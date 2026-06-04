@@ -223,13 +223,17 @@ def predict_scoreline(
     params: DixonColesParams,
     max_goals: int = _MAX_GOALS,
     neutral: bool = False,
+    rho_override: float | None = None,
 ) -> np.ndarray:
-    """Returns (max_goals+1 x max_goals+1) matrix of P(home_goals=i, away_goals=j)."""
+    """Returns (max_goals+1 x max_goals+1) matrix of P(home_goals=i, away_goals=j).
+    rho_override: replaces params.rho when set (used for stage-specific calibration).
+    """
     lh, la = _lambdas(home, away, params, neutral)
+    rho = rho_override if rho_override is not None else params.rho
     matrix = np.zeros((max_goals + 1, max_goals + 1))
     for i in range(max_goals + 1):
         for j in range(max_goals + 1):
-            t = _tau(i, j, lh, la, params.rho)
+            t = _tau(i, j, lh, la, rho)
             matrix[i, j] = poisson.pmf(i, lh) * poisson.pmf(j, la) * t
     # Renormalize to account for truncation
     total = matrix.sum()
@@ -244,9 +248,12 @@ def predict_match(
     params: DixonColesParams,
     max_goals: int = _MAX_GOALS,
     neutral: bool = False,
+    rho_override: float | None = None,
 ) -> dict[str, float]:
-    """Returns {'p_home': float, 'p_draw': float, 'p_away': float}."""
-    matrix = predict_scoreline(home, away, params, max_goals, neutral)
+    """Returns {'p_home': float, 'p_draw': float, 'p_away': float}.
+    rho_override: applies stage-specific low-score correction (see predict_match_staged).
+    """
+    matrix = predict_scoreline(home, away, params, max_goals, neutral, rho_override)
     p_home = float(np.tril(matrix, -1).sum())
     p_draw = float(np.trace(matrix))
     p_away = float(np.triu(matrix, 1).sum())
@@ -256,6 +263,24 @@ def predict_match(
         "p_draw": p_draw / total,
         "p_away": p_away / total,
     }
+
+
+def predict_match_staged(
+    home: str,
+    away: str,
+    params: DixonColesParams,
+    is_knockout: bool = False,
+    neutral: bool = False,
+) -> dict[str, float]:
+    """
+    Stage-aware prediction. Adjusts rho to reflect tactical draw dynamics:
+    - Group stage: rho * 1.10 (slightly more low-score correction, draw is valid result)
+    - Knockout: rho * 0.75 (teams play to win, draw still possible at 90min but less strategic)
+    Empirically small effect (Agent 3: 21.9% vs 21.3% draw rate) but directionally correct.
+    """
+    rho_factor = 0.75 if is_knockout else 1.10
+    rho = params.rho * rho_factor
+    return predict_match(home, away, params, neutral=neutral, rho_override=rho)
 
 
 def predict_goals_distribution(
@@ -281,6 +306,7 @@ def predict_asian_handicap(
     params: DixonColesParams,
     line: float = -0.5,
     neutral: bool = False,
+    rho_override: float | None = None,
 ) -> dict[str, float]:
     """
     Asian Handicap -0.5 (home): home wins outright → win; draw/away win → loss.
@@ -289,7 +315,7 @@ def predict_asian_handicap(
     """
     if line != -0.5:
         raise ValueError(f"Unsupported AH line: {line}. Only -0.5 supported.")
-    probs = predict_match(home, away, params, neutral=neutral)
+    probs = predict_match(home, away, params, neutral=neutral, rho_override=rho_override)
     return {
         "p_ah_home": probs["p_home"],
         "p_ah_away": 1.0 - probs["p_home"],
@@ -303,9 +329,10 @@ def predict_totals(
     line: float = 2.5,
     max_goals: int = _MAX_GOALS,
     neutral: bool = False,
+    rho_override: float | None = None,
 ) -> dict[str, float]:
     """Returns P(total goals > line) and P(total goals <= line) from scoreline matrix."""
-    matrix = predict_scoreline(home, away, params, max_goals, neutral)
+    matrix = predict_scoreline(home, away, params, max_goals, neutral, rho_override)
     p_over = 0.0
     for i in range(max_goals + 1):
         for j in range(max_goals + 1):
