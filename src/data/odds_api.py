@@ -69,11 +69,37 @@ def fetch_upcoming_matches(
     return _parse_matches(data)
 
 
+_PREFERRED_BM = "bet365"
+
+
+def _parse_markets(bm: dict, home: str, away: str, store: dict) -> None:
+    """Extracts h2h/totals/spreads odds from one bookmaker into store dict."""
+    for market in bm.get("markets", []):
+        mkt = market.get("key")
+        if mkt == "h2h":
+            for o in market.get("outcomes", []):
+                name, price = o["name"], o["price"]
+                if price > store.get(name, 0):
+                    store[name] = price
+        elif mkt == "totals":
+            for o in market.get("outcomes", []):
+                if abs(o.get("point", 0) - 2.5) < 0.1:
+                    key = f"{o['name']}_2.5"
+                    if o["price"] > store.get(key, 0):
+                        store[key] = o["price"]
+        elif mkt == "spreads":
+            for o in market.get("outcomes", []):
+                if abs(o.get("point", 0) + 0.5) < 0.1:
+                    key = f"ah_{o['name']}"
+                    if o["price"] > store.get(key, 0):
+                        store[key] = o["price"]
+
+
 def _parse_matches(raw: list[dict]) -> list[dict]:
     """
-    Returns one entry per match with BEST odds per outcome across ALL bookmakers.
-    Also records which bookmaker provided each best price.
-    Captures h2h (1X2), totals (O/U 2.5), and spreads (AH -0.5).
+    Returns one entry per match with:
+    - Best odds across ALL bookmakers (used for EV calculation)
+    - Bet365-specific odds (shown in report/Telegram — what user actually gets)
     """
     matches = []
     for event in raw:
@@ -86,43 +112,31 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
         if not bookmakers:
             continue
 
-        # Best price per outcome across all bookmakers
         best: dict[str, float] = {}
+        b365: dict[str, float] = {}
         best_bm: dict[str, str] = {}
 
         for bm in bookmakers:
             bm_key = bm["key"]
-            for market in bm.get("markets", []):
-                mkt = market.get("key")
-                if mkt == "h2h":
-                    for o in market.get("outcomes", []):
-                        name, price = o["name"], o["price"]
-                        if price > best.get(name, 0):
-                            best[name] = price
-                            best_bm[name] = bm_key
-                elif mkt == "totals":
-                    for o in market.get("outcomes", []):
-                        if abs(o.get("point", 0) - 2.5) < 0.1:
-                            key = f"{o['name']}_2.5"
-                            if o["price"] > best.get(key, 0):
-                                best[key] = o["price"]
-                                best_bm[key] = bm_key
-                elif mkt == "spreads":
-                    for o in market.get("outcomes", []):
-                        if abs(o.get("point", 0) + 0.5) < 0.1:  # AH -0.5 home
-                            key = f"ah_{o['name']}"
-                            if o["price"] > best.get(key, 0):
-                                best[key] = o["price"]
-                                best_bm[key] = bm_key
+            prev = {k: v for k, v in best.items()}
+            _parse_markets(bm, home, away, best)
+            # Track which bookmaker provides each best price
+            for k in best:
+                if best[k] != prev.get(k, 0):
+                    best_bm[k] = bm_key
+            # Capture Bet365 separately
+            if bm_key == _PREFERRED_BM:
+                _parse_markets(bm, home, away, b365)
 
         if not best.get(home):
-            continue  # no h2h odds found
+            continue
 
         match_dict: dict = {
             "match_id":      match_id,
             "commence_time": commence,
             "home_team":     home,
             "away_team":     away,
+            # Best-market odds (for EV/model comparison)
             "home_odds":     best.get(home, 0.0),
             "draw_odds":     best.get("Draw", 0.0),
             "away_odds":     best.get(away, 0.0),
@@ -133,6 +147,14 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
             "best_home_bm":  best_bm.get(home, ""),
             "best_draw_bm":  best_bm.get("Draw", ""),
             "best_away_bm":  best_bm.get(away, ""),
+            # Bet365-specific odds (shown to user for placing)
+            "b365_home":     b365.get(home, 0.0),
+            "b365_draw":     b365.get("Draw", 0.0),
+            "b365_away":     b365.get(away, 0.0),
+            "b365_over":     b365.get("Over_2.5", 0.0),
+            "b365_under":    b365.get("Under_2.5", 0.0),
+            "b365_ah_home":  b365.get(f"ah_{home}", 0.0),
+            "b365_ah_away":  b365.get(f"ah_{away}", 0.0),
         }
         matches.append(match_dict)
 

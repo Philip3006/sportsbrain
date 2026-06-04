@@ -29,7 +29,11 @@ def _confirm_bets(selected_signals: list, bankroll: float) -> list:
             f"@ {s.decimal_odds:.2f} | EV +{s.ev*100:.1f}% | "
             f"€{stake:.2f} | {s.confidence}"
         )
-        ans = input("  Wette eingehen? (j/n): ").strip().lower()
+        try:
+            ans = input("  Wette eingehen? (j/n): ").strip().lower()
+        except EOFError:
+            print("\n  [Kein interaktives Terminal — nutze '! python3 scripts/daily_scan.py' direkt im Terminal]")
+            break
         if ans == "j":
             confirmed.append(s)
             print("  ✓ Eingetragen.")
@@ -50,6 +54,8 @@ if __name__ == "__main__":
                         help="Auto-retrain DC + LightGBM before scanning")
     parser.add_argument("--horizon", type=int, default=None,
                         help="Only scan matches starting within HORIZON hours from now")
+    parser.add_argument("--date", type=str, default=None,
+                        help="Only scan matches on this date, e.g. 2026-06-11")
     args = parser.parse_args()
 
     if args.retrain:
@@ -64,6 +70,7 @@ if __name__ == "__main__":
         output_path=Path(args.output) if args.output else None,
         auto_log=args.auto_log,
         horizon_hours=args.horizon,
+        scan_date_filter=args.date,
     )
 
     if not signals_df.empty:

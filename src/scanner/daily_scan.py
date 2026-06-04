@@ -106,6 +106,7 @@ def run_daily_scan(
     output_path: Path | None = None,
     auto_log: bool = False,
     horizon_hours: int | None = None,
+    scan_date_filter: str | None = None,
 ) -> tuple[pd.DataFrame, list]:
     """
     Main scan orchestrator.
@@ -175,6 +176,13 @@ def run_daily_scan(
         n_beyond = before_horizon - len(filtered)
         if n_beyond:
             print(f"  Horizon filter: dropped {n_beyond} matches beyond {horizon_hours}h window.")
+
+    if scan_date_filter is not None:
+        day_start = pd.Timestamp(scan_date_filter, tz="UTC")
+        day_end = day_start + pd.Timedelta(days=1)
+        before = len(filtered)
+        filtered = [m for m in filtered if day_start <= _match_ts_utc(m) < day_end]
+        print(f"  Date filter '{scan_date_filter}': {len(filtered)} matches (dropped {before - len(filtered)}).")
 
     if skipped_team:
         print(f"  Skipped {skipped_team} matches with non-WM-2026 teams (pre-tournament friendlies).")
@@ -348,6 +356,19 @@ def run_daily_scan(
 
         # Filter out signals with unrealistically high EV (model artifact)
         signals = [s for s in signals if s.ev <= MAX_EV]
+
+        # Attach Bet365-specific odds to each signal for display
+        b365_map = {
+            "home":          float(match.get("b365_home", 0)),
+            "draw":          float(match.get("b365_draw", 0)),
+            "away":          float(match.get("b365_away", 0)),
+            "o/u2.5_over":   float(match.get("b365_over", 0)),
+            "o/u2.5_under":  float(match.get("b365_under", 0)),
+            "ah-0.5_home":   float(match.get("b365_ah_home", 0)),
+            "ah+0.5_away":   float(match.get("b365_ah_away", 0)),
+        }
+        for s in signals:
+            s.b365_odds = b365_map.get(s.market, 0.0)
 
         # 1-bet-per-match: keep only the highest-EV signal per match.
         # AH -0.5 and 1X2 home share >80% outcome correlation — stacking them
