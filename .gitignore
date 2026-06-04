@@ -1,0 +1,9 @@
+.env
+data/cache/
+data/raw/
+results/scans/
+results/backtests/
+results/closing_odds.log
+__pycache__/
+*.pyc
+.DS_Store
