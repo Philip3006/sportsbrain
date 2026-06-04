@@ -67,56 +67,54 @@ def send_scan_alert(
     if not token or not chat_id or not signals:
         return False
 
+    SEP = "─────────────────────"
     top = sorted(signals, key=lambda s: s.ev, reverse=True)[:5]
 
-    lines = [f"<b>WM 2026 Wert-Wetten — {scan_date}</b>", ""]
+    lines = [f"<b>WM 2026 — {scan_date}</b>", SEP]
     for s in top:
         stake_eur = s.stake_pct * bankroll
-        total_return = stake_eur * s.decimal_odds
         profit = stake_eur * (s.decimal_odds - 1)
 
         if s.b365_odds > 1.0:
-            odds_line = f"Bet365: {s.b365_odds:.2f}"
+            odds_str = f"Bet365: {s.b365_odds:.2f}"
             if s.b365_odds < s.decimal_odds - 0.02:
-                odds_line += f"  (bester Kurs: {s.decimal_odds:.2f})"
+                odds_str += f"  (Markt: {s.decimal_odds:.2f})"
         else:
-            odds_line = f"Bester Kurs: {s.decimal_odds:.2f}  (Bet365 nicht verfuegbar)"
+            odds_str = f"Kurs: {s.decimal_odds:.2f}  (Bet365 n.v.)"
 
-        conf_line = "\nBeide Modelle einig" if s.confidence == "HIGH" else ""
-        lines.append(
-            f"<b>{s.home} vs {s.away}</b>\n"
-            f"Tipp: {_market_label(s.market, s.home, s.away)}\n"
-            f"{odds_line}\n"
-            f"Wahrscheinlichkeit: {s.model_prob*100:.1f}%  |  EV: +{s.ev*100:.1f}%\n"
-            f"Einsatz: {stake_eur:.2f} EUR  |  "
-            f"Gewinn: +{profit:.2f} EUR  |  Verlust: -{stake_eur:.2f} EUR{conf_line}"
-        )
+        conf = "  Beide Modelle einig" if s.confidence == "HIGH" else ""
+        lines += [
+            f"<b>{s.home} vs {s.away}</b>",
+            f"Tipp:      {_market_label(s.market, s.home, s.away)}",
+            f"Quote:     {odds_str}",
+            f"Modell:    {s.model_prob*100:.1f}%   EV: +{s.ev*100:.1f}%{conf}",
+            f"Einsatz:   {stake_eur:.2f} EUR",
+            f"Gewinn:    +{profit:.2f} EUR   Verlust: -{stake_eur:.2f} EUR",
+            SEP,
+        ]
 
     n_open = summary.get("n_open", 0)
     pnl = summary.get("total_pnl", 0.0)
     roi = summary.get("roi_pct", 0.0)
     n_won = summary.get("n_won", 0)
     n_lost = summary.get("n_lost", 0)
-    portfolio_line = (
-        f"<b>Portfolio:</b> {n_open}/3  |  "
-        f"G/V: {pnl:+.2f} EUR  |  Rendite: {roi:+.1f}%  |  W{n_won}/L{n_lost}"
+    lines.append(
+        f"<b>Portfolio:</b> {n_open}/3 aktiv   "
+        f"G/V: {pnl:+.2f} EUR   ROI: {roi:+.1f}%   W{n_won}/L{n_lost}"
     )
     clv = summary.get("mean_clv", None)
     if clv is not None and (n_won + n_lost) > 0:
-        portfolio_line += f"  |  CLV: {clv*100:+.1f}%"
-    lines += ["", portfolio_line]
+        lines.append(f"CLV: {clv*100:+.1f}%")
 
-    # Inline buttons: one row per match — Analyse + both team Ratings
     keyboard = []
     for s in top:
+        keyboard.append([{
+            "text": f"Analyse: {s.home} vs {s.away}",
+            "callback_data": f"/analyse {s.home} vs {s.away}",
+        }])
         keyboard.append([
-            {"text": f"Analyse: {s.home} vs {s.away}",
-             "callback_data": f"/analyse {s.home} vs {s.away}"},
-        ])
-        keyboard.append([
-            {"text": f"Rating: {s.home}", "callback_data": f"/rating {s.home}"},
-            {"text": f"Rating: {s.away}", "callback_data": f"/rating {s.away}"},
+            {"text": f"Rating {s.home}", "callback_data": f"/rating {s.home}"},
+            {"text": f"Rating {s.away}", "callback_data": f"/rating {s.away}"},
         ])
 
-    reply_markup = {"inline_keyboard": keyboard}
-    return _post(token, chat_id, "\n".join(lines), reply_markup)
+    return _post(token, chat_id, "\n".join(lines), {"inline_keyboard": keyboard})
