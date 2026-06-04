@@ -15,24 +15,24 @@ from src.betting.value_detector import BetSignal
 
 _ENV_PATH = Path(__file__).parent.parent.parent / ".env"
 
-_MARKET_LABELS = {
-    "home":          "🏠 Heimsieg",
-    "draw":          "🤝 Unentschieden",
-    "away":          "✈️ Auswärtssieg",
-    "o/u2.5_over":   "📈 Over 2.5 Tore",
-    "o/u2.5_under":  "📉 Under 2.5 Tore",
-    "ah-0.5_home":   "⚖️ Asian Handicap -0.5 (Heimsieg)",
-    "ah+0.5_away":   "⚖️ Asian Handicap +0.5 (Auswärts/Unentschieden)",
-}
 
-
-def _market_label(market: str, home: str = "", away: str = "") -> str:
+def _market_label(market: str, home: str, away: str) -> str:
     m = market.lower()
+    if m == "home":
+        return f"{home} gewinnt"
+    if m == "away":
+        return f"{away} gewinnt"
+    if m == "draw":
+        return "Unentschieden"
+    if m == "o/u2.5_over":
+        return "Over 2.5 Tore"
+    if m == "o/u2.5_under":
+        return "Under 2.5 Tore"
     if m == "ah-0.5_home":
-        return f"⚖️ Asian Handicap: {home} gewinnt (kein Unentschieden)"
+        return f"Asian Handicap: {home} gewinnt (kein Unentschieden)"
     if m == "ah+0.5_away":
-        return f"⚖️ Asian Handicap: {away} gewinnt oder Unentschieden"
-    return _MARKET_LABELS.get(m, market.upper())
+        return f"Asian Handicap: {away} gewinnt oder Unentschieden"
+    return market.upper()
 
 
 def send_scan_alert(
@@ -43,6 +43,7 @@ def send_scan_alert(
 ) -> bool:
     """
     Sends a Telegram message with up to 5 top signals.
+    Shows Bet365 odds when available, best-market odds as fallback.
     Returns True if message was sent, False if skipped (no token, no signals, or error).
     """
     load_dotenv(dotenv_path=_ENV_PATH)
@@ -54,21 +55,31 @@ def send_scan_alert(
 
     top = sorted(signals, key=lambda s: s.ev, reverse=True)[:5]
 
-    lines = [f"<b>🎯 WM 2026 Wert-Wetten — {scan_date}</b>", ""]
+    lines = [f"<b>WM 2026 Wert-Wetten — {scan_date}</b>", ""]
     for s in top:
-        conf = "\n  ⭐ Beide Modelle einig" if s.confidence == "HIGH" else ""
         stake_eur = s.stake_pct * bankroll
         total_return = stake_eur * s.decimal_odds
         profit = stake_eur * (s.decimal_odds - 1)
+
+        # Show Bet365 odds if available, otherwise best-market odds
+        if s.b365_odds > 1.0:
+            odds_line = f"Bet365: {s.b365_odds:.2f}"
+            if s.b365_odds < s.decimal_odds - 0.02:
+                odds_line += f"  (bester Kurs: {s.decimal_odds:.2f})"
+        else:
+            odds_line = f"Bester Kurs: {s.decimal_odds:.2f}  (Bet365 nicht verfugbar)"
+
+        conf_line = "\nBeide Modelle einig" if s.confidence == "HIGH" else ""
+
         lines.append(
             f"<b>{s.home} vs {s.away}</b>\n"
-            f"  Markt: {_market_label(s.market, s.home, s.away)}\n"
-            f"  Modell-Wahrscheinlichkeit: {s.model_prob*100:.1f}%\n"
-            f"  Quote: {s.decimal_odds:.2f}\n"
-            f"  Expected Value: +{s.ev*100:.1f}%\n"
-            f"  Einsatz: €{stake_eur:.2f}\n"
-            f"  Bei Gewinn: €{total_return:.2f} zurück (€{profit:.2f} Gewinn)\n"
-            f"  Bei Verlust: -€{stake_eur:.2f}{conf}"
+            f"Tipp: {_market_label(s.market, s.home, s.away)}\n"
+            f"{odds_line}\n"
+            f"Modell-Wahrscheinlichkeit: {s.model_prob*100:.1f}%\n"
+            f"Expected Value: +{s.ev*100:.1f}%\n"
+            f"Einsatz: {stake_eur:.2f} EUR\n"
+            f"Bei Gewinn: {total_return:.2f} EUR ({profit:+.2f} EUR)\n"
+            f"Bei Verlust: -{stake_eur:.2f} EUR{conf_line}"
         )
 
     n_open = summary.get("n_open", 0)
@@ -79,12 +90,12 @@ def send_scan_alert(
     clv = summary.get("mean_clv", None)
 
     portfolio_line = (
-        f"📊 <b>Portfolio:</b> {n_open}/3 aktive Wetten | "
-        f"Gewinn/Verlust: €{pnl:+.2f} | Rendite: {roi:+.1f}% | "
-        f"Gewonnen: {n_won} / Verloren: {n_lost}"
+        f"<b>Portfolio:</b> {n_open}/3 aktive Wetten | "
+        f"G/V: {pnl:+.2f} EUR | Rendite: {roi:+.1f}% | "
+        f"W{n_won}/L{n_lost}"
     )
     if clv is not None and (n_won + n_lost) > 0:
-        portfolio_line += f" | Closing Line Value: {clv*100:+.1f}%"
+        portfolio_line += f" | CLV: {clv*100:+.1f}%"
 
     lines += ["", portfolio_line]
     text = "\n".join(lines)

@@ -20,6 +20,7 @@ class BetSignal:
     kelly_f: float
     stake_pct: float     # fraction of bankroll recommended
     confidence: str      # "HIGH" if both DC and LightGBM agree, else "MEDIUM"
+    b365_odds: float = 0.0  # Bet365-specific quote (0 = not available)
 
 
 _MARKETS = ["home", "draw", "away"]
