@@ -1,21 +1,18 @@
 """
 Telegram command responder for SportsBrain.
-Reads unprocessed messages from the bot chat and answers commands.
+Reads unprocessed messages AND button taps (callback queries) and answers them.
 
-Commands:
-  /analyse <home> vs <away>   Full match analysis (model reasoning, odds, value)
-  /analyse <home> <away>      Same without "vs"
-  /rating <team>              Team profile (Elo, market value, recent form)
-  /scan                       Quick scan for today's matches
-  /hilfe                      List all commands
+Commands (text or button):
+  /analyse <home> vs <away>   Full match analysis
+  /rating <team>              Team profile (Elo, market value, form)
+  /scan                       Quick scan for today
+  /hilfe                      List commands
 
 Usage:
-  python scripts/telegram_bot.py          # process pending messages once
-  # Run automatically after daily_scan.py in GitHub Actions
+  python scripts/telegram_bot.py     # process pending messages once
 """
 from __future__ import annotations
 
-import glob
 import json
 import os
 import sys
@@ -34,14 +31,36 @@ CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 _OFFSET_FILE = Path(__file__).parent.parent / "data" / "cache" / "tg_offset.json"
 
 
-def _send(text: str) -> None:
+# ---------------------------------------------------------------------------
+# Telegram API helpers
+# ---------------------------------------------------------------------------
+
+def _send(text: str, reply_markup: dict | None = None) -> None:
     if not TOKEN or not CHAT_ID:
         return
-    requests.post(
-        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
-        json={"chat_id": CHAT_ID, "text": text, "parse_mode": "HTML"},
-        timeout=10,
-    )
+    payload: dict = {"chat_id": CHAT_ID, "text": text, "parse_mode": "HTML"}
+    if reply_markup:
+        payload["reply_markup"] = reply_markup
+    try:
+        requests.post(
+            f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+            json=payload,
+            timeout=10,
+        )
+    except Exception:
+        pass
+
+
+def _answer_callback(callback_id: str) -> None:
+    """Acknowledge button tap so Telegram removes the loading indicator."""
+    try:
+        requests.post(
+            f"https://api.telegram.org/bot{TOKEN}/answerCallbackQuery",
+            json={"callback_query_id": callback_id},
+            timeout=5,
+        )
+    except Exception:
+        pass
 
 
 def _get_updates(offset: int) -> list[dict]:
@@ -69,20 +88,58 @@ def _save_offset(offset: int) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Follow-up keyboards
+# ---------------------------------------------------------------------------
+
+def _analyse_keyboard(home: str, away: str) -> dict:
+    """Buttons shown after an analysis: ratings for both teams + new scan."""
+    return {"inline_keyboard": [
+        [
+            {"text": f"Rating: {home}", "callback_data": f"/rating {home}"},
+            {"text": f"Rating: {away}", "callback_data": f"/rating {away}"},
+        ],
+        [{"text": "Scan heute", "callback_data": "/scan"}],
+    ]}
+
+
+def _rating_keyboard(team: str) -> dict:
+    """Buttons shown after a rating: back to hilfe or scan."""
+    return {"inline_keyboard": [
+        [{"text": "Scan heute", "callback_data": "/scan"}],
+        [{"text": "Alle Befehle", "callback_data": "/hilfe"}],
+    ]}
+
+
+def _scan_keyboard(signals: list) -> dict:
+    """Buttons shown after a scan: analyse each match."""
+    rows = []
+    for s in signals[:3]:
+        rows.append([{
+            "text": f"Analyse: {s.home} vs {s.away}",
+            "callback_data": f"/analyse {s.home} vs {s.away}",
+        }])
+    return {"inline_keyboard": rows} if rows else {}
+
+
+# ---------------------------------------------------------------------------
 # Command handlers
 # ---------------------------------------------------------------------------
 
-def _cmd_hilfe() -> str:
-    return (
-        "<b>SportsBrain Befehle</b>\n\n"
-        "/analyse &lt;Heim&gt; vs &lt;Auswaerts&gt;  —  Vollstandige Match-Analyse\n"
-        "/rating &lt;Team&gt;  —  Team-Profil (Elo, Marktwert, Form)\n"
+def _cmd_hilfe() -> tuple[str, dict]:
+    text = (
+        "<b>Verfuegbare Befehle</b>\n\n"
+        "/analyse Heim vs Auswaerts  —  Vollstaendige Match-Analyse\n"
+        "/rating Teamname  —  Team-Profil (Elo, Marktwert, Form)\n"
         "/scan  —  Sofort-Scan heutiger Spiele\n"
-        "/hilfe  —  Diese Ubersicht"
+        "/hilfe  —  Diese Uebersicht"
     )
+    keyboard = {"inline_keyboard": [
+        [{"text": "Scan heute", "callback_data": "/scan"}],
+    ]}
+    return text, keyboard
 
 
-def _cmd_rating(team: str) -> str:
+def _cmd_rating(team: str) -> tuple[str, dict]:
     from src.config import canonical_name
     from src.data.international import fetch_international_results, filter_competitive
     from src.data.market_values import SQUAD_VALUES_M
@@ -95,23 +152,20 @@ def _cmd_rating(team: str) -> str:
         elo_series = compute_elo_series(historical)
         now = pd.Timestamp.now()
 
-        # Latest Elo
         home_rows = elo_series[elo_series["home_team"] == team]
         away_rows = elo_series[elo_series["away_team"] == team]
         candidates = []
         if not home_rows.empty:
-            r = home_rows.iloc[-1]
-            candidates.append((r["date"], float(r["elo_home_post"])))
+            candidates.append(float(home_rows.iloc[-1]["elo_home_post"]))
         if not away_rows.empty:
-            r = away_rows.iloc[-1]
-            candidates.append((r["date"], float(r["elo_away_post"])))
-        elo = max(candidates, key=lambda x: x[0])[1] if candidates else 1500.0
+            candidates.append(float(away_rows.iloc[-1]["elo_away_post"]))
+        elo = max(candidates) if candidates else 1500.0
 
         form = rolling_form(team, now, historical, competitive_only=True)
         mom = momentum_score(team, now, historical)
         mv = SQUAD_VALUES_M.get(team, 0)
 
-        return (
+        text = (
             f"<b>{team}</b>\n\n"
             f"Elo-Rating: {elo:.0f}\n"
             f"Kaderwert: {mv:.0f} Mio EUR\n"
@@ -122,10 +176,12 @@ def _cmd_rating(team: str) -> str:
             f"Formtrend: {mom['form_trend']:+.2f}"
         )
     except Exception as e:
-        return f"Fehler bei {team}: {e}"
+        text = f"Fehler bei {team}: {e}"
+
+    return text, _rating_keyboard(team)
 
 
-def _cmd_analyse(home: str, away: str) -> str:
+def _cmd_analyse(home: str, away: str) -> tuple[str, dict]:
     from src.config import canonical_name
     from src.data.international import fetch_international_results, filter_competitive
     from src.data.market_values import SQUAD_VALUES_M, get_market_value_ratio
@@ -133,7 +189,6 @@ def _cmd_analyse(home: str, away: str) -> str:
     from src.models import dixon_coles as dc
     from src.features.form import rolling_form
     from src.features.head_to_head import h2h_stats
-    from src.betting.odds_utils import remove_margin_shin
 
     home = canonical_name(home)
     away = canonical_name(away)
@@ -143,17 +198,15 @@ def _cmd_analyse(home: str, away: str) -> str:
         historical = filter_competitive(fetch_international_results())
         elo_series = compute_elo_series(historical)
 
-        # DC params
         snap_dir = Path(__file__).parent.parent / "models" / "dixon_coles"
         files = sorted(snap_dir.glob("params_*.pkl"))
         if not files:
-            return "Kein DC-Modell gefunden."
+            return "Kein Modell gefunden.", {}
         params = dc.load(files[-1])
 
         dc_probs = dc.predict_match_staged(home, away, params, is_knockout=False, neutral=True)
 
-        # Elo
-        def last_elo(team):
+        def last_elo(team: str) -> float:
             hr = elo_series[elo_series["home_team"] == team]
             ar = elo_series[elo_series["away_team"] == team]
             cands = []
@@ -163,68 +216,108 @@ def _cmd_analyse(home: str, away: str) -> str:
                 cands.append(float(ar.iloc[-1]["elo_away_post"]))
             return max(cands) if cands else 1500.0
 
-        elo_h = last_elo(home)
-        elo_a = last_elo(away)
+        elo_h, elo_a = last_elo(home), last_elo(away)
         eh, _, ea = elo_win_probability(elo_h, elo_a, neutral=True)
 
-        # Form
         fh = rolling_form(home, now, historical, competitive_only=True)
         fa = rolling_form(away, now, historical, competitive_only=True)
 
-        # H2H
         h2h = h2h_stats(home, away, now, historical)
         h2h_played = int(h2h.get("h2h_matches", 0))
         h2h_hw = int(h2h.get("h2h_home_wins", 0))
         h2h_draw = int(h2h.get("h2h_draws", 0))
+        h2h_aw = h2h_played - h2h_hw - h2h_draw
 
-        # Market value
         mv_h = SQUAD_VALUES_M.get(home, 0)
         mv_a = SQUAD_VALUES_M.get(away, 0)
         mv_ratio = get_market_value_ratio(home, away)
+        mv_note = f"{home} staerker" if mv_ratio >= 1 else f"{away} staerker"
 
-        return (
+        text = (
             f"<b>Analyse: {home} vs {away}</b>\n\n"
             f"<b>Modell-Prognose</b>\n"
             f"{home} gewinnt: {dc_probs['p_home']*100:.1f}%\n"
             f"Unentschieden: {dc_probs['p_draw']*100:.1f}%\n"
             f"{away} gewinnt: {dc_probs['p_away']*100:.1f}%\n\n"
             f"<b>Elo-Ratings</b>\n"
-            f"{home}: {elo_h:.0f}  (Elo-Siegchance: {eh*100:.1f}%)\n"
-            f"{away}: {elo_a:.0f}  (Elo-Siegchance: {ea*100:.1f}%)\n\n"
+            f"{home}: {elo_h:.0f}  (Siegchance: {eh*100:.1f}%)\n"
+            f"{away}: {elo_a:.0f}  (Siegchance: {ea*100:.1f}%)\n\n"
             f"<b>Kaderwert</b>\n"
             f"{home}: {mv_h:.0f} Mio EUR\n"
             f"{away}: {mv_a:.0f} Mio EUR\n"
-            f"Verhaltnis: {mv_ratio:.2f}x ({home} {'starker' if mv_ratio >= 1 else 'schwacher'})\n\n"
+            f"Verhaeltnis: {mv_ratio:.2f}x  ({mv_note})\n\n"
             f"<b>Letzte 5 Pflichtspiele</b>\n"
-            f"{home}: {fh['form_pts']:.1f} Pkt | {fh['form_gf']:.1f} Tore/Spiel\n"
-            f"{away}: {fa['form_pts']:.1f} Pkt | {fa['form_gf']:.1f} Tore/Spiel\n\n"
-            f"<b>Direktvergleich (letzte {h2h_played} Spiele)</b>\n"
-            f"{home}: {h2h_hw}S / Unentschieden: {h2h_draw}U / {away}: {h2h_played-h2h_hw-h2h_draw}S"
+            f"{home}: {fh['form_pts']:.1f} Pkt | {fh['form_gf']:.1f} Tore | {fh['form_ga']:.1f} Gegentore\n"
+            f"{away}: {fa['form_pts']:.1f} Pkt | {fa['form_gf']:.1f} Tore | {fa['form_ga']:.1f} Gegentore\n\n"
+            f"<b>Direktvergleich ({h2h_played} Spiele)</b>\n"
+            f"{home}: {h2h_hw}S  |  Unentschieden: {h2h_draw}U  |  {away}: {h2h_aw}S"
         )
     except Exception as e:
-        return f"Fehler bei der Analyse: {e}"
+        text = f"Fehler: {e}"
+        return text, {}
+
+    return text, _analyse_keyboard(home, away)
 
 
-def _cmd_scan() -> str:
+def _cmd_scan() -> tuple[str, dict]:
     from src.scanner.daily_scan import run_daily_scan
+    from src.notifications.telegram import _market_label
     try:
         _, signals = run_daily_scan(bankroll=100.0, auto_log=False)
         if not signals:
-            return "Kein Value-Signal heute gefunden."
+            text = "Kein Value-Signal heute gefunden."
+            return text, {"inline_keyboard": [[{"text": "Alle Befehle", "callback_data": "/hilfe"}]]}
         lines = ["<b>Tages-Scan</b>\n"]
         for s in signals[:3]:
-            from src.notifications.telegram import _market_label
             lines.append(
-                f"{s.home} vs {s.away}  |  {_market_label(s.market, s.home, s.away)}\n"
+                f"<b>{s.home} vs {s.away}</b>\n"
+                f"{_market_label(s.market, s.home, s.away)}  |  "
                 f"Quote: {s.decimal_odds:.2f}  |  EV: +{s.ev*100:.1f}%"
             )
-        return "\n\n".join(lines)
+        return "\n\n".join(lines), _scan_keyboard(signals)
     except Exception as e:
-        return f"Scan-Fehler: {e}"
+        return f"Scan-Fehler: {e}", {}
 
 
 # ---------------------------------------------------------------------------
-# Main loop (run once per invocation)
+# Dispatcher
+# ---------------------------------------------------------------------------
+
+def _dispatch(text: str) -> tuple[str, dict]:
+    """Routes a command string to the right handler. Returns (reply_text, keyboard)."""
+    parts = text.strip().split()
+    if not parts:
+        return _cmd_hilfe()
+
+    cmd = parts[0].lower().split("@")[0]
+
+    if cmd in ("/hilfe", "/start", "/help"):
+        return _cmd_hilfe()
+
+    if cmd == "/rating" and len(parts) >= 2:
+        return _cmd_rating(" ".join(parts[1:]))
+
+    if cmd == "/analyse" and len(parts) >= 3:
+        rest = " ".join(parts[1:])
+        if " vs " in rest.lower():
+            idx = rest.lower().index(" vs ")
+            home, away = rest[:idx].strip(), rest[idx + 4:].strip()
+        else:
+            mid = max(1, len(parts[1:]) // 2)
+            home = " ".join(parts[1:1 + mid])
+            away = " ".join(parts[1 + mid:])
+        return _cmd_analyse(home, away)
+
+    if cmd == "/scan":
+        return _cmd_scan()
+
+    return (f"Unbekannter Befehl: {cmd}", {"inline_keyboard": [
+        [{"text": "Alle Befehle", "callback_data": "/hilfe"}]
+    ]})
+
+
+# ---------------------------------------------------------------------------
+# Main — process one batch of updates per run
 # ---------------------------------------------------------------------------
 
 def main() -> None:
@@ -234,47 +327,32 @@ def main() -> None:
 
     offset = _load_offset()
     updates = _get_updates(offset)
+    processed = 0
 
     for upd in updates:
         offset = upd["update_id"] + 1
-        msg = upd.get("message", {})
-        text = msg.get("text", "").strip()
 
-        if not text.startswith("/"):
-            continue
+        # Text message
+        if "message" in upd:
+            text = upd["message"].get("text", "").strip()
+            if text.startswith("/"):
+                reply, keyboard = _dispatch(text)
+                _send(reply, keyboard or None)
+                processed += 1
 
-        parts = text.split()
-        cmd = parts[0].lower().split("@")[0]  # strip @botname if present
-
-        if cmd == "/hilfe" or cmd == "/start":
-            _send(_cmd_hilfe())
-
-        elif cmd == "/rating" and len(parts) >= 2:
-            team = " ".join(parts[1:])
-            _send(_cmd_rating(team))
-
-        elif cmd == "/analyse" and len(parts) >= 3:
-            rest = " ".join(parts[1:])
-            # Accept "Home vs Away" or "Home Away"
-            if " vs " in rest.lower():
-                idx = rest.lower().index(" vs ")
-                home, away = rest[:idx].strip(), rest[idx+4:].strip()
-            else:
-                mid = len(parts[1:]) // 2
-                home = " ".join(parts[1:1+mid])
-                away = " ".join(parts[1+mid:])
-            _send(_cmd_analyse(home, away))
-
-        elif cmd == "/scan":
-            _send("Scan laeuft...")
-            _send(_cmd_scan())
-
-        else:
-            _send(f"Unbekannter Befehl: {cmd}\n\n{_cmd_hilfe()}")
+        # Button tap (inline keyboard callback)
+        elif "callback_query" in upd:
+            cq = upd["callback_query"]
+            _answer_callback(cq["id"])
+            data = cq.get("data", "").strip()
+            if data.startswith("/"):
+                reply, keyboard = _dispatch(data)
+                _send(reply, keyboard or None)
+                processed += 1
 
     _save_offset(offset)
-    if updates:
-        print(f"  Telegram bot: {len(updates)} Nachricht(en) verarbeitet.")
+    if processed:
+        print(f"  Telegram bot: {processed} Nachricht(en) verarbeitet.")
 
 
 if __name__ == "__main__":
