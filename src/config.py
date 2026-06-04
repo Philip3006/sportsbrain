@@ -16,8 +16,8 @@ ODDS_API_URL = "https://api.the-odds-api.com/v4"
 DC_PHI = 0.0065
 KELLY_FRAC = 0.25
 MIN_EDGE = 0.03
-MAX_STAKE_PCT = 0.02
-MAX_ACTIVE_BETS = 3
+MAX_STAKE_PCT = 0.03
+MAX_ACTIVE_BETS = 5
 MAX_EV = 0.40           # signals with EV > 40% are almost always model artifacts
 
 # Confederation per team — used for asymmetric divergence threshold.
