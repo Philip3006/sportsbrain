@@ -19,13 +19,8 @@ from src.config import DATA_CACHE
 _CACHE_PATH = DATA_CACHE / "statsbomb_xg.pkl"
 _CACHE_MAX_AGE_H = 24
 
-# StatsBomb competition/season IDs for free tournaments
-# Format: competition_id → list of season_ids
-_SB_COMPETITIONS: dict[int, list[int]] = {
-    43:  [106, 107],   # FIFA World Cup 2022 (106), 2018 (107)
-    55:  [43, 282],    # UEFA Euro 2020 (43), 2024 (282)
-    223: [282],        # Copa América 2024
-}
+# Target competition IDs — season IDs are discovered dynamically from StatsBomb
+_SB_COMPETITION_IDS = {43, 55, 223}  # FIFA World Cup, UEFA Euro, Copa América
 
 _SB_BASE = "https://raw.githubusercontent.com/statsbomb/open-data/master/data"
 _TOURNAMENT_NAMES = {
@@ -33,6 +28,26 @@ _TOURNAMENT_NAMES = {
     55:  "UEFA Euro",
     223: "Copa América",
 }
+
+
+def _discover_competitions() -> dict[int, list[int]]:
+    """Fetches competitions.json from StatsBomb and returns {comp_id: [season_ids]}."""
+    url = f"{_SB_BASE}/competitions.json"
+    try:
+        resp = requests.get(url, timeout=15)
+        resp.raise_for_status()
+        comps = resp.json()
+    except Exception:
+        # Fallback to known seasons if GitHub is unreachable
+        return {43: [106, 107], 55: [43, 282], 223: [282]}
+
+    result: dict[int, list[int]] = {}
+    for c in comps:
+        cid = c.get("competition_id")
+        sid = c.get("season_id")
+        if cid in _SB_COMPETITION_IDS and sid is not None:
+            result.setdefault(cid, []).append(sid)
+    return result
 
 
 def _cache_is_fresh() -> bool:
@@ -108,9 +123,19 @@ def fetch_statsbomb_xg(force: bool = False) -> pd.DataFrame:
         return pd.read_pickle(_CACHE_PATH)
 
     print("Fetching StatsBomb xG data (this may take 1-3 minutes)...")
+    competitions = _discover_competitions()
+
+    # Warn about new unknown seasons (e.g. WM 2026 once StatsBomb publishes it)
+    _known = {43: {106, 107}, 55: {43, 282}, 223: {282}}
+    for cid, sids in competitions.items():
+        new = set(sids) - _known.get(cid, set())
+        if new:
+            name = _TOURNAMENT_NAMES.get(cid, str(cid))
+            print(f"  Neue {name} Daten bei StatsBomb: Season-IDs {new} — werden geladen!")
+
     all_rows: list[dict] = []
 
-    for comp_id, season_ids in _SB_COMPETITIONS.items():
+    for comp_id, season_ids in competitions.items():
         for season_id in season_ids:
             print(f"  competition={comp_id}, season={season_id}...")
             rows = _fetch_match_xg(comp_id, season_id)
