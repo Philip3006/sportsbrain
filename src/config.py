@@ -20,6 +20,39 @@ MAX_STAKE_PCT = 0.02
 MAX_ACTIVE_BETS = 3
 MAX_EV = 0.40           # signals with EV > 40% are almost always model artifacts
 
+# Confederation per team — used for asymmetric divergence threshold.
+# Non-UEFA/CONMEBOL away teams have higher confederation-bias risk in DC model
+# (training data dominated by qualifier blowouts). Stricter filter applied.
+TEAM_CONFEDERATION: dict[str, str] = {
+    # UEFA
+    "Germany": "UEFA", "France": "UEFA", "Spain": "UEFA", "Portugal": "UEFA",
+    "England": "UEFA", "Netherlands": "UEFA", "Belgium": "UEFA", "Italy": "UEFA",
+    "Croatia": "UEFA", "Austria": "UEFA", "Switzerland": "UEFA", "Denmark": "UEFA",
+    "Poland": "UEFA", "Serbia": "UEFA", "Ukraine": "UEFA", "Turkey": "UEFA",
+    "Scotland": "UEFA", "Hungary": "UEFA", "Slovakia": "UEFA", "Albania": "UEFA",
+    "Czech Republic": "UEFA", "Czechia": "UEFA", "Romania": "UEFA", "Slovenia": "UEFA",
+    "Georgia": "UEFA",
+    # CONMEBOL
+    "Argentina": "CONMEBOL", "Brazil": "CONMEBOL", "Uruguay": "CONMEBOL",
+    "Colombia": "CONMEBOL", "Ecuador": "CONMEBOL", "Venezuela": "CONMEBOL",
+    "Paraguay": "CONMEBOL", "Bolivia": "CONMEBOL", "Chile": "CONMEBOL", "Peru": "CONMEBOL",
+    # CONCACAF
+    "United States": "CONCACAF", "Mexico": "CONCACAF", "Canada": "CONCACAF",
+    "Panama": "CONCACAF", "Costa Rica": "CONCACAF", "Honduras": "CONCACAF",
+    "Jamaica": "CONCACAF", "El Salvador": "CONCACAF", "Guatemala": "CONCACAF",
+    # CAF
+    "Morocco": "CAF", "Senegal": "CAF", "Nigeria": "CAF", "Egypt": "CAF",
+    "Ivory Coast": "CAF", "Cote d'Ivoire": "CAF", "South Africa": "CAF",
+    "Algeria": "CAF", "Tunisia": "CAF", "Ghana": "CAF", "Cameroon": "CAF",
+    "Mali": "CAF", "DR Congo": "CAF",
+    # AFC
+    "Japan": "AFC", "South Korea": "AFC", "Saudi Arabia": "AFC", "Iran": "AFC",
+    "Australia": "AFC", "Indonesia": "AFC", "New Zealand": "AFC", "Uzbekistan": "AFC",
+    "Qatar": "AFC",
+    # OFC
+    "New Caledonia": "OFC",
+}
+
 COMPETITIVE_TOURNAMENTS = {
     "FIFA World Cup",
     "UEFA Euro",

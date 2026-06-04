@@ -1,0 +1,42 @@
+name: Pre-Match Scan (72h)
+
+on:
+  schedule:
+    # Täglich 06:00 UTC — scannt Matches die in 48-96h stattfinden
+    # Gibt frühzeitig Signale wenn Opening-Kurse noch nicht effizient sind
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  prematch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt && python -m playwright install chromium --with-deps
+
+      - name: Run 72h pre-match scan
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/daily_scan.py --bankroll 100 --auto-log --horizon 96
+
+      - name: Commit ledger
+        run: |
+          git config user.name "SportsBrain Bot"
+          git config user.email "bot@sportsbrain"
+          git add results/ledger.csv results/scans/ || true
+          git diff --staged --quiet || git commit -m "auto: pre-match scan $(date +%Y-%m-%d)"
+          git push

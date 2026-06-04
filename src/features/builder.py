@@ -4,6 +4,7 @@ from typing import Any
 
 from src.betting.odds_utils import remove_margin_shin
 from src.data.statsbomb import get_team_xg_stats
+from src.data.market_values import get_market_value_ratio, get_market_value_log_ratio
 from src.features.form import rolling_form, days_since_last_match, momentum_score, match_load
 from src.features.head_to_head import h2h_stats
 from src.features.squad_context import tournament_stage_features
@@ -140,6 +141,10 @@ def build_feature_row(
             features["mkt_vs_dc_home"]  = features.get("dc_p_home", p_h) - p_h
             features["mkt_vs_dc_draw"]  = features.get("dc_p_draw", p_d) - p_d
             features["mkt_vs_dc_away"]  = features.get("dc_p_away", p_a) - p_a
+
+    # --- Market value features ---
+    features["market_value_ratio"]     = get_market_value_ratio(home, away)
+    features["market_value_log_ratio"] = get_market_value_log_ratio(home, away)
 
     # --- xG features (StatsBomb open data — WC/EURO/Copa only) ---
     if statsbomb_xg is not None and not statsbomb_xg.empty:

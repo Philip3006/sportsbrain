@@ -8,7 +8,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from src.config import MODELS_DIR, RESULTS_DIR, canonical_name, MAX_ACTIVE_BETS, MAX_EV
+from src.config import MODELS_DIR, RESULTS_DIR, canonical_name, MAX_ACTIVE_BETS, MAX_EV, TEAM_CONFEDERATION
 from src.betting.value_detector import (
     BetSignal, detect_value, set_confidence, detect_value_totals, detect_value_ah,
 )
@@ -88,12 +88,24 @@ def _form_context(team: str, scan_date: pd.Timestamp, historical: pd.DataFrame) 
     }
 
 
+def _match_ts_utc(match: dict) -> pd.Timestamp:
+    """Parses commence_time to UTC Timestamp, falls back to far future."""
+    try:
+        ts = pd.Timestamp(match.get("commence_time", ""))
+        if ts.tzinfo is None:
+            ts = ts.tz_localize("UTC")
+        return ts
+    except Exception:
+        return pd.Timestamp("2099-01-01", tz="UTC")
+
+
 def run_daily_scan(
     bankroll: float = 1000.0,
     api_key: str | None = None,
     mock: bool = False,
     output_path: Path | None = None,
     auto_log: bool = False,
+    horizon_hours: int | None = None,
 ) -> tuple[pd.DataFrame, list]:
     """
     Main scan orchestrator.
@@ -156,6 +168,14 @@ def run_daily_scan(
             pass
         filtered.append(m)
 
+    if horizon_hours is not None:
+        horizon_cutoff = pd.Timestamp.now(tz="UTC") + pd.Timedelta(hours=horizon_hours)
+        before_horizon = len(filtered)
+        filtered = [m for m in filtered if _match_ts_utc(m) <= horizon_cutoff]
+        n_beyond = before_horizon - len(filtered)
+        if n_beyond:
+            print(f"  Horizon filter: dropped {n_beyond} matches beyond {horizon_hours}h window.")
+
     if skipped_team:
         print(f"  Skipped {skipped_team} matches with non-WM-2026 teams (pre-tournament friendlies).")
     if skipped_date:
@@ -199,9 +219,11 @@ def run_daily_scan(
         if any(o <= 1.0 for o in raw_odds):
             continue
 
-        # Dixon-Coles prediction
+        # Dixon-Coles prediction — stage-aware rho adjustment
+        stage_pre = tournament_stage_features(scan_date, match.get("tournament"))
+        is_ko = bool(stage_pre.get("is_knockout", False))
         try:
-            dc_probs = dc.predict_match(home, away, dc_params, neutral=True)
+            dc_probs = dc.predict_match_staged(home, away, dc_params, is_knockout=is_ko, neutral=True)
         except Exception:
             dc_probs = {"p_home": 1/3, "p_draw": 1/3, "p_away": 1/3}
 
@@ -260,7 +282,14 @@ def run_daily_scan(
             )
         except ValueError:
             max_div = 0.0
-        if max_div > 1.75:
+
+        # Tighter threshold when away team is from a confederation with high
+        # qualifier-blowout bias (AFC/CAF/CONCACAF/OFC). Their DC params are
+        # most inflated relative to WM finals level.
+        away_conf = TEAM_CONFEDERATION.get(away, "UEFA")
+        div_threshold = 1.50 if away_conf not in {"UEFA", "CONMEBOL"} else 1.75
+
+        if max_div > div_threshold:
             skipped_divergence += 1
             continue
 
@@ -277,13 +306,11 @@ def run_daily_scan(
         away_squad = squad_report(away, scan_date)
         final_arr = _squad_adjust(final_arr, home_squad, away_squad)
 
-        stage = tournament_stage_features(scan_date, match.get("tournament"))
-
         match_contexts[match_id] = {
             "home": home, "away": away,
             "home_ctx": home_ctx, "away_ctx": away_ctx,
             "home_squad": home_squad, "away_squad": away_squad,
-            "stage": stage,
+            "stage": stage_pre,
             "p_home": float(final_arr[2]),
             "p_draw": float(final_arr[1]),
             "p_away": float(final_arr[0]),
@@ -322,8 +349,12 @@ def run_daily_scan(
         # Filter out signals with unrealistically high EV (model artifact)
         signals = [s for s in signals if s.ev <= MAX_EV]
 
+        # 1-bet-per-match: keep only the highest-EV signal per match.
+        # AH -0.5 and 1X2 home share >80% outcome correlation — stacking them
+        # effectively doubles exposure on the same result with no diversification.
         if signals:
-            all_signals.extend(signals)
+            best = max(signals, key=lambda s: s.ev)
+            all_signals.append(best)
         else:
             no_value_matches.append({
                 "match": f"{home} vs {away}",
@@ -334,7 +365,7 @@ def run_daily_scan(
             })
 
     if skipped_divergence:
-        print(f"  Skipped {skipped_divergence} matches: model/market divergence >2.0x (confederation bias).")
+        print(f"  Skipped {skipped_divergence} matches: model/market divergence too high (confederation bias filter).")
 
     # D/E — Settle existing open bets, apply portfolio cap, log new bets
     settle_from_results(LEDGER_PATH)

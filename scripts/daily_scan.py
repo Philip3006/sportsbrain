@@ -48,6 +48,8 @@ if __name__ == "__main__":
                         help="Skip confirmation, log all signals automatically")
     parser.add_argument("--retrain", action="store_true",
                         help="Auto-retrain DC + LightGBM before scanning")
+    parser.add_argument("--horizon", type=int, default=None,
+                        help="Only scan matches starting within HORIZON hours from now")
     args = parser.parse_args()
 
     if args.retrain:
@@ -61,6 +63,7 @@ if __name__ == "__main__":
         mock=args.mock,
         output_path=Path(args.output) if args.output else None,
         auto_log=args.auto_log,
+        horizon_hours=args.horizon,
     )
 
     if not signals_df.empty:
