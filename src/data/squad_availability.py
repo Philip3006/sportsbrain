@@ -95,6 +95,7 @@ _TM_TEAMS: dict[str, tuple[str, str]] = {
     "Nigeria":        ("nigeria", "3667"),
     "Egypt":          ("agypten", "3668"),
     "Ivory Coast":    ("elfenbeinskuste", "3655"),
+    "Cote d'Ivoire":  ("elfenbeinskuste", "3655"),
     "South Africa":   ("sudafrika", "3660"),
     "Algeria":        ("algerien", "3671"),
     "Tunisia":        ("tunesien", "3670"),
@@ -333,7 +334,7 @@ def _scrape_kader_playwright(url: str, match_date: pd.Timestamp) -> list[PlayerS
                     position=position,
                     availability=availability,
                     status=status,
-                    key_player=False,
+                    key_player=True,  # marked after full squad is loaded
                 ))
 
             browser.close()
