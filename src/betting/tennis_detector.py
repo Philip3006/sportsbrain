@@ -24,6 +24,9 @@ def _devig_2way(odds_a: float, odds_b: float) -> tuple[float, float]:
     return p_a / total, p_b / total
 
 
+_MIN_PROB = 0.35  # Skip extreme underdogs: backtest shows p<0.35 is -EV even at edge>3%
+
+
 def _signal(
     match_id: str,
     player_a: str,
@@ -34,6 +37,8 @@ def _signal(
     odds: float,
     bankroll: float,
 ) -> BetSignal | None:
+    if model_p < _MIN_PROB:
+        return None
     ev = expected_value(model_p, odds)
     if ev < MIN_EDGE or ev > MAX_EV:
         return None
