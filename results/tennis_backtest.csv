@@ -1,0 +1,1532 @@
+date,year,tour,tournament,surface,round,winner,loser,side,model_prob,b365_odds,ev,kelly_f,stake,won,pnl
+2021-02-08,2021,WTA,ausopen,hard,1st Round,Babos T,Bonaventure Y,loser,0.5666,2.45,0.3881,0.0669,15.0,0,-15.0
+2021-02-08,2021,WTA,ausopen,hard,1st Round,Diyas Z,Zidansek T,winner,0.5128,2.06,0.0564,0.0133,6.55,1,6.94
+2021-02-08,2021,WTA,ausopen,hard,1st Round,Garcia C,Hercog P,loser,0.4352,2.84,0.2359,0.0321,15.0,0,-15.0
+2021-02-08,2021,WTA,ausopen,hard,1st Round,Errani S,Wang Q,winner,0.3692,3.1,0.1444,0.0172,11.73,1,24.63
+2021-02-08,2021,WTA,ausopen,hard,1st Round,Pera B,Kerber A,winner,0.3507,3.39,0.1889,0.0198,14.35,1,34.28
+2021-02-08,2021,WTA,ausopen,hard,1st Round,Rybakina E,Zvonareva V,winner,0.6444,1.61,0.0375,0.0154,5.44,1,3.32
+2021-02-08,2021,WTA,ausopen,hard,1st Round,Gracheva V,Blinkova A,winner,0.5635,2.0,0.1271,0.0318,10.71,1,10.71
+2021-02-08,2021,WTA,ausopen,hard,1st Round,Andreescu B,Buzarnescu M,winner,0.8093,1.29,0.044,0.0379,5.82,1,1.69
+2021-02-08,2021,WTA,ausopen,hard,1st Round,Ferro F,Siniakova K,winner,0.6181,2.22,0.3721,0.0762,15.0,1,18.3
+2021-02-08,2021,ATP,ausopen,hard,1st Round,Bublik A,Bedene A,winner,0.5132,2.05,0.052,0.0124,6.3,1,6.61
+2021-02-08,2021,ATP,ausopen,hard,1st Round,Kecmanovic M,Majchrzak K,loser,0.3787,3.1,0.1739,0.0207,13.47,0,-13.47
+2021-02-08,2021,ATP,ausopen,hard,1st Round,Bolt A,Gombos N,winner,0.5419,1.94,0.0513,0.0136,6.25,1,5.88
+2021-02-08,2021,ATP,ausopen,hard,1st Round,Bolt A,Gombos N,loser,0.4581,2.4,0.0994,0.0177,9.08,0,-9.08
+2021-02-08,2021,ATP,ausopen,hard,1st Round,Mannarino A,Novak D,winner,0.6199,1.83,0.1344,0.0405,11.14,1,9.25
+2021-02-08,2021,ATP,ausopen,hard,1st Round,Dimitrov G,Cilic M,loser,0.41,2.67,0.0948,0.0142,8.81,0,-8.81
+2021-02-08,2021,ATP,ausopen,hard,1st Round,Cressy M,Daniel T,winner,0.5876,2.3,0.3514,0.0676,15.0,1,19.5
+2021-02-09,2021,WTA,ausopen,hard,1st Round,Danilovic O,Martic P,winner,0.3664,3.2,0.1725,0.0196,13.38,1,29.44
+2021-02-09,2021,WTA,ausopen,hard,1st Round,Van Uytvanck A,Burel C,loser,0.4736,2.32,0.0988,0.0187,9.05,0,-9.05
+2021-02-09,2021,WTA,ausopen,hard,1st Round,Stosur S,Aiava D,winner,0.4484,2.55,0.1435,0.0231,11.68,1,18.1
+2021-02-09,2021,WTA,ausopen,hard,1st Round,Hibino N,Sharma A,winner,0.6145,2.1,0.2905,0.066,15.0,1,16.5
+2021-02-09,2021,WTA,ausopen,hard,1st Round,Vekic D,Wang Y,loser,0.4251,3.22,0.3689,0.0415,15.0,0,-15.0
+2021-02-09,2021,WTA,ausopen,hard,1st Round,Gauff C,Teichmann J,loser,0.3645,3.09,0.1264,0.0151,10.67,0,-10.67
+2021-02-09,2021,WTA,ausopen,hard,1st Round,Kuznetsova S,Strycova B,winner,0.6195,1.68,0.0408,0.015,5.63,1,3.83
+2021-02-09,2021,WTA,ausopen,hard,1st Round,Zhu L,Osuigwe W,loser,0.4831,2.65,0.2802,0.0425,15.0,0,-15.0
+2021-02-09,2021,WTA,ausopen,hard,1st Round,Juvan K,Konta J,winner,0.4184,2.63,0.1004,0.0154,9.14,1,14.9
+2021-02-09,2021,WTA,ausopen,hard,1st Round,Samsonova L,Badosa P,loser,0.5562,2.38,0.3238,0.0587,15.0,0,-15.0
+2021-02-09,2021,WTA,ausopen,hard,1st Round,Muchova K,Ostapenko J,loser,0.4562,2.55,0.1633,0.0263,12.84,0,-12.84
+2021-02-09,2021,ATP,ausopen,hard,1st Round,Ruud C,Thompson J,loser,0.5777,2.12,0.2248,0.0502,15.0,0,-15.0
+2021-02-09,2021,ATP,ausopen,hard,1st Round,Mmoh M,Troicki V,loser,0.4987,2.48,0.2369,0.04,15.0,0,-15.0
+2021-02-09,2021,ATP,ausopen,hard,1st Round,Caruso S,Laaksonen H,loser,0.4323,2.7,0.1671,0.0246,13.07,0,-13.07
+2021-02-09,2021,ATP,ausopen,hard,1st Round,Sonego L,Querrey S,loser,0.5162,2.15,0.1098,0.0239,9.69,0,-9.69
+2021-02-09,2021,WTA,ausopen,hard,1st Round,Krejcikova B,Zheng S,loser,0.5063,2.63,0.3316,0.0509,15.0,0,-15.0
+2021-02-09,2021,ATP,ausopen,hard,1st Round,Mcdonald M,Cecchinato M,loser,0.4023,3.4,0.3679,0.0383,15.0,0,-15.0
+2021-02-09,2021,ATP,ausopen,hard,1st Round,Alcaraz C,Van De Zandschulp B,loser,0.5126,2.25,0.1533,0.0307,12.25,0,-12.25
+2021-02-09,2021,ATP,ausopen,hard,1st Round,Safiullin R,Ivashka I,loser,0.4735,2.47,0.1695,0.0288,13.21,0,-13.21
+2021-02-09,2021,ATP,ausopen,hard,1st Round,Popyrin A,Goffin D,winner,0.3852,3.27,0.2597,0.0286,15.0,1,34.05
+2021-02-09,2021,ATP,ausopen,hard,1st Round,Cuevas P,Seppi A,loser,0.5749,2.4,0.3797,0.0678,15.0,0,-15.0
+2021-02-09,2021,ATP,ausopen,hard,1st Round,Andujar P,Halys Q,winner,0.4092,3.16,0.2932,0.0339,15.0,1,32.4
+2021-02-10,2021,WTA,ausopen,hard,2nd Round,Diyas Z,Pera B,winner,0.4943,2.47,0.2208,0.0376,15.0,1,22.05
+2021-02-10,2021,WTA,ausopen,hard,2nd Round,Potapova A,Babos T,loser,0.3999,3.03,0.2117,0.0261,15.0,0,-15.0
+2021-02-10,2021,ATP,ausopen,hard,2nd Round,Kyrgios N,Humbert U,loser,0.5034,2.19,0.1025,0.0215,9.26,0,-9.26
+2021-02-10,2021,ATP,ausopen,hard,2nd Round,Mannarino A,Kecmanovic M,winner,0.4963,2.39,0.1861,0.0335,14.18,1,19.72
+2021-02-10,2021,ATP,ausopen,hard,2nd Round,Fritz T,Opelka R,loser,0.5764,2.25,0.297,0.0594,15.0,0,-15.0
+2021-02-10,2021,ATP,ausopen,hard,2nd Round,Lajovic D,Bublik A,winner,0.375,3.26,0.2223,0.0246,15.0,1,33.9
+2021-02-11,2021,WTA,ausopen,hard,2nd Round,Bencic B,Kuznetsova S,winner,0.5786,2.15,0.244,0.053,15.0,1,17.25
+2021-02-11,2021,WTA,ausopen,hard,2nd Round,Rogers S,Danilovic O,loser,0.351,3.4,0.1933,0.0201,14.6,0,-14.6
+2021-02-11,2021,WTA,ausopen,hard,2nd Round,Putintseva Y,Van Uytvanck A,loser,0.3599,3.4,0.2237,0.0233,15.0,0,-15.0
+2021-02-11,2021,WTA,ausopen,hard,2nd Round,Alexandrova E,Krejcikova B,loser,0.4123,3.38,0.3934,0.0413,15.0,0,-15.0
+2021-02-11,2021,ATP,ausopen,hard,2nd Round,Harris L,Popyrin A,loser,0.5406,2.38,0.2865,0.0519,15.0,0,-15.0
+2021-02-11,2021,ATP,ausopen,hard,2nd Round,Ymer M,Alcaraz C,winner,0.4589,2.67,0.2254,0.0337,15.0,1,25.05
+2021-02-11,2021,ATP,ausopen,hard,2nd Round,Ruud C,Paul T,loser,0.5114,2.25,0.1507,0.0301,12.1,0,-12.1
+2021-02-11,2021,ATP,ausopen,hard,2nd Round,Fognini F,Caruso S,loser,0.4293,3.21,0.3781,0.0428,15.0,0,-15.0
+2021-02-11,2021,WTA,ausopen,hard,2nd Round,Svitolina E,Gauff C,loser,0.3723,2.81,0.046,0.0064,5.94,0,-5.94
+2021-02-11,2021,WTA,ausopen,hard,2nd Round,Vekic D,Podoroska N,winner,0.4855,2.73,0.3254,0.047,15.0,1,25.95
+2021-02-11,2021,WTA,ausopen,hard,2nd Round,Kanepi K,Kenin S,loser,0.7375,1.8,0.3274,0.1023,15.0,0,-15.0
+2021-02-12,2021,WTA,ausopen,hard,3rd Round,Halep S,Kudermetova V,loser,0.3666,3.04,0.1146,0.014,9.98,0,-9.98
+2021-02-12,2021,WTA,ausopen,hard,3rd Round,Vondrousova M,Cirstea S,loser,0.5457,2.3,0.2552,0.0491,15.0,0,-15.0
+2021-02-12,2021,ATP,ausopen,hard,3rd Round,Dimitrov G,Carreno Busta P,loser,0.5659,2.28,0.2901,0.0567,15.0,0,-15.0
+2021-02-12,2021,ATP,ausopen,hard,3rd Round,Lajovic D,Martinez P,loser,0.5131,2.28,0.1699,0.0332,13.23,0,-13.23
+2021-02-13,2021,WTA,ausopen,hard,3rd Round,Rogers S,Kontaveit A,loser,0.6209,1.8,0.1175,0.0367,10.15,0,-10.15
+2021-02-13,2021,ATP,ausopen,hard,3rd Round,Mcdonald M,Harris L,winner,0.4709,2.21,0.0406,0.0084,5.62,1,6.8
+2021-02-14,2021,WTA,ausopen,hard,4th Round,Halep S,Swiatek I,winner,0.5569,1.87,0.0414,0.0119,5.67,1,4.93
+2021-02-14,2021,ATP,ausopen,hard,4th Round,Djokovic N,Raonic M,winner,0.7352,1.52,0.1175,0.0565,10.15,1,5.28
+2021-02-14,2021,WTA,ausopen,hard,4th Round,Williams S,Sabalenka A,winner,0.5241,2.21,0.1583,0.0327,12.55,1,15.18
+2021-02-15,2021,WTA,ausopen,hard,4th Round,Muchova K,Mertens E,winner,0.3591,3.82,0.3716,0.0329,15.0,1,42.3
+2021-02-16,2021,WTA,ausopen,hard,Quarterfinals,Williams S,Halep S,winner,0.5135,2.05,0.0527,0.0126,6.34,1,6.65
+2021-02-16,2021,ATP,ausopen,hard,Quarterfinals,Djokovic N,Zverev A,winner,0.6427,1.69,0.0861,0.0312,8.3,1,5.73
+2021-02-17,2021,WTA,ausopen,hard,Quarterfinals,Brady J,Pegula J,loser,0.3797,3.1,0.177,0.0211,13.65,0,-13.65
+2021-02-17,2021,ATP,ausopen,hard,Quarterfinals,Medvedev D,Rublev A,loser,0.3942,3.32,0.3087,0.0333,15.0,0,-15.0
+2021-02-17,2021,ATP,ausopen,hard,Quarterfinals,Tsitsipas S,Nadal R,winner,0.3868,3.2,0.2379,0.027,15.0,1,33.0
+2021-02-18,2021,WTA,ausopen,hard,Semifinals,Osaka N,Williams S,loser,0.4062,2.6,0.0562,0.0088,6.54,0,-6.54
+2021-02-18,2021,WTA,ausopen,hard,Semifinals,Brady J,Muchova K,loser,0.4691,2.71,0.2713,0.0397,15.0,0,-15.0
+2021-05-30,2021,ATP,frenchopen,clay,1st Round,Van De Zandschulp B,Hurkacz H,winner,0.5063,2.66,0.3469,0.0522,15.0,1,24.9
+2021-05-30,2021,ATP,frenchopen,clay,1st Round,Djere L,Moutet C,winner,0.5559,1.87,0.0396,0.0114,5.56,1,4.84
+2021-05-30,2021,ATP,frenchopen,clay,1st Round,Couacaud E,Gerasimov E,loser,0.4847,2.52,0.2213,0.0364,15.0,0,-15.0
+2021-05-30,2021,ATP,frenchopen,clay,1st Round,Kecmanovic M,Evans D,winner,0.4452,2.88,0.2821,0.0375,15.0,1,28.2
+2021-05-30,2021,ATP,frenchopen,clay,1st Round,Laaksonen H,Hanfmann Y,loser,0.6588,1.94,0.2781,0.074,15.0,0,-15.0
+2021-05-30,2021,WTA,frenchopen,clay,1st Round,Kovinic D,Burel C,winner,0.5275,2.5,0.3188,0.0531,15.0,1,22.5
+2021-05-30,2021,WTA,frenchopen,clay,1st Round,Vesnina E,Govortsova O,winner,0.5074,2.08,0.0555,0.0128,6.5,1,7.02
+2021-05-30,2021,WTA,frenchopen,clay,1st Round,Bogdan A,Cocciaretto E,loser,0.5004,2.54,0.271,0.044,15.0,0,-15.0
+2021-05-30,2021,WTA,frenchopen,clay,1st Round,Kalinina A,Kerber A,winner,0.4623,2.56,0.1835,0.0294,14.03,1,21.88
+2021-05-30,2021,WTA,frenchopen,clay,1st Round,Siniakova K,Bouzkova M,loser,0.4,3.3,0.32,0.0348,15.0,0,-15.0
+2021-05-31,2021,WTA,frenchopen,clay,1st Round,Peterson R,Rogers S,winner,0.4384,3.1,0.3591,0.0428,15.0,1,31.5
+2021-05-31,2021,WTA,frenchopen,clay,1st Round,Vondrousova M,Kanepi K,winner,0.5514,1.93,0.0642,0.0173,7.01,1,6.52
+2021-05-31,2021,WTA,frenchopen,clay,1st Round,Tan H,Cornet A,winner,0.4603,2.37,0.0909,0.0166,8.58,1,11.76
+2021-05-31,2021,WTA,frenchopen,clay,1st Round,Hercog P,Bertens K,loser,0.6629,1.91,0.2661,0.0731,15.0,0,-15.0
+2021-05-31,2021,ATP,frenchopen,clay,1st Round,Musetti L,Goffin D,loser,0.4502,2.3,0.0354,0.0068,5.32,0,-5.32
+2021-05-31,2021,ATP,frenchopen,clay,1st Round,Basilashvili N,Lajovic D,loser,0.4634,2.29,0.0612,0.0119,6.84,0,-6.84
+2021-05-31,2021,ATP,frenchopen,clay,1st Round,Medvedev D,Bublik A,loser,0.3836,3.06,0.1739,0.0211,13.46,0,-13.46
+2021-05-31,2021,ATP,frenchopen,clay,1st Round,Monteiro T,Cerundolo F,loser,0.4909,2.47,0.2125,0.0361,15.0,0,-15.0
+2021-05-31,2021,ATP,frenchopen,clay,1st Round,Krajinovic F,Marterer M,loser,0.3918,2.86,0.1205,0.0162,10.33,0,-10.33
+2021-05-31,2021,ATP,frenchopen,clay,1st Round,Opelka R,Martin A,loser,0.4398,3.0,0.3194,0.0399,15.0,0,-15.0
+2021-05-31,2021,WTA,frenchopen,clay,1st Round,Baptiste H,Blinkova A,loser,0.4922,2.55,0.2552,0.0412,15.0,0,-15.0
+2021-05-31,2021,WTA,frenchopen,clay,1st Round,Zidansek T,Andreescu B,winner,0.3884,2.95,0.1457,0.0187,11.8,1,23.02
+2021-05-31,2021,WTA,frenchopen,clay,1st Round,Gracheva V,Arruabarrena L,winner,0.4781,2.3,0.0996,0.0191,9.09,1,11.82
+2021-05-31,2021,WTA,frenchopen,clay,1st Round,Bencic B,Podoroska N,winner,0.4723,2.2,0.0391,0.0082,5.54,1,6.64
+2021-05-31,2021,WTA,frenchopen,clay,1st Round,Cirstea S,Konta J,loser,0.503,2.1,0.0562,0.0128,6.54,0,-6.54
+2021-05-31,2021,WTA,frenchopen,clay,1st Round,Garcia C,Siegemund L,loser,0.5063,2.3,0.1645,0.0316,12.91,0,-12.91
+2021-06-01,2021,WTA,frenchopen,clay,1st Round,Brady J,Sevastova A,loser,0.5043,2.12,0.0691,0.0154,7.3,0,-7.3
+2021-06-01,2021,ATP,frenchopen,clay,1st Round,Ymer M,Carballes Baena R,winner,0.5168,2.29,0.1835,0.0356,14.03,1,18.1
+2021-06-01,2021,ATP,frenchopen,clay,1st Round,De Minaur A,Travaglia S,loser,0.4633,2.52,0.1674,0.0275,13.08,0,-13.08
+2021-06-01,2021,WTA,frenchopen,clay,1st Round,Jabeur O,Putintseva Y,loser,0.4097,2.79,0.1431,0.02,11.65,0,-11.65
+2021-06-01,2021,ATP,frenchopen,clay,1st Round,Bagnis F,Bonzi B,loser,0.5099,2.19,0.1168,0.0245,10.1,0,-10.1
+2021-06-01,2021,ATP,frenchopen,clay,1st Round,Kohlschreiber P,Verdasco F,loser,0.479,2.28,0.0921,0.018,8.65,0,-8.65
+2021-06-01,2021,ATP,frenchopen,clay,1st Round,Coria F,Lopez F,loser,0.4371,2.53,0.1058,0.0173,9.46,0,-9.46
+2021-06-01,2021,ATP,frenchopen,clay,1st Round,Gasquet R,Gaston H,loser,0.5631,2.29,0.2894,0.0561,15.0,0,-15.0
+2021-06-01,2021,ATP,frenchopen,clay,1st Round,Cuevas P,Pouille L,loser,0.4297,3.06,0.3149,0.0382,15.0,0,-15.0
+2021-06-01,2021,WTA,frenchopen,clay,1st Round,Paolini J,Voegele S,loser,0.4873,2.8,0.3645,0.0506,15.0,0,-15.0
+2021-06-01,2021,WTA,frenchopen,clay,1st Round,Sharma A,Bara I,winner,0.5087,2.5,0.2716,0.0453,15.0,1,22.5
+2021-06-01,2021,WTA,frenchopen,clay,1st Round,Lepchenko V,Zhang S,loser,0.5981,2.28,0.3636,0.071,15.0,0,-15.0
+2021-06-01,2021,WTA,frenchopen,clay,1st Round,Kontaveit A,Golubic V,loser,0.3922,3.4,0.3335,0.0347,15.0,0,-15.0
+2021-06-02,2021,ATP,frenchopen,clay,2nd Round,Nishikori K,Khachanov K,winner,0.567,2.22,0.2587,0.053,15.0,1,18.3
+2021-06-02,2021,ATP,frenchopen,clay,2nd Round,Opelka R,Munar J,loser,0.5108,2.41,0.231,0.041,15.0,0,-15.0
+2021-06-02,2021,ATP,frenchopen,clay,2nd Round,Isner J,Krajinovic F,winner,0.5399,2.25,0.2148,0.043,15.0,1,18.75
+2021-06-02,2021,ATP,frenchopen,clay,2nd Round,Djere L,Kecmanovic M,winner,0.5787,1.81,0.0474,0.0146,6.02,1,4.88
+2021-06-02,2021,ATP,frenchopen,clay,2nd Round,Fognini F,Fucsovics M,loser,0.5379,2.37,0.2749,0.0502,15.0,0,-15.0
+2021-06-02,2021,ATP,frenchopen,clay,2nd Round,Delbonis F,Andujar P,winner,0.6596,1.82,0.2006,0.0611,15.0,1,12.3
+2021-06-02,2021,WTA,frenchopen,clay,2nd Round,Pavlyuchenkova A,Tomljanovic A,loser,0.4304,2.65,0.1406,0.0213,11.51,0,-11.51
+2021-06-02,2021,WTA,frenchopen,clay,2nd Round,Hercog P,Garcia C,winner,0.4064,2.75,0.1175,0.0168,10.15,1,17.76
+2021-06-02,2021,WTA,frenchopen,clay,2nd Round,Kasatkina D,Bencic B,winner,0.451,2.41,0.087,0.0154,8.35,1,11.78
+2021-06-02,2021,WTA,frenchopen,clay,2nd Round,Siniakova K,Kudermetova V,winner,0.4124,3.0,0.2373,0.0297,15.0,1,30.0
+2021-06-03,2021,ATP,frenchopen,clay,2nd Round,Federer R,Cilic M,loser,0.383,3.3,0.2637,0.0287,15.0,0,-15.0
+2021-06-03,2021,ATP,frenchopen,clay,2nd Round,Cecchinato M,De Minaur A,winner,0.5319,2.19,0.1649,0.0346,12.93,1,15.39
+2021-06-03,2021,ATP,frenchopen,clay,2nd Round,Norrie C,Harris L,loser,0.3563,3.17,0.1294,0.0149,10.84,0,-10.84
+2021-06-03,2021,ATP,frenchopen,clay,2nd Round,Musetti L,Nishioka Y,loser,0.4248,2.93,0.2446,0.0317,15.0,0,-15.0
+2021-06-03,2021,WTA,frenchopen,clay,2nd Round,Gracheva V,Giorgi C,winner,0.4497,2.6,0.1692,0.0264,13.19,1,21.1
+2021-06-03,2021,WTA,frenchopen,clay,2nd Round,Krejcikova B,Alexandrova E,winner,0.5579,1.85,0.0321,0.0094,5.12,1,4.36
+2021-06-03,2021,ATP,frenchopen,clay,2nd Round,Alcaraz C,Basilashvili N,loser,0.5073,2.4,0.2174,0.0388,15.0,0,-15.0
+2021-06-03,2021,WTA,frenchopen,clay,2nd Round,Kontaveit A,Mladenovic K,loser,0.4011,3.38,0.3558,0.0374,15.0,0,-15.0
+2021-06-04,2021,WTA,frenchopen,clay,3rd Round,Azarenka V,Keys M,loser,0.4636,2.55,0.1822,0.0294,13.95,0,-13.95
+2021-06-04,2021,WTA,frenchopen,clay,3rd Round,Williams S,Collins D,loser,0.5329,2.45,0.3056,0.0527,15.0,0,-15.0
+2021-06-04,2021,WTA,frenchopen,clay,3rd Round,Zidansek T,Siniakova K,loser,0.5971,2.18,0.3016,0.0639,15.0,0,-15.0
+2021-06-04,2021,WTA,frenchopen,clay,3rd Round,Vondrousova M,Hercog P,loser,0.3932,3.05,0.1992,0.0243,14.95,0,-14.95
+2021-06-05,2021,WTA,frenchopen,clay,3rd Round,Stephens S,Muchova K,winner,0.4921,2.64,0.299,0.0456,15.0,1,24.6
+2021-06-05,2021,WTA,frenchopen,clay,3rd Round,Krejcikova B,Svitolina E,winner,0.4591,2.32,0.065,0.0123,7.06,1,9.32
+2021-06-05,2021,WTA,frenchopen,clay,3rd Round,Kenin S,Pegula J,winner,0.5675,1.85,0.0498,0.0147,6.17,1,5.24
+2021-06-05,2021,WTA,frenchopen,clay,3rd Round,Sakkari M,Mertens E,loser,0.5445,2.13,0.1599,0.0354,12.64,0,-12.64
+2021-06-05,2021,WTA,frenchopen,clay,3rd Round,Jabeur O,Linette M,loser,0.3668,3.58,0.3133,0.0304,15.0,0,-15.0
+2021-06-05,2021,ATP,frenchopen,clay,3rd Round,Musetti L,Cecchinato M,loser,0.4441,2.47,0.0968,0.0165,8.93,0,-8.93
+2021-06-06,2021,WTA,frenchopen,clay,4th Round,Zidansek T,Cirstea S,loser,0.6018,1.83,0.1012,0.0305,9.19,0,-9.19
+2021-06-06,2021,WTA,frenchopen,clay,4th Round,Rybakina E,Williams S,winner,0.4955,2.74,0.3576,0.0514,15.0,1,26.1
+2021-06-06,2021,ATP,frenchopen,clay,4th Round,Davidovich Fokina A,Delbonis F,loser,0.5408,2.21,0.1951,0.0403,14.71,0,-14.71
+2021-06-06,2021,WTA,frenchopen,clay,4th Round,Badosa P,Vondrousova M,loser,0.4819,2.33,0.1229,0.0231,10.47,0,-10.47
+2021-06-06,2021,WTA,frenchopen,clay,4th Round,Pavlyuchenkova A,Azarenka V,winner,0.4829,2.51,0.212,0.0351,15.0,1,22.65
+2021-06-07,2021,WTA,frenchopen,clay,4th Round,Sakkari M,Kenin S,loser,0.5126,2.73,0.3993,0.0577,15.0,0,-15.0
+2021-06-07,2021,WTA,frenchopen,clay,4th Round,Gauff C,Jabeur O,loser,0.4937,2.46,0.2144,0.0367,15.0,0,-15.0
+2021-06-07,2021,WTA,frenchopen,clay,4th Round,Krejcikova B,Stephens S,loser,0.4236,2.78,0.1777,0.025,13.69,0,-13.69
+2021-06-08,2021,ATP,frenchopen,clay,Quarterfinals,Tsitsipas S,Medvedev D,winner,0.7245,1.54,0.1158,0.0536,10.04,1,5.42
+2021-06-08,2021,WTA,frenchopen,clay,Quarterfinals,Zidansek T,Badosa P,winner,0.3615,3.65,0.3194,0.0301,15.0,1,39.75
+2021-06-08,2021,WTA,frenchopen,clay,Quarterfinals,Pavlyuchenkova A,Rybakina E,winner,0.4785,2.51,0.2009,0.0333,15.0,1,22.65
+2021-06-09,2021,WTA,frenchopen,clay,Quarterfinals,Krejcikova B,Gauff C,winner,0.5318,2.1,0.1167,0.0265,10.1,1,11.11
+2021-06-10,2021,WTA,frenchopen,clay,Semifinals,Pavlyuchenkova A,Zidansek T,loser,0.4612,2.82,0.3005,0.0413,15.0,0,-15.0
+2021-06-11,2021,ATP,frenchopen,clay,Semifinals,Tsitsipas S,Zverev A,loser,0.4182,3.06,0.2796,0.0339,15.0,0,-15.0
+2021-06-12,2021,WTA,frenchopen,clay,The Final,Krejcikova B,Pavlyuchenkova A,winner,0.5708,1.85,0.056,0.0165,6.53,1,5.55
+2021-06-28,2021,WTA,wimbledon,grass,1st Round,Collins D,Hercog P,loser,0.4688,2.7,0.2656,0.0391,15.0,0,-15.0
+2021-06-28,2021,WTA,wimbledon,grass,1st Round,Golubic V,Kudermetova V,winner,0.4547,2.38,0.0822,0.0149,8.07,1,11.14
+2021-06-28,2021,ATP,wimbledon,grass,1st Round,Koepfer D,Opelka R,winner,0.4709,2.5,0.1773,0.0295,13.66,1,20.5
+2021-06-28,2021,ATP,wimbledon,grass,1st Round,Khachanov K,Mcdonald M,loser,0.4698,2.55,0.1981,0.032,14.89,0,-14.89
+2021-06-28,2021,ATP,wimbledon,grass,1st Round,Murray A,Basilashvili N,winner,0.5026,2.06,0.0353,0.0083,5.31,1,5.63
+2021-06-28,2021,ATP,wimbledon,grass,1st Round,Vesely J,Hanfmann Y,loser,0.4982,2.75,0.3702,0.0529,15.0,0,-15.0
+2021-06-28,2021,ATP,wimbledon,grass,1st Round,Kudla D,Davidovich Fokina A,loser,0.5672,1.91,0.0834,0.0229,8.14,0,-8.14
+2021-06-29,2021,ATP,wimbledon,grass,1st Round,Otte O,Rinderknech A,winner,0.4977,2.53,0.2592,0.0424,15.0,1,22.95
+2021-06-29,2021,ATP,wimbledon,grass,1st Round,Sandgren T,Gombos N,loser,0.4597,2.53,0.1629,0.0266,12.82,0,-12.82
+2021-06-29,2021,ATP,wimbledon,grass,1st Round,Djere L,Cuevas P,winner,0.4521,2.6,0.1756,0.0274,13.56,1,21.7
+2021-06-29,2021,ATP,wimbledon,grass,1st Round,Hurkacz H,Musetti L,loser,0.4484,3.0,0.3452,0.0432,15.0,0,-15.0
+2021-06-29,2021,ATP,wimbledon,grass,1st Round,Korda S,De Minaur A,winner,0.4464,2.66,0.1873,0.0282,14.26,1,23.66
+2021-06-29,2021,ATP,wimbledon,grass,1st Round,Lajovic D,Simon G,winner,0.4816,2.51,0.2089,0.0346,15.0,1,22.65
+2021-06-29,2021,ATP,wimbledon,grass,1st Round,Bolt A,Krajinovic F,loser,0.5009,2.42,0.2122,0.0374,15.0,0,-15.0
+2021-06-29,2021,WTA,wimbledon,grass,1st Round,Zhu L,Barthel M,winner,0.5005,2.51,0.2562,0.0424,15.0,1,22.65
+2021-06-29,2021,WTA,wimbledon,grass,1st Round,Krejcikova B,Tauson C,loser,0.3883,2.7,0.0485,0.0071,6.09,0,-6.09
+2021-06-29,2021,WTA,wimbledon,grass,1st Round,Blinkova A,Babos T,loser,0.4951,2.7,0.3368,0.0495,15.0,0,-15.0
+2021-06-29,2021,WTA,wimbledon,grass,1st Round,Vesnina E,Trevisan M,loser,0.4971,2.8,0.392,0.0544,15.0,0,-15.0
+2021-06-29,2021,WTA,wimbledon,grass,1st Round,Zvonareva V,Bouzkova M,loser,0.5297,2.5,0.3242,0.054,15.0,0,-15.0
+2021-06-29,2021,WTA,wimbledon,grass,1st Round,Liu C,Doi M,loser,0.4822,2.6,0.2537,0.0396,15.0,0,-15.0
+2021-06-29,2021,WTA,wimbledon,grass,1st Round,Williams V,Buzarnescu M,loser,0.5103,2.05,0.0462,0.011,5.95,0,-5.95
+2021-06-29,2021,WTA,wimbledon,grass,1st Round,Vekic D,Potapova A,loser,0.4937,2.38,0.1749,0.0317,13.52,0,-13.52
+2021-06-29,2021,WTA,wimbledon,grass,1st Round,Brengle M,Mchale C,winner,0.5805,1.83,0.0623,0.0188,6.9,1,5.72
+2021-06-30,2021,WTA,wimbledon,grass,1st Round,Linette M,Anisimova A,winner,0.4769,2.91,0.3879,0.0508,15.0,1,28.65
+2021-06-30,2021,ATP,wimbledon,grass,1st Round,Thompson J,Ruud C,winner,0.4253,2.8,0.1909,0.0265,14.47,1,26.04
+2021-06-30,2021,ATP,wimbledon,grass,1st Round,Bedene A,Moutet C,loser,0.5572,2.11,0.1757,0.0396,13.57,0,-13.57
+2021-06-30,2021,ATP,wimbledon,grass,1st Round,Van De Zandschulp B,Barrere G,winner,0.5127,2.7,0.3844,0.0565,15.0,1,25.5
+2021-06-30,2021,ATP,wimbledon,grass,1st Round,Chardy J,Karatsev A,loser,0.5886,1.81,0.0654,0.0202,7.08,0,-7.08
+2021-06-30,2021,ATP,wimbledon,grass,1st Round,Giron M,Ruusuvuori E,loser,0.4822,2.47,0.1911,0.0325,14.47,0,-14.47
+2021-06-30,2021,ATP,wimbledon,grass,1st Round,Querrey S,Carreno Busta P,loser,0.4832,2.48,0.1984,0.0335,14.91,0,-14.91
+2021-06-30,2021,ATP,wimbledon,grass,1st Round,Duckworth J,Albot R,loser,0.468,2.68,0.2542,0.0378,15.0,0,-15.0
+2021-06-30,2021,ATP,wimbledon,grass,1st Round,Nishikori K,Popyrin A,loser,0.3839,3.11,0.1938,0.023,14.64,0,-14.64
+2021-06-30,2021,WTA,wimbledon,grass,1st Round,Vondrousova M,Kontaveit A,winner,0.4009,2.97,0.1907,0.0242,14.45,1,28.47
+2021-06-30,2021,WTA,wimbledon,grass,1st Round,Tomljanovic A,Minnen G,loser,0.474,2.63,0.2467,0.0378,15.0,0,-15.0
+2021-06-30,2021,WTA,wimbledon,grass,2nd Round,Martincova T,Podoroska N,loser,0.5594,2.3,0.2867,0.0551,15.0,0,-15.0
+2021-06-30,2021,WTA,wimbledon,grass,2nd Round,Samsonova L,Pegula J,loser,0.5007,2.15,0.0764,0.0166,7.73,0,-7.73
+2021-06-30,2021,WTA,wimbledon,grass,1st Round,Cornet A,Andreescu B,winner,0.4791,2.23,0.0684,0.0139,7.26,1,8.93
+2021-06-30,2021,WTA,wimbledon,grass,1st Round,Raducanu E,Diatchenko V,winner,0.5764,2.31,0.3316,0.0633,15.0,1,19.65
+2021-06-30,2021,ATP,wimbledon,grass,1st Round,Garin C,Zapata Miralles B,loser,0.404,2.81,0.1353,0.0187,11.2,0,-11.2
+2021-06-30,2021,WTA,wimbledon,grass,1st Round,Svitolina E,Van Uytvanck A,winner,0.6275,1.75,0.0981,0.0327,9.01,1,6.75
+2021-06-30,2021,WTA,wimbledon,grass,1st Round,Svitolina E,Van Uytvanck A,loser,0.3725,3.08,0.1473,0.0177,11.9,0,-11.9
+2021-06-30,2021,ATP,wimbledon,grass,2nd Round,Tiafoe F,Pospisil V,loser,0.5207,2.37,0.2341,0.0427,15.0,0,-15.0
+2021-06-30,2021,ATP,wimbledon,grass,2nd Round,Fucsovics M,Vesely J,loser,0.4669,2.62,0.2233,0.0345,15.0,0,-15.0
+2021-06-30,2021,ATP,wimbledon,grass,2nd Round,Kudla D,Seppi A,loser,0.5299,2.3,0.2187,0.042,15.0,0,-15.0
+2021-06-30,2021,ATP,wimbledon,grass,1st Round,Johnson S,Novak D,loser,0.4522,2.28,0.031,0.0061,5.06,0,-5.06
+2021-06-30,2021,ATP,wimbledon,grass,1st Round,Kyrgios N,Humbert U,winner,0.418,2.63,0.0993,0.0152,9.08,1,14.8
+2021-07-01,2021,ATP,wimbledon,grass,2nd Round,Ivashka I,Chardy J,loser,0.4692,2.36,0.1074,0.0197,9.55,0,-9.55
+2021-07-01,2021,ATP,wimbledon,grass,2nd Round,Fritz T,Johnson S,loser,0.4579,2.31,0.0578,0.011,6.63,0,-6.63
+2021-07-01,2021,ATP,wimbledon,grass,2nd Round,Hurkacz H,Giron M,loser,0.4128,3.18,0.3126,0.0359,15.0,0,-15.0
+2021-07-01,2021,WTA,wimbledon,grass,2nd Round,Juvan K,Burel C,winner,0.5236,2.06,0.0786,0.0185,7.86,1,8.33
+2021-07-01,2021,WTA,wimbledon,grass,2nd Round,Tomljanovic A,Cornet A,winner,0.508,2.35,0.1938,0.0359,14.64,1,19.76
+2021-07-01,2021,WTA,wimbledon,grass,2nd Round,Ostapenko J,Kasatkina D,loser,0.5096,2.67,0.3607,0.054,15.0,0,-15.0
+2021-07-01,2021,WTA,wimbledon,grass,2nd Round,Linette M,Svitolina E,winner,0.3906,3.26,0.2735,0.0302,15.0,1,33.9
+2021-07-01,2021,WTA,wimbledon,grass,2nd Round,Siniakova K,Vandeweghe C,loser,0.4814,2.36,0.1362,0.025,11.25,0,-11.25
+2021-07-01,2021,WTA,wimbledon,grass,2nd Round,Muchova K,Giorgi C,winner,0.6002,1.94,0.1644,0.0437,12.91,1,12.13
+2021-07-01,2021,WTA,wimbledon,grass,2nd Round,Sevastova A,Kostyuk M,loser,0.5128,2.2,0.1283,0.0267,10.78,0,-10.78
+2021-07-02,2021,ATP,wimbledon,grass,3rd Round,Korda S,Evans D,winner,0.4998,2.42,0.2095,0.0369,15.0,1,21.3
+2021-07-02,2021,ATP,wimbledon,grass,3rd Round,Khachanov K,Tiafoe F,winner,0.5449,2.3,0.2532,0.0487,15.0,1,19.5
+2021-07-02,2021,WTA,wimbledon,grass,3rd Round,Samsonova L,Stephens S,loser,0.5533,2.51,0.3888,0.0644,15.0,0,-15.0
+2021-07-02,2021,WTA,wimbledon,grass,3rd Round,Rybakina E,Rogers S,loser,0.4469,2.97,0.3272,0.0415,15.0,0,-15.0
+2021-07-02,2021,WTA,wimbledon,grass,3rd Round,Keys M,Mertens E,loser,0.5585,2.1,0.1728,0.0393,13.4,0,-13.4
+2021-07-02,2021,ATP,wimbledon,grass,3rd Round,Fucsovics M,Schwartzman D,loser,0.5232,1.97,0.0307,0.0079,5.04,0,-5.04
+2021-07-03,2021,WTA,wimbledon,grass,3rd Round,Badosa P,Linette M,loser,0.5283,2.38,0.2574,0.0466,15.0,0,-15.0
+2021-07-03,2021,WTA,wimbledon,grass,3rd Round,Raducanu E,Cirstea S,winner,0.4762,2.7,0.2858,0.042,15.0,1,25.5
+2021-07-03,2021,WTA,wimbledon,grass,3rd Round,Krejcikova B,Sevastova A,loser,0.4226,2.5,0.0565,0.0094,6.56,0,-6.56
+2021-07-03,2021,ATP,wimbledon,grass,3rd Round,Ivashka I,Thompson J,loser,0.5361,2.35,0.2599,0.0481,15.0,0,-15.0
+2021-07-03,2021,ATP,wimbledon,grass,3rd Round,Sonego L,Duckworth J,loser,0.4076,3.11,0.2677,0.0317,15.0,0,-15.0
+2021-07-03,2021,ATP,wimbledon,grass,3rd Round,Hurkacz H,Bublik A,loser,0.5321,2.4,0.2771,0.0495,15.0,0,-15.0
+2021-07-03,2021,ATP,wimbledon,grass,3rd Round,Federer R,Norrie C,loser,0.4086,2.95,0.2054,0.0263,15.0,0,-15.0
+2021-07-05,2021,WTA,wimbledon,grass,4th Round,Sabalenka A,Rybakina E,loser,0.4846,2.7,0.3085,0.0454,15.0,0,-15.0
+2021-07-05,2021,ATP,wimbledon,grass,4th Round,Shapovalov D,Bautista Agut R,loser,0.5788,2.36,0.3661,0.0673,15.0,0,-15.0
+2021-07-05,2021,ATP,wimbledon,grass,4th Round,Khachanov K,Korda S,loser,0.5255,2.06,0.0825,0.0195,8.09,0,-8.09
+2021-07-05,2021,WTA,wimbledon,grass,4th Round,Jabeur O,Swiatek I,winner,0.5552,2.42,0.3436,0.0605,15.0,1,21.3
+2021-07-05,2021,WTA,wimbledon,grass,4th Round,Tomljanovic A,Raducanu E,loser,0.5064,2.13,0.0787,0.0174,7.87,0,-7.87
+2021-07-05,2021,WTA,wimbledon,grass,4th Round,Muchova K,Badosa P,loser,0.4417,2.71,0.1971,0.0288,14.83,0,-14.83
+2021-07-05,2021,WTA,wimbledon,grass,4th Round,Golubic V,Keys M,winner,0.4347,2.97,0.291,0.0369,15.0,1,29.55
+2021-07-05,2021,WTA,wimbledon,grass,4th Round,Kerber A,Gauff C,winner,0.4746,2.19,0.0393,0.0082,5.55,1,6.6
+2021-07-06,2021,WTA,wimbledon,grass,Quarterfinals,Sabalenka A,Jabeur O,loser,0.5348,2.32,0.2408,0.0456,15.0,0,-15.0
+2021-07-06,2021,WTA,wimbledon,grass,Quarterfinals,Kerber A,Muchova K,loser,0.502,2.4,0.2048,0.0366,15.0,0,-15.0
+2021-07-08,2021,WTA,wimbledon,grass,Semifinals,Barty A,Kerber A,loser,0.4296,3.06,0.3145,0.0382,15.0,0,-15.0
+2021-08-30,2021,ATP,usopen,hard,1st Round,Laaksonen H,Millman J,winner,0.4023,2.7,0.0862,0.0127,8.31,1,14.12
+2021-08-30,2021,ATP,usopen,hard,1st Round,Nakashima B,Isner J,loser,0.6927,1.59,0.1014,0.043,9.2,0,-9.2
+2021-08-30,2021,ATP,usopen,hard,1st Round,Andujar P,Kukushkin M,winner,0.4896,2.85,0.3953,0.0534,15.0,1,27.75
+2021-08-30,2021,ATP,usopen,hard,1st Round,Lajovic D,Paire B,winner,0.5048,2.55,0.2872,0.0463,15.0,1,23.25
+2021-08-30,2021,ATP,usopen,hard,1st Round,Zapata Miralles B,Lopez F,loser,0.4403,2.5,0.1008,0.0168,9.17,0,-9.17
+2021-08-30,2021,WTA,usopen,hard,1st Round,Juvan K,Watson H,winner,0.5715,1.95,0.1144,0.0301,9.96,1,9.46
+2021-08-30,2021,WTA,usopen,hard,1st Round,Masarova R,Bogdan A,winner,0.5583,2.3,0.2841,0.0546,15.0,1,19.5
+2021-08-30,2021,WTA,usopen,hard,1st Round,Garcia C,Dart H,loser,0.4117,2.55,0.05,0.0081,6.17,0,-6.17
+2021-08-30,2021,ATP,usopen,hard,1st Round,Rinderknech A,Kecmanovic M,winner,0.5389,2.21,0.1909,0.0395,14.47,1,17.51
+2021-08-30,2021,ATP,usopen,hard,1st Round,Koepfer D,Halys Q,loser,0.3588,3.05,0.0945,0.0115,8.79,0,-8.79
+2021-08-30,2021,ATP,usopen,hard,1st Round,Alcaraz C,Norrie C,winner,0.3976,2.9,0.153,0.0201,12.24,1,23.25
+2021-08-30,2021,WTA,usopen,hard,1st Round,Halep S,Giorgi C,winner,0.6105,2.1,0.282,0.0641,15.0,1,16.5
+2021-08-30,2021,WTA,usopen,hard,1st Round,Kanepi K,Putintseva Y,winner,0.429,2.82,0.2098,0.0288,15.0,1,27.3
+2021-08-30,2021,WTA,usopen,hard,1st Round,Stephens S,Keys M,loser,0.5967,2.0,0.1935,0.0484,14.62,0,-14.62
+2021-08-30,2021,WTA,usopen,hard,1st Round,Kalinina A,Sherif M,loser,0.467,2.32,0.0833,0.0158,8.14,0,-8.14
+2021-08-31,2021,ATP,usopen,hard,1st Round,Basilashvili N,Korda S,winner,0.3886,3.21,0.2475,0.028,15.0,1,33.15
+2021-08-31,2021,ATP,usopen,hard,1st Round,Sock J,Nishioka Y,winner,0.5737,2.24,0.285,0.0575,15.0,1,18.6
+2021-08-31,2021,WTA,usopen,hard,1st Round,Zidansek T,Pera B,winner,0.5441,2.25,0.2243,0.0449,15.0,1,18.75
+2021-08-31,2021,WTA,usopen,hard,1st Round,Trevisan M,Vandeweghe C,winner,0.4955,2.6,0.2884,0.0451,15.0,1,24.0
+2021-08-31,2021,WTA,usopen,hard,1st Round,Gracheva V,Parrizas Diaz N,winner,0.5228,2.4,0.2547,0.0455,15.0,1,21.0
+2021-08-31,2021,ATP,usopen,hard,1st Round,Pospisil V,Fognini F,winner,0.4377,2.75,0.2037,0.0291,15.0,1,26.25
+2021-08-31,2021,ATP,usopen,hard,1st Round,Johnson S,Marterer M,loser,0.4839,2.8,0.3548,0.0493,15.0,0,-15.0
+2021-08-31,2021,WTA,usopen,hard,1st Round,Rogers S,Brengle M,loser,0.3559,3.3,0.1746,0.019,13.5,0,-13.5
+2021-08-31,2021,ATP,usopen,hard,1st Round,Escobedo E,Cuevas P,loser,0.4488,2.66,0.1939,0.0292,14.64,0,-14.64
+2021-08-31,2021,ATP,usopen,hard,1st Round,Bautista Agut R,Kyrgios N,loser,0.451,2.6,0.1725,0.027,13.38,0,-13.38
+2021-08-31,2021,ATP,usopen,hard,1st Round,Musetti L,Nava E,loser,0.43,3.02,0.2985,0.0369,15.0,0,-15.0
+2021-08-31,2021,ATP,usopen,hard,1st Round,Harris L,Khachanov K,winner,0.4527,3.0,0.358,0.0448,15.0,1,30.0
+2021-08-31,2021,ATP,usopen,hard,1st Round,Kudla D,Djere L,loser,0.4799,2.68,0.286,0.0426,15.0,0,-15.0
+2021-09-01,2021,WTA,usopen,hard,1st Round,Sorribes Tormo S,Muchova K,winner,0.427,2.45,0.0461,0.0079,5.95,1,8.62
+2021-09-01,2021,WTA,usopen,hard,1st Round,Minnen G,Podoroska N,winner,0.4407,2.5,0.1018,0.017,9.23,1,13.84
+2021-09-01,2021,WTA,usopen,hard,2nd Round,Kasatkina D,Vondrousova M,winner,0.4706,2.3,0.0824,0.0158,8.08,1,10.51
+2021-09-01,2021,ATP,usopen,hard,2nd Round,Laaksonen H,Garin C,winner,0.4351,2.66,0.1574,0.0237,12.49,1,20.74
+2021-09-01,2021,ATP,usopen,hard,2nd Round,Bautista Agut R,Ruusuvuori E,loser,0.4156,2.85,0.1846,0.0249,14.09,0,-14.09
+2021-09-01,2021,ATP,usopen,hard,2nd Round,Tiafoe F,Pella G,loser,0.3557,3.6,0.2807,0.027,15.0,0,-15.0
+2021-09-01,2021,ATP,usopen,hard,2nd Round,Gojowczyk P,Lajovic D,winner,0.4744,2.25,0.0675,0.0135,7.2,1,9.0
+2021-09-01,2021,ATP,usopen,hard,2nd Round,Evans D,Giron M,loser,0.4796,2.19,0.0503,0.0106,6.19,0,-6.19
+2021-09-01,2021,ATP,usopen,hard,2nd Round,Popyrin A,Dimitrov G,winner,0.4078,2.8,0.1418,0.0197,11.57,1,20.83
+2021-09-01,2021,ATP,usopen,hard,1st Round,Fritz T,De Minaur A,winner,0.437,2.44,0.0663,0.0115,7.13,1,10.27
+2021-09-01,2021,ATP,usopen,hard,2nd Round,Bagnis F,Trungelliti M,loser,0.4956,2.15,0.0655,0.0142,7.09,0,-7.09
+2021-09-02,2021,WTA,usopen,hard,2nd Round,Rogers S,Cirstea S,winner,0.53,2.2,0.1661,0.0346,13.0,1,15.6
+2021-09-02,2021,WTA,usopen,hard,2nd Round,Rogers S,Cirstea S,loser,0.47,2.3,0.0809,0.0156,8.0,0,-8.0
+2021-09-02,2021,WTA,usopen,hard,2nd Round,Stephens S,Gauff C,winner,0.3503,3.0,0.0508,0.0063,6.22,1,12.44
+2021-09-02,2021,WTA,usopen,hard,2nd Round,Stephens S,Gauff C,loser,0.6497,1.6,0.0396,0.0165,5.56,0,-5.56
+2021-09-02,2021,WTA,usopen,hard,2nd Round,Kontaveit A,Teichmann J,winner,0.6667,1.65,0.1001,0.0385,9.12,1,5.93
+2021-09-02,2021,WTA,usopen,hard,2nd Round,Sakkari M,Siniakova K,winner,0.7371,1.53,0.1277,0.0602,10.75,1,5.7
+2021-09-02,2021,WTA,usopen,hard,2nd Round,Raducanu E,Zhang S,loser,0.4949,2.35,0.163,0.0302,12.82,0,-12.82
+2021-09-02,2021,ATP,usopen,hard,2nd Round,Karatsev A,Thompson J,loser,0.4153,3.25,0.3499,0.0389,15.0,0,-15.0
+2021-09-02,2021,ATP,usopen,hard,2nd Round,Otte O,Kudla D,winner,0.5239,2.54,0.3307,0.0537,15.0,1,23.1
+2021-09-02,2021,ATP,usopen,hard,2nd Round,Monfils G,Johnson S,loser,0.3718,3.41,0.2677,0.0278,15.0,0,-15.0
+2021-09-02,2021,ATP,usopen,hard,2nd Round,Sock J,Bublik A,loser,0.6153,1.79,0.1013,0.0321,9.2,0,-9.2
+2021-09-03,2021,WTA,usopen,hard,3rd Round,Muguruza G,Azarenka V,winner,0.5601,2.04,0.1425,0.0343,11.62,1,12.08
+2021-09-03,2021,WTA,usopen,hard,3rd Round,Svitolina E,Kasatkina D,loser,0.3838,3.11,0.1937,0.023,14.63,0,-14.63
+2021-09-03,2021,WTA,usopen,hard,3rd Round,Kerber A,Stephens S,winner,0.6205,1.83,0.1356,0.0408,11.21,1,9.3
+2021-09-03,2021,WTA,usopen,hard,3rd Round,Halep S,Rybakina E,winner,0.6005,1.83,0.0989,0.0298,9.05,1,7.51
+2021-09-03,2021,WTA,usopen,hard,2nd Round,Tomljanovic A,Martic P,loser,0.5124,2.31,0.1837,0.0351,14.04,0,-14.04
+2021-09-03,2021,ATP,usopen,hard,3rd Round,Evans D,Popyrin A,loser,0.5229,2.2,0.1503,0.0313,12.08,0,-12.08
+2021-09-03,2021,ATP,usopen,hard,3rd Round,Gojowczyk P,Laaksonen H,winner,0.4765,2.33,0.1103,0.0207,9.72,1,12.93
+2021-09-04,2021,WTA,usopen,hard,3rd Round,Raducanu E,Sorribes Tormo S,winner,0.516,2.2,0.1353,0.0282,11.19,1,13.43
+2021-09-04,2021,WTA,usopen,hard,3rd Round,Sabalenka A,Collins D,loser,0.3921,2.75,0.0783,0.0112,7.84,0,-7.84
+2021-09-04,2021,ATP,usopen,hard,3rd Round,Tiafoe F,Rublev A,loser,0.7685,1.35,0.0375,0.0268,5.44,0,-5.44
+2021-09-04,2021,WTA,usopen,hard,3rd Round,Swiatek I,Kontaveit A,loser,0.5447,2.1,0.1438,0.0327,11.69,0,-11.69
+2021-09-04,2021,ATP,usopen,hard,3rd Round,Berrettini M,Ivashka I,loser,0.3661,2.85,0.0434,0.0059,5.79,0,-5.79
+2021-09-04,2021,ATP,usopen,hard,3rd Round,Otte O,Seppi A,winner,0.5548,1.87,0.0375,0.0108,5.44,1,4.73
+2021-09-04,2021,WTA,usopen,hard,3rd Round,Sakkari M,Kvitova P,winner,0.5477,2.02,0.1063,0.026,9.49,1,9.68
+2021-09-04,2021,ATP,usopen,hard,3rd Round,Sinner J,Monfils G,loser,0.4396,2.46,0.0815,0.0139,8.03,0,-8.03
+2021-09-04,2021,WTA,usopen,hard,3rd Round,Bencic B,Pegula J,loser,0.5085,2.23,0.1339,0.0272,11.11,0,-11.11
+2021-09-04,2021,ATP,usopen,hard,3rd Round,Brooksby J,Karatsev A,loser,0.6021,2.25,0.3547,0.0709,15.0,0,-15.0
+2021-09-05,2021,WTA,usopen,hard,4th Round,Svitolina E,Halep S,loser,0.5314,2.12,0.1265,0.0282,10.68,0,-10.68
+2021-09-05,2021,ATP,usopen,hard,3rd Round,Harris L,Shapovalov D,winner,0.5094,2.63,0.3398,0.0521,15.0,1,24.45
+2021-09-05,2021,ATP,usopen,hard,3rd Round,Opelka R,Basilashvili N,loser,0.4049,2.78,0.1255,0.0176,10.62,0,-10.62
+2021-09-06,2021,WTA,usopen,hard,4th Round,Krejcikova B,Muguruza G,loser,0.5546,2.17,0.2036,0.0435,15.0,0,-15.0
+2021-09-06,2021,WTA,usopen,hard,4th Round,Bencic B,Swiatek I,winner,0.5032,2.24,0.1271,0.0256,10.71,1,13.29
+2021-09-06,2021,ATP,usopen,hard,4th Round,Harris L,Opelka R,loser,0.5468,2.18,0.1919,0.0407,14.52,0,-14.52
+2021-09-07,2021,WTA,usopen,hard,4th Round,Sakkari M,Andreescu B,loser,0.484,2.41,0.1664,0.0295,13.02,0,-13.02
+2021-09-08,2021,WTA,usopen,hard,Quarterfinals,Raducanu E,Bencic B,loser,0.6799,1.69,0.149,0.054,12.0,0,-12.0
+2021-09-10,2021,WTA,usopen,hard,Semifinals,Raducanu E,Sakkari M,loser,0.6904,1.73,0.1945,0.0666,14.68,0,-14.68
+2021-09-11,2021,ATP,usopen,hard,Semifinals,Djokovic N,Zverev A,loser,0.4285,3.25,0.3926,0.0436,15.0,0,-15.0
+2021-09-12,2021,ATP,usopen,hard,The Final,Medvedev D,Djokovic N,winner,0.4059,3.36,0.3639,0.0386,15.0,1,35.4
+2022-01-17,2022,WTA,ausopen,hard,1st Round,Giorgi C,Potapova A,winner,0.5982,1.9,0.1366,0.0379,11.27,1,10.14
+2022-01-17,2022,WTA,ausopen,hard,1st Round,Pera B,Alexandrova E,loser,0.6832,1.52,0.0384,0.0185,5.49,0,-5.49
+2022-01-17,2022,WTA,ausopen,hard,1st Round,Brengle M,Yastremska D,winner,0.465,2.3,0.0695,0.0134,7.32,1,9.52
+2022-01-17,2022,WTA,ausopen,hard,1st Round,Zanevska M,Juvan K,winner,0.4968,2.45,0.2171,0.0374,15.0,1,21.75
+2022-01-17,2022,WTA,ausopen,hard,1st Round,Bronzetti L,Gracheva V,winner,0.4785,2.36,0.1293,0.0238,10.84,1,14.75
+2022-01-17,2022,WTA,ausopen,hard,1st Round,Parrizas Diaz N,Bara I,loser,0.4863,2.5,0.2158,0.036,15.0,0,-15.0
+2022-01-17,2022,WTA,ausopen,hard,1st Round,Kudermetova V,Liu C,loser,0.3538,3.8,0.3446,0.0308,15.0,0,-15.0
+2022-01-17,2022,WTA,ausopen,hard,1st Round,Trevisan M,Hibino N,loser,0.4695,2.67,0.2535,0.038,15.0,0,-15.0
+2022-01-17,2022,WTA,ausopen,hard,1st Round,Teichmann J,Martic P,loser,0.4401,3.15,0.3864,0.0449,15.0,0,-15.0
+2022-01-17,2022,ATP,ausopen,hard,1st Round,Lajovic D,Fucsovics M,winner,0.4026,3.45,0.3889,0.0397,15.0,1,36.75
+2022-01-17,2022,ATP,ausopen,hard,1st Round,Millman J,Lopez F,loser,0.4051,3.15,0.276,0.0321,15.0,0,-15.0
+2022-01-17,2022,ATP,ausopen,hard,1st Round,Opelka R,Anderson K,loser,0.4021,3.2,0.2867,0.0326,15.0,0,-15.0
+2022-01-17,2022,ATP,ausopen,hard,1st Round,Griekspoor T,Fognini F,winner,0.4836,2.27,0.0978,0.0192,8.99,1,11.41
+2022-01-17,2022,WTA,ausopen,hard,1st Round,Cristian J,Minnen G,winner,0.572,1.82,0.041,0.0125,5.65,1,4.63
+2022-01-17,2022,ATP,ausopen,hard,1st Round,Bublik A,Escobedo E,loser,0.4586,2.31,0.0593,0.0113,6.72,0,-6.72
+2022-01-17,2022,ATP,ausopen,hard,1st Round,Mannarino A,Duckworth J,winner,0.4873,2.86,0.3936,0.0529,15.0,1,27.9
+2022-01-17,2022,ATP,ausopen,hard,1st Round,Berrettini M,Nakashima B,loser,0.3626,3.86,0.3997,0.0349,15.0,0,-15.0
+2022-01-17,2022,ATP,ausopen,hard,1st Round,Albot R,Nishioka Y,winner,0.5661,2.2,0.2455,0.0511,15.0,1,18.0
+2022-01-17,2022,ATP,ausopen,hard,1st Round,Martinez P,Delbonis F,loser,0.3557,3.91,0.3906,0.0336,15.0,0,-15.0
+2022-01-17,2022,ATP,ausopen,hard,1st Round,Garin C,Bagnis F,loser,0.4575,2.88,0.3176,0.0422,15.0,0,-15.0
+2022-01-17,2022,ATP,ausopen,hard,1st Round,Korda S,Norrie C,winner,0.467,2.56,0.1956,0.0313,14.74,1,22.99
+2022-01-18,2022,WTA,ausopen,hard,1st Round,Cirstea S,Kvitova P,winner,0.3919,2.8,0.0973,0.0135,8.96,1,16.13
+2022-01-18,2022,WTA,ausopen,hard,1st Round,Kucova K,Doi M,winner,0.5179,2.44,0.2637,0.0458,15.0,1,21.6
+2022-01-18,2022,WTA,ausopen,hard,1st Round,Stosur S,Anderson R,loser,0.6162,1.86,0.1461,0.0425,11.83,0,-11.83
+2022-01-18,2022,WTA,ausopen,hard,1st Round,Peterson R,Saville D,loser,0.4382,2.44,0.0693,0.012,7.31,0,-7.31
+2022-01-18,2022,WTA,ausopen,hard,1st Round,Raducanu E,Stephens S,winner,0.6391,2.15,0.3742,0.0813,15.0,1,17.25
+2022-01-18,2022,ATP,ausopen,hard,1st Round,Gombos N,Skatov T,loser,0.5701,2.4,0.3681,0.0657,15.0,0,-15.0
+2022-01-18,2022,ATP,ausopen,hard,1st Round,Kohlschreiber P,Cecchinato M,loser,0.3774,2.9,0.0946,0.0124,8.8,0,-8.8
+2022-01-18,2022,ATP,ausopen,hard,1st Round,Berankis R,Carballes Baena R,loser,0.4194,3.16,0.3253,0.0376,15.0,0,-15.0
+2022-01-18,2022,ATP,ausopen,hard,1st Round,Cressy M,Isner J,loser,0.5258,2.04,0.0726,0.0175,7.51,0,-7.51
+2022-01-18,2022,WTA,ausopen,hard,1st Round,Kanepi K,Kerber A,winner,0.3756,2.75,0.033,0.0047,5.18,1,9.06
+2022-01-18,2022,WTA,ausopen,hard,1st Round,Baptiste H,Garcia C,winner,0.4115,3.0,0.2344,0.0293,15.0,1,30.0
+2022-01-18,2022,WTA,ausopen,hard,1st Round,Linette M,Sevastova A,winner,0.5567,2.16,0.2024,0.0436,15.0,1,17.4
+2022-01-18,2022,WTA,ausopen,hard,1st Round,Watson H,Sherif M,loser,0.5188,2.5,0.2971,0.0495,15.0,0,-15.0
+2022-01-18,2022,WTA,ausopen,hard,1st Round,Zidansek T,Rus A,loser,0.4353,2.38,0.036,0.0065,5.35,0,-5.35
+2022-01-18,2022,WTA,ausopen,hard,1st Round,Konjuh A,Rogers S,loser,0.6247,1.77,0.1057,0.0343,9.46,0,-9.46
+2022-01-18,2022,ATP,ausopen,hard,1st Round,Murray A,Basilashvili N,loser,0.4569,2.8,0.2793,0.0388,15.0,0,-15.0
+2022-01-18,2022,ATP,ausopen,hard,1st Round,Majchrzak K,Seppi A,loser,0.4756,2.42,0.1508,0.0266,12.11,0,-12.11
+2022-01-18,2022,ATP,ausopen,hard,1st Round,Rinderknech A,Popyrin A,loser,0.4801,2.38,0.1426,0.0258,11.62,0,-11.62
+2022-01-18,2022,ATP,ausopen,hard,1st Round,Kyrgios N,Broady L,loser,0.4162,2.8,0.1652,0.0229,12.95,0,-12.95
+2022-01-18,2022,ATP,ausopen,hard,1st Round,Andujar P,Dzumhur D,winner,0.5467,2.4,0.3121,0.0557,15.0,1,21.0
+2022-01-18,2022,ATP,ausopen,hard,1st Round,Molcan A,Safiullin R,loser,0.4652,2.45,0.1398,0.0241,11.46,0,-11.46
+2022-01-19,2022,WTA,ausopen,hard,2nd Round,Pegula J,Pera B,winner,0.7598,1.45,0.1017,0.0565,9.21,1,4.15
+2022-01-19,2022,WTA,ausopen,hard,2nd Round,Parrizas Diaz N,Zanevska M,loser,0.5821,2.4,0.397,0.0709,15.0,0,-15.0
+2022-01-19,2022,WTA,ausopen,hard,2nd Round,Wang Q,Van Uytvanck A,winner,0.4812,2.62,0.2608,0.0402,15.0,1,24.3
+2022-01-19,2022,WTA,ausopen,hard,2nd Round,Anisimova A,Bencic B,winner,0.4183,2.47,0.0332,0.0056,5.19,1,7.63
+2022-01-19,2022,ATP,ausopen,hard,2nd Round,Garin C,Martinez P,loser,0.5686,2.0,0.1372,0.0343,11.31,0,-11.31
+2022-01-19,2022,ATP,ausopen,hard,2nd Round,Albot R,Vukic A,winner,0.4361,2.78,0.2123,0.0298,15.0,1,26.7
+2022-01-19,2022,ATP,ausopen,hard,2nd Round,Karatsev A,Mcdonald M,loser,0.3594,3.0,0.0782,0.0098,7.83,0,-7.83
+2022-01-19,2022,WTA,ausopen,hard,2nd Round,Giorgi C,Martincova T,loser,0.4571,3.03,0.385,0.0474,15.0,0,-15.0
+2022-01-19,2022,ATP,ausopen,hard,2nd Round,Kecmanovic M,Paul T,loser,0.7079,1.49,0.0548,0.028,6.46,0,-6.46
+2022-01-20,2022,ATP,ausopen,hard,2nd Round,Medvedev D,Kyrgios N,winner,0.8763,1.18,0.034,0.0473,5.24,1,0.94
+2022-01-20,2022,ATP,ausopen,hard,2nd Round,Cressy M,Machac T,winner,0.6004,1.78,0.0687,0.022,7.28,1,5.67
+2022-01-20,2022,WTA,ausopen,hard,2nd Round,Collins D,Konjuh A,winner,0.7203,1.49,0.0732,0.0373,7.54,1,3.69
+2022-01-20,2022,WTA,ausopen,hard,2nd Round,Inglis M,Baptiste H,winner,0.5137,2.07,0.0634,0.0148,6.96,1,7.45
+2022-01-20,2022,WTA,ausopen,hard,2nd Round,Zidansek T,Watson H,loser,0.4267,2.72,0.1605,0.0233,12.68,0,-12.68
+2022-01-20,2022,WTA,ausopen,hard,2nd Round,Kanepi K,Bouzkova M,winner,0.604,1.8,0.0871,0.0272,8.36,1,6.69
+2022-01-20,2022,WTA,ausopen,hard,2nd Round,Vondrousova M,Samsonova L,loser,0.4175,2.8,0.1691,0.0235,13.18,0,-13.18
+2022-01-21,2022,ATP,ausopen,hard,3rd Round,Kecmanovic M,Sonego L,winner,0.3934,2.71,0.0661,0.0097,7.12,1,12.18
+2022-01-21,2022,ATP,ausopen,hard,3rd Round,Berrettini M,Alcaraz C,winner,0.5379,2.4,0.291,0.052,15.0,1,21.0
+2022-01-21,2022,ATP,ausopen,hard,3rd Round,Shapovalov D,Opelka R,loser,0.486,2.24,0.0887,0.0179,8.45,0,-8.45
+2022-01-21,2022,ATP,ausopen,hard,3rd Round,Carreno Busta P,Korda S,loser,0.4559,2.35,0.0713,0.0132,7.43,0,-7.43
+2022-01-21,2022,WTA,ausopen,hard,3rd Round,Sakkari M,Kudermetova V,loser,0.3668,3.06,0.1224,0.0149,10.44,0,-10.44
+2022-01-21,2022,WTA,ausopen,hard,3rd Round,Anisimova A,Osaka N,loser,0.7201,1.44,0.0369,0.021,5.41,0,-5.41
+2022-01-22,2022,WTA,ausopen,hard,3rd Round,Cornet A,Zidansek T,loser,0.4431,2.47,0.0946,0.0161,8.8,0,-8.8
+2022-01-22,2022,WTA,ausopen,hard,3rd Round,Sabalenka A,Vondrousova M,winner,0.5475,2.4,0.314,0.0561,15.0,1,21.0
+2022-01-22,2022,WTA,ausopen,hard,3rd Round,Collins D,Tauson C,winner,0.6025,2.05,0.2351,0.056,15.0,1,15.75
+2022-01-22,2022,ATP,ausopen,hard,3rd Round,Fritz T,Bautista Agut R,winner,0.5412,2.26,0.2232,0.0443,15.0,1,18.9
+2022-01-22,2022,WTA,ausopen,hard,3rd Round,Cirstea S,Pavlyuchenkova A,winner,0.3855,2.78,0.0717,0.0101,7.45,1,13.27
+2022-01-23,2022,ATP,ausopen,hard,4th Round,Berrettini M,Carreno Busta P,loser,0.4534,3.01,0.3649,0.0454,15.0,0,-15.0
+2022-01-23,2022,WTA,ausopen,hard,4th Round,Keys M,Badosa P,winner,0.4397,2.71,0.1915,0.028,14.5,1,24.79
+2022-01-23,2022,WTA,ausopen,hard,4th Round,Krejcikova B,Azarenka V,winner,0.4142,2.91,0.2052,0.0269,15.0,1,28.65
+2022-01-23,2022,WTA,ausopen,hard,4th Round,Pegula J,Sakkari M,winner,0.4219,3.1,0.3078,0.0366,15.0,1,31.5
+2022-01-23,2022,ATP,ausopen,hard,4th Round,Shapovalov D,Zverev A,loser,0.8037,1.29,0.0367,0.0317,5.4,0,-5.4
+2022-01-24,2022,ATP,ausopen,hard,4th Round,Tsitsipas S,Fritz T,loser,0.4937,2.7,0.3329,0.049,15.0,0,-15.0
+2022-01-24,2022,WTA,ausopen,hard,4th Round,Collins D,Mertens E,loser,0.5032,2.35,0.1826,0.0338,13.97,0,-13.97
+2022-01-25,2022,ATP,ausopen,hard,Quarterfinals,Nadal R,Shapovalov D,winner,0.744,1.4,0.0416,0.026,5.68,1,2.27
+2022-01-25,2022,WTA,ausopen,hard,Quarterfinals,Keys M,Krejcikova B,loser,0.5746,1.84,0.0572,0.017,6.6,0,-6.6
+2022-01-25,2022,ATP,ausopen,hard,Quarterfinals,Berrettini M,Monfils G,loser,0.4636,2.56,0.1869,0.03,14.23,0,-14.23
+2022-01-26,2022,WTA,ausopen,hard,Quarterfinals,Collins D,Cornet A,loser,0.3914,3.32,0.2996,0.0323,15.0,0,-15.0
+2022-01-26,2022,ATP,ausopen,hard,Quarterfinals,Tsitsipas S,Sinner J,winner,0.4618,2.34,0.0806,0.015,7.98,1,10.69
+2022-01-27,2022,WTA,ausopen,hard,Semifinals,Collins D,Swiatek I,winner,0.4571,2.47,0.129,0.0219,10.82,1,15.91
+2022-01-28,2022,ATP,ausopen,hard,Semifinals,Nadal R,Berrettini M,loser,0.3549,3.34,0.1855,0.0198,14.14,0,-14.14
+2022-05-22,2022,ATP,frenchopen,clay,1st Round,Kubler J,Kudla D,loser,0.4642,2.75,0.2765,0.0395,15.0,0,-15.0
+2022-05-22,2022,ATP,frenchopen,clay,1st Round,Ugo Carabelli C,Karatsev A,winner,0.4838,2.43,0.1756,0.0307,13.57,1,19.4
+2022-05-22,2022,ATP,frenchopen,clay,1st Round,Fognini F,Popyrin A,loser,0.4246,2.64,0.121,0.0184,10.35,0,-10.35
+2022-05-22,2022,ATP,frenchopen,clay,1st Round,Cuevas P,Brooksby J,winner,0.3766,3.38,0.2728,0.0287,15.0,1,35.7
+2022-05-22,2022,ATP,frenchopen,clay,1st Round,Isner J,Halys Q,winner,0.7009,1.64,0.1495,0.0584,12.03,1,7.7
+2022-05-22,2022,ATP,frenchopen,clay,1st Round,Coric B,Taberner C,loser,0.5143,2.1,0.08,0.0182,7.94,0,-7.94
+2022-05-22,2022,ATP,frenchopen,clay,1st Round,Dellien H,Thiem D,loser,0.6937,2.0,0.3874,0.0968,15.0,0,-15.0
+2022-05-22,2022,WTA,frenchopen,clay,1st Round,Teichmann J,Pera B,loser,0.3746,3.2,0.1986,0.0226,14.92,0,-14.92
+2022-05-22,2022,WTA,frenchopen,clay,1st Round,Kanepi K,Muguruza G,loser,0.5448,1.91,0.0405,0.0111,5.62,0,-5.62
+2022-05-22,2022,WTA,frenchopen,clay,1st Round,Danilovic O,Galfi D,winner,0.4961,2.3,0.141,0.0271,11.53,1,14.99
+2022-05-23,2022,WTA,frenchopen,clay,1st Round,Petkovic A,Dodin O,loser,0.4755,2.21,0.0508,0.0105,6.22,0,-6.22
+2022-05-23,2022,ATP,frenchopen,clay,1st Round,Mcdonald M,Agamenone F,loser,0.4995,2.5,0.2489,0.0415,15.0,0,-15.0
+2022-05-23,2022,ATP,frenchopen,clay,1st Round,Evans D,Cerundolo F,loser,0.5548,2.0,0.1095,0.0274,9.68,0,-9.68
+2022-05-23,2022,ATP,frenchopen,clay,1st Round,Moutet C,Wawrinka S,loser,0.6444,1.74,0.1212,0.041,10.37,0,-10.37
+2022-05-23,2022,ATP,frenchopen,clay,1st Round,Nakashima B,Majchrzak K,winner,0.5471,2.19,0.1981,0.0416,14.89,1,17.72
+2022-05-23,2022,ATP,frenchopen,clay,1st Round,Gojo B,Giannessi A,loser,0.4734,2.34,0.1077,0.0201,9.57,0,-9.57
+2022-05-23,2022,WTA,frenchopen,clay,1st Round,Anisimova A,Osaka N,loser,0.4329,2.85,0.2337,0.0316,15.0,0,-15.0
+2022-05-23,2022,WTA,frenchopen,clay,1st Round,Zheng Q,Zanevska M,loser,0.57,2.34,0.3338,0.0623,15.0,0,-15.0
+2022-05-23,2022,WTA,frenchopen,clay,1st Round,Kvitova P,Bondar A,loser,0.4792,2.28,0.0927,0.0181,8.69,0,-8.69
+2022-05-24,2022,ATP,frenchopen,clay,1st Round,Ivashka I,Paire B,loser,0.365,2.83,0.0328,0.0045,5.17,0,-5.17
+2022-05-24,2022,ATP,frenchopen,clay,1st Round,Johnson S,Vesely J,winner,0.5651,2.35,0.328,0.0607,15.0,1,20.25
+2022-05-24,2022,ATP,frenchopen,clay,1st Round,Kolar Z,Pouille L,winner,0.5784,1.91,0.1047,0.0288,9.39,1,8.55
+2022-05-24,2022,ATP,frenchopen,clay,1st Round,Tiafoe F,Bonzi B,loser,0.4694,2.53,0.1875,0.0306,14.26,0,-14.26
+2022-05-24,2022,ATP,frenchopen,clay,1st Round,Delbonis F,Mannarino A,loser,0.3999,3.35,0.3395,0.0361,15.0,0,-15.0
+2022-05-24,2022,ATP,frenchopen,clay,1st Round,Goffin D,Lehecka J,loser,0.3685,3.6,0.3265,0.0314,15.0,0,-15.0
+2022-05-24,2022,ATP,frenchopen,clay,1st Round,Gasquet R,Harris L,loser,0.4308,2.78,0.1976,0.0277,14.86,0,-14.86
+2022-05-24,2022,ATP,frenchopen,clay,1st Round,Molcan A,Coria F,loser,0.4496,2.85,0.2814,0.038,15.0,0,-15.0
+2022-05-24,2022,ATP,frenchopen,clay,1st Round,Bublik A,Rinderknech A,winner,0.441,2.8,0.2347,0.0326,15.0,1,27.0
+2022-05-24,2022,ATP,frenchopen,clay,1st Round,Rune H,Shapovalov D,winner,0.5207,2.3,0.1977,0.038,14.87,1,19.33
+2022-05-24,2022,WTA,frenchopen,clay,1st Round,Garcia C,Townsend T,winner,0.5343,2.5,0.3357,0.0559,15.0,1,22.5
+2022-05-24,2022,WTA,frenchopen,clay,1st Round,Krunic A,Rakhimova K,loser,0.4805,2.65,0.2734,0.0414,15.0,0,-15.0
+2022-05-24,2022,WTA,frenchopen,clay,1st Round,Keys M,Kalinskaya A,loser,0.3843,3.4,0.3065,0.0319,15.0,0,-15.0
+2022-05-24,2022,WTA,frenchopen,clay,1st Round,Rogers S,Martincova T,loser,0.4863,2.15,0.0456,0.0099,5.92,0,-5.92
+2022-05-24,2022,WTA,frenchopen,clay,1st Round,Sherif M,Kostyuk M,loser,0.5677,1.98,0.124,0.0316,10.53,0,-10.53
+2022-05-24,2022,WTA,frenchopen,clay,1st Round,Giorgi C,Zhang S,loser,0.4881,2.35,0.1469,0.0272,11.88,0,-11.88
+2022-05-24,2022,WTA,frenchopen,clay,1st Round,Zidansek T,Liu C,winner,0.5459,2.07,0.13,0.0304,10.89,1,11.65
+2022-05-25,2022,WTA,frenchopen,clay,2nd Round,Stephens S,Cirstea S,winner,0.479,2.7,0.2932,0.0431,15.0,1,25.5
+2022-05-25,2022,ATP,frenchopen,clay,2nd Round,Schwartzman D,Munar J,winner,0.7455,1.41,0.0511,0.0312,6.24,1,2.56
+2022-05-25,2022,ATP,frenchopen,clay,2nd Round,Zapata Miralles B,Fritz T,loser,0.7119,1.51,0.075,0.0368,7.65,0,-7.65
+2022-05-25,2022,ATP,frenchopen,clay,2nd Round,Khachanov K,Dellien H,winner,0.705,1.5,0.0575,0.0288,6.62,1,3.31
+2022-05-25,2022,ATP,frenchopen,clay,2nd Round,Van De Zandschulp B,Fognini F,loser,0.4514,2.6,0.1737,0.0271,13.45,0,-13.45
+2022-05-25,2022,WTA,frenchopen,clay,2nd Round,Trevisan M,Linette M,winner,0.5337,2.02,0.0781,0.0191,7.83,1,7.99
+2022-05-25,2022,WTA,frenchopen,clay,2nd Round,Kanepi K,Haddad Maia B,loser,0.4472,2.35,0.0509,0.0094,6.23,0,-6.23
+2022-05-25,2022,WTA,frenchopen,clay,2nd Round,Bencic B,Andreescu B,loser,0.4597,2.55,0.1721,0.0278,13.36,0,-13.36
+2022-05-25,2022,WTA,frenchopen,clay,2nd Round,Muchova K,Sakkari M,winner,0.3518,3.15,0.1082,0.0126,9.6,1,20.64
+2022-05-25,2022,WTA,frenchopen,clay,2nd Round,Mertens E,Bouzkova M,winner,0.6393,1.95,0.2467,0.0649,15.0,1,14.25
+2022-05-25,2022,WTA,frenchopen,clay,2nd Round,Sasnovich A,Raducanu E,loser,0.5425,2.19,0.1881,0.0395,14.3,0,-14.3
+2022-05-25,2022,ATP,frenchopen,clay,2nd Round,Korda S,Gasquet R,loser,0.4492,3.1,0.3927,0.0467,15.0,0,-15.0
+2022-05-26,2022,ATP,frenchopen,clay,2nd Round,Simon G,Johnson S,winner,0.3916,2.86,0.12,0.0161,10.3,1,19.15
+2022-05-26,2022,ATP,frenchopen,clay,2nd Round,Garin C,Ivashka I,loser,0.4008,2.8,0.1221,0.017,10.42,0,-10.42
+2022-05-26,2022,ATP,frenchopen,clay,2nd Round,Mcdonald M,Basilashvili N,winner,0.4966,2.78,0.3804,0.0534,15.0,1,26.7
+2022-05-26,2022,ATP,frenchopen,clay,2nd Round,Sonego L,Sousa J,loser,0.3692,3.21,0.185,0.0209,14.12,0,-14.12
+2022-05-26,2022,ATP,frenchopen,clay,2nd Round,Cilic M,Fucsovics M,loser,0.4535,2.9,0.3151,0.0415,15.0,0,-15.0
+2022-05-26,2022,ATP,frenchopen,clay,2nd Round,Gaston H,Cachin P,winner,0.534,2.14,0.1428,0.0313,11.63,1,13.26
+2022-05-26,2022,WTA,frenchopen,clay,2nd Round,Cornet A,Ostapenko J,winner,0.404,2.78,0.1233,0.0173,10.49,1,18.66
+2022-05-26,2022,WTA,frenchopen,clay,2nd Round,Pegula J,Kalinina A,loser,0.4046,2.75,0.1126,0.0161,9.86,0,-9.86
+2022-05-26,2022,WTA,frenchopen,clay,2nd Round,Kudermetova V,Krunic A,loser,0.3537,3.82,0.3512,0.0311,15.0,0,-15.0
+2022-05-26,2022,WTA,frenchopen,clay,2nd Round,Keys M,Garcia C,loser,0.4137,2.8,0.1583,0.022,12.55,0,-12.55
+2022-05-27,2022,WTA,frenchopen,clay,3rd Round,Mertens E,Gracheva V,loser,0.3536,3.2,0.1315,0.0149,10.97,0,-10.97
+2022-05-27,2022,WTA,frenchopen,clay,3rd Round,Trevisan M,Saville D,loser,0.4388,2.46,0.0795,0.0136,7.91,0,-7.91
+2022-05-27,2022,WTA,frenchopen,clay,3rd Round,Sasnovich A,Kerber A,loser,0.5359,2.0,0.0717,0.0179,7.46,0,-7.46
+2022-05-27,2022,WTA,frenchopen,clay,3rd Round,Anisimova A,Muchova K,loser,0.3794,3.36,0.2747,0.0291,15.0,0,-15.0
+2022-05-27,2022,WTA,frenchopen,clay,3rd Round,Gauff C,Kanepi K,winner,0.6453,1.64,0.0584,0.0228,6.67,1,4.27
+2022-05-27,2022,ATP,frenchopen,clay,3rd Round,Schwartzman D,Dimitrov G,winner,0.5281,2.6,0.373,0.0583,15.0,1,24.0
+2022-05-27,2022,WTA,frenchopen,clay,3rd Round,Teichmann J,Azarenka V,loser,0.5825,1.97,0.1476,0.038,11.92,0,-11.92
+2022-05-27,2022,ATP,frenchopen,clay,3rd Round,Khachanov K,Norrie C,winner,0.3787,2.78,0.0527,0.0074,6.33,1,11.28
+2022-05-27,2022,ATP,frenchopen,clay,3rd Round,Zapata Miralles B,Isner J,loser,0.7011,1.71,0.1988,0.07,14.93,0,-14.93
+2022-05-28,2022,ATP,frenchopen,clay,3rd Round,Medvedev D,Kecmanovic M,loser,0.455,2.4,0.0919,0.0164,8.64,0,-8.64
+2022-05-28,2022,ATP,frenchopen,clay,3rd Round,Hurkacz H,Goffin D,loser,0.5111,2.4,0.2265,0.0405,15.0,0,-15.0
+2022-05-28,2022,WTA,frenchopen,clay,3rd Round,Zheng Q,Cornet A,loser,0.4803,2.33,0.1191,0.0224,10.24,0,-10.24
+2022-05-28,2022,WTA,frenchopen,clay,3rd Round,Keys M,Rybakina E,winner,0.4598,2.86,0.3151,0.0423,15.0,1,27.9
+2022-05-28,2022,WTA,frenchopen,clay,2nd Round,Zidansek T,Sherif M,winner,0.5992,1.76,0.0545,0.0179,6.44,1,4.9
+2022-05-29,2022,WTA,frenchopen,clay,4th Round,Trevisan M,Sasnovich A,winner,0.5529,2.18,0.2053,0.0435,15.0,1,17.7
+2022-05-30,2022,ATP,frenchopen,clay,4th Round,Ruud C,Hurkacz H,winner,0.7399,1.66,0.2282,0.0864,15.0,1,9.9
+2022-05-30,2022,ATP,frenchopen,clay,4th Round,Rune H,Tsitsipas S,loser,0.8308,1.27,0.0551,0.051,6.48,0,-6.48
+2022-05-30,2022,WTA,frenchopen,clay,4th Round,Kudermetova V,Keys M,winner,0.5204,2.26,0.1761,0.0349,13.6,1,17.13
+2022-05-30,2022,ATP,frenchopen,clay,4th Round,Rublev A,Sinner J,loser,0.5357,2.1,0.1249,0.0284,10.58,0,-10.58
+2022-05-31,2022,ATP,frenchopen,clay,Quarterfinals,Nadal R,Djokovic N,winner,0.4276,3.1,0.3257,0.0388,15.0,1,31.5
+2022-05-31,2022,WTA,frenchopen,clay,Quarterfinals,Gauff C,Stephens S,loser,0.4174,2.82,0.177,0.0243,13.65,0,-13.65
+2022-06-01,2022,ATP,frenchopen,clay,Quarterfinals,Cilic M,Rublev A,loser,0.6124,1.8,0.1022,0.032,9.25,0,-9.25
+2022-06-01,2022,ATP,frenchopen,clay,Quarterfinals,Ruud C,Rune H,winner,0.733,1.5,0.0995,0.0497,9.09,1,4.54
+2022-06-27,2022,ATP,wimbledon,grass,1st Round,Kokkinakis T,Majchrzak K,winner,0.5311,2.17,0.1526,0.0326,12.21,1,14.29
+2022-06-27,2022,ATP,wimbledon,grass,1st Round,Bublik A,Fucsovics M,loser,0.5002,2.66,0.3306,0.0498,15.0,0,-15.0
+2022-06-27,2022,ATP,wimbledon,grass,1st Round,Kecmanovic M,Millman J,loser,0.4359,3.13,0.3642,0.0428,15.0,0,-15.0
+2022-06-27,2022,ATP,wimbledon,grass,1st Round,Munar J,Monteiro T,winner,0.4321,2.4,0.0371,0.0066,5.42,1,7.58
+2022-06-27,2022,ATP,wimbledon,grass,1st Round,Tabilo A,Djere L,winner,0.4636,3.0,0.3908,0.0488,15.0,1,30.0
+2022-06-27,2022,ATP,wimbledon,grass,1st Round,Marterer M,Bedene A,winner,0.4842,2.13,0.0313,0.0069,5.08,1,5.74
+2022-06-27,2022,WTA,wimbledon,grass,1st Round,Hontama M,Tauson C,winner,0.4885,2.5,0.2212,0.0369,15.0,1,22.5
+2022-06-27,2022,WTA,wimbledon,grass,1st Round,Cocciaretto E,Trevisan M,winner,0.4509,2.7,0.2174,0.032,15.0,1,25.5
+2022-06-27,2022,WTA,wimbledon,grass,1st Round,Raducanu E,Van Uytvanck A,winner,0.5195,2.49,0.2936,0.0493,15.0,1,22.35
+2022-06-28,2022,ATP,wimbledon,grass,1st Round,Ymer M,Altmaier D,winner,0.568,1.91,0.0848,0.0233,8.23,1,7.49
+2022-06-28,2022,ATP,wimbledon,grass,1st Round,Brooksby J,Kukushkin M,loser,0.4012,3.1,0.2438,0.029,15.0,0,-15.0
+2022-06-28,2022,ATP,wimbledon,grass,1st Round,Garin C,Ymer E,loser,0.4411,2.71,0.1954,0.0286,14.73,0,-14.73
+2022-06-28,2022,ATP,wimbledon,grass,1st Round,Gasquet R,Sousa J,loser,0.4053,2.85,0.1552,0.021,12.36,0,-12.36
+2022-06-28,2022,ATP,wimbledon,grass,1st Round,Baez S,Daniel T,winner,0.5621,1.92,0.0791,0.0215,7.89,1,7.26
+2022-06-28,2022,ATP,wimbledon,grass,1st Round,Goffin D,Albot R,winner,0.6503,1.6,0.0404,0.0168,5.61,1,3.37
+2022-06-28,2022,WTA,wimbledon,grass,1st Round,Davis L,Brengle M,loser,0.5096,2.2,0.1212,0.0252,10.36,0,-10.36
+2022-06-28,2022,WTA,wimbledon,grass,1st Round,Bara I,Paquet C,winner,0.4931,2.26,0.1144,0.0227,9.97,1,12.56
+2022-06-28,2022,WTA,wimbledon,grass,1st Round,Bogdan A,Yastremska D,winner,0.4145,2.73,0.1316,0.019,10.98,1,18.99
+2022-06-28,2022,WTA,wimbledon,grass,1st Round,Tomljanovic A,Teichmann J,winner,0.6405,1.67,0.0696,0.026,7.33,1,4.91
+2022-06-28,2022,WTA,wimbledon,grass,1st Round,Cornet A,Putintseva Y,loser,0.4654,2.4,0.1169,0.0209,10.11,0,-10.11
+2022-06-28,2022,WTA,wimbledon,grass,1st Round,Liu C,Parrizas Diaz N,loser,0.5207,2.35,0.2236,0.0414,15.0,0,-15.0
+2022-06-28,2022,WTA,wimbledon,grass,1st Round,Golubic V,Petkovic A,loser,0.4323,2.55,0.1024,0.0165,9.26,0,-9.26
+2022-06-28,2022,WTA,wimbledon,grass,1st Round,Wickmayer Y,Zhu L,loser,0.4641,2.6,0.2067,0.0323,15.0,0,-15.0
+2022-06-28,2022,WTA,wimbledon,grass,1st Round,Buzarnescu M,Schunk N,winner,0.4269,2.55,0.0885,0.0143,8.44,1,13.08
+2022-06-28,2022,WTA,wimbledon,grass,1st Round,Tomova V,Saville D,winner,0.477,2.71,0.2927,0.0428,15.0,1,25.65
+2022-06-28,2022,ATP,wimbledon,grass,1st Round,Giron M,Rune H,loser,0.512,2.29,0.1724,0.0334,13.38,0,-13.38
+2022-06-28,2022,ATP,wimbledon,grass,1st Round,Sonego L,Kudla D,winner,0.5787,2.0,0.1575,0.0394,12.5,1,12.5
+2022-06-28,2022,WTA,wimbledon,grass,1st Round,Martic P,Rogers S,winner,0.4745,2.6,0.2336,0.0365,15.0,1,24.0
+2022-06-28,2022,WTA,wimbledon,grass,1st Round,Tan H,Williams S,winner,0.3554,3.75,0.3326,0.0302,15.0,1,41.25
+2022-06-28,2022,ATP,wimbledon,grass,1st Round,Broady L,Klein L,loser,0.5279,2.28,0.2036,0.0398,15.0,0,-15.0
+2022-06-28,2022,WTA,wimbledon,grass,1st Round,Zheng Q,Stephens S,winner,0.4743,2.29,0.0862,0.0167,8.3,1,10.71
+2022-06-29,2022,ATP,wimbledon,grass,2nd Round,Paul T,Mannarino A,loser,0.5047,2.5,0.2618,0.0436,15.0,0,-15.0
+2022-06-29,2022,WTA,wimbledon,grass,2nd Round,Juvan K,Galfi D,loser,0.4532,2.9,0.3144,0.0414,15.0,0,-15.0
+2022-06-29,2022,ATP,wimbledon,grass,2nd Round,Goffin D,Baez S,loser,0.4518,2.75,0.2424,0.0346,15.0,0,-15.0
+2022-06-29,2022,ATP,wimbledon,grass,2nd Round,Johnson S,Peniston R,loser,0.5691,1.84,0.0472,0.014,6.01,0,-6.01
+2022-06-29,2022,ATP,wimbledon,grass,2nd Round,Humbert U,Ruud C,winner,0.4381,2.5,0.0952,0.0159,8.84,1,13.26
+2022-06-29,2022,ATP,wimbledon,grass,2nd Round,Basilashvili N,Halys Q,loser,0.4554,2.3,0.0473,0.0091,6.02,0,-6.02
+2022-06-29,2022,ATP,wimbledon,grass,2nd Round,Vesely J,Davidovich Fokina A,winner,0.4592,2.51,0.1527,0.0253,12.22,1,18.45
+2022-06-29,2022,ATP,wimbledon,grass,2nd Round,Van Rijthoven T,Opelka R,winner,0.5989,1.83,0.096,0.0289,8.88,1,7.37
+2022-06-29,2022,WTA,wimbledon,grass,2nd Round,Garcia C,Raducanu E,winner,0.4835,2.35,0.1362,0.0252,11.25,1,15.18
+2022-06-29,2022,WTA,wimbledon,grass,2nd Round,Niemeier J,Kontaveit A,winner,0.3901,2.9,0.1313,0.0173,10.96,1,20.82
+2022-06-29,2022,WTA,wimbledon,grass,2nd Round,Zhang S,Kostyuk M,winner,0.5597,2.05,0.1473,0.0351,11.9,1,12.5
+2022-06-29,2022,WTA,wimbledon,grass,2nd Round,Parry D,Hontama M,loser,0.5128,2.49,0.277,0.0465,15.0,0,-15.0
+2022-06-30,2022,ATP,wimbledon,grass,2nd Round,Broady L,Schwartzman D,winner,0.382,3.5,0.337,0.0337,15.0,1,37.5
+2022-06-30,2022,ATP,wimbledon,grass,2nd Round,Nakashima B,Shapovalov D,winner,0.4641,2.4,0.1139,0.0203,9.94,1,13.91
+2022-06-30,2022,ATP,wimbledon,grass,2nd Round,Gasquet R,Mcdonald M,winner,0.5149,2.49,0.282,0.0473,15.0,1,22.35
+2022-06-30,2022,ATP,wimbledon,grass,2nd Round,Brooksby J,Bonzi B,winner,0.5058,2.52,0.2745,0.0452,15.0,1,22.8
+2022-06-30,2022,WTA,wimbledon,grass,2nd Round,Cornet A,Liu C,loser,0.4311,2.68,0.1553,0.0231,12.37,0,-12.37
+2022-06-30,2022,WTA,wimbledon,grass,2nd Round,Zheng Q,Minnen G,loser,0.4387,2.55,0.1187,0.0191,10.22,0,-10.22
+2022-06-30,2022,WTA,wimbledon,grass,2nd Round,Rybakina E,Andreescu B,winner,0.5268,2.3,0.2116,0.0407,15.0,1,19.5
+2022-06-30,2022,WTA,wimbledon,grass,2nd Round,Watson H,Wang Q,winner,0.4418,2.6,0.1488,0.0232,11.99,1,19.18
+2022-06-30,2022,ATP,wimbledon,grass,2nd Round,De Minaur A,Draper J,loser,0.4821,2.71,0.3065,0.0448,15.0,0,-15.0
+2022-06-30,2022,WTA,wimbledon,grass,2nd Round,Krejcikova B,Golubic V,loser,0.443,2.57,0.1386,0.0221,11.39,0,-11.39
+2022-07-01,2022,ATP,wimbledon,grass,3rd Round,Paul T,Vesely J,loser,0.456,3.0,0.368,0.046,15.0,0,-15.0
+2022-07-01,2022,ATP,wimbledon,grass,3rd Round,Goffin D,Humbert U,loser,0.4393,2.42,0.0632,0.0111,6.95,0,-6.95
+2022-07-01,2022,ATP,wimbledon,grass,3rd Round,Van Rijthoven T,Basilashvili N,loser,0.4266,3.1,0.3225,0.0384,15.0,0,-15.0
+2022-07-01,2022,ATP,wimbledon,grass,3rd Round,Tiafoe F,Bublik A,loser,0.5871,1.84,0.0803,0.0239,7.96,0,-7.96
+2022-07-01,2022,ATP,wimbledon,grass,2nd Round,Kubler J,Novak D,loser,0.4374,2.93,0.2817,0.0365,15.0,0,-15.0
+2022-07-01,2022,ATP,wimbledon,grass,3rd Round,Sinner J,Isner J,loser,0.4733,2.46,0.1644,0.0282,12.91,0,-12.91
+2022-07-01,2022,ATP,wimbledon,grass,2nd Round,Sock J,Cressy M,winner,0.4599,2.95,0.3567,0.0457,15.0,1,29.25
+2022-07-01,2022,WTA,wimbledon,grass,3rd Round,Watson H,Juvan K,winner,0.3838,2.85,0.0939,0.0127,8.76,1,16.2
+2022-07-01,2022,WTA,wimbledon,grass,3rd Round,Niemeier J,Tsurenko L,loser,0.5127,2.51,0.287,0.0475,15.0,0,-15.0
+2022-07-01,2022,WTA,wimbledon,grass,3rd Round,Garcia C,Zhang S,loser,0.5306,2.25,0.1937,0.0387,14.63,0,-14.63
+2022-07-01,2022,ATP,wimbledon,grass,3rd Round,Norrie C,Johnson S,loser,0.3708,3.76,0.3943,0.0357,15.0,0,-15.0
+2022-07-02,2022,WTA,wimbledon,grass,3rd Round,Rybakina E,Zheng Q,winner,0.6886,1.57,0.0811,0.0356,8.0,1,4.56
+2022-07-02,2022,ATP,wimbledon,grass,3rd Round,Kubler J,Sock J,winner,0.4617,2.55,0.1772,0.0286,13.66,1,21.18
+2022-07-02,2022,WTA,wimbledon,grass,3rd Round,Martic P,Pegula J,winner,0.4086,3.2,0.3075,0.0349,15.0,1,33.0
+2022-07-02,2022,WTA,wimbledon,grass,3rd Round,Badosa P,Kvitova P,winner,0.4774,2.4,0.1457,0.026,11.81,1,16.53
+2022-07-02,2022,WTA,wimbledon,grass,3rd Round,Tomljanovic A,Krejcikova B,winner,0.5032,2.25,0.1323,0.0265,11.02,1,13.77
+2022-07-02,2022,WTA,wimbledon,grass,3rd Round,Anisimova A,Gauff C,winner,0.4198,3.3,0.3854,0.0419,15.0,1,34.5
+2022-07-03,2022,ATP,wimbledon,grass,4th Round,Goffin D,Tiafoe F,winner,0.5789,1.88,0.0884,0.0251,8.44,1,7.42
+2022-07-03,2022,ATP,wimbledon,grass,4th Round,Sinner J,Alcaraz C,winner,0.3901,3.41,0.3303,0.0343,15.0,1,36.15
+2022-07-03,2022,ATP,wimbledon,grass,4th Round,Norrie C,Paul T,loser,0.4476,2.65,0.186,0.0282,14.18,0,-14.18
+2022-07-03,2022,WTA,wimbledon,grass,4th Round,Bouzkova M,Garcia C,loser,0.5577,2.2,0.2269,0.0473,15.0,0,-15.0
+2022-07-03,2022,WTA,wimbledon,grass,4th Round,Niemeier J,Watson H,loser,0.4544,2.65,0.2042,0.0309,15.0,0,-15.0
+2022-07-04,2022,WTA,wimbledon,grass,4th Round,Rybakina E,Martic P,loser,0.4212,2.95,0.2426,0.0311,15.0,0,-15.0
+2022-07-04,2022,WTA,wimbledon,grass,4th Round,Tomljanovic A,Cornet A,winner,0.5099,2.16,0.1014,0.0219,9.2,1,10.67
+2022-07-04,2022,WTA,wimbledon,grass,4th Round,Halep S,Badosa P,loser,0.4019,3.4,0.3663,0.0382,15.0,0,-15.0
+2022-07-05,2022,WTA,wimbledon,grass,Quarterfinals,Maria T,Niemeier J,winner,0.4644,2.56,0.189,0.0303,14.35,1,22.39
+2022-07-05,2022,ATP,wimbledon,grass,Quarterfinals,Norrie C,Goffin D,loser,0.4469,3.06,0.3674,0.0446,15.0,0,-15.0
+2022-07-06,2022,ATP,wimbledon,grass,Quarterfinals,Nadal R,Fritz T,loser,0.3907,3.0,0.1722,0.0215,13.36,0,-13.36
+2022-07-06,2022,WTA,wimbledon,grass,Quarterfinals,Halep S,Anisimova A,loser,0.4202,3.22,0.3531,0.0398,15.0,0,-15.0
+2022-07-06,2022,WTA,wimbledon,grass,Quarterfinals,Rybakina E,Tomljanovic A,loser,0.454,3.0,0.362,0.0452,15.0,0,-15.0
+2022-07-09,2022,WTA,wimbledon,grass,The Final,Rybakina E,Jabeur O,winner,0.4244,2.57,0.0908,0.0145,8.57,1,13.46
+2022-07-09,2022,WTA,wimbledon,grass,The Final,Rybakina E,Jabeur O,loser,0.5756,1.83,0.0533,0.0161,6.37,0,-6.37
+2022-08-29,2022,ATP,usopen,hard,1st Round,Moutet C,Wawrinka S,loser,0.5184,2.12,0.0989,0.0221,9.05,0,-9.05
+2022-08-29,2022,ATP,usopen,hard,1st Round,Borges N,Shelton B,winner,0.4423,3.15,0.3932,0.0457,15.0,1,32.25
+2022-08-29,2022,ATP,usopen,hard,1st Round,Nava E,Millman J,winner,0.3836,3.6,0.3809,0.0366,15.0,1,39.0
+2022-08-29,2022,ATP,usopen,hard,1st Round,Davidovich Fokina A,Nishioka Y,loser,0.4966,2.35,0.1671,0.0309,13.07,0,-13.07
+2022-08-29,2022,WTA,usopen,hard,1st Round,Marino R,Frech M,loser,0.4838,2.3,0.1127,0.0217,9.86,0,-9.86
+2022-08-29,2022,ATP,usopen,hard,1st Round,Garin C,Lehecka J,winner,0.5253,2.11,0.1084,0.0244,9.61,1,10.67
+2022-08-29,2022,ATP,usopen,hard,1st Round,Van De Zandschulp B,Machac T,loser,0.3824,3.1,0.1855,0.0221,14.15,0,-14.15
+2022-08-29,2022,ATP,usopen,hard,1st Round,Bublik A,Gaston H,loser,0.3587,3.35,0.2015,0.0214,15.0,0,-15.0
+2022-08-29,2022,ATP,usopen,hard,1st Round,Thompson J,Sonego L,winner,0.4869,2.75,0.3391,0.0484,15.0,1,26.25
+2022-08-29,2022,ATP,usopen,hard,1st Round,Draper J,Ruusuvuori E,winner,0.5024,2.3,0.1556,0.0299,12.39,1,16.1
+2022-08-29,2022,WTA,usopen,hard,1st Round,Kalinskaya A,Peterson R,loser,0.4451,3.0,0.3352,0.0419,15.0,0,-15.0
+2022-08-29,2022,ATP,usopen,hard,1st Round,Tabilo A,Majchrzak K,loser,0.491,2.4,0.1784,0.0319,13.73,0,-13.73
+2022-08-29,2022,ATP,usopen,hard,1st Round,Rinderknech A,Halys Q,loser,0.3671,2.89,0.0608,0.008,6.81,0,-6.81
+2022-08-29,2022,WTA,usopen,hard,1st Round,Zhang S,Teichmann J,winner,0.5162,2.05,0.0582,0.0139,6.66,1,6.99
+2022-08-29,2022,WTA,usopen,hard,1st Round,Tomljanovic A,Muchova K,loser,0.5274,2.45,0.2921,0.0504,15.0,0,-15.0
+2022-08-30,2022,ATP,usopen,hard,1st Round,Eubanks C,Martinez P,loser,0.6049,2.19,0.3248,0.0682,15.0,0,-15.0
+2022-08-30,2022,ATP,usopen,hard,1st Round,Tiafoe F,Giron M,winner,0.7481,1.42,0.0623,0.0371,6.9,1,2.9
+2022-08-30,2022,ATP,usopen,hard,1st Round,Musetti L,Goffin D,winner,0.5182,2.15,0.1141,0.0248,9.95,1,11.44
+2022-08-30,2022,ATP,usopen,hard,1st Round,Dimitrov G,Johnson S,loser,0.4582,2.83,0.2968,0.0405,15.0,0,-15.0
+2022-08-30,2022,WTA,usopen,hard,1st Round,Zheng Q,Ostapenko J,loser,0.6436,1.93,0.2421,0.0651,15.0,0,-15.0
+2022-08-30,2022,WTA,usopen,hard,1st Round,Potapova A,Liu C,loser,0.4279,3.1,0.3265,0.0389,15.0,0,-15.0
+2022-08-30,2022,WTA,usopen,hard,1st Round,Stephens S,Minnen G,loser,0.3883,3.6,0.398,0.0383,15.0,0,-15.0
+2022-08-30,2022,WTA,usopen,hard,1st Round,Muguruza G,Tauson C,winner,0.5856,1.97,0.1536,0.0396,12.27,1,11.9
+2022-08-30,2022,WTA,usopen,hard,1st Round,Kanepi K,Martincova T,loser,0.3855,2.85,0.0986,0.0133,9.04,0,-9.04
+2022-08-30,2022,WTA,usopen,hard,1st Round,Cirstea S,Siegemund L,loser,0.3746,3.22,0.2061,0.0232,15.0,0,-15.0
+2022-08-30,2022,WTA,usopen,hard,1st Round,Krunic A,Avanesyan E,loser,0.5201,2.55,0.3261,0.0526,15.0,0,-15.0
+2022-08-30,2022,WTA,usopen,hard,1st Round,Sasnovich A,Cocciaretto E,loser,0.399,3.11,0.2409,0.0285,15.0,0,-15.0
+2022-08-30,2022,WTA,usopen,hard,1st Round,Davis L,Bronzetti L,loser,0.5831,2.02,0.1779,0.0436,13.7,0,-13.7
+2022-08-30,2022,ATP,usopen,hard,1st Round,Gasquet R,Daniel T,winner,0.6224,1.73,0.0768,0.0263,7.75,1,5.66
+2022-08-30,2022,WTA,usopen,hard,1st Round,Bucsa C,Juvan K,loser,0.5975,1.91,0.1412,0.0388,11.54,0,-11.54
+2022-08-30,2022,ATP,usopen,hard,1st Round,Bonzi B,Humbert U,loser,0.464,2.3,0.0672,0.0129,7.19,0,-7.19
+2022-08-30,2022,WTA,usopen,hard,1st Round,Yuan Y,Fourlis J,loser,0.4699,2.75,0.2921,0.0417,15.0,0,-15.0
+2022-08-30,2022,WTA,usopen,hard,1st Round,Putintseva Y,Anisimova A,winner,0.3678,3.58,0.3169,0.0307,15.0,1,38.7
+2022-08-31,2022,ATP,usopen,hard,2nd Round,Paul T,Korda S,winner,0.5223,2.16,0.1281,0.0276,10.77,1,12.49
+2022-08-31,2022,ATP,usopen,hard,2nd Round,Cachin P,Holt B,winner,0.4966,2.62,0.3011,0.0465,15.0,1,24.3
+2022-08-31,2022,ATP,usopen,hard,1st Round,Kubler J,Ymer M,loser,0.5967,1.74,0.0383,0.0129,5.49,0,-5.49
+2022-08-31,2022,WTA,usopen,hard,2nd Round,Garcia C,Kalinskaya A,loser,0.3726,3.74,0.3935,0.0359,15.0,0,-15.0
+2022-08-31,2022,WTA,usopen,hard,2nd Round,Galfi D,Dart H,winner,0.4934,2.2,0.0855,0.0178,8.26,1,9.91
+2022-08-31,2022,WTA,usopen,hard,2nd Round,Marino R,Snigur D,loser,0.5156,2.56,0.32,0.0513,15.0,0,-15.0
+2022-08-31,2022,WTA,usopen,hard,2nd Round,Keys M,Giorgi C,loser,0.3964,2.97,0.1772,0.0225,13.66,0,-13.66
+2022-08-31,2022,WTA,usopen,hard,1st Round,Collins D,Osaka N,winner,0.4772,2.5,0.1929,0.0322,14.58,1,21.87
+2022-08-31,2022,WTA,usopen,hard,1st Round,Cornet A,Raducanu E,winner,0.4969,2.45,0.2174,0.0375,15.0,1,21.75
+2022-09-01,2022,ATP,usopen,hard,2nd Round,Brooksby J,Coric B,loser,0.5503,1.97,0.0841,0.0217,8.18,0,-8.18
+2022-09-01,2022,WTA,usopen,hard,2nd Round,Zheng Q,Potapova A,loser,0.5114,2.56,0.3091,0.0495,15.0,0,-15.0
+2022-09-01,2022,WTA,usopen,hard,2nd Round,Cornet A,Siniakova K,loser,0.3642,2.85,0.0381,0.0051,5.48,0,-5.48
+2022-09-01,2022,WTA,usopen,hard,2nd Round,Muguruza G,Fruhvirtova L,loser,0.3866,2.8,0.0826,0.0115,8.09,0,-8.09
+2022-09-01,2022,WTA,usopen,hard,2nd Round,Sabalenka A,Kanepi K,loser,0.3933,2.95,0.1601,0.0205,12.65,0,-12.65
+2022-09-01,2022,ATP,usopen,hard,2nd Round,Nakashima B,Dimitrov G,winner,0.4575,2.31,0.0568,0.0108,6.58,1,8.62
+2022-09-01,2022,WTA,usopen,hard,2nd Round,Martic P,Badosa P,loser,0.6705,1.6,0.0727,0.0303,7.51,0,-7.51
+2022-09-01,2022,ATP,usopen,hard,2nd Round,Gasquet R,Kecmanovic M,winner,0.3528,3.4,0.1997,0.0208,14.98,1,35.95
+2022-09-01,2022,WTA,usopen,hard,2nd Round,Davis L,Alexandrova E,winner,0.3513,3.26,0.1452,0.0161,11.78,1,26.62
+2022-09-01,2022,WTA,usopen,hard,2nd Round,Bencic B,Cirstea S,loser,0.4087,2.85,0.1647,0.0223,12.93,0,-12.93
+2022-09-01,2022,WTA,usopen,hard,2nd Round,Andreescu B,Haddad Maia B,winner,0.5652,2.25,0.2717,0.0543,15.0,1,18.75
+2022-09-01,2022,WTA,usopen,hard,2nd Round,Williams S,Kontaveit A,winner,0.4383,3.19,0.3982,0.0455,15.0,1,32.85
+2022-09-01,2022,WTA,usopen,hard,2nd Round,Niemeier J,Putintseva Y,winner,0.4235,2.49,0.0545,0.0091,6.44,1,9.59
+2022-09-02,2022,ATP,usopen,hard,3rd Round,Carreno Busta P,De Minaur A,loser,0.4822,2.45,0.1813,0.0313,13.9,0,-13.9
+2022-09-02,2022,WTA,usopen,hard,2nd Round,Collins D,Bucsa C,winner,0.8024,1.33,0.0673,0.0509,7.19,1,2.37
+2022-09-02,2022,WTA,usopen,hard,3rd Round,Zhang S,Marino R,loser,0.3992,2.75,0.0979,0.014,8.99,0,-8.99
+2022-09-02,2022,WTA,usopen,hard,3rd Round,Jabeur O,Rogers S,loser,0.4136,2.61,0.0795,0.0123,7.91,0,-7.91
+2022-09-02,2022,ATP,usopen,hard,3rd Round,Khachanov K,Draper J,winner,0.5823,2.3,0.3393,0.0652,15.0,1,19.5
+2022-09-02,2022,WTA,usopen,hard,3rd Round,Gauff C,Keys M,loser,0.5201,2.35,0.2222,0.0411,15.0,0,-15.0
+2022-09-02,2022,WTA,usopen,hard,2nd Round,Burel C,Van Uytvanck A,winner,0.4419,2.6,0.149,0.0233,12.0,1,19.2
+2022-09-02,2022,ATP,usopen,hard,3rd Round,Ruud C,Paul T,loser,0.4086,2.66,0.0868,0.0131,8.34,0,-8.34
+2022-09-02,2022,ATP,usopen,hard,3rd Round,Berrettini M,Murray A,loser,0.3623,2.97,0.0761,0.0097,7.71,0,-7.71
+2022-09-03,2022,WTA,usopen,hard,3rd Round,Tomljanovic A,Williams S,loser,0.6529,1.83,0.1948,0.0587,14.7,0,-14.7
+2022-09-03,2022,ATP,usopen,hard,3rd Round,Tiafoe F,Schwartzman D,loser,0.4429,3.0,0.3286,0.0411,15.0,0,-15.0
+2022-09-03,2022,ATP,usopen,hard,3rd Round,Ivashka I,Musetti L,loser,0.3835,2.9,0.1123,0.0148,9.84,0,-9.84
+2022-09-03,2022,ATP,usopen,hard,3rd Round,Cilic M,Evans D,loser,0.4695,2.5,0.1738,0.029,13.46,0,-13.46
+2022-09-04,2022,ATP,usopen,hard,4th Round,Khachanov K,Carreno Busta P,winner,0.3696,2.9,0.0718,0.0094,7.46,1,14.17
+2022-09-04,2022,WTA,usopen,hard,3rd Round,Collins D,Cornet A,winner,0.6375,1.67,0.0647,0.0241,7.04,1,4.72
+2022-09-05,2022,WTA,usopen,hard,4th Round,Jabeur O,Kudermetova V,winner,0.5809,1.9,0.1036,0.0288,9.33,1,8.4
+2022-09-05,2022,WTA,usopen,hard,4th Round,Pegula J,Kvitova P,winner,0.5711,1.91,0.0908,0.0249,8.58,1,7.81
+2022-09-05,2022,ATP,usopen,hard,4th Round,Rublev A,Norrie C,winner,0.4517,2.3,0.0389,0.0075,5.53,1,7.18
+2022-09-06,2022,WTA,usopen,hard,4th Round,Sabalenka A,Collins D,loser,0.5309,2.1,0.1149,0.0261,9.99,0,-9.99
+2022-09-06,2022,ATP,usopen,hard,Quarterfinals,Ruud C,Berrettini M,winner,0.5641,2.1,0.1846,0.042,14.1,1,15.5
+2022-09-07,2022,WTA,usopen,hard,Quarterfinals,Garcia C,Gauff C,loser,0.5352,2.2,0.1773,0.0369,13.67,0,-13.67
+2022-09-07,2022,ATP,usopen,hard,Quarterfinals,Tiafoe F,Rublev A,loser,0.5902,1.93,0.1391,0.0374,11.42,0,-11.42
+2022-09-08,2022,ATP,usopen,hard,Quarterfinals,Alcaraz C,Sinner J,loser,0.4692,2.65,0.2435,0.0369,15.0,0,-15.0
+2022-09-09,2022,WTA,usopen,hard,Semifinals,Swiatek I,Sabalenka A,loser,0.371,2.85,0.0575,0.0078,6.62,0,-6.62
+2022-09-09,2022,ATP,usopen,hard,Semifinals,Ruud C,Khachanov K,loser,0.3791,3.05,0.1563,0.0191,12.43,0,-12.43
+2022-09-10,2022,ATP,usopen,hard,Semifinals,Alcaraz C,Tiafoe F,winner,0.6833,1.56,0.0659,0.0294,7.11,1,3.98
+2022-09-10,2022,WTA,usopen,hard,The Final,Swiatek I,Jabeur O,winner,0.653,1.62,0.0579,0.0233,6.64,1,4.12
+2022-09-11,2022,ATP,usopen,hard,The Final,Alcaraz C,Ruud C,loser,0.4552,3.02,0.3747,0.0464,15.0,0,-15.0
+2023-01-16,2023,ATP,ausopen,hard,1st Round,Watanuki Y,Rinderknech A,loser,0.6123,1.77,0.0837,0.0272,8.16,0,-8.16
+2023-01-16,2023,ATP,ausopen,hard,1st Round,Nadal R,Draper J,loser,0.3509,3.3,0.1579,0.0172,12.52,0,-12.52
+2023-01-16,2023,ATP,ausopen,hard,1st Round,Nishioka Y,Ymer M,winner,0.5454,2.04,0.1125,0.0271,9.86,1,10.25
+2023-01-16,2023,ATP,ausopen,hard,1st Round,Mcdonald M,Nakashima B,winner,0.4232,2.72,0.1511,0.022,12.12,1,20.85
+2023-01-16,2023,WTA,ausopen,hard,1st Round,Podoroska N,Jeanjean L,loser,0.5477,2.1,0.1502,0.0341,12.07,0,-12.07
+2023-01-16,2023,WTA,ausopen,hard,1st Round,Bondar A,Bogdan A,winner,0.4385,3.17,0.3899,0.0449,15.0,1,32.55
+2023-01-16,2023,WTA,ausopen,hard,1st Round,Sasnovich A,Fruhvirtova B,loser,0.4232,3.05,0.2909,0.0355,15.0,0,-15.0
+2023-01-16,2023,WTA,ausopen,hard,1st Round,Azarenka V,Kenin S,winner,0.7155,1.48,0.0589,0.0307,6.7,1,3.22
+2023-01-16,2023,WTA,ausopen,hard,1st Round,Kalinina A,Vandeweghe C,loser,0.3585,3.48,0.2475,0.025,15.0,0,-15.0
+2023-01-16,2023,WTA,ausopen,hard,1st Round,Muchova K,Tsurenko L,winner,0.6525,1.72,0.1223,0.0425,10.43,1,7.51
+2023-01-16,2023,WTA,ausopen,hard,1st Round,Rybakina E,Cocciaretto E,winner,0.7672,1.36,0.0434,0.0302,5.79,1,2.08
+2023-01-16,2023,WTA,ausopen,hard,1st Round,Andreescu B,Bouzkova M,loser,0.4824,2.2,0.0612,0.0128,6.84,0,-6.84
+2023-01-16,2023,WTA,ausopen,hard,1st Round,Kostyuk M,Anisimova A,loser,0.577,1.93,0.1136,0.0305,9.92,0,-9.92
+2023-01-16,2023,WTA,ausopen,hard,1st Round,Gadecki O,Kudermetova P,winner,0.4449,2.6,0.1567,0.0245,12.45,1,19.92
+2023-01-16,2023,ATP,ausopen,hard,1st Round,Daniel T,Escobedo E,loser,0.523,2.57,0.3441,0.0548,15.0,0,-15.0
+2023-01-16,2023,WTA,ausopen,hard,1st Round,Collins D,Kalinskaya A,loser,0.3576,3.1,0.1086,0.0129,9.63,0,-9.63
+2023-01-16,2023,WTA,ausopen,hard,1st Round,Bucsa C,Lys E,loser,0.5288,2.05,0.084,0.02,8.18,0,-8.18
+2023-01-16,2023,WTA,ausopen,hard,1st Round,Teichmann J,Dart H,loser,0.4724,2.7,0.2754,0.0405,15.0,0,-15.0
+2023-01-16,2023,ATP,ausopen,hard,1st Round,Kubler J,Baez S,loser,0.3817,3.66,0.397,0.0373,15.0,0,-15.0
+2023-01-16,2023,ATP,ausopen,hard,1st Round,Hijikata R,Hanfmann Y,winner,0.5072,2.1,0.0652,0.0148,7.07,1,7.77
+2023-01-16,2023,WTA,ausopen,hard,1st Round,Zhu L,Marino R,winner,0.5243,2.3,0.2059,0.0396,15.0,1,19.5
+2023-01-16,2023,ATP,ausopen,hard,1st Round,Tsitsipas S,Halys Q,winner,0.875,1.18,0.0326,0.0452,5.15,1,0.93
+2023-01-17,2023,WTA,ausopen,hard,1st Round,Martic P,Golubic V,loser,0.4727,2.2,0.0399,0.0083,5.58,0,-5.58
+2023-01-17,2023,WTA,ausopen,hard,1st Round,Alexandrova E,Bonaventure Y,loser,0.3509,3.43,0.2037,0.021,15.0,0,-15.0
+2023-01-17,2023,WTA,ausopen,hard,1st Round,Giorgi C,Pavlyuchenkova A,loser,0.5221,2.21,0.1538,0.0318,12.28,0,-12.28
+2023-01-17,2023,WTA,ausopen,hard,1st Round,Mertens E,Muguruza G,winner,0.4817,2.15,0.0356,0.0077,5.33,1,6.13
+2023-01-17,2023,ATP,ausopen,hard,1st Round,Davidovich Fokina A,Bublik A,loser,0.5408,2.25,0.2169,0.0434,15.0,0,-15.0
+2023-01-17,2023,ATP,ausopen,hard,1st Round,Schwartzman D,Krutykh O,loser,0.4392,2.78,0.2211,0.031,15.0,0,-15.0
+2023-01-17,2023,ATP,ausopen,hard,1st Round,Djere L,Bergs Z,loser,0.4143,2.79,0.1558,0.0218,12.4,0,-12.4
+2023-01-18,2023,WTA,ausopen,hard,1st Round,Stefanini L,Maria T,winner,0.4779,2.6,0.2425,0.0379,15.0,1,24.0
+2023-01-18,2023,WTA,ausopen,hard,1st Round,Potapova A,Stephens S,loser,0.5928,1.82,0.0789,0.0241,7.88,0,-7.88
+2023-01-18,2023,WTA,ausopen,hard,2nd Round,Baindl K,Mcnally C,winner,0.4315,2.9,0.2514,0.0331,15.0,1,28.5
+2023-01-18,2023,WTA,ausopen,hard,2nd Round,Kalinina A,Kvitova P,loser,0.7012,1.63,0.1429,0.0567,11.64,0,-11.64
+2023-01-18,2023,WTA,ausopen,hard,2nd Round,Zhu L,Teichmann J,winner,0.4216,3.01,0.2689,0.0334,15.0,1,30.15
+2023-01-18,2023,ATP,ausopen,hard,2nd Round,Fucsovics M,Harris L,loser,0.5887,2.05,0.2068,0.0492,15.0,0,-15.0
+2023-01-18,2023,ATP,ausopen,hard,1st Round,Holt B,Vukic A,winner,0.4856,2.45,0.1898,0.0327,14.4,1,20.88
+2023-01-18,2023,ATP,ausopen,hard,1st Round,Mannarino A,Isner J,loser,0.568,1.9,0.0792,0.022,7.9,0,-7.9
+2023-01-18,2023,ATP,ausopen,hard,1st Round,Ruusuvuori E,Purcell M,loser,0.3786,3.35,0.2684,0.0285,15.0,0,-15.0
+2023-01-18,2023,WTA,ausopen,hard,1st Round,Liu C,Brengle M,loser,0.5143,2.5,0.2858,0.0476,15.0,0,-15.0
+2023-01-18,2023,ATP,ausopen,hard,2nd Round,Cerundolo F,Moutet C,loser,0.6276,1.95,0.2239,0.0589,15.0,0,-15.0
+2023-01-18,2023,ATP,ausopen,hard,2nd Round,Griekspoor T,Van De Zandschulp B,loser,0.6453,1.79,0.1551,0.0491,12.36,0,-12.36
+2023-01-18,2023,ATP,ausopen,hard,2nd Round,Lehecka J,Eubanks C,loser,0.3855,3.01,0.1604,0.02,12.67,0,-12.67
+2023-01-19,2023,ATP,ausopen,hard,2nd Round,Humbert U,Kudla D,loser,0.4657,2.97,0.383,0.0486,15.0,0,-15.0
+2023-01-19,2023,ATP,ausopen,hard,2nd Round,Murray A,Kokkinakis T,winner,0.5108,2.56,0.3078,0.0493,15.0,1,23.4
+2023-01-19,2023,ATP,ausopen,hard,2nd Round,Shelton B,Jarry N,winner,0.6476,1.9,0.2304,0.064,15.0,1,13.5
+2023-01-19,2023,ATP,ausopen,hard,2nd Round,Paul T,Davidovich Fokina A,winner,0.7413,1.54,0.1417,0.0656,11.57,1,6.25
+2023-01-19,2023,WTA,ausopen,hard,2nd Round,Vondrousova M,Jabeur O,loser,0.6199,1.83,0.1344,0.0405,11.14,0,-11.14
+2023-01-19,2023,WTA,ausopen,hard,2nd Round,Zhang S,Martic P,winner,0.5359,2.18,0.1682,0.0356,13.13,1,15.49
+2023-01-19,2023,WTA,ausopen,hard,2nd Round,Parrizas Diaz N,Potapova A,winner,0.4412,2.7,0.1912,0.0281,14.49,1,24.62
+2023-01-19,2023,WTA,ausopen,hard,2nd Round,Linette M,Kontaveit A,winner,0.4613,2.65,0.2224,0.0337,15.0,1,24.75
+2023-01-19,2023,WTA,ausopen,hard,2nd Round,Mertens E,Davis L,winner,0.5606,1.84,0.0315,0.0094,5.09,1,4.27
+2023-01-20,2023,ATP,ausopen,hard,3rd Round,Nishioka Y,Mcdonald M,loser,0.4792,2.56,0.2268,0.0363,15.0,0,-15.0
+2023-01-20,2023,ATP,ausopen,hard,3rd Round,Hurkacz H,Shapovalov D,winner,0.5431,1.94,0.0536,0.0143,6.39,1,6.01
+2023-01-20,2023,ATP,ausopen,hard,3rd Round,Khachanov K,Tiafoe F,loser,0.5413,1.91,0.0339,0.0093,5.23,0,-5.23
+2023-01-20,2023,WTA,ausopen,hard,3rd Round,Krejcikova B,Kalinina A,winner,0.6535,1.72,0.124,0.0431,10.53,1,7.58
+2023-01-20,2023,WTA,ausopen,hard,3rd Round,Rybakina E,Collins D,loser,0.5227,2.46,0.2859,0.0489,15.0,0,-15.0
+2023-01-21,2023,ATP,ausopen,hard,3rd Round,Djokovic N,Dimitrov G,winner,0.866,1.25,0.0825,0.0825,8.09,1,2.02
+2023-01-21,2023,WTA,ausopen,hard,3rd Round,Zhang S,Volynets K,loser,0.369,3.2,0.1808,0.0206,13.87,0,-13.87
+2023-01-21,2023,ATP,ausopen,hard,3rd Round,Shelton B,Popyrin A,winner,0.5261,2.63,0.3835,0.0588,15.0,1,24.45
+2023-01-21,2023,ATP,ausopen,hard,3rd Round,Paul T,Brooksby J,loser,0.4636,2.35,0.0896,0.0166,8.5,0,-8.5
+2023-01-21,2023,WTA,ausopen,hard,3rd Round,Linette M,Alexandrova E,winner,0.4893,2.4,0.1742,0.0311,13.48,1,18.88
+2023-01-22,2023,ATP,ausopen,hard,4th Round,Korda S,Hurkacz H,loser,0.4978,2.65,0.3192,0.0484,15.0,0,-15.0
+2023-01-22,2023,ATP,ausopen,hard,4th Round,Khachanov K,Nishioka Y,loser,0.4244,3.0,0.2732,0.0342,15.0,0,-15.0
+2023-01-22,2023,ATP,ausopen,hard,4th Round,Tsitsipas S,Sinner J,loser,0.4098,3.11,0.2744,0.0325,15.0,0,-15.0
+2023-01-22,2023,WTA,ausopen,hard,4th Round,Pegula J,Krejcikova B,loser,0.4279,3.02,0.2923,0.0362,15.0,0,-15.0
+2023-01-23,2023,ATP,ausopen,hard,4th Round,Rublev A,Rune H,winner,0.4686,2.25,0.0543,0.0109,6.43,1,8.04
+2023-01-23,2023,ATP,ausopen,hard,4th Round,Paul T,Bautista Agut R,loser,0.473,2.3,0.088,0.0169,8.41,0,-8.41
+2023-01-23,2023,WTA,ausopen,hard,4th Round,Sabalenka A,Bencic B,loser,0.4505,2.32,0.0452,0.0086,5.9,0,-5.9
+2023-01-24,2023,ATP,ausopen,hard,Quarterfinals,Khachanov K,Korda S,winner,0.4735,2.24,0.0607,0.0122,6.81,1,8.44
+2023-01-28,2023,WTA,ausopen,hard,The Final,Sabalenka A,Rybakina E,winner,0.575,1.86,0.0696,0.0202,7.33,1,6.3
+2023-05-28,2023,ATP,frenchopen,clay,1st Round,Sonego L,Shelton B,loser,0.3508,3.0,0.0524,0.0066,6.32,0,-6.32
+2023-05-28,2023,ATP,frenchopen,clay,1st Round,Griekspoor T,Martinez P,winner,0.5568,2.2,0.225,0.0469,15.0,1,18.0
+2023-05-28,2023,ATP,frenchopen,clay,1st Round,Kokkinakis T,Evans D,winner,0.5352,2.05,0.0972,0.0231,8.95,1,9.4
+2023-05-28,2023,ATP,frenchopen,clay,1st Round,Kubler J,Diaz Acosta F,winner,0.5166,2.45,0.2657,0.0458,15.0,1,21.75
+2023-05-28,2023,ATP,frenchopen,clay,1st Round,Korda S,Mcdonald M,loser,0.4016,2.66,0.0682,0.0103,7.25,0,-7.25
+2023-05-28,2023,ATP,frenchopen,clay,1st Round,Moutet C,Cazaux A,loser,0.526,2.09,0.0993,0.0228,9.08,0,-9.08
+2023-05-28,2023,ATP,frenchopen,clay,1st Round,Ofner S,Cressy M,loser,0.3574,3.8,0.3583,0.032,15.0,0,-15.0
+2023-05-28,2023,ATP,frenchopen,clay,1st Round,Pouille L,Rodionov J,loser,0.5848,2.25,0.3158,0.0632,15.0,0,-15.0
+2023-05-28,2023,WTA,frenchopen,clay,1st Round,Hunter S,Parrizas Diaz N,loser,0.5594,1.95,0.0907,0.0239,8.57,0,-8.57
+2023-05-28,2023,WTA,frenchopen,clay,1st Round,Errani S,Teichmann J,winner,0.3824,3.4,0.3003,0.0313,15.0,1,36.0
+2023-05-28,2023,WTA,frenchopen,clay,1st Round,Tauson C,Sasnovich A,loser,0.4908,2.49,0.2222,0.0373,15.0,0,-15.0
+2023-05-28,2023,WTA,frenchopen,clay,1st Round,Jeanjean L,Birrell K,winner,0.5116,2.1,0.0744,0.0169,7.61,1,8.37
+2023-05-28,2023,WTA,frenchopen,clay,1st Round,Muchova K,Sakkari M,loser,0.5676,1.95,0.1067,0.0281,9.51,0,-9.51
+2023-05-28,2023,WTA,frenchopen,clay,1st Round,Rakhimova K,Bejlek S,loser,0.5035,2.09,0.0523,0.012,6.31,0,-6.31
+2023-05-28,2023,WTA,frenchopen,clay,1st Round,Podoroska N,Ponchet J,loser,0.4806,2.35,0.1294,0.024,10.85,0,-10.85
+2023-05-28,2023,WTA,frenchopen,clay,1st Round,Shymanovich I,Udvardy P,loser,0.4588,3.0,0.3765,0.0471,15.0,0,-15.0
+2023-05-28,2023,WTA,frenchopen,clay,1st Round,Giorgi C,Cornet A,loser,0.4488,3.0,0.3463,0.0433,15.0,0,-15.0
+2023-05-29,2023,WTA,frenchopen,clay,1st Round,Waltert S,Mandlik E,winner,0.5034,2.05,0.0319,0.0076,5.11,1,5.37
+2023-05-29,2023,WTA,frenchopen,clay,1st Round,Cocciaretto E,Kvitova P,loser,0.63,1.88,0.1844,0.0524,14.08,0,-14.08
+2023-05-29,2023,WTA,frenchopen,clay,1st Round,Blinkova A,Bonaventure Y,loser,0.444,2.85,0.2654,0.0359,15.0,0,-15.0
+2023-05-29,2023,ATP,frenchopen,clay,1st Round,Shapovalov D,Nakashima B,winner,0.5272,2.24,0.1809,0.0365,13.88,1,17.21
+2023-05-29,2023,ATP,frenchopen,clay,1st Round,Schwartzman D,Zapata Miralles B,loser,0.576,1.8,0.0367,0.0115,5.39,0,-5.39
+2023-05-29,2023,WTA,frenchopen,clay,1st Round,Vekic D,Yastremska D,winner,0.6484,1.6,0.0374,0.0156,5.44,1,3.26
+2023-05-29,2023,WTA,frenchopen,clay,1st Round,Pera B,Kontaveit A,loser,0.5108,2.11,0.0779,0.0175,7.82,0,-7.82
+2023-05-29,2023,WTA,frenchopen,clay,1st Round,Shnaider D,Marino R,loser,0.4657,2.93,0.3645,0.0472,15.0,0,-15.0
+2023-05-29,2023,WTA,frenchopen,clay,1st Round,Putintseva Y,Zanevska M,loser,0.4194,2.59,0.0862,0.0135,8.3,0,-8.3
+2023-05-29,2023,WTA,frenchopen,clay,1st Round,Svitolina E,Trevisan M,winner,0.5886,1.76,0.036,0.0118,5.35,1,4.07
+2023-05-29,2023,ATP,frenchopen,clay,1st Round,Giron M,Medjedovic H,winner,0.5587,2.25,0.257,0.0514,15.0,1,18.75
+2023-05-29,2023,ATP,frenchopen,clay,1st Round,Karatsev A,Popyrin A,loser,0.4836,2.3,0.1122,0.0216,9.84,0,-9.84
+2023-05-29,2023,ATP,frenchopen,clay,1st Round,Van Assche L,Cecchinato M,loser,0.5985,2.12,0.2688,0.06,15.0,0,-15.0
+2023-05-30,2023,WTA,frenchopen,clay,1st Round,Parry D,Kalinina A,winner,0.4065,3.25,0.3211,0.0357,15.0,1,33.75
+2023-05-30,2023,WTA,frenchopen,clay,1st Round,Peterson R,Ferro F,loser,0.5386,2.4,0.2927,0.0523,15.0,0,-15.0
+2023-05-30,2023,ATP,frenchopen,clay,1st Round,Rinderknech A,Gasquet R,winner,0.4881,2.3,0.1226,0.0236,10.45,1,13.58
+2023-05-30,2023,ATP,frenchopen,clay,1st Round,Ruusuvuori E,Barrere G,loser,0.4864,2.59,0.2598,0.0408,15.0,0,-15.0
+2023-05-30,2023,ATP,frenchopen,clay,1st Round,Zeppieri G,Bublik A,loser,0.531,2.12,0.1258,0.0281,10.63,0,-10.63
+2023-05-30,2023,ATP,frenchopen,clay,1st Round,Molcan A,Gaston H,winner,0.6352,1.68,0.0671,0.0247,7.18,1,4.89
+2023-05-30,2023,ATP,frenchopen,clay,1st Round,Purcell M,Thompson J,winner,0.5478,2.23,0.2216,0.045,15.0,1,18.45
+2023-05-30,2023,ATP,frenchopen,clay,1st Round,Vavassori A,Kecmanovic M,winner,0.4086,3.0,0.2257,0.0282,15.0,1,30.0
+2023-05-30,2023,WTA,frenchopen,clay,1st Round,Noskova L,Kovinic D,loser,0.5485,2.3,0.2616,0.0503,15.0,0,-15.0
+2023-05-30,2023,WTA,frenchopen,clay,1st Round,Andreescu B,Azarenka V,winner,0.4215,2.55,0.0749,0.0121,7.64,1,11.84
+2023-05-30,2023,WTA,frenchopen,clay,1st Round,Paolini J,Cirstea S,winner,0.4062,3.13,0.2714,0.0319,15.0,1,31.95
+2023-05-31,2023,ATP,frenchopen,clay,2nd Round,Hurkacz H,Griekspoor T,loser,0.3945,3.32,0.3097,0.0334,15.0,0,-15.0
+2023-05-31,2023,ATP,frenchopen,clay,2nd Round,Shapovalov D,Arnaldi M,winner,0.5569,2.25,0.2531,0.0506,15.0,1,18.75
+2023-05-31,2023,ATP,frenchopen,clay,2nd Round,Ofner S,Korda S,winner,0.4063,2.7,0.097,0.0143,8.94,1,15.2
+2023-05-31,2023,ATP,frenchopen,clay,2nd Round,Kokkinakis T,Wawrinka S,loser,0.559,1.98,0.1068,0.0273,9.52,0,-9.52
+2023-05-31,2023,ATP,frenchopen,clay,2nd Round,Schwartzman D,Borges N,loser,0.4664,2.28,0.0633,0.0124,6.96,0,-6.96
+2023-05-31,2023,WTA,frenchopen,clay,2nd Round,Potapova A,Sherif M,loser,0.4256,3.0,0.2769,0.0346,15.0,0,-15.0
+2023-05-31,2023,WTA,frenchopen,clay,2nd Round,Rakhimova K,Frech M,winner,0.4657,2.3,0.071,0.0137,7.41,1,9.64
+2023-05-31,2023,WTA,frenchopen,clay,2nd Round,Stephens S,Gracheva V,loser,0.4166,2.5,0.0414,0.0069,5.67,0,-5.67
+2023-06-01,2023,ATP,frenchopen,clay,2nd Round,Coric B,Cachin P,loser,0.3635,3.38,0.2288,0.024,15.0,0,-15.0
+2023-06-01,2023,ATP,frenchopen,clay,2nd Round,Nishioka Y,Purcell M,loser,0.4006,3.4,0.362,0.0377,15.0,0,-15.0
+2023-06-01,2023,ATP,frenchopen,clay,2nd Round,Dimitrov G,Ruusuvuori E,loser,0.3679,3.16,0.1626,0.0188,12.8,0,-12.8
+2023-06-01,2023,ATP,frenchopen,clay,2nd Round,Tiafoe F,Karatsev A,winner,0.5481,2.01,0.1016,0.0251,9.21,1,9.3
+2023-06-01,2023,ATP,frenchopen,clay,2nd Round,Jarry N,Paul T,winner,0.6646,1.67,0.1099,0.041,9.7,1,6.5
+2023-06-01,2023,ATP,frenchopen,clay,2nd Round,Giron M,Lehecka J,winner,0.4398,2.91,0.2799,0.0366,15.0,1,28.65
+2023-06-01,2023,WTA,frenchopen,clay,2nd Round,Andreescu B,Navarro E,loser,0.4235,2.47,0.0459,0.0078,5.94,0,-5.94
+2023-06-01,2023,WTA,frenchopen,clay,2nd Round,Sorribes Tormo S,Martic P,loser,0.5453,2.09,0.1397,0.032,11.45,0,-11.45
+2023-06-01,2023,WTA,frenchopen,clay,2nd Round,Pera B,Vekic D,winner,0.512,2.4,0.2287,0.0408,15.0,1,21.0
+2023-06-01,2023,WTA,frenchopen,clay,2nd Round,Tsurenko L,Davis L,loser,0.4117,2.85,0.1733,0.0234,13.43,0,-13.43
+2023-06-01,2023,WTA,frenchopen,clay,2nd Round,Danilovic O,Paolini J,loser,0.4924,2.32,0.1423,0.0269,11.61,0,-11.61
+2023-06-02,2023,ATP,frenchopen,clay,3rd Round,Ofner S,Fognini F,winner,0.4623,2.31,0.0679,0.013,7.23,1,9.47
+2023-06-02,2023,WTA,frenchopen,clay,3rd Round,Avanesyan E,Tauson C,winner,0.4177,2.9,0.2115,0.0278,15.0,1,28.5
+2023-06-02,2023,WTA,frenchopen,clay,3rd Round,Stephens S,Putintseva Y,loser,0.5115,2.7,0.3811,0.0561,15.0,0,-15.0
+2023-06-02,2023,WTA,frenchopen,clay,3rd Round,Svitolina E,Blinkova A,loser,0.3612,3.32,0.1991,0.0215,14.95,0,-14.95
+2023-06-02,2023,WTA,frenchopen,clay,3rd Round,Pavlyuchenkova A,Potapova A,winner,0.4922,2.45,0.206,0.0355,15.0,1,21.75
+2023-06-02,2023,WTA,frenchopen,clay,3rd Round,Kasatkina D,Stearns P,loser,0.4166,3.22,0.3413,0.0384,15.0,0,-15.0
+2023-06-03,2023,ATP,frenchopen,clay,3rd Round,Nishioka Y,Seyboth Wild T,winner,0.5176,2.65,0.3718,0.0563,15.0,1,24.75
+2023-06-03,2023,WTA,frenchopen,clay,3rd Round,Pera B,Cocciaretto E,winner,0.6175,2.23,0.377,0.0766,15.0,1,18.45
+2023-06-03,2023,WTA,frenchopen,clay,3rd Round,Tsurenko L,Andreescu B,winner,0.4627,2.3,0.0642,0.0124,7.01,1,9.12
+2023-06-03,2023,WTA,frenchopen,clay,3rd Round,Gauff C,Andreeva M,winner,0.6902,1.82,0.2561,0.0781,15.0,1,12.3
+2023-06-04,2023,WTA,frenchopen,clay,4th Round,Svitolina E,Kasatkina D,winner,0.4331,2.66,0.1521,0.0229,12.18,1,20.22
+2023-06-04,2023,ATP,frenchopen,clay,4th Round,Khachanov K,Sonego L,loser,0.3684,2.84,0.0463,0.0063,5.96,0,-5.96
+2023-06-05,2023,WTA,frenchopen,clay,4th Round,Haddad Maia B,Sorribes Tormo S,loser,0.5013,2.46,0.2331,0.0399,15.0,0,-15.0
+2023-06-05,2023,ATP,frenchopen,clay,4th Round,Ruud C,Jarry N,loser,0.3958,2.9,0.1477,0.0194,11.93,0,-11.93
+2023-06-05,2023,ATP,frenchopen,clay,4th Round,Rune H,Cerundolo F,loser,0.3683,3.4,0.2522,0.0263,15.0,0,-15.0
+2023-06-05,2023,ATP,frenchopen,clay,4th Round,Zverev A,Dimitrov G,loser,0.3808,3.22,0.2263,0.0255,15.0,0,-15.0
+2023-06-06,2023,WTA,frenchopen,clay,Quarterfinals,Muchova K,Pavlyuchenkova A,loser,0.4298,2.7,0.1604,0.0236,12.67,0,-12.67
+2023-06-07,2023,ATP,frenchopen,clay,Quarterfinals,Ruud C,Rune H,loser,0.5317,2.25,0.1963,0.0393,14.78,0,-14.78
+2023-06-09,2023,ATP,frenchopen,clay,Semifinals,Djokovic N,Alcaraz C,winner,0.4994,2.8,0.3982,0.0553,15.0,1,27.0
+2023-06-09,2023,ATP,frenchopen,clay,Semifinals,Ruud C,Zverev A,loser,0.5379,2.05,0.1027,0.0244,9.28,0,-9.28
+2023-07-03,2023,WTA,wimbledon,grass,1st Round,Bucsa C,Rakhimova K,loser,0.5551,2.35,0.3045,0.0564,15.0,0,-15.0
+2023-07-03,2023,WTA,wimbledon,grass,1st Round,Strycova B,Zanevska M,loser,0.4256,2.45,0.0428,0.0074,5.75,0,-5.75
+2023-07-03,2023,WTA,wimbledon,grass,1st Round,Bogdan A,Samsonova L,winner,0.3858,3.56,0.3735,0.0365,15.0,1,38.4
+2023-07-03,2023,WTA,wimbledon,grass,1st Round,Siniakova K,Zheng Q,loser,0.5152,2.2,0.1333,0.0278,11.08,0,-11.08
+2023-07-03,2023,WTA,wimbledon,grass,1st Round,Masarova R,Sherif M,loser,0.5442,1.94,0.0557,0.0148,6.51,0,-6.51
+2023-07-03,2023,WTA,wimbledon,grass,1st Round,Mertens E,Hruncakova V,loser,0.3994,3.0,0.1982,0.0248,14.9,0,-14.9
+2023-07-03,2023,WTA,wimbledon,grass,1st Round,Linette M,Teichmann J,winner,0.5978,1.78,0.0641,0.0205,7.01,1,5.46
+2023-07-03,2023,WTA,wimbledon,grass,1st Round,Tsurenko L,Liu C,loser,0.3683,3.4,0.2522,0.0263,15.0,0,-15.0
+2023-07-03,2023,WTA,wimbledon,grass,1st Round,Martic P,Fruhvirtova L,loser,0.4453,2.53,0.1267,0.0207,10.69,0,-10.69
+2023-07-03,2023,ATP,wimbledon,grass,1st Round,Karatsev A,Van Assche L,loser,0.5025,2.45,0.2311,0.0398,15.0,0,-15.0
+2023-07-03,2023,ATP,wimbledon,grass,1st Round,Schwartzman D,Kecmanovic M,winner,0.4822,2.8,0.35,0.0486,15.0,1,27.0
+2023-07-03,2023,ATP,wimbledon,grass,1st Round,Bublik A,Mcdonald M,loser,0.3917,2.95,0.1554,0.0199,12.38,0,-12.38
+2023-07-03,2023,ATP,wimbledon,grass,1st Round,Otte O,Koepfer D,loser,0.4568,2.36,0.078,0.0143,7.83,0,-7.83
+2023-07-03,2023,ATP,wimbledon,grass,1st Round,Choinski J,Lajovic D,winner,0.4712,2.75,0.2958,0.0423,15.0,1,26.25
+2023-07-03,2023,ATP,wimbledon,grass,1st Round,Munar J,Isner J,winner,0.3823,3.3,0.2617,0.0284,15.0,1,34.5
+2023-07-03,2023,ATP,wimbledon,grass,1st Round,Goffin D,Marozsan F,loser,0.4738,2.91,0.3788,0.0496,15.0,0,-15.0
+2023-07-03,2023,ATP,wimbledon,grass,1st Round,Moutet C,Gasquet R,winner,0.4542,2.55,0.1583,0.0255,12.55,1,19.45
+2023-07-03,2023,ATP,wimbledon,grass,1st Round,Marterer M,Gojo B,winner,0.4874,2.26,0.1015,0.0201,9.2,1,11.6
+2023-07-03,2023,ATP,wimbledon,grass,1st Round,Thompson J,Nakashima B,loser,0.5003,2.06,0.0307,0.0072,5.04,0,-5.04
+2023-07-03,2023,ATP,wimbledon,grass,1st Round,Broady L,Lestienne C,loser,0.504,2.76,0.3909,0.0555,15.0,0,-15.0
+2023-07-04,2023,ATP,wimbledon,grass,1st Round,Halys Q,Evans D,winner,0.4796,2.15,0.0311,0.0068,5.06,1,5.82
+2023-07-05,2023,WTA,wimbledon,grass,1st Round,Bai Z,Bonaventure Y,winner,0.557,2.22,0.2364,0.0485,15.0,1,18.3
+2023-07-05,2023,WTA,wimbledon,grass,1st Round,Cirstea S,Maria T,loser,0.5499,2.05,0.1274,0.0303,10.73,0,-10.73
+2023-07-05,2023,ATP,wimbledon,grass,1st Round,Djere L,Cressy M,winner,0.4795,2.35,0.1269,0.0235,10.7,1,14.45
+2023-07-05,2023,WTA,wimbledon,grass,1st Round,Blinkova A,Wickmayer Y,winner,0.536,2.2,0.1791,0.0373,13.77,1,16.53
+2023-07-05,2023,WTA,wimbledon,grass,1st Round,Brengle M,Errani S,loser,0.5417,2.34,0.2676,0.0499,15.0,0,-15.0
+2023-07-05,2023,WTA,wimbledon,grass,1st Round,Cornet A,Hibino N,loser,0.4047,3.38,0.368,0.0387,15.0,0,-15.0
+2023-07-05,2023,WTA,wimbledon,grass,1st Round,Tomova V,Pera B,winner,0.456,2.75,0.254,0.0363,15.0,1,26.25
+2023-07-05,2023,WTA,wimbledon,grass,1st Round,Korpatsch T,Zhao C,loser,0.583,2.2,0.2825,0.0589,15.0,0,-15.0
+2023-07-05,2023,ATP,wimbledon,grass,1st Round,Mayot H,Bonzi B,loser,0.5573,2.47,0.3764,0.064,15.0,0,-15.0
+2023-07-05,2023,ATP,wimbledon,grass,1st Round,Safiullin R,Bautista Agut R,winner,0.3509,3.85,0.351,0.0308,15.0,1,42.75
+2023-07-05,2023,ATP,wimbledon,grass,1st Round,Pella G,Coric B,winner,0.4072,3.2,0.3031,0.0344,15.0,1,33.0
+2023-07-05,2023,WTA,wimbledon,grass,1st Round,Kontaveit A,Stefanini L,loser,0.4377,2.6,0.138,0.0216,11.36,0,-11.36
+2023-07-05,2023,WTA,wimbledon,grass,1st Round,Stephens S,Peterson R,loser,0.4293,3.1,0.3307,0.0394,15.0,0,-15.0
+2023-07-05,2023,ATP,wimbledon,grass,1st Round,Barrere G,Harris L,winner,0.5119,2.15,0.1006,0.0219,9.15,1,10.53
+2023-07-05,2023,ATP,wimbledon,grass,1st Round,Stricker D,Popyrin A,winner,0.5911,1.76,0.0403,0.0133,5.61,1,4.26
+2023-07-05,2023,ATP,wimbledon,grass,1st Round,Lehecka J,Ofner S,loser,0.4281,2.47,0.0573,0.0097,6.61,0,-6.61
+2023-07-05,2023,ATP,wimbledon,grass,1st Round,Raonic M,Novak D,winner,0.6368,2.02,0.2863,0.0702,15.0,1,15.3
+2023-07-06,2023,ATP,wimbledon,grass,2nd Round,Lehecka J,Cerundolo F,loser,0.5689,1.95,0.1093,0.0288,9.66,0,-9.66
+2023-07-06,2023,ATP,wimbledon,grass,1st Round,Davidovich Fokina A,Fils A,loser,0.5064,2.4,0.2154,0.0385,15.0,0,-15.0
+2023-07-06,2023,ATP,wimbledon,grass,1st Round,Carballes Baena R,Arnaldi M,winner,0.4463,3.04,0.3568,0.0437,15.0,1,30.6
+2023-07-06,2023,ATP,wimbledon,grass,1st Round,Kubler J,Humbert U,winner,0.4979,2.45,0.2198,0.0379,15.0,1,21.75
+2023-07-06,2023,ATP,wimbledon,grass,2nd Round,Pella G,Mayot H,winner,0.4656,2.45,0.1407,0.0243,11.51,1,16.69
+2023-07-06,2023,ATP,wimbledon,grass,2nd Round,Djere L,Shelton B,winner,0.5191,2.65,0.3756,0.0569,15.0,1,24.75
+2023-07-06,2023,ATP,wimbledon,grass,2nd Round,Halys Q,Vukic A,loser,0.4935,2.36,0.1646,0.0303,12.92,0,-12.92
+2023-07-06,2023,ATP,wimbledon,grass,2nd Round,Shapovalov D,Barrere G,loser,0.4494,2.64,0.1865,0.0284,14.21,0,-14.21
+2023-07-06,2023,ATP,wimbledon,grass,2nd Round,Safiullin R,Moutet C,loser,0.4329,2.65,0.1471,0.0223,11.89,0,-11.89
+2023-07-06,2023,ATP,wimbledon,grass,2nd Round,Paul T,Raonic M,loser,0.45,2.91,0.3094,0.0405,15.0,0,-15.0
+2023-07-06,2023,ATP,wimbledon,grass,2nd Round,Marterer M,Mmoh M,loser,0.5543,2.05,0.1362,0.0324,11.25,0,-11.25
+2023-07-06,2023,WTA,wimbledon,grass,2nd Round,Tsurenko L,Siniakova K,winner,0.5385,2.4,0.2923,0.0522,15.0,1,21.0
+2023-07-06,2023,WTA,wimbledon,grass,2nd Round,Andreeva M,Krejcikova B,winner,0.3806,3.55,0.3512,0.0344,15.0,1,38.25
+2023-07-06,2023,WTA,wimbledon,grass,2nd Round,Vondrousova M,Kudermetova V,winner,0.4795,2.43,0.1651,0.0289,12.95,1,18.51
+2023-07-06,2023,WTA,wimbledon,grass,2nd Round,Linette M,Strycova B,loser,0.485,2.54,0.2318,0.0376,15.0,0,-15.0
+2023-07-06,2023,WTA,wimbledon,grass,2nd Round,Bouzkova M,Kontaveit A,loser,0.465,2.42,0.1252,0.022,10.6,0,-10.6
+2023-07-06,2023,WTA,wimbledon,grass,2nd Round,Boulter K,Tomova V,loser,0.3913,3.5,0.3696,0.037,15.0,0,-15.0
+2023-07-06,2023,WTA,wimbledon,grass,2nd Round,Cocciaretto E,Masarova R,winner,0.497,2.4,0.1927,0.0344,14.57,1,20.4
+2023-07-07,2023,WTA,wimbledon,grass,2nd Round,Stevanovic N,Korpatsch T,loser,0.4391,2.48,0.0889,0.015,8.47,0,-8.47
+2023-07-07,2023,WTA,wimbledon,grass,2nd Round,Galfi D,Niemeier J,winner,0.4274,3.12,0.3335,0.0393,15.0,1,31.8
+2023-07-07,2023,ATP,wimbledon,grass,3rd Round,Safiullin R,Pella G,loser,0.4447,3.02,0.3429,0.0424,15.0,0,-15.0
+2023-07-07,2023,ATP,wimbledon,grass,3rd Round,Hurkacz H,Musetti L,loser,0.422,2.6,0.0973,0.0152,8.96,0,-8.96
+2023-07-07,2023,ATP,wimbledon,grass,2nd Round,Jarry N,Kubler J,loser,0.4884,2.44,0.1916,0.0333,14.51,0,-14.51
+2023-07-07,2023,ATP,wimbledon,grass,2nd Round,Fucsovics M,Giron M,loser,0.3845,3.2,0.2304,0.0262,15.0,0,-15.0
+2023-07-07,2023,WTA,wimbledon,grass,2nd Round,Andreescu B,Kalinina A,loser,0.4998,2.2,0.0995,0.0207,9.09,0,-9.09
+2023-07-07,2023,ATP,wimbledon,grass,2nd Round,Tsitsipas S,Murray A,winner,0.5587,2.25,0.2571,0.0514,15.0,1,18.75
+2023-07-07,2023,WTA,wimbledon,grass,3rd Round,Azarenka V,Kasatkina D,winner,0.4617,2.71,0.2513,0.0367,15.0,1,25.65
+2023-07-07,2023,WTA,wimbledon,grass,3rd Round,Bouzkova M,Garcia C,loser,0.6083,2.05,0.2469,0.0588,15.0,0,-15.0
+2023-07-07,2023,WTA,wimbledon,grass,3rd Round,Svitolina E,Kenin S,winner,0.5555,2.4,0.3333,0.0595,15.0,1,21.0
+2023-07-07,2023,WTA,wimbledon,grass,3rd Round,Vondrousova M,Vekic D,loser,0.5134,2.15,0.1038,0.0226,9.34,0,-9.34
+2023-07-07,2023,WTA,wimbledon,grass,3rd Round,Tsurenko L,Bogdan A,winner,0.5969,1.87,0.1163,0.0334,10.07,1,8.77
+2023-07-08,2023,ATP,wimbledon,grass,3rd Round,Rune H,Davidovich Fokina A,loser,0.3678,3.36,0.2359,0.025,15.0,0,-15.0
+2023-07-08,2023,ATP,wimbledon,grass,3rd Round,Berrettini M,Zverev A,winner,0.5941,2.16,0.2833,0.061,15.0,1,17.4
+2023-07-08,2023,WTA,wimbledon,grass,3rd Round,Haddad Maia B,Cirstea S,winner,0.5929,1.76,0.0435,0.0143,5.8,1,4.4
+2023-07-08,2023,ATP,wimbledon,grass,3rd Round,Lehecka J,Paul T,loser,0.6511,1.9,0.2371,0.0659,15.0,0,-15.0
+2023-07-09,2023,ATP,wimbledon,grass,4th Round,Rublev A,Bublik A,winner,0.5466,1.92,0.0494,0.0134,6.14,1,5.65
+2023-07-09,2023,WTA,wimbledon,grass,3rd Round,Andreeva M,Potapova A,winner,0.4679,2.35,0.0995,0.0184,9.09,1,12.27
+2023-07-09,2023,WTA,wimbledon,grass,4th Round,Vondrousova M,Bouzkova M,loser,0.4361,3.12,0.3605,0.0425,15.0,0,-15.0
+2023-07-09,2023,ATP,wimbledon,grass,3rd Round,Dimitrov G,Tiafoe F,loser,0.565,1.92,0.0848,0.023,8.22,0,-8.22
+2023-07-09,2023,WTA,wimbledon,grass,4th Round,Svitolina E,Azarenka V,winner,0.5214,2.38,0.2409,0.0436,15.0,1,20.7
+2023-07-09,2023,ATP,wimbledon,grass,4th Round,Safiullin R,Shapovalov D,winner,0.4541,2.6,0.1807,0.0282,13.86,1,22.18
+2023-07-10,2023,WTA,wimbledon,grass,4th Round,Keys M,Andreeva M,loser,0.4249,3.27,0.3893,0.0429,15.0,0,-15.0
+2023-07-10,2023,WTA,wimbledon,grass,4th Round,Jabeur O,Kvitova P,winner,0.5651,2.25,0.2715,0.0543,15.0,1,18.75
+2023-07-10,2023,ATP,wimbledon,grass,4th Round,Rune H,Dimitrov G,winner,0.5186,2.62,0.3588,0.0554,15.0,1,24.3
+2023-07-10,2023,ATP,wimbledon,grass,4th Round,Alcaraz C,Berrettini M,loser,0.4025,3.27,0.316,0.0348,15.0,0,-15.0
+2023-07-10,2023,WTA,wimbledon,grass,4th Round,Sabalenka A,Alexandrova E,loser,0.4721,2.8,0.3219,0.0447,15.0,0,-15.0
+2023-07-11,2023,WTA,wimbledon,grass,Quarterfinals,Vondrousova M,Pegula J,winner,0.4955,2.35,0.1645,0.0305,12.91,1,17.43
+2023-07-12,2023,WTA,wimbledon,grass,Quarterfinals,Jabeur O,Rybakina E,winner,0.4517,2.57,0.1609,0.0256,12.7,1,19.93
+2023-07-13,2023,WTA,wimbledon,grass,Semifinals,Vondrousova M,Svitolina E,loser,0.477,2.38,0.1351,0.0245,11.19,0,-11.19
+2023-07-16,2023,ATP,wimbledon,grass,The Final,Alcaraz C,Djokovic N,loser,0.646,1.6,0.0336,0.014,5.21,0,-5.21
+2023-08-28,2023,ATP,usopen,hard,1st Round,Vesely J,Couacaud E,winner,0.5216,2.61,0.3613,0.0561,15.0,1,24.15
+2023-08-28,2023,ATP,usopen,hard,1st Round,Mensik J,Barrere G,winner,0.54,2.2,0.188,0.0392,14.3,1,17.16
+2023-08-28,2023,ATP,usopen,hard,1st Round,Hijikata R,Kotov P,winner,0.6347,1.88,0.1933,0.0549,14.61,1,12.85
+2023-08-28,2023,ATP,usopen,hard,1st Round,Marozsan F,Gasquet R,winner,0.4326,3.1,0.3412,0.0406,15.0,1,31.5
+2023-08-28,2023,ATP,usopen,hard,1st Round,Gaston H,Shimabukuro S,loser,0.5896,2.16,0.2735,0.059,15.0,0,-15.0
+2023-08-28,2023,ATP,usopen,hard,1st Round,Ofner S,Borges N,loser,0.4902,2.22,0.0883,0.0181,8.43,0,-8.43
+2023-08-28,2023,ATP,usopen,hard,1st Round,Karatsev A,Lehecka J,loser,0.7217,1.55,0.1187,0.054,10.22,0,-10.22
+2023-08-29,2023,ATP,usopen,hard,1st Round,Rinderknech A,Schwartzman D,winner,0.4705,2.42,0.1387,0.0244,11.39,1,16.18
+2023-08-29,2023,ATP,usopen,hard,1st Round,Mmoh M,Khachanov K,loser,0.7606,1.64,0.2474,0.0967,15.0,0,-15.0
+2023-08-29,2023,ATP,usopen,hard,1st Round,Jarry N,Van Assche L,loser,0.442,2.95,0.3038,0.0389,15.0,0,-15.0
+2023-08-29,2023,ATP,usopen,hard,1st Round,Meligeni Alves F,Duckworth J,loser,0.5361,2.25,0.2062,0.0412,15.0,0,-15.0
+2023-08-29,2023,ATP,usopen,hard,1st Round,Berrettini M,Humbert U,loser,0.4528,2.73,0.2361,0.0341,15.0,0,-15.0
+2023-08-29,2023,ATP,usopen,hard,1st Round,Baez S,Coric B,winner,0.3861,2.83,0.0925,0.0126,8.68,1,15.88
+2023-08-29,2023,ATP,usopen,hard,1st Round,Wawrinka S,Nishioka Y,loser,0.3705,2.97,0.1005,0.0127,9.14,0,-9.14
+2023-08-29,2023,ATP,usopen,hard,1st Round,Altmaier D,Lestienne C,loser,0.5693,2.05,0.167,0.0398,13.06,0,-13.06
+2023-08-30,2023,ATP,usopen,hard,2nd Round,Djere L,Gaston H,loser,0.3734,2.88,0.0755,0.01,7.68,0,-7.68
+2023-08-30,2023,ATP,usopen,hard,2nd Round,Gojo B,Mcdonald M,loser,0.6932,1.52,0.0536,0.0258,6.39,0,-6.39
+2023-08-30,2023,ATP,usopen,hard,2nd Round,Bonzi B,Eubanks C,winner,0.5131,2.7,0.3854,0.0567,15.0,1,25.5
+2023-08-30,2023,ATP,usopen,hard,2nd Round,Paul T,Safiullin R,winner,0.8457,1.31,0.1079,0.087,9.58,1,2.97
+2023-08-30,2023,ATP,usopen,hard,2nd Round,Mensik J,Droguet T,loser,0.5471,2.35,0.2856,0.0529,15.0,0,-15.0
+2023-08-30,2023,ATP,usopen,hard,2nd Round,Shelton B,Thiem D,loser,0.6029,2.14,0.2903,0.0637,15.0,0,-15.0
+2023-08-30,2023,ATP,usopen,hard,2nd Round,Mannarino A,Marozsan F,loser,0.3567,3.53,0.259,0.0256,15.0,0,-15.0
+2023-08-31,2023,ATP,usopen,hard,2nd Round,Draper J,Hurkacz H,winner,0.3593,2.92,0.049,0.0064,6.12,1,11.75
+2023-08-31,2023,ATP,usopen,hard,2nd Round,Arnaldi M,Fils A,winner,0.445,2.54,0.1302,0.0211,10.89,1,16.77
+2023-08-31,2023,ATP,usopen,hard,2nd Round,Rublev A,Monfils G,loser,0.4105,3.16,0.2973,0.0344,15.0,0,-15.0
+2023-08-31,2023,ATP,usopen,hard,2nd Round,Evans D,Van De Zandschulp B,loser,0.516,2.62,0.3519,0.0543,15.0,0,-15.0
+2023-08-31,2023,ATP,usopen,hard,2nd Round,Jarry N,Michelsen A,loser,0.5227,2.51,0.312,0.0517,15.0,0,-15.0
+2023-09-01,2023,ATP,usopen,hard,3rd Round,Paul T,Davidovich Fokina A,winner,0.6214,1.71,0.0626,0.0221,6.92,1,4.91
+2023-09-01,2023,ATP,usopen,hard,3rd Round,Shelton B,Karatsev A,loser,0.4436,2.48,0.1001,0.0169,9.12,0,-9.12
+2023-09-01,2023,ATP,usopen,hard,3rd Round,Stricker D,Bonzi B,loser,0.507,2.39,0.2117,0.0381,15.0,0,-15.0
+2023-09-03,2023,ATP,usopen,hard,3rd Round,Zverev A,Dimitrov G,loser,0.4067,3.0,0.2202,0.0275,15.0,0,-15.0
+2023-09-03,2023,ATP,usopen,hard,4th Round,Shelton B,Paul T,loser,0.7448,1.44,0.0725,0.0412,7.5,0,-7.5
+2023-09-04,2023,ATP,usopen,hard,4th Round,Rublev A,Draper J,loser,0.4012,3.43,0.376,0.0387,15.0,0,-15.0
+2023-09-05,2023,ATP,usopen,hard,4th Round,Zverev A,Sinner J,winner,0.387,2.73,0.0566,0.0082,6.56,1,11.36
+2023-09-06,2023,ATP,usopen,hard,Quarterfinals,Shelton B,Tiafoe F,loser,0.7081,1.46,0.0339,0.0184,5.23,0,-5.23
+2024-01-14,2024,WTA,ausopen,hard,1st Round,Avanesyan E,Bai Z,winner,0.4826,2.67,0.2884,0.0432,15.0,1,25.05
+2024-01-14,2024,WTA,ausopen,hard,1st Round,Wozniacki C,Linette M,loser,0.4434,2.69,0.1927,0.0285,14.57,0,-14.57
+2024-01-14,2024,WTA,ausopen,hard,1st Round,Korpatsch T,Burrage J,loser,0.4957,2.25,0.1153,0.0231,10.01,0,-10.01
+2024-01-14,2024,WTA,ausopen,hard,1st Round,Fruhvirtova B,Bogdan A,loser,0.4909,2.38,0.1684,0.0305,13.14,0,-13.14
+2024-01-14,2024,WTA,ausopen,hard,1st Round,Anisimova A,Samsonova L,winner,0.3869,3.01,0.1645,0.0205,12.91,1,25.96
+2024-01-14,2024,WTA,ausopen,hard,1st Round,Timofeeva M,Cornet A,loser,0.486,2.23,0.0838,0.017,8.16,0,-8.16
+2024-01-14,2024,WTA,ausopen,hard,1st Round,Rakhimova K,Bektas E,loser,0.5318,2.06,0.0955,0.0225,8.85,0,-8.85
+2024-01-14,2024,ATP,ausopen,hard,1st Round,Munar J,Shevchenko A,winner,0.3612,3.51,0.2677,0.0267,15.0,1,37.65
+2024-01-14,2024,ATP,ausopen,hard,1st Round,Kotov P,Rinderknech A,loser,0.4392,2.37,0.0409,0.0075,5.64,0,-5.64
+2024-01-14,2024,ATP,ausopen,hard,1st Round,Marozsan F,Cilic M,loser,0.5642,2.22,0.2525,0.0517,15.0,0,-15.0
+2024-01-14,2024,ATP,ausopen,hard,1st Round,Tiafoe F,Coric B,loser,0.4431,2.6,0.152,0.0237,12.18,0,-12.18
+2024-01-14,2024,ATP,ausopen,hard,1st Round,Cerundolo F,Sweeny D,loser,0.3871,3.46,0.3395,0.0345,15.0,0,-15.0
+2024-01-14,2024,WTA,ausopen,hard,1st Round,Tsurenko L,Bronzetti L,loser,0.432,2.97,0.283,0.0359,15.0,0,-15.0
+2024-01-15,2024,WTA,ausopen,hard,1st Round,Paolini J,Shnaider D,loser,0.4467,2.73,0.2195,0.0317,15.0,0,-15.0
+2024-01-15,2024,ATP,ausopen,hard,1st Round,Humbert U,Goffin D,winner,0.7408,1.46,0.0816,0.0443,8.04,1,3.7
+2024-01-15,2024,ATP,ausopen,hard,1st Round,Monfils G,Hanfmann Y,winner,0.7338,1.54,0.1301,0.0602,10.89,1,5.88
+2024-01-15,2024,WTA,ausopen,hard,1st Round,Frech M,Saville D,loser,0.6079,1.75,0.0638,0.0213,6.99,0,-6.99
+2024-01-15,2024,WTA,ausopen,hard,1st Round,Badosa P,Townsend T,winner,0.6019,1.75,0.0534,0.0178,6.38,1,4.78
+2024-01-15,2024,WTA,ausopen,hard,1st Round,Rus A,Kalinina A,loser,0.629,1.67,0.0505,0.0188,6.2,0,-6.2
+2024-01-15,2024,WTA,ausopen,hard,1st Round,Kalinskaya A,Volynets K,loser,0.3717,3.5,0.301,0.0301,15.0,0,-15.0
+2024-01-15,2024,WTA,ausopen,hard,1st Round,Masarova R,Sasnovich A,winner,0.4828,2.42,0.1684,0.0296,13.14,1,18.66
+2024-01-15,2024,ATP,ausopen,hard,1st Round,Gaston H,Carballes Baena R,winner,0.477,2.41,0.1496,0.0265,12.03,1,16.97
+2024-01-15,2024,ATP,ausopen,hard,1st Round,Shelton B,Bautista Agut R,loser,0.3696,3.4,0.2566,0.0267,15.0,0,-15.0
+2024-01-15,2024,ATP,ausopen,hard,1st Round,Mannarino A,Wawrinka S,loser,0.3825,3.01,0.1513,0.0188,12.13,0,-12.13
+2024-01-15,2024,ATP,ausopen,hard,1st Round,Van Assche L,Duckworth J,loser,0.5243,2.12,0.1114,0.0249,9.79,0,-9.79
+2024-01-15,2024,ATP,ausopen,hard,1st Round,Mensik J,Shapovalov D,loser,0.574,2.32,0.3317,0.0628,15.0,0,-15.0
+2024-01-15,2024,ATP,ausopen,hard,1st Round,Kovacevic A,Tabilo A,loser,0.6241,1.7,0.0609,0.0218,6.82,0,-6.82
+2024-01-15,2024,ATP,ausopen,hard,1st Round,Eubanks C,Daniel T,winner,0.4326,2.6,0.1247,0.0195,10.57,1,16.91
+2024-01-15,2024,WTA,ausopen,hard,1st Round,Noskova L,Bouzkova M,winner,0.5383,2.5,0.3458,0.0576,15.0,1,22.5
+2024-01-15,2024,WTA,ausopen,hard,1st Round,Podoroska N,Zidansek T,loser,0.5091,2.05,0.0436,0.0104,5.8,0,-5.8
+2024-01-15,2024,WTA,ausopen,hard,1st Round,Gracheva V,Wickmayer Y,loser,0.4939,2.45,0.21,0.0362,15.0,0,-15.0
+2024-01-15,2024,WTA,ausopen,hard,1st Round,Siegemund L,Alexandrova E,winner,0.3723,3.2,0.1913,0.0217,14.49,1,31.88
+2024-01-16,2024,WTA,ausopen,hard,1st Round,Trevisan M,Zarazua R,loser,0.4828,2.42,0.1684,0.0297,13.14,0,-13.14
+2024-01-16,2024,WTA,ausopen,hard,1st Round,Cocciaretto E,Sun L,loser,0.5387,2.2,0.1852,0.0386,14.13,0,-14.13
+2024-01-16,2024,WTA,ausopen,hard,1st Round,Tauson C,Minnen G,loser,0.397,3.49,0.3857,0.0387,15.0,0,-15.0
+2024-01-16,2024,ATP,ausopen,hard,1st Round,Griekspoor T,Safiullin R,winner,0.4511,2.75,0.2406,0.0344,15.0,1,26.25
+2024-01-16,2024,ATP,ausopen,hard,1st Round,Zeppieri G,Lajovic D,loser,0.5532,1.93,0.0677,0.0182,7.21,0,-7.21
+2024-01-16,2024,WTA,ausopen,hard,1st Round,Stephens S,Gadecki O,loser,0.4032,2.81,0.1329,0.0184,11.05,0,-11.05
+2024-01-16,2024,ATP,ausopen,hard,1st Round,Kokkinakis T,Ofner S,loser,0.5767,1.87,0.0785,0.0225,7.85,0,-7.85
+2024-01-16,2024,ATP,ausopen,hard,1st Round,Cazaux A,Djere L,loser,0.5984,1.91,0.143,0.0393,11.65,0,-11.65
+2024-01-16,2024,WTA,ausopen,hard,1st Round,Blinkova A,Bucsa C,winner,0.4636,2.31,0.071,0.0135,7.41,1,9.71
+2024-01-16,2024,WTA,ausopen,hard,1st Round,Collins D,Kerber A,loser,0.4056,3.45,0.3993,0.0407,15.0,0,-15.0
+2024-01-16,2024,WTA,ausopen,hard,1st Round,Tomljanovic A,Martic P,winner,0.4972,2.3,0.1436,0.0276,11.68,1,15.19
+2024-01-16,2024,WTA,ausopen,hard,1st Round,Boulter K,Yuan Y,loser,0.519,2.33,0.2093,0.0393,15.0,0,-15.0
+2024-01-17,2024,ATP,ausopen,hard,2nd Round,Mannarino A,Munar J,winner,0.7474,1.38,0.0314,0.0207,5.08,1,1.93
+2024-01-17,2024,ATP,ausopen,hard,2nd Round,Cobolli F,Kotov P,winner,0.4435,2.55,0.131,0.0211,10.94,1,16.95
+2024-01-17,2024,ATP,ausopen,hard,2nd Round,Van Assche L,Musetti L,winner,0.3772,2.9,0.0939,0.0124,8.76,1,16.64
+2024-01-17,2024,WTA,ausopen,hard,2nd Round,Anisimova A,Podoroska N,loser,0.3503,3.82,0.338,0.03,15.0,0,-15.0
+2024-01-17,2024,WTA,ausopen,hard,2nd Round,Hunter S,Siegemund L,loser,0.614,1.73,0.0623,0.0213,6.9,0,-6.9
+2024-01-17,2024,WTA,ausopen,hard,2nd Round,Parry D,Rakhimova K,winner,0.5196,2.13,0.1068,0.0236,9.52,1,10.75
+2024-01-17,2024,WTA,ausopen,hard,2nd Round,Zakharova A,Juvan K,winner,0.4169,2.62,0.0923,0.0142,8.66,1,14.04
+2024-01-17,2024,WTA,ausopen,hard,2nd Round,Badosa P,Pavlyuchenkova A,winner,0.5157,2.35,0.2118,0.0392,15.0,1,20.25
+2024-01-17,2024,WTA,ausopen,hard,2nd Round,Tsurenko L,Masarova R,loser,0.4404,2.73,0.2023,0.0292,15.0,0,-15.0
+2024-01-17,2024,WTA,ausopen,hard,2nd Round,Kostyuk M,Mertens E,winner,0.4379,2.44,0.0684,0.0119,7.26,1,10.45
+2024-01-18,2024,WTA,ausopen,hard,2nd Round,Yastremska D,Gracheva V,loser,0.5771,2.2,0.2697,0.0562,15.0,0,-15.0
+2024-01-18,2024,WTA,ausopen,hard,2nd Round,Golubic V,Siniakova K,winner,0.4045,3.0,0.2134,0.0267,15.0,1,30.0
+2024-01-18,2024,WTA,ausopen,hard,2nd Round,Stephens S,Kasatkina D,loser,0.7072,1.6,0.1315,0.0548,10.97,0,-10.97
+2024-01-18,2024,WTA,ausopen,hard,2nd Round,Paolini J,Maria T,loser,0.3633,3.2,0.1627,0.0185,12.8,0,-12.8
+2024-01-18,2024,WTA,ausopen,hard,2nd Round,Dodin O,Trevisan M,winner,0.4443,2.45,0.0885,0.0153,8.44,1,12.24
+2024-01-18,2024,ATP,ausopen,hard,2nd Round,Griekspoor T,Fils A,winner,0.4851,2.45,0.1885,0.0325,14.32,1,20.77
+2024-01-18,2024,ATP,ausopen,hard,2nd Round,Paul T,Draper J,winner,0.5049,2.04,0.03,0.0072,5.0,1,5.2
+2024-01-18,2024,ATP,ausopen,hard,2nd Round,Norrie C,Zeppieri G,loser,0.3825,3.53,0.3503,0.0346,15.0,0,-15.0
+2024-01-19,2024,ATP,ausopen,hard,3rd Round,Khachanov K,Machac T,winner,0.6829,1.68,0.1472,0.0541,11.9,1,8.09
+2024-01-19,2024,WTA,ausopen,hard,3rd Round,Anisimova A,Badosa P,winner,0.44,2.51,0.1044,0.0173,9.38,1,14.16
+2024-01-20,2024,WTA,ausopen,hard,3rd Round,Paolini J,Blinkova A,winner,0.6237,1.68,0.0479,0.0176,6.05,1,4.12
+2024-01-20,2024,ATP,ausopen,hard,3rd Round,Cazaux A,Griekspoor T,loser,0.6759,1.75,0.1828,0.0609,13.99,0,-13.99
+2024-01-20,2024,ATP,ausopen,hard,3rd Round,Norrie C,Ruud C,winner,0.4301,3.2,0.3764,0.0428,15.0,1,33.0
+2024-01-20,2024,WTA,ausopen,hard,3rd Round,Dodin O,Burel C,winner,0.3722,3.5,0.3028,0.0303,15.0,1,37.5
+2024-01-20,2024,WTA,ausopen,hard,3rd Round,Azarenka V,Ostapenko J,loser,0.5863,1.91,0.1199,0.0329,10.29,0,-10.29
+2024-01-20,2024,WTA,ausopen,hard,3rd Round,Kalinskaya A,Stephens S,loser,0.4795,2.33,0.1173,0.022,10.13,0,-10.13
+2024-01-20,2024,WTA,ausopen,hard,3rd Round,Yastremska D,Navarro E,winner,0.3801,2.93,0.1137,0.0147,9.93,1,19.16
+2024-01-21,2024,ATP,ausopen,hard,4th Round,Rublev A,De Minaur A,loser,0.4864,2.23,0.0848,0.0172,8.22,0,-8.22
+2024-01-21,2024,ATP,ausopen,hard,4th Round,Fritz T,Tsitsipas S,winner,0.4992,2.4,0.1981,0.0354,14.89,1,20.84
+2024-01-21,2024,WTA,ausopen,hard,4th Round,Kostyuk M,Timofeeva M,loser,0.4274,2.75,0.1754,0.0251,13.55,0,-13.55
+2024-01-22,2024,WTA,ausopen,hard,4th Round,Kalinskaya A,Paolini J,loser,0.5374,2.42,0.3004,0.0529,15.0,0,-15.0
+2024-01-22,2024,ATP,ausopen,hard,4th Round,Hurkacz H,Cazaux A,winner,0.8168,1.44,0.1762,0.1001,13.6,1,5.98
+2024-01-22,2024,WTA,ausopen,hard,4th Round,Noskova L,Svitolina E,winner,0.4097,2.79,0.1429,0.02,11.64,1,20.84
+2024-01-24,2024,WTA,ausopen,hard,Quarterfinals,Zheng Q,Kalinskaya A,winner,0.6768,1.7,0.1506,0.0538,12.09,1,8.47
+2024-01-24,2024,WTA,ausopen,hard,Quarterfinals,Yastremska D,Noskova L,loser,0.7059,1.61,0.1365,0.0559,11.26,0,-11.26
+2024-01-25,2024,WTA,ausopen,hard,Semifinals,Zheng Q,Yastremska D,winner,0.7623,1.53,0.1663,0.0784,13.02,1,6.9
+2024-01-26,2024,ATP,ausopen,hard,Semifinals,Medvedev D,Zverev A,winner,0.5957,1.79,0.0664,0.021,7.14,1,5.64
+2024-01-26,2024,ATP,ausopen,hard,Semifinals,Sinner J,Djokovic N,winner,0.3746,2.75,0.0302,0.0043,5.01,1,8.77
+2024-05-26,2024,ATP,frenchopen,clay,1st Round,Muller A,Nardi L,loser,0.4369,2.54,0.1097,0.0178,9.69,0,-9.69
+2024-05-26,2024,WTA,frenchopen,clay,1st Round,Danilovic O,Trevisan M,loser,0.4603,2.82,0.2982,0.041,15.0,0,-15.0
+2024-05-26,2024,ATP,frenchopen,clay,1st Round,Wawrinka S,Murray A,loser,0.4921,2.54,0.2499,0.0406,15.0,0,-15.0
+2024-05-26,2024,ATP,frenchopen,clay,1st Round,Ofner S,Atmane T,loser,0.5329,2.62,0.3963,0.0612,15.0,0,-15.0
+2024-05-26,2024,ATP,frenchopen,clay,1st Round,Moutet C,Jarry N,loser,0.7055,1.5,0.0582,0.0291,6.66,0,-6.66
+2024-05-26,2024,WTA,frenchopen,clay,1st Round,Anisimova A,Sramkova R,winner,0.5833,1.81,0.0558,0.0172,6.52,1,5.28
+2024-05-26,2024,WTA,frenchopen,clay,1st Round,Kenin S,Siegemund L,winner,0.5381,2.46,0.3238,0.0554,15.0,1,21.9
+2024-05-26,2024,WTA,frenchopen,clay,1st Round,Ostapenko J,Cristian J,loser,0.4536,2.9,0.3153,0.0415,15.0,0,-15.0
+2024-05-26,2024,WTA,frenchopen,clay,1st Round,Fett J,Bouzas Maneiro J,winner,0.4544,2.53,0.1496,0.0244,12.03,1,18.41
+2024-05-26,2024,ATP,frenchopen,clay,1st Round,Marterer M,Thompson J,winner,0.445,2.71,0.206,0.0301,15.0,1,25.65
+2024-05-26,2024,WTA,frenchopen,clay,1st Round,Wang Y,Timofeeva M,loser,0.6188,1.85,0.1447,0.0426,11.75,0,-11.75
+2024-05-26,2024,WTA,frenchopen,clay,1st Round,Vekic D,Tsurenko L,loser,0.5322,2.42,0.2879,0.0507,15.0,0,-15.0
+2024-05-26,2024,ATP,frenchopen,clay,1st Round,Sonego L,Humbert U,winner,0.4954,2.75,0.3623,0.0518,15.0,1,26.25
+2024-05-26,2024,ATP,frenchopen,clay,1st Round,Nakashima B,Moreno De Alboran N,loser,0.4859,2.66,0.2925,0.0441,15.0,0,-15.0
+2024-05-27,2024,WTA,frenchopen,clay,1st Round,Parry D,Ferro F,loser,0.4568,2.6,0.1876,0.0293,14.27,0,-14.27
+2024-05-27,2024,WTA,frenchopen,clay,1st Round,Kalinskaya A,Burel C,loser,0.5011,2.31,0.1575,0.03,12.5,0,-12.5
+2024-05-27,2024,WTA,frenchopen,clay,1st Round,Tomova V,Alexandrova E,loser,0.6642,1.6,0.0628,0.0261,6.93,0,-6.93
+2024-05-27,2024,WTA,frenchopen,clay,1st Round,Baptiste H,Day K,loser,0.4965,2.72,0.3505,0.0509,15.0,0,-15.0
+2024-05-27,2024,WTA,frenchopen,clay,1st Round,Samsonova L,Linette M,loser,0.4841,2.56,0.2393,0.0384,15.0,0,-15.0
+2024-05-27,2024,WTA,frenchopen,clay,1st Round,Bucsa C,Starodubtseva Y,loser,0.5423,2.32,0.2582,0.0489,15.0,0,-15.0
+2024-05-27,2024,WTA,frenchopen,clay,1st Round,Bogdan A,Jacquemot E,loser,0.4393,2.66,0.1685,0.0254,13.14,0,-13.14
+2024-05-27,2024,ATP,frenchopen,clay,1st Round,Kovalik J,Giron M,winner,0.4974,2.2,0.0943,0.0196,8.78,1,10.54
+2024-05-27,2024,ATP,frenchopen,clay,1st Round,Shevchenko A,Karatsev A,loser,0.5082,2.5,0.2705,0.0451,15.0,0,-15.0
+2024-05-27,2024,ATP,frenchopen,clay,1st Round,Squire H,Purcell M,loser,0.487,2.78,0.3538,0.0497,15.0,0,-15.0
+2024-05-27,2024,ATP,frenchopen,clay,1st Round,Shelton B,Gaston H,loser,0.3969,3.19,0.2661,0.0304,15.0,0,-15.0
+2024-05-27,2024,ATP,frenchopen,clay,1st Round,Kotov P,Norrie C,winner,0.389,3.06,0.1902,0.0231,14.42,1,29.71
+2024-05-27,2024,ATP,frenchopen,clay,1st Round,Misolic F,Virtanen O,loser,0.4854,2.63,0.2766,0.0424,15.0,0,-15.0
+2024-05-27,2024,WTA,frenchopen,clay,1st Round,Cocciaretto E,Haddad Maia B,winner,0.3664,3.08,0.1284,0.0154,10.79,1,22.43
+2024-05-27,2024,ATP,frenchopen,clay,1st Round,Fognini F,Van De Zandschulp B,winner,0.4837,2.75,0.3302,0.0472,15.0,1,26.25
+2024-05-27,2024,ATP,frenchopen,clay,1st Round,Monfils G,Seyboth Wild T,winner,0.4403,2.36,0.0391,0.0072,5.53,1,7.53
+2024-05-27,2024,ATP,frenchopen,clay,1st Round,Kecmanovic M,Monteiro T,loser,0.5306,2.03,0.0772,0.0187,7.78,0,-7.78
+2024-05-27,2024,ATP,frenchopen,clay,1st Round,Shapovalov D,Van Assche L,loser,0.4507,2.56,0.1537,0.0246,12.28,0,-12.28
+2024-05-27,2024,ATP,frenchopen,clay,1st Round,Lajovic D,Safiullin R,loser,0.4422,2.35,0.0392,0.0073,5.54,0,-5.54
+2024-05-28,2024,WTA,frenchopen,clay,1st Round,Putintseva Y,Stephens S,loser,0.538,2.26,0.2158,0.0428,15.0,0,-15.0
+2024-05-28,2024,WTA,frenchopen,clay,1st Round,Stearns P,Ciric Bagaric L,loser,0.4067,2.81,0.1429,0.0197,11.64,0,-11.64
+2024-05-28,2024,WTA,frenchopen,clay,1st Round,Avanesyan E,Zhu L,loser,0.3751,3.63,0.3615,0.0344,15.0,0,-15.0
+2024-05-28,2024,ATP,frenchopen,clay,1st Round,Cobolli F,Medjedovic H,winner,0.5176,2.64,0.3665,0.0559,15.0,1,24.6
+2024-05-28,2024,ATP,frenchopen,clay,1st Round,Munar J,Bautista Agut R,loser,0.5383,2.3,0.2381,0.0458,15.0,0,-15.0
+2024-05-28,2024,ATP,frenchopen,clay,1st Round,Bublik A,Barrere G,winner,0.5249,2.08,0.0918,0.0212,8.63,1,9.32
+2024-05-29,2024,WTA,frenchopen,clay,2nd Round,Kenin S,Garcia C,winner,0.4635,2.5,0.1587,0.0265,12.57,1,18.86
+2024-05-29,2024,ATP,frenchopen,clay,2nd Round,Kotov P,Wawrinka S,loser,0.4146,2.61,0.082,0.0127,8.06,0,-8.06
+2024-05-30,2024,WTA,frenchopen,clay,2nd Round,Badosa P,Putintseva Y,loser,0.4774,2.2,0.0503,0.0105,6.19,0,-6.19
+2024-05-30,2024,WTA,frenchopen,clay,2nd Round,Gracheva V,Pera B,winner,0.4363,2.37,0.0341,0.0062,5.24,1,7.18
+2024-05-30,2024,WTA,frenchopen,clay,2nd Round,Bogdan A,Pavlyuchenkova A,winner,0.3506,3.1,0.0867,0.0103,8.34,1,17.51
+2024-05-30,2024,WTA,frenchopen,clay,2nd Round,Vekic D,Kostyuk M,winner,0.435,2.66,0.1572,0.0237,12.48,1,20.72
+2024-05-30,2024,WTA,frenchopen,clay,2nd Round,Tauson C,Ostapenko J,winner,0.4429,2.47,0.0939,0.016,8.76,1,12.88
+2024-05-30,2024,WTA,frenchopen,clay,2nd Round,Cocciaretto E,Bucsa C,loser,0.3972,2.79,0.1082,0.0151,9.6,0,-9.6
+2024-05-30,2024,WTA,frenchopen,clay,2nd Round,Stearns P,Kasatkina D,winner,0.356,3.34,0.1892,0.0202,14.36,1,33.61
+2024-05-30,2024,WTA,frenchopen,clay,2nd Round,Andreescu B,Kalinskaya A,winner,0.5023,2.6,0.306,0.0478,15.0,1,24.0
+2024-05-30,2024,WTA,frenchopen,clay,2nd Round,Andreeva M,Azarenka V,winner,0.5412,2.03,0.0987,0.024,9.04,1,9.31
+2024-05-30,2024,ATP,frenchopen,clay,2nd Round,Kokkinakis T,Zeppieri G,loser,0.4889,2.3,0.1244,0.0239,10.55,0,-10.55
+2024-05-30,2024,ATP,frenchopen,clay,2nd Round,Machac T,Navone M,loser,0.5029,2.31,0.1618,0.0309,12.75,0,-12.75
+2024-05-30,2024,ATP,frenchopen,clay,2nd Round,Shapovalov D,Tiafoe F,loser,0.4975,2.63,0.3084,0.0473,15.0,0,-15.0
+2024-05-30,2024,ATP,frenchopen,clay,2nd Round,Musetti L,Monfils G,loser,0.4207,3.01,0.2663,0.0331,15.0,0,-15.0
+2024-05-31,2024,WTA,frenchopen,clay,3rd Round,Tauson C,Kenin S,loser,0.5424,2.24,0.2151,0.0434,15.0,0,-15.0
+2024-05-31,2024,WTA,frenchopen,clay,3rd Round,Danilovic O,Vekic D,loser,0.5254,2.12,0.1139,0.0254,9.93,0,-9.93
+2024-06-01,2024,ATP,frenchopen,clay,3rd Round,Cerundolo F,Paul T,winner,0.5207,2.4,0.2497,0.0446,15.0,1,21.0
+2024-06-01,2024,ATP,frenchopen,clay,3rd Round,Medvedev D,Machac T,loser,0.3513,3.6,0.2647,0.0254,15.0,0,-15.0
+2024-06-01,2024,WTA,frenchopen,clay,3rd Round,Navarro E,Keys M,loser,0.6739,1.6,0.0782,0.0326,7.83,0,-7.83
+2024-06-02,2024,WTA,frenchopen,clay,4th Round,Jabeur O,Tauson C,winner,0.6353,1.64,0.0419,0.0164,5.7,1,3.65
+2024-06-02,2024,ATP,frenchopen,clay,4th Round,Dimitrov G,Hurkacz H,loser,0.5456,2.53,0.3803,0.0621,15.0,0,-15.0
+2024-06-03,2024,WTA,frenchopen,clay,4th Round,Sabalenka A,Navarro E,winner,0.7858,1.34,0.053,0.039,6.35,1,2.16
+2024-06-05,2024,ATP,frenchopen,clay,Quarterfinals,Ruud C,Djokovic N,loser,0.5657,2.2,0.2446,0.051,15.0,0,-15.0
+2024-06-06,2024,WTA,frenchopen,clay,Semifinals,Paolini J,Andreeva M,loser,0.5456,1.9,0.0367,0.0102,5.39,0,-5.39
+2024-06-07,2024,ATP,frenchopen,clay,Semifinals,Alcaraz C,Sinner J,loser,0.4623,2.3,0.0633,0.0122,6.96,0,-6.96
+2024-06-07,2024,ATP,frenchopen,clay,Semifinals,Zverev A,Ruud C,loser,0.5336,2.13,0.1365,0.0302,11.26,0,-11.26
+2024-07-01,2024,WTA,wimbledon,grass,1st Round,Gracheva V,Tsurenko L,loser,0.5687,2.22,0.2624,0.0538,15.0,0,-15.0
+2024-07-01,2024,WTA,wimbledon,grass,1st Round,Minnen G,Watson H,loser,0.5336,2.4,0.2807,0.0501,15.0,0,-15.0
+2024-07-01,2024,ATP,wimbledon,grass,1st Round,Tiafoe F,Arnaldi M,loser,0.4656,2.32,0.0803,0.0152,7.96,0,-7.96
+2024-07-01,2024,ATP,wimbledon,grass,1st Round,Shang J,Garin C,loser,0.5893,2.1,0.2374,0.054,15.0,0,-15.0
+2024-07-01,2024,ATP,wimbledon,grass,1st Round,Ruud C,Bolt A,loser,0.377,3.2,0.2064,0.0235,15.0,0,-15.0
+2024-07-01,2024,ATP,wimbledon,grass,1st Round,Coric B,Meligeni Alves F,loser,0.53,2.49,0.3198,0.0537,15.0,0,-15.0
+2024-07-01,2024,ATP,wimbledon,grass,1st Round,Shapovalov D,Jarry N,loser,0.5118,2.56,0.3102,0.0497,15.0,0,-15.0
+2024-07-01,2024,WTA,wimbledon,grass,1st Round,Rus A,Yuan Y,winner,0.4467,2.93,0.3087,0.04,15.0,1,28.95
+2024-07-01,2024,WTA,wimbledon,grass,1st Round,Burel C,Lys E,winner,0.4832,2.22,0.0726,0.0149,7.51,1,9.16
+2024-07-01,2024,WTA,wimbledon,grass,1st Round,Andreeva E,Bektas E,winner,0.5025,2.38,0.1961,0.0355,14.77,1,20.38
+2024-07-01,2024,WTA,wimbledon,grass,1st Round,Stephens S,Jacquemot E,loser,0.439,3.15,0.3828,0.0445,15.0,0,-15.0
+2024-07-01,2024,WTA,wimbledon,grass,1st Round,Starodubtseva Y,Van Uytvanck A,winner,0.526,2.13,0.1205,0.0267,10.32,1,11.66
+2024-07-01,2024,WTA,wimbledon,grass,1st Round,Miyazaki Y,Korpatsch T,loser,0.4757,2.32,0.1037,0.0196,9.33,0,-9.33
+2024-07-01,2024,WTA,wimbledon,grass,1st Round,Kartal S,Cirstea S,loser,0.6232,2.0,0.2464,0.0616,15.0,0,-15.0
+2024-07-01,2024,WTA,wimbledon,grass,1st Round,Badosa P,Muchova K,winner,0.5152,2.11,0.087,0.0196,8.35,1,9.27
+2024-07-01,2024,ATP,wimbledon,grass,1st Round,Fognini F,Van Assche L,winner,0.5574,2.2,0.2264,0.0472,15.0,1,18.0
+2024-07-01,2024,ATP,wimbledon,grass,1st Round,Virtanen O,Purcell M,winner,0.4831,2.4,0.1595,0.0285,12.62,1,17.66
+2024-07-01,2024,ATP,wimbledon,grass,1st Round,Van De Zandschulp B,Broady L,loser,0.5097,2.47,0.259,0.044,15.0,0,-15.0
+2024-07-01,2024,ATP,wimbledon,grass,1st Round,Bublik A,Mensik J,loser,0.4121,3.03,0.2486,0.0306,15.0,0,-15.0
+2024-07-01,2024,ATP,wimbledon,grass,1st Round,Vukic A,Ofner S,loser,0.5022,2.25,0.13,0.026,10.88,0,-10.88
+2024-07-01,2024,ATP,wimbledon,grass,1st Round,Harris L,Michelsen A,loser,0.5716,2.11,0.206,0.0464,15.0,0,-15.0
+2024-07-01,2024,ATP,wimbledon,grass,1st Round,Monfils G,Mannarino A,loser,0.5067,2.62,0.3277,0.0506,15.0,0,-15.0
+2024-07-01,2024,ATP,wimbledon,grass,1st Round,Wawrinka S,Broom C,loser,0.4946,2.35,0.1622,0.03,12.78,0,-12.78
+2024-07-01,2024,ATP,wimbledon,grass,1st Round,Muller A,Gaston H,winner,0.4979,2.43,0.2098,0.0367,15.0,1,21.45
+2024-07-01,2024,ATP,wimbledon,grass,1st Round,Altmaier D,Fery A,loser,0.5694,1.94,0.1047,0.0279,9.4,0,-9.4
+2024-07-02,2024,ATP,wimbledon,grass,1st Round,Seyboth Wild T,Jubb P,winner,0.5112,2.35,0.2013,0.0373,15.0,1,20.25
+2024-07-02,2024,WTA,wimbledon,grass,1st Round,Montgomery R,Gadecki O,loser,0.4811,2.75,0.323,0.0461,15.0,0,-15.0
+2024-07-02,2024,WTA,wimbledon,grass,1st Round,Dart H,Bai Z,loser,0.471,2.75,0.2954,0.0422,15.0,0,-15.0
+2024-07-02,2024,WTA,wimbledon,grass,1st Round,Bucsa C,Bogdan A,winner,0.4213,2.51,0.0574,0.0095,6.61,1,9.99
+2024-07-02,2024,WTA,wimbledon,grass,1st Round,Pera B,Potapova A,winner,0.3805,3.35,0.2745,0.0292,15.0,1,35.25
+2024-07-02,2024,WTA,wimbledon,grass,1st Round,Avanesyan E,Kalinina A,winner,0.4957,2.13,0.0559,0.0124,6.53,1,7.37
+2024-07-02,2024,WTA,wimbledon,grass,1st Round,Garcia C,Blinkova A,loser,0.463,2.33,0.0787,0.0148,7.86,0,-7.86
+2024-07-02,2024,WTA,wimbledon,grass,1st Round,Martic P,Jones F,loser,0.4186,3.02,0.2641,0.0327,15.0,0,-15.0
+2024-07-02,2024,WTA,wimbledon,grass,1st Round,Galfi D,Sherif M,loser,0.4554,2.75,0.2523,0.036,15.0,0,-15.0
+2024-07-02,2024,WTA,wimbledon,grass,1st Round,Ostapenko J,Tomljanovic A,loser,0.4376,2.8,0.2254,0.0313,15.0,0,-15.0
+2024-07-02,2024,ATP,wimbledon,grass,1st Round,Cobolli F,Hijikata R,winner,0.4848,2.25,0.0907,0.0181,8.57,1,10.72
+2024-07-03,2024,WTA,wimbledon,grass,2nd Round,Shnaider D,Stephens S,loser,0.4783,2.5,0.1957,0.0326,14.75,0,-14.75
+2024-07-03,2024,ATP,wimbledon,grass,2nd Round,Tiafoe F,Coric B,loser,0.426,2.84,0.2099,0.0285,15.0,0,-15.0
+2024-07-03,2024,ATP,wimbledon,grass,1st Round,Machac T,Goffin D,loser,0.5355,2.38,0.2745,0.0497,15.0,0,-15.0
+2024-07-03,2024,ATP,wimbledon,grass,1st Round,Pouille L,Djere L,loser,0.4842,2.65,0.2831,0.0429,15.0,0,-15.0
+2024-07-03,2024,ATP,wimbledon,grass,1st Round,Ruusuvuori E,Mcdonald M,loser,0.4946,2.45,0.2118,0.0365,15.0,0,-15.0
+2024-07-03,2024,ATP,wimbledon,grass,1st Round,Safiullin R,Cerundolo F,loser,0.5334,2.19,0.1681,0.0353,13.12,0,-13.12
+2024-07-03,2024,WTA,wimbledon,grass,2nd Round,Sun L,Starodubtseva Y,winner,0.5471,2.0,0.0941,0.0235,8.77,1,8.77
+2024-07-03,2024,WTA,wimbledon,grass,2nd Round,Yastremska D,Gracheva V,loser,0.5143,2.4,0.2342,0.0418,15.0,0,-15.0
+2024-07-03,2024,ATP,wimbledon,grass,1st Round,Halys Q,Eubanks C,loser,0.5143,2.05,0.0543,0.0129,6.43,0,-6.43
+2024-07-03,2024,WTA,wimbledon,grass,2nd Round,Navarro E,Osaka N,winner,0.5559,2.25,0.2508,0.0502,15.0,1,18.75
+2024-07-03,2024,WTA,wimbledon,grass,2nd Round,Raducanu E,Mertens E,loser,0.501,2.78,0.3928,0.0552,15.0,0,-15.0
+2024-07-03,2024,WTA,wimbledon,grass,2nd Round,Andreescu B,Noskova L,winner,0.5212,2.06,0.0738,0.0174,7.57,1,8.03
+2024-07-03,2024,WTA,wimbledon,grass,2nd Round,Kartal S,Burel C,loser,0.5538,2.37,0.3124,0.057,15.0,0,-15.0
+2024-07-03,2024,ATP,wimbledon,grass,2nd Round,Nakashima B,Thompson J,loser,0.5515,2.3,0.2685,0.0516,15.0,0,-15.0
+2024-07-03,2024,ATP,wimbledon,grass,2nd Round,Bautista Agut R,Sonego L,loser,0.4627,2.52,0.166,0.0273,13.0,0,-13.0
+2024-07-03,2024,WTA,wimbledon,grass,1st Round,Haddad Maia B,Frech M,loser,0.4103,2.63,0.0792,0.0121,7.89,0,-7.89
+2024-07-03,2024,WTA,wimbledon,grass,1st Round,Krejcikova B,Kudermetova V,winner,0.5839,2.31,0.3489,0.0666,15.0,1,19.65
+2024-07-03,2024,WTA,wimbledon,grass,1st Round,Niemeier J,Golubic V,loser,0.5048,2.15,0.0853,0.0185,8.25,0,-8.25
+2024-07-03,2024,WTA,wimbledon,grass,1st Round,Collins D,Tauson C,loser,0.4025,3.2,0.2881,0.0327,15.0,0,-15.0
+2024-07-03,2024,ATP,wimbledon,grass,2nd Round,Bublik A,Cazaux A,loser,0.3767,3.5,0.3186,0.0319,15.0,0,-15.0
+2024-07-04,2024,ATP,wimbledon,grass,2nd Round,Pouille L,Kokkinakis T,winner,0.4282,2.75,0.1775,0.0254,13.68,1,23.94
+2024-07-04,2024,ATP,wimbledon,grass,2nd Round,Safiullin R,Machac T,loser,0.517,2.29,0.1839,0.0356,14.06,0,-14.06
+2024-07-04,2024,ATP,wimbledon,grass,2nd Round,Shelton B,Harris L,winner,0.5972,1.75,0.045,0.015,5.88,1,4.41
+2024-07-04,2024,WTA,wimbledon,grass,2nd Round,Svitolina E,Niemeier J,winner,0.6332,1.65,0.0449,0.0173,5.87,1,3.82
+2024-07-04,2024,WTA,wimbledon,grass,2nd Round,Pera B,Garcia C,loser,0.6837,1.67,0.1419,0.0529,11.58,0,-11.58
+2024-07-04,2024,WTA,wimbledon,grass,2nd Round,Kalinskaya A,Bouzkova M,loser,0.5279,2.41,0.2723,0.0483,15.0,0,-15.0
+2024-07-04,2024,WTA,wimbledon,grass,2nd Round,Putintseva Y,Siniakova K,winner,0.5025,2.2,0.1056,0.022,9.45,1,11.34
+2024-07-04,2024,WTA,wimbledon,grass,2nd Round,Bouzas Maneiro J,Bucsa C,loser,0.4994,2.25,0.1236,0.0247,10.5,0,-10.5
+2024-07-04,2024,WTA,wimbledon,grass,2nd Round,Krejcikova B,Volynets K,winner,0.6807,1.72,0.1707,0.0593,13.28,1,9.56
+2024-07-04,2024,WTA,wimbledon,grass,2nd Round,Badosa P,Fruhvirtova B,loser,0.3802,3.24,0.2318,0.0259,15.0,0,-15.0
+2024-07-04,2024,ATP,wimbledon,grass,2nd Round,Halys Q,Khachanov K,winner,0.3874,2.8,0.0847,0.0118,8.22,1,14.8
+2024-07-05,2024,WTA,wimbledon,grass,3rd Round,Raducanu E,Sakkari M,loser,0.5129,2.28,0.1695,0.0331,13.2,0,-13.2
+2024-07-05,2024,WTA,wimbledon,grass,3rd Round,Navarro E,Shnaider D,loser,0.498,2.4,0.1952,0.0349,14.72,0,-14.72
+2024-07-05,2024,ATP,wimbledon,grass,3rd Round,Paul T,Bublik A,loser,0.4251,2.79,0.186,0.026,14.18,0,-14.18
+2024-07-05,2024,WTA,wimbledon,grass,3rd Round,Sun L,Zhu L,winner,0.5242,2.0,0.0485,0.0121,6.09,1,6.09
+2024-07-05,2024,WTA,wimbledon,grass,3rd Round,Paolini J,Andreescu B,loser,0.522,2.25,0.1745,0.0349,13.5,0,-13.5
+2024-07-06,2024,ATP,wimbledon,grass,3rd Round,Fils A,Safiullin R,loser,0.5063,2.21,0.119,0.0246,10.23,0,-10.23
+2024-07-06,2024,WTA,wimbledon,grass,3rd Round,Svitolina E,Jabeur O,winner,0.4293,2.76,0.1848,0.0262,14.11,1,24.82
+2024-07-06,2024,WTA,wimbledon,grass,3rd Round,Kalinskaya A,Samsonova L,winner,0.4642,2.3,0.0677,0.013,7.22,1,9.39
+2024-07-06,2024,ATP,wimbledon,grass,3rd Round,Shelton B,Shapovalov D,loser,0.5734,2.1,0.2041,0.0464,15.0,0,-15.0
+2024-07-06,2024,ATP,wimbledon,grass,3rd Round,Humbert U,Nakashima B,loser,0.4856,2.17,0.0538,0.0115,6.4,0,-6.4
+2024-07-07,2024,WTA,wimbledon,grass,4th Round,Paolini J,Keys M,winner,0.413,3.23,0.3341,0.0375,15.0,1,33.45
+2024-07-07,2024,ATP,wimbledon,grass,4th Round,Medvedev D,Dimitrov G,winner,0.6216,1.74,0.0816,0.0276,8.04,1,5.95
+2024-07-08,2024,WTA,wimbledon,grass,4th Round,Ostapenko J,Putintseva Y,winner,0.573,1.83,0.0486,0.0146,6.09,1,5.06
+2024-07-08,2024,ATP,wimbledon,grass,4th Round,Djokovic N,Rune H,winner,0.7612,1.36,0.0352,0.0244,5.31,1,1.91
+2024-07-08,2024,ATP,wimbledon,grass,4th Round,Fritz T,Zverev A,winner,0.4582,2.55,0.1683,0.0271,13.14,1,20.36
+2024-07-09,2024,WTA,wimbledon,grass,Quarterfinals,Paolini J,Navarro E,winner,0.462,2.5,0.1549,0.0258,12.35,1,18.52
+2024-07-11,2024,WTA,wimbledon,grass,Semifinals,Paolini J,Vekic D,loser,0.5523,2.51,0.3862,0.0639,15.0,0,-15.0
+2024-07-14,2024,ATP,wimbledon,grass,The Final,Alcaraz C,Djokovic N,loser,0.5171,2.2,0.1375,0.0287,11.33,0,-11.33
+2024-08-26,2024,ATP,usopen,hard,1st Round,Martinez P,Kasnikowski M,loser,0.5692,2.07,0.1782,0.0416,13.72,0,-13.72
+2024-08-26,2024,ATP,usopen,hard,1st Round,Shang J,Bublik A,loser,0.5131,2.33,0.1956,0.0368,14.74,0,-14.74
+2024-08-26,2024,ATP,usopen,hard,1st Round,Krueger M,Grenier H,loser,0.5032,2.34,0.1775,0.0331,13.68,0,-13.68
+2024-08-26,2024,WTA,usopen,hard,1st Round,Maria T,Sierra S,loser,0.604,1.75,0.0569,0.019,6.58,0,-6.58
+2024-08-26,2024,ATP,usopen,hard,1st Round,Kecmanovic M,Nishioka Y,loser,0.6089,1.84,0.1204,0.0358,10.32,0,-10.32
+2024-08-26,2024,ATP,usopen,hard,1st Round,Muller A,Walton A,loser,0.4616,2.91,0.3432,0.0449,15.0,0,-15.0
+2024-08-26,2024,WTA,usopen,hard,1st Round,Niemeier J,Yastremska D,winner,0.3956,2.75,0.088,0.0126,8.41,1,14.72
+2024-08-26,2024,WTA,usopen,hard,1st Round,Andreeva E,Yuan Y,loser,0.626,1.74,0.0892,0.0301,8.48,0,-8.48
+2024-08-26,2024,WTA,usopen,hard,1st Round,Rus A,Bogdan A,winner,0.4756,2.22,0.0559,0.0115,6.52,1,7.96
+2024-08-26,2024,WTA,usopen,hard,1st Round,Zheng Q,Anisimova A,loser,0.385,2.68,0.0318,0.0047,5.11,0,-5.11
+2024-08-26,2024,WTA,usopen,hard,1st Round,Keys M,Siniakova K,loser,0.3512,3.05,0.0713,0.0087,7.43,0,-7.43
+2024-08-26,2024,ATP,usopen,hard,1st Round,Hijikata R,Davidovich Fokina A,winner,0.3724,3.43,0.2772,0.0285,15.0,1,36.45
+2024-08-26,2024,ATP,usopen,hard,1st Round,Nakashima B,Rune H,loser,0.682,1.61,0.0981,0.0402,9.0,0,-9.0
+2024-08-26,2024,ATP,usopen,hard,1st Round,Baez S,Darderi L,loser,0.484,2.27,0.0988,0.0194,9.04,0,-9.04
+2024-08-26,2024,ATP,usopen,hard,1st Round,Rinderknech A,Eubanks C,loser,0.442,2.35,0.0388,0.0072,5.52,0,-5.52
+2024-08-27,2024,WTA,usopen,hard,1st Round,Burel C,Stephens S,loser,0.5169,2.05,0.0596,0.0142,6.74,0,-6.74
+2024-08-27,2024,WTA,usopen,hard,1st Round,Alexandrova E,Tomova V,winner,0.7316,1.49,0.0901,0.046,8.53,1,4.18
+2024-08-27,2024,WTA,usopen,hard,1st Round,Bronzetti L,Sun L,winner,0.3931,2.75,0.0811,0.0116,8.0,1,14.01
+2024-08-27,2024,WTA,usopen,hard,1st Round,Dart H,Paquet C,loser,0.4367,2.81,0.2272,0.0314,15.0,0,-15.0
+2024-08-27,2024,ATP,usopen,hard,1st Round,De Minaur A,Giron M,winner,0.8307,1.31,0.0882,0.0712,8.43,1,2.61
+2024-08-27,2024,ATP,usopen,hard,1st Round,Purcell M,Vukic A,winner,0.4835,2.23,0.0782,0.0159,7.84,1,9.64
+2024-08-27,2024,ATP,usopen,hard,1st Round,Marozsan F,Medjedovic H,winner,0.5757,1.79,0.0305,0.0097,5.03,1,3.97
+2024-08-27,2024,ATP,usopen,hard,1st Round,Diallo G,Munar J,winner,0.6394,1.98,0.266,0.0679,15.0,1,14.7
+2024-08-27,2024,ATP,usopen,hard,1st Round,Bergs Z,Kotov P,loser,0.6073,2.21,0.342,0.0707,15.0,0,-15.0
+2024-08-27,2024,WTA,usopen,hard,1st Round,Muchova K,Volynets K,winner,0.84,1.3,0.092,0.0767,8.65,1,2.59
+2024-08-27,2024,WTA,usopen,hard,1st Round,Zarazua R,Garcia C,loser,0.7151,1.61,0.1513,0.062,12.14,0,-12.14
+2024-08-27,2024,ATP,usopen,hard,1st Round,Cazaux A,Carreno Busta P,loser,0.6881,1.64,0.1284,0.0502,10.79,0,-10.79
+2024-08-27,2024,WTA,usopen,hard,1st Round,Haddad Maia B,Avanesyan E,loser,0.448,2.4,0.0752,0.0134,7.66,0,-7.66
+2024-08-27,2024,ATP,usopen,hard,1st Round,Navone M,Altmaier D,winner,0.5349,2.4,0.2839,0.0507,15.0,1,21.0
+2024-08-27,2024,ATP,usopen,hard,1st Round,Schoolkate T,Daniel T,winner,0.5248,2.53,0.3278,0.0536,15.0,1,22.95
+2024-08-27,2024,ATP,usopen,hard,1st Round,Virtanen O,Halys Q,winner,0.4831,2.19,0.058,0.0122,6.65,1,7.91
+2024-08-27,2024,WTA,usopen,hard,1st Round,Bouzkova M,Lys E,loser,0.3902,3.0,0.1705,0.0213,13.26,0,-13.26
+2024-08-27,2024,ATP,usopen,hard,1st Round,Diaz Acosta F,Gaston H,winner,0.4629,2.4,0.111,0.0198,9.77,1,13.67
+2024-08-27,2024,WTA,usopen,hard,1st Round,Errani S,Bucsa C,winner,0.4412,2.69,0.187,0.0277,14.23,1,24.05
+2024-08-27,2024,WTA,usopen,hard,1st Round,Boulter K,Sasnovich A,loser,0.4379,2.47,0.0817,0.0139,8.04,0,-8.04
+2024-08-27,2024,WTA,usopen,hard,1st Round,Osaka N,Ostapenko J,loser,0.5561,2.34,0.3014,0.0562,15.0,0,-15.0
+2024-08-27,2024,ATP,usopen,hard,1st Round,Arnaldi M,Svajda Z,winner,0.7381,1.41,0.0407,0.0248,5.63,1,2.31
+2024-08-27,2024,WTA,usopen,hard,1st Round,Bouzas Maneiro J,Martic P,loser,0.4794,2.5,0.1986,0.0331,14.92,0,-14.92
+2024-08-27,2024,WTA,usopen,hard,1st Round,Lepchenko V,Fruhvirtova B,winner,0.4284,2.5,0.0711,0.0118,7.42,1,11.12
+2024-08-28,2024,WTA,usopen,hard,1st Round,Paolini J,Andreescu B,loser,0.4171,2.65,0.1054,0.016,9.44,0,-9.44
+2024-08-28,2024,ATP,usopen,hard,2nd Round,Griekspoor T,Baez S,loser,0.4177,2.68,0.1194,0.0178,10.26,0,-10.26
+2024-08-28,2024,WTA,usopen,hard,1st Round,Putintseva Y,Noskova L,loser,0.5659,2.0,0.1318,0.033,10.99,0,-10.99
+2024-08-28,2024,ATP,usopen,hard,2nd Round,Shang J,Carballes Baena R,loser,0.383,3.6,0.3789,0.0364,15.0,0,-15.0
+2024-08-28,2024,ATP,usopen,hard,2nd Round,Ruud C,Monfils G,loser,0.4998,2.68,0.3395,0.0505,15.0,0,-15.0
+2024-08-28,2024,ATP,usopen,hard,2nd Round,Musetti L,Kecmanovic M,loser,0.4046,3.21,0.2987,0.0338,15.0,0,-15.0
+2024-08-28,2024,WTA,usopen,hard,2nd Round,Mertens E,Tomljanovic A,loser,0.3799,3.31,0.2575,0.0279,15.0,0,-15.0
+2024-08-28,2024,WTA,usopen,hard,2nd Round,Alexandrova E,Jovic I,loser,0.3611,3.56,0.2854,0.0279,15.0,0,-15.0
+2024-08-29,2024,ATP,usopen,hard,2nd Round,Cobolli F,Bergs Z,winner,0.7099,1.6,0.1359,0.0566,11.23,1,6.74
+2024-08-29,2024,ATP,usopen,hard,2nd Round,De Minaur A,Virtanen O,winner,0.8532,1.27,0.0836,0.0774,8.15,1,2.2
+2024-08-29,2024,WTA,usopen,hard,2nd Round,Samsonova L,Bouzkova M,loser,0.412,2.5,0.0301,0.005,5.0,0,-5.0
+2024-08-29,2024,WTA,usopen,hard,2nd Round,Stearns P,Kasatkina D,loser,0.6357,1.84,0.1697,0.0505,13.22,0,-13.22
+2024-08-29,2024,ATP,usopen,hard,2nd Round,Fritz T,Berrettini M,winner,0.6932,1.57,0.0883,0.0387,8.43,1,4.8
+2024-08-29,2024,ATP,usopen,hard,2nd Round,Arnaldi M,Safiullin R,winner,0.6379,1.84,0.1738,0.0517,13.46,1,11.3
+2024-08-29,2024,WTA,usopen,hard,2nd Round,Pavlyuchenkova A,Cocciaretto E,winner,0.6665,1.57,0.0465,0.0204,5.97,1,3.4
+2024-08-30,2024,WTA,usopen,hard,2nd Round,Muchova K,Osaka N,winner,0.5789,2.22,0.2852,0.0584,15.0,1,18.3
+2024-08-30,2024,ATP,usopen,hard,3rd Round,Tiafoe F,Shelton B,winner,0.514,2.45,0.2594,0.0447,15.0,1,21.75
+2024-08-30,2024,ATP,usopen,hard,3rd Round,Rublev A,Lehecka J,loser,0.3568,3.5,0.2489,0.0249,15.0,0,-15.0
+2024-08-30,2024,ATP,usopen,hard,3rd Round,Nakashima B,Musetti L,loser,0.4681,2.38,0.1141,0.0207,9.95,0,-9.95
+2024-08-30,2024,WTA,usopen,hard,3rd Round,Vekic D,Stearns P,loser,0.4279,2.42,0.0356,0.0063,5.33,0,-5.33
+2024-08-30,2024,WTA,usopen,hard,3rd Round,Navarro E,Kostyuk M,loser,0.5273,2.47,0.3023,0.0514,15.0,0,-15.0
+2024-08-30,2024,ATP,usopen,hard,3rd Round,Ruud C,Shang J,loser,0.3603,3.37,0.2142,0.0226,15.0,0,-15.0
+2024-08-31,2024,WTA,usopen,hard,3rd Round,Samsonova L,Krueger A,winner,0.7271,1.65,0.1998,0.0768,14.99,1,9.74
+2024-08-31,2024,WTA,usopen,hard,3rd Round,Paolini J,Putintseva Y,loser,0.4558,2.35,0.0712,0.0132,7.42,0,-7.42
+2024-08-31,2024,WTA,usopen,hard,3rd Round,Muchova K,Potapova A,winner,0.7269,1.43,0.0394,0.0229,5.55,1,2.39
+2024-08-31,2024,WTA,usopen,hard,3rd Round,Mertens E,Keys M,winner,0.3952,3.01,0.1897,0.0236,14.39,1,28.93
+2024-09-01,2024,WTA,usopen,hard,3rd Round,Haddad Maia B,Kalinskaya A,winner,0.4536,2.65,0.2019,0.0306,15.0,1,24.75
+2024-09-01,2024,ATP,usopen,hard,3rd Round,De Minaur A,Evans D,winner,0.8747,1.18,0.0321,0.0446,5.13,1,0.92
+2024-09-02,2024,WTA,usopen,hard,4th Round,Haddad Maia B,Wozniacki C,winner,0.5272,2.14,0.1281,0.0281,10.77,1,12.28
+2024-09-02,2024,WTA,usopen,hard,4th Round,Pegula J,Shnaider D,winner,0.7498,1.53,0.1472,0.0695,11.9,1,6.31
+2024-09-02,2024,WTA,usopen,hard,4th Round,Zheng Q,Vekic D,loser,0.3844,3.0,0.1532,0.0192,12.25,0,-12.25
+2024-09-02,2024,WTA,usopen,hard,4th Round,Muchova K,Paolini J,loser,0.4101,2.55,0.0458,0.0074,5.93,0,-5.93
+2024-09-02,2024,ATP,usopen,hard,4th Round,Draper J,Machac T,loser,0.4125,2.98,0.2294,0.029,15.0,0,-15.0
+2024-09-02,2024,ATP,usopen,hard,4th Round,Tiafoe F,Popyrin A,loser,0.5111,2.02,0.0324,0.0079,5.14,0,-5.14
+2024-09-03,2024,ATP,usopen,hard,Quarterfinals,Fritz T,Zverev A,loser,0.6792,1.61,0.0936,0.0383,8.74,0,-8.74
+2024-09-04,2024,WTA,usopen,hard,Quarterfinals,Muchova K,Haddad Maia B,loser,0.3641,3.62,0.3179,0.0303,15.0,0,-15.0
+2024-09-04,2024,ATP,usopen,hard,Quarterfinals,Draper J,De Minaur A,loser,0.6732,1.73,0.1646,0.0564,12.92,0,-12.92
+2024-09-06,2024,WTA,usopen,hard,Semifinals,Pegula J,Muchova K,loser,0.4281,2.44,0.0445,0.0077,5.85,0,-5.85
+2025-01-12,2025,WTA,ausopen,hard,1st Round,Bouzas Maneiro J,Kartal S,winner,0.4758,2.2,0.0468,0.0097,5.99,1,7.18
+2025-01-12,2025,WTA,ausopen,hard,1st Round,Maria T,Pera B,winner,0.4565,2.82,0.2872,0.0395,15.0,1,27.3
+2025-01-12,2025,ATP,ausopen,hard,1st Round,Martinez P,Darderi L,loser,0.4546,2.45,0.1138,0.0196,9.93,0,-9.93
+2025-01-12,2025,ATP,ausopen,hard,1st Round,Halys Q,Walton A,winner,0.6086,2.01,0.2234,0.0553,15.0,1,15.15
+2025-01-12,2025,WTA,ausopen,hard,1st Round,Blinkova A,Saville D,loser,0.4938,2.77,0.3678,0.052,15.0,0,-15.0
+2025-01-13,2025,WTA,ausopen,hard,1st Round,Sramkova R,Volynets K,winner,0.6332,2.12,0.3424,0.0764,15.0,1,16.8
+2025-01-13,2025,WTA,ausopen,hard,1st Round,Gibson T,Sonmez Z,winner,0.4206,2.69,0.1315,0.0195,10.97,1,18.54
+2025-01-13,2025,WTA,ausopen,hard,1st Round,Danilovic O,Rus A,loser,0.383,2.78,0.0646,0.0091,7.04,0,-7.04
+2025-01-13,2025,WTA,ausopen,hard,1st Round,Siegemund L,Baptiste H,winner,0.5327,2.12,0.1292,0.0288,10.84,1,12.14
+2025-01-13,2025,WTA,ausopen,hard,1st Round,Uchijima M,Linette M,winner,0.3778,3.22,0.2164,0.0244,15.0,1,33.3
+2025-01-13,2025,ATP,ausopen,hard,1st Round,Carballes Baena R,Tabilo A,winner,0.4794,2.79,0.3376,0.0472,15.0,1,26.85
+2025-01-13,2025,ATP,ausopen,hard,1st Round,Borges N,Muller A,loser,0.4962,2.3,0.1412,0.0272,11.54,0,-11.54
+2025-01-13,2025,ATP,ausopen,hard,1st Round,Marozsan F,Seyboth Wild T,loser,0.3893,3.1,0.2067,0.0246,15.0,0,-15.0
+2025-01-13,2025,ATP,ausopen,hard,1st Round,Duckworth J,Stricker D,loser,0.6534,2.12,0.3853,0.086,15.0,0,-15.0
+2025-01-13,2025,ATP,ausopen,hard,1st Round,Schoolkate T,Daniel T,winner,0.5414,2.02,0.0937,0.023,8.75,1,8.92
+2025-01-13,2025,ATP,ausopen,hard,1st Round,Michelsen A,Tsitsipas S,winner,0.4245,2.53,0.074,0.0121,7.59,1,11.61
+2025-01-13,2025,WTA,ausopen,hard,1st Round,Frech M,Kudermetova P,winner,0.4741,2.32,0.0999,0.0189,9.11,1,12.02
+2025-01-13,2025,WTA,ausopen,hard,1st Round,Aiava D,Minnen G,winner,0.4679,2.22,0.0388,0.008,5.52,1,6.73
+2025-01-13,2025,WTA,ausopen,hard,1st Round,Cristian J,Martic P,loser,0.4698,2.56,0.2026,0.0325,15.0,0,-15.0
+2025-01-13,2025,WTA,ausopen,hard,1st Round,Bencic B,Ostapenko J,loser,0.4424,2.4,0.0619,0.011,6.87,0,-6.87
+2025-01-13,2025,WTA,ausopen,hard,1st Round,Niemeier J,Chwalinska M,winner,0.4995,2.71,0.3537,0.0517,15.0,1,25.65
+2025-01-13,2025,ATP,ausopen,hard,1st Round,Cazaux A,Baez S,loser,0.4022,3.13,0.2588,0.0304,15.0,0,-15.0
+2025-01-13,2025,ATP,ausopen,hard,1st Round,Fearnley J,Kyrgios N,loser,0.7366,1.86,0.3701,0.1076,15.0,0,-15.0
+2025-01-13,2025,ATP,ausopen,hard,1st Round,Faria J,Kotov P,winner,0.5337,2.4,0.2809,0.0502,15.0,1,21.0
+2025-01-13,2025,ATP,ausopen,hard,1st Round,Korda S,Klein L,winner,0.7733,1.36,0.0517,0.0359,6.28,1,2.26
+2025-01-14,2025,ATP,ausopen,hard,1st Round,Fonseca J,Rublev A,loser,0.6216,1.66,0.0318,0.0121,5.11,0,-5.11
+2025-01-14,2025,WTA,ausopen,hard,1st Round,Navarro E,Stearns P,winner,0.6482,1.71,0.1083,0.0382,9.61,1,6.82
+2025-01-14,2025,WTA,ausopen,hard,1st Round,Wang Y,Bondar A,winner,0.6553,2.05,0.3433,0.0817,15.0,1,15.75
+2025-01-14,2025,WTA,ausopen,hard,1st Round,Raducanu E,Alexandrova E,loser,0.5226,2.2,0.1496,0.0312,12.04,0,-12.04
+2025-01-14,2025,WTA,ausopen,hard,1st Round,Jovic I,Parrizas Diaz N,winner,0.5213,2.21,0.152,0.0314,12.18,1,14.74
+2025-01-14,2025,WTA,ausopen,hard,1st Round,Zhang S,Kessler M,winner,0.3978,3.47,0.3804,0.0385,15.0,1,37.05
+2025-01-14,2025,WTA,ausopen,hard,1st Round,Putintseva Y,Avanesyan E,loser,0.3719,2.91,0.0822,0.0108,8.07,0,-8.07
+2025-01-14,2025,ATP,ausopen,hard,1st Round,Carreno Busta P,Majchrzak K,winner,0.6037,1.77,0.0685,0.0222,7.26,1,5.59
+2025-01-14,2025,WTA,ausopen,hard,1st Round,Zarazua R,Townsend T,loser,0.5994,1.75,0.049,0.0163,6.12,0,-6.12
+2025-01-14,2025,WTA,ausopen,hard,1st Round,Jabeur O,Kalinina A,loser,0.3833,2.86,0.0963,0.0129,8.9,0,-8.9
+2025-01-14,2025,WTA,ausopen,hard,1st Round,Gracheva V,Mcnally C,loser,0.531,2.2,0.1682,0.035,13.13,0,-13.13
+2025-01-14,2025,ATP,ausopen,hard,1st Round,Diallo G,Nardi L,loser,0.4166,2.92,0.2166,0.0282,15.0,0,-15.0
+2025-01-14,2025,ATP,ausopen,hard,1st Round,Garin C,Coric B,winner,0.4936,2.1,0.0366,0.0083,5.39,1,5.93
+2025-01-14,2025,ATP,ausopen,hard,1st Round,Cerundolo F,Bublik A,loser,0.424,2.45,0.0389,0.0067,5.52,0,-5.52
+2025-01-14,2025,ATP,ausopen,hard,1st Round,Diaz Acosta F,Bergs Z,winner,0.389,2.86,0.1124,0.0151,9.85,1,18.32
+2025-01-14,2025,ATP,ausopen,hard,1st Round,Altmaier D,Comesana F,loser,0.6,2.01,0.206,0.051,15.0,0,-15.0
+2025-01-14,2025,ATP,ausopen,hard,1st Round,Musetti L,Arnaldi M,loser,0.5058,2.5,0.2645,0.0441,15.0,0,-15.0
+2025-01-14,2025,ATP,ausopen,hard,1st Round,Krueger M,Hijikata R,winner,0.3886,3.1,0.2045,0.0243,15.0,1,31.5
+2025-01-14,2025,WTA,ausopen,hard,1st Round,Kudermetova V,Gadecki O,loser,0.4004,3.45,0.3813,0.0389,15.0,0,-15.0
+2025-01-15,2025,WTA,ausopen,hard,2nd Round,Pavlyuchenkova A,Potapova A,winner,0.5989,1.73,0.0362,0.0124,5.36,1,3.91
+2025-01-15,2025,WTA,ausopen,hard,2nd Round,Osaka N,Muchova K,winner,0.3522,3.49,0.2291,0.023,15.0,1,37.35
+2025-01-15,2025,WTA,ausopen,hard,2nd Round,Frech M,Blinkova A,loser,0.4517,2.3,0.0389,0.0075,5.53,0,-5.53
+2025-01-15,2025,WTA,ausopen,hard,2nd Round,Danilovic O,Samsonova L,winner,0.3833,3.31,0.2687,0.0291,15.0,1,34.65
+2025-01-15,2025,ATP,ausopen,hard,2nd Round,Borges N,Thompson J,loser,0.6471,2.04,0.3201,0.0769,15.0,0,-15.0
+2025-01-15,2025,ATP,ausopen,hard,2nd Round,Paul T,Nishikori K,loser,0.4179,3.0,0.2538,0.0317,15.0,0,-15.0
+2025-01-15,2025,ATP,ausopen,hard,2nd Round,Draper J,Kokkinakis T,winner,0.6785,1.56,0.0585,0.0261,6.68,1,3.74
+2025-01-15,2025,ATP,ausopen,hard,2nd Round,Fearnley J,Cazaux A,loser,0.5355,2.4,0.2852,0.0509,15.0,0,-15.0
+2025-01-15,2025,ATP,ausopen,hard,2nd Round,Machac T,Opelka R,loser,0.3795,3.5,0.3282,0.0328,15.0,0,-15.0
+2025-01-16,2025,ATP,ausopen,hard,2nd Round,Marozsan F,Tiafoe F,winner,0.4306,2.75,0.1841,0.0263,14.06,1,24.61
+2025-01-16,2025,ATP,ausopen,hard,2nd Round,Moutet C,Krueger M,loser,0.4648,2.75,0.2782,0.0397,15.0,0,-15.0
+2025-01-16,2025,ATP,ausopen,hard,2nd Round,Cerundolo F,Diaz Acosta F,loser,0.3907,3.48,0.3597,0.0363,15.0,0,-15.0
+2025-01-16,2025,ATP,ausopen,hard,2nd Round,Musetti L,Shapovalov D,winner,0.4963,2.1,0.0422,0.0096,5.72,1,6.29
+2025-01-16,2025,ATP,ausopen,hard,2nd Round,Kecmanovic M,Hurkacz H,winner,0.3549,3.75,0.3308,0.0301,15.0,1,41.25
+2025-01-16,2025,WTA,ausopen,hard,2nd Round,Cristian J,Bronzetti L,winner,0.4431,2.41,0.0678,0.012,7.22,1,10.18
+2025-01-16,2025,WTA,ausopen,hard,2nd Round,Lys E,Gracheva V,loser,0.434,2.56,0.1111,0.0178,9.77,0,-9.77
+2025-01-16,2025,WTA,ausopen,hard,2nd Round,Raducanu E,Anisimova A,winner,0.4658,2.4,0.1179,0.0211,10.17,1,14.24
+2025-01-17,2025,ATP,ausopen,hard,3rd Round,Davidovich Fokina A,Mensik J,winner,0.4101,2.72,0.1155,0.0168,10.03,1,17.25
+2025-01-17,2025,ATP,ausopen,hard,3rd Round,Humbert U,Fils A,winner,0.6208,1.66,0.0305,0.0116,5.03,1,3.32
+2025-01-17,2025,WTA,ausopen,hard,3rd Round,Bencic B,Osaka N,winner,0.5228,2.22,0.1606,0.0329,12.68,1,15.48
+2025-01-17,2025,WTA,ausopen,hard,3rd Round,Vekic D,Shnaider D,winner,0.455,2.5,0.1374,0.0229,11.32,1,16.98
+2025-01-18,2025,WTA,ausopen,hard,3rd Round,Keys M,Collins D,loser,0.4039,3.27,0.3206,0.0353,15.0,0,-15.0
+2025-01-18,2025,WTA,ausopen,hard,3rd Round,Svitolina E,Paolini J,winner,0.4762,2.25,0.0715,0.0143,7.44,1,9.3
+2025-01-18,2025,WTA,ausopen,hard,3rd Round,Kudermetova V,Haddad Maia B,loser,0.6373,1.96,0.2492,0.0649,15.0,0,-15.0
+2025-01-18,2025,WTA,ausopen,hard,3rd Round,Kasatkina D,Putintseva Y,winner,0.455,2.33,0.06,0.0113,6.77,1,9.0
+2025-01-18,2025,WTA,ausopen,hard,3rd Round,Lys E,Cristian J,loser,0.4837,2.65,0.2818,0.0427,15.0,0,-15.0
+2025-01-18,2025,ATP,ausopen,hard,3rd Round,Sonego L,Marozsan F,loser,0.596,2.1,0.2515,0.0572,15.0,0,-15.0
+2025-01-18,2025,ATP,ausopen,hard,3rd Round,Shelton B,Musetti L,winner,0.6233,1.69,0.0534,0.0194,6.38,1,4.4
+2025-01-18,2025,ATP,ausopen,hard,3rd Round,Rune H,Kecmanovic M,winner,0.7081,1.5,0.0622,0.0311,6.89,1,3.45
+2025-01-19,2025,WTA,ausopen,hard,4th Round,Pavlyuchenkova A,Vekic D,winner,0.5229,2.11,0.1034,0.0233,9.32,1,10.34
+2025-01-20,2025,WTA,ausopen,hard,4th Round,Navarro E,Kasatkina D,winner,0.5611,1.97,0.1053,0.0271,9.43,1,9.15
+2025-01-20,2025,WTA,ausopen,hard,4th Round,Keys M,Rybakina E,winner,0.5767,2.32,0.338,0.064,15.0,1,19.8
+2025-01-20,2025,ATP,ausopen,hard,4th Round,Shelton B,Monfils G,loser,0.5272,2.5,0.318,0.053,15.0,0,-15.0
+2025-01-20,2025,WTA,ausopen,hard,4th Round,Svitolina E,Kudermetova V,winner,0.6794,1.53,0.0396,0.0187,5.56,1,2.95
+2025-01-20,2025,ATP,ausopen,hard,4th Round,Sonego L,Tien L,loser,0.5042,2.22,0.1193,0.0245,10.25,0,-10.25
+2025-01-22,2025,WTA,ausopen,hard,Quarterfinals,Keys M,Svitolina E,loser,0.4858,2.63,0.2778,0.0426,15.0,0,-15.0
+2025-01-26,2025,ATP,ausopen,hard,The Final,Sinner J,Zverev A,winner,0.7481,1.39,0.0398,0.0255,5.58,1,2.18
+2025-05-25,2025,ATP,frenchopen,clay,1st Round,Medjedovic H,Majchrzak K,loser,0.5064,2.56,0.2965,0.0475,15.0,0,-15.0
+2025-05-25,2025,ATP,frenchopen,clay,1st Round,Opelka R,Hijikata R,loser,0.3937,2.96,0.1652,0.0211,12.96,0,-12.96
+2025-05-25,2025,ATP,frenchopen,clay,1st Round,Carreno Busta P,Comesana F,winner,0.4414,2.84,0.2536,0.0345,15.0,1,27.6
+2025-05-25,2025,ATP,frenchopen,clay,1st Round,Tiafoe F,Safiullin R,loser,0.3646,3.15,0.1486,0.0173,11.98,0,-11.98
+2025-05-25,2025,ATP,frenchopen,clay,1st Round,Gigante M,Hassan B,loser,0.5061,2.69,0.3615,0.0535,15.0,0,-15.0
+2025-05-25,2025,ATP,frenchopen,clay,1st Round,Nava E,Van De Zandschulp B,loser,0.5809,1.82,0.0573,0.0175,6.61,0,-6.61
+2025-05-25,2025,ATP,frenchopen,clay,1st Round,Brooksby J,Faria J,loser,0.4303,2.45,0.0542,0.0093,6.42,0,-6.42
+2025-05-25,2025,ATP,frenchopen,clay,1st Round,Halys Q,Machac T,winner,0.4178,3.25,0.3577,0.0397,15.0,1,33.75
+2025-05-25,2025,WTA,frenchopen,clay,1st Round,Potapova A,Noskova L,winner,0.6195,1.79,0.109,0.0345,9.64,1,7.62
+2025-05-25,2025,WTA,frenchopen,clay,1st Round,Jovic I,Zarazua R,winner,0.5716,1.92,0.0974,0.0265,8.96,1,8.25
+2025-05-25,2025,WTA,frenchopen,clay,1st Round,Vekic D,Blinkova A,winner,0.6301,1.81,0.1405,0.0434,11.5,1,9.31
+2025-05-25,2025,WTA,frenchopen,clay,1st Round,Teichmann J,Stefanini L,loser,0.4775,2.7,0.2893,0.0425,15.0,0,-15.0
+2025-05-25,2025,WTA,frenchopen,clay,1st Round,Arango E,Eala A,winner,0.4942,2.36,0.1663,0.0306,13.02,1,17.7
+2025-05-25,2025,WTA,frenchopen,clay,1st Round,Lys E,Stearns P,winner,0.3545,3.45,0.2229,0.0227,15.0,1,36.75
+2025-05-25,2025,WTA,frenchopen,clay,1st Round,Bondar A,Siegemund L,loser,0.5201,2.44,0.269,0.0467,15.0,0,-15.0
+2025-05-25,2025,WTA,frenchopen,clay,1st Round,Golubic V,Kvitova P,loser,0.6071,1.84,0.1171,0.0349,10.13,0,-10.13
+2025-05-26,2025,WTA,frenchopen,clay,1st Round,Tauson C,Linette M,loser,0.5191,2.52,0.3081,0.0507,15.0,0,-15.0
+2025-05-26,2025,WTA,frenchopen,clay,1st Round,Dolehide C,Minnen G,loser,0.4147,2.66,0.103,0.0155,9.3,0,-9.3
+2025-05-26,2025,WTA,frenchopen,clay,1st Round,Cocciaretto E,Townsend T,winner,0.5317,2.02,0.0739,0.0181,7.58,1,7.74
+2025-05-26,2025,WTA,frenchopen,clay,1st Round,Starodubtseva Y,Korpatsch T,winner,0.5443,2.2,0.1975,0.0411,14.85,1,17.82
+2025-05-26,2025,WTA,frenchopen,clay,1st Round,Samsonova L,Sherif M,loser,0.4144,3.25,0.3468,0.0385,15.0,0,-15.0
+2025-05-26,2025,WTA,frenchopen,clay,1st Round,Cristian J,Birrell K,loser,0.394,3.35,0.32,0.034,15.0,0,-15.0
+2025-05-26,2025,WTA,frenchopen,clay,1st Round,Badosa P,Osaka N,winner,0.6188,2.11,0.3057,0.0689,15.0,1,16.65
+2025-05-26,2025,WTA,frenchopen,clay,1st Round,Pera B,Garcia C,loser,0.5578,2.26,0.2607,0.0517,15.0,0,-15.0
+2025-05-26,2025,ATP,frenchopen,clay,1st Round,Kecmanovic M,Baez S,loser,0.5794,1.79,0.0371,0.0117,5.42,0,-5.42
+2025-05-26,2025,ATP,frenchopen,clay,1st Round,Korda S,Darderi L,winner,0.5174,2.0,0.0348,0.0087,5.28,1,5.28
+2025-05-26,2025,ATP,frenchopen,clay,1st Round,Munar J,Ugo Carabelli C,loser,0.5,2.46,0.23,0.0394,15.0,0,-15.0
+2025-05-26,2025,ATP,frenchopen,clay,1st Round,Shapovalov D,Martinez P,loser,0.4713,2.63,0.2396,0.0368,15.0,0,-15.0
+2025-05-26,2025,ATP,frenchopen,clay,1st Round,Gasquet R,Atmane T,winner,0.4407,2.56,0.1282,0.0205,10.78,1,16.81
+2025-05-26,2025,ATP,frenchopen,clay,1st Round,Fearnley J,Wawrinka S,loser,0.3846,2.96,0.1384,0.0176,11.37,0,-11.37
+2025-05-27,2025,WTA,frenchopen,clay,1st Round,Bouzkova M,Kalinskaya A,winner,0.5181,2.46,0.2745,0.047,15.0,1,21.9
+2025-05-27,2025,WTA,frenchopen,clay,1st Round,Putintseva Y,Sierra S,winner,0.6184,1.7,0.0513,0.0183,6.25,1,4.38
+2025-05-27,2025,WTA,frenchopen,clay,1st Round,Kalinina A,Avanesyan E,winner,0.4006,3.1,0.2419,0.0288,15.0,1,31.5
+2025-05-27,2025,WTA,frenchopen,clay,1st Round,Kenin S,Gracheva V,loser,0.3611,3.5,0.2639,0.0264,15.0,0,-15.0
+2025-05-27,2025,ATP,frenchopen,clay,1st Round,Fonseca J,Hurkacz H,loser,0.6532,2.1,0.3716,0.0845,15.0,0,-15.0
+2025-05-27,2025,ATP,frenchopen,clay,1st Round,Cobolli F,Cilic M,loser,0.3923,3.2,0.2555,0.029,15.0,0,-15.0
+2025-05-27,2025,WTA,frenchopen,clay,1st Round,Vondrousova M,Selekhmeteva O,winner,0.6963,1.51,0.0514,0.0252,6.26,1,3.19
+2025-05-27,2025,ATP,frenchopen,clay,1st Round,De Jong J,Passaro F,loser,0.4698,2.78,0.306,0.043,15.0,0,-15.0
+2025-05-28,2025,ATP,frenchopen,clay,2nd Round,Altmaier D,Kopriva V,loser,0.5084,2.63,0.337,0.0517,15.0,0,-15.0
+2025-05-28,2025,WTA,frenchopen,clay,2nd Round,Mboko V,Lys E,loser,0.5299,2.62,0.3883,0.0599,15.0,0,-15.0
+2025-05-28,2025,WTA,frenchopen,clay,2nd Round,Pera B,Vekic D,winner,0.4171,2.52,0.0512,0.0084,6.25,1,9.5
+2025-05-28,2025,ATP,frenchopen,clay,2nd Round,Tiafoe F,Carreno Busta P,loser,0.4492,2.65,0.1903,0.0288,14.43,0,-14.43
+2025-05-28,2025,WTA,frenchopen,clay,2nd Round,Danilovic O,Collins D,loser,0.5936,1.79,0.0625,0.0198,6.91,0,-6.91
+2025-05-28,2025,WTA,frenchopen,clay,2nd Round,Yastremska D,Shnaider D,winner,0.3694,3.0,0.1083,0.0135,9.6,1,19.21
+2025-05-28,2025,ATP,frenchopen,clay,2nd Round,Popyrin A,Tabilo A,loser,0.5031,2.66,0.3381,0.0509,15.0,0,-15.0
+2025-05-28,2025,ATP,frenchopen,clay,2nd Round,Khachanov K,Ofner S,loser,0.3941,3.2,0.2612,0.0297,15.0,0,-15.0
+2025-05-28,2025,ATP,frenchopen,clay,2nd Round,Halys Q,Kecmanovic M,winner,0.4592,2.5,0.148,0.0247,11.94,1,17.91
+2025-05-29,2025,WTA,frenchopen,clay,2nd Round,Kudermetova V,Krejcikova B,loser,0.5241,2.63,0.3784,0.058,15.0,0,-15.0
+2025-05-29,2025,WTA,frenchopen,clay,2nd Round,Kenin S,Azarenka V,loser,0.4424,2.81,0.2433,0.0336,15.0,0,-15.0
+2025-05-29,2025,WTA,frenchopen,clay,2nd Round,Boisson L,Kalinina A,loser,0.5317,2.14,0.1378,0.0302,11.34,0,-11.34
+2025-05-29,2025,ATP,frenchopen,clay,2nd Round,Cobolli F,Arnaldi M,winner,0.5515,1.93,0.0645,0.0173,7.03,1,6.54
+2025-05-29,2025,WTA,frenchopen,clay,2nd Round,Bouzkova M,Kartal S,loser,0.4397,2.92,0.284,0.037,15.0,0,-15.0
+2025-05-29,2025,ATP,frenchopen,clay,2nd Round,Griekspoor T,Diallo G,loser,0.4513,2.6,0.1735,0.0271,13.44,0,-13.44
+2025-05-29,2025,ATP,frenchopen,clay,2nd Round,Fearnley J,Humbert U,winner,0.6048,2.29,0.3851,0.0746,15.0,1,19.35
+2025-05-29,2025,ATP,frenchopen,clay,2nd Round,Misolic F,Shapovalov D,winner,0.4853,2.54,0.2326,0.0378,15.0,1,23.1
+2025-05-29,2025,ATP,frenchopen,clay,2nd Round,Quinn E,Shevchenko A,winner,0.4546,2.34,0.0637,0.0119,6.98,1,9.35
+2025-05-30,2025,WTA,frenchopen,clay,3rd Round,Rybakina E,Ostapenko J,loser,0.354,2.98,0.0549,0.0069,6.47,0,-6.47
+2025-05-30,2025,ATP,frenchopen,clay,3rd Round,Paul T,Khachanov K,winner,0.5581,2.22,0.2391,0.049,15.0,1,18.3
+2025-05-30,2025,ATP,frenchopen,clay,3rd Round,Popyrin A,Borges N,loser,0.5356,2.16,0.1569,0.0338,12.46,0,-12.46
+2025-05-30,2025,ATP,frenchopen,clay,3rd Round,Altmaier D,Medjedovic H,winner,0.4729,2.56,0.2106,0.0338,15.0,1,23.4
+2025-05-30,2025,ATP,frenchopen,clay,3rd Round,Shelton B,Gigante M,loser,0.4171,2.78,0.1595,0.0224,12.62,0,-12.62
+2025-05-30,2025,ATP,frenchopen,clay,3rd Round,Tiafoe F,Korda S,loser,0.5419,1.94,0.0513,0.0136,6.25,0,-6.25
+2025-05-30,2025,WTA,frenchopen,clay,3rd Round,Anisimova A,Tauson C,loser,0.5021,2.53,0.2702,0.0442,15.0,0,-15.0
+2025-05-31,2025,ATP,frenchopen,clay,3rd Round,Norrie C,Fearnley J,winner,0.5822,1.84,0.0713,0.0212,7.43,1,6.24
+2025-05-31,2025,WTA,frenchopen,clay,3rd Round,Kasatkina D,Badosa P,winner,0.3949,2.82,0.1135,0.0156,9.91,1,18.04
+2025-05-31,2025,WTA,frenchopen,clay,3rd Round,Pegula J,Vondrousova M,loser,0.468,2.92,0.3666,0.0477,15.0,0,-15.0
+2025-05-31,2025,ATP,frenchopen,clay,3rd Round,Draper J,Fonseca J,winner,0.6825,1.52,0.0374,0.018,5.44,1,2.83
+2025-05-31,2025,WTA,frenchopen,clay,3rd Round,Boisson L,Jacquemot E,loser,0.4132,2.75,0.1362,0.0195,11.25,0,-11.25
+2025-05-31,2025,WTA,frenchopen,clay,3rd Round,Baptiste H,Bouzas Maneiro J,loser,0.519,2.04,0.0588,0.0141,6.69,0,-6.69
+2025-05-31,2025,WTA,frenchopen,clay,3rd Round,Keys M,Kenin S,loser,0.3796,3.25,0.2338,0.026,15.0,0,-15.0
+2025-06-01,2025,ATP,frenchopen,clay,4th Round,Paul T,Popyrin A,winner,0.6739,1.67,0.1253,0.0468,10.61,1,7.11
+2025-06-01,2025,WTA,frenchopen,clay,4th Round,Svitolina E,Paolini J,winner,0.5185,2.26,0.1717,0.0341,13.34,1,16.81
+2025-06-01,2025,WTA,frenchopen,clay,4th Round,Swiatek I,Rybakina E,loser,0.3548,2.96,0.0502,0.0064,6.19,0,-6.19
+2025-06-01,2025,ATP,frenchopen,clay,4th Round,Tiafoe F,Altmaier D,loser,0.3822,2.83,0.0817,0.0112,8.04,0,-8.04
+2025-06-01,2025,ATP,frenchopen,clay,4th Round,Musetti L,Rune H,loser,0.3828,2.98,0.1407,0.0178,11.51,0,-11.51
+2025-06-04,2025,WTA,frenchopen,clay,Quarterfinals,Gauff C,Keys M,loser,0.4265,3.11,0.3265,0.0387,15.0,0,-15.0
+2025-06-04,2025,ATP,frenchopen,clay,Quarterfinals,Djokovic N,Zverev A,winner,0.5288,2.02,0.0683,0.0167,7.25,1,7.4
+2025-06-05,2025,WTA,frenchopen,clay,Semifinals,Sabalenka A,Swiatek I,loser,0.5452,2.16,0.1775,0.0383,13.68,0,-13.68
+2025-06-08,2025,ATP,frenchopen,clay,The Final,Alcaraz C,Sinner J,winner,0.5751,2.03,0.1675,0.0407,13.09,1,13.48
+2025-06-30,2025,ATP,wimbledon,grass,1st Round,Tarvet O,Riedi L,winner,0.4991,2.18,0.0879,0.0186,8.41,1,9.92
+2025-06-30,2025,ATP,wimbledon,grass,1st Round,Thompson J,Kopriva V,loser,0.4055,3.35,0.3583,0.0381,15.0,0,-15.0
+2025-06-30,2025,ATP,wimbledon,grass,1st Round,Brooksby J,Griekspoor T,winner,0.3888,2.85,0.1082,0.0146,9.6,1,17.76
+2025-06-30,2025,ATP,wimbledon,grass,1st Round,Garin C,Rodesch C,loser,0.4774,2.38,0.1361,0.0247,11.24,0,-11.24
+2025-06-30,2025,ATP,wimbledon,grass,1st Round,Harris B,Lajovic D,loser,0.4665,3.0,0.3995,0.0499,15.0,0,-15.0
+2025-06-30,2025,ATP,wimbledon,grass,1st Round,Borges N,Cerundolo F,winner,0.434,2.56,0.1109,0.0178,9.76,1,15.23
+2025-06-30,2025,ATP,wimbledon,grass,1st Round,Harris L,Bergs Z,winner,0.4423,2.82,0.2474,0.034,15.0,1,27.3
+2025-06-30,2025,ATP,wimbledon,grass,1st Round,Norrie C,Bautista Agut R,winner,0.5198,1.99,0.0345,0.0087,5.26,1,5.21
+2025-06-30,2025,ATP,wimbledon,grass,1st Round,Tien L,Basavareddy N,loser,0.4599,2.8,0.2878,0.04,15.0,0,-15.0
+2025-06-30,2025,WTA,wimbledon,grass,1st Round,Boulter K,Badosa P,loser,0.5646,1.85,0.0444,0.0131,5.85,0,-5.85
+2025-06-30,2025,WTA,wimbledon,grass,1st Round,Lys E,Yuan Y,winner,0.538,2.0,0.076,0.019,7.71,1,7.71
+2025-06-30,2025,WTA,wimbledon,grass,1st Round,Kartal S,Ostapenko J,loser,0.6709,1.64,0.1003,0.0392,9.13,0,-9.13
+2025-06-30,2025,WTA,wimbledon,grass,1st Round,Sierra S,Gadecki O,winner,0.5593,1.91,0.0683,0.0188,7.25,1,6.6
+2025-06-30,2025,WTA,wimbledon,grass,1st Round,Haddad Maia B,Sramkova R,loser,0.4404,2.7,0.1892,0.0278,14.36,0,-14.36
+2025-06-30,2025,WTA,wimbledon,grass,1st Round,Bouzkova M,Sun L,loser,0.4652,3.0,0.3957,0.0495,15.0,0,-15.0
+2025-06-30,2025,WTA,wimbledon,grass,1st Round,Sasnovich A,Gracheva V,loser,0.5137,2.04,0.048,0.0115,6.06,0,-6.06
+2025-06-30,2025,WTA,wimbledon,grass,1st Round,Zarazua R,Wickmayer Y,loser,0.5069,2.25,0.1405,0.0281,11.5,0,-11.5
+2025-06-30,2025,WTA,wimbledon,grass,1st Round,Galfi D,Dart H,winner,0.5202,2.2,0.1445,0.0301,11.74,1,14.08
+2025-06-30,2025,WTA,wimbledon,grass,1st Round,Pavlyuchenkova A,Tomljanovic A,loser,0.5208,2.24,0.1666,0.0336,13.04,0,-13.04
+2025-06-30,2025,WTA,wimbledon,grass,1st Round,Vekic D,Birrell K,loser,0.3597,3.0,0.079,0.0099,7.88,0,-7.88
+2025-06-30,2025,WTA,wimbledon,grass,1st Round,Siegemund L,Stearns P,winner,0.463,2.66,0.2315,0.0349,15.0,1,24.9
+2025-07-01,2025,WTA,wimbledon,grass,1st Round,Bouzas Maneiro J,Seidel E,loser,0.4601,2.32,0.0674,0.0128,7.2,0,-7.2
+2025-07-01,2025,WTA,wimbledon,grass,1st Round,Volynets K,Maria T,winner,0.3861,2.75,0.0619,0.0088,6.88,1,12.03
+2025-07-01,2025,WTA,wimbledon,grass,1st Round,Siniakova K,Zheng Q,winner,0.4087,2.82,0.1526,0.021,12.21,1,22.23
+2025-07-01,2025,ATP,wimbledon,grass,1st Round,Kecmanovic M,Michelsen A,winner,0.4359,3.0,0.3076,0.0384,15.0,1,30.0
+2025-07-01,2025,WTA,wimbledon,grass,1st Round,Kalinskaya A,Stojanovic N,loser,0.3887,3.35,0.3021,0.0321,15.0,0,-15.0
+2025-07-01,2025,WTA,wimbledon,grass,1st Round,Samsonova L,Joint M,loser,0.4466,2.92,0.3041,0.0396,15.0,0,-15.0
+2025-07-01,2025,WTA,wimbledon,grass,1st Round,Bronzetti L,Teichmann J,loser,0.4766,2.28,0.0866,0.0169,8.33,0,-8.33
+2025-07-01,2025,WTA,wimbledon,grass,1st Round,Sakkari M,Blinkova A,loser,0.4707,2.32,0.0919,0.0174,8.64,0,-8.64
+2025-07-01,2025,WTA,wimbledon,grass,1st Round,Starodubtseva Y,Jones F,winner,0.5448,2.06,0.1223,0.0288,10.43,1,11.05
+2025-07-01,2025,ATP,wimbledon,grass,1st Round,Cazaux A,Walton A,loser,0.495,2.63,0.3018,0.0463,15.0,0,-15.0
+2025-07-01,2025,ATP,wimbledon,grass,1st Round,Basilashvili N,Musetti L,loser,0.7847,1.36,0.0672,0.0466,7.19,0,-7.19
+2025-07-01,2025,ATP,wimbledon,grass,1st Round,De Jong J,Eubanks C,loser,0.5779,2.34,0.3524,0.0657,15.0,0,-15.0
+2025-07-01,2025,ATP,wimbledon,grass,1st Round,Ofner S,Medjedovic H,winner,0.4871,2.74,0.3346,0.0481,15.0,1,26.1
+2025-07-01,2025,ATP,wimbledon,grass,1st Round,Van De Zandschulp B,Arnaldi M,winner,0.4764,2.34,0.1148,0.0214,9.99,1,13.38
+2025-07-01,2025,ATP,wimbledon,grass,1st Round,Moutet C,Comesana F,loser,0.4647,2.8,0.3013,0.0418,15.0,0,-15.0
+2025-07-01,2025,WTA,wimbledon,grass,1st Round,Mboko V,Frech M,loser,0.4819,2.2,0.0603,0.0126,6.78,0,-6.78
+2025-07-01,2025,WTA,wimbledon,grass,1st Round,Kenin S,Townsend T,loser,0.4351,2.88,0.2531,0.0337,15.0,0,-15.0
+2025-07-02,2025,ATP,wimbledon,grass,2nd Round,Norrie C,Tiafoe F,winner,0.4897,2.66,0.3027,0.0456,15.0,1,24.9
+2025-07-02,2025,ATP,wimbledon,grass,2nd Round,Jarry N,Tien L,loser,0.5332,2.24,0.1944,0.0392,14.67,0,-14.67
+2025-07-02,2025,ATP,wimbledon,grass,2nd Round,Borges N,Harris B,loser,0.5026,2.62,0.3168,0.0489,15.0,0,-15.0
+2025-07-02,2025,WTA,wimbledon,grass,2nd Round,Raducanu E,Vondrousova M,winner,0.4212,2.76,0.1624,0.0231,12.79,1,22.51
+2025-07-02,2025,WTA,wimbledon,grass,2nd Round,Galfi D,Haddad Maia B,winner,0.4046,3.4,0.3757,0.0391,15.0,1,36.0
+2025-07-02,2025,WTA,wimbledon,grass,2nd Round,Osaka N,Siniakova K,winner,0.536,1.99,0.0665,0.0168,7.15,1,7.08
+2025-07-02,2025,ATP,wimbledon,grass,2nd Round,Majchrzak K,Quinn E,winner,0.4642,2.3,0.0677,0.013,7.22,1,9.38
+2025-07-03,2025,ATP,wimbledon,grass,2nd Round,Sonego L,Basilashvili N,loser,0.4431,3.0,0.3292,0.0412,15.0,0,-15.0
+2025-07-03,2025,ATP,wimbledon,grass,2nd Round,Martinez P,Navone M,winner,0.416,2.78,0.1565,0.022,12.44,1,22.15
+2025-07-03,2025,WTA,wimbledon,grass,2nd Round,Tauson C,Kalinskaya A,loser,0.5296,2.22,0.1758,0.036,13.58,0,-13.58
+2025-07-03,2025,ATP,wimbledon,grass,2nd Round,Darderi L,Fery A,winner,0.5103,2.22,0.1329,0.0272,11.05,1,13.48
+2025-07-03,2025,ATP,wimbledon,grass,2nd Round,Rinderknech A,Garin C,loser,0.5515,2.34,0.2905,0.0542,15.0,0,-15.0
+2025-07-03,2025,WTA,wimbledon,grass,2nd Round,Baptiste H,Mboko V,winner,0.5108,2.2,0.1238,0.0258,10.52,1,12.62
+2025-07-03,2025,WTA,wimbledon,grass,2nd Round,Cocciaretto E,Volynets K,loser,0.3916,2.85,0.1161,0.0157,10.06,0,-10.06
+2025-07-03,2025,WTA,wimbledon,grass,2nd Round,Navarro E,Kudermetova V,loser,0.4166,2.74,0.1414,0.0203,11.55,0,-11.55
+2025-07-03,2025,ATP,wimbledon,grass,2nd Round,Munar J,Marozsan F,loser,0.4964,2.22,0.1021,0.0209,9.24,0,-9.24
+2025-07-03,2025,ATP,wimbledon,grass,2nd Round,Dimitrov G,Moutet C,loser,0.4339,2.42,0.05,0.0088,6.18,0,-6.18
+2025-07-03,2025,ATP,wimbledon,grass,2nd Round,Cobolli F,Pinnington Jones J,loser,0.3873,3.35,0.2975,0.0316,15.0,0,-15.0
+2025-07-04,2025,WTA,wimbledon,grass,3rd Round,Sierra S,Bucsa C,winner,0.517,2.36,0.2201,0.0405,15.0,1,20.4
+2025-07-04,2025,WTA,wimbledon,grass,3rd Round,Kartal S,Parry D,loser,0.5071,2.48,0.2577,0.0435,15.0,0,-15.0
+2025-07-04,2025,ATP,wimbledon,grass,3rd Round,Khachanov K,Borges N,loser,0.3717,3.05,0.1338,0.0163,11.11,0,-11.11
+2025-07-04,2025,ATP,wimbledon,grass,3rd Round,Jarry N,Fonseca J,winner,0.431,3.05,0.3146,0.0384,15.0,1,30.75
+2025-07-04,2025,ATP,wimbledon,grass,3rd Round,Majchrzak K,Rinderknech A,loser,0.5498,1.9,0.0446,0.0124,5.86,0,-5.86
+2025-07-04,2025,ATP,wimbledon,grass,3rd Round,Thompson J,Darderi L,winner,0.6107,1.82,0.1115,0.034,9.79,1,8.03
+2025-07-04,2025,ATP,wimbledon,grass,3rd Round,Norrie C,Bellucci M,winner,0.6371,1.63,0.0385,0.0153,5.5,1,3.47
+2025-07-05,2025,WTA,wimbledon,grass,3rd Round,Samsonova L,Kasatkina D,loser,0.4755,2.94,0.3978,0.0513,15.0,0,-15.0
+2025-07-05,2025,WTA,wimbledon,grass,3rd Round,Bouzas Maneiro J,Yastremska D,winner,0.4779,2.86,0.3668,0.0493,15.0,1,27.9
+2025-07-05,2025,ATP,wimbledon,grass,3rd Round,Dimitrov G,Ofner S,loser,0.3585,3.9,0.3981,0.0343,15.0,0,-15.0
+2025-07-05,2025,ATP,wimbledon,grass,3rd Round,Sonego L,Nakashima B,winner,0.4239,2.78,0.1784,0.0251,13.73,1,24.44
+2025-07-05,2025,WTA,wimbledon,grass,3rd Round,Bencic B,Cocciaretto E,loser,0.4141,2.8,0.1596,0.0222,12.62,0,-12.62
+2025-07-05,2025,ATP,wimbledon,grass,3rd Round,Cilic M,Munar J,loser,0.4016,2.62,0.0521,0.008,6.3,0,-6.3
+2025-07-05,2025,WTA,wimbledon,grass,3rd Round,Swiatek I,Collins D,winner,0.7303,1.42,0.0371,0.0221,5.42,1,2.27
+2025-07-06,2025,WTA,wimbledon,grass,4th Round,Pavlyuchenkova A,Kartal S,winner,0.5397,2.02,0.0903,0.0221,8.55,1,8.72
+2025-07-06,2025,WTA,wimbledon,grass,4th Round,Siegemund L,Sierra S,loser,0.5034,2.57,0.2936,0.0468,15.0,0,-15.0
+2025-07-06,2025,WTA,wimbledon,grass,4th Round,Anisimova A,Noskova L,winner,0.6327,1.77,0.1199,0.0389,10.29,1,7.92
+2025-07-06,2025,ATP,wimbledon,grass,4th Round,Norrie C,Jarry N,winner,0.601,2.1,0.2622,0.0596,15.0,1,16.5
+2025-07-06,2025,ATP,wimbledon,grass,4th Round,Khachanov K,Majchrzak K,loser,0.3583,3.4,0.2183,0.0227,15.0,0,-15.0
+2025-07-07,2025,ATP,wimbledon,grass,4th Round,Cobolli F,Cilic M,loser,0.527,2.1,0.1068,0.0243,9.52,0,-9.52
+2025-07-07,2025,WTA,wimbledon,grass,4th Round,Bencic B,Alexandrova E,winner,0.4559,2.8,0.2764,0.0384,15.0,1,27.0
+2025-07-08,2025,WTA,wimbledon,grass,Quarterfinals,Anisimova A,Pavlyuchenkova A,loser,0.3902,3.35,0.3071,0.0327,15.0,0,-15.0
+2025-07-13,2025,ATP,wimbledon,grass,The Final,Sinner J,Alcaraz C,loser,0.5913,2.07,0.224,0.0523,15.0,0,-15.0
+2025-08-24,2025,ATP,usopen,hard,1st Round,Mannarino A,Griekspoor T,winner,0.4783,2.3,0.1,0.0192,9.12,1,11.85
+2025-08-24,2025,ATP,usopen,hard,1st Round,Mensik J,Jarry N,winner,0.7601,1.4,0.0641,0.0401,7.01,1,2.8
+2025-08-24,2025,ATP,usopen,hard,1st Round,Machac T,Nardi L,winner,0.7161,1.5,0.0742,0.0371,7.6,1,3.8
+2025-08-24,2025,ATP,usopen,hard,1st Round,Kym J,Quinn E,winner,0.5468,2.4,0.3124,0.0558,15.0,1,21.0
+2025-08-24,2025,ATP,usopen,hard,1st Round,Carreno Busta P,Llamas Ruiz P,loser,0.4504,2.5,0.1261,0.021,10.65,0,-10.65
+2025-08-24,2025,WTA,usopen,hard,1st Round,Potapova A,Zhu L,loser,0.427,2.63,0.123,0.0189,10.47,0,-10.47
+2025-08-24,2025,WTA,usopen,hard,1st Round,Kessler M,Linette M,loser,0.505,2.63,0.328,0.0503,15.0,0,-15.0
+2025-08-24,2025,WTA,usopen,hard,1st Round,Kudermetova P,Parrizas Diaz N,loser,0.468,2.35,0.0998,0.0185,9.11,0,-9.11
+2025-08-24,2025,WTA,usopen,hard,1st Round,Eala A,Tauson C,loser,0.7576,1.4,0.0606,0.0379,6.8,0,-6.8
+2025-08-24,2025,ATP,usopen,hard,1st Round,Giron M,Navone M,winner,0.5641,2.1,0.1847,0.042,14.1,1,15.51
+2025-08-25,2025,ATP,usopen,hard,1st Round,Wong C,Kovacevic A,winner,0.5602,2.25,0.2606,0.0521,15.0,1,18.75
+2025-08-25,2025,ATP,usopen,hard,1st Round,Bellucci M,Shang J,loser,0.5412,2.28,0.2339,0.0457,15.0,0,-15.0
+2025-08-25,2025,ATP,usopen,hard,1st Round,Comesana F,Michelsen A,winner,0.3626,3.75,0.3599,0.0327,15.0,1,41.25
+2025-08-25,2025,ATP,usopen,hard,1st Round,Fonseca J,Kecmanovic M,loser,0.4387,2.6,0.1405,0.022,11.5,0,-11.5
+2025-08-25,2025,ATP,usopen,hard,1st Round,Norrie C,Korda S,loser,0.6454,1.6,0.0326,0.0136,5.15,0,-5.15
+2025-08-25,2025,ATP,usopen,hard,1st Round,Walton A,Humbert U,loser,0.7404,1.47,0.0884,0.047,8.44,0,-8.44
+2025-08-25,2025,ATP,usopen,hard,1st Round,Harris L,Baez S,loser,0.4351,2.6,0.1313,0.0205,10.96,0,-10.96
+2025-08-25,2025,WTA,usopen,hard,1st Round,Pavlyuchenkova A,Yastremska D,winner,0.5038,2.4,0.2092,0.0374,15.0,1,21.0
+2025-08-25,2025,WTA,usopen,hard,1st Round,Putintseva Y,Cocciaretto E,winner,0.6018,2.28,0.372,0.0727,15.0,1,19.2
+2025-08-25,2025,WTA,usopen,hard,1st Round,Rakhimova K,Garcia C,loser,0.6332,2.1,0.3298,0.075,15.0,0,-15.0
+2025-08-25,2025,ATP,usopen,hard,1st Round,Boyer T,Duckworth J,winner,0.5637,2.1,0.1838,0.0418,14.04,1,15.45
+2025-08-26,2025,WTA,usopen,hard,1st Round,Lys E,Jones F,winner,0.6048,1.8,0.0887,0.0277,8.45,1,6.76
+2025-08-26,2025,ATP,usopen,hard,1st Round,Schoolkate T,Sonego L,winner,0.4068,3.4,0.383,0.0399,15.0,1,36.0
+2025-08-26,2025,WTA,usopen,hard,1st Round,Cristian J,Collins D,winner,0.3847,3.25,0.2504,0.0278,15.0,1,33.75
+2025-08-26,2025,WTA,usopen,hard,1st Round,Golubic V,Boisson L,loser,0.5872,2.25,0.3211,0.0642,15.0,0,-15.0
+2025-08-26,2025,ATP,usopen,hard,1st Round,Safiullin R,Monfils G,loser,0.6786,1.92,0.3028,0.0823,15.0,0,-15.0
+2025-08-26,2025,WTA,usopen,hard,1st Round,Haddad Maia B,Kartal S,winner,0.5653,2.04,0.1532,0.0368,12.24,1,12.73
+2025-08-26,2025,ATP,usopen,hard,1st Round,Cerundolo F,Arnaldi M,winner,0.6292,1.82,0.1451,0.0442,11.77,1,9.65
+2025-08-26,2025,ATP,usopen,hard,1st Round,Bublik A,Cilic M,loser,0.4798,2.8,0.3433,0.0477,15.0,0,-15.0
+2025-08-26,2025,ATP,usopen,hard,1st Round,Riedi L,Martinez P,loser,0.5029,2.41,0.2121,0.0376,15.0,0,-15.0
+2025-08-26,2025,WTA,usopen,hard,1st Round,Cirstea S,Sierra S,loser,0.3558,3.75,0.3343,0.0304,15.0,0,-15.0
+2025-08-27,2025,ATP,usopen,hard,2nd Round,Darderi L,Spizzirri E,loser,0.5409,2.4,0.2981,0.0532,15.0,0,-15.0
+2025-08-27,2025,ATP,usopen,hard,1st Round,Fearnley J,Bautista Agut R,winner,0.4734,2.3,0.0888,0.0171,8.46,1,11.0
+2025-08-27,2025,WTA,usopen,hard,2nd Round,Azarenka V,Pavlyuchenkova A,winner,0.4702,2.38,0.1191,0.0216,10.24,1,14.14
+2025-08-27,2025,WTA,usopen,hard,2nd Round,Bucsa C,Eala A,winner,0.5024,2.6,0.3063,0.0479,15.0,1,24.0
+2025-08-27,2025,WTA,usopen,hard,2nd Round,Townsend T,Ostapenko J,loser,0.5439,2.1,0.1422,0.0323,11.6,0,-11.6
+2025-08-27,2025,ATP,usopen,hard,2nd Round,Machac T,Fonseca J,winner,0.5402,2.05,0.1074,0.0256,9.55,1,10.03
+2025-08-27,2025,ATP,usopen,hard,2nd Round,Norrie C,Comesana F,loser,0.4258,2.63,0.1198,0.0184,10.28,0,-10.28
+2025-08-28,2025,WTA,usopen,hard,2nd Round,Noskova L,Lys E,loser,0.4173,2.9,0.2102,0.0277,15.0,0,-15.0
+2025-08-28,2025,WTA,usopen,hard,2nd Round,Haddad Maia B,Golubic V,winner,0.5914,1.78,0.0527,0.0169,6.34,1,4.94
+2025-08-28,2025,WTA,usopen,hard,2nd Round,Frech M,Stearns P,winner,0.4848,2.66,0.2896,0.0436,15.0,1,24.9
+2025-08-28,2025,WTA,usopen,hard,2nd Round,Siegemund L,Zakharova A,loser,0.4418,2.55,0.1267,0.0204,10.69,0,-10.69
+2025-08-28,2025,WTA,usopen,hard,2nd Round,Muchova K,Cirstea S,winner,0.6137,1.91,0.1722,0.0473,13.36,1,12.16
+2025-08-28,2025,WTA,usopen,hard,2nd Round,Parry D,Zarazua R,winner,0.5586,1.96,0.0948,0.0247,8.81,1,8.46
+2025-08-28,2025,WTA,usopen,hard,2nd Round,Cristian J,Krueger A,winner,0.4689,2.3,0.0785,0.0151,7.85,1,10.21
+2025-08-28,2025,WTA,usopen,hard,2nd Round,Kasatkina D,Rakhimova K,winner,0.7102,1.48,0.0511,0.0266,6.24,1,3.0
+2025-08-28,2025,ATP,usopen,hard,2nd Round,Munar J,Diallo G,loser,0.5589,1.98,0.1067,0.0272,9.51,0,-9.51
+2025-08-28,2025,ATP,usopen,hard,2nd Round,Riedi L,Cerundolo F,loser,0.7343,1.5,0.1014,0.0507,9.2,0,-9.2
+2025-08-28,2025,ATP,usopen,hard,2nd Round,Cobolli F,Brooksby J,loser,0.5528,2.4,0.3267,0.0583,15.0,0,-15.0
+2025-08-29,2025,ATP,usopen,hard,3rd Round,Rinderknech A,Bonzi B,loser,0.5345,1.95,0.0423,0.0111,5.72,0,-5.72
+2025-08-29,2025,WTA,usopen,hard,3rd Round,Vondrousova M,Paolini J,loser,0.6227,1.95,0.2142,0.0564,15.0,0,-15.0
+2025-08-30,2025,WTA,usopen,hard,3rd Round,Muchova K,Noskova L,winner,0.6189,1.91,0.1822,0.05,13.95,1,12.69
+2025-08-30,2025,ATP,usopen,hard,3rd Round,Musetti L,Cobolli F,loser,0.4107,3.25,0.3347,0.0372,15.0,0,-15.0
+2025-08-31,2025,ATP,usopen,hard,4th Round,Lehecka J,Mannarino A,loser,0.3777,3.4,0.2842,0.0296,15.0,0,-15.0
+2025-08-31,2025,WTA,usopen,hard,4th Round,Krejcikova B,Townsend T,winner,0.6525,1.75,0.1419,0.0473,11.58,1,8.69
+2025-08-31,2025,WTA,usopen,hard,3rd Round,Haddad Maia B,Sakkari M,winner,0.4677,2.45,0.1459,0.0252,11.82,1,17.14
+2025-09-01,2025,ATP,usopen,hard,4th Round,Musetti L,Munar J,loser,0.3917,2.9,0.1358,0.0179,11.22,0,-11.22
+2025-09-01,2025,WTA,usopen,hard,4th Round,Vondrousova M,Rybakina E,winner,0.3529,3.2,0.1293,0.0147,10.84,1,23.85
+2025-09-01,2025,WTA,usopen,hard,4th Round,Osaka N,Gauff C,loser,0.64,1.78,0.1393,0.0446,11.43,0,-11.43
+2025-09-02,2025,ATP,usopen,hard,4th Round,Sinner J,Bublik A,winner,0.9477,1.12,0.0614,0.1279,6.85,1,0.82
+2025-09-03,2025,ATP,usopen,hard,Quarterfinals,Djokovic N,Fritz T,loser,0.4108,2.88,0.1831,0.0244,14.01,0,-14.01
+2025-09-03,2025,WTA,usopen,hard,Quarterfinals,Sabalenka A,Vondrousova M,winner,0.8162,1.35,0.1018,0.0727,9.23,1,3.23
+2025-09-05,2025,WTA,usopen,hard,Semifinals,Anisimova A,Osaka N,loser,0.5134,2.1,0.0781,0.0177,7.83,0,-7.83
+2025-09-06,2025,WTA,usopen,hard,The Final,Sabalenka A,Anisimova A,winner,0.7506,1.62,0.216,0.0871,15.0,1,9.3
+2025-09-07,2025,ATP,usopen,hard,The Final,Alcaraz C,Sinner J,loser,0.6258,1.83,0.1453,0.0438,11.78,0,-11.78
