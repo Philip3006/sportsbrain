@@ -173,9 +173,22 @@ def _format_report(
                 "",
             ]
 
-    lines += ["---", "## Top Grass Elo"]
+    lines += [
+        "---",
+        "## Top Grass Elo",
+    ]
     for name, rating in top_grass:
         lines.append(f"  {name}: {rating:.0f}")
+
+    lines += [
+        "",
+        "---",
+        "## Backtest (2021-2025, Max Odds, p≥35%)",
+        "  WTA Wimbledon:  +10.3% ROI  ← primary focus",
+        "  ATP Wimbledon:   -5.9% ROI",
+        "  WTA overall:     +6.9% ROI",
+        "  Clay/FO:         -7.8% ROI  ← avoid",
+    ]
 
     return "\n".join(lines)
 
