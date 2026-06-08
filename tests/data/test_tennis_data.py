@@ -23,6 +23,12 @@ def _mock_resp(text: str):
     return r
 
 
+@pytest.fixture(autouse=True)
+def isolated_cache(tmp_path, monkeypatch):
+    """Redirect DATA_CACHE to a temp dir so tests never corrupt the real cache."""
+    monkeypatch.setattr("src.data.cache.DATA_CACHE", tmp_path)
+
+
 def test_grass_matches_filters_surface():
     df = pd.DataFrame({
         "surface": ["grass", "clay", "hard", "grass"],
@@ -49,8 +55,6 @@ def test_wimbledon_matches_filters_tournament():
 @patch("src.data.tennis_data.requests.get")
 def test_fetch_atp_returns_dataframe(mock_get):
     mock_get.return_value = _mock_resp(_MINI_CSV)
-    from src.data.cache import clear_cache
-    clear_cache("tennis_atp_matches")
     df = fetch_atp_matches(force=True)
     assert isinstance(df, pd.DataFrame)
     assert "winner_name" in df.columns
@@ -61,8 +65,6 @@ def test_fetch_atp_returns_dataframe(mock_get):
 @patch("src.data.tennis_data.requests.get")
 def test_fetch_wta_returns_dataframe(mock_get):
     mock_get.return_value = _mock_resp(_MINI_CSV)
-    from src.data.cache import clear_cache
-    clear_cache("tennis_wta_matches")
     df = fetch_wta_matches(force=True)
     assert isinstance(df, pd.DataFrame)
     assert "winner_name" in df.columns
@@ -72,10 +74,7 @@ def test_fetch_wta_returns_dataframe(mock_get):
 @patch("src.data.tennis_data.requests.get")
 def test_fetch_matches_routes_to_wta(mock_get):
     mock_get.return_value = _mock_resp(_MINI_CSV)
-    from src.data.cache import clear_cache
-    clear_cache("tennis_wta_matches")
     df = fetch_matches("wta", force=True)
-    # WTA URL should have been called
     called_url = mock_get.call_args[0][0]
     assert "tennis_wta" in called_url
 
@@ -83,17 +82,13 @@ def test_fetch_matches_routes_to_wta(mock_get):
 @patch("src.data.tennis_data.requests.get")
 def test_fetch_matches_routes_to_atp(mock_get):
     mock_get.return_value = _mock_resp(_MINI_CSV)
-    from src.data.cache import clear_cache
-    clear_cache("tennis_atp_matches")
     df = fetch_matches("atp", force=True)
     called_url = mock_get.call_args[0][0]
     assert "tennis_atp" in called_url
 
 
-def test_surface_normalized_to_lowercase():
-    with patch("src.data.tennis_data.requests.get") as mock_get:
-        mock_get.return_value = _mock_resp(_MINI_CSV)
-        from src.data.cache import clear_cache
-        clear_cache("tennis_atp_matches")
-        df = fetch_atp_matches(force=True)
-        assert all(s == s.lower() for s in df["surface"].dropna())
+@patch("src.data.tennis_data.requests.get")
+def test_surface_normalized_to_lowercase(mock_get):
+    mock_get.return_value = _mock_resp(_MINI_CSV)
+    df = fetch_atp_matches(force=True)
+    assert all(s == s.lower() for s in df["surface"].dropna())

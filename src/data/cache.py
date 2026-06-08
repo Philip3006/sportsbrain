@@ -10,12 +10,12 @@ def disk_cache(name: str, max_age_hours: float = 24.0):
     """
     Decorator for zero-argument callables. Persists result at DATA_CACHE/{name}.pkl.
     Wrapped function receives an optional `force: bool = False` kwarg to bypass cache.
+    DATA_CACHE is read at call time so tests can monkeypatch it to a temp directory.
     """
-    cache_path = DATA_CACHE / f"{name}.pkl"
-
     def decorator(fn):
         @functools.wraps(fn)
         def wrapper(*args, force: bool = False, **kwargs):
+            cache_path = DATA_CACHE / f"{name}.pkl"
             if not force and cache_path.exists():
                 age_hours = (time.time() - cache_path.stat().st_mtime) / 3600
                 if age_hours < max_age_hours:

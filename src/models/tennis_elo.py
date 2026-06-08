@@ -119,17 +119,25 @@ def compute_tennis_elo(matches: pd.DataFrame) -> TennisEloRatings:
     return ratings
 
 
+# Surface-specific Elo blend weights, calibrated via backtest (2021-2025 Grand Slams):
+#   Grass: 60% surface / 40% overall — fewer grass matches → trust overall Elo more
+#   Clay/Hard: 70% surface / 30% overall — more matches per surface, better calibrated
+_SURFACE_WEIGHTS: dict[str, float] = {"grass": 0.60, "clay": 0.70, "hard": 0.70}
+
+
 def predict_winner(
     player_a: str,
     player_b: str,
     ratings: TennisEloRatings,
     surface: str,
-    w_surface: float = 0.70,
+    w_surface: float | None = None,
 ) -> dict[str, float]:
     """
     Returns {'p_a': float, 'p_b': float} for a 2-outcome match.
-    Uses surface-blended Elo.
+    Uses surface-specific blend weights by default (_SURFACE_WEIGHTS).
     """
+    if w_surface is None:
+        w_surface = _SURFACE_WEIGHTS.get(surface.lower(), 0.70)
     r_a = ratings.get_blended(player_a, surface, w_surface)
     r_b = ratings.get_blended(player_b, surface, w_surface)
     p_a = _expected(r_a, r_b)
