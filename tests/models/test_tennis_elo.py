@@ -6,7 +6,9 @@ from src.models.tennis_elo import (
     TennisEloRatings,
     compute_tennis_elo,
     predict_winner,
+    _apply_decay,
     _DEFAULT_RATING,
+    _DECAY,
     _expected,
 )
 
@@ -75,3 +77,44 @@ def test_blended_rating_uses_both_pools():
     blended = ratings.get_blended("Player", "grass", w_surface=0.70)
     expected = 0.70 * 1700 + 0.30 * 1600
     assert abs(blended - expected) < 1e-6
+
+
+def test_decay_pulls_toward_default():
+    pool = {"A": 1700.0, "B": 1300.0}
+    _apply_decay(pool)
+    assert abs(pool["A"] - (1500.0 + _DECAY * 200.0)) < 1e-9
+    assert abs(pool["B"] - (1500.0 + _DECAY * (-200.0))) < 1e-9
+
+
+def test_annual_decay_applied_at_year_boundary():
+    # Two matches in different years — decay should run between them
+    df = _make_matches(
+        (pd.Timestamp("2023-07-01"), "Alcaraz", "Djokovic", "grass", "G"),
+        (pd.Timestamp("2024-07-01"), "Alcaraz", "Djokovic", "grass", "G"),
+    )
+    ratings = compute_tennis_elo(df)
+    # After year boundary, Djokovic (loser in 2023) had their rating decay toward 1500
+    # before taking the second loss. Net effect: Djokovic is less penalised than if no decay.
+    # Just verify we ran without error and got non-default ratings.
+    assert ratings.get_overall("Alcaraz") != _DEFAULT_RATING
+    assert ratings.get_overall("Djokovic") != _DEFAULT_RATING
+
+
+def test_decay_not_applied_within_same_year():
+    # Two matches same year — no decay between them
+    df = _make_matches(
+        (pd.Timestamp("2024-01-01"), "A", "B", "hard", "M"),
+        (pd.Timestamp("2024-06-01"), "A", "B", "hard", "G"),
+    )
+    ratings_same_year = compute_tennis_elo(df)
+
+    # Compare to two matches in different years (decay will be applied between them)
+    df2 = _make_matches(
+        (pd.Timestamp("2023-06-01"), "A", "B", "hard", "M"),
+        (pd.Timestamp("2024-06-01"), "A", "B", "hard", "G"),
+    )
+    ratings_diff_year = compute_tennis_elo(df2)
+
+    # A wins both: with decay A's 2023 rating was pulled down before 2024 match
+    # so A's final rating is lower when decay occurred
+    assert ratings_same_year.get_overall("A") > ratings_diff_year.get_overall("A")

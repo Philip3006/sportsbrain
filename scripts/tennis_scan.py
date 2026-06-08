@@ -8,7 +8,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sys
 from datetime import datetime
@@ -68,7 +67,6 @@ def _fetch_wimbledon_odds(api_key: str) -> list[dict]:
 
         best_h2h_home = best_h2h_away = 0.0
         best_spread_home = best_spread_away = 0.0
-        spread_point = 0.0
 
         for bm in event.get("bookmakers", []):
             for mkt in bm.get("markets", []):
@@ -81,9 +79,7 @@ def _fetch_wimbledon_odds(api_key: str) -> list[dict]:
                             best_h2h_away = max(best_h2h_away, o["price"])
                 elif key == "spreads":
                     for o in mkt.get("outcomes", []):
-                        pt = abs(o.get("point", 0))
-                        if abs(pt - 1.5) < 0.1:  # -1.5 / +1.5 set handicap
-                            spread_point = pt
+                        if abs(abs(o.get("point", 0)) - 1.5) < 0.1:  # ±1.5 set handicap
                             if o["name"] == home:
                                 best_spread_home = max(best_spread_home, o["price"])
                             elif o["name"] == away:

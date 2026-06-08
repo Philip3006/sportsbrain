@@ -22,6 +22,8 @@ from dataclasses import dataclass, field
 import pandas as pd
 
 _DEFAULT_RATING = 1500.0
+_DECAY = 0.90  # 10% annual pull toward 1500 — applied at start of each new calendar year
+
 _K_BY_LEVEL: dict[str, float] = {
     "g": 40.0,   # Grand Slams (tourney_level = 'G')
     "m": 32.0,   # Masters (= 'M')
@@ -79,16 +81,35 @@ class TennisEloRatings:
         self._update(self.by_surface[surf], winner, loser, k)
 
 
+def _apply_decay(pool: dict[str, float]) -> None:
+    """Pull all ratings 10% toward the default — applied once per calendar year."""
+    for player in pool:
+        pool[player] = _DEFAULT_RATING + _DECAY * (pool[player] - _DEFAULT_RATING)
+
+
 def compute_tennis_elo(matches: pd.DataFrame) -> TennisEloRatings:
     """
     Iterates all matches chronologically and returns final TennisEloRatings.
+    Applies 10% annual decay at the start of each new calendar year to keep
+    ratings responsive to recent form.
     Expects columns: tourney_date, winner_name, loser_name, surface, tourney_level.
     Rows with NaN winner/loser are skipped.
     """
     ratings = TennisEloRatings()
     df = matches.dropna(subset=["winner_name", "loser_name"]).sort_values("tourney_date")
 
+    current_year: int | None = None
+
     for _, row in df.iterrows():
+        match_year = row["tourney_date"].year if hasattr(row["tourney_date"], "year") else None
+        if match_year and match_year != current_year:
+            if current_year is not None:
+                # Decay all pools at start of each new year
+                _apply_decay(ratings.overall)
+                for surf_pool in ratings.by_surface.values():
+                    _apply_decay(surf_pool)
+            current_year = match_year
+
         winner = str(row["winner_name"])
         loser  = str(row["loser_name"])
         surface = str(row.get("surface", "hard")).lower()
