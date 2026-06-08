@@ -17,6 +17,7 @@ from src.data.cache import disk_cache
 _SACKMANN_URL = (
     "https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master/atp_matches_{year}.csv"
 )
+_WTA_URL = "https://raw.githubusercontent.com/JeffSackmann/tennis_wta/master/wta_matches_{year}.csv"
 _YEARS = range(2019, 2027)  # 2019-2026 inclusive (adds Wimbledon 2019, 2021)
 
 # Only keep columns we actually use — reduces memory and cache size
@@ -63,6 +64,49 @@ def fetch_atp_matches() -> pd.DataFrame:
     return combined.reset_index(drop=True)
 
 
+@disk_cache("tennis_wta_matches", max_age_hours=24.0)
+def fetch_wta_matches() -> pd.DataFrame:
+    """
+    Downloads Jeff Sackmann WTA match CSVs for 2019-2026.
+    Returns a DataFrame sorted by date with standardised columns.
+    Cached for 24 hours.
+    """
+    frames: list[pd.DataFrame] = []
+    for year in _YEARS:
+        url = _WTA_URL.format(year=year)
+        try:
+            resp = requests.get(url, timeout=15)
+            if not resp.ok:
+                continue
+            df = pd.read_csv(io.StringIO(resp.text), low_memory=False)
+            available = [c for c in _KEEP_COLS if c in df.columns]
+            df = df[available].copy()
+            frames.append(df)
+        except Exception:
+            continue
+
+    if not frames:
+        return pd.DataFrame(columns=_KEEP_COLS)
+
+    combined = pd.concat(frames, ignore_index=True)
+
+    # Normalise date: tourney_date is YYYYMMDD int → datetime
+    combined["tourney_date"] = pd.to_datetime(
+        combined["tourney_date"].astype(str), format="%Y%m%d", errors="coerce"
+    )
+    combined = combined.dropna(subset=["tourney_date"]).sort_values("tourney_date")
+    combined["surface"] = combined["surface"].str.lower().fillna("unknown")
+
+    return combined.reset_index(drop=True)
+
+
+def fetch_matches(tour: str = "atp", force: bool = False) -> pd.DataFrame:
+    """Returns ATP or WTA match data. tour='atp'|'wta'"""
+    if tour.lower() == "wta":
+        return fetch_wta_matches(force=force)
+    return fetch_atp_matches(force=force)
+
+
 def grass_matches(df: pd.DataFrame | None = None) -> pd.DataFrame:
     """Returns only grass-court matches (Wimbledon surface)."""
     if df is None:
@@ -70,9 +114,9 @@ def grass_matches(df: pd.DataFrame | None = None) -> pd.DataFrame:
     return df[df["surface"] == "grass"].copy()
 
 
-def wimbledon_matches(df: pd.DataFrame | None = None) -> pd.DataFrame:
+def wimbledon_matches(df: pd.DataFrame | None = None, tour: str = "atp") -> pd.DataFrame:
     """Returns only Wimbledon matches specifically."""
     if df is None:
-        df = fetch_atp_matches()
+        df = fetch_matches(tour)
     mask = df["tourney_name"].str.contains("Wimbledon", case=False, na=False)
     return df[mask].copy()
