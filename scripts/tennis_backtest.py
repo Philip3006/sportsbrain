@@ -141,12 +141,17 @@ def _build_walkforward_elo(
     return snapshots
 
 
+_SURFACE_WEIGHTS = {"grass": 0.60, "clay": 0.70, "hard": 0.70}
+
+
 def _predict_from_snapshot(
     snap: dict,
     surface: str,
-    w_surface: float = 0.70,
+    w_surface: float | None = None,
 ) -> tuple[float, float]:
     """Returns (p_winner, p_loser) from a pre-match rating snapshot."""
+    if w_surface is None:
+        w_surface = _SURFACE_WEIGHTS.get(surface.lower(), 0.70)
     r_w = w_surface * snap["r_w_surface"] + (1 - w_surface) * snap["r_w_overall"]
     r_l = w_surface * snap["r_l_surface"] + (1 - w_surface) * snap["r_l_overall"]
     p_w = _expected(r_w, r_l)
@@ -169,7 +174,7 @@ def run_backtest(
     surface_filter: str = "all",
     min_year: int = 2021,
     bankroll: float = 100.0,
-    w_surface: float = 0.70,
+    w_surface: float | None = None,
     odds_source: str = "max",
     min_prob: float = 0.35,
 ) -> pd.DataFrame:
@@ -180,6 +185,8 @@ def run_backtest(
         'max' uses best-available market odds (matches live scanner behaviour).
     min_prob: minimum model probability to place a bet (filters extreme underdogs).
         Backtest shows p >= 0.35 optimal: grass +3.8% ROI, WTA +6.3% (Max odds).
+    w_surface: surface Elo blend weight. None = use surface-specific defaults
+        (grass=0.60, clay/hard=0.70 — calibrated from backtest).
     min_year: first year used for testing (2019-2020 are warm-up only).
     """
     w_col, l_col = _ODDS_COLS.get(odds_source.lower(), _ODDS_COLS["max"])
