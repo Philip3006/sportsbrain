@@ -3,14 +3,14 @@
 Daily tennis scanner — Wimbledon 2026 (30 June – 13 July).
 
 Usage:
-  python3 scripts/tennis_scan.py [--mock] [--bankroll 100] [--surface grass]
+  python3 scripts/tennis_scan.py [--mock] [--bankroll 100] [--surface grass] [--tour atp|wta|both]
 """
 from __future__ import annotations
 
 import argparse
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, date
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
@@ -21,23 +21,42 @@ load_dotenv(ROOT / ".env")
 
 import requests
 
-from src.data.tennis_data import fetch_atp_matches
+from src.data.tennis_data import fetch_atp_matches, fetch_wta_matches
 from src.models.tennis_elo import compute_tennis_elo, predict_winner, top_players
 from src.betting.tennis_detector import detect_value_tennis
 from src.betting.ledger import append_bets, ledger_summary
 from src.notifications.telegram import _post
 
 _SPORT_WIMBLEDON = "tennis_atp_wimbledon"
+_SPORT_WTA_WIMBLEDON = "tennis_wta_wimbledon"
 _ODDS_API_URL = "https://api.the-odds-api.com/v4"
 
 
-def _fetch_wimbledon_odds(api_key: str) -> list[dict]:
+def _fetch_both_tours() -> "pd.DataFrame":
+    import pandas as pd
+    try:
+        atp = fetch_atp_matches()
+    except Exception:
+        atp = pd.DataFrame()
+    try:
+        wta = fetch_wta_matches()
+    except Exception:
+        wta = pd.DataFrame()
+    if atp.empty:
+        return wta
+    if wta.empty:
+        return atp
+    return pd.concat([atp, wta], ignore_index=True).sort_values("tourney_date").reset_index(drop=True)
+
+
+def _fetch_wimbledon_odds(api_key: str, tour: str = "atp") -> list[dict]:
     """
     Fetches live Wimbledon match odds from TheOddsAPI.
     Markets: h2h (match winner) + spreads (set handicap).
     Returns list of match dicts.
     """
-    url = f"{_ODDS_API_URL}/sports/{_SPORT_WIMBLEDON}/odds"
+    sport = _SPORT_WTA_WIMBLEDON if tour.lower() == "wta" else _SPORT_WIMBLEDON
+    url = f"{_ODDS_API_URL}/sports/{sport}/odds"
     params = {
         "apiKey": api_key,
         "regions": "eu",
@@ -161,14 +180,15 @@ def _format_report(
     return "\n".join(lines)
 
 
-def _send_tennis_alert(signals: list, scan_date: str, summary: dict) -> None:
+def _send_tennis_alert(signals: list, scan_date: str, summary: dict, tour: str = "atp") -> None:
     token = os.getenv("TELEGRAM_BOT_TOKEN", "")
     chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
     if not token or not chat_id:
         return
 
     SEP = "─────────────────────"
-    lines = [f"<b>🎾 Wimbledon — {scan_date}</b>", SEP]
+    tour_label = {"atp": "Herren", "wta": "Damen", "both": "Herren + Damen"}.get(tour, "")
+    lines = [f"<b>🎾 Wimbledon {tour_label} — {scan_date}</b>", SEP]
 
     if not signals:
         lines.append("<i>Keine Tennis Value Bets heute.</i>")
@@ -209,15 +229,28 @@ def main() -> None:
     parser.add_argument("--surface", default="grass", choices=["grass", "clay", "hard"])
     parser.add_argument("--no-ledger", action="store_true", help="Skip writing to ledger")
     parser.add_argument("--no-telegram", action="store_true", help="Skip Telegram notification")
+    parser.add_argument("--tour", default="atp", choices=["atp", "wta", "both"],
+                        help="ATP, WTA oder beide")
     args = parser.parse_args()
 
     scan_date = datetime.now().strftime("%Y-%m-%d")
-    print(f"Tennis Scan — {scan_date} (surface: {args.surface})")
+    print(f"Tennis Scan — {scan_date} (surface: {args.surface}, tour: {args.tour})")
 
-    # 1. Load historical ATP data and compute Elo ratings
-    print("Loading ATP match data...")
+    # Wimbledon date guard
+    today = date.today()
+    wimbledon_active = date(2026, 6, 29) <= today <= date(2026, 7, 13)
+    if not wimbledon_active and not args.mock:
+        print(f"Wimbledon nicht aktiv (heute: {today}). Nutze --mock für Tests.")
+
+    # 1. Load historical match data and compute Elo ratings
+    tour_label_load = "ATP" if args.tour == "atp" else ("WTA" if args.tour == "wta" else "ATP+WTA")
+    print(f"Loading {tour_label_load} match data...")
     try:
-        matches = fetch_atp_matches()
+        if args.tour == "both":
+            matches = _fetch_both_tours()
+        else:
+            from src.data.tennis_data import fetch_matches
+            matches = fetch_matches(args.tour)
         print(f"  {len(matches)} matches loaded")
     except Exception as e:
         print(f"  ERROR loading match data: {e}")
@@ -238,14 +271,27 @@ def main() -> None:
     if args.mock:
         print("Loading mock Wimbledon matches...")
         upcoming = _mock_wimbledon_matches()
+    elif args.tour == "both":
+        api_key = os.getenv("ODDS_API_KEY", "")
+        if not api_key:
+            print("ERROR: ODDS_API_KEY not set.")
+            sys.exit(1)
+        print("Fetching Wimbledon odds (ATP + WTA) from TheOddsAPI...")
+        try:
+            upcoming_atp = _fetch_wimbledon_odds(api_key, tour="atp")
+            upcoming_wta = _fetch_wimbledon_odds(api_key, tour="wta")
+            upcoming = upcoming_atp + upcoming_wta
+        except Exception as e:
+            print(f"ERROR fetching odds: {e}")
+            sys.exit(1)
     else:
         api_key = os.getenv("ODDS_API_KEY", "")
         if not api_key:
             print("ERROR: ODDS_API_KEY not set.")
             sys.exit(1)
-        print("Fetching Wimbledon odds from TheOddsAPI...")
+        print(f"Fetching Wimbledon odds ({args.tour.upper()}) from TheOddsAPI...")
         try:
-            upcoming = _fetch_wimbledon_odds(api_key)
+            upcoming = _fetch_wimbledon_odds(api_key, tour=args.tour)
         except Exception as e:
             print(f"ERROR fetching odds: {e}")
             sys.exit(1)
@@ -295,7 +341,7 @@ def main() -> None:
     # 6. Telegram notification
     if not args.no_telegram:
         summary = ledger_summary()
-        _send_tennis_alert(all_signals, scan_date, summary)
+        _send_tennis_alert(all_signals, scan_date, summary, tour=args.tour)
         print("Telegram: notification sent.")
 
     # Print summary
