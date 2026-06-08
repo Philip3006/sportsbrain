@@ -129,6 +129,8 @@ def _cmd_hilfe() -> tuple[str, dict]:
         "  → P&L, ROI, Win-Rate nach Markt\n\n"
         "/open\n"
         "  → Alle offenen Wetten\n\n"
+        "/tennis\n"
+        "  → Tennis Value Bets (Wimbledon)\n\n"
         "/analyse Heim vs Auswaerts\n"
         "  → Vollstaendige Match-Analyse\n\n"
         "/rating Teamname\n"
@@ -140,6 +142,7 @@ def _cmd_hilfe() -> tuple[str, dict]:
         [{"text": "Scan starten", "callback_data": "/scan"},
          {"text": "Portfolio", "callback_data": "/portfolio"}],
         [{"text": "Offene Wetten", "callback_data": "/open"}],
+        [{"text": "🎾 Tennis", "callback_data": "/tennis"}],
     ]}
     return text, keyboard
 
@@ -337,6 +340,68 @@ def _cmd_open() -> tuple[str, dict]:
     return "\n".join(lines), keyboard
 
 
+def _cmd_tennis(tour: str = "both") -> tuple[str, dict]:
+    """Zeigt den letzten Tennis-Scan aus dem results/-Ordner."""
+    import glob
+    import datetime as dt
+
+    results_dir = Path(__file__).parent.parent / "results"
+    # Suche nach tennis_scan_*.md Dateien
+    reports = sorted(results_dir.glob("tennis_scan_*.md"), reverse=True)
+
+    keyboard = {"inline_keyboard": [
+        [{"text": "⚽ Fussball Scan", "callback_data": "/scan"},
+         {"text": "📊 Portfolio", "callback_data": "/portfolio"}],
+        [{"text": "🎾 Herren", "callback_data": "/tennis atp"},
+         {"text": "🎾 Damen", "callback_data": "/tennis wta"}],
+    ]}
+
+    if not reports:
+        return (
+            "🎾 <b>Kein Tennis-Scan vorhanden.</b>\n"
+            "Wimbledon beginnt am 30. Juni 2026.",
+            keyboard,
+        )
+
+    latest = reports[0]
+    age_h = (dt.datetime.now().timestamp() - latest.stat().st_mtime) / 3600
+    stale_warning = f"\n<i>⚠️ Scan ist {age_h:.0f}h alt</i>" if age_h > 26 else ""
+
+    scan_date = latest.stem.replace("tennis_scan_", "")
+    content = latest.read_text()
+
+    SEP = "─────────────────────"
+    lines = [f"🎾 <b>Wimbledon — {scan_date}</b>{stale_warning}", SEP]
+
+    in_elo_section = False
+    for raw_line in content.splitlines():
+        line = raw_line.strip()
+        if not line or line == "---":
+            continue
+        if line.startswith("# "):  # Haupttitel überspringen
+            continue
+        if "Top Grass Elo" in line:
+            in_elo_section = True
+            lines += [SEP, "<b>Top Grass Elo (Herren):</b>"]
+            continue
+        if line.startswith("## ") and not in_elo_section:
+            lines.append(f"\n<b>{line[3:]}</b>")
+            continue
+        if line.startswith("Surface:") and not in_elo_section:
+            continue
+        if line.startswith("*No value"):
+            lines.append("<i>Keine Value Bets heute.</i>")
+            continue
+        lines.append(line)
+
+    text = "\n".join(lines)
+    # Telegram Limit: 4096 Zeichen
+    if len(text) > 3800:
+        text = text[:3800].rsplit("\n", 1)[0] + "\n<i>... (gekürzt)</i>"
+
+    return text, keyboard
+
+
 def _cmd_scan() -> tuple[str, dict]:
     from src.scanner.daily_scan import run_daily_scan
     from src.notifications.telegram import send_scan_alert, _market_label
@@ -402,6 +467,9 @@ def _dispatch(text: str) -> tuple[str, dict]:
         return _cmd_portfolio()
     if cmd == "/open":
         return _cmd_open()
+    if cmd == "/tennis":
+        tour_arg = parts[1].lower() if len(parts) >= 2 else "both"
+        return _cmd_tennis(tour_arg)
 
     return (
         f"Unbekannter Befehl: {cmd}",
