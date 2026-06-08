@@ -36,9 +36,9 @@ def get_api_key(api_key: str | None = None) -> str:
 
 @disk_cache("odds_api_upcoming", max_age_hours=1.0)
 def fetch_upcoming_matches(
-    sport: str = "soccer_fifa_world_cup",
+    sport: str = "soccer_fifa_world_cup_2026",
     regions: str = "eu",
-    markets: str = "h2h,totals,spreads",
+    markets: str = "h2h,totals,spreads,btts",
     api_key: str | None = None,
     force: bool = False,
 ) -> list[dict]:
@@ -64,6 +64,11 @@ def fetch_upcoming_matches(
 
     if remaining < 20:
         print(f"WARNING: Only {remaining} API requests remaining this month.")
+        try:
+            from src.notifications.telegram import send_quota_alert
+            send_quota_alert(remaining)
+        except Exception:
+            pass
 
     data = resp.json()
     return _parse_matches(data)
@@ -73,7 +78,7 @@ _PREFERRED_BM = "bet365"
 
 
 def _parse_markets(bm: dict, home: str, away: str, store: dict) -> None:
-    """Extracts h2h/totals/spreads odds from one bookmaker into store dict."""
+    """Extracts h2h/totals/spreads/btts odds from one bookmaker into store dict."""
     for market in bm.get("markets", []):
         mkt = market.get("key")
         if mkt == "h2h":
@@ -89,10 +94,23 @@ def _parse_markets(bm: dict, home: str, away: str, store: dict) -> None:
                         store[key] = o["price"]
         elif mkt == "spreads":
             for o in market.get("outcomes", []):
-                if abs(o.get("point", 0) + 0.5) < 0.1:
-                    key = f"ah_{o['name']}"
-                    if o["price"] > store.get(key, 0):
-                        store[key] = o["price"]
+                pt = o.get("point", 0)
+                name = o["name"]
+                if abs(abs(pt) - 0.5) < 0.1:
+                    key = f"ah_{name}"
+                elif abs(abs(pt) - 1.0) < 0.1:
+                    key = f"ah1_{name}"
+                elif abs(abs(pt) - 1.5) < 0.1:
+                    key = f"ah15_{name}"
+                else:
+                    continue
+                if o["price"] > store.get(key, 0):
+                    store[key] = o["price"]
+        elif mkt == "btts":
+            for o in market.get("outcomes", []):
+                key = f"btts_{o['name'].lower()}"  # "btts_yes" or "btts_no"
+                if o["price"] > store.get(key, 0):
+                    store[key] = o["price"]
 
 
 def _parse_matches(raw: list[dict]) -> list[dict]:
@@ -132,29 +150,42 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
             continue
 
         match_dict: dict = {
-            "match_id":      match_id,
-            "commence_time": commence,
-            "home_team":     home,
-            "away_team":     away,
+            "match_id":       match_id,
+            "commence_time":  commence,
+            "home_team":      home,
+            "away_team":      away,
+            "tournament":     "FIFA World Cup",
             # Best-market odds (for EV/model comparison)
-            "home_odds":     best.get(home, 0.0),
-            "draw_odds":     best.get("Draw", 0.0),
-            "away_odds":     best.get(away, 0.0),
-            "over_odds":     best.get("Over_2.5", 0.0),
-            "under_odds":    best.get("Under_2.5", 0.0),
-            "ah_home_odds":  best.get(f"ah_{home}", 0.0),
-            "ah_away_odds":  best.get(f"ah_{away}", 0.0),
-            "best_home_bm":  best_bm.get(home, ""),
-            "best_draw_bm":  best_bm.get("Draw", ""),
-            "best_away_bm":  best_bm.get(away, ""),
+            "home_odds":      best.get(home, 0.0),
+            "draw_odds":      best.get("Draw", 0.0),
+            "away_odds":      best.get(away, 0.0),
+            "over_odds":      best.get("Over_2.5", 0.0),
+            "under_odds":     best.get("Under_2.5", 0.0),
+            "ah_home_odds":   best.get(f"ah_{home}", 0.0),
+            "ah_away_odds":   best.get(f"ah_{away}", 0.0),
+            "ah1_home_odds":  best.get(f"ah1_{home}", 0.0),
+            "ah1_away_odds":  best.get(f"ah1_{away}", 0.0),
+            "ah15_home_odds": best.get(f"ah15_{home}", 0.0),
+            "ah15_away_odds": best.get(f"ah15_{away}", 0.0),
+            "btts_yes_odds":  best.get("btts_yes", 0.0),
+            "btts_no_odds":   best.get("btts_no", 0.0),
+            "best_home_bm":   best_bm.get(home, ""),
+            "best_draw_bm":   best_bm.get("Draw", ""),
+            "best_away_bm":   best_bm.get(away, ""),
             # Bet365-specific odds (shown to user for placing)
-            "b365_home":     b365.get(home, 0.0),
-            "b365_draw":     b365.get("Draw", 0.0),
-            "b365_away":     b365.get(away, 0.0),
-            "b365_over":     b365.get("Over_2.5", 0.0),
-            "b365_under":    b365.get("Under_2.5", 0.0),
-            "b365_ah_home":  b365.get(f"ah_{home}", 0.0),
-            "b365_ah_away":  b365.get(f"ah_{away}", 0.0),
+            "b365_home":      b365.get(home, 0.0),
+            "b365_draw":      b365.get("Draw", 0.0),
+            "b365_away":      b365.get(away, 0.0),
+            "b365_over":      b365.get("Over_2.5", 0.0),
+            "b365_under":     b365.get("Under_2.5", 0.0),
+            "b365_ah_home":   b365.get(f"ah_{home}", 0.0),
+            "b365_ah_away":   b365.get(f"ah_{away}", 0.0),
+            "b365_ah1_home":  b365.get(f"ah1_{home}", 0.0),
+            "b365_ah1_away":  b365.get(f"ah1_{away}", 0.0),
+            "b365_ah15_home": b365.get(f"ah15_{home}", 0.0),
+            "b365_ah15_away": b365.get(f"ah15_{away}", 0.0),
+            "b365_btts_yes":  b365.get("btts_yes", 0.0),
+            "b365_btts_no":   b365.get("btts_no", 0.0),
         }
         matches.append(match_dict)
 
@@ -176,6 +207,10 @@ def mock_upcoming_matches() -> list[dict]:
             "under_odds": 1.95,
             "ah_home_odds": 1.85,
             "ah_away_odds": 2.00,
+            "ah1_home_odds": 2.05,
+            "ah1_away_odds": 1.80,
+            "btts_yes_odds": 1.72,
+            "btts_no_odds": 2.05,
             "best_home_bm": "mock",
             "best_draw_bm": "mock",
             "best_away_bm": "mock",
@@ -192,6 +227,10 @@ def mock_upcoming_matches() -> list[dict]:
             "under_odds": 2.00,
             "ah_home_odds": 1.90,
             "ah_away_odds": 1.95,
+            "ah1_home_odds": 2.05,
+            "ah1_away_odds": 1.80,
+            "btts_yes_odds": 1.72,
+            "btts_no_odds": 2.05,
             "best_home_bm": "mock",
             "best_draw_bm": "mock",
             "best_away_bm": "mock",

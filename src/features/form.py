@@ -156,7 +156,9 @@ def momentum_score(
 
     pts = [3.0 if r == "W" else (1.0 if r == "D" else 0.0) for r in results]
     pts_last3 = float(np.mean(pts[:3])) if len(pts) >= 3 else float(np.mean(pts))
-    pts_prev3 = float(np.mean(pts[3:6])) if len(pts) >= 6 else float(np.mean(pts))
+    pts_prev3 = float(np.mean(pts[3:6])) if len(pts) >= 6 else (
+        float(np.mean(pts[3:])) if len(pts) > 3 else 0.0
+    )
     form_trend = pts_last3 - pts_prev3
 
     return {

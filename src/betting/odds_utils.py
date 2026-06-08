@@ -19,19 +19,21 @@ def remove_margin_shin(
         return q  # no margin to remove
 
     # Iterative Shin algorithm
+    # M stays constant (original overround); only z is updated each iteration.
+    M = overround
     z = 0.0
+    probs = list(q)
     for _ in range(max_iter):
-        z_new = (overround - 1.0) / (overround - 1.0 + n)
-        probs = []
+        new_probs = []
         for qi in q:
-            inner = z_new**2 + 4.0 * (1.0 - z_new) * (qi / overround) ** 2
-            p = (math.sqrt(inner) - z_new) / (2.0 * (1.0 - z_new))
-            probs.append(p)
+            inner = z**2 + 4.0 * (1.0 - z) * (qi / M) ** 2
+            p = (math.sqrt(max(inner, 0.0)) - z) / (2.0 * (1.0 - z))
+            new_probs.append(p)
+        probs = new_probs
         overround_new = sum(probs)
         if abs(overround_new - 1.0) < tol:
-            z = z_new
             break
-        z = z_new
+        z = (overround_new - 1.0) / (overround_new - 1.0 + n)
 
     # Normalise
     total = sum(probs)

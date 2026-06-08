@@ -14,7 +14,7 @@ from pathlib import Path
 import pandas as pd
 import requests
 
-from src.config import DATA_CACHE
+from src.config import DATA_CACHE, canonical_name as _cn
 
 _CACHE_PATH = DATA_CACHE / "statsbomb_xg.pkl"
 _CACHE_MAX_AGE_H = 24
@@ -103,8 +103,8 @@ def _fetch_match_xg(competition_id: int, season_id: int) -> list[dict]:
                 away_xg += xg
 
         rows.append({
-            "home_team": home,
-            "away_team": away,
+            "home_team": _cn(home),
+            "away_team": _cn(away),
             "date": date,
             "home_xg": home_xg,
             "away_xg": away_xg,
@@ -143,6 +143,15 @@ def fetch_statsbomb_xg(force: bool = False) -> pd.DataFrame:
             print(f"    {len(rows)} matches fetched.")
 
     if not all_rows:
+        # Explicit warning during WM 2026 group stage (June 11-27) when xG features matter most.
+        import datetime as _dt
+        _today = _dt.datetime.now().date()
+        if _dt.date(2026, 6, 11) <= _today <= _dt.date(2026, 6, 27):
+            print(
+                "  ⚠️ WM 2026 group stage active — StatsBomb xG data not yet published "
+                "for ongoing tournament. xG features will be DC lambda estimates only. "
+                "StatsBomb typically publishes 1-2 days after each match."
+            )
         return pd.DataFrame(columns=["home_team", "away_team", "date", "home_xg", "away_xg", "tournament"])
 
     df = pd.DataFrame(all_rows)

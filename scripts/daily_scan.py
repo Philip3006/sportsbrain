@@ -20,6 +20,15 @@ def _confirm_bets(selected_signals: list, bankroll: float) -> list:
     if not selected_signals:
         return []
 
+    # Detect non-interactive context early — avoid mid-loop EOFError confusion.
+    if not sys.stdin.isatty():
+        print(
+            "\n  [Kein interaktives Terminal — Bestätigung übersprungen.]"
+            "\n  Nutze '--auto-log' um alle Signals automatisch einzutragen, "
+            "oder '! python3 scripts/daily_scan.py' im Terminal für interaktive Bestätigung."
+        )
+        return []
+
     print("\n=== Offene Slots — Bestätigung erforderlich ===")
     confirmed = []
     for s in selected_signals:
@@ -32,7 +41,7 @@ def _confirm_bets(selected_signals: list, bankroll: float) -> list:
         try:
             ans = input("  Wette eingehen? (j/n): ").strip().lower()
         except EOFError:
-            print("\n  [Kein interaktives Terminal — nutze '! python3 scripts/daily_scan.py' direkt im Terminal]")
+            print("\n  [Stdin geschlossen — Bestätigung abgebrochen.]")
             break
         if ans == "j":
             confirmed.append(s)
@@ -56,6 +65,8 @@ if __name__ == "__main__":
                         help="Only scan matches starting within HORIZON hours from now")
     parser.add_argument("--date", type=str, default=None,
                         help="Only scan matches on this date, e.g. 2026-06-11")
+    parser.add_argument("--force", action="store_true",
+                        help="Bypass WM date guard (scan even before June 11 or after July 19)")
     args = parser.parse_args()
 
     if args.retrain:
@@ -64,13 +75,14 @@ if __name__ == "__main__":
         subprocess.run([sys.executable, "scripts/auto_retrain.py"], check=True)
         print("--- Scan ---")
 
-    signals_df, selected_signals = run_daily_scan(
+    signals_df, selected_signals, match_date_lookup, _match_contexts = run_daily_scan(
         bankroll=args.bankroll,
         mock=args.mock,
         output_path=Path(args.output) if args.output else None,
         auto_log=args.auto_log,
         horizon_hours=args.horizon,
         scan_date_filter=args.date,
+        force=args.force,
     )
 
     if not signals_df.empty:
@@ -83,7 +95,10 @@ if __name__ == "__main__":
     if not args.auto_log and selected_signals:
         confirmed = _confirm_bets(selected_signals, args.bankroll)
         if confirmed:
-            n = append_bets(confirmed, args.bankroll, LEDGER_PATH)
+            n = 0
+            for s in confirmed:
+                md = match_date_lookup.get(s.match_id, "")
+                n += append_bets([s], args.bankroll, LEDGER_PATH, match_date=md)
             print(f"\n{n} Wette(n) ins Ledger eingetragen.")
         else:
             print("\nKeine Wetten eingetragen.")

@@ -16,7 +16,8 @@ ODDS_API_URL = "https://api.the-odds-api.com/v4"
 DC_PHI = 0.0065
 KELLY_FRAC = 0.25
 MIN_EDGE = 0.03
-MAX_STAKE_PCT = 0.03
+MIN_STAKE_EUR = 5.0
+MAX_STAKE_EUR = 15.0
 MAX_ACTIVE_BETS = 5
 MAX_EV = 0.40           # signals with EV > 40% are almost always model artifacts
 
@@ -51,6 +52,11 @@ TEAM_CONFEDERATION: dict[str, str] = {
     "Qatar": "AFC",
     # OFC
     "New Caledonia": "OFC",
+    # WM 2026 qualifiers — not in original list
+    "Bosnia and Herzegovina": "UEFA", "Sweden": "UEFA", "Norway": "UEFA",
+    "Haiti": "CONCACAF", "Curacao": "CONCACAF",
+    "Cape Verde": "CAF", "South Africa": "CAF",
+    "Iraq": "AFC", "Jordan": "AFC",
 }
 
 COMPETITIVE_TOURNAMENTS = {
@@ -152,6 +158,41 @@ TEAM_NAME_MAP: dict[str, str] = {
     # TheOddsAPI-specific aliases
     "DR Congo": "DR Congo",  # DC uses "DR Congo" directly — no change needed
     "Cote d'Ivoire": "Cote d'Ivoire",
+    # Accented/variant spellings from TheOddsAPI for WM 2026 qualifiers
+    "Curaçao": "Curacao",
+    "Bosnia & Herzegovina": "Bosnia and Herzegovina",
+    "Côte d'Ivoire": "Cote d'Ivoire",
+}
+
+
+# WM 2026 Group assignments (12 groups, 4 teams each)
+# Verified against official FIFA draw held 2025-12-05, Washington D.C.
+# Source: https://en.wikipedia.org/wiki/2026_FIFA_World_Cup_draw
+WM2026_GROUPS: dict[str, str] = {
+    # Group A
+    "Mexico": "A", "South Africa": "A", "South Korea": "A", "Czechia": "A",
+    # Group B
+    "Canada": "B", "Bosnia and Herzegovina": "B", "Qatar": "B", "Switzerland": "B",
+    # Group C
+    "Brazil": "C", "Morocco": "C", "Haiti": "C", "Scotland": "C",
+    # Group D
+    "United States": "D", "Paraguay": "D", "Australia": "D", "Turkey": "D",
+    # Group E
+    "Germany": "E", "Curacao": "E", "Cote d'Ivoire": "E", "Ecuador": "E",
+    # Group F
+    "Netherlands": "F", "Japan": "F", "Sweden": "F", "Tunisia": "F",
+    # Group G
+    "Belgium": "G", "Egypt": "G", "Iran": "G", "New Zealand": "G",
+    # Group H
+    "Spain": "H", "Cape Verde": "H", "Saudi Arabia": "H", "Uruguay": "H",
+    # Group I
+    "France": "I", "Senegal": "I", "Iraq": "I", "Norway": "I",
+    # Group J
+    "Argentina": "J", "Algeria": "J", "Austria": "J", "Jordan": "J",
+    # Group K
+    "Portugal": "K", "DR Congo": "K", "Uzbekistan": "K", "Colombia": "K",
+    # Group L
+    "England": "L", "Croatia": "L", "Ghana": "L", "Panama": "L",
 }
 
 

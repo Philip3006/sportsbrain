@@ -47,7 +47,10 @@ def main(since: str = "2018-01-01", val_since: str = "2023-01-01"):
     if not snaps:
         raise RuntimeError("No DC model found. Run: python scripts/train_dixon_coles.py")
     dc_params = dc.load(snaps[-1])
-    dc_snapshot_map = {dc_params.fit_date: dc_params}
+    # Key with epoch so DC features cover all training matches.
+    # build_training_matrix uses "latest snapshot <= match_date"; keying with
+    # epoch ensures the current model is available for every historical match.
+    dc_snapshot_map = {pd.Timestamp("2000-01-01"): dc_params}
 
     print("Loading tournament odds for market-implied features...")
     wc_odds = fetch_wc_odds()
@@ -60,9 +63,18 @@ def main(since: str = "2018-01-01", val_since: str = "2023-01-01"):
         print(f"  {len(odds_lookup)} matches with market odds loaded "
               f"({odds_lookup['tournament'].nunique()} tournaments)")
 
+    print("Loading StatsBomb xG data...")
+    try:
+        from src.data.statsbomb import fetch_statsbomb_xg
+        statsbomb_xg = fetch_statsbomb_xg()
+        print(f"  {len(statsbomb_xg)} xG match records loaded")
+    except Exception as e:
+        print(f"  Warning: StatsBomb xG not available ({e}) — skipping xG features")
+        statsbomb_xg = None
+
     print("Building feature matrix (this may take a few minutes)...")
     X, y = build_training_matrix(matches, all_matches, elo_series, dc_snapshot_map,
-                                 odds_lookup=odds_lookup)
+                                 odds_lookup=odds_lookup, statsbomb_xg=statsbomb_xg)
     print(f"  Features: {X.shape[1]}, Samples: {len(X)}")
 
     # Train / validation split
