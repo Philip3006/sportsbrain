@@ -41,9 +41,15 @@ def _lambdas(
     params: DixonColesParams,
     neutral: bool = False,
 ) -> tuple[float, float]:
+    unknown = [t for t in (home, away) if t not in params.attack]
+    if unknown:
+        raise ValueError(
+            f"Team(s) not in DC model: {unknown}. "
+            "Run canonical_name() before predict, or retrain with updated data."
+        )
     gamma = 0.0 if neutral else params.home_adv
-    lh = np.exp(params.attack.get(home, 0.0) + params.defence.get(away, 0.0) + gamma)
-    la = np.exp(params.attack.get(away, 0.0) + params.defence.get(home, 0.0))
+    lh = np.exp(params.attack[home] + params.defence[away] + gamma)
+    la = np.exp(params.attack[away] + params.defence[home])
     return lh, la
 
 
@@ -305,20 +311,85 @@ def predict_asian_handicap(
     away: str,
     params: DixonColesParams,
     line: float = -0.5,
+    max_goals: int = _MAX_GOALS,
     neutral: bool = False,
     rho_override: float | None = None,
 ) -> dict[str, float]:
     """
-    Asian Handicap -0.5 (home): home wins outright → win; draw/away win → loss.
-    Returns {p_ah_home, p_ah_away} summing to 1.0.
-    Only line=-0.5 supported (maps directly to p_home from predict_match).
+    Asian Handicap prediction for line values: -0.5, -1.0, -1.5, +0.5, +1.0, +1.5.
+
+    For half-line handicaps (±0.5, ±1.5): no push possible.
+    For whole-line handicaps (±1.0): push possible when home wins by exactly |line| goals.
+
+    Returns dict with keys p_ah_home, p_ah_away, p_push.
+    p_ah_home + p_ah_away + p_push == 1.0 (within floating-point tolerance).
+
+    line=-0.5 (home -0.5): home wins outright → AH home wins; draw/away → AH away wins.
+    line=-1.0 (home -1.0): home wins by 2+ → AH home; home wins by exactly 1 → push; else → AH away.
+    line=-1.5 (home -1.5): home wins by 2+ → AH home; else → AH away (no push).
+    line=+0.5 (home +0.5): home wins or draws → AH home; away wins → AH away (no push).
+    line=+1.0 (home +1.0): away wins by 2+ → AH away; away wins by exactly 1 → push; else → AH home.
+    line=+1.5 (home +1.5): away wins by 2+ → AH away; else → AH home (no push).
     """
-    if line != -0.5:
-        raise ValueError(f"Unsupported AH line: {line}. Only -0.5 supported.")
-    probs = predict_match(home, away, params, neutral=neutral, rho_override=rho_override)
+    _SUPPORTED_LINES = {-0.5, -1.0, -1.5, 0.5, 1.0, 1.5}
+    if line not in _SUPPORTED_LINES:
+        raise ValueError(f"Unsupported AH line: {line}. Supported: {sorted(_SUPPORTED_LINES)}")
+
+    matrix = predict_scoreline(home, away, params, max_goals, neutral, rho_override)
+
+    p_ah_home = 0.0
+    p_ah_away = 0.0
+    p_push = 0.0
+
+    for i in range(max_goals + 1):
+        for j in range(max_goals + 1):
+            prob = matrix[i, j]
+            diff = i - j  # home goals minus away goals
+            if line == -0.5:
+                # Home wins outright (diff > 0) → AH home; else → AH away
+                if diff > 0:
+                    p_ah_home += prob
+                else:
+                    p_ah_away += prob
+            elif line == -1.0:
+                # Home wins by 2+ → AH home; home wins by exactly 1 → push; else → AH away
+                if diff >= 2:
+                    p_ah_home += prob
+                elif diff == 1:
+                    p_push += prob
+                else:
+                    p_ah_away += prob
+            elif line == -1.5:
+                # Home wins by 2+ → AH home; else → AH away (no push)
+                if diff >= 2:
+                    p_ah_home += prob
+                else:
+                    p_ah_away += prob
+            elif line == 0.5:
+                # Home wins or draws (diff >= 0) → AH home; away wins → AH away
+                if diff >= 0:
+                    p_ah_home += prob
+                else:
+                    p_ah_away += prob
+            elif line == 1.0:
+                # Away wins by 2+ → AH away; away wins by exactly 1 → push; else → AH home
+                if diff <= -2:
+                    p_ah_away += prob
+                elif diff == -1:
+                    p_push += prob
+                else:
+                    p_ah_home += prob
+            elif line == 1.5:
+                # Away wins by 2+ → AH away; else → AH home (no push)
+                if diff <= -2:
+                    p_ah_away += prob
+                else:
+                    p_ah_home += prob
+
     return {
-        "p_ah_home": probs["p_home"],
-        "p_ah_away": 1.0 - probs["p_home"],
+        "p_ah_home": float(p_ah_home),
+        "p_ah_away": float(p_ah_away),
+        "p_push": float(p_push),
     }
 
 
@@ -339,6 +410,20 @@ def predict_totals(
             if i + j > line:
                 p_over += matrix[i, j]
     return {"p_over": float(p_over), "p_under": float(1.0 - p_over), "line": line}
+
+
+def predict_btts(
+    home: str,
+    away: str,
+    params: DixonColesParams,
+    max_goals: int = _MAX_GOALS,
+    neutral: bool = False,
+    rho_override: float | None = None,
+) -> dict[str, float]:
+    """Returns P(both teams score >= 1) and P(at least one team scores 0)."""
+    matrix = predict_scoreline(home, away, params, max_goals, neutral, rho_override)
+    p_yes = float(matrix[1:, 1:].sum())  # all cells where home >= 1 AND away >= 1
+    return {"p_btts_yes": p_yes, "p_btts_no": float(1.0 - p_yes)}
 
 
 def save(params: DixonColesParams, path: Path) -> None:

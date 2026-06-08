@@ -2,11 +2,14 @@
 Persistent P&L ledger for live bets.
 
 CSV at results/ledger.csv — one row per bet, human-editable in Excel.
-Settlement is automatic via martj42 results CSV.
+Settlement is automatic via martj42 results CSV, with TheOddsAPI as same-day
+primary source for WM 2026 matches.
 """
 from __future__ import annotations
 
+import contextlib
 import csv
+import time
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
@@ -16,6 +19,90 @@ from src.config import RESULTS_DIR
 from src.betting.value_detector import BetSignal
 
 LEDGER_PATH = RESULTS_DIR / "ledger.csv"
+
+
+@contextlib.contextmanager
+def _file_lock(path: Path, timeout: float = 10.0):
+    """
+    Advisory exclusive lock on `path + '.lock'` using fcntl (macOS/Linux).
+    Falls back to no-op on platforms without fcntl (Windows).
+    Prevents duplicate writes when two scan processes run simultaneously.
+    """
+    lock_path = path.with_suffix(".lock")
+    try:
+        import fcntl
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+        fh = open(lock_path, "w")
+        deadline = time.monotonic() + timeout
+        while True:
+            try:
+                fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                if time.monotonic() > deadline:
+                    raise TimeoutError(f"Could not acquire ledger lock within {timeout}s")
+                time.sleep(0.05)
+        try:
+            yield
+        finally:
+            fcntl.flock(fh, fcntl.LOCK_UN)
+            fh.close()
+    except ImportError:
+        yield  # fcntl unavailable (Windows) — no locking
+
+
+_WM_SCORES_CACHE: dict = {"ts": 0.0, "data": {}}
+_WM_SCORES_TTL = 900  # 15 minutes
+
+
+def _fetch_completed_wm_scores(api_key: str = "") -> dict[tuple[str, str], tuple[int, int]]:
+    """
+    Queries TheOddsAPI scores endpoint for recently completed WM 2026 matches.
+    Returns {(canonical_home, canonical_away): (home_score, away_score)}.
+    Cached for 15 minutes to avoid burning quota during settlement loops.
+    Falls back to empty dict on any error (martj42 CSV is the primary fallback).
+    """
+    import time
+    now = time.monotonic()
+    if now - _WM_SCORES_CACHE["ts"] < _WM_SCORES_TTL and _WM_SCORES_CACHE["data"]:
+        return _WM_SCORES_CACHE["data"]  # type: ignore[return-value]
+
+    if not api_key:
+        import os
+        from dotenv import load_dotenv
+        load_dotenv(Path(__file__).parent.parent.parent / ".env")
+        api_key = os.getenv("ODDS_API_KEY", "")
+    if not api_key:
+        return {}
+    try:
+        import requests
+        from src.config import canonical_name
+        url = "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup_2026/scores/"
+        resp = requests.get(url, params={"apiKey": api_key, "daysFrom": 7}, timeout=10)
+        if not resp.ok:
+            return {}
+        scores: dict[tuple[str, str], tuple[int, int]] = {}
+        for match in resp.json():
+            if not match.get("completed"):
+                continue
+            home_name = canonical_name(match.get("home_team", ""))
+            away_name = canonical_name(match.get("away_team", ""))
+            match_scores = match.get("scores") or []
+            h_score = next(
+                (int(s["score"]) for s in match_scores if s["name"] == match.get("home_team")),
+                None,
+            )
+            a_score = next(
+                (int(s["score"]) for s in match_scores if s["name"] == match.get("away_team")),
+                None,
+            )
+            if h_score is not None and a_score is not None:
+                scores[(home_name, away_name)] = (h_score, a_score)
+        _WM_SCORES_CACHE["ts"] = time.monotonic()
+        _WM_SCORES_CACHE["data"] = scores
+        return scores
+    except Exception:
+        return {}
 
 _FIELDS = [
     "match_id", "match_date", "home", "away", "market",
@@ -64,35 +151,36 @@ def append_bets(
     if not signals:
         return 0
 
-    df = _load(path)
-    existing = set(zip(df.get("match_id", pd.Series([])), df.get("market", pd.Series([]))))
+    with _file_lock(path):
+        df = _load(path)
+        existing = set(zip(df.get("match_id", pd.Series([])), df.get("market", pd.Series([]))))
 
-    today = pd.Timestamp.now().strftime("%Y-%m-%d")
-    new_rows = []
-    for s in signals:
-        key = (s.match_id, s.market)
-        if key in existing:
-            continue
-        new_rows.append({
-            "match_id":     s.match_id,
-            "match_date":   match_date,
-            "home":         s.home,
-            "away":         s.away,
-            "market":       s.market,
-            "decimal_odds": f"{s.decimal_odds:.4f}",
-            "stake_pct":    f"{s.stake_pct:.6f}",
-            "stake_amount": f"{s.stake_pct * bankroll:.2f}",
-            "placed_date":  today,
-            "status":        "open",
-            "pnl":           "0.0",
-            "closing_odds":  "0.0",
-            "clv":           "",
-        })
+        today = pd.Timestamp.now().strftime("%Y-%m-%d")
+        new_rows = []
+        for s in signals:
+            key = (s.match_id, s.market)
+            if key in existing:
+                continue
+            new_rows.append({
+                "match_id":     s.match_id,
+                "match_date":   match_date,
+                "home":         s.home,
+                "away":         s.away,
+                "market":       s.market,
+                "decimal_odds": f"{s.decimal_odds:.4f}",
+                "stake_pct":    f"{s.stake_pct:.6f}",
+                "stake_amount": f"{s.stake_eur if s.stake_eur > 0 else s.stake_pct * bankroll:.2f}",
+                "placed_date":  today,
+                "status":        "open",
+                "pnl":           "0.0",
+                "closing_odds":  "0.0",
+                "clv":           "",
+            })
 
-    if new_rows:
-        new_df = pd.DataFrame(new_rows, columns=_FIELDS)
-        df = pd.concat([df, new_df], ignore_index=True)
-        _save(df, path)
+        if new_rows:
+            new_df = pd.DataFrame(new_rows, columns=_FIELDS)
+            df = pd.concat([df, new_df], ignore_index=True)
+            _save(df, path)
 
     return len(new_rows)
 
@@ -107,6 +195,14 @@ def settle_from_results(
     O/U: home_score + away_score vs 2.5.
     Returns number of newly settled bets.
     """
+    with _file_lock(ledger_path):
+        return _settle_from_results_locked(ledger_path, results)
+
+
+def _settle_from_results_locked(
+    ledger_path: Path,
+    results: pd.DataFrame | None,
+) -> int:
     df = _load(ledger_path)
     if df.empty:
         return 0
@@ -130,10 +226,15 @@ def settle_from_results(
         & results["home_score"].notna()
     ] if "tournament" in results.columns else results.iloc[:0]
 
+    from src.config import canonical_name as _cn
     res_lookup: dict[tuple, dict] = {}
     for _, row in wm_results.iterrows():
-        key = (str(row["home_team"]), str(row["away_team"]))
+        # Canonicalize so "Czech Republic" in martj42 CSV matches "Czechia" in ledger.
+        key = (_cn(str(row["home_team"])), _cn(str(row["away_team"])))
         res_lookup[key] = row
+
+    # Try TheOddsAPI scores endpoint first (same-day results, no lag)
+    live_scores = _fetch_completed_wm_scores()
 
     settled = 0
     for idx in df[open_mask].index:
@@ -143,34 +244,85 @@ def settle_from_results(
         odds = float(row["decimal_odds"])
         stake = float(row["stake_amount"])
 
-        result = res_lookup.get((home, away))
-        if result is None:
-            continue
-
-        hg = int(result["home_score"])
-        ag = int(result["away_score"])
+        # Look up score: live API first, then martj42 CSV
+        # score_key uses canonical names (e.g. "Czechia") so it matches res_lookup
+        # which is also canonicalized — prevents "Czech Republic" vs "Czechia" mismatch.
+        from src.config import canonical_name
+        score_key = (canonical_name(home), canonical_name(away))
+        if score_key in live_scores:
+            hg, ag = live_scores[score_key]
+        else:
+            result = res_lookup.get(score_key)
+            if result is None:
+                continue
+            hg = int(result["home_score"])
+            ag = int(result["away_score"])
         total = hg + ag
 
         # Determine outcome
+        push = False
         if market == "home":
             won = hg > ag
         elif market == "away":
             won = ag > hg
         elif market == "draw":
             won = hg == ag
-        elif "over" in market:
+        elif market == "o/u2.5_over":
             won = total > 2.5
-        elif "under" in market:
+        elif market == "o/u2.5_under":
             won = total <= 2.5
+        elif market == "ah-0.5_home":
+            # Home -0.5: home must WIN outright (no draw possible)
+            won = hg > ag
+        elif market == "ah+0.5_away":
+            # Away +0.5: away wins OR draws (home must win for home to beat handicap)
+            won = ag >= hg
+        elif market == "ah-1.0_home":
+            # Home -1.0: home wins by 2+ → won; home wins by exactly 1 → push; else → lost
+            if hg >= ag + 2:
+                won = True
+            elif hg == ag + 1:
+                push = True
+                won = False
+            else:
+                won = False
+        elif market == "ah+1.0_away":
+            # Away +1.0: away wins or draws → won; home wins by exactly 1 → push; home wins by 2+ → lost
+            if ag >= hg:
+                won = True
+            elif hg == ag + 1:
+                push = True
+                won = False
+            else:
+                won = False
+        elif market == "ah-1.5_home":
+            # Home -1.5: home wins by 2+ → won; else → lost (no push)
+            won = hg >= ag + 2
+        elif market == "ah+1.5_away":
+            # Away +1.5: away wins, draws, or loses by 1 → won; home wins by 2+ → lost (no push)
+            won = hg <= ag + 1
+        elif market == "btts_yes":
+            won = (hg >= 1) and (ag >= 1)
+        elif market == "btts_no":
+            won = (hg == 0) or (ag == 0)
         else:
+            # Unknown market type: log and skip to avoid silent data corruption
+            import warnings
+            warnings.warn(f"settle_from_results: unknown market type '{market}' — skipping")
             continue
 
-        df.at[idx, "status"] = "won" if won else "lost"
-        df.at[idx, "pnl"] = f"{stake * (odds - 1):.2f}" if won else f"{-stake:.2f}"
-        # CLV: positive = we got better price than closing line
+        if push:
+            df.at[idx, "status"] = "void"
+            df.at[idx, "pnl"] = "0.00"
+        else:
+            df.at[idx, "status"] = "won" if won else "lost"
+            df.at[idx, "pnl"] = f"{stake * (odds - 1):.2f}" if won else f"{-stake:.2f}"
+        # CLV: positive = we got better price than closing line.
+        # Guard: closing_odds > odds*3 (e.g. odds crashed to 0.25 from 2.50) indicates
+        # data corruption — cap CLV to [-99%, +200%] to protect mean_clv stats.
         closing = float(df.at[idx, "closing_odds"] or 0)
-        if closing > 1.0:
-            clv = odds / closing - 1.0
+        if 1.0 < closing < odds * 3.0:
+            clv = max(-0.99, min(2.00, odds / closing - 1.0))
             df.at[idx, "clv"] = f"{clv:.4f}"
         settled += 1
 
@@ -202,14 +354,18 @@ def ledger_summary(path: Path = LEDGER_PATH) -> dict:
     n_open = int((df["status"] == "open").sum())
     n_won = int((df["status"] == "won").sum())
     n_lost = int((df["status"] == "lost").sum())
-    settled = df[df["status"].isin(["won", "lost"])]
+    n_void = int((df["status"] == "void").sum())
+    # Include void in staked/pnl so ROI denominator is accurate (push returns stake, pnl=0)
+    settled = df[df["status"].isin(["won", "lost", "void"])]
 
     total_staked = pd.to_numeric(settled["stake_amount"], errors="coerce").sum()
     total_pnl = pd.to_numeric(settled["pnl"], errors="coerce").sum()
     roi_pct = (total_pnl / total_staked * 100) if total_staked > 0 else 0.0
     win_rate = (n_won / (n_won + n_lost) * 100) if (n_won + n_lost) > 0 else 0.0
 
-    clv_vals = pd.to_numeric(settled.get("clv", pd.Series([])), errors="coerce").dropna()
+    clv_vals = pd.to_numeric(
+        df[df["status"].isin(["won", "lost"])].get("clv", pd.Series([])), errors="coerce"
+    ).dropna()
     mean_clv = float(clv_vals.mean()) if not clv_vals.empty else None
 
     return {
@@ -217,6 +373,7 @@ def ledger_summary(path: Path = LEDGER_PATH) -> dict:
         "n_open": n_open,
         "n_won": n_won,
         "n_lost": n_lost,
+        "n_void": n_void,
         "total_staked": float(total_staked),
         "total_pnl": float(total_pnl),
         "roi_pct": float(roi_pct),

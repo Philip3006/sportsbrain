@@ -5,8 +5,9 @@ Checks if new WM 2026 matches have been played since the last DC model fit.
 If yes (or --force): retrains DC (finals-only) + LightGBM.
 
 Usage:
-  python scripts/auto_retrain.py          # retrain only if new WM matches found
-  python scripts/auto_retrain.py --force  # always retrain
+  python scripts/auto_retrain.py           # retrain only if new WM matches found
+  python scripts/auto_retrain.py --force   # always retrain
+  python scripts/auto_retrain.py --dry-run # show what would happen without retraining
 """
 import argparse
 import sys
@@ -34,13 +35,13 @@ def check_new_wm_matches(fit_date: pd.Timestamp, results: pd.DataFrame) -> int:
     wm = results[
         (results["tournament"] == "FIFA World Cup")
         & (results["date"] >= pd.Timestamp("2026-06-11"))
-        & (results["date"] > fit_date)
+        & (results["date"] >= fit_date)
         & results["home_score"].notna()
     ]
     return len(wm)
 
 
-def main(force: bool = False) -> None:
+def main(force: bool = False, dry_run: bool = False) -> None:
     print("Checking for new WM 2026 matches...")
 
     dc_params = _load_latest_dc_params()
@@ -50,6 +51,16 @@ def main(force: bool = False) -> None:
     results = fetch_international_results(force=True)
     n_new = check_new_wm_matches(fit_date, results)
 
+    if dry_run:
+        if n_new == 0 and not force:
+            print(f"  [DRY-RUN] No new WM matches since {fit_date.date()} — retraining would be skipped.")
+        elif force:
+            print(f"  [DRY-RUN] Would retrain: --force flag set (regardless of new matches).")
+        else:
+            print(f"  [DRY-RUN] Would retrain: {n_new} new WM match(es) since {fit_date.date()}.")
+        print("  [DRY-RUN] No changes made.")
+        return
+
     if n_new == 0 and not force:
         print(f"  No new WM matches since {fit_date.date()} — retraining skipped.")
         return
@@ -57,6 +68,21 @@ def main(force: bool = False) -> None:
     if force:
         print("  --force flag set — retraining regardless.")
     else:
+        # Guard: don't retrain on same-day WM results — martj42 CSV may not have them yet
+        wm_mask = (
+            (results["tournament"] == "FIFA World Cup")
+            & (results["date"] >= pd.Timestamp("2026-06-11"))
+            & results["home_score"].notna()
+        )
+        if wm_mask.any():
+            latest_wm_date = results[wm_mask]["date"].max()
+            if pd.Timestamp(latest_wm_date).date() >= pd.Timestamp.now().date():
+                print(
+                    f"  Latest WM match on {latest_wm_date.date()} (today) — "
+                    "martj42 may be incomplete. Retrain skipped to avoid stale data. "
+                    "Re-run tomorrow or use --force."
+                )
+                return
         print(f"  {n_new} new WM match(es) since last training — retraining.")
 
     print("\nStep 1/2: Retraining Dixon-Coles (finals-only)...")
@@ -79,5 +105,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--force", action="store_true",
                         help="Retrain even if no new WM matches")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Print what would happen without actually retraining")
     args = parser.parse_args()
-    main(force=args.force)
+    main(force=args.force, dry_run=args.dry_run)

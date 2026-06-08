@@ -13,15 +13,11 @@ class CLVRecord:
     clv: float            # bet_odds / closing_odds - 1 (positive = beat close)
 
 
-def compute_clv(model_prob: float, closing_odds: float) -> float:
-    """
-    CLV = model_prob × closing_odds - 1.
-    Positive: model has positive EV against the sharpest available closing price → genuine edge.
-    Uses H-Max (market-best closing odds) as benchmark rather than a single bookmaker.
-    """
-    if closing_odds <= 0 or model_prob <= 0:
+def compute_clv(bet_odds: float, closing_odds: float) -> float:
+    """CLV = bet_odds / closing_odds - 1. Positive = beat the closing line."""
+    if closing_odds <= 0 or bet_odds <= 0:
         return 0.0
-    return model_prob * closing_odds - 1.0
+    return bet_odds / closing_odds - 1.0
 
 
 def track_bets(

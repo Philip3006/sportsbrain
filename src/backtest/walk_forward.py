@@ -18,6 +18,25 @@ TOURNAMENT_EVENTS = [
 ]
 
 
+def _confederation_min_edge(home: str, away: str, market: str, base_min_edge: float) -> float:
+    """
+    Returns a higher min_edge for markets with known confederation bias.
+
+    Duplicated from src/scanner/daily_scan.py to avoid circular imports.
+    CONMEBOL away: 1.5x — structural away overestimation in neutral-venue tournaments.
+    CONCACAF away: 1.3x — similar but less pronounced bias.
+    All other combinations: unchanged base_min_edge.
+    """
+    from src.config import TEAM_CONFEDERATION
+    if market == "away":
+        away_conf = TEAM_CONFEDERATION.get(away, "")
+        if away_conf == "CONMEBOL":
+            return base_min_edge * 1.5
+        if away_conf == "CONCACAF":
+            return base_min_edge * 1.3
+    return base_min_edge
+
+
 def run_event_backtest(
     event: dict[str, str],
     all_matches: pd.DataFrame,
@@ -57,13 +76,15 @@ def run_event_backtest(
     for _, row in event_matches.iterrows():
         home, away = row["home_team"], row["away_team"]
         neutral = bool(row.get("neutral", True))  # tournament matches often neutral
-        match_id = f"{event['name']}_{home}_vs_{away}"
+        match_id = f"{event['name']}_{home}_vs_{away}_{row['date'].strftime('%Y%m%d')}"
+        # Odds lookup uses the legacy format (no date) — look up by home/away/tournament
+        odds_match_id = f"{event['name']}_{home}_vs_{away}"
 
         # Get market odds from lookup if available
         raw_odds = None
         closing_odds = None  # (close_home, close_draw, close_away) if available
         if odds_lookup is not None:
-            odds_row = odds_lookup[odds_lookup["match_id"] == match_id]
+            odds_row = odds_lookup[odds_lookup["match_id"] == odds_match_id]
             if not odds_row.empty:
                 r = odds_row.iloc[0]
                 raw_odds = (
@@ -110,9 +131,14 @@ def run_event_backtest(
         }
 
         if raw_odds:
+            edge_overrides = {
+                market: _confederation_min_edge(home, away, market, min_edge)
+                for market in ["home", "draw", "away"]
+            }
             signals = detect_value(
                 home, away, probs_arr, raw_odds,
                 bankroll=bankroll, min_edge=min_edge, match_id=match_id,
+                min_edge_override=edge_overrides,
             )
             for sig in signals:
                 market_outcome = {"home": 2, "draw": 1, "away": 0}[sig.market]
@@ -175,7 +201,7 @@ def compute_backtest_metrics(results: pd.DataFrame) -> dict[str, float]:
     Portfolio-level metrics from backtest results.
     Only considers rows where has_bet=True.
     """
-    bets = results[results.get("has_bet", False) == True].copy() if "has_bet" in results.columns else results.copy()
+    bets = results[results["has_bet"].astype(bool)].copy() if "has_bet" in results.columns else results.copy()
 
     if bets.empty or "pnl" not in bets.columns:
         return {"n_bets": 0, "roi": 0.0, "win_rate": 0.0, "sharpe": 0.0, "max_drawdown": 0.0}

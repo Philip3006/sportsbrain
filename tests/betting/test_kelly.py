@@ -1,6 +1,6 @@
 import pytest
-from src.betting.kelly import expected_value, kelly_fraction, stake
-from src.config import KELLY_FRAC, MAX_STAKE_PCT
+from src.betting.kelly import dynamic_stake_eur, expected_value, kelly_fraction, stake
+from src.config import KELLY_FRAC, MIN_STAKE_EUR, MAX_STAKE_EUR
 
 
 class TestKellyFraction:
@@ -30,14 +30,38 @@ class TestKellyFraction:
         assert kelly_fraction(0.5, 1.0) == 0.0  # b = 0
 
 
+class TestDynamicStakeEur:
+    def test_min_at_low_ev(self):
+        assert dynamic_stake_eur(0.03, "MEDIUM") == MIN_STAKE_EUR
+
+    def test_max_at_high_ev(self):
+        assert dynamic_stake_eur(0.20, "MEDIUM") == MAX_STAKE_EUR
+
+    def test_artifact_ev_capped(self):
+        # EV > 20% must not exceed MAX_STAKE_EUR
+        assert dynamic_stake_eur(0.50, "MEDIUM") == MAX_STAKE_EUR
+
+    def test_scales_monotonically(self):
+        s1 = dynamic_stake_eur(0.05, "MEDIUM")
+        s2 = dynamic_stake_eur(0.10, "MEDIUM")
+        s3 = dynamic_stake_eur(0.15, "MEDIUM")
+        assert s1 < s2 < s3
+
+    def test_high_confidence_bonus(self):
+        medium = dynamic_stake_eur(0.10, "MEDIUM")
+        high = dynamic_stake_eur(0.10, "HIGH")
+        assert high > medium
+        assert high <= MAX_STAKE_EUR
+
+
 class TestStake:
     def test_respects_max_cap(self):
-        # kelly_f=0.10, bankroll=10_000, max=0.02 → capped at 200
-        assert stake(0.10, 10_000, max_pct=0.02) == 200.0
+        # kelly_f=0.10, bankroll=10_000, max_eur=200 → capped at 200
+        assert stake(0.10, 10_000, max_eur=200.0) == 200.0
 
     def test_below_cap(self):
-        # kelly_f=0.01, bankroll=1000, max=0.02 → 10.0
-        assert stake(0.01, 1000, max_pct=0.02) == 10.0
+        # kelly_f=0.01, bankroll=1000, max_eur=20 → 10.0
+        assert stake(0.01, 1000, max_eur=20.0) == 10.0
 
     def test_zero_kelly_returns_zero(self):
         assert stake(0.0, 1000) == 0.0

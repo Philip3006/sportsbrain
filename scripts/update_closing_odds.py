@@ -14,11 +14,16 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.betting.ledger import LEDGER_PATH, _load, _save
+from src.betting.ledger import LEDGER_PATH, _load, _save, _file_lock
 from src.config import canonical_name
 
 
 def main(mock: bool = False) -> None:
+    with _file_lock(LEDGER_PATH):
+        _main_locked(mock)
+
+
+def _main_locked(mock: bool) -> None:
     df = _load(LEDGER_PATH)
     if df.empty:
         print("Ledger is empty — nothing to update.")
@@ -54,13 +59,19 @@ def main(mock: bool = False) -> None:
             odds_lookup[(h, a)] = m
 
         _MARKET_ODDS_KEY = {
-            "home":        "home_odds",
-            "draw":        "draw_odds",
-            "away":        "away_odds",
-            "o/u2.5_over": "over_odds",
-            "o/u2.5_under":"under_odds",
-            "ah-0.5_home": "ah_home_odds",
-            "ah+0.5_away": "ah_away_odds",
+            "home":         "home_odds",
+            "draw":         "draw_odds",
+            "away":         "away_odds",
+            "o/u2.5_over":  "over_odds",
+            "o/u2.5_under": "under_odds",
+            "ah-0.5_home":  "ah_home_odds",
+            "ah+0.5_away":  "ah_away_odds",
+            "ah-1.0_home":  "ah1_home_odds",
+            "ah+1.0_away":  "ah1_away_odds",
+            "ah-1.5_home":  "ah15_home_odds",
+            "ah+1.5_away":  "ah15_away_odds",
+            "btts_yes":     "btts_yes_odds",
+            "btts_no":      "btts_no_odds",
         }
 
         n = 0
@@ -81,6 +92,32 @@ def main(mock: bool = False) -> None:
 
     _save(df, LEDGER_PATH)
     print(f"  Updated closing_odds for {n} bet(s) → {LEDGER_PATH}")
+
+    # Also compute CLV for already-settled bets that now have closing_odds but missing clv.
+    # This handles the case where a bet settled before closing odds were fetched (09:00 settlement
+    # vs 16:00/20:00 closing-odds update), leaving clv="" even though closing_odds is now known.
+    n_clv = 0
+    settled_mask = df["status"].isin(["won", "lost"])
+    for idx in df[settled_mask].index:
+        if str(df.at[idx, "clv"]).strip():
+            continue  # already has CLV
+        try:
+            closing = float(df.at[idx, "closing_odds"] or 0)
+            if closing <= 1.0:
+                continue
+            bet_odds = float(df.at[idx, "decimal_odds"] or 0)
+            if bet_odds <= 1.0:
+                continue
+            if closing >= bet_odds * 3.0:
+                continue  # pathological closing odds — skip (data corruption guard)
+            clv = max(-0.99, min(2.00, bet_odds / closing - 1.0))
+            df.at[idx, "clv"] = f"{clv:.4f}"
+            n_clv += 1
+        except (ValueError, TypeError):
+            pass
+    if n_clv:
+        _save(df, LEDGER_PATH)
+        print(f"  Computed CLV for {n_clv} settled bet(s) that were missing it.")
 
 
 if __name__ == "__main__":

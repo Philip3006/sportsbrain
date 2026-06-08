@@ -272,22 +272,35 @@ def _cmd_analyse(home: str, away: str) -> tuple[str, dict]:
 
 def _cmd_scan() -> tuple[str, dict]:
     from src.scanner.daily_scan import run_daily_scan
-    from src.notifications.telegram import _market_label
+    from src.notifications.telegram import send_scan_alert, _market_label
+    from src.betting.ledger import ledger_summary, LEDGER_PATH
+    import datetime
     try:
-        _, signals = run_daily_scan(bankroll=100.0, auto_log=False)
+        _, signals, _match_dates, match_contexts = run_daily_scan(bankroll=100.0, auto_log=False)
         if not signals:
-            text = "Kein Value-Signal heute gefunden."
-            return text, {"inline_keyboard": [[{"text": "Alle Befehle", "callback_data": "/hilfe"}]]}
+            return "Kein Value-Signal heute gefunden.", {"inline_keyboard": [[{"text": "Alle Befehle", "callback_data": "/hilfe"}]]}
 
-        lines = ["<b>Tages-Scan</b>\n" + _line()]
-        for s in signals[:3]:
-            b365 = f"Bet365: {s.b365_odds:.2f}" if s.b365_odds > 1.0 else f"Kurs: {s.decimal_odds:.2f}"
-            lines.append(
-                f"<b>{s.home} vs {s.away}</b>\n"
-                f"{_market_label(s.market, s.home, s.away)}\n"
-                f"{b365}  |  EV: +{s.ev*100:.1f}%"
-            )
-        return "\n" + _line() + "\n".join(lines), _scan_keyboard(signals)
+        # Use the same rich alert format as the auto-scan
+        sent = send_scan_alert(
+            signals,
+            {**ledger_summary(LEDGER_PATH), "bankroll": 100.0},
+            scan_date=datetime.datetime.now().strftime("%Y-%m-%d"),
+            bankroll=100.0,
+            match_contexts=match_contexts,
+        )
+        if sent:
+            return "Scan-Ergebnis wurde als Alert gesendet.", {}
+        else:
+            # Fallback: build simple text if alert couldn't be sent
+            lines = ["<b>Tages-Scan</b>\n" + _line()]
+            for s in signals[:3]:
+                b365 = f"Bet365: {s.b365_odds:.2f}" if s.b365_odds > 1.0 else f"Kurs: {s.decimal_odds:.2f}"
+                lines.append(
+                    f"<b>{s.home} vs {s.away}</b>\n"
+                    f"{_market_label(s.market, s.home, s.away)}\n"
+                    f"{b365}  |  EV: +{s.ev*100:.1f}%"
+                )
+            return "\n" + _line() + "\n".join(lines), _scan_keyboard(signals)
     except Exception as e:
         return f"Scan-Fehler: {e}", {}
 

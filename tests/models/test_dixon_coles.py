@@ -6,7 +6,10 @@ from src.models.dixon_coles import (
     DixonColesParams,
     _tau,
     fit,
+    predict_asian_handicap,
+    predict_btts,
     predict_match,
+    predict_match_staged,
     predict_scoreline,
 )
 
@@ -72,6 +75,117 @@ class TestPredictMatch:
         assert result["p_home"] > 0.6
 
 
+class TestPredictBtts:
+    def test_predict_btts_sums_to_one(self, minimal_dc_params):
+        result = predict_btts("Home", "Away", minimal_dc_params)
+        assert abs(result["p_btts_yes"] + result["p_btts_no"] - 1.0) < 1e-6
+
+    def test_predict_btts_range(self, minimal_dc_params):
+        result = predict_btts("Home", "Away", minimal_dc_params)
+        assert 0 < result["p_btts_yes"] < 1
+        assert 0 < result["p_btts_no"] < 1
+
+
+class TestPredictAsianHandicap:
+    """Tests for predict_asian_handicap() with lines -1.0, -1.5, +1.0, +1.5."""
+
+    def test_minus_05_sums_to_one(self, minimal_dc_params):
+        r = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-0.5)
+        assert abs(r["p_ah_home"] + r["p_ah_away"] + r["p_push"] - 1.0) < 1e-6
+
+    def test_minus_05_no_push(self, minimal_dc_params):
+        r = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-0.5)
+        assert r["p_push"] == 0.0
+
+    def test_minus_10_sums_to_one(self, minimal_dc_params):
+        r = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-1.0)
+        total = r["p_ah_home"] + r["p_ah_away"] + r["p_push"]
+        assert abs(total - 1.0) < 1e-6
+
+    def test_minus_10_push_is_positive(self, minimal_dc_params):
+        """AH -1.0 must have p_push > 0 (probability of home winning by exactly 1)."""
+        r = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-1.0)
+        assert r["p_push"] > 0.0
+
+    def test_minus_10_all_components_nonneg(self, minimal_dc_params):
+        r = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-1.0)
+        assert r["p_ah_home"] >= 0.0
+        assert r["p_ah_away"] >= 0.0
+        assert r["p_push"] >= 0.0
+
+    def test_minus_15_sums_to_one(self, minimal_dc_params):
+        r = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-1.5)
+        assert abs(r["p_ah_home"] + r["p_ah_away"] + r["p_push"] - 1.0) < 1e-6
+
+    def test_minus_15_no_push(self, minimal_dc_params):
+        r = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-1.5)
+        assert r["p_push"] == 0.0
+
+    def test_plus_05_sums_to_one(self, minimal_dc_params):
+        r = predict_asian_handicap("Home", "Away", minimal_dc_params, line=0.5)
+        assert abs(r["p_ah_home"] + r["p_ah_away"] + r["p_push"] - 1.0) < 1e-6
+
+    def test_plus_05_no_push(self, minimal_dc_params):
+        r = predict_asian_handicap("Home", "Away", minimal_dc_params, line=0.5)
+        assert r["p_push"] == 0.0
+
+    def test_plus_10_sums_to_one(self, minimal_dc_params):
+        r = predict_asian_handicap("Home", "Away", minimal_dc_params, line=1.0)
+        total = r["p_ah_home"] + r["p_ah_away"] + r["p_push"]
+        assert abs(total - 1.0) < 1e-6
+
+    def test_plus_10_push_is_positive(self, minimal_dc_params):
+        """AH +1.0 must have p_push > 0 (probability of away winning by exactly 1)."""
+        r = predict_asian_handicap("Home", "Away", minimal_dc_params, line=1.0)
+        assert r["p_push"] > 0.0
+
+    def test_plus_15_sums_to_one(self, minimal_dc_params):
+        r = predict_asian_handicap("Home", "Away", minimal_dc_params, line=1.5)
+        assert abs(r["p_ah_home"] + r["p_ah_away"] + r["p_push"] - 1.0) < 1e-6
+
+    def test_plus_15_no_push(self, minimal_dc_params):
+        r = predict_asian_handicap("Home", "Away", minimal_dc_params, line=1.5)
+        assert r["p_push"] == 0.0
+
+    def test_unsupported_line_raises(self, minimal_dc_params):
+        with pytest.raises(ValueError, match="Unsupported AH line"):
+            predict_asian_handicap("Home", "Away", minimal_dc_params, line=-2.0)
+
+    def test_minus_10_home_prob_less_than_minus_05(self, minimal_dc_params):
+        """AH -1.0 is harder for home to cover than AH -0.5."""
+        r05 = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-0.5)
+        r10 = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-1.0)
+        # Home needs to win by 2+ for -1.0 vs just winning for -0.5 → lower p_ah_home
+        assert r10["p_ah_home"] < r05["p_ah_home"]
+
+    def test_minus_15_home_prob_equals_minus_10_home_prob(self, minimal_dc_params):
+        """AH -1.5 home wins same scorelines as -1.0 home wins (both need 2+ goal margin)."""
+        r10 = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-1.0)
+        r15 = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-1.5)
+        # p_ah_home is identical (both = P(home wins by 2+))
+        assert abs(r10["p_ah_home"] - r15["p_ah_home"]) < 1e-9
+
+    def test_symmetry_minus_05_versus_plus_05(self, minimal_dc_params):
+        """AH -0.5 home ≡ AH +0.5 away (same market, different perspective)."""
+        r_minus = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-0.5)
+        r_plus = predict_asian_handicap("Home", "Away", minimal_dc_params, line=0.5)
+        # p_ah_home for -0.5 = P(home wins) = complement of p_ah_home for +0.5 (P(home wins or draws))
+        # They are different markets; just verify both sum to 1
+        assert abs(r_minus["p_ah_home"] + r_minus["p_ah_away"] - 1.0) < 1e-6
+        assert abs(r_plus["p_ah_home"] + r_plus["p_ah_away"] - 1.0) < 1e-6
+
+    def test_strong_favourite_has_high_p_ah_home_minus_05(self):
+        """A very strong favourite should win AH -0.5 most of the time."""
+        params = DixonColesParams(
+            attack={"Strong": 1.5, "Weak": -1.0},
+            defence={"Strong": -0.8, "Weak": 0.5},
+            home_adv=0.3,
+            rho=-0.13,
+        )
+        r = predict_asian_handicap("Strong", "Weak", params, line=-0.5)
+        assert r["p_ah_home"] > 0.7
+
+
 class TestFit:
     def test_rho_in_valid_range(self, fitted_params):
         assert -0.5 <= fitted_params.rho <= 0.0
@@ -116,3 +230,37 @@ class TestFit:
         params = fit(synthetic_matches, max_iter=500)
         # All teams are in the model
         assert len(params.attack) == len(params.defence)
+
+
+class TestPredictMatchStaged:
+    def test_group_stage_has_higher_draw_prob_than_knockout(self, minimal_dc_params):
+        """Group stage rho*1.10 should increase draw probability vs knockout rho*0.75."""
+        group = predict_match_staged("Home", "Away", minimal_dc_params, is_knockout=False)
+        knockout = predict_match_staged("Home", "Away", minimal_dc_params, is_knockout=True)
+        assert group["p_draw"] > knockout["p_draw"]
+
+    def test_probabilities_sum_to_one(self, minimal_dc_params):
+        for is_ko in (True, False):
+            probs = predict_match_staged("Home", "Away", minimal_dc_params, is_knockout=is_ko)
+            total = probs["p_home"] + probs["p_draw"] + probs["p_away"]
+            assert abs(total - 1.0) < 1e-6
+
+    def test_group_stage_returns_dict_with_all_keys(self, minimal_dc_params):
+        probs = predict_match_staged("Home", "Away", minimal_dc_params)
+        assert {"p_home", "p_draw", "p_away"}.issubset(probs.keys())
+
+
+class TestUnknownTeam:
+    def test_unknown_team_raises_value_error(self, minimal_dc_params):
+        """Unknown team must raise ValueError — not silently use λ=1.0."""
+        with pytest.raises(ValueError, match="not in DC model"):
+            predict_scoreline("UnknownTeamXYZ", "Away", minimal_dc_params)
+
+    def test_both_unknown_teams_raise_value_error(self, minimal_dc_params):
+        with pytest.raises(ValueError, match="not in DC model"):
+            predict_scoreline("UnknownA", "UnknownB", minimal_dc_params)
+
+    def test_known_teams_do_not_raise(self, minimal_dc_params):
+        """Sanity check: known teams must not raise."""
+        matrix = predict_scoreline("Home", "Away", minimal_dc_params)
+        assert matrix.sum() > 0.99

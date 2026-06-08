@@ -186,6 +186,7 @@ def build_training_matrix(
     elo_series: pd.DataFrame,
     dc_snapshot_map: dict[pd.Timestamp, DixonColesParams] | None = None,
     odds_lookup: pd.DataFrame | None = None,
+    statsbomb_xg: pd.DataFrame | None = None,
 ) -> tuple[pd.DataFrame, pd.Series]:
     """
     Builds (X, y) training pair with no lookahead.
@@ -227,6 +228,7 @@ def build_training_matrix(
             neutral=bool(row.get("neutral", False)),
             tournament=row.get("tournament"),
             market_odds=market_odds,
+            statsbomb_xg=statsbomb_xg,
         )
         rows.append(feat)
 

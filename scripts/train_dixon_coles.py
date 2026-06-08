@@ -2,13 +2,15 @@
 Fits Dixon-Coles model on competitive international matches.
 Saves model snapshot to models/dixon_coles/params_{date}.pkl
 
-By default uses finals + Nations Leagues only (no qualifiers).
-Qualifiers inflate attack params for teams like Japan (14-0 vs Bangladesh)
-and NZ (12-0 vs Tonga), making them appear stronger than at WC level.
+Default: all competitive matches except OFC qualifiers (Oceania).
+OFC teams (NZ, Fiji, Samoa…) run up 8-0 scores vs minnows even with phi-decay,
+inflating attack ratings. Non-OFC qualifiers (CONMEBOL, UEFA, CAF, AFC, CONCACAF)
+provide genuine form signal and are included.
 
 Usage:
-  python scripts/train_dixon_coles.py                    # finals-only (default)
-  python scripts/train_dixon_coles.py --all              # all competitive incl. qualifiers
+  python scripts/train_dixon_coles.py                    # no-OFC qualifier (default)
+  python scripts/train_dixon_coles.py --finals-only      # finals + Nations Leagues only
+  python scripts/train_dixon_coles.py --all              # all competitive incl. OFC qualifiers
   python scripts/train_dixon_coles.py --since 2018-01-01 # all competitive since date
 """
 import argparse
@@ -23,11 +25,22 @@ from src.config import MODELS_DIR, COMPETITIVE_TOURNAMENTS
 from src.data.international import fetch_international_results, filter_competitive
 from src.models import dixon_coles
 
-# Finals-only tournaments: no qualifiers, no weak-minnow blowouts.
 _FINALS_TOURNAMENTS = {t for t in COMPETITIVE_TOURNAMENTS if "qualification" not in t.lower()}
 
+_OFC_TEAMS = {
+    "New Zealand", "Fiji", "Vanuatu", "Solomon Islands", "Papua New Guinea",
+    "New Caledonia", "Tahiti", "Samoa", "American Samoa", "Tonga",
+    "Cook Islands", "Tuvalu", "Micronesia", "Kiribati",
+}
 
-def main(since: str | None = None, finals_only: bool = True):
+
+def _remove_ofc_qualifiers(df: pd.DataFrame) -> pd.DataFrame:
+    qualifier_mask = df["tournament"].str.contains("qualification", case=False, na=False)
+    ofc_mask = df["home_team"].isin(_OFC_TEAMS) | df["away_team"].isin(_OFC_TEAMS)
+    return df[~(qualifier_mask & ofc_mask)]
+
+
+def main(since: str | None = None, finals_only: bool = False, all_competitive: bool = False):
     print("Loading data...")
     df = fetch_international_results()
     df = filter_competitive(df)
@@ -35,11 +48,15 @@ def main(since: str | None = None, finals_only: bool = True):
     if finals_only:
         df = df[df["tournament"].isin(_FINALS_TOURNAMENTS)]
         print(f"  Finals + Nations Leagues only (no qualifiers): {len(df)} matches")
-    elif since:
-        df = df[df["date"] >= pd.Timestamp(since)]
-        print(f"  All competitive since {since}: {len(df)} matches")
-    else:
+    elif all_competitive:
+        if since:
+            df = df[df["date"] >= pd.Timestamp(since)]
         print(f"  All competitive matches: {len(df)}")
+    else:
+        df = _remove_ofc_qualifiers(df)
+        if since:
+            df = df[df["date"] >= pd.Timestamp(since)]
+        print(f"  All competitive excl. OFC qualifiers: {len(df)} matches")
 
     print("Fitting Dixon-Coles model (this may take ~60-120 seconds)...")
     params = dixon_coles.fit(df, max_iter=2000)
@@ -63,9 +80,11 @@ def main(since: str | None = None, finals_only: bool = True):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("--finals-only", action="store_true",
+                        help="Use only finals + Nations Leagues (no qualifiers)")
     parser.add_argument("--all", action="store_true",
-                        help="Use all competitive matches including qualifiers")
+                        help="Use all competitive matches including OFC qualifiers")
     parser.add_argument("--since", default=None,
-                        help="When --all: only matches since YYYY-MM-DD")
+                        help="Filter to matches since YYYY-MM-DD")
     args = parser.parse_args()
-    main(since=args.since, finals_only=not args.all)
+    main(since=args.since, finals_only=args.finals_only, all_competitive=args.all)
