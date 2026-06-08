@@ -38,7 +38,7 @@ def get_api_key(api_key: str | None = None) -> str:
 def fetch_upcoming_matches(
     sport: str = "soccer_fifa_world_cup_2026",
     regions: str = "eu",
-    markets: str = "h2h,totals,spreads,btts",
+    markets: str = "h2h,totals,spreads,btts,alternate_totals,alternate_spreads",
     api_key: str | None = None,
     force: bool = False,
 ) -> list[dict]:
@@ -92,7 +92,7 @@ def _parse_markets(bm: dict, home: str, away: str, store: dict) -> None:
                     key = f"{o['name']}_2.5"
                     if o["price"] > store.get(key, 0):
                         store[key] = o["price"]
-        elif mkt == "spreads":
+        elif mkt in ("spreads", "alternate_spreads"):
             for o in market.get("outcomes", []):
                 pt = o.get("point", 0)
                 name = o["name"]
@@ -102,6 +102,22 @@ def _parse_markets(bm: dict, home: str, away: str, store: dict) -> None:
                     key = f"ah1_{name}"
                 elif abs(abs(pt) - 1.5) < 0.1:
                     key = f"ah15_{name}"
+                elif abs(abs(pt) - 2.0) < 0.1:
+                    key = f"ah2_{name}"
+                elif abs(abs(pt) - 2.5) < 0.1:
+                    key = f"ah25_{name}"
+                else:
+                    continue
+                if o["price"] > store.get(key, 0):
+                    store[key] = o["price"]
+        elif mkt == "alternate_totals":
+            for o in market.get("outcomes", []):
+                pt = o.get("point", 0)
+                side = o["name"].lower()  # "over" or "under"
+                if abs(pt - 1.5) < 0.1:
+                    key = f"{side}_1.5"
+                elif abs(pt - 3.5) < 0.1:
+                    key = f"{side}_3.5"
                 else:
                     continue
                 if o["price"] > store.get(key, 0):
@@ -167,8 +183,18 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
             "ah1_away_odds":  best.get(f"ah1_{away}", 0.0),
             "ah15_home_odds": best.get(f"ah15_{home}", 0.0),
             "ah15_away_odds": best.get(f"ah15_{away}", 0.0),
+            "ah2_home_odds":  best.get(f"ah2_{home}", 0.0),
+            "ah2_away_odds":  best.get(f"ah2_{away}", 0.0),
+            "ah25_home_odds": best.get(f"ah25_{home}", 0.0),
+            "ah25_away_odds": best.get(f"ah25_{away}", 0.0),
             "btts_yes_odds":  best.get("btts_yes", 0.0),
             "btts_no_odds":   best.get("btts_no", 0.0),
+            "over15_odds":    best.get("over_1.5", 0.0),
+            "under15_odds":   best.get("under_1.5", 0.0),
+            "over35_odds":    best.get("over_3.5", 0.0),
+            "under35_odds":   best.get("under_3.5", 0.0),
+            "ftts_home_odds": best.get("ftts_home", 0.0),
+            "ftts_away_odds": best.get("ftts_away", 0.0),
             "best_home_bm":   best_bm.get(home, ""),
             "best_draw_bm":   best_bm.get("Draw", ""),
             "best_away_bm":   best_bm.get(away, ""),
@@ -205,12 +231,24 @@ def mock_upcoming_matches() -> list[dict]:
             "away_odds": 3.00,
             "over_odds": 1.90,
             "under_odds": 1.95,
+            "over15_odds": 1.35,
+            "under15_odds": 3.10,
+            "over35_odds": 3.20,
+            "under35_odds": 1.38,
             "ah_home_odds": 1.85,
             "ah_away_odds": 2.00,
             "ah1_home_odds": 2.05,
             "ah1_away_odds": 1.80,
+            "ah15_home_odds": 0.0,
+            "ah15_away_odds": 0.0,
+            "ah2_home_odds": 0.0,
+            "ah2_away_odds": 0.0,
+            "ah25_home_odds": 0.0,
+            "ah25_away_odds": 0.0,
             "btts_yes_odds": 1.72,
             "btts_no_odds": 2.05,
+            "ftts_home_odds": 1.90,
+            "ftts_away_odds": 2.05,
             "best_home_bm": "mock",
             "best_draw_bm": "mock",
             "best_away_bm": "mock",
@@ -225,12 +263,24 @@ def mock_upcoming_matches() -> list[dict]:
             "away_odds": 3.50,
             "over_odds": 1.85,
             "under_odds": 2.00,
+            "over15_odds": 1.30,
+            "under15_odds": 3.40,
+            "over35_odds": 3.40,
+            "under35_odds": 1.35,
             "ah_home_odds": 1.90,
             "ah_away_odds": 1.95,
             "ah1_home_odds": 2.05,
             "ah1_away_odds": 1.80,
+            "ah15_home_odds": 0.0,
+            "ah15_away_odds": 0.0,
+            "ah2_home_odds": 0.0,
+            "ah2_away_odds": 0.0,
+            "ah25_home_odds": 0.0,
+            "ah25_away_odds": 0.0,
             "btts_yes_odds": 1.72,
             "btts_no_odds": 2.05,
+            "ftts_home_odds": 1.85,
+            "ftts_away_odds": 2.10,
             "best_home_bm": "mock",
             "best_draw_bm": "mock",
             "best_away_bm": "mock",

@@ -331,7 +331,7 @@ def predict_asian_handicap(
     line=+1.0 (home +1.0): away wins by 2+ → AH away; away wins by exactly 1 → push; else → AH home.
     line=+1.5 (home +1.5): away wins by 2+ → AH away; else → AH home (no push).
     """
-    _SUPPORTED_LINES = {-0.5, -1.0, -1.5, 0.5, 1.0, 1.5}
+    _SUPPORTED_LINES = {-0.5, -1.0, -1.5, -2.0, -2.5, 0.5, 1.0, 1.5, 2.0, 2.5}
     if line not in _SUPPORTED_LINES:
         raise ValueError(f"Unsupported AH line: {line}. Supported: {sorted(_SUPPORTED_LINES)}")
 
@@ -385,6 +385,34 @@ def predict_asian_handicap(
                     p_ah_away += prob
                 else:
                     p_ah_home += prob
+            elif line == -2.0:
+                # Home wins by 3+ → AH home; home wins by exactly 2 → push; else → AH away
+                if diff >= 3:
+                    p_ah_home += prob
+                elif diff == 2:
+                    p_push += prob
+                else:
+                    p_ah_away += prob
+            elif line == -2.5:
+                # Home wins by 3+ → AH home; else → AH away (no push)
+                if diff >= 3:
+                    p_ah_home += prob
+                else:
+                    p_ah_away += prob
+            elif line == 2.0:
+                # Away wins by 3+ → AH away; away wins by exactly 2 → push; else → AH home
+                if diff <= -3:
+                    p_ah_away += prob
+                elif diff == -2:
+                    p_push += prob
+                else:
+                    p_ah_home += prob
+            elif line == 2.5:
+                # Away wins by 3+ → AH away; else → AH home (no push)
+                if diff <= -3:
+                    p_ah_away += prob
+                else:
+                    p_ah_home += prob
 
     return {
         "p_ah_home": float(p_ah_home),
@@ -424,6 +452,18 @@ def predict_btts(
     matrix = predict_scoreline(home, away, params, max_goals, neutral, rho_override)
     p_yes = float(matrix[1:, 1:].sum())  # all cells where home >= 1 AND away >= 1
     return {"p_btts_yes": p_yes, "p_btts_no": float(1.0 - p_yes)}
+
+
+def predict_first_scorer(
+    home: str,
+    away: str,
+    params: DixonColesParams,
+    neutral: bool = False,
+) -> dict[str, float]:
+    """P(home scores first) — exponential race: each team's rate is λ, first scorer wins."""
+    lh, la = _lambdas(home, away, params, neutral=neutral)
+    p_home = lh / (lh + la)
+    return {"p_home_first": float(p_home), "p_away_first": float(1.0 - p_home)}
 
 
 def save(params: DixonColesParams, path: Path) -> None:

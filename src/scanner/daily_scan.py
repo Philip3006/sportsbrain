@@ -22,6 +22,7 @@ def _is_wm_active(today: datetime | None = None) -> bool:
 from src.config import MODELS_DIR, RESULTS_DIR, canonical_name, MAX_ACTIVE_BETS, MAX_EV, TEAM_CONFEDERATION
 from src.betting.value_detector import (
     BetSignal, detect_value, set_confidence, detect_value_totals, detect_value_ah,
+    detect_value_ftts,
 )
 from src.betting.ledger import (
     append_bets, count_open_bets, settle_from_results, ledger_summary, LEDGER_PATH,
@@ -500,6 +501,26 @@ def run_daily_scan(
             )
             signals.extend(ou_signals)
 
+        # O/U 1.5
+        over15_odds = float(match.get("over15_odds", 0))
+        under15_odds = float(match.get("under15_odds", 0))
+        if over15_odds > 1.0 or under15_odds > 1.0:
+            totals15 = dc.predict_totals(home, away, dc_params, line=1.5, neutral=True, rho_override=rho_staged)
+            signals.extend(detect_value_totals(
+                home, away, totals15, over15_odds, under15_odds,
+                bankroll=bankroll, match_id=match_id,
+            ))
+
+        # O/U 3.5
+        over35_odds = float(match.get("over35_odds", 0))
+        under35_odds = float(match.get("under35_odds", 0))
+        if over35_odds > 1.0 or under35_odds > 1.0:
+            totals35 = dc.predict_totals(home, away, dc_params, line=3.5, neutral=True, rho_override=rho_staged)
+            signals.extend(detect_value_totals(
+                home, away, totals35, over35_odds, under35_odds,
+                bankroll=bankroll, match_id=match_id,
+            ))
+
         # Asian Handicap -0.5/+0.5
         ah_home_odds = float(match.get("ah_home_odds", 0))
         ah_away_odds = float(match.get("ah_away_odds", 0))
@@ -533,6 +554,26 @@ def run_daily_scan(
             )
             signals.extend(ah15_signals)
 
+        # Asian Handicap -2.0/+2.0 (push on 2-goal win)
+        ah2_home_odds = float(match.get("ah2_home_odds", 0))
+        ah2_away_odds = float(match.get("ah2_away_odds", 0))
+        if ah2_home_odds > 1.0 or ah2_away_odds > 1.0:
+            ah2_probs = dc.predict_asian_handicap(home, away, dc_params, line=-2.0, neutral=True, rho_override=rho_staged)
+            signals.extend(detect_value_ah(
+                home, away, ah2_probs, ah2_home_odds, ah2_away_odds,
+                bankroll=bankroll, match_id=match_id, line=-2.0,
+            ))
+
+        # Asian Handicap -2.5/+2.5 (no push)
+        ah25_home_odds = float(match.get("ah25_home_odds", 0))
+        ah25_away_odds = float(match.get("ah25_away_odds", 0))
+        if ah25_home_odds > 1.0 or ah25_away_odds > 1.0:
+            ah25_probs = dc.predict_asian_handicap(home, away, dc_params, line=-2.5, neutral=True, rho_override=rho_staged)
+            signals.extend(detect_value_ah(
+                home, away, ah25_probs, ah25_home_odds, ah25_away_odds,
+                bankroll=bankroll, match_id=match_id, line=-2.5,
+            ))
+
         # BTTS (Both Teams to Score)
         btts_yes_odds = float(match.get("btts_yes_odds", 0))
         btts_no_odds = float(match.get("btts_no_odds", 0))
@@ -544,6 +585,16 @@ def run_daily_scan(
                 bankroll=bankroll, match_id=match_id,
             )
             signals.extend(btts_signals)
+
+        # FTTS (First Team to Score)
+        ftts_home_odds = float(match.get("ftts_home_odds", 0))
+        ftts_away_odds = float(match.get("ftts_away_odds", 0))
+        if ftts_home_odds > 1.0 or ftts_away_odds > 1.0:
+            ftts_probs = dc.predict_first_scorer(home, away, dc_params, neutral=True)
+            signals.extend(detect_value_ftts(
+                home, away, ftts_probs, ftts_home_odds, ftts_away_odds,
+                bankroll=bankroll, match_id=match_id,
+            ))
 
         # Apply confidence to all signals (1X2 + AH + O/U + BTTS) after full collection
         if lgbm_model and lgbm_raw_arr is not None:
@@ -582,6 +633,16 @@ def run_daily_scan(
             "ah+1.5_away":   float(match.get("b365_ah15_away", 0)),
             "btts_yes":      float(match.get("b365_btts_yes", 0)),
             "btts_no":       float(match.get("b365_btts_no", 0)),
+            "o/u1.5_over":   float(match.get("over15_odds", 0)),
+            "o/u1.5_under":  float(match.get("under15_odds", 0)),
+            "o/u3.5_over":   float(match.get("over35_odds", 0)),
+            "o/u3.5_under":  float(match.get("under35_odds", 0)),
+            "ah-2.0_home":   float(match.get("ah2_home_odds", 0)),
+            "ah+2.0_away":   float(match.get("ah2_away_odds", 0)),
+            "ah-2.5_home":   float(match.get("ah25_home_odds", 0)),
+            "ah+2.5_away":   float(match.get("ah25_away_odds", 0)),
+            "ftts_home":     float(match.get("ftts_home_odds", 0)),
+            "ftts_away":     float(match.get("ftts_away_odds", 0)),
         }
         for s in signals:
             s.b365_odds = b365_map.get(s.market, 0.0)
@@ -591,7 +652,13 @@ def run_daily_scan(
         # Bucket B (goals-volume, structurally independent): O/U 2.5 + BTTS.
         # Within each bucket, signals are >80% correlated — only one slot.
         # Across buckets: independent exposure — both may be placed.
-        _GOALS_MARKETS = {"o/u2.5_over", "o/u2.5_under", "btts_yes", "btts_no"}
+        _GOALS_MARKETS = {
+            "o/u1.5_over", "o/u1.5_under",
+            "o/u2.5_over", "o/u2.5_under",
+            "o/u3.5_over", "o/u3.5_under",
+            "btts_yes", "btts_no",
+            "ftts_home", "ftts_away",
+        }
         if signals:
             bucket_a = [s for s in signals if s.market not in _GOALS_MARKETS]
             bucket_b = [s for s in signals if s.market in _GOALS_MARKETS]
