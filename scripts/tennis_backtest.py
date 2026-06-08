@@ -276,8 +276,8 @@ def run_backtest(
                 "winner":     winner,
                 "loser":      loser,
                 "side":       side,
-                "model_prob": round(model_p, 4),
-                "b365_odds":  odds,
+                "model_prob":  round(model_p, 4),
+                "market_odds": odds,
                 "ev":         round(ev, 4),
                 "kelly_f":    round(kf, 4),
                 "stake":      round(stake, 2),
@@ -365,7 +365,7 @@ def print_results(df: pd.DataFrame) -> None:
         pnl = grp["pnl"].sum()
         r = pnl / st * 100 if st > 0 else 0
         w = int(grp["won"].sum())
-        avg_odds = grp["b365_odds"].mean()
+        avg_odds = grp["market_odds"].mean()
         print(f"  {side:<8} {len(grp):>4} bets  {pnl:+7.0f} EUR  ROI:{r:+6.1f}%  avg odds:{avg_odds:.2f}")
 
     # By round
