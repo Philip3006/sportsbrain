@@ -123,17 +123,23 @@ def _cmd_hilfe() -> tuple[str, dict]:
     text = (
         "<b>SportsBrain Befehle</b>\n"
         + _line() + "\n"
+        "/scan\n"
+        "  → Sofort-Scan heutiger Spiele\n\n"
+        "/portfolio\n"
+        "  → P&L, ROI, Win-Rate nach Markt\n\n"
+        "/open\n"
+        "  → Alle offenen Wetten\n\n"
         "/analyse Heim vs Auswaerts\n"
         "  → Vollstaendige Match-Analyse\n\n"
         "/rating Teamname\n"
         "  → Elo, Marktwert, Form\n\n"
-        "/scan\n"
-        "  → Sofort-Scan heutiger Spiele\n\n"
         "/hilfe\n"
         "  → Diese Uebersicht"
     )
     keyboard = {"inline_keyboard": [
-        [{"text": "Scan starten", "callback_data": "/scan"}],
+        [{"text": "Scan starten", "callback_data": "/scan"},
+         {"text": "Portfolio", "callback_data": "/portfolio"}],
+        [{"text": "Offene Wetten", "callback_data": "/open"}],
     ]}
     return text, keyboard
 
@@ -270,6 +276,67 @@ def _cmd_analyse(home: str, away: str) -> tuple[str, dict]:
     return text, _analyse_keyboard(home, away)
 
 
+def _cmd_portfolio() -> tuple[str, dict]:
+    from src.betting.ledger import ledger_summary, LEDGER_PATH
+    s = ledger_summary(LEDGER_PATH)
+    if s["n_bets"] == 0:
+        return "Ledger ist leer — noch keine Wetten.", {}
+
+    lines = [
+        "<b>Portfolio-Übersicht</b>",
+        _line(),
+        f"Wetten gesamt:  {s['n_bets']}  (offen: {s['n_open']})",
+        f"Gewonnen/Verloren: {s['n_won']}W / {s['n_lost']}L" + (f" / {s['n_void']}V" if s.get('n_void') else ""),
+        f"Einsatz gesamt: {s['total_staked']:.2f} EUR",
+        f"P&L:            {s['total_pnl']:+.2f} EUR",
+        f"ROI:            {s['roi_pct']:+.1f}%",
+        f"Win Rate:       {s['win_rate']:.1f}%",
+    ]
+    clv = s.get("mean_clv")
+    if clv is not None:
+        lines.append(f"Mean CLV:       {clv*100:+.1f}%")
+
+    by_market = s.get("by_market", {})
+    if by_market:
+        lines += ["", "<b>Nach Markt:</b>"]
+        for mkt, m in sorted(by_market.items(), key=lambda x: x[1]["pnl"], reverse=True):
+            lines.append(
+                f"  {mkt:<18} {m['pnl']:+6.2f} EUR  ROI: {m['roi_pct']:+.1f}%  ({m['won']}W/{m['lost']}L)"
+            )
+
+    keyboard = {"inline_keyboard": [
+        [{"text": "Offene Wetten", "callback_data": "/open"},
+         {"text": "Neuer Scan", "callback_data": "/scan"}],
+    ]}
+    return "\n".join(lines), keyboard
+
+
+def _cmd_open() -> tuple[str, dict]:
+    from src.betting.ledger import _load, LEDGER_PATH
+    df = _load(LEDGER_PATH)
+    if df.empty:
+        return "Ledger ist leer.", {}
+
+    open_bets = df[df["status"] == "open"]
+    if open_bets.empty:
+        return "Keine offenen Wetten.", {"inline_keyboard": [[{"text": "Portfolio", "callback_data": "/portfolio"}]]}
+
+    lines = [f"<b>Offene Wetten ({len(open_bets)})</b>", _line()]
+    for _, row in open_bets.iterrows():
+        md = str(row.get("match_date", "")).strip() or "?"
+        lines.append(
+            f"<b>{row['home']} vs {row['away']}</b>  [{md}]\n"
+            f"  {row['market'].upper()}  @{float(row['decimal_odds']):.2f}"
+            f"  Einsatz: {float(row['stake_amount']):.2f} EUR"
+        )
+
+    keyboard = {"inline_keyboard": [
+        [{"text": "Portfolio", "callback_data": "/portfolio"},
+         {"text": "Neuer Scan", "callback_data": "/scan"}],
+    ]}
+    return "\n".join(lines), keyboard
+
+
 def _cmd_scan() -> tuple[str, dict]:
     from src.scanner.daily_scan import run_daily_scan
     from src.notifications.telegram import send_scan_alert, _market_label
@@ -331,6 +398,10 @@ def _dispatch(text: str) -> tuple[str, dict]:
         return _cmd_analyse(home, away)
     if cmd == "/scan":
         return _cmd_scan()
+    if cmd == "/portfolio":
+        return _cmd_portfolio()
+    if cmd == "/open":
+        return _cmd_open()
 
     return (
         f"Unbekannter Befehl: {cmd}",

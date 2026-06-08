@@ -208,6 +208,52 @@ def send_scan_alert(
     return ok
 
 
+def send_settlement_alert(record: dict, summary: dict) -> bool:
+    """
+    Sends a won/lost notification after a bet settles.
+    record: dict with keys home, away, market, decimal_odds, stake_amount, status, pnl, clv.
+    """
+    load_dotenv(dotenv_path=_ENV_PATH)
+    token = os.getenv("TELEGRAM_BOT_TOKEN", "")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
+    if not token or not chat_id:
+        return False
+
+    status = str(record.get("status", ""))
+    if status not in ("won", "lost", "void"):
+        return False
+
+    icon = {"won": "✅", "lost": "❌", "void": "↩️"}.get(status, "")
+    home = str(record.get("home", ""))
+    away = str(record.get("away", ""))
+    market = str(record.get("market", ""))
+    odds = float(record.get("decimal_odds", 0))
+    stake = float(record.get("stake_amount", 0))
+    pnl = float(record.get("pnl", 0))
+
+    clv_val = record.get("clv", "")
+    try:
+        clv_f = float(clv_val)
+        clv_str = f"CLV: {clv_f*100:+.1f}%" if abs(clv_f) > 0.001 else ""
+    except (TypeError, ValueError):
+        clv_str = ""
+
+    lines = [
+        f"{icon} <b>{home} vs {away}</b>",
+        f"Tipp:    {_market_label(market, home, away)}  @ {odds:.2f}",
+        f"Einsatz: {stake:.2f} EUR   P&L: <b>{pnl:+.2f} EUR</b>",
+    ]
+    if clv_str:
+        lines.append(clv_str)
+
+    n_open = summary.get("n_open", 0)
+    total_pnl = summary.get("total_pnl", 0.0)
+    roi = summary.get("roi_pct", 0.0)
+    lines.append(f"Portfolio: {n_open}/{MAX_ACTIVE_BETS} aktiv   Gesamt: {total_pnl:+.2f} EUR   ROI: {roi:+.1f}%")
+
+    return _post(token, chat_id, "\n".join(lines))
+
+
 def send_quota_alert(remaining: int) -> bool:
     """Sends a Telegram alert when API quota is critically low (< 20 requests left)."""
     load_dotenv(dotenv_path=_ENV_PATH)

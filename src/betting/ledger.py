@@ -237,6 +237,7 @@ def _settle_from_results_locked(
     live_scores = _fetch_completed_wm_scores()
 
     settled = 0
+    newly_settled_indices: list = []
     for idx in df[open_mask].index:
         row = df.loc[idx]
         home, away = str(row["home"]), str(row["away"])
@@ -324,10 +325,19 @@ def _settle_from_results_locked(
         if 1.0 < closing < odds * 3.0:
             clv = max(-0.99, min(2.00, odds / closing - 1.0))
             df.at[idx, "clv"] = f"{clv:.4f}"
+        newly_settled_indices.append(idx)
         settled += 1
 
     if settled:
         _save(df, ledger_path)
+        # Send Telegram notification for each newly settled bet
+        try:
+            from src.notifications.telegram import send_settlement_alert
+            summary = ledger_summary(ledger_path)
+            for idx in newly_settled_indices:
+                send_settlement_alert(df.loc[idx].to_dict(), summary)
+        except Exception:
+            pass
 
     return settled
 
@@ -368,6 +378,22 @@ def ledger_summary(path: Path = LEDGER_PATH) -> dict:
     ).dropna()
     mean_clv = float(clv_vals.mean()) if not clv_vals.empty else None
 
+    # ROI breakdown per market type
+    by_market: dict = {}
+    if not settled.empty and "market" in settled.columns:
+        for mkt, grp in settled.groupby("market"):
+            m_staked = pd.to_numeric(grp["stake_amount"], errors="coerce").sum()
+            m_pnl = pd.to_numeric(grp["pnl"], errors="coerce").sum()
+            m_won = int((grp["status"] == "won").sum())
+            m_lost = int((grp["status"] == "lost").sum())
+            by_market[str(mkt)] = {
+                "n": len(grp),
+                "pnl": float(m_pnl),
+                "roi_pct": float(m_pnl / m_staked * 100) if m_staked > 0 else 0.0,
+                "won": m_won,
+                "lost": m_lost,
+            }
+
     return {
         "n_bets": len(df),
         "n_open": n_open,
@@ -379,4 +405,5 @@ def ledger_summary(path: Path = LEDGER_PATH) -> dict:
         "roi_pct": float(roi_pct),
         "win_rate": float(win_rate),
         "mean_clv": mean_clv,
+        "by_market": by_market,
     }
