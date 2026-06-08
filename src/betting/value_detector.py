@@ -161,9 +161,13 @@ def detect_value_ah(
 
     # Determine market label suffixes based on line
     _HOME_LABEL = {-0.5: "ah-0.5_home", -1.0: "ah-1.0_home", -1.5: "ah-1.5_home",
-                   0.5: "ah+0.5_home", 1.0: "ah+1.0_home", 1.5: "ah+1.5_home"}
+                   -2.0: "ah-2.0_home", -2.5: "ah-2.5_home",
+                   0.5: "ah+0.5_home", 1.0: "ah+1.0_home", 1.5: "ah+1.5_home",
+                   2.0: "ah+2.0_home", 2.5: "ah+2.5_home"}
     _AWAY_LABEL = {-0.5: "ah+0.5_away", -1.0: "ah+1.0_away", -1.5: "ah+1.5_away",
-                   0.5: "ah-0.5_away", 1.0: "ah-1.0_away", 1.5: "ah-1.5_away"}
+                   -2.0: "ah+2.0_away", -2.5: "ah+2.5_away",
+                   0.5: "ah-0.5_away", 1.0: "ah-1.0_away", 1.5: "ah-1.5_away",
+                   2.0: "ah-2.0_away", 2.5: "ah-2.5_away"}
     home_market = _HOME_LABEL.get(line, f"ah{line:+.1f}_home")
     away_market = _AWAY_LABEL.get(line, f"ah{line:+.1f}_away")
 
@@ -286,6 +290,38 @@ def detect_value_btts(
         signals.append(_make_signal(
             match_id, home, away, side,
             model_p, fair_p, odds, ev, kf, confidence, bankroll,
+        ))
+    return signals
+
+
+def detect_value_ftts(
+    home: str,
+    away: str,
+    ftts_probs: dict[str, float],
+    ftts_home_odds: float,
+    ftts_away_odds: float,
+    bankroll: float = 1000.0,
+    min_edge: float = MIN_EDGE,
+    match_id: str = "",
+) -> list[BetSignal]:
+    """
+    Checks First Team to Score (FTTS) market for positive EV.
+    ftts_probs: {p_home_first, p_away_first} from dc.predict_first_scorer()
+    """
+    signals = []
+    for market, model_p, odds in [
+        ("ftts_home", ftts_probs["p_home_first"], ftts_home_odds),
+        ("ftts_away", ftts_probs["p_away_first"], ftts_away_odds),
+    ]:
+        if odds <= 1.0:
+            continue
+        ev = expected_value(model_p, odds)
+        if ev < min_edge - 1e-9:
+            continue
+        kf = kelly_fraction(model_p, odds)
+        signals.append(_make_signal(
+            match_id, home, away, market,
+            model_p, model_p, odds, ev, kf, "MEDIUM", bankroll,
         ))
     return signals
 

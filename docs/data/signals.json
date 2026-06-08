@@ -1,6 +1,17 @@
 {
-  "updated": "2026-06-08T23:03:20Z",
-  "football": [],
+  "updated": "2026-06-08T23:14:41Z",
+  "football": [
+    {
+      "sport": "football",
+      "match": "United States vs Mexico",
+      "market": "o/u3.5_over",
+      "odds": 3.2,
+      "model_prob": 37.4,
+      "ev_pct": 19.8,
+      "stake_eur": 15.0,
+      "confidence": "HIGH"
+    }
+  ],
   "tennis": [
     {
       "sport": "tennis",
@@ -40,6 +51,16 @@
       "model_prob": 54.0,
       "ev_pct": 18.7,
       "stake_eur": 14.23,
+      "confidence": "MEDIUM"
+    },
+    {
+      "sport": "tennis",
+      "match": "Jannik Sinner vs Daniil Medvedev",
+      "market": "first_set_a",
+      "odds": 1.68,
+      "model_prob": 63.7,
+      "ev_pct": 7.0,
+      "stake_eur": 7.34,
       "confidence": "MEDIUM"
     }
   ],

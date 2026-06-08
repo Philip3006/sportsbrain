@@ -104,6 +104,14 @@ def _set_handicap_probs(p_a_wins: float) -> dict[str, float]:
     }
 
 
+def _first_set_probs(p_a_wins: float) -> dict[str, float]:
+    """P(player_a wins first set) — uses per-set probability as proxy for first-set win."""
+    if p_a_wins <= 0 or p_a_wins >= 1:
+        return {"first_set_a": 0.5, "first_set_b": 0.5}
+    p_set = _p_set_from_p_match(p_a_wins)
+    return {"first_set_a": p_set, "first_set_b": 1.0 - p_set}
+
+
 def detect_value_tennis(
     player_a: str,
     player_b: str,
@@ -114,6 +122,8 @@ def detect_value_tennis(
     match_id: str = "",
     ah_odds_a: float = 0.0,
     ah_odds_b: float = 0.0,
+    first_set_odds_a: float = 0.0,
+    first_set_odds_b: float = 0.0,
 ) -> list[BetSignal]:
     """
     Detects value in tennis match markets.
@@ -155,6 +165,24 @@ def detect_value_tennis(
         sig = _signal(
             match_id, player_a, player_b, "ah+1.5_b",
             ah_probs["ah+1.5_b"], fair_ah_b, ah_odds_b, bankroll,
+        )
+        if sig:
+            signals.append(sig)
+
+    # First Set Winner
+    if first_set_odds_a > 1.0 and first_set_odds_b > 1.0:
+        fs_probs = _first_set_probs(p_a)
+        fair_fs_a, fair_fs_b = _devig_2way(first_set_odds_a, first_set_odds_b)
+        sig = _signal(
+            match_id, player_a, player_b, "first_set_a",
+            fs_probs["first_set_a"], fair_fs_a, first_set_odds_a, bankroll,
+        )
+        if sig:
+            signals.append(sig)
+
+        sig = _signal(
+            match_id, player_a, player_b, "first_set_b",
+            fs_probs["first_set_b"], fair_fs_b, first_set_odds_b, bankroll,
         )
         if sig:
             signals.append(sig)

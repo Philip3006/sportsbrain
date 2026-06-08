@@ -61,7 +61,7 @@ def _fetch_wimbledon_odds(api_key: str, tour: str = "atp") -> list[dict]:
     params = {
         "apiKey": api_key,
         "regions": "eu",
-        "markets": "h2h,spreads",
+        "markets": "h2h,spreads,set_winner",
         "oddsFormat": "decimal",
     }
     resp = requests.get(url, params=params, timeout=15)
@@ -87,6 +87,7 @@ def _fetch_wimbledon_odds(api_key: str, tour: str = "atp") -> list[dict]:
 
         best_h2h_home = best_h2h_away = 0.0
         best_spread_home = best_spread_away = 0.0
+        best_fs_home = best_fs_away = 0.0
 
         for bm in event.get("bookmakers", []):
             for mkt in bm.get("markets", []):
@@ -104,6 +105,14 @@ def _fetch_wimbledon_odds(api_key: str, tour: str = "atp") -> list[dict]:
                                 best_spread_home = max(best_spread_home, o["price"])
                             elif o["name"] == away:
                                 best_spread_away = max(best_spread_away, o["price"])
+                elif key == "set_winner":
+                    for o in mkt.get("outcomes", []):
+                        desc = o.get("description", "").lower()
+                        if "set 1" in desc or "1st set" in desc:
+                            if o["name"] == home:
+                                best_fs_home = max(best_fs_home, o["price"])
+                            elif o["name"] == away:
+                                best_fs_away = max(best_fs_away, o["price"])
 
         if not best_h2h_home or not best_h2h_away:
             continue
@@ -117,6 +126,8 @@ def _fetch_wimbledon_odds(api_key: str, tour: str = "atp") -> list[dict]:
             "odds_b": best_h2h_away,
             "ah_odds_a": best_spread_home,
             "ah_odds_b": best_spread_away,
+            "first_set_odds_a": best_fs_home,
+            "first_set_odds_b": best_fs_away,
         })
 
     return matches
@@ -134,6 +145,8 @@ def _mock_wimbledon_matches() -> list[dict]:
             "odds_b": 2.10,
             "ah_odds_a": 2.00,
             "ah_odds_b": 1.85,
+            "first_set_odds_a": 1.72,
+            "first_set_odds_b": 2.10,
         },
         {
             "match_id": "mock_sinner_medvedev",
@@ -144,6 +157,8 @@ def _mock_wimbledon_matches() -> list[dict]:
             "odds_b": 2.55,
             "ah_odds_a": 2.20,
             "ah_odds_b": 1.65,
+            "first_set_odds_a": 1.68,
+            "first_set_odds_b": 2.20,
         },
     ]
 
@@ -328,6 +343,8 @@ def main() -> None:
             match_id=m["match_id"],
             ah_odds_a=m.get("ah_odds_a", 0.0),
             ah_odds_b=m.get("ah_odds_b", 0.0),
+            first_set_odds_a=m.get("first_set_odds_a", 0.0),
+            first_set_odds_b=m.get("first_set_odds_b", 0.0),
         )
 
         if signals:

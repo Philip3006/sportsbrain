@@ -149,7 +149,7 @@ class TestPredictAsianHandicap:
 
     def test_unsupported_line_raises(self, minimal_dc_params):
         with pytest.raises(ValueError, match="Unsupported AH line"):
-            predict_asian_handicap("Home", "Away", minimal_dc_params, line=-2.0)
+            predict_asian_handicap("Home", "Away", minimal_dc_params, line=-3.0)
 
     def test_minus_10_home_prob_less_than_minus_05(self, minimal_dc_params):
         """AH -1.0 is harder for home to cover than AH -0.5."""
