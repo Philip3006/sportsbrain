@@ -17,7 +17,7 @@ from src.data.cache import disk_cache
 _SACKMANN_URL = (
     "https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master/atp_matches_{year}.csv"
 )
-_YEARS = range(2022, 2027)  # 2022-2026 inclusive
+_YEARS = range(2019, 2027)  # 2019-2026 inclusive (adds Wimbledon 2019, 2021)
 
 # Only keep columns we actually use — reduces memory and cache size
 _KEEP_COLS = [
