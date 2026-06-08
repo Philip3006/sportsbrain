@@ -1,0 +1,312 @@
+#!/usr/bin/env python3
+"""
+Daily tennis scanner — Wimbledon 2026 (30 June – 13 July).
+
+Usage:
+  python3 scripts/tennis_scan.py [--mock] [--bankroll 100] [--surface grass]
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from datetime import datetime
+from pathlib import Path
+
+ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(ROOT))
+
+from dotenv import load_dotenv
+load_dotenv(ROOT / ".env")
+
+import requests
+
+from src.data.tennis_data import fetch_atp_matches
+from src.models.tennis_elo import compute_tennis_elo, predict_winner, top_players
+from src.betting.tennis_detector import detect_value_tennis
+from src.betting.ledger import append_bets, ledger_summary
+from src.notifications.telegram import _post
+
+_SPORT_WIMBLEDON = "tennis_atp_wimbledon"
+_ODDS_API_URL = "https://api.the-odds-api.com/v4"
+
+
+def _fetch_wimbledon_odds(api_key: str) -> list[dict]:
+    """
+    Fetches live Wimbledon match odds from TheOddsAPI.
+    Markets: h2h (match winner) + spreads (set handicap).
+    Returns list of match dicts.
+    """
+    url = f"{_ODDS_API_URL}/sports/{_SPORT_WIMBLEDON}/odds"
+    params = {
+        "apiKey": api_key,
+        "regions": "eu",
+        "markets": "h2h,spreads",
+        "oddsFormat": "decimal",
+    }
+    resp = requests.get(url, params=params, timeout=15)
+    resp.raise_for_status()
+
+    remaining = int(resp.headers.get("x-requests-remaining", 999))
+    used = int(resp.headers.get("x-requests-used", 0))
+    print(f"  API quota: {used} used / {remaining} remaining")
+
+    if remaining < 20:
+        try:
+            from src.notifications.telegram import send_quota_alert
+            send_quota_alert(remaining)
+        except Exception:
+            pass
+
+    matches = []
+    for event in resp.json():
+        home = event.get("home_team", "")
+        away = event.get("away_team", "")
+        match_id = event.get("id", f"{home}_vs_{away}")
+        commence = event.get("commence_time", "")
+
+        best_h2h_home = best_h2h_away = 0.0
+        best_spread_home = best_spread_away = 0.0
+        spread_point = 0.0
+
+        for bm in event.get("bookmakers", []):
+            for mkt in bm.get("markets", []):
+                key = mkt.get("key")
+                if key == "h2h":
+                    for o in mkt.get("outcomes", []):
+                        if o["name"] == home:
+                            best_h2h_home = max(best_h2h_home, o["price"])
+                        elif o["name"] == away:
+                            best_h2h_away = max(best_h2h_away, o["price"])
+                elif key == "spreads":
+                    for o in mkt.get("outcomes", []):
+                        pt = abs(o.get("point", 0))
+                        if abs(pt - 1.5) < 0.1:  # -1.5 / +1.5 set handicap
+                            spread_point = pt
+                            if o["name"] == home:
+                                best_spread_home = max(best_spread_home, o["price"])
+                            elif o["name"] == away:
+                                best_spread_away = max(best_spread_away, o["price"])
+
+        if not best_h2h_home or not best_h2h_away:
+            continue
+
+        matches.append({
+            "match_id": match_id,
+            "commence_time": commence,
+            "player_a": home,
+            "player_b": away,
+            "odds_a": best_h2h_home,
+            "odds_b": best_h2h_away,
+            "ah_odds_a": best_spread_home,
+            "ah_odds_b": best_spread_away,
+        })
+
+    return matches
+
+
+def _mock_wimbledon_matches() -> list[dict]:
+    """Synthetic Wimbledon matches for dry-run testing."""
+    return [
+        {
+            "match_id": "mock_alcaraz_djokovic",
+            "commence_time": "2026-07-06T13:00:00Z",
+            "player_a": "Carlos Alcaraz",
+            "player_b": "Novak Djokovic",
+            "odds_a": 1.75,
+            "odds_b": 2.10,
+            "ah_odds_a": 2.00,
+            "ah_odds_b": 1.85,
+        },
+        {
+            "match_id": "mock_sinner_medvedev",
+            "commence_time": "2026-07-07T11:00:00Z",
+            "player_a": "Jannik Sinner",
+            "player_b": "Daniil Medvedev",
+            "odds_a": 1.55,
+            "odds_b": 2.55,
+            "ah_odds_a": 2.20,
+            "ah_odds_b": 1.65,
+        },
+    ]
+
+
+def _format_report(
+    signals: list,
+    scan_date: str,
+    surface: str,
+    top_grass: list,
+) -> str:
+    lines = [
+        f"# Tennis Scan — Wimbledon {scan_date}",
+        f"Surface: {surface.upper()}",
+        "",
+    ]
+
+    if not signals:
+        lines.append("*No value bets found today.*")
+    else:
+        for s in sorted(signals, key=lambda x: x.ev, reverse=True):
+            ev_pct = s.ev * 100
+            lines += [
+                f"## {s.home} vs {s.away}",
+                f"Market:  {'Match Winner: ' + s.home if s.market == 'home' else 'Match Winner: ' + s.away if s.market == 'away' else s.market}",
+                f"Odds:    {s.decimal_odds:.2f}",
+                f"Model:   {s.model_prob*100:.1f}%  EV: +{ev_pct:.1f}%  ({s.confidence})",
+                f"Stake:   {s.stake_eur:.2f} EUR",
+                "",
+            ]
+
+    lines += ["---", "## Top Grass Elo"]
+    for name, rating in top_grass:
+        lines.append(f"  {name}: {rating:.0f}")
+
+    return "\n".join(lines)
+
+
+def _send_tennis_alert(signals: list, scan_date: str, summary: dict) -> None:
+    token = os.getenv("TELEGRAM_BOT_TOKEN", "")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
+    if not token or not chat_id:
+        return
+
+    SEP = "─────────────────────"
+    lines = [f"<b>🎾 Wimbledon — {scan_date}</b>", SEP]
+
+    if not signals:
+        lines.append("<i>Keine Tennis Value Bets heute.</i>")
+    else:
+        for s in sorted(signals, key=lambda x: x.ev, reverse=True)[:5]:
+            if s.market == "home":
+                mkt_label = f"{s.home} gewinnt"
+            elif s.market == "away":
+                mkt_label = f"{s.away} gewinnt"
+            elif s.market == "ah-1.5_a":
+                mkt_label = f"{s.home} gewinnt 3:0 oder 3:1"
+            elif s.market == "ah+1.5_b":
+                mkt_label = f"{s.away} gewinnt oder verliert max. 1 Satz"
+            else:
+                mkt_label = s.market
+
+            lines += [
+                f"<b>{s.home} vs {s.away}</b>",
+                f"Tipp:    {mkt_label}",
+                f"Quote:   {s.decimal_odds:.2f}",
+                f"Modell:  {s.model_prob*100:.1f}%  EV: +{s.ev*100:.1f}%",
+                f"Einsatz: {s.stake_eur:.2f} EUR",
+                SEP,
+            ]
+
+    n_open = summary.get("n_open", 0)
+    pnl = summary.get("total_pnl", 0.0)
+    roi = summary.get("roi_pct", 0.0)
+    lines.append(f"<b>Portfolio:</b> {n_open} aktiv   G/V: {pnl:+.2f} EUR   ROI: {roi:+.1f}%")
+
+    _post(token, chat_id, "\n".join(lines))
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Tennis value bet scanner (Wimbledon)")
+    parser.add_argument("--mock", action="store_true", help="Use mock data (no API call)")
+    parser.add_argument("--bankroll", type=float, default=100.0)
+    parser.add_argument("--surface", default="grass", choices=["grass", "clay", "hard"])
+    parser.add_argument("--no-ledger", action="store_true", help="Skip writing to ledger")
+    parser.add_argument("--no-telegram", action="store_true", help="Skip Telegram notification")
+    args = parser.parse_args()
+
+    scan_date = datetime.now().strftime("%Y-%m-%d")
+    print(f"Tennis Scan — {scan_date} (surface: {args.surface})")
+
+    # 1. Load historical ATP data and compute Elo ratings
+    print("Loading ATP match data...")
+    try:
+        matches = fetch_atp_matches()
+        print(f"  {len(matches)} matches loaded")
+    except Exception as e:
+        print(f"  ERROR loading match data: {e}")
+        matches = None
+
+    if matches is not None and not matches.empty:
+        print("Computing surface-adjusted Elo ratings...")
+        ratings = compute_tennis_elo(matches)
+        top_grass = top_players(ratings, surface="grass", n=10)
+        print(f"  Top grass Elo: {top_grass[0][0] if top_grass else 'n/a'}")
+    else:
+        print("  WARNING: No match data — using default Elo ratings.")
+        from src.models.tennis_elo import TennisEloRatings
+        ratings = TennisEloRatings()
+        top_grass = []
+
+    # 2. Fetch upcoming Wimbledon odds
+    if args.mock:
+        print("Loading mock Wimbledon matches...")
+        upcoming = _mock_wimbledon_matches()
+    else:
+        api_key = os.getenv("ODDS_API_KEY", "")
+        if not api_key:
+            print("ERROR: ODDS_API_KEY not set.")
+            sys.exit(1)
+        print("Fetching Wimbledon odds from TheOddsAPI...")
+        try:
+            upcoming = _fetch_wimbledon_odds(api_key)
+        except Exception as e:
+            print(f"ERROR fetching odds: {e}")
+            sys.exit(1)
+
+    print(f"  {len(upcoming)} upcoming matches found")
+
+    # 3. Predict and detect value
+    all_signals = []
+    for m in upcoming:
+        pa, pb = m["player_a"], m["player_b"]
+        probs = predict_winner(pa, pb, ratings, args.surface)
+
+        signals = detect_value_tennis(
+            player_a=pa,
+            player_b=pb,
+            probs=probs,
+            odds_a=m["odds_a"],
+            odds_b=m["odds_b"],
+            bankroll=args.bankroll,
+            match_id=m["match_id"],
+            ah_odds_a=m.get("ah_odds_a", 0.0),
+            ah_odds_b=m.get("ah_odds_b", 0.0),
+        )
+
+        if signals:
+            for s in signals:
+                print(f"  VALUE: {pa} vs {pb} — {s.market}  EV:{s.ev*100:.1f}%  odds:{s.decimal_odds:.2f}")
+        else:
+            print(f"  No value: {pa} vs {pb}  (p_a={probs['p_a']*100:.1f}%)")
+
+        all_signals.extend(signals)
+
+    print(f"\n{len(all_signals)} value signal(s) found.")
+
+    # 4. Write report
+    report_path = ROOT / "results" / f"tennis_scan_{scan_date}.md"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report = _format_report(all_signals, scan_date, args.surface, top_grass)
+    report_path.write_text(report)
+    print(f"Report: {report_path}")
+
+    # 5. Write to ledger
+    if all_signals and not args.no_ledger:
+        n = append_bets(all_signals, args.bankroll)
+        print(f"Ledger: {n} new bet(s) recorded.")
+
+    # 6. Telegram notification
+    if not args.no_telegram:
+        summary = ledger_summary()
+        _send_tennis_alert(all_signals, scan_date, summary)
+        print("Telegram: notification sent.")
+
+    # Print summary
+    print("\n--- Top Grass Elo ---")
+    for name, rating in top_grass[:5]:
+        print(f"  {name}: {rating:.0f}")
+
+
+if __name__ == "__main__":
+    main()

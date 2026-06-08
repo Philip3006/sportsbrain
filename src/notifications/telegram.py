@@ -45,6 +45,11 @@ def _market_label(market: str, home: str, away: str) -> str:
         return "BTTS: Beide Teams treffen"
     if m == "btts_no":
         return "BTTS: Mindestens ein Team trifft nicht"
+    # Tennis set handicap markets (home = player_a, away = player_b)
+    if m == "ah-1.5_a":
+        return f"🎾 {home} gewinnt 3:0 oder 3:1"
+    if m == "ah+1.5_b":
+        return f"🎾 {away} gewinnt oder verliert max. 1 Satz"
     return market.upper()
 
 

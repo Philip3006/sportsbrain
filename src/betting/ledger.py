@@ -306,6 +306,9 @@ def _settle_from_results_locked(
             won = (hg >= 1) and (ag >= 1)
         elif market == "btts_no":
             won = (hg == 0) or (ag == 0)
+        elif market in ("ah-1.5_a", "ah+1.5_b"):
+            # Tennis set handicap — not settled via football results, skip silently
+            continue
         else:
             # Unknown market type: log and skip to avoid silent data corruption
             import warnings
