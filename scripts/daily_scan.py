@@ -12,7 +12,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.scanner.daily_scan import run_daily_scan
-from src.betting.ledger import append_bets, LEDGER_PATH
+from src.betting.ledger import append_bets, ledger_summary, LEDGER_PATH
+from src.notifications.web_dashboard import write_signals_json
 
 
 def _confirm_bets(selected_signals: list, bankroll: float) -> list:
@@ -90,6 +91,11 @@ if __name__ == "__main__":
         print(signals_df.to_string(index=False))
     else:
         print("\nNo value bets found today.")
+
+    # Write web dashboard JSON
+    portfolio = ledger_summary()
+    write_signals_json(football=selected_signals, portfolio=portfolio)
+    print("Dashboard: docs/data/signals.json updated.")
 
     # Interactive confirmation (skipped with --auto-log)
     if not args.auto_log and selected_signals:

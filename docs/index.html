@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SportsBrain">
+  <meta name="theme-color" content="#0f1117">
+  <title>SportsBrain Signals</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --card: #1a1d27;
+      --card-hover: #222536;
+      --border: #2a2d3e;
+      --text: #e8eaf0;
+      --muted: #7c7f99;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --blue: #3b82f6;
+      --red: #ef4444;
+      --accent: #6366f1;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 16px 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .logo { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+    .logo span { color: var(--accent); }
+    .updated { font-size: 11px; color: var(--muted); }
+
+    /* Portfolio bar */
+    .portfolio-bar {
+      background: linear-gradient(135deg, #1e2035 0%, #161929 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+    }
+    .portfolio-inner {
+      display: flex;
+      gap: 20px;
+      max-width: 640px;
+      margin: 0 auto;
+      flex-wrap: wrap;
+    }
+    .stat { display: flex; flex-direction: column; }
+    .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value { font-size: 18px; font-weight: 700; }
+    .pos { color: var(--green); }
+    .neg { color: var(--red); }
+    .neutral { color: var(--text); }
+
+    /* Main */
+    main {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* Section title */
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin: 20px 0 10px;
+    }
+    .section-title:first-child { margin-top: 0; }
+
+    /* Signal card */
+    .signal-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      transition: background 0.15s;
+    }
+    .signal-card:active { background: var(--card-hover); }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .match-name { font-size: 14px; font-weight: 600; }
+    .sport-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .badge-football { background: #1d3a6e; color: #93bbf7; }
+    .badge-tennis   { background: #1a3a1a; color: #6ee97e; }
+
+    .card-mid {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      background: #242738;
+      color: var(--muted);
+    }
+    .market-pill { color: #a5b4fc; background: #1e1e3a; font-weight: 500; }
+
+    .card-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .ev-chip {
+      font-size: 13px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+    .ev-high   { background: #14532d; color: var(--green); }
+    .ev-medium { background: #422006; color: var(--yellow); }
+    .ev-low    { background: #242738; color: var(--muted); }
+    .odds-stake {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .odds-val { font-size: 16px; font-weight: 700; }
+    .stake-val { font-size: 13px; color: var(--muted); }
+
+    /* Elo table */
+    .elo-table {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .elo-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .elo-row:last-child { border-bottom: none; }
+    .elo-rank { font-size: 12px; color: var(--muted); width: 20px; }
+    .elo-name { flex: 1; padding: 0 10px; font-weight: 500; }
+    .elo-rating {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    /* Empty state */
+    .empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+    }
+    .empty .icon { font-size: 32px; margin-bottom: 8px; }
+    .empty .msg { font-size: 14px; }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 24px 16px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-row">
+    <div class="logo">Sports<span>Brain</span></div>
+    <div class="updated" id="updated-time">Laden…</div>
+  </div>
+</header>
+
+<div class="portfolio-bar">
+  <div class="portfolio-inner">
+    <div class="stat">
+      <span class="stat-label">Offene Wetten</span>
+      <span class="stat-value neutral" id="n-open">—</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Gesamt P&amp;L</span>
+      <span class="stat-value" id="total-pnl">—</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">ROI</span>
+      <span class="stat-value" id="roi">—</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Heute</span>
+      <span class="stat-value" id="today-count">—</span>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div id="signals-container"></div>
+  <div id="elo-container"></div>
+</main>
+
+<footer>
+  SportsBrain · Automatisch aktualisiert täglich 09:00 UTC ·
+  <a href="https://github.com/Philip3006/sportsbrain" target="_blank">GitHub</a>
+</footer>
+
+<script>
+const DATA_URL = 'data/signals.json';
+
+function marketLabel(mkt) {
+  const map = {
+    'home': 'Heimsieg', 'draw': 'Unentschieden', 'away': 'Auswärtssieg',
+    'o/u2.5_over': 'Über 2.5', 'o/u2.5_under': 'Unter 2.5',
+    'o/u1.5_over': 'Über 1.5', 'o/u1.5_under': 'Unter 1.5',
+    'o/u3.5_over': 'Über 3.5', 'o/u3.5_under': 'Unter 3.5',
+    'ah-0.5_home': 'AH -0.5 Heim', 'ah+0.5_away': 'AH +0.5 Auswärts',
+    'ah-1.0_home': 'AH -1.0 Heim', 'ah+1.0_away': 'AH +1.0 Auswärts',
+    'ah-1.5_home': 'AH -1.5 Heim', 'ah+1.5_away': 'AH +1.5 Auswärts',
+    'ah-2.0_home': 'AH -2.0 Heim', 'ah+2.0_away': 'AH +2.0 Auswärts',
+    'ah-2.5_home': 'AH -2.5 Heim', 'ah+2.5_away': 'AH +2.5 Auswärts',
+    'btts_yes': 'Beide treffen', 'btts_no': 'Nicht beide treffen',
+    'ftts_home': '1. Tor Heim', 'ftts_away': '1. Tor Auswärts',
+    'first_set_a': '1. Satz: A', 'first_set_b': '1. Satz: B',
+    'ah-1.5_a': 'Set AH -1.5 A', 'ah+1.5_b': 'Set AH +1.5 B',
+  };
+  return map[mkt] || mkt;
+}
+
+function evClass(ev) {
+  if (ev >= 8) return 'ev-high';
+  if (ev >= 3) return 'ev-medium';
+  return 'ev-low';
+}
+
+function pnlClass(val) {
+  if (val > 0) return 'pos';
+  if (val < 0) return 'neg';
+  return 'neutral';
+}
+
+function signalCard(s) {
+  const badge = s.sport === 'tennis'
+    ? '<span class="sport-badge badge-tennis">Tennis</span>'
+    : '<span class="sport-badge badge-football">Fußball</span>';
+  const evCls = evClass(s.ev_pct);
+  return `
+    <div class="signal-card">
+      <div class="card-top">
+        <div class="match-name">${s.match}</div>
+        ${badge}
+      </div>
+      <div class="card-mid">
+        <span class="pill market-pill">${marketLabel(s.market)}</span>
+        <span class="pill">${s.model_prob}% Modell</span>
+        <span class="pill">${s.confidence}</span>
+      </div>
+      <div class="card-bottom">
+        <span class="ev-chip ${evCls}">EV +${s.ev_pct}%</span>
+        <div class="odds-stake">
+          <span class="odds-val">${s.odds.toFixed(2)}</span>
+          <span class="stake-val">${s.stake_eur.toFixed(2)} €</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function eloRow(item, idx) {
+  const medals = ['🥇', '🥈', '🥉'];
+  const rank = medals[idx] || `${idx + 1}.`;
+  return `
+    <div class="elo-row">
+      <span class="elo-rank">${rank}</span>
+      <span class="elo-name">${item.name}</span>
+      <span class="elo-rating">${item.rating}</span>
+    </div>`;
+}
+
+async function load() {
+  try {
+    const r = await fetch(DATA_URL + '?t=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+
+    // Header timestamp
+    const dt = new Date(d.updated);
+    document.getElementById('updated-time').textContent =
+      'Update: ' + dt.toLocaleString('de-DE', {
+        day: '2-digit', month: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+      });
+
+    // Portfolio bar
+    const p = d.portfolio || {};
+    document.getElementById('n-open').textContent = p.n_open ?? '0';
+
+    const pnlEl = document.getElementById('total-pnl');
+    const pnl = p.total_pnl ?? 0;
+    pnlEl.textContent = (pnl >= 0 ? '+' : '') + pnl.toFixed(2) + ' €';
+    pnlEl.className = 'stat-value ' + pnlClass(pnl);
+
+    const roiEl = document.getElementById('roi');
+    const roi = p.roi_pct ?? 0;
+    roiEl.textContent = (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%';
+    roiEl.className = 'stat-value ' + pnlClass(roi);
+
+    const allSignals = [...(d.football || []), ...(d.tennis || [])];
+    allSignals.sort((a, b) => b.ev_pct - a.ev_pct);
+    document.getElementById('today-count').textContent = allSignals.length + ' Signals';
+
+    // Signal cards
+    const container = document.getElementById('signals-container');
+    if (allSignals.length === 0) {
+      container.innerHTML = `
+        <div class="empty">
+          <div class="icon">🔍</div>
+          <div class="msg">Keine Value Bets heute.<br>Nächster Scan: morgen 09:00 UTC</div>
+        </div>`;
+    } else {
+      const footballSigs = allSignals.filter(s => s.sport === 'football');
+      const tennisSigs = allSignals.filter(s => s.sport === 'tennis');
+      let html = '';
+      if (footballSigs.length) {
+        html += '<div class="section-title">⚽ Fußball</div>';
+        html += footballSigs.map(signalCard).join('');
+      }
+      if (tennisSigs.length) {
+        html += '<div class="section-title">🎾 Tennis</div>';
+        html += tennisSigs.map(signalCard).join('');
+      }
+      container.innerHTML = html;
+    }
+
+    // Top Elo
+    const eloContainer = document.getElementById('elo-container');
+    const elo = d.top_elo || [];
+    if (elo.length) {
+      eloContainer.innerHTML = `
+        <div class="section-title">🎾 Top Grass Elo (Wimbledon)</div>
+        <div class="elo-table">
+          ${elo.slice(0, 10).map(eloRow).join('')}
+        </div>`;
+    }
+  } catch (e) {
+    document.getElementById('signals-container').innerHTML = `
+      <div class="empty">
+        <div class="icon">⚠️</div>
+        <div class="msg">Daten konnten nicht geladen werden.<br>${e.message}</div>
+      </div>`;
+  }
+}
+
+load();
+</script>
+</body>
+</html>

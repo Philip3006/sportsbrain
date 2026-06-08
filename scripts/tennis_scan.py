@@ -26,6 +26,7 @@ from src.models.tennis_elo import compute_tennis_elo, predict_winner, top_player
 from src.betting.tennis_detector import detect_value_tennis
 from src.betting.ledger import append_bets, ledger_summary
 from src.notifications.telegram import _post
+from src.notifications.web_dashboard import write_signals_json
 
 _SPORT_WIMBLEDON = "tennis_atp_wimbledon"
 _SPORT_WTA_WIMBLEDON = "tennis_wta_wimbledon"
@@ -356,6 +357,11 @@ def main() -> None:
         summary = ledger_summary()
         _send_tennis_alert(all_signals, scan_date, summary, tour=args.tour)
         print("Telegram: notification sent.")
+
+    # 7. Write web dashboard JSON
+    dashboard_summary = ledger_summary()
+    write_signals_json(tennis=all_signals, portfolio=dashboard_summary, top_elo=top_grass)
+    print("Dashboard: docs/data/signals.json updated.")
 
     # Print summary
     print("\n--- Top Grass Elo ---")

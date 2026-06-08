@@ -42,6 +42,6 @@ jobs:
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add results/tennis_scan_*.md results/ledger.csv || true
+          git add results/tennis_scan_*.md results/ledger.csv docs/data/signals.json || true
           git diff --staged --quiet || git commit -m "auto: tennis scan $(date +%Y-%m-%d)"
           git push

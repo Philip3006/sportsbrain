@@ -1,0 +1,101 @@
+{
+  "updated": "2026-06-08T23:03:20Z",
+  "football": [],
+  "tennis": [
+    {
+      "sport": "tennis",
+      "match": "Carlos Alcaraz vs Novak Djokovic",
+      "market": "home",
+      "odds": 1.75,
+      "model_prob": 61.0,
+      "ev_pct": 6.7,
+      "stake_eur": 7.17,
+      "confidence": "MEDIUM"
+    },
+    {
+      "sport": "tennis",
+      "match": "Carlos Alcaraz vs Novak Djokovic",
+      "market": "ah+1.5_b",
+      "odds": 1.85,
+      "model_prob": 59.4,
+      "ev_pct": 9.9,
+      "stake_eur": 9.07,
+      "confidence": "MEDIUM"
+    },
+    {
+      "sport": "tennis",
+      "match": "Jannik Sinner vs Daniil Medvedev",
+      "market": "home",
+      "odds": 1.55,
+      "model_prob": 74.4,
+      "ev_pct": 15.3,
+      "stake_eur": 12.24,
+      "confidence": "MEDIUM"
+    },
+    {
+      "sport": "tennis",
+      "match": "Jannik Sinner vs Daniil Medvedev",
+      "market": "ah-1.5_a",
+      "odds": 2.2,
+      "model_prob": 54.0,
+      "ev_pct": 18.7,
+      "stake_eur": 14.23,
+      "confidence": "MEDIUM"
+    }
+  ],
+  "portfolio": {
+    "n_bets": 4,
+    "n_open": 4,
+    "n_won": 0,
+    "n_lost": 0,
+    "n_void": 0,
+    "total_staked": 0.0,
+    "total_pnl": 0.0,
+    "roi_pct": 0.0,
+    "win_rate": 0.0,
+    "mean_clv": null,
+    "by_market": {}
+  },
+  "top_elo": [
+    {
+      "name": "Carlos Alcaraz",
+      "rating": 1768
+    },
+    {
+      "name": "Novak Djokovic",
+      "rating": 1739
+    },
+    {
+      "name": "Jannik Sinner",
+      "rating": 1728
+    },
+    {
+      "name": "Taylor Fritz",
+      "rating": 1695
+    },
+    {
+      "name": "Daniil Medvedev",
+      "rating": 1632
+    },
+    {
+      "name": "Alex De Minaur",
+      "rating": 1632
+    },
+    {
+      "name": "Matteo Berrettini",
+      "rating": 1619
+    },
+    {
+      "name": "Alexander Bublik",
+      "rating": 1605
+    },
+    {
+      "name": "Alexander Zverev",
+      "rating": 1597
+    },
+    {
+      "name": "Tommy Paul",
+      "rating": 1593
+    }
+  ]
+}
