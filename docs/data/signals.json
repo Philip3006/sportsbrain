@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-09T12:30:38Z",
+  "updated": "2026-06-09T12:44:12Z",
   "football": [
     {
       "sport": "football",
@@ -9,7 +9,19 @@
       "model_prob": 37.4,
       "ev_pct": 19.8,
       "stake_eur": 15.0,
-      "confidence": "HIGH"
+      "confidence": "HIGH",
+      "kickoff": "2026-06-15T20:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "United States vs Mexico",
+      "market": "away",
+      "odds": 3.0,
+      "model_prob": 37.1,
+      "ev_pct": 11.4,
+      "stake_eur": 9.97,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-15T20:00:00Z"
     }
   ],
   "tennis": [
@@ -22,7 +34,8 @@
       "ev_pct": 16.9,
       "stake_eur": 14.48,
       "confidence": "HIGH",
-      "tour": "atp"
+      "tour": "atp",
+      "kickoff": "2026-07-07T11:00:00Z"
     },
     {
       "sport": "tennis",
@@ -33,7 +46,8 @@
       "ev_pct": 21.2,
       "stake_eur": 15.0,
       "confidence": "HIGH",
-      "tour": "atp"
+      "tour": "atp",
+      "kickoff": "2026-07-07T11:00:00Z"
     },
     {
       "sport": "tennis",
@@ -44,7 +58,8 @@
       "ev_pct": 9.2,
       "stake_eur": 9.52,
       "confidence": "HIGH",
-      "tour": "wta"
+      "tour": "wta",
+      "kickoff": "2026-07-06T11:00:00Z"
     },
     {
       "sport": "tennis",
@@ -55,7 +70,8 @@
       "ev_pct": 30.2,
       "stake_eur": 15.0,
       "confidence": "HIGH",
-      "tour": "wta"
+      "tour": "wta",
+      "kickoff": "2026-07-06T11:00:00Z"
     }
   ],
   "portfolio": {

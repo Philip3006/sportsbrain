@@ -273,6 +273,10 @@
       font-weight: 700;
       cursor: help;
     }
+    .time-soon  { color: #f87171; background: #2d1010; border: 1px solid #4a1a1a; font-size: 10px; font-weight: 700; }
+    .time-today { color: var(--blue); background: #0d1a2e; border: 1px solid #1a3560; font-size: 10px; }
+    .time-future{ color: var(--muted); background: #1c1f2e; font-size: 10px; }
+    .time-past  { color: var(--muted); background: #1c1f2e; font-size: 10px; }
 
     /* EV bar area */
     .card-bottom {
@@ -577,6 +581,20 @@ function evBarColor(ev) {
   return '#6b6e8a';
 }
 
+function kickoffChip(kickoff) {
+  if (!kickoff) return '';
+  try {
+    const dt = new Date(kickoff);
+    const now = Date.now();
+    const diffH = (dt.getTime() - now) / 3600000;
+    const timeStr = dt.toLocaleString('de-DE', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Berlin'});
+    if (diffH < 0) return `<span class="pill time-past">live / beendet</span>`;
+    if (diffH < 2) return `<span class="pill time-soon">⚡ in ${Math.round(diffH*60)}min</span>`;
+    if (diffH < 24) return `<span class="pill time-today">heute ${timeStr.slice(6)}</span>`;
+    return `<span class="pill time-future">${timeStr}</span>`;
+  } catch { return ''; }
+}
+
 function signalCard(s) {
   let sportLabel = s.sport === 'football' ? 'WM 2026' : 'Tennis';
   if (s.sport === 'tennis' && s.tour) {
@@ -587,7 +605,8 @@ function signalCard(s) {
     : `<span class="sport-badge badge-football">${sportLabel}</span>`;
   const confBadge = `<span class="confidence-badge ${confClass(s.confidence)}">${s.confidence}</span>`;
   const evCls = evClass(s.ev_pct);
-  const barPct = Math.min(100, (s.ev_pct / 25) * 100);
+  const evScale = s.ev_pct > 25 ? 40 : 25;
+  const barPct = Math.min(100, (s.ev_pct / evScale) * 100);
   const barColor = evBarColor(s.ev_pct);
   const marketProb = (100 / s.odds).toFixed(1);
   const edge = (s.model_prob - parseFloat(marketProb)).toFixed(1);
@@ -596,6 +615,7 @@ function signalCard(s) {
   const underWarn = isUnderMarket(s.market)
     ? '<span class="pill under-warn" title="DC-Modell überschätzt UNTER systematisch (~5pp) — höherer Beweis nötig">⚠️ DC-Bias</span>'
     : '';
+  const timeChip = kickoffChip(s.kickoff);
 
   return `
     <div class="${cardClass(s)}">
@@ -606,7 +626,7 @@ function signalCard(s) {
       <div class="card-mid">
         <span class="pill cat-pill">${cat.icon} ${cat.label}</span>
         <span class="pill market-pill">${marketLabel(s.market, s.match)}</span>
-        ${underWarn}
+        ${timeChip}${underWarn}
       </div>
       <div class="card-bottom">
         <div class="card-bottom-row">
@@ -630,7 +650,7 @@ function signalCard(s) {
           <div class="ev-bar-bg">
             <div class="ev-bar-fill" style="width:${barPct}%;background:${barColor}"></div>
           </div>
-          <span class="ev-bar-label">max 25%</span>
+          <span class="ev-bar-label">max ${evScale}%</span>
         </div>
       </div>
     </div>`;
@@ -723,9 +743,13 @@ async function _loadData() {
     roiEl.textContent = (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%';
     roiEl.className = 'stat-value ' + pnlClass(roi);
 
-    // All signals merged and sorted by EV
+    // All signals merged: HIGH confidence first, then by EV
     _allSignals = [...(d.football || []), ...(d.tennis || [])];
-    _allSignals.sort((a, b) => b.ev_pct - a.ev_pct);
+    const _confOrder = {HIGH: 2, MEDIUM: 1, LOW: 0};
+    _allSignals.sort((a, b) => {
+      const cd = (_confOrder[b.confidence] || 0) - (_confOrder[a.confidence] || 0);
+      return cd !== 0 ? cd : b.ev_pct - a.ev_pct;
+    });
 
     // Update counts
     document.getElementById('today-count').textContent = _allSignals.length;

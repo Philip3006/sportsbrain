@@ -14,7 +14,12 @@ ROOT = Path(__file__).parent.parent.parent
 _JSON_PATH = ROOT / "docs" / "data" / "signals.json"
 
 
-def _signal_to_dict(s: BetSignal, sport: str = "football", tour: str = "") -> dict:
+def _signal_to_dict(
+    s: BetSignal,
+    sport: str = "football",
+    tour: str = "",
+    kickoff: str = "",
+) -> dict:
     d = {
         "sport":      sport,
         "match":      f"{s.home} vs {s.away}",
@@ -27,6 +32,8 @@ def _signal_to_dict(s: BetSignal, sport: str = "football", tour: str = "") -> di
     }
     if tour:
         d["tour"] = tour
+    if kickoff:
+        d["kickoff"] = kickoff
     return d
 
 
@@ -36,18 +43,21 @@ def write_signals_json(
     portfolio: dict | None = None,
     top_elo: list[tuple[str, float]] | None = None,
     tennis_tour_map: dict[str, str] | None = None,
+    kickoff_map: dict[str, str] | None = None,
 ) -> None:
     """
     Writes (or merges into) docs/data/signals.json.
     Merges football and tennis so each scanner can call independently.
 
     tennis_tour_map: optional {match_id: "atp"|"wta"} — adds tour field to tennis signals
+    kickoff_map: optional {match_id: "ISO-8601"} — adds kickoff time to all signals
     """
     football = football or []
     tennis = tennis or []
     portfolio = portfolio or {}
     top_elo = top_elo or []
     tennis_tour_map = tennis_tour_map or {}
+    kickoff_map = kickoff_map or {}
 
     # Load existing JSON to merge sport sections
     existing: dict = {}
@@ -59,10 +69,18 @@ def write_signals_json(
 
     updated = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    football_data = [_signal_to_dict(s, "football") for s in football] if football else existing.get("football", [])
+    football_data = [
+        _signal_to_dict(s, "football", kickoff=kickoff_map.get(s.match_id, ""))
+        for s in football
+    ] if football else existing.get("football", [])
+
     if tennis:
         tennis_data = [
-            _signal_to_dict(s, "tennis", tour=tennis_tour_map.get(s.match_id, ""))
+            _signal_to_dict(
+                s, "tennis",
+                tour=tennis_tour_map.get(s.match_id, ""),
+                kickoff=kickoff_map.get(s.match_id, ""),
+            )
             for s in tennis
         ]
     else:

@@ -171,14 +171,12 @@ def run_daily_scan(
     horizon_hours: int | None = None,
     scan_date_filter: str | None = None,
     force: bool = False,
-) -> tuple[pd.DataFrame, list, dict, dict]:
+) -> tuple[pd.DataFrame, list, list, dict, dict]:
     """
     Main scan orchestrator.
-    1. Fetch upcoming WM 2026 matches + odds.
-    2. Load DC params + optional LightGBM + calibrators.
-    3. Per match: predict → detect value → compute form/squad context.
-    4. Write markdown report with mandatory output fields.
-    Returns DataFrame of BetSignals.
+    Returns (signals_df, all_signals, selected_signals, match_date_lookup, match_contexts).
+    all_signals: every value bet found (pre portfolio cap) — for dashboard display.
+    selected_signals: post portfolio cap — for ledger logging.
 
     Args:
         force: Skip the WM date guard (useful for testing before/after tournament).
@@ -201,7 +199,7 @@ def run_daily_scan(
                 f"[{today.strftime('%Y-%m-%d')}] WM 2026 ended on "
                 f"{_WM_2026_END.strftime('%Y-%m-%d')}. Scan skipped — no quota used."
             )
-        return pd.DataFrame(), [], {}, {}
+        return pd.DataFrame(), [], [], {}, {}
 
     print("Loading DC model...")
     dc_params = _load_latest_dc_params()
@@ -758,7 +756,7 @@ def run_daily_scan(
         }
         for s in all_signals
     ])
-    return signals_df, selected_signals, match_date_lookup, match_contexts
+    return signals_df, all_signals, selected_signals, match_date_lookup, match_contexts
 
 
 def _top_scorelines(score_matrix, n: int = 3) -> list[tuple[int, int, float]]:

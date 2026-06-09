@@ -76,7 +76,7 @@ if __name__ == "__main__":
         subprocess.run([sys.executable, "scripts/auto_retrain.py"], check=True)
         print("--- Scan ---")
 
-    signals_df, selected_signals, match_date_lookup, _match_contexts = run_daily_scan(
+    signals_df, all_signals, selected_signals, match_date_lookup, _match_contexts = run_daily_scan(
         bankroll=args.bankroll,
         mock=args.mock,
         output_path=Path(args.output) if args.output else None,
@@ -92,9 +92,13 @@ if __name__ == "__main__":
     else:
         print("\nNo value bets found today.")
 
-    # Write web dashboard JSON
+    # Write web dashboard JSON — show ALL signals (pre-cap) so user sees full picture
     portfolio = ledger_summary()
-    write_signals_json(football=selected_signals, portfolio=portfolio)
+    kickoff_map = {
+        mid: ctx.get("commence_time", "")
+        for mid, ctx in _match_contexts.items()
+    }
+    write_signals_json(football=all_signals, portfolio=portfolio, kickoff_map=kickoff_map)
     print("Dashboard: docs/data/signals.json updated.")
 
     # Interactive confirmation (skipped with --auto-log)
