@@ -406,14 +406,16 @@ def main() -> None:
         _send_tennis_alert(all_signals, scan_date, summary, tour=args.tour)
         print("Telegram: notification sent.")
 
-    # 7. Write web dashboard JSON (with per-match tour info for ATP/WTA badge)
+    # 7. Write web dashboard JSON (with per-match tour info + kickoff times)
     dashboard_summary = ledger_summary()
     match_tour_map = {m["match_id"]: m.get("tour", args.tour) for m in upcoming}
+    kickoff_map = {m["match_id"]: m.get("commence_time", "") for m in upcoming}
     write_signals_json(
         tennis=all_signals,
         portfolio=dashboard_summary,
         top_elo=top_grass,
         tennis_tour_map=match_tour_map,
+        kickoff_map=kickoff_map,
     )
     print("Dashboard: docs/data/signals.json updated.")
 

@@ -408,7 +408,7 @@ def _cmd_scan() -> tuple[str, dict]:
     from src.betting.ledger import ledger_summary, LEDGER_PATH
     import datetime
     try:
-        _, signals, _match_dates, match_contexts = run_daily_scan(bankroll=100.0, auto_log=False)
+        _, _all_sigs, signals, _match_dates, match_contexts = run_daily_scan(bankroll=100.0, auto_log=False)
         if not signals:
             return "Kein Value-Signal heute gefunden.", {"inline_keyboard": [[{"text": "Alle Befehle", "callback_data": "/hilfe"}]]}
 
