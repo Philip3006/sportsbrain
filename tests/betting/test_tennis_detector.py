@@ -1,7 +1,7 @@
 """Tests for tennis value detector."""
 import pytest
 
-from src.betting.tennis_detector import detect_value_tennis, _set_handicap_probs, _devig_2way, _first_set_probs
+from src.betting.tennis_detector import detect_value_tennis, _set_handicap_probs, _devig_2way, _first_set_probs, _MAX_ODDS
 
 
 def test_devig_2way_sums_to_one():
@@ -138,11 +138,12 @@ def test_first_set_probs_monotone():
 
 
 def test_first_set_signal_detected_when_odds_generous():
-    # Generous odds (1.75) vs ~63% model probability → EV ≈ +10%
+    # Generous first_set odds (1.75) vs ~63% model probability → EV ≈ +10%
+    # No h2h odds so first_set is the only directional candidate
     signals = detect_value_tennis(
         player_a="Favourite", player_b="Underdog",
         probs={"p_a": 0.75, "p_b": 0.25},
-        odds_a=1.80, odds_b=3.50,
+        odds_a=0.0, odds_b=0.0,  # h2h unavailable — isolate first_set
         bankroll=100.0,
         first_set_odds_a=1.75,
         first_set_odds_b=2.10,
@@ -178,3 +179,97 @@ def test_first_set_zero_odds_ignored():
     markets = [s.market for s in signals]
     assert "first_set_a" not in markets
     assert "first_set_b" not in markets
+
+
+def test_bucketing_returns_at_most_one_directional_per_match():
+    # Both home AND first_set_a have value — bucketing picks only best directional
+    signals = detect_value_tennis(
+        player_a="Fav", player_b="Dog",
+        probs={"p_a": 0.75, "p_b": 0.25},
+        odds_a=1.80, odds_b=3.50,
+        bankroll=100.0,
+        first_set_odds_a=1.75, first_set_odds_b=2.10,
+    )
+    directional = [s for s in signals if s.market in ("home", "away", "first_set_a", "first_set_b")]
+    assert len(directional) <= 1, "At most 1 directional signal per match"
+
+
+def test_bucketing_returns_directional_and_structural():
+    # home has value AND ah-1.5_a has value → both returned (different buckets)
+    signals = detect_value_tennis(
+        player_a="Strong", player_b="Weak",
+        probs={"p_a": 0.80, "p_b": 0.20},
+        odds_a=1.50, odds_b=4.00,
+        bankroll=100.0,
+        ah_odds_a=1.60, ah_odds_b=2.40,
+    )
+    markets = {s.market for s in signals}
+    has_directional = bool(markets & {"home", "away", "first_set_a", "first_set_b"})
+    has_structural = bool(markets & {"ah-1.5_a", "ah+1.5_b"})
+    # At most 2 signals total: one per bucket
+    assert len(signals) <= 2
+    # If both buckets have value, both should be returned
+    if has_directional and has_structural:
+        assert len(signals) == 2
+
+
+def test_max_odds_filter_blocks_extreme_price():
+    # odds > _MAX_ODDS should produce no signal even with positive EV
+    extreme_odds = _MAX_ODDS + 0.5
+    # p_a = 0.40, odds_a = extreme → EV = 0.40*extreme - 1 > 0 but filtered
+    signals = detect_value_tennis(
+        player_a="A", player_b="B",
+        probs={"p_a": 0.40, "p_b": 0.60},
+        odds_a=extreme_odds, odds_b=1.25,
+        bankroll=100.0,
+    )
+    home_sigs = [s for s in signals if s.market == "home"]
+    assert home_sigs == [], f"Odds above {_MAX_ODDS} should be filtered"
+
+
+def test_custom_min_edge_raises_bar():
+    # EV=7% passes default 3% but fails custom min_edge=10%
+    signals = detect_value_tennis(
+        player_a="A", player_b="B",
+        probs={"p_a": 0.60, "p_b": 0.40},
+        odds_a=1.80, odds_b=2.50,  # EV = 0.60*1.80-1 = 0.08 (8%)
+        bankroll=100.0,
+        min_edge=0.10,
+    )
+    assert signals == [], "8% EV should not fire with min_edge=10%"
+
+
+def test_wta_confidence_high_at_lower_ev():
+    # WTA: EV=9% should be HIGH (bar=8%); ATP: same EV stays MEDIUM (bar=15%)
+    # EV ≈ 0.60*1.80-1 = 0.08 (8%)... slightly above 8% needed for WTA HIGH
+    signals_wta = detect_value_tennis(
+        player_a="A", player_b="B",
+        probs={"p_a": 0.62, "p_b": 0.38},
+        odds_a=1.80, odds_b=2.70,  # EV = 0.62*1.80-1 = 0.116 (11.6%)
+        bankroll=100.0,
+        tour="wta",
+    )
+    signals_atp = detect_value_tennis(
+        player_a="A", player_b="B",
+        probs={"p_a": 0.62, "p_b": 0.38},
+        odds_a=1.80, odds_b=2.70,
+        bankroll=100.0,
+        tour="atp",
+    )
+    if signals_wta:
+        assert signals_wta[0].confidence == "HIGH", "WTA 11.6% EV should be HIGH"
+    if signals_atp:
+        assert signals_atp[0].confidence == "MEDIUM", "ATP 11.6% EV should be MEDIUM (bar 15%)"
+
+
+def test_atp_confidence_high_at_very_high_ev():
+    # ATP: EV=16% should be HIGH (bar=15%)
+    signals = detect_value_tennis(
+        player_a="A", player_b="B",
+        probs={"p_a": 0.75, "p_b": 0.25},
+        odds_a=1.60, odds_b=3.80,  # EV = 0.75*1.60-1 = 0.20 (20%)
+        bankroll=100.0,
+        tour="atp",
+    )
+    if signals:
+        assert signals[0].confidence == "HIGH", "ATP 20% EV should be HIGH"

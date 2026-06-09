@@ -24,7 +24,8 @@ def _devig_2way(odds_a: float, odds_b: float) -> tuple[float, float]:
     return p_a / total, p_b / total
 
 
-_MIN_PROB = 0.35  # Skip extreme underdogs: backtest shows p<0.35 is -EV even at edge>3%
+_MIN_PROB = 0.35   # Skip extreme underdogs: p<0.35 is -EV even at edge>3%
+_MAX_ODDS = 4.50   # Skip extreme prices: bookmaker margin is too wide above 4.5
 
 
 def _signal(
@@ -36,11 +37,14 @@ def _signal(
     fair_p: float,
     odds: float,
     bankroll: float,
+    min_edge: float = MIN_EDGE,
 ) -> BetSignal | None:
     if model_p < _MIN_PROB:
         return None
+    if odds > _MAX_ODDS:
+        return None
     ev = expected_value(model_p, odds)
-    if ev < MIN_EDGE or ev > MAX_EV:
+    if ev < min_edge or ev > MAX_EV:
         return None
     kf = kelly_fraction(model_p, odds)
     stake_eur = dynamic_stake_eur(ev, "MEDIUM")
@@ -112,6 +116,15 @@ def _first_set_probs(p_a_wins: float) -> dict[str, float]:
     return {"first_set_a": p_set, "first_set_b": 1.0 - p_set}
 
 
+_HIGH_EV_ATP  = 0.15  # ATP: upgrade to HIGH only at very strong edge (backtest -5.9%)
+_HIGH_EV_WTA  = 0.08  # WTA grass has +10.3% ROI: smaller edge required for HIGH
+
+
+def _confidence_for(ev: float, tour: str) -> str:
+    threshold = _HIGH_EV_WTA if tour.lower() == "wta" else _HIGH_EV_ATP
+    return "HIGH" if ev >= threshold else "MEDIUM"
+
+
 def detect_value_tennis(
     player_a: str,
     player_b: str,
@@ -124,6 +137,8 @@ def detect_value_tennis(
     ah_odds_b: float = 0.0,
     first_set_odds_a: float = 0.0,
     first_set_odds_b: float = 0.0,
+    min_edge: float = MIN_EDGE,
+    tour: str = "atp",
 ) -> list[BetSignal]:
     """
     Detects value in tennis match markets.
@@ -131,60 +146,66 @@ def detect_value_tennis(
     probs: {'p_a': float, 'p_b': float} from predict_winner()
     odds_a / odds_b: decimal odds for player_a / player_b match winner
     ah_odds_a / ah_odds_b: decimal odds for set handicap -1.5/+1.5 (0 = not available)
+    min_edge: edge floor — raise for ATP (backtest -5.9%) vs WTA (+10.3%).
+    tour: "atp"|"wta" — affects HIGH confidence threshold and stake sizing.
 
     Returns list of BetSignal (empty if no value found).
+    Two-bucket output: at most 1 directional (match/first-set) + 1 structural (set AH).
     """
-    signals: list[BetSignal] = []
     p_a = probs.get("p_a", 0.0)
     p_b = probs.get("p_b", 0.0)
 
-    # Proportional devigged fair probabilities from market odds
+    directional: list[BetSignal] = []
+    structural: list[BetSignal] = []
+
+    # Bucket A — directional (match winner + first set: correlated with outcome)
     if odds_a > 1.0 and odds_b > 1.0:
         fair_a, fair_b = _devig_2way(odds_a, odds_b)
-
-        sig = _signal(match_id, player_a, player_b, "home", p_a, fair_a, odds_a, bankroll)
+        sig = _signal(match_id, player_a, player_b, "home", p_a, fair_a, odds_a, bankroll, min_edge)
         if sig:
-            signals.append(sig)
-
-        sig = _signal(match_id, player_a, player_b, "away", p_b, fair_b, odds_b, bankroll)
+            directional.append(sig)
+        sig = _signal(match_id, player_a, player_b, "away", p_b, fair_b, odds_b, bankroll, min_edge)
         if sig:
-            signals.append(sig)
+            directional.append(sig)
 
-    # Set handicap markets
-    ah_probs = _set_handicap_probs(p_a)
-
-    if ah_odds_a > 1.0 and ah_odds_b > 1.0:
-        fair_ah_a, fair_ah_b = _devig_2way(ah_odds_a, ah_odds_b)
-        sig = _signal(
-            match_id, player_a, player_b, "ah-1.5_a",
-            ah_probs["ah-1.5_a"], fair_ah_a, ah_odds_a, bankroll,
-        )
-        if sig:
-            signals.append(sig)
-
-        sig = _signal(
-            match_id, player_a, player_b, "ah+1.5_b",
-            ah_probs["ah+1.5_b"], fair_ah_b, ah_odds_b, bankroll,
-        )
-        if sig:
-            signals.append(sig)
-
-    # First Set Winner
     if first_set_odds_a > 1.0 and first_set_odds_b > 1.0:
         fs_probs = _first_set_probs(p_a)
         fair_fs_a, fair_fs_b = _devig_2way(first_set_odds_a, first_set_odds_b)
-        sig = _signal(
-            match_id, player_a, player_b, "first_set_a",
-            fs_probs["first_set_a"], fair_fs_a, first_set_odds_a, bankroll,
-        )
+        sig = _signal(match_id, player_a, player_b, "first_set_a",
+                      fs_probs["first_set_a"], fair_fs_a, first_set_odds_a, bankroll, min_edge)
         if sig:
-            signals.append(sig)
-
-        sig = _signal(
-            match_id, player_a, player_b, "first_set_b",
-            fs_probs["first_set_b"], fair_fs_b, first_set_odds_b, bankroll,
-        )
+            directional.append(sig)
+        sig = _signal(match_id, player_a, player_b, "first_set_b",
+                      fs_probs["first_set_b"], fair_fs_b, first_set_odds_b, bankroll, min_edge)
         if sig:
-            signals.append(sig)
+            directional.append(sig)
 
-    return signals
+    # Bucket B — structural (set AH: margin-of-victory, less correlated with result)
+    if ah_odds_a > 1.0 and ah_odds_b > 1.0:
+        ah_probs = _set_handicap_probs(p_a)
+        fair_ah_a, fair_ah_b = _devig_2way(ah_odds_a, ah_odds_b)
+        sig = _signal(match_id, player_a, player_b, "ah-1.5_a",
+                      ah_probs["ah-1.5_a"], fair_ah_a, ah_odds_a, bankroll, min_edge)
+        if sig:
+            structural.append(sig)
+        sig = _signal(match_id, player_a, player_b, "ah+1.5_b",
+                      ah_probs["ah+1.5_b"], fair_ah_b, ah_odds_b, bankroll, min_edge)
+        if sig:
+            structural.append(sig)
+
+    # Per-match: best directional + best structural (prevent correlated overexposure)
+    selected: list[BetSignal] = []
+    if directional:
+        selected.append(max(directional, key=lambda s: s.ev))
+    if structural:
+        selected.append(max(structural, key=lambda s: s.ev))
+
+    # Tour-aware confidence upgrade: WTA has stronger backtest edge → lower HIGH bar
+    for s in selected:
+        s.confidence = _confidence_for(s.ev, tour)
+        if s.confidence == "HIGH":
+            s.stake_eur = dynamic_stake_eur(s.ev, "HIGH")
+            if bankroll > 0:
+                s.stake_pct = s.stake_eur / bankroll
+
+    return selected

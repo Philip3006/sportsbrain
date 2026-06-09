@@ -330,6 +330,12 @@ def main() -> None:
 
     print(f"  {len(upcoming)} upcoming matches found")
 
+    # ATP Wimbledon backtest: -5.9% ROI → raise min_edge to 10% to filter out noise.
+    # WTA Wimbledon: +10.3% ROI → use standard 3% edge floor.
+    # "both" tour: apply ATP guard to all (conservative).
+    from src.config import MIN_EDGE
+    _match_min_edge = 0.10 if args.tour in ("atp", "both") else MIN_EDGE
+
     # 3. Predict and detect value
     all_signals = []
     for m in upcoming:
@@ -348,6 +354,8 @@ def main() -> None:
             ah_odds_b=m.get("ah_odds_b", 0.0),
             first_set_odds_a=m.get("first_set_odds_a", 0.0),
             first_set_odds_b=m.get("first_set_odds_b", 0.0),
+            min_edge=_match_min_edge,
+            tour=args.tour,
         )
 
         if signals:
