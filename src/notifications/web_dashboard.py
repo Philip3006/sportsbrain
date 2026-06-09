@@ -14,8 +14,8 @@ ROOT = Path(__file__).parent.parent.parent
 _JSON_PATH = ROOT / "docs" / "data" / "signals.json"
 
 
-def _signal_to_dict(s: BetSignal, sport: str = "football") -> dict:
-    return {
+def _signal_to_dict(s: BetSignal, sport: str = "football", tour: str = "") -> dict:
+    d = {
         "sport":      sport,
         "match":      f"{s.home} vs {s.away}",
         "market":     s.market,
@@ -25,6 +25,9 @@ def _signal_to_dict(s: BetSignal, sport: str = "football") -> dict:
         "stake_eur":  round(s.stake_eur, 2),
         "confidence": s.confidence,
     }
+    if tour:
+        d["tour"] = tour
+    return d
 
 
 def write_signals_json(
@@ -32,15 +35,19 @@ def write_signals_json(
     tennis: list[BetSignal] | None = None,
     portfolio: dict | None = None,
     top_elo: list[tuple[str, float]] | None = None,
+    tennis_tour_map: dict[str, str] | None = None,
 ) -> None:
     """
     Writes (or merges into) docs/data/signals.json.
     Merges football and tennis so each scanner can call independently.
+
+    tennis_tour_map: optional {match_id: "atp"|"wta"} — adds tour field to tennis signals
     """
     football = football or []
     tennis = tennis or []
     portfolio = portfolio or {}
     top_elo = top_elo or []
+    tennis_tour_map = tennis_tour_map or {}
 
     # Load existing JSON to merge sport sections
     existing: dict = {}
@@ -53,7 +60,13 @@ def write_signals_json(
     updated = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     football_data = [_signal_to_dict(s, "football") for s in football] if football else existing.get("football", [])
-    tennis_data = [_signal_to_dict(s, "tennis") for s in tennis] if tennis else existing.get("tennis", [])
+    if tennis:
+        tennis_data = [
+            _signal_to_dict(s, "tennis", tour=tennis_tour_map.get(s.match_id, ""))
+            for s in tennis
+        ]
+    else:
+        tennis_data = existing.get("tennis", [])
 
     payload = {
         "updated": updated,

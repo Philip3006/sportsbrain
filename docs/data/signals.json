@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-09T12:12:21Z",
+  "updated": "2026-06-09T12:30:38Z",
   "football": [
     {
       "sport": "football",
@@ -15,58 +15,52 @@
   "tennis": [
     {
       "sport": "tennis",
-      "match": "Carlos Alcaraz vs Novak Djokovic",
-      "market": "home",
-      "odds": 1.75,
-      "model_prob": 61.0,
-      "ev_pct": 6.7,
-      "stake_eur": 7.17,
-      "confidence": "MEDIUM"
-    },
-    {
-      "sport": "tennis",
-      "match": "Carlos Alcaraz vs Novak Djokovic",
-      "market": "ah+1.5_b",
-      "odds": 1.85,
-      "model_prob": 59.4,
-      "ev_pct": 9.9,
-      "stake_eur": 9.07,
-      "confidence": "MEDIUM"
-    },
-    {
-      "sport": "tennis",
       "match": "Jannik Sinner vs Daniil Medvedev",
       "market": "home",
       "odds": 1.55,
-      "model_prob": 74.4,
-      "ev_pct": 15.3,
-      "stake_eur": 12.24,
-      "confidence": "MEDIUM"
+      "model_prob": 75.4,
+      "ev_pct": 16.9,
+      "stake_eur": 14.48,
+      "confidence": "HIGH",
+      "tour": "atp"
     },
     {
       "sport": "tennis",
       "match": "Jannik Sinner vs Daniil Medvedev",
       "market": "ah-1.5_a",
       "odds": 2.2,
-      "model_prob": 54.0,
-      "ev_pct": 18.7,
-      "stake_eur": 14.23,
-      "confidence": "MEDIUM"
+      "model_prob": 55.1,
+      "ev_pct": 21.2,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "tour": "atp"
     },
     {
       "sport": "tennis",
-      "match": "Jannik Sinner vs Daniil Medvedev",
-      "market": "first_set_a",
-      "odds": 1.68,
-      "model_prob": 63.7,
-      "ev_pct": 7.0,
-      "stake_eur": 7.34,
-      "confidence": "MEDIUM"
+      "match": "Iga Swiatek vs Aryna Sabalenka",
+      "market": "away",
+      "odds": 2.0,
+      "model_prob": 54.6,
+      "ev_pct": 9.2,
+      "stake_eur": 9.52,
+      "confidence": "HIGH",
+      "tour": "wta"
+    },
+    {
+      "sport": "tennis",
+      "match": "Iga Swiatek vs Aryna Sabalenka",
+      "market": "ah+1.5_b",
+      "odds": 1.8,
+      "model_prob": 72.3,
+      "ev_pct": 30.2,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "tour": "wta"
     }
   ],
   "portfolio": {
-    "n_bets": 9,
-    "n_open": 9,
+    "n_bets": 14,
+    "n_open": 14,
     "n_won": 0,
     "n_lost": 0,
     "n_void": 0,
@@ -80,7 +74,7 @@
   "top_elo": [
     {
       "name": "Carlos Alcaraz",
-      "rating": 1768
+      "rating": 1774
     },
     {
       "name": "Novak Djokovic",
@@ -88,35 +82,35 @@
     },
     {
       "name": "Jannik Sinner",
-      "rating": 1728
+      "rating": 1736
     },
     {
       "name": "Taylor Fritz",
-      "rating": 1695
+      "rating": 1700
+    },
+    {
+      "name": "Iga Swiatek",
+      "rating": 1684
+    },
+    {
+      "name": "Aryna Sabalenka",
+      "rating": 1656
+    },
+    {
+      "name": "Elena Rybakina",
+      "rating": 1651
+    },
+    {
+      "name": "Amanda Anisimova",
+      "rating": 1633
     },
     {
       "name": "Daniil Medvedev",
-      "rating": 1632
+      "rating": 1628
     },
     {
       "name": "Alex De Minaur",
-      "rating": 1632
-    },
-    {
-      "name": "Matteo Berrettini",
-      "rating": 1619
-    },
-    {
-      "name": "Alexander Bublik",
-      "rating": 1605
-    },
-    {
-      "name": "Alexander Zverev",
-      "rating": 1597
-    },
-    {
-      "name": "Tommy Paul",
-      "rating": 1593
+      "rating": 1626
     }
   ]
 }
