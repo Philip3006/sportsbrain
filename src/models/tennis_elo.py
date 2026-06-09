@@ -17,12 +17,16 @@ Usage:
 """
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
+from datetime import datetime
 
 import pandas as pd
 
 _DEFAULT_RATING = 1500.0
 _DECAY = 0.90  # 10% annual pull toward 1500 — applied at start of each new calendar year
+
+_RECENCY_HALFLIFE = 3.0  # years; older matches lose half their K every 3 years
 
 _K_BY_LEVEL: dict[str, float] = {
     "g": 40.0,   # Grand Slams (tourney_level = 'G')
@@ -107,24 +111,32 @@ def _apply_decay(pool: dict[str, float]) -> None:
         pool[player] = _DEFAULT_RATING + _DECAY * (pool[player] - _DEFAULT_RATING)
 
 
-def compute_tennis_elo(matches: pd.DataFrame) -> TennisEloRatings:
+def compute_tennis_elo(
+    matches: pd.DataFrame,
+    reference_date: datetime | None = None,
+) -> TennisEloRatings:
     """
     Iterates all matches chronologically and returns final TennisEloRatings.
-    Applies 10% annual decay at the start of each new calendar year to keep
-    ratings responsive to recent form.
+    Applies 10% annual decay at the start of each new calendar year.
+
+    reference_date: if given, scales each match's K-factor by recency:
+      K *= exp(-ln(2)/HALFLIFE * years_ago), half-life = 3 years.
+      Matches from last week get full K; matches from 3 years ago get ~50% K.
+
     Expects columns: tourney_date, winner_name, loser_name, surface, tourney_level.
     Rows with NaN winner/loser are skipped.
     """
     ratings = TennisEloRatings()
     df = matches.dropna(subset=["winner_name", "loser_name"]).sort_values("tourney_date")
+    _lambda = math.log(2) / _RECENCY_HALFLIFE
 
     current_year: int | None = None
 
     for _, row in df.iterrows():
-        match_year = row["tourney_date"].year if hasattr(row["tourney_date"], "year") else None
+        tourney_date = row["tourney_date"]
+        match_year = tourney_date.year if hasattr(tourney_date, "year") else None
         if match_year and match_year != current_year:
             if current_year is not None:
-                # Decay all pools at start of each new year
                 _apply_decay(ratings.overall)
                 for surf_pool in ratings.by_surface.values():
                     _apply_decay(surf_pool)
@@ -134,7 +146,25 @@ def compute_tennis_elo(matches: pd.DataFrame) -> TennisEloRatings:
         loser  = str(row["loser_name"])
         surface = str(row.get("surface", "hard")).lower()
         level   = str(row.get("tourney_level", "")).strip()
-        ratings.update(winner, loser, surface, level)
+
+        k_override = None
+        if reference_date is not None and hasattr(tourney_date, "year"):
+            years_ago = max(0.0, (reference_date - tourney_date).days / 365.25)
+            recency = math.exp(-_lambda * years_ago)
+            k_override = _k(level) * recency
+
+        if k_override is not None:
+            ratings._update(ratings.overall, winner, loser, k_override)
+            surf = surface.lower()
+            if surf not in ratings.by_surface:
+                ratings.by_surface[surf] = {}
+            if surf not in ratings.surface_counts:
+                ratings.surface_counts[surf] = {}
+            ratings._update(ratings.by_surface[surf], winner, loser, k_override)
+            ratings.surface_counts[surf][winner] = ratings.surface_counts[surf].get(winner, 0) + 1
+            ratings.surface_counts[surf][loser] = ratings.surface_counts[surf].get(loser, 0) + 1
+        else:
+            ratings.update(winner, loser, surface, level)
 
     return ratings
 
