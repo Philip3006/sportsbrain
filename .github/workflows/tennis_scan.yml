@@ -24,19 +24,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run ATP tennis scan
+      - name: Run tennis scan (ATP + WTA)
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/tennis_scan.py --bankroll 100 --tour atp
-
-      - name: Run WTA tennis scan
-        env:
-          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/tennis_scan.py --bankroll 100 --tour wta
+        run: |
+          # WTA is the primary focus (+8.5% Wimbledon ROI); ATP uses stricter 10% edge floor
+          python scripts/tennis_scan.py --bankroll 100 --tour both
 
       - name: Commit results
         run: |

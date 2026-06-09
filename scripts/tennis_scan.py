@@ -128,13 +128,14 @@ def _fetch_wimbledon_odds(api_key: str, tour: str = "atp") -> list[dict]:
             "ah_odds_b": best_spread_away,
             "first_set_odds_a": best_fs_home,
             "first_set_odds_b": best_fs_away,
+            "tour": tour.lower(),
         })
 
     return matches
 
 
 def _mock_wimbledon_matches() -> list[dict]:
-    """Synthetic Wimbledon matches for dry-run testing."""
+    """Synthetic Wimbledon matches for dry-run testing (ATP + WTA)."""
     return [
         {
             "match_id": "mock_alcaraz_djokovic",
@@ -147,6 +148,7 @@ def _mock_wimbledon_matches() -> list[dict]:
             "ah_odds_b": 1.85,
             "first_set_odds_a": 1.72,
             "first_set_odds_b": 2.10,
+            "tour": "atp",
         },
         {
             "match_id": "mock_sinner_medvedev",
@@ -159,6 +161,20 @@ def _mock_wimbledon_matches() -> list[dict]:
             "ah_odds_b": 1.65,
             "first_set_odds_a": 1.68,
             "first_set_odds_b": 2.20,
+            "tour": "atp",
+        },
+        {
+            "match_id": "mock_swiatek_sabalenka",
+            "commence_time": "2026-07-06T11:00:00Z",
+            "player_a": "Iga Swiatek",
+            "player_b": "Aryna Sabalenka",
+            "odds_a": 1.90,
+            "odds_b": 2.00,
+            "ah_odds_a": 2.10,
+            "ah_odds_b": 1.80,
+            "first_set_odds_a": 1.88,
+            "first_set_odds_b": 2.00,
+            "tour": "wta",
         },
     ]
 
@@ -212,8 +228,8 @@ def _format_report(
         "",
         "---",
         "## Backtest (2021-2025, Max Odds, p≥35%)",
-        "  WTA Wimbledon:  +10.3% ROI  ← primary focus",
-        "  ATP Wimbledon:   -5.9% ROI",
+        "  WTA Wimbledon:   +8.5% ROI  ← primary focus (216 Bets, 2021-2025)",
+        "  ATP Wimbledon:   -6.4% ROI",
         "  WTA overall:     +6.9% ROI",
         "  Clay/FO:         -7.8% ROI  ← avoid",
     ]
@@ -261,8 +277,8 @@ def main() -> None:
     parser.add_argument("--surface", default="grass", choices=["grass", "clay", "hard"])
     parser.add_argument("--no-ledger", action="store_true", help="Skip writing to ledger")
     parser.add_argument("--no-telegram", action="store_true", help="Skip Telegram notification")
-    parser.add_argument("--tour", default="atp", choices=["atp", "wta", "both"],
-                        help="ATP, WTA oder beide")
+    parser.add_argument("--tour", default="both", choices=["atp", "wta", "both"],
+                        help="ATP, WTA oder beide (default: both — WTA hat +8.5%% ROI Wimbledon)")
     args = parser.parse_args()
 
     scan_date = datetime.now().strftime("%Y-%m-%d")
@@ -330,17 +346,21 @@ def main() -> None:
 
     print(f"  {len(upcoming)} upcoming matches found")
 
-    # ATP Wimbledon backtest: -5.9% ROI → raise min_edge to 10% to filter out noise.
-    # WTA Wimbledon: +10.3% ROI → use standard 3% edge floor.
-    # "both" tour: apply ATP guard to all (conservative).
+    # Per-match edge guard based on backtest results:
+    # ATP Wimbledon: -6.4% ROI → require 10% min_edge (very tight market)
+    # WTA Wimbledon: +8.5% ROI → standard 3% min_edge (less efficient market)
     from src.config import MIN_EDGE
-    _match_min_edge = 0.10 if args.tour in ("atp", "both") else MIN_EDGE
+    _ATP_MIN_EDGE = 0.10
+
+    def _min_edge_for(match_tour: str) -> float:
+        return _ATP_MIN_EDGE if match_tour == "atp" else MIN_EDGE
 
     # 3. Predict and detect value
     all_signals = []
     for m in upcoming:
         pa, pb = m["player_a"], m["player_b"]
         probs = predict_winner(pa, pb, ratings, args.surface)
+        match_tour = m.get("tour", args.tour)
 
         signals = detect_value_tennis(
             player_a=pa,
@@ -354,8 +374,8 @@ def main() -> None:
             ah_odds_b=m.get("ah_odds_b", 0.0),
             first_set_odds_a=m.get("first_set_odds_a", 0.0),
             first_set_odds_b=m.get("first_set_odds_b", 0.0),
-            min_edge=_match_min_edge,
-            tour=args.tour,
+            min_edge=_min_edge_for(match_tour),
+            tour=match_tour,
         )
 
         if signals:
