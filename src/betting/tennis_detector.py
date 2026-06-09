@@ -64,43 +64,59 @@ def _signal(
     )
 
 
-def _p_match_from_p_set(p_s: float) -> float:
+def _p_match_from_p_set_bo5(p_s: float) -> float:
     """P(player_a wins best-of-5 match) given per-set win prob p_s."""
     q = 1.0 - p_s
     return p_s**3 * (1.0 + 3.0 * q + 6.0 * q**2)
 
 
-def _p_set_from_p_match(p_match: float) -> float:
-    """Numerical inversion of _p_match_from_p_set via binary search (50 iterations)."""
+def _p_match_from_p_set_bo3(p_s: float) -> float:
+    """P(player_a wins best-of-3 match) given per-set win prob p_s."""
+    return p_s**2 * (3.0 - 2.0 * p_s)
+
+
+# Keep backward-compatible alias pointing to BO5 (ATP default)
+_p_match_from_p_set = _p_match_from_p_set_bo5
+
+
+def _p_set_from_p_match(p_match: float, bo5: bool = True) -> float:
+    """
+    Numerical inversion via binary search (50 iterations).
+    bo5=True for ATP (best-of-5), bo5=False for WTA (best-of-3).
+    """
+    forward = _p_match_from_p_set_bo5 if bo5 else _p_match_from_p_set_bo3
     lo, hi = 1e-6, 1.0 - 1e-6
     for _ in range(50):
         mid = (lo + hi) / 2.0
-        if _p_match_from_p_set(mid) < p_match:
+        if forward(mid) < p_match:
             lo = mid
         else:
             hi = mid
     return (lo + hi) / 2.0
 
 
-def _set_handicap_probs(p_a_wins: float) -> dict[str, float]:
+def _set_handicap_probs(p_a_wins: float, bo5: bool = True) -> dict[str, float]:
     """
-    Approximates set handicap probabilities for best-of-5 from match-win probability.
+    Approximates set handicap probabilities from match-win probability.
 
-    Correctly inverts the best-of-5 binomial: P(win match) depends on per-set prob p_s via
-      P = p_s^3 * (1 + 3q + 6q^2)  where q = 1-p_s.
+    bo5=True  → ATP (best-of-5):  ah-1.5_a = A wins 3:0 or 3:1
+    bo5=False → WTA (best-of-3):  ah-1.5_a = A wins 2:0 (only way to win by ≥2 sets)
 
-    ah-1.5_a = player_a wins 3:0 or 3:1 (wins by >=2 sets net)
-    ah+1.5_b = player_b wins OR 3:2 for player_a (NOT 3:0 or 3:1)
+    ah+1.5_b = complement (B wins OR close match).
     """
     if p_a_wins <= 0 or p_a_wins >= 1:
         return {"ah-1.5_a": 0.0, "ah+1.5_b": 0.0}
 
-    p_set = _p_set_from_p_match(p_a_wins)
-    q = 1.0 - p_set
+    p_set = _p_set_from_p_match(p_a_wins, bo5=bo5)
 
-    p_3_0 = p_set ** 3
-    p_3_1 = 3.0 * p_set**3 * q
-    p_a_dominant = p_3_0 + p_3_1  # 3:0 or 3:1
+    if bo5:
+        q = 1.0 - p_set
+        p_3_0 = p_set ** 3
+        p_3_1 = 3.0 * p_set**3 * q
+        p_a_dominant = p_3_0 + p_3_1  # 3:0 or 3:1
+    else:
+        # BO3: only 2:0 counts as ah-1.5_a (win by 2 sets net)
+        p_a_dominant = p_set ** 2  # P(A wins first 2 sets straight)
 
     return {
         "ah-1.5_a": max(0.0, min(1.0, p_a_dominant)),
@@ -108,11 +124,12 @@ def _set_handicap_probs(p_a_wins: float) -> dict[str, float]:
     }
 
 
-def _first_set_probs(p_a_wins: float) -> dict[str, float]:
-    """P(player_a wins first set) — uses per-set probability as proxy for first-set win."""
+def _first_set_probs(p_a_wins: float, bo5: bool = True) -> dict[str, float]:
+    """P(player_a wins first set) — uses per-set probability as proxy for first-set win.
+    bo5/bo3 affects per-set inversion; first-set probability itself is p_set regardless of format."""
     if p_a_wins <= 0 or p_a_wins >= 1:
         return {"first_set_a": 0.5, "first_set_b": 0.5}
-    p_set = _p_set_from_p_match(p_a_wins)
+    p_set = _p_set_from_p_match(p_a_wins, bo5=bo5)
     return {"first_set_a": p_set, "first_set_b": 1.0 - p_set}
 
 
@@ -154,6 +171,7 @@ def detect_value_tennis(
     """
     p_a = probs.get("p_a", 0.0)
     p_b = probs.get("p_b", 0.0)
+    bo5 = tour.lower() != "wta"  # WTA plays best-of-3; ATP plays best-of-5
 
     directional: list[BetSignal] = []
     structural: list[BetSignal] = []
@@ -169,7 +187,7 @@ def detect_value_tennis(
             directional.append(sig)
 
     if first_set_odds_a > 1.0 and first_set_odds_b > 1.0:
-        fs_probs = _first_set_probs(p_a)
+        fs_probs = _first_set_probs(p_a, bo5=bo5)
         fair_fs_a, fair_fs_b = _devig_2way(first_set_odds_a, first_set_odds_b)
         sig = _signal(match_id, player_a, player_b, "first_set_a",
                       fs_probs["first_set_a"], fair_fs_a, first_set_odds_a, bankroll, min_edge)
@@ -182,7 +200,7 @@ def detect_value_tennis(
 
     # Bucket B — structural (set AH: margin-of-victory, less correlated with result)
     if ah_odds_a > 1.0 and ah_odds_b > 1.0:
-        ah_probs = _set_handicap_probs(p_a)
+        ah_probs = _set_handicap_probs(p_a, bo5=bo5)
         fair_ah_a, fair_ah_b = _devig_2way(ah_odds_a, ah_odds_b)
         sig = _signal(match_id, player_a, player_b, "ah-1.5_a",
                       ah_probs["ah-1.5_a"], fair_ah_a, ah_odds_a, bankroll, min_edge)

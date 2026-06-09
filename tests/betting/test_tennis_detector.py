@@ -1,7 +1,10 @@
 """Tests for tennis value detector."""
 import pytest
 
-from src.betting.tennis_detector import detect_value_tennis, _set_handicap_probs, _devig_2way, _first_set_probs, _MAX_ODDS
+from src.betting.tennis_detector import (
+    detect_value_tennis, _set_handicap_probs, _devig_2way, _first_set_probs,
+    _MAX_ODDS, _p_match_from_p_set_bo3, _p_match_from_p_set_bo5,
+)
 
 
 def test_devig_2way_sums_to_one():
@@ -273,3 +276,47 @@ def test_atp_confidence_high_at_very_high_ev():
     )
     if signals:
         assert signals[0].confidence == "HIGH", "ATP 20% EV should be HIGH"
+
+
+def test_bo3_match_from_set_sums_correctly():
+    """For p_s=0.5 → P(match)=0.5 in BO3."""
+    assert abs(_p_match_from_p_set_bo3(0.5) - 0.5) < 1e-9
+
+
+def test_bo5_match_from_set_sums_correctly():
+    """For p_s=0.5 → P(match)=0.5 in BO5."""
+    assert abs(_p_match_from_p_set_bo5(0.5) - 0.5) < 1e-9
+
+
+def test_bo3_ah_lower_than_bo5_for_same_match_prob():
+    """
+    For same match win prob, P(ah-1.5_a) in BO3 < BO5:
+    BO3 requires 2:0 only; BO5 allows 3:0 or 3:1.
+    """
+    probs_bo5 = _set_handicap_probs(0.75, bo5=True)
+    probs_bo3 = _set_handicap_probs(0.75, bo5=False)
+    # BO3: P(2:0) = p_s^2 where p_s is inverted from p_match for BO3
+    # BO5: P(3:0 or 3:1) = higher since more paths
+    # In BO3, 2:0 is a subset of all wins; in BO5, 3:0+3:1 is also a subset
+    # But the per-set prob differs: BO5 inverts to HIGHER p_s for same match win prob
+    # (because BO5 amplifies the advantage more), so BO5 handicap prob is higher
+    assert probs_bo5["ah-1.5_a"] > probs_bo3["ah-1.5_a"], \
+        "BO5 ah-1.5_a should be higher than BO3 for same match prob"
+
+
+def test_wta_uses_bo3_handicap(monkeypatch):
+    """WTA (bo5=False) set AH signals differ from ATP (bo5=True) for same probs."""
+    import src.betting.tennis_detector as td
+    captured = {}
+    orig = td._set_handicap_probs
+    def mock_sh(p, bo5=True):
+        captured['bo5'] = bo5
+        return orig(p, bo5=bo5)
+    monkeypatch.setattr(td, '_set_handicap_probs', mock_sh)
+    detect_value_tennis(
+        "A", "B", {"p_a": 0.70, "p_b": 0.30},
+        odds_a=1.55, odds_b=2.55,
+        ah_odds_a=2.20, ah_odds_b=1.65,
+        bankroll=100.0, tour="wta",
+    )
+    assert captured.get('bo5') == False, "WTA should use BO3 (bo5=False)"
