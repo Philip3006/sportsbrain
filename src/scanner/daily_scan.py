@@ -490,6 +490,13 @@ def run_daily_scan(
         # Stage-adjusted rho (shared by O/U and BTTS blocks)
         rho_staged = dc_params.rho * (0.75 if is_ko else 1.10)
 
+        # Calibration-corrected UNDER min_edge: DC systematically underestimates
+        # OVER probability (~6pp for 1.5/2.5, ~3pp for 3.5) → UNDER needs higher bar.
+        from src.config import MIN_EDGE as _MIN_EDGE
+        _UNDER_MIN_EDGE_25 = _MIN_EDGE + 0.06
+        _UNDER_MIN_EDGE_15 = _MIN_EDGE + 0.06
+        _UNDER_MIN_EDGE_35 = _MIN_EDGE + 0.03
+
         # O/U 2.5 market
         over_odds = float(match.get("over_odds", 0))
         under_odds = float(match.get("under_odds", 0))
@@ -498,6 +505,7 @@ def run_daily_scan(
             ou_signals = detect_value_totals(
                 home, away, totals, over_odds, under_odds,
                 bankroll=bankroll, match_id=match_id,
+                min_edge_under=_UNDER_MIN_EDGE_25,
             )
             signals.extend(ou_signals)
 
@@ -509,6 +517,7 @@ def run_daily_scan(
             signals.extend(detect_value_totals(
                 home, away, totals15, over15_odds, under15_odds,
                 bankroll=bankroll, match_id=match_id,
+                min_edge_under=_UNDER_MIN_EDGE_15,
             ))
 
         # O/U 3.5
@@ -519,6 +528,7 @@ def run_daily_scan(
             signals.extend(detect_value_totals(
                 home, away, totals35, over35_odds, under35_odds,
                 bankroll=bankroll, match_id=match_id,
+                min_edge_under=_UNDER_MIN_EDGE_35,
             ))
 
         # Asian Handicap -0.5/+0.5
@@ -652,12 +662,13 @@ def run_daily_scan(
         # Bucket B (goals-volume, structurally independent): O/U 2.5 + BTTS.
         # Within each bucket, signals are >80% correlated — only one slot.
         # Across buckets: independent exposure — both may be placed.
+        # Bucket B: pure goals-volume markets (structurally independent of 1X2/AH)
+        # FTTS excluded: it's correlated with 1X2 (first scorer usually wins) → bucket A
         _GOALS_MARKETS = {
             "o/u1.5_over", "o/u1.5_under",
             "o/u2.5_over", "o/u2.5_under",
             "o/u3.5_over", "o/u3.5_under",
             "btts_yes", "btts_no",
-            "ftts_home", "ftts_away",
         }
         if signals:
             bucket_a = [s for s in signals if s.market not in _GOALS_MARKETS]

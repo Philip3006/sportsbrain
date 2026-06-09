@@ -167,6 +167,31 @@ class TestDetectValueTotalsConsistencyGate:
         assert len(over_sigs) == 1
         assert over_sigs[0].confidence == "MEDIUM"
 
+    def test_min_edge_under_blocks_marginal_under_signal(self):
+        # UNDER with 9% model EV passes base MIN_EDGE=3% but should fail min_edge_under=10%
+        totals = {"p_over": 0.40, "p_under": 0.60, "line": 2.5}
+        # odds 1.65: EV = 0.60*1.65-1 = -0.01 → no signal anyway
+        # odds 1.82: EV = 0.60*1.82-1 = 0.092 → passes 3%, should fail 10%
+        sigs = detect_value_totals("A", "B", totals, 0.0, 1.82, bankroll=100.0, min_edge_under=0.10)
+        under_sigs = [s for s in sigs if "under" in s.market]
+        assert len(under_sigs) == 0
+
+    def test_min_edge_under_passes_high_ev_under_signal(self):
+        # UNDER with 15% model EV should pass min_edge_under=10%
+        totals = {"p_over": 0.35, "p_under": 0.65, "line": 2.5}
+        # odds 1.77: EV = 0.65*1.77-1 = 0.1505 → 15% → passes 10% threshold
+        sigs = detect_value_totals("A", "B", totals, 0.0, 1.77, bankroll=100.0, min_edge_under=0.10)
+        under_sigs = [s for s in sigs if "under" in s.market]
+        assert len(under_sigs) == 1
+
+    def test_min_edge_under_does_not_affect_over_side(self):
+        # min_edge_under should only filter UNDER; OVER with 5% EV still passes base 3%
+        totals = {"p_over": 0.60, "p_under": 0.40, "line": 2.5}
+        # over_odds 1.75: EV=0.05; under_odds 2.20: EV=0.40*2.20-1=-0.12 → no under anyway
+        sigs = detect_value_totals("A", "B", totals, 1.75, 2.20, bankroll=100.0, min_edge_under=0.10)
+        over_sigs = [s for s in sigs if "over" in s.market]
+        assert len(over_sigs) == 1
+
 
 # ---------------------------------------------------------------------------
 # LOW-confidence signal separation (Iteration #16)
