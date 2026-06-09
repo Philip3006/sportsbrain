@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-09T11:46:19Z",
+  "updated": "2026-06-09T12:12:21Z",
   "football": [
     {
       "sport": "football",
@@ -65,8 +65,8 @@
     }
   ],
   "portfolio": {
-    "n_bets": 4,
-    "n_open": 4,
+    "n_bets": 9,
+    "n_open": 9,
     "n_won": 0,
     "n_lost": 0,
     "n_void": 0,

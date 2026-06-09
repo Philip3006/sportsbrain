@@ -214,14 +214,17 @@ def detect_value_totals(
     max_stake_pct: float = MAX_STAKE_EUR,  # kept for API compatibility
     match_id: str = "",
     dc_probs: dict | None = None,
+    min_edge_under: float | None = None,
 ) -> list[BetSignal]:
     """
-    Checks O/U 2.5 market for positive EV.
+    Checks O/U market for positive EV.
     totals_probs: {p_over, p_under, line} from dc.predict_totals()
 
+    min_edge_under: if set, overrides min_edge for UNDER side only.
+    Use to compensate for DC's systematic OVER underestimation (calibration finding:
+    model under-calls OVER by ~3-6pp → UNDER signals need higher threshold).
+
     dc_probs: optional dict with keys p_over/p_under (DC totals output).
-    Consistency gate downgrades to "LOW" when models conflict relative to the
-    fair baseline (Poisson implied ~0.5 for balanced O/U books).
     """
     signals = []
     line = totals_probs.get("line", 2.5)
@@ -231,8 +234,9 @@ def detect_value_totals(
     ]:
         if odds <= 1.0:
             continue
+        effective_min = min_edge_under if (side == "under" and min_edge_under is not None) else min_edge
         ev = expected_value(model_p, odds)
-        if ev < min_edge - 1e-9:
+        if ev < effective_min - 1e-9:
             continue
         kf = kelly_fraction(model_p, odds)
         dc_p = dc_probs.get(dc_key) if dc_probs else None

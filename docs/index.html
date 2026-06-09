@@ -259,6 +259,20 @@
       background: #1b1c38;
       font-weight: 600;
     }
+    .cat-pill {
+      color: var(--text-dim);
+      background: #1c1f2e;
+      font-weight: 600;
+      font-size: 11px;
+    }
+    .under-warn {
+      color: #f59e0b;
+      background: var(--yellow-bg);
+      border: 1px solid var(--yellow-border);
+      font-size: 10px;
+      font-weight: 700;
+      cursor: help;
+    }
 
     /* EV bar area */
     .card-bottom {
@@ -308,6 +322,21 @@
       transition: width 0.6s ease;
     }
     .ev-bar-label { font-size: 10px; color: var(--muted); white-space: nowrap; }
+
+    /* prob comparison */
+    .prob-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .prob-model { color: var(--text-dim); font-weight: 700; }
+    .prob-arrow { color: var(--muted); }
+    .prob-market { color: var(--muted); }
+    .prob-edge { font-weight: 700; }
+    .prob-edge.pos { color: var(--green); }
+    .prob-edge.neg { color: var(--red); }
 
     /* ─── Elo table ───────────────────────────────── */
     .elo-table {
@@ -481,23 +510,43 @@ const DATA_URL = 'data/signals.json';
 let _allSignals = [];
 let _activeFilter = 'all';
 
-function marketLabel(mkt) {
+function _players(match) {
+  const parts = match.split(' vs ');
+  return [parts[0] ? parts[0].trim() : 'A', parts[1] ? parts[1].trim() : 'B'];
+}
+
+function marketLabel(mkt, match) {
+  const [a, b] = _players(match || '');
   const map = {
-    'home': 'Match Winner: Heimspieler', 'draw': 'Unentschieden', 'away': 'Match Winner: Auswärtsspieler',
-    'o/u2.5_over': 'Über 2.5', 'o/u2.5_under': 'Unter 2.5',
-    'o/u1.5_over': 'Über 1.5', 'o/u1.5_under': 'Unter 1.5',
-    'o/u3.5_over': 'Über 3.5', 'o/u3.5_under': 'Unter 3.5',
-    'ah-0.5_home': 'AH -0.5 Heim', 'ah+0.5_away': 'AH +0.5 Auswärts',
-    'ah-1.0_home': 'AH -1.0 Heim', 'ah+1.0_away': 'AH +1.0 Auswärts',
-    'ah-1.5_home': 'AH -1.5 Heim', 'ah+1.5_away': 'AH +1.5 Auswärts',
-    'ah-2.0_home': 'AH -2.0 Heim', 'ah+2.0_away': 'AH +2.0 Auswärts',
-    'ah-2.5_home': 'AH -2.5 Heim', 'ah+2.5_away': 'AH +2.5 Auswärts',
+    'home': `Sieger: ${a}`, 'draw': 'Unentschieden', 'away': `Sieger: ${b}`,
+    'o/u2.5_over': 'Über 2.5 Tore', 'o/u2.5_under': 'Unter 2.5 Tore',
+    'o/u1.5_over': 'Über 1.5 Tore', 'o/u1.5_under': 'Unter 1.5 Tore',
+    'o/u3.5_over': 'Über 3.5 Tore', 'o/u3.5_under': 'Unter 3.5 Tore',
+    'ah-0.5_home': `AH -0.5 ${a}`, 'ah+0.5_away': `AH +0.5 ${b}`,
+    'ah-1.0_home': `AH -1.0 ${a}`, 'ah+1.0_away': `AH +1.0 ${b}`,
+    'ah-1.5_home': `AH -1.5 ${a}`, 'ah+1.5_away': `AH +1.5 ${b}`,
+    'ah-2.0_home': `AH -2.0 ${a}`, 'ah+2.0_away': `AH +2.0 ${b}`,
+    'ah-2.5_home': `AH -2.5 ${a}`, 'ah+2.5_away': `AH +2.5 ${b}`,
     'btts_yes': 'Beide Teams treffen', 'btts_no': 'Nicht beide Teams treffen',
-    'ftts_home': '1. Tor: Heimteam', 'ftts_away': '1. Tor: Auswärtsteam',
-    'first_set_a': '1. Satz: A gewinnt', 'first_set_b': '1. Satz: B gewinnt',
-    'ah-1.5_a': 'Set AH -1.5 A (3:0 oder 3:1)', 'ah+1.5_b': 'Set AH +1.5 B',
+    'ftts_home': `1. Tor: ${a}`, 'ftts_away': `1. Tor: ${b}`,
+    'first_set_a': `1. Satz: ${a}`, 'first_set_b': `1. Satz: ${b}`,
+    'ah-1.5_a': `${a} gewinnt 3:0 oder 3:1`, 'ah+1.5_b': `${b} +1.5 Sätze`,
   };
   return map[mkt] || mkt;
+}
+
+function marketCategory(mkt) {
+  if (mkt === 'home' || mkt === 'draw' || mkt === 'away') return { icon: '🏆', label: '1X2' };
+  if (mkt.startsWith('ah')) return { icon: '⚖️', label: 'Handicap' };
+  if (mkt.startsWith('o/u')) return { icon: '🎯', label: 'Tore' };
+  if (mkt.startsWith('btts')) return { icon: '⚽', label: 'BTTS' };
+  if (mkt.startsWith('ftts')) return { icon: '⚡', label: '1. Tor' };
+  if (mkt.startsWith('first_set')) return { icon: '🎾', label: '1. Satz' };
+  return { icon: '📊', label: '' };
+}
+
+function isUnderMarket(mkt) {
+  return mkt.includes('_under') || mkt === 'btts_no';
 }
 
 function evClass(ev) {
@@ -536,6 +585,13 @@ function signalCard(s) {
   const evCls = evClass(s.ev_pct);
   const barPct = Math.min(100, (s.ev_pct / 25) * 100);
   const barColor = evBarColor(s.ev_pct);
+  const marketProb = (100 / s.odds).toFixed(1);
+  const edge = (s.model_prob - parseFloat(marketProb)).toFixed(1);
+  const edgeCls = parseFloat(edge) > 0 ? 'pos' : 'neg';
+  const cat = marketCategory(s.market);
+  const underWarn = isUnderMarket(s.market)
+    ? '<span class="pill under-warn" title="DC-Modell überschätzt UNTER systematisch (~5pp) — höherer Beweis nötig">⚠️ DC-Bias</span>'
+    : '';
 
   return `
     <div class="${cardClass(s)}">
@@ -544,22 +600,33 @@ function signalCard(s) {
         <div class="badges">${confBadge}${sportBadge}</div>
       </div>
       <div class="card-mid">
-        <span class="pill market-pill">${marketLabel(s.market)}</span>
-        <span class="pill">${s.model_prob}% Modell</span>
+        <span class="pill cat-pill">${cat.icon} ${cat.label}</span>
+        <span class="pill market-pill">${marketLabel(s.market, s.match)}</span>
+        ${underWarn}
       </div>
       <div class="card-bottom">
         <div class="card-bottom-row">
           <span class="ev-chip ${evCls}">EV +${s.ev_pct}%</span>
           <div class="odds-stake">
             <span class="odds-val">${s.odds.toFixed(2)}</span>
-            <span class="stake-val">${s.stake_eur.toFixed(2)} €</span>
+            <span class="stake-val">€${s.stake_eur.toFixed(0)}</span>
           </div>
+        </div>
+        <div class="prob-row">
+          <span>Modell</span>
+          <span class="prob-model">${s.model_prob}%</span>
+          <span class="prob-arrow">vs</span>
+          <span>Markt</span>
+          <span class="prob-market">${marketProb}%</span>
+          <span class="prob-arrow">·</span>
+          <span>Edge</span>
+          <span class="prob-edge ${edgeCls}">${parseFloat(edge) > 0 ? '+' : ''}${edge}pp</span>
         </div>
         <div class="ev-bar-wrap">
           <div class="ev-bar-bg">
             <div class="ev-bar-fill" style="width:${barPct}%;background:${barColor}"></div>
           </div>
-          <span class="ev-bar-label">EV max 25%</span>
+          <span class="ev-bar-label">max 25%</span>
         </div>
       </div>
     </div>`;
