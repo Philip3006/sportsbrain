@@ -1,7 +1,7 @@
 """Tests for tennis value detector."""
 import pytest
 
-from src.betting.tennis_detector import detect_value_tennis, _set_handicap_probs, _devig_2way
+from src.betting.tennis_detector import detect_value_tennis, _set_handicap_probs, _devig_2way, _first_set_probs
 
 
 def test_devig_2way_sums_to_one():
@@ -93,3 +93,88 @@ def test_signal_stake_within_bounds():
     )
     for s in signals:
         assert 5.0 <= s.stake_eur <= 15.0
+
+
+def test_min_prob_filter_blocks_extreme_underdog():
+    # model_p=0.30 < _MIN_PROB=0.35 → no signal even if EV is positive
+    signals = detect_value_tennis(
+        player_a="Underdog", player_b="Favourite",
+        probs={"p_a": 0.30, "p_b": 0.70},
+        odds_a=4.00, odds_b=1.30,  # EV for underdog: 0.30*4.0-1 = 0.20 (+20%) but blocked
+        bankroll=100.0,
+    )
+    underdog_signals = [s for s in signals if s.market == "home"]
+    assert underdog_signals == [], "p<0.35 underdog should be filtered even with high EV"
+
+
+def test_min_prob_filter_passes_at_threshold():
+    # model_p=0.36 >= _MIN_PROB=0.35 → allowed if EV passes
+    signals = detect_value_tennis(
+        player_a="SlightUnderdog", player_b="SlightFavourite",
+        probs={"p_a": 0.36, "p_b": 0.64},
+        odds_a=3.20, odds_b=1.45,  # EV for A: 0.36*3.2-1 = 0.152 (+15.2%)
+        bankroll=100.0,
+    )
+    home_signals = [s for s in signals if s.market == "home"]
+    assert len(home_signals) == 1
+
+
+def test_first_set_probs_sum_to_one():
+    probs = _first_set_probs(0.70)
+    assert abs(probs["first_set_a"] + probs["first_set_b"] - 1.0) < 1e-9
+
+
+def test_first_set_probs_favourite_above_half():
+    """Favourite should have higher first-set win probability."""
+    probs = _first_set_probs(0.75)
+    assert probs["first_set_a"] > 0.5
+
+
+def test_first_set_probs_monotone():
+    """Higher match prob → higher first set prob."""
+    p60 = _first_set_probs(0.60)["first_set_a"]
+    p75 = _first_set_probs(0.75)["first_set_a"]
+    assert p75 > p60
+
+
+def test_first_set_signal_detected_when_odds_generous():
+    # Generous odds (1.75) vs ~63% model probability → EV ≈ +10%
+    signals = detect_value_tennis(
+        player_a="Favourite", player_b="Underdog",
+        probs={"p_a": 0.75, "p_b": 0.25},
+        odds_a=1.80, odds_b=3.50,
+        bankroll=100.0,
+        first_set_odds_a=1.75,
+        first_set_odds_b=2.10,
+    )
+    markets = [s.market for s in signals]
+    assert "first_set_a" in markets, "Should find value on first set for heavy favourite at 1.75"
+
+
+def test_first_set_no_signal_when_odds_tight():
+    # Tight odds (1.55) → insufficient EV
+    signals = detect_value_tennis(
+        player_a="Favourite", player_b="Underdog",
+        probs={"p_a": 0.65, "p_b": 0.35},
+        odds_a=1.70, odds_b=2.30,
+        bankroll=100.0,
+        first_set_odds_a=1.55,
+        first_set_odds_b=2.60,
+    )
+    markets = [s.market for s in signals]
+    assert "first_set_a" not in markets
+
+
+def test_first_set_zero_odds_ignored():
+    # first_set_odds = 0 → market not available, no signals
+    signals = detect_value_tennis(
+        player_a="A", player_b="B",
+        probs={"p_a": 0.70, "p_b": 0.30},
+        odds_a=1.80, odds_b=3.50,
+        bankroll=100.0,
+        first_set_odds_a=0.0,
+        first_set_odds_b=0.0,
+    )
+    markets = [s.market for s in signals]
+    assert "first_set_a" not in markets
+    assert "first_set_b" not in markets
