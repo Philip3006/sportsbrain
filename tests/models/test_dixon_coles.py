@@ -8,6 +8,7 @@ from src.models.dixon_coles import (
     fit,
     predict_asian_handicap,
     predict_btts,
+    predict_first_scorer,
     predict_match,
     predict_match_staged,
     predict_scoreline,
@@ -184,6 +185,63 @@ class TestPredictAsianHandicap:
         )
         r = predict_asian_handicap("Strong", "Weak", params, line=-0.5)
         assert r["p_ah_home"] > 0.7
+
+    def test_minus_20_sums_to_one(self, minimal_dc_params):
+        r = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-2.0)
+        assert abs(r["p_ah_home"] + r["p_ah_away"] + r["p_push"] - 1.0) < 1e-6
+
+    def test_minus_20_has_push(self, minimal_dc_params):
+        """AH -2.0 has push when home wins by exactly 2."""
+        r = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-2.0)
+        assert r["p_push"] > 0.0
+
+    def test_minus_25_no_push(self, minimal_dc_params):
+        r = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-2.5)
+        assert r["p_push"] == 0.0
+
+    def test_minus_25_harder_than_minus_20(self, minimal_dc_params):
+        """AH -2.5 requires winning by 3+ goals (harder than -2.0 which pushes on 2)."""
+        r20 = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-2.0)
+        r25 = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-2.5)
+        assert r25["p_ah_home"] <= r20["p_ah_home"]
+
+    def test_minus_20_harder_than_minus_15(self, minimal_dc_params):
+        """AH -2.0 home win requires 3+ goals margin; -1.5 only needs 2+."""
+        r15 = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-1.5)
+        r20 = predict_asian_handicap("Home", "Away", minimal_dc_params, line=-2.0)
+        assert r20["p_ah_home"] < r15["p_ah_home"]
+
+    def test_plus_20_sums_to_one(self, minimal_dc_params):
+        r = predict_asian_handicap("Home", "Away", minimal_dc_params, line=2.0)
+        assert abs(r["p_ah_home"] + r["p_ah_away"] + r["p_push"] - 1.0) < 1e-6
+
+
+class TestPredictFirstScorer:
+    def test_probs_sum_to_one(self, minimal_dc_params):
+        r = predict_first_scorer("Home", "Away", minimal_dc_params)
+        assert abs(r["p_home_first"] + r["p_away_first"] - 1.0) < 1e-9
+
+    def test_stronger_attack_scores_first_more(self):
+        """Team with higher attack rate should score first more often."""
+        params = DixonColesParams(
+            attack={"Strong": 1.5, "Weak": -1.0},
+            defence={"Strong": -0.5, "Weak": 0.3},
+            home_adv=0.0,
+            rho=-0.13,
+        )
+        r = predict_first_scorer("Strong", "Weak", params, neutral=True)
+        assert r["p_home_first"] > 0.7
+
+    def test_neutral_returns_near_half_for_equal_teams(self):
+        """Equal teams should have ~50% chance each to score first."""
+        params = DixonColesParams(
+            attack={"A": 0.0, "B": 0.0},
+            defence={"A": 0.0, "B": 0.0},
+            home_adv=0.0,
+            rho=0.0,
+        )
+        r = predict_first_scorer("A", "B", params, neutral=True)
+        assert abs(r["p_home_first"] - 0.5) < 1e-9
 
 
 class TestFit:

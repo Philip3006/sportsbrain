@@ -41,15 +41,39 @@ def _market_label(market: str, home: str, away: str) -> str:
         return f"AH -1.5: {home} gewinnt mit 2+ Toren"
     if m == "ah+1.5_away":
         return f"AH +1.5: {away} gewinnt, Unentschieden oder verliert mit 1 Tor"
+    if m == "o/u1.5_over":
+        return "Over 1.5 Tore"
+    if m == "o/u1.5_under":
+        return "Under 1.5 Tore"
+    if m == "o/u3.5_over":
+        return "Over 3.5 Tore"
+    if m == "o/u3.5_under":
+        return "Under 3.5 Tore"
+    if m == "ah-2.0_home":
+        return f"AH -2.0: {home} gewinnt mit 3+ Toren (Push: genau 2)"
+    if m == "ah+2.0_away":
+        return f"AH +2.0: {away} gewinnt, Draw oder Heimsieg max. 2 Tore (Push)"
+    if m == "ah-2.5_home":
+        return f"AH -2.5: {home} gewinnt mit 3+ Toren"
+    if m == "ah+2.5_away":
+        return f"AH +2.5: {away} gewinnt, Draw oder verliert mit max. 2 Toren"
     if m == "btts_yes":
         return "BTTS: Beide Teams treffen"
     if m == "btts_no":
         return "BTTS: Mindestens ein Team trifft nicht"
+    if m == "ftts_home":
+        return f"1. Tor: {home} trifft zuerst"
+    if m == "ftts_away":
+        return f"1. Tor: {away} trifft zuerst"
     # Tennis set handicap markets (home = player_a, away = player_b)
     if m == "ah-1.5_a":
         return f"🎾 {home} gewinnt 3:0 oder 3:1"
     if m == "ah+1.5_b":
         return f"🎾 {away} gewinnt oder verliert max. 1 Satz"
+    if m == "first_set_a":
+        return f"🎾 1. Satz: {home} gewinnt"
+    if m == "first_set_b":
+        return f"🎾 1. Satz: {away} gewinnt"
     return market.upper()
 
 

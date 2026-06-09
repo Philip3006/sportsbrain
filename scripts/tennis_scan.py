@@ -163,6 +163,18 @@ def _mock_wimbledon_matches() -> list[dict]:
     ]
 
 
+def _tennis_market_label(market: str, player_a: str, player_b: str) -> str:
+    labels = {
+        "home":        f"Match Winner: {player_a}",
+        "away":        f"Match Winner: {player_b}",
+        "ah-1.5_a":   f"{player_a} gewinnt 3:0 oder 3:1 (Set AH -1.5)",
+        "ah+1.5_b":   f"{player_b} gewinnt oder verliert max. 1 Satz (Set AH +1.5)",
+        "first_set_a": f"1. Satz: {player_a} gewinnt",
+        "first_set_b": f"1. Satz: {player_b} gewinnt",
+    }
+    return labels.get(market, market)
+
+
 def _format_report(
     signals: list,
     scan_date: str,
@@ -182,7 +194,7 @@ def _format_report(
             ev_pct = s.ev * 100
             lines += [
                 f"## {s.home} vs {s.away}",
-                f"Market:  {'Match Winner: ' + s.home if s.market == 'home' else 'Match Winner: ' + s.away if s.market == 'away' else s.market}",
+                f"Market:  {_tennis_market_label(s.market, s.home, s.away)}",
                 f"Odds:    {s.decimal_odds:.2f}",
                 f"Model:   {s.model_prob*100:.1f}%  EV: +{ev_pct:.1f}%  ({s.confidence})",
                 f"Stake:   {s.stake_eur:.2f} EUR",
@@ -223,16 +235,7 @@ def _send_tennis_alert(signals: list, scan_date: str, summary: dict, tour: str =
         lines.append("<i>Keine Tennis Value Bets heute.</i>")
     else:
         for s in sorted(signals, key=lambda x: x.ev, reverse=True)[:5]:
-            if s.market == "home":
-                mkt_label = f"{s.home} gewinnt"
-            elif s.market == "away":
-                mkt_label = f"{s.away} gewinnt"
-            elif s.market == "ah-1.5_a":
-                mkt_label = f"{s.home} gewinnt 3:0 oder 3:1"
-            elif s.market == "ah+1.5_b":
-                mkt_label = f"{s.away} gewinnt oder verliert max. 1 Satz"
-            else:
-                mkt_label = s.market
+            mkt_label = _tennis_market_label(s.market, s.home, s.away)
 
             lines += [
                 f"<b>{s.home} vs {s.away}</b>",

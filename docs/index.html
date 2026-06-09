@@ -6,40 +6,52 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SportsBrain">
-  <meta name="theme-color" content="#0f1117">
+  <meta name="theme-color" content="#0b0d14">
   <title>SportsBrain Signals</title>
   <style>
     :root {
-      --bg: #0f1117;
-      --card: #1a1d27;
-      --card-hover: #222536;
-      --border: #2a2d3e;
-      --text: #e8eaf0;
-      --muted: #7c7f99;
+      --bg: #0b0d14;
+      --surface: #13161f;
+      --card: #181b26;
+      --card-hover: #1e2131;
+      --border: #252838;
+      --border-subtle: #1c1f2e;
+      --text: #e4e6f0;
+      --text-dim: #9a9db8;
+      --muted: #6b6e8a;
       --green: #22c55e;
-      --yellow: #eab308;
-      --blue: #3b82f6;
-      --red: #ef4444;
-      --accent: #6366f1;
+      --green-bg: #0d2818;
+      --green-border: #1a4a2e;
+      --yellow: #f59e0b;
+      --yellow-bg: #271d08;
+      --yellow-border: #4a3610;
+      --blue: #60a5fa;
+      --purple: #818cf8;
+      --purple-bg: #1a1b35;
+      --red: #f87171;
+      --high-glow: rgba(34, 197, 94, 0.12);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
       font-size: 14px;
       line-height: 1.5;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* Header */
+    /* ─── Header ─────────────────────────────────── */
     header {
-      background: var(--card);
+      background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 14px 16px 12px;
+      padding: 14px 16px;
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
     .header-row {
       display: flex;
@@ -48,155 +60,353 @@
       max-width: 640px;
       margin: 0 auto;
     }
-    .logo { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
-    .logo span { color: var(--accent); }
+    .logo { font-size: 17px; font-weight: 800; letter-spacing: -0.5px; }
+    .logo span { color: var(--purple); }
+    .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
     .updated { font-size: 11px; color: var(--muted); }
+    .live-dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      margin-right: 4px;
+      animation: pulse 2s infinite;
+      vertical-align: middle;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
 
-    /* Portfolio bar */
+    /* ─── Portfolio bar ───────────────────────────── */
     .portfolio-bar {
-      background: linear-gradient(135deg, #1e2035 0%, #161929 100%);
-      border-bottom: 1px solid var(--border);
-      padding: 10px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 16px 14px;
     }
     .portfolio-inner {
-      display: flex;
-      gap: 20px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
       max-width: 640px;
       margin: 0 auto;
-      flex-wrap: wrap;
+      gap: 4px;
     }
-    .stat { display: flex; flex-direction: column; }
-    .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    .stat-value { font-size: 18px; font-weight: 700; }
+    .stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 6px 4px;
+      border-radius: 10px;
+      background: var(--card);
+      border: 1px solid var(--border-subtle);
+    }
+    .stat-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; }
+    .stat-value { font-size: 17px; font-weight: 800; letter-spacing: -0.5px; }
     .pos { color: var(--green); }
     .neg { color: var(--red); }
     .neutral { color: var(--text); }
 
-    /* Main */
+    /* ─── Filter tabs ─────────────────────────────── */
+    .tab-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 16px;
+      position: sticky;
+      top: 57px;
+      z-index: 90;
+    }
+    .tabs {
+      display: flex;
+      gap: 0;
+      max-width: 640px;
+      margin: 0 auto;
+      overflow-x: auto;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      flex-shrink: 0;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      user-select: none;
+    }
+    .tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+    .tab .count {
+      display: inline-block;
+      background: var(--card);
+      border-radius: 10px;
+      padding: 1px 6px;
+      font-size: 10px;
+      margin-left: 4px;
+      color: var(--muted);
+    }
+    .tab.active .count { background: var(--purple-bg); color: var(--purple); }
+    .tab.high-tab .count { background: var(--green-bg); color: var(--green); }
+
+    /* ─── Main ────────────────────────────────────── */
     main {
       max-width: 640px;
       margin: 0 auto;
-      padding: 16px;
+      padding: 14px 16px 32px;
     }
 
-    /* Section title */
+    /* ─── Section title ───────────────────────────── */
     .section-title {
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.8px;
+      letter-spacing: 1px;
       margin: 20px 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
-    .section-title:first-child { margin-top: 0; }
+    .section-title:first-child { margin-top: 4px; }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
 
-    /* Signal card */
+    /* ─── Signal card ─────────────────────────────── */
     .signal-card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 14px 16px;
       margin-bottom: 10px;
-      transition: background 0.15s;
+      transition: background 0.15s, transform 0.1s;
+      position: relative;
+      overflow: hidden;
     }
-    .signal-card:active { background: var(--card-hover); }
+    .signal-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      border-radius: 14px 0 0 14px;
+      background: transparent;
+    }
+    .signal-card.high-confidence {
+      border-color: var(--green-border);
+      box-shadow: 0 0 20px var(--high-glow), inset 0 0 0 1px var(--green-border);
+    }
+    .signal-card.high-confidence::before { background: var(--green); }
+    .signal-card.medium-confidence::before { background: var(--yellow); }
+    .signal-card:active { background: var(--card-hover); transform: scale(0.99); }
 
     .card-top {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 8px;
+      margin-bottom: 9px;
     }
-    .match-name { font-size: 14px; font-weight: 600; }
+    .match-name {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      flex: 1;
+      padding-right: 8px;
+    }
+    .badges { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
     .sport-badge {
       font-size: 10px;
-      padding: 2px 6px;
+      padding: 2px 7px;
       border-radius: 6px;
-      font-weight: 600;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-football { background: #162447; color: #7badf5; border: 1px solid #1e3a6e; }
+    .badge-tennis   { background: #0d2d10; color: #5de87a; border: 1px solid #1a4a20; }
+
+    .confidence-badge {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.4px;
     }
-    .badge-football { background: #1d3a6e; color: #93bbf7; }
-    .badge-tennis   { background: #1a3a1a; color: #6ee97e; }
+    .conf-HIGH   { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+    .conf-MEDIUM { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-border); }
+    .conf-LOW    { background: #1a1a2e; color: var(--muted); border: 1px solid var(--border); }
 
     .card-mid {
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .pill {
       display: inline-block;
-      padding: 3px 8px;
-      border-radius: 6px;
+      padding: 3px 9px;
+      border-radius: 20px;
       font-size: 12px;
-      background: #242738;
-      color: var(--muted);
+      background: #1c1f2e;
+      color: var(--text-dim);
     }
-    .market-pill { color: #a5b4fc; background: #1e1e3a; font-weight: 500; }
+    .market-pill {
+      color: #a5b4fc;
+      background: #1b1c38;
+      font-weight: 600;
+    }
 
+    /* EV bar area */
     .card-bottom {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .card-bottom-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     .ev-chip {
-      font-size: 13px;
-      font-weight: 700;
-      padding: 4px 10px;
+      font-size: 14px;
+      font-weight: 800;
+      padding: 4px 12px;
       border-radius: 8px;
+      letter-spacing: -0.3px;
     }
-    .ev-high   { background: #14532d; color: var(--green); }
-    .ev-medium { background: #422006; color: var(--yellow); }
-    .ev-low    { background: #242738; color: var(--muted); }
+    .ev-high   { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+    .ev-medium { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-border); }
+    .ev-low    { background: #1c1f2e; color: var(--muted); }
     .odds-stake {
       display: flex;
-      gap: 12px;
+      gap: 14px;
       align-items: center;
     }
-    .odds-val { font-size: 16px; font-weight: 700; }
-    .stake-val { font-size: 13px; color: var(--muted); }
+    .odds-val { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+    .stake-val { font-size: 13px; color: var(--text-dim); font-weight: 600; }
 
-    /* Elo table */
+    /* EV bar */
+    .ev-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ev-bar-bg {
+      flex: 1;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .ev-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.6s ease;
+    }
+    .ev-bar-label { font-size: 10px; color: var(--muted); white-space: nowrap; }
+
+    /* ─── Elo table ───────────────────────────────── */
     .elo-table {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 14px;
       overflow: hidden;
     }
     .elo-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--border);
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      gap: 10px;
     }
     .elo-row:last-child { border-bottom: none; }
-    .elo-rank { font-size: 12px; color: var(--muted); width: 20px; }
-    .elo-name { flex: 1; padding: 0 10px; font-weight: 500; }
+    .elo-rank { font-size: 13px; width: 22px; flex-shrink: 0; text-align: center; }
+    .elo-name { flex: 1; font-weight: 600; font-size: 13px; }
+    .elo-right { display: flex; align-items: center; gap: 10px; }
+    .elo-bar-bg {
+      width: 60px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .elo-bar-fill {
+      height: 100%;
+      background: var(--purple);
+      border-radius: 2px;
+    }
     .elo-rating {
       font-size: 13px;
-      font-weight: 700;
-      color: var(--accent);
+      font-weight: 800;
+      color: var(--purple);
+      width: 34px;
+      text-align: right;
     }
 
-    /* Empty state */
+    /* ─── Skeleton loading ────────────────────────── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--card) 25%, var(--card-hover) 50%, var(--card) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 8px;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .skel-card {
+      height: 110px;
+      border-radius: 14px;
+      margin-bottom: 10px;
+    }
+
+    /* ─── Empty state ─────────────────────────────── */
     .empty {
       text-align: center;
-      padding: 40px 20px;
+      padding: 48px 20px;
       color: var(--muted);
     }
-    .empty .icon { font-size: 32px; margin-bottom: 8px; }
-    .empty .msg { font-size: 14px; }
+    .empty .icon { font-size: 36px; margin-bottom: 12px; }
+    .empty .msg { font-size: 14px; line-height: 1.6; }
+    .empty .msg strong { color: var(--text-dim); }
 
-    /* Footer */
+    /* ─── Refresh btn ────────────────────────────── */
+    .refresh-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .refresh-btn:active { color: var(--text); border-color: var(--text-dim); }
+    .stale-banner {
+      background: var(--yellow-bg);
+      border: 1px solid var(--yellow-border);
+      color: var(--yellow);
+      text-align: center;
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* ─── Footer ──────────────────────────────────── */
     footer {
       text-align: center;
       padding: 24px 16px;
       color: var(--muted);
       font-size: 11px;
+      border-top: 1px solid var(--border-subtle);
     }
-    footer a { color: var(--accent); text-decoration: none; }
+    footer a { color: var(--purple); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -204,18 +414,24 @@
 <header>
   <div class="header-row">
     <div class="logo">Sports<span>Brain</span></div>
-    <div class="updated" id="updated-time">Laden…</div>
+    <div class="header-right">
+      <div class="updated"><span class="live-dot"></span><span id="updated-time">Laden…</span></div>
+      <button class="refresh-btn" onclick="load()" id="refresh-btn">↺ Refresh</button>
+    </div>
   </div>
 </header>
+<div id="stale-banner" style="display:none" class="stale-banner">
+  ⚠️ Letzte Daten von gestern — Scan läuft täglich 08:00–09:00 UTC
+</div>
 
 <div class="portfolio-bar">
   <div class="portfolio-inner">
     <div class="stat">
-      <span class="stat-label">Offene Wetten</span>
+      <span class="stat-label">Aktiv</span>
       <span class="stat-value neutral" id="n-open">—</span>
     </div>
     <div class="stat">
-      <span class="stat-label">Gesamt P&amp;L</span>
+      <span class="stat-label">P&amp;L</span>
       <span class="stat-value" id="total-pnl">—</span>
     </div>
     <div class="stat">
@@ -223,28 +439,51 @@
       <span class="stat-value" id="roi">—</span>
     </div>
     <div class="stat">
-      <span class="stat-label">Heute</span>
-      <span class="stat-value" id="today-count">—</span>
+      <span class="stat-label">Signals</span>
+      <span class="stat-value neutral" id="today-count">—</span>
+    </div>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <div class="tabs">
+    <div class="tab active" data-filter="all" onclick="setFilter('all')">
+      Alle <span class="count" id="cnt-all">0</span>
+    </div>
+    <div class="tab" data-filter="high" onclick="setFilter('high')">
+      ⚡ HIGH <span class="count" id="cnt-high">0</span>
+    </div>
+    <div class="tab" data-filter="football" onclick="setFilter('football')">
+      ⚽ Fußball <span class="count" id="cnt-football">0</span>
+    </div>
+    <div class="tab" data-filter="tennis" onclick="setFilter('tennis')">
+      🎾 Tennis <span class="count" id="cnt-tennis">0</span>
     </div>
   </div>
 </div>
 
 <main>
-  <div id="signals-container"></div>
+  <div id="signals-container">
+    <div class="skeleton skel-card"></div>
+    <div class="skeleton skel-card"></div>
+    <div class="skeleton skel-card"></div>
+  </div>
   <div id="elo-container"></div>
 </main>
 
 <footer>
-  SportsBrain · Automatisch aktualisiert täglich 09:00 UTC ·
+  SportsBrain · Scan täglich 08:00–09:00 UTC ·
   <a href="https://github.com/Philip3006/sportsbrain" target="_blank">GitHub</a>
 </footer>
 
 <script>
 const DATA_URL = 'data/signals.json';
+let _allSignals = [];
+let _activeFilter = 'all';
 
 function marketLabel(mkt) {
   const map = {
-    'home': 'Heimsieg', 'draw': 'Unentschieden', 'away': 'Auswärtssieg',
+    'home': 'Match Winner: Heimspieler', 'draw': 'Unentschieden', 'away': 'Match Winner: Auswärtsspieler',
     'o/u2.5_over': 'Über 2.5', 'o/u2.5_under': 'Unter 2.5',
     'o/u1.5_over': 'Über 1.5', 'o/u1.5_under': 'Unter 1.5',
     'o/u3.5_over': 'Über 3.5', 'o/u3.5_under': 'Unter 3.5',
@@ -253,15 +492,10 @@ function marketLabel(mkt) {
     'ah-1.5_home': 'AH -1.5 Heim', 'ah+1.5_away': 'AH +1.5 Auswärts',
     'ah-2.0_home': 'AH -2.0 Heim', 'ah+2.0_away': 'AH +2.0 Auswärts',
     'ah-2.5_home': 'AH -2.5 Heim', 'ah+2.5_away': 'AH +2.5 Auswärts',
-    'btts_yes': 'Beide treffen', 'btts_no': 'Nicht beide treffen',
-    'ftts_home': '1. Tor Heim', 'ftts_away': '1. Tor Auswärts',
-    'first_set_a': '1. Satz: A gewinnt', 'first_set_b': '1. Satz: B gewinnt',
-    'ah-1.5_a': 'Set AH -1.5 A', 'ah+1.5_b': 'Set AH +1.5 B',
+    'btts_yes': 'Beide Teams treffen', 'btts_no': 'Nicht beide Teams treffen',
     'ftts_home': '1. Tor: Heimteam', 'ftts_away': '1. Tor: Auswärtsteam',
-    'o/u1.5_over': 'Über 1.5', 'o/u1.5_under': 'Unter 1.5',
-    'o/u3.5_over': 'Über 3.5', 'o/u3.5_under': 'Unter 3.5',
-    'ah-2.0_home': 'AH -2.0 Heim', 'ah+2.0_away': 'AH +2.0 Auswärts',
-    'ah-2.5_home': 'AH -2.5 Heim', 'ah+2.5_away': 'AH +2.5 Auswärts',
+    'first_set_a': '1. Satz: A gewinnt', 'first_set_b': '1. Satz: B gewinnt',
+    'ah-1.5_a': 'Set AH -1.5 A (3:0 oder 3:1)', 'ah+1.5_b': 'Set AH +1.5 B',
   };
   return map[mkt] || mkt;
 }
@@ -272,70 +506,145 @@ function evClass(ev) {
   return 'ev-low';
 }
 
+function confClass(c) {
+  return 'conf-' + (c || 'MEDIUM');
+}
+
+function cardClass(s) {
+  if (s.confidence === 'HIGH') return 'signal-card high-confidence';
+  if (s.confidence === 'MEDIUM') return 'signal-card medium-confidence';
+  return 'signal-card';
+}
+
 function pnlClass(val) {
   if (val > 0) return 'pos';
   if (val < 0) return 'neg';
   return 'neutral';
 }
 
+function evBarColor(ev) {
+  if (ev >= 8) return '#22c55e';
+  if (ev >= 3) return '#f59e0b';
+  return '#6b6e8a';
+}
+
 function signalCard(s) {
-  const badge = s.sport === 'tennis'
+  const sportBadge = s.sport === 'tennis'
     ? '<span class="sport-badge badge-tennis">Tennis</span>'
     : '<span class="sport-badge badge-football">Fußball</span>';
+  const confBadge = `<span class="confidence-badge ${confClass(s.confidence)}">${s.confidence}</span>`;
   const evCls = evClass(s.ev_pct);
+  const barPct = Math.min(100, (s.ev_pct / 25) * 100);
+  const barColor = evBarColor(s.ev_pct);
+
   return `
-    <div class="signal-card">
+    <div class="${cardClass(s)}">
       <div class="card-top">
         <div class="match-name">${s.match}</div>
-        ${badge}
+        <div class="badges">${confBadge}${sportBadge}</div>
       </div>
       <div class="card-mid">
         <span class="pill market-pill">${marketLabel(s.market)}</span>
         <span class="pill">${s.model_prob}% Modell</span>
-        <span class="pill">${s.confidence}</span>
       </div>
       <div class="card-bottom">
-        <span class="ev-chip ${evCls}">EV +${s.ev_pct}%</span>
-        <div class="odds-stake">
-          <span class="odds-val">${s.odds.toFixed(2)}</span>
-          <span class="stake-val">${s.stake_eur.toFixed(2)} €</span>
+        <div class="card-bottom-row">
+          <span class="ev-chip ${evCls}">EV +${s.ev_pct}%</span>
+          <div class="odds-stake">
+            <span class="odds-val">${s.odds.toFixed(2)}</span>
+            <span class="stake-val">${s.stake_eur.toFixed(2)} €</span>
+          </div>
+        </div>
+        <div class="ev-bar-wrap">
+          <div class="ev-bar-bg">
+            <div class="ev-bar-fill" style="width:${barPct}%;background:${barColor}"></div>
+          </div>
+          <span class="ev-bar-label">EV max 25%</span>
         </div>
       </div>
     </div>`;
 }
 
-function eloRow(item, idx) {
+function eloRow(item, idx, maxRating) {
   const medals = ['🥇', '🥈', '🥉'];
   const rank = medals[idx] || `${idx + 1}.`;
+  const barPct = Math.round((item.rating / maxRating) * 100);
   return `
     <div class="elo-row">
       <span class="elo-rank">${rank}</span>
       <span class="elo-name">${item.name}</span>
-      <span class="elo-rating">${item.rating}</span>
+      <div class="elo-right">
+        <div class="elo-bar-bg">
+          <div class="elo-bar-fill" style="width:${barPct}%"></div>
+        </div>
+        <span class="elo-rating">${item.rating}</span>
+      </div>
     </div>`;
 }
 
-async function load() {
+function setFilter(f) {
+  _activeFilter = f;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.filter === f));
+  renderSignals();
+}
+
+function renderSignals() {
+  const container = document.getElementById('signals-container');
+  let signals = _allSignals;
+
+  if (_activeFilter === 'high') signals = signals.filter(s => s.confidence === 'HIGH');
+  else if (_activeFilter === 'football') signals = signals.filter(s => s.sport === 'football');
+  else if (_activeFilter === 'tennis') signals = signals.filter(s => s.sport === 'tennis');
+
+  if (signals.length === 0) {
+    const msg = _activeFilter === 'all'
+      ? '<strong>Keine Value Bets heute.</strong><br>Nächster Scan: morgen 08:00–09:00 UTC'
+      : '<strong>Keine Signale für diesen Filter.</strong>';
+    container.innerHTML = `<div class="empty"><div class="icon">🔍</div><div class="msg">${msg}</div></div>`;
+    return;
+  }
+
+  const footballSigs = signals.filter(s => s.sport === 'football');
+  const tennisSigs = signals.filter(s => s.sport === 'tennis');
+  let html = '';
+
+  if (footballSigs.length && _activeFilter !== 'tennis') {
+    if (_activeFilter !== 'football' || tennisSigs.length) {
+      html += '<div class="section-title">⚽ Fußball</div>';
+    }
+    html += footballSigs.map(signalCard).join('');
+  }
+  if (tennisSigs.length && _activeFilter !== 'football') {
+    if (_activeFilter !== 'tennis' || footballSigs.length) {
+      html += '<div class="section-title">🎾 Tennis</div>';
+    }
+    html += tennisSigs.map(signalCard).join('');
+  }
+  container.innerHTML = html;
+}
+
+async function _loadData() {
   try {
     const r = await fetch(DATA_URL + '?t=' + Date.now());
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
 
-    // Header timestamp
+    // Timestamp + stale detection
     const dt = new Date(d.updated);
+    const ageHours = (Date.now() - dt.getTime()) / 3600000;
     document.getElementById('updated-time').textContent =
-      'Update: ' + dt.toLocaleString('de-DE', {
-        day: '2-digit', month: '2-digit',
-        hour: '2-digit', minute: '2-digit'
-      });
+      dt.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    document.getElementById('stale-banner').style.display = ageHours > 26 ? 'block' : 'none';
+    // Dot color: green if fresh (<26h), yellow if stale
+    document.querySelector('.live-dot').style.background = ageHours > 26 ? 'var(--yellow)' : 'var(--green)';
 
-    // Portfolio bar
+    // Portfolio
     const p = d.portfolio || {};
     document.getElementById('n-open').textContent = p.n_open ?? '0';
 
     const pnlEl = document.getElementById('total-pnl');
     const pnl = p.total_pnl ?? 0;
-    pnlEl.textContent = (pnl >= 0 ? '+' : '') + pnl.toFixed(2) + ' €';
+    pnlEl.textContent = (pnl >= 0 ? '+' : '') + pnl.toFixed(2) + '€';
     pnlEl.className = 'stat-value ' + pnlClass(pnl);
 
     const roiEl = document.getElementById('roi');
@@ -343,52 +652,52 @@ async function load() {
     roiEl.textContent = (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%';
     roiEl.className = 'stat-value ' + pnlClass(roi);
 
-    const allSignals = [...(d.football || []), ...(d.tennis || [])];
-    allSignals.sort((a, b) => b.ev_pct - a.ev_pct);
-    document.getElementById('today-count').textContent = allSignals.length + ' Signals';
+    // All signals merged and sorted by EV
+    _allSignals = [...(d.football || []), ...(d.tennis || [])];
+    _allSignals.sort((a, b) => b.ev_pct - a.ev_pct);
 
-    // Signal cards
-    const container = document.getElementById('signals-container');
-    if (allSignals.length === 0) {
-      container.innerHTML = `
-        <div class="empty">
-          <div class="icon">🔍</div>
-          <div class="msg">Keine Value Bets heute.<br>Nächster Scan: morgen 09:00 UTC</div>
-        </div>`;
-    } else {
-      const footballSigs = allSignals.filter(s => s.sport === 'football');
-      const tennisSigs = allSignals.filter(s => s.sport === 'tennis');
-      let html = '';
-      if (footballSigs.length) {
-        html += '<div class="section-title">⚽ Fußball</div>';
-        html += footballSigs.map(signalCard).join('');
-      }
-      if (tennisSigs.length) {
-        html += '<div class="section-title">🎾 Tennis</div>';
-        html += tennisSigs.map(signalCard).join('');
-      }
-      container.innerHTML = html;
-    }
+    // Update counts
+    document.getElementById('today-count').textContent = _allSignals.length;
+    document.getElementById('cnt-all').textContent = _allSignals.length;
+    document.getElementById('cnt-high').textContent = _allSignals.filter(s => s.confidence === 'HIGH').length;
+    document.getElementById('cnt-football').textContent = _allSignals.filter(s => s.sport === 'football').length;
+    document.getElementById('cnt-tennis').textContent = _allSignals.filter(s => s.sport === 'tennis').length;
 
-    // Top Elo
+    renderSignals();
+
+    // Elo leaderboard
     const eloContainer = document.getElementById('elo-container');
-    const elo = d.top_elo || [];
+    const elo = (d.top_elo || []).slice(0, 10);
     if (elo.length) {
+      const maxRating = elo[0].rating;
       eloContainer.innerHTML = `
-        <div class="section-title">🎾 Top Grass Elo (Wimbledon)</div>
+        <div class="section-title">🏆 Grass Elo-Ranking</div>
         <div class="elo-table">
-          ${elo.slice(0, 10).map(eloRow).join('')}
+          ${elo.map((item, i) => eloRow(item, i, maxRating)).join('')}
         </div>`;
     }
+
   } catch (e) {
     document.getElementById('signals-container').innerHTML = `
       <div class="empty">
         <div class="icon">⚠️</div>
-        <div class="msg">Daten konnten nicht geladen werden.<br>${e.message}</div>
+        <div class="msg"><strong>Daten konnten nicht geladen werden.</strong><br>${e.message}</div>
       </div>`;
   }
 }
 
+async function load() {
+  const btn = document.getElementById('refresh-btn');
+  if (btn) btn.textContent = '↺ …';
+  try {
+    await _loadData();
+  } finally {
+    if (btn) btn.textContent = '↺ Refresh';
+  }
+}
+
+// Auto-refresh every 30 minutes
+setInterval(load, 30 * 60 * 1000);
 load();
 </script>
 </body>

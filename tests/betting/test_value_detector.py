@@ -8,6 +8,7 @@ from src.betting.value_detector import (
     detect_value,
     detect_value_ah,
     detect_value_btts,
+    detect_value_ftts,
     detect_value_totals,
     set_confidence,
 )
@@ -413,3 +414,58 @@ class TestDetectValueBtts:
         assert all(s.market != "btts_yes" for s in signals), (
             "btts_yes signal should not appear when EV is negative"
         )
+
+
+# ---------------------------------------------------------------------------
+# detect_value_ftts tests
+# ---------------------------------------------------------------------------
+
+class TestDetectValueFtts:
+    def _ftts_probs(self, p_home: float) -> dict:
+        return {"p_home_first": p_home, "p_away_first": 1.0 - p_home}
+
+    def test_returns_signal_when_value_exists(self):
+        # home scores first with 60% model prob, offered at 2.00 → EV = 0.60*2.0-1 = 0.20
+        signals = detect_value_ftts(
+            "A", "B", self._ftts_probs(0.60),
+            ftts_home_odds=2.00, ftts_away_odds=1.80,
+            bankroll=100.0,
+        )
+        markets = [s.market for s in signals]
+        assert "ftts_home" in markets
+
+    def test_returns_no_signal_when_no_value(self):
+        # 50% prob at 1.90 → EV = 0.50*1.90-1 = -0.05 → no signal
+        signals = detect_value_ftts(
+            "A", "B", self._ftts_probs(0.50),
+            ftts_home_odds=1.90, ftts_away_odds=1.90,
+            bankroll=100.0,
+        )
+        assert signals == []
+
+    def test_zero_odds_skipped(self):
+        signals = detect_value_ftts(
+            "A", "B", self._ftts_probs(0.65),
+            ftts_home_odds=0.0, ftts_away_odds=0.0,
+            bankroll=100.0,
+        )
+        assert signals == []
+
+    def test_market_keys_are_correct(self):
+        signals = detect_value_ftts(
+            "Home", "Away", self._ftts_probs(0.70),
+            ftts_home_odds=1.75, ftts_away_odds=3.50,
+            bankroll=100.0,
+        )
+        for s in signals:
+            assert s.market in ("ftts_home", "ftts_away")
+
+    def test_home_team_set_correctly(self):
+        signals = detect_value_ftts(
+            "Barcelona", "Madrid", self._ftts_probs(0.65),
+            ftts_home_odds=1.80, ftts_away_odds=2.50,
+            bankroll=100.0,
+        )
+        for s in signals:
+            assert s.home == "Barcelona"
+            assert s.away == "Madrid"
