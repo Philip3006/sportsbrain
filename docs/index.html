@@ -578,9 +578,13 @@ function evBarColor(ev) {
 }
 
 function signalCard(s) {
+  let sportLabel = s.sport === 'football' ? 'WM 2026' : 'Tennis';
+  if (s.sport === 'tennis' && s.tour) {
+    sportLabel = s.tour.toUpperCase();
+  }
   const sportBadge = s.sport === 'tennis'
-    ? '<span class="sport-badge badge-tennis">Tennis</span>'
-    : '<span class="sport-badge badge-football">Fußball</span>';
+    ? `<span class="sport-badge badge-tennis">${sportLabel}</span>`
+    : `<span class="sport-badge badge-football">${sportLabel}</span>`;
   const confBadge = `<span class="confidence-badge ${confClass(s.confidence)}">${s.confidence}</span>`;
   const evCls = evClass(s.ev_pct);
   const barPct = Math.min(100, (s.ev_pct / 25) * 100);
