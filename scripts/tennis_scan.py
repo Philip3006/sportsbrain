@@ -305,8 +305,8 @@ def main() -> None:
         matches = None
 
     if matches is not None and not matches.empty:
-        print("Computing surface-adjusted Elo ratings...")
-        ratings = compute_tennis_elo(matches)
+        print("Computing surface-adjusted Elo ratings (recency-weighted)...")
+        ratings = compute_tennis_elo(matches, reference_date=datetime.utcnow())
         top_grass = top_players(ratings, surface="grass", n=10)
         print(f"  Top grass Elo: {top_grass[0][0] if top_grass else 'n/a'}")
     else:

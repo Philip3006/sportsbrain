@@ -1,4 +1,6 @@
 """Tests for surface-adjusted tennis Elo model."""
+from datetime import datetime
+
 import pandas as pd
 import pytest
 
@@ -169,12 +171,54 @@ def test_predict_winner_uses_per_player_dynamic_weight():
         for m in range(9)
     ])
     ratings = compute_tennis_elo(df)
-    # GrassSpec has 9 grass wins → higher dynamic surface weight
-    # ClaySpec has 0 grass matches → low surface weight
     assert ratings.get_surface_count("GrassSpec", "grass") == 9
     assert ratings.get_surface_count("ClaySpec", "grass") == 0
     probs = predict_winner("GrassSpec", "ClaySpec", ratings, "grass")
     assert abs(probs["p_a"] + probs["p_b"] - 1.0) < 1e-9
-    # GrassSpec's grass Elo is real (built from 9 wins); ClaySpec is unknown (default 1500)
-    # With dynamic blend: GrassSpec's surface Elo gets higher weight → should be favoured
+    # GrassSpec's surface Elo built from 9 wins → higher weight → favoured
     assert probs["p_a"] > probs["p_b"]
+
+
+# --- Recency K-factor tests ---
+
+def test_recency_k_reduces_old_match_impact():
+    """Recent match (this year) should move ratings more than the same match 5 years ago."""
+    ref = datetime(2026, 6, 9)
+
+    df_recent = _make_matches(
+        (pd.Timestamp("2026-05-01"), "A", "B", "grass", "G"),
+    )
+    df_old = _make_matches(
+        (pd.Timestamp("2021-05-01"), "A", "B", "grass", "G"),
+    )
+    r_recent = compute_tennis_elo(df_recent, reference_date=ref)
+    r_old    = compute_tennis_elo(df_old,    reference_date=ref)
+
+    # Recent win → higher rating for A
+    assert r_recent.get_overall("A") > r_old.get_overall("A")
+    # Recent loss → lower rating for B (more penalised)
+    assert r_recent.get_overall("B") < r_old.get_overall("B")
+
+
+def test_recency_k_same_as_default_when_no_reference():
+    """Without reference_date, behaviour is unchanged (backward compatible)."""
+    df = _make_matches(
+        (pd.Timestamp("2024-01-01"), "Alcaraz", "Djokovic", "grass", "G"),
+    )
+    ratings_default = compute_tennis_elo(df)
+    ratings_no_ref  = compute_tennis_elo(df, reference_date=None)
+    assert ratings_default.get_overall("Alcaraz") == ratings_no_ref.get_overall("Alcaraz")
+
+
+def test_recency_k_gradual_not_cliff():
+    """Match 2 years ago should have more weight than 4 years ago (gradual decay)."""
+    ref = datetime(2026, 6, 9)
+
+    df_2yr = _make_matches((pd.Timestamp("2024-06-09"), "A", "B", "grass", "G"))
+    df_4yr = _make_matches((pd.Timestamp("2022-06-09"), "A", "B", "grass", "G"))
+
+    r_2yr = compute_tennis_elo(df_2yr, reference_date=ref)
+    r_4yr = compute_tennis_elo(df_4yr, reference_date=ref)
+
+    # 2-year-old win carries more weight: A's rating deviation is larger
+    assert (r_2yr.get_overall("A") - _DEFAULT_RATING) > (r_4yr.get_overall("A") - _DEFAULT_RATING)
