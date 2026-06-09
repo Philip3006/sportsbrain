@@ -32,6 +32,17 @@ _SPORT_WIMBLEDON = "tennis_atp_wimbledon"
 _SPORT_WTA_WIMBLEDON = "tennis_wta_wimbledon"
 _ODDS_API_URL = "https://api.the-odds-api.com/v4"
 
+_ATP_MIN_EDGE = 0.10  # ATP Wimbledon backtest: -6.4% ROI → tight market requires 10% edge
+
+
+def min_edge_for(match_tour: str) -> float:
+    """Returns minimum EV edge threshold per tour.
+    ATP: 10% (backtest -6.4% ROI — market is efficient)
+    WTA: 3%  (backtest +8.5% ROI — market is less efficient)
+    """
+    from src.config import MIN_EDGE
+    return _ATP_MIN_EDGE if match_tour.lower() == "atp" else MIN_EDGE
+
 
 def _fetch_both_tours() -> "pd.DataFrame":
     import pandas as pd
@@ -170,10 +181,12 @@ def _mock_wimbledon_matches() -> list[dict]:
             "player_b": "Aryna Sabalenka",
             "odds_a": 1.90,
             "odds_b": 2.00,
-            "ah_odds_a": 2.10,
-            "ah_odds_b": 1.80,
-            "first_set_odds_a": 1.88,
-            "first_set_odds_b": 2.00,
+            # WTA BO3: ah-1.5_a = wins 2:0 straight sets (~23% for near-even match)
+            # Realistic: odds ~4.00/1.30 (not ATP-style 2.10/1.80)
+            "ah_odds_a": 4.00,
+            "ah_odds_b": 1.30,
+            "first_set_odds_a": 1.92,
+            "first_set_odds_b": 1.95,
             "tour": "wta",
         },
     ]
@@ -306,7 +319,7 @@ def main() -> None:
 
     if matches is not None and not matches.empty:
         print("Computing surface-adjusted Elo ratings (recency-weighted)...")
-        ratings = compute_tennis_elo(matches, reference_date=datetime.utcnow())
+        ratings = compute_tennis_elo(matches, reference_date=datetime.now())
         top_grass = top_players(ratings, surface="grass", n=10)
         print(f"  Top grass Elo: {top_grass[0][0] if top_grass else 'n/a'}")
     else:
@@ -346,15 +359,6 @@ def main() -> None:
 
     print(f"  {len(upcoming)} upcoming matches found")
 
-    # Per-match edge guard based on backtest results:
-    # ATP Wimbledon: -6.4% ROI → require 10% min_edge (very tight market)
-    # WTA Wimbledon: +8.5% ROI → standard 3% min_edge (less efficient market)
-    from src.config import MIN_EDGE
-    _ATP_MIN_EDGE = 0.10
-
-    def _min_edge_for(match_tour: str) -> float:
-        return _ATP_MIN_EDGE if match_tour == "atp" else MIN_EDGE
-
     # 3. Predict and detect value
     all_signals = []
     for m in upcoming:
@@ -374,7 +378,7 @@ def main() -> None:
             ah_odds_b=m.get("ah_odds_b", 0.0),
             first_set_odds_a=m.get("first_set_odds_a", 0.0),
             first_set_odds_b=m.get("first_set_odds_b", 0.0),
-            min_edge=_min_edge_for(match_tour),
+            min_edge=min_edge_for(match_tour),
             tour=match_tour,
         )
 
