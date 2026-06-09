@@ -49,9 +49,12 @@ class TennisEloRatings:
     """
     Holds per-surface + overall Elo ratings for all players seen so far.
     `overall` is updated on every match; `by_surface` only on matching surface.
+    `surface_counts` tracks how many matches each player has played per surface
+    and drives the dynamic blend weight in get_blended().
     """
     overall: dict[str, float] = field(default_factory=dict)
     by_surface: dict[str, dict[str, float]] = field(default_factory=dict)
+    surface_counts: dict[str, dict[str, int]] = field(default_factory=dict)
 
     def get_overall(self, player: str) -> float:
         return self.overall.get(player, _DEFAULT_RATING)
@@ -59,8 +62,21 @@ class TennisEloRatings:
     def get_surface(self, player: str, surface: str) -> float:
         return self.by_surface.get(surface, {}).get(player, _DEFAULT_RATING)
 
-    def get_blended(self, player: str, surface: str, w_surface: float = 0.70) -> float:
-        """Blend surface Elo (70%) with overall (30%) to handle sparse data."""
+    def get_surface_count(self, player: str, surface: str) -> int:
+        """Number of matches played on this surface (winner + loser)."""
+        return self.surface_counts.get(surface, {}).get(player, 0)
+
+    def _dynamic_w_surface(self, player: str, surface: str) -> float:
+        """Surface weight that grows with match count: new player→0.15, experienced→cap.
+        Ramps linearly from 0.15 to the surface cap over the first 20 matches."""
+        n = self.get_surface_count(player, surface)
+        cap = _SURFACE_WEIGHTS.get(surface.lower(), 0.70)
+        return min(cap, 0.15 + (cap - 0.15) * min(n, 20) / 20)
+
+    def get_blended(self, player: str, surface: str, w_surface: float | None = None) -> float:
+        """Blend surface Elo with overall. Uses per-player dynamic weight if w_surface is None."""
+        if w_surface is None:
+            w_surface = self._dynamic_w_surface(player, surface)
         s = self.get_surface(player, surface)
         o = self.get_overall(player)
         return w_surface * s + (1.0 - w_surface) * o
@@ -78,7 +94,11 @@ class TennisEloRatings:
         surf = surface.lower()
         if surf not in self.by_surface:
             self.by_surface[surf] = {}
+        if surf not in self.surface_counts:
+            self.surface_counts[surf] = {}
         self._update(self.by_surface[surf], winner, loser, k)
+        self.surface_counts[surf][winner] = self.surface_counts[surf].get(winner, 0) + 1
+        self.surface_counts[surf][loser] = self.surface_counts[surf].get(loser, 0) + 1
 
 
 def _apply_decay(pool: dict[str, float]) -> None:
@@ -134,10 +154,9 @@ def predict_winner(
 ) -> dict[str, float]:
     """
     Returns {'p_a': float, 'p_b': float} for a 2-outcome match.
-    Uses surface-specific blend weights by default (_SURFACE_WEIGHTS).
+    Each player's surface blend weight is computed independently from their match count
+    (via _dynamic_w_surface). Pass explicit w_surface to override for both players.
     """
-    if w_surface is None:
-        w_surface = _SURFACE_WEIGHTS.get(surface.lower(), 0.70)
     r_a = ratings.get_blended(player_a, surface, w_surface)
     r_b = ratings.get_blended(player_b, surface, w_surface)
     p_a = _expected(r_a, r_b)

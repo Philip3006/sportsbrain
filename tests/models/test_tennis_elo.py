@@ -10,6 +10,7 @@ from src.models.tennis_elo import (
     _DEFAULT_RATING,
     _DECAY,
     _expected,
+    _SURFACE_WEIGHTS,
 )
 
 
@@ -118,3 +119,62 @@ def test_decay_not_applied_within_same_year():
     # A wins both: with decay A's 2023 rating was pulled down before 2024 match
     # so A's final rating is lower when decay occurred
     assert ratings_same_year.get_overall("A") > ratings_diff_year.get_overall("A")
+
+
+# --- Dynamic surface blend tests ---
+
+def test_surface_count_increments_after_update():
+    """update() increments surface_counts for both winner and loser."""
+    ratings = TennisEloRatings()
+    assert ratings.get_surface_count("Alcaraz", "grass") == 0
+    ratings.update("Alcaraz", "Djokovic", "grass", "G")
+    assert ratings.get_surface_count("Alcaraz", "grass") == 1
+    assert ratings.get_surface_count("Djokovic", "grass") == 1
+    ratings.update("Alcaraz", "Federer", "grass", "G")
+    assert ratings.get_surface_count("Alcaraz", "grass") == 2
+    assert ratings.get_surface_count("Federer", "grass") == 1
+    # clay counts stay zero
+    assert ratings.get_surface_count("Alcaraz", "clay") == 0
+
+
+def test_dynamic_blend_new_player_trusts_overall():
+    """Player with 0 grass matches gets low surface weight (~0.15)."""
+    ratings = TennisEloRatings()
+    ratings.overall["NewPlayer"] = 1600
+    ratings.by_surface["grass"] = {"NewPlayer": 1700}
+    # 0 grass matches → w_surface = 0.15
+    blended_dynamic = ratings.get_blended("NewPlayer", "grass")
+    blended_fixed = ratings.get_blended("NewPlayer", "grass", w_surface=_SURFACE_WEIGHTS["grass"])
+    # Dynamic blend is closer to overall (1600) than fixed blend
+    assert blended_dynamic < blended_fixed, "0-match player should trust overall more than fixed weight"
+    assert abs(blended_dynamic - (0.15 * 1700 + 0.85 * 1600)) < 1.0
+
+
+def test_dynamic_blend_experienced_player_trusts_surface():
+    """Player with 20 grass matches reaches the surface cap weight."""
+    ratings = TennisEloRatings()
+    ratings.overall["GrassKing"] = 1500
+    ratings.by_surface["grass"] = {"GrassKing": 1700}
+    ratings.surface_counts["grass"] = {"GrassKing": 20}
+    blended = ratings.get_blended("GrassKing", "grass")
+    cap = _SURFACE_WEIGHTS["grass"]  # 0.60 for grass
+    expected = cap * 1700 + (1.0 - cap) * 1500
+    assert abs(blended - expected) < 1.0, "20-match player should use full surface cap weight"
+
+
+def test_predict_winner_uses_per_player_dynamic_weight():
+    """Grass specialist (10 grass matches) vs clay specialist (0 grass matches)."""
+    df = _make_matches(*[
+        (pd.Timestamp(f"2024-0{(m % 9) + 1}-01"), "GrassSpec", f"opp_g{m}", "grass", "G")
+        for m in range(9)
+    ])
+    ratings = compute_tennis_elo(df)
+    # GrassSpec has 9 grass wins → higher dynamic surface weight
+    # ClaySpec has 0 grass matches → low surface weight
+    assert ratings.get_surface_count("GrassSpec", "grass") == 9
+    assert ratings.get_surface_count("ClaySpec", "grass") == 0
+    probs = predict_winner("GrassSpec", "ClaySpec", ratings, "grass")
+    assert abs(probs["p_a"] + probs["p_b"] - 1.0) < 1e-9
+    # GrassSpec's grass Elo is real (built from 9 wins); ClaySpec is unknown (default 1500)
+    # With dynamic blend: GrassSpec's surface Elo gets higher weight → should be favoured
+    assert probs["p_a"] > probs["p_b"]
