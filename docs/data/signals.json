@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-10T11:38:24Z",
+  "updated": "2026-06-09T13:19:52Z",
   "football": [
     {
       "sport": "football",
@@ -30,10 +30,10 @@
       "match": "Jannik Sinner vs Daniil Medvedev",
       "market": "home",
       "odds": 1.55,
-      "model_prob": 75.4,
-      "ev_pct": 16.9,
-      "stake_eur": 14.48,
-      "confidence": "HIGH",
+      "model_prob": 73.1,
+      "ev_pct": 13.3,
+      "stake_eur": 11.07,
+      "confidence": "MEDIUM",
       "tour": "atp",
       "kickoff": "2026-07-07T11:00:00Z"
     },
@@ -42,9 +42,9 @@
       "match": "Jannik Sinner vs Daniil Medvedev",
       "market": "ah-1.5_a",
       "odds": 2.2,
-      "model_prob": 55.1,
-      "ev_pct": 21.2,
-      "stake_eur": 15.0,
+      "model_prob": 52.6,
+      "ev_pct": 15.6,
+      "stake_eur": 13.67,
       "confidence": "HIGH",
       "tour": "atp",
       "kickoff": "2026-07-07T11:00:00Z"
@@ -54,29 +54,17 @@
       "match": "Iga Swiatek vs Aryna Sabalenka",
       "market": "away",
       "odds": 2.0,
-      "model_prob": 54.6,
-      "ev_pct": 9.2,
-      "stake_eur": 9.52,
-      "confidence": "HIGH",
-      "tour": "wta",
-      "kickoff": "2026-07-06T11:00:00Z"
-    },
-    {
-      "sport": "tennis",
-      "match": "Iga Swiatek vs Aryna Sabalenka",
-      "market": "ah+1.5_b",
-      "odds": 1.8,
-      "model_prob": 72.3,
-      "ev_pct": 30.2,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
+      "model_prob": 53.4,
+      "ev_pct": 6.8,
+      "stake_eur": 7.22,
+      "confidence": "MEDIUM",
       "tour": "wta",
       "kickoff": "2026-07-06T11:00:00Z"
     }
   ],
   "portfolio": {
-    "n_bets": 4,
-    "n_open": 4,
+    "n_bets": 14,
+    "n_open": 14,
     "n_won": 0,
     "n_lost": 0,
     "n_void": 0,
@@ -90,43 +78,43 @@
   "top_elo": [
     {
       "name": "Carlos Alcaraz",
-      "rating": 1774
-    },
-    {
-      "name": "Novak Djokovic",
-      "rating": 1739
+      "rating": 1695
     },
     {
       "name": "Jannik Sinner",
-      "rating": 1736
+      "rating": 1669
     },
     {
-      "name": "Taylor Fritz",
-      "rating": 1700
-    },
-    {
-      "name": "Iga Swiatek",
-      "rating": 1684
-    },
-    {
-      "name": "Aryna Sabalenka",
+      "name": "Novak Djokovic",
       "rating": 1656
     },
     {
-      "name": "Elena Rybakina",
-      "rating": 1651
+      "name": "Taylor Fritz",
+      "rating": 1652
+    },
+    {
+      "name": "Iga Swiatek",
+      "rating": 1637
+    },
+    {
+      "name": "Aryna Sabalenka",
+      "rating": 1603
     },
     {
       "name": "Amanda Anisimova",
-      "rating": 1633
+      "rating": 1597
     },
     {
-      "name": "Daniil Medvedev",
-      "rating": 1628
+      "name": "Elena Rybakina",
+      "rating": 1594
+    },
+    {
+      "name": "Barbora Krejcikova",
+      "rating": 1583
     },
     {
       "name": "Alex De Minaur",
-      "rating": 1626
+      "rating": 1583
     }
   ]
 }
