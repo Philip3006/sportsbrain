@@ -24,7 +24,7 @@
       --yellow:    #d29922;
       --yellow-dim:#2d2208;
       --red:       #f85149;
-      --nav-h:     calc(60px + env(safe-area-inset-bottom));
+      --nav-h:     calc(72px + env(safe-area-inset-bottom));
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; -webkit-font-smoothing: antialiased; }
@@ -111,10 +111,10 @@
     .elo-val { font-size: 13px; font-weight: 800; color: var(--green); width: 36px; text-align: right; }
 
     /* Bottom nav */
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); display: flex; padding-bottom: env(safe-area-inset-bottom); z-index: 100; }
-    .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 8px 4px 6px; gap: 3px; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; }
-    .ni { font-size: 20px; line-height: 1; }
-    .nl { font-size: 10px; color: var(--muted); font-weight: 600; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); display: flex; padding-bottom: max(env(safe-area-inset-bottom), 8px); z-index: 100; }
+    .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 4px 8px; gap: 4px; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; }
+    .ni { font-size: 24px; line-height: 1; }
+    .nl { font-size: 11px; color: var(--muted); font-weight: 600; }
     .nav-tab.active .nl { color: var(--green); }
     .nav-tab.active .ni { filter: drop-shadow(0 0 4px rgba(63,185,80,.5)); }
     .nav-badge { position: absolute; top: 5px; right: calc(50% - 18px); background: var(--green); color: #000; font-size: 9px; font-weight: 800; border-radius: 8px; padding: 1px 5px; min-width: 16px; text-align: center; display: none; }
@@ -164,7 +164,7 @@
 
 <nav class="bottom-nav">
   <div class="nav-tab active" data-view="signals" data-filter="all" onclick="navTo(this)">
-    <span class="ni">🎯</span><span class="nl">Signale</span>
+    <span class="ni">🏠</span><span class="nl">Home</span>
     <span class="nav-badge" id="badge-all"></span>
   </div>
   <div class="nav-tab" data-view="signals" data-filter="football" onclick="navTo(this)">
@@ -172,14 +172,11 @@
     <span class="nav-badge" id="badge-football"></span>
   </div>
   <div class="nav-tab" data-view="signals" data-filter="tennis" onclick="navTo(this)">
-    <span class="ni">🎾</span><span class="nl">Tennis</span>
+    <span class="ni">🏆</span><span class="nl">WM</span>
     <span class="nav-badge" id="badge-tennis"></span>
   </div>
   <div class="nav-tab" data-view="journal" onclick="navTo(this)">
-    <span class="ni">📓</span><span class="nl">Journal</span>
-  </div>
-  <div class="nav-tab" data-view="ranking" onclick="navTo(this)">
-    <span class="ni">🏆</span><span class="nl">Ranking</span>
+    <span class="ni">📅</span><span class="nl">Kalender</span>
   </div>
 </nav>
 
