@@ -24,7 +24,7 @@
       --yellow:    #d29922;
       --yellow-dim:#2d2208;
       --red:       #f85149;
-      --nav-h:     calc(72px + env(safe-area-inset-bottom));
+      --nav-h:     calc(86px + env(safe-area-inset-bottom));
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; -webkit-font-smoothing: antialiased; }
@@ -110,14 +110,15 @@
     .elo-bar-fill { height: 100%; background: var(--green); border-radius: 2px; }
     .elo-val { font-size: 13px; font-weight: 800; color: var(--green); width: 36px; text-align: right; }
 
-    /* Bottom nav */
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); display: flex; padding-bottom: max(env(safe-area-inset-bottom), 8px); z-index: 100; }
-    .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 4px 8px; gap: 4px; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; }
-    .ni { font-size: 24px; line-height: 1; }
-    .nl { font-size: 11px; color: var(--muted); font-weight: 600; }
+    /* Bottom nav — Bet365 style */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #1a1f2e; border-top: 2px solid var(--green); display: flex; padding-bottom: max(env(safe-area-inset-bottom), 10px); z-index: 100; }
+    .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px 4px 10px; gap: 5px; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; min-height: 64px; }
+    .nav-tab.active { background: rgba(63,185,80,0.08); }
+    .ni { font-size: 26px; line-height: 1; transition: transform 0.15s; }
+    .nav-tab.active .ni { transform: scale(1.12); }
+    .nl { font-size: 12px; color: #6e7681; font-weight: 700; letter-spacing: 0.2px; text-transform: uppercase; }
     .nav-tab.active .nl { color: var(--green); }
-    .nav-tab.active .ni { filter: drop-shadow(0 0 4px rgba(63,185,80,.5)); }
-    .nav-badge { position: absolute; top: 5px; right: calc(50% - 18px); background: var(--green); color: #000; font-size: 9px; font-weight: 800; border-radius: 8px; padding: 1px 5px; min-width: 16px; text-align: center; display: none; }
+    .nav-badge { position: absolute; top: 8px; right: calc(50% - 20px); background: var(--green); color: #000; font-size: 10px; font-weight: 900; border-radius: 10px; padding: 1px 6px; min-width: 18px; text-align: center; display: none; }
     .nav-badge.show { display: block; }
   </style>
 </head>
@@ -172,7 +173,7 @@
     <span class="nav-badge" id="badge-football"></span>
   </div>
   <div class="nav-tab" data-view="signals" data-filter="tennis" onclick="navTo(this)">
-    <span class="ni">🏆</span><span class="nl">WM</span>
+    <span class="ni">🎾</span><span class="nl">Tennis</span>
     <span class="nav-badge" id="badge-tennis"></span>
   </div>
   <div class="nav-tab" data-view="journal" onclick="navTo(this)">
