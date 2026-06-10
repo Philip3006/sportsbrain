@@ -816,17 +816,11 @@
     }
   ],
   "portfolio": {
-    "n_bets": 14,
-    "n_open": 14,
-    "n_won": 0,
-    "n_lost": 0,
-    "n_void": 0,
-    "total_staked": 0.0,
+    "n_open": 0,
+    "n_bets": 0,
+    "total_staked": 0,
     "total_pnl": 0.0,
-    "roi_pct": 0.0,
-    "win_rate": 0.0,
-    "mean_clv": null,
-    "by_market": {}
+    "roi_pct": 0.0
   },
   "top_elo": [
     {
