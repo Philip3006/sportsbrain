@@ -7,6 +7,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SportsBrain">
   <meta name="theme-color" content="#0f1117">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>SportsBrain</title>
   <style>
     :root {
@@ -347,7 +350,7 @@ function renderElo(elo) {
 
 // ── Load data ────────────────────────────────────────────────
 async function _load() {
-  const r = await fetch(DATA_URL + '?t=' + Date.now());
+  const r = await fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
   if (!r.ok) throw new Error('HTTP ' + r.status);
   const d = await r.json();
 
