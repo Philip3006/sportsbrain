@@ -6,793 +6,398 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SportsBrain">
-  <meta name="theme-color" content="#0b0d14">
-  <title>SportsBrain Signals</title>
+  <meta name="theme-color" content="#0f1117">
+  <title>SportsBrain</title>
   <style>
     :root {
-      --bg: #0b0d14;
-      --surface: #13161f;
-      --card: #181b26;
-      --card-hover: #1e2131;
-      --border: #252838;
-      --border-subtle: #1c1f2e;
-      --text: #e4e6f0;
-      --text-dim: #9a9db8;
-      --muted: #6b6e8a;
-      --green: #22c55e;
-      --green-bg: #0d2818;
-      --green-border: #1a4a2e;
-      --yellow: #f59e0b;
-      --yellow-bg: #271d08;
-      --yellow-border: #4a3610;
-      --blue: #60a5fa;
-      --purple: #818cf8;
-      --purple-bg: #1a1b35;
-      --red: #f87171;
-      --high-glow: rgba(34, 197, 94, 0.12);
+      --bg:        #0f1117;
+      --surface:   #161b22;
+      --card:      #1c2128;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --green:     #3fb950;
+      --green-dim: #1a3a20;
+      --yellow:    #d29922;
+      --yellow-dim:#2d2208;
+      --red:       #f85149;
+      --nav-h:     calc(60px + env(safe-area-inset-bottom));
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
-      font-size: 14px;
-      line-height: 1.5;
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-    }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; -webkit-font-smoothing: antialiased; }
 
-    /* ─── Header ─────────────────────────────────── */
-    header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 14px 16px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
-    .header-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      max-width: 640px;
-      margin: 0 auto;
-    }
-    .logo { font-size: 17px; font-weight: 800; letter-spacing: -0.5px; }
-    .logo span { color: var(--purple); }
-    .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+    /* Header */
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+    .logo { font-size: 16px; font-weight: 800; letter-spacing: -0.5px; }
+    .logo em { color: var(--green); font-style: normal; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
     .updated { font-size: 11px; color: var(--muted); }
-    .live-dot {
-      display: inline-block;
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--green);
-      margin-right: 4px;
-      animation: pulse 2s infinite;
-      vertical-align: middle;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(0.85); }
-    }
+    .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); margin-right: 4px; vertical-align: middle; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+    .refresh-btn { background: none; border: 1px solid var(--border); color: var(--muted); padding: 4px 10px; border-radius: 7px; font-size: 12px; cursor: pointer; }
 
-    /* ─── Portfolio bar ───────────────────────────── */
-    .portfolio-bar {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border-subtle);
-      padding: 12px 16px 14px;
-    }
-    .portfolio-inner {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      max-width: 640px;
-      margin: 0 auto;
-      gap: 4px;
-    }
-    .stat {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 6px 4px;
-      border-radius: 10px;
-      background: var(--card);
-      border: 1px solid var(--border-subtle);
-    }
-    .stat-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; }
-    .stat-value { font-size: 17px; font-weight: 800; letter-spacing: -0.5px; }
+    /* Portfolio strip */
+    .portfolio-strip { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .portfolio-strip::-webkit-scrollbar { display: none; }
+    .pstat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 14px; display: flex; flex-direction: column; align-items: center; gap: 2px; flex-shrink: 0; }
+    .pstat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .pstat-value { font-size: 16px; font-weight: 800; }
     .pos { color: var(--green); }
     .neg { color: var(--red); }
-    .neutral { color: var(--text); }
+    .neu { color: var(--text); }
 
-    /* ─── Filter tabs ─────────────────────────────── */
-    .tab-bar {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 0 16px;
-      position: sticky;
-      top: 57px;
-      z-index: 90;
-    }
-    .tabs {
-      display: flex;
-      gap: 0;
-      max-width: 640px;
-      margin: 0 auto;
-      overflow-x: auto;
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-    .tabs::-webkit-scrollbar { display: none; }
-    .tab {
-      flex-shrink: 0;
-      padding: 10px 16px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--muted);
-      border-bottom: 2px solid transparent;
-      cursor: pointer;
-      transition: color 0.15s, border-color 0.15s;
-      user-select: none;
-    }
-    .tab.active { color: var(--purple); border-bottom-color: var(--purple); }
-    .tab .count {
-      display: inline-block;
-      background: var(--card);
-      border-radius: 10px;
-      padding: 1px 6px;
-      font-size: 10px;
-      margin-left: 4px;
-      color: var(--muted);
-    }
-    .tab.active .count { background: var(--purple-bg); color: var(--purple); }
-    .tab.high-tab .count { background: var(--green-bg); color: var(--green); }
+    /* Stale banner */
+    .stale-banner { background: var(--yellow-dim); border-bottom: 1px solid var(--yellow); color: var(--yellow); text-align: center; padding: 7px; font-size: 12px; font-weight: 600; display: none; }
 
-    /* ─── Main ────────────────────────────────────── */
-    main {
-      max-width: 640px;
-      margin: 0 auto;
-      padding: 14px 16px 32px;
-    }
+    /* Main views */
+    main { padding: 12px 16px calc(var(--nav-h) + 12px); max-width: 600px; margin: 0 auto; }
+    .view { display: none; }
+    .view.active { display: block; }
 
-    /* ─── Section title ───────────────────────────── */
-    .section-title {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin: 20px 0 10px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .section-title:first-child { margin-top: 4px; }
-    .section-title::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
+    /* Signal card */
+    .signal-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; border-left: 3px solid var(--border); }
+    .signal-card.high { border-left-color: var(--green); box-shadow: 0 0 16px rgba(63,185,80,.08); }
+    .signal-card.medium { border-left-color: var(--yellow); }
+    .card-meta { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+    .card-match { font-size: 17px; font-weight: 800; letter-spacing: -.4px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+    .card-match .vs { font-size: 12px; font-weight: 400; color: var(--muted); flex-shrink: 0; }
+    .card-market { font-size: 13px; color: var(--muted); margin-bottom: 12px; padding: 5px 10px; background: var(--bg); border-radius: 6px; display: inline-block; }
+    .card-footer { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .odds-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; font-size: 18px; font-weight: 800; color: var(--text); flex-shrink: 0; }
+    .signal-card.high .odds-btn { border-color: var(--green); color: var(--green); }
+    .ev-chip { font-size: 13px; font-weight: 700; }
+    .ev-chip.ev-h { color: var(--green); }
+    .ev-chip.ev-m { color: var(--yellow); }
+    .conf-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; }
+    .conf-HIGH   { background: var(--green-dim); color: var(--green); border: 1px solid rgba(63,185,80,.3); }
+    .conf-MEDIUM { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(210,153,34,.3); }
+    .stake-val { font-size: 13px; color: var(--muted); margin-left: auto; font-weight: 600; }
+    .kickoff-chip { font-size: 10px; padding: 2px 7px; border-radius: 12px; font-weight: 600; }
+    .kick-soon  { background: #2d1010; color: var(--red); }
+    .kick-today { background: #0d1a2e; color: #60a5fa; }
+    .kick-later { background: var(--card); color: var(--muted); }
 
-    /* ─── Signal card ─────────────────────────────── */
-    .signal-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px 16px;
-      margin-bottom: 10px;
-      transition: background 0.15s, transform 0.1s;
-      position: relative;
-      overflow: hidden;
-    }
-    .signal-card::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 3px;
-      border-radius: 14px 0 0 14px;
-      background: transparent;
-    }
-    .signal-card.high-confidence {
-      border-color: var(--green-border);
-      box-shadow: 0 0 20px var(--high-glow), inset 0 0 0 1px var(--green-border);
-    }
-    .signal-card.high-confidence::before { background: var(--green); }
-    .signal-card.medium-confidence::before { background: var(--yellow); }
-    .signal-card:active { background: var(--card-hover); transform: scale(0.99); }
+    /* Empty state */
+    .empty { text-align: center; padding: 48px 16px; color: var(--muted); }
+    .empty .icon { font-size: 32px; margin-bottom: 10px; }
 
-    .card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 9px;
-    }
-    .match-name {
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: -0.2px;
-      flex: 1;
-      padding-right: 8px;
-    }
-    .badges { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
-    .sport-badge {
-      font-size: 10px;
-      padding: 2px 7px;
-      border-radius: 6px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .badge-football { background: #162447; color: #7badf5; border: 1px solid #1e3a6e; }
-    .badge-tennis   { background: #0d2d10; color: #5de87a; border: 1px solid #1a4a20; }
+    /* Skeleton */
+    .skel { background: linear-gradient(90deg,var(--card) 25%,var(--surface) 50%,var(--card) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 12px; height: 100px; margin-bottom: 10px; }
+    @keyframes shimmer { 0%{background-position:200% 0}100%{background-position:-200% 0} }
 
-    .confidence-badge {
-      font-size: 10px;
-      padding: 2px 7px;
-      border-radius: 6px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-    }
-    .conf-HIGH   { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
-    .conf-MEDIUM { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-border); }
-    .conf-LOW    { background: #1a1a2e; color: var(--muted); border: 1px solid var(--border); }
+    /* Section title */
+    .section-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin: 16px 0 8px; display: flex; align-items: center; gap: 8px; }
+    .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
 
-    .card-mid {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-    }
-    .pill {
-      display: inline-block;
-      padding: 3px 9px;
-      border-radius: 20px;
-      font-size: 12px;
-      background: #1c1f2e;
-      color: var(--text-dim);
-    }
-    .market-pill {
-      color: #a5b4fc;
-      background: #1b1c38;
-      font-weight: 600;
-    }
-    .cat-pill {
-      color: var(--text-dim);
-      background: #1c1f2e;
-      font-weight: 600;
-      font-size: 11px;
-    }
-    .under-warn {
-      color: #f59e0b;
-      background: var(--yellow-bg);
-      border: 1px solid var(--yellow-border);
-      font-size: 10px;
-      font-weight: 700;
-      cursor: help;
-    }
-    .time-soon  { color: #f87171; background: #2d1010; border: 1px solid #4a1a1a; font-size: 10px; font-weight: 700; }
-    .time-today { color: var(--blue); background: #0d1a2e; border: 1px solid #1a3560; font-size: 10px; }
-    .time-future{ color: var(--muted); background: #1c1f2e; font-size: 10px; }
-    .time-past  { color: var(--muted); background: #1c1f2e; font-size: 10px; }
+    /* Journal */
+    .journal-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .journal-table th { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+    .journal-table td { padding: 11px 10px; border-bottom: 1px solid rgba(48,54,61,.5); }
+    .journal-table tr:last-child td { border-bottom: none; }
+    .journal-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .journal-total { background: var(--surface); border-top: 1px solid var(--border); padding: 12px 16px; font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; border-radius: 0 0 12px 12px; }
 
-    /* EV bar area */
-    .card-bottom {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .card-bottom-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .ev-chip {
-      font-size: 14px;
-      font-weight: 800;
-      padding: 4px 12px;
-      border-radius: 8px;
-      letter-spacing: -0.3px;
-    }
-    .ev-high   { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
-    .ev-medium { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-border); }
-    .ev-low    { background: #1c1f2e; color: var(--muted); }
-    .odds-stake {
-      display: flex;
-      gap: 14px;
-      align-items: center;
-    }
-    .odds-val { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
-    .stake-val { font-size: 13px; color: var(--text-dim); font-weight: 600; }
-
-    /* EV bar */
-    .ev-bar-wrap {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .ev-bar-bg {
-      flex: 1;
-      height: 4px;
-      background: var(--border);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-    .ev-bar-fill {
-      height: 100%;
-      border-radius: 2px;
-      transition: width 0.6s ease;
-    }
-    .ev-bar-label { font-size: 10px; color: var(--muted); white-space: nowrap; }
-
-    /* prob comparison */
-    .prob-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      color: var(--muted);
-    }
-    .prob-model { color: var(--text-dim); font-weight: 700; }
-    .prob-arrow { color: var(--muted); }
-    .prob-market { color: var(--muted); }
-    .prob-edge { font-weight: 700; }
-    .prob-edge.pos { color: var(--green); }
-    .prob-edge.neg { color: var(--red); }
-
-    /* ─── Elo table ───────────────────────────────── */
-    .elo-table {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      overflow: hidden;
-    }
-    .elo-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 11px 16px;
-      border-bottom: 1px solid var(--border-subtle);
-      gap: 10px;
-    }
+    /* Elo table */
+    .elo-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .elo-row { display: flex; align-items: center; padding: 11px 14px; border-bottom: 1px solid rgba(48,54,61,.5); gap: 10px; }
     .elo-row:last-child { border-bottom: none; }
-    .elo-rank { font-size: 13px; width: 22px; flex-shrink: 0; text-align: center; }
+    .elo-rank { font-size: 14px; width: 24px; flex-shrink: 0; }
     .elo-name { flex: 1; font-weight: 600; font-size: 13px; }
-    .elo-right { display: flex; align-items: center; gap: 10px; }
-    .elo-bar-bg {
-      width: 60px;
-      height: 4px;
-      background: var(--border);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-    .elo-bar-fill {
-      height: 100%;
-      background: var(--purple);
-      border-radius: 2px;
-    }
-    .elo-rating {
-      font-size: 13px;
-      font-weight: 800;
-      color: var(--purple);
-      width: 34px;
-      text-align: right;
-    }
+    .elo-bar { flex: 0 0 60px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .elo-bar-fill { height: 100%; background: var(--green); border-radius: 2px; }
+    .elo-val { font-size: 13px; font-weight: 800; color: var(--green); width: 36px; text-align: right; }
 
-    /* ─── Skeleton loading ────────────────────────── */
-    .skeleton {
-      background: linear-gradient(90deg, var(--card) 25%, var(--card-hover) 50%, var(--card) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
-      border-radius: 8px;
-    }
-    @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-    .skel-card {
-      height: 110px;
-      border-radius: 14px;
-      margin-bottom: 10px;
-    }
-
-    /* ─── Empty state ─────────────────────────────── */
-    .empty {
-      text-align: center;
-      padding: 48px 20px;
-      color: var(--muted);
-    }
-    .empty .icon { font-size: 36px; margin-bottom: 12px; }
-    .empty .msg { font-size: 14px; line-height: 1.6; }
-    .empty .msg strong { color: var(--text-dim); }
-
-    /* ─── Refresh btn ────────────────────────────── */
-    .refresh-btn {
-      background: none;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      padding: 4px 10px;
-      border-radius: 8px;
-      font-size: 12px;
-      cursor: pointer;
-      transition: color 0.15s, border-color 0.15s;
-    }
-    .refresh-btn:active { color: var(--text); border-color: var(--text-dim); }
-    .stale-banner {
-      background: var(--yellow-bg);
-      border: 1px solid var(--yellow-border);
-      color: var(--yellow);
-      text-align: center;
-      padding: 8px 16px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    /* ─── Footer ──────────────────────────────────── */
-    footer {
-      text-align: center;
-      padding: 24px 16px;
-      color: var(--muted);
-      font-size: 11px;
-      border-top: 1px solid var(--border-subtle);
-    }
-    footer a { color: var(--purple); text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
+    /* Bottom nav */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); display: flex; padding-bottom: env(safe-area-inset-bottom); z-index: 100; }
+    .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 8px 4px 6px; gap: 3px; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; }
+    .ni { font-size: 20px; line-height: 1; }
+    .nl { font-size: 10px; color: var(--muted); font-weight: 600; }
+    .nav-tab.active .nl { color: var(--green); }
+    .nav-tab.active .ni { filter: drop-shadow(0 0 4px rgba(63,185,80,.5)); }
+    .nav-badge { position: absolute; top: 5px; right: calc(50% - 18px); background: var(--green); color: #000; font-size: 9px; font-weight: 800; border-radius: 8px; padding: 1px 5px; min-width: 16px; text-align: center; display: none; }
+    .nav-badge.show { display: block; }
   </style>
 </head>
 <body>
 
 <header>
-  <div class="header-row">
-    <div class="logo">Sports<span>Brain</span></div>
-    <div class="header-right">
-      <div class="updated"><span class="live-dot"></span><span id="updated-time">Laden…</span></div>
-      <button class="refresh-btn" onclick="load()" id="refresh-btn">↺ Refresh</button>
-    </div>
+  <div class="logo">Sports<em>Brain</em></div>
+  <div class="header-right">
+    <span class="updated"><span class="dot" id="dot"></span><span id="updated-time">—</span></span>
+    <button class="refresh-btn" onclick="load()" id="refresh-btn">↺</button>
   </div>
 </header>
-<div id="stale-banner" style="display:none" class="stale-banner">
-  ⚠️ Letzte Daten von gestern — Scan läuft täglich 08:00–09:00 UTC
-</div>
 
-<div class="portfolio-bar">
-  <div class="portfolio-inner">
-    <div class="stat">
-      <span class="stat-label">Aktiv</span>
-      <span class="stat-value neutral" id="n-open">—</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">P&amp;L</span>
-      <span class="stat-value" id="total-pnl">—</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">ROI</span>
-      <span class="stat-value" id="roi">—</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">Signals</span>
-      <span class="stat-value neutral" id="today-count">—</span>
-    </div>
-  </div>
-</div>
+<div class="stale-banner" id="stale-banner">⚠️ Daten von gestern — Scan läuft täglich 08:00 UTC</div>
 
-<div class="tab-bar">
-  <div class="tabs">
-    <div class="tab active" data-filter="all" onclick="setFilter('all')">
-      Alle <span class="count" id="cnt-all">0</span>
-    </div>
-    <div class="tab" data-filter="high" onclick="setFilter('high')">
-      ⚡ HIGH <span class="count" id="cnt-high">0</span>
-    </div>
-    <div class="tab" data-filter="football" onclick="setFilter('football')">
-      ⚽ Fußball <span class="count" id="cnt-football">0</span>
-    </div>
-    <div class="tab" data-filter="tennis" onclick="setFilter('tennis')">
-      🎾 Tennis <span class="count" id="cnt-tennis">0</span>
-    </div>
-  </div>
+<div class="portfolio-strip" id="portfolio-strip">
+  <div class="pstat"><span class="pstat-label">Aktiv</span><span class="pstat-value neu" id="s-open">—</span></div>
+  <div class="pstat"><span class="pstat-label">P&amp;L</span><span class="pstat-value" id="s-pnl">—</span></div>
+  <div class="pstat"><span class="pstat-label">ROI</span><span class="pstat-value" id="s-roi">—</span></div>
+  <div class="pstat"><span class="pstat-label">Wetten ges.</span><span class="pstat-value neu" id="s-total">—</span></div>
 </div>
 
 <main>
-  <div id="signals-container">
-    <div class="skeleton skel-card"></div>
-    <div class="skeleton skel-card"></div>
-    <div class="skeleton skel-card"></div>
-  </div>
-  <div id="elo-container"></div>
+  <section id="view-signals" class="view active">
+    <div id="signals-container">
+      <div class="skel"></div><div class="skel"></div><div class="skel"></div>
+    </div>
+  </section>
+
+  <section id="view-journal" class="view">
+    <div class="section-title">📓 Tagesverlauf</div>
+    <div id="journal-container">
+      <div class="empty"><div class="icon">📭</div><div>Noch keine abgeschlossenen Wetten.</div></div>
+    </div>
+  </section>
+
+  <section id="view-ranking" class="view">
+    <div class="section-title">🏆 Grass Elo-Ranking</div>
+    <div id="elo-container">
+      <div class="empty"><div class="icon">📊</div><div>Elo-Daten werden geladen…</div></div>
+    </div>
+  </section>
 </main>
 
-<footer>
-  SportsBrain · Scan täglich 08:00–09:00 UTC ·
-  <a href="https://github.com/Philip3006/sportsbrain" target="_blank">GitHub</a>
-</footer>
+<nav class="bottom-nav">
+  <div class="nav-tab active" data-view="signals" data-filter="all" onclick="navTo(this)">
+    <span class="ni">🎯</span><span class="nl">Signale</span>
+    <span class="nav-badge" id="badge-all"></span>
+  </div>
+  <div class="nav-tab" data-view="signals" data-filter="football" onclick="navTo(this)">
+    <span class="ni">⚽</span><span class="nl">Fußball</span>
+    <span class="nav-badge" id="badge-football"></span>
+  </div>
+  <div class="nav-tab" data-view="signals" data-filter="tennis" onclick="navTo(this)">
+    <span class="ni">🎾</span><span class="nl">Tennis</span>
+    <span class="nav-badge" id="badge-tennis"></span>
+  </div>
+  <div class="nav-tab" data-view="journal" onclick="navTo(this)">
+    <span class="ni">📓</span><span class="nl">Journal</span>
+  </div>
+  <div class="nav-tab" data-view="ranking" onclick="navTo(this)">
+    <span class="ni">🏆</span><span class="nl">Ranking</span>
+  </div>
+</nav>
 
 <script>
 const DATA_URL = 'data/signals.json';
-let _allSignals = [];
+let _signals = [];
 let _activeFilter = 'all';
 
-function _players(match) {
-  const parts = match.split(' vs ');
-  return [parts[0] ? parts[0].trim() : 'A', parts[1] ? parts[1].trim() : 'B'];
+// ── Navigation ──────────────────────────────────────────────
+function navTo(tab) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  const view = tab.dataset.view || 'signals';
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  if (tab.dataset.filter) {
+    _activeFilter = tab.dataset.filter;
+    renderSignals();
+  }
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+function players(match) {
+  const p = (match || '').split(' vs ');
+  return [p[0]?.trim() || '?', p[1]?.trim() || '?'];
 }
 
 function marketLabel(mkt, match) {
-  const [a, b] = _players(match || '');
-  const map = {
-    'home': `Sieger: ${a}`, 'draw': 'Unentschieden', 'away': `Sieger: ${b}`,
-    'o/u2.5_over': 'Über 2.5 Tore', 'o/u2.5_under': 'Unter 2.5 Tore',
-    'o/u1.5_over': 'Über 1.5 Tore', 'o/u1.5_under': 'Unter 1.5 Tore',
-    'o/u3.5_over': 'Über 3.5 Tore', 'o/u3.5_under': 'Unter 3.5 Tore',
-    'ah-0.5_home': `AH -0.5 ${a}`, 'ah+0.5_away': `AH +0.5 ${b}`,
-    'ah-1.0_home': `AH -1.0 ${a}`, 'ah+1.0_away': `AH +1.0 ${b}`,
-    'ah-1.5_home': `AH -1.5 ${a}`, 'ah+1.5_away': `AH +1.5 ${b}`,
-    'ah-2.0_home': `AH -2.0 ${a}`, 'ah+2.0_away': `AH +2.0 ${b}`,
-    'ah-2.5_home': `AH -2.5 ${a}`, 'ah+2.5_away': `AH +2.5 ${b}`,
-    'btts_yes': 'Beide Teams treffen', 'btts_no': 'Nicht beide Teams treffen',
-    'ftts_home': `1. Tor: ${a}`, 'ftts_away': `1. Tor: ${b}`,
-    'first_set_a': `1. Satz: ${a}`, 'first_set_b': `1. Satz: ${b}`,
-    'ah-1.5_a': `${a} gewinnt 3:0 oder 3:1`, 'ah+1.5_b': `${b} +1.5 Sätze`,
+  const [a, b] = players(match);
+  const m = {
+    home:`Sieg ${a}`, draw:'Unentschieden', away:`Sieg ${b}`,
+    'o/u2.5_over':'Über 2.5 Tore','o/u2.5_under':'Unter 2.5 Tore',
+    'o/u1.5_over':'Über 1.5 Tore','o/u1.5_under':'Unter 1.5 Tore',
+    'o/u3.5_over':'Über 3.5 Tore','o/u3.5_under':'Unter 3.5 Tore',
+    'btts_yes':'Beide treffen','btts_no':'Nicht beide treffen',
+    'ftts_home':`1. Tor: ${a}`,'ftts_away':`1. Tor: ${b}`,
+    'first_set_a':`1. Satz: ${a}`,'first_set_b':`1. Satz: ${b}`,
+    'ah-1.5_a':`${a} gewinnt 3:0 / 3:1`,'ah+1.5_b':`${b} +1.5 Sätze`,
+    'ah-0.5_home':`AH -0.5 ${a}`,'ah+0.5_away':`AH +0.5 ${b}`,
+    'ah-1.0_home':`AH -1.0 ${a}`,'ah+1.0_away':`AH +1.0 ${b}`,
+    'ah-1.5_home':`AH -1.5 ${a}`,'ah+1.5_away':`AH +1.5 ${b}`,
+    'ah-2.0_home':`AH -2.0 ${a}`,'ah+2.0_away':`AH +2.0 ${b}`,
+    'ah-2.5_home':`AH -2.5 ${a}`,'ah+2.5_away':`AH +2.5 ${b}`,
   };
-  return map[mkt] || mkt;
-}
-
-function marketCategory(mkt) {
-  if (mkt === 'home' || mkt === 'draw' || mkt === 'away') return { icon: '🏆', label: '1X2' };
-  if (mkt.startsWith('ah')) return { icon: '⚖️', label: 'Handicap' };
-  if (mkt.startsWith('o/u')) return { icon: '🎯', label: 'Tore' };
-  if (mkt.startsWith('btts')) return { icon: '⚽', label: 'BTTS' };
-  if (mkt.startsWith('ftts')) return { icon: '⚡', label: '1. Tor' };
-  if (mkt.startsWith('first_set')) return { icon: '🎾', label: '1. Satz' };
-  return { icon: '📊', label: '' };
-}
-
-function isUnderMarket(mkt) {
-  return mkt.includes('_under') || mkt === 'btts_no';
-}
-
-function evClass(ev) {
-  if (ev >= 8) return 'ev-high';
-  if (ev >= 3) return 'ev-medium';
-  return 'ev-low';
-}
-
-function confClass(c) {
-  return 'conf-' + (c || 'MEDIUM');
-}
-
-function cardClass(s) {
-  if (s.confidence === 'HIGH') return 'signal-card high-confidence';
-  if (s.confidence === 'MEDIUM') return 'signal-card medium-confidence';
-  return 'signal-card';
-}
-
-function pnlClass(val) {
-  if (val > 0) return 'pos';
-  if (val < 0) return 'neg';
-  return 'neutral';
-}
-
-function evBarColor(ev) {
-  if (ev >= 8) return '#22c55e';
-  if (ev >= 3) return '#f59e0b';
-  return '#6b6e8a';
+  return m[mkt] || mkt;
 }
 
 function kickoffChip(kickoff) {
   if (!kickoff) return '';
   try {
-    const dt = new Date(kickoff);
-    const now = Date.now();
-    const diffH = (dt.getTime() - now) / 3600000;
-    const timeStr = dt.toLocaleString('de-DE', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Berlin'});
-    if (diffH < 0) return `<span class="pill time-past">live / beendet</span>`;
-    if (diffH < 2) return `<span class="pill time-soon">⚡ in ${Math.round(diffH*60)}min</span>`;
-    if (diffH < 24) return `<span class="pill time-today">heute ${timeStr.slice(6)}</span>`;
-    return `<span class="pill time-future">${timeStr}</span>`;
+    const dt = new Date(kickoff), now = Date.now(), diff = (dt - now) / 36e5;
+    const t = dt.toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Berlin'});
+    if (diff < 0)  return `<span class="kickoff-chip kick-later">beendet</span>`;
+    if (diff < 2)  return `<span class="kickoff-chip kick-soon">⚡ ${Math.round(diff*60)}min</span>`;
+    if (diff < 24) return `<span class="kickoff-chip kick-today">heute ${t.slice(6)}</span>`;
+    return `<span class="kickoff-chip kick-later">${t}</span>`;
   } catch { return ''; }
 }
 
+function sportMeta(s) {
+  const sport = s.sport === 'football' ? '⚽ WM 2026' : `🎾 ${(s.tour||'Tennis').toUpperCase()}`;
+  const kickoff = s.kickoff ? ' · ' + (() => {
+    try {
+      const dt = new Date(s.kickoff);
+      return dt.toLocaleString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Berlin'});
+    } catch { return ''; }
+  })() : '';
+  return sport + kickoff;
+}
+
+// ── Signal card ──────────────────────────────────────────────
 function signalCard(s) {
-  let sportLabel = s.sport === 'football' ? 'WM 2026' : 'Tennis';
-  if (s.sport === 'tennis' && s.tour) {
-    sportLabel = s.tour.toUpperCase();
-  }
-  const sportBadge = s.sport === 'tennis'
-    ? `<span class="sport-badge badge-tennis">${sportLabel}</span>`
-    : `<span class="sport-badge badge-football">${sportLabel}</span>`;
-  const confBadge = `<span class="confidence-badge ${confClass(s.confidence)}">${s.confidence}</span>`;
-  const evCls = evClass(s.ev_pct);
-  const evScale = s.ev_pct > 25 ? 40 : 25;
-  const barPct = Math.min(100, (s.ev_pct / evScale) * 100);
-  const barColor = evBarColor(s.ev_pct);
-  const marketProb = (100 / s.odds).toFixed(1);
-  const edge = (s.model_prob - parseFloat(marketProb)).toFixed(1);
-  const edgeCls = parseFloat(edge) > 0 ? 'pos' : 'neg';
-  const cat = marketCategory(s.market);
-  const underWarn = isUnderMarket(s.market)
-    ? '<span class="pill under-warn" title="DC-Modell überschätzt UNTER systematisch (~5pp) — höherer Beweis nötig">⚠️ DC-Bias</span>'
-    : '';
+  const [a, b] = players(s.match);
+  const evPct = s.ev_pct;
+  const evCls = evPct >= 10 ? 'ev-h' : 'ev-m';
+  const cardCls = s.confidence === 'HIGH' ? 'high' : 'medium';
   const timeChip = kickoffChip(s.kickoff);
-
   return `
-    <div class="${cardClass(s)}">
-      <div class="card-top">
-        <div class="match-name">${s.match}</div>
-        <div class="badges">${confBadge}${sportBadge}</div>
+    <div class="signal-card ${cardCls}">
+      <div class="card-meta">${sportMeta(s)}${timeChip ? ' · ' : ''}${timeChip}</div>
+      <div class="card-match">
+        <span>${a}</span>
+        <span class="vs">vs</span>
+        <span>${b}</span>
       </div>
-      <div class="card-mid">
-        <span class="pill cat-pill">${cat.icon} ${cat.label}</span>
-        <span class="pill market-pill">${marketLabel(s.market, s.match)}</span>
-        ${timeChip}${underWarn}
-      </div>
-      <div class="card-bottom">
-        <div class="card-bottom-row">
-          <span class="ev-chip ${evCls}">EV +${s.ev_pct}%</span>
-          <div class="odds-stake">
-            <span class="odds-val">${s.odds.toFixed(2)}</span>
-            <span class="stake-val">€${s.stake_eur.toFixed(0)}</span>
-          </div>
-        </div>
-        <div class="prob-row">
-          <span>Modell</span>
-          <span class="prob-model">${s.model_prob}%</span>
-          <span class="prob-arrow">vs</span>
-          <span>Markt</span>
-          <span class="prob-market">${marketProb}%</span>
-          <span class="prob-arrow">·</span>
-          <span>Edge</span>
-          <span class="prob-edge ${edgeCls}">${parseFloat(edge) > 0 ? '+' : ''}${edge}pp</span>
-        </div>
-        <div class="ev-bar-wrap">
-          <div class="ev-bar-bg">
-            <div class="ev-bar-fill" style="width:${barPct}%;background:${barColor}"></div>
-          </div>
-          <span class="ev-bar-label">max ${evScale}%</span>
-        </div>
+      <div class="card-market">${marketLabel(s.market, s.match)}</div>
+      <div class="card-footer">
+        <span class="odds-btn">${s.odds.toFixed(2)}</span>
+        <span class="ev-chip ${evCls}">EV +${evPct}%</span>
+        <span class="conf-badge conf-${s.confidence}">${s.confidence}</span>
+        <span class="stake-val">€${s.stake_eur.toFixed(0)}</span>
       </div>
     </div>`;
 }
 
-function eloRow(item, idx, maxRating) {
-  const medals = ['🥇', '🥈', '🥉'];
-  const rank = medals[idx] || `${idx + 1}.`;
-  const barPct = Math.round((item.rating / maxRating) * 100);
-  return `
-    <div class="elo-row">
-      <span class="elo-rank">${rank}</span>
-      <span class="elo-name">${item.name}</span>
-      <div class="elo-right">
-        <div class="elo-bar-bg">
-          <div class="elo-bar-fill" style="width:${barPct}%"></div>
-        </div>
-        <span class="elo-rating">${item.rating}</span>
-      </div>
-    </div>`;
-}
-
-function setFilter(f) {
-  _activeFilter = f;
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.filter === f));
-  renderSignals();
-}
-
+// ── Render signals ───────────────────────────────────────────
 function renderSignals() {
-  const container = document.getElementById('signals-container');
-  let signals = _allSignals;
-
-  if (_activeFilter === 'high') signals = signals.filter(s => s.confidence === 'HIGH');
-  else if (_activeFilter === 'football') signals = signals.filter(s => s.sport === 'football');
-  else if (_activeFilter === 'tennis') signals = signals.filter(s => s.sport === 'tennis');
-
-  if (signals.length === 0) {
-    const msg = _activeFilter === 'all'
-      ? '<strong>Keine Value Bets heute.</strong><br>Nächster Scan: morgen 08:00–09:00 UTC'
-      : '<strong>Keine Signale für diesen Filter.</strong>';
-    container.innerHTML = `<div class="empty"><div class="icon">🔍</div><div class="msg">${msg}</div></div>`;
+  const c = document.getElementById('signals-container');
+  let sigs = _activeFilter === 'football' ? _signals.filter(s=>s.sport==='football')
+           : _activeFilter === 'tennis'   ? _signals.filter(s=>s.sport==='tennis')
+           : _signals;
+  if (!sigs.length) {
+    c.innerHTML = `<div class="empty"><div class="icon">🔍</div><div>Keine Value Bets für diesen Filter.<br><small>Nächster Scan: täglich 08:00 UTC</small></div></div>`;
     return;
   }
-
-  const footballSigs = signals.filter(s => s.sport === 'football');
-  const tennisSigs = signals.filter(s => s.sport === 'tennis');
-  let html = '';
-
-  if (footballSigs.length && _activeFilter !== 'tennis') {
-    if (_activeFilter !== 'football' || tennisSigs.length) {
-      html += '<div class="section-title">⚽ Fußball</div>';
-    }
-    html += footballSigs.map(signalCard).join('');
+  const fb = sigs.filter(s=>s.sport==='football'), tn = sigs.filter(s=>s.sport==='tennis');
+  let h = '';
+  if (fb.length && _activeFilter !== 'tennis') {
+    if (_activeFilter === 'all' && tn.length) h += '<div class="section-title">⚽ Fußball</div>';
+    h += fb.map(signalCard).join('');
   }
-  if (tennisSigs.length && _activeFilter !== 'football') {
-    if (_activeFilter !== 'tennis' || footballSigs.length) {
-      html += '<div class="section-title">🎾 Tennis</div>';
-    }
-    html += tennisSigs.map(signalCard).join('');
+  if (tn.length && _activeFilter !== 'football') {
+    if (_activeFilter === 'all' && fb.length) h += '<div class="section-title">🎾 Tennis</div>';
+    h += tn.map(signalCard).join('');
   }
-  container.innerHTML = html;
+  c.innerHTML = h;
 }
 
-async function _loadData() {
-  try {
-    const r = await fetch(DATA_URL + '?t=' + Date.now());
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const d = await r.json();
-
-    // Timestamp + stale detection
-    const dt = new Date(d.updated);
-    const ageHours = (Date.now() - dt.getTime()) / 3600000;
-    document.getElementById('updated-time').textContent =
-      dt.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-    document.getElementById('stale-banner').style.display = ageHours > 26 ? 'block' : 'none';
-    // Dot color: green if fresh (<26h), yellow if stale
-    document.querySelector('.live-dot').style.background = ageHours > 26 ? 'var(--yellow)' : 'var(--green)';
-
-    // Portfolio
-    const p = d.portfolio || {};
-    document.getElementById('n-open').textContent = p.n_open ?? '0';
-
-    const pnlEl = document.getElementById('total-pnl');
-    const pnl = p.total_pnl ?? 0;
-    pnlEl.textContent = (pnl >= 0 ? '+' : '') + pnl.toFixed(2) + '€';
-    pnlEl.className = 'stat-value ' + pnlClass(pnl);
-
-    const roiEl = document.getElementById('roi');
-    const roi = p.roi_pct ?? 0;
-    roiEl.textContent = (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%';
-    roiEl.className = 'stat-value ' + pnlClass(roi);
-
-    // All signals merged: HIGH confidence first, then by EV
-    _allSignals = [...(d.football || []), ...(d.tennis || [])];
-    const _confOrder = {HIGH: 2, MEDIUM: 1, LOW: 0};
-    _allSignals.sort((a, b) => {
-      const cd = (_confOrder[b.confidence] || 0) - (_confOrder[a.confidence] || 0);
-      return cd !== 0 ? cd : b.ev_pct - a.ev_pct;
-    });
-
-    // Update counts
-    document.getElementById('today-count').textContent = _allSignals.length;
-    document.getElementById('cnt-all').textContent = _allSignals.length;
-    document.getElementById('cnt-high').textContent = _allSignals.filter(s => s.confidence === 'HIGH').length;
-    document.getElementById('cnt-football').textContent = _allSignals.filter(s => s.sport === 'football').length;
-    document.getElementById('cnt-tennis').textContent = _allSignals.filter(s => s.sport === 'tennis').length;
-
-    renderSignals();
-
-    // Elo leaderboard
-    const eloContainer = document.getElementById('elo-container');
-    const elo = (d.top_elo || []).slice(0, 10);
-    if (elo.length) {
-      const maxRating = elo[0].rating;
-      eloContainer.innerHTML = `
-        <div class="section-title">🏆 Grass Elo-Ranking</div>
-        <div class="elo-table">
-          ${elo.map((item, i) => eloRow(item, i, maxRating)).join('')}
-        </div>`;
-    }
-
-  } catch (e) {
-    document.getElementById('signals-container').innerHTML = `
-      <div class="empty">
-        <div class="icon">⚠️</div>
-        <div class="msg"><strong>Daten konnten nicht geladen werden.</strong><br>${e.message}</div>
-      </div>`;
+// ── Journal ──────────────────────────────────────────────────
+function renderJournal(history) {
+  const c = document.getElementById('journal-container');
+  if (!history || !history.length) {
+    c.innerHTML = `<div class="empty"><div class="icon">📭</div><div>Noch keine abgeschlossenen Wetten.</div></div>`;
+    return;
   }
+  const rows = history.map(d => {
+    const pnlCls = d.pnl > 0 ? 'pos' : d.pnl < 0 ? 'neg' : 'neu';
+    const roiCls = d.roi_pct > 0 ? 'pos' : d.roi_pct < 0 ? 'neg' : 'neu';
+    const dateStr = d.date.slice(8,10) + '.' + d.date.slice(5,7) + '.' + d.date.slice(2,4);
+    return `<tr>
+      <td>${dateStr}</td>
+      <td style="text-align:center">${d.n_bets}</td>
+      <td class="${pnlCls}" style="font-weight:700">${d.pnl >= 0 ? '+' : ''}${d.pnl.toFixed(2)}€</td>
+      <td class="${roiCls}">${d.roi_pct >= 0 ? '+' : ''}${d.roi_pct.toFixed(1)}%</td>
+    </tr>`;
+  }).join('');
+  const totPnl = history.reduce((s,d)=>s+d.pnl, 0);
+  const totStake = history.reduce((s,d)=>s+(d.n_bets*10), 0); // approx
+  const totCls = totPnl >= 0 ? 'pos' : 'neg';
+  c.innerHTML = `
+    <div class="journal-wrap">
+      <table class="journal-table">
+        <thead><tr><th>Datum</th><th>Wetten</th><th>P&amp;L</th><th>ROI</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="journal-total">
+        <span>Gesamt (${history.length} Tage)</span>
+        <span class="${totCls}" style="font-weight:700">${totPnl >= 0?'+':''}${totPnl.toFixed(2)}€</span>
+      </div>
+    </div>`;
+}
+
+// ── Elo ranking ──────────────────────────────────────────────
+function renderElo(elo) {
+  const c = document.getElementById('elo-container');
+  if (!elo || !elo.length) { c.innerHTML = `<div class="empty"><div class="icon">📊</div><div>Keine Elo-Daten.</div></div>`; return; }
+  const max = elo[0].rating;
+  const medals = ['🥇','🥈','🥉'];
+  const rows = elo.map((e,i) => `
+    <div class="elo-row">
+      <span class="elo-rank">${medals[i]||i+1+'.'}</span>
+      <span class="elo-name">${e.name}</span>
+      <div class="elo-bar"><div class="elo-bar-fill" style="width:${Math.round(e.rating/max*100)}%"></div></div>
+      <span class="elo-val">${e.rating}</span>
+    </div>`).join('');
+  c.innerHTML = `<div class="elo-wrap">${rows}</div>`;
+}
+
+// ── Load data ────────────────────────────────────────────────
+async function _load() {
+  const r = await fetch(DATA_URL + '?t=' + Date.now());
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const d = await r.json();
+
+  // Timestamp
+  const dt = new Date(d.updated), age = (Date.now()-dt)/36e5;
+  document.getElementById('updated-time').textContent =
+    dt.toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  document.getElementById('stale-banner').style.display = age > 26 ? 'block' : 'none';
+  document.getElementById('dot').style.background = age > 26 ? 'var(--yellow)' : 'var(--green)';
+
+  // Portfolio
+  const p = d.portfolio || {};
+  document.getElementById('s-open').textContent = p.n_open ?? '0';
+  const pnlEl = document.getElementById('s-pnl'), pnl = p.total_pnl ?? 0;
+  pnlEl.textContent = (pnl>=0?'+':'') + pnl.toFixed(2) + '€';
+  pnlEl.className = 'pstat-value ' + (pnl>0?'pos':pnl<0?'neg':'neu');
+  const roiEl = document.getElementById('s-roi'), roi = p.roi_pct ?? 0;
+  roiEl.textContent = (roi>=0?'+':'') + roi.toFixed(1) + '%';
+  roiEl.className = 'pstat-value ' + (roi>0?'pos':roi<0?'neg':'neu');
+  document.getElementById('s-total').textContent = p.n_total ?? '0';
+
+  // Signals
+  _signals = [...(d.football||[]), ...(d.tennis||[])];
+  _signals.sort((a,b)=>{
+    const o={HIGH:2,MEDIUM:1,LOW:0};
+    const cd=(o[b.confidence]||0)-(o[a.confidence]||0);
+    return cd||b.ev_pct-a.ev_pct;
+  });
+
+  // Nav badges
+  const setB = (id, n) => { const el=document.getElementById(id); el.textContent=n; el.classList.toggle('show',n>0); };
+  setB('badge-all', _signals.length);
+  setB('badge-football', _signals.filter(s=>s.sport==='football').length);
+  setB('badge-tennis', _signals.filter(s=>s.sport==='tennis').length);
+
+  renderSignals();
+  renderJournal(d.history || []);
+  renderElo((d.top_elo||[]).slice(0,10));
 }
 
 async function load() {
   const btn = document.getElementById('refresh-btn');
-  if (btn) btn.textContent = '↺ …';
-  try {
-    await _loadData();
-  } finally {
-    if (btn) btn.textContent = '↺ Refresh';
-  }
+  btn.textContent = '↺…';
+  try { await _load(); } catch(e) {
+    document.getElementById('signals-container').innerHTML =
+      `<div class="empty"><div class="icon">⚠️</div><div>Fehler: ${e.message}</div></div>`;
+  } finally { btn.textContent = '↺'; }
 }
 
-// Auto-refresh every 30 minutes
-setInterval(load, 30 * 60 * 1000);
+setInterval(load, 30*60*1000);
 load();
 </script>
 </body>

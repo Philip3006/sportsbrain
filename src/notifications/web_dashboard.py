@@ -4,7 +4,9 @@ Called at the end of daily_scan.py and tennis_scan.py.
 """
 from __future__ import annotations
 
+import csv
 import json
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -12,6 +14,36 @@ from src.betting.value_detector import BetSignal
 
 ROOT = Path(__file__).parent.parent.parent
 _JSON_PATH = ROOT / "docs" / "data" / "signals.json"
+_LEDGER_PATH = ROOT / "results" / "ledger.csv"
+
+
+def _build_history(n_days: int = 30) -> list[dict]:
+    """Read ledger CSV and return daily P&L history (most recent first)."""
+    if not _LEDGER_PATH.exists():
+        return []
+    try:
+        daily: dict[str, dict] = defaultdict(lambda: {"n_bets": 0, "staked": 0.0, "pnl": 0.0})
+        with open(_LEDGER_PATH, newline="") as f:
+            for row in csv.DictReader(f):
+                date = (row.get("placed_date") or row.get("match_date") or "")[:10].strip()
+                if not date:
+                    continue
+                daily[date]["n_bets"] += 1
+                daily[date]["staked"] += float(row.get("stake_amount") or 0)
+                daily[date]["pnl"]    += float(row.get("pnl") or 0)
+        result = []
+        for date in sorted(daily.keys(), reverse=True)[:n_days]:
+            d = daily[date]
+            roi = (d["pnl"] / d["staked"] * 100) if d["staked"] > 0 else 0.0
+            result.append({
+                "date":    date,
+                "n_bets":  d["n_bets"],
+                "pnl":     round(d["pnl"], 2),
+                "roi_pct": round(roi, 1),
+            })
+        return result
+    except Exception:
+        return []
 
 
 def _signal_to_dict(
@@ -87,11 +119,12 @@ def write_signals_json(
         tennis_data = existing.get("tennis", [])
 
     payload = {
-        "updated": updated,
-        "football": football_data,
-        "tennis":   tennis_data,
+        "updated":   updated,
+        "football":  football_data,
+        "tennis":    tennis_data,
         "portfolio": portfolio if portfolio else existing.get("portfolio", {}),
-        "top_elo": [{"name": n, "rating": round(r)} for n, r in top_elo] if top_elo else existing.get("top_elo", []),
+        "top_elo":   [{"name": n, "rating": round(r)} for n, r in top_elo] if top_elo else existing.get("top_elo", []),
+        "history":   _build_history(),
     }
 
     _JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
