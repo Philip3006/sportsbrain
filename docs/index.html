@@ -42,9 +42,8 @@
     @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.35} }
 
     /* ── Portfolio strip ── */
-    .portfolio-strip { background: #0d1117; border-bottom: 1px solid rgba(255,255,255,0.07); padding: 8px 12px; display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-    .portfolio-strip::-webkit-scrollbar { display: none; }
-    .pstat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 7px 16px; display: flex; flex-direction: column; align-items: center; gap: 1px; flex-shrink: 0; }
+    .portfolio-strip { background: #0d1117; border-bottom: 1px solid rgba(255,255,255,0.07); padding: 8px 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .pstat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
     .pstat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
     .pstat-value { font-size: 15px; font-weight: 800; }
     .pos { color: var(--green); }
@@ -208,6 +207,7 @@
 <script>
 const DATA_URL = 'data/signals.json';
 let _signals = [];
+let _schedule = [];
 let _prevView = 'home';
 
 // ── Navigation ───────────────────────────────────────────────
@@ -290,33 +290,42 @@ function sigCard(s) {
   </div>`;
 }
 
-// ── Render Home (game list grouped by day) ───────────────────
+// ── Render Home (game list from schedule, sorted by kickoff) ─
 function renderHome() {
   const c = document.getElementById('home-container');
-  if (!_signals.length) {
+  const games = _schedule.length ? _schedule : _signals.map(s => ({
+    sport: s.sport, home: s.match.split(' vs ')[0].trim(),
+    away: s.match.split(' vs ')[1].trim(), kickoff: s.kickoff||'', tour: s.tour||'',
+  })).filter((g,i,a) => a.findIndex(x=>x.home===g.home&&x.away===g.away)===i);
+
+  if (!games.length) {
     c.innerHTML = `<div class="empty"><div class="icon">🔍</div><div>Keine Spiele gefunden.<br><small>Nächster Scan: täglich 08:00 UTC</small></div></div>`;
     return;
   }
-  // Deduplicate by match key
-  const matchMap = {};
-  for (const s of _signals) {
-    if (!matchMap[s.match]) matchMap[s.match] = { sport: s.sport, kickoff: s.kickoff||'', tour: s.tour||'', count: 0 };
-    matchMap[s.match].count++;
-  }
-  // Sort: kickoff asc, no-kickoff last
-  const matches = Object.entries(matchMap).sort(([,a],[,b]) => {
-    if (!a.kickoff && !b.kickoff) return 0;
-    if (!a.kickoff) return 1;
-    if (!b.kickoff) return -1;
-    return new Date(a.kickoff) - new Date(b.kickoff);
-  });
+
+  // Build signal count lookup by "Home vs Away"
+  const sigCount = {};
+  for (const s of _signals) sigCount[s.match] = (sigCount[s.match]||0) + 1;
+
+  // Filter next 30 days + sort by kickoff
+  const cutoff = Date.now() + 30*24*36e5;
+  const sorted = games
+    .filter(g => !g.kickoff || new Date(g.kickoff) <= cutoff)
+    .sort((a,b) => {
+      if (!a.kickoff && !b.kickoff) return 0;
+      if (!a.kickoff) return 1;
+      if (!b.kickoff) return -1;
+      return new Date(a.kickoff) - new Date(b.kickoff);
+    });
+
   // Group by date
   const days = {};
-  for (const [key, m] of matches) {
-    const dk = m.kickoff ? m.kickoff.slice(0,10) : '__';
+  for (const g of sorted) {
+    const dk = g.kickoff ? g.kickoff.slice(0,10) : '__';
     if (!days[dk]) days[dk] = [];
-    days[dk].push([key, m]);
+    days[dk].push(g);
   }
+
   let h = '';
   for (const [dk, group] of Object.entries(days)) {
     if (dk === '__') {
@@ -328,19 +337,21 @@ function renderHome() {
         : dt.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'2-digit'});
       h += `<div class="day-header">${label}</div>`;
     }
-    for (const [key, m] of group) {
-      const icon = m.sport === 'football' ? '⚽' : '🎾';
-      const sub  = m.kickoff ? fmtTime(m.kickoff)
-                 : m.sport === 'football' ? 'WM 2026'
-                 : m.tour ? m.tour.toUpperCase() : 'Tennis';
-      h += `<div class="game-row" onclick='openMatch(${JSON.stringify(key)})'>
+    for (const g of group) {
+      const icon = g.sport === 'football' ? '⚽' : '🎾';
+      const matchKey = `${g.home} vs ${g.away}`;
+      const sub = g.kickoff ? fmtTime(g.kickoff)
+                : g.sport === 'football' ? 'WM 2026'
+                : g.tour ? g.tour.toUpperCase() : 'Tennis';
+      const n = sigCount[matchKey] || 0;
+      h += `<div class="game-row" onclick='openMatch(${JSON.stringify(matchKey)})'>
         <span class="sport-icon">${icon}</span>
         <div class="game-info">
-          <div class="game-teams">${esc(key)}</div>
+          <div class="game-teams">${esc(matchKey)}</div>
           <div class="game-sub">${sub}</div>
         </div>
         <div class="game-right">
-          ${m.count > 0 ? `<span class="sig-bubble">${m.count}</span>` : ''}
+          ${n > 0 ? `<span class="sig-bubble">${n}</span>` : ''}
           <span class="chevron">›</span>
         </div>
       </div>`;
@@ -423,9 +434,10 @@ async function _load() {
   const re = document.getElementById('s-roi');
   re.textContent = (roi>=0?'+':'') + roi.toFixed(1) + '%';
   re.className = 'pstat-value ' + (roi>0?'pos':roi<0?'neg':'neu');
-  document.getElementById('s-total').textContent = p.n_total ?? '0';
+  document.getElementById('s-total').textContent = p.n_bets ?? '0';
 
   _signals = [...(d.football||[]), ...(d.tennis||[])];
+  _schedule = d.schedule || [];
 
   const setB = (id, n) => { const el=document.getElementById(id); el.textContent=n; el.classList.toggle('show',n>0); };
   setB('badge-all',      _signals.length);
