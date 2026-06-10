@@ -1,4 +1,10 @@
 {
   "projectName": "sportsbrain",
-  "description": "Sports prediction & value betting tool"
+  "description": "Sports prediction & value betting tool",
+  "permissions": {
+    "allow": [
+      "Bash(python3 -m pytest tests/ *)",
+      "Bash(pytest tests/ *)"
+    ]
+  }
 }

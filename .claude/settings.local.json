@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git init *)"
+      "Bash(git init *)",
+      "Bash(python3 -m http.server 8765 --directory docs)",
+      "Bash(python3 *)",
+      "Bash(curl -s \"http://localhost:8765/index.html\")",
+      "Bash(pkill -f \"python3 -m http.server 8765\")",
+      "Bash(git add *)"
     ]
   }
 }

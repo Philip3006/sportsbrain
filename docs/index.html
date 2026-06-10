@@ -58,17 +58,27 @@
     .view { display: none; }
     .view.active { display: block; }
 
-    /* ── Game list ── */
-    .day-header { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; padding: 14px 16px 6px; }
-    .game-row { display: flex; align-items: center; padding: 13px 16px; border-bottom: 1px solid rgba(48,54,61,.6); gap: 12px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-    .game-row:active { background: rgba(255,255,255,.04); }
-    .sport-icon { font-size: 22px; flex-shrink: 0; width: 30px; text-align: center; }
-    .game-info { flex: 1; min-width: 0; }
-    .game-teams { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .game-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
-    .game-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-    .sig-bubble { background: var(--green); color: #000; font-size: 11px; font-weight: 900; border-radius: 12px; padding: 2px 9px; min-width: 22px; text-align: center; }
-    .chevron { color: #4a5568; font-size: 20px; line-height: 1; }
+    /* ── Bet365-style match list ── */
+    .b365-day-header { background: var(--bg); padding: 12px 16px 4px; font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
+    .comp-header { background: #111820; border-top: 1px solid rgba(255,255,255,.06); border-bottom: 1px solid rgba(255,255,255,.06); padding: 8px 16px; display: flex; align-items: center; gap: 8px; position: sticky; top: 52px; z-index: 10; }
+    .comp-icon { font-size: 14px; flex-shrink: 0; }
+    .comp-name { font-size: 12px; font-weight: 700; color: var(--text); flex: 1; letter-spacing: .2px; }
+    .comp-meta { font-size: 11px; color: var(--muted); }
+
+    .b365-row { display: flex; align-items: center; padding: 8px 12px 8px 16px; border-bottom: 1px solid rgba(48,54,61,.5); gap: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .b365-row:active { background: rgba(255,255,255,.04); }
+    .b365-left { flex: 1; min-width: 0; }
+    .b365-time { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 3px; display: flex; align-items: center; gap: 5px; }
+    .b365-val-tag { background: rgba(0,200,83,.15); border: 1px solid rgba(0,200,83,.3); color: var(--green); font-size: 10px; font-weight: 800; border-radius: 4px; padding: 1px 5px; }
+    .b365-teams { display: flex; flex-direction: column; gap: 2px; }
+    .b365-team { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+
+    .mkt-header { display: flex; gap: 5px; padding: 5px 12px 5px 0; background: #0d1117; border-bottom: 1px solid rgba(48,54,61,.4); justify-content: flex-end; }
+    .mkt-header span { width: 54px; text-align: center; font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .3px; }
+    .b365-odds { display: flex; gap: 5px; flex-shrink: 0; align-items: center; }
+    .b365-btn { display: block; background: #1e2733; border: 1px solid rgba(255,255,255,.1); border-radius: 6px; width: 54px; height: 32px; line-height: 32px; text-align: center; font-size: 13px; font-weight: 800; color: var(--text); cursor: pointer; overflow: hidden; }
+    .b365-btn.val { background: rgba(0,200,83,.12); border-color: rgba(0,200,83,.5); color: var(--green); }
+    .b365-btn.no-odds { color: rgba(255,255,255,.18); font-weight: 400; }
 
     /* ── Detail view ── */
     .back-bar { display: flex; align-items: center; gap: 6px; padding: 12px 16px 10px; cursor: pointer; color: var(--green); font-size: 15px; font-weight: 600; -webkit-tap-highlight-color: transparent; border-bottom: 1px solid var(--border); }
@@ -224,8 +234,13 @@ function showView(id) {
 function closeDetail() { showView(_prevView); }
 
 // ── Open match detail ────────────────────────────────────────
-function openMatch(matchKey) {
-  const sigs = _signals.filter(s => s.match === matchKey);
+function openMatch(displayKey) {
+  const [dh, da] = displayKey.split(' vs ').map(x => x.trim());
+  const nk = matchKey(dh, da);
+  const sigs = _signals.filter(s => {
+    const [sh, sa] = s.match.split(' vs ').map(x => x.trim());
+    return matchKey(sh, sa) === nk;
+  });
   if (!sigs.length) return;
   const s0 = sigs[0];
   const sportLabel = s0.sport === 'football' ? '⚽ WM 2026' : `🎾 ${(s0.tour||'Tennis').toUpperCase()}`;
@@ -233,7 +248,7 @@ function openMatch(matchKey) {
   document.getElementById('detail-header').innerHTML = `
     <div class="match-header">
       <div class="match-sport">${sportLabel}</div>
-      <div class="match-teams">${esc(matchKey)}</div>
+      <div class="match-teams">${esc(displayKey)}</div>
       ${timeStr ? `<div class="match-time">${timeStr}</div>` : ''}
     </div>`;
   document.getElementById('detail-cards').innerHTML = sigs.map(sigCard).join('');
@@ -242,6 +257,24 @@ function openMatch(matchKey) {
 
 // ── Helpers ──────────────────────────────────────────────────
 const esc = s => s.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// Normalize team names to match between scanner sources and schedule
+const TEAM_ALIASES = {
+  'czechia': 'czech republic',
+  'united states': 'usa',
+  "cote d'ivoire": 'ivory coast',
+  'ivory coast': "cote d'ivoire",
+  'bosnia and herzegovina': 'bosnia & herzegovina',
+  'bosnia & herzegovina': 'bosnia and herzegovina',
+};
+function normTeam(name) {
+  return name.toLowerCase().replace(/[^a-z0-9 ']/g, '').trim();
+}
+function matchKey(a, b) {
+  const na = normTeam(a), nb = normTeam(b);
+  const na2 = TEAM_ALIASES[na] || na, nb2 = TEAM_ALIASES[nb] || nb;
+  return [na2, nb2].join(' vs ');
+}
 
 function fmtKickoff(k) {
   try {
@@ -290,7 +323,7 @@ function sigCard(s) {
   </div>`;
 }
 
-// ── Render Home (game list from schedule, sorted by kickoff) ─
+// ── Render Home — Bet365-style with inline odds ───────────────
 function renderHome() {
   const c = document.getElementById('home-container');
   const games = _schedule.length ? _schedule : _signals.map(s => ({
@@ -303,18 +336,29 @@ function renderHome() {
     return;
   }
 
-  // Build signal count lookup by "Home vs Away"
-  const sigCount = {};
-  for (const s of _signals) sigCount[s.match] = (sigCount[s.match]||0) + 1;
+  // Build signal count + best odds per market — use normalized key for matching
+  const sigCount = {}, oddsMap = {};
+  for (const s of _signals) {
+    const [sh, sa] = s.match.split(' vs ').map(x => x.trim());
+    const nk = matchKey(sh, sa);
+    sigCount[nk] = (sigCount[nk]||0) + 1;
+    if (!oddsMap[nk]) oddsMap[nk] = {};
+    let k = null;
+    if (['home','ah-0.5_home','first_set_a'].includes(s.market)) k = 'home';
+    else if (s.market === 'draw') k = 'draw';
+    else if (['away','ah+0.5_away','first_set_b'].includes(s.market)) k = 'away';
+    if (k && (!oddsMap[nk][k] || s.ev_pct > oddsMap[nk][k].ev)) {
+      oddsMap[nk][k] = { odds: s.odds, ev: s.ev_pct };
+    }
+  }
 
-  // Filter next 30 days + sort by kickoff
+  // Sort + filter next 30 days
   const cutoff = Date.now() + 30*24*36e5;
   const sorted = games
     .filter(g => !g.kickoff || new Date(g.kickoff) <= cutoff)
     .sort((a,b) => {
       if (!a.kickoff && !b.kickoff) return 0;
-      if (!a.kickoff) return 1;
-      if (!b.kickoff) return -1;
+      if (!a.kickoff) return 1; if (!b.kickoff) return -1;
       return new Date(a.kickoff) - new Date(b.kickoff);
     });
 
@@ -326,35 +370,65 @@ function renderHome() {
     days[dk].push(g);
   }
 
+  const oddsBtn = (nk, mkt) => {
+    const od = (oddsMap[nk]||{})[mkt];
+    if (od) return `<div class="b365-btn val">${od.odds.toFixed(2)}</div>`;
+    return `<div class="b365-btn no-odds">—</div>`;
+  };
+
   let h = '';
   for (const [dk, group] of Object.entries(days)) {
+    // Day header
     if (dk === '__') {
-      h += `<div class="day-header">Datum ausstehend</div>`;
+      h += `<div class="b365-day-header">Datum ausstehend</div>`;
     } else {
       const dt = new Date(dk + 'T12:00:00');
       const diff = Math.round((dt - new Date().setHours(0,0,0,0)) / 864e5);
       const label = diff === 0 ? 'Heute' : diff === 1 ? 'Morgen'
         : dt.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'2-digit'});
-      h += `<div class="day-header">${label}</div>`;
+      h += `<div class="b365-day-header">${label}</div>`;
     }
+
+    // Group by competition within each day
+    const comps = {};
     for (const g of group) {
-      const icon = g.sport === 'football' ? '⚽' : '🎾';
-      const matchKey = `${g.home} vs ${g.away}`;
-      const sub = g.kickoff ? fmtTime(g.kickoff)
-                : g.sport === 'football' ? 'WM 2026'
-                : g.tour ? g.tour.toUpperCase() : 'Tennis';
-      const n = sigCount[matchKey] || 0;
-      h += `<div class="game-row" onclick='openMatch(${JSON.stringify(matchKey)})'>
-        <span class="sport-icon">${icon}</span>
-        <div class="game-info">
-          <div class="game-teams">${esc(matchKey)}</div>
-          <div class="game-sub">${sub}</div>
-        </div>
-        <div class="game-right">
-          ${n > 0 ? `<span class="sig-bubble">${n}</span>` : ''}
-          <span class="chevron">›</span>
-        </div>
-      </div>`;
+      const ck = g.sport === 'football' ? 'FIFA WM 2026' : (g.tour||'Tennis').toUpperCase();
+      if (!comps[ck]) comps[ck] = { sport: g.sport, games: [] };
+      comps[ck].games.push(g);
+    }
+
+    for (const [compKey, { sport, games: cg }] of Object.entries(comps)) {
+      const mktHdr = sport === 'football'
+        ? `<span>1</span><span>X</span><span>2</span>`
+        : `<span>1</span><span>2</span>`;
+      h += `<div class="comp-header">
+        <span class="comp-icon">${sport === 'football' ? '🏆' : '🎾'}</span>
+        <span class="comp-name">${compKey}</span>
+        <span class="comp-meta">${cg.length} Spiele</span>
+      </div>
+      <div class="mkt-header">${mktHdr}</div>`;
+
+      for (const g of cg) {
+        const mk = `${g.home} vs ${g.away}`;
+        const nk = matchKey(g.home, g.away);
+        const n = sigCount[nk] || 0;
+        const timeStr = g.kickoff ? fmtTime(g.kickoff) : '—';
+        const isFootball = sport === 'football';
+        const odds = isFootball
+          ? oddsBtn(nk,'home') + oddsBtn(nk,'draw') + oddsBtn(nk,'away')
+          : oddsBtn(nk,'home') + oddsBtn(nk,'away');
+
+        h += `<div class="b365-row" onclick='openMatch(${JSON.stringify(mk)})'>
+          <div class="b365-left">
+            <div class="b365-time">${timeStr}${n>0?` <span class="b365-val-tag">${n} Value</span>`:''}</div>
+            <div class="b365-teams">
+              <span class="b365-team">${esc(g.home)}</span>
+              <span class="b365-team">${esc(g.away)}</span>
+            </div>
+          </div>
+          <div class="b365-odds">${odds}</div>
+        </div>`;
+      }
     }
   }
   c.innerHTML = h;
