@@ -1,12 +1,15 @@
 {
-  "updated": "2026-06-11",
+  "updated": "2026-06-10",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Youcef Atal",
+        "Ismael Bennacer"
+      ],
       "players": [
         {
           "name": "Melvin Mastil",
@@ -145,7 +148,11 @@
       "player_count": 25,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Leonardo Balerdi",
+        "Nahuel Molina",
+        "Gonzalo Montiel"
+      ],
       "players": [
         {
           "name": "Juan Musso",
@@ -160,7 +167,7 @@
         {
           "name": "Gonzalo Montiel",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Leandro Paredes",
@@ -270,7 +277,7 @@
         {
           "name": "Nahuel Molina",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         }
       ]
     },
@@ -279,7 +286,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Riley McGree"
+      ],
       "players": [
         {
           "name": "Mathew Ryan",
@@ -418,7 +427,9 @@
       "player_count": 25,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Christoph Baumgartner"
+      ],
       "players": [
         {
           "name": "Alexander Schlager",
@@ -552,7 +563,10 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Romelu Lukaku",
+        "Zeno Debast"
+      ],
       "players": [
         {
           "name": "Thibaut Courtois",
@@ -562,7 +576,7 @@
         {
           "name": "Zeno Debast",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Arthur Theate",
@@ -597,7 +611,7 @@
         {
           "name": "Romelu Lukaku",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Leandro Trossard",
@@ -830,7 +844,10 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Wesley França",
+        "Neymar"
+      ],
       "players": [
         {
           "name": "Alisson",
@@ -880,7 +897,7 @@
         {
           "name": "Neymar",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Raphinha",
@@ -969,7 +986,10 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Marcelo Flores",
+        "Moïse Bombito"
+      ],
       "players": [
         {
           "name": "Dayne St. Clair",
@@ -1044,7 +1064,7 @@
         {
           "name": "Moïse Bombito",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Maxime Crépeau",
@@ -1664,7 +1684,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Václav Cerný"
+      ],
       "players": [
         {
           "name": "Matěj Kovář",
@@ -1803,7 +1825,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Rocky Bushiri"
+      ],
       "players": [
         {
           "name": "Lionel Mpasi",
@@ -2220,7 +2244,12 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Bukayo Saka",
+        "Tino Livramento",
+        "Reece James",
+        "Ezri Konsa"
+      ],
       "players": [
         {
           "name": "Jordan Pickford",
@@ -2230,7 +2259,7 @@
         {
           "name": "Ezri Konsa",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Nico O'Reilly",
@@ -2255,7 +2284,7 @@
         {
           "name": "Bukayo Saka",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Elliot Anderson",
@@ -2280,7 +2309,7 @@
         {
           "name": "Tino Livramento",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Dean Henderson",
@@ -2340,7 +2369,7 @@
         {
           "name": "Reece James",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Djed Spence",
@@ -2359,7 +2388,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Hugo Ekitike"
+      ],
       "players": [
         {
           "name": "Brice Samba",
@@ -2498,7 +2529,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Lennart Karl"
+      ],
       "players": [
         {
           "name": "Manuel Neuer",
@@ -2637,7 +2670,10 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Mohammed Kudus",
+        "Mohammed Salisu"
+      ],
       "players": [
         {
           "name": "Lawrence Ati-Zigi",
@@ -2915,7 +2951,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Ali Gholizadeh"
+      ],
       "players": [
         {
           "name": "Alireza Beiranvand",
@@ -3193,7 +3231,10 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Clément Akpa",
+        "Sébastien Haller"
+      ],
       "players": [
         {
           "name": "Yahia Fofana",
@@ -3332,7 +3373,10 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Kaoru Mitoma",
+        "Takumi Minamino"
+      ],
       "players": [
         {
           "name": "Zion Suzuki",
@@ -3471,7 +3515,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Yazan Alnemat"
+      ],
       "players": [
         {
           "name": "Yazeed Abulaila",
@@ -3610,7 +3656,10 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Marcel Ruiz",
+        "Luis Ángel Malagón"
+      ],
       "players": [
         {
           "name": "Raúl Rangel",
@@ -3749,7 +3798,10 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Abdessamad Ezzalzouli",
+        "Nayef Aguerd"
+      ],
       "players": [
         {
           "name": "Yassine Bounou",
@@ -3774,7 +3826,7 @@
         {
           "name": "Nayef Aguerd",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Ayyoub Bouaddi",
@@ -3888,7 +3940,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Jurriën Timber"
+      ],
       "players": [
         {
           "name": "Bart Verbruggen",
@@ -4027,7 +4081,11 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Sarpreet Singh",
+        "Matthew Garbett",
+        "Liberato Cacace"
+      ],
       "players": [
         {
           "name": "Max Crocombe",
@@ -4062,7 +4120,7 @@
         {
           "name": "Matthew Garbett",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Marko Stamenić",
@@ -4077,7 +4135,7 @@
         {
           "name": "Sarpreet Singh",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Elijah Just",
@@ -4092,7 +4150,7 @@
         {
           "name": "Liberato Cacace",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Alex Rufer",
@@ -4166,7 +4224,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Martin Odegaard"
+      ],
       "players": [
         {
           "name": "Ørjan Nyland",
@@ -4305,7 +4365,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Adalberto Carrasquilla"
+      ],
       "players": [
         {
           "name": "Luis Mejía",
@@ -4345,7 +4407,7 @@
         {
           "name": "Adalberto Carrasquilla",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Tomás Rodríguez",
@@ -4444,7 +4506,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Julio Enciso"
+      ],
       "players": [
         {
           "name": "Gatito Fernández",
@@ -4539,7 +4603,7 @@
         {
           "name": "Julio Enciso",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Braian Ojeda",
@@ -5000,7 +5064,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Billy Gilmour"
+      ],
       "players": [
         {
           "name": "Angus Gunn",
@@ -5417,7 +5483,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Cho Yu-min"
+      ],
       "players": [
         {
           "name": "Kim Seung-gyu",
@@ -5556,7 +5624,11 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Dani Carvajal",
+        "Fermin Lopez",
+        "Nico Williams"
+      ],
       "players": [
         {
           "name": "David Raya",
@@ -5641,7 +5713,7 @@
         {
           "name": "Nico Williams",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Martín Zubimendi",
@@ -5695,7 +5767,10 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Dejan Kulusevski",
+        "Emil Holm"
+      ],
       "players": [
         {
           "name": "Jacob Widell Zetterström",
@@ -5973,7 +6048,10 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Ferjani Sassi",
+        "Mohamed Ali Ben Romdhane"
+      ],
       "players": [
         {
           "name": "Mouhib Chamakh",
@@ -6390,7 +6468,11 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Giorgian de Arrascaeta",
+        "Ronald Araujo",
+        "Rodrigo Bentancur"
+      ],
       "players": [
         {
           "name": "Sergio Rochet",
@@ -6420,7 +6502,7 @@
         {
           "name": "Rodrigo Bentancur",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Nicolás de la Cruz",
@@ -6440,7 +6522,7 @@
         {
           "name": "Giorgian de Arrascaeta",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Facundo Pellistri",
