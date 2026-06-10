@@ -118,11 +118,21 @@ if __name__ == "__main__":
              "kickoff": ctx.get("commence_time", "")}
             for ctx in _match_contexts.values()
         ]
+    all_odds = {
+        f"{ctx['home']} vs {ctx['away']}": {
+            "home": round(ctx.get("odds_home", 0), 2),
+            "draw": round(ctx.get("odds_draw", 0), 2),
+            "away": round(ctx.get("odds_away", 0), 2),
+        }
+        for ctx in _match_contexts.values()
+        if ctx.get("odds_home", 0) > 1.0
+    }
     write_signals_json(
         football=all_signals,
         portfolio=portfolio,
         kickoff_map=kickoff_map,
         schedule=schedule,
+        all_odds=all_odds,
     )
     print("Dashboard: docs/data/signals.json updated.")
 

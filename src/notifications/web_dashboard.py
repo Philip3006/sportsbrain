@@ -77,6 +77,7 @@ def write_signals_json(
     tennis_tour_map: dict[str, str] | None = None,
     kickoff_map: dict[str, str] | None = None,
     schedule: list[dict] | None = None,
+    all_odds: dict[str, dict] | None = None,
 ) -> None:
     """
     Writes (or merges into) docs/data/signals.json.
@@ -126,9 +127,15 @@ def write_signals_json(
     else:
         schedule_data = existing.get("schedule", [])
 
+    if all_odds is not None:
+        all_odds_data = all_odds
+    else:
+        all_odds_data = existing.get("all_odds", {})
+
     payload = {
         "updated":   updated,
         "schedule":  schedule_data,
+        "all_odds":  all_odds_data,
         "football":  football_data,
         "tennis":    tennis_data,
         "portfolio": portfolio if portfolio else existing.get("portfolio", {}),
