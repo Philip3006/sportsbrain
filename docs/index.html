@@ -129,6 +129,30 @@
     .journal-table tr:last-child td { border-bottom: none; }
     .journal-total { background: rgba(255,255,255,0.03); border-top: 1px solid var(--border); padding: 11px 12px; font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; }
 
+    /* ── Squads view ── */
+    .squad-search { position: sticky; top: 52px; z-index: 20; background: var(--bg); padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    .squad-search input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; padding: 9px 14px; outline: none; }
+    .squad-search input::placeholder { color: var(--muted); }
+    .squad-team-row { display: flex; align-items: center; padding: 11px 16px; border-bottom: 1px solid rgba(48,54,61,.4); gap: 12px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .squad-team-row:active { background: rgba(255,255,255,.04); }
+    .squad-ampel { font-size: 14px; flex-shrink: 0; }
+    .squad-team-name { flex: 1; font-size: 14px; font-weight: 700; }
+    .squad-meta { font-size: 12px; color: var(--muted); text-align: right; }
+    .squad-source { font-size: 10px; color: var(--muted); }
+    /* Squad detail */
+    .squad-detail-header { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+    .squad-detail-name { font-size: 20px; font-weight: 900; margin-bottom: 4px; }
+    .squad-detail-meta { font-size: 12px; color: var(--muted); }
+    .squad-pos-group { padding: 10px 16px 4px; font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; border-bottom: 1px solid rgba(48,54,61,.3); }
+    .squad-player-row { display: flex; align-items: center; padding: 9px 16px; border-bottom: 1px solid rgba(48,54,61,.3); gap: 10px; }
+    .squad-player-pos { width: 30px; font-size: 11px; font-weight: 700; color: var(--muted); }
+    .squad-player-name { flex: 1; font-size: 13px; font-weight: 600; }
+    .squad-player-status { font-size: 11px; font-weight: 700; }
+    .status-fit { color: var(--green); }
+    .status-injured { color: var(--red); }
+    .status-suspended { color: var(--yellow); }
+    .status-doubtful { color: var(--yellow); }
+
     /* ── Bottom nav ── */
     .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg); border-top: 2px solid var(--green); display: flex; padding-bottom: max(env(safe-area-inset-bottom), 10px); z-index: 100; }
     .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 13px 4px 11px; gap: 5px; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; min-height: 70px; }
@@ -194,6 +218,12 @@
       <div class="empty"><div class="icon">📭</div><div>Noch keine abgeschlossenen Wetten.</div></div>
     </div>
   </section>
+
+  <section id="view-squads" class="view">
+    <div id="squads-container">
+      <div class="skel"></div><div class="skel"></div>
+    </div>
+  </section>
 </main>
 
 <nav class="bottom-nav">
@@ -212,13 +242,18 @@
   <div class="nav-tab" data-view="journal" onclick="navTo(this)">
     <span class="ni">📅</span><span class="nl">Kalender</span>
   </div>
+  <div class="nav-tab" data-view="squads" onclick="navTo(this)">
+    <span class="ni">👥</span><span class="nl">Kader</span>
+  </div>
 </nav>
 
 <script>
 const DATA_URL = 'data/signals.json';
+const SQUADS_URL = 'data/squads.json';
 let _signals = [];
 let _schedule = [];
 let _allOdds = {};
+let _squads = {};
 let _prevView = 'home';
 
 // ── Navigation ───────────────────────────────────────────────
@@ -231,6 +266,7 @@ function navTo(tab) {
 function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + id).classList.add('active');
+  if (id === 'squads') renderSquads();
 }
 function closeDetail() { showView(_prevView); }
 
@@ -503,6 +539,99 @@ function renderJournal(history) {
   </div>`;
 }
 
+// ── Squads ───────────────────────────────────────────────────
+let _squadFilter = '';
+
+function renderSquads() {
+  const con = document.getElementById('squads-container');
+  const teams = Object.keys(_squads).filter(t =>
+    !_squadFilter || t.toLowerCase().includes(_squadFilter.toLowerCase())
+  ).sort();
+
+  if (!teams.length && !Object.keys(_squads).length) {
+    con.innerHTML = `<div style="padding:12px 16px;font-size:12px;color:var(--muted)">
+      <input class="squad-search-inline" placeholder="🔍 Team suchen..." oninput="filterSquads(this.value)" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;padding:9px 14px;outline:none;margin-bottom:12px;display:block">
+      Laden…</div>`;
+    return;
+  }
+
+  const posOrder = {GK:0,DEF:1,MID:2,FWD:3};
+  let html = `<div class="squad-search">
+    <input placeholder="🔍 Team suchen..." oninput="filterSquads(this.value)" value="${esc(_squadFilter)}">
+  </div>`;
+
+  if (!teams.length) {
+    html += `<div style="padding:24px;text-align:center;color:var(--muted)">Kein Team gefunden.</div>`;
+  }
+
+  for (const team of teams) {
+    const d = _squads[team];
+    const injured = (d.players||[]).filter(p => p.status !== 'fit').length;
+    const susp = (d.suspended||[]).length;
+    const badge = injured > 0 ? `<span style="color:var(--red)">${injured} verletzt</span>` :
+                  susp > 0   ? `<span style="color:var(--yellow)">${susp} gesperrt</span>` : '';
+    html += `<div class="squad-team-row" onclick="openSquad('${esc(team)}')">
+      <span class="squad-ampel">${d.ampel||'🟢'}</span>
+      <span class="squad-team-name">${esc(team)}</span>
+      <div class="squad-meta">${badge ? badge+'<br>' : ''}<span class="squad-source">${esc(d.source||'')}</span></div>
+      <span style="color:var(--muted);font-size:16px">›</span>
+    </div>`;
+  }
+
+  con.innerHTML = html;
+}
+
+function filterSquads(val) {
+  _squadFilter = val;
+  renderSquads();
+}
+
+function openSquad(team) {
+  const d = _squads[team];
+  if (!d) return;
+  _prevView = 'squads';
+  const players = (d.players||[]).slice().sort((a,b) => {
+    const po = {GK:0,DEF:1,MID:2,FWD:3};
+    return (po[a.pos]??9) - (po[b.pos]??9);
+  });
+
+  const posLabels = {GK:'Torhüter',DEF:'Abwehr',MID:'Mittelfeld',FWD:'Sturm'};
+  let rows = '', lastPos = '';
+  for (const p of players) {
+    if (p.pos !== lastPos) {
+      rows += `<div class="squad-pos-group">${esc(posLabels[p.pos]||p.pos)}</div>`;
+      lastPos = p.pos;
+    }
+    const sc = p.status === 'injured' ? 'status-injured' :
+               p.status === 'suspended' ? 'status-suspended' :
+               p.status === 'doubtful' ? 'status-doubtful' : 'status-fit';
+    const sl = p.status === 'fit' ? '' : p.status === 'injured' ? '🤕' : p.status === 'suspended' ? '🟡' : '❓';
+    rows += `<div class="squad-player-row">
+      <span class="squad-player-pos">${esc(p.pos||'')}</span>
+      <span class="squad-player-name">${esc(p.name)}</span>
+      ${sl ? `<span class="squad-player-status ${sc}">${sl}</span>` : ''}
+    </div>`;
+  }
+
+  // Add suspended players not in squad list
+  const susp = d.suspended||[];
+  if (susp.length) {
+    rows += `<div class="squad-pos-group">Gesperrt (manuell)</div>`;
+    for (const s of susp) {
+      rows += `<div class="squad-player-row"><span class="squad-player-pos">—</span><span class="squad-player-name">${esc(s)}</span><span class="squad-player-status status-suspended">🟡</span></div>`;
+    }
+  }
+
+  const header = `<div class="squad-detail-header">
+    <div class="squad-detail-name">${esc(team)}</div>
+    <div class="squad-detail-meta">${d.player_count||players.length} Spieler · Quelle: ${esc(d.source||'—')} · ${d.ampel||'🟢'} Verfügbarkeit</div>
+  </div>`;
+
+  document.getElementById('detail-header').innerHTML = header;
+  document.getElementById('detail-cards').innerHTML = rows || '<div style="padding:20px;color:var(--muted);text-align:center">Keine Spieler-Daten.</div>';
+  showView('detail');
+}
+
 // ── Load ─────────────────────────────────────────────────────
 async function _load() {
   const r = await fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
@@ -539,6 +668,12 @@ async function _load() {
   renderSport('football');
   renderSport('tennis');
   renderJournal(d.history || []);
+
+  // Load squads in background (non-blocking)
+  fetch(SQUADS_URL + '?t=' + Date.now(), { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(sd => { if (sd) _squads = sd.teams || {}; })
+    .catch(() => {});
 }
 
 async function load() {

@@ -326,8 +326,10 @@ def squad_report(
             suspended_count=susp_count,
         )
 
-    # TM blocked or returned nothing — try Wikipedia as fallback
-    wiki_players = _fetch_wikipedia_squad(team, match_date)
+    # TM blocked — try consolidated WC squads page (parse API, no bot blocking)
+    wiki_players = _fetch_wc_squads_page(team, match_date)
+    if not wiki_players:
+        wiki_players = _fetch_wikipedia_squad(team, match_date)
     if wiki_players:
         wiki_players, susp_count = _apply_suspension_overlay_to_statuses(wiki_players, team)
         return SquadReport(
@@ -359,6 +361,114 @@ def squad_impact_features(
         "key_player_risk_home": float(len(home_report.risk_players)),
         "key_player_risk_away": float(len(away_report.risk_players)),
     }
+
+
+# ---------------------------------------------------------------------------
+# Wikipedia WC-squads page scraper (MediaWiki parse API — no bot blocking)
+# ---------------------------------------------------------------------------
+
+# All 48 WM 2026 teams → Wikipedia section index on "2026_FIFA_World_Cup_squads"
+_WC_SECTION_MAP: dict[str, int] = {
+    "Czech Republic": 2, "Mexico": 3, "South Africa": 4, "South Korea": 5,
+    "Bosnia and Herzegovina": 7, "Bosnia & Herzegovina": 7,
+    "Canada": 8, "Qatar": 9, "Switzerland": 10,
+    "Brazil": 12, "Haiti": 13, "Morocco": 14, "Scotland": 15,
+    "Australia": 17, "Paraguay": 18, "Turkey": 19, "United States": 20,
+    "Curacao": 22, "Ecuador": 23, "Germany": 24,
+    "Ivory Coast": 25, "Cote d'Ivoire": 25,
+    "Japan": 27, "Netherlands": 28, "Sweden": 29, "Tunisia": 30,
+    "Belgium": 32, "Egypt": 33, "Iran": 34, "New Zealand": 35,
+    "Cape Verde": 37, "Saudi Arabia": 38, "Spain": 39, "Uruguay": 40,
+    "France": 42, "Iraq": 43, "Norway": 44, "Senegal": 45,
+    "Algeria": 47, "Argentina": 48, "Austria": 49, "Jordan": 50,
+    "Colombia": 52, "DR Congo": 53, "Portugal": 54, "Uzbekistan": 55,
+    "Croatia": 57, "England": 58, "Ghana": 59, "Panama": 60,
+    # Aliases
+    "USA": 20, "Czechia": 2,
+}
+
+_WC_PAGE = "2026_FIFA_World_Cup_squads"
+_WIKI_API = "https://en.wikipedia.org/w/api.php"
+
+# Wikitext player template pattern: |name=[[Link|Display Name]] or |name=[[Name]]
+_WT_NAME_RE = re.compile(r"\|name=\[\[(?:[^\|\]]+\|)?([^\]]+)\]\]")
+_WT_POS_RE  = re.compile(r"\|pos=(GK|DF|MF|FW)")
+
+
+def _parse_wikitext_squad(wikitext: str) -> list[PlayerStatus]:
+    """Extract players from Wikipedia wikitext squad template format."""
+    players: list[PlayerStatus] = []
+    lines = wikitext.split("\n")
+    for line in lines:
+        name_m = _WT_NAME_RE.search(line)
+        pos_m  = _WT_POS_RE.search(line)
+        if not name_m:
+            continue
+        raw_name = name_m.group(1).strip()
+        # Strip disambiguation suffixes like "(soccer)" or "(footballer)"
+        raw_name = re.sub(r"\s*\([^)]*\)\s*$", "", raw_name).strip()
+        pos_raw = pos_m.group(1) if pos_m else "MF"
+        position = _WIKI_POS_MAP.get(pos_raw, "MID")
+        players.append(PlayerStatus(
+            name=raw_name, position=position,
+            availability=1.0, status="fit",
+            key_player=True, p_plays=1.0,
+        ))
+    return players
+
+
+def _fetch_wc_squads_page(team: str, match_date: pd.Timestamp) -> list[PlayerStatus]:
+    """
+    Fetches squad from the Wikipedia WC 2026 squads consolidated page using
+    the MediaWiki parse API (no HTML scraping — no bot blocking).
+    Caches result to data/cache/squad/{team}_wiki.json.
+    """
+    cache_file = _wiki_cache_path(team)
+    if _cache_fresh(cache_file):
+        return _load_cache(cache_file)
+
+    section_idx = _WC_SECTION_MAP.get(team)
+    if section_idx is None:
+        return []
+
+    _wiki_headers = {
+        "User-Agent": "SportsBrain/1.0 (WM 2026 squad fetcher; +https://github.com/sportsbrain)",
+        "Accept": "application/json",
+    }
+    try:
+        resp = requests.get(
+            _WIKI_API,
+            params={
+                "action": "parse",
+                "page": _WC_PAGE,
+                "prop": "wikitext",
+                "section": section_idx,
+                "format": "json",
+            },
+            headers=_wiki_headers,
+            timeout=15,
+        )
+        time.sleep(0.3)
+    except Exception as exc:
+        print(f"  [wiki-wc] {team}: request failed — {exc}")
+        return []
+
+    if resp.status_code != 200:
+        print(f"  [wiki-wc] {team}: HTTP {resp.status_code}")
+        return []
+
+    try:
+        wikitext = resp.json()["parse"]["wikitext"]["*"]
+    except (KeyError, ValueError):
+        return []
+
+    players = _parse_wikitext_squad(wikitext)
+    if players:
+        _save_cache(cache_file, players)
+        print(f"  [wiki-wc] {team}: {len(players)} players (WC squads page)")
+    else:
+        print(f"  [wiki-wc] {team}: no players parsed from wikitext")
+    return players
 
 
 # ---------------------------------------------------------------------------
