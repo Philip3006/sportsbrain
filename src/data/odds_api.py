@@ -36,9 +36,9 @@ def get_api_key(api_key: str | None = None) -> str:
 
 @disk_cache("odds_api_upcoming", max_age_hours=1.0)
 def fetch_upcoming_matches(
-    sport: str = "soccer_fifa_world_cup_2026",
+    sport: str = "soccer_fifa_world_cup",
     regions: str = "eu",
-    markets: str = "h2h,totals,spreads,btts,alternate_totals,alternate_spreads",
+    markets: str = "h2h,totals,spreads",
     api_key: str | None = None,
     force: bool = False,
 ) -> list[dict]:
