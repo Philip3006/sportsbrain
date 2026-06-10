@@ -98,7 +98,21 @@ if __name__ == "__main__":
         mid: ctx.get("commence_time", "")
         for mid, ctx in _match_contexts.items()
     }
-    write_signals_json(football=all_signals, portfolio=portfolio, kickoff_map=kickoff_map)
+    schedule = [
+        {
+            "sport": "football",
+            "home": ctx["home"],
+            "away": ctx["away"],
+            "kickoff": ctx.get("commence_time", ""),
+        }
+        for ctx in _match_contexts.values()
+    ]
+    write_signals_json(
+        football=all_signals,
+        portfolio=portfolio,
+        kickoff_map=kickoff_map,
+        schedule=schedule,
+    )
     print("Dashboard: docs/data/signals.json updated.")
 
     # Interactive confirmation (skipped with --auto-log)

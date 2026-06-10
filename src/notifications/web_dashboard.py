@@ -76,11 +76,14 @@ def write_signals_json(
     top_elo: list[tuple[str, float]] | None = None,
     tennis_tour_map: dict[str, str] | None = None,
     kickoff_map: dict[str, str] | None = None,
+    schedule: list[dict] | None = None,
 ) -> None:
     """
     Writes (or merges into) docs/data/signals.json.
     Merges football and tennis so each scanner can call independently.
 
+    schedule: optional list of all upcoming matches (not just value bets) —
+              each dict: {sport, home, away, kickoff, tour?}
     tennis_tour_map: optional {match_id: "atp"|"wta"} — adds tour field to tennis signals
     kickoff_map: optional {match_id: "ISO-8601"} — adds kickoff time to all signals
     """
@@ -118,8 +121,14 @@ def write_signals_json(
     else:
         tennis_data = existing.get("tennis", [])
 
+    if schedule is not None:
+        schedule_data = schedule
+    else:
+        schedule_data = existing.get("schedule", [])
+
     payload = {
         "updated":   updated,
+        "schedule":  schedule_data,
         "football":  football_data,
         "tennis":    tennis_data,
         "portfolio": portfolio if portfolio else existing.get("portfolio", {}),

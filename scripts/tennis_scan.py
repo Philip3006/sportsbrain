@@ -414,12 +414,23 @@ def main() -> None:
     dashboard_summary = ledger_summary()
     match_tour_map = {m["match_id"]: m.get("tour", args.tour) for m in upcoming}
     kickoff_map = {m["match_id"]: m.get("commence_time", "") for m in upcoming}
+    tennis_schedule = [
+        {
+            "sport": "tennis",
+            "home": m["player_a"],
+            "away": m["player_b"],
+            "kickoff": m.get("commence_time", ""),
+            "tour": m.get("tour", ""),
+        }
+        for m in upcoming
+    ]
     write_signals_json(
         tennis=all_signals,
         portfolio=dashboard_summary,
         top_elo=top_grass,
         tennis_tour_map=match_tour_map,
         kickoff_map=kickoff_map,
+        schedule=tennis_schedule,
     )
     print("Dashboard: docs/data/signals.json updated.")
 
