@@ -127,6 +127,28 @@ if __name__ == "__main__":
         for ctx in _match_contexts.values()
         if ctx.get("odds_home", 0) > 1.0
     }
+    # Fill gaps for schedule games not processed by model using DC predictions
+    _DC_ALIASES = {
+        'Czech Republic': 'Czechia', 'Bosnia & Herzegovina': 'Bosnia and Herzegovina',
+        'USA': 'United States', 'Ivory Coast': "Cote d'Ivoire",
+    }
+    try:
+        from src.models.dixon_coles import load as _dc_load, predict_match as _dc_pred
+        _dc = _dc_load(Path(__file__).parent.parent / "models" / "dixon_coles" / "params_20260401.pkl")
+        _MARGIN = 0.05
+        for g in schedule:
+            key = f"{g['home']} vs {g['away']}"
+            if key in all_odds: continue
+            try:
+                pr = _dc_pred(_DC_ALIASES.get(g['home'], g['home']),
+                              _DC_ALIASES.get(g['away'], g['away']), _dc, neutral=True)
+                all_odds[key] = {
+                    "home": round(1 / (pr['p_home'] * (1 + _MARGIN)), 2),
+                    "draw": round(1 / (pr['p_draw'] * (1 + _MARGIN)), 2),
+                    "away": round(1 / (pr['p_away'] * (1 + _MARGIN)), 2),
+                }
+            except Exception: pass
+    except Exception: pass
     write_signals_json(
         football=all_signals,
         portfolio=portfolio,

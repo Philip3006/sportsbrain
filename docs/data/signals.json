@@ -1190,6 +1190,66 @@
       "home": 5.05,
       "draw": 2.93,
       "away": 1.96
+    },
+    "South Korea vs Czech Republic": {
+      "home": 1.14,
+      "draw": 8.07,
+      "away": 19.24
+    },
+    "Canada vs Bosnia & Herzegovina": {
+      "home": 1.45,
+      "draw": 3.9,
+      "away": 9.69
+    },
+    "USA vs Paraguay": {
+      "home": 4.31,
+      "draw": 3.17,
+      "away": 1.99
+    },
+    "Ivory Coast vs Ecuador": {
+      "home": 11.5,
+      "draw": 2.45,
+      "away": 1.8
+    },
+    "Czech Republic vs South Africa": {
+      "home": 3.68,
+      "draw": 4.43,
+      "away": 1.81
+    },
+    "Switzerland vs Bosnia & Herzegovina": {
+      "home": 1.35,
+      "draw": 4.49,
+      "away": 11.52
+    },
+    "USA vs Australia": {
+      "home": 9.11,
+      "draw": 4.16,
+      "away": 1.43
+    },
+    "Germany vs Ivory Coast": {
+      "home": 2.43,
+      "draw": 3.66,
+      "away": 2.74
+    },
+    "Bosnia & Herzegovina vs Qatar": {
+      "home": 3.79,
+      "draw": 3.23,
+      "away": 2.1
+    },
+    "Czech Republic vs Mexico": {
+      "home": 43.3,
+      "draw": 14.04,
+      "away": 1.05
+    },
+    "Curaçao vs Ivory Coast": {
+      "home": 1.81,
+      "draw": 3.3,
+      "away": 5.17
+    },
+    "Turkey vs USA": {
+      "home": 2.39,
+      "draw": 3.06,
+      "away": 3.27
     }
   }
 }
