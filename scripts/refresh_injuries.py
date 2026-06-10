@@ -82,6 +82,12 @@ _INJURY_KEYWORDS = re.compile(
     re.I,
 )
 
+_FIT_KEYWORDS = re.compile(
+    r'\b(fit|recovered|returns?|available|cleared|back in|back to training|'
+    r'ready|no longer|fully fit|named in squad|included)\b',
+    re.I,
+)
+
 # Known players per team (loaded from squads.json for name matching)
 _squad_players: dict[str, list[str]] = {}
 
@@ -97,26 +103,37 @@ def _load_squad_players() -> None:
         pass
 
 
-def _find_mentioned_players(text: str, team: str) -> list[str]:
-    """Return squad players whose name appears near an injury keyword in text."""
+def _find_mentioned_players(text: str, team: str) -> tuple[list[str], list[str]]:
+    """
+    Returns (injured_players, fit_players) based on proximity to keywords.
+    A player is 'fit' if mentioned near fit-keywords but NOT near injury-keywords.
+    """
     players = _squad_players.get(team, [])
-    found = []
+    injured, fit = [], []
     for name in players:
-        # Check if name appears within 120 chars of an injury keyword
+        near_injury = False
+        near_fit = False
         for m in re.finditer(re.escape(name), text, re.I):
-            start = max(0, m.start() - 120)
-            end = min(len(text), m.end() + 120)
+            start = max(0, m.start() - 150)
+            end = min(len(text), m.end() + 150)
             context = text[start:end]
             if _INJURY_KEYWORDS.search(context):
-                if name not in found:
-                    found.append(name)
-    return found
+                near_injury = True
+            if _FIT_KEYWORDS.search(context):
+                near_fit = True
+        if near_injury and name not in injured:
+            injured.append(name)
+        elif near_fit and not near_injury and name not in fit:
+            fit.append(name)
+    return injured, fit
 
 
-def search_team_injuries(team: str, query: str, n: int = 5) -> tuple[list[str], list[str]]:
+def search_team_injuries(
+    team: str, query: str, n: int = 6
+) -> tuple[list[str], list[str], list[str]]:
     """
-    Searches DDG news for injury news about team.
-    Returns (found_player_names, raw_headlines).
+    Searches DDG news for injury/fitness news about team.
+    Returns (injured_players, fit_players, raw_headlines).
     """
     try:
         from ddgs import DDGS
@@ -125,7 +142,7 @@ def search_team_injuries(team: str, query: str, n: int = 5) -> tuple[list[str], 
             from duckduckgo_search import DDGS
         except ImportError:
             print("  [injury] ddgs not installed — run: pip3 install ddgs")
-            return [], []
+            return [], [], []
 
     headlines = []
     combined_text = ""
@@ -139,14 +156,10 @@ def search_team_injuries(team: str, query: str, n: int = 5) -> tuple[list[str], 
             combined_text += f" {title} {body}"
     except Exception as e:
         print(f"  [injury] DDG search failed for {team}: {e}")
-        return [], []
+        return [], [], []
 
-    # Only process if injury keywords appear at all
-    if not _INJURY_KEYWORDS.search(combined_text):
-        return [], headlines
-
-    players = _find_mentioned_players(combined_text, team)
-    return players, headlines
+    injured, fit = _find_mentioned_players(combined_text, team)
+    return injured, fit, headlines
 
 
 def _load_suspensions() -> dict:
@@ -202,24 +215,32 @@ def run(teams_filter: list[str] | None = None, dry_run: bool = False) -> None:
         teams = [(t, q) for t, q in WM_TEAMS if t in teams_filter]
 
     total_new = 0
+    total_removed = 0
     for i, (team, query) in enumerate(teams):
         print(f"  [{i+1:2d}/{len(teams)}] {team:<30s}", end="", flush=True)
-        players, headlines = search_team_injuries(team, query)
+        injured, fit, _ = search_team_injuries(team, query)
 
         existing = [p for p in suspensions.get(team, []) if not p.startswith("_")]
-        new_players = [p for p in players if p not in existing]
+        new_players = [p for p in injured if p not in existing]
+        # Remove players explicitly mentioned as fit/recovered/returning
+        removed = [p for p in existing if p in fit]
 
+        parts = []
         if new_players:
-            print(f"  🆕 {new_players}")
+            parts.append(f"🆕 {new_players}")
             total_new += len(new_players)
-        else:
-            print(f"  {'(no new findings)' if not players else f'confirmed: {players}'}")
+        if removed:
+            parts.append(f"✅ back: {removed}")
+            total_removed += len(removed)
+        if not parts:
+            parts.append("(no change)")
+        print("  " + " | ".join(parts))
 
-        if not dry_run and not players and team not in suspensions:
-            suspensions[team] = []
-        elif not dry_run and new_players:
+        if not dry_run:
             suspensions.setdefault(team, [])
-            suspensions[team] = list(dict.fromkeys(existing + new_players))
+            updated = list(dict.fromkeys(existing + new_players))
+            updated = [p for p in updated if p not in removed]
+            suspensions[team] = updated
 
         time.sleep(0.8)  # polite rate limit
 
@@ -228,10 +249,10 @@ def run(teams_filter: list[str] | None = None, dry_run: bool = False) -> None:
         suspensions["_injuries_last_updated"] = str(date.today())
         _save_suspensions(suspensions)
         squad_updates = _update_squads_json(suspensions)
-        print(f"\n✓ suspensions.json updated — {total_new} new players flagged")
-        print(f"✓ squads.json updated — {squad_updates} player statuses changed")
+        print(f"\n✓ suspensions.json — {total_new} neu, {total_removed} wieder fit")
+        print(f"✓ squads.json — {squad_updates} Spielerstatus geändert")
     else:
-        print(f"\n[dry-run] {total_new} new players would be flagged")
+        print(f"\n[dry-run] {total_new} neu, {total_removed} wieder fit")
 
 
 if __name__ == "__main__":
