@@ -218,6 +218,7 @@
 const DATA_URL = 'data/signals.json';
 let _signals = [];
 let _schedule = [];
+let _allOdds = {};
 let _prevView = 'home';
 
 // ── Navigation ───────────────────────────────────────────────
@@ -241,17 +242,23 @@ function openMatch(displayKey) {
     const [sh, sa] = s.match.split(' vs ').map(x => x.trim());
     return matchKey(sh, sa) === nk;
   });
-  if (!sigs.length) return;
+  // Find kickoff + sport from schedule
+  const sched = _schedule.find(g => matchKey(g.home, g.away) === nk);
   const s0 = sigs[0];
-  const sportLabel = s0.sport === 'football' ? '⚽ WM 2026' : `🎾 ${(s0.tour||'Tennis').toUpperCase()}`;
-  const timeStr = s0.kickoff ? fmtKickoff(s0.kickoff) : '';
+  const sport = s0?.sport || sched?.sport || 'football';
+  const kickoff = s0?.kickoff || sched?.kickoff || '';
+  const tour = s0?.tour || sched?.tour || '';
+  const sportLabel = sport === 'football' ? '⚽ WM 2026' : `🎾 ${(tour||'Tennis').toUpperCase()}`;
+  const timeStr = kickoff ? fmtKickoff(kickoff) : '';
   document.getElementById('detail-header').innerHTML = `
     <div class="match-header">
       <div class="match-sport">${sportLabel}</div>
       <div class="match-teams">${esc(displayKey)}</div>
       ${timeStr ? `<div class="match-time">${timeStr}</div>` : ''}
     </div>`;
-  document.getElementById('detail-cards').innerHTML = sigs.map(sigCard).join('');
+  document.getElementById('detail-cards').innerHTML = sigs.length
+    ? sigs.map(sigCard).join('')
+    : `<div class="empty"><div class="icon">📊</div><div>Kein Value Bet gefunden.<br><small>Unser Modell sieht hier keinen Vorteil.</small></div></div>`;
   showView('detail');
 }
 
@@ -336,8 +343,18 @@ function renderHome() {
     return;
   }
 
-  // Build signal count + best odds per market — use normalized key for matching
+  // Seed oddsMap from all_odds (raw book odds for all games)
   const sigCount = {}, oddsMap = {};
+  for (const [rawKey, raw] of Object.entries(_allOdds)) {
+    const [rh, ra] = rawKey.split(' vs ').map(x => x.trim());
+    const nk = matchKey(rh, ra);
+    oddsMap[nk] = {
+      home: raw.home > 1 ? { odds: raw.home, ev: null } : null,
+      draw: raw.draw > 1 ? { odds: raw.draw, ev: null } : null,
+      away: raw.away > 1 ? { odds: raw.away, ev: null } : null,
+    };
+  }
+  // Override with signal odds (value bets) — marked with ev so they show green
   for (const s of _signals) {
     const [sh, sa] = s.match.split(' vs ').map(x => x.trim());
     const nk = matchKey(sh, sa);
@@ -347,9 +364,7 @@ function renderHome() {
     if (['home','ah-0.5_home','first_set_a'].includes(s.market)) k = 'home';
     else if (s.market === 'draw') k = 'draw';
     else if (['away','ah+0.5_away','first_set_b'].includes(s.market)) k = 'away';
-    if (k && (!oddsMap[nk][k] || s.ev_pct > oddsMap[nk][k].ev)) {
-      oddsMap[nk][k] = { odds: s.odds, ev: s.ev_pct };
-    }
+    if (k) oddsMap[nk][k] = { odds: s.odds, ev: s.ev_pct };
   }
 
   // Sort + filter next 30 days
@@ -372,8 +387,9 @@ function renderHome() {
 
   const oddsBtn = (nk, mkt) => {
     const od = (oddsMap[nk]||{})[mkt];
-    if (od) return `<div class="b365-btn val">${od.odds.toFixed(2)}</div>`;
-    return `<div class="b365-btn no-odds">—</div>`;
+    if (!od) return `<div class="b365-btn no-odds">—</div>`;
+    const cls = od.ev !== null ? 'val' : '';
+    return `<div class="b365-btn ${cls}">${od.odds.toFixed(2)}</div>`;
   };
 
   let h = '';
@@ -512,6 +528,7 @@ async function _load() {
 
   _signals = [...(d.football||[]), ...(d.tennis||[])];
   _schedule = d.schedule || [];
+  _allOdds = d.all_odds || {};
 
   const setB = (id, n) => { const el=document.getElementById(id); el.textContent=n; el.classList.toggle('show',n>0); };
   setB('badge-all',      _signals.length);
