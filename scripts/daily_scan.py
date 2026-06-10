@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.scanner.daily_scan import run_daily_scan
 from src.betting.ledger import append_bets, ledger_summary, LEDGER_PATH
 from src.notifications.web_dashboard import write_signals_json
+from src.data.odds_api import fetch_upcoming_matches
 
 
 def _confirm_bets(selected_signals: list, bankroll: float) -> list:
@@ -98,15 +99,25 @@ if __name__ == "__main__":
         mid: ctx.get("commence_time", "")
         for mid, ctx in _match_contexts.items()
     }
-    schedule = [
-        {
-            "sport": "football",
-            "home": ctx["home"],
-            "away": ctx["away"],
-            "kickoff": ctx.get("commence_time", ""),
-        }
-        for ctx in _match_contexts.values()
-    ]
+    # Build schedule from ALL raw API matches (not just those the model processed)
+    try:
+        import os
+        raw_all = fetch_upcoming_matches(api_key=os.getenv("ODDS_API_KEY", ""))
+        schedule = [
+            {
+                "sport": "football",
+                "home": m["home_team"],
+                "away": m["away_team"],
+                "kickoff": m.get("commence_time", ""),
+            }
+            for m in raw_all
+        ]
+    except Exception:
+        schedule = [
+            {"sport": "football", "home": ctx["home"], "away": ctx["away"],
+             "kickoff": ctx.get("commence_time", "")}
+            for ctx in _match_contexts.values()
+        ]
     write_signals_json(
         football=all_signals,
         portfolio=portfolio,

@@ -1,56 +1,780 @@
 {
-  "updated": "2026-06-10T13:23:44Z",
+  "updated": "2026-06-10T18:49:09Z",
   "schedule": [
     {
       "sport": "football",
-      "home": "United States",
+      "home": "Mexico",
+      "away": "South Africa",
+      "kickoff": "2026-06-11T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "South Korea",
+      "away": "Czech Republic",
+      "kickoff": "2026-06-12T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Canada",
+      "away": "Bosnia & Herzegovina",
+      "kickoff": "2026-06-12T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "USA",
+      "away": "Paraguay",
+      "kickoff": "2026-06-13T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Qatar",
+      "away": "Switzerland",
+      "kickoff": "2026-06-13T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Brazil",
+      "away": "Morocco",
+      "kickoff": "2026-06-13T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Haiti",
+      "away": "Scotland",
+      "kickoff": "2026-06-14T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Australia",
+      "away": "Turkey",
+      "kickoff": "2026-06-14T04:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Germany",
+      "away": "Curaçao",
+      "kickoff": "2026-06-14T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Netherlands",
+      "away": "Japan",
+      "kickoff": "2026-06-14T20:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Ivory Coast",
+      "away": "Ecuador",
+      "kickoff": "2026-06-14T23:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Sweden",
+      "away": "Tunisia",
+      "kickoff": "2026-06-15T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Spain",
+      "away": "Cape Verde",
+      "kickoff": "2026-06-15T16:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Belgium",
+      "away": "Egypt",
+      "kickoff": "2026-06-15T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Saudi Arabia",
+      "away": "Uruguay",
+      "kickoff": "2026-06-15T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Iran",
+      "away": "New Zealand",
+      "kickoff": "2026-06-16T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "France",
+      "away": "Senegal",
+      "kickoff": "2026-06-16T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Iraq",
+      "away": "Norway",
+      "kickoff": "2026-06-16T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Argentina",
+      "away": "Algeria",
+      "kickoff": "2026-06-17T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Austria",
+      "away": "Jordan",
+      "kickoff": "2026-06-17T04:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Portugal",
+      "away": "DR Congo",
+      "kickoff": "2026-06-17T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "England",
+      "away": "Croatia",
+      "kickoff": "2026-06-17T20:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Ghana",
+      "away": "Panama",
+      "kickoff": "2026-06-17T23:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Uzbekistan",
+      "away": "Colombia",
+      "kickoff": "2026-06-18T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Czech Republic",
+      "away": "South Africa",
+      "kickoff": "2026-06-18T16:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Switzerland",
+      "away": "Bosnia & Herzegovina",
+      "kickoff": "2026-06-18T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Canada",
+      "away": "Qatar",
+      "kickoff": "2026-06-18T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Mexico",
+      "away": "South Korea",
+      "kickoff": "2026-06-19T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "USA",
+      "away": "Australia",
+      "kickoff": "2026-06-19T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Scotland",
+      "away": "Morocco",
+      "kickoff": "2026-06-19T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Brazil",
+      "away": "Haiti",
+      "kickoff": "2026-06-20T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Turkey",
+      "away": "Paraguay",
+      "kickoff": "2026-06-20T03:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Netherlands",
+      "away": "Sweden",
+      "kickoff": "2026-06-20T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Germany",
+      "away": "Ivory Coast",
+      "kickoff": "2026-06-20T20:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Ecuador",
+      "away": "Curaçao",
+      "kickoff": "2026-06-21T00:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Tunisia",
+      "away": "Japan",
+      "kickoff": "2026-06-21T04:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Spain",
+      "away": "Saudi Arabia",
+      "kickoff": "2026-06-21T16:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Belgium",
+      "away": "Iran",
+      "kickoff": "2026-06-21T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Uruguay",
+      "away": "Cape Verde",
+      "kickoff": "2026-06-21T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "New Zealand",
+      "away": "Egypt",
+      "kickoff": "2026-06-22T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Argentina",
+      "away": "Austria",
+      "kickoff": "2026-06-22T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "France",
+      "away": "Iraq",
+      "kickoff": "2026-06-22T21:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Norway",
+      "away": "Senegal",
+      "kickoff": "2026-06-23T00:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Jordan",
+      "away": "Algeria",
+      "kickoff": "2026-06-23T03:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Portugal",
+      "away": "Uzbekistan",
+      "kickoff": "2026-06-23T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "England",
+      "away": "Ghana",
+      "kickoff": "2026-06-23T20:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Panama",
+      "away": "Croatia",
+      "kickoff": "2026-06-23T23:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Colombia",
+      "away": "DR Congo",
+      "kickoff": "2026-06-24T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Bosnia & Herzegovina",
+      "away": "Qatar",
+      "kickoff": "2026-06-24T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Switzerland",
+      "away": "Canada",
+      "kickoff": "2026-06-24T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Scotland",
+      "away": "Brazil",
+      "kickoff": "2026-06-24T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Morocco",
+      "away": "Haiti",
+      "kickoff": "2026-06-24T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Czech Republic",
       "away": "Mexico",
-      "kickoff": "2026-06-15T20:00:00Z"
+      "kickoff": "2026-06-25T01:00:00Z"
     },
     {
-      "sport": "tennis",
-      "home": "Carlos Alcaraz",
-      "away": "Novak Djokovic",
-      "kickoff": "2026-07-06T13:00:00Z",
-      "tour": "atp"
+      "sport": "football",
+      "home": "South Africa",
+      "away": "South Korea",
+      "kickoff": "2026-06-25T01:00:00Z"
     },
     {
-      "sport": "tennis",
-      "home": "Jannik Sinner",
-      "away": "Daniil Medvedev",
-      "kickoff": "2026-07-07T11:00:00Z",
-      "tour": "atp"
+      "sport": "football",
+      "home": "Curaçao",
+      "away": "Ivory Coast",
+      "kickoff": "2026-06-25T20:00:00Z"
     },
     {
-      "sport": "tennis",
-      "home": "Iga Swiatek",
-      "away": "Aryna Sabalenka",
-      "kickoff": "2026-07-06T11:00:00Z",
-      "tour": "wta"
+      "sport": "football",
+      "home": "Ecuador",
+      "away": "Germany",
+      "kickoff": "2026-06-25T20:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Japan",
+      "away": "Sweden",
+      "kickoff": "2026-06-25T23:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Tunisia",
+      "away": "Netherlands",
+      "kickoff": "2026-06-25T23:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Paraguay",
+      "away": "Australia",
+      "kickoff": "2026-06-26T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Turkey",
+      "away": "USA",
+      "kickoff": "2026-06-26T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Norway",
+      "away": "France",
+      "kickoff": "2026-06-26T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Senegal",
+      "away": "Iraq",
+      "kickoff": "2026-06-26T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Cape Verde",
+      "away": "Saudi Arabia",
+      "kickoff": "2026-06-27T00:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Uruguay",
+      "away": "Spain",
+      "kickoff": "2026-06-27T00:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "New Zealand",
+      "away": "Belgium",
+      "kickoff": "2026-06-27T03:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Egypt",
+      "away": "Iran",
+      "kickoff": "2026-06-27T03:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Croatia",
+      "away": "Ghana",
+      "kickoff": "2026-06-27T21:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Panama",
+      "away": "England",
+      "kickoff": "2026-06-27T21:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Colombia",
+      "away": "Portugal",
+      "kickoff": "2026-06-27T23:30:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "DR Congo",
+      "away": "Uzbekistan",
+      "kickoff": "2026-06-27T23:30:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Algeria",
+      "away": "Austria",
+      "kickoff": "2026-06-28T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "home": "Jordan",
+      "away": "Argentina",
+      "kickoff": "2026-06-28T02:00:00Z"
     }
   ],
   "football": [
     {
       "sport": "football",
-      "match": "United States vs Mexico",
-      "market": "o/u3.5_over",
-      "odds": 3.2,
-      "model_prob": 37.4,
-      "ev_pct": 19.8,
+      "match": "Turkey vs Paraguay",
+      "market": "away",
+      "odds": 3.6,
+      "model_prob": 38.7,
+      "ev_pct": 39.1,
       "stake_eur": 15.0,
       "confidence": "HIGH",
-      "kickoff": "2026-06-15T20:00:00Z"
+      "kickoff": "2026-06-20T03:00:00Z"
     },
     {
       "sport": "football",
-      "match": "United States vs Mexico",
-      "market": "away",
-      "odds": 3.0,
-      "model_prob": 37.1,
-      "ev_pct": 11.4,
-      "stake_eur": 9.97,
+      "match": "Algeria vs Austria",
+      "market": "home",
+      "odds": 3.85,
+      "model_prob": 35.7,
+      "ev_pct": 37.4,
+      "stake_eur": 15.0,
       "confidence": "MEDIUM",
-      "kickoff": "2026-06-15T20:00:00Z"
+      "kickoff": "2026-06-28T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "England vs Croatia",
+      "market": "o/u2.5_under",
+      "odds": 1.76,
+      "model_prob": 76.9,
+      "ev_pct": 35.3,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-17T20:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Uruguay vs Cape Verde",
+      "market": "draw",
+      "odds": 4.7,
+      "model_prob": 28.8,
+      "ev_pct": 35.2,
+      "stake_eur": 15.0,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-21T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Netherlands vs Sweden",
+      "market": "ah-1.5_home",
+      "odds": 2.81,
+      "model_prob": 46.2,
+      "ev_pct": 29.9,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-20T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Algeria vs Austria",
+      "market": "o/u2.5_under",
+      "odds": 1.72,
+      "model_prob": 75.1,
+      "ev_pct": 29.2,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-28T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Netherlands vs Sweden",
+      "market": "o/u2.5_over",
+      "odds": 1.97,
+      "model_prob": 65.5,
+      "ev_pct": 29.0,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-20T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Canada vs Bosnia and Herzegovina",
+      "market": "ah-1.5_home",
+      "odds": 3.31,
+      "model_prob": 38.6,
+      "ev_pct": 27.7,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-12T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Argentina vs Austria",
+      "market": "o/u2.5_under",
+      "odds": 1.88,
+      "model_prob": 67.9,
+      "ev_pct": 27.6,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-22T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Cote d'Ivoire vs Ecuador",
+      "market": "o/u2.5_under",
+      "odds": 1.44,
+      "model_prob": 88.3,
+      "ev_pct": 27.1,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-14T23:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "South Korea vs Czechia",
+      "market": "home",
+      "odds": 2.8,
+      "model_prob": 45.3,
+      "ev_pct": 26.8,
+      "stake_eur": 15.0,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-12T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "England vs Croatia",
+      "market": "away",
+      "odds": 5.3,
+      "model_prob": 23.8,
+      "ev_pct": 26.4,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-17T20:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Tunisia vs Japan",
+      "market": "o/u2.5_over",
+      "odds": 2.25,
+      "model_prob": 55.5,
+      "ev_pct": 24.9,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-21T04:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Uruguay vs Cape Verde",
+      "market": "o/u2.5_under",
+      "odds": 1.91,
+      "model_prob": 65.3,
+      "ev_pct": 24.8,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-21T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Cote d'Ivoire vs Ecuador",
+      "market": "away",
+      "odds": 2.56,
+      "model_prob": 48.6,
+      "ev_pct": 24.4,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-14T23:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "DR Congo vs Uzbekistan",
+      "market": "away",
+      "odds": 3.3,
+      "model_prob": 37.1,
+      "ev_pct": 22.5,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-27T23:30:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Switzerland vs Bosnia and Herzegovina",
+      "market": "ah-1.5_home",
+      "odds": 2.7,
+      "model_prob": 44.8,
+      "ev_pct": 20.9,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-18T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Turkey vs Paraguay",
+      "market": "o/u2.5_under",
+      "odds": 1.65,
+      "model_prob": 72.9,
+      "ev_pct": 20.3,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-20T03:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Scotland vs Brazil",
+      "market": "o/u2.5_under",
+      "odds": 2.0,
+      "model_prob": 59.9,
+      "ev_pct": 19.8,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-24T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Turkey vs United States",
+      "market": "o/u2.5_under",
+      "odds": 1.94,
+      "model_prob": 61.7,
+      "ev_pct": 19.8,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-26T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Argentina vs Austria",
+      "market": "ah-1.5_home",
+      "odds": 2.84,
+      "model_prob": 41.9,
+      "ev_pct": 19.0,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-22T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Norway vs France",
+      "market": "o/u2.5_over",
+      "odds": 1.99,
+      "model_prob": 58.8,
+      "ev_pct": 17.1,
+      "stake_eur": 14.59,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-26T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Switzerland vs Canada",
+      "market": "o/u2.5_under",
+      "odds": 1.7,
+      "model_prob": 68.7,
+      "ev_pct": 16.9,
+      "stake_eur": 14.46,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-24T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Norway vs France",
+      "market": "draw",
+      "odds": 3.75,
+      "model_prob": 30.5,
+      "ev_pct": 14.5,
+      "stake_eur": 11.77,
+      "confidence": "LOW",
+      "kickoff": "2026-06-26T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Iran vs New Zealand",
+      "market": "away",
+      "odds": 4.9,
+      "model_prob": 23.3,
+      "ev_pct": 14.0,
+      "stake_eur": 11.45,
+      "confidence": "LOW",
+      "kickoff": "2026-06-16T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Tunisia vs Japan",
+      "market": "away",
+      "odds": 1.76,
+      "model_prob": 64.5,
+      "ev_pct": 13.6,
+      "stake_eur": 12.34,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-21T04:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "New Zealand vs Egypt",
+      "market": "home",
+      "odds": 5.4,
+      "model_prob": 20.6,
+      "ev_pct": 11.2,
+      "stake_eur": 9.8,
+      "confidence": "LOW",
+      "kickoff": "2026-06-22T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Colombia vs Portugal",
+      "market": "ah-0.5_home",
+      "odds": 1.68,
+      "model_prob": 65.7,
+      "ev_pct": 10.4,
+      "stake_eur": 10.28,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-27T23:30:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Switzerland vs Canada",
+      "market": "ah+0.5_away",
+      "odds": 1.69,
+      "model_prob": 64.0,
+      "ev_pct": 8.1,
+      "stake_eur": 7.99,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-24T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Turkey vs United States",
+      "market": "draw",
+      "odds": 3.63,
+      "model_prob": 29.5,
+      "ev_pct": 7.1,
+      "stake_eur": 7.42,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-26T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "New Zealand vs Egypt",
+      "market": "o/u2.5_over",
+      "odds": 2.32,
+      "model_prob": 45.6,
+      "ev_pct": 5.7,
+      "stake_eur": 6.61,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-22T01:00:00Z"
     }
   ],
   "tennis": [
