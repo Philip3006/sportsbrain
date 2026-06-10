@@ -118,37 +118,45 @@ if __name__ == "__main__":
              "kickoff": ctx.get("commence_time", "")}
             for ctx in _match_contexts.values()
         ]
-    all_odds = {
-        f"{ctx['home']} vs {ctx['away']}": {
-            "home": round(ctx.get("odds_home", 0), 2),
-            "draw": round(ctx.get("odds_draw", 0), 2),
-            "away": round(ctx.get("odds_away", 0), 2),
-        }
-        for ctx in _match_contexts.values()
-        if ctx.get("odds_home", 0) > 1.0
-    }
-    # Fill gaps for schedule games not processed by model using DC predictions
-    _DC_ALIASES = {
-        'Czech Republic': 'Czechia', 'Bosnia & Herzegovina': 'Bosnia and Herzegovina',
-        'USA': 'United States', 'Ivory Coast': "Cote d'Ivoire",
-    }
+    # Build all_odds from real Odds API data (all 72 WM matches available)
+    # Prefer Bet365, fall back to first available bookmaker. Never use DC model for display odds.
+    all_odds = {}
     try:
-        from src.models.dixon_coles import load as _dc_load, predict_match as _dc_pred
-        _dc = _dc_load(Path(__file__).parent.parent / "models" / "dixon_coles" / "params_20260401.pkl")
-        _MARGIN = 0.05
-        for g in schedule:
-            key = f"{g['home']} vs {g['away']}"
-            if key in all_odds: continue
-            try:
-                pr = _dc_pred(_DC_ALIASES.get(g['home'], g['home']),
-                              _DC_ALIASES.get(g['away'], g['away']), _dc, neutral=True)
-                all_odds[key] = {
-                    "home": round(1 / (pr['p_home'] * (1 + _MARGIN)), 2),
-                    "draw": round(1 / (pr['p_draw'] * (1 + _MARGIN)), 2),
-                    "away": round(1 / (pr['p_away'] * (1 + _MARGIN)), 2),
+        import os as _os
+        _api_key = _os.getenv("ODDS_API_KEY", "")
+        import requests as _req
+        _r = _req.get(
+            "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/odds",
+            params={"apiKey": _api_key, "regions": "eu", "markets": "h2h", "oddsFormat": "decimal"},
+            timeout=15,
+        )
+        if _r.ok:
+            for _m in _r.json():
+                _home, _away = _m["home_team"], _m["away_team"]
+                _bk = next((b for b in _m.get("bookmakers", []) if "bet365" in b["key"]), None)
+                if not _bk and _m.get("bookmakers"):
+                    _bk = _m["bookmakers"][0]
+                if not _bk:
+                    continue
+                _oc = {o["name"]: o["price"] for o in _bk["markets"][0]["outcomes"]}
+                all_odds[f"{_home} vs {_away}"] = {
+                    "home": round(_oc.get(_home, 0), 2),
+                    "draw": round(_oc.get("Draw", 0), 2),
+                    "away": round(_oc.get(_away, 0), 2),
                 }
-            except Exception: pass
-    except Exception: pass
+            print(f"  Odds API: {len(all_odds)} matches with real bookmaker odds")
+    except Exception as _e:
+        print(f"  Odds API fetch failed: {_e} — keeping existing odds")
+        # Fall back to match_contexts odds if API unavailable
+        all_odds = {
+            f"{ctx['home']} vs {ctx['away']}": {
+                "home": round(ctx.get("odds_home", 0), 2),
+                "draw": round(ctx.get("odds_draw", 0), 2),
+                "away": round(ctx.get("odds_away", 0), 2),
+            }
+            for ctx in _match_contexts.values()
+            if ctx.get("odds_home", 0) > 1.0
+        }
     write_signals_json(
         football=all_signals,
         portfolio=portfolio,
