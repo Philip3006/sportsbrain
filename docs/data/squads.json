@@ -1,0 +1,6667 @@
+{
+  "updated": "2026-06-11",
+  "teams": {
+    "Algeria": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Melvin Mastil",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Aïssa Mandi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Achref Abada",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Mohamed Amine Tougai",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Zineddine Belaïd",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ramiz Zerrouki",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Riyad Mahrez",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Houssem Aouar",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Amine Gouiri",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Farès Chaïbi",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Anis Hadj Moussa",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Nadhir Benbouali",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Jaouen Hadjam",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Hicham Boudaoui",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Rayan Aït-Nouri",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Oussama Benbot",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Rafik Belghali",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Mohamed Amoura",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Nabil Bentaleb",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Adil Boulbina",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ramy Bensebaini",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ibrahim Maza",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Luca Zidane",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Yacine Titraoui",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Farès Ghedjemis",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Samir Chergui",
+          "pos": "DEF",
+          "status": "fit"
+        }
+      ]
+    },
+    "Argentina": {
+      "source": "wikipedia",
+      "player_count": 25,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Juan Musso",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Nicolás Tagliafico",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Gonzalo Montiel",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Leandro Paredes",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Lisandro Martínez",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Rodrigo De Paul",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Valentín Barco",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Julián Alvarez",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Lionel Messi",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Giovani Lo Celso",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Gerónimo Rulli",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Cristian Romero",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Exequiel Palacios",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Nicolás González",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Thiago Almada",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Giuliano Simeone",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Nico Paz",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Nicolás Otamendi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Alexis Mac Allister",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "José Manuel López",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Lautaro Martínez",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Emiliano Martínez",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Enzo Fernández",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Facundo Medina",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Nahuel Molina",
+          "pos": "DEF",
+          "status": "fit"
+        }
+      ]
+    },
+    "Australia": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Mathew Ryan",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Miloš Degenek",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Alessandro Circati",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jacob Italiano",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jordan Bos",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jason Geria",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Mathew Leckie",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Connor Metcalfe",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Mohamed Touré",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ajdin Hrustic",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Awer Mabil",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Paul Izzo",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Aiden O'Neill",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Cammy Devlin",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Kai Trewin",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Aziz Behich",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Nestory Irankunda",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Patrick Beach",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Harry Souttar",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Cristian Volpato",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Cameron Burgess",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jackson Irvine",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Nishan Velupillay",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Paul Okon-Engstler",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Lucas Herrington",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Tete Yengi",
+          "pos": "FWD",
+          "status": "fit"
+        }
+      ]
+    },
+    "Austria": {
+      "source": "wikipedia",
+      "player_count": 25,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Alexander Schlager",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "David Affengruber",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kevin Danso",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Xaver Schlager",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Stefan Posch",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Nicolas Seiwald",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Marko Arnautović",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "David Alaba",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Marcel Sabitzer",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Florian Grillitsch",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Michael Gregoritsch",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Florian Wiegele",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Patrick Pentz",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Saša Kalajdžić",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Philipp Lienhart",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Phillipp Mwene",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Carney Chukwuemeka",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Romano Schmid",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Konrad Laimer",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Patrick Wimmer",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Alexander Prass",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Marco Friedl",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Paul Wanner",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Michael Svoboda",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Alessandro Schöpf",
+          "pos": "MID",
+          "status": "fit"
+        }
+      ]
+    },
+    "Belgium": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Thibaut Courtois",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Zeno Debast",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Arthur Theate",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Brandon Mechele",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Maxim De Cuyper",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Axel Witsel",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Kevin De Bruyne",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Youri Tielemans",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Romelu Lukaku",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Leandro Trossard",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Jérémy Doku",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Senne Lammens",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Mike Penders",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Dodi Lukébakio",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Thomas Meunier",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Koni De Winter",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Charles De Ketelaere",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Joaquin Seys",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Diego Moreira",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Hans Vanaken",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Timothy Castagne",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Alexis Saelemaekers",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Nicolas Raskin",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Amadou Onana",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Nathan Ngoy",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Matias Fernandez-Pardo",
+          "pos": "FWD",
+          "status": "fit"
+        }
+      ]
+    },
+    "Bosnia and Herzegovina": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Nikola Vasilj",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Nihad Mujakić",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Dennis Hadžikadunić",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Tarik Muharemović",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Sead Kolašinac",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Benjamin Tahirović",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Amar Dedić",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Armin Gigović",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Samed Baždar",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ermedin Demirović",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Edin Džeko",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Mladen Jurkas",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Ivan Bašić",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ivan Šunjić",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Amar Memić",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Amir Hadžiahmetović",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Dženis Burnić",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Nikola Katić",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kerim Alajbegović",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Esmir Bajraktarević",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Stjepan Radeljić",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Martin Zlomislić",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Haris Tabaković",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Nidal Čelik",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jovo Lukić",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ermin Mahmić",
+          "pos": "MID",
+          "status": "fit"
+        }
+      ]
+    },
+    "Brazil": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Alisson",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Éderson Silva",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Gabriel Magalhães",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Marquinhos",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Casemiro",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Alex Sandro",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Vinícius Júnior",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Bruno Guimarães",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Matheus Cunha",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Neymar",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Raphinha",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Weverton",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Danilo Luiz",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Bremer",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Léo Pereira",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Douglas Santos",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Fabinho",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Danilo Santos",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Endrick",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Lucas Paquetá",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Luiz Henrique",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Gabriel Martinelli",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ederson Moraes",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Roger Ibañez",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Igor Thiago",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Rayan",
+          "pos": "FWD",
+          "status": "fit"
+        }
+      ]
+    },
+    "Canada": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Dayne St. Clair",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Alistair Johnston",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Alfie Jones",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Luc de Fougerolles",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Joel Waterman",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Mathieu Choinière",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Stephen Eustáquio",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ismaël Koné",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Cyle Larin",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Jonathan David",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Liam Millar",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Tani Oluwaseyi",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Derek Cornelius",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jacob Shaffelburg",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Moïse Bombito",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Maxime Crépeau",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Tajon Buchanan",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Owen Goodman",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Alphonso Davies",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ali Ahmed",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Jonathan Osorio",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Richie Laryea",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Niko Sigur",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Promise David",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Nathan Saliba",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jayden Nelson",
+          "pos": "MID",
+          "status": "fit"
+        }
+      ]
+    },
+    "Cape Verde": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Vozinha",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Stopira",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Diney",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Roberto Lopes",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Logan Costa",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kevin Pina",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jovane Cabral",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "João Paulo",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Gilson Benchimol",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Jamiro Monteiro",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Garry Rodrigues",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Márcio Rosa",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Sidny Lopes Cabral",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Deroy Duarte",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Laros Duarte",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Yannick Semedo",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Willy Semedo",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Telmo Arcanjo",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Dailon Livramento",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ryan Mendes",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Nuno da Costa",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Steven Moreira",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "CJ dos Santos",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Wagner Pina",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kelvin Pires",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Hélio Varela",
+          "pos": "MID",
+          "status": "fit"
+        }
+      ]
+    },
+    "Colombia": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "David Ospina",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Daniel Muñoz",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jhon Lucumí",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Santiago Arias",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kevin Castaño",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Richard Ríos",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Luis Díaz",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Jorge Carrascal",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jhon Córdoba",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "James Rodríguez",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jhon Arias",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Camilo Vargas",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Yerry Mina",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Gustavo Puerta",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Juan Portilla",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jefferson Lerma",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Johan Mojica",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Willer Ditta",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Cucho Hernández",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Juan Fernando Quintero",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jaminton Campaz",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Deiver Machado",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Davinson Sánchez",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Álvaro Montero",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Luis Suárez",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Andrés Gómez",
+          "pos": "FWD",
+          "status": "fit"
+        }
+      ]
+    },
+    "Croatia": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Dominik Livaković",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Josip Stanišić",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Marin Pongračić",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Joško Gvardiol",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Duje Ćaleta-Car",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Josip Šutalo",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Nikola Moro",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Mateo Kovačić",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Andrej Kramarić",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Luka Modrić",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ante Budimir",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ivor Pandur",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Nikola Vlašić",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ivan Perišić",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Mario Pašalić",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Martin Baturina",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Petar Sučić",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Kristijan Jakić",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Toni Fruk",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Igor Matanović",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Luka Sučić",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Luka Vušković",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Dominik Kotarski",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Marco Pašalić",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Martin Erlić",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Petar Musa",
+          "pos": "FWD",
+          "status": "fit"
+        }
+      ]
+    },
+    "Curacao": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Eloy Room",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Shurandy Sambo",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Juriën Gaari",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Roshon van Eijma",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Sherel Floranus",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Godfried Roemeratoe",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Juninho Bacuna",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Livano Comenencia",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jürgen Locadia",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Leandro Bacuna",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jeremy Antonisse",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Sontje Hansen",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Tyrese Noslin",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Kenji Gorré",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ar'jany Martha",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jearl Margaritha",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Brandley Kuwas",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Armando Obispo",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Gervane Kastaneer",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Joshua Brenet",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Tahith Chong",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Kevin Felida",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Riechedly Bazoer",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Deveron Fonville",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Tyrick Bodak",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Trevor Doornbusch",
+          "pos": "GK",
+          "status": "fit"
+        }
+      ]
+    },
+    "Czech Republic": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Matěj Kovář",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "David Zima",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Tomáš Holeš",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Robin Hranáč",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Vladimír Coufal",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Štěpán Chaloupek",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ladislav Krejčí",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Vladimír Darida",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Adam Hložek",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Patrik Schick",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Jan Kuchta",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Lukáš Červ",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Mojmír Chytil",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "David Jurásek",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Pavel Šulc",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Jindřich Staněk",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Lukáš Provod",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Michal Sadílek",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Tomáš Chorý",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Jaroslav Zelený",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "David Douděra",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Tomáš Souček",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Lukáš Horníček",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Alexandr Sojka",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Hugo Sochůrek",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Denis Višinský",
+          "pos": "FWD",
+          "status": "fit"
+        }
+      ]
+    },
+    "DR Congo": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Lionel Mpasi",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Aaron Wan-Bissaka",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Steve Kapuadi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Axel Tuanzebe",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Dylan Batubinsika",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ngal'ayel Mukau",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Nathanaël Mbuku",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Samuel Moutoussamy",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Brian Cipenga",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Théo Bongonda",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Gaël Kakuta",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Joris Kayembe",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Meschak Elia",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Noah Sadiki",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Aaron Tshibola",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Timothy Fayulu",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Cédric Bakambu",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Charles Pickel",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Fiston Mayele",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Yoane Wissa",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Matthieu Epolo",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Chancel Mbemba",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Simon Banza",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Gédéon Kalulu",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Edo Kayembe",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Arthur Masuaku",
+          "pos": "DEF",
+          "status": "fit"
+        }
+      ]
+    },
+    "Ecuador": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Hernán Galíndez",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Félix Torres",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Piero Hincapié",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Joel Ordóñez",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jordy Alcívar",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Willian Pacho",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Pervis Estupiñán",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Anthony Valencia",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "John Yeboah",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Kendry Páez",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Kevin Rodríguez",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Moisés Ramírez",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Enner Valencia",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Alan Minda",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Pedro Vite",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jordy Caicedo",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ángelo Preciado",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Denil Castillo",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Gonzalo Plata",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Nilson Angulo",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Alan Franco",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Gonzalo Valle",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Moisés Caicedo",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jeremy Arévalo",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Jackson Porozo",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Yaimar Medina",
+          "pos": "DEF",
+          "status": "fit"
+        }
+      ]
+    },
+    "Egypt": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Mohamed El Shenawy",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Yasser Ibrahim",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Mohamed Hany",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Hossam Abdelmaguid",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ramy Rabia",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Mohamed Abdelmonem",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Trézéguet",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Emam Ashour",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Hamza Abdelkarim",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Mohamed Salah",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Mostafa Ziko",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Haissem Hassan",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ahmed Fatouh",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Hamdy Fathy",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Karim Hafez",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "El Mahdy Soliman",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Mohanad Lasheen",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Nabil Emad",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Marwan Attia",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ibrahim Adel",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Mahmoud Saber",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Omar Marmoush",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Mostafa Shobeir",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Tarek Alaa",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Zizo",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Mohamed Alaa",
+          "pos": "GK",
+          "status": "fit"
+        }
+      ]
+    },
+    "England": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Jordan Pickford",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Ezri Konsa",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Nico O'Reilly",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Declan Rice",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "John Stones",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Marc Guéhi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Bukayo Saka",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Elliot Anderson",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Harry Kane",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Jude Bellingham",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Marcus Rashford",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Tino Livramento",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Dean Henderson",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Jordan Henderson",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Dan Burn",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kobbie Mainoo",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Morgan Rogers",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Anthony Gordon",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ollie Watkins",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Noni Madueke",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Eberechi Eze",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ivan Toney",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "James Trafford",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Reece James",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Djed Spence",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jarell Quansah",
+          "pos": "DEF",
+          "status": "fit"
+        }
+      ]
+    },
+    "France": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Brice Samba",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Malo Gusto",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Lucas Digne",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Dayot Upamecano",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jules Koundé",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Manu Koné",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ousmane Dembélé",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Aurélien Tchouaméni",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Marcus Thuram",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Kylian Mbappé",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Michael Olise",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Bradley Barcola",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "N'Golo Kanté",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Adrien Rabiot",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ibrahima Konaté",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Mike Maignan",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "William Saliba",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Warren Zaïre-Emery",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Théo Hernandez",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Désiré Doué",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Lucas Hernandez",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jean-Philippe Mateta",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Robin Risser",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Rayan Cherki",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Maghnes Akliouche",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Maxence Lacroix",
+          "pos": "DEF",
+          "status": "fit"
+        }
+      ]
+    },
+    "Germany": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Manuel Neuer",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Antonio Rüdiger",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Waldemar Anton",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jonathan Tah",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Aleksandar Pavlović",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Joshua Kimmich",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kai Havertz",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Leon Goretzka",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jamie Leweling",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jamal Musiala",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Nick Woltemade",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Oliver Baumann",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Pascal Groß",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Maximilian Beier",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Nico Schlotterbeck",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Angelo Stiller",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Florian Wirtz",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Nathaniel Brown",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Leroy Sané",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Nadiem Amiri",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Alexander Nübel",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "David Raum",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Felix Nmecha",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Malick Thiaw",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Assan Ouédraogo",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Deniz Undav",
+          "pos": "FWD",
+          "status": "fit"
+        }
+      ]
+    },
+    "Ghana": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Lawrence Ati-Zigi",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Alidu Seidu",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Caleb Yirenkyi",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jonas Adjetey",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Thomas Partey",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Abdul Mumin",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Abdul Fatawu",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Kwasi Sibo",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jordan Ayew",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Brandon Thomas-Asante",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Antoine Semenyo",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Joseph Anang",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Christopher Bonsu Baah",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Gideon Mensah",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Elisha Owusu",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Benjamin Asare",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Abdul Rahman Baba",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jerome Opoku",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Iñaki Williams",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Augustine Boakye",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Kojo Peprah Oppong",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kamaldeen Sulemana",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Derrick Luckassen",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ernest Nuamah",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Prince Kwabena Adu",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Marvin Senaya",
+          "pos": "DEF",
+          "status": "fit"
+        }
+      ]
+    },
+    "Haiti": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Johny Placide",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Carlens Arcus",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Keeto Thermoncy",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ricardo Adé",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Hannes Delcroix",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Carl Sainté",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Derrick Etienne Jr.",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Martin Expérience",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Duckens Nazon",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Jean-Ricner Bellegarde",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Louicius Deedson",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Alexandre Pierre",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Duke Lacroix",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Leverton Pierre",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ruben Providence",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Lenny Joseph",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Danley Jean Jacques",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Wilson Isidor",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Yassin Fortuné",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Frantzdy Pierrot",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Josué Casimir",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Jean-Kévin Duverne",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Josué Duverger",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Wilguens Paugain",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Dominique Simon",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Woodensky Pierre",
+          "pos": "MID",
+          "status": "fit"
+        }
+      ]
+    },
+    "Iran": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Alireza Beiranvand",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Saleh Hardani",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ehsan Hajsafi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Shojae Khalilzadeh",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Milad Mohammadi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Saeid Ezatolahi",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Alireza Jahanbakhsh",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Mohammad Mohebi",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Mehdi Taremi",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Mehdi Ghayedi",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ali Alipour",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Payam Niazmand",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Hossein Kanaanizadegan",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Saman Ghoddos",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Rouzbeh Cheshmi",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Mehdi Torabi",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Aria Yousefi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Amirhossein Hosseinzadeh",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ali Nemati",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Shahriyar Moghanlou",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Mohammad Ghorbani",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Hossein Hosseini",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Ramin Rezaeian",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Dennis Eckert",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Danial Eiri",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Amirmohammad Razzaghinia",
+          "pos": "MID",
+          "status": "fit"
+        }
+      ]
+    },
+    "Iraq": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Fahad Talib",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Rebin Sulaka",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Hussein Ali",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Zaid Tahseen",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Akam Hashim",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Manaf Younis",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Youssef Amyn",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ibrahim Bayesh",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ali Al-Hamadi",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Mohanad Ali",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ahmed Qasem",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Jalal Hassan",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Ali Yousif",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Zidane Iqbal",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ahmed Maknzi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Amir Al-Ammari",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ali Jasim",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Aymen Hussein",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Kevin Yakob",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Aimar Sher",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Marko Farji",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ahmed Basil",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Merchas Doski",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Zaid Ismail",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Mustafa Saadoon",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Frans Putros",
+          "pos": "DEF",
+          "status": "fit"
+        }
+      ]
+    },
+    "Ivory Coast": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Yahia Fofana",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Ousmane Diomande",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ghislain Konan",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jean Michaël Seri",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Wilfried Singo",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Seko Fofana",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Odilon Kossounou",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Franck Kessié",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ange-Yoan Bonny",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Simon Adingra",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Yan Diomande",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Elye Wahi",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Christopher Opéri",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Oumar Diakité",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Amad Diallo",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Mohamed Koné",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Guéla Doué",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ibrahim Sangaré",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Nicolas Pépé",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Emmanuel Agbadou",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Evan Ndicka",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Evann Guessand",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Alban Lafont",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Bazoumana Touré",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Parfait Guiagon",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Christ Inao Oulaï",
+          "pos": "MID",
+          "status": "fit"
+        }
+      ]
+    },
+    "Japan": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Zion Suzuki",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Yukinari Sugawara",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Shōgo Taniguchi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kō Itakura",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Yūto Nagatomo",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Wataru Endo",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ao Tanaka",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Takefusa Kubo",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Keisuke Gotō",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ritsu Dōan",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Daizen Maeda",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Keisuke Ōsako",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Keito Nakamura",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Junya Itō",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Daichi Kamada",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Tsuyoshi Watanabe",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Yuito Suzuki",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ayase Ueda",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Kōki Ogawa",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ayumu Seko",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Hiroki Itō",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Takehiro Tomiyasu",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Tomoki Hayakawa",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Kaishū Sano",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Junnosuke Suzuki",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kento Shiogai",
+          "pos": "FWD",
+          "status": "fit"
+        }
+      ]
+    },
+    "Jordan": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Yazeed Abulaila",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Mohammad Abu Hashish",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Abdallah Nasib",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Husam Abu Dahab",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Yazan Al-Arab",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Amer Jamous",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Mohammad Abu Zrayq",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Noor Al-Rawabdeh",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ali Olwan",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Musa Al-Taamari",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Odeh Al-Fakhouri",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Nour Bani Attiah",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Mahmoud Al-Mardi",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Rajaei Ayed",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ibrahim Sadeh",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Mo Abualnadi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Salim Obaid",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Mohammad Taha",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Saed Al-Rosan",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Mohannad Abu Taha",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Nizar Al-Rashdan",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Abdallah Al-Fakhouri",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Ihsan Haddad",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ali Azaizeh",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Mohammad Al-Dawoud",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Anas Badawi",
+          "pos": "DEF",
+          "status": "fit"
+        }
+      ]
+    },
+    "Mexico": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Raúl Rangel",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Jorge Sánchez",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "César Montes",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Edson Álvarez",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Johan Vásquez",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Érik Lira",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Luis Romo",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Álvaro Fidalgo",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Raúl Jiménez",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Alexis Vega",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Santiago Giménez",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Carlos Acevedo",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Guillermo Ochoa",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Armando González",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Israel Reyes",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Julián Quiñones",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Orbelín Pineda",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Obed Vargas",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Gilberto Mora",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Mateo Chávez",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "César Huerta",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Guillermo Martínez",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Jesús Gallardo",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Luis Chávez",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Roberto Alvarado",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Brian Gutiérrez",
+          "pos": "MID",
+          "status": "fit"
+        }
+      ]
+    },
+    "Morocco": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Yassine Bounou",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Achraf Hakimi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Noussair Mazraoui",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Sofyan Amrabat",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Nayef Aguerd",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ayyoub Bouaddi",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Chemsdine Talbi",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Azzedine Ounahi",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Soufiane Rahimi",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Brahim Díaz",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ismael Saibari",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Munir Mohamedi",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Zakaria El Ouahdi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Issa Diop",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Samir El Mourabet",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Gessime Yassine",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Abde Ezzalzouli",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Chadi Riad",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Youssef Belammari",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ayoub El Kaabi",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ayoube Amaimouni",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ahmed Reda Tagnaouti",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Bilal El Khannouss",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Neil El Aynaoui",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Redouane Halhal",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Anass Salah-Eddine",
+          "pos": "DEF",
+          "status": "fit"
+        }
+      ]
+    },
+    "Netherlands": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Bart Verbruggen",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Lutsharel Geertruida",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Marten de Roon",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Virgil van Dijk",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Nathan Aké",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jan Paul van Hecke",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Justin Kluivert",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ryan Gravenberch",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Wout Weghorst",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Memphis Depay",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Cody Gakpo",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Mats Wieffer",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Robin Roefs",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Tijjani Reijnders",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Micky van de Ven",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Guus Til",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Noa Lang",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Donyell Malen",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Brian Brobbey",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Teun Koopmeiners",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Frenkie de Jong",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Denzel Dumfries",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Mark Flekken",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Crysencio Summerville",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Jorrel Hato",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Quinten Timber",
+          "pos": "MID",
+          "status": "fit"
+        }
+      ]
+    },
+    "New Zealand": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Max Crocombe",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Tim Payne",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Francis de Vries",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Tyler Bindon",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Michael Boxall",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Joe Bell",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Matthew Garbett",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Marko Stamenić",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Chris Wood",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Sarpreet Singh",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Elijah Just",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Alex Paulsen",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Liberato Cacace",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Alex Rufer",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Nando Pijnaker",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Finn Surman",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kosta Barbarouses",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ben Waine",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ben Old",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Callum McCowatt",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jesse Randall",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Michael Woud",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Ryan Thomas",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Callan Elliot",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Lachlan Bayliss",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Tommy Smith",
+          "pos": "DEF",
+          "status": "fit"
+        }
+      ]
+    },
+    "Norway": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Ørjan Nyland",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Morten Thorsby",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Kristoffer Ajer",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Leo Østigård",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "David Møller Wolfe",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Patrick Berg",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Alexander Sørloth",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Sander Berge",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Erling Haaland",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Martin Ødegaard",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jørgen Strand Larsen",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Sander Tangvik",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Egil Selvik",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Fredrik Aursnes",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Fredrik André Bjørkan",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Marcus Holmgren Pedersen",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Torbjørn Heggem",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kristian Thorstvedt",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Thelo Aasgaard",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Antonio Nusa",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Andreas Schjelderup",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Oscar Bobb",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jens Petter Hauge",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Sondre Langås",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Henrik Falchener",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Julian Ryerson",
+          "pos": "FWD",
+          "status": "fit"
+        }
+      ]
+    },
+    "Panama": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Luis Mejía",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "César Blackman",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "José Córdoba",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Fidel Escobar",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Edgardo Fariña",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Cristian Martínez",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "José Luis Rodríguez",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Adalberto Carrasquilla",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Tomás Rodríguez",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ismael Díaz",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Yoel Bárcenas",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "César Samudio",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Jiovany Ramos",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Carlos Harvey",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Eric Davis",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Andrés Andrade",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "José Fajardo",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Cecilio Waterman",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Alberto Quintero",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Aníbal Godoy",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "César Yanis",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Orlando Mosquera",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Michael Amir Murillo",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Azarias Londoño",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Roderick Miller",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jorge Gutiérrez",
+          "pos": "DEF",
+          "status": "fit"
+        }
+      ]
+    },
+    "Paraguay": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Gatito Fernández",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Gustavo Velázquez",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Omar Alderete",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Juan José Cáceres",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Fabián Balbuena",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Júnior Alonso",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ramón Sosa",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Diego Gómez",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Antonio Sanabria",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Miguel Almirón",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Maurício",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Orlando Gill",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "José Canale",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Andrés Cubas",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Gustavo Gómez",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Damián Bobadilla",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Kaku",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Álex Arce",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Julio Enciso",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Braian Ojeda",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Gabriel Ávalos",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Gastón Olveira",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Matías Galarza",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Gustavo Caballero",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Isidro Pitta",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Alexandro Maidana",
+          "pos": "DEF",
+          "status": "fit"
+        }
+      ]
+    },
+    "Portugal": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Diogo Costa",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Nélson Semedo",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Rúben Dias",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Tomás Araújo",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Diogo Dalot",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Matheus Nunes",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Cristiano Ronaldo",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Bruno Fernandes",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Gonçalo Ramos",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Bernardo Silva",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "João Félix",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "José Sá",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Renato Veiga",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Gonçalo Inácio",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "João Neves",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Francisco Trincão",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Rafael Leão",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Pedro Neto",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Gonçalo Guedes",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "João Cancelo",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Rúben Neves",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Rui Silva",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Vitinha",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Samú Costa",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Nuno Mendes",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Francisco Conceição",
+          "pos": "FWD",
+          "status": "fit"
+        }
+      ]
+    },
+    "Qatar": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Mahmud Abunada",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Pedro Miguel",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Lucas Mendes",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Issa Laye",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jassem Gaber",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Abdulaziz Hatem",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ahmed Alaaeldin",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Edmilson Junior",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Mohammed Muntari",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Hassan Al-Haydos",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Akram Afif",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Karim Boudiaf",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ayoub Al-Oui",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Homam Ahmed",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Yusuf Abdurisag",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Boualem Khoukhi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ahmed Al-Ganehi",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Sultan Al-Brake",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Almoez Ali",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ahmed Fathy",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Salah Zakaria",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Meshaal Barsham",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Assim Madibo",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Tahsin Jamshid",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Al-Hashmi Al-Hussain",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Mohamed Manai",
+          "pos": "FWD",
+          "status": "fit"
+        }
+      ]
+    },
+    "Saudi Arabia": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Nawaf Al-Aqidi",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Ali Majrashi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ali Lajami",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Abdulelah Al-Amri",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Hassan Al-Tambakti",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Nasser Al-Dawsari",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Musab Al-Juwayr",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ayman Yahya",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Firas Al-Buraikan",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Salem Al-Dawsari",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Saleh Al-Shehri",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Saud Abdulhamid",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Nawaf Boushal",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Hassan Kadesh",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Abdullah Al-Khaibari",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ziyad Al-Johani",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Khalid Al-Ghannam",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Alaa Al-Hejji",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Abdullah Al-Hamdan",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Sultan Mandash",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Mohammed Al-Owais",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Ahmed Al-Kassar",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Mohamed Kanno",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Moteb Al-Harbi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jehad Thakri",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Mohammed Abu Al-Shamat",
+          "pos": "DEF",
+          "status": "fit"
+        }
+      ]
+    },
+    "Scotland": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Angus Gunn",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Aaron Hickey",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Andy Robertson",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Scott McTominay",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Grant Hanley",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kieran Tierney",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "John McGinn",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Tyler Fletcher",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Lyndon Dykes",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ché Adams",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ryan Christie",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Liam Kelly",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Jack Hendry",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ross Stewart",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "John Souttar",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Dominic Hyam",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ben Gannon-Doak",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "George Hirst",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Lewis Ferguson",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Lawrence Shankland",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Craig Gordon",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Nathan Patterson",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kenny McLean",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Anthony Ralston",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Findlay Curtis",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Scott McKenna",
+          "pos": "DEF",
+          "status": "fit"
+        }
+      ]
+    },
+    "Senegal": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Yehvann Diouf",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Mamadou Sarr",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kalidou Koulibaly",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Abdoulaye Seck",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Idrissa Gueye",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Pathé Ciss",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Assane Diao",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Lamine Camara",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Bamba Dieng",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Sadio Mané",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Nicolas Jackson",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Cherif Ndiaye",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Iliman Ndiaye",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ismail Jakobs",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Krépin Diatta",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Édouard Mendy",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Pape Matar Sarr",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ismaïla Sarr",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Moussa Niakhaté",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ibrahim Mbaye",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Habib Diarra",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Bara Sapoko Ndiaye",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Mory Diaw",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Antoine Mendy",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "El Hadji Malick Diouf",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Pape Gueye",
+          "pos": "MID",
+          "status": "fit"
+        }
+      ]
+    },
+    "South Africa": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Ronwen Williams",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Thabang Matuludi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Khulumani Ndamane",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Teboho Mokoena",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Thalente Mbatha",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Aubrey Modiba",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Oswin Appollis",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Tshepang Moremi",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Lyle Foster",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Relebohile Mofokeng",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Themba Zwane",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Thapelo Maseko",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Sphephelo Sithole",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Mbekezeli Mbokazi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Iqraam Rayners",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Sipho Chaine",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Evidence Makgopa",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Samukele Kabini",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Nkosinathi Sibisi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Khuliso Mudau",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ime Okon",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ricardo Goss",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Jayden Adams",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Olwethu Makhanya",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kamogelo Sebelebele",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Bradley Cross",
+          "pos": "DEF",
+          "status": "fit"
+        }
+      ]
+    },
+    "South Korea": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Kim Seung-gyu",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Lee Han-beom",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Lee Gi-hyuk",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Kim Min-jae",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kim Tae-hyeon",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Hwang In-beom",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Son Heung-min",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Paik Seung-ho",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Cho Gue-sung",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Lee Jae-sung",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Hwang Hee-chan",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Song Bum-keun",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Lee Tae-seok",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Cho Wi-je",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kim Moon-hwan",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Park Jin-seob",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Bae Jun-ho",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Oh Hyeon-gyu",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Lee Kang-in",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Yang Hyun-jun",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jo Hyeon-woo",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Seol Young-woo",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jens Castrop",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Kim Jin-gyu",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Eom Ji-sung",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Lee Dong-gyeong",
+          "pos": "MID",
+          "status": "fit"
+        }
+      ]
+    },
+    "Spain": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "David Raya",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Marc Pubill",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Álex Grimaldo",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Eric García",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Marcos Llorente",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Mikel Merino",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ferran Torres",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Fabián Ruiz",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Gavi",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Dani Olmo",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Yéremy Pino",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Pedro Porro",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Joan Garcia",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Aymeric Laporte",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Álex Baena",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Rodri",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Nico Williams",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Martín Zubimendi",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Lamine Yamal",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Pedri",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Mikel Oyarzabal",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Pau Cubarsí",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Unai Simón",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Marc Cucurella",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Víctor Muñoz",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Borja Iglesias",
+          "pos": "FWD",
+          "status": "fit"
+        }
+      ]
+    },
+    "Sweden": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Jacob Widell Zetterström",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Gustaf Lagerbielke",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Victor Lindelöf",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Isak Hien",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Gabriel Gudmundsson",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Herman Johansson",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Lucas Bergvall",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Daniel Svensson",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Alexander Isak",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Benjamin Nygren",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Anthony Elanga",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Viktor Johansson",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Ken Sema",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Hjalmar Ekdal",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Carl Starfelt",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jesper Karlström",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Viktor Gyökeres",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Yasin Ayari",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Mattias Svanberg",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Eric Smith",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Alexander Bernhardsson",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Besfort Zeneli",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Kristoffer Nordfeldt",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Elliot Stroud",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Gustaf Nilsson",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Taha Ali",
+          "pos": "FWD",
+          "status": "fit"
+        }
+      ]
+    },
+    "Switzerland": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Gregor Kobel",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Miro Muheim",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Silvan Widmer",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Nico Elvedi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Manuel Akanji",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Denis Zakaria",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Breel Embolo",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Remo Freuler",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Johan Manzambi",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Granit Xhaka",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Dan Ndoye",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Yvon Mvogo",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Ricardo Rodriguez",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ardon Jashari",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Djibril Sow",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Christian Fassnacht",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Rubén Vargas",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Eray Cömert",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Noah Okafor",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Michel Aebischer",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Marvin Keller",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Fabian Rieder",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Zeki Amdouni",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Aurèle Amenda",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Luca Jaquez",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Cedric Itten",
+          "pos": "FWD",
+          "status": "fit"
+        }
+      ]
+    },
+    "Tunisia": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Mouhib Chamakh",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Ali Abdi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Montassar Talbi",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Omar Rekik",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Adem Arous",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Dylan Bronn",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Elias Achouri",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Elias Saad",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Hazem Mastouri",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Hannibal Mejbri",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ismaël Gharbi",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Mortadha Ben Ouanes",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Rani Khedira",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Khalil Ayari",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Hadj Mahmoud",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Aymen Dahmen",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Ellyes Skhiri",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Rayan Elloumi",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Firas Chaouat",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Yan Valery",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Mohamed Amine Ben Hamida",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Sabri Ben Hessen",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Moutaz Neffati",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Raed Chikhaoui",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Anis Ben Slimane",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Sebastian Tounekti",
+          "pos": "MID",
+          "status": "fit"
+        }
+      ]
+    },
+    "Turkey": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Mert Günok",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Zeki Çelik",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Merih Demiral",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Çağlar Söyüncü",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Salih Özcan",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Orkun Kökçü",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Kerem Aktürkoğlu",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Arda Güler",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Deniz Gül",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Hakan Çalhanoğlu",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Kenan Yıldız",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Altay Bayındır",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Eren Elmalı",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Abdülkerim Bardakcı",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ozan Kabak",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "İsmail Yüksek",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "İrfan Can Kahveci",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Mert Müldür",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Yunus Akgün",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Ferdi Kadıoğlu",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Barış Alper Yılmaz",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Kaan Ayhan",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Uğurcan Çakır",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Oğuz Aydın",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Samet Akaydin",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Can Uzun",
+          "pos": "FWD",
+          "status": "fit"
+        }
+      ]
+    },
+    "United States": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Matt Turner",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Sergiño Dest",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Chris Richards",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Tyler Adams",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Antonee Robinson",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Auston Trusty",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Giovanni Reyna",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Weston McKennie",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Ricardo Pepi",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Christian Pulisic",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Brenden Aaronson",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Miles Robinson",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Tim Ream",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Sebastian Berhalter",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Cristian Roldan",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Alex Freeman",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Malik Tillman",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Max Arfsten",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Haji Wright",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Folarin Balogun",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Timothy Weah",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Mark McKenzie",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Joe Scally",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Matt Freese",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Chris Brady",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Alejandro Zendejas",
+          "pos": "FWD",
+          "status": "fit"
+        }
+      ]
+    },
+    "Uruguay": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Sergio Rochet",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "José Giménez",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Sebastián Cáceres",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Ronald Araújo",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Manuel Ugarte",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Rodrigo Bentancur",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Nicolás de la Cruz",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Federico Valverde",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Darwin Núñez",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Giorgian de Arrascaeta",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Facundo Pellistri",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Santiago Mele",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Guillermo Varela",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Agustín Canobbio",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Emiliano Martínez",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Mathías Olivera",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Matías Viña",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Brian Rodríguez",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Rodrigo Aguirre",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Maximiliano Araújo",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Federico Viñas",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Joaquín Piquerez",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Fernando Muslera",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Santiago Bueno",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Juan Manuel Sanabria",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Rodrigo Zalazar",
+          "pos": "MID",
+          "status": "fit"
+        }
+      ]
+    },
+    "Uzbekistan": {
+      "source": "wikipedia",
+      "player_count": 26,
+      "availability_score": 1.0,
+      "ampel": "🟢",
+      "suspended": [],
+      "players": [
+        {
+          "name": "Utkir Yusupov",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Abdukodir Khusanov",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Khojiakbar Alijonov",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Farrukh Sayfiev",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Rustam Ashurmatov",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Akmal Mozgovoy",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Otabek Shukurov",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jamshid Iskanderov",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Odiljon Hamrobekov",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Jaloliddin Masharipov",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Oston Urunov",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Abduvohid Nematov",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Sherzod Nasrullaev",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Eldor Shomurodov",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Umar Eshmurodov",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Botirali Ergashev",
+          "pos": "GK",
+          "status": "fit"
+        },
+        {
+          "name": "Dostonbek Khamdamov",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Abdulla Abdullaev",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Azizjon Ganiev",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Azizbek Amonov",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Igor Sergeev",
+          "pos": "FWD",
+          "status": "fit"
+        },
+        {
+          "name": "Abbosbek Fayzullaev",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Sherzod Esanov",
+          "pos": "MID",
+          "status": "fit"
+        },
+        {
+          "name": "Bekhruz Karimov",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Avazbek Ulmasaliev",
+          "pos": "DEF",
+          "status": "fit"
+        },
+        {
+          "name": "Jakhongir Urozov",
+          "pos": "DEF",
+          "status": "fit"
+        }
+      ]
+    }
+  }
+}
