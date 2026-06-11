@@ -477,6 +477,45 @@ def detect_value_btts(
     return signals
 
 
+def detect_value_double_chance(
+    home: str,
+    away: str,
+    p_home: float,
+    p_draw: float,
+    p_away: float,
+    dc_1x_odds: float,
+    dc_x2_odds: float,
+    dc_both_odds: float,
+    bankroll: float = 1000.0,
+    min_edge: float = MIN_EDGE,
+    match_id: str = "",
+) -> list[BetSignal]:
+    """
+    Checks Double Chance market (1X, X2, 12) for positive EV.
+    p_home/p_draw/p_away: final ensemble probabilities.
+    dc_1x_odds: Home or Draw; dc_x2_odds: Draw or Away; dc_both_odds: Home or Away.
+    """
+    # DC outcomes overlap (1X and X2 share draw), so standard proportional margin
+    # removal doesn't apply. Use model probabilities directly as fair baseline.
+    signals = []
+    for market, model_p, odds, fair_p in [
+        ("dc_1x", p_home + p_draw, dc_1x_odds, p_home + p_draw),
+        ("dc_x2", p_draw + p_away, dc_x2_odds, p_draw + p_away),
+        ("dc_12", p_home + p_away, dc_both_odds, p_home + p_away),
+    ]:
+        if odds <= 1.0:
+            continue
+        ev = expected_value(model_p, odds)
+        if ev < min_edge - 1e-9:
+            continue
+        kf = kelly_fraction(model_p, odds)
+        signals.append(_make_signal(
+            match_id, home, away, market,
+            model_p, fair_p, odds, ev, kf, "MEDIUM", bankroll,
+        ))
+    return signals
+
+
 def detect_value_ftts(
     home: str,
     away: str,

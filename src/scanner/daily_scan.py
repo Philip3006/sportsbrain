@@ -24,7 +24,7 @@ from src.betting.value_detector import (
     BetSignal, detect_value, set_confidence,
     detect_value_totals, detect_value_totals_quarter,
     detect_value_ah, detect_value_ah_quarter,
-    detect_value_ftts,
+    detect_value_ftts, detect_value_double_chance,
 )
 from src.betting.ledger import (
     append_bets, count_open_bets, settle_from_results, ledger_summary, LEDGER_PATH,
@@ -573,6 +573,23 @@ def run_daily_scan(
                 bankroll=bankroll, match_id=match_id,
             ))
 
+        # Double Chance (1X / X2 / 12)
+        dc_1x = float(match.get("dc_1x_odds", 0))
+        dc_x2 = float(match.get("dc_x2_odds", 0))
+        dc_12 = float(match.get("dc_12_odds", 0))
+        if any(o > 1.0 for o in (dc_1x, dc_x2, dc_12)):
+            signals.extend(detect_value_double_chance(
+                home, away,
+                p_home=float(final_arr[2]),
+                p_draw=float(final_arr[1]),
+                p_away=float(final_arr[0]),
+                dc_1x_odds=dc_1x,
+                dc_x2_odds=dc_x2,
+                dc_both_odds=dc_12,
+                bankroll=bankroll,
+                match_id=match_id,
+            ))
+
         # Apply confidence to all signals (1X2 + AH + O/U + BTTS) after full collection
         if lgbm_model and lgbm_raw_arr is not None:
             signals = [set_confidence(s, dc_probs, lgbm_raw_arr) for s in signals]
@@ -608,6 +625,9 @@ def run_daily_scan(
             "away":  float(match.get("pin_away", 0)),
             "btts_yes": float(match.get("pin_btts_yes", 0)),
             "btts_no":  float(match.get("pin_btts_no", 0)),
+            "dc_1x": float(match.get("pin_dc_1x", 0)),
+            "dc_x2": float(match.get("pin_dc_x2", 0)),
+            "dc_12": float(match.get("pin_dc_12", 0)),
         }
         # Add O/U and AH from dynamic data where available
         for ou_line, ou_dict in match.get("totals_lines", {}).items():
