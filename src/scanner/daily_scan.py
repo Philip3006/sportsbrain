@@ -21,7 +21,9 @@ def _is_wm_active(today: datetime | None = None) -> bool:
 
 from src.config import MODELS_DIR, RESULTS_DIR, canonical_name, MAX_ACTIVE_BETS, MAX_EV, TEAM_CONFEDERATION
 from src.betting.value_detector import (
-    BetSignal, detect_value, set_confidence, detect_value_totals, detect_value_ah,
+    BetSignal, detect_value, set_confidence,
+    detect_value_totals, detect_value_totals_quarter,
+    detect_value_ah, detect_value_ah_quarter,
     detect_value_ftts,
 )
 from src.betting.ledger import (
@@ -492,98 +494,62 @@ def run_daily_scan(
         rho_staged = dc_params.rho * (0.75 if is_ko else 1.10)
 
         # Calibration-corrected UNDER min_edge: DC systematically underestimates
-        # OVER probability (~6pp for 1.5/2.5, ~3pp for 3.5) → UNDER needs higher bar.
+        # OVER probability (~3-6pp) → UNDER needs higher threshold.
         from src.config import MIN_EDGE as _MIN_EDGE
-        _UNDER_MIN_EDGE_25 = _MIN_EDGE + 0.06
-        _UNDER_MIN_EDGE_15 = _MIN_EDGE + 0.06
-        _UNDER_MIN_EDGE_35 = _MIN_EDGE + 0.03
+        _UNDER_BIAS = {1.5: _MIN_EDGE + 0.06, 2.5: _MIN_EDGE + 0.06, 3.5: _MIN_EDGE + 0.03}
 
-        # O/U 2.5 market
-        over_odds = float(match.get("over_odds", 0))
-        under_odds = float(match.get("under_odds", 0))
-        if over_odds > 1.0 or under_odds > 1.0:
-            totals = dc.predict_totals(home, away, dc_params, neutral=True, rho_override=rho_staged)
-            ou_signals = detect_value_totals(
-                home, away, totals, over_odds, under_odds,
-                bankroll=bankroll, match_id=match_id,
-                min_edge_under=_UNDER_MIN_EDGE_25,
-            )
-            signals.extend(ou_signals)
+        # --- Dynamic O/U loop: covers ALL totals lines from the API ---
+        totals_cache: dict[float, dict] = {}  # memoize per line to avoid recomputing
+        for ou_line, ou_dict in match.get("totals_lines", {}).items():
+            ou_line = float(ou_line)
+            over_o = float(ou_dict.get("over", 0))
+            under_o = float(ou_dict.get("under", 0))
+            if over_o <= 1.0 and under_o <= 1.0:
+                continue
+            if ou_line not in totals_cache:
+                totals_cache[ou_line] = dc.predict_totals_all(
+                    home, away, dc_params, line=ou_line, neutral=True, rho_override=rho_staged
+                )
+            totals_p = totals_cache[ou_line]
+            under_me = _UNDER_BIAS.get(ou_line, _MIN_EDGE + 0.03)
+            if totals_p.get("quarter_ball"):
+                signals.extend(detect_value_totals_quarter(
+                    home, away, totals_p, over_o, under_o,
+                    bankroll=bankroll, match_id=match_id, min_edge_under=under_me,
+                ))
+            else:
+                signals.extend(detect_value_totals(
+                    home, away, totals_p, over_o, under_o,
+                    bankroll=bankroll, match_id=match_id, min_edge_under=under_me,
+                ))
 
-        # O/U 1.5
-        over15_odds = float(match.get("over15_odds", 0))
-        under15_odds = float(match.get("under15_odds", 0))
-        if over15_odds > 1.0 or under15_odds > 1.0:
-            totals15 = dc.predict_totals(home, away, dc_params, line=1.5, neutral=True, rho_override=rho_staged)
-            signals.extend(detect_value_totals(
-                home, away, totals15, over15_odds, under15_odds,
-                bankroll=bankroll, match_id=match_id,
-                min_edge_under=_UNDER_MIN_EDGE_15,
-            ))
-
-        # O/U 3.5
-        over35_odds = float(match.get("over35_odds", 0))
-        under35_odds = float(match.get("under35_odds", 0))
-        if over35_odds > 1.0 or under35_odds > 1.0:
-            totals35 = dc.predict_totals(home, away, dc_params, line=3.5, neutral=True, rho_override=rho_staged)
-            signals.extend(detect_value_totals(
-                home, away, totals35, over35_odds, under35_odds,
-                bankroll=bankroll, match_id=match_id,
-                min_edge_under=_UNDER_MIN_EDGE_35,
-            ))
-
-        # Asian Handicap -0.5/+0.5
-        ah_home_odds = float(match.get("ah_home_odds", 0))
-        ah_away_odds = float(match.get("ah_away_odds", 0))
-        if ah_home_odds > 1.0 or ah_away_odds > 1.0:
-            ah_probs = dc.predict_asian_handicap(home, away, dc_params, line=-0.5, neutral=True, rho_override=rho_staged)
-            ah_signals = detect_value_ah(
-                home, away, ah_probs, ah_home_odds, ah_away_odds,
-                bankroll=bankroll, match_id=match_id,
-            )
-            signals.extend(ah_signals)
-
-        # Asian Handicap -1.0/+1.0 (push possible — void on exact handicap result)
-        ah1_home_odds = float(match.get("ah1_home_odds", 0))
-        ah1_away_odds = float(match.get("ah1_away_odds", 0))
-        if ah1_home_odds > 1.0 or ah1_away_odds > 1.0:
-            ah1_probs = dc.predict_asian_handicap(home, away, dc_params, line=-1.0, neutral=True, rho_override=rho_staged)
-            ah1_signals = detect_value_ah(
-                home, away, ah1_probs, ah1_home_odds, ah1_away_odds,
-                bankroll=bankroll, match_id=match_id, line=-1.0,
-            )
-            signals.extend(ah1_signals)
-
-        # Asian Handicap -1.5/+1.5 (no push)
-        ah15_home_odds = float(match.get("ah15_home_odds", 0))
-        ah15_away_odds = float(match.get("ah15_away_odds", 0))
-        if ah15_home_odds > 1.0 or ah15_away_odds > 1.0:
-            ah15_probs = dc.predict_asian_handicap(home, away, dc_params, line=-1.5, neutral=True, rho_override=rho_staged)
-            ah15_signals = detect_value_ah(
-                home, away, ah15_probs, ah15_home_odds, ah15_away_odds,
-                bankroll=bankroll, match_id=match_id, line=-1.5,
-            )
-            signals.extend(ah15_signals)
-
-        # Asian Handicap -2.0/+2.0 (push on 2-goal win)
-        ah2_home_odds = float(match.get("ah2_home_odds", 0))
-        ah2_away_odds = float(match.get("ah2_away_odds", 0))
-        if ah2_home_odds > 1.0 or ah2_away_odds > 1.0:
-            ah2_probs = dc.predict_asian_handicap(home, away, dc_params, line=-2.0, neutral=True, rho_override=rho_staged)
-            signals.extend(detect_value_ah(
-                home, away, ah2_probs, ah2_home_odds, ah2_away_odds,
-                bankroll=bankroll, match_id=match_id, line=-2.0,
-            ))
-
-        # Asian Handicap -2.5/+2.5 (no push)
-        ah25_home_odds = float(match.get("ah25_home_odds", 0))
-        ah25_away_odds = float(match.get("ah25_away_odds", 0))
-        if ah25_home_odds > 1.0 or ah25_away_odds > 1.0:
-            ah25_probs = dc.predict_asian_handicap(home, away, dc_params, line=-2.5, neutral=True, rho_override=rho_staged)
-            signals.extend(detect_value_ah(
-                home, away, ah25_probs, ah25_home_odds, ah25_away_odds,
-                bankroll=bankroll, match_id=match_id, line=-2.5,
-            ))
+        # --- Dynamic AH loop: covers ALL spread lines from the API ---
+        ah_cache: dict[float, dict] = {}  # memoize per line
+        _AH_SUPPORTED = {-0.5, -1.0, -1.5, -2.0, -2.5, 0.5, 1.0, 1.5, 2.0, 2.5}
+        for ah_line, ah_dict in match.get("spreads", {}).items():
+            ah_line = float(ah_line)
+            ah_h = float(ah_dict.get("home", 0))
+            ah_a = float(ah_dict.get("away", 0))
+            if ah_h <= 1.0 and ah_a <= 1.0:
+                continue
+            if ah_line not in ah_cache:
+                try:
+                    ah_cache[ah_line] = dc.predict_asian_handicap_all(
+                        home, away, dc_params, line=ah_line, neutral=True, rho_override=rho_staged
+                    )
+                except ValueError:
+                    continue  # unsupported line (outside ±2.5 range)
+            ah_p = ah_cache[ah_line]
+            if ah_p.get("quarter_ball"):
+                signals.extend(detect_value_ah_quarter(
+                    home, away, ah_p, ah_h, ah_a,
+                    bankroll=bankroll, match_id=match_id, line=ah_line,
+                ))
+            else:
+                signals.extend(detect_value_ah(
+                    home, away, ah_p, ah_h, ah_a,
+                    bankroll=bankroll, match_id=match_id, line=ah_line,
+                ))
 
         # BTTS (Both Teams to Score)
         btts_yes_odds = float(match.get("btts_yes_odds", 0))
@@ -629,51 +595,40 @@ def run_daily_scan(
         # Filter out signals with unrealistically high EV (model artifact)
         signals = [s for s in signals if s.ev <= MAX_EV]
 
+        def _ah_label(line: float, side: str) -> str:
+            """Returns AH market label consistent with detect_value_ah / detect_value_ah_quarter."""
+            rem = round((abs(line) * 4) % 2)
+            fmt = ".2f" if rem == 1 else ".1f"
+            return f"ah{line:+{fmt}}_{side}"
+
         # Attach Pinnacle-specific odds to each signal for display/CLV
-        b365_map = {
-            "home":          float(match.get("pin_home", 0)),
-            "draw":          float(match.get("pin_draw", 0)),
-            "away":          float(match.get("pin_away", 0)),
-            "o/u2.5_over":   float(match.get("pin_over", 0)),
-            "o/u2.5_under":  float(match.get("pin_under", 0)),
-            "ah-0.5_home":   float(match.get("pin_ah_home", 0)),
-            "ah+0.5_away":   float(match.get("pin_ah_away", 0)),
-            "ah-1.0_home":   float(match.get("pin_ah1_home", 0)),
-            "ah+1.0_away":   float(match.get("pin_ah1_away", 0)),
-            "ah-1.5_home":   float(match.get("pin_ah15_home", 0)),
-            "ah+1.5_away":   float(match.get("pin_ah15_away", 0)),
-            "btts_yes":      float(match.get("pin_btts_yes", 0)),
-            "btts_no":       float(match.get("pin_btts_no", 0)),
-            "o/u1.5_over":   float(match.get("over15_odds", 0)),
-            "o/u1.5_under":  float(match.get("under15_odds", 0)),
-            "o/u3.5_over":   float(match.get("over35_odds", 0)),
-            "o/u3.5_under":  float(match.get("under35_odds", 0)),
-            "ah-2.0_home":   float(match.get("ah2_home_odds", 0)),
-            "ah+2.0_away":   float(match.get("ah2_away_odds", 0)),
-            "ah-2.5_home":   float(match.get("ah25_home_odds", 0)),
-            "ah+2.5_away":   float(match.get("ah25_away_odds", 0)),
-            "ftts_home":     float(match.get("ftts_home_odds", 0)),
-            "ftts_away":     float(match.get("ftts_away_odds", 0)),
+        b365_map: dict[str, float] = {
+            "home":  float(match.get("pin_home", 0)),
+            "draw":  float(match.get("pin_draw", 0)),
+            "away":  float(match.get("pin_away", 0)),
+            "btts_yes": float(match.get("pin_btts_yes", 0)),
+            "btts_no":  float(match.get("pin_btts_no", 0)),
         }
+        # Add O/U and AH from dynamic data where available
+        for ou_line, ou_dict in match.get("totals_lines", {}).items():
+            b365_map[f"o/u{float(ou_line)}_over"] = float(ou_dict.get("over", 0))
+            b365_map[f"o/u{float(ou_line)}_under"] = float(ou_dict.get("under", 0))
+        for ah_line, ah_dict in match.get("spreads", {}).items():
+            b365_map[_ah_label(float(ah_line), "home")] = float(ah_dict.get("home", 0))
+            b365_map[_ah_label(float(ah_line), "away")] = float(ah_dict.get("away", 0))
         for s in signals:
             s.b365_odds = b365_map.get(s.market, 0.0)
 
         # Two-bucket selection: keep best EV from each bucket per match.
         # Bucket A (directional/result-correlated): 1X2 + all AH variants.
-        # Bucket B (goals-volume, structurally independent): O/U 2.5 + BTTS.
+        # Bucket B (goals-volume, structurally independent): O/U + BTTS.
         # Within each bucket, signals are >80% correlated — only one slot.
         # Across buckets: independent exposure — both may be placed.
-        # Bucket B: pure goals-volume markets (structurally independent of 1X2/AH)
-        # FTTS excluded: it's correlated with 1X2 (first scorer usually wins) → bucket A
-        _GOALS_MARKETS = {
-            "o/u1.5_over", "o/u1.5_under",
-            "o/u2.5_over", "o/u2.5_under",
-            "o/u3.5_over", "o/u3.5_under",
-            "btts_yes", "btts_no",
-        }
+        def _is_goals_market(mkt: str) -> bool:
+            return mkt.startswith("o/u") or mkt in ("btts_yes", "btts_no")
         if signals:
-            bucket_a = [s for s in signals if s.market not in _GOALS_MARKETS]
-            bucket_b = [s for s in signals if s.market in _GOALS_MARKETS]
+            bucket_a = [s for s in signals if not _is_goals_market(s.market)]
+            bucket_b = [s for s in signals if _is_goals_market(s.market)]
             if bucket_a:
                 all_signals.append(max(bucket_a, key=lambda s: s.ev))
             if bucket_b:

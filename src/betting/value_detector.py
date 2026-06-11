@@ -170,6 +170,7 @@ def detect_value_ah(
                    2.0: "ah-2.0_away", 2.5: "ah-2.5_away"}
     home_market = _HOME_LABEL.get(line, f"ah{line:+.1f}_home")
     away_market = _AWAY_LABEL.get(line, f"ah{line:+.1f}_away")
+    # Note: quarter-ball lines (e.g. -1.25) go through detect_value_ah_quarter, not this function
 
     signals = []
     for p_win, odds, market, dc_key in [
@@ -218,33 +219,211 @@ def detect_value_totals(
 ) -> list[BetSignal]:
     """
     Checks O/U market for positive EV.
-    totals_probs: {p_over, p_under, line} from dc.predict_totals()
+    totals_probs: {p_over, p_under, p_push, line} from dc.predict_totals()
 
-    min_edge_under: if set, overrides min_edge for UNDER side only.
-    Use to compensate for DC's systematic OVER underestimation (calibration finding:
-    model under-calls OVER by ~3-6pp → UNDER signals need higher threshold).
+    Handles push (whole-ball lines like 2.0, 3.0): EV = p_over*(o-1) + p_push*0 - p_under.
+    Quarter-ball lines: use detect_value_totals_quarter instead.
 
+    min_edge_under: overrides min_edge for UNDER side only.
     dc_probs: optional dict with keys p_over/p_under (DC totals output).
     """
     signals = []
     line = totals_probs.get("line", 2.5)
+    p_push = totals_probs.get("p_push", 0.0)
+    p_over = totals_probs["p_over"]
+    p_under = totals_probs["p_under"]
+
     for side, model_p, odds, dc_key in [
-        ("over", totals_probs["p_over"], over_odds, "p_over"),
-        ("under", totals_probs["p_under"], under_odds, "p_under"),
+        ("over", p_over, over_odds, "p_over"),
+        ("under", p_under, under_odds, "p_under"),
     ]:
         if odds <= 1.0:
             continue
         effective_min = min_edge_under if (side == "under" and min_edge_under is not None) else min_edge
-        ev = expected_value(model_p, odds)
+
+        if p_push > 0:
+            # Whole-ball push-aware EV: p_over*(o-1) + p_push*0 - p_under
+            p_lose = max(0.0, 1.0 - model_p - p_push)
+            ev = model_p * (odds - 1) - p_lose
+            p_eff = model_p / max(model_p + p_lose, 1e-10)
+            kf = kelly_fraction(p_eff, odds)
+        else:
+            ev = expected_value(model_p, odds)
+            kf = kelly_fraction(model_p, odds)
+
         if ev < effective_min - 1e-9:
             continue
-        kf = kelly_fraction(model_p, odds)
         dc_p = dc_probs.get(dc_key) if dc_probs else None
         confidence = _consistency_confidence(model_p, 0.5, dc_p, "MEDIUM")
         signals.append(_make_signal(
             match_id, home, away, f"o/u{line}_{side}",
             model_p, model_p, odds, ev, kf, confidence, bankroll,
         ))
+    return signals
+
+
+def detect_value_totals_quarter(
+    home: str,
+    away: str,
+    quarter_probs: dict,
+    over_odds: float,
+    under_odds: float,
+    bankroll: float = 1000.0,
+    min_edge: float = MIN_EDGE,
+    match_id: str = "",
+    min_edge_under: float | None = None,
+) -> list[BetSignal]:
+    """Quarter-ball O/U (e.g., 2.25, 2.75): computes EV from two adjacent legs.
+    quarter_probs: from dc.predict_totals_all() with quarter_ball=True.
+
+    For Over 2.25: split O/U 2.0 (push at 2) + O/U 2.5 (no push).
+    - total ≥ 3: Full WIN for Over
+    - total = 2: O/U 2.0 pushes (Half LOSS for Over)
+    - total ≤ 1: Full LOSS for Over
+    (Symmetric half WIN for Under at total=2)
+    """
+    line = quarter_probs.get("line", 0)
+    p_lower = quarter_probs["lower_probs"]
+    p_push_lower = p_lower.get("p_push", 0.0)  # push from whole-ball leg
+
+    # P(A) = full win for Over = P(total > upper line) = p_lower["p_over"] since both lines agree
+    P_A = p_lower["p_over"]        # full win Over = both legs over
+    P_B = p_push_lower             # push on whole-ball leg = half loss Over / half win Under
+    P_C = p_lower["p_under"]       # full loss Over = both legs under... but wait:
+
+    # Actually for O/U 2.25 (lower=2.0, upper=2.5):
+    # P_A = P(total >= 3) = p_lower["p_over"] [≡ p_upper["p_over"]]
+    # P_B = P(total = 2) = p_lower["p_push"] [only lower has push]
+    # P_C = P(total <= 1) = p_lower["p_under"] [= 1 - P_A - P_B]
+    # Verify: P_A + P_B + P_C = p_over + p_push + p_under = 1 ✓
+
+    signals = []
+
+    if over_odds > 1.0:
+        ev_over = P_A * (over_odds - 1) - P_B * 0.5 - P_C
+        if ev_over >= min_edge - 1e-9:
+            # effective prob for Kelly: p_eff such that EV = p_eff*(o-1) - (1-p_eff)
+            # p_eff = (EV + 1) / over_odds
+            p_eff = (ev_over + 1) / over_odds if over_odds > 1 else P_A
+            kf = kelly_fraction(min(p_eff, 0.99), over_odds)
+            signals.append(_make_signal(
+                match_id, home, away, f"o/u{line}_over",
+                P_A + 0.5 * P_B, P_A + 0.5 * P_B, over_odds, ev_over, kf, "MEDIUM", bankroll,
+            ))
+
+    effective_min_under = min_edge_under if min_edge_under is not None else min_edge
+    if under_odds > 1.0:
+        ev_under = P_C * (under_odds - 1) + P_B * 0.5 * (under_odds - 1) - P_A
+        if ev_under >= effective_min_under - 1e-9:
+            p_eff = (ev_under + 1) / under_odds if under_odds > 1 else P_C
+            kf = kelly_fraction(min(p_eff, 0.99), under_odds)
+            signals.append(_make_signal(
+                match_id, home, away, f"o/u{line}_under",
+                P_C + 0.5 * P_B, P_C + 0.5 * P_B, under_odds, ev_under, kf, "MEDIUM", bankroll,
+            ))
+
+    return signals
+
+
+def detect_value_ah_quarter(
+    home: str,
+    away: str,
+    quarter_probs: dict,
+    ah_home_odds: float,
+    ah_away_odds: float,
+    bankroll: float = 1000.0,
+    min_edge: float = MIN_EDGE,
+    match_id: str = "",
+    line: float = -1.25,
+) -> list[BetSignal]:
+    """Quarter-ball AH (e.g., -1.25, -0.75): computes EV from two adjacent legs.
+    quarter_probs: from dc.predict_asian_handicap_all() with quarter_ball=True.
+
+    For -1.25 HOME (lower=-1.0, upper=-1.5):
+    - diff ≥ 2: Full WIN for Home
+    - diff = 1: Half LOSS for Home (lower pushes, upper loses) / Half WIN for Away
+    - diff ≤ 0: Full LOSS for Home / Full WIN for Away
+    """
+    p_lower = quarter_probs["lower_probs"]
+    # The whole-ball leg is the one with a push; get the push probability
+    p_push_lower = p_lower.get("p_push", 0.0)
+    p_push_upper = quarter_probs["upper_probs"].get("p_push", 0.0)
+
+    # For standard quarter-ball: exactly one leg has a push
+    # P_A = P(full win home) = same from both legs (lower.p_ah_home == upper.p_ah_home for -1.25)
+    P_A = p_lower["p_ah_home"]   # P(diff >= required for full win home)
+    P_B = p_push_lower + p_push_upper  # push from whole-ball leg
+    P_C = p_lower["p_ah_away"]   # P(full loss home / full win away for the less-aggressive leg)
+
+    # For -1.25: P_C = P(diff <= 0) [full loss for home]
+    # For -0.75: lower=-0.5 (no push), upper=-1.0 (push at diff=1)
+    #   P_A = P(diff >= 1) from -0.5 leg, P(diff >= 2) from -1.0 leg
+    #   This doesn't hold that P_A is the same for both legs!
+    # Need to handle -0.75 carefully: the "full win" is when BOTH legs win.
+    # For -0.75 HOME:
+    #   lower=-0.5: win if diff >= 1
+    #   upper=-1.0: win if diff >= 2, push if diff=1
+    # Combined HOME:
+    #   diff >= 2: both win → Full WIN
+    #   diff = 1: lower wins, upper pushes → Half WIN for home! (not half loss)
+    #   diff <= 0: both lose → Full LOSS
+    #
+    # So the "pivot" direction depends on which leg is more aggressive.
+    # For -1.25: whole line is LESS aggressive (lower) → pivot = half LOSS for home
+    # For -0.75: whole line is MORE aggressive (upper) → pivot = half WIN for home
+
+    # Determine pivot direction: if lower leg has push, pivot is half-loss for home
+    whole_is_lower = p_push_lower > 0
+
+    _SUPPORTED = {-0.5, -1.0, -1.5, -2.0, -2.5, 0.5, 1.0, 1.5, 2.0, 2.5}
+
+    signals = []
+    home_label = f"ah{line:+.2f}_home"
+    away_label = f"ah{line:+.2f}_away"
+
+    if ah_home_odds > 1.0:
+        if whole_is_lower:
+            # -1.25 type: pivot = half LOSS for home
+            # P_A = P(full win home), P_B = P(half loss home), P_C = 1-P_A-P_B
+            ev_home = P_A * (ah_home_odds - 1) - P_B * 0.5 - P_C
+        else:
+            # -0.75 type: pivot = half WIN for home
+            # For -0.75: P_A=P(diff>=2) from -1.0 leg, P_B=push from -1.0 (diff=1)
+            # BUT: P_lower["p_ah_home"] for lower=-0.5 is P(diff>=1), not P(diff>=2)
+            # So P_A here needs to be P(full win both legs) = P(diff>=2) = p_upper["p_ah_home"]
+            P_A_actual = quarter_probs["upper_probs"]["p_ah_home"]  # more aggressive leg's win
+            P_B_actual = p_push_upper
+            P_C_actual = 1 - P_A_actual - P_B_actual
+            ev_home = P_A_actual * (ah_home_odds - 1) + P_B_actual * 0.5 * (ah_home_odds - 1) - P_C_actual
+            P_A, P_B, P_C = P_A_actual, P_B_actual, P_C_actual
+
+        if ev_home >= min_edge - 1e-9:
+            p_eff = (ev_home + 1) / ah_home_odds if ah_home_odds > 1 else 0
+            kf = kelly_fraction(min(p_eff, 0.99), ah_home_odds)
+            signals.append(_make_signal(
+                match_id, home, away, home_label,
+                P_A, P_A, ah_home_odds, ev_home, kf, "MEDIUM", bankroll,
+            ))
+
+    if ah_away_odds > 1.0:
+        if whole_is_lower:
+            # -1.25 type: pivot = half WIN for away
+            ev_away = P_C * (ah_away_odds - 1) + P_B * 0.5 * (ah_away_odds - 1) - P_A
+        else:
+            # -0.75 type: pivot = half LOSS for away
+            P_A_away = quarter_probs["upper_probs"]["p_ah_away"]
+            P_B_away = p_push_upper
+            P_C_away = 1 - P_A_away - P_B_away
+            ev_away = P_A_away * (ah_away_odds - 1) - P_B_away * 0.5 - P_C_away
+
+        if ev_away >= min_edge - 1e-9:
+            p_eff = (ev_away + 1) / ah_away_odds if ah_away_odds > 1 else 0
+            kf = kelly_fraction(min(p_eff, 0.99), ah_away_odds)
+            signals.append(_make_signal(
+                match_id, home, away, away_label,
+                P_C, P_C, ah_away_odds, ev_away, kf, "MEDIUM", bankroll,
+            ))
+
     return signals
 
 

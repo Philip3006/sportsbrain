@@ -77,8 +77,16 @@ def fetch_upcoming_matches(
 _PREFERRED_BM = "pinnacle"
 
 
-def _parse_markets(bm: dict, home: str, away: str, store: dict) -> None:
-    """Extracts h2h/totals/spreads/btts odds from one bookmaker into store dict."""
+def _round_quarter(x: float) -> float:
+    """Round to nearest 0.25."""
+    return round(x * 4) / 4
+
+
+def _parse_markets(bm: dict, home: str, away: str, store: dict, dynamic: dict) -> None:
+    """Extracts h2h/totals/spreads/btts odds from one bookmaker.
+    store: flat dict for h2h and btts.
+    dynamic: nested dict with keys 'spreads' and 'totals' for all lines.
+    """
     for market in bm.get("markets", []):
         mkt = market.get("key")
         if mkt == "h2h":
@@ -86,42 +94,29 @@ def _parse_markets(bm: dict, home: str, away: str, store: dict) -> None:
                 name, price = o["name"], o["price"]
                 if price > store.get(name, 0):
                     store[name] = price
-        elif mkt == "totals":
+        elif mkt in ("totals", "alternate_totals"):
             for o in market.get("outcomes", []):
-                if abs(o.get("point", 0) - 2.5) < 0.1:
-                    key = f"{o['name']}_2.5"
-                    if o["price"] > store.get(key, 0):
-                        store[key] = o["price"]
+                pt = _round_quarter(o.get("point", 0))
+                side = o["name"].lower()  # "over" or "under"
+                if pt not in dynamic["totals"]:
+                    dynamic["totals"][pt] = {}
+                if o["price"] > dynamic["totals"][pt].get(side, 0):
+                    dynamic["totals"][pt][side] = o["price"]
         elif mkt in ("spreads", "alternate_spreads"):
             for o in market.get("outcomes", []):
-                pt = o.get("point", 0)
-                name = o["name"]
-                if abs(abs(pt) - 0.5) < 0.1:
-                    key = f"ah_{name}"
-                elif abs(abs(pt) - 1.0) < 0.1:
-                    key = f"ah1_{name}"
-                elif abs(abs(pt) - 1.5) < 0.1:
-                    key = f"ah15_{name}"
-                elif abs(abs(pt) - 2.0) < 0.1:
-                    key = f"ah2_{name}"
-                elif abs(abs(pt) - 2.5) < 0.1:
-                    key = f"ah25_{name}"
+                pt = _round_quarter(o.get("point", 0))
+                # Normalize to home's line (negative when home favored)
+                team = o["name"]
+                if team == home:
+                    home_line = pt
                 else:
-                    continue
-                if o["price"] > store.get(key, 0):
-                    store[key] = o["price"]
-        elif mkt == "alternate_totals":
-            for o in market.get("outcomes", []):
-                pt = o.get("point", 0)
-                side = o["name"].lower()  # "over" or "under"
-                if abs(pt - 1.5) < 0.1:
-                    key = f"{side}_1.5"
-                elif abs(pt - 3.5) < 0.1:
-                    key = f"{side}_3.5"
-                else:
-                    continue
-                if o["price"] > store.get(key, 0):
-                    store[key] = o["price"]
+                    home_line = -pt  # away's line flipped to home perspective
+                home_line = _round_quarter(home_line)
+                side = "home" if team == home else "away"
+                if home_line not in dynamic["spreads"]:
+                    dynamic["spreads"][home_line] = {}
+                if o["price"] > dynamic["spreads"][home_line].get(side, 0):
+                    dynamic["spreads"][home_line][side] = o["price"]
         elif mkt == "btts":
             for o in market.get("outcomes", []):
                 key = f"btts_{o['name'].lower()}"  # "btts_yes" or "btts_no"
@@ -133,7 +128,9 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
     """
     Returns one entry per match with:
     - Best odds across ALL bookmakers (used for EV calculation)
-    - Bet365-specific odds (shown in report/Telegram — what user actually gets)
+    - Pinnacle-specific odds (sharp reference line)
+    - `spreads`: {home_line: {"home": odds, "away": odds}} for all AH lines
+    - `totals_lines`: {line: {"over": odds, "under": odds}} for all O/U lines
     """
     matches = []
     for event in raw:
@@ -148,53 +145,58 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
 
         best: dict[str, float] = {}
         pin: dict[str, float] = {}
+        pin_dynamic: dict = {"spreads": {}, "totals": {}}
+        best_dynamic: dict = {"spreads": {}, "totals": {}}
         best_bm: dict[str, str] = {}
 
         for bm in bookmakers:
             bm_key = bm["key"]
             prev = {k: v for k, v in best.items()}
-            _parse_markets(bm, home, away, best)
+            _parse_markets(bm, home, away, best, best_dynamic)
             # Track which bookmaker provides each best price
             for k in best:
                 if best[k] != prev.get(k, 0):
                     best_bm[k] = bm_key
             # Capture Pinnacle separately (sharp reference line)
             if bm_key == _PREFERRED_BM:
-                _parse_markets(bm, home, away, pin)
+                _parse_markets(bm, home, away, pin, pin_dynamic)
 
         if not best.get(home):
             continue
 
+        # Build backward-compat h2h flat keys from best dict
         match_dict: dict = {
             "match_id":       match_id,
             "commence_time":  commence,
             "home_team":      home,
             "away_team":      away,
             "tournament":     "FIFA World Cup",
-            # Best-market odds (for EV/model comparison)
+            # Best h2h odds (for EV/model comparison)
             "home_odds":      best.get(home, 0.0),
             "draw_odds":      best.get("Draw", 0.0),
             "away_odds":      best.get(away, 0.0),
-            "over_odds":      best.get("Over_2.5", 0.0),
-            "under_odds":     best.get("Under_2.5", 0.0),
-            "ah_home_odds":   best.get(f"ah_{home}", 0.0),
-            "ah_away_odds":   best.get(f"ah_{away}", 0.0),
-            "ah1_home_odds":  best.get(f"ah1_{home}", 0.0),
-            "ah1_away_odds":  best.get(f"ah1_{away}", 0.0),
-            "ah15_home_odds": best.get(f"ah15_{home}", 0.0),
-            "ah15_away_odds": best.get(f"ah15_{away}", 0.0),
-            "ah2_home_odds":  best.get(f"ah2_{home}", 0.0),
-            "ah2_away_odds":  best.get(f"ah2_{away}", 0.0),
-            "ah25_home_odds": best.get(f"ah25_{home}", 0.0),
-            "ah25_away_odds": best.get(f"ah25_{away}", 0.0),
+            # Backward compat O/U 2.5 (best across bookmakers)
+            "over_odds":      best_dynamic["totals"].get(2.5, {}).get("over", 0.0),
+            "under_odds":     best_dynamic["totals"].get(2.5, {}).get("under", 0.0),
+            "over15_odds":    best_dynamic["totals"].get(1.5, {}).get("over", 0.0),
+            "under15_odds":   best_dynamic["totals"].get(1.5, {}).get("under", 0.0),
+            "over35_odds":    best_dynamic["totals"].get(3.5, {}).get("over", 0.0),
+            "under35_odds":   best_dynamic["totals"].get(3.5, {}).get("under", 0.0),
+            # Backward compat AH (best across bookmakers)
+            "ah_home_odds":   best_dynamic["spreads"].get(-0.5, {}).get("home", 0.0),
+            "ah_away_odds":   best_dynamic["spreads"].get(-0.5, {}).get("away", 0.0),
+            "ah1_home_odds":  best_dynamic["spreads"].get(-1.0, {}).get("home", 0.0),
+            "ah1_away_odds":  best_dynamic["spreads"].get(-1.0, {}).get("away", 0.0),
+            "ah15_home_odds": best_dynamic["spreads"].get(-1.5, {}).get("home", 0.0),
+            "ah15_away_odds": best_dynamic["spreads"].get(-1.5, {}).get("away", 0.0),
+            "ah2_home_odds":  best_dynamic["spreads"].get(-2.0, {}).get("home", 0.0),
+            "ah2_away_odds":  best_dynamic["spreads"].get(-2.0, {}).get("away", 0.0),
+            "ah25_home_odds": best_dynamic["spreads"].get(-2.5, {}).get("home", 0.0),
+            "ah25_away_odds": best_dynamic["spreads"].get(-2.5, {}).get("away", 0.0),
             "btts_yes_odds":  best.get("btts_yes", 0.0),
             "btts_no_odds":   best.get("btts_no", 0.0),
-            "over15_odds":    best.get("over_1.5", 0.0),
-            "under15_odds":   best.get("under_1.5", 0.0),
-            "over35_odds":    best.get("over_3.5", 0.0),
-            "under35_odds":   best.get("under_3.5", 0.0),
-            "ftts_home_odds": best.get("ftts_home", 0.0),
-            "ftts_away_odds": best.get("ftts_away", 0.0),
+            "ftts_home_odds": 0.0,
+            "ftts_away_odds": 0.0,
             "best_home_bm":   best_bm.get(home, ""),
             "best_draw_bm":   best_bm.get("Draw", ""),
             "best_away_bm":   best_bm.get(away, ""),
@@ -202,16 +204,19 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
             "pin_home":      pin.get(home, 0.0),
             "pin_draw":      pin.get("Draw", 0.0),
             "pin_away":      pin.get(away, 0.0),
-            "pin_over":      pin.get("Over_2.5", 0.0),
-            "pin_under":     pin.get("Under_2.5", 0.0),
-            "pin_ah_home":   pin.get(f"ah_{home}", 0.0),
-            "pin_ah_away":   pin.get(f"ah_{away}", 0.0),
-            "pin_ah1_home":  pin.get(f"ah1_{home}", 0.0),
-            "pin_ah1_away":  pin.get(f"ah1_{away}", 0.0),
-            "pin_ah15_home": pin.get(f"ah15_{home}", 0.0),
-            "pin_ah15_away": pin.get(f"ah15_{away}", 0.0),
+            "pin_over":      pin_dynamic["totals"].get(2.5, {}).get("over", 0.0),
+            "pin_under":     pin_dynamic["totals"].get(2.5, {}).get("under", 0.0),
+            "pin_ah_home":   pin_dynamic["spreads"].get(-0.5, {}).get("home", 0.0),
+            "pin_ah_away":   pin_dynamic["spreads"].get(-0.5, {}).get("away", 0.0),
+            "pin_ah1_home":  pin_dynamic["spreads"].get(-1.0, {}).get("home", 0.0),
+            "pin_ah1_away":  pin_dynamic["spreads"].get(-1.0, {}).get("away", 0.0),
+            "pin_ah15_home": pin_dynamic["spreads"].get(-1.5, {}).get("home", 0.0),
+            "pin_ah15_away": pin_dynamic["spreads"].get(-1.5, {}).get("away", 0.0),
             "pin_btts_yes":  pin.get("btts_yes", 0.0),
             "pin_btts_no":   pin.get("btts_no", 0.0),
+            # Dynamic all-lines dicts — used by scanner for comprehensive coverage
+            "spreads":        best_dynamic["spreads"],   # {home_line: {"home": odds, "away": odds}}
+            "totals_lines":   best_dynamic["totals"],    # {line: {"over": odds, "under": odds}}
         }
         matches.append(match_dict)
 
@@ -229,22 +234,6 @@ def mock_upcoming_matches() -> list[dict]:
             "home_odds": 2.30,
             "draw_odds": 3.20,
             "away_odds": 3.00,
-            "over_odds": 1.90,
-            "under_odds": 1.95,
-            "over15_odds": 1.35,
-            "under15_odds": 3.10,
-            "over35_odds": 3.20,
-            "under35_odds": 1.38,
-            "ah_home_odds": 1.85,
-            "ah_away_odds": 2.00,
-            "ah1_home_odds": 2.05,
-            "ah1_away_odds": 1.80,
-            "ah15_home_odds": 0.0,
-            "ah15_away_odds": 0.0,
-            "ah2_home_odds": 0.0,
-            "ah2_away_odds": 0.0,
-            "ah25_home_odds": 0.0,
-            "ah25_away_odds": 0.0,
             "btts_yes_odds": 1.72,
             "btts_no_odds": 2.05,
             "ftts_home_odds": 1.90,
@@ -252,6 +241,30 @@ def mock_upcoming_matches() -> list[dict]:
             "best_home_bm": "mock",
             "best_draw_bm": "mock",
             "best_away_bm": "mock",
+            # Dynamic dicts used by scanner's dynamic loops
+            "totals_lines": {
+                1.5: {"over": 1.35, "under": 3.10},
+                2.25: {"over": 1.93, "under": 1.97},
+                2.5: {"over": 1.90, "under": 1.95},
+                3.5: {"over": 3.20, "under": 1.38},
+            },
+            "spreads": {
+                -0.5: {"home": 1.85, "away": 2.00},
+                -1.0: {"home": 2.05, "away": 1.80},
+            },
+            # Backward-compat (still used for pin_* fields in b365_map)
+            "over_odds": 1.90, "under_odds": 1.95,
+            "over15_odds": 1.35, "under15_odds": 3.10,
+            "over35_odds": 3.20, "under35_odds": 1.38,
+            "ah_home_odds": 1.85, "ah_away_odds": 2.00,
+            "ah1_home_odds": 2.05, "ah1_away_odds": 1.80,
+            "ah15_home_odds": 0.0, "ah15_away_odds": 0.0,
+            "pin_home": 2.28, "pin_draw": 3.15, "pin_away": 2.97,
+            "pin_over": 1.90, "pin_under": 1.95,
+            "pin_ah_home": 1.83, "pin_ah_away": 1.98,
+            "pin_ah1_home": 2.02, "pin_ah1_away": 1.78,
+            "pin_ah15_home": 0.0, "pin_ah15_away": 0.0,
+            "pin_btts_yes": 1.70, "pin_btts_no": 2.03,
         },
         {
             "match_id": "mock_Brazil_vs_Argentina",
@@ -261,22 +274,6 @@ def mock_upcoming_matches() -> list[dict]:
             "home_odds": 2.10,
             "draw_odds": 3.40,
             "away_odds": 3.50,
-            "over_odds": 1.85,
-            "under_odds": 2.00,
-            "over15_odds": 1.30,
-            "under15_odds": 3.40,
-            "over35_odds": 3.40,
-            "under35_odds": 1.35,
-            "ah_home_odds": 1.90,
-            "ah_away_odds": 1.95,
-            "ah1_home_odds": 2.05,
-            "ah1_away_odds": 1.80,
-            "ah15_home_odds": 0.0,
-            "ah15_away_odds": 0.0,
-            "ah2_home_odds": 0.0,
-            "ah2_away_odds": 0.0,
-            "ah25_home_odds": 0.0,
-            "ah25_away_odds": 0.0,
             "btts_yes_odds": 1.72,
             "btts_no_odds": 2.05,
             "ftts_home_odds": 1.85,
@@ -284,5 +281,30 @@ def mock_upcoming_matches() -> list[dict]:
             "best_home_bm": "mock",
             "best_draw_bm": "mock",
             "best_away_bm": "mock",
+            # Dynamic dicts
+            "totals_lines": {
+                1.5: {"over": 1.30, "under": 3.40},
+                2.25: {"over": 1.87, "under": 2.02},
+                2.5: {"over": 1.85, "under": 2.00},
+                3.5: {"over": 3.40, "under": 1.35},
+            },
+            "spreads": {
+                -0.5: {"home": 1.90, "away": 1.95},
+                -0.75: {"home": 2.05, "away": 1.85},
+                -1.0: {"home": 2.20, "away": 1.72},
+            },
+            # Backward-compat
+            "over_odds": 1.85, "under_odds": 2.00,
+            "over15_odds": 1.30, "under15_odds": 3.40,
+            "over35_odds": 3.40, "under35_odds": 1.35,
+            "ah_home_odds": 1.90, "ah_away_odds": 1.95,
+            "ah1_home_odds": 2.20, "ah1_away_odds": 1.72,
+            "ah15_home_odds": 0.0, "ah15_away_odds": 0.0,
+            "pin_home": 2.08, "pin_draw": 3.38, "pin_away": 3.47,
+            "pin_over": 1.83, "pin_under": 1.97,
+            "pin_ah_home": 1.88, "pin_ah_away": 1.93,
+            "pin_ah1_home": 2.18, "pin_ah1_away": 1.70,
+            "pin_ah15_home": 0.0, "pin_ah15_away": 0.0,
+            "pin_btts_yes": 1.70, "pin_btts_no": 2.03,
         },
     ]
