@@ -252,6 +252,23 @@
     .stats-table td:first-child { text-align: left; color: var(--muted); font-weight: 600; }
     .stats-table tr:last-child td { border-bottom: none; }
 
+    /* ── Group Standings ── */
+    .standings-group { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+    .standings-group-header { background: rgba(0,200,83,.08); border-bottom: 1px solid rgba(0,200,83,.2); padding: 8px 12px; font-size: 11px; font-weight: 800; color: var(--green); text-transform: uppercase; letter-spacing: .6px; }
+    .standings-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .standings-table th { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; padding: 6px 10px; text-align: center; border-bottom: 1px solid var(--border); }
+    .standings-table th:first-child { text-align: left; padding-left: 12px; }
+    .standings-table td { padding: 8px 10px; text-align: center; border-bottom: 1px solid rgba(48,54,61,.4); font-weight: 700; }
+    .standings-table td:first-child { text-align: left; padding-left: 12px; font-size: 13px; }
+    .standings-table tr:last-child td { border-bottom: none; }
+    .standings-table tr.qualify-q { background: rgba(0,200,83,.05); }
+    .standings-table tr.qualify-po { background: rgba(210,153,34,.04); }
+    .standings-pts { font-size: 14px; font-weight: 900; color: var(--text); }
+    .standings-form span { display: inline-block; width: 16px; height: 16px; border-radius: 3px; font-size: 10px; font-weight: 800; line-height: 16px; text-align: center; margin: 0 1px; }
+    .form-W { background: rgba(0,200,83,.3); color: var(--green); }
+    .form-D { background: rgba(210,153,34,.3); color: var(--yellow); }
+    .form-L { background: rgba(248,81,73,.3); color: var(--red); }
+
     /* ── Smart Suggest ── */
     .suggest-card { margin: 10px 12px 4px; background: linear-gradient(135deg, rgba(0,200,83,.08) 0%, rgba(0,200,83,.03) 100%); border: 1px solid rgba(0,200,83,.3); border-radius: 14px; padding: 14px; }
     .suggest-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
@@ -349,6 +366,8 @@
     <div id="journal-container">
       <div class="empty"><div class="icon">📭</div><div>Noch keine abgeschlossenen Wetten.</div></div>
     </div>
+    <div class="section-title" style="margin-top:8px">WM 2026 Gruppenstandings</div>
+    <div id="standings-container" style="padding:0 16px 16px"></div>
   </section>
 
   <section id="view-squads" class="view">
@@ -1181,6 +1200,89 @@ function renderJournal(history) {
   </div>`;
 }
 
+// ── Group Standings ──────────────────────────────────────────
+const WM_GROUPS = {
+  A:['Mexico','South Africa','South Korea','Czechia'],
+  B:['Canada','Bosnia and Herzegovina','Qatar','Switzerland'],
+  C:['Brazil','Morocco','Haiti','Scotland'],
+  D:['United States','Paraguay','Australia','Turkey'],
+  E:['Germany','Curacao',"Cote d'Ivoire",'Ecuador'],
+  F:['Netherlands','Japan','Sweden','Tunisia'],
+  G:['Belgium','Egypt','Iran','New Zealand'],
+  H:['Spain','Cape Verde','Saudi Arabia','Uruguay'],
+  I:['France','Senegal','Iraq','Norway'],
+  J:['Argentina','Algeria','Austria','Jordan'],
+  K:['Portugal','DR Congo','Uzbekistan','Colombia'],
+  L:['England','Croatia','Ghana','Panama'],
+};
+
+function renderStandings() {
+  const c = document.getElementById('standings-container');
+  if (!c) return;
+  const results = _wmResults;
+  if (!Object.keys(results).length) {
+    c.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:8px 0">Noch keine Ergebnisse — WM startet 11. Juni 2026.</div>`;
+    return;
+  }
+
+  // Build standings per team from results
+  const stats = {};
+  for (const teams of Object.values(WM_GROUPS)) {
+    for (const t of teams) stats[t] = {p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0,form:[]};
+  }
+  for (const r of Object.values(results)) {
+    const h = r.home, a = r.away;
+    if (r.home_score == null || r.away_score == null) continue;
+    const hs = r.home_score, as_ = r.away_score;
+    if (!stats[h] || !stats[a]) continue;
+    stats[h].p++; stats[h].gf += hs; stats[h].ga += as_;
+    stats[a].p++; stats[a].gf += as_; stats[a].ga += hs;
+    if (hs > as_) {
+      stats[h].w++; stats[h].pts += 3; stats[h].form.push('W');
+      stats[a].l++; stats[a].form.push('L');
+    } else if (hs === as_) {
+      stats[h].d++; stats[h].pts++; stats[h].form.push('D');
+      stats[a].d++; stats[a].pts++; stats[a].form.push('D');
+    } else {
+      stats[a].w++; stats[a].pts += 3; stats[a].form.push('W');
+      stats[h].l++; stats[h].form.push('L');
+    }
+  }
+
+  let html = '';
+  for (const [grp, teams] of Object.entries(WM_GROUPS)) {
+    const sorted = [...teams].sort((a,b) => {
+      const sa = stats[a], sb = stats[b];
+      if (sb.pts !== sa.pts) return sb.pts - sa.pts;
+      const gdA = sa.gf - sa.ga, gdB = sb.gf - sb.ga;
+      if (gdB !== gdA) return gdB - gdA;
+      return sb.gf - sa.gf;
+    });
+    const rows = sorted.map((t, i) => {
+      const s = stats[t];
+      const rowCls = i < 2 ? 'qualify-q' : i === 2 ? 'qualify-po' : '';
+      const formHtml = s.form.slice(-3).map(f=>`<span class="form-${f}">${f}</span>`).join('');
+      const gd = s.gf - s.ga;
+      return `<tr class="${rowCls}">
+        <td><span style="color:var(--muted);font-size:10px;font-weight:700;margin-right:6px">${i+1}</span>${esc(t)}</td>
+        <td>${s.p}</td><td>${s.w}</td><td>${s.d}</td><td>${s.l}</td>
+        <td>${s.gf}:${s.ga}</td>
+        <td style="color:${gd>0?'var(--green)':gd<0?'var(--red)':'var(--muted)'}">${gd>0?'+':''}${gd}</td>
+        <td class="standings-pts">${s.pts}</td>
+        <td class="standings-form">${formHtml}</td>
+      </tr>`;
+    }).join('');
+    html += `<div class="standings-group">
+      <div class="standings-group-header">Gruppe ${grp}</div>
+      <table class="standings-table">
+        <thead><tr><th>Team</th><th>Sp</th><th>S</th><th>U</th><th>N</th><th>Tore</th><th>TD</th><th>Pkt</th><th>Form</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  }
+  c.innerHTML = html;
+}
+
 // ── Squads ───────────────────────────────────────────────────
 let _squadFilter = '';
 
@@ -1314,6 +1416,7 @@ async function _load() {
   renderSport('tennis');
   renderJournalStats(_wmStats);
   renderJournal(d.history || []);
+  renderStandings();
   renderBets();
   _updateClock();
 
