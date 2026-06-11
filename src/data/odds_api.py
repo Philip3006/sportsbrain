@@ -250,6 +250,46 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
     return matches
 
 
+@disk_cache("odds_api_scores", max_age_hours=0.5)
+def fetch_wm_scores(
+    days_from: int = 3,
+    api_key: str | None = None,
+) -> list[dict]:
+    """
+    Fetches completed WM 2026 match scores from TheOddsAPI.
+    Cached for 30 minutes to avoid quota burn.
+    Returns list of {match_id, home, away, home_score, away_score, commence_time}.
+    """
+    key = get_api_key(api_key)
+    url = f"{ODDS_API_URL}/sports/soccer_fifa_world_cup/scores"
+    params = {"apiKey": key, "daysFrom": days_from}
+    resp = requests.get(url, params=params, timeout=15)
+    resp.raise_for_status()
+    data = resp.json()
+    results = []
+    for m in data:
+        if not m.get("completed"):
+            continue
+        scores_raw = m.get("scores") or []
+        scores = {}
+        for s in scores_raw:
+            if s.get("score") is not None:
+                try:
+                    scores[s["name"]] = int(s["score"])
+                except (ValueError, TypeError):
+                    pass
+        home, away = m["home_team"], m["away_team"]
+        results.append({
+            "match_id": m.get("id", f"{home}_vs_{away}"),
+            "home": home,
+            "away": away,
+            "home_score": scores.get(home),
+            "away_score": scores.get(away),
+            "commence_time": m.get("commence_time", ""),
+        })
+    return results
+
+
 def mock_upcoming_matches() -> list[dict]:
     """Returns synthetic upcoming matches for dry-run testing (no API call)."""
     return [

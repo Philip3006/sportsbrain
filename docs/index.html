@@ -213,6 +213,10 @@
     .today-countdown.warn { color: var(--yellow); }
     .today-live-badge { font-size: 10px; font-weight: 900; background: var(--red); color: #fff; border-radius: 4px; padding: 1px 5px; animation: pulse 1.5s infinite; }
     .last-call-badge { font-size: 10px; font-weight: 900; background: rgba(210,153,34,.2); border: 1px solid var(--yellow); color: var(--yellow); border-radius: 4px; padding: 1px 6px; }
+    .score-box { background: rgba(255,255,255,.06); border: 1px solid var(--border); border-radius: 8px; padding: 4px 14px; font-size: 20px; font-weight: 900; letter-spacing: -0.5px; flex-shrink: 0; }
+    .score-box.result-home { color: var(--green); border-color: rgba(0,200,83,.3); }
+    .score-box.result-away { color: var(--red); border-color: rgba(248,81,73,.3); }
+    .score-box.result-draw { color: var(--yellow); border-color: rgba(210,153,34,.3); }
 
     /* ── Value-Radar ── */
     .radar-strip { padding: 10px 0 4px; border-bottom: 1px solid rgba(255,255,255,.06); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
@@ -396,6 +400,7 @@ let _openBets = [];
 let _bankrollState = {};
 let _squads = {};
 let _oddsHistory = {};
+let _wmResults = {};  // {matchKey: {home_score, away_score}}
 let _prevView = 'home';
 
 // ── Navigation ───────────────────────────────────────────────
@@ -1032,19 +1037,29 @@ function renderHome() {
         const n = sigCount[nk] || 0;
         const timeStr = g.kickoff ? fmtTime(g.kickoff) : '—';
         const isFootball = sport === 'football';
-        const odds = isFootball
-          ? oddsBtn(nk,'home') + oddsBtn(nk,'draw') + oddsBtn(nk,'away')
-          : oddsBtn(nk,'home') + oddsBtn(nk,'away');
+        const result = _wmResults[nk];
+        const isCompleted = result && result.home_score != null && result.away_score != null;
+
+        let rightCol;
+        if (isCompleted) {
+          const resultClass = result.home_score > result.away_score ? 'result-home'
+            : result.away_score > result.home_score ? 'result-away' : 'result-draw';
+          rightCol = `<div class="score-box ${resultClass}">${result.home_score}–${result.away_score}</div>`;
+        } else {
+          rightCol = isFootball
+            ? oddsBtn(nk,'home') + oddsBtn(nk,'draw') + oddsBtn(nk,'away')
+            : oddsBtn(nk,'home') + oddsBtn(nk,'away');
+        }
 
         h += `<div class="b365-row" onclick='openMatch(${JSON.stringify(mk)})'>
           <div class="b365-left">
-            <div class="b365-time">${timeStr}${n>0?` <span class="b365-val-tag">${n} Value</span>`:''}</div>
+            <div class="b365-time">${timeStr}${isCompleted?` <span style="font-size:10px;color:var(--muted);font-weight:700">FT</span>`:''} ${n>0&&!isCompleted?` <span class="b365-val-tag">${n} Value</span>`:''}</div>
             <div class="b365-teams">
               <span class="b365-team">${esc(g.home)}</span>
               <span class="b365-team">${esc(g.away)}</span>
             </div>
           </div>
-          <div class="b365-odds">${odds}</div>
+          <div class="b365-odds">${rightCol}</div>
         </div>`;
       }
     }
@@ -1278,6 +1293,12 @@ async function _load() {
   _openBets = d.open_bets || [];
   _bankrollState = d.bankroll_state || {};
   _oddsHistory = d.odds_history || {};
+  // Index wm_results by matchKey for fast lookup in Home tab
+  _wmResults = {};
+  for (const r of (d.wm_results || [])) {
+    const mk = matchKey(r.home, r.away);
+    _wmResults[mk] = r;
+  }
   renderBankrollStrip();
 
   const setB = (id, n) => { const el=document.getElementById(id); el.textContent=n; el.classList.toggle('show',n>0); };

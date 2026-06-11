@@ -140,6 +140,7 @@ def write_signals_json(
     model_tips: dict[str, dict] | None = None,
     open_bets: list[dict] | None = None,
     odds_history: dict | None = None,  # {match_key: [{date, home, draw, away}]}
+    wm_results: list[dict] | None = None,  # [{home, away, home_score, away_score, commence_time}]
 ) -> None:
     """
     Writes (or merges into) docs/data/signals.json.
@@ -234,6 +235,7 @@ def write_signals_json(
         "wm_stats": _build_wm_stats(),
     }
     payload["odds_history"] = odds_history if odds_history is not None else existing.get("odds_history", {})
+    payload["wm_results"] = wm_results if wm_results is not None else existing.get("wm_results", [])
 
     _JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
     _JSON_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2))

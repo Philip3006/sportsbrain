@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.scanner.daily_scan import run_daily_scan
 from src.betting.ledger import append_bets, ledger_summary, LEDGER_PATH
 from src.notifications.web_dashboard import write_signals_json
-from src.data.odds_api import fetch_upcoming_matches
+from src.data.odds_api import fetch_upcoming_matches, fetch_wm_scores
 
 
 def _confirm_bets(selected_signals: list, bankroll: float) -> list:
@@ -309,6 +309,17 @@ if __name__ == "__main__":
     except Exception as _e:
         print(f"  Open bets build failed: {_e}")
 
+    # Fetch completed WM 2026 scores (cached 30 min, graceful fail)
+    _wm_results = []
+    if not args.mock:
+        try:
+            import os as _os3
+            _wm_results = fetch_wm_scores(api_key=_os3.getenv("ODDS_API_KEY", ""))
+            if _wm_results:
+                print(f"  Scores: {len(_wm_results)} completed match(es) fetched")
+        except Exception as _e:
+            print(f"  Scores fetch failed: {_e}")
+
     write_signals_json(
         football=all_signals,
         portfolio=portfolio,
@@ -318,6 +329,7 @@ if __name__ == "__main__":
         model_tips=model_tips if model_tips else None,
         open_bets=_open_bets,
         odds_history=_odds_hist_for_dashboard,
+        wm_results=_wm_results if _wm_results else None,
     )
     print("Dashboard: docs/data/signals.json updated.")
 
