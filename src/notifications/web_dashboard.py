@@ -79,6 +79,7 @@ def write_signals_json(
     schedule: list[dict] | None = None,
     all_odds: dict[str, dict] | None = None,
     model_tips: dict[str, dict] | None = None,
+    open_bets: list[dict] | None = None,
 ) -> None:
     """
     Writes (or merges into) docs/data/signals.json.
@@ -148,6 +149,7 @@ def write_signals_json(
         "portfolio":   portfolio if portfolio else existing.get("portfolio", {}),
         "top_elo":     [{"name": n, "rating": round(r)} for n, r in top_elo] if top_elo else existing.get("top_elo", []),
         "history":     _build_history(),
+        "open_bets":   open_bets if open_bets is not None else existing.get("open_bets", []),
     }
 
     _JSON_PATH.parent.mkdir(parents=True, exist_ok=True)

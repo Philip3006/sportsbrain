@@ -172,13 +172,33 @@
     .pred-xg-label { font-size: 10px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
     .pred-xg-team-name { font-size: 11px; color: var(--muted); font-weight: 600; text-align: center; max-width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+    /* ── Open bets view ── */
+    .bet-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin: 8px 16px; }
+    .bet-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .bet-match { font-size: 14px; font-weight: 800; }
+    .bet-date { font-size: 11px; color: var(--muted); }
+    .bet-market-chip { display: inline-block; font-size: 11px; font-weight: 700; background: rgba(255,255,255,.06); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; margin-bottom: 8px; }
+    .bet-odds-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .bet-odds-entry { font-size: 20px; font-weight: 900; color: var(--text); }
+    .bet-odds-arrow { font-size: 16px; }
+    .bet-odds-current { font-size: 18px; font-weight: 800; }
+    .drift-good { color: var(--green); }
+    .drift-bad { color: var(--red); }
+    .bet-footer { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .bet-stake { font-size: 12px; color: var(--muted); font-weight: 600; }
+    .bet-edge { font-size: 12px; font-weight: 800; }
+    .clv-pill { font-size: 10px; font-weight: 800; border-radius: 20px; padding: 2px 8px; }
+    .clv-good { background: rgba(0,200,83,.12); color: var(--green); border: 1px solid rgba(0,200,83,.3); }
+    .clv-bad { background: rgba(248,81,73,.12); color: var(--red); border: 1px solid rgba(248,81,73,.3); }
+    .clv-neutral { background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid var(--border); }
+
     /* ── Bottom nav ── */
     .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg); border-top: 2px solid var(--green); display: flex; padding-bottom: max(env(safe-area-inset-bottom), 10px); z-index: 100; }
-    .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 13px 4px 11px; gap: 5px; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; min-height: 70px; }
+    .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 2px 9px; gap: 4px; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; min-height: 66px; }
     .nav-tab.active { background: rgba(0,200,83,0.07); }
-    .ni { font-size: 26px; line-height: 1; transition: transform 0.15s; }
+    .ni { font-size: 22px; line-height: 1; transition: transform 0.15s; }
     .nav-tab.active .ni { transform: scale(1.1); }
-    .nl { font-size: 11px; color: #5a6370; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; }
+    .nl { font-size: 10px; color: #5a6370; font-weight: 700; letter-spacing: .2px; text-transform: uppercase; }
     .nav-tab.active .nl { color: var(--green); }
     .nav-badge { position: absolute; top: 9px; right: calc(50% - 20px); background: var(--green); color: #000; font-size: 10px; font-weight: 900; border-radius: 10px; padding: 1px 6px; min-width: 18px; text-align: center; display: none; }
     .nav-badge.show { display: block; }
@@ -243,6 +263,12 @@
       <div class="skel"></div><div class="skel"></div>
     </div>
   </section>
+
+  <section id="view-bets" class="view">
+    <div id="bets-container">
+      <div class="skel"></div><div class="skel"></div>
+    </div>
+  </section>
 </main>
 
 <nav class="bottom-nav">
@@ -259,7 +285,11 @@
     <span class="nav-badge" id="badge-tennis"></span>
   </div>
   <div class="nav-tab" data-view="journal" onclick="navTo(this)">
-    <span class="ni">📅</span><span class="nl">Kalender</span>
+    <span class="ni">📅</span><span class="nl">Journal</span>
+  </div>
+  <div class="nav-tab" data-view="bets" onclick="navTo(this)">
+    <span class="ni">📋</span><span class="nl">Wetten</span>
+    <span class="nav-badge" id="badge-bets"></span>
   </div>
   <div class="nav-tab" data-view="squads" onclick="navTo(this)">
     <span class="ni">👥</span><span class="nl">Kader</span>
@@ -273,6 +303,7 @@ let _signals = [];
 let _schedule = [];
 let _allOdds = {};
 let _modelTips = {};
+let _openBets = [];
 let _squads = {};
 let _prevView = 'home';
 
@@ -459,6 +490,45 @@ function sigCard(s) {
       <span class="stake-val">€${s.stake_eur.toFixed(0)}</span>
     </div>
   </div>`;
+}
+
+// ── Render open bets tab ─────────────────────────────────────
+function renderBets() {
+  const c = document.getElementById('bets-container');
+  if (!c) return;
+  if (!_openBets.length) {
+    c.innerHTML = `<div class="empty"><div class="icon">📭</div><div>Keine offenen Wetten.<br><small>Signals werden täglich 08:00 UTC aktualisiert.</small></div></div>`;
+    return;
+  }
+  const mktLabels = {home:'Heimsieg',draw:'Unentschieden',away:'Auswärtssieg','o/u2.5_over':'Über 2.5','o/u2.5_under':'Unter 2.5'};
+  let h = '';
+  for (const b of _openBets) {
+    const driftCls = b.drift_pct === null ? '' : b.drift_pct < 0 ? 'drift-good' : 'drift-bad';
+    const driftArrow = b.drift_pct === null ? '' : b.drift_pct < 0 ? '↓' : '↑';
+    const driftStr = b.drift_pct !== null ? `${driftArrow} ${Math.abs(b.drift_pct).toFixed(1)}%` : '—';
+    const clvCls = b.clv_signal === 'good' ? 'clv-good' : b.clv_signal === 'bad' ? 'clv-bad' : 'clv-neutral';
+    const clvLabel = b.clv_signal === 'good' ? '✓ CLV positiv' : b.clv_signal === 'bad' ? '✗ CLV negativ' : 'CLV n/a';
+    const dateStr = b.match_date ? b.match_date.slice(0,10).split('-').reverse().join('.') : '—';
+    const edgeStr = b.model_edge_pct !== null && b.model_edge_pct !== undefined ? `Edge: ${b.model_edge_pct > 0 ? '+' : ''}${b.model_edge_pct}%` : '';
+    h += `<div class="bet-card">
+      <div class="bet-card-header">
+        <span class="bet-match">${esc(b.match)}</span>
+        <span class="bet-date">${dateStr}</span>
+      </div>
+      <div class="bet-market-chip">${esc(mktLabels[b.market] || b.market)}</div>
+      <div class="bet-odds-row">
+        <span class="bet-odds-entry">${b.entry_odds.toFixed(2)}</span>
+        <span class="bet-odds-arrow ${driftCls}">→</span>
+        <span class="bet-odds-current ${driftCls}">${b.current_odds ? b.current_odds.toFixed(2) : '—'} <small>${driftStr}</small></span>
+      </div>
+      <div class="bet-footer">
+        <span class="bet-stake">€${b.stake.toFixed(0)} Einsatz</span>
+        ${edgeStr ? `<span class="bet-edge ${b.model_edge_pct > 0 ? 'drift-good' : 'drift-bad'}">${esc(edgeStr)}</span>` : ''}
+        <span class="clv-pill ${clvCls}">${clvLabel}</span>
+      </div>
+    </div>`;
+  }
+  c.innerHTML = h;
 }
 
 // ── Render Home — Bet365-style with inline odds ───────────────
@@ -754,16 +824,20 @@ async function _load() {
   _schedule = d.schedule || [];
   _allOdds = d.all_odds || {};
   _modelTips = d.model_tips || {};
+  _openBets = d.open_bets || [];
 
   const setB = (id, n) => { const el=document.getElementById(id); el.textContent=n; el.classList.toggle('show',n>0); };
   setB('badge-all',      _signals.length);
   setB('badge-football', _signals.filter(s=>s.sport==='football').length);
   setB('badge-tennis',   _signals.filter(s=>s.sport==='tennis').length);
+  const setBBets = document.getElementById('badge-bets');
+  if (setBBets) { setBBets.textContent = _openBets.length; setBBets.classList.toggle('show', _openBets.length > 0); }
 
   renderHome();
   renderSport('football');
   renderSport('tennis');
   renderJournal(d.history || []);
+  renderBets();
 
   // Load squads in background (non-blocking)
   fetch(SQUADS_URL + '?t=' + Date.now(), { cache: 'no-store' })

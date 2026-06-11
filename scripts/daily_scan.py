@@ -200,6 +200,51 @@ if __name__ == "__main__":
     except Exception as _e:
         print(f"  Model tips failed: {_e}")
 
+    # Build open_bets section from ledger
+    import csv as _csv
+    _open_bets = []
+    try:
+        _ledger_path = Path(__file__).parent.parent / "results" / "ledger.csv"
+        if _ledger_path.exists():
+            with open(_ledger_path) as _f:
+                for _row in _csv.DictReader(_f):
+                    if _row.get("status") != "open":
+                        continue
+                    _home, _away = _row["home"], _row["away"]
+                    _mk = f"{_home} vs {_away}"
+                    _market = _row["market"]
+                    _entry = float(_row["decimal_odds"])
+                    _stake = float(_row["stake_amount"])
+                    # Current odds lookup
+                    _cur_odds_block = all_odds.get(_mk, {})
+                    _cur = None
+                    if _market in ("home", "draw", "away"):
+                        _cur = _cur_odds_block.get(_market)
+                    # Drift
+                    _drift = round((_cur - _entry) / _entry * 100, 1) if _cur else None
+                    # CLV signal: quote fällt = gut (Markt bestätigt uns)
+                    _clv = "good" if (_drift is not None and _drift < 0) else ("bad" if _drift is not None else None)
+                    # Model prob
+                    _tip = (model_tips or {}).get(_mk, {})
+                    _model_p = _tip.get(f"p_{_market}") if _market in ("home", "draw", "away") else None
+                    _model_edge = round((_model_p * _cur - 1) * 100, 1) if (_model_p and _cur) else None
+                    _open_bets.append({
+                        "match": _mk,
+                        "home": _home,
+                        "away": _away,
+                        "market": _market,
+                        "entry_odds": _entry,
+                        "current_odds": _cur,
+                        "drift_pct": _drift,
+                        "clv_signal": _clv,
+                        "stake": _stake,
+                        "match_date": _row.get("match_date", ""),
+                        "model_edge_pct": _model_edge,
+                    })
+        print(f"  Open bets: {len(_open_bets)} loaded")
+    except Exception as _e:
+        print(f"  Open bets build failed: {_e}")
+
     write_signals_json(
         football=all_signals,
         portfolio=portfolio,
@@ -207,6 +252,7 @@ if __name__ == "__main__":
         schedule=schedule,
         all_odds=all_odds,
         model_tips=model_tips if model_tips else None,
+        open_bets=_open_bets,
     )
     print("Dashboard: docs/data/signals.json updated.")
 
