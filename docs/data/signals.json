@@ -436,54 +436,54 @@
   ],
   "all_odds": {
     "Mexico vs South Africa": {
-      "home": 1.43,
-      "draw": 4.56,
-      "away": 8.77
+      "home": 4.8,
+      "draw": 1.25,
+      "away": 9.6
     },
     "South Korea vs Czech Republic": {
-      "home": 2.72,
-      "draw": 3.1,
-      "away": 2.96
+      "home": 6.4,
+      "draw": 1.23,
+      "away": 7.0
     },
     "Canada vs Bosnia & Herzegovina": {
-      "home": 1.84,
-      "draw": 3.59,
-      "away": 4.66
+      "home": 1.85,
+      "draw": 3.5,
+      "away": 5.0
     },
     "USA vs Paraguay": {
-      "home": 1.98,
-      "draw": 3.46,
-      "away": 4.16
+      "home": 1.97,
+      "draw": 3.52,
+      "away": 4.15
     },
     "Qatar vs Switzerland": {
-      "home": 12.86,
-      "draw": 6.85,
+      "home": 16.0,
+      "draw": 7.0,
       "away": 1.23
     },
     "Brazil vs Morocco": {
       "home": 1.68,
-      "draw": 3.77,
-      "away": 5.6
+      "draw": 3.84,
+      "away": 5.65
     },
     "Haiti vs Scotland": {
-      "home": 6.14,
-      "draw": 4.35,
-      "away": 1.55
+      "home": 6.1,
+      "draw": 4.4,
+      "away": 1.56
     },
     "Australia vs Turkey": {
-      "home": 5.22,
-      "draw": 3.88,
-      "away": 1.7
+      "home": 5.0,
+      "draw": 3.85,
+      "away": 1.75
     },
     "Germany vs Curaçao": {
       "home": 1.04,
-      "draw": 19.0,
-      "away": 41.0
+      "draw": 17.5,
+      "away": 53.0
     },
     "Netherlands vs Japan": {
-      "home": 2.04,
-      "draw": 3.61,
-      "away": 3.73
+      "home": 1.99,
+      "draw": 3.64,
+      "away": 3.92
     },
     "Ivory Coast vs Ecuador": {
       "home": 3.69,
@@ -492,22 +492,22 @@
     },
     "Sweden vs Tunisia": {
       "home": 1.93,
-      "draw": 3.48,
-      "away": 4.32
+      "draw": 3.52,
+      "away": 4.33
     },
     "Spain vs Cape Verde": {
-      "home": 1.08,
-      "draw": 11.8,
-      "away": 28.89
+      "home": 1.11,
+      "draw": 11.0,
+      "away": 26.0
     },
     "Belgium vs Egypt": {
-      "home": 1.65,
-      "draw": 4.0,
+      "home": 1.67,
+      "draw": 3.94,
       "away": 5.6
     },
     "Saudi Arabia vs Uruguay": {
-      "home": 7.75,
-      "draw": 4.47,
+      "home": 8.2,
+      "draw": 4.45,
       "away": 1.46
     },
     "Iran vs New Zealand": {
@@ -516,74 +516,74 @@
       "away": 4.75
     },
     "France vs Senegal": {
-      "home": 1.49,
-      "draw": 4.4,
-      "away": 7.09
+      "home": 1.5,
+      "draw": 4.33,
+      "away": 7.4
     },
     "Iraq vs Norway": {
-      "home": 14.39,
-      "draw": 7.3,
-      "away": 1.2
+      "home": 16.0,
+      "draw": 6.75,
+      "away": 1.22
     },
     "Argentina vs Algeria": {
       "home": 1.41,
-      "draw": 4.56,
-      "away": 9.05
+      "draw": 4.6,
+      "away": 9.4
     },
     "Austria vs Jordan": {
-      "home": 1.33,
-      "draw": 5.52,
-      "away": 9.25
+      "home": 1.32,
+      "draw": 5.75,
+      "away": 11.0
     },
     "Portugal vs DR Congo": {
-      "home": 1.28,
-      "draw": 5.89,
-      "away": 11.9
+      "home": 1.29,
+      "draw": 6.0,
+      "away": 12.0
     },
     "England vs Croatia": {
-      "home": 1.74,
-      "draw": 3.9,
-      "away": 4.91
+      "home": 1.76,
+      "draw": 3.84,
+      "away": 4.9
     },
     "Ghana vs Panama": {
-      "home": 2.13,
-      "draw": 3.53,
-      "away": 3.55
+      "home": 2.09,
+      "draw": 3.56,
+      "away": 3.66
     },
     "Uzbekistan vs Colombia": {
-      "home": 9.17,
-      "draw": 4.74,
-      "away": 1.39
+      "home": 9.5,
+      "draw": 4.7,
+      "away": 1.4
     },
     "Czech Republic vs South Africa": {
-      "home": 1.93,
+      "home": 1.97,
       "draw": 3.3,
-      "away": 4.07
+      "away": 4.1
     },
     "Switzerland vs Bosnia & Herzegovina": {
-      "home": 1.58,
-      "draw": 3.93,
-      "away": 5.3
+      "home": 1.57,
+      "draw": 3.9,
+      "away": 6.1
     },
     "Canada vs Qatar": {
-      "home": 1.29,
-      "draw": 5.03,
-      "away": 9.6
+      "home": 1.26,
+      "draw": 4.8,
+      "away": 8.5
     },
     "Mexico vs South Korea": {
-      "home": 1.75,
-      "draw": 3.6,
-      "away": 4.49
+      "home": 1.81,
+      "draw": 3.5,
+      "away": 4.7
     },
     "USA vs Australia": {
-      "home": 1.71,
-      "draw": 3.95,
-      "away": 4.3
+      "home": 1.75,
+      "draw": 4.0,
+      "away": 4.5
     },
     "Scotland vs Morocco": {
-      "home": 4.1,
-      "draw": 3.2,
-      "away": 1.95
+      "home": 3.65,
+      "draw": 3.15,
+      "away": 1.9
     },
     "Brazil vs Haiti": {
       "home": 1.08,
@@ -591,34 +591,34 @@
       "away": 31.0
     },
     "Turkey vs Paraguay": {
-      "home": 2.2,
-      "draw": 3.13,
-      "away": 3.42
+      "home": 2.28,
+      "draw": 3.3,
+      "away": 3.55
     },
     "Netherlands vs Sweden": {
-      "home": 1.61,
-      "draw": 4.01,
-      "away": 4.96
+      "home": 1.65,
+      "draw": 3.95,
+      "away": 5.3
     },
     "Germany vs Ivory Coast": {
-      "home": 1.54,
-      "draw": 4.27,
-      "away": 5.29
+      "home": 1.57,
+      "draw": 4.1,
+      "away": 5.8
     },
     "Ecuador vs Curaçao": {
-      "home": 1.18,
-      "draw": 7.08,
-      "away": 11.55
+      "home": 1.15,
+      "draw": 6.75,
+      "away": 10.0
     },
     "Tunisia vs Japan": {
-      "home": 5.25,
-      "draw": 3.57,
-      "away": 1.66
+      "home": 5.1,
+      "draw": 3.6,
+      "away": 1.74
     },
     "Spain vs Saudi Arabia": {
       "home": 1.09,
-      "draw": 10.21,
-      "away": 21.54
+      "draw": 12.2,
+      "away": 34.0
     },
     "Belgium vs Iran": {
       "home": 1.37,
@@ -626,173 +626,173 @@
       "away": 7.75
     },
     "Uruguay vs Cape Verde": {
-      "home": 1.4,
-      "draw": 4.47,
-      "away": 7.28
+      "home": 1.45,
+      "draw": 4.35,
+      "away": 7.5
     },
     "New Zealand vs Egypt": {
-      "home": 4.33,
-      "draw": 3.81,
-      "away": 1.73
+      "home": 5.2,
+      "draw": 3.6,
+      "away": 1.72
     },
     "Argentina vs Austria": {
-      "home": 1.61,
-      "draw": 3.71,
-      "away": 5.44
+      "home": 1.68,
+      "draw": 3.75,
+      "away": 5.3
     },
     "France vs Iraq": {
-      "home": 1.11,
-      "draw": 8.06,
-      "away": 24.06
+      "home": 1.12,
+      "draw": 9.0,
+      "away": 23.0
     },
     "Norway vs Senegal": {
-      "home": 2.09,
-      "draw": 3.51,
-      "away": 3.28
+      "home": 2.18,
+      "draw": 3.55,
+      "away": 3.5
     },
     "Jordan vs Algeria": {
-      "home": 6.2,
-      "draw": 4.17,
-      "away": 1.48
+      "home": 6.5,
+      "draw": 4.25,
+      "away": 1.56
     },
     "Portugal vs Uzbekistan": {
       "home": 1.21,
-      "draw": 6.31,
-      "away": 10.82
+      "draw": 5.8,
+      "away": 8.5
     },
     "England vs Ghana": {
-      "home": 1.29,
-      "draw": 5.32,
-      "away": 8.93
+      "home": 1.26,
+      "draw": 5.1,
+      "away": 7.75
     },
     "Panama vs Croatia": {
-      "home": 6.28,
-      "draw": 3.68,
-      "away": 1.56
+      "home": 5.5,
+      "draw": 3.85,
+      "away": 1.49
     },
     "Colombia vs DR Congo": {
-      "home": 1.43,
-      "draw": 4.23,
-      "away": 7.22
+      "home": 1.53,
+      "draw": 4.2,
+      "away": 7.5
     },
     "Bosnia & Herzegovina vs Qatar": {
-      "home": 1.62,
-      "draw": 3.64,
-      "away": 5.49
+      "home": 1.58,
+      "draw": 3.9,
+      "away": 5.8
     },
     "Switzerland vs Canada": {
       "home": 2.1,
-      "draw": 3.33,
-      "away": 3.44
+      "draw": 3.2,
+      "away": 3.4
     },
     "Scotland vs Brazil": {
-      "home": 5.37,
-      "draw": 4.82,
-      "away": 1.47
+      "home": 7.5,
+      "draw": 4.35,
+      "away": 1.45
     },
     "Morocco vs Haiti": {
       "home": 1.3,
-      "draw": 5.06,
-      "away": 9.14
+      "draw": 4.8,
+      "away": 9.0
     },
     "Czech Republic vs Mexico": {
-      "home": 4.54,
-      "draw": 3.56,
-      "away": 1.75
+      "home": 3.8,
+      "draw": 3.15,
+      "away": 1.64
     },
     "South Africa vs South Korea": {
-      "home": 4.03,
-      "draw": 3.35,
-      "away": 1.92
+      "home": 3.4,
+      "draw": 3.05,
+      "away": 1.76
     },
     "Curaçao vs Ivory Coast": {
-      "home": 11.7,
-      "draw": 6.49,
-      "away": 1.2
+      "home": 8.5,
+      "draw": 5.0,
+      "away": 1.15
     },
     "Ecuador vs Germany": {
-      "home": 4.5,
-      "draw": 3.7,
-      "away": 1.73
+      "home": 4.0,
+      "draw": 3.35,
+      "away": 1.56
     },
     "Japan vs Sweden": {
-      "home": 2.08,
-      "draw": 3.37,
-      "away": 3.47
+      "home": 1.94,
+      "draw": 3.15,
+      "away": 3.15
     },
     "Tunisia vs Netherlands": {
-      "home": 6.28,
-      "draw": 4.22,
-      "away": 1.47
+      "home": 5.0,
+      "draw": 3.7,
+      "away": 1.39
     },
     "Paraguay vs Australia": {
-      "home": 2.12,
-      "draw": 3.17,
-      "away": 3.57
+      "home": 2.0,
+      "draw": 3.05,
+      "away": 3.1
     },
     "Turkey vs USA": {
-      "home": 2.56,
-      "draw": 3.52,
-      "away": 2.56
+      "home": 2.4,
+      "draw": 3.1,
+      "away": 2.25
     },
     "Norway vs France": {
-      "home": 4.16,
-      "draw": 3.54,
-      "away": 1.83
+      "home": 4.39,
+      "draw": 3.66,
+      "away": 1.78
     },
     "Senegal vs Iraq": {
-      "home": 1.38,
-      "draw": 4.55,
-      "away": 7.6
+      "home": 1.53,
+      "draw": 4.31,
+      "away": 6.94
     },
     "Cape Verde vs Saudi Arabia": {
-      "home": 2.52,
-      "draw": 3.27,
-      "away": 2.75
+      "home": 2.55,
+      "draw": 3.2,
+      "away": 2.6
     },
     "Uruguay vs Spain": {
-      "home": 5.15,
-      "draw": 3.86,
-      "away": 1.61
+      "home": 5.3,
+      "draw": 3.8,
+      "away": 1.57
     },
     "New Zealand vs Belgium": {
-      "home": 9.66,
-      "draw": 5.73,
-      "away": 1.25
+      "home": 9.85,
+      "draw": 5.58,
+      "away": 1.3
     },
     "Egypt vs Iran": {
-      "home": 2.22,
-      "draw": 2.99,
-      "away": 3.55
+      "home": 2.38,
+      "draw": 3.08,
+      "away": 3.62
     },
     "Croatia vs Ghana": {
       "home": 1.6,
-      "draw": 3.77,
-      "away": 5.46
+      "draw": 3.7,
+      "away": 5.2
     },
     "Panama vs England": {
-      "home": 7.56,
-      "draw": 6.38,
+      "home": 8.5,
+      "draw": 5.5,
       "away": 1.27
     },
     "Colombia vs Portugal": {
-      "home": 3.46,
-      "draw": 3.27,
+      "home": 3.6,
+      "draw": 3.3,
       "away": 2.12
     },
     "DR Congo vs Uzbekistan": {
-      "home": 2.29,
-      "draw": 3.32,
-      "away": 3.05
+      "home": 2.15,
+      "draw": 3.1,
+      "away": 2.8
     },
     "Algeria vs Austria": {
-      "home": 3.74,
-      "draw": 3.03,
-      "away": 2.13
+      "home": 3.05,
+      "draw": 2.9,
+      "away": 1.94
     },
     "Jordan vs Argentina": {
-      "home": 13.33,
-      "draw": 7.12,
+      "home": 14.0,
+      "draw": 6.5,
       "away": 1.16
     }
   },
@@ -1257,483 +1257,621 @@
       "p_draw": 0.093,
       "p_away": 0.042,
       "xg_home": 3.49,
-      "xg_away": 0.76
+      "xg_away": 0.76,
+      "p_btts_yes": 0.521,
+      "p_btts_no": 0.479
     },
     "South Korea vs Czech Republic": {
       "p_home": 0.832,
       "p_draw": 0.118,
       "p_away": 0.05,
       "xg_home": 3.0,
-      "xg_away": 0.67
+      "xg_away": 0.67,
+      "p_btts_yes": 0.468,
+      "p_btts_no": 0.532
     },
     "Canada vs Bosnia & Herzegovina": {
       "p_home": 0.657,
       "p_draw": 0.244,
       "p_away": 0.098,
       "xg_home": 1.7,
-      "xg_away": 0.51
+      "xg_away": 0.51,
+      "p_btts_yes": 0.336,
+      "p_btts_no": 0.664
     },
     "USA vs Paraguay": {
       "p_home": 0.221,
       "p_draw": 0.301,
       "p_away": 0.478,
       "xg_home": 0.84,
-      "xg_away": 1.36
+      "xg_away": 1.36,
+      "p_btts_yes": 0.434,
+      "p_btts_no": 0.566
     },
     "Qatar vs Switzerland": {
       "p_home": 0.127,
       "p_draw": 0.225,
       "p_away": 0.648,
       "xg_home": 0.75,
-      "xg_away": 1.96
+      "xg_away": 1.96,
+      "p_btts_yes": 0.463,
+      "p_btts_no": 0.537
     },
     "Brazil vs Morocco": {
       "p_home": 0.049,
       "p_draw": 0.326,
       "p_away": 0.624,
       "xg_home": 0.17,
-      "xg_away": 1.17
+      "xg_away": 1.17,
+      "p_btts_yes": 0.113,
+      "p_btts_no": 0.887
     },
     "Haiti vs Scotland": {
       "p_home": 0.443,
       "p_draw": 0.241,
       "p_away": 0.316,
       "xg_home": 1.85,
-      "xg_away": 1.54
+      "xg_away": 1.54,
+      "p_btts_yes": 0.671,
+      "p_btts_no": 0.329
     },
     "Australia vs Turkey": {
       "p_home": 0.57,
       "p_draw": 0.294,
       "p_away": 0.136,
       "xg_home": 1.4,
-      "xg_away": 0.55
+      "xg_away": 0.55,
+      "p_btts_yes": 0.329,
+      "p_btts_no": 0.671
     },
     "Netherlands vs Japan": {
       "p_home": 0.109,
       "p_draw": 0.25,
       "p_away": 0.642,
       "xg_home": 0.55,
-      "xg_away": 1.68
+      "xg_away": 1.68,
+      "p_btts_yes": 0.354,
+      "p_btts_no": 0.646
     },
     "Ivory Coast vs Ecuador": {
       "p_home": 0.083,
       "p_draw": 0.389,
       "p_away": 0.528,
       "xg_home": 0.23,
-      "xg_away": 0.95
+      "xg_away": 0.95,
+      "p_btts_yes": 0.133,
+      "p_btts_no": 0.867
     },
     "Sweden vs Tunisia": {
       "p_home": 0.152,
       "p_draw": 0.172,
       "p_away": 0.676,
       "xg_home": 1.32,
-      "xg_away": 2.79
+      "xg_away": 2.79,
+      "p_btts_yes": 0.692,
+      "p_btts_no": 0.308
     },
     "Spain vs Cape Verde": {
       "p_home": 0.788,
       "p_draw": 0.132,
       "p_away": 0.08,
       "xg_home": 3.1,
-      "xg_away": 0.97
+      "xg_away": 0.97,
+      "p_btts_yes": 0.599,
+      "p_btts_no": 0.401
     },
     "Belgium vs Egypt": {
       "p_home": 0.132,
       "p_draw": 0.288,
       "p_away": 0.58,
       "xg_home": 0.55,
-      "xg_away": 1.43
+      "xg_away": 1.43,
+      "p_btts_yes": 0.331,
+      "p_btts_no": 0.669
     },
     "Saudi Arabia vs Uruguay": {
       "p_home": 0.181,
       "p_draw": 0.378,
       "p_away": 0.441,
       "xg_home": 0.51,
-      "xg_away": 0.95
+      "xg_away": 0.95,
+      "p_btts_yes": 0.255,
+      "p_btts_no": 0.745
     },
     "Iran vs New Zealand": {
       "p_home": 0.764,
       "p_draw": 0.164,
       "p_away": 0.072,
       "xg_home": 2.44,
-      "xg_away": 0.64
+      "xg_away": 0.64,
+      "p_btts_yes": 0.44,
+      "p_btts_no": 0.56
     },
     "France vs Senegal": {
       "p_home": 0.202,
       "p_draw": 0.267,
       "p_away": 0.531,
       "xg_home": 0.93,
-      "xg_away": 1.64
+      "xg_away": 1.64,
+      "p_btts_yes": 0.497,
+      "p_btts_no": 0.503
     },
     "Iraq vs Norway": {
       "p_home": 0.287,
       "p_draw": 0.309,
       "p_away": 0.404,
       "xg_home": 1.0,
-      "xg_away": 1.24
+      "xg_away": 1.24,
+      "p_btts_yes": 0.461,
+      "p_btts_no": 0.539
     },
     "Argentina vs Algeria": {
       "p_home": 0.516,
       "p_draw": 0.336,
       "p_away": 0.148,
       "xg_home": 1.16,
-      "xg_away": 0.5
+      "xg_away": 0.5,
+      "p_btts_yes": 0.278,
+      "p_btts_no": 0.722
     },
     "Austria vs Jordan": {
       "p_home": 0.122,
       "p_draw": 0.268,
       "p_away": 0.61,
       "xg_home": 0.56,
-      "xg_away": 1.56
+      "xg_away": 1.56,
+      "p_btts_yes": 0.349,
+      "p_btts_no": 0.651
     },
     "Portugal vs DR Congo": {
       "p_home": 0.247,
       "p_draw": 0.345,
       "p_away": 0.408,
       "xg_home": 0.76,
-      "xg_away": 1.05
+      "xg_away": 1.05,
+      "p_btts_yes": 0.358,
+      "p_btts_no": 0.642
     },
     "England vs Croatia": {
       "p_home": 0.655,
       "p_draw": 0.281,
       "p_away": 0.063,
       "xg_home": 1.39,
-      "xg_away": 0.27
+      "xg_away": 0.27,
+      "p_btts_yes": 0.182,
+      "p_btts_no": 0.818
     },
     "Ghana vs Panama": {
       "p_home": 0.324,
       "p_draw": 0.371,
       "p_away": 0.305,
       "xg_home": 0.84,
-      "xg_away": 0.8
+      "xg_away": 0.8,
+      "p_btts_yes": 0.325,
+      "p_btts_no": 0.675
     },
     "Uzbekistan vs Colombia": {
       "p_home": 0.258,
       "p_draw": 0.348,
       "p_away": 0.394,
       "xg_home": 0.77,
-      "xg_away": 1.03
+      "xg_away": 1.03,
+      "p_btts_yes": 0.358,
+      "p_btts_no": 0.642
     },
     "Czech Republic vs South Africa": {
       "p_home": 0.259,
       "p_draw": 0.215,
       "p_away": 0.526,
       "xg_home": 1.56,
-      "xg_away": 2.25
+      "xg_away": 2.25,
+      "p_btts_yes": 0.714,
+      "p_btts_no": 0.286
     },
     "Switzerland vs Bosnia & Herzegovina": {
       "p_home": 0.705,
       "p_draw": 0.212,
       "p_away": 0.083,
       "xg_home": 1.93,
-      "xg_away": 0.52
+      "xg_away": 0.52,
+      "p_btts_yes": 0.355,
+      "p_btts_no": 0.645
     },
     "Canada vs Qatar": {
       "p_home": 0.598,
       "p_draw": 0.253,
       "p_away": 0.148,
       "xg_home": 1.72,
-      "xg_away": 0.74
+      "xg_away": 0.74,
+      "p_btts_yes": 0.44,
+      "p_btts_no": 0.56
     },
     "Mexico vs South Korea": {
       "p_home": 0.471,
       "p_draw": 0.282,
       "p_away": 0.247,
       "xg_home": 1.49,
-      "xg_away": 1.02
+      "xg_away": 1.02,
+      "p_btts_yes": 0.506,
+      "p_btts_no": 0.494
     },
     "USA vs Australia": {
       "p_home": 0.105,
       "p_draw": 0.229,
       "p_away": 0.666,
       "xg_home": 0.6,
-      "xg_away": 1.85
+      "xg_away": 1.85,
+      "p_btts_yes": 0.388,
+      "p_btts_no": 0.612
     },
     "Scotland vs Morocco": {
       "p_home": 0.014,
       "p_draw": 0.128,
       "p_away": 0.858,
       "xg_home": 0.15,
-      "xg_away": 2.26
+      "xg_away": 2.26,
+      "p_btts_yes": 0.127,
+      "p_btts_no": 0.873
     },
     "Brazil vs Haiti": {
       "p_home": 0.558,
       "p_draw": 0.252,
       "p_away": 0.19,
       "xg_home": 1.78,
-      "xg_away": 0.95
+      "xg_away": 0.95,
+      "p_btts_yes": 0.521,
+      "p_btts_no": 0.479
     },
     "Turkey vs Paraguay": {
       "p_home": 0.256,
       "p_draw": 0.347,
       "p_away": 0.396,
       "xg_home": 0.77,
-      "xg_away": 1.03
+      "xg_away": 1.03,
+      "p_btts_yes": 0.358,
+      "p_btts_no": 0.642
     },
     "Netherlands vs Sweden": {
       "p_home": 0.679,
       "p_draw": 0.19,
       "p_away": 0.13,
       "xg_home": 2.39,
-      "xg_away": 0.98
+      "xg_away": 0.98,
+      "p_btts_yes": 0.574,
+      "p_btts_no": 0.426
     },
     "Germany vs Ivory Coast": {
       "p_home": 0.393,
       "p_draw": 0.26,
       "p_away": 0.347,
       "xg_home": 1.57,
-      "xg_away": 1.47
+      "xg_away": 1.47,
+      "p_btts_yes": 0.62,
+      "p_btts_no": 0.38
     },
     "Tunisia vs Japan": {
       "p_home": 0.083,
       "p_draw": 0.182,
       "p_away": 0.735,
       "xg_home": 0.64,
-      "xg_away": 2.26
+      "xg_away": 2.26,
+      "p_btts_yes": 0.432,
+      "p_btts_no": 0.568
     },
     "Spain vs Saudi Arabia": {
       "p_home": 0.55,
       "p_draw": 0.247,
       "p_away": 0.203,
       "xg_home": 1.84,
-      "xg_away": 1.04
+      "xg_away": 1.04,
+      "p_btts_yes": 0.553,
+      "p_btts_no": 0.447
     },
     "Belgium vs Iran": {
       "p_home": 0.15,
       "p_draw": 0.253,
       "p_away": 0.597,
       "xg_home": 0.75,
-      "xg_away": 1.73
+      "xg_away": 1.73,
+      "p_btts_yes": 0.444,
+      "p_btts_no": 0.556
     },
     "Uruguay vs Cape Verde": {
       "p_home": 0.646,
       "p_draw": 0.256,
       "p_away": 0.098,
       "xg_home": 1.61,
-      "xg_away": 0.48
+      "xg_away": 0.48,
+      "p_btts_yes": 0.312,
+      "p_btts_no": 0.688
     },
     "New Zealand vs Egypt": {
       "p_home": 0.067,
       "p_draw": 0.195,
       "p_away": 0.738,
       "xg_home": 0.47,
-      "xg_away": 2.03
+      "xg_away": 2.03,
+      "p_btts_yes": 0.332,
+      "p_btts_no": 0.668
     },
     "Argentina vs Austria": {
       "p_home": 0.707,
       "p_draw": 0.233,
       "p_away": 0.06,
       "xg_home": 1.67,
-      "xg_away": 0.32
+      "xg_away": 0.32,
+      "p_btts_yes": 0.23,
+      "p_btts_no": 0.77
     },
     "France vs Iraq": {
       "p_home": 0.272,
       "p_draw": 0.348,
       "p_away": 0.379,
       "xg_home": 0.81,
-      "xg_away": 1.01
+      "xg_away": 1.01,
+      "p_btts_yes": 0.364,
+      "p_btts_no": 0.636
     },
     "Norway vs Senegal": {
       "p_home": 0.323,
       "p_draw": 0.258,
       "p_away": 0.418,
       "xg_home": 1.42,
-      "xg_away": 1.63
+      "xg_away": 1.63,
+      "p_btts_yes": 0.619,
+      "p_btts_no": 0.381
     },
     "Jordan vs Algeria": {
       "p_home": 0.393,
       "p_draw": 0.334,
       "p_away": 0.274,
       "xg_home": 1.09,
-      "xg_away": 0.86
+      "xg_away": 0.86,
+      "p_btts_yes": 0.395,
+      "p_btts_no": 0.605
     },
     "Portugal vs Uzbekistan": {
       "p_home": 0.21,
       "p_draw": 0.364,
       "p_away": 0.426,
       "xg_home": 0.61,
-      "xg_away": 0.99
+      "xg_away": 0.99,
+      "p_btts_yes": 0.3,
+      "p_btts_no": 0.7
     },
     "England vs Ghana": {
       "p_home": 0.551,
       "p_draw": 0.356,
       "p_away": 0.093,
       "xg_home": 1.07,
-      "xg_away": 0.29
+      "xg_away": 0.29,
+      "p_btts_yes": 0.173,
+      "p_btts_no": 0.827
     },
     "Panama vs Croatia": {
       "p_home": 0.401,
       "p_draw": 0.346,
       "p_away": 0.253,
       "xg_home": 1.04,
-      "xg_away": 0.77
+      "xg_away": 0.77,
+      "p_btts_yes": 0.359,
+      "p_btts_no": 0.641
     },
     "Colombia vs DR Congo": {
       "p_home": 0.457,
       "p_draw": 0.313,
       "p_away": 0.23,
       "xg_home": 1.27,
-      "xg_away": 0.82
+      "xg_away": 0.82,
+      "p_btts_yes": 0.414,
+      "p_btts_no": 0.586
     },
     "Bosnia & Herzegovina vs Qatar": {
       "p_home": 0.251,
       "p_draw": 0.295,
       "p_away": 0.454,
       "xg_home": 0.97,
-      "xg_away": 1.39
+      "xg_away": 1.39,
+      "p_btts_yes": 0.476,
+      "p_btts_no": 0.524
     },
     "Switzerland vs Canada": {
       "p_home": 0.362,
       "p_draw": 0.335,
       "p_away": 0.303,
       "xg_home": 1.04,
-      "xg_away": 0.92
+      "xg_away": 0.92,
+      "p_btts_yes": 0.401,
+      "p_btts_no": 0.599
     },
     "Scotland vs Brazil": {
       "p_home": 0.156,
       "p_draw": 0.271,
       "p_away": 0.573,
       "xg_home": 0.71,
-      "xg_away": 1.58
+      "xg_away": 1.58,
+      "p_btts_yes": 0.413,
+      "p_btts_no": 0.587
     },
     "Morocco vs Haiti": {
       "p_home": 0.878,
       "p_draw": 0.107,
       "p_away": 0.015,
       "xg_home": 2.55,
-      "xg_away": 0.2
+      "xg_away": 0.2,
+      "p_btts_yes": 0.171,
+      "p_btts_no": 0.829
     },
     "Czech Republic vs Mexico": {
       "p_home": 0.022,
       "p_draw": 0.068,
       "p_away": 0.91,
       "xg_home": 0.56,
-      "xg_away": 3.7
+      "xg_away": 3.7,
+      "p_btts_yes": 0.422,
+      "p_btts_no": 0.578
     },
     "South Africa vs South Korea": {
       "p_home": 0.087,
       "p_draw": 0.148,
       "p_away": 0.764,
       "xg_home": 0.91,
-      "xg_away": 2.83
+      "xg_away": 2.83,
+      "p_btts_yes": 0.567,
+      "p_btts_no": 0.433
     },
     "Ecuador vs Germany": {
       "p_home": 0.48,
       "p_draw": 0.433,
       "p_away": 0.087,
       "xg_home": 0.82,
-      "xg_away": 0.21
+      "xg_away": 0.21,
+      "p_btts_yes": 0.113,
+      "p_btts_no": 0.887
     },
     "Japan vs Sweden": {
       "p_home": 0.9,
       "p_draw": 0.079,
       "p_away": 0.021,
       "xg_home": 3.31,
-      "xg_away": 0.44
+      "xg_away": 0.44,
+      "p_btts_yes": 0.349,
+      "p_btts_no": 0.651
     },
     "Tunisia vs Netherlands": {
       "p_home": 0.323,
       "p_draw": 0.259,
       "p_away": 0.418,
       "xg_home": 1.41,
-      "xg_away": 1.63
+      "xg_away": 1.63,
+      "p_btts_yes": 0.619,
+      "p_btts_no": 0.381
     },
     "Paraguay vs Australia": {
       "p_home": 0.183,
       "p_draw": 0.332,
       "p_away": 0.485,
       "xg_home": 0.61,
-      "xg_away": 1.18
+      "xg_away": 1.18,
+      "p_btts_yes": 0.328,
+      "p_btts_no": 0.672
     },
     "Turkey vs USA": {
       "p_home": 0.398,
       "p_draw": 0.311,
       "p_away": 0.291,
       "xg_home": 1.22,
-      "xg_away": 1.0
+      "xg_away": 1.0,
+      "p_btts_yes": 0.457,
+      "p_btts_no": 0.543
     },
     "Norway vs France": {
       "p_home": 0.515,
       "p_draw": 0.246,
       "p_away": 0.239,
       "xg_home": 1.85,
-      "xg_away": 1.2
+      "xg_away": 1.2,
+      "p_btts_yes": 0.599,
+      "p_btts_no": 0.401
     },
     "Senegal vs Iraq": {
       "p_home": 0.418,
       "p_draw": 0.338,
       "p_away": 0.243,
       "xg_home": 1.1,
-      "xg_away": 0.77
+      "xg_away": 0.77,
+      "p_btts_yes": 0.37,
+      "p_btts_no": 0.63
     },
     "Cape Verde vs Saudi Arabia": {
       "p_home": 0.196,
       "p_draw": 0.306,
       "p_away": 0.497,
       "xg_home": 0.74,
-      "xg_away": 1.33
+      "xg_away": 1.33,
+      "p_btts_yes": 0.394,
+      "p_btts_no": 0.606
     },
     "Uruguay vs Spain": {
       "p_home": 0.37,
       "p_draw": 0.296,
       "p_away": 0.335,
       "xg_home": 1.26,
-      "xg_away": 1.19
+      "xg_away": 1.19,
+      "p_btts_yes": 0.51,
+      "p_btts_no": 0.49
     },
     "New Zealand vs Belgium": {
       "p_home": 0.219,
       "p_draw": 0.234,
       "p_away": 0.548,
       "xg_home": 1.2,
-      "xg_away": 1.99
+      "xg_away": 1.99,
+      "p_btts_yes": 0.613,
+      "p_btts_no": 0.387
     },
     "Egypt vs Iran": {
       "p_home": 0.33,
       "p_draw": 0.397,
       "p_away": 0.273,
       "xg_home": 0.77,
-      "xg_away": 0.67
+      "xg_away": 0.67,
+      "p_btts_yes": 0.273,
+      "p_btts_no": 0.727
     },
     "Croatia vs Ghana": {
       "p_home": 0.243,
       "p_draw": 0.348,
       "p_away": 0.409,
       "xg_home": 0.74,
-      "xg_away": 1.05
+      "xg_away": 1.05,
+      "p_btts_yes": 0.351,
+      "p_btts_no": 0.649
     },
     "Panama vs England": {
       "p_home": 0.089,
       "p_draw": 0.346,
       "p_away": 0.565,
       "xg_home": 0.29,
-      "xg_away": 1.11
+      "xg_away": 1.11,
+      "p_btts_yes": 0.176,
+      "p_btts_no": 0.824
     },
     "Colombia vs Portugal": {
       "p_home": 0.655,
       "p_draw": 0.191,
       "p_away": 0.154,
       "xg_home": 2.47,
-      "xg_away": 1.15
+      "xg_away": 1.15,
+      "p_btts_yes": 0.632,
+      "p_btts_no": 0.368
     },
     "DR Congo vs Uzbekistan": {
       "p_home": 0.228,
       "p_draw": 0.494,
       "p_away": 0.278,
       "xg_home": 0.44,
-      "xg_away": 0.51
+      "xg_away": 0.51,
+      "p_btts_yes": 0.15,
+      "p_btts_no": 0.85
     },
     "Algeria vs Austria": {
       "p_home": 0.511,
       "p_draw": 0.332,
       "p_away": 0.157,
       "xg_home": 1.19,
-      "xg_away": 0.54
+      "xg_away": 0.54,
+      "p_btts_yes": 0.298,
+      "p_btts_no": 0.702
     },
     "Jordan vs Argentina": {
       "p_home": 0.188,
       "p_draw": 0.325,
       "p_away": 0.487,
       "xg_home": 0.65,
-      "xg_away": 1.22
+      "xg_away": 1.22,
+      "p_btts_yes": 0.348,
+      "p_btts_no": 0.652
     }
   }
 }

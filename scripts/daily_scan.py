@@ -133,9 +133,7 @@ if __name__ == "__main__":
         if _r.ok:
             for _m in _r.json():
                 _home, _away = _m["home_team"], _m["away_team"]
-                _bk = next((b for b in _m.get("bookmakers", []) if "pinnacle" in b["key"]), None)
-                if not _bk:
-                    _bk = next((b for b in _m.get("bookmakers", []) if "bet365" in b["key"]), None)
+                _bk = next((b for b in _m.get("bookmakers", []) if "bet365" in b["key"]), None)
                 if not _bk and _m.get("bookmakers"):
                     _bk = _m["bookmakers"][0]
                 if not _bk:
@@ -164,7 +162,7 @@ if __name__ == "__main__":
     try:
         import os as _os2
         from src.scanner.daily_scan import _load_latest_dc_params
-        from src.models.dixon_coles import predict_match, predict_xg
+        from src.models.dixon_coles import predict_match, predict_xg, predict_btts
         from src.config import canonical_name
         _dc_params = _load_latest_dc_params()
         if _dc_params:
@@ -175,12 +173,15 @@ if __name__ == "__main__":
                     _a = canonical_name(_a_raw)
                     _probs = predict_match(_h, _a, _dc_params, neutral=True)
                     _xgh, _xga = predict_xg(_h, _a, _dc_params, neutral=True)
+                    _btts = predict_btts(_h, _a, _dc_params, neutral=True)
                     model_tips[f"{_h_raw} vs {_a_raw}"] = {
                         "p_home": round(_probs["p_home"], 3),
                         "p_draw": round(_probs["p_draw"], 3),
                         "p_away": round(_probs["p_away"], 3),
                         "xg_home": round(_xgh, 2),
                         "xg_away": round(_xga, 2),
+                        "p_btts_yes": round(_btts["p_btts_yes"], 3),
+                        "p_btts_no": round(_btts["p_btts_no"], 3),
                     }
                 except Exception:
                     pass

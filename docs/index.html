@@ -433,6 +433,16 @@ function predCard(home, away, tip) {
         <span class="pred-xg-team-name">${esc(away)}</span>
       </div>
     </div>
+    ${tip.p_btts_yes != null ? `<div style="margin-top:10px;display:flex;gap:8px">
+      <div style="flex:1;background:rgba(255,255,255,.04);border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:var(--muted);font-weight:700">⚽ Beide treffen</span>
+        <span style="font-size:16px;font-weight:900;color:var(--green)">${Math.round(tip.p_btts_yes*100)}%</span>
+      </div>
+      <div style="flex:1;background:rgba(255,255,255,.04);border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:var(--muted);font-weight:700">🔒 Nicht beide</span>
+        <span style="font-size:16px;font-weight:900;color:var(--muted)">${Math.round(tip.p_btts_no*100)}%</span>
+      </div>
+    </div>` : ''}
   </div>`;
 }
 
