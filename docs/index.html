@@ -608,12 +608,10 @@ function predCard(home, away, tip, odds, nk) {
 
   const mktRows = mkts.map(m => {
     const ev = (m.p * m.q - 1) * 100;
-    const isValue = ev > 3;
     const evCls = ev > 0 ? 'color:var(--green)' : 'color:var(--red)';
-    const valueBadge = isValue ? ' <span style="background:rgba(0,200,83,.15);border:1px solid rgba(0,200,83,.3);color:var(--green);font-size:9px;font-weight:800;border-radius:4px;padding:1px 4px">VALUE</span>' : '';
     const mvmt = nk ? oddsMovement(nk, m.key) : '';
     return `<tr style="border-bottom:1px solid rgba(48,54,61,.4)">
-      <td style="padding:7px 8px;font-size:12px;font-weight:600">${m.name}${valueBadge}</td>
+      <td style="padding:7px 8px;font-size:12px;font-weight:600">${m.name}</td>
       <td style="padding:7px 8px;font-size:12px;color:var(--muted);text-align:right">${Math.round(m.p*100)}%</td>
       <td style="padding:7px 8px;font-size:13px;font-weight:800;text-align:right">${m.q.toFixed(2)}${mvmt}</td>
       <td style="padding:7px 8px;font-size:12px;font-weight:800;text-align:right;${evCls}">${ev>0?'+':''}${ev.toFixed(1)}%</td>
