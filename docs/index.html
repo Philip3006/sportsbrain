@@ -497,6 +497,27 @@ const TEAM_ALIASES = {
   'bosnia and herzegovina': 'bosnia & herzegovina',
   'bosnia & herzegovina': 'bosnia and herzegovina',
 };
+const COUNTRY_FLAGS = {
+  'Mexico':'🇲🇽','South Africa':'🇿🇦','South Korea':'🇰🇷','Czechia':'🇨🇿','Czech Republic':'🇨🇿',
+  'Canada':'🇨🇦','Bosnia and Herzegovina':'🇧🇦','Bosnia & Herzegovina':'🇧🇦','Qatar':'🇶🇦','Switzerland':'🇨🇭',
+  'Brazil':'🇧🇷','Morocco':'🇲🇦','Haiti':'🇭🇹','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+  'United States':'🇺🇸','USA':'🇺🇸','Paraguay':'🇵🇾','Australia':'🇦🇺','Turkey':'🇹🇷',
+  'Germany':'🇩🇪','Curacao':'🇨🇼',"Cote d'Ivoire":'🇨🇮','Ivory Coast':'🇨🇮','Ecuador':'🇪🇨',
+  'Netherlands':'🇳🇱','Japan':'🇯🇵','Sweden':'🇸🇪','Tunisia':'🇹🇳',
+  'Belgium':'🇧🇪','Egypt':'🇪🇬','Iran':'🇮🇷','New Zealand':'🇳🇿',
+  'Spain':'🇪🇸','Cape Verde':'🇨🇻','Saudi Arabia':'🇸🇦','Uruguay':'🇺🇾',
+  'France':'🇫🇷','Senegal':'🇸🇳','Iraq':'🇮🇶','Norway':'🇳🇴',
+  'Argentina':'🇦🇷','Algeria':'🇩🇿','Austria':'🇦🇹','Jordan':'🇯🇴',
+  'Portugal':'🇵🇹','DR Congo':'🇨🇩','Uzbekistan':'🇺🇿','Colombia':'🇨🇴',
+  'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Croatia':'🇭🇷','Ghana':'🇬🇭','Panama':'🇵🇦',
+  'Italy':'🇮🇹','Ukraine':'🇺🇦','Poland':'🇵🇱','Serbia':'🇷🇸','Denmark':'🇩🇰',
+  'Romania':'🇷🇴','Hungary':'🇭🇺','Greece':'🇬🇷','Nigeria':'🇳🇬','Cameroon':'🇨🇲',
+  'Chile':'🇨🇱','Peru':'🇵🇪','Bolivia':'🇧🇴','Venezuela':'🇻🇪','Costa Rica':'🇨🇷',
+  'Honduras':'🇭🇳','Jamaica':'🇯🇲','El Salvador':'🇸🇻','Suriname':'🇸🇷',
+  'Wales':'🏴󠁧󠁢󠁷󠁬󠁳󠁿','Ireland':'🇮🇪','Slovakia':'🇸🇰','Bulgaria':'🇧🇬','Finland':'🇫🇮',
+  'Russia':'🇷🇺','Belarus':'🇧🇾','China':'🇨🇳','Israel':'🇮🇱','Kazakhstan':'🇰🇿',
+};
+function teamFlag(name) { return COUNTRY_FLAGS[name] || ''; }
 function normTeam(name) {
   return name.toLowerCase().replace(/[^a-z0-9 ']/g, '').trim();
 }
@@ -521,22 +542,20 @@ function fmtTime(k) {
 function marketLabel(mkt, match) {
   const p = match.split(' vs ');
   const a = p[0]?.trim()||'?', b = p[1]?.trim()||'?';
-  return ({
+  const known = {
     home:`Sieg ${a}`, draw:'Unentschieden', away:`Sieg ${b}`,
-    'o/u2.5_over':'Über 2.5 Tore','o/u2.5_under':'Unter 2.5 Tore',
-    'o/u1.5_over':'Über 1.5 Tore','o/u1.5_under':'Unter 1.5 Tore',
-    'o/u3.5_over':'Über 3.5 Tore','o/u3.5_under':'Unter 3.5 Tore',
     'btts_yes':'Beide treffen','btts_no':'Nicht beide treffen',
     'ftts_home':`1. Tor: ${a}`,'ftts_away':`1. Tor: ${b}`,
     'first_set_a':`1. Satz: ${a}`,'first_set_b':`1. Satz: ${b}`,
     'ah-1.5_a':`${a} 3:0 / 3:1`,'ah+1.5_b':`${b} +1.5 Sätze`,
-    'ah-0.5_home':`AH -0.5 ${a}`,'ah+0.5_away':`AH +0.5 ${b}`,
-    'ah-1.0_home':`AH -1.0 ${a}`,'ah+1.0_away':`AH +1.0 ${b}`,
-    'ah-1.5_home':`AH -1.5 ${a}`,'ah+1.5_away':`AH +1.5 ${b}`,
-    'ah-2.0_home':`AH -2.0 ${a}`,'ah+2.0_away':`AH +2.0 ${b}`,
-    'ah-2.5_home':`AH -2.5 ${a}`,'ah+2.5_away':`AH +2.5 ${b}`,
     'dc_1x':`DC: ${a} oder Remis`,'dc_x2':`DC: Remis oder ${b}`,'dc_12':`DC: ${a} oder ${b}`,
-  })[mkt] || mkt;
+  };
+  if (known[mkt]) return known[mkt];
+  const ouM = mkt.match(/^o\/u([\d.]+)_(over|under)$/);
+  if (ouM) return ouM[2] === 'over' ? `Über ${ouM[1]} Tore` : `Unter ${ouM[1]} Tore`;
+  const ahM = mkt.match(/^ah([+-][\d.]+)_(home|away)$/);
+  if (ahM) return `AH ${ahM[1]} ${ahM[2] === 'home' ? a : b}`;
+  return mkt;
 }
 
 // ── Odds movement badge (line movement) ──────────────────────
@@ -950,8 +969,8 @@ function renderHome() {
             ${n > 0 && !hasLastCall ? `<span class="b365-val-tag">${n} Value</span>` : ''}
           </div>
           <div class="b365-teams">
-            <span class="b365-team">${esc(g.home)}</span>
-            <span class="b365-team">${esc(g.away)}</span>
+            <span class="b365-team">${esc(g.home)} ${teamFlag(g.home)}</span>
+            <span class="b365-team">${esc(g.away)} ${teamFlag(g.away)}</span>
           </div>
         </div>
         <div class="b365-odds">${odds}</div>
@@ -1102,8 +1121,8 @@ function renderHome() {
           <div class="b365-left">
             <div class="b365-time">${timeStr}${isCompleted?` <span style="font-size:10px;color:var(--muted);font-weight:700">FT</span>`:''} ${n>0&&!isCompleted?` <span class="b365-val-tag">${n} Value</span>`:''}</div>
             <div class="b365-teams">
-              <span class="b365-team">${esc(g.home)}</span>
-              <span class="b365-team">${esc(g.away)}</span>
+              <span class="b365-team">${esc(g.home)} ${teamFlag(g.home)}</span>
+              <span class="b365-team">${esc(g.away)} ${teamFlag(g.away)}</span>
             </div>
           </div>
           <div class="b365-odds">${rightCol}</div>
@@ -1134,7 +1153,7 @@ function renderSport(sport) {
     const timeStr = s0.kickoff ? fmtKickoff(s0.kickoff) : '';
     const tourStr = sport === 'tennis' ? (s0.tour||'Tennis').toUpperCase() : 'WM 2026';
     h += `<div style="padding:14px 16px 6px;border-bottom:1px solid rgba(48,54,61,.4)">
-      <div style="font-size:16px;font-weight:900;letter-spacing:-.3px;margin-bottom:3px">${esc(mh)} <span style="color:var(--muted);font-weight:500">vs</span> ${esc(ma)}</div>
+      <div style="font-size:16px;font-weight:900;letter-spacing:-.3px;margin-bottom:3px">${teamFlag(mh)} ${esc(mh)} <span style="color:var(--muted);font-weight:500">vs</span> ${teamFlag(ma)} ${esc(ma)}</div>
       <div style="font-size:11px;color:var(--muted);font-weight:600">${esc(tourStr)}${timeStr ? ' · ' + timeStr : ''}</div>
     </div>`;
     h += `<div class="match-group-cards">${mSigs.map(s => sigCard(s, false)).join('')}</div>`;
