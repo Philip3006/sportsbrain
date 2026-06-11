@@ -268,16 +268,72 @@ def _settle_from_results_locked(
             won = ag > hg
         elif market == "draw":
             won = hg == ag
-        elif market.startswith("o/u") and "_over" in market:
+        elif market.startswith("o/u") and ("_over" in market or "_under" in market):
             try:
+                side = "over" if "_over" in market else "under"
                 line = float(market.split("o/u")[1].split("_")[0])
-                won = total > line
-            except (ValueError, IndexError):
-                continue
-        elif market.startswith("o/u") and "_under" in market:
-            try:
-                line = float(market.split("o/u")[1].split("_")[0])
-                won = total < line
+                is_quarter = int(round(line * 4)) % 2 == 1
+                if not is_quarter:
+                    # Whole-ball or half-ball: simple comparison (no push for half-ball)
+                    if side == "over":
+                        # whole-ball push: total == lower → void (e.g. O/U 2.0 at total=2)
+                        if total == line:
+                            push = True
+                            won = False
+                        else:
+                            won = total > line
+                    else:
+                        if total == line:
+                            push = True
+                            won = False
+                        else:
+                            won = total < line
+                else:
+                    # Quarter-ball: half WIN or half LOSS at the pivot value
+                    # lower = floor(line), upper = ceil(line)
+                    lower = int(line) if line > int(line) else int(line) - 1
+                    # Pivot = the integer between lower and upper
+                    pivot = lower + 1 if (line % 1) == 0.25 else lower + 1
+                    if side == "over":
+                        if total > line + 0.5:   # ≥ pivot+1: full WIN
+                            won = True
+                        elif total == pivot - 1 and (line % 1) == 0.25:
+                            # e.g. O/U 2.25: total=2 → half LOSS
+                            won = False
+                            # Store half-loss: settled as lost with half pnl
+                            df.at[idx, "status"] = "lost"
+                            df.at[idx, "pnl"] = f"{-stake / 2:.2f}"
+                            newly_settled_indices.append(idx)
+                            settled += 1
+                            continue
+                        elif total == pivot and (line % 1) == 0.75:
+                            # e.g. O/U 2.75: total=3 → half WIN
+                            df.at[idx, "status"] = "won"
+                            df.at[idx, "pnl"] = f"{stake * (odds - 1) / 2:.2f}"
+                            newly_settled_indices.append(idx)
+                            settled += 1
+                            continue
+                        else:
+                            won = False
+                    else:  # under
+                        if total < line - 0.5:   # ≤ pivot-1: full WIN
+                            won = True
+                        elif total == pivot - 1 and (line % 1) == 0.25:
+                            # e.g. O/U 2.25 under: total=2 → half WIN
+                            df.at[idx, "status"] = "won"
+                            df.at[idx, "pnl"] = f"{stake * (odds - 1) / 2:.2f}"
+                            newly_settled_indices.append(idx)
+                            settled += 1
+                            continue
+                        elif total == pivot and (line % 1) == 0.75:
+                            # e.g. O/U 2.75 under: total=3 → half LOSS
+                            df.at[idx, "status"] = "lost"
+                            df.at[idx, "pnl"] = f"{-stake / 2:.2f}"
+                            newly_settled_indices.append(idx)
+                            settled += 1
+                            continue
+                        else:
+                            won = False
             except (ValueError, IndexError):
                 continue
         elif market == "ah-0.5_home":
