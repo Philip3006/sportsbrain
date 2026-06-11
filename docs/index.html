@@ -351,9 +351,18 @@ function openMatch(displayKey) {
       if (matchKey(kh, ka) === nk) { tip = v; break; }
     }
   }
+  // Find odds for this match
+  let oddsEntry = _allOdds[displayKey];
+  if (!oddsEntry) {
+    const found = Object.entries(_allOdds).find(([k]) => {
+      const [kh, ka] = k.split(' vs ').map(x => x.trim());
+      return matchKey(kh, ka) === nk;
+    });
+    oddsEntry = found ? found[1] : {};
+  }
 
   let cards = '';
-  if (tip) cards += predCard(dh, da, tip);
+  if (tip) cards += predCard(dh, da, tip, oddsEntry);
   cards += sigs.length
     ? sigs.map(sigCard).join('')
     : `<div class="empty"><div class="icon">📊</div><div>Kein Value Bet gefunden.<br><small>Unser Modell sieht hier keinen Vorteil.</small></div></div>`;
@@ -416,7 +425,8 @@ function marketLabel(mkt, match) {
 }
 
 // ── Model prediction card ─────────────────────────────────────
-function predCard(home, away, tip) {
+function predCard(home, away, tip, odds) {
+  odds = odds || {};
   const ph = Math.round(tip.p_home * 100);
   const pd = Math.round(tip.p_draw * 100);
   const pa = Math.round(tip.p_away * 100);
@@ -429,6 +439,45 @@ function predCard(home, away, tip) {
   } else {
     tipLabel = '🤝 Unentschieden';
   }
+
+  // Build Marktübersicht
+  const mkts = [];
+  if (tip.p_home && odds.home > 1) mkts.push({name: esc(home) + ' gewinnt', p: tip.p_home, q: odds.home});
+  if (tip.p_draw && odds.draw > 1) mkts.push({name: 'Unentschieden', p: tip.p_draw, q: odds.draw});
+  if (tip.p_away && odds.away > 1) mkts.push({name: esc(away) + ' gewinnt', p: tip.p_away, q: odds.away});
+  if (tip.p_over25 && odds.over25 > 1) mkts.push({name: 'Über 2.5 Tore', p: tip.p_over25, q: odds.over25});
+  if (tip.p_under25 && odds.under25 > 1) mkts.push({name: 'Unter 2.5 Tore', p: tip.p_under25, q: odds.under25});
+  if (tip.p_btts_yes && odds.btts_yes > 1) mkts.push({name: 'Beide treffen', p: tip.p_btts_yes, q: odds.btts_yes});
+
+  const mktRows = mkts.map(m => {
+    const ev = (m.p * m.q - 1) * 100;
+    const isValue = ev > 3;
+    const evCls = ev > 0 ? 'color:var(--green)' : 'color:var(--red)';
+    const valueBadge = isValue ? ' <span style="background:rgba(0,200,83,.15);border:1px solid rgba(0,200,83,.3);color:var(--green);font-size:9px;font-weight:800;border-radius:4px;padding:1px 4px">VALUE</span>' : '';
+    return `<tr style="border-bottom:1px solid rgba(48,54,61,.4)">
+      <td style="padding:7px 8px;font-size:12px;font-weight:600">${m.name}${valueBadge}</td>
+      <td style="padding:7px 8px;font-size:12px;color:var(--muted);text-align:right">${Math.round(m.p*100)}%</td>
+      <td style="padding:7px 8px;font-size:13px;font-weight:800;text-align:right">${m.q.toFixed(2)}</td>
+      <td style="padding:7px 8px;font-size:12px;font-weight:800;text-align:right;${evCls}">${ev>0?'+':''}${ev.toFixed(1)}%</td>
+    </tr>`;
+  }).join('');
+
+  const mktTable = mkts.length ? `
+    <div style="margin-top:10px">
+      <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Marktübersicht</div>
+      <div style="background:rgba(255,255,255,.03);border-radius:8px;overflow:hidden;border:1px solid var(--border)">
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr style="border-bottom:1px solid var(--border)">
+            <th style="padding:6px 8px;font-size:10px;font-weight:700;color:var(--muted);text-align:left">Markt</th>
+            <th style="padding:6px 8px;font-size:10px;font-weight:700;color:var(--muted);text-align:right">Modell</th>
+            <th style="padding:6px 8px;font-size:10px;font-weight:700;color:var(--muted);text-align:right">Quote</th>
+            <th style="padding:6px 8px;font-size:10px;font-weight:700;color:var(--muted);text-align:right">EV</th>
+          </tr></thead>
+          <tbody>${mktRows}</tbody>
+        </table>
+      </div>
+    </div>` : '';
+
   return `<div class="pred-card">
     <div class="pred-title">⚡ Modell-Tipp</div>
     <div class="pred-tip">${tipLabel}</div>
@@ -474,6 +523,7 @@ function predCard(home, away, tip) {
         <span style="font-size:16px;font-weight:900;color:var(--muted)">${Math.round(tip.p_btts_no*100)}%</span>
       </div>
     </div>` : ''}
+    ${mktTable}
   </div>`;
 }
 

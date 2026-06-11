@@ -127,7 +127,7 @@ if __name__ == "__main__":
         import requests as _req
         _r = _req.get(
             "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/odds",
-            params={"apiKey": _api_key, "regions": "eu", "markets": "h2h", "oddsFormat": "decimal"},
+            params={"apiKey": _api_key, "regions": "eu,us,uk", "markets": "h2h,totals", "oddsFormat": "decimal"},
             timeout=15,
         )
         if _r.ok:
@@ -146,13 +146,31 @@ if __name__ == "__main__":
                     _bk = next((b for b in _bks if b["key"] not in _BLACKLIST), None)
                 if not _bk:
                     continue
-                _oc = {o["name"]: o["price"] for o in _bk["markets"][0]["outcomes"]}
+                # Find h2h market explicitly (markets order may vary when totals also requested)
+                _h2h_mkt = next((mk for mk in _bk.get("markets", []) if mk["key"] == "h2h"), None)
+                if not _h2h_mkt:
+                    continue
+                _oc = {o["name"]: o["price"] for o in _h2h_mkt["outcomes"]}
                 _h = round(_oc.get(_home, 0), 2)
                 _d = round(_oc.get("Draw", 0), 2)
                 _a = round(_oc.get(_away, 0), 2)
                 if _d > 0 and _d < 1.5:  # sanity check — draw < 1.5 is always wrong
                     continue
-                all_odds[f"{_home} vs {_away}"] = {"home": _h, "draw": _d, "away": _a}
+                # Extract Over/Under 2.5 from totals market
+                _over25 = 0.0
+                _under25 = 0.0
+                for _mkt_data in _bk.get("markets", []):
+                    if _mkt_data["key"] == "totals":
+                        for _o in _mkt_data["outcomes"]:
+                            if abs(_o.get("point", 0) - 2.5) < 0.1:
+                                if _o["name"].lower() == "over":
+                                    _over25 = round(_o["price"], 2)
+                                elif _o["name"].lower() == "under":
+                                    _under25 = round(_o["price"], 2)
+                all_odds[f"{_home} vs {_away}"] = {
+                    "home": _h, "draw": _d, "away": _a,
+                    "over25": _over25, "under25": _under25,
+                }
             print(f"  Odds API: {len(all_odds)} matches with real bookmaker odds")
     except Exception as _e:
         print(f"  Odds API fetch failed: {_e} — keeping existing odds")
@@ -171,7 +189,7 @@ if __name__ == "__main__":
     try:
         import os as _os2
         from src.scanner.daily_scan import _load_latest_dc_params
-        from src.models.dixon_coles import predict_match, predict_xg, predict_btts
+        from src.models.dixon_coles import predict_match, predict_xg, predict_btts, predict_totals
         from src.config import canonical_name
         _dc_params = _load_latest_dc_params()
         if _dc_params:
@@ -183,6 +201,7 @@ if __name__ == "__main__":
                     _probs = predict_match(_h, _a, _dc_params, neutral=True)
                     _xgh, _xga = predict_xg(_h, _a, _dc_params, neutral=True)
                     _btts = predict_btts(_h, _a, _dc_params, neutral=True)
+                    _totals = predict_totals(_h, _a, _dc_params, neutral=True)
                     model_tips[f"{_h_raw} vs {_a_raw}"] = {
                         "p_home": round(_probs["p_home"], 3),
                         "p_draw": round(_probs["p_draw"], 3),
@@ -191,6 +210,8 @@ if __name__ == "__main__":
                         "xg_away": round(_xga, 2),
                         "p_btts_yes": round(_btts["p_btts_yes"], 3),
                         "p_btts_no": round(_btts["p_btts_no"], 3),
+                        "p_over25": round(_totals["p_over"], 3),
+                        "p_under25": round(_totals["p_under"], 3),
                     }
                 except Exception:
                     pass
