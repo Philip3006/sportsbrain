@@ -932,7 +932,7 @@ function renderHome() {
   if (free > 5) {
     const slots = Math.max(0, 5 - openCount);
     const nowSug = Date.now();
-    const now7d = nowSug + 7 * 24 * 36e5;
+    const now48h = nowSug + 48 * 36e5;
     const openMkSug = new Set((_openBets || []).map(b => {
       const [bh, ba] = (b.match || '').split(' vs ').map(x => x.trim());
       return matchKey(bh, ba);
@@ -945,7 +945,7 @@ function renderHome() {
       .filter(s => {
         if (!s.kickoff) return false;
         const ko = new Date(s.kickoff).getTime();
-        return ko > nowSug && ko <= now7d;
+        return ko > nowSug && ko <= now48h;
       })
       .filter(s => {
         const [sh, sa] = (s.match || '').split(' vs ').map(x => x.trim());
@@ -965,6 +965,7 @@ function renderHome() {
       remaining -= stake;
     }
 
+    picks.sort((a, b) => (a.kickoff || '') < (b.kickoff || '') ? -1 : 1);
     if (picks.length > 0) {
       const usedStake = picks.reduce((s, p) => s + p.display_stake, 0);
       const picksHtml = picks.map(p => {
