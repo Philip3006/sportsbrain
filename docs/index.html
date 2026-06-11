@@ -395,6 +395,7 @@ let _modelTips = {};
 let _openBets = [];
 let _bankrollState = {};
 let _squads = {};
+let _oddsHistory = {};
 let _prevView = 'home';
 
 // ── Navigation ───────────────────────────────────────────────
@@ -452,7 +453,7 @@ function openMatch(displayKey) {
   }
 
   let cards = '';
-  if (tip) cards += predCard(dh, da, tip, oddsEntry);
+  if (tip) cards += predCard(dh, da, tip, oddsEntry, nk);
   cards += sigs.length
     ? sigs.map(sigCard).join('')
     : `<div class="empty"><div class="icon">📊</div><div>Kein Value Bet gefunden.<br><small>Unser Modell sieht hier keinen Vorteil.</small></div></div>`;
@@ -514,8 +515,30 @@ function marketLabel(mkt, match) {
   })[mkt] || mkt;
 }
 
+// ── Odds movement badge (line movement) ──────────────────────
+function oddsMovement(nk, side) {
+  // Find match history via normalized key
+  let hist = null;
+  for (const [k, v] of Object.entries(_oddsHistory)) {
+    const [kh, ka] = k.split(' vs ').map(x => x.trim());
+    if (matchKey(kh, ka) === nk) { hist = v; break; }
+  }
+  if (!hist || hist.length < 2) return '';
+  const prev = hist[hist.length - 2]; // yesterday
+  const curr = hist[hist.length - 1]; // today
+  const prevOdds = prev[side];
+  const currOdds = curr[side];
+  if (!prevOdds || !currOdds) return '';
+  const delta = currOdds - prevOdds;
+  if (Math.abs(delta) < 0.02) return '';
+  const isGood = delta > 0; // rising odds = more value for bettor
+  const cls = isGood ? 'drift-good' : 'drift-bad';
+  const arrow = isGood ? '▲' : '▼';
+  return `<span class="${cls}" style="font-size:10px;font-weight:800;margin-left:4px">${arrow}${Math.abs(delta).toFixed(2)}</span>`;
+}
+
 // ── Model prediction card ─────────────────────────────────────
-function predCard(home, away, tip, odds) {
+function predCard(home, away, tip, odds, nk) {
   odds = odds || {};
   const ph = Math.round(tip.p_home * 100);
   const pd = Math.round(tip.p_draw * 100);
@@ -532,22 +555,23 @@ function predCard(home, away, tip, odds) {
 
   // Build Marktübersicht
   const mkts = [];
-  if (tip.p_home && odds.home > 1) mkts.push({name: esc(home) + ' gewinnt', p: tip.p_home, q: odds.home});
-  if (tip.p_draw && odds.draw > 1) mkts.push({name: 'Unentschieden', p: tip.p_draw, q: odds.draw});
-  if (tip.p_away && odds.away > 1) mkts.push({name: esc(away) + ' gewinnt', p: tip.p_away, q: odds.away});
-  if (tip.p_over25 && odds.over25 > 1) mkts.push({name: 'Über 2.5 Tore', p: tip.p_over25, q: odds.over25});
-  if (tip.p_under25 && odds.under25 > 1) mkts.push({name: 'Unter 2.5 Tore', p: tip.p_under25, q: odds.under25});
-  if (tip.p_btts_yes && odds.btts_yes > 1) mkts.push({name: 'Beide treffen', p: tip.p_btts_yes, q: odds.btts_yes});
+  if (tip.p_home && odds.home > 1) mkts.push({key: 'home', name: esc(home) + ' gewinnt', p: tip.p_home, q: odds.home});
+  if (tip.p_draw && odds.draw > 1) mkts.push({key: 'draw', name: 'Unentschieden', p: tip.p_draw, q: odds.draw});
+  if (tip.p_away && odds.away > 1) mkts.push({key: 'away', name: esc(away) + ' gewinnt', p: tip.p_away, q: odds.away});
+  if (tip.p_over25 && odds.over25 > 1) mkts.push({key: 'over25', name: 'Über 2.5 Tore', p: tip.p_over25, q: odds.over25});
+  if (tip.p_under25 && odds.under25 > 1) mkts.push({key: 'under25', name: 'Unter 2.5 Tore', p: tip.p_under25, q: odds.under25});
+  if (tip.p_btts_yes && odds.btts_yes > 1) mkts.push({key: 'btts_yes', name: 'Beide treffen', p: tip.p_btts_yes, q: odds.btts_yes});
 
   const mktRows = mkts.map(m => {
     const ev = (m.p * m.q - 1) * 100;
     const isValue = ev > 3;
     const evCls = ev > 0 ? 'color:var(--green)' : 'color:var(--red)';
     const valueBadge = isValue ? ' <span style="background:rgba(0,200,83,.15);border:1px solid rgba(0,200,83,.3);color:var(--green);font-size:9px;font-weight:800;border-radius:4px;padding:1px 4px">VALUE</span>' : '';
+    const mvmt = nk ? oddsMovement(nk, m.key) : '';
     return `<tr style="border-bottom:1px solid rgba(48,54,61,.4)">
       <td style="padding:7px 8px;font-size:12px;font-weight:600">${m.name}${valueBadge}</td>
       <td style="padding:7px 8px;font-size:12px;color:var(--muted);text-align:right">${Math.round(m.p*100)}%</td>
-      <td style="padding:7px 8px;font-size:13px;font-weight:800;text-align:right">${m.q.toFixed(2)}</td>
+      <td style="padding:7px 8px;font-size:13px;font-weight:800;text-align:right">${m.q.toFixed(2)}${mvmt}</td>
       <td style="padding:7px 8px;font-size:12px;font-weight:800;text-align:right;${evCls}">${ev>0?'+':''}${ev.toFixed(1)}%</td>
     </tr>`;
   }).join('');
@@ -1251,6 +1275,7 @@ async function _load() {
   _modelTips = d.model_tips || {};
   _openBets = d.open_bets || [];
   _bankrollState = d.bankroll_state || {};
+  _oddsHistory = d.odds_history || {};
   renderBankrollStrip();
 
   const setB = (id, n) => { const el=document.getElementById(id); el.textContent=n; el.classList.toggle('show',n>0); };
