@@ -512,6 +512,7 @@ function marketLabel(mkt, match) {
     'ah-1.5_home':`AH -1.5 ${a}`,'ah+1.5_away':`AH +1.5 ${b}`,
     'ah-2.0_home':`AH -2.0 ${a}`,'ah+2.0_away':`AH +2.0 ${b}`,
     'ah-2.5_home':`AH -2.5 ${a}`,'ah+2.5_away':`AH +2.5 ${b}`,
+    'dc_1x':`DC: ${a} oder Remis`,'dc_x2':`DC: Remis oder ${b}`,'dc_12':`DC: ${a} oder ${b}`,
   })[mkt] || mkt;
 }
 
@@ -664,7 +665,7 @@ function renderBets() {
     c.innerHTML = `<div class="empty"><div class="icon">📭</div><div>Keine offenen Wetten.<br><small>Signals werden täglich 08:00 UTC aktualisiert.</small></div></div>`;
     return;
   }
-  const mktLabels = {home:'Heimsieg',draw:'Unentschieden',away:'Auswärtssieg','o/u2.5_over':'Über 2.5','o/u2.5_under':'Unter 2.5'};
+  const mktLabels = {home:'Heimsieg',draw:'Unentschieden',away:'Auswärtssieg','o/u2.5_over':'Über 2.5','o/u2.5_under':'Unter 2.5',dc_1x:'DC 1X',dc_x2:'DC X2',dc_12:'DC 12'};
   let h = '';
   for (const b of _openBets) {
     const driftCls = b.drift_pct === null ? '' : b.drift_pct < 0 ? 'drift-good' : 'drift-bad';
@@ -756,6 +757,7 @@ function renderHome() {
     'o/u2.5_over':'Über 2.5 Tore', 'o/u2.5_under':'Unter 2.5 Tore',
     'o/u1.5_over':'Über 1.5 Tore', 'o/u1.5_under':'Unter 1.5 Tore',
     btts_yes:'Beide treffen', btts_no:'Nicht beide',
+    dc_1x:'DC 1X (Heim/Remis)', dc_x2:'DC X2 (Remis/Auswärts)', dc_12:'DC 12 (Heim/Auswärts)',
   };
 
   let radarHtml = '';
