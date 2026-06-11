@@ -512,7 +512,7 @@ const COUNTRY_FLAGS = {
   'Canada':'🇨🇦','Bosnia and Herzegovina':'🇧🇦','Bosnia & Herzegovina':'🇧🇦','Qatar':'🇶🇦','Switzerland':'🇨🇭',
   'Brazil':'🇧🇷','Morocco':'🇲🇦','Haiti':'🇭🇹','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿',
   'United States':'🇺🇸','USA':'🇺🇸','Paraguay':'🇵🇾','Australia':'🇦🇺','Turkey':'🇹🇷',
-  'Germany':'🇩🇪','Curacao':'🇨🇼',"Cote d'Ivoire":'🇨🇮','Ivory Coast':'🇨🇮','Ecuador':'🇪🇨',
+  'Germany':'🇩🇪','Curacao':'🇨🇼','Curaçao':'🇨🇼',"Cote d'Ivoire":'🇨🇮','Ivory Coast':'🇨🇮','Ecuador':'🇪🇨',
   'Netherlands':'🇳🇱','Japan':'🇯🇵','Sweden':'🇸🇪','Tunisia':'🇹🇳',
   'Belgium':'🇧🇪','Egypt':'🇪🇬','Iran':'🇮🇷','New Zealand':'🇳🇿',
   'Spain':'🇪🇸','Cape Verde':'🇨🇻','Saudi Arabia':'🇸🇦','Uruguay':'🇺🇾',
@@ -529,7 +529,7 @@ const COUNTRY_FLAGS = {
 };
 function teamFlag(name) { return COUNTRY_FLAGS[name] || ''; }
 function normTeam(name) {
-  return name.toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9 ']/g,'').replace(/\s+/g,' ').trim();
+  return name.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9 ']/g,'').replace(/\s+/g,' ').trim();
 }
 function matchKey(a, b) {
   const na = normTeam(a), nb = normTeam(b);
@@ -1210,7 +1210,7 @@ const WM_GROUPS = {
   B:['Canada','Bosnia and Herzegovina','Qatar','Switzerland'],
   C:['Brazil','Morocco','Haiti','Scotland'],
   D:['United States','Paraguay','Australia','Turkey'],
-  E:['Germany','Curacao',"Cote d'Ivoire",'Ecuador'],
+  E:['Germany','Curaçao',"Cote d'Ivoire",'Ecuador'],
   F:['Netherlands','Japan','Sweden','Tunisia'],
   G:['Belgium','Egypt','Iran','New Zealand'],
   H:['Spain','Cape Verde','Saudi Arabia','Uruguay'],
