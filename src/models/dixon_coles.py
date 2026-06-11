@@ -430,14 +430,89 @@ def predict_totals(
     neutral: bool = False,
     rho_override: float | None = None,
 ) -> dict[str, float]:
-    """Returns P(total goals > line) and P(total goals <= line) from scoreline matrix."""
+    """Returns P(total goals > line), P(push), P(under) from scoreline matrix.
+    Whole-ball lines (e.g., 2.0, 3.0) have p_push > 0 at the exact goal total.
+    Half-ball lines (e.g., 2.5) have p_push = 0.
+    """
     matrix = predict_scoreline(home, away, params, max_goals, neutral, rho_override)
+    is_whole = abs(line % 1) < 0.001
     p_over = 0.0
+    p_push = 0.0
     for i in range(max_goals + 1):
         for j in range(max_goals + 1):
-            if i + j > line:
+            total = i + j
+            if total > line:
                 p_over += matrix[i, j]
-    return {"p_over": float(p_over), "p_under": float(1.0 - p_over), "line": line}
+            elif is_whole and abs(total - line) < 0.001:
+                p_push += matrix[i, j]
+    return {
+        "p_over": float(p_over),
+        "p_under": float(1.0 - p_over - p_push),
+        "p_push": float(p_push),
+        "line": line,
+    }
+
+
+def predict_totals_all(
+    home: str,
+    away: str,
+    params: DixonColesParams,
+    line: float,
+    max_goals: int = _MAX_GOALS,
+    neutral: bool = False,
+    rho_override: float | None = None,
+) -> dict:
+    """Predict O/U for any line type: half-ball (.5), whole-ball (.0), or quarter-ball (.25/.75).
+    Quarter-ball lines return lower_probs/upper_probs for EV computation.
+    """
+    import math
+    remainder = round((line * 4) % 2)  # 0=whole, 2=half, 1=quarter
+    if remainder == 1:
+        lower = math.floor(line * 2) / 2  # e.g., 2.25 → 2.0
+        upper = math.ceil(line * 2) / 2   # e.g., 2.25 → 2.5
+        p_lower = predict_totals(home, away, params, lower, max_goals, neutral, rho_override)
+        p_upper = predict_totals(home, away, params, upper, max_goals, neutral, rho_override)
+        return {
+            "p_over": 0.5 * (p_lower["p_over"] + p_upper["p_over"]),
+            "p_under": 0.5 * (p_lower["p_under"] + p_upper["p_under"]),
+            "p_push": 0.0,
+            "lower_probs": p_lower,
+            "upper_probs": p_upper,
+            "quarter_ball": True,
+            "line": line,
+        }
+    return predict_totals(home, away, params, line, max_goals, neutral, rho_override)
+
+
+def predict_asian_handicap_all(
+    home: str,
+    away: str,
+    params: DixonColesParams,
+    line: float,
+    max_goals: int = _MAX_GOALS,
+    neutral: bool = False,
+    rho_override: float | None = None,
+) -> dict:
+    """Predict AH for any line type, including quarter-ball (e.g., -1.25, -0.75).
+    Quarter-ball lines return lower_probs/upper_probs for direct EV computation.
+    """
+    import math
+    remainder = round((line * 4) % 2)  # 0=whole, 2=half, 1=quarter
+    if remainder == 1:
+        lower = math.ceil(line * 2) / 2   # less aggressive (closer to 0)
+        upper = math.floor(line * 2) / 2  # more aggressive (farther from 0)
+        p_lower = predict_asian_handicap(home, away, params, lower, max_goals, neutral, rho_override)
+        p_upper = predict_asian_handicap(home, away, params, upper, max_goals, neutral, rho_override)
+        return {
+            "p_ah_home": 0.5 * (p_lower["p_ah_home"] + p_upper["p_ah_home"]),
+            "p_ah_away": 0.5 * (p_lower["p_ah_away"] + p_upper["p_ah_away"]),
+            "p_push": 0.0,
+            "lower_probs": p_lower,
+            "upper_probs": p_upper,
+            "quarter_ball": True,
+            "line": line,
+        }
+    return predict_asian_handicap(home, away, params, line, max_goals, neutral, rho_override)
 
 
 def predict_btts(
