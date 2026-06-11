@@ -22,7 +22,7 @@ python3 scripts/refresh_injuries.py >> "$LOG" 2>&1
 
 # 3. Daily value scan
 echo "--- Daily scan ---" >> "$LOG"
-python3 scripts/daily_scan.py --auto-log --bankroll 100 --retrain >> "$LOG" 2>&1
+python3 scripts/daily_scan.py --bankroll 100 --retrain >> "$LOG" 2>&1
 
 EXIT_CODE=$?
 

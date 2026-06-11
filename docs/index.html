@@ -577,14 +577,29 @@ function predCard(home, away, tip, odds, nk) {
     tipLabel = '🤝 Unentschieden';
   }
 
-  // Build Marktübersicht
+  // Build Marktübersicht — enriched with all available odds
   const mkts = [];
   if (tip.p_home && odds.home > 1) mkts.push({key: 'home', name: esc(home) + ' gewinnt', p: tip.p_home, q: odds.home});
   if (tip.p_draw && odds.draw > 1) mkts.push({key: 'draw', name: 'Unentschieden', p: tip.p_draw, q: odds.draw});
   if (tip.p_away && odds.away > 1) mkts.push({key: 'away', name: esc(away) + ' gewinnt', p: tip.p_away, q: odds.away});
-  if (tip.p_over25 && odds.over25 > 1) mkts.push({key: 'over25', name: 'Über 2.5 Tore', p: tip.p_over25, q: odds.over25});
-  if (tip.p_under25 && odds.under25 > 1) mkts.push({key: 'under25', name: 'Unter 2.5 Tore', p: tip.p_under25, q: odds.under25});
+  // DC markets
+  if (tip.p_home && tip.p_draw && odds.dc_1x > 1) mkts.push({key: 'dc_1x', name: `DC: ${esc(home)} oder Remis`, p: tip.p_home + tip.p_draw, q: odds.dc_1x});
+  if (tip.p_draw && tip.p_away && odds.dc_x2 > 1) mkts.push({key: 'dc_x2', name: `DC: Remis oder ${esc(away)}`, p: tip.p_draw + tip.p_away, q: odds.dc_x2});
+  if (tip.p_home && tip.p_away && odds.dc_12 > 1) mkts.push({key: 'dc_12', name: `DC: ${esc(home)} oder ${esc(away)}`, p: tip.p_home + tip.p_away, q: odds.dc_12});
+  // O/U lines — show all available
+  const ouLines = [
+    {pt:'15', label:'1.5', pKey:'p_over15'}, {pt:'175', label:'1.75', pKey:'p_over175'},
+    {pt:'25', label:'2.5', pKey:'p_over25'}, {pt:'225', label:'2.25', pKey:'p_over225'},
+    {pt:'275', label:'2.75', pKey:'p_over275'}, {pt:'35', label:'3.5', pKey:'p_over35'},
+  ];
+  for (const {pt, label, pKey} of ouLines) {
+    const po = tip[pKey] || tip.p_over25;
+    const pu = po ? 1 - po : null;
+    if (po && odds[`over${pt}`] > 1) mkts.push({key:`o/u${label}_over`, name:`Über ${label} Tore`, p: po, q: odds[`over${pt}`]});
+    if (pu && odds[`under${pt}`] > 1) mkts.push({key:`o/u${label}_under`, name:`Unter ${label} Tore`, p: pu, q: odds[`under${pt}`]});
+  }
   if (tip.p_btts_yes && odds.btts_yes > 1) mkts.push({key: 'btts_yes', name: 'Beide treffen', p: tip.p_btts_yes, q: odds.btts_yes});
+  if (tip.p_btts_no && odds.btts_no > 1) mkts.push({key: 'btts_no', name: 'Kein BTTS', p: tip.p_btts_no, q: odds.btts_no});
 
   const mktRows = mkts.map(m => {
     const ev = (m.p * m.q - 1) * 100;
@@ -666,10 +681,15 @@ function predCard(home, away, tip, odds, nk) {
 }
 
 // ── Signal card ──────────────────────────────────────────────
-function sigCard(s) {
+function sigCard(s, showMatch) {
   const cls = s.confidence === 'HIGH' ? 'high' : 'medium';
   const evCls = s.ev_pct >= 10 ? 'ev-h' : 'ev-m';
+  const [sh, sa] = s.match.split(' vs ').map(x => x.trim());
+  const matchLine = showMatch
+    ? `<div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px"><span>⚽</span><span>${esc(sh)}</span><span style="color:var(--muted)">vs</span><span>${esc(sa)}</span></div>`
+    : '';
   return `<div class="sig-card ${cls}">
+    ${matchLine}
     <div class="card-market">${marketLabel(s.market, s.match)}</div>
     <div class="card-footer">
       <span class="odds-btn">${s.odds.toFixed(2)}</span>
@@ -840,10 +860,19 @@ function renderHome() {
     if (k) oddsMap[nk][k] = { odds: s.odds, ev: s.ev_pct };
   }
 
-  // Sort + filter next 30 days
+  // Sort + filter next 30 days; remove live games (started, no result yet)
   const cutoff = Date.now() + 30*24*36e5;
   const sorted = games
-    .filter(g => !g.kickoff || new Date(g.kickoff) <= cutoff)
+    .filter(g => {
+      if (g.kickoff && new Date(g.kickoff) > cutoff) return false;
+      if (g.kickoff) {
+        const ko = new Date(g.kickoff).getTime();
+        const nk = matchKey(g.home, g.away);
+        const hasResult = _wmResults[nk] && _wmResults[nk].home_score != null;
+        if (ko < now && !hasResult) return false; // live / no result → hide
+      }
+      return true;
+    })
     .sort((a,b) => {
       if (!a.kickoff && !b.kickoff) return 0;
       if (!a.kickoff) return 1; if (!b.kickoff) return -1;
@@ -1101,9 +1130,14 @@ function renderSport(sport) {
   let h = '<div class="sport-view-inner">';
   for (const [match, mSigs] of Object.entries(groupMap)) {
     const s0 = mSigs[0];
-    const sub = s0.kickoff ? fmtKickoff(s0.kickoff) : (sport === 'tennis' ? (s0.tour||'Tennis').toUpperCase() : 'WM 2026');
-    h += `<div class="match-group-header">${esc(match)}<span class="match-group-header sport-tag">${sub}</span></div>`;
-    h += `<div class="match-group-cards">${mSigs.map(sigCard).join('')}</div>`;
+    const [mh, ma] = match.split(' vs ').map(x => x.trim());
+    const timeStr = s0.kickoff ? fmtKickoff(s0.kickoff) : '';
+    const tourStr = sport === 'tennis' ? (s0.tour||'Tennis').toUpperCase() : 'WM 2026';
+    h += `<div style="padding:14px 16px 6px;border-bottom:1px solid rgba(48,54,61,.4)">
+      <div style="font-size:16px;font-weight:900;letter-spacing:-.3px;margin-bottom:3px">${esc(mh)} <span style="color:var(--muted);font-weight:500">vs</span> ${esc(ma)}</div>
+      <div style="font-size:11px;color:var(--muted);font-weight:600">${esc(tourStr)}${timeStr ? ' · ' + timeStr : ''}</div>
+    </div>`;
+    h += `<div class="match-group-cards">${mSigs.map(s => sigCard(s, false)).join('')}</div>`;
   }
   h += '</div>';
   c.innerHTML = h;

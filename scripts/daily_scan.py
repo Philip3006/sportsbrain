@@ -120,9 +120,8 @@ if __name__ == "__main__":
              "kickoff": ctx.get("commence_time", "")}
             for ctx in _match_contexts.values()
         ]
-    # Build all_odds from real Odds API data (all 72 WM matches available)
-    # Prefer Bet365, fall back to first available bookmaker. Never use DC model for display odds.
-    # Seed all_odds from existing signals.json so API failures don't wipe them
+    # Build all_odds from already-fetched raw_all (reuse API call, no extra quota cost).
+    # Seed from existing signals.json so single-match failures don't wipe previous data.
     all_odds = {}
     try:
         import json as _json0
@@ -131,58 +130,39 @@ if __name__ == "__main__":
     except Exception:
         pass
     try:
-        import os as _os
-        _api_key = _os.getenv("ODDS_API_KEY", "")
-        import requests as _req
-        _r = _req.get(
-            "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/odds",
-            params={"apiKey": _api_key, "regions": "eu,us,uk", "markets": "h2h,totals", "oddsFormat": "decimal"},
-            timeout=15,
-        )
-        if _r.ok:
-            for _m in _r.json():
-                _home, _away = _m["home_team"], _m["away_team"]
-                _bks = _m.get("bookmakers", [])
-                # Prefer Pinnacle (sharpest line, tracks Bet365 closely); never use Marathonbet
-                _BLACKLIST = {"marathonbet"}
-                _PRIORITY = ["pinnacle", "betfair_ex_eu", "williamhill", "coolbet"]
-                _bk = None
-                for _pref in _PRIORITY:
-                    _bk = next((b for b in _bks if b["key"] == _pref), None)
-                    if _bk:
-                        break
-                if not _bk:
-                    _bk = next((b for b in _bks if b["key"] not in _BLACKLIST), None)
-                if not _bk:
-                    continue
-                # Find h2h market explicitly (markets order may vary when totals also requested)
-                _h2h_mkt = next((mk for mk in _bk.get("markets", []) if mk["key"] == "h2h"), None)
-                if not _h2h_mkt:
-                    continue
-                _oc = {o["name"]: o["price"] for o in _h2h_mkt["outcomes"]}
-                _h = round(_oc.get(_home, 0), 2)
-                _d = round(_oc.get("Draw", 0), 2)
-                _a = round(_oc.get(_away, 0), 2)
-                if _d > 0 and _d < 1.5:  # sanity check — draw < 1.5 is always wrong
-                    continue
-                # Extract Over/Under 2.5 from totals market
-                _over25 = 0.0
-                _under25 = 0.0
-                for _mkt_data in _bk.get("markets", []):
-                    if _mkt_data["key"] == "totals":
-                        for _o in _mkt_data["outcomes"]:
-                            if abs(_o.get("point", 0) - 2.5) < 0.1:
-                                if _o["name"].lower() == "over":
-                                    _over25 = round(_o["price"], 2)
-                                elif _o["name"].lower() == "under":
-                                    _under25 = round(_o["price"], 2)
-                all_odds[f"{_home} vs {_away}"] = {
-                    "home": _h, "draw": _d, "away": _a,
-                    "over25": _over25, "under25": _under25,
-                }
-            print(f"  Odds API: {len(all_odds)} matches with real bookmaker odds")
+        for _m in raw_all:
+            _home, _away = _m["home_team"], _m["away_team"]
+            _mk = f"{_home} vs {_away}"
+            _tl = _m.get("totals_lines", {})
+            _sp = _m.get("spreads", {})
+            _entry: dict = {
+                "home":     round(_m.get("home_odds", 0), 2),
+                "draw":     round(_m.get("draw_odds", 0), 2),
+                "away":     round(_m.get("away_odds", 0), 2),
+                "over25":   round(_m.get("over_odds", 0), 2),
+                "under25":  round(_m.get("under_odds", 0), 2),
+                "over15":   round(_m.get("over15_odds", 0), 2),
+                "under15":  round(_m.get("under15_odds", 0), 2),
+                "over35":   round(_m.get("over35_odds", 0), 2),
+                "under35":  round(_m.get("under35_odds", 0), 2),
+                "btts_yes": round(_m.get("btts_yes_odds", 0), 2),
+                "btts_no":  round(_m.get("btts_no_odds", 0), 2),
+            }
+            # Quarter-ball O/U lines (1.75, 2.25, 2.75, etc.)
+            for _pt, _sides in _tl.items():
+                _key_o = f"over{str(float(_pt)).replace('.', '')}"
+                _key_u = f"under{str(float(_pt)).replace('.', '')}"
+                if _sides.get("over", 0) > 1: _entry[_key_o] = round(_sides["over"], 2)
+                if _sides.get("under", 0) > 1: _entry[_key_u] = round(_sides["under"], 2)
+            # AH lines
+            for _line, _sides in _sp.items():
+                if _sides.get("home", 0) > 1: _entry[f"ah{_line}_home"] = round(_sides["home"], 2)
+                if _sides.get("away", 0) > 1: _entry[f"ah{_line}_away"] = round(_sides["away"], 2)
+            if _entry["home"] > 1:
+                all_odds[_mk] = _entry
+        print(f"  Odds API: {len(all_odds)} matches with enriched bookmaker odds")
     except Exception as _e:
-        print(f"  Odds API fetch failed: {_e} — keeping existing odds")
+        print(f"  Odds API odds enrichment failed: {_e} — keeping existing odds")
 
     # Log daily odds snapshot for line movement tracking
     try:
