@@ -1146,8 +1146,12 @@ function renderSport(sport) {
     if (!groupMap[s.match]) groupMap[s.match] = [];
     groupMap[s.match].push(s);
   }
+  const sortedGroups = Object.entries(groupMap).sort(([, a], [, b]) => {
+    const ka = a[0].kickoff || '9999', kb = b[0].kickoff || '9999';
+    return ka < kb ? -1 : ka > kb ? 1 : 0;
+  });
   let h = '<div class="sport-view-inner">';
-  for (const [match, mSigs] of Object.entries(groupMap)) {
+  for (const [match, mSigs] of sortedGroups) {
     const s0 = mSigs[0];
     const [mh, ma] = match.split(' vs ').map(x => x.trim());
     const timeStr = s0.kickoff ? fmtKickoff(s0.kickoff) : '';
