@@ -645,6 +645,12 @@ function renderBankrollStrip() {
 }
 
 // ── Render Home — Bet365-style with inline odds ───────────────
+function _updateClock() {
+  const el = document.getElementById('today-clock');
+  if (el) el.textContent = new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Berlin'}) + ' Uhr';
+}
+setInterval(_updateClock, 30000);
+
 function renderHome() {
   const c = document.getElementById('home-container');
   const games = _schedule.length ? _schedule : _signals.map(s => ({
@@ -706,7 +712,85 @@ function renderHome() {
     return `<div class="b365-btn ${cls}">${od.odds.toFixed(2)}</div>`;
   };
 
-  let h = '';
+  // ── Heute-Sektion (nächste 24h) ──────────────────────────────
+  const now = Date.now();
+  const in24h = now + 24 * 36e5;
+  const todayGames = sorted.filter(g => {
+    if (!g.kickoff) return false;
+    const t = new Date(g.kickoff).getTime();
+    return t >= now - 36e5 && t <= in24h; // -1h für laufende Spiele
+  });
+
+  let todayHtml = '';
+  if (todayGames.length > 0) {
+    todayHtml += `<div class="today-header">
+      <span class="today-dot"></span>
+      <span>Heute · ${todayGames.length} Spiele</span>
+      <span class="today-sub" id="today-clock"></span>
+    </div>`;
+
+    for (const g of todayGames) {
+      const mk = `${g.home} vs ${g.away}`;
+      const nk = matchKey(g.home, g.away);
+      const n = sigCount[nk] || 0;
+      const kickoffTs = new Date(g.kickoff).getTime();
+      const minsLeft = Math.round((kickoffTs - now) / 60000);
+      const isLive = minsLeft < 0 && minsLeft > -110;
+      const timeStr = g.kickoff ? fmtTime(g.kickoff) : '—';
+
+      // Countdown string
+      let countdown = '';
+      if (isLive) {
+        countdown = `<span class="today-live-badge">LIVE</span>`;
+      } else if (minsLeft < 60) {
+        countdown = `<span class="today-countdown warn">in ${minsLeft} min</span>`;
+      } else {
+        const h = Math.floor(minsLeft / 60), m = minsLeft % 60;
+        countdown = `<span class="today-countdown">in ${h}h ${m}min</span>`;
+      }
+
+      // Last-Call badge: Value-Signal vorhanden + Anpfiff < 4h
+      const hasLastCall = n > 0 && minsLeft > 0 && minsLeft < 240;
+      const lastCallBadge = hasLastCall ? `<span class="last-call-badge">⚡ Last Call</span>` : '';
+
+      // Odds buttons
+      const isFootball = g.sport === 'football';
+      const odds = isFootball
+        ? oddsBtn(nk,'home') + oddsBtn(nk,'draw') + oddsBtn(nk,'away')
+        : oddsBtn(nk,'home') + oddsBtn(nk,'away');
+
+      todayHtml += `<div class="b365-row today-row" onclick='openMatch(${JSON.stringify(mk)})'>
+        <div class="b365-left">
+          <div class="b365-time">
+            ${timeStr}
+            ${countdown}
+            ${lastCallBadge}
+            ${n > 0 && !hasLastCall ? `<span class="b365-val-tag">${n} Value</span>` : ''}
+          </div>
+          <div class="b365-teams">
+            <span class="b365-team">${esc(g.home)}</span>
+            <span class="b365-team">${esc(g.away)}</span>
+          </div>
+        </div>
+        <div class="b365-odds">${odds}</div>
+      </div>`;
+    }
+
+    todayHtml += `<div style="height:8px"></div>`;
+  }
+
+  // Update countdowns every 60s
+  clearInterval(window._todayTimer);
+  if (todayGames.length > 0) {
+    window._todayTimer = setInterval(() => {
+      if (document.getElementById('view-home')?.classList.contains('active')) {
+        renderHome();
+        clearInterval(window._todayTimer);
+      }
+    }, 60000);
+  }
+
+  let h = todayHtml;
   for (const [dk, group] of Object.entries(days)) {
     // Day header
     if (dk === '__') {
@@ -942,6 +1026,7 @@ async function _load() {
   renderSport('tennis');
   renderJournal(d.history || []);
   renderBets();
+  _updateClock();
 
   // Load squads in background (non-blocking)
   fetch(SQUADS_URL + '?t=' + Date.now(), { cache: 'no-store' })
