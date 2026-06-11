@@ -477,19 +477,7 @@ function openMatch(displayKey) {
     cards += `<div class="empty"><div class="icon">📊</div><div>Kein Value Bet gefunden.<br><small>Unser Modell sieht hier keinen Vorteil.</small></div></div>`;
   } else {
     cards += otherSigs.map(sigCard).join('');
-    if (ouSigs.length) {
-      const hasValue = ouSigs.some(s => s.ev_pct >= 3);
-      const valueBadge = hasValue ? `<span class="ou-value-badge">⚡ Value</span>` : '';
-      cards += `<div class="ou-accordion">
-        <div class="ou-accordion-header" onclick="this.closest('.ou-accordion').classList.toggle('open')">
-          <span class="ou-accordion-label">Über / Unter</span>
-          ${valueBadge}
-          <span class="ou-count">${ouSigs.length} Wetten</span>
-          <span class="ou-chevron">›</span>
-        </div>
-        <div class="ou-accordion-body">${ouSigs.map(sigCard).join('')}</div>
-      </div>`;
-    }
+    cards += buildOuAccordion(ouSigs, otherSigs.length === 0);
   }
 
   if (sport === 'football') cards += squadSection(dh, da);
@@ -698,6 +686,20 @@ function predCard(home, away, tip, odds, nk) {
 }
 
 // ── Signal card ──────────────────────────────────────────────
+function buildOuAccordion(ouSigs, autoOpen) {
+  if (!ouSigs.length) return '';
+  const hasValue = ouSigs.some(s => s.ev_pct >= 3);
+  const valueBadge = hasValue ? `<span class="ou-value-badge">⚡ Value</span>` : '';
+  return `<div class="ou-accordion${autoOpen ? ' open' : ''}">
+    <div class="ou-accordion-header" onclick="this.closest('.ou-accordion').classList.toggle('open')">
+      <span class="ou-accordion-label">Über / Unter</span>
+      ${valueBadge}
+      <span class="ou-count">${ouSigs.length} Wetten</span>
+      <span class="ou-chevron">›</span>
+    </div>
+    <div class="ou-accordion-body">${ouSigs.map(s => sigCard(s, false)).join('')}</div>
+  </div>`;
+}
 function sigCard(s, showMatch) {
   const cls = s.confidence === 'HIGH' ? 'high' : 'medium';
   const evCls = s.ev_pct >= 10 ? 'ev-h' : 'ev-m';
@@ -1108,7 +1110,9 @@ function renderSport(sport) {
       <div style="font-size:16px;font-weight:900;letter-spacing:-.3px;margin-bottom:3px">${teamFlag(mh)} ${esc(mh)} <span style="color:var(--muted);font-weight:500">vs</span> ${teamFlag(ma)} ${esc(ma)}</div>
       <div style="font-size:11px;color:var(--muted);font-weight:600">${esc(tourStr)}${timeStr ? ' · ' + timeStr : ''}</div>
     </div>`;
-    h += `<div class="match-group-cards">${mSigs.map(s => sigCard(s, false)).join('')}</div>`;
+    const ouS = mSigs.filter(s => /^o\/u/.test(s.market));
+    const otherS = mSigs.filter(s => !/^o\/u/.test(s.market));
+    h += `<div class="match-group-cards">${otherS.map(s => sigCard(s, false)).join('')}${buildOuAccordion(ouS, otherS.length === 0)}</div>`;
   }
   h += '</div>';
   c.innerHTML = h;
