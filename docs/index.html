@@ -41,11 +41,23 @@
     .icon-btn { background: none; border: none; color: var(--muted); font-size: 20px; padding: 4px 6px; cursor: pointer; line-height: 1; }
     @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.35} }
 
-    /* ── Portfolio strip ── */
-    .portfolio-strip { background: #0d1117; border-bottom: 1px solid rgba(255,255,255,0.07); padding: 8px 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-    .pstat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-    .pstat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
-    .pstat-value { font-size: 15px; font-weight: 800; }
+    /* ── Bankroll strip ── */
+    .bankroll-strip { background: #0d1117; border-bottom: 1px solid rgba(255,255,255,0.07); padding: 8px 12px 6px; }
+    .bankroll-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .bankroll-free { font-size: 22px; font-weight: 900; letter-spacing: -.5px; }
+    .bankroll-label { font-size: 10px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+    .bankroll-meta { text-align: right; }
+    .bankroll-meta-val { font-size: 13px; font-weight: 800; }
+    .bankroll-meta-sub { font-size: 10px; color: var(--muted); }
+    .exposure-track { width: 100%; height: 6px; background: rgba(255,255,255,.08); border-radius: 3px; overflow: hidden; margin-bottom: 5px; }
+    .exposure-fill { height: 100%; border-radius: 3px; transition: width .5s; }
+    .exposure-low  { background: var(--green); }
+    .exposure-mid  { background: var(--yellow); }
+    .exposure-high { background: var(--red); }
+    .bankroll-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+    .bankroll-row span { font-weight: 600; }
+    /* keep old pstat for fallback */
+    .pstat { display: none; }
     .pos { color: var(--green); }
     .neg { color: var(--red); }
     .neu { color: var(--text); }
@@ -192,6 +204,16 @@
     .clv-bad { background: rgba(248,81,73,.12); color: var(--red); border: 1px solid rgba(248,81,73,.3); }
     .clv-neutral { background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid var(--border); }
 
+    /* ── Heute-Sektion ── */
+    .today-header { background: rgba(0,200,83,.06); border-top: 1px solid rgba(0,200,83,.2); border-bottom: 1px solid rgba(0,200,83,.15); padding: 8px 16px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; color: var(--green); letter-spacing: .3px; }
+    .today-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; flex-shrink: 0; }
+    .today-sub { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--muted); }
+    .today-row { background: rgba(0,200,83,.02); border-left: 2px solid rgba(0,200,83,.25); }
+    .today-countdown { font-size: 10px; font-weight: 800; color: var(--muted); }
+    .today-countdown.warn { color: var(--yellow); }
+    .today-live-badge { font-size: 10px; font-weight: 900; background: var(--red); color: #fff; border-radius: 4px; padding: 1px 5px; animation: pulse 1.5s infinite; }
+    .last-call-badge { font-size: 10px; font-weight: 900; background: rgba(210,153,34,.2); border: 1px solid var(--yellow); color: var(--yellow); border-radius: 4px; padding: 1px 6px; }
+
     /* ── Bottom nav ── */
     .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg); border-top: 2px solid var(--green); display: flex; padding-bottom: max(env(safe-area-inset-bottom), 10px); z-index: 100; }
     .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 2px 9px; gap: 4px; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; min-height: 66px; }
@@ -219,11 +241,26 @@
 
 <div class="stale-banner" id="stale-banner">⚠️ Daten älter als 26h — Scan läuft täglich 08:00 UTC</div>
 
-<div class="portfolio-strip">
-  <div class="pstat"><span class="pstat-label">Aktiv</span><span class="pstat-value neu" id="s-open">—</span></div>
-  <div class="pstat"><span class="pstat-label">P&amp;L</span><span class="pstat-value" id="s-pnl">—</span></div>
-  <div class="pstat"><span class="pstat-label">ROI</span><span class="pstat-value" id="s-roi">—</span></div>
-  <div class="pstat"><span class="pstat-label">Wetten ges.</span><span class="pstat-value neu" id="s-total">—</span></div>
+<div class="bankroll-strip" id="bankroll-strip">
+  <div class="bankroll-top">
+    <div>
+      <div class="bankroll-label">Freies Kapital</div>
+      <div class="bankroll-free" id="br-free">—</div>
+    </div>
+    <div class="bankroll-meta">
+      <div class="bankroll-meta-val" id="br-pnl">—</div>
+      <div class="bankroll-meta-sub">P&amp;L gesamt</div>
+      <div class="bankroll-meta-val" id="br-maxwin" style="color:var(--green)">—</div>
+      <div class="bankroll-meta-sub">Max. Gewinn</div>
+    </div>
+  </div>
+  <div class="exposure-track">
+    <div class="exposure-fill" id="br-bar" style="width:0%"></div>
+  </div>
+  <div class="bankroll-row">
+    <span>€<span id="br-staked">0</span> im Einsatz (<span id="br-exp">0</span>%)</span>
+    <span id="br-count">0 offene Wetten</span>
+  </div>
 </div>
 
 <main>
@@ -304,6 +341,7 @@ let _schedule = [];
 let _allOdds = {};
 let _modelTips = {};
 let _openBets = [];
+let _bankrollState = {};
 let _squads = {};
 let _prevView = 'home';
 
@@ -579,6 +617,31 @@ function renderBets() {
     </div>`;
   }
   c.innerHTML = h;
+}
+
+// ── Render Bankroll strip ─────────────────────────────────────
+function renderBankrollStrip() {
+  const b = _bankrollState;
+  if (!b || b.free == null) return;
+  const free = b.free ?? 0;
+  const pnl = (b.pnl_closed ?? 0);
+  const maxWin = b.max_win ?? 0;
+  const staked = b.staked ?? 0;
+  const exp = b.exposure_pct ?? 0;
+  const openCount = (_openBets || []).length;
+
+  document.getElementById('br-free').textContent = '€' + free.toFixed(2);
+  const pnlEl = document.getElementById('br-pnl');
+  pnlEl.textContent = (pnl >= 0 ? '+' : '') + pnl.toFixed(2) + '€';
+  pnlEl.style.color = pnl > 0 ? 'var(--green)' : pnl < 0 ? 'var(--red)' : 'var(--text)';
+  document.getElementById('br-maxwin').textContent = '+€' + maxWin.toFixed(2);
+  document.getElementById('br-staked').textContent = staked.toFixed(2);
+  document.getElementById('br-exp').textContent = exp.toFixed(1);
+  document.getElementById('br-count').textContent = openCount + ' offene Wette' + (openCount !== 1 ? 'n' : '');
+
+  const bar = document.getElementById('br-bar');
+  bar.style.width = Math.min(exp, 100) + '%';
+  bar.className = 'exposure-fill ' + (exp < 30 ? 'exposure-low' : exp < 60 ? 'exposure-mid' : 'exposure-high');
 }
 
 // ── Render Home — Bet365-style with inline odds ───────────────
@@ -859,22 +922,13 @@ async function _load() {
   document.getElementById('stale-banner').style.display = age > 26 ? 'block' : 'none';
   document.getElementById('dot').style.background = age > 26 ? 'var(--yellow)' : 'var(--green)';
 
-  const p = d.portfolio || {};
-  document.getElementById('s-open').textContent = p.n_open ?? '0';
-  const pnl = p.total_pnl ?? 0, roi = p.roi_pct ?? 0;
-  const pe = document.getElementById('s-pnl');
-  pe.textContent = (pnl>=0?'+':'') + pnl.toFixed(2) + '€';
-  pe.className = 'pstat-value ' + (pnl>0?'pos':pnl<0?'neg':'neu');
-  const re = document.getElementById('s-roi');
-  re.textContent = (roi>=0?'+':'') + roi.toFixed(1) + '%';
-  re.className = 'pstat-value ' + (roi>0?'pos':roi<0?'neg':'neu');
-  document.getElementById('s-total').textContent = p.n_bets ?? '0';
-
   _signals = [...(d.football||[]), ...(d.tennis||[])];
   _schedule = d.schedule || [];
   _allOdds = d.all_odds || {};
   _modelTips = d.model_tips || {};
   _openBets = d.open_bets || [];
+  _bankrollState = d.bankroll_state || {};
+  renderBankrollStrip();
 
   const setB = (id, n) => { const el=document.getElementById(id); el.textContent=n; el.classList.toggle('show',n>0); };
   setB('badge-all',      _signals.length);

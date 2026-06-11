@@ -69,6 +69,16 @@ def _signal_to_dict(
     return d
 
 
+def _get_closed_bets() -> list[dict]:
+    if not _LEDGER_PATH.exists():
+        return []
+    try:
+        with open(_LEDGER_PATH, newline="") as f:
+            return [r for r in csv.DictReader(f) if r.get("status") in ("won", "lost", "push")]
+    except Exception:
+        return []
+
+
 def write_signals_json(
     football: list[BetSignal] | None = None,
     tennis: list[BetSignal] | None = None,
@@ -139,17 +149,38 @@ def write_signals_json(
     else:
         model_tips_data = existing.get("model_tips", {})
 
+    # Compute bankroll state from ledger
+    _resolved_open_bets = open_bets if open_bets is not None else existing.get("open_bets", [])
+    _staked = sum(float(b.get("stake", 0)) for b in (_resolved_open_bets or []))
+    _max_win = sum(
+        float(b.get("stake", 0)) * (float(b.get("current_odds") or b.get("entry_odds", 0)) - 1)
+        for b in (_resolved_open_bets or [])
+        if b.get("current_odds") or b.get("entry_odds")
+    )
+    _bankroll_start = 100.0
+    _pnl_closed = sum(float(row.get("pnl", 0)) for row in _get_closed_bets())
+    _free = round(_bankroll_start + _pnl_closed - _staked, 2)
+    _exposure_pct = round(_staked / _bankroll_start * 100, 1)
+
     payload = {
-        "updated":     updated,
-        "schedule":    schedule_data,
-        "all_odds":    all_odds_data,
-        "model_tips":  model_tips_data,
-        "football":    football_data,
-        "tennis":      tennis_data,
-        "portfolio":   portfolio if portfolio else existing.get("portfolio", {}),
-        "top_elo":     [{"name": n, "rating": round(r)} for n, r in top_elo] if top_elo else existing.get("top_elo", []),
-        "history":     _build_history(),
-        "open_bets":   open_bets if open_bets is not None else existing.get("open_bets", []),
+        "updated":        updated,
+        "schedule":       schedule_data,
+        "all_odds":       all_odds_data,
+        "model_tips":     model_tips_data,
+        "football":       football_data,
+        "tennis":         tennis_data,
+        "portfolio":      portfolio if portfolio else existing.get("portfolio", {}),
+        "top_elo":        [{"name": n, "rating": round(r)} for n, r in top_elo] if top_elo else existing.get("top_elo", []),
+        "history":        _build_history(),
+        "open_bets":      _resolved_open_bets,
+        "bankroll_state": {
+            "start":        _bankroll_start,
+            "free":         round(_free, 2),
+            "staked":       round(_staked, 2),
+            "exposure_pct": _exposure_pct,
+            "max_win":      round(_max_win, 2),
+            "pnl_closed":   round(_pnl_closed, 2),
+        },
     }
 
     _JSON_PATH.parent.mkdir(parents=True, exist_ok=True)

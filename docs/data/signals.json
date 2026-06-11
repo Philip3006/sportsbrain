@@ -2222,5 +2222,13 @@
       "match_date": "2026-06-24",
       "model_edge_pct": 4.2
     }
-  ]
+  ],
+  "bankroll_state": {
+    "start": 100.0,
+    "free": 25.0,
+    "staked": 75.0,
+    "exposure_pct": 75.0,
+    "max_win": 190.2,
+    "pnl_closed": 0
+  }
 }
