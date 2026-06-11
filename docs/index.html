@@ -248,6 +248,23 @@
     .stats-table td:first-child { text-align: left; color: var(--muted); font-weight: 600; }
     .stats-table tr:last-child td { border-bottom: none; }
 
+    /* ── Smart Suggest ── */
+    .suggest-card { margin: 10px 12px 4px; background: linear-gradient(135deg, rgba(0,200,83,.08) 0%, rgba(0,200,83,.03) 100%); border: 1px solid rgba(0,200,83,.3); border-radius: 14px; padding: 14px; }
+    .suggest-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .suggest-title { font-size: 12px; font-weight: 800; color: var(--green); flex: 1; }
+    .suggest-budget { font-size: 12px; font-weight: 700; color: var(--muted); }
+    .suggest-pick { background: rgba(0,0,0,.25); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .suggest-pick:last-of-type { margin-bottom: 0; }
+    .suggest-pick:active { opacity: .8; }
+    .suggest-pick-left { flex: 1; min-width: 0; }
+    .suggest-pick-match { font-size: 12px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .suggest-pick-market { font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 2px; }
+    .suggest-pick-right { text-align: right; flex-shrink: 0; }
+    .suggest-pick-odds { font-size: 18px; font-weight: 900; color: var(--green); }
+    .suggest-pick-ev { font-size: 11px; color: var(--green); font-weight: 700; }
+    .suggest-pick-stake { font-size: 12px; font-weight: 800; color: var(--text); }
+    .suggest-footer { font-size: 11px; color: var(--muted); margin-top: 10px; text-align: center; }
+
     /* ── Bottom nav ── */
     .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg); border-top: 2px solid var(--green); display: flex; padding-bottom: max(env(safe-area-inset-bottom), 10px); z-index: 100; }
     .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 2px 9px; gap: 4px; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; min-height: 66px; }
@@ -877,7 +894,81 @@ function renderHome() {
     }, 60000);
   }
 
-  let h = radarHtml + todayHtml;
+  // ── Smart Suggest ──────────────────────────────────────────
+  let suggestHtml = '';
+  const free = (_bankrollState && _bankrollState.free != null) ? _bankrollState.free : 0;
+  const openCount = (_openBets || []).length;
+
+  if (free > 5 && openCount < 3) {
+    const now72 = Date.now() + 72 * 36e5;
+    const openMatchKeys72 = new Set((_openBets || []).map(b => {
+      const [bh, ba] = (b.match || '').split(' vs ').map(x => x.trim());
+      return matchKey(bh, ba);
+    }));
+    // Dedupliziere: nur ein Signal pro Match
+    const seenMatches = new Set();
+    const picks = [];
+    let remaining = free;
+    const candidates = (_signals || [])
+      .filter(s => s.sport === 'football' && s.ev_pct >= 3)
+      .filter(s => {
+        if (!s.kickoff) return false;
+        const ko = new Date(s.kickoff).getTime();
+        return ko > Date.now() && ko <= now72;
+      })
+      .filter(s => {
+        const [sh, sa] = (s.match || '').split(' vs ').map(x => x.trim());
+        return !openMatchKeys72.has(matchKey(sh, sa));
+      })
+      .sort((a, b) => b.ev_pct - a.ev_pct);
+
+    for (const s of candidates) {
+      if (picks.length >= 2) break;
+      const [sh, sa] = (s.match || '').split(' vs ').map(x => x.trim());
+      const mk72 = matchKey(sh, sa);
+      if (seenMatches.has(mk72)) continue;
+      const stake = Math.min(s.stake_eur || 10, remaining);
+      if (stake < 3) continue;
+      seenMatches.add(mk72);
+      picks.push({ ...s, display_stake: Math.round(stake) });
+      remaining -= stake;
+    }
+
+    if (picks.length > 0) {
+      const suggestMktLabels = {
+        home:'Heimsieg', draw:'Unentschieden', away:'Auswärtssieg',
+        'o/u2.5_over':'Über 2.5 Tore', 'o/u2.5_under':'Unter 2.5 Tore',
+        'o/u1.5_over':'Über 1.5 Tore', 'o/u1.5_under':'Unter 1.5 Tore',
+        btts_yes:'Beide treffen', btts_no:'Nicht beide',
+      };
+      const picksHtml = picks.map(p => {
+        const [ph, pa] = (p.match || '').split(' vs ').map(x => x.trim());
+        const mktLabel = suggestMktLabels[p.market] || p.market;
+        return `<div class="suggest-pick" onclick='openMatch(${JSON.stringify(p.match)})'>
+          <div class="suggest-pick-left">
+            <div class="suggest-pick-match">${esc(ph)} vs ${esc(pa)}</div>
+            <div class="suggest-pick-market">${esc(mktLabel)}</div>
+          </div>
+          <div class="suggest-pick-right">
+            <div class="suggest-pick-odds">${p.odds.toFixed(2)}</div>
+            <div class="suggest-pick-ev">EV +${p.ev_pct.toFixed(1)}%</div>
+            <div class="suggest-pick-stake">€${p.display_stake}</div>
+          </div>
+        </div>`;
+      }).join('');
+      const usedStake = picks.reduce((s, p) => s + p.display_stake, 0);
+      suggestHtml = `<div class="suggest-card">
+        <div class="suggest-header">
+          <span class="suggest-title">💡 Empfehlung für dein freies Kapital</span>
+          <span class="suggest-budget">€${free.toFixed(0)} verfügbar</span>
+        </div>
+        ${picksHtml}
+        <div class="suggest-footer">€${usedStake} Einsatz · €${Math.max(0, free - usedStake).toFixed(0)} verbleibend</div>
+      </div>`;
+    }
+  }
+
+  let h = suggestHtml + radarHtml + todayHtml;
   for (const [dk, group] of Object.entries(days)) {
     // Day header
     if (dk === '__') {
