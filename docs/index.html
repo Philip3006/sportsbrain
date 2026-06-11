@@ -861,7 +861,8 @@ function renderHome() {
   }
 
   // Sort + filter next 30 days; remove live games (started, no result yet)
-  const cutoff = Date.now() + 30*24*36e5;
+  const now = Date.now();
+  const cutoff = now + 30*24*36e5;
   const sorted = games
     .filter(g => {
       if (g.kickoff && new Date(g.kickoff) > cutoff) return false;
@@ -895,7 +896,6 @@ function renderHome() {
   };
 
   // ── Heute-Sektion (nächste 24h) ──────────────────────────────
-  const now = Date.now();
   const in24h = now + 24 * 36e5;
   const todayGames = sorted.filter(g => {
     if (!g.kickoff) return false;
