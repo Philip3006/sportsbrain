@@ -618,18 +618,6 @@ function predCard(home, away, tip, odds, nk) {
   if (tip.p_home && tip.p_draw && odds.dc_1x > 1) mkts.push({key: 'dc_1x', name: `DC: ${esc(home)} oder Remis`, p: tip.p_home + tip.p_draw, q: odds.dc_1x});
   if (tip.p_draw && tip.p_away && odds.dc_x2 > 1) mkts.push({key: 'dc_x2', name: `DC: Remis oder ${esc(away)}`, p: tip.p_draw + tip.p_away, q: odds.dc_x2});
   if (tip.p_home && tip.p_away && odds.dc_12 > 1) mkts.push({key: 'dc_12', name: `DC: ${esc(home)} oder ${esc(away)}`, p: tip.p_home + tip.p_away, q: odds.dc_12});
-  // O/U lines — show all available
-  const ouLines = [
-    {pt:'15', label:'1.5', pKey:'p_over15'}, {pt:'175', label:'1.75', pKey:'p_over175'},
-    {pt:'25', label:'2.5', pKey:'p_over25'}, {pt:'225', label:'2.25', pKey:'p_over225'},
-    {pt:'275', label:'2.75', pKey:'p_over275'}, {pt:'35', label:'3.5', pKey:'p_over35'},
-  ];
-  for (const {pt, label, pKey} of ouLines) {
-    const po = tip[pKey] || tip.p_over25;
-    const pu = po ? 1 - po : null;
-    if (po && odds[`over${pt}`] > 1) mkts.push({key:`o/u${label}_over`, name:`Über ${label} Tore`, p: po, q: odds[`over${pt}`]});
-    if (pu && odds[`under${pt}`] > 1) mkts.push({key:`o/u${label}_under`, name:`Unter ${label} Tore`, p: pu, q: odds[`under${pt}`]});
-  }
   if (tip.p_btts_yes && odds.btts_yes > 1) mkts.push({key: 'btts_yes', name: 'Beide treffen', p: tip.p_btts_yes, q: odds.btts_yes});
   if (tip.p_btts_no && odds.btts_no > 1) mkts.push({key: 'btts_no', name: 'Kein BTTS', p: tip.p_btts_no, q: odds.btts_no});
 
