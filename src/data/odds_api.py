@@ -38,7 +38,7 @@ def get_api_key(api_key: str | None = None) -> str:
 def fetch_upcoming_matches(
     sport: str = "soccer_fifa_world_cup",
     regions: str = "eu",
-    markets: str = "h2h,totals,spreads",
+    markets: str = "h2h,totals,spreads,double_chance",
     api_key: str | None = None,
     force: bool = False,
 ) -> list[dict]:
@@ -54,8 +54,17 @@ def fetch_upcoming_matches(
         "markets": markets,
         "oddsFormat": "decimal",
     }
-    resp = requests.get(url, params=params, timeout=15)
-    resp.raise_for_status()
+    try:
+        resp = requests.get(url, params=params, timeout=15)
+        resp.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        if e.response is not None and e.response.status_code == 422 and "double_chance" in markets:
+            print("  WARN: double_chance market unavailable for this sport — retrying without it.")
+            params["markets"] = ",".join(m for m in markets.split(",") if m != "double_chance")
+            resp = requests.get(url, params=params, timeout=15)
+            resp.raise_for_status()
+        else:
+            raise
 
     # Log usage from response headers
     used = int(resp.headers.get("x-requests-used", 0))
@@ -121,6 +130,17 @@ def _parse_markets(bm: dict, home: str, away: str, store: dict, dynamic: dict) -
             for o in market.get("outcomes", []):
                 key = f"btts_{o['name'].lower()}"  # "btts_yes" or "btts_no"
                 if o["price"] > store.get(key, 0):
+                    store[key] = o["price"]
+        elif mkt == "double_chance":
+            for o in market.get("outcomes", []):
+                name, price = o["name"], o["price"]
+                if "Home" in name and "Draw" in name:
+                    key = "dc_1x"
+                elif "Draw" in name and "Away" in name:
+                    key = "dc_x2"
+                else:
+                    key = "dc_12"
+                if price > store.get(key, 0):
                     store[key] = o["price"]
 
 
@@ -214,6 +234,13 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
             "pin_ah15_away": pin_dynamic["spreads"].get(-1.5, {}).get("away", 0.0),
             "pin_btts_yes":  pin.get("btts_yes", 0.0),
             "pin_btts_no":   pin.get("btts_no", 0.0),
+            # Double Chance (best across bookmakers)
+            "dc_1x_odds":    best.get("dc_1x", 0.0),   # Home or Draw
+            "dc_x2_odds":    best.get("dc_x2", 0.0),   # Draw or Away
+            "dc_12_odds":    best.get("dc_12", 0.0),   # Home or Away
+            "pin_dc_1x":     pin.get("dc_1x", 0.0),
+            "pin_dc_x2":     pin.get("dc_x2", 0.0),
+            "pin_dc_12":     pin.get("dc_12", 0.0),
             # Dynamic all-lines dicts — used by scanner for comprehensive coverage
             "spreads":        best_dynamic["spreads"],   # {home_line: {"home": odds, "away": odds}}
             "totals_lines":   best_dynamic["totals"],    # {line: {"over": odds, "under": odds}}
@@ -265,6 +292,8 @@ def mock_upcoming_matches() -> list[dict]:
             "pin_ah1_home": 2.02, "pin_ah1_away": 1.78,
             "pin_ah15_home": 0.0, "pin_ah15_away": 0.0,
             "pin_btts_yes": 1.70, "pin_btts_no": 2.03,
+            "dc_1x_odds": 1.35, "dc_x2_odds": 1.72, "dc_12_odds": 1.22,
+            "pin_dc_1x": 1.33, "pin_dc_x2": 1.70, "pin_dc_12": 1.20,
         },
         {
             "match_id": "mock_Brazil_vs_Argentina",
@@ -306,5 +335,7 @@ def mock_upcoming_matches() -> list[dict]:
             "pin_ah1_home": 2.18, "pin_ah1_away": 1.70,
             "pin_ah15_home": 0.0, "pin_ah15_away": 0.0,
             "pin_btts_yes": 1.70, "pin_btts_no": 2.03,
+            "dc_1x_odds": 1.30, "dc_x2_odds": 1.88, "dc_12_odds": 1.18,
+            "pin_dc_1x": 1.28, "pin_dc_x2": 1.86, "pin_dc_12": 1.16,
         },
     ]

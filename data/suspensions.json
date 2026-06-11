@@ -1,8 +1,7 @@
 {
   "_comment": "WM 2026 Verletzungen & Sperren — Stand: 10. Juni 2026. Quellen: ESPN, Goal.com, FIFA.com, Sports Mole.",
   "_format": "team_name: [player_name, ...] — availability=0 im Modell gesetzt",
-  "_injuries_last_updated": "2026-06-10",
-
+  "_injuries_last_updated": "2026-06-11",
   "Czech Republic": [
     "Václav Cerný"
   ],
@@ -21,7 +20,6 @@
   ],
   "Qatar": [],
   "Switzerland": [],
-
   "Brazil": [
     "Wesley França",
     "Neymar"
@@ -42,7 +40,6 @@
   ],
   "Turkey": [],
   "United States": [],
-
   "Curacao": [],
   "Ecuador": [],
   "Germany": [
@@ -67,7 +64,6 @@
     "Ferjani Sassi",
     "Mohamed Ali Ben Romdhane"
   ],
-
   "Belgium": [
     "Romelu Lukaku",
     "Zeno Debast"
@@ -93,7 +89,6 @@
     "Ronald Araujo",
     "Rodrigo Bentancur"
   ],
-
   "France": [
     "Hugo Ekitike"
   ],
@@ -117,7 +112,6 @@
   "Jordan": [
     "Yazan Alnemat"
   ],
-
   "Colombia": [],
   "DR Congo": [
     "Rocky Bushiri"

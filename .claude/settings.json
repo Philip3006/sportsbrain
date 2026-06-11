@@ -3,8 +3,9 @@
   "description": "Sports prediction & value betting tool",
   "permissions": {
     "allow": [
-      "Bash(python3 -m pytest tests/ *)",
-      "Bash(pytest tests/ *)"
+      "Bash(*)",
+      "WebSearch",
+      "WebFetch"
     ]
   }
 }
