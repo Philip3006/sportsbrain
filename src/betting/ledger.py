@@ -336,36 +336,67 @@ def _settle_from_results_locked(
                             won = False
             except (ValueError, IndexError):
                 continue
-        elif market == "ah-0.5_home":
-            # Home -0.5: home must WIN outright (no draw possible)
-            won = hg > ag
-        elif market == "ah+0.5_away":
-            # Away +0.5: away wins OR draws (home must win for home to beat handicap)
-            won = ag >= hg
-        elif market == "ah-1.0_home":
-            # Home -1.0: home wins by 2+ → won; home wins by exactly 1 → push; else → lost
-            if hg >= ag + 2:
-                won = True
-            elif hg == ag + 1:
-                push = True
-                won = False
-            else:
-                won = False
-        elif market == "ah+1.0_away":
-            # Away +1.0: away wins or draws → won; home wins by exactly 1 → push; home wins by 2+ → lost
-            if ag >= hg:
-                won = True
-            elif hg == ag + 1:
-                push = True
-                won = False
-            else:
-                won = False
-        elif market == "ah-1.5_home":
-            # Home -1.5: home wins by 2+ → won; else → lost (no push)
-            won = hg >= ag + 2
-        elif market == "ah+1.5_away":
-            # Away +1.5: away wins, draws, or loses by 1 → won; home wins by 2+ → lost (no push)
-            won = hg <= ag + 1
+        elif market.startswith("ah") and ("_home" in market or "_away" in market):
+            side = "home" if "_home" in market else "away"
+            try:
+                line = float(market.split("ah")[1].split("_")[0])
+            except (ValueError, IndexError):
+                continue
+            diff = hg - ag
+            if side == "home":
+                need = -line  # goals home must win by to cover
+                is_quarter = int(round(need * 4)) % 2 == 1
+                lo = int(need)
+                if not is_quarter:
+                    if need == lo:  # whole-ball
+                        won = diff > need if diff != need else (push := True) and False
+                    else:
+                        won = diff > need
+                elif need % 1 < 0.5:  # x.25: pivot=lo (whole-ball lower)
+                    if diff > lo:
+                        won = True
+                    elif diff == lo:
+                        df.at[idx, "status"] = "lost"
+                        df.at[idx, "pnl"] = f"{-stake / 2:.2f}"
+                        newly_settled_indices.append(idx); settled += 1; continue
+                    else:
+                        won = False
+                else:  # x.75: pivot=lo+1 (whole-ball upper)
+                    if diff > lo + 1:
+                        won = True
+                    elif diff == lo + 1:
+                        df.at[idx, "status"] = "won"
+                        df.at[idx, "pnl"] = f"{stake * (odds - 1) / 2:.2f}"
+                        newly_settled_indices.append(idx); settled += 1; continue
+                    else:
+                        won = False
+            else:  # away
+                need = line  # goals away can spot (home must exceed to beat handicap)
+                is_quarter = int(round(need * 4)) % 2 == 1
+                lo = int(need)
+                if not is_quarter:
+                    if need == lo:  # whole-ball
+                        won = diff < need if diff != need else (push := True) and False
+                    else:
+                        won = diff < need
+                elif need % 1 < 0.5:  # x.25: pivot=lo
+                    if diff < lo:
+                        won = True
+                    elif diff == lo:
+                        df.at[idx, "status"] = "won"
+                        df.at[idx, "pnl"] = f"{stake * (odds - 1) / 2:.2f}"
+                        newly_settled_indices.append(idx); settled += 1; continue
+                    else:
+                        won = False
+                else:  # x.75: pivot=lo+1
+                    if diff < lo + 1:
+                        won = True
+                    elif diff == lo + 1:
+                        df.at[idx, "status"] = "lost"
+                        df.at[idx, "pnl"] = f"{-stake / 2:.2f}"
+                        newly_settled_indices.append(idx); settled += 1; continue
+                    else:
+                        won = False
         elif market == "btts_yes":
             won = (hg >= 1) and (ag >= 1)
         elif market == "btts_no":
