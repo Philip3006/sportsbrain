@@ -77,7 +77,7 @@ def _fetch_completed_wm_scores(api_key: str = "") -> dict[tuple[str, str], tuple
     try:
         import requests
         from src.config import canonical_name
-        url = "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup_2026/scores/"
+        url = "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/scores/"
         resp = requests.get(url, params={"apiKey": api_key, "daysFrom": 7}, timeout=10)
         if not resp.ok:
             return {}
@@ -268,10 +268,18 @@ def _settle_from_results_locked(
             won = ag > hg
         elif market == "draw":
             won = hg == ag
-        elif market == "o/u2.5_over":
-            won = total > 2.5
-        elif market == "o/u2.5_under":
-            won = total <= 2.5
+        elif market.startswith("o/u") and "_over" in market:
+            try:
+                line = float(market.split("o/u")[1].split("_")[0])
+                won = total > line
+            except (ValueError, IndexError):
+                continue
+        elif market.startswith("o/u") and "_under" in market:
+            try:
+                line = float(market.split("o/u")[1].split("_")[0])
+                won = total < line
+            except (ValueError, IndexError):
+                continue
         elif market == "ah-0.5_home":
             # Home -0.5: home must WIN outright (no draw possible)
             won = hg > ag
@@ -306,6 +314,15 @@ def _settle_from_results_locked(
             won = (hg >= 1) and (ag >= 1)
         elif market == "btts_no":
             won = (hg == 0) or (ag == 0)
+        elif market == "dc_1x":
+            # Home Win or Draw — only away win loses
+            won = hg >= ag
+        elif market == "dc_x2":
+            # Draw or Away Win — only home win loses
+            won = ag >= hg
+        elif market == "dc_12":
+            # Home Win or Away Win — draw loses
+            won = hg != ag
         elif market in ("ah-1.5_a", "ah+1.5_b"):
             # Tennis set handicap — not settled via football results, skip silently
             continue
