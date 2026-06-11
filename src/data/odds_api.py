@@ -74,7 +74,7 @@ def fetch_upcoming_matches(
     return _parse_matches(data)
 
 
-_PREFERRED_BM = "bet365"
+_PREFERRED_BM = "pinnacle"
 
 
 def _parse_markets(bm: dict, home: str, away: str, store: dict) -> None:
@@ -147,7 +147,7 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
             continue
 
         best: dict[str, float] = {}
-        b365: dict[str, float] = {}
+        pin: dict[str, float] = {}
         best_bm: dict[str, str] = {}
 
         for bm in bookmakers:
@@ -158,9 +158,9 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
             for k in best:
                 if best[k] != prev.get(k, 0):
                     best_bm[k] = bm_key
-            # Capture Bet365 separately
+            # Capture Pinnacle separately (sharp reference line)
             if bm_key == _PREFERRED_BM:
-                _parse_markets(bm, home, away, b365)
+                _parse_markets(bm, home, away, pin)
 
         if not best.get(home):
             continue
@@ -198,20 +198,20 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
             "best_home_bm":   best_bm.get(home, ""),
             "best_draw_bm":   best_bm.get("Draw", ""),
             "best_away_bm":   best_bm.get(away, ""),
-            # Bet365-specific odds (shown to user for placing)
-            "b365_home":      b365.get(home, 0.0),
-            "b365_draw":      b365.get("Draw", 0.0),
-            "b365_away":      b365.get(away, 0.0),
-            "b365_over":      b365.get("Over_2.5", 0.0),
-            "b365_under":     b365.get("Under_2.5", 0.0),
-            "b365_ah_home":   b365.get(f"ah_{home}", 0.0),
-            "b365_ah_away":   b365.get(f"ah_{away}", 0.0),
-            "b365_ah1_home":  b365.get(f"ah1_{home}", 0.0),
-            "b365_ah1_away":  b365.get(f"ah1_{away}", 0.0),
-            "b365_ah15_home": b365.get(f"ah15_{home}", 0.0),
-            "b365_ah15_away": b365.get(f"ah15_{away}", 0.0),
-            "b365_btts_yes":  b365.get("btts_yes", 0.0),
-            "b365_btts_no":   b365.get("btts_no", 0.0),
+            # Pinnacle odds (sharp reference line — used for display and CLV)
+            "pin_home":      pin.get(home, 0.0),
+            "pin_draw":      pin.get("Draw", 0.0),
+            "pin_away":      pin.get(away, 0.0),
+            "pin_over":      pin.get("Over_2.5", 0.0),
+            "pin_under":     pin.get("Under_2.5", 0.0),
+            "pin_ah_home":   pin.get(f"ah_{home}", 0.0),
+            "pin_ah_away":   pin.get(f"ah_{away}", 0.0),
+            "pin_ah1_home":  pin.get(f"ah1_{home}", 0.0),
+            "pin_ah1_away":  pin.get(f"ah1_{away}", 0.0),
+            "pin_ah15_home": pin.get(f"ah15_{home}", 0.0),
+            "pin_ah15_away": pin.get(f"ah15_{away}", 0.0),
+            "pin_btts_yes":  pin.get("btts_yes", 0.0),
+            "pin_btts_no":   pin.get("btts_no", 0.0),
         }
         matches.append(match_dict)
 

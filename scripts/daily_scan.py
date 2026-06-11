@@ -133,7 +133,9 @@ if __name__ == "__main__":
         if _r.ok:
             for _m in _r.json():
                 _home, _away = _m["home_team"], _m["away_team"]
-                _bk = next((b for b in _m.get("bookmakers", []) if "bet365" in b["key"]), None)
+                _bk = next((b for b in _m.get("bookmakers", []) if "pinnacle" in b["key"]), None)
+                if not _bk:
+                    _bk = next((b for b in _m.get("bookmakers", []) if "bet365" in b["key"]), None)
                 if not _bk and _m.get("bookmakers"):
                     _bk = _m["bookmakers"][0]
                 if not _bk:

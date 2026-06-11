@@ -126,11 +126,11 @@ def send_scan_alert(
             profit = stake_eur * (s.decimal_odds - 1)
 
             if s.b365_odds > 1.0:
-                odds_str = f"Bet365: {s.b365_odds:.2f}"
+                odds_str = f"Pinnacle: {s.b365_odds:.2f}"
                 if s.b365_odds < s.decimal_odds - 0.02:
                     odds_str += f"  (Markt: {s.decimal_odds:.2f})"
             else:
-                odds_str = f"Kurs: {s.decimal_odds:.2f}  (Bet365 n.v.)"
+                odds_str = f"Kurs: {s.decimal_odds:.2f}  (Pinnacle n.v.)"
 
             conf = "  Beide Modelle einig" if s.confidence == "HIGH" else ""
             elo_suffix = f" (Elo {s.elo_prob*100:.1f}%)" if s.elo_prob > 0.0 else ""
