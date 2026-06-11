@@ -103,6 +103,16 @@
 
     /* ── Signal card ── */
     .sig-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; border-left: 3px solid transparent; }
+    .ou-accordion { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+    .ou-accordion-header { display: flex; align-items: center; gap: 8px; padding: 13px 14px; cursor: pointer; background: var(--card); -webkit-tap-highlight-color: transparent; user-select: none; }
+    .ou-accordion-header:active { background: rgba(255,255,255,.03); }
+    .ou-accordion-label { font-size: 13px; font-weight: 800; flex: 1; color: var(--text); }
+    .ou-value-badge { font-size: 10px; font-weight: 800; background: rgba(0,200,83,.12); color: var(--green); border: 1px solid rgba(0,200,83,.25); border-radius: 10px; padding: 2px 7px; white-space: nowrap; }
+    .ou-count { font-size: 11px; font-weight: 700; color: var(--muted); }
+    .ou-chevron { font-size: 18px; color: var(--muted); font-weight: 300; line-height: 1; transition: transform .2s ease; }
+    .ou-accordion.open .ou-chevron { transform: rotate(90deg); }
+    .ou-accordion-body { display: none; }
+    .ou-accordion.open .ou-accordion-body { display: block; background: var(--surface); padding: 4px 0 0; }
     .sig-card.high { border-left-color: var(--green); }
     .sig-card.medium { border-left-color: var(--yellow); }
     .card-market { font-size: 12px; color: var(--muted); margin-bottom: 11px; padding: 4px 9px; background: rgba(255,255,255,0.05); border-radius: 6px; display: inline-block; border: 1px solid rgba(255,255,255,0.07); }
@@ -457,11 +467,30 @@ function openMatch(displayKey) {
     oddsEntry = found ? found[1] : {};
   }
 
+  const ouSigs = sigs.filter(s => /^o\/u/.test(s.market));
+  const otherSigs = sigs.filter(s => !/^o\/u/.test(s.market));
+
   let cards = '';
   if (tip) cards += predCard(dh, da, tip, oddsEntry, nk);
-  cards += sigs.length
-    ? sigs.map(sigCard).join('')
-    : `<div class="empty"><div class="icon">📊</div><div>Kein Value Bet gefunden.<br><small>Unser Modell sieht hier keinen Vorteil.</small></div></div>`;
+
+  if (!sigs.length) {
+    cards += `<div class="empty"><div class="icon">📊</div><div>Kein Value Bet gefunden.<br><small>Unser Modell sieht hier keinen Vorteil.</small></div></div>`;
+  } else {
+    cards += otherSigs.map(sigCard).join('');
+    if (ouSigs.length) {
+      const hasValue = ouSigs.some(s => s.ev_pct >= 3);
+      const valueBadge = hasValue ? `<span class="ou-value-badge">⚡ Value</span>` : '';
+      cards += `<div class="ou-accordion">
+        <div class="ou-accordion-header" onclick="this.closest('.ou-accordion').classList.toggle('open')">
+          <span class="ou-accordion-label">Über / Unter</span>
+          ${valueBadge}
+          <span class="ou-count">${ouSigs.length} Wetten</span>
+          <span class="ou-chevron">›</span>
+        </div>
+        <div class="ou-accordion-body">${ouSigs.map(sigCard).join('')}</div>
+      </div>`;
+    }
+  }
 
   if (sport === 'football') cards += squadSection(dh, da);
 
