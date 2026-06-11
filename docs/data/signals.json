@@ -1873,5 +1873,72 @@
       "p_btts_yes": 0.348,
       "p_btts_no": 0.652
     }
-  }
+  },
+  "open_bets": [
+    {
+      "match": "England vs Croatia",
+      "home": "England",
+      "away": "Croatia",
+      "market": "o/u2.5_under",
+      "entry_odds": 1.79,
+      "current_odds": null,
+      "drift_pct": null,
+      "clv_signal": null,
+      "stake": 15.0,
+      "match_date": "2026-06-17",
+      "model_edge_pct": null
+    },
+    {
+      "match": "Algeria vs Austria",
+      "home": "Algeria",
+      "away": "Austria",
+      "market": "home",
+      "entry_odds": 3.85,
+      "current_odds": 3.74,
+      "drift_pct": -2.9,
+      "clv_signal": "good",
+      "stake": 15.0,
+      "match_date": "2026-06-28",
+      "model_edge_pct": 91.1
+    },
+    {
+      "match": "Uruguay vs Cape Verde",
+      "home": "Uruguay",
+      "away": "Cape Verde",
+      "market": "draw",
+      "entry_odds": 4.75,
+      "current_odds": 4.47,
+      "drift_pct": -5.9,
+      "clv_signal": "good",
+      "stake": 15.0,
+      "match_date": "2026-06-21",
+      "model_edge_pct": 14.4
+    },
+    {
+      "match": "Turkey vs Paraguay",
+      "home": "Turkey",
+      "away": "Paraguay",
+      "market": "away",
+      "entry_odds": 3.6,
+      "current_odds": 3.42,
+      "drift_pct": -5.0,
+      "clv_signal": "good",
+      "stake": 15.0,
+      "match_date": "2026-06-20",
+      "model_edge_pct": 35.4
+    },
+    {
+      "match": "Switzerland vs Canada",
+      "home": "Switzerland",
+      "away": "Canada",
+      "market": "away",
+      "entry_odds": 3.69,
+      "current_odds": 3.44,
+      "drift_pct": -6.8,
+      "clv_signal": "good",
+      "stake": 15.0,
+      "match_date": "2026-06-24",
+      "model_edge_pct": 4.2
+    }
+  ]
 }
