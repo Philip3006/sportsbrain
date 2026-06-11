@@ -403,9 +403,6 @@
     <span class="ni">📋</span><span class="nl">Wetten</span>
     <span class="nav-badge" id="badge-bets"></span>
   </div>
-  <div class="nav-tab" data-view="squads" onclick="navTo(this)">
-    <span class="ni">👥</span><span class="nl">Kader</span>
-  </div>
 </nav>
 
 <script>
@@ -481,6 +478,8 @@ function openMatch(displayKey) {
   cards += sigs.length
     ? sigs.map(sigCard).join('')
     : `<div class="empty"><div class="icon">📊</div><div>Kein Value Bet gefunden.<br><small>Unser Modell sieht hier keinen Vorteil.</small></div></div>`;
+
+  if (sport === 'football') cards += squadSection(dh, da);
 
   document.getElementById('detail-cards').innerHTML = cards;
   showView('detail');
@@ -1281,6 +1280,73 @@ function renderStandings() {
     </div>`;
   }
   c.innerHTML = html;
+}
+
+// ── Squad section for match detail ───────────────────────────
+function squadSection(home, away) {
+  if (!Object.keys(_squads).length) return '';
+  const posLabels = {GK:'TW',DEF:'ABW',MID:'MIT',FWD:'STU'};
+
+  function teamBlock(teamName) {
+    // Fuzzy match team name
+    const key = Object.keys(_squads).find(k =>
+      k.toLowerCase() === teamName.toLowerCase() ||
+      k.toLowerCase().includes(teamName.toLowerCase()) ||
+      teamName.toLowerCase().includes(k.toLowerCase())
+    );
+    if (!key) return '';
+    const d = _squads[key];
+    const players = (d.players || []).slice().sort((a,b) => {
+      const po = {GK:0,DEF:1,MID:2,FWD:3};
+      return (po[a.pos]??9) - (po[b.pos]??9);
+    });
+    const injured = players.filter(p => p.status !== 'fit');
+    const susp = d.suspended || [];
+    let rows = '';
+    let lastPos = '';
+    for (const p of players) {
+      if (p.status !== 'fit' || susp.includes(p.name)) {
+        if (p.pos !== lastPos) {
+          rows += `<div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;padding:6px 12px 3px;border-bottom:1px solid rgba(48,54,61,.3)">${esc(posLabels[p.pos]||p.pos)}</div>`;
+          lastPos = p.pos;
+        }
+        const sc = p.status === 'injured' ? 'status-injured' : p.status === 'suspended' ? 'status-suspended' : 'status-doubtful';
+        const sl = p.status === 'injured' ? '🤕' : p.status === 'suspended' ? '🟡' : '❓';
+        rows += `<div class="squad-player-row" style="padding:7px 12px">
+          <span class="squad-player-pos">${esc(p.pos||'')}</span>
+          <span class="squad-player-name">${esc(p.name)}</span>
+          <span class="squad-player-status ${sc}">${sl} ${p.status}</span>
+        </div>`;
+      }
+    }
+    for (const s of susp) {
+      rows += `<div class="squad-player-row" style="padding:7px 12px">
+        <span class="squad-player-pos">—</span>
+        <span class="squad-player-name">${esc(s)}</span>
+        <span class="squad-player-status status-suspended">🟡 suspended</span>
+      </div>`;
+    }
+    const statusLine = injured.length > 0 || susp.length > 0
+      ? `<span style="color:var(--red);font-size:11px">${injured.length + susp.length} Ausfall${injured.length + susp.length !== 1 ? 'e' : ''}</span>`
+      : `<span style="color:var(--green);font-size:11px">Kein Ausfall ${d.ampel||'🟢'}</span>`;
+    return `<div style="flex:1;min-width:0">
+      <div style="font-size:12px;font-weight:800;padding:0 0 5px">${esc(key)} ${statusLine}</div>
+      ${rows || `<div style="font-size:11px;color:var(--muted);padding:6px 0">Alle fit 🟢</div>`}
+    </div>`;
+  }
+
+  const homeBlock = teamBlock(home);
+  const awayBlock = teamBlock(away);
+  if (!homeBlock && !awayBlock) return '';
+
+  return `<div style="margin-top:4px">
+    <div class="section-title" style="padding-top:4px">👥 Kader & Ausfälle</div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:flex-start">
+      ${homeBlock}
+      <div style="width:1px;background:var(--border);align-self:stretch"></div>
+      ${awayBlock}
+    </div>
+  </div>`;
 }
 
 // ── Squads ───────────────────────────────────────────────────

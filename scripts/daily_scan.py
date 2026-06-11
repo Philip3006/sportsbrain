@@ -217,16 +217,6 @@ if __name__ == "__main__":
                 })
     except Exception:
         _odds_hist_for_dashboard = {}
-        # Fall back to match_contexts odds if API unavailable
-        all_odds = {
-            f"{ctx['home']} vs {ctx['away']}": {
-                "home": round(ctx.get("odds_home", 0), 2),
-                "draw": round(ctx.get("odds_draw", 0), 2),
-                "away": round(ctx.get("odds_away", 0), 2),
-            }
-            for ctx in _match_contexts.values()
-            if ctx.get("odds_home", 0) > 1.0
-        }
     # Build DC model tips for all schedule games (win/draw/loss probs + xG)
     model_tips = {}
     try:
