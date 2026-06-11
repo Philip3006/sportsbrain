@@ -426,7 +426,7 @@ def _cmd_scan() -> tuple[str, dict]:
             # Fallback: build simple text if alert couldn't be sent
             lines = ["<b>Tages-Scan</b>\n" + _line()]
             for s in signals[:3]:
-                b365 = f"Bet365: {s.b365_odds:.2f}" if s.b365_odds > 1.0 else f"Kurs: {s.decimal_odds:.2f}"
+                b365 = f"Pinnacle: {s.b365_odds:.2f}" if s.b365_odds > 1.0 else f"Kurs: {s.decimal_odds:.2f}"
                 lines.append(
                     f"<b>{s.home} vs {s.away}</b>\n"
                     f"{_market_label(s.market, s.home, s.away)}\n"

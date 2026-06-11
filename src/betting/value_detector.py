@@ -21,7 +21,7 @@ class BetSignal:
     stake_pct: float     # stake_eur / bankroll (for ledger / % display)
     confidence: str      # "HIGH" if both DC and LightGBM agree, else "MEDIUM"
     stake_eur: float = 0.0    # absolute stake in EUR
-    b365_odds: float = 0.0    # Bet365-specific quote (0 = not available)
+    b365_odds: float = 0.0    # Pinnacle reference quote (0 = not available)
     elo_prob: float = 0.0     # Elo win probability for the bet's outcome (0 = not computed)
     n_models_agree: int = 0   # how many of [DC, Elo, LGBM] see value (0–3); 0 = not computed / non-1X2 market
 

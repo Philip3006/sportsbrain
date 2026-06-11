@@ -629,21 +629,21 @@ def run_daily_scan(
         # Filter out signals with unrealistically high EV (model artifact)
         signals = [s for s in signals if s.ev <= MAX_EV]
 
-        # Attach Bet365-specific odds to each signal for display
+        # Attach Pinnacle-specific odds to each signal for display/CLV
         b365_map = {
-            "home":          float(match.get("b365_home", 0)),
-            "draw":          float(match.get("b365_draw", 0)),
-            "away":          float(match.get("b365_away", 0)),
-            "o/u2.5_over":   float(match.get("b365_over", 0)),
-            "o/u2.5_under":  float(match.get("b365_under", 0)),
-            "ah-0.5_home":   float(match.get("b365_ah_home", 0)),
-            "ah+0.5_away":   float(match.get("b365_ah_away", 0)),
-            "ah-1.0_home":   float(match.get("b365_ah1_home", 0)),
-            "ah+1.0_away":   float(match.get("b365_ah1_away", 0)),
-            "ah-1.5_home":   float(match.get("b365_ah15_home", 0)),
-            "ah+1.5_away":   float(match.get("b365_ah15_away", 0)),
-            "btts_yes":      float(match.get("b365_btts_yes", 0)),
-            "btts_no":       float(match.get("b365_btts_no", 0)),
+            "home":          float(match.get("pin_home", 0)),
+            "draw":          float(match.get("pin_draw", 0)),
+            "away":          float(match.get("pin_away", 0)),
+            "o/u2.5_over":   float(match.get("pin_over", 0)),
+            "o/u2.5_under":  float(match.get("pin_under", 0)),
+            "ah-0.5_home":   float(match.get("pin_ah_home", 0)),
+            "ah+0.5_away":   float(match.get("pin_ah_away", 0)),
+            "ah-1.0_home":   float(match.get("pin_ah1_home", 0)),
+            "ah+1.0_away":   float(match.get("pin_ah1_away", 0)),
+            "ah-1.5_home":   float(match.get("pin_ah15_home", 0)),
+            "ah+1.5_away":   float(match.get("pin_ah15_away", 0)),
+            "btts_yes":      float(match.get("pin_btts_yes", 0)),
+            "btts_no":       float(match.get("pin_btts_no", 0)),
             "o/u1.5_over":   float(match.get("over15_odds", 0)),
             "o/u1.5_under":  float(match.get("under15_odds", 0)),
             "o/u3.5_over":   float(match.get("over35_odds", 0)),
