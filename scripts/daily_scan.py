@@ -133,17 +133,26 @@ if __name__ == "__main__":
         if _r.ok:
             for _m in _r.json():
                 _home, _away = _m["home_team"], _m["away_team"]
-                _bk = next((b for b in _m.get("bookmakers", []) if "bet365" in b["key"]), None)
-                if not _bk and _m.get("bookmakers"):
-                    _bk = _m["bookmakers"][0]
+                _bks = _m.get("bookmakers", [])
+                # Prefer Pinnacle (sharpest line, tracks Bet365 closely); never use Marathonbet
+                _BLACKLIST = {"marathonbet"}
+                _PRIORITY = ["pinnacle", "betfair_ex_eu", "williamhill", "coolbet"]
+                _bk = None
+                for _pref in _PRIORITY:
+                    _bk = next((b for b in _bks if b["key"] == _pref), None)
+                    if _bk:
+                        break
+                if not _bk:
+                    _bk = next((b for b in _bks if b["key"] not in _BLACKLIST), None)
                 if not _bk:
                     continue
                 _oc = {o["name"]: o["price"] for o in _bk["markets"][0]["outcomes"]}
-                all_odds[f"{_home} vs {_away}"] = {
-                    "home": round(_oc.get(_home, 0), 2),
-                    "draw": round(_oc.get("Draw", 0), 2),
-                    "away": round(_oc.get(_away, 0), 2),
-                }
+                _h = round(_oc.get(_home, 0), 2)
+                _d = round(_oc.get("Draw", 0), 2)
+                _a = round(_oc.get(_away, 0), 2)
+                if _d > 0 and _d < 1.5:  # sanity check — draw < 1.5 is always wrong
+                    continue
+                all_odds[f"{_home} vs {_away}"] = {"home": _h, "draw": _d, "away": _a}
             print(f"  Odds API: {len(all_odds)} matches with real bookmaker odds")
     except Exception as _e:
         print(f"  Odds API fetch failed: {_e} — keeping existing odds")
