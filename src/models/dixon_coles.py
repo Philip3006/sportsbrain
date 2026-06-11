@@ -454,6 +454,17 @@ def predict_btts(
     return {"p_btts_yes": p_yes, "p_btts_no": float(1.0 - p_yes)}
 
 
+def predict_xg(
+    home: str,
+    away: str,
+    params: DixonColesParams,
+    neutral: bool = False,
+) -> tuple[float, float]:
+    """Returns (xg_home, xg_away) — the Poisson goal rates for each team."""
+    lh, la = _lambdas(home, away, params, neutral)
+    return float(lh), float(la)
+
+
 def predict_first_scorer(
     home: str,
     away: str,

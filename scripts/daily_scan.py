@@ -157,12 +157,44 @@ if __name__ == "__main__":
             for ctx in _match_contexts.values()
             if ctx.get("odds_home", 0) > 1.0
         }
+    # Build DC model tips for all schedule games (win/draw/loss probs + xG)
+    model_tips = {}
+    try:
+        import os as _os2
+        from src.scanner.daily_scan import _load_latest_dc_params
+        from src.models.dixon_coles import predict_match, predict_xg
+        from src.config import canonical_name
+        _dc_params = _load_latest_dc_params()
+        if _dc_params:
+            for _g in schedule:
+                _h_raw, _a_raw = _g.get("home", ""), _g.get("away", "")
+                try:
+                    _h = canonical_name(_h_raw)
+                    _a = canonical_name(_a_raw)
+                    _probs = predict_match(_h, _a, _dc_params, neutral=True)
+                    _xgh, _xga = predict_xg(_h, _a, _dc_params, neutral=True)
+                    model_tips[f"{_h_raw} vs {_a_raw}"] = {
+                        "p_home": round(_probs["p_home"], 3),
+                        "p_draw": round(_probs["p_draw"], 3),
+                        "p_away": round(_probs["p_away"], 3),
+                        "xg_home": round(_xgh, 2),
+                        "xg_away": round(_xga, 2),
+                    }
+                except Exception:
+                    pass
+            print(f"  Model tips: {len(model_tips)} matches computed")
+        else:
+            print("  Model tips: no DC params found — skipping")
+    except Exception as _e:
+        print(f"  Model tips failed: {_e}")
+
     write_signals_json(
         football=all_signals,
         portfolio=portfolio,
         kickoff_map=kickoff_map,
         schedule=schedule,
         all_odds=all_odds,
+        model_tips=model_tips if model_tips else None,
     )
     print("Dashboard: docs/data/signals.json updated.")
 
