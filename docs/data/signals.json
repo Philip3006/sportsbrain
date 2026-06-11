@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-11T19:34:49Z",
+  "updated": "2026-06-11T20:49:04Z",
   "schedule": [
     {
       "sport": "football",
@@ -435,17 +435,10 @@
     }
   ],
   "all_odds": {
-    "Mexico vs South Africa": {
-      "home": 1.13,
-      "draw": 7.61,
-      "away": 44.4,
-      "over25": 0.0,
-      "under25": 0.0
-    },
     "South Korea vs Czech Republic": {
-      "home": 2.72,
+      "home": 2.63,
       "draw": 3.1,
-      "away": 3.02,
+      "away": 3.13,
       "over25": 0.0,
       "under25": 0.0
     },
@@ -457,9 +450,9 @@
       "under25": 0.0
     },
     "USA vs Paraguay": {
-      "home": 1.94,
+      "home": 1.93,
       "draw": 3.53,
-      "away": 4.23,
+      "away": 4.26,
       "over25": 0.0,
       "under25": 0.0
     },
@@ -604,9 +597,9 @@
       "under25": 1.91
     },
     "Czech Republic vs South Africa": {
-      "home": 1.74,
-      "draw": 3.56,
-      "away": 4.68,
+      "home": 1.69,
+      "draw": 3.64,
+      "away": 4.83,
       "over25": 0.0,
       "under25": 0.0
     },
@@ -668,8 +661,8 @@
     },
     "Ecuador vs Curaçao": {
       "home": 1.18,
-      "draw": 7.08,
-      "away": 11.55,
+      "draw": 7.15,
+      "away": 11.69,
       "over25": 0.0,
       "under25": 0.0
     },
@@ -800,9 +793,9 @@
       "under25": 0.0
     },
     "South Africa vs South Korea": {
-      "home": 4.64,
-      "draw": 3.61,
-      "away": 1.72,
+      "home": 4.9,
+      "draw": 3.73,
+      "away": 1.67,
       "over25": 0.0,
       "under25": 0.0
     },
@@ -1697,25 +1690,388 @@
   "football": [
     {
       "sport": "football",
-      "match": "United States vs Mexico",
+      "match": "Colombia vs Portugal",
       "market": "o/u2.25_over",
-      "odds": 1.93,
-      "model_prob": 71.0,
-      "ev_pct": 26.6,
+      "odds": 1.85,
+      "model_prob": 79.1,
+      "ev_pct": 38.6,
       "stake_eur": 15.0,
       "confidence": "HIGH",
-      "kickoff": "2026-06-15T20:00:00Z"
+      "kickoff": "2026-06-27T23:30:00Z"
     },
     {
       "sport": "football",
-      "match": "United States vs Mexico",
-      "market": "dc_x2",
-      "odds": 1.72,
-      "model_prob": 66.7,
-      "ev_pct": 14.6,
-      "stake_eur": 13.04,
+      "match": "England vs Croatia",
+      "market": "o/u2.25_under",
+      "odds": 1.97,
+      "model_prob": 63.5,
+      "ev_pct": 38.4,
+      "stake_eur": 15.0,
       "confidence": "HIGH",
-      "kickoff": "2026-06-15T20:00:00Z"
+      "kickoff": "2026-06-17T20:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Cote d'Ivoire vs Ecuador",
+      "market": "o/u1.75_under",
+      "odds": 2.09,
+      "model_prob": 66.2,
+      "ev_pct": 38.3,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-14T23:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Algeria vs Austria",
+      "market": "home",
+      "odds": 3.85,
+      "model_prob": 35.7,
+      "ev_pct": 37.4,
+      "stake_eur": 15.0,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-28T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Uruguay vs Cape Verde",
+      "market": "draw",
+      "odds": 4.75,
+      "model_prob": 28.8,
+      "ev_pct": 36.6,
+      "stake_eur": 15.0,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-21T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Algeria vs Austria",
+      "market": "o/u2.25_under",
+      "odds": 1.98,
+      "model_prob": 61.5,
+      "ev_pct": 35.4,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-28T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Iran vs New Zealand",
+      "market": "o/u2.25_over",
+      "odds": 2.07,
+      "model_prob": 70.8,
+      "ev_pct": 34.6,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-16T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "New Zealand vs Egypt",
+      "market": "ah+0.75_away",
+      "odds": 1.98,
+      "model_prob": 48.5,
+      "ev_pct": 33.6,
+      "stake_eur": 15.0,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-22T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Switzerland vs Canada",
+      "market": "away",
+      "odds": 3.69,
+      "model_prob": 36.1,
+      "ev_pct": 33.2,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-24T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Turkey vs Paraguay",
+      "market": "away",
+      "odds": 3.55,
+      "model_prob": 37.5,
+      "ev_pct": 33.1,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-20T03:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Egypt vs Iran",
+      "market": "o/u2.0_under",
+      "odds": 1.88,
+      "model_prob": 57.0,
+      "ev_pct": 32.5,
+      "stake_eur": 15.0,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-27T03:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Argentina vs Austria",
+      "market": "o/u2.5_under",
+      "odds": 1.92,
+      "model_prob": 67.9,
+      "ev_pct": 30.3,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-22T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Netherlands vs Sweden",
+      "market": "ah-1.5_home",
+      "odds": 2.81,
+      "model_prob": 46.2,
+      "ev_pct": 29.9,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-20T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Cote d'Ivoire vs Ecuador",
+      "market": "ah-0.5_away",
+      "odds": 2.45,
+      "model_prob": 52.7,
+      "ev_pct": 29.2,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-14T23:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Netherlands vs Sweden",
+      "market": "o/u2.5_over",
+      "odds": 1.97,
+      "model_prob": 65.5,
+      "ev_pct": 29.0,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-20T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Uruguay vs Cape Verde",
+      "market": "o/u2.5_under",
+      "odds": 1.94,
+      "model_prob": 65.3,
+      "ev_pct": 26.7,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-21T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Canada vs Bosnia and Herzegovina",
+      "market": "ah-0.5_home",
+      "odds": 1.9,
+      "model_prob": 65.6,
+      "ev_pct": 24.7,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-12T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "South Korea vs Czechia",
+      "market": "o/u1.5_over",
+      "odds": 1.4,
+      "model_prob": 88.6,
+      "ev_pct": 24.0,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-12T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "South Korea vs Czechia",
+      "market": "home",
+      "odds": 2.72,
+      "model_prob": 45.3,
+      "ev_pct": 23.2,
+      "stake_eur": 15.0,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-12T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "DR Congo vs Uzbekistan",
+      "market": "ah+0.5_away",
+      "odds": 1.6,
+      "model_prob": 77.0,
+      "ev_pct": 23.2,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-27T23:30:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Turkey vs Paraguay",
+      "market": "o/u2.0_under",
+      "odds": 2.08,
+      "model_prob": 44.9,
+      "ev_pct": 21.4,
+      "stake_eur": 15.0,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-20T03:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Switzerland vs Canada",
+      "market": "o/u2.25_under",
+      "odds": 1.96,
+      "model_prob": 54.6,
+      "ev_pct": 21.1,
+      "stake_eur": 15.0,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-24T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Switzerland vs Bosnia and Herzegovina",
+      "market": "ah-1.5_home",
+      "odds": 2.7,
+      "model_prob": 44.8,
+      "ev_pct": 20.9,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-18T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Scotland vs Brazil",
+      "market": "o/u2.5_under",
+      "odds": 2.0,
+      "model_prob": 59.9,
+      "ev_pct": 19.8,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-24T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Turkey vs United States",
+      "market": "o/u2.5_under",
+      "odds": 1.94,
+      "model_prob": 61.7,
+      "ev_pct": 19.8,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-26T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Argentina vs Austria",
+      "market": "ah-1.5_home",
+      "odds": 2.84,
+      "model_prob": 41.9,
+      "ev_pct": 19.0,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-22T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Norway vs France",
+      "market": "o/u2.5_over",
+      "odds": 1.99,
+      "model_prob": 58.8,
+      "ev_pct": 17.1,
+      "stake_eur": 14.59,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-26T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "England vs Croatia",
+      "market": "ah-0.75_home",
+      "odds": 2.02,
+      "model_prob": 34.4,
+      "ev_pct": 16.4,
+      "stake_eur": 12.9,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-17T20:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Scotland vs Brazil",
+      "market": "ah+1.25_home",
+      "odds": 1.86,
+      "model_prob": 42.8,
+      "ev_pct": 16.3,
+      "stake_eur": 12.85,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-24T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Norway vs France",
+      "market": "draw",
+      "odds": 3.75,
+      "model_prob": 30.5,
+      "ev_pct": 14.5,
+      "stake_eur": 11.77,
+      "confidence": "LOW",
+      "kickoff": "2026-06-26T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Egypt vs Iran",
+      "market": "ah+0.5_away",
+      "odds": 1.64,
+      "model_prob": 66.8,
+      "ev_pct": 9.5,
+      "stake_eur": 8.83,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-27T03:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Iran vs New Zealand",
+      "market": "home",
+      "odds": 1.89,
+      "model_prob": 57.9,
+      "ev_pct": 9.5,
+      "stake_eur": 9.69,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-16T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Turkey vs United States",
+      "market": "draw",
+      "odds": 3.63,
+      "model_prob": 29.5,
+      "ev_pct": 7.1,
+      "stake_eur": 7.42,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-26T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Canada vs Bosnia and Herzegovina",
+      "market": "o/u2.25_under",
+      "odds": 1.93,
+      "model_prob": 48.1,
+      "ev_pct": 6.7,
+      "stake_eur": 7.16,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-12T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "New Zealand vs Egypt",
+      "market": "o/u2.5_over",
+      "odds": 2.32,
+      "model_prob": 45.6,
+      "ev_pct": 5.7,
+      "stake_eur": 6.61,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-22T01:00:00Z"
     }
   ],
   "tennis": [
@@ -1839,12 +2195,12 @@
       "away": "Austria",
       "market": "home",
       "entry_odds": 3.85,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
+      "current_odds": 3.74,
+      "drift_pct": -2.9,
+      "clv_signal": "good",
       "stake": 15.0,
       "match_date": "2026-06-28",
-      "model_edge_pct": null
+      "model_edge_pct": 91.1
     },
     {
       "match": "Uruguay vs Cape Verde",
@@ -1852,12 +2208,12 @@
       "away": "Cape Verde",
       "market": "draw",
       "entry_odds": 4.75,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
+      "current_odds": 4.55,
+      "drift_pct": -4.2,
+      "clv_signal": "good",
       "stake": 15.0,
       "match_date": "2026-06-21",
-      "model_edge_pct": null
+      "model_edge_pct": 16.5
     },
     {
       "match": "Turkey vs Paraguay",
@@ -1865,12 +2221,12 @@
       "away": "Paraguay",
       "market": "away",
       "entry_odds": 3.6,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
+      "current_odds": 3.42,
+      "drift_pct": -5.0,
+      "clv_signal": "good",
       "stake": 15.0,
       "match_date": "2026-06-20",
-      "model_edge_pct": null
+      "model_edge_pct": 35.4
     },
     {
       "match": "Switzerland vs Canada",
@@ -1878,12 +2234,12 @@
       "away": "Canada",
       "market": "away",
       "entry_odds": 3.69,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
+      "current_odds": 3.44,
+      "drift_pct": -6.8,
+      "clv_signal": "good",
       "stake": 15.0,
       "match_date": "2026-06-24",
-      "model_edge_pct": null
+      "model_edge_pct": 4.2
     }
   ],
   "bankroll_state": {
@@ -1891,7 +2247,7 @@
     "free": 25.0,
     "staked": 75.0,
     "exposure_pct": 75.0,
-    "max_win": 190.2,
+    "max_win": 179.1,
     "pnl_closed": 0
   },
   "wm_stats": {
@@ -1936,5 +2292,6 @@
       }
     ]
   },
-  "odds_history": {}
+  "odds_history": {},
+  "wm_results": []
 }

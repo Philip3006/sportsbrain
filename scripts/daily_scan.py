@@ -54,6 +54,8 @@ def _confirm_bets(selected_signals: list, bankroll: float) -> list:
     return confirmed
 
 
+ROOT = Path(__file__).parent.parent
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="SportsBrain daily value scan")
     parser.add_argument("--bankroll", type=float, default=100.0, help="Bankroll in EUR")
@@ -120,7 +122,14 @@ if __name__ == "__main__":
         ]
     # Build all_odds from real Odds API data (all 72 WM matches available)
     # Prefer Bet365, fall back to first available bookmaker. Never use DC model for display odds.
+    # Seed all_odds from existing signals.json so API failures don't wipe them
     all_odds = {}
+    try:
+        import json as _json0
+        _existing_sig = _json0.loads((ROOT / "docs" / "data" / "signals.json").read_text()) if (ROOT / "docs" / "data" / "signals.json").exists() else {}
+        all_odds = _existing_sig.get("all_odds", {})
+    except Exception:
+        pass
     try:
         import os as _os
         _api_key = _os.getenv("ODDS_API_KEY", "")
