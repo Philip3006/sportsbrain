@@ -506,9 +506,6 @@ const TEAM_ALIASES = {
   'czechia': 'czech republic',
   'united states': 'usa',
   "cote d'ivoire": 'ivory coast',
-  'ivory coast': "cote d'ivoire",
-  'bosnia and herzegovina': 'bosnia & herzegovina',
-  'bosnia & herzegovina': 'bosnia and herzegovina',
 };
 const COUNTRY_FLAGS = {
   'Mexico':'🇲🇽','South Africa':'🇿🇦','South Korea':'🇰🇷','Czechia':'🇨🇿','Czech Republic':'🇨🇿',
@@ -532,7 +529,7 @@ const COUNTRY_FLAGS = {
 };
 function teamFlag(name) { return COUNTRY_FLAGS[name] || ''; }
 function normTeam(name) {
-  return name.toLowerCase().replace(/[^a-z0-9 ']/g, '').trim();
+  return name.toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9 ']/g,'').replace(/\s+/g,' ').trim();
 }
 function matchKey(a, b) {
   const na = normTeam(a), nb = normTeam(b);
