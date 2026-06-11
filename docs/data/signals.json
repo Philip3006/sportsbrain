@@ -2230,5 +2230,47 @@
     "exposure_pct": 75.0,
     "max_win": 190.2,
     "pnl_closed": 0
+  },
+  "wm_stats": {
+    "stats": {
+      "1x2": {
+        "n": 0,
+        "won": 0,
+        "staked": 0.0,
+        "pnl": 0.0,
+        "hit_rate": null,
+        "roi": null
+      },
+      "ou25": {
+        "n": 0,
+        "won": 0,
+        "staked": 0.0,
+        "pnl": 0.0,
+        "hit_rate": null,
+        "roi": null
+      },
+      "btts": {
+        "n": 0,
+        "won": 0,
+        "staked": 0.0,
+        "pnl": 0.0,
+        "hit_rate": null,
+        "roi": null
+      },
+      "other": {
+        "n": 0,
+        "won": 0,
+        "staked": 0.0,
+        "pnl": 0.0,
+        "hit_rate": null,
+        "roi": null
+      }
+    },
+    "series": [
+      {
+        "date": "2026-06-11",
+        "balance": 100.0
+      }
+    ]
   }
 }

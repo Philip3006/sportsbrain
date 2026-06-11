@@ -233,6 +233,21 @@
     .radar-title { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
     .radar-count { font-size: 10px; font-weight: 800; background: var(--green); color: #000; border-radius: 8px; padding: 1px 5px; }
 
+    /* ── WM Stats ── */
+    .wm-stats-wrap { padding: 12px 16px 4px; }
+    .wm-sparkline { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+    .sparkline-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .sparkline-title { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .sparkline-delta { font-size: 18px; font-weight: 900; }
+    .sparkline-svg { width: 100%; display: block; }
+    .stats-table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+    .stats-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .stats-table th { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--border); }
+    .stats-table th:first-child { text-align: left; }
+    .stats-table td { padding: 9px 10px; text-align: right; border-bottom: 1px solid rgba(48,54,61,.4); font-weight: 700; }
+    .stats-table td:first-child { text-align: left; color: var(--muted); font-weight: 600; }
+    .stats-table tr:last-child td { border-bottom: none; }
+
     /* ── Bottom nav ── */
     .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg); border-top: 2px solid var(--green); display: flex; padding-bottom: max(env(safe-area-inset-bottom), 10px); z-index: 100; }
     .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 2px 9px; gap: 4px; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; min-height: 66px; }
@@ -309,6 +324,7 @@
 
   <section id="view-journal" class="view">
     <div class="section-title">P&amp;L Verlauf</div>
+    <div id="wm-stats-container" style="padding:0 0 4px"></div>
     <div id="journal-container">
       <div class="empty"><div class="icon">📭</div><div>Noch keine abgeschlossenen Wetten.</div></div>
     </div>
@@ -943,6 +959,67 @@ function renderSport(sport) {
   c.innerHTML = h;
 }
 
+// ── WM Stats (Sparkline + Trefferquoten) ─────────────────────
+let _wmStats = {};
+
+function renderJournalStats(wmStats) {
+  const wrap = document.getElementById('wm-stats-container');
+  if (!wrap) return;
+
+  const series = (wmStats.series || []);
+  const stats = wmStats.stats || {};
+
+  // Sparkline SVG
+  let sparkHtml = '';
+  if (series.length >= 2) {
+    const balances = series.map(p => p.balance);
+    const minB = Math.min(...balances), maxB = Math.max(...balances);
+    const range = maxB - minB || 1;
+    const W = 280, H = 60, pad = 4;
+    const pts = series.map((p, i) => {
+      const x = pad + (i / (series.length - 1)) * (W - 2*pad);
+      const y = H - pad - ((p.balance - minB) / range) * (H - 2*pad);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    const last = balances[balances.length - 1];
+    const delta = last - 100;
+    const deltaStr = (delta >= 0 ? '+' : '') + delta.toFixed(2) + '€';
+    const lineColor = delta >= 0 ? 'var(--green)' : 'var(--red)';
+    const lastPt = pts.split(' ').pop().split(',');
+    sparkHtml = `<div class="wm-sparkline">
+      <div class="sparkline-header">
+        <span class="sparkline-title">Bankroll-Verlauf WM 2026</span>
+        <span class="sparkline-delta" style="color:${lineColor}">${deltaStr}</span>
+      </div>
+      <svg class="sparkline-svg" viewBox="0 0 ${W} ${H}" height="60">
+        <polyline points="${pts}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="${parseFloat(lastPt[0])}" cy="${parseFloat(lastPt[1])}" r="3" fill="${lineColor}"/>
+      </svg>
+      <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:4px">Start €100 · Aktuell €${last.toFixed(2)}</div>
+    </div>`;
+  }
+
+  // Stats-Tabelle
+  const rows = [
+    ['1X2', stats['1x2']],
+    ['Über/Unter', stats['ou25']],
+    ['BTTS', stats['btts']],
+  ].filter(([_, d]) => d && d.n > 0).map(([label, d]) =>
+    `<tr><td>${label}</td><td>${d.n}</td><td>${d.won}/${d.n}</td><td>${d.hit_rate != null ? d.hit_rate : '—'}%</td><td style="color:${d.pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${d.pnl >= 0 ? '+' : ''}${d.pnl != null ? d.pnl.toFixed(2) : '0.00'}€</td></tr>`
+  ).join('');
+
+  const tableHtml = rows ? `<div class="stats-table-wrap" style="margin:0 16px 10px">
+    <table class="stats-table">
+      <thead><tr><th>Markt</th><th style="text-align:right">Wetten</th><th style="text-align:right">Treffer</th><th style="text-align:right">Hit-%</th><th style="text-align:right">P&amp;L</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>` : '';
+
+  wrap.innerHTML = (sparkHtml || tableHtml)
+    ? `<div style="padding:12px 16px 4px">${sparkHtml}</div>${tableHtml}`
+    : '';
+}
+
 // ── Render Journal ───────────────────────────────────────────
 function renderJournal(history) {
   const c = document.getElementById('journal-container');
@@ -1092,9 +1169,11 @@ async function _load() {
   const setBBets = document.getElementById('badge-bets');
   if (setBBets) { setBBets.textContent = _openBets.length; setBBets.classList.toggle('show', _openBets.length > 0); }
 
+  _wmStats = d.wm_stats || {};
   renderHome();
   renderSport('football');
   renderSport('tennis');
+  renderJournalStats(_wmStats);
   renderJournal(d.history || []);
   renderBets();
   _updateClock();
