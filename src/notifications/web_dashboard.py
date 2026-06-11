@@ -69,6 +69,55 @@ def _signal_to_dict(
     return d
 
 
+def _build_wm_stats() -> dict:
+    """Aggregiert WM-Performance-Stats aus dem Ledger."""
+    if not _LEDGER_PATH.exists():
+        return {}
+    try:
+        stats = {
+            "1x2":   {"n": 0, "won": 0, "staked": 0.0, "pnl": 0.0},
+            "ou25":  {"n": 0, "won": 0, "staked": 0.0, "pnl": 0.0},
+            "btts":  {"n": 0, "won": 0, "staked": 0.0, "pnl": 0.0},
+            "other": {"n": 0, "won": 0, "staked": 0.0, "pnl": 0.0},
+        }
+        bankroll_series = [{"date": "2026-06-11", "balance": 100.0}]
+        balance = 100.0
+        with open(_LEDGER_PATH, newline="") as f:
+            for row in sorted(csv.DictReader(f), key=lambda r: r.get("match_date", "")):
+                status = row.get("status", "")
+                if status not in ("won", "lost", "push"):
+                    continue
+                mkt = row.get("market", "")
+                stake = float(row.get("stake_amount", 0))
+                pnl = float(row.get("pnl", 0))
+                date = row.get("match_date", "")[:10]
+                # Marktgruppe
+                if mkt in ("home", "draw", "away"):
+                    grp = "1x2"
+                elif "o/u2.5" in mkt or "o/u1.5" in mkt or "o/u3.5" in mkt:
+                    grp = "ou25"
+                elif "btts" in mkt:
+                    grp = "btts"
+                else:
+                    grp = "other"
+                stats[grp]["n"] += 1
+                stats[grp]["won"] += 1 if status == "won" else 0
+                stats[grp]["staked"] += stake
+                stats[grp]["pnl"] += pnl
+                balance += pnl
+                bankroll_series.append({"date": date, "balance": round(balance, 2)})
+        # Compute hit-rates
+        for grp in stats:
+            d = stats[grp]
+            d["hit_rate"] = round(d["won"] / d["n"] * 100, 1) if d["n"] > 0 else None
+            d["roi"] = round(d["pnl"] / d["staked"] * 100, 1) if d["staked"] > 0 else None
+            d["staked"] = round(d["staked"], 2)
+            d["pnl"] = round(d["pnl"], 2)
+        return {"stats": stats, "series": bankroll_series}
+    except Exception:
+        return {}
+
+
 def _get_closed_bets() -> list[dict]:
     if not _LEDGER_PATH.exists():
         return []
@@ -181,6 +230,7 @@ def write_signals_json(
             "max_win":      round(_max_win, 2),
             "pnl_closed":   round(_pnl_closed, 2),
         },
+        "wm_stats": _build_wm_stats(),
     }
 
     _JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
