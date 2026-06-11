@@ -214,6 +214,25 @@
     .today-live-badge { font-size: 10px; font-weight: 900; background: var(--red); color: #fff; border-radius: 4px; padding: 1px 5px; animation: pulse 1.5s infinite; }
     .last-call-badge { font-size: 10px; font-weight: 900; background: rgba(210,153,34,.2); border: 1px solid var(--yellow); color: var(--yellow); border-radius: 4px; padding: 1px 6px; }
 
+    /* ── Value-Radar ── */
+    .radar-strip { padding: 10px 0 4px; border-bottom: 1px solid rgba(255,255,255,.06); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .radar-strip::-webkit-scrollbar { display: none; }
+    .radar-inner { display: flex; gap: 10px; padding: 0 12px; width: max-content; }
+    .radar-empty { padding: 10px 16px; font-size: 12px; color: var(--muted); }
+    .radar-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 11px 13px; min-width: 160px; max-width: 160px; cursor: pointer; -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
+    .radar-card:active { opacity: .8; }
+    .radar-card.ev-high { border-top: 2px solid var(--green); }
+    .radar-card.ev-mid  { border-top: 2px solid var(--yellow); }
+    .radar-ev { font-size: 20px; font-weight: 900; margin-bottom: 4px; }
+    .radar-ev.ev-high { color: var(--green); }
+    .radar-ev.ev-mid  { color: var(--yellow); }
+    .radar-market { font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+    .radar-match { font-size: 12px; font-weight: 800; color: var(--text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .radar-meta { font-size: 10px; color: var(--muted); display: flex; justify-content: space-between; }
+    .radar-header { padding: 6px 16px 2px; display: flex; align-items: center; gap: 6px; }
+    .radar-title { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
+    .radar-count { font-size: 10px; font-weight: 800; background: var(--green); color: #000; border-radius: 8px; padding: 1px 5px; }
+
     /* ── Bottom nav ── */
     .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg); border-top: 2px solid var(--green); display: flex; padding-bottom: max(env(safe-area-inset-bottom), 10px); z-index: 100; }
     .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 2px 9px; gap: 4px; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; min-height: 66px; }
@@ -653,6 +672,58 @@ setInterval(_updateClock, 30000);
 
 function renderHome() {
   const c = document.getElementById('home-container');
+
+  // ── Value-Radar ──────────────────────────────────────────────
+  const now48 = Date.now() + 48 * 36e5;
+  const openMatchKeys = new Set((_openBets || []).map(b => {
+    const [bh, ba] = b.match.split(' vs ').map(x => x.trim());
+    return matchKey(bh, ba);
+  }));
+
+  // Filter signals: EV >= 3%, sport=football, kickoff in next 48h, not already bet
+  const radarSigs = (_signals || [])
+    .filter(s => {
+      if (s.sport !== 'football') return false;
+      if (s.ev_pct < 3) return false;
+      const [sh, sa] = s.match.split(' vs ').map(x => x.trim());
+      if (openMatchKeys.has(matchKey(sh, sa))) return false;
+      if (!s.kickoff) return false;
+      const ko = new Date(s.kickoff).getTime();
+      return ko > Date.now() && ko <= now48;
+    })
+    .sort((a, b) => b.ev_pct - a.ev_pct)
+    .slice(0, 3);
+
+  const mktLabels = {
+    home:'Heimsieg', draw:'Unentschieden', away:'Auswärtssieg',
+    'o/u2.5_over':'Über 2.5 Tore', 'o/u2.5_under':'Unter 2.5 Tore',
+    'o/u1.5_over':'Über 1.5 Tore', 'o/u1.5_under':'Unter 1.5 Tore',
+    btts_yes:'Beide treffen', btts_no:'Nicht beide',
+  };
+
+  let radarHtml = '';
+  if (radarSigs.length > 0) {
+    radarHtml += `<div class="radar-header">
+    <span class="radar-title">⚡ Value-Radar</span>
+    <span class="radar-count">${radarSigs.length}</span>
+  </div>
+  <div class="radar-strip"><div class="radar-inner">`;
+    for (const s of radarSigs) {
+      const evCls = s.ev_pct >= 5 ? 'ev-high' : 'ev-mid';
+      const timeStr = s.kickoff ? fmtTime(s.kickoff) : '';
+      const dateStr = s.kickoff ? new Date(s.kickoff).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',timeZone:'Europe/Berlin'}) : '';
+      const label = mktLabels[s.market] || s.market;
+      const [sh, sa] = s.match.split(' vs ').map(x => x.trim());
+      radarHtml += `<div class="radar-card ${evCls}" onclick='openMatch(${JSON.stringify(s.match)})'>
+      <div class="radar-ev ${evCls}">+${s.ev_pct.toFixed(1)}%</div>
+      <div class="radar-market">${esc(label)}</div>
+      <div class="radar-match">${esc(sh)} – ${esc(sa)}</div>
+      <div class="radar-meta"><span>${s.odds.toFixed(2)}</span><span>${timeStr} ${dateStr}</span></div>
+    </div>`;
+    }
+    radarHtml += `</div></div>`;
+  }
+
   const games = _schedule.length ? _schedule : _signals.map(s => ({
     sport: s.sport, home: s.match.split(' vs ')[0].trim(),
     away: s.match.split(' vs ')[1].trim(), kickoff: s.kickoff||'', tour: s.tour||'',
@@ -790,7 +861,7 @@ function renderHome() {
     }, 60000);
   }
 
-  let h = todayHtml;
+  let h = radarHtml + todayHtml;
   for (const [dk, group] of Object.entries(days)) {
     // Day header
     if (dk === '__') {
