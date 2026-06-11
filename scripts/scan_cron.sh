@@ -25,4 +25,12 @@ echo "--- Daily scan ---" >> "$LOG"
 python3 scripts/daily_scan.py --auto-log --bankroll 100 --retrain >> "$LOG" 2>&1
 
 EXIT_CODE=$?
+
+# 4. Push signals.json to GitHub Pages
+echo "--- Git push ---" >> "$LOG"
+git add docs/data/signals.json >> "$LOG" 2>&1
+git commit -m "auto: scan $(date '+%Y-%m-%d')" >> "$LOG" 2>&1
+git push >> "$LOG" 2>&1
+echo "--- Git push done (exit $?) ---" >> "$LOG"
+
 echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] scan_cron finished (exit $EXIT_CODE) ---" >> "$LOG"
