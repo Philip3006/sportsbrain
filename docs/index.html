@@ -219,23 +219,6 @@
     .score-box.result-draw { color: var(--yellow); border-color: rgba(210,153,34,.3); }
 
     /* ── Value-Radar ── */
-    .radar-strip { padding: 10px 0 4px; border-bottom: 1px solid rgba(255,255,255,.06); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-    .radar-strip::-webkit-scrollbar { display: none; }
-    .radar-inner { display: flex; gap: 10px; padding: 0 12px; width: max-content; }
-    .radar-empty { padding: 10px 16px; font-size: 12px; color: var(--muted); }
-    .radar-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 11px 13px; min-width: 160px; max-width: 160px; cursor: pointer; -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
-    .radar-card:active { opacity: .8; }
-    .radar-card.ev-high { border-top: 2px solid var(--green); }
-    .radar-card.ev-mid  { border-top: 2px solid var(--yellow); }
-    .radar-ev { font-size: 20px; font-weight: 900; margin-bottom: 4px; }
-    .radar-ev.ev-high { color: var(--green); }
-    .radar-ev.ev-mid  { color: var(--yellow); }
-    .radar-market { font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
-    .radar-match { font-size: 12px; font-weight: 800; color: var(--text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .radar-meta { font-size: 10px; color: var(--muted); display: flex; justify-content: space-between; }
-    .radar-header { padding: 6px 16px 2px; display: flex; align-items: center; gap: 6px; }
-    .radar-title { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
-    .radar-count { font-size: 10px; font-weight: 800; background: var(--green); color: #000; border-radius: 8px; padding: 1px 5px; }
 
     /* ── WM Stats ── */
     .wm-stats-wrap { padding: 12px 16px 4px; }
@@ -270,21 +253,22 @@
     .form-L { background: rgba(248,81,73,.3); color: var(--red); }
 
     /* ── Smart Suggest ── */
-    .suggest-card { margin: 10px 12px 4px; background: linear-gradient(135deg, rgba(0,200,83,.08) 0%, rgba(0,200,83,.03) 100%); border: 1px solid rgba(0,200,83,.3); border-radius: 14px; padding: 14px; }
-    .suggest-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-    .suggest-title { font-size: 12px; font-weight: 800; color: var(--green); flex: 1; }
-    .suggest-budget { font-size: 12px; font-weight: 700; color: var(--muted); }
-    .suggest-pick { background: rgba(0,0,0,.25); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-    .suggest-pick:last-of-type { margin-bottom: 0; }
-    .suggest-pick:active { opacity: .8; }
-    .suggest-pick-left { flex: 1; min-width: 0; }
-    .suggest-pick-match { font-size: 12px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .suggest-pick-market { font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 2px; }
-    .suggest-pick-right { text-align: right; flex-shrink: 0; }
-    .suggest-pick-odds { font-size: 18px; font-weight: 900; color: var(--green); }
-    .suggest-pick-ev { font-size: 11px; color: var(--green); font-weight: 700; }
-    .suggest-pick-stake { font-size: 12px; font-weight: 800; color: var(--text); }
-    .suggest-footer { font-size: 11px; color: var(--muted); margin-top: 10px; text-align: center; }
+    .suggest-card { margin: 10px 12px 4px; background: var(--card); border: 1px solid rgba(0,200,83,.25); border-radius: 14px; overflow: hidden; }
+    .suggest-header { padding: 12px 16px 10px; display: flex; align-items: flex-start; justify-content: space-between; background: rgba(0,200,83,.06); border-bottom: 1px solid rgba(48,54,61,.6); }
+    .suggest-title { font-size: 13px; font-weight: 900; color: var(--green); letter-spacing: -.2px; }
+    .suggest-subtitle { font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 2px; }
+    .suggest-stake-big { font-size: 20px; font-weight: 900; color: var(--text); line-height: 1; text-align: right; }
+    .suggest-stake-label { font-size: 9px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-top: 3px; text-align: right; }
+    .suggest-pick { padding: 11px 16px 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .suggest-pick:active { background: rgba(255,255,255,.03); }
+    .suggest-pick + .suggest-pick { border-top: 1px solid rgba(48,54,61,.6); }
+    .suggest-teams-row { font-size: 14px; font-weight: 800; margin-bottom: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .suggest-teams-row .vs { color: var(--muted); font-size: 11px; font-weight: 500; margin: 0 3px; }
+    .suggest-bottom-row { display: flex; align-items: center; gap: 8px; }
+    .suggest-mkt-pill { font-size: 11px; font-weight: 700; background: rgba(0,200,83,.1); color: var(--green); border: 1px solid rgba(0,200,83,.2); border-radius: 20px; padding: 2px 8px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .suggest-odds { font-size: 16px; font-weight: 900; color: var(--text); flex-shrink: 0; }
+    .suggest-ev { font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .suggest-eur { font-size: 12px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
 
     /* ── Bottom nav ── */
     .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg); border-top: 2px solid var(--green); display: flex; padding-bottom: max(env(safe-area-inset-bottom), 10px); z-index: 100; }
@@ -793,57 +777,6 @@ setInterval(_updateClock, 30000);
 function renderHome() {
   const c = document.getElementById('home-container');
 
-  // ── Value-Radar ──────────────────────────────────────────────
-  const now48 = Date.now() + 48 * 36e5;
-  const openMatchKeys = new Set((_openBets || []).map(b => {
-    const [bh, ba] = b.match.split(' vs ').map(x => x.trim());
-    return matchKey(bh, ba);
-  }));
-
-  // Filter signals: EV >= 3%, sport=football, kickoff in next 48h, not already bet
-  const radarSigs = (_signals || [])
-    .filter(s => {
-      if (s.sport !== 'football') return false;
-      if (s.ev_pct < 3) return false;
-      const [sh, sa] = s.match.split(' vs ').map(x => x.trim());
-      if (openMatchKeys.has(matchKey(sh, sa))) return false;
-      if (!s.kickoff) return false;
-      const ko = new Date(s.kickoff).getTime();
-      return ko > Date.now() && ko <= now48;
-    })
-    .sort((a, b) => b.ev_pct - a.ev_pct)
-    .slice(0, 3);
-
-  const mktLabels = {
-    home:'Heimsieg', draw:'Unentschieden', away:'Auswärtssieg',
-    'o/u2.5_over':'Über 2.5 Tore', 'o/u2.5_under':'Unter 2.5 Tore',
-    'o/u1.5_over':'Über 1.5 Tore', 'o/u1.5_under':'Unter 1.5 Tore',
-    btts_yes:'Beide treffen', btts_no:'Nicht beide',
-    dc_1x:'DC 1X (Heim/Remis)', dc_x2:'DC X2 (Remis/Auswärts)', dc_12:'DC 12 (Heim/Auswärts)',
-  };
-
-  let radarHtml = '';
-  if (radarSigs.length > 0) {
-    radarHtml += `<div class="radar-header">
-    <span class="radar-title">⚡ Value-Radar</span>
-    <span class="radar-count">${radarSigs.length}</span>
-  </div>
-  <div class="radar-strip"><div class="radar-inner">`;
-    for (const s of radarSigs) {
-      const evCls = s.ev_pct >= 5 ? 'ev-high' : 'ev-mid';
-      const timeStr = s.kickoff ? fmtTime(s.kickoff) : '';
-      const dateStr = s.kickoff ? new Date(s.kickoff).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',timeZone:'Europe/Berlin'}) : '';
-      const label = mktLabels[s.market] || s.market;
-      const [sh, sa] = s.match.split(' vs ').map(x => x.trim());
-      radarHtml += `<div class="radar-card ${evCls}" onclick='openMatch(${JSON.stringify(s.match)})'>
-      <div class="radar-ev ${evCls}">+${s.ev_pct.toFixed(1)}%</div>
-      <div class="radar-market">${esc(label)}</div>
-      <div class="radar-match">${esc(sh)} – ${esc(sa)}</div>
-      <div class="radar-meta"><span>${s.odds.toFixed(2)}</span><span>${timeStr} ${dateStr}</span></div>
-    </div>`;
-    }
-    radarHtml += `</div></div>`;
-  }
 
   const games = _schedule.length ? _schedule : _signals.map(s => ({
     sport: s.sport, home: s.match.split(' vs ')[0].trim(),
@@ -996,13 +929,14 @@ function renderHome() {
   const free = (_bankrollState && _bankrollState.free != null) ? _bankrollState.free : 0;
   const openCount = (_openBets || []).length;
 
-  if (free > 5 && openCount < 3) {
-    const now72 = Date.now() + 72 * 36e5;
-    const openMatchKeys72 = new Set((_openBets || []).map(b => {
+  if (free > 5) {
+    const slots = Math.max(0, 5 - openCount);
+    const nowSug = Date.now();
+    const now7d = nowSug + 7 * 24 * 36e5;
+    const openMkSug = new Set((_openBets || []).map(b => {
       const [bh, ba] = (b.match || '').split(' vs ').map(x => x.trim());
       return matchKey(bh, ba);
     }));
-    // Dedupliziere: nur ein Signal pro Match
     const seenMatches = new Set();
     const picks = [];
     let remaining = free;
@@ -1011,61 +945,60 @@ function renderHome() {
       .filter(s => {
         if (!s.kickoff) return false;
         const ko = new Date(s.kickoff).getTime();
-        return ko > Date.now() && ko <= now72;
+        return ko > nowSug && ko <= now7d;
       })
       .filter(s => {
         const [sh, sa] = (s.match || '').split(' vs ').map(x => x.trim());
-        return !openMatchKeys72.has(matchKey(sh, sa));
+        return !openMkSug.has(matchKey(sh, sa));
       })
       .sort((a, b) => b.ev_pct - a.ev_pct);
 
     for (const s of candidates) {
-      if (picks.length >= 2) break;
+      if (picks.length >= Math.min(3, Math.max(1, slots))) break;
       const [sh, sa] = (s.match || '').split(' vs ').map(x => x.trim());
-      const mk72 = matchKey(sh, sa);
-      if (seenMatches.has(mk72)) continue;
+      const mk = matchKey(sh, sa);
+      if (seenMatches.has(mk)) continue;
       const stake = Math.min(s.stake_eur || 10, remaining);
       if (stake < 3) continue;
-      seenMatches.add(mk72);
+      seenMatches.add(mk);
       picks.push({ ...s, display_stake: Math.round(stake) });
       remaining -= stake;
     }
 
     if (picks.length > 0) {
-      const suggestMktLabels = {
-        home:'Heimsieg', draw:'Unentschieden', away:'Auswärtssieg',
-        'o/u2.5_over':'Über 2.5 Tore', 'o/u2.5_under':'Unter 2.5 Tore',
-        'o/u1.5_over':'Über 1.5 Tore', 'o/u1.5_under':'Unter 1.5 Tore',
-        btts_yes:'Beide treffen', btts_no:'Nicht beide',
-      };
+      const usedStake = picks.reduce((s, p) => s + p.display_stake, 0);
       const picksHtml = picks.map(p => {
         const [ph, pa] = (p.match || '').split(' vs ').map(x => x.trim());
-        const mktLabel = suggestMktLabels[p.market] || p.market;
+        const mktLabel = marketLabel(p.market, p.match);
+        const evColor = p.ev_pct >= 10 ? 'var(--green)' : 'var(--yellow)';
+        const timeStr = p.kickoff ? fmtKickoff(p.kickoff) : '';
         return `<div class="suggest-pick" onclick='openMatch(${JSON.stringify(p.match)})'>
-          <div class="suggest-pick-left">
-            <div class="suggest-pick-match">${esc(ph)} vs ${esc(pa)}</div>
-            <div class="suggest-pick-market">${esc(mktLabel)}</div>
-          </div>
-          <div class="suggest-pick-right">
-            <div class="suggest-pick-odds">${p.odds.toFixed(2)}</div>
-            <div class="suggest-pick-ev">EV +${p.ev_pct.toFixed(1)}%</div>
-            <div class="suggest-pick-stake">€${p.display_stake}</div>
+          <div class="suggest-teams-row">${teamFlag(ph)} <strong>${esc(ph)}</strong><span class="vs">vs</span>${teamFlag(pa)} <strong>${esc(pa)}</strong><span style="font-size:11px;color:var(--muted);font-weight:500;margin-left:6px">${esc(timeStr)}</span></div>
+          <div class="suggest-bottom-row">
+            <span class="suggest-mkt-pill">${esc(mktLabel)}</span>
+            <span class="suggest-odds">${p.odds.toFixed(2)}</span>
+            <span class="suggest-ev" style="color:${evColor}">+${p.ev_pct.toFixed(1)}%</span>
+            <span class="suggest-eur">€${p.display_stake}</span>
           </div>
         </div>`;
       }).join('');
-      const usedStake = picks.reduce((s, p) => s + p.display_stake, 0);
       suggestHtml = `<div class="suggest-card">
         <div class="suggest-header">
-          <span class="suggest-title">💡 Empfehlung für dein freies Kapital</span>
-          <span class="suggest-budget">€${free.toFixed(0)} verfügbar</span>
+          <div>
+            <div class="suggest-title">⚡ Empfehlung</div>
+            <div class="suggest-subtitle">${slots} freier Slot${slots !== 1 ? 's' : ''} · €${free.toFixed(0)} verfügbar</div>
+          </div>
+          <div>
+            <div class="suggest-stake-big">€${usedStake}</div>
+            <div class="suggest-stake-label">Einsatz</div>
+          </div>
         </div>
         ${picksHtml}
-        <div class="suggest-footer">€${usedStake} Einsatz · €${Math.max(0, free - usedStake).toFixed(0)} verbleibend</div>
       </div>`;
     }
   }
 
-  let h = suggestHtml + radarHtml + todayHtml;
+  let h = suggestHtml + todayHtml;
   for (const [dk, group] of Object.entries(days)) {
     // Day header
     if (dk === '__') {
