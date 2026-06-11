@@ -78,6 +78,7 @@ def write_signals_json(
     kickoff_map: dict[str, str] | None = None,
     schedule: list[dict] | None = None,
     all_odds: dict[str, dict] | None = None,
+    model_tips: dict[str, dict] | None = None,
 ) -> None:
     """
     Writes (or merges into) docs/data/signals.json.
@@ -132,15 +133,21 @@ def write_signals_json(
     else:
         all_odds_data = existing.get("all_odds", {})
 
+    if model_tips is not None:
+        model_tips_data = model_tips
+    else:
+        model_tips_data = existing.get("model_tips", {})
+
     payload = {
-        "updated":   updated,
-        "schedule":  schedule_data,
-        "all_odds":  all_odds_data,
-        "football":  football_data,
-        "tennis":    tennis_data,
-        "portfolio": portfolio if portfolio else existing.get("portfolio", {}),
-        "top_elo":   [{"name": n, "rating": round(r)} for n, r in top_elo] if top_elo else existing.get("top_elo", []),
-        "history":   _build_history(),
+        "updated":     updated,
+        "schedule":    schedule_data,
+        "all_odds":    all_odds_data,
+        "model_tips":  model_tips_data,
+        "football":    football_data,
+        "tennis":      tennis_data,
+        "portfolio":   portfolio if portfolio else existing.get("portfolio", {}),
+        "top_elo":     [{"name": n, "rating": round(r)} for n, r in top_elo] if top_elo else existing.get("top_elo", []),
+        "history":     _build_history(),
     }
 
     _JSON_PATH.parent.mkdir(parents=True, exist_ok=True)

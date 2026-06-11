@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-10T18:49:09Z",
+  "updated": "2026-06-11T06:34:18Z",
   "schedule": [
     {
       "sport": "football",
@@ -434,466 +434,16 @@
       "kickoff": "2026-06-28T02:00:00Z"
     }
   ],
-  "football": [
-    {
-      "sport": "football",
-      "match": "Turkey vs Paraguay",
-      "market": "away",
-      "odds": 3.6,
-      "model_prob": 38.7,
-      "ev_pct": 39.1,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-20T03:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Algeria vs Austria",
-      "market": "home",
-      "odds": 3.85,
-      "model_prob": 35.7,
-      "ev_pct": 37.4,
-      "stake_eur": 15.0,
-      "confidence": "MEDIUM",
-      "kickoff": "2026-06-28T02:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "England vs Croatia",
-      "market": "o/u2.5_under",
-      "odds": 1.76,
-      "model_prob": 76.9,
-      "ev_pct": 35.3,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-17T20:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Uruguay vs Cape Verde",
-      "market": "draw",
-      "odds": 4.7,
-      "model_prob": 28.8,
-      "ev_pct": 35.2,
-      "stake_eur": 15.0,
-      "confidence": "MEDIUM",
-      "kickoff": "2026-06-21T22:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Netherlands vs Sweden",
-      "market": "ah-1.5_home",
-      "odds": 2.81,
-      "model_prob": 46.2,
-      "ev_pct": 29.9,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-20T17:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Algeria vs Austria",
-      "market": "o/u2.5_under",
-      "odds": 1.72,
-      "model_prob": 75.1,
-      "ev_pct": 29.2,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-28T02:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Netherlands vs Sweden",
-      "market": "o/u2.5_over",
-      "odds": 1.97,
-      "model_prob": 65.5,
-      "ev_pct": 29.0,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-20T17:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Canada vs Bosnia and Herzegovina",
-      "market": "ah-1.5_home",
-      "odds": 3.31,
-      "model_prob": 38.6,
-      "ev_pct": 27.7,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-12T19:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Argentina vs Austria",
-      "market": "o/u2.5_under",
-      "odds": 1.88,
-      "model_prob": 67.9,
-      "ev_pct": 27.6,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-22T17:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Cote d'Ivoire vs Ecuador",
-      "market": "o/u2.5_under",
-      "odds": 1.44,
-      "model_prob": 88.3,
-      "ev_pct": 27.1,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-14T23:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "South Korea vs Czechia",
-      "market": "home",
-      "odds": 2.8,
-      "model_prob": 45.3,
-      "ev_pct": 26.8,
-      "stake_eur": 15.0,
-      "confidence": "MEDIUM",
-      "kickoff": "2026-06-12T02:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "England vs Croatia",
-      "market": "away",
-      "odds": 5.3,
-      "model_prob": 23.8,
-      "ev_pct": 26.4,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-17T20:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Tunisia vs Japan",
-      "market": "o/u2.5_over",
-      "odds": 2.25,
-      "model_prob": 55.5,
-      "ev_pct": 24.9,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-21T04:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Uruguay vs Cape Verde",
-      "market": "o/u2.5_under",
-      "odds": 1.91,
-      "model_prob": 65.3,
-      "ev_pct": 24.8,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-21T22:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Cote d'Ivoire vs Ecuador",
-      "market": "away",
-      "odds": 2.56,
-      "model_prob": 48.6,
-      "ev_pct": 24.4,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-14T23:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "DR Congo vs Uzbekistan",
-      "market": "away",
-      "odds": 3.3,
-      "model_prob": 37.1,
-      "ev_pct": 22.5,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-27T23:30:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Switzerland vs Bosnia and Herzegovina",
-      "market": "ah-1.5_home",
-      "odds": 2.7,
-      "model_prob": 44.8,
-      "ev_pct": 20.9,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-18T19:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Turkey vs Paraguay",
-      "market": "o/u2.5_under",
-      "odds": 1.65,
-      "model_prob": 72.9,
-      "ev_pct": 20.3,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-20T03:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Scotland vs Brazil",
-      "market": "o/u2.5_under",
-      "odds": 2.0,
-      "model_prob": 59.9,
-      "ev_pct": 19.8,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-24T22:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Turkey vs United States",
-      "market": "o/u2.5_under",
-      "odds": 1.94,
-      "model_prob": 61.7,
-      "ev_pct": 19.8,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-26T02:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Argentina vs Austria",
-      "market": "ah-1.5_home",
-      "odds": 2.84,
-      "model_prob": 41.9,
-      "ev_pct": 19.0,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-22T17:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Norway vs France",
-      "market": "o/u2.5_over",
-      "odds": 1.99,
-      "model_prob": 58.8,
-      "ev_pct": 17.1,
-      "stake_eur": 14.59,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-26T19:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Switzerland vs Canada",
-      "market": "o/u2.5_under",
-      "odds": 1.7,
-      "model_prob": 68.7,
-      "ev_pct": 16.9,
-      "stake_eur": 14.46,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-24T19:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Norway vs France",
-      "market": "draw",
-      "odds": 3.75,
-      "model_prob": 30.5,
-      "ev_pct": 14.5,
-      "stake_eur": 11.77,
-      "confidence": "LOW",
-      "kickoff": "2026-06-26T19:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Iran vs New Zealand",
-      "market": "away",
-      "odds": 4.9,
-      "model_prob": 23.3,
-      "ev_pct": 14.0,
-      "stake_eur": 11.45,
-      "confidence": "LOW",
-      "kickoff": "2026-06-16T01:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Tunisia vs Japan",
-      "market": "away",
-      "odds": 1.76,
-      "model_prob": 64.5,
-      "ev_pct": 13.6,
-      "stake_eur": 12.34,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-21T04:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "New Zealand vs Egypt",
-      "market": "home",
-      "odds": 5.4,
-      "model_prob": 20.6,
-      "ev_pct": 11.2,
-      "stake_eur": 9.8,
-      "confidence": "LOW",
-      "kickoff": "2026-06-22T01:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Colombia vs Portugal",
-      "market": "ah-0.5_home",
-      "odds": 1.68,
-      "model_prob": 65.7,
-      "ev_pct": 10.4,
-      "stake_eur": 10.28,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-27T23:30:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Switzerland vs Canada",
-      "market": "ah+0.5_away",
-      "odds": 1.69,
-      "model_prob": 64.0,
-      "ev_pct": 8.1,
-      "stake_eur": 7.99,
-      "confidence": "MEDIUM",
-      "kickoff": "2026-06-24T19:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Turkey vs United States",
-      "market": "draw",
-      "odds": 3.63,
-      "model_prob": 29.5,
-      "ev_pct": 7.1,
-      "stake_eur": 7.42,
-      "confidence": "MEDIUM",
-      "kickoff": "2026-06-26T02:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "New Zealand vs Egypt",
-      "market": "o/u2.5_over",
-      "odds": 2.32,
-      "model_prob": 45.6,
-      "ev_pct": 5.7,
-      "stake_eur": 6.61,
-      "confidence": "MEDIUM",
-      "kickoff": "2026-06-22T01:00:00Z"
-    }
-  ],
-  "tennis": [
-    {
-      "sport": "tennis",
-      "match": "Jannik Sinner vs Daniil Medvedev",
-      "market": "home",
-      "odds": 1.55,
-      "model_prob": 73.1,
-      "ev_pct": 13.3,
-      "stake_eur": 11.07,
-      "confidence": "MEDIUM",
-      "tour": "atp",
-      "kickoff": "2026-07-07T11:00:00Z"
-    },
-    {
-      "sport": "tennis",
-      "match": "Jannik Sinner vs Daniil Medvedev",
-      "market": "ah-1.5_a",
-      "odds": 2.2,
-      "model_prob": 52.6,
-      "ev_pct": 15.6,
-      "stake_eur": 13.67,
-      "confidence": "HIGH",
-      "tour": "atp",
-      "kickoff": "2026-07-07T11:00:00Z"
-    },
-    {
-      "sport": "tennis",
-      "match": "Iga Swiatek vs Aryna Sabalenka",
-      "market": "away",
-      "odds": 2.0,
-      "model_prob": 53.4,
-      "ev_pct": 6.8,
-      "stake_eur": 7.22,
-      "confidence": "MEDIUM",
-      "tour": "wta",
-      "kickoff": "2026-07-06T11:00:00Z"
-    }
-  ],
-  "portfolio": {
-    "n_open": 0,
-    "n_bets": 0,
-    "total_staked": 0,
-    "total_pnl": 0.0,
-    "roi_pct": 0.0
-  },
-  "top_elo": [
-    {
-      "name": "Carlos Alcaraz",
-      "rating": 1695
-    },
-    {
-      "name": "Jannik Sinner",
-      "rating": 1669
-    },
-    {
-      "name": "Novak Djokovic",
-      "rating": 1656
-    },
-    {
-      "name": "Taylor Fritz",
-      "rating": 1652
-    },
-    {
-      "name": "Iga Swiatek",
-      "rating": 1637
-    },
-    {
-      "name": "Aryna Sabalenka",
-      "rating": 1603
-    },
-    {
-      "name": "Amanda Anisimova",
-      "rating": 1597
-    },
-    {
-      "name": "Elena Rybakina",
-      "rating": 1594
-    },
-    {
-      "name": "Barbora Krejcikova",
-      "rating": 1583
-    },
-    {
-      "name": "Alex De Minaur",
-      "rating": 1583
-    }
-  ],
-  "history": [
-    {
-      "date": "2026-06-09",
-      "n_bets": 10,
-      "pnl": 0.0,
-      "roi_pct": 0.0
-    },
-    {
-      "date": "2026-06-05",
-      "n_bets": 1,
-      "pnl": 0.0,
-      "roi_pct": 0.0
-    },
-    {
-      "date": "2026-06-04",
-      "n_bets": 3,
-      "pnl": 0.0,
-      "roi_pct": 0.0
-    }
-  ],
   "all_odds": {
     "Mexico vs South Africa": {
-      "home": 1.44,
+      "home": 1.45,
       "draw": 4.5,
-      "away": 8.6
+      "away": 8.3
     },
     "South Korea vs Czech Republic": {
-      "home": 2.7,
-      "draw": 3.15,
-      "away": 2.9
+      "home": 2.76,
+      "draw": 3.14,
+      "away": 2.85
     },
     "Canada vs Bosnia & Herzegovina": {
       "home": 1.85,
@@ -901,9 +451,9 @@
       "away": 5.0
     },
     "USA vs Paraguay": {
-      "home": 1.95,
+      "home": 1.97,
       "draw": 3.52,
-      "away": 4.25
+      "away": 4.15
     },
     "Qatar vs Switzerland": {
       "home": 19.0,
@@ -912,41 +462,41 @@
     },
     "Brazil vs Morocco": {
       "home": 1.68,
-      "draw": 3.8,
-      "away": 5.75
+      "draw": 3.84,
+      "away": 5.65
     },
     "Haiti vs Scotland": {
-      "home": 6.05,
-      "draw": 4.35,
+      "home": 5.95,
+      "draw": 4.4,
       "away": 1.57
     },
     "Australia vs Turkey": {
-      "home": 5.35,
-      "draw": 3.9,
-      "away": 1.7
+      "home": 5.0,
+      "draw": 3.85,
+      "away": 1.75
     },
     "Germany vs Curaçao": {
       "home": 1.05,
-      "draw": 16.25,
+      "draw": 16.0,
       "away": 56.0
     },
     "Netherlands vs Japan": {
-      "home": 1.98,
+      "home": 1.99,
       "draw": 3.64,
-      "away": 3.95
+      "away": 3.92
     },
     "Ivory Coast vs Ecuador": {
-      "home": 3.64,
+      "home": 3.61,
       "draw": 2.82,
-      "away": 2.48
+      "away": 2.49
     },
     "Sweden vs Tunisia": {
-      "home": 1.88,
-      "draw": 3.56,
-      "away": 4.55
+      "home": 1.93,
+      "draw": 3.52,
+      "away": 4.33
     },
     "Spain vs Cape Verde": {
-      "home": 1.1,
+      "home": 1.11,
       "draw": 11.0,
       "away": 27.0
     },
@@ -961,9 +511,9 @@
       "away": 1.46
     },
     "Iran vs New Zealand": {
-      "home": 1.88,
-      "draw": 3.52,
-      "away": 4.59
+      "home": 1.83,
+      "draw": 3.57,
+      "away": 4.75
     },
     "France vs Senegal": {
       "home": 1.5,
@@ -971,19 +521,19 @@
       "away": 7.4
     },
     "Iraq vs Norway": {
-      "home": 15.75,
-      "draw": 7.0,
-      "away": 1.21
+      "home": 16.0,
+      "draw": 6.75,
+      "away": 1.22
     },
     "Argentina vs Algeria": {
-      "home": 1.42,
-      "draw": 4.55,
-      "away": 9.2
+      "home": 1.41,
+      "draw": 4.6,
+      "away": 9.4
     },
     "Austria vs Jordan": {
-      "home": 1.34,
-      "draw": 5.5,
-      "away": 10.0
+      "home": 1.3,
+      "draw": 5.8,
+      "away": 11.0
     },
     "Portugal vs DR Congo": {
       "home": 1.29,
@@ -1026,9 +576,9 @@
       "away": 4.7
     },
     "USA vs Australia": {
-      "home": 1.77,
+      "home": 1.76,
       "draw": 4.0,
-      "away": 4.6
+      "away": 4.5
     },
     "Scotland vs Morocco": {
       "home": 3.65,
@@ -1067,13 +617,13 @@
     },
     "Spain vs Saudi Arabia": {
       "home": 1.09,
-      "draw": 10.4,
+      "draw": 10.2,
       "away": 28.0
     },
     "Belgium vs Iran": {
       "home": 1.37,
-      "draw": 4.61,
-      "away": 7.67
+      "draw": 4.62,
+      "away": 7.75
     },
     "Uruguay vs Cape Verde": {
       "home": 1.45,
@@ -1126,9 +676,9 @@
       "away": 7.5
     },
     "Bosnia & Herzegovina vs Qatar": {
-      "home": 1.52,
-      "draw": 4.1,
-      "away": 6.3
+      "home": 1.58,
+      "draw": 3.9,
+      "away": 5.8
     },
     "Switzerland vs Canada": {
       "home": 2.1,
@@ -1186,14 +736,14 @@
       "away": 2.25
     },
     "Norway vs France": {
-      "home": 3.65,
-      "draw": 3.2,
-      "away": 1.66
+      "home": 4.39,
+      "draw": 3.66,
+      "away": 1.78
     },
     "Senegal vs Iraq": {
-      "home": 1.37,
-      "draw": 4.5,
-      "away": 7.5
+      "home": 1.53,
+      "draw": 4.31,
+      "away": 6.94
     },
     "Cape Verde vs Saudi Arabia": {
       "home": 2.55,
@@ -1206,14 +756,14 @@
       "away": 1.57
     },
     "New Zealand vs Belgium": {
-      "home": 10.75,
-      "draw": 5.6,
-      "away": 1.25
+      "home": 10.07,
+      "draw": 5.58,
+      "away": 1.3
     },
     "Egypt vs Iran": {
-      "home": 2.0,
-      "draw": 2.7,
-      "away": 3.05
+      "home": 2.38,
+      "draw": 3.08,
+      "away": 3.62
     },
     "Croatia vs Ghana": {
       "home": 1.6,
@@ -1244,6 +794,946 @@
       "home": 14.0,
       "draw": 6.5,
       "away": 1.16
+    }
+  },
+  "football": [
+    {
+      "sport": "football",
+      "match": "England vs Croatia",
+      "market": "o/u2.5_under",
+      "odds": 1.79,
+      "model_prob": 76.9,
+      "ev_pct": 37.6,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-17T20:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Algeria vs Austria",
+      "market": "home",
+      "odds": 3.85,
+      "model_prob": 35.7,
+      "ev_pct": 37.4,
+      "stake_eur": 15.0,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-28T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Uruguay vs Cape Verde",
+      "market": "draw",
+      "odds": 4.75,
+      "model_prob": 28.8,
+      "ev_pct": 36.6,
+      "stake_eur": 15.0,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-21T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Turkey vs Paraguay",
+      "market": "away",
+      "odds": 3.6,
+      "model_prob": 37.5,
+      "ev_pct": 35.0,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-20T03:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Switzerland vs Canada",
+      "market": "away",
+      "odds": 3.69,
+      "model_prob": 36.1,
+      "ev_pct": 33.2,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-24T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Argentina vs Austria",
+      "market": "o/u2.5_under",
+      "odds": 1.92,
+      "model_prob": 67.9,
+      "ev_pct": 30.3,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-22T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Netherlands vs Sweden",
+      "market": "ah-1.5_home",
+      "odds": 2.81,
+      "model_prob": 46.2,
+      "ev_pct": 29.9,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-20T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Algeria vs Austria",
+      "market": "o/u2.5_under",
+      "odds": 1.72,
+      "model_prob": 75.1,
+      "ev_pct": 29.2,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-28T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Netherlands vs Sweden",
+      "market": "o/u2.5_over",
+      "odds": 1.97,
+      "model_prob": 65.5,
+      "ev_pct": 29.0,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-20T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "South Korea vs Czechia",
+      "market": "home",
+      "odds": 2.84,
+      "model_prob": 45.3,
+      "ev_pct": 28.6,
+      "stake_eur": 15.0,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-12T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Canada vs Bosnia and Herzegovina",
+      "market": "ah-1.5_home",
+      "odds": 3.31,
+      "model_prob": 38.6,
+      "ev_pct": 27.7,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-12T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Cote d'Ivoire vs Ecuador",
+      "market": "o/u2.5_under",
+      "odds": 1.44,
+      "model_prob": 88.3,
+      "ev_pct": 27.1,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-14T23:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Uruguay vs Cape Verde",
+      "market": "o/u2.5_under",
+      "odds": 1.93,
+      "model_prob": 65.3,
+      "ev_pct": 26.1,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-21T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Cote d'Ivoire vs Ecuador",
+      "market": "away",
+      "odds": 2.56,
+      "model_prob": 48.6,
+      "ev_pct": 24.4,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-14T23:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Switzerland vs Bosnia and Herzegovina",
+      "market": "ah-1.5_home",
+      "odds": 2.76,
+      "model_prob": 44.8,
+      "ev_pct": 23.6,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-18T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "DR Congo vs Uzbekistan",
+      "market": "ah+0.5_away",
+      "odds": 1.6,
+      "model_prob": 77.0,
+      "ev_pct": 23.2,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-27T23:30:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Turkey vs United States",
+      "market": "o/u2.5_under",
+      "odds": 1.95,
+      "model_prob": 61.7,
+      "ev_pct": 20.4,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-26T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Turkey vs Paraguay",
+      "market": "o/u2.5_under",
+      "odds": 1.65,
+      "model_prob": 72.9,
+      "ev_pct": 20.3,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-20T03:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Switzerland vs Canada",
+      "market": "o/u2.5_under",
+      "odds": 1.75,
+      "model_prob": 68.7,
+      "ev_pct": 20.3,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-24T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Scotland vs Brazil",
+      "market": "o/u2.5_under",
+      "odds": 2.0,
+      "model_prob": 59.9,
+      "ev_pct": 19.8,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-24T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "United States vs Paraguay",
+      "market": "draw",
+      "odds": 3.6,
+      "model_prob": 33.2,
+      "ev_pct": 19.4,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-13T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Argentina vs Austria",
+      "market": "ah-1.5_home",
+      "odds": 2.84,
+      "model_prob": 41.9,
+      "ev_pct": 19.0,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-22T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Egypt vs Iran",
+      "market": "o/u2.5_under",
+      "odds": 1.44,
+      "model_prob": 82.4,
+      "ev_pct": 18.6,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-27T03:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Norway vs France",
+      "market": "o/u2.5_over",
+      "odds": 1.99,
+      "model_prob": 58.8,
+      "ev_pct": 17.1,
+      "stake_eur": 14.59,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-26T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "England vs Croatia",
+      "market": "ah-1.0_home",
+      "odds": 2.43,
+      "model_prob": 34.4,
+      "ev_pct": 14.7,
+      "stake_eur": 11.88,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-17T20:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Norway vs France",
+      "market": "draw",
+      "odds": 3.75,
+      "model_prob": 30.5,
+      "ev_pct": 14.5,
+      "stake_eur": 11.77,
+      "confidence": "LOW",
+      "kickoff": "2026-06-26T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Colombia vs Portugal",
+      "market": "ah-0.5_home",
+      "odds": 1.7,
+      "model_prob": 65.7,
+      "ev_pct": 11.7,
+      "stake_eur": 11.13,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-27T23:30:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Egypt vs Iran",
+      "market": "ah+0.5_away",
+      "odds": 1.64,
+      "model_prob": 66.8,
+      "ev_pct": 9.5,
+      "stake_eur": 8.83,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-27T03:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Iran vs New Zealand",
+      "market": "home",
+      "odds": 1.88,
+      "model_prob": 57.9,
+      "ev_pct": 8.9,
+      "stake_eur": 9.31,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-16T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Turkey vs United States",
+      "market": "draw",
+      "odds": 3.63,
+      "model_prob": 29.5,
+      "ev_pct": 7.1,
+      "stake_eur": 7.42,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-26T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "New Zealand vs Egypt",
+      "market": "o/u2.5_over",
+      "odds": 2.32,
+      "model_prob": 45.6,
+      "ev_pct": 5.7,
+      "stake_eur": 6.61,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-22T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "New Zealand vs Egypt",
+      "market": "away",
+      "odds": 1.8,
+      "model_prob": 58.5,
+      "ev_pct": 5.3,
+      "stake_eur": 7.01,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-22T01:00:00Z"
+    }
+  ],
+  "tennis": [
+    {
+      "sport": "tennis",
+      "match": "Jannik Sinner vs Daniil Medvedev",
+      "market": "home",
+      "odds": 1.55,
+      "model_prob": 73.1,
+      "ev_pct": 13.3,
+      "stake_eur": 11.07,
+      "confidence": "MEDIUM",
+      "tour": "atp",
+      "kickoff": "2026-07-07T11:00:00Z"
+    },
+    {
+      "sport": "tennis",
+      "match": "Jannik Sinner vs Daniil Medvedev",
+      "market": "ah-1.5_a",
+      "odds": 2.2,
+      "model_prob": 52.6,
+      "ev_pct": 15.6,
+      "stake_eur": 13.67,
+      "confidence": "HIGH",
+      "tour": "atp",
+      "kickoff": "2026-07-07T11:00:00Z"
+    },
+    {
+      "sport": "tennis",
+      "match": "Iga Swiatek vs Aryna Sabalenka",
+      "market": "away",
+      "odds": 2.0,
+      "model_prob": 53.4,
+      "ev_pct": 6.8,
+      "stake_eur": 7.22,
+      "confidence": "MEDIUM",
+      "tour": "wta",
+      "kickoff": "2026-07-06T11:00:00Z"
+    }
+  ],
+  "portfolio": {
+    "n_bets": 5,
+    "n_open": 5,
+    "n_won": 0,
+    "n_lost": 0,
+    "n_void": 0,
+    "total_staked": 0.0,
+    "total_pnl": 0.0,
+    "roi_pct": 0.0,
+    "win_rate": 0.0,
+    "mean_clv": null,
+    "by_market": {}
+  },
+  "top_elo": [
+    {
+      "name": "Carlos Alcaraz",
+      "rating": 1695
+    },
+    {
+      "name": "Jannik Sinner",
+      "rating": 1669
+    },
+    {
+      "name": "Novak Djokovic",
+      "rating": 1656
+    },
+    {
+      "name": "Taylor Fritz",
+      "rating": 1652
+    },
+    {
+      "name": "Iga Swiatek",
+      "rating": 1637
+    },
+    {
+      "name": "Aryna Sabalenka",
+      "rating": 1603
+    },
+    {
+      "name": "Amanda Anisimova",
+      "rating": 1597
+    },
+    {
+      "name": "Elena Rybakina",
+      "rating": 1594
+    },
+    {
+      "name": "Barbora Krejcikova",
+      "rating": 1583
+    },
+    {
+      "name": "Alex De Minaur",
+      "rating": 1583
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-06-11",
+      "n_bets": 5,
+      "pnl": 0.0,
+      "roi_pct": 0.0
+    }
+  ],
+  "model_tips": {
+    "Mexico vs South Africa": {
+      "p_home": 0.865,
+      "p_draw": 0.093,
+      "p_away": 0.042,
+      "xg_home": 3.49,
+      "xg_away": 0.76
+    },
+    "South Korea vs Czech Republic": {
+      "p_home": 0.832,
+      "p_draw": 0.118,
+      "p_away": 0.05,
+      "xg_home": 3.0,
+      "xg_away": 0.67
+    },
+    "Canada vs Bosnia & Herzegovina": {
+      "p_home": 0.657,
+      "p_draw": 0.244,
+      "p_away": 0.098,
+      "xg_home": 1.7,
+      "xg_away": 0.51
+    },
+    "USA vs Paraguay": {
+      "p_home": 0.221,
+      "p_draw": 0.301,
+      "p_away": 0.478,
+      "xg_home": 0.84,
+      "xg_away": 1.36
+    },
+    "Qatar vs Switzerland": {
+      "p_home": 0.127,
+      "p_draw": 0.225,
+      "p_away": 0.648,
+      "xg_home": 0.75,
+      "xg_away": 1.96
+    },
+    "Brazil vs Morocco": {
+      "p_home": 0.049,
+      "p_draw": 0.326,
+      "p_away": 0.624,
+      "xg_home": 0.17,
+      "xg_away": 1.17
+    },
+    "Haiti vs Scotland": {
+      "p_home": 0.443,
+      "p_draw": 0.241,
+      "p_away": 0.316,
+      "xg_home": 1.85,
+      "xg_away": 1.54
+    },
+    "Australia vs Turkey": {
+      "p_home": 0.57,
+      "p_draw": 0.294,
+      "p_away": 0.136,
+      "xg_home": 1.4,
+      "xg_away": 0.55
+    },
+    "Netherlands vs Japan": {
+      "p_home": 0.109,
+      "p_draw": 0.25,
+      "p_away": 0.642,
+      "xg_home": 0.55,
+      "xg_away": 1.68
+    },
+    "Ivory Coast vs Ecuador": {
+      "p_home": 0.083,
+      "p_draw": 0.389,
+      "p_away": 0.528,
+      "xg_home": 0.23,
+      "xg_away": 0.95
+    },
+    "Sweden vs Tunisia": {
+      "p_home": 0.152,
+      "p_draw": 0.172,
+      "p_away": 0.676,
+      "xg_home": 1.32,
+      "xg_away": 2.79
+    },
+    "Spain vs Cape Verde": {
+      "p_home": 0.788,
+      "p_draw": 0.132,
+      "p_away": 0.08,
+      "xg_home": 3.1,
+      "xg_away": 0.97
+    },
+    "Belgium vs Egypt": {
+      "p_home": 0.132,
+      "p_draw": 0.288,
+      "p_away": 0.58,
+      "xg_home": 0.55,
+      "xg_away": 1.43
+    },
+    "Saudi Arabia vs Uruguay": {
+      "p_home": 0.181,
+      "p_draw": 0.378,
+      "p_away": 0.441,
+      "xg_home": 0.51,
+      "xg_away": 0.95
+    },
+    "Iran vs New Zealand": {
+      "p_home": 0.764,
+      "p_draw": 0.164,
+      "p_away": 0.072,
+      "xg_home": 2.44,
+      "xg_away": 0.64
+    },
+    "France vs Senegal": {
+      "p_home": 0.202,
+      "p_draw": 0.267,
+      "p_away": 0.531,
+      "xg_home": 0.93,
+      "xg_away": 1.64
+    },
+    "Iraq vs Norway": {
+      "p_home": 0.287,
+      "p_draw": 0.309,
+      "p_away": 0.404,
+      "xg_home": 1.0,
+      "xg_away": 1.24
+    },
+    "Argentina vs Algeria": {
+      "p_home": 0.516,
+      "p_draw": 0.336,
+      "p_away": 0.148,
+      "xg_home": 1.16,
+      "xg_away": 0.5
+    },
+    "Austria vs Jordan": {
+      "p_home": 0.122,
+      "p_draw": 0.268,
+      "p_away": 0.61,
+      "xg_home": 0.56,
+      "xg_away": 1.56
+    },
+    "Portugal vs DR Congo": {
+      "p_home": 0.247,
+      "p_draw": 0.345,
+      "p_away": 0.408,
+      "xg_home": 0.76,
+      "xg_away": 1.05
+    },
+    "England vs Croatia": {
+      "p_home": 0.655,
+      "p_draw": 0.281,
+      "p_away": 0.063,
+      "xg_home": 1.39,
+      "xg_away": 0.27
+    },
+    "Ghana vs Panama": {
+      "p_home": 0.324,
+      "p_draw": 0.371,
+      "p_away": 0.305,
+      "xg_home": 0.84,
+      "xg_away": 0.8
+    },
+    "Uzbekistan vs Colombia": {
+      "p_home": 0.258,
+      "p_draw": 0.348,
+      "p_away": 0.394,
+      "xg_home": 0.77,
+      "xg_away": 1.03
+    },
+    "Czech Republic vs South Africa": {
+      "p_home": 0.259,
+      "p_draw": 0.215,
+      "p_away": 0.526,
+      "xg_home": 1.56,
+      "xg_away": 2.25
+    },
+    "Switzerland vs Bosnia & Herzegovina": {
+      "p_home": 0.705,
+      "p_draw": 0.212,
+      "p_away": 0.083,
+      "xg_home": 1.93,
+      "xg_away": 0.52
+    },
+    "Canada vs Qatar": {
+      "p_home": 0.598,
+      "p_draw": 0.253,
+      "p_away": 0.148,
+      "xg_home": 1.72,
+      "xg_away": 0.74
+    },
+    "Mexico vs South Korea": {
+      "p_home": 0.471,
+      "p_draw": 0.282,
+      "p_away": 0.247,
+      "xg_home": 1.49,
+      "xg_away": 1.02
+    },
+    "USA vs Australia": {
+      "p_home": 0.105,
+      "p_draw": 0.229,
+      "p_away": 0.666,
+      "xg_home": 0.6,
+      "xg_away": 1.85
+    },
+    "Scotland vs Morocco": {
+      "p_home": 0.014,
+      "p_draw": 0.128,
+      "p_away": 0.858,
+      "xg_home": 0.15,
+      "xg_away": 2.26
+    },
+    "Brazil vs Haiti": {
+      "p_home": 0.558,
+      "p_draw": 0.252,
+      "p_away": 0.19,
+      "xg_home": 1.78,
+      "xg_away": 0.95
+    },
+    "Turkey vs Paraguay": {
+      "p_home": 0.256,
+      "p_draw": 0.347,
+      "p_away": 0.396,
+      "xg_home": 0.77,
+      "xg_away": 1.03
+    },
+    "Netherlands vs Sweden": {
+      "p_home": 0.679,
+      "p_draw": 0.19,
+      "p_away": 0.13,
+      "xg_home": 2.39,
+      "xg_away": 0.98
+    },
+    "Germany vs Ivory Coast": {
+      "p_home": 0.393,
+      "p_draw": 0.26,
+      "p_away": 0.347,
+      "xg_home": 1.57,
+      "xg_away": 1.47
+    },
+    "Tunisia vs Japan": {
+      "p_home": 0.083,
+      "p_draw": 0.182,
+      "p_away": 0.735,
+      "xg_home": 0.64,
+      "xg_away": 2.26
+    },
+    "Spain vs Saudi Arabia": {
+      "p_home": 0.55,
+      "p_draw": 0.247,
+      "p_away": 0.203,
+      "xg_home": 1.84,
+      "xg_away": 1.04
+    },
+    "Belgium vs Iran": {
+      "p_home": 0.15,
+      "p_draw": 0.253,
+      "p_away": 0.597,
+      "xg_home": 0.75,
+      "xg_away": 1.73
+    },
+    "Uruguay vs Cape Verde": {
+      "p_home": 0.646,
+      "p_draw": 0.256,
+      "p_away": 0.098,
+      "xg_home": 1.61,
+      "xg_away": 0.48
+    },
+    "New Zealand vs Egypt": {
+      "p_home": 0.067,
+      "p_draw": 0.195,
+      "p_away": 0.738,
+      "xg_home": 0.47,
+      "xg_away": 2.03
+    },
+    "Argentina vs Austria": {
+      "p_home": 0.707,
+      "p_draw": 0.233,
+      "p_away": 0.06,
+      "xg_home": 1.67,
+      "xg_away": 0.32
+    },
+    "France vs Iraq": {
+      "p_home": 0.272,
+      "p_draw": 0.348,
+      "p_away": 0.379,
+      "xg_home": 0.81,
+      "xg_away": 1.01
+    },
+    "Norway vs Senegal": {
+      "p_home": 0.323,
+      "p_draw": 0.258,
+      "p_away": 0.418,
+      "xg_home": 1.42,
+      "xg_away": 1.63
+    },
+    "Jordan vs Algeria": {
+      "p_home": 0.393,
+      "p_draw": 0.334,
+      "p_away": 0.274,
+      "xg_home": 1.09,
+      "xg_away": 0.86
+    },
+    "Portugal vs Uzbekistan": {
+      "p_home": 0.21,
+      "p_draw": 0.364,
+      "p_away": 0.426,
+      "xg_home": 0.61,
+      "xg_away": 0.99
+    },
+    "England vs Ghana": {
+      "p_home": 0.551,
+      "p_draw": 0.356,
+      "p_away": 0.093,
+      "xg_home": 1.07,
+      "xg_away": 0.29
+    },
+    "Panama vs Croatia": {
+      "p_home": 0.401,
+      "p_draw": 0.346,
+      "p_away": 0.253,
+      "xg_home": 1.04,
+      "xg_away": 0.77
+    },
+    "Colombia vs DR Congo": {
+      "p_home": 0.457,
+      "p_draw": 0.313,
+      "p_away": 0.23,
+      "xg_home": 1.27,
+      "xg_away": 0.82
+    },
+    "Bosnia & Herzegovina vs Qatar": {
+      "p_home": 0.251,
+      "p_draw": 0.295,
+      "p_away": 0.454,
+      "xg_home": 0.97,
+      "xg_away": 1.39
+    },
+    "Switzerland vs Canada": {
+      "p_home": 0.362,
+      "p_draw": 0.335,
+      "p_away": 0.303,
+      "xg_home": 1.04,
+      "xg_away": 0.92
+    },
+    "Scotland vs Brazil": {
+      "p_home": 0.156,
+      "p_draw": 0.271,
+      "p_away": 0.573,
+      "xg_home": 0.71,
+      "xg_away": 1.58
+    },
+    "Morocco vs Haiti": {
+      "p_home": 0.878,
+      "p_draw": 0.107,
+      "p_away": 0.015,
+      "xg_home": 2.55,
+      "xg_away": 0.2
+    },
+    "Czech Republic vs Mexico": {
+      "p_home": 0.022,
+      "p_draw": 0.068,
+      "p_away": 0.91,
+      "xg_home": 0.56,
+      "xg_away": 3.7
+    },
+    "South Africa vs South Korea": {
+      "p_home": 0.087,
+      "p_draw": 0.148,
+      "p_away": 0.764,
+      "xg_home": 0.91,
+      "xg_away": 2.83
+    },
+    "Ecuador vs Germany": {
+      "p_home": 0.48,
+      "p_draw": 0.433,
+      "p_away": 0.087,
+      "xg_home": 0.82,
+      "xg_away": 0.21
+    },
+    "Japan vs Sweden": {
+      "p_home": 0.9,
+      "p_draw": 0.079,
+      "p_away": 0.021,
+      "xg_home": 3.31,
+      "xg_away": 0.44
+    },
+    "Tunisia vs Netherlands": {
+      "p_home": 0.323,
+      "p_draw": 0.259,
+      "p_away": 0.418,
+      "xg_home": 1.41,
+      "xg_away": 1.63
+    },
+    "Paraguay vs Australia": {
+      "p_home": 0.183,
+      "p_draw": 0.332,
+      "p_away": 0.485,
+      "xg_home": 0.61,
+      "xg_away": 1.18
+    },
+    "Turkey vs USA": {
+      "p_home": 0.398,
+      "p_draw": 0.311,
+      "p_away": 0.291,
+      "xg_home": 1.22,
+      "xg_away": 1.0
+    },
+    "Norway vs France": {
+      "p_home": 0.515,
+      "p_draw": 0.246,
+      "p_away": 0.239,
+      "xg_home": 1.85,
+      "xg_away": 1.2
+    },
+    "Senegal vs Iraq": {
+      "p_home": 0.418,
+      "p_draw": 0.338,
+      "p_away": 0.243,
+      "xg_home": 1.1,
+      "xg_away": 0.77
+    },
+    "Cape Verde vs Saudi Arabia": {
+      "p_home": 0.196,
+      "p_draw": 0.306,
+      "p_away": 0.497,
+      "xg_home": 0.74,
+      "xg_away": 1.33
+    },
+    "Uruguay vs Spain": {
+      "p_home": 0.37,
+      "p_draw": 0.296,
+      "p_away": 0.335,
+      "xg_home": 1.26,
+      "xg_away": 1.19
+    },
+    "New Zealand vs Belgium": {
+      "p_home": 0.219,
+      "p_draw": 0.234,
+      "p_away": 0.548,
+      "xg_home": 1.2,
+      "xg_away": 1.99
+    },
+    "Egypt vs Iran": {
+      "p_home": 0.33,
+      "p_draw": 0.397,
+      "p_away": 0.273,
+      "xg_home": 0.77,
+      "xg_away": 0.67
+    },
+    "Croatia vs Ghana": {
+      "p_home": 0.243,
+      "p_draw": 0.348,
+      "p_away": 0.409,
+      "xg_home": 0.74,
+      "xg_away": 1.05
+    },
+    "Panama vs England": {
+      "p_home": 0.089,
+      "p_draw": 0.346,
+      "p_away": 0.565,
+      "xg_home": 0.29,
+      "xg_away": 1.11
+    },
+    "Colombia vs Portugal": {
+      "p_home": 0.655,
+      "p_draw": 0.191,
+      "p_away": 0.154,
+      "xg_home": 2.47,
+      "xg_away": 1.15
+    },
+    "DR Congo vs Uzbekistan": {
+      "p_home": 0.228,
+      "p_draw": 0.494,
+      "p_away": 0.278,
+      "xg_home": 0.44,
+      "xg_away": 0.51
+    },
+    "Algeria vs Austria": {
+      "p_home": 0.511,
+      "p_draw": 0.332,
+      "p_away": 0.157,
+      "xg_home": 1.19,
+      "xg_away": 0.54
+    },
+    "Jordan vs Argentina": {
+      "p_home": 0.188,
+      "p_draw": 0.325,
+      "p_away": 0.487,
+      "xg_home": 0.65,
+      "xg_away": 1.22
     }
   }
 }

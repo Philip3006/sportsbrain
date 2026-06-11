@@ -153,6 +153,25 @@
     .status-suspended { color: var(--yellow); }
     .status-doubtful { color: var(--yellow); }
 
+    /* ── Model prediction card ── */
+    .pred-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; border-left: 3px solid #4d9fff; }
+    .pred-title { font-size: 11px; font-weight: 800; color: #4d9fff; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 12px; }
+    .pred-tip { font-size: 16px; font-weight: 900; margin-bottom: 12px; }
+    .pred-bars { display: flex; flex-direction: column; gap: 7px; margin-bottom: 12px; }
+    .pred-bar-row { display: flex; align-items: center; gap: 8px; }
+    .pred-bar-label { width: 24px; font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; flex-shrink: 0; }
+    .pred-bar-track { flex: 1; height: 8px; background: rgba(255,255,255,.07); border-radius: 4px; overflow: hidden; }
+    .pred-bar-fill { height: 100%; border-radius: 4px; transition: width .4s; }
+    .pred-bar-fill.win { background: var(--green); }
+    .pred-bar-fill.draw { background: var(--yellow); }
+    .pred-bar-fill.loss { background: rgba(255,255,255,.2); }
+    .pred-bar-pct { width: 36px; text-align: right; font-size: 12px; font-weight: 800; flex-shrink: 0; }
+    .pred-xg { display: flex; justify-content: space-between; background: rgba(255,255,255,.04); border-radius: 8px; padding: 9px 12px; }
+    .pred-xg-team { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .pred-xg-val { font-size: 22px; font-weight: 900; }
+    .pred-xg-label { font-size: 10px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+    .pred-xg-team-name { font-size: 11px; color: var(--muted); font-weight: 600; text-align: center; max-width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
     /* ── Bottom nav ── */
     .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg); border-top: 2px solid var(--green); display: flex; padding-bottom: max(env(safe-area-inset-bottom), 10px); z-index: 100; }
     .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 13px 4px 11px; gap: 5px; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; min-height: 70px; }
@@ -253,6 +272,7 @@ const SQUADS_URL = 'data/squads.json';
 let _signals = [];
 let _schedule = [];
 let _allOdds = {};
+let _modelTips = {};
 let _squads = {};
 let _prevView = 'home';
 
@@ -292,9 +312,22 @@ function openMatch(displayKey) {
       <div class="match-teams">${esc(displayKey)}</div>
       ${timeStr ? `<div class="match-time">${timeStr}</div>` : ''}
     </div>`;
-  document.getElementById('detail-cards').innerHTML = sigs.length
+  // Look up model tip — try exact key first, then normalized key
+  let tip = _modelTips[displayKey];
+  if (!tip) {
+    for (const [k, v] of Object.entries(_modelTips)) {
+      const [kh, ka] = k.split(' vs ').map(x => x.trim());
+      if (matchKey(kh, ka) === nk) { tip = v; break; }
+    }
+  }
+
+  let cards = '';
+  if (tip) cards += predCard(dh, da, tip);
+  cards += sigs.length
     ? sigs.map(sigCard).join('')
     : `<div class="empty"><div class="icon">📊</div><div>Kein Value Bet gefunden.<br><small>Unser Modell sieht hier keinen Vorteil.</small></div></div>`;
+
+  document.getElementById('detail-cards').innerHTML = cards;
   showView('detail');
 }
 
@@ -349,6 +382,58 @@ function marketLabel(mkt, match) {
     'ah-2.0_home':`AH -2.0 ${a}`,'ah+2.0_away':`AH +2.0 ${b}`,
     'ah-2.5_home':`AH -2.5 ${a}`,'ah+2.5_away':`AH +2.5 ${b}`,
   })[mkt] || mkt;
+}
+
+// ── Model prediction card ─────────────────────────────────────
+function predCard(home, away, tip) {
+  const ph = Math.round(tip.p_home * 100);
+  const pd = Math.round(tip.p_draw * 100);
+  const pa = Math.round(tip.p_away * 100);
+  // Determine top outcome
+  let tipLabel;
+  if (tip.p_home >= tip.p_away && tip.p_home >= tip.p_draw) {
+    tipLabel = `🏆 ${esc(home)} gewinnt`;
+  } else if (tip.p_away >= tip.p_home && tip.p_away >= tip.p_draw) {
+    tipLabel = `🏆 ${esc(away)} gewinnt`;
+  } else {
+    tipLabel = '🤝 Unentschieden';
+  }
+  return `<div class="pred-card">
+    <div class="pred-title">⚡ Modell-Tipp</div>
+    <div class="pred-tip">${tipLabel}</div>
+    <div class="pred-bars">
+      <div class="pred-bar-row">
+        <span class="pred-bar-label">1</span>
+        <div class="pred-bar-track"><div class="pred-bar-fill win" style="width:${ph}%"></div></div>
+        <span class="pred-bar-pct" style="color:var(--green)">${ph}%</span>
+      </div>
+      <div class="pred-bar-row">
+        <span class="pred-bar-label">X</span>
+        <div class="pred-bar-track"><div class="pred-bar-fill draw" style="width:${pd}%"></div></div>
+        <span class="pred-bar-pct" style="color:var(--yellow)">${pd}%</span>
+      </div>
+      <div class="pred-bar-row">
+        <span class="pred-bar-label">2</span>
+        <div class="pred-bar-track"><div class="pred-bar-fill loss" style="width:${pa}%"></div></div>
+        <span class="pred-bar-pct" style="color:var(--muted)">${pa}%</span>
+      </div>
+    </div>
+    <div class="pred-xg">
+      <div class="pred-xg-team">
+        <span class="pred-xg-val" style="color:var(--text)">${tip.xg_home.toFixed(2)}</span>
+        <span class="pred-xg-label">xG</span>
+        <span class="pred-xg-team-name">${esc(home)}</span>
+      </div>
+      <div class="pred-xg-team" style="align-items:center">
+        <span style="font-size:12px;color:var(--muted);font-weight:700">Erw. Tore</span>
+      </div>
+      <div class="pred-xg-team" style="align-items:flex-end">
+        <span class="pred-xg-val" style="color:var(--text)">${tip.xg_away.toFixed(2)}</span>
+        <span class="pred-xg-label">xG</span>
+        <span class="pred-xg-team-name">${esc(away)}</span>
+      </div>
+    </div>
+  </div>`;
 }
 
 // ── Signal card ──────────────────────────────────────────────
@@ -658,6 +743,7 @@ async function _load() {
   _signals = [...(d.football||[]), ...(d.tennis||[])];
   _schedule = d.schedule || [];
   _allOdds = d.all_odds || {};
+  _modelTips = d.model_tips || {};
 
   const setB = (id, n) => { const el=document.getElementById(id); el.textContent=n; el.classList.toggle('show',n>0); };
   setB('badge-all',      _signals.length);
