@@ -12,11 +12,15 @@ echo "========================================" >> "$LOG"
 echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] scan_cron started ---" >> "$LOG"
 echo "========================================" >> "$LOG"
 
-# 1. Refresh injury news (DDG search, all 48 teams)
+# 1. Auto-settle completed matches
+echo "--- Settle bets ---" >> "$LOG"
+python3 scripts/settle_bets.py >> "$LOG" 2>&1
+
+# 2. Refresh injury news (DDG search, all 48 teams)
 echo "--- Injury refresh ---" >> "$LOG"
 python3 scripts/refresh_injuries.py >> "$LOG" 2>&1
 
-# 2. Daily value scan
+# 3. Daily value scan
 echo "--- Daily scan ---" >> "$LOG"
 python3 scripts/daily_scan.py --auto-log --bankroll 100 --retrain >> "$LOG" 2>&1
 
