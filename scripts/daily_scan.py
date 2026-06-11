@@ -174,6 +174,49 @@ if __name__ == "__main__":
             print(f"  Odds API: {len(all_odds)} matches with real bookmaker odds")
     except Exception as _e:
         print(f"  Odds API fetch failed: {_e} — keeping existing odds")
+
+    # Log daily odds snapshot for line movement tracking
+    try:
+        import json as _json2
+        from datetime import datetime as _dt2
+        _hist_path = ROOT / "data" / "odds_history.json"
+        _today_snap = {
+            "ts": _dt2.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "date": _dt2.utcnow().strftime("%Y-%m-%d"),
+            "odds": {k: {"home": v["home"], "draw": v["draw"], "away": v["away"]} for k, v in all_odds.items()},
+        }
+        # Load existing history, append today's snapshot (keep last 14 entries)
+        _hist = []
+        if _hist_path.exists():
+            try:
+                _hist = _json2.loads(_hist_path.read_text())
+            except Exception:
+                _hist = []
+        # Remove duplicate for today
+        _hist = [s for s in _hist if s.get("date") != _today_snap["date"]]
+        _hist.append(_today_snap)
+        _hist = _hist[-14:]  # keep last 14 days
+        _hist_path.write_text(_json2.dumps(_hist, ensure_ascii=False, indent=2))
+        print(f"  Odds history: {len(_hist)} snapshots logged")
+    except Exception as _e:
+        print(f"  Odds history log failed: {_e}")
+
+    # Build odds_history dict for dashboard: {match_key: [{date, home, draw, away}, ...]}
+    _odds_hist_for_dashboard = {}
+    try:
+        _hist_data = _json2.loads((ROOT / "data" / "odds_history.json").read_text()) if (ROOT / "data" / "odds_history.json").exists() else []
+        for _snap in _hist_data:
+            for _mk, _od in _snap.get("odds", {}).items():
+                if _mk not in _odds_hist_for_dashboard:
+                    _odds_hist_for_dashboard[_mk] = []
+                _odds_hist_for_dashboard[_mk].append({
+                    "date": _snap["date"],
+                    "home": _od.get("home", 0),
+                    "draw": _od.get("draw", 0),
+                    "away": _od.get("away", 0),
+                })
+    except Exception:
+        _odds_hist_for_dashboard = {}
         # Fall back to match_contexts odds if API unavailable
         all_odds = {
             f"{ctx['home']} vs {ctx['away']}": {
@@ -274,6 +317,7 @@ if __name__ == "__main__":
         all_odds=all_odds,
         model_tips=model_tips if model_tips else None,
         open_bets=_open_bets,
+        odds_history=_odds_hist_for_dashboard,
     )
     print("Dashboard: docs/data/signals.json updated.")
 
