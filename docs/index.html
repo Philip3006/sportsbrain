@@ -195,18 +195,30 @@
     .pred-xg-team-name { font-size: 11px; color: var(--muted); font-weight: 600; text-align: center; max-width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* ── Open bets view ── */
-    .bet-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin: 8px 16px; }
-    .bet-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-    .bet-match { font-size: 14px; font-weight: 800; }
-    .bet-date { font-size: 11px; color: var(--muted); }
-    .bet-market-chip { display: inline-block; font-size: 11px; font-weight: 700; background: rgba(255,255,255,.06); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; margin-bottom: 8px; }
-    .bet-odds-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-    .bet-odds-entry { font-size: 20px; font-weight: 900; color: var(--text); }
-    .bet-odds-arrow { font-size: 16px; }
+    .bet-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; margin: 8px 16px; overflow: hidden; }
+    .bet-card-top { padding: 14px 14px 10px; border-bottom: 1px solid var(--border); }
+    .bet-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .bet-match { font-size: 15px; font-weight: 800; }
+    .bet-date { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .bet-market-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    .bet-market-chip { display: inline-block; font-size: 12px; font-weight: 700; background: rgba(255,255,255,.07); border: 1px solid var(--border); border-radius: 6px; padding: 3px 10px; }
+    .bet-conf-chip { display: inline-block; font-size: 10px; font-weight: 800; border-radius: 6px; padding: 3px 8px; letter-spacing: .3px; }
+    .conf-high { background: rgba(0,200,83,.15); color: var(--green); border: 1px solid rgba(0,200,83,.3); }
+    .conf-medium { background: rgba(255,193,7,.12); color: var(--yellow); border: 1px solid rgba(255,193,7,.3); }
+    .bet-odds-row { display: flex; align-items: center; gap: 10px; }
+    .bet-odds-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+    .bet-odds-entry { font-size: 22px; font-weight: 900; color: var(--text); }
+    .bet-odds-arrow { font-size: 14px; color: var(--muted); }
     .bet-odds-current { font-size: 18px; font-weight: 800; }
     .drift-good { color: var(--green); }
     .drift-bad { color: var(--red); }
-    .bet-footer { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .bet-card-money { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+    .bet-money-cell { background: var(--card); padding: 12px 14px; }
+    .bet-money-label { font-size: 10px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+    .bet-money-val { font-size: 20px; font-weight: 900; line-height: 1; }
+    .bet-money-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .bet-money-win { color: var(--green); }
+    .bet-card-footer { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 14px; background: rgba(255,255,255,.02); }
     .bet-stake { font-size: 12px; color: var(--muted); font-weight: 600; }
     .bet-edge { font-size: 12px; font-weight: 800; }
     .clv-pill { font-size: 10px; font-weight: 800; border-radius: 20px; padding: 2px 8px; }
@@ -725,30 +737,78 @@ function renderBets() {
     c.innerHTML = `<div class="empty"><div class="icon">📭</div><div>Keine offenen Wetten.<br><small>Signals werden täglich 08:00 UTC aktualisiert.</small></div></div>`;
     return;
   }
-  const mktLabels = {home:'Heimsieg',draw:'Unentschieden',away:'Auswärtssieg','o/u2.5_over':'Über 2.5','o/u2.5_under':'Unter 2.5',dc_1x:'DC 1X',dc_x2:'DC X2',dc_12:'DC 12'};
   let h = '';
   for (const b of _openBets) {
-    const driftCls = b.drift_pct === null ? '' : b.drift_pct < 0 ? 'drift-good' : 'drift-bad';
-    const driftArrow = b.drift_pct === null ? '' : b.drift_pct < 0 ? '↓' : '↑';
-    const driftStr = b.drift_pct !== null ? `${driftArrow} ${Math.abs(b.drift_pct).toFixed(1)}%` : '—';
+    const home = b.home || b.match?.split(' vs ')[0] || '';
+    const away = b.away || b.match?.split(' vs ')[1] || '';
+    const mktLabel = marketLabel(b.market, home, away);
+    const conf = b.confidence || '';
+    const confCls = conf === 'HIGH' ? 'conf-high' : conf === 'MEDIUM' ? 'conf-medium' : '';
+
+    const stake = b.stake || 0;
+    const odds = b.entry_odds || 0;
+    const potProfit = (odds - 1) * stake;
+    const totalReturn = odds * stake;
+
+    const driftCls = b.drift_pct == null ? '' : b.drift_pct < 0 ? 'drift-good' : 'drift-bad';
+    const driftArrow = b.drift_pct == null ? '' : b.drift_pct < 0 ? '↓' : '↑';
+    const driftStr = b.drift_pct != null ? `${driftArrow}${Math.abs(b.drift_pct).toFixed(1)}%` : '—';
     const clvCls = b.clv_signal === 'good' ? 'clv-good' : b.clv_signal === 'bad' ? 'clv-bad' : 'clv-neutral';
-    const clvLabel = b.clv_signal === 'good' ? '✓ CLV positiv' : b.clv_signal === 'bad' ? '✗ CLV negativ' : 'CLV n/a';
-    const dateStr = b.match_date ? b.match_date.slice(0,10).split('-').reverse().join('.') : '—';
-    const edgeStr = b.model_edge_pct !== null && b.model_edge_pct !== undefined ? `Edge: ${b.model_edge_pct > 0 ? '+' : ''}${b.model_edge_pct}%` : '';
+    const clvLabel = b.clv_signal === 'good' ? '✓ CLV positiv' : b.clv_signal === 'bad' ? '✗ CLV negativ' : 'CLV ausstehend';
+    const edgePct = b.model_edge_pct;
+    const edgeStr = edgePct != null ? `${edgePct > 0 ? '+' : ''}${edgePct}% Edge` : '';
+
+    const matchDate = b.match_date ? b.match_date.slice(0,10) : null;
+    let dateLabel = '—';
+    if (matchDate) {
+      const [y,mo,d] = matchDate.split('-');
+      const today = new Date(); today.setHours(0,0,0,0);
+      const mDate = new Date(+y, +mo-1, +d);
+      const diff = Math.round((mDate - today) / 86400000);
+      dateLabel = diff === 0 ? 'Heute' : diff === 1 ? 'Morgen' : `${d}.${mo}.`;
+    }
+
+    const flagH = teamFlag(home) || '';
+    const flagA = teamFlag(away) || '';
+
+    const currentOddsStr = b.current_odds ? b.current_odds.toFixed(2) : '—';
+
     h += `<div class="bet-card">
-      <div class="bet-card-header">
-        <span class="bet-match">${esc(b.match)}</span>
-        <span class="bet-date">${dateStr}</span>
+      <div class="bet-card-top">
+        <div class="bet-card-header">
+          <span class="bet-match">${flagH} ${esc(home)} vs ${flagA} ${esc(away)}</span>
+          <span class="bet-date">${dateLabel}</span>
+        </div>
+        <div class="bet-market-row">
+          <span class="bet-market-chip">${esc(mktLabel)}</span>
+          ${conf ? `<span class="bet-conf-chip ${confCls}">${conf}</span>` : ''}
+        </div>
+        <div class="bet-odds-row">
+          <div>
+            <div class="bet-odds-label">Einstieg</div>
+            <span class="bet-odds-entry">@${odds.toFixed(2)}</span>
+          </div>
+          <span class="bet-odds-arrow">→</span>
+          <div>
+            <div class="bet-odds-label">Aktuell</div>
+            <span class="bet-odds-current ${driftCls}">${currentOddsStr} <small>${driftStr}</small></span>
+          </div>
+        </div>
       </div>
-      <div class="bet-market-chip">${esc(mktLabels[b.market] || b.market)}</div>
-      <div class="bet-odds-row">
-        <span class="bet-odds-entry">${b.entry_odds.toFixed(2)}</span>
-        <span class="bet-odds-arrow ${driftCls}">→</span>
-        <span class="bet-odds-current ${driftCls}">${b.current_odds ? b.current_odds.toFixed(2) : '—'} <small>${driftStr}</small></span>
+      <div class="bet-card-money">
+        <div class="bet-money-cell">
+          <div class="bet-money-label">Einsatz</div>
+          <div class="bet-money-val">€${stake.toFixed(2)}</div>
+          <div class="bet-money-sub">bei Verlust: −€${stake.toFixed(2)}</div>
+        </div>
+        <div class="bet-money-cell">
+          <div class="bet-money-label">Möglicher Gewinn</div>
+          <div class="bet-money-val bet-money-win">+€${potProfit.toFixed(2)}</div>
+          <div class="bet-money-sub">Rückgabe: €${totalReturn.toFixed(2)}</div>
+        </div>
       </div>
-      <div class="bet-footer">
-        <span class="bet-stake">€${b.stake.toFixed(0)} Einsatz</span>
-        ${edgeStr ? `<span class="bet-edge ${b.model_edge_pct > 0 ? 'drift-good' : 'drift-bad'}">${esc(edgeStr)}</span>` : ''}
+      <div class="bet-card-footer">
+        ${edgeStr ? `<span class="bet-edge ${edgePct > 0 ? 'drift-good' : 'drift-bad'}">${esc(edgeStr)}</span>` : ''}
         <span class="clv-pill ${clvCls}">${clvLabel}</span>
       </div>
     </div>`;
