@@ -347,6 +347,14 @@ def run_daily_scan(
         print(f"  {len(statsbomb_xg)} matches with xG data.")
     except Exception:
         statsbomb_xg = pd.DataFrame()
+
+    # Fetch Bet365 BTTS odds (api-football, optional — needs API_FOOTBALL_KEY)
+    _btts_map: dict = {}
+    try:
+        from src.data.btts_odds import fetch_btts_odds, overlay_btts_odds
+        _btts_map = fetch_btts_odds(matches=unique_matches)
+    except Exception as _e:
+        print(f"  [btts] skipped: {_e}")
         print("  StatsBomb xG unavailable — xG features disabled.")
 
     all_signals: list[BetSignal] = []
@@ -601,7 +609,9 @@ def run_daily_scan(
                     bankroll=bankroll, match_id=match_id, line=ah_line,
                 ))
 
-        # BTTS (Both Teams to Score)
+        # BTTS (Both Teams to Score) — overlay Bet365 odds from api-football
+        if _btts_map:
+            match = overlay_btts_odds(match, _btts_map)
         btts_yes_odds = float(match.get("btts_yes_odds", 0))
         btts_no_odds = float(match.get("btts_no_odds", 0))
         if btts_yes_odds > 1.0 or btts_no_odds > 1.0:
