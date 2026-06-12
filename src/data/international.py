@@ -91,6 +91,39 @@ def filter_minnow_qualifiers(
     return df[~mask].reset_index(drop=True)
 
 
+TOURNAMENT_FINALS_KEYWORDS = ("FIFA World Cup", "UEFA Euro", "Copa América", "Copa America")
+
+
+def compute_sample_weights(
+    df: pd.DataFrame,
+    finals_weight: float = 1.5,
+    qualifier_weight: float = 0.5,
+    default_weight: float = 1.0,
+) -> pd.Series:
+    """
+    Sample weights for GBT training. Tournament-finals matches (WC, Euro, Copa)
+    are up-weighted to reflect WM-2026-like dynamics; qualifiers down-weighted.
+    """
+    def weight(t: str) -> float:
+        if "qualif" in t.lower():
+            return qualifier_weight
+        if any(k in t for k in TOURNAMENT_FINALS_KEYWORDS):
+            return finals_weight
+        return default_weight
+
+    return df["tournament"].apply(weight).astype(float)
+
+
+def is_wc2022(df: pd.DataFrame) -> pd.Series:
+    """Mask for WC2022 finals matches (used as ensemble holdout)."""
+    return (
+        df["tournament"].str.contains("FIFA World Cup", regex=False, na=False)
+        & ~df["tournament"].str.contains("qualif", case=False, regex=False, na=False)
+        & (df["date"] >= pd.Timestamp("2022-11-01"))
+        & (df["date"] <= pd.Timestamp("2022-12-31"))
+    )
+
+
 def filter_since(df: pd.DataFrame, date: str | pd.Timestamp) -> pd.DataFrame:
     """Returns matches on or after date."""
     return df[df["date"] >= pd.Timestamp(date)].reset_index(drop=True)

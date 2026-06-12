@@ -31,15 +31,20 @@ def train(
     params: dict | None = None,
     eval_set: tuple | None = None,
     early_stopping_rounds: int = 50,
+    sample_weight: np.ndarray | pd.Series | None = None,
 ) -> HistGradientBoostingClassifier:
     """
     Trains HistGradientBoostingClassifier (multiclass).
     eval_set ignored — sklearn uses internal validation_fraction for early stopping.
     y: 0=away_win, 1=draw, 2=home_win.
+    sample_weight: optional per-row weights (e.g. up-weight tournament finals).
     """
     merged = {**GBT_PARAMS, **(params or {})}
     model = HistGradientBoostingClassifier(**merged)
-    model.fit(X, y)
+    if sample_weight is not None:
+        model.fit(X, y, sample_weight=np.asarray(sample_weight))
+    else:
+        model.fit(X, y)
     return model
 
 
