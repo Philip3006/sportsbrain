@@ -31,12 +31,12 @@ jobs:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/daily_scan.py --bankroll 100 --auto-log --horizon 96
+        run: python scripts/daily_scan.py --bankroll 100 --horizon 96
 
-      - name: Commit ledger
+      - name: Commit scan results (NO ledger — manual confirmation required)
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add results/ledger.csv results/scans/ || true
+          git add results/scans/ docs/data/signals.json || true
           git diff --staged --quiet || git commit -m "auto: pre-match scan $(date +%Y-%m-%d)"
           git push
