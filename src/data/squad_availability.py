@@ -396,11 +396,48 @@ def squad_report(
     return report
 
 
+# Position-weighted impact (Lever 3 proxy without per-player market values).
+# Rationale: GK losses hurt more than outfield since they're rarely replaced 1:1.
+# DEF/MID slightly above FWD because tournament defenses rely on chemistry.
+_POSITION_IMPACT_WEIGHTS = {
+    "GK":  1.30, "Goalkeeper": 1.30,
+    "DEF": 1.05, "Defender": 1.05, "Centre-Back": 1.05, "Left-Back": 1.05,
+                  "Right-Back": 1.05,
+    "MID": 1.05, "Midfielder": 1.05, "Central Midfield": 1.05,
+                  "Defensive Midfield": 1.05, "Attacking Midfield": 1.05,
+    "FWD": 1.00, "Forward": 1.00, "Centre-Forward": 1.00, "Left Winger": 1.00,
+                  "Right Winger": 1.00, "Second Striker": 1.00,
+    "unknown": 1.00,
+}
+
+
+def _weighted_impact_lost(report: SquadReport) -> float:
+    """Normalized impact lost ∈ [0,1] weighted by position rarity.
+
+    Without per-player market values (Transfermarkt scrape doesn't expose them
+    in our pipeline), we proxy via position weights. GK absence weighs ~25%
+    more than FWD absence; intra-outfield differences kept small to avoid
+    over-claiming precision.
+    """
+    if not report.players:
+        return 0.0
+    total_w = sum(_POSITION_IMPACT_WEIGHTS.get(p.position, 1.0) for p in report.players)
+    if total_w == 0:
+        return 0.0
+    lost = sum(
+        _POSITION_IMPACT_WEIGHTS.get(p.position, 1.0) * (1.0 - p.availability)
+        for p in report.players
+    )
+    return float(lost / total_w)
+
+
 def squad_impact_features(
     home_report: SquadReport,
     away_report: SquadReport,
 ) -> dict[str, float]:
     """Numeric features for the model from two SquadReports."""
+    impact_h = _weighted_impact_lost(home_report)
+    impact_a = _weighted_impact_lost(away_report)
     return {
         "squad_availability_home": home_report.availability_score,
         "squad_availability_away": away_report.availability_score,
@@ -409,6 +446,10 @@ def squad_impact_features(
         ),
         "key_player_risk_home": float(len(home_report.risk_players)),
         "key_player_risk_away": float(len(away_report.risk_players)),
+        # Lever 3: position-weighted impact-lost (proxy for per-player value impact)
+        "weighted_impact_lost_home": impact_h,
+        "weighted_impact_lost_away": impact_a,
+        "weighted_impact_lost_diff": impact_h - impact_a,
     }
 
 

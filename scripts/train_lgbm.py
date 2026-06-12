@@ -40,7 +40,7 @@ def main(
     since: str = "2018-01-01",
     val_since: str = "2023-01-01",
     ensemble_holdout: bool = True,
-    gate_brier: float = 0.51,
+    gate_min_improvement: float = 0.01,
 ):
     print("Loading data...")
     all_matches = filter_competitive(fetch_international_results())
@@ -182,22 +182,25 @@ def main(
         brier_dc_only = brier_score_multiclass(dc_arr, y_wc22.values)
         brier_lgbm_only = brier_score_multiclass(lgbm_wc22_cal, y_wc22.values)
 
+        improvement = brier_dc_only - brier_blend
         print(f"  DC-only Brier:        {brier_dc_only:.4f}")
         print(f"  LGBM-only Brier:      {brier_lgbm_only:.4f}")
         print(f"  Blend Brier:          {brier_blend:.4f}  (dc_weight={optimal_dc_weight:.2f})")
-        print(f"  Gate threshold:       {gate_brier:.4f}")
-        gate_passed = bool(brier_blend <= gate_brier and brier_blend < brier_dc_only)
+        print(f"  Improvement vs DC:    {improvement:+.4f}  (min required: {gate_min_improvement:+.4f})")
+        gate_passed = bool(improvement >= gate_min_improvement)
         gate_meta = {
             "holdout": "wc2022",
             "n_matches": int(len(matches_wc22)),
             "dc_only_brier": brier_dc_only,
             "lgbm_only_brier": brier_lgbm_only,
             "blend_brier": brier_blend,
+            "improvement_vs_dc": improvement,
             "dc_weight": optimal_dc_weight,
-            "threshold": gate_brier,
+            "min_improvement_required": gate_min_improvement,
             "passed": gate_passed,
-            "reason": "blend beats DC-only and threshold" if gate_passed
-                     else "blend did not improve on DC-only",
+            "reason": (f"blend improves DC-only by {improvement:.4f} (≥ {gate_min_improvement})"
+                       if gate_passed
+                       else f"blend improvement {improvement:.4f} below {gate_min_improvement} threshold"),
         }
         print("  Gate result:          " + ("✅ PASS — LGBM eligible for live ensemble" if gate_passed
                                               else "❌ FAIL — scanner stays DC-only"))
@@ -227,8 +230,9 @@ if __name__ == "__main__":
     parser.add_argument("--val-since", default="2023-01-01")
     parser.add_argument("--no-holdout", action="store_true",
                         help="Skip WC2022 ensemble holdout (use entire date range for train/val)")
-    parser.add_argument("--gate-brier", type=float, default=0.51,
-                        help="Max Brier on WC2022 holdout for ensemble gate to pass")
+    parser.add_argument("--gate-min-improvement", type=float, default=0.01,
+                        help="Min Brier improvement of blend over DC-only on WC2022 holdout")
     args = parser.parse_args()
     main(since=args.since, val_since=args.val_since,
-         ensemble_holdout=not args.no_holdout, gate_brier=args.gate_brier)
+         ensemble_holdout=not args.no_holdout,
+         gate_min_improvement=args.gate_min_improvement)
