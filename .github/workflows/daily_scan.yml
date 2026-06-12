@@ -29,7 +29,7 @@ jobs:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/daily_scan.py --bankroll 100 --auto-log --retrain
+        run: python scripts/daily_scan.py --bankroll 100 --retrain
 
       - name: Process Telegram commands
         env:
@@ -37,10 +37,11 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python scripts/telegram_bot.py
 
-      - name: Commit ledger + models
+      - name: Commit models + signals (NO ledger — manual confirmation required)
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add results/ledger.csv models/ docs/data/signals.json || true
+          git add models/ docs/data/signals.json || true
           git diff --staged --quiet || git commit -m "auto: scan $(date +%Y-%m-%d)"
+          git pull --rebase origin main || true
           git push

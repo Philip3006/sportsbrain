@@ -2,7 +2,8 @@ name: Wimbledon Tennis Scan
 
 on:
   schedule:
-    - cron: '0 9 * * *'   # täglich 09:00 UTC (11:00 MESZ) — nach Spielplan
+    # Wimbledon 2026: 29. Juni – 13. Juli — davor kein aktiver Scan nötig
+    - cron: '0 9 * 7 *'   # täglich 09:00 UTC im Juli
   workflow_dispatch:        # manuell auslösbar
 
 jobs:
@@ -33,10 +34,11 @@ jobs:
           # WTA is the primary focus (+8.5% Wimbledon ROI); ATP uses stricter 10% edge floor
           python scripts/tennis_scan.py --bankroll 100 --tour both
 
-      - name: Commit results
+      - name: Commit results (NO ledger — manual confirmation required)
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add results/tennis_scan_*.md results/ledger.csv docs/data/signals.json || true
+          git add results/tennis_scan_*.md docs/data/signals.json || true
           git diff --staged --quiet || git commit -m "auto: tennis scan $(date +%Y-%m-%d)"
+          git pull --rebase origin main || true
           git push
