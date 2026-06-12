@@ -46,7 +46,8 @@ def fetch_live_xg(force: bool = False) -> pd.DataFrame:
 
     # Dedup: keep the LAST occurrence (Sofascore appended last, so it wins for WC2026).
     # Match on (date normalized to day, home_team, away_team).
-    df["_date_day"] = pd.to_datetime(df["date"]).dt.normalize()
+    _dt = pd.to_datetime(df["date"], utc=True, errors="coerce")
+    df["_date_day"] = _dt.dt.tz_localize(None).dt.normalize()
     df = df.drop_duplicates(subset=["_date_day", "home_team", "away_team"], keep="last")
     df = df.drop(columns=["_date_day"]).reset_index(drop=True)
 

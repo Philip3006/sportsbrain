@@ -278,6 +278,7 @@ def detect_value_totals_quarter(
     min_edge: float = MIN_EDGE,
     match_id: str = "",
     min_edge_under: float | None = None,
+    dc_probs: dict | None = None,
 ) -> list[BetSignal]:
     """Quarter-ball O/U (e.g., 2.25, 2.75): computes EV from two adjacent legs.
     quarter_probs: from dc.predict_totals_all() with quarter_ball=True.
@@ -312,9 +313,12 @@ def detect_value_totals_quarter(
             # p_eff = (EV + 1) / over_odds
             p_eff = (ev_over + 1) / over_odds if over_odds > 1 else P_A
             kf = kelly_fraction(min(p_eff, 0.99), over_odds)
+            model_p_over = P_A + 0.5 * P_B
+            dc_p_over = dc_probs.get("p_over") if dc_probs else None
+            confidence = _consistency_confidence(model_p_over, 0.5, dc_p_over, "MEDIUM")
             signals.append(_make_signal(
                 match_id, home, away, f"o/u{line}_over",
-                P_A + 0.5 * P_B, P_A + 0.5 * P_B, over_odds, ev_over, kf, "MEDIUM", bankroll,
+                model_p_over, model_p_over, over_odds, ev_over, kf, confidence, bankroll,
             ))
 
     effective_min_under = min_edge_under if min_edge_under is not None else min_edge
@@ -323,9 +327,12 @@ def detect_value_totals_quarter(
         if ev_under >= effective_min_under - 1e-9:
             p_eff = (ev_under + 1) / under_odds if under_odds > 1 else P_C
             kf = kelly_fraction(min(p_eff, 0.99), under_odds)
+            model_p_under = P_C + 0.5 * P_B
+            dc_p_under = dc_probs.get("p_under") if dc_probs else None
+            confidence = _consistency_confidence(model_p_under, 0.5, dc_p_under, "MEDIUM")
             signals.append(_make_signal(
                 match_id, home, away, f"o/u{line}_under",
-                P_C + 0.5 * P_B, P_C + 0.5 * P_B, under_odds, ev_under, kf, "MEDIUM", bankroll,
+                model_p_under, model_p_under, under_odds, ev_under, kf, confidence, bankroll,
             ))
 
     return signals
@@ -341,6 +348,7 @@ def detect_value_ah_quarter(
     min_edge: float = MIN_EDGE,
     match_id: str = "",
     line: float = -1.25,
+    dc_probs: dict | None = None,
 ) -> list[BetSignal]:
     """Quarter-ball AH (e.g., -1.25, -0.75): computes EV from two adjacent legs.
     quarter_probs: from dc.predict_asian_handicap_all() with quarter_ball=True.
@@ -406,9 +414,11 @@ def detect_value_ah_quarter(
         if ev_home >= min_edge - 1e-9:
             p_eff = (ev_home + 1) / ah_home_odds if ah_home_odds > 1 else 0
             kf = kelly_fraction(min(p_eff, 0.99), ah_home_odds)
+            dc_p_home = dc_probs.get("p_ah_home") if dc_probs else None
+            confidence = _consistency_confidence(P_A, 0.5, dc_p_home, "MEDIUM")
             signals.append(_make_signal(
                 match_id, home, away, home_label,
-                P_A, P_A, ah_home_odds, ev_home, kf, "MEDIUM", bankroll,
+                P_A, P_A, ah_home_odds, ev_home, kf, confidence, bankroll,
             ))
 
     if ah_away_odds > 1.0:
@@ -425,9 +435,11 @@ def detect_value_ah_quarter(
         if ev_away >= min_edge - 1e-9:
             p_eff = (ev_away + 1) / ah_away_odds if ah_away_odds > 1 else 0
             kf = kelly_fraction(min(p_eff, 0.99), ah_away_odds)
+            dc_p_away = dc_probs.get("p_ah_away") if dc_probs else None
+            confidence = _consistency_confidence(P_C, 0.5, dc_p_away, "MEDIUM")
             signals.append(_make_signal(
                 match_id, home, away, away_label,
-                P_C, P_C, ah_away_odds, ev_away, kf, "MEDIUM", bankroll,
+                P_C, P_C, ah_away_odds, ev_away, kf, confidence, bankroll,
             ))
 
     return signals
