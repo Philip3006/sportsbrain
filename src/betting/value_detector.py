@@ -66,10 +66,16 @@ def _consistency_confidence(
     If dc_p is None the check is skipped and base_confidence is returned unchanged.
     """
     if dc_p is None:
+        # Even without DC consistency check, market-disagreement gate applies.
+        if market_disagreement_low(ensemble_p, fair_p):
+            return "LOW"
         return base_confidence
     ensemble_above = ensemble_p > fair_p
     dc_above = dc_p > fair_p
     if ensemble_above != dc_above:
+        return "LOW"
+    # Lever 6 gate: model significantly diverges from market → high overconfidence risk.
+    if market_disagreement_low(ensemble_p, fair_p) or market_disagreement_low(dc_p, fair_p):
         return "LOW"
     return base_confidence
 
@@ -546,6 +552,18 @@ def detect_value_ftts(
             model_p, model_p, odds, ev, kf, "MEDIUM", bankroll,
         ))
     return signals
+
+
+_MARKET_DISAGREEMENT_THRESHOLD = 0.10  # 10pp Modell-vs-Markt → LOW
+# Lever 6: empirisch (scripts/fit_closing_anchor.py) liefert Closing-Line Brier 0.574
+# vs Modell 0.626 → unser Modell ist deutlich schlechter als der Markt. Bei großer
+# Abweichung ist Overconfidence das Default-Risiko, nicht Edge.
+
+
+def market_disagreement_low(model_prob: float, market_implied_prob: float,
+                            threshold: float = _MARKET_DISAGREEMENT_THRESHOLD) -> bool:
+    """Returns True if model deviates from market by more than threshold (pp)."""
+    return abs(float(model_prob) - float(market_implied_prob)) > threshold
 
 
 def set_confidence(signal: BetSignal, dc_probs: dict, lgbm_probs: np.ndarray) -> BetSignal:

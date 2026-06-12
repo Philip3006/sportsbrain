@@ -39,8 +39,12 @@ class TestConsistencyConfidence:
         assert _consistency_confidence(0.10, 0.20, 0.30, "MEDIUM") == "LOW"
 
     def test_base_confidence_preserved_when_consistent(self):
-        # HIGH base should be preserved when models agree
-        assert _consistency_confidence(0.55, 0.40, 0.50, "HIGH") == "HIGH"
+        # HIGH base preserved when models agree AND stay within market-disagreement gate
+        assert _consistency_confidence(0.45, 0.40, 0.43, "HIGH") == "HIGH"
+
+    def test_market_disagreement_forces_low(self):
+        # Both models on same side of fair (above) but model >> market → LOW (Lever 6)
+        assert _consistency_confidence(0.55, 0.40, 0.52, "HIGH") == "LOW"
 
     def test_low_applied_regardless_of_base(self):
         # Even if base was "HIGH", divergence forces "LOW"

@@ -1,0 +1,60 @@
+{
+  "group": {
+    "n": 632,
+    "fitted": 0.0,
+    "shrunk": 0.0,
+    "alpha": 0.0,
+    "brier_fitted": 0.7052905022969645,
+    "baseline": 1.1
+  },
+  "r16": {
+    "n": 192,
+    "fitted": 0.0,
+    "shrunk": 0.0,
+    "alpha": 0.1724137931034483,
+    "brier_fitted": 0.6463062911322425,
+    "brier_shrunk": 0.6463062911322425,
+    "brier_default": 0.6494581663700962,
+    "baseline": 0.75
+  },
+  "qf": {
+    "n": 96,
+    "fitted": 1.25,
+    "shrunk": 0.8823529411764706,
+    "alpha": 0.29411764705882354,
+    "brier_fitted": 0.6451812667776514,
+    "brier_shrunk": 0.6454411884486467,
+    "brier_default": 0.6456439671261728,
+    "baseline": 0.75
+  },
+  "sf": {
+    "n": 48,
+    "fitted": 0.0,
+    "shrunk": 0.0,
+    "alpha": 0.45454545454545453,
+    "brier_fitted": 0.6933898031405721,
+    "brier_shrunk": 0.6933898031405721,
+    "brier_default": 0.6995650963306286,
+    "baseline": 0.75
+  },
+  "third_place": {
+    "n": 7,
+    "fitted": 0.0,
+    "shrunk": 0.0,
+    "alpha": 0.851063829787234,
+    "brier_fitted": 0.6445769454921909,
+    "brier_shrunk": 0.6445769454921909,
+    "brier_default": 0.655996571186848,
+    "baseline": 0.75
+  },
+  "final": {
+    "n": 24,
+    "fitted": 0.9,
+    "shrunk": 0.3375,
+    "alpha": 0.625,
+    "brier_fitted": 0.7055980750510534,
+    "brier_shrunk": 0.7061841380758516,
+    "brier_default": 0.7056319656849528,
+    "baseline": 0.75
+  }
+}

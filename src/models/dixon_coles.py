@@ -271,22 +271,84 @@ def predict_match(
     }
 
 
+_RHO_FACTORS_CACHE: dict | None = None
+
+
+def _load_rho_factors() -> dict[str, float]:
+    """Loads empirically-fit rho factors from rho_stages.json (built by
+    scripts/fit_rho_stages.py via walk-forward DC snapshots).
+    Falls back to hardcoded defaults if file missing.
+    """
+    global _RHO_FACTORS_CACHE
+    if _RHO_FACTORS_CACHE is not None:
+        return _RHO_FACTORS_CACHE
+    import json as _json
+    from src.config import MODELS_DIR
+    defaults = {"group": 1.10, "r16": 0.75, "qf": 0.75, "sf": 0.75,
+                "third_place": 0.75, "final": 0.75}
+    path = MODELS_DIR / "dixon_coles" / "rho_stages.json"
+    if path.exists():
+        try:
+            data = _json.loads(path.read_text())
+            for stage, meta in data.items():
+                if isinstance(meta, dict) and "shrunk" in meta:
+                    defaults[stage] = float(meta["shrunk"])
+        except Exception:
+            pass
+    _RHO_FACTORS_CACHE = defaults
+    return defaults
+
+
 def predict_match_staged(
     home: str,
     away: str,
     params: DixonColesParams,
     is_knockout: bool = False,
     neutral: bool = False,
+    stage: str | None = None,
 ) -> dict[str, float]:
     """
-    Stage-aware prediction. Adjusts rho to reflect tactical draw dynamics:
-    - Group stage: rho * 1.10 (slightly more low-score correction, draw is valid result)
-    - Knockout: rho * 0.75 (teams play to win, draw still possible at 90min but less strategic)
-    Empirically small effect (Agent 3: 21.9% vs 21.3% draw rate) but directionally correct.
+    Stage-aware prediction. Rho factors are loaded from rho_stages.json
+    (fit by scripts/fit_rho_stages.py with walk-forward DC snapshots; no leakage).
+
+    If `stage` is provided ("group", "r16", "qf", "sf", "third_place", "final"),
+    uses that specific factor. Otherwise falls back to binary is_knockout:
+    knockout → mean of KO-stage factors weighted by sample size; else group.
     """
-    rho_factor = 0.75 if is_knockout else 1.10
+    factors = _load_rho_factors()
+    if stage and stage in factors:
+        rho_factor = factors[stage]
+    elif is_knockout:
+        # KO-weighted average (n: r16=192, qf=96, sf=48, 3rd=7, final=24 from rho_stages.json)
+        rho_factor = (factors.get("r16", 0.0) * 192
+                      + factors.get("qf", 0.0) * 96
+                      + factors.get("sf", 0.0) * 48
+                      + factors.get("third_place", 0.0) * 7
+                      + factors.get("final", 0.0) * 24) / 367.0
+    else:
+        rho_factor = factors.get("group", 1.10)
     rho = params.rho * rho_factor
     return predict_match(home, away, params, neutral=neutral, rho_override=rho)
+
+
+def get_stage_rho(params: DixonColesParams, stage: str | None,
+                  is_knockout: bool = False) -> float:
+    """Returns the rho override value the scanner should pass to other
+    market-prediction functions (predict_totals, predict_btts, etc.)
+    so they stay consistent with the staged 1X2 prediction.
+    """
+    factors = _load_rho_factors()
+    if stage and stage in factors:
+        rho_factor = factors[stage]
+    elif is_knockout:
+        rho_factor = (factors.get("r16", 0.0) * 192
+                      + factors.get("qf", 0.0) * 96
+                      + factors.get("sf", 0.0) * 48
+                      + factors.get("third_place", 0.0) * 7
+                      + factors.get("final", 0.0) * 24) / 367.0
+    else:
+        rho_factor = factors.get("group", 1.10)
+    return params.rho * rho_factor
 
 
 def predict_goals_distribution(

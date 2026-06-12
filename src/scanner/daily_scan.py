@@ -99,7 +99,25 @@ def _load_latest_dc_params() -> dc.DixonColesParams | None:
     return dc.load(files[-1])
 
 
+def _load_lgbm_gate() -> dict:
+    """Reads models/lgbm/gate.json (written by train_lgbm.py).
+    Returns {'passed': bool, 'dc_weight': float, ...}. Missing file → not passed.
+    """
+    import json as _json
+    path = MODELS_DIR / "lgbm" / "gate.json"
+    if not path.exists():
+        return {"passed": False, "dc_weight": 0.5, "reason": "no gate.json"}
+    try:
+        return _json.loads(path.read_text())
+    except Exception as e:
+        return {"passed": False, "dc_weight": 0.5, "reason": f"unreadable gate.json: {e}"}
+
+
 def _load_latest_lgbm():
+    """Loads LGBM model only if the ensemble gate passed (gate.json)."""
+    gate = _load_lgbm_gate()
+    if not gate.get("passed"):
+        return None
     try:
         from src.models import lgbm_model
         model_path = MODELS_DIR / "lgbm" / "model.pkl"
@@ -240,11 +258,14 @@ def run_daily_scan(
 
     lgbm_model = _load_latest_lgbm()
     calibrators = _load_calibrators() if lgbm_model else None
+    _gate = _load_lgbm_gate()
+    _dc_weight = float(_gate.get("dc_weight", 0.5))
 
     if lgbm_model:
-        print("LightGBM model loaded — using ensemble predictions.")
+        print(f"LightGBM model loaded (gate ✅ dc_weight={_dc_weight:.2f}) — ensemble active.")
     else:
-        print("No LightGBM model found — using Dixon-Coles only.")
+        reason = _gate.get("reason", "no model")
+        print(f"LightGBM disabled ({reason}) — Dixon-Coles only.")
 
     print("Fetching upcoming matches...")
     if mock:
@@ -392,11 +413,11 @@ def run_daily_scan(
                 if calibrators:
                     from src.ensemble.calibration import calibrate
                     from src.ensemble.combiner import blend
-                    blended = blend(dc_probs, lgbm_raw_arr)
+                    blended = blend(dc_probs, lgbm_raw_arr, dc_weight=_dc_weight)
                     final_arr = calibrate(blended.reshape(1, -1), calibrators)[0]
                 else:
                     from src.ensemble.combiner import blend
-                    final_arr = blend(dc_probs, lgbm_raw_arr)
+                    final_arr = blend(dc_probs, lgbm_raw_arr, dc_weight=_dc_weight)
             except Exception:
                 final_arr = dc_arr
         else:
@@ -519,8 +540,8 @@ def run_daily_scan(
 
         # NOTE: set_confidence is applied AFTER all market signals are collected (below)
 
-        # Stage-adjusted rho (shared by O/U and BTTS blocks)
-        rho_staged = dc_params.rho * (0.75 if is_ko else 1.10)
+        # Stage-adjusted rho (shared by O/U and BTTS blocks) — uses empirically fit factors
+        rho_staged = dc.get_stage_rho(dc_params, stage=None, is_knockout=is_ko)
 
         # Calibration-corrected UNDER min_edge: DC systematically underestimates
         # OVER probability (~3-6pp) → UNDER needs higher threshold.
