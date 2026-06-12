@@ -209,17 +209,21 @@ class TestApplySuspensionOverlay:
 class TestSquadReportSuspendedCount:
 
     @patch("src.data.squad_availability._fetch_wikipedia_squad")
+    @patch("src.data.squad_availability._fetch_wc_squads_page")
+    @patch("src.data.squad_availability._fetch_covers_squad")
     @patch("src.data.squad_availability.fetch_transfermarkt_squad")
-    def test_suspended_count_in_tm_report(self, mock_tm, mock_wiki, tmp_path, monkeypatch):
+    def test_suspended_count_in_tm_report(self, mock_tm, mock_covers, mock_wc, mock_wiki, tmp_path, monkeypatch):
         monkeypatch.setattr("src.data.squad_availability._CACHE_DIR", tmp_path / "squad")
         f = tmp_path / "suspensions.json"
         f.write_text(json.dumps({"Germany": ["Musiala"]}))
         monkeypatch.setattr("src.data.squad_availability._SUSPENSIONS_FILE", f)
 
+        mock_covers.return_value = []
         mock_tm.return_value = [
             _make_player("Jamal Musiala"),
             _make_player("Joshua Kimmich"),
         ]
+        mock_wc.return_value = []
         mock_wiki.return_value = []
 
         report = squad_report("Germany", pd.Timestamp("2026-07-10"))
@@ -227,14 +231,18 @@ class TestSquadReportSuspendedCount:
         assert report.suspended_count == 1
 
     @patch("src.data.squad_availability._fetch_wikipedia_squad")
+    @patch("src.data.squad_availability._fetch_wc_squads_page")
+    @patch("src.data.squad_availability._fetch_covers_squad")
     @patch("src.data.squad_availability.fetch_transfermarkt_squad")
-    def test_suspended_count_in_wiki_report(self, mock_tm, mock_wiki, tmp_path, monkeypatch):
+    def test_suspended_count_in_wiki_report(self, mock_tm, mock_covers, mock_wc, mock_wiki, tmp_path, monkeypatch):
         monkeypatch.setattr("src.data.squad_availability._CACHE_DIR", tmp_path / "squad")
         f = tmp_path / "suspensions.json"
         f.write_text(json.dumps({"Brazil": ["Rodrygo"]}))
         monkeypatch.setattr("src.data.squad_availability._SUSPENSIONS_FILE", f)
 
+        mock_covers.return_value = []
         mock_tm.return_value = []
+        mock_wc.return_value = []
         mock_wiki.return_value = [
             _make_player("Rodrygo Goes"),
             _make_player("Vinicius Junior"),
@@ -245,30 +253,38 @@ class TestSquadReportSuspendedCount:
         assert report.suspended_count == 1
 
     @patch("src.data.squad_availability._fetch_wikipedia_squad")
+    @patch("src.data.squad_availability._fetch_wc_squads_page")
+    @patch("src.data.squad_availability._fetch_covers_squad")
     @patch("src.data.squad_availability.fetch_transfermarkt_squad")
     def test_suspended_count_zero_when_no_suspensions(
-        self, mock_tm, mock_wiki, tmp_path, monkeypatch
+        self, mock_tm, mock_covers, mock_wc, mock_wiki, tmp_path, monkeypatch
     ):
         monkeypatch.setattr("src.data.squad_availability._CACHE_DIR", tmp_path / "squad")
         monkeypatch.setattr(
             "src.data.squad_availability._SUSPENSIONS_FILE",
             tmp_path / "missing.json",
         )
+        mock_covers.return_value = []
         mock_tm.return_value = [_make_player("Kimmich")]
+        mock_wc.return_value = []
         mock_wiki.return_value = []
 
         report = squad_report("Germany", pd.Timestamp("2026-07-10"))
         assert report.suspended_count == 0
 
     @patch("src.data.squad_availability._fetch_wikipedia_squad")
+    @patch("src.data.squad_availability._fetch_wc_squads_page")
+    @patch("src.data.squad_availability._fetch_covers_squad")
     @patch("src.data.squad_availability.fetch_transfermarkt_squad")
-    def test_suspended_count_in_default_report(self, mock_tm, mock_wiki, tmp_path, monkeypatch):
+    def test_suspended_count_in_default_report(self, mock_tm, mock_covers, mock_wc, mock_wiki, tmp_path, monkeypatch):
         monkeypatch.setattr("src.data.squad_availability._CACHE_DIR", tmp_path / "squad")
         f = tmp_path / "suspensions.json"
         f.write_text(json.dumps({"Argentina": ["Messi", "De Paul"]}))
         monkeypatch.setattr("src.data.squad_availability._SUSPENSIONS_FILE", f)
 
+        mock_covers.return_value = []
         mock_tm.return_value = []
+        mock_wc.return_value = []
         mock_wiki.return_value = []
 
         report = squad_report("Argentina", pd.Timestamp("2026-07-10"))

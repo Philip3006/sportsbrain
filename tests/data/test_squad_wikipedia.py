@@ -233,14 +233,18 @@ class TestFetchWikipediaSquad:
 class TestSquadReportWikipediaFallback:
 
     @patch("src.data.squad_availability._fetch_wikipedia_squad")
+    @patch("src.data.squad_availability._fetch_wc_squads_page")
+    @patch("src.data.squad_availability._fetch_covers_squad")
     @patch("src.data.squad_availability.fetch_transfermarkt_squad")
-    def test_uses_wikipedia_when_tm_empty(self, mock_tm, mock_wiki, tmp_path, monkeypatch):
+    def test_uses_wikipedia_when_tm_empty(self, mock_tm, mock_covers, mock_wc, mock_wiki, tmp_path, monkeypatch):
         from src.data.squad_availability import PlayerStatus
 
         monkeypatch.setattr(
             "src.data.squad_availability._CACHE_DIR", tmp_path / "squad"
         )
-        mock_tm.return_value = []  # TM blocked
+        mock_tm.return_value = []      # TM blocked
+        mock_covers.return_value = []  # covers.com: no injuries
+        mock_wc.return_value = []      # WC squads page: empty
         mock_wiki.return_value = [
             PlayerStatus(name="Test Player", position="GK", availability=1.0,
                          status="fit", key_player=True, p_plays=1.0)
@@ -252,13 +256,15 @@ class TestSquadReportWikipediaFallback:
         assert report.availability_score == 1.0
 
     @patch("src.data.squad_availability._fetch_wikipedia_squad")
+    @patch("src.data.squad_availability._fetch_covers_squad")
     @patch("src.data.squad_availability.fetch_transfermarkt_squad")
-    def test_uses_tm_when_available(self, mock_tm, mock_wiki, tmp_path, monkeypatch):
+    def test_uses_tm_when_available(self, mock_tm, mock_covers, mock_wiki, tmp_path, monkeypatch):
         from src.data.squad_availability import PlayerStatus
 
         monkeypatch.setattr(
             "src.data.squad_availability._CACHE_DIR", tmp_path / "squad"
         )
+        mock_covers.return_value = []  # no covers data for this test
         mock_tm.return_value = [
             PlayerStatus(name="TM Player", position="FWD", availability=0.0,
                          status="injured", key_player=True, p_plays=0.0)

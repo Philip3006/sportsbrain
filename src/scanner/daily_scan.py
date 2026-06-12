@@ -127,11 +127,39 @@ def _squad_adjust(
     away_squad: SquadReport,
     weight: float = 0.30,
 ) -> np.ndarray:
-    """Shifts home/away win probs by squad availability difference. No-op if both default."""
-    if home_squad.data_source == "default" or away_squad.data_source == "default":
+    """Shifts home/away win probs by squad availability difference.
+    No-op only when BOTH sources are default (no real data at all).
+    Covers.com, Transfermarkt, Wikipedia all count as real data.
+    """
+    both_default = (
+        home_squad.data_source == "default"
+        and away_squad.data_source == "default"
+    )
+    if both_default:
         return final_arr
     avail_diff = home_squad.availability_score - away_squad.availability_score
     shift = avail_diff * weight
+    adjusted = final_arr.copy()
+    adjusted[2] = max(0.01, adjusted[2] + shift)
+    adjusted[0] = max(0.01, adjusted[0] - shift)
+    adjusted[1] = max(0.01, adjusted[1])
+    return adjusted / adjusted.sum()
+
+
+def _rank_adjust(
+    final_arr: np.ndarray,
+    home: str,
+    away: str,
+    weight: float = 0.03,
+) -> np.ndarray:
+    """Small shift based on FIFA ranking difference. Complements Elo.
+    Effect is capped at ±weight (3%). Applied after squad adjustment.
+    Positive rank_diff = home is better ranked (lower rank number = stronger).
+    """
+    from src.data.fifa_rankings import get_fifa_rank_diff
+    rank_diff = get_fifa_rank_diff(home, away)  # positive = home better ranked
+    # Normalize: every 50 rank positions = full weight unit
+    shift = float(np.clip(rank_diff / 50.0 * weight, -weight, weight))
     adjusted = final_arr.copy()
     adjusted[2] = max(0.01, adjusted[2] + shift)
     adjusted[0] = max(0.01, adjusted[0] - shift)
@@ -420,6 +448,7 @@ def run_daily_scan(
         home_squad = squad_report(home, match_ts_naive)
         away_squad = squad_report(away, match_ts_naive)
         final_arr = _squad_adjust(final_arr, home_squad, away_squad)
+        final_arr = _rank_adjust(final_arr, home, away)
 
         # DC expected goals, BTTS and top scorelines for display (single matrix computation)
         try:

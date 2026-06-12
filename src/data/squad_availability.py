@@ -305,6 +305,34 @@ def _apply_suspension_overlay_to_statuses(
     return players, count
 
 
+def _fetch_covers_squad(team: str, match_date: pd.Timestamp) -> list[PlayerStatus]:
+    """
+    Fetches injury data from covers.com and converts to PlayerStatus list.
+    Returns a small list of unavailable/doubtful players (not the full squad).
+    Used as primary real-injury source before Transfermarkt.
+    """
+    try:
+        from src.data.injury_data import get_team_injuries
+    except ImportError:
+        return []
+
+    injuries = get_team_injuries(team)
+    if not injuries:
+        return []
+
+    players = []
+    for inj in injuries:
+        players.append(PlayerStatus(
+            name=inj["player"],
+            position="unknown",
+            availability=inj["availability"],
+            status=inj["status"],
+            key_player=True,
+            p_plays=inj["availability"],
+        ))
+    return players
+
+
 def squad_report(
     team: str,
     match_date: pd.Timestamp,
@@ -312,9 +340,30 @@ def squad_report(
 ) -> SquadReport:
     """
     Returns SquadReport for team at match_date.
-    Priority: Transfermarkt → Wikipedia → default_report.
+    Priority: Covers.com injuries → Transfermarkt → Wikipedia → default_report.
     Suspension overlay (data/suspensions.json) is applied on top of all sources.
     """
+    # Covers.com: structured injury data, scrapable without bot protection
+    covers_players = _fetch_covers_squad(team, match_date)
+    if covers_players:
+        covers_players, susp_count = _apply_suspension_overlay_to_statuses(covers_players, team)
+        # For covers: we only have injured/doubtful players, not the full squad.
+        # Pad with a proxy full-squad so availability_score reflects reality.
+        squad_size = 26
+        n_injured = len(covers_players)
+        fit_players = [
+            PlayerStatus(name=f"fit_{i}", position="unknown", availability=1.0, status="fit")
+            for i in range(max(0, squad_size - n_injured))
+        ]
+        all_players = covers_players + fit_players
+        return SquadReport(
+            team=team,
+            report_date=match_date,
+            players=all_players,
+            data_source="covers",
+            suspended_count=susp_count,
+        )
+
     players = fetch_transfermarkt_squad(team, match_date, force=force)
     if players:
         players, susp_count = _apply_suspension_overlay_to_statuses(players, team)
