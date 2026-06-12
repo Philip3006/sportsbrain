@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-12T13:16:56Z",
+  "updated": "2026-06-12T17:28:40Z",
   "schedule": [
     {
       "sport": "football",
@@ -445,10 +445,10 @@
       "ah-0.5_away": 1.49
     },
     "Canada vs Bosnia & Herzegovina": {
-      "home": 1.89,
+      "home": 1.87,
       "draw": 3.65,
-      "away": 5.1,
-      "over25": 2.35,
+      "away": 5.2,
+      "over25": 2.32,
       "under25": 1.67,
       "over15": 0.0,
       "under15": 0.0,
@@ -456,42 +456,44 @@
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over20": 1.77,
-      "under20": 2.2,
-      "over225": 2.07,
-      "under225": 1.85,
+      "over20": 1.75,
+      "under20": 2.24,
+      "over225": 2.02,
+      "under225": 1.88,
       "over30": 3.55,
       "under30": 1.3,
+      "ah-0.75_home": 2.1,
+      "ah-0.75_away": 1.83,
       "ah-0.5_home": 1.87,
       "ah-0.5_away": 2.12,
-      "ah0.0_home": 1.33,
-      "ah0.0_away": 3.36
+      "ah-1.5_home": 3.34,
+      "ah-1.5_away": 1.34
     },
     "USA vs Paraguay": {
       "home": 2.16,
       "draw": 3.35,
-      "away": 4.1,
-      "over25": 2.5,
-      "under25": 1.55,
-      "over15": 1.5,
-      "under15": 2.7,
+      "away": 4.2,
+      "over25": 2.48,
+      "under25": 1.56,
+      "over15": 1.48,
+      "under15": 2.75,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over20": 1.92,
-      "under20": 2.02,
-      "ah-0.25_home": 1.83,
+      "over20": 1.9,
+      "under20": 2.04,
+      "ah-0.25_home": 1.82,
       "ah-0.25_away": 2.12,
       "ah-0.5_home": 2.16,
-      "ah-0.5_away": 1.84,
+      "ah-0.5_away": 1.85,
       "ah0.0_home": 1.48,
       "ah0.0_away": 2.7
     },
     "Qatar vs Switzerland": {
       "home": 17.0,
-      "draw": 7.05,
-      "away": 1.25,
+      "draw": 7.2,
+      "away": 1.24,
       "over25": 1.76,
       "under25": 2.28,
       "over15": 0.0,
@@ -500,23 +502,23 @@
       "under35": 1.45,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over275": 1.92,
-      "under275": 1.97,
-      "over30": 2.14,
-      "under30": 1.81,
-      "ah1.5_home": 2.23,
-      "ah1.5_away": 1.71,
-      "ah1.75_home": 1.96,
-      "ah1.75_away": 2.0,
+      "over275": 1.94,
+      "under275": 1.94,
+      "over30": 2.2,
+      "under30": 1.79,
+      "ah1.5_home": 2.21,
+      "ah1.5_away": 1.73,
+      "ah1.75_home": 2.02,
+      "ah1.75_away": 1.96,
       "ah2.0_home": 1.69,
       "ah2.0_away": 2.25
     },
     "Brazil vs Morocco": {
-      "home": 1.7,
-      "draw": 4.0,
-      "away": 6.0,
-      "over25": 2.1,
-      "under25": 1.84,
+      "home": 1.69,
+      "draw": 3.95,
+      "away": 6.2,
+      "over25": 2.13,
+      "under25": 1.82,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
@@ -525,10 +527,10 @@
       "btts_no": 0.0,
       "over225": 1.84,
       "under225": 2.06,
-      "over30": 2.9,
-      "under30": 1.42,
-      "ah-0.75_home": 1.9,
-      "ah-0.75_away": 2.09,
+      "over30": 2.95,
+      "under30": 1.41,
+      "ah-0.75_home": 1.89,
+      "ah-0.75_away": 2.1,
       "ah-1.0_home": 2.13,
       "ah-1.0_away": 1.78,
       "ah-0.5_home": 1.63,
@@ -538,8 +540,8 @@
     },
     "Haiti vs Scotland": {
       "home": 6.5,
-      "draw": 4.4,
-      "away": 1.62,
+      "draw": 4.5,
+      "away": 1.61,
       "over25": 1.96,
       "under25": 2.02,
       "over15": 0.0,
@@ -551,15 +553,15 @@
       "over20": 1.44,
       "under20": 2.75,
       "ah1.0_home": 1.91,
-      "ah1.0_away": 2.08,
+      "ah1.0_away": 2.06,
       "ah0.5_home": 2.37,
       "ah0.5_away": 1.57,
       "ah1.5_home": 1.51,
       "ah1.5_away": 2.6
     },
     "Australia vs Turkey": {
-      "home": 5.75,
-      "draw": 3.95,
+      "home": 5.6,
+      "draw": 4.0,
       "away": 1.77,
       "over25": 2.07,
       "under25": 1.86,
@@ -581,27 +583,27 @@
     "Germany vs Curaçao": {
       "home": 1.06,
       "draw": 25.0,
-      "away": 55.0,
-      "over25": 1.2,
-      "under25": 4.65,
+      "away": 85.0,
+      "over25": 1.21,
+      "under25": 4.55,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over425": 1.9,
-      "under425": 1.93,
+      "over425": 1.88,
+      "under425": 1.95,
       "over45": 2.2,
       "under45": 1.82,
       "over40": 1.7,
       "under40": 2.03,
-      "ah-3.5_home": 2.08,
-      "ah-3.5_away": 1.89
+      "ah-3.5_home": 2.05,
+      "ah-3.5_away": 1.92
     },
     "Netherlands vs Japan": {
-      "home": 2.06,
-      "draw": 3.71,
+      "home": 2.08,
+      "draw": 3.75,
       "away": 4.1,
       "over25": 2.02,
       "under25": 1.96,
@@ -613,15 +615,15 @@
       "btts_no": 0.0,
       "over20": 1.45,
       "under20": 2.7,
-      "ah-0.5_home": 2.04,
-      "ah-0.5_away": 1.92,
+      "ah-0.5_home": 2.08,
+      "ah-0.5_away": 1.91,
       "ah0.0_home": 1.43,
       "ah0.0_away": 2.87
     },
     "Ivory Coast vs Ecuador": {
-      "home": 3.75,
+      "home": 3.8,
       "draw": 2.92,
-      "away": 2.56,
+      "away": 2.5,
       "over25": 2.92,
       "under25": 1.44,
       "over15": 1.63,
@@ -634,15 +636,15 @@
       "under175": 2.09,
       "over20": 2.23,
       "under20": 1.75,
-      "ah0.25_home": 1.88,
-      "ah0.25_away": 2.12,
+      "ah0.25_home": 1.92,
+      "ah0.25_away": 2.06,
       "ah0.5_home": 1.61,
       "ah0.5_away": 2.45,
       "ah0.0_home": 2.4,
       "ah0.0_away": 1.62
     },
     "Sweden vs Tunisia": {
-      "home": 1.95,
+      "home": 1.94,
       "draw": 3.65,
       "away": 4.7,
       "over25": 2.28,
@@ -657,15 +659,15 @@
       "under225": 1.94,
       "over20": 1.71,
       "under20": 2.24,
-      "ah-0.5_home": 1.94,
-      "ah-0.5_away": 2.04,
+      "ah-0.5_home": 1.93,
+      "ah-0.5_away": 2.06,
       "ah0.0_home": 1.37,
-      "ah0.0_away": 3.17
+      "ah0.0_away": 3.13
     },
     "Spain vs Cape Verde": {
-      "home": 1.11,
+      "home": 1.12,
       "draw": 15.0,
-      "away": 33.0,
+      "away": 41.0,
       "over25": 1.37,
       "under25": 3.15,
       "over15": 0.0,
@@ -676,13 +678,13 @@
       "btts_no": 0.0,
       "over40": 2.5,
       "under40": 1.5,
-      "ah-2.5_home": 1.96,
-      "ah-2.5_away": 2.0
+      "ah-2.5_home": 1.95,
+      "ah-2.5_away": 2.02
     },
     "Belgium vs Egypt": {
       "home": 1.69,
       "draw": 4.1,
-      "away": 6.5,
+      "away": 6.2,
       "over25": 2.06,
       "under25": 1.92,
       "over15": 0.0,
@@ -724,11 +726,11 @@
       "ah1.5_away": 2.29
     },
     "Iran vs New Zealand": {
-      "home": 1.89,
+      "home": 1.88,
       "draw": 3.6,
-      "away": 5.0,
+      "away": 5.1,
       "over25": 2.38,
-      "under25": 1.62,
+      "under25": 1.63,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
@@ -737,8 +739,8 @@
       "btts_no": 0.0,
       "over20": 1.83,
       "under20": 2.17,
-      "over225": 1.95,
-      "under225": 1.8,
+      "over225": 2.05,
+      "under225": 1.74,
       "ah-0.5_home": 1.88,
       "ah-0.5_away": 2.1,
       "ah0.0_home": 1.31,
@@ -758,27 +760,27 @@
       "btts_no": 0.0,
       "over20": 1.48,
       "under20": 2.75,
-      "ah-1.0_home": 1.84,
+      "ah-1.0_home": 1.85,
       "ah-1.0_away": 2.12,
       "ah-1.5_home": 2.39,
       "ah-1.5_away": 1.59
     },
     "Iraq vs Norway": {
       "home": 19.0,
-      "draw": 8.0,
+      "draw": 7.6,
       "away": 1.25,
       "over25": 1.6,
       "under25": 2.42,
       "over15": 0.0,
       "under15": 0.0,
-      "over35": 2.45,
-      "under35": 1.64,
+      "over35": 2.5,
+      "under35": 1.6,
       "btts_yes": 0.0,
       "btts_no": 0.0,
       "over30": 1.96,
       "under30": 1.98,
       "ah2.0_home": 1.85,
-      "ah2.0_away": 2.12,
+      "ah2.0_away": 2.1,
       "ah1.5_home": 2.31,
       "ah1.5_away": 1.63
     },
@@ -803,17 +805,17 @@
     },
     "Austria vs Jordan": {
       "home": 1.36,
-      "draw": 5.9,
+      "draw": 6.0,
       "away": 10.5,
       "over25": 1.68,
       "under25": 2.35,
       "over15": 0.0,
       "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
+      "over35": 2.75,
+      "under35": 1.48,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over275": 1.88,
+      "over275": 1.87,
       "under275": 2.02,
       "over30": 2.08,
       "under30": 1.85,
@@ -824,22 +826,20 @@
       "home": 1.32,
       "draw": 6.0,
       "away": 13.0,
-      "over25": 1.73,
-      "under25": 2.21,
+      "over25": 1.76,
+      "under25": 2.28,
       "over15": 0.0,
       "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
+      "over35": 2.8,
+      "under35": 1.47,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over275": 1.89,
+      "over275": 1.9,
       "under275": 1.99,
       "over30": 2.07,
       "under30": 1.68,
-      "ah-1.75_home": 2.08,
-      "ah-1.75_away": 1.84,
-      "ah-1.5_home": 1.93,
-      "ah-1.5_away": 2.06
+      "ah-1.5_home": 1.92,
+      "ah-1.5_away": 2.07
     },
     "England vs Croatia": {
       "home": 1.77,
@@ -856,7 +856,7 @@
       "over225": 1.93,
       "under225": 1.96,
       "ah-0.75_home": 1.99,
-      "ah-0.75_away": 1.98,
+      "ah-0.75_away": 1.97,
       "ah-1.0_home": 2.45,
       "ah-1.0_away": 1.61,
       "ah-0.5_home": 1.74,
@@ -867,9 +867,9 @@
     "Ghana vs Panama": {
       "home": 2.24,
       "draw": 3.55,
-      "away": 3.85,
+      "away": 3.65,
       "over25": 2.38,
-      "under25": 1.7,
+      "under25": 1.69,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
@@ -882,8 +882,10 @@
       "under20": 2.23,
       "ah-0.25_home": 1.92,
       "ah-0.25_away": 2.06,
-      "ah-0.5_home": 2.13,
-      "ah-0.5_away": 1.78,
+      "ah-0.5_home": 2.16,
+      "ah-0.5_away": 1.77,
+      "ah0.5_home": 1.33,
+      "ah0.5_away": 3.23,
       "ah0.0_home": 1.54,
       "ah0.0_away": 2.52
     },
@@ -891,7 +893,7 @@
       "home": 10.5,
       "draw": 4.9,
       "away": 1.42,
-      "over25": 2.0,
+      "over25": 2.02,
       "under25": 1.94,
       "over15": 0.0,
       "under15": 0.0,
@@ -899,8 +901,8 @@
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over20": 1.49,
-      "under20": 2.7,
+      "over20": 1.48,
+      "under20": 2.75,
       "ah1.25_home": 2.0,
       "ah1.25_away": 1.94,
       "ah1.0_home": 2.39,
@@ -909,54 +911,52 @@
       "ah1.5_away": 2.2
     },
     "Czech Republic vs South Africa": {
-      "home": 1.78,
+      "home": 1.82,
       "draw": 3.95,
-      "away": 5.5,
-      "over25": 2.15,
-      "under25": 1.86,
+      "away": 5.0,
+      "over25": 2.18,
+      "under25": 1.85,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over225": 1.84,
-      "under225": 2.04,
-      "ah-0.5_home": 1.71,
+      "over225": 1.87,
+      "under225": 2.02,
+      "ah-0.5_home": 1.77,
       "ah-0.5_away": 2.14,
-      "ah-1.5_home": 3.25,
-      "ah-1.5_away": 1.35,
-      "ah-0.75_home": 2.0,
-      "ah-0.75_away": 1.96,
-      "ah-1.0_home": 2.36,
-      "ah-1.0_away": 1.65
+      "ah-1.5_home": 3.38,
+      "ah-1.5_away": 1.33,
+      "ah-0.75_home": 2.08,
+      "ah-0.75_away": 1.91
     },
     "Switzerland vs Bosnia & Herzegovina": {
-      "home": 1.64,
+      "home": 1.63,
       "draw": 4.2,
-      "away": 6.5,
+      "away": 6.4,
       "over25": 2.09,
-      "under25": 1.83,
+      "under25": 1.85,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over225": 1.82,
-      "under225": 2.02,
+      "over225": 1.8,
+      "under225": 2.05,
       "ah-0.5_home": 1.58,
       "ah-0.5_away": 2.34,
       "ah-1.5_home": 2.7,
       "ah-1.5_away": 1.48,
-      "ah-1.0_home": 2.1,
-      "ah-1.0_away": 1.86
+      "ah-1.0_home": 2.08,
+      "ah-1.0_away": 1.89
     },
     "Canada vs Qatar": {
-      "home": 1.33,
-      "draw": 5.7,
+      "home": 1.32,
+      "draw": 5.8,
       "away": 13.0,
-      "over25": 1.99,
+      "over25": 1.97,
       "under25": 1.96,
       "over15": 0.0,
       "under15": 0.0,
@@ -964,12 +964,12 @@
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "ah-1.5_home": 2.02,
-      "ah-1.5_away": 1.92
+      "ah-1.5_home": 2.0,
+      "ah-1.5_away": 1.93
     },
     "Mexico vs South Korea": {
-      "home": 2.06,
-      "draw": 3.45,
+      "home": 2.08,
+      "draw": 3.55,
       "away": 4.3,
       "over25": 2.38,
       "under25": 1.63,
@@ -981,8 +981,8 @@
       "btts_no": 0.0,
       "over20": 1.83,
       "under20": 2.1,
-      "ah-0.5_home": 2.06,
-      "ah-0.5_away": 1.92,
+      "ah-0.5_home": 2.08,
+      "ah-0.5_away": 1.9,
       "ah0.0_home": 1.4,
       "ah0.0_away": 3.02
     },
@@ -1000,8 +1000,8 @@
       "btts_no": 0.0,
       "ah-0.5_home": 1.77,
       "ah-0.5_away": 2.14,
-      "ah-1.5_home": 3.25,
-      "ah-1.5_away": 1.35,
+      "ah-1.5_home": 3.31,
+      "ah-1.5_away": 1.34,
       "ah-0.75_home": 1.95,
       "ah-0.75_away": 1.87
     },
@@ -1021,20 +1021,20 @@
       "under20": 2.3,
       "over225": 2.02,
       "under225": 1.82,
-      "ah0.5_home": 1.85,
+      "ah0.5_home": 1.84,
       "ah0.5_away": 2.03,
       "ah0.0_home": 2.88,
       "ah0.0_away": 1.43
     },
     "Brazil vs Haiti": {
-      "home": 1.09,
+      "home": 1.1,
       "draw": 15.0,
       "away": 40.0,
       "over25": 1.25,
       "under25": 3.5,
       "over15": 0.0,
       "under15": 0.0,
-      "over35": 1.77,
+      "over35": 1.78,
       "under35": 2.12,
       "btts_yes": 0.0,
       "btts_no": 0.0,
@@ -1093,7 +1093,7 @@
     },
     "Germany vs Ivory Coast": {
       "home": 1.59,
-      "draw": 4.6,
+      "draw": 4.7,
       "away": 6.5,
       "over25": 1.85,
       "under25": 2.09,
@@ -1107,13 +1107,13 @@
       "under275": 1.85,
       "ah-0.5_home": 1.55,
       "ah-0.5_away": 2.41,
-      "ah-1.5_home": 2.54,
-      "ah-1.5_away": 1.53,
-      "ah-1.0_home": 1.95,
+      "ah-1.5_home": 2.51,
+      "ah-1.5_away": 1.54,
+      "ah-1.0_home": 1.93,
       "ah-1.0_away": 1.94
     },
     "Ecuador vs Curaçao": {
-      "home": 1.25,
+      "home": 1.23,
       "draw": 8.0,
       "away": 20.0,
       "over25": 1.68,
@@ -1149,12 +1149,12 @@
       "under20": 2.33,
       "over225": 1.93,
       "under225": 1.89,
+      "ah1.5_home": 1.36,
+      "ah1.5_away": 3.25,
       "ah0.5_home": 2.23,
       "ah0.5_away": 1.71,
-      "ah1.5_home": 1.35,
-      "ah1.5_away": 3.25,
-      "ah0.75_home": 1.91,
-      "ah0.75_away": 1.91
+      "ah0.75_home": 1.93,
+      "ah0.75_away": 1.89
     },
     "Spain vs Saudi Arabia": {
       "home": 1.13,
@@ -1168,7 +1168,7 @@
       "under35": 1.68,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over30": 1.8,
+      "over30": 1.78,
       "under30": 2.2,
       "over325": 1.95,
       "under325": 1.87,
@@ -1177,7 +1177,7 @@
     },
     "Belgium vs Iran": {
       "home": 1.44,
-      "draw": 4.9,
+      "draw": 5.0,
       "away": 9.0,
       "over25": 1.91,
       "under25": 1.98,
@@ -1193,19 +1193,19 @@
       "ah-1.5_away": 1.69
     },
     "Uruguay vs Cape Verde": {
-      "home": 1.48,
-      "draw": 4.75,
-      "away": 8.25,
+      "home": 1.47,
+      "draw": 4.9,
+      "away": 8.6,
       "over25": 2.02,
-      "under25": 1.94,
+      "under25": 1.93,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "ah-1.5_home": 2.29,
-      "ah-1.5_away": 1.65,
+      "ah-1.5_home": 2.25,
+      "ah-1.5_away": 1.66,
       "ah-1.0_home": 1.75,
       "ah-1.0_away": 2.18,
       "ah-1.25_home": 2.02,
@@ -1237,7 +1237,7 @@
     "Argentina vs Austria": {
       "home": 1.7,
       "draw": 4.1,
-      "away": 5.75,
+      "away": 5.8,
       "over25": 2.01,
       "under25": 1.92,
       "over15": 0.0,
@@ -1257,7 +1257,7 @@
     },
     "France vs Iraq": {
       "home": 1.15,
-      "draw": 10.0,
+      "draw": 10.5,
       "away": 30.0,
       "over25": 1.44,
       "under25": 2.5,
@@ -1294,8 +1294,8 @@
       "ah-0.25_away": 2.0
     },
     "Jordan vs Algeria": {
-      "home": 6.8,
-      "draw": 4.7,
+      "home": 6.79,
+      "draw": 4.6,
       "away": 1.56,
       "over25": 1.98,
       "under25": 1.91,
@@ -1312,7 +1312,7 @@
     },
     "Portugal vs Uzbekistan": {
       "home": 1.27,
-      "draw": 6.95,
+      "draw": 7.0,
       "away": 12.5,
       "over25": 1.55,
       "under25": 2.5,
@@ -1331,7 +1331,7 @@
     },
     "England vs Ghana": {
       "home": 1.36,
-      "draw": 6.0,
+      "draw": 5.9,
       "away": 11.0,
       "over25": 1.81,
       "under25": 2.28,
@@ -1367,7 +1367,7 @@
     },
     "Colombia vs DR Congo": {
       "home": 1.53,
-      "draw": 4.42,
+      "draw": 4.5,
       "away": 8.0,
       "over25": 2.21,
       "under25": 1.74,
@@ -1398,15 +1398,15 @@
       "btts_no": 0.0,
       "over225": 1.83,
       "under225": 1.97,
-      "ah-0.5_home": 1.63,
-      "ah-0.5_away": 2.24,
+      "ah-1.5_home": 2.86,
+      "ah-1.5_away": 1.41,
       "ah-0.75_home": 1.84,
       "ah-0.75_away": 1.96,
       "ah-1.0_home": 2.07,
       "ah-1.0_away": 1.81
     },
     "Switzerland vs Canada": {
-      "home": 2.26,
+      "home": 2.24,
       "draw": 3.47,
       "away": 3.65,
       "over25": 2.12,
@@ -1436,7 +1436,7 @@
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "ah1.5_home": 1.59,
+      "ah1.5_home": 1.65,
       "ah1.5_away": 2.24,
       "ah1.25_home": 1.86,
       "ah1.25_away": 2.05,
@@ -1445,7 +1445,7 @@
     },
     "Morocco vs Haiti": {
       "home": 1.35,
-      "draw": 5.5,
+      "draw": 5.6,
       "away": 11.25,
       "over25": 1.74,
       "under25": 2.14,
@@ -1458,7 +1458,7 @@
       "over275": 1.98,
       "under275": 1.9,
       "ah-1.5_home": 1.99,
-      "ah-1.5_away": 1.91
+      "ah-1.5_away": 1.87
     },
     "Czech Republic vs Mexico": {
       "home": 5.0,
@@ -1550,10 +1550,12 @@
       "btts_no": 0.0,
       "over225": 1.83,
       "under225": 2.04,
-      "ah-0.5_home": 2.15,
-      "ah-0.5_away": 1.76,
+      "ah0.5_home": 1.31,
+      "ah0.5_away": 3.37,
       "ah-0.25_home": 1.79,
-      "ah-0.25_away": 2.02
+      "ah-0.25_away": 2.02,
+      "ah-0.5_home": 2.15,
+      "ah-0.5_away": 1.76
     },
     "Tunisia vs Netherlands": {
       "home": 7.0,
@@ -1645,7 +1647,7 @@
       "ah-1.0_away": 2.18
     },
     "Cape Verde vs Saudi Arabia": {
-      "home": 2.7,
+      "home": 2.65,
       "draw": 3.4,
       "away": 3.0,
       "over25": 2.18,
@@ -1658,10 +1660,10 @@
       "btts_no": 0.0,
       "over225": 2.05,
       "under225": 1.93,
-      "ah-0.5_home": 2.37,
-      "ah-0.5_away": 1.57,
-      "ah-0.25_home": 2.02,
-      "ah-0.25_away": 1.79,
+      "ah-0.5_home": 2.39,
+      "ah-0.5_away": 1.56,
+      "ah-0.25_home": 2.04,
+      "ah-0.25_away": 1.78,
       "ah0.0_home": 1.85,
       "ah0.0_away": 2.01
     },
@@ -1717,17 +1719,19 @@
       "btts_no": 0.0,
       "over20": 1.97,
       "under20": 1.88,
-      "ah-0.5_home": 2.2,
-      "ah-0.5_away": 1.65,
+      "ah0.5_home": 1.3,
+      "ah0.5_away": 3.44,
       "ah-0.25_home": 1.88,
-      "ah-0.25_away": 1.99
+      "ah-0.25_away": 1.99,
+      "ah-0.5_home": 2.16,
+      "ah-0.5_away": 1.62
     },
     "Croatia vs Ghana": {
       "home": 1.74,
       "draw": 3.9,
       "away": 6.0,
       "over25": 2.1,
-      "under25": 1.76,
+      "under25": 1.78,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
@@ -1736,19 +1740,19 @@
       "btts_no": 0.0,
       "over225": 1.85,
       "under225": 2.02,
-      "ah-0.5_home": 1.62,
-      "ah-0.5_away": 2.25,
+      "ah-1.5_home": 2.76,
+      "ah-1.5_away": 1.43,
       "ah-0.75_home": 1.8,
       "ah-0.75_away": 2.09,
       "ah-1.0_home": 2.12,
       "ah-1.0_away": 1.65
     },
     "Panama vs England": {
-      "home": 11.0,
+      "home": 12.0,
       "draw": 6.75,
       "away": 1.32,
       "over25": 1.68,
-      "under25": 2.38,
+      "under25": 2.43,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
@@ -1767,7 +1771,7 @@
       "draw": 3.4,
       "away": 2.2,
       "over25": 2.1,
-      "under25": 1.77,
+      "under25": 1.76,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
@@ -1782,7 +1786,7 @@
       "ah0.25_away": 1.87
     },
     "DR Congo vs Uzbekistan": {
-      "home": 2.38,
+      "home": 2.36,
       "draw": 3.35,
       "away": 3.3,
       "over25": 2.25,
@@ -1795,10 +1799,10 @@
       "btts_no": 0.0,
       "over225": 2.09,
       "under225": 1.84,
-      "over20": 1.67,
-      "under20": 2.08,
-      "ah-0.5_home": 2.28,
-      "ah-0.5_away": 1.61,
+      "over20": 1.64,
+      "under20": 2.12,
+      "ah0.5_home": 1.38,
+      "ah0.5_away": 3.0,
       "ah-0.25_home": 2.04,
       "ah-0.25_away": 1.83,
       "ah0.0_home": 1.63,
@@ -1807,8 +1811,8 @@
     "Algeria vs Austria": {
       "home": 3.85,
       "draw": 3.35,
-      "away": 2.2,
-      "over25": 2.17,
+      "away": 2.23,
+      "over25": 2.18,
       "under25": 1.71,
       "over15": 0.0,
       "under15": 0.0,
@@ -1824,15 +1828,15 @@
       "ah0.25_away": 1.83
     },
     "Jordan vs Argentina": {
-      "home": 17.0,
+      "home": 16.0,
       "draw": 7.5,
-      "away": 1.21,
+      "away": 1.22,
       "over25": 1.56,
-      "under25": 2.5,
+      "under25": 2.38,
       "over15": 0.0,
       "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
+      "over35": 2.43,
+      "under35": 1.57,
       "btts_yes": 0.0,
       "btts_no": 0.0,
       "over30": 1.99,
@@ -1845,817 +1849,861 @@
   },
   "model_tips": {
     "Canada vs Bosnia & Herzegovina": {
-      "p_home": 0.983,
-      "p_draw": 0.015,
-      "p_away": 0.002,
-      "xg_home": 5.48,
-      "xg_away": 0.38,
-      "p_btts_yes": 0.318,
-      "p_btts_no": 0.682,
-      "p_over25": 0.93,
-      "p_under25": 0.07
-    },
-    "USA vs Paraguay": {
-      "p_home": 0.525,
-      "p_draw": 0.276,
-      "p_away": 0.199,
-      "xg_home": 1.65,
-      "xg_away": 0.94,
-      "p_btts_yes": 0.508,
-      "p_btts_no": 0.492,
-      "p_over25": 0.479,
-      "p_under25": 0.521
-    },
-    "Qatar vs Switzerland": {
-      "p_home": 0.38,
-      "p_draw": 0.32,
-      "p_away": 0.3,
-      "xg_home": 1.22,
-      "xg_away": 1.06,
-      "p_btts_yes": 0.478,
-      "p_btts_no": 0.522,
-      "p_over25": 0.398,
-      "p_under25": 0.602
-    },
-    "Brazil vs Morocco": {
-      "p_home": 0.078,
-      "p_draw": 0.481,
-      "p_away": 0.441,
-      "xg_home": 0.18,
-      "xg_away": 0.7,
-      "p_btts_yes": 0.089,
-      "p_btts_no": 0.911,
-      "p_over25": 0.06,
-      "p_under25": 0.94
-    },
-    "Haiti vs Scotland": {
-      "p_home": 0.679,
-      "p_draw": 0.216,
-      "p_away": 0.105,
-      "xg_home": 2.09,
-      "xg_away": 0.72,
-      "p_btts_yes": 0.461,
-      "p_btts_no": 0.539,
-      "p_over25": 0.532,
-      "p_under25": 0.468
-    },
-    "Australia vs Turkey": {
-      "p_home": 0.375,
-      "p_draw": 0.31,
-      "p_away": 0.315,
-      "xg_home": 1.27,
-      "xg_away": 1.15,
-      "p_btts_yes": 0.509,
-      "p_btts_no": 0.491,
-      "p_over25": 0.436,
-      "p_under25": 0.564
-    },
-    "Germany vs Curaçao": {
-      "p_home": 0.2,
-      "p_draw": 0.336,
-      "p_away": 0.464,
-      "xg_home": 0.71,
-      "xg_away": 1.21,
-      "p_btts_yes": 0.373,
-      "p_btts_no": 0.627,
-      "p_over25": 0.302,
-      "p_under25": 0.698
-    },
-    "Netherlands vs Japan": {
-      "p_home": 0.609,
-      "p_draw": 0.22,
-      "p_away": 0.171,
-      "xg_home": 2.22,
-      "xg_away": 1.13,
-      "p_btts_yes": 0.614,
-      "p_btts_no": 0.386,
-      "p_over25": 0.65,
-      "p_under25": 0.35
-    },
-    "Ivory Coast vs Ecuador": {
-      "p_home": 0.045,
-      "p_draw": 0.087,
-      "p_away": 0.869,
-      "xg_home": 0.98,
-      "xg_away": 3.92,
-      "p_btts_yes": 0.615,
-      "p_btts_no": 0.385,
-      "p_over25": 0.866,
-      "p_under25": 0.134
-    },
-    "Sweden vs Tunisia": {
-      "p_home": 0.086,
-      "p_draw": 0.107,
-      "p_away": 0.807,
-      "xg_home": 1.48,
-      "xg_away": 4.01,
-      "p_btts_yes": 0.762,
-      "p_btts_no": 0.238,
+      "p_home": 0.973,
+      "p_draw": 0.023,
+      "p_away": 0.004,
+      "xg_home": 5.07,
+      "xg_away": 0.44,
+      "p_btts_yes": 0.354,
+      "p_btts_no": 0.646,
       "p_over25": 0.911,
       "p_under25": 0.089
     },
+    "USA vs Paraguay": {
+      "p_home": 0.438,
+      "p_draw": 0.298,
+      "p_away": 0.264,
+      "xg_home": 1.48,
+      "xg_away": 1.11,
+      "p_btts_yes": 0.536,
+      "p_btts_no": 0.464,
+      "p_over25": 0.478,
+      "p_under25": 0.522
+    },
+    "Qatar vs Switzerland": {
+      "p_home": 0.367,
+      "p_draw": 0.331,
+      "p_away": 0.302,
+      "xg_home": 1.18,
+      "xg_away": 1.05,
+      "p_btts_yes": 0.47,
+      "p_btts_no": 0.53,
+      "p_over25": 0.384,
+      "p_under25": 0.616
+    },
+    "Brazil vs Morocco": {
+      "p_home": 0.102,
+      "p_draw": 0.524,
+      "p_away": 0.374,
+      "xg_home": 0.21,
+      "xg_away": 0.59,
+      "p_btts_yes": 0.093,
+      "p_btts_no": 0.907,
+      "p_over25": 0.048,
+      "p_under25": 0.952
+    },
+    "Haiti vs Scotland": {
+      "p_home": 0.64,
+      "p_draw": 0.235,
+      "p_away": 0.125,
+      "xg_home": 2.0,
+      "xg_away": 0.8,
+      "p_btts_yes": 0.49,
+      "p_btts_no": 0.51,
+      "p_over25": 0.53,
+      "p_under25": 0.47
+    },
+    "Australia vs Turkey": {
+      "p_home": 0.401,
+      "p_draw": 0.321,
+      "p_away": 0.278,
+      "xg_home": 1.28,
+      "xg_away": 1.03,
+      "p_btts_yes": 0.486,
+      "p_btts_no": 0.514,
+      "p_over25": 0.408,
+      "p_under25": 0.592
+    },
+    "Germany vs Curaçao": {
+      "p_home": 0.225,
+      "p_draw": 0.345,
+      "p_away": 0.43,
+      "xg_home": 0.79,
+      "xg_away": 1.18,
+      "p_btts_yes": 0.397,
+      "p_btts_no": 0.603,
+      "p_over25": 0.313,
+      "p_under25": 0.687
+    },
+    "Netherlands vs Japan": {
+      "p_home": 0.631,
+      "p_draw": 0.212,
+      "p_away": 0.156,
+      "xg_home": 2.35,
+      "xg_away": 1.13,
+      "p_btts_yes": 0.625,
+      "p_btts_no": 0.375,
+      "p_over25": 0.674,
+      "p_under25": 0.326
+    },
+    "Ivory Coast vs Ecuador": {
+      "p_home": 0.016,
+      "p_draw": 0.043,
+      "p_away": 0.941,
+      "xg_home": 0.82,
+      "xg_away": 4.88,
+      "p_btts_yes": 0.559,
+      "p_btts_no": 0.441,
+      "p_over25": 0.922,
+      "p_under25": 0.078
+    },
+    "Sweden vs Tunisia": {
+      "p_home": 0.061,
+      "p_draw": 0.086,
+      "p_away": 0.854,
+      "xg_home": 1.4,
+      "xg_away": 4.41,
+      "p_btts_yes": 0.746,
+      "p_btts_no": 0.254,
+      "p_over25": 0.928,
+      "p_under25": 0.072
+    },
     "Spain vs Cape Verde": {
-      "p_home": 0.702,
-      "p_draw": 0.169,
-      "p_away": 0.129,
-      "xg_home": 2.85,
-      "xg_away": 1.23,
-      "p_btts_yes": 0.673,
-      "p_btts_no": 0.327,
-      "p_over25": 0.773,
-      "p_under25": 0.227
+      "p_home": 0.674,
+      "p_draw": 0.188,
+      "p_away": 0.138,
+      "xg_home": 2.63,
+      "xg_away": 1.17,
+      "p_btts_yes": 0.652,
+      "p_btts_no": 0.348,
+      "p_over25": 0.732,
+      "p_under25": 0.268
     },
     "Belgium vs Egypt": {
-      "p_home": 0.209,
-      "p_draw": 0.419,
-      "p_away": 0.372,
+      "p_home": 0.213,
+      "p_draw": 0.431,
+      "p_away": 0.356,
       "xg_home": 0.53,
-      "xg_away": 0.8,
-      "p_btts_yes": 0.243,
-      "p_btts_no": 0.757,
-      "p_over25": 0.151,
-      "p_under25": 0.849
+      "xg_away": 0.77,
+      "p_btts_yes": 0.239,
+      "p_btts_no": 0.761,
+      "p_over25": 0.143,
+      "p_under25": 0.857
     },
     "Saudi Arabia vs Uruguay": {
-      "p_home": 0.088,
-      "p_draw": 0.297,
-      "p_away": 0.615,
-      "xg_home": 0.38,
-      "xg_away": 1.39,
-      "p_btts_yes": 0.249,
-      "p_btts_no": 0.751,
-      "p_over25": 0.261,
-      "p_under25": 0.739
+      "p_home": 0.076,
+      "p_draw": 0.291,
+      "p_away": 0.634,
+      "xg_home": 0.35,
+      "xg_away": 1.43,
+      "p_btts_yes": 0.239,
+      "p_btts_no": 0.761,
+      "p_over25": 0.265,
+      "p_under25": 0.735
     },
     "Iran vs New Zealand": {
-      "p_home": 0.627,
-      "p_draw": 0.211,
-      "p_away": 0.162,
-      "xg_home": 2.32,
-      "xg_away": 1.14,
-      "p_btts_yes": 0.624,
-      "p_btts_no": 0.376,
-      "p_over25": 0.671,
-      "p_under25": 0.329
+      "p_home": 0.657,
+      "p_draw": 0.202,
+      "p_away": 0.141,
+      "xg_home": 2.44,
+      "xg_away": 1.1,
+      "p_btts_yes": 0.621,
+      "p_btts_no": 0.379,
+      "p_over25": 0.687,
+      "p_under25": 0.313
     },
     "France vs Senegal": {
-      "p_home": 0.57,
-      "p_draw": 0.262,
-      "p_away": 0.167,
-      "xg_home": 1.76,
-      "xg_away": 0.87,
-      "p_btts_yes": 0.494,
-      "p_btts_no": 0.506,
-      "p_over25": 0.488,
-      "p_under25": 0.512
+      "p_home": 0.567,
+      "p_draw": 0.272,
+      "p_away": 0.161,
+      "xg_home": 1.71,
+      "xg_away": 0.83,
+      "p_btts_yes": 0.478,
+      "p_btts_no": 0.522,
+      "p_over25": 0.466,
+      "p_under25": 0.534
     },
     "Iraq vs Norway": {
-      "p_home": 0.139,
-      "p_draw": 0.122,
-      "p_away": 0.739,
-      "xg_home": 2.02,
-      "xg_away": 4.12,
-      "p_btts_yes": 0.855,
-      "p_btts_no": 0.145,
-      "p_over25": 0.944,
-      "p_under25": 0.056
+      "p_home": 0.16,
+      "p_draw": 0.133,
+      "p_away": 0.706,
+      "xg_home": 2.09,
+      "xg_away": 3.96,
+      "p_btts_yes": 0.863,
+      "p_btts_no": 0.137,
+      "p_over25": 0.94,
+      "p_under25": 0.06
     },
     "Argentina vs Algeria": {
-      "p_home": 0.739,
-      "p_draw": 0.238,
-      "p_away": 0.023,
-      "xg_home": 1.54,
-      "xg_away": 0.13,
-      "p_btts_yes": 0.098,
-      "p_btts_no": 0.902,
-      "p_over25": 0.233,
-      "p_under25": 0.767
+      "p_home": 0.804,
+      "p_draw": 0.184,
+      "p_away": 0.012,
+      "xg_home": 1.8,
+      "xg_away": 0.09,
+      "p_btts_yes": 0.079,
+      "p_btts_no": 0.921,
+      "p_over25": 0.295,
+      "p_under25": 0.705
     },
     "Austria vs Jordan": {
-      "p_home": 0.342,
-      "p_draw": 0.279,
-      "p_away": 0.379,
-      "xg_home": 1.41,
-      "xg_away": 1.49,
-      "p_btts_yes": 0.6,
-      "p_btts_no": 0.4,
-      "p_over25": 0.553,
-      "p_under25": 0.447
+      "p_home": 0.318,
+      "p_draw": 0.278,
+      "p_away": 0.404,
+      "xg_home": 1.39,
+      "xg_away": 1.59,
+      "p_btts_yes": 0.616,
+      "p_btts_no": 0.384,
+      "p_over25": 0.573,
+      "p_under25": 0.427
     },
     "Portugal vs DR Congo": {
-      "p_home": 0.667,
-      "p_draw": 0.252,
-      "p_away": 0.081,
-      "xg_home": 1.67,
-      "xg_away": 0.44,
-      "p_btts_yes": 0.303,
-      "p_btts_no": 0.697,
-      "p_over25": 0.355,
-      "p_under25": 0.645
+      "p_home": 0.708,
+      "p_draw": 0.231,
+      "p_away": 0.061,
+      "xg_home": 1.8,
+      "xg_away": 0.39,
+      "p_btts_yes": 0.284,
+      "p_btts_no": 0.716,
+      "p_over25": 0.375,
+      "p_under25": 0.625
     },
     "England vs Croatia": {
-      "p_home": 0.463,
-      "p_draw": 0.345,
-      "p_away": 0.193,
-      "xg_home": 1.16,
-      "xg_away": 0.66,
-      "p_btts_yes": 0.349,
-      "p_btts_no": 0.651,
-      "p_over25": 0.276,
-      "p_under25": 0.724
+      "p_home": 0.455,
+      "p_draw": 0.35,
+      "p_away": 0.195,
+      "xg_home": 1.17,
+      "xg_away": 0.68,
+      "p_btts_yes": 0.36,
+      "p_btts_no": 0.64,
+      "p_over25": 0.282,
+      "p_under25": 0.718
     },
     "Ghana vs Panama": {
-      "p_home": 0.063,
-      "p_draw": 0.085,
-      "p_away": 0.851,
-      "xg_home": 1.44,
-      "xg_away": 4.44,
-      "p_btts_yes": 0.756,
-      "p_btts_no": 0.244,
-      "p_over25": 0.932,
-      "p_under25": 0.068
+      "p_home": 0.046,
+      "p_draw": 0.068,
+      "p_away": 0.886,
+      "xg_home": 1.42,
+      "xg_away": 4.89,
+      "p_btts_yes": 0.753,
+      "p_btts_no": 0.247,
+      "p_over25": 0.95,
+      "p_under25": 0.05
     },
     "Uzbekistan vs Colombia": {
-      "p_home": 0.037,
-      "p_draw": 0.176,
-      "p_away": 0.787,
-      "xg_home": 0.32,
-      "xg_away": 2.1,
-      "p_btts_yes": 0.246,
-      "p_btts_no": 0.754,
-      "p_over25": 0.434,
-      "p_under25": 0.566
+      "p_home": 0.032,
+      "p_draw": 0.172,
+      "p_away": 0.796,
+      "xg_home": 0.3,
+      "xg_away": 2.13,
+      "p_btts_yes": 0.237,
+      "p_btts_no": 0.763,
+      "p_over25": 0.438,
+      "p_under25": 0.562
     },
     "Czech Republic vs South Africa": {
-      "p_home": 0.45,
-      "p_draw": 0.253,
-      "p_away": 0.296,
-      "xg_home": 1.83,
+      "p_home": 0.43,
+      "p_draw": 0.264,
+      "p_away": 0.306,
+      "xg_home": 1.75,
       "xg_away": 1.46,
-      "p_btts_yes": 0.659,
-      "p_btts_no": 0.341,
-      "p_over25": 0.639,
-      "p_under25": 0.361
+      "p_btts_yes": 0.651,
+      "p_btts_no": 0.349,
+      "p_over25": 0.622,
+      "p_under25": 0.378
     },
     "Switzerland vs Bosnia & Herzegovina": {
-      "p_home": 0.883,
-      "p_draw": 0.095,
-      "p_away": 0.022,
-      "xg_home": 3.05,
-      "xg_away": 0.41,
-      "p_btts_yes": 0.325,
-      "p_btts_no": 0.675,
-      "p_over25": 0.671,
-      "p_under25": 0.329
+      "p_home": 0.862,
+      "p_draw": 0.111,
+      "p_away": 0.027,
+      "xg_home": 2.93,
+      "xg_away": 0.45,
+      "p_btts_yes": 0.353,
+      "p_btts_no": 0.647,
+      "p_over25": 0.658,
+      "p_under25": 0.342
     },
     "Canada vs Qatar": {
-      "p_home": 0.537,
-      "p_draw": 0.251,
-      "p_away": 0.212,
-      "xg_home": 1.9,
-      "xg_away": 1.14,
-      "p_btts_yes": 0.593,
-      "p_btts_no": 0.407,
-      "p_over25": 0.586,
-      "p_under25": 0.414
+      "p_home": 0.515,
+      "p_draw": 0.265,
+      "p_away": 0.22,
+      "xg_home": 1.81,
+      "xg_away": 1.13,
+      "p_btts_yes": 0.585,
+      "p_btts_no": 0.415,
+      "p_over25": 0.565,
+      "p_under25": 0.435
     },
     "Mexico vs South Korea": {
-      "p_home": 0.564,
-      "p_draw": 0.418,
-      "p_away": 0.017,
-      "xg_home": 0.88,
-      "xg_away": 0.05,
-      "p_btts_yes": 0.029,
-      "p_btts_no": 0.971,
-      "p_over25": 0.067,
-      "p_under25": 0.933
+      "p_home": 0.55,
+      "p_draw": 0.405,
+      "p_away": 0.044,
+      "xg_home": 0.92,
+      "xg_away": 0.13,
+      "p_btts_yes": 0.079,
+      "p_btts_no": 0.921,
+      "p_over25": 0.09,
+      "p_under25": 0.91
     },
     "USA vs Australia": {
-      "p_home": 0.245,
-      "p_draw": 0.387,
-      "p_away": 0.368,
-      "xg_home": 0.68,
+      "p_home": 0.246,
+      "p_draw": 0.392,
+      "p_away": 0.363,
+      "xg_home": 0.69,
       "xg_away": 0.9,
-      "p_btts_yes": 0.311,
-      "p_btts_no": 0.689,
-      "p_over25": 0.212,
-      "p_under25": 0.788
+      "p_btts_yes": 0.317,
+      "p_btts_no": 0.683,
+      "p_over25": 0.215,
+      "p_under25": 0.785
     },
     "Scotland vs Morocco": {
       "p_home": 0.016,
-      "p_draw": 0.191,
-      "p_away": 0.792,
+      "p_draw": 0.194,
+      "p_away": 0.79,
       "xg_home": 0.12,
       "xg_away": 1.78,
-      "p_btts_yes": 0.095,
-      "p_btts_no": 0.905,
+      "p_btts_yes": 0.099,
+      "p_btts_no": 0.901,
       "p_over25": 0.295,
       "p_under25": 0.705
     },
     "Brazil vs Haiti": {
-      "p_home": 0.398,
-      "p_draw": 0.347,
-      "p_away": 0.254,
-      "xg_home": 1.1,
-      "xg_away": 0.83,
-      "p_btts_yes": 0.393,
-      "p_btts_no": 0.607,
-      "p_over25": 0.303,
-      "p_under25": 0.697
+      "p_home": 0.525,
+      "p_draw": 0.315,
+      "p_away": 0.16,
+      "xg_home": 1.39,
+      "xg_away": 0.67,
+      "p_btts_yes": 0.384,
+      "p_btts_no": 0.616,
+      "p_over25": 0.338,
+      "p_under25": 0.662
     },
     "Turkey vs Paraguay": {
-      "p_home": 0.668,
-      "p_draw": 0.179,
-      "p_away": 0.153,
-      "xg_home": 2.77,
-      "xg_away": 1.33,
-      "p_btts_yes": 0.698,
-      "p_btts_no": 0.302,
-      "p_over25": 0.776,
-      "p_under25": 0.224
+      "p_home": 0.506,
+      "p_draw": 0.23,
+      "p_away": 0.264,
+      "xg_home": 2.2,
+      "xg_away": 1.58,
+      "p_btts_yes": 0.718,
+      "p_btts_no": 0.282,
+      "p_over25": 0.728,
+      "p_under25": 0.272
     },
     "Netherlands vs Sweden": {
-      "p_home": 0.619,
-      "p_draw": 0.22,
-      "p_away": 0.161,
-      "xg_home": 2.2,
-      "xg_away": 1.07,
-      "p_btts_yes": 0.595,
-      "p_btts_no": 0.405,
-      "p_over25": 0.634,
-      "p_under25": 0.366
+      "p_home": 0.731,
+      "p_draw": 0.17,
+      "p_away": 0.099,
+      "xg_home": 2.73,
+      "xg_away": 0.98,
+      "p_btts_yes": 0.594,
+      "p_btts_no": 0.406,
+      "p_over25": 0.716,
+      "p_under25": 0.284
     },
     "Germany vs Ivory Coast": {
-      "p_home": 0.525,
-      "p_draw": 0.239,
-      "p_away": 0.235,
-      "xg_home": 2.04,
-      "xg_away": 1.33,
+      "p_home": 0.552,
+      "p_draw": 0.236,
+      "p_away": 0.213,
+      "xg_home": 2.13,
+      "xg_away": 1.29,
       "p_btts_yes": 0.652,
       "p_btts_no": 0.348,
-      "p_over25": 0.653,
-      "p_under25": 0.347
+      "p_over25": 0.663,
+      "p_under25": 0.337
     },
     "Ecuador vs Curaçao": {
-      "p_home": 0.461,
-      "p_draw": 0.311,
-      "p_away": 0.228,
-      "xg_home": 1.36,
-      "xg_away": 0.89,
-      "p_btts_yes": 0.456,
-      "p_btts_no": 0.544,
-      "p_over25": 0.392,
-      "p_under25": 0.608
+      "p_home": 0.608,
+      "p_draw": 0.258,
+      "p_away": 0.135,
+      "xg_home": 1.8,
+      "xg_away": 0.75,
+      "p_btts_yes": 0.459,
+      "p_btts_no": 0.541,
+      "p_over25": 0.471,
+      "p_under25": 0.529
     },
     "Tunisia vs Japan": {
-      "p_home": 0.798,
-      "p_draw": 0.109,
-      "p_away": 0.093,
-      "xg_home": 4.05,
-      "xg_away": 1.56,
-      "p_btts_yes": 0.78,
-      "p_btts_no": 0.22,
-      "p_over25": 0.918,
-      "p_under25": 0.082
+      "p_home": 0.761,
+      "p_draw": 0.126,
+      "p_away": 0.113,
+      "xg_home": 3.79,
+      "xg_away": 1.61,
+      "p_btts_yes": 0.786,
+      "p_btts_no": 0.214,
+      "p_over25": 0.905,
+      "p_under25": 0.095
     },
     "Spain vs Saudi Arabia": {
-      "p_home": 0.73,
-      "p_draw": 0.162,
-      "p_away": 0.108,
-      "xg_home": 2.86,
-      "xg_away": 1.09,
-      "p_btts_yes": 0.633,
-      "p_btts_no": 0.367,
-      "p_over25": 0.754,
-      "p_under25": 0.246
+      "p_home": 0.698,
+      "p_draw": 0.183,
+      "p_away": 0.118,
+      "xg_home": 2.62,
+      "xg_away": 1.05,
+      "p_btts_yes": 0.615,
+      "p_btts_no": 0.385,
+      "p_over25": 0.71,
+      "p_under25": 0.29
     },
     "Belgium vs Iran": {
-      "p_home": 0.265,
-      "p_draw": 0.312,
-      "p_away": 0.422,
-      "xg_home": 1.0,
+      "p_home": 0.256,
+      "p_draw": 0.319,
+      "p_away": 0.425,
+      "xg_home": 0.98,
       "xg_away": 1.32,
-      "p_btts_yes": 0.481,
-      "p_btts_no": 0.519,
-      "p_over25": 0.41,
-      "p_under25": 0.59
+      "p_btts_yes": 0.479,
+      "p_btts_no": 0.521,
+      "p_over25": 0.405,
+      "p_under25": 0.595
     },
     "Uruguay vs Cape Verde": {
-      "p_home": 0.598,
-      "p_draw": 0.301,
-      "p_away": 0.1,
-      "xg_home": 1.38,
-      "xg_away": 0.43,
-      "p_btts_yes": 0.273,
-      "p_btts_no": 0.727,
-      "p_over25": 0.272,
-      "p_under25": 0.728
+      "p_home": 0.621,
+      "p_draw": 0.294,
+      "p_away": 0.085,
+      "xg_home": 1.43,
+      "xg_away": 0.39,
+      "p_btts_yes": 0.261,
+      "p_btts_no": 0.739,
+      "p_over25": 0.277,
+      "p_under25": 0.723
     },
     "New Zealand vs Egypt": {
-      "p_home": 0.145,
-      "p_draw": 0.305,
-      "p_away": 0.55,
-      "xg_home": 0.61,
-      "xg_away": 1.4,
+      "p_home": 0.139,
+      "p_draw": 0.309,
+      "p_away": 0.552,
+      "xg_home": 0.6,
+      "xg_away": 1.41,
       "p_btts_yes": 0.358,
       "p_btts_no": 0.642,
       "p_over25": 0.326,
       "p_under25": 0.674
     },
     "Argentina vs Austria": {
-      "p_home": 0.831,
-      "p_draw": 0.147,
-      "p_away": 0.022,
-      "xg_home": 2.23,
-      "xg_away": 0.23,
-      "p_btts_yes": 0.19,
-      "p_btts_no": 0.81,
-      "p_over25": 0.447,
-      "p_under25": 0.553
+      "p_home": 0.881,
+      "p_draw": 0.107,
+      "p_away": 0.012,
+      "xg_home": 2.58,
+      "xg_away": 0.19,
+      "p_btts_yes": 0.164,
+      "p_btts_no": 0.836,
+      "p_over25": 0.522,
+      "p_under25": 0.478
     },
     "France vs Iraq": {
-      "p_home": 0.777,
-      "p_draw": 0.13,
-      "p_away": 0.093,
-      "xg_home": 3.41,
-      "xg_away": 1.24,
+      "p_home": 0.789,
+      "p_draw": 0.126,
+      "p_away": 0.085,
+      "xg_home": 3.5,
+      "xg_away": 1.23,
       "p_btts_yes": 0.692,
       "p_btts_no": 0.308,
-      "p_over25": 0.842,
-      "p_under25": 0.158
+      "p_over25": 0.851,
+      "p_under25": 0.149
     },
     "Norway vs Senegal": {
-      "p_home": 0.528,
-      "p_draw": 0.232,
-      "p_away": 0.241,
-      "xg_home": 2.13,
-      "xg_away": 1.41,
-      "p_btts_yes": 0.678,
-      "p_btts_no": 0.322,
-      "p_over25": 0.687,
-      "p_under25": 0.313
-    },
-    "Jordan vs Algeria": {
-      "p_home": 0.39,
-      "p_draw": 0.361,
-      "p_away": 0.249,
-      "xg_home": 1.03,
-      "xg_away": 0.77,
-      "p_btts_yes": 0.361,
-      "p_btts_no": 0.639,
-      "p_over25": 0.267,
-      "p_under25": 0.733
-    },
-    "Portugal vs Uzbekistan": {
-      "p_home": 0.583,
-      "p_draw": 0.269,
-      "p_away": 0.148,
-      "xg_home": 1.68,
-      "xg_away": 0.74,
-      "p_btts_yes": 0.44,
-      "p_btts_no": 0.56,
-      "p_over25": 0.435,
-      "p_under25": 0.565
-    },
-    "England vs Ghana": {
-      "p_home": 0.894,
-      "p_draw": 0.074,
-      "p_away": 0.031,
-      "xg_home": 3.97,
-      "xg_away": 0.81,
-      "p_btts_yes": 0.549,
-      "p_btts_no": 0.451,
-      "p_over25": 0.855,
-      "p_under25": 0.145
-    },
-    "Panama vs Croatia": {
-      "p_home": 0.379,
-      "p_draw": 0.306,
-      "p_away": 0.316,
-      "xg_home": 1.3,
-      "xg_away": 1.17,
-      "p_btts_yes": 0.52,
-      "p_btts_no": 0.48,
-      "p_over25": 0.45,
-      "p_under25": 0.55
-    },
-    "Colombia vs DR Congo": {
-      "p_home": 0.822,
-      "p_draw": 0.157,
-      "p_away": 0.02,
-      "xg_home": 2.09,
-      "xg_away": 0.19,
-      "p_btts_yes": 0.157,
-      "p_btts_no": 0.843,
-      "p_over25": 0.4,
-      "p_under25": 0.6
-    },
-    "Bosnia & Herzegovina vs Qatar": {
-      "p_home": 0.02,
-      "p_draw": 0.102,
-      "p_away": 0.878,
-      "xg_home": 0.33,
-      "xg_away": 2.84,
-      "p_btts_yes": 0.27,
-      "p_btts_no": 0.73,
-      "p_over25": 0.614,
-      "p_under25": 0.386
-    },
-    "Switzerland vs Canada": {
-      "p_home": 0.175,
-      "p_draw": 0.21,
-      "p_away": 0.614,
-      "xg_home": 1.22,
-      "xg_away": 2.35,
-      "p_btts_yes": 0.65,
-      "p_btts_no": 0.35,
-      "p_over25": 0.693,
-      "p_under25": 0.307
-    },
-    "Scotland vs Brazil": {
-      "p_home": 0.085,
-      "p_draw": 0.342,
-      "p_away": 0.573,
-      "xg_home": 0.3,
-      "xg_away": 1.16,
-      "p_btts_yes": 0.189,
-      "p_btts_no": 0.811,
-      "p_over25": 0.181,
-      "p_under25": 0.819
-    },
-    "Morocco vs Haiti": {
-      "p_home": 0.708,
-      "p_draw": 0.237,
-      "p_away": 0.055,
-      "xg_home": 1.68,
-      "xg_away": 0.32,
-      "p_btts_yes": 0.231,
-      "p_btts_no": 0.769,
-      "p_over25": 0.324,
-      "p_under25": 0.676
-    },
-    "Czech Republic vs Mexico": {
-      "p_home": 0.008,
-      "p_draw": 0.308,
-      "p_away": 0.684,
-      "xg_home": 0.03,
-      "xg_away": 1.19,
-      "p_btts_yes": 0.023,
-      "p_btts_no": 0.977,
-      "p_over25": 0.126,
-      "p_under25": 0.874
-    },
-    "South Africa vs South Korea": {
-      "p_home": 0.115,
-      "p_draw": 0.172,
-      "p_away": 0.713,
-      "xg_home": 1.07,
-      "xg_away": 2.73,
-      "p_btts_yes": 0.624,
-      "p_btts_no": 0.376,
-      "p_over25": 0.732,
-      "p_under25": 0.268
-    },
-    "Curaçao vs Ivory Coast": {
-      "p_home": 0.646,
-      "p_draw": 0.233,
-      "p_away": 0.121,
-      "xg_home": 1.96,
-      "xg_away": 0.75,
-      "p_btts_yes": 0.467,
-      "p_btts_no": 0.533,
-      "p_over25": 0.51,
-      "p_under25": 0.49
-    },
-    "Ecuador vs Germany": {
-      "p_home": 0.692,
-      "p_draw": 0.193,
-      "p_away": 0.115,
-      "xg_home": 2.41,
-      "xg_away": 0.92,
-      "p_btts_yes": 0.56,
-      "p_btts_no": 0.44,
+      "p_home": 0.485,
+      "p_draw": 0.251,
+      "p_away": 0.264,
+      "xg_home": 1.94,
+      "xg_away": 1.4,
+      "p_btts_yes": 0.661,
+      "p_btts_no": 0.339,
       "p_over25": 0.648,
       "p_under25": 0.352
     },
-    "Japan vs Sweden": {
-      "p_home": 0.414,
+    "Jordan vs Algeria": {
+      "p_home": 0.436,
+      "p_draw": 0.358,
+      "p_away": 0.206,
+      "xg_home": 1.11,
+      "xg_away": 0.69,
+      "p_btts_yes": 0.354,
+      "p_btts_no": 0.646,
+      "p_over25": 0.27,
+      "p_under25": 0.73
+    },
+    "Portugal vs Uzbekistan": {
+      "p_home": 0.55,
+      "p_draw": 0.292,
+      "p_away": 0.157,
+      "xg_home": 1.55,
+      "xg_away": 0.73,
+      "p_btts_yes": 0.426,
+      "p_btts_no": 0.574,
+      "p_over25": 0.398,
+      "p_under25": 0.602
+    },
+    "England vs Ghana": {
+      "p_home": 0.9,
+      "p_draw": 0.07,
+      "p_away": 0.03,
+      "xg_home": 4.16,
+      "xg_away": 0.86,
+      "p_btts_yes": 0.573,
+      "p_btts_no": 0.427,
+      "p_over25": 0.877,
+      "p_under25": 0.123
+    },
+    "Panama vs Croatia": {
+      "p_home": 0.406,
+      "p_draw": 0.309,
+      "p_away": 0.285,
+      "xg_home": 1.37,
+      "xg_away": 1.12,
+      "p_btts_yes": 0.522,
+      "p_btts_no": 0.478,
+      "p_over25": 0.452,
+      "p_under25": 0.548
+    },
+    "Colombia vs DR Congo": {
+      "p_home": 0.877,
+      "p_draw": 0.112,
+      "p_away": 0.011,
+      "xg_home": 2.48,
+      "xg_away": 0.16,
+      "p_btts_yes": 0.141,
+      "p_btts_no": 0.859,
+      "p_over25": 0.491,
+      "p_under25": 0.509
+    },
+    "Bosnia & Herzegovina vs Qatar": {
+      "p_home": 0.025,
+      "p_draw": 0.118,
+      "p_away": 0.857,
+      "xg_home": 0.38,
+      "xg_away": 2.74,
+      "p_btts_yes": 0.302,
+      "p_btts_no": 0.698,
+      "p_over25": 0.603,
+      "p_under25": 0.397
+    },
+    "Switzerland vs Canada": {
+      "p_home": 0.191,
+      "p_draw": 0.23,
+      "p_away": 0.579,
+      "xg_home": 1.21,
+      "xg_away": 2.18,
+      "p_btts_yes": 0.638,
+      "p_btts_no": 0.362,
+      "p_over25": 0.659,
+      "p_under25": 0.341
+    },
+    "Scotland vs Brazil": {
+      "p_home": 0.059,
+      "p_draw": 0.304,
+      "p_away": 0.637,
+      "xg_home": 0.25,
+      "xg_away": 1.32,
+      "p_btts_yes": 0.175,
+      "p_btts_no": 0.825,
+      "p_over25": 0.21,
+      "p_under25": 0.79
+    },
+    "Morocco vs Haiti": {
+      "p_home": 0.745,
       "p_draw": 0.211,
-      "p_away": 0.376,
-      "xg_home": 2.28,
-      "xg_away": 2.17,
-      "p_btts_yes": 0.803,
-      "p_btts_no": 0.197,
-      "p_over25": 0.821,
-      "p_under25": 0.179
+      "p_away": 0.044,
+      "xg_home": 1.87,
+      "xg_away": 0.32,
+      "p_btts_yes": 0.24,
+      "p_btts_no": 0.76,
+      "p_over25": 0.373,
+      "p_under25": 0.627
+    },
+    "Czech Republic vs Mexico": {
+      "p_home": 0.021,
+      "p_draw": 0.299,
+      "p_away": 0.68,
+      "xg_home": 0.09,
+      "xg_away": 1.26,
+      "p_btts_yes": 0.065,
+      "p_btts_no": 0.935,
+      "p_over25": 0.154,
+      "p_under25": 0.846
+    },
+    "South Africa vs South Korea": {
+      "p_home": 0.128,
+      "p_draw": 0.192,
+      "p_away": 0.68,
+      "xg_home": 1.07,
+      "xg_away": 2.54,
+      "p_btts_yes": 0.617,
+      "p_btts_no": 0.383,
+      "p_over25": 0.699,
+      "p_under25": 0.301
+    },
+    "Curaçao vs Ivory Coast": {
+      "p_home": 0.631,
+      "p_draw": 0.241,
+      "p_away": 0.128,
+      "xg_home": 1.95,
+      "xg_away": 0.79,
+      "p_btts_yes": 0.484,
+      "p_btts_no": 0.516,
+      "p_over25": 0.516,
+      "p_under25": 0.484
+    },
+    "Ecuador vs Germany": {
+      "p_home": 0.793,
+      "p_draw": 0.141,
+      "p_away": 0.065,
+      "xg_home": 2.94,
+      "xg_away": 0.82,
+      "p_btts_yes": 0.54,
+      "p_btts_no": 0.46,
+      "p_over25": 0.725,
+      "p_under25": 0.275
+    },
+    "Japan vs Sweden": {
+      "p_home": 0.521,
+      "p_draw": 0.199,
+      "p_away": 0.28,
+      "xg_home": 2.66,
+      "xg_away": 1.98,
+      "p_btts_yes": 0.81,
+      "p_btts_no": 0.19,
+      "p_over25": 0.841,
+      "p_under25": 0.159
     },
     "Tunisia vs Netherlands": {
-      "p_home": 0.476,
-      "p_draw": 0.242,
-      "p_away": 0.283,
-      "xg_home": 1.98,
-      "xg_away": 1.51,
-      "p_btts_yes": 0.684,
-      "p_btts_no": 0.316,
-      "p_over25": 0.678,
-      "p_under25": 0.322
+      "p_home": 0.42,
+      "p_draw": 0.25,
+      "p_away": 0.331,
+      "xg_home": 1.87,
+      "xg_away": 1.65,
+      "p_btts_yes": 0.699,
+      "p_btts_no": 0.301,
+      "p_over25": 0.684,
+      "p_under25": 0.316
     },
     "Paraguay vs Australia": {
-      "p_home": 0.137,
-      "p_draw": 0.199,
-      "p_away": 0.665,
-      "xg_home": 1.05,
-      "xg_away": 2.41,
-      "p_btts_yes": 0.602,
-      "p_btts_no": 0.398,
-      "p_over25": 0.672,
-      "p_under25": 0.328
+      "p_home": 0.2,
+      "p_draw": 0.244,
+      "p_away": 0.556,
+      "xg_home": 1.17,
+      "xg_away": 2.03,
+      "p_btts_yes": 0.615,
+      "p_btts_no": 0.385,
+      "p_over25": 0.62,
+      "p_under25": 0.38
     },
     "Turkey vs USA": {
-      "p_home": 0.367,
-      "p_draw": 0.353,
-      "p_away": 0.28,
-      "xg_home": 1.03,
-      "xg_away": 0.87,
-      "p_btts_yes": 0.392,
-      "p_btts_no": 0.608,
-      "p_over25": 0.297,
-      "p_under25": 0.703
+      "p_home": 0.33,
+      "p_draw": 0.36,
+      "p_away": 0.31,
+      "xg_home": 0.97,
+      "xg_away": 0.94,
+      "p_btts_yes": 0.4,
+      "p_btts_no": 0.6,
+      "p_over25": 0.299,
+      "p_under25": 0.701
     },
     "Norway vs France": {
-      "p_home": 0.28,
-      "p_draw": 0.2,
-      "p_away": 0.52,
-      "xg_home": 1.92,
-      "xg_away": 2.59,
-      "p_btts_yes": 0.797,
-      "p_btts_no": 0.203,
-      "p_over25": 0.828,
-      "p_under25": 0.172
+      "p_home": 0.24,
+      "p_draw": 0.197,
+      "p_away": 0.563,
+      "xg_home": 1.79,
+      "xg_away": 2.69,
+      "p_btts_yes": 0.784,
+      "p_btts_no": 0.216,
+      "p_over25": 0.823,
+      "p_under25": 0.177
     },
     "Senegal vs Iraq": {
-      "p_home": 0.476,
-      "p_draw": 0.253,
-      "p_away": 0.27,
-      "xg_home": 1.86,
-      "xg_away": 1.37,
-      "p_btts_yes": 0.643,
-      "p_btts_no": 0.357,
-      "p_over25": 0.626,
-      "p_under25": 0.374
+      "p_home": 0.475,
+      "p_draw": 0.261,
+      "p_away": 0.264,
+      "xg_home": 1.83,
+      "xg_away": 1.33,
+      "p_btts_yes": 0.634,
+      "p_btts_no": 0.366,
+      "p_over25": 0.612,
+      "p_under25": 0.388
     },
     "Cape Verde vs Saudi Arabia": {
-      "p_home": 0.338,
-      "p_draw": 0.381,
-      "p_away": 0.281,
-      "xg_home": 0.88,
-      "xg_away": 0.78,
-      "p_btts_yes": 0.333,
-      "p_btts_no": 0.667,
-      "p_over25": 0.231,
-      "p_under25": 0.769
+      "p_home": 0.32,
+      "p_draw": 0.407,
+      "p_away": 0.273,
+      "xg_home": 0.79,
+      "xg_away": 0.71,
+      "p_btts_yes": 0.296,
+      "p_btts_no": 0.704,
+      "p_over25": 0.19,
+      "p_under25": 0.81
     },
     "Uruguay vs Spain": {
-      "p_home": 0.491,
-      "p_draw": 0.247,
-      "p_away": 0.263,
-      "xg_home": 1.94,
+      "p_home": 0.55,
+      "p_draw": 0.235,
+      "p_away": 0.215,
+      "xg_home": 2.13,
+      "xg_away": 1.3,
+      "p_btts_yes": 0.657,
+      "p_btts_no": 0.343,
+      "p_over25": 0.668,
+      "p_under25": 0.332
+    },
+    "New Zealand vs Belgium": {
+      "p_home": 0.208,
+      "p_draw": 0.314,
+      "p_away": 0.478,
+      "xg_home": 0.85,
       "xg_away": 1.39,
-      "p_btts_yes": 0.656,
-      "p_btts_no": 0.344,
+      "p_btts_yes": 0.449,
+      "p_btts_no": 0.551,
+      "p_over25": 0.388,
+      "p_under25": 0.612
+    },
+    "Egypt vs Iran": {
+      "p_home": 0.337,
+      "p_draw": 0.358,
+      "p_away": 0.305,
+      "xg_home": 0.99,
+      "xg_away": 0.94,
+      "p_btts_yes": 0.404,
+      "p_btts_no": 0.596,
+      "p_over25": 0.304,
+      "p_under25": 0.696
+    },
+    "Croatia vs Ghana": {
+      "p_home": 0.709,
+      "p_draw": 0.19,
+      "p_away": 0.102,
+      "xg_home": 2.45,
+      "xg_away": 0.87,
+      "p_btts_yes": 0.545,
+      "p_btts_no": 0.455,
       "p_over25": 0.646,
       "p_under25": 0.354
     },
-    "New Zealand vs Belgium": {
-      "p_home": 0.226,
-      "p_draw": 0.31,
-      "p_away": 0.464,
-      "xg_home": 0.89,
-      "xg_away": 1.37,
-      "p_btts_yes": 0.457,
-      "p_btts_no": 0.543,
-      "p_over25": 0.394,
-      "p_under25": 0.606
-    },
-    "Egypt vs Iran": {
-      "p_home": 0.357,
-      "p_draw": 0.351,
-      "p_away": 0.291,
-      "xg_home": 1.02,
-      "xg_away": 0.9,
-      "p_btts_yes": 0.398,
-      "p_btts_no": 0.602,
-      "p_over25": 0.302,
-      "p_under25": 0.698
-    },
-    "Croatia vs Ghana": {
-      "p_home": 0.689,
-      "p_draw": 0.202,
-      "p_away": 0.108,
-      "xg_home": 2.26,
-      "xg_away": 0.82,
-      "p_btts_yes": 0.511,
-      "p_btts_no": 0.489,
-      "p_over25": 0.593,
-      "p_under25": 0.407
-    },
     "Panama vs England": {
-      "p_home": 0.226,
-      "p_draw": 0.237,
-      "p_away": 0.536,
-      "xg_home": 1.3,
-      "xg_away": 2.06,
-      "p_btts_yes": 0.647,
-      "p_btts_no": 0.353,
-      "p_over25": 0.652,
-      "p_under25": 0.348
+      "p_home": 0.26,
+      "p_draw": 0.256,
+      "p_away": 0.485,
+      "xg_home": 1.36,
+      "xg_away": 1.89,
+      "p_btts_yes": 0.646,
+      "p_btts_no": 0.354,
+      "p_over25": 0.63,
+      "p_under25": 0.37
     },
     "Colombia vs Portugal": {
-      "p_home": 0.635,
-      "p_draw": 0.256,
-      "p_away": 0.109,
-      "xg_home": 1.72,
-      "xg_away": 0.59,
-      "p_btts_yes": 0.378,
-      "p_btts_no": 0.622,
-      "p_over25": 0.405,
-      "p_under25": 0.595
+      "p_home": 0.664,
+      "p_draw": 0.247,
+      "p_away": 0.089,
+      "xg_home": 1.78,
+      "xg_away": 0.53,
+      "p_btts_yes": 0.358,
+      "p_btts_no": 0.642,
+      "p_over25": 0.408,
+      "p_under25": 0.592
     },
     "DR Congo vs Uzbekistan": {
-      "p_home": 0.195,
-      "p_draw": 0.397,
-      "p_away": 0.408,
-      "xg_home": 0.54,
-      "xg_away": 0.9,
-      "p_btts_yes": 0.264,
-      "p_btts_no": 0.736,
-      "p_over25": 0.177,
-      "p_under25": 0.823
+      "p_home": 0.151,
+      "p_draw": 0.382,
+      "p_away": 0.467,
+      "xg_home": 0.47,
+      "xg_away": 1.01,
+      "p_btts_yes": 0.256,
+      "p_btts_no": 0.744,
+      "p_over25": 0.187,
+      "p_under25": 0.813
     },
     "Algeria vs Austria": {
-      "p_home": 0.268,
-      "p_draw": 0.342,
-      "p_away": 0.39,
-      "xg_home": 0.88,
-      "xg_away": 1.11,
-      "p_btts_yes": 0.411,
-      "p_btts_no": 0.589,
-      "p_over25": 0.322,
-      "p_under25": 0.678
+      "p_home": 0.239,
+      "p_draw": 0.339,
+      "p_away": 0.421,
+      "xg_home": 0.85,
+      "xg_away": 1.2,
+      "p_btts_yes": 0.42,
+      "p_btts_no": 0.58,
+      "p_over25": 0.336,
+      "p_under25": 0.664
     },
     "Jordan vs Argentina": {
-      "p_home": 0.027,
-      "p_draw": 0.182,
-      "p_away": 0.791,
-      "xg_home": 0.21,
-      "xg_away": 1.94,
-      "p_btts_yes": 0.17,
-      "p_btts_no": 0.83,
-      "p_over25": 0.365,
-      "p_under25": 0.635
+      "p_home": 0.018,
+      "p_draw": 0.157,
+      "p_away": 0.825,
+      "xg_home": 0.18,
+      "xg_away": 2.09,
+      "p_btts_yes": 0.147,
+      "p_btts_no": 0.853,
+      "p_over25": 0.396,
+      "p_under25": 0.604
     }
   },
   "football": [
     {
       "sport": "football",
-      "match": "Colombia vs DR Congo",
-      "market": "ah-1.5_home",
-      "odds": 2.45,
-      "model_prob": 56.9,
-      "ev_pct": 39.4,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-24T02:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Saudi Arabia vs Uruguay",
+      "match": "Uruguay vs Cape Verde",
       "market": "o/u2.5_under",
-      "odds": 1.88,
-      "model_prob": 73.9,
-      "ev_pct": 39.0,
+      "odds": 1.93,
+      "model_prob": 72.3,
+      "ev_pct": 39.6,
       "stake_eur": 15.0,
       "confidence": "LOW",
-      "kickoff": "2026-06-15T22:00:00Z"
+      "kickoff": "2026-06-21T22:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Switzerland vs Canada",
-      "market": "o/u2.25_over",
-      "odds": 1.87,
-      "model_prob": 78.3,
-      "ev_pct": 38.5,
+      "match": "Argentina vs Algeria",
+      "market": "o/u2.5_under",
+      "odds": 1.97,
+      "model_prob": 70.5,
+      "ev_pct": 38.8,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-17T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Croatia vs Ghana",
+      "market": "ah-1.5_home",
+      "odds": 2.76,
+      "model_prob": 49.8,
+      "ev_pct": 37.5,
       "stake_eur": 15.0,
       "confidence": "HIGH",
-      "kickoff": "2026-06-24T19:00:00Z"
+      "kickoff": "2026-06-27T21:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Switzerland vs Bosnia and Herzegovina",
+      "market": "o/u2.5_over",
+      "odds": 2.09,
+      "model_prob": 65.8,
+      "ev_pct": 37.4,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-18T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Switzerland vs Bosnia and Herzegovina",
+      "market": "ah-0.5_home",
+      "odds": 1.58,
+      "model_prob": 86.9,
+      "ev_pct": 37.4,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-18T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Netherlands vs Sweden",
+      "market": "ah-1.0_home",
+      "odds": 2.17,
+      "model_prob": 53.5,
+      "ev_pct": 36.8,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-20T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Netherlands vs Japan",
+      "market": "o/u2.5_over",
+      "odds": 2.02,
+      "model_prob": 67.4,
+      "ev_pct": 36.2,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-14T20:00:00Z"
     },
     {
       "sport": "football",
       "match": "Norway vs Senegal",
-      "market": "o/u2.5_over",
-      "odds": 1.99,
-      "model_prob": 68.7,
-      "ev_pct": 36.6,
+      "market": "away",
+      "odds": 3.51,
+      "model_prob": 38.8,
+      "ev_pct": 36.1,
       "stake_eur": 15.0,
       "confidence": "LOW",
       "kickoff": "2026-06-23T00:00:00Z"
@@ -2665,242 +2713,154 @@
       "match": "Turkey vs United States",
       "market": "o/u2.5_under",
       "odds": 1.94,
-      "model_prob": 70.3,
-      "ev_pct": 36.5,
+      "model_prob": 70.1,
+      "ev_pct": 36.0,
       "stake_eur": 15.0,
       "confidence": "LOW",
       "kickoff": "2026-06-26T02:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Argentina vs Austria",
-      "market": "ah-0.5_home",
-      "odds": 1.61,
-      "model_prob": 83.7,
-      "ev_pct": 34.8,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-22T17:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "England vs Ghana",
-      "market": "draw",
-      "odds": 6.0,
-      "model_prob": 22.1,
-      "ev_pct": 32.4,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-23T20:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Cote d'Ivoire vs Ecuador",
-      "market": "away",
-      "odds": 2.56,
-      "model_prob": 51.4,
-      "ev_pct": 31.7,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-14T23:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Switzerland vs Bosnia and Herzegovina",
-      "market": "o/u2.25_over",
-      "odds": 1.82,
-      "model_prob": 76.5,
-      "ev_pct": 31.6,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-18T19:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Netherlands vs Japan",
-      "market": "o/u2.5_over",
-      "odds": 2.02,
-      "model_prob": 65.0,
-      "ev_pct": 31.2,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-14T20:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Scotland vs Brazil",
-      "market": "home",
-      "odds": 8.0,
-      "model_prob": 16.1,
-      "ev_pct": 28.7,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-24T22:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Argentina vs Algeria",
-      "market": "draw",
-      "odds": 4.9,
-      "model_prob": 26.3,
-      "ev_pct": 28.6,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-17T01:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Netherlands vs Sweden",
-      "market": "o/u2.5_over",
-      "odds": 2.0,
-      "model_prob": 63.4,
-      "ev_pct": 26.8,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-20T17:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Netherlands vs Japan",
-      "market": "ah-0.5_home",
-      "odds": 2.04,
-      "model_prob": 62.1,
-      "ev_pct": 26.7,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-14T20:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Czechia vs Mexico",
-      "market": "ah-0.5_away",
-      "odds": 1.83,
-      "model_prob": 68.6,
-      "ev_pct": 25.5,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-25T01:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Croatia vs Ghana",
       "market": "o/u2.5_over",
       "odds": 2.1,
-      "model_prob": 59.3,
-      "ev_pct": 24.6,
+      "model_prob": 64.6,
+      "ev_pct": 35.7,
       "stake_eur": 15.0,
-      "confidence": "HIGH",
+      "confidence": "LOW",
       "kickoff": "2026-06-27T21:00:00Z"
     },
     {
       "sport": "football",
-      "match": "United States vs Paraguay",
+      "match": "Mexico vs South Korea",
       "market": "away",
-      "odds": 4.1,
-      "model_prob": 30.3,
-      "ev_pct": 24.4,
+      "odds": 4.3,
+      "model_prob": 31.3,
+      "ev_pct": 34.6,
       "stake_eur": 15.0,
       "confidence": "LOW",
-      "kickoff": "2026-06-13T01:00:00Z"
+      "kickoff": "2026-06-19T01:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Norway vs Senegal",
-      "market": "away",
-      "odds": 3.51,
-      "model_prob": 35.4,
-      "ev_pct": 24.3,
+      "match": "Netherlands vs Japan",
+      "market": "ah-0.5_home",
+      "odds": 2.08,
+      "model_prob": 64.4,
+      "ev_pct": 34.0,
       "stake_eur": 15.0,
       "confidence": "LOW",
-      "kickoff": "2026-06-23T00:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Saudi Arabia vs Uruguay",
-      "market": "home",
-      "odds": 8.8,
-      "model_prob": 14.1,
-      "ev_pct": 23.7,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-15T22:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Uzbekistan vs Colombia",
-      "market": "home",
-      "odds": 10.5,
-      "model_prob": 11.8,
-      "ev_pct": 23.5,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-18T02:00:00Z"
+      "kickoff": "2026-06-14T20:00:00Z"
     },
     {
       "sport": "football",
       "match": "Uruguay vs Cape Verde",
       "market": "draw",
-      "odds": 4.75,
-      "model_prob": 25.9,
-      "ev_pct": 22.9,
+      "odds": 4.9,
+      "model_prob": 26.7,
+      "ev_pct": 30.9,
       "stake_eur": 15.0,
       "confidence": "HIGH",
       "kickoff": "2026-06-21T22:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Switzerland vs Canada",
+      "match": "Turkey vs Paraguay",
       "market": "away",
-      "odds": 3.65,
-      "model_prob": 33.5,
-      "ev_pct": 22.1,
+      "odds": 3.6,
+      "model_prob": 36.1,
+      "ev_pct": 29.9,
+      "stake_eur": 15.0,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-20T03:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Norway vs Senegal",
+      "market": "o/u2.5_over",
+      "odds": 1.99,
+      "model_prob": 64.8,
+      "ev_pct": 29.0,
       "stake_eur": 15.0,
       "confidence": "LOW",
-      "kickoff": "2026-06-24T19:00:00Z"
+      "kickoff": "2026-06-23T00:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Croatia vs Ghana",
-      "market": "ah-1.0_home",
-      "odds": 2.12,
-      "model_prob": 46.6,
-      "ev_pct": 21.9,
-      "stake_eur": 15.0,
-      "confidence": "MEDIUM",
-      "kickoff": "2026-06-27T21:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Algeria vs Austria",
+      "match": "England vs Croatia",
       "market": "o/u2.25_under",
-      "odds": 1.98,
-      "model_prob": 54.1,
-      "ev_pct": 20.8,
+      "odds": 1.96,
+      "model_prob": 58.3,
+      "ev_pct": 27.8,
       "stake_eur": 15.0,
-      "confidence": "MEDIUM",
-      "kickoff": "2026-06-28T02:00:00Z"
+      "confidence": "LOW",
+      "kickoff": "2026-06-17T20:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Turkey vs United States",
+      "market": "draw",
+      "odds": 3.63,
+      "model_prob": 34.9,
+      "ev_pct": 26.6,
+      "stake_eur": 15.0,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-26T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Uzbekistan vs Colombia",
+      "market": "draw",
+      "odds": 4.9,
+      "model_prob": 25.7,
+      "ev_pct": 26.0,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-18T02:00:00Z"
     },
     {
       "sport": "football",
       "match": "Iran vs New Zealand",
       "market": "ah-0.5_home",
       "odds": 1.88,
-      "model_prob": 63.8,
-      "ev_pct": 19.9,
-      "stake_eur": 14.95,
+      "model_prob": 66.9,
+      "ev_pct": 25.9,
+      "stake_eur": 15.0,
       "confidence": "LOW",
       "kickoff": "2026-06-16T01:00:00Z"
     },
     {
       "sport": "football",
+      "match": "South Africa vs South Korea",
+      "market": "home",
+      "odds": 6.0,
+      "model_prob": 19.9,
+      "ev_pct": 19.3,
+      "stake_eur": 14.58,
+      "confidence": "LOW",
+      "kickoff": "2026-06-25T01:00:00Z"
+    },
+    {
+      "sport": "football",
       "match": "United States vs Paraguay",
       "market": "o/u2.5_over",
-      "odds": 2.5,
-      "model_prob": 47.9,
-      "ev_pct": 19.8,
+      "odds": 2.48,
+      "model_prob": 47.8,
+      "ev_pct": 18.6,
       "stake_eur": 15.0,
       "confidence": "HIGH",
       "kickoff": "2026-06-13T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Algeria vs Austria",
+      "market": "o/u2.25_under",
+      "odds": 1.98,
+      "model_prob": 52.6,
+      "ev_pct": 18.0,
+      "stake_eur": 13.8,
+      "confidence": "LOW",
+      "kickoff": "2026-06-28T02:00:00Z"
     },
     {
       "sport": "football",
@@ -2908,109 +2868,120 @@
       "market": "o/u2.5_under",
       "odds": 1.74,
       "model_prob": 67.4,
-      "ev_pct": 17.3,
-      "stake_eur": 13.39,
+      "ev_pct": 17.2,
+      "stake_eur": 13.36,
       "confidence": "LOW",
       "kickoff": "2026-06-22T01:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Turkey vs United States",
-      "market": "draw",
-      "odds": 3.63,
-      "model_prob": 32.2,
-      "ev_pct": 16.7,
-      "stake_eur": 14.37,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-26T02:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Japan vs Sweden",
-      "market": "away",
-      "odds": 3.75,
-      "model_prob": 30.7,
-      "ev_pct": 15.0,
-      "stake_eur": 12.03,
-      "confidence": "LOW",
-      "kickoff": "2026-06-25T23:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Norway vs France",
-      "market": "home",
-      "odds": 4.4,
-      "model_prob": 25.9,
-      "ev_pct": 14.0,
-      "stake_eur": 11.44,
+      "match": "England vs Croatia",
+      "market": "ah-0.75_away",
+      "odds": 1.97,
+      "model_prob": 52.5,
+      "ev_pct": 16.8,
+      "stake_eur": 13.14,
       "confidence": "MEDIUM",
-      "kickoff": "2026-06-26T19:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Turkey vs Paraguay",
-      "market": "away",
-      "odds": 3.6,
-      "model_prob": 31.6,
-      "ev_pct": 13.8,
-      "stake_eur": 11.37,
-      "confidence": "LOW",
-      "kickoff": "2026-06-20T03:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Netherlands vs Sweden",
-      "market": "away",
-      "odds": 5.6,
-      "model_prob": 20.3,
-      "ev_pct": 13.6,
-      "stake_eur": 11.25,
-      "confidence": "LOW",
-      "kickoff": "2026-06-20T17:00:00Z"
+      "kickoff": "2026-06-17T20:00:00Z"
     },
     {
       "sport": "football",
       "match": "Algeria vs Austria",
       "market": "away",
-      "odds": 2.2,
-      "model_prob": 50.6,
-      "ev_pct": 11.3,
-      "stake_eur": 9.88,
+      "odds": 2.23,
+      "model_prob": 52.3,
+      "ev_pct": 16.5,
+      "stake_eur": 12.97,
       "confidence": "LOW",
       "kickoff": "2026-06-28T02:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Uzbekistan vs Colombia",
-      "market": "o/u2.5_under",
-      "odds": 1.94,
-      "model_prob": 56.6,
-      "ev_pct": 9.9,
-      "stake_eur": 9.05,
+      "match": "Argentina vs Algeria",
+      "market": "ah-1.25_home",
+      "odds": 1.98,
+      "model_prob": 51.4,
+      "ev_pct": 16.4,
+      "stake_eur": 12.87,
       "confidence": "MEDIUM",
+      "kickoff": "2026-06-17T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Argentina vs Austria",
+      "market": "away",
+      "odds": 5.8,
+      "model_prob": 19.9,
+      "ev_pct": 15.7,
+      "stake_eur": 12.46,
+      "confidence": "LOW",
+      "kickoff": "2026-06-22T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Japan vs Sweden",
+      "market": "ah-0.5_home",
+      "odds": 2.15,
+      "model_prob": 52.9,
+      "ev_pct": 13.8,
+      "stake_eur": 12.49,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-25T23:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Scotland vs Brazil",
+      "market": "ah+1.25_home",
+      "odds": 1.86,
+      "model_prob": 35.2,
+      "ev_pct": 11.5,
+      "stake_eur": 10.01,
+      "confidence": "LOW",
+      "kickoff": "2026-06-24T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Uzbekistan vs Colombia",
+      "market": "o/u2.0_under",
+      "odds": 2.75,
+      "model_prob": 30.2,
+      "ev_pct": 9.0,
+      "stake_eur": 8.52,
+      "confidence": "LOW",
       "kickoff": "2026-06-18T02:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Canada vs Bosnia and Herzegovina",
-      "market": "home",
-      "odds": 1.89,
-      "model_prob": 57.4,
-      "ev_pct": 8.4,
-      "stake_eur": 8.19,
-      "confidence": "LOW",
-      "kickoff": "2026-06-12T19:00:00Z"
+      "match": "Norway vs France",
+      "market": "ah-0.5_away",
+      "odds": 1.85,
+      "model_prob": 57.2,
+      "ev_pct": 5.7,
+      "stake_eur": 6.61,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-26T19:00:00Z"
     },
     {
       "sport": "football",
-      "match": "New Zealand vs Egypt",
-      "market": "away",
-      "odds": 1.79,
-      "model_prob": 57.6,
-      "ev_pct": 3.2,
-      "stake_eur": 5.61,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-22T01:00:00Z"
+      "match": "Argentina vs Austria",
+      "market": "o/u2.5_over",
+      "odds": 2.01,
+      "model_prob": 52.2,
+      "ev_pct": 5.0,
+      "stake_eur": 6.16,
+      "confidence": "MEDIUM",
+      "kickoff": "2026-06-22T17:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "United States vs Paraguay",
+      "market": "draw",
+      "odds": 3.35,
+      "model_prob": 31.0,
+      "ev_pct": 3.9,
+      "stake_eur": 5.54,
+      "confidence": "LOW",
+      "kickoff": "2026-06-13T01:00:00Z"
     }
   ],
   "tennis": [
@@ -3156,13 +3127,39 @@
       "roi_pct": 0.0
     }
   ],
-  "open_bets": [],
+  "open_bets": [
+    {
+      "match": "Canada vs Bosnia and Herzegovina",
+      "home": "Canada",
+      "away": "Bosnia and Herzegovina",
+      "market": "home",
+      "entry_odds": 1.8,
+      "current_odds": null,
+      "drift_pct": null,
+      "clv_signal": null,
+      "stake": 8.0,
+      "match_date": "2026-06-12",
+      "model_edge_pct": null
+    },
+    {
+      "match": "United States vs Paraguay",
+      "home": "United States",
+      "away": "Paraguay",
+      "market": "o/u2.5_over",
+      "entry_odds": 2.45,
+      "current_odds": null,
+      "drift_pct": null,
+      "clv_signal": null,
+      "stake": 15.0,
+      "match_date": "2026-06-13",
+      "model_edge_pct": null
+    }
+  ],
   "bankroll_state": {
     "start": 100.0,
-    "free": 113.11,
-    "staked": 0,
-    "exposure_pct": 0.0,
-    "max_win": 0,
+    "free": 90.11,
+    "staked": 23.0,
+    "exposure_pct": 23.0,
     "pnl_closed": 13.11
   },
   "wm_stats": {
@@ -3235,9 +3232,9 @@
       },
       {
         "date": "2026-06-12",
-        "home": 1.89,
+        "home": 1.87,
         "draw": 3.65,
-        "away": 5.1
+        "away": 5.2
       }
     ],
     "USA vs Paraguay": [
@@ -3251,7 +3248,7 @@
         "date": "2026-06-12",
         "home": 2.16,
         "draw": 3.35,
-        "away": 4.1
+        "away": 4.2
       }
     ],
     "Qatar vs Switzerland": [
@@ -3264,8 +3261,8 @@
       {
         "date": "2026-06-12",
         "home": 17.0,
-        "draw": 7.05,
-        "away": 1.25
+        "draw": 7.2,
+        "away": 1.24
       }
     ],
     "Brazil vs Morocco": [
@@ -3277,9 +3274,9 @@
       },
       {
         "date": "2026-06-12",
-        "home": 1.7,
-        "draw": 4.0,
-        "away": 6.0
+        "home": 1.69,
+        "draw": 3.95,
+        "away": 6.2
       }
     ],
     "Haiti vs Scotland": [
@@ -3292,8 +3289,8 @@
       {
         "date": "2026-06-12",
         "home": 6.5,
-        "draw": 4.4,
-        "away": 1.62
+        "draw": 4.5,
+        "away": 1.61
       }
     ],
     "Australia vs Turkey": [
@@ -3305,8 +3302,8 @@
       },
       {
         "date": "2026-06-12",
-        "home": 5.75,
-        "draw": 3.95,
+        "home": 5.6,
+        "draw": 4.0,
         "away": 1.77
       }
     ],
@@ -3321,7 +3318,7 @@
         "date": "2026-06-12",
         "home": 1.06,
         "draw": 25.0,
-        "away": 55.0
+        "away": 85.0
       }
     ],
     "Netherlands vs Japan": [
@@ -3333,8 +3330,8 @@
       },
       {
         "date": "2026-06-12",
-        "home": 2.06,
-        "draw": 3.71,
+        "home": 2.08,
+        "draw": 3.75,
         "away": 4.1
       }
     ],
@@ -3347,9 +3344,9 @@
       },
       {
         "date": "2026-06-12",
-        "home": 3.75,
+        "home": 3.8,
         "draw": 2.92,
-        "away": 2.56
+        "away": 2.5
       }
     ],
     "Sweden vs Tunisia": [
@@ -3361,7 +3358,7 @@
       },
       {
         "date": "2026-06-12",
-        "home": 1.95,
+        "home": 1.94,
         "draw": 3.65,
         "away": 4.7
       }
@@ -3375,9 +3372,9 @@
       },
       {
         "date": "2026-06-12",
-        "home": 1.11,
+        "home": 1.12,
         "draw": 15.0,
-        "away": 33.0
+        "away": 41.0
       }
     ],
     "Belgium vs Egypt": [
@@ -3391,7 +3388,7 @@
         "date": "2026-06-12",
         "home": 1.69,
         "draw": 4.1,
-        "away": 6.5
+        "away": 6.2
       }
     ],
     "Saudi Arabia vs Uruguay": [
@@ -3417,9 +3414,9 @@
       },
       {
         "date": "2026-06-12",
-        "home": 1.89,
+        "home": 1.88,
         "draw": 3.6,
-        "away": 5.0
+        "away": 5.1
       }
     ],
     "France vs Senegal": [
@@ -3446,7 +3443,7 @@
       {
         "date": "2026-06-12",
         "home": 19.0,
-        "draw": 8.0,
+        "draw": 7.6,
         "away": 1.25
       }
     ],
@@ -3474,7 +3471,7 @@
       {
         "date": "2026-06-12",
         "home": 1.36,
-        "draw": 5.9,
+        "draw": 6.0,
         "away": 10.5
       }
     ],
@@ -3517,7 +3514,7 @@
         "date": "2026-06-12",
         "home": 2.24,
         "draw": 3.55,
-        "away": 3.85
+        "away": 3.65
       }
     ],
     "Uzbekistan vs Colombia": [
@@ -3543,9 +3540,9 @@
       },
       {
         "date": "2026-06-12",
-        "home": 1.78,
+        "home": 1.82,
         "draw": 3.95,
-        "away": 5.5
+        "away": 5.0
       }
     ],
     "Switzerland vs Bosnia & Herzegovina": [
@@ -3557,9 +3554,9 @@
       },
       {
         "date": "2026-06-12",
-        "home": 1.64,
+        "home": 1.63,
         "draw": 4.2,
-        "away": 6.5
+        "away": 6.4
       }
     ],
     "Canada vs Qatar": [
@@ -3571,8 +3568,8 @@
       },
       {
         "date": "2026-06-12",
-        "home": 1.33,
-        "draw": 5.7,
+        "home": 1.32,
+        "draw": 5.8,
         "away": 13.0
       }
     ],
@@ -3585,8 +3582,8 @@
       },
       {
         "date": "2026-06-12",
-        "home": 2.06,
-        "draw": 3.45,
+        "home": 2.08,
+        "draw": 3.55,
         "away": 4.3
       }
     ],
@@ -3627,7 +3624,7 @@
       },
       {
         "date": "2026-06-12",
-        "home": 1.09,
+        "home": 1.1,
         "draw": 15.0,
         "away": 40.0
       }
@@ -3670,7 +3667,7 @@
       {
         "date": "2026-06-12",
         "home": 1.59,
-        "draw": 4.6,
+        "draw": 4.7,
         "away": 6.5
       }
     ],
@@ -3683,7 +3680,7 @@
       },
       {
         "date": "2026-06-12",
-        "home": 1.25,
+        "home": 1.23,
         "draw": 8.0,
         "away": 20.0
       }
@@ -3726,7 +3723,7 @@
       {
         "date": "2026-06-12",
         "home": 1.44,
-        "draw": 4.9,
+        "draw": 5.0,
         "away": 9.0
       }
     ],
@@ -3739,9 +3736,9 @@
       },
       {
         "date": "2026-06-12",
-        "home": 1.48,
-        "draw": 4.75,
-        "away": 8.25
+        "home": 1.47,
+        "draw": 4.9,
+        "away": 8.6
       }
     ],
     "New Zealand vs Egypt": [
@@ -3769,7 +3766,7 @@
         "date": "2026-06-12",
         "home": 1.7,
         "draw": 4.1,
-        "away": 5.75
+        "away": 5.8
       }
     ],
     "France vs Iraq": [
@@ -3782,7 +3779,7 @@
       {
         "date": "2026-06-12",
         "home": 1.15,
-        "draw": 10.0,
+        "draw": 10.5,
         "away": 30.0
       }
     ],
@@ -3809,8 +3806,8 @@
       },
       {
         "date": "2026-06-12",
-        "home": 6.8,
-        "draw": 4.7,
+        "home": 6.79,
+        "draw": 4.6,
         "away": 1.56
       }
     ],
@@ -3824,7 +3821,7 @@
       {
         "date": "2026-06-12",
         "home": 1.27,
-        "draw": 6.95,
+        "draw": 7.0,
         "away": 12.5
       }
     ],
@@ -3838,7 +3835,7 @@
       {
         "date": "2026-06-12",
         "home": 1.36,
-        "draw": 6.0,
+        "draw": 5.9,
         "away": 11.0
       }
     ],
@@ -3866,7 +3863,7 @@
       {
         "date": "2026-06-12",
         "home": 1.53,
-        "draw": 4.42,
+        "draw": 4.5,
         "away": 8.0
       }
     ],
@@ -3893,7 +3890,7 @@
       },
       {
         "date": "2026-06-12",
-        "home": 2.26,
+        "home": 2.24,
         "draw": 3.47,
         "away": 3.65
       }
@@ -3922,7 +3919,7 @@
       {
         "date": "2026-06-12",
         "home": 1.35,
-        "draw": 5.5,
+        "draw": 5.6,
         "away": 11.25
       }
     ],
@@ -4075,7 +4072,7 @@
       },
       {
         "date": "2026-06-12",
-        "home": 2.7,
+        "home": 2.65,
         "draw": 3.4,
         "away": 3.0
       }
@@ -4145,7 +4142,7 @@
       },
       {
         "date": "2026-06-12",
-        "home": 11.0,
+        "home": 12.0,
         "draw": 6.75,
         "away": 1.32
       }
@@ -4173,7 +4170,7 @@
       },
       {
         "date": "2026-06-12",
-        "home": 2.38,
+        "home": 2.36,
         "draw": 3.35,
         "away": 3.3
       }
@@ -4189,7 +4186,7 @@
         "date": "2026-06-12",
         "home": 3.85,
         "draw": 3.35,
-        "away": 2.2
+        "away": 2.23
       }
     ],
     "Jordan vs Argentina": [
@@ -4201,9 +4198,9 @@
       },
       {
         "date": "2026-06-12",
-        "home": 17.0,
+        "home": 16.0,
         "draw": 7.5,
-        "away": 1.21
+        "away": 1.22
       }
     ]
   },
