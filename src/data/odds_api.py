@@ -38,7 +38,7 @@ def get_api_key(api_key: str | None = None) -> str:
 def fetch_upcoming_matches(
     sport: str = "soccer_fifa_world_cup",
     regions: str = "eu",
-    markets: str = "h2h,totals,spreads,double_chance",
+    markets: str = "h2h,totals,spreads",
     api_key: str | None = None,
     force: bool = False,
 ) -> list[dict]:
@@ -58,11 +58,15 @@ def fetch_upcoming_matches(
         resp = requests.get(url, params=params, timeout=15)
         resp.raise_for_status()
     except requests.exceptions.HTTPError as e:
-        if e.response is not None and e.response.status_code == 422 and "double_chance" in markets:
-            print("  WARN: double_chance market unavailable for this sport — retrying without it.")
-            params["markets"] = ",".join(m for m in markets.split(",") if m != "double_chance")
-            resp = requests.get(url, params=params, timeout=15)
-            resp.raise_for_status()
+        if e.response is not None and e.response.status_code == 422:
+            optional = [m for m in ("double_chance", "btts") if m in markets]
+            if optional:
+                print(f"  WARN: market(s) unavailable — retrying without {', '.join(optional)}.")
+                params["markets"] = ",".join(m for m in markets.split(",") if m not in optional)
+                resp = requests.get(url, params=params, timeout=15)
+                resp.raise_for_status()
+            else:
+                raise
         else:
             raise
 
