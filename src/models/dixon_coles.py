@@ -207,7 +207,7 @@ def fit(
     init_defence = np.zeros(n)
     x0 = np.concatenate([init_attack, init_defence, [0.3, -0.1]])
 
-    bounds = [(None, None)] * (2 * n) + [(None, None), (-0.5, 0.0)]
+    bounds = [(-3.0, 3.0)] * (2 * n) + [(None, None), (-0.5, 0.0)]
 
     result = minimize(
         _vectorized_nll,

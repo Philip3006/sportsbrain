@@ -571,9 +571,11 @@ def run_daily_scan(
             totals_p = totals_cache[ou_line]
             under_me = _UNDER_BIAS.get(ou_line, _MIN_EDGE + 0.03)
             if totals_p.get("quarter_ball"):
+                _dc_quarter_tot = totals_p.get("lower_probs", {})
                 signals.extend(detect_value_totals_quarter(
                     home, away, totals_p, over_o, under_o,
                     bankroll=bankroll, match_id=match_id, min_edge_under=under_me,
+                    dc_probs=_dc_quarter_tot,
                 ))
             else:
                 signals.extend(detect_value_totals(
@@ -599,9 +601,11 @@ def run_daily_scan(
                     continue  # unsupported line (outside ±2.5 range)
             ah_p = ah_cache[ah_line]
             if ah_p.get("quarter_ball"):
+                _dc_quarter_ah = ah_p.get("lower_probs", {})
                 signals.extend(detect_value_ah_quarter(
                     home, away, ah_p, ah_h, ah_a,
                     bankroll=bankroll, match_id=match_id, line=ah_line,
+                    dc_probs=_dc_quarter_ah,
                 ))
             else:
                 signals.extend(detect_value_ah(

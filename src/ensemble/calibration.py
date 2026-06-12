@@ -32,8 +32,12 @@ def calibrate(
     calibrated = np.column_stack([
         calibrators[i].predict(raw_probs[:, i]) for i in range(3)
     ])
+    calibrated = np.clip(calibrated, 0.0, None)
     row_sums = calibrated.sum(axis=1, keepdims=True)
-    row_sums = np.where(row_sums == 0, 1.0, row_sums)
+    degenerate = (row_sums < 1e-6).flatten()
+    if degenerate.any():
+        calibrated[degenerate] = np.array([1/3, 1/3, 1/3])
+        row_sums = calibrated.sum(axis=1, keepdims=True)
     return calibrated / row_sums
 
 

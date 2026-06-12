@@ -198,19 +198,24 @@ def fetch_match_xg(event_id: int) -> tuple[float | None, float | None]:
         return None, None
     j = r.json()
     # Structure: statistics → [{period: "ALL"/"1ST"/"2ND", groups: [{statisticsItems: [...]}]}]
+    matches_xg: list[tuple[float, float]] = []
     for period in (j.get("statistics") or []):
         if period.get("period") != "ALL":
             continue
         for group in period.get("groups", []):
             for stat in group.get("statisticsItems", []):
                 key = (stat.get("key") or "").lower()
-                name = (stat.get("name") or "").lower()
-                if key == "expected_goals" or "expected goals" in name:
+                name = (stat.get("name") or "").lower().strip()
+                if key == "expected_goals" or name == "expected goals":
                     try:
-                        return float(stat.get("home")), float(stat.get("away"))
+                        matches_xg.append((float(stat.get("home")), float(stat.get("away"))))
                     except (TypeError, ValueError):
-                        return None, None
-    return None, None
+                        pass
+    if not matches_xg:
+        return None, None
+    if len(matches_xg) > 1:
+        print(f"  [sofascore] WARN: {len(matches_xg)} expected_goals rows for event {event_id} — using first")
+    return matches_xg[0]
 
 
 def _team_value_cache_path(team_id: int) -> Path:
