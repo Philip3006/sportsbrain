@@ -162,6 +162,31 @@ _POS_MAP = {
 # "Adductor injury - Return expected on 20/07/2026"
 _RETURN_RE = re.compile(r"Return expected on (\d{2}/\d{2}/\d{4})", re.I)
 
+# Market value parsing: "€10.00m" → 10.0, "€500k" → 0.5, "€1.50bn" → 1500.0
+_MV_RE = re.compile(r"€\s*([\d.,]+)\s*([kmbn]+)?", re.I)
+
+
+def _parse_market_value_m(text: str) -> float:
+    """Returns market value in millions EUR. 0.0 if unparseable."""
+    if not text:
+        return 0.0
+    m = _MV_RE.search(text.replace("\xa0", " "))
+    if not m:
+        return 0.0
+    try:
+        num = float(m.group(1).replace(",", ".").rstrip("."))
+    except ValueError:
+        return 0.0
+    suffix = (m.group(2) or "").lower()
+    if "b" in suffix:
+        return num * 1000.0  # billion → millions
+    if "m" in suffix:
+        return num
+    if "k" in suffix:
+        return num / 1000.0
+    # No suffix on TM is unusual; treat as raw EUR
+    return num / 1_000_000.0
+
 
 # ---------------------------------------------------------------------------
 # Core dataclasses
@@ -175,6 +200,7 @@ class PlayerStatus:
     status: str = "fit"
     key_player: bool = False
     p_plays: float = 1.0
+    market_value_eur_m: float = 0.0  # Transfermarkt-derived, 0.0 when unknown
 
 
 @dataclass
@@ -333,6 +359,17 @@ def _fetch_covers_squad(team: str, match_date: pd.Timestamp) -> list[PlayerStatu
     return players
 
 
+def _overlay_sofascore_values(team: str, players: list[PlayerStatus]) -> None:
+    """Best-effort overlay of Sofascore-derived per-player market values onto
+    a SquadReport's PlayerStatus list. Silently does nothing on failure.
+    """
+    try:
+        from src.data.sofascore import overlay_player_values
+        overlay_player_values(team, players)
+    except Exception:
+        pass
+
+
 def squad_report(
     team: str,
     match_date: pd.Timestamp,
@@ -342,6 +379,7 @@ def squad_report(
     Returns SquadReport for team at match_date.
     Priority: Covers.com injuries → Transfermarkt → Wikipedia → default_report.
     Suspension overlay (data/suspensions.json) is applied on top of all sources.
+    Sofascore market values are overlayed onto the chosen source's player list.
     """
     # Covers.com: structured injury data, scrapable without bot protection
     covers_players = _fetch_covers_squad(team, match_date)
@@ -356,6 +394,7 @@ def squad_report(
             for i in range(max(0, squad_size - n_injured))
         ]
         all_players = covers_players + fit_players
+        _overlay_sofascore_values(team, all_players)
         return SquadReport(
             team=team,
             report_date=match_date,
@@ -367,6 +406,7 @@ def squad_report(
     players = fetch_transfermarkt_squad(team, match_date, force=force)
     if players:
         players, susp_count = _apply_suspension_overlay_to_statuses(players, team)
+        _overlay_sofascore_values(team, players)
         return SquadReport(
             team=team,
             report_date=match_date,
@@ -381,6 +421,7 @@ def squad_report(
         wiki_players = _fetch_wikipedia_squad(team, match_date)
     if wiki_players:
         wiki_players, susp_count = _apply_suspension_overlay_to_statuses(wiki_players, team)
+        _overlay_sofascore_values(team, wiki_players)
         return SquadReport(
             team=team,
             report_date=match_date,
@@ -412,15 +453,31 @@ _POSITION_IMPACT_WEIGHTS = {
 
 
 def _weighted_impact_lost(report: SquadReport) -> float:
-    """Normalized impact lost ∈ [0,1] weighted by position rarity.
+    """Normalized impact lost ∈ [0,1].
 
-    Without per-player market values (Transfermarkt scrape doesn't expose them
-    in our pipeline), we proxy via position weights. GK absence weighs ~25%
-    more than FWD absence; intra-outfield differences kept small to avoid
-    over-claiming precision.
+    Preferred: per-player market-value share × position weight × (1 − availability).
+    Fallback: position-weighted only (used when no per-player values are present —
+    e.g. Wikipedia squads or pre-Lever-3 caches).
+
+    The market-value formula reflects the intuition that Mbappé out hurts France
+    far more than a backup midfielder out hurts France, even with the same
+    binary "1 player missing" signal.
     """
     if not report.players:
         return 0.0
+
+    total_value = sum(p.market_value_eur_m for p in report.players if p.market_value_eur_m > 0)
+    if total_value > 0:
+        # Value-weighted impact
+        return float(sum(
+            (p.market_value_eur_m / total_value)
+            * _POSITION_IMPACT_WEIGHTS.get(p.position, 1.0)
+            * (1.0 - p.availability)
+            for p in report.players
+            if p.market_value_eur_m > 0
+        ))
+
+    # Fallback: position-weight only
     total_w = sum(_POSITION_IMPACT_WEIGHTS.get(p.position, 1.0) for p in report.players)
     if total_w == 0:
         return 0.0
@@ -847,12 +904,20 @@ def _scrape_kader_playwright(url: str, match_date: pd.Timestamp) -> list[PlayerS
                     status = "suspended"
                     availability = 0.0
 
+                # Market value: TM kader page has a right-aligned hauptlink cell
+                # at the end of each row with values like "€10.00m" / "€500k".
+                mv_eur_m = 0.0
+                mv_td = row.query_selector("td.rechts.hauptlink") or row.query_selector("td.rechts:last-child")
+                if mv_td:
+                    mv_eur_m = _parse_market_value_m(mv_td.inner_text() or "")
+
                 players.append(PlayerStatus(
                     name=name,
                     position=position,
                     availability=availability,
                     status=status,
                     key_player=True,  # marked after full squad is loaded
+                    market_value_eur_m=mv_eur_m,
                 ))
 
             browser.close()
@@ -918,6 +983,7 @@ def _save_cache(path: Path, players: list[PlayerStatus]) -> None:
             "status": p.status,
             "key_player": p.key_player,
             "p_plays": p.p_plays,
+            "market_value_eur_m": p.market_value_eur_m,
         }
         for p in players
     ]
@@ -935,6 +1001,7 @@ def _load_cache(path: Path) -> list[PlayerStatus]:
                 status=d.get("status", "fit"),
                 key_player=d.get("key_player", False),
                 p_plays=d.get("p_plays", 1.0),
+                market_value_eur_m=d.get("market_value_eur_m", 0.0),
             )
             for d in data
         ]
