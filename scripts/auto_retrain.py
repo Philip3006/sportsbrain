@@ -68,7 +68,9 @@ def main(force: bool = False, dry_run: bool = False) -> None:
     if force:
         print("  --force flag set — retraining regardless.")
     else:
-        # Guard: don't retrain on same-day WM results — martj42 CSV may not have them yet
+        # During WM 2026 we retrain even if today's results are partial — partial data
+        # with WC2026_BOOST still beats stale data from last training. The 12h cadence
+        # picks up later matches on the next run.
         wm_mask = (
             (results["tournament"] == "FIFA World Cup")
             & (results["date"] >= pd.Timestamp("2026-06-11"))
@@ -79,10 +81,8 @@ def main(force: bool = False, dry_run: bool = False) -> None:
             if pd.Timestamp(latest_wm_date).date() >= pd.Timestamp.now().date():
                 print(
                     f"  Latest WM match on {latest_wm_date.date()} (today) — "
-                    "martj42 may be incomplete. Retrain skipped to avoid stale data. "
-                    "Re-run tomorrow or use --force."
+                    "martj42 may be partial, but proceeding (12h cadence will catch later matches)."
                 )
-                return
         print(f"  {n_new} new WM match(es) since last training — retraining.")
 
     print("\nStep 1/2: Retraining Dixon-Coles (finals-only)...")

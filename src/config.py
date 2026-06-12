@@ -104,6 +104,13 @@ TOURNAMENT_K_FACTORS: dict[str, float] = {
     "CONCACAF Nations League qualification": 0.45,
 }
 
+# WM 2026 freshness boost — current-tournament matches carry more signal about
+# present team form than historical finals. Applied multiplicatively on top of
+# TOURNAMENT_WEIGHTS for matches with date >= WC2026_START and tournament="FIFA World Cup".
+WC2026_START = "2026-06-11"
+WC2026_BOOST = 3.0
+
+
 # Tournament quality weights for DC NLL — final tournaments > group/NL > qualifiers.
 # Qualifiers against weak opponents (e.g. OFC, CAF) inflate attack params without
 # reflecting true ability at WC/EURO level. Down-weighting them reduces confederation bias.

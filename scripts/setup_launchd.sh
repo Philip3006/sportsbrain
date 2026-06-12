@@ -13,7 +13,8 @@ echo "=== SportsBrain launchd setup ==="
 echo "[1/3] Setting execute permissions on cron wrappers..."
 chmod +x "$SPORTSBRAIN_DIR/scripts/scan_cron.sh"
 chmod +x "$SPORTSBRAIN_DIR/scripts/closing_odds_cron.sh"
-echo "      OK: scan_cron.sh, closing_odds_cron.sh"
+chmod +x "$SPORTSBRAIN_DIR/scripts/auto_retrain_cron.sh"
+echo "      OK: scan_cron.sh, closing_odds_cron.sh, auto_retrain_cron.sh"
 
 # 2. Ensure results directory exists
 mkdir -p "$SPORTSBRAIN_DIR/results"
@@ -25,6 +26,7 @@ PLISTS=(
     "com.sportsbrain.daily-scan.plist"
     "com.sportsbrain.closing-odds.plist"
     "com.sportsbrain.closing-odds-evening.plist"
+    "com.sportsbrain.auto-retrain.plist"
 )
 
 for PLIST in "${PLISTS[@]}"; do
@@ -41,7 +43,7 @@ done
 
 # 4. Verify
 echo "[3/3] Verifying loaded agents..."
-for LABEL in com.sportsbrain.daily-scan com.sportsbrain.closing-odds com.sportsbrain.closing-odds-evening; do
+for LABEL in com.sportsbrain.daily-scan com.sportsbrain.closing-odds com.sportsbrain.closing-odds-evening com.sportsbrain.auto-retrain; do
     STATUS=$(launchctl list "$LABEL" 2>/dev/null | grep '"Label"' || echo "NOT FOUND")
     if echo "$STATUS" | grep -q "$LABEL"; then
         echo "      OK: $LABEL is registered"
@@ -54,6 +56,7 @@ echo ""
 echo "=== Setup complete ==="
 echo ""
 echo "Schedule summary (UTC / CET):"
+echo "  06:00 / 18:00 local    — auto-retrain (DC + LGBM)  (com.sportsbrain.auto-retrain)"
 echo "  09:00 CET / 07:00 UTC  — daily scan          (com.sportsbrain.daily-scan)"
 echo "  16:00 CET / 14:00 UTC  — closing odds AM      (com.sportsbrain.closing-odds)"
 echo "  20:00 CET / 18:00 UTC  — closing odds PM      (com.sportsbrain.closing-odds-evening)"
