@@ -489,7 +489,7 @@ function openMatch(displayKey) {
     cards += `<div class="empty"><div class="icon">📊</div><div>Kein Value Bet gefunden.<br><small>Unser Modell sieht hier keinen Vorteil.</small></div></div>`;
   } else {
     cards += otherSigs.map(sigCard).join('');
-    cards += buildOuAccordion(ouSigs, otherSigs.length === 0);
+    cards += buildOuAccordion(ouSigs, otherSigs.length === 0 || ouSigs.some(s => s.confidence === 'HIGH'));
   }
 
   if (sport === 'football') cards += squadSection(dh, da);
@@ -1170,7 +1170,7 @@ function renderSport(sport) {
     </div>`;
     const ouS = mSigs.filter(s => /^o\/u/.test(s.market));
     const otherS = mSigs.filter(s => !/^o\/u/.test(s.market));
-    h += `<div class="match-group-cards">${otherS.map(s => sigCard(s, false)).join('')}${buildOuAccordion(ouS, otherS.length === 0)}</div>`;
+    h += `<div class="match-group-cards">${otherS.map(s => sigCard(s, false)).join('')}${buildOuAccordion(ouS, otherS.length === 0 || ouS.some(s => s.confidence === 'HIGH'))}</div>`;
   }
   h += '</div>';
   c.innerHTML = h;
