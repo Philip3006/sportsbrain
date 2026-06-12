@@ -76,13 +76,13 @@ def main(
         print(f"  {len(odds_lookup)} matches with market odds loaded "
               f"({odds_lookup['tournament'].nunique()} tournaments)")
 
-    print("Loading StatsBomb xG data...")
+    print("Loading live xG data (StatsBomb + Sofascore WC2026)...")
     try:
-        from src.data.statsbomb import fetch_statsbomb_xg
-        statsbomb_xg = fetch_statsbomb_xg()
+        from src.features.xg_live import fetch_live_xg
+        statsbomb_xg = fetch_live_xg()
         print(f"  {len(statsbomb_xg)} xG match records loaded")
     except Exception as e:
-        print(f"  Warning: StatsBomb xG not available ({e}) — skipping xG features")
+        print(f"  Warning: live xG not available ({e}) — skipping xG features")
         statsbomb_xg = None
 
     print("Building feature matrix (this may take a few minutes)...")

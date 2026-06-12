@@ -340,10 +340,10 @@ def run_daily_scan(
         elo_series = pd.DataFrame()
         elo_ratings = {}
 
-    print("Loading StatsBomb xG data...")
+    print("Loading live xG data (StatsBomb + Sofascore WC2026)...")
     try:
-        from src.data.statsbomb import fetch_statsbomb_xg
-        statsbomb_xg = fetch_statsbomb_xg()
+        from src.features.xg_live import fetch_live_xg
+        statsbomb_xg = fetch_live_xg()
         print(f"  {len(statsbomb_xg)} matches with xG data.")
     except Exception:
         statsbomb_xg = pd.DataFrame()
