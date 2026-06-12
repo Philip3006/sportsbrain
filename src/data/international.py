@@ -7,7 +7,9 @@ from src.config import COMPETITIVE_TOURNAMENTS, INTL_CSV_URL, canonical_name
 from src.data.cache import disk_cache
 
 
-@disk_cache("international_results", max_age_hours=24.0)
+# Cache TTL: 6h during WM 2026 (matches land throughout the day on martj42),
+# 24h baseline otherwise. auto_retrain.py additionally calls with force=True.
+@disk_cache("international_results", max_age_hours=6.0)
 def fetch_international_results(force: bool = False) -> pd.DataFrame:
     """
     Downloads the martj42/international_results CSV (~4 MB, ~50k matches).
@@ -99,19 +101,29 @@ def compute_sample_weights(
     finals_weight: float = 1.5,
     qualifier_weight: float = 0.5,
     default_weight: float = 1.0,
+    wc2026_weight: float = 3.0,
 ) -> pd.Series:
     """
     Sample weights for GBT training. Tournament-finals matches (WC, Euro, Copa)
     are up-weighted to reflect WM-2026-like dynamics; qualifiers down-weighted.
+    Live WM 2026 matches receive an additional boost — current-tournament
+    form is the most informative signal for in-tournament predictions.
     """
-    def weight(t: str) -> float:
+    from src.config import WC2026_START
+    wc2026_cutoff = pd.Timestamp(WC2026_START)
+    has_date = "date" in df.columns
+
+    def weight(row) -> float:
+        t = row["tournament"]
+        if has_date and t == "FIFA World Cup" and row["date"] >= wc2026_cutoff:
+            return wc2026_weight
         if "qualif" in t.lower():
             return qualifier_weight
         if any(k in t for k in TOURNAMENT_FINALS_KEYWORDS):
             return finals_weight
         return default_weight
 
-    return df["tournament"].apply(weight).astype(float)
+    return df.apply(weight, axis=1).astype(float)
 
 
 def is_wc2022(df: pd.DataFrame) -> pd.Series:

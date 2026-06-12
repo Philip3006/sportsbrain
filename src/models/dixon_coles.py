@@ -8,7 +8,7 @@ from scipy.optimize import minimize
 from scipy.special import gammaln
 from scipy.stats import poisson
 
-from src.config import DC_PHI, TOURNAMENT_WEIGHTS
+from src.config import DC_PHI, TOURNAMENT_WEIGHTS, WC2026_BOOST, WC2026_START
 
 _TAU_EPSILON = 1e-6
 _MAX_GOALS = 10
@@ -89,6 +89,15 @@ def _prepare_arrays(
     if "tournament" in m.columns:
         tourn_w = m["tournament"].map(TOURNAMENT_WEIGHTS).fillna(0.65).values
         weights = weights * tourn_w
+
+        # WM 2026 freshness boost: current-tournament matches carry the most
+        # signal about present team form (fitness, tactical shape, manager).
+        wc2026_mask = (
+            (m["tournament"] == "FIFA World Cup")
+            & (m["date"] >= pd.Timestamp(WC2026_START))
+        ).values
+        if wc2026_mask.any():
+            weights = weights * np.where(wc2026_mask, WC2026_BOOST, 1.0)
 
     neutral = m.get("neutral", pd.Series(False, index=m.index)).fillna(False).values.astype(bool)
 
