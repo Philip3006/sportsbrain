@@ -302,6 +302,7 @@ def main() -> None:
     wimbledon_active = date(2026, 6, 29) <= today <= date(2026, 7, 13)
     if not wimbledon_active and not args.mock:
         print(f"Wimbledon nicht aktiv (heute: {today}). Nutze --mock für Tests.")
+        sys.exit(0)
 
     # 1. Load historical match data and compute Elo ratings
     tour_label_load = "ATP" if args.tour == "atp" else ("WTA" if args.tour == "wta" else "ATP+WTA")

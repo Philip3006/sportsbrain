@@ -36,4 +36,5 @@ jobs:
           git config user.email "bot@sportsbrain"
           git add results/ledger.csv || true
           git diff --staged --quiet || git commit -m "auto: closing odds $(date +%Y-%m-%d %H:%M)"
+          git pull --rebase origin main || true
           git push
