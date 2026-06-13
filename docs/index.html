@@ -305,12 +305,12 @@
     .nav-badge.show { display: block; }
 
     /* ── Info-Tooltip (tap-toggle, mobil) ── */
-    .tip { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.15); color: var(--muted); font-size: 9px; font-weight: 800; line-height: 1; margin-left: 4px; cursor: pointer; vertical-align: middle; position: relative; -webkit-tap-highlight-color: transparent; user-select: none; flex-shrink: 0; }
-    .tip:active { background: rgba(255,255,255,.14); }
-    .tip-pop { display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #0d1117; border: 1px solid var(--green); border-radius: 8px; padding: 8px 10px; font-size: 11px; font-weight: 500; color: var(--text); line-height: 1.45; width: min(240px, 75vw); white-space: normal; text-align: left; box-shadow: 0 6px 18px rgba(0,0,0,.55); z-index: 200; letter-spacing: 0; text-transform: none; cursor: default; }
-    .tip-pop::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: var(--green); }
+    .tip { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: rgba(0,200,83,.14); border: 1.5px solid rgba(0,200,83,.55); color: var(--green); font-size: 11px; font-weight: 900; font-style: italic; font-family: Georgia, 'Times New Roman', serif; line-height: 1; margin-left: 6px; cursor: pointer; vertical-align: middle; position: relative; -webkit-tap-highlight-color: transparent; user-select: none; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(0,200,83,.08); transition: transform .12s ease, box-shadow .12s ease; }
+    .tip:active { transform: scale(0.88); }
+    .tip-pop { display: none; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #0d1117; border: 1.5px solid var(--green); border-radius: 10px; padding: 10px 12px; font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.5; width: min(260px, 80vw); white-space: normal; text-align: left; box-shadow: 0 8px 24px rgba(0,0,0,.7), 0 0 0 4px rgba(0,200,83,.08); z-index: 200; letter-spacing: 0; text-transform: none; cursor: default; font-style: normal; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; }
+    .tip-pop::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: var(--green); }
     .tip.open .tip-pop { display: block; }
-    .tip.open { background: rgba(0,200,83,.18); border-color: rgba(0,200,83,.5); color: var(--green); }
+    .tip.open { background: var(--green); color: #0d1117; border-color: var(--green); box-shadow: 0 0 0 4px rgba(0,200,83,.22); }
   </style>
 </head>
 <body>
@@ -515,13 +515,26 @@ const esc = s => s.replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 // ── Tooltip: tap-toggle. esc() den body, weil er als innerHTML reingeht ──
 function infoTip(body) {
-  return `<span class="tip" onclick="event.stopPropagation();this.classList.toggle('open')" aria-label="Info">ⓘ<span class="tip-pop">${esc(body)}</span></span>`;
+  return `<span class="tip" onclick="event.stopPropagation();_toggleTip(this)" aria-label="Info">i<span class="tip-pop">${esc(body)}</span></span>`;
 }
-// Outside-Tap schließt offene Tooltips
-document.addEventListener('click', (e) => {
+function _toggleTip(el) {
+  const isOpen = el.classList.contains('open');
+  document.querySelectorAll('.tip.open').forEach(t => t.classList.remove('open'));
+  if (!isOpen) el.classList.add('open');
+}
+// Outside-Tap schließt sofort und schluckt den Tap, damit nicht versehentlich
+// ein anderes Element (Match-Row, Nav-Tab) aktiviert wird.
+function _closeAllTipsCapture(e) {
   if (e.target.closest('.tip')) return;
-  document.querySelectorAll('.tip.open').forEach(el => el.classList.remove('open'));
-});
+  const open = document.querySelectorAll('.tip.open');
+  if (!open.length) return;
+  open.forEach(t => t.classList.remove('open'));
+  e.preventDefault();
+  e.stopPropagation();
+}
+document.addEventListener('pointerdown', _closeAllTipsCapture, true);
+document.addEventListener('touchstart', _closeAllTipsCapture, {capture:true, passive:false});
+document.addEventListener('click', _closeAllTipsCapture, true);
 
 // Normalize team names to match between scanner sources and schedule
 const TEAM_ALIASES = {
@@ -695,7 +708,7 @@ function predCard(home, away, tip, odds, nk) {
         <span class="pred-xg-team-name">${esc(home)}</span>
       </div>
       <div class="pred-xg-team" style="align-items:center">
-        <span style="font-size:12px;color:var(--muted);font-weight:700">Erw. Tore${infoTip('Expected Goals laut Dixon-Coles-Modell. WM 2026 Liga-Schnitt liegt bei ~1.35 pro Team. Werte deutlich darüber/darunter zeigen Über-/Unterlegenheit an.')}</span>
+        <span style="font-size:12px;color:var(--muted);font-weight:700">Erw. Tore${infoTip('Expected Goals laut Dixon-Coles. Aktueller WM-2026-Schnitt: ~1.15 Tore pro Team. Werte >1.6 = offensiv stark, <0.8 = stark dominiert.')}</span>
       </div>
       <div class="pred-xg-team" style="align-items:flex-end">
         <span class="pred-xg-val" style="color:var(--text)">${tip.xg_away.toFixed(2)}</span>
@@ -744,8 +757,8 @@ function sigCard(s, showMatch) {
     <div class="card-market">${marketLabel(s.market, s.match)}</div>
     <div class="card-footer">
       <span class="odds-btn">${s.odds.toFixed(2)}</span>
-      <span class="ev-chip ${evCls}">EV +${s.ev_pct}%${infoTip(`Erwarteter Gewinn pro €1 Einsatz. +${s.ev_pct}% = langfristig +€${(s.ev_pct/100).toFixed(2)} pro €1, bei €${s.stake_eur.toFixed(0)} also ~+€${(s.ev_pct/100*s.stake_eur).toFixed(2)} Erwartungswert.`)}</span>
-      <span class="conf-badge conf-${s.confidence}">${s.confidence}${infoTip(s.confidence === 'HIGH' ? 'HIGH: Modell-Edge ≥7% und Markt kohärent. Stake wird +10% skaliert.' : 'MEDIUM: solider EV, aber kleinerer Edge oder weniger Marktkonsens. Standard-Stake.')}</span>
+      <span class="ev-chip ${evCls}">EV +${s.ev_pct}%${infoTip(`Expected Value = Modell-Wahrscheinlichkeit × Quote − 1. +${s.ev_pct}% heißt: langfristig +€${(s.ev_pct/100*s.stake_eur).toFixed(2)} Gewinn bei €${s.stake_eur.toFixed(0)} Einsatz. SportsBrain wettet nur bei EV ≥ 3%.`)}</span>
+      <span class="conf-badge conf-${s.confidence}">${s.confidence}${infoTip(s.confidence === 'HIGH' ? 'HIGH = höchste Modell-Übereinstimmung. Fußball: Dixon-Coles UND LightGBM tippen dasselbe. Tennis: starker Edge (WTA ≥8%, ATP ≥15%). Stake wird automatisch +10% skaliert.' : 'MEDIUM = Standard-Confidence. Solider EV (≥3%), aber kein voller Modell-Konsens. Stake bleibt im €5–15 Standardbereich.')}</span>
       <span class="stake-val">€${s.stake_eur.toFixed(0)}</span>
     </div>
   </div>`;
@@ -812,7 +825,7 @@ function renderBets() {
           </div>
           <span class="bet-odds-arrow">→</span>
           <div>
-            <div class="bet-odds-label">Aktuell${infoTip('Quotenänderung seit deinem Einstieg. ↓ (grün) = Markt zieht Quote runter, dein Edge bestätigt sich. ↑ (rot) = Quote steigt, Markt sieht es anders als wir.')}</div>
+            <div class="bet-odds-label">Aktuell${infoTip('Markt-Bewegung seit deinem Einstieg. ↓ Quote gefallen (grün): der Markt glaubt jetzt eher an dein Outcome — du hast vorher zu guter Quote gegriffen. ↑ Quote gestiegen (rot): der Markt sieht es jetzt anders als du.')}</div>
             <span class="bet-odds-current ${driftCls}">${currentOddsStr} <small>${driftStr}</small></span>
           </div>
         </div>
@@ -831,7 +844,7 @@ function renderBets() {
       </div>
       <div class="bet-card-footer">
         ${edgeStr ? `<span class="bet-edge ${edgePct > 0 ? 'drift-good' : 'drift-bad'}">${esc(edgeStr)}</span>` : ''}
-        <span class="clv-pill ${clvCls}">${clvLabel}${infoTip('Closing Line Value: vergleicht deine Einstiegsquote mit der Markt-Endquote kurz vor Anpfiff. ✓ = bessere Quote als der Markt-Konsens → langfristig profitabel. ✗ = schlechter als der Markt.')}</span>
+        <span class="clv-pill ${clvCls}">${clvLabel}${infoTip('CLV = Closing Line Value. Vergleicht deine Einstiegsquote mit der Endquote kurz vor Anpfiff (Markt-Konsens). ✓ positiv = du hast besser eingeschätzt als der Markt → langfristig der stärkste Profit-Indikator. ✗ negativ = der Markt war schlauer.')}</span>
       </div>
     </div>`;
   }
