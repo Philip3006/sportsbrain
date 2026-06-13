@@ -324,6 +324,40 @@
     .nav-badge { position: absolute; top: 7px; right: calc(50% - 22px); background: var(--green); color: #000; font-size: 10px; font-weight: 900; border-radius: 10px; padding: 1px 6px; min-width: 18px; text-align: center; display: none; }
     .nav-badge.show { display: block; }
 
+    /* ── Bet-Modal & Token-Modal ── */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.65); backdrop-filter: blur(3px); display: none; align-items: flex-end; justify-content: center; z-index: 400; }
+    .modal-backdrop.show { display: flex; }
+    .modal { background: var(--card); border: 1px solid var(--border); border-top: 3px solid var(--green); border-radius: 16px 16px 0 0; width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto; padding: 18px 18px calc(env(safe-area-inset-bottom) + 22px); animation: slideUp .22s cubic-bezier(.2,.7,.2,1); }
+    @keyframes slideUp { from { transform: translateY(60px); opacity: .3; } to { transform: translateY(0); opacity: 1; } }
+    .modal h3 { font-size: 16px; font-weight: 900; margin-bottom: 4px; letter-spacing: -.3px; }
+    .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+    .modal-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(48,54,61,.4); font-size: 13px; }
+    .modal-row:last-of-type { border-bottom: none; }
+    .modal-row .mr-label { color: var(--muted); font-weight: 600; }
+    .modal-row .mr-val { font-weight: 800; }
+    .modal-stake-input { width: 100%; background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; color: var(--text); font-size: 22px; font-weight: 900; padding: 10px 14px; outline: none; text-align: center; margin: 6px 0 4px; -moz-appearance: textfield; }
+    .modal-stake-input::-webkit-outer-spin-button, .modal-stake-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .modal-stake-input:focus { border-color: var(--green); }
+    .modal-warn { background: rgba(248,81,73,.1); border: 1px solid rgba(248,81,73,.35); color: var(--red); border-radius: 8px; padding: 9px 12px; font-size: 12px; font-weight: 600; margin: 10px 0 0; display: none; }
+    .modal-warn.show { display: block; }
+    .modal-info { background: rgba(0,200,83,.07); border: 1px solid rgba(0,200,83,.22); color: var(--green); border-radius: 8px; padding: 9px 12px; font-size: 12px; font-weight: 600; margin: 10px 0 0; }
+    .modal-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+    .modal-btn { font-size: 14px; font-weight: 800; padding: 12px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .modal-btn.cancel { background: var(--surface); color: var(--text); }
+    .modal-btn.confirm { background: var(--green); color: #0d1117; border-color: var(--green); }
+    .modal-btn.confirm:disabled { background: rgba(0,200,83,.25); color: rgba(13,17,23,.5); cursor: not-allowed; }
+    .modal-btn:active { transform: scale(.97); }
+    .modal-token-input { width: 100%; background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; color: var(--text); font-size: 13px; padding: 10px 12px; outline: none; margin: 10px 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .modal-token-input:focus { border-color: var(--green); }
+
+    /* ── Place-Bet-Button in signal card ── */
+    .place-bet-btn { display: block; width: 100%; margin-top: 12px; background: var(--green); color: #0d1117; border: none; border-radius: 10px; padding: 11px; font-size: 14px; font-weight: 900; cursor: pointer; -webkit-tap-highlight-color: transparent; letter-spacing: .2px; }
+    .place-bet-btn:active { transform: scale(.98); }
+    .sig-card.medium .place-bet-btn { background: var(--yellow); }
+
+    /* ── Pending-Sync Pill in open-bets ── */
+    .pending-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; background: rgba(210,153,34,.14); border: 1px solid rgba(210,153,34,.4); color: var(--yellow); border-radius: 6px; padding: 2px 7px; }
+
     /* ── Global loading spinner overlay ── */
     .spinner-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(13,17,23,.4); backdrop-filter: blur(2px); display: none; align-items: center; justify-content: center; z-index: 250; pointer-events: none; }
     .spinner-overlay.show { display: flex; }
@@ -384,6 +418,60 @@
 
 <div class="spinner-overlay" id="spinner-overlay" aria-hidden="true"><div class="spinner" role="status" aria-label="Lade Daten"></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="modal-backdrop" id="bet-modal-bd" role="dialog" aria-modal="true" aria-labelledby="bet-modal-title">
+  <div class="modal" id="bet-modal">
+    <h3 id="bet-modal-title">Wette platzieren</h3>
+    <div class="modal-sub" id="bet-modal-sub">—</div>
+
+    <div class="modal-row">
+      <span class="mr-label">Quote</span>
+      <span class="mr-val" id="bet-modal-odds">—</span>
+    </div>
+    <div class="modal-row">
+      <span class="mr-label">EV</span>
+      <span class="mr-val" id="bet-modal-ev">—</span>
+    </div>
+
+    <div style="margin-top:14px">
+      <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Einsatz (€)</div>
+      <input type="number" inputmode="decimal" min="0.5" max="25" step="0.5" class="modal-stake-input" id="bet-modal-stake" aria-label="Einsatz in Euro">
+    </div>
+
+    <div class="modal-row">
+      <span class="mr-label">Möglicher Gewinn</span>
+      <span class="mr-val" style="color:var(--green)" id="bet-modal-profit">—</span>
+    </div>
+    <div class="modal-row">
+      <span class="mr-label">Rückgabe</span>
+      <span class="mr-val" id="bet-modal-return">—</span>
+    </div>
+    <div class="modal-row">
+      <span class="mr-label">Anteil Bankroll</span>
+      <span class="mr-val" id="bet-modal-risk">—</span>
+    </div>
+
+    <div class="modal-warn" id="bet-modal-warn">⚠️ Einsatz übersteigt 5% der Bankroll — laut Risiko-Regel maximal €5 bei €100 Bankroll empfohlen.</div>
+    <div class="modal-info" id="bet-modal-info">Wird beim nächsten Sync in dein Ledger geschrieben. Den echten Stake setzt du wie gewohnt im Bookmaker.</div>
+
+    <div class="modal-buttons">
+      <button class="modal-btn cancel" id="bet-modal-cancel" type="button">Abbrechen</button>
+      <button class="modal-btn confirm" id="bet-modal-confirm" type="button">Wette eintragen</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="token-modal-bd" role="dialog" aria-modal="true" aria-labelledby="token-modal-title">
+  <div class="modal">
+    <h3 id="token-modal-title">Worker-Token einmalig eintragen</h3>
+    <div class="modal-sub">Der Token ist nötig, damit deine Wetten an den Cloudflare-Worker geschickt werden können. Steht in deiner <code>.env</code> als <code>SIGNALS_API_TOKEN</code>. Wird nur lokal im Browser gespeichert.</div>
+    <input type="password" class="modal-token-input" id="token-modal-input" placeholder="Bearer-Token einfügen…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <div class="modal-buttons">
+      <button class="modal-btn cancel" id="token-modal-cancel" type="button">Abbrechen</button>
+      <button class="modal-btn confirm" id="token-modal-save" type="button">Speichern</button>
+    </div>
+  </div>
+</div>
 
 <div class="bankroll-strip" id="bankroll-strip">
   <div class="bankroll-top">
@@ -844,6 +932,16 @@ function sigCard(s, showMatch) {
   const matchLine = showMatch
     ? `<div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px"><span>⚽</span><span>${esc(sh)}</span><span style="color:var(--muted)">vs</span><span>${esc(sa)}</span></div>`
     : '';
+  const btnAttrs = [
+    `data-match="${esc(s.match)}"`,
+    `data-market="${esc(s.market)}"`,
+    `data-odds="${s.odds}"`,
+    `data-stake="${s.stake_eur}"`,
+    `data-ev="${s.ev_pct}"`,
+    `data-confidence="${esc(s.confidence||'')}"`,
+    `data-kickoff="${esc(s.kickoff||'')}"`,
+    `data-sport="${esc(s.sport||'')}"`,
+  ].join(' ');
   return `<div class="sig-card ${cls}">
     ${matchLine}
     <div class="card-market">${marketLabel(s.market, s.match)}</div>
@@ -853,18 +951,51 @@ function sigCard(s, showMatch) {
       <span class="conf-badge conf-${s.confidence}">${s.confidence}${infoTip(s.confidence === 'HIGH' ? 'HIGH = höchste Modell-Übereinstimmung. Fußball: Dixon-Coles UND LightGBM tippen dasselbe. Tennis: starker Edge (WTA ≥8%, ATP ≥15%). Stake wird automatisch +10% skaliert.' : 'MEDIUM = Standard-Confidence. Solider EV (≥3%), aber kein voller Modell-Konsens. Stake bleibt im €5–15 Standardbereich.')}</span>
       <span class="stake-val">€${s.stake_eur.toFixed(0)}</span>
     </div>
+    <button class="place-bet-btn" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="Wette platzieren">Wette platzieren · €${s.stake_eur.toFixed(0)}</button>
   </div>`;
 }
 
 // ── Render open bets tab ─────────────────────────────────────
+function _pwaPendingHtml() {
+  if (!_pwaPendingIds.length) return '';
+  // Eintrag entfernen, wenn schon im Server-Ledger gelandet
+  const now = Date.now();
+  const stillPending = _pwaPendingIds.filter(p => {
+    if (now - p.ts > 6 * 3600000) return false; // 6h alte Pending verwerfen
+    const match = (p.match || '').toLowerCase();
+    return !_openBets.some(b => {
+      const bm = (b.match || (b.home + ' vs ' + b.away) || '').toLowerCase();
+      return bm === match && (b.market || '') === (p.market || '');
+    });
+  });
+  if (stillPending.length !== _pwaPendingIds.length) _savePwaPending(stillPending);
+  if (!stillPending.length) return '';
+  return stillPending.map(p => {
+    const [h, a] = (p.match || ' vs ').split(' vs ');
+    return `<div class="bet-card" style="border-color:rgba(210,153,34,.35)">
+      <div class="bet-card-top">
+        <div class="bet-card-header">
+          <span class="bet-match">${esc(h)} vs ${esc(a)}</span>
+          <span class="pending-pill">⏳ Sync ausstehend</span>
+        </div>
+        <div class="bet-market-row">
+          <span class="bet-market-chip">${esc(marketLabel(p.market, h, a))}</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600">Wird beim nächsten Consumer-Lauf ins Ledger geschrieben.</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function renderBets() {
   const c = document.getElementById('bets-container');
   if (!c) return;
-  if (!_openBets.length) {
+  const pendingHtml = _pwaPendingHtml();
+  if (!_openBets.length && !pendingHtml) {
     c.innerHTML = `<div class="empty"><div class="icon">📭</div><div>Keine offenen Wetten.<br><small>Signals werden täglich 08:00 UTC aktualisiert.</small></div></div>`;
     return;
   }
-  let h = '';
+  let h = pendingHtml;
   for (const b of _openBets) {
     const home = b.home || b.match?.split(' vs ')[0] || '';
     const away = b.away || b.match?.split(' vs ')[1] || '';
@@ -1009,6 +1140,136 @@ function _tickCountdowns() {
   });
 }
 setInterval(_tickCountdowns, 1000);
+
+// ── Bet-Modal & Worker-Submit ─────────────────────────────────
+const WORKER_BASE = CLOUD_URL.replace(/\/signals\.json$/, '');
+const BANKROLL_START = 100; // 5%-Regel-Referenz; ggf. später aus _bankrollState.start ableiten
+let _pendingBet = null;
+let _pwaPendingIds = JSON.parse(localStorage.getItem('sb_pwa_pending') || '[]');
+
+function _savePwaPending(ids) {
+  _pwaPendingIds = ids;
+  localStorage.setItem('sb_pwa_pending', JSON.stringify(ids));
+}
+
+function _openBetModalFromBtn(btn) {
+  const d = btn.dataset;
+  _pendingBet = {
+    match: d.match,
+    market: d.market,
+    odds: parseFloat(d.odds),
+    stake_eur: parseFloat(d.stake),
+    ev_pct: parseFloat(d.ev || '0'),
+    confidence: d.confidence || '',
+    kickoff: d.kickoff || '',
+    sport: d.sport || '',
+  };
+  const [h, a] = _pendingBet.match.split(' vs ').map(x => x.trim());
+  document.getElementById('bet-modal-sub').textContent = `${h} vs ${a} · ${marketLabel(_pendingBet.market, h, a)}`;
+  document.getElementById('bet-modal-odds').textContent = '@' + _pendingBet.odds.toFixed(2);
+  document.getElementById('bet-modal-ev').textContent = '+' + _pendingBet.ev_pct.toFixed(1) + '%';
+  const inp = document.getElementById('bet-modal-stake');
+  inp.value = _pendingBet.stake_eur.toFixed(2);
+  _updateBetModalCalcs();
+  document.getElementById('bet-modal-bd').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  // kein autofocus auf Mobile, hebt sonst die Tastatur an
+}
+
+function _closeBetModal() {
+  document.getElementById('bet-modal-bd').classList.remove('show');
+  document.body.style.overflow = '';
+  _pendingBet = null;
+}
+
+function _updateBetModalCalcs() {
+  if (!_pendingBet) return;
+  const stake = parseFloat(document.getElementById('bet-modal-stake').value) || 0;
+  const odds = _pendingBet.odds;
+  const profit = (odds - 1) * stake;
+  const ret = odds * stake;
+  const free = _bankrollState?.free ?? BANKROLL_START;
+  const start = _bankrollState?.start ?? BANKROLL_START;
+  const riskPct = start > 0 ? (stake / start * 100) : 0;
+  document.getElementById('bet-modal-profit').textContent = '+€' + profit.toFixed(2);
+  document.getElementById('bet-modal-return').textContent = '€' + ret.toFixed(2);
+  document.getElementById('bet-modal-risk').textContent = riskPct.toFixed(1) + '% (€' + free.toFixed(0) + ' frei)';
+  const warn = document.getElementById('bet-modal-warn');
+  warn.classList.toggle('show', stake > start * 0.05 + 0.001);
+  const btn = document.getElementById('bet-modal-confirm');
+  btn.disabled = !(stake >= 0.5 && stake <= 25);
+}
+
+async function _submitBet() {
+  if (!_pendingBet) return;
+  const stake = parseFloat(document.getElementById('bet-modal-stake').value) || 0;
+  if (stake < 0.5 || stake > 25) { showToast('Einsatz muss zwischen €0.50 und €25 liegen', 'error'); return; }
+  const token = localStorage.getItem('sb_token');
+  if (!token) { _openTokenModal(); return; }
+
+  const btn = document.getElementById('bet-modal-confirm');
+  btn.disabled = true; btn.textContent = 'Eintragen…';
+  const payload = { ..._pendingBet, stake_eur: stake };
+  try {
+    const r = await fetch(WORKER_BASE + '/pending_bets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(payload),
+    });
+    if (r.status === 401) {
+      localStorage.removeItem('sb_token');
+      _closeBetModal();
+      showToast('Token abgelehnt — bitte erneut eingeben', 'error');
+      _openTokenModal();
+      return;
+    }
+    if (!r.ok) {
+      let msg = 'HTTP ' + r.status;
+      try { const j = await r.json(); if (j.error) msg = j.error; } catch {}
+      showToast('Fehler: ' + msg, 'error');
+      return;
+    }
+    const j = await r.json();
+    if (j.id) {
+      const ids = [..._pwaPendingIds, { id: j.id, match: payload.match, market: payload.market, ts: Date.now() }];
+      _savePwaPending(ids);
+    }
+    _closeBetModal();
+    showToast('✅ Wette eingetragen — wird beim nächsten Sync ins Ledger geschrieben', 'success');
+    renderBets();
+  } catch (e) {
+    showToast('Netzwerk-Fehler: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Wette eintragen';
+  }
+}
+
+function _openTokenModal() {
+  document.getElementById('token-modal-input').value = '';
+  document.getElementById('token-modal-bd').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function _closeTokenModal() {
+  document.getElementById('token-modal-bd').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+// Listener verdrahten
+(function () {
+  document.getElementById('bet-modal-stake')?.addEventListener('input', _updateBetModalCalcs);
+  document.getElementById('bet-modal-cancel')?.addEventListener('click', _closeBetModal);
+  document.getElementById('bet-modal-confirm')?.addEventListener('click', _submitBet);
+  document.getElementById('bet-modal-bd')?.addEventListener('click', (e) => { if (e.target.id === 'bet-modal-bd') _closeBetModal(); });
+  document.getElementById('token-modal-cancel')?.addEventListener('click', _closeTokenModal);
+  document.getElementById('token-modal-save')?.addEventListener('click', () => {
+    const v = document.getElementById('token-modal-input').value.trim();
+    if (!v) { showToast('Token darf nicht leer sein', 'error'); return; }
+    localStorage.setItem('sb_token', v);
+    _closeTokenModal();
+    if (_pendingBet) _submitBet();
+  });
+  document.getElementById('token-modal-bd')?.addEventListener('click', (e) => { if (e.target.id === 'token-modal-bd') _closeTokenModal(); });
+})();
 
 function renderHome() {
   const c = document.getElementById('home-container');
