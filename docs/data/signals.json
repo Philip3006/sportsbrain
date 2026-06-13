@@ -3075,8 +3075,8 @@
     }
   ],
   "portfolio": {
-    "n_bets": 13,
-    "n_open": 5,
+    "n_bets": 8,
+    "n_open": 0,
     "n_won": 2,
     "n_lost": 1,
     "n_void": 5,
@@ -3179,79 +3179,13 @@
       "roi_pct": 0.0
     }
   ],
-  "open_bets": [
-    {
-      "match": "Tunisia vs Netherlands",
-      "home": "Tunisia",
-      "away": "Netherlands",
-      "market": "ah+1.0_home",
-      "entry_odds": 2.05,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
-      "stake": 15.0,
-      "match_date": "2026-06-25",
-      "model_edge_pct": null
-    },
-    {
-      "match": "New Zealand vs Egypt",
-      "home": "New Zealand",
-      "away": "Egypt",
-      "market": "ah+0.75_away",
-      "entry_odds": 1.98,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
-      "stake": 15.0,
-      "match_date": "2026-06-22",
-      "model_edge_pct": null
-    },
-    {
-      "match": "Netherlands vs Sweden",
-      "home": "Netherlands",
-      "away": "Sweden",
-      "market": "ah-1.5_home",
-      "entry_odds": 2.77,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
-      "stake": 15.0,
-      "match_date": "2026-06-20",
-      "model_edge_pct": null
-    },
-    {
-      "match": "Scotland vs Brazil",
-      "home": "Scotland",
-      "away": "Brazil",
-      "market": "ah+1.0_home",
-      "entry_odds": 2.23,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
-      "stake": 15.0,
-      "match_date": "2026-06-24",
-      "model_edge_pct": null
-    },
-    {
-      "match": "Qatar vs Switzerland",
-      "home": "Qatar",
-      "away": "Switzerland",
-      "market": "o/u2.5_under",
-      "entry_odds": 2.4,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
-      "stake": 15.0,
-      "match_date": "2026-06-13",
-      "model_edge_pct": null
-    }
-  ],
+  "open_bets": [],
   "bankroll_state": {
     "start": 100.0,
-    "free": 51.86,
-    "staked": 75.0,
-    "exposure_pct": 75.0,
-    "max_win": 96.45,
+    "free": 126.86,
+    "staked": 0.0,
+    "exposure_pct": 0.0,
+    "max_win": 0.0,
     "pnl_closed": 26.86
   },
   "wm_stats": {
