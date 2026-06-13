@@ -172,21 +172,55 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
         pin_dynamic: dict = {"spreads": {}, "totals": {}}
         best_dynamic: dict = {"spreads": {}, "totals": {}}
         best_bm: dict[str, str] = {}
+        bm_h2h: list[tuple[str, float, float, float]] = []  # (key, home, draw, away)
 
         for bm in bookmakers:
             bm_key = bm["key"]
             prev = {k: v for k, v in best.items()}
             _parse_markets(bm, home, away, best, best_dynamic)
-            # Track which bookmaker provides each best price
             for k in best:
                 if best[k] != prev.get(k, 0):
                     best_bm[k] = bm_key
-            # Capture Pinnacle separately (sharp reference line)
             if bm_key == _PREFERRED_BM:
                 _parse_markets(bm, home, away, pin, pin_dynamic)
+            # Capture per-bookmaker h2h for coherence fallback
+            bm_store: dict[str, float] = {}
+            _parse_markets(bm, home, away, bm_store, {"spreads": {}, "totals": {}})
+            bh = bm_store.get(home, 0.0)
+            bd = bm_store.get("Draw", 0.0)
+            ba = bm_store.get(away, 0.0)
+            if bh > 0 and bd > 0 and ba > 0:
+                bm_h2h.append((bm_key, bh, bd, ba))
 
         if not best.get(home):
             continue
+
+        def _implied(h: float, d: float, a: float) -> float:
+            return 1/h + 1/d + 1/a if h > 0 and d > 0 and a > 0 else 0.0
+
+        h_odds = best.get(home, 0.0)
+        d_odds = best.get("Draw", 0.0)
+        a_odds = best.get(away, 0.0)
+
+        # For h2h: if best-of-all is incoherent (implied < 90%), fall back to a single
+        # coherent bookmaker. Pinnacle first, then highest-implied single bookmaker.
+        if _implied(h_odds, d_odds, a_odds) < 0.90:
+            pin_h = pin.get(home, 0.0)
+            pin_d = pin.get("Draw", 0.0)
+            pin_a = pin.get(away, 0.0)
+            if _implied(pin_h, pin_d, pin_a) >= 0.90:
+                h_odds, d_odds, a_odds = pin_h, pin_d, pin_a
+            else:
+                candidates = [(1/bh + 1/bd + 1/ba, bh, bd, ba, bk)
+                              for bk, bh, bd, ba in bm_h2h
+                              if 1/bh + 1/bd + 1/ba >= 0.90]
+                if candidates:
+                    _, h_odds, d_odds, a_odds, chosen_bm = max(candidates)
+                    print(f"  INFO: {home} vs {away} — using {chosen_bm} h2h "
+                          f"(best-of implied was {_implied(best.get(home,0), best.get('Draw',0), best.get(away,0)):.0%})")
+                else:
+                    print(f"  WARN: {home} vs {away} — no coherent h2h found, skipping.")
+                    continue
 
         # Build backward-compat h2h flat keys from best dict
         match_dict: dict = {
@@ -195,10 +229,10 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
             "home_team":      home,
             "away_team":      away,
             "tournament":     "FIFA World Cup",
-            # Best h2h odds (for EV/model comparison)
-            "home_odds":      best.get(home, 0.0),
-            "draw_odds":      best.get("Draw", 0.0),
-            "away_odds":      best.get(away, 0.0),
+            # h2h odds: coherent single-bookmaker when best-of-all is incoherent
+            "home_odds":      h_odds,
+            "draw_odds":      d_odds,
+            "away_odds":      a_odds,
             # Backward compat O/U 2.5 (best across bookmakers)
             "over_odds":      best_dynamic["totals"].get(2.5, {}).get("over", 0.0),
             "under_odds":     best_dynamic["totals"].get(2.5, {}).get("under", 0.0),
