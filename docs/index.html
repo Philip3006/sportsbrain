@@ -25,7 +25,7 @@
       --yellow:   #d29922;
       --yellow-d: #2d2208;
       --red:      #f85149;
-      --nav-h:    calc(112px + env(safe-area-inset-bottom));
+      --nav-h:    calc(132px + env(safe-area-inset-bottom));
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; -webkit-font-smoothing: antialiased; overscroll-behavior: none; }
@@ -293,7 +293,7 @@
     .suggest-eur { font-size: 12px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
 
     /* ── Bottom nav ── */
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg); border-top: 2px solid var(--green); display: flex; padding-bottom: max(calc(env(safe-area-inset-bottom) + 16px), 26px); z-index: 100; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg); border-top: 2px solid var(--green); display: flex; padding-bottom: max(calc(env(safe-area-inset-bottom) + 36px), 46px); z-index: 100; }
     .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 2px 9px; gap: 4px; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; min-height: 66px; }
     .nav-tab.active { background: rgba(0,200,83,0.07); }
     .ni { font-size: 22px; line-height: 1; transition: transform 0.15s; }
