@@ -412,7 +412,10 @@
 </nav>
 
 <script>
-const DATA_URL = 'data/signals.json';
+// Cloud URL — set after Cloudflare Worker setup (see cloudflare/SETUP.md)
+// Leave empty ('') to fall back to GitHub Pages only.
+const CLOUD_URL  = '';
+const DATA_URL   = 'data/signals.json';
 const SQUADS_URL = 'data/squads.json';
 let _signals = [];
 let _schedule = [];
@@ -1511,7 +1514,12 @@ function openSquad(team) {
 
 // ── Load ─────────────────────────────────────────────────────
 async function _load() {
-  const r = await fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
+  const ts = '?t=' + Date.now();
+  let r;
+  if (CLOUD_URL) {
+    try { r = await fetch(CLOUD_URL + ts, { cache: 'no-store' }); } catch (_) {}
+  }
+  if (!r || !r.ok) r = await fetch(DATA_URL + ts, { cache: 'no-store' });
   if (!r.ok) throw new Error('HTTP ' + r.status);
   const d = await r.json();
 
@@ -1569,7 +1577,25 @@ async function load() {
   } finally { btn.textContent = '↺'; }
 }
 
-setInterval(load, 30*60*1000);
+setInterval(load, 10*60*1000);
+
+// ── Pull-to-Refresh ───────────────────────────────────────────
+(function () {
+  let startY = 0, pulling = false;
+  document.addEventListener('touchstart', e => {
+    if (window.scrollY === 0) startY = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    if (!startY) return;
+    if (e.touches[0].clientY - startY > 70 && window.scrollY === 0) pulling = true;
+  }, { passive: true });
+  document.addEventListener('touchend', () => {
+    if (pulling) load();
+    startY = 0;
+    pulling = false;
+  });
+})();
+
 load();
 </script>
 </body>

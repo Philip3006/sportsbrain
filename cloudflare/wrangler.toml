@@ -1,0 +1,10 @@
+name = "sportsbrain-signals"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "SIGNALS"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+
+# Secrets (set via: wrangler secret put API_TOKEN)
+# API_TOKEN — shared secret between Python uploader and this Worker

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -239,3 +240,36 @@ def write_signals_json(
 
     _JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
     _JSON_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2))
+    upload_signals_to_cloud()
+
+
+def upload_signals_to_cloud(path: Path | None = None) -> bool:
+    """Upload signals.json to Cloudflare Worker KV. No-op if env vars not set."""
+    try:
+        import requests as _req
+    except ImportError:
+        return False
+
+    url = os.getenv("SIGNALS_CLOUD_URL")
+    token = os.getenv("SIGNALS_API_TOKEN")
+    if not url or not token:
+        return False
+
+    target = path or _JSON_PATH
+    if not target.exists():
+        return False
+
+    try:
+        data = target.read_bytes()
+        r = _req.post(
+            url,
+            data=data,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json; charset=utf-8",
+            },
+            timeout=15,
+        )
+        return r.status_code == 200
+    except Exception:
+        return False
