@@ -5,5 +5,5 @@ match_id,match_date,home,away,market,decimal_odds,stake_pct,stake_amount,placed_
 f955d4b3395ce6e3b5ac1031ca52ca4e,2026-06-20,Turkey,Paraguay,away,3.6000,0.150000,15.00,2026-06-11,void,0.0,3.5500,
 c9ef5822ee64fd5275f7c73251bb56c7,2026-06-24,Switzerland,Canada,away,3.6900,0.150000,15.00,2026-06-11,void,0.0,3.6900,
 384cbb5d76b535896a24fe65f93cfac8,2026-06-12,South Korea,Czechia,o/u2.5_over,2.1500,0.114000,11.40,2026-06-12,won,13.11,,
-a84f52fd74f98ad89ff2bcfa278ad5ca,2026-06-12,Canada,Bosnia and Herzegovina,home,1.8000,0.080000,8.00,2026-06-12,open,0.0,23.0000,
-5a7ad4083801bcd19485ac982fd435e7,2026-06-13,United States,Paraguay,o/u2.5_over,2.4500,0.150000,15.00,2026-06-12,open,0.0,2.6000,
+a84f52fd74f98ad89ff2bcfa278ad5ca,2026-06-12,Canada,Bosnia and Herzegovina,home,1.8000,0.080000,8.00,2026-06-12,lost,-8.00,23.0000,
+5a7ad4083801bcd19485ac982fd435e7,2026-06-13,United States,Paraguay,o/u2.5_over,2.4500,0.150000,15.00,2026-06-12,won,21.75,2.6000,-0.0577
