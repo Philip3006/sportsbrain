@@ -129,6 +129,34 @@ def _get_closed_bets() -> list[dict]:
         return []
 
 
+def _get_open_bets_from_ledger() -> list[dict]:
+    """Read open bets directly from ledger — always authoritative, never stale."""
+    if not _LEDGER_PATH.exists():
+        return []
+    try:
+        rows = []
+        with open(_LEDGER_PATH, newline="") as f:
+            for r in csv.DictReader(f):
+                if r.get("status") != "open":
+                    continue
+                rows.append({
+                    "match": f"{r['home']} vs {r['away']}",
+                    "home": r["home"],
+                    "away": r["away"],
+                    "market": r["market"],
+                    "entry_odds": float(r["decimal_odds"]),
+                    "current_odds": None,
+                    "drift_pct": None,
+                    "clv_signal": None,
+                    "stake": float(r["stake_amount"]),
+                    "match_date": r.get("match_date", ""),
+                    "model_edge_pct": None,
+                })
+        return rows
+    except Exception:
+        return []
+
+
 def _drop_finished_signals(signals: list[dict]) -> list[dict]:
     """Remove signals whose match kicked off more than 100 minutes ago."""
     now = datetime.now(timezone.utc)
@@ -224,8 +252,9 @@ def write_signals_json(
     else:
         model_tips_data = existing.get("model_tips", {})
 
-    # Compute bankroll state from ledger
-    _resolved_open_bets = open_bets if open_bets is not None else existing.get("open_bets", [])
+    # Compute bankroll state from ledger — always read from ledger when not explicitly passed
+    # (avoids stale phantom bets persisting in KV from old JSON)
+    _resolved_open_bets = open_bets if open_bets is not None else _get_open_bets_from_ledger()
     _staked = sum(float(b.get("stake", 0)) for b in (_resolved_open_bets or []))
     _max_win = sum(
         float(b.get("stake", 0)) * (float(b.get("current_odds") or b.get("entry_odds", 0)) - 1)
