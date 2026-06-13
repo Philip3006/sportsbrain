@@ -8,7 +8,7 @@ import csv
 import json
 import os
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from src.betting.value_detector import BetSignal
@@ -129,6 +129,25 @@ def _get_closed_bets() -> list[dict]:
         return []
 
 
+def _drop_finished_signals(signals: list[dict]) -> list[dict]:
+    """Remove signals whose match kicked off more than 100 minutes ago."""
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(minutes=100)
+    result = []
+    for s in signals:
+        ko = s.get("kickoff", "")
+        if not ko:
+            result.append(s)
+            continue
+        try:
+            ko_dt = datetime.fromisoformat(ko.replace("Z", "+00:00"))
+            if ko_dt > cutoff:
+                result.append(s)
+        except ValueError:
+            result.append(s)
+    return result
+
+
 def write_signals_json(
     football: list[BetSignal] | None = None,
     tennis: list[BetSignal] | None = None,
@@ -185,6 +204,10 @@ def write_signals_json(
         ]
     else:
         tennis_data = existing.get("tennis", [])
+
+    # Remove signals for matches that ended > 100 minutes ago
+    football_data = _drop_finished_signals(football_data)
+    tennis_data   = _drop_finished_signals(tennis_data)
 
     if schedule is not None:
         schedule_data = schedule

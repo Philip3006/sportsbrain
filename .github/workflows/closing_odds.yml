@@ -1,4 +1,4 @@
-name: Closing Odds Update
+name: Closing Odds + Post-Match Update
 
 on:
   schedule:
@@ -30,11 +30,21 @@ jobs:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
         run: python scripts/update_closing_odds.py
 
-      - name: Commit ledger
+      - name: Settle open bets + refresh signals
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
+          SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
+        run: python scripts/post_match_update.py
+
+      - name: Auto-retrain if new WM matches
+        run: python scripts/auto_retrain.py
+
+      - name: Commit all changes
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add results/ledger.csv || true
+          git add results/ledger.csv docs/data/signals.json models/ || true
           git diff --staged --quiet || git commit -m "auto: closing odds $(date +%Y-%m-%d %H:%M)"
           git pull --rebase origin main || true
           git push
