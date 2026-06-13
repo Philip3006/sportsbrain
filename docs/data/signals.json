@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-13T17:58:42Z",
+  "updated": "2026-06-13T18:09:16Z",
   "schedule": [
     {
       "sport": "football",
@@ -3151,12 +3151,6 @@
   ],
   "history": [
     {
-      "date": "2026-06-13",
-      "n_bets": 1,
-      "pnl": 0.0,
-      "roi_pct": 0.0
-    },
-    {
       "date": "2026-06-12",
       "n_bets": 3,
       "pnl": 26.86,
@@ -3169,27 +3163,13 @@
       "roi_pct": 0.0
     }
   ],
-  "open_bets": [
-    {
-      "match": "Qatar vs Switzerland",
-      "home": "Qatar",
-      "away": "Switzerland",
-      "market": "o/u2.5_under",
-      "entry_odds": 2.4,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
-      "stake": 15.0,
-      "match_date": "2026-06-13",
-      "model_edge_pct": null
-    }
-  ],
+  "open_bets": [],
   "bankroll_state": {
     "start": 100.0,
-    "free": 111.86,
-    "staked": 15.0,
-    "exposure_pct": 15.0,
-    "max_win": 21.0,
+    "free": 126.86,
+    "staked": 0,
+    "exposure_pct": 0.0,
+    "max_win": 0,
     "pnl_closed": 26.86
   },
   "wm_stats": {
