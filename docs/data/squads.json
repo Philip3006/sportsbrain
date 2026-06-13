@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-11",
+  "updated": "2026-06-13",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -845,8 +845,7 @@
       "availability_score": 1.0,
       "ampel": "🟢",
       "suspended": [
-        "Wesley França",
-        "Neymar"
+        "Wesley França"
       ],
       "players": [
         {
@@ -897,7 +896,7 @@
         {
           "name": "Neymar",
           "pos": "FWD",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Raphinha",
@@ -2389,7 +2388,8 @@
       "availability_score": 1.0,
       "ampel": "🟢",
       "suspended": [
-        "Hugo Ekitike"
+        "Hugo Ekitike",
+        "Michael Olise"
       ],
       "players": [
         {
@@ -2445,7 +2445,7 @@
         {
           "name": "Michael Olise",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Bradley Barcola",
@@ -3375,7 +3375,8 @@
       "ampel": "🟢",
       "suspended": [
         "Kaoru Mitoma",
-        "Takumi Minamino"
+        "Takumi Minamino",
+        "Wataru Endo"
       ],
       "players": [
         {
@@ -3406,7 +3407,7 @@
         {
           "name": "Wataru Endo",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Ao Tanaka",
@@ -5626,8 +5627,7 @@
       "ampel": "🟢",
       "suspended": [
         "Dani Carvajal",
-        "Fermin Lopez",
-        "Nico Williams"
+        "Fermin Lopez"
       ],
       "players": [
         {
@@ -5713,7 +5713,7 @@
         {
           "name": "Nico Williams",
           "pos": "FWD",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Martín Zubimendi",

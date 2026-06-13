@@ -1,9 +1,9 @@
 match_id,match_date,home,away,market,decimal_odds,stake_pct,stake_amount,placed_date,status,pnl,closing_odds,clv
-689096c8cd7e2753b9fec95321943c5d,2026-06-17,England,Croatia,o/u2.5_under,1.7900,0.150000,15.00,2026-06-11,void,0.0,1.7900,
-8756200e539155e571557c4f2e0d7f05,2026-06-28,Algeria,Austria,home,3.8500,0.150000,15.00,2026-06-11,void,0.0,3.8500,
-852a3abe6d46820720febc0fedebff9a,2026-06-21,Uruguay,Cape Verde,draw,4.7500,0.150000,15.00,2026-06-11,void,0.0,4.7500,
-f955d4b3395ce6e3b5ac1031ca52ca4e,2026-06-20,Turkey,Paraguay,away,3.6000,0.150000,15.00,2026-06-11,void,0.0,3.5500,
-c9ef5822ee64fd5275f7c73251bb56c7,2026-06-24,Switzerland,Canada,away,3.6900,0.150000,15.00,2026-06-11,void,0.0,3.6900,
-384cbb5d76b535896a24fe65f93cfac8,2026-06-12,South Korea,Czechia,o/u2.5_over,2.1500,0.114000,11.40,2026-06-12,won,13.11,,
-a84f52fd74f98ad89ff2bcfa278ad5ca,2026-06-12,Canada,Bosnia and Herzegovina,home,1.8000,0.080000,8.00,2026-06-12,lost,-8.00,23.0000,
-5a7ad4083801bcd19485ac982fd435e7,2026-06-13,United States,Paraguay,o/u2.5_over,2.4500,0.150000,15.00,2026-06-12,won,21.75,2.6000,-0.0577
+689096c8cd7e2753b9fec95321943c5d,2026-06-17,England,Croatia,o/u2.5_under,1.79,0.15,15.0,2026-06-11,void,0.0,1.79,
+8756200e539155e571557c4f2e0d7f05,2026-06-28,Algeria,Austria,home,3.85,0.15,15.0,2026-06-11,void,0.0,3.85,
+852a3abe6d46820720febc0fedebff9a,2026-06-21,Uruguay,Cape Verde,draw,4.75,0.15,15.0,2026-06-11,void,0.0,4.75,
+f955d4b3395ce6e3b5ac1031ca52ca4e,2026-06-20,Turkey,Paraguay,away,3.6,0.15,15.0,2026-06-11,void,0.0,3.55,
+c9ef5822ee64fd5275f7c73251bb56c7,2026-06-24,Switzerland,Canada,away,3.69,0.15,15.0,2026-06-11,void,0.0,3.69,
+384cbb5d76b535896a24fe65f93cfac8,2026-06-12,South Korea,Czechia,o/u2.5_over,2.15,0.114,11.4,2026-06-12,won,13.11,,
+a84f52fd74f98ad89ff2bcfa278ad5ca,2026-06-12,Canada,Bosnia and Herzegovina,home,1.8,0.08,8.0,2026-06-12,lost,-8.0,23.0,
+5a7ad4083801bcd19485ac982fd435e7,2026-06-13,United States,Paraguay,o/u2.5_over,2.45,0.15,15.0,2026-06-12,won,21.75,2.6,-0.0577

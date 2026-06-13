@@ -131,6 +131,9 @@ def _vectorized_nll(
     m10: np.ndarray,
     m01: np.ndarray,
     m11: np.ndarray,
+    regularization: float = 0.0,
+    prior_attack: np.ndarray | None = None,
+    prior_defence: np.ndarray | None = None,
 ) -> float:
     attack = params_vec[:n].copy()
     attack[ref_idx] = 0.0
@@ -160,7 +163,21 @@ def _vectorized_nll(
     if m11.any():
         log_tau[m11] = np.log(max(_TAU_EPSILON, 1.0 - rho))
 
-    return -float((weights * (log_p_hg + log_p_ag + log_tau)).sum())
+    nll = -float((weights * (log_p_hg + log_p_ag + log_tau)).sum())
+
+    if regularization > 0.0:
+        # Bayesian prior: penalise deviation from prior_params when available.
+        # This prevents a single boosted WM match from dominating a team's calibration
+        # when the prior carries far more cumulative evidence than one game.
+        # Falls back to standard L2 (shrink toward 0) when no prior is supplied.
+        atk_center = prior_attack if prior_attack is not None else np.zeros(n)
+        def_center = prior_defence if prior_defence is not None else np.zeros(n)
+        nll += regularization * (
+            float(np.dot(attack - atk_center, attack - atk_center))
+            + float(np.dot(defence - def_center, defence - def_center))
+        )
+
+    return nll
 
 
 def negative_log_likelihood(
@@ -186,8 +203,20 @@ def fit(
     today: pd.Timestamp | None = None,
     method: str = "L-BFGS-B",
     max_iter: int = 2000,
+    prior_params: "DixonColesParams | None" = None,
+    regularization: float = 0.005,
 ) -> DixonColesParams:
-    """Fits Dixon-Coles model. Returns DixonColesParams."""
+    """Fits Dixon-Coles model. Returns DixonColesParams.
+
+    prior_params: warm-start the optimizer from a previous model's parameters
+        instead of the global-average default. Prevents WM match boosts from
+        pushing teams to counterintuitive extremes (e.g. a team scoring 4 goals
+        having a lower attack than before the match).
+    regularization: L2 penalty coefficient on attack/defence vectors. Keeps
+        parameter shifts bounded when a small number of high-weight matches (WM
+        with WC2026_BOOST) would otherwise explain a blowout entirely through
+        one team's parameter.
+    """
     if today is None:
         today = matches["date"].max() + pd.Timedelta(days=1)
 
@@ -203,16 +232,28 @@ def fit(
     arrays = _prepare_arrays(matches, team_idx, phi, today)
 
     mean_home_goals = float(matches["home_score"].mean())
-    init_attack = np.full(n, np.log(max(mean_home_goals, 0.5)))
-    init_defence = np.zeros(n)
-    x0 = np.concatenate([init_attack, init_defence, [0.3, -0.1]])
+    fallback_atk = np.log(max(mean_home_goals, 0.5))
+
+    if prior_params is not None:
+        init_attack = np.array([prior_params.attack.get(t, fallback_atk) for t in teams])
+        init_defence = np.array([prior_params.defence.get(t, 0.0) for t in teams])
+        x0 = np.concatenate([init_attack, init_defence,
+                              [prior_params.home_adv, prior_params.rho]])
+        prior_atk_vec = init_attack.copy()
+        prior_def_vec = init_defence.copy()
+    else:
+        init_attack = np.full(n, fallback_atk)
+        init_defence = np.zeros(n)
+        x0 = np.concatenate([init_attack, init_defence, [0.3, -0.1]])
+        prior_atk_vec = None
+        prior_def_vec = None
 
     bounds = [(-3.0, 3.0)] * (2 * n) + [(None, None), (-0.5, 0.0)]
 
     result = minimize(
         _vectorized_nll,
         x0,
-        args=(n, ref_idx, *arrays),
+        args=(n, ref_idx, *arrays, regularization, prior_atk_vec, prior_def_vec),
         method=method,
         bounds=bounds,
         options={"maxiter": max_iter, "ftol": 1e-9},

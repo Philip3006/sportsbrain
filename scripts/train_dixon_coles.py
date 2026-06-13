@@ -25,6 +25,14 @@ from src.config import MODELS_DIR, COMPETITIVE_TOURNAMENTS
 from src.data.international import fetch_international_results, filter_competitive
 from src.models import dixon_coles
 
+
+def _load_latest_params() -> dixon_coles.DixonColesParams | None:
+    snap_dir = MODELS_DIR / "dixon_coles"
+    if not snap_dir.exists():
+        return None
+    files = sorted(snap_dir.glob("params_*.pkl"))
+    return dixon_coles.load(files[-1]) if files else None
+
 _FINALS_TOURNAMENTS = {t for t in COMPETITIVE_TOURNAMENTS if "qualification" not in t.lower()}
 
 _OFC_TEAMS = {
@@ -58,8 +66,13 @@ def main(since: str | None = None, finals_only: bool = False, all_competitive: b
             df = df[df["date"] >= pd.Timestamp(since)]
         print(f"  All competitive excl. OFC qualifiers: {len(df)} matches")
 
+    prior = _load_latest_params()
+    if prior is not None:
+        print(f"  Warm-start from prior model (fit_date={prior.fit_date.date()})")
     print("Fitting Dixon-Coles model (this may take ~60-120 seconds)...")
-    params = dixon_coles.fit(df, max_iter=2000)
+    # alpha=0.1: Bayesian prior strong enough to prevent a single boosted WM match
+    # from dominating a team's calibration vs their full historical record.
+    params = dixon_coles.fit(df, max_iter=2000, prior_params=prior, regularization=0.1)
 
     snap_dir = MODELS_DIR / "dixon_coles"
     snap_dir.mkdir(parents=True, exist_ok=True)
