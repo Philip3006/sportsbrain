@@ -303,6 +303,14 @@
     .nav-tab.active .nl { color: #ffffff; }
     .nav-badge { position: absolute; top: 7px; right: calc(50% - 22px); background: var(--green); color: #000; font-size: 10px; font-weight: 900; border-radius: 10px; padding: 1px 6px; min-width: 18px; text-align: center; display: none; }
     .nav-badge.show { display: block; }
+
+    /* ── Info-Tooltip (tap-toggle, mobil) ── */
+    .tip { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.15); color: var(--muted); font-size: 9px; font-weight: 800; line-height: 1; margin-left: 4px; cursor: pointer; vertical-align: middle; position: relative; -webkit-tap-highlight-color: transparent; user-select: none; flex-shrink: 0; }
+    .tip:active { background: rgba(255,255,255,.14); }
+    .tip-pop { display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #0d1117; border: 1px solid var(--green); border-radius: 8px; padding: 8px 10px; font-size: 11px; font-weight: 500; color: var(--text); line-height: 1.45; width: min(240px, 75vw); white-space: normal; text-align: left; box-shadow: 0 6px 18px rgba(0,0,0,.55); z-index: 200; letter-spacing: 0; text-transform: none; cursor: default; }
+    .tip-pop::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: var(--green); }
+    .tip.open .tip-pop { display: block; }
+    .tip.open { background: rgba(0,200,83,.18); border-color: rgba(0,200,83,.5); color: var(--green); }
   </style>
 </head>
 <body>
@@ -337,7 +345,7 @@
     <div class="exposure-fill" id="br-bar" style="width:0%"></div>
   </div>
   <div class="bankroll-row">
-    <span>€<span id="br-staked">0</span> im Einsatz (<span id="br-exp">0</span>%)</span>
+    <span>€<span id="br-staked">0</span> im Einsatz (<span id="br-exp">0</span>%)<span id="br-exp-tip"></span></span>
     <span id="br-count">0 offene Wetten</span>
   </div>
 </div>
@@ -504,6 +512,16 @@ function openMatch(displayKey) {
 
 // ── Helpers ──────────────────────────────────────────────────
 const esc = s => s.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// ── Tooltip: tap-toggle. esc() den body, weil er als innerHTML reingeht ──
+function infoTip(body) {
+  return `<span class="tip" onclick="event.stopPropagation();this.classList.toggle('open')" aria-label="Info">ⓘ<span class="tip-pop">${esc(body)}</span></span>`;
+}
+// Outside-Tap schließt offene Tooltips
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.tip')) return;
+  document.querySelectorAll('.tip.open').forEach(el => el.classList.remove('open'));
+});
 
 // Normalize team names to match between scanner sources and schedule
 const TEAM_ALIASES = {
@@ -677,7 +695,7 @@ function predCard(home, away, tip, odds, nk) {
         <span class="pred-xg-team-name">${esc(home)}</span>
       </div>
       <div class="pred-xg-team" style="align-items:center">
-        <span style="font-size:12px;color:var(--muted);font-weight:700">Erw. Tore</span>
+        <span style="font-size:12px;color:var(--muted);font-weight:700">Erw. Tore${infoTip('Expected Goals laut Dixon-Coles-Modell. WM 2026 Liga-Schnitt liegt bei ~1.35 pro Team. Werte deutlich darüber/darunter zeigen Über-/Unterlegenheit an.')}</span>
       </div>
       <div class="pred-xg-team" style="align-items:flex-end">
         <span class="pred-xg-val" style="color:var(--text)">${tip.xg_away.toFixed(2)}</span>
@@ -726,8 +744,8 @@ function sigCard(s, showMatch) {
     <div class="card-market">${marketLabel(s.market, s.match)}</div>
     <div class="card-footer">
       <span class="odds-btn">${s.odds.toFixed(2)}</span>
-      <span class="ev-chip ${evCls}">EV +${s.ev_pct}%</span>
-      <span class="conf-badge conf-${s.confidence}">${s.confidence}</span>
+      <span class="ev-chip ${evCls}">EV +${s.ev_pct}%${infoTip(`Erwarteter Gewinn pro €1 Einsatz. +${s.ev_pct}% = langfristig +€${(s.ev_pct/100).toFixed(2)} pro €1, bei €${s.stake_eur.toFixed(0)} also ~+€${(s.ev_pct/100*s.stake_eur).toFixed(2)} Erwartungswert.`)}</span>
+      <span class="conf-badge conf-${s.confidence}">${s.confidence}${infoTip(s.confidence === 'HIGH' ? 'HIGH: Modell-Edge ≥7% und Markt kohärent. Stake wird +10% skaliert.' : 'MEDIUM: solider EV, aber kleinerer Edge oder weniger Marktkonsens. Standard-Stake.')}</span>
       <span class="stake-val">€${s.stake_eur.toFixed(0)}</span>
     </div>
   </div>`;
@@ -794,7 +812,7 @@ function renderBets() {
           </div>
           <span class="bet-odds-arrow">→</span>
           <div>
-            <div class="bet-odds-label">Aktuell</div>
+            <div class="bet-odds-label">Aktuell${infoTip('Quotenänderung seit deinem Einstieg. ↓ (grün) = Markt zieht Quote runter, dein Edge bestätigt sich. ↑ (rot) = Quote steigt, Markt sieht es anders als wir.')}</div>
             <span class="bet-odds-current ${driftCls}">${currentOddsStr} <small>${driftStr}</small></span>
           </div>
         </div>
@@ -813,7 +831,7 @@ function renderBets() {
       </div>
       <div class="bet-card-footer">
         ${edgeStr ? `<span class="bet-edge ${edgePct > 0 ? 'drift-good' : 'drift-bad'}">${esc(edgeStr)}</span>` : ''}
-        <span class="clv-pill ${clvCls}">${clvLabel}</span>
+        <span class="clv-pill ${clvCls}">${clvLabel}${infoTip('Closing Line Value: vergleicht deine Einstiegsquote mit der Markt-Endquote kurz vor Anpfiff. ✓ = bessere Quote als der Markt-Konsens → langfristig profitabel. ✗ = schlechter als der Markt.')}</span>
       </div>
     </div>`;
   }
@@ -843,6 +861,14 @@ function renderBankrollStrip() {
   const bar = document.getElementById('br-bar');
   bar.style.width = Math.min(exp, 100) + '%';
   bar.className = 'exposure-fill ' + (exp < 30 ? 'exposure-low' : exp < 60 ? 'exposure-mid' : 'exposure-high');
+
+  const tipEl = document.getElementById('br-exp-tip');
+  if (tipEl) {
+    const stateTxt = exp < 30 ? 'grün — sicher, weitere Wetten ok.'
+                   : exp < 60 ? 'gelb — moderat, neue Wetten vorsichtig.'
+                   : 'rot — hoch, Pause empfohlen.';
+    tipEl.innerHTML = infoTip(`Anteil der Bankroll, der gerade in offenen Wetten gebunden ist. <30% = grün, 30–60% = gelb, >60% = rot. Aktuell ${exp.toFixed(1)}% → ${stateTxt}`);
+  }
 }
 
 // ── Render Home — Bet365-style with inline odds ───────────────
