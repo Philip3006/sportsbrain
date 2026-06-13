@@ -146,10 +146,30 @@
     /* ── Journal ── */
     .journal-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin: 0 16px; }
     .journal-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .journal-table th { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
-    .journal-table td { padding: 11px 12px; border-bottom: 1px solid rgba(48,54,61,.4); }
+    .journal-table th { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; padding: 9px 10px; text-align: right; border-bottom: 1px solid var(--border); background: rgba(255,255,255,.02); position: sticky; top: 0; }
+    .journal-table th:first-child { text-align: left; padding-left: 12px; }
+    .journal-table td { padding: 9px 10px; border-bottom: 1px solid rgba(48,54,61,.4); text-align: right; font-variant-numeric: tabular-nums; }
+    .journal-table td:first-child { text-align: left; padding-left: 12px; }
     .journal-table tr:last-child td { border-bottom: none; }
+    .journal-table tr:active { background: rgba(255,255,255,.03); }
+    .journal-day-date { display: inline-block; font-weight: 700; color: var(--text); }
+    .journal-day-wd { display: inline-block; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; margin-right: 6px; min-width: 22px; }
     .journal-total { background: rgba(255,255,255,0.03); border-top: 1px solid var(--border); padding: 11px 12px; font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; }
+    .trend-cell { width: 60px; padding: 9px 10px !important; }
+    .trend-bar-wrap { position: relative; width: 50px; height: 18px; margin-left: auto; }
+    .trend-bar-mid { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,.15); }
+    .trend-bar-fill { position: absolute; top: 4px; bottom: 4px; border-radius: 2px; }
+    .trend-bar-fill.pos { left: 50%; background: var(--green); }
+    .trend-bar-fill.neg { right: 50%; background: var(--red); }
+
+    /* ── Journal KPI strip ── */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 8px 12px 4px; }
+    .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 9px 10px; min-width: 0; }
+    .kpi-label { font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .kpi-val { font-size: 16px; font-weight: 900; letter-spacing: -.3px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .kpi-val.pos { color: var(--green); }
+    .kpi-val.neg { color: var(--red); }
+    .kpi-sub { font-size: 10px; color: var(--muted); font-weight: 600; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* ── Squads view ── */
     .squad-search { position: sticky; top: 52px; z-index: 20; background: var(--bg); padding: 10px 12px; border-bottom: 1px solid var(--border); }
@@ -1393,6 +1413,46 @@ function renderJournalStats(wmStats) {
 
 // ── Render Journal ───────────────────────────────────────────
 let _journalHistory = [];
+const _WD_DE = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+
+function _buildJournalKpis(rows) {
+  if (!rows.length) return '';
+  const days = rows.length;
+  const winDays = rows.filter(d => d.pnl > 0).length;
+  const winRate = days ? (winDays / days * 100) : 0;
+  const totPnl = rows.reduce((s,d) => s + (d.pnl || 0), 0);
+  const totBets = rows.reduce((s,d) => s + (d.n_bets || 0), 0);
+  const avgRoi = days ? rows.reduce((s,d) => s + (d.roi_pct || 0), 0) / days : 0;
+  const best = rows.reduce((b,d) => (b == null || d.pnl > b.pnl) ? d : b, null);
+  const worst = rows.reduce((b,d) => (b == null || d.pnl < b.pnl) ? d : b, null);
+  const fmtDay = (d) => d ? d.date.slice(8,10)+'.'+d.date.slice(5,7)+'.' : '—';
+
+  const cls = (v) => v > 0 ? 'pos' : v < 0 ? 'neg' : '';
+  const totSign = totPnl >= 0 ? '+' : '';
+  return `<div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Gesamt P&L</div>
+      <div class="kpi-val ${cls(totPnl)}">${totSign}€${totPnl.toFixed(2)}</div>
+      <div class="kpi-sub">${totBets} Wetten · ${days} Tage</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Ø ROI / Tag</div>
+      <div class="kpi-val ${cls(avgRoi)}">${avgRoi>=0?'+':''}${avgRoi.toFixed(1)}%</div>
+      <div class="kpi-sub">${winRate.toFixed(0)}% Gewinn-Tage</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Bester Tag</div>
+      <div class="kpi-val ${cls(best?.pnl ?? 0)}">${best && best.pnl >= 0 ? '+' : ''}€${best ? best.pnl.toFixed(2) : '0.00'}</div>
+      <div class="kpi-sub">${fmtDay(best)}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Schlecht. Tag</div>
+      <div class="kpi-val ${cls(worst?.pnl ?? 0)}">${worst && worst.pnl >= 0 ? '+' : ''}€${worst ? worst.pnl.toFixed(2) : '0.00'}</div>
+      <div class="kpi-sub">${fmtDay(worst)}</div>
+    </div>
+  </div>`;
+}
+
 function renderJournal(history) {
   if (history) _journalHistory = history;
   const c = document.getElementById('journal-container');
@@ -1418,25 +1478,44 @@ function renderJournal(history) {
     filtered = all.filter(d => new Date(d.date).getTime() >= cutoff);
   }
 
+  const kpisHtml = _buildJournalKpis(filtered);
+
   if (!filtered.length) {
-    c.innerHTML = chipsHtml + `<div class="empty"><div class="icon">📭</div><div>Keine Einträge in diesem Filter.</div></div>`;
+    c.innerHTML = chipsHtml + kpisHtml + `<div class="empty"><div class="icon">📭</div><div>Keine Einträge in diesem Filter.</div></div>`;
     _bindJournalChips();
     return;
   }
 
-  const rows = filtered.map(d => {
+  // Skaliere Trend-Bars relativ zum größten Absolutwert
+  const maxAbs = filtered.reduce((m,d) => Math.max(m, Math.abs(d.pnl || 0)), 0) || 1;
+
+  // Aktuellste Tage oben
+  const sorted = [...filtered].sort((a,b) => (a.date < b.date ? 1 : -1));
+
+  const rows = sorted.map(d => {
     const pc = d.pnl > 0 ? 'pos' : d.pnl < 0 ? 'neg' : 'neu';
     const rc = d.roi_pct > 0 ? 'pos' : d.roi_pct < 0 ? 'neg' : 'neu';
-    const ds = d.date.slice(8,10)+'.'+d.date.slice(5,7)+'.'+d.date.slice(2,4);
-    return `<tr><td>${ds}</td><td style="text-align:center">${d.n_bets}</td>
-      <td class="${pc}" style="font-weight:700">${d.pnl>=0?'+':''}${d.pnl.toFixed(2)}€</td>
-      <td class="${rc}">${d.roi_pct>=0?'+':''}${d.roi_pct.toFixed(1)}%</td></tr>`;
+    const ds = d.date.slice(8,10)+'.'+d.date.slice(5,7)+'.';
+    const wd = _WD_DE[(new Date(d.date + 'T00:00:00').getDay())] || '';
+    const widthPct = Math.min(50, (Math.abs(d.pnl) / maxAbs) * 50);
+    const barCls = d.pnl > 0 ? 'pos' : d.pnl < 0 ? 'neg' : '';
+    const barHtml = d.pnl === 0
+      ? '<div class="trend-bar-wrap"><div class="trend-bar-mid"></div></div>'
+      : `<div class="trend-bar-wrap"><div class="trend-bar-mid"></div><div class="trend-bar-fill ${barCls}" style="width:${widthPct}%"></div></div>`;
+    return `<tr>
+      <td><span class="journal-day-wd">${wd}</span><span class="journal-day-date">${ds}</span></td>
+      <td>${d.n_bets}</td>
+      <td class="${pc}" style="font-weight:800">${d.pnl>=0?'+':''}${d.pnl.toFixed(2)}€</td>
+      <td class="${rc}" style="font-weight:700">${d.roi_pct>=0?'+':''}${d.roi_pct.toFixed(1)}%</td>
+      <td class="trend-cell">${barHtml}</td>
+    </tr>`;
   }).join('');
+
   const tot = filtered.reduce((s,d)=>s+d.pnl,0);
   const tc = tot >= 0 ? 'pos' : 'neg';
-  c.innerHTML = chipsHtml + `<div class="journal-wrap">
+  c.innerHTML = chipsHtml + kpisHtml + `<div class="journal-wrap">
     <table class="journal-table">
-      <thead><tr><th>Datum</th><th>Wetten</th><th>P&amp;L</th><th>ROI</th></tr></thead>
+      <thead><tr><th>Tag</th><th>#</th><th>P&amp;L</th><th>ROI</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
     <div class="journal-total">
