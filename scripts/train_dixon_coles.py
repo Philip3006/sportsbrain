@@ -77,7 +77,7 @@ def main(since: str | None = None, finals_only: bool = False, all_competitive: b
     snap_dir = MODELS_DIR / "dixon_coles"
     snap_dir.mkdir(parents=True, exist_ok=True)
     out_path = snap_dir / f"params_{params.fit_date.strftime('%Y%m%d')}.pkl"
-    dixon_coles.save(params, out_path)
+    dixon_coles.save(params, out_path, prior=prior)
 
     print(f"Saved: {out_path}")
     print(f"  Teams: {len(params.attack)}")

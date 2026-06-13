@@ -664,7 +664,79 @@ def predict_first_scorer(
     return {"p_home_first": float(p_home), "p_away_first": float(1.0 - p_home)}
 
 
-def save(params: DixonColesParams, path: Path) -> None:
+# Sanity bounds applied at save() time to prevent silently shipping a
+# corrupted snapshot (see docs/audit_2026-06-12.md, section A).
+_ATTACK_RANGE = (-3.5, 2.5)
+_DEFENCE_RANGE = (-3.0, 2.5)
+_HOME_ADV_MAX = 1.0
+_RHO_RANGE = (-0.5, 0.0)
+_MAX_TEAM_DRIFT = 1.5  # max |Δ attack| or |Δ defence| per team vs prior
+
+
+def validate_params(
+    params: DixonColesParams,
+    prior: "DixonColesParams | None" = None,
+) -> list[str]:
+    """Returns a list of human-readable issues. Empty list = OK.
+
+    Range check: every team's attack/defence must fall inside the sanity
+    intervals; home_adv and rho must be within the optimizer's natural bounds.
+    Drift check (only when prior is given): no team's attack or defence may
+    move by more than _MAX_TEAM_DRIFT between successive snapshots — guards
+    against a single high-weight match dominating the retrain.
+    """
+    issues: list[str] = []
+
+    a_lo, a_hi = _ATTACK_RANGE
+    d_lo, d_hi = _DEFENCE_RANGE
+    for team, v in params.attack.items():
+        if not (a_lo <= v <= a_hi):
+            issues.append(f"{team}.attack={v:+.3f} out of range [{a_lo}, {a_hi}]")
+    for team, v in params.defence.items():
+        if not (d_lo <= v <= d_hi):
+            issues.append(f"{team}.defence={v:+.3f} out of range [{d_lo}, {d_hi}]")
+
+    if abs(params.home_adv) > _HOME_ADV_MAX:
+        issues.append(f"home_adv={params.home_adv:+.3f} exceeds |{_HOME_ADV_MAX}|")
+    r_lo, r_hi = _RHO_RANGE
+    if not (r_lo <= params.rho <= r_hi):
+        issues.append(f"rho={params.rho:+.3f} out of range [{r_lo}, {r_hi}]")
+
+    if prior is not None:
+        for team, v in params.attack.items():
+            pv = prior.attack.get(team)
+            if pv is not None and abs(v - pv) > _MAX_TEAM_DRIFT:
+                issues.append(
+                    f"{team}.attack drift |{v:+.3f} - {pv:+.3f}|={abs(v - pv):.3f}"
+                    f" exceeds {_MAX_TEAM_DRIFT}"
+                )
+        for team, v in params.defence.items():
+            pv = prior.defence.get(team)
+            if pv is not None and abs(v - pv) > _MAX_TEAM_DRIFT:
+                issues.append(
+                    f"{team}.defence drift |{v:+.3f} - {pv:+.3f}|={abs(v - pv):.3f}"
+                    f" exceeds {_MAX_TEAM_DRIFT}"
+                )
+
+    return issues
+
+
+def save(
+    params: DixonColesParams,
+    path: Path,
+    prior: "DixonColesParams | None" = None,
+    force: bool = False,
+) -> None:
+    issues = validate_params(params, prior=prior)
+    if issues and not force:
+        raise ValueError(
+            "DC sanity check failed (use force=True to override):\n  "
+            + "\n  ".join(issues)
+        )
+    if issues and force:
+        print("⚠️  DC sanity check failed but force=True; saving anyway:")
+        for line in issues:
+            print(f"   {line}")
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "wb") as f:
