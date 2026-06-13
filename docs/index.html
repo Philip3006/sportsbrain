@@ -304,6 +304,40 @@
     .nav-badge { position: absolute; top: 7px; right: calc(50% - 22px); background: var(--green); color: #000; font-size: 10px; font-weight: 900; border-radius: 10px; padding: 1px 6px; min-width: 18px; text-align: center; display: none; }
     .nav-badge.show { display: block; }
 
+    /* ── Global loading spinner overlay ── */
+    .spinner-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(13,17,23,.4); backdrop-filter: blur(2px); display: none; align-items: center; justify-content: center; z-index: 250; pointer-events: none; }
+    .spinner-overlay.show { display: flex; }
+    .spinner { width: 36px; height: 36px; border: 3px solid rgba(0,200,83,.18); border-top-color: var(--green); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ── */
+    .toast { position: fixed; left: 50%; transform: translate(-50%, 14px); bottom: calc(var(--nav-h) + 12px); background: var(--card); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 600; color: var(--text); box-shadow: 0 8px 24px rgba(0,0,0,.45); z-index: 300; opacity: 0; transition: opacity .2s ease, transform .2s ease; max-width: min(420px, 90vw); pointer-events: none; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .toast.error { border-left-color: var(--red); }
+    .toast.success { border-left-color: var(--green); }
+
+    /* ── Home search ── */
+    .home-search { position: sticky; top: 52px; z-index: 15; background: var(--bg); padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    .home-search input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; padding: 9px 12px 9px 36px; outline: none; background-image: linear-gradient(transparent, transparent); }
+    .home-search input::placeholder { color: var(--muted); }
+    .home-search input:focus { border-color: rgba(0,200,83,.5); }
+    .home-search-wrap { position: relative; }
+    .home-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14px; pointer-events: none; }
+    .home-search-clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,.08); border: none; color: var(--muted); font-size: 12px; font-weight: 800; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: none; line-height: 1; }
+    .home-search-wrap.has-text .home-search-clear { display: block; }
+
+    /* ── Filter chips ── */
+    .filter-chips { display: flex; gap: 6px; padding: 8px 16px 4px; flex-wrap: wrap; }
+    .filter-chip { font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
+    .filter-chip.active { background: rgba(0,200,83,.14); border-color: rgba(0,200,83,.55); color: var(--green); }
+    .filter-chip:active { background: rgba(255,255,255,.06); }
+
+    /* ── Match countdown (Detail-View) ── */
+    .match-countdown { font-size: 12px; font-weight: 800; color: var(--green); margin-top: 6px; letter-spacing: .3px; display: inline-flex; align-items: center; gap: 5px; background: rgba(0,200,83,.1); border: 1px solid rgba(0,200,83,.25); border-radius: 6px; padding: 3px 9px; }
+    .match-countdown.warn { color: var(--yellow); background: rgba(210,153,34,.1); border-color: rgba(210,153,34,.3); }
+    .match-countdown.live { color: #fff; background: var(--red); border-color: var(--red); animation: pulse 1.6s infinite; }
+    .match-countdown.done { color: var(--muted); background: rgba(255,255,255,.04); border-color: var(--border); }
+
     /* ── Info-Tooltip (tap-toggle, mobil) ── */
     .tip { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: rgba(0,200,83,.14); border: 1.5px solid rgba(0,200,83,.55); color: var(--green); font-size: 11px; font-weight: 900; font-style: italic; font-family: Georgia, 'Times New Roman', serif; line-height: 1; margin-left: 6px; cursor: pointer; vertical-align: middle; position: relative; -webkit-tap-highlight-color: transparent; user-select: none; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(0,200,83,.08); transition: transform .12s ease, box-shadow .12s ease; }
     .tip:active { transform: scale(0.88); }
@@ -318,15 +352,18 @@
 <header>
   <div class="logo">Sports<em>Brain</em></div>
   <div class="header-right">
-    <div class="live-pill">
-      <span class="live-dot" id="dot"></span>
+    <div class="live-pill" aria-live="polite" aria-label="Zuletzt aktualisiert">
+      <span class="live-dot" id="dot" aria-hidden="true"></span>
       <span class="updated-text" id="updated-time">—</span>
     </div>
-    <button class="icon-btn" onclick="load()" id="refresh-btn">↺</button>
+    <button class="icon-btn" onclick="load()" id="refresh-btn" aria-label="Daten neu laden">↺</button>
   </div>
 </header>
 
 <div class="stale-banner" id="stale-banner">⚠️ Daten älter als 26h — Scan läuft täglich 08:00 UTC</div>
+
+<div class="spinner-overlay" id="spinner-overlay" aria-hidden="true"><div class="spinner" role="status" aria-label="Lade Daten"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <div class="bankroll-strip" id="bankroll-strip">
   <div class="bankroll-top">
@@ -352,13 +389,20 @@
 
 <main>
   <section id="view-home" class="view active">
+    <div class="home-search">
+      <div class="home-search-wrap" id="home-search-wrap">
+        <span class="home-search-icon">🔍</span>
+        <input type="search" id="home-search-input" placeholder="Team suchen…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Spiele durchsuchen">
+        <button class="home-search-clear" id="home-search-clear" aria-label="Suche zurücksetzen">×</button>
+      </div>
+    </div>
     <div id="home-container">
       <div class="skel"></div><div class="skel"></div><div class="skel"></div>
     </div>
   </section>
 
   <section id="view-detail" class="view">
-    <div class="back-bar" onclick="closeDetail()">‹ Zurück</div>
+    <div class="back-bar" onclick="closeDetail()" role="button" tabindex="0" aria-label="Zurück" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();closeDetail();}">‹ Zurück</div>
     <div id="detail-header"></div>
     <div class="detail-cards" id="detail-cards"></div>
   </section>
@@ -398,25 +442,25 @@
   </section>
 </main>
 
-<nav class="bottom-nav">
-  <div class="nav-tab active" data-view="home" onclick="navTo(this)">
-    <span class="ni">🏠</span><span class="nl">Home</span>
-    <span class="nav-badge" id="badge-all"></span>
+<nav class="bottom-nav" role="tablist" aria-label="Hauptnavigation">
+  <div class="nav-tab active" data-view="home" onclick="navTo(this)" role="tab" tabindex="0" aria-label="Home" aria-selected="true" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();navTo(this);}">
+    <span class="ni" aria-hidden="true">🏠</span><span class="nl">Home</span>
+    <span class="nav-badge" id="badge-all" aria-hidden="true"></span>
   </div>
-  <div class="nav-tab" data-view="football" onclick="navTo(this)">
-    <span class="ni">⚽</span><span class="nl">Fußball</span>
-    <span class="nav-badge" id="badge-football"></span>
+  <div class="nav-tab" data-view="football" onclick="navTo(this)" role="tab" tabindex="0" aria-label="Fußball" aria-selected="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();navTo(this);}">
+    <span class="ni" aria-hidden="true">⚽</span><span class="nl">Fußball</span>
+    <span class="nav-badge" id="badge-football" aria-hidden="true"></span>
   </div>
-  <div class="nav-tab" data-view="tennis" onclick="navTo(this)">
-    <span class="ni">🎾</span><span class="nl">Tennis</span>
-    <span class="nav-badge" id="badge-tennis"></span>
+  <div class="nav-tab" data-view="tennis" onclick="navTo(this)" role="tab" tabindex="0" aria-label="Tennis" aria-selected="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();navTo(this);}">
+    <span class="ni" aria-hidden="true">🎾</span><span class="nl">Tennis</span>
+    <span class="nav-badge" id="badge-tennis" aria-hidden="true"></span>
   </div>
-  <div class="nav-tab" data-view="journal" onclick="navTo(this)">
-    <span class="ni">📅</span><span class="nl">Journal</span>
+  <div class="nav-tab" data-view="journal" onclick="navTo(this)" role="tab" tabindex="0" aria-label="Journal" aria-selected="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();navTo(this);}">
+    <span class="ni" aria-hidden="true">📅</span><span class="nl">Journal</span>
   </div>
-  <div class="nav-tab" data-view="bets" onclick="navTo(this)">
-    <span class="ni">📋</span><span class="nl">Wetten</span>
-    <span class="nav-badge" id="badge-bets"></span>
+  <div class="nav-tab" data-view="bets" onclick="navTo(this)" role="tab" tabindex="0" aria-label="Wetten" aria-selected="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();navTo(this);}">
+    <span class="ni" aria-hidden="true">📋</span><span class="nl">Wetten</span>
+    <span class="nav-badge" id="badge-bets" aria-hidden="true"></span>
   </div>
 </nav>
 
@@ -436,11 +480,17 @@ let _squads = {};
 let _oddsHistory = {};
 let _wmResults = {};  // {matchKey: {home_score, away_score}}
 let _prevView = 'home';
+let _homeSearch = '';
+let _journalFilter = 'all';
 
 // ── Navigation ───────────────────────────────────────────────
 function navTo(tab) {
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    t.classList.remove('active');
+    t.setAttribute('aria-selected', 'false');
+  });
   tab.classList.add('active');
+  tab.setAttribute('aria-selected', 'true');
   _prevView = tab.dataset.view;
   showView(tab.dataset.view);
 }
@@ -467,12 +517,15 @@ function openMatch(displayKey) {
   const tour = s0?.tour || sched?.tour || '';
   const sportLabel = sport === 'football' ? '⚽ WM 2026' : `🎾 ${(tour||'Tennis').toUpperCase()}`;
   const timeStr = kickoff ? fmtKickoff(kickoff) : '';
+  const cdHtml = kickoff ? `<div class="match-countdown" data-kickoff="${esc(kickoff)}">⏱ …</div>` : '';
   document.getElementById('detail-header').innerHTML = `
     <div class="match-header">
       <div class="match-sport">${sportLabel}</div>
       <div class="match-teams">${esc(displayKey)}</div>
       ${timeStr ? `<div class="match-time">${timeStr}</div>` : ''}
+      ${cdHtml}
     </div>`;
+  _tickCountdowns();
   // Look up model tip — try exact key first, then normalized key
   let tip = _modelTips[displayKey];
   if (!tip) {
@@ -497,8 +550,10 @@ function openMatch(displayKey) {
   let cards = '';
   if (tip) cards += predCard(dh, da, tip, oddsEntry, nk);
 
-  if (!sigs.length) {
-    cards += `<div class="empty"><div class="icon">📊</div><div>Kein Value Bet gefunden.<br><small>Unser Modell sieht hier keinen Vorteil.</small></div></div>`;
+  if (!sigs.length && !tip) {
+    cards += `<div class="empty"><div class="icon">⏳</div><div>Noch keine Modellbewertung für dieses Spiel.<br><small>Wird im nächsten Scan (täglich 08:00 UTC) ergänzt.</small></div></div>`;
+  } else if (!sigs.length) {
+    cards += `<div class="empty"><div class="icon">📊</div><div>Kein Value Bet gefunden.<br><small>Modell sieht hier keinen Vorteil (EV < 3%).</small></div></div>`;
   } else {
     cards += otherSigs.map(sigCard).join('');
     cards += buildOuAccordion(ouSigs, otherSigs.length === 0 || ouSigs.some(s => s.confidence === 'HIGH'));
@@ -512,6 +567,23 @@ function openMatch(displayKey) {
 
 // ── Helpers ──────────────────────────────────────────────────
 const esc = s => s.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// ── Spinner + Toast ───────────────────────────────────────────
+function _spinner(on) {
+  document.getElementById('spinner-overlay')?.classList.toggle('show', !!on);
+}
+let _toastTimer = null;
+function showToast(msg, kind) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'toast' + (kind ? ' ' + kind : '');
+  // force reflow so re-trigger of CSS transition works
+  void el.offsetWidth;
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
+}
 
 // ── Tooltip: tap-toggle. esc() den body, weil er als innerHTML reingeht ──
 function infoTip(body) {
@@ -736,7 +808,7 @@ function buildOuAccordion(ouSigs, autoOpen) {
   const hasValue = ouSigs.some(s => s.ev_pct >= 3);
   const valueBadge = hasValue ? `<span class="ou-value-badge">⚡ Value</span>` : '';
   return `<div class="ou-accordion${autoOpen ? ' open' : ''}">
-    <div class="ou-accordion-header" onclick="this.closest('.ou-accordion').classList.toggle('open')">
+    <div class="ou-accordion-header" role="button" tabindex="0" aria-label="Über/Unter-Wetten ein- oder ausklappen" onclick="this.closest('.ou-accordion').classList.toggle('open')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.closest('.ou-accordion').classList.toggle('open');}">
       <span class="ou-accordion-label">Über / Unter</span>
       ${valueBadge}
       <span class="ou-count">${ouSigs.length} Wetten</span>
@@ -891,17 +963,56 @@ function _updateClock() {
 }
 setInterval(_updateClock, 30000);
 
+// ── Live-Countdown (Detail-View) ──────────────────────────────
+function _tickCountdowns() {
+  const els = document.querySelectorAll('.match-countdown[data-kickoff]');
+  if (!els.length) return;
+  const now = Date.now();
+  els.forEach(el => {
+    const k = el.getAttribute('data-kickoff');
+    if (!k) return;
+    const t = new Date(k).getTime();
+    if (isNaN(t)) return;
+    const diff = t - now;
+    let cls = 'match-countdown', txt;
+    if (diff <= -7200000) { cls += ' done'; txt = '✓ Abgeschlossen'; }
+    else if (diff <= 0)   { cls += ' live'; txt = '🔴 LIVE jetzt'; }
+    else if (diff <= 300000) { cls += ' live'; txt = `⏱ ${Math.ceil(diff/1000)}s — gleich Anpfiff`; }
+    else if (diff <= 3600000) { cls += ' warn'; const m = Math.floor(diff/60000); txt = `⏱ ${m}m bis Anpfiff`; }
+    else {
+      const h = Math.floor(diff/3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      txt = `⏱ ${h}h ${m}m bis Anpfiff`;
+    }
+    el.className = cls;
+    el.textContent = txt;
+  });
+}
+setInterval(_tickCountdowns, 1000);
+
 function renderHome() {
   const c = document.getElementById('home-container');
 
 
-  const games = _schedule.length ? _schedule : _signals.map(s => ({
+  let games = _schedule.length ? _schedule : _signals.map(s => ({
     sport: s.sport, home: s.match.split(' vs ')[0].trim(),
     away: s.match.split(' vs ')[1].trim(), kickoff: s.kickoff||'', tour: s.tour||'',
   })).filter((g,i,a) => a.findIndex(x=>x.home===g.home&&x.away===g.away)===i);
 
+  // Suchfilter (Team-Name, normalisiert)
+  const q = (_homeSearch || '').trim().toLowerCase();
+  if (q) {
+    const qn = normTeam(q);
+    games = games.filter(g => {
+      const nh = normTeam(g.home || ''), na = normTeam(g.away || '');
+      return nh.includes(qn) || na.includes(qn) || (g.home||'').toLowerCase().includes(q) || (g.away||'').toLowerCase().includes(q);
+    });
+  }
+
   if (!games.length) {
-    c.innerHTML = `<div class="empty"><div class="icon">🔍</div><div>Keine Spiele gefunden.<br><small>Nächster Scan: täglich 08:00 UTC</small></div></div>`;
+    c.innerHTML = q
+      ? `<div class="empty"><div class="icon">🔍</div><div>Keine Treffer für „${esc(q)}".<br><small>Versuche einen anderen Team-Namen.</small></div></div>`
+      : `<div class="empty"><div class="icon">🔍</div><div>Keine Spiele gefunden.<br><small>Nächster Scan: täglich 08:00 UTC</small></div></div>`;
     return;
   }
 
@@ -1010,7 +1121,7 @@ function renderHome() {
         ? oddsBtn(nk,'home') + oddsBtn(nk,'draw') + oddsBtn(nk,'away')
         : oddsBtn(nk,'home') + oddsBtn(nk,'away');
 
-      todayHtml += `<div class="b365-row today-row" onclick='openMatch(${JSON.stringify(mk)})'>
+      todayHtml += `<div class="b365-row today-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)}" onclick='openMatch(${JSON.stringify(mk)})' onkeydown='if(event.key==="Enter"||event.key===" "){event.preventDefault();openMatch(${JSON.stringify(mk)});}'>
         <div class="b365-left">
           <div class="b365-time">
             ${timeStr}
@@ -1168,7 +1279,7 @@ function renderHome() {
             : oddsBtn(nk,'home') + oddsBtn(nk,'away');
         }
 
-        h += `<div class="b365-row" onclick='openMatch(${JSON.stringify(mk)})'>
+        h += `<div class="b365-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)}" onclick='openMatch(${JSON.stringify(mk)})' onkeydown='if(event.key==="Enter"||event.key===" "){event.preventDefault();openMatch(${JSON.stringify(mk)});}'>
           <div class="b365-left">
             <div class="b365-time">${timeStr}${isCompleted?` <span style="font-size:10px;color:var(--muted);font-weight:700">FT</span>`:''} ${n>0&&!isCompleted?` <span class="b365-val-tag">${n} Value</span>`:''}</div>
             <div class="b365-teams">
@@ -1281,13 +1392,39 @@ function renderJournalStats(wmStats) {
 }
 
 // ── Render Journal ───────────────────────────────────────────
+let _journalHistory = [];
 function renderJournal(history) {
+  if (history) _journalHistory = history;
   const c = document.getElementById('journal-container');
-  if (!history || !history.length) {
-    c.innerHTML = `<div class="empty"><div class="icon">📭</div><div>Noch keine abgeschlossenen Wetten.</div></div>`;
+  const all = _journalHistory || [];
+  const chipsHtml = `<div class="filter-chips" role="tablist" aria-label="Journal-Filter">
+    ${['all','win','loss','7d'].map(f => {
+      const lbl = f==='all'?'Alle':f==='win'?'Gewinn-Tage':f==='loss'?'Verlust-Tage':'Letzte 7 Tage';
+      return `<span class="filter-chip${_journalFilter===f?' active':''}" role="tab" tabindex="0" aria-selected="${_journalFilter===f}" data-jf="${f}">${lbl}</span>`;
+    }).join('')}
+  </div>`;
+
+  if (!all.length) {
+    c.innerHTML = chipsHtml + `<div class="empty"><div class="icon">📭</div><div>Noch keine abgeschlossenen Wetten.</div></div>`;
+    _bindJournalChips();
     return;
   }
-  const rows = history.map(d => {
+
+  let filtered = all;
+  if (_journalFilter === 'win')  filtered = all.filter(d => d.pnl > 0);
+  else if (_journalFilter === 'loss') filtered = all.filter(d => d.pnl < 0);
+  else if (_journalFilter === '7d') {
+    const cutoff = Date.now() - 7*86400000;
+    filtered = all.filter(d => new Date(d.date).getTime() >= cutoff);
+  }
+
+  if (!filtered.length) {
+    c.innerHTML = chipsHtml + `<div class="empty"><div class="icon">📭</div><div>Keine Einträge in diesem Filter.</div></div>`;
+    _bindJournalChips();
+    return;
+  }
+
+  const rows = filtered.map(d => {
     const pc = d.pnl > 0 ? 'pos' : d.pnl < 0 ? 'neg' : 'neu';
     const rc = d.roi_pct > 0 ? 'pos' : d.roi_pct < 0 ? 'neg' : 'neu';
     const ds = d.date.slice(8,10)+'.'+d.date.slice(5,7)+'.'+d.date.slice(2,4);
@@ -1295,18 +1432,26 @@ function renderJournal(history) {
       <td class="${pc}" style="font-weight:700">${d.pnl>=0?'+':''}${d.pnl.toFixed(2)}€</td>
       <td class="${rc}">${d.roi_pct>=0?'+':''}${d.roi_pct.toFixed(1)}%</td></tr>`;
   }).join('');
-  const tot = history.reduce((s,d)=>s+d.pnl,0);
+  const tot = filtered.reduce((s,d)=>s+d.pnl,0);
   const tc = tot >= 0 ? 'pos' : 'neg';
-  c.innerHTML = `<div class="journal-wrap">
+  c.innerHTML = chipsHtml + `<div class="journal-wrap">
     <table class="journal-table">
       <thead><tr><th>Datum</th><th>Wetten</th><th>P&amp;L</th><th>ROI</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
     <div class="journal-total">
-      <span>Gesamt (${history.length} Tage)</span>
+      <span>Gesamt (${filtered.length} Tag${filtered.length===1?'':'e'})</span>
       <span class="${tc}" style="font-weight:800">${tot>=0?'+':''}${tot.toFixed(2)}€</span>
     </div>
   </div>`;
+  _bindJournalChips();
+}
+function _bindJournalChips() {
+  document.querySelectorAll('#journal-container .filter-chip[data-jf]').forEach(el => {
+    const handler = () => { _journalFilter = el.dataset.jf; renderJournal(); };
+    el.addEventListener('click', handler);
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } });
+  });
 }
 
 // ── Group Standings ──────────────────────────────────────────
@@ -1553,14 +1698,23 @@ function openSquad(team) {
 }
 
 // ── Load ─────────────────────────────────────────────────────
+let _cloudHealthy = true;
 async function _load() {
   const ts = '?t=' + Date.now();
-  let r;
+  let r, cloudFailed = false;
   if (CLOUD_URL) {
-    try { r = await fetch(CLOUD_URL + ts, { cache: 'no-store' }); } catch (_) {}
+    try { r = await fetch(CLOUD_URL + ts, { cache: 'no-store' }); } catch (_) { cloudFailed = true; }
+    if (!r || !r.ok) cloudFailed = true;
   }
   if (!r || !r.ok) r = await fetch(DATA_URL + ts, { cache: 'no-store' });
   if (!r.ok) throw new Error('HTTP ' + r.status);
+  // Cloud-Erreichbarkeit nur einmal melden, wenn sich der Zustand ändert
+  if (cloudFailed && _cloudHealthy) {
+    showToast('⚠️ Cloud nicht erreichbar — Fallback auf GitHub-Daten (ggf. veraltet)', 'error');
+    _cloudHealthy = false;
+  } else if (!cloudFailed && !_cloudHealthy) {
+    _cloudHealthy = true;
+  }
   const d = await r.json();
 
   const dt = new Date(d.updated), age = (Date.now()-dt)/36e5;
@@ -1611,13 +1765,36 @@ async function _load() {
 async function load() {
   const btn = document.getElementById('refresh-btn');
   btn.textContent = '↺…';
+  _spinner(true);
   try { await _load(); } catch(e) {
     document.getElementById('home-container').innerHTML =
       `<div class="empty"><div class="icon">⚠️</div><div>Fehler: ${esc(e.message)}</div></div>`;
-  } finally { btn.textContent = '↺'; }
+    showToast('⚠️ Daten konnten nicht geladen werden: ' + e.message, 'error');
+  } finally { btn.textContent = '↺'; _spinner(false); }
 }
 
 setInterval(load, 10*60*1000);
+
+// ── Home-Suche ────────────────────────────────────────────────
+(function () {
+  const input = document.getElementById('home-search-input');
+  const wrap  = document.getElementById('home-search-wrap');
+  const clear = document.getElementById('home-search-clear');
+  if (!input || !wrap || !clear) return;
+  let t = null;
+  input.addEventListener('input', () => {
+    _homeSearch = input.value;
+    wrap.classList.toggle('has-text', !!input.value);
+    clearTimeout(t);
+    t = setTimeout(() => { if (document.getElementById('view-home').classList.contains('active') || true) renderHome(); }, 80);
+  });
+  clear.addEventListener('click', () => {
+    input.value = ''; _homeSearch = '';
+    wrap.classList.remove('has-text');
+    renderHome();
+    input.focus();
+  });
+})();
 
 // ── Pull-to-Refresh ───────────────────────────────────────────
 (function () {
