@@ -307,6 +307,9 @@ def upload_signals_to_cloud(path: Path | None = None) -> bool:
     if not url or not token:
         return False
 
+    # Worker POST endpoint is /signals, GET is /signals.json — strip suffix for write
+    post_url = url[: -len("/signals.json")] + "/signals" if url.endswith("/signals.json") else url
+
     target = path or _JSON_PATH
     if not target.exists():
         return False
@@ -314,7 +317,7 @@ def upload_signals_to_cloud(path: Path | None = None) -> bool:
     try:
         data = target.read_bytes()
         r = _req.post(
-            url,
+            post_url,
             data=data,
             headers={
                 "Authorization": f"Bearer {token}",
