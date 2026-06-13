@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-13T11:46:57Z",
+  "updated": "2026-06-13T14:03:22Z",
   "schedule": [
     {
       "sport": "football",
@@ -3166,12 +3166,6 @@
     }
   ],
   "history": [
-    {
-      "date": "2026-06-13",
-      "n_bets": 5,
-      "pnl": 0.0,
-      "roi_pct": 0.0
-    },
     {
       "date": "2026-06-12",
       "n_bets": 3,
