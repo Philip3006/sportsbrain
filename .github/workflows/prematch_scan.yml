@@ -31,6 +31,8 @@ jobs:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
+          SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
         run: python scripts/daily_scan.py --bankroll 100 --horizon 96
 
       - name: Commit scan results (NO ledger — manual confirmation required)
