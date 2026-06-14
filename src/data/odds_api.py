@@ -224,19 +224,27 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
         match_id = event.get("id", f"{home}_vs_{away}")
 
         bookmakers = event.get("bookmakers", [])
-        if not bookmakers:
+        # WebSearch fallback: 0 bookmakers OR fewer than 3 (sparse early market)
+        sparse = len(bookmakers) < 3
+        if sparse:
             ws_odds = _websearch_odds_fallback(home, away)
             if ws_odds:
-                bookmakers = [{"key": "websearch", "title": "WebSearch", "markets": [
+                ws_bm = {"key": "websearch", "title": "WebSearch", "markets": [
                     {"key": "h2h", "outcomes": [
                         {"name": home,   "price": ws_odds["home"]},
                         {"name": "Draw", "price": ws_odds["draw"]},
                         {"name": away,   "price": ws_odds["away"]},
                     ]}
-                ]}]
-                print(f"  INFO: {home} vs {away} — odds via WebSearch fallback "
-                      f"({ws_odds['home']}/{ws_odds['draw']}/{ws_odds['away']})")
-            else:
+                ]}
+                if not bookmakers:
+                    bookmakers = [ws_bm]
+                    print(f"  INFO: {home} vs {away} — odds via WebSearch (0 bookmakers) "
+                          f"({ws_odds['home']}/{ws_odds['draw']}/{ws_odds['away']})")
+                else:
+                    bookmakers = bookmakers + [ws_bm]
+                    print(f"  INFO: {home} vs {away} — WebSearch enriched sparse market "
+                          f"({len(bookmakers)-1} → +WebSearch)")
+            elif not bookmakers:
                 print(f"  WARN: {home} vs {away} — no bookmakers, WebSearch found nothing.")
                 continue
 
