@@ -70,8 +70,14 @@ def _prepare_arrays(
     team_idx: dict[str, int],
     phi: float,
     today: pd.Timestamp,
+    wc2026_boost_override: float | None = None,
 ) -> tuple:
-    """Pre-computes fixed numpy arrays for vectorized NLL. Called once before optimize."""
+    """Pre-computes fixed numpy arrays for vectorized NLL. Called once before optimize.
+
+    wc2026_boost_override: if set, replaces config.WC2026_BOOST for this fit only.
+        Used by retry-logic in train_dixon_coles.py when the optimizer hits a bound
+        (a sign the boost is over-fitting one team's calibration to a single match).
+    """
     known = matches["home_team"].isin(team_idx) & matches["away_team"].isin(team_idx)
     m = matches[known].reset_index(drop=True)
 
@@ -92,12 +98,13 @@ def _prepare_arrays(
 
         # WM 2026 freshness boost: current-tournament matches carry the most
         # signal about present team form (fitness, tactical shape, manager).
+        wc2026_boost = WC2026_BOOST if wc2026_boost_override is None else wc2026_boost_override
         wc2026_mask = (
             (m["tournament"] == "FIFA World Cup")
             & (m["date"] >= pd.Timestamp(WC2026_START))
         ).values
-        if wc2026_mask.any():
-            weights = weights * np.where(wc2026_mask, WC2026_BOOST, 1.0)
+        if wc2026_mask.any() and wc2026_boost != 1.0:
+            weights = weights * np.where(wc2026_mask, wc2026_boost, 1.0)
 
     neutral = m.get("neutral", pd.Series(False, index=m.index)).fillna(False).values.astype(bool)
 
@@ -197,6 +204,55 @@ def negative_log_likelihood(
     return _vectorized_nll(params_vec, len(teams), ref_idx, *arrays)
 
 
+# Optimizer hard bounds — kept tighter than validate_params() sanity ranges so
+# that hitting a bound is a real signal (Mexico defence=-2.97 / rho=-0.5 in
+# params_20260614.pkl both touched the previous wider bounds). When the optimizer
+# hits a bound, _check_bounds_hit() reports it so the train script can retry with
+# a smaller WC2026_BOOST.
+_FIT_BOUNDS_ATTACK = (-3.0, 2.5)
+_FIT_BOUNDS_DEFENCE = (-2.5, 2.0)
+_FIT_BOUNDS_HOME_ADV = (0.0, 0.6)
+_FIT_BOUNDS_RHO = (-0.30, 0.10)
+_BOUND_TOLERANCE = 1e-3  # within this distance of a bound counts as "hit"
+
+
+def _check_bounds_hit(
+    params: "DixonColesParams",
+    tolerance: float = _BOUND_TOLERANCE,
+) -> dict[str, list]:
+    """Returns dict of {param_group: [(name, value, hit_side)]} for params that
+    touched the optimizer bounds. Empty lists = clean fit.
+
+    hit_side ∈ {"low", "high"}. Used by train_dixon_coles.py to decide whether
+    to retry with a reduced WC2026_BOOST.
+    """
+    hits: dict[str, list] = {"attack": [], "defence": [], "home_adv": [], "rho": []}
+    a_lo, a_hi = _FIT_BOUNDS_ATTACK
+    d_lo, d_hi = _FIT_BOUNDS_DEFENCE
+    h_lo, h_hi = _FIT_BOUNDS_HOME_ADV
+    r_lo, r_hi = _FIT_BOUNDS_RHO
+
+    for t, v in params.attack.items():
+        if abs(v - a_lo) < tolerance:
+            hits["attack"].append((t, v, "low"))
+        elif abs(v - a_hi) < tolerance:
+            hits["attack"].append((t, v, "high"))
+    for t, v in params.defence.items():
+        if abs(v - d_lo) < tolerance:
+            hits["defence"].append((t, v, "low"))
+        elif abs(v - d_hi) < tolerance:
+            hits["defence"].append((t, v, "high"))
+    if abs(params.home_adv - h_lo) < tolerance:
+        hits["home_adv"].append(("home_adv", params.home_adv, "low"))
+    elif abs(params.home_adv - h_hi) < tolerance:
+        hits["home_adv"].append(("home_adv", params.home_adv, "high"))
+    if abs(params.rho - r_lo) < tolerance:
+        hits["rho"].append(("rho", params.rho, "low"))
+    elif abs(params.rho - r_hi) < tolerance:
+        hits["rho"].append(("rho", params.rho, "high"))
+    return hits
+
+
 def fit(
     matches: pd.DataFrame,
     phi: float = DC_PHI,
@@ -205,6 +261,7 @@ def fit(
     max_iter: int = 2000,
     prior_params: "DixonColesParams | None" = None,
     regularization: float = 0.005,
+    wc2026_boost_override: float | None = None,
 ) -> DixonColesParams:
     """Fits Dixon-Coles model. Returns DixonColesParams.
 
@@ -216,6 +273,7 @@ def fit(
         parameter shifts bounded when a small number of high-weight matches (WM
         with WC2026_BOOST) would otherwise explain a blowout entirely through
         one team's parameter.
+    wc2026_boost_override: replaces config.WC2026_BOOST for this fit (retry-logic).
     """
     if today is None:
         today = matches["date"].max() + pd.Timedelta(days=1)
@@ -229,7 +287,8 @@ def fit(
     ref_idx = team_idx[reference_team]
 
     # Pre-compute fixed arrays once (not on every NLL call)
-    arrays = _prepare_arrays(matches, team_idx, phi, today)
+    arrays = _prepare_arrays(matches, team_idx, phi, today,
+                              wc2026_boost_override=wc2026_boost_override)
 
     mean_home_goals = float(matches["home_score"].mean())
     fallback_atk = np.log(max(mean_home_goals, 0.5))
@@ -248,7 +307,19 @@ def fit(
         prior_atk_vec = None
         prior_def_vec = None
 
-    bounds = [(-3.0, 3.0)] * (2 * n) + [(None, None), (-0.5, 0.0)]
+    # Clamp warm-start x0 into the (tighter) optimizer bounds.
+    a_lo, a_hi = _FIT_BOUNDS_ATTACK
+    d_lo, d_hi = _FIT_BOUNDS_DEFENCE
+    h_lo, h_hi = _FIT_BOUNDS_HOME_ADV
+    r_lo, r_hi = _FIT_BOUNDS_RHO
+    x0[:n] = np.clip(x0[:n], a_lo, a_hi)
+    x0[n:2 * n] = np.clip(x0[n:2 * n], d_lo, d_hi)
+    x0[2 * n] = np.clip(x0[2 * n], h_lo, h_hi)
+    x0[2 * n + 1] = np.clip(x0[2 * n + 1], r_lo, r_hi)
+
+    bounds = ([(a_lo, a_hi)] * n
+              + [(d_lo, d_hi)] * n
+              + [(h_lo, h_hi), (r_lo, r_hi)])
 
     result = minimize(
         _vectorized_nll,
@@ -666,10 +737,13 @@ def predict_first_scorer(
 
 # Sanity bounds applied at save() time to prevent silently shipping a
 # corrupted snapshot (see docs/audit_2026-06-12.md, section A).
-_ATTACK_RANGE = (-3.5, 2.5)
-_DEFENCE_RANGE = (-3.0, 2.5)
-_HOME_ADV_MAX = 1.0
-_RHO_RANGE = (-0.5, 0.0)
+# Phase 1.1: tightened to match optimizer _FIT_BOUNDS_*; the previous wider
+# ranges allowed params_20260614 (rho=-0.5, Mexico defence=-2.97) to silently
+# pass even though they were optimizer bound-hits.
+_ATTACK_RANGE = _FIT_BOUNDS_ATTACK
+_DEFENCE_RANGE = _FIT_BOUNDS_DEFENCE
+_HOME_ADV_MAX = _FIT_BOUNDS_HOME_ADV[1]
+_RHO_RANGE = _FIT_BOUNDS_RHO
 _MAX_TEAM_DRIFT = 1.5  # max |Δ attack| or |Δ defence| per team vs prior
 
 
