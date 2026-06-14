@@ -129,8 +129,30 @@ def _get_closed_bets() -> list[dict]:
         return []
 
 
-def _get_open_bets_from_ledger() -> list[dict]:
-    """Read open bets directly from ledger — always authoritative, never stale."""
+def _market_to_odds_key(market: str) -> str | None:
+    """Map a ledger market string to the key used in all_odds dicts."""
+    m = market.lower()
+    if m == "home":
+        return "home_odds"
+    if m == "away":
+        return "away_odds"
+    if m == "draw":
+        return "draw_odds"
+    if m in ("o/u2.5_over", "o/u1.5_over", "o/u3.5_over"):
+        return "over_odds"
+    if m == "btts_yes":
+        return "btts_yes_odds"
+    if m == "dc_1x":
+        return "dc_1x_odds"
+    return None
+
+
+def _get_open_bets_from_ledger(all_odds: dict | None = None) -> list[dict]:
+    """Read open bets directly from ledger — always authoritative, never stale.
+
+    If all_odds is provided, enrich each bet with current_odds, drift_pct,
+    and clv_signal using the current market prices.
+    """
     if not _LEDGER_PATH.exists():
         return []
     try:
@@ -139,15 +161,41 @@ def _get_open_bets_from_ledger() -> list[dict]:
             for r in csv.DictReader(f):
                 if r.get("status") != "open":
                     continue
+                home = r["home"]
+                away = r["away"]
+                market = r["market"]
+                entry_odds = float(r["decimal_odds"])
+
+                current_odds = None
+                drift_pct = None
+                clv_signal = None
+
+                if all_odds:
+                    try:
+                        mk = home.lower().replace(" ", "") + "_" + away.lower().replace(" ", "")
+                        odds_key = _market_to_odds_key(market)
+                        if odds_key and mk in all_odds:
+                            raw = all_odds[mk].get(odds_key)
+                            if raw is not None:
+                                current_odds = float(raw)
+                                if entry_odds and entry_odds > 0:
+                                    drift_pct = round((current_odds - entry_odds) / entry_odds * 100, 1)
+                                    if drift_pct > 2:
+                                        clv_signal = "good"
+                                    elif drift_pct < -2:
+                                        clv_signal = "bad"
+                    except Exception:
+                        pass
+
                 rows.append({
-                    "match": f"{r['home']} vs {r['away']}",
-                    "home": r["home"],
-                    "away": r["away"],
-                    "market": r["market"],
-                    "entry_odds": float(r["decimal_odds"]),
-                    "current_odds": None,
-                    "drift_pct": None,
-                    "clv_signal": None,
+                    "match": f"{home} vs {away}",
+                    "home": home,
+                    "away": away,
+                    "market": market,
+                    "entry_odds": entry_odds,
+                    "current_odds": current_odds,
+                    "drift_pct": drift_pct,
+                    "clv_signal": clv_signal,
                     "stake": float(r["stake_amount"]),
                     "match_date": r.get("match_date", ""),
                     "model_edge_pct": None,
@@ -254,7 +302,9 @@ def write_signals_json(
 
     # Compute bankroll state from ledger — always read from ledger when not explicitly passed
     # (avoids stale phantom bets persisting in KV from old JSON)
-    _resolved_open_bets = open_bets if open_bets is not None else _get_open_bets_from_ledger()
+    _resolved_open_bets = open_bets if open_bets is not None else _get_open_bets_from_ledger(
+        all_odds=all_odds_data if all_odds_data else None
+    )
     _staked = sum(float(b.get("stake", 0)) for b in (_resolved_open_bets or []))
     _max_win = sum(
         float(b.get("stake", 0)) * (float(b.get("current_odds") or b.get("entry_odds", 0)) - 1)
@@ -288,7 +338,30 @@ def write_signals_json(
         "wm_stats": _build_wm_stats(),
     }
     payload["odds_history"] = odds_history if odds_history is not None else existing.get("odds_history", {})
-    payload["wm_results"] = wm_results if wm_results is not None else existing.get("wm_results", [])
+
+    # WM Results: merge auto-fetched scores with existing — never overwrite existing entries
+    _wm_results_base: list[dict] = wm_results if wm_results is not None else existing.get("wm_results", [])
+    try:
+        from src.data.odds_api import fetch_wm_scores as _fetch_wm_scores
+        _fetched = _fetch_wm_scores(days_from=3)
+        # Build lookup key from existing entries
+        _existing_keys = {
+            (e.get("home", ""), e.get("away", "")) for e in _wm_results_base
+        }
+        for _m in _fetched:
+            _key = (_m.get("home", ""), _m.get("away", ""))
+            if _key not in _existing_keys:
+                _wm_results_base.append({
+                    "home": _m.get("home", ""),
+                    "away": _m.get("away", ""),
+                    "home_score": _m.get("home_score"),
+                    "away_score": _m.get("away_score"),
+                    "commence_time": _m.get("commence_time", ""),
+                })
+                _existing_keys.add(_key)
+    except Exception:
+        pass  # silently keep existing wm_results on any error
+    payload["wm_results"] = _wm_results_base
 
     _JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
     _JSON_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2))
