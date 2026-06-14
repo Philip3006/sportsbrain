@@ -21,6 +21,23 @@ MAX_STAKE_EUR = 15.0
 MAX_ACTIVE_BETS = 5
 MAX_EV = 0.40           # signals with EV > 40% are almost always model artifacts
 
+# Phase 2 feature flags — keep new components off-by-default until the
+# Backtest Gate (Brier vs current blend) has validated each on its own.
+STACKER_ENABLED = False             # src/ensemble/stacking.py
+CONFORMAL_ENABLED = False           # src/ensemble/conformal.py
+HIERARCHICAL_DC_ENABLED = False     # src/models/dixon_coles.py confederation prior
+
+# Phase 3 new markets — guarded so a buggy detector doesn't pollute signals.json
+HT_FT_ENABLED = False
+CORRECT_SCORE_ENABLED = False
+PLAYER_PROPS_ENABLED = False
+LINE_SHOPPING_REGIONS = ["eu"]      # extend to ["eu", "us", "uk", "au", "us2"] when ready
+
+# Phase 4 lern-loop
+DRIFT_MONITOR_ENABLED = False
+PINNACLE_CLV_ENABLED = False
+PER_CLUSTER_CALIBRATION_ENABLED = False
+
 # Confederation per team — used for asymmetric divergence threshold.
 # Non-UEFA/CONMEBOL away teams have higher confederation-bias risk in DC model
 # (training data dominated by qualifier blowouts). Stricter filter applied.
