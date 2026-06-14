@@ -21,7 +21,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.config import MODELS_DIR, COMPETITIVE_TOURNAMENTS
+from src.config import MODELS_DIR, COMPETITIVE_TOURNAMENTS, HIERARCHICAL_DC_ENABLED, TEAM_CONFEDERATION
 from src.data.international import fetch_international_results, filter_competitive
 from src.models import dixon_coles
 
@@ -83,6 +83,8 @@ def main(since: str | None = None, finals_only: bool = False, all_competitive: b
         params = dixon_coles.fit(
             df, max_iter=2000, prior_params=prior, regularization=0.1,
             wc2026_boost_override=boost,
+            cluster_map=TEAM_CONFEDERATION if HIERARCHICAL_DC_ENABLED else None,
+            cluster_strength=0.03 if HIERARCHICAL_DC_ENABLED else 0.0,
         )
         hits = dixon_coles._check_bounds_hit(params)
         n_hits = sum(len(v) for v in hits.values())

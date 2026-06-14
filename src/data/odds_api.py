@@ -37,7 +37,7 @@ def get_api_key(api_key: str | None = None) -> str:
 @disk_cache("odds_api_upcoming_wide", max_age_hours=1.0)
 def fetch_upcoming_matches(
     sport: str = "soccer_fifa_world_cup",
-    regions: str = "eu,us,uk,au",
+    regions: str | None = None,
     markets: str = "h2h,totals,spreads",
     api_key: str | None = None,
     force: bool = False,
@@ -46,6 +46,9 @@ def fetch_upcoming_matches(
     Fetches upcoming matches with odds from TheOddsAPI.
     Returns list of parsed match dicts with bookmaker odds.
     """
+    from src.config import LINE_SHOPPING_REGIONS
+    if regions is None:
+        regions = ",".join(LINE_SHOPPING_REGIONS)
     key = get_api_key(api_key)
     url = f"{ODDS_API_URL}/sports/{sport}/odds"
     params = {
