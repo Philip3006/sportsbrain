@@ -50,6 +50,26 @@ def _make_signal(
     )
 
 
+# EVs ≥ this are virtually always Qualifier-bias artefacts in the current
+# data (see docs/audit_2026-06-12.md, sections A & H — Algeria 37 %,
+# Côte d'Ivoire 38 %, USA-Mexico o/u3.5_under 37 %). Apply only to football;
+# tennis has no analogous bias.
+_BIAS_EV_CAP = 0.30
+
+
+def _bias_safety_confidence(base_confidence: str, ev: float) -> str:
+    """Downgrade implausibly-high EV signals to LOW.
+
+    Final safety net after _consistency_confidence — even if both models
+    agree and the market gate passes, EVs around 30 % or more are in the
+    current dataset overwhelmingly Qualifier-training artefacts rather
+    than real edges.
+    """
+    if ev >= _BIAS_EV_CAP and base_confidence != "LOW":
+        return "LOW"
+    return base_confidence
+
+
 def _consistency_confidence(
     ensemble_p: float,
     fair_p: float,
@@ -125,6 +145,7 @@ def detect_value(
         fair_p = fair_probs[market]
         dc_p = dc_probs.get(f"p_{market}") if dc_probs else None
         confidence = _consistency_confidence(model_p, fair_p, dc_p, "MEDIUM")
+        confidence = _bias_safety_confidence(confidence, ev)
         signals.append(_make_signal(
             match_id, home, away, market,
             model_p, fair_p, odds, ev, kf, confidence, bankroll,
@@ -203,6 +224,7 @@ def detect_value_ah(
         # For AH the implied fair is ~0.5 (balanced book); use it as baseline.
         dc_p = dc_probs.get(dc_key) if dc_probs else None
         confidence = _consistency_confidence(p_win, 0.5, dc_p, "MEDIUM")
+        confidence = _bias_safety_confidence(confidence, ev)
         signals.append(_make_signal(
             match_id, home, away, market,
             p_win, p_win, odds, ev, kf, confidence, bankroll,
@@ -261,6 +283,7 @@ def detect_value_totals(
             continue
         dc_p = dc_probs.get(dc_key) if dc_probs else None
         confidence = _consistency_confidence(model_p, 0.5, dc_p, "MEDIUM")
+        confidence = _bias_safety_confidence(confidence, ev)
         signals.append(_make_signal(
             match_id, home, away, f"o/u{line}_{side}",
             model_p, model_p, odds, ev, kf, confidence, bankroll,
@@ -316,6 +339,7 @@ def detect_value_totals_quarter(
             model_p_over = P_A + 0.5 * P_B
             dc_p_over = dc_probs.get("p_over") if dc_probs else None
             confidence = _consistency_confidence(model_p_over, 0.5, dc_p_over, "MEDIUM")
+            confidence = _bias_safety_confidence(confidence, ev_over)
             signals.append(_make_signal(
                 match_id, home, away, f"o/u{line}_over",
                 model_p_over, model_p_over, over_odds, ev_over, kf, confidence, bankroll,
@@ -330,6 +354,7 @@ def detect_value_totals_quarter(
             model_p_under = P_C + 0.5 * P_B
             dc_p_under = dc_probs.get("p_under") if dc_probs else None
             confidence = _consistency_confidence(model_p_under, 0.5, dc_p_under, "MEDIUM")
+            confidence = _bias_safety_confidence(confidence, ev_under)
             signals.append(_make_signal(
                 match_id, home, away, f"o/u{line}_under",
                 model_p_under, model_p_under, under_odds, ev_under, kf, confidence, bankroll,
@@ -416,6 +441,7 @@ def detect_value_ah_quarter(
             kf = kelly_fraction(min(p_eff, 0.99), ah_home_odds)
             dc_p_home = dc_probs.get("p_ah_home") if dc_probs else None
             confidence = _consistency_confidence(P_A, 0.5, dc_p_home, "MEDIUM")
+            confidence = _bias_safety_confidence(confidence, ev_home)
             signals.append(_make_signal(
                 match_id, home, away, home_label,
                 P_A, P_A, ah_home_odds, ev_home, kf, confidence, bankroll,
@@ -437,6 +463,7 @@ def detect_value_ah_quarter(
             kf = kelly_fraction(min(p_eff, 0.99), ah_away_odds)
             dc_p_away = dc_probs.get("p_ah_away") if dc_probs else None
             confidence = _consistency_confidence(P_C, 0.5, dc_p_away, "MEDIUM")
+            confidence = _bias_safety_confidence(confidence, ev_away)
             signals.append(_make_signal(
                 match_id, home, away, away_label,
                 P_C, P_C, ah_away_odds, ev_away, kf, confidence, bankroll,
@@ -488,6 +515,7 @@ def detect_value_btts(
         kf = kelly_fraction(model_p, odds)
         dc_p = dc_probs.get(dc_key) if dc_probs else None
         confidence = _consistency_confidence(model_p, fair_p, dc_p, "MEDIUM")
+        confidence = _bias_safety_confidence(confidence, ev)
         signals.append(_make_signal(
             match_id, home, away, side,
             model_p, fair_p, odds, ev, kf, confidence, bankroll,

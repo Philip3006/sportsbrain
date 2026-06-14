@@ -63,9 +63,11 @@ class TestDetectValueConsistencyGate:
     DRAW_ODDS = 4.00
     RAW_ODDS = (HOME_ODDS, DRAW_ODDS, AWAY_ODDS)
 
-    # Ensemble: Croatia Away 26.3% (above fair) — positive EV on away
+    # Ensemble: Croatia Away 25% (above fair ~17.8%) — positive EV on away
+    # Kept below 30% so the EV (≈ +25%) stays under _BIAS_EV_CAP and isolates
+    # the consistency-gate path from the bias-safety downgrade.
     # [p_away, p_draw, p_home]
-    ENSEMBLE_AWAY_SIGNAL = np.array([0.263, 0.40, 0.337])
+    ENSEMBLE_AWAY_SIGNAL = np.array([0.25, 0.40, 0.35])
 
     def test_no_dc_probs_gives_medium(self):
         signals = detect_value(
