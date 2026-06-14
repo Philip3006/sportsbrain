@@ -26,6 +26,10 @@ from src.config import DATA_CACHE, canonical_name as _cn
 
 _CACHE_PATH = DATA_CACHE / "sofascore_xg.pkl"
 _CACHE_MAX_AGE_H = 3.0  # WM phase: refresh every 3h to pick up newly-finished matches
+_CACHE_STALE_MAX_H = 48.0  # graceful-degradation ceiling — if API is down/rate-limited
+                            # we still return stale cache up to 48h old before giving up.
+                            # Beyond that the live-xG feature is disabled to avoid stale
+                            # form signals masking real changes (Lever 2 collapse).
 
 _TEAM_IDS_CACHE = DATA_CACHE / "sofascore_team_ids.json"
 _PLAYER_VALUES_CACHE = DATA_CACHE / "sofascore_player_values"
@@ -52,11 +56,29 @@ def _headers() -> dict[str, str]:
     return {"X-RapidAPI-Key": key, "X-RapidAPI-Host": _HOST}
 
 
-def _cache_is_fresh() -> bool:
+def _cache_age_h() -> float | None:
+    """Returns cache age in hours, or None if cache does not exist."""
     if not _CACHE_PATH.exists():
-        return False
-    age_h = (time.time() - _CACHE_PATH.stat().st_mtime) / 3600
-    return age_h < _CACHE_MAX_AGE_H
+        return None
+    return (time.time() - _CACHE_PATH.stat().st_mtime) / 3600
+
+
+def _cache_is_fresh() -> bool:
+    age = _cache_age_h()
+    return age is not None and age < _CACHE_MAX_AGE_H
+
+
+def _load_cache_or_empty() -> pd.DataFrame:
+    """Returns cached xG DataFrame, or empty if no cache exists. Never raises."""
+    if not _CACHE_PATH.exists():
+        return pd.DataFrame(columns=["home_team", "away_team", "date",
+                                      "home_xg", "away_xg", "tournament"])
+    try:
+        return pd.read_pickle(_CACHE_PATH)
+    except Exception as e:
+        print(f"  [sofascore] cache load failed ({e}) — returning empty")
+        return pd.DataFrame(columns=["home_team", "away_team", "date",
+                                      "home_xg", "away_xg", "tournament"])
 
 
 def _persist_team_ids(name_to_id: dict[str, int]) -> None:
@@ -183,6 +205,9 @@ def fetch_wc2026_event_ids() -> list[dict]:
 def fetch_match_xg(event_id: int) -> tuple[float | None, float | None]:
     """Returns (home_xg, away_xg) from matches/get-statistics for a finished event.
     Sofascore returns multiple periods; we take 'ALL' period's Expected goals row.
+
+    Raises RuntimeError("rate-limited" / "quota") on HTTP 429 so the caller
+    can fall back to cache instead of silently returning (None, None) per call.
     """
     try:
         r = requests.get(
@@ -194,6 +219,10 @@ def fetch_match_xg(event_id: int) -> tuple[float | None, float | None]:
     except Exception as e:
         print(f"  [sofascore] stats fetch failed for {event_id}: {e}")
         return None, None
+    if r.status_code == 429:
+        raise RuntimeError(f"sofascore rate-limited (429) on event {event_id}")
+    if r.status_code in (402, 403):
+        raise RuntimeError(f"sofascore quota exhausted ({r.status_code}) on event {event_id}")
     if r.status_code != 200 or not r.text:
         return None, None
     j = r.json()
@@ -369,26 +398,58 @@ def fetch_wc2026_xg(force: bool = False) -> pd.DataFrame:
     """
     Returns DataFrame with columns: home_team, away_team, date, home_xg, away_xg, tournament.
     Same schema as fetch_statsbomb_xg() so it can be concatenated.
-    Cached 3h.
+
+    Phase 1.3 resilience:
+      1. Fresh cache (< _CACHE_MAX_AGE_H)  → return immediately, no network.
+      2. Force refresh OR stale cache (3h-48h) → try live fetch; on rate-limit
+         or 429, fall back to whatever cache we have and WARN loudly.
+      3. Cache older than _CACHE_STALE_MAX_H or missing → live fetch only.
+      4. Live fetch fails completely → empty DataFrame (xG features disabled
+         downstream rather than serving stale data).
+
+    The audit (sofascore_rate_limit_backlog.md) flagged that Sofascore's RapidAPI
+    quota silently zeros out, causing the LightGBM scanner-path to lose all xG
+    features. This makes the fallback explicit so the scanner can keep running
+    on day-old xG instead of going blind.
     """
-    if not force and _cache_is_fresh():
-        try:
-            return pd.read_pickle(_CACHE_PATH)
-        except Exception:
-            pass
+    age = _cache_age_h()
+    if not force and age is not None and age < _CACHE_MAX_AGE_H:
+        return _load_cache_or_empty()
 
     if not _get_api_key():
         print("  [sofascore] API_FOOTBALL_KEY missing — returning empty xG")
-        return pd.DataFrame(columns=["home_team", "away_team", "date", "home_xg", "away_xg", "tournament"])
+        return _load_cache_or_empty() if age is not None and age < _CACHE_STALE_MAX_H else pd.DataFrame(
+            columns=["home_team", "away_team", "date", "home_xg", "away_xg", "tournament"]
+        )
 
     print("  [sofascore] fetching WC 2026 fixtures...")
-    fixtures = fetch_wc2026_event_ids()
-    finished = [f for f in fixtures if f.get("status") == "finished" or "ended" in f.get("status_desc", "").lower()]
+    try:
+        fixtures = fetch_wc2026_event_ids()
+    except Exception as e:
+        print(f"  [sofascore] ⚠️  fixture fetch failed ({e})")
+        fixtures = []
+
+    if not fixtures and age is not None and age < _CACHE_STALE_MAX_H:
+        print(f"  [sofascore] ⚠️  using stale cache (age={age:.1f}h, ttl={_CACHE_STALE_MAX_H}h)")
+        return _load_cache_or_empty()
+
+    finished = [f for f in fixtures
+                if f.get("status") == "finished"
+                or "ended" in f.get("status_desc", "").lower()]
     print(f"  [sofascore] {len(fixtures)} total events, {len(finished)} finished — fetching xG for finished...")
 
     rows = []
+    rate_limited = False
     for i, f in enumerate(finished, start=1):
-        home_xg, away_xg = fetch_match_xg(f["event_id"])
+        try:
+            home_xg, away_xg = fetch_match_xg(f["event_id"])
+        except Exception as e:
+            msg = str(e).lower()
+            if "429" in msg or "rate" in msg or "quota" in msg:
+                rate_limited = True
+                print(f"  [sofascore] ⚠️  rate-limit hit at event {i}/{len(finished)} — aborting fetch loop")
+                break
+            home_xg, away_xg = None, None
         if home_xg is None:
             continue
         rows.append({
@@ -404,7 +465,13 @@ def fetch_wc2026_xg(force: bool = False) -> pd.DataFrame:
             print(f"    {i}/{len(finished)} processed")
 
     df = pd.DataFrame(rows)
-    _CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    df.to_pickle(_CACHE_PATH)
-    print(f"  [sofascore] cached {len(df)} WC 2026 xG records → {_CACHE_PATH.name}")
+    if df.empty and age is not None and age < _CACHE_STALE_MAX_H:
+        suffix = "rate-limited" if rate_limited else "no new data"
+        print(f"  [sofascore] ⚠️  {suffix} — returning stale cache (age={age:.1f}h)")
+        return _load_cache_or_empty()
+
+    if not df.empty:
+        _CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        df.to_pickle(_CACHE_PATH)
+        print(f"  [sofascore] cached {len(df)} WC 2026 xG records → {_CACHE_PATH.name}")
     return df

@@ -70,9 +70,57 @@ def main(since: str | None = None, finals_only: bool = False, all_competitive: b
     if prior is not None:
         print(f"  Warm-start from prior model (fit_date={prior.fit_date.date()})")
     print("Fitting Dixon-Coles model (this may take ~60-120 seconds)...")
-    # alpha=0.1: Bayesian prior strong enough to prevent a single boosted WM match
-    # from dominating a team's calibration vs their full historical record.
-    params = dixon_coles.fit(df, max_iter=2000, prior_params=prior, regularization=0.1)
+
+    # Retry-on-bound-hit: WC2026_BOOST=1.5 is large enough that a single match
+    # can drive the optimizer into a bound. When that happens, refit with a
+    # smaller boost rather than ship a saturated snapshot.
+    boost_schedule = [None, 1.0, 0.75, 0.5]
+    params = None
+    final_boost = None
+    for attempt, boost in enumerate(boost_schedule):
+        suffix = f"WC2026_BOOST={boost}" if boost is not None else "default WC2026_BOOST"
+        print(f"  Attempt {attempt + 1}/{len(boost_schedule)} ({suffix})")
+        params = dixon_coles.fit(
+            df, max_iter=2000, prior_params=prior, regularization=0.1,
+            wc2026_boost_override=boost,
+        )
+        hits = dixon_coles._check_bounds_hit(params)
+        n_hits = sum(len(v) for v in hits.values())
+        if n_hits == 0:
+            final_boost = boost
+            print(f"  ✓ no bounds hit at attempt {attempt + 1}")
+            break
+        print(f"  ⚠️  {n_hits} bound-hit(s): "
+              + ", ".join(
+                  f"{group}: " + ",".join(f"{n}={v:+.3f}({s})" for n, v, s in items)
+                  for group, items in hits.items() if items
+              ))
+    else:
+        # No clean fit across schedule — keep last attempt but warn loudly.
+        print("  ⚠️⚠️  No clean fit found across boost schedule; keeping last attempt.")
+        final_boost = boost_schedule[-1]
+
+    # Phase 1.1: log per-team drift vs prior so we notice if the retrain shifts
+    # any team's calibration by more than 0.8 (silent regression risk).
+    if prior is not None and params is not None:
+        atk_drift = sorted(
+            ((t, params.attack[t] - prior.attack.get(t, params.attack[t]))
+             for t in params.attack if t in prior.attack),
+            key=lambda x: abs(x[1]), reverse=True,
+        )[:5]
+        def_drift = sorted(
+            ((t, params.defence[t] - prior.defence.get(t, params.defence[t]))
+             for t in params.defence if t in prior.defence),
+            key=lambda x: abs(x[1]), reverse=True,
+        )[:5]
+        print(f"  Top-5 attack drift vs prior:  "
+              + ", ".join(f"{t}={d:+.3f}" for t, d in atk_drift))
+        print(f"  Top-5 defence drift vs prior: "
+              + ", ".join(f"{t}={d:+.3f}" for t, d in def_drift))
+        large = [(t, d) for t, d in atk_drift + def_drift if abs(d) > 0.8]
+        if large:
+            print(f"  ⚠️  {len(large)} param(s) drifted > 0.8 — review before publishing")
+    print(f"  Effective WC2026_BOOST used: {final_boost}")
 
     snap_dir = MODELS_DIR / "dixon_coles"
     snap_dir.mkdir(parents=True, exist_ok=True)
