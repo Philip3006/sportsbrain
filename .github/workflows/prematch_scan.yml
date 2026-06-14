@@ -1,14 +1,13 @@
-name: Pre-Match Scan (72h)
+name: Pre-Match Watchdog (Settlement + Scan)
 
 on:
   schedule:
-    # Täglich 06:00 UTC — scannt Matches die in 48-96h stattfinden
-    # Gibt frühzeitig Signale wenn Opening-Kurse noch nicht effizient sind
-    - cron: '0 6 * * *'
+    # Alle 30 Minuten — MacBook muss NICHT an sein
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 jobs:
-  prematch:
+  watchdog:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -24,22 +23,104 @@ jobs:
           cache: 'pip'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt && python -m playwright install chromium --with-deps
+        run: pip install -r requirements.txt
 
-      - name: Run 72h pre-match scan
+      - name: Check window + settle
+        id: window
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
           SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
-        run: python scripts/daily_scan.py --bankroll 100 --horizon 96
+        run: |
+          # 1. Settle completed matches
+          python scripts/settle_bets.py
 
-      - name: Commit scan results (NO ledger — manual confirmation required)
+          # 2. Check if scan is needed:
+          #    Condition A: game starts in 45–90 min
+          #    Condition B: it's 21:30–22:15 UTC and there are games after 22:00 UTC (midnight Berlin)
+          python - <<'PYEOF'
+          import json, sys
+          from datetime import datetime, timezone, timedelta
+          from pathlib import Path
+
+          data = json.loads(Path("docs/data/signals.json").read_text())
+          now = datetime.now(timezone.utc)
+
+          # Condition A: pre-match window
+          lo, hi = now + timedelta(minutes=45), now + timedelta(minutes=90)
+          for g in data.get("schedule", []):
+              ko = g.get("kickoff", "")
+              if not ko:
+                  continue
+              try:
+                  ko_dt = datetime.fromisoformat(ko.replace("Z", "+00:00"))
+                  if lo <= ko_dt <= hi:
+                      print(f"SCAN_NEEDED=true")
+                      print(f"REASON={g['home']} vs {g['away']} @ {ko_dt.strftime('%H:%M UTC')} (pre-match)")
+                      sys.exit(0)
+              except Exception:
+                  continue
+
+          # Condition B: midnight Berlin deadline (21:30–22:15 UTC) for night games
+          midnight_window = (now.hour == 21 and now.minute >= 30) or (now.hour == 22 and now.minute <= 15)
+          if midnight_window:
+              night_lo = now.replace(hour=22, minute=0, second=0, microsecond=0)
+              night_hi = night_lo + timedelta(hours=10)
+              for g in data.get("schedule", []):
+                  ko = g.get("kickoff", "")
+                  if not ko:
+                      continue
+                  try:
+                      ko_dt = datetime.fromisoformat(ko.replace("Z", "+00:00"))
+                      if night_lo <= ko_dt <= night_hi:
+                          print(f"SCAN_NEEDED=true")
+                          print(f"REASON={g['home']} vs {g['away']} @ {ko_dt.strftime('%H:%M UTC')} (Nacht-Deadline)")
+                          sys.exit(0)
+                  except Exception:
+                      continue
+
+          print("SCAN_NEEDED=false")
+          PYEOF
+
+      - name: Read bankroll from ledger
+        id: bankroll
+        if: contains(steps.window.outputs.stdout, 'SCAN_NEEDED=true') || true
+        run: |
+          BANKROLL=$(python3 -c "
+          from src.betting.ledger import ledger_summary
+          s = ledger_summary()
+          print(round(100 + s['total_pnl'], 2))
+          " 2>/dev/null || echo "100")
+          echo "bankroll=$BANKROLL" >> $GITHUB_OUTPUT
+
+      - name: Run pre-match scan
+        if: contains(steps.window.outputs.stdout, 'SCAN_NEEDED=true')
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
+          SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
+        run: |
+          echo "Starte Scan — Bankroll: €${{ steps.bankroll.outputs.bankroll }}"
+          python scripts/daily_scan.py --bankroll ${{ steps.bankroll.outputs.bankroll }} --force
+
+      - name: Update dashboard (KV + signals.json) auch ohne Scan
+        if: always()
+        env:
+          SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
+          SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
+        run: |
+          python -c "from src.notifications.web_dashboard import write_signals_json; write_signals_json()"
+
+      - name: Commit results
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add results/scans/ docs/data/signals.json || true
-          git diff --staged --quiet || git commit -m "auto: pre-match scan $(date +%Y-%m-%d)"
+          git add results/ledger.csv docs/data/signals.json results/scans/ || true
+          git diff --staged --quiet && exit 0
+          git commit -m "auto: watchdog $(date -u '+%Y-%m-%d %H:%M UTC')"
           git pull --rebase origin main || true
           git push
