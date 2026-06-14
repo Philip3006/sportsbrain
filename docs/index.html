@@ -1293,7 +1293,7 @@ function renderHome() {
   if (!games.length) {
     c.innerHTML = q
       ? `<div class="empty"><div class="icon">🔍</div><div>Keine Treffer für „${esc(q)}".<br><small>Versuche einen anderen Team-Namen.</small></div></div>`
-      : `<div class="empty"><div class="icon">🔍</div><div>Keine Spiele gefunden.<br><small>Nächster Scan: täglich 08:00 UTC</small></div></div>`;
+      : `<div class="empty"><div class="icon">🔄</div><div>Keine anstehenden Spiele.<br><small>Letztes Update: ${document.getElementById('updated-time').textContent || '…'} · Nächster Scan: 08:00 UTC</small></div></div>`;
     return;
   }
 
@@ -1331,7 +1331,11 @@ function renderHome() {
         const ko = new Date(g.kickoff).getTime();
         const nk = matchKey(g.home, g.away);
         const hasResult = _wmResults[nk] && _wmResults[nk].home_score != null;
-        if (ko < now && !hasResult) return false; // live / no result → hide
+        if (ko < now && !hasResult) {
+          const threeHoursAgo = now - 3*60*60*1000;
+          if (ko < threeHoursAgo) return false; // Spiel vor mehr als 3h → wirklich vorbei
+          // Spiel läuft gerade → trotzdem anzeigen
+        }
       }
       return true;
     })
@@ -1446,7 +1450,7 @@ function renderHome() {
       const [bh, ba] = (b.match || '').split(' vs ').map(x => x.trim());
       return matchKey(bh, ba);
     }));
-    const seenMatches = new Set();
+    const seenKeys = new Set();
     const picks = [];
     let remaining = free;
     const candidates = (_signals || [])
@@ -1462,14 +1466,22 @@ function renderHome() {
       })
       .sort((a, b) => b.ev_pct - a.ev_pct);
 
+    const mktCat = m =>
+      ['home','draw','away'].includes(m) ? '1x2'
+      : m.startsWith('ah') ? 'ah'
+      : m.startsWith('o/u') ? 'ou'
+      : m.startsWith('btts_') ? 'btts'
+      : m.startsWith('dc_') ? 'dc'
+      : m;
+
     for (const s of candidates) {
-      if (picks.length >= Math.min(3, Math.max(1, slots))) break;
+      if (picks.length >= 5) break;
       const [sh, sa] = (s.match || '').split(' vs ').map(x => x.trim());
-      const mk = matchKey(sh, sa);
-      if (seenMatches.has(mk)) continue;
+      const dedupKey = matchKey(sh, sa) + '|' + mktCat(s.market);
+      if (seenKeys.has(dedupKey)) continue;
       const stake = Math.min(s.stake_eur || 10, remaining);
       if (stake < 3) continue;
-      seenMatches.add(mk);
+      seenKeys.add(dedupKey);
       picks.push({ ...s, display_stake: Math.round(stake) });
       remaining -= stake;
     }
