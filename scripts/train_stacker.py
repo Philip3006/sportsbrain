@@ -5,19 +5,14 @@ For each tournament event in TOURNAMENT_EVENTS:
   • For every event match, compute DC probs + Shin-debiased market probs.
   • Store (stacker_features, true_outcome) as one training row.
 
-The final stacker is fit on ALL collected rows — strictly avoiding the leak
-where a model is tested on matches that were in its own training set.
-This mirrors the discipline in run_backtest.py / walk_forward.run_event_backtest.
-
-Walk-forward LGBM probs are NOT included (the live LGBM was trained including
-some of the held-out tournaments). The stacker therefore learns a DC + market
-+ context refinement; the live scanner can still cascade through the LGBM blend
-first and feed the blended probs in as `lgbm_probs` once a walk-forward-trained
-LGBM is available.
+Additionally, WM 2026 matches with known results can be appended (--include-wm2026).
+The current DC snapshot is used for those rows — this is slightly in-sample for DC
+but acceptable for a re-calibration layer that learns relative model/market trust.
 
 Run:
-  python3 scripts/train_stacker.py             # train on all backtest tournaments
-  python3 scripts/train_stacker.py --report    # also print per-event Brier
+  python3 scripts/train_stacker.py                   # historical tournaments only
+  python3 scripts/train_stacker.py --include-wm2026  # + WM 2026 completed matches
+  python3 scripts/train_stacker.py --report           # also print per-event Brier
 """
 from __future__ import annotations
 
@@ -43,6 +38,8 @@ from src.ensemble.calibration import (
 )
 from src.ensemble.stacking import Stacker, build_stacker_features, feature_columns
 from src.models import dixon_coles as dc
+
+_WM2026_START = pd.Timestamp("2026-06-11")
 
 
 def _outcome_idx(hg: int, ag: int) -> int:
@@ -109,7 +106,91 @@ def collect_event_rows(event: dict, all_matches: pd.DataFrame,
     return rows
 
 
-def main(report: bool = False, save: bool = True) -> int:
+def _load_odds_history_shin() -> dict[str, tuple[float, float, float]]:
+    """Reads data/odds_history.json and returns {canonical_key: (p_home, p_draw, p_away)}.
+
+    canonical_key = "HomeTeam_vs_AwayTeam" (lowercase, spaces→underscore).
+    Uses the first (earliest) snapshot for each match — opening market is most
+    reliable for calibration before line movement.
+    """
+    path = Path(__file__).parent.parent / "data" / "odds_history.json"
+    if not path.exists():
+        return {}
+    try:
+        import json as _json
+        snapshots = _json.loads(path.read_text())
+    except Exception:
+        return {}
+
+    result: dict[str, tuple[float, float, float]] = {}
+    for snap in snapshots:
+        for match_key, odds in snap.get("odds", {}).items():
+            h = float(odds.get("home", 0))
+            d = float(odds.get("draw", 0))
+            a = float(odds.get("away", 0))
+            if not all(o > 1.0 for o in (h, d, a)):
+                continue
+            canonical = match_key.lower().replace(" ", "_").replace("&", "and")
+            if canonical not in result:  # keep first snapshot = opening odds
+                result[canonical] = remove_margin_shin((h, d, a))
+    return result
+
+
+def _match_key(home: str, away: str) -> str:
+    return f"{home.lower().replace(' ', '_')}_vs_{away.lower().replace(' ', '_')}"
+
+
+def collect_wm2026_rows(
+    dc_params: dc.DixonColesParams,
+    all_matches: pd.DataFrame,
+    odds_shin: dict,
+) -> list[dict]:
+    """Collect completed WM 2026 matches as stacker training rows.
+
+    Uses the current DC snapshot (already trained on these matches) for probs —
+    acceptable for a re-calibration layer whose job is weighting DC vs. market.
+    """
+    wm = all_matches[
+        (all_matches["tournament"] == "FIFA World Cup")
+        & (all_matches["date"] >= _WM2026_START)
+        & all_matches["home_score"].notna()
+        & all_matches["away_score"].notna()
+    ]
+    if wm.empty:
+        return []
+
+    rows: list[dict] = []
+    for _, m in wm.iterrows():
+        home, away = m["home_team"], m["away_team"]
+        try:
+            dc_probs = dc.predict_match(home, away, dc_params, neutral=True)
+        except ValueError:
+            continue
+
+        key = _match_key(home, away)
+        shin = odds_shin.get(key)
+
+        feats = build_stacker_features(
+            dc_probs=dc_probs,
+            lgbm_probs=None,
+            shin_probs=shin,
+            is_knockout=False,
+            is_neutral=True,
+        )
+        rows.append({
+            "event": "WC2026",
+            "home": home, "away": away,
+            "features": feats,
+            "outcome": _outcome_idx(int(m["home_score"]), int(m["away_score"])),
+            "dc_probs": dc_probs,
+            "shin_probs": shin,
+        })
+
+    print(f"  [WC2026] {len(rows)} completed match rows appended")
+    return rows
+
+
+def main(report: bool = False, save: bool = True, include_wm2026: bool = False) -> int:
     print("Loading data...")
     all_matches = filter_competitive(fetch_international_results())
     print(f"  {len(all_matches)} competitive matches")
@@ -136,9 +217,23 @@ def main(report: bool = False, save: bool = True) -> int:
         print("⚠️  No rows collected — cannot train stacker.")
         return 1
 
+    n_wm2026_rows = 0
+    if include_wm2026:
+        print("\nAppending WM 2026 completed matches...")
+        snap_dir = MODELS_DIR / "dixon_coles"
+        dc_files = sorted(snap_dir.glob("params_*.pkl")) if snap_dir.exists() else []
+        if dc_files:
+            current_params = dc.load(dc_files[-1])
+            odds_shin = _load_odds_history_shin()
+            wm26_rows = collect_wm2026_rows(current_params, all_matches, odds_shin)
+            all_rows.extend(wm26_rows)
+            n_wm2026_rows = len(wm26_rows)
+        else:
+            print("  No DC snapshot found — skipping WM 2026 rows")
+
     X = np.vstack([r["features"] for r in all_rows])
     y = np.array([r["outcome"] for r in all_rows], dtype=int)
-    print(f"\nTotal training rows: {len(X)}")
+    print(f"\nTotal training rows: {len(X)} (historical={len(X)-n_wm2026_rows}, WC2026={n_wm2026_rows})")
     print(f"  Outcome dist: away={int((y == 0).sum())}, draw={int((y == 1).sum())}, home={int((y == 2).sum())}")
 
     print("\nFitting stacker (LogisticRegression, multinomial)...")
@@ -168,6 +263,7 @@ def main(report: bool = False, save: bool = True) -> int:
         meta_path.write_text(json.dumps({
             "feature_columns": feature_columns(),
             "n_training_samples": stacker.n_training_samples,
+            "wm2026_matches_at_train": n_wm2026_rows,
             "in_sample_brier": brier,
             "in_sample_ece": ece,
         }, indent=2))
@@ -180,5 +276,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--report", action="store_true", help="Print per-event diagnostics")
     parser.add_argument("--no-save", action="store_true", help="Train without saving")
+    parser.add_argument("--include-wm2026", action="store_true",
+                        help="Append completed WM 2026 matches to training data")
     args = parser.parse_args()
-    sys.exit(main(report=args.report, save=not args.no_save))
+    sys.exit(main(report=args.report, save=not args.no_save, include_wm2026=args.include_wm2026))
