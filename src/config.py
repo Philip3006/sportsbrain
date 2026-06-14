@@ -26,6 +26,7 @@ MAX_EV = 0.40           # signals with EV > 40% are almost always model artifact
 STACKER_ENABLED = True             # src/ensemble/stacking.py
 CONFORMAL_ENABLED = True           # src/ensemble/conformal.py
 HIERARCHICAL_DC_ENABLED = True     # src/models/dixon_coles.py confederation prior
+PLAYER_XG_ENABLED = True           # src/features/player_rating.py — per-player shot quality
 
 # Phase 3 new markets — guarded so a buggy detector doesn't pollute signals.json
 HT_FT_ENABLED = False
@@ -35,8 +36,8 @@ LINE_SHOPPING_REGIONS = ["eu", "us", "uk", "au"]  # best-price across all region
 
 # Phase 4 lern-loop
 DRIFT_MONITOR_ENABLED = True
-PINNACLE_CLV_ENABLED = False
-PER_CLUSTER_CALIBRATION_ENABLED = False
+PINNACLE_CLV_ENABLED = True
+PER_CLUSTER_CALIBRATION_ENABLED = True
 
 # Confederation per team — used for asymmetric divergence threshold.
 # Non-UEFA/CONMEBOL away teams have higher confederation-bias risk in DC model
@@ -151,6 +152,7 @@ TOURNAMENT_WEIGHTS: dict[str, float] = {
     "CONMEBOL World Cup qualification": 0.30,
     "AFC Asian Cup qualification": 0.25,
     "CAF World Cup qualification": 0.25,
+    "African Cup of Nations qualification": 0.25,
     "CONCACAF World Cup qualification": 0.28,
     "OFC World Cup qualification": 0.20,
     "CONCACAF Nations League qualification": 0.28,

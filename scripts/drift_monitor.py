@@ -79,6 +79,38 @@ def analyse_clv(df: pd.DataFrame) -> dict:
     }
 
 
+def analyse_pinnacle_clv(df: pd.DataFrame) -> dict:
+    """Opening CLV vs Pinnacle reference odds stored at bet placement time.
+
+    opening_clv = decimal_odds / pinnacle_ref_odds - 1
+    Positive = we got better price than Pinnacle's opening line.
+    """
+    if "pinnacle_ref_odds" not in df.columns:
+        return {"n": 0, "mean_opening_clv": None, "pct_positive": None}
+
+    pin_df = df[
+        df["pinnacle_ref_odds"].notna()
+        & (df["pinnacle_ref_odds"] != "")
+        & (df["status"].isin(["won", "lost", "open"]))
+    ].copy()
+    pin_df = pin_df[pd.to_numeric(pin_df["pinnacle_ref_odds"], errors="coerce") > 1.0].copy()
+    if pin_df.empty:
+        return {"n": 0, "mean_opening_clv": None, "pct_positive": None}
+
+    dec_odds = pd.to_numeric(pin_df["decimal_odds"], errors="coerce")
+    pin_odds = pd.to_numeric(pin_df["pinnacle_ref_odds"], errors="coerce")
+    opening_clv = (dec_odds / pin_odds - 1.0).dropna().values
+    mean_oclv = float(opening_clv.mean())
+    pct_pos = float((opening_clv > 0).mean())
+    alert = len(opening_clv) >= _MIN_BETS_CLV and mean_oclv < _CLV_ALERT_THRESHOLD
+    return {
+        "n": int(len(opening_clv)),
+        "mean_opening_clv": mean_oclv,
+        "pct_positive": pct_pos,
+        "alert": alert,
+    }
+
+
 def analyse_calibration(df: pd.DataFrame) -> dict:
     """Compare model_prob expectations vs actual win rate per market bucket."""
     settled = df[df["status"].isin(["won", "lost"])].copy()
@@ -161,9 +193,9 @@ def main(no_alert: bool = False) -> int:
     settled_n = int((df["status"].isin(["won", "lost"])).sum()) if "status" in df.columns else 0
     print(f"\nLedger: {total} bets total, {settled_n} settled\n")
 
-    # 1. CLV analysis
+    # 1. CLV analysis (closing-line)
     clv = analyse_clv(df)
-    print("── CLV Analysis ──────────────────────────────────")
+    print("── CLV Analysis (closing line) ───────────────────")
     if clv["n"] == 0:
         print("  No closing odds data yet.")
     else:
@@ -173,6 +205,23 @@ def main(no_alert: bool = False) -> int:
             msg = f"⚠️ DRIFT ALERT: mean CLV={clv['mean_clv']:+.3f} < {_CLV_ALERT_THRESHOLD} on {clv['n']} bets"
             print(f"  {msg}")
             _send_alert(msg, no_alert)
+
+    # 1b. Opening CLV vs Pinnacle reference (only when PINNACLE_CLV_ENABLED)
+    from src.config import PINNACLE_CLV_ENABLED
+    if PINNACLE_CLV_ENABLED:
+        print("\n── Opening CLV vs Pinnacle ───────────────────────")
+        pclv = analyse_pinnacle_clv(df)
+        if pclv["n"] == 0:
+            print("  No Pinnacle reference odds stored yet "
+                  "(bets placed before this feature was enabled).")
+        else:
+            print(f"  n={pclv['n']}  mean opening CLV={pclv['mean_opening_clv']:+.3f}  "
+                  f"pct_positive={pclv['pct_positive']:.0%}")
+            if pclv.get("alert"):
+                msg = (f"⚠️ PINNACLE CLV ALERT: opening CLV={pclv['mean_opening_clv']:+.3f} "
+                       f"< {_CLV_ALERT_THRESHOLD}")
+                print(f"  {msg}")
+                _send_alert(msg, no_alert)
 
     # 2. Calibration
     print("\n── Calibration (model_prob vs win rate) ──────────")

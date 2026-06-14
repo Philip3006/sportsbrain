@@ -108,6 +108,7 @@ _FIELDS = [
     "match_id", "match_date", "home", "away", "market",
     "decimal_odds", "stake_pct", "stake_amount",
     "placed_date", "status", "pnl", "closing_odds", "clv",
+    "pinnacle_ref_odds",
 ]
 
 
@@ -175,6 +176,7 @@ def append_bets(
                 "pnl":           "0.0",
                 "closing_odds":  "0.0",
                 "clv":           "",
+                "pinnacle_ref_odds": f"{s.b365_odds:.4f}" if s.b365_odds > 1.0 else "",
             })
 
         if new_rows:

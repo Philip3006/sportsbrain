@@ -1,0 +1,39 @@
+name: Auto-Retrain (6h Kadenz)
+
+on:
+  schedule:
+    # 00:00, 06:00, 12:00, 18:00 UTC — deckt Nacht- und Tagesspiele ab
+    - cron: '0 0,6,12,18 * * *'
+  workflow_dispatch:
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Auto-retrain (DC + LGBM + Stacker)
+        run: python scripts/auto_retrain.py
+
+      - name: Commit updated models
+        run: |
+          git config user.name "SportsBrain Bot"
+          git config user.email "bot@sportsbrain"
+          git add models/ || true
+          git diff --staged --quiet && echo "No new WM matches — no model changes." && exit 0
+          git commit -m "auto: retrain $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git pull --rebase origin main || true
+          git push

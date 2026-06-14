@@ -77,17 +77,29 @@ def main(
               f"({odds_lookup['tournament'].nunique()} tournaments)")
 
     print("Loading live xG data (StatsBomb + Sofascore WC2026)...")
+    statsbomb_xg = None
+    player_xg_df = None
     try:
         from src.features.xg_live import fetch_live_xg
         statsbomb_xg = fetch_live_xg()
         print(f"  {len(statsbomb_xg)} xG match records loaded")
     except Exception as e:
         print(f"  Warning: live xG not available ({e}) — skipping xG features")
-        statsbomb_xg = None
+
+    from src.config import PLAYER_XG_ENABLED
+    if PLAYER_XG_ENABLED:
+        print("Loading per-player xG data (StatsBomb events)...")
+        try:
+            from src.data.statsbomb import fetch_statsbomb_player_xg
+            player_xg_df = fetch_statsbomb_player_xg()
+            print(f"  {len(player_xg_df)} player-match xG records loaded")
+        except Exception as e:
+            print(f"  Warning: player xG not available ({e}) — skipping player features")
 
     print("Building feature matrix (this may take a few minutes)...")
     X, y = build_training_matrix(matches, all_matches, elo_series, dc_snapshot_map,
-                                 odds_lookup=odds_lookup, statsbomb_xg=statsbomb_xg)
+                                 odds_lookup=odds_lookup, statsbomb_xg=statsbomb_xg,
+                                 player_xg_df=player_xg_df)
     print(f"  Features: {X.shape[1]}, Samples: {len(X)}")
 
     # WC2022 ensemble holdout — pulled out before train/val split so the gate is honest.
@@ -131,7 +143,7 @@ def main(
     print(f"\n  Validation Brier score: {brier:.4f}  (lower = better)")
     print(f"  ECE (pre-calibration):  {ece:.4f}  (target < 0.05)")
 
-    # Isotonic calibration
+    # Isotonic calibration (global)
     print("Fitting isotonic calibrators...")
     calibrators = [fit_isotonic(val_probs, y_val.values, i) for i in range(3)]
 
@@ -142,6 +154,18 @@ def main(
     print(f"  Brier score (calibrated): {brier_cal:.4f}")
     print(f"  ECE (calibrated):         {ece_cal:.4f}", end="")
     print(" ✅" if ece_cal < 0.05 else " ⚠️  still above 0.05 threshold")
+
+    # Per-confederation isotonic calibrators
+    print("Fitting per-cluster calibrators (away confederation)...")
+    from src.config import TEAM_CONFEDERATION, canonical_name as _cn
+    from src.ensemble.calibration import fit_cluster_calibrators, save_cluster_calibrators
+    val_matches = matches[val_mask].reset_index(drop=True)
+    cluster_labels = np.array([
+        TEAM_CONFEDERATION.get(_cn(str(row.get("away_team", ""))), "OTHER")
+        for _, row in val_matches.iterrows()
+    ])
+    cluster_cals = fit_cluster_calibrators(val_probs, y_val.values, cluster_labels)
+    print(f"  Clusters trained: {sorted(cluster_cals.keys())} ({len(cluster_cals)} total)")
 
     # Top SHAP features
     print("\nTop features by SHAP:")
@@ -210,6 +234,7 @@ def main(
     out_dir.mkdir(parents=True, exist_ok=True)
     lgbm_model.save_model(model, out_dir / "model.pkl")
     save_calibrators(calibrators, out_dir / "calibrators.pkl")
+    save_cluster_calibrators(cluster_cals, out_dir / "cluster_calibrators.pkl")
     import json as _json
     (out_dir / "gate.json").write_text(_json.dumps(gate_meta, indent=2, default=float))
     print(f"Saved gate metadata: {out_dir / 'gate.json'}")
@@ -219,9 +244,10 @@ def main(
     import json
     (out_dir / "feature_columns.json").write_text(json.dumps(feature_cols))
 
-    print(f"\nSaved model:       {out_dir / 'model.pkl'}")
-    print(f"Saved calibrators: {out_dir / 'calibrators.pkl'}")
-    print(f"Feature columns:   {out_dir / 'feature_columns.json'}")
+    print(f"\nSaved model:              {out_dir / 'model.pkl'}")
+    print(f"Saved calibrators:        {out_dir / 'calibrators.pkl'}")
+    print(f"Saved cluster calibrators:{out_dir / 'cluster_calibrators.pkl'}")
+    print(f"Feature columns:          {out_dir / 'feature_columns.json'}")
 
 
 if __name__ == "__main__":

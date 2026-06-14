@@ -102,3 +102,46 @@ def save_calibrators(calibrators: list[IsotonicRegression], path: Path) -> None:
 def load_calibrators(path: Path) -> list[IsotonicRegression]:
     with open(path, "rb") as f:
         return pickle.load(f)
+
+
+def fit_cluster_calibrators(
+    probs: np.ndarray,
+    outcomes: np.ndarray,
+    cluster_labels: np.ndarray,
+    min_samples: int = 20,
+) -> dict[str, list[IsotonicRegression]]:
+    """Fit per-cluster isotonic calibrators keyed by confederation cluster.
+
+    Clusters with fewer than min_samples fall back to the caller's global
+    calibrators at inference time. Only clusters with enough data are stored.
+    """
+    result: dict[str, list[IsotonicRegression]] = {}
+    for clust in sorted(set(cluster_labels)):
+        mask = cluster_labels == clust
+        if mask.sum() < min_samples:
+            continue
+        result[clust] = [fit_isotonic(probs[mask], outcomes[mask], i) for i in range(3)]
+    return result
+
+
+def calibrate_per_cluster(
+    raw_probs: np.ndarray,
+    cluster_label: str,
+    cluster_calibrators: dict[str, list[IsotonicRegression]],
+    fallback_calibrators: list[IsotonicRegression],
+) -> np.ndarray:
+    """Apply cluster-specific calibrators to raw_probs (N, 3), falling back to global."""
+    cals = cluster_calibrators.get(cluster_label, fallback_calibrators)
+    return calibrate(raw_probs, cals)
+
+
+def save_cluster_calibrators(cluster_cals: dict, path: Path) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "wb") as f:
+        pickle.dump(cluster_cals, f)
+
+
+def load_cluster_calibrators(path: Path) -> dict[str, list[IsotonicRegression]]:
+    with open(path, "rb") as f:
+        return pickle.load(f)

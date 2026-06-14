@@ -139,6 +139,20 @@ def _load_calibrators():
     return None
 
 
+def _load_cluster_calibrators():
+    try:
+        from src.config import PER_CLUSTER_CALIBRATION_ENABLED
+        if not PER_CLUSTER_CALIBRATION_ENABLED:
+            return None
+        from src.ensemble.calibration import load_cluster_calibrators
+        path = MODELS_DIR / "lgbm" / "cluster_calibrators.pkl"
+        if path.exists():
+            return load_cluster_calibrators(path)
+    except Exception:
+        pass
+    return None
+
+
 def _load_stacker():
     try:
         from src.config import STACKER_ENABLED
@@ -286,6 +300,7 @@ def run_daily_scan(
 
     lgbm_model = _load_latest_lgbm()
     calibrators = _load_calibrators() if lgbm_model else None
+    cluster_calibrators = _load_cluster_calibrators() if lgbm_model else None
     _gate = _load_lgbm_gate()
     _dc_weight = float(_gate.get("dc_weight", 0.5))
     stacker = _load_stacker()
@@ -382,6 +397,16 @@ def run_daily_scan(
     except Exception:
         statsbomb_xg = pd.DataFrame()
 
+    player_xg_df = pd.DataFrame()
+    try:
+        from src.config import PLAYER_XG_ENABLED
+        if PLAYER_XG_ENABLED:
+            from src.data.statsbomb import fetch_statsbomb_player_xg
+            player_xg_df = fetch_statsbomb_player_xg()
+            print(f"  {len(player_xg_df)} player-match xG records loaded.")
+    except Exception as _e:
+        print(f"  [player_xg] skipped: {_e}")
+
     # Fetch Bet365 BTTS odds (api-football, optional — needs API_FOOTBALL_KEY)
     _btts_map: dict = {}
     try:
@@ -448,6 +473,7 @@ def run_daily_scan(
                     neutral=True,
                     tournament=match.get("tournament"),
                     statsbomb_xg=statsbomb_xg if not statsbomb_xg.empty else None,
+                    player_xg_df=player_xg_df if not player_xg_df.empty else None,
                 )
                 X = pd.DataFrame([feat])
                 # Align to model's trained feature set
@@ -469,6 +495,15 @@ def run_daily_scan(
                         is_neutral=True,
                     )
                     final_arr = stacker.predict_proba(x_s.reshape(1, -1))[0]
+                elif cluster_calibrators and calibrators:
+                    # Phase 4: per-confederation calibration (away team cluster)
+                    from src.ensemble.calibration import calibrate_per_cluster
+                    from src.ensemble.combiner import blend
+                    blended = blend(dc_probs, lgbm_raw_arr, dc_weight=_dc_weight)
+                    away_conf = TEAM_CONFEDERATION.get(away, "OTHER")
+                    final_arr = calibrate_per_cluster(
+                        blended.reshape(1, -1), away_conf, cluster_calibrators, calibrators
+                    )[0]
                 elif calibrators:
                     from src.ensemble.calibration import calibrate
                     from src.ensemble.combiner import blend
