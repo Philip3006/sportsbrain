@@ -1,7 +1,7 @@
 {
   "_comment": "WM 2026 Verletzungen & Sperren — Stand: 10. Juni 2026. Quellen: ESPN, Goal.com, FIFA.com, Sports Mole.",
   "_format": "team_name: [player_name, ...] — availability=0 im Modell gesetzt",
-  "_injuries_last_updated": "2026-06-13",
+  "_injuries_last_updated": "2026-06-14",
   "Czech Republic": [
     "Václav Cerný"
   ],
