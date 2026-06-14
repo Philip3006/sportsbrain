@@ -23,18 +23,18 @@ MAX_EV = 0.40           # signals with EV > 40% are almost always model artifact
 
 # Phase 2 feature flags — keep new components off-by-default until the
 # Backtest Gate (Brier vs current blend) has validated each on its own.
-STACKER_ENABLED = False             # src/ensemble/stacking.py
-CONFORMAL_ENABLED = False           # src/ensemble/conformal.py
-HIERARCHICAL_DC_ENABLED = False     # src/models/dixon_coles.py confederation prior
+STACKER_ENABLED = True             # src/ensemble/stacking.py
+CONFORMAL_ENABLED = True           # src/ensemble/conformal.py
+HIERARCHICAL_DC_ENABLED = True     # src/models/dixon_coles.py confederation prior
 
 # Phase 3 new markets — guarded so a buggy detector doesn't pollute signals.json
 HT_FT_ENABLED = False
 CORRECT_SCORE_ENABLED = False
 PLAYER_PROPS_ENABLED = False
-LINE_SHOPPING_REGIONS = ["eu"]      # extend to ["eu", "us", "uk", "au", "us2"] when ready
+LINE_SHOPPING_REGIONS = ["eu", "us", "uk", "au"]  # best-price across all regions
 
 # Phase 4 lern-loop
-DRIFT_MONITOR_ENABLED = False
+DRIFT_MONITOR_ENABLED = True
 PINNACLE_CLV_ENABLED = False
 PER_CLUSTER_CALIBRATION_ENABLED = False
 

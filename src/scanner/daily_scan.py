@@ -139,6 +139,34 @@ def _load_calibrators():
     return None
 
 
+def _load_stacker():
+    try:
+        from src.config import STACKER_ENABLED
+        if not STACKER_ENABLED:
+            return None
+        from src.ensemble.stacking import Stacker
+        path = MODELS_DIR / "lgbm" / "stacker.pkl"
+        if path.exists():
+            return Stacker.load(path)
+    except Exception:
+        pass
+    return None
+
+
+def _load_conformal():
+    try:
+        from src.config import CONFORMAL_ENABLED
+        if not CONFORMAL_ENABLED:
+            return None
+        from src.ensemble.conformal import ConformalPredictor
+        path = MODELS_DIR / "lgbm" / "conformal.pkl"
+        if path.exists():
+            return ConformalPredictor.load(path)
+    except Exception:
+        pass
+    return None
+
+
 def _squad_adjust(
     final_arr: np.ndarray,
     home_squad: SquadReport,
@@ -260,12 +288,18 @@ def run_daily_scan(
     calibrators = _load_calibrators() if lgbm_model else None
     _gate = _load_lgbm_gate()
     _dc_weight = float(_gate.get("dc_weight", 0.5))
+    stacker = _load_stacker()
+    conformal = _load_conformal()
 
     if lgbm_model:
         print(f"LightGBM model loaded (gate ✅ dc_weight={_dc_weight:.2f}) — ensemble active.")
     else:
         reason = _gate.get("reason", "no model")
         print(f"LightGBM disabled ({reason}) — Dixon-Coles only.")
+    if stacker is not None:
+        print(f"Stacker meta-learner loaded (n={stacker.n_training_samples}) — replaces linear blend.")
+    if conformal is not None:
+        print(f"Conformal predictor loaded (n={conformal.fit_calibration_size}, α=0.10) — confidence gate active.")
 
     print("Fetching upcoming matches...")
     if mock:
@@ -393,6 +427,12 @@ def run_daily_scan(
         dc_arr = np.array([dc_probs["p_away"], dc_probs["p_draw"], dc_probs["p_home"]])
         lgbm_raw_arr: np.ndarray | None = None  # track separately for confidence scoring
 
+        # Shin-debiased market probs — computed early so Stacker can use them
+        from src.betting.odds_utils import remove_margin_shin
+        mkt_h, mkt_d, mkt_a = remove_margin_shin(raw_odds)
+        mkt_arr = np.array([mkt_a, mkt_d, mkt_h])
+        shin_probs = (mkt_h, mkt_d, mkt_a)  # (p_home, p_draw, p_away)
+
         # Ensemble if available
         if lgbm_model and not historical.empty:
             from src.features.builder import build_feature_row
@@ -418,7 +458,18 @@ def run_daily_scan(
                 X = X.reindex(columns=trained_cols, fill_value=0.0).fillna(0.0)
                 lgbm_raw_arr = predict_proba(lgbm_model, X)[0]
 
-                if calibrators:
+                if stacker is not None:
+                    # Phase 2.1: Stacking Meta-Learner replaces the fixed linear blend.
+                    from src.ensemble.stacking import build_stacker_features
+                    x_s = build_stacker_features(
+                        dc_probs=dc_probs,
+                        lgbm_probs=lgbm_raw_arr,
+                        shin_probs=shin_probs,
+                        is_knockout=is_ko,
+                        is_neutral=True,
+                    )
+                    final_arr = stacker.predict_proba(x_s.reshape(1, -1))[0]
+                elif calibrators:
                     from src.ensemble.calibration import calibrate
                     from src.ensemble.combiner import blend
                     blended = blend(dc_probs, lgbm_raw_arr, dc_weight=_dc_weight)
@@ -428,15 +479,19 @@ def run_daily_scan(
                     final_arr = blend(dc_probs, lgbm_raw_arr, dc_weight=_dc_weight)
             except Exception:
                 final_arr = dc_arr
+        elif stacker is not None:
+            # Stacker without LGBM: falls back to DC + market context only
+            from src.ensemble.stacking import build_stacker_features
+            x_s = build_stacker_features(
+                dc_probs=dc_probs,
+                lgbm_probs=None,
+                shin_probs=shin_probs,
+                is_knockout=is_ko,
+                is_neutral=True,
+            )
+            final_arr = stacker.predict_proba(x_s.reshape(1, -1))[0]
         else:
             final_arr = dc_arr
-
-        # Skip if model diverges significantly from Shin-corrected market in EITHER direction.
-        # Catches both: model overestimates weak team (e.g. DR Congo) AND
-        # underestimates strong favorite (e.g. Portugal), which is the same bias.
-        from src.betting.odds_utils import remove_margin_shin
-        mkt_h, mkt_d, mkt_a = remove_margin_shin(raw_odds)
-        mkt_arr = np.array([mkt_a, mkt_d, mkt_h])
         try:
             max_div = max(
                 max(final_arr[i] / mkt_arr[i], mkt_arr[i] / final_arr[i])
@@ -672,6 +727,16 @@ def run_daily_scan(
                     bankroll_est = s.stake_eur / s.stake_pct if s.stake_pct > 0 else bankroll
                     s.stake_eur = dynamic_stake_eur(s.ev, "HIGH")
                     s.stake_pct = s.stake_eur / bankroll_est
+
+        # Phase 2.3: Conformal gate — downgrade 1X2 confidence when DC prediction
+        # set at 90% coverage contains more than one outcome class.
+        if conformal is not None:
+            from src.ensemble.conformal import conformal_confidence_filter
+            for s in signals:
+                if s.market in ("home", "draw", "away"):
+                    s.confidence = conformal_confidence_filter(
+                        s.confidence, dc_arr, s.market, conformal
+                    )
 
         # Filter out signals with unrealistically high EV (model artifact)
         signals = [s for s in signals if s.ev <= MAX_EV]
