@@ -5,6 +5,9 @@ on:
     - cron: '0 8 * * *'   # täglich 08:00 UTC (10:00 MESZ)
   workflow_dispatch:        # manuell auslösbar über GitHub UI
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   scan:
     runs-on: ubuntu-latest
