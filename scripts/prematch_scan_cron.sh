@@ -9,7 +9,8 @@ LOCKFILE="$SPORTSBRAIN_DIR/results/prematch_scan.lock"
 
 cd "$SPORTSBRAIN_DIR" || exit 1
 
-# Check if a game is starting in 45–90 minutes
+# Check if a game is starting in 45–90 minutes (pre-match window)
+# OR it is 21:30–22:15 UTC and there are night games after 22:00 UTC (midnight Berlin = 22:00 UTC)
 WINDOW_RESULT=$(python3 - <<'PYEOF'
 import json, sys
 from datetime import datetime, timezone, timedelta
@@ -25,9 +26,10 @@ except Exception:
     sys.exit(1)
 
 now = datetime.now(timezone.utc)
+
+# --- Condition 1: game starts in 45–90 minutes ---
 lo = now + timedelta(minutes=45)
 hi = now + timedelta(minutes=90)
-
 for g in data.get("schedule", []):
     ko = g.get("kickoff", "")
     if not ko:
@@ -35,10 +37,29 @@ for g in data.get("schedule", []):
     try:
         ko_dt = datetime.fromisoformat(ko.replace("Z", "+00:00"))
         if lo <= ko_dt <= hi:
-            print(f'{g["home"]} vs {g["away"]} @ {ko_dt.strftime("%H:%M UTC")}')
+            print(f'{g["home"]} vs {g["away"]} @ {ko_dt.strftime("%H:%M UTC")} (pre-match)')
             sys.exit(0)
     except Exception:
         continue
+
+# --- Condition 2: midnight-Berlin deadline (21:30–22:15 UTC) for night games ---
+# Night games = kickoff after 22:00 UTC today through 08:00 UTC next day
+midnight_window = (now.hour == 21 and now.minute >= 30) or (now.hour == 22 and now.minute <= 15)
+if midnight_window:
+    night_lo = now.replace(hour=22, minute=0, second=0, microsecond=0)
+    night_hi = night_lo + timedelta(hours=10)  # up to 08:00 UTC next day
+    for g in data.get("schedule", []):
+        ko = g.get("kickoff", "")
+        if not ko:
+            continue
+        try:
+            ko_dt = datetime.fromisoformat(ko.replace("Z", "+00:00"))
+            if night_lo <= ko_dt <= night_hi:
+                print(f'{g["home"]} vs {g["away"]} @ {ko_dt.strftime("%H:%M UTC")} (Nacht-Deadline)')
+                sys.exit(0)
+        except Exception:
+            continue
+
 sys.exit(1)
 PYEOF
 )
