@@ -1,0 +1,87 @@
+#!/bin/bash
+# Pre-match scanner: runs 45-90 min before any scheduled game.
+# Triggered every 20 min by com.sportsbrain.prematch-scan.plist
+# Skips if no game in window, or if cache is fresh (<25 min old).
+
+SPORTSBRAIN_DIR="/Users/philiprassillier/sportsbrain"
+LOG="$SPORTSBRAIN_DIR/results/prematch_scan_cron.log"
+LOCKFILE="$SPORTSBRAIN_DIR/results/prematch_scan.lock"
+
+cd "$SPORTSBRAIN_DIR" || exit 1
+
+# Check if a game is starting in 45–90 minutes
+WINDOW_RESULT=$(python3 - <<'PYEOF'
+import json, sys
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
+
+p = Path("docs/data/signals.json")
+if not p.exists():
+    sys.exit(1)
+
+try:
+    data = json.loads(p.read_text())
+except Exception:
+    sys.exit(1)
+
+now = datetime.now(timezone.utc)
+lo = now + timedelta(minutes=45)
+hi = now + timedelta(minutes=90)
+
+for g in data.get("schedule", []):
+    ko = g.get("kickoff", "")
+    if not ko:
+        continue
+    try:
+        ko_dt = datetime.fromisoformat(ko.replace("Z", "+00:00"))
+        if lo <= ko_dt <= hi:
+            print(f'{g["home"]} vs {g["away"]} @ {ko_dt.strftime("%H:%M UTC")}')
+            sys.exit(0)
+    except Exception:
+        continue
+sys.exit(1)
+PYEOF
+)
+
+if [ $? -ne 0 ]; then
+    exit 0  # No game in window — silent exit
+fi
+
+# Rate-limit: skip if we scanned in the last 25 minutes
+if [ -f "$LOCKFILE" ]; then
+    LAST=$(cat "$LOCKFILE" 2>/dev/null || echo 0)
+    NOW=$(date +%s)
+    DIFF=$(( NOW - LAST ))
+    if [ "$DIFF" -lt 1500 ]; then
+        exit 0
+    fi
+fi
+
+# Write lock
+date +%s > "$LOCKFILE"
+
+echo "" >> "$LOG"
+echo "========================================" >> "$LOG"
+echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] prematch_scan gestartet ---" >> "$LOG"
+echo "--- Spiel im Fenster: $WINDOW_RESULT ---" >> "$LOG"
+echo "========================================" >> "$LOG"
+
+# Get current bankroll from ledger
+BANKROLL=$(python3 -c "
+from src.betting.ledger import ledger_summary
+s = ledger_summary()
+print(round(100 + s['total_pnl'], 2))
+" 2>/dev/null || echo "100")
+
+echo "--- Bankroll: €$BANKROLL ---" >> "$LOG"
+
+# Settle first
+echo "--- Settle ---" >> "$LOG"
+python3 scripts/settle_bets.py >> "$LOG" 2>&1
+
+# Run scan
+echo "--- Scan (--force, kein --auto-log) ---" >> "$LOG"
+python3 scripts/daily_scan.py --bankroll "$BANKROLL" --force >> "$LOG" 2>&1
+
+EXIT_CODE=$?
+echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] prematch_scan fertig (exit $EXIT_CODE) ---" >> "$LOG"
