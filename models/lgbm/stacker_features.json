@@ -1,0 +1,24 @@
+{
+  "feature_columns": [
+    "dc_p_away",
+    "dc_p_draw",
+    "dc_p_home",
+    "lgbm_p_away",
+    "lgbm_p_draw",
+    "lgbm_p_home",
+    "shin_p_away",
+    "shin_p_draw",
+    "shin_p_home",
+    "is_knockout",
+    "is_neutral",
+    "dc_vs_shin_home",
+    "dc_vs_shin_draw",
+    "dc_vs_shin_away",
+    "dc_vs_lgbm_home",
+    "dc_vs_lgbm_draw",
+    "dc_vs_lgbm_away"
+  ],
+  "n_training_samples": 392,
+  "in_sample_brier": 0.5893007774044485,
+  "in_sample_ece": 0.042132546404935994
+}

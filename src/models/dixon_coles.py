@@ -141,6 +141,9 @@ def _vectorized_nll(
     regularization: float = 0.0,
     prior_attack: np.ndarray | None = None,
     prior_defence: np.ndarray | None = None,
+    cluster_strength: float = 0.0,
+    cluster_attack_center: np.ndarray | None = None,
+    cluster_defence_center: np.ndarray | None = None,
 ) -> float:
     attack = params_vec[:n].copy()
     attack[ref_idx] = 0.0
@@ -182,6 +185,21 @@ def _vectorized_nll(
         nll += regularization * (
             float(np.dot(attack - atk_center, attack - atk_center))
             + float(np.dot(defence - def_center, defence - def_center))
+        )
+
+    if cluster_strength > 0.0 and cluster_attack_center is not None:
+        # Hierarchical confederation prior (Phase 2.2):
+        # Each team is softly shrunk toward its confederation cluster mean
+        # (UEFA, CONMEBOL, …). Stops Cape Verde or Botswana from drifting
+        # to extremes after one or two matches at WC level — the data has
+        # one game, but the prior knows what CAF teams look like in
+        # aggregate. cluster_strength tunes how much the cluster pulls vs.
+        # the data; 0 disables the prior entirely.
+        atk_cluster = cluster_attack_center
+        def_cluster = cluster_defence_center if cluster_defence_center is not None else np.zeros(n)
+        nll += cluster_strength * (
+            float(np.dot(attack - atk_cluster, attack - atk_cluster))
+            + float(np.dot(defence - def_cluster, defence - def_cluster))
         )
 
     return nll
@@ -253,6 +271,53 @@ def _check_bounds_hit(
     return hits
 
 
+def _compute_cluster_centers(
+    teams: list[str],
+    prior_params: "DixonColesParams | None",
+    cluster_map: dict[str, str] | None,
+) -> tuple[np.ndarray, np.ndarray]:
+    """For each team, returns (attack_center, defence_center) shaped (n,).
+
+    A team's center is the mean of its confederation cluster as observed in
+    `prior_params`. Teams missing from `cluster_map` (e.g. small federations
+    not enumerated in config.TEAM_CONFEDERATION) get the global prior mean.
+
+    If `prior_params` is None we cannot derive a meaningful cluster mean, so
+    the function returns zeros — i.e. the hierarchical penalty collapses to
+    standard L2 shrinkage. The hierarchical effect only kicks in once a
+    prior is available; subsequent retrains then refine the cluster picture.
+    """
+    n = len(teams)
+    if prior_params is None or not cluster_map:
+        return np.zeros(n), np.zeros(n)
+
+    # Aggregate per-cluster mean from prior
+    bucket_atk: dict[str, list[float]] = {}
+    bucket_def: dict[str, list[float]] = {}
+    for t in teams:
+        c = cluster_map.get(t)
+        if not c:
+            continue
+        if t in prior_params.attack:
+            bucket_atk.setdefault(c, []).append(prior_params.attack[t])
+        if t in prior_params.defence:
+            bucket_def.setdefault(c, []).append(prior_params.defence[t])
+    cluster_atk_mean = {c: float(np.mean(v)) for c, v in bucket_atk.items() if v}
+    cluster_def_mean = {c: float(np.mean(v)) for c, v in bucket_def.items() if v}
+
+    # Global fall-back for teams without a confederation entry
+    global_atk = float(np.mean(list(prior_params.attack.values()))) if prior_params.attack else 0.0
+    global_def = float(np.mean(list(prior_params.defence.values()))) if prior_params.defence else 0.0
+
+    atk_center = np.array([
+        cluster_atk_mean.get(cluster_map.get(t, ""), global_atk) for t in teams
+    ])
+    def_center = np.array([
+        cluster_def_mean.get(cluster_map.get(t, ""), global_def) for t in teams
+    ])
+    return atk_center, def_center
+
+
 def fit(
     matches: pd.DataFrame,
     phi: float = DC_PHI,
@@ -262,6 +327,8 @@ def fit(
     prior_params: "DixonColesParams | None" = None,
     regularization: float = 0.005,
     wc2026_boost_override: float | None = None,
+    cluster_map: dict[str, str] | None = None,
+    cluster_strength: float = 0.0,
 ) -> DixonColesParams:
     """Fits Dixon-Coles model. Returns DixonColesParams.
 
@@ -274,6 +341,11 @@ def fit(
         with WC2026_BOOST) would otherwise explain a blowout entirely through
         one team's parameter.
     wc2026_boost_override: replaces config.WC2026_BOOST for this fit (retry-logic).
+    cluster_map: optional {team: cluster_id} dict (e.g. TEAM_CONFEDERATION).
+        When combined with cluster_strength > 0 and prior_params, applies a
+        soft hierarchical prior that shrinks each team toward its cluster mean.
+    cluster_strength: penalty coefficient for the hierarchical cluster prior.
+        Defaults to 0 (no effect). Typical values: 0.01–0.05.
     """
     if today is None:
         today = matches["date"].max() + pd.Timedelta(days=1)
@@ -321,10 +393,15 @@ def fit(
               + [(d_lo, d_hi)] * n
               + [(h_lo, h_hi), (r_lo, r_hi)])
 
+    cluster_atk_vec, cluster_def_vec = _compute_cluster_centers(
+        teams, prior_params, cluster_map,
+    )
+
     result = minimize(
         _vectorized_nll,
         x0,
-        args=(n, ref_idx, *arrays, regularization, prior_atk_vec, prior_def_vec),
+        args=(n, ref_idx, *arrays, regularization, prior_atk_vec, prior_def_vec,
+              cluster_strength, cluster_atk_vec, cluster_def_vec),
         method=method,
         bounds=bounds,
         options={"maxiter": max_iter, "ftol": 1e-9},
