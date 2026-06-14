@@ -34,10 +34,10 @@ def get_api_key(api_key: str | None = None) -> str:
     return key
 
 
-@disk_cache("odds_api_upcoming", max_age_hours=1.0)
+@disk_cache("odds_api_upcoming_wide", max_age_hours=1.0)
 def fetch_upcoming_matches(
     sport: str = "soccer_fifa_world_cup",
-    regions: str = "eu",
+    regions: str = "eu,us,uk,au",
     markets: str = "h2h,totals,spreads",
     api_key: str | None = None,
     force: bool = False,
@@ -148,6 +148,66 @@ def _parse_markets(bm: dict, home: str, away: str, store: dict, dynamic: dict) -
                     store[key] = o["price"]
 
 
+def _websearch_odds_fallback(home: str, away: str) -> dict | None:
+    """Search for h2h odds when TheOddsAPI has no bookmakers for a game.
+
+    Uses DuckDuckGo text search → fetches first result → extracts decimal odds
+    via JSON-LD or regex. Returns {home, draw, away} or None.
+    """
+    try:
+        from ddgs import DDGS
+        import re
+
+        query = f'{home} vs {away} 2026 FIFA World Cup odds'
+        results = DDGS().text(query, max_results=4)
+        if not results:
+            return None
+
+        headers = {"User-Agent": "Mozilla/5.0 (compatible; SportsBrainBot/1.0)"}
+        for result in results:
+            url = result.get("href", "")
+            if not url or "twitter" in url or "youtube" in url:
+                continue
+            try:
+                resp = requests.get(url, headers=headers, timeout=8)
+                if resp.status_code != 200:
+                    continue
+                html = resp.text
+
+                # Try JSON-LD first (structured sports data)
+                ld_blocks = re.findall(r'<script[^>]+type="application/ld\+json"[^>]*>(.*?)</script>',
+                                       html, re.DOTALL)
+                for block in ld_blocks:
+                    try:
+                        ld = json.loads(block)
+                        items = ld if isinstance(ld, list) else [ld]
+                        for item in items:
+                            if item.get("@type") in ("SportsEvent", "Event"):
+                                offers = item.get("offers", [])
+                                if isinstance(offers, list) and len(offers) >= 3:
+                                    prices = [float(o.get("price", 0)) for o in offers if o.get("price")]
+                                    if len(prices) >= 3 and all(1.01 < p < 50 for p in prices[:3]):
+                                        return {"home": prices[0], "draw": prices[1], "away": prices[2]}
+                    except Exception:
+                        continue
+
+                # Regex fallback: look for 3 consecutive decimal odds in context
+                # e.g. "Netherlands 2.05, Draw 3.40, Japan 3.60"
+                pattern = r'(?:home|win|1)\D{0,20}?(\d\.\d{2})\D{0,30}(?:draw|x|tie)\D{0,20}?(\d\.\d{2})\D{0,30}(?:away|win|2)\D{0,20}?(\d\.\d{2})'
+                m = re.search(pattern, html, re.IGNORECASE)
+                if m:
+                    h, d, a = float(m.group(1)), float(m.group(2)), float(m.group(3))
+                    if all(1.01 < x < 50 for x in (h, d, a)):
+                        implied = 1/h + 1/d + 1/a
+                        if 0.90 <= implied <= 1.20:
+                            return {"home": h, "draw": d, "away": a}
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return None
+
+
 def _parse_matches(raw: list[dict]) -> list[dict]:
     """
     Returns one entry per match with:
@@ -165,7 +225,20 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
 
         bookmakers = event.get("bookmakers", [])
         if not bookmakers:
-            continue
+            ws_odds = _websearch_odds_fallback(home, away)
+            if ws_odds:
+                bookmakers = [{"key": "websearch", "title": "WebSearch", "markets": [
+                    {"key": "h2h", "outcomes": [
+                        {"name": home,   "price": ws_odds["home"]},
+                        {"name": "Draw", "price": ws_odds["draw"]},
+                        {"name": away,   "price": ws_odds["away"]},
+                    ]}
+                ]}]
+                print(f"  INFO: {home} vs {away} — odds via WebSearch fallback "
+                      f"({ws_odds['home']}/{ws_odds['draw']}/{ws_odds['away']})")
+            else:
+                print(f"  WARN: {home} vs {away} — no bookmakers, WebSearch found nothing.")
+                continue
 
         best: dict[str, float] = {}
         pin: dict[str, float] = {}
