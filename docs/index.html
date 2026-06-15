@@ -26,6 +26,10 @@
       --yellow-d: #2d2208;
       --red:      #f85149;
       --nav-h:    calc(122px + env(safe-area-inset-bottom));
+      /* Design-System Tokens */
+      --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px;  --sp-4: 16px;  --sp-6: 24px;
+      --r-sm: 6px;  --r-base: 8px; --r-md: 10px; --r-lg: 12px;  --r-pill: 20px;
+      --text-xs: 11px; --text-sm: 13px; --text-base: 15px; --text-lg: 18px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; -webkit-font-smoothing: antialiased; overscroll-behavior: none; overflow-x: hidden; }
@@ -35,7 +39,7 @@
     .logo { font-size: 19px; font-weight: 900; letter-spacing: -0.6px; }
     .logo em { color: var(--green); font-style: normal; }
     .header-right { display: flex; align-items: center; gap: 8px; }
-    .live-pill { display: flex; align-items: center; gap: 5px; background: rgba(0,200,83,0.1); border: 1px solid rgba(0,200,83,0.2); border-radius: 20px; padding: 3px 10px; }
+    .live-pill { display: flex; align-items: center; gap: 5px; background: rgba(0,200,83,0.1); border: 1px solid rgba(0,200,83,0.2); border-radius: var(--r-pill); padding: 3px 10px; }
     .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
     .updated-text { font-size: 11px; color: var(--green); font-weight: 600; }
     .icon-btn { background: none; border: none; color: var(--muted); font-size: 20px; padding: 4px 6px; cursor: pointer; line-height: 1; }
@@ -56,8 +60,6 @@
     .exposure-high { background: var(--red); }
     .bankroll-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
     .bankroll-row span { font-weight: 600; }
-    /* keep old pstat for fallback */
-    .pstat { display: none; }
     .pos { color: var(--green); }
     .neg { color: var(--red); }
     .neu { color: var(--text); }
@@ -71,14 +73,15 @@
     .view.active { display: block; }
 
     /* ── Bet365-style match list ── */
-    .b365-day-header { background: var(--bg); padding: 12px 16px 4px; font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
+    .b365-day-header { background: var(--bg); padding: var(--sp-3) var(--sp-4) var(--sp-1); font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
     .comp-header { background: #111820; border-top: 1px solid rgba(255,255,255,.06); border-bottom: 1px solid rgba(255,255,255,.06); padding: 8px 16px; display: flex; align-items: center; gap: 8px; position: sticky; top: 52px; z-index: 10; }
     .comp-icon { font-size: 14px; flex-shrink: 0; }
     .comp-name { font-size: 12px; font-weight: 700; color: var(--text); flex: 1; letter-spacing: .2px; }
     .comp-meta { font-size: 11px; color: var(--muted); }
 
-    .b365-row { display: flex; align-items: center; padding: 12px 12px 12px 16px; border-bottom: 1px solid rgba(48,54,61,.5); gap: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-    .b365-row:active { background: rgba(255,255,255,.04); }
+    .b365-row { display: flex; align-items: center; padding: 12px 12px 12px 16px; border-bottom: 1px solid rgba(48,54,61,.5); gap: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background .12s ease; }
+    .b365-row:hover { background: rgba(255,255,255,.03); }
+    .b365-row:active { background: rgba(255,255,255,.07); }
     .b365-left { flex: 1; min-width: 0; }
     .b365-time { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 3px; display: flex; align-items: center; gap: 5px; }
     .b365-val-tag { background: rgba(0,200,83,.15); border: 1px solid rgba(0,200,83,.3); color: var(--green); font-size: 10px; font-weight: 800; border-radius: 4px; padding: 1px 5px; }
@@ -88,7 +91,7 @@
     .mkt-header { display: flex; gap: 5px; padding: 5px 12px 5px 0; background: #0d1117; border-bottom: 1px solid rgba(48,54,61,.4); justify-content: flex-end; }
     .mkt-header span { width: 54px; text-align: center; font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .3px; }
     .b365-odds { display: flex; gap: 5px; flex-shrink: 0; align-items: center; }
-    .b365-btn { display: block; background: #1e2733; border: 1px solid rgba(255,255,255,.18); border-radius: 8px; width: 64px; height: 44px; line-height: 44px; text-align: center; font-size: 15px; font-weight: 800; color: var(--text); cursor: pointer; overflow: hidden; padding: 0; font-family: inherit; box-sizing: border-box; }
+    .b365-btn { display: block; background: #1e2733; border: 1px solid rgba(255,255,255,.18); border-radius: var(--r-base); width: 64px; height: 44px; line-height: 44px; text-align: center; font-size: 15px; font-weight: 800; color: var(--text); cursor: pointer; overflow: hidden; padding: 0; font-family: inherit; box-sizing: border-box; }
     .b365-btn.val { background: rgba(0,200,83,.16); border-color: rgba(0,200,83,.6); color: var(--green); }
     .b365-btn.no-odds { color: rgba(255,255,255,.18); font-weight: 400; }
     button.b365-btn-click { -webkit-appearance: none; appearance: none; }
@@ -108,8 +111,8 @@
     .detail-cards { padding: 12px 16px; }
 
     /* ── Signal card ── */
-    .sig-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; border-left: 3px solid transparent; }
-    .ou-accordion { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+    .sig-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 14px; margin-bottom: 10px; border-left: 3px solid transparent; }
+    .ou-accordion { border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; margin-bottom: 10px; }
     .ou-accordion-header { display: flex; align-items: center; gap: 8px; padding: 13px 14px; cursor: pointer; background: var(--card); -webkit-tap-highlight-color: transparent; user-select: none; }
     .ou-accordion-header:active { background: rgba(255,255,255,.03); }
     .ou-accordion-label { font-size: 13px; font-weight: 800; flex: 1; color: var(--text); }
@@ -121,9 +124,9 @@
     .ou-accordion.open .ou-accordion-body { display: block; background: var(--surface); padding: 4px 0 0; }
     .sig-card.high { border-left-color: var(--green); }
     .sig-card.medium { border-left-color: var(--yellow); }
-    .card-market { font-size: 12px; color: var(--muted); margin-bottom: 11px; padding: 4px 9px; background: rgba(255,255,255,0.05); border-radius: 6px; display: inline-block; border: 1px solid rgba(255,255,255,0.07); }
+    .card-market { font-size: 12px; color: var(--muted); margin-bottom: 11px; padding: 4px 9px; background: rgba(255,255,255,0.05); border-radius: var(--r-sm); display: inline-block; border: 1px solid rgba(255,255,255,0.07); }
     .card-footer { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .odds-btn { background: rgba(0,200,83,0.1); border: 1.5px solid var(--green); border-radius: 8px; padding: 7px 18px; font-size: 20px; font-weight: 900; color: var(--green); flex-shrink: 0; }
+    .odds-btn { background: rgba(0,200,83,0.1); border: 1.5px solid var(--green); border-radius: var(--r-base); padding: 7px 18px; font-size: 20px; font-weight: 900; color: var(--green); flex-shrink: 0; }
     .sig-card.medium .odds-btn { background: rgba(210,153,34,.08); border-color: var(--yellow); color: var(--yellow); }
     .ev-chip { font-size: 13px; font-weight: 700; }
     .ev-h { color: var(--green); }
@@ -132,25 +135,32 @@
     .conf-HIGH   { background: var(--green-d); color: var(--green); border: 1px solid rgba(0,200,83,.2); }
     .conf-MEDIUM { background: var(--yellow-d); color: var(--yellow); border: 1px solid rgba(210,153,34,.2); }
     .stake-val { font-size: 13px; color: var(--muted); margin-left: auto; font-weight: 600; }
+    .stake-pct { font-size: 10px; font-weight: 600; color: var(--muted); opacity: .7; }
+    .models-dots { font-size: 11px; letter-spacing: 1px; flex-shrink: 0; }
+    .models-green { color: var(--green); }
+    .models-muted { color: rgba(139,148,158,.35); }
+    .prob-row { display: flex; gap: 10px; margin-top: 8px; font-size: 11px; font-weight: 600; color: var(--muted); }
+    .prob-edge { font-weight: 800; color: var(--green); }
 
     /* ── Sport tabs (Fußball/Tennis): signals grouped by match ── */
     .sport-view-inner { padding: 0 0 8px; }
-    .match-group-header { font-size: 12px; font-weight: 700; color: var(--text); padding: 14px 16px 8px; border-bottom: 1px solid rgba(48,54,61,.4); display: flex; align-items: center; gap: 8px; }
+    .match-group-header { font-size: 12px; font-weight: 700; color: var(--text); padding: var(--sp-3) var(--sp-4) var(--sp-2); border-bottom: 1px solid rgba(48,54,61,.4); display: flex; align-items: center; gap: 8px; }
     .match-group-header .sport-tag { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; }
     .match-group-cards { padding: 10px 16px 4px; }
 
     /* ── Section title ── */
-    .section-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; padding: 14px 16px 8px; display: flex; align-items: center; gap: 8px; }
+    .section-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; padding: var(--sp-3) var(--sp-4) var(--sp-2); display: flex; align-items: center; gap: 8px; }
     .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
 
     /* ── Empty / Skeleton ── */
     .empty { text-align: center; padding: 52px 16px; color: var(--muted); }
     .empty .icon { font-size: 34px; margin-bottom: 10px; }
-    .skel { background: linear-gradient(90deg,var(--card) 25%,var(--surface) 50%,var(--card) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 12px; height: 80px; margin: 10px 16px; }
-    @keyframes shimmer { 0%{background-position:200% 0}100%{background-position:-200% 0} }
+    .skel { background: var(--card); border-radius: 12px; height: 80px; margin: 10px 16px; overflow: hidden; position: relative; }
+    .skel::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.06) 50%, transparent 100%); transform: translateX(-100%); animation: shimmer 1.4s infinite; }
+    @keyframes shimmer { to { transform: translateX(100%); } }
 
     /* ── Journal ── */
-    .journal-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin: 0 16px; }
+    .journal-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; margin: 0 16px; }
     .journal-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .journal-table th { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; padding: 9px 10px; text-align: right; border-bottom: 1px solid var(--border); background: rgba(255,255,255,.02); position: sticky; top: 0; }
     .journal-table th:first-child { text-align: left; padding-left: 12px; }
@@ -170,7 +180,7 @@
 
     /* ── Journal KPI strip ── */
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 8px 12px 4px; }
-    .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 9px 10px; min-width: 0; }
+    .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); padding: 9px 10px; min-width: 0; }
     .kpi-label { font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .kpi-val { font-size: 16px; font-weight: 900; letter-spacing: -.3px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .kpi-val.pos { color: var(--green); }
@@ -179,7 +189,7 @@
 
     /* ── Squads view ── */
     .squad-search { position: sticky; top: 52px; z-index: 20; background: var(--bg); padding: 10px 12px; border-bottom: 1px solid var(--border); }
-    .squad-search input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; padding: 9px 14px; outline: none; }
+    .squad-search input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); color: var(--text); font-size: 14px; padding: 9px 14px; outline: none; }
     .squad-search input::placeholder { color: var(--muted); }
     .squad-team-row { display: flex; align-items: center; padding: 11px 16px; border-bottom: 1px solid rgba(48,54,61,.4); gap: 12px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
     .squad-team-row:active { background: rgba(255,255,255,.04); }
@@ -202,7 +212,7 @@
     .status-doubtful { color: var(--yellow); }
 
     /* ── Model prediction card ── */
-    .pred-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; border-left: 3px solid #4d9fff; }
+    .pred-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 14px; margin-bottom: 10px; border-left: 3px solid #4d9fff; }
     .pred-title { font-size: 11px; font-weight: 800; color: #4d9fff; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 12px; }
     .pred-tip { font-size: 16px; font-weight: 900; margin-bottom: 12px; }
     .pred-bars { display: flex; flex-direction: column; gap: 7px; margin-bottom: 12px; }
@@ -227,7 +237,7 @@
     .bet-match { font-size: 15px; font-weight: 800; }
     .bet-date { font-size: 11px; color: var(--muted); white-space: nowrap; }
     .bet-market-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-    .bet-market-chip { display: inline-block; font-size: 12px; font-weight: 700; background: rgba(255,255,255,.07); border: 1px solid var(--border); border-radius: 6px; padding: 3px 10px; }
+    .bet-market-chip { display: inline-block; font-size: 12px; font-weight: 700; background: rgba(255,255,255,.07); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 3px 10px; }
     .bet-conf-chip { display: inline-block; font-size: 10px; font-weight: 800; border-radius: 6px; padding: 3px 8px; letter-spacing: .3px; }
     .conf-high { background: rgba(0,200,83,.15); color: var(--green); border: 1px solid rgba(0,200,83,.3); }
     .conf-medium { background: rgba(255,193,7,.12); color: var(--yellow); border: 1px solid rgba(255,193,7,.3); }
@@ -261,7 +271,7 @@
     .today-countdown.warn { color: var(--yellow); }
     .today-live-badge { font-size: 10px; font-weight: 900; background: var(--red); color: #fff; border-radius: 4px; padding: 1px 5px; animation: pulse 1.5s infinite; }
     .last-call-badge { font-size: 10px; font-weight: 900; background: rgba(210,153,34,.2); border: 1px solid var(--yellow); color: var(--yellow); border-radius: 4px; padding: 1px 6px; }
-    .score-box { background: rgba(255,255,255,.06); border: 1px solid var(--border); border-radius: 8px; padding: 4px 14px; font-size: 20px; font-weight: 900; letter-spacing: -0.5px; flex-shrink: 0; }
+    .score-box { background: rgba(255,255,255,.06); border: 1px solid var(--border); border-radius: var(--r-base); padding: 4px 14px; font-size: 20px; font-weight: 900; letter-spacing: -0.5px; flex-shrink: 0; }
     .score-box.result-home { color: var(--green); border-color: rgba(0,200,83,.3); }
     .score-box.result-away { color: var(--red); border-color: rgba(248,81,73,.3); }
     .score-box.result-draw { color: var(--yellow); border-color: rgba(210,153,34,.3); }
@@ -270,12 +280,12 @@
 
     /* ── WM Stats ── */
     .wm-stats-wrap { padding: 12px 16px 4px; }
-    .wm-sparkline { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+    .wm-sparkline { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 12px; margin-bottom: 10px; }
     .sparkline-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
     .sparkline-title { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
     .sparkline-delta { font-size: 18px; font-weight: 900; }
     .sparkline-svg { width: 100%; display: block; }
-    .stats-table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+    .stats-table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; margin-bottom: 10px; }
     .stats-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     .stats-table th { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--border); }
     .stats-table th:first-child { text-align: left; }
@@ -284,7 +294,7 @@
     .stats-table tr:last-child td { border-bottom: none; }
 
     /* ── Group Standings ── */
-    .standings-group { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+    .standings-group { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; margin-bottom: 10px; }
     .standings-group-header { background: rgba(0,200,83,.08); border-bottom: 1px solid rgba(0,200,83,.2); padding: 8px 12px; font-size: 11px; font-weight: 800; color: var(--green); text-transform: uppercase; letter-spacing: .6px; }
     .standings-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     .standings-table th { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; padding: 6px 10px; text-align: center; border-bottom: 1px solid var(--border); }
@@ -342,23 +352,23 @@
     .modal-row:last-of-type { border-bottom: none; }
     .modal-row .mr-label { color: var(--muted); font-weight: 600; }
     .modal-row .mr-val { font-weight: 800; }
-    .modal-stake-input { width: 100%; background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; color: var(--text); font-size: 22px; font-weight: 900; padding: 10px 14px; outline: none; text-align: center; margin: 6px 0 4px; -moz-appearance: textfield; }
+    .modal-stake-input { width: 100%; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r-md); color: var(--text); font-size: 22px; font-weight: 900; padding: 10px 14px; outline: none; text-align: center; margin: 6px 0 4px; -moz-appearance: textfield; }
     .modal-stake-input::-webkit-outer-spin-button, .modal-stake-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .modal-stake-input:focus { border-color: var(--green); }
     .modal-warn { background: rgba(248,81,73,.1); border: 1px solid rgba(248,81,73,.35); color: var(--red); border-radius: 8px; padding: 9px 12px; font-size: 12px; font-weight: 600; margin: 10px 0 0; display: none; }
     .modal-warn.show { display: block; }
     .modal-info { background: rgba(0,200,83,.07); border: 1px solid rgba(0,200,83,.22); color: var(--green); border-radius: 8px; padding: 9px 12px; font-size: 12px; font-weight: 600; margin: 10px 0 0; }
     .modal-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
-    .modal-btn { font-size: 14px; font-weight: 800; padding: 12px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .modal-btn { font-size: 14px; font-weight: 800; padding: 12px; border-radius: var(--r-md); border: 1px solid var(--border); cursor: pointer; -webkit-tap-highlight-color: transparent; }
     .modal-btn.cancel { background: var(--surface); color: var(--text); }
     .modal-btn.confirm { background: var(--green); color: #0d1117; border-color: var(--green); }
     .modal-btn.confirm:disabled { background: rgba(0,200,83,.25); color: rgba(13,17,23,.5); cursor: not-allowed; }
     .modal-btn:active { transform: scale(.97); }
-    .modal-token-input { width: 100%; background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; color: var(--text); font-size: 13px; padding: 10px 12px; outline: none; margin: 10px 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .modal-token-input { width: 100%; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r-md); color: var(--text); font-size: 13px; padding: 10px 12px; outline: none; margin: 10px 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
     .modal-token-input:focus { border-color: var(--green); }
 
     /* ── Place-Bet-Button in signal card ── */
-    .place-bet-btn { display: block; width: 100%; margin-top: 12px; background: var(--green); color: #0d1117; border: none; border-radius: 10px; padding: 11px; font-size: 14px; font-weight: 900; cursor: pointer; -webkit-tap-highlight-color: transparent; letter-spacing: .2px; }
+    .place-bet-btn { display: block; width: 100%; margin-top: 12px; background: var(--green); color: #0d1117; border: none; border-radius: var(--r-md); padding: 11px; font-size: 14px; font-weight: 900; cursor: pointer; -webkit-tap-highlight-color: transparent; letter-spacing: .2px; }
     .place-bet-btn:active { transform: scale(.98); }
     .sig-card.medium .place-bet-btn { background: var(--yellow); }
 
@@ -389,7 +399,7 @@
 
     /* ── Filter chips ── */
     .filter-chips { display: flex; gap: 6px; padding: 8px 16px 4px; flex-wrap: wrap; }
-    .filter-chip { font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
+    .filter-chip { font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: var(--r-pill); background: var(--surface); border: 1px solid var(--border); color: var(--muted); cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
     .filter-chip.active { background: rgba(0,200,83,.14); border-color: rgba(0,200,83,.55); color: var(--green); }
     .filter-chip:active { background: rgba(255,255,255,.06); }
 
@@ -538,10 +548,12 @@
     <div class="section-title">P&amp;L Verlauf</div>
     <div id="wm-stats-container" style="padding:0 0 4px"></div>
     <div id="journal-container">
-      <div class="empty"><div class="icon">📭</div><div>Noch keine abgeschlossenen Wetten.</div></div>
+      <div class="skel"></div><div class="skel"></div>
     </div>
     <div class="section-title" style="margin-top:8px">WM 2026 Gruppenstandings</div>
-    <div id="standings-container" style="padding:0 16px 16px"></div>
+    <div id="standings-container" style="padding:0 16px 16px">
+      <div class="skel"></div><div class="skel"></div>
+    </div>
   </section>
 
   <section id="view-squads" class="view">
@@ -583,6 +595,9 @@
 // Cloud URL — set after Cloudflare Worker setup (see cloudflare/SETUP.md)
 // Leave empty ('') to fall back to GitHub Pages only.
 const CLOUD_URL  = 'https://sportsbrain-signals.sportsbrain-philip.workers.dev/signals.json';
+
+// ── Utility: Expected Value ───────────────────────────────────
+const calcEV = (p, q) => (p * q - 1) * 100;  // p: decimal prob, q: decimal odds
 const DATA_URL   = 'data/signals.json';
 const SQUADS_URL = 'data/squads.json';
 let _signals = [];
@@ -911,7 +926,7 @@ function predCard(home, away, tip, odds, nk, kickoff, sport) {
   // Direct bet buttons next to 1/X/2 probability bars (same data as Marktübersicht)
   const barBetBtn = (mktKey, modelP, q) => {
     if (!q || q <= 1) return '';
-    const ev = (modelP * q - 1) * 100;
+    const ev = calcEV(modelP, q);
     const isValue = ev >= 3;
     const src = isValue ? 'value' : 'manual';
     const stake = isValue ? 10 : 5;
@@ -1066,6 +1081,15 @@ function buildOuAccordion(ouSigs, autoOpen) {
     <div class="ou-accordion-body">${ouSigs.map(s => sigCard(s, false)).join('')}</div>
   </div>`;
 }
+function _modelDots(n) {
+  const filled = Math.max(0, Math.min(3, n || 0));
+  let out = '';
+  for (let i = 0; i < 3; i++) {
+    out += `<span class="${i < filled ? 'models-green' : 'models-muted'}">●</span>`;
+  }
+  return out;
+}
+
 function sigCard(s, showMatch) {
   const cls = s.confidence === 'HIGH' ? 'high' : 'medium';
   const evCls = s.ev_pct >= 10 ? 'ev-h' : 'ev-m';
@@ -1083,6 +1107,21 @@ function sigCard(s, showMatch) {
     `data-kickoff="${esc(s.kickoff||'')}"`,
     `data-sport="${esc(s.sport||'')}"`,
   ].join(' ');
+  // Prob-Row: nur anzeigen wenn fair_prob vorhanden (neue Signale)
+  const _edge = s.fair_prob > 0 && s.model_prob > 0 ? s.model_prob - s.fair_prob : null;
+  const probRow = _edge !== null
+    ? `<div class="prob-row">
+        <span>Markt: ${s.fair_prob.toFixed(1)}%</span>
+        <span>Modell: ${s.model_prob.toFixed(1)}%</span>
+        <span class="prob-edge">Edge: ${_edge >= 0 ? '+' : ''}${_edge.toFixed(1)}%</span>
+      </div>`
+    : '';
+  const stakeLabel = s.stake_pct > 0
+    ? `€${s.stake_eur.toFixed(0)} <span class="stake-pct">(${s.stake_pct.toFixed(1)}%)</span>`
+    : `€${s.stake_eur.toFixed(0)}`;
+  const dotsHtml = s.n_models_agree > 0
+    ? `<span class="models-dots" title="${s.n_models_agree}/3 Modelle einig">${_modelDots(s.n_models_agree)}</span>`
+    : '';
   return `<div class="sig-card ${cls}">
     ${matchLine}
     <div class="card-market">${marketLabel(s.market, s.match)}</div>
@@ -1090,8 +1129,10 @@ function sigCard(s, showMatch) {
       <span class="odds-btn">${s.odds.toFixed(2)}</span>
       <span class="ev-chip ${evCls}">EV +${s.ev_pct}%${infoTip(`Expected Value = Modell-Wahrscheinlichkeit × Quote − 1. +${s.ev_pct}% heißt: langfristig +€${(s.ev_pct/100*s.stake_eur).toFixed(2)} Gewinn bei €${s.stake_eur.toFixed(0)} Einsatz. SportsBrain wettet nur bei EV ≥ 3%.`)}</span>
       <span class="conf-badge conf-${s.confidence}">${s.confidence}${infoTip(s.confidence === 'HIGH' ? 'HIGH = höchste Modell-Übereinstimmung. Fußball: Dixon-Coles UND LightGBM tippen dasselbe. Tennis: starker Edge (WTA ≥8%, ATP ≥15%). Stake wird automatisch +10% skaliert.' : 'MEDIUM = Standard-Confidence. Solider EV (≥3%), aber kein voller Modell-Konsens. Stake bleibt im €5–15 Standardbereich.')}</span>
-      <span class="stake-val">€${s.stake_eur.toFixed(0)}</span>
+      ${dotsHtml}
+      <span class="stake-val">${stakeLabel}</span>
     </div>
+    ${probRow}
     ${['h1_goals_2_4','h2_goals_2_4','h1_goals_2_4_no','h2_goals_2_4_no'].includes(s.market)
       ? `<div style="font-size:10px;color:var(--muted);padding:2px 8px 6px">⚠ HZ-Settlement manuell — Quote beim Buchmacher prüfen</div>`
       : `<button class="place-bet-btn" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="Wette platzieren">Wette platzieren · €${s.stake_eur.toFixed(0)}</button>`}
@@ -1367,7 +1408,7 @@ function _updateBetModalCalcs() {
   const evEl = document.getElementById('bet-modal-ev');
   let evPct = null;
   if (_pendingBet.model_prob && _pendingBet.model_prob > 0 && odds > 0) {
-    evPct = (_pendingBet.model_prob * odds - 1) * 100;
+    evPct = calcEV(_pendingBet.model_prob, odds);
   } else if (Number.isFinite(_pendingBet.ev_pct) && _pendingBet.ev_pct !== 0) {
     evPct = _pendingBet.ev_pct;
   }
@@ -1408,7 +1449,7 @@ async function _submitBet() {
   };
   if (_pendingBet.model_prob && _pendingBet.model_prob > 0) {
     payload.model_prob = _pendingBet.model_prob;
-    payload.ev_pct = (_pendingBet.model_prob * odds - 1) * 100;
+    payload.ev_pct = calcEV(_pendingBet.model_prob, odds);
   }
   try {
     const r = await fetch(WORKER_BASE + '/pending_bets', {
@@ -2018,9 +2059,12 @@ function renderJournal(history) {
 }
 function _bindJournalChips() {
   document.querySelectorAll('#journal-container .filter-chip[data-jf]').forEach(el => {
-    const handler = () => { _journalFilter = el.dataset.jf; renderJournal(); };
-    el.addEventListener('click', handler);
-    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } });
+    // cloneNode removes accumulated listeners from previous renderJournal() calls
+    const fresh = el.cloneNode(true);
+    el.parentNode.replaceChild(fresh, el);
+    const handler = () => { _journalFilter = fresh.dataset.jf; renderJournal(); };
+    fresh.addEventListener('click', handler);
+    fresh.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } });
   });
 }
 
@@ -2224,7 +2268,9 @@ function filterSquads(val) {
 function openSquad(team) {
   const d = _squads[team];
   if (!d) return;
-  _prevView = 'squads';
+  // Use active nav tab as back target, so back always returns to the correct view
+  const activeTab = document.querySelector('.nav-tab.active');
+  _prevView = activeTab ? activeTab.dataset.view : 'squads';
   const players = (d.players||[]).slice().sort((a,b) => {
     const po = {GK:0,DEF:1,MID:2,FWD:3};
     return (po[a.pos]??9) - (po[b.pos]??9);
@@ -2329,7 +2375,12 @@ async function _load() {
   fetch(SQUADS_URL + '?t=' + Date.now(), { cache: 'no-store' })
     .then(r => r.ok ? r.json() : null)
     .then(sd => { if (sd) _squads = sd.teams || {}; })
-    .catch(() => {});
+    .catch(err => {
+      const c = document.getElementById('squads-container');
+      if (c && !c.querySelector('.squad-team-row')) {
+        c.innerHTML = `<div class="empty"><div class="icon">⚠️</div><div>Kader konnten nicht geladen werden.<br><small style="color:var(--muted)">${esc(err.message)}</small></div></div>`;
+      }
+    });
 }
 
 async function load() {
@@ -2398,6 +2449,14 @@ setInterval(load, 10*60*1000);
     pulling = false;
   });
 })();
+
+// ── Escape-Taste: Modals + Detail-View schließen ──────────────
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('bet-modal-bd')?.classList.contains('show'))   { _closeBetModal();   return; }
+  if (document.getElementById('token-modal-bd')?.classList.contains('show')) { _closeTokenModal(); return; }
+  if (document.getElementById('view-detail')?.classList.contains('active'))  { closeDetail(); }
+});
 
 load();
 </script>
