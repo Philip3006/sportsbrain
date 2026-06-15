@@ -14,6 +14,7 @@ Usage:
   python scripts/train_dixon_coles.py --since 2018-01-01 # all competitive since date
 """
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -24,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.config import MODELS_DIR, COMPETITIVE_TOURNAMENTS, HIERARCHICAL_DC_ENABLED, TEAM_CONFEDERATION
 from src.data.international import fetch_international_results, filter_competitive
 from src.models import dixon_coles
+from src.models.elo import compute_elo_series, current_ratings
 
 
 def _load_latest_params() -> dixon_coles.DixonColesParams | None:
@@ -48,6 +50,7 @@ def _remove_ofc_qualifiers(df: pd.DataFrame) -> pd.DataFrame:
     return df[~(qualifier_mask & ofc_mask)]
 
 
+
 def main(since: str | None = None, finals_only: bool = False, all_competitive: bool = False):
     print("Loading data...")
     df = fetch_international_results()
@@ -65,6 +68,13 @@ def main(since: str | None = None, finals_only: bool = False, all_competitive: b
         if since:
             df = df[df["date"] >= pd.Timestamp(since)]
         print(f"  All competitive excl. OFC qualifiers: {len(df)} matches")
+
+    # Compute Elo series for snapshot — used by scanner at inference time only.
+    # DC training does NOT use Elo adjustment (training-time Elo with scale=600
+    # caused perverse parameter distortion; inference-only is the safe approach).
+    print("Computing Elo series (for inference snapshot)...")
+    elo_df = compute_elo_series(df)
+    print(f"  Elo series computed: {len(elo_df)} matches")
 
     prior = _load_latest_params()
     if prior is not None:
@@ -128,6 +138,12 @@ def main(since: str | None = None, finals_only: bool = False, all_competitive: b
     snap_dir.mkdir(parents=True, exist_ok=True)
     out_path = snap_dir / f"params_{params.fit_date.strftime('%Y%m%d')}.pkl"
     dixon_coles.save(params, out_path, prior=prior)
+
+    # Save current Elo ratings snapshot for inference (scanner reads this at startup)
+    elo_now = current_ratings(elo_df)
+    elo_path = snap_dir / "current_elo.json"
+    elo_path.write_text(json.dumps(elo_now, indent=2))
+    print(f"Saved Elo snapshot: {elo_path} ({len(elo_now)} teams)")
 
     print(f"Saved: {out_path}")
     print(f"  Teams: {len(params.attack)}")
