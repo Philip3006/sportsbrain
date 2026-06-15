@@ -77,7 +77,7 @@
     .comp-name { font-size: 12px; font-weight: 700; color: var(--text); flex: 1; letter-spacing: .2px; }
     .comp-meta { font-size: 11px; color: var(--muted); }
 
-    .b365-row { display: flex; align-items: center; padding: 8px 12px 8px 16px; border-bottom: 1px solid rgba(48,54,61,.5); gap: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .b365-row { display: flex; align-items: center; padding: 12px 12px 12px 16px; border-bottom: 1px solid rgba(48,54,61,.5); gap: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
     .b365-row:active { background: rgba(255,255,255,.04); }
     .b365-left { flex: 1; min-width: 0; }
     .b365-time { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 3px; display: flex; align-items: center; gap: 5px; }
@@ -88,12 +88,13 @@
     .mkt-header { display: flex; gap: 5px; padding: 5px 12px 5px 0; background: #0d1117; border-bottom: 1px solid rgba(48,54,61,.4); justify-content: flex-end; }
     .mkt-header span { width: 54px; text-align: center; font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .3px; }
     .b365-odds { display: flex; gap: 5px; flex-shrink: 0; align-items: center; }
-    .b365-btn { display: block; background: #1e2733; border: 1px solid rgba(255,255,255,.1); border-radius: 6px; width: 54px; height: 32px; line-height: 32px; text-align: center; font-size: 13px; font-weight: 800; color: var(--text); cursor: pointer; overflow: hidden; padding: 0; font-family: inherit; box-sizing: border-box; }
-    .b365-btn.val { background: rgba(0,200,83,.12); border-color: rgba(0,200,83,.5); color: var(--green); }
+    .b365-btn { display: block; background: #1e2733; border: 1px solid rgba(255,255,255,.18); border-radius: 8px; width: 64px; height: 44px; line-height: 44px; text-align: center; font-size: 15px; font-weight: 800; color: var(--text); cursor: pointer; overflow: hidden; padding: 0; font-family: inherit; box-sizing: border-box; }
+    .b365-btn.val { background: rgba(0,200,83,.16); border-color: rgba(0,200,83,.6); color: var(--green); }
     .b365-btn.no-odds { color: rgba(255,255,255,.18); font-weight: 400; }
     button.b365-btn-click { -webkit-appearance: none; appearance: none; }
-    button.b365-btn-click:active { transform: scale(0.96); }
+    button.b365-btn-click:active { transform: scale(0.94); filter: brightness(1.2); }
     button.b365-btn-click:hover { filter: brightness(1.15); }
+    .b365-odds { gap: 7px !important; }
 
     /* ── Detail view ── */
     .back-bar { display: flex; align-items: center; gap: 6px; padding: 12px 16px 10px; cursor: pointer; color: var(--green); font-size: 15px; font-weight: 600; -webkit-tap-highlight-color: transparent; border-bottom: 1px solid var(--border); }
@@ -891,6 +892,37 @@ function predCard(home, away, tip, odds, nk, kickoff, sport) {
       </div>
     </div>` : '';
 
+  // Direct bet buttons next to 1/X/2 probability bars (same data as Marktübersicht)
+  const barBetBtn = (mktKey, modelP, q) => {
+    if (!q || q <= 1) return '';
+    const ev = (modelP * q - 1) * 100;
+    const isValue = ev >= 3;
+    const src = isValue ? 'value' : 'manual';
+    const stake = isValue ? 10 : 5;
+    const style = isValue
+      ? 'background:rgba(0,200,83,.18);color:var(--green);border:1px solid rgba(0,200,83,.55)'
+      : 'background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--border)';
+    const attrs = [
+      `type="button"`,
+      `data-match="${esc(matchStr)}"`,
+      `data-market="${mktKey}"`,
+      `data-odds="${q}"`,
+      `data-stake="${stake}"`,
+      `data-ev="${ev.toFixed(2)}"`,
+      `data-confidence=""`,
+      `data-kickoff="${esc(koStr)}"`,
+      `data-sport="${esc(spStr)}"`,
+      `data-model-prob="${modelP}"`,
+      `data-source="${src}"`,
+      `onclick="event.stopPropagation();_openBetModalFromBtn(this)"`,
+    ].join(' ');
+    return `<button ${attrs} aria-label="Wette ${mktKey} @ ${q.toFixed(2)}"
+      style="${style};font-size:13px;font-weight:800;padding:6px 12px;border-radius:8px;cursor:pointer;white-space:nowrap;min-width:62px;height:38px;-webkit-appearance:none;appearance:none">${q.toFixed(2)}</button>`;
+  };
+  const homeBtn = barBetBtn('home', tip.p_home, odds.home);
+  const drawBtn = barBetBtn('draw', tip.p_draw, odds.draw);
+  const awayBtn = barBetBtn('away', tip.p_away, odds.away);
+
   return `<div class="pred-card">
     <div class="pred-title">⚡ Modell-Tipp</div>
     <div class="pred-tip">${tipLabel}</div>
@@ -899,16 +931,19 @@ function predCard(home, away, tip, odds, nk, kickoff, sport) {
         <span class="pred-bar-label">1</span>
         <div class="pred-bar-track"><div class="pred-bar-fill win" style="width:${ph}%"></div></div>
         <span class="pred-bar-pct" style="color:var(--green)">${ph}%</span>
+        ${homeBtn}
       </div>
       <div class="pred-bar-row">
         <span class="pred-bar-label">X</span>
         <div class="pred-bar-track"><div class="pred-bar-fill draw" style="width:${pd}%"></div></div>
         <span class="pred-bar-pct" style="color:var(--yellow)">${pd}%</span>
+        ${drawBtn}
       </div>
       <div class="pred-bar-row">
         <span class="pred-bar-label">2</span>
         <div class="pred-bar-track"><div class="pred-bar-fill loss" style="width:${pa}%"></div></div>
         <span class="pred-bar-pct" style="color:var(--muted)">${pa}%</span>
+        ${awayBtn}
       </div>
     </div>
     <div class="pred-xg">
@@ -1582,7 +1617,7 @@ function renderHome() {
   if (free > 5) {
     const slots = Math.max(0, 5 - openCount);
     const nowSug = Date.now();
-    const now48h = nowSug + 48 * 36e5;
+    const now24h = nowSug + 24 * 36e5;
     const openMkSug = new Set((_openBets || []).map(b => {
       const [bh, ba] = (b.match || '').split(' vs ').map(x => x.trim());
       return matchKey(bh, ba);
@@ -1595,7 +1630,7 @@ function renderHome() {
       .filter(s => {
         if (!s.kickoff) return false;
         const ko = new Date(s.kickoff).getTime();
-        return ko > nowSug && ko <= now48h;
+        return ko > nowSug && ko <= now24h;
       })
       .filter(s => {
         const [sh, sa] = (s.match || '').split(' vs ').map(x => x.trim());
