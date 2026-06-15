@@ -372,6 +372,62 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
     return matches
 
 
+def fetch_event_player_props(
+    event_id: str,
+    regions: str = "eu,uk",
+    api_key: str | None = None,
+    force: bool = False,
+    max_age_hours: float = 1.0,
+) -> dict[str, float]:
+    """
+    Fetches anytime goalscorer odds for one event from TheOddsAPI.
+    Returns {player_name: best_odds_across_bookmakers}.
+    Costs 1 API request per call; cached per event_id for 1h to preserve quota.
+    """
+    import pickle
+    import time as _time
+
+    cache_path = DATA_CACHE / f"player_props_{event_id}.pkl"
+    if not force and cache_path.exists():
+        if (_time.time() - cache_path.stat().st_mtime) / 3600 < max_age_hours:
+            with open(cache_path, "rb") as f:
+                return pickle.load(f)
+
+    key = get_api_key(api_key)
+    url = f"{ODDS_API_URL}/sports/soccer_fifa_world_cup/events/{event_id}/odds"
+    params = {
+        "apiKey": key,
+        "regions": regions,
+        "markets": "player_goal_scorer_anytime",
+        "oddsFormat": "decimal",
+    }
+    try:
+        resp = requests.get(url, params=params, timeout=15)
+        resp.raise_for_status()
+    except Exception:
+        return {}
+
+    used = int(resp.headers.get("x-requests-used", 0))
+    remaining = int(resp.headers.get("x-requests-remaining", 0))
+    _log_usage(used, remaining)
+
+    best: dict[str, float] = {}
+    for bm in resp.json().get("bookmakers", []):
+        for market in bm.get("markets", []):
+            if market.get("key") != "player_goal_scorer_anytime":
+                continue
+            for outcome in market.get("outcomes", []):
+                name = (outcome.get("description") or "").strip()
+                price = float(outcome.get("price") or 0)
+                if name and price > 1.0 and price > best.get(name, 0):
+                    best[name] = price
+
+    DATA_CACHE.mkdir(parents=True, exist_ok=True)
+    with open(cache_path, "wb") as f:
+        pickle.dump(best, f)
+    return best
+
+
 @disk_cache("odds_api_scores", max_age_hours=0.5)
 def fetch_wm_scores(
     days_from: int = 3,
