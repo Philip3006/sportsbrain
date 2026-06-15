@@ -96,10 +96,27 @@ def main(
         except Exception as e:
             print(f"  Warning: player xG not available ({e}) — skipping player features")
 
+    print("Loading Fotmob player ratings...")
+    fotmob_ratings_df = None
+    try:
+        import pickle
+        from src.config import DATA_CACHE
+        _fm_path = DATA_CACHE / "fotmob_ratings.pkl"
+        if _fm_path.exists():
+            with open(_fm_path, "rb") as _f:
+                fotmob_ratings_df = pickle.load(_f)
+            print(f"  {len(fotmob_ratings_df)} Fotmob records loaded "
+                  f"({fotmob_ratings_df['team'].nunique()} teams)")
+        else:
+            print("  No Fotmob cache found — run scripts/prefetch_fotmob.py first")
+    except Exception as e:
+        print(f"  Warning: Fotmob ratings not available ({e}) — skipping")
+
     print("Building feature matrix (this may take a few minutes)...")
     X, y = build_training_matrix(matches, all_matches, elo_series, dc_snapshot_map,
                                  odds_lookup=odds_lookup, statsbomb_xg=statsbomb_xg,
-                                 player_xg_df=player_xg_df)
+                                 player_xg_df=player_xg_df,
+                                 fotmob_ratings_df=fotmob_ratings_df)
     print(f"  Features: {X.shape[1]}, Samples: {len(X)}")
 
     # WC2022 ensemble holdout — pulled out before train/val split so the gate is honest.
