@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-15T17:54:02Z",
+  "updated": "2026-06-15T18:20:03Z",
   "schedule": [
     {
       "sport": "football",
@@ -4536,8 +4536,8 @@
     }
   ],
   "portfolio": {
-    "n_bets": 13,
-    "n_open": 2,
+    "n_bets": 14,
+    "n_open": 3,
     "n_won": 3,
     "n_lost": 3,
     "n_void": 5,
@@ -4636,7 +4636,7 @@
   "history": [
     {
       "date": "2026-06-15",
-      "n_bets": 2,
+      "n_bets": 3,
       "pnl": 0.0,
       "roi_pct": 0.0
     },
@@ -4685,14 +4685,27 @@
       "stake": 15.0,
       "match_date": "2026-06-15",
       "model_edge_pct": null
+    },
+    {
+      "match": "Saudi Arabia vs Uruguay",
+      "home": "Saudi Arabia",
+      "away": "Uruguay",
+      "market": "ah+1.5_home",
+      "entry_odds": 1.65,
+      "current_odds": null,
+      "drift_pct": null,
+      "clv_signal": null,
+      "stake": 15.0,
+      "match_date": "2026-06-15",
+      "model_edge_pct": null
     }
   ],
   "bankroll_state": {
     "start": 100.0,
-    "free": 88.08,
-    "staked": 24.42,
-    "exposure_pct": 24.4,
-    "max_win": 46.43,
+    "free": 73.08,
+    "staked": 39.42,
+    "exposure_pct": 39.4,
+    "max_win": 56.18,
     "pnl_closed": 12.5
   },
   "wm_stats": {
@@ -7061,6 +7074,14 @@
       "home_score": 5,
       "away_score": 1,
       "commence_time": "2026-06-15T02:00:00Z"
+    },
+    {
+      "match_id": "c54f00b11925751d2b62988775c6c239",
+      "home": "Spain",
+      "away": "Cape Verde",
+      "home_score": 0,
+      "away_score": 0,
+      "commence_time": "2026-06-15T16:01:00Z"
     }
   ]
 }
