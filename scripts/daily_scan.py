@@ -245,26 +245,24 @@ if __name__ == "__main__":
 
         def _match_player(sb_name: str, eligible: dict) -> str | None:
             """
-            Match a StatsBomb full name to a squad name using three-tier priority:
-            1. Last name of squad player (≥4 chars) found in StatsBomb name
-            2. Any long token (≥6 chars) shared between both names
-            3. All short tokens (≥3 chars) of squad name appear in StatsBomb name
+            Match a StatsBomb full name to a squad name using two-tier priority:
+            1. Last name (≥4 chars) in StatsBomb tokens, PLUS first name if ≥4 chars also matches
+               → prevents same-surname false positives (e.g. Moteb Al-Harbi ≠ Fahad Al-Harbi)
+            2. All squad tokens (≥3 chars) appear in StatsBomb name (handles short last names)
             Returns squad name on match, None otherwise.
             """
             sb_parts = _asciify(sb_name)
             sb_set = set(sb_parts)
             for sq_name, sq_parts in eligible.items():
-                # 1. Last name match (most reliable — surname is rightmost token)
-                if sq_parts and len(sq_parts[-1]) >= 4 and sq_parts[-1] in sb_set:
-                    return sq_name
-                # 2. Any long shared token (handles compound surnames)
-                sq_long = {t for t in sq_parts if len(t) >= 6}
-                sb_long = {t for t in sb_parts if len(t) >= 6}
-                if sq_long & sb_long:
-                    return sq_name
-                # 3. All squad short tokens appear in StatsBomb name (short names e.g. Korean)
+                last = sq_parts[-1] if sq_parts else ""
+                first = sq_parts[0] if len(sq_parts) >= 2 else ""
+                # 1. Last name match (most reliable) — also require first name if it's long enough
+                if last and len(last) >= 4 and last in sb_set:
+                    if not first or len(first) < 4 or first in sb_set:
+                        return sq_name
+                # 2. All squad tokens (≥3 chars) appear in StatsBomb name (e.g. Korean names, short surnames)
                 sq_short = {t for t in sq_parts if len(t) >= 3}
-                if sq_short and sq_short <= sb_set:
+                if len(sq_short) >= 2 and sq_short <= sb_set:
                     return sq_name
             return None
 
@@ -276,19 +274,19 @@ if __name__ == "__main__":
             sq_info = _squads_data.get(team, {})
             sq_players = sq_info.get("players", [])
             if not sq_players:
-                return [{"name": p["player"], "p": p["p_score"]} for p in preds]
+                return [{"name": p["player"], "p": round(p["p_score"], 3)} for p in preds]
             eligible = {
                 p["name"]: _asciify(p["name"])
                 for p in sq_players
                 if p.get("status") not in ("injured", "out")
                 and p.get("pos") != "GK"
             }
-            result = []
+            seen: dict[str, float] = {}
             for pred in preds:
                 sq_name = _match_player(pred["player"], eligible)
-                if sq_name:
-                    result.append({"name": sq_name, "p": round(pred["p_score"], 3)})
-            return result
+                if sq_name and sq_name not in seen:
+                    seen[sq_name] = round(pred["p_score"], 3)
+            return [{"name": n, "p": p} for n, p in seen.items()]
 
         import pandas as _pd_tip
         _now_ts = _pd_tip.Timestamp.now()
