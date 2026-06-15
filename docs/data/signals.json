@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-15T09:05:11Z",
+  "updated": "2026-06-15T12:47:24Z",
   "schedule": [
     {
       "sport": "football",
@@ -508,30 +508,32 @@
       "ah-1.5_away": 1.28
     },
     "Spain vs Cape Verde": {
-      "home": 1.08,
-      "draw": 13.5,
-      "away": 34.0,
-      "over25": 1.35,
-      "under25": 3.25,
+      "home": 1.09,
+      "draw": 16.0,
+      "away": 42.0,
+      "over25": 1.32,
+      "under25": 3.45,
       "over15": 0.0,
       "under15": 0.0,
-      "over35": 2.0,
-      "under35": 1.97,
+      "over35": 1.91,
+      "under35": 2.08,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over40": 2.4,
-      "under40": 1.59,
-      "ah-2.75_home": 2.0,
-      "ah-2.75_away": 1.97,
-      "ah-2.5_home": 1.8,
-      "ah-2.5_away": 2.2
+      "over40": 2.35,
+      "under40": 1.61,
+      "ah-2.75_home": 1.94,
+      "ah-2.75_away": 2.0,
+      "ah-3.0_home": 2.05,
+      "ah-3.0_away": 1.75,
+      "ah-2.5_home": 1.76,
+      "ah-2.5_away": 2.28
     },
     "Belgium vs Egypt": {
-      "home": 1.61,
-      "draw": 4.12,
-      "away": 6.21,
-      "over25": 2.03,
-      "under25": 1.96,
+      "home": 1.64,
+      "draw": 4.2,
+      "away": 6.4,
+      "over25": 2.04,
+      "under25": 1.95,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
@@ -540,61 +542,61 @@
       "btts_no": 0.0,
       "over30": 2.8,
       "under30": 1.47,
-      "ah-1.0_home": 2.12,
-      "ah-1.0_away": 1.88,
-      "ah-0.5_home": 1.61,
-      "ah-0.5_away": 2.29,
-      "ah-1.5_home": 2.7,
-      "ah-1.5_away": 1.49
+      "ah-1.0_home": 2.1,
+      "ah-1.0_away": 1.87,
+      "ah-0.5_home": 1.59,
+      "ah-0.5_away": 2.32,
+      "ah-1.5_home": 2.72,
+      "ah-1.5_away": 1.5
     },
     "Saudi Arabia vs Uruguay": {
-      "home": 8.42,
-      "draw": 4.42,
-      "away": 1.47,
-      "over25": 2.15,
-      "under25": 1.81,
+      "home": 9.0,
+      "draw": 4.5,
+      "away": 1.49,
+      "over25": 2.14,
+      "under25": 1.8,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over225": 1.86,
-      "under225": 2.05,
+      "over225": 1.88,
+      "under225": 2.03,
       "over30": 2.95,
       "under30": 1.41,
-      "ah1.25_home": 1.87,
-      "ah1.25_away": 2.1,
-      "ah1.0_home": 2.12,
+      "ah1.25_home": 1.85,
+      "ah1.25_away": 2.11,
+      "ah1.0_home": 2.14,
       "ah1.0_away": 1.83,
-      "ah1.5_home": 1.61,
-      "ah1.5_away": 2.35
+      "ah1.5_home": 1.62,
+      "ah1.5_away": 2.39
     },
     "Iran vs New Zealand": {
       "home": 1.95,
-      "draw": 3.4,
-      "away": 4.63,
-      "over25": 2.55,
-      "under25": 1.57,
+      "draw": 3.5,
+      "away": 4.9,
+      "over25": 2.5,
+      "under25": 1.58,
       "over15": 1.48,
       "under15": 2.75,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over20": 1.88,
-      "under20": 2.05,
-      "ah-0.5_home": 1.98,
-      "ah-0.5_away": 2.0,
-      "ah0.0_home": 1.36,
-      "ah0.0_away": 3.21,
-      "ah-1.5_home": 3.85,
-      "ah-1.5_away": 1.25
+      "over20": 1.85,
+      "under20": 2.06,
+      "ah-0.5_home": 1.95,
+      "ah-0.5_away": 2.04,
+      "ah0.0_home": 1.34,
+      "ah0.0_away": 3.44,
+      "ah-1.5_home": 3.6,
+      "ah-1.5_away": 1.28
     },
     "France vs Senegal": {
       "home": 1.51,
       "draw": 4.65,
-      "away": 8.5,
+      "away": 8.2,
       "over25": 1.99,
       "under25": 1.99,
       "over15": 0.0,
@@ -605,33 +607,35 @@
       "btts_no": 0.0,
       "over30": 2.7,
       "under30": 1.5,
-      "ah-1.0_home": 1.85,
-      "ah-1.0_away": 2.12,
-      "ah-1.5_home": 2.37,
-      "ah-1.5_away": 1.6
+      "ah-1.25_home": 2.13,
+      "ah-1.25_away": 1.81,
+      "ah-1.0_home": 1.84,
+      "ah-1.0_away": 2.14,
+      "ah-1.5_home": 2.39,
+      "ah-1.5_away": 1.62
     },
     "Iraq vs Norway": {
-      "home": 19.0,
+      "home": 18.5,
       "draw": 8.2,
       "away": 1.2,
       "over25": 1.61,
-      "under25": 2.42,
+      "under25": 2.45,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 2.45,
       "under35": 1.61,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over30": 1.99,
-      "under30": 1.98,
-      "ah2.0_home": 1.91,
-      "ah2.0_away": 2.06,
-      "ah1.5_home": 2.37,
+      "over30": 1.98,
+      "under30": 1.93,
+      "ah2.0_home": 1.93,
+      "ah2.0_away": 2.04,
+      "ah1.5_home": 2.4,
       "ah1.5_away": 1.62
     },
     "Argentina vs Algeria": {
-      "home": 1.43,
-      "draw": 5.0,
+      "home": 1.44,
+      "draw": 4.9,
       "away": 10.0,
       "over25": 2.06,
       "under25": 1.92,
@@ -643,15 +647,15 @@
       "btts_no": 0.0,
       "over30": 2.75,
       "under30": 1.48,
-      "ah-1.25_home": 2.0,
-      "ah-1.25_away": 1.97,
+      "ah-1.25_home": 1.98,
+      "ah-1.25_away": 1.98,
       "ah-1.5_home": 2.21,
       "ah-1.5_away": 1.73
     },
     "Austria vs Jordan": {
       "home": 1.37,
       "draw": 5.8,
-      "away": 10.0,
+      "away": 10.5,
       "over25": 1.71,
       "under25": 2.3,
       "over15": 0.0,
@@ -662,16 +666,16 @@
       "btts_no": 0.0,
       "over275": 1.9,
       "under275": 1.99,
-      "over30": 2.2,
+      "over30": 2.17,
       "under30": 1.77,
       "ah-1.5_home": 2.04,
-      "ah-1.5_away": 1.92
+      "ah-1.5_away": 1.91
     },
     "Portugal vs DR Congo": {
-      "home": 1.32,
+      "home": 1.33,
       "draw": 6.0,
       "away": 12.5,
-      "over25": 1.73,
+      "over25": 1.74,
       "under25": 2.21,
       "over15": 0.0,
       "under15": 0.0,
@@ -681,8 +685,8 @@
       "btts_no": 0.0,
       "over275": 1.91,
       "under275": 1.98,
-      "over30": 2.24,
-      "under30": 1.75,
+      "over30": 2.2,
+      "under30": 1.72,
       "ah-1.5_home": 1.91,
       "ah-1.5_away": 2.06
     },
@@ -690,7 +694,7 @@
       "home": 1.78,
       "draw": 3.95,
       "away": 5.5,
-      "over25": 2.23,
+      "over25": 2.21,
       "under25": 1.76,
       "over15": 0.0,
       "under15": 0.0,
@@ -708,11 +712,11 @@
       "ah-1.0_away": 1.65,
       "ah-0.5_home": 1.71,
       "ah-0.5_away": 2.2,
-      "ah-1.5_home": 3.13,
+      "ah-1.5_home": 3.24,
       "ah-1.5_away": 1.37
     },
     "Ghana vs Panama": {
-      "home": 2.28,
+      "home": 2.26,
       "draw": 3.55,
       "away": 3.6,
       "over25": 2.4,
@@ -723,25 +727,27 @@
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over225": 2.04,
+      "over225": 2.05,
       "under225": 1.85,
       "over20": 1.73,
       "under20": 2.23,
-      "ah-0.25_home": 1.95,
-      "ah-0.25_away": 2.02,
+      "ah-0.25_home": 1.94,
+      "ah-0.25_away": 2.04,
       "ah-0.5_home": 2.2,
       "ah-0.5_away": 1.74,
-      "ah0.0_home": 1.56,
-      "ah0.0_away": 2.47,
-      "ah-1.5_home": 4.35,
-      "ah-1.5_away": 1.19
+      "ah0.5_home": 1.34,
+      "ah0.5_away": 3.18,
+      "ah0.0_home": 1.57,
+      "ah0.0_away": 2.49,
+      "ah-1.5_home": 4.25,
+      "ah-1.5_away": 1.2
     },
     "Uzbekistan vs Colombia": {
       "home": 10.5,
       "draw": 5.0,
       "away": 1.42,
       "over25": 2.02,
-      "under25": 1.96,
+      "under25": 1.95,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
@@ -754,14 +760,14 @@
       "ah1.25_away": 1.93,
       "ah1.0_home": 2.39,
       "ah1.0_away": 1.63,
-      "ah1.5_home": 1.72,
+      "ah1.5_home": 1.74,
       "ah1.5_away": 2.2
     },
     "Czech Republic vs South Africa": {
-      "home": 1.82,
-      "draw": 3.9,
-      "away": 4.9,
-      "over25": 2.17,
+      "home": 1.83,
+      "draw": 3.94,
+      "away": 5.0,
+      "over25": 2.16,
       "under25": 1.8,
       "over15": 0.0,
       "under15": 0.0,
@@ -769,14 +775,14 @@
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over225": 1.85,
+      "over225": 1.84,
       "under225": 2.05,
       "over30": 3.0,
       "under30": 1.38,
       "ah-0.5_home": 1.77,
       "ah-0.5_away": 2.14,
-      "ah-1.5_home": 3.19,
-      "ah-1.5_away": 1.36,
+      "ah-1.5_home": 3.37,
+      "ah-1.5_away": 1.35,
       "ah-0.75_home": 2.06,
       "ah-0.75_away": 1.9
     },
@@ -784,7 +790,7 @@
       "home": 1.62,
       "draw": 4.3,
       "away": 6.6,
-      "over25": 2.12,
+      "over25": 2.15,
       "under25": 1.8,
       "over15": 0.0,
       "under15": 0.0,
@@ -798,16 +804,16 @@
       "under20": 2.5,
       "ah-0.5_home": 1.58,
       "ah-0.5_away": 2.34,
-      "ah-1.5_home": 2.69,
-      "ah-1.5_away": 1.48,
+      "ah-1.5_home": 2.72,
+      "ah-1.5_away": 1.5,
       "ah-1.0_home": 2.05,
-      "ah-1.0_away": 1.9
+      "ah-1.0_away": 1.91
     },
     "Canada vs Qatar": {
       "home": 1.31,
       "draw": 6.25,
       "away": 14.0,
-      "over25": 1.84,
+      "over25": 1.83,
       "under25": 2.14,
       "over15": 0.0,
       "under15": 0.0,
@@ -815,7 +821,7 @@
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over275": 2.03,
+      "over275": 2.02,
       "under275": 1.87,
       "over20": 1.37,
       "under20": 3.1,
@@ -823,9 +829,9 @@
       "ah-1.5_away": 2.04
     },
     "Mexico vs South Korea": {
-      "home": 2.03,
+      "home": 2.04,
       "draw": 3.5,
-      "away": 4.4,
+      "away": 4.3,
       "over25": 2.45,
       "under25": 1.62,
       "over15": 1.48,
@@ -836,19 +842,19 @@
       "btts_no": 0.0,
       "over20": 1.86,
       "under20": 2.1,
-      "ah-0.5_home": 2.02,
-      "ah-0.5_away": 1.95,
+      "ah-0.5_home": 2.04,
+      "ah-0.5_away": 1.94,
       "ah0.0_home": 1.43,
-      "ah0.0_away": 2.87,
+      "ah0.0_away": 2.96,
       "ah-1.5_home": 3.85,
       "ah-1.5_away": 1.22
     },
     "USA vs Australia": {
       "home": 1.65,
-      "draw": 4.4,
+      "draw": 4.5,
       "away": 6.0,
       "over25": 2.04,
-      "under25": 1.94,
+      "under25": 1.93,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
@@ -857,9 +863,9 @@
       "btts_no": 0.0,
       "ah-0.5_home": 1.61,
       "ah-0.5_away": 2.27,
-      "ah-1.5_home": 2.81,
-      "ah-1.5_away": 1.45,
-      "ah-0.75_home": 1.85,
+      "ah-1.5_home": 2.8,
+      "ah-1.5_away": 1.47,
+      "ah-0.75_home": 1.83,
       "ah-0.75_away": 2.16,
       "ah-1.0_home": 2.04,
       "ah-1.0_away": 1.83
@@ -869,7 +875,7 @@
       "draw": 3.8,
       "away": 1.82,
       "over25": 2.3,
-      "under25": 1.74,
+      "under25": 1.73,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
@@ -883,28 +889,28 @@
       "ah0.5_home": 2.18,
       "ah0.5_away": 1.75,
       "ah1.5_home": 1.35,
-      "ah1.5_away": 3.46,
+      "ah1.5_away": 3.6,
       "ah0.75_home": 1.94,
       "ah0.75_away": 2.03
     },
     "Brazil vs Haiti": {
       "home": 1.13,
       "draw": 13.0,
-      "away": 29.0,
-      "over25": 1.36,
+      "away": 28.0,
+      "over25": 1.37,
       "under25": 3.2,
       "over15": 0.0,
       "under15": 0.0,
-      "over35": 2.0,
+      "over35": 1.95,
       "under35": 2.02,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "ah-2.5_home": 2.02,
-      "ah-2.5_away": 1.92
+      "ah-2.5_home": 2.0,
+      "ah-2.5_away": 1.94
     },
     "Turkey vs Paraguay": {
       "home": 2.12,
-      "draw": 3.45,
+      "draw": 3.5,
       "away": 4.2,
       "over25": 2.25,
       "under25": 1.82,
@@ -915,18 +921,18 @@
       "btts_yes": 0.0,
       "btts_no": 0.0,
       "over225": 1.88,
-      "under225": 2.02,
+      "under225": 2.05,
       "ah-0.5_home": 2.1,
-      "ah-0.5_away": 1.88,
-      "ah0.0_home": 1.46,
-      "ah0.0_away": 2.77,
+      "ah-0.5_away": 1.89,
+      "ah0.0_home": 1.47,
+      "ah0.0_away": 2.8,
       "ah-1.5_home": 4.0,
       "ah-1.5_away": 1.22
     },
     "Netherlands vs Sweden": {
       "home": 1.73,
-      "draw": 4.1,
-      "away": 5.3,
+      "draw": 4.2,
+      "away": 5.33,
       "over25": 2.0,
       "under25": 2.04,
       "over15": 0.0,
@@ -938,11 +944,11 @@
       "ah-0.5_home": 1.67,
       "ah-0.5_away": 2.17,
       "ah-1.5_home": 2.9,
-      "ah-1.5_away": 1.44,
+      "ah-1.5_away": 1.45,
       "ah-1.0_home": 2.17,
       "ah-1.0_away": 1.75,
       "ah-0.75_home": 1.93,
-      "ah-0.75_away": 2.02
+      "ah-0.75_away": 2.04
     },
     "Germany vs Ivory Coast": {
       "home": 1.59,
@@ -956,40 +962,38 @@
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over275": 1.96,
+      "over275": 1.95,
       "under275": 1.93,
-      "ah-0.5_home": 1.56,
-      "ah-0.5_away": 2.38,
-      "ah-1.5_home": 2.49,
-      "ah-1.5_away": 1.55,
-      "ah-1.0_home": 1.95,
+      "ah-1.5_home": 2.52,
+      "ah-1.5_away": 1.56,
+      "ah-1.0_home": 1.96,
       "ah-1.0_away": 2.0
     },
     "Ecuador vs Curaçao": {
       "home": 1.15,
       "draw": 12.0,
-      "away": 32.0,
+      "away": 35.0,
       "over25": 1.53,
       "under25": 2.62,
       "over15": 0.0,
       "under15": 0.0,
-      "over35": 2.25,
-      "under35": 1.74,
+      "over35": 2.3,
+      "under35": 1.71,
       "btts_yes": 0.0,
       "btts_no": 0.0,
       "over30": 1.8,
       "under30": 2.09,
       "over325": 1.95,
-      "under325": 1.88,
-      "ah-2.5_home": 2.04,
-      "ah-2.5_away": 1.88
+      "under325": 1.87,
+      "ah-2.5_home": 2.06,
+      "ah-2.5_away": 1.89
     },
     "Tunisia vs Japan": {
       "home": 7.8,
-      "draw": 4.21,
+      "draw": 4.3,
       "away": 1.61,
-      "over25": 2.2,
-      "under25": 1.8,
+      "over25": 2.18,
+      "under25": 1.79,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
@@ -998,23 +1002,23 @@
       "btts_no": 0.0,
       "over225": 1.88,
       "under225": 2.01,
-      "ah0.5_home": 2.47,
-      "ah0.5_away": 1.53,
-      "ah1.5_home": 1.52,
-      "ah1.5_away": 2.58,
-      "ah1.0_home": 1.97,
-      "ah1.0_away": 2.0
+      "ah0.5_home": 2.5,
+      "ah0.5_away": 1.51,
+      "ah1.5_home": 1.54,
+      "ah1.5_away": 2.57,
+      "ah1.0_home": 1.99,
+      "ah1.0_away": 1.99
     },
     "Spain vs Saudi Arabia": {
-      "home": 1.13,
-      "draw": 12.5,
+      "home": 1.12,
+      "draw": 13.5,
       "away": 34.0,
       "over25": 1.44,
       "under25": 2.5,
       "over15": 0.0,
       "under15": 0.0,
-      "over35": 2.25,
-      "under35": 1.67,
+      "over35": 2.28,
+      "under35": 1.7,
       "btts_yes": 0.0,
       "btts_no": 0.0,
       "over30": 1.78,
@@ -1022,13 +1026,32 @@
       "over325": 1.98,
       "under325": 1.85,
       "ah-2.5_home": 2.06,
-      "ah-2.5_away": 1.87
+      "ah-2.5_away": 1.9
     },
     "Belgium vs Iran": {
-      "home": 1.43,
-      "draw": 5.2,
-      "away": 9.0,
+      "home": 1.44,
+      "draw": 5.25,
+      "away": 9.5,
       "over25": 1.92,
+      "under25": 2.04,
+      "over15": 0.0,
+      "under15": 0.0,
+      "over35": 0.0,
+      "under35": 0.0,
+      "btts_yes": 0.0,
+      "btts_no": 0.0,
+      "ah-1.25_home": 1.98,
+      "ah-1.25_away": 1.98,
+      "ah-1.5_home": 2.23,
+      "ah-1.5_away": 1.73,
+      "ah-1.0_home": 1.65,
+      "ah-1.0_away": 2.15
+    },
+    "Uruguay vs Cape Verde": {
+      "home": 1.49,
+      "draw": 4.8,
+      "away": 8.5,
+      "over25": 1.97,
       "under25": 2.0,
       "over15": 0.0,
       "under15": 0.0,
@@ -1036,31 +1059,12 @@
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "ah-1.25_home": 1.97,
-      "ah-1.25_away": 1.98,
-      "ah-1.5_home": 2.23,
-      "ah-1.5_away": 1.71,
-      "ah-1.0_home": 1.65,
-      "ah-1.0_away": 2.15
-    },
-    "Uruguay vs Cape Verde": {
-      "home": 1.47,
-      "draw": 4.8,
-      "away": 8.5,
-      "over25": 1.97,
-      "under25": 1.96,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "ah-1.5_home": 2.29,
-      "ah-1.5_away": 1.64,
+      "ah-1.5_home": 2.31,
+      "ah-1.5_away": 1.66,
       "ah-1.0_home": 1.75,
       "ah-1.0_away": 2.18,
       "ah-1.25_home": 2.08,
-      "ah-1.25_away": 1.83
+      "ah-1.25_away": 1.86
     },
     "New Zealand vs Egypt": {
       "home": 5.4,
@@ -1081,9 +1085,9 @@
       "ah0.5_home": 2.14,
       "ah0.5_away": 1.77,
       "ah1.5_home": 1.36,
-      "ah1.5_away": 3.2,
-      "ah0.75_home": 1.87,
-      "ah0.75_away": 2.04
+      "ah1.5_away": 3.31,
+      "ah0.75_home": 1.88,
+      "ah0.75_away": 2.02
     },
     "Argentina vs Austria": {
       "home": 1.7,
@@ -1097,46 +1101,46 @@
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "ah-0.5_home": 1.61,
-      "ah-0.5_away": 2.29,
-      "ah-1.5_home": 2.77,
-      "ah-1.5_away": 1.46,
+      "ah-0.5_home": 1.6,
+      "ah-0.5_away": 2.31,
+      "ah-1.5_home": 2.8,
+      "ah-1.5_away": 1.47,
       "ah-1.0_home": 2.17,
       "ah-1.0_away": 1.8
     },
     "France vs Iraq": {
-      "home": 1.14,
+      "home": 1.13,
       "draw": 11.0,
-      "away": 33.0,
+      "away": 36.0,
       "over25": 1.44,
       "under25": 2.5,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 2.25,
-      "under35": 1.68,
+      "under35": 1.7,
       "btts_yes": 0.0,
       "btts_no": 0.0,
       "over30": 1.81,
       "under30": 2.08,
-      "over325": 2.02,
-      "under325": 1.82,
+      "over325": 2.0,
+      "under325": 1.83,
       "ah-2.5_home": 2.08,
-      "ah-2.5_away": 1.82
+      "ah-2.5_away": 1.83
     },
     "Norway vs Senegal": {
-      "home": 2.26,
+      "home": 2.22,
       "draw": 3.6,
       "away": 3.51,
       "over25": 1.99,
-      "under25": 1.88,
+      "under25": 1.9,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "ah0.0_home": 1.57,
-      "ah0.0_away": 2.44,
+      "ah0.0_home": 1.59,
+      "ah0.0_away": 2.46,
       "ah-0.5_home": 2.22,
       "ah-0.5_away": 1.75,
       "ah-0.25_home": 1.8,
@@ -1156,7 +1160,7 @@
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "ah1.5_home": 1.57,
+      "ah1.5_home": 1.59,
       "ah1.5_away": 2.5,
       "ah1.0_home": 2.05,
       "ah1.0_away": 1.87
@@ -1164,9 +1168,9 @@
     "Portugal vs Uzbekistan": {
       "home": 1.28,
       "draw": 7.0,
-      "away": 14.2,
+      "away": 14.7,
       "over25": 1.6,
-      "under25": 2.4,
+      "under25": 2.43,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
@@ -1176,14 +1180,14 @@
       "over30": 2.08,
       "under30": 1.87,
       "ah-1.5_home": 1.8,
-      "ah-1.5_away": 2.1,
+      "ah-1.5_away": 2.11,
       "ah-1.75_home": 1.95,
       "ah-1.75_away": 1.87
     },
     "England vs Ghana": {
       "home": 1.36,
-      "draw": 5.9,
-      "away": 11.1,
+      "draw": 6.2,
+      "away": 11.3,
       "over25": 1.81,
       "under25": 2.28,
       "over15": 0.0,
@@ -1194,11 +1198,11 @@
       "btts_no": 0.0,
       "over275": 1.89,
       "under275": 1.93,
-      "ah-1.5_home": 1.93,
+      "ah-1.5_home": 1.95,
       "ah-1.5_away": 1.98
     },
     "Panama vs Croatia": {
-      "home": 7.21,
+      "home": 7.29,
       "draw": 4.2,
       "away": 1.59,
       "over25": 2.06,
@@ -1213,8 +1217,8 @@
       "under225": 2.02,
       "ah0.5_home": 2.45,
       "ah0.5_away": 1.53,
-      "ah1.5_home": 1.52,
-      "ah1.5_away": 2.57,
+      "ah1.5_home": 1.54,
+      "ah1.5_away": 2.6,
       "ah1.0_home": 1.89,
       "ah1.0_away": 2.01
     },
@@ -1232,18 +1236,18 @@
       "btts_no": 0.0,
       "over225": 1.89,
       "under225": 1.93,
-      "ah-1.5_home": 2.44,
-      "ah-1.5_away": 1.57,
+      "ah-1.5_home": 2.46,
+      "ah-1.5_away": 1.59,
       "ah-1.0_home": 1.8,
       "ah-1.0_away": 2.1,
       "ah-1.25_home": 2.05,
       "ah-1.25_away": 1.8
     },
     "Bosnia & Herzegovina vs Qatar": {
-      "home": 1.6,
-      "draw": 4.3,
+      "home": 1.61,
+      "draw": 4.4,
       "away": 7.0,
-      "over25": 2.05,
+      "over25": 2.07,
       "under25": 1.85,
       "over15": 0.0,
       "under15": 0.0,
@@ -1253,19 +1257,19 @@
       "btts_no": 0.0,
       "over225": 1.82,
       "under225": 2.02,
-      "ah-1.5_home": 2.6,
-      "ah-1.5_away": 1.51,
+      "ah-1.5_home": 2.63,
+      "ah-1.5_away": 1.52,
       "ah-0.5_home": 1.55,
       "ah-0.5_away": 2.4,
       "ah-1.0_home": 2.08,
       "ah-1.0_away": 1.87
     },
     "Switzerland vs Canada": {
-      "home": 2.22,
-      "draw": 3.47,
+      "home": 2.26,
+      "draw": 3.5,
       "away": 3.65,
       "over25": 2.14,
-      "under25": 1.75,
+      "under25": 1.76,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
@@ -1274,8 +1278,8 @@
       "btts_no": 0.0,
       "over225": 1.87,
       "under225": 1.99,
-      "ah0.0_home": 1.54,
-      "ah0.0_away": 2.52,
+      "ah0.0_home": 1.55,
+      "ah0.0_away": 2.54,
       "ah-0.5_home": 2.1,
       "ah-0.5_away": 1.73,
       "ah-0.25_home": 1.83,
@@ -1288,15 +1292,15 @@
       "draw": 5.5,
       "away": 1.48,
       "over25": 1.9,
-      "under25": 2.0,
+      "under25": 2.02,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "ah1.5_home": 1.65,
-      "ah1.5_away": 2.29,
+      "ah1.5_home": 1.66,
+      "ah1.5_away": 2.31,
       "ah1.25_home": 1.87,
       "ah1.25_away": 1.95,
       "ah1.0_home": 2.23,
@@ -1305,27 +1309,27 @@
     "Morocco vs Haiti": {
       "home": 1.36,
       "draw": 6.0,
-      "away": 11.9,
-      "over25": 1.72,
-      "under25": 2.29,
+      "away": 12.9,
+      "over25": 1.67,
+      "under25": 2.38,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
+      "over30": 2.02,
+      "under30": 1.82,
       "over275": 1.83,
       "under275": 2.04,
-      "over30": 2.0,
-      "under30": 1.72,
       "ah-1.5_home": 1.93,
-      "ah-1.5_away": 2.0
+      "ah-1.5_away": 2.1
     },
     "Czech Republic vs Mexico": {
       "home": 5.0,
-      "draw": 3.65,
+      "draw": 3.67,
       "away": 1.9,
-      "over25": 2.14,
+      "over25": 2.16,
       "under25": 1.76,
       "over15": 0.0,
       "under15": 0.0,
@@ -1341,14 +1345,14 @@
       "ah0.75_away": 2.05,
       "ah1.5_home": 1.3,
       "ah1.5_away": 3.3,
-      "ah0.0_home": 3.27,
-      "ah0.0_away": 1.35
+      "ah0.0_home": 3.31,
+      "ah0.0_away": 1.36
     },
     "South Africa vs South Korea": {
       "home": 6.25,
       "draw": 4.5,
-      "away": 1.65,
-      "over25": 2.05,
+      "away": 1.66,
+      "over25": 2.06,
       "under25": 1.88,
       "over15": 0.0,
       "under15": 0.0,
@@ -1364,34 +1368,34 @@
       "ah0.75_away": 1.78,
       "ah1.0_home": 1.75,
       "ah1.0_away": 2.0,
-      "ah1.5_home": 1.47,
-      "ah1.5_away": 2.75
+      "ah1.5_home": 1.48,
+      "ah1.5_away": 2.76
     },
     "Curaçao vs Ivory Coast": {
-      "home": 21.0,
-      "draw": 8.0,
-      "away": 1.19,
+      "home": 23.0,
+      "draw": 8.2,
+      "away": 1.2,
       "over25": 1.51,
       "under25": 2.6,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 2.28,
-      "under35": 1.66,
+      "under35": 1.68,
       "btts_yes": 0.0,
       "btts_no": 0.0,
       "over325": 2.0,
       "under325": 1.83,
       "over30": 1.78,
       "under30": 2.14,
-      "ah2.5_home": 1.66,
-      "ah2.5_away": 2.26,
+      "ah2.5_home": 1.67,
+      "ah2.5_away": 2.28,
       "ah2.0_home": 2.02,
       "ah2.0_away": 1.85
     },
     "Ecuador vs Germany": {
       "home": 5.1,
-      "draw": 4.1,
-      "away": 1.79,
+      "draw": 4.04,
+      "away": 1.82,
       "over25": 1.96,
       "under25": 1.93,
       "over15": 0.0,
@@ -1401,11 +1405,11 @@
       "btts_yes": 0.0,
       "btts_no": 0.0,
       "ah0.5_home": 2.13,
-      "ah0.5_away": 1.7,
+      "ah0.5_away": 1.75,
       "ah0.75_home": 1.96,
       "ah0.75_away": 2.0,
       "ah1.5_home": 1.4,
-      "ah1.5_away": 3.02
+      "ah1.5_away": 3.12
     },
     "Japan vs Sweden": {
       "home": 2.2,
@@ -1429,11 +1433,11 @@
       "ah-1.5_away": 1.22
     },
     "Tunisia vs Netherlands": {
-      "home": 9.7,
-      "draw": 5.5,
+      "home": 9.5,
+      "draw": 5.6,
       "away": 1.37,
       "over25": 1.77,
-      "under25": 2.25,
+      "under25": 2.23,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
@@ -1450,7 +1454,7 @@
     "Paraguay vs Australia": {
       "home": 2.23,
       "draw": 3.4,
-      "away": 3.65,
+      "away": 3.6,
       "over25": 2.28,
       "under25": 1.65,
       "over15": 0.0,
@@ -1471,10 +1475,10 @@
       "ah-1.5_away": 1.19
     },
     "Turkey vs USA": {
-      "home": 2.9,
-      "draw": 3.9,
+      "home": 2.85,
+      "draw": 3.85,
       "away": 2.55,
-      "over25": 1.87,
+      "over25": 1.88,
       "under25": 2.04,
       "over15": 0.0,
       "under15": 0.0,
@@ -1484,10 +1488,10 @@
       "btts_no": 0.0,
       "ah0.5_home": 1.57,
       "ah0.5_away": 2.37,
-      "ah0.0_home": 2.1,
+      "ah0.0_home": 2.09,
       "ah0.0_away": 1.8,
-      "ah1.5_home": 1.17,
-      "ah1.5_away": 4.6
+      "ah1.5_home": 1.16,
+      "ah1.5_away": 4.75
     },
     "Norway vs France": {
       "home": 4.5,
@@ -1528,8 +1532,8 @@
     "Cape Verde vs Saudi Arabia": {
       "home": 2.56,
       "draw": 4.0,
-      "away": 2.86,
-      "over25": 2.18,
+      "away": 2.9,
+      "over25": 2.16,
       "under25": 1.76,
       "over15": 0.0,
       "under15": 0.0,
@@ -1584,7 +1588,7 @@
       "over30": 2.07,
       "under30": 1.68,
       "ah1.5_home": 1.95,
-      "ah1.5_away": 1.91
+      "ah1.5_away": 1.95
     },
     "Egypt vs Iran": {
       "home": 2.3,
@@ -1602,7 +1606,7 @@
       "under20": 1.89,
       "ah-0.5_home": 2.22,
       "ah-0.5_away": 1.65,
-      "ah-0.25_home": 1.89,
+      "ah-0.25_home": 1.87,
       "ah-0.25_away": 1.99,
       "ah-1.5_home": 4.6,
       "ah-1.5_away": 1.17
@@ -1665,12 +1669,12 @@
       "btts_no": 0.0,
       "over225": 1.87,
       "under225": 1.99,
-      "ah0.5_home": 1.75,
-      "ah0.5_away": 2.1,
+      "ah0.5_home": 1.71,
+      "ah0.5_away": 2.15,
       "ah0.25_home": 2.02,
       "ah0.25_away": 1.87,
-      "ah1.5_home": 1.22,
-      "ah1.5_away": 4.0
+      "ah1.5_home": 1.2,
+      "ah1.5_away": 4.2
     },
     "DR Congo vs Uzbekistan": {
       "home": 2.4,
@@ -1688,14 +1692,12 @@
       "under225": 1.85,
       "over20": 1.64,
       "under20": 2.12,
-      "ah0.5_home": 1.38,
-      "ah0.5_away": 3.0,
+      "ah-0.5_home": 2.26,
+      "ah-0.5_away": 1.62,
       "ah-0.25_home": 2.04,
       "ah-0.25_away": 1.83,
       "ah0.0_home": 1.63,
       "ah0.0_away": 2.15,
-      "ah-0.5_home": 2.25,
-      "ah-0.5_away": 1.62,
       "ah-1.5_home": 4.6,
       "ah-1.5_away": 1.17
     },
@@ -1713,10 +1715,12 @@
       "btts_no": 0.0,
       "over225": 1.93,
       "under225": 2.0,
-      "ah0.5_home": 1.69,
-      "ah0.5_away": 2.14,
+      "ah-0.5_home": 3.63,
+      "ah-0.5_away": 1.27,
       "ah0.25_home": 2.04,
       "ah0.25_away": 1.83,
+      "ah0.5_home": 1.67,
+      "ah0.5_away": 2.08,
       "ah1.5_home": 1.22,
       "ah1.5_away": 4.1
     },
@@ -1753,15 +1757,15 @@
       "p_under25": 0.288,
       "top_scorers_home": [
         {
-          "name": "Lamine Yamal Nasraoui Ebana",
+          "name": "Lamine Yamal",
           "p": 0.325
         },
         {
-          "name": "Mikel Oyarzabal Ugarte",
+          "name": "Mikel Oyarzabal",
           "p": 0.313
         },
         {
-          "name": "Nicholas Williams Arthuer",
+          "name": "Nico Williams",
           "p": 0.298
         }
       ],
@@ -1779,29 +1783,29 @@
       "p_under25": 0.692,
       "top_scorers_home": [
         {
-          "name": "Romelu Lukaku Menama",
-          "p": 0.463
+          "name": "Kevin De Bruyne",
+          "p": 0.168
         },
         {
-          "name": "Dries Mertens",
-          "p": 0.319
+          "name": "Dodi Lukébakio",
+          "p": 0.127
         },
         {
-          "name": "Yannick Ferreira Carrasco",
-          "p": 0.171
+          "name": "Jérémy Doku",
+          "p": 0.084
         }
       ],
       "top_scorers_away": [
         {
-          "name": "Mohamed Salah",
+          "name": "Mohamed El Shenawy",
           "p": 0.569
         },
         {
-          "name": "Mahmoud Ibrahim Hassan",
+          "name": "Yasser Ibrahim",
           "p": 0.225
         },
         {
-          "name": "Marwan Mohsen",
+          "name": "Marwan Attia",
           "p": 0.134
         }
       ]
@@ -1818,30 +1822,30 @@
       "p_under25": 0.842,
       "top_scorers_home": [
         {
-          "name": "Salman Mohammed Al Faraj",
+          "name": "Mohammed Al-Owais",
           "p": 0.789
         },
         {
-          "name": "Fahad Mosaed Al Muwallad Al Harbi",
+          "name": "Moteb Al-Harbi",
           "p": 0.498
         },
         {
-          "name": "Salem Mohammed Al Dawsari",
+          "name": "Nasser Al-Dawsari",
           "p": 0.435
         }
       ],
       "top_scorers_away": [
         {
-          "name": "Giorgian Daniel De Arrascaeta Benedetti",
-          "p": 0.66
-        },
-        {
-          "name": "Rodrigo Bentancur Colmán",
+          "name": "Rodrigo Aguirre",
           "p": 0.605
         },
         {
-          "name": "Luis Alberto Suárez Díaz",
-          "p": 0.566
+          "name": "Federico Valverde",
+          "p": 0.443
+        },
+        {
+          "name": "Facundo Pellistri",
+          "p": 0.428
         }
       ]
     },
@@ -1861,12 +1865,12 @@
           "p": 0.44
         },
         {
-          "name": "Sardar Azmoun",
-          "p": 0.37
-        },
-        {
           "name": "Saman Ghoddos",
           "p": 0.294
+        },
+        {
+          "name": "Ramin Rezaeian",
+          "p": 0.126
         }
       ],
       "top_scorers_away": []
@@ -1891,13 +1895,13 @@
           "p": 0.455
         },
         {
-          "name": "Youssouf Fofana",
+          "name": "Ousmane Dembélé",
           "p": 0.433
         }
       ],
       "top_scorers_away": [
         {
-          "name": "Ismaïla Sarr",
+          "name": "Mamadou Sarr",
           "p": 0.581
         },
         {
@@ -1905,8 +1909,8 @@
           "p": 0.374
         },
         {
-          "name": "Famara Diedhiou",
-          "p": 0.262
+          "name": "Idrissa Gueye",
+          "p": 0.19
         }
       ]
     },
@@ -1935,16 +1939,16 @@
       "p_under25": 0.797,
       "top_scorers_home": [
         {
-          "name": "Gonzalo Ariel Montiel",
+          "name": "Nicolás Tagliafico",
           "p": 0.791
         },
         {
-          "name": "Nicolás Hernán Otamendi",
-          "p": 0.791
-        },
-        {
-          "name": "Lionel Andrés Messi Cuccittini",
+          "name": "Lionel Messi",
           "p": 0.529
+        },
+        {
+          "name": "Julián Alvarez",
+          "p": 0.508
         }
       ],
       "top_scorers_away": []
@@ -1965,12 +1969,12 @@
           "p": 0.515
         },
         {
-          "name": "Christoph Baumgartner",
-          "p": 0.494
-        },
-        {
           "name": "Marko Arnautović",
           "p": 0.405
+        },
+        {
+          "name": "Marcel Sabitzer",
+          "p": 0.243
         }
       ],
       "top_scorers_away": []
@@ -1987,11 +1991,11 @@
       "p_under25": 0.728,
       "top_scorers_home": [
         {
-          "name": "Cristiano Ronaldo dos Santos Aveiro",
+          "name": "Cristiano Ronaldo",
           "p": 0.705
         },
         {
-          "name": "Bernardo Mota Veiga de Carvalho e Silva",
+          "name": "Bernardo Silva",
           "p": 0.564
         },
         {
@@ -2013,23 +2017,19 @@
       "p_under25": 0.733,
       "top_scorers_home": [
         {
-          "name": "Trent Alexander-Arnold",
-          "p": 0.469
-        },
-        {
           "name": "Ivan Toney",
           "p": 0.464
         },
         {
           "name": "Harry Kane",
           "p": 0.39
+        },
+        {
+          "name": "Jude Bellingham",
+          "p": 0.366
         }
       ],
       "top_scorers_away": [
-        {
-          "name": "Bruno Petković",
-          "p": 0.488
-        },
         {
           "name": "Luka Modrić",
           "p": 0.424
@@ -2037,6 +2037,10 @@
         {
           "name": "Josip Šutalo",
           "p": 0.289
+        },
+        {
+          "name": "Andrej Kramarić",
+          "p": 0.272
         }
       ]
     },
@@ -2052,30 +2056,30 @@
       "p_under25": 0.775,
       "top_scorers_home": [
         {
-          "name": "André Ayew Pelé",
+          "name": "Jordan Ayew",
           "p": 0.642
         },
         {
-          "name": "Mohammed Kudus",
-          "p": 0.288
+          "name": "Antoine Semenyo",
+          "p": 0.186
         },
         {
-          "name": "Mohamed Salisu",
-          "p": 0.261
+          "name": "Thomas Partey",
+          "p": 0.152
         }
       ],
       "top_scorers_away": [
         {
-          "name": "Kahiser Lenis Navarro",
-          "p": 0.389
-        },
-        {
-          "name": "José Fajardo Nelson",
+          "name": "José Fajardo",
           "p": 0.221
         },
         {
-          "name": "Roderick Alonso Miller Molina",
+          "name": "Roderick Miller",
           "p": 0.171
+        },
+        {
+          "name": "Yoel Bárcenas",
+          "p": 0.155
         }
       ]
     },
@@ -2092,16 +2096,16 @@
       "top_scorers_home": [],
       "top_scorers_away": [
         {
-          "name": "Andrés Mateus Uribe Villa",
+          "name": "Andrés Gómez",
           "p": 0.451
         },
         {
-          "name": "Carlos Eccehomo Cuesta Figueroa",
-          "p": 0.448
+          "name": "Yerry Mina",
+          "p": 0.447
         },
         {
-          "name": "Davinson Sánchez Mina",
-          "p": 0.447
+          "name": "Cucho Hernández",
+          "p": 0.409
         }
       ]
     },
@@ -2118,15 +2122,15 @@
       "top_scorers_home": [
         {
           "name": "Tomáš Chorý",
-          "p": 0.519
+          "p": 0.5185401103786824
         },
         {
           "name": "Patrik Schick",
-          "p": 0.491
+          "p": 0.49059620408371796
         },
         {
           "name": "Václav Černý",
-          "p": 0.42
+          "p": 0.42049006376944387
         }
       ],
       "top_scorers_away": []
@@ -2143,16 +2147,16 @@
       "p_under25": 0.649,
       "top_scorers_home": [
         {
-          "name": "Manuel Obafemi Akanji",
+          "name": "Manuel Akanji",
           "p": 0.791
         },
         {
-          "name": "Mohamed Zeki Amdouni",
+          "name": "Zeki Amdouni",
           "p": 0.662
         },
         {
-          "name": "Xherdan Shaqiri",
-          "p": 0.64
+          "name": "Breel Embolo",
+          "p": 0.611
         }
       ],
       "top_scorers_away": []
@@ -2169,30 +2173,30 @@
       "p_under25": 0.696,
       "top_scorers_home": [
         {
-          "name": "Mathieu Choiniere",
+          "name": "Mathieu Choinière",
           "p": 0.737
         },
         {
-          "name": "Moise Bombito",
-          "p": 0.707
+          "name": "Jonathan David",
+          "p": 0.684
         },
         {
-          "name": "Jonathan Osorio",
-          "p": 0.684
+          "name": "Ismaël Koné",
+          "p": 0.638
         }
       ],
       "top_scorers_away": [
         {
-          "name": "Almoez Ali Zainalabiddin Abdulla",
+          "name": "Almoez Ali",
           "p": 0.333
-        },
-        {
-          "name": "Ismaeel Mohammad Mohammad",
-          "p": 0.211
         },
         {
           "name": "Mohammed Muntari",
           "p": 0.139
+        },
+        {
+          "name": "Hassan Al-Haydos",
+          "p": 0.124
         }
       ]
     },
@@ -2208,30 +2212,30 @@
       "p_under25": 0.868,
       "top_scorers_home": [
         {
-          "name": "Henry Josué Martín Mex",
-          "p": 0.574
-        },
-        {
-          "name": "Santiago Tomás Giménez",
+          "name": "Santiago Giménez",
           "p": 0.424
         },
         {
-          "name": "Orbelín Pineda Alvarado",
+          "name": "Orbelín Pineda",
           "p": 0.372
+        },
+        {
+          "name": "Alexis Vega",
+          "p": 0.312
         }
       ],
       "top_scorers_away": [
         {
-          "name": "Ui-Jo Hwang",
-          "p": 0.424
+          "name": "Hwang Hee-chan",
+          "p": 0.306
         },
         {
-          "name": "Young-Gwon Kim",
-          "p": 0.386
+          "name": "Son Heung-min",
+          "p": 0.298
         },
         {
-          "name": "Jin-Su Kim",
-          "p": 0.346
+          "name": "Cho Gue-sung",
+          "p": 0.295
         }
       ]
     },
@@ -2247,7 +2251,7 @@
       "p_under25": 0.492,
       "top_scorers_home": [
         {
-          "name": "Ricardo Daniel Pepi",
+          "name": "Ricardo Pepi",
           "p": 0.711
         },
         {
@@ -2261,16 +2265,16 @@
       ],
       "top_scorers_away": [
         {
-          "name": "Mile Jedinak",
-          "p": 0.43
+          "name": "Mathew Ryan",
+          "p": 0.163
         },
         {
-          "name": "Garang Kuol",
-          "p": 0.352
+          "name": "Jackson Irvine",
+          "p": 0.126
         },
         {
-          "name": "Trent Sainsbury",
-          "p": 0.336
+          "name": "Harry Souttar",
+          "p": 0.119
         }
       ]
     },
@@ -2290,7 +2294,7 @@
           "p": 0.257
         },
         {
-          "name": "Grant Campbell Hanley",
+          "name": "Grant Hanley",
           "p": 0.242
         },
         {
@@ -2300,16 +2304,16 @@
       ],
       "top_scorers_away": [
         {
-          "name": "Badr Banoun",
-          "p": 0.611
+          "name": "Achraf Hakimi",
+          "p": 0.413
         },
         {
-          "name": "Abderrazak Hamdallah",
-          "p": 0.47
+          "name": "Youssef Belammari",
+          "p": 0.365
         },
         {
-          "name": "Abdelhamid Sabiri",
-          "p": 0.44
+          "name": "Achraf Hakimi",
+          "p": 0.351
         }
       ]
     },
@@ -2325,15 +2329,15 @@
       "p_under25": 0.506,
       "top_scorers_home": [
         {
-          "name": "Douglas Luiz Soares de Paulo",
+          "name": "Danilo Luiz",
           "p": 0.737
         },
         {
-          "name": "Gabriel Teodoro Martinelli Silva",
+          "name": "Éderson Silva",
           "p": 0.737
         },
         {
-          "name": "Pedro Guilherme Abreu dos Santos",
+          "name": "Douglas Santos",
           "p": 0.704
         }
       ],
@@ -2359,22 +2363,22 @@
           "p": 0.365
         },
         {
-          "name": "Muhammed Kerem Aktürkoğlu",
+          "name": "Kerem Aktürkoğlu",
           "p": 0.349
         }
       ],
       "top_scorers_away": [
         {
-          "name": "Ángel Rodrigo Romero Villamayor",
-          "p": 0.536
-        },
-        {
-          "name": "Julio César Enciso Espínola",
-          "p": 0.256
-        },
-        {
-          "name": "Alex Adrián Arce Barrios",
+          "name": "Álex Arce",
           "p": 0.244
+        },
+        {
+          "name": "Ramón Sosa",
+          "p": 0.152
+        },
+        {
+          "name": "Fabián Balbuena",
+          "p": 0.128
         }
       ]
     },
@@ -2404,16 +2408,12 @@
       ],
       "top_scorers_away": [
         {
-          "name": "Marcus Berg",
-          "p": 0.347
-        },
-        {
-          "name": "Viktor Claesson",
+          "name": "Viktor Johansson",
           "p": 0.313
         },
         {
-          "name": "Emil Peter Forsberg",
-          "p": 0.279
+          "name": "Alexander Isak",
+          "p": 0.184
         }
       ]
     },
@@ -2433,12 +2433,12 @@
           "p": 0.614
         },
         {
-          "name": "İlkay Gündoğan",
-          "p": 0.267
+          "name": "Jamal Musiala",
+          "p": 0.193
         },
         {
-          "name": "Niclas Füllkrug",
-          "p": 0.265
+          "name": "Florian Wirtz",
+          "p": 0.177
         }
       ],
       "top_scorers_away": []
@@ -2455,16 +2455,16 @@
       "p_under25": 0.948,
       "top_scorers_home": [
         {
-          "name": "Jordy Josué Caicedo Medina",
+          "name": "Jordy Caicedo",
           "p": 0.839
         },
         {
-          "name": "Ángel Israel Mena Delgado",
-          "p": 0.788
+          "name": "Alan Minda",
+          "p": 0.673
         },
         {
-          "name": "Alan Steve Minda García",
-          "p": 0.673
+          "name": "Anthony Valencia",
+          "p": 0.505
         }
       ],
       "top_scorers_away": []
@@ -2481,30 +2481,26 @@
       "p_under25": 0.407,
       "top_scorers_home": [
         {
-          "name": "Fakhreddine Ben Youssef",
-          "p": 0.659
+          "name": "Mohamed Amine Ben Hamida",
+          "p": 0.258
         },
         {
-          "name": "Issam Jebali",
-          "p": 0.493
-        },
-        {
-          "name": "Youssef Msakni",
-          "p": 0.461
+          "name": "Anis Ben Slimane",
+          "p": 0.119
         }
       ],
       "top_scorers_away": [
-        {
-          "name": "Kaoru Mitoma",
-          "p": 0.656
-        },
         {
           "name": "Ao Tanaka",
           "p": 0.651
         },
         {
-          "name": "Maya Yoshida",
-          "p": 0.632
+          "name": "Daizen Maeda",
+          "p": 0.328
+        },
+        {
+          "name": "Hiroki Itō",
+          "p": 0.297
         }
       ]
     },
@@ -2520,29 +2516,29 @@
       "p_under25": 0.474,
       "top_scorers_home": [
         {
-          "name": "Lamine Yamal Nasraoui Ebana",
+          "name": "Lamine Yamal",
           "p": 0.325
         },
         {
-          "name": "Mikel Oyarzabal Ugarte",
+          "name": "Mikel Oyarzabal",
           "p": 0.313
         },
         {
-          "name": "Nicholas Williams Arthuer",
+          "name": "Nico Williams",
           "p": 0.298
         }
       ],
       "top_scorers_away": [
         {
-          "name": "Salman Mohammed Al Faraj",
+          "name": "Mohammed Al-Owais",
           "p": 0.789
         },
         {
-          "name": "Fahad Mosaed Al Muwallad Al Harbi",
+          "name": "Moteb Al-Harbi",
           "p": 0.498
         },
         {
-          "name": "Salem Mohammed Al Dawsari",
+          "name": "Nasser Al-Dawsari",
           "p": 0.435
         }
       ]
@@ -2559,16 +2555,16 @@
       "p_under25": 0.539,
       "top_scorers_home": [
         {
-          "name": "Romelu Lukaku Menama",
-          "p": 0.463
+          "name": "Kevin De Bruyne",
+          "p": 0.168
         },
         {
-          "name": "Dries Mertens",
-          "p": 0.319
+          "name": "Dodi Lukébakio",
+          "p": 0.127
         },
         {
-          "name": "Yannick Ferreira Carrasco",
-          "p": 0.171
+          "name": "Jérémy Doku",
+          "p": 0.084
         }
       ],
       "top_scorers_away": [
@@ -2577,12 +2573,12 @@
           "p": 0.44
         },
         {
-          "name": "Sardar Azmoun",
-          "p": 0.37
-        },
-        {
           "name": "Saman Ghoddos",
           "p": 0.294
+        },
+        {
+          "name": "Ramin Rezaeian",
+          "p": 0.126
         }
       ]
     },
@@ -2598,16 +2594,16 @@
       "p_under25": 0.729,
       "top_scorers_home": [
         {
-          "name": "Giorgian Daniel De Arrascaeta Benedetti",
-          "p": 0.66
-        },
-        {
-          "name": "Rodrigo Bentancur Colmán",
+          "name": "Rodrigo Aguirre",
           "p": 0.605
         },
         {
-          "name": "Luis Alberto Suárez Díaz",
-          "p": 0.566
+          "name": "Federico Valverde",
+          "p": 0.443
+        },
+        {
+          "name": "Facundo Pellistri",
+          "p": 0.428
         }
       ],
       "top_scorers_away": []
@@ -2625,15 +2621,15 @@
       "top_scorers_home": [],
       "top_scorers_away": [
         {
-          "name": "Mohamed Salah",
+          "name": "Mohamed El Shenawy",
           "p": 0.569
         },
         {
-          "name": "Mahmoud Ibrahim Hassan",
+          "name": "Yasser Ibrahim",
           "p": 0.225
         },
         {
-          "name": "Marwan Mohsen",
+          "name": "Marwan Attia",
           "p": 0.134
         }
       ]
@@ -2650,16 +2646,16 @@
       "p_under25": 0.726,
       "top_scorers_home": [
         {
-          "name": "Gonzalo Ariel Montiel",
+          "name": "Nicolás Tagliafico",
           "p": 0.791
         },
         {
-          "name": "Nicolás Hernán Otamendi",
-          "p": 0.791
-        },
-        {
-          "name": "Lionel Andrés Messi Cuccittini",
+          "name": "Lionel Messi",
           "p": 0.529
+        },
+        {
+          "name": "Julián Alvarez",
+          "p": 0.508
         }
       ],
       "top_scorers_away": [
@@ -2668,12 +2664,12 @@
           "p": 0.515
         },
         {
-          "name": "Christoph Baumgartner",
-          "p": 0.494
-        },
-        {
           "name": "Marko Arnautović",
           "p": 0.405
+        },
+        {
+          "name": "Marcel Sabitzer",
+          "p": 0.243
         }
       ]
     },
@@ -2697,7 +2693,7 @@
           "p": 0.455
         },
         {
-          "name": "Youssouf Fofana",
+          "name": "Ousmane Dembélé",
           "p": 0.433
         }
       ],
@@ -2716,7 +2712,7 @@
       "top_scorers_home": [],
       "top_scorers_away": [
         {
-          "name": "Ismaïla Sarr",
+          "name": "Mamadou Sarr",
           "p": 0.581
         },
         {
@@ -2724,8 +2720,8 @@
           "p": 0.374
         },
         {
-          "name": "Famara Diedhiou",
-          "p": 0.262
+          "name": "Idrissa Gueye",
+          "p": 0.19
         }
       ]
     },
@@ -2754,11 +2750,11 @@
       "p_under25": 0.72,
       "top_scorers_home": [
         {
-          "name": "Cristiano Ronaldo dos Santos Aveiro",
+          "name": "Cristiano Ronaldo",
           "p": 0.705
         },
         {
-          "name": "Bernardo Mota Veiga de Carvalho e Silva",
+          "name": "Bernardo Silva",
           "p": 0.564
         },
         {
@@ -2780,30 +2776,30 @@
       "p_under25": 0.827,
       "top_scorers_home": [
         {
-          "name": "Trent Alexander-Arnold",
-          "p": 0.469
-        },
-        {
           "name": "Ivan Toney",
           "p": 0.464
         },
         {
           "name": "Harry Kane",
           "p": 0.39
+        },
+        {
+          "name": "Jude Bellingham",
+          "p": 0.366
         }
       ],
       "top_scorers_away": [
         {
-          "name": "André Ayew Pelé",
+          "name": "Jordan Ayew",
           "p": 0.642
         },
         {
-          "name": "Mohammed Kudus",
-          "p": 0.288
+          "name": "Antoine Semenyo",
+          "p": 0.186
         },
         {
-          "name": "Mohamed Salisu",
-          "p": 0.261
+          "name": "Thomas Partey",
+          "p": 0.152
         }
       ]
     },
@@ -2819,23 +2815,19 @@
       "p_under25": 0.709,
       "top_scorers_home": [
         {
-          "name": "Kahiser Lenis Navarro",
-          "p": 0.389
-        },
-        {
-          "name": "José Fajardo Nelson",
+          "name": "José Fajardo",
           "p": 0.221
         },
         {
-          "name": "Roderick Alonso Miller Molina",
+          "name": "Roderick Miller",
           "p": 0.171
+        },
+        {
+          "name": "Yoel Bárcenas",
+          "p": 0.155
         }
       ],
       "top_scorers_away": [
-        {
-          "name": "Bruno Petković",
-          "p": 0.488
-        },
         {
           "name": "Luka Modrić",
           "p": 0.424
@@ -2843,6 +2835,10 @@
         {
           "name": "Josip Šutalo",
           "p": 0.289
+        },
+        {
+          "name": "Andrej Kramarić",
+          "p": 0.272
         }
       ]
     },
@@ -2858,16 +2854,16 @@
       "p_under25": 0.69,
       "top_scorers_home": [
         {
-          "name": "Andrés Mateus Uribe Villa",
+          "name": "Andrés Gómez",
           "p": 0.451
         },
         {
-          "name": "Carlos Eccehomo Cuesta Figueroa",
-          "p": 0.448
+          "name": "Yerry Mina",
+          "p": 0.447
         },
         {
-          "name": "Davinson Sánchez Mina",
-          "p": 0.447
+          "name": "Cucho Hernández",
+          "p": 0.409
         }
       ],
       "top_scorers_away": []
@@ -2885,16 +2881,16 @@
       "top_scorers_home": [],
       "top_scorers_away": [
         {
-          "name": "Almoez Ali Zainalabiddin Abdulla",
+          "name": "Almoez Ali",
           "p": 0.333
-        },
-        {
-          "name": "Ismaeel Mohammad Mohammad",
-          "p": 0.211
         },
         {
           "name": "Mohammed Muntari",
           "p": 0.139
+        },
+        {
+          "name": "Hassan Al-Haydos",
+          "p": 0.124
         }
       ]
     },
@@ -2910,30 +2906,30 @@
       "p_under25": 0.689,
       "top_scorers_home": [
         {
-          "name": "Manuel Obafemi Akanji",
+          "name": "Manuel Akanji",
           "p": 0.791
         },
         {
-          "name": "Mohamed Zeki Amdouni",
+          "name": "Zeki Amdouni",
           "p": 0.662
         },
         {
-          "name": "Xherdan Shaqiri",
-          "p": 0.64
+          "name": "Breel Embolo",
+          "p": 0.611
         }
       ],
       "top_scorers_away": [
         {
-          "name": "Mathieu Choiniere",
+          "name": "Mathieu Choinière",
           "p": 0.737
         },
         {
-          "name": "Moise Bombito",
-          "p": 0.707
+          "name": "Jonathan David",
+          "p": 0.684
         },
         {
-          "name": "Jonathan Osorio",
-          "p": 0.684
+          "name": "Ismaël Koné",
+          "p": 0.638
         }
       ]
     },
@@ -2953,7 +2949,7 @@
           "p": 0.257
         },
         {
-          "name": "Grant Campbell Hanley",
+          "name": "Grant Hanley",
           "p": 0.242
         },
         {
@@ -2963,15 +2959,15 @@
       ],
       "top_scorers_away": [
         {
-          "name": "Douglas Luiz Soares de Paulo",
+          "name": "Danilo Luiz",
           "p": 0.737
         },
         {
-          "name": "Gabriel Teodoro Martinelli Silva",
+          "name": "Éderson Silva",
           "p": 0.737
         },
         {
-          "name": "Pedro Guilherme Abreu dos Santos",
+          "name": "Douglas Santos",
           "p": 0.704
         }
       ]
@@ -2988,16 +2984,16 @@
       "p_under25": 0.609,
       "top_scorers_home": [
         {
-          "name": "Badr Banoun",
-          "p": 0.611
+          "name": "Achraf Hakimi",
+          "p": 0.413
         },
         {
-          "name": "Abderrazak Hamdallah",
-          "p": 0.47
+          "name": "Youssef Belammari",
+          "p": 0.365
         },
         {
-          "name": "Abdelhamid Sabiri",
-          "p": 0.44
+          "name": "Achraf Hakimi",
+          "p": 0.351
         }
       ],
       "top_scorers_away": []
@@ -3015,29 +3011,29 @@
       "top_scorers_home": [
         {
           "name": "Tomáš Chorý",
-          "p": 0.519
+          "p": 0.5185401103786824
         },
         {
           "name": "Patrik Schick",
-          "p": 0.491
+          "p": 0.49059620408371796
         },
         {
           "name": "Václav Černý",
-          "p": 0.42
+          "p": 0.42049006376944387
         }
       ],
       "top_scorers_away": [
         {
-          "name": "Henry Josué Martín Mex",
-          "p": 0.574
-        },
-        {
-          "name": "Santiago Tomás Giménez",
+          "name": "Santiago Giménez",
           "p": 0.424
         },
         {
-          "name": "Orbelín Pineda Alvarado",
+          "name": "Orbelín Pineda",
           "p": 0.372
+        },
+        {
+          "name": "Alexis Vega",
+          "p": 0.312
         }
       ]
     },
@@ -3054,16 +3050,16 @@
       "top_scorers_home": [],
       "top_scorers_away": [
         {
-          "name": "Ui-Jo Hwang",
-          "p": 0.424
+          "name": "Hwang Hee-chan",
+          "p": 0.306
         },
         {
-          "name": "Young-Gwon Kim",
-          "p": 0.386
+          "name": "Son Heung-min",
+          "p": 0.298
         },
         {
-          "name": "Jin-Su Kim",
-          "p": 0.346
+          "name": "Cho Gue-sung",
+          "p": 0.295
         }
       ]
     },
@@ -3092,16 +3088,16 @@
       "p_under25": 0.911,
       "top_scorers_home": [
         {
-          "name": "Jordy Josué Caicedo Medina",
+          "name": "Jordy Caicedo",
           "p": 0.839
         },
         {
-          "name": "Ángel Israel Mena Delgado",
-          "p": 0.788
+          "name": "Alan Minda",
+          "p": 0.673
         },
         {
-          "name": "Alan Steve Minda García",
-          "p": 0.673
+          "name": "Anthony Valencia",
+          "p": 0.505
         }
       ],
       "top_scorers_away": [
@@ -3110,12 +3106,12 @@
           "p": 0.614
         },
         {
-          "name": "İlkay Gündoğan",
-          "p": 0.267
+          "name": "Jamal Musiala",
+          "p": 0.193
         },
         {
-          "name": "Niclas Füllkrug",
-          "p": 0.265
+          "name": "Florian Wirtz",
+          "p": 0.177
         }
       ]
     },
@@ -3131,30 +3127,26 @@
       "p_under25": 0.257,
       "top_scorers_home": [
         {
-          "name": "Kaoru Mitoma",
-          "p": 0.656
-        },
-        {
           "name": "Ao Tanaka",
           "p": 0.651
         },
         {
-          "name": "Maya Yoshida",
-          "p": 0.632
+          "name": "Daizen Maeda",
+          "p": 0.328
+        },
+        {
+          "name": "Hiroki Itō",
+          "p": 0.297
         }
       ],
       "top_scorers_away": [
         {
-          "name": "Marcus Berg",
-          "p": 0.347
-        },
-        {
-          "name": "Viktor Claesson",
+          "name": "Viktor Johansson",
           "p": 0.313
         },
         {
-          "name": "Emil Peter Forsberg",
-          "p": 0.279
+          "name": "Alexander Isak",
+          "p": 0.184
         }
       ]
     },
@@ -3170,16 +3162,12 @@
       "p_under25": 0.383,
       "top_scorers_home": [
         {
-          "name": "Fakhreddine Ben Youssef",
-          "p": 0.659
+          "name": "Mohamed Amine Ben Hamida",
+          "p": 0.258
         },
         {
-          "name": "Issam Jebali",
-          "p": 0.493
-        },
-        {
-          "name": "Youssef Msakni",
-          "p": 0.461
+          "name": "Anis Ben Slimane",
+          "p": 0.119
         }
       ],
       "top_scorers_away": [
@@ -3209,30 +3197,30 @@
       "p_under25": 0.411,
       "top_scorers_home": [
         {
-          "name": "Ángel Rodrigo Romero Villamayor",
-          "p": 0.536
-        },
-        {
-          "name": "Julio César Enciso Espínola",
-          "p": 0.256
-        },
-        {
-          "name": "Alex Adrián Arce Barrios",
+          "name": "Álex Arce",
           "p": 0.244
+        },
+        {
+          "name": "Ramón Sosa",
+          "p": 0.152
+        },
+        {
+          "name": "Fabián Balbuena",
+          "p": 0.128
         }
       ],
       "top_scorers_away": [
         {
-          "name": "Mile Jedinak",
-          "p": 0.43
+          "name": "Mathew Ryan",
+          "p": 0.163
         },
         {
-          "name": "Garang Kuol",
-          "p": 0.352
+          "name": "Jackson Irvine",
+          "p": 0.126
         },
         {
-          "name": "Trent Sainsbury",
-          "p": 0.336
+          "name": "Harry Souttar",
+          "p": 0.119
         }
       ]
     },
@@ -3256,13 +3244,13 @@
           "p": 0.365
         },
         {
-          "name": "Muhammed Kerem Aktürkoğlu",
+          "name": "Kerem Aktürkoğlu",
           "p": 0.349
         }
       ],
       "top_scorers_away": [
         {
-          "name": "Ricardo Daniel Pepi",
+          "name": "Ricardo Pepi",
           "p": 0.711
         },
         {
@@ -3296,7 +3284,7 @@
           "p": 0.455
         },
         {
-          "name": "Youssouf Fofana",
+          "name": "Ousmane Dembélé",
           "p": 0.433
         }
       ]
@@ -3313,7 +3301,7 @@
       "p_under25": 0.703,
       "top_scorers_home": [
         {
-          "name": "Ismaïla Sarr",
+          "name": "Mamadou Sarr",
           "p": 0.581
         },
         {
@@ -3321,8 +3309,8 @@
           "p": 0.374
         },
         {
-          "name": "Famara Diedhiou",
-          "p": 0.262
+          "name": "Idrissa Gueye",
+          "p": 0.19
         }
       ],
       "top_scorers_away": []
@@ -3340,15 +3328,15 @@
       "top_scorers_home": [],
       "top_scorers_away": [
         {
-          "name": "Salman Mohammed Al Faraj",
+          "name": "Mohammed Al-Owais",
           "p": 0.789
         },
         {
-          "name": "Fahad Mosaed Al Muwallad Al Harbi",
+          "name": "Moteb Al-Harbi",
           "p": 0.498
         },
         {
-          "name": "Salem Mohammed Al Dawsari",
+          "name": "Nasser Al-Dawsari",
           "p": 0.435
         }
       ]
@@ -3365,29 +3353,29 @@
       "p_under25": 0.599,
       "top_scorers_home": [
         {
-          "name": "Giorgian Daniel De Arrascaeta Benedetti",
-          "p": 0.66
-        },
-        {
-          "name": "Rodrigo Bentancur Colmán",
+          "name": "Rodrigo Aguirre",
           "p": 0.605
         },
         {
-          "name": "Luis Alberto Suárez Díaz",
-          "p": 0.566
+          "name": "Federico Valverde",
+          "p": 0.443
+        },
+        {
+          "name": "Facundo Pellistri",
+          "p": 0.428
         }
       ],
       "top_scorers_away": [
         {
-          "name": "Lamine Yamal Nasraoui Ebana",
+          "name": "Lamine Yamal",
           "p": 0.325
         },
         {
-          "name": "Mikel Oyarzabal Ugarte",
+          "name": "Mikel Oyarzabal",
           "p": 0.313
         },
         {
-          "name": "Nicholas Williams Arthuer",
+          "name": "Nico Williams",
           "p": 0.298
         }
       ]
@@ -3405,16 +3393,16 @@
       "top_scorers_home": [],
       "top_scorers_away": [
         {
-          "name": "Romelu Lukaku Menama",
-          "p": 0.463
+          "name": "Kevin De Bruyne",
+          "p": 0.168
         },
         {
-          "name": "Dries Mertens",
-          "p": 0.319
+          "name": "Dodi Lukébakio",
+          "p": 0.127
         },
         {
-          "name": "Yannick Ferreira Carrasco",
-          "p": 0.171
+          "name": "Jérémy Doku",
+          "p": 0.084
         }
       ]
     },
@@ -3430,15 +3418,15 @@
       "p_under25": 0.813,
       "top_scorers_home": [
         {
-          "name": "Mohamed Salah",
+          "name": "Mohamed El Shenawy",
           "p": 0.569
         },
         {
-          "name": "Mahmoud Ibrahim Hassan",
+          "name": "Yasser Ibrahim",
           "p": 0.225
         },
         {
-          "name": "Marwan Mohsen",
+          "name": "Marwan Attia",
           "p": 0.134
         }
       ],
@@ -3448,12 +3436,12 @@
           "p": 0.44
         },
         {
-          "name": "Sardar Azmoun",
-          "p": 0.37
-        },
-        {
           "name": "Saman Ghoddos",
           "p": 0.294
+        },
+        {
+          "name": "Ramin Rezaeian",
+          "p": 0.126
         }
       ]
     },
@@ -3469,30 +3457,30 @@
       "p_under25": 0.721,
       "top_scorers_home": [
         {
-          "name": "Bruno Petković",
-          "p": 0.488
-        },
-        {
           "name": "Luka Modrić",
           "p": 0.424
         },
         {
           "name": "Josip Šutalo",
           "p": 0.289
+        },
+        {
+          "name": "Andrej Kramarić",
+          "p": 0.272
         }
       ],
       "top_scorers_away": [
         {
-          "name": "André Ayew Pelé",
+          "name": "Jordan Ayew",
           "p": 0.642
         },
         {
-          "name": "Mohammed Kudus",
-          "p": 0.288
+          "name": "Antoine Semenyo",
+          "p": 0.186
         },
         {
-          "name": "Mohamed Salisu",
-          "p": 0.261
+          "name": "Thomas Partey",
+          "p": 0.152
         }
       ]
     },
@@ -3508,23 +3496,19 @@
       "p_under25": 0.8,
       "top_scorers_home": [
         {
-          "name": "Kahiser Lenis Navarro",
-          "p": 0.389
-        },
-        {
-          "name": "José Fajardo Nelson",
+          "name": "José Fajardo",
           "p": 0.221
         },
         {
-          "name": "Roderick Alonso Miller Molina",
+          "name": "Roderick Miller",
           "p": 0.171
+        },
+        {
+          "name": "Yoel Bárcenas",
+          "p": 0.155
         }
       ],
       "top_scorers_away": [
-        {
-          "name": "Trent Alexander-Arnold",
-          "p": 0.469
-        },
         {
           "name": "Ivan Toney",
           "p": 0.464
@@ -3532,6 +3516,10 @@
         {
           "name": "Harry Kane",
           "p": 0.39
+        },
+        {
+          "name": "Jude Bellingham",
+          "p": 0.366
         }
       ]
     },
@@ -3547,25 +3535,25 @@
       "p_under25": 0.354,
       "top_scorers_home": [
         {
-          "name": "Andrés Mateus Uribe Villa",
+          "name": "Andrés Gómez",
           "p": 0.451
         },
         {
-          "name": "Carlos Eccehomo Cuesta Figueroa",
-          "p": 0.448
+          "name": "Yerry Mina",
+          "p": 0.447
         },
         {
-          "name": "Davinson Sánchez Mina",
-          "p": 0.447
+          "name": "Cucho Hernández",
+          "p": 0.409
         }
       ],
       "top_scorers_away": [
         {
-          "name": "Cristiano Ronaldo dos Santos Aveiro",
+          "name": "Cristiano Ronaldo",
           "p": 0.705
         },
         {
-          "name": "Bernardo Mota Veiga de Carvalho e Silva",
+          "name": "Bernardo Silva",
           "p": 0.564
         },
         {
@@ -3604,12 +3592,12 @@
           "p": 0.515
         },
         {
-          "name": "Christoph Baumgartner",
-          "p": 0.494
-        },
-        {
           "name": "Marko Arnautović",
           "p": 0.405
+        },
+        {
+          "name": "Marcel Sabitzer",
+          "p": 0.243
         }
       ]
     },
@@ -3626,32 +3614,21 @@
       "top_scorers_home": [],
       "top_scorers_away": [
         {
-          "name": "Gonzalo Ariel Montiel",
+          "name": "Nicolás Tagliafico",
           "p": 0.791
         },
         {
-          "name": "Nicolás Hernán Otamendi",
-          "p": 0.791
-        },
-        {
-          "name": "Lionel Andrés Messi Cuccittini",
+          "name": "Lionel Messi",
           "p": 0.529
+        },
+        {
+          "name": "Julián Alvarez",
+          "p": 0.508
         }
       ]
     }
   },
   "football": [
-    {
-      "sport": "football",
-      "match": "Jordan vs Algeria",
-      "market": "ah+1.5_home",
-      "odds": 1.57,
-      "model_prob": 89.0,
-      "ev_pct": 39.8,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-23T03:00:00Z"
-    },
     {
       "sport": "football",
       "match": "Jordan vs Argentina",
@@ -3665,17 +3642,6 @@
     },
     {
       "sport": "football",
-      "match": "Saudi Arabia vs Uruguay",
-      "market": "ah+1.5_home",
-      "odds": 1.61,
-      "model_prob": 86.7,
-      "ev_pct": 39.5,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-15T22:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Argentina vs Austria",
       "market": "o/u2.5_under",
       "odds": 1.92,
@@ -3684,17 +3650,6 @@
       "stake_eur": 15.0,
       "confidence": "LOW",
       "kickoff": "2026-06-22T17:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Brazil vs Haiti",
-      "market": "ah+2.5_away",
-      "odds": 1.92,
-      "model_prob": 72.5,
-      "ev_pct": 39.2,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-20T01:00:00Z"
     },
     {
       "sport": "football",
@@ -3720,6 +3675,28 @@
     },
     {
       "sport": "football",
+      "match": "Panama vs Croatia",
+      "market": "ah+1.5_home",
+      "odds": 1.54,
+      "model_prob": 90.2,
+      "ev_pct": 38.9,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-23T23:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Iran vs New Zealand",
+      "market": "ah-0.5_home",
+      "odds": 1.95,
+      "model_prob": 71.2,
+      "ev_pct": 38.9,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-16T01:00:00Z"
+    },
+    {
+      "sport": "football",
       "match": "Czechia vs Mexico",
       "market": "ah+0.75_away",
       "odds": 2.05,
@@ -3742,39 +3719,6 @@
     },
     {
       "sport": "football",
-      "match": "Colombia vs Portugal",
-      "market": "ah+0.5_home",
-      "odds": 1.75,
-      "model_prob": 78.9,
-      "ev_pct": 38.1,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-27T23:30:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Spain vs Saudi Arabia",
-      "market": "draw",
-      "odds": 12.5,
-      "model_prob": 11.0,
-      "ev_pct": 37.8,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-21T16:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Algeria vs Austria",
-      "market": "ah+0.5_home",
-      "odds": 1.69,
-      "model_prob": 81.3,
-      "ev_pct": 37.3,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-28T02:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Ecuador vs Germany",
       "market": "ah+1.5_home",
       "odds": 1.4,
@@ -3783,17 +3727,6 @@
       "stake_eur": 15.0,
       "confidence": "LOW",
       "kickoff": "2026-06-25T20:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Panama vs Croatia",
-      "market": "ah+1.5_home",
-      "odds": 1.52,
-      "model_prob": 90.2,
-      "ev_pct": 37.1,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-23T23:00:00Z"
     },
     {
       "sport": "football",
@@ -3819,17 +3752,6 @@
     },
     {
       "sport": "football",
-      "match": "Germany vs Cote d'Ivoire",
-      "market": "ah+0.5_away",
-      "odds": 2.38,
-      "model_prob": 57.5,
-      "ev_pct": 36.9,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-20T20:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Senegal vs Iraq",
       "market": "ah+1.5_away",
       "odds": 1.65,
@@ -3852,36 +3774,25 @@
     },
     {
       "sport": "football",
-      "match": "Ecuador vs Curacao",
-      "market": "draw",
-      "odds": 12.0,
-      "model_prob": 11.3,
-      "ev_pct": 36.1,
+      "match": "Germany vs Cote d'Ivoire",
+      "market": "ah+1.0_away",
+      "odds": 2.0,
+      "model_prob": 57.5,
+      "ev_pct": 35.9,
       "stake_eur": 15.0,
       "confidence": "LOW",
-      "kickoff": "2026-06-21T00:00:00Z"
+      "kickoff": "2026-06-20T20:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Iran vs New Zealand",
-      "market": "o/u2.5_over",
-      "odds": 2.55,
-      "model_prob": 53.3,
-      "ev_pct": 36.0,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-16T01:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Belgium vs Egypt",
-      "market": "o/u2.5_under",
-      "odds": 1.96,
-      "model_prob": 69.2,
+      "match": "Algeria vs Austria",
+      "market": "ah+0.5_home",
+      "odds": 1.67,
+      "model_prob": 81.3,
       "ev_pct": 35.7,
       "stake_eur": 15.0,
       "confidence": "LOW",
-      "kickoff": "2026-06-15T19:00:00Z"
+      "kickoff": "2026-06-28T02:00:00Z"
     },
     {
       "sport": "football",
@@ -3890,6 +3801,28 @@
       "odds": 2.1,
       "model_prob": 64.6,
       "ev_pct": 35.7,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-27T23:30:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Belgium vs Egypt",
+      "market": "o/u2.5_under",
+      "odds": 1.95,
+      "model_prob": 69.2,
+      "ev_pct": 35.0,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-15T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Colombia vs Portugal",
+      "market": "ah+0.5_home",
+      "odds": 1.71,
+      "model_prob": 78.9,
+      "ev_pct": 35.0,
       "stake_eur": 15.0,
       "confidence": "LOW",
       "kickoff": "2026-06-27T23:30:00Z"
@@ -3915,6 +3848,17 @@
       "stake_eur": 15.0,
       "confidence": "LOW",
       "kickoff": "2026-06-27T21:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Iran vs New Zealand",
+      "market": "o/u2.5_over",
+      "odds": 2.5,
+      "model_prob": 53.3,
+      "ev_pct": 33.3,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-16T01:00:00Z"
     },
     {
       "sport": "football",
@@ -3962,6 +3906,17 @@
     },
     {
       "sport": "football",
+      "match": "Morocco vs Haiti",
+      "market": "o/u3.0_under",
+      "odds": 1.82,
+      "model_prob": 60.9,
+      "ev_pct": 30.8,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-24T22:00:00Z"
+    },
+    {
+      "sport": "football",
       "match": "Uruguay vs Spain",
       "market": "ah+1.0_home",
       "odds": 1.71,
@@ -3970,17 +3925,6 @@
       "stake_eur": 15.0,
       "confidence": "LOW",
       "kickoff": "2026-06-27T00:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Czechia vs South Africa",
-      "market": "o/u2.25_over",
-      "odds": 1.85,
-      "model_prob": 74.9,
-      "ev_pct": 30.2,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-18T16:00:00Z"
     },
     {
       "sport": "football",
@@ -4006,6 +3950,17 @@
     },
     {
       "sport": "football",
+      "match": "Czechia vs South Africa",
+      "market": "o/u2.25_over",
+      "odds": 1.84,
+      "model_prob": 74.9,
+      "ev_pct": 29.6,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-18T16:00:00Z"
+    },
+    {
+      "sport": "football",
       "match": "Saudi Arabia vs Uruguay",
       "market": "o/u3.0_under",
       "odds": 1.41,
@@ -4014,17 +3969,6 @@
       "stake_eur": 15.0,
       "confidence": "LOW",
       "kickoff": "2026-06-15T22:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "France vs Senegal",
-      "market": "away",
-      "odds": 8.5,
-      "model_prob": 15.2,
-      "ev_pct": 29.3,
-      "stake_eur": 15.0,
-      "confidence": "LOW",
-      "kickoff": "2026-06-16T19:00:00Z"
     },
     {
       "sport": "football",
@@ -4061,14 +4005,14 @@
     },
     {
       "sport": "football",
-      "match": "Spain vs Cape Verde",
-      "market": "draw",
-      "odds": 13.5,
-      "model_prob": 9.3,
-      "ev_pct": 26.1,
+      "match": "France vs Senegal",
+      "market": "away",
+      "odds": 8.2,
+      "model_prob": 15.3,
+      "ev_pct": 25.8,
       "stake_eur": 15.0,
       "confidence": "LOW",
-      "kickoff": "2026-06-15T16:00:00Z"
+      "kickoff": "2026-06-16T19:00:00Z"
     },
     {
       "sport": "football",
@@ -4080,6 +4024,17 @@
       "stake_eur": 15.0,
       "confidence": "LOW",
       "kickoff": "2026-06-25T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Brazil vs Haiti",
+      "market": "away",
+      "odds": 28.0,
+      "model_prob": 4.4,
+      "ev_pct": 23.9,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-20T01:00:00Z"
     },
     {
       "sport": "football",
@@ -4097,22 +4052,22 @@
       "match": "Portugal vs Uzbekistan",
       "market": "draw",
       "odds": 7.0,
-      "model_prob": 17.7,
-      "ev_pct": 23.6,
+      "model_prob": 17.6,
+      "ev_pct": 23.3,
       "stake_eur": 15.0,
       "confidence": "LOW",
       "kickoff": "2026-06-23T17:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Norway vs Senegal",
-      "market": "away",
-      "odds": 3.51,
-      "model_prob": 35.2,
-      "ev_pct": 23.4,
+      "match": "New Zealand vs Egypt",
+      "market": "ah-1.5_away",
+      "odds": 3.31,
+      "model_prob": 37.1,
+      "ev_pct": 22.7,
       "stake_eur": 15.0,
       "confidence": "LOW",
-      "kickoff": "2026-06-23T00:00:00Z"
+      "kickoff": "2026-06-22T01:00:00Z"
     },
     {
       "sport": "football",
@@ -4135,6 +4090,17 @@
       "stake_eur": 15.0,
       "confidence": "LOW",
       "kickoff": "2026-06-27T00:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Norway vs Senegal",
+      "market": "away",
+      "odds": 3.51,
+      "model_prob": 34.9,
+      "ev_pct": 22.6,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-23T00:00:00Z"
     },
     {
       "sport": "football",
@@ -4182,6 +4148,17 @@
     },
     {
       "sport": "football",
+      "match": "Jordan vs Algeria",
+      "market": "draw",
+      "odds": 4.5,
+      "model_prob": 26.9,
+      "ev_pct": 20.9,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-23T03:00:00Z"
+    },
+    {
+      "sport": "football",
       "match": "Egypt vs Iran",
       "market": "away",
       "odds": 3.7,
@@ -4215,14 +4192,14 @@
     },
     {
       "sport": "football",
-      "match": "New Zealand vs Egypt",
-      "market": "ah-1.5_away",
-      "odds": 3.2,
-      "model_prob": 37.1,
-      "ev_pct": 18.6,
-      "stake_eur": 14.19,
+      "match": "Switzerland vs Canada",
+      "market": "home",
+      "odds": 2.26,
+      "model_prob": 52.2,
+      "ev_pct": 18.0,
+      "stake_eur": 13.8,
       "confidence": "LOW",
-      "kickoff": "2026-06-22T01:00:00Z"
+      "kickoff": "2026-06-24T19:00:00Z"
     },
     {
       "sport": "football",
@@ -4237,23 +4214,12 @@
     },
     {
       "sport": "football",
-      "match": "Switzerland vs Canada",
-      "market": "home",
-      "odds": 2.22,
-      "model_prob": 52.4,
-      "ev_pct": 16.4,
-      "stake_eur": 12.9,
-      "confidence": "LOW",
-      "kickoff": "2026-06-24T19:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "South Africa vs South Korea",
       "market": "draw",
       "odds": 4.5,
       "model_prob": 25.9,
-      "ev_pct": 16.4,
-      "stake_eur": 12.89,
+      "ev_pct": 16.5,
+      "stake_eur": 12.97,
       "confidence": "LOW",
       "kickoff": "2026-06-25T01:00:00Z"
     },
@@ -4325,36 +4291,58 @@
     },
     {
       "sport": "football",
-      "match": "Iran vs New Zealand",
-      "market": "home",
+      "match": "Germany vs Cote d'Ivoire",
+      "market": "o/u2.75_over",
       "odds": 1.95,
-      "model_prob": 58.4,
-      "ev_pct": 14.0,
-      "stake_eur": 11.45,
-      "confidence": "LOW",
-      "kickoff": "2026-06-16T01:00:00Z"
+      "model_prob": 58.1,
+      "ev_pct": 13.3,
+      "stake_eur": 12.14,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-20T20:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Germany vs Cote d'Ivoire",
-      "market": "o/u2.75_over",
-      "odds": 1.96,
-      "model_prob": 58.1,
-      "ev_pct": 13.8,
-      "stake_eur": 12.52,
-      "confidence": "HIGH",
-      "kickoff": "2026-06-20T20:00:00Z"
+      "match": "Saudi Arabia vs Uruguay",
+      "market": "home",
+      "odds": 9.0,
+      "model_prob": 12.6,
+      "ev_pct": 13.2,
+      "stake_eur": 12.12,
+      "confidence": "LOW",
+      "kickoff": "2026-06-15T22:00:00Z"
     },
     {
       "sport": "football",
       "match": "Turkey vs Paraguay",
       "market": "home",
       "odds": 2.12,
-      "model_prob": 52.9,
-      "ev_pct": 12.1,
-      "stake_eur": 10.35,
+      "model_prob": 53.0,
+      "ev_pct": 12.4,
+      "stake_eur": 10.55,
       "confidence": "LOW",
       "kickoff": "2026-06-20T03:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Morocco vs Haiti",
+      "market": "home",
+      "odds": 1.36,
+      "model_prob": 82.6,
+      "ev_pct": 12.3,
+      "stake_eur": 10.46,
+      "confidence": "LOW",
+      "kickoff": "2026-06-24T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Belgium vs Egypt",
+      "market": "draw",
+      "odds": 4.2,
+      "model_prob": 26.5,
+      "ev_pct": 11.1,
+      "stake_eur": 10.74,
+      "confidence": "LOW",
+      "kickoff": "2026-06-15T19:00:00Z"
     },
     {
       "sport": "football",
@@ -4380,6 +4368,17 @@
     },
     {
       "sport": "football",
+      "match": "Mexico vs South Korea",
+      "market": "ah-0.5_home",
+      "odds": 2.04,
+      "model_prob": 54.2,
+      "ev_pct": 10.5,
+      "stake_eur": 10.37,
+      "confidence": "HIGH",
+      "kickoff": "2026-06-19T01:00:00Z"
+    },
+    {
+      "sport": "football",
       "match": "New Zealand vs Belgium",
       "market": "o/u2.75_over",
       "odds": 1.93,
@@ -4402,17 +4401,6 @@
     },
     {
       "sport": "football",
-      "match": "Mexico vs South Korea",
-      "market": "ah-0.5_home",
-      "odds": 2.02,
-      "model_prob": 54.2,
-      "ev_pct": 9.4,
-      "stake_eur": 8.79,
-      "confidence": "MEDIUM",
-      "kickoff": "2026-06-19T01:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Turkey vs Paraguay",
       "market": "o/u2.5_under",
       "odds": 1.82,
@@ -4424,23 +4412,12 @@
     },
     {
       "sport": "football",
-      "match": "Belgium vs Egypt",
-      "market": "draw",
-      "odds": 4.12,
-      "model_prob": 26.5,
-      "ev_pct": 9.1,
-      "stake_eur": 9.42,
-      "confidence": "LOW",
-      "kickoff": "2026-06-15T19:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Tunisia vs Netherlands",
       "market": "home",
-      "odds": 9.7,
+      "odds": 9.5,
       "model_prob": 11.2,
-      "ev_pct": 8.2,
-      "stake_eur": 8.07,
+      "ev_pct": 6.6,
+      "stake_eur": 7.1,
       "confidence": "LOW",
       "kickoff": "2026-06-25T23:00:00Z"
     },
@@ -4449,9 +4426,9 @@
       "match": "Argentina vs Algeria",
       "market": "away",
       "odds": 10.0,
-      "model_prob": 10.5,
-      "ev_pct": 5.1,
-      "stake_eur": 6.23,
+      "model_prob": 10.6,
+      "ev_pct": 6.1,
+      "stake_eur": 6.82,
       "confidence": "LOW",
       "kickoff": "2026-06-17T01:00:00Z"
     },
@@ -4459,10 +4436,10 @@
       "sport": "football",
       "match": "Turkey vs United States",
       "market": "o/u2.5_over",
-      "odds": 1.87,
+      "odds": 1.88,
       "model_prob": 56.1,
-      "ev_pct": 4.9,
-      "stake_eur": 6.11,
+      "ev_pct": 5.4,
+      "stake_eur": 6.44,
       "confidence": "MEDIUM",
       "kickoff": "2026-06-26T02:00:00Z"
     }
@@ -4506,8 +4483,8 @@
     }
   ],
   "portfolio": {
-    "n_bets": 11,
-    "n_open": 0,
+    "n_bets": 13,
+    "n_open": 2,
     "n_won": 3,
     "n_lost": 3,
     "n_void": 5,
@@ -4605,6 +4582,12 @@
   ],
   "history": [
     {
+      "date": "2026-06-15",
+      "n_bets": 2,
+      "pnl": 0.0,
+      "roi_pct": 0.0
+    },
+    {
       "date": "2026-06-14",
       "n_bets": 3,
       "pnl": -14.36,
@@ -4623,13 +4606,40 @@
       "roi_pct": 0.0
     }
   ],
-  "open_bets": [],
+  "open_bets": [
+    {
+      "match": "Belgium vs Egypt",
+      "home": "Belgium",
+      "away": "Egypt",
+      "market": "draw",
+      "entry_odds": 4.12,
+      "current_odds": 4.2,
+      "drift_pct": 1.9,
+      "clv_signal": "bad",
+      "stake": 9.42,
+      "match_date": "2026-06-15",
+      "model_edge_pct": 38.2
+    },
+    {
+      "match": "Belgium vs Egypt",
+      "home": "Belgium",
+      "away": "Egypt",
+      "market": "o/u2.5_under",
+      "entry_odds": 1.96,
+      "current_odds": null,
+      "drift_pct": null,
+      "clv_signal": null,
+      "stake": 15.0,
+      "match_date": "2026-06-15",
+      "model_edge_pct": null
+    }
+  ],
   "bankroll_state": {
     "start": 100.0,
-    "free": 112.5,
-    "staked": 0,
-    "exposure_pct": 0.0,
-    "max_win": 0,
+    "free": 88.08,
+    "staked": 24.42,
+    "exposure_pct": 24.4,
+    "max_win": 44.54,
     "pnl_closed": 12.5
   },
   "wm_stats": {
@@ -5024,9 +5034,9 @@
       },
       {
         "date": "2026-06-15",
-        "home": 1.08,
-        "draw": 13.5,
-        "away": 34.0
+        "home": 1.09,
+        "draw": 16.0,
+        "away": 42.0
       }
     ],
     "Belgium vs Egypt": [
@@ -5056,9 +5066,9 @@
       },
       {
         "date": "2026-06-15",
-        "home": 1.61,
-        "draw": 4.12,
-        "away": 6.21
+        "home": 1.64,
+        "draw": 4.2,
+        "away": 6.4
       }
     ],
     "Saudi Arabia vs Uruguay": [
@@ -5088,9 +5098,9 @@
       },
       {
         "date": "2026-06-15",
-        "home": 8.42,
-        "draw": 4.42,
-        "away": 1.47
+        "home": 9.0,
+        "draw": 4.5,
+        "away": 1.49
       }
     ],
     "Iran vs New Zealand": [
@@ -5121,8 +5131,8 @@
       {
         "date": "2026-06-15",
         "home": 1.95,
-        "draw": 3.4,
-        "away": 4.63
+        "draw": 3.5,
+        "away": 4.9
       }
     ],
     "France vs Senegal": [
@@ -5154,7 +5164,7 @@
         "date": "2026-06-15",
         "home": 1.51,
         "draw": 4.65,
-        "away": 8.5
+        "away": 8.2
       }
     ],
     "Iraq vs Norway": [
@@ -5184,7 +5194,7 @@
       },
       {
         "date": "2026-06-15",
-        "home": 19.0,
+        "home": 18.5,
         "draw": 8.2,
         "away": 1.2
       }
@@ -5216,8 +5226,8 @@
       },
       {
         "date": "2026-06-15",
-        "home": 1.43,
-        "draw": 5.0,
+        "home": 1.44,
+        "draw": 4.9,
         "away": 10.0
       }
     ],
@@ -5250,7 +5260,7 @@
         "date": "2026-06-15",
         "home": 1.37,
         "draw": 5.8,
-        "away": 10.0
+        "away": 10.5
       }
     ],
     "Portugal vs DR Congo": [
@@ -5280,7 +5290,7 @@
       },
       {
         "date": "2026-06-15",
-        "home": 1.32,
+        "home": 1.33,
         "draw": 6.0,
         "away": 12.5
       }
@@ -5344,7 +5354,7 @@
       },
       {
         "date": "2026-06-15",
-        "home": 2.28,
+        "home": 2.26,
         "draw": 3.55,
         "away": 3.6
       }
@@ -5408,9 +5418,9 @@
       },
       {
         "date": "2026-06-15",
-        "home": 1.82,
-        "draw": 3.9,
-        "away": 4.9
+        "home": 1.83,
+        "draw": 3.94,
+        "away": 5.0
       }
     ],
     "Switzerland vs Bosnia & Herzegovina": [
@@ -5504,9 +5514,9 @@
       },
       {
         "date": "2026-06-15",
-        "home": 2.03,
+        "home": 2.04,
         "draw": 3.5,
-        "away": 4.4
+        "away": 4.3
       }
     ],
     "USA vs Australia": [
@@ -5537,7 +5547,7 @@
       {
         "date": "2026-06-15",
         "home": 1.65,
-        "draw": 4.4,
+        "draw": 4.5,
         "away": 6.0
       }
     ],
@@ -5602,7 +5612,7 @@
         "date": "2026-06-15",
         "home": 1.13,
         "draw": 13.0,
-        "away": 29.0
+        "away": 28.0
       }
     ],
     "Turkey vs Paraguay": [
@@ -5633,7 +5643,7 @@
       {
         "date": "2026-06-15",
         "home": 2.12,
-        "draw": 3.45,
+        "draw": 3.5,
         "away": 4.2
       }
     ],
@@ -5665,8 +5675,8 @@
       {
         "date": "2026-06-15",
         "home": 1.73,
-        "draw": 4.1,
-        "away": 5.3
+        "draw": 4.2,
+        "away": 5.33
       }
     ],
     "Germany vs Ivory Coast": [
@@ -5730,7 +5740,7 @@
         "date": "2026-06-15",
         "home": 1.15,
         "draw": 12.0,
-        "away": 32.0
+        "away": 35.0
       }
     ],
     "Tunisia vs Japan": [
@@ -5761,7 +5771,7 @@
       {
         "date": "2026-06-15",
         "home": 7.8,
-        "draw": 4.21,
+        "draw": 4.3,
         "away": 1.61
       }
     ],
@@ -5792,8 +5802,8 @@
       },
       {
         "date": "2026-06-15",
-        "home": 1.13,
-        "draw": 12.5,
+        "home": 1.12,
+        "draw": 13.5,
         "away": 34.0
       }
     ],
@@ -5824,9 +5834,9 @@
       },
       {
         "date": "2026-06-15",
-        "home": 1.43,
-        "draw": 5.2,
-        "away": 9.0
+        "home": 1.44,
+        "draw": 5.25,
+        "away": 9.5
       }
     ],
     "Uruguay vs Cape Verde": [
@@ -5856,7 +5866,7 @@
       },
       {
         "date": "2026-06-15",
-        "home": 1.47,
+        "home": 1.49,
         "draw": 4.8,
         "away": 8.5
       }
@@ -5952,9 +5962,9 @@
       },
       {
         "date": "2026-06-15",
-        "home": 1.14,
+        "home": 1.13,
         "draw": 11.0,
-        "away": 33.0
+        "away": 36.0
       }
     ],
     "Norway vs Senegal": [
@@ -5984,7 +5994,7 @@
       },
       {
         "date": "2026-06-15",
-        "home": 2.26,
+        "home": 2.22,
         "draw": 3.6,
         "away": 3.51
       }
@@ -6050,7 +6060,7 @@
         "date": "2026-06-15",
         "home": 1.28,
         "draw": 7.0,
-        "away": 14.2
+        "away": 14.7
       }
     ],
     "England vs Ghana": [
@@ -6081,8 +6091,8 @@
       {
         "date": "2026-06-15",
         "home": 1.36,
-        "draw": 5.9,
-        "away": 11.1
+        "draw": 6.2,
+        "away": 11.3
       }
     ],
     "Panama vs Croatia": [
@@ -6112,7 +6122,7 @@
       },
       {
         "date": "2026-06-15",
-        "home": 7.21,
+        "home": 7.29,
         "draw": 4.2,
         "away": 1.59
       }
@@ -6176,8 +6186,8 @@
       },
       {
         "date": "2026-06-15",
-        "home": 1.6,
-        "draw": 4.3,
+        "home": 1.61,
+        "draw": 4.4,
         "away": 7.0
       }
     ],
@@ -6208,8 +6218,8 @@
       },
       {
         "date": "2026-06-15",
-        "home": 2.22,
-        "draw": 3.47,
+        "home": 2.26,
+        "draw": 3.5,
         "away": 3.65
       }
     ],
@@ -6274,7 +6284,7 @@
         "date": "2026-06-15",
         "home": 1.36,
         "draw": 6.0,
-        "away": 11.9
+        "away": 12.9
       }
     ],
     "Czech Republic vs Mexico": [
@@ -6305,7 +6315,7 @@
       {
         "date": "2026-06-15",
         "home": 5.0,
-        "draw": 3.65,
+        "draw": 3.67,
         "away": 1.9
       }
     ],
@@ -6338,7 +6348,7 @@
         "date": "2026-06-15",
         "home": 6.25,
         "draw": 4.5,
-        "away": 1.65
+        "away": 1.66
       }
     ],
     "Curaçao vs Ivory Coast": [
@@ -6368,9 +6378,9 @@
       },
       {
         "date": "2026-06-15",
-        "home": 21.0,
-        "draw": 8.0,
-        "away": 1.19
+        "home": 23.0,
+        "draw": 8.2,
+        "away": 1.2
       }
     ],
     "Ecuador vs Germany": [
@@ -6401,8 +6411,8 @@
       {
         "date": "2026-06-15",
         "home": 5.1,
-        "draw": 4.1,
-        "away": 1.79
+        "draw": 4.04,
+        "away": 1.82
       }
     ],
     "Japan vs Sweden": [
@@ -6464,8 +6474,8 @@
       },
       {
         "date": "2026-06-15",
-        "home": 9.7,
-        "draw": 5.5,
+        "home": 9.5,
+        "draw": 5.6,
         "away": 1.37
       }
     ],
@@ -6498,7 +6508,7 @@
         "date": "2026-06-15",
         "home": 2.23,
         "draw": 3.4,
-        "away": 3.65
+        "away": 3.6
       }
     ],
     "Turkey vs USA": [
@@ -6528,8 +6538,8 @@
       },
       {
         "date": "2026-06-15",
-        "home": 2.9,
-        "draw": 3.9,
+        "home": 2.85,
+        "draw": 3.85,
         "away": 2.55
       }
     ],
@@ -6626,7 +6636,7 @@
         "date": "2026-06-15",
         "home": 2.56,
         "draw": 4.0,
-        "away": 2.86
+        "away": 2.9
       }
     ],
     "Uruguay vs Spain": [

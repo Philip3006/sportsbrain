@@ -7,6 +7,8 @@ def dynamic_stake_eur(ev: float, confidence: str) -> float:
     EV is clipped at 20% to prevent model artifacts from causing oversized bets.
     HIGH confidence signals receive a +10% bonus (still capped at MAX_STAKE_EUR).
     """
+    if ev <= 0:
+        return 0.0
     ev_clipped = min(ev, 0.20)
     ev_range = 0.20 - 0.03  # min_edge = 3%
     amount = MIN_STAKE_EUR + (ev_clipped - 0.03) / ev_range * (MAX_STAKE_EUR - MIN_STAKE_EUR)
