@@ -7,6 +7,7 @@ from __future__ import annotations
 import csv
 import json
 import os
+import re
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -54,14 +55,17 @@ def _signal_to_dict(
     kickoff: str = "",
 ) -> dict:
     d = {
-        "sport":      sport,
-        "match":      f"{s.home} vs {s.away}",
-        "market":     s.market,
-        "odds":       round(s.decimal_odds, 2),
-        "model_prob": round(s.model_prob * 100, 1),
-        "ev_pct":     round(s.ev * 100, 1),
-        "stake_eur":  round(s.stake_eur, 2),
-        "confidence": s.confidence,
+        "sport":           sport,
+        "match":           f"{s.home} vs {s.away}",
+        "market":          s.market,
+        "odds":            round(s.decimal_odds, 2),
+        "model_prob":      round(s.model_prob * 100, 1),
+        "fair_prob":       round(s.fair_prob * 100, 1),
+        "ev_pct":          round(s.ev * 100, 1),
+        "stake_eur":       round(s.stake_eur, 2),
+        "stake_pct":       round(s.stake_pct * 100, 1),
+        "confidence":      s.confidence,
+        "n_models_agree":  s.n_models_agree,
     }
     if tour:
         d["tour"] = tour
@@ -81,7 +85,7 @@ def _build_wm_stats() -> dict:
             "btts":  {"n": 0, "won": 0, "staked": 0.0, "pnl": 0.0},
             "other": {"n": 0, "won": 0, "staked": 0.0, "pnl": 0.0},
         }
-        bankroll_series = [{"date": "2026-06-11", "balance": 100.0}]
+        daily_balance: dict[str, float] = {}
         balance = 100.0
         with open(_LEDGER_PATH, newline="") as f:
             for row in sorted(csv.DictReader(f), key=lambda r: r.get("match_date", "")):
@@ -106,7 +110,13 @@ def _build_wm_stats() -> dict:
                 stats[grp]["staked"] += stake
                 stats[grp]["pnl"] += pnl
                 balance += pnl
-                bankroll_series.append({"date": date, "balance": round(balance, 2)})
+                if date:
+                    daily_balance[date] = round(balance, 2)
+        bankroll_series = [{"date": "2026-06-11", "balance": 100.0}] + [
+            {"date": d, "balance": b}
+            for d, b in sorted(daily_balance.items())
+            if d > "2026-06-11"
+        ]
         # Compute hit-rates
         for grp in stats:
             d = stats[grp]
@@ -131,19 +141,18 @@ def _get_closed_bets() -> list[dict]:
 
 def _market_to_odds_key(market: str) -> str | None:
     """Map a ledger market string to the key used in all_odds dicts."""
-    m = market.lower()
-    if m == "home":
-        return "home_odds"
-    if m == "away":
-        return "away_odds"
-    if m == "draw":
-        return "draw_odds"
-    if m in ("o/u2.5_over", "o/u1.5_over", "o/u3.5_over"):
-        return "over_odds"
-    if m == "btts_yes":
-        return "btts_yes_odds"
-    if m == "dc_1x":
-        return "dc_1x_odds"
+    m = market.lower().strip()
+    if m == "home":   return "home"
+    if m == "away":   return "away"
+    if m == "draw":   return "draw"
+    if "_over"  in m: return "over25"
+    if "_under" in m: return "under25"
+    if m == "btts_yes": return "btts_yes"
+    if m == "btts_no":  return "btts_no"
+    if m in ("dc_1x", "dc_x2", "dc_12"): return m
+    ah = re.match(r"ah[+\-]?(\d+\.?\d*)_(home|away)", m)
+    if ah:
+        return f"ah{ah.group(1)}_{ah.group(2)}"
     return None
 
 
@@ -172,10 +181,13 @@ def _get_open_bets_from_ledger(all_odds: dict | None = None) -> list[dict]:
 
                 if all_odds:
                     try:
-                        mk = home.lower().replace(" ", "") + "_" + away.lower().replace(" ", "")
+                        mk_lower = f"{home.lower()} vs {away.lower()}"
+                        odds_block = next(
+                            (v for k, v in all_odds.items() if k.lower() == mk_lower), None
+                        )
                         odds_key = _market_to_odds_key(market)
-                        if odds_key and mk in all_odds:
-                            raw = all_odds[mk].get(odds_key)
+                        if odds_key and odds_block is not None:
+                            raw = odds_block.get(odds_key)
                             if raw is not None:
                                 current_odds = float(raw)
                                 if entry_odds and entry_odds > 0:
