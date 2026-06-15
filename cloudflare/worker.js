@@ -109,6 +109,9 @@ export default {
         if (!Number.isFinite(odds) || odds < 1.01 || odds > 100) return jsonResponse({ error: 'odds out of range (1.01–100)' }, 400);
         if (!Number.isFinite(stake) || stake < 0.5 || stake > 25) return jsonResponse({ error: 'stake_eur out of range (0.5–25)' }, 400);
 
+        const rawSource = (body.source || 'value').toString().toLowerCase();
+        const source = (rawSource === 'manual') ? 'manual' : 'value';
+
         const id = crypto.randomUUID();
         const entry = {
           id,
@@ -117,10 +120,12 @@ export default {
           odds,
           stake_eur: stake,
           ev_pct: Number.isFinite(Number(body.ev_pct)) ? Number(body.ev_pct) : null,
+          model_prob: Number.isFinite(Number(body.model_prob)) ? Number(body.model_prob) : null,
           confidence: typeof body.confidence === 'string' ? body.confidence : '',
           kickoff: typeof body.kickoff === 'string' ? body.kickoff : '',
           sport: typeof body.sport === 'string' ? body.sport : '',
-          source: 'pwa',
+          source,
+          origin: 'pwa',
           placed_at: new Date().toISOString(),
         };
 

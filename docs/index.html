@@ -88,9 +88,12 @@
     .mkt-header { display: flex; gap: 5px; padding: 5px 12px 5px 0; background: #0d1117; border-bottom: 1px solid rgba(48,54,61,.4); justify-content: flex-end; }
     .mkt-header span { width: 54px; text-align: center; font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .3px; }
     .b365-odds { display: flex; gap: 5px; flex-shrink: 0; align-items: center; }
-    .b365-btn { display: block; background: #1e2733; border: 1px solid rgba(255,255,255,.1); border-radius: 6px; width: 54px; height: 32px; line-height: 32px; text-align: center; font-size: 13px; font-weight: 800; color: var(--text); cursor: pointer; overflow: hidden; }
+    .b365-btn { display: block; background: #1e2733; border: 1px solid rgba(255,255,255,.1); border-radius: 6px; width: 54px; height: 32px; line-height: 32px; text-align: center; font-size: 13px; font-weight: 800; color: var(--text); cursor: pointer; overflow: hidden; padding: 0; font-family: inherit; box-sizing: border-box; }
     .b365-btn.val { background: rgba(0,200,83,.12); border-color: rgba(0,200,83,.5); color: var(--green); }
     .b365-btn.no-odds { color: rgba(255,255,255,.18); font-weight: 400; }
+    button.b365-btn-click { -webkit-appearance: none; appearance: none; }
+    button.b365-btn-click:active { transform: scale(0.96); }
+    button.b365-btn-click:hover { filter: brightness(1.15); }
 
     /* ── Detail view ── */
     .back-bar { display: flex; align-items: center; gap: 6px; padding: 12px 16px 10px; cursor: pointer; color: var(--green); font-size: 15px; font-weight: 600; -webkit-tap-highlight-color: transparent; border-bottom: 1px solid var(--border); }
@@ -422,14 +425,14 @@
 
 <div class="modal-backdrop" id="bet-modal-bd" role="dialog" aria-modal="true" aria-labelledby="bet-modal-title">
   <div class="modal" id="bet-modal">
-    <h3 id="bet-modal-title">Wette platzieren</h3>
+    <h3 id="bet-modal-title">Wette platzieren <span id="bet-modal-kind-badge" style="display:none;font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;margin-left:8px;vertical-align:middle"></span></h3>
     <div class="modal-sub" id="bet-modal-sub">—</div>
 
-    <div class="modal-row">
+    <div class="modal-row" style="align-items:center">
       <span class="mr-label">Quote</span>
-      <span class="mr-val" id="bet-modal-odds">—</span>
+      <input type="number" inputmode="decimal" min="1.01" max="100" step="0.01" class="modal-stake-input" id="bet-modal-odds-input" aria-label="Quote" style="max-width:110px;text-align:right">
     </div>
-    <div class="modal-row">
+    <div class="modal-row" id="bet-modal-ev-row">
       <span class="mr-label">EV</span>
       <span class="mr-val" id="bet-modal-ev">—</span>
     </div>
@@ -657,7 +660,7 @@ function openMatch(displayKey) {
   const otherSigs = sigs.filter(s => !/^o\/u/.test(s.market));
 
   let cards = '';
-  if (tip) cards += predCard(dh, da, tip, oddsEntry, nk);
+  if (tip) cards += predCard(dh, da, tip, oddsEntry, nk, kickoff, sport);
 
   if (!sigs.length && !tip) {
     cards += `<div class="empty"><div class="icon">⏳</div><div>Noch keine Modellbewertung für dieses Spiel.<br><small>Wird im nächsten Scan (täglich 08:00 UTC) ergänzt.</small></div></div>`;
@@ -807,8 +810,11 @@ function oddsMovement(nk, side) {
 }
 
 // ── Model prediction card ─────────────────────────────────────
-function predCard(home, away, tip, odds, nk) {
+function predCard(home, away, tip, odds, nk, kickoff, sport) {
   odds = odds || {};
+  const matchStr = `${home} vs ${away}`;
+  const koStr = kickoff || '';
+  const spStr = sport || '';
   const ph = Math.round(tip.p_home * 100);
   const pd = Math.round(tip.p_draw * 100);
   const pa = Math.round(tip.p_away * 100);
@@ -838,11 +844,33 @@ function predCard(home, away, tip, odds, nk) {
     const ev = (m.p * m.q - 1) * 100;
     const evCls = ev > 0 ? 'color:var(--green)' : 'color:var(--red)';
     const mvmt = nk ? oddsMovement(nk, m.key) : '';
+    const isValue = ev >= 3;
+    const src = isValue ? 'value' : 'manual';
+    const defaultStake = isValue ? 10 : 5;
+    const btnAttrs = [
+      `data-match="${esc(matchStr)}"`,
+      `data-market="${esc(m.key)}"`,
+      `data-odds="${m.q}"`,
+      `data-stake="${defaultStake}"`,
+      `data-ev="${ev.toFixed(2)}"`,
+      `data-confidence=""`,
+      `data-kickoff="${esc(koStr)}"`,
+      `data-sport="${esc(spStr)}"`,
+      `data-model-prob="${m.p}"`,
+      `data-source="${src}"`,
+    ].join(' ');
+    const btnStyle = isValue
+      ? 'background:rgba(0,200,83,.15);color:var(--green);border:1px solid rgba(0,200,83,.45)'
+      : 'background:rgba(255,255,255,.05);color:var(--text);border:1px solid var(--border)';
     return `<tr style="border-bottom:1px solid rgba(48,54,61,.4)">
       <td style="padding:7px 8px;font-size:12px;font-weight:600">${m.name}</td>
       <td style="padding:7px 8px;font-size:12px;color:var(--muted);text-align:right">${Math.round(m.p*100)}%</td>
       <td style="padding:7px 8px;font-size:13px;font-weight:800;text-align:right">${m.q.toFixed(2)}${mvmt}</td>
       <td style="padding:7px 8px;font-size:12px;font-weight:800;text-align:right;${evCls}">${ev>0?'+':''}${ev.toFixed(1)}%</td>
+      <td style="padding:5px 6px;text-align:right">
+        <button type="button" class="market-bet-btn" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs}
+                aria-label="Wette platzieren" style="${btnStyle};font-size:11px;font-weight:800;padding:4px 9px;border-radius:6px;cursor:pointer;white-space:nowrap">+&nbsp;Wetten</button>
+      </td>
     </tr>`;
   }).join('');
 
@@ -856,6 +884,7 @@ function predCard(home, away, tip, odds, nk) {
             <th style="padding:6px 8px;font-size:10px;font-weight:700;color:var(--muted);text-align:right">Modell</th>
             <th style="padding:6px 8px;font-size:10px;font-weight:700;color:var(--muted);text-align:right">Quote</th>
             <th style="padding:6px 8px;font-size:10px;font-weight:700;color:var(--muted);text-align:right">EV</th>
+            <th style="padding:6px 8px;font-size:10px;font-weight:700;color:var(--muted);text-align:right"></th>
           </tr></thead>
           <tbody>${mktRows}</tbody>
         </table>
@@ -1183,20 +1212,43 @@ function _savePwaPending(ids) {
 
 function _openBetModalFromBtn(btn) {
   const d = btn.dataset;
+  const source = (d.source === 'manual') ? 'manual' : 'value';
+  const modelProbRaw = parseFloat(d.modelProb || '0');
+  const modelProb = (modelProbRaw > 0 && modelProbRaw <= 1) ? modelProbRaw
+                  : (modelProbRaw > 1 && modelProbRaw <= 100) ? modelProbRaw / 100
+                  : 0;
   _pendingBet = {
     match: d.match,
     market: d.market,
     odds: parseFloat(d.odds),
-    stake_eur: parseFloat(d.stake),
+    stake_eur: parseFloat(d.stake) || (source === 'manual' ? 5 : 5),
     ev_pct: parseFloat(d.ev || '0'),
     confidence: d.confidence || '',
     kickoff: d.kickoff || '',
     sport: d.sport || '',
+    source,
+    model_prob: modelProb,
   };
   const [h, a] = _pendingBet.match.split(' vs ').map(x => x.trim());
   document.getElementById('bet-modal-sub').textContent = `${h} vs ${a} · ${marketLabel(_pendingBet.market, h, a)}`;
-  document.getElementById('bet-modal-odds').textContent = '@' + _pendingBet.odds.toFixed(2);
-  document.getElementById('bet-modal-ev').textContent = '+' + _pendingBet.ev_pct.toFixed(1) + '%';
+  const oddsInp = document.getElementById('bet-modal-odds-input');
+  if (oddsInp) oddsInp.value = _pendingBet.odds.toFixed(2);
+  const badge = document.getElementById('bet-modal-kind-badge');
+  if (badge) {
+    if (source === 'manual') {
+      badge.textContent = '✍️ Manuell';
+      badge.style.background = 'rgba(210,153,34,.18)';
+      badge.style.color = 'var(--yellow)';
+      badge.style.border = '1px solid rgba(210,153,34,.4)';
+      badge.style.display = 'inline-block';
+    } else {
+      badge.textContent = '💡 Value-Bet';
+      badge.style.background = 'rgba(0,200,83,.15)';
+      badge.style.color = 'var(--green)';
+      badge.style.border = '1px solid rgba(0,200,83,.4)';
+      badge.style.display = 'inline-block';
+    }
+  }
   const inp = document.getElementById('bet-modal-stake');
   inp.value = _pendingBet.stake_eur.toFixed(2);
   _updateBetModalCalcs();
@@ -1214,7 +1266,9 @@ function _closeBetModal() {
 function _updateBetModalCalcs() {
   if (!_pendingBet) return;
   const stake = parseFloat(document.getElementById('bet-modal-stake').value) || 0;
-  const odds = _pendingBet.odds;
+  const oddsInp = document.getElementById('bet-modal-odds-input');
+  const odds = oddsInp ? (parseFloat(oddsInp.value) || 0) : _pendingBet.odds;
+  _pendingBet.odds = odds;
   const profit = (odds - 1) * stake;
   const ret = odds * stake;
   const free = _bankrollState?.free ?? BANKROLL_START;
@@ -1223,22 +1277,54 @@ function _updateBetModalCalcs() {
   document.getElementById('bet-modal-profit').textContent = '+€' + profit.toFixed(2);
   document.getElementById('bet-modal-return').textContent = '€' + ret.toFixed(2);
   document.getElementById('bet-modal-risk').textContent = riskPct.toFixed(1) + '% (€' + free.toFixed(0) + ' frei)';
+  // Live EV: use model_prob if available, else show the static ev_pct (or hide if neither)
+  const evRow = document.getElementById('bet-modal-ev-row');
+  const evEl = document.getElementById('bet-modal-ev');
+  let evPct = null;
+  if (_pendingBet.model_prob && _pendingBet.model_prob > 0 && odds > 0) {
+    evPct = (_pendingBet.model_prob * odds - 1) * 100;
+  } else if (Number.isFinite(_pendingBet.ev_pct) && _pendingBet.ev_pct !== 0) {
+    evPct = _pendingBet.ev_pct;
+  }
+  if (evPct == null) {
+    if (evRow) evRow.style.display = 'none';
+  } else {
+    if (evRow) evRow.style.display = '';
+    if (evEl) {
+      const sign = evPct >= 0 ? '+' : '';
+      evEl.textContent = sign + evPct.toFixed(1) + '%';
+      evEl.style.color = evPct >= 0 ? 'var(--green)' : 'var(--red)';
+    }
+  }
   const warn = document.getElementById('bet-modal-warn');
   warn.classList.toggle('show', stake > start * 0.05 + 0.001);
   const btn = document.getElementById('bet-modal-confirm');
-  btn.disabled = !(stake >= 0.5 && stake <= 25);
+  const oddsOk = odds >= 1.01 && odds <= 100;
+  btn.disabled = !(stake >= 0.5 && stake <= 25 && oddsOk);
 }
 
 async function _submitBet() {
   if (!_pendingBet) return;
   const stake = parseFloat(document.getElementById('bet-modal-stake').value) || 0;
   if (stake < 0.5 || stake > 25) { showToast('Einsatz muss zwischen €0.50 und €25 liegen', 'error'); return; }
+  const oddsInp = document.getElementById('bet-modal-odds-input');
+  const odds = oddsInp ? (parseFloat(oddsInp.value) || 0) : _pendingBet.odds;
+  if (!(odds >= 1.01 && odds <= 100)) { showToast('Quote muss zwischen 1.01 und 100 liegen', 'error'); return; }
   const token = localStorage.getItem('sb_token');
   if (!token) { _openTokenModal(); return; }
 
   const btn = document.getElementById('bet-modal-confirm');
   btn.disabled = true; btn.textContent = 'Eintragen…';
-  const payload = { ..._pendingBet, stake_eur: stake };
+  const payload = {
+    ..._pendingBet,
+    odds,
+    stake_eur: stake,
+    source: _pendingBet.source || 'value',
+  };
+  if (_pendingBet.model_prob && _pendingBet.model_prob > 0) {
+    payload.model_prob = _pendingBet.model_prob;
+    payload.ev_pct = (_pendingBet.model_prob * odds - 1) * 100;
+  }
   try {
     const r = await fetch(WORKER_BASE + '/pending_bets', {
       method: 'POST',
@@ -1286,6 +1372,7 @@ function _closeTokenModal() {
 // Listener verdrahten
 (function () {
   document.getElementById('bet-modal-stake')?.addEventListener('input', _updateBetModalCalcs);
+  document.getElementById('bet-modal-odds-input')?.addEventListener('input', _updateBetModalCalcs);
   document.getElementById('bet-modal-cancel')?.addEventListener('click', _closeBetModal);
   document.getElementById('bet-modal-confirm')?.addEventListener('click', _submitBet);
   document.getElementById('bet-modal-bd')?.addEventListener('click', (e) => { if (e.target.id === 'bet-modal-bd') _closeBetModal(); });
@@ -1382,11 +1469,32 @@ function renderHome() {
     days[dk].push(g);
   }
 
-  const oddsBtn = (nk, mkt) => {
+  const oddsBtn = (nk, mkt, game) => {
     const od = (oddsMap[nk]||{})[mkt];
     if (!od) return `<div class="b365-btn no-odds">—</div>`;
     const cls = od.ev !== null ? 'val' : '';
-    return `<div class="b365-btn ${cls}">${od.odds.toFixed(2)}</div>`;
+    if (!game) return `<div class="b365-btn ${cls}">${od.odds.toFixed(2)}</div>`;
+    const mkStr = `${game.home} vs ${game.away}`;
+    const isValue = od.ev !== null && od.ev >= 3;
+    const src = isValue ? 'value' : 'manual';
+    const evVal = od.ev !== null ? od.ev : 0;
+    const stake = isValue ? 10 : 5;
+    const attrs = [
+      `type="button"`,
+      `class="b365-btn ${cls} b365-btn-click"`,
+      `data-match="${esc(mkStr)}"`,
+      `data-market="${mkt}"`,
+      `data-odds="${od.odds}"`,
+      `data-stake="${stake}"`,
+      `data-ev="${evVal}"`,
+      `data-confidence=""`,
+      `data-kickoff="${esc(game.kickoff || '')}"`,
+      `data-sport="${esc(game.sport || '')}"`,
+      `data-source="${src}"`,
+      `onclick="event.stopPropagation();_openBetModalFromBtn(this)"`,
+      `aria-label="Wette platzieren · ${mkt} @ ${od.odds.toFixed(2)}"`,
+    ].join(' ');
+    return `<button ${attrs}>${od.odds.toFixed(2)}</button>`;
   };
 
   // ── Heute-Sektion (nächste 24h) ──────────────────────────────
@@ -1432,8 +1540,8 @@ function renderHome() {
       // Odds buttons
       const isFootball = g.sport === 'football';
       const odds = isFootball
-        ? oddsBtn(nk,'home') + oddsBtn(nk,'draw') + oddsBtn(nk,'away')
-        : oddsBtn(nk,'home') + oddsBtn(nk,'away');
+        ? oddsBtn(nk,'home',g) + oddsBtn(nk,'draw',g) + oddsBtn(nk,'away',g)
+        : oddsBtn(nk,'home',g) + oddsBtn(nk,'away',g);
 
       todayHtml += `<div class="b365-row today-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)}" onclick='openMatch(${JSON.stringify(mk)})' onkeydown='if(event.key==="Enter"||event.key===" "){event.preventDefault();openMatch(${JSON.stringify(mk)});}'>
         <div class="b365-left">
@@ -1597,8 +1705,8 @@ function renderHome() {
           rightCol = `<div class="score-box ${resultClass}">${result.home_score}–${result.away_score}</div>`;
         } else {
           rightCol = isFootball
-            ? oddsBtn(nk,'home') + oddsBtn(nk,'draw') + oddsBtn(nk,'away')
-            : oddsBtn(nk,'home') + oddsBtn(nk,'away');
+            ? oddsBtn(nk,'home',g) + oddsBtn(nk,'draw',g) + oddsBtn(nk,'away',g)
+            : oddsBtn(nk,'home',g) + oddsBtn(nk,'away',g);
         }
 
         h += `<div class="b365-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)}" onclick='openMatch(${JSON.stringify(mk)})' onkeydown='if(event.key==="Enter"||event.key===" "){event.preventDefault();openMatch(${JSON.stringify(mk)});}'>

@@ -70,6 +70,17 @@ def _row_from_bet(bet: dict, today: str) -> dict | None:
         return None
     kickoff = bet.get("kickoff") or ""
     match_date = kickoff[:10] if kickoff else ""
+    source = (bet.get("source") or "value").strip().lower()
+    if source not in ("value", "manual"):
+        source = "value"
+    model_prob_raw = bet.get("model_prob")
+    if model_prob_raw is None or model_prob_raw == "":
+        model_prob_str = ""
+    else:
+        try:
+            model_prob_str = f"{float(model_prob_raw):.6f}"
+        except (TypeError, ValueError):
+            model_prob_str = ""
     return {
         "match_id":     _match_id(home, away, kickoff),
         "match_date":   match_date,
@@ -84,6 +95,9 @@ def _row_from_bet(bet: dict, today: str) -> dict | None:
         "pnl":          "0.0",
         "closing_odds": "0.0",
         "clv":          "",
+        "pinnacle_ref_odds": "",
+        "source":       source,
+        "model_prob":   model_prob_str,
     }
 
 
