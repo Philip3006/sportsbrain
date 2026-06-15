@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-15T20:57:28Z",
+  "updated": "2026-06-15T23:06:41Z",
   "schedule": [
     {
       "sport": "football",
@@ -5037,9 +5037,9 @@
       "away": "Egypt",
       "market": "draw",
       "entry_odds": 4.12,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
+      "current_odds": 3.2,
+      "drift_pct": -22.3,
+      "clv_signal": "bad",
       "stake": 9.42,
       "match_date": "2026-06-15",
       "model_edge_pct": null
@@ -5050,9 +5050,9 @@
       "away": "Egypt",
       "market": "o/u2.5_under",
       "entry_odds": 1.96,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
+      "current_odds": 2.06,
+      "drift_pct": 5.1,
+      "clv_signal": "good",
       "stake": 15.0,
       "match_date": "2026-06-15",
       "model_edge_pct": null
@@ -5063,8 +5063,8 @@
       "away": "Uruguay",
       "market": "ah+1.5_home",
       "entry_odds": 1.65,
-      "current_odds": null,
-      "drift_pct": null,
+      "current_odds": 1.64,
+      "drift_pct": -0.6,
       "clv_signal": null,
       "stake": 15.0,
       "match_date": "2026-06-15",
@@ -5076,7 +5076,7 @@
     "free": 73.08,
     "staked": 39.42,
     "exposure_pct": 39.4,
-    "max_win": 53.54,
+    "max_win": 46.22,
     "pnl_closed": 12.5
   },
   "wm_stats": {
@@ -5121,19 +5121,7 @@
       },
       {
         "date": "2026-06-12",
-        "balance": 113.11
-      },
-      {
-        "date": "2026-06-12",
         "balance": 105.11
-      },
-      {
-        "date": "2026-06-13",
-        "balance": 126.86
-      },
-      {
-        "date": "2026-06-13",
-        "balance": 116.86
       },
       {
         "date": "2026-06-13",
@@ -7445,6 +7433,13 @@
       "home_score": 0,
       "away_score": 0,
       "commence_time": "2026-06-15T16:01:00Z"
+    },
+    {
+      "home": "Belgium",
+      "away": "Egypt",
+      "home_score": 1,
+      "away_score": 1,
+      "commence_time": "2026-06-15T19:00:00Z"
     }
   ]
 }
