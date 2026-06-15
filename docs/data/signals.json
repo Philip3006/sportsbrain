@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-15T14:09:36Z",
+  "updated": "2026-06-15T17:16:52Z",
   "schedule": [
     {
       "sport": "football",
@@ -4534,12 +4534,12 @@
       "away": "Egypt",
       "market": "draw",
       "entry_odds": 4.12,
-      "current_odds": 4.2,
-      "drift_pct": 1.9,
-      "clv_signal": "bad",
+      "current_odds": null,
+      "drift_pct": null,
+      "clv_signal": null,
       "stake": 9.42,
       "match_date": "2026-06-15",
-      "model_edge_pct": 55.4
+      "model_edge_pct": null
     },
     {
       "match": "Belgium vs Egypt",
@@ -4560,7 +4560,7 @@
     "free": 88.08,
     "staked": 24.42,
     "exposure_pct": 24.4,
-    "max_win": 44.54,
+    "max_win": 43.79,
     "pnl_closed": 12.5
   },
   "wm_stats": {
