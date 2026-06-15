@@ -313,7 +313,8 @@
     .suggest-eur { font-size: 12px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
 
     /* ── Bottom nav — Bet365 Style ── */
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #1a2030; border-top: 1px solid rgba(255,255,255,0.12); display: flex; padding-bottom: max(calc(env(safe-area-inset-bottom) + 26px), 36px); z-index: 100; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #1a2030; border-top: 1px solid rgba(255,255,255,0.12); display: flex; padding-bottom: max(calc(env(safe-area-inset-bottom) + 26px), 36px); z-index: 100; transition: transform 0.28s cubic-bezier(.4,0,.2,1); }
+    .bottom-nav.nav-hidden { transform: translateY(100%); }
     .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 9px; gap: 5px; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; min-height: 58px; border-top: 3px solid transparent; transition: border-color 0.2s ease; }
     .nav-tab.active { border-top-color: var(--green); background: none; }
     .ni { font-size: 22px; line-height: 1; filter: grayscale(0.5) opacity(0.65); transition: filter 0.18s ease, transform 0.22s cubic-bezier(.34,1.56,.64,1); }
@@ -2174,6 +2175,23 @@ setInterval(load, 10*60*1000);
     renderHome();
     input.focus();
   });
+})();
+
+// ── Hide bottom-nav on scroll down, show on scroll up ─────────
+(function () {
+  const nav = document.querySelector('.bottom-nav');
+  let lastY = 0, ticking = false;
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const y = window.scrollY;
+      if (y > lastY + 4) nav.classList.add('nav-hidden');
+      else if (y < lastY - 4) nav.classList.remove('nav-hidden');
+      lastY = y;
+      ticking = false;
+    });
+  }, { passive: true });
 })();
 
 // ── Pull-to-Refresh ───────────────────────────────────────────
