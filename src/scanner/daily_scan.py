@@ -611,10 +611,10 @@ def run_daily_scan(
             try:
                 from src.betting.goalscorer import get_top_goalscorer_predictions
                 _home_scorers = get_top_goalscorer_predictions(
-                    home, match_ts_naive, player_xg_df, top_n=3, dc_params=dc_params
+                    home, match_ts_naive, player_xg_df, top_n=5, dc_params=dc_params
                 )
                 _away_scorers = get_top_goalscorer_predictions(
-                    away, match_ts_naive, player_xg_df, top_n=3, dc_params=dc_params
+                    away, match_ts_naive, player_xg_df, top_n=5, dc_params=dc_params
                 )
             except Exception:
                 pass
@@ -816,6 +816,22 @@ def run_daily_scan(
         # Filter out signals with unrealistically high EV (model artifact)
         signals = [s for s in signals if s.ev <= MAX_EV]
 
+        # Goalscorer value bets — independent third bucket (never blocks match slots)
+        _scorer_signals: list[BetSignal] = []
+        if _home_scorers or _away_scorers:
+            try:
+                from src.data.odds_api import fetch_event_player_props
+                from src.betting.goalscorer import detect_value_goalscorer
+                _player_props = fetch_event_player_props(match_id)
+                if _player_props:
+                    _scorer_signals = detect_value_goalscorer(
+                        match_id, home, away,
+                        _home_scorers, _away_scorers,
+                        _player_props, bankroll,
+                    )
+            except Exception:
+                pass
+
         def _ah_label(line: float, side: str) -> str:
             """Returns AH market label consistent with detect_value_ah / detect_value_ah_quarter."""
             rem = round((abs(line) * 4) % 2)
@@ -865,6 +881,10 @@ def run_daily_scan(
                 "p_away": float(final_arr[0]),
                 "match_id": match_id,
             })
+        # Scorer signals: third bucket — structurally independent from result/goals.
+        # Never compete with match bets for portfolio slots (always LOW confidence).
+        if _scorer_signals:
+            all_signals.append(max(_scorer_signals, key=lambda s: s.ev))
 
     if skipped_divergence:
         print(f"  Skipped {skipped_divergence} matches: model/market divergence too high (confederation bias filter).")
