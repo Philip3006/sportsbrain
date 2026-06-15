@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-14",
+  "updated": "2026-06-15",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -8,7 +8,8 @@
       "ampel": "🟢",
       "suspended": [
         "Youcef Atal",
-        "Ismael Bennacer"
+        "Ismael Bennacer",
+        "Ramy Bensebaini"
       ],
       "players": [
         {
@@ -114,7 +115,7 @@
         {
           "name": "Ramy Bensebaini",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Ibrahim Maza",
@@ -428,7 +429,8 @@
       "availability_score": 1.0,
       "ampel": "🟢",
       "suspended": [
-        "Christoph Baumgartner"
+        "Christoph Baumgartner",
+        "David Alaba"
       ],
       "players": [
         {
@@ -469,7 +471,7 @@
         {
           "name": "David Alaba",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Marcel Sabitzer",

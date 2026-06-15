@@ -910,23 +910,28 @@ function predCard(home, away, tip, odds, nk) {
       const hsc = tip.top_scorers_home || [];
       const asc = tip.top_scorers_away || [];
       if (!hsc.length && !asc.length) return '';
-      const row = (sc, team) => sc.length ? `
-        <div style="margin-bottom:6px">
-          <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">${esc(team)}</div>
-          ${sc.map(p => `
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-              <div style="flex:1;background:rgba(255,255,255,.06);border-radius:4px;height:6px;overflow:hidden">
-                <div style="width:${Math.round(p.p*100)}%;height:100%;background:var(--green);border-radius:4px"></div>
-              </div>
-              <span style="font-size:12px;font-weight:800;color:var(--green);min-width:36px;text-align:right">${Math.round(p.p*100)}%</span>
-              <span style="font-size:12px;color:var(--text);min-width:0;flex:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name)}</span>
+      const pctColor = p => p >= .45 ? 'var(--green)' : p >= .25 ? 'var(--yellow)' : 'var(--muted)';
+      const medals = ['🥇','🥈','🥉'];
+      const col = (sc, team) => {
+        if (!sc.length) return `<div style="flex:1"><div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(team)}</div><div style="font-size:11px;color:var(--muted);font-style:italic">Keine Daten</div></div>`;
+        return `<div style="flex:1;min-width:0">
+          <div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(team)}</div>
+          ${sc.map((p,i) => `
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px">
+              <span style="font-size:14px;line-height:1;flex-shrink:0">${medals[i]||'·'}</span>
+              <span style="font-size:13px;font-weight:700;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name)}</span>
+              <span style="font-size:13px;font-weight:900;color:${pctColor(p.p)};flex-shrink:0">${Math.round(p.p*100)}%</span>
             </div>`).join('')}
-        </div>` : '';
-      return `<div style="margin-top:12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:10px 12px">
-        <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">🎯 Torschützen-Prognose</div>
-        ${row(hsc, home)}
-        ${row(asc, away)}
-        <div style="font-size:10px;color:var(--muted);margin-top:4px">StatsBomb xG · gegnerstärke-korrigiert</div>
+        </div>`;
+      };
+      return `<div style="margin-top:12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:12px 14px">
+        <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">🎯 Torschützen-Prognose</div>
+        <div style="display:flex;gap:16px">
+          ${col(hsc, home)}
+          <div style="width:1px;background:var(--border);flex-shrink:0"></div>
+          ${col(asc, away)}
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid rgba(48,54,61,.4)">StatsBomb xG · gegnerstärke-korrigiert · nur aktuelle Kaderspieler</div>
       </div>`;
     })()}
     ${mktTable}

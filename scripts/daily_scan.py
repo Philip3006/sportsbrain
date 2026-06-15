@@ -210,6 +210,9 @@ if __name__ == "__main__":
     model_tips = {}
     try:
         import os as _os2
+        import re as _re
+        import unicodedata as _ud
+        import json as _jsc
         from src.scanner.daily_scan import _load_latest_dc_params
         from src.models.dixon_coles import predict_match, predict_xg, predict_btts, predict_totals
         from src.config import canonical_name, DATA_CACHE
@@ -226,6 +229,67 @@ if __name__ == "__main__":
             except Exception:
                 pass
 
+        # Load squads.json for current-squad filtering and clean name lookup
+        _squads_data = {}
+        try:
+            _sq_path = ROOT / "docs" / "data" / "squads.json"
+            if _sq_path.exists():
+                _squads_data = _jsc.loads(_sq_path.read_text()).get("teams", {})
+        except Exception:
+            pass
+
+        def _asciify(s: str) -> list:
+            """ASCII-normalize and split into lowercase word tokens."""
+            s = _ud.normalize("NFKD", s).encode("ascii", "ignore").decode().lower()
+            return _re.split(r"[\s\-]+", s)
+
+        def _match_player(sb_name: str, eligible: dict) -> str | None:
+            """
+            Match a StatsBomb full name to a squad name using three-tier priority:
+            1. Last name of squad player (≥4 chars) found in StatsBomb name
+            2. Any long token (≥6 chars) shared between both names
+            3. All short tokens (≥3 chars) of squad name appear in StatsBomb name
+            Returns squad name on match, None otherwise.
+            """
+            sb_parts = _asciify(sb_name)
+            sb_set = set(sb_parts)
+            for sq_name, sq_parts in eligible.items():
+                # 1. Last name match (most reliable — surname is rightmost token)
+                if sq_parts and len(sq_parts[-1]) >= 4 and sq_parts[-1] in sb_set:
+                    return sq_name
+                # 2. Any long shared token (handles compound surnames)
+                sq_long = {t for t in sq_parts if len(t) >= 6}
+                sb_long = {t for t in sb_parts if len(t) >= 6}
+                if sq_long & sb_long:
+                    return sq_name
+                # 3. All squad short tokens appear in StatsBomb name (short names e.g. Korean)
+                sq_short = {t for t in sq_parts if len(t) >= 3}
+                if sq_short and sq_short <= sb_set:
+                    return sq_name
+            return None
+
+        def _filter_by_squad(preds: list, team: str) -> list:
+            """
+            Keeps only players in the current squad (not injured/out).
+            Uses squad name for display (shorter, cleaner than StatsBomb full name).
+            """
+            sq_info = _squads_data.get(team, {})
+            sq_players = sq_info.get("players", [])
+            if not sq_players:
+                return [{"name": p["player"], "p": p["p_score"]} for p in preds]
+            eligible = {
+                p["name"]: _asciify(p["name"])
+                for p in sq_players
+                if p.get("status") not in ("injured", "out")
+                and p.get("pos") != "GK"
+            }
+            result = []
+            for pred in preds:
+                sq_name = _match_player(pred["player"], eligible)
+                if sq_name:
+                    result.append({"name": sq_name, "p": round(pred["p_score"], 3)})
+            return result
+
         import pandas as _pd_tip
         _now_ts = _pd_tip.Timestamp.now()
 
@@ -240,24 +304,20 @@ if __name__ == "__main__":
                     _btts = predict_btts(_h, _a, _dc_params, neutral=True)
                     _totals = predict_totals(_h, _a, _dc_params, neutral=True)
 
-                    # Goalscorer predictions (opponent-adjusted xG)
+                    # Goalscorer predictions — squad-filtered, opponent-adjusted xG
                     _home_sc, _away_sc = [], []
                     if _player_xg_df is not None:
                         try:
-                            _home_sc = [
-                                {"name": p["player"], "p": round(p["p_score"], 3)}
-                                for p in get_top_goalscorer_predictions(
-                                    _h, _now_ts, _player_xg_df,
-                                    n_games=5, top_n=3, dc_params=_dc_params,
-                                )
-                            ]
-                            _away_sc = [
-                                {"name": p["player"], "p": round(p["p_score"], 3)}
-                                for p in get_top_goalscorer_predictions(
-                                    _a, _now_ts, _player_xg_df,
-                                    n_games=5, top_n=3, dc_params=_dc_params,
-                                )
-                            ]
+                            _raw_h = get_top_goalscorer_predictions(
+                                _h, _now_ts, _player_xg_df,
+                                n_games=5, top_n=8, dc_params=_dc_params,
+                            )
+                            _raw_a = get_top_goalscorer_predictions(
+                                _a, _now_ts, _player_xg_df,
+                                n_games=5, top_n=8, dc_params=_dc_params,
+                            )
+                            _home_sc = _filter_by_squad(_raw_h, _h)[:3]
+                            _away_sc = _filter_by_squad(_raw_a, _a)[:3]
                         except Exception:
                             pass
 
