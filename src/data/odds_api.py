@@ -372,6 +372,45 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
     return matches
 
 
+def derive_goals_range_implied(
+    totals_lines: dict,
+    min_g: int = 2,
+    max_g: int = 4,
+) -> float | None:
+    """Derive implied P(min_g ≤ total ≤ max_g) from available O/U lines.
+
+    Primary: P(2-4) = P(over 1.5) − P(over 4.5).
+    Fallback: invert O/U 2.5 to a Poisson mean λ, then sum PMF over [min_g, max_g].
+    Returns None when no usable line is available.
+    """
+    from scipy.optimize import brentq
+    from scipy.stats import poisson as _poisson
+
+    low_key = float(min_g) - 0.5   # 1.5
+    high_key = float(max_g) + 0.5  # 4.5
+    over_low = totals_lines.get(low_key, {}).get("over")
+    over_high = totals_lines.get(high_key, {}).get("over")
+    if over_low and over_high and over_low > 1.0 and over_high > 1.0:
+        implied = 1.0 / over_low - 1.0 / over_high
+        return max(0.0, implied)
+
+    # Fallback: use O/U 2.5 to infer Poisson mean, then compute P(min_g–max_g)
+    over_25 = totals_lines.get(2.5, {}).get("over")
+    under_25 = totals_lines.get(2.5, {}).get("under")
+    if not over_25 or not under_25 or over_25 <= 1.0 or under_25 <= 1.0:
+        return None
+    # Remove margin: fair P(over 2.5) = P(total ≥ 3)
+    total_inv = 1.0 / over_25 + 1.0 / under_25
+    p_over = (1.0 / over_25) / total_inv
+    # Solve for λ: P(total ≥ 3 | Poisson(λ)) = p_over
+    try:
+        lam = brentq(lambda l: 1.0 - _poisson.cdf(2, l) - p_over, 0.01, 15.0)
+    except ValueError:
+        return None
+    implied = float(sum(_poisson.pmf(k, lam) for k in range(min_g, max_g + 1)))
+    return max(0.0, implied)
+
+
 def fetch_event_player_props(
     event_id: str,
     regions: str = "eu,uk",

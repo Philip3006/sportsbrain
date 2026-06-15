@@ -840,6 +840,64 @@ def predict_btts(
     return {"p_btts_yes": p_yes, "p_btts_no": float(1.0 - p_yes)}
 
 
+def predict_goals_range(
+    home: str,
+    away: str,
+    params: "DixonColesParams",
+    min_g: int,
+    max_g: int,
+    max_goals: int = _MAX_GOALS,
+    neutral: bool = False,
+    rho_override: float | None = None,
+    elo_home: float | None = None,
+    elo_away: float | None = None,
+    elo_scale: float = DC_ELO_SCALE,
+) -> dict[str, float]:
+    """P(total goals in [min_g, max_g]) from full-match scoreline matrix."""
+    matrix = predict_scoreline(
+        home, away, params, max_goals, neutral, rho_override, elo_home, elo_away, elo_scale
+    )
+    rows, cols = matrix.shape
+    p_in = float(sum(
+        matrix[i, j]
+        for i in range(rows)
+        for j in range(cols)
+        if min_g <= i + j <= max_g
+    ))
+    return {"p_in": p_in, "p_out": 1.0 - p_in}
+
+
+_H1_FACTOR = 0.43  # empirical: ~43% of goals fall in 1st half (WM calibration)
+_H2_FACTOR = 0.57
+
+
+def predict_half_goals_range(
+    home: str,
+    away: str,
+    params: "DixonColesParams",
+    min_g: int,
+    max_g: int,
+    half: int = 1,
+    neutral: bool = False,
+) -> dict[str, float]:
+    """P(half-time goals in [min_g, max_g]) using scaled Poisson rates.
+
+    DC correction (τ) is omitted — it is calibrated for full-match scorelines
+    and would bias half-time estimates. Independent Poisson is the safer
+    approximation when no half-time parameters are available.
+    """
+    lh, la = _lambdas(home, away, params, neutral)
+    factor = _H1_FACTOR if half == 1 else _H2_FACTOR
+    lh_h, la_h = lh * factor, la * factor
+    p_in = float(sum(
+        poisson.pmf(i, lh_h) * poisson.pmf(j, la_h)
+        for i in range(15)
+        for j in range(15)
+        if min_g <= i + j <= max_g
+    ))
+    return {"p_in": p_in, "p_out": 1.0 - p_in}
+
+
 def predict_xg(
     home: str,
     away: str,

@@ -423,6 +423,13 @@ def _settle_from_results_locked(
         elif market == "dc_12":
             # Home Win or Away Win — draw loses
             won = hg != ag
+        elif market == "goals_2_4":
+            won = 2 <= (hg + ag) <= 4
+        elif market in ("h1_goals_2_4", "h2_goals_2_4"):
+            # Half-time scores not automatically available — mark void until manual entry
+            df.at[idx, "status"] = "void"
+            df.at[idx, "pnl"] = "0.00"
+            newly_settled_indices.append(idx); settled += 1; continue
         elif market in ("ah-1.5_a", "ah+1.5_b"):
             # Tennis set handicap — not settled via football results, skip silently
             continue

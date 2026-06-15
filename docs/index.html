@@ -842,6 +842,9 @@ function marketLabel(mkt, match) {
     'first_set_a':`1. Satz: ${a}`,'first_set_b':`1. Satz: ${b}`,
     'ah-1.5_a':`${a} 3:0 / 3:1`,'ah+1.5_b':`${b} +1.5 Sätze`,
     'dc_1x':`DC: ${a} oder Remis`,'dc_x2':`DC: Remis oder ${b}`,'dc_12':`DC: ${a} oder ${b}`,
+    'goals_2_4':'2-4 Tore (Spiel)','goals_2_4_no':'KEIN 2-4 Tore (Spiel)',
+    'h1_goals_2_4':'2-4 Tore (1. HZ)','h1_goals_2_4_no':'KEIN 2-4 Tore (1. HZ)',
+    'h2_goals_2_4':'2-4 Tore (2. HZ)','h2_goals_2_4_no':'KEIN 2-4 Tore (2. HZ)',
   };
   if (known[mkt]) return known[mkt];
   const ouM = mkt.match(/^o\/u([\d.]+)_(over|under)$/);
@@ -1089,7 +1092,9 @@ function sigCard(s, showMatch) {
       <span class="conf-badge conf-${s.confidence}">${s.confidence}${infoTip(s.confidence === 'HIGH' ? 'HIGH = höchste Modell-Übereinstimmung. Fußball: Dixon-Coles UND LightGBM tippen dasselbe. Tennis: starker Edge (WTA ≥8%, ATP ≥15%). Stake wird automatisch +10% skaliert.' : 'MEDIUM = Standard-Confidence. Solider EV (≥3%), aber kein voller Modell-Konsens. Stake bleibt im €5–15 Standardbereich.')}</span>
       <span class="stake-val">€${s.stake_eur.toFixed(0)}</span>
     </div>
-    <button class="place-bet-btn" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="Wette platzieren">Wette platzieren · €${s.stake_eur.toFixed(0)}</button>
+    ${['h1_goals_2_4','h2_goals_2_4','h1_goals_2_4_no','h2_goals_2_4_no'].includes(s.market)
+      ? `<div style="font-size:10px;color:var(--muted);padding:2px 8px 6px">⚠ HZ-Settlement manuell — Quote beim Buchmacher prüfen</div>`
+      : `<button class="place-bet-btn" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="Wette platzieren">Wette platzieren · €${s.stake_eur.toFixed(0)}</button>`}
   </div>`;
 }
 
