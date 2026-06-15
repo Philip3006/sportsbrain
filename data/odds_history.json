@@ -1414,7 +1414,7 @@
     }
   },
   {
-    "ts": "2026-06-15T18:20:02Z",
+    "ts": "2026-06-15T20:28:20Z",
     "date": "2026-06-15",
     "odds": {
       "Qatar vs Switzerland": {
@@ -1463,34 +1463,34 @@
         "away": 18.38
       },
       "Belgium vs Egypt": {
-        "home": 1.61,
-        "draw": 4.4,
-        "away": 6.8
+        "home": 3.55,
+        "draw": 3.2,
+        "away": 2.77
       },
       "Saudi Arabia vs Uruguay": {
-        "home": 9.4,
+        "home": 9.5,
         "draw": 4.6,
-        "away": 1.47
+        "away": 1.48
       },
       "Iran vs New Zealand": {
         "home": 1.86,
         "draw": 3.7,
-        "away": 5.4
+        "away": 5.3
       },
       "France vs Senegal": {
-        "home": 1.51,
-        "draw": 4.65,
-        "away": 8.5
+        "home": 1.53,
+        "draw": 4.6,
+        "away": 8.0
       },
       "Iraq vs Norway": {
-        "home": 19.0,
+        "home": 20.0,
         "draw": 8.2,
         "away": 1.22
       },
       "Argentina vs Algeria": {
         "home": 1.44,
         "draw": 5.0,
-        "away": 10.5
+        "away": 11.0
       },
       "Austria vs Jordan": {
         "home": 1.39,
@@ -1534,11 +1534,11 @@
       },
       "Mexico vs South Korea": {
         "home": 2.06,
-        "draw": 3.55,
-        "away": 4.3
+        "draw": 3.5,
+        "away": 4.25
       },
       "USA vs Australia": {
-        "home": 1.64,
+        "home": 1.63,
         "draw": 4.5,
         "away": 6.0
       },
@@ -1558,12 +1558,12 @@
         "away": 4.2
       },
       "Netherlands vs Sweden": {
-        "home": 1.73,
+        "home": 1.74,
         "draw": 4.11,
         "away": 5.4
       },
       "Germany vs Ivory Coast": {
-        "home": 1.59,
+        "home": 1.58,
         "draw": 4.7,
         "away": 6.5
       },
@@ -1579,8 +1579,8 @@
       },
       "Spain vs Saudi Arabia": {
         "home": 1.12,
-        "draw": 14.01,
-        "away": 34.0
+        "draw": 14.0,
+        "away": 35.0
       },
       "Belgium vs Iran": {
         "home": 1.44,
@@ -1594,8 +1594,8 @@
       },
       "New Zealand vs Egypt": {
         "home": 5.4,
-        "draw": 3.9,
-        "away": 1.8
+        "draw": 4.1,
+        "away": 1.78
       },
       "Argentina vs Austria": {
         "home": 1.7,
@@ -1610,7 +1610,7 @@
       "Norway vs Senegal": {
         "home": 2.22,
         "draw": 3.6,
-        "away": 3.51
+        "away": 3.6
       },
       "Jordan vs Algeria": {
         "home": 8.0,
@@ -1635,15 +1635,15 @@
       "Colombia vs DR Congo": {
         "home": 1.5,
         "draw": 4.5,
-        "away": 8.5
+        "away": 8.6
       },
       "Bosnia & Herzegovina vs Qatar": {
         "home": 1.61,
-        "draw": 4.4,
+        "draw": 4.3,
         "away": 7.0
       },
       "Switzerland vs Canada": {
-        "home": 2.26,
+        "home": 2.22,
         "draw": 3.6,
         "away": 3.65
       },
@@ -1653,8 +1653,8 @@
         "away": 1.48
       },
       "Morocco vs Haiti": {
-        "home": 1.31,
-        "draw": 6.2,
+        "home": 1.32,
+        "draw": 6.0,
         "away": 12.9
       },
       "Czech Republic vs Mexico": {
@@ -1669,7 +1669,7 @@
       },
       "Curaçao vs Ivory Coast": {
         "home": 26.0,
-        "draw": 9.45,
+        "draw": 9.3,
         "away": 1.19
       },
       "Ecuador vs Germany": {
@@ -1678,7 +1678,7 @@
         "away": 1.8
       },
       "Japan vs Sweden": {
-        "home": 2.23,
+        "home": 2.24,
         "draw": 3.53,
         "away": 3.75
       },
@@ -1688,18 +1688,18 @@
         "away": 1.37
       },
       "Paraguay vs Australia": {
-        "home": 2.23,
+        "home": 2.25,
         "draw": 3.4,
-        "away": 3.6
+        "away": 3.61
       },
       "Turkey vs USA": {
         "home": 2.9,
         "draw": 3.8,
-        "away": 2.55
+        "away": 2.5
       },
       "Norway vs France": {
         "home": 4.5,
-        "draw": 3.95,
+        "draw": 3.9,
         "away": 1.87
       },
       "Senegal vs Iraq": {
@@ -1708,19 +1708,19 @@
         "away": 8.8
       },
       "Cape Verde vs Saudi Arabia": {
-        "home": 2.55,
-        "draw": 3.95,
-        "away": 2.86
+        "home": 2.54,
+        "draw": 3.8,
+        "away": 2.9
       },
       "Uruguay vs Spain": {
-        "home": 5.95,
-        "draw": 4.1,
-        "away": 1.67
+        "home": 6.2,
+        "draw": 4.4,
+        "away": 1.62
       },
       "New Zealand vs Belgium": {
         "home": 11.0,
         "draw": 6.0,
-        "away": 1.32
+        "away": 1.35
       },
       "Egypt vs Iran": {
         "home": 2.3,
