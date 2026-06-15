@@ -206,14 +206,29 @@ if __name__ == "__main__":
                 })
     except Exception:
         _odds_hist_for_dashboard = {}
-    # Build DC model tips for all schedule games (win/draw/loss probs + xG)
+    # Build DC model tips for all schedule games (win/draw/loss probs + xG + goalscorers)
     model_tips = {}
     try:
         import os as _os2
         from src.scanner.daily_scan import _load_latest_dc_params
         from src.models.dixon_coles import predict_match, predict_xg, predict_btts, predict_totals
-        from src.config import canonical_name
+        from src.config import canonical_name, DATA_CACHE
+        from src.betting.goalscorer import get_top_goalscorer_predictions
+        import pickle as _pkl
         _dc_params = _load_latest_dc_params()
+
+        # Load player xG cache for goalscorer predictions
+        _pxg_path = DATA_CACHE / "statsbomb_player_xg.pkl"
+        _player_xg_df = None
+        if _pxg_path.exists():
+            try:
+                _player_xg_df = _pkl.load(open(_pxg_path, "rb"))
+            except Exception:
+                pass
+
+        import pandas as _pd_tip
+        _now_ts = _pd_tip.Timestamp.now()
+
         if _dc_params:
             for _g in schedule:
                 _h_raw, _a_raw = _g.get("home", ""), _g.get("away", "")
@@ -224,6 +239,28 @@ if __name__ == "__main__":
                     _xgh, _xga = predict_xg(_h, _a, _dc_params, neutral=True)
                     _btts = predict_btts(_h, _a, _dc_params, neutral=True)
                     _totals = predict_totals(_h, _a, _dc_params, neutral=True)
+
+                    # Goalscorer predictions (opponent-adjusted xG)
+                    _home_sc, _away_sc = [], []
+                    if _player_xg_df is not None:
+                        try:
+                            _home_sc = [
+                                {"name": p["player"], "p": round(p["p_score"], 3)}
+                                for p in get_top_goalscorer_predictions(
+                                    _h, _now_ts, _player_xg_df,
+                                    n_games=5, top_n=3, dc_params=_dc_params,
+                                )
+                            ]
+                            _away_sc = [
+                                {"name": p["player"], "p": round(p["p_score"], 3)}
+                                for p in get_top_goalscorer_predictions(
+                                    _a, _now_ts, _player_xg_df,
+                                    n_games=5, top_n=3, dc_params=_dc_params,
+                                )
+                            ]
+                        except Exception:
+                            pass
+
                     model_tips[f"{_h_raw} vs {_a_raw}"] = {
                         "p_home": round(_probs["p_home"], 3),
                         "p_draw": round(_probs["p_draw"], 3),
@@ -234,6 +271,8 @@ if __name__ == "__main__":
                         "p_btts_no": round(_btts["p_btts_no"], 3),
                         "p_over25": round(_totals["p_over"], 3),
                         "p_under25": round(_totals["p_under"], 3),
+                        "top_scorers_home": _home_sc,
+                        "top_scorers_away": _away_sc,
                     }
                 except Exception:
                     pass

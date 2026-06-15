@@ -7,7 +7,9 @@ from src.data.statsbomb import get_team_xg_stats
 from src.data.market_values import get_market_value_ratio, get_market_value_log_ratio
 from src.features.form import rolling_form, days_since_last_match, momentum_score, match_load
 from src.features.head_to_head import h2h_stats
+from src.features.player_rating import rolling_shot_quality
 from src.features.squad_context import tournament_stage_features
+from src.data.fotmob import get_team_rolling_rating
 from src.data.squad_availability import SquadReport, default_report, squad_impact_features
 from src.models import dixon_coles as dc
 from src.models.dixon_coles import DixonColesParams
@@ -27,6 +29,8 @@ def build_feature_row(
     squad_away: SquadReport | None = None,
     market_odds: tuple[float, float, float] | None = None,
     statsbomb_xg: pd.DataFrame | None = None,
+    player_xg_df: pd.DataFrame | None = None,
+    fotmob_ratings_df: pd.DataFrame | None = None,
 ) -> dict[str, Any]:
     """
     Assembles a flat feature dict for one match.
@@ -159,6 +163,46 @@ def build_feature_row(
         except Exception:
             pass
 
+    # --- Player quality features (StatsBomb per-player xG — WC/EURO/Copa only) ---
+    # shot_quality: xG per shot (clinical finishing ability)
+    # key_player_xg: share of xG from top-3 players (star dependency)
+    # sb_data_available: binary indicator so model knows when the above are meaningful
+    if player_xg_df is not None and not player_xg_df.empty:
+        try:
+            home_pq = rolling_shot_quality(home, match_date, player_xg_df, dc_params=dc_params)
+            away_pq = rolling_shot_quality(away, match_date, player_xg_df, dc_params=dc_params)
+            home_avail = int(home_pq["shot_quality"] > 0)
+            away_avail = int(away_pq["shot_quality"] > 0)
+            features["sb_shot_quality_home"]   = home_pq["shot_quality"]
+            features["sb_shot_quality_away"]   = away_pq["shot_quality"]
+            features["sb_key_player_xg_home"]  = home_pq["key_player_xg"]
+            features["sb_key_player_xg_away"]  = away_pq["key_player_xg"]
+            features["sb_data_available_home"] = home_avail
+            features["sb_data_available_away"] = away_avail
+        except Exception:
+            pass
+
+    # --- Fotmob player ratings (live tournament scrape — all competitive matches) ---
+    # fotmob_team_rating: avg team rating (1-10) over last 5 games, exp. decayed
+    # fotmob_top_player_rating: best starter's rating per game, exp. decayed
+    # Covers NL/qualifiers too — fills the StatsBomb gap outside WC/Euro/Copa.
+    if fotmob_ratings_df is not None and not fotmob_ratings_df.empty:
+        try:
+            home_fm = get_team_rolling_rating(home, match_date, fotmob_ratings_df)
+            away_fm = get_team_rolling_rating(away, match_date, fotmob_ratings_df)
+            features["fotmob_team_rating_home"]     = home_fm["fotmob_team_rating"]
+            features["fotmob_team_rating_away"]     = away_fm["fotmob_team_rating"]
+            features["fotmob_top_player_home"]      = home_fm["fotmob_top_player_rating"]
+            features["fotmob_top_player_away"]      = away_fm["fotmob_top_player_rating"]
+            features["fotmob_rating_diff"]          = (
+                home_fm["fotmob_team_rating"] - away_fm["fotmob_team_rating"]
+            )
+            features["fotmob_data_available"]       = int(
+                home_fm["fotmob_team_rating"] > 0 or away_fm["fotmob_team_rating"] > 0
+            )
+        except Exception:
+            pass
+
     return features
 
 
@@ -187,6 +231,8 @@ def build_training_matrix(
     dc_snapshot_map: dict[pd.Timestamp, DixonColesParams] | None = None,
     odds_lookup: pd.DataFrame | None = None,
     statsbomb_xg: pd.DataFrame | None = None,
+    player_xg_df: pd.DataFrame | None = None,
+    fotmob_ratings_df: pd.DataFrame | None = None,
 ) -> tuple[pd.DataFrame, pd.Series]:
     """
     Builds (X, y) training pair with no lookahead.
@@ -229,6 +275,8 @@ def build_training_matrix(
             tournament=row.get("tournament"),
             market_odds=market_odds,
             statsbomb_xg=statsbomb_xg,
+            player_xg_df=player_xg_df,
+            fotmob_ratings_df=fotmob_ratings_df,
         )
         rows.append(feat)
 

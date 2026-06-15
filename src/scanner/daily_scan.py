@@ -407,6 +407,20 @@ def run_daily_scan(
     except Exception as _e:
         print(f"  [player_xg] skipped: {_e}")
 
+    fotmob_ratings_df = pd.DataFrame()
+    try:
+        import pickle
+        from src.config import DATA_CACHE
+        _fm_path = DATA_CACHE / "fotmob_ratings.pkl"
+        if _fm_path.exists():
+            with open(_fm_path, "rb") as _fh:
+                fotmob_ratings_df = pickle.load(_fh)
+            print(f"  {len(fotmob_ratings_df)} Fotmob rating records loaded.")
+        else:
+            print("  [fotmob] no cache — run scripts/prefetch_fotmob.py")
+    except Exception as _e:
+        print(f"  [fotmob] skipped: {_e}")
+
     # Fetch Bet365 BTTS odds (api-football, optional — needs API_FOOTBALL_KEY)
     _btts_map: dict = {}
     try:
@@ -441,7 +455,11 @@ def run_daily_scan(
         stage_pre = tournament_stage_features(match_ts_naive, match.get("tournament"))
         is_ko = bool(stage_pre.get("is_knockout", False))
         try:
-            dc_probs = dc.predict_match_staged(home, away, dc_params, is_knockout=is_ko, neutral=True)
+            dc_probs = dc.predict_match_staged(
+                home, away, dc_params, is_knockout=is_ko, neutral=True,
+                elo_home=elo_ratings.get(home, 1500.0),
+                elo_away=elo_ratings.get(away, 1500.0),
+            )
         except ValueError as e:
             # Team not in DC model — skip rather than predict with wrong λ=1.0 default.
             print(f"  WARN: Skipping {home} vs {away} — {e}")
@@ -474,6 +492,7 @@ def run_daily_scan(
                     tournament=match.get("tournament"),
                     statsbomb_xg=statsbomb_xg if not statsbomb_xg.empty else None,
                     player_xg_df=player_xg_df if not player_xg_df.empty else None,
+                    fotmob_ratings_df=fotmob_ratings_df if not fotmob_ratings_df.empty else None,
                 )
                 X = pd.DataFrame([feat])
                 # Align to model's trained feature set
@@ -571,7 +590,11 @@ def run_daily_scan(
 
         # DC expected goals, BTTS and top scorelines for display (single matrix computation)
         try:
-            _score_matrix = dc.predict_scoreline(home, away, dc_params, neutral=True)
+            _score_matrix = dc.predict_scoreline(
+                home, away, dc_params, neutral=True,
+                elo_home=elo_ratings.get(home, 1500.0),
+                elo_away=elo_ratings.get(away, 1500.0),
+            )
             _mg = _score_matrix.shape[0] - 1
             _lambda_home = float(sum(i * _score_matrix[i, :].sum() for i in range(_mg + 1)))
             _lambda_away = float(sum(j * _score_matrix[:, j].sum() for j in range(_mg + 1)))
@@ -580,6 +603,21 @@ def run_daily_scan(
         except Exception:
             _lambda_home = _lambda_away = _p_btts_yes = None
             _top_scores = []
+
+        # Goalscorer predictions (StatsBomb xG, graceful fallback)
+        _home_scorers: list[dict] = []
+        _away_scorers: list[dict] = []
+        if not player_xg_df.empty:
+            try:
+                from src.betting.goalscorer import get_top_goalscorer_predictions
+                _home_scorers = get_top_goalscorer_predictions(
+                    home, match_ts_naive, player_xg_df, top_n=3, dc_params=dc_params
+                )
+                _away_scorers = get_top_goalscorer_predictions(
+                    away, match_ts_naive, player_xg_df, top_n=3, dc_params=dc_params
+                )
+            except Exception:
+                pass
 
         match_contexts[match_id] = {
             "home": home, "away": away,
@@ -597,6 +635,8 @@ def run_daily_scan(
             "p_btts_yes": _p_btts_yes,
             "top_scorelines": _top_scores,
             "commence_time": match.get("commence_time", ""),
+            "home_scorers": _home_scorers,
+            "away_scorers": _away_scorers,
         }
 
         # Pass dc_probs to the consistency gate only when LightGBM is blended in.
@@ -992,6 +1032,13 @@ def _format_match_context(ctx: dict) -> list[str]:
 
     if hs.data_source == "default" or as_.data_source == "default":
         lines.append("  - ℹ️ Squad data: default (all fit) — run refresh_squad_cache.py to update")
+
+    # Goalscorer predictions
+    home_scorers = ctx.get("home_scorers", [])
+    away_scorers = ctx.get("away_scorers", [])
+    if home_scorers or away_scorers:
+        from src.betting.goalscorer import format_goalscorer_section
+        lines.extend(format_goalscorer_section(home, away, home_scorers, away_scorers))
 
     return lines
 

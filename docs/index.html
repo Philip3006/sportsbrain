@@ -906,6 +906,29 @@ function predCard(home, away, tip, odds, nk) {
         <span style="font-size:16px;font-weight:900;color:var(--muted)">${Math.round(tip.p_btts_no*100)}%</span>
       </div>
     </div>` : ''}
+    ${(() => {
+      const hsc = tip.top_scorers_home || [];
+      const asc = tip.top_scorers_away || [];
+      if (!hsc.length && !asc.length) return '';
+      const row = (sc, team) => sc.length ? `
+        <div style="margin-bottom:6px">
+          <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">${esc(team)}</div>
+          ${sc.map(p => `
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <div style="flex:1;background:rgba(255,255,255,.06);border-radius:4px;height:6px;overflow:hidden">
+                <div style="width:${Math.round(p.p*100)}%;height:100%;background:var(--green);border-radius:4px"></div>
+              </div>
+              <span style="font-size:12px;font-weight:800;color:var(--green);min-width:36px;text-align:right">${Math.round(p.p*100)}%</span>
+              <span style="font-size:12px;color:var(--text);min-width:0;flex:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name)}</span>
+            </div>`).join('')}
+        </div>` : '';
+      return `<div style="margin-top:12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:10px 12px">
+        <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">🎯 Torschützen-Prognose</div>
+        ${row(hsc, home)}
+        ${row(asc, away)}
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">StatsBomb xG · gegnerstärke-korrigiert</div>
+      </div>`;
+    })()}
     ${mktTable}
   </div>`;
 }
