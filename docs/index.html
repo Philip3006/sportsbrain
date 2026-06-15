@@ -841,56 +841,6 @@ function predCard(home, away, tip, odds, nk, kickoff, sport) {
   if (tip.p_btts_yes && odds.btts_yes > 1) mkts.push({key: 'btts_yes', name: 'Beide treffen', p: tip.p_btts_yes, q: odds.btts_yes});
   if (tip.p_btts_no && odds.btts_no > 1) mkts.push({key: 'btts_no', name: 'Kein BTTS', p: tip.p_btts_no, q: odds.btts_no});
 
-  const mktRows = mkts.map(m => {
-    const ev = (m.p * m.q - 1) * 100;
-    const evCls = ev > 0 ? 'color:var(--green)' : 'color:var(--red)';
-    const mvmt = nk ? oddsMovement(nk, m.key) : '';
-    const isValue = ev >= 3;
-    const src = isValue ? 'value' : 'manual';
-    const defaultStake = isValue ? 10 : 5;
-    const btnAttrs = [
-      `data-match="${esc(matchStr)}"`,
-      `data-market="${esc(m.key)}"`,
-      `data-odds="${m.q}"`,
-      `data-stake="${defaultStake}"`,
-      `data-ev="${ev.toFixed(2)}"`,
-      `data-confidence=""`,
-      `data-kickoff="${esc(koStr)}"`,
-      `data-sport="${esc(spStr)}"`,
-      `data-model-prob="${m.p}"`,
-      `data-source="${src}"`,
-    ].join(' ');
-    const btnStyle = isValue
-      ? 'background:rgba(0,200,83,.15);color:var(--green);border:1px solid rgba(0,200,83,.45)'
-      : 'background:rgba(255,255,255,.05);color:var(--text);border:1px solid var(--border)';
-    return `<tr style="border-bottom:1px solid rgba(48,54,61,.4)">
-      <td style="padding:7px 8px;font-size:12px;font-weight:600">${m.name}</td>
-      <td style="padding:7px 8px;font-size:12px;color:var(--muted);text-align:right">${Math.round(m.p*100)}%</td>
-      <td style="padding:7px 8px;font-size:13px;font-weight:800;text-align:right">${m.q.toFixed(2)}${mvmt}</td>
-      <td style="padding:7px 8px;font-size:12px;font-weight:800;text-align:right;${evCls}">${ev>0?'+':''}${ev.toFixed(1)}%</td>
-      <td style="padding:5px 6px;text-align:right">
-        <button type="button" class="market-bet-btn" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs}
-                aria-label="Wette platzieren" style="${btnStyle};font-size:11px;font-weight:800;padding:4px 9px;border-radius:6px;cursor:pointer;white-space:nowrap">+&nbsp;Wetten</button>
-      </td>
-    </tr>`;
-  }).join('');
-
-  const mktTable = mkts.length ? `
-    <div style="margin-top:10px">
-      <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Marktübersicht</div>
-      <div style="background:rgba(255,255,255,.03);border-radius:8px;overflow:hidden;border:1px solid var(--border)">
-        <table style="width:100%;border-collapse:collapse">
-          <thead><tr style="border-bottom:1px solid var(--border)">
-            <th style="padding:6px 8px;font-size:10px;font-weight:700;color:var(--muted);text-align:left">Markt</th>
-            <th style="padding:6px 8px;font-size:10px;font-weight:700;color:var(--muted);text-align:right">Modell</th>
-            <th style="padding:6px 8px;font-size:10px;font-weight:700;color:var(--muted);text-align:right">Quote</th>
-            <th style="padding:6px 8px;font-size:10px;font-weight:700;color:var(--muted);text-align:right">EV</th>
-            <th style="padding:6px 8px;font-size:10px;font-weight:700;color:var(--muted);text-align:right"></th>
-          </tr></thead>
-          <tbody>${mktRows}</tbody>
-        </table>
-      </div>
-    </div>` : '';
 
   // Direct bet buttons next to 1/X/2 probability bars (same data as Marktübersicht)
   const barBetBtn = (mktKey, modelP, q) => {
@@ -923,6 +873,48 @@ function predCard(home, away, tip, odds, nk, kickoff, sport) {
   const drawBtn = barBetBtn('draw', tip.p_draw, odds.draw);
   const awayBtn = barBetBtn('away', tip.p_away, odds.away);
 
+  // Compact "Weitere Märkte" buttons: DC, BTTS — direkt über xG.
+  // Ersetzt die separate Marktübersicht-Tabelle.
+  const extraMkts = mkts.filter(m => !['home','draw','away'].includes(m.key));
+  const extraBtn = (m) => {
+    const ev = (m.p * m.q - 1) * 100;
+    const isValue = ev >= 3;
+    const src = isValue ? 'value' : 'manual';
+    const stake = isValue ? 10 : 5;
+    const cardStyle = isValue
+      ? 'background:rgba(0,200,83,.10);border:1px solid rgba(0,200,83,.45)'
+      : 'background:rgba(255,255,255,.04);border:1px solid var(--border)';
+    const oddsColor = isValue ? 'var(--green)' : 'var(--text)';
+    const evColor = ev >= 0 ? 'var(--green)' : 'var(--red)';
+    const attrs = [
+      `type="button"`,
+      `data-match="${esc(matchStr)}"`,
+      `data-market="${m.key}"`,
+      `data-odds="${m.q}"`,
+      `data-stake="${stake}"`,
+      `data-ev="${ev.toFixed(2)}"`,
+      `data-confidence=""`,
+      `data-kickoff="${esc(koStr)}"`,
+      `data-sport="${esc(spStr)}"`,
+      `data-model-prob="${m.p}"`,
+      `data-source="${src}"`,
+      `onclick="event.stopPropagation();_openBetModalFromBtn(this)"`,
+    ].join(' ');
+    return `<button ${attrs} aria-label="Wette ${m.name} @ ${m.q.toFixed(2)}"
+      style="${cardStyle};border-radius:10px;padding:9px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-family:inherit;color:var(--text);-webkit-appearance:none;appearance:none;min-width:0">
+      <span style="font-size:10px;font-weight:700;color:var(--muted);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${m.name}</span>
+      <span style="font-size:16px;font-weight:900;color:${oddsColor}">${m.q.toFixed(2)}</span>
+      <span style="font-size:10px;font-weight:800;color:${evColor}">${Math.round(m.p*100)}% · ${ev>=0?'+':''}${ev.toFixed(1)}%</span>
+    </button>`;
+  };
+  const extraGrid = extraMkts.length ? `
+    <div style="margin-top:10px;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Weitere Märkte</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:7px">
+        ${extraMkts.map(extraBtn).join('')}
+      </div>
+    </div>` : '';
+
   return `<div class="pred-card">
     <div class="pred-title">⚡ Modell-Tipp</div>
     <div class="pred-tip">${tipLabel}</div>
@@ -946,6 +938,7 @@ function predCard(home, away, tip, odds, nk, kickoff, sport) {
         ${awayBtn}
       </div>
     </div>
+    ${extraGrid}
     <div class="pred-xg">
       <div class="pred-xg-team">
         <span class="pred-xg-val" style="color:var(--text)">${tip.xg_home.toFixed(2)}</span>
@@ -961,16 +954,6 @@ function predCard(home, away, tip, odds, nk, kickoff, sport) {
         <span class="pred-xg-team-name">${esc(away)}</span>
       </div>
     </div>
-    ${tip.p_btts_yes != null ? `<div style="margin-top:10px;display:flex;gap:8px">
-      <div style="flex:1;background:rgba(255,255,255,.04);border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:var(--muted);font-weight:700">⚽ Beide treffen</span>
-        <span style="font-size:16px;font-weight:900;color:var(--green)">${Math.round(tip.p_btts_yes*100)}%</span>
-      </div>
-      <div style="flex:1;background:rgba(255,255,255,.04);border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:var(--muted);font-weight:700">🔒 Nicht beide</span>
-        <span style="font-size:16px;font-weight:900;color:var(--muted)">${Math.round(tip.p_btts_no*100)}%</span>
-      </div>
-    </div>` : ''}
     ${(() => {
       const hsc = tip.top_scorers_home || [];
       const asc = tip.top_scorers_away || [];
@@ -999,7 +982,6 @@ function predCard(home, away, tip, odds, nk, kickoff, sport) {
         <div style="font-size:10px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid rgba(48,54,61,.4)">StatsBomb xG · gegnerstärke-korrigiert · nur aktuelle Kaderspieler</div>
       </div>`;
     })()}
-    ${mktTable}
   </div>`;
 }
 
@@ -1617,7 +1599,7 @@ function renderHome() {
   if (free > 5) {
     const slots = Math.max(0, 5 - openCount);
     const nowSug = Date.now();
-    const now24h = nowSug + 24 * 36e5;
+    const now24h = nowSug + 12 * 36e5;
     const openMkSug = new Set((_openBets || []).map(b => {
       const [bh, ba] = (b.match || '').split(' vs ').map(x => x.trim());
       return matchKey(bh, ba);
