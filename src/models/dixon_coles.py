@@ -8,7 +8,7 @@ from scipy.optimize import minimize
 from scipy.special import gammaln
 from scipy.stats import poisson
 
-from src.config import DC_PHI, TOURNAMENT_WEIGHTS, WC2026_BOOST, WC2026_START
+from src.config import DC_ELO_SCALE, DC_PHI, TOURNAMENT_WEIGHTS, WC2026_BOOST, WC2026_START
 
 _TAU_EPSILON = 1e-6
 _MAX_GOALS = 10
@@ -40,6 +40,9 @@ def _lambdas(
     away: str,
     params: DixonColesParams,
     neutral: bool = False,
+    elo_home: float | None = None,
+    elo_away: float | None = None,
+    elo_scale: float = DC_ELO_SCALE,
 ) -> tuple[float, float]:
     unknown = [t for t in (home, away) if t not in params.attack]
     if unknown:
@@ -50,6 +53,10 @@ def _lambdas(
     gamma = 0.0 if neutral else params.home_adv
     lh = np.exp(params.attack[home] + params.defence[away] + gamma)
     la = np.exp(params.attack[away] + params.defence[home])
+    if elo_home is not None and elo_away is not None:
+        elo_adj = np.exp((elo_home - elo_away) / elo_scale)
+        lh *= elo_adj
+        la /= elo_adj
     return lh, la
 
 
@@ -71,6 +78,7 @@ def _prepare_arrays(
     phi: float,
     today: pd.Timestamp,
     wc2026_boost_override: float | None = None,
+    elo_scale: float | None = None,
 ) -> tuple:
     """Pre-computes fixed numpy arrays for vectorized NLL. Called once before optimize.
 
@@ -108,6 +116,18 @@ def _prepare_arrays(
 
     neutral = m.get("neutral", pd.Series(False, index=m.index)).fillna(False).values.astype(bool)
 
+    # Elo-based opponent quality adjustment.
+    # elo_adj > 1 when home team is stronger (higher Elo) → home expected goals boosted,
+    # away expected goals reduced. Calibrates DC parameters cross-confederation: a 6-0
+    # vs a 1100-Elo minnow is "expected" given the Elo gap, so Tunisia's attack param
+    # no longer needs to be as high to explain it. Applied to both training weights and
+    # the Poisson means inside _vectorized_nll.
+    if elo_scale is not None and "elo_home_pre" in m.columns and "elo_away_pre" in m.columns:
+        elo_diff = m["elo_home_pre"].values.astype(np.float64) - m["elo_away_pre"].values.astype(np.float64)
+        elo_adj = np.exp(elo_diff / elo_scale)
+    else:
+        elo_adj = np.ones(len(m), dtype=np.float64)
+
     # Pre-compute log(k!) for Poisson log-pmf  (gammaln(k+1) = log(k!))
     log_fac_hg = gammaln(hg + 1)
     log_fac_ag = gammaln(ag + 1)
@@ -119,7 +139,7 @@ def _prepare_arrays(
     m11 = (hg == 1) & (ag == 1)
 
     return (home_idx, away_idx, hg, ag, weights, neutral,
-            log_fac_hg, log_fac_ag, m00, m10, m01, m11)
+            log_fac_hg, log_fac_ag, m00, m10, m01, m11, elo_adj)
 
 
 def _vectorized_nll(
@@ -138,6 +158,7 @@ def _vectorized_nll(
     m10: np.ndarray,
     m01: np.ndarray,
     m11: np.ndarray,
+    elo_adj: np.ndarray,
     regularization: float = 0.0,
     prior_attack: np.ndarray | None = None,
     prior_defence: np.ndarray | None = None,
@@ -151,12 +172,15 @@ def _vectorized_nll(
     gamma = params_vec[2 * n]
     rho = params_vec[2 * n + 1]
 
-    # Vectorized lambda computation via index arrays
+    # Vectorized lambda computation via index arrays.
+    # elo_adj encodes the Elo quality gap: exp((elo_home - elo_away) / DC_ELO_SCALE).
+    # Multiplying lh by elo_adj means a strong-vs-weak match requires less DC attack
+    # to explain the same scoreline — calibrating parameters cross-confederation.
     gamma_eff = np.where(neutral, 0.0, gamma)
     log_lh = attack[home_idx] + defence[away_idx] + gamma_eff
     log_la = attack[away_idx] + defence[home_idx]
-    lh = np.exp(log_lh)
-    la = np.exp(log_la)
+    lh = np.exp(log_lh) * elo_adj
+    la = np.exp(log_la) / elo_adj
 
     # Poisson log-pmf: k*log(lambda) - lambda - log(k!)
     log_p_hg = hg * log_lh - lh - log_fac_hg
@@ -329,6 +353,8 @@ def fit(
     wc2026_boost_override: float | None = None,
     cluster_map: dict[str, str] | None = None,
     cluster_strength: float = 0.0,
+    elo_series: "pd.DataFrame | None" = None,
+    elo_scale: float = DC_ELO_SCALE,
 ) -> DixonColesParams:
     """Fits Dixon-Coles model. Returns DixonColesParams.
 
@@ -350,6 +376,14 @@ def fit(
     if today is None:
         today = matches["date"].max() + pd.Timedelta(days=1)
 
+    # Join pre-match Elo columns when available — used by _prepare_arrays() to compute
+    # elo_adj per match. The elo_series must be computed from the same (filtered) matches
+    # DataFrame so indices align.
+    if elo_series is not None:
+        matches = matches.copy()
+        matches["elo_home_pre"] = elo_series["elo_home_pre"].values
+        matches["elo_away_pre"] = elo_series["elo_away_pre"].values
+
     teams = sorted(
         set(matches["home_team"].tolist() + matches["away_team"].tolist())
     )
@@ -360,7 +394,8 @@ def fit(
 
     # Pre-compute fixed arrays once (not on every NLL call)
     arrays = _prepare_arrays(matches, team_idx, phi, today,
-                              wc2026_boost_override=wc2026_boost_override)
+                              wc2026_boost_override=wc2026_boost_override,
+                              elo_scale=elo_scale if elo_series is not None else None)
 
     mean_home_goals = float(matches["home_score"].mean())
     fallback_atk = np.log(max(mean_home_goals, 0.5))
@@ -428,11 +463,16 @@ def predict_scoreline(
     max_goals: int = _MAX_GOALS,
     neutral: bool = False,
     rho_override: float | None = None,
+    elo_home: float | None = None,
+    elo_away: float | None = None,
+    elo_scale: float = DC_ELO_SCALE,
 ) -> np.ndarray:
     """Returns (max_goals+1 x max_goals+1) matrix of P(home_goals=i, away_goals=j).
     rho_override: replaces params.rho when set (used for stage-specific calibration).
+    elo_home/elo_away: current Elo ratings; when provided, applies the same quality
+        adjustment used during training so predictions are cross-confederation calibrated.
     """
-    lh, la = _lambdas(home, away, params, neutral)
+    lh, la = _lambdas(home, away, params, neutral, elo_home, elo_away, elo_scale)
     rho = rho_override if rho_override is not None else params.rho
     matrix = np.zeros((max_goals + 1, max_goals + 1))
     for i in range(max_goals + 1):
@@ -453,11 +493,17 @@ def predict_match(
     max_goals: int = _MAX_GOALS,
     neutral: bool = False,
     rho_override: float | None = None,
+    elo_home: float | None = None,
+    elo_away: float | None = None,
+    elo_scale: float = DC_ELO_SCALE,
 ) -> dict[str, float]:
     """Returns {'p_home': float, 'p_draw': float, 'p_away': float}.
     rho_override: applies stage-specific low-score correction (see predict_match_staged).
+    elo_home/elo_away: when provided, applies Elo quality adjustment at inference
+        (must match the scale used during training for consistent results).
     """
-    matrix = predict_scoreline(home, away, params, max_goals, neutral, rho_override)
+    matrix = predict_scoreline(home, away, params, max_goals, neutral, rho_override,
+                                elo_home=elo_home, elo_away=elo_away, elo_scale=elo_scale)
     p_home = float(np.tril(matrix, -1).sum())
     p_draw = float(np.trace(matrix))
     p_away = float(np.triu(matrix, 1).sum())
@@ -504,6 +550,9 @@ def predict_match_staged(
     is_knockout: bool = False,
     neutral: bool = False,
     stage: str | None = None,
+    elo_home: float | None = None,
+    elo_away: float | None = None,
+    elo_scale: float = DC_ELO_SCALE,
 ) -> dict[str, float]:
     """
     Stage-aware prediction. Rho factors are loaded from rho_stages.json
@@ -512,6 +561,7 @@ def predict_match_staged(
     If `stage` is provided ("group", "r16", "qf", "sf", "third_place", "final"),
     uses that specific factor. Otherwise falls back to binary is_knockout:
     knockout → mean of KO-stage factors weighted by sample size; else group.
+    elo_home/elo_away: pass current Elo ratings for cross-confederation calibration.
     """
     factors = _load_rho_factors()
     if stage and stage in factors:
@@ -526,7 +576,8 @@ def predict_match_staged(
     else:
         rho_factor = factors.get("group", 1.10)
     rho = params.rho * rho_factor
-    return predict_match(home, away, params, neutral=neutral, rho_override=rho)
+    return predict_match(home, away, params, neutral=neutral, rho_override=rho,
+                         elo_home=elo_home, elo_away=elo_away, elo_scale=elo_scale)
 
 
 def get_stage_rho(params: DixonColesParams, stage: str | None,

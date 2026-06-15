@@ -128,6 +128,11 @@ TOURNAMENT_K_FACTORS: dict[str, float] = {
 WC2026_START = "2026-06-11"
 WC2026_BOOST = 1.5
 
+# Elo-adjusted DC: scale factor for opponent quality adjustment.
+# exp(elo_diff / DC_ELO_SCALE) is multiplied into the home team's Poisson mean.
+# 600 ≈ "400 Elo gap doubles expected goal rate" (standard Elo win-prob scale × ln(2)).
+DC_ELO_SCALE: float = 600.0  # inference-only: calibrated so a 278-pt Elo gap → ~1.59x on goal rates
+
 
 # Tournament quality weights for DC NLL — final tournaments > group/NL > qualifiers.
 # Qualifiers against weak opponents (e.g. OFC, CAF) inflate attack params without
