@@ -19,17 +19,18 @@ def _is_wm_active(today: datetime | None = None) -> bool:
     # Include the full final day (+1 day buffer so July 19 games are covered)
     return _WM_2026_START <= today <= _WM_2026_END + timedelta(days=1)
 
-from src.config import MODELS_DIR, RESULTS_DIR, canonical_name, MAX_ACTIVE_BETS, MAX_EV, TEAM_CONFEDERATION
+from src.config import MODELS_DIR, RESULTS_DIR, canonical_name, MAX_ACTIVE_BETS, MAX_EV, TEAM_CONFEDERATION, GOALS_RANGE_ENABLED, GOALS_RANGE_MAX_STAKE
 from src.betting.value_detector import (
     BetSignal, detect_value, set_confidence,
     detect_value_totals, detect_value_totals_quarter,
     detect_value_ah, detect_value_ah_quarter,
     detect_value_ftts, detect_value_double_chance,
+    detect_value_goals_range,
 )
 from src.betting.ledger import (
     append_bets, count_open_bets, settle_from_results, ledger_summary, LEDGER_PATH,
 )
-from src.data.odds_api import fetch_upcoming_matches, mock_upcoming_matches
+from src.data.odds_api import fetch_upcoming_matches, mock_upcoming_matches, derive_goals_range_implied
 from src.data.international import fetch_international_results, filter_competitive
 from src.data.squad_availability import default_report, squad_report, SquadReport, _TM_TEAMS, get_suspended_players
 from src.notifications.telegram import send_scan_alert
@@ -757,6 +758,40 @@ def run_daily_scan(
             )
             signals.extend(btts_signals)
 
+        # Tore Bereich 2-4 (Vollspiel + H1 + H2)
+        if GOALS_RANGE_ENABLED:
+            _totals_lines = match.get("totals_lines", {})
+            _implied_p_range = derive_goals_range_implied(_totals_lines, min_g=2, max_g=4)
+            _gr_probs = dc.predict_goals_range(
+                home, away, dc_params, min_g=2, max_g=4,
+                neutral=True, rho_override=rho_staged,
+                elo_home=elo_home_rating, elo_away=elo_away_rating,
+            )
+            _h1_probs = dc.predict_half_goals_range(
+                home, away, dc_params, min_g=2, max_g=4, half=1, neutral=True,
+            )
+            _h2_probs = dc.predict_half_goals_range(
+                home, away, dc_params, min_g=2, max_g=4, half=2, neutral=True,
+            )
+            # Vollspiel: echte EV-Signale wenn implied_p verfügbar
+            if _implied_p_range is not None:
+                signals.extend(detect_value_goals_range(
+                    home, away, _gr_probs["p_in"], _implied_p_range,
+                    market="goals_2_4", bankroll=bankroll, match_id=match_id,
+                ))
+            # H1/H2: Modell-Insight nur wenn echte Quoten manuell eingegeben
+            # (settlement void ohne HZ-Score → kein Auto-Log; Signale erscheinen
+            # im Dashboard aber werden nicht ins Ledger geschrieben bis manuelle Bestätigung)
+            if _implied_p_range is not None:
+                signals.extend(detect_value_goals_range(
+                    home, away, _h1_probs["p_in"], _implied_p_range,
+                    market="h1_goals_2_4", bankroll=bankroll, match_id=match_id,
+                ))
+                signals.extend(detect_value_goals_range(
+                    home, away, _h2_probs["p_in"], _implied_p_range,
+                    market="h2_goals_2_4", bankroll=bankroll, match_id=match_id,
+                ))
+
         # FTTS (First Team to Score)
         ftts_home_odds = float(match.get("ftts_home_odds", 0))
         ftts_away_odds = float(match.get("ftts_away_odds", 0))
@@ -813,8 +848,22 @@ def run_daily_scan(
                         s.confidence, dc_arr, s.market, conformal
                     )
 
-        # Filter out signals with unrealistically high EV (model artifact)
-        signals = [s for s in signals if s.ev <= MAX_EV]
+        # Filter out signals with unrealistically high EV (model artifact).
+        # Tore-Bereich uses synthetic implied odds (O/U Poisson) → allow up to 0.55
+        # since derived EV is structurally inflated vs actual bookmaker margin.
+        _GOALS_RANGE_MAX_EV = 0.55
+        signals = [
+            s for s in signals
+            if s.ev <= (_GOALS_RANGE_MAX_EV if s.market.startswith(("goals_", "h1_goals_", "h2_goals_")) else MAX_EV)
+        ]
+        # Tore-Bereich confidence cap: implied prob is synthetic (O/U Poisson).
+        # set_confidence() can upgrade to HIGH, but that's misleading — cap at MEDIUM.
+        for s in signals:
+            if s.market.startswith(("goals_", "h1_goals_", "h2_goals_")) and s.confidence == "HIGH":
+                from src.betting.kelly import dynamic_stake_eur
+                s.confidence = "MEDIUM"
+                s.stake_eur = min(dynamic_stake_eur(s.ev, "MEDIUM"), GOALS_RANGE_MAX_STAKE)
+                s.stake_pct = s.stake_eur / bankroll if bankroll > 0 else 0.0
 
         # Goalscorer value bets — independent third bucket (never blocks match slots)
         _scorer_signals: list[BetSignal] = []
@@ -861,18 +910,30 @@ def run_daily_scan(
 
         # Two-bucket selection: keep best EV from each bucket per match.
         # Bucket A (directional/result-correlated): 1X2 + all AH variants.
-        # Bucket B (goals-volume, structurally independent): O/U + BTTS.
-        # Within each bucket, signals are >80% correlated — only one slot.
-        # Across buckets: independent exposure — both may be placed.
-        def _is_goals_market(mkt: str) -> bool:
+        # Bucket A: directional (1X2, AH, DC) — one slot per match.
+        # Bucket B1: O/U + BTTS — highly correlated with each other, one slot.
+        # Bucket B2: Tore Bereich (goals_range) — synthetic derived odds, separate slot.
+        # Across buckets: independent exposure — all three may be placed.
+        def _is_ou_btts(mkt: str) -> bool:
             return mkt.startswith("o/u") or mkt in ("btts_yes", "btts_no")
+
+        def _is_goals_range(mkt: str) -> bool:
+            return (mkt.startswith("goals_") or mkt.startswith("h1_goals_")
+                    or mkt.startswith("h2_goals_"))
+
+        def _is_goals_market(mkt: str) -> bool:
+            return _is_ou_btts(mkt) or _is_goals_range(mkt)
+
         if signals:
-            bucket_a = [s for s in signals if not _is_goals_market(s.market)]
-            bucket_b = [s for s in signals if _is_goals_market(s.market)]
+            bucket_a  = [s for s in signals if not _is_goals_market(s.market)]
+            bucket_b1 = [s for s in signals if _is_ou_btts(s.market)]
+            bucket_b2 = [s for s in signals if _is_goals_range(s.market)]
             if bucket_a:
                 all_signals.append(max(bucket_a, key=lambda s: s.ev))
-            if bucket_b:
-                all_signals.append(max(bucket_b, key=lambda s: s.ev))
+            if bucket_b1:
+                all_signals.append(max(bucket_b1, key=lambda s: s.ev))
+            if bucket_b2:
+                all_signals.append(max(bucket_b2, key=lambda s: s.ev))
         else:
             no_value_matches.append({
                 "match": f"{home} vs {away}",

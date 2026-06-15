@@ -4,7 +4,7 @@ import numpy as np
 
 from src.betting.kelly import dynamic_stake_eur, expected_value, kelly_fraction
 from src.betting.odds_utils import remove_margin_shin
-from src.config import MIN_EDGE, MAX_STAKE_EUR
+from src.config import MIN_EDGE, MAX_STAKE_EUR, GOALS_RANGE_MAX_STAKE
 
 
 @dataclass
@@ -591,6 +591,52 @@ def detect_value_ftts(
             match_id, home, away, market,
             model_p, model_p, odds, ev, kf, "MEDIUM", bankroll,
         ))
+    return signals
+
+
+def detect_value_goals_range(
+    home: str,
+    away: str,
+    p_model: float,
+    implied_p: float,
+    market: str,
+    bankroll: float = 1000.0,
+    min_edge: float = MIN_EDGE,
+    match_id: str = "",
+) -> list[BetSignal]:
+    """EV check for Tore-Bereich markets (goals_2_4, h1_goals_2_4, h2_goals_2_4).
+
+    Checks both JA (2-4 goals) and NEIN (not 2-4 goals) sides.
+    implied_p = market-derived P(2-4); fair odds derived synthetically from O/U lines.
+    H1-JA blocked (WM 2018+2022 backtest: structurally negative).
+    Stake capped at GOALS_RANGE_MAX_STAKE during initial data-collection phase.
+    """
+    if implied_p <= 0.0 or implied_p >= 1.0:
+        return []
+    fair_ja_odds   = 1.0 / implied_p
+    fair_nein_odds = 1.0 / (1.0 - implied_p)
+    signals = []
+    for side_market, p_side, fair_odds in [
+        (market,          p_model,       fair_ja_odds),
+        (market + "_no",  1.0 - p_model, fair_nein_odds),
+    ]:
+        # H1-JA blocked: model systematically overestimates H1 scoring
+        if market == "h1_goals_2_4" and p_side == p_model:
+            continue
+        ev = expected_value(p_side, fair_odds)
+        if ev < min_edge - 1e-9:
+            continue
+        kf = kelly_fraction(p_side, fair_odds)
+        confidence = _bias_safety_confidence("MEDIUM", ev)
+        # Use the base market key for both sides (JA/NEIN encoded in model_prob direction)
+        sig = _make_signal(
+            match_id, home, away, side_market,
+            p_side, 1.0 - implied_p if "no" in side_market else implied_p,
+            fair_odds, ev, kf, confidence, bankroll,
+        )
+        sig.stake_eur = min(sig.stake_eur, GOALS_RANGE_MAX_STAKE)
+        sig.stake_pct = sig.stake_eur / bankroll if bankroll > 0 else 0.0
+        signals.append(sig)
     return signals
 
 
