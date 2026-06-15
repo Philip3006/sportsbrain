@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-15T20:28:22Z",
+  "updated": "2026-06-15T20:33:49Z",
   "schedule": [
     {
       "sport": "football",
@@ -4060,8 +4060,8 @@
       "odds": 2.58,
       "model_prob": 50.3,
       "ev_pct": 29.7,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-23T03:00:00Z"
     },
     {
@@ -4082,8 +4082,8 @@
       "odds": 2.57,
       "model_prob": 50.4,
       "ev_pct": 29.2,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-17T01:00:00Z"
     },
     {
@@ -4093,8 +4093,8 @@
       "odds": 2.52,
       "model_prob": 50.9,
       "ev_pct": 28.4,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-25T23:00:00Z"
     },
     {
@@ -4181,8 +4181,8 @@
       "odds": 2.31,
       "model_prob": 55.0,
       "ev_pct": 27.0,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-27T03:00:00Z"
     },
     {
@@ -4280,8 +4280,8 @@
       "odds": 2.58,
       "model_prob": 47.7,
       "ev_pct": 23.3,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-23T17:00:00Z"
     },
     {
@@ -4324,8 +4324,8 @@
       "odds": 2.61,
       "model_prob": 46.6,
       "ev_pct": 21.7,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-25T23:00:00Z"
     },
     {
@@ -4390,8 +4390,8 @@
       "odds": 2.55,
       "model_prob": 47.2,
       "ev_pct": 20.2,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-23T23:00:00Z"
     },
     {
@@ -4401,8 +4401,8 @@
       "odds": 2.59,
       "model_prob": 46.4,
       "ev_pct": 20.2,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-26T19:00:00Z"
     },
     {
@@ -4423,8 +4423,8 @@
       "odds": 2.61,
       "model_prob": 46.0,
       "ev_pct": 20.2,
-      "stake_eur": 15.0,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-17T17:00:00Z"
     },
     {
@@ -4467,8 +4467,8 @@
       "odds": 2.53,
       "model_prob": 46.5,
       "ev_pct": 17.6,
-      "stake_eur": 14.93,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-27T21:00:00Z"
     },
     {
@@ -4500,8 +4500,8 @@
       "odds": 2.6,
       "model_prob": 44.9,
       "ev_pct": 16.7,
-      "stake_eur": 14.36,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-24T22:00:00Z"
     },
     {
@@ -4522,8 +4522,8 @@
       "odds": 2.43,
       "model_prob": 47.6,
       "ev_pct": 15.7,
-      "stake_eur": 13.72,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-17T23:00:00Z"
     },
     {
@@ -4555,8 +4555,8 @@
       "odds": 2.49,
       "model_prob": 46.3,
       "ev_pct": 15.4,
-      "stake_eur": 13.54,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-28T02:00:00Z"
     },
     {
@@ -4566,8 +4566,8 @@
       "odds": 2.52,
       "model_prob": 45.6,
       "ev_pct": 14.7,
-      "stake_eur": 13.07,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-24T19:00:00Z"
     },
     {
@@ -4599,8 +4599,8 @@
       "odds": 2.48,
       "model_prob": 46.0,
       "ev_pct": 14.2,
-      "stake_eur": 12.72,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-24T02:00:00Z"
     },
     {
@@ -4643,8 +4643,8 @@
       "odds": 2.49,
       "model_prob": 45.2,
       "ev_pct": 12.4,
-      "stake_eur": 11.57,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-17T20:00:00Z"
     },
     {
@@ -4709,8 +4709,8 @@
       "odds": 2.6,
       "model_prob": 42.8,
       "ev_pct": 11.4,
-      "stake_eur": 10.93,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-27T21:00:00Z"
     },
     {
@@ -4720,8 +4720,8 @@
       "odds": 2.52,
       "model_prob": 44.1,
       "ev_pct": 11.3,
-      "stake_eur": 10.86,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-21T04:00:00Z"
     },
     {
@@ -4742,8 +4742,8 @@
       "odds": 2.52,
       "model_prob": 44.0,
       "ev_pct": 10.8,
-      "stake_eur": 10.57,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-27T00:00:00Z"
     },
     {
@@ -4753,8 +4753,8 @@
       "odds": 2.46,
       "model_prob": 44.9,
       "ev_pct": 10.3,
-      "stake_eur": 10.23,
-      "confidence": "HIGH",
+      "stake_eur": 7.0,
+      "confidence": "MEDIUM",
       "kickoff": "2026-06-22T01:00:00Z"
     },
     {
