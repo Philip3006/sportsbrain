@@ -28,7 +28,7 @@
       --nav-h:    calc(122px + env(safe-area-inset-bottom));
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; -webkit-font-smoothing: antialiased; overscroll-behavior: none; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 14px; -webkit-font-smoothing: antialiased; overscroll-behavior: none; overflow-x: hidden; }
 
     /* ── Header ── */
     header { background: #0d1117; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 0 16px; height: 52px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
@@ -97,12 +97,14 @@
     .b365-odds { gap: 7px !important; }
 
     /* ── Detail view ── */
-    .back-bar { display: flex; align-items: center; gap: 6px; padding: 12px 16px 10px; cursor: pointer; color: var(--green); font-size: 15px; font-weight: 600; -webkit-tap-highlight-color: transparent; border-bottom: 1px solid var(--border); }
-    .back-bar:active { opacity: .7; }
-    .match-header { padding: 14px 16px; border-bottom: 1px solid var(--border); }
-    .match-sport { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
-    .match-teams { font-size: 22px; font-weight: 900; letter-spacing: -.5px; margin-bottom: 3px; }
-    .match-time { font-size: 12px; color: var(--muted); }
+    .swipe-hint { font-size: 10px; color: var(--muted); padding: 6px 14px 4px; opacity: .55; letter-spacing: .3px; user-select: none; pointer-events: none; }
+    #view-detail { will-change: transform; transition: transform .22s cubic-bezier(.2,.7,.3,1); }
+    #view-detail.swiping { transition: none; }
+    #view-detail.swiping-back { box-shadow: -8px 0 24px rgba(0,0,0,.35); }
+    .match-header { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; min-width: 0; }
+    .match-sport-icon { font-size: 18px; flex-shrink: 0; line-height: 1; }
+    .match-teams { font-size: 15px; font-weight: 800; letter-spacing: -.2px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .match-meta { font-size: 11px; color: var(--muted); font-weight: 700; flex-shrink: 0; white-space: nowrap; }
     .detail-cards { padding: 12px 16px; }
 
     /* ── Signal card ── */
@@ -515,7 +517,7 @@
   </section>
 
   <section id="view-detail" class="view">
-    <div class="back-bar" onclick="closeDetail()" role="button" tabindex="0" aria-label="Zurück" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();closeDetail();}">‹ Zurück</div>
+    <div class="swipe-hint" aria-hidden="true">← wischen für zurück</div>
     <div id="detail-header"></div>
     <div class="detail-cards" id="detail-cards"></div>
   </section>
@@ -614,6 +616,57 @@ function showView(id) {
 }
 function closeDetail() { showView(_prevView); }
 
+// ── Swipe-back-Geste für Detail-View (WhatsApp-Style) ─────────
+(function setupDetailSwipeBack() {
+  const view = document.getElementById('view-detail');
+  if (!view) return;
+  let startX = null, startY = null, dx = 0, dy = 0, locked = null;
+  const THRESHOLD_DIST = 90;   // px — Mindestdistanz für Auslösen
+  const LOCK_ANGLE = 10;       // px — ab dann entscheiden wir horizontal vs vertikal
+  function reset() {
+    view.classList.remove('swiping', 'swiping-back');
+    view.style.transform = '';
+    startX = startY = null; dx = dy = 0; locked = null;
+  }
+  view.addEventListener('touchstart', (e) => {
+    if (!view.classList.contains('active')) return;
+    if (e.touches.length !== 1) return;
+    // Inputs/Buttons: keinen Swipe starten, damit Quote-Tap nicht versehentlich auslöst
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    locked = null;
+  }, { passive: true });
+  view.addEventListener('touchmove', (e) => {
+    if (startX === null) return;
+    dx = e.touches[0].clientX - startX;
+    dy = e.touches[0].clientY - startY;
+    if (locked === null) {
+      if (Math.abs(dx) < LOCK_ANGLE && Math.abs(dy) < LOCK_ANGLE) return;
+      locked = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+      if (locked === 'h' && dx > 0) view.classList.add('swiping', 'swiping-back');
+    }
+    if (locked !== 'h' || dx <= 0) return;
+    e.preventDefault();
+    const t = Math.min(dx, window.innerWidth);
+    view.style.transform = `translateX(${t}px)`;
+  }, { passive: false });
+  view.addEventListener('touchend', () => {
+    if (startX === null) return;
+    if (locked === 'h' && dx > THRESHOLD_DIST) {
+      view.classList.remove('swiping');
+      view.style.transform = `translateX(${window.innerWidth}px)`;
+      setTimeout(() => { reset(); closeDetail(); }, 220);
+    } else {
+      view.classList.remove('swiping');
+      view.style.transform = '';
+      setTimeout(reset, 220);
+    }
+  });
+  view.addEventListener('touchcancel', reset);
+})();
+
 // ── Open match detail ────────────────────────────────────────
 function openMatch(displayKey) {
   const [dh, da] = displayKey.split(' vs ').map(x => x.trim());
@@ -628,14 +681,14 @@ function openMatch(displayKey) {
   const sport = s0?.sport || sched?.sport || 'football';
   const kickoff = s0?.kickoff || sched?.kickoff || '';
   const tour = s0?.tour || sched?.tour || '';
-  const sportLabel = sport === 'football' ? '⚽ WM 2026' : `🎾 ${(tour||'Tennis').toUpperCase()}`;
-  const timeStr = kickoff ? fmtKickoff(kickoff) : '';
-  const cdHtml = kickoff ? `<div class="match-countdown" data-kickoff="${esc(kickoff)}">⏱ …</div>` : '';
+  const sportIcon = sport === 'football' ? '⚽' : '🎾';
+  const metaStr = kickoff ? fmtKickoffCompact(kickoff) : '';
+  const cdHtml = kickoff ? `<span class="match-countdown" data-kickoff="${esc(kickoff)}" style="margin-top:0;font-size:10px;padding:2px 7px">⏱ …</span>` : '';
   document.getElementById('detail-header').innerHTML = `
     <div class="match-header">
-      <div class="match-sport">${sportLabel}</div>
-      <div class="match-teams">${esc(displayKey)}</div>
-      ${timeStr ? `<div class="match-time">${timeStr}</div>` : ''}
+      <span class="match-sport-icon">${sportIcon}</span>
+      <span class="match-teams">${esc(displayKey)}</span>
+      ${metaStr ? `<span class="match-meta">${metaStr}</span>` : ''}
       ${cdHtml}
     </div>`;
   _tickCountdowns();
@@ -657,19 +710,11 @@ function openMatch(displayKey) {
     oddsEntry = found ? found[1] : {};
   }
 
-  const ouSigs = sigs.filter(s => /^o\/u/.test(s.market));
-  const otherSigs = sigs.filter(s => !/^o\/u/.test(s.market));
-
   let cards = '';
   if (tip) cards += predCard(dh, da, tip, oddsEntry, nk, kickoff, sport);
 
-  if (!sigs.length && !tip) {
+  if (!tip) {
     cards += `<div class="empty"><div class="icon">⏳</div><div>Noch keine Modellbewertung für dieses Spiel.<br><small>Wird im nächsten Scan (täglich 08:00 UTC) ergänzt.</small></div></div>`;
-  } else if (!sigs.length) {
-    cards += `<div class="empty"><div class="icon">📊</div><div>Kein Value Bet gefunden.<br><small>Modell sieht hier keinen Vorteil (EV < 3%).</small></div></div>`;
-  } else {
-    cards += otherSigs.map(sigCard).join('');
-    cards += buildOuAccordion(ouSigs, otherSigs.length === 0 || ouSigs.some(s => s.confidence === 'HIGH'));
   }
 
   if (sport === 'football') cards += squadSection(dh, da);
@@ -760,6 +805,17 @@ function matchKey(a, b) {
 function fmtKickoff(k) {
   try {
     return new Date(k).toLocaleString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Berlin'});
+  } catch { return ''; }
+}
+
+function fmtKickoffCompact(k) {
+  // "Mo 15.06 · 21:00"
+  try {
+    const d = new Date(k);
+    const wd = d.toLocaleDateString('de-DE',{weekday:'short',timeZone:'Europe/Berlin'}).replace('.','');
+    const date = d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',timeZone:'Europe/Berlin'});
+    const time = d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Berlin'});
+    return `${wd} ${date} · ${time}`;
   } catch { return ''; }
 }
 
