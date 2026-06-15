@@ -2180,17 +2180,16 @@ setInterval(load, 10*60*1000);
 // ── Hide bottom-nav on scroll down, show on scroll up ─────────
 (function () {
   const nav = document.querySelector('.bottom-nav');
-  let lastY = 0, ticking = false;
+  let lastY = window.scrollY, dir = 0;
   window.addEventListener('scroll', () => {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(() => {
-      const y = window.scrollY;
-      if (y > lastY + 4) nav.classList.add('nav-hidden');
-      else if (y < lastY - 4) nav.classList.remove('nav-hidden');
-      lastY = y;
-      ticking = false;
-    });
+    const y = window.scrollY;
+    const d = y - lastY;
+    lastY = y;
+    if (d > 0 && dir < 0) dir = 0;   // direction changed to down
+    if (d < 0 && dir > 0) dir = 0;   // direction changed to up
+    dir += d;
+    if (dir > 80) { nav.classList.add('nav-hidden'); dir = 0; }
+    else if (dir < -40 || y < 80) { nav.classList.remove('nav-hidden'); dir = 0; }
   }, { passive: true });
 })();
 
