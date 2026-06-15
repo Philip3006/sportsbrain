@@ -710,11 +710,18 @@ function openMatch(displayKey) {
     oddsEntry = found ? found[1] : {};
   }
 
+  const ouSigs = sigs.filter(s => /^o\/u/.test(s.market));
+  const otherSigs = sigs.filter(s => !/^o\/u/.test(s.market));
+
   let cards = '';
   if (tip) cards += predCard(dh, da, tip, oddsEntry, nk, kickoff, sport);
 
-  if (!tip) {
+  if (!tip && !sigs.length) {
     cards += `<div class="empty"><div class="icon">⏳</div><div>Noch keine Modellbewertung für dieses Spiel.<br><small>Wird im nächsten Scan (täglich 08:00 UTC) ergänzt.</small></div></div>`;
+  } else if (sigs.length) {
+    cards += `<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:14px 16px 6px">💡 Vorgeschlagene Value Bets</div>`;
+    cards += otherSigs.map(s => sigCard(s, false)).join('');
+    if (ouSigs.length) cards += buildOuAccordion(ouSigs, otherSigs.length === 0 || ouSigs.some(s => s.confidence === 'HIGH'));
   }
 
   if (sport === 'football') cards += squadSection(dh, da);
