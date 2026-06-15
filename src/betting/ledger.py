@@ -109,6 +109,7 @@ _FIELDS = [
     "decimal_odds", "stake_pct", "stake_amount",
     "placed_date", "status", "pnl", "closing_odds", "clv",
     "pinnacle_ref_odds",
+    "source", "model_prob",
 ]
 
 
@@ -130,7 +131,15 @@ class BetRecord:
 def _load(path: Path) -> pd.DataFrame:
     if not path.exists():
         return pd.DataFrame(columns=_FIELDS)
-    return pd.read_csv(path, dtype=str)
+    df = pd.read_csv(path, dtype=str)
+    # Schema migration: backfill new columns for legacy ledgers.
+    if "source" not in df.columns:
+        df["source"] = "value"
+    else:
+        df["source"] = df["source"].fillna("value").replace("", "value")
+    if "model_prob" not in df.columns:
+        df["model_prob"] = ""
+    return df
 
 
 def _save(df: pd.DataFrame, path: Path) -> None:
@@ -177,6 +186,8 @@ def append_bets(
                 "closing_odds":  "0.0",
                 "clv":           "",
                 "pinnacle_ref_odds": f"{s.b365_odds:.4f}" if s.b365_odds > 1.0 else "",
+                "source":        "value",
+                "model_prob":    f"{s.model_prob:.6f}" if getattr(s, "model_prob", 0.0) > 0 else "",
             })
 
         if new_rows:
