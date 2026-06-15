@@ -1517,21 +1517,17 @@ function renderHome() {
     if (k) oddsMap[nk][k] = { odds: s.odds, ev: s.ev_pct };
   }
 
-  // Sort + filter next 30 days; remove live games (started, no result yet)
+  // Sort + filter next 30 days; remove finished games 30min after final whistle
+  // (kickoff + 90min + ~30min Halbzeit/Nachspielzeit + 30min Sichtbarkeit = 2.5h)
   const now = Date.now();
   const cutoff = now + 30*24*36e5;
+  const POST_MATCH_VISIBLE_MS = 2.5 * 60 * 60 * 1000;
   const sorted = games
     .filter(g => {
       if (g.kickoff && new Date(g.kickoff) > cutoff) return false;
       if (g.kickoff) {
         const ko = new Date(g.kickoff).getTime();
-        const nk = matchKey(g.home, g.away);
-        const hasResult = _wmResults[nk] && _wmResults[nk].home_score != null;
-        if (ko < now && !hasResult) {
-          const threeHoursAgo = now - 3*60*60*1000;
-          if (ko < threeHoursAgo) return false; // Spiel vor mehr als 3h → wirklich vorbei
-          // Spiel läuft gerade → trotzdem anzeigen
-        }
+        if (ko + POST_MATCH_VISIBLE_MS < now) return false; // 30min nach Spielende: weg
       }
       return true;
     })
