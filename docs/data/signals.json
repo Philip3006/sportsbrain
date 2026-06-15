@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-15T17:39:43Z",
+  "updated": "2026-06-15T17:54:02Z",
   "schedule": [
     {
       "sport": "football",
@@ -3574,6 +3574,28 @@
     },
     {
       "sport": "football",
+      "match": "Switzerland vs Bosnia and Herzegovina",
+      "market": "scorer_Breel-Donald Embolo",
+      "odds": 2.48,
+      "model_prob": 56.3,
+      "ev_pct": 39.5,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-18T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "England vs Croatia",
+      "market": "scorer_Andrej Kramarić",
+      "odds": 5.41,
+      "model_prob": 25.8,
+      "ev_pct": 39.4,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-17T20:00:00Z"
+    },
+    {
+      "sport": "football",
       "match": "Jordan vs Argentina",
       "market": "o/u3.5_under",
       "odds": 1.56,
@@ -3607,6 +3629,17 @@
     },
     {
       "sport": "football",
+      "match": "Portugal vs DR Congo",
+      "market": "scorer_Bruno Miguel Borges Fernandes",
+      "odds": 3.0,
+      "model_prob": 46.3,
+      "ev_pct": 38.9,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-17T17:00:00Z"
+    },
+    {
+      "sport": "football",
       "match": "Uruguay vs Spain",
       "market": "ah+0.75_home",
       "odds": 2.08,
@@ -3615,6 +3648,17 @@
       "stake_eur": 15.0,
       "confidence": "LOW",
       "kickoff": "2026-06-27T00:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Mexico vs South Korea",
+      "market": "scorer_Ernesto Alexis Vega Rojas",
+      "odds": 4.6,
+      "model_prob": 30.2,
+      "ev_pct": 38.7,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-19T01:00:00Z"
     },
     {
       "sport": "football",
@@ -3714,6 +3758,17 @@
       "stake_eur": 15.0,
       "confidence": "LOW",
       "kickoff": "2026-06-18T16:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Scotland vs Morocco",
+      "market": "scorer_Scott McTominay",
+      "odds": 5.5,
+      "model_prob": 24.2,
+      "ev_pct": 33.3,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-19T22:00:00Z"
     },
     {
       "sport": "football",
@@ -3827,6 +3882,28 @@
     },
     {
       "sport": "football",
+      "match": "Ghana vs Panama",
+      "market": "scorer_Edgar Yoel Bárcenas Herrera",
+      "odds": 9.0,
+      "model_prob": 14.4,
+      "ev_pct": 29.9,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-17T23:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Turkey vs Paraguay",
+      "market": "scorer_Julio César Enciso Espínola",
+      "odds": 5.0,
+      "model_prob": 25.9,
+      "ev_pct": 29.5,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-20T03:00:00Z"
+    },
+    {
+      "sport": "football",
       "match": "Czechia vs Mexico",
       "market": "o/u2.25_under",
       "odds": 1.95,
@@ -3912,6 +3989,17 @@
       "stake_eur": 15.0,
       "confidence": "LOW",
       "kickoff": "2026-06-23T23:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Czechia vs South Africa",
+      "market": "scorer_Patrik Schick",
+      "odds": 2.5,
+      "model_prob": 50.8,
+      "ev_pct": 27.1,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-18T16:00:00Z"
     },
     {
       "sport": "football",
@@ -4025,6 +4113,17 @@
     },
     {
       "sport": "football",
+      "match": "Iran vs New Zealand",
+      "market": "scorer_Mehdi Taremi",
+      "odds": 3.0,
+      "model_prob": 40.7,
+      "ev_pct": 22.2,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-16T01:00:00Z"
+    },
+    {
+      "sport": "football",
       "match": "Netherlands vs Sweden",
       "market": "o/u2.0_over",
       "odds": 1.42,
@@ -4069,6 +4168,17 @@
     },
     {
       "sport": "football",
+      "match": "Belgium vs Egypt",
+      "market": "scorer_Romelu Lukaku Menama",
+      "odds": 2.52,
+      "model_prob": 48.0,
+      "ev_pct": 20.9,
+      "stake_eur": 15.0,
+      "confidence": "LOW",
+      "kickoff": "2026-06-15T19:00:00Z"
+    },
+    {
+      "sport": "football",
       "match": "Brazil vs Haiti",
       "market": "o/u3.0_under",
       "odds": 2.75,
@@ -4077,6 +4187,17 @@
       "stake_eur": 15.0,
       "confidence": "LOW",
       "kickoff": "2026-06-20T01:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Argentina vs Algeria",
+      "market": "scorer_Julián Álvarez",
+      "odds": 2.51,
+      "model_prob": 47.7,
+      "ev_pct": 19.6,
+      "stake_eur": 14.77,
+      "confidence": "LOW",
+      "kickoff": "2026-06-17T01:00:00Z"
     },
     {
       "sport": "football",
@@ -4176,6 +4297,17 @@
       "stake_eur": 12.92,
       "confidence": "LOW",
       "kickoff": "2026-06-19T22:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Netherlands vs Sweden",
+      "market": "scorer_Donyell Malen",
+      "odds": 2.84,
+      "model_prob": 40.3,
+      "ev_pct": 14.4,
+      "stake_eur": 11.7,
+      "confidence": "LOW",
+      "kickoff": "2026-06-20T17:00:00Z"
     },
     {
       "sport": "football",
