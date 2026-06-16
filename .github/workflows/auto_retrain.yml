@@ -38,5 +38,10 @@ jobs:
           git add models/ || true
           git diff --staged --quiet && echo "No new WM matches — no model changes." && exit 0
           git commit -m "auto: retrain $(date -u '+%Y-%m-%d %H:%M UTC')"
-          git pull --rebase origin main || true
-          git push
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin main || true
+            git push && exit 0
+            echo "[push] attempt $i failed, retry after backoff…"
+            sleep $((RANDOM % 6 + 2))
+          done
+          echo "[push] giving up after 5 attempts" >&2; exit 1

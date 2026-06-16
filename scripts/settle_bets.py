@@ -38,13 +38,33 @@ def _api_key() -> str:
 
 
 def fetch_scores() -> dict[str, dict]:
-    """Returns {match_id: {home, away, home_score, away_score, completed}}."""
-    r = requests.get(
-        API_URL,
-        params={"apiKey": _api_key(), "daysFrom": 3},
-        timeout=15,
-    )
-    r.raise_for_status()
+    """Returns {match_id: {home, away, home_score, away_score, completed}}.
+
+    Transient API problems (401 Quota/Auth, 429 Rate-Limit, 5xx, timeout) werden
+    abgefangen — settle_bets soll dann gracefully ohne Settlements weiterlaufen,
+    statt den ganzen CI-Run zu killen.
+    """
+    try:
+        r = requests.get(
+            API_URL,
+            params={"apiKey": _api_key(), "daysFrom": 3},
+            timeout=15,
+        )
+    except requests.RequestException as e:
+        print(f"[settle] scores fetch failed (network): {e} — skipping settlement.")
+        return {}
+    if r.status_code in (401, 403, 429):
+        print(f"[settle] scores fetch returned {r.status_code} "
+              "(Quota/Auth/Rate-Limit) — skipping settlement.")
+        return {}
+    if r.status_code >= 500:
+        print(f"[settle] scores fetch returned {r.status_code} — skipping settlement.")
+        return {}
+    try:
+        r.raise_for_status()
+    except requests.HTTPError as e:
+        print(f"[settle] scores fetch HTTP error: {e} — skipping settlement.")
+        return {}
     results = {}
     for m in r.json():
         if not m.get("completed") or not m.get("scores"):
@@ -78,7 +98,7 @@ def _settle_market(market: str, home_g: int, away_g: int) -> str | None:
         return "won" if diff == 0 else "lost"
 
     # Over/Under
-    for line in ("2.5", "1.5", "3.5", "0.5"):
+    for line in ("2.5", "1.5", "3.5", "0.5", "3.0", "4.5", "4.0", "5.5"):
         thresh = float(line)
         if market == f"o/u{line}_over":
             return "won" if total > thresh else "lost"
