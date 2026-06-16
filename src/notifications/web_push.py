@@ -103,38 +103,72 @@ def _send_notification(title: str, body: str, *, url: str = "/", kind: str = "ge
         print("  [web_push] pywebpush nicht installiert — Notification übersprungen.")
         return 0
     load_dotenv(dotenv_path=_ENV_PATH)
-    private_key = os.getenv("VAPID_PRIVATE_KEY", "").strip()
+    private_key = os.getenv("VAPID_PRIVATE_KEY", "").strip().strip('"')
     sub_claim = os.getenv("VAPID_SUB", "").strip() or "mailto:noreply@sportsbrain"
     if not private_key:
         print("  [web_push] VAPID_PRIVATE_KEY fehlt — Notification übersprungen.")
         return 0
-    # pywebpush akzeptiert base64url-encoded raw key direkt.
-    # PEM-Keys (PKCS8) aus GitHub Secrets haben oft fehlende Zeilenumbrüche —
-    # wir extrahieren den rohen EC-Schlüssel und konvertieren zu base64url.
-    if private_key.startswith("-----BEGIN"):
-        import base64, re
-        from cryptography.hazmat.primitives.serialization import (
-            load_pem_private_key, Encoding, PrivateFormat, NoEncryption,
-        )
-        pem = private_key
-        # GitHub Secrets kann Newlines als literal \n speichern
-        if "\\n" in pem and "\n" not in pem:
-            pem = pem.replace("\\n", "\n")
-        # Fehlende Zeilenumbrüche im PEM-Body rekonstruieren
-        if pem.count("\n") < 3:
-            m = re.match(r"(-+BEGIN[^-]+-+)(.*?)(-+END[^-]+-+)", pem, re.DOTALL)
-            if m:
-                h, body, foot = m.groups()
-                clean = "".join(body.split())
-                lines = "\n".join(clean[i:i+64] for i in range(0, len(clean), 64))
-                pem = f"{h}\n{lines}\n{foot}\n"
-        try:
-            key_obj = load_pem_private_key(pem.encode(), password=None)
-            raw = key_obj.private_bytes(Encoding.Raw, PrivateFormat.Raw, NoEncryption())
-            private_key = base64.urlsafe_b64encode(raw).rstrip(b"=").decode()
-        except Exception as e:
-            print(f"  [web_push] VAPID-Key-Parse fehlgeschlagen: {e}")
-            return 0
+    # pywebpush akzeptiert base64url-encoded raw 32-Byte EC-Key.
+    # GitHub-Secrets können den Key in drei Formaten enthalten:
+    #   (a) PEM (PKCS8) mit BEGIN/END-Header   (lokales gen_vapid_keys.py Output)
+    #   (b) Base64-Body ohne Header, evtl. einzeilig  (Secret-UI strippt Markers)
+    #   (c) bereits raw base64url-32-Byte
+    # Wir normalisieren alles auf (c).
+    import base64, re
+    from cryptography.hazmat.primitives.serialization import (
+        load_pem_private_key, load_der_private_key,
+    )
+    from cryptography.hazmat.primitives.asymmetric import ec
+
+    def _key_obj_to_raw_b64url(key_obj) -> str | None:
+        # EC-P-256 hat keine Encoding.Raw-Form — wir extrahieren die 32-Byte
+        # private_value direkt aus dem Skalar 'd'.
+        if not isinstance(key_obj, ec.EllipticCurvePrivateKey):
+            return None
+        d_int = key_obj.private_numbers().private_value
+        raw = d_int.to_bytes(32, "big")
+        return base64.urlsafe_b64encode(raw).rstrip(b"=").decode()
+
+    def _to_raw_b64url(key_str: str) -> str | None:
+        key_str = key_str.strip().strip('"').strip("'")
+        if "\\n" in key_str and "\n" not in key_str:
+            key_str = key_str.replace("\\n", "\n")
+        # Case (a): PEM mit BEGIN/END
+        if "-----BEGIN" in key_str:
+            pem = key_str
+            if pem.count("\n") < 3:
+                m = re.match(r"(-+BEGIN[^-]+-+)(.*?)(-+END[^-]+-+)", pem, re.DOTALL)
+                if m:
+                    h, body, foot = m.groups()
+                    clean = "".join(body.split())
+                    lines = "\n".join(clean[i:i+64] for i in range(0, len(clean), 64))
+                    pem = f"{h}\n{lines}\n{foot}\n"
+            try:
+                return _key_obj_to_raw_b64url(load_pem_private_key(pem.encode(), password=None))
+            except Exception:
+                pass
+        # Case (c)/(b): kompakter Base64-String — kann raw 32-Byte oder DER-PKCS8 sein
+        compact = re.sub(r"\s+", "", key_str)
+        for decoder in (base64.urlsafe_b64decode, base64.b64decode):
+            try:
+                pad = "=" * (-len(compact) % 4)
+                decoded = decoder(compact + pad)
+            except Exception:
+                continue
+            if len(decoded) == 32:
+                return base64.urlsafe_b64encode(decoded).rstrip(b"=").decode()
+            try:
+                return _key_obj_to_raw_b64url(load_der_private_key(decoded, password=None))
+            except Exception:
+                continue
+        return None
+
+    normalized = _to_raw_b64url(private_key)
+    if normalized is None:
+        print("  [web_push] VAPID-Key-Parse fehlgeschlagen: Format unbekannt "
+              "(weder PEM noch Base64-DER noch raw base64url)")
+        return 0
+    private_key = normalized
 
     subs = _list_subscriptions()
     if not subs:
