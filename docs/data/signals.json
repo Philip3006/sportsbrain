@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-16T20:13:26Z",
+  "updated": "2026-06-16T22:54:23Z",
   "schedule": [
     {
       "sport": "football",
@@ -7478,20 +7478,6 @@
     },
     {
       "sport": "football",
-      "match": "France vs Senegal",
-      "market": "h2_goals_2_4_no",
-      "odds": 2.61,
-      "model_prob": 58.9,
-      "fair_prob": 38.4,
-      "ev_pct": 53.7,
-      "stake_eur": 7.0,
-      "stake_pct": 4.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-16T19:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "South Africa vs South Korea",
       "market": "h1_goals_2_4_no",
       "odds": 2.56,
@@ -8220,20 +8206,6 @@
     },
     {
       "sport": "football",
-      "match": "France vs Senegal",
-      "market": "ah+1.5_away",
-      "odds": 1.62,
-      "model_prob": 78.5,
-      "fair_prob": 78.5,
-      "ev_pct": 27.1,
-      "stake_eur": 20.0,
-      "stake_pct": 11.5,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-16T19:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Argentina vs Algeria",
       "market": "scorer_Julián Álvarez",
       "odds": 2.8,
@@ -8777,20 +8749,6 @@
       "confidence": "MEDIUM",
       "n_models_agree": 0,
       "kickoff": "2026-06-27T21:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "France vs Senegal",
-      "market": "o/u3.0_under",
-      "odds": 1.73,
-      "model_prob": 53.0,
-      "fair_prob": 53.0,
-      "ev_pct": 13.3,
-      "stake_eur": 14.48,
-      "stake_pct": 8.3,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-16T19:00:00Z"
     },
     {
       "sport": "football",
