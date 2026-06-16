@@ -30,17 +30,11 @@ jobs:
       - name: Run daily scan
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
           SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUB: ${{ secrets.VAPID_SUB }}
         run: python scripts/daily_scan.py --bankroll 100 --retrain
-
-      - name: Process Telegram commands
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/telegram_bot.py
 
       - name: Build WM 2026 Monte-Carlo Forecast + xPoints
         run: python scripts/build_wm_forecast.py --n 2000

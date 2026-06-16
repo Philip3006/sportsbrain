@@ -54,6 +54,27 @@ async function writePending(env, arr) {
   await env.SIGNALS.put('pending_bets', JSON.stringify(arr));
 }
 
+// ── Push Subscriptions (Web Push) ─────────────────────────────
+// Stored as a JSON array under KV-key "push_subs":
+//   [{ endpoint, keys: { p256dh, auth }, created_at, ua? }, ...]
+async function readPushSubs(env) {
+  const raw = await env.SIGNALS.get('push_subs');
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+async function writePushSubs(env, arr) {
+  await env.SIGNALS.put('push_subs', JSON.stringify(arr));
+}
+function _validSub(s) {
+  return s && typeof s.endpoint === 'string' && s.endpoint.startsWith('https://')
+    && s.keys && typeof s.keys.p256dh === 'string' && typeof s.keys.auth === 'string';
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') {
@@ -153,6 +174,56 @@ export default {
         await writePending(env, next);
         return jsonResponse({ ok: true, removed: arr.length - next.length });
       }
+    }
+
+    // ── /push/subscribe (PUBLIC — Browser registriert sich) ──
+    if (request.method === 'POST' && path === '/push/subscribe') {
+      let sub;
+      try { sub = await request.json(); } catch { return jsonResponse({ error: 'invalid json' }, 400); }
+      if (!_validSub(sub)) return jsonResponse({ error: 'invalid subscription' }, 400);
+      const arr = await readPushSubs(env);
+      // Dedup by endpoint
+      const filtered = arr.filter(s => s.endpoint !== sub.endpoint);
+      filtered.push({
+        endpoint:   sub.endpoint,
+        keys:       { p256dh: sub.keys.p256dh, auth: sub.keys.auth },
+        created_at: new Date().toISOString(),
+        ua:         request.headers.get('User-Agent') || '',
+      });
+      await writePushSubs(env, filtered);
+      return jsonResponse({ ok: true, total: filtered.length });
+    }
+
+    // ── /push/unsubscribe (PUBLIC — Browser meldet sich ab) ──
+    if (request.method === 'POST' && path === '/push/unsubscribe') {
+      let body;
+      try { body = await request.json(); } catch { return jsonResponse({ error: 'invalid json' }, 400); }
+      const endpoint = (body && body.endpoint) || '';
+      if (!endpoint) return jsonResponse({ error: 'endpoint required' }, 400);
+      const arr = await readPushSubs(env);
+      const next = arr.filter(s => s.endpoint !== endpoint);
+      await writePushSubs(env, next);
+      return jsonResponse({ ok: true, removed: arr.length - next.length });
+    }
+
+    // ── /push/list (AUTH — Python liest Subscriptions zum Senden) ──
+    if (request.method === 'GET' && path === '/push/list') {
+      if (!requireAuth(request, env)) return new Response('Unauthorized', { status: 401, headers: cors() });
+      const arr = await readPushSubs(env);
+      return jsonResponse({ subs: arr });
+    }
+
+    // ── /push/prune (AUTH — Python entfernt expired Subs nach 410-Status) ──
+    if (request.method === 'POST' && path === '/push/prune') {
+      if (!requireAuth(request, env)) return new Response('Unauthorized', { status: 401, headers: cors() });
+      let body;
+      try { body = await request.json(); } catch { return jsonResponse({ error: 'invalid json' }, 400); }
+      const endpoints = (body && Array.isArray(body.endpoints)) ? body.endpoints : [];
+      if (!endpoints.length) return jsonResponse({ ok: true, removed: 0 });
+      const arr = await readPushSubs(env);
+      const next = arr.filter(s => !endpoints.includes(s.endpoint));
+      await writePushSubs(env, next);
+      return jsonResponse({ ok: true, removed: arr.length - next.length });
     }
 
     return new Response('Not Found', { status: 404, headers: cors() });

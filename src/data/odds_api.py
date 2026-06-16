@@ -81,7 +81,7 @@ def fetch_upcoming_matches(
     if remaining < 20:
         print(f"WARNING: Only {remaining} API requests remaining this month.")
         try:
-            from src.notifications.telegram import send_quota_alert
+            from src.notifications.web_push import send_quota_alert
             send_quota_alert(remaining)
         except Exception:
             pass
