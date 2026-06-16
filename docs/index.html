@@ -200,10 +200,43 @@
     .fc-pct.hi { color: var(--green); }
     .fc-pct.peak { color: var(--green); font-weight: 900; }
     .fc-note { font-size: 10px; color: var(--muted); padding: 6px 16px 16px; line-height: 1.5; }
+    /* Compact Mode (Tier 4.1, OddsJam-Style) */
+    .icon-btn.active { color: var(--green); background: rgba(0,200,83,.12); border-radius: 6px; }
+    .compact-table-wrap { padding: 8px 12px; }
+    .compact-table { width: 100%; border-collapse: collapse; font-size: 11px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+    .compact-table th { font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; padding: 7px 6px; text-align: right; border-bottom: 1px solid var(--border); background: var(--surface); }
+    .compact-table th:nth-child(1), .compact-table th:nth-child(2), .compact-table th:nth-child(3) { text-align: left; }
+    .compact-table td { padding: 8px 6px; text-align: right; border-bottom: 1px solid rgba(48,54,61,.4); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .compact-table td:nth-child(1) { color: var(--muted); font-size: 10px; text-align: left; }
+    .compact-table td:nth-child(2) { text-align: left; color: var(--text); font-weight: 800; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .compact-table td:nth-child(3) { text-align: left; color: var(--muted); font-size: 10px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .compact-table tr:last-child td { border-bottom: none; }
+    .compact-table tr.ev-h td { background: rgba(0,200,83,.05); }
+    .compact-table tr:active { background: rgba(255,255,255,.04); }
+    .compact-place-btn { background: rgba(0,200,83,.18); color: var(--green); border: 1px solid rgba(0,200,83,.45); border-radius: 6px; padding: 5px 10px; font-size: 11px; font-weight: 800; cursor: pointer; -webkit-appearance: none; appearance: none; }
+    .compact-place-btn:active { background: rgba(0,200,83,.3); }
+    .compact-ev { color: var(--green); }
+    .compact-ev.lo { color: var(--text); }
+    /* Quick-Stake-Buttons im Bet-Modal (Tier 4.4) */
+    .quick-stake-row { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+    .quick-stake-btn { flex: 1; min-width: 56px; padding: 7px 4px; font-size: 11px; font-weight: 800; border-radius: 7px; border: 1px solid var(--border); background: rgba(255,255,255,.04); color: var(--text); cursor: pointer; -webkit-appearance: none; appearance: none; line-height: 1.2; font-family: inherit; }
+    .quick-stake-btn .qs-lbl { display: block; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; }
+    .quick-stake-btn:active { background: rgba(255,255,255,.08); }
+    .quick-stake-btn.kelly { border-color: rgba(0,200,83,.45); }
+    .quick-stake-btn.kelly .qs-lbl { color: var(--green); }
+    .quick-stake-btn:disabled { opacity: .35; cursor: not-allowed; }
+    /* Storytelling-Banner im Detail-View (Tier 4.3) */
+    .pred-story { font-size: 12px; color: var(--text); font-weight: 600; line-height: 1.45; padding: 9px 12px; margin-top: 10px; background: rgba(0,200,83,.06); border: 1px solid rgba(0,200,83,.25); border-radius: 8px; }
+    .pred-story b { font-weight: 900; color: var(--green); }
+    .pred-story.draw { background: rgba(210,153,34,.06); border-color: rgba(210,153,34,.3); }
+    .pred-story.draw b { color: var(--yellow); }
     /* Journal: Drawdown + Histogramm-Cards */
     .journal-extra { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px 12px 8px; }
     .je-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); padding: 9px 10px; }
     .je-card.full { grid-column: 1 / -1; }
+    .je-card.hero { background: linear-gradient(135deg, rgba(0,200,83,.10), rgba(0,200,83,.02)); border-color: rgba(0,200,83,.35); }
+    .je-card.hero .je-label { color: var(--green); }
+    .je-card.hero .je-val { font-size: 20px; }
     .je-label { font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 6px; }
     .je-val   { font-size: 16px; font-weight: 900; letter-spacing: -.3px; line-height: 1.1; }
     .je-val.pos { color: var(--green); }
@@ -507,6 +540,7 @@
       <span class="live-dot" id="dot" aria-hidden="true"></span>
       <span class="updated-text" id="updated-time">—</span>
     </div>
+    <button class="icon-btn" onclick="toggleCompact()" id="compact-btn" aria-label="Kompakt-Ansicht umschalten" title="Kompakt-Ansicht">▤</button>
     <button class="icon-btn" onclick="load()" id="refresh-btn" aria-label="Daten neu laden">↺</button>
   </div>
 </header>
@@ -533,6 +567,7 @@
     <div style="margin-top:14px">
       <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Einsatz (€)</div>
       <input type="number" inputmode="decimal" min="0.5" max="25" step="0.5" class="modal-stake-input" id="bet-modal-stake" aria-label="Einsatz in Euro">
+      <div class="quick-stake-row" id="bet-modal-quick-stakes" role="group" aria-label="Schnellauswahl Einsatz"></div>
     </div>
 
     <div class="modal-row">
@@ -711,6 +746,18 @@ function _saveSportFilters(state) {
   try { localStorage.setItem(_SPORT_FILTER_KEY, JSON.stringify(state)); } catch {}
 }
 let _sportFilters = _loadSportFilters();
+// Compact-Mode (Tier 4.1) — Tabellen-Layout statt Karten
+let _compactMode = (() => {
+  try { return localStorage.getItem('sb_compact_mode') === '1'; } catch { return false; }
+})();
+function toggleCompact() {
+  _compactMode = !_compactMode;
+  try { localStorage.setItem('sb_compact_mode', _compactMode ? '1' : '0'); } catch {}
+  const btn = document.getElementById('compact-btn');
+  if (btn) btn.classList.toggle('active', _compactMode);
+  renderSport('football');
+  renderSport('tennis');
+}
 function _getSportFilter(sport) {
   const def = { ev: 0, conf: 'all', sort: 'kickoff' };
   return Object.assign({}, def, _sportFilters[sport] || {});
@@ -1105,9 +1152,44 @@ function predCard(home, away, tip, odds, nk, kickoff, sport) {
       </div>
     </div>` : '';
 
+  // ── Storytelling (Tier 4.3) ─────────────────────────────
+  const _story = (() => {
+    const xgSum = (tip.xg_home || 0) + (tip.xg_away || 0);
+    const probMax = Math.max(tip.p_home, tip.p_draw, tip.p_away);
+    const probGap = probMax - Math.min(tip.p_home, tip.p_away);
+    const parts = [];
+    // Tor-Erwartung
+    if (xgSum >= 2.8) {
+      parts.push(`Hohe Tor-Erwartung (<b>${xgSum.toFixed(1)} xG</b> kombiniert) — Über 2.5 in Reichweite.`);
+    } else if (xgSum < 2.0) {
+      parts.push(`Defensiv-Match (<b>${xgSum.toFixed(1)} xG</b> kombiniert) — Unter 2.5 wahrscheinlich.`);
+    } else {
+      parts.push(`Mittlere Tor-Erwartung (<b>${xgSum.toFixed(1)} xG</b>).`);
+    }
+    // Favoriten-Gap
+    let storyCls = '';
+    if (probMax >= 0.55) {
+      const favTeam = tip.p_home >= tip.p_away && tip.p_home >= tip.p_draw ? home : (tip.p_away >= tip.p_draw ? away : null);
+      if (favTeam) {
+        parts.push(`<b>${esc(favTeam)}</b> klarer Favorit mit <b>${Math.round(probMax*100)}%</b>.`);
+      } else {
+        parts.push(`Remis-Tendenz (<b>${Math.round(tip.p_draw*100)}%</b>).`);
+        storyCls = 'draw';
+      }
+    } else if (probGap < 0.10) {
+      parts.push(`Offenes Duell — 1/X/2 nahezu gleich verteilt.`);
+      storyCls = 'draw';
+    } else {
+      const favTeam = tip.p_home >= tip.p_away ? home : away;
+      parts.push(`Leichter Vorteil <b>${esc(favTeam)}</b> (<b>${Math.round(probMax*100)}%</b>).`);
+    }
+    return `<div class="pred-story ${storyCls}">${parts.join(' ')}</div>`;
+  })();
+
   return `<div class="pred-card">
     <div class="pred-title">⚡ Modell-Tipp</div>
     <div class="pred-tip">${tipLabel}</div>
+    ${_story}
     <div class="pred-bars">
       <div class="pred-bar-row">
         <span class="pred-bar-label">1</span>
@@ -1556,6 +1638,54 @@ function _savePwaPending(ids) {
   localStorage.setItem('sb_pwa_pending', JSON.stringify(ids));
 }
 
+// ── Quick-Stake-Buttons (Tier 4.4, Bet365-Style) ──────────────
+const _KELLY_FRAC = 0.25;  // fractional Kelly, identisch zu Backend
+function _calcKellyStake() {
+  if (!_pendingBet) return null;
+  const p = _pendingBet.model_prob;
+  const o = _pendingBet.odds;
+  if (!p || p <= 0 || p >= 1 || !o || o <= 1) return null;
+  // f* = (p*o - 1) / (o - 1)
+  const fFull = (p * o - 1) / (o - 1);
+  if (fFull <= 0) return null;
+  const bk = (_bankrollState && _bankrollState.start) ? _bankrollState.start : BANKROLL_START;
+  const stake = bk * fFull * _KELLY_FRAC;
+  // 0.50€-Granularität, min 0.50€, max 25€ (UI-Limit)
+  const rounded = Math.max(0.5, Math.min(25, Math.round(stake * 2) / 2));
+  return rounded;
+}
+function _setStake(v) {
+  const inp = document.getElementById('bet-modal-stake');
+  if (!inp) return;
+  inp.value = v.toFixed(2);
+  _updateBetModalCalcs();
+}
+function _renderQuickStakes() {
+  const wrap = document.getElementById('bet-modal-quick-stakes');
+  if (!wrap) return;
+  const kelly = _calcKellyStake();
+  const half  = kelly != null ? Math.max(0.5, Math.round(kelly / 2 * 2) / 2) : null;
+  const bk = (_bankrollState && _bankrollState.start) ? _bankrollState.start : BANKROLL_START;
+  const onepct = Math.max(0.5, Math.round(bk * 0.01 * 2) / 2);
+  const buttons = [
+    { lbl: 'Kelly', val: kelly, cls: 'kelly' },
+    { lbl: 'Half-K', val: half, cls: 'kelly' },
+    { lbl: '€5', val: 5, cls: '' },
+    { lbl: '€10', val: 10, cls: '' },
+    { lbl: '1% BK', val: onepct, cls: '' },
+  ];
+  wrap.innerHTML = buttons.map(b => {
+    if (b.val == null) {
+      return `<button type="button" class="quick-stake-btn ${b.cls}" disabled aria-label="${b.lbl} (nicht verfügbar)">
+        <span class="qs-lbl">${b.lbl}</span><span>—</span>
+      </button>`;
+    }
+    return `<button type="button" class="quick-stake-btn ${b.cls}" onclick="_setStake(${b.val})" aria-label="${b.lbl} €${b.val.toFixed(2)}">
+      <span class="qs-lbl">${b.lbl}</span><span>€${b.val.toFixed(b.val < 10 ? 2 : 0)}</span>
+    </button>`;
+  }).join('');
+}
+
 function _openBetModalFromBtn(btn) {
   const d = btn.dataset;
   const source = (d.source === 'manual') ? 'manual' : 'value';
@@ -1597,6 +1727,7 @@ function _openBetModalFromBtn(btn) {
   }
   const inp = document.getElementById('bet-modal-stake');
   inp.value = _pendingBet.stake_eur.toFixed(2);
+  _renderQuickStakes();
   _updateBetModalCalcs();
   document.getElementById('bet-modal-bd').classList.add('show');
   document.body.style.overflow = 'hidden';
@@ -2150,6 +2281,54 @@ function renderSport(sport) {
     const ka = a[0].kickoff || '9999', kb = b[0].kickoff || '9999';
     return ka < kb ? -1 : ka > kb ? 1 : 0;
   });
+  // Compact-Mode: dichte Tabelle statt Karten
+  if (_compactMode) {
+    const sortedSigs = [];
+    for (const [, mSigs] of sortedGroups) sortedSigs.push(...mSigs);
+    if (filter.sort === 'ev') sortedSigs.sort((a,b) => (b.ev_pct||0) - (a.ev_pct||0));
+    else if (filter.sort === 'odds') sortedSigs.sort((a,b) => (a.odds||9999) - (b.odds||9999));
+    // kickoff bleibt durch sortedGroups vorgegeben
+    const rows = sortedSigs.map(s => {
+      const [mh, ma] = s.match.split(' vs ').map(x => x.trim());
+      const tKo = s.kickoff ? fmtKickoffCompact(s.kickoff) : '—';
+      const evCls = s.ev_pct >= 10 ? '' : 'lo';
+      const trCls = s.ev_pct >= 10 ? 'ev-h' : '';
+      const lbl = marketLabel(s.market, s.match);
+      const isManual = ['h1_goals_2_4','h2_goals_2_4','h1_goals_2_4_no','h2_goals_2_4_no'].includes(s.market);
+      const btnAttrs = isManual ? '' : [
+        `type="button"`,
+        `data-match="${esc(s.match)}"`,
+        `data-market="${esc(s.market)}"`,
+        `data-odds="${s.odds}"`,
+        `data-stake="${s.stake_eur}"`,
+        `data-ev="${s.ev_pct}"`,
+        `data-confidence="${esc(s.confidence||'')}"`,
+        `data-kickoff="${esc(s.kickoff||'')}"`,
+        `data-sport="${esc(s.sport||'')}"`,
+        `onclick="event.stopPropagation();_openBetModalFromBtn(this)"`,
+      ].join(' ');
+      const btn = isManual
+        ? `<span style="font-size:9px;color:var(--yellow)" title="HZ manuell">⚠ HZ</span>`
+        : `<button class="compact-place-btn" ${btnAttrs} aria-label="Wette platzieren">€${s.stake_eur.toFixed(0)}</button>`;
+      return `<tr class="${trCls}" onclick='openMatch(${JSON.stringify(s.match)})' role="button" tabindex="0" onkeydown='if(event.key==="Enter"||event.key===" "){event.preventDefault();openMatch(${JSON.stringify(s.match)});}'>
+        <td>${tKo}</td>
+        <td>${esc(mh)} – ${esc(ma)}</td>
+        <td>${esc(lbl)}</td>
+        <td>${s.odds.toFixed(2)}</td>
+        <td><span class="compact-ev ${evCls}">+${s.ev_pct.toFixed(1)}%</span></td>
+        <td>${btn}</td>
+      </tr>`;
+    }).join('');
+    c.innerHTML = controlsHtml + `<div class="compact-table-wrap">
+      <table class="compact-table">
+        <thead><tr><th>Zeit</th><th>Match</th><th>Markt</th><th>Quote</th><th>EV</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+    _bindSportControls(sport);
+    return;
+  }
+
   let h = controlsHtml + '<div class="sport-view-inner">';
   for (const [match, mSigs] of sortedGroups) {
     const s0 = mSigs[0];
@@ -2268,8 +2447,8 @@ function renderJournalStats(wmStats) {
     const edgeCls = edgeVal == null ? '' : edgeVal >= 0 ? 'pos' : 'neg';
     const edgeStr = edgeVal == null ? '—' : (edgeVal >= 0 ? '+' : '') + edgeVal.toFixed(1) + 'pp';
     summaryHtml = `<div class="journal-extra">
-      <div class="je-card">
-        <div class="je-label">Yield (Lifetime)</div>
+      <div class="je-card hero">
+        <div class="je-label">📈 Yield Lifetime</div>
         <div class="je-val ${yieldCls}">${yieldStr}</div>
         <div class="je-sub">${summary.n_settled} Wetten · €${(summary.staked||0).toFixed(0)} eingesetzt</div>
       </div>
@@ -3019,6 +3198,8 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('view-detail')?.classList.contains('active'))  { closeDetail(); }
 });
 
+// Restore Compact-Mode-Toggle-State
+{ const _cb = document.getElementById('compact-btn'); if (_cb && _compactMode) _cb.classList.add('active'); }
 load();
 </script>
 </body>
