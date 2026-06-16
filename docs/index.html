@@ -1909,15 +1909,23 @@ function renderJournalStats(wmStats) {
     const deltaStr = (delta >= 0 ? '+' : '') + delta.toFixed(2) + '€';
     const lineColor = delta >= 0 ? 'var(--green)' : 'var(--red)';
     const lastPt = pts.split(' ').pop().split(',');
+    const firstLabel = (series[0]?.date?.slice(8,10) || '') + '.' + (series[0]?.date?.slice(5,7) || '') + '.';
+    const lastLabel  = (series[series.length-1]?.date?.slice(8,10) || '') + '.' + (series[series.length-1]?.date?.slice(5,7) || '') + '.';
+    const firstX = pad, lastX = pad + (W - 2*pad);
+    const fillPts = pts + ` ${lastX.toFixed(1)},${H} ${firstX.toFixed(1)},${H}`;
     sparkHtml = `<div class="wm-sparkline">
       <div class="sparkline-header">
         <span class="sparkline-title">Bankroll-Verlauf WM 2026</span>
         <span class="sparkline-delta" style="color:${lineColor}">${deltaStr}</span>
       </div>
       <svg class="sparkline-svg" viewBox="0 0 ${W} ${H}" height="60">
+        <polygon points="${fillPts}" fill="${lineColor}" opacity="0.07"/>
         <polyline points="${pts}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linejoin="round"/>
         <circle cx="${parseFloat(lastPt[0])}" cy="${parseFloat(lastPt[1])}" r="3" fill="${lineColor}"/>
       </svg>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:1px;padding:0 ${pad}px">
+        <span>${firstLabel}</span><span>${lastLabel}</span>
+      </div>
       <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:4px">Start €100 · Aktuell €${last.toFixed(2)}</div>
     </div>`;
   }
@@ -1927,13 +1935,25 @@ function renderJournalStats(wmStats) {
     ['1X2', stats['1x2']],
     ['Über/Unter', stats['ou25']],
     ['BTTS', stats['btts']],
+    ['Sonstige', stats['other']],
   ].filter(([_, d]) => d && d.n > 0).map(([label, d]) =>
-    `<tr><td>${label}</td><td>${d.n}</td><td>${d.won}/${d.n}</td><td>${d.hit_rate != null ? d.hit_rate : '—'}%</td><td style="color:${d.pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${d.pnl >= 0 ? '+' : ''}${d.pnl != null ? d.pnl.toFixed(2) : '0.00'}€</td></tr>`
+    `<tr>
+      <td>${label}</td>
+      <td>${d.n}</td>
+      <td>${d.won}/${d.n}</td>
+      <td>${d.hit_rate != null ? d.hit_rate : '—'}%</td>
+      <td style="color:${d.roi != null && d.roi >= 0 ? 'var(--green)' : 'var(--red)'}">
+        ${d.roi != null ? (d.roi >= 0 ? '+' : '') + d.roi.toFixed(1) + '%' : '—'}
+      </td>
+      <td style="color:${d.pnl >= 0 ? 'var(--green)' : 'var(--red)'}">
+        ${d.pnl >= 0 ? '+' : ''}${d.pnl != null ? d.pnl.toFixed(2) : '0.00'}€
+      </td>
+    </tr>`
   ).join('');
 
   const tableHtml = rows ? `<div class="stats-table-wrap" style="margin:0 16px 10px">
     <table class="stats-table">
-      <thead><tr><th>Markt</th><th style="text-align:right">Wetten</th><th style="text-align:right">Treffer</th><th style="text-align:right">Hit-%</th><th style="text-align:right">P&amp;L</th></tr></thead>
+      <thead><tr><th>Markt</th><th style="text-align:right">Wetten</th><th style="text-align:right">Treffer</th><th style="text-align:right">Hit-%</th><th style="text-align:right">ROI</th><th style="text-align:right">P&amp;L</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </div>` : '';
@@ -1946,6 +1966,20 @@ function renderJournalStats(wmStats) {
 // ── Render Journal ───────────────────────────────────────────
 let _journalHistory = [];
 const _WD_DE = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+
+function _calcStreak(rows) {
+  const sorted = [...rows].sort((a,b) => a.date > b.date ? -1 : 1);
+  if (!sorted.length) return { n: 0, type: null };
+  const type = sorted[0].pnl > 0 ? 'win' : sorted[0].pnl < 0 ? 'loss' : null;
+  if (!type) return { n: 0, type: null };
+  let n = 0;
+  for (const d of sorted) {
+    const t = d.pnl > 0 ? 'win' : d.pnl < 0 ? 'loss' : null;
+    if (t === type) n++;
+    else break;
+  }
+  return { n, type };
+}
 
 function _buildJournalKpis(rows) {
   if (!rows.length) return '';
@@ -1970,7 +2004,7 @@ function _buildJournalKpis(rows) {
     <div class="kpi-card">
       <div class="kpi-label">Ø ROI / Tag</div>
       <div class="kpi-val ${cls(avgRoi)}">${avgRoi>=0?'+':''}${avgRoi.toFixed(1)}%</div>
-      <div class="kpi-sub">${winRate.toFixed(0)}% Gewinn-Tage</div>
+      <div class="kpi-sub">${(() => { const st = _calcStreak(rows); return st.n > 1 ? `${st.n}× ${st.type === 'win' ? '🔥' : '❄️'} Serie` : `${winRate.toFixed(0)}% Gewinn-Tage`; })()}</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Bester Tag</div>
@@ -2119,6 +2153,14 @@ function renderStandings() {
 
   let html = '';
   for (const [grp, teams] of Object.entries(WM_GROUPS)) {
+    const hasAnyMatch = teams.some(t => stats[t] && stats[t].p > 0);
+    if (!hasAnyMatch) {
+      html += `<div class="standings-group">
+        <div class="standings-group-header">Gruppe ${grp}</div>
+        <div style="font-size:12px;color:var(--muted);padding:10px 12px;font-weight:600">Noch nicht gespielt</div>
+      </div>`;
+      continue;
+    }
     const sorted = [...teams].sort((a,b) => {
       const sa = stats[a], sb = stats[b];
       if (sb.pts !== sa.pts) return sb.pts - sa.pts;

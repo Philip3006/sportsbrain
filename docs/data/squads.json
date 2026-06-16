@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-15",
+  "updated": "2026-06-16",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -847,7 +847,8 @@
       "availability_score": 1.0,
       "ampel": "🟢",
       "suspended": [
-        "Wesley França"
+        "Wesley França",
+        "Neymar"
       ],
       "players": [
         {
@@ -898,7 +899,7 @@
         {
           "name": "Neymar",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Raphinha",
@@ -2249,7 +2250,8 @@
         "Bukayo Saka",
         "Tino Livramento",
         "Reece James",
-        "Ezri Konsa"
+        "Ezri Konsa",
+        "Noni Madueke"
       ],
       "players": [
         {
@@ -2350,7 +2352,7 @@
         {
           "name": "Noni Madueke",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Eberechi Eze",
@@ -2390,8 +2392,7 @@
       "availability_score": 1.0,
       "ampel": "🟢",
       "suspended": [
-        "Hugo Ekitike",
-        "Michael Olise"
+        "Hugo Ekitike"
       ],
       "players": [
         {
@@ -2447,7 +2448,7 @@
         {
           "name": "Michael Olise",
           "pos": "FWD",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Bradley Barcola",
@@ -5629,7 +5630,8 @@
       "ampel": "🟢",
       "suspended": [
         "Dani Carvajal",
-        "Fermin Lopez"
+        "Fermin Lopez",
+        "Lamine Yamal"
       ],
       "players": [
         {
@@ -5725,7 +5727,7 @@
         {
           "name": "Lamine Yamal",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Pedri",
