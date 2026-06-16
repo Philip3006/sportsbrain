@@ -3405,6 +3405,21 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('view-detail')?.classList.contains('active'))  { closeDetail(); }
 });
 
+// URL-Token-Setter: ?token=XXX → speichert + entfernt den Param aus der URL
+(function () {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get('token');
+    if (t && t.length >= 32) {
+      localStorage.setItem('sb_token', t);
+      params.delete('token');
+      const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + window.location.hash;
+      window.history.replaceState({}, '', newUrl);
+      setTimeout(() => showToast && showToast('🔑 Worker-Token gespeichert', 'success'), 200);
+    }
+  } catch {}
+})();
+
 // Pre-register Service Worker im Hintergrund (für Push), nicht-blockierend
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW register failed:', err));
