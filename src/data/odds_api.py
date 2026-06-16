@@ -257,9 +257,12 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
         best_dynamic: dict = {"spreads": {}, "totals": {}}
         best_bm: dict[str, str] = {}
         bm_h2h: list[tuple[str, float, float, float]] = []  # (key, home, draw, away)
+        # Per-Bookmaker-Quoten für h2h (Bookie-Matrix im Frontend)
+        per_bm_h2h: list[dict] = []
 
         for bm in bookmakers:
             bm_key = bm["key"]
+            bm_title = bm.get("title", bm_key)
             prev = {k: v for k, v in best.items()}
             _parse_markets(bm, home, away, best, best_dynamic)
             for k in best:
@@ -267,7 +270,7 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
                     best_bm[k] = bm_key
             if bm_key == _PREFERRED_BM:
                 _parse_markets(bm, home, away, pin, pin_dynamic)
-            # Capture per-bookmaker h2h for coherence fallback
+            # Capture per-bookmaker h2h for coherence fallback + matrix
             bm_store: dict[str, float] = {}
             _parse_markets(bm, home, away, bm_store, {"spreads": {}, "totals": {}})
             bh = bm_store.get(home, 0.0)
@@ -275,6 +278,13 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
             ba = bm_store.get(away, 0.0)
             if bh > 0 and bd > 0 and ba > 0:
                 bm_h2h.append((bm_key, bh, bd, ba))
+                per_bm_h2h.append({
+                    "key":   bm_key,
+                    "title": bm_title,
+                    "home":  round(bh, 2),
+                    "draw":  round(bd, 2),
+                    "away":  round(ba, 2),
+                })
 
         if not best.get(home):
             continue
@@ -366,6 +376,8 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
             # Dynamic all-lines dicts — used by scanner for comprehensive coverage
             "spreads":        best_dynamic["spreads"],   # {home_line: {"home": odds, "away": odds}}
             "totals_lines":   best_dynamic["totals"],    # {line: {"over": odds, "under": odds}}
+            # Per-Bookmaker-h2h-Quoten (für Bookie-Matrix im Frontend)
+            "bookmakers_h2h": per_bm_h2h,
         }
         matches.append(match_dict)
 
