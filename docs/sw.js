@@ -8,7 +8,7 @@
 // Wir machen hier KEIN Caching der App-Shell (PWA bleibt online-first via
 // Cloudflare KV). Der Service Worker existiert nur für Web Push.
 
-const SW_VERSION = '2026-06-16-v1';
+const SW_VERSION = '2026-06-16-v2-force-reload';
 
 self.addEventListener('install', (event) => {
   // Sofort aktivieren — kein Wait auf Tab-Reload
@@ -16,7 +16,19 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil((async () => {
+    await self.clients.claim();
+    // Bei jeder SW-Update force-reload aller controlled Clients —
+    // löst das hartnäckige iOS-PWA-HTML-Caching.
+    const allClients = await self.clients.matchAll({ type: 'window' });
+    for (const client of allClients) {
+      try {
+        if ('navigate' in client) {
+          await client.navigate(client.url);
+        }
+      } catch {}
+    }
+  })());
 });
 
 self.addEventListener('push', (event) => {
