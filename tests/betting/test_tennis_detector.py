@@ -88,14 +88,27 @@ def test_detect_value_ah_odds_when_provided():
 
 
 def test_signal_stake_within_bounds():
+    # bankroll=50 → Tier 0 bounds (€5–€15) for backward-compat behaviour
     signals = detect_value_tennis(
         player_a="A", player_b="B",
         probs={"p_a": 0.70, "p_b": 0.30},
         odds_a=1.80, odds_b=3.50,
-        bankroll=100.0,
+        bankroll=50.0,
     )
     for s in signals:
         assert 5.0 <= s.stake_eur <= 15.0
+
+
+def test_signal_stake_scales_with_bankroll_tier():
+    # bankroll=175 → Tier 1 bounds (€6–€20); HIGH-confidence allowed up to €20
+    signals = detect_value_tennis(
+        player_a="A", player_b="B",
+        probs={"p_a": 0.70, "p_b": 0.30},
+        odds_a=1.80, odds_b=3.50,
+        bankroll=175.0,
+    )
+    for s in signals:
+        assert 6.0 <= s.stake_eur <= 20.0
 
 
 def test_min_prob_filter_blocks_extreme_underdog():

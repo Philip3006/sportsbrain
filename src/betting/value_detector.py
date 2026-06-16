@@ -38,7 +38,7 @@ def _make_signal(
     model_p: float, fair_p: float, odds: float, ev: float,
     kf: float, confidence: str, bankroll: float,
 ) -> BetSignal:
-    stake_eur = dynamic_stake_eur(ev, confidence)
+    stake_eur = dynamic_stake_eur(ev, confidence, bankroll)
     return BetSignal(
         match_id=match_id or f"{home}_vs_{away}",
         home=home, away=away, market=market,
@@ -670,8 +670,8 @@ def set_confidence(signal: BetSignal, dc_probs: dict, lgbm_probs: np.ndarray) ->
         # Use model_prob (DC-computed) with stricter threshold (≥10% DC-implied EV).
         if signal.confidence != "LOW" and signal.model_prob * signal.decimal_odds > 1.10:
             signal.confidence = "HIGH"
-            new_eur = dynamic_stake_eur(signal.ev, "HIGH")
             bankroll = signal.stake_eur / signal.stake_pct if signal.stake_pct > 0 else 1000.0
+            new_eur = dynamic_stake_eur(signal.ev, "HIGH", bankroll)
             signal.stake_eur = new_eur
             signal.stake_pct = new_eur / bankroll
         return signal
@@ -681,8 +681,8 @@ def set_confidence(signal: BetSignal, dc_probs: dict, lgbm_probs: np.ndarray) ->
     lgbm_p = float(lgbm_probs[lgbm_idx])
     if signal.confidence != "LOW" and (dc_p * signal.decimal_odds > 1.0) and (lgbm_p * signal.decimal_odds > 1.0):
         signal.confidence = "HIGH"
-        new_eur = dynamic_stake_eur(signal.ev, "HIGH")
         bankroll = signal.stake_eur / signal.stake_pct if signal.stake_pct > 0 else 1000.0
+        new_eur = dynamic_stake_eur(signal.ev, "HIGH", bankroll)
         signal.stake_eur = new_eur
         signal.stake_pct = new_eur / bankroll
     return signal

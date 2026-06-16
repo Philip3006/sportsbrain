@@ -1,20 +1,60 @@
-from src.config import KELLY_FRAC, MIN_STAKE_EUR, MAX_STAKE_EUR
+from src.config import (
+    KELLY_FRAC,
+    MIN_STAKE_EUR,
+    MAX_STAKE_EUR,
+    STAKE_TIERS,
+    GOALS_RANGE_TIER_PCT,
+)
 
 
-def dynamic_stake_eur(ev: float, confidence: str) -> float:
+def get_stake_bounds(bankroll: float) -> tuple[float, float]:
+    """Returns (min_stake_eur, max_stake_eur) for the bankroll tier.
+
+    STAKE_TIERS is ordered high-threshold → low; the first row whose
+    threshold ≤ bankroll wins. Falls back to the lowest tier for negative
+    bankrolls (shouldn't happen, but keeps callers safe).
     """
-    Returns absolute stake in EUR, scaling linearly from MIN_STAKE_EUR to MAX_STAKE_EUR.
+    for threshold, lo, hi in STAKE_TIERS:
+        if bankroll >= threshold:
+            return lo, hi
+    threshold, lo, hi = STAKE_TIERS[-1]
+    return lo, hi
+
+
+def goals_range_max_for(bankroll: float | None) -> float:
+    """Tier-aware cap for Goals-Range stakes (more conservative than the main MAX)."""
+    if bankroll is None:
+        lo, hi = MIN_STAKE_EUR, MAX_STAKE_EUR
+    else:
+        lo, hi = get_stake_bounds(bankroll)
+    return lo + GOALS_RANGE_TIER_PCT * (hi - lo)
+
+
+def dynamic_stake_eur(
+    ev: float,
+    confidence: str,
+    bankroll: float | None = None,
+) -> float:
+    """
+    Returns absolute stake in EUR. Scales linearly from min→max across EV 3%→20%.
     EV is clipped at 20% to prevent model artifacts from causing oversized bets.
-    HIGH confidence signals receive a +10% bonus (still capped at MAX_STAKE_EUR).
+    HIGH confidence signals receive a +10% bonus (still capped at tier MAX).
+
+    bankroll=None preserves legacy Tier-0 behaviour (€5–€15) for tests and
+    callers that haven't been migrated yet.
     """
     if ev <= 0:
         return 0.0
+    if bankroll is None:
+        lo, hi = MIN_STAKE_EUR, MAX_STAKE_EUR
+    else:
+        lo, hi = get_stake_bounds(bankroll)
     ev_clipped = min(ev, 0.20)
     ev_range = 0.20 - 0.03  # min_edge = 3%
-    amount = MIN_STAKE_EUR + (ev_clipped - 0.03) / ev_range * (MAX_STAKE_EUR - MIN_STAKE_EUR)
-    amount = max(MIN_STAKE_EUR, min(MAX_STAKE_EUR, amount))
+    amount = lo + (ev_clipped - 0.03) / ev_range * (hi - lo)
+    amount = max(lo, min(hi, amount))
     if confidence == "HIGH":
-        amount = min(amount * 1.10, MAX_STAKE_EUR)
+        amount = min(amount * 1.10, hi)
     return amount
 
 

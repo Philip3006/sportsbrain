@@ -20,9 +20,14 @@ python3 scripts/settle_bets.py >> "$LOG" 2>&1
 echo "--- Injury refresh ---" >> "$LOG"
 python3 scripts/refresh_injuries.py >> "$LOG" 2>&1
 
-# 3. Daily value scan
+# 3. Daily value scan — bankroll from weekly snapshot (tier-aware stakes)
+BANKROLL=$(python3 -c "
+from src.betting.ledger import get_bankroll_snapshot
+print(get_bankroll_snapshot())
+" 2>/dev/null || echo "100")
+echo "--- Bankroll (snapshot): €$BANKROLL ---" >> "$LOG"
 echo "--- Daily scan ---" >> "$LOG"
-python3 scripts/daily_scan.py --bankroll 100 --retrain >> "$LOG" 2>&1
+python3 scripts/daily_scan.py --bankroll "$BANKROLL" --retrain >> "$LOG" 2>&1
 
 EXIT_CODE=$?
 
