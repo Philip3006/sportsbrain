@@ -3,22 +3,32 @@ name: Result Push (manuell)
 on:
   workflow_dispatch:
     inputs:
+      push_type:
+        description: 'Push-Typ'
+        required: true
+        default: 'goal'
+        type: choice
+        options: [goal, halftime, result]
       home_team:
         description: 'Heimteam'
         required: true
-        default: 'France'
+        default: 'Iraq'
       away_team:
         description: 'Auswärtsteam'
         required: true
-        default: 'Senegal'
+        default: 'Norway'
       home_score:
         description: 'Heimtore'
         required: true
-        default: '3'
+        default: '1'
       away_score:
         description: 'Auswärtstore'
         required: true
-        default: '1'
+        default: '0'
+      minute:
+        description: 'Spielminute (nur für Tor)'
+        required: false
+        default: '23'
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -42,12 +52,14 @@ jobs:
         run: |
           python3 scripts/debug_vapid_key.py
 
-      - name: Ergebnis-Push senden
+      - name: Push senden
         env:
+          PUSH_TYPE:         ${{ github.event.inputs.push_type }}
           HOME_TEAM:         ${{ github.event.inputs.home_team }}
           AWAY_TEAM:         ${{ github.event.inputs.away_team }}
           HOME_SCORE:        ${{ github.event.inputs.home_score }}
           AWAY_SCORE:        ${{ github.event.inputs.away_score }}
+          MINUTE:            ${{ github.event.inputs.minute }}
           SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
           SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
