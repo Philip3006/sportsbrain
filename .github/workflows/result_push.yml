@@ -36,6 +36,22 @@ jobs:
 
       - run: pip install -r requirements.txt
 
+      - name: VAPID-Key Debug (kein Secret-Leak)
+        env:
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+        run: |
+          python3 - <<'EOF'
+          import os, re
+          k = os.getenv("VAPID_PRIVATE_KEY", "")
+          print(f"Länge: {len(k)}")
+          print(f"Startet mit '-----BEGIN': {k.startswith('-----BEGIN')}")
+          print(f"Literal \\n vorhanden: {'\\\\n' in k}")
+          print(f"Echte Newlines: {k.count(chr(10))}")
+          print(f"Erste 30 Zeichen (maskiert): {k[:10]}...{k[-10:] if len(k)>20 else ''}")
+          m = re.match(r"(-+BEGIN[^-]+-+)", k)
+          print(f"Header: {m.group(1) if m else 'KEIN HEADER'}")
+          EOF
+
       - name: Ergebnis-Push senden
         env:
           HOME_TEAM:         ${{ github.event.inputs.home_team }}
