@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-16T18:47:48Z",
+  "updated": "2026-06-16T20:13:26Z",
   "schedule": [
     {
       "sport": "football",
@@ -9269,9 +9269,9 @@
       "away": "Senegal",
       "market": "o/u2.5_under",
       "entry_odds": 2.05,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
+      "current_odds": 2.12,
+      "drift_pct": 3.4,
+      "clv_signal": "good",
       "stake": 11.44,
       "match_date": "2026-06-16",
       "model_edge_pct": null
@@ -9295,7 +9295,7 @@
     "free": 158.28,
     "staked": 26.44,
     "exposure_pct": 26.4,
-    "max_win": 21.31,
+    "max_win": 22.11,
     "pnl_closed": 84.72
   },
   "wm_stats": {
