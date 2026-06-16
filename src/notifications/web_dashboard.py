@@ -75,7 +75,12 @@ def _signal_to_dict(
 
 
 def _build_wm_stats() -> dict:
-    """Aggregiert WM-Performance-Stats aus dem Ledger."""
+    """Aggregiert WM-Performance-Stats aus dem Ledger.
+
+    Liefert: stats (per Markt), series (Bankroll-Verlauf täglich),
+    drawdown (current/max + Peak), clv_dist + edge_dist (Histogramme),
+    summary (Lifetime ROI/Yield/Mean-CLV/Mean-Edge).
+    """
     if not _LEDGER_PATH.exists():
         return {}
     try:
@@ -87,6 +92,20 @@ def _build_wm_stats() -> dict:
         }
         daily_balance: dict[str, float] = {}
         balance = 100.0
+        # Histogram bins (Prozentpunkte) — Edges sind (links, rechts) halboffen [l, r)
+        # CLV-Bins: <-5 / [-5,-2) / [-2,0) / [0,+2) / [+2,+5) / >=+5  (in % vom Opening)
+        clv_edges = [-100, -5, -2, 0, 2, 5, 1000]
+        clv_labels = ["≤-5%", "-5/-2%", "-2/0%", "0/+2%", "+2/+5%", "≥+5%"]
+        clv_bins = [0] * len(clv_labels)
+        # Edge-Bins: pp = model_prob - implied_market_prob (in pp)
+        edge_edges = [-100, 0, 3, 6, 10, 15, 1000]
+        edge_labels = ["≤0pp", "0-3pp", "3-6pp", "6-10pp", "10-15pp", "≥15pp"]
+        edge_bins = [0] * len(edge_labels)
+        clv_values: list[float] = []
+        edge_values: list[float] = []
+        total_staked = 0.0
+        total_pnl = 0.0
+        total_n = 0
         with open(_LEDGER_PATH, newline="") as f:
             for row in sorted(csv.DictReader(f), key=lambda r: r.get("match_date", "")):
                 status = row.get("status", "")
@@ -112,6 +131,35 @@ def _build_wm_stats() -> dict:
                 balance += pnl
                 if date:
                     daily_balance[date] = round(balance, 2)
+                total_staked += stake
+                total_pnl += pnl
+                total_n += 1
+                # CLV in % (placed_odds / closing_odds - 1) * 100  — positiv = wir hatten bessere Quote als Markt am Schluss
+                try:
+                    placed_odds = float(row.get("decimal_odds") or 0)
+                    closing_odds = float(row.get("closing_odds") or 0)
+                    if placed_odds > 1.0 and closing_odds > 1.0:
+                        clv_pct = (placed_odds / closing_odds - 1.0) * 100.0
+                        clv_values.append(clv_pct)
+                        for i in range(len(clv_labels)):
+                            if clv_edges[i] <= clv_pct < clv_edges[i + 1]:
+                                clv_bins[i] += 1
+                                break
+                except (TypeError, ValueError):
+                    pass
+                # Edge in pp (Modell-% − Markt-implied-%)
+                try:
+                    model_prob = float(row.get("model_prob") or 0)
+                    placed_odds = float(row.get("decimal_odds") or 0)
+                    if 0 < model_prob < 1 and placed_odds > 1.0:
+                        edge_pp = (model_prob - 1.0 / placed_odds) * 100.0
+                        edge_values.append(edge_pp)
+                        for i in range(len(edge_labels)):
+                            if edge_edges[i] <= edge_pp < edge_edges[i + 1]:
+                                edge_bins[i] += 1
+                                break
+                except (TypeError, ValueError):
+                    pass
         bankroll_series = [{"date": "2026-06-11", "balance": 100.0}] + [
             {"date": d, "balance": b}
             for d, b in sorted(daily_balance.items())
@@ -124,7 +172,52 @@ def _build_wm_stats() -> dict:
             d["roi"] = round(d["pnl"] / d["staked"] * 100, 1) if d["staked"] > 0 else None
             d["staked"] = round(d["staked"], 2)
             d["pnl"] = round(d["pnl"], 2)
-        return {"stats": stats, "series": bankroll_series}
+        # Drawdown auf bankroll_series
+        peak = 100.0
+        max_dd = 0.0
+        max_dd_pct = 0.0
+        for pt in bankroll_series:
+            b = pt["balance"]
+            if b > peak:
+                peak = b
+            dd = peak - b
+            dd_pct = (dd / peak * 100.0) if peak > 0 else 0.0
+            if dd > max_dd:
+                max_dd = dd
+                max_dd_pct = dd_pct
+        current = bankroll_series[-1]["balance"] if bankroll_series else 100.0
+        current_dd = max(0.0, peak - current)
+        current_dd_pct = (current_dd / peak * 100.0) if peak > 0 else 0.0
+        drawdown = {
+            "peak":            round(peak, 2),
+            "current":         round(current, 2),
+            "current_dd":      round(current_dd, 2),
+            "current_dd_pct":  round(current_dd_pct, 2),
+            "max_dd":          round(max_dd, 2),
+            "max_dd_pct":      round(max_dd_pct, 2),
+        }
+        # Summary
+        mean_clv = round(sum(clv_values) / len(clv_values), 2) if clv_values else None
+        mean_edge = round(sum(edge_values) / len(edge_values), 2) if edge_values else None
+        yield_pct = round(total_pnl / total_staked * 100.0, 2) if total_staked > 0 else None
+        summary = {
+            "n_settled":  total_n,
+            "staked":     round(total_staked, 2),
+            "pnl":        round(total_pnl, 2),
+            "yield_pct":  yield_pct,
+            "mean_clv":   mean_clv,
+            "mean_edge":  mean_edge,
+            "n_clv":      len(clv_values),
+            "n_edge":     len(edge_values),
+        }
+        return {
+            "stats":    stats,
+            "series":   bankroll_series,
+            "drawdown": drawdown,
+            "clv_dist": {"labels": clv_labels, "bins": clv_bins},
+            "edge_dist": {"labels": edge_labels, "bins": edge_bins},
+            "summary":  summary,
+        }
     except Exception:
         return {}
 
