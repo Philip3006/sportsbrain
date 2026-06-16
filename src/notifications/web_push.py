@@ -108,6 +108,15 @@ def _send_notification(title: str, body: str, *, url: str = "/", kind: str = "ge
     if not private_key:
         print("  [web_push] VAPID_PRIVATE_KEY fehlt — Notification übersprungen.")
         return 0
+    # pywebpush erwartet einen Dateipfad ODER base64-encoded raw key, NICHT
+    # einen PEM-String mit -----BEGIN-Header. Wenn wir PEM-Inhalt haben,
+    # schreiben wir ihn in eine Tempdatei und übergeben den Pfad.
+    if private_key.startswith("-----BEGIN"):
+        import tempfile
+        tf = tempfile.NamedTemporaryFile(mode="w", suffix=".pem", delete=False)
+        tf.write(private_key)
+        tf.close()
+        private_key = tf.name
 
     subs = _list_subscriptions()
     if not subs:
