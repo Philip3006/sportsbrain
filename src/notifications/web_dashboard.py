@@ -18,6 +18,96 @@ ROOT = Path(__file__).parent.parent.parent
 _JSON_PATH = ROOT / "docs" / "data" / "signals.json"
 _LEDGER_PATH = ROOT / "results" / "ledger.csv"
 
+# FIFA-Konföderation-Mapping (WM 2026 Teams + WM-Qualifikations-Backtest)
+CONFEDERATION_MAP: dict[str, str] = {
+    # UEFA
+    "Germany": "UEFA", "Netherlands": "UEFA", "France": "UEFA", "Spain": "UEFA",
+    "England": "UEFA", "Belgium": "UEFA", "Portugal": "UEFA", "Switzerland": "UEFA",
+    "Croatia": "UEFA", "Austria": "UEFA", "Czechia": "UEFA", "Czech Republic": "UEFA",
+    "Norway": "UEFA", "Sweden": "UEFA", "Scotland": "UEFA", "Turkey": "UEFA",
+    "Italy": "UEFA", "Denmark": "UEFA", "Poland": "UEFA", "Serbia": "UEFA",
+    "Greece": "UEFA", "Romania": "UEFA", "Ukraine": "UEFA", "Hungary": "UEFA",
+    "Wales": "UEFA", "Iceland": "UEFA", "Slovakia": "UEFA", "Albania": "UEFA",
+    "Russia": "UEFA", "Finland": "UEFA", "Ireland": "UEFA", "Bulgaria": "UEFA",
+    "Bosnia and Herzegovina": "UEFA", "Bosnia & Herzegovina": "UEFA",
+    "Slovenia": "UEFA", "Belarus": "UEFA", "North Macedonia": "UEFA",
+    "Cyprus": "UEFA", "Estonia": "UEFA", "Latvia": "UEFA", "Lithuania": "UEFA",
+    "Luxembourg": "UEFA", "Moldova": "UEFA", "Montenegro": "UEFA",
+    "Northern Ireland": "UEFA", "Kazakhstan": "UEFA", "Kosovo": "UEFA",
+    "Andorra": "UEFA", "Liechtenstein": "UEFA", "San Marino": "UEFA",
+    "Gibraltar": "UEFA", "Faroe Islands": "UEFA", "Malta": "UEFA",
+    "Armenia": "UEFA", "Azerbaijan": "UEFA", "Georgia": "UEFA", "Israel": "UEFA",
+    # CONMEBOL
+    "Brazil": "CONMEBOL", "Argentina": "CONMEBOL", "Paraguay": "CONMEBOL",
+    "Uruguay": "CONMEBOL", "Colombia": "CONMEBOL", "Ecuador": "CONMEBOL",
+    "Chile": "CONMEBOL", "Peru": "CONMEBOL", "Venezuela": "CONMEBOL",
+    "Bolivia": "CONMEBOL",
+    # CONCACAF
+    "Mexico": "CONCACAF", "United States": "CONCACAF", "USA": "CONCACAF",
+    "Canada": "CONCACAF", "Haiti": "CONCACAF", "Panama": "CONCACAF",
+    "Curacao": "CONCACAF", "Curaçao": "CONCACAF", "Honduras": "CONCACAF",
+    "Costa Rica": "CONCACAF", "Jamaica": "CONCACAF", "Trinidad and Tobago": "CONCACAF",
+    "El Salvador": "CONCACAF", "Guatemala": "CONCACAF",
+    # AFC
+    "South Korea": "AFC", "Qatar": "AFC", "Australia": "AFC", "Japan": "AFC",
+    "Iran": "AFC", "Saudi Arabia": "AFC", "Iraq": "AFC", "Uzbekistan": "AFC",
+    "Jordan": "AFC", "China": "AFC", "India": "AFC", "Vietnam": "AFC",
+    "UAE": "AFC", "United Arab Emirates": "AFC", "Oman": "AFC", "Bahrain": "AFC",
+    "Kuwait": "AFC", "Thailand": "AFC", "Philippines": "AFC", "Indonesia": "AFC",
+    "Malaysia": "AFC", "Lebanon": "AFC", "Syria": "AFC", "Palestine": "AFC",
+    "Yemen": "AFC", "Hong Kong": "AFC", "Singapore": "AFC", "Tajikistan": "AFC",
+    "Kyrgyzstan": "AFC", "Turkmenistan": "AFC", "North Korea": "AFC",
+    "Myanmar": "AFC", "Cambodia": "AFC", "Laos": "AFC", "Bangladesh": "AFC",
+    "Sri Lanka": "AFC", "Pakistan": "AFC", "Maldives": "AFC", "Bhutan": "AFC",
+    "Nepal": "AFC", "Mongolia": "AFC", "Macau": "AFC", "Brunei": "AFC",
+    "Chinese Taipei": "AFC", "East Timor": "AFC", "Guam": "AFC",
+    "Northern Mariana Islands": "AFC",
+    # CAF
+    "South Africa": "CAF", "Morocco": "CAF", "Cote d'Ivoire": "CAF",
+    "Ivory Coast": "CAF", "Tunisia": "CAF", "Egypt": "CAF", "Cape Verde": "CAF",
+    "Senegal": "CAF", "Algeria": "CAF", "DR Congo": "CAF", "Ghana": "CAF",
+    "Nigeria": "CAF", "Cameroon": "CAF", "Mali": "CAF", "Burkina Faso": "CAF",
+    "Guinea": "CAF", "Zambia": "CAF", "Angola": "CAF", "Kenya": "CAF",
+    "Uganda": "CAF", "Tanzania": "CAF", "Ethiopia": "CAF", "Sudan": "CAF",
+    "Zimbabwe": "CAF", "Mozambique": "CAF", "Madagascar": "CAF", "Gabon": "CAF",
+    "Congo": "CAF", "Equatorial Guinea": "CAF", "Central African Republic": "CAF",
+    "Botswana": "CAF", "Namibia": "CAF", "Malawi": "CAF", "Rwanda": "CAF",
+    "Burundi": "CAF", "Sierra Leone": "CAF", "Liberia": "CAF", "Togo": "CAF",
+    "Benin": "CAF", "Niger": "CAF", "Chad": "CAF", "Mauritania": "CAF",
+    "Gambia": "CAF", "Guinea-Bissau": "CAF", "Comoros": "CAF",
+    "Lesotho": "CAF", "Eswatini": "CAF", "Mauritius": "CAF",
+    "Sao Tome and Principe": "CAF", "Seychelles": "CAF", "Djibouti": "CAF",
+    "Somalia": "CAF", "Eritrea": "CAF", "South Sudan": "CAF", "Libya": "CAF",
+    # OFC
+    "New Zealand": "OFC", "Fiji": "OFC", "Papua New Guinea": "OFC",
+    "Solomon Islands": "OFC", "Vanuatu": "OFC", "Tahiti": "OFC", "Samoa": "OFC",
+    "Tonga": "OFC", "Cook Islands": "OFC", "American Samoa": "OFC",
+}
+
+
+def _confederation(team: str) -> str:
+    return CONFEDERATION_MAP.get(team, "Other")
+
+
+def _market_group(mkt: str) -> str:
+    if mkt in ("home", "draw", "away"):
+        return "1X2"
+    if mkt.startswith("o/u") and "_over" in mkt:
+        return "Over"
+    if mkt.startswith("o/u") and "_under" in mkt:
+        return "Under"
+    if mkt.startswith("ah"):
+        return "AH"
+    if mkt.startswith("btts"):
+        return "BTTS"
+    if "goals_2_4" in mkt:
+        return "2-4 Tore"
+    if mkt.startswith("dc_"):
+        return "Double Chance"
+    if mkt.startswith("first_set"):
+        return "1. Satz"
+    return "Sonstige"
+
 
 def _build_history(n_days: int = 30) -> list[dict]:
     """Read ledger CSV and return daily P&L history (most recent first)."""
@@ -106,6 +196,10 @@ def _build_wm_stats() -> dict:
         total_staked = 0.0
         total_pnl = 0.0
         total_n = 0
+        # Per-Team-Markt-Buckets (für Bet-History im Detail-View)
+        per_team_market: dict[str, dict[str, dict]] = {}
+        # Per-Konföderation-Aggregat (für Journal)
+        by_confed: dict[str, dict] = {}
         with open(_LEDGER_PATH, newline="") as f:
             for row in sorted(csv.DictReader(f), key=lambda r: r.get("match_date", "")):
                 status = row.get("status", "")
@@ -134,6 +228,30 @@ def _build_wm_stats() -> dict:
                 total_staked += stake
                 total_pnl += pnl
                 total_n += 1
+                # Per-Team-Markt-Aggregate (für beide Teams im Match)
+                home_team = (row.get("home", "") or "").strip()
+                away_team = (row.get("away", "") or "").strip()
+                mg = _market_group(mkt)
+                for team in (home_team, away_team):
+                    if not team:
+                        continue
+                    per_team_market.setdefault(team, {}).setdefault(mg, {
+                        "n": 0, "won": 0, "staked": 0.0, "pnl": 0.0,
+                    })
+                    bucket = per_team_market[team][mg]
+                    bucket["n"] += 1
+                    bucket["won"] += 1 if status == "won" else 0
+                    bucket["staked"] += stake
+                    bucket["pnl"] += pnl
+                # Per-Konföderation (klassifiziere via Home-Team)
+                confed = _confederation(home_team) if home_team else "Other"
+                by_confed.setdefault(confed, {
+                    "n": 0, "won": 0, "staked": 0.0, "pnl": 0.0,
+                })
+                by_confed[confed]["n"] += 1
+                by_confed[confed]["won"] += 1 if status == "won" else 0
+                by_confed[confed]["staked"] += stake
+                by_confed[confed]["pnl"] += pnl
                 # CLV in % (placed_odds / closing_odds - 1) * 100  — positiv = wir hatten bessere Quote als Markt am Schluss
                 try:
                     placed_odds = float(row.get("decimal_odds") or 0)
@@ -210,13 +328,39 @@ def _build_wm_stats() -> dict:
             "n_clv":      len(clv_values),
             "n_edge":     len(edge_values),
         }
+        # Per-Team-Markt: Hit-Rate + ROI berechnen
+        ptm_out: dict[str, dict[str, dict]] = {}
+        for team, by_m in per_team_market.items():
+            ptm_out[team] = {}
+            for mg, b in by_m.items():
+                ptm_out[team][mg] = {
+                    "n":        b["n"],
+                    "won":      b["won"],
+                    "staked":   round(b["staked"], 2),
+                    "pnl":      round(b["pnl"], 2),
+                    "hit_rate": round(b["won"] / b["n"] * 100, 1) if b["n"] > 0 else None,
+                    "roi":      round(b["pnl"] / b["staked"] * 100, 1) if b["staked"] > 0 else None,
+                }
+        # Per-Konföderation
+        confed_out: dict[str, dict] = {}
+        for c, b in by_confed.items():
+            confed_out[c] = {
+                "n":        b["n"],
+                "won":      b["won"],
+                "staked":   round(b["staked"], 2),
+                "pnl":      round(b["pnl"], 2),
+                "hit_rate": round(b["won"] / b["n"] * 100, 1) if b["n"] > 0 else None,
+                "roi":      round(b["pnl"] / b["staked"] * 100, 1) if b["staked"] > 0 else None,
+            }
         return {
-            "stats":    stats,
-            "series":   bankroll_series,
-            "drawdown": drawdown,
-            "clv_dist": {"labels": clv_labels, "bins": clv_bins},
-            "edge_dist": {"labels": edge_labels, "bins": edge_bins},
-            "summary":  summary,
+            "stats":           stats,
+            "series":          bankroll_series,
+            "drawdown":        drawdown,
+            "clv_dist":        {"labels": clv_labels, "bins": clv_bins},
+            "edge_dist":       {"labels": edge_labels, "bins": edge_bins},
+            "summary":         summary,
+            "per_team_market": ptm_out,
+            "by_confederation": confed_out,
         }
     except Exception:
         return {}
