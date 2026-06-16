@@ -42,11 +42,14 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python scripts/telegram_bot.py
 
-      - name: Commit models + signals (NO ledger — manual confirmation required)
+      - name: Build WM 2026 Monte-Carlo Forecast + xPoints
+        run: python scripts/build_wm_forecast.py --n 2000
+
+      - name: Commit models + signals + forecast (NO ledger — manual confirmation required)
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add models/ docs/data/signals.json || true
+          git add models/ docs/data/signals.json docs/data/wm_forecast.json || true
           git diff --staged --quiet || git commit -m "auto: scan $(date +%Y-%m-%d)"
           git pull --rebase origin main || true
           git push
