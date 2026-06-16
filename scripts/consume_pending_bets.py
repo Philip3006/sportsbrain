@@ -171,6 +171,37 @@ def main() -> int:
         except Exception as e:
             print(f"[consume] KV refresh failed (non-fatal): {e}", file=sys.stderr)
 
+        # Push ledger to GitHub so the CI watchdog sees the new bets and
+        # doesn't overwrite the KV with a stale repo state.
+        import subprocess
+        try:
+            ROOT = Path(__file__).resolve().parent.parent
+            def _g(*args):
+                return subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
+                                      text=True, timeout=30)
+            # Only the ledger — no other files (avoid pushing local-only state).
+            _g("add", "results/ledger.csv")
+            staged = _g("diff", "--cached", "--quiet", "results/ledger.csv")
+            if staged.returncode != 0:  # there are staged changes
+                commit_msg = f"auto: ledger sync {added} bet(s)"
+                _g("commit", "-m", commit_msg,
+                   "--author=SportsBrain Bot <bot@sportsbrain>")
+                for attempt in range(1, 6):
+                    _g("pull", "--rebase", "origin", "main")
+                    push = _g("push", "origin", "main")
+                    if push.returncode == 0:
+                        print(f"[consume] ledger pushed to GitHub ({commit_msg})")
+                        break
+                    print(f"[consume] push attempt {attempt} failed: "
+                          f"{push.stderr.strip()[:120]}", file=sys.stderr)
+                    import time as _t, random as _r
+                    _t.sleep(_r.randint(2, 6))
+                else:
+                    print("[consume] ledger push gave up after 5 attempts",
+                          file=sys.stderr)
+        except Exception as e:
+            print(f"[consume] ledger push failed (non-fatal): {e}", file=sys.stderr)
+
     return 0
 
 
