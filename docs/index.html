@@ -175,6 +175,31 @@
     .bm-matrix-table tr:last-child td { border-bottom: none; }
     .bm-best { color: var(--green); position: relative; }
     .bm-best::before { content: '★'; margin-right: 2px; font-size: 10px; }
+    /* Forecast-Tab */
+    .fc-header { padding: 14px 16px 8px; }
+    .fc-title { font-size: 18px; font-weight: 900; letter-spacing: -.3px; margin-bottom: 2px; }
+    .fc-sub { font-size: 11px; color: var(--muted); font-weight: 600; }
+    .fc-controls { display: flex; gap: 6px; padding: 4px 16px 10px; flex-wrap: wrap; align-items: center; }
+    .fc-controls .sc-label { font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; }
+    .fc-table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg); margin: 0 12px 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .fc-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 540px; }
+    .fc-table th { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; padding: 8px 6px; text-align: right; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+    .fc-table th:first-child, .fc-table th:nth-child(2) { text-align: left; position: sticky; left: 0; background: var(--surface); z-index: 1; }
+    .fc-table th:nth-child(2) { left: 36px; }
+    .fc-table th.sorted-asc::after  { content: ' ▲'; font-size: 9px; }
+    .fc-table th.sorted-desc::after { content: ' ▼'; font-size: 9px; }
+    .fc-table td { padding: 8px 6px; text-align: right; border-bottom: 1px solid rgba(48,54,61,.4); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .fc-table td:first-child { width: 36px; color: var(--muted); font-size: 11px; position: sticky; left: 0; background: var(--card); z-index: 1; text-align: center; }
+    .fc-table td:nth-child(2) { text-align: left; color: var(--text); font-weight: 800; position: sticky; left: 36px; background: var(--card); z-index: 1; }
+    .fc-table tr:last-child td { border-bottom: none; }
+    .fc-table tr.fc-eliminated td { opacity: .45; }
+    .fc-table tr.fc-eliminated td:first-child::before { content: '✖ '; color: var(--red); }
+    .fc-pct { display: inline-block; min-width: 38px; text-align: right; }
+    .fc-pct.lo { color: var(--muted); }
+    .fc-pct.mid { color: var(--text); }
+    .fc-pct.hi { color: var(--green); }
+    .fc-pct.peak { color: var(--green); font-weight: 900; }
+    .fc-note { font-size: 10px; color: var(--muted); padding: 6px 16px 16px; line-height: 1.5; }
     /* Journal: Drawdown + Histogramm-Cards */
     .journal-extra { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px 12px 8px; }
     .je-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); padding: 9px 10px; }
@@ -622,6 +647,12 @@
       <div class="skel"></div><div class="skel"></div>
     </div>
   </section>
+
+  <section id="view-forecast" class="view">
+    <div id="forecast-container">
+      <div class="skel"></div><div class="skel"></div>
+    </div>
+  </section>
 </main>
 
 <nav class="bottom-nav" role="tablist" aria-label="Hauptnavigation">
@@ -639,6 +670,9 @@
   </div>
   <div class="nav-tab" data-view="journal" onclick="navTo(this)" role="tab" tabindex="0" aria-label="Journal" aria-selected="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();navTo(this);}">
     <span class="ni" aria-hidden="true">📅</span><span class="nl">Journal</span>
+  </div>
+  <div class="nav-tab" data-view="forecast" onclick="navTo(this)" role="tab" tabindex="0" aria-label="Forecast" aria-selected="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();navTo(this);}">
+    <span class="ni" aria-hidden="true">🔮</span><span class="nl">Forecast</span>
   </div>
   <div class="nav-tab" data-view="bets" onclick="navTo(this)" role="tab" tabindex="0" aria-label="Wetten" aria-selected="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();navTo(this);}">
     <span class="ni" aria-hidden="true">📋</span><span class="nl">Wetten</span>
@@ -701,6 +735,7 @@ function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + id).classList.add('active');
   if (id === 'squads') renderSquads();
+  if (id === 'forecast') renderForecast();
 }
 function closeDetail() { showView(_prevView); }
 
@@ -2518,6 +2553,163 @@ function renderStandings() {
     </div>`;
   }
   c.innerHTML = html;
+}
+
+// ── Forecast Tab (WM 2026 Monte-Carlo) ───────────────────────
+let _forecastData = null;
+const _FC_SORT_KEY = 'sb_fc_sort_v1';
+let _fcSort = (() => {
+  try { return JSON.parse(localStorage.getItem(_FC_SORT_KEY)) || { col: 'p_champion', dir: 'desc' }; }
+  catch { return { col: 'p_champion', dir: 'desc' }; }
+})();
+
+const _FC_COLS = [
+  { key: 'group',      lbl: 'G',    fmt: v => v },
+  { key: 'team',       lbl: 'Team', fmt: v => `${teamFlag(v)} ${esc(v)}` },
+  { key: 'p_first',    lbl: '1.',   pct: true },
+  { key: 'p_advance',  lbl: 'R32',  pct: true },
+  { key: 'p_r16',      lbl: 'R16',  pct: true },
+  { key: 'p_qf',       lbl: 'QF',   pct: true },
+  { key: 'p_sf',       lbl: 'SF',   pct: true },
+  { key: 'p_final',    lbl: 'Final', pct: true },
+  { key: 'p_champion', lbl: '🏆',   pct: true, isChamp: true },
+];
+
+function _fcCls(v, isChamp) {
+  if (v == null) return 'lo';
+  if (isChamp) {
+    if (v >= 10) return 'peak';
+    if (v >= 3)  return 'hi';
+    if (v >= 1)  return 'mid';
+    return 'lo';
+  }
+  if (v >= 70) return 'peak';
+  if (v >= 40) return 'hi';
+  if (v >= 15) return 'mid';
+  return 'lo';
+}
+
+async function loadForecast() {
+  if (_forecastData) return _forecastData;
+  try {
+    const r = await fetch('data/wm_forecast.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    _forecastData = await r.json();
+  } catch (e) {
+    _forecastData = { error: e.message };
+  }
+  return _forecastData;
+}
+
+function renderForecast() {
+  const c = document.getElementById('forecast-container');
+  if (!c) return;
+  if (!_forecastData) {
+    c.innerHTML = `<div class="empty"><div class="icon">⏳</div><div>Lade Forecast …</div></div>`;
+    loadForecast().then(() => renderForecast());
+    return;
+  }
+  if (_forecastData.error) {
+    c.innerHTML = `<div class="empty"><div class="icon">⚠️</div><div>Forecast nicht verfügbar.<br><small>${esc(_forecastData.error)}</small></div></div>`;
+    return;
+  }
+  const d = _forecastData;
+  const teams = [...(d.teams || [])];
+  // Sortierung
+  const col = _fcSort.col, dir = _fcSort.dir;
+  teams.sort((a, b) => {
+    let va = a[col], vb = b[col];
+    if (typeof va === 'string') { va = va.toLowerCase(); vb = (vb||'').toLowerCase(); }
+    if (va < vb) return dir === 'asc' ? -1 : 1;
+    if (va > vb) return dir === 'asc' ? 1 : -1;
+    return 0;
+  });
+  const updated = d.updated ? new Date(d.updated).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+  const head = _FC_COLS.map(col => {
+    let sortCls = '';
+    if (_fcSort.col === col.key) sortCls = _fcSort.dir === 'asc' ? 'sorted-asc' : 'sorted-desc';
+    return `<th class="${sortCls}" data-fc-sort="${col.key}">${col.lbl}</th>`;
+  }).join('');
+  const rows = teams.map(t => {
+    const cells = _FC_COLS.map(col => {
+      if (col.key === 'group') return `<td>${esc(t.group || '')}</td>`;
+      if (col.key === 'team')  return `<td>${col.fmt(t.team)}</td>`;
+      const v = t[col.key];
+      const cls = _fcCls(v, col.isChamp);
+      const txt = v == null ? '—' : v.toFixed(col.isChamp ? 2 : 1) + '%';
+      return `<td><span class="fc-pct ${cls}">${txt}</span></td>`;
+    }).join('');
+    const elimCls = (t.p_advance != null && t.p_advance < 1) ? 'fc-eliminated' : '';
+    return `<tr class="${elimCls}">${cells}</tr>`;
+  }).join('');
+  // xPoints / Modell-Performance
+  const xp = d.xpoints || [];
+  let xpHtml = '';
+  if (xp.length) {
+    const xpRows = xp.map(t => {
+      const diff = t.diff || 0;
+      const diffCls = diff > 0.5 ? 'fc-pct hi' : diff < -0.5 ? 'fc-pct lo' : 'fc-pct mid';
+      const diffStr = (diff >= 0 ? '+' : '') + diff.toFixed(2);
+      const gfDiff = t.gf_diff || 0;
+      const gfDiffCls = gfDiff > 0.3 ? 'fc-pct hi' : gfDiff < -0.3 ? 'fc-pct lo' : 'fc-pct mid';
+      const gfDiffStr = (gfDiff >= 0 ? '+' : '') + gfDiff.toFixed(2);
+      return `<tr>
+        <td>${esc(t.group||'')}</td>
+        <td>${teamFlag(t.team)} ${esc(t.team)}</td>
+        <td>${t.n}</td>
+        <td>${t.pts}</td>
+        <td>${(t.xpts||0).toFixed(2)}</td>
+        <td><span class="${diffCls}">${diffStr}</span></td>
+        <td>${t.gf}</td>
+        <td>${(t.xgf||0).toFixed(2)}</td>
+        <td><span class="${gfDiffCls}">${gfDiffStr}</span></td>
+      </tr>`;
+    }).join('');
+    xpHtml = `<div class="fc-header" style="padding-top:18px">
+      <div class="fc-title">📊 Modell-Performance (xPoints)</div>
+      <div class="fc-sub">Realisierte Punkte vs DC-Erwartung pro Team — positive Diff = Überperformer, negative = Unterperformer.</div>
+    </div>
+    <div class="fc-table-wrap">
+      <table class="fc-table">
+        <thead><tr>
+          <th>G</th><th>Team</th><th>Sp</th><th>Pkt</th><th>xPkt</th><th>Diff</th><th>Tore</th><th>xG</th><th>ΔxG</th>
+        </tr></thead>
+        <tbody>${xpRows}</tbody>
+      </table>
+    </div>`;
+  }
+
+  c.innerHTML = `<div class="fc-header">
+    <div class="fc-title">🔮 WM 2026 Forecast</div>
+    <div class="fc-sub">Monte-Carlo, ${d.n_trials || 0} Simulationen · ${d.n_played || 0} Spiele gespielt · ${d.n_remaining_group || 0} Gruppenspiele offen · zuletzt ${updated}</div>
+  </div>
+  <div class="fc-table-wrap">
+    <table class="fc-table">
+      <thead><tr>${head}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>
+  <div class="fc-note">P-Werte sind kumulativ: <b>R16</b> = P(im Achtelfinale oder weiter), <b>🏆</b> = P(Weltmeister).
+  KO-Bracket nutzt zufällige Paarungen pro Simulation (FIFA-Bracket-Mapping vereinfacht). Bei KO-Unentschieden 50/50-Münzwurf (Elfmeterschießen).</div>
+  ${xpHtml}`;
+  _bindForecastHeaders();
+}
+
+function _bindForecastHeaders() {
+  document.querySelectorAll('.fc-table th[data-fc-sort]').forEach(el => {
+    const fresh = el.cloneNode(true);
+    el.parentNode.replaceChild(fresh, el);
+    fresh.addEventListener('click', () => {
+      const key = fresh.dataset.fcSort;
+      if (_fcSort.col === key) {
+        _fcSort.dir = _fcSort.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        _fcSort = { col: key, dir: (key === 'team' || key === 'group') ? 'asc' : 'desc' };
+      }
+      try { localStorage.setItem(_FC_SORT_KEY, JSON.stringify(_fcSort)); } catch {}
+      renderForecast();
+    });
+  });
 }
 
 // ── Squad section for match detail ───────────────────────────
