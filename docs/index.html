@@ -770,7 +770,7 @@
 const CLOUD_URL  = 'https://sportsbrain-signals.sportsbrain-philip.workers.dev/signals.json';
 // VAPID Public Key (kann öffentlich sein) — wird via scripts/gen_vapid_keys.py
 // erzeugt und hier eingetragen. Bei Platzhalter ist Push-Toggle deaktiviert.
-const VAPID_PUBLIC_KEY = 'REPLACE_ME_WITH_VAPID_PUBLIC_KEY';
+const VAPID_PUBLIC_KEY = 'BCWFSMWF_b1ef9i76yoGltxiEEel_pJtXqjl-0q7ZYS3Ya2V9dBW5gN5N_rzdShckjkLq7UaI-5GPaV0PKc7ZBI';
 
 // ── Utility: Expected Value ───────────────────────────────────
 const calcEV = (p, q) => (p * q - 1) * 100;  // p: decimal prob, q: decimal odds
@@ -1928,7 +1928,7 @@ async function _togglePush() {
     showToast('⚠️ Push wird von diesem Browser nicht unterstützt.', 'error');
     return;
   }
-  if (VAPID_PUBLIC_KEY === 'REPLACE_ME_WITH_VAPID_PUBLIC_KEY' || !VAPID_PUBLIC_KEY) {
+  if (VAPID_PUBLIC_KEY === 'BCWFSMWF_b1ef9i76yoGltxiEEel_pJtXqjl-0q7ZYS3Ya2V9dBW5gN5N_rzdShckjkLq7UaI-5GPaV0PKc7ZBI' || !VAPID_PUBLIC_KEY) {
     showToast('⚠️ VAPID-Key noch nicht konfiguriert (siehe scripts/gen_vapid_keys.py).', 'error');
     return;
   }
@@ -1986,7 +1986,7 @@ async function _renderSettingsState() {
       btn.textContent = 'N/A';
       btn.className = 'settings-toggle warn';
       sub.textContent = 'Dieser Browser unterstützt Web Push nicht.';
-    } else if (VAPID_PUBLIC_KEY === 'REPLACE_ME_WITH_VAPID_PUBLIC_KEY' || !VAPID_PUBLIC_KEY) {
+    } else if (VAPID_PUBLIC_KEY === 'BCWFSMWF_b1ef9i76yoGltxiEEel_pJtXqjl-0q7ZYS3Ya2V9dBW5gN5N_rzdShckjkLq7UaI-5GPaV0PKc7ZBI' || !VAPID_PUBLIC_KEY) {
       btn.textContent = 'Setup';
       btn.className = 'settings-toggle warn';
       sub.textContent = 'VAPID-Schlüssel noch nicht konfiguriert.';
