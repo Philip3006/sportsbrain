@@ -31,10 +31,10 @@ jobs:
       - name: Run tennis scan (ATP + WTA)
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
           SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUB: ${{ secrets.VAPID_SUB }}
         run: |
           # WTA is the primary focus (+8.5% Wimbledon ROI); ATP uses stricter 10% edge floor
           python scripts/tennis_scan.py --bankroll 100 --tour both

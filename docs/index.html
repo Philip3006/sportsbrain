@@ -230,6 +230,17 @@
     .pred-story b { font-weight: 900; color: var(--green); }
     .pred-story.draw { background: rgba(210,153,34,.06); border-color: rgba(210,153,34,.3); }
     .pred-story.draw b { color: var(--yellow); }
+    /* Settings-Modal */
+    .settings-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .settings-row:last-of-type { border-bottom: none; }
+    .settings-row-text { flex: 1; min-width: 0; }
+    .settings-row-title { font-size: 13px; font-weight: 800; color: var(--text); margin-bottom: 2px; }
+    .settings-row-sub { font-size: 11px; color: var(--muted); line-height: 1.4; }
+    .settings-toggle { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; -webkit-appearance: none; appearance: none; font-family: inherit; flex-shrink: 0; min-width: 70px; }
+    .settings-toggle.on { background: rgba(0,200,83,.18); color: var(--green); border-color: rgba(0,200,83,.45); }
+    .settings-toggle.off { background: rgba(248,81,73,.10); color: var(--red); border-color: rgba(248,81,73,.35); }
+    .settings-toggle.warn { background: rgba(210,153,34,.12); color: var(--yellow); border-color: rgba(210,153,34,.4); }
+    .settings-info { background: rgba(56,139,253,.08); border: 1px solid rgba(56,139,253,.3); border-radius: 8px; padding: 10px 12px; font-size: 11px; color: var(--text); line-height: 1.5; margin-top: 8px; }
     /* Journal: Drawdown + Histogramm-Cards */
     .journal-extra { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px 12px 8px; }
     .je-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); padding: 9px 10px; }
@@ -540,7 +551,7 @@
       <span class="live-dot" id="dot" aria-hidden="true"></span>
       <span class="updated-text" id="updated-time">—</span>
     </div>
-    <button class="icon-btn" onclick="toggleCompact()" id="compact-btn" aria-label="Kompakt-Ansicht umschalten" title="Kompakt-Ansicht">▤</button>
+    <button class="icon-btn" onclick="_openSettings()" id="settings-btn" aria-label="Einstellungen" title="Einstellungen">⚙</button>
     <button class="icon-btn" onclick="load()" id="refresh-btn" aria-label="Daten neu laden">↺</button>
   </div>
 </header>
@@ -601,6 +612,44 @@
     <div class="modal-buttons">
       <button class="modal-btn cancel" id="token-modal-cancel" type="button">Abbrechen</button>
       <button class="modal-btn confirm" id="token-modal-save" type="button">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="settings-modal-bd" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+  <div class="modal">
+    <h3 id="settings-modal-title">⚙ Einstellungen</h3>
+
+    <div class="settings-row">
+      <div class="settings-row-text">
+        <div class="settings-row-title">🔔 Push-Benachrichtigungen</div>
+        <div class="settings-row-sub" id="settings-push-status">Status wird geprüft …</div>
+      </div>
+      <button class="settings-toggle" id="settings-push-toggle" type="button" onclick="_togglePush()">—</button>
+    </div>
+
+    <div class="settings-row">
+      <div class="settings-row-text">
+        <div class="settings-row-title">▤ Kompakt-Ansicht</div>
+        <div class="settings-row-sub">Dichte Tabellen-Darstellung statt Karten in Fußball/Tennis-Tabs.</div>
+      </div>
+      <button class="settings-toggle" id="settings-compact-toggle" type="button" onclick="_toggleCompactFromSettings()">—</button>
+    </div>
+
+    <div class="settings-row">
+      <div class="settings-row-text">
+        <div class="settings-row-title">🔑 Worker-Token</div>
+        <div class="settings-row-sub" id="settings-token-status">—</div>
+      </div>
+      <button class="settings-toggle" type="button" onclick="_closeSettings();_openTokenModal()">Ändern</button>
+    </div>
+
+    <div class="settings-info" id="settings-ios-hint" style="display:none">
+      ℹ️ <b>iOS-Hinweis:</b> Push-Benachrichtigungen funktionieren auf iPhone nur, wenn diese PWA über den Safari-Share-Button → "Zum Home-Bildschirm" hinzugefügt und dann als App gestartet wird.
+    </div>
+
+    <div class="modal-buttons">
+      <button class="modal-btn confirm" type="button" onclick="_closeSettings()">Fertig</button>
     </div>
   </div>
 </div>
@@ -719,6 +768,9 @@
 // Cloud URL — set after Cloudflare Worker setup (see cloudflare/SETUP.md)
 // Leave empty ('') to fall back to GitHub Pages only.
 const CLOUD_URL  = 'https://sportsbrain-signals.sportsbrain-philip.workers.dev/signals.json';
+// VAPID Public Key (kann öffentlich sein) — wird via scripts/gen_vapid_keys.py
+// erzeugt und hier eingetragen. Bei Platzhalter ist Push-Toggle deaktiviert.
+const VAPID_PUBLIC_KEY = 'REPLACE_ME_WITH_VAPID_PUBLIC_KEY';
 
 // ── Utility: Expected Value ───────────────────────────────────
 const calcEV = (p, q) => (p * q - 1) * 100;  // p: decimal prob, q: decimal odds
@@ -1836,6 +1888,159 @@ async function _submitBet() {
   }
 }
 
+// ── Web Push: Subscribe-Flow + Settings-Modal ────────────────
+function _urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const out = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) out[i] = rawData.charCodeAt(i);
+  return out;
+}
+
+async function _swRegistration() {
+  if (!('serviceWorker' in navigator)) return null;
+  try {
+    // sw.js liegt unter /sportsbrain/sw.js (GitHub Pages)
+    const reg = await navigator.serviceWorker.register('sw.js');
+    await navigator.serviceWorker.ready;
+    return reg;
+  } catch (e) {
+    console.warn('SW register failed:', e);
+    return null;
+  }
+}
+
+async function _currentPushSubscription() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+  const reg = await navigator.serviceWorker.getRegistration();
+  if (!reg) return null;
+  try { return await reg.pushManager.getSubscription(); } catch { return null; }
+}
+
+function _pushSupported() {
+  return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+}
+
+async function _togglePush() {
+  const btn = document.getElementById('settings-push-toggle');
+  if (!_pushSupported()) {
+    showToast('⚠️ Push wird von diesem Browser nicht unterstützt.', 'error');
+    return;
+  }
+  if (VAPID_PUBLIC_KEY === 'REPLACE_ME_WITH_VAPID_PUBLIC_KEY' || !VAPID_PUBLIC_KEY) {
+    showToast('⚠️ VAPID-Key noch nicht konfiguriert (siehe scripts/gen_vapid_keys.py).', 'error');
+    return;
+  }
+  if (btn) btn.disabled = true;
+  try {
+    const existing = await _currentPushSubscription();
+    if (existing) {
+      // Abmelden
+      const endpoint = existing.endpoint;
+      try { await existing.unsubscribe(); } catch {}
+      try {
+        await fetch(WORKER_BASE + '/push/unsubscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint }),
+        });
+      } catch {}
+      showToast('🔕 Push deaktiviert.', '');
+    } else {
+      // Permission anfragen
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') {
+        showToast('⚠️ Notification-Permission verweigert.', 'error');
+        return;
+      }
+      const reg = await _swRegistration();
+      if (!reg) throw new Error('Service Worker konnte nicht registriert werden.');
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: _urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+      const r = await fetch(WORKER_BASE + '/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub.toJSON ? sub.toJSON() : sub),
+      });
+      if (!r.ok) throw new Error('Subscribe-POST schlug fehl: HTTP ' + r.status);
+      showToast('🔔 Push aktiviert.', 'success');
+    }
+  } catch (e) {
+    showToast('⚠️ ' + (e.message || e), 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+    _renderSettingsState();
+  }
+}
+
+async function _renderSettingsState() {
+  // Push-Status
+  const btn = document.getElementById('settings-push-toggle');
+  const sub = document.getElementById('settings-push-status');
+  const iosHint = document.getElementById('settings-ios-hint');
+  if (btn && sub) {
+    if (!_pushSupported()) {
+      btn.textContent = 'N/A';
+      btn.className = 'settings-toggle warn';
+      sub.textContent = 'Dieser Browser unterstützt Web Push nicht.';
+    } else if (VAPID_PUBLIC_KEY === 'REPLACE_ME_WITH_VAPID_PUBLIC_KEY' || !VAPID_PUBLIC_KEY) {
+      btn.textContent = 'Setup';
+      btn.className = 'settings-toggle warn';
+      sub.textContent = 'VAPID-Schlüssel noch nicht konfiguriert.';
+    } else {
+      const existing = await _currentPushSubscription();
+      if (existing) {
+        btn.textContent = 'AN';
+        btn.className = 'settings-toggle on';
+        sub.textContent = 'Notifications für neue Value-Bets + Settlement aktiv.';
+      } else {
+        btn.textContent = 'AUS';
+        btn.className = 'settings-toggle off';
+        sub.textContent = 'Tippe um Notifications zu aktivieren.';
+      }
+    }
+  }
+  // iOS-Hinweis nur anzeigen wenn iOS Safari ohne PWA-Standalone-Modus
+  if (iosHint) {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+      || window.navigator.standalone === true;
+    iosHint.style.display = (isIOS && !isStandalone) ? '' : 'none';
+  }
+  // Compact-Mode-Status
+  const cbtn = document.getElementById('settings-compact-toggle');
+  if (cbtn) {
+    cbtn.textContent = _compactMode ? 'AN' : 'AUS';
+    cbtn.className = 'settings-toggle ' + (_compactMode ? 'on' : 'off');
+  }
+  // Token-Status
+  const ts = document.getElementById('settings-token-status');
+  if (ts) {
+    try {
+      const t = localStorage.getItem('sb_worker_token');
+      ts.textContent = t ? 'Gesetzt · ••••' + t.slice(-4) : 'Nicht gesetzt';
+    } catch { ts.textContent = '—'; }
+  }
+}
+
+function _toggleCompactFromSettings() {
+  toggleCompact();
+  _renderSettingsState();
+}
+
+function _openSettings() {
+  document.getElementById('settings-modal-bd').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  _renderSettingsState();
+}
+function _closeSettings() {
+  document.getElementById('settings-modal-bd').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
 function _openTokenModal() {
   document.getElementById('token-modal-input').value = '';
   document.getElementById('token-modal-bd').classList.add('show');
@@ -1862,6 +2067,7 @@ function _closeTokenModal() {
     if (_pendingBet) _submitBet();
   });
   document.getElementById('token-modal-bd')?.addEventListener('click', (e) => { if (e.target.id === 'token-modal-bd') _closeTokenModal(); });
+  document.getElementById('settings-modal-bd')?.addEventListener('click', (e) => { if (e.target.id === 'settings-modal-bd') _closeSettings(); });
 })();
 
 function renderHome() {
@@ -3195,11 +3401,14 @@ document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (document.getElementById('bet-modal-bd')?.classList.contains('show'))   { _closeBetModal();   return; }
   if (document.getElementById('token-modal-bd')?.classList.contains('show')) { _closeTokenModal(); return; }
+  if (document.getElementById('settings-modal-bd')?.classList.contains('show')) { _closeSettings(); return; }
   if (document.getElementById('view-detail')?.classList.contains('active'))  { closeDetail(); }
 });
 
-// Restore Compact-Mode-Toggle-State
-{ const _cb = document.getElementById('compact-btn'); if (_cb && _compactMode) _cb.classList.add('active'); }
+// Pre-register Service Worker im Hintergrund (für Push), nicht-blockierend
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW register failed:', err));
+}
 load();
 </script>
 </body>

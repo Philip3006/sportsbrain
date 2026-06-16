@@ -460,9 +460,9 @@ def _settle_from_results_locked(
 
     if settled:
         _save(df, ledger_path)
-        # Send Telegram notification for each newly settled bet
+        # Send Web Push notification for each newly settled bet
         try:
-            from src.notifications.telegram import send_settlement_alert
+            from src.notifications.web_push import send_settlement_alert
             summary = ledger_summary(ledger_path)
             for idx in newly_settled_indices:
                 send_settlement_alert(df.loc[idx].to_dict(), summary)

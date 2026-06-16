@@ -25,7 +25,7 @@ from src.data.tennis_data import fetch_atp_matches, fetch_wta_matches
 from src.models.tennis_elo import compute_tennis_elo, predict_winner, top_players
 from src.betting.tennis_detector import detect_value_tennis
 from src.betting.ledger import append_bets, ledger_summary
-from src.notifications.telegram import _post
+from src.notifications.web_push import send_scan_alert as _web_push_scan_alert
 from src.notifications.web_dashboard import write_signals_json
 
 _SPORT_WIMBLEDON = "tennis_atp_wimbledon"
@@ -84,7 +84,7 @@ def _fetch_wimbledon_odds(api_key: str, tour: str = "atp") -> list[dict]:
 
     if remaining < 20:
         try:
-            from src.notifications.telegram import send_quota_alert
+            from src.notifications.web_push import send_quota_alert
             send_quota_alert(remaining)
         except Exception:
             pass
@@ -251,36 +251,10 @@ def _format_report(
 
 
 def _send_tennis_alert(signals: list, scan_date: str, summary: dict, tour: str = "atp") -> None:
-    token = os.getenv("TELEGRAM_BOT_TOKEN", "")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
-    if not token or not chat_id:
-        return
-
-    SEP = "─────────────────────"
-    tour_label = {"atp": "Herren", "wta": "Damen", "both": "Herren + Damen"}.get(tour, "")
-    lines = [f"<b>🎾 Wimbledon {tour_label} — {scan_date}</b>", SEP]
-
+    """Tennis-Scan-Alert via Web Push — wiederverwendet send_scan_alert."""
     if not signals:
-        lines.append("<i>Keine Tennis Value Bets heute.</i>")
-    else:
-        for s in sorted(signals, key=lambda x: x.ev, reverse=True)[:5]:
-            mkt_label = _tennis_market_label(s.market, s.home, s.away)
-
-            lines += [
-                f"<b>{s.home} vs {s.away}</b>",
-                f"Tipp:    {mkt_label}",
-                f"Quote:   {s.decimal_odds:.2f}",
-                f"Modell:  {s.model_prob*100:.1f}%  EV: +{s.ev*100:.1f}%",
-                f"Einsatz: {s.stake_eur:.2f} EUR",
-                SEP,
-            ]
-
-    n_open = summary.get("n_open", 0)
-    pnl = summary.get("total_pnl", 0.0)
-    roi = summary.get("roi_pct", 0.0)
-    lines.append(f"<b>Portfolio:</b> {n_open} aktiv   G/V: {pnl:+.2f} EUR   ROI: {roi:+.1f}%")
-
-    _post(token, chat_id, "\n".join(lines))
+        return
+    _web_push_scan_alert(signals, summary, scan_date)
 
 
 def main() -> None:

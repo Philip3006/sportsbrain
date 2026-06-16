@@ -33,7 +33,7 @@ from src.betting.ledger import (
 from src.data.odds_api import fetch_upcoming_matches, mock_upcoming_matches, derive_goals_range_implied
 from src.data.international import fetch_international_results, filter_competitive
 from src.data.squad_availability import default_report, squad_report, SquadReport, _TM_TEAMS, get_suspended_players
-from src.notifications.telegram import send_scan_alert
+from src.notifications.web_push import send_scan_alert
 from src.features.form import momentum_score, match_load, form_direction_label
 from src.features.squad_context import tournament_stage_features
 from src.models import dixon_coles as dc
