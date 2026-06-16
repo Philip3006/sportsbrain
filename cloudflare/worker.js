@@ -21,7 +21,9 @@ const ALLOWED_MARKETS = new Set([
 ]);
 const OU_RE = /^o\/u\d+(?:\.\d+)?_(over|under)$/;
 const AH_RE = /^ah[+-]\d+(?:\.\d+)?_(home|away|a|b)$/;
-const SCORER_RE = /^scorer_[a-zA-Z0-9 '_\-\.]{1,60}$/;
+// Player names may contain Unicode letters (João, Álvarez, Aktürkoğlu, …) and
+// occasional curly apostrophes (’) — allow \p{L}/\p{M}/\p{N} via the /u flag.
+const SCORER_RE = /^scorer_[\p{L}\p{M}\p{N} '’_\-\.]{1,60}$/u;
 
 function isValidMarket(m) {
   if (typeof m !== 'string' || !m) return false;
