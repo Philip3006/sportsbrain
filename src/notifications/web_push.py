@@ -108,15 +108,33 @@ def _send_notification(title: str, body: str, *, url: str = "/", kind: str = "ge
     if not private_key:
         print("  [web_push] VAPID_PRIVATE_KEY fehlt — Notification übersprungen.")
         return 0
-    # pywebpush erwartet einen Dateipfad ODER base64-encoded raw key, NICHT
-    # einen PEM-String mit -----BEGIN-Header. Wenn wir PEM-Inhalt haben,
-    # schreiben wir ihn in eine Tempdatei und übergeben den Pfad.
+    # pywebpush akzeptiert base64url-encoded raw key direkt.
+    # PEM-Keys (PKCS8) aus GitHub Secrets haben oft fehlende Zeilenumbrüche —
+    # wir extrahieren den rohen EC-Schlüssel und konvertieren zu base64url.
     if private_key.startswith("-----BEGIN"):
-        import tempfile
-        tf = tempfile.NamedTemporaryFile(mode="w", suffix=".pem", delete=False)
-        tf.write(private_key)
-        tf.close()
-        private_key = tf.name
+        import base64, re
+        from cryptography.hazmat.primitives.serialization import (
+            load_pem_private_key, Encoding, PrivateFormat, NoEncryption,
+        )
+        pem = private_key
+        # GitHub Secrets kann Newlines als literal \n speichern
+        if "\\n" in pem and "\n" not in pem:
+            pem = pem.replace("\\n", "\n")
+        # Fehlende Zeilenumbrüche im PEM-Body rekonstruieren
+        if pem.count("\n") < 3:
+            m = re.match(r"(-+BEGIN[^-]+-+)(.*?)(-+END[^-]+-+)", pem, re.DOTALL)
+            if m:
+                h, body, foot = m.groups()
+                clean = "".join(body.split())
+                lines = "\n".join(clean[i:i+64] for i in range(0, len(clean), 64))
+                pem = f"{h}\n{lines}\n{foot}\n"
+        try:
+            key_obj = load_pem_private_key(pem.encode(), password=None)
+            raw = key_obj.private_bytes(Encoding.Raw, PrivateFormat.Raw, NoEncryption())
+            private_key = base64.urlsafe_b64encode(raw).rstrip(b"=").decode()
+        except Exception as e:
+            print(f"  [web_push] VAPID-Key-Parse fehlgeschlagen: {e}")
+            return 0
 
     subs = _list_subscriptions()
     if not subs:
