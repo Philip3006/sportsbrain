@@ -9412,6 +9412,270 @@
       "mean_edge": null,
       "n_clv": 4,
       "n_edge": 0
+    },
+    "per_team_market": {
+      "South Korea": {
+        "Over": {
+          "n": 1,
+          "won": 1,
+          "staked": 11.4,
+          "pnl": 13.11,
+          "hit_rate": 100.0,
+          "roi": 115.0
+        }
+      },
+      "Czechia": {
+        "Over": {
+          "n": 1,
+          "won": 1,
+          "staked": 11.4,
+          "pnl": 13.11,
+          "hit_rate": 100.0,
+          "roi": 115.0
+        }
+      },
+      "Canada": {
+        "1X2": {
+          "n": 1,
+          "won": 0,
+          "staked": 8.0,
+          "pnl": -8.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "Bosnia and Herzegovina": {
+        "1X2": {
+          "n": 1,
+          "won": 0,
+          "staked": 8.0,
+          "pnl": -8.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "United States": {
+        "Over": {
+          "n": 1,
+          "won": 1,
+          "staked": 15.0,
+          "pnl": 21.75,
+          "hit_rate": 100.0,
+          "roi": 145.0
+        }
+      },
+      "Paraguay": {
+        "Over": {
+          "n": 1,
+          "won": 1,
+          "staked": 15.0,
+          "pnl": 21.75,
+          "hit_rate": 100.0,
+          "roi": 145.0
+        }
+      },
+      "Brazil": {
+        "Over": {
+          "n": 1,
+          "won": 0,
+          "staked": 10.0,
+          "pnl": -10.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "Morocco": {
+        "Over": {
+          "n": 1,
+          "won": 0,
+          "staked": 10.0,
+          "pnl": -10.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "Switzerland": {
+        "AH": {
+          "n": 1,
+          "won": 0,
+          "staked": 11.86,
+          "pnl": -11.86,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "Qatar": {
+        "AH": {
+          "n": 1,
+          "won": 0,
+          "staked": 11.86,
+          "pnl": -11.86,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "Haiti": {
+        "1X2": {
+          "n": 1,
+          "won": 1,
+          "staked": 15.0,
+          "pnl": 7.5,
+          "hit_rate": 100.0,
+          "roi": 50.0
+        }
+      },
+      "Scotland": {
+        "1X2": {
+          "n": 1,
+          "won": 1,
+          "staked": 15.0,
+          "pnl": 7.5,
+          "hit_rate": 100.0,
+          "roi": 50.0
+        }
+      },
+      "Belgium": {
+        "1X2": {
+          "n": 1,
+          "won": 1,
+          "staked": 9.42,
+          "pnl": 29.39,
+          "hit_rate": 100.0,
+          "roi": 312.0
+        },
+        "Under": {
+          "n": 1,
+          "won": 1,
+          "staked": 15.0,
+          "pnl": 14.4,
+          "hit_rate": 100.0,
+          "roi": 96.0
+        }
+      },
+      "Egypt": {
+        "1X2": {
+          "n": 1,
+          "won": 1,
+          "staked": 9.42,
+          "pnl": 29.39,
+          "hit_rate": 100.0,
+          "roi": 312.0
+        },
+        "Under": {
+          "n": 1,
+          "won": 1,
+          "staked": 15.0,
+          "pnl": 14.4,
+          "hit_rate": 100.0,
+          "roi": 96.0
+        }
+      },
+      "Saudi Arabia": {
+        "AH": {
+          "n": 1,
+          "won": 1,
+          "staked": 15.0,
+          "pnl": 9.75,
+          "hit_rate": 100.0,
+          "roi": 65.0
+        },
+        "Under": {
+          "n": 1,
+          "won": 1,
+          "staked": 15.0,
+          "pnl": 10.2,
+          "hit_rate": 100.0,
+          "roi": 68.0
+        }
+      },
+      "Uruguay": {
+        "AH": {
+          "n": 1,
+          "won": 1,
+          "staked": 15.0,
+          "pnl": 9.75,
+          "hit_rate": 100.0,
+          "roi": 65.0
+        },
+        "Under": {
+          "n": 1,
+          "won": 1,
+          "staked": 15.0,
+          "pnl": 10.2,
+          "hit_rate": 100.0,
+          "roi": 68.0
+        }
+      },
+      "Iran": {
+        "AH": {
+          "n": 1,
+          "won": 0,
+          "staked": 10.0,
+          "pnl": -10.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        },
+        "Over": {
+          "n": 1,
+          "won": 1,
+          "staked": 14.0,
+          "pnl": 18.48,
+          "hit_rate": 100.0,
+          "roi": 132.0
+        }
+      },
+      "New Zealand": {
+        "AH": {
+          "n": 1,
+          "won": 0,
+          "staked": 10.0,
+          "pnl": -10.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        },
+        "Over": {
+          "n": 1,
+          "won": 1,
+          "staked": 14.0,
+          "pnl": 18.48,
+          "hit_rate": 100.0,
+          "roi": 132.0
+        }
+      }
+    },
+    "by_confederation": {
+      "AFC": {
+        "n": 5,
+        "won": 4,
+        "staked": 65.4,
+        "pnl": 41.54,
+        "hit_rate": 80.0,
+        "roi": 63.5
+      },
+      "CONCACAF": {
+        "n": 3,
+        "won": 2,
+        "staked": 38.0,
+        "pnl": 21.25,
+        "hit_rate": 66.7,
+        "roi": 55.9
+      },
+      "CONMEBOL": {
+        "n": 1,
+        "won": 0,
+        "staked": 10.0,
+        "pnl": -10.0,
+        "hit_rate": 0.0,
+        "roi": -100.0
+      },
+      "UEFA": {
+        "n": 3,
+        "won": 2,
+        "staked": 36.28,
+        "pnl": 31.93,
+        "hit_rate": 66.7,
+        "roi": 88.0
+      }
     }
   },
   "odds_history": {

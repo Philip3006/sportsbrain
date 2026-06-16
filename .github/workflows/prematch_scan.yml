@@ -128,6 +128,15 @@ jobs:
         run: |
           python -c "from src.notifications.web_dashboard import write_signals_json; write_signals_json()"
 
+      - name: Match-Reminder Push (25-35 Min vor Anpfiff offener Wetten)
+        if: always()
+        env:
+          SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
+          SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUB: ${{ secrets.VAPID_SUB }}
+        run: python scripts/match_reminder.py
+
       - name: Commit results
         run: |
           git config user.name "SportsBrain Bot"

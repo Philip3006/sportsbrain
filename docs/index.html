@@ -230,6 +230,25 @@
     .pred-story b { font-weight: 900; color: var(--green); }
     .pred-story.draw { background: rgba(210,153,34,.06); border-color: rgba(210,153,34,.3); }
     .pred-story.draw b { color: var(--yellow); }
+    /* Bet-History Card (Detail-View, #1) + Konföderations-Stats (Journal, #7) */
+    .bh-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg); margin: 10px 16px; overflow: hidden; }
+    .bh-card-title { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; padding: 10px 12px 4px; }
+    .bh-team-row { padding: 6px 12px 4px; font-size: 12px; font-weight: 800; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    .bh-grid { padding: 4px 12px 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+    .bh-pill { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 6px 10px; background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 6px; font-size: 11px; font-weight: 700; }
+    .bh-pill .bh-mkt { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bh-pill .bh-rec { font-variant-numeric: tabular-nums; }
+    .bh-pill .bh-roi { font-weight: 800; min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
+    .bh-pill .bh-roi.pos { color: var(--green); }
+    .bh-pill .bh-roi.neg { color: var(--red); }
+    .bh-empty { padding: 6px 12px 12px; font-size: 11px; color: var(--muted); }
+    /* Match-Notes (#2) */
+    .bet-notes-row { padding: 6px 12px 10px; }
+    .bet-notes-input { width: 100%; background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 6px 8px; font-size: 11px; font-family: inherit; resize: vertical; min-height: 36px; max-height: 120px; -webkit-appearance: none; appearance: none; }
+    .bet-notes-input:focus { outline: none; border-color: rgba(0,200,83,.5); }
+    .bet-notes-label { font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; margin-bottom: 4px; }
+    .bet-notes-saved { font-size: 10px; color: var(--green); margin-left: 6px; opacity: 0; transition: opacity .2s; }
+    .bet-notes-saved.show { opacity: 1; }
     /* Settings-Modal */
     .settings-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
     .settings-row:last-of-type { border-bottom: none; }
@@ -937,6 +956,7 @@ function openMatch(displayKey) {
 
   let cards = '';
   if (tip) cards += predCard(dh, da, tip, oddsEntry, nk, kickoff, sport);
+  if (sport === 'football') cards += _betHistoryCard(dh, da);
   cards += _bookieMatrixCard(oddsEntry, sport);
 
   if (!tip && !sigs.length) {
@@ -1333,6 +1353,73 @@ function _modelDots(n) {
   return out;
 }
 
+// ── Match-Notes (#2): localStorage-Persistenz pro Bet ────────
+const _BET_NOTES_KEY = 'sb_bet_notes_v1';
+function _loadBetNotes() {
+  try { return JSON.parse(localStorage.getItem(_BET_NOTES_KEY) || '{}') || {}; }
+  catch { return {}; }
+}
+function _saveBetNotes(obj) {
+  try { localStorage.setItem(_BET_NOTES_KEY, JSON.stringify(obj)); } catch {}
+}
+function _betNoteKey(home, away, market) {
+  return `${(home||'').toLowerCase().trim()}|${(away||'').toLowerCase().trim()}|${(market||'').toLowerCase().trim()}`;
+}
+function _loadBetNote(home, away, market) {
+  return _loadBetNotes()[_betNoteKey(home, away, market)] || '';
+}
+let _betNoteSaveTimers = {};
+function _onBetNoteInput(textarea) {
+  const key = textarea.dataset.noteKey;
+  if (!key) return;
+  clearTimeout(_betNoteSaveTimers[key]);
+  _betNoteSaveTimers[key] = setTimeout(() => {
+    const notes = _loadBetNotes();
+    const v = textarea.value.trim();
+    if (v) notes[key] = v; else delete notes[key];
+    _saveBetNotes(notes);
+    const indicator = document.getElementById('notes-saved-' + key);
+    if (indicator) {
+      indicator.classList.add('show');
+      setTimeout(() => indicator.classList.remove('show'), 1500);
+    }
+  }, 400);
+}
+
+// ── Bet-History Card (#1, Detail-View) ──────────────────────
+function _betHistoryCard(home, away) {
+  const ptm = (_wmStats && _wmStats.per_team_market) || {};
+  const h = ptm[home];
+  const a = ptm[away];
+  if (!h && !a) return '';
+  const teamBlock = (team, data) => {
+    if (!data || Object.keys(data).length === 0) {
+      return `<div class="bh-team-row">${teamFlag(team)} ${esc(team)}</div>
+        <div class="bh-empty">Noch keine settlement-Historie.</div>`;
+    }
+    // Sort markets by # of bets desc
+    const entries = Object.entries(data).sort((x, y) => (y[1].n||0) - (x[1].n||0));
+    const pills = entries.map(([mg, b]) => {
+      const roi = b.roi == null ? null : b.roi;
+      const roiCls = roi == null ? '' : roi > 0 ? 'pos' : roi < 0 ? 'neg' : '';
+      const roiStr = roi == null ? '—' : (roi >= 0 ? '+' : '') + roi.toFixed(0) + '%';
+      const wl = `${b.won}W ${(b.n - b.won)}L`;
+      return `<div class="bh-pill" title="${b.n} Wetten · €${b.pnl >= 0 ? '+' : ''}${b.pnl.toFixed(2)}">
+        <span class="bh-mkt">${mg}</span>
+        <span class="bh-rec">${wl}</span>
+        <span class="bh-roi ${roiCls}">${roiStr}</span>
+      </div>`;
+    }).join('');
+    return `<div class="bh-team-row">${teamFlag(team)} ${esc(team)}</div>
+      <div class="bh-grid">${pills}</div>`;
+  };
+  return `<div class="bh-card">
+    <div class="bh-card-title">📊 Wett-Historie</div>
+    ${teamBlock(home, h)}
+    ${teamBlock(away, a)}
+  </div>`;
+}
+
 // ── Bookmaker-Matrix (Detail-View, OddsJam/RebelBetting-inspiriert) ──
 function _bookieMatrixCard(oddsEntry, sport) {
   if (!oddsEntry || !Array.isArray(oddsEntry.bookmakers_h2h)) return '';
@@ -1606,6 +1693,12 @@ function renderBets() {
       <div class="bet-card-footer">
         ${edgeStr ? `<span class="bet-edge ${edgePct > 0 ? 'drift-good' : 'drift-bad'}">${esc(edgeStr)}</span>` : ''}
         <span class="clv-pill ${clvCls}">${clvLabel}${infoTip('CLV = Closing Line Value. Vergleicht deine Einstiegsquote mit der Endquote kurz vor Anpfiff (Markt-Konsens). ✓ positiv = du hast besser eingeschätzt als der Markt → langfristig der stärkste Profit-Indikator. ✗ negativ = der Markt war schlauer.')}</span>
+      </div>
+      <div class="bet-notes-row">
+        <div class="bet-notes-label">📝 Notiz <span class="bet-notes-saved" id="notes-saved-${esc(_betNoteKey(home, away, b.market || ''))}">gespeichert</span></div>
+        <textarea class="bet-notes-input" data-note-key="${esc(_betNoteKey(home, away, b.market || ''))}"
+          placeholder="Warum diese Wette? Setze dein Reasoning, später nachvollziehen…"
+          oninput="_onBetNoteInput(this)">${esc(_loadBetNote(home, away, b.market || ''))}</textarea>
       </div>
     </div>`;
   }
@@ -2705,8 +2798,36 @@ function renderJournalStats(wmStats) {
     ? `<div class="journal-extra">${clvHist}${edgeHist}</div>`
     : '';
 
-  wrap.innerHTML = (sparkHtml || summaryHtml || tableHtml || histsHtml)
-    ? `<div style="padding:12px 16px 4px">${sparkHtml}</div>${summaryHtml}${histsHtml}${tableHtml}`
+  // Konföderations-Tabelle (#7)
+  const byC = wmStats.by_confederation || {};
+  let confedHtml = '';
+  const confedRows = Object.entries(byC).filter(([_, d]) => d.n > 0);
+  if (confedRows.length) {
+    // Sortiere nach ROI desc
+    confedRows.sort(([, a], [, b]) => (b.roi == null ? -999 : b.roi) - (a.roi == null ? -999 : a.roi));
+    const rows = confedRows.map(([c, d]) => {
+      const roiCls = d.roi == null ? '' : d.roi >= 0 ? 'pos' : 'neg';
+      const pnlCls = d.pnl >= 0 ? 'pos' : 'neg';
+      return `<tr>
+        <td>${esc(c)}</td>
+        <td>${d.n}</td>
+        <td>${d.won}/${d.n}</td>
+        <td>${d.hit_rate != null ? d.hit_rate : '—'}%</td>
+        <td class="fc-pct ${roiCls}" style="font-weight:800">${d.roi != null ? (d.roi >= 0 ? '+' : '') + d.roi.toFixed(1) + '%' : '—'}</td>
+        <td class="fc-pct ${pnlCls}" style="font-weight:800">${d.pnl >= 0 ? '+' : ''}${d.pnl.toFixed(2)}€</td>
+      </tr>`;
+    }).join('');
+    confedHtml = `<div class="stats-table-wrap" style="margin:0 16px 10px">
+      <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:8px 10px 2px">🌍 ROI pro Konföderation</div>
+      <table class="stats-table">
+        <thead><tr><th>Konföd.</th><th style="text-align:right">Wetten</th><th style="text-align:right">Treffer</th><th style="text-align:right">Hit-%</th><th style="text-align:right">ROI</th><th style="text-align:right">P&amp;L</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  }
+
+  wrap.innerHTML = (sparkHtml || summaryHtml || tableHtml || histsHtml || confedHtml)
+    ? `<div style="padding:12px 16px 4px">${sparkHtml}</div>${summaryHtml}${histsHtml}${tableHtml}${confedHtml}`
     : '';
 }
 
