@@ -135,18 +135,23 @@ def _send_notification(title: str, body: str, *, url: str = "/", kind: str = "ge
             key_str = key_str.replace("\\n", "\n")
         # Case (a): PEM mit BEGIN/END
         if "-----BEGIN" in key_str:
-            pem = key_str
-            if pem.count("\n") < 3:
-                m = re.match(r"(-+BEGIN[^-]+-+)(.*?)(-+END[^-]+-+)", pem, re.DOTALL)
-                if m:
-                    h, body, foot = m.groups()
-                    clean = "".join(body.split())
+            # Extrahiere NUR den ersten PEM-Block — ignoriert extra Zeilen nach -----END
+            pm = re.search(r"(-+BEGIN[^-]+-+)(.*?)(-+END[^-]+-+)", key_str, re.DOTALL)
+            if pm:
+                h, body, foot = pm.groups()
+                clean = "".join(body.split())
+                if not clean:
+                    # Body leer → schon auf Zeilenstruktur aufgebaut, direkt nehmen
+                    clean_pem = f"{h}{body}{foot}\n"
+                else:
                     lines = "\n".join(clean[i:i+64] for i in range(0, len(clean), 64))
-                    pem = f"{h}\n{lines}\n{foot}\n"
-            try:
-                return _key_obj_to_raw_b64url(load_pem_private_key(pem.encode(), password=None))
-            except Exception:
-                pass
+                    clean_pem = f"{h}\n{lines}\n{foot}\n"
+                try:
+                    return _key_obj_to_raw_b64url(
+                        load_pem_private_key(clean_pem.encode(), password=None)
+                    )
+                except Exception as _e:
+                    print(f"  [web_push] PEM-Parse Fehler: {_e}")
         # Case (c)/(b): kompakter Base64-String — kann raw 32-Byte oder DER-PKCS8 sein
         compact = re.sub(r"\s+", "", key_str)
         for decoder in (base64.urlsafe_b64decode, base64.b64decode):
