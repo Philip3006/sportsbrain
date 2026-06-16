@@ -355,22 +355,29 @@ def write_signals_json(
     _wm_results_base: list[dict] = wm_results if wm_results is not None else existing.get("wm_results", [])
     try:
         from src.data.odds_api import fetch_wm_scores as _fetch_wm_scores
-        _fetched = _fetch_wm_scores(days_from=3)
-        # Build lookup key from existing entries
-        _existing_keys = {
-            (e.get("home", ""), e.get("away", "")) for e in _wm_results_base
+        _fetched = _fetch_wm_scores(days_from=14)
+        # Build lookup: update existing entries if score was missing, add new ones
+        _existing_map = {
+            (e.get("home", ""), e.get("away", "")): i
+            for i, e in enumerate(_wm_results_base)
         }
         for _m in _fetched:
             _key = (_m.get("home", ""), _m.get("away", ""))
-            if _key not in _existing_keys:
-                _wm_results_base.append({
-                    "home": _m.get("home", ""),
-                    "away": _m.get("away", ""),
-                    "home_score": _m.get("home_score"),
-                    "away_score": _m.get("away_score"),
-                    "commence_time": _m.get("commence_time", ""),
-                })
-                _existing_keys.add(_key)
+            _entry = {
+                "home": _m.get("home", ""),
+                "away": _m.get("away", ""),
+                "home_score": _m.get("home_score"),
+                "away_score": _m.get("away_score"),
+                "commence_time": _m.get("commence_time", ""),
+            }
+            if _key in _existing_map:
+                # Overwrite if existing entry has no score yet
+                _idx = _existing_map[_key]
+                if _wm_results_base[_idx].get("home_score") is None and _entry["home_score"] is not None:
+                    _wm_results_base[_idx] = _entry
+            else:
+                _wm_results_base.append(_entry)
+                _existing_map[_key] = len(_wm_results_base) - 1
     except Exception:
         pass  # silently keep existing wm_results on any error
     payload["wm_results"] = _wm_results_base
