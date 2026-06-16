@@ -1,0 +1,49 @@
+name: Live Score Push (Tore + Halbzeit)
+
+on:
+  schedule:
+    # Alle 5 Min während WM-2026-Match-Zeitraum (Juni + Juli)
+    # Smart-Skip im Script: kein API-Call wenn keine offenen Wetten ein Live-Match haben
+    - cron: '*/5 * * 6,7 *'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  live-score:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Live-Score-Push
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
+          SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUB: ${{ secrets.VAPID_SUB }}
+        run: python scripts/live_score_push.py
+
+      - name: Commit Cache (nur wenn geändert)
+        run: |
+          git config user.name "SportsBrain Bot"
+          git config user.email "bot@sportsbrain"
+          git add data/live_scores.json || true
+          if ! git diff --staged --quiet; then
+            git commit -m "auto: live scores $(date -u '+%Y-%m-%d %H:%M UTC')"
+            git pull --rebase origin main || true
+            git push
+          fi

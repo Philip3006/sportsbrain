@@ -480,6 +480,45 @@ def fetch_event_player_props(
 
 
 @disk_cache("odds_api_scores", max_age_hours=0.5)
+def fetch_wm_live_scores(
+    days_from: int = 2,
+    api_key: str | None = None,
+) -> list[dict]:
+    """Liefert ALLE WM-Matches (live + completed) mit aktuellem Score.
+
+    Returns list of {match_id, home, away, home_score, away_score,
+    commence_time, completed, last_update}.
+    """
+    key = get_api_key(api_key)
+    url = f"{ODDS_API_URL}/sports/soccer_fifa_world_cup/scores"
+    params = {"apiKey": key, "daysFrom": days_from}
+    resp = requests.get(url, params=params, timeout=15)
+    resp.raise_for_status()
+    data = resp.json()
+    results = []
+    for m in data:
+        scores_raw = m.get("scores") or []
+        scores: dict[str, int] = {}
+        for s in scores_raw:
+            if s.get("score") is not None:
+                try:
+                    scores[s["name"]] = int(s["score"])
+                except (ValueError, TypeError):
+                    pass
+        home, away = m.get("home_team", ""), m.get("away_team", "")
+        results.append({
+            "match_id":      m.get("id", f"{home}_vs_{away}"),
+            "home":          home,
+            "away":          away,
+            "home_score":    scores.get(home),
+            "away_score":    scores.get(away),
+            "commence_time": m.get("commence_time", ""),
+            "completed":     bool(m.get("completed", False)),
+            "last_update":   m.get("last_update", ""),
+        })
+    return results
+
+
 def fetch_wm_scores(
     days_from: int = 3,
     api_key: str | None = None,
