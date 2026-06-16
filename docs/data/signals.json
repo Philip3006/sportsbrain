@@ -5282,7 +5282,61 @@
         "date": "2026-06-16",
         "balance": 174.52
       }
-    ]
+    ],
+    "drawdown": {
+      "peak": 174.52,
+      "current": 174.52,
+      "current_dd": 0.0,
+      "current_dd_pct": 0.0,
+      "max_dd": 0.11,
+      "max_dd_pct": 0.1
+    },
+    "clv_dist": {
+      "labels": [
+        "≤-5%",
+        "-5/-2%",
+        "-2/0%",
+        "0/+2%",
+        "+2/+5%",
+        "≥+5%"
+      ],
+      "bins": [
+        2,
+        0,
+        0,
+        0,
+        1,
+        1
+      ]
+    },
+    "edge_dist": {
+      "labels": [
+        "≤0pp",
+        "0-3pp",
+        "3-6pp",
+        "6-10pp",
+        "10-15pp",
+        "≥15pp"
+      ],
+      "bins": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "summary": {
+      "n_settled": 11,
+      "staked": 134.68,
+      "pnl": 74.52,
+      "yield_pct": 55.33,
+      "mean_clv": 13.22,
+      "mean_edge": null,
+      "n_clv": 4,
+      "n_edge": 0
+    }
   },
   "odds_history": {
     "South Korea vs Czech Republic": [

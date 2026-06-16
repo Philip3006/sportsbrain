@@ -141,6 +141,40 @@
     .models-muted { color: rgba(139,148,158,.35); }
     .prob-row { display: flex; gap: 10px; margin-top: 8px; font-size: 11px; font-weight: 600; color: var(--muted); }
     .prob-edge { font-weight: 800; color: var(--green); }
+    /* Visual edge bars (Markt vs Modell) */
+    .edge-bars { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+    .edge-bar-row { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; color: var(--muted); }
+    .edge-bar-label { width: 42px; flex-shrink: 0; text-transform: uppercase; letter-spacing: .3px; }
+    .edge-bar-track { flex: 1; height: 6px; background: rgba(255,255,255,.06); border-radius: 3px; overflow: hidden; position: relative; }
+    .edge-bar-fill { height: 100%; border-radius: 3px; }
+    .edge-bar-fill.market { background: rgba(139,148,158,.55); }
+    .edge-bar-fill.model  { background: var(--green); }
+    .edge-bar-fill.model.neg { background: var(--red); }
+    .edge-bar-val { width: 38px; flex-shrink: 0; text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
+    .edge-bar-delta { font-size: 10px; font-weight: 800; text-align: right; padding-top: 2px; }
+    .edge-bar-delta.pos { color: var(--green); }
+    .edge-bar-delta.neg { color: var(--red); }
+    /* Journal: Drawdown + Histogramm-Cards */
+    .journal-extra { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px 12px 8px; }
+    .je-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); padding: 9px 10px; }
+    .je-card.full { grid-column: 1 / -1; }
+    .je-label { font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 6px; }
+    .je-val   { font-size: 16px; font-weight: 900; letter-spacing: -.3px; line-height: 1.1; }
+    .je-val.pos { color: var(--green); }
+    .je-val.neg { color: var(--red); }
+    .je-sub   { font-size: 10px; color: var(--muted); font-weight: 700; margin-top: 2px; }
+    .hist-row { display: flex; align-items: flex-end; gap: 4px; height: 48px; padding-top: 4px; }
+    .hist-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+    .hist-bar { width: 100%; background: rgba(0,200,83,.55); border-radius: 2px 2px 0 0; min-height: 2px; transition: height .2s; }
+    .hist-bar.neg { background: rgba(248,81,73,.55); }
+    .hist-bar.zero { background: rgba(139,148,158,.25); }
+    .hist-count { font-size: 9px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+    .hist-label { font-size: 8.5px; font-weight: 700; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    /* Sport-View Filter/Sort Controls */
+    .sport-controls { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 16px 4px; align-items: center; }
+    .sport-controls .sc-group { display: flex; gap: 4px; align-items: center; }
+    .sport-controls .sc-label { font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; margin-right: 2px; }
+    .sport-controls .filter-chip { font-size: 11px; padding: 4px 9px; }
 
     /* ── Sport tabs (Fußball/Tennis): signals grouped by match ── */
     .sport-view-inner { padding: 0 0 8px; }
@@ -612,6 +646,24 @@ let _wmResults = {};  // {matchKey: {home_score, away_score}}
 let _prevView = 'home';
 let _homeSearch = '';
 let _journalFilter = 'all';
+// Sport-Tab Filter/Sort State (persistiert in LocalStorage)
+const _SPORT_FILTER_KEY = 'sb_sport_filter_v1';
+function _loadSportFilters() {
+  try { return JSON.parse(localStorage.getItem(_SPORT_FILTER_KEY) || '{}') || {}; }
+  catch { return {}; }
+}
+function _saveSportFilters(state) {
+  try { localStorage.setItem(_SPORT_FILTER_KEY, JSON.stringify(state)); } catch {}
+}
+let _sportFilters = _loadSportFilters();
+function _getSportFilter(sport) {
+  const def = { ev: 0, conf: 'all', sort: 'kickoff' };
+  return Object.assign({}, def, _sportFilters[sport] || {});
+}
+function _setSportFilter(sport, patch) {
+  _sportFilters[sport] = Object.assign(_getSportFilter(sport), patch);
+  _saveSportFilters(_sportFilters);
+}
 
 // ── Navigation ───────────────────────────────────────────────
 function navTo(tab) {
@@ -1107,15 +1159,29 @@ function sigCard(s, showMatch) {
     `data-kickoff="${esc(s.kickoff||'')}"`,
     `data-sport="${esc(s.sport||'')}"`,
   ].join(' ');
-  // Prob-Row: nur anzeigen wenn fair_prob vorhanden (neue Signale)
+  // Prob-Bars: visueller Vergleich Markt vs Modell (nur wenn fair_prob vorhanden)
   const _edge = s.fair_prob > 0 && s.model_prob > 0 ? s.model_prob - s.fair_prob : null;
-  const probRow = _edge !== null
-    ? `<div class="prob-row">
-        <span>Markt: ${s.fair_prob.toFixed(1)}%</span>
-        <span>Modell: ${s.model_prob.toFixed(1)}%</span>
-        <span class="prob-edge">Edge: ${_edge >= 0 ? '+' : ''}${_edge.toFixed(1)}%</span>
-      </div>`
-    : '';
+  let probRow = '';
+  if (_edge !== null) {
+    const mktPct = Math.max(0, Math.min(100, s.fair_prob));
+    const mdlPct = Math.max(0, Math.min(100, s.model_prob));
+    const edgeCls = _edge >= 0 ? 'pos' : 'neg';
+    const mdlBarCls = _edge >= 0 ? '' : 'neg';
+    const edgeSign = _edge >= 0 ? '+' : '';
+    probRow = `<div class="edge-bars">
+      <div class="edge-bar-row">
+        <span class="edge-bar-label">Markt</span>
+        <span class="edge-bar-track"><span class="edge-bar-fill market" style="width:${mktPct.toFixed(1)}%"></span></span>
+        <span class="edge-bar-val">${s.fair_prob.toFixed(1)}%</span>
+      </div>
+      <div class="edge-bar-row">
+        <span class="edge-bar-label">Modell</span>
+        <span class="edge-bar-track"><span class="edge-bar-fill model ${mdlBarCls}" style="width:${mdlPct.toFixed(1)}%"></span></span>
+        <span class="edge-bar-val">${s.model_prob.toFixed(1)}%</span>
+      </div>
+      <div class="edge-bar-delta ${edgeCls}">Edge ${edgeSign}${_edge.toFixed(1)}pp</div>
+    </div>`;
+  }
   const stakeLabel = s.stake_pct > 0
     ? `€${s.stake_eur.toFixed(0)} <span class="stake-pct">(${s.stake_pct.toFixed(1)}%)</span>`
     : `€${s.stake_eur.toFixed(0)}`;
@@ -1848,11 +1914,66 @@ function renderHome() {
 }
 
 // ── Render sport tab (signals grouped by match) ──────────────
+function _buildSportControls(sport, filter, totalAll, totalFiltered) {
+  const evChips = [0, 3, 5, 10].map(v => {
+    const lbl = v === 0 ? 'Alle' : `≥${v}%`;
+    const active = filter.ev === v ? ' active' : '';
+    return `<span class="filter-chip${active}" data-sf="${sport}" data-key="ev" data-val="${v}" role="tab" tabindex="0" aria-selected="${filter.ev===v}">${lbl}</span>`;
+  }).join('');
+  const confChips = [['all','Beide'],['HIGH','High'],['MEDIUM','Med']].map(([v, lbl]) => {
+    const active = filter.conf === v ? ' active' : '';
+    return `<span class="filter-chip${active}" data-sf="${sport}" data-key="conf" data-val="${v}" role="tab" tabindex="0" aria-selected="${filter.conf===v}">${lbl}</span>`;
+  }).join('');
+  const sortChips = [['kickoff','Kickoff'],['ev','EV'],['odds','Quote']].map(([v, lbl]) => {
+    const active = filter.sort === v ? ' active' : '';
+    return `<span class="filter-chip${active}" data-sf="${sport}" data-key="sort" data-val="${v}" role="tab" tabindex="0" aria-selected="${filter.sort===v}">${lbl}</span>`;
+  }).join('');
+  const countTxt = (totalFiltered !== totalAll)
+    ? `<span class="sc-label" style="margin-left:auto">${totalFiltered}/${totalAll}</span>`
+    : `<span class="sc-label" style="margin-left:auto">${totalAll} Signal${totalAll===1?'':'e'}</span>`;
+  return `<div class="sport-controls" role="toolbar" aria-label="Filter und Sortierung">
+    <div class="sc-group"><span class="sc-label">EV</span>${evChips}</div>
+    <div class="sc-group"><span class="sc-label">Conf</span>${confChips}</div>
+    <div class="sc-group"><span class="sc-label">Sort</span>${sortChips}</div>
+    ${countTxt}
+  </div>`;
+}
+
+function _bindSportControls(sport) {
+  document.querySelectorAll(`.sport-controls .filter-chip[data-sf="${sport}"]`).forEach(el => {
+    const fresh = el.cloneNode(true);
+    el.parentNode.replaceChild(fresh, el);
+    const handler = () => {
+      const key = fresh.dataset.key;
+      let val = fresh.dataset.val;
+      if (key === 'ev') val = parseInt(val, 10) || 0;
+      _setSportFilter(sport, { [key]: val });
+      renderSport(sport);
+    };
+    fresh.addEventListener('click', handler);
+    fresh.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } });
+  });
+}
+
 function renderSport(sport) {
   const c = document.getElementById(sport + '-container');
-  const sigs = _signals.filter(s => s.sport === sport);
+  const allSigs = _signals.filter(s => s.sport === sport);
+  const filter = _getSportFilter(sport);
+  // Filter anwenden
+  const sigs = allSigs.filter(s => {
+    if (filter.ev > 0 && (s.ev_pct || 0) < filter.ev) return false;
+    if (filter.conf !== 'all' && s.confidence !== filter.conf) return false;
+    return true;
+  });
+  const controlsHtml = _buildSportControls(sport, filter, allSigs.length, sigs.length);
+  if (!allSigs.length) {
+    c.innerHTML = controlsHtml + `<div class="empty"><div class="icon">🔍</div><div>Keine Value Bets.<br><small>Nächster Scan: täglich 08:00 UTC</small></div></div>`;
+    _bindSportControls(sport);
+    return;
+  }
   if (!sigs.length) {
-    c.innerHTML = `<div class="empty"><div class="icon">🔍</div><div>Keine Value Bets.<br><small>Nächster Scan: täglich 08:00 UTC</small></div></div>`;
+    c.innerHTML = controlsHtml + `<div class="empty"><div class="icon">🎚️</div><div>Keine Signale mit aktuellem Filter.<br><small>Filter lockern oder zurücksetzen.</small></div></div>`;
+    _bindSportControls(sport);
     return;
   }
   const groupMap = {};
@@ -1861,10 +1982,21 @@ function renderSport(sport) {
     groupMap[s.match].push(s);
   }
   const sortedGroups = Object.entries(groupMap).sort(([, a], [, b]) => {
+    if (filter.sort === 'ev') {
+      const ea = Math.max(...a.map(s => s.ev_pct || 0));
+      const eb = Math.max(...b.map(s => s.ev_pct || 0));
+      return eb - ea;  // desc
+    }
+    if (filter.sort === 'odds') {
+      const oa = Math.min(...a.map(s => s.odds || 9999));
+      const ob = Math.min(...b.map(s => s.odds || 9999));
+      return oa - ob;  // asc (niedrigste Quote = Favorit zuerst)
+    }
+    // default: kickoff
     const ka = a[0].kickoff || '9999', kb = b[0].kickoff || '9999';
     return ka < kb ? -1 : ka > kb ? 1 : 0;
   });
-  let h = '<div class="sport-view-inner">';
+  let h = controlsHtml + '<div class="sport-view-inner">';
   for (const [match, mSigs] of sortedGroups) {
     const s0 = mSigs[0];
     const [mh, ma] = match.split(' vs ').map(x => x.trim());
@@ -1880,6 +2012,7 @@ function renderSport(sport) {
   }
   h += '</div>';
   c.innerHTML = h;
+  _bindSportControls(sport);
 }
 
 // ── WM Stats (Sparkline + Trefferquoten) ─────────────────────
@@ -1958,8 +2091,83 @@ function renderJournalStats(wmStats) {
     </table>
   </div>` : '';
 
-  wrap.innerHTML = (sparkHtml || tableHtml)
-    ? `<div style="padding:12px 16px 4px">${sparkHtml}</div>${tableHtml}`
+  // ── Lifetime-Summary + Drawdown + Histogramme ─────────────
+  const summary  = wmStats.summary  || {};
+  const drawdown = wmStats.drawdown || {};
+  const clvDist  = wmStats.clv_dist  || {};
+  const edgeDist = wmStats.edge_dist || {};
+
+  let summaryHtml = '';
+  if (summary.n_settled > 0) {
+    const yieldVal = summary.yield_pct;
+    const yieldCls = yieldVal == null ? '' : yieldVal >= 0 ? 'pos' : 'neg';
+    const yieldStr = yieldVal == null ? '—' : (yieldVal >= 0 ? '+' : '') + yieldVal.toFixed(1) + '%';
+    const ddCls = (drawdown.max_dd || 0) > 0 ? 'neg' : '';
+    const ddStr = drawdown.max_dd_pct != null ? '−' + drawdown.max_dd_pct.toFixed(1) + '%' : '—';
+    const ddSub = drawdown.max_dd != null
+      ? `−€${drawdown.max_dd.toFixed(2)} · Peak €${(drawdown.peak||0).toFixed(2)}`
+      : '';
+    const clvVal = summary.mean_clv;
+    const clvCls = clvVal == null ? '' : clvVal >= 0 ? 'pos' : 'neg';
+    const clvStr = clvVal == null ? '—' : (clvVal >= 0 ? '+' : '') + clvVal.toFixed(2) + '%';
+    const edgeVal = summary.mean_edge;
+    const edgeCls = edgeVal == null ? '' : edgeVal >= 0 ? 'pos' : 'neg';
+    const edgeStr = edgeVal == null ? '—' : (edgeVal >= 0 ? '+' : '') + edgeVal.toFixed(1) + 'pp';
+    summaryHtml = `<div class="journal-extra">
+      <div class="je-card">
+        <div class="je-label">Yield (Lifetime)</div>
+        <div class="je-val ${yieldCls}">${yieldStr}</div>
+        <div class="je-sub">${summary.n_settled} Wetten · €${(summary.staked||0).toFixed(0)} eingesetzt</div>
+      </div>
+      <div class="je-card">
+        <div class="je-label">Max Drawdown</div>
+        <div class="je-val ${ddCls}">${ddStr}</div>
+        <div class="je-sub">${ddSub}</div>
+      </div>
+      <div class="je-card">
+        <div class="je-label">Ø CLV</div>
+        <div class="je-val ${clvCls}">${clvStr}</div>
+        <div class="je-sub">${summary.n_clv} Wetten mit Closing-Quote</div>
+      </div>
+      <div class="je-card">
+        <div class="je-label">Ø Edge</div>
+        <div class="je-val ${edgeCls}">${edgeStr}</div>
+        <div class="je-sub">${summary.n_edge} Wetten mit Modell-%</div>
+      </div>
+    </div>`;
+  }
+
+  const histHtml = (title, dist, signClass) => {
+    if (!dist || !dist.bins || !dist.bins.length) return '';
+    const total = dist.bins.reduce((s, n) => s + n, 0);
+    if (total === 0) return '';
+    const maxV = Math.max(...dist.bins, 1);
+    const cols = dist.bins.map((n, i) => {
+      const h = n === 0 ? 0 : Math.max(4, (n / maxV) * 44);
+      // Klasse: bei CLV: index < 3 (also <0%) negativ; bei Edge: index 0 (≤0pp) negativ; sonst positiv
+      let cls = 'zero';
+      if (n > 0) cls = signClass(i) ? 'neg' : '';
+      return `<div class="hist-col">
+        <div class="hist-count">${n || ''}</div>
+        <div class="hist-bar ${cls}" style="height:${h}px"></div>
+        <div class="hist-label">${dist.labels[i] || ''}</div>
+      </div>`;
+    }).join('');
+    return `<div class="je-card full">
+      <div class="je-label">${title} · n=${total}</div>
+      <div class="hist-row">${cols}</div>
+    </div>`;
+  };
+  // CLV: bins 0..2 → negativ (<0%), bins 3..5 → positiv
+  const clvHist  = histHtml('CLV-Verteilung', clvDist, (i) => i < 3);
+  // Edge: bin 0 (≤0pp) → negativ, Rest positiv
+  const edgeHist = histHtml('Edge-Verteilung', edgeDist, (i) => i === 0);
+  const histsHtml = (clvHist || edgeHist)
+    ? `<div class="journal-extra">${clvHist}${edgeHist}</div>`
+    : '';
+
+  wrap.innerHTML = (sparkHtml || summaryHtml || tableHtml || histsHtml)
+    ? `<div style="padding:12px 16px 4px">${sparkHtml}</div>${summaryHtml}${histsHtml}${tableHtml}`
     : '';
 }
 
