@@ -479,24 +479,71 @@ def fetch_event_player_props(
     return best
 
 
-@disk_cache("odds_api_scores", max_age_hours=0.5)
+def _fetch_espn_wm_scores() -> list[dict]:
+    """ESPN public scoreboard — kein API-Key, ~30-60s Lag.
+
+    Returns same schema as fetch_wm_live_scores.
+    """
+    from datetime import datetime, timezone
+    url = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard"
+    resp = requests.get(url, timeout=10)
+    resp.raise_for_status()
+    now_iso = datetime.now(timezone.utc).isoformat()
+    results = []
+    for e in resp.json().get("events", []):
+        comp = e.get("competitions", [{}])[0]
+        competitors = comp.get("competitors", [])
+        home_c = next((c for c in competitors if c.get("homeAway") == "home"), None)
+        away_c = next((c for c in competitors if c.get("homeAway") == "away"), None)
+        if not home_c or not away_c:
+            continue
+        status = comp.get("status", {})
+        state = status.get("type", {}).get("state", "pre")
+        completed = bool(status.get("type", {}).get("completed", False))
+        home_score = away_score = None
+        if state in ("in", "post"):
+            try:
+                home_score = int(home_c.get("score", 0))
+                away_score = int(away_c.get("score", 0))
+            except (ValueError, TypeError):
+                pass
+        results.append({
+            "match_id":      f"espn_{e.get('id', '')}",
+            "home":          home_c.get("team", {}).get("displayName", ""),
+            "away":          away_c.get("team", {}).get("displayName", ""),
+            "home_score":    home_score,
+            "away_score":    away_score,
+            "commence_time": e.get("date", "").replace("Z", "+00:00"),
+            "completed":     completed,
+            "last_update":   now_iso,
+        })
+    return results
+
+
 def fetch_wm_live_scores(
     days_from: int = 2,
     api_key: str | None = None,
 ) -> list[dict]:
-    """Liefert ALLE WM-Matches (live + completed) mit aktuellem Score.
+    """WM Live-Scores — ESPN primär (kein Key, ~30-60s Lag), TheOddsAPI als Fallback.
 
     Returns list of {match_id, home, away, home_score, away_score,
     commence_time, completed, last_update}.
     """
+    try:
+        scores = _fetch_espn_wm_scores()
+        if scores:
+            return scores
+    except Exception as e:
+        print(f"  [scores] ESPN fehlgeschlagen ({e}), Fallback TheOddsAPI…")
+
+    # Fallback: TheOddsAPI
     key = get_api_key(api_key)
     url = f"{ODDS_API_URL}/sports/soccer_fifa_world_cup/scores"
     params = {"apiKey": key, "daysFrom": days_from}
     resp = requests.get(url, params=params, timeout=15)
     resp.raise_for_status()
-    data = resp.json()
     results = []
-    for m in data:
+    for m in resp.json():
         scores_raw = m.get("scores") or []
         scores: dict[str, int] = {}
         for s in scores_raw:

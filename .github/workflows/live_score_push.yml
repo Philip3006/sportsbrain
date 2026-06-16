@@ -2,9 +2,9 @@ name: Live Score Push (Tore + Halbzeit)
 
 on:
   schedule:
-    # Alle 5 Min während WM-2026-Match-Zeitraum (Juni + Juli)
+    # Alle 2 Min während WM-2026-Match-Zeitraum (Juni + Juli)
     # Smart-Skip im Script: kein API-Call wenn keine offenen Wetten ein Live-Match haben
-    - cron: '*/5 * * 6,7 *'
+    - cron: '*/2 * * 6,7 *'
   workflow_dispatch:
 
 env:
