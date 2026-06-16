@@ -15,7 +15,10 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.config import RESULTS_DIR
+import json
+from datetime import date
+
+from src.config import RESULTS_DIR, BANKROLL_SNAPSHOT_PATH, BANKROLL_START
 from src.betting.value_detector import BetSignal
 
 LEDGER_PATH = RESULTS_DIR / "ledger.csv"
@@ -534,3 +537,59 @@ def ledger_summary(path: Path = LEDGER_PATH) -> dict:
         "mean_clv": mean_clv,
         "by_market": by_market,
     }
+
+
+def _current_iso_week(today: date | None = None) -> tuple[int, int]:
+    d = today or date.today()
+    iso = d.isocalendar()
+    return iso[0], iso[1]
+
+
+def _live_bankroll(ledger_path: Path = LEDGER_PATH) -> float:
+    """BANKROLL_START + total realized P&L (excluding open bets)."""
+    s = ledger_summary(ledger_path)
+    return round(BANKROLL_START + s["total_pnl"], 2)
+
+
+def peek_bankroll_snapshot(
+    snapshot_path: Path = BANKROLL_SNAPSHOT_PATH,
+    ledger_path: Path = LEDGER_PATH,
+) -> float:
+    """Read-only: returns cached snapshot if valid for current ISO week,
+    otherwise the live computed bankroll. Does NOT write to disk."""
+    year, week = _current_iso_week()
+    if snapshot_path.exists():
+        try:
+            data = json.loads(snapshot_path.read_text())
+            if data.get("iso_year") == year and data.get("iso_week") == week:
+                return float(data["bankroll"])
+        except (json.JSONDecodeError, KeyError, ValueError):
+            pass
+    return _live_bankroll(ledger_path)
+
+
+def get_bankroll_snapshot(
+    snapshot_path: Path = BANKROLL_SNAPSHOT_PATH,
+    ledger_path: Path = LEDGER_PATH,
+) -> float:
+    """Returns bankroll for the current ISO week. On the first call of a new
+    ISO week, recomputes from the ledger and persists the snapshot. Within
+    the same week, returns the cached value so stakes stay stable across
+    intra-week wins/losses (drawdown smoothing — user choice over HWM)."""
+    year, week = _current_iso_week()
+    if snapshot_path.exists():
+        try:
+            data = json.loads(snapshot_path.read_text())
+            if data.get("iso_year") == year and data.get("iso_week") == week:
+                return float(data["bankroll"])
+        except (json.JSONDecodeError, KeyError, ValueError):
+            pass
+    bankroll = _live_bankroll(ledger_path)
+    snapshot_path.parent.mkdir(parents=True, exist_ok=True)
+    snapshot_path.write_text(json.dumps({
+        "iso_year": year,
+        "iso_week": week,
+        "snapshot_date": date.today().isoformat(),
+        "bankroll": bankroll,
+    }, indent=2))
+    return bankroll

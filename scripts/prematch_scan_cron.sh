@@ -87,11 +87,10 @@ echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] prematch_scan gestartet ---" >> "$LO
 echo "--- Spiel im Fenster: $WINDOW_RESULT ---" >> "$LOG"
 echo "========================================" >> "$LOG"
 
-# Get current bankroll from ledger
+# Get current bankroll from weekly snapshot (tier-aware stakes)
 BANKROLL=$(python3 -c "
-from src.betting.ledger import ledger_summary
-s = ledger_summary()
-print(round(100 + s['total_pnl'], 2))
+from src.betting.ledger import get_bankroll_snapshot
+print(get_bankroll_snapshot())
 " 2>/dev/null || echo "100")
 
 echo "--- Bankroll: €$BANKROLL ---" >> "$LOG"

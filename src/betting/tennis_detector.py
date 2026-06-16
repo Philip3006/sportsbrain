@@ -47,7 +47,7 @@ def _signal(
     if ev < min_edge or ev > MAX_EV:
         return None
     kf = kelly_fraction(model_p, odds)
-    stake_eur = dynamic_stake_eur(ev, "MEDIUM")
+    stake_eur = dynamic_stake_eur(ev, "MEDIUM", bankroll)
     return BetSignal(
         match_id=match_id or f"{player_a}_vs_{player_b}",
         home=player_a,
@@ -222,7 +222,7 @@ def detect_value_tennis(
     for s in selected:
         s.confidence = _confidence_for(s.ev, tour)
         if s.confidence == "HIGH":
-            s.stake_eur = dynamic_stake_eur(s.ev, "HIGH")
+            s.stake_eur = dynamic_stake_eur(s.ev, "HIGH", bankroll)
             if bankroll > 0:
                 s.stake_pct = s.stake_eur / bankroll
 

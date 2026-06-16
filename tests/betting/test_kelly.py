@@ -1,5 +1,12 @@
 import pytest
-from src.betting.kelly import dynamic_stake_eur, expected_value, kelly_fraction, stake
+from src.betting.kelly import (
+    dynamic_stake_eur,
+    expected_value,
+    get_stake_bounds,
+    goals_range_max_for,
+    kelly_fraction,
+    stake,
+)
 from src.config import KELLY_FRAC, MIN_STAKE_EUR, MAX_STAKE_EUR
 
 
@@ -68,6 +75,80 @@ class TestStake:
 
     def test_zero_bankroll_returns_zero(self):
         assert stake(0.05, 0.0) == 0.0
+
+
+class TestStakeBounds:
+    @pytest.mark.parametrize("bankroll,expected", [
+        (0.0,    (5.0, 15.0)),
+        (50.0,   (5.0, 15.0)),
+        (99.99,  (5.0, 15.0)),
+        (100.0,  (6.0, 20.0)),
+        (150.0,  (6.0, 20.0)),
+        (199.99, (6.0, 20.0)),
+        (200.0,  (7.0, 25.0)),
+        (299.99, (7.0, 25.0)),
+        (300.0,  (8.0, 30.0)),
+        (400.0, (10.0, 35.0)),
+        (500.0, (12.0, 40.0)),
+        (1000.0,(12.0, 40.0)),
+    ])
+    def test_per_tier_bounds(self, bankroll, expected):
+        assert get_stake_bounds(bankroll) == expected
+
+
+class TestDynamicStakeBankroll:
+    def test_default_is_tier_0(self):
+        assert dynamic_stake_eur(0.03, "MEDIUM") == MIN_STAKE_EUR
+        assert dynamic_stake_eur(0.20, "MEDIUM") == MAX_STAKE_EUR
+
+    def test_explicit_tier_0_matches_default(self):
+        assert dynamic_stake_eur(0.10, "MEDIUM", bankroll=50.0) == \
+            dynamic_stake_eur(0.10, "MEDIUM")
+
+    def test_max_scales_per_tier(self):
+        # At EV=20% the stake hits the tier MAX
+        assert dynamic_stake_eur(0.20, "MEDIUM", bankroll=100.0) == 20.0
+        assert dynamic_stake_eur(0.20, "MEDIUM", bankroll=175.0) == 20.0
+        assert dynamic_stake_eur(0.20, "MEDIUM", bankroll=250.0) == 25.0
+        assert dynamic_stake_eur(0.20, "MEDIUM", bankroll=350.0) == 30.0
+        assert dynamic_stake_eur(0.20, "MEDIUM", bankroll=600.0) == 40.0
+
+    def test_min_scales_per_tier(self):
+        assert dynamic_stake_eur(0.03, "MEDIUM", bankroll=175.0) == 6.0
+        assert dynamic_stake_eur(0.03, "MEDIUM", bankroll=250.0) == 7.0
+        assert dynamic_stake_eur(0.03, "MEDIUM", bankroll=350.0) == 8.0
+
+    def test_high_bonus_respects_tier_cap(self):
+        # EV=20% already at MAX → HIGH must NOT exceed tier cap
+        assert dynamic_stake_eur(0.20, "HIGH", bankroll=175.0) == 20.0
+        assert dynamic_stake_eur(0.20, "HIGH", bankroll=250.0) == 25.0
+
+    def test_high_bonus_applies_below_cap(self):
+        # At lower EV, HIGH is +10% over MEDIUM
+        m = dynamic_stake_eur(0.05, "MEDIUM", bankroll=175.0)
+        h = dynamic_stake_eur(0.05, "HIGH", bankroll=175.0)
+        assert abs(h - m * 1.10) < 1e-9
+
+    def test_negative_bankroll_falls_back_to_lowest_tier(self):
+        # Defensive: shouldn't happen but must not crash
+        assert dynamic_stake_eur(0.20, "MEDIUM", bankroll=-50.0) == 15.0
+
+
+class TestGoalsRangeCap:
+    def test_tier_0(self):
+        # 5 + 0.2 * (15-5) = 7
+        assert abs(goals_range_max_for(50.0) - 7.0) < 1e-9
+
+    def test_tier_1(self):
+        # 6 + 0.2 * (20-6) = 8.8
+        assert abs(goals_range_max_for(175.0) - 8.8) < 1e-9
+
+    def test_tier_2(self):
+        # 7 + 0.2 * (25-7) = 10.6
+        assert abs(goals_range_max_for(250.0) - 10.6) < 1e-9
+
+    def test_default_is_tier_0(self):
+        assert abs(goals_range_max_for(None) - 7.0) < 1e-9
 
 
 class TestExpectedValue:

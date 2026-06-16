@@ -179,7 +179,7 @@ def detect_value_goalscorer(
                 ev = model_p * odds - 1.0
                 if min_ev <= ev <= MAX_EV:
                     kf = kelly_fraction(model_p, odds)
-                    stake_eur = dynamic_stake_eur(ev, "LOW")
+                    stake_eur = dynamic_stake_eur(ev, "LOW", bankroll)
                     signals.append(BetSignal(
                         match_id=match_id,
                         home=home, away=away,

@@ -21,6 +21,23 @@ MAX_STAKE_EUR = 15.0
 MAX_ACTIVE_BETS = 5
 MAX_EV = 0.40           # signals with EV > 40% are almost always model artifacts
 
+# Dynamic stake tiers: each entry = (lower_bankroll_threshold, min_stake_eur, max_stake_eur).
+# Lookup picks the first row whose threshold ≤ bankroll (sorted high → low).
+# MAX-% of bankroll falls with growth (defensive Kelly clamp) while absolute MAX grows.
+STAKE_TIERS: list[tuple[float, float, float]] = [
+    (500.0, 12.0, 40.0),
+    (400.0, 10.0, 35.0),
+    (300.0,  8.0, 30.0),
+    (200.0,  7.0, 25.0),
+    (100.0,  6.0, 20.0),
+    (  0.0,  5.0, 15.0),
+]
+# Goals-Range cap derives from the tier band: min + GOALS_RANGE_TIER_PCT × (max − min)
+GOALS_RANGE_TIER_PCT = 0.2
+
+BANKROLL_SNAPSHOT_PATH = DATA_CACHE / "bankroll_snapshot.json"
+BANKROLL_START = 100.0
+
 # Phase 2 feature flags — keep new components off-by-default until the
 # Backtest Gate (Brier vs current blend) has validated each on its own.
 STACKER_ENABLED = True             # src/ensemble/stacking.py
