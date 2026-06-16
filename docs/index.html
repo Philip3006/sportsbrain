@@ -2020,7 +2020,7 @@ async function _renderSettingsState() {
   const ts = document.getElementById('settings-token-status');
   if (ts) {
     try {
-      const t = localStorage.getItem('sb_worker_token');
+      const t = localStorage.getItem('sb_token');
       ts.textContent = t ? 'Gesetzt · ••••' + t.slice(-4) : 'Nicht gesetzt';
     } catch { ts.textContent = '—'; }
   }
