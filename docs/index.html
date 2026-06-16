@@ -1928,7 +1928,7 @@ async function _togglePush() {
     showToast('⚠️ Push wird von diesem Browser nicht unterstützt.', 'error');
     return;
   }
-  if (VAPID_PUBLIC_KEY === 'BCWFSMWF_b1ef9i76yoGltxiEEel_pJtXqjl-0q7ZYS3Ya2V9dBW5gN5N_rzdShckjkLq7UaI-5GPaV0PKc7ZBI' || !VAPID_PUBLIC_KEY) {
+  if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY.startsWith('REPLACE_')) {
     showToast('⚠️ VAPID-Key noch nicht konfiguriert (siehe scripts/gen_vapid_keys.py).', 'error');
     return;
   }
@@ -1986,7 +1986,7 @@ async function _renderSettingsState() {
       btn.textContent = 'N/A';
       btn.className = 'settings-toggle warn';
       sub.textContent = 'Dieser Browser unterstützt Web Push nicht.';
-    } else if (VAPID_PUBLIC_KEY === 'BCWFSMWF_b1ef9i76yoGltxiEEel_pJtXqjl-0q7ZYS3Ya2V9dBW5gN5N_rzdShckjkLq7UaI-5GPaV0PKc7ZBI' || !VAPID_PUBLIC_KEY) {
+    } else if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY.startsWith('REPLACE_')) {
       btn.textContent = 'Setup';
       btn.className = 'settings-toggle warn';
       sub.textContent = 'VAPID-Schlüssel noch nicht konfiguriert.';
