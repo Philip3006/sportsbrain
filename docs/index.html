@@ -3405,16 +3405,16 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('view-detail')?.classList.contains('active'))  { closeDetail(); }
 });
 
-// URL-Token-Setter: ?token=XXX → speichert + entfernt den Param aus der URL
+// URL-Token-Setter: ?token=XXX → speichert in localStorage.
+// Param wird NICHT aus URL entfernt, damit "Zum Home-Bildschirm" die Magic-URL
+// behält und die PWA beim ersten Launch den Token auch in ihrer eigenen
+// localStorage-Sandbox speichern kann (iOS-PWA hat separates Storage).
 (function () {
   try {
     const params = new URLSearchParams(window.location.search);
     const t = params.get('token');
     if (t && t.length >= 32) {
       localStorage.setItem('sb_token', t);
-      params.delete('token');
-      const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + window.location.hash;
-      window.history.replaceState({}, '', newUrl);
       setTimeout(() => showToast && showToast('🔑 Worker-Token gespeichert', 'success'), 200);
     }
   } catch {}
