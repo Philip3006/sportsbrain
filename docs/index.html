@@ -1094,6 +1094,8 @@ function marketLabel(mkt, match) {
   if (ouM) return ouM[2] === 'over' ? `Über ${ouM[1]} Tore` : `Unter ${ouM[1]} Tore`;
   const ahM = mkt.match(/^ah([+-][\d.]+)_(home|away)$/);
   if (ahM) return `AH ${ahM[1]} ${ahM[2] === 'home' ? a : b}`;
+  const scM = mkt.match(/^scorer_(.+)$/);
+  if (scM) return `⚽ Torschütze: ${scM[1]}`;
   return mkt;
 }
 

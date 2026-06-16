@@ -21,10 +21,11 @@ const ALLOWED_MARKETS = new Set([
 ]);
 const OU_RE = /^o\/u\d+(?:\.\d+)?_(over|under)$/;
 const AH_RE = /^ah[+-]\d+(?:\.\d+)?_(home|away|a|b)$/;
+const SCORER_RE = /^scorer_[a-zA-Z0-9 '_\-\.]{1,60}$/;
 
 function isValidMarket(m) {
   if (typeof m !== 'string' || !m) return false;
-  return ALLOWED_MARKETS.has(m) || OU_RE.test(m) || AH_RE.test(m);
+  return ALLOWED_MARKETS.has(m) || OU_RE.test(m) || AH_RE.test(m) || SCORER_RE.test(m);
 }
 
 function jsonResponse(obj, status = 200) {
