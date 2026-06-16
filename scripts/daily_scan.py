@@ -158,6 +158,10 @@ if __name__ == "__main__":
             for _line, _sides in _sp.items():
                 if _sides.get("home", 0) > 1: _entry[f"ah{_line}_home"] = round(_sides["home"], 2)
                 if _sides.get("away", 0) > 1: _entry[f"ah{_line}_away"] = round(_sides["away"], 2)
+            # Per-Bookmaker h2h (Bookie-Matrix) — Top 10
+            _bm_h2h = _m.get("bookmakers_h2h", []) or []
+            if _bm_h2h:
+                _entry["bookmakers_h2h"] = _bm_h2h[:10]
             if _entry["home"] > 1:
                 all_odds[_mk] = _entry
         print(f"  Odds API: {len(all_odds)} matches with enriched bookmaker odds")

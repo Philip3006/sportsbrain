@@ -154,6 +154,27 @@
     .edge-bar-delta { font-size: 10px; font-weight: 800; text-align: right; padding-top: 2px; }
     .edge-bar-delta.pos { color: var(--green); }
     .edge-bar-delta.neg { color: var(--red); }
+    /* Line-Movement Sparkline (mini, im Card-Footer) */
+    .line-mv { display: inline-flex; align-items: center; gap: 2px; padding: 2px 5px; border-radius: 4px; background: rgba(255,255,255,.03); border: 1px solid var(--border); }
+    .line-mv-svg { display: block; }
+    .line-mv-arrow { font-size: 11px; font-weight: 900; line-height: 1; }
+    .line-mv.good .line-mv-arrow { color: var(--green); }
+    .line-mv.bad .line-mv-arrow { color: var(--red); }
+    .line-mv.flat .line-mv-arrow { color: var(--muted); }
+    /* Bookmaker-Matrix (Detail-View) */
+    .bm-matrix { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg); margin: 10px 16px; overflow: hidden; }
+    .bm-matrix summary { list-style: none; padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+    .bm-matrix summary::-webkit-details-marker { display: none; }
+    .bm-matrix summary::after { content: '▾'; margin-left: auto; transition: transform .15s; }
+    .bm-matrix[open] summary::after { transform: rotate(180deg); }
+    .bm-matrix-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .bm-matrix-table th { font-size: 10px; font-weight: 700; color: var(--muted); padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--border); border-top: 1px solid var(--border); }
+    .bm-matrix-table th:first-child { text-align: left; }
+    .bm-matrix-table td { padding: 7px 10px; text-align: right; border-bottom: 1px solid rgba(48,54,61,.4); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .bm-matrix-table td:first-child { text-align: left; color: var(--text); font-weight: 600; }
+    .bm-matrix-table tr:last-child td { border-bottom: none; }
+    .bm-best { color: var(--green); position: relative; }
+    .bm-best::before { content: '★'; margin-right: 2px; font-size: 10px; }
     /* Journal: Drawdown + Histogramm-Cards */
     .journal-extra { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px 12px 8px; }
     .je-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md); padding: 9px 10px; }
@@ -782,6 +803,7 @@ function openMatch(displayKey) {
 
   let cards = '';
   if (tip) cards += predCard(dh, da, tip, oddsEntry, nk, kickoff, sport);
+  cards += _bookieMatrixCard(oddsEntry, sport);
 
   if (!tip && !sigs.length) {
     cards += `<div class="empty"><div class="icon">⏳</div><div>Noch keine Modellbewertung für dieses Spiel.<br><small>Wird im nächsten Scan (täglich 08:00 UTC) ergänzt.</small></div></div>`;
@@ -1142,6 +1164,98 @@ function _modelDots(n) {
   return out;
 }
 
+// ── Bookmaker-Matrix (Detail-View, OddsJam/RebelBetting-inspiriert) ──
+function _bookieMatrixCard(oddsEntry, sport) {
+  if (!oddsEntry || !Array.isArray(oddsEntry.bookmakers_h2h)) return '';
+  const rows = oddsEntry.bookmakers_h2h.filter(b =>
+    b && b.home > 1 && b.away > 1 && (sport === 'tennis' || b.draw > 1)
+  );
+  if (rows.length < 2) return '';
+  // Beste Quote pro Spalte ermitteln
+  const bestHome = Math.max(...rows.map(r => r.home || 0));
+  const bestDraw = sport === 'tennis' ? 0 : Math.max(...rows.map(r => r.draw || 0));
+  const bestAway = Math.max(...rows.map(r => r.away || 0));
+  const sorted = [...rows].sort((a, b) => (b.home + (b.draw||0) + b.away) - (a.home + (a.draw||0) + a.away));
+  const top = sorted.slice(0, 8);
+  const drawCol = sport === 'tennis' ? '' : '<th>X</th>';
+  const tbody = top.map(r => {
+    const hCls = r.home === bestHome ? 'bm-best' : '';
+    const dCls = (sport !== 'tennis' && r.draw === bestDraw) ? 'bm-best' : '';
+    const aCls = r.away === bestAway ? 'bm-best' : '';
+    const drawCell = sport === 'tennis' ? '' : `<td class="${dCls}">${(r.draw||0).toFixed(2)}</td>`;
+    return `<tr>
+      <td>${esc(r.title || r.key || '—')}</td>
+      <td class="${hCls}">${r.home.toFixed(2)}</td>
+      ${drawCell}
+      <td class="${aCls}">${r.away.toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+  return `<details class="bm-matrix">
+    <summary>Quoten bei Bookmakern · ${top.length}</summary>
+    <table class="bm-matrix-table">
+      <thead><tr><th>Bookie</th><th>1</th>${drawCol}<th>2</th></tr></thead>
+      <tbody>${tbody}</tbody>
+    </table>
+  </details>`;
+}
+
+// ── Line-Movement Sparkline ──────────────────────────────────
+// Liefert SVG-Sparkline + Direction-Badge für ein 1X2-Signal.
+// Returns '' wenn keine Historie (≥2 valid points) verfügbar.
+function _oddsSparkline(matchStr, side, currentOdds) {
+  if (!['home','draw','away'].includes(side)) return '';
+  // matchStr: "Home vs Away". Suche in _oddsHistory exakte oder normalisierte Variante.
+  const [mh, ma] = matchStr.split(' vs ').map(x => x.trim());
+  const nk = matchKey(mh, ma);
+  let series = _oddsHistory[matchStr];
+  if (!series) {
+    for (const [k, v] of Object.entries(_oddsHistory)) {
+      const [kh, ka] = k.split(' vs ').map(x => x.trim());
+      if (matchKey(kh, ka) === nk) { series = v; break; }
+    }
+  }
+  if (!Array.isArray(series)) return '';
+  // Punkte mit gültiger Quote (>1)
+  const pts = series
+    .map(p => ({ date: p.date, v: parseFloat(p[side]) }))
+    .filter(p => p.v > 1.0 && isFinite(p.v));
+  // Aktuelle Quote als letzten Punkt hinzufügen, wenn sie sich vom letzten Snapshot unterscheidet
+  if (currentOdds > 1.0 && (pts.length === 0 || Math.abs(pts[pts.length-1].v - currentOdds) > 0.005)) {
+    pts.push({ date: 'now', v: currentOdds });
+  }
+  if (pts.length < 2) return '';
+  const vals = pts.map(p => p.v);
+  const minV = Math.min(...vals), maxV = Math.max(...vals);
+  const range = maxV - minV || 1;
+  const W = 56, H = 16, pad = 2;
+  const coords = vals.map((v, i) => {
+    const x = pad + (i / (vals.length - 1)) * (W - 2*pad);
+    // y invertiert: fallende Quote (gut für uns) → Linie geht NACH OBEN
+    const y = H - pad - ((maxV - v) / range) * (H - 2*pad);
+    return [x, y];
+  });
+  const polyPts = coords.map(([x,y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+  const [lx, ly] = coords[coords.length-1];
+  const first = vals[0], last = vals[vals.length-1];
+  const dropPct = ((first - last) / first) * 100;  // positiv = Quote gefallen → gut
+  let dirCls, dirSym, dirTxt;
+  if (dropPct >= 3) {
+    dirCls = 'good'; dirSym = '↘'; dirTxt = `Quote ${first.toFixed(2)}→${last.toFixed(2)} · Markt geht in unsere Richtung`;
+  } else if (dropPct <= -3) {
+    dirCls = 'bad'; dirSym = '↗'; dirTxt = `Quote ${first.toFixed(2)}→${last.toFixed(2)} · Markt geht gegen uns`;
+  } else {
+    dirCls = 'flat'; dirSym = '→'; dirTxt = `Quote ${first.toFixed(2)}→${last.toFixed(2)} · stabil`;
+  }
+  const stroke = dirCls === 'good' ? 'var(--green)' : dirCls === 'bad' ? 'var(--red)' : 'rgba(139,148,158,.7)';
+  return `<span class="line-mv ${dirCls}" title="${dirTxt}" aria-label="${dirTxt}">
+    <svg class="line-mv-svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
+      <polyline points="${polyPts}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="1.8" fill="${stroke}"/>
+    </svg>
+    <span class="line-mv-arrow">${dirSym}</span>
+  </span>`;
+}
+
 function sigCard(s, showMatch) {
   const cls = s.confidence === 'HIGH' ? 'high' : 'medium';
   const evCls = s.ev_pct >= 10 ? 'ev-h' : 'ev-m';
@@ -1188,6 +1302,10 @@ function sigCard(s, showMatch) {
   const dotsHtml = s.n_models_agree > 0
     ? `<span class="models-dots" title="${s.n_models_agree}/3 Modelle einig">${_modelDots(s.n_models_agree)}</span>`
     : '';
+  // Line-Movement Sparkline nur für 1X2-Märkte (für andere fehlt Historie)
+  const lineMvHtml = ['home','draw','away'].includes(s.market)
+    ? _oddsSparkline(s.match, s.market, s.odds)
+    : '';
   return `<div class="sig-card ${cls}">
     ${matchLine}
     <div class="card-market">${marketLabel(s.market, s.match)}</div>
@@ -1196,6 +1314,7 @@ function sigCard(s, showMatch) {
       <span class="ev-chip ${evCls}">EV +${s.ev_pct}%${infoTip(`Expected Value = Modell-Wahrscheinlichkeit × Quote − 1. +${s.ev_pct}% heißt: langfristig +€${(s.ev_pct/100*s.stake_eur).toFixed(2)} Gewinn bei €${s.stake_eur.toFixed(0)} Einsatz. SportsBrain wettet nur bei EV ≥ 3%.`)}</span>
       <span class="conf-badge conf-${s.confidence}">${s.confidence}${infoTip(s.confidence === 'HIGH' ? 'HIGH = höchste Modell-Übereinstimmung. Fußball: Dixon-Coles UND LightGBM tippen dasselbe. Tennis: starker Edge (WTA ≥8%, ATP ≥15%). Stake wird automatisch +10% skaliert.' : 'MEDIUM = Standard-Confidence. Solider EV (≥3%), aber kein voller Modell-Konsens. Stake bleibt im €5–15 Standardbereich.')}</span>
       ${dotsHtml}
+      ${lineMvHtml}
       <span class="stake-val">${stakeLabel}</span>
     </div>
     ${probRow}
