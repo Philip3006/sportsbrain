@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-16T13:05:59Z",
+  "updated": "2026-06-16T16:55:55Z",
   "schedule": [
     {
       "sport": "football",
@@ -5295,8 +5295,8 @@
     {
       "date": "2026-06-15",
       "n_bets": 6,
-      "pnl": 62.02,
-      "roi_pct": 79.1
+      "pnl": 72.22,
+      "roi_pct": 92.1
     },
     {
       "date": "2026-06-14",
@@ -5317,28 +5317,14 @@
       "roi_pct": 0.0
     }
   ],
-  "open_bets": [
-    {
-      "match": "Saudi Arabia vs Uruguay",
-      "home": "Saudi Arabia",
-      "away": "Uruguay",
-      "market": "o/u3.0_under",
-      "entry_odds": 1.68,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
-      "stake": 15.0,
-      "match_date": "2026-06-15",
-      "model_edge_pct": null
-    }
-  ],
+  "open_bets": [],
   "bankroll_state": {
     "start": 100.0,
-    "free": 159.52,
-    "staked": 15.0,
-    "exposure_pct": 15.0,
-    "max_win": 10.2,
-    "pnl_closed": 74.52
+    "free": 184.72,
+    "staked": 0,
+    "exposure_pct": 0.0,
+    "max_win": 0,
+    "pnl_closed": 84.72
   },
   "wm_stats": {
     "stats": {
@@ -5367,12 +5353,12 @@
         "roi": null
       },
       "other": {
-        "n": 3,
-        "won": 1,
-        "staked": 36.86,
-        "pnl": -12.11,
-        "hit_rate": 33.3,
-        "roi": -32.9
+        "n": 4,
+        "won": 2,
+        "staked": 51.86,
+        "pnl": -1.91,
+        "hit_rate": 50.0,
+        "roi": -3.7
       }
     },
     "series": [
@@ -5394,16 +5380,16 @@
       },
       {
         "date": "2026-06-15",
-        "balance": 166.04
+        "balance": 176.24
       },
       {
         "date": "2026-06-16",
-        "balance": 174.52
+        "balance": 184.72
       }
     ],
     "drawdown": {
-      "peak": 174.52,
-      "current": 174.52,
+      "peak": 184.72,
+      "current": 184.72,
       "current_dd": 0.0,
       "current_dd_pct": 0.0,
       "max_dd": 0.11,
@@ -5446,10 +5432,10 @@
       ]
     },
     "summary": {
-      "n_settled": 11,
-      "staked": 134.68,
-      "pnl": 74.52,
-      "yield_pct": 55.33,
+      "n_settled": 12,
+      "staked": 149.68,
+      "pnl": 84.72,
+      "yield_pct": 56.6,
       "mean_clv": 13.22,
       "mean_edge": null,
       "n_clv": 4,
