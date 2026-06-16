@@ -162,6 +162,15 @@ def main() -> int:
         except requests.RequestException as e:
             print(f"[consume] DELETE {bid} failed: {e}", file=sys.stderr)
 
+    # Refresh KV immediately so app shows updated open_bets + bankroll_state
+    if added > 0:
+        try:
+            from src.notifications.web_dashboard import write_signals_json
+            write_signals_json()
+            print("[consume] KV state refreshed")
+        except Exception as e:
+            print(f"[consume] KV refresh failed (non-fatal): {e}", file=sys.stderr)
+
     return 0
 
 
