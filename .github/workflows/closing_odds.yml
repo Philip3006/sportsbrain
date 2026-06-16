@@ -58,5 +58,10 @@ jobs:
           git config user.email "bot@sportsbrain"
           git add results/ledger.csv docs/data/signals.json docs/data/wm_forecast.json || true
           git diff --staged --quiet || git commit -m "auto: closing odds $(date +%Y-%m-%d %H:%M)"
-          git pull --rebase origin main || true
-          git push
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin main || true
+            git push && exit 0
+            echo "[push] attempt $i failed, retry after backoff…"
+            sleep $((RANDOM % 6 + 2))
+          done
+          echo "[push] giving up after 5 attempts" >&2; exit 1

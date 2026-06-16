@@ -44,6 +44,11 @@ jobs:
           git add data/live_scores.json || true
           if ! git diff --staged --quiet; then
             git commit -m "auto: live scores $(date -u '+%Y-%m-%d %H:%M UTC')"
-            git pull --rebase origin main || true
-            git push
+            for i in 1 2 3 4 5; do
+              git pull --rebase origin main || true
+              git push && break
+              echo "[push] attempt $i failed, retry after backoff…"
+              sleep $((RANDOM % 6 + 2))
+              [ "$i" = "5" ] && { echo "[push] giving up after 5 attempts" >&2; exit 1; }
+            done
           fi

@@ -317,6 +317,16 @@ def main() -> None:
             upcoming_atp = _fetch_wimbledon_odds(api_key, tour="atp")
             upcoming_wta = _fetch_wimbledon_odds(api_key, tour="wta")
             upcoming = upcoming_atp + upcoming_wta
+        except requests.HTTPError as e:
+            code = getattr(e.response, "status_code", None)
+            if code in (404, 422):
+                # Wimbledon-Slot bei TheOddsAPI noch nicht offen (zu früh im Jahr) —
+                # kein echter Fehler, nur „keine Matches im Markt".
+                print(f"WARN: Wimbledon-Markt noch nicht offen bei TheOddsAPI (HTTP {code}). "
+                      "Scan endet ohne Signals.")
+                sys.exit(0)
+            print(f"ERROR fetching odds: {e}")
+            sys.exit(1)
         except Exception as e:
             print(f"ERROR fetching odds: {e}")
             sys.exit(1)
@@ -328,6 +338,16 @@ def main() -> None:
         print(f"Fetching Wimbledon odds ({args.tour.upper()}) from TheOddsAPI...")
         try:
             upcoming = _fetch_wimbledon_odds(api_key, tour=args.tour)
+        except requests.HTTPError as e:
+            code = getattr(e.response, "status_code", None)
+            if code in (404, 422):
+                # Wimbledon-Slot bei TheOddsAPI noch nicht offen (zu früh im Jahr) —
+                # kein echter Fehler, nur „keine Matches im Markt".
+                print(f"WARN: Wimbledon-Markt noch nicht offen bei TheOddsAPI (HTTP {code}). "
+                      "Scan endet ohne Signals.")
+                sys.exit(0)
+            print(f"ERROR fetching odds: {e}")
+            sys.exit(1)
         except Exception as e:
             print(f"ERROR fetching odds: {e}")
             sys.exit(1)
