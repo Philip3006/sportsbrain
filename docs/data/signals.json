@@ -10652,7 +10652,7 @@
     }
   ],
   "system_health": {
-    "status": "error",
+    "status": "warn",
     "last_scan_at": "2026-06-17T23:03:48Z",
     "open_bets": 2,
     "settlement_due": 0,
@@ -10661,13 +10661,13 @@
       "requests_remaining": 18877
     },
     "last_retrain_at": "2026-06-17T16:00:09Z",
-    "last_closing_odds_at": "2026-06-17T23:03:48Z",
+    "last_closing_odds_at": "2026-06-17T23:03:52Z",
     "model_snapshot": "params_20260617.pkl"
   },
   "automation": {
-    "generated_at": "2026-06-17T23:03:49Z",
-    "status": "error",
-    "last_success_at": "2026-06-17T23:03:45Z",
+    "generated_at": "2026-06-17T23:04:19Z",
+    "status": "warn",
+    "last_success_at": "2026-06-17T23:03:52Z",
     "jobs": {
       "scan": {
         "name": "prematch_scan_cron",
@@ -10689,9 +10689,9 @@
         "name": "closing_odds_cron",
         "path": "results/closing_odds_cron.log",
         "exists": true,
-        "updated_at": "2026-06-17T23:03:48Z",
-        "status": "error",
-        "message": "Letzter Lauf ohne Erfolgssignal"
+        "updated_at": "2026-06-17T23:03:52Z",
+        "status": "warn",
+        "message": "Fehler im Log, letzter Lauf wirkt abgeschlossen"
       },
       "pending_bet_sync": {
         "name": "consume_pending_bets",
@@ -10712,8 +10712,8 @@
     },
     "summary": {
       "ok": 0,
-      "warn": 4,
-      "error": 1,
+      "warn": 5,
+      "error": 0,
       "missing": 0
     }
   },
@@ -10748,9 +10748,9 @@
   },
   "alerts": [
     {
-      "level": "error",
-      "code": "AUTOMATION_FAILED",
-      "message": "Mindestens ein Automationsjob ist fehlgeschlagen"
+      "level": "warn",
+      "code": "AUTOMATION_WARN",
+      "message": "Automationsstatus unvollständig oder mit Warnungen"
     }
   ],
   "odds_history": {
