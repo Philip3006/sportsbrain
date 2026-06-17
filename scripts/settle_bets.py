@@ -194,12 +194,49 @@ def settle(dry_run: bool = False) -> int:
             w.writeheader()
             w.writerows(rows)
         print(f"\n✓ {settled} bet(s) settled and ledger updated.")
+        _send_settlement_push(rows, settled)
     elif dry_run:
         print(f"\n[dry-run] {settled} bet(s) would be settled.")
     else:
         print("\nNo bets to settle yet.")
 
     return settled
+
+
+def _send_settlement_push(rows: list[dict], settled: int) -> None:
+    """Push-Zusammenfassung nach Settlement."""
+    try:
+        from src.notifications.web_push import _send_notification
+        from src.notifications.flags import flag
+
+        settled_rows = [r for r in rows if r.get("status") in ("won", "lost", "push")]
+        just_settled = settled_rows[-settled:] if settled <= len(settled_rows) else settled_rows
+
+        total_pnl = sum(float(r.get("pnl") or 0) for r in just_settled)
+        won_count = sum(1 for r in just_settled if r.get("status") == "won")
+        pnl_sign = "+" if total_pnl >= 0 else ""
+        emoji = "✅" if total_pnl > 0 else ("↩️" if total_pnl == 0 else "❌")
+
+        lines = []
+        for r in just_settled:
+            h, a = r.get("home", ""), r.get("away", "")
+            fh, fa = flag(h), flag(a)
+            mkt = r.get("market", "").upper()
+            pnl = float(r.get("pnl") or 0)
+            status_icon = "✅" if r.get("status") == "won" else ("↩️" if r.get("status") == "push" else "❌")
+            lines.append(f"{status_icon} {fh}{h} vs {a}{fa} · {mkt} · {'+' if pnl>=0 else ''}€{pnl:.2f}")
+
+        _send_notification(
+            title=f"{emoji} Settlement: {won_count}/{settled} gewonnen · {pnl_sign}€{total_pnl:.2f}",
+            body="\n".join(lines),
+            url="/sportsbrain/#journal",
+            kind="settlement",
+            tag=f"settle-{'-'.join(r.get('bet_id','')[:6] for r in just_settled)}",
+            require=False,
+        )
+        print(f"  📲 Settlement-Push gesendet: {pnl_sign}€{total_pnl:.2f}")
+    except Exception as e:
+        print(f"  Settlement-Push fehlgeschlagen: {e}")
 
 
 if __name__ == "__main__":

@@ -80,7 +80,8 @@ def main() -> int:
         if h and a and ko:
             ko_map[(h, a)] = ko
 
-    # 3. Welche Matches sind aktuell live?
+    # 3. Welche Matches sind aktuell live ODER kürzlich beendet?
+    # Window bis 150 Min nach KO damit Abpfiff + Nachspielzeit erfasst werden.
     now = datetime.now(timezone.utc)
     live_match_keys: set[tuple[str, str]] = set()
     for b in open_bets:
@@ -94,7 +95,7 @@ def main() -> int:
         except ValueError:
             continue
         elapsed_min = (now - ko_dt).total_seconds() / 60.0
-        if -5 <= elapsed_min <= 115:  # 5 Min Slack vor KO, bis 115 nach KO
+        if -5 <= elapsed_min <= 150:
             live_match_keys.add((h, a))
 
     if not live_match_keys:
@@ -151,6 +152,8 @@ def main() -> int:
         prev_as = prev.get("away_score")
         ht_sent = bool(prev.get("ht_sent", False))
         ko_sent = bool(prev.get("ko_sent", False))
+        abpfiff_sent = bool(prev.get("abpfiff_sent", False))
+        completed = bool(m.get("completed", False))
 
         # Anpfiff-Push (erster Eintrag im Cache, Match gerade gestartet, 0-10 Min)
         if not ko_sent and prev_hs is None and 0 <= elapsed_min <= 10:
@@ -200,17 +203,41 @@ def main() -> int:
                 ht_sent = True
                 print(f"  ⏸️ HT pushed: {h} {hs}-{as_} {a}")
 
+        # Abpfiff-Push + Auto-Settlement (einmal pro Match wenn completed=True)
+        if completed and not abpfiff_sent:
+            _send_notification(
+                title=f"🏁 Abpfiff {fh}{fa}".strip(),
+                body=f"{score_line}\nWetten werden jetzt abgerechnet…",
+                url="/sportsbrain/#bets",
+                kind="result",
+                tag=f"result-{match_id}",
+                require=False,
+            )
+            pushes_sent += 1
+            abpfiff_sent = True
+            print(f"  🏁 Abpfiff pushed: {h} {hs}-{as_} {a} — starte Settlement")
+            try:
+                import subprocess
+                subprocess.run(
+                    [sys.executable, str(ROOT / "scripts" / "settle_bets.py")],
+                    check=False, timeout=60,
+                )
+                print("  ✅ settle_bets.py abgeschlossen")
+            except Exception as e:
+                print(f"  ⚠️ Settlement fehlgeschlagen: {e}")
+
         cache[match_id] = {
-            "home":       h,
-            "away":       a,
-            "home_score": hs,
-            "away_score": as_,
-            "completed":  m.get("completed", False),
-            "ko_sent":    ko_sent,
-            "ht_sent":    ht_sent,
-            "scorer_names": scorer_names,
+            "home":          h,
+            "away":          a,
+            "home_score":    hs,
+            "away_score":    as_,
+            "completed":     completed,
+            "ko_sent":       ko_sent,
+            "ht_sent":       ht_sent,
+            "abpfiff_sent":  abpfiff_sent,
+            "scorer_names":  scorer_names,
             "last_goal_scorer": last_goal_scorer,
-            "updated":    now.isoformat(),
+            "updated":       now.isoformat(),
         }
 
     _save_cache(cache)
