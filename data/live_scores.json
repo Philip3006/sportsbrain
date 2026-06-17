@@ -33,7 +33,7 @@
   "espn_760437": {
     "home": "England",
     "away": "Croatia",
-    "home_score": 1,
+    "home_score": 2,
     "away_score": 1,
     "completed": false,
     "ko_sent": true,
@@ -41,6 +41,6 @@
     "abpfiff_sent": false,
     "scorer_names": [],
     "last_goal_scorer": "",
-    "updated": "2026-06-17T20:41:04.513634+00:00"
+    "updated": "2026-06-17T20:42:51.702740+00:00"
   }
 }
