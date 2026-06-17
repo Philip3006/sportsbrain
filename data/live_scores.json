@@ -22,11 +22,12 @@
     "away": "DR Congo",
     "home_score": 1,
     "away_score": 1,
-    "completed": false,
+    "completed": true,
     "ko_sent": false,
     "ht_sent": true,
+    "abpfiff_sent": true,
     "scorer_names": [],
     "last_goal_scorer": "",
-    "updated": "2026-06-17T18:54:03.409715+00:00"
+    "updated": "2026-06-17T19:10:42.581980+00:00"
   }
 }
