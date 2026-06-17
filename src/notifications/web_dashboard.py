@@ -553,6 +553,7 @@ def _build_bet_card(
         "clv_signal": clv_signal,
         "stake": stake,
         "match_date": row.get("match_date", ""),
+        "placed_date": row.get("placed_date", ""),
         "kickoff": kickoff,
         "model_edge_pct": None,
         "group": group,
@@ -638,7 +639,7 @@ def _build_bets_view(
 
     for key in ("open", "live"):
         groups[key].sort(key=lambda row: (row.get("kickoff", ""), row.get("match", "")))
-    groups["settled"].sort(key=lambda row: (row.get("match_date", ""), row.get("match", "")), reverse=True)
+    groups["settled"].sort(key=lambda row: (row.get("placed_date", ""), row.get("match_date", ""), row.get("match", "")), reverse=True)
     groups["summary"] = {key: len(groups[key]) for key in ("open", "live", "settled")}
     return groups
 
