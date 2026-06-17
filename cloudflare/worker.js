@@ -3,6 +3,8 @@
 // Signals (existing):
 //   GET  /signals.json    → reads from KV (public)
 //   POST /signals         → writes to KV (Bearer token)
+//   GET  /health          → reads health/status summary from KV (public)
+//   POST /automation_status → writes job status to KV (Bearer token)
 //
 // Pending bets (PWA → local sync):
 //   POST   /pending_bets       → append one bet to KV array (Bearer token)
@@ -65,6 +67,27 @@ async function writePending(env, arr) {
   await env.SIGNALS.put('pending_bets', JSON.stringify(arr));
 }
 
+async function readSignalsSnapshot(env) {
+  const raw = await env.SIGNALS.get('signals_json');
+  if (!raw) return null;
+  try {
+    const data = JSON.parse(raw);
+    return data && typeof data === 'object' ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+function isValidAutomationStatus(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return false;
+  const status = String(body.status || '').toLowerCase();
+  if (!['ok', 'warn', 'error', 'running'].includes(status)) return false;
+  if (body.job != null && (typeof body.job !== 'string' || body.job.length > 80)) return false;
+  if (body.message != null && (typeof body.message !== 'string' || body.message.length > 500)) return false;
+  if (body.generated_at != null && typeof body.generated_at !== 'string') return false;
+  return true;
+}
+
 // ── Push Subscriptions (Web Push) ─────────────────────────────
 // Stored as a JSON array under KV-key "push_subs":
 //   [{ endpoint, keys: { p256dh, auth }, created_at, ua? }, ...]
@@ -95,6 +118,30 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
+    // ── /health (public status summary for dashboard/automation checks) ──
+    if (request.method === 'GET' && path === '/health') {
+      const snapshot = await readSignalsSnapshot(env);
+      const automationRaw = await env.SIGNALS.get('automation_status');
+      let automationStatus = null;
+      if (automationRaw) {
+        try { automationStatus = JSON.parse(automationRaw); } catch {}
+      }
+      if (!snapshot) {
+        return jsonResponse({ ok: false, status: 'error', error: 'no signals snapshot' }, 404);
+      }
+      const health = snapshot.system_health || {};
+      return jsonResponse({
+        ok: health.status !== 'error',
+        status: health.status || 'unknown',
+        updated: snapshot.updated || '',
+        system_health: health,
+        data_freshness: snapshot.data_freshness || {},
+        model_status: snapshot.model_status || {},
+        alerts: snapshot.alerts || [],
+        automation: automationStatus || snapshot.automation || {},
+      });
+    }
+
     // ── /signals.json (public read of latest signals snapshot) ──
     if (request.method === 'GET' && (path === '/signals.json' || path === '/')) {
       const data = await env.SIGNALS.get('signals_json');
@@ -117,6 +164,23 @@ export default {
       try { JSON.parse(body); } catch { return new Response('Invalid JSON', { status: 400 }); }
       await env.SIGNALS.put('signals_json', body);
       return new Response('OK', { headers: cors() });
+    }
+
+    // ── POST /automation_status (write latest job status) ──
+    if (request.method === 'POST' && path === '/automation_status') {
+      if (!requireAuth(request, env)) return new Response('Unauthorized', { status: 401, headers: cors() });
+      let body;
+      try { body = await request.json(); } catch { return jsonResponse({ error: 'invalid json' }, 400); }
+      if (!isValidAutomationStatus(body)) {
+        return jsonResponse({ error: 'invalid automation status payload' }, 400);
+      }
+      const entry = {
+        ...body,
+        status: String(body.status).toLowerCase(),
+        received_at: new Date().toISOString(),
+      };
+      await env.SIGNALS.put('automation_status', JSON.stringify(entry));
+      return jsonResponse({ ok: true });
     }
 
     // ── /pending_bets ──

@@ -66,6 +66,13 @@
 
     /* ── Stale banner ── */
     .stale-banner { background: var(--yellow-d); border-bottom: 1px solid var(--yellow); color: var(--yellow); text-align: center; padding: 7px; font-size: 12px; font-weight: 600; display: none; }
+    .health-strip { display: none; background: #111820; border-bottom: 1px solid rgba(255,255,255,.07); padding: 7px 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 6px; align-items: center; }
+    .health-strip.show { display: flex; }
+    .health-chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; border-radius: var(--r-pill); border: 1px solid var(--border); background: rgba(255,255,255,.04); color: var(--muted); padding: 4px 9px; font-size: 10px; font-weight: 800; white-space: nowrap; text-transform: uppercase; letter-spacing: .2px; }
+    .health-chip.ok { color: var(--green); border-color: rgba(0,200,83,.35); background: rgba(0,200,83,.10); }
+    .health-chip.warn { color: var(--yellow); border-color: rgba(210,153,34,.4); background: rgba(210,153,34,.10); }
+    .health-chip.error { color: var(--red); border-color: rgba(248,81,73,.4); background: rgba(248,81,73,.10); }
+    .health-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
     /* ── Views ── */
     main { padding-bottom: var(--nav-h); max-width: 600px; margin: 0 auto; }
@@ -134,6 +141,7 @@
     .conf-badge { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; }
     .conf-HIGH   { background: var(--green-d); color: var(--green); border: 1px solid rgba(0,200,83,.2); }
     .conf-MEDIUM { background: var(--yellow-d); color: var(--yellow); border: 1px solid rgba(210,153,34,.2); }
+    .conf-LOW    { background: rgba(248,81,73,.10); color: var(--red); border: 1px solid rgba(248,81,73,.25); }
     .stake-val { font-size: 13px; color: var(--muted); margin-left: auto; font-weight: 600; }
     .stake-pct { font-size: 10px; font-weight: 600; color: var(--muted); opacity: .7; }
     .models-dots { font-size: 11px; letter-spacing: 1px; flex-shrink: 0; }
@@ -141,6 +149,10 @@
     .models-muted { color: rgba(139,148,158,.35); }
     .prob-row { display: flex; gap: 10px; margin-top: 8px; font-size: 11px; font-weight: 600; color: var(--muted); }
     .prob-edge { font-weight: 800; color: var(--green); }
+    .safety-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+    .safety-pill { font-size: 9px; font-weight: 800; border-radius: var(--r-pill); padding: 2px 7px; border: 1px solid var(--border); color: var(--muted); background: rgba(255,255,255,.03); text-transform: uppercase; letter-spacing: .2px; }
+    .safety-pill.pass { color: var(--green); border-color: rgba(0,200,83,.28); background: rgba(0,200,83,.08); }
+    .safety-pill.warn { color: var(--yellow); border-color: rgba(210,153,34,.35); background: rgba(210,153,34,.08); }
     /* Visual edge bars (Markt vs Modell) */
     .edge-bars { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
     .edge-bar-row { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; color: var(--muted); }
@@ -611,6 +623,7 @@
 </header>
 
 <div class="stale-banner" id="stale-banner">⚠️ Daten älter als 26h — Scan läuft täglich 08:00 UTC</div>
+<div class="health-strip" id="health-strip" aria-live="polite" aria-label="Systemstatus"></div>
 
 <div class="spinner-overlay" id="spinner-overlay" aria-hidden="true"><div class="spinner" role="status" aria-label="Lade Daten"></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -652,7 +665,7 @@
       <span class="mr-val" id="bet-modal-risk">—</span>
     </div>
 
-    <div class="modal-warn" id="bet-modal-warn">⚠️ Einsatz übersteigt 5% der Bankroll — laut Risiko-Regel maximal €5 bei €100 Bankroll empfohlen.</div>
+    <div class="modal-warn" id="bet-modal-warn">Einsatz übersteigt den Kelly-/Tier-Cap dieses Signals.</div>
     <div class="modal-warn" id="bet-modal-value-warn">Quote ist nach Modellprüfung keine Value-Bet mehr.</div>
     <div class="modal-info" id="bet-modal-info">Wird beim nächsten Sync in dein Ledger geschrieben. Den echten Stake setzt du wie gewohnt im Bookmaker.</div>
 
@@ -855,6 +868,11 @@ let _modelTips = {};
 let _openBets = [];
 let _betsView = { open: [], live: [], settled: [], summary: { open: 0, live: 0, settled: 0 } };
 let _bankrollState = {};
+let _systemHealth = {};
+let _alerts = [];
+let _automation = {};
+let _modelStatus = {};
+let _dataFreshness = {};
 let _squads = {};
 let _oddsHistory = {};
 let _wmResults = {};  // {matchKey: {home_score, away_score}}
@@ -1653,18 +1671,33 @@ function sigCard(s, showMatch) {
   const lineMvHtml = ['home','draw','away'].includes(s.market)
     ? _oddsSparkline(s.match, s.market, s.odds)
     : '';
+  const gates = s.safety_gates || {};
+  const minEv = s.min_ev_pct || minEvPctForMarket(s.market);
+  const safetyHtml = `<div class="safety-row" aria-label="Safety Gates">
+    <span class="safety-pill pass">EV ≥ ${minEv.toFixed(1)}%</span>
+    <span class="safety-pill pass">Kelly</span>
+    ${gates.stake_capped ? '<span class="safety-pill warn">Tier-Cap</span>' : ''}
+    ${s.confidence === 'LOW' || gates.low_confidence ? '<span class="safety-pill warn">LOW</span>' : ''}
+    ${s.n_models_agree > 0 ? `<span class="safety-pill pass">${s.n_models_agree}/3 Modelle</span>` : ''}
+  </div>`;
+  const confTip = s.confidence === 'HIGH'
+    ? 'HIGH = höchste Modell-Übereinstimmung. Fußball: Dixon-Coles UND LightGBM tippen dasselbe. Tennis: starker Edge. Stake wird über fractional Kelly berechnet und durch den dynamischen Tier-Cap begrenzt.'
+    : s.confidence === 'LOW'
+      ? 'LOW = Safety-Gate hat das Signal heruntergestuft, meist wegen Modell-/Markt-Divergenz oder Bias-Risiko. Es wird nicht priorisiert.'
+      : 'MEDIUM = Standard-Confidence. Solider EV, aber kein voller Modell-Konsens. Stake wird über fractional Kelly berechnet und durch den dynamischen Tier-Cap begrenzt.';
   return `<div class="sig-card ${cls}">
     ${matchLine}
     <div class="card-market">${marketLabel(s.market, s.match)}</div>
     <div class="card-footer">
       <span class="odds-btn">${s.odds.toFixed(2)}</span>
-      <span class="ev-chip ${evCls}">EV +${s.ev_pct}%${infoTip(`Expected Value = Modell-Wahrscheinlichkeit × Quote − 1. +${s.ev_pct}% heißt: langfristig +€${(s.ev_pct/100*s.stake_eur).toFixed(2)} Gewinn bei €${s.stake_eur.toFixed(0)} Einsatz. SportsBrain wettet nur bei EV ≥ 3%.`)}</span>
-      <span class="conf-badge conf-${s.confidence}">${s.confidence}${infoTip(s.confidence === 'HIGH' ? 'HIGH = höchste Modell-Übereinstimmung. Fußball: Dixon-Coles UND LightGBM tippen dasselbe. Tennis: starker Edge (WTA ≥8%, ATP ≥15%). Stake wird automatisch +10% skaliert.' : 'MEDIUM = Standard-Confidence. Solider EV (≥3%), aber kein voller Modell-Konsens. Stake bleibt im €5–15 Standardbereich.')}</span>
+      <span class="ev-chip ${evCls}">EV +${s.ev_pct}%${infoTip(`Expected Value = Modell-Wahrscheinlichkeit × Quote − 1. +${s.ev_pct}% heißt: langfristig +€${(s.ev_pct/100*s.stake_eur).toFixed(2)} Gewinn bei €${s.stake_eur.toFixed(0)} Einsatz. SportsBrain zeigt nur Signale über der Mindest-EV-Schwelle (${minEv.toFixed(1)}%).`)}</span>
+      <span class="conf-badge conf-${s.confidence}">${s.confidence}${infoTip(confTip)}</span>
       ${dotsHtml}
       ${lineMvHtml}
       <span class="stake-val">${stakeLabel}</span>
     </div>
     ${probRow}
+    ${safetyHtml}
     <button class="place-bet-btn" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="Wette platzieren">Wette platzieren · €${s.stake_eur.toFixed(0)}</button>
   </div>`;
 }
@@ -1881,8 +1914,10 @@ function renderBets() {
     live: _betsView?.live || [],
     settled: _betsView?.settled || [],
   };
+  const pendingCount = _pwaPendingIds.length;
   if (_betsFilter === 'open' && !groups.open.length && groups.live.length) _betsFilter = 'live';
-  if (_betsFilter !== 'settled' && !groups[_betsFilter].length && !groups.open.length && !groups.live.length && groups.settled.length) _betsFilter = 'settled';
+  if (_betsFilter === 'open' && !groups.open.length && pendingCount) _betsFilter = 'pending';
+  if (_betsFilter !== 'pending' && _betsFilter !== 'settled' && !groups[_betsFilter].length && !groups.open.length && !groups.live.length && groups.settled.length) _betsFilter = 'settled';
   const activeRows = groups[_betsFilter] || [];
   if (!summary.open && !summary.live && !summary.settled && !pendingHtml) {
     c.innerHTML = `<div class="empty"><div class="icon">📭</div><div>Keine offenen Wetten.<br><small>Signals werden täglich 08:00 UTC aktualisiert.</small></div></div>`;
@@ -1890,6 +1925,7 @@ function renderBets() {
   }
   const chips = [
     ['open', `Offen ${summary.open}`],
+    ['pending', `Pending ${pendingCount}`],
     ['live', `Live ${summary.live}`],
     ['settled', `Abgerechnet ${summary.settled}`],
   ].map(([key, label]) =>
@@ -1897,9 +1933,11 @@ function renderBets() {
   ).join('');
 
   let h = `<div class="filter-chips" role="tablist" aria-label="Wetten-Filter">${chips}</div>`;
-  h += `<div class="bets-summary">${summary.open + summary.live} aktiv · ${summary.settled} entschieden</div>`;
-  if (_betsFilter === 'open' && pendingHtml) h += pendingHtml;
-  if (!activeRows.length) {
+  h += `<div class="bets-summary">${summary.open + summary.live} aktiv · ${pendingCount} pending · ${summary.settled} entschieden</div>`;
+  if (_betsFilter === 'pending') {
+    h += pendingHtml || `<div class="empty"><div class="icon">⏳</div><div>Keine ausstehenden Sync-Wetten.</div></div>`;
+    c.innerHTML = h;
+  } else if (!activeRows.length) {
     h += `<div class="empty"><div class="icon">${_betsFilter === 'settled' ? '🧾' : _betsFilter === 'live' ? '🔴' : '📭'}</div><div>Keine ${_betsFilter === 'settled' ? 'abgerechneten' : _betsFilter === 'live' ? 'live laufenden' : 'offenen'} Wetten.</div></div>`;
     c.innerHTML = h;
   } else {
@@ -1952,6 +1990,30 @@ function renderBankrollStrip() {
   }
 }
 
+function renderSystemHealth() {
+  const strip = document.getElementById('health-strip');
+  if (!strip) return;
+  const health = _systemHealth || {};
+  const alertCodes = new Set((_alerts || []).map(a => a.code));
+  const status = health.status || 'unknown';
+  const chips = [];
+  const baseCls = status === 'ok' ? 'ok' : status === 'error' ? 'error' : 'warn';
+  chips.push({ cls: baseCls, label: status === 'ok' ? 'Live' : status === 'error' ? 'Fehler' : 'Warnung' });
+  if (alertCodes.has('STALE_SCAN') || _dataFreshness?.signals_stale) chips.push({ cls: 'warn', label: 'Stale' });
+  if (alertCodes.has('LOW_ODDS_QUOTA')) chips.push({ cls: 'warn', label: 'API-Limit niedrig' });
+  if (alertCodes.has('RETRAIN_OVERDUE')) chips.push({ cls: 'warn', label: 'Retrain überfällig' });
+  if (alertCodes.has('SETTLEMENT_DUE')) chips.push({ cls: 'warn', label: 'Settlement offen' });
+  if (alertCodes.has('MODEL_GATE_FAILED')) chips.push({ cls: 'error', label: 'Modell-Gate' });
+  if (alertCodes.has('AUTOMATION_FAILED')) chips.push({ cls: 'error', label: 'Automation' });
+  if (!chips.length) {
+    strip.classList.remove('show');
+    strip.innerHTML = '';
+    return;
+  }
+  strip.innerHTML = chips.map(c => `<span class="health-chip ${c.cls}"><span class="health-dot" aria-hidden="true"></span>${esc(c.label)}</span>`).join('');
+  strip.classList.add('show');
+}
+
 // ── Render Home — Bet365-style with inline odds ───────────────
 function _updateClock() {
   const el = document.getElementById('today-clock');
@@ -1988,7 +2050,7 @@ setInterval(_tickCountdowns, 1000);
 
 // ── Bet-Modal & Worker-Submit ─────────────────────────────────
 const WORKER_BASE = CLOUD_URL.replace(/\/signals\.json$/, '');
-const BANKROLL_START = 100; // 5%-Regel-Referenz; ggf. später aus _bankrollState.start ableiten
+const BANKROLL_START = 100; // Fallback, wenn bankroll_state noch nicht geladen ist
 let _pendingBet = null;
 let _pwaPendingIds = JSON.parse(localStorage.getItem('sb_pwa_pending') || '[]');
 
@@ -2009,8 +2071,9 @@ function _calcKellyStake() {
   if (fFull <= 0) return null;
   const bk = (_bankrollState && _bankrollState.start) ? _bankrollState.start : BANKROLL_START;
   const stake = bk * fFull * _KELLY_FRAC;
+  const signalCap = Number(_pendingBet.stake_eur || 0);
   // 0.50€-Granularität, min 0.50€, max 25€ (UI-Limit)
-  const rounded = Math.max(0.5, Math.min(25, Math.round(stake * 2) / 2));
+  const rounded = Math.max(0.5, Math.min(25, signalCap || 25, Math.round(stake * 2) / 2));
   return rounded;
 }
 function _setStake(v) {
@@ -2115,6 +2178,7 @@ function _updateBetModalCalcs() {
   const free = _bankrollState?.free ?? BANKROLL_START;
   const start = _bankrollState?.start ?? BANKROLL_START;
   const riskPct = start > 0 ? (stake / start * 100) : 0;
+  const maxSignalStake = Number(_pendingBet.stake_eur || 0);
   document.getElementById('bet-modal-profit').textContent = '+€' + profit.toFixed(2);
   document.getElementById('bet-modal-return').textContent = '€' + ret.toFixed(2);
   document.getElementById('bet-modal-risk').textContent = riskPct.toFixed(1) + '% (€' + free.toFixed(0) + ' frei)';
@@ -2144,7 +2208,13 @@ function _updateBetModalCalcs() {
   if (minRow) minRow.style.display = minOdds ? '' : 'none';
   if (minEl && minOdds) minEl.textContent = minOdds.toFixed(2) + ` (${minEvPct.toFixed(1)}% EV)`;
   const warn = document.getElementById('bet-modal-warn');
-  warn.classList.toggle('show', stake > start * 0.05 + 0.001);
+  const stakeCapOk = !maxSignalStake || stake <= maxSignalStake + 0.001;
+  if (warn) {
+    warn.textContent = maxSignalStake
+      ? `Einsatz übersteigt den Kelly-/Tier-Cap (€${maxSignalStake.toFixed(2)}) dieses Signals.`
+      : 'Einsatz überschreitet den zulässigen Signal-Cap.';
+    warn.classList.toggle('show', !stakeCapOk);
+  }
   const valueWarn = document.getElementById('bet-modal-value-warn');
   if (valueWarn) {
     if (!_pendingBet.model_prob) {
@@ -2161,13 +2231,19 @@ function _updateBetModalCalcs() {
   }
   const btn = document.getElementById('bet-modal-confirm');
   const oddsOk = odds >= 1.01 && odds <= 100;
-  btn.disabled = !(stake >= 0.5 && stake <= 25 && oddsOk && valueOk);
+  btn.disabled = !(stake >= 0.5 && stake <= 25 && oddsOk && valueOk && stakeCapOk);
 }
 
 async function _submitBet() {
   if (!_pendingBet) return;
   const stake = parseFloat(document.getElementById('bet-modal-stake').value) || 0;
   if (stake < 0.5 || stake > 25) { showToast('Einsatz muss zwischen €0.50 und €25 liegen', 'error'); return; }
+  const maxSignalStake = Number(_pendingBet.stake_eur || 0);
+  if (maxSignalStake && stake > maxSignalStake + 0.001) {
+    showToast(`Einsatz über Kelly-/Tier-Cap (€${maxSignalStake.toFixed(2)})`, 'error');
+    _updateBetModalCalcs();
+    return;
+  }
   const oddsInp = document.getElementById('bet-modal-odds-input');
   const odds = oddsInp ? (parseFloat(oddsInp.value) || 0) : _pendingBet.odds;
   if (!(odds >= 1.01 && odds <= 100)) { showToast('Quote muss zwischen 1.01 und 100 liegen', 'error'); return; }
@@ -3677,6 +3753,11 @@ async function _load() {
   _openBets = d.open_bets || [];
   _betsView = d.bets || { open: [], live: [], settled: [], summary: { open: 0, live: 0, settled: 0 } };
   _bankrollState = d.bankroll_state || {};
+  _systemHealth = d.system_health || {};
+  _alerts = d.alerts || [];
+  _automation = d.automation || {};
+  _modelStatus = d.model_status || {};
+  _dataFreshness = d.data_freshness || {};
   _oddsHistory = d.odds_history || {};
   // Index wm_results by matchKey for fast lookup in Home tab
   _wmResults = {};
@@ -3685,6 +3766,7 @@ async function _load() {
     _wmResults[mk] = r;
   }
   renderBankrollStrip();
+  renderSystemHealth();
 
   const setB = (id, n) => { const el=document.getElementById(id); el.textContent=n; el.classList.toggle('show',n>0); };
   setB('badge-all',      _signals.length);
