@@ -418,6 +418,18 @@
     .bet-result-val.minus { color: var(--red); }
     .bets-summary { padding: 4px 16px 0; font-size: 11px; color: var(--muted); font-weight: 600; }
     .bet-live-note { font-size: 11px; color: var(--muted); font-weight: 700; margin-top: 6px; }
+    /* Collapsible settled cards */
+    .bet-card.settled-card { cursor: pointer; user-select: none; }
+    .bet-card.settled-card .bet-details { overflow: hidden; transition: max-height .28s ease; max-height: 800px; }
+    .bet-card.settled-card.collapsed .bet-details { max-height: 0; }
+    .bet-collapsed-summary { display: none; padding: 6px 14px 10px; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); font-weight: 600; }
+    .bet-card.settled-card.collapsed .bet-collapsed-summary { display: flex; }
+    .bcs-meta { font-size: 11px; }
+    .bcs-pnl { margin-left: auto; font-weight: 900; font-size: 14px; }
+    .bcs-pnl.plus { color: var(--green); }
+    .bcs-pnl.minus { color: var(--red); }
+    .bet-expand-hint { font-size: 10px; color: var(--muted); opacity: .5; padding: 0 14px 6px; text-align: right; }
+    .bet-card.settled-card:not(.collapsed) .bet-expand-hint { display: none; }
 
     /* ── Heute-Sektion ── */
     .today-header { background: rgba(0,200,83,.06); border-top: 1px solid rgba(0,200,83,.2); border-bottom: 1px solid rgba(0,200,83,.15); padding: 8px 16px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; color: var(--green); letter-spacing: .3px; }
@@ -1424,6 +1436,10 @@ function _loadBetNotes() {
 function _saveBetNotes(obj) {
   try { localStorage.setItem(_BET_NOTES_KEY, JSON.stringify(obj)); } catch {}
 }
+function _toggleSettledCard(el) {
+  const card = el.closest('.bet-card');
+  if (card) card.classList.toggle('collapsed');
+}
 function _betNoteKey(home, away, market) {
   return `${(home||'').toLowerCase().trim()}|${(away||'').toLowerCase().trim()}|${(market||'').toLowerCase().trim()}`;
 }
@@ -1771,6 +1787,41 @@ function _renderBetCard(b) {
           <div class="bet-money-sub">Rückgabe: €${totalReturn.toFixed(2)}</div>
         </div>
       </div>`;
+
+  if (b.group === 'settled') {
+    const totalReturn = odds * stake;
+    const bcsReturnStr = b.status === 'void' ? `€${stake.toFixed(2)} zurück` : (pnl >= 0 ? `€${totalReturn.toFixed(2)} zurück` : `€0 zurück`);
+    return `<div class="bet-card settled-card collapsed" onclick="_toggleSettledCard(this)">
+    <div class="bet-card-top">
+      <div class="bet-card-header">
+        <span class="bet-match">${flagH} ${esc(home)} vs ${flagA} ${esc(away)}</span>
+        ${_betStatusChip(b)}
+      </div>
+      <div class="bet-market-row">
+        <span class="bet-market-chip">${esc(mktLabel)}</span>
+        <span class="bet-date">${_betDateLabel(b)}</span>
+      </div>
+    </div>
+    <div class="bet-collapsed-summary">
+      <span class="bcs-meta">€${stake.toFixed(2)} · @${odds.toFixed(2)}</span>
+      <span class="bcs-pnl ${pnlCls}">${pnl >= 0 ? '+' : ''}€${Math.abs(pnl).toFixed(2)}</span>
+    </div>
+    <div class="bet-details">
+      ${scorelineHtml}
+      ${midRow}
+      <div class="bet-card-footer">
+        ${settledLiveHtml}
+      </div>
+      <div class="bet-notes-row">
+        <div class="bet-notes-label">📝 Notiz <span class="bet-notes-saved" id="notes-saved-${esc(noteKey)}">gespeichert</span></div>
+        <textarea class="bet-notes-input" data-note-key="${esc(noteKey)}"
+          placeholder="Warum diese Wette? Setze dein Reasoning, später nachvollziehen…"
+          onclick="event.stopPropagation()"
+          oninput="_onBetNoteInput(this)">${esc(_loadBetNote(home, away, b.market || ''))}</textarea>
+      </div>
+    </div>
+  </div>`;
+  }
 
   return `<div class="bet-card">
     <div class="bet-card-top">

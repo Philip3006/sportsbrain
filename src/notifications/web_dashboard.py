@@ -636,8 +636,9 @@ def _build_bets_view(
     except Exception:
         return empty
 
-    for key in groups:
+    for key in ("open", "live"):
         groups[key].sort(key=lambda row: (row.get("kickoff", ""), row.get("match", "")))
+    groups["settled"].sort(key=lambda row: (row.get("match_date", ""), row.get("match", "")), reverse=True)
     groups["summary"] = {key: len(groups[key]) for key in ("open", "live", "settled")}
     return groups
 

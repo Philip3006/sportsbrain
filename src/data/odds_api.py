@@ -619,6 +619,8 @@ def _fetch_espn_wm_scores() -> list[dict]:
             "away_score":    away_score,
             "commence_time": e.get("date", "").replace("Z", "+00:00"),
             "completed":     completed,
+            "display_clock": status.get("displayClock", ""),
+            "period":        status.get("period", 0),
             "last_update":   now_iso,
         })
     return results
