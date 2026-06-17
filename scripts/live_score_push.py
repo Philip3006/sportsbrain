@@ -174,7 +174,12 @@ def main() -> int:
                 and (hs > prev_hs or as_ > prev_as)):
             scorer = h if hs > prev_hs else a
             scorer_flag = fh if scorer == h else fa
-            elapsed_str = f"{int(max(0, elapsed_min))}'" if elapsed_min > 0 else "Live"
+            dc = m.get("display_clock", "").strip()
+            period = m.get("period", 0)
+            if dc:
+                elapsed_str = f"HZ+{dc}" if period == 2 and not dc.startswith("HZ") else dc
+            else:
+                elapsed_str = f"{int(max(0, elapsed_min))}'" if elapsed_min > 0 else "Live"
             is_equalizer = hs == as_
             goal_emoji = "⚖️" if is_equalizer else "⚽"
             goal_label = "AUSGLEICH" if is_equalizer else "TOR!"
