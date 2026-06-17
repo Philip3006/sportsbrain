@@ -1670,6 +1670,35 @@ function _renderBetCard(b) {
   const pnl = Number(b.pnl || 0);
   const pnlCls = pnl > 0 ? 'plus' : pnl < 0 ? 'minus' : '';
   const noteKey = _betNoteKey(home, away, b.market || '');
+  const liveScorerHtml = b.group === 'live' && b.last_goal_scorer
+    ? `<div class="bet-live-note">Letzter Torschütze: ${esc(b.last_goal_scorer)}</div>`
+    : '';
+  const scoreMetaHtml = b.group !== 'settled'
+    ? `<span class="clv-pill ${clvCls}">${clvLabel}</span>`
+    : `<span class="bet-date">${esc(b.status === 'void' ? 'Refund' : (b.status === 'won' ? 'Gewonnen' : 'Verloren'))}</span>`;
+  const scorelineHtml = (b.scoreline || b.group === 'live')
+    ? `<div class="bet-mini-row">
+        <div class="bet-scoreline">${esc(b.scoreline || '—')}</div>
+        ${scoreMetaHtml}
+      </div>`
+    : '';
+  const oddsRowHtml = b.group === 'settled' ? '' : `<div class="bet-odds-row" style="margin-top:10px">
+      <div>
+        <div class="bet-odds-label">Einstieg</div>
+        <span class="bet-odds-entry">@${odds.toFixed(2)}</span>
+      </div>
+      <span class="bet-odds-arrow">→</span>
+      <div>
+        <div class="bet-odds-label">Aktuell${infoTip('Markt-Bewegung seit deinem Einstieg. ↓ Quote gefallen (grün): der Markt glaubt jetzt eher an dein Outcome. ↑ Quote gestiegen (rot): der Markt ist skeptischer geworden.')}</div>
+        <span class="bet-odds-current ${driftCls}">${currentOddsStr} <small>${driftStr}</small></span>
+      </div>
+    </div>`;
+  const footerHtml = b.group !== 'settled'
+    ? `<span class="clv-pill ${clvCls}">${clvLabel}${infoTip('CLV = Marktbewegung seit deinem Einstieg. Für offene Wetten ist das ein Live-Indikator, ob der Markt deine Richtung bestätigt.')}</span>`
+    : '';
+  const settledLiveHtml = b.group === 'settled' && b.status_source === 'live'
+    ? `<span class="clv-pill clv-neutral">Automatisch live verschoben</span>`
+    : '';
 
   const midRow = b.group === 'settled'
     ? `<div class="bet-result-row">
@@ -1707,31 +1736,14 @@ function _renderBetCard(b) {
         <span class="bet-market-chip">${esc(mktLabel)}</span>
         <span class="bet-date">${_betDateLabel(b)}</span>
       </div>
-      ${(b.scoreline || b.group === 'live')
-        ? `<div class="bet-mini-row">
-            <div class="bet-scoreline">${esc(b.scoreline || '—')}</div>
-            ${b.group !== 'settled'
-              ? `<span class="clv-pill ${clvCls}">${clvLabel}</span>`
-              : `<span class="bet-date">${esc(b.status === 'void' ? 'Refund' : (b.status === 'won' ? 'Gewonnen' : 'Verloren'))}</span>`}
-          </div>`
-        : ''}
-      ${b.group === 'live' && b.last_goal_scorer ? `<div class="bet-live-note">Letzter Torschütze: ${esc(b.last_goal_scorer)}</div>` : ''}
-      ${b.group === 'settled' ? '' : `<div class="bet-odds-row" style="margin-top:10px">
-        <div>
-          <div class="bet-odds-label">Einstieg</div>
-          <span class="bet-odds-entry">@${odds.toFixed(2)}</span>
-        </div>
-        <span class="bet-odds-arrow">→</span>
-        <div>
-          <div class="bet-odds-label">Aktuell${infoTip('Markt-Bewegung seit deinem Einstieg. ↓ Quote gefallen (grün): der Markt glaubt jetzt eher an dein Outcome. ↑ Quote gestiegen (rot): der Markt ist skeptischer geworden.')}</div>
-          <span class="bet-odds-current ${driftCls}">${currentOddsStr} <small>${driftStr}</small></span>
-        </div>
-      </div>` : ''}
+      ${scorelineHtml}
+      ${liveScorerHtml}
+      ${oddsRowHtml}
     </div>
     ${midRow}
     <div class="bet-card-footer">
-      ${b.group !== 'settled' ? `<span class="clv-pill ${clvCls}">${clvLabel}${infoTip('CLV = Marktbewegung seit deinem Einstieg. Für offene Wetten ist das ein Live-Indikator, ob der Markt deine Richtung bestätigt.')}</span>` : ''}
-      ${b.group === 'settled' && b.status_source === 'live' ? `<span class="clv-pill clv-neutral">Automatisch live verschoben</span>` : ''}
+      ${footerHtml}
+      ${settledLiveHtml}
     </div>
     <div class="bet-notes-row">
       <div class="bet-notes-label">📝 Notiz <span class="bet-notes-saved" id="notes-saved-${esc(noteKey)}">gespeichert</span></div>
