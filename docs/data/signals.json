@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-17T12:26:40Z",
+  "updated": "2026-06-17T15:36:26Z",
   "schedule": [
     {
       "sport": "football",
@@ -9118,7 +9118,18 @@
       "clv_signal": "bad",
       "stake": 10.58,
       "match_date": "2026-06-17",
-      "model_edge_pct": 95.6
+      "kickoff": "",
+      "model_edge_pct": null,
+      "group": "open",
+      "status": "open",
+      "status_source": "official",
+      "badge_text": "Offen",
+      "is_live_badge": false,
+      "scoreline": null,
+      "home_score": null,
+      "away_score": null,
+      "last_goal_scorer": "",
+      "pnl": 0.0
     },
     {
       "match": "Portugal vs DR Congo",
@@ -9126,12 +9137,23 @@
       "away": "DR Congo",
       "market": "o/u3.5_under",
       "entry_odds": 1.37,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
+      "current_odds": 1.4,
+      "drift_pct": 2.2,
+      "clv_signal": "bad",
       "stake": 20.0,
       "match_date": "2026-06-17",
-      "model_edge_pct": null
+      "kickoff": "",
+      "model_edge_pct": null,
+      "group": "open",
+      "status": "open",
+      "status_source": "official",
+      "badge_text": "Offen",
+      "is_live_badge": false,
+      "scoreline": null,
+      "home_score": null,
+      "away_score": null,
+      "last_goal_scorer": "",
+      "pnl": 0.0
     },
     {
       "match": "England vs Croatia",
@@ -9144,7 +9166,18 @@
       "clv_signal": "bad",
       "stake": 14.15,
       "match_date": "2026-06-17",
-      "model_edge_pct": -26.8
+      "kickoff": "",
+      "model_edge_pct": null,
+      "group": "open",
+      "status": "open",
+      "status_source": "official",
+      "badge_text": "Offen",
+      "is_live_badge": false,
+      "scoreline": null,
+      "home_score": null,
+      "away_score": null,
+      "last_goal_scorer": "",
+      "pnl": 0.0
     },
     {
       "match": "England vs Croatia",
@@ -9152,12 +9185,23 @@
       "away": "Croatia",
       "market": "o/u2.5_under",
       "entry_odds": 1.68,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
+      "current_odds": 1.78,
+      "drift_pct": 6.0,
+      "clv_signal": "bad",
       "stake": 20.0,
       "match_date": "2026-06-17",
-      "model_edge_pct": null
+      "kickoff": "",
+      "model_edge_pct": null,
+      "group": "open",
+      "status": "open",
+      "status_source": "official",
+      "badge_text": "Offen",
+      "is_live_badge": false,
+      "scoreline": null,
+      "home_score": null,
+      "away_score": null,
+      "last_goal_scorer": "",
+      "pnl": 0.0
     },
     {
       "match": "England vs Croatia",
@@ -9170,7 +9214,18 @@
       "clv_signal": null,
       "stake": 20.0,
       "match_date": "2026-06-17",
-      "model_edge_pct": null
+      "kickoff": "",
+      "model_edge_pct": null,
+      "group": "open",
+      "status": "open",
+      "status_source": "official",
+      "badge_text": "Offen",
+      "is_live_badge": false,
+      "scoreline": null,
+      "home_score": null,
+      "away_score": null,
+      "last_goal_scorer": "",
+      "pnl": 0.0
     }
   ],
   "bets": {
@@ -9886,7 +9941,7 @@
     "free": 61.52,
     "staked": 84.73,
     "exposure_pct": 84.7,
-    "max_win": 124.65,
+    "max_win": 127.25,
     "pnl_closed": 46.25
   },
   "wm_stats": {
