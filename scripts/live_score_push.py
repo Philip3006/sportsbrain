@@ -242,16 +242,6 @@ def main() -> int:
 
     _save_cache(cache)
 
-    # Settlement vor Dashboard-Refresh — damit KV nie stale Ledger-Daten bekommt
-    try:
-        import subprocess
-        subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "settle_bets.py")],
-            check=False, timeout=60,
-        )
-    except Exception:
-        pass
-
     try:
         from src.notifications.web_dashboard import write_signals_json
         write_signals_json()

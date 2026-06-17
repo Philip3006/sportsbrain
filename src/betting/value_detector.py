@@ -652,6 +652,7 @@ def detect_value_goals_range(
     bankroll: float = 1000.0,
     min_edge: float = MIN_EDGE,
     match_id: str = "",
+    odds_source: str = "",
 ) -> list[BetSignal]:
     """EV check for Tore-Bereich markets (goals_2_4, h1_goals_2_4, h2_goals_2_4).
 
@@ -685,6 +686,7 @@ def detect_value_goals_range(
         )
         sig.stake_eur = min(sig.stake_eur, GOALS_RANGE_MAX_STAKE)
         sig.stake_pct = sig.stake_eur / bankroll if bankroll > 0 else 0.0
+        sig.odds_source = odds_source
         signals.append(sig)
     return signals
 

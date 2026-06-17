@@ -684,6 +684,15 @@ def _drop_finished_signals(signals: list[dict]) -> list[dict]:
     return result
 
 
+def _is_goals_range_market(market: str) -> bool:
+    return str(market).startswith(("goals_2_4", "h1_goals_2_4", "h2_goals_2_4"))
+
+
+def _drop_goals_range_signals(signals: list[dict]) -> list[dict]:
+    """Remove suspended goal-band markets from the dashboard signal feed."""
+    return [s for s in signals if not _is_goals_range_market(s.get("market", ""))]
+
+
 def _pin_open_bet_signals(
     current: list[dict],
     previous: list[dict],
@@ -799,9 +808,11 @@ def write_signals_json(
     # Remove signals for matches that ended > 100 minutes ago
     football_data = _drop_finished_signals(football_data)
     tennis_data   = _drop_finished_signals(tennis_data)
+    football_data = _drop_goals_range_signals(football_data)
 
     # Pin signals with an open bet — never drop them just because EV drifted below threshold
     football_data = _pin_open_bet_signals(football_data, existing.get("football", []))
+    football_data = _drop_goals_range_signals(football_data)
 
     if schedule is not None:
         schedule_data = schedule

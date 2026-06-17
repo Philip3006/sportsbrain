@@ -19,7 +19,7 @@ def _is_wm_active(today: datetime | None = None) -> bool:
     # Include the full final day (+1 day buffer so July 19 games are covered)
     return _WM_2026_START <= today <= _WM_2026_END + timedelta(days=1)
 
-from src.config import MODELS_DIR, RESULTS_DIR, canonical_name, MAX_ACTIVE_BETS, MAX_EV, TEAM_CONFEDERATION, GOALS_RANGE_ENABLED, GOALS_RANGE_MAX_STAKE
+from src.config import MODELS_DIR, RESULTS_DIR, canonical_name, MAX_ACTIVE_BETS, MAX_EV, TEAM_CONFEDERATION, GOALS_RANGE_ENABLED
 from src.betting.value_detector import (
     BetSignal, detect_value, set_confidence,
     detect_value_totals, detect_value_totals_quarter,
@@ -30,7 +30,12 @@ from src.betting.value_detector import (
 from src.betting.ledger import (
     append_bets, count_open_bets, settle_from_results, ledger_summary, LEDGER_PATH,
 )
-from src.data.odds_api import fetch_upcoming_matches, mock_upcoming_matches, derive_goals_range_implied
+from src.data.odds_api import (
+    fetch_upcoming_matches,
+    mock_upcoming_matches,
+    derive_goals_range_implied,
+    fetch_event_period_totals,
+)
 from src.data.international import fetch_international_results, filter_competitive
 from src.data.squad_availability import default_report, squad_report, SquadReport, _TM_TEAMS, get_suspended_players
 from src.notifications.web_push import send_scan_alert
@@ -253,6 +258,37 @@ def _match_ts_utc(match: dict) -> pd.Timestamp:
         return pd.Timestamp("2099-01-01", tz="UTC")
 
 
+def _goals_range_signals_for_lines(
+    home: str,
+    away: str,
+    match_id: str,
+    bankroll: float,
+    p_full: float,
+    p_h1: float,
+    p_h2: float,
+    totals_lines: dict,
+    totals_h1_lines: dict | None,
+    totals_h2_lines: dict | None,
+) -> list[BetSignal]:
+    """Create 2-4 goals signals only from matching full/H1/H2 market lines."""
+    signals: list[BetSignal] = []
+    market_specs = [
+        ("goals_2_4", p_full, totals_lines, "theoddsapi:totals"),
+        ("h1_goals_2_4", p_h1, totals_h1_lines or {}, "theoddsapi:totals_h1"),
+        ("h2_goals_2_4", p_h2, totals_h2_lines or {}, "theoddsapi:totals_h2"),
+    ]
+    for market, p_model, lines, odds_source in market_specs:
+        implied_p_range = derive_goals_range_implied(lines, min_g=2, max_g=4)
+        if implied_p_range is None:
+            continue
+        signals.extend(detect_value_goals_range(
+            home, away, p_model, implied_p_range,
+            market=market, bankroll=bankroll, match_id=match_id,
+            odds_source=odds_source,
+        ))
+    return signals
+
+
 def run_daily_scan(
     bankroll: float = 1000.0,
     api_key: str | None = None,
@@ -430,6 +466,13 @@ def run_daily_scan(
     except Exception as _e:
         print(f"  [btts] skipped: {_e}")
         print("  StatsBomb xG unavailable — xG features disabled.")
+
+    _bet365_scorer_map: dict = {}
+    try:
+        from src.data.btts_odds import fetch_bet365_goalscorer_odds
+        _bet365_scorer_map = fetch_bet365_goalscorer_odds(matches=unique_matches)
+    except Exception as _e:
+        print(f"  [scorer] Bet365 odds skipped: {_e}")
 
     all_signals: list[BetSignal] = []
     no_value_matches: list[dict] = []
@@ -761,7 +804,26 @@ def run_daily_scan(
         # Tore Bereich 2-4 (Vollspiel + H1 + H2)
         if GOALS_RANGE_ENABLED:
             _totals_lines = match.get("totals_lines", {})
-            _implied_p_range = derive_goals_range_implied(_totals_lines, min_g=2, max_g=4)
+            _period_totals = {"totals_h1_lines": match.get("totals_h1_lines", {}),
+                              "totals_h2_lines": match.get("totals_h2_lines", {})}
+            if not mock and (not _period_totals["totals_h1_lines"] or not _period_totals["totals_h2_lines"]):
+                try:
+                    _fetched_period_totals = fetch_event_period_totals(
+                        "soccer_fifa_world_cup",
+                        match_id,
+                        api_key=api_key,
+                        force=force,
+                    )
+                    _period_totals["totals_h1_lines"] = (
+                        _period_totals["totals_h1_lines"]
+                        or _fetched_period_totals.get("totals_h1_lines", {})
+                    )
+                    _period_totals["totals_h2_lines"] = (
+                        _period_totals["totals_h2_lines"]
+                        or _fetched_period_totals.get("totals_h2_lines", {})
+                    )
+                except Exception as _e:
+                    print(f"  [period_totals] skipped {home} vs {away}: {_e}")
             _gr_probs = dc.predict_goals_range(
                 home, away, dc_params, min_g=2, max_g=4,
                 neutral=True, rho_override=rho_staged,
@@ -773,24 +835,13 @@ def run_daily_scan(
             _h2_probs = dc.predict_half_goals_range(
                 home, away, dc_params, min_g=2, max_g=4, half=2, neutral=True,
             )
-            # Vollspiel: echte EV-Signale wenn implied_p verfügbar
-            if _implied_p_range is not None:
-                signals.extend(detect_value_goals_range(
-                    home, away, _gr_probs["p_in"], _implied_p_range,
-                    market="goals_2_4", bankroll=bankroll, match_id=match_id,
-                ))
-            # H1/H2: Modell-Insight nur wenn echte Quoten manuell eingegeben
-            # (settlement void ohne HZ-Score → kein Auto-Log; Signale erscheinen
-            # im Dashboard aber werden nicht ins Ledger geschrieben bis manuelle Bestätigung)
-            if _implied_p_range is not None:
-                signals.extend(detect_value_goals_range(
-                    home, away, _h1_probs["p_in"], _implied_p_range,
-                    market="h1_goals_2_4", bankroll=bankroll, match_id=match_id,
-                ))
-                signals.extend(detect_value_goals_range(
-                    home, away, _h2_probs["p_in"], _implied_p_range,
-                    market="h2_goals_2_4", bankroll=bankroll, match_id=match_id,
-                ))
+            signals.extend(_goals_range_signals_for_lines(
+                home, away, match_id, bankroll,
+                _gr_probs["p_in"], _h1_probs["p_in"], _h2_probs["p_in"],
+                _totals_lines,
+                _period_totals.get("totals_h1_lines", {}),
+                _period_totals.get("totals_h2_lines", {}),
+            ))
 
         # FTTS (First Team to Score)
         ftts_home_odds = float(match.get("ftts_home_odds", 0))
@@ -865,9 +916,9 @@ def run_daily_scan(
         _scorer_signals: list[BetSignal] = []
         if _home_scorers or _away_scorers:
             try:
-                from src.data.odds_api import fetch_event_player_props
+                from src.data.btts_odds import match_bet365_goalscorer_odds
                 from src.betting.goalscorer import detect_value_goalscorer
-                _player_props = fetch_event_player_props(match_id)
+                _player_props = match_bet365_goalscorer_odds(match, _bet365_scorer_map)
                 if _player_props:
                     _scorer_signals = detect_value_goalscorer(
                         match_id, home, away,

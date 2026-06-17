@@ -65,12 +65,19 @@ def main() -> int:
     title_emoji = "📈" if pnl > 0 else "📉" if pnl < 0 else "➡️"
     title = f"{title_emoji} Woche: {pnl_sign}€{pnl:.2f} ({roi_sign}{roi:.1f}% ROI)"
 
+    from src.notifications.flags import flag
+
+    def _matchup(r: dict) -> str:
+        h, a = r.get("home", "?"), r.get("away", "?")
+        fh, fa = flag(h), flag(a)
+        return f"{fh} {h} vs {a} {fa}".strip()
+
     lines = [
         f"{n} Wetten · {won} gewonnen ({hit_rate:.0f}%)",
-        f"Beste: {best.get('home','?')} vs {best.get('away','?')} +€{best['_pnl']:.2f}",
+        f"🏆 {_matchup(best)}  +€{best['_pnl']:.2f}",
     ]
     if worst["_pnl"] < 0:
-        lines.append(f"Schlechteste: {worst.get('home','?')} vs {worst.get('away','?')} €{worst['_pnl']:.2f}")
+        lines.append(f"💸 {_matchup(worst)}  €{worst['_pnl']:.2f}")
     body = "\n".join(lines)
 
     from src.notifications.web_push import _send_notification

@@ -47,6 +47,19 @@ def test_open_bets_marks_shorter_current_odds_as_good_clv_signal(tmp_path, monke
     assert rows[0]["clv_signal"] == "good"
 
 
+def test_drop_goals_range_signals_removes_suspended_markets():
+    rows = [
+        {"match": "England vs Croatia", "market": "goals_2_4_no"},
+        {"match": "England vs Croatia", "market": "h1_goals_2_4_no"},
+        {"match": "England vs Croatia", "market": "h2_goals_2_4"},
+        {"match": "England vs Croatia", "market": "o/u2.5_under"},
+    ]
+
+    filtered = web_dashboard._drop_goals_range_signals(rows)
+
+    assert filtered == [{"match": "England vs Croatia", "market": "o/u2.5_under"}]
+
+
 def test_open_bets_maps_away_ah_market_to_normalized_all_odds_key(tmp_path, monkeypatch):
     ledger = tmp_path / "ledger.csv"
     _write_ledger(ledger, [_open_row(market="ah+1.5_away", decimal_odds="1.95")])

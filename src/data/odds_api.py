@@ -118,6 +118,17 @@ def _parse_markets(bm: dict, home: str, away: str, store: dict, dynamic: dict) -
                     dynamic["totals"][pt] = {}
                 if o["price"] > dynamic["totals"][pt].get(side, 0):
                     dynamic["totals"][pt][side] = o["price"]
+        elif mkt in ("totals_h1", "alternate_totals_h1", "totals_h2", "alternate_totals_h2"):
+            period_key = "totals_h1" if mkt.endswith("_h1") else "totals_h2"
+            if period_key not in dynamic:
+                dynamic[period_key] = {}
+            for o in market.get("outcomes", []):
+                pt = _round_quarter(o.get("point", 0))
+                side = o["name"].lower()  # "over" or "under"
+                if pt not in dynamic[period_key]:
+                    dynamic[period_key][pt] = {}
+                if o["price"] > dynamic[period_key][pt].get(side, 0):
+                    dynamic[period_key][pt][side] = o["price"]
         elif mkt in ("spreads", "alternate_spreads"):
             for o in market.get("outcomes", []):
                 pt = _round_quarter(o.get("point", 0))
@@ -253,8 +264,8 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
 
         best: dict[str, float] = {}
         pin: dict[str, float] = {}
-        pin_dynamic: dict = {"spreads": {}, "totals": {}}
-        best_dynamic: dict = {"spreads": {}, "totals": {}}
+        pin_dynamic: dict = {"spreads": {}, "totals": {}, "totals_h1": {}, "totals_h2": {}}
+        best_dynamic: dict = {"spreads": {}, "totals": {}, "totals_h1": {}, "totals_h2": {}}
         best_bm: dict[str, str] = {}
         bm_h2h: list[tuple[str, float, float, float]] = []  # (key, home, draw, away)
         # Per-Bookmaker-Quoten für h2h (Bookie-Matrix im Frontend)
@@ -272,7 +283,10 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
                 _parse_markets(bm, home, away, pin, pin_dynamic)
             # Capture per-bookmaker h2h for coherence fallback + matrix
             bm_store: dict[str, float] = {}
-            _parse_markets(bm, home, away, bm_store, {"spreads": {}, "totals": {}})
+            _parse_markets(
+                bm, home, away, bm_store,
+                {"spreads": {}, "totals": {}, "totals_h1": {}, "totals_h2": {}},
+            )
             bh = bm_store.get(home, 0.0)
             bd = bm_store.get("Draw", 0.0)
             ba = bm_store.get(away, 0.0)
@@ -376,12 +390,82 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
             # Dynamic all-lines dicts — used by scanner for comprehensive coverage
             "spreads":        best_dynamic["spreads"],   # {home_line: {"home": odds, "away": odds}}
             "totals_lines":   best_dynamic["totals"],    # {line: {"over": odds, "under": odds}}
+            "totals_h1_lines": best_dynamic["totals_h1"], # 1st-half O/U lines only
+            "totals_h2_lines": best_dynamic["totals_h2"], # 2nd-half O/U lines only
             # Per-Bookmaker-h2h-Quoten (für Bookie-Matrix im Frontend)
             "bookmakers_h2h": per_bm_h2h,
         }
         matches.append(match_dict)
 
     return matches
+
+
+def _parse_period_totals_from_event(event: dict) -> dict[str, dict]:
+    """Extract real first/second-half totals from one event-odds response."""
+    dynamic: dict = {"spreads": {}, "totals": {}, "totals_h1": {}, "totals_h2": {}}
+    home = event.get("home_team", "")
+    away = event.get("away_team", "")
+    store: dict[str, float] = {}
+    for bm in event.get("bookmakers", []):
+        _parse_markets(bm, home, away, store, dynamic)
+    return {
+        "totals_h1_lines": dynamic["totals_h1"],
+        "totals_h2_lines": dynamic["totals_h2"],
+    }
+
+
+def fetch_event_period_totals(
+    sport: str,
+    event_id: str,
+    regions: str | None = None,
+    api_key: str | None = None,
+    force: bool = False,
+    max_age_hours: float = 1.0,
+) -> dict[str, dict]:
+    """Fetch real H1/H2 O/U lines for one event from TheOddsAPI.
+
+    Returns {"totals_h1_lines": {...}, "totals_h2_lines": {...}}. Missing or
+    unsupported period markets return empty dicts.
+    """
+    import hashlib
+    import pickle
+    import time as _time
+
+    from src.config import LINE_SHOPPING_REGIONS
+
+    if regions is None:
+        regions = ",".join(LINE_SHOPPING_REGIONS)
+    markets = "totals_h1,alternate_totals_h1,totals_h2,alternate_totals_h2"
+    cache_key = hashlib.md5(f"{sport}|{event_id}|{regions}|{markets}".encode()).hexdigest()
+    cache_path = DATA_CACHE / f"period_totals_{cache_key}.pkl"
+    if not force and cache_path.exists():
+        age_hours = (_time.time() - cache_path.stat().st_mtime) / 3600
+        if age_hours < max_age_hours:
+            with open(cache_path, "rb") as f:
+                return pickle.load(f)
+
+    key = get_api_key(api_key)
+    url = f"{ODDS_API_URL}/sports/{sport}/events/{event_id}/odds"
+    params = {
+        "apiKey": key,
+        "regions": regions,
+        "markets": markets,
+        "oddsFormat": "decimal",
+    }
+    try:
+        resp = requests.get(url, params=params, timeout=15)
+        resp.raise_for_status()
+        data = _parse_period_totals_from_event(resp.json())
+    except requests.exceptions.HTTPError as e:
+        if e.response is not None and e.response.status_code == 422:
+            data = {"totals_h1_lines": {}, "totals_h2_lines": {}}
+        else:
+            raise
+
+    DATA_CACHE.mkdir(parents=True, exist_ok=True)
+    with open(cache_path, "wb") as f:
+        pickle.dump(data, f)
+    return data
 
 
 def derive_goals_range_implied(

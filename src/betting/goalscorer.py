@@ -154,6 +154,8 @@ def detect_value_goalscorer(
     player_props: dict[str, float],
     bankroll: float,
     min_ev: float = _MIN_EV_SCORER,
+    odds_bookmaker: str = "bet365",
+    odds_source: str = "sofascore",
 ) -> list["BetSignal"]:
     """
     Compares model goalscorer probabilities (Poisson) against bookmaker odds.
@@ -192,6 +194,10 @@ def detect_value_goalscorer(
                         stake_pct=stake_eur / bankroll if bankroll > 0 else 0.0,
                         confidence="LOW",
                         stake_eur=stake_eur,
+                        b365_odds=odds,
+                        odds_bookmaker=odds_bookmaker,
+                        odds_source=odds_source,
+                        min_ev_pct=min_ev * 100.0,
                     ))
                 break
     return signals
