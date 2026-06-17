@@ -989,13 +989,27 @@ def _build_alerts(
     return alerts
 
 
-def _build_system_status(updated: str, schedule: list[dict], all_odds: dict, now: datetime | None = None) -> dict:
+def _build_system_status(
+    updated: str,
+    schedule: list[dict],
+    all_odds: dict,
+    now: datetime | None = None,
+    existing: dict | None = None,
+) -> dict:
     now = now or datetime.now(timezone.utc)
+    existing = existing or {}
     open_rows = _open_ledger_rows()
     settlement_due = _settlement_due_count(open_rows, now)
     api_usage = _read_json_file(_API_USAGE_PATH)
     data_freshness = _build_data_freshness(updated, schedule, all_odds, now)
     automation = _build_automation_status(now)
+    previous_automation = existing.get("automation", {})
+    if (
+        previous_automation.get("jobs")
+        and automation.get("jobs")
+        and all(job.get("status") == "missing" for job in automation["jobs"].values())
+    ):
+        automation = previous_automation
     model_status = _build_model_status(now)
     alerts = _build_alerts(
         data_freshness=data_freshness,
@@ -1157,7 +1171,7 @@ def write_signals_json(
     _free = round(_bankroll_start + _pnl_closed - _staked, 2)
     _exposure_pct = round(_staked / _bankroll_start * 100, 1)
     _bets_view = _build_bets_view(schedule_data, all_odds_data if all_odds_data else None, _wm_results_base)
-    _status_blocks = _build_system_status(updated, schedule_data, all_odds_data)
+    _status_blocks = _build_system_status(updated, schedule_data, all_odds_data, existing=existing)
 
     payload = {
         "updated":        updated,

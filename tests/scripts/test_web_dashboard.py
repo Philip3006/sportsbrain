@@ -287,3 +287,42 @@ def test_scan_log_status_downgrades_historical_error_after_clean_done(tmp_path):
 
     assert status["status"] == "warn"
     assert status["message"] == "Fehler im Log, letzter Lauf wirkt abgeschlossen"
+
+
+def test_build_system_status_preserves_previous_automation_when_logs_missing(tmp_path, monkeypatch):
+    monkeypatch.setattr(web_dashboard, "_RESULTS_DIR", tmp_path / "missing_results")
+    monkeypatch.setattr(web_dashboard, "_LEDGER_PATH", tmp_path / "missing_ledger.csv")
+    monkeypatch.setattr(web_dashboard, "_API_USAGE_PATH", tmp_path / "missing_api_usage.json")
+    models_dir = tmp_path / "models"
+    (models_dir / "dixon_coles").mkdir(parents=True)
+    (models_dir / "lgbm").mkdir(parents=True)
+    (models_dir / "dixon_coles" / "params_20260618.pkl").write_bytes(b"model")
+    (models_dir / "lgbm" / "gate.json").write_text(json.dumps({"passed": True}))
+    monkeypatch.setattr(web_dashboard, "_MODELS_DIR", models_dir)
+
+    existing = {
+        "automation": {
+            "generated_at": "2026-06-18T08:00:00Z",
+            "status": "warn",
+            "jobs": {
+                "scan": {"status": "warn", "updated_at": "2026-06-18T08:00:00Z"},
+                "retrain": {"status": "warn", "updated_at": "2026-06-18T08:00:00Z"},
+                "closing_odds": {"status": "warn", "updated_at": "2026-06-18T08:00:00Z"},
+                "pending_bet_sync": {"status": "warn", "updated_at": "2026-06-18T08:00:00Z"},
+                "live_score_push": {"status": "warn", "updated_at": "2026-06-18T08:00:00Z"},
+            },
+            "summary": {"ok": 0, "warn": 2, "error": 0, "missing": 0},
+        }
+    }
+
+    status = web_dashboard._build_system_status(
+        "2026-06-18T08:00:00Z",
+        [],
+        {},
+        now=datetime(2026, 6, 18, 9, tzinfo=timezone.utc),
+        existing=existing,
+    )
+
+    assert status["automation"] == existing["automation"]
+    assert status["system_health"]["status"] == "warn"
+    assert {alert["code"] for alert in status["alerts"]} == {"AUTOMATION_WARN"}
