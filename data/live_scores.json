@@ -21,12 +21,12 @@
     "home": "Portugal",
     "away": "DR Congo",
     "home_score": 1,
-    "away_score": 0,
+    "away_score": 1,
     "completed": false,
     "ko_sent": false,
     "ht_sent": true,
     "scorer_names": [],
     "last_goal_scorer": "",
-    "updated": "2026-06-17T17:50:26.352355+00:00"
+    "updated": "2026-06-17T17:52:34.057011+00:00"
   }
 }
