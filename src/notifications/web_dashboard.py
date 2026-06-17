@@ -12,7 +12,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from src.betting.live_state import pnl_from_mode, resolve_market_state
-from src.betting.value_detector import BetSignal
+from src.betting.value_detector import BetSignal, min_ev_pct_for_market
 from src.betting.odds_utils import market_to_all_odds_key
 
 ROOT = Path(__file__).parent.parent.parent
@@ -158,7 +158,12 @@ def _signal_to_dict(
         "stake_pct":       round(s.stake_pct * 100, 1),
         "confidence":      s.confidence,
         "n_models_agree":  s.n_models_agree,
+        "min_ev_pct":      round(s.min_ev_pct or min_ev_pct_for_market(s.market), 1),
     }
+    if s.odds_bookmaker:
+        d["odds_bookmaker"] = s.odds_bookmaker
+    if s.odds_source:
+        d["odds_source"] = s.odds_source
     if tour:
         d["tour"] = tour
     if kickoff:
@@ -679,6 +684,61 @@ def _drop_finished_signals(signals: list[dict]) -> list[dict]:
     return result
 
 
+def _pin_open_bet_signals(
+    current: list[dict],
+    previous: list[dict],
+) -> list[dict]:
+    """Add back signals from previous scan that have a matching open bet in the ledger.
+
+    Prevents a signal from disappearing from the football tab just because EV drifted
+    below threshold between scans. The bet is already placed — the user needs to see it.
+    """
+    if not _LEDGER_PATH.exists():
+        return current
+
+    try:
+        open_bets: list[dict] = []
+        with open(_LEDGER_PATH, newline="") as f:
+            for r in csv.DictReader(f):
+                if r.get("status") == "open":
+                    open_bets.append(r)
+    except Exception:
+        return current
+
+    if not open_bets:
+        return current
+
+    def _norm(s: str) -> str:
+        return (s or "").lower().strip()
+
+    # Build set of (home, away, market) already in current signals
+    current_keys: set[tuple[str, str, str]] = set()
+    for s in current:
+        match = s.get("match", "")
+        parts = [p.strip() for p in match.split(" vs ", 1)]
+        h, a = (parts[0], parts[1]) if len(parts) == 2 else ("", "")
+        current_keys.add((_norm(h), _norm(a), _norm(s.get("market", ""))))
+
+    # Build lookup of previous signals by (home, away, market)
+    prev_map: dict[tuple[str, str, str], dict] = {}
+    for s in previous:
+        match = s.get("match", "")
+        parts = [p.strip() for p in match.split(" vs ", 1)]
+        h, a = (parts[0], parts[1]) if len(parts) == 2 else ("", "")
+        prev_map[(_norm(h), _norm(a), _norm(s.get("market", "")))] = s
+
+    pinned = list(current)
+    for bet in open_bets:
+        key = (_norm(bet.get("home", "")), _norm(bet.get("away", "")), _norm(bet.get("market", "")))
+        if key in current_keys:
+            continue  # already present
+        prev_sig = prev_map.get(key)
+        if prev_sig:
+            pinned.append({**prev_sig, "pinned": True})
+
+    return pinned
+
+
 def write_signals_json(
     football: list[BetSignal] | None = None,
     tennis: list[BetSignal] | None = None,
@@ -739,6 +799,9 @@ def write_signals_json(
     # Remove signals for matches that ended > 100 minutes ago
     football_data = _drop_finished_signals(football_data)
     tennis_data   = _drop_finished_signals(tennis_data)
+
+    # Pin signals with an open bet — never drop them just because EV drifted below threshold
+    football_data = _pin_open_bet_signals(football_data, existing.get("football", []))
 
     if schedule is not None:
         schedule_data = schedule
