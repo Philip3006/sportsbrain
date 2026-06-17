@@ -19,6 +19,9 @@ ROOT = Path(__file__).parent.parent.parent
 _JSON_PATH = ROOT / "docs" / "data" / "signals.json"
 _LEDGER_PATH = ROOT / "results" / "ledger.csv"
 _LIVE_SCORES_PATH = ROOT / "data" / "live_scores.json"
+_API_USAGE_PATH = ROOT / "data" / "cache" / "api_usage.json"
+_RESULTS_DIR = ROOT / "results"
+_MODELS_DIR = ROOT / "models"
 
 # FIFA-Konföderation-Mapping (WM 2026 Teams + WM-Qualifikations-Backtest)
 CONFEDERATION_MAP: dict[str, str] = {
@@ -159,6 +162,14 @@ def _signal_to_dict(
         "confidence":      s.confidence,
         "n_models_agree":  s.n_models_agree,
         "min_ev_pct":      round(s.min_ev_pct or min_ev_pct_for_market(s.market), 1),
+    }
+    d["safety_gates"] = {
+        "positive_ev": s.ev > 0,
+        "min_ev": (s.ev * 100.0) + 1e-9 >= d["min_ev_pct"],
+        "kelly": s.kelly_f > 0 and s.stake_eur >= 0,
+        "confidence": s.confidence,
+        "low_confidence": s.confidence == "LOW",
+        "stake_capped": s.stake_pct > 0 and s.kelly_f > s.stake_pct + 1e-9,
     }
     if s.odds_bookmaker:
         d["odds_bookmaker"] = s.odds_bookmaker
@@ -541,6 +552,9 @@ def _build_bet_card(
     elif group == "live":
         badge_text = badge_text if is_live else "LIVE"
         is_live = True
+    elif group == "open" and score and score.get("completed", False) is True:
+        badge_text = "Manuell prüfen"
+        is_live = False
 
     return {
         "match": f"{home} vs {away}",
@@ -624,7 +638,12 @@ def _build_bets_view(
                     continue
 
                 _, live_by_time = _live_badge(kickoff, now, completed)
-                target = "live" if live_by_time or (score and score.get("home_score") is not None) else "open"
+                has_live_score = (
+                    bool(score)
+                    and score.get("home_score") is not None
+                    and not completed
+                )
+                target = "live" if live_by_time or has_live_score else "open"
                 groups[target].append(_build_bet_card(
                     row,
                     all_odds=all_odds,
@@ -748,6 +767,267 @@ def _pin_open_bet_signals(
             pinned.append({**prev_sig, "pinned": True})
 
     return pinned
+
+
+def _iso_from_mtime(path: Path) -> str:
+    try:
+        return datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    except Exception:
+        return ""
+
+
+def _age_hours(iso_value: str, now: datetime) -> float | None:
+    if not iso_value:
+        return None
+    try:
+        dt = datetime.fromisoformat(iso_value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return max(0.0, (now - dt).total_seconds() / 3600.0)
+
+
+def _latest_matching_file(directory: Path, pattern: str) -> Path | None:
+    try:
+        files = [p for p in directory.glob(pattern) if p.is_file()]
+    except Exception:
+        return None
+    if not files:
+        return None
+    return max(files, key=lambda p: p.name)
+
+
+def _read_json_file(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text())
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _scan_log_status(path: Path) -> dict:
+    try:
+        display_path = str(path.relative_to(ROOT))
+    except ValueError:
+        display_path = str(path)
+    status = {
+        "name": path.stem,
+        "path": display_path,
+        "exists": path.exists(),
+        "updated_at": _iso_from_mtime(path),
+        "status": "missing",
+        "message": "Log fehlt",
+    }
+    if not path.exists():
+        return status
+    try:
+        tail = path.read_text(errors="ignore")[-12000:]
+    except Exception:
+        return {**status, "status": "unknown", "message": "Log nicht lesbar"}
+
+    lower_tail = tail.lower()
+    has_error = any(token in lower_tail for token in ("traceback", " error", "failed", "exception"))
+    latest_done = max(tail.rfind(" done"), tail.rfind(" fertig"), tail.rfind("exit 0"))
+    latest_start = max(tail.rfind(" start"), tail.rfind("--- ["))
+    if has_error and latest_done < latest_start:
+        return {**status, "status": "error", "message": "Letzter Lauf ohne Erfolgssignal"}
+    if has_error and latest_done >= 0:
+        return {**status, "status": "warn", "message": "Fehler im Log, letzter Lauf wirkt abgeschlossen"}
+    if latest_done >= 0:
+        return {**status, "status": "ok", "message": "Letzter Lauf abgeschlossen"}
+    return {**status, "status": "unknown", "message": "Kein Abschluss im Log gefunden"}
+
+
+def _open_ledger_rows() -> list[dict]:
+    if not _LEDGER_PATH.exists():
+        return []
+    try:
+        with open(_LEDGER_PATH, newline="") as f:
+            return [r for r in csv.DictReader(f) if r.get("status") == "open"]
+    except Exception:
+        return []
+
+
+def _settlement_due_count(open_rows: list[dict], now: datetime) -> int:
+    due = 0
+    today = now.date()
+    for row in open_rows:
+        raw = (row.get("match_date") or "")[:10]
+        if not raw:
+            continue
+        try:
+            match_day = datetime.fromisoformat(raw).date()
+        except ValueError:
+            continue
+        if match_day < today:
+            due += 1
+    return due
+
+
+def _build_data_freshness(updated: str, schedule: list[dict], all_odds: dict, now: datetime) -> dict:
+    signals_age = _age_hours(updated, now)
+    odds_updated = _iso_from_mtime(_API_USAGE_PATH) if _API_USAGE_PATH.exists() else ""
+    odds_age = _age_hours(odds_updated, now)
+    next_kickoffs = []
+    for row in schedule or []:
+        kickoff = str(row.get("kickoff", ""))
+        try:
+            ko_dt = datetime.fromisoformat(kickoff.replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if ko_dt >= now:
+            next_kickoffs.append(ko_dt)
+    next_kickoff = min(next_kickoffs).strftime("%Y-%m-%dT%H:%M:%SZ") if next_kickoffs else ""
+    return {
+        "signals_updated_at": updated,
+        "signals_age_hours": round(signals_age, 1) if signals_age is not None else None,
+        "signals_stale": signals_age is None or signals_age > 26,
+        "odds_cache_updated_at": odds_updated,
+        "odds_cache_age_hours": round(odds_age, 1) if odds_age is not None else None,
+        "odds_snapshot_count": len(all_odds or {}),
+        "next_kickoff": next_kickoff,
+        "schedule_count": len(schedule or []),
+    }
+
+
+def _build_model_status(now: datetime) -> dict:
+    dc_file = _latest_matching_file(_MODELS_DIR / "dixon_coles", "params_*.pkl")
+    lgbm_gate = _read_json_file(_MODELS_DIR / "lgbm" / "gate.json")
+    anchor = _read_json_file(_MODELS_DIR / "lgbm" / "anchor.json")
+    dc_updated = _iso_from_mtime(dc_file) if dc_file else ""
+    dc_age = _age_hours(dc_updated, now)
+    gate_passed = bool(lgbm_gate.get("passed", False))
+    return {
+        "active_snapshot": dc_file.name if dc_file else "",
+        "active_snapshot_updated_at": dc_updated,
+        "active_snapshot_age_hours": round(dc_age, 1) if dc_age is not None else None,
+        "active_snapshot_exists": dc_file is not None,
+        "backtest_gate": {
+            "passed": gate_passed,
+            "holdout": lgbm_gate.get("holdout", ""),
+            "blend_brier": lgbm_gate.get("blend_brier"),
+            "improvement_vs_dc": lgbm_gate.get("improvement_vs_dc"),
+            "reason": lgbm_gate.get("reason", "Gate-Metadaten fehlen"),
+        },
+        "closing_anchor": {
+            "enabled": bool(anchor.get("use_anchor", False)),
+            "brier_blend": anchor.get("brier_blend"),
+            "reason": anchor.get("reason", ""),
+        },
+        "status": "ok" if dc_file and gate_passed else "error",
+    }
+
+
+def _build_automation_status(now: datetime) -> dict:
+    jobs = {
+        "scan": _scan_log_status(_RESULTS_DIR / "prematch_scan_cron.log"),
+        "retrain": _scan_log_status(_RESULTS_DIR / "launchd_auto_retrain.log"),
+        "closing_odds": _scan_log_status(_RESULTS_DIR / "closing_odds_cron.log"),
+        "pending_bet_sync": _scan_log_status(_RESULTS_DIR / "consume_pending_bets.log"),
+        "live_score_push": _scan_log_status(_RESULTS_DIR / "launchd_live_score_push.log"),
+    }
+    failed = [name for name, job in jobs.items() if job["status"] == "error"]
+    missing = [name for name, job in jobs.items() if job["status"] == "missing"]
+    warnings = [name for name, job in jobs.items() if job["status"] in ("warn", "unknown")]
+    last_successes = [
+        job["updated_at"] for job in jobs.values()
+        if job.get("updated_at") and job["status"] in ("ok", "warn")
+    ]
+    return {
+        "generated_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "status": "error" if failed else "warn" if warnings or missing else "ok",
+        "last_success_at": max(last_successes) if last_successes else "",
+        "jobs": jobs,
+        "summary": {
+            "ok": sum(1 for job in jobs.values() if job["status"] == "ok"),
+            "warn": len(warnings),
+            "error": len(failed),
+            "missing": len(missing),
+        },
+    }
+
+
+def _build_alerts(
+    *,
+    data_freshness: dict,
+    automation: dict,
+    model_status: dict,
+    api_usage: dict,
+    open_rows: list[dict],
+    settlement_due: int,
+    now: datetime,
+) -> list[dict]:
+    alerts: list[dict] = []
+    if data_freshness.get("signals_stale"):
+        alerts.append({"level": "warn", "code": "STALE_SCAN", "message": "Signals älter als 26h"})
+    remaining = api_usage.get("requests_remaining")
+    try:
+        remaining_num = int(remaining)
+    except (TypeError, ValueError):
+        remaining_num = None
+    if remaining_num is not None and remaining_num < 500:
+        alerts.append({"level": "warn", "code": "LOW_ODDS_QUOTA", "message": f"Odds-API-Quota niedrig ({remaining_num})"})
+    if automation.get("status") == "error":
+        alerts.append({"level": "error", "code": "AUTOMATION_FAILED", "message": "Mindestens ein Automationsjob ist fehlgeschlagen"})
+    elif automation.get("status") == "warn":
+        alerts.append({"level": "warn", "code": "AUTOMATION_WARN", "message": "Automationsstatus unvollständig oder mit Warnungen"})
+    retrain_at = automation.get("jobs", {}).get("retrain", {}).get("updated_at", "")
+    retrain_age = _age_hours(retrain_at, now)
+    if retrain_age is None or retrain_age > 48:
+        alerts.append({"level": "warn", "code": "RETRAIN_OVERDUE", "message": "Retrain überfällig"})
+    closing_at = automation.get("jobs", {}).get("closing_odds", {}).get("updated_at", "")
+    closing_age = _age_hours(closing_at, now)
+    if closing_age is None or closing_age > 24:
+        alerts.append({"level": "warn", "code": "CLOSING_ODDS_STALE", "message": "Closing-Odds-Aktualisierung überfällig"})
+    if model_status.get("status") != "ok":
+        alerts.append({"level": "error", "code": "MODEL_GATE_FAILED", "message": "Aktives Modell oder Backtest-Gate fehlt"})
+    if settlement_due > 0:
+        alerts.append({"level": "warn", "code": "SETTLEMENT_DUE", "message": f"{settlement_due} offene Wette(n) nach Matchdatum"})
+    if len(open_rows) > 5:
+        alerts.append({"level": "error", "code": "MAX_ACTIVE_BETS", "message": f"{len(open_rows)} aktive Wetten überschreiten das Limit 5"})
+    return alerts
+
+
+def _build_system_status(updated: str, schedule: list[dict], all_odds: dict, now: datetime | None = None) -> dict:
+    now = now or datetime.now(timezone.utc)
+    open_rows = _open_ledger_rows()
+    settlement_due = _settlement_due_count(open_rows, now)
+    api_usage = _read_json_file(_API_USAGE_PATH)
+    data_freshness = _build_data_freshness(updated, schedule, all_odds, now)
+    automation = _build_automation_status(now)
+    model_status = _build_model_status(now)
+    alerts = _build_alerts(
+        data_freshness=data_freshness,
+        automation=automation,
+        model_status=model_status,
+        api_usage=api_usage,
+        open_rows=open_rows,
+        settlement_due=settlement_due,
+        now=now,
+    )
+    levels = {alert["level"] for alert in alerts}
+    status = "error" if "error" in levels else "warn" if "warn" in levels else "ok"
+    system_health = {
+        "status": status,
+        "last_scan_at": updated,
+        "open_bets": len(open_rows),
+        "settlement_due": settlement_due,
+        "odds_api": {
+            "requests_used": api_usage.get("requests_used"),
+            "requests_remaining": api_usage.get("requests_remaining"),
+        },
+        "last_retrain_at": automation.get("jobs", {}).get("retrain", {}).get("updated_at", ""),
+        "last_closing_odds_at": automation.get("jobs", {}).get("closing_odds", {}).get("updated_at", ""),
+        "model_snapshot": model_status.get("active_snapshot", ""),
+    }
+    return {
+        "system_health": system_health,
+        "automation": automation,
+        "model_status": model_status,
+        "data_freshness": data_freshness,
+        "alerts": alerts,
+    }
 
 
 def write_signals_json(
@@ -877,6 +1157,7 @@ def write_signals_json(
     _free = round(_bankroll_start + _pnl_closed - _staked, 2)
     _exposure_pct = round(_staked / _bankroll_start * 100, 1)
     _bets_view = _build_bets_view(schedule_data, all_odds_data if all_odds_data else None, _wm_results_base)
+    _status_blocks = _build_system_status(updated, schedule_data, all_odds_data)
 
     payload = {
         "updated":        updated,
@@ -900,6 +1181,7 @@ def write_signals_json(
         },
         "wm_stats": _build_wm_stats(),
         "wm_results": _wm_results_base,
+        **_status_blocks,
     }
     payload["odds_history"] = odds_history if odds_history is not None else existing.get("odds_history", {})
 
