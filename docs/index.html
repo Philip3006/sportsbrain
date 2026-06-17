@@ -420,16 +420,25 @@
     .bet-live-note { font-size: 11px; color: var(--muted); font-weight: 700; margin-top: 6px; }
     /* Collapsible settled cards */
     .bet-card.settled-card { cursor: pointer; user-select: none; }
-    .bet-card.settled-card .bet-details { overflow: hidden; transition: max-height .28s ease; max-height: 800px; }
+    .bet-card.settled-card .bet-details { overflow: hidden; transition: max-height .3s ease; max-height: 800px; }
     .bet-card.settled-card.collapsed .bet-details { max-height: 0; }
-    .bet-collapsed-summary { display: none; padding: 6px 14px 10px; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); font-weight: 600; }
+    .bet-card.settled-card .bet-card-top { border-bottom: none; padding-bottom: 0; }
+    .bet-card.settled-card:not(.collapsed) .bet-card-top { border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+    /* Compact summary row visible when collapsed */
+    .bet-collapsed-summary { display: none; padding: 6px 14px 12px; align-items: center; gap: 0; }
     .bet-card.settled-card.collapsed .bet-collapsed-summary { display: flex; }
-    .bcs-meta { font-size: 11px; }
-    .bcs-pnl { margin-left: auto; font-weight: 900; font-size: 14px; }
+    .bcs-left { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+    .bcs-mkt { font-size: 12px; font-weight: 700; color: var(--text); }
+    .bcs-detail { font-size: 11px; color: var(--muted); font-weight: 500; }
+    .bcs-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+    .bcs-pnl { font-weight: 900; font-size: 15px; line-height: 1; }
     .bcs-pnl.plus { color: var(--green); }
     .bcs-pnl.minus { color: var(--red); }
-    .bet-expand-hint { font-size: 10px; color: var(--muted); opacity: .5; padding: 0 14px 6px; text-align: right; }
-    .bet-card.settled-card:not(.collapsed) .bet-expand-hint { display: none; }
+    .bcs-pnl.void { color: var(--muted); }
+    .bcs-return { font-size: 10px; color: var(--muted); font-weight: 600; }
+    /* Chevron toggle indicator */
+    .bet-card-header .bcs-chevron { font-size: 11px; color: var(--muted); opacity: .5; transition: transform .25s; margin-left: 4px; align-self: center; }
+    .bet-card.settled-card:not(.collapsed) .bcs-chevron { transform: rotate(180deg); }
 
     /* ── Heute-Sektion ── */
     .today-header { background: rgba(0,200,83,.06); border-top: 1px solid rgba(0,200,83,.2); border-bottom: 1px solid rgba(0,200,83,.15); padding: 8px 16px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; color: var(--green); letter-spacing: .3px; }
@@ -1790,24 +1799,35 @@ function _renderBetCard(b) {
 
   if (b.group === 'settled') {
     const totalReturn = odds * stake;
-    const bcsReturnStr = b.status === 'void' ? `€${stake.toFixed(2)} zurück` : (pnl >= 0 ? `€${totalReturn.toFixed(2)} zurück` : `€0 zurück`);
+    const isVoid = b.status === 'void';
+    const bcsPnlCls = isVoid ? 'void' : pnlCls;
+    const bcsPnlStr = isVoid ? `€${stake.toFixed(2)} Refund` : `${pnl >= 0 ? '+' : ''}€${Math.abs(pnl).toFixed(2)}`;
+    const bcsReturnStr = isVoid ? '' : `Einsatz €${stake.toFixed(2)} · ${pnl >= 0 ? 'Rückgabe' : 'Verlust'} €${pnl >= 0 ? totalReturn.toFixed(2) : stake.toFixed(2)}`;
     return `<div class="bet-card settled-card collapsed" onclick="_toggleSettledCard(this)">
     <div class="bet-card-top">
       <div class="bet-card-header">
         <span class="bet-match">${flagH} ${esc(home)} vs ${flagA} ${esc(away)}</span>
-        ${_betStatusChip(b)}
-      </div>
-      <div class="bet-market-row">
-        <span class="bet-market-chip">${esc(mktLabel)}</span>
-        <span class="bet-date">${_betDateLabel(b)}</span>
+        <span style="display:flex;align-items:center;gap:6px">${_betStatusChip(b)}<span class="bcs-chevron">▾</span></span>
       </div>
     </div>
     <div class="bet-collapsed-summary">
-      <span class="bcs-meta">€${stake.toFixed(2)} · @${odds.toFixed(2)}</span>
-      <span class="bcs-pnl ${pnlCls}">${pnl >= 0 ? '+' : ''}€${Math.abs(pnl).toFixed(2)}</span>
+      <div class="bcs-left">
+        <span class="bcs-mkt">${esc(mktLabel)}</span>
+        <span class="bcs-detail">@${odds.toFixed(2)} · ${_betDateLabel(b)}</span>
+      </div>
+      <div class="bcs-right">
+        <span class="bcs-pnl ${bcsPnlCls}">${bcsPnlStr}</span>
+        ${bcsReturnStr ? `<span class="bcs-return">${bcsReturnStr}</span>` : ''}
+      </div>
     </div>
     <div class="bet-details">
-      ${scorelineHtml}
+      <div style="padding:12px 14px 0">
+        <div class="bet-market-row" style="margin-bottom:6px">
+          <span class="bet-market-chip">${esc(mktLabel)}</span>
+          <span class="bet-date">${_betDateLabel(b)}</span>
+        </div>
+        ${scorelineHtml}
+      </div>
       ${midRow}
       <div class="bet-card-footer">
         ${settledLiveHtml}
