@@ -49,9 +49,9 @@ PLAYER_XG_ENABLED = True           # src/features/player_rating.py — per-playe
 HT_FT_ENABLED = False
 CORRECT_SCORE_ENABLED = False
 PLAYER_PROPS_ENABLED = False
-# Tore Bereich 2-4: konservative Startphase (Backtest in-sample → echter Datenaufbau nötig)
-# H1/H2 aktiv als Modell-Insight, aber Settlement manuell → kein Auto-Log
-GOALS_RANGE_ENABLED = True
+# Tore-Bereich-Wetten bleiben aus, bis eine echte spielbare Goal-Band-Quote
+# verfügbar ist. Aus O/U-Linien abgeleitete Fair-Quoten sind kein Bet-Markt.
+GOALS_RANGE_ENABLED = False
 GOALS_RANGE_MAX_STAKE = 7.0   # start konservativ; nach 30+ echten Wetten erhöhen
 LINE_SHOPPING_REGIONS = ["eu", "us", "uk", "au"]  # best-price across all regions
 

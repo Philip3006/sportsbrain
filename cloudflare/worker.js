@@ -15,9 +15,6 @@ const ALLOWED_MARKETS = new Set([
   'dc_1x', 'dc_x2', 'dc_12',
   'first_set_a', 'first_set_b',
   'ftts_home', 'ftts_away',
-  'goals_2_4', 'goals_2_4_no',
-  'h1_goals_2_4', 'h1_goals_2_4_no',
-  'h2_goals_2_4', 'h2_goals_2_4_no',
 ]);
 const OU_RE = /^o\/u\d+(?:\.\d+)?_(over|under)$/;
 const AH_RE = /^ah[+-]\d+(?:\.\d+)?_(home|away|a|b)$/;
@@ -28,6 +25,17 @@ const SCORER_RE = /^scorer_[\p{L}\p{M}\p{N} '’_\-\.]{1,60}$/u;
 function isValidMarket(m) {
   if (typeof m !== 'string' || !m) return false;
   return ALLOWED_MARKETS.has(m) || OU_RE.test(m) || AH_RE.test(m) || SCORER_RE.test(m);
+}
+
+function minEvPctForMarket(market) {
+  return market.startsWith('scorer_') ? 10 : 3;
+}
+
+function parseModelProb(value) {
+  const n = Number(value);
+  if (Number.isFinite(n) && n > 0 && n < 1) return n;
+  if (Number.isFinite(n) && n > 1 && n <= 100) return n / 100;
+  return NaN;
 }
 
 function jsonResponse(obj, status = 200) {
@@ -135,6 +143,23 @@ export default {
         if (!isValidMarket(market)) return jsonResponse({ error: 'unknown market: ' + market }, 400);
         if (!Number.isFinite(odds) || odds < 1.01 || odds > 100) return jsonResponse({ error: 'odds out of range (1.01–100)' }, 400);
         if (!Number.isFinite(stake) || stake < 0.5 || stake > 25) return jsonResponse({ error: 'stake_eur out of range (0.5–25)' }, 400);
+        const modelProb = parseModelProb(body.model_prob);
+        if (!Number.isFinite(modelProb)) return jsonResponse({ error: 'model_prob required for value recheck' }, 400);
+        const suppliedMinEv = Number(body.min_ev_pct);
+        const minEvPct = Math.max(
+          minEvPctForMarket(market),
+          Number.isFinite(suppliedMinEv) ? suppliedMinEv : 0
+        );
+        const evPct = (modelProb * odds - 1) * 100;
+        if (evPct + 1e-9 < minEvPct) {
+          const minOdds = (1 + minEvPct / 100) / modelProb;
+          return jsonResponse({
+            error: `not a value bet after odds change (EV ${evPct.toFixed(1)}%, needs ${minEvPct.toFixed(1)}%; min odds ${minOdds.toFixed(2)}`,
+            ev_pct: Number(evPct.toFixed(4)),
+            min_ev_pct: minEvPct,
+            min_odds: Number(minOdds.toFixed(4)),
+          }, 400);
+        }
 
         const rawSource = (body.source || 'value').toString().toLowerCase();
         const source = (rawSource === 'manual') ? 'manual' : 'value';
@@ -146,8 +171,11 @@ export default {
           market,
           odds,
           stake_eur: stake,
-          ev_pct: Number.isFinite(Number(body.ev_pct)) ? Number(body.ev_pct) : null,
-          model_prob: Number.isFinite(Number(body.model_prob)) ? Number(body.model_prob) : null,
+          ev_pct: Number(evPct.toFixed(4)),
+          model_prob: modelProb,
+          min_ev_pct: minEvPct,
+          odds_bookmaker: typeof body.odds_bookmaker === 'string' ? body.odds_bookmaker : '',
+          odds_source: typeof body.odds_source === 'string' ? body.odds_source : '',
           confidence: typeof body.confidence === 'string' ? body.confidence : '',
           kickoff: typeof body.kickoff === 'string' ? body.kickoff : '',
           sport: typeof body.sport === 'string' ? body.sport : '',

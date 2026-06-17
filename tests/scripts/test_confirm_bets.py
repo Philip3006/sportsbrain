@@ -1,6 +1,6 @@
 import pandas as pd
 
-from scripts.confirm_bets import _make_signal
+from scripts.confirm_bets import _make_signal, _reprice_dashboard_signal
 from src.betting.ledger import append_bets
 from src.betting.value_detector import BetSignal
 
@@ -60,3 +60,30 @@ def test_make_signal_derives_stake_pct_when_missing():
 
     assert sig.stake_pct == 0.05
     assert sig.kelly_f == 0.05
+
+
+def test_reprice_dashboard_signal_blocks_quote_below_value_threshold():
+    data = _dashboard_signal()
+
+    assert _reprice_dashboard_signal(data, bankroll=100.0, odds=1.80) is None
+
+
+def test_reprice_dashboard_signal_updates_ev_and_stake_for_manual_quote():
+    data = _dashboard_signal()
+
+    updated = _reprice_dashboard_signal(data, bankroll=100.0, odds=1.90)
+
+    assert updated is not None
+    assert updated["odds"] == 1.9
+    assert updated["ev_pct"] == 4.5
+    assert updated["stake_eur"] > 0
+
+
+def test_reprice_dashboard_signal_uses_ten_percent_for_scorer_markets():
+    data = _dashboard_signal()
+    data["market"] = "scorer_Jane Striker"
+    data["model_prob"] = 25.0
+    data["min_ev_pct"] = 10.0
+
+    assert _reprice_dashboard_signal(data, bankroll=100.0, odds=4.20) is None
+    assert _reprice_dashboard_signal(data, bankroll=100.0, odds=4.40) is not None
