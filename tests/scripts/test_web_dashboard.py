@@ -271,3 +271,19 @@ def test_build_system_status_reports_stale_scan_and_settlement_due(tmp_path, mon
     assert "STALE_SCAN" in codes
     assert "LOW_ODDS_QUOTA" in codes
     assert "SETTLEMENT_DUE" in codes
+
+
+def test_scan_log_status_downgrades_historical_error_after_clean_done(tmp_path):
+    log = tmp_path / "job.log"
+    log.write_text(
+        "--- [2026-06-18 10:00:00 CEST] job started ---\n"
+        "push failed: fetch first\n"
+        "--- [2026-06-18 10:01:00 CEST] job error: push failed ---\n"
+        "--- [2026-06-18 10:05:00 CEST] job started ---\n"
+        "--- [2026-06-18 10:05:10 CEST] job done ---\n"
+    )
+
+    status = web_dashboard._scan_log_status(log)
+
+    assert status["status"] == "warn"
+    assert status["message"] == "Fehler im Log, letzter Lauf wirkt abgeschlossen"
