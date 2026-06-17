@@ -24,6 +24,9 @@ class BetSignal:
     b365_odds: float = 0.0    # Pinnacle reference quote (0 = not available)
     elo_prob: float = 0.0     # Elo win probability for the bet's outcome (0 = not computed)
     n_models_agree: int = 0   # how many of [DC, Elo, LGBM] see value (0–3); 0 = not computed / non-1X2 market
+    odds_bookmaker: str = ""  # preferred book/source used for this signal, e.g. bet365
+    odds_source: str = ""     # provider path, e.g. sofascore
+    min_ev_pct: float = 0.0   # market-specific minimum EV threshold in percentage points
 
 
 _MARKETS = ["home", "draw", "away"]
@@ -31,6 +34,52 @@ _MARKETS = ["home", "draw", "away"]
 _MODEL_IDX = {"home": 2, "draw": 1, "away": 0}
 # raw_odds tuple order: (home_odds, draw_odds, away_odds)
 _ODDS_IDX = {"home": 0, "draw": 1, "away": 2}
+
+_SCORER_MIN_EV = 0.10
+
+
+def min_ev_for_market(market: str) -> float:
+    """Return the minimum EV threshold for a market as a decimal fraction."""
+    return _SCORER_MIN_EV if str(market).startswith("scorer_") else MIN_EDGE
+
+
+def min_ev_pct_for_market(market: str) -> float:
+    """Return the minimum EV threshold for a market in percentage points."""
+    return min_ev_for_market(market) * 100.0
+
+
+def reprice_value_bet(
+    market: str,
+    model_prob: float,
+    decimal_odds: float,
+    bankroll: float,
+    min_ev: float | None = None,
+) -> dict:
+    """Recompute EV, minimum odds and Kelly stake for a manually changed quote."""
+    try:
+        p = float(model_prob)
+        odds = float(decimal_odds)
+    except (TypeError, ValueError):
+        p, odds = 0.0, 0.0
+
+    threshold = min_ev_for_market(market) if min_ev is None else float(min_ev)
+    min_odds = (1.0 + threshold) / p if p > 0 else float("inf")
+    ev = expected_value(p, odds) if p > 0 and odds > 1.0 else float("-inf")
+    kf = kelly_fraction(p, odds) if p > 0 and odds > 1.0 else 0.0
+    stake_eur = kelly_stake_eur(kf, bankroll) if bankroll > 0 else 0.0
+    return {
+        "market": market,
+        "model_prob": p,
+        "decimal_odds": odds,
+        "ev": ev,
+        "ev_pct": ev * 100.0,
+        "min_ev": threshold,
+        "min_ev_pct": threshold * 100.0,
+        "min_odds": min_odds,
+        "kelly_f": kf,
+        "stake_eur": stake_eur,
+        "is_value": ev >= threshold - 1e-9,
+    }
 
 
 def _make_signal(
