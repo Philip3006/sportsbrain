@@ -479,6 +479,26 @@ def fetch_event_player_props(
     return best
 
 
+_ESPN_NAME_ALIASES: dict[str, str] = {
+    # ESPN displayName → our canonical name (as used in ledger/signals)
+    "congo dr":           "DR Congo",
+    "dr congo":           "DR Congo",
+    "bosnia and herzegovina": "Bosnia & Herzegovina",
+    "korea republic":     "South Korea",
+    "korea dpr":          "North Korea",
+    "usa":                "United States",
+    "united states":      "USA",
+    "côte d'ivoire":      "Ivory Coast",
+    "cote d'ivoire":      "Ivory Coast",
+    "türkiye":            "Turkey",
+}
+
+
+def _espn_team_name(raw: str) -> str:
+    """Normalize ESPN displayName to canonical team name."""
+    return _ESPN_NAME_ALIASES.get(raw.lower().strip(), raw)
+
+
 def _fetch_espn_wm_scores() -> list[dict]:
     """ESPN public scoreboard — kein API-Key, ~30-60s Lag.
 
@@ -509,8 +529,8 @@ def _fetch_espn_wm_scores() -> list[dict]:
                 pass
         results.append({
             "match_id":      f"espn_{e.get('id', '')}",
-            "home":          home_c.get("team", {}).get("displayName", ""),
-            "away":          away_c.get("team", {}).get("displayName", ""),
+            "home":          _espn_team_name(home_c.get("team", {}).get("displayName", "")),
+            "away":          _espn_team_name(away_c.get("team", {}).get("displayName", "")),
             "home_score":    home_score,
             "away_score":    away_score,
             "commence_time": e.get("date", "").replace("Z", "+00:00"),
