@@ -1760,7 +1760,11 @@
     }
   },
   {
+<<<<<<< Updated upstream
     "ts": "2026-06-16T23:51:49Z",
+=======
+    "ts": "2026-06-16T21:56:03Z",
+>>>>>>> Stashed changes
     "date": "2026-06-16",
     "odds": {
       "Qatar vs Switzerland": {
@@ -1829,6 +1833,7 @@
         "away": 7.6
       },
       "Iraq vs Norway": {
+<<<<<<< Updated upstream
         "home": 61.0,
         "draw": 9.0,
         "away": 1.16
@@ -1836,6 +1841,15 @@
       "Argentina vs Algeria": {
         "home": 1.49,
         "draw": 4.75,
+=======
+        "home": 17.0,
+        "draw": 7.5,
+        "away": 1.26
+      },
+      "Argentina vs Algeria": {
+        "home": 1.48,
+        "draw": 4.7,
+>>>>>>> Stashed changes
         "away": 9.0
       },
       "Austria vs Jordan": {
@@ -1844,8 +1858,13 @@
         "away": 10.0
       },
       "Portugal vs DR Congo": {
+<<<<<<< Updated upstream
         "home": 1.35,
         "draw": 6.0,
+=======
+        "home": 1.36,
+        "draw": 6.1,
+>>>>>>> Stashed changes
         "away": 13.0
       },
       "England vs Croatia": {
@@ -1854,6 +1873,7 @@
         "away": 5.5
       },
       "Ghana vs Panama": {
+<<<<<<< Updated upstream
         "home": 2.34,
         "draw": 3.41,
         "away": 3.55
@@ -1861,6 +1881,15 @@
       "Uzbekistan vs Colombia": {
         "home": 11.0,
         "draw": 5.1,
+=======
+        "home": 2.33,
+        "draw": 3.45,
+        "away": 3.55
+      },
+      "Uzbekistan vs Colombia": {
+        "home": 11.5,
+        "draw": 5.3,
+>>>>>>> Stashed changes
         "away": 1.42
       },
       "Czech Republic vs South Africa": {
@@ -1871,7 +1900,11 @@
       "Switzerland vs Bosnia & Herzegovina": {
         "home": 1.62,
         "draw": 4.3,
+<<<<<<< Updated upstream
         "away": 7.1
+=======
+        "away": 6.9
+>>>>>>> Stashed changes
       },
       "Canada vs Qatar": {
         "home": 1.32,
@@ -1881,7 +1914,11 @@
       "Mexico vs South Korea": {
         "home": 2.08,
         "draw": 3.45,
+<<<<<<< Updated upstream
         "away": 4.2
+=======
+        "away": 4.21
+>>>>>>> Stashed changes
       },
       "USA vs Australia": {
         "home": 1.64,
@@ -1896,7 +1933,11 @@
       "Brazil vs Haiti": {
         "home": 1.13,
         "draw": 13.0,
+<<<<<<< Updated upstream
         "away": 30.0
+=======
+        "away": 31.0
+>>>>>>> Stashed changes
       },
       "Turkey vs Paraguay": {
         "home": 2.12,
@@ -1904,7 +1945,11 @@
         "away": 4.2
       },
       "Netherlands vs Sweden": {
+<<<<<<< Updated upstream
         "home": 1.75,
+=======
+        "home": 1.76,
+>>>>>>> Stashed changes
         "draw": 4.1,
         "away": 5.3
       },
@@ -1935,13 +1980,18 @@
       },
       "Uruguay vs Cape Verde": {
         "home": 1.54,
+<<<<<<< Updated upstream
         "draw": 4.35,
         "away": 8.4
+=======
+        "draw": 4.4,
+        "away": 8.6
+>>>>>>> Stashed changes
       },
       "New Zealand vs Egypt": {
         "home": 6.0,
         "draw": 4.3,
-        "away": 1.67
+        "away": 1.68
       },
       "Argentina vs Austria": {
         "home": 1.7,
@@ -1951,12 +2001,18 @@
       "France vs Iraq": {
         "home": 1.14,
         "draw": 11.0,
-        "away": 36.0
+        "away": 34.0
       },
       "Norway vs Senegal": {
+<<<<<<< Updated upstream
         "home": 2.52,
         "draw": 3.6,
         "away": 3.16
+=======
+        "home": 2.44,
+        "draw": 3.6,
+        "away": 3.2
+>>>>>>> Stashed changes
       },
       "Jordan vs Algeria": {
         "home": 7.6,
@@ -1971,7 +2027,11 @@
       "England vs Ghana": {
         "home": 1.35,
         "draw": 5.9,
+<<<<<<< Updated upstream
         "away": 11.3
+=======
+        "away": 11.0
+>>>>>>> Stashed changes
       },
       "Panama vs Croatia": {
         "home": 7.2,
@@ -1986,7 +2046,11 @@
       "Bosnia & Herzegovina vs Qatar": {
         "home": 1.62,
         "draw": 4.4,
+<<<<<<< Updated upstream
         "away": 6.5
+=======
+        "away": 7.0
+>>>>>>> Stashed changes
       },
       "Switzerland vs Canada": {
         "home": 2.2,
@@ -2010,7 +2074,11 @@
       },
       "South Africa vs South Korea": {
         "home": 6.25,
+<<<<<<< Updated upstream
         "draw": 4.3,
+=======
+        "draw": 4.4,
+>>>>>>> Stashed changes
         "away": 1.63
       },
       "Curaçao vs Ivory Coast": {
@@ -2034,7 +2102,11 @@
         "away": 1.38
       },
       "Paraguay vs Australia": {
+<<<<<<< Updated upstream
         "home": 2.26,
+=======
+        "home": 2.24,
+>>>>>>> Stashed changes
         "draw": 3.4,
         "away": 3.6
       },
@@ -2049,13 +2121,21 @@
         "away": 1.87
       },
       "Senegal vs Iraq": {
+<<<<<<< Updated upstream
         "home": 1.43,
+=======
+        "home": 1.45,
+>>>>>>> Stashed changes
         "draw": 5.2,
         "away": 10.0
       },
       "Cape Verde vs Saudi Arabia": {
         "home": 2.94,
+<<<<<<< Updated upstream
         "draw": 3.84,
+=======
+        "draw": 3.9,
+>>>>>>> Stashed changes
         "away": 2.54
       },
       "Uruguay vs Spain": {
