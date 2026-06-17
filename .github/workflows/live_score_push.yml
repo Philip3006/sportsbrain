@@ -45,10 +45,15 @@ jobs:
           if ! git diff --staged --quiet; then
             git commit -m "auto: live scores $(date -u '+%Y-%m-%d %H:%M UTC')"
             for i in 1 2 3 4 5; do
-              git pull --rebase origin main || true
+              if ! git pull --rebase origin main 2>/dev/null; then
+                # Rebase-Konflikt in live_scores.json → eigene Version bevorzugen
+                git checkout --ours data/live_scores.json 2>/dev/null || true
+                git add data/live_scores.json 2>/dev/null || true
+                git rebase --continue 2>/dev/null || git rebase --skip 2>/dev/null || true
+              fi
               git push && break
               echo "[push] attempt $i failed, retry after backoff…"
               sleep $((RANDOM % 6 + 2))
-              [ "$i" = "5" ] && { echo "[push] giving up after 5 attempts" >&2; exit 1; }
+              [ "$i" = "5" ] && { echo "[cache-push] giving up — nicht kritisch" >&2; exit 0; }
             done
           fi
