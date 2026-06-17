@@ -205,15 +205,20 @@ def main() -> int:
             def _g(*args):
                 return subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
                                       text=True, timeout=30)
-            # Only the ledger — no other files (avoid pushing local-only state).
-            _g("add", "results/ledger.csv")
-            staged = _g("diff", "--cached", "--quiet", "results/ledger.csv")
+            # Keep repo-backed dashboard state in sync with the ledger, but avoid
+            # staging unrelated local files from launchd jobs or manual work.
+            _g("add", "results/ledger.csv", "docs/data/signals.json")
+            staged = _g("diff", "--cached", "--quiet", "--", "results/ledger.csv", "docs/data/signals.json")
             if staged.returncode != 0:  # there are staged changes
                 commit_msg = f"auto: ledger sync {added} bet(s)"
                 _g("commit", "-m", commit_msg,
                    "--author=SportsBrain Bot <bot@sportsbrain>")
                 for attempt in range(1, 6):
-                    _g("pull", "--rebase", "origin", "main")
+                    pull = _g("pull", "--rebase", "--autostash", "origin", "main")
+                    if pull.returncode != 0:
+                        print(f"[consume] pull attempt {attempt} failed: "
+                              f"{pull.stderr.strip()[:120]}", file=sys.stderr)
+                        continue
                     push = _g("push", "origin", "main")
                     if push.returncode == 0:
                         print(f"[consume] ledger pushed to GitHub ({commit_msg})")
