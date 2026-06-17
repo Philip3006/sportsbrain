@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-17T23:03:48Z",
+  "updated": "2026-06-17T23:26:45Z",
   "schedule": [
     {
       "sport": "football",
@@ -9226,7 +9226,7 @@
         "group": "live",
         "status": "open",
         "status_source": "official",
-        "badge_text": "LIVE 3'",
+        "badge_text": "LIVE 26'",
         "is_live_badge": true,
         "scoreline": "0:0",
         "home_score": 0,
@@ -9251,7 +9251,7 @@
         "group": "live",
         "status": "open",
         "status_source": "official",
-        "badge_text": "LIVE 3'",
+        "badge_text": "LIVE 26'",
         "is_live_badge": true,
         "scoreline": "0:0",
         "home_score": 0,
@@ -10653,12 +10653,12 @@
   ],
   "system_health": {
     "status": "warn",
-    "last_scan_at": "2026-06-17T23:03:48Z",
+    "last_scan_at": "2026-06-17T23:26:45Z",
     "open_bets": 2,
     "settlement_due": 0,
     "odds_api": {
-      "requests_used": 1123,
-      "requests_remaining": 18877
+      "requests_used": 1135,
+      "requests_remaining": 18865
     },
     "last_retrain_at": "2026-06-17T16:00:09Z",
     "last_closing_odds_at": "2026-06-17T23:03:52Z",
@@ -10719,8 +10719,8 @@
   },
   "model_status": {
     "active_snapshot": "params_20260617.pkl",
-    "active_snapshot_updated_at": "2026-06-17T10:53:30Z",
-    "active_snapshot_age_hours": 12.2,
+    "active_snapshot_updated_at": "2026-06-17T23:26:14Z",
+    "active_snapshot_age_hours": 0.0,
     "active_snapshot_exists": true,
     "backtest_gate": {
       "passed": true,
@@ -10737,10 +10737,10 @@
     "status": "ok"
   },
   "data_freshness": {
-    "signals_updated_at": "2026-06-17T23:03:48Z",
+    "signals_updated_at": "2026-06-17T23:26:45Z",
     "signals_age_hours": 0.0,
     "signals_stale": false,
-    "odds_cache_updated_at": "2026-06-17T23:03:48Z",
+    "odds_cache_updated_at": "2026-06-17T23:26:44Z",
     "odds_cache_age_hours": 0.0,
     "odds_snapshot_count": 68,
     "next_kickoff": "2026-06-18T02:00:00Z",
