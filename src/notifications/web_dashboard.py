@@ -7,16 +7,18 @@ from __future__ import annotations
 import csv
 import json
 import os
-import re
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from src.betting.live_state import pnl_from_mode, resolve_market_state
 from src.betting.value_detector import BetSignal
+from src.betting.odds_utils import market_to_all_odds_key
 
 ROOT = Path(__file__).parent.parent.parent
 _JSON_PATH = ROOT / "docs" / "data" / "signals.json"
 _LEDGER_PATH = ROOT / "results" / "ledger.csv"
+_LIVE_SCORES_PATH = ROOT / "data" / "live_scores.json"
 
 # FIFA-Konföderation-Mapping (WM 2026 Teams + WM-Qualifikations-Backtest)
 CONFEDERATION_MAP: dict[str, str] = {
@@ -371,34 +373,271 @@ def _get_closed_bets() -> list[dict]:
         return []
     try:
         with open(_LEDGER_PATH, newline="") as f:
-            return [r for r in csv.DictReader(f) if r.get("status") in ("won", "lost", "push")]
+            return [r for r in csv.DictReader(f) if r.get("status") in ("won", "lost", "void")]
     except Exception:
         return []
 
 
 def _market_to_odds_key(market: str) -> str | None:
     """Map a ledger market string to the key used in all_odds dicts."""
-    m = market.lower().strip()
-    if m == "home":   return "home"
-    if m == "away":   return "away"
-    if m == "draw":   return "draw"
-    if "_over"  in m: return "over25"
-    if "_under" in m: return "under25"
-    if m == "btts_yes": return "btts_yes"
-    if m == "btts_no":  return "btts_no"
-    if m in ("dc_1x", "dc_x2", "dc_12"): return m
-    ah = re.match(r"ah[+\-]?(\d+\.?\d*)_(home|away)", m)
-    if ah:
-        return f"ah{ah.group(1)}_{ah.group(2)}"
-    return None
+    return market_to_all_odds_key(market)
+
+
+def _norm_team(value: str) -> str:
+    return (value or "").strip().lower()
+
+
+def _load_live_scores_cache() -> dict:
+    if not _LIVE_SCORES_PATH.exists():
+        return {}
+    try:
+        return json.loads(_LIVE_SCORES_PATH.read_text())
+    except Exception:
+        return {}
+
+
+def _kickoff_map(schedule: list[dict]) -> dict[tuple[str, str], str]:
+    mapping: dict[tuple[str, str], str] = {}
+    for row in schedule:
+        home = _norm_team(str(row.get("home", "")))
+        away = _norm_team(str(row.get("away", "")))
+        kickoff = str(row.get("kickoff", ""))
+        if home and away and kickoff:
+            mapping[(home, away)] = kickoff
+    return mapping
+
+
+def _score_maps(live_scores: dict, wm_results: list[dict]) -> tuple[dict, dict]:
+    by_match_id: dict[str, dict] = {}
+    by_match: dict[tuple[str, str], dict] = {}
+
+    for match_id, row in (live_scores or {}).items():
+        if not isinstance(row, dict):
+            continue
+        score = {
+            "match_id": match_id,
+            "home": row.get("home", ""),
+            "away": row.get("away", ""),
+            "home_score": row.get("home_score"),
+            "away_score": row.get("away_score"),
+            "completed": bool(row.get("completed", False)),
+            "updated": row.get("updated", ""),
+            "scorer_names": set(row.get("scorer_names", []) or []),
+            "last_goal_scorer": row.get("last_goal_scorer", ""),
+        }
+        by_match_id[match_id] = score
+        home = _norm_team(str(score["home"]))
+        away = _norm_team(str(score["away"]))
+        if home and away:
+            by_match[(home, away)] = score
+
+    for row in wm_results or []:
+        score = {
+            "match_id": row.get("match_id", f'{row.get("home", "")}_vs_{row.get("away", "")}'),
+            "home": row.get("home", ""),
+            "away": row.get("away", ""),
+            "home_score": row.get("home_score"),
+            "away_score": row.get("away_score"),
+            "completed": row.get("home_score") is not None and row.get("away_score") is not None,
+            "updated": "",
+            "scorer_names": set(),
+            "last_goal_scorer": "",
+        }
+        home = _norm_team(str(score["home"]))
+        away = _norm_team(str(score["away"]))
+        if home and away:
+            by_match[(home, away)] = score
+        match_id = str(score["match_id"])
+        if match_id:
+            by_match_id[match_id] = score
+
+    return by_match_id, by_match
+
+
+def _market_odds_snapshot(home: str, away: str, market: str, all_odds: dict | None) -> tuple[float | None, float | None, str | None]:
+    current_odds = None
+    drift_pct = None
+    clv_signal = None
+    if all_odds:
+        try:
+            mk_lower = f"{home.lower()} vs {away.lower()}"
+            odds_block = next((v for k, v in all_odds.items() if k.lower() == mk_lower), None)
+            odds_key = _market_to_odds_key(market)
+            if odds_key and odds_block is not None:
+                raw = odds_block.get(odds_key)
+                if raw is not None:
+                    current_odds = float(raw)
+        except Exception:
+            current_odds = None
+    return current_odds, drift_pct, clv_signal
+
+
+def _live_badge(kickoff: str, now: datetime, completed: bool) -> tuple[str, bool]:
+    if completed:
+        return "Abgerechnet", False
+    if not kickoff:
+        return "Offen", False
+    try:
+        ko_dt = datetime.fromisoformat(kickoff.replace("Z", "+00:00"))
+    except ValueError:
+        return "Offen", False
+    diff_min = (now - ko_dt).total_seconds() / 60.0
+    if diff_min < -5:
+        return "Offen", False
+    if diff_min <= 125:
+        return f"LIVE {max(0, int(diff_min))}'", True
+    return "Offen", False
+
+
+def _build_bet_card(
+    row: dict,
+    *,
+    all_odds: dict | None,
+    kickoff: str,
+    score: dict | None,
+    derived: dict | None,
+    group: str,
+    now: datetime,
+) -> dict:
+    home = row["home"]
+    away = row["away"]
+    market = row["market"]
+    entry_odds = float(row.get("decimal_odds") or 0)
+    stake = float(row.get("stake_amount") or 0)
+    current_odds, _, _ = _market_odds_snapshot(home, away, market, all_odds)
+
+    drift_pct = None
+    clv_signal = None
+    if current_odds and entry_odds > 0:
+        drift_pct = round((current_odds - entry_odds) / entry_odds * 100, 1)
+        if drift_pct < -2:
+            clv_signal = "good"
+        elif drift_pct > 2:
+            clv_signal = "bad"
+
+    resolved = row.get("status") in ("won", "lost", "void")
+    score_known = score and score.get("home_score") is not None and score.get("away_score") is not None
+    scoreline = None
+    if score_known:
+        scoreline = f'{int(score["home_score"])}:{int(score["away_score"])}'
+
+    status = row.get("status", "open")
+    pnl = float(row.get("pnl") or 0)
+    pnl_source = "official"
+    if derived is not None:
+        status = derived["status"]
+        pnl = pnl_from_mode(derived["pnl_mode"], entry_odds, stake)
+        pnl_source = "live"
+
+    badge_text, is_live = _live_badge(kickoff, now, resolved or (score and score.get("completed", False) is True) or group == "settled")
+    if group == "settled":
+        badge_text = "Abgerechnet" if pnl_source == "official" else "Live entschieden"
+        is_live = pnl_source == "live"
+    elif group == "live":
+        badge_text = badge_text if is_live else "LIVE"
+        is_live = True
+
+    return {
+        "match": f"{home} vs {away}",
+        "home": home,
+        "away": away,
+        "market": market,
+        "entry_odds": entry_odds,
+        "current_odds": current_odds,
+        "drift_pct": drift_pct,
+        "clv_signal": clv_signal,
+        "stake": stake,
+        "match_date": row.get("match_date", ""),
+        "kickoff": kickoff,
+        "model_edge_pct": None,
+        "group": group,
+        "status": status,
+        "status_source": pnl_source,
+        "badge_text": badge_text,
+        "is_live_badge": is_live,
+        "scoreline": scoreline,
+        "home_score": score.get("home_score") if score else None,
+        "away_score": score.get("away_score") if score else None,
+        "last_goal_scorer": score.get("last_goal_scorer", "") if score else "",
+        "pnl": round(pnl, 2),
+    }
+
+
+def _build_bets_view(
+    schedule: list[dict],
+    all_odds: dict | None,
+    wm_results: list[dict],
+) -> dict:
+    empty = {"open": [], "live": [], "settled": [], "summary": {"open": 0, "live": 0, "settled": 0}}
+    if not _LEDGER_PATH.exists():
+        return empty
+
+    kickoff_by_match = _kickoff_map(schedule)
+    live_scores = _load_live_scores_cache()
+    score_by_match_id, score_by_match = _score_maps(live_scores, wm_results)
+    now = datetime.now(timezone.utc)
+
+    groups = {"open": [], "live": [], "settled": []}
+    try:
+        with open(_LEDGER_PATH, newline="") as f:
+            for row in csv.DictReader(f):
+                home = row["home"]
+                away = row["away"]
+                market = row["market"]
+                match_key = (_norm_team(home), _norm_team(away))
+                kickoff = kickoff_by_match.get(match_key, "")
+
+                score = None
+                match_id = str(row.get("match_id", ""))
+                if match_id and match_id in score_by_match_id:
+                    score = score_by_match_id[match_id]
+                elif match_key in score_by_match:
+                    score = score_by_match[match_key]
+
+                completed = bool(score and score.get("completed"))
+                derived = None
+                if row.get("status") == "open" and score and score.get("home_score") is not None and score.get("away_score") is not None:
+                    derived = resolve_market_state(
+                        market,
+                        int(score["home_score"]),
+                        int(score["away_score"]),
+                        completed=completed,
+                        scorer_names=score.get("scorer_names") or None,
+                    )
+
+                if row.get("status") in ("won", "lost", "void") or derived is not None:
+                    groups["settled"].append(_build_bet_card(
+                        row,
+                        all_odds=all_odds,
+                        kickoff=kickoff,
+                        score=score,
+                        derived=derived,
+                        group="settled",
+                        now=now,
+                    ))
+                    continue
+
+                _, live_by_time = _live_badge(kickoff, now, completed)
+                target = "live" if live_by_time or (score and score.get("home_score") is not None) else "open"
+                groups[target].append(_build_bet_card(
+                    row,
+                    all_odds=all_odds,
+                    kickoff=kickoff,
+                    score=score,
+                    derived=None,
+                    group=target,
+                    now=now,
+                ))
+    except Exception:
+        return empty
+
+    for key in groups:
+        groups[key].sort(key=lambda row: (row.get("kickoff", ""), row.get("match", "")))
+    groups["summary"] = {key: len(groups[key]) for key in ("open", "live", "settled")}
+    return groups
 
 
 def _get_open_bets_from_ledger(all_odds: dict | None = None) -> list[dict]:
-    """Read open bets directly from ledger — always authoritative, never stale.
-
-    If all_odds is provided, enrich each bet with current_odds, drift_pct,
-    and clv_signal using the current market prices.
-    """
     if not _LEDGER_PATH.exists():
         return []
     try:
@@ -407,48 +646,15 @@ def _get_open_bets_from_ledger(all_odds: dict | None = None) -> list[dict]:
             for r in csv.DictReader(f):
                 if r.get("status") != "open":
                     continue
-                home = r["home"]
-                away = r["away"]
-                market = r["market"]
-                entry_odds = float(r["decimal_odds"])
-
-                current_odds = None
-                drift_pct = None
-                clv_signal = None
-
-                if all_odds:
-                    try:
-                        mk_lower = f"{home.lower()} vs {away.lower()}"
-                        odds_block = next(
-                            (v for k, v in all_odds.items() if k.lower() == mk_lower), None
-                        )
-                        odds_key = _market_to_odds_key(market)
-                        if odds_key and odds_block is not None:
-                            raw = odds_block.get(odds_key)
-                            if raw is not None:
-                                current_odds = float(raw)
-                                if entry_odds and entry_odds > 0:
-                                    drift_pct = round((current_odds - entry_odds) / entry_odds * 100, 1)
-                                    if drift_pct > 2:
-                                        clv_signal = "good"
-                                    elif drift_pct < -2:
-                                        clv_signal = "bad"
-                    except Exception:
-                        pass
-
-                rows.append({
-                    "match": f"{home} vs {away}",
-                    "home": home,
-                    "away": away,
-                    "market": market,
-                    "entry_odds": entry_odds,
-                    "current_odds": current_odds,
-                    "drift_pct": drift_pct,
-                    "clv_signal": clv_signal,
-                    "stake": float(r["stake_amount"]),
-                    "match_date": r.get("match_date", ""),
-                    "model_edge_pct": None,
-                })
+                rows.append(_build_bet_card(
+                    r,
+                    all_odds=all_odds,
+                    kickoff="",
+                    score=None,
+                    derived=None,
+                    group="open",
+                    now=datetime.now(timezone.utc),
+                ))
         return rows
     except Exception:
         return []
@@ -549,45 +755,6 @@ def write_signals_json(
     else:
         model_tips_data = existing.get("model_tips", {})
 
-    # Compute bankroll state from ledger — always read from ledger when not explicitly passed
-    # (avoids stale phantom bets persisting in KV from old JSON)
-    _resolved_open_bets = open_bets if open_bets is not None else _get_open_bets_from_ledger(
-        all_odds=all_odds_data if all_odds_data else None
-    )
-    _staked = sum(float(b.get("stake", 0)) for b in (_resolved_open_bets or []))
-    _max_win = sum(
-        float(b.get("stake", 0)) * (float(b.get("current_odds") or b.get("entry_odds", 0)) - 1)
-        for b in (_resolved_open_bets or [])
-        if b.get("current_odds") or b.get("entry_odds")
-    )
-    _bankroll_start = 100.0
-    _pnl_closed = sum(float(row.get("pnl", 0)) for row in _get_closed_bets())
-    _free = round(_bankroll_start + _pnl_closed - _staked, 2)
-    _exposure_pct = round(_staked / _bankroll_start * 100, 1)
-
-    payload = {
-        "updated":        updated,
-        "schedule":       schedule_data,
-        "all_odds":       all_odds_data,
-        "model_tips":     model_tips_data,
-        "football":       football_data,
-        "tennis":         tennis_data,
-        "portfolio":      portfolio if portfolio else existing.get("portfolio", {}),
-        "top_elo":        [{"name": n, "rating": round(r)} for n, r in top_elo] if top_elo else existing.get("top_elo", []),
-        "history":        _build_history(),
-        "open_bets":      _resolved_open_bets,
-        "bankroll_state": {
-            "start":        _bankroll_start,
-            "free":         round(_free, 2),
-            "staked":       round(_staked, 2),
-            "exposure_pct": _exposure_pct,
-            "max_win":      round(_max_win, 2),
-            "pnl_closed":   round(_pnl_closed, 2),
-        },
-        "wm_stats": _build_wm_stats(),
-    }
-    payload["odds_history"] = odds_history if odds_history is not None else existing.get("odds_history", {})
-
     # WM Results: merge auto-fetched scores with existing — never overwrite existing entries
     _wm_results_base: list[dict] = wm_results if wm_results is not None else existing.get("wm_results", [])
     try:
@@ -617,7 +784,48 @@ def write_signals_json(
                 _existing_map[_key] = len(_wm_results_base) - 1
     except Exception:
         pass  # silently keep existing wm_results on any error
-    payload["wm_results"] = _wm_results_base
+
+    # Compute bankroll state from ledger — always read from ledger when not explicitly passed
+    # (avoids stale phantom bets persisting in KV from old JSON)
+    _resolved_open_bets = open_bets if open_bets is not None else _get_open_bets_from_ledger(
+        all_odds=all_odds_data if all_odds_data else None
+    )
+    _staked = sum(float(b.get("stake", 0)) for b in (_resolved_open_bets or []))
+    _max_win = sum(
+        float(b.get("stake", 0)) * (float(b.get("current_odds") or b.get("entry_odds", 0)) - 1)
+        for b in (_resolved_open_bets or [])
+        if b.get("current_odds") or b.get("entry_odds")
+    )
+    _bankroll_start = 100.0
+    _pnl_closed = sum(float(row.get("pnl", 0)) for row in _get_closed_bets())
+    _free = round(_bankroll_start + _pnl_closed - _staked, 2)
+    _exposure_pct = round(_staked / _bankroll_start * 100, 1)
+    _bets_view = _build_bets_view(schedule_data, all_odds_data if all_odds_data else None, _wm_results_base)
+
+    payload = {
+        "updated":        updated,
+        "schedule":       schedule_data,
+        "all_odds":       all_odds_data,
+        "model_tips":     model_tips_data,
+        "football":       football_data,
+        "tennis":         tennis_data,
+        "portfolio":      portfolio if portfolio else existing.get("portfolio", {}),
+        "top_elo":        [{"name": n, "rating": round(r)} for n, r in top_elo] if top_elo else existing.get("top_elo", []),
+        "history":        _build_history(),
+        "open_bets":      _resolved_open_bets,
+        "bets":           _bets_view,
+        "bankroll_state": {
+            "start":        _bankroll_start,
+            "free":         round(_free, 2),
+            "staked":       round(_staked, 2),
+            "exposure_pct": _exposure_pct,
+            "max_win":      round(_max_win, 2),
+            "pnl_closed":   round(_pnl_closed, 2),
+        },
+        "wm_stats": _build_wm_stats(),
+        "wm_results": _wm_results_base,
+    }
+    payload["odds_history"] = odds_history if odds_history is not None else existing.get("odds_history", {})
 
     _JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
     _JSON_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2))

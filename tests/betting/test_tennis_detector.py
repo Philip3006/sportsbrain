@@ -87,8 +87,8 @@ def test_detect_value_ah_odds_when_provided():
     assert any(m in ("ah-1.5_a", "home") for m in markets)
 
 
-def test_signal_stake_within_bounds():
-    # bankroll=50 → Tier 0 bounds (€5–€15) for backward-compat behaviour
+def test_signal_stake_uses_kelly_with_tier_cap():
+    # bankroll=50 → raw Kelly stake is below tier max and should not be floored.
     signals = detect_value_tennis(
         player_a="A", player_b="B",
         probs={"p_a": 0.70, "p_b": 0.30},
@@ -96,11 +96,11 @@ def test_signal_stake_within_bounds():
         bankroll=50.0,
     )
     for s in signals:
-        assert 5.0 <= s.stake_eur <= 15.0
+        assert s.stake_eur == pytest.approx(min(s.kelly_f * 50.0, 15.0))
 
 
 def test_signal_stake_scales_with_bankroll_tier():
-    # bankroll=175 → Tier 1 bounds (€6–€20); HIGH-confidence allowed up to €20
+    # bankroll=175 → raw Kelly stake scales with bankroll and is capped at tier max.
     signals = detect_value_tennis(
         player_a="A", player_b="B",
         probs={"p_a": 0.70, "p_b": 0.30},
@@ -108,7 +108,7 @@ def test_signal_stake_scales_with_bankroll_tier():
         bankroll=175.0,
     )
     for s in signals:
-        assert 6.0 <= s.stake_eur <= 20.0
+        assert s.stake_eur == pytest.approx(min(s.kelly_f * 175.0, 20.0))
 
 
 def test_min_prob_filter_blocks_extreme_underdog():

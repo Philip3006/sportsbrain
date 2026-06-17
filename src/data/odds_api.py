@@ -520,6 +520,59 @@ def _fetch_espn_wm_scores() -> list[dict]:
     return results
 
 
+def fetch_espn_goal_scorers(event_id: str) -> list[str]:
+    """Returns normalized scorer display names for one ESPN event, best effort."""
+    if not event_id:
+        return []
+    url = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary"
+    resp = requests.get(url, params={"event": event_id}, timeout=10)
+    resp.raise_for_status()
+    data = resp.json()
+    names: list[str] = []
+
+    def _append_name(raw: str | None) -> None:
+        if not raw:
+            return
+        val = str(raw).strip()
+        if val and val not in names:
+            names.append(val)
+
+    scoring_plays = data.get("scoringPlays") or []
+    for play in scoring_plays:
+        athletes = play.get("participants") or play.get("athletes") or []
+        if isinstance(athletes, list):
+            for athlete in athletes:
+                if not isinstance(athlete, dict):
+                    continue
+                display = athlete.get("displayName")
+                short = athlete.get("shortName")
+                full = (athlete.get("athlete") or {}).get("displayName") if isinstance(athlete.get("athlete"), dict) else None
+                _append_name(display or full or short)
+        competitor = play.get("competitor") or {}
+        leader = competitor.get("leaders") if isinstance(competitor, dict) else None
+        if isinstance(leader, list):
+            for row in leader:
+                leaders = row.get("leaders") if isinstance(row, dict) else None
+                if isinstance(leaders, list):
+                    for athlete in leaders:
+                        if isinstance(athlete, dict):
+                            _append_name(athlete.get("displayName"))
+        text = play.get("text")
+        if isinstance(text, str) and "goal" in text.lower():
+            _append_name(text.split("goal", 1)[0].strip(" .:-"))
+
+    if names:
+        return names
+
+    drives = data.get("drives") or {}
+    for play in drives.get("plays", []) if isinstance(drives, dict) else []:
+        text = play.get("text")
+        if isinstance(text, str) and "goal" in text.lower():
+            _append_name(text.split("goal", 1)[0].strip(" .:-"))
+
+    return names
+
+
 def fetch_wm_live_scores(
     days_from: int = 2,
     api_key: str | None = None,

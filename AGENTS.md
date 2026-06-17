@@ -1,4 +1,4 @@
-# SportsBrain — Claude Code Configuration
+# SportsBrain — Codex Configuration
 
 ## Projektziel
 Tool zur Vorhersage von Fußball- und Basketball-Ergebnissen + Sportwetten-Value-Optimierung.
@@ -21,7 +21,7 @@ sportsbrain/
 ├── models/        # Trainierte Modelle (.pkl, .json)
 ├── scripts/       # One-off Scripts, Backtests
 ├── results/       # Reports, Predictions, Logs
-└── CLAUDE.md
+└── AGENTS.md
 ```
 
 ## System-Architektur (Phasen)

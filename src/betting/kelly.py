@@ -58,6 +58,19 @@ def dynamic_stake_eur(
     return amount
 
 
+def kelly_stake_eur(
+    kelly_f: float,
+    bankroll: float,
+    max_eur: float | None = None,
+) -> float:
+    """Returns fractional-Kelly stake in EUR, capped by the active bankroll tier."""
+    if kelly_f <= 0 or bankroll <= 0:
+        return 0.0
+    if max_eur is None:
+        _, max_eur = get_stake_bounds(bankroll)
+    return min(kelly_f * bankroll, max_eur)
+
+
 def kelly_fraction(
     model_prob: float,
     decimal_odds: float,
@@ -89,9 +102,7 @@ def stake(
     Returns recommended stake in EUR.
     Capped at max_eur regardless of Kelly output.
     """
-    if kelly_f <= 0 or bankroll <= 0:
-        return 0.0
-    return min(kelly_f * bankroll, max_eur)
+    return kelly_stake_eur(kelly_f, bankroll, max_eur=max_eur)
 
 
 def expected_value(model_prob: float, decimal_odds: float) -> float:

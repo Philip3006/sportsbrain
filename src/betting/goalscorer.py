@@ -165,7 +165,7 @@ def detect_value_goalscorer(
         return []
 
     from src.config import MAX_EV
-    from src.betting.kelly import kelly_fraction, dynamic_stake_eur
+    from src.betting.kelly import kelly_fraction, kelly_stake_eur
     from src.betting.value_detector import BetSignal
 
     signals = []
@@ -179,7 +179,7 @@ def detect_value_goalscorer(
                 ev = model_p * odds - 1.0
                 if min_ev <= ev <= MAX_EV:
                     kf = kelly_fraction(model_p, odds)
-                    stake_eur = dynamic_stake_eur(ev, "LOW", bankroll)
+                    stake_eur = kelly_stake_eur(kf, bankroll)
                     signals.append(BetSignal(
                         match_id=match_id,
                         home=home, away=away,
