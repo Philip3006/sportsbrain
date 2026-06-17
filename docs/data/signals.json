@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-17T19:11:08Z",
+  "updated": "2026-06-17T19:15:24Z",
   "schedule": [
     {
       "sport": "football",
@@ -8600,8 +8600,8 @@
     {
       "date": "2026-06-17",
       "n_bets": 7,
-      "pnl": -8.43,
-      "roi_pct": -8.2
+      "pnl": 46.58,
+      "roi_pct": 45.2
     },
     {
       "date": "2026-06-16",
@@ -8635,54 +8635,6 @@
     }
   ],
   "open_bets": [
-    {
-      "match": "Portugal vs DR Congo",
-      "home": "Portugal",
-      "away": "DR Congo",
-      "market": "draw",
-      "entry_odds": 5.5,
-      "current_odds": 6.0,
-      "drift_pct": 9.1,
-      "clv_signal": "bad",
-      "stake": 10.58,
-      "match_date": "2026-06-17",
-      "kickoff": "",
-      "model_edge_pct": null,
-      "group": "open",
-      "status": "open",
-      "status_source": "official",
-      "badge_text": "Offen",
-      "is_live_badge": false,
-      "scoreline": null,
-      "home_score": null,
-      "away_score": null,
-      "last_goal_scorer": "",
-      "pnl": 0.0
-    },
-    {
-      "match": "Portugal vs DR Congo",
-      "home": "Portugal",
-      "away": "DR Congo",
-      "market": "o/u3.5_under",
-      "entry_odds": 1.37,
-      "current_odds": 1.4,
-      "drift_pct": 2.2,
-      "clv_signal": "bad",
-      "stake": 20.0,
-      "match_date": "2026-06-17",
-      "kickoff": "",
-      "model_edge_pct": null,
-      "group": "open",
-      "status": "open",
-      "status_source": "official",
-      "badge_text": "Offen",
-      "is_live_badge": false,
-      "scoreline": null,
-      "home_score": null,
-      "away_score": null,
-      "last_goal_scorer": "",
-      "pnl": 0.0
-    },
     {
       "match": "England vs Croatia",
       "home": "England",
@@ -8783,56 +8735,7 @@
         "pnl": 0.0
       }
     ],
-    "live": [
-      {
-        "match": "Portugal vs DR Congo",
-        "home": "Portugal",
-        "away": "DR Congo",
-        "market": "draw",
-        "entry_odds": 5.5,
-        "current_odds": 6.0,
-        "drift_pct": 9.1,
-        "clv_signal": "bad",
-        "stake": 10.58,
-        "match_date": "2026-06-17",
-        "kickoff": "2026-06-17T17:00:00Z",
-        "model_edge_pct": null,
-        "group": "live",
-        "status": "open",
-        "status_source": "official",
-        "badge_text": "LIVE",
-        "is_live_badge": true,
-        "scoreline": "1:1",
-        "home_score": 1,
-        "away_score": 1,
-        "last_goal_scorer": "",
-        "pnl": 0.0
-      },
-      {
-        "match": "Portugal vs DR Congo",
-        "home": "Portugal",
-        "away": "DR Congo",
-        "market": "o/u3.5_under",
-        "entry_odds": 1.37,
-        "current_odds": 1.4,
-        "drift_pct": 2.2,
-        "clv_signal": "bad",
-        "stake": 20.0,
-        "match_date": "2026-06-17",
-        "kickoff": "2026-06-17T17:00:00Z",
-        "model_edge_pct": null,
-        "group": "live",
-        "status": "open",
-        "status_source": "official",
-        "badge_text": "LIVE",
-        "is_live_badge": true,
-        "scoreline": "1:1",
-        "home_score": 1,
-        "away_score": 1,
-        "last_goal_scorer": "",
-        "pnl": 0.0
-      }
-    ],
+    "live": [],
     "settled": [
       {
         "match": "Argentina vs Algeria",
@@ -9267,6 +9170,54 @@
         "pnl": 21.75
       },
       {
+        "match": "Portugal vs DR Congo",
+        "home": "Portugal",
+        "away": "DR Congo",
+        "market": "draw",
+        "entry_odds": 5.5,
+        "current_odds": 6.0,
+        "drift_pct": 9.1,
+        "clv_signal": "bad",
+        "stake": 10.58,
+        "match_date": "2026-06-17",
+        "kickoff": "2026-06-17T17:00:00Z",
+        "model_edge_pct": null,
+        "group": "settled",
+        "status": "won",
+        "status_source": "official",
+        "badge_text": "Abgerechnet",
+        "is_live_badge": false,
+        "scoreline": "1:1",
+        "home_score": 1,
+        "away_score": 1,
+        "last_goal_scorer": "",
+        "pnl": 47.61
+      },
+      {
+        "match": "Portugal vs DR Congo",
+        "home": "Portugal",
+        "away": "DR Congo",
+        "market": "o/u3.5_under",
+        "entry_odds": 1.37,
+        "current_odds": 1.4,
+        "drift_pct": 2.2,
+        "clv_signal": "bad",
+        "stake": 20.0,
+        "match_date": "2026-06-17",
+        "kickoff": "2026-06-17T17:00:00Z",
+        "model_edge_pct": null,
+        "group": "settled",
+        "status": "won",
+        "status_source": "official",
+        "badge_text": "Abgerechnet",
+        "is_live_badge": false,
+        "scoreline": "1:1",
+        "home_score": 1,
+        "away_score": 1,
+        "last_goal_scorer": "",
+        "pnl": 7.4
+      },
+      {
         "match": "England vs Croatia",
         "home": "England",
         "away": "Croatia",
@@ -9437,35 +9388,35 @@
     ],
     "summary": {
       "open": 2,
-      "live": 2,
-      "settled": 25
+      "live": 0,
+      "settled": 27
     }
   },
   "bankroll_state": {
     "start": 100.0,
-    "free": 85.67,
-    "staked": 60.58,
-    "exposure_pct": 60.6,
-    "max_win": 97.1,
-    "pnl_closed": 46.25
+    "free": 171.26,
+    "staked": 30.0,
+    "exposure_pct": 30.0,
+    "max_win": 36.2,
+    "pnl_closed": 101.26
   },
   "wm_stats": {
     "stats": {
       "1x2": {
-        "n": 4,
-        "won": 2,
-        "staked": 40.85,
-        "pnl": 20.46,
-        "hit_rate": 50.0,
-        "roi": 50.1
+        "n": 5,
+        "won": 3,
+        "staked": 51.43,
+        "pnl": 68.07,
+        "hit_rate": 60.0,
+        "roi": 132.4
       },
       "ou25": {
-        "n": 6,
-        "won": 4,
-        "staked": 76.84,
-        "pnl": 46.3,
-        "hit_rate": 66.7,
-        "roi": 60.3
+        "n": 7,
+        "won": 5,
+        "staked": 96.84,
+        "pnl": 53.7,
+        "hit_rate": 71.4,
+        "roi": 55.5
       },
       "btts": {
         "n": 1,
@@ -9511,16 +9462,16 @@
       },
       {
         "date": "2026-06-17",
-        "balance": 146.25
+        "balance": 201.26
       }
     ],
     "drawdown": {
-      "peak": 176.24,
-      "current": 146.25,
-      "current_dd": 29.99,
-      "current_dd_pct": 17.02,
-      "max_dd": 29.99,
-      "max_dd_pct": 17.02
+      "peak": 201.26,
+      "current": 201.26,
+      "current_dd": 0.0,
+      "current_dd_pct": 0.0,
+      "max_dd": 1.56,
+      "max_dd_pct": 0.89
     },
     "clv_dist": {
       "labels": [
@@ -9532,12 +9483,12 @@
         "≥+5%"
       ],
       "bins": [
-        3,
+        4,
         0,
         1,
         0,
         1,
-        1
+        2
       ]
     },
     "edge_dist": {
@@ -9559,13 +9510,13 @@
       ]
     },
     "summary": {
-      "n_settled": 17,
-      "staked": 216.52,
-      "pnl": 46.25,
-      "yield_pct": 21.36,
-      "mean_clv": 7.33,
+      "n_settled": 19,
+      "staked": 247.1,
+      "pnl": 101.26,
+      "yield_pct": 40.98,
+      "mean_clv": 13.03,
       "mean_edge": 12.7,
-      "n_clv": 6,
+      "n_clv": 8,
       "n_edge": 1
     },
     "per_team_market": {
@@ -9892,6 +9843,42 @@
           "hit_rate": 0.0,
           "roi": -100.0
         }
+      },
+      "Portugal": {
+        "1X2": {
+          "n": 1,
+          "won": 1,
+          "staked": 10.58,
+          "pnl": 47.61,
+          "hit_rate": 100.0,
+          "roi": 450.0
+        },
+        "Under": {
+          "n": 1,
+          "won": 1,
+          "staked": 20.0,
+          "pnl": 7.4,
+          "hit_rate": 100.0,
+          "roi": 37.0
+        }
+      },
+      "DR Congo": {
+        "1X2": {
+          "n": 1,
+          "won": 1,
+          "staked": 10.58,
+          "pnl": 47.61,
+          "hit_rate": 100.0,
+          "roi": 450.0
+        },
+        "Under": {
+          "n": 1,
+          "won": 1,
+          "staked": 20.0,
+          "pnl": 7.4,
+          "hit_rate": 100.0,
+          "roi": 37.0
+        }
       }
     },
     "by_confederation": {
@@ -9920,12 +9907,12 @@
         "roi": -100.0
       },
       "UEFA": {
-        "n": 6,
-        "won": 2,
-        "staked": 71.15,
-        "pnl": -2.94,
-        "hit_rate": 33.3,
-        "roi": -4.1
+        "n": 8,
+        "won": 4,
+        "staked": 101.73,
+        "pnl": 52.07,
+        "hit_rate": 50.0,
+        "roi": 51.2
       }
     }
   },
