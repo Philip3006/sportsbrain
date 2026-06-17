@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-17T16:12:00Z",
+  "updated": "2026-06-17T18:20:58Z",
   "schedule": [
     {
       "sport": "football",
@@ -9136,7 +9136,18 @@
       "clv_signal": "bad",
       "stake": 10.58,
       "match_date": "2026-06-17",
-      "model_edge_pct": 95.6
+      "kickoff": "",
+      "model_edge_pct": null,
+      "group": "open",
+      "status": "open",
+      "status_source": "official",
+      "badge_text": "Offen",
+      "is_live_badge": false,
+      "scoreline": null,
+      "home_score": null,
+      "away_score": null,
+      "last_goal_scorer": "",
+      "pnl": 0.0
     },
     {
       "match": "Portugal vs DR Congo",
@@ -9144,12 +9155,23 @@
       "away": "DR Congo",
       "market": "o/u3.5_under",
       "entry_odds": 1.37,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
+      "current_odds": 1.4,
+      "drift_pct": 2.2,
+      "clv_signal": "bad",
       "stake": 20.0,
       "match_date": "2026-06-17",
-      "model_edge_pct": null
+      "kickoff": "",
+      "model_edge_pct": null,
+      "group": "open",
+      "status": "open",
+      "status_source": "official",
+      "badge_text": "Offen",
+      "is_live_badge": false,
+      "scoreline": null,
+      "home_score": null,
+      "away_score": null,
+      "last_goal_scorer": "",
+      "pnl": 0.0
     },
     {
       "match": "England vs Croatia",
@@ -9162,7 +9184,18 @@
       "clv_signal": "bad",
       "stake": 14.15,
       "match_date": "2026-06-17",
-      "model_edge_pct": -26.4
+      "kickoff": "",
+      "model_edge_pct": null,
+      "group": "open",
+      "status": "open",
+      "status_source": "official",
+      "badge_text": "Offen",
+      "is_live_badge": false,
+      "scoreline": null,
+      "home_score": null,
+      "away_score": null,
+      "last_goal_scorer": "",
+      "pnl": 0.0
     },
     {
       "match": "England vs Croatia",
@@ -9170,12 +9203,23 @@
       "away": "Croatia",
       "market": "o/u2.5_under",
       "entry_odds": 1.68,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
+      "current_odds": 1.81,
+      "drift_pct": 7.7,
+      "clv_signal": "bad",
       "stake": 20.0,
       "match_date": "2026-06-17",
-      "model_edge_pct": null
+      "kickoff": "",
+      "model_edge_pct": null,
+      "group": "open",
+      "status": "open",
+      "status_source": "official",
+      "badge_text": "Offen",
+      "is_live_badge": false,
+      "scoreline": null,
+      "home_score": null,
+      "away_score": null,
+      "last_goal_scorer": "",
+      "pnl": 0.0
     },
     {
       "match": "England vs Croatia",
@@ -9188,59 +9232,22 @@
       "clv_signal": null,
       "stake": 20.0,
       "match_date": "2026-06-17",
-      "model_edge_pct": null
+      "kickoff": "",
+      "model_edge_pct": null,
+      "group": "open",
+      "status": "open",
+      "status_source": "official",
+      "badge_text": "Offen",
+      "is_live_badge": false,
+      "scoreline": null,
+      "home_score": null,
+      "away_score": null,
+      "last_goal_scorer": "",
+      "pnl": 0.0
     }
   ],
   "bets": {
     "open": [
-      {
-        "match": "Portugal vs DR Congo",
-        "home": "Portugal",
-        "away": "DR Congo",
-        "market": "draw",
-        "entry_odds": 5.5,
-        "current_odds": 6.0,
-        "drift_pct": 9.1,
-        "clv_signal": "bad",
-        "stake": 10.58,
-        "match_date": "2026-06-17",
-        "kickoff": "2026-06-17T17:00:00Z",
-        "model_edge_pct": null,
-        "group": "open",
-        "status": "open",
-        "status_source": "official",
-        "badge_text": "Offen",
-        "is_live_badge": false,
-        "scoreline": null,
-        "home_score": null,
-        "away_score": null,
-        "last_goal_scorer": "",
-        "pnl": 0.0
-      },
-      {
-        "match": "Portugal vs DR Congo",
-        "home": "Portugal",
-        "away": "DR Congo",
-        "market": "o/u3.5_under",
-        "entry_odds": 1.37,
-        "current_odds": 1.4,
-        "drift_pct": 2.2,
-        "clv_signal": "bad",
-        "stake": 20.0,
-        "match_date": "2026-06-17",
-        "kickoff": "2026-06-17T17:00:00Z",
-        "model_edge_pct": null,
-        "group": "open",
-        "status": "open",
-        "status_source": "official",
-        "badge_text": "Offen",
-        "is_live_badge": false,
-        "scoreline": null,
-        "home_score": null,
-        "away_score": null,
-        "last_goal_scorer": "",
-        "pnl": 0.0
-      },
       {
         "match": "England vs Croatia",
         "home": "England",
@@ -9314,7 +9321,56 @@
         "pnl": 0.0
       }
     ],
-    "live": [],
+    "live": [
+      {
+        "match": "Portugal vs DR Congo",
+        "home": "Portugal",
+        "away": "DR Congo",
+        "market": "draw",
+        "entry_odds": 5.5,
+        "current_odds": 6.0,
+        "drift_pct": 9.1,
+        "clv_signal": "bad",
+        "stake": 10.58,
+        "match_date": "2026-06-17",
+        "kickoff": "2026-06-17T17:00:00Z",
+        "model_edge_pct": null,
+        "group": "live",
+        "status": "open",
+        "status_source": "official",
+        "badge_text": "LIVE 80'",
+        "is_live_badge": true,
+        "scoreline": "1:1",
+        "home_score": 1,
+        "away_score": 1,
+        "last_goal_scorer": "",
+        "pnl": 0.0
+      },
+      {
+        "match": "Portugal vs DR Congo",
+        "home": "Portugal",
+        "away": "DR Congo",
+        "market": "o/u3.5_under",
+        "entry_odds": 1.37,
+        "current_odds": 1.4,
+        "drift_pct": 2.2,
+        "clv_signal": "bad",
+        "stake": 20.0,
+        "match_date": "2026-06-17",
+        "kickoff": "2026-06-17T17:00:00Z",
+        "model_edge_pct": null,
+        "group": "live",
+        "status": "open",
+        "status_source": "official",
+        "badge_text": "LIVE 80'",
+        "is_live_badge": true,
+        "scoreline": "1:1",
+        "home_score": 1,
+        "away_score": 1,
+        "last_goal_scorer": "",
+        "pnl": 0.0
+      }
+    ],
     "settled": [
       {
         "match": "Argentina vs Algeria",
@@ -9894,8 +9950,8 @@
       }
     ],
     "summary": {
-      "open": 5,
-      "live": 0,
+      "open": 3,
+      "live": 2,
       "settled": 24
     }
   },
@@ -9904,7 +9960,7 @@
     "free": 61.52,
     "staked": 84.73,
     "exposure_pct": 84.7,
-    "max_win": 124.8,
+    "max_win": 128.0,
     "pnl_closed": 46.25
   },
   "wm_stats": {
