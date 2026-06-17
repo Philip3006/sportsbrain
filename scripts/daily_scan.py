@@ -147,6 +147,9 @@ if __name__ == "__main__":
                 "under35":  round(_m.get("under35_odds", 0), 2),
                 "btts_yes": round(_m.get("btts_yes_odds", 0), 2),
                 "btts_no":  round(_m.get("btts_no_odds", 0), 2),
+                "dc_1x":    round(_m.get("dc_1x_odds", 0), 2),
+                "dc_x2":    round(_m.get("dc_x2_odds", 0), 2),
+                "dc_12":    round(_m.get("dc_12_odds", 0), 2),
             }
             # Quarter-ball O/U lines (1.75, 2.25, 2.75, etc.)
             for _pt, _sides in _tl.items():

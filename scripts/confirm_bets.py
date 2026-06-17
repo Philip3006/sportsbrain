@@ -13,22 +13,46 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.betting.ledger import append_bets, count_open_bets, LEDGER_PATH, ledger_summary
-from src.notifications.web_dashboard import BetSignal
+from src.config import MAX_ACTIVE_BETS
+from src.betting.value_detector import BetSignal
 
 
-def _make_signal(d: dict) -> BetSignal:
-    s = BetSignal.__new__(BetSignal)
-    s.home = d["match"].split(" vs ")[0].strip()
-    s.away = d["match"].split(" vs ")[1].strip()
-    s.market = d["market"]
-    s.decimal_odds = d["odds"]
-    s.model_prob = d["model_prob"] / 100
-    s.ev = d["ev_pct"] / 100
-    s.confidence = d["confidence"]
-    s.stake_eur = d["stake_eur"]
-    s.match_id = d.get("match_id", f"{s.home}_{s.away}")
-    s.b365_odds = d["odds"]
-    return s
+def _pct_to_prob(value, default: float = 0.0) -> float:
+    try:
+        return float(value) / 100.0
+    except (TypeError, ValueError):
+        return default
+
+
+def _float_value(value, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _make_signal(d: dict, bankroll: float) -> BetSignal:
+    home, away = [p.strip() for p in d["match"].split(" vs ", 1)]
+    stake_eur = _float_value(d.get("stake_eur"))
+    stake_pct = _pct_to_prob(d.get("stake_pct"))
+    if stake_pct <= 0 and bankroll > 0:
+        stake_pct = stake_eur / bankroll
+    return BetSignal(
+        match_id=d.get("match_id", f"{home}_{away}"),
+        home=home,
+        away=away,
+        market=d["market"],
+        model_prob=_pct_to_prob(d.get("model_prob")),
+        fair_prob=_pct_to_prob(d.get("fair_prob")),
+        decimal_odds=_float_value(d.get("odds")),
+        ev=_pct_to_prob(d.get("ev_pct")),
+        kelly_f=stake_eur / bankroll if bankroll > 0 else 0.0,
+        stake_pct=stake_pct,
+        confidence=d.get("confidence", "MEDIUM"),
+        stake_eur=stake_eur,
+        b365_odds=_float_value(d.get("odds")),
+        n_models_agree=int(_float_value(d.get("n_models_agree"))),
+    )
 
 
 def main(bankroll: float = 100.0) -> None:
@@ -43,7 +67,7 @@ def main(bankroll: float = 100.0) -> None:
     signals.sort(key=lambda s: s["ev_pct"], reverse=True)
 
     open_count = count_open_bets(LEDGER_PATH)
-    max_bets = 5
+    max_bets = MAX_ACTIVE_BETS
     slots = max(0, max_bets - open_count)
 
     print(f"\n=== SportsBrain — Wetten bestätigen ===")
@@ -96,7 +120,7 @@ def main(bankroll: float = 100.0) -> None:
 
     n = 0
     for sd in chosen:
-        sig = _make_signal(sd)
+        sig = _make_signal(sd, bankroll)
         match_date = sd.get("kickoff", "")[:10] if sd.get("kickoff") else ""
         n += append_bets([sig], bankroll, LEDGER_PATH, match_date=match_date)
 

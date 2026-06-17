@@ -5,6 +5,7 @@ from src.betting.kelly import (
     get_stake_bounds,
     goals_range_max_for,
     kelly_fraction,
+    kelly_stake_eur,
     stake,
 )
 from src.config import KELLY_FRAC, MIN_STAKE_EUR, MAX_STAKE_EUR
@@ -75,6 +76,23 @@ class TestStake:
 
     def test_zero_bankroll_returns_zero(self):
         assert stake(0.05, 0.0) == 0.0
+
+
+class TestKellyStakeEur:
+    def test_uses_fractional_kelly_amount_below_cap(self):
+        assert kelly_stake_eur(0.05, 100.0) == 5.0
+
+    def test_caps_at_dynamic_bankroll_tier_max(self):
+        # bankroll=100 -> tier max 20; raw Kelly would be 50.
+        assert kelly_stake_eur(0.50, 100.0) == 20.0
+
+    def test_allows_more_than_five_percent_when_tier_allows(self):
+        # User-chosen bankroll tiers may exceed 5%; there is no hard 5% cap.
+        assert kelly_stake_eur(0.50, 100.0) > 5.0
+
+    def test_no_minimum_floor_above_kelly(self):
+        # Kelly gate must not round small Kelly stakes up to MIN_STAKE_EUR.
+        assert kelly_stake_eur(0.01, 100.0) == 1.0
 
 
 class TestStakeBounds:

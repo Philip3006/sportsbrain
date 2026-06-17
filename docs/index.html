@@ -404,6 +404,20 @@
     .clv-good { background: rgba(0,200,83,.12); color: var(--green); border: 1px solid rgba(0,200,83,.3); }
     .clv-bad { background: rgba(248,81,73,.12); color: var(--red); border: 1px solid rgba(248,81,73,.3); }
     .clv-neutral { background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid var(--border); }
+    .bet-status-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 900; border-radius: 999px; padding: 3px 9px; letter-spacing: .3px; border: 1px solid var(--border); }
+    .bet-status-chip.live { background: rgba(248,81,73,.14); border-color: rgba(248,81,73,.35); color: #fff; }
+    .bet-status-chip.open { background: rgba(255,255,255,.06); color: var(--muted); }
+    .bet-status-chip.won { background: rgba(0,200,83,.14); border-color: rgba(0,200,83,.35); color: var(--green); }
+    .bet-status-chip.lost { background: rgba(248,81,73,.14); border-color: rgba(248,81,73,.35); color: var(--red); }
+    .bet-status-chip.void { background: rgba(210,153,34,.14); border-color: rgba(210,153,34,.35); color: var(--yellow); }
+    .bet-mini-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 6px; }
+    .bet-scoreline { font-size: 18px; font-weight: 900; color: var(--text); }
+    .bet-result-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+    .bet-result-cell { background: var(--card); padding: 12px 14px; }
+    .bet-result-val.plus { color: var(--green); }
+    .bet-result-val.minus { color: var(--red); }
+    .bets-summary { padding: 4px 16px 0; font-size: 11px; color: var(--muted); font-weight: 600; }
+    .bet-live-note { font-size: 11px; color: var(--muted); font-weight: 700; margin-top: 6px; }
 
     /* ── Heute-Sektion ── */
     .today-header { background: rgba(0,200,83,.06); border-top: 1px solid rgba(0,200,83,.2); border-bottom: 1px solid rgba(0,200,83,.15); padding: 8px 16px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; color: var(--green); letter-spacing: .3px; }
@@ -800,6 +814,7 @@ let _schedule = [];
 let _allOdds = {};
 let _modelTips = {};
 let _openBets = [];
+let _betsView = { open: [], live: [], settled: [], summary: { open: 0, live: 0, settled: 0 } };
 let _bankrollState = {};
 let _squads = {};
 let _oddsHistory = {};
@@ -807,6 +822,7 @@ let _wmResults = {};  // {matchKey: {home_score, away_score}}
 let _prevView = 'home';
 let _homeSearch = '';
 let _journalFilter = 'all';
+let _betsFilter = 'open';
 // Sport-Tab Filter/Sort State (persistiert in LocalStorage)
 const _SPORT_FILTER_KEY = 'sb_sport_filter_v1';
 function _loadSportFilters() {
@@ -1614,73 +1630,61 @@ function _pwaPendingHtml() {
   }).join('');
 }
 
-function renderBets() {
-  const c = document.getElementById('bets-container');
-  if (!c) return;
-  const pendingHtml = _pwaPendingHtml();
-  if (!_openBets.length && !pendingHtml) {
-    c.innerHTML = `<div class="empty"><div class="icon">📭</div><div>Keine offenen Wetten.<br><small>Signals werden täglich 08:00 UTC aktualisiert.</small></div></div>`;
-    return;
-  }
-  let h = pendingHtml;
-  for (const b of _openBets) {
-    const home = b.home || b.match?.split(' vs ')[0] || '';
-    const away = b.away || b.match?.split(' vs ')[1] || '';
-    const mktLabel = marketLabel(b.market, home, away);
-    const conf = b.confidence || '';
-    const confCls = conf === 'HIGH' ? 'conf-high' : conf === 'MEDIUM' ? 'conf-medium' : '';
+function _betDateLabel(b) {
+  const iso = b.kickoff || b.match_date;
+  if (!iso) return '—';
+  const dt = new Date(iso);
+  if (isNaN(dt.getTime())) return '—';
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const betDay = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+  const diff = Math.round((betDay - today) / 86400000);
+  if (diff === 0) return 'Heute';
+  if (diff === 1) return 'Morgen';
+  return dt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+}
 
-    const stake = b.stake || 0;
-    const odds = b.entry_odds || 0;
-    const potProfit = (odds - 1) * stake;
-    const totalReturn = odds * stake;
+function _betStatusChip(b) {
+  const cls = b.group === 'live' ? 'live'
+    : b.group === 'open' ? 'open'
+    : (b.status || 'open');
+  return `<span class="bet-status-chip ${cls}">${esc(b.badge_text || cls.toUpperCase())}</span>`;
+}
 
-    const driftCls = b.drift_pct == null ? '' : b.drift_pct < 0 ? 'drift-good' : 'drift-bad';
-    const driftArrow = b.drift_pct == null ? '' : b.drift_pct < 0 ? '↓' : '↑';
-    const driftStr = b.drift_pct != null ? `${driftArrow}${Math.abs(b.drift_pct).toFixed(1)}%` : '—';
-    const clvCls = b.clv_signal === 'good' ? 'clv-good' : b.clv_signal === 'bad' ? 'clv-bad' : 'clv-neutral';
-    const clvLabel = b.clv_signal === 'good' ? '✓ CLV positiv' : b.clv_signal === 'bad' ? '✗ CLV negativ' : 'CLV ausstehend';
-    const edgePct = b.model_edge_pct;
-    const edgeStr = edgePct != null ? `${edgePct > 0 ? '+' : ''}${edgePct}% Edge` : '';
+function _renderBetCard(b) {
+  const home = b.home || b.match?.split(' vs ')[0] || '';
+  const away = b.away || b.match?.split(' vs ')[1] || '';
+  const mktLabel = marketLabel(b.market, home, away);
+  const stake = b.stake || 0;
+  const odds = b.entry_odds || 0;
+  const potProfit = (odds - 1) * stake;
+  const totalReturn = odds * stake;
+  const driftCls = b.drift_pct == null ? '' : b.drift_pct < 0 ? 'drift-good' : 'drift-bad';
+  const driftArrow = b.drift_pct == null ? '' : b.drift_pct < 0 ? '↓' : '↑';
+  const driftStr = b.drift_pct != null ? `${driftArrow}${Math.abs(b.drift_pct).toFixed(1)}%` : '—';
+  const clvCls = b.clv_signal === 'good' ? 'clv-good' : b.clv_signal === 'bad' ? 'clv-bad' : 'clv-neutral';
+  const clvLabel = b.clv_signal === 'good' ? '✓ CLV positiv' : b.clv_signal === 'bad' ? '✗ CLV negativ' : 'CLV ausstehend';
+  const flagH = teamFlag(home) || '';
+  const flagA = teamFlag(away) || '';
+  const currentOddsStr = b.current_odds ? b.current_odds.toFixed(2) : '—';
+  const pnl = Number(b.pnl || 0);
+  const pnlCls = pnl > 0 ? 'plus' : pnl < 0 ? 'minus' : '';
+  const noteKey = _betNoteKey(home, away, b.market || '');
 
-    const matchDate = b.match_date ? b.match_date.slice(0,10) : null;
-    let dateLabel = '—';
-    if (matchDate) {
-      const [y,mo,d] = matchDate.split('-');
-      const today = new Date(); today.setHours(0,0,0,0);
-      const mDate = new Date(+y, +mo-1, +d);
-      const diff = Math.round((mDate - today) / 86400000);
-      dateLabel = diff === 0 ? 'Heute' : diff === 1 ? 'Morgen' : `${d}.${mo}.`;
-    }
-
-    const flagH = teamFlag(home) || '';
-    const flagA = teamFlag(away) || '';
-
-    const currentOddsStr = b.current_odds ? b.current_odds.toFixed(2) : '—';
-
-    h += `<div class="bet-card">
-      <div class="bet-card-top">
-        <div class="bet-card-header">
-          <span class="bet-match">${flagH} ${esc(home)} vs ${flagA} ${esc(away)}</span>
-          <span class="bet-date">${dateLabel}</span>
+  const midRow = b.group === 'settled'
+    ? `<div class="bet-result-row">
+        <div class="bet-result-cell">
+          <div class="bet-money-label">Ergebnis</div>
+          <div class="bet-money-val ${pnlCls}">${pnl >= 0 ? '+' : ''}€${pnl.toFixed(2)}</div>
+          <div class="bet-money-sub">${b.status_source === 'live' ? 'live entschieden' : 'offiziell abgerechnet'}</div>
         </div>
-        <div class="bet-market-row">
-          <span class="bet-market-chip">${esc(mktLabel)}</span>
-          ${conf ? `<span class="bet-conf-chip ${confCls}">${conf}</span>` : ''}
+        <div class="bet-result-cell">
+          <div class="bet-money-label">Einsatz</div>
+          <div class="bet-money-val">€${stake.toFixed(2)}</div>
+          <div class="bet-money-sub">Quote: @${odds.toFixed(2)}</div>
         </div>
-        <div class="bet-odds-row">
-          <div>
-            <div class="bet-odds-label">Einstieg</div>
-            <span class="bet-odds-entry">@${odds.toFixed(2)}</span>
-          </div>
-          <span class="bet-odds-arrow">→</span>
-          <div>
-            <div class="bet-odds-label">Aktuell${infoTip('Markt-Bewegung seit deinem Einstieg. ↓ Quote gefallen (grün): der Markt glaubt jetzt eher an dein Outcome — du hast vorher zu guter Quote gegriffen. ↑ Quote gestiegen (rot): der Markt sieht es jetzt anders als du.')}</div>
-            <span class="bet-odds-current ${driftCls}">${currentOddsStr} <small>${driftStr}</small></span>
-          </div>
-        </div>
-      </div>
-      <div class="bet-card-money">
+      </div>`
+    : `<div class="bet-card-money">
         <div class="bet-money-cell">
           <div class="bet-money-label">Einsatz</div>
           <div class="bet-money-val">€${stake.toFixed(2)}</div>
@@ -1691,20 +1695,99 @@ function renderBets() {
           <div class="bet-money-val bet-money-win">+€${potProfit.toFixed(2)}</div>
           <div class="bet-money-sub">Rückgabe: €${totalReturn.toFixed(2)}</div>
         </div>
+      </div>`;
+
+  return `<div class="bet-card">
+    <div class="bet-card-top">
+      <div class="bet-card-header">
+        <span class="bet-match">${flagH} ${esc(home)} vs ${flagA} ${esc(away)}</span>
+        ${_betStatusChip(b)}
       </div>
-      <div class="bet-card-footer">
-        ${edgeStr ? `<span class="bet-edge ${edgePct > 0 ? 'drift-good' : 'drift-bad'}">${esc(edgeStr)}</span>` : ''}
-        <span class="clv-pill ${clvCls}">${clvLabel}${infoTip('CLV = Closing Line Value. Vergleicht deine Einstiegsquote mit der Endquote kurz vor Anpfiff (Markt-Konsens). ✓ positiv = du hast besser eingeschätzt als der Markt → langfristig der stärkste Profit-Indikator. ✗ negativ = der Markt war schlauer.')}</span>
+      <div class="bet-market-row">
+        <span class="bet-market-chip">${esc(mktLabel)}</span>
+        <span class="bet-date">${_betDateLabel(b)}</span>
       </div>
-      <div class="bet-notes-row">
-        <div class="bet-notes-label">📝 Notiz <span class="bet-notes-saved" id="notes-saved-${esc(_betNoteKey(home, away, b.market || ''))}">gespeichert</span></div>
-        <textarea class="bet-notes-input" data-note-key="${esc(_betNoteKey(home, away, b.market || ''))}"
-          placeholder="Warum diese Wette? Setze dein Reasoning, später nachvollziehen…"
-          oninput="_onBetNoteInput(this)">${esc(_loadBetNote(home, away, b.market || ''))}</textarea>
-      </div>
-    </div>`;
+      ${(b.scoreline || b.group === 'live')
+        ? `<div class="bet-mini-row">
+            <div class="bet-scoreline">${esc(b.scoreline || '—')}</div>
+            ${b.group !== 'settled'
+              ? `<span class="clv-pill ${clvCls}">${clvLabel}</span>`
+              : `<span class="bet-date">${esc(b.status === 'void' ? 'Refund' : (b.status === 'won' ? 'Gewonnen' : 'Verloren'))}</span>`}
+          </div>`
+        : ''}
+      ${b.group === 'live' && b.last_goal_scorer ? `<div class="bet-live-note">Letzter Torschütze: ${esc(b.last_goal_scorer)}</div>` : ''}
+      ${b.group === 'settled' ? '' : `<div class="bet-odds-row" style="margin-top:10px">
+        <div>
+          <div class="bet-odds-label">Einstieg</div>
+          <span class="bet-odds-entry">@${odds.toFixed(2)}</span>
+        </div>
+        <span class="bet-odds-arrow">→</span>
+        <div>
+          <div class="bet-odds-label">Aktuell${infoTip('Markt-Bewegung seit deinem Einstieg. ↓ Quote gefallen (grün): der Markt glaubt jetzt eher an dein Outcome. ↑ Quote gestiegen (rot): der Markt ist skeptischer geworden.')}</div>
+          <span class="bet-odds-current ${driftCls}">${currentOddsStr} <small>${driftStr}</small></span>
+        </div>
+      </div>` : ''}
+    </div>
+    ${midRow}
+    <div class="bet-card-footer">
+      ${b.group !== 'settled' ? `<span class="clv-pill ${clvCls}">${clvLabel}${infoTip('CLV = Marktbewegung seit deinem Einstieg. Für offene Wetten ist das ein Live-Indikator, ob der Markt deine Richtung bestätigt.')}</span>` : ''}
+      ${b.group === 'settled' && b.status_source === 'live' ? `<span class="clv-pill clv-neutral">Automatisch live verschoben</span>` : ''}
+    </div>
+    <div class="bet-notes-row">
+      <div class="bet-notes-label">📝 Notiz <span class="bet-notes-saved" id="notes-saved-${esc(noteKey)}">gespeichert</span></div>
+      <textarea class="bet-notes-input" data-note-key="${esc(noteKey)}"
+        placeholder="Warum diese Wette? Setze dein Reasoning, später nachvollziehen…"
+        oninput="_onBetNoteInput(this)">${esc(_loadBetNote(home, away, b.market || ''))}</textarea>
+    </div>
+  </div>`;
+}
+
+function renderBets() {
+  const c = document.getElementById('bets-container');
+  if (!c) return;
+  const summary = _betsView?.summary || { open: 0, live: 0, settled: 0 };
+  const pendingHtml = _pwaPendingHtml();
+  const groups = {
+    open: _betsView?.open || [],
+    live: _betsView?.live || [],
+    settled: _betsView?.settled || [],
+  };
+  if (_betsFilter === 'open' && !groups.open.length && groups.live.length) _betsFilter = 'live';
+  if (_betsFilter !== 'settled' && !groups[_betsFilter].length && !groups.open.length && !groups.live.length && groups.settled.length) _betsFilter = 'settled';
+  const activeRows = groups[_betsFilter] || [];
+  if (!summary.open && !summary.live && !summary.settled && !pendingHtml) {
+    c.innerHTML = `<div class="empty"><div class="icon">📭</div><div>Keine offenen Wetten.<br><small>Signals werden täglich 08:00 UTC aktualisiert.</small></div></div>`;
+    return;
   }
-  c.innerHTML = h;
+  const chips = [
+    ['open', `Offen ${summary.open}`],
+    ['live', `Live ${summary.live}`],
+    ['settled', `Abgerechnet ${summary.settled}`],
+  ].map(([key, label]) =>
+    `<span class="filter-chip${_betsFilter===key?' active':''}" role="tab" tabindex="0" aria-selected="${_betsFilter===key}" data-bf="${key}">${label}</span>`
+  ).join('');
+
+  let h = `<div class="filter-chips" role="tablist" aria-label="Wetten-Filter">${chips}</div>`;
+  h += `<div class="bets-summary">${summary.open + summary.live} aktiv · ${summary.settled} entschieden</div>`;
+  if (_betsFilter === 'open' && pendingHtml) h += pendingHtml;
+  if (!activeRows.length) {
+    h += `<div class="empty"><div class="icon">${_betsFilter === 'settled' ? '🧾' : _betsFilter === 'live' ? '🔴' : '📭'}</div><div>Keine ${_betsFilter === 'settled' ? 'abgerechneten' : _betsFilter === 'live' ? 'live laufenden' : 'offenen'} Wetten.</div></div>`;
+    c.innerHTML = h;
+  } else {
+    h += activeRows.map(_renderBetCard).join('');
+    c.innerHTML = h;
+  }
+  document.querySelectorAll('#bets-container .filter-chip[data-bf]').forEach(el => {
+    const fresh = el;
+    const handler = () => {
+      _betsFilter = fresh.dataset.bf;
+      renderBets();
+    };
+    fresh.onclick = handler;
+    fresh.onkeydown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); }
+    };
+  });
 }
 
 // ── Render Bankroll strip ─────────────────────────────────────
@@ -1716,7 +1799,7 @@ function renderBankrollStrip() {
   const maxWin = b.max_win ?? 0;
   const staked = b.staked ?? 0;
   const exp = b.exposure_pct ?? 0;
-  const openCount = (_openBets || []).length;
+  const openCount = (_betsView.summary?.open || 0) + (_betsView.summary?.live || 0);
 
   document.getElementById('br-free').textContent = '€' + free.toFixed(2);
   const pnlEl = document.getElementById('br-pnl');
@@ -1725,7 +1808,7 @@ function renderBankrollStrip() {
   document.getElementById('br-maxwin').textContent = '+€' + maxWin.toFixed(2);
   document.getElementById('br-staked').textContent = staked.toFixed(2);
   document.getElementById('br-exp').textContent = exp.toFixed(1);
-  document.getElementById('br-count').textContent = openCount + ' offene Wette' + (openCount !== 1 ? 'n' : '');
+  document.getElementById('br-count').textContent = openCount + ' aktive Wette' + (openCount !== 1 ? 'n' : '');
 
   const bar = document.getElementById('br-bar');
   bar.style.width = Math.min(exp, 100) + '%';
@@ -3413,6 +3496,7 @@ async function _load() {
   _allOdds = d.all_odds || {};
   _modelTips = d.model_tips || {};
   _openBets = d.open_bets || [];
+  _betsView = d.bets || { open: [], live: [], settled: [], summary: { open: 0, live: 0, settled: 0 } };
   _bankrollState = d.bankroll_state || {};
   _oddsHistory = d.odds_history || {};
   // Index wm_results by matchKey for fast lookup in Home tab
@@ -3428,7 +3512,8 @@ async function _load() {
   setB('badge-football', _signals.filter(s=>s.sport==='football').length);
   setB('badge-tennis',   _signals.filter(s=>s.sport==='tennis').length);
   const setBBets = document.getElementById('badge-bets');
-  if (setBBets) { setBBets.textContent = _openBets.length; setBBets.classList.toggle('show', _openBets.length > 0); }
+  const _activeBets = (_betsView.summary?.open || 0) + (_betsView.summary?.live || 0);
+  if (setBBets) { setBBets.textContent = _activeBets; setBBets.classList.toggle('show', _activeBets > 0); }
 
   _wmStats = d.wm_stats || {};
   renderHome();

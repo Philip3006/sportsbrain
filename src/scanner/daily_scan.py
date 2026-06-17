@@ -823,7 +823,6 @@ def run_daily_scan(
         if lgbm_model and lgbm_raw_arr is not None:
             signals = [set_confidence(s, dc_probs, lgbm_raw_arr) for s in signals]
         else:
-            from src.betting.kelly import dynamic_stake_eur
             _1x2_dc_keys = {"home": "p_home", "draw": "p_draw", "away": "p_away"}
             for s in signals:
                 if s.market in _1x2_dc_keys:
@@ -834,9 +833,6 @@ def run_daily_scan(
                     upgrade = s.confidence != "LOW" and s.model_prob * s.decimal_odds > 1.10
                 if upgrade:
                     s.confidence = "HIGH"
-                    bankroll_est = s.stake_eur / s.stake_pct if s.stake_pct > 0 else bankroll
-                    s.stake_eur = dynamic_stake_eur(s.ev, "HIGH", bankroll_est)
-                    s.stake_pct = s.stake_eur / bankroll_est
 
         # Phase 2.3: Conformal gate — downgrade 1X2 confidence when DC prediction
         # set at 90% coverage contains more than one outcome class.
@@ -860,9 +856,9 @@ def run_daily_scan(
         # set_confidence() can upgrade to HIGH, but that's misleading — cap at MEDIUM.
         for s in signals:
             if s.market.startswith(("goals_", "h1_goals_", "h2_goals_")) and s.confidence == "HIGH":
-                from src.betting.kelly import dynamic_stake_eur, goals_range_max_for
+                from src.betting.kelly import goals_range_max_for
                 s.confidence = "MEDIUM"
-                s.stake_eur = min(dynamic_stake_eur(s.ev, "MEDIUM", bankroll), goals_range_max_for(bankroll))
+                s.stake_eur = min(s.stake_eur, goals_range_max_for(bankroll))
                 s.stake_pct = s.stake_eur / bankroll if bankroll > 0 else 0.0
 
         # Goalscorer value bets — independent third bucket (never blocks match slots)

@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from src.betting.kelly import dynamic_stake_eur, expected_value, kelly_fraction
+from src.betting.kelly import expected_value, kelly_fraction, kelly_stake_eur
 from src.betting.odds_utils import remove_margin_shin
 from src.config import MIN_EDGE, MAX_STAKE_EUR, GOALS_RANGE_MAX_STAKE
 
@@ -38,7 +38,7 @@ def _make_signal(
     model_p: float, fair_p: float, odds: float, ev: float,
     kf: float, confidence: str, bankroll: float,
 ) -> BetSignal:
-    stake_eur = dynamic_stake_eur(ev, confidence, bankroll)
+    stake_eur = kelly_stake_eur(kf, bankroll)
     return BetSignal(
         match_id=match_id or f"{home}_vs_{away}",
         home=home, away=away, market=market,
@@ -670,10 +670,6 @@ def set_confidence(signal: BetSignal, dc_probs: dict, lgbm_probs: np.ndarray) ->
         # Use model_prob (DC-computed) with stricter threshold (≥10% DC-implied EV).
         if signal.confidence != "LOW" and signal.model_prob * signal.decimal_odds > 1.10:
             signal.confidence = "HIGH"
-            bankroll = signal.stake_eur / signal.stake_pct if signal.stake_pct > 0 else 1000.0
-            new_eur = dynamic_stake_eur(signal.ev, "HIGH", bankroll)
-            signal.stake_eur = new_eur
-            signal.stake_pct = new_eur / bankroll
         return signal
 
     # 1X2 market — require both DC and LightGBM to agree.
@@ -681,8 +677,4 @@ def set_confidence(signal: BetSignal, dc_probs: dict, lgbm_probs: np.ndarray) ->
     lgbm_p = float(lgbm_probs[lgbm_idx])
     if signal.confidence != "LOW" and (dc_p * signal.decimal_odds > 1.0) and (lgbm_p * signal.decimal_odds > 1.0):
         signal.confidence = "HIGH"
-        bankroll = signal.stake_eur / signal.stake_pct if signal.stake_pct > 0 else 1000.0
-        new_eur = dynamic_stake_eur(signal.ev, "HIGH", bankroll)
-        signal.stake_eur = new_eur
-        signal.stake_pct = new_eur / bankroll
     return signal

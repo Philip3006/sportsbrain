@@ -706,6 +706,42 @@ class TestUpdateClosingOddsMock:
         clv = bet_odds / closing - 1
         assert clv > 0, "Mock 0.97x factor should produce positive CLV (beat closing line)"
 
+    def test_updates_double_chance_closing_odds_from_api_match(self, tmp_path, monkeypatch):
+        ledger = _make_ledger(tmp_path, [
+            _base_row(match_id="M1", market="dc_1x", closing_odds="0.0"),
+        ])
+        monkeypatch.setattr("src.betting.ledger.LEDGER_PATH", ledger)
+        monkeypatch.setattr(
+            "src.data.odds_api.fetch_upcoming_matches",
+            lambda **kwargs: [{
+                "home_team": "Brazil",
+                "away_team": "Argentina",
+                "dc_1x_odds": 1.44,
+            }],
+        )
+        main = self._import_main()
+        main(mock=False)
+        df = _load(ledger)
+        assert float(df.loc[0, "closing_odds"]) == pytest.approx(1.44, abs=0.001)
+
+    def test_updates_quarter_ah_closing_odds_from_dynamic_spreads(self, tmp_path, monkeypatch):
+        ledger = _make_ledger(tmp_path, [
+            _base_row(match_id="M1", market="ah+1.5_away", closing_odds="0.0"),
+        ])
+        monkeypatch.setattr("src.betting.ledger.LEDGER_PATH", ledger)
+        monkeypatch.setattr(
+            "src.data.odds_api.fetch_upcoming_matches",
+            lambda **kwargs: [{
+                "home_team": "Brazil",
+                "away_team": "Argentina",
+                "spreads": {-1.5: {"home": 2.04, "away": 1.83}},
+            }],
+        )
+        main = self._import_main()
+        main(mock=False)
+        df = _load(ledger)
+        assert float(df.loc[0, "closing_odds"]) == pytest.approx(1.83, abs=0.001)
+
     def test_mock_no_open_bets_skips_update(self, tmp_path, monkeypatch, capsys):
         """If all bets are settled, script exits cleanly and prints 'No open bets'."""
         ledger = _make_ledger(tmp_path, [

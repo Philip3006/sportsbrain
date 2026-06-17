@@ -15,6 +15,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.betting.ledger import LEDGER_PATH, _load, _save, _file_lock
+from src.betting.odds_utils import extract_market_odds
 from src.config import canonical_name
 
 
@@ -46,7 +47,10 @@ def _main_locked(mock: bool) -> None:
     else:
         from src.data.odds_api import fetch_upcoming_matches
         try:
-            matches = fetch_upcoming_matches(force=True)
+            matches = fetch_upcoming_matches(
+                markets="h2h,totals,spreads,btts,double_chance",
+                force=True,
+            )
         except Exception as e:
             print(f"  API error: {e}")
             return
@@ -58,22 +62,6 @@ def _main_locked(mock: bool) -> None:
             a = canonical_name(m["away_team"])
             odds_lookup[(h, a)] = m
 
-        _MARKET_ODDS_KEY = {
-            "home":         "home_odds",
-            "draw":         "draw_odds",
-            "away":         "away_odds",
-            "o/u2.5_over":  "over_odds",
-            "o/u2.5_under": "under_odds",
-            "ah-0.5_home":  "ah_home_odds",
-            "ah+0.5_away":  "ah_away_odds",
-            "ah-1.0_home":  "ah1_home_odds",
-            "ah+1.0_away":  "ah1_away_odds",
-            "ah-1.5_home":  "ah15_home_odds",
-            "ah+1.5_away":  "ah15_away_odds",
-            "btts_yes":     "btts_yes_odds",
-            "btts_no":      "btts_no_odds",
-        }
-
         n = 0
         for idx in df[open_mask].index:
             home = canonical_name(str(df.at[idx, "home"]))
@@ -82,10 +70,7 @@ def _main_locked(mock: bool) -> None:
             match = odds_lookup.get((home, away))
             if match is None:
                 continue
-            odds_key = _MARKET_ODDS_KEY.get(market)
-            if odds_key is None:
-                continue
-            closing = float(match.get(odds_key, 0))
+            closing = extract_market_odds(match, market)
             if closing > 1.0:
                 df.at[idx, "closing_odds"] = f"{closing:.4f}"
                 n += 1

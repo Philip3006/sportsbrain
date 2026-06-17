@@ -392,6 +392,9 @@ class TestDetectValueBtts:
         assert len(yes_sigs) == 1
         assert yes_sigs[0].ev > 0
         assert yes_sigs[0].stake_eur > 0
+        assert yes_sigs[0].stake_eur == pytest.approx(
+            min(yes_sigs[0].kelly_f * 100.0, 20.0)
+        )
 
     def test_detect_value_btts_no_signal_when_zero_odds(self):
         signals = detect_value_btts(
