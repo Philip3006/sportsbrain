@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-17T06:30:25Z",
+  "updated": "2026-06-17T07:18:08Z",
   "schedule": [
     {
       "sport": "football",
@@ -9008,15 +9008,15 @@
   "history": [
     {
       "date": "2026-06-17",
-      "n_bets": 1,
-      "pnl": 0.0,
-      "roi_pct": 0.0
+      "n_bets": 6,
+      "pnl": -8.43,
+      "roi_pct": -9.0
     },
     {
       "date": "2026-06-16",
       "n_bets": 5,
-      "pnl": -46.44,
-      "roi_pct": -59.2
+      "pnl": -30.04,
+      "roi_pct": -38.3
     },
     {
       "date": "2026-06-15",
@@ -9045,62 +9045,88 @@
   ],
   "open_bets": [
     {
-      "match": "Iraq vs Norway",
-      "home": "Iraq",
-      "away": "Norway",
-      "market": "btts_yes",
-      "entry_odds": 2.37,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
-      "stake": 11.97,
-      "match_date": "2026-06-16",
+      "match": "Portugal vs DR Congo",
+      "home": "Portugal",
+      "away": "DR Congo",
+      "market": "draw",
+      "entry_odds": 5.5,
+      "current_odds": 5.8,
+      "drift_pct": 5.5,
+      "clv_signal": "good",
+      "stake": 10.58,
+      "match_date": "2026-06-17",
       "model_edge_pct": null
     },
     {
-      "match": "Argentina vs Algeria",
-      "home": "Argentina",
-      "away": "Algeria",
-      "market": "scorer_Julián Álvarez",
-      "entry_odds": 2.5,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
+      "match": "Portugal vs DR Congo",
+      "home": "Portugal",
+      "away": "DR Congo",
+      "market": "o/u3.5_under",
+      "entry_odds": 1.37,
+      "current_odds": 2.12,
+      "drift_pct": 54.7,
+      "clv_signal": "good",
       "stake": 20.0,
       "match_date": "2026-06-17",
       "model_edge_pct": null
     },
     {
-      "match": "Austria vs Jordan",
-      "home": "Austria",
-      "away": "Jordan",
-      "market": "draw",
-      "entry_odds": 5.0,
-      "current_odds": 5.4,
-      "drift_pct": 8.0,
-      "clv_signal": "bad",
-      "stake": 8.43,
+      "match": "England vs Croatia",
+      "home": "England",
+      "away": "Croatia",
+      "market": "home",
+      "entry_odds": 1.72,
+      "current_odds": 1.78,
+      "drift_pct": 3.5,
+      "clv_signal": "good",
+      "stake": 14.15,
       "match_date": "2026-06-17",
       "model_edge_pct": null
+    },
+    {
+      "match": "England vs Croatia",
+      "home": "England",
+      "away": "Croatia",
+      "market": "o/u2.5_under",
+      "entry_odds": 1.68,
+      "current_odds": 1.76,
+      "drift_pct": 4.8,
+      "clv_signal": "good",
+      "stake": 20.0,
+      "match_date": "2026-06-17",
+      "model_edge_pct": null
+    },
+    {
+      "match": "England vs Croatia",
+      "home": "England",
+      "away": "Croatia",
+      "market": "scorer_Harry Kane",
+      "entry_odds": 3.0,
+      "current_odds": null,
+      "drift_pct": null,
+      "clv_signal": null,
+      "stake": 20.0,
+      "match_date": "2026-06-17",
+      "model_edge_pct": 26.0
     }
   ],
   "bankroll_state": {
     "start": 100.0,
-    "free": 97.88,
-    "staked": 40.4,
-    "exposure_pct": 40.4,
-    "max_win": 83.49,
-    "pnl_closed": 38.28
+    "free": 61.52,
+    "staked": 84.73,
+    "exposure_pct": 84.7,
+    "max_win": 129.42,
+    "pnl_closed": 46.25
   },
   "wm_stats": {
     "stats": {
       "1x2": {
-        "n": 3,
+        "n": 4,
         "won": 2,
-        "staked": 32.42,
-        "pnl": 28.89,
-        "hit_rate": 66.7,
-        "roi": 89.1
+        "staked": 40.85,
+        "pnl": 20.46,
+        "hit_rate": 50.0,
+        "roi": 50.1
       },
       "ou25": {
         "n": 6,
@@ -9111,12 +9137,12 @@
         "roi": 60.3
       },
       "btts": {
-        "n": 0,
-        "won": 0,
-        "staked": 0.0,
-        "pnl": 0.0,
-        "hit_rate": null,
-        "roi": null
+        "n": 1,
+        "won": 1,
+        "staked": 11.97,
+        "pnl": 16.4,
+        "hit_rate": 100.0,
+        "roi": 137.0
       },
       "other": {
         "n": 6,
@@ -9150,20 +9176,20 @@
       },
       {
         "date": "2026-06-16",
-        "balance": 158.28
+        "balance": 174.68
       },
       {
         "date": "2026-06-17",
-        "balance": 138.28
+        "balance": 146.25
       }
     ],
     "drawdown": {
       "peak": 176.24,
-      "current": 138.28,
-      "current_dd": 37.96,
-      "current_dd_pct": 21.54,
-      "max_dd": 37.96,
-      "max_dd_pct": 21.54
+      "current": 146.25,
+      "current_dd": 29.99,
+      "current_dd_pct": 17.02,
+      "max_dd": 29.99,
+      "max_dd_pct": 17.02
     },
     "clv_dist": {
       "labels": [
@@ -9197,19 +9223,19 @@
         0,
         0,
         0,
-        0,
+        1,
         0
       ]
     },
     "summary": {
-      "n_settled": 15,
-      "staked": 196.12,
-      "pnl": 38.28,
-      "yield_pct": 19.52,
+      "n_settled": 17,
+      "staked": 216.52,
+      "pnl": 46.25,
+      "yield_pct": 21.36,
       "mean_clv": 7.33,
-      "mean_edge": null,
+      "mean_edge": 12.7,
       "n_clv": 6,
-      "n_edge": 0
+      "n_edge": 1
     },
     "per_team_market": {
       "South Korea": {
@@ -9476,6 +9502,26 @@
           "roi": -100.0
         }
       },
+      "Iraq": {
+        "BTTS": {
+          "n": 1,
+          "won": 1,
+          "staked": 11.97,
+          "pnl": 16.4,
+          "hit_rate": 100.0,
+          "roi": 137.0
+        }
+      },
+      "Norway": {
+        "BTTS": {
+          "n": 1,
+          "won": 1,
+          "staked": 11.97,
+          "pnl": 16.4,
+          "hit_rate": 100.0,
+          "roi": 137.0
+        }
+      },
       "Argentina": {
         "Under": {
           "n": 1,
@@ -9495,16 +9541,36 @@
           "hit_rate": 0.0,
           "roi": -100.0
         }
+      },
+      "Austria": {
+        "1X2": {
+          "n": 1,
+          "won": 0,
+          "staked": 8.43,
+          "pnl": -8.43,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "Jordan": {
+        "1X2": {
+          "n": 1,
+          "won": 0,
+          "staked": 8.43,
+          "pnl": -8.43,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
       }
     },
     "by_confederation": {
       "AFC": {
-        "n": 5,
-        "won": 4,
-        "staked": 65.4,
-        "pnl": 41.54,
-        "hit_rate": 80.0,
-        "roi": 63.5
+        "n": 6,
+        "won": 5,
+        "staked": 77.37,
+        "pnl": 57.94,
+        "hit_rate": 83.3,
+        "roi": 74.9
       },
       "CONCACAF": {
         "n": 3,
@@ -9523,12 +9589,12 @@
         "roi": -100.0
       },
       "UEFA": {
-        "n": 5,
+        "n": 6,
         "won": 2,
-        "staked": 62.72,
-        "pnl": 5.49,
-        "hit_rate": 40.0,
-        "roi": 8.8
+        "staked": 71.15,
+        "pnl": -2.94,
+        "hit_rate": 33.3,
+        "roi": -4.1
       }
     }
   },
