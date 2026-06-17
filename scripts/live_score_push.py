@@ -150,6 +150,21 @@ def main() -> int:
         prev_hs = prev.get("home_score")
         prev_as = prev.get("away_score")
         ht_sent = bool(prev.get("ht_sent", False))
+        ko_sent = bool(prev.get("ko_sent", False))
+
+        # Anpfiff-Push (erster Eintrag im Cache, Match gerade gestartet, 0-10 Min)
+        if not ko_sent and prev_hs is None and 0 <= elapsed_min <= 10:
+            if _send_notification(
+                title=f"🟢 Anpfiff! {fh}{fa}".strip(),
+                body=score_line,
+                url="/sportsbrain/#bets",
+                kind="kickoff",
+                tag=f"ko-{match_id}",
+                require=False,
+            ):
+                pushes_sent += 1
+                ko_sent = True
+                print(f"  🟢 KO pushed: {h} vs {a}")
 
         # Score-Änderung → Tor-Push
         if (prev_hs is not None and prev_as is not None
@@ -191,6 +206,7 @@ def main() -> int:
             "home_score": hs,
             "away_score": as_,
             "completed":  m.get("completed", False),
+            "ko_sent":    ko_sent,
             "ht_sent":    ht_sent,
             "scorer_names": scorer_names,
             "last_goal_scorer": last_goal_scorer,
