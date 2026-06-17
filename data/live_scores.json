@@ -7,5 +7,14 @@
     "completed": false,
     "ht_sent": false,
     "updated": "2026-06-16T19:33:19.317447+00:00"
+  },
+  "espn_760433": {
+    "home": "Argentina",
+    "away": "Algeria",
+    "home_score": 0,
+    "away_score": 0,
+    "completed": false,
+    "ht_sent": false,
+    "updated": "2026-06-17T01:05:28.356091+00:00"
   }
 }
