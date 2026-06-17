@@ -97,6 +97,12 @@ def _settle_market(market: str, home_g: int, away_g: int) -> str | None:
     if market == "draw":
         return "won" if diff == 0 else "lost"
 
+    # BTTS — beide Teams treffen
+    if market == "btts_yes":
+        return "won" if (home_g >= 1 and away_g >= 1) else "lost"
+    if market == "btts_no":
+        return "won" if (home_g == 0 or away_g == 0) else "lost"
+
     # Over/Under
     for line in ("2.5", "1.5", "3.5", "0.5", "3.0", "4.5", "4.0", "5.5"):
         thresh = float(line)
