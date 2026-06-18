@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-18T21:02:54Z",
+  "updated": "2026-06-18T21:21:59Z",
   "schedule": [
     {
       "sport": "football",
@@ -8334,14 +8334,14 @@
   "tennis": [],
   "portfolio": {
     "n_bets": 35,
-    "n_open": 2,
+    "n_open": 0,
     "n_won": 12,
-    "n_lost": 13,
+    "n_lost": 15,
     "n_void": 8,
-    "total_staked": 461.26,
-    "total_pnl": 46.25,
-    "roi_pct": 10.026882886007892,
-    "win_rate": 48.0,
+    "total_staked": 481.26,
+    "total_pnl": 26.25,
+    "roi_pct": 5.454432115696297,
+    "win_rate": 44.44444444444444,
     "mean_clv": 0.015,
     "by_market": {
       "ah+1.5_away": {
@@ -8387,11 +8387,11 @@
         "lost": 1
       },
       "draw": {
-        "n": 5,
-        "pnl": 58.559999999999995,
-        "roi_pct": 109.58083832335328,
+        "n": 6,
+        "pnl": 48.559999999999995,
+        "roi_pct": 76.54476670870113,
         "won": 2,
-        "lost": 2
+        "lost": 3
       },
       "home": {
         "n": 4,
@@ -8428,6 +8428,13 @@
         "won": 1,
         "lost": 0
       },
+      "scorer_Breel Embolo": {
+        "n": 1,
+        "pnl": -10.0,
+        "roi_pct": -100.0,
+        "won": 0,
+        "lost": 1
+      },
       "scorer_Harry Kane": {
         "n": 1,
         "pnl": 20.0,
@@ -8456,8 +8463,8 @@
     {
       "date": "2026-06-18",
       "n_bets": 4,
-      "pnl": -30.0,
-      "roi_pct": -60.0
+      "pnl": -50.0,
+      "roi_pct": -100.0
     },
     {
       "date": "2026-06-17",
@@ -8496,62 +8503,9 @@
       "roi_pct": 0.0
     }
   ],
-  "open_bets": [
-    {
-      "match": "Switzerland vs Bosnia & Herzegovina",
-      "home": "Switzerland",
-      "away": "Bosnia & Herzegovina",
-      "market": "draw",
-      "entry_odds": 4.0,
-      "current_odds": 1.93,
-      "drift_pct": -51.8,
-      "clv_signal": "good",
-      "stake": 10.0,
-      "match_date": "2026-06-18",
-      "model_edge_pct": -43.3
-    },
-    {
-      "match": "Switzerland vs Bosnia & Herzegovina",
-      "home": "Switzerland",
-      "away": "Bosnia & Herzegovina",
-      "market": "scorer_Breel Embolo",
-      "entry_odds": 2.2,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
-      "stake": 10.0,
-      "match_date": "2026-06-18",
-      "model_edge_pct": null
-    }
-  ],
+  "open_bets": [],
   "bets": {
-    "open": [
-      {
-        "match": "Switzerland vs Bosnia & Herzegovina",
-        "home": "Switzerland",
-        "away": "Bosnia & Herzegovina",
-        "market": "scorer_Breel Embolo",
-        "entry_odds": 2.2,
-        "current_odds": null,
-        "drift_pct": null,
-        "clv_signal": null,
-        "stake": 10.0,
-        "match_date": "2026-06-18",
-        "placed_date": "2026-06-18",
-        "kickoff": "2026-06-18T19:00:00Z",
-        "model_edge_pct": null,
-        "group": "open",
-        "status": "open",
-        "status_source": "official",
-        "badge_text": "Manuell prüfen",
-        "is_live_badge": false,
-        "scoreline": "4:1",
-        "home_score": 4,
-        "away_score": 1,
-        "last_goal_scorer": "",
-        "pnl": 0.0
-      }
-    ],
+    "open": [],
     "live": [],
     "settled": [
       {
@@ -8570,9 +8524,34 @@
         "model_edge_pct": null,
         "group": "settled",
         "status": "lost",
-        "status_source": "live",
-        "badge_text": "Live entschieden",
-        "is_live_badge": true,
+        "status_source": "official",
+        "badge_text": "Abgerechnet",
+        "is_live_badge": false,
+        "scoreline": "4:1",
+        "home_score": 4,
+        "away_score": 1,
+        "last_goal_scorer": "",
+        "pnl": -10.0
+      },
+      {
+        "match": "Switzerland vs Bosnia & Herzegovina",
+        "home": "Switzerland",
+        "away": "Bosnia & Herzegovina",
+        "market": "scorer_Breel Embolo",
+        "entry_odds": 2.2,
+        "current_odds": null,
+        "drift_pct": null,
+        "clv_signal": null,
+        "stake": 10.0,
+        "match_date": "2026-06-18",
+        "placed_date": "2026-06-18",
+        "kickoff": "2026-06-18T19:00:00Z",
+        "model_edge_pct": null,
+        "group": "settled",
+        "status": "lost",
+        "status_source": "official",
+        "badge_text": "Abgerechnet",
+        "is_live_badge": false,
         "scoreline": "4:1",
         "home_score": 4,
         "away_score": 1,
@@ -9406,28 +9385,28 @@
       }
     ],
     "summary": {
-      "open": 1,
+      "open": 0,
       "live": 0,
-      "settled": 34
+      "settled": 35
     }
   },
   "bankroll_state": {
     "start": 100.0,
     "free": 126.25,
-    "staked": 20.0,
-    "exposure_pct": 20.0,
-    "max_win": 21.3,
-    "pnl_closed": 46.25
+    "staked": 0,
+    "exposure_pct": 0.0,
+    "max_win": 0,
+    "pnl_closed": 26.25
   },
   "wm_stats": {
     "stats": {
       "1x2": {
-        "n": 7,
+        "n": 8,
         "won": 3,
-        "staked": 71.44,
-        "pnl": 48.06,
-        "hit_rate": 42.9,
-        "roi": 67.3
+        "staked": 81.44,
+        "pnl": 38.06,
+        "hit_rate": 37.5,
+        "roi": 46.7
       },
       "ou25": {
         "n": 9,
@@ -9446,12 +9425,12 @@
         "roi": 5.2
       },
       "other": {
-        "n": 7,
+        "n": 8,
         "won": 3,
-        "staked": 96.86,
-        "pnl": -16.91,
-        "hit_rate": 42.9,
-        "roi": -17.5
+        "staked": 106.86,
+        "pnl": -26.91,
+        "hit_rate": 37.5,
+        "roi": -25.2
       }
     },
     "series": [
@@ -9485,16 +9464,16 @@
       },
       {
         "date": "2026-06-18",
-        "balance": 146.25
+        "balance": 126.25
       }
     ],
     "drawdown": {
       "peak": 176.25,
-      "current": 146.25,
-      "current_dd": 30.0,
-      "current_dd_pct": 17.02,
-      "max_dd": 30.0,
-      "max_dd_pct": 17.02
+      "current": 126.25,
+      "current_dd": 50.0,
+      "current_dd_pct": 28.37,
+      "max_dd": 50.0,
+      "max_dd_pct": 28.37
     },
     "clv_dist": {
       "labels": [
@@ -9526,21 +9505,21 @@
       "bins": [
         1,
         0,
-        1,
-        1,
+        2,
+        2,
         1,
         0
       ]
     },
     "summary": {
-      "n_settled": 25,
-      "staked": 332.11,
-      "pnl": 46.25,
-      "yield_pct": 13.93,
+      "n_settled": 27,
+      "staked": 352.11,
+      "pnl": 26.25,
+      "yield_pct": 7.46,
       "mean_clv": 7.3,
-      "mean_edge": 2.01,
+      "mean_edge": 3.43,
       "n_clv": 12,
-      "n_edge": 4
+      "n_edge": 6
     },
     "per_team_market": {
       "South Korea": {
@@ -9637,6 +9616,22 @@
           "won": 0,
           "staked": 11.86,
           "pnl": -11.86,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        },
+        "1X2": {
+          "n": 1,
+          "won": 0,
+          "staked": 10.0,
+          "pnl": -10.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        },
+        "Sonstige": {
+          "n": 1,
+          "won": 0,
+          "staked": 10.0,
+          "pnl": -10.0,
           "hit_rate": 0.0,
           "roi": -100.0
         }
@@ -10000,6 +9995,24 @@
           "hit_rate": 0.0,
           "roi": -100.0
         }
+      },
+      "Bosnia & Herzegovina": {
+        "1X2": {
+          "n": 1,
+          "won": 0,
+          "staked": 10.0,
+          "pnl": -10.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        },
+        "Sonstige": {
+          "n": 1,
+          "won": 0,
+          "staked": 10.0,
+          "pnl": -10.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
       }
     },
     "by_confederation": {
@@ -10028,12 +10041,12 @@
         "roi": -100.0
       },
       "UEFA": {
-        "n": 12,
+        "n": 14,
         "won": 5,
-        "staked": 161.73,
-        "pnl": 22.07,
-        "hit_rate": 41.7,
-        "roi": 13.6
+        "staked": 181.73,
+        "pnl": 2.07,
+        "hit_rate": 35.7,
+        "roi": 1.1
       },
       "CAF": {
         "n": 2,
@@ -10145,8 +10158,8 @@
   ],
   "system_health": {
     "status": "error",
-    "last_scan_at": "2026-06-18T21:02:54Z",
-    "open_bets": 2,
+    "last_scan_at": "2026-06-18T21:21:59Z",
+    "open_bets": 0,
     "settlement_due": 0,
     "odds_api": {
       "requests_used": 1331,
@@ -10157,9 +10170,9 @@
     "model_snapshot": "params_20260618_candidate05.pkl"
   },
   "automation": {
-    "generated_at": "2026-06-18T21:02:54Z",
+    "generated_at": "2026-06-18T21:22:00Z",
     "status": "error",
-    "last_success_at": "2026-06-18T21:01:58Z",
+    "last_success_at": "2026-06-18T21:20:14Z",
     "jobs": {
       "scan": {
         "name": "prematch_scan_cron",
@@ -10189,7 +10202,7 @@
         "name": "consume_pending_bets",
         "path": "results/consume_pending_bets.log",
         "exists": true,
-        "updated_at": "2026-06-18T21:01:58Z",
+        "updated_at": "2026-06-18T21:20:14Z",
         "status": "ok",
         "message": "Letzter Lauf abgeschlossen"
       },
@@ -10197,7 +10210,7 @@
         "name": "launchd_live_score_push",
         "path": "results/launchd_live_score_push.log",
         "exists": true,
-        "updated_at": "2026-06-18T21:01:46Z",
+        "updated_at": "2026-06-18T21:20:14Z",
         "status": "unknown",
         "message": "Kein Abschluss im Log gefunden"
       }
@@ -10212,7 +10225,7 @@
   "model_status": {
     "active_snapshot": "params_20260618_candidate05.pkl",
     "active_snapshot_updated_at": "2026-06-18T19:35:21Z",
-    "active_snapshot_age_hours": 1.5,
+    "active_snapshot_age_hours": 1.8,
     "active_snapshot_exists": true,
     "active_snapshot_status": "active",
     "validation_evidence": {
@@ -10237,11 +10250,11 @@
     "status": "ok"
   },
   "data_freshness": {
-    "signals_updated_at": "2026-06-18T21:02:54Z",
+    "signals_updated_at": "2026-06-18T21:21:59Z",
     "signals_age_hours": 0.0,
     "signals_stale": false,
     "odds_cache_updated_at": "2026-06-18T20:45:39Z",
-    "odds_cache_age_hours": 0.3,
+    "odds_cache_age_hours": 0.6,
     "odds_snapshot_count": 68,
     "next_kickoff": "2026-06-18T22:00:00Z",
     "schedule_count": 47
