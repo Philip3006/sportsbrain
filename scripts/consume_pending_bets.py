@@ -34,7 +34,6 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from src.betting.ledger import LEDGER_PATH, _FIELDS, _load, _save, _file_lock
-from src.betting.value_detector import min_ev_pct_for_market, reprice_value_bet
 
 
 def _worker_base() -> str:
@@ -59,54 +58,29 @@ def _match_id(home: str, away: str, kickoff: str) -> str:
     return hashlib.md5(key.encode("utf-8")).hexdigest()
 
 
-def _float_value(value, default: float = 0.0) -> float:
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return default
-
-
-def _prob_value(value) -> float:
-    raw = _float_value(value)
-    if 0.0 < raw < 1.0:
-        return raw
-    if 1.0 < raw <= 100.0:
-        return raw / 100.0
-    return 0.0
-
-
 def _row_from_bet(bet: dict, today: str) -> dict | None:
     match = (bet.get("match") or "").strip()
     if " vs " not in match:
         return None
     home, away = [s.strip() for s in match.split(" vs ", 1)]
     market = (bet.get("market") or "").strip()
-    odds = _float_value(bet.get("odds"))
-    stake = _float_value(bet.get("stake_eur"))
+    odds = float(bet.get("odds") or 0)
+    stake = float(bet.get("stake_eur") or 0)
     if odds < 1.01 or stake <= 0:
-        return None
-    model_prob = _prob_value(bet.get("model_prob"))
-    if model_prob <= 0:
-        return None
-    min_ev_pct = max(
-        _float_value(bet.get("min_ev_pct")),
-        min_ev_pct_for_market(market),
-    )
-    repriced = reprice_value_bet(
-        market,
-        model_prob,
-        odds,
-        bankroll=100.0,
-        min_ev=min_ev_pct / 100.0,
-    )
-    if not repriced["is_value"]:
         return None
     kickoff = bet.get("kickoff") or ""
     match_date = kickoff[:10] if kickoff else ""
     source = (bet.get("source") or "value").strip().lower()
     if source not in ("value", "manual"):
         source = "value"
-    model_prob_str = f"{model_prob:.6f}"
+    model_prob_raw = bet.get("model_prob")
+    if model_prob_raw is None or model_prob_raw == "":
+        model_prob_str = ""
+    else:
+        try:
+            model_prob_str = f"{float(model_prob_raw):.6f}"
+        except (TypeError, ValueError):
+            model_prob_str = ""
     return {
         "match_id":     _match_id(home, away, kickoff),
         "match_date":   match_date,
@@ -205,20 +179,15 @@ def main() -> int:
             def _g(*args):
                 return subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
                                       text=True, timeout=30)
-            # Keep repo-backed dashboard state in sync with the ledger, but avoid
-            # staging unrelated local files from launchd jobs or manual work.
-            _g("add", "results/ledger.csv", "docs/data/signals.json")
-            staged = _g("diff", "--cached", "--quiet", "--", "results/ledger.csv", "docs/data/signals.json")
+            # Only the ledger — no other files (avoid pushing local-only state).
+            _g("add", "results/ledger.csv")
+            staged = _g("diff", "--cached", "--quiet", "results/ledger.csv")
             if staged.returncode != 0:  # there are staged changes
                 commit_msg = f"auto: ledger sync {added} bet(s)"
                 _g("commit", "-m", commit_msg,
                    "--author=SportsBrain Bot <bot@sportsbrain>")
                 for attempt in range(1, 6):
-                    pull = _g("pull", "--rebase", "--autostash", "origin", "main")
-                    if pull.returncode != 0:
-                        print(f"[consume] pull attempt {attempt} failed: "
-                              f"{pull.stderr.strip()[:120]}", file=sys.stderr)
-                        continue
+                    _g("pull", "--rebase", "origin", "main")
                     push = _g("push", "origin", "main")
                     if push.returncode == 0:
                         print(f"[consume] ledger pushed to GitHub ({commit_msg})")

@@ -154,8 +154,6 @@ def detect_value_goalscorer(
     player_props: dict[str, float],
     bankroll: float,
     min_ev: float = _MIN_EV_SCORER,
-    odds_bookmaker: str = "bet365",
-    odds_source: str = "sofascore",
 ) -> list["BetSignal"]:
     """
     Compares model goalscorer probabilities (Poisson) against bookmaker odds.
@@ -167,7 +165,7 @@ def detect_value_goalscorer(
         return []
 
     from src.config import MAX_EV
-    from src.betting.kelly import kelly_fraction, kelly_stake_eur
+    from src.betting.kelly import kelly_fraction, dynamic_stake_eur
     from src.betting.value_detector import BetSignal
 
     signals = []
@@ -181,7 +179,7 @@ def detect_value_goalscorer(
                 ev = model_p * odds - 1.0
                 if min_ev <= ev <= MAX_EV:
                     kf = kelly_fraction(model_p, odds)
-                    stake_eur = kelly_stake_eur(kf, bankroll)
+                    stake_eur = dynamic_stake_eur(ev, "LOW", bankroll)
                     signals.append(BetSignal(
                         match_id=match_id,
                         home=home, away=away,
@@ -194,10 +192,6 @@ def detect_value_goalscorer(
                         stake_pct=stake_eur / bankroll if bankroll > 0 else 0.0,
                         confidence="LOW",
                         stake_eur=stake_eur,
-                        b365_odds=odds,
-                        odds_bookmaker=odds_bookmaker,
-                        odds_source=odds_source,
-                        min_ev_pct=min_ev * 100.0,
                     ))
                 break
     return signals

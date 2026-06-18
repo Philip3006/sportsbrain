@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 from src.config import MIN_EDGE, MAX_EV
-from src.betting.kelly import expected_value, kelly_fraction, kelly_stake_eur
+from src.betting.kelly import dynamic_stake_eur, kelly_fraction, expected_value
 from src.data.tennis_data import fetch_atp_matches, fetch_wta_matches
 from src.data.tennis_odds import fetch_grand_slam_odds
 from src.models.tennis_elo import TennisEloRatings, _k, _expected, _apply_decay, _DEFAULT_RATING
@@ -269,7 +269,7 @@ def run_backtest(
                 continue
 
             kf = kelly_fraction(model_p, odds)
-            stake = kelly_stake_eur(kf, bankroll)
+            stake = dynamic_stake_eur(ev, "MEDIUM")
             won = outcome
             pnl = stake * (odds - 1) if won else -stake
 

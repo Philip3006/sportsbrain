@@ -252,9 +252,9 @@ def negative_log_likelihood(
 # hits a bound, _check_bounds_hit() reports it so the train script can retry with
 # a smaller WC2026_BOOST.
 _FIT_BOUNDS_ATTACK = (-3.0, 2.5)
-_FIT_BOUNDS_DEFENCE = (-3.0, 2.0)  # widened: Cape Verde/strong WM defenses can reach -2.5
+_FIT_BOUNDS_DEFENCE = (-2.5, 2.0)
 _FIT_BOUNDS_HOME_ADV = (0.0, 0.6)
-_FIT_BOUNDS_RHO = (-0.50, 0.10)  # widened: WM low-draw tournaments push rho past -0.40
+_FIT_BOUNDS_RHO = (-0.30, 0.10)
 _BOUND_TOLERANCE = 1e-3  # within this distance of a bound counts as "hit"
 
 
@@ -930,7 +930,7 @@ _ATTACK_RANGE = _FIT_BOUNDS_ATTACK
 _DEFENCE_RANGE = _FIT_BOUNDS_DEFENCE
 _HOME_ADV_MAX = _FIT_BOUNDS_HOME_ADV[1]
 _RHO_RANGE = _FIT_BOUNDS_RHO
-_MAX_TEAM_DRIFT = 1.5  # max |Δ attack| or |Δ defence| per team vs prior (raised for WM live-training)
+_MAX_TEAM_DRIFT = 1.5  # max |Δ attack| or |Δ defence| per team vs prior
 
 
 def validate_params(

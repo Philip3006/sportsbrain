@@ -13,74 +13,22 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.betting.ledger import append_bets, count_open_bets, LEDGER_PATH, ledger_summary
-from src.config import MAX_ACTIVE_BETS
-from src.betting.value_detector import BetSignal, min_ev_pct_for_market, reprice_value_bet
+from src.notifications.web_dashboard import BetSignal
 
 
-def _pct_to_prob(value, default: float = 0.0) -> float:
-    try:
-        return float(value) / 100.0
-    except (TypeError, ValueError):
-        return default
-
-
-def _float_value(value, default: float = 0.0) -> float:
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return default
-
-
-def _make_signal(d: dict, bankroll: float) -> BetSignal:
-    home, away = [p.strip() for p in d["match"].split(" vs ", 1)]
-    stake_eur = _float_value(d.get("stake_eur"))
-    stake_pct = _pct_to_prob(d.get("stake_pct"))
-    if stake_pct <= 0 and bankroll > 0:
-        stake_pct = stake_eur / bankroll
-    return BetSignal(
-        match_id=d.get("match_id", f"{home}_{away}"),
-        home=home,
-        away=away,
-        market=d["market"],
-        model_prob=_pct_to_prob(d.get("model_prob")),
-        fair_prob=_pct_to_prob(d.get("fair_prob")),
-        decimal_odds=_float_value(d.get("odds")),
-        ev=_pct_to_prob(d.get("ev_pct")),
-        kelly_f=stake_eur / bankroll if bankroll > 0 else 0.0,
-        stake_pct=stake_pct,
-        confidence=d.get("confidence", "MEDIUM"),
-        stake_eur=stake_eur,
-        b365_odds=_float_value(d.get("odds")),
-        n_models_agree=int(_float_value(d.get("n_models_agree"))),
-        odds_bookmaker=d.get("odds_bookmaker", ""),
-        odds_source=d.get("odds_source", ""),
-        min_ev_pct=_float_value(d.get("min_ev_pct")) or min_ev_pct_for_market(d["market"]),
-    )
-
-
-def _reprice_dashboard_signal(d: dict, bankroll: float, odds: float | None = None) -> dict | None:
-    """Return a repriced dashboard signal, or None when it is no longer value."""
-    model_prob = _pct_to_prob(d.get("model_prob"))
-    current_odds = _float_value(d.get("odds") if odds is None else odds)
-    if model_prob <= 0 or current_odds <= 1.0:
-        return None
-    min_ev_pct = _float_value(d.get("min_ev_pct")) or min_ev_pct_for_market(d["market"])
-    repriced = reprice_value_bet(
-        d["market"],
-        model_prob,
-        current_odds,
-        bankroll,
-        min_ev=min_ev_pct / 100.0,
-    )
-    if not repriced["is_value"]:
-        return None
-    out = dict(d)
-    out["odds"] = round(current_odds, 4)
-    out["ev_pct"] = round(repriced["ev_pct"], 2)
-    out["stake_eur"] = round(repriced["stake_eur"], 2)
-    out["stake_pct"] = round((repriced["stake_eur"] / bankroll * 100.0) if bankroll > 0 else 0.0, 2)
-    out["min_ev_pct"] = round(min_ev_pct, 2)
-    return out
+def _make_signal(d: dict) -> BetSignal:
+    s = BetSignal.__new__(BetSignal)
+    s.home = d["match"].split(" vs ")[0].strip()
+    s.away = d["match"].split(" vs ")[1].strip()
+    s.market = d["market"]
+    s.decimal_odds = d["odds"]
+    s.model_prob = d["model_prob"] / 100
+    s.ev = d["ev_pct"] / 100
+    s.confidence = d["confidence"]
+    s.stake_eur = d["stake_eur"]
+    s.match_id = d.get("match_id", f"{s.home}_{s.away}")
+    s.b365_odds = d["odds"]
+    return s
 
 
 def main(bankroll: float = 100.0) -> None:
@@ -91,11 +39,11 @@ def main(bankroll: float = 100.0) -> None:
 
     data = json.loads(sig_path.read_text())
     signals = data.get("football", []) + data.get("tennis", [])
-    signals = [s2 for s in signals if (s2 := _reprice_dashboard_signal(s, bankroll)) is not None]
+    signals = [s for s in signals if s.get("ev_pct", 0) >= 3]
     signals.sort(key=lambda s: s["ev_pct"], reverse=True)
 
     open_count = count_open_bets(LEDGER_PATH)
-    max_bets = MAX_ACTIVE_BETS
+    max_bets = 5
     slots = max(0, max_bets - open_count)
 
     print(f"\n=== SportsBrain — Wetten bestätigen ===")
@@ -137,32 +85,6 @@ def main(bankroll: float = 100.0) -> None:
         return
 
     chosen = chosen[:slots]
-    print(f"\nQuoten prüfen ({len(chosen)}): leer lassen = aktuelle Quote übernehmen")
-    repriced = []
-    for s in chosen:
-        min_ev = _float_value(s.get("min_ev_pct")) or min_ev_pct_for_market(s["market"])
-        print(f"  {s['match']} | {s['market']} | aktuell @{s['odds']:.2f} | EV +{s['ev_pct']:.1f}% | Min-EV {min_ev:.1f}%")
-        raw_odds = input("    Neue Quote? ").strip()
-        odds = s["odds"]
-        if raw_odds:
-            try:
-                odds = float(raw_odds.replace(",", "."))
-            except ValueError:
-                print("    Ungültige Quote — übersprungen.")
-                continue
-        updated = _reprice_dashboard_signal(s, bankroll, odds=odds)
-        if updated is None:
-            model_prob = _pct_to_prob(s.get("model_prob"))
-            min_odds = (1.0 + min_ev / 100.0) / model_prob if model_prob > 0 else 0.0
-            print(f"    Kein Value mehr — Mindestquote {min_odds:.2f}. Übersprungen.")
-            continue
-        repriced.append(updated)
-
-    chosen = repriced
-    if not chosen:
-        print("Keine ausgewählte Wette ist nach Quotenprüfung noch Value.")
-        return
-
     print(f"\nZu platzierende Wetten ({len(chosen)}):")
     for s in chosen:
         print(f"  {s['match']} | {s['market']} | @ {s['odds']:.2f} | EV +{s['ev_pct']:.1f}% | €{s['stake_eur']:.0f}")
@@ -174,7 +96,7 @@ def main(bankroll: float = 100.0) -> None:
 
     n = 0
     for sd in chosen:
-        sig = _make_signal(sd, bankroll)
+        sig = _make_signal(sd)
         match_date = sd.get("kickoff", "")[:10] if sd.get("kickoff") else ""
         n += append_bets([sig], bankroll, LEDGER_PATH, match_date=match_date)
 

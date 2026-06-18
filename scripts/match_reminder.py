@@ -1,8 +1,7 @@
 """Match-Reminder Push: 25-35 Min vor Anpfiff einer offenen Wette.
 
 Wird via prematch_scan.yml Watchdog alle 30 Min ausgelöst. Mit dem 30-Min-
-Window (20-50 vor KO) ist auch bei GitHub-Actions-Delays ein Hit pro Spiel
-sichergestellt. Doppelte Pushes werden via tag-Deduplizierung verhindert.
+Window (25-35 vor KO) ist garantiert genau ein Hit pro Spiel.
 
 Liest open bets aus dem Ledger + Kickoff aus docs/data/signals.json
 (schedule oder wm_results) und sendet pro offener Wette einen Push.
@@ -57,7 +56,6 @@ def main() -> int:
     sent_count = 0
 
     from src.notifications.web_push import _send_notification
-    from src.notifications.flags import flag
 
     for b in open_bets:
         home = b.get("home", "")
@@ -73,14 +71,12 @@ def main() -> int:
         except ValueError:
             continue
         minutes_to_ko = (ko_dt - now).total_seconds() / 60.0
-        # 20-50 Min Window — fängt GitHub-Actions-Delays ab, kein doppelter Push via tag
-        if not (20 <= minutes_to_ko < 50):
+        # 25-35 Min Window (30-Min-Cron + 5 Min Slack auf jeder Seite → genau ein Treffer)
+        if not (25 <= minutes_to_ko < 35):
             continue
 
-        fh, fa = flag(home), flag(away)
-        matchup = f"{fh} {home} vs {away} {fa}".strip()
-        title = f"⏰ Anpfiff in {int(minutes_to_ko)} Min · {fh}{fa}".strip(" ·")
-        body = f"{matchup}\n{market.upper()} @ {odds:.2f} · €{stake:.0f}"
+        title = f"⏰ Anpfiff in {int(minutes_to_ko)} Min"
+        body = f"{home} vs {away}\n{market.upper()} @ {odds:.2f} · €{stake:.0f}"
         ok = _send_notification(
             title=title,
             body=body,

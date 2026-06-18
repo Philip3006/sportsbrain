@@ -65,18 +65,6 @@ def _market_label(market: str, home: str, away: str) -> str:
         return f"1. Tor: {home} trifft zuerst"
     if m == "ftts_away":
         return f"1. Tor: {away} trifft zuerst"
-    if m == "goals_2_4":
-        return "2-4 Tore (Spiel)"
-    if m == "goals_2_4_no":
-        return "KEIN 2-4 Tore (Spiel)"
-    if m == "h1_goals_2_4":
-        return "2-4 Tore (1. HZ)"
-    if m == "h1_goals_2_4_no":
-        return "KEIN 2-4 Tore (1. HZ)"
-    if m == "h2_goals_2_4":
-        return "2-4 Tore (2. HZ)"
-    if m == "h2_goals_2_4_no":
-        return "KEIN 2-4 Tore (2. HZ)"
     # Tennis set handicap markets (home = player_a, away = player_b)
     if m == "ah-1.5_a":
         return f"🎾 {home} gewinnt 3:0 oder 3:1"

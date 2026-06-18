@@ -46,12 +46,6 @@ def _save_cache(cache: dict) -> None:
     CACHE_PATH.write_text(json.dumps(cache, indent=2, ensure_ascii=False))
 
 
-def _event_id_from_match_id(match_id: str) -> str:
-    if match_id.startswith("espn_"):
-        return match_id.split("_", 1)[1]
-    return ""
-
-
 def main() -> int:
     if not LEDGER.exists() or not SIGNALS.exists():
         return 0
@@ -80,8 +74,7 @@ def main() -> int:
         if h and a and ko:
             ko_map[(h, a)] = ko
 
-    # 3. Welche Matches sind aktuell live ODER kürzlich beendet?
-    # Window bis 150 Min nach KO damit Abpfiff + Nachspielzeit erfasst werden.
+    # 3. Welche Matches sind aktuell live?
     now = datetime.now(timezone.utc)
     live_match_keys: set[tuple[str, str]] = set()
     for b in open_bets:
@@ -95,7 +88,7 @@ def main() -> int:
         except ValueError:
             continue
         elapsed_min = (now - ko_dt).total_seconds() / 60.0
-        if -5 <= elapsed_min <= 150:
+        if -5 <= elapsed_min <= 115:  # 5 Min Slack vor KO, bis 115 nach KO
             live_match_keys.add((h, a))
 
     if not live_match_keys:
@@ -105,7 +98,7 @@ def main() -> int:
     print(f"Live-Polling für {len(live_match_keys)} Match(es)...")
 
     # 4. Live-Scores fetchen
-    from src.data.odds_api import fetch_espn_goal_scorers, fetch_wm_live_scores
+    from src.data.odds_api import fetch_wm_live_scores
     try:
         scores = fetch_wm_live_scores(days_from=2, api_key=os.getenv("ODDS_API_KEY"))
     except Exception as e:
@@ -116,7 +109,6 @@ def main() -> int:
     pushes_sent = 0
 
     from src.notifications.web_push import _send_notification
-    from src.notifications.flags import flag, with_flag
 
     for m in scores:
         h, a = m.get("home", ""), m.get("away", "")
@@ -136,56 +128,21 @@ def main() -> int:
             continue
 
         prev = cache.get(match_id, {})
-        scorer_names = prev.get("scorer_names", []) if isinstance(prev, dict) else []
-        event_id = _event_id_from_match_id(match_id)
-        if event_id:
-            try:
-                scorer_names = fetch_espn_goal_scorers(event_id)
-            except Exception:
-                pass
-        last_goal_scorer = scorer_names[-1] if scorer_names else prev.get("last_goal_scorer", "")
-
-        fh, fa = flag(h), flag(a)
-        score_line = f"{fh} {h}  {hs} : {as_}  {a} {fa}".strip()
-
         prev_hs = prev.get("home_score")
         prev_as = prev.get("away_score")
         ht_sent = bool(prev.get("ht_sent", False))
-        ko_sent = bool(prev.get("ko_sent", False))
-        abpfiff_sent = bool(prev.get("abpfiff_sent", False))
-        completed = bool(m.get("completed", False))
-
-        # Anpfiff-Push (erster Eintrag im Cache, Match gerade gestartet, 0-10 Min)
-        if not ko_sent and prev_hs is None and 0 <= elapsed_min <= 10:
-            if _send_notification(
-                title=f"🟢 Anpfiff! {fh}{fa}".strip(),
-                body=score_line,
-                url="/sportsbrain/#bets",
-                kind="kickoff",
-                tag=f"ko-{match_id}",
-                require=False,
-            ):
-                pushes_sent += 1
-                ko_sent = True
-                print(f"  🟢 KO pushed: {h} vs {a}")
 
         # Score-Änderung → Tor-Push
         if (prev_hs is not None and prev_as is not None
                 and (hs > prev_hs or as_ > prev_as)):
             scorer = h if hs > prev_hs else a
-            scorer_flag = fh if scorer == h else fa
-            dc = m.get("display_clock", "").strip()
-            period = m.get("period", 0)
-            if dc:
-                elapsed_str = f"HZ+{dc}" if period == 2 and not dc.startswith("HZ") else dc
-            else:
-                elapsed_str = f"{int(max(0, elapsed_min))}'" if elapsed_min > 0 else "Live"
-            is_equalizer = hs == as_
-            goal_emoji = "⚖️" if is_equalizer else "⚽"
-            goal_label = "AUSGLEICH" if is_equalizer else "TOR!"
+            other = a if scorer == h else h
+            new_s_score = hs if scorer == h else as_
+            other_score = as_ if scorer == h else hs
+            elapsed_str = f"{int(max(0, elapsed_min))}'" if elapsed_min > 0 else "Live"
             if _send_notification(
-                title=f"{goal_emoji} {goal_label} {elapsed_str} — {scorer_flag} {scorer}",
-                body=score_line,
+                title=f"⚽ TOR — {scorer}",
+                body=f"{elapsed_str}   {h} {hs} : {as_} {a}",
                 url="/sportsbrain/#bets",
                 kind="goal",
                 tag=f"goal-{match_id}-{hs}-{as_}",
@@ -197,8 +154,8 @@ def main() -> int:
         # Halbzeit-Push (50 Min nach KO, einmal pro Match)
         if not ht_sent and 50 <= elapsed_min <= 65:
             if _send_notification(
-                title=f"⏸️ Halbzeit",
-                body=score_line,
+                title=f"⏸️ HALBZEIT — {h} {hs} : {as_} {a}",
+                body="Erste Hälfte vorbei. Tap für Match-Details.",
                 url="/sportsbrain/#bets",
                 kind="halftime",
                 tag=f"ht-{match_id}",
@@ -208,50 +165,17 @@ def main() -> int:
                 ht_sent = True
                 print(f"  ⏸️ HT pushed: {h} {hs}-{as_} {a}")
 
-        # Abpfiff-Push + Auto-Settlement (einmal pro Match wenn completed=True)
-        if completed and not abpfiff_sent:
-            _send_notification(
-                title=f"🏁 Abpfiff {fh}{fa}".strip(),
-                body=f"{score_line}\nWetten werden jetzt abgerechnet…",
-                url="/sportsbrain/#bets",
-                kind="result",
-                tag=f"result-{match_id}",
-                require=False,
-            )
-            pushes_sent += 1
-            abpfiff_sent = True
-            print(f"  🏁 Abpfiff pushed: {h} {hs}-{as_} {a} — starte Settlement")
-            try:
-                import subprocess
-                subprocess.run(
-                    [sys.executable, str(ROOT / "scripts" / "settle_bets.py")],
-                    check=False, timeout=60,
-                )
-                print("  ✅ settle_bets.py abgeschlossen")
-            except Exception as e:
-                print(f"  ⚠️ Settlement fehlgeschlagen: {e}")
-
         cache[match_id] = {
-            "home":          h,
-            "away":          a,
-            "home_score":    hs,
-            "away_score":    as_,
-            "completed":     completed,
-            "ko_sent":       ko_sent,
-            "ht_sent":       ht_sent,
-            "abpfiff_sent":  abpfiff_sent,
-            "scorer_names":  scorer_names,
-            "last_goal_scorer": last_goal_scorer,
-            "updated":       now.isoformat(),
+            "home":       h,
+            "away":       a,
+            "home_score": hs,
+            "away_score": as_,
+            "completed":  m.get("completed", False),
+            "ht_sent":    ht_sent,
+            "updated":    now.isoformat(),
         }
 
     _save_cache(cache)
-
-    try:
-        from src.notifications.web_dashboard import write_signals_json
-        write_signals_json()
-    except Exception as e:
-        print(f"Dashboard-Refresh fehlgeschlagen: {e}")
     print(f"Total {pushes_sent} push(es) gesendet.")
     return 0
 

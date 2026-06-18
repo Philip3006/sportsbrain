@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from src.betting.kelly import expected_value, kelly_fraction, kelly_stake_eur
+from src.betting.kelly import dynamic_stake_eur, expected_value, kelly_fraction
 from src.betting.odds_utils import remove_margin_shin
 from src.config import MIN_EDGE, MAX_STAKE_EUR, GOALS_RANGE_MAX_STAKE
 
@@ -24,9 +24,6 @@ class BetSignal:
     b365_odds: float = 0.0    # Pinnacle reference quote (0 = not available)
     elo_prob: float = 0.0     # Elo win probability for the bet's outcome (0 = not computed)
     n_models_agree: int = 0   # how many of [DC, Elo, LGBM] see value (0–3); 0 = not computed / non-1X2 market
-    odds_bookmaker: str = ""  # preferred book/source used for this signal, e.g. bet365
-    odds_source: str = ""     # provider path, e.g. sofascore
-    min_ev_pct: float = 0.0   # market-specific minimum EV threshold in percentage points
 
 
 _MARKETS = ["home", "draw", "away"]
@@ -35,59 +32,13 @@ _MODEL_IDX = {"home": 2, "draw": 1, "away": 0}
 # raw_odds tuple order: (home_odds, draw_odds, away_odds)
 _ODDS_IDX = {"home": 0, "draw": 1, "away": 2}
 
-_SCORER_MIN_EV = 0.10
-
-
-def min_ev_for_market(market: str) -> float:
-    """Return the minimum EV threshold for a market as a decimal fraction."""
-    return _SCORER_MIN_EV if str(market).startswith("scorer_") else MIN_EDGE
-
-
-def min_ev_pct_for_market(market: str) -> float:
-    """Return the minimum EV threshold for a market in percentage points."""
-    return min_ev_for_market(market) * 100.0
-
-
-def reprice_value_bet(
-    market: str,
-    model_prob: float,
-    decimal_odds: float,
-    bankroll: float,
-    min_ev: float | None = None,
-) -> dict:
-    """Recompute EV, minimum odds and Kelly stake for a manually changed quote."""
-    try:
-        p = float(model_prob)
-        odds = float(decimal_odds)
-    except (TypeError, ValueError):
-        p, odds = 0.0, 0.0
-
-    threshold = min_ev_for_market(market) if min_ev is None else float(min_ev)
-    min_odds = (1.0 + threshold) / p if p > 0 else float("inf")
-    ev = expected_value(p, odds) if p > 0 and odds > 1.0 else float("-inf")
-    kf = kelly_fraction(p, odds) if p > 0 and odds > 1.0 else 0.0
-    stake_eur = kelly_stake_eur(kf, bankroll) if bankroll > 0 else 0.0
-    return {
-        "market": market,
-        "model_prob": p,
-        "decimal_odds": odds,
-        "ev": ev,
-        "ev_pct": ev * 100.0,
-        "min_ev": threshold,
-        "min_ev_pct": threshold * 100.0,
-        "min_odds": min_odds,
-        "kelly_f": kf,
-        "stake_eur": stake_eur,
-        "is_value": ev >= threshold - 1e-9,
-    }
-
 
 def _make_signal(
     match_id: str, home: str, away: str, market: str,
     model_p: float, fair_p: float, odds: float, ev: float,
     kf: float, confidence: str, bankroll: float,
 ) -> BetSignal:
-    stake_eur = kelly_stake_eur(kf, bankroll)
+    stake_eur = dynamic_stake_eur(ev, confidence, bankroll)
     return BetSignal(
         match_id=match_id or f"{home}_vs_{away}",
         home=home, away=away, market=market,
@@ -652,7 +603,6 @@ def detect_value_goals_range(
     bankroll: float = 1000.0,
     min_edge: float = MIN_EDGE,
     match_id: str = "",
-    odds_source: str = "",
 ) -> list[BetSignal]:
     """EV check for Tore-Bereich markets (goals_2_4, h1_goals_2_4, h2_goals_2_4).
 
@@ -686,7 +636,6 @@ def detect_value_goals_range(
         )
         sig.stake_eur = min(sig.stake_eur, GOALS_RANGE_MAX_STAKE)
         sig.stake_pct = sig.stake_eur / bankroll if bankroll > 0 else 0.0
-        sig.odds_source = odds_source
         signals.append(sig)
     return signals
 
@@ -721,6 +670,10 @@ def set_confidence(signal: BetSignal, dc_probs: dict, lgbm_probs: np.ndarray) ->
         # Use model_prob (DC-computed) with stricter threshold (≥10% DC-implied EV).
         if signal.confidence != "LOW" and signal.model_prob * signal.decimal_odds > 1.10:
             signal.confidence = "HIGH"
+            bankroll = signal.stake_eur / signal.stake_pct if signal.stake_pct > 0 else 1000.0
+            new_eur = dynamic_stake_eur(signal.ev, "HIGH", bankroll)
+            signal.stake_eur = new_eur
+            signal.stake_pct = new_eur / bankroll
         return signal
 
     # 1X2 market — require both DC and LightGBM to agree.
@@ -728,4 +681,8 @@ def set_confidence(signal: BetSignal, dc_probs: dict, lgbm_probs: np.ndarray) ->
     lgbm_p = float(lgbm_probs[lgbm_idx])
     if signal.confidence != "LOW" and (dc_p * signal.decimal_odds > 1.0) and (lgbm_p * signal.decimal_odds > 1.0):
         signal.confidence = "HIGH"
+        bankroll = signal.stake_eur / signal.stake_pct if signal.stake_pct > 0 else 1000.0
+        new_eur = dynamic_stake_eur(signal.ev, "HIGH", bankroll)
+        signal.stake_eur = new_eur
+        signal.stake_pct = new_eur / bankroll
     return signal

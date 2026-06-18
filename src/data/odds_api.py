@@ -118,17 +118,6 @@ def _parse_markets(bm: dict, home: str, away: str, store: dict, dynamic: dict) -
                     dynamic["totals"][pt] = {}
                 if o["price"] > dynamic["totals"][pt].get(side, 0):
                     dynamic["totals"][pt][side] = o["price"]
-        elif mkt in ("totals_h1", "alternate_totals_h1", "totals_h2", "alternate_totals_h2"):
-            period_key = "totals_h1" if mkt.endswith("_h1") else "totals_h2"
-            if period_key not in dynamic:
-                dynamic[period_key] = {}
-            for o in market.get("outcomes", []):
-                pt = _round_quarter(o.get("point", 0))
-                side = o["name"].lower()  # "over" or "under"
-                if pt not in dynamic[period_key]:
-                    dynamic[period_key][pt] = {}
-                if o["price"] > dynamic[period_key][pt].get(side, 0):
-                    dynamic[period_key][pt][side] = o["price"]
         elif mkt in ("spreads", "alternate_spreads"):
             for o in market.get("outcomes", []):
                 pt = _round_quarter(o.get("point", 0))
@@ -264,8 +253,8 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
 
         best: dict[str, float] = {}
         pin: dict[str, float] = {}
-        pin_dynamic: dict = {"spreads": {}, "totals": {}, "totals_h1": {}, "totals_h2": {}}
-        best_dynamic: dict = {"spreads": {}, "totals": {}, "totals_h1": {}, "totals_h2": {}}
+        pin_dynamic: dict = {"spreads": {}, "totals": {}}
+        best_dynamic: dict = {"spreads": {}, "totals": {}}
         best_bm: dict[str, str] = {}
         bm_h2h: list[tuple[str, float, float, float]] = []  # (key, home, draw, away)
         # Per-Bookmaker-Quoten für h2h (Bookie-Matrix im Frontend)
@@ -283,10 +272,7 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
                 _parse_markets(bm, home, away, pin, pin_dynamic)
             # Capture per-bookmaker h2h for coherence fallback + matrix
             bm_store: dict[str, float] = {}
-            _parse_markets(
-                bm, home, away, bm_store,
-                {"spreads": {}, "totals": {}, "totals_h1": {}, "totals_h2": {}},
-            )
+            _parse_markets(bm, home, away, bm_store, {"spreads": {}, "totals": {}})
             bh = bm_store.get(home, 0.0)
             bd = bm_store.get("Draw", 0.0)
             ba = bm_store.get(away, 0.0)
@@ -390,82 +376,12 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
             # Dynamic all-lines dicts — used by scanner for comprehensive coverage
             "spreads":        best_dynamic["spreads"],   # {home_line: {"home": odds, "away": odds}}
             "totals_lines":   best_dynamic["totals"],    # {line: {"over": odds, "under": odds}}
-            "totals_h1_lines": best_dynamic["totals_h1"], # 1st-half O/U lines only
-            "totals_h2_lines": best_dynamic["totals_h2"], # 2nd-half O/U lines only
             # Per-Bookmaker-h2h-Quoten (für Bookie-Matrix im Frontend)
             "bookmakers_h2h": per_bm_h2h,
         }
         matches.append(match_dict)
 
     return matches
-
-
-def _parse_period_totals_from_event(event: dict) -> dict[str, dict]:
-    """Extract real first/second-half totals from one event-odds response."""
-    dynamic: dict = {"spreads": {}, "totals": {}, "totals_h1": {}, "totals_h2": {}}
-    home = event.get("home_team", "")
-    away = event.get("away_team", "")
-    store: dict[str, float] = {}
-    for bm in event.get("bookmakers", []):
-        _parse_markets(bm, home, away, store, dynamic)
-    return {
-        "totals_h1_lines": dynamic["totals_h1"],
-        "totals_h2_lines": dynamic["totals_h2"],
-    }
-
-
-def fetch_event_period_totals(
-    sport: str,
-    event_id: str,
-    regions: str | None = None,
-    api_key: str | None = None,
-    force: bool = False,
-    max_age_hours: float = 1.0,
-) -> dict[str, dict]:
-    """Fetch real H1/H2 O/U lines for one event from TheOddsAPI.
-
-    Returns {"totals_h1_lines": {...}, "totals_h2_lines": {...}}. Missing or
-    unsupported period markets return empty dicts.
-    """
-    import hashlib
-    import pickle
-    import time as _time
-
-    from src.config import LINE_SHOPPING_REGIONS
-
-    if regions is None:
-        regions = ",".join(LINE_SHOPPING_REGIONS)
-    markets = "totals_h1,alternate_totals_h1,totals_h2,alternate_totals_h2"
-    cache_key = hashlib.md5(f"{sport}|{event_id}|{regions}|{markets}".encode()).hexdigest()
-    cache_path = DATA_CACHE / f"period_totals_{cache_key}.pkl"
-    if not force and cache_path.exists():
-        age_hours = (_time.time() - cache_path.stat().st_mtime) / 3600
-        if age_hours < max_age_hours:
-            with open(cache_path, "rb") as f:
-                return pickle.load(f)
-
-    key = get_api_key(api_key)
-    url = f"{ODDS_API_URL}/sports/{sport}/events/{event_id}/odds"
-    params = {
-        "apiKey": key,
-        "regions": regions,
-        "markets": markets,
-        "oddsFormat": "decimal",
-    }
-    try:
-        resp = requests.get(url, params=params, timeout=15)
-        resp.raise_for_status()
-        data = _parse_period_totals_from_event(resp.json())
-    except requests.exceptions.HTTPError as e:
-        if e.response is not None and e.response.status_code == 422:
-            data = {"totals_h1_lines": {}, "totals_h2_lines": {}}
-        else:
-            raise
-
-    DATA_CACHE.mkdir(parents=True, exist_ok=True)
-    with open(cache_path, "wb") as f:
-        pickle.dump(data, f)
-    return data
 
 
 def derive_goals_range_implied(
@@ -563,26 +479,6 @@ def fetch_event_player_props(
     return best
 
 
-_ESPN_NAME_ALIASES: dict[str, str] = {
-    # ESPN displayName → our canonical name (as used in ledger/signals)
-    "congo dr":           "DR Congo",
-    "dr congo":           "DR Congo",
-    "bosnia and herzegovina": "Bosnia & Herzegovina",
-    "korea republic":     "South Korea",
-    "korea dpr":          "North Korea",
-    "usa":                "United States",
-    "united states":      "USA",
-    "côte d'ivoire":      "Ivory Coast",
-    "cote d'ivoire":      "Ivory Coast",
-    "türkiye":            "Turkey",
-}
-
-
-def _espn_team_name(raw: str) -> str:
-    """Normalize ESPN displayName to canonical team name."""
-    return _ESPN_NAME_ALIASES.get(raw.lower().strip(), raw)
-
-
 def _fetch_espn_wm_scores() -> list[dict]:
     """ESPN public scoreboard — kein API-Key, ~30-60s Lag.
 
@@ -613,70 +509,15 @@ def _fetch_espn_wm_scores() -> list[dict]:
                 pass
         results.append({
             "match_id":      f"espn_{e.get('id', '')}",
-            "home":          _espn_team_name(home_c.get("team", {}).get("displayName", "")),
-            "away":          _espn_team_name(away_c.get("team", {}).get("displayName", "")),
+            "home":          home_c.get("team", {}).get("displayName", ""),
+            "away":          away_c.get("team", {}).get("displayName", ""),
             "home_score":    home_score,
             "away_score":    away_score,
             "commence_time": e.get("date", "").replace("Z", "+00:00"),
             "completed":     completed,
-            "display_clock": status.get("displayClock", ""),
-            "period":        status.get("period", 0),
             "last_update":   now_iso,
         })
     return results
-
-
-def fetch_espn_goal_scorers(event_id: str) -> list[str]:
-    """Returns normalized scorer display names for one ESPN event, best effort."""
-    if not event_id:
-        return []
-    url = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary"
-    resp = requests.get(url, params={"event": event_id}, timeout=10)
-    resp.raise_for_status()
-    data = resp.json()
-    names: list[str] = []
-
-    def _append_name(raw: str | None) -> None:
-        if not raw:
-            return
-        val = str(raw).strip()
-        if val and val not in names:
-            names.append(val)
-
-    scoring_plays = data.get("scoringPlays") or []
-    for play in scoring_plays:
-        athletes = play.get("participants") or play.get("athletes") or []
-        if isinstance(athletes, list):
-            for athlete in athletes:
-                if not isinstance(athlete, dict):
-                    continue
-                display = athlete.get("displayName")
-                short = athlete.get("shortName")
-                full = (athlete.get("athlete") or {}).get("displayName") if isinstance(athlete.get("athlete"), dict) else None
-                _append_name(display or full or short)
-        competitor = play.get("competitor") or {}
-        leader = competitor.get("leaders") if isinstance(competitor, dict) else None
-        if isinstance(leader, list):
-            for row in leader:
-                leaders = row.get("leaders") if isinstance(row, dict) else None
-                if isinstance(leaders, list):
-                    for athlete in leaders:
-                        if isinstance(athlete, dict):
-                            _append_name(athlete.get("displayName"))
-        text = play.get("text")
-        if isinstance(text, str) and "goal" in text.lower():
-            _append_name(text.split("goal", 1)[0].strip(" .:-"))
-
-    if names:
-        return names
-
-    drives = data.get("drives") or {}
-    for play in drives.get("plays", []) if isinstance(drives, dict) else []:
-        text = play.get("text")
-        if isinstance(text, str) and "goal" in text.lower():
-            _append_name(text.split("goal", 1)[0].strip(" .:-"))
-
-    return names
 
 
 def fetch_wm_live_scores(

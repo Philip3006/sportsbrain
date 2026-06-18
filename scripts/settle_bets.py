@@ -65,7 +65,6 @@ def fetch_scores() -> dict[str, dict]:
     except requests.HTTPError as e:
         print(f"[settle] scores fetch HTTP error: {e} — skipping settlement.")
         return {}
-    from src.config import canonical_name
     results = {}
     for m in r.json():
         if not m.get("completed") or not m.get("scores"):
@@ -73,17 +72,14 @@ def fetch_scores() -> dict[str, dict]:
         scores = {s["name"]: int(s["score"]) for s in m["scores"]}
         home = m["home_team"]
         away = m["away_team"]
-        entry = {
+        results[m["id"]] = {
             "home": home,
             "away": away,
             "home_score": scores.get(home, 0),
             "away_score": scores.get(away, 0),
         }
-        results[m["id"]] = entry
-        # Index by raw API names and canonical names for robust matching
-        results[f"{home} vs {away}"] = entry
-        c_home, c_away = canonical_name(home), canonical_name(away)
-        results[f"{c_home} vs {c_away}"] = entry
+        # Also index by "Home vs Away" string for fallback matching
+        results[f"{home} vs {away}"] = results[m["id"]]
     return results
 
 
@@ -164,13 +160,11 @@ def settle(dry_run: bool = False) -> int:
     open_bets = [r for r in rows if r["status"] == "open"]
     print(f"Open bets: {len(open_bets)}")
 
-    from src.config import canonical_name
     settled = 0
     for r in open_bets:
         home, away = r["home"], r["away"]
         match_key = f"{home} vs {away}"
-        c_key = f"{canonical_name(home)} vs {canonical_name(away)}"
-        sc = scores.get(r["match_id"]) or scores.get(match_key) or scores.get(c_key)
+        sc = scores.get(r["match_id"]) or scores.get(match_key)
         if not sc:
             continue
 
@@ -200,49 +194,12 @@ def settle(dry_run: bool = False) -> int:
             w.writeheader()
             w.writerows(rows)
         print(f"\n✓ {settled} bet(s) settled and ledger updated.")
-        _send_settlement_push(rows, settled)
     elif dry_run:
         print(f"\n[dry-run] {settled} bet(s) would be settled.")
     else:
         print("\nNo bets to settle yet.")
 
     return settled
-
-
-def _send_settlement_push(rows: list[dict], settled: int) -> None:
-    """Push-Zusammenfassung nach Settlement."""
-    try:
-        from src.notifications.web_push import _send_notification
-        from src.notifications.flags import flag
-
-        settled_rows = [r for r in rows if r.get("status") in ("won", "lost", "push")]
-        just_settled = settled_rows[-settled:] if settled <= len(settled_rows) else settled_rows
-
-        total_pnl = sum(float(r.get("pnl") or 0) for r in just_settled)
-        won_count = sum(1 for r in just_settled if r.get("status") == "won")
-        pnl_sign = "+" if total_pnl >= 0 else ""
-        emoji = "✅" if total_pnl > 0 else ("↩️" if total_pnl == 0 else "❌")
-
-        lines = []
-        for r in just_settled:
-            h, a = r.get("home", ""), r.get("away", "")
-            fh, fa = flag(h), flag(a)
-            mkt = r.get("market", "").upper()
-            pnl = float(r.get("pnl") or 0)
-            status_icon = "✅" if r.get("status") == "won" else ("↩️" if r.get("status") == "push" else "❌")
-            lines.append(f"{status_icon} {fh}{h} vs {a}{fa} · {mkt} · {'+' if pnl>=0 else ''}€{pnl:.2f}")
-
-        _send_notification(
-            title=f"{emoji} Settlement: {won_count}/{settled} gewonnen · {pnl_sign}€{total_pnl:.2f}",
-            body="\n".join(lines),
-            url="/sportsbrain/#journal",
-            kind="settlement",
-            tag=f"settle-{'-'.join(r.get('bet_id','')[:6] for r in just_settled)}",
-            require=False,
-        )
-        print(f"  📲 Settlement-Push gesendet: {pnl_sign}€{total_pnl:.2f}")
-    except Exception as e:
-        print(f"  Settlement-Push fehlgeschlagen: {e}")
 
 
 if __name__ == "__main__":

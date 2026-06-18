@@ -3,8 +3,6 @@
 // Signals (existing):
 //   GET  /signals.json    → reads from KV (public)
 //   POST /signals         → writes to KV (Bearer token)
-//   GET  /health          → reads health/status summary from KV (public)
-//   POST /automation_status → writes job status to KV (Bearer token)
 //
 // Pending bets (PWA → local sync):
 //   POST   /pending_bets       → append one bet to KV array (Bearer token)
@@ -17,6 +15,9 @@ const ALLOWED_MARKETS = new Set([
   'dc_1x', 'dc_x2', 'dc_12',
   'first_set_a', 'first_set_b',
   'ftts_home', 'ftts_away',
+  'goals_2_4', 'goals_2_4_no',
+  'h1_goals_2_4', 'h1_goals_2_4_no',
+  'h2_goals_2_4', 'h2_goals_2_4_no',
 ]);
 const OU_RE = /^o\/u\d+(?:\.\d+)?_(over|under)$/;
 const AH_RE = /^ah[+-]\d+(?:\.\d+)?_(home|away|a|b)$/;
@@ -27,17 +28,6 @@ const SCORER_RE = /^scorer_[\p{L}\p{M}\p{N} '’_\-\.]{1,60}$/u;
 function isValidMarket(m) {
   if (typeof m !== 'string' || !m) return false;
   return ALLOWED_MARKETS.has(m) || OU_RE.test(m) || AH_RE.test(m) || SCORER_RE.test(m);
-}
-
-function minEvPctForMarket(market) {
-  return market.startsWith('scorer_') ? 10 : 3;
-}
-
-function parseModelProb(value) {
-  const n = Number(value);
-  if (Number.isFinite(n) && n > 0 && n < 1) return n;
-  if (Number.isFinite(n) && n > 1 && n <= 100) return n / 100;
-  return NaN;
 }
 
 function jsonResponse(obj, status = 200) {
@@ -65,27 +55,6 @@ async function readPending(env) {
 
 async function writePending(env, arr) {
   await env.SIGNALS.put('pending_bets', JSON.stringify(arr));
-}
-
-async function readSignalsSnapshot(env) {
-  const raw = await env.SIGNALS.get('signals_json');
-  if (!raw) return null;
-  try {
-    const data = JSON.parse(raw);
-    return data && typeof data === 'object' ? data : null;
-  } catch {
-    return null;
-  }
-}
-
-function isValidAutomationStatus(body) {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) return false;
-  const status = String(body.status || '').toLowerCase();
-  if (!['ok', 'warn', 'error', 'running'].includes(status)) return false;
-  if (body.job != null && (typeof body.job !== 'string' || body.job.length > 80)) return false;
-  if (body.message != null && (typeof body.message !== 'string' || body.message.length > 500)) return false;
-  if (body.generated_at != null && typeof body.generated_at !== 'string') return false;
-  return true;
 }
 
 // ── Push Subscriptions (Web Push) ─────────────────────────────
@@ -118,30 +87,6 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // ── /health (public status summary for dashboard/automation checks) ──
-    if (request.method === 'GET' && path === '/health') {
-      const snapshot = await readSignalsSnapshot(env);
-      const automationRaw = await env.SIGNALS.get('automation_status');
-      let automationStatus = null;
-      if (automationRaw) {
-        try { automationStatus = JSON.parse(automationRaw); } catch {}
-      }
-      if (!snapshot) {
-        return jsonResponse({ ok: false, status: 'error', error: 'no signals snapshot' }, 404);
-      }
-      const health = snapshot.system_health || {};
-      return jsonResponse({
-        ok: health.status !== 'error',
-        status: health.status || 'unknown',
-        updated: snapshot.updated || '',
-        system_health: health,
-        data_freshness: snapshot.data_freshness || {},
-        model_status: snapshot.model_status || {},
-        alerts: snapshot.alerts || [],
-        automation: automationStatus || snapshot.automation || {},
-      });
-    }
-
     // ── /signals.json (public read of latest signals snapshot) ──
     if (request.method === 'GET' && (path === '/signals.json' || path === '/')) {
       const data = await env.SIGNALS.get('signals_json');
@@ -164,23 +109,6 @@ export default {
       try { JSON.parse(body); } catch { return new Response('Invalid JSON', { status: 400 }); }
       await env.SIGNALS.put('signals_json', body);
       return new Response('OK', { headers: cors() });
-    }
-
-    // ── POST /automation_status (write latest job status) ──
-    if (request.method === 'POST' && path === '/automation_status') {
-      if (!requireAuth(request, env)) return new Response('Unauthorized', { status: 401, headers: cors() });
-      let body;
-      try { body = await request.json(); } catch { return jsonResponse({ error: 'invalid json' }, 400); }
-      if (!isValidAutomationStatus(body)) {
-        return jsonResponse({ error: 'invalid automation status payload' }, 400);
-      }
-      const entry = {
-        ...body,
-        status: String(body.status).toLowerCase(),
-        received_at: new Date().toISOString(),
-      };
-      await env.SIGNALS.put('automation_status', JSON.stringify(entry));
-      return jsonResponse({ ok: true });
     }
 
     // ── /pending_bets ──
@@ -207,23 +135,6 @@ export default {
         if (!isValidMarket(market)) return jsonResponse({ error: 'unknown market: ' + market }, 400);
         if (!Number.isFinite(odds) || odds < 1.01 || odds > 100) return jsonResponse({ error: 'odds out of range (1.01–100)' }, 400);
         if (!Number.isFinite(stake) || stake < 0.5 || stake > 25) return jsonResponse({ error: 'stake_eur out of range (0.5–25)' }, 400);
-        const modelProb = parseModelProb(body.model_prob);
-        if (!Number.isFinite(modelProb)) return jsonResponse({ error: 'model_prob required for value recheck' }, 400);
-        const suppliedMinEv = Number(body.min_ev_pct);
-        const minEvPct = Math.max(
-          minEvPctForMarket(market),
-          Number.isFinite(suppliedMinEv) ? suppliedMinEv : 0
-        );
-        const evPct = (modelProb * odds - 1) * 100;
-        if (evPct + 1e-9 < minEvPct) {
-          const minOdds = (1 + minEvPct / 100) / modelProb;
-          return jsonResponse({
-            error: `not a value bet after odds change (EV ${evPct.toFixed(1)}%, needs ${minEvPct.toFixed(1)}%; min odds ${minOdds.toFixed(2)}`,
-            ev_pct: Number(evPct.toFixed(4)),
-            min_ev_pct: minEvPct,
-            min_odds: Number(minOdds.toFixed(4)),
-          }, 400);
-        }
 
         const rawSource = (body.source || 'value').toString().toLowerCase();
         const source = (rawSource === 'manual') ? 'manual' : 'value';
@@ -235,11 +146,8 @@ export default {
           market,
           odds,
           stake_eur: stake,
-          ev_pct: Number(evPct.toFixed(4)),
-          model_prob: modelProb,
-          min_ev_pct: minEvPct,
-          odds_bookmaker: typeof body.odds_bookmaker === 'string' ? body.odds_bookmaker : '',
-          odds_source: typeof body.odds_source === 'string' ? body.odds_source : '',
+          ev_pct: Number.isFinite(Number(body.ev_pct)) ? Number(body.ev_pct) : null,
+          model_prob: Number.isFinite(Number(body.model_prob)) ? Number(body.model_prob) : null,
           confidence: typeof body.confidence === 'string' ? body.confidence : '',
           kickoff: typeof body.kickoff === 'string' ? body.kickoff : '',
           sport: typeof body.sport === 'string' ? body.sport : '',

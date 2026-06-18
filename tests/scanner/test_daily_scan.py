@@ -2,12 +2,7 @@
 
 import numpy as np
 
-from src.scanner.daily_scan import (
-    _confederation_min_edge,
-    _count_model_agreement,
-    _goals_range_signals_for_lines,
-)
-from src.config import GOALS_RANGE_ENABLED
+from src.scanner.daily_scan import _confederation_min_edge, _count_model_agreement
 from src.betting.value_detector import BetSignal
 
 
@@ -128,45 +123,3 @@ class TestCountModelAgreement:
         lgbm_probs = np.array([0.10, 0.20, 0.70])  # home=index2=0.70 above 0.40
         result = _count_model_agreement(signal, dc_probs, elo_prob, lgbm_probs)
         assert result == 2  # only Elo and LGBM
-
-
-class TestGoalsRangePeriodLines:
-    FULL_LINES = {
-        1.5: {"over": 1.20},
-        4.5: {"over": 6.00},
-    }
-    PERIOD_LINES = {
-        1.5: {"over": 1.25},
-        4.5: {"over": 8.00},
-    }
-
-    def test_half_markets_are_not_created_from_full_game_lines(self):
-        signals = _goals_range_signals_for_lines(
-            "Home", "Away", "m1", 100.0,
-            p_full=0.75, p_h1=0.20, p_h2=0.75,
-            totals_lines=self.FULL_LINES,
-            totals_h1_lines={},
-            totals_h2_lines={},
-        )
-        markets = {s.market for s in signals}
-
-        assert "goals_2_4" in markets
-        assert all(not m.startswith(("h1_goals_2_4", "h2_goals_2_4")) for m in markets)
-
-    def test_half_markets_require_real_period_lines(self):
-        signals = _goals_range_signals_for_lines(
-            "Home", "Away", "m1", 100.0,
-            p_full=0.75, p_h1=0.20, p_h2=0.75,
-            totals_lines=self.FULL_LINES,
-            totals_h1_lines=self.PERIOD_LINES,
-            totals_h2_lines=self.PERIOD_LINES,
-        )
-        by_market = {s.market: s for s in signals}
-
-        assert "h1_goals_2_4_no" in by_market
-        assert "h2_goals_2_4" in by_market
-        assert by_market["h1_goals_2_4_no"].odds_source == "theoddsapi:totals_h1"
-        assert by_market["h2_goals_2_4"].odds_source == "theoddsapi:totals_h2"
-
-    def test_goals_range_feature_flag_is_disabled(self):
-        assert GOALS_RANGE_ENABLED is False
