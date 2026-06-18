@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-17T23:03:48Z",
+  "updated": "2026-06-18T00:41:36Z",
   "schedule": [
     {
       "sport": "football",
@@ -8188,28 +8188,6 @@
     },
     {
       "sport": "football",
-      "match": "Ghana vs Panama",
-      "market": "scorer_Edgar Yoel Bárcenas Herrera",
-      "odds": 9.0,
-      "model_prob": 14.3,
-      "fair_prob": 11.1,
-      "ev_pct": 28.6,
-      "stake_eur": 20.0,
-      "stake_pct": 11.5,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-17T23:00:00Z",
-      "safety_gates": {
-        "positive_ev": true,
-        "min_ev": true,
-        "kelly": true,
-        "confidence": "LOW",
-        "low_confidence": true,
-        "stake_capped": false
-      }
-    },
-    {
-      "sport": "football",
       "match": "Scotland vs Brazil",
       "market": "ah+1.0_home",
       "odds": 2.23,
@@ -8628,28 +8606,6 @@
     },
     {
       "sport": "football",
-      "match": "Ghana vs Panama",
-      "market": "o/u1.5_under",
-      "odds": 2.9,
-      "model_prob": 40.4,
-      "fair_prob": 40.4,
-      "ev_pct": 17.3,
-      "stake_eur": 19.54,
-      "stake_pct": 11.2,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-17T23:00:00Z",
-      "safety_gates": {
-        "positive_ev": true,
-        "min_ev": true,
-        "kelly": true,
-        "confidence": "HIGH",
-        "low_confidence": false,
-        "stake_capped": false
-      }
-    },
-    {
-      "sport": "football",
       "match": "Switzerland vs Canada",
       "market": "home",
       "odds": 2.2,
@@ -8892,28 +8848,6 @@
     },
     {
       "sport": "football",
-      "match": "Ghana vs Panama",
-      "market": "ah+0.5_away",
-      "odds": 1.69,
-      "model_prob": 65.0,
-      "fair_prob": 65.0,
-      "ev_pct": 9.8,
-      "stake_eur": 11.62,
-      "stake_pct": 6.7,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-17T23:00:00Z",
-      "safety_gates": {
-        "positive_ev": true,
-        "min_ev": true,
-        "kelly": true,
-        "confidence": "LOW",
-        "low_confidence": true,
-        "stake_capped": false
-      }
-    },
-    {
-      "sport": "football",
       "match": "Mexico vs South Korea",
       "market": "ah-0.5_home",
       "odds": 2.08,
@@ -9118,6 +9052,12 @@
   "top_elo": [],
   "history": [
     {
+      "date": "2026-06-18",
+      "n_bets": 1,
+      "pnl": 0.0,
+      "roi_pct": 0.0
+    },
+    {
       "date": "2026-06-17",
       "n_bets": 9,
       "pnl": 46.58,
@@ -9204,10 +9144,61 @@
       "away_score": null,
       "last_goal_scorer": "",
       "pnl": 0.0
+    },
+    {
+      "match": "Uzbekistan vs Colombia",
+      "home": "Uzbekistan",
+      "away": "Colombia",
+      "market": "draw",
+      "entry_odds": 4.33,
+      "current_odds": 5.1,
+      "drift_pct": 17.8,
+      "clv_signal": "bad",
+      "stake": 10.0,
+      "match_date": "2026-06-18",
+      "placed_date": "2026-06-18",
+      "kickoff": "",
+      "model_edge_pct": null,
+      "group": "open",
+      "status": "open",
+      "status_source": "official",
+      "badge_text": "Offen",
+      "is_live_badge": false,
+      "scoreline": null,
+      "home_score": null,
+      "away_score": null,
+      "last_goal_scorer": "",
+      "pnl": 0.0
     }
   ],
   "bets": {
-    "open": [],
+    "open": [
+      {
+        "match": "Uzbekistan vs Colombia",
+        "home": "Uzbekistan",
+        "away": "Colombia",
+        "market": "draw",
+        "entry_odds": 4.33,
+        "current_odds": 5.1,
+        "drift_pct": 17.8,
+        "clv_signal": "bad",
+        "stake": 10.0,
+        "match_date": "2026-06-18",
+        "placed_date": "2026-06-18",
+        "kickoff": "2026-06-18T02:00:00Z",
+        "model_edge_pct": null,
+        "group": "open",
+        "status": "open",
+        "status_source": "official",
+        "badge_text": "Offen",
+        "is_live_badge": false,
+        "scoreline": null,
+        "home_score": null,
+        "away_score": null,
+        "last_goal_scorer": "",
+        "pnl": 0.0
+      }
+    ],
     "live": [
       {
         "match": "Ghana vs Panama",
@@ -9226,7 +9217,7 @@
         "group": "live",
         "status": "open",
         "status_source": "official",
-        "badge_text": "LIVE 3'",
+        "badge_text": "LIVE 101'",
         "is_live_badge": true,
         "scoreline": "0:0",
         "home_score": 0,
@@ -9251,7 +9242,7 @@
         "group": "live",
         "status": "open",
         "status_source": "official",
-        "badge_text": "LIVE 3'",
+        "badge_text": "LIVE 101'",
         "is_live_badge": true,
         "scoreline": "0:0",
         "home_score": 0,
@@ -9988,17 +9979,17 @@
       }
     ],
     "summary": {
-      "open": 0,
+      "open": 1,
       "live": 2,
       "settled": 29
     }
   },
   "bankroll_state": {
     "start": 100.0,
-    "free": 176.25,
-    "staked": 25.01,
-    "exposure_pct": 25.0,
-    "max_win": 38.07,
+    "free": 166.25,
+    "staked": 35.01,
+    "exposure_pct": 35.0,
+    "max_win": 79.07,
     "pnl_closed": 101.26
   },
   "wm_stats": {
@@ -10652,10 +10643,10 @@
     }
   ],
   "system_health": {
-    "status": "warn",
-    "last_scan_at": "2026-06-17T23:03:48Z",
-    "open_bets": 2,
-    "settlement_due": 0,
+    "status": "error",
+    "last_scan_at": "2026-06-18T00:41:36Z",
+    "open_bets": 3,
+    "settlement_due": 2,
     "odds_api": {
       "requests_used": 1123,
       "requests_remaining": 18877
@@ -10665,8 +10656,8 @@
     "model_snapshot": "params_20260617.pkl"
   },
   "automation": {
-    "generated_at": "2026-06-17T23:04:19Z",
-    "status": "warn",
+    "generated_at": "2026-06-18T00:41:36Z",
+    "status": "error",
     "last_success_at": "2026-06-17T23:03:52Z",
     "jobs": {
       "scan": {
@@ -10697,30 +10688,30 @@
         "name": "consume_pending_bets",
         "path": "results/consume_pending_bets.log",
         "exists": true,
-        "updated_at": "2026-06-17T23:03:45Z",
-        "status": "warn",
-        "message": "Fehler im Log, letzter Lauf wirkt abgeschlossen"
+        "updated_at": "2026-06-18T00:08:47Z",
+        "status": "error",
+        "message": "Letzter Lauf ohne Erfolgssignal"
       },
       "live_score_push": {
         "name": "launchd_live_score_push",
         "path": "results/launchd_live_score_push.log",
         "exists": true,
-        "updated_at": "2026-06-17T23:03:45Z",
+        "updated_at": "2026-06-18T00:25:37Z",
         "status": "unknown",
         "message": "Kein Abschluss im Log gefunden"
       }
     },
     "summary": {
       "ok": 0,
-      "warn": 5,
-      "error": 0,
+      "warn": 4,
+      "error": 1,
       "missing": 0
     }
   },
   "model_status": {
     "active_snapshot": "params_20260617.pkl",
     "active_snapshot_updated_at": "2026-06-17T10:53:30Z",
-    "active_snapshot_age_hours": 12.2,
+    "active_snapshot_age_hours": 13.8,
     "active_snapshot_exists": true,
     "backtest_gate": {
       "passed": true,
@@ -10737,20 +10728,25 @@
     "status": "ok"
   },
   "data_freshness": {
-    "signals_updated_at": "2026-06-17T23:03:48Z",
+    "signals_updated_at": "2026-06-18T00:41:36Z",
     "signals_age_hours": 0.0,
     "signals_stale": false,
     "odds_cache_updated_at": "2026-06-17T23:03:48Z",
-    "odds_cache_age_hours": 0.0,
+    "odds_cache_age_hours": 1.6,
     "odds_snapshot_count": 68,
     "next_kickoff": "2026-06-18T02:00:00Z",
     "schedule_count": 52
   },
   "alerts": [
     {
+      "level": "error",
+      "code": "AUTOMATION_FAILED",
+      "message": "Mindestens ein Automationsjob ist fehlgeschlagen"
+    },
+    {
       "level": "warn",
-      "code": "AUTOMATION_WARN",
-      "message": "Automationsstatus unvollständig oder mit Warnungen"
+      "code": "SETTLEMENT_DUE",
+      "message": "2 offene Wette(n) nach Matchdatum"
     }
   ],
   "odds_history": {
