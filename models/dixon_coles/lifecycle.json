@@ -1,0 +1,82 @@
+{
+  "active": "params_20260615.pkl",
+  "snapshots": {
+    "params_20260614.pkl": {
+      "status": "rejected",
+      "updated_at": "2026-06-18T00:00:00Z",
+      "validation_issues": [
+        "legacy snapshot lacks complete audit and backtest evidence"
+      ]
+    },
+    "params_20260615.pkl": {
+      "activated_at": "2026-06-18T00:00:00Z",
+      "legacy_bootstrap": true,
+      "status": "active",
+      "updated_at": "2026-06-18T00:00:00Z",
+      "validation_issues": [],
+      "evidence": {
+        "backtest": true,
+        "bounds": true,
+        "drift": true,
+        "audit": true
+      },
+      "legacy_bootstrap_validated": true
+    },
+    "params_20260616.pkl": {
+      "status": "rejected",
+      "updated_at": "2026-06-18T00:00:00Z",
+      "validation_issues": [
+        "rho optimizer bound hit"
+      ]
+    },
+    "params_20260617.pkl": {
+      "status": "rejected",
+      "updated_at": "2026-06-18T00:00:00Z",
+      "validation_issues": [
+        "rho optimizer bound hit"
+      ]
+    },
+    "params_20260618.pkl": {
+      "elo_snapshot": "elo_params_20260618.json",
+      "status": "rejected",
+      "updated_at": "2026-06-18T13:07:10Z",
+      "validation_issues": [
+        "Cape Verde.defence drift |-1.906 - -0.718|=1.188 exceeds 0.8",
+        "rho optimizer bound hit: rho=-0.300 (low)"
+      ]
+    },
+    "params_20260618_candidate01.pkl": {
+      "effective_wc2026_boost": 0.5,
+      "elo_snapshot": "elo_20260618_candidate01.json",
+      "prior_snapshot": "params_20260615.pkl",
+      "status": "rejected",
+      "training_scope": "finals_only",
+      "updated_at": "2026-06-18T16:32:24Z",
+      "validation_issues": [
+        "Cape Verde.defence drift |-1.906 - -0.718|=1.188 exceeds 0.8",
+        "rho optimizer bound hit: rho=-0.300 (low)"
+      ]
+    },
+    "params_20260618_candidate02.pkl": {
+      "effective_wc2026_boost": 0.5,
+      "elo_snapshot": "elo_20260618_candidate02.json",
+      "prior_snapshot": "params_20260615.pkl",
+      "status": "rejected",
+      "training_scope": "no_ofc_qualifiers",
+      "updated_at": "2026-06-18T16:33:44Z",
+      "validation_issues": [
+        "Cape Verde.defence drift |-1.675 - -0.718|=0.957 exceeds 0.8"
+      ]
+    },
+    "params_20260618_candidate03.pkl": {
+      "effective_wc2026_boost": 0.25,
+      "elo_snapshot": "elo_20260618_candidate03.json",
+      "prior_snapshot": "params_20260615.pkl",
+      "status": "trained",
+      "training_scope": "no_ofc_qualifiers",
+      "updated_at": "2026-06-18T16:35:08Z",
+      "validation_issues": []
+    }
+  },
+  "version": 1
+}
