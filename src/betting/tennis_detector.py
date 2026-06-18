@@ -11,7 +11,7 @@ BetSignal.home = player_a, BetSignal.away = player_b (tennis has no actual home/
 """
 from __future__ import annotations
 
-from src.betting.kelly import expected_value, kelly_fraction, kelly_stake_eur
+from src.betting.kelly import dynamic_stake_eur, expected_value, kelly_fraction
 from src.betting.value_detector import BetSignal
 from src.config import MAX_EV, MIN_EDGE
 
@@ -47,7 +47,7 @@ def _signal(
     if ev < min_edge or ev > MAX_EV:
         return None
     kf = kelly_fraction(model_p, odds)
-    stake_eur = kelly_stake_eur(kf, bankroll)
+    stake_eur = dynamic_stake_eur(ev, "MEDIUM", bankroll)
     return BetSignal(
         match_id=match_id or f"{player_a}_vs_{player_b}",
         home=player_a,
@@ -221,5 +221,9 @@ def detect_value_tennis(
     # Tour-aware confidence upgrade: WTA has stronger backtest edge → lower HIGH bar
     for s in selected:
         s.confidence = _confidence_for(s.ev, tour)
+        if s.confidence == "HIGH":
+            s.stake_eur = dynamic_stake_eur(s.ev, "HIGH", bankroll)
+            if bankroll > 0:
+                s.stake_pct = s.stake_eur / bankroll
 
     return selected

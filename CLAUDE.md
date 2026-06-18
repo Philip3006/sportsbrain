@@ -39,7 +39,7 @@ sportsbrain/
 ### Phase 3 — Value-Optimierung
 - Value-Bet: Modell-Wahrscheinlichkeit > Implied Probability der Quote
 - Kelly-Criterion: optimale Einsatzgröße (fractional Kelly = 25% empfohlen)
-- Max. Einzeleinsatz: dynamischer Bankroll-Tier-Cap aus `STAKE_TIERS`; kein fixer 5%-Cap
+- Max. Einzeleinsatz: 5% des Bankrolls
 
 ### Phase 4 — Live-Scanner
 - Täglicher Scan: anstehende Spiele → Vorhersagen → Value-Bets hervorheben
@@ -49,9 +49,9 @@ sportsbrain/
 
 - **KEINE SCHÄTZUNGEN:** Wahrscheinlichkeiten nur aus Modell-Output mit echten Daten
 - **EV > 0 PFLICHT:** Kein Wetten-Vorschlag ohne positiven Expected Value
-- **KELLY-GATE:** Einsatz immer über fractional Kelly berechnen und über den dynamischen Bankroll-Tier-Cap begrenzen — nie "nach Gefühl"
+- **KELLY-GATE:** Einsatz immer über fractional Kelly berechnen — nie "nach Gefühl"
 - **BACKTEST ZUERST:** Jedes neue Modell/Feature gegen historische Daten validieren bevor Live-Einsatz
-- **MAX 5 AKTIVE WETTEN:** Bankroll-Schutz
+- **MAX 3 AKTIVE WETTEN:** Bankroll-Schutz
 
 ## Skill Auto-Aktivierung
 

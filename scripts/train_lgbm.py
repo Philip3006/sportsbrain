@@ -4,7 +4,6 @@ Saves model + calibrators to models/lgbm/.
 Run: python scripts/train_lgbm.py [--since YYYY-MM-DD] [--val-since YYYY-MM-DD]
 """
 import argparse
-import os
 import sys
 from pathlib import Path
 
@@ -34,7 +33,6 @@ from src.ensemble.combiner import find_optimal_weight
 from src.features.builder import build_training_matrix
 from src.models import dixon_coles as dc
 from src.models import lgbm_model
-from src.models.lifecycle import training_snapshot
 from src.models.elo import compute_elo_series
 
 
@@ -58,9 +56,10 @@ def main(
 
     print("Loading DC model snapshot...")
     snap_dir = MODELS_DIR / "dixon_coles"
-    candidate_name = os.getenv("SPORTSBRAIN_DC_CANDIDATE", "").strip()
-    dc_path = training_snapshot(snap_dir, candidate_name)
-    dc_params = dc.load(dc_path)
+    snaps = sorted(snap_dir.glob("params_*.pkl"))
+    if not snaps:
+        raise RuntimeError("No DC model found. Run: python scripts/train_dixon_coles.py")
+    dc_params = dc.load(snaps[-1])
     # Key with epoch so DC features cover all training matches.
     # build_training_matrix uses "latest snapshot <= match_date"; keying with
     # epoch ensures the current model is available for every historical match.
@@ -248,11 +247,7 @@ def main(
                                               else "❌ FAIL — scanner stays DC-only"))
 
     # Save
-    gate_meta["dc_snapshot"] = dc_path.name
-    out_dir = (
-        MODELS_DIR / "lgbm" / "candidates" / dc_path.stem
-        if candidate_name else MODELS_DIR / "lgbm"
-    )
+    out_dir = MODELS_DIR / "lgbm"
     out_dir.mkdir(parents=True, exist_ok=True)
     lgbm_model.save_model(model, out_dir / "model.pkl")
     save_calibrators(calibrators, out_dir / "calibrators.pkl")

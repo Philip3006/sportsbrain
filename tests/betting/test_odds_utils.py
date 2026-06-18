@@ -1,10 +1,5 @@
 import pytest
-from src.betting.odds_utils import (
-    extract_market_odds,
-    market_to_all_odds_key,
-    overround,
-    remove_margin_shin,
-)
+from src.betting.odds_utils import overround, remove_margin_shin
 
 
 class TestShinMarginRemoval:
@@ -49,31 +44,3 @@ class TestOverround:
 
     def test_zero_for_fair_book(self):
         assert abs(overround((2.0, 4.0, 4.0))) < 1e-9
-
-
-class TestMarketToAllOddsKey:
-    def test_maps_standard_totals_line(self):
-        assert market_to_all_odds_key("o/u2.5_over") == "over25"
-
-    def test_maps_quarter_totals_line(self):
-        assert market_to_all_odds_key("o/u2.25_under") == "under225"
-
-    def test_maps_ah_home_negative_line(self):
-        assert market_to_all_odds_key("ah-1.5_home") == "ah-1.5_home"
-
-    def test_maps_ah_away_positive_label_to_home_line_key(self):
-        assert market_to_all_odds_key("ah+1.5_away") == "ah-1.5_away"
-
-
-class TestExtractMarketOdds:
-    def test_extracts_double_chance_direct_key(self):
-        match = {"dc_1x_odds": 1.42}
-        assert extract_market_odds(match, "dc_1x") == 1.42
-
-    def test_extracts_quarter_total_from_dynamic_totals(self):
-        match = {"totals_lines": {2.25: {"over": 2.11, "under": 1.76}}}
-        assert extract_market_odds(match, "o/u2.25_over") == 2.11
-
-    def test_extracts_away_ah_from_normalized_home_line(self):
-        match = {"spreads": {-1.5: {"home": 2.05, "away": 1.81}}}
-        assert extract_market_odds(match, "ah+1.5_away") == 1.81

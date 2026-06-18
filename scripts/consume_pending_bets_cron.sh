@@ -15,17 +15,8 @@ if [ -f "$SPORTSBRAIN_DIR/.env" ]; then
   set +a
 fi
 
-# Log every run so the dashboard health layer can see the latest successful
-# completion instead of a stale historical error.
+# Only log lines when something interesting happens (skip silent "no pending")
 out=$(python3 -m scripts.consume_pending_bets 2>&1)
-rc=$?
-if [ "$rc" -ne 0 ] || [ -n "$out" ]; then
-  echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] consume_pending_bets start ---" >> "$LOG"
-  echo "$out" >> "$LOG"
-  if [ "$rc" -eq 0 ]; then
-    echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] consume_pending_bets done ---" >> "$LOG"
-  else
-    echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] consume_pending_bets error exit $rc ---" >> "$LOG"
-  fi
+if [ -n "$out" ] && [ "$out" != "[consume] no pending bets" ]; then
+  echo "[$(date '+%Y-%m-%d %H:%M:%S %Z')] $out" >> "$LOG"
 fi
-exit "$rc"

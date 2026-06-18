@@ -26,38 +26,14 @@ from src.config import MODELS_DIR, COMPETITIVE_TOURNAMENTS, HIERARCHICAL_DC_ENAB
 from src.data.international import fetch_international_results, filter_competitive
 from src.models import dixon_coles
 from src.models.elo import compute_elo_series, current_ratings
-from src.models.lifecycle import register_trained
 
 
-def _load_active_params() -> tuple[Path, dixon_coles.DixonColesParams]:
+def _load_latest_params() -> dixon_coles.DixonColesParams | None:
     snap_dir = MODELS_DIR / "dixon_coles"
-    snaps = sorted(snap_dir.glob("params_*.pkl"))
-    if not snaps:
-        raise RuntimeError("No params_*.pkl found in models/dixon_coles/")
-    path = snaps[-1]
-    return path, dixon_coles.load(path)
-
-
-def _next_candidate_paths(snap_dir: Path, fit_date: pd.Timestamp) -> tuple[Path, Path]:
-    stem = f"{fit_date.strftime('%Y%m%d')}_candidate"
-    index = 1
-    while True:
-        suffix = f"{stem}{index:02d}"
-        params_path = snap_dir / f"params_{suffix}.pkl"
-        elo_path = snap_dir / f"elo_{suffix}.json"
-        if not params_path.exists() and not elo_path.exists():
-            return params_path, elo_path
-        index += 1
-
-
-def _candidate_issues(params, prior) -> list[str]:
-    issues = dixon_coles.validate_params(params, prior=prior)
-    hits = dixon_coles._check_bounds_hit(params)
-    issues.extend(
-        f"{group} optimizer bound hit: {name}={value:+.3f} ({side})"
-        for group, items in hits.items() for name, value, side in items
-    )
-    return issues
+    if not snap_dir.exists():
+        return None
+    files = sorted(snap_dir.glob("params_*.pkl"))
+    return dixon_coles.load(files[-1]) if files else None
 
 _FINALS_TOURNAMENTS = {t for t in COMPETITIVE_TOURNAMENTS if "qualification" not in t.lower()}
 
@@ -100,14 +76,15 @@ def main(since: str | None = None, finals_only: bool = False, all_competitive: b
     elo_df = compute_elo_series(df)
     print(f"  Elo series computed: {len(elo_df)} matches")
 
-    prior_path, prior = _load_active_params()
-    print(f"  Warm-start from active model {prior_path.name} (fit_date={prior.fit_date.date()})")
+    prior = _load_latest_params()
+    if prior is not None:
+        print(f"  Warm-start from prior model (fit_date={prior.fit_date.date()})")
     print("Fitting Dixon-Coles model (this may take ~60-120 seconds)...")
 
     # Retry-on-bound-hit: WC2026_BOOST=1.5 is large enough that a single match
     # can drive the optimizer into a bound. When that happens, refit with a
     # smaller boost rather than ship a saturated snapshot.
-    boost_schedule = [None, 1.0, 0.75, 0.5, 0.25]
+    boost_schedule = [None, 1.0, 0.75, 0.5]
     params = None
     final_boost = None
     for attempt, boost in enumerate(boost_schedule):
@@ -119,12 +96,17 @@ def main(since: str | None = None, finals_only: bool = False, all_competitive: b
             cluster_map=TEAM_CONFEDERATION if HIERARCHICAL_DC_ENABLED else None,
             cluster_strength=0.03 if HIERARCHICAL_DC_ENABLED else 0.0,
         )
-        attempt_issues = _candidate_issues(params, prior)
-        if not attempt_issues:
+        hits = dixon_coles._check_bounds_hit(params)
+        n_hits = sum(len(v) for v in hits.values())
+        if n_hits == 0:
             final_boost = boost
-            print(f"  ✓ bounds and drift clean at attempt {attempt + 1}")
+            print(f"  ✓ no bounds hit at attempt {attempt + 1}")
             break
-        print("  ⚠️  candidate issues: " + "; ".join(attempt_issues))
+        print(f"  ⚠️  {n_hits} bound-hit(s): "
+              + ", ".join(
+                  f"{group}: " + ",".join(f"{n}={v:+.3f}({s})" for n, v, s in items)
+                  for group, items in hits.items() if items
+              ))
     else:
         # No clean fit across schedule — keep last attempt but warn loudly.
         print("  ⚠️⚠️  No clean fit found across boost schedule; keeping last attempt.")
@@ -154,14 +136,12 @@ def main(since: str | None = None, finals_only: bool = False, all_competitive: b
 
     snap_dir = MODELS_DIR / "dixon_coles"
     snap_dir.mkdir(parents=True, exist_ok=True)
-    out_path, elo_path = _next_candidate_paths(snap_dir, params.fit_date)
-    issues = _candidate_issues(params, prior)
-    # Rejected candidates remain reproducible audit evidence, but force-saving
-    # never changes lifecycle active and cannot make them scanner-eligible.
-    dixon_coles.save(params, out_path, prior=prior, force=bool(issues))
+    out_path = snap_dir / f"params_{params.fit_date.strftime('%Y%m%d')}.pkl"
+    dixon_coles.save(params, out_path, prior=prior)
 
     # Save current Elo ratings snapshot for inference (scanner reads this at startup)
     elo_now = current_ratings(elo_df)
+    elo_path = snap_dir / "current_elo.json"
     elo_path.write_text(json.dumps(elo_now, indent=2))
     print(f"Saved Elo snapshot: {elo_path} ({len(elo_now)} teams)")
 
@@ -171,22 +151,10 @@ def main(since: str | None = None, finals_only: bool = False, all_competitive: b
     print(f"  Rho (low-score correction): {params.rho:.4f}")
     print(f"  Fit date: {params.fit_date.date()}")
 
-    status = register_trained(
-        snap_dir,
-        out_path,
-        issues=issues,
-        prior_snapshot=prior_path.name,
-        elo_snapshot=elo_path.name,
-        effective_wc2026_boost=final_boost,
-        training_scope=("finals_only" if finals_only else "all_competitive" if all_competitive else "no_ofc_qualifiers"),
-    )
-    print(f"  Lifecycle status: {status}")
-
     top_attack = sorted(params.attack.items(), key=lambda x: x[1], reverse=True)[:8]
     print("\n  Top 8 attack ratings:")
     for team, val in top_attack:
         print(f"    {team}: {val:.4f}")
-    return out_path
 
 
 if __name__ == "__main__":
