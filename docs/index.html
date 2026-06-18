@@ -716,6 +716,13 @@
       <button class="settings-toggle" type="button" onclick="_closeSettings();_openTokenModal()">Ändern</button>
     </div>
 
+    <div class="settings-row">
+      <div class="settings-row-text">
+        <div class="settings-row-title">Modellstatus</div>
+        <div class="settings-row-sub" id="settings-model-status">Kein aktiver Snapshot</div>
+      </div>
+    </div>
+
     <div class="settings-info" id="settings-ios-hint" style="display:none">
       ℹ️ <b>iOS-Hinweis:</b> Push-Benachrichtigungen funktionieren auf iPhone nur, wenn diese PWA über den Safari-Share-Button → "Zum Home-Bildschirm" hinzugefügt und dann als App gestartet wird.
     </div>
@@ -1047,8 +1054,8 @@ function openMatch(displayKey) {
 }
 
 // ── Helpers ──────────────────────────────────────────────────
-const esc = s => String(s ?? '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-const escAttr = s => esc(s).replace(/"/g,'&quot;');
+const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const escAttr = s => esc(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
 // ── Spinner + Toast ───────────────────────────────────────────
 function _spinner(on) {
@@ -1336,9 +1343,74 @@ function predCard(home, away, tip, odds, nk, kickoff, sport) {
     return `<div class="pred-story ${storyCls}">${parts.join(' ')}</div>`;
   })();
 
+  // EV badge: find value bets for this match
+  const _matchSigs = _signals.filter(s => {
+    const [sh, sa] = s.match.split(' vs ').map(x => x.trim());
+    return matchKey(sh, sa) === nk;
+  }).filter(s => s.ev_pct >= 3 && s.confidence !== 'LOW');
+  const _evBadge = _matchSigs.length ? (() => {
+    const best = _matchSigs.sort((a, b) => b.ev_pct - a.ev_pct)[0];
+    const mktLabel = best.market.toUpperCase().replace('_', ' ');
+    return `<div style="margin-bottom:10px;padding:8px 12px;background:rgba(0,200,83,.10);border:1px solid rgba(0,200,83,.40);border-radius:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="font-size:13px">🔥</span>
+      <span style="font-size:11px;font-weight:900;color:var(--green);text-transform:uppercase;letter-spacing:.5px">VALUE BET</span>
+      <span style="font-size:12px;font-weight:700;color:var(--text)">${esc(mktLabel)}</span>
+      <span style="font-size:12px;font-weight:900;color:var(--green)">@ ${best.odds ? best.odds.toFixed(2) : '—'}</span>
+      <span style="font-size:11px;font-weight:800;color:var(--green)">+${best.ev_pct.toFixed(1)}% EV</span>
+      ${_matchSigs.length > 1 ? `<span style="font-size:10px;color:var(--muted)">+${_matchSigs.length-1} weitere</span>` : ''}
+    </div>`;
+  })() : '';
+
+  // O/U probability bars
+  const _ouSection = (() => {
+    const lines = [
+      {label: 'Über 1.5', p: tip.p_over15},
+      {label: 'Über 2.5', p: tip.p_over25},
+      {label: 'Über 3.5', p: tip.p_over35},
+    ].filter(l => l.p != null);
+    if (!lines.length) return '';
+    const ouBar = (l) => {
+      const pct = Math.round(l.p * 100);
+      const col = l.p >= 0.65 ? 'var(--green)' : l.p >= 0.45 ? 'var(--yellow)' : 'var(--muted)';
+      return `<div style="flex:1;min-width:80px">
+        <div style="font-size:10px;font-weight:800;color:var(--muted);margin-bottom:4px;text-align:center">${l.label}</div>
+        <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:4px">
+          <div style="height:100%;width:${pct}%;background:${col};border-radius:3px"></div>
+        </div>
+        <div style="font-size:13px;font-weight:900;color:${col};text-align:center">${pct}%</div>
+      </div>`;
+    };
+    return `<div style="margin-top:10px;padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px">
+      <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Über / Unter Tore</div>
+      <div style="display:flex;gap:8px">${lines.map(ouBar).join('')}</div>
+    </div>`;
+  })();
+
+  // Scoreline predictions
+  const _scorelineSection = (() => {
+    const entries = [
+      {sl: tip.top_scoreline, p: tip.top_scoreline_prob},
+      {sl: tip.second_scoreline, p: tip.second_scoreline_prob},
+      {sl: tip.third_scoreline, p: tip.third_scoreline_prob},
+    ].filter(e => e.sl);
+    if (!entries.length) return '';
+    const slChip = (e) => {
+      const pct = Math.round(e.p * 100);
+      return `<div style="text-align:center;padding:8px 12px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;min-width:64px">
+        <div style="font-size:16px;font-weight:900;color:var(--text);letter-spacing:1px">${esc(e.sl)}</div>
+        <div style="font-size:10px;font-weight:800;color:var(--muted);margin-top:2px">${pct}%</div>
+      </div>`;
+    };
+    return `<div style="margin-top:10px;padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px">
+      <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">🎯 Wahrscheinlichstes Ergebnis</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${entries.map(slChip).join('')}</div>
+    </div>`;
+  })();
+
   return `<div class="pred-card">
     <div class="pred-title">⚡ Modell-Tipp</div>
     <div class="pred-tip">${tipLabel}</div>
+    ${_evBadge}
     ${_story}
     <div class="pred-bars">
       <div class="pred-bar-row">
@@ -1361,7 +1433,9 @@ function predCard(home, away, tip, odds, nk, kickoff, sport) {
       </div>
     </div>
     ${extraGrid}
-    <div class="pred-xg">
+    ${_ouSection}
+    ${_scorelineSection}
+    ${tip.xg_home != null ? `<div class="pred-xg">
       <div class="pred-xg-team">
         <span class="pred-xg-val" style="color:var(--text)">${tip.xg_home.toFixed(2)}</span>
         <span class="pred-xg-label">xG</span>
@@ -1375,13 +1449,13 @@ function predCard(home, away, tip, odds, nk, kickoff, sport) {
         <span class="pred-xg-label">xG</span>
         <span class="pred-xg-team-name">${esc(away)}</span>
       </div>
-    </div>
+    </div>` : ''}
     ${(() => {
-      const hsc = tip.top_scorers_home || [];
-      const asc = tip.top_scorers_away || [];
+      const hsc = (tip.top_scorers_home || []).slice(0, 2);
+      const asc = (tip.top_scorers_away || []).slice(0, 2);
       if (!hsc.length && !asc.length) return '';
       const pctColor = p => p >= .45 ? 'var(--green)' : p >= .25 ? 'var(--yellow)' : 'var(--muted)';
-      const medals = ['🥇','🥈','🥉'];
+      const medals = ['🥇','🥈'];
       const scorerBtn = (p) => {
         if (!p.p || p.p <= 0) return '';
         const market = `scorer_${p.name}`;
@@ -2441,6 +2515,19 @@ async function _renderSettingsState() {
       const t = localStorage.getItem('sb_token');
       ts.textContent = t ? 'Gesetzt · ••••' + t.slice(-4) : 'Nicht gesetzt';
     } catch { ts.textContent = '—'; }
+  }
+  const ms = document.getElementById('settings-model-status');
+  if (ms) {
+    const snapshot = _modelStatus.active_snapshot || 'Kein aktiver Snapshot';
+    const validation = _modelStatus.validation_complete === true
+      ? 'validiert' : 'nicht vollständig validiert';
+    const backtest = _modelStatus.backtest_gate?.passed === true
+      ? 'Backtest bestanden' : 'Backtest blockiert';
+    const updatedRaw = _modelStatus.active_snapshot_updated_at || '';
+    const updatedDate = updatedRaw ? new Date(updatedRaw) : null;
+    const updated = updatedDate && !isNaN(updatedDate.getTime())
+      ? ` · Stand ${updatedDate.toLocaleString('de-DE')}` : '';
+    ms.textContent = `${snapshot} · ${validation} · ${backtest}${updated}`;
   }
 }
 
@@ -3656,7 +3743,7 @@ function renderSquads() {
     const susp = (d.suspended||[]).length;
     const badge = injured > 0 ? `<span style="color:var(--red)">${injured} verletzt</span>` :
                   susp > 0   ? `<span style="color:var(--yellow)">${susp} gesperrt</span>` : '';
-    html += `<div class="squad-team-row" onclick="openSquad('${esc(team)}')">
+    html += `<div class="squad-team-row" onclick="openSquad(${escAttr(JSON.stringify(team))})">
       <span class="squad-ampel">${d.ampel||'🟢'}</span>
       <span class="squad-team-name">${esc(team)}</span>
       <div class="squad-meta">${badge ? badge+'<br>' : ''}<span class="squad-source">${esc(d.source||'')}</span></div>
@@ -3874,16 +3961,16 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('view-detail')?.classList.contains('active'))  { closeDetail(); }
 });
 
-// URL-Token-Setter: ?token=XXX → speichert in localStorage.
-// Param wird NICHT aus URL entfernt, damit "Zum Home-Bildschirm" die Magic-URL
-// behält und die PWA beim ersten Launch den Token auch in ihrer eigenen
-// localStorage-Sandbox speichern kann (iOS-PWA hat separates Storage).
+// URL-Token-Setter: ?token=XXX → speichert privat und bereinigt die URL.
 (function () {
   try {
     const params = new URLSearchParams(window.location.search);
     const t = params.get('token');
     if (t && t.length >= 32) {
       localStorage.setItem('sb_token', t);
+      params.delete('token');
+      const query = params.toString();
+      history.replaceState(null, '', `${window.location.pathname}${query ? '?' + query : ''}${window.location.hash}`);
       setTimeout(() => showToast && showToast('🔑 Worker-Token gespeichert', 'success'), 200);
     }
   } catch {}

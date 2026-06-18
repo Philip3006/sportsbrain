@@ -32,13 +32,13 @@ class TestBoundsValues:
         assert _FIT_BOUNDS_ATTACK == (-3.0, 2.5)
 
     def test_defence_bounds(self):
-        assert _FIT_BOUNDS_DEFENCE == (-2.5, 2.0)
+        assert _FIT_BOUNDS_DEFENCE == (-3.0, 2.0)
 
     def test_home_adv_bounds(self):
         assert _FIT_BOUNDS_HOME_ADV == (0.0, 0.6)
 
     def test_rho_bounds(self):
-        assert _FIT_BOUNDS_RHO == (-0.30, 0.10)
+        assert _FIT_BOUNDS_RHO == (-0.50, 0.10)
 
 
 class TestCheckBoundsHit:
@@ -57,7 +57,7 @@ class TestCheckBoundsHit:
 
     def test_rho_low_bound_detected(self):
         p = self._clean()
-        p.rho = -0.30
+        p.rho = -0.50
         hits = _check_bounds_hit(p)
         assert len(hits["rho"]) == 1
         assert hits["rho"][0][2] == "low"
@@ -72,7 +72,7 @@ class TestCheckBoundsHit:
 
     def test_defence_low_bound_detected(self):
         p = self._clean()
-        p.defence["A"] = -2.5
+        p.defence["A"] = -3.0
         hits = _check_bounds_hit(p)
         assert len(hits["defence"]) == 1
         assert hits["defence"][0][2] == "low"
