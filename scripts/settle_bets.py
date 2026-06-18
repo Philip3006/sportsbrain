@@ -65,6 +65,7 @@ def fetch_scores() -> dict[str, dict]:
     except requests.HTTPError as e:
         print(f"[settle] scores fetch HTTP error: {e} — skipping settlement.")
         return {}
+    from src.config import canonical_name
     results = {}
     for m in r.json():
         if not m.get("completed") or not m.get("scores"):
@@ -72,14 +73,17 @@ def fetch_scores() -> dict[str, dict]:
         scores = {s["name"]: int(s["score"]) for s in m["scores"]}
         home = m["home_team"]
         away = m["away_team"]
-        results[m["id"]] = {
+        entry = {
             "home": home,
             "away": away,
             "home_score": scores.get(home, 0),
             "away_score": scores.get(away, 0),
         }
-        # Also index by "Home vs Away" string for fallback matching
-        results[f"{home} vs {away}"] = results[m["id"]]
+        results[m["id"]] = entry
+        # Index by raw API names and canonical names for robust matching
+        results[f"{home} vs {away}"] = entry
+        c_home, c_away = canonical_name(home), canonical_name(away)
+        results[f"{c_home} vs {c_away}"] = entry
     return results
 
 
@@ -160,11 +164,13 @@ def settle(dry_run: bool = False) -> int:
     open_bets = [r for r in rows if r["status"] == "open"]
     print(f"Open bets: {len(open_bets)}")
 
+    from src.config import canonical_name
     settled = 0
     for r in open_bets:
         home, away = r["home"], r["away"]
         match_key = f"{home} vs {away}"
-        sc = scores.get(r["match_id"]) or scores.get(match_key)
+        c_key = f"{canonical_name(home)} vs {canonical_name(away)}"
+        sc = scores.get(r["match_id"]) or scores.get(match_key) or scores.get(c_key)
         if not sc:
             continue
 
