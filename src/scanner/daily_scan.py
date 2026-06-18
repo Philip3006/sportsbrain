@@ -97,12 +97,10 @@ def _count_model_agreement(
 
 def _load_latest_dc_params() -> dc.DixonColesParams | None:
     snap_dir = MODELS_DIR / "dixon_coles"
-    if not snap_dir.exists():
+    snaps = sorted(snap_dir.glob("params_*.pkl"))
+    if not snaps:
         return None
-    files = sorted(snap_dir.glob("params_*.pkl"))
-    if not files:
-        return None
-    return dc.load(files[-1])
+    return dc.load(snaps[-1])
 
 
 def _load_lgbm_gate() -> dict:
@@ -166,7 +164,14 @@ def _load_stacker():
             return None
         from src.ensemble.stacking import Stacker
         path = MODELS_DIR / "lgbm" / "stacker.pkl"
-        if path.exists():
+        metadata_path = MODELS_DIR / "lgbm" / "stacker_features.json"
+        if path.exists() and metadata_path.exists():
+            import json
+            from src.models.lifecycle import active_snapshot
+            metadata = json.loads(metadata_path.read_text())
+            active = active_snapshot(MODELS_DIR / "dixon_coles").name
+            if metadata.get("dc_snapshot") != active:
+                return None
             return Stacker.load(path)
     except Exception:
         pass
@@ -298,12 +303,13 @@ def run_daily_scan(
     horizon_hours: int | None = None,
     scan_date_filter: str | None = None,
     force: bool = False,
-) -> tuple[pd.DataFrame, list, list, dict, dict]:
+) -> tuple[pd.DataFrame, list, list, dict, dict, dict]:
     """
     Main scan orchestrator.
-    Returns (signals_df, all_signals, selected_signals, match_date_lookup, match_contexts).
+    Returns (signals_df, all_signals, selected_signals, match_date_lookup, match_contexts, all_match_contexts).
     all_signals: every value bet found (pre portfolio cap) — for dashboard display.
     selected_signals: post portfolio cap — for ledger logging.
+    all_match_contexts: predictions for ALL matches including divergence-filtered (for model_tips).
 
     Args:
         force: Skip the WM date guard (useful for testing before/after tournament).
@@ -478,6 +484,7 @@ def run_daily_scan(
     no_value_matches: list[dict] = []
     skipped_divergence_matches: list[dict] = []
     match_contexts: dict[str, dict] = {}
+    all_match_contexts: dict[str, dict] = {}  # ALL matches incl. divergence-filtered
     scan_date = pd.Timestamp.now()
 
     skipped_divergence = 0
@@ -603,7 +610,70 @@ def run_daily_scan(
         # qualifier-blowout bias (AFC/CAF/CONCACAF/OFC). Their DC params are
         # most inflated relative to WM finals level.
         away_conf = TEAM_CONFEDERATION.get(away, "UEFA")
-        div_threshold = 1.50 if away_conf not in {"UEFA", "CONMEBOL"} else 1.75
+        div_threshold = 2.00 if away_conf not in {"UEFA", "CONMEBOL"} else 2.50
+
+        # ── Pre-divergence: compute predictions for ALL matches (model_tips) ──
+        match_id = match["match_id"]
+        try:
+            _score_matrix = dc.predict_scoreline(
+                home, away, dc_params, neutral=True,
+                elo_home=elo_ratings.get(home, 1500.0),
+                elo_away=elo_ratings.get(away, 1500.0),
+            )
+            _mg = _score_matrix.shape[0] - 1
+            _lambda_home = float(sum(i * _score_matrix[i, :].sum() for i in range(_mg + 1)))
+            _lambda_away = float(sum(j * _score_matrix[:, j].sum() for j in range(_mg + 1)))
+            _p_btts_yes = float(_score_matrix[1:, 1:].sum())
+            _p_over15 = float(sum(
+                _score_matrix[i, j]
+                for i in range(_mg + 1) for j in range(_mg + 1) if i + j >= 2
+            ))
+            _p_over25 = float(sum(
+                _score_matrix[i, j]
+                for i in range(_mg + 1) for j in range(_mg + 1) if i + j >= 3
+            ))
+            _p_over35 = float(sum(
+                _score_matrix[i, j]
+                for i in range(_mg + 1) for j in range(_mg + 1) if i + j >= 4
+            ))
+            _top_scores = _top_scorelines(_score_matrix, n=3)
+        except Exception:
+            _lambda_home = _lambda_away = _p_btts_yes = None
+            _p_over15 = _p_over25 = _p_over35 = None
+            _score_matrix = None
+            _top_scores = []
+
+        _home_scorers: list[dict] = []
+        _away_scorers: list[dict] = []
+        if not player_xg_df.empty:
+            try:
+                from src.betting.goalscorer import get_top_goalscorer_predictions
+                _home_scorers = get_top_goalscorer_predictions(
+                    home, match_ts_naive, player_xg_df, top_n=5, dc_params=dc_params
+                )
+                _away_scorers = get_top_goalscorer_predictions(
+                    away, match_ts_naive, player_xg_df, top_n=5, dc_params=dc_params
+                )
+            except Exception:
+                pass
+
+        all_match_contexts[match_id] = {
+            "home": home, "away": away,
+            "commence_time": match.get("commence_time", ""),
+            "p_home": float(final_arr[2]),
+            "p_draw": float(final_arr[1]),
+            "p_away": float(final_arr[0]),
+            "lambda_home": _lambda_home,
+            "lambda_away": _lambda_away,
+            "p_btts_yes": _p_btts_yes,
+            "p_over15": _p_over15,
+            "p_over25": _p_over25,
+            "p_over35": _p_over35,
+            "p_under25": 1.0 - _p_over25 if _p_over25 is not None else None,
+            "top_scorelines": _top_scores,
+            "home_scorers": _home_scorers,
+            "away_scorers": _away_scorers,
+        }
 
         if max_div > div_threshold:
             skipped_divergence += 1
@@ -618,8 +688,7 @@ def run_daily_scan(
             })
             continue
 
-        # Form + squad context for display
-        match_id = match["match_id"]
+        # Form + squad context for display (scanner-approved only)
         if not historical.empty:
             home_ctx = _form_context(home, scan_date, historical)
             away_ctx = _form_context(away, scan_date, historical)
@@ -632,36 +701,26 @@ def run_daily_scan(
         final_arr = _squad_adjust(final_arr, home_squad, away_squad)
         final_arr = _rank_adjust(final_arr, home, away)
 
-        # DC expected goals, BTTS and top scorelines for display (single matrix computation)
-        try:
-            _score_matrix = dc.predict_scoreline(
-                home, away, dc_params, neutral=True,
-                elo_home=elo_ratings.get(home, 1500.0),
-                elo_away=elo_ratings.get(away, 1500.0),
-            )
-            _mg = _score_matrix.shape[0] - 1
-            _lambda_home = float(sum(i * _score_matrix[i, :].sum() for i in range(_mg + 1)))
-            _lambda_away = float(sum(j * _score_matrix[:, j].sum() for j in range(_mg + 1)))
-            _p_btts_yes = float(_score_matrix[1:, 1:].sum())
-            _top_scores = _top_scorelines(_score_matrix, n=3)
-        except Exception:
-            _lambda_home = _lambda_away = _p_btts_yes = None
-            _top_scores = []
-
-        # Goalscorer predictions (StatsBomb xG, graceful fallback)
-        _home_scorers: list[dict] = []
-        _away_scorers: list[dict] = []
-        if not player_xg_df.empty:
-            try:
-                from src.betting.goalscorer import get_top_goalscorer_predictions
-                _home_scorers = get_top_goalscorer_predictions(
-                    home, match_ts_naive, player_xg_df, top_n=5, dc_params=dc_params
-                )
-                _away_scorers = get_top_goalscorer_predictions(
-                    away, match_ts_naive, player_xg_df, top_n=5, dc_params=dc_params
-                )
-            except Exception:
-                pass
+        # Availability/ranking adjustments happen after the first divergence gate.
+        # Re-check the exact probabilities that may reach signals and publishing.
+        post_adjust_div = max(
+            max(final_arr[i] / mkt_arr[i], mkt_arr[i] / final_arr[i])
+            for i in range(3)
+            if mkt_arr[i] > 0.02 and final_arr[i] > 0.02
+        )
+        if post_adjust_div > div_threshold:
+            skipped_divergence += 1
+            skipped_divergence_matches.append({
+                "match": f"{home} vs {away}",
+                "p_home": float(final_arr[2]),
+                "p_draw": float(final_arr[1]),
+                "p_away": float(final_arr[0]),
+                "mkt_home": float(mkt_h), "mkt_draw": float(mkt_d), "mkt_away": float(mkt_a),
+                "max_div": float(post_adjust_div),
+                "div_threshold": float(div_threshold),
+                "stage": "post_adjustment",
+            })
+            continue
 
         match_contexts[match_id] = {
             "home": home, "away": away,
@@ -677,11 +736,21 @@ def run_daily_scan(
             "lambda_home": _lambda_home,
             "lambda_away": _lambda_away,
             "p_btts_yes": _p_btts_yes,
+            "p_over15": _p_over15,
+            "p_over25": _p_over25,
+            "p_over35": _p_over35,
+            "p_under25": 1.0 - _p_over25 if _p_over25 is not None else None,
             "top_scorelines": _top_scores,
             "commence_time": match.get("commence_time", ""),
             "home_scorers": _home_scorers,
             "away_scorers": _away_scorers,
         }
+        # Update all_match_contexts with squad-adjusted probabilities
+        all_match_contexts[match_id].update({
+            "p_home": float(final_arr[2]),
+            "p_draw": float(final_arr[1]),
+            "p_away": float(final_arr[0]),
+        })
 
         # Pass dc_probs to the consistency gate only when LightGBM is blended in.
         # When DC-only, ensemble == DC so the gate is a no-op.
@@ -1066,7 +1135,7 @@ def run_daily_scan(
         }
         for s in all_signals
     ])
-    return signals_df, all_signals, selected_signals, match_date_lookup, match_contexts
+    return signals_df, all_signals, selected_signals, match_date_lookup, match_contexts, all_match_contexts
 
 
 def _top_scorelines(score_matrix, n: int = 3) -> list[tuple[int, int, float]]:
@@ -1185,7 +1254,7 @@ def _format_report(
     lines = [
         f"# WM 2026 Value Scan — {scan_date.strftime('%Y-%m-%d')}",
         "",
-        f"Bankroll: €{bankroll:,.0f} | Min edge: 3% | Kelly fraction: 25% | Model/market divergence cap: 1.50x–1.75x",
+        f"Bankroll: €{bankroll:,.0f} | Min edge: 3% | Kelly fraction: 25% | Model/market divergence cap: 2.00x–2.50x",
         "",
         f"**Portfolio:** {open_count}/{MAX_ACTIVE_BETS} active bets | "
         f"ROI: {summary['roi_pct']:+.1f}% on {summary['n_won']+summary['n_lost']} settled "

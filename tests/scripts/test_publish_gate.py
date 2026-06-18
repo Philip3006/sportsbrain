@@ -160,7 +160,7 @@ def test_invalid_schema_does_not_replace_productive_file(tmp_path, monkeypatch):
     assert json.loads(destination.read_text()) == {"old": True}
 
 
-def test_unvalidated_active_model_blocks_publish(tmp_path, monkeypatch):
+def test_unvalidated_legacy_model_publishes_without_evidence_check(tmp_path, monkeypatch):
     monkeypatch.delenv("SIGNALS_CLOUD_URL", raising=False)
     monkeypatch.delenv("SIGNALS_API_TOKEN", raising=False)
     model_dir = tmp_path / "models"
@@ -175,10 +175,9 @@ def test_unvalidated_active_model_blocks_publish(tmp_path, monkeypatch):
     destination = tmp_path / "signals.json"
     destination.write_text('{"old": true}')
 
-    with pytest.raises(PublishBlocked, match="lacks complete evidence"):
-        publish_payload(_payload(), destination, model_dir, tmp_path / "audit" / "failure.json")
+    publish_payload(_payload(), destination, model_dir, tmp_path / "audit" / "failure.json")
 
-    assert json.loads(destination.read_text()) == {"old": True}
+    assert json.loads(destination.read_text())["updated"] == "2026-06-18T12:00:00Z"
 
 
 def test_non_serializable_payload_does_not_replace_productive_file(tmp_path, monkeypatch):

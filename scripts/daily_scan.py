@@ -79,7 +79,7 @@ if __name__ == "__main__":
         subprocess.run([sys.executable, "scripts/auto_retrain.py"], check=True)
         print("--- Scan ---")
 
-    signals_df, all_signals, selected_signals, match_date_lookup, _match_contexts = run_daily_scan(
+    signals_df, all_signals, selected_signals, match_date_lookup, _match_contexts, _all_match_contexts = run_daily_scan(
         bankroll=args.bankroll,
         mock=args.mock,
         output_path=Path(args.output) if args.output else None,
@@ -213,139 +213,11 @@ if __name__ == "__main__":
                 })
     except Exception:
         _odds_hist_for_dashboard = {}
-    # Build DC model tips for all schedule games (win/draw/loss probs + xG + goalscorers)
-    model_tips = {}
-    try:
-        import os as _os2
-        import re as _re
-        import unicodedata as _ud
-        import json as _jsc
-        from src.scanner.daily_scan import _load_latest_dc_params
-        from src.models.dixon_coles import predict_match, predict_xg, predict_btts, predict_totals
-        from src.config import canonical_name, DATA_CACHE
-        from src.betting.goalscorer import get_top_goalscorer_predictions
-        import pickle as _pkl
-        _dc_params = _load_latest_dc_params()
-
-        # Load player xG cache for goalscorer predictions
-        _pxg_path = DATA_CACHE / "statsbomb_player_xg.pkl"
-        _player_xg_df = None
-        if _pxg_path.exists():
-            try:
-                _player_xg_df = _pkl.load(open(_pxg_path, "rb"))
-            except Exception:
-                pass
-
-        # Load squads.json for current-squad filtering and clean name lookup
-        _squads_data = {}
-        try:
-            _sq_path = ROOT / "docs" / "data" / "squads.json"
-            if _sq_path.exists():
-                _squads_data = _jsc.loads(_sq_path.read_text()).get("teams", {})
-        except Exception:
-            pass
-
-        def _asciify(s: str) -> list:
-            """ASCII-normalize and split into lowercase word tokens."""
-            s = _ud.normalize("NFKD", s).encode("ascii", "ignore").decode().lower()
-            return _re.split(r"[\s\-]+", s)
-
-        def _match_player(sb_name: str, eligible: dict) -> str | None:
-            """
-            Match a StatsBomb full name to a squad name using two-tier priority:
-            1. Last name (≥4 chars) in StatsBomb tokens, PLUS first name if ≥4 chars also matches
-               → prevents same-surname false positives (e.g. Moteb Al-Harbi ≠ Fahad Al-Harbi)
-            2. All squad tokens (≥3 chars) appear in StatsBomb name (handles short last names)
-            Returns squad name on match, None otherwise.
-            """
-            sb_parts = _asciify(sb_name)
-            sb_set = set(sb_parts)
-            for sq_name, sq_parts in eligible.items():
-                last = sq_parts[-1] if sq_parts else ""
-                first = sq_parts[0] if len(sq_parts) >= 2 else ""
-                # 1. Last name match (most reliable) — also require first name if it's long enough
-                if last and len(last) >= 4 and last in sb_set:
-                    if not first or len(first) < 4 or first in sb_set:
-                        return sq_name
-                # 2. All squad tokens (≥3 chars) appear in StatsBomb name (e.g. Korean names, short surnames)
-                sq_short = {t for t in sq_parts if len(t) >= 3}
-                if len(sq_short) >= 2 and sq_short <= sb_set:
-                    return sq_name
-            return None
-
-        def _filter_by_squad(preds: list, team: str) -> list:
-            """
-            Keeps only players in the current squad (not injured/out).
-            Uses squad name for display (shorter, cleaner than StatsBomb full name).
-            """
-            sq_info = _squads_data.get(team, {})
-            sq_players = sq_info.get("players", [])
-            if not sq_players:
-                return [{"name": p["player"], "p": round(p["p_score"], 3)} for p in preds]
-            eligible = {
-                p["name"]: _asciify(p["name"])
-                for p in sq_players
-                if p.get("status") not in ("injured", "out")
-                and p.get("pos") != "GK"
-            }
-            seen: dict[str, float] = {}
-            for pred in preds:
-                sq_name = _match_player(pred["player"], eligible)
-                if sq_name and sq_name not in seen:
-                    seen[sq_name] = round(pred["p_score"], 3)
-            return [{"name": n, "p": p} for n, p in seen.items()]
-
-        import pandas as _pd_tip
-        _now_ts = _pd_tip.Timestamp.now()
-
-        if _dc_params:
-            for _g in schedule:
-                _h_raw, _a_raw = _g.get("home", ""), _g.get("away", "")
-                try:
-                    _h = canonical_name(_h_raw)
-                    _a = canonical_name(_a_raw)
-                    _probs = predict_match(_h, _a, _dc_params, neutral=True)
-                    _xgh, _xga = predict_xg(_h, _a, _dc_params, neutral=True)
-                    _btts = predict_btts(_h, _a, _dc_params, neutral=True)
-                    _totals = predict_totals(_h, _a, _dc_params, neutral=True)
-
-                    # Goalscorer predictions — squad-filtered, opponent-adjusted xG
-                    _home_sc, _away_sc = [], []
-                    if _player_xg_df is not None:
-                        try:
-                            _raw_h = get_top_goalscorer_predictions(
-                                _h, _now_ts, _player_xg_df,
-                                n_games=5, top_n=8, dc_params=_dc_params,
-                            )
-                            _raw_a = get_top_goalscorer_predictions(
-                                _a, _now_ts, _player_xg_df,
-                                n_games=5, top_n=8, dc_params=_dc_params,
-                            )
-                            _home_sc = _filter_by_squad(_raw_h, _h)[:3]
-                            _away_sc = _filter_by_squad(_raw_a, _a)[:3]
-                        except Exception:
-                            pass
-
-                    model_tips[f"{_h_raw} vs {_a_raw}"] = {
-                        "p_home": round(_probs["p_home"], 3),
-                        "p_draw": round(_probs["p_draw"], 3),
-                        "p_away": round(_probs["p_away"], 3),
-                        "xg_home": round(_xgh, 2),
-                        "xg_away": round(_xga, 2),
-                        "p_btts_yes": round(_btts["p_btts_yes"], 3),
-                        "p_btts_no": round(_btts["p_btts_no"], 3),
-                        "p_over25": round(_totals["p_over"], 3),
-                        "p_under25": round(_totals["p_under"], 3),
-                        "top_scorers_home": _home_sc,
-                        "top_scorers_away": _away_sc,
-                    }
-                except Exception:
-                    pass
-            print(f"  Model tips: {len(model_tips)} matches computed")
-        else:
-            print("  Model tips: no DC params found — skipping")
-    except Exception as _e:
-        print(f"  Model tips failed: {_e}")
+    # Public tips use the same ensemble probabilities and market-divergence gates
+    # as signal generation. Matches rejected by the scanner are intentionally absent.
+    from src.notifications.model_tips import build_published_model_tips
+    model_tips = build_published_model_tips(schedule, _all_match_contexts)
+    print(f"  Model tips: {len(model_tips)} scanner-approved matches")
 
     # Build open_bets section from ledger
     import csv as _csv
@@ -409,7 +281,7 @@ if __name__ == "__main__":
         kickoff_map=kickoff_map,
         schedule=schedule,
         all_odds=all_odds,
-        model_tips=model_tips if model_tips else None,
+        model_tips=model_tips,
         open_bets=_open_bets,
         odds_history=_odds_hist_for_dashboard,
         wm_results=_wm_results if _wm_results else None,
