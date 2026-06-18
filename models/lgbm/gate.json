@@ -8,5 +8,6 @@
   "dc_weight": 0.4,
   "min_improvement_required": 0.01,
   "passed": true,
-  "reason": "blend improves DC-only by 0.0669 (\u2265 0.01)"
+  "reason": "blend improves DC-only by 0.0669 (\u2265 0.01)",
+  "dc_snapshot": "params_20260615.pkl"
 }
