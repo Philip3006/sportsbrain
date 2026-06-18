@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-18T12:09:13Z",
+  "updated": "2026-06-18T15:29:25Z",
   "schedule": [
     {
       "sport": "football",
@@ -8606,6 +8606,12 @@
   "top_elo": [],
   "history": [
     {
+      "date": "2026-06-18",
+      "n_bets": 2,
+      "pnl": 0.0,
+      "roi_pct": 0.0
+    },
+    {
       "date": "2026-06-17",
       "n_bets": 9,
       "pnl": 21.57,
@@ -8642,9 +8648,111 @@
       "roi_pct": 0.0
     }
   ],
-  "open_bets": [],
+  "open_bets": [
+    {
+      "match": "Czechia vs South Africa",
+      "home": "Czechia",
+      "away": "South Africa",
+      "market": "home",
+      "entry_odds": 1.8,
+      "current_odds": null,
+      "drift_pct": null,
+      "clv_signal": null,
+      "stake": 10.0,
+      "match_date": "2026-06-18",
+      "placed_date": "2026-06-18",
+      "kickoff": "",
+      "model_edge_pct": null,
+      "group": "open",
+      "status": "open",
+      "status_source": "official",
+      "badge_text": "Offen",
+      "is_live_badge": false,
+      "scoreline": null,
+      "home_score": null,
+      "away_score": null,
+      "last_goal_scorer": "",
+      "pnl": 0.0
+    },
+    {
+      "match": "Czechia vs South Africa",
+      "home": "Czechia",
+      "away": "South Africa",
+      "market": "o/u2.5_over",
+      "entry_odds": 2.05,
+      "current_odds": null,
+      "drift_pct": null,
+      "clv_signal": null,
+      "stake": 20.0,
+      "match_date": "2026-06-18",
+      "placed_date": "2026-06-18",
+      "kickoff": "",
+      "model_edge_pct": null,
+      "group": "open",
+      "status": "open",
+      "status_source": "official",
+      "badge_text": "Offen",
+      "is_live_badge": false,
+      "scoreline": null,
+      "home_score": null,
+      "away_score": null,
+      "last_goal_scorer": "",
+      "pnl": 0.0
+    }
+  ],
   "bets": {
-    "open": [],
+    "open": [
+      {
+        "match": "Czechia vs South Africa",
+        "home": "Czechia",
+        "away": "South Africa",
+        "market": "home",
+        "entry_odds": 1.8,
+        "current_odds": null,
+        "drift_pct": null,
+        "clv_signal": null,
+        "stake": 10.0,
+        "match_date": "2026-06-18",
+        "placed_date": "2026-06-18",
+        "kickoff": "",
+        "model_edge_pct": null,
+        "group": "open",
+        "status": "open",
+        "status_source": "official",
+        "badge_text": "Offen",
+        "is_live_badge": false,
+        "scoreline": null,
+        "home_score": null,
+        "away_score": null,
+        "last_goal_scorer": "",
+        "pnl": 0.0
+      },
+      {
+        "match": "Czechia vs South Africa",
+        "home": "Czechia",
+        "away": "South Africa",
+        "market": "o/u2.5_over",
+        "entry_odds": 2.05,
+        "current_odds": null,
+        "drift_pct": null,
+        "clv_signal": null,
+        "stake": 20.0,
+        "match_date": "2026-06-18",
+        "placed_date": "2026-06-18",
+        "kickoff": "",
+        "model_edge_pct": null,
+        "group": "open",
+        "status": "open",
+        "status_source": "official",
+        "badge_text": "Offen",
+        "is_live_badge": false,
+        "scoreline": null,
+        "home_score": null,
+        "away_score": null,
+        "last_goal_scorer": "",
+        "pnl": 0.0
+      }
+    ],
     "live": [],
     "settled": [
       {
@@ -9424,17 +9532,17 @@
       }
     ],
     "summary": {
-      "open": 0,
+      "open": 2,
       "live": 0,
       "settled": 31
     }
   },
   "bankroll_state": {
     "start": 100.0,
-    "free": 176.25,
-    "staked": 0,
-    "exposure_pct": 0.0,
-    "max_win": 0,
+    "free": 146.25,
+    "staked": 30.0,
+    "exposure_pct": 30.0,
+    "max_win": 29.0,
     "pnl_closed": 76.25
   },
   "wm_stats": {
@@ -10133,12 +10241,12 @@
   ],
   "system_health": {
     "status": "warn",
-    "last_scan_at": "2026-06-18T12:09:13Z",
-    "open_bets": 0,
+    "last_scan_at": "2026-06-18T15:29:25Z",
+    "open_bets": 2,
     "settlement_due": 0,
     "odds_api": {
-      "requests_used": 1169,
-      "requests_remaining": 18831
+      "requests_used": 1201,
+      "requests_remaining": 18799
     },
     "last_retrain_at": "2026-06-17T16:00:09Z",
     "last_closing_odds_at": "2026-06-17T23:03:52Z",
@@ -10199,8 +10307,8 @@
   },
   "model_status": {
     "active_snapshot": "params_20260618.pkl",
-    "active_snapshot_updated_at": "2026-06-18T11:50:53Z",
-    "active_snapshot_age_hours": 0.3,
+    "active_snapshot_updated_at": "2026-06-18T15:28:48Z",
+    "active_snapshot_age_hours": 0.0,
     "active_snapshot_exists": true,
     "backtest_gate": {
       "passed": true,
@@ -10217,11 +10325,11 @@
     "status": "ok"
   },
   "data_freshness": {
-    "signals_updated_at": "2026-06-18T12:09:13Z",
+    "signals_updated_at": "2026-06-18T15:29:25Z",
     "signals_age_hours": 0.0,
     "signals_stale": false,
-    "odds_cache_updated_at": "2026-06-18T12:00:43Z",
-    "odds_cache_age_hours": 0.1,
+    "odds_cache_updated_at": "2026-06-18T15:29:23Z",
+    "odds_cache_age_hours": 0.0,
     "odds_snapshot_count": 68,
     "next_kickoff": "2026-06-18T16:00:00Z",
     "schedule_count": 48
