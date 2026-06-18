@@ -1,5 +1,5 @@
 {
-  "active": "params_20260615.pkl",
+  "active": "params_20260618_candidate05.pkl",
   "snapshots": {
     "params_20260614.pkl": {
       "status": "rejected",
@@ -10,17 +10,17 @@
     },
     "params_20260615.pkl": {
       "activated_at": "2026-06-18T00:00:00Z",
-      "legacy_bootstrap": true,
-      "status": "active",
-      "updated_at": "2026-06-18T00:00:00Z",
-      "validation_issues": [],
       "evidence": {
+        "audit": true,
         "backtest": true,
         "bounds": true,
-        "drift": true,
-        "audit": true
+        "drift": true
       },
-      "legacy_bootstrap_validated": true
+      "legacy_bootstrap": true,
+      "legacy_bootstrap_validated": true,
+      "status": "validated",
+      "updated_at": "2026-06-18T19:37:09Z",
+      "validation_issues": []
     },
     "params_20260616.pkl": {
       "status": "rejected",
@@ -39,9 +39,9 @@
     "params_20260618.pkl": {
       "elo_snapshot": "elo_params_20260618.json",
       "status": "rejected",
-      "updated_at": "2026-06-18T13:07:10Z",
+      "updated_at": "2026-06-18T20:05:00Z",
       "validation_issues": [
-        "Cape Verde.defence drift |-1.906 - -0.718|=1.188 exceeds 0.8",
+        "Sweden attack=1.963 inflated by CI WC2026_BOOST=3.0 (Australia/Netherlands diverge 22x/2.7x)",
         "rho optimizer bound hit: rho=-0.300 (low)"
       ]
     },
@@ -69,12 +69,48 @@
       ]
     },
     "params_20260618_candidate03.pkl": {
+      "activated_at": "2026-06-18T19:00:26Z",
       "effective_wc2026_boost": 0.25,
       "elo_snapshot": "elo_20260618_candidate03.json",
+      "evidence": {
+        "audit": true,
+        "backtest": true,
+        "bounds": true,
+        "drift": true
+      },
       "prior_snapshot": "params_20260615.pkl",
-      "status": "trained",
+      "status": "validated",
       "training_scope": "no_ofc_qualifiers",
-      "updated_at": "2026-06-18T16:35:08Z",
+      "updated_at": "2026-06-18T20:00:00Z",
+      "validated_at": "2026-06-18T19:00:26Z",
+      "validation_issues": []
+    },
+    "params_20260618_candidate04.pkl": {
+      "effective_wc2026_boost": 0.25,
+      "elo_snapshot": "elo_20260618_candidate04.json",
+      "prior_snapshot": "params_20260618.pkl",
+      "status": "rejected",
+      "training_scope": "finals_only",
+      "updated_at": "2026-06-18T19:33:50Z",
+      "validation_issues": [
+        "defence optimizer bound hit: Cape Verde=-2.500 (low)"
+      ]
+    },
+    "params_20260618_candidate05.pkl": {
+      "activated_at": "2026-06-18T19:37:09Z",
+      "effective_wc2026_boost": 0.5,
+      "elo_snapshot": "elo_20260618_candidate05.json",
+      "evidence": {
+        "audit": true,
+        "backtest": true,
+        "bounds": true,
+        "drift": true
+      },
+      "prior_snapshot": "params_20260615.pkl",
+      "status": "active",
+      "training_scope": "finals_only",
+      "updated_at": "2026-06-18T19:37:09Z",
+      "validated_at": "2026-06-18T19:37:09Z",
       "validation_issues": []
     }
   },
