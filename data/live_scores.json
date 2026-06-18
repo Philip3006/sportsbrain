@@ -46,7 +46,7 @@
   "espn_760434": {
     "home": "Ghana",
     "away": "Panama",
-    "home_score": 0,
+    "home_score": 1,
     "away_score": 0,
     "completed": false,
     "ko_sent": true,
@@ -54,6 +54,6 @@
     "abpfiff_sent": false,
     "scorer_names": [],
     "last_goal_scorer": "",
-    "updated": "2026-06-18T00:43:22.090183+00:00"
+    "updated": "2026-06-18T01:00:19.354356+00:00"
   }
 }
