@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-18T21:21:59Z",
+  "updated": "2026-06-18T21:23:14Z",
   "schedule": [
     {
       "sport": "football",
@@ -10158,12 +10158,12 @@
   ],
   "system_health": {
     "status": "error",
-    "last_scan_at": "2026-06-18T21:21:59Z",
+    "last_scan_at": "2026-06-18T21:23:14Z",
     "open_bets": 0,
     "settlement_due": 0,
     "odds_api": {
-      "requests_used": 1331,
-      "requests_remaining": 18669
+      "requests_used": null,
+      "requests_remaining": null
     },
     "last_retrain_at": "2026-06-18T16:00:05Z",
     "last_closing_odds_at": "2026-06-18T16:00:09Z",
@@ -10224,17 +10224,9 @@
   },
   "model_status": {
     "active_snapshot": "params_20260618_candidate05.pkl",
-    "active_snapshot_updated_at": "2026-06-18T19:35:21Z",
-    "active_snapshot_age_hours": 1.8,
+    "active_snapshot_updated_at": "2026-06-18T21:22:44Z",
+    "active_snapshot_age_hours": 0.0,
     "active_snapshot_exists": true,
-    "active_snapshot_status": "active",
-    "validation_evidence": {
-      "audit": true,
-      "backtest": true,
-      "bounds": true,
-      "drift": true
-    },
-    "validation_complete": true,
     "backtest_gate": {
       "passed": true,
       "holdout": "wc2022",
@@ -10250,11 +10242,11 @@
     "status": "ok"
   },
   "data_freshness": {
-    "signals_updated_at": "2026-06-18T21:21:59Z",
+    "signals_updated_at": "2026-06-18T21:23:14Z",
     "signals_age_hours": 0.0,
     "signals_stale": false,
-    "odds_cache_updated_at": "2026-06-18T20:45:39Z",
-    "odds_cache_age_hours": 0.6,
+    "odds_cache_updated_at": "",
+    "odds_cache_age_hours": null,
     "odds_snapshot_count": 68,
     "next_kickoff": "2026-06-18T22:00:00Z",
     "schedule_count": 47
