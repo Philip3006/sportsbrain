@@ -41,7 +41,7 @@ jobs:
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add data/live_scores.json || true
+          git add data/live_scores.json docs/data/live_scores.json || true
           if ! git diff --staged --quiet; then
             git commit -m "auto: live scores $(date -u '+%Y-%m-%d %H:%M UTC')"
             for i in 1 2 3 4 5; do

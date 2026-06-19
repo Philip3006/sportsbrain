@@ -1,0 +1,77 @@
+{
+  "73a4fcd14cc9766b9b9bfd50b8ca153a": {
+    "home": "France",
+    "away": "Senegal",
+    "home_score": 0,
+    "away_score": 0,
+    "completed": false,
+    "ht_sent": false,
+    "updated": "2026-06-16T19:33:19.317447+00:00"
+  },
+  "espn_760433": {
+    "home": "Argentina",
+    "away": "Algeria",
+    "home_score": 3,
+    "away_score": 0,
+    "completed": false,
+    "ht_sent": true,
+    "updated": "2026-06-17T02:46:25.876374+00:00"
+  },
+  "espn_760435": {
+    "home": "Portugal",
+    "away": "DR Congo",
+    "home_score": 1,
+    "away_score": 1,
+    "completed": true,
+    "ko_sent": false,
+    "ht_sent": true,
+    "abpfiff_sent": true,
+    "scorer_names": [],
+    "last_goal_scorer": "",
+    "updated": "2026-06-17T19:28:55.918252+00:00"
+  },
+  "espn_760437": {
+    "home": "England",
+    "away": "Croatia",
+    "home_score": 4,
+    "away_score": 2,
+    "completed": true,
+    "ko_sent": true,
+    "ht_sent": true,
+    "abpfiff_sent": true,
+    "scorer_names": [],
+    "last_goal_scorer": "",
+    "updated": "2026-06-17T22:19:02.168054+00:00"
+  },
+  "espn_760434": {
+    "home": "Ghana",
+    "away": "Panama",
+    "home_score": 1,
+    "away_score": 0,
+    "completed": false,
+    "ko_sent": true,
+    "ht_sent": true,
+    "abpfiff_sent": false,
+    "scorer_names": [],
+    "last_goal_scorer": "",
+    "updated": "2026-06-18T01:00:19.354356+00:00"
+  },
+  "usa_vs_australia_wm2026": {
+    "home": "United States",
+    "away": "Australia",
+    "home_score": 1,
+    "away_score": 0,
+    "completed": false,
+    "ht_sent": false,
+    "updated": "2026-06-19T19:28:38.146557+00:00"
+  },
+  "espn_760442": {
+    "home": "United States",
+    "away": "Australia",
+    "home_score": 2,
+    "away_score": 0,
+    "completed": false,
+    "ht_sent": true,
+    "updated": "2026-06-19T20:06:15.677388+00:00"
+  }
+}

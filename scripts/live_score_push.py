@@ -53,7 +53,12 @@ def _load_cache() -> dict:
 
 def _save_cache(cache: dict) -> None:
     CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    CACHE_PATH.write_text(json.dumps(cache, indent=2, ensure_ascii=False))
+    payload = json.dumps(cache, indent=2, ensure_ascii=False)
+    CACHE_PATH.write_text(payload)
+    # Mirror to docs/ so GitHub Pages serves it for the Live tab in the dashboard
+    docs_path = ROOT / "docs" / "data" / "live_scores.json"
+    docs_path.parent.mkdir(parents=True, exist_ok=True)
+    docs_path.write_text(payload)
 
 
 def main() -> int:
