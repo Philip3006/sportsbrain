@@ -63,10 +63,11 @@ health_finish() {
     if echo "$tail_text" | grep -q -i "USED STALE CACHE"; then
       detected_fallback="stale_cache"
       status="degraded"
-    elif echo "$tail_text" | grep -q -i "ESPN-Fallback aktiv"; then
+    elif echo "$tail_text" | grep -q -i "ESPN-Fallback"; then
+      # Matches "schalte auf ESPN-Fallback" and "ESPN-Fallback aktiv".
       detected_fallback="espn"
       status="degraded"
-    elif echo "$tail_text" | grep -q -i "WebSearch-Fallback"; then
+    elif echo "$tail_text" | grep -q -i "WebSearch-Fallback\|via WebSearch"; then
       detected_fallback="websearch"
       status="degraded"
     fi
