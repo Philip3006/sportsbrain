@@ -46,9 +46,23 @@ git_safe_push() {
   fi
 
   if git push origin main >> "$LOG" 2>&1; then
+    echo "[$TS] git_safe_push: push ok (attempt 2) — $(git log origin/main -1 --oneline 2>/dev/null)" >> "$LOG"
     return 0
   fi
 
-  echo "[$TS] git_safe_push: push failed after retry" >> "$LOG"
+  # 5. Final attempt — third concurrent job may have pushed in between
+  echo "[$TS] git_safe_push: second push rejected, final attempt" >> "$LOG"
+  git fetch origin main >> "$LOG" 2>&1
+  if ! git pull --rebase --autostash --strategy-option=theirs origin main >> "$LOG" 2>&1; then
+    echo "[$TS] git_safe_push: final rebase conflict" >> "$LOG"
+    git rebase --abort >> "$LOG" 2>&1 || true
+    return 1
+  fi
+  if git push origin main >> "$LOG" 2>&1; then
+    echo "[$TS] git_safe_push: push ok (attempt 3) — $(git log origin/main -1 --oneline 2>/dev/null)" >> "$LOG"
+    return 0
+  fi
+
+  echo "[$TS] git_safe_push: push FAILED after 3 attempts — $(git log origin/main -1 --oneline 2>/dev/null)" >> "$LOG"
   return 1
 }
