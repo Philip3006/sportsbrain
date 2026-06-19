@@ -42,7 +42,7 @@ class TestBoundsValues:
         assert _FIT_BOUNDS_HOME_ADV == (0.0, 0.6)
 
     def test_rho_bounds(self):
-        assert _FIT_BOUNDS_RHO == (-0.40, 0.10)
+        assert _FIT_BOUNDS_RHO == (-0.50, 0.10)
 
 
 class TestCheckBoundsHit:
@@ -61,7 +61,7 @@ class TestCheckBoundsHit:
 
     def test_rho_low_bound_detected(self):
         p = self._clean()
-        p.rho = -0.40
+        p.rho = -0.50
         hits = _check_bounds_hit(p)
         assert len(hits["rho"]) == 1
         assert hits["rho"][0][2] == "low"
@@ -134,4 +134,4 @@ class TestBoostOverride:
         for v in p.defence.values():
             assert -3.5 <= v <= 2.0
         assert 0.0 <= p.home_adv <= 0.6
-        assert -0.40 <= p.rho <= 0.10
+        assert -0.50 <= p.rho <= 0.10

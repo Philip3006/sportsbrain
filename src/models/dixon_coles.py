@@ -269,7 +269,7 @@ def negative_log_likelihood(
 _FIT_BOUNDS_ATTACK = (-3.0, 2.5)
 _FIT_BOUNDS_DEFENCE = (-3.5, 2.0)
 _FIT_BOUNDS_HOME_ADV = (0.0, 0.6)
-_FIT_BOUNDS_RHO = (-0.40, 0.10)
+_FIT_BOUNDS_RHO = (-0.50, 0.10)
 _BOUND_TOLERANCE = 1e-3  # within this distance of a bound counts as "hit"
 
 
