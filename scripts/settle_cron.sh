@@ -28,4 +28,9 @@ EXIT_CODE=$?
 echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] settle finished (exit $EXIT_CODE) ---" >> "$LOG"
 
 health_finish "settle" "$EXIT_CODE" "" "$LOG"
+
+# Refresh the Claude session report — runs hourly via this plist, so the
+# report is always ≤1h old when a new Claude-Code session starts.
+python3 scripts/generate_session_report.py >> "$LOG" 2>&1 || true
+
 exit "$EXIT_CODE"

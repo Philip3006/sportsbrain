@@ -6,6 +6,7 @@ results/scans/
 results/backtests/
 results/closing_odds.log
 results/health/
+results/session_report.md
 results/*_cron.log
 results/launchd_*.log
 results/settle.log

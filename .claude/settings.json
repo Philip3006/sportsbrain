@@ -7,5 +7,18 @@
       "WebSearch",
       "WebFetch"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "test -f /Users/philiprassillier/sportsbrain/results/session_report.md && find /Users/philiprassillier/sportsbrain/results/session_report.md -mmin -1440 -exec cat {} \\;"
+          }
+        ]
+      }
+    ]
   }
 }
