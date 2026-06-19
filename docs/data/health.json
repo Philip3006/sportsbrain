@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-06-19T14:31:31Z",
-  "overall": "down",
+  "generated_at": "2026-06-19T14:39:22Z",
+  "overall": "degraded",
   "jobs": [
     {
       "job": "daily_scan",
-      "status": "error",
-      "last_run_at": "2026-06-19T14:31:31Z",
-      "duration_s": 1.0,
-      "exit_code": 1,
-      "error": "[fake] Traceback (most recent call last): TimeoutError ",
+      "status": "ok",
+      "last_run_at": "2026-06-19T14:31:32Z",
+      "duration_s": 0.0,
+      "exit_code": 0,
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 86400,
       "cadence": "1×/Tag 07:00"
@@ -38,7 +38,7 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-06-19T14:30:32Z",
+      "last_run_at": "2026-06-19T14:38:43Z",
       "duration_s": 1.0,
       "exit_code": 0,
       "error": null,
@@ -49,8 +49,8 @@
     {
       "job": "live_score_push",
       "status": "ok",
-      "last_run_at": "2026-06-19T14:30:03Z",
-      "duration_s": 3.0,
+      "last_run_at": "2026-06-19T14:38:21Z",
+      "duration_s": 8.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -59,11 +59,11 @@
     },
     {
       "job": "prematch_scan",
-      "status": "stale",
-      "last_run_at": null,
-      "duration_s": null,
-      "exit_code": null,
-      "error": "no health snapshot yet — job has never reported",
+      "status": "ok",
+      "last_run_at": "2026-06-19T14:32:07Z",
+      "duration_s": 0.0,
+      "exit_code": 0,
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 1200,
       "cadence": "alle 20 Min (im Fenster)"
@@ -71,7 +71,7 @@
     {
       "job": "settle",
       "status": "ok",
-      "last_run_at": "2026-06-19T14:30:06Z",
+      "last_run_at": "2026-06-19T14:34:19Z",
       "duration_s": 1.0,
       "exit_code": 0,
       "error": null,
@@ -82,7 +82,7 @@
     {
       "job": "aggregate_health",
       "status": "ok",
-      "last_run_at": "2026-06-19T14:30:33Z",
+      "last_run_at": "2026-06-19T14:38:45Z",
       "duration_s": 1.0,
       "exit_code": 0,
       "error": null,

@@ -255,6 +255,18 @@
     .settings-row-text { flex: 1; min-width: 0; }
     .settings-row-title { font-size: 13px; font-weight: 800; color: var(--text); margin-bottom: 2px; }
     .settings-row-sub { font-size: 11px; color: var(--muted); line-height: 1.4; }
+    /* Health-Status pills + job list */
+    .health-pill { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: .3px; text-transform: uppercase; }
+    .health-pill.ok       { background: rgba(0,200,83,.18);  color: var(--green);  border: 1px solid rgba(0,200,83,.45); }
+    .health-pill.degraded { background: rgba(210,153,34,.14); color: var(--yellow); border: 1px solid rgba(210,153,34,.45); }
+    .health-pill.error    { background: rgba(248,81,73,.14);  color: var(--red);    border: 1px solid rgba(248,81,73,.45); }
+    .health-pill.stale    { background: rgba(255,255,255,.06); color: var(--muted);  border: 1px solid var(--border); }
+    .health-job { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .health-job:last-child { border-bottom: none; }
+    .health-job-name { flex: 1; min-width: 0; }
+    .health-job-title { font-size: 13px; font-weight: 700; color: var(--text); }
+    .health-job-sub   { font-size: 10px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+    .health-job-err   { font-size: 10px; color: var(--red); margin-top: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-word; }
     .settings-toggle { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; -webkit-appearance: none; appearance: none; font-family: inherit; flex-shrink: 0; min-width: 70px; }
     .settings-toggle.on { background: rgba(0,200,83,.18); color: var(--green); border-color: rgba(0,200,83,.45); }
     .settings-toggle.off { background: rgba(248,81,73,.10); color: var(--red); border-color: rgba(248,81,73,.35); }
@@ -663,12 +675,32 @@
       <button class="settings-toggle" type="button" onclick="_closeSettings();_openTokenModal()">Ändern</button>
     </div>
 
+    <div class="settings-row">
+      <div class="settings-row-text">
+        <div class="settings-row-title">🛡️ System-Status</div>
+        <div class="settings-row-sub" id="settings-health-summary">Status wird geprüft …</div>
+      </div>
+      <button class="settings-toggle" type="button" onclick="_openHealthDetail()">Details</button>
+    </div>
+
     <div class="settings-info" id="settings-ios-hint" style="display:none">
       ℹ️ <b>iOS-Hinweis:</b> Push-Benachrichtigungen funktionieren auf iPhone nur, wenn diese PWA über den Safari-Share-Button → "Zum Home-Bildschirm" hinzugefügt und dann als App gestartet wird.
     </div>
 
     <div class="modal-buttons">
       <button class="modal-btn confirm" type="button" onclick="_closeSettings()">Fertig</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🛡️ System-Health Detail-Modal -->
+<div class="modal-backdrop" id="health-detail-modal-bd" role="dialog" aria-modal="true" aria-labelledby="health-detail-modal-title">
+  <div class="modal">
+    <h3 id="health-detail-modal-title">🛡️ System-Status</h3>
+    <div class="settings-row-sub" id="health-overall-line" style="margin-bottom: 12px;">—</div>
+    <div id="health-jobs-list"></div>
+    <div class="modal-buttons">
+      <button class="modal-btn confirm" type="button" onclick="_closeHealthDetail()">Fertig</button>
     </div>
   </div>
 </div>
@@ -991,6 +1023,117 @@ function showToast(msg, kind) {
   el.classList.add('show');
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+// ── 🛡️ System-Health (Phase E) ───────────────────────────────
+// Health-data comes inline in signals.json under key "health" — written by
+// src/monitoring/aggregate_health.py every 2 minutes.
+let _health = null;
+
+function _healthLabel(s) {
+  return s === 'ok' ? 'OK' :
+         s === 'degraded' ? 'DEGRADED' :
+         s === 'error' ? 'ERROR' :
+         s === 'stale' ? 'STALE' : (s||'?').toUpperCase();
+}
+
+function _healthRelTime(iso) {
+  if (!iso) return 'noch nie gelaufen';
+  const dt = new Date(iso);
+  const diffM = Math.round((Date.now() - dt.getTime()) / 60000);
+  if (!isFinite(diffM)) return iso;
+  if (diffM < 1) return 'gerade eben';
+  if (diffM < 60) return `vor ${diffM} Min`;
+  const h = Math.round(diffM / 60);
+  if (h < 24) return `vor ${h} h`;
+  const d = Math.round(h / 24);
+  return `vor ${d} Tag(en)`;
+}
+
+function renderHealthSummary(h) {
+  _health = h;
+  const sumEl = document.getElementById('settings-health-summary');
+  if (!sumEl) return;
+  if (!h) { sumEl.textContent = 'Status: keine Daten'; return; }
+  const total = (h.jobs||[]).length;
+  const ok    = (h.jobs||[]).filter(j => j.status === 'ok').length;
+  const bad   = (h.jobs||[]).filter(j => j.status === 'error').length;
+  const deg   = (h.jobs||[]).filter(j => j.status === 'degraded' || j.status === 'stale').length;
+
+  let label;
+  if (h.overall === 'ok')       label = `✅ Alle ${total} Jobs ok`;
+  else if (h.overall === 'down') label = `🔴 ${bad} Job(s) fehlgeschlagen · ${ok}/${total} ok`;
+  else                            label = `⚠️ ${deg} Job(s) degraded · ${ok}/${total} ok`;
+  sumEl.textContent = label;
+}
+
+function renderHealthDetail(h) {
+  if (!h) h = _health;
+  const list = document.getElementById('health-jobs-list');
+  const top  = document.getElementById('health-overall-line');
+  if (!list || !top || !h) return;
+  const overallLabel = h.overall === 'ok' ? '✅ Alles läuft' :
+                       h.overall === 'down' ? '🔴 System gestört' :
+                       '⚠️ Eingeschränkter Betrieb';
+  top.innerHTML = `${overallLabel} · zuletzt aktualisiert: ${_healthRelTime(h.generated_at)}`;
+  list.innerHTML = (h.jobs||[]).map(j => {
+    const pillCls = j.status === 'ok' ? 'ok' :
+                    j.status === 'error' ? 'error' :
+                    j.status === 'degraded' ? 'degraded' : 'stale';
+    const subLines = [];
+    subLines.push(`<div class="health-job-sub">${esc(j.cadence||'')} · ${_healthRelTime(j.last_run_at)}</div>`);
+    if (j.fallback_used) {
+      subLines.push(`<div class="health-job-sub">Fallback aktiv: <b>${esc(j.fallback_used)}</b></div>`);
+    }
+    if (j.error) {
+      subLines.push(`<div class="health-job-err">${esc(String(j.error).slice(0, 240))}</div>`);
+    }
+    return `
+      <div class="health-job">
+        <div class="health-job-name">
+          <div class="health-job-title">${esc(j.job)}</div>
+          ${subLines.join('')}
+        </div>
+        <span class="health-pill ${pillCls}">${_healthLabel(j.status)}</span>
+      </div>`;
+  }).join('') || '<div class="settings-row-sub">Keine Job-Daten</div>';
+}
+
+function _openHealthDetail() {
+  // Close settings first if open, then open the sub-modal.
+  _closeSettings();
+  renderHealthDetail(_health);
+  const bd = document.getElementById('health-detail-modal-bd');
+  if (bd) bd.classList.add('show');
+}
+function _closeHealthDetail() {
+  const bd = document.getElementById('health-detail-modal-bd');
+  if (bd) bd.classList.remove('show');
+}
+
+// Toast on first transition to degraded/down — throttled via localStorage so
+// the user doesn't see the same warning every 60s. When the system recovers,
+// reset state so a future regression triggers a fresh toast.
+function _maybeShowHealthToast(h) {
+  if (!h) return;
+  let last;
+  try { last = localStorage.getItem('health.lastSeenOverall'); } catch (_) {}
+
+  if (h.overall === 'ok') {
+    if (last && last !== 'ok') {
+      try { localStorage.setItem('health.lastSeenOverall', 'ok'); } catch (_) {}
+      showToast('✅ System wieder ok', 'success');
+    }
+    return;
+  }
+
+  if (last === h.overall) return;  // same warn state already announced
+  try { localStorage.setItem('health.lastSeenOverall', h.overall); } catch (_) {}
+
+  const msg = h.overall === 'down'
+    ? '🔴 System-Job fehlgeschlagen — Settings → System-Status'
+    : '⚠️ System läuft mit Einschränkungen — Details in Settings';
+  showToast(msg, 'error');
 }
 
 // ── Tooltip: tap-toggle. esc() den body, weil er als innerHTML reingeht ──
@@ -3429,6 +3572,21 @@ async function _load() {
   setB('badge-tennis',   _signals.filter(s=>s.sport==='tennis').length);
   const setBBets = document.getElementById('badge-bets');
   if (setBBets) { setBBets.textContent = _openBets.length; setBBets.classList.toggle('show', _openBets.length > 0); }
+
+  // 🛡️ System-Health (Phase E) — health is injected into signals.json by
+  // src/monitoring/aggregate_health.py. Render the settings summary and
+  // pop a toast on state transitions.
+  if (d.health) {
+    renderHealthSummary(d.health);
+    _maybeShowHealthToast(d.health);
+  } else {
+    // Reset memory if no health data is present so a later transition still pops a toast.
+    try { localStorage.removeItem('health.lastSeenOverall'); } catch (_) {}
+  }
+  // If the user has the detail modal open, refresh it live too.
+  if (document.getElementById('health-detail-modal-bd')?.classList.contains('show')) {
+    renderHealthDetail(d.health);
+  }
 
   _wmStats = d.wm_stats || {};
   renderHome();
