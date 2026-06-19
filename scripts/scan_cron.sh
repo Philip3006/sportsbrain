@@ -7,6 +7,10 @@ LOG="$SPORTSBRAIN_DIR/results/scan_cron.log"
 
 cd "$SPORTSBRAIN_DIR" || { echo "ERROR: could not cd to $SPORTSBRAIN_DIR"; exit 1; }
 
+# shellcheck source=./_health.sh
+source "$SPORTSBRAIN_DIR/scripts/_health.sh"
+health_start "daily_scan"
+
 echo "" >> "$LOG"
 echo "========================================" >> "$LOG"
 echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] scan_cron started ---" >> "$LOG"
@@ -42,3 +46,6 @@ PUSH_EXIT=$?
 echo "--- Git push done (exit $PUSH_EXIT) ---" >> "$LOG"
 
 echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] scan_cron finished (exit $EXIT_CODE) ---" >> "$LOG"
+
+# Health-status: track exit + auto-detect fallback markers in the log tail.
+health_finish "daily_scan" "$EXIT_CODE" "" "$LOG"

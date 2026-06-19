@@ -9,6 +9,10 @@ LOCKFILE="$SPORTSBRAIN_DIR/results/prematch_scan.lock"
 
 cd "$SPORTSBRAIN_DIR" || exit 1
 
+# shellcheck source=./_health.sh
+source "$SPORTSBRAIN_DIR/scripts/_health.sh"
+health_start "prematch_scan"
+
 # Check if a game is starting in 45–90 minutes (pre-match window)
 # OR it is 21:30–22:15 UTC and there are night games after 22:00 UTC (midnight Berlin = 22:00 UTC)
 WINDOW_RESULT=$(python3 - <<'PYEOF'
@@ -65,7 +69,9 @@ PYEOF
 )
 
 if [ $? -ne 0 ]; then
-    exit 0  # No game in window — silent exit
+    # No game in window — silent noop, but report alive for health-tracking.
+    health_finish "prematch_scan" 0 "" ""
+    exit 0
 fi
 
 # Rate-limit: skip if we scanned in the last 25 minutes
@@ -74,6 +80,7 @@ if [ -f "$LOCKFILE" ]; then
     NOW=$(date +%s)
     DIFF=$(( NOW - LAST ))
     if [ "$DIFF" -lt 1500 ]; then
+        health_finish "prematch_scan" 0 "" ""
         exit 0
     fi
 fi
@@ -105,3 +112,5 @@ python3 scripts/daily_scan.py --bankroll "$BANKROLL" --force >> "$LOG" 2>&1
 
 EXIT_CODE=$?
 echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] prematch_scan fertig (exit $EXIT_CODE) ---" >> "$LOG"
+
+health_finish "prematch_scan" "$EXIT_CODE" "" "$LOG"
