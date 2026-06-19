@@ -45,7 +45,7 @@ jobs:
           if ! git diff --staged --quiet; then
             git commit -m "auto: live scores $(date -u '+%Y-%m-%d %H:%M UTC')"
             for i in 1 2 3 4 5; do
-              git pull --rebase origin main || true
+              git pull --rebase --strategy-option=theirs origin main || true
               git push && break
               echo "[push] attempt $i failed, retry after backoff…"
               sleep $((RANDOM % 6 + 2))
