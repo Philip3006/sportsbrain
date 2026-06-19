@@ -1172,7 +1172,7 @@ def _format_report(
             agree_str = _agree_stars(s.n_models_agree) if s.n_models_agree > 0 else ""
             _stake_eur = s.stake_eur if s.stake_eur > 0 else s.stake_pct * bankroll
             _profit = _stake_eur * (s.decimal_odds - 1)
-            # Kickoff time from match context (CET)
+            # Kickoff time from match context (CET) — append (KO) for knockout rounds
             kickoff_str = "—"
             ctx = match_contexts.get(s.match_id, {})
             commence = ctx.get("commence_time", "")
@@ -1184,6 +1184,8 @@ def _format_report(
                     kickoff_str = ko.tz_convert("Europe/Berlin").strftime("%d.%m %H:%M")
                 except Exception:
                     pass
+            if ctx.get("stage", {}).get("is_knockout"):
+                kickoff_str += "(KO)"
             lines.append(
                 f"| {kickoff_str} "
                 f"| {match_label} | {s.market.upper()} "
