@@ -35,6 +35,14 @@ def _tau(x: int, y: int, lh: float, la: float, rho: float) -> float:
     return 1.0
 
 
+# Inference-time cap on Poisson means to prevent unrealistic xG outputs
+# (e.g. France=6.16 vs minnow seen 2026-06-18 after Codex-revert). The cap
+# is intentionally generous — historical WC matches almost never see xG
+# above this for either side, so a value above signals model drift, not
+# genuine attacking superiority.
+_MAX_LAMBDA = 4.5
+
+
 def _lambdas(
     home: str,
     away: str,
@@ -57,6 +65,10 @@ def _lambdas(
         elo_adj = np.exp((elo_home - elo_away) / elo_scale)
         lh *= elo_adj
         la /= elo_adj
+    # Hard cap at inference: protects downstream consumers (totals/AH/audit)
+    # from runaway poisson tails on edge teams without re-fitting the model.
+    lh = min(lh, _MAX_LAMBDA)
+    la = min(la, _MAX_LAMBDA)
     return lh, la
 
 
