@@ -1,0 +1,13 @@
+{
+  "holdout": "wc2022",
+  "n_matches": 64,
+  "dc_only_brier": 0.6475281711751897,
+  "lgbm_only_brier": 0.6057770030197458,
+  "blend_brier": 0.5963476609416523,
+  "improvement_vs_dc": 0.051180510233537424,
+  "dc_weight": 0.4,
+  "min_improvement_required": 0.01,
+  "passed": true,
+  "reason": "blend improves DC-only by 0.0512 (\u2265 0.01)",
+  "dc_snapshot": "params_20260618_candidate03.pkl"
+}
