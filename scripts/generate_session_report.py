@@ -55,22 +55,33 @@ def _parse_iso(s: str | None) -> datetime | None:
 
 def collect_health() -> tuple[list[dict], list[dict], list[dict]]:
     """Returns (failures, degraded, ok) job dicts."""
-    if not HEALTH_DIR.exists():
-        return [], [], []
     failures, degraded, ok = [], [], []
-    for p in sorted(HEALTH_DIR.glob("*.json")):
-        if p.name == "push_state.json":
-            continue
-        data = _read_json(p)
-        if not isinstance(data, dict):
-            continue
-        st = data.get("status")
-        if st == "error":
-            failures.append(data)
-        elif st in ("degraded", "stale"):
-            degraded.append(data)
-        else:
-            ok.append(data)
+
+    def _classify(entries: list[dict]) -> None:
+        for data in entries:
+            if not isinstance(data, dict):
+                continue
+            st = data.get("status")
+            if st == "error":
+                failures.append(data)
+            elif st in ("degraded", "stale"):
+                degraded.append(data)
+            else:
+                ok.append(data)
+
+    per_job_files = sorted(HEALTH_DIR.glob("*.json")) if HEALTH_DIR.exists() else []
+    per_job_files = [p for p in per_job_files if p.name != "push_state.json"]
+
+    if per_job_files:
+        _classify([_read_json(p) for p in per_job_files])
+    else:
+        # Fallback: read docs/data/health.json committed by GH Actions
+        cloud = ROOT / "docs" / "data" / "health.json"
+        if cloud.exists():
+            data = _read_json(cloud)
+            if isinstance(data, dict):
+                _classify(data.get("jobs", []))
+
     return failures, degraded, ok
 
 
