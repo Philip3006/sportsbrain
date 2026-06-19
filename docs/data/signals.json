@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-19T20:26:58Z",
+  "updated": "2026-06-19T22:05:12Z",
   "meta": {
     "stale_odds": false
   },
@@ -8557,7 +8557,7 @@
       "stake": 10.0,
       "match_date": "2026-06-19",
       "model_edge_pct": null,
-      "is_live": true
+      "is_live": false
     },
     {
       "match": "USA vs Australia",
@@ -8571,7 +8571,7 @@
       "stake": 10.0,
       "match_date": "2026-06-19",
       "model_edge_pct": null,
-      "is_live": true
+      "is_live": false
     }
   ],
   "settled_bets": [
