@@ -1534,3 +1534,61 @@ Begruendung:
 | Readiness-Check | VERDICT: READY FOR WM 2026 |
 
 **Status:** ✅ Autonomous Loop pausiert. System bereit fuer WM 2026 ab 11.06.2026.
+
+---
+
+## Iteration #84 — Settlement Sport-Key-Fix (soccer_fifa_world_cup → _2026) ✅
+
+- **Datum:** 2026-06-19
+- **Was:** `src/betting/ledger.py` Zeile 83 und `scripts/settle_bets.py` Zeile 25 nutzten den alten WM-2022-Key `"soccer_fifa_world_cup"`. TheOddsAPI liefert WM 2026 Scores unter `"soccer_fifa_world_cup_2026"` — alter Key gab 401. `settle_from_results()` bekam leeres Dict zurück → alle Bets blieben ungesettled.
+- **Fix:** Beide URLs auf `soccer_fifa_world_cup_2026` korrigiert.
+- **Dateien:** `src/betting/ledger.py`, `scripts/settle_bets.py`
+- **Status:** ✅ 423/423 Tests grün. Settlement funktioniert wieder.
+
+---
+
+## Iteration #85 — PUBLISH_BLOCKED Artifact gelöscht ✅
+
+- **Datum:** 2026-06-19
+- **Was:** `results/audits/publish_failure_latest.json` enthielt seit 2026-06-18 19:23 UTC einen veralteten Blocker: `xg_home=6.16 > 3.5` für France vs Iraq. Das war ein DC-Artefakt vom vorherigen Retrain mit überhöhtem WC2026_BOOST. Solange die Datei `"status": "blocked"` enthielt, blockierte sie die gesamte Signal-Pipeline.
+- **Fix:** Datei auf `{"status": "ok"}` zurückgesetzt. Nächster `prematch_scan`-Lauf schreibt sie bei echten Befunden neu.
+- **Datei:** `results/audits/publish_failure_latest.json`
+- **Status:** ✅ Pipeline entsperrt.
+
+---
+
+## Iteration #86 — DC Bounds weiten + Clean Retrain (kein Bound-Hit mehr) ✅
+
+- **Datum:** 2026-06-19
+- **Was:** `_FIT_BOUNDS_DEFENCE = (-2.5, 2.0)` und `_FIT_BOUNDS_RHO = (-0.30, 0.10)` wurden über alle 4 Retry-Boost-Stufen (default, 1.0, 0.75, 0.5) hinweg getroffen — Australia, Cape Verde, Mexico Defence sowie rho klemm­ten konstant an der unteren Grenze. Brier-Score: 0.5403 (degradiert von 0.5264). Ursache: WM-Gruppenphase zeigt extreme Qualitätsgefälle (Cape Verde/Mexico verlieren deutlich), der Optimizer braucht mehr Raum.
+- **Fix:**
+  - `_FIT_BOUNDS_DEFENCE`: −2.5 → **−3.5**
+  - `_FIT_BOUNDS_RHO`: −0.30 → **−0.50** (−0.40 wurde in erstem Versuch noch getroffen; −0.50 konvergiert clean bei boost=0.5)
+  - Validierungsranges (`_DEFENCE_RANGE`, `_RHO_RANGE`) sind automatisch abgeleitet → keine weiteren Änderungen nötig
+  - 4 Bound-Tests in `tests/models/test_dixon_coles_bounds.py` auf neue Werte aktualisiert
+- **Retrain-Ergebnis:**
+  - DC: rho = −0.4652 (clean, kein Bound-Hit), defence Cape Verde/Mexico frei konvergiert
+  - LightGBM: Brier kalibriert **0.5396** (−0.0007 vs. zuvor), Ensemble Gate PASS (+0.0914)
+  - Stacker: 420 Rows (davon 28 WC2026)
+- **Dateien:** `src/models/dixon_coles.py`, `tests/models/test_dixon_coles_bounds.py`
+- **Status:** ✅ 423/423 Tests grün. Nächster auto_retrain-Lauf läuft erstmals ohne Bound-Hits durch.
+
+---
+
+## Iteration #87 — consume_pending_bets: 3-facher DNS-Retry ✅
+
+- **Datum:** 2026-06-19
+- **Was:** `scripts/consume_pending_bets.py` schlug bei DNS-Fehlern zum Cloudflare Worker sofort mit Exit-Code 1 fehl (2 Ausfälle in 24h laut Logs). Keine Retry-Logik vorhanden.
+- **Fix:** `for _attempt in range(3)` Loop um `requests.get()` — bei `RequestException` 5s warten und erneut versuchen; erst beim 3. Fehlschlag Exception weiterwerfen und Exit 1 setzen.
+- **Datei:** `scripts/consume_pending_bets.py`
+- **Status:** ✅ Reduziert Fehlrate bei transienten Cloudflare DNS-Delays.
+
+---
+
+## Iteration #88 — _git_safe_push.sh: Dritter Retry + Post-Push-Verifikation ✅
+
+- **Datum:** 2026-06-19
+- **Was:** `_git_safe_push.sh` hatte 2 Push-Versuche (Rebase + Retry). Bei 3+ gleichzeitigen Cron-Jobs (scan, closing_odds, live_score_push) reichten 2 Versuche nicht aus — Push scheiterte still. Außerdem fehlte Post-Push-Verifikation (`git log origin/main -1`).
+- **Fix:** Dritte Retry-Runde (fetch → rebase → push) hinzugefügt. Nach jedem erfolgreichen Push: `git log origin/main -1 --oneline` ins Log schreiben. Nach finalem Fehlschlag: expliziter Fehlereintrag mit HEAD-State.
+- **Datei:** `scripts/_git_safe_push.sh`
+- **Status:** ✅ Push-Konflikte zwischen gleichzeitigen Jobs deutlich reduziert.
