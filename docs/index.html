@@ -417,6 +417,21 @@
     .clv-bad { background: rgba(248,81,73,.12); color: var(--red); border: 1px solid rgba(248,81,73,.3); }
     .clv-neutral { background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid var(--border); }
 
+    /* ── Bet Filter Tabs ── */
+    .bet-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--card); }
+    .bet-tab { flex: 1; padding: 10px 4px; font-size: 12px; font-weight: 800; text-align: center; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; letter-spacing: .2px; }
+    .bet-tab.active { color: var(--text); border-bottom-color: var(--green); }
+    .bet-tab .tab-count { display: inline-block; background: rgba(255,255,255,.08); border-radius: 8px; font-size: 10px; padding: 1px 5px; margin-left: 4px; }
+    .bet-tab.active .tab-count { background: rgba(0,200,83,.15); color: var(--green); }
+    /* ── Settled card ── */
+    .bet-result-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; }
+    .bet-result-badge { font-size: 13px; font-weight: 900; padding: 4px 12px; border-radius: 6px; }
+    .result-won  { background: rgba(0,200,83,.15); color: var(--green); border: 1px solid rgba(0,200,83,.3); }
+    .result-lost { background: rgba(248,81,73,.12); color: var(--red); border: 1px solid rgba(248,81,73,.3); }
+    .result-void { background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid var(--border); }
+    .bet-pnl { font-size: 22px; font-weight: 900; }
+    .bet-date-group { padding: 6px 14px 2px; font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+
     /* ── Heute-Sektion ── */
     .today-header { background: rgba(0,200,83,.06); border-top: 1px solid rgba(0,200,83,.2); border-bottom: 1px solid rgba(0,200,83,.15); padding: 8px 16px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; color: var(--green); letter-spacing: .3px; }
     .today-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; flex-shrink: 0; }
@@ -778,6 +793,11 @@
   </section>
 
   <section id="view-bets" class="view">
+    <div class="bet-tabs" id="bet-tabs">
+      <button class="bet-tab active" onclick="_setBetTab('open')">Offen<span class="tab-count" id="tc-open">0</span></button>
+      <button class="bet-tab" onclick="_setBetTab('live')">🔴 Live<span class="tab-count" id="tc-live">0</span></button>
+      <button class="bet-tab" onclick="_setBetTab('settled')">Abgerechnet<span class="tab-count" id="tc-settled">0</span></button>
+    </div>
     <div id="bets-container">
       <div class="skel"></div><div class="skel"></div>
     </div>
@@ -832,6 +852,8 @@ let _schedule = [];
 let _allOdds = {};
 let _modelTips = {};
 let _openBets = [];
+let _settledBets = [];
+let _activeBetTab = 'open';
 let _bankrollState = {};
 let _squads = {};
 let _oddsHistory = {};
@@ -1757,27 +1779,36 @@ function _pwaPendingHtml() {
   }).join('');
 }
 
-function renderBets() {
-  const c = document.getElementById('bets-container');
-  if (!c) return;
-  const pendingHtml = _pwaPendingHtml();
-  if (!_openBets.length && !pendingHtml) {
-    c.innerHTML = `<div class="empty"><div class="icon">📭</div><div>Keine offenen Wetten.<br><small>Signals werden täglich 08:00 UTC aktualisiert.</small></div></div>`;
-    return;
-  }
-  let h = pendingHtml;
-  for (const b of _openBets) {
+function _setBetTab(tab) {
+  _activeBetTab = tab;
+  document.querySelectorAll('.bet-tab').forEach(el => {
+    el.classList.toggle('active', el.getAttribute('onclick').includes(`'${tab}'`));
+  });
+  renderBets();
+}
+
+function _betDateLabel(matchDate, forSettled) {
+  if (!matchDate) return '—';
+  const [y,mo,d] = matchDate.slice(0,10).split('-');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const mDate = new Date(+y, +mo-1, +d);
+  const diff = Math.round((mDate - today) / 86400000);
+  if (forSettled) return diff === 0 ? 'Heute' : diff === -1 ? 'Gestern' : `${d}.${mo}.`;
+  return diff === 0 ? 'Heute' : diff === 1 ? 'Morgen' : `${d}.${mo}.`;
+}
+
+function _renderOpenBetCards(bets, isLive) {
+  let h = '';
+  for (const b of bets) {
     const home = b.home || b.match?.split(' vs ')[0] || '';
     const away = b.away || b.match?.split(' vs ')[1] || '';
     const mktLabel = marketLabel(b.market, home, away);
     const conf = b.confidence || '';
     const confCls = conf === 'HIGH' ? 'conf-high' : conf === 'MEDIUM' ? 'conf-medium' : '';
-
     const stake = b.stake || 0;
     const odds = b.entry_odds || 0;
     const potProfit = (odds - 1) * stake;
     const totalReturn = odds * stake;
-
     const driftCls = b.drift_pct == null ? '' : b.drift_pct < 0 ? 'drift-good' : 'drift-bad';
     const driftArrow = b.drift_pct == null ? '' : b.drift_pct < 0 ? '↓' : '↑';
     const driftStr = b.drift_pct != null ? `${driftArrow}${Math.abs(b.drift_pct).toFixed(1)}%` : '—';
@@ -1785,22 +1816,10 @@ function renderBets() {
     const clvLabel = b.clv_signal === 'good' ? '✓ CLV positiv' : b.clv_signal === 'bad' ? '✗ CLV negativ' : 'CLV ausstehend';
     const edgePct = b.model_edge_pct;
     const edgeStr = edgePct != null ? `${edgePct > 0 ? '+' : ''}${edgePct}% Edge` : '';
-
-    const matchDate = b.match_date ? b.match_date.slice(0,10) : null;
-    let dateLabel = '—';
-    if (matchDate) {
-      const [y,mo,d] = matchDate.split('-');
-      const today = new Date(); today.setHours(0,0,0,0);
-      const mDate = new Date(+y, +mo-1, +d);
-      const diff = Math.round((mDate - today) / 86400000);
-      dateLabel = diff === 0 ? 'Heute' : diff === 1 ? 'Morgen' : `${d}.${mo}.`;
-    }
-
+    const dateLabel = _betDateLabel(b.match_date, false);
     const flagH = teamFlag(home) || '';
     const flagA = teamFlag(away) || '';
-
     const currentOddsStr = b.current_odds ? b.current_odds.toFixed(2) : '—';
-
     h += `<div class="bet-card">
       <div class="bet-card-top">
         <div class="bet-card-header">
@@ -1810,6 +1829,7 @@ function renderBets() {
         <div class="bet-market-row">
           <span class="bet-market-chip">${esc(mktLabel)}</span>
           ${conf ? `<span class="bet-conf-chip ${confCls}">${conf}</span>` : ''}
+          ${isLive ? `<span class="today-live-badge">LIVE</span>` : ''}
         </div>
         <div class="bet-odds-row">
           <div>
@@ -1846,6 +1866,75 @@ function renderBets() {
           oninput="_onBetNoteInput(this)">${esc(_loadBetNote(home, away, b.market || ''))}</textarea>
       </div>
     </div>`;
+  }
+  return h;
+}
+
+function _renderSettledCards(bets) {
+  let h = '';
+  let lastDate = null;
+  for (const b of bets) {
+    const home = b.home || '';
+    const away = b.away || '';
+    const mktLabel = marketLabel(b.market, home, away);
+    const flagH = teamFlag(home) || '';
+    const flagA = teamFlag(away) || '';
+    const dateStr = (b.match_date || '').slice(0,10);
+    if (dateStr !== lastDate) {
+      lastDate = dateStr;
+      h += `<div class="bet-date-group">${_betDateLabel(dateStr, true)}</div>`;
+    }
+    const status = b.status || '';
+    const resultCls = status === 'won' ? 'result-won' : status === 'lost' ? 'result-lost' : 'result-void';
+    const resultLabel = status === 'won' ? '✅ Gewonnen' : status === 'lost' ? '❌ Verloren' : '↩️ Void';
+    const pnl = b.pnl || 0;
+    const pnlStr = status === 'void' || pnl === 0 ? '—' : (pnl > 0 ? `+€${pnl.toFixed(2)}` : `−€${Math.abs(pnl).toFixed(2)}`);
+    const pnlCls = pnl > 0 ? 'drift-good' : pnl < 0 ? 'drift-bad' : '';
+    h += `<div class="bet-card">
+      <div class="bet-card-top">
+        <div class="bet-card-header">
+          <span class="bet-match">${flagH} ${esc(home)} vs ${flagA} ${esc(away)}</span>
+        </div>
+        <div class="bet-market-row">
+          <span class="bet-market-chip">${esc(mktLabel)}</span>
+          <span class="bet-odds-label">@${(b.entry_odds||0).toFixed(2)} · €${(b.stake||0).toFixed(2)}</span>
+        </div>
+      </div>
+      <div class="bet-result-row">
+        <span class="bet-result-badge ${resultCls}">${resultLabel}</span>
+        <span class="bet-pnl ${pnlCls}">${pnlStr}</span>
+      </div>
+    </div>`;
+  }
+  return h;
+}
+
+function renderBets() {
+  const c = document.getElementById('bets-container');
+  if (!c) return;
+
+  const liveBets = _openBets.filter(b => b.is_live);
+  const preBets  = _openBets.filter(b => !b.is_live);
+
+  const tc = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n; };
+  tc('tc-open',    preBets.length);
+  tc('tc-live',    liveBets.length);
+  tc('tc-settled', _settledBets.length);
+
+  let h = '';
+  if (_activeBetTab === 'live') {
+    h = liveBets.length
+      ? _renderOpenBetCards(liveBets, true)
+      : `<div class="empty"><div class="icon">📡</div><div>Keine Live-Wetten gerade.</div></div>`;
+  } else if (_activeBetTab === 'settled') {
+    h = _settledBets.length
+      ? _renderSettledCards(_settledBets)
+      : `<div class="empty"><div class="icon">📭</div><div>Noch keine abgerechneten Wetten.</div></div>`;
+  } else {
+    h = _pwaPendingHtml();
+    h += preBets.length
+      ? _renderOpenBetCards(preBets, false)
+      : `<div class="empty"><div class="icon">📭</div><div>Keine offenen Wetten.<br><small>Signals werden täglich 08:00 UTC aktualisiert.</small></div></div>`;
   }
   c.innerHTML = h;
 }
@@ -3556,6 +3645,7 @@ async function _load() {
   _allOdds = d.all_odds || {};
   _modelTips = d.model_tips || {};
   _openBets = d.open_bets || [];
+  _settledBets = d.settled_bets || [];
   _bankrollState = d.bankroll_state || {};
   _oddsHistory = d.odds_history || {};
   // Index wm_results by matchKey for fast lookup in Home tab

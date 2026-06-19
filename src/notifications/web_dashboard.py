@@ -376,6 +376,32 @@ def _get_closed_bets() -> list[dict]:
         return []
 
 
+def _get_settled_bets_for_dashboard() -> list[dict]:
+    if not _LEDGER_PATH.exists():
+        return []
+    try:
+        rows = []
+        with open(_LEDGER_PATH, newline="") as f:
+            for r in csv.DictReader(f):
+                if r.get("status") not in ("won", "lost", "push", "void"):
+                    continue
+                rows.append({
+                    "match":      f"{r['home']} vs {r['away']}",
+                    "home":       r["home"],
+                    "away":       r["away"],
+                    "market":     r["market"],
+                    "entry_odds": float(r["decimal_odds"]),
+                    "stake":      float(r["stake_amount"]),
+                    "pnl":        float(r.get("pnl") or 0),
+                    "match_date": r.get("match_date", ""),
+                    "status":     r["status"],
+                })
+        rows.sort(key=lambda x: x["match_date"], reverse=True)
+        return rows
+    except Exception:
+        return []
+
+
 def _market_to_odds_key(market: str) -> str | None:
     """Map a ledger market string to the key used in all_odds dicts."""
     m = market.lower().strip()
@@ -554,6 +580,24 @@ def write_signals_json(
     _resolved_open_bets = open_bets if open_bets is not None else _get_open_bets_from_ledger(
         all_odds=all_odds_data if all_odds_data else None
     )
+
+    # Enrich open bets with is_live flag (same [-5, 115] min window as live_score_push.py)
+    _now_utc = datetime.now(timezone.utc)
+    _ko_lookup = {
+        (g.get("home", "").lower(), g.get("away", "").lower()): g.get("kickoff", "")
+        for g in (schedule_data or [])
+    }
+    for _bet in (_resolved_open_bets or []):
+        _ko = _ko_lookup.get((_bet["home"].lower(), _bet["away"].lower()), "")
+        _bet["is_live"] = False
+        if _ko:
+            try:
+                _ko_dt = datetime.fromisoformat(_ko.replace("Z", "+00:00"))
+                _elapsed = (_now_utc - _ko_dt).total_seconds() / 60
+                _bet["is_live"] = -5 <= _elapsed <= 115
+            except ValueError:
+                pass
+
     _staked = sum(float(b.get("stake", 0)) for b in (_resolved_open_bets or []))
     _max_win = sum(
         float(b.get("stake", 0)) * (float(b.get("current_odds") or b.get("entry_odds", 0)) - 1)
@@ -587,6 +631,7 @@ def write_signals_json(
         "top_elo":        [{"name": n, "rating": round(r)} for n, r in top_elo] if top_elo else existing.get("top_elo", []),
         "history":        _build_history(),
         "open_bets":      _resolved_open_bets,
+        "settled_bets":   _get_settled_bets_for_dashboard(),
         "bankroll_state": {
             "start":        _bankroll_start,
             "free":         round(_free, 2),
