@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-19T23:19:58Z",
+  "updated": "2026-06-19T23:52:20Z",
   "meta": {
     "stale_odds": false
   },
@@ -8545,8 +8545,8 @@
     {
       "date": "2026-06-19",
       "n_bets": 3,
-      "pnl": 0.0,
-      "roi_pct": 0.0
+      "pnl": -5.0,
+      "roi_pct": -16.7
     },
     {
       "date": "2026-06-18",
@@ -8591,20 +8591,18 @@
       "roi_pct": 0.0
     }
   ],
-  "open_bets": [
+  "open_bets": [],
+  "settled_bets": [
     {
       "match": "Alba Berlin vs Bayern München",
       "home": "Alba Berlin",
       "away": "Bayern München",
       "market": "home",
       "entry_odds": 2.5,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
       "stake": 10.0,
+      "pnl": 15.0,
       "match_date": "2026-06-19",
-      "model_edge_pct": null,
-      "is_live": false
+      "status": "won"
     },
     {
       "match": "USA vs Australia",
@@ -8612,13 +8610,10 @@
       "away": "Australia",
       "market": "btts_yes",
       "entry_odds": 2.25,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
       "stake": 10.0,
+      "pnl": -10.0,
       "match_date": "2026-06-19",
-      "model_edge_pct": null,
-      "is_live": false
+      "status": "lost"
     },
     {
       "match": "USA vs Australia",
@@ -8626,16 +8621,11 @@
       "away": "Australia",
       "market": "o/u2.5_over",
       "entry_odds": 2.15,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
       "stake": 10.0,
+      "pnl": -10.0,
       "match_date": "2026-06-19",
-      "model_edge_pct": null,
-      "is_live": false
-    }
-  ],
-  "settled_bets": [
+      "status": "lost"
+    },
     {
       "match": "Czechia vs South Africa",
       "home": "Czechia",
@@ -8980,37 +8970,37 @@
   ],
   "bankroll_state": {
     "start": 100.0,
-    "free": 96.25,
-    "staked": 30.0,
-    "exposure_pct": 30.0,
-    "max_win": 39.0,
-    "pnl_closed": 26.25
+    "free": 121.25,
+    "staked": 0,
+    "exposure_pct": 0.0,
+    "max_win": 0,
+    "pnl_closed": 21.25
   },
   "wm_stats": {
     "stats": {
       "1x2": {
-        "n": 8,
-        "won": 3,
-        "staked": 81.44,
-        "pnl": 38.06,
-        "hit_rate": 37.5,
-        "roi": 46.7
+        "n": 9,
+        "won": 4,
+        "staked": 91.44,
+        "pnl": 53.06,
+        "hit_rate": 44.4,
+        "roi": 58.0
       },
       "ou25": {
-        "n": 9,
+        "n": 10,
         "won": 5,
-        "staked": 136.84,
-        "pnl": 13.7,
-        "hit_rate": 55.6,
-        "roi": 10.0
+        "staked": 146.84,
+        "pnl": 3.7,
+        "hit_rate": 50.0,
+        "roi": 2.5
       },
       "btts": {
-        "n": 2,
+        "n": 3,
         "won": 1,
-        "staked": 26.97,
-        "pnl": 1.4,
-        "hit_rate": 50.0,
-        "roi": 5.2
+        "staked": 36.97,
+        "pnl": -8.6,
+        "hit_rate": 33.3,
+        "roi": -23.3
       },
       "other": {
         "n": 8,
@@ -9053,15 +9043,19 @@
       {
         "date": "2026-06-18",
         "balance": 126.25
+      },
+      {
+        "date": "2026-06-19",
+        "balance": 121.25
       }
     ],
     "drawdown": {
       "peak": 176.25,
-      "current": 126.25,
-      "current_dd": 50.0,
-      "current_dd_pct": 28.37,
-      "max_dd": 50.0,
-      "max_dd_pct": 28.37
+      "current": 121.25,
+      "current_dd": 55.0,
+      "current_dd_pct": 31.21,
+      "max_dd": 55.0,
+      "max_dd_pct": 31.21
     },
     "clv_dist": {
       "labels": [
@@ -9078,7 +9072,7 @@
         1,
         0,
         1,
-        3
+        4
       ]
     },
     "edge_dist": {
@@ -9100,13 +9094,13 @@
       ]
     },
     "summary": {
-      "n_settled": 27,
-      "staked": 352.11,
-      "pnl": 26.25,
-      "yield_pct": 7.46,
-      "mean_clv": 7.3,
+      "n_settled": 30,
+      "staked": 382.11,
+      "pnl": 21.25,
+      "yield_pct": 5.56,
+      "mean_clv": 9.58,
       "mean_edge": 3.43,
-      "n_clv": 12,
+      "n_clv": 13,
       "n_edge": 6
     },
     "per_team_market": {
@@ -9601,6 +9595,62 @@
           "hit_rate": 0.0,
           "roi": -100.0
         }
+      },
+      "Alba Berlin": {
+        "1X2": {
+          "n": 1,
+          "won": 1,
+          "staked": 10.0,
+          "pnl": 15.0,
+          "hit_rate": 100.0,
+          "roi": 150.0
+        }
+      },
+      "Bayern München": {
+        "1X2": {
+          "n": 1,
+          "won": 1,
+          "staked": 10.0,
+          "pnl": 15.0,
+          "hit_rate": 100.0,
+          "roi": 150.0
+        }
+      },
+      "USA": {
+        "BTTS": {
+          "n": 1,
+          "won": 0,
+          "staked": 10.0,
+          "pnl": -10.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        },
+        "Over": {
+          "n": 1,
+          "won": 0,
+          "staked": 10.0,
+          "pnl": -10.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "Australia": {
+        "BTTS": {
+          "n": 1,
+          "won": 0,
+          "staked": 10.0,
+          "pnl": -10.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        },
+        "Over": {
+          "n": 1,
+          "won": 0,
+          "staked": 10.0,
+          "pnl": -10.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
       }
     },
     "by_confederation": {
@@ -9613,12 +9663,12 @@
         "roi": 74.9
       },
       "CONCACAF": {
-        "n": 3,
+        "n": 5,
         "won": 2,
-        "staked": 38.0,
-        "pnl": 21.25,
-        "hit_rate": 66.7,
-        "roi": 55.9
+        "staked": 58.0,
+        "pnl": 1.25,
+        "hit_rate": 40.0,
+        "roi": 2.2
       },
       "CONMEBOL": {
         "n": 2,
@@ -9643,6 +9693,14 @@
         "pnl": -25.01,
         "hit_rate": 0.0,
         "roi": -100.0
+      },
+      "Other": {
+        "n": 1,
+        "won": 1,
+        "staked": 10.0,
+        "pnl": 15.0,
+        "hit_rate": 100.0,
+        "roi": 150.0
       }
     }
   },
