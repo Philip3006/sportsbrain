@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "test -f /Users/philiprassillier/sportsbrain/results/session_report.md && find /Users/philiprassillier/sportsbrain/results/session_report.md -mmin -1440 -exec cat {} \\;"
+            "command": "cd /Users/philiprassillier/sportsbrain && git pull --ff-only -q 2>/dev/null; python3 scripts/generate_session_report.py 2>/dev/null && cat results/session_report.md"
           }
         ]
       }
