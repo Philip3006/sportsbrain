@@ -3788,16 +3788,31 @@ setInterval(load, 60*1000);
 // ── Hide bottom-nav on scroll down, show on scroll up ─────────
 (function () {
   const nav = document.querySelector('.bottom-nav');
-  let lastY = window.scrollY, dir = 0;
+  if (!nav) return;
+  let lastY = window.scrollY, dir = 0, hidden = false;
   window.addEventListener('scroll', () => {
     const y = window.scrollY;
     const d = y - lastY;
     lastY = y;
-    if (d > 0 && dir < 0) dir = 0;   // direction changed to down
-    if (d < 0 && dir > 0) dir = 0;   // direction changed to up
+
+    // Ignore micro-scroll noise from iOS momentum/bounce — prevents flicker
+    if (Math.abs(d) < 3) return;
+
+    // Always show at top or page bottom
+    const atBottom = (y + window.innerHeight) >= (document.documentElement.scrollHeight - 50);
+    if (y < 80 || atBottom) {
+      if (hidden) { nav.classList.remove('nav-hidden'); hidden = false; dir = 0; }
+      return;
+    }
+
+    if ((d > 0 && dir < 0) || (d < 0 && dir > 0)) dir = 0;
     dir += d;
-    if (dir > 80) { nav.classList.add('nav-hidden'); dir = 0; }
-    else if (dir < -40 || y < 80) { nav.classList.remove('nav-hidden'); dir = 0; }
+
+    if (dir > 80 && !hidden) {
+      nav.classList.add('nav-hidden'); hidden = true; dir = 0;
+    } else if (dir < -40 && hidden) {
+      nav.classList.remove('nav-hidden'); hidden = false; dir = 0;
+    }
   }, { passive: true });
 })();
 
