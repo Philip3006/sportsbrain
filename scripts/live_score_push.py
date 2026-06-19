@@ -28,8 +28,18 @@ SIGNALS = ROOT / "docs" / "data" / "signals.json"
 CACHE_PATH = ROOT / "data" / "live_scores.json"
 
 
+_ALIASES: dict[str, str] = {
+    "united states": "usa",
+    "türkiye": "turkey",
+    "republic of ireland": "ireland",
+    "côte d'ivoire": "ivory coast",
+    "dr congo": "democratic republic of congo",
+}
+
+
 def _norm(s: str) -> str:
-    return (s or "").lower().strip()
+    n = (s or "").lower().strip()
+    return _ALIASES.get(n, n)
 
 
 def _load_cache() -> dict:
