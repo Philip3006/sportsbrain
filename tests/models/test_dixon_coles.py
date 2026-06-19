@@ -311,6 +311,25 @@ class TestPredictMatchStaged:
         probs = predict_match_staged("Home", "Away", minimal_dc_params)
         assert {"p_home", "p_draw", "p_away"}.issubset(probs.keys())
 
+    def test_negative_rho_boosts_ko_draws_vs_group(self, minimal_dc_params, monkeypatch):
+        """KO draw > group draw when rho < 0 and KO rho factor > group rho factor.
+
+        Uses known mock factors (group=0, KO stages=0.75) so the test is independent
+        of rho_stages.json content. With rho=-0.13 and KO factor 0.75:
+          - group rho_override = -0.13 * 0.0 = 0 (pure Poisson, no DC correction)
+          - KO rho_override ≈ -0.13 * 0.25 ≈ -0.033 (negative → _tau boosts draws)
+        """
+        import src.models.dixon_coles as _dc
+        known_factors = {"group": 0.0, "r16": 0.75, "qf": 0.75, "sf": 0.75,
+                         "third_place": 0.75, "final": 0.75}
+        monkeypatch.setattr(_dc, "_RHO_FACTORS_CACHE", known_factors)
+        group = predict_match_staged("Home", "Away", minimal_dc_params, is_knockout=False)
+        knockout = predict_match_staged("Home", "Away", minimal_dc_params, is_knockout=True)
+        assert knockout["p_draw"] > group["p_draw"], (
+            f"KO draw {knockout['p_draw']:.4f} should exceed group draw {group['p_draw']:.4f} "
+            f"when rho_ko={minimal_dc_params.rho * 0.25:.4f} < rho_group=0"
+        )
+
 
 class TestUnknownTeam:
     def test_unknown_team_raises_value_error(self, minimal_dc_params):
