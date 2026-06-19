@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-06-19T14:39:22Z",
-  "overall": "degraded",
+  "generated_at": "2026-06-19T18:43:36Z",
+  "overall": "ok",
   "jobs": [
     {
       "job": "daily_scan",
@@ -15,22 +15,22 @@
     },
     {
       "job": "auto_retrain",
-      "status": "stale",
-      "last_run_at": null,
-      "duration_s": null,
-      "exit_code": null,
-      "error": "no health snapshot yet — job has never reported",
+      "status": "ok",
+      "last_run_at": "2026-06-19T16:09:04Z",
+      "duration_s": 539.0,
+      "exit_code": 0,
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 43200,
       "cadence": "2×/Tag 06:00 + 18:00"
     },
     {
       "job": "closing_odds",
-      "status": "stale",
-      "last_run_at": null,
-      "duration_s": null,
-      "exit_code": null,
-      "error": "no health snapshot yet — job has never reported",
+      "status": "ok",
+      "last_run_at": "2026-06-19T16:00:08Z",
+      "duration_s": 3.0,
+      "exit_code": 0,
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 43200,
       "cadence": "2×/Tag 14:00 + 18:00"
@@ -38,8 +38,8 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-06-19T14:38:43Z",
-      "duration_s": 1.0,
+      "last_run_at": "2026-06-19T18:43:36Z",
+      "duration_s": 2.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -49,8 +49,8 @@
     {
       "job": "live_score_push",
       "status": "ok",
-      "last_run_at": "2026-06-19T14:38:21Z",
-      "duration_s": 8.0,
+      "last_run_at": "2026-06-19T18:41:53Z",
+      "duration_s": 3.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -60,7 +60,7 @@
     {
       "job": "prematch_scan",
       "status": "ok",
-      "last_run_at": "2026-06-19T14:32:07Z",
+      "last_run_at": "2026-06-19T18:25:16Z",
       "duration_s": 0.0,
       "exit_code": 0,
       "error": null,
@@ -71,7 +71,7 @@
     {
       "job": "settle",
       "status": "ok",
-      "last_run_at": "2026-06-19T14:34:19Z",
+      "last_run_at": "2026-06-19T18:30:06Z",
       "duration_s": 1.0,
       "exit_code": 0,
       "error": null,
@@ -82,7 +82,7 @@
     {
       "job": "aggregate_health",
       "status": "ok",
-      "last_run_at": "2026-06-19T14:38:45Z",
+      "last_run_at": "2026-06-19T18:41:34Z",
       "duration_s": 1.0,
       "exit_code": 0,
       "error": null,

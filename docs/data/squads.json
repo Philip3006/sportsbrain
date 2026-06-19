@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-17",
+  "updated": "2026-06-19",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -990,7 +990,8 @@
       "ampel": "🟢",
       "suspended": [
         "Marcelo Flores",
-        "Moïse Bombito"
+        "Moïse Bombito",
+        "Ismaël Koné"
       ],
       "players": [
         {
@@ -1031,7 +1032,7 @@
         {
           "name": "Ismaël Koné",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Cyle Larin",
@@ -3379,7 +3380,8 @@
       "suspended": [
         "Kaoru Mitoma",
         "Takumi Minamino",
-        "Wataru Endo"
+        "Wataru Endo",
+        "Takefusa Kubo"
       ],
       "players": [
         {
@@ -3420,7 +3422,7 @@
         {
           "name": "Takefusa Kubo",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Keisuke Gotō",
@@ -6333,7 +6335,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Christian Pulisic"
+      ],
       "players": [
         {
           "name": "Matt Turner",
@@ -6383,7 +6387,7 @@
         {
           "name": "Christian Pulisic",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Brenden Aaronson",
