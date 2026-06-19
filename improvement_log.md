@@ -1585,6 +1585,32 @@ Begruendung:
 
 ---
 
+## Iteration #93 — KO-Phase Kalibrierung: Test + Scan-Report Flag ✅
+
+- **Datum:** 2026-06-20
+- **Was:** Keine automatische Verifikation dass KO-Matches korrekt höhere Draw-Wahrscheinlichkeit erzeugen (via rho_staged). Scan-Report zeigte keine Unterscheidung zwischen Gruppen- und KO-Matches in der Kickoff-Spalte.
+- **Fix:**
+  1. Neuer Test `test_negative_rho_boosts_ko_draws_vs_group` in `TestPredictMatchStaged`: injiziert bekannte rho-Faktoren (group=0, KO=0.75) via `monkeypatch` und verifiziert `ko_draw > group_draw`. Erklärt die DC-Mechanik: rho_KO < 0 → _tau boosted (0,0) und (1,1) → mehr Unentschieden.
+  2. `_format_report()` hängt `(KO)` an `kickoff_str` wenn `ctx["stage"]["is_knockout"]` True ist. Ab 27. Juni (R32) sieht man sofort welche Matches KO-Runden sind.
+- **Dateien:** `tests/models/test_dixon_coles.py`, `src/scanner/daily_scan.py`
+- **Status:** ✅ 424/424 Tests grün.
+
+---
+
+## Iteration #89 — Global Push-Lock in _git_safe_push.sh ✅
+
+- **Datum:** 2026-06-20
+- **Was:** `_git_safe_push.sh` hatte 3 Retry-Runden, aber KEINEN Prozess-Lock. Bei simultanen Cron-Jobs (scan + closing_odds + live_score_push) starteten alle drei gleichzeitig ihren Rebase-Push-Zyklus → Kollision auch nach 3 Versuchen möglich (logs zeigten push-rejected trotz Iter #88). Ursache: alle drei Jobs fetchten zur gleichen Zeit, rebasten, und pushten — Job A schlug fehl weil Job B zwischen Fetch und Push einschob.
+- **Fix:** Äußerste Lock-Hülle um die gesamte Fetch-Rebase-Push-Sequenz:
+  - `flock -w 90 200` falls `flock` verfügbar (Linux / macOS+Homebrew)
+  - `mkdir /tmp/sportsbrain_push.lock.d` als atomarer Spinlock-Fallback (POSIX, portables macOS)
+  - Lock-Timeout: 90s (jeder Push dauert <30s, 90s ist großzügig)
+  - Bestehende 3-Retry-Logik bleibt für remote GH-Actions-Pushes die unabhängig ankommen
+- **Datei:** `scripts/_git_safe_push.sh`
+- **Status:** ✅ Serialisiert lokale Concurrent-Pushes OS-seitig.
+
+---
+
 ## Iteration #88 — _git_safe_push.sh: Dritter Retry + Post-Push-Verifikation ✅
 
 - **Datum:** 2026-06-19

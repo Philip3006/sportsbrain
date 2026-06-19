@@ -60,6 +60,22 @@ def _fetch_scores_espn_fallback() -> dict[str, dict]:
     except Exception as e:
         print(f"[settle] ESPN-Fallback fetch failed: {e}")
         return {}
+    # ESPN uses full country names; ledger may use short forms or aliases.
+    _ALIASES: dict[str, list[str]] = {
+        "United States": ["USA", "US"],
+        "South Korea":   ["Korea Republic", "Korea"],
+        "Ivory Coast":   ["Côte d'Ivoire", "Cote d'Ivoire"],
+        "Türkiye":       ["Turkey"],
+        "DR Congo":      ["Congo DR", "Congo"],
+        "Bosnia & Herzegovina": ["Bosnia"],
+        "Curacao":       ["Curaçao"],
+    }
+    # Build reverse map: alias → canonical ESPN name
+    _REVERSE: dict[str, str] = {}
+    for canonical, aliases in _ALIASES.items():
+        for alias in aliases:
+            _REVERSE[alias.lower()] = canonical
+
     results: dict[str, dict] = {}
     for m in raw:
         if not m.get("completed"):
@@ -75,10 +91,15 @@ def _fetch_scores_espn_fallback() -> dict[str, dict]:
             "home_score": int(hs),
             "away_score": int(as_),
         }
-        # ESPN IDs differ from TheOddsAPI IDs — fallback match-string is the
-        # canonical lookup used by settle() at line ~167.
         results[m.get("match_id", f"espn_{home}_vs_{away}")] = entry
         results[f"{home} vs {away}"] = entry
+        # Also register alias keys so ledger entries with short names resolve.
+        home_aliases = _ALIASES.get(home, [])
+        away_aliases = _ALIASES.get(away, [])
+        for ha in (home_aliases or [home]):
+            for aa in (away_aliases or [away]):
+                if ha != home or aa != away:
+                    results[f"{ha} vs {aa}"] = entry
     return results
 
 
