@@ -123,11 +123,17 @@ def main() -> int:
     token = _token()
     headers = {"Authorization": f"Bearer {token}"}
 
-    try:
-        r = requests.get(f"{base}/pending_bets", headers=headers, timeout=15)
-    except requests.RequestException as e:
-        print(f"[consume] fetch failed: {e}", file=sys.stderr)
-        return 1
+    import time as _time
+    r = None
+    for _attempt in range(3):
+        try:
+            r = requests.get(f"{base}/pending_bets", headers=headers, timeout=15)
+            break
+        except requests.RequestException as e:
+            if _attempt == 2:
+                print(f"[consume] fetch failed: {e}", file=sys.stderr)
+                return 1
+            _time.sleep(5)
     if r.status_code != 200:
         print(f"[consume] HTTP {r.status_code}: {r.text[:200]}", file=sys.stderr)
         return 1

@@ -80,7 +80,7 @@ def _fetch_completed_wm_scores(api_key: str = "") -> dict[tuple[str, str], tuple
     try:
         import requests
         from src.config import canonical_name
-        url = "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/scores/"
+        url = "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup_2026/scores/"
         resp = requests.get(url, params={"apiKey": api_key, "daysFrom": 7}, timeout=10)
         if not resp.ok:
             return {}

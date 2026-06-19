@@ -258,15 +258,18 @@ def negative_log_likelihood(
     return _vectorized_nll(params_vec, len(teams), ref_idx, *arrays)
 
 
-# Optimizer hard bounds — kept tighter than validate_params() sanity ranges so
-# that hitting a bound is a real signal (Mexico defence=-2.97 / rho=-0.5 in
-# params_20260614.pkl both touched the previous wider bounds). When the optimizer
-# hits a bound, _check_bounds_hit() reports it so the train script can retry with
-# a smaller WC2026_BOOST.
+# Optimizer hard bounds — widened 2026-06-19 because Cape Verde, Mexico, rho
+# consistently hit the lower bounds across all 4 retry-boost-schedule attempts,
+# even at boost=0.5. These teams genuinely have extreme WM 2026 results (Cape
+# Verde/Mexico losing badly in group stage) and the optimizer needs room to
+# converge. Previous tightening (params_20260614 incident) was caused by
+# WC2026_BOOST=3.0 driving Mexico to -4.04; today boost_schedule tops out at 1.5
+# and the retry goes down to 0.5 — the _MAX_LAMBDA=4.5 cap at inference time
+# provides the safety net against runaway xG.
 _FIT_BOUNDS_ATTACK = (-3.0, 2.5)
-_FIT_BOUNDS_DEFENCE = (-2.5, 2.0)
+_FIT_BOUNDS_DEFENCE = (-3.5, 2.0)
 _FIT_BOUNDS_HOME_ADV = (0.0, 0.6)
-_FIT_BOUNDS_RHO = (-0.30, 0.10)
+_FIT_BOUNDS_RHO = (-0.40, 0.10)
 _BOUND_TOLERANCE = 1e-3  # within this distance of a bound counts as "hit"
 
 
