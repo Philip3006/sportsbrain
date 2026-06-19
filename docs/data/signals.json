@@ -1,5 +1,8 @@
 {
-  "updated": "2026-06-18T21:48:40Z",
+  "updated": "2026-06-19T15:22:22Z",
+  "meta": {
+    "stale_odds": false
+  },
   "schedule": [
     {
       "sport": "football",
@@ -7142,20 +7145,6 @@
   "football": [
     {
       "sport": "football",
-      "match": "Mexico vs South Korea",
-      "market": "goals_2_4_no",
-      "odds": 2.5,
-      "model_prob": 61.9,
-      "fair_prob": 40.0,
-      "ev_pct": 54.7,
-      "stake_eur": 7.0,
-      "stake_pct": 4.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-19T01:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Colombia vs Portugal",
       "market": "h1_goals_2_4_no",
       "odds": 2.53,
@@ -7702,20 +7691,6 @@
     },
     {
       "sport": "football",
-      "match": "Mexico vs South Korea",
-      "market": "scorer_Santiago Tomás Giménez",
-      "odds": 3.5,
-      "model_prob": 35.3,
-      "fair_prob": 28.6,
-      "ev_pct": 23.6,
-      "stake_eur": 20.0,
-      "stake_pct": 11.5,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-19T01:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Scotland vs Brazil",
       "market": "goals_2_4_no",
       "odds": 2.6,
@@ -8105,20 +8080,6 @@
       "confidence": "MEDIUM",
       "n_models_agree": 0,
       "kickoff": "2026-06-21T04:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Mexico vs South Korea",
-      "market": "away",
-      "odds": 4.3,
-      "model_prob": 25.0,
-      "fair_prob": 23.3,
-      "ev_pct": 7.5,
-      "stake_eur": 9.72,
-      "stake_pct": 5.6,
-      "confidence": "LOW",
-      "n_models_agree": 2,
-      "kickoff": "2026-06-19T01:00:00Z"
     },
     {
       "sport": "football",
