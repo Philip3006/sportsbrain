@@ -1,9 +1,17 @@
 .env
+.env.bak_*
 data/cache/
 data/raw/
 results/scans/
 results/backtests/
 results/closing_odds.log
+results/health/
+results/*_cron.log
+results/launchd_*.log
+results/settle.log
+results/consume_pending_bets.log
+results/*.lock
+results/*.bak_*
 __pycache__/
 *.pyc
 .DS_Store
