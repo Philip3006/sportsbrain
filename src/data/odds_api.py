@@ -34,6 +34,65 @@ def get_api_key(api_key: str | None = None) -> str:
     return key
 
 
+# Module-level flag: callers (daily_scan, prematch_scan) read this after
+# fetch_upcoming_matches() to know whether they got fresh odds or fell back
+# to a stale on-disk cache. Surfaces in signals.json["meta"]["stale_odds"]
+# and the health snapshot so the dashboard can show a banner.
+USED_STALE_CACHE: bool = False
+
+
+def _http_get_with_retry(url: str, params: dict, *, total_attempts: int = 3,
+                         base_timeout: float = 30.0) -> "requests.Response":
+    """Issues GET with N attempts, exponential-ish backoff between tries.
+
+    Raises the last exception only after all attempts fail. 422 is NOT
+    retried — callers must handle it (market-fallback logic).
+    """
+    import time as _time
+    delays = [5.0, 15.0]  # gap before retry 2 and 3
+    last_exc: Exception | None = None
+    for attempt in range(total_attempts):
+        try:
+            resp = requests.get(url, params=params, timeout=base_timeout)
+            # Don't retry on client-side issues — they're not transient.
+            if resp.status_code in (401, 403, 422):
+                return resp
+            resp.raise_for_status()
+            return resp
+        except (requests.exceptions.Timeout,
+                requests.exceptions.ConnectionError,
+                requests.exceptions.HTTPError) as e:
+            last_exc = e
+            if attempt < total_attempts - 1:
+                wait = delays[min(attempt, len(delays) - 1)]
+                print(f"  WARN: odds-api attempt {attempt+1}/{total_attempts} "
+                      f"failed ({e.__class__.__name__}) — retry in {wait:.0f}s")
+                _time.sleep(wait)
+                continue
+    assert last_exc is not None
+    raise last_exc
+
+
+def _load_stale_upcoming_cache() -> list[dict] | None:
+    """Loads the latest on-disk pickle of upcoming matches, regardless of age.
+
+    Used when the live API call fails after all retries. Returns None if no
+    cache exists.
+    """
+    import pickle as _pickle
+    path = DATA_CACHE / "odds_api_upcoming_wide.pkl"
+    if not path.exists():
+        return None
+    try:
+        with open(path, "rb") as f:
+            data = _pickle.load(f)
+        if isinstance(data, list):
+            return data
+    except Exception as e:
+        print(f"  WARN: stale-cache load failed: {e}")
+    return None
+
+
 @disk_cache("odds_api_upcoming_wide", max_age_hours=1.0)
 def fetch_upcoming_matches(
     sport: str = "soccer_fifa_world_cup",
@@ -45,7 +104,15 @@ def fetch_upcoming_matches(
     """
     Fetches upcoming matches with odds from TheOddsAPI.
     Returns list of parsed match dicts with bookmaker odds.
+
+    Resilience:
+      - 30s timeout per attempt, up to 3 attempts with backoff (5s, 15s)
+      - On total failure: loads last on-disk cache (regardless of age) and
+        sets module-level USED_STALE_CACHE=True so callers can flag it.
     """
+    global USED_STALE_CACHE
+    USED_STALE_CACHE = False  # reset on each fresh call
+
     from src.config import LINE_SHOPPING_REGIONS
     if regions is None:
         regions = ",".join(LINE_SHOPPING_REGIONS)
@@ -58,20 +125,30 @@ def fetch_upcoming_matches(
         "oddsFormat": "decimal",
     }
     try:
-        resp = requests.get(url, params=params, timeout=15)
-        resp.raise_for_status()
-    except requests.exceptions.HTTPError as e:
-        if e.response is not None and e.response.status_code == 422:
+        resp = _http_get_with_retry(url, params)
+        # 422 = market combination unsupported — drop optional markets and retry once
+        if resp.status_code == 422:
             optional = [m for m in ("double_chance", "btts") if m in markets]
             if optional:
                 print(f"  WARN: market(s) unavailable — retrying without {', '.join(optional)}.")
                 params["markets"] = ",".join(m for m in markets.split(",") if m not in optional)
-                resp = requests.get(url, params=params, timeout=15)
+                resp = _http_get_with_retry(url, params)
                 resp.raise_for_status()
             else:
-                raise
-        else:
-            raise
+                resp.raise_for_status()
+    except Exception as e:
+        # Hard fail after retries — try to keep the scanner alive with the
+        # last known on-disk cache instead of returning empty (which would
+        # cause cascading failures downstream).
+        print(f"  ERROR: TheOddsAPI fetch failed after retries: {e}")
+        stale = _load_stale_upcoming_cache()
+        if stale is not None:
+            USED_STALE_CACHE = True
+            print(f"  ⚠️  USED STALE CACHE — {len(stale)} matches loaded "
+                  "(odds may be outdated). Flag propagated to signals.meta.")
+            return stale
+        # No cache → propagate the original exception so caller can handle it.
+        raise
 
     # Log usage from response headers
     used = int(resp.headers.get("x-requests-used", 0))

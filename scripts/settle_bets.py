@@ -37,13 +37,67 @@ def _api_key() -> str:
     return key
 
 
+# Tracks which source produced the last fetch_scores() result.
+# Read by callers (and health-monitoring) to know whether the primary
+# TheOddsAPI was used or the ESPN fallback kicked in. Values:
+#   "odds_api" | "espn_fallback" | "none"
+LAST_SCORES_SOURCE: str = "none"
+
+
+def _fetch_scores_espn_fallback() -> dict[str, dict]:
+    """ESPN public scoreboard fallback — no API key, ~30-60s lag.
+
+    Re-uses the existing _fetch_espn_wm_scores() implementation from
+    src.data.odds_api and adapts its schema to the dict expected by settle().
+    """
+    try:
+        from src.data.odds_api import _fetch_espn_wm_scores
+    except Exception as e:
+        print(f"[settle] ESPN-Fallback Import-Fehler: {e}")
+        return {}
+    try:
+        raw = _fetch_espn_wm_scores()
+    except Exception as e:
+        print(f"[settle] ESPN-Fallback fetch failed: {e}")
+        return {}
+    results: dict[str, dict] = {}
+    for m in raw:
+        if not m.get("completed"):
+            continue
+        home = m.get("home", "")
+        away = m.get("away", "")
+        hs, as_ = m.get("home_score"), m.get("away_score")
+        if hs is None or as_ is None:
+            continue
+        entry = {
+            "home": home,
+            "away": away,
+            "home_score": int(hs),
+            "away_score": int(as_),
+        }
+        # ESPN IDs differ from TheOddsAPI IDs — fallback match-string is the
+        # canonical lookup used by settle() at line ~167.
+        results[m.get("match_id", f"espn_{home}_vs_{away}")] = entry
+        results[f"{home} vs {away}"] = entry
+    return results
+
+
 def fetch_scores() -> dict[str, dict]:
     """Returns {match_id: {home, away, home_score, away_score, completed}}.
 
-    Transient API problems (401 Quota/Auth, 429 Rate-Limit, 5xx, timeout) werden
-    abgefangen — settle_bets soll dann gracefully ohne Settlements weiterlaufen,
-    statt den ganzen CI-Run zu killen.
+    Fallback chain:
+      1. TheOddsAPI scores endpoint (primary, requires ODDS_API_KEY)
+      2. ESPN public scoreboard (no key, slightly higher lag)
+
+    Transient API problems (401 Quota/Auth, 429 Rate-Limit, 5xx, timeout)
+    trigger the ESPN fallback instead of returning empty — keeping settlement
+    alive during API outages. Sets module-level LAST_SCORES_SOURCE so callers
+    can report which source was used.
     """
+    global LAST_SCORES_SOURCE
+    LAST_SCORES_SOURCE = "none"
+    fallback_reason: str | None = None
+
     try:
         r = requests.get(
             API_URL,
@@ -51,36 +105,50 @@ def fetch_scores() -> dict[str, dict]:
             timeout=15,
         )
     except requests.RequestException as e:
-        print(f"[settle] scores fetch failed (network): {e} — skipping settlement.")
-        return {}
-    if r.status_code in (401, 403, 429):
-        print(f"[settle] scores fetch returned {r.status_code} "
-              "(Quota/Auth/Rate-Limit) — skipping settlement.")
-        return {}
-    if r.status_code >= 500:
-        print(f"[settle] scores fetch returned {r.status_code} — skipping settlement.")
-        return {}
-    try:
-        r.raise_for_status()
-    except requests.HTTPError as e:
-        print(f"[settle] scores fetch HTTP error: {e} — skipping settlement.")
-        return {}
-    results = {}
-    for m in r.json():
-        if not m.get("completed") or not m.get("scores"):
-            continue
-        scores = {s["name"]: int(s["score"]) for s in m["scores"]}
-        home = m["home_team"]
-        away = m["away_team"]
-        results[m["id"]] = {
-            "home": home,
-            "away": away,
-            "home_score": scores.get(home, 0),
-            "away_score": scores.get(away, 0),
-        }
-        # Also index by "Home vs Away" string for fallback matching
-        results[f"{home} vs {away}"] = results[m["id"]]
-    return results
+        fallback_reason = f"network: {e}"
+        r = None
+    if r is not None and r.status_code in (401, 403, 429):
+        fallback_reason = f"odds_api {r.status_code} (Quota/Auth/Rate-Limit)"
+        r = None
+    if r is not None and r.status_code >= 500:
+        fallback_reason = f"odds_api {r.status_code} (server error)"
+        r = None
+    if r is not None:
+        try:
+            r.raise_for_status()
+        except requests.HTTPError as e:
+            fallback_reason = f"odds_api HTTP: {e}"
+            r = None
+
+    if r is not None:
+        results = {}
+        for m in r.json():
+            if not m.get("completed") or not m.get("scores"):
+                continue
+            scores = {s["name"]: int(s["score"]) for s in m["scores"]}
+            home = m["home_team"]
+            away = m["away_team"]
+            results[m["id"]] = {
+                "home": home,
+                "away": away,
+                "home_score": scores.get(home, 0),
+                "away_score": scores.get(away, 0),
+            }
+            # Also index by "Home vs Away" string for fallback matching
+            results[f"{home} vs {away}"] = results[m["id"]]
+        LAST_SCORES_SOURCE = "odds_api"
+        return results
+
+    # ----- ESPN fallback -----
+    print(f"[settle] TheOddsAPI nicht verfügbar ({fallback_reason}) — "
+          "schalte auf ESPN-Fallback.")
+    espn = _fetch_scores_espn_fallback()
+    if espn:
+        LAST_SCORES_SOURCE = "espn_fallback"
+        print(f"[settle] ESPN-Fallback aktiv: {len(espn)//2} completed match(es).")
+    else:
+        print("[settle] ESPN-Fallback lieferte keine Scores — skipping settlement.")
+    return espn
 
 
 def _settle_market(market: str, home_g: int, away_g: int) -> str | None:

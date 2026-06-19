@@ -33,7 +33,10 @@ from src.config import RESULTS_DIR
 SIGNALS_JSON = Path(__file__).parent.parent / "docs" / "data" / "signals.json"
 
 _P_THRESHOLD = 0.85
-_XG_THRESHOLD = 3.5
+# Synchronized with src/models/dixon_coles._MAX_LAMBDA (4.5). The DC layer
+# now caps lambdas at 4.5 at inference time, so the audit threshold matches
+# that cap — a hit signals the cap fired (model wanted to go higher).
+_XG_THRESHOLD = 4.5
 _PBINARY_THRESHOLD = 0.90
 
 
