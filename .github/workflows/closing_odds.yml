@@ -34,6 +34,7 @@ jobs:
         run: python scripts/update_closing_odds.py
 
       - name: Settle open bets + refresh signals
+        id: settle_post
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
@@ -52,11 +53,26 @@ jobs:
             python scripts/build_wm_forecast.py --n 2000
           fi
 
+      - name: Write health snapshot
+        if: always()
+        env:
+          SETTLE_STATUS: ${{ steps.settle_post.outcome == 'failure' && 'error' || 'ok' }}
+        run: |
+          mkdir -p results/health
+          python3 -m src.monitoring.health_writer --job closing_odds --status "$SETTLE_STATUS"
+
+      - name: Aggregate & upload health
+        if: always()
+        env:
+          SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
+          SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
+        run: python3 -m src.monitoring.aggregate_health --merge-from-committed
+
       - name: Commit all changes
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add results/ledger.csv docs/data/signals.json docs/data/wm_forecast.json || true
+          git add results/ledger.csv docs/data/signals.json docs/data/wm_forecast.json docs/data/health.json || true
           git diff --staged --quiet || git commit -m "auto: closing odds $(date +%Y-%m-%d %H:%M)"
           for i in 1 2 3 4 5; do
             git pull --rebase origin main || true

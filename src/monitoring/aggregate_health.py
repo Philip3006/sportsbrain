@@ -57,6 +57,21 @@ def _load_one(path: Path) -> dict[str, Any] | None:
         return None
 
 
+def _load_baseline() -> dict[str, dict]:
+    """Reads docs/data/health.json and returns {job: entry} as fallback baseline.
+
+    Used by --merge-from-committed so GH Actions can preserve Mac-side job
+    statuses for jobs it doesn't run itself (e.g. live_score_push).
+    """
+    if not HEALTH_JSON_OUT.exists():
+        return {}
+    try:
+        data = json.loads(HEALTH_JSON_OUT.read_text())
+        return {e["job"]: e for e in data.get("jobs", []) if "job" in e}
+    except Exception:
+        return {}
+
+
 def _job_entry(job: str, raw: dict[str, Any] | None) -> dict[str, Any]:
     """Builds the public dashboard entry for one job, including freshness."""
     sched = JOB_SCHEDULE.get(job, {})
@@ -109,12 +124,18 @@ def _overall(jobs: list[dict[str, Any]]) -> str:
     return "ok"
 
 
-def aggregate() -> dict[str, Any]:
+def aggregate(merge_from_committed: bool = False) -> dict[str, Any]:
     HEALTH_DIR.mkdir(parents=True, exist_ok=True)
+    baseline = _load_baseline() if merge_from_committed else {}
     jobs: list[dict[str, Any]] = []
     for job in JOB_SCHEDULE:
         path = HEALTH_DIR / f"{job}.json"
-        raw = _load_one(path) if path.exists() else None
+        if path.exists():
+            raw = _load_one(path)
+        elif merge_from_committed and job in baseline:
+            raw = baseline[job]
+        else:
+            raw = None
         jobs.append(_job_entry(job, raw))
 
     payload = {
@@ -174,10 +195,13 @@ def _cli() -> int:
     p = argparse.ArgumentParser(description="Aggregate health snapshots into docs/data/health.json")
     p.add_argument("--no-upload", action="store_true",
                    help="skip Cloudflare KV upload (useful in tests)")
+    p.add_argument("--merge-from-committed", action="store_true",
+                   help="use docs/data/health.json as baseline for jobs without fresh snapshots "
+                        "(for GitHub Actions, where results/health/ is gitignored)")
     p.add_argument("--quiet", action="store_true")
     args = p.parse_args()
 
-    payload = aggregate()
+    payload = aggregate(merge_from_committed=args.merge_from_committed)
 
     if not args.quiet:
         n_ok = sum(1 for j in payload["jobs"] if j["status"] == "ok")
