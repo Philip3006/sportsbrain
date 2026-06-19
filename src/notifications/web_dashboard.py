@@ -379,11 +379,15 @@ def _get_closed_bets() -> list[dict]:
 def _get_settled_bets_for_dashboard() -> list[dict]:
     if not _LEDGER_PATH.exists():
         return []
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     try:
         rows = []
         with open(_LEDGER_PATH, newline="") as f:
             for r in csv.DictReader(f):
                 if r.get("status") not in ("won", "lost", "push", "void"):
+                    continue
+                # Skip bets whose match hasn't happened yet (future-voided anomalies)
+                if r.get("match_date", "") > today_str:
                     continue
                 rows.append({
                     "match":      f"{r['home']} vs {r['away']}",

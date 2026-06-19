@@ -854,6 +854,7 @@ let _modelTips = {};
 let _openBets = [];
 let _settledBets = [];
 let _activeBetTab = 'open';
+let _liveScores = {};
 let _bankrollState = {};
 let _squads = {};
 let _oddsHistory = {};
@@ -1779,12 +1780,39 @@ function _pwaPendingHtml() {
   }).join('');
 }
 
+const _NORM_ALIASES = {
+  'united states': 'usa', 'türkiye': 'turkey', 'republic of ireland': 'ireland',
+  "côte d'ivoire": 'ivory coast', 'dr congo': 'democratic republic of congo',
+};
+function _normTeam(s) { const n = (s || '').toLowerCase().trim(); return _NORM_ALIASES[n] || n; }
+
+function _buildLiveScoreLookup(data) {
+  const out = {};
+  for (const v of Object.values(data)) {
+    const key = `${_normTeam(v.home)}_vs_${_normTeam(v.away)}`;
+    // Keep the most recently updated entry if duplicates exist
+    if (!out[key] || v.updated > out[key].updated) out[key] = v;
+  }
+  return out;
+}
+
+async function _fetchLiveScores() {
+  try {
+    const r = await fetch('data/live_scores.json?t=' + Date.now(), { cache: 'no-store' });
+    if (r.ok) _liveScores = _buildLiveScoreLookup(await r.json());
+  } catch (_) {}
+}
+
 function _setBetTab(tab) {
   _activeBetTab = tab;
   document.querySelectorAll('.bet-tab').forEach(el => {
     el.classList.toggle('active', el.getAttribute('onclick').includes(`'${tab}'`));
   });
-  renderBets();
+  if (tab === 'live') {
+    _fetchLiveScores().then(() => renderBets());
+  } else {
+    renderBets();
+  }
 }
 
 function _betDateLabel(matchDate, forSettled) {
@@ -1820,6 +1848,28 @@ function _renderOpenBetCards(bets, isLive) {
     const flagH = teamFlag(home) || '';
     const flagA = teamFlag(away) || '';
     const currentOddsStr = b.current_odds ? b.current_odds.toFixed(2) : '—';
+
+    // Live score lookup
+    let liveScoreHtml = '';
+    if (isLive) {
+      const lsKey = `${_normTeam(home)}_vs_${_normTeam(away)}`;
+      const ls = _liveScores[lsKey];
+      if (ls && ls.home_score != null) {
+        // Compute approximate match minute from kickoff in schedule
+        const koEntry = _schedule.find(s => _normTeam(s.home) === _normTeam(home) && _normTeam(s.away) === _normTeam(away));
+        let minStr = '';
+        if (koEntry?.kickoff) {
+          const elapsed = Math.floor((Date.now() - new Date(koEntry.kickoff).getTime()) / 60000);
+          const clamp = Math.min(Math.max(elapsed, 0), 90);
+          minStr = `${clamp}'`;
+        }
+        liveScoreHtml = `<div style="display:flex;align-items:center;gap:8px;padding:10px 14px 0;">
+          <span class="score-box">${ls.home_score} : ${ls.away_score}</span>
+          ${minStr ? `<span class="today-countdown">${minStr}</span>` : ''}
+        </div>`;
+      }
+    }
+
     h += `<div class="bet-card">
       <div class="bet-card-top">
         <div class="bet-card-header">
@@ -1831,7 +1881,8 @@ function _renderOpenBetCards(bets, isLive) {
           ${conf ? `<span class="bet-conf-chip ${confCls}">${conf}</span>` : ''}
           ${isLive ? `<span class="today-live-badge">LIVE</span>` : ''}
         </div>
-        <div class="bet-odds-row">
+        ${liveScoreHtml}
+        <div class="bet-odds-row" style="${isLive ? 'padding-top:8px;' : ''}">
           <div>
             <div class="bet-odds-label">Einstieg</div>
             <span class="bet-odds-entry">@${odds.toFixed(2)}</span>
