@@ -116,11 +116,16 @@ health_finish() {
   _HEALTH_START_TS=""
   _HEALTH_RUN_ID=""
 
-  # Hook for Phase C: push notifications on failure are inserted here later.
+  # Push-notification + recovery tracking (Phase C).
+  # On error: notify_failure() handles throttling internally so a recurring
+  # failure (e.g. expired API key) only pushes once every THROTTLE_HOURS.
+  # On ok: mark the job as recovered so the next failure pushes immediately
+  # (state transition ok→fail).
   if [ "$status" = "error" ]; then
-    # Stub — Phase C wires this up.
-    if command -v health_push_on_fail >/dev/null 2>&1; then
-      health_push_on_fail "$job" "$err_msg" || true
-    fi
+    python3 -m src.notifications.health_push "$job" "$err_msg" \
+      >/dev/null 2>&1 || true
+  elif [ "$status" = "ok" ]; then
+    python3 -m src.notifications.health_push "$job" --recover \
+      >/dev/null 2>&1 || true
   fi
 }
