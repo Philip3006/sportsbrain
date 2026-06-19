@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-19T17:45:14Z",
+  "updated": "2026-06-19T20:05:14Z",
   "meta": {
     "stale_odds": false
   },
@@ -8482,6 +8482,12 @@
   "top_elo": [],
   "history": [
     {
+      "date": "2026-06-19",
+      "n_bets": 3,
+      "pnl": 0.0,
+      "roi_pct": 0.0
+    },
+    {
       "date": "2026-06-18",
       "n_bets": 4,
       "pnl": -50.0,
@@ -8524,13 +8530,443 @@
       "roi_pct": 0.0
     }
   ],
-  "open_bets": [],
+  "open_bets": [
+    {
+      "match": "Alba Berlin vs Bayern München",
+      "home": "Alba Berlin",
+      "away": "Bayern München",
+      "market": "home",
+      "entry_odds": 2.5,
+      "current_odds": null,
+      "drift_pct": null,
+      "clv_signal": null,
+      "stake": 10.0,
+      "match_date": "2026-06-19",
+      "model_edge_pct": null,
+      "is_live": false
+    },
+    {
+      "match": "USA vs Australia",
+      "home": "USA",
+      "away": "Australia",
+      "market": "btts_yes",
+      "entry_odds": 2.25,
+      "current_odds": 0.0,
+      "drift_pct": -100.0,
+      "clv_signal": "bad",
+      "stake": 10.0,
+      "match_date": "2026-06-19",
+      "model_edge_pct": null,
+      "is_live": true
+    },
+    {
+      "match": "USA vs Australia",
+      "home": "USA",
+      "away": "Australia",
+      "market": "o/u2.5_over",
+      "entry_odds": 2.15,
+      "current_odds": 2.02,
+      "drift_pct": -6.0,
+      "clv_signal": "bad",
+      "stake": 10.0,
+      "match_date": "2026-06-19",
+      "model_edge_pct": null,
+      "is_live": true
+    }
+  ],
+  "settled_bets": [
+    {
+      "match": "Algeria vs Austria",
+      "home": "Algeria",
+      "away": "Austria",
+      "market": "home",
+      "entry_odds": 3.85,
+      "stake": 15.0,
+      "pnl": 0.0,
+      "match_date": "2026-06-28",
+      "status": "void"
+    },
+    {
+      "match": "Switzerland vs Canada",
+      "home": "Switzerland",
+      "away": "Canada",
+      "market": "away",
+      "entry_odds": 3.69,
+      "stake": 15.0,
+      "pnl": 0.0,
+      "match_date": "2026-06-24",
+      "status": "void"
+    },
+    {
+      "match": "Uruguay vs Cape Verde",
+      "home": "Uruguay",
+      "away": "Cape Verde",
+      "market": "draw",
+      "entry_odds": 4.75,
+      "stake": 15.0,
+      "pnl": 0.0,
+      "match_date": "2026-06-21",
+      "status": "void"
+    },
+    {
+      "match": "Turkey vs Paraguay",
+      "home": "Turkey",
+      "away": "Paraguay",
+      "market": "away",
+      "entry_odds": 3.6,
+      "stake": 15.0,
+      "pnl": 0.0,
+      "match_date": "2026-06-20",
+      "status": "void"
+    },
+    {
+      "match": "Czechia vs South Africa",
+      "home": "Czechia",
+      "away": "South Africa",
+      "market": "home",
+      "entry_odds": 1.8,
+      "stake": 10.0,
+      "pnl": -10.0,
+      "match_date": "2026-06-18",
+      "status": "lost"
+    },
+    {
+      "match": "Czechia vs South Africa",
+      "home": "Czechia",
+      "away": "South Africa",
+      "market": "o/u2.5_over",
+      "entry_odds": 2.05,
+      "stake": 20.0,
+      "pnl": -20.0,
+      "match_date": "2026-06-18",
+      "status": "lost"
+    },
+    {
+      "match": "Switzerland vs Bosnia & Herzegovina",
+      "home": "Switzerland",
+      "away": "Bosnia & Herzegovina",
+      "market": "draw",
+      "entry_odds": 4.0,
+      "stake": 10.0,
+      "pnl": -10.0,
+      "match_date": "2026-06-18",
+      "status": "lost"
+    },
+    {
+      "match": "Switzerland vs Bosnia & Herzegovina",
+      "home": "Switzerland",
+      "away": "Bosnia & Herzegovina",
+      "market": "scorer_Breel Embolo",
+      "entry_odds": 2.2,
+      "stake": 10.0,
+      "pnl": -10.0,
+      "match_date": "2026-06-18",
+      "status": "lost"
+    },
+    {
+      "match": "England vs Croatia",
+      "home": "England",
+      "away": "Croatia",
+      "market": "o/u2.5_under",
+      "entry_odds": 1.79,
+      "stake": 15.0,
+      "pnl": 0.0,
+      "match_date": "2026-06-17",
+      "status": "void"
+    },
+    {
+      "match": "Argentina vs Algeria",
+      "home": "Argentina",
+      "away": "Algeria",
+      "market": "o/u3.0_under",
+      "entry_odds": 1.86,
+      "stake": 20.0,
+      "pnl": -20.0,
+      "match_date": "2026-06-17",
+      "status": "lost"
+    },
+    {
+      "match": "Argentina vs Algeria",
+      "home": "Argentina",
+      "away": "Algeria",
+      "market": "scorer_Julián Álvarez",
+      "entry_odds": 2.5,
+      "stake": 20.0,
+      "pnl": 0.0,
+      "match_date": "2026-06-17",
+      "status": "void"
+    },
+    {
+      "match": "Austria vs Jordan",
+      "home": "Austria",
+      "away": "Jordan",
+      "market": "draw",
+      "entry_odds": 5.0,
+      "stake": 8.43,
+      "pnl": -8.43,
+      "match_date": "2026-06-17",
+      "status": "lost"
+    },
+    {
+      "match": "Portugal vs DR Congo",
+      "home": "Portugal",
+      "away": "DR Congo",
+      "market": "draw",
+      "entry_odds": 5.5,
+      "stake": 10.58,
+      "pnl": 47.61,
+      "match_date": "2026-06-17",
+      "status": "won"
+    },
+    {
+      "match": "Portugal vs DR Congo",
+      "home": "Portugal",
+      "away": "DR Congo",
+      "market": "o/u3.5_under",
+      "entry_odds": 1.37,
+      "stake": 20.0,
+      "pnl": 7.4,
+      "match_date": "2026-06-17",
+      "status": "won"
+    },
+    {
+      "match": "England vs Croatia",
+      "home": "England",
+      "away": "Croatia",
+      "market": "home",
+      "entry_odds": 1.72,
+      "stake": 14.15,
+      "pnl": 0.0,
+      "match_date": "2026-06-17",
+      "status": "void"
+    },
+    {
+      "match": "England vs Croatia",
+      "home": "England",
+      "away": "Croatia",
+      "market": "o/u2.5_under",
+      "entry_odds": 1.68,
+      "stake": 20.0,
+      "pnl": -20.0,
+      "match_date": "2026-06-17",
+      "status": "lost"
+    },
+    {
+      "match": "England vs Croatia",
+      "home": "England",
+      "away": "Croatia",
+      "market": "scorer_Ivan Toney",
+      "entry_odds": 2.5,
+      "stake": 20.0,
+      "pnl": 0.0,
+      "match_date": "2026-06-17",
+      "status": "void"
+    },
+    {
+      "match": "England vs Croatia",
+      "home": "England",
+      "away": "Croatia",
+      "market": "scorer_Harry Kane",
+      "entry_odds": 3.0,
+      "stake": 10.0,
+      "pnl": 20.0,
+      "match_date": "2026-06-17",
+      "status": "won"
+    },
+    {
+      "match": "Ghana vs Panama",
+      "home": "Ghana",
+      "away": "Panama",
+      "market": "draw",
+      "entry_odds": 3.1,
+      "stake": 10.01,
+      "pnl": -10.01,
+      "match_date": "2026-06-17",
+      "status": "lost"
+    },
+    {
+      "match": "Ghana vs Panama",
+      "home": "Ghana",
+      "away": "Panama",
+      "market": "btts_yes",
+      "entry_odds": 1.97,
+      "stake": 15.0,
+      "pnl": -15.0,
+      "match_date": "2026-06-17",
+      "status": "lost"
+    },
+    {
+      "match": "Iran vs New Zealand",
+      "home": "Iran",
+      "away": "New Zealand",
+      "market": "ah-1.5_home",
+      "entry_odds": 3.3,
+      "stake": 10.0,
+      "pnl": -10.0,
+      "match_date": "2026-06-16",
+      "status": "lost"
+    },
+    {
+      "match": "Iran vs New Zealand",
+      "home": "Iran",
+      "away": "New Zealand",
+      "market": "o/u2.5_over",
+      "entry_odds": 2.32,
+      "stake": 14.0,
+      "pnl": 18.48,
+      "match_date": "2026-06-16",
+      "status": "won"
+    },
+    {
+      "match": "France vs Senegal",
+      "home": "France",
+      "away": "Senegal",
+      "market": "o/u2.5_under",
+      "entry_odds": 2.05,
+      "stake": 11.44,
+      "pnl": -11.44,
+      "match_date": "2026-06-16",
+      "status": "lost"
+    },
+    {
+      "match": "France vs Senegal",
+      "home": "France",
+      "away": "Senegal",
+      "market": "ah+1.5_away",
+      "entry_odds": 1.62,
+      "stake": 15.0,
+      "pnl": -15.0,
+      "match_date": "2026-06-16",
+      "status": "lost"
+    },
+    {
+      "match": "Iraq vs Norway",
+      "home": "Iraq",
+      "away": "Norway",
+      "market": "btts_yes",
+      "entry_odds": 2.37,
+      "stake": 11.97,
+      "pnl": 16.4,
+      "match_date": "2026-06-16",
+      "status": "won"
+    },
+    {
+      "match": "Belgium vs Egypt",
+      "home": "Belgium",
+      "away": "Egypt",
+      "market": "draw",
+      "entry_odds": 4.12,
+      "stake": 9.42,
+      "pnl": 29.39,
+      "match_date": "2026-06-15",
+      "status": "won"
+    },
+    {
+      "match": "Belgium vs Egypt",
+      "home": "Belgium",
+      "away": "Egypt",
+      "market": "o/u2.5_under",
+      "entry_odds": 1.96,
+      "stake": 15.0,
+      "pnl": 14.4,
+      "match_date": "2026-06-15",
+      "status": "won"
+    },
+    {
+      "match": "Saudi Arabia vs Uruguay",
+      "home": "Saudi Arabia",
+      "away": "Uruguay",
+      "market": "ah+1.5_home",
+      "entry_odds": 1.65,
+      "stake": 15.0,
+      "pnl": 9.75,
+      "match_date": "2026-06-15",
+      "status": "won"
+    },
+    {
+      "match": "Saudi Arabia vs Uruguay",
+      "home": "Saudi Arabia",
+      "away": "Uruguay",
+      "market": "o/u3.0_under",
+      "entry_odds": 1.68,
+      "stake": 15.0,
+      "pnl": 10.2,
+      "match_date": "2026-06-15",
+      "status": "won"
+    },
+    {
+      "match": "Haiti vs Scotland",
+      "home": "Haiti",
+      "away": "Scotland",
+      "market": "away",
+      "entry_odds": 1.5,
+      "stake": 15.0,
+      "pnl": 7.5,
+      "match_date": "2026-06-14",
+      "status": "won"
+    },
+    {
+      "match": "United States vs Paraguay",
+      "home": "United States",
+      "away": "Paraguay",
+      "market": "o/u2.5_over",
+      "entry_odds": 2.45,
+      "stake": 15.0,
+      "pnl": 21.75,
+      "match_date": "2026-06-13",
+      "status": "won"
+    },
+    {
+      "match": "Brazil vs Morocco",
+      "home": "Brazil",
+      "away": "Morocco",
+      "market": "o/u2.5_over",
+      "entry_odds": 0.0,
+      "stake": 10.0,
+      "pnl": -10.0,
+      "match_date": "2026-06-13",
+      "status": "lost"
+    },
+    {
+      "match": "Switzerland vs Qatar",
+      "home": "Switzerland",
+      "away": "Qatar",
+      "market": "ah-1.0_home",
+      "entry_odds": 0.0,
+      "stake": 11.86,
+      "pnl": -11.86,
+      "match_date": "2026-06-13",
+      "status": "lost"
+    },
+    {
+      "match": "South Korea vs Czechia",
+      "home": "South Korea",
+      "away": "Czechia",
+      "market": "o/u2.5_over",
+      "entry_odds": 2.15,
+      "stake": 11.4,
+      "pnl": 13.11,
+      "match_date": "2026-06-12",
+      "status": "won"
+    },
+    {
+      "match": "Canada vs Bosnia and Herzegovina",
+      "home": "Canada",
+      "away": "Bosnia and Herzegovina",
+      "market": "home",
+      "entry_odds": 1.8,
+      "stake": 8.0,
+      "pnl": -8.0,
+      "match_date": "2026-06-12",
+      "status": "lost"
+    }
+  ],
   "bankroll_state": {
     "start": 100.0,
-    "free": 126.25,
-    "staked": 0,
-    "exposure_pct": 0.0,
-    "max_win": 0,
+    "free": 96.25,
+    "staked": 30.0,
+    "exposure_pct": 30.0,
+    "max_win": 37.7,
     "pnl_closed": 26.25
   },
   "wm_stats": {
