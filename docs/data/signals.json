@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-19T20:05:14Z",
+  "updated": "2026-06-19T20:26:58Z",
   "meta": {
     "stale_odds": false
   },
@@ -8575,50 +8575,6 @@
     }
   ],
   "settled_bets": [
-    {
-      "match": "Algeria vs Austria",
-      "home": "Algeria",
-      "away": "Austria",
-      "market": "home",
-      "entry_odds": 3.85,
-      "stake": 15.0,
-      "pnl": 0.0,
-      "match_date": "2026-06-28",
-      "status": "void"
-    },
-    {
-      "match": "Switzerland vs Canada",
-      "home": "Switzerland",
-      "away": "Canada",
-      "market": "away",
-      "entry_odds": 3.69,
-      "stake": 15.0,
-      "pnl": 0.0,
-      "match_date": "2026-06-24",
-      "status": "void"
-    },
-    {
-      "match": "Uruguay vs Cape Verde",
-      "home": "Uruguay",
-      "away": "Cape Verde",
-      "market": "draw",
-      "entry_odds": 4.75,
-      "stake": 15.0,
-      "pnl": 0.0,
-      "match_date": "2026-06-21",
-      "status": "void"
-    },
-    {
-      "match": "Turkey vs Paraguay",
-      "home": "Turkey",
-      "away": "Paraguay",
-      "market": "away",
-      "entry_odds": 3.6,
-      "stake": 15.0,
-      "pnl": 0.0,
-      "match_date": "2026-06-20",
-      "status": "void"
-    },
     {
       "match": "Czechia vs South Africa",
       "home": "Czechia",
