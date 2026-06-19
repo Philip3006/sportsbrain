@@ -28,6 +28,7 @@ jobs:
         run: pip install -r requirements.txt && python -m playwright install chromium --with-deps
 
       - name: Run daily scan
+        id: scan
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
@@ -39,11 +40,26 @@ jobs:
       - name: Build WM 2026 Monte-Carlo Forecast + xPoints
         run: python scripts/build_wm_forecast.py --n 2000
 
+      - name: Write health snapshot
+        if: always()
+        env:
+          SCAN_STATUS: ${{ steps.scan.outcome == 'failure' && 'error' || 'ok' }}
+        run: |
+          mkdir -p results/health
+          python3 -m src.monitoring.health_writer --job daily_scan --status "$SCAN_STATUS"
+
+      - name: Aggregate & upload health
+        if: always()
+        env:
+          SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
+          SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
+        run: python3 -m src.monitoring.aggregate_health --merge-from-committed
+
       - name: Commit models + signals + forecast (NO ledger — manual confirmation required)
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add models/ docs/data/signals.json docs/data/wm_forecast.json || true
+          git add models/ docs/data/signals.json docs/data/wm_forecast.json docs/data/health.json || true
           git diff --staged --quiet || git commit -m "auto: scan $(date +%Y-%m-%d)"
           for i in 1 2 3 4 5; do
             git pull --rebase origin main || true

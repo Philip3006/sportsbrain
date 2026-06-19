@@ -28,6 +28,13 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Consume pending PWA bets
+        id: consume
+        env:
+          SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
+          SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
+        run: python3 scripts/consume_pending_bets.py
+
       - name: Check window + settle
         id: window
         env:
@@ -109,6 +116,7 @@ jobs:
           echo "bankroll=$BANKROLL" >> $GITHUB_OUTPUT
 
       - name: Run pre-match scan
+        id: prematch
         if: contains(steps.window.outputs.stdout, 'SCAN_NEEDED=true')
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
@@ -137,11 +145,30 @@ jobs:
           VAPID_SUB: ${{ secrets.VAPID_SUB }}
         run: python scripts/match_reminder.py
 
+      - name: Write health snapshots
+        if: always()
+        env:
+          CONSUME_STATUS: ${{ steps.consume.outcome == 'failure' && 'error' || 'ok' }}
+          SETTLE_STATUS: ${{ steps.window.outcome == 'failure' && 'error' || 'ok' }}
+          PREMATCH_STATUS: ${{ steps.prematch.outcome == 'failure' && 'error' || 'ok' }}
+        run: |
+          mkdir -p results/health
+          python3 -m src.monitoring.health_writer --job consume_pending_bets --status "$CONSUME_STATUS"
+          python3 -m src.monitoring.health_writer --job settle --status "$SETTLE_STATUS"
+          python3 -m src.monitoring.health_writer --job prematch_scan --status "$PREMATCH_STATUS"
+
+      - name: Aggregate & upload health
+        if: always()
+        env:
+          SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
+          SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
+        run: python3 -m src.monitoring.aggregate_health --merge-from-committed
+
       - name: Commit results
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add results/ledger.csv docs/data/signals.json results/scans/ || true
+          git add results/ledger.csv docs/data/signals.json docs/data/health.json results/scans/ || true
           git diff --staged --quiet && exit 0
           git commit -m "auto: watchdog $(date -u '+%Y-%m-%d %H:%M UTC')"
           for i in 1 2 3 4 5; do

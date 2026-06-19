@@ -29,13 +29,29 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Auto-retrain (DC + LGBM + Stacker)
+        id: retrain
         run: python scripts/auto_retrain.py
+
+      - name: Write health snapshot
+        if: always()
+        env:
+          RETRAIN_STATUS: ${{ steps.retrain.outcome == 'failure' && 'error' || 'ok' }}
+        run: |
+          mkdir -p results/health
+          python3 -m src.monitoring.health_writer --job auto_retrain --status "$RETRAIN_STATUS"
+
+      - name: Aggregate & upload health
+        if: always()
+        env:
+          SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
+          SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
+        run: python3 -m src.monitoring.aggregate_health --merge-from-committed
 
       - name: Commit updated models
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add models/ || true
+          git add models/ docs/data/health.json || true
           git diff --staged --quiet && echo "No new WM matches — no model changes." && exit 0
           git commit -m "auto: retrain $(date -u '+%Y-%m-%d %H:%M UTC')"
           for i in 1 2 3 4 5; do
