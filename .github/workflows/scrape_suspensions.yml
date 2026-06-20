@@ -1,0 +1,55 @@
+name: Sperren-Scraper (WM 2026)
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # täglich 06:00 UTC (08:00 MESZ)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry-run (kein Schreiben, kein Push)'
+        required: false
+        default: 'false'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run suspension scraper
+        env:
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUB: ${{ secrets.VAPID_SUB }}
+        run: |
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            python scripts/scrape_suspensions.py --dry-run
+          else
+            python scripts/scrape_suspensions.py
+          fi
+
+      - name: Commit & push if changed
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet data/suspensions.json data/suspensions_candidates.json; then
+            echo "No changes."
+            exit 0
+          fi
+          git add data/suspensions.json data/suspensions_candidates.json
+          git commit -m "auto: scrape suspensions $(date -u +%Y-%m-%dT%H:%MZ)"
+          git pull --rebase --strategy-option=theirs
+          git push

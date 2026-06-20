@@ -258,12 +258,13 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Impact/Aufwand/Risiko**: 🟡 · 🔴 · 🟢 (Flag schützt)
 - **Dateien**: `src/features/ppda.py` (neu), `src/features/builder.py`, `src/config.py`, `scripts/backtest_with_ppda.py` (neu)
 
-### G2. Sperren-Tracking automatisieren
-- **Was**: `scripts/scrape_suspensions.py` läuft täglich (Sofascore/WhoScored), füllt `data/suspensions.json`.
+### G2. Sperren-Tracking automatisieren ✅
+- **Was**: `scripts/scrape_suspensions.py` läuft täglich (Multi-Source), füllt `data/suspensions.json`.
 - **Warum**: Vor KO-Phase 2026-07-04.
 - **Impact/Aufwand/Risiko**: 🟡 · 🔴 · 🔴 (Sofascore-Quota erschöpft, WhoScored Cloudflare-geschützt)
-- **Dateien**: `scripts/scrape_suspensions.py`, `.github/workflows/suspensions.yml`
+- **Dateien**: `scripts/scrape_suspensions.py`, `.github/workflows/scrape_suspensions.yml`, `tests/scripts/test_scrape_suspensions.py`
 - **⚠ Realitätscheck**: Wenn keine Quelle: manuelle CLI bleiben + Memory.
+- **Status (2026-06-20)**: Erledigt. Quellen: FIFA.com (Gewicht 3), UEFA.com (2), BBC Sport (1), ESPN (1). Confidence-Score = Σ Source-Gewichte + 2 (Squad-Cache-Verifikation) + 2 (≥2 unabhängige Quellen). Auto-Merge ab Score ≥ 5 → `data/suspensions.json`; sonst → `data/suspensions_candidates.json` für manuelle Review via `add_suspension.py`. Push-Notification mit Top-3 Funden. Workflow: täglich 06:00 UTC (`scrape_suspensions.yml`). 15 Unit-Tests grün (Total 446 = Baseline 431 + 15).
 
 ### G3. Wikipedia-Squad-Fallback verifizieren ✅
 - **Was**: Stichprobe 3 von 15 Cloudflare-blockierten Teams.
@@ -377,7 +378,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **0** | A1, A2, A3 (Roadmap-Setup) | ✅ erledigt | 20 min |
 | **1** | B1–B8 (Hygiene & Sicherheit) | ✅ erledigt 2026-06-20 | 90 min |
 | **2** | F1, F2 (Stabilität) | ✅ erledigt 2026-06-20 | 2 h |
-| **3** | G3 (Wikipedia-Verify), G2 (Sperren-Auto) | bis 2026-07-03 | 2-4 h |
+| **3** | G3 (Wikipedia-Verify), G2 (Sperren-Auto) | ✅ erledigt 2026-06-20 | 2-4 h |
 | **4** | G1 (PPDA Shadow) | bis 2026-07-15 | 4-6 h |
 | **5** | F3, F4 (CLV-Audit + UI) | Tag 3-4 | 2-3 h |
 | **6** | C1–C7 (Trust-UI) | Tag 4-6 | 4-6 h |
@@ -407,3 +408,4 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **2026-06-20**: Initiale Roadmap aus Audit-Phasen 1-7 + improvement_log-Durchgang. Phase 0 (A1-A3) erledigt.
 - **2026-06-20**: ~ Phase 1 (B1-B8) vollständig erledigt in Commit `c61f142`, Worker-Deploy `6a8744c6`. Alle Verifikations-Kriterien erfüllt. Roadmap-Workflow (Überblick → Detail-Fragen → Tests vor Push) als Feedback-Memory persistiert. Nächste Phase: F1/F2 (Stabilität).
 - **2026-06-20**: ~ Phase 2 (F1, F2) erledigt. Zentraler `scripts/_http_retry.py::retry_request` mit 7 Unit-Tests, 14 Call-Sites migriert (Worker, TheOddsAPI, ESPN, Sofascore, StatsBomb, Fotmob, Wikipedia, Covers, Football-Data, etc.). Default-Backoff (5/15/30s) deckt DNS-Aussetzer ab, die heute mehrfach im Session-Report auftauchten. 431/431 Tests grün. Fotmob als 3. Live-Score-Quelle bewusst nicht gebaut (YAGNI). Nächste Phase: G3 + G2 (Wikipedia-Verify, Sperren-Auto) bis 2026-07-03.
+- **2026-06-20**: ~ Phase 3 (G3, G2) erledigt. G3: Stichprobe Tunisia/Senegal/Jordan (Seed 20260620) liefert 26 Spieler aus `_fetch_wc_squads_page`; Per-Team-Wikipedia-Seiten sind faktisch 404 → echter Fallback ist die konsolidierte WC-Squads-Page. G2: Multi-Source-Scraper (FIFA/UEFA/BBC/ESPN) mit Confidence-Score (Source-Gewicht + Squad-Verifikation + Multi-Source-Bonus), Auto-Merge ab Score ≥ 5, sonst Kandidaten-Datei für manuelle Review. Workflow täglich 06:00 UTC. 446/446 Tests grün (+15). Nächste Phase: G1 (PPDA Shadow) bis 2026-07-15.
