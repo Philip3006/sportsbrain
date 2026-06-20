@@ -145,6 +145,32 @@ def format_goalscorer_section(
     return lines
 
 
+def filter_scorers_by_squad(
+    preds: list[dict],
+    squad_report,
+) -> list[dict]:
+    """
+    Removes predictions for players not in the confirmed squad.
+    Only filters when squad_report has real data (wikipedia or transfermarkt source).
+    Covers.com only provides injured players (not full squad), so it's skipped.
+    Default reports (no data) are also skipped — better to show unfiltered than nothing.
+    """
+    if squad_report is None or squad_report.data_source not in ("wikipedia", "transfermarkt"):
+        return preds
+
+    squad_names = [p.name for p in squad_report.players]
+    if not squad_names:
+        return preds
+
+    filtered = []
+    for pred in preds:
+        sb_name = pred["player"]
+        in_squad = any(_names_match(sb_name, sq_name) for sq_name in squad_names)
+        if in_squad:
+            filtered.append(pred)
+    return filtered
+
+
 def detect_value_goalscorer(
     match_id: str,
     home: str,

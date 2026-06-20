@@ -606,17 +606,30 @@ def run_daily_scan(
             _top_scores = []
 
         # Goalscorer predictions (StatsBomb xG, graceful fallback)
+        # Squad filter: only keep players confirmed in the actual squad roster.
         _home_scorers: list[dict] = []
         _away_scorers: list[dict] = []
         if not player_xg_df.empty:
             try:
-                from src.betting.goalscorer import get_top_goalscorer_predictions
-                _home_scorers = get_top_goalscorer_predictions(
-                    home, match_ts_naive, player_xg_df, top_n=5, dc_params=dc_params
+                from src.betting.goalscorer import (
+                    get_top_goalscorer_predictions,
+                    filter_scorers_by_squad,
                 )
-                _away_scorers = get_top_goalscorer_predictions(
-                    away, match_ts_naive, player_xg_df, top_n=5, dc_params=dc_params
+                _home_scorers = filter_scorers_by_squad(
+                    get_top_goalscorer_predictions(
+                        home, match_ts_naive, player_xg_df, top_n=10, dc_params=dc_params
+                    ),
+                    home_squad,
                 )
+                _away_scorers = filter_scorers_by_squad(
+                    get_top_goalscorer_predictions(
+                        away, match_ts_naive, player_xg_df, top_n=10, dc_params=dc_params
+                    ),
+                    away_squad,
+                )
+                # After squad filter, keep only top 5
+                _home_scorers = _home_scorers[:5]
+                _away_scorers = _away_scorers[:5]
             except Exception:
                 pass
 
