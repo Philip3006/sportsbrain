@@ -56,6 +56,8 @@ def fetch_wc_odds(force: bool = False) -> pd.DataFrame:
 
         df = xl.parse(sheet)
         df = df.dropna(subset=["Home", "Away", "HGFT", "AGFT"])
+        # Datum mitführen wo verfügbar (für genaues Match-Lookup, kein „Wiederbegegnung gewinnt alte Quote")
+        date_col = next((c for c in ("Date", "MatchDate", "date") if c in df.columns), None)
 
         # Pick best available odds columns
         h_col = d_col = a_col = bm_label = None
@@ -95,11 +97,21 @@ def fetch_wc_odds(force: bool = False) -> pd.DataFrame:
                 except (ValueError, TypeError):
                     pass
 
+            match_date = None
+            if date_col is not None:
+                try:
+                    match_date = pd.to_datetime(row[date_col], dayfirst=True, errors="coerce")
+                    if pd.isna(match_date):
+                        match_date = None
+                except Exception:
+                    match_date = None
+
             rows.append({
                 "tournament":   tournament,
                 "match_id":     f"{tournament}_{home}_vs_{away}",
                 "home_team":    home,
                 "away_team":    away,
+                "date":         match_date,
                 "home_odds":    h_odds,
                 "draw_odds":    d_odds,
                 "away_odds":    a_odds,
