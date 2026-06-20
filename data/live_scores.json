@@ -82,5 +82,14 @@
     "completed": false,
     "ht_sent": true,
     "updated": "2026-06-20T02:00:39.685723+00:00"
+  },
+  "espn_760447": {
+    "home": "Netherlands",
+    "away": "Sweden",
+    "home_score": 0,
+    "away_score": 0,
+    "completed": false,
+    "ht_sent": false,
+    "updated": "2026-06-20T17:02:26.797272+00:00"
   }
 }
