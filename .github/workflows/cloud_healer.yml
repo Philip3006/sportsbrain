@@ -1,0 +1,129 @@
+name: Cloud Healer (30 min)
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  heal:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check health and retry failed jobs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - <<'EOF'
+          import json
+          import subprocess
+          import sys
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          HEALTH = Path("docs/data/health.json")
+          HEAL_LOG = Path("results/auto_heal.log")
+          HEAL_LOG.parent.mkdir(exist_ok=True)
+
+          # Jobs that run too frequently or are handled by their own retry cadence
+          SKIP = {"consume_pending_bets", "aggregate_health"}
+
+          WORKFLOW_MAP = {
+              "daily_scan":     "daily_scan.yml",
+              "auto_retrain":   "auto_retrain.yml",
+              "closing_odds":   "closing_odds.yml",
+              "settle":         "settle.yml",
+              "prematch_scan":  "prematch_scan.yml",
+              "live_score_push": "live_score_push.yml",
+          }
+
+          def log(msg):
+              ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+              line = f"[{ts}] [cloud_healer] {msg}"
+              print(line)
+              with HEAL_LOG.open("a") as f:
+                  f.write(line + "\n")
+
+          if not HEALTH.exists():
+              sys.exit(0)
+
+          data = json.loads(HEALTH.read_text())
+          if data.get("overall") == "ok":
+              sys.exit(0)
+
+          now = datetime.now(timezone.utc)
+          triggered = []
+
+          for job in data.get("jobs", []):
+              name = job["job"]
+              status = job["status"]
+
+              if status == "ok":
+                  continue
+              if name in SKIP:
+                  continue
+              if name not in WORKFLOW_MAP:
+                  log(f"{name}: kein Workflow-Mapping — übersprungen")
+                  continue
+
+              # Cooldown: nicht auslösen wenn letzter Run < 10 Min her
+              last_run = job.get("last_run_at")
+              if last_run:
+                  last_dt = datetime.fromisoformat(last_run.replace("Z", "+00:00"))
+                  age_s = (now - last_dt).total_seconds()
+                  if age_s < 600:
+                      log(f"{name}: letzter Run vor {int(age_s)}s — zu frisch, übersprungen")
+                      continue
+
+              wf = WORKFLOW_MAP[name]
+
+              # Nicht auslösen wenn Workflow bereits läuft oder in Queue
+              r_check = subprocess.run(
+                  ["gh", "run", "list", "--workflow", wf, "--limit", "1",
+                   "--json", "status", "--jq", ".[0].status"],
+                  capture_output=True, text=True
+              )
+              active = r_check.stdout.strip().strip('"')
+              if active in ("in_progress", "queued", "waiting"):
+                  log(f"{name}: Workflow bereits aktiv ({active}) — übersprungen")
+                  continue
+
+              log(f"{name}: status={status} — triggere {wf}")
+              r = subprocess.run(
+                  ["gh", "workflow", "run", wf, "--ref", "main"],
+                  capture_output=True, text=True
+              )
+              if r.returncode == 0:
+                  log(f"{name}: erfolgreich ausgelöst")
+                  triggered.append(name)
+              else:
+                  log(f"{name}: Trigger fehlgeschlagen: {r.stderr.strip()}")
+
+          if not triggered:
+              sys.exit(0)
+          EOF
+
+      - name: Commit heal log if updated
+        run: |
+          git config user.name "SportsBrain Bot"
+          git config user.email "bot@sportsbrain"
+          git add results/auto_heal.log || true
+          git diff --staged --quiet && exit 0
+          git commit -m "auto: cloud-healer retry $(date +%Y-%m-%d\ %H:%M) UTC"
+          git fetch origin main
+          git rebase --strategy-option=theirs origin/main || true
+          git push origin main || true
