@@ -929,7 +929,7 @@ function closeDetail() { showView(_prevView); }
     if (e.touches.length !== 1) return;
     // Inputs/Buttons: keinen Swipe starten, damit Quote-Tap nicht versehentlich auslöst
     const tag = (e.target.tagName || '').toLowerCase();
-    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    if (tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button') return;
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     locked = null;
@@ -1170,11 +1170,14 @@ function _toggleTip(el) {
 }
 // Outside-Tap schließt sofort und schluckt den Tap, damit nicht versehentlich
 // ein anderes Element (Match-Row, Nav-Tab) aktiviert wird.
+// Ausnahme: Buttons werden NICHT geschluckt — der User will Tip schließen UND
+// den Button drücken (z.B. "Wette platzieren").
 function _closeAllTipsCapture(e) {
   if (e.target.closest('.tip')) return;
   const open = document.querySelectorAll('.tip.open');
   if (!open.length) return;
   open.forEach(t => t.classList.remove('open'));
+  if (e.target.closest('button')) return;
   e.preventDefault();
   e.stopPropagation();
 }
