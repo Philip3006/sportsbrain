@@ -252,11 +252,12 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ## 🟦 G. Während laufender WM (P1, vor KO-Phase 2026-07-04)
 
-### G1. PPDA als Shadow-Feature
+### G1. PPDA als Shadow-Feature ✅
 - **Was**: `PPDA_LIVE_ENABLED=False`. Aggregation aus StatsBomb-Events (gleitender Mittelwert letzte 10 Matches). LGBM-Feature-Set erweitert, Live-Scanner ignoriert mit Flag. Backtest-Skript misst ROI-Diff.
 - **Warum**: Vorbereitung ohne Live-Risiko.
 - **Impact/Aufwand/Risiko**: 🟡 · 🔴 · 🟢 (Flag schützt)
-- **Dateien**: `src/features/ppda.py` (neu), `src/features/builder.py`, `src/config.py`, `scripts/backtest_with_ppda.py` (neu)
+- **Dateien**: `src/features/ppda.py` (neu), `src/features/builder.py`, `src/config.py`, `scripts/backtest_with_ppda.py` (neu), `src/data/statsbomb_ppda.py` (neu), `src/data/fbref_ppda.py` (neu, Saison-Fallback-Snapshot)
+- **Status (2026-06-20)**: Erledigt. PPDA-Berechnung aus StatsBomb-Events (Pässe in Opp-60% / Def-Aktionen im Press-Bereich x≥48, Denominator-Floor 5 → NaN-Schutz). Rolling-Window N=10 mit Bayes-Shrinkage gegen Konföderations-Prior (PRIOR_WEIGHT=3.0, MIN_MATCHES=3), Fallback-Kaskade Konföderation → FBref-Snapshot → globaler Fallback 11.5. Builder integriert via `force_ppda`-Flag (Live bleibt off durch `PPDA_LIVE_ENABLED=False`). Backtest-Script vergleicht Brier + ROI-Proxy auf identischem Train/Val-Split. I5-Gate: Δ Brier ≥ 0.001 UND Δ ROI ≥ 0.5pp. 14 Unit-Tests grün, Gesamt-Suite 460/460 (+14 ggü. Baseline 446).
 
 ### G2. Sperren-Tracking automatisieren ✅
 - **Was**: `scripts/scrape_suspensions.py` läuft täglich (Multi-Source), füllt `data/suspensions.json`.
@@ -379,7 +380,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **1** | B1–B8 (Hygiene & Sicherheit) | ✅ erledigt 2026-06-20 | 90 min |
 | **2** | F1, F2 (Stabilität) | ✅ erledigt 2026-06-20 | 2 h |
 | **3** | G3 (Wikipedia-Verify), G2 (Sperren-Auto) | ✅ erledigt 2026-06-20 | 2-4 h |
-| **4** | G1 (PPDA Shadow) | bis 2026-07-15 | 4-6 h |
+| **4** | G1 (PPDA Shadow) | ✅ erledigt 2026-06-20 | 4-6 h |
 | **5** | F3, F4 (CLV-Audit + UI) | Tag 3-4 | 2-3 h |
 | **6** | C1–C7 (Trust-UI) | Tag 4-6 | 4-6 h |
 | **7** | D1–D3 (Risiko & Multi-User) | Tag 7 | 2-3 h |
@@ -409,3 +410,4 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **2026-06-20**: ~ Phase 1 (B1-B8) vollständig erledigt in Commit `c61f142`, Worker-Deploy `6a8744c6`. Alle Verifikations-Kriterien erfüllt. Roadmap-Workflow (Überblick → Detail-Fragen → Tests vor Push) als Feedback-Memory persistiert. Nächste Phase: F1/F2 (Stabilität).
 - **2026-06-20**: ~ Phase 2 (F1, F2) erledigt. Zentraler `scripts/_http_retry.py::retry_request` mit 7 Unit-Tests, 14 Call-Sites migriert (Worker, TheOddsAPI, ESPN, Sofascore, StatsBomb, Fotmob, Wikipedia, Covers, Football-Data, etc.). Default-Backoff (5/15/30s) deckt DNS-Aussetzer ab, die heute mehrfach im Session-Report auftauchten. 431/431 Tests grün. Fotmob als 3. Live-Score-Quelle bewusst nicht gebaut (YAGNI). Nächste Phase: G3 + G2 (Wikipedia-Verify, Sperren-Auto) bis 2026-07-03.
 - **2026-06-20**: ~ Phase 3 (G3, G2) erledigt. G3: Stichprobe Tunisia/Senegal/Jordan (Seed 20260620) liefert 26 Spieler aus `_fetch_wc_squads_page`; Per-Team-Wikipedia-Seiten sind faktisch 404 → echter Fallback ist die konsolidierte WC-Squads-Page. G2: Multi-Source-Scraper (FIFA/UEFA/BBC/ESPN) mit Confidence-Score (Source-Gewicht + Squad-Verifikation + Multi-Source-Bonus), Auto-Merge ab Score ≥ 5, sonst Kandidaten-Datei für manuelle Review. Workflow täglich 06:00 UTC. 446/446 Tests grün (+15). Nächste Phase: G1 (PPDA Shadow) bis 2026-07-15.
+- **2026-06-20**: ~ Phase 4 (G1) erledigt. Neue Module `src/data/statsbomb_ppda.py` (Event-Parser, PPDA pro Match aus Pässen-in-Opp-60% / Def-Aktionen-im-Press-Bereich x≥48, Denominator-Floor 5 → NaN-Schutz, eigener 24h-Cache) und `src/data/fbref_ppda.py` (Saison-PPDA-Snapshot-Fallback). `src/features/ppda.py`: Rolling-Window N=10 mit Bayes-Shrinkage gegen Konföderations-Prior (Fallback-Kaskade Konföderation → FBref → 11.5). `src/features/builder.py` bekommt `ppda_df`/`force_ppda`-Parameter; Live bleibt off durch `PPDA_LIVE_ENABLED=False`. `scripts/backtest_with_ppda.py` vergleicht Brier + ROI-Proxy auf identischem Train/Val-Split, schreibt `results/audits/g1_ppda_backtest_*.json`. I5-Gate-Kriterium: Δ Brier ≥ 0.001 UND Δ ROI ≥ 0.5pp. 14 Unit-Tests neu, Gesamt-Suite 460/460. Nächste Phase: F3/F4 (CLV-Audit + UI).
