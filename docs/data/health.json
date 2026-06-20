@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-20T05:58:10Z",
+  "generated_at": "2026-06-20T05:58:44Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -26,11 +26,11 @@
     },
     {
       "job": "closing_odds",
-      "status": "stale",
-      "last_run_at": "2026-06-19T16:00:08Z",
-      "duration_s": 3.0,
+      "status": "ok",
+      "last_run_at": "2026-06-20T05:58:44Z",
+      "duration_s": null,
       "exit_code": 0,
-      "error": "last run was at 2026-06-19T16:00:08Z — overdue (>46800s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 43200,
       "cadence": "2×/Tag 14:00 + 18:00"
