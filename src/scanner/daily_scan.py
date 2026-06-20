@@ -422,14 +422,7 @@ def run_daily_scan(
     except Exception as _e:
         print(f"  [fotmob] skipped: {_e}")
 
-    # Fetch Bet365 BTTS odds (api-football, optional — needs API_FOOTBALL_KEY)
-    _btts_map: dict = {}
-    try:
-        from src.data.btts_odds import fetch_btts_odds, overlay_btts_odds
-        _btts_map = fetch_btts_odds(matches=unique_matches)
-    except Exception as _e:
-        print(f"  [btts] skipped: {_e}")
-        print("  StatsBomb xG unavailable — xG features disabled.")
+    # BTTS deaktiviert (Backtest 2026-06-21: 13pp Kalibrierungslücke)
 
     all_signals: list[BetSignal] = []
     no_value_matches: list[dict] = []
@@ -757,19 +750,7 @@ def run_daily_scan(
                     bankroll=bankroll, match_id=match_id, line=ah_line,
                 ))
 
-        # BTTS (Both Teams to Score) — overlay Bet365 odds from api-football
-        if _btts_map:
-            match = overlay_btts_odds(match, _btts_map)
-        btts_yes_odds = float(match.get("btts_yes_odds", 0))
-        btts_no_odds = float(match.get("btts_no_odds", 0))
-        if btts_yes_odds > 1.0 or btts_no_odds > 1.0:
-            from src.betting.value_detector import detect_value_btts
-            btts_probs = dc.predict_btts(home, away, dc_params, neutral=True, rho_override=rho_staged)
-            btts_signals = detect_value_btts(
-                home, away, btts_probs, btts_yes_odds, btts_no_odds,
-                bankroll=bankroll, match_id=match_id,
-            )
-            signals.extend(btts_signals)
+        # BTTS deaktiviert: Backtest 2026-06-21 zeigt 13pp Kalibrierungslücke (Modell überschätzt btts_no)
 
         # Tore Bereich 2-4 (Vollspiel + H1 + H2)
         if GOALS_RANGE_ENABLED:
@@ -905,8 +886,6 @@ def run_daily_scan(
             "home":  float(match.get("pin_home", 0)),
             "draw":  float(match.get("pin_draw", 0)),
             "away":  float(match.get("pin_away", 0)),
-            "btts_yes": float(match.get("pin_btts_yes", 0)),
-            "btts_no":  float(match.get("pin_btts_no", 0)),
             "dc_1x": float(match.get("pin_dc_1x", 0)),
             "dc_x2": float(match.get("pin_dc_x2", 0)),
             "dc_12": float(match.get("pin_dc_12", 0)),
@@ -922,31 +901,19 @@ def run_daily_scan(
             s.b365_odds = b365_map.get(s.market, 0.0)
 
         # Two-bucket selection: keep best EV from each bucket per match.
-        # Bucket A (directional/result-correlated): 1X2 + all AH variants.
         # Bucket A: directional (1X2, AH, DC) — one slot per match.
-        # Bucket B1: O/U + BTTS — highly correlated with each other, one slot.
-        # Bucket B2: Tore Bereich (goals_range) — synthetic derived odds, separate slot.
-        # Across buckets: independent exposure — all three may be placed.
-        def _is_ou_btts(mkt: str) -> bool:
-            return mkt.startswith("o/u") or mkt in ("btts_yes", "btts_no")
-
-        def _is_goals_range(mkt: str) -> bool:
-            return (mkt.startswith("goals_") or mkt.startswith("h1_goals_")
-                    or mkt.startswith("h2_goals_"))
-
-        def _is_goals_market(mkt: str) -> bool:
-            return _is_ou_btts(mkt) or _is_goals_range(mkt)
+        # Bucket B: O/U — one slot per match.
+        # BTTS und Goals 2-4 deaktiviert (Backtest 2026-06-21: Kalibrierungslücke >9pp).
+        def _is_ou(mkt: str) -> bool:
+            return mkt.startswith("o/u")
 
         if signals:
-            bucket_a  = [s for s in signals if not _is_goals_market(s.market)]
-            bucket_b1 = [s for s in signals if _is_ou_btts(s.market)]
-            bucket_b2 = [s for s in signals if _is_goals_range(s.market)]
+            bucket_a = [s for s in signals if not _is_ou(s.market)]
+            bucket_b = [s for s in signals if _is_ou(s.market)]
             if bucket_a:
                 all_signals.append(max(bucket_a, key=lambda s: s.ev))
-            if bucket_b1:
-                all_signals.append(max(bucket_b1, key=lambda s: s.ev))
-            if bucket_b2:
-                all_signals.append(max(bucket_b2, key=lambda s: s.ev))
+            if bucket_b:
+                all_signals.append(max(bucket_b, key=lambda s: s.ev))
         else:
             no_value_matches.append({
                 "match": f"{home} vs {away}",
