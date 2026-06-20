@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-20T12:57:41Z",
+  "generated_at": "2026-06-20T13:21:47Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -16,8 +16,8 @@
     {
       "job": "auto_retrain",
       "status": "ok",
-      "last_run_at": "2026-06-20T04:13:37Z",
-      "duration_s": 15.0,
+      "last_run_at": "2026-06-20T13:21:47Z",
+      "duration_s": null,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -37,11 +37,11 @@
     },
     {
       "job": "consume_pending_bets",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-06-20T12:57:41Z",
       "duration_s": null,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-06-20T12:57:41Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
