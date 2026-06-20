@@ -33,9 +33,12 @@ from src.data.international import fetch_international_results, filter_competiti
 from src.features.builder import build_training_matrix
 from src.models import dixon_coles as dc
 from src.models.elo import compute_elo_series
-from src.ensemble import lgbm_model
-from src.ensemble.metrics import brier_score_multiclass
-from src.ensemble.calibration import fit_isotonic, calibrate
+from src.models import lgbm_model
+from src.ensemble.calibration import (
+    brier_score_multiclass,
+    calibrate,
+    fit_isotonic,
+)
 
 
 def _load_dc_params():
