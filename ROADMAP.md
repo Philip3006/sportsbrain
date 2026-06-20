@@ -265,11 +265,12 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Dateien**: `scripts/scrape_suspensions.py`, `.github/workflows/suspensions.yml`
 - **⚠ Realitätscheck**: Wenn keine Quelle: manuelle CLI bleiben + Memory.
 
-### G3. Wikipedia-Squad-Fallback verifizieren
+### G3. Wikipedia-Squad-Fallback verifizieren ✅
 - **Was**: Stichprobe 3 von 15 Cloudflare-blockierten Teams.
 - **Warum**: Verifikation der dokumentierten Lösung.
 - **Impact/Aufwand/Risiko**: 🟡 · 🟢 · 🟢
 - **Verifikation**: Markdown-Bericht mit Squad-Count.
+- **Status (2026-06-20)**: Erledigt. Stichprobe Tunisia/Senegal/Jordan (Seed 20260620) liefert jeweils 26 Spieler aus `_fetch_wc_squads_page` (MediaWiki Parse-API auf `2026_FIFA_World_Cup_squads`). Bericht: `results/audits/g3_wikipedia_squad_verify_2026-06-20.md`. Befund: Per-Team-Pages (`{Team}_at_the_2026_FIFA_World_Cup`) sind in der Praxis 404 — der echte Fallback ist die konsolidierte WC-Squads-Page. Keine Code-Änderungen nötig.
 
 ---
 
