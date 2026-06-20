@@ -46,3 +46,8 @@
 [2026-06-20 19:49:25 UTC] [cloud_healer] prematch_scan: erfolgreich ausgelöst
 [2026-06-20 19:49:25 UTC] [cloud_healer] settle: status=stale — triggere settle.yml
 [2026-06-20 19:49:26 UTC] [cloud_healer] settle: erfolgreich ausgelöst
+[2026-06-20 21:24:28 UTC] [cloud_healer] live_score_push: Workflow bereits aktiv (in_progress) — übersprungen
+[2026-06-20 21:24:28 UTC] [cloud_healer] prematch_scan: status=stale — triggere prematch_scan.yml
+[2026-06-20 21:24:29 UTC] [cloud_healer] prematch_scan: erfolgreich ausgelöst
+[2026-06-20 21:24:29 UTC] [cloud_healer] settle: status=stale — triggere settle.yml
+[2026-06-20 21:24:30 UTC] [cloud_healer] settle: erfolgreich ausgelöst
