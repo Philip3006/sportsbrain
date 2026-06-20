@@ -460,14 +460,18 @@ def _settle_from_results_locked(
 
     if settled:
         _save(df, ledger_path)
-        # Send Web Push notification for each newly settled bet
-        try:
-            from src.notifications.web_push import send_settlement_alert
-            summary = ledger_summary(ledger_path)
-            for idx in newly_settled_indices:
-                send_settlement_alert(df.loc[idx].to_dict(), summary)
-        except Exception:
-            pass
+        # Send Web Push notification for each newly settled bet.
+        # Skip under pytest: tests use fake fixtures (Brazil vs Argentina etc.) and
+        # would otherwise fire real VAPID pushes to subscribed devices.
+        import os
+        if not os.getenv("PYTEST_CURRENT_TEST"):
+            try:
+                from src.notifications.web_push import send_settlement_alert
+                summary = ledger_summary(ledger_path)
+                for idx in newly_settled_indices:
+                    send_settlement_alert(df.loc[idx].to_dict(), summary)
+            except Exception:
+                pass
 
     return settled
 
