@@ -1696,6 +1696,7 @@ function sigCard(s, showMatch) {
     `data-odds="${s.odds}"`,
     `data-stake="${s.stake_eur}"`,
     `data-ev="${s.ev_pct}"`,
+    `data-model-prob="${s.model_prob || 0}"`,
     `data-confidence="${esc(s.confidence||'')}"`,
     `data-kickoff="${esc(s.kickoff||'')}"`,
     `data-sport="${esc(s.sport||'')}"`,
@@ -2225,13 +2226,15 @@ async function _submitBet() {
 
   const btn = document.getElementById('bet-modal-confirm');
   btn.disabled = true; btn.textContent = 'Eintragen…';
+  const hasModelProb = _pendingBet.model_prob && _pendingBet.model_prob > 0;
   const payload = {
     ..._pendingBet,
     odds,
     stake_eur: stake,
-    source: _pendingBet.source || 'value',
+    // Ohne model_prob kann der Worker keine EV-Prüfung machen → 'manual'
+    source: hasModelProb ? (_pendingBet.source || 'value') : 'manual',
   };
-  if (_pendingBet.model_prob && _pendingBet.model_prob > 0) {
+  if (hasModelProb) {
     payload.model_prob = _pendingBet.model_prob;
     payload.ev_pct = calcEV(_pendingBet.model_prob, odds);
   }
@@ -2498,7 +2501,7 @@ function renderHome() {
     if (['home','ah-0.5_home','first_set_a'].includes(s.market)) k = 'home';
     else if (s.market === 'draw') k = 'draw';
     else if (['away','ah+0.5_away','first_set_b'].includes(s.market)) k = 'away';
-    if (k) oddsMap[nk][k] = { odds: s.odds, ev: s.ev_pct };
+    if (k) oddsMap[nk][k] = { odds: s.odds, ev: s.ev_pct, model_prob: s.model_prob || 0 };
   }
 
   // Sort + filter next 30 days; remove finished games 30min after final whistle
@@ -2547,6 +2550,7 @@ function renderHome() {
       `data-odds="${od.odds}"`,
       `data-stake="${stake}"`,
       `data-ev="${evVal}"`,
+      `data-model-prob="${od.model_prob || 0}"`,
       `data-confidence=""`,
       `data-kickoff="${esc(game.kickoff || '')}"`,
       `data-sport="${esc(game.sport || '')}"`,
@@ -2889,6 +2893,7 @@ function renderSport(sport) {
         `data-odds="${s.odds}"`,
         `data-stake="${s.stake_eur}"`,
         `data-ev="${s.ev_pct}"`,
+        `data-model-prob="${s.model_prob || 0}"`,
         `data-confidence="${esc(s.confidence||'')}"`,
         `data-kickoff="${esc(s.kickoff||'')}"`,
         `data-sport="${esc(s.sport||'')}"`,
