@@ -25,3 +25,5 @@
 [2026-06-20 11:24:59 UTC] [auto_heal_ai] closing_odds: transient — no action. TRANSIENT: No log file available; stale health status with no fallback indicates the job failed to run or complete within the expected interval, likely due to a temporary issue such as network timeout, API unavailability, or service interruption.
 [2026-06-20 12:03:19 UTC] [cloud_healer] closing_odds: status=stale — triggere closing_odds.yml
 [2026-06-20 12:03:20 UTC] [cloud_healer] closing_odds: erfolgreich ausgelöst
+[2026-06-20 14:53:58 UTC] [cloud_healer] live_score_push: status=stale — triggere live_score_push.yml
+[2026-06-20 14:53:59 UTC] [cloud_healer] live_score_push: erfolgreich ausgelöst
