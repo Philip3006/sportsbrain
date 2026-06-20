@@ -56,10 +56,12 @@ health_finish() {
   fi
 
   # Auto-detect degraded from log markers (only when exit==0).
+  # Only scan output from the CURRENT run (lines after the last "started ---"
+  # marker) — previous runs' ESPN-Fallback lines must not pollute detection.
   local detected_fallback=""
   if [ -n "$log_path" ] && [ -f "$log_path" ] && [ "$exit_code" -eq 0 ]; then
     local tail_text
-    tail_text=$(tail -n 200 "$log_path" 2>/dev/null)
+    tail_text=$(awk '/--- \[.*\] .* started ---/{buf=""} {buf=buf"\n"$0} END{print buf}' "$log_path" 2>/dev/null)
     if echo "$tail_text" | grep -q -i "USED STALE CACHE"; then
       detected_fallback="stale_cache"
       status="degraded"
