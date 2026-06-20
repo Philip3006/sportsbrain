@@ -170,13 +170,11 @@ def analyse_dc_params() -> dict:
 
 
 def _send_alert(msg: str, no_alert: bool) -> None:
+    # Drift-Alerts wurden früher via Telegram verschickt. Telegram-Bot ist seit Roadmap B6
+    # retired (PWA-Push ist primärer Kanal). Drift-Output bleibt im stdout-Log + Markdown-Report.
     if no_alert:
         return
-    try:
-        from src.notifications.telegram import send_scan_alert
-        send_scan_alert(msg)
-    except Exception:
-        pass
+    print(f"[drift-alert] {msg}")
 
 
 def main(no_alert: bool = False) -> int:

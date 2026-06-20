@@ -1008,19 +1008,19 @@ def run_daily_scan(
     print(f"\nReport written to: {output_path}")
     print(f"Value bets found: {len(all_signals)}")
 
-    # Pass selected (actionable) + low signals so Telegram can show LOW as warnings
-    telegram_signals = selected_signals + low_only_signals
+    # Pass selected (actionable) + low signals so Push can show LOW as warnings
+    push_signals = selected_signals + low_only_signals
     sent = send_scan_alert(
-        telegram_signals,
+        push_signals,
         {**ledger_summary(LEDGER_PATH), "bankroll": bankroll},
         scan_date.strftime("%Y-%m-%d"),
         bankroll=bankroll,
         match_contexts=match_contexts,
     )
     if sent:
-        print("  Telegram alert sent.")
-    elif telegram_signals:
-        print("  Telegram: no token configured (set TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID in .env).")
+        print("  Push alert sent.")
+    elif push_signals:
+        print("  Push: keine Subscribers oder VAPID nicht konfiguriert.")
 
     signals_df = pd.DataFrame([
         {

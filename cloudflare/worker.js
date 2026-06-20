@@ -30,10 +30,10 @@ function isValidMarket(m) {
   return ALLOWED_MARKETS.has(m) || OU_RE.test(m) || AH_RE.test(m) || SCORER_RE.test(m);
 }
 
-function jsonResponse(obj, status = 200) {
+function jsonResponse(obj, status = 200, corsHeaders = {}) {
   return new Response(JSON.stringify(obj), {
     status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8', ...cors() },
+    headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders },
   });
 }
 
@@ -80,8 +80,12 @@ function _validSub(s) {
 
 export default {
   async fetch(request, env) {
+    const origin = request.headers.get('Origin') || '';
+    const ch = cors(origin, env);
+    const jr = (obj, status = 200) => jsonResponse(obj, status, ch);
+
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: cors() });
+      return new Response(null, { headers: ch });
     }
 
     const url = new URL(request.url);
@@ -91,13 +95,13 @@ export default {
     if (request.method === 'GET' && (path === '/signals.json' || path === '/')) {
       const data = await env.SIGNALS.get('signals_json');
       if (!data) {
-        return jsonResponse({ error: 'no data yet' }, 404);
+        return jr({ error: 'no data yet' }, 404);
       }
       return new Response(data, {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           'Cache-Control': 'no-cache, max-age=0',
-          ...cors(),
+          ...ch,
         },
       });
     }
@@ -108,33 +112,33 @@ export default {
       const body = await request.text();
       try { JSON.parse(body); } catch { return new Response('Invalid JSON', { status: 400 }); }
       await env.SIGNALS.put('signals_json', body);
-      return new Response('OK', { headers: cors() });
+      return new Response('OK', { headers: ch });
     }
 
     // ── /pending_bets ──
     if (path === '/pending_bets' || path.startsWith('/pending_bets/')) {
       if (!requireAuth(request, env)) {
-        return new Response('Unauthorized', { status: 401, headers: cors() });
+        return new Response('Unauthorized', { status: 401, headers: ch });
       }
 
       if (request.method === 'GET' && path === '/pending_bets') {
         const arr = await readPending(env);
-        return jsonResponse({ bets: arr });
+        return jr({ bets: arr });
       }
 
       if (request.method === 'POST' && path === '/pending_bets') {
         let body;
-        try { body = await request.json(); } catch { return jsonResponse({ error: 'invalid json' }, 400); }
+        try { body = await request.json(); } catch { return jr({ error: 'invalid json' }, 400); }
 
         const match = (body.match || '').toString().trim();
         const market = (body.market || '').toString().trim();
         const odds = Number(body.odds);
         const stake = Number(body.stake_eur);
 
-        if (!match || !match.includes(' vs ')) return jsonResponse({ error: 'match must be "Home vs Away"' }, 400);
-        if (!isValidMarket(market)) return jsonResponse({ error: 'unknown market: ' + market }, 400);
-        if (!Number.isFinite(odds) || odds < 1.01 || odds > 100) return jsonResponse({ error: 'odds out of range (1.01–100)' }, 400);
-        if (!Number.isFinite(stake) || stake < 0.5 || stake > 25) return jsonResponse({ error: 'stake_eur out of range (0.5–25)' }, 400);
+        if (!match || !match.includes(' vs ')) return jr({ error: 'match must be "Home vs Away"' }, 400);
+        if (!isValidMarket(market)) return jr({ error: 'unknown market: ' + market }, 400);
+        if (!Number.isFinite(odds) || odds < 1.01 || odds > 100) return jr({ error: 'odds out of range (1.01–100)' }, 400);
+        if (!Number.isFinite(stake) || stake < 0.5 || stake > 25) return jr({ error: 'stake_eur out of range (0.5–25)' }, 400);
 
         const rawSource = (body.source || 'value').toString().toLowerCase();
         const source = (rawSource === 'manual') ? 'manual' : 'value';
@@ -163,11 +167,11 @@ export default {
           Math.abs(b.odds - entry.odds) < 0.001 &&
           (Date.now() - new Date(b.placed_at).getTime()) < 60_000
         );
-        if (recent) return jsonResponse({ ok: true, id: recent.id, duplicate: true });
+        if (recent) return jr({ ok: true, id: recent.id, duplicate: true });
 
         arr.push(entry);
         await writePending(env, arr);
-        return jsonResponse({ ok: true, id });
+        return jr({ ok: true, id });
       }
 
       if (request.method === 'DELETE' && path.startsWith('/pending_bets/')) {
@@ -175,15 +179,15 @@ export default {
         const arr = await readPending(env);
         const next = arr.filter(b => b.id !== id);
         await writePending(env, next);
-        return jsonResponse({ ok: true, removed: arr.length - next.length });
+        return jr({ ok: true, removed: arr.length - next.length });
       }
     }
 
     // ── /push/subscribe (PUBLIC — Browser registriert sich) ──
     if (request.method === 'POST' && path === '/push/subscribe') {
       let sub;
-      try { sub = await request.json(); } catch { return jsonResponse({ error: 'invalid json' }, 400); }
-      if (!_validSub(sub)) return jsonResponse({ error: 'invalid subscription' }, 400);
+      try { sub = await request.json(); } catch { return jr({ error: 'invalid json' }, 400); }
+      if (!_validSub(sub)) return jr({ error: 'invalid subscription' }, 400);
       const arr = await readPushSubs(env);
       // Dedup by endpoint
       const filtered = arr.filter(s => s.endpoint !== sub.endpoint);
@@ -194,49 +198,75 @@ export default {
         ua:         request.headers.get('User-Agent') || '',
       });
       await writePushSubs(env, filtered);
-      return jsonResponse({ ok: true, total: filtered.length });
+      return jr({ ok: true, total: filtered.length });
     }
 
     // ── /push/unsubscribe (PUBLIC — Browser meldet sich ab) ──
     if (request.method === 'POST' && path === '/push/unsubscribe') {
       let body;
-      try { body = await request.json(); } catch { return jsonResponse({ error: 'invalid json' }, 400); }
+      try { body = await request.json(); } catch { return jr({ error: 'invalid json' }, 400); }
       const endpoint = (body && body.endpoint) || '';
-      if (!endpoint) return jsonResponse({ error: 'endpoint required' }, 400);
+      if (!endpoint) return jr({ error: 'endpoint required' }, 400);
       const arr = await readPushSubs(env);
       const next = arr.filter(s => s.endpoint !== endpoint);
       await writePushSubs(env, next);
-      return jsonResponse({ ok: true, removed: arr.length - next.length });
+      return jr({ ok: true, removed: arr.length - next.length });
     }
 
     // ── /push/list (AUTH — Python liest Subscriptions zum Senden) ──
     if (request.method === 'GET' && path === '/push/list') {
-      if (!requireAuth(request, env)) return new Response('Unauthorized', { status: 401, headers: cors() });
+      if (!requireAuth(request, env)) return new Response('Unauthorized', { status: 401, headers: ch });
       const arr = await readPushSubs(env);
-      return jsonResponse({ subs: arr });
+      return jr({ subs: arr });
     }
 
     // ── /push/prune (AUTH — Python entfernt expired Subs nach 410-Status) ──
     if (request.method === 'POST' && path === '/push/prune') {
-      if (!requireAuth(request, env)) return new Response('Unauthorized', { status: 401, headers: cors() });
+      if (!requireAuth(request, env)) return new Response('Unauthorized', { status: 401, headers: ch });
       let body;
-      try { body = await request.json(); } catch { return jsonResponse({ error: 'invalid json' }, 400); }
+      try { body = await request.json(); } catch { return jr({ error: 'invalid json' }, 400); }
       const endpoints = (body && Array.isArray(body.endpoints)) ? body.endpoints : [];
-      if (!endpoints.length) return jsonResponse({ ok: true, removed: 0 });
+      if (!endpoints.length) return jr({ ok: true, removed: 0 });
       const arr = await readPushSubs(env);
       const next = arr.filter(s => !endpoints.includes(s.endpoint));
       await writePushSubs(env, next);
-      return jsonResponse({ ok: true, removed: arr.length - next.length });
+      return jr({ ok: true, removed: arr.length - next.length });
     }
 
-    return new Response('Not Found', { status: 404, headers: cors() });
+    return new Response('Not Found', { status: 404, headers: ch });
   },
 };
 
-function cors() {
-  return {
-    'Access-Control-Allow-Origin': '*',
+// ── CORS Allowlist ────────────────────────────────────────────
+// Hardcoded defaults: GitHub Pages (Prod-PWA) + localhost (Dev).
+// Optional via env.ALLOWED_ORIGINS (comma-separated) für Custom-Domain-Slot,
+// sodass z.B. sportsbrain.app ohne Worker-Code-Redeploy ergänzt werden kann.
+const _ALLOWED_ORIGINS_EXACT = new Set([
+  'https://philip3006.github.io',
+]);
+const _LOCALHOST_RE = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
+function isAllowedOrigin(origin, env) {
+  if (!origin) return false;
+  if (_ALLOWED_ORIGINS_EXACT.has(origin)) return true;
+  if (_LOCALHOST_RE.test(origin)) return true;
+  const extra = (env && typeof env.ALLOWED_ORIGINS === 'string') ? env.ALLOWED_ORIGINS : '';
+  if (extra) {
+    for (const o of extra.split(',').map(s => s.trim()).filter(Boolean)) {
+      if (o === origin) return true;
+    }
+  }
+  return false;
+}
+
+function cors(origin, env) {
+  const h = {
     'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+    'Vary': 'Origin',
   };
+  if (isAllowedOrigin(origin, env)) {
+    h['Access-Control-Allow-Origin'] = origin;
+  }
+  return h;
 }

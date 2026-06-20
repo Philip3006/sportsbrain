@@ -251,7 +251,7 @@ def _format_report(
 
 
 def _send_tennis_alert(signals: list, scan_date: str, summary: dict, tour: str = "atp") -> None:
-    """Tennis-Scan-Alert via Web Push — wiederverwendet send_scan_alert."""
+    """Tennis-Scan-Alert via Web Push."""
     if not signals:
         return
     _web_push_scan_alert(signals, summary, scan_date)
@@ -263,7 +263,8 @@ def main() -> None:
     parser.add_argument("--bankroll", type=float, default=100.0)
     parser.add_argument("--surface", default="grass", choices=["grass", "clay", "hard"])
     parser.add_argument("--no-ledger", action="store_true", help="Skip writing to ledger")
-    parser.add_argument("--no-telegram", action="store_true", help="Skip Telegram notification")
+    parser.add_argument("--no-push", "--no-telegram", action="store_true", dest="no_push",
+                        help="Skip Web-Push notification (--no-telegram als Alias für Legacy-Cron-Calls)")
     parser.add_argument("--tour", default="both", choices=["atp", "wta", "both"],
                         help="ATP, WTA oder beide (default: both — WTA hat +8.5%% ROI Wimbledon)")
     args = parser.parse_args()
@@ -399,11 +400,11 @@ def main() -> None:
         n = append_bets(all_signals, args.bankroll)
         print(f"Ledger: {n} new bet(s) recorded.")
 
-    # 6. Telegram notification
-    if not args.no_telegram:
+    # 6. Web-Push notification
+    if not args.no_push:
         summary = ledger_summary()
         _send_tennis_alert(all_signals, scan_date, summary, tour=args.tour)
-        print("Telegram: notification sent.")
+        print("Push: notification sent.")
 
     # 7. Write web dashboard JSON (with per-match tour info + kickoff times)
     dashboard_summary = ledger_summary()
