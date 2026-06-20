@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-20T02:03:37Z",
+  "generated_at": "2026-06-20T05:42:17Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -26,22 +26,22 @@
     },
     {
       "job": "closing_odds",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-06-19T16:00:08Z",
       "duration_s": 3.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-06-19T16:00:08Z — overdue (>46800s)",
       "fallback_used": null,
       "next_expected_in_s": 43200,
       "cadence": "2×/Tag 14:00 + 18:00"
     },
     {
       "job": "consume_pending_bets",
-      "status": "stale",
-      "last_run_at": "2026-06-19T23:50:46Z",
-      "duration_s": 1.0,
+      "status": "ok",
+      "last_run_at": "2026-06-20T05:42:17Z",
+      "duration_s": null,
       "exit_code": 0,
-      "error": "last run was at 2026-06-19T23:50:46Z — overdue (>420s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
