@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-20T18:13:33Z",
+  "updated": "2026-06-20T20:16:47Z",
   "meta": {
     "stale_odds": false
   },
@@ -7224,20 +7224,6 @@
     },
     {
       "sport": "football",
-      "match": "Netherlands vs Sweden",
-      "market": "o/u3.0_over",
-      "odds": 2.04,
-      "model_prob": 57.1,
-      "fair_prob": 57.1,
-      "ev_pct": 35.8,
-      "stake_eur": 20.0,
-      "stake_pct": 11.5,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-20T17:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Senegal vs Iraq",
       "market": "h2_goals_2_4_no",
       "odds": 2.6,
@@ -7291,20 +7277,6 @@
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-21T19:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Netherlands vs Sweden",
-      "market": "h1_goals_2_4_no",
-      "odds": 2.6,
-      "model_prob": 51.6,
-      "fair_prob": 38.5,
-      "ev_pct": 34.1,
-      "stake_eur": 7.0,
-      "stake_pct": 4.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-20T17:00:00Z"
     },
     {
       "sport": "football",
@@ -7714,20 +7686,6 @@
     },
     {
       "sport": "football",
-      "match": "Netherlands vs Sweden",
-      "market": "scorer_Donyell Malen",
-      "odds": 2.9,
-      "model_prob": 40.4,
-      "fair_prob": 34.5,
-      "ev_pct": 17.1,
-      "stake_eur": 17.63,
-      "stake_pct": 10.1,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-20T17:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Belgium vs Iran",
       "market": "scorer_Romelu Lukaku Menama",
       "odds": 2.43,
@@ -7949,20 +7907,6 @@
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-27T23:30:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Netherlands vs Sweden",
-      "market": "home",
-      "odds": 1.79,
-      "model_prob": 61.8,
-      "fair_prob": 56.0,
-      "ev_pct": 10.6,
-      "stake_eur": 12.27,
-      "stake_pct": 7.0,
-      "confidence": "LOW",
-      "n_models_agree": 2,
-      "kickoff": "2026-06-20T17:00:00Z"
     },
     {
       "sport": "football",
@@ -8300,8 +8244,8 @@
     {
       "date": "2026-06-20",
       "n_bets": 4,
-      "pnl": -30.0,
-      "roi_pct": -60.0
+      "pnl": -15.5,
+      "roi_pct": -31.0
     },
     {
       "date": "2026-06-19",
@@ -8365,21 +8309,7 @@
       "stake": 10.0,
       "match_date": "2026-06-20",
       "model_edge_pct": null,
-      "is_live": true
-    },
-    {
-      "match": "Netherlands vs Sweden",
-      "home": "Netherlands",
-      "away": "Sweden",
-      "market": "o/u3.0_over",
-      "entry_odds": 2.45,
-      "current_odds": 1.72,
-      "drift_pct": -29.8,
-      "clv_signal": "bad",
-      "stake": 10.0,
-      "match_date": "2026-06-20",
-      "model_edge_pct": null,
-      "is_live": true
+      "is_live": false
     }
   ],
   "settled_bets": [
@@ -8415,6 +8345,17 @@
       "pnl": -10.0,
       "match_date": "2026-06-20",
       "status": "lost"
+    },
+    {
+      "match": "Netherlands vs Sweden",
+      "home": "Netherlands",
+      "away": "Sweden",
+      "market": "o/u3.0_over",
+      "entry_odds": 2.45,
+      "stake": 10.0,
+      "pnl": 14.5,
+      "match_date": "2026-06-20",
+      "status": "won"
     },
     {
       "match": "Alba Berlin vs Bayern München",
@@ -8793,11 +8734,11 @@
   ],
   "bankroll_state": {
     "start": 100.0,
-    "free": 71.25,
-    "staked": 20.0,
-    "exposure_pct": 20.0,
-    "max_win": 47.2,
-    "pnl_closed": -8.75
+    "free": 95.75,
+    "staked": 10.0,
+    "exposure_pct": 10.0,
+    "max_win": 40.0,
+    "pnl_closed": 5.75
   },
   "wm_stats": {
     "stats": {
@@ -8826,12 +8767,12 @@
         "roi": -23.3
       },
       "other": {
-        "n": 10,
-        "won": 3,
-        "staked": 136.86,
-        "pnl": -56.91,
-        "hit_rate": 30.0,
-        "roi": -41.6
+        "n": 11,
+        "won": 4,
+        "staked": 146.86,
+        "pnl": -42.41,
+        "hit_rate": 36.4,
+        "roi": -28.9
       }
     },
     "series": [
@@ -8873,16 +8814,16 @@
       },
       {
         "date": "2026-06-20",
-        "balance": 91.25
+        "balance": 105.75
       }
     ],
     "drawdown": {
       "peak": 176.25,
-      "current": 91.25,
-      "current_dd": 85.0,
-      "current_dd_pct": 48.23,
-      "max_dd": 85.0,
-      "max_dd_pct": 48.23
+      "current": 105.75,
+      "current_dd": 70.5,
+      "current_dd_pct": 40.0,
+      "max_dd": 70.5,
+      "max_dd_pct": 40.0
     },
     "clv_dist": {
       "labels": [
@@ -8917,18 +8858,18 @@
         2,
         2,
         1,
-        0
+        1
       ]
     },
     "summary": {
-      "n_settled": 32,
-      "staked": 412.11,
-      "pnl": -8.75,
-      "yield_pct": -2.12,
+      "n_settled": 33,
+      "staked": 422.11,
+      "pnl": 5.75,
+      "yield_pct": 1.36,
       "mean_clv": 9.58,
-      "mean_edge": 3.43,
+      "mean_edge": 5.27,
       "n_clv": 13,
-      "n_edge": 6
+      "n_edge": 7
     },
     "per_team_market": {
       "South Korea": {
@@ -9510,6 +9451,26 @@
           "hit_rate": 0.0,
           "roi": -100.0
         }
+      },
+      "Netherlands": {
+        "Over": {
+          "n": 1,
+          "won": 1,
+          "staked": 10.0,
+          "pnl": 14.5,
+          "hit_rate": 100.0,
+          "roi": 145.0
+        }
+      },
+      "Sweden": {
+        "Over": {
+          "n": 1,
+          "won": 1,
+          "staked": 10.0,
+          "pnl": 14.5,
+          "hit_rate": 100.0,
+          "roi": 145.0
+        }
       }
     },
     "by_confederation": {
@@ -9538,12 +9499,12 @@
         "roi": -100.0
       },
       "UEFA": {
-        "n": 14,
-        "won": 5,
-        "staked": 181.73,
-        "pnl": 2.07,
-        "hit_rate": 35.7,
-        "roi": 1.1
+        "n": 15,
+        "won": 6,
+        "staked": 191.73,
+        "pnl": 16.57,
+        "hit_rate": 40.0,
+        "roi": 8.6
       },
       "CAF": {
         "n": 3,
