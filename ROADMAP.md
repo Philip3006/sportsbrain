@@ -53,58 +53,65 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ## 🟦 B. Block 1 — Sofortige Hygiene & Sicherheit (P0, ≈ 90 min)
 
-### B1. `.env`-Backups aus Repo, `.gitignore` verschärfen
+### B1. `.env`-Backups aus Repo, `.gitignore` verschärfen ✅
 - **Was**: `.env.bak_pre_a1` löschen, `.gitignore` um `.env*` (außer `.env.example`) erweitern.
 - **Warum**: Secret-Leak-Risiko bei versehentlichem `git add`.
 - **Impact/Aufwand/Risiko**: 🟢 · 🟢 · 🟢
 - **Dateien**: `.gitignore`, `.env.bak_pre_a1` (delete)
 - **Verifikation**: `git status` zeigt `.env` als ignoriert; `git ls-files | grep env` enthält keine Secret-Files.
+- **Status (2026-06-20)**: Erledigt in Commit `c61f142`. Bonus: git-History gegen alle `.env*`-Pfade geprüft → nur `.env.example` war je committed, keine Secret-Leaks historisch.
 
-### B2. Worker-CORS-Allowlist
+### B2. Worker-CORS-Allowlist ✅
 - **Was**: `cloudflare/worker.js`-Funktion `cors()` von `*` auf Allowlist: `https://philip3006.github.io` + `http://localhost:*`.
 - **Warum**: Reduziert Token-Klau-Risiko. Skaliert für Freunde-Onboarding.
 - **Impact/Aufwand/Risiko**: 🟢 · 🟢 · 🟡 (Origin-Tippfehler bricht PWA)
 - **Dateien**: `cloudflare/worker.js`
 - **Verifikation**: `wrangler dev` → PWA funktioniert; `curl -H "Origin: https://evil.com"` blockiert.
+- **Status (2026-06-20)**: Erledigt in Commit `c61f142`, deployed als Worker-Version `6a8744c6`. Allowlist enthält GitHub Pages + localhost-Regex + optionale `ALLOWED_ORIGINS`-Env-Var als Custom-Domain-Slot (kein Worker-Redeploy nötig für künftige Domain). 10/10 Logik-Tests + live-`curl`-Smoke (allowed/blocked/no-origin) grün.
 
-### B3. Stale-Banner-Schwelle 26h → 90min
+### B3. Stale-Banner-Schwelle 26h → 90min ✅
 - **Was**: PWA-Frontend Stale-Threshold reduzieren.
 - **Warum**: Cadence ist 30 min — 26h ist absurd großzügig.
 - **Impact/Aufwand/Risiko**: 🟢 · 🟢 · 🟢
 - **Dateien**: `docs/index.html` (Z. ~605)
 - **Verifikation**: künstlich `updated` auf 2h alt → Banner erscheint.
+- **Status (2026-06-20)**: Erledigt in Commit `c61f142`. `age > 1.5` (Stunden) → 90 min = 3× Cadence-Puffer.
 
-### B4. `results/*.bak*` archivieren
+### B4. `results/*.bak*` archivieren ✅
 - **Was**: 17+ Backup-Files in `results/_archive/` verschieben.
 - **Warum**: Audit-Hygiene.
 - **Impact/Aufwand/Risiko**: ⚪ · 🟢 · 🟢
 - **Dateien**: `results/ledger_backup_*.csv`, `models/dixon_coles/*.bak_*`, `*.local_bak`
 - **Verifikation**: `ls results/*.bak*` leer.
+- **Status (2026-06-20)**: Erledigt in Commit `c61f142`. Getrennte Archive (`results/_archive/`, `models/dixon_coles/_archive/`), beide in `.gitignore`.
 
-### B5. CLAUDE.md: Basketball-Status korrigieren
+### B5. CLAUDE.md: Basketball-Status korrigieren ✅
 - **Was**: „Basketball" als „Phase 5 — Start zur Euroleague (Okt 2026) / BBL (Sept 2026) / NBA (Okt 2026)" markieren.
 - **Warum**: Aktuelle CLAUDE.md erweckt den Eindruck, Basketball sei live.
 - **Impact/Aufwand/Risiko**: ⚪ · 🟢 · 🟢
 - **Dateien**: `CLAUDE.md`
+- **Status (2026-06-20)**: Erledigt in Commit `c61f142`. Klartext „⚠️ PHASE 5 — NICHT IMPLEMENTIERT" plus Verweis auf Roadmap-Item J1.
 
-### B6. Telegram-Bot streichen
+### B6. Telegram-Bot streichen ✅
 - **Was**: `scripts/telegram_bot.py` (537 Z.) löschen + Workflow/Config-Referenzen entfernen.
 - **Warum**: PWA-Push ist primärer Kanal; doppelte Wartung lohnt nicht.
 - **Impact/Aufwand/Risiko**: ⚪ · 🟢 · 🟡
 - **Dateien**: `scripts/telegram_bot.py`, evtl. workflow-yamls, `src/notifications/telegram.py`
 - **Verifikation**: `grep -r telegram .github/workflows/` leer.
+- **Status (2026-06-20)**: Erledigt in Commit `c61f142`. Beide Files weg, `daily_scan.py`/`drift_monitor.py`/`tennis_scan.py` auf Web-Push umgestellt, `--no-telegram` bleibt als CLI-Alias für Legacy-Cron-Calls, `wm2026_readiness_check.py` prüft jetzt VAPID-Keys statt TELEGRAM-Tokens, `cloudflare/SETUP.md` aktualisiert.
 
-### B7. Squads-Tab aus PWA-Nav entfernen
+### B7. Squads-Tab aus PWA-Nav entfernen ✅
 - **Was**: Tab aus Bottom-Nav + `view-squads` + Render-Code entfernen.
 - **Warum**: Du nutzt ihn nicht; Backend-Squad-Daten brauchen kein UI.
 - **Impact/Aufwand/Risiko**: 🟢 · 🟢 · 🟢
 - **Dateien**: `docs/index.html`
+- **Status (2026-06-20)**: Erledigt in Commit `c61f142`. `view-squads`/`renderSquads`/`filterSquads`/`openSquad` weg; Bet-Modal-Helper `squadSection()` bleibt funktional (nutzt `_squads`-Cache weiter im Hintergrund). Nav-Eintrag war bereits zuvor entfernt.
 
-### B8. Operations-Checkliste verdichtet in CLAUDE.md
+### B8. Operations-Checkliste verdichtet in CLAUDE.md ✅
 - **Was**: Aus improvement_log nur die noch manuell relevanten Commands (Ledger-Check, Sperren-CLI, Readiness-Check, Worker-Redeploy).
 - **Warum**: Auto-Workflows haben den Rest übernommen.
 - **Impact/Aufwand/Risiko**: 🟡 · 🟢 · 🟢
-- **Status**: Teil von A3, ergänzt mit konkreten Commands
+- **Status**: ✅ Teil von A3 (siehe Operations-Block in `CLAUDE.md`).
 
 ---
 
@@ -366,7 +373,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | Phase | Items | Wann | Dauer |
 |---|---|---|---|
 | **0** | A1, A2, A3 (Roadmap-Setup) | ✅ erledigt | 20 min |
-| **1** | B1–B8 (Hygiene & Sicherheit) | Tag 1 | 90 min |
+| **1** | B1–B8 (Hygiene & Sicherheit) | ✅ erledigt 2026-06-20 | 90 min |
 | **2** | F1, F2 (Stabilität) | Tag 1-2 | 2-3 h |
 | **3** | G3 (Wikipedia-Verify), G2 (Sperren-Auto) | bis 2026-07-03 | 2-4 h |
 | **4** | G1 (PPDA Shadow) | bis 2026-07-15 | 4-6 h |
@@ -385,7 +392,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 ## 📊 Statistik
 
 - **Insgesamt**: 47 konkrete Items
-- **P0**: 11 (sofort) — davon 3 ✅
+- **P0**: 11 (sofort) — davon 11 ✅ (Phase 0 + Phase 1 vollständig)
 - **P1**: 18 (diese Woche / vor KO-Phase)
 - **P2**: 14 (dieser Monat / Refactor)
 - **P3**: 4 (Q4 2026)
@@ -396,3 +403,4 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 ## 📝 Änderungs-Historie
 
 - **2026-06-20**: Initiale Roadmap aus Audit-Phasen 1-7 + improvement_log-Durchgang. Phase 0 (A1-A3) erledigt.
+- **2026-06-20**: ~ Phase 1 (B1-B8) vollständig erledigt in Commit `c61f142`, Worker-Deploy `6a8744c6`. Alle Verifikations-Kriterien erfüllt. Roadmap-Workflow (Überblick → Detail-Fragen → Tests vor Push) als Feedback-Memory persistiert. Nächste Phase: F1/F2 (Stabilität).
