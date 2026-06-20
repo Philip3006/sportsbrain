@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-20T05:42:17Z",
+  "generated_at": "2026-06-20T05:58:10Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -37,11 +37,11 @@
     },
     {
       "job": "consume_pending_bets",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-06-20T05:42:17Z",
       "duration_s": null,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-06-20T05:42:17Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
@@ -70,12 +70,12 @@
     },
     {
       "job": "settle",
-      "status": "stale",
-      "last_run_at": "2026-06-19T23:30:05Z",
-      "duration_s": 1.0,
+      "status": "ok",
+      "last_run_at": "2026-06-20T05:58:10Z",
+      "duration_s": null,
       "exit_code": 0,
-      "error": "last run was at 2026-06-19T23:30:05Z — overdue (>4200s)",
-      "fallback_used": "espn",
+      "error": null,
+      "fallback_used": null,
       "next_expected_in_s": 3600,
       "cadence": "stündlich 00:30–04:30"
     },
