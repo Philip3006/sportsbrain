@@ -7,6 +7,10 @@ on:
     - cron: '*/2 * * 6,7 *'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -45,10 +49,12 @@ jobs:
           if ! git diff --staged --quiet; then
             git commit -m "auto: live scores $(date -u '+%Y-%m-%d %H:%M UTC')"
             for i in 1 2 3 4 5; do
-              git pull --rebase --strategy-option=theirs origin main || true
-              git push && break
-              echo "[push] attempt $i failed, retry after backoff…"
-              sleep $((RANDOM % 6 + 2))
-              [ "$i" = "5" ] && { echo "[push] giving up after 5 attempts" >&2; exit 1; }
+              git fetch origin main
+              git rebase --strategy-option=theirs origin/main \
+                || { git rebase --abort 2>/dev/null || true; echo "[push] rebase conflict on attempt $i, retrying"; }
+              git push origin main && exit 0
+              echo "[push] attempt $i failed, backoff..."
+              sleep $((RANDOM % 20 + 10))
             done
+            echo "[push] giving up after 5 attempts" >&2; exit 1
           fi

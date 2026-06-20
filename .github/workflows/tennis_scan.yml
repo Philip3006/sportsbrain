@@ -6,6 +6,10 @@ on:
     - cron: '0 9 * 7 *'   # täglich 09:00 UTC im Juli
   workflow_dispatch:        # manuell auslösbar
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -46,9 +50,11 @@ jobs:
           git add results/tennis_scan_*.md docs/data/signals.json || true
           git diff --staged --quiet || git commit -m "auto: tennis scan $(date +%Y-%m-%d)"
           for i in 1 2 3 4 5; do
-            git pull --rebase origin main || true
-            git push && exit 0
-            echo "[push] attempt $i failed, retry after backoff…"
-            sleep $((RANDOM % 6 + 2))
+            git fetch origin main
+            git rebase --strategy-option=theirs origin/main \
+              || { git rebase --abort 2>/dev/null || true; echo "[push] rebase conflict on attempt $i, retrying"; }
+            git push origin main && exit 0
+            echo "[push] attempt $i failed, backoff..."
+            sleep $((RANDOM % 20 + 10))
           done
           echo "[push] giving up after 5 attempts" >&2; exit 1
