@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 
 import requests
 
+from scripts._http_retry import retry_request
 from src.data.cache import disk_cache
 from src.config import canonical_name
 
@@ -37,7 +38,7 @@ def _norm(name: str) -> str:
 def _get_sofascore_events(date_str: str, headers: dict) -> list[dict]:
     """Returns upcoming football events from Sofascore for a given date."""
     url = f"https://{_HOST_SOFASCORE}/api/v1/sport/football/scheduled-events/{date_str}"
-    resp = requests.get(url, headers=headers, timeout=12)
+    resp = retry_request("GET",url, headers=headers, timeout=12)
     if resp.status_code == 403:
         print("  [btts] Sofascore nicht abonniert — auf RapidAPI 'Sofascore' (Api Dojo) gratis subscriben.")
         return []
@@ -49,7 +50,7 @@ def _get_sofascore_events(date_str: str, headers: dict) -> list[dict]:
 def _get_btts_odds(event_id: int, headers: dict) -> tuple[float, float]:
     """Returns (yes_odds, no_odds) from Bet365 for a Sofascore event."""
     url = f"https://{_HOST_SOFASCORE}/api/v1/event/{event_id}/odds/1/featured"
-    resp = requests.get(url, headers=headers, timeout=12)
+    resp = retry_request("GET",url, headers=headers, timeout=12)
     if resp.status_code != 200:
         return 0.0, 0.0
 

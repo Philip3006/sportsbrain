@@ -7,6 +7,7 @@ import io
 import pandas as pd
 import requests
 
+from scripts._http_retry import retry_request
 from src.config import DATA_RAW, FBDATA_BASE, canonical_name
 from src.data.cache import disk_cache
 
@@ -54,7 +55,7 @@ def fetch_season(
 
     url = _season_url(league, season)
     try:
-        resp = requests.get(url, timeout=20)
+        resp = retry_request("GET",url, timeout=20)
         resp.raise_for_status()
     except Exception:
         return None

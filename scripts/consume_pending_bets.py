@@ -27,6 +27,8 @@ from pathlib import Path
 import pandas as pd
 import requests
 
+from scripts._http_retry import retry_request
+
 # Repo-root on sys.path so `src` imports work even when run as a script.
 _THIS_DIR = Path(__file__).resolve().parent
 _ROOT = _THIS_DIR.parent
@@ -123,17 +125,17 @@ def main() -> int:
     token = _token()
     headers = {"Authorization": f"Bearer {token}"}
 
-    import time as _time
-    r = None
-    for _attempt in range(3):
-        try:
-            r = requests.get(f"{base}/pending_bets", headers=headers, timeout=15)
-            break
-        except requests.RequestException as e:
-            if _attempt == 2:
-                print(f"[consume] fetch failed: {e}", file=sys.stderr)
-                return 1
-            _time.sleep(5)
+    try:
+        r = retry_request(
+            "GET",
+            f"{base}/pending_bets",
+            headers=headers,
+            timeout=15,
+            log_prefix="[consume]",
+        )
+    except requests.RequestException as e:
+        print(f"[consume] fetch failed: {e}", file=sys.stderr)
+        return 1
     if r.status_code != 200:
         print(f"[consume] HTTP {r.status_code}: {r.text[:200]}", file=sys.stderr)
         return 1
@@ -162,7 +164,13 @@ def main() -> int:
         if not bid:
             continue
         try:
-            d = requests.delete(f"{base}/pending_bets/{bid}", headers=headers, timeout=15)
+            d = retry_request(
+                "DELETE",
+                f"{base}/pending_bets/{bid}",
+                headers=headers,
+                timeout=15,
+                log_prefix="[consume]",
+            )
             if d.status_code != 200:
                 print(f"[consume] DELETE {bid} → HTTP {d.status_code}", file=sys.stderr)
         except requests.RequestException as e:

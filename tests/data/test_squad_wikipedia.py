@@ -131,7 +131,7 @@ class TestParseWikipediaSquadHtml:
 
 class TestFetchWikipediaSquad:
 
-    @patch("src.data.squad_availability.requests.get")
+    @patch("src.data.squad_availability.retry_request")
     def test_returns_players_on_200(self, mock_get, tmp_path, monkeypatch):
         monkeypatch.setattr(
             "src.data.squad_availability._CACHE_DIR", tmp_path / "squad"
@@ -145,7 +145,7 @@ class TestFetchWikipediaSquad:
         assert len(result) == 4
         assert result[0].status == "fit"
 
-    @patch("src.data.squad_availability.requests.get")
+    @patch("src.data.squad_availability.retry_request")
     def test_returns_empty_on_404(self, mock_get, tmp_path, monkeypatch):
         monkeypatch.setattr(
             "src.data.squad_availability._CACHE_DIR", tmp_path / "squad"
@@ -157,7 +157,7 @@ class TestFetchWikipediaSquad:
         result = _fetch_wikipedia_squad("Saudi Arabia", pd.Timestamp("2026-06-15"))
         assert result == []
 
-    @patch("src.data.squad_availability.requests.get")
+    @patch("src.data.squad_availability.retry_request")
     def test_returns_empty_on_request_exception(self, mock_get, tmp_path, monkeypatch):
         monkeypatch.setattr(
             "src.data.squad_availability._CACHE_DIR", tmp_path / "squad"
@@ -167,7 +167,7 @@ class TestFetchWikipediaSquad:
         result = _fetch_wikipedia_squad("Iran", pd.Timestamp("2026-06-15"))
         assert result == []
 
-    @patch("src.data.squad_availability.requests.get")
+    @patch("src.data.squad_availability.retry_request")
     def test_writes_cache_on_success(self, mock_get, tmp_path, monkeypatch):
         cache_dir = tmp_path / "squad"
         monkeypatch.setattr("src.data.squad_availability._CACHE_DIR", cache_dir)
@@ -180,7 +180,7 @@ class TestFetchWikipediaSquad:
         cache_files = list(cache_dir.glob("*_wiki.json"))
         assert len(cache_files) == 1
 
-    @patch("src.data.squad_availability.requests.get")
+    @patch("src.data.squad_availability.retry_request")
     def test_uses_cache_when_fresh(self, mock_get, tmp_path, monkeypatch):
         cache_dir = tmp_path / "squad"
         monkeypatch.setattr("src.data.squad_availability._CACHE_DIR", cache_dir)
@@ -198,7 +198,7 @@ class TestFetchWikipediaSquad:
         assert mock_get.call_count == 1  # still 1
         assert len(result) == 4
 
-    @patch("src.data.squad_availability.requests.get")
+    @patch("src.data.squad_availability.retry_request")
     def test_url_slug_built_correctly(self, mock_get, tmp_path, monkeypatch):
         monkeypatch.setattr(
             "src.data.squad_availability._CACHE_DIR", tmp_path / "squad"
@@ -208,11 +208,11 @@ class TestFetchWikipediaSquad:
         mock_get.return_value = mock_resp
 
         _fetch_wikipedia_squad("Saudi Arabia", pd.Timestamp("2026-06-15"))
-        called_url = mock_get.call_args[0][0]
+        called_url = mock_get.call_args[0][1]
         assert "Saudi_Arabia" in called_url
         assert "2026_FIFA_World_Cup" in called_url
 
-    @patch("src.data.squad_availability.requests.get")
+    @patch("src.data.squad_availability.retry_request")
     def test_dr_congo_slug_override(self, mock_get, tmp_path, monkeypatch):
         monkeypatch.setattr(
             "src.data.squad_availability._CACHE_DIR", tmp_path / "squad"
@@ -222,7 +222,7 @@ class TestFetchWikipediaSquad:
         mock_get.return_value = mock_resp
 
         _fetch_wikipedia_squad("DR Congo", pd.Timestamp("2026-06-15"))
-        called_url = mock_get.call_args[0][0]
+        called_url = mock_get.call_args[0][1]
         assert "DR_Congo" in called_url
 
 

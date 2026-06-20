@@ -21,6 +21,7 @@ load_dotenv(ROOT / ".env")
 
 import requests
 
+from scripts._http_retry import retry_request
 from src.data.tennis_data import fetch_atp_matches, fetch_wta_matches
 from src.models.tennis_elo import compute_tennis_elo, predict_winner, top_players
 from src.betting.tennis_detector import detect_value_tennis
@@ -75,7 +76,7 @@ def _fetch_wimbledon_odds(api_key: str, tour: str = "atp") -> list[dict]:
         "markets": "h2h,spreads,set_winner",
         "oddsFormat": "decimal",
     }
-    resp = requests.get(url, params=params, timeout=15)
+    resp = retry_request("GET", url, params=params, timeout=15, log_prefix="[tennis_scan]")
     resp.raise_for_status()
 
     remaining = int(resp.headers.get("x-requests-remaining", 999))

@@ -21,6 +21,7 @@ from pathlib import Path
 import pandas as pd
 import requests
 
+from scripts._http_retry import retry_request
 from src.config import DATA_CACHE
 
 _CACHE_DIR = DATA_CACHE / "fotmob"
@@ -61,7 +62,7 @@ def fetch_match_ids_for_date(date_str: str) -> list[int]:
     """
     url = f"https://api.fotmob.com/matches?date={date_str}"
     try:
-        r = requests.get(url, headers=_HEADERS, timeout=10)
+        r = retry_request("GET",url, headers=_HEADERS, timeout=10)
         r.raise_for_status()
         root = ET.fromstring(r.text)
     except Exception:
@@ -98,7 +99,7 @@ def fetch_match_data(match_id: int, force: bool = False) -> dict | None:
 
     time.sleep(_RATE_LIMIT_S)
     try:
-        r = requests.get(
+        r = retry_request("GET",
             f"https://www.fotmob.com/match/{match_id}",
             headers=_HEADERS,
             timeout=15,

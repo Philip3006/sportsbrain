@@ -12,6 +12,7 @@ from pathlib import Path
 import pandas as pd
 import requests
 
+from scripts._http_retry import retry_request
 from src.data.cache import disk_cache
 
 _SACKMANN_URL = (
@@ -39,7 +40,7 @@ def fetch_atp_matches() -> pd.DataFrame:
     for year in _YEARS:
         url = _SACKMANN_URL.format(year=year)
         try:
-            resp = requests.get(url, timeout=15)
+            resp = retry_request("GET",url, timeout=15)
             if not resp.ok:
                 continue
             df = pd.read_csv(io.StringIO(resp.text), low_memory=False)
@@ -75,7 +76,7 @@ def fetch_wta_matches() -> pd.DataFrame:
     for year in _YEARS:
         url = _WTA_URL.format(year=year)
         try:
-            resp = requests.get(url, timeout=15)
+            resp = retry_request("GET",url, timeout=15)
             if not resp.ok:
                 continue
             df = pd.read_csv(io.StringIO(resp.text), low_memory=False)

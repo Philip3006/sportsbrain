@@ -3,6 +3,7 @@ import io
 import pandas as pd
 import requests
 
+from scripts._http_retry import retry_request
 from src.config import COMPETITIVE_TOURNAMENTS, INTL_CSV_URL, canonical_name
 from src.data.cache import disk_cache
 
@@ -15,7 +16,7 @@ def fetch_international_results(force: bool = False) -> pd.DataFrame:
     Downloads the martj42/international_results CSV (~4 MB, ~50k matches).
     Returns cleaned DataFrame with canonical team names.
     """
-    response = requests.get(INTL_CSV_URL, timeout=30)
+    response = retry_request("GET", INTL_CSV_URL, timeout=30, log_prefix="[intl]")
     response.raise_for_status()
 
     df = pd.read_csv(io.StringIO(response.text))

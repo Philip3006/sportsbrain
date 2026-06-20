@@ -22,6 +22,7 @@ from pathlib import Path  # noqa: F401  (used in _team_value_cache_path)
 import pandas as pd
 import requests
 
+from scripts._http_retry import retry_request
 from src.config import DATA_CACHE, canonical_name as _cn
 
 _CACHE_PATH = DATA_CACHE / "sofascore_xg.pkl"
@@ -100,7 +101,7 @@ def bootstrap_team_ids_from_standings() -> dict[str, int]:
     if not _get_api_key():
         return {}
     try:
-        r = requests.get(
+        r = retry_request("GET",
             f"{_BASE}/tournaments/get-standings",
             headers=_headers(),
             params={"tournamentId": WC2026_TOURNAMENT_ID, "seasonId": WC2026_SEASON_ID},
@@ -146,7 +147,7 @@ def fetch_wc2026_event_ids() -> list[dict]:
     for course in ("last", "next"):
         for page in range(0, 8):
             try:
-                r = requests.get(
+                r = retry_request("GET",
                     f"{_BASE}/tournaments/get-matches",
                     headers=_headers(),
                     params={
@@ -210,7 +211,7 @@ def fetch_match_xg(event_id: int) -> tuple[float | None, float | None]:
     can fall back to cache instead of silently returning (None, None) per call.
     """
     try:
-        r = requests.get(
+        r = retry_request("GET",
             f"{_BASE}/matches/get-statistics",
             headers=_headers(),
             params={"matchId": event_id},
@@ -278,7 +279,7 @@ def fetch_team_player_values(team_id: int, force: bool = False) -> dict[str, flo
         return {}
 
     try:
-        r = requests.get(
+        r = retry_request("GET",
             f"{_BASE}/teams/get-squad",
             headers=_headers(),
             params={"teamId": team_id},
@@ -298,7 +299,7 @@ def fetch_team_player_values(team_id: int, force: bool = False) -> dict[str, flo
         if not pid or not name:
             continue
         try:
-            r2 = requests.get(
+            r2 = retry_request("GET",
                 f"{_BASE}/players/detail",
                 headers=_headers(),
                 params={"playerId": pid},

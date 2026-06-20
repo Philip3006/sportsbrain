@@ -30,6 +30,7 @@ from pathlib import Path
 import pandas as pd
 import requests
 
+from scripts._http_retry import retry_request
 from src.config import DATA_CACHE
 
 
@@ -583,7 +584,7 @@ def _fetch_wc_squads_page(team: str, match_date: pd.Timestamp) -> list[PlayerSta
         "Accept": "application/json",
     }
     try:
-        resp = requests.get(
+        resp = retry_request("GET",
             _WIKI_API,
             params={
                 "action": "parse",
@@ -684,7 +685,7 @@ def _fetch_wikipedia_squad(
     url = f"https://en.wikipedia.org/wiki/{slug}_at_the_2026_FIFA_World_Cup"
 
     try:
-        resp = requests.get(
+        resp = retry_request("GET",
             url,
             headers=_HEADERS,
             timeout=15,
