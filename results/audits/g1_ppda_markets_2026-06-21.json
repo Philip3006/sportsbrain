@@ -1,0 +1,106 @@
+{
+  "as_of": "2026-06-20T23:13:33.518996Z",
+  "since": "2018-01-01",
+  "val_since": "2023-01-01",
+  "n_matches": 1909,
+  "n_skipped": 246,
+  "avg_lambda_mult_home": 0.9786464542605235,
+  "avg_lambda_mult_away": 0.9794533099000293,
+  "markets": {
+    "1X2_home": {
+      "baseline_brier": 0.20324329767064844,
+      "ppda_brier": 0.2047296144538819,
+      "delta_brier": -0.0014863167832334656,
+      "baseline_roi": 0.06449980459971788,
+      "ppda_roi": 0.07636676786832378,
+      "delta_roi_pp": 1.1866963268605897,
+      "baseline_n_bets": 746,
+      "ppda_n_bets": 751
+    },
+    "1X2_draw": {
+      "baseline_brier": 0.18004856775904102,
+      "ppda_brier": 0.18109574490453553,
+      "delta_brier": -0.0010471771454945156,
+      "baseline_roi": -0.25232282774719894,
+      "ppda_roi": -0.2594340449204823,
+      "delta_roi_pp": -0.7111217173283335,
+      "baseline_n_bets": 714,
+      "ppda_n_bets": 751
+    },
+    "1X2_away": {
+      "baseline_brier": 0.17977764983188685,
+      "ppda_brier": 0.18058577893028296,
+      "delta_brier": -0.0008081290983961154,
+      "baseline_roi": 0.004703640441208703,
+      "ppda_roi": 0.01715144909942144,
+      "delta_roi_pp": 1.2447808658212736,
+      "baseline_n_bets": 546,
+      "ppda_n_bets": 545
+    },
+    "ah_home_plus_0_5": {
+      "baseline_brier": 0.17977764983188685,
+      "ppda_brier": 0.18058577893028296,
+      "delta_brier": -0.0008081290983961154,
+      "baseline_roi": -0.028263648772710672,
+      "ppda_roi": -0.03443889364450748,
+      "delta_roi_pp": -0.6175244871796808,
+      "baseline_n_bets": 959,
+      "ppda_n_bets": 981
+    },
+    "ah_away_plus_0_5": {
+      "baseline_brier": 0.20324329767064842,
+      "ppda_brier": 0.2047296144538819,
+      "delta_brier": -0.0014863167832334934,
+      "baseline_roi": -0.06354496701520056,
+      "ppda_roi": -0.05865446933630473,
+      "delta_roi_pp": 0.4890497678895829,
+      "baseline_n_bets": 904,
+      "ppda_n_bets": 926
+    },
+    "over_2_5": {
+      "baseline_brier": 0.2544395009121538,
+      "ppda_brier": 0.2546552362602503,
+      "delta_brier": -0.00021573534809649075,
+      "baseline_roi": -0.14582670457808355,
+      "ppda_roi": -0.1347594253933417,
+      "delta_roi_pp": 1.1067279184741845,
+      "baseline_n_bets": 698,
+      "ppda_n_bets": 665
+    },
+    "under_2_5": {
+      "baseline_brier": 0.2544395009121538,
+      "ppda_brier": 0.2546552362602503,
+      "delta_brier": -0.00021573534809649075,
+      "baseline_roi": -0.1687688250718124,
+      "ppda_roi": -0.18493673423256884,
+      "delta_roi_pp": -1.6167909160756444,
+      "baseline_n_bets": 866,
+      "ppda_n_bets": 901
+    },
+    "btts_yes": {
+      "baseline_brier": 0.24573484004204496,
+      "ppda_brier": 0.24580726171787648,
+      "delta_brier": -7.242167583151882e-05,
+      "baseline_roi": -0.19226098630507785,
+      "ppda_roi": -0.18643415032193286,
+      "delta_roi_pp": 0.5826835983144985,
+      "baseline_n_bets": 546,
+      "ppda_n_bets": 517
+    },
+    "btts_no": {
+      "baseline_brier": 0.24573484004204496,
+      "ppda_brier": 0.24580726171787648,
+      "delta_brier": -7.242167583151882e-05,
+      "baseline_roi": -0.02068299405047315,
+      "ppda_roi": -0.0434185589457336,
+      "delta_roi_pp": -2.2735564895260447,
+      "baseline_n_bets": 876,
+      "ppda_n_bets": 904
+    }
+  },
+  "notes": [
+    "Brier: kleiner = besser. ROI: self-priced (Quote=1/p), nicht market-aware.",
+    "1X2-LGBM-Backtest separat in scripts/backtest_with_ppda.py.",
+    "Scorer-Backtest noch nicht implementiert (per-Player-xG-Pfad fehlt)."
+  ]
+}

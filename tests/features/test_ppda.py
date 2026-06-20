@@ -11,6 +11,7 @@ from src.features.ppda import (
     GLOBAL_FALLBACK_PPDA,
     confederation_mean_ppda,
     ppda_features,
+    ppda_lambda_multipliers,
     team_match_ppda_series,
     team_rolling_ppda,
 )
@@ -129,6 +130,26 @@ def test_confederation_mean_ppda_filters_by_confederation():
 def test_ppda_features_returns_zero_dict_on_empty_input():
     out = ppda_features("A", "B", pd.Timestamp("2024-01-01"), None)
     assert out == {"ppda_home": 0.0, "ppda_away": 0.0, "ppda_diff": 0.0}
+
+
+def test_lambda_multipliers_boost_when_pressing():
+    """Niedriges PPDA (aggressives Pressing) → Multiplier > 1."""
+    mh, ma = ppda_lambda_multipliers(ppda_home=6.0, ppda_away=14.0)
+    assert mh > 1.0
+    assert ma < 1.0
+
+
+def test_lambda_multipliers_neutral_on_nan():
+    mh, ma = ppda_lambda_multipliers(ppda_home=float("nan"), ppda_away=float("nan"))
+    assert math.isclose(mh, 1.0, rel_tol=1e-9)
+    assert math.isclose(ma, 1.0, rel_tol=1e-9)
+
+
+def test_lambda_multipliers_respect_clip():
+    mh, _ = ppda_lambda_multipliers(ppda_home=0.5, ppda_away=11.5,
+                                    z_scale=1.0, boost=1.0, clip=0.10)
+    # Extreme z würde Mult > 1.10 produzieren → muss auf 1.10 deckeln
+    assert math.isclose(mh, 1.10, rel_tol=1e-9)
 
 
 def test_ppda_features_computes_diff_with_correct_sign():

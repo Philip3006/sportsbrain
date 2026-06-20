@@ -132,6 +132,38 @@ def team_rolling_ppda(
     return float((series.sum() + prior_weight * prior) / (n_obs + prior_weight))
 
 
+def ppda_lambda_multipliers(
+    ppda_home: float,
+    ppda_away: float,
+    baseline: float = GLOBAL_FALLBACK_PPDA,
+    z_scale: float = 5.0,
+    boost: float = 0.025,
+    clip: float = 0.10,
+) -> tuple[float, float]:
+    """
+    Liefert (mult_lh, mult_la) zur Multiplikation der Dixon-Coles-Lambdas λ_home/λ_away.
+
+    Idee: niedriges PPDA = aggressives Pressing → mehr Ball-Wins hoch im Feld →
+    mehr eigene Torchancen. Eigenes Attack-Lambda wird leicht angehoben,
+    Effekt auf das Opp-Lambda bleibt 0 (Counter-Vulnerabilität gleicht den
+    Defence-Bonus statistisch ungefähr aus — neutrale Default-Annahme).
+
+    Multiplier deckelt bei ±10% (clip). Bei NaN-Inputs → 1.0 (neutral).
+    """
+    if not (ppda_home == ppda_home):  # NaN check
+        z_h = 0.0
+    else:
+        z_h = (baseline - ppda_home) / z_scale
+    if not (ppda_away == ppda_away):
+        z_a = 0.0
+    else:
+        z_a = (baseline - ppda_away) / z_scale
+
+    mult_lh = float(min(max((1.0 + boost * z_h), 1.0 - clip), 1.0 + clip))
+    mult_la = float(min(max((1.0 + boost * z_a), 1.0 - clip), 1.0 + clip))
+    return mult_lh, mult_la
+
+
 def ppda_features(
     home: str,
     away: str,
