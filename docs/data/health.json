@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-06-20T16:32:07Z",
-  "overall": "ok",
+  "generated_at": "2026-06-20T16:46:33Z",
+  "overall": "degraded",
   "jobs": [
     {
       "job": "daily_scan",
@@ -38,8 +38,8 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-06-20T16:32:07Z",
-      "duration_s": 0.0,
+      "last_run_at": "2026-06-20T16:46:33Z",
+      "duration_s": null,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -48,11 +48,11 @@
     },
     {
       "job": "live_score_push",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-06-20T16:31:07Z",
       "duration_s": 3.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-06-20T16:31:07Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
@@ -81,11 +81,11 @@
     },
     {
       "job": "aggregate_health",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-06-20T16:30:06Z",
       "duration_s": 0.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-06-20T16:30:06Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min (huckepack)"
