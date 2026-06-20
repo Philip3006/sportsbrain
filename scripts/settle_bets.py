@@ -22,7 +22,7 @@ ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
 LEDGER = ROOT / "results" / "ledger.csv"
-API_URL = "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup_2026/scores/"
+API_URL = "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/scores/"
 
 
 def _api_key() -> str:
