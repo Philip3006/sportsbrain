@@ -73,5 +73,14 @@
     "completed": false,
     "ht_sent": true,
     "updated": "2026-06-19T20:53:30.274409+00:00"
+  },
+  "espn_760444": {
+    "home": "Brazil",
+    "away": "Haiti",
+    "home_score": 1,
+    "away_score": 0,
+    "completed": false,
+    "ht_sent": false,
+    "updated": "2026-06-20T00:59:46.054135+00:00"
   }
 }
