@@ -5,6 +5,10 @@ on:
     - cron: '0 8 * * *'   # täglich 08:00 UTC (10:00 MESZ)
   workflow_dispatch:        # manuell auslösbar über GitHub UI
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -62,9 +66,11 @@ jobs:
           git add models/ docs/data/signals.json docs/data/wm_forecast.json docs/data/health.json || true
           git diff --staged --quiet || git commit -m "auto: scan $(date +%Y-%m-%d)"
           for i in 1 2 3 4 5; do
-            git pull --rebase origin main || true
-            git push && exit 0
-            echo "[push] attempt $i failed, retry after backoff…"
-            sleep $((RANDOM % 6 + 2))
+            git fetch origin main
+            git rebase --strategy-option=theirs origin/main \
+              || { git rebase --abort 2>/dev/null || true; echo "[push] rebase conflict on attempt $i, retrying"; }
+            git push origin main && exit 0
+            echo "[push] attempt $i failed, backoff..."
+            sleep $((RANDOM % 20 + 10))
           done
           echo "[push] giving up after 5 attempts" >&2; exit 1
