@@ -17,10 +17,11 @@ chmod +x "$SPORTSBRAIN_DIR/scripts/auto_retrain_cron.sh"
 chmod +x "$SPORTSBRAIN_DIR/scripts/auto_heal_cron.sh"
 echo "      OK: scan_cron.sh, closing_odds_cron.sh, auto_retrain_cron.sh, auto_heal_cron.sh"
 
-# 1b. Copy auto-heal plist to LaunchAgents (new agent — copy from repo)
-echo "[1b/3] Installing auto-heal launchd plist..."
+# 1b. Copy auto-heal plists to LaunchAgents (new agents — copy from repo)
+echo "[1b/3] Installing auto-heal launchd plists..."
 cp "$SPORTSBRAIN_DIR/launchd/com.sportsbrain.auto-heal.plist" "$LAUNCH_AGENTS_DIR/"
-echo "       OK: com.sportsbrain.auto-heal.plist → $LAUNCH_AGENTS_DIR/"
+cp "$SPORTSBRAIN_DIR/launchd/com.sportsbrain.auto-heal-ai.plist" "$LAUNCH_AGENTS_DIR/"
+echo "       OK: com.sportsbrain.auto-heal.plist + auto-heal-ai.plist → $LAUNCH_AGENTS_DIR/"
 
 # 2. Ensure results directory exists
 mkdir -p "$SPORTSBRAIN_DIR/results"
@@ -34,6 +35,7 @@ PLISTS=(
     "com.sportsbrain.closing-odds-evening.plist"
     "com.sportsbrain.auto-retrain.plist"
     "com.sportsbrain.auto-heal.plist"
+    "com.sportsbrain.auto-heal-ai.plist"
 )
 
 for PLIST in "${PLISTS[@]}"; do
@@ -50,7 +52,7 @@ done
 
 # 4. Verify
 echo "[3/3] Verifying loaded agents..."
-for LABEL in com.sportsbrain.daily-scan com.sportsbrain.closing-odds com.sportsbrain.closing-odds-evening com.sportsbrain.auto-retrain com.sportsbrain.auto-heal; do
+for LABEL in com.sportsbrain.daily-scan com.sportsbrain.closing-odds com.sportsbrain.closing-odds-evening com.sportsbrain.auto-retrain com.sportsbrain.auto-heal com.sportsbrain.auto-heal-ai; do
     STATUS=$(launchctl list "$LABEL" 2>/dev/null | grep '"Label"' || echo "NOT FOUND")
     if echo "$STATUS" | grep -q "$LABEL"; then
         echo "      OK: $LABEL is registered"
