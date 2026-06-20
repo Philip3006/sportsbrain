@@ -58,35 +58,80 @@ def _log_tail(job: str, n: int = 80) -> str:
     return "\n".join(lines[-n:])
 
 
-def _ask_claude(job: str, status: str, fallback: str | None, log_tail: str) -> str:
-    import anthropic  # imported here so missing package doesn't crash on load
+_HAIKU = "claude-haiku-4-5-20251001"
+_SONNET = "claude-sonnet-4-6"
 
+_DIAGNOSIS_PROMPT = """\
+SportsBrain cron job '{job}' has health status '{status}' (fallback_used: {fallback}).
+
+Log tail (last 80 lines):
+<log>
+{log_tail}
+</log>
+
+Analyze the root cause. Reply with EXACTLY ONE of these formats:
+
+If it's a fixable code bug in a file under scripts/:
+FIX
+FILE: scripts/filename.py
+OLD: <exact string to replace — single line only>
+NEW: <replacement string — single line only>
+
+If it's transient (network timeout, DNS, API quota 429, rate limit):
+TRANSIENT: <brief reason>
+
+If fallback is active but job is otherwise working (espn fallback, stale cache):
+DEGRADED_OK: <brief reason>
+
+If unclear or requires human review:
+UNCLEAR: <brief reason>
+
+Be concise. Output only the structured response above, nothing else."""
+
+_FIX_PROMPT = """\
+SportsBrain cron job '{job}' needs a code fix. Initial diagnosis:
+{diagnosis}
+
+Log tail (last 80 lines):
+<log>
+{log_tail}
+</log>
+
+Produce the corrected fix block (same format):
+FIX
+FILE: scripts/filename.py
+OLD: <exact string to replace — single line only>
+NEW: <replacement string — single line only>
+
+Only fix files under scripts/. Output only the fix block, nothing else."""
+
+
+def _call(model: str, prompt: str, max_tokens: int = 400) -> str:
+    import anthropic
     client = anthropic.Anthropic(api_key=_api_key())
-    prompt = (
-        f"SportsBrain cron job '{job}' has health status '{status}' "
-        f"(fallback_used: {fallback}).\n\n"
-        f"Log tail (last 80 lines):\n<log>\n{log_tail}\n</log>\n\n"
-        "Analyze the root cause. Reply with EXACTLY ONE of these formats:\n\n"
-        "If it's a fixable code bug in a file under scripts/:\n"
-        "FIX\n"
-        "FILE: scripts/filename.py\n"
-        "OLD: <exact string to replace — single line only>\n"
-        "NEW: <replacement string — single line only>\n\n"
-        "If it's transient (network timeout, DNS, API quota 429, rate limit):\n"
-        "TRANSIENT: <brief reason>\n\n"
-        "If fallback is active but job is otherwise working (espn fallback, stale cache):\n"
-        "DEGRADED_OK: <brief reason>\n\n"
-        "If unclear or requires human review:\n"
-        "UNCLEAR: <brief reason>\n\n"
-        "Be concise. Output only the structured response above, nothing else."
-    )
-
     msg = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=400,
+        model=model,
+        max_tokens=max_tokens,
         messages=[{"role": "user", "content": prompt}],
     )
     return msg.content[0].text.strip()
+
+
+def _ask_claude(job: str, status: str, fallback: str | None, log_tail: str) -> str:
+    """Haiku diagnoses; Sonnet is called only when a code fix is needed."""
+    prompt = _DIAGNOSIS_PROMPT.format(
+        job=job, status=status, fallback=fallback, log_tail=log_tail
+    )
+    diagnosis = _call(_HAIKU, prompt, max_tokens=400)
+
+    if diagnosis.startswith("FIX"):
+        _log(f"{job}: Haiku flagged FIX — escalating to Sonnet for precise fix")
+        fix_prompt = _FIX_PROMPT.format(
+            job=job, diagnosis=diagnosis, log_tail=log_tail
+        )
+        return _call(_SONNET, fix_prompt, max_tokens=600)
+
+    return diagnosis
 
 
 def _apply_fix(response: str, job: str) -> bool:
