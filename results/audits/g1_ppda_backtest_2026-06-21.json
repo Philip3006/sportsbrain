@@ -1,24 +1,36 @@
 {
-  "as_of": "2026-06-20T23:05:36.640870Z",
+  "as_of": "2026-06-20T23:35:58.742701+00:00",
   "since": "2018-01-01",
-  "val_since": "2023-01-01",
+  "val_since": "2022-11-01",
   "baseline": {
-    "brier_raw": 0.5336256088091875,
-    "brier_cal": 0.5048455871859288,
-    "roi_proxy": 0.004605149331567924,
-    "n_val": 2155,
-    "n_features": 64
+    "brier_raw": 0.5390246943559946,
+    "brier_cal": 0.5068142074608615,
+    "roi_proxy": 0.004349175026536928,
+    "n_val": 2219,
+    "n_features": 64,
+    "roi_market": 0.07515151515151511,
+    "n_bets_market": 132,
+    "total_pnl": 9.919999999999995,
+    "n_matches_with_odds": 97
   },
   "with_ppda": {
-    "brier_raw": 0.5325305334851761,
-    "brier_cal": 0.5019857298262667,
-    "roi_proxy": 0.0013613627244906158,
-    "n_val": 2155,
-    "n_features": 67
+    "brier_raw": 0.5338599660705695,
+    "brier_cal": 0.5032661081656391,
+    "roi_proxy": -0.004821600634939676,
+    "n_val": 2219,
+    "n_features": 67,
+    "roi_market": 0.19365671641791038,
+    "n_bets_market": 134,
+    "total_pnl": 25.949999999999992,
+    "n_matches_with_odds": 97
   },
-  "brier_improvement": 0.002859857359662099,
-  "roi_improvement_pp": -0.32437866070773086,
+  "brier_improvement": 0.0035480992952223733,
+  "roi_improvement_proxy_pp": -0.9170775661476606,
+  "roi_improvement_market_pp": 11.850520126639527,
   "gate_brier_passed": true,
-  "gate_roi_passed": false,
-  "i5_gate_passed": false
+  "gate_roi_proxy_passed": false,
+  "gate_roi_market_passed": true,
+  "i5_gate_passed": true,
+  "n_market_bets_baseline": 132,
+  "n_market_bets_ppda": 134
 }
