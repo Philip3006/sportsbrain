@@ -1,0 +1,70 @@
+name: Consume Pending Bets (5 min)
+
+on:
+  schedule:
+    # Alle 5 Minuten — GitHub-Minimum (lokal läuft es alle 2 Min als Backup)
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  consume:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Consume pending bets from Cloudflare KV
+        id: consume
+        env:
+          SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
+          SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
+        run: python3 -m scripts.consume_pending_bets
+
+      - name: Write health snapshot
+        if: always()
+        run: |
+          mkdir -p results/health
+          STATUS=$([[ "${{ steps.consume.outcome }}" == "failure" ]] && echo "error" || echo "ok")
+          python3 -m src.monitoring.health_writer --job consume_pending_bets --status "$STATUS"
+
+      - name: Aggregate & upload health
+        if: always()
+        env:
+          SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
+          SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
+        run: python3 -m src.monitoring.aggregate_health --merge-from-committed
+
+      - name: Commit if new bets were added
+        run: |
+          git config user.name "SportsBrain Bot"
+          git config user.email "bot@sportsbrain"
+          git add results/ledger.csv docs/data/health.json || true
+          git diff --staged --quiet && exit 0
+          git commit -m "auto: consume pending bets $(date +%Y-%m-%d\ %H:%M) UTC"
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase --strategy-option=theirs origin/main \
+              || { git rebase --abort 2>/dev/null || true; echo "[push] rebase conflict attempt $i"; }
+            git push origin main && exit 0
+            sleep $((RANDOM % 15 + 5))
+          done
+          echo "[push] giving up after 5 attempts" >&2; exit 1
