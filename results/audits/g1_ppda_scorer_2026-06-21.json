@@ -1,0 +1,21 @@
+{
+  "as_of": "2026-06-20T23:43:37.041302+00:00",
+  "val_since": "2022-11-01",
+  "n_records": 2720,
+  "n_players": 789,
+  "n_scored": 214,
+  "brier_baseline": 0.13339763245372568,
+  "brier_ppda": 0.15433282429398398,
+  "delta_brier": -0.0209351918402583,
+  "roi_baseline_self_priced": -0.7517475753711075,
+  "roi_ppda_self_priced": -0.7687753528850384,
+  "delta_roi_pp": -1.702777751393092,
+  "n_bets_baseline": 950,
+  "n_bets_ppda": 1106,
+  "avg_ppda_mult": 1.170902749910708,
+  "notes": [
+    "Scorer-Quoten sind nicht im Repo verf\u00fcgbar \u2192 ROI ist self-priced (Quote=1/p).",
+    "Brier ist der prim\u00e4re Indikator; ROI nur als Konsistenz-Check.",
+    "PPDA-XG-Multiplier: (opp_ppda/11.5)^0.5, clipped \u00b130%."
+  ]
+}
