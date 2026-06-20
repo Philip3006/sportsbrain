@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-20T14:08:20Z",
+  "generated_at": "2026-06-20T15:06:03Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -37,11 +37,11 @@
     },
     {
       "job": "consume_pending_bets",
-      "status": "stale",
-      "last_run_at": "2026-06-20T13:36:02Z",
-      "duration_s": 1.0,
+      "status": "ok",
+      "last_run_at": "2026-06-20T15:06:03Z",
+      "duration_s": null,
       "exit_code": 0,
-      "error": "last run was at 2026-06-20T13:36:02Z — overdue (>420s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
@@ -59,22 +59,22 @@
     },
     {
       "job": "prematch_scan",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-06-20T13:23:49Z",
       "duration_s": 0.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-06-20T13:23:49Z — overdue (>2700s)",
       "fallback_used": null,
       "next_expected_in_s": 1800,
       "cadence": "alle 30 Min (im Fenster)"
     },
     {
       "job": "settle",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-06-20T13:30:05Z",
       "duration_s": 1.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-06-20T13:30:05Z — overdue (>4200s)",
       "fallback_used": null,
       "next_expected_in_s": 3600,
       "cadence": "stündlich 00:30–04:30"
