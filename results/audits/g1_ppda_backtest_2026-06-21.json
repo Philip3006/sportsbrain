@@ -1,0 +1,24 @@
+{
+  "as_of": "2026-06-20T23:05:36.640870Z",
+  "since": "2018-01-01",
+  "val_since": "2023-01-01",
+  "baseline": {
+    "brier_raw": 0.5336256088091875,
+    "brier_cal": 0.5048455871859288,
+    "roi_proxy": 0.004605149331567924,
+    "n_val": 2155,
+    "n_features": 64
+  },
+  "with_ppda": {
+    "brier_raw": 0.5325305334851761,
+    "brier_cal": 0.5019857298262667,
+    "roi_proxy": 0.0013613627244906158,
+    "n_val": 2155,
+    "n_features": 67
+  },
+  "brier_improvement": 0.002859857359662099,
+  "roi_improvement_pp": -0.32437866070773086,
+  "gate_brier_passed": true,
+  "gate_roi_passed": false,
+  "i5_gate_passed": false
+}

@@ -258,6 +258,11 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Impact/Aufwand/Risiko**: 🟡 · 🔴 · 🟢 (Flag schützt)
 - **Dateien**: `src/features/ppda.py` (neu), `src/features/builder.py`, `src/config.py`, `scripts/backtest_with_ppda.py` (neu), `src/data/statsbomb_ppda.py` (neu), `src/data/fbref_ppda.py` (neu, Saison-Fallback-Snapshot)
 - **Status (2026-06-20)**: Erledigt. PPDA-Berechnung aus StatsBomb-Events (Pässe in Opp-60% / Def-Aktionen im Press-Bereich x≥48, Denominator-Floor 5 → NaN-Schutz). Rolling-Window N=10 mit Bayes-Shrinkage gegen Konföderations-Prior (PRIOR_WEIGHT=3.0, MIN_MATCHES=3), Fallback-Kaskade Konföderation → FBref-Snapshot → globaler Fallback 11.5. Builder integriert via `force_ppda`-Flag (Live bleibt off durch `PPDA_LIVE_ENABLED=False`). Backtest-Script vergleicht Brier + ROI-Proxy auf identischem Train/Val-Split. I5-Gate: Δ Brier ≥ 0.001 UND Δ ROI ≥ 0.5pp. 14 Unit-Tests grün, Gesamt-Suite 460/460 (+14 ggü. Baseline 446).
+- **Backtest-Resultate 2026-06-21**:
+  - **1X2-LGBM (scripts/backtest_with_ppda.py)**: Brier 0.5048 → 0.5020 (Δ +0.0029 ✅), ROI-Proxy +0.46% → +0.14% (Δ −0.32pp ⚠️). I5-Gate **nicht bestanden**, Shadow bleibt aktiv.
+  - **Markt-Erweiterung (scripts/backtest_with_ppda_markets.py)**: 1909 Val-Matches, DC-Lambda-Adjustment via `ppda_lambda_multipliers` (Boost 2.5% pro PPDA-z, Clip ±10%). Brier durchgängig minimal schlechter (max −0.0015). ROI-Effekte gemischt: positiv bei 1X2_home (+1.19pp), 1X2_away (+1.24pp), over_2_5 (+1.11pp), btts_yes (+0.58pp); negativ bei btts_no (−2.27pp), under_2_5 (−1.62pp), draw (−0.71pp). Insight: Adjustment schiebt Modell systematisch Richtung „mehr Tore" — passt zur PPDA-Theorie, aber Brier-Verschlechterung deutet auf Overfitting des Multiplier-Tunings (z_scale=5, boost=0.025).
+  - **Scorer-Markt**: out-of-scope dieser Iteration (braucht per-Player-xG × Minuten × Team-PPDA-Pfad).
+  - **Empfehlung**: PPDA bleibt Shadow. Vor Live-Schaltung: (a) Multiplier-Tuning gegen Brier-Floor; (b) markt-aware ROI mit echten Closing-Quoten statt self-priced; (c) Scorer-Pfad nachziehen.
 
 ### G2. Sperren-Tracking automatisieren ✅
 - **Was**: `scripts/scrape_suspensions.py` läuft täglich (Multi-Source), füllt `data/suspensions.json`.
