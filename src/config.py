@@ -60,6 +60,13 @@ DRIFT_MONITOR_ENABLED = True
 PINNACLE_CLV_ENABLED = True
 PER_CLUSTER_CALIBRATION_ENABLED = True
 
+# Roadmap G1 — PPDA Shadow Feature.
+# Wenn False: builder berechnet das Feature nicht für Live-Scans (gibt 0.0 zurück),
+# Backtest-Skripte (scripts/backtest_with_ppda.py) können das Flag temporär
+# überschreiben, um die ROI-Diff zu messen. Wechsel auf True erst nach
+# I5-Gate (ROI-Improvement ≥ 0.5pp UND Brier-Improvement ≥ 0.001).
+PPDA_LIVE_ENABLED = False
+
 # Confederation per team — used for asymmetric divergence threshold.
 # Non-UEFA/CONMEBOL away teams have higher confederation-bias risk in DC model
 # (training data dominated by qualifier blowouts). Stricter filter applied.

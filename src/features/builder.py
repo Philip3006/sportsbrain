@@ -3,11 +3,13 @@ import numpy as np
 from typing import Any
 
 from src.betting.odds_utils import remove_margin_shin
+from src.config import PPDA_LIVE_ENABLED
 from src.data.statsbomb import get_team_xg_stats
 from src.data.market_values import get_market_value_ratio, get_market_value_log_ratio
 from src.features.form import rolling_form, days_since_last_match, momentum_score, match_load
 from src.features.head_to_head import h2h_stats
 from src.features.player_rating import rolling_shot_quality
+from src.features.ppda import ppda_features
 from src.features.squad_context import tournament_stage_features
 from src.data.fotmob import get_team_rolling_rating
 from src.data.squad_availability import SquadReport, default_report, squad_impact_features
@@ -31,6 +33,8 @@ def build_feature_row(
     statsbomb_xg: pd.DataFrame | None = None,
     player_xg_df: pd.DataFrame | None = None,
     fotmob_ratings_df: pd.DataFrame | None = None,
+    ppda_df: pd.DataFrame | None = None,
+    force_ppda: bool = False,
 ) -> dict[str, Any]:
     """
     Assembles a flat feature dict for one match.
@@ -203,6 +207,18 @@ def build_feature_row(
         except Exception:
             pass
 
+    # --- PPDA pressing-intensity features (Roadmap G1, Shadow-Mode) ---
+    # Live-Scanner überspringt das Feature solange PPDA_LIVE_ENABLED=False ist,
+    # damit existierende LGBM-Modelle keine unbekannte Feature-Verteilung sehen.
+    # Backtest-Skripte setzen force_ppda=True, um den ROI-Diff zu messen.
+    if force_ppda or PPDA_LIVE_ENABLED:
+        try:
+            features.update(ppda_features(home, away, match_date, ppda_df))
+        except Exception:
+            features.setdefault("ppda_home", 0.0)
+            features.setdefault("ppda_away", 0.0)
+            features.setdefault("ppda_diff", 0.0)
+
     return features
 
 
@@ -233,6 +249,8 @@ def build_training_matrix(
     statsbomb_xg: pd.DataFrame | None = None,
     player_xg_df: pd.DataFrame | None = None,
     fotmob_ratings_df: pd.DataFrame | None = None,
+    ppda_df: pd.DataFrame | None = None,
+    force_ppda: bool = False,
 ) -> tuple[pd.DataFrame, pd.Series]:
     """
     Builds (X, y) training pair with no lookahead.
@@ -277,6 +295,8 @@ def build_training_matrix(
             statsbomb_xg=statsbomb_xg,
             player_xg_df=player_xg_df,
             fotmob_ratings_df=fotmob_ratings_df,
+            ppda_df=ppda_df,
+            force_ppda=force_ppda,
         )
         rows.append(feat)
 
