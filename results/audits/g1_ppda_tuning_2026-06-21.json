@@ -1,0 +1,170 @@
+{
+  "as_of": "2026-06-20T23:22:47.281628+00:00",
+  "n_matches": 1909,
+  "grid_size": 36,
+  "winner": {
+    "z_scale": 12.0,
+    "boost": 0.01,
+    "clip": 0.05,
+    "score": -0.11686822016475351
+  },
+  "winner_markets": {
+    "1X2_home": {
+      "brier_base": 0.20324329767064844,
+      "brier_adj": 0.2034720774807993,
+      "delta_brier": -0.00022877981015084758,
+      "roi_base": 0.06449980459971788,
+      "roi_adj": 0.06409666165764302,
+      "delta_roi_pp": -0.04031429420748578,
+      "n_bets_adj": 746,
+      "n_bets_base": 746
+    },
+    "1X2_draw": {
+      "brier_base": 0.18004856775904102,
+      "brier_adj": 0.18021115542329974,
+      "delta_brier": -0.00016258766425872317,
+      "roi_base": -0.25232282774719894,
+      "roi_adj": -0.25093431817661427,
+      "delta_roi_pp": 0.13885095705846728,
+      "n_bets_adj": 719,
+      "n_bets_base": 714
+    },
+    "1X2_away": {
+      "brier_base": 0.17977764983188685,
+      "brier_adj": 0.17989711622504584,
+      "delta_brier": -0.0001194663931589901,
+      "roi_base": 0.004703640441208703,
+      "roi_adj": 0.005749216632881346,
+      "delta_roi_pp": 0.10455761916726433,
+      "n_bets_adj": 547,
+      "n_bets_base": 546
+    },
+    "over_2_5": {
+      "brier_base": 0.2544395009121538,
+      "brier_adj": 0.25444005506138617,
+      "delta_brier": -5.541492323901664e-07,
+      "roi_base": -0.14582670457808355,
+      "roi_adj": -0.14648941151301814,
+      "delta_roi_pp": -0.06627069349345871,
+      "n_bets_adj": 697,
+      "n_bets_base": 698
+    },
+    "under_2_5": {
+      "brier_base": 0.2544395009121538,
+      "brier_adj": 0.25444005506138617,
+      "delta_brier": -5.541492323901664e-07,
+      "roi_base": -0.1687688250718124,
+      "roi_adj": -0.16950089217137218,
+      "delta_roi_pp": -0.073206709955978,
+      "n_bets_adj": 869,
+      "n_bets_base": 866
+    },
+    "btts_yes": {
+      "brier_base": 0.24573484004204496,
+      "brier_adj": 0.24573322145187196,
+      "delta_brier": 1.6185901730025876e-06,
+      "roi_base": -0.19226098630507785,
+      "roi_adj": -0.1882323144580737,
+      "delta_roi_pp": 0.4028671847004145,
+      "n_bets_adj": 538,
+      "n_bets_base": 546
+    },
+    "btts_no": {
+      "brier_base": 0.24573484004204496,
+      "brier_adj": 0.24573322145187196,
+      "delta_brier": 1.6185901730025876e-06,
+      "roi_base": -0.02068299405047315,
+      "roi_adj": -0.02139709522447951,
+      "delta_roi_pp": -0.07141011740063596,
+      "n_bets_adj": 881,
+      "n_bets_base": 876
+    }
+  },
+  "top10": [
+    {
+      "z_scale": 12.0,
+      "boost": 0.01,
+      "clip": 0.05,
+      "score": -0.11686822016475351,
+      "delta_roi_sum_pp": 0.3950739458685877,
+      "delta_brier_sum": -0.000508704985687336
+    },
+    {
+      "z_scale": 12.0,
+      "boost": 0.01,
+      "clip": 0.1,
+      "score": -0.11686822016475351,
+      "delta_roi_sum_pp": 0.3950739458685877,
+      "delta_brier_sum": -0.000508704985687336
+    },
+    {
+      "z_scale": 12.0,
+      "boost": 0.01,
+      "clip": 0.15,
+      "score": -0.11686822016475351,
+      "delta_roi_sum_pp": 0.3950739458685877,
+      "delta_brier_sum": -0.000508704985687336
+    },
+    {
+      "z_scale": 8.0,
+      "boost": 0.01,
+      "clip": 0.05,
+      "score": -0.2910905301367579,
+      "delta_roi_sum_pp": 0.4945650531793837,
+      "delta_brier_sum": -0.0007848204166624184
+    },
+    {
+      "z_scale": 8.0,
+      "boost": 0.01,
+      "clip": 0.1,
+      "score": -0.2910905301367579,
+      "delta_roi_sum_pp": 0.4945650531793837,
+      "delta_brier_sum": -0.0007848204166624184
+    },
+    {
+      "z_scale": 8.0,
+      "boost": 0.01,
+      "clip": 0.15,
+      "score": -0.2910905301367579,
+      "delta_roi_sum_pp": 0.4945650531793837,
+      "delta_brier_sum": -0.0007848204166624184
+    },
+    {
+      "z_scale": 12.0,
+      "boost": 0.025,
+      "clip": 0.1,
+      "score": -0.8751555892068801,
+      "delta_roi_sum_pp": 0.5060812516332198,
+      "delta_brier_sum": -0.0013812368408401
+    },
+    {
+      "z_scale": 12.0,
+      "boost": 0.025,
+      "clip": 0.15,
+      "score": -0.8751555892068801,
+      "delta_roi_sum_pp": 0.5060812516332198,
+      "delta_brier_sum": -0.0013812368408401
+    },
+    {
+      "z_scale": 12.0,
+      "boost": 0.025,
+      "clip": 0.05,
+      "score": -0.8756129448947554,
+      "delta_roi_sum_pp": 0.5064789566533328,
+      "delta_brier_sum": -0.0013820919015480881
+    },
+    {
+      "z_scale": 5.0,
+      "boost": 0.01,
+      "clip": 0.1,
+      "score": -0.9941200896371081,
+      "delta_roi_sum_pp": 0.3247900858549359,
+      "delta_brier_sum": -0.001318910175492044
+    }
+  ],
+  "notes": [
+    "Score = \u03a3 ROI-\u0394 (pp) \u2212 10 \u00d7 100 \u00d7 \u03a3 max(0, Brier-Verschlechterung).",
+    "Self-priced Quotes (Sprint 1 \u2014 markt-aware kommt in Sprint 2).",
+    "Bei mehreren gleichwertigen: kleinstes boost bevorzugen (konservativer)."
+  ]
+}
