@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.sportsbrain.auto-heal-ai</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Library/Frameworks/Python.framework/Versions/3.13/bin/python3</string>
+        <string>/Users/philiprassillier/sportsbrain/scripts/auto_heal_ai.py</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/philiprassillier/sportsbrain</string>
+
+    <!-- Every 15 minutes -->
+    <key>StartInterval</key>
+    <integer>900</integer>
+
+    <key>StandardOutPath</key>
+    <string>/Users/philiprassillier/sportsbrain/results/launchd_auto_heal_ai.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/philiprassillier/sportsbrain/results/launchd_auto_heal_ai.log</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Library/Frameworks/Python.framework/Versions/3.13/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+</dict>
+</plist>
