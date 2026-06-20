@@ -223,7 +223,7 @@ def main():
     # -----------------------------------------------------------------------
     # 6. Environment Variables
     # -----------------------------------------------------------------------
-    required_keys = ["ODDS_API_KEY", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"]
+    required_keys = ["ODDS_API_KEY", "VAPID_PUBLIC_KEY", "VAPID_PRIVATE_KEY"]
     env_status = check_env_keys(required_keys)
 
     print("Environment:")

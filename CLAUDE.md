@@ -33,7 +33,7 @@ sportsbrain/
 
 ### Phase 2 — Vorhersage-Modelle
 - **Fußball:** Poisson-Regression (Tore), xG-basiert, Elo-Rating (LIVE)
-- **Basketball:** Pythagorean-Erwartung, Pace-adjusted Ratings, ELO (Phase 5 — geplant zum Saisonstart: BBL ~26.09.2026, Euroleague ~02.10.2026, NBA ~21.10.2026; aktuell NICHT implementiert)
+- **Basketball:** ⚠️ **PHASE 5 — NICHT IMPLEMENTIERT.** Pythagorean-Erwartung, Pace-adjusted Ratings und Basketball-ELO sind als geplante Modell-Architektur dokumentiert — **kein Code, kein Scanner, keine Daten-Pipeline aktiv**. Saisonstart-Ziele: BBL ~26.09.2026, Euroleague ~02.10.2026, NBA ~21.10.2026. Roadmap-Item J1.
 - Backtest: historische Quoten vs. Modell-Output → Expected Value (EV)
 
 ### Phase 3 — Value-Optimierung

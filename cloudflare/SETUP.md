@@ -159,9 +159,10 @@ MIG...
 VAPID_SUB=mailto:deine@email.tld
 ```
 
-## Schritt 4 — Telegram-Secrets aufräumen (optional)
+## Schritt 4 — Telegram-Secrets aufräumen
 
-Die Workflows nutzen `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` nicht mehr. Du kannst die Secrets im GitHub-Repo löschen, falls du Telegram komplett retirest.
+Telegram-Bot ist seit Roadmap-B6 (2026-06-20) komplett retired (PWA-Push ist primärer Kanal).
+GitHub-Secrets `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` können gefahrlos gelöscht werden.
 
 ## Schritt 5 — PWA-Notifications aktivieren
 

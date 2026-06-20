@@ -602,7 +602,7 @@
   </div>
 </header>
 
-<div class="stale-banner" id="stale-banner">⚠️ Daten älter als 26h — Scan läuft täglich 08:00 UTC</div>
+<div class="stale-banner" id="stale-banner">⚠️ Daten älter als 90 min — Cron-Cadence ist 30 min, prüfe CI-Status</div>
 
 <div class="spinner-overlay" id="spinner-overlay" aria-hidden="true"><div class="spinner" role="status" aria-label="Lade Daten"></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -786,12 +786,6 @@
     </div>
   </section>
 
-  <section id="view-squads" class="view">
-    <div id="squads-container">
-      <div class="skel"></div><div class="skel"></div>
-    </div>
-  </section>
-
   <section id="view-bets" class="view">
     <div class="bet-tabs" id="bet-tabs">
       <button class="bet-tab active" onclick="_setBetTab('open')">Offen<span class="tab-count" id="tc-open">0</span></button>
@@ -907,7 +901,6 @@ function navTo(tab) {
 function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + id).classList.add('active');
-  if (id === 'squads') renderSquads();
   if (id === 'forecast') renderForecast();
 }
 function closeDetail() { showView(_prevView); }
@@ -3578,101 +3571,6 @@ function squadSection(home, away) {
   </div>`;
 }
 
-// ── Squads ───────────────────────────────────────────────────
-let _squadFilter = '';
-
-function renderSquads() {
-  const con = document.getElementById('squads-container');
-  const teams = Object.keys(_squads).filter(t =>
-    !_squadFilter || t.toLowerCase().includes(_squadFilter.toLowerCase())
-  ).sort();
-
-  if (!teams.length && !Object.keys(_squads).length) {
-    con.innerHTML = `<div style="padding:12px 16px;font-size:12px;color:var(--muted)">
-      <input class="squad-search-inline" placeholder="🔍 Team suchen..." oninput="filterSquads(this.value)" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;padding:9px 14px;outline:none;margin-bottom:12px;display:block">
-      Laden…</div>`;
-    return;
-  }
-
-  const posOrder = {GK:0,DEF:1,MID:2,FWD:3};
-  let html = `<div class="squad-search">
-    <input placeholder="🔍 Team suchen..." oninput="filterSquads(this.value)" value="${esc(_squadFilter)}">
-  </div>`;
-
-  if (!teams.length) {
-    html += `<div style="padding:24px;text-align:center;color:var(--muted)">Kein Team gefunden.</div>`;
-  }
-
-  for (const team of teams) {
-    const d = _squads[team];
-    const injured = (d.players||[]).filter(p => p.status !== 'fit').length;
-    const susp = (d.suspended||[]).length;
-    const badge = injured > 0 ? `<span style="color:var(--red)">${injured} verletzt</span>` :
-                  susp > 0   ? `<span style="color:var(--yellow)">${susp} gesperrt</span>` : '';
-    html += `<div class="squad-team-row" onclick="openSquad('${esc(team)}')">
-      <span class="squad-ampel">${d.ampel||'🟢'}</span>
-      <span class="squad-team-name">${esc(team)}</span>
-      <div class="squad-meta">${badge ? badge+'<br>' : ''}<span class="squad-source">${esc(d.source||'')}</span></div>
-      <span style="color:var(--muted);font-size:16px">›</span>
-    </div>`;
-  }
-
-  con.innerHTML = html;
-}
-
-function filterSquads(val) {
-  _squadFilter = val;
-  renderSquads();
-}
-
-function openSquad(team) {
-  const d = _squads[team];
-  if (!d) return;
-  // Use active nav tab as back target, so back always returns to the correct view
-  const activeTab = document.querySelector('.nav-tab.active');
-  _prevView = activeTab ? activeTab.dataset.view : 'squads';
-  const players = (d.players||[]).slice().sort((a,b) => {
-    const po = {GK:0,DEF:1,MID:2,FWD:3};
-    return (po[a.pos]??9) - (po[b.pos]??9);
-  });
-
-  const posLabels = {GK:'Torhüter',DEF:'Abwehr',MID:'Mittelfeld',FWD:'Sturm'};
-  let rows = '', lastPos = '';
-  for (const p of players) {
-    if (p.pos !== lastPos) {
-      rows += `<div class="squad-pos-group">${esc(posLabels[p.pos]||p.pos)}</div>`;
-      lastPos = p.pos;
-    }
-    const sc = p.status === 'injured' ? 'status-injured' :
-               p.status === 'suspended' ? 'status-suspended' :
-               p.status === 'doubtful' ? 'status-doubtful' : 'status-fit';
-    const sl = p.status === 'fit' ? '' : p.status === 'injured' ? '🤕' : p.status === 'suspended' ? '🟡' : '❓';
-    rows += `<div class="squad-player-row">
-      <span class="squad-player-pos">${esc(p.pos||'')}</span>
-      <span class="squad-player-name">${esc(p.name)}</span>
-      ${sl ? `<span class="squad-player-status ${sc}">${sl}</span>` : ''}
-    </div>`;
-  }
-
-  // Add suspended players not in squad list
-  const susp = d.suspended||[];
-  if (susp.length) {
-    rows += `<div class="squad-pos-group">Gesperrt (manuell)</div>`;
-    for (const s of susp) {
-      rows += `<div class="squad-player-row"><span class="squad-player-pos">—</span><span class="squad-player-name">${esc(s)}</span><span class="squad-player-status status-suspended">🟡</span></div>`;
-    }
-  }
-
-  const header = `<div class="squad-detail-header">
-    <div class="squad-detail-name">${esc(team)}</div>
-    <div class="squad-detail-meta">${d.player_count||players.length} Spieler · Quelle: ${esc(d.source||'—')} · ${d.ampel||'🟢'} Verfügbarkeit</div>
-  </div>`;
-
-  document.getElementById('detail-header').innerHTML = header;
-  document.getElementById('detail-cards').innerHTML = rows || '<div style="padding:20px;color:var(--muted);text-align:center">Keine Spieler-Daten.</div>';
-  showView('detail');
-}
-
 // ── Load ─────────────────────────────────────────────────────
 let _cloudHealthy = true;
 async function _load() {
@@ -3696,8 +3594,8 @@ async function _load() {
   const dt = new Date(d.updated), age = (Date.now()-dt)/36e5;
   document.getElementById('updated-time').textContent =
     dt.toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-  document.getElementById('stale-banner').style.display = age > 26 ? 'block' : 'none';
-  document.getElementById('dot').style.background = age > 26 ? 'var(--yellow)' : 'var(--green)';
+  document.getElementById('stale-banner').style.display = age > 1.5 ? 'block' : 'none';
+  document.getElementById('dot').style.background = age > 1.5 ? 'var(--yellow)' : 'var(--green)';
 
   _signals = [...(d.football||[]), ...(d.tennis||[])];
   _schedule = d.schedule || [];

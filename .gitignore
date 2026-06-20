@@ -1,5 +1,5 @@
-.env
-.env.bak_*
+.env*
+!.env.example
 data/cache/
 data/raw/
 results/scans/
@@ -13,6 +13,8 @@ results/settle.log
 results/consume_pending_bets.log
 results/*.lock
 results/*.bak_*
+results/_archive/
+models/dixon_coles/_archive/
 __pycache__/
 *.pyc
 .DS_Store
