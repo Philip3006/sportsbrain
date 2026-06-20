@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-19T23:52:20Z",
+  "updated": "2026-06-20T05:58:11Z",
   "meta": {
     "stale_odds": false
   },
@@ -7266,20 +7266,6 @@
     },
     {
       "sport": "football",
-      "match": "Brazil vs Haiti",
-      "market": "draw",
-      "odds": 13.0,
-      "model_prob": 10.6,
-      "fair_prob": 7.7,
-      "ev_pct": 38.3,
-      "stake_eur": 20.0,
-      "stake_pct": 11.5,
-      "confidence": "LOW",
-      "n_models_agree": 2,
-      "kickoff": "2026-06-20T00:30:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Norway vs Senegal",
       "market": "o/u2.5_over",
       "odds": 2.06,
@@ -7333,20 +7319,6 @@
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-25T23:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Turkey vs Paraguay",
-      "market": "h1_goals_2_4_no",
-      "odds": 2.53,
-      "model_prob": 53.9,
-      "fair_prob": 39.5,
-      "ev_pct": 36.6,
-      "stake_eur": 7.0,
-      "stake_pct": 4.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-20T03:00:00Z"
     },
     {
       "sport": "football",
@@ -7571,20 +7543,6 @@
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-21T00:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Brazil vs Haiti",
-      "market": "goals_2_4_no",
-      "odds": 2.25,
-      "model_prob": 56.7,
-      "fair_prob": 44.5,
-      "ev_pct": 27.4,
-      "stake_eur": 8.8,
-      "stake_pct": 5.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-20T00:30:00Z"
     },
     {
       "sport": "football",
@@ -7924,20 +7882,6 @@
     },
     {
       "sport": "football",
-      "match": "Turkey vs Paraguay",
-      "market": "home",
-      "odds": 2.12,
-      "model_prob": 54.5,
-      "fair_prob": 47.2,
-      "ev_pct": 15.6,
-      "stake_eur": 16.35,
-      "stake_pct": 9.4,
-      "confidence": "LOW",
-      "n_models_agree": 2,
-      "kickoff": "2026-06-20T03:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Panama vs England",
       "market": "draw",
       "odds": 7.2,
@@ -8120,20 +8064,6 @@
     },
     {
       "sport": "football",
-      "match": "Turkey vs Paraguay",
-      "market": "scorer_Alex Adrián Arce Barrios",
-      "odds": 4.5,
-      "model_prob": 24.9,
-      "fair_prob": 22.2,
-      "ev_pct": 12.2,
-      "stake_eur": 13.59,
-      "stake_pct": 7.8,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-20T03:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "France vs Iraq",
       "market": "scorer_Bradley Barcola",
       "odds": 2.55,
@@ -8187,20 +8117,6 @@
       "confidence": "LOW",
       "n_models_agree": 3,
       "kickoff": "2026-06-26T02:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Brazil vs Haiti",
-      "market": "o/u3.0_under",
-      "odds": 3.0,
-      "model_prob": 29.8,
-      "fair_prob": 29.8,
-      "ev_pct": 10.5,
-      "stake_eur": 12.15,
-      "stake_pct": 7.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-20T00:30:00Z"
     },
     {
       "sport": "football",
@@ -8543,6 +8459,12 @@
   "top_elo": [],
   "history": [
     {
+      "date": "2026-06-20",
+      "n_bets": 2,
+      "pnl": -20.0,
+      "roi_pct": -66.7
+    },
+    {
       "date": "2026-06-19",
       "n_bets": 3,
       "pnl": -5.0,
@@ -8591,8 +8513,45 @@
       "roi_pct": 0.0
     }
   ],
-  "open_bets": [],
+  "open_bets": [
+    {
+      "match": "Brazil vs Haiti",
+      "home": "Brazil",
+      "away": "Haiti",
+      "market": "o/u3.0_under",
+      "entry_odds": 3.4,
+      "current_odds": 3.65,
+      "drift_pct": 7.4,
+      "clv_signal": "good",
+      "stake": 10.0,
+      "match_date": "2026-06-20",
+      "model_edge_pct": null,
+      "is_live": false
+    }
+  ],
   "settled_bets": [
+    {
+      "match": "Turkey vs Paraguay",
+      "home": "Turkey",
+      "away": "Paraguay",
+      "market": "away",
+      "entry_odds": 3.6,
+      "stake": 15.0,
+      "pnl": 0.0,
+      "match_date": "2026-06-20",
+      "status": "void"
+    },
+    {
+      "match": "Morocco vs Scotland",
+      "home": "Morocco",
+      "away": "Scotland",
+      "market": "ah+0.5",
+      "entry_odds": 2.2,
+      "stake": 20.0,
+      "pnl": -20.0,
+      "match_date": "2026-06-20",
+      "status": "lost"
+    },
     {
       "match": "Alba Berlin vs Bayern München",
       "home": "Alba Berlin",
@@ -8970,11 +8929,11 @@
   ],
   "bankroll_state": {
     "start": 100.0,
-    "free": 121.25,
-    "staked": 0,
-    "exposure_pct": 0.0,
-    "max_win": 0,
-    "pnl_closed": 21.25
+    "free": 91.25,
+    "staked": 10.0,
+    "exposure_pct": 10.0,
+    "max_win": 26.5,
+    "pnl_closed": 1.25
   },
   "wm_stats": {
     "stats": {
@@ -9003,12 +8962,12 @@
         "roi": -23.3
       },
       "other": {
-        "n": 8,
+        "n": 9,
         "won": 3,
-        "staked": 106.86,
-        "pnl": -26.91,
-        "hit_rate": 37.5,
-        "roi": -25.2
+        "staked": 126.86,
+        "pnl": -46.91,
+        "hit_rate": 33.3,
+        "roi": -37.0
       }
     },
     "series": [
@@ -9047,15 +9006,19 @@
       {
         "date": "2026-06-19",
         "balance": 121.25
+      },
+      {
+        "date": "2026-06-20",
+        "balance": 101.25
       }
     ],
     "drawdown": {
       "peak": 176.25,
-      "current": 121.25,
-      "current_dd": 55.0,
-      "current_dd_pct": 31.21,
-      "max_dd": 55.0,
-      "max_dd_pct": 31.21
+      "current": 101.25,
+      "current_dd": 75.0,
+      "current_dd_pct": 42.55,
+      "max_dd": 75.0,
+      "max_dd_pct": 42.55
     },
     "clv_dist": {
       "labels": [
@@ -9094,10 +9057,10 @@
       ]
     },
     "summary": {
-      "n_settled": 30,
-      "staked": 382.11,
-      "pnl": 21.25,
-      "yield_pct": 5.56,
+      "n_settled": 31,
+      "staked": 402.11,
+      "pnl": 1.25,
+      "yield_pct": 0.31,
       "mean_clv": 9.58,
       "mean_edge": 3.43,
       "n_clv": 13,
@@ -9190,6 +9153,14 @@
           "pnl": -10.0,
           "hit_rate": 0.0,
           "roi": -100.0
+        },
+        "AH": {
+          "n": 1,
+          "won": 0,
+          "staked": 20.0,
+          "pnl": -20.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
         }
       },
       "Switzerland": {
@@ -9246,6 +9217,14 @@
           "pnl": 7.5,
           "hit_rate": 100.0,
           "roi": 50.0
+        },
+        "AH": {
+          "n": 1,
+          "won": 0,
+          "staked": 20.0,
+          "pnl": -20.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
         }
       },
       "Belgium": {
@@ -9687,10 +9666,10 @@
         "roi": 1.1
       },
       "CAF": {
-        "n": 2,
+        "n": 3,
         "won": 0,
-        "staked": 25.01,
-        "pnl": -25.01,
+        "staked": 45.01,
+        "pnl": -45.01,
         "hit_rate": 0.0,
         "roi": -100.0
       },
