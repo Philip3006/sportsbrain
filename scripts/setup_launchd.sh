@@ -14,7 +14,13 @@ echo "[1/3] Setting execute permissions on cron wrappers..."
 chmod +x "$SPORTSBRAIN_DIR/scripts/scan_cron.sh"
 chmod +x "$SPORTSBRAIN_DIR/scripts/closing_odds_cron.sh"
 chmod +x "$SPORTSBRAIN_DIR/scripts/auto_retrain_cron.sh"
-echo "      OK: scan_cron.sh, closing_odds_cron.sh, auto_retrain_cron.sh"
+chmod +x "$SPORTSBRAIN_DIR/scripts/auto_heal_cron.sh"
+echo "      OK: scan_cron.sh, closing_odds_cron.sh, auto_retrain_cron.sh, auto_heal_cron.sh"
+
+# 1b. Copy auto-heal plist to LaunchAgents (new agent — copy from repo)
+echo "[1b/3] Installing auto-heal launchd plist..."
+cp "$SPORTSBRAIN_DIR/launchd/com.sportsbrain.auto-heal.plist" "$LAUNCH_AGENTS_DIR/"
+echo "       OK: com.sportsbrain.auto-heal.plist → $LAUNCH_AGENTS_DIR/"
 
 # 2. Ensure results directory exists
 mkdir -p "$SPORTSBRAIN_DIR/results"
@@ -27,6 +33,7 @@ PLISTS=(
     "com.sportsbrain.closing-odds.plist"
     "com.sportsbrain.closing-odds-evening.plist"
     "com.sportsbrain.auto-retrain.plist"
+    "com.sportsbrain.auto-heal.plist"
 )
 
 for PLIST in "${PLISTS[@]}"; do
@@ -43,7 +50,7 @@ done
 
 # 4. Verify
 echo "[3/3] Verifying loaded agents..."
-for LABEL in com.sportsbrain.daily-scan com.sportsbrain.closing-odds com.sportsbrain.closing-odds-evening com.sportsbrain.auto-retrain; do
+for LABEL in com.sportsbrain.daily-scan com.sportsbrain.closing-odds com.sportsbrain.closing-odds-evening com.sportsbrain.auto-retrain com.sportsbrain.auto-heal; do
     STATUS=$(launchctl list "$LABEL" 2>/dev/null | grep '"Label"' || echo "NOT FOUND")
     if echo "$STATUS" | grep -q "$LABEL"; then
         echo "      OK: $LABEL is registered"
@@ -71,3 +78,6 @@ echo ""
 echo "To check agent status:  launchctl list | grep sportsbrain"
 echo "To unload all agents:   launchctl unload ~/Library/LaunchAgents/com.sportsbrain.*.plist"
 echo "To test scan now:       bash $SPORTSBRAIN_DIR/scripts/scan_cron.sh"
+echo "  $SPORTSBRAIN_DIR/results/auto_heal.log"
+echo ""
+echo "Auto-heal (Layer 1) fires every 10 min — check: launchctl list com.sportsbrain.auto-heal"
