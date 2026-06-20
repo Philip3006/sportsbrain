@@ -34,7 +34,7 @@ JOB_SCHEDULE: dict[str, dict[str, int | str]] = {
     "closing_odds":            {"interval_s": 12 * 3600, "grace_s": 1 * 3600,  "cadence": "2×/Tag 14:00 + 18:00"},
     "consume_pending_bets":    {"interval_s": 120,        "grace_s": 300,       "cadence": "alle 2 Min"},
     "live_score_push":         {"interval_s": 120,        "grace_s": 300,       "cadence": "alle 2 Min"},
-    "prematch_scan":           {"interval_s": 1200,       "grace_s": 600,       "cadence": "alle 20 Min (im Fenster)"},
+    "prematch_scan":           {"interval_s": 1800,       "grace_s": 900,       "cadence": "alle 30 Min (im Fenster)"},
     "settle":                  {"interval_s": 3600,       "grace_s": 600,       "cadence": "stündlich 00:30–04:30"},
     "aggregate_health":        {"interval_s": 120,        "grace_s": 300,       "cadence": "alle 2 Min (huckepack)"},
 }
