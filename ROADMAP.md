@@ -1,7 +1,7 @@
 # SportsBrain — ROADMAP
 
 > **Lebende Quelle der Wahrheit** für alle Audit-Befunde, Entscheidungen und geplanten Arbeiten.
-> Aktualisiert: 2026-06-20
+> Aktualisiert: 2026-06-21
 
 ---
 
@@ -329,6 +329,28 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Impact/Aufwand/Risiko**: 🟡 · 🟢 · 🟡
 - **Abhängigkeiten**: G1
 
+### I6. + NEU Home-Advantage Gastgeber-Länder (WM 2026)
+- **Was**: Separate `host_boost` Parameter in `dc.predict_match()`: wenn Team in `HOST_NATIONS = {"United States", "Canada", "Mexico"}` und das Spiel im jeweiligen Heimland stattfindet, wird Lambda_home mit einem Faktor `HOST_LAMBDA_BOOST` (default 1.08, aus historischen Daten WC 2006/2010/2014/2018 kalibriert) multipliziert. Venue-Erkennung via `match.get("venue_country")` aus TheOddsAPI. Falls kein Venue: Host-Match via fixture-Daten (Wikipedia/ESPN) annotieren.
+- **Warum**: Gastgeber-Vorteil ist statistisch messbar (+3–8% Gewinnwahrscheinlichkeit, bes. Gruppenphase). USA/Kanada/Mexiko spielen vor Heim-Publikum — aktuell wird `neutral=True` gesetzt was diesen Vorteil ignoriert.
+- **Impact**: 🟢 — direkte Qualitätsverbesserung für 16 von 64 WM-Matches (je ~5 Gruppenspiele + KO pro Gastgeber)
+- **Aufwand**: 🟡 (1-3 h: Kalibrierung via WC-Historisch-Daten + Venue-Lookup + DC-Integration + Backtest-Verifikation)
+- **Risiko**: 🟡 — falscher Boost-Faktor kann EV verzerren; Backtest-Gate nötig (Brier vorher/nachher)
+- **Priorität**: P1 — WM 2026 läuft, KO-Phase ab 2026-07-04
+- **Dateien**: `src/models/dixon_coles.py` (`predict_match`, `fit`), `src/config.py` (`HOST_NATIONS`, `HOST_LAMBDA_BOOST`), `src/scanner/daily_scan.py` (Venue-Übergabe), `scripts/run_backtest.py` (Verifikation)
+- **Abhängigkeiten**: G1 (DC-Modell stabil), historische WM-Daten (vorhanden)
+- **Verifikation**: Brier auf WC2006/2010/2014/2018 Gastgeber-Matches verbessert sich; WM2026-Prognosen USA/CAN/MEX zeigen plausiblen Boost von ~3-8pp gegenüber Baseline
+
+### I7. + NEU Monte Carlo Simulationen (Scoreline-Verteilung)
+- **Was**: `src/analysis/monte_carlo.py` mit `simulate_match(home, away, params, n=10000)` → zieht N mal aus der DC-Scoreline-Matrix (Poisson-Sampler), gibt zurück: Top-5 wahrscheinlichste Scores, kumulative Tor-Verteilung (P(0), P(1), ..., P(5+)), Most-Likely-Score, Most-Likely-Result (H/D/A). Integration in PWA-Forecast-Tab als „Wahrscheinlichste Ergebnisse" unter den Prognosen.
+- **Warum**: DC `predict_scoreline()` liefert bereits die volle Matrix — Monte Carlo ist nur ein Sampler drüber und macht die Outputs für dich intuitiv lesbar. Zusätzlicher Nutzen: komplexe Märkte (Correct Score, beide Teams treffen in Halbzeit X) können exakt aus Sims abgeleitet werden ohne analytische Näherung.
+- **Impact**: 🟡 — visueller Mehrwert in PWA + Basis für spätere Correct-Score-Märkte (falls re-enablet)
+- **Aufwand**: 🟢 (< 2h: Sampler ~50 Zeilen, PWA-Integration ~30 Zeilen)
+- **Risiko**: 🟢 — keine Modell-Änderung; nur Display
+- **Priorität**: P2 — nach I6 (Home Advantage), da dort die Scoreline-Matrix ohnehin verbessert wird
+- **Dateien**: `src/analysis/monte_carlo.py` (neu), `docs/index.html` (Forecast-Tab C3-Erweiterung), `signals.json` (neues Feld `top_scores` pro Match)
+- **Abhängigkeiten**: G1 (DC-Modell), C3 (Forecast-Tab Tooltip)
+- **Verifikation**: Top-5 Scores für 5 WM-Spiele manuell gegen analytische Matrix-Diagonale gegenprüfen (Max-Abweichung <1pp bei N=10000)
+
 ---
 
 ## 🟦 J. Saisonstart-Vorbereitung (P2, ab August 2026)
@@ -390,7 +412,9 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **6** | C1–C7 (Trust-UI) | Tag 4-6 | 4-6 h |
 | **7** | D1–D3 (Risiko & Multi-User) | Tag 7 | 2-3 h |
 | **8** | E1–E4 (Refactor) | Tag 8-12 | 6-8 h |
-| **9** | I1–I5 (Post-WM Snapshot + Retrain) | 2026-07-20 bis 2026-07-31 | 8-12 h |
+| **9** | I6 (Home Advantage Gastgeber) | vor KO-Phase 2026-07-04 | 1-3 h |
+| **9b** | I1–I5 (Post-WM Snapshot + Retrain) | 2026-07-20 bis 2026-07-31 | 8-12 h |
+| **9c** | I7 (Monte Carlo Sims) | nach I6, anytime | < 2 h |
 | **10** | H1, H2 (Push-Deep-Link, Legal-Stub) | anytime ab Tag 10 | 1-2 h |
 | **11** | J1 (Basketball) | ab 2026-08-15 | 30-50 h |
 | **12** | J2 (Tennis-Ausbau) | nach Spec-Klärung | 8-12 h |
@@ -400,10 +424,10 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ## 📊 Statistik
 
-- **Insgesamt**: 47 konkrete Items
+- **Insgesamt**: 49 konkrete Items (+2 neu: I6, I7)
 - **P0**: 11 (sofort) — davon 11 ✅ (Phase 0 + Phase 1 vollständig)
-- **P1**: 18 (diese Woche / vor KO-Phase)
-- **P2**: 14 (dieser Monat / Refactor)
+- **P1**: 19 (diese Woche / vor KO-Phase) — inkl. I6 (Home Advantage, neu)
+- **P2**: 15 (dieser Monat / Refactor) — inkl. I7 (Monte Carlo, neu)
 - **P3**: 4 (Q4 2026)
 - **Veto**: 11 (bewusst nicht gebaut)
 
@@ -415,4 +439,6 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **2026-06-20**: ~ Phase 1 (B1-B8) vollständig erledigt in Commit `c61f142`, Worker-Deploy `6a8744c6`. Alle Verifikations-Kriterien erfüllt. Roadmap-Workflow (Überblick → Detail-Fragen → Tests vor Push) als Feedback-Memory persistiert. Nächste Phase: F1/F2 (Stabilität).
 - **2026-06-20**: ~ Phase 2 (F1, F2) erledigt. Zentraler `scripts/_http_retry.py::retry_request` mit 7 Unit-Tests, 14 Call-Sites migriert (Worker, TheOddsAPI, ESPN, Sofascore, StatsBomb, Fotmob, Wikipedia, Covers, Football-Data, etc.). Default-Backoff (5/15/30s) deckt DNS-Aussetzer ab, die heute mehrfach im Session-Report auftauchten. 431/431 Tests grün. Fotmob als 3. Live-Score-Quelle bewusst nicht gebaut (YAGNI). Nächste Phase: G3 + G2 (Wikipedia-Verify, Sperren-Auto) bis 2026-07-03.
 - **2026-06-20**: ~ Phase 3 (G3, G2) erledigt. G3: Stichprobe Tunisia/Senegal/Jordan (Seed 20260620) liefert 26 Spieler aus `_fetch_wc_squads_page`; Per-Team-Wikipedia-Seiten sind faktisch 404 → echter Fallback ist die konsolidierte WC-Squads-Page. G2: Multi-Source-Scraper (FIFA/UEFA/BBC/ESPN) mit Confidence-Score (Source-Gewicht + Squad-Verifikation + Multi-Source-Bonus), Auto-Merge ab Score ≥ 5, sonst Kandidaten-Datei für manuelle Review. Workflow täglich 06:00 UTC. 446/446 Tests grün (+15). Nächste Phase: G1 (PPDA Shadow) bis 2026-07-15.
+- **2026-06-21**: + I6 NEU (Home-Advantage Gastgeber-Länder, P1 vor KO-Phase), + I7 NEU (Monte Carlo Simulationen, P2). Statistik: 47 → 49 Items. Priorisierung: I6 vor I1-I5.
+- **2026-06-21**: BTTS und Goals 2-4 aus Scanner deaktiviert nach Backtest-Validierung (392 Spiele): BTTS 13pp Kalibrierungslücke, Goals 2-4 9pp Lücke + falsche Richtung. AH ±0.5 und O/U bleiben aktiv (≤2pp Gap). `GOALS_RANGE_ENABLED=False`, BTTS-Block entfernt. Neues Skript `scripts/backtest_special_markets.py`.
 - **2026-06-20**: ~ Phase 4 (G1) erledigt. Neue Module `src/data/statsbomb_ppda.py` (Event-Parser, PPDA pro Match aus Pässen-in-Opp-60% / Def-Aktionen-im-Press-Bereich x≥48, Denominator-Floor 5 → NaN-Schutz, eigener 24h-Cache) und `src/data/fbref_ppda.py` (Saison-PPDA-Snapshot-Fallback). `src/features/ppda.py`: Rolling-Window N=10 mit Bayes-Shrinkage gegen Konföderations-Prior (Fallback-Kaskade Konföderation → FBref → 11.5). `src/features/builder.py` bekommt `ppda_df`/`force_ppda`-Parameter; Live bleibt off durch `PPDA_LIVE_ENABLED=False`. `scripts/backtest_with_ppda.py` vergleicht Brier + ROI-Proxy auf identischem Train/Val-Split, schreibt `results/audits/g1_ppda_backtest_*.json`. I5-Gate-Kriterium: Δ Brier ≥ 0.001 UND Δ ROI ≥ 0.5pp. 14 Unit-Tests neu, Gesamt-Suite 460/460. Nächste Phase: F3/F4 (CLV-Audit + UI).
