@@ -15,6 +15,7 @@ from pathlib import Path
 import pandas as pd
 import requests
 
+from scripts._http_retry import retry_request
 from src.config import DATA_RAW, canonical_name
 
 _XLSX_URL = "https://www.football-data.co.uk/WorldCup2022.xlsx"
@@ -42,7 +43,7 @@ def fetch_wc_odds(force: bool = False) -> pd.DataFrame:
         return pd.read_csv(cache)
 
     print("  Downloading WorldCup2022.xlsx from football-data.co.uk ...")
-    r = requests.get(_XLSX_URL, headers={"User-Agent": "Mozilla/5.0"}, timeout=30)
+    r = retry_request("GET", _XLSX_URL, headers={"User-Agent": "Mozilla/5.0"}, timeout=30, log_prefix="[fduk]")
     r.raise_for_status()
 
     xl = pd.ExcelFile(io.BytesIO(r.content))

@@ -530,7 +530,11 @@ def fetch_event_player_props(
         "oddsFormat": "decimal",
     }
     try:
-        resp = requests.get(url, params=params, timeout=15)
+        from scripts._http_retry import retry_request
+        resp = retry_request(
+            "GET", url, params=params, timeout=15,
+            log_prefix="[odds_api/scorer]",
+        )
         resp.raise_for_status()
     except Exception:
         return {}
@@ -563,7 +567,8 @@ def _fetch_espn_wm_scores() -> list[dict]:
     """
     from datetime import datetime, timezone
     url = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard"
-    resp = requests.get(url, timeout=10)
+    from scripts._http_retry import retry_request
+    resp = retry_request("GET", url, timeout=10, log_prefix="[espn]")
     resp.raise_for_status()
     now_iso = datetime.now(timezone.utc).isoformat()
     results = []
@@ -617,7 +622,11 @@ def fetch_wm_live_scores(
     key = get_api_key(api_key)
     url = f"{ODDS_API_URL}/sports/soccer_fifa_world_cup/scores"
     params = {"apiKey": key, "daysFrom": days_from}
-    resp = requests.get(url, params=params, timeout=15)
+    from scripts._http_retry import retry_request
+    resp = retry_request(
+        "GET", url, params=params, timeout=15,
+        log_prefix="[odds_api/scores]",
+    )
     resp.raise_for_status()
     results = []
     for m in resp.json():
@@ -655,7 +664,11 @@ def fetch_wm_scores(
     key = get_api_key(api_key)
     url = f"{ODDS_API_URL}/sports/soccer_fifa_world_cup/scores"
     params = {"apiKey": key, "daysFrom": days_from}
-    resp = requests.get(url, params=params, timeout=15)
+    from scripts._http_retry import retry_request
+    resp = retry_request(
+        "GET", url, params=params, timeout=15,
+        log_prefix="[odds_api/wm_scores]",
+    )
     resp.raise_for_status()
     data = resp.json()
     results = []

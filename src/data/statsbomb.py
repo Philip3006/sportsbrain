@@ -14,6 +14,7 @@ from pathlib import Path
 import pandas as pd
 import requests
 
+from scripts._http_retry import retry_request
 from src.config import DATA_CACHE, canonical_name as _cn
 
 _CACHE_PATH = DATA_CACHE / "statsbomb_xg.pkl"
@@ -35,7 +36,7 @@ def _discover_competitions() -> dict[int, list[int]]:
     """Fetches competitions.json from StatsBomb and returns {comp_id: [season_ids]}."""
     url = f"{_SB_BASE}/competitions.json"
     try:
-        resp = requests.get(url, timeout=15)
+        resp = retry_request("GET",url, timeout=15)
         resp.raise_for_status()
         comps = resp.json()
     except Exception:
@@ -65,7 +66,7 @@ def _fetch_match_xg(competition_id: int, season_id: int) -> tuple[list[dict], li
     """
     matches_url = f"{_SB_BASE}/matches/{competition_id}/{season_id}.json"
     try:
-        resp = requests.get(matches_url, timeout=15)
+        resp = retry_request("GET",matches_url, timeout=15)
         resp.raise_for_status()
         matches = resp.json()
     except Exception:
@@ -92,7 +93,7 @@ def _fetch_match_xg(competition_id: int, season_id: int) -> tuple[list[dict], li
         time.sleep(0.5)  # rate limit
         events_url = f"{_SB_BASE}/events/{match_id}.json"
         try:
-            ev_resp = requests.get(events_url, timeout=20)
+            ev_resp = retry_request("GET",events_url, timeout=20)
             ev_resp.raise_for_status()
             events = ev_resp.json()
         except Exception:

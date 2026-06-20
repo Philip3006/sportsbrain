@@ -120,10 +120,13 @@ def fetch_scores() -> dict[str, dict]:
     fallback_reason: str | None = None
 
     try:
-        r = requests.get(
+        from scripts._http_retry import retry_request
+        r = retry_request(
+            "GET",
             API_URL,
             params={"apiKey": _api_key(), "daysFrom": 3},
             timeout=15,
+            log_prefix="[settle/odds_api]",
         )
     except requests.RequestException as e:
         fallback_reason = f"network: {e}"

@@ -52,7 +52,7 @@ def test_wimbledon_matches_filters_tournament():
     assert all("Wimbledon" in n for n in result["tourney_name"])
 
 
-@patch("src.data.tennis_data.requests.get")
+@patch("src.data.tennis_data.retry_request")
 def test_fetch_atp_returns_dataframe(mock_get):
     mock_get.return_value = _mock_resp(_MINI_CSV)
     df = fetch_atp_matches(force=True)
@@ -62,7 +62,7 @@ def test_fetch_atp_returns_dataframe(mock_get):
     assert len(df) > 0
 
 
-@patch("src.data.tennis_data.requests.get")
+@patch("src.data.tennis_data.retry_request")
 def test_fetch_wta_returns_dataframe(mock_get):
     mock_get.return_value = _mock_resp(_MINI_CSV)
     df = fetch_wta_matches(force=True)
@@ -71,23 +71,23 @@ def test_fetch_wta_returns_dataframe(mock_get):
     assert len(df) > 0
 
 
-@patch("src.data.tennis_data.requests.get")
+@patch("src.data.tennis_data.retry_request")
 def test_fetch_matches_routes_to_wta(mock_get):
     mock_get.return_value = _mock_resp(_MINI_CSV)
     df = fetch_matches("wta", force=True)
-    called_url = mock_get.call_args[0][0]
+    called_url = mock_get.call_args[0][1]
     assert "tennis_wta" in called_url
 
 
-@patch("src.data.tennis_data.requests.get")
+@patch("src.data.tennis_data.retry_request")
 def test_fetch_matches_routes_to_atp(mock_get):
     mock_get.return_value = _mock_resp(_MINI_CSV)
     df = fetch_matches("atp", force=True)
-    called_url = mock_get.call_args[0][0]
+    called_url = mock_get.call_args[0][1]
     assert "tennis_atp" in called_url
 
 
-@patch("src.data.tennis_data.requests.get")
+@patch("src.data.tennis_data.retry_request")
 def test_surface_normalized_to_lowercase(mock_get):
     mock_get.return_value = _mock_resp(_MINI_CSV)
     df = fetch_atp_matches(force=True)

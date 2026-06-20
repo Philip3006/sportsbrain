@@ -221,18 +221,19 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ## 🟦 F. Resilienz & Stabilität (P1, parallel zu Block 1–3)
 
-### F1. ESPN-Live-Score-Fallback härten
-- **Was**: Dritte Quelle (Fotmob) oder ESPN-Retry mit Backoff (3 Versuche, 5/15/30s).
+### F1. ESPN-Live-Score-Fallback härten ✅
+- **Was**: ESPN-Retry mit Backoff (3 Versuche, 5/15/30s) via zentralen `retry_request`-Helper. Fotmob-3.-Quelle bewusst ausgeklammert (YAGNI; weniger Brittleness).
 - **Warum**: Session-Report zeigt ESPN-DNS-Fails; Live-Scores essenziell für Settle.
 - **Impact/Aufwand/Risiko**: 🟢 · 🟡 · 🟡
-- **Dateien**: `src/data/espn.py` oder `scripts/settle_bets.py`, `src/data/fotmob.py`
-- **Verifikation**: ESPN-DNS blocken → Fallback liefert.
+- **Dateien**: `src/data/odds_api.py` (`_fetch_espn_wm_scores` → `retry_request`)
+- **Status (2026-06-20)**: Erledigt zusammen mit F2 — ESPN-Call läuft jetzt durch `retry_request("GET", url, log_prefix="[espn]")` mit Default-Backoff.
 
-### F2. DNS-Retry-Helper `_retry_request()` extrahieren
-- **Was**: 3-Retry-Pattern aus #87 in `scripts/_http_retry.py`. Anwenden auf alle Cloudflare-Worker- + TheOddsAPI- + Sofascore-Calls.
+### F2. DNS-Retry-Helper `_retry_request()` extrahieren ✅
+- **Was**: 3-Retry-Pattern als `scripts/_http_retry.py::retry_request(method, url, *, retries=3, backoff=(5,15,30), retry_on_status, ...)`. Default: retry auf `requests.RequestException`; optional auf HTTP-Status.
 - **Warum**: Wiederkehrendes DNS-Failure-Pattern; zentral lösen.
 - **Impact/Aufwand/Risiko**: 🟢 · 🟡 · 🟢
-- **Dateien**: `scripts/_http_retry.py` (neu), 4-6 Skripte
+- **Dateien**: `scripts/_http_retry.py` (neu, 95 Z.), `tests/scripts/test_http_retry.py` (7 Tests). Migrierte Call-Sites: `scripts/consume_pending_bets.py` (GET+DELETE), `scripts/settle_bets.py` (TheOddsAPI), `scripts/tennis_scan.py`, `src/data/odds_api.py` (3 Stellen inkl. ESPN), `src/data/sofascore.py`, `src/data/statsbomb.py`, `src/data/fotmob.py`, `src/data/injury_data.py`, `src/data/squad_availability.py`, `src/data/football_data.py`, `src/data/btts_odds.py`, `src/data/international.py`, `src/data/football_data_intl.py`, `src/data/tennis_data.py`.
+- **Status (2026-06-20)**: Erledigt. 431 Tests grün (+9 ggü. Baseline 422). odds_api's eigene `_http_get_with_retry` (mit 422-spezifischer Logik) bleibt absichtlich erhalten — projekt-spezifisches Verhalten.
 
 ### F3. CLV-Pre-1600-Bug: Stichprobe + Entscheidung
 - **Was**: 10 abgerechnete Bets prüfen: wie viele `clv=""`? Wenn >2: Fix; wenn ≤2: akzeptieren.
@@ -374,7 +375,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 |---|---|---|---|
 | **0** | A1, A2, A3 (Roadmap-Setup) | ✅ erledigt | 20 min |
 | **1** | B1–B8 (Hygiene & Sicherheit) | ✅ erledigt 2026-06-20 | 90 min |
-| **2** | F1, F2 (Stabilität) | Tag 1-2 | 2-3 h |
+| **2** | F1, F2 (Stabilität) | ✅ erledigt 2026-06-20 | 2 h |
 | **3** | G3 (Wikipedia-Verify), G2 (Sperren-Auto) | bis 2026-07-03 | 2-4 h |
 | **4** | G1 (PPDA Shadow) | bis 2026-07-15 | 4-6 h |
 | **5** | F3, F4 (CLV-Audit + UI) | Tag 3-4 | 2-3 h |
@@ -404,3 +405,4 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 - **2026-06-20**: Initiale Roadmap aus Audit-Phasen 1-7 + improvement_log-Durchgang. Phase 0 (A1-A3) erledigt.
 - **2026-06-20**: ~ Phase 1 (B1-B8) vollständig erledigt in Commit `c61f142`, Worker-Deploy `6a8744c6`. Alle Verifikations-Kriterien erfüllt. Roadmap-Workflow (Überblick → Detail-Fragen → Tests vor Push) als Feedback-Memory persistiert. Nächste Phase: F1/F2 (Stabilität).
+- **2026-06-20**: ~ Phase 2 (F1, F2) erledigt. Zentraler `scripts/_http_retry.py::retry_request` mit 7 Unit-Tests, 14 Call-Sites migriert (Worker, TheOddsAPI, ESPN, Sofascore, StatsBomb, Fotmob, Wikipedia, Covers, Football-Data, etc.). Default-Backoff (5/15/30s) deckt DNS-Aussetzer ab, die heute mehrfach im Session-Report auftauchten. 431/431 Tests grün. Fotmob als 3. Live-Score-Quelle bewusst nicht gebaut (YAGNI). Nächste Phase: G3 + G2 (Wikipedia-Verify, Sperren-Auto) bis 2026-07-03.

@@ -18,6 +18,7 @@ from pathlib import Path
 
 import requests
 
+from scripts._http_retry import retry_request
 from src.config import DATA_CACHE
 
 _CACHE_DIR = DATA_CACHE / "injuries"
@@ -106,7 +107,7 @@ def _fetch_covers_injuries() -> list[dict]:
         return []
 
     try:
-        resp = requests.get(
+        resp = retry_request("GET",
             _COVERS_URL,
             headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"},
             timeout=15,
