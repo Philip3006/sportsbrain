@@ -3496,8 +3496,8 @@ const WM_GROUPS = {
   L:['England','Croatia','Ghana','Panama'],
 };
 
-function renderStandings() {
-  const c = document.getElementById('standings-container');
+function renderStandings(targetId = 'standings-container') {
+  const c = document.getElementById(targetId);
   if (!c) return;
   const results = _wmResults;
   if (!Object.keys(results).length) {
@@ -3700,25 +3700,35 @@ function renderForecast() {
         <td><span class="${gfDiffCls}">${gfDiffStr}</span></td>
       </tr>`;
     }).join('');
-    xpHtml = `<div class="fc-header" style="padding-top:18px">
-      <div class="fc-title">📊 Modell-Performance (xPoints)</div>
-      <div class="fc-sub">Realisierte Punkte vs DC-Erwartung pro Team — positive Diff = Überperformer, negative = Unterperformer.</div>
-    </div>
-    <div class="fc-table-wrap">
-      <table class="fc-table">
-        <thead><tr>
-          <th>G</th><th>Team</th><th>Sp</th><th>Pkt</th><th>xPkt</th><th>Diff</th><th>Tore</th><th>xG</th><th>ΔxG</th>
-        </tr></thead>
-        <tbody>${xpRows}</tbody>
-      </table>
-    </div>`;
+    xpHtml = `<details class="fc-collapsible" style="margin-top:18px">
+      <summary style="cursor:pointer;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);font-weight:800;color:var(--text);font-size:13px;list-style:none;display:flex;justify-content:space-between;align-items:center">
+        <span>📊 Modell-Performance (xPoints)</span>
+        <span style="color:var(--muted);font-size:11px;font-weight:600">aufklappen</span>
+      </summary>
+      <div style="padding-top:10px">
+        <div class="fc-sub" style="padding:0 4px 8px">Realisierte Punkte vs DC-Erwartung — positiv = Überperformer, negativ = Unterperformer.</div>
+        <div class="fc-table-wrap">
+          <table class="fc-table">
+            <thead><tr>
+              <th>G</th><th>Team</th><th>Sp</th><th>Pkt</th><th>xPkt</th><th>Diff</th><th>Tore</th><th>xG</th><th>ΔxG</th>
+            </tr></thead>
+            <tbody>${xpRows}</tbody>
+          </table>
+        </div>
+      </div>
+    </details>`;
   }
 
   c.innerHTML = `<div class="fc-header">
     <div class="fc-title">🔮 WM 2026 Forecast</div>
     <div class="fc-sub">Monte-Carlo, ${d.n_trials || 0} Simulationen · ${d.n_played || 0} Spiele gespielt · ${d.n_remaining_group || 0} Gruppenspiele offen · zuletzt ${updated}</div>
-    <div class="fc-sub" style="margin-top:6px;color:var(--muted)">Jede Spalte zeigt die Wahrscheinlichkeit, mindestens diese Runde zu erreichen. Spaltenkopf antippen für Erklärung.</div>
   </div>
+
+  <div class="section-title" style="margin-top:14px">Gruppen-Stände (live)</div>
+  <div id="forecast-standings-container" style="padding:0 2px 8px"></div>
+
+  <div class="section-title" style="margin-top:14px">Stage-Wahrscheinlichkeiten</div>
+  <div class="fc-sub" style="padding:0 2px 8px;color:var(--muted)">Jede Spalte = P(mindestens diese Runde erreichen). Spaltenkopf antippen zum Sortieren / Tooltip.</div>
   <div class="fc-table-wrap">
     <table class="fc-table">
       <thead><tr>${head}</tr></thead>
@@ -3728,6 +3738,8 @@ function renderForecast() {
   <div class="fc-note">P-Werte sind kumulativ: <b>R16</b> = P(im Achtelfinale oder weiter), <b>🏆</b> = P(Weltmeister).
   KO-Bracket nutzt zufällige Paarungen pro Simulation (FIFA-Bracket-Mapping vereinfacht). Bei KO-Unentschieden 50/50-Münzwurf (Elfmeterschießen).</div>
   ${xpHtml}`;
+  // Embed live group standings at top
+  try { renderStandings('forecast-standings-container'); } catch {}
   _bindForecastHeaders();
 }
 

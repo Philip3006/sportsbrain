@@ -300,16 +300,16 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Dateien**: `src/scanner/daily_scan.py` (Gruppen-Aggregator), `docs/index.html` (`renderForecast`/`renderGroups`), `data/cache/group_standings_*.json` (falls vorhanden)
 - **Verifikation**: Standings manuell gegen FIFA-Tabelle vergleichen — alle 8 Gruppen exakt korrekt (Pkt/Tore/GD/Rang)
 
-### L2. + NEU Forecast-Fix
-- **Was**: Forecast-Tab (`view-forecast`) zeigt fehlerhafte Ausgaben — Wahrscheinlichkeiten, Gruppen-Advance-Wkt., KO-Simulationen oder Spalten-Werte stimmen nicht. Konkrete Diagnose vor Fix nötig.
-- **Warum**: Forecast ist primäres Entscheidungs-Werkzeug für KO-Phase-Bets; falsche Advance-Wkt. = falsche EV-Berechnung.
-- **Impact**: 🟢 — KO-Phase ab 2026-07-04, alle Long-Range-Value-Bets hängen daran
-- **Aufwand**: 🟡 (2-4 h: abhängig von L1, da Gruppen-Daten Forecast speisen)
-- **Risiko**: 🟡 — Forecast-Simulation berührt DC-Modell-Output; Regressionstest nötig
-- **Priorität**: P1 — nach L1 (Gruppen-Fix), vor 2026-07-04 (KO-Start)
-- **Dateien**: `docs/index.html` (`renderForecast`, Monte-Carlo-Code), `src/models/dixon_coles.py` (`simulate_group`/`predict_scoreline`), `scripts/daily_scan.py`
-- **Abhängigkeiten**: L1
-- **Verifikation**: Forecast für 2 bereits abgeschlossene WM-Gruppen gegen tatsächliche Ergebnisse prüfen — Advance-Wkt. der Qualifizierten >50%
+### L2. ~ GEÄNDERT Forecast-Tab Umbau (Gruppen + Bracket + Cleanup)
+- **Was**: (a) Gruppen-Standings (renderStandings-Output) oben im Forecast-Tab einbetten, (b) Bracket-Vorschau R32→Finale basierend auf wahrscheinlichsten Qualifizierten + DC-Predictions pro Paarung, (c) Layout aufräumen: xPoints einklappbar, kompaktere Spalten, klare Sektionen.
+- **Warum**: Diagnose 2026-06-21 zeigte: Forecast-Werte rechnen mathematisch korrekt (ΣP=100, Σadvance=3200). Was als "fehlerhaft" wirkte: (1) L1's Standings-Bug spillte in PWA-Forecast-Eindruck, (2) Tab zu unübersichtlich, (3) Bracket-Vorschau (wer-vs-wen R16/QF/SF/Final beim aktuellen Stand) fehlt komplett — Forecast ist heute nur Wkt.-Tabelle ohne Pfad-Visualisierung.
+- **Impact**: 🟢 — Forecast wird endlich Entscheidungs-Werkzeug für KO-Bets, nicht nur abstrakte Tabelle
+- **Aufwand**: 🟡 (3-5 h: Step1 Frontend-Embed + Cleanup ~30min, Step2 Backend-Bracket + Frontend-Render ~3h)
+- **Risiko**: 🟡 — Bracket-Mapping ist vereinfacht (FIFA-2026-Auslosung folgt offiziell erst später); transparent als "Approximation" markieren
+- **Priorität**: P1 — vor 2026-07-04 (KO-Start)
+- **Dateien**: `docs/index.html` (`renderForecast`, neue `_renderBracket`), `scripts/build_wm_forecast.py` (neuer Block `most_likely_qualifiers` + `bracket_preview`)
+- **Abhängigkeiten**: L1 ✅
+- **Verifikation**: Bracket-Vorschau zeigt 16 R16-Paarungen, jedes Match einen wahrscheinlicheren Sieger, Pfad bis zum Finale plausibel
 
 ### L3. + NEU Journal-Fix
 - **Was**: Journal-Tab zeigt fehlerhafte Einträge, fehlt Bets oder stellt Status/P&L falsch dar. Bugfix für bestehenden Render-Code — kein neues Feature (C4/F4 sind separate Feature-Items).
