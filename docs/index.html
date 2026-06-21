@@ -3507,14 +3507,32 @@ function renderStandings() {
 
   // Build standings per team from results
   const stats = {};
+  // Inverse lookup: any raw team-name (normalized + aliased + reverse-aliased) → canonical group-team name
+  const _groupTeamLookup = {};
+  const _revAlias = {};
+  for (const [k, v] of Object.entries(TEAM_ALIASES)) _revAlias[v] = k;
   for (const teams of Object.values(WM_GROUPS)) {
-    for (const t of teams) stats[t] = {p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0,form:[]};
+    for (const t of teams) {
+      stats[t] = {p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0,form:[]};
+      const n = normTeam(t);
+      _groupTeamLookup[n] = t;
+      if (TEAM_ALIASES[n]) _groupTeamLookup[TEAM_ALIASES[n]] = t;
+      if (_revAlias[n])     _groupTeamLookup[_revAlias[n]]    = t;
+    }
   }
+  const _toGroupTeam = (raw) => {
+    if (!raw) return null;
+    const n = normTeam(raw);
+    return _groupTeamLookup[n]
+        || _groupTeamLookup[TEAM_ALIASES[n] || '']
+        || _groupTeamLookup[_revAlias[n]     || '']
+        || null;
+  };
   for (const r of Object.values(results)) {
-    const h = r.home, a = r.away;
     if (r.home_score == null || r.away_score == null) continue;
+    const h = _toGroupTeam(r.home), a = _toGroupTeam(r.away);
     const hs = r.home_score, as_ = r.away_score;
-    if (!stats[h] || !stats[a]) continue;
+    if (!h || !a || !stats[h] || !stats[a]) continue;
     stats[h].p++; stats[h].gf += hs; stats[h].ga += as_;
     stats[a].p++; stats[a].gf += as_; stats[a].ga += hs;
     if (hs > as_) {

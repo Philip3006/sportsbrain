@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-06-21T18:23:54Z",
-  "overall": "degraded",
+  "generated_at": "2026-06-21T16:00:06Z",
+  "overall": "ok",
   "jobs": [
     {
       "job": "daily_scan",
@@ -27,8 +27,8 @@
     {
       "job": "closing_odds",
       "status": "ok",
-      "last_run_at": "2026-06-21T18:20:40Z",
-      "duration_s": null,
+      "last_run_at": "2026-06-21T12:07:31Z",
+      "duration_s": 16.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -37,33 +37,33 @@
     },
     {
       "job": "consume_pending_bets",
-      "status": "stale",
-      "last_run_at": "2026-06-21T18:15:12Z",
-      "duration_s": null,
+      "status": "ok",
+      "last_run_at": "2026-06-21T16:00:06Z",
+      "duration_s": 0.0,
       "exit_code": 0,
-      "error": "last run was at 2026-06-21T18:15:12Z — overdue (>420s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
     },
     {
       "job": "live_score_push",
-      "status": "stale",
-      "last_run_at": "2026-06-21T13:30:12Z",
-      "duration_s": 3.0,
+      "status": "ok",
+      "last_run_at": "2026-06-21T15:59:52Z",
+      "duration_s": 2.0,
       "exit_code": 0,
-      "error": "last run was at 2026-06-21T13:30:12Z — overdue (>420s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
     },
     {
       "job": "prematch_scan",
-      "status": "stale",
-      "last_run_at": "2026-06-21T13:15:48Z",
+      "status": "ok",
+      "last_run_at": "2026-06-21T15:56:55Z",
       "duration_s": 0.0,
       "exit_code": 0,
-      "error": "last run was at 2026-06-21T13:15:48Z — overdue (>2700s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 1800,
       "cadence": "alle 30 Min (im Fenster)"
@@ -71,8 +71,8 @@
     {
       "job": "settle",
       "status": "ok",
-      "last_run_at": "2026-06-21T17:47:18Z",
-      "duration_s": null,
+      "last_run_at": "2026-06-21T15:30:06Z",
+      "duration_s": 1.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -81,11 +81,11 @@
     },
     {
       "job": "aggregate_health",
-      "status": "stale",
-      "last_run_at": "2026-06-21T13:28:43Z",
-      "duration_s": 1.0,
+      "status": "ok",
+      "last_run_at": "2026-06-21T15:58:06Z",
+      "duration_s": 2.0,
       "exit_code": 0,
-      "error": "last run was at 2026-06-21T13:28:43Z — overdue (>420s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min (huckepack)"
