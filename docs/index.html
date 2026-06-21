@@ -4187,8 +4187,13 @@ let _walkSkipEl = null;
 
 function _walkFindEl(selectors) {
   for (const sel of selectors.split(',')) {
-    const el = document.querySelector(sel.trim());
-    if (el && el.offsetParent !== null) return el;
+    const all = document.querySelectorAll(sel.trim());
+    for (const el of all) {
+      // offsetParent reicht nicht: kann auch bei fixed/sticky null sein.
+      // Wir prüfen reale Sichtbarkeit per BoundingRect.
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) return el;
+    }
   }
   return null;
 }
