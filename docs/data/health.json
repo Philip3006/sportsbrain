@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-21T18:15:12Z",
+  "generated_at": "2026-06-21T18:20:40Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -27,7 +27,7 @@
     {
       "job": "closing_odds",
       "status": "ok",
-      "last_run_at": "2026-06-21T16:47:18Z",
+      "last_run_at": "2026-06-21T18:20:40Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
