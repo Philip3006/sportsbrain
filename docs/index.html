@@ -1938,6 +1938,14 @@ function _renderSettledCards(bets) {
     const pnl = b.pnl || 0;
     const pnlStr = status === 'void' || pnl === 0 ? '—' : (pnl > 0 ? `+€${pnl.toFixed(2)}` : `−€${Math.abs(pnl).toFixed(2)}`);
     const pnlCls = pnl > 0 ? 'drift-good' : pnl < 0 ? 'drift-bad' : '';
+    // CLV-Pille (Closing Line Value): positiv = bessere Quote als Markt am Schluss → langfristig der stärkste Profit-Indikator.
+    let clvPillHtml = '';
+    if (b.clv != null) {
+      const clvPct = b.clv * 100;
+      const clvCls = clvPct > 0.5 ? 'clv-good' : clvPct < -0.5 ? 'clv-bad' : 'clv-neutral';
+      const sign = clvPct >= 0 ? '+' : '';
+      clvPillHtml = `<span class="clv-pill ${clvCls}" title="CLV: Einstiegsquote vs Closing-Quote (${(b.entry_odds||0).toFixed(2)} → ${(b.closing_odds||0).toFixed(2)})">CLV ${sign}${clvPct.toFixed(1)}%</span>`;
+    }
     h += `<div class="bet-card">
       <div class="bet-card-top">
         <div class="bet-card-header">
@@ -1950,7 +1958,7 @@ function _renderSettledCards(bets) {
       </div>
       <div class="bet-result-row">
         <span class="bet-result-badge ${resultCls}">${resultLabel}</span>
-        <span class="bet-pnl ${pnlCls}">${pnlStr}</span>
+        <span style="display:flex;align-items:center;gap:8px">${clvPillHtml}<span class="bet-pnl ${pnlCls}">${pnlStr}</span></span>
       </div>
     </div>`;
   }
@@ -3028,6 +3036,10 @@ function renderJournalStats(wmStats) {
     const clvVal = summary.mean_clv;
     const clvCls = clvVal == null ? '' : clvVal >= 0 ? 'pos' : 'neg';
     const clvStr = clvVal == null ? '—' : (clvVal >= 0 ? '+' : '') + clvVal.toFixed(2) + '%';
+    const clv30Val = summary.mean_clv_30d;
+    const clv30Cls = clv30Val == null ? '' : clv30Val >= 0 ? 'pos' : 'neg';
+    const clv30Str = clv30Val == null ? '—' : (clv30Val >= 0 ? '+' : '') + clv30Val.toFixed(2) + '%';
+    const n_clv_30d = summary.n_clv_30d || 0;
     const edgeVal = summary.mean_edge;
     const edgeCls = edgeVal == null ? '' : edgeVal >= 0 ? 'pos' : 'neg';
     const edgeStr = edgeVal == null ? '—' : (edgeVal >= 0 ? '+' : '') + edgeVal.toFixed(1) + 'pp';
@@ -3043,9 +3055,14 @@ function renderJournalStats(wmStats) {
         <div class="je-sub">${ddSub}</div>
       </div>
       <div class="je-card">
-        <div class="je-label">Ø CLV</div>
+        <div class="je-label">Ø CLV Lifetime</div>
         <div class="je-val ${clvCls}">${clvStr}</div>
-        <div class="je-sub">${summary.n_clv} Wetten mit Closing-Quote</div>
+        <div class="je-sub">${summary.n_clv} Wetten gesamt</div>
+      </div>
+      <div class="je-card">
+        <div class="je-label">Ø CLV letzte 30 Tage</div>
+        <div class="je-val ${clv30Cls}">${clv30Str}</div>
+        <div class="je-sub">${n_clv_30d} Wetten</div>
       </div>
       <div class="je-card">
         <div class="je-label">Ø Edge</div>
