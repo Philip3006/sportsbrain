@@ -546,9 +546,10 @@
     .glossary-example { font-size: 11px; line-height: 1.4; color: var(--muted); font-style: italic; }
 
     /* ── M3: Walkthrough-Spotlight ── */
-    .walk-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 450; display: none; pointer-events: auto; }
+    .walk-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.15); z-index: 450; display: none; pointer-events: auto; }
     .walk-backdrop.show { display: block; }
-    .walk-spot { position: absolute; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,.75), 0 0 0 3px var(--green), 0 0 32px rgba(0,200,83,.6); transition: all .25s ease; pointer-events: none; }
+    .walk-spot { position: absolute; border-radius: 12px; border: 3px solid var(--green); box-shadow: 0 0 0 4px rgba(0,200,83,.25), 0 0 24px rgba(0,200,83,.7); transition: all .25s ease; pointer-events: none; animation: walk-pulse 1.6s ease-in-out infinite; }
+    @keyframes walk-pulse { 0%,100% { box-shadow: 0 0 0 4px rgba(0,200,83,.25), 0 0 24px rgba(0,200,83,.7);} 50% { box-shadow: 0 0 0 8px rgba(0,200,83,.15), 0 0 40px rgba(0,200,83,.9);} }
     .walk-tooltip { position: absolute; background: var(--card); border: 1.5px solid var(--green); border-radius: 12px; padding: 14px 16px; max-width: min(340px, 88vw); box-shadow: 0 12px 32px rgba(0,0,0,.7); z-index: 460; }
     .walk-tooltip-title { font-size: 14px; font-weight: 900; color: var(--green); margin-bottom: 6px; }
     .walk-tooltip-text { font-size: 12.5px; line-height: 1.5; color: var(--text); margin-bottom: 12px; }
