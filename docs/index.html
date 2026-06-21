@@ -134,6 +134,7 @@
     .conf-badge { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; }
     .conf-HIGH   { background: var(--green-d); color: var(--green); border: 1px solid rgba(0,200,83,.2); }
     .conf-MEDIUM { background: var(--yellow-d); color: var(--yellow); border: 1px solid rgba(210,153,34,.2); }
+    .conf-LOW    { background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid var(--border); }
     .stake-val { font-size: 13px; color: var(--muted); margin-left: auto; font-weight: 600; }
     .stake-pct { font-size: 10px; font-weight: 600; color: var(--muted); opacity: .7; }
     .models-dots { font-size: 11px; letter-spacing: 1px; flex-shrink: 0; }
@@ -609,7 +610,7 @@
 
 <div class="modal-backdrop" id="bet-modal-bd" role="dialog" aria-modal="true" aria-labelledby="bet-modal-title">
   <div class="modal" id="bet-modal">
-    <h3 id="bet-modal-title">Wette platzieren <span id="bet-modal-kind-badge" style="display:none;font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;margin-left:8px;vertical-align:middle"></span></h3>
+    <h3 id="bet-modal-title">Wette platzieren <span id="bet-modal-kind-badge" style="display:none;font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;margin-left:8px;vertical-align:middle"></span><span id="bet-modal-tier-badge" class="conf-badge" style="display:none;margin-left:6px;vertical-align:middle"></span></h3>
     <div class="modal-sub" id="bet-modal-sub">—</div>
 
     <div class="modal-row" style="align-items:center">
@@ -620,6 +621,13 @@
       <span class="mr-label">EV</span>
       <span class="mr-val" id="bet-modal-ev">—</span>
     </div>
+
+    <details class="why-bet-drawer" id="bet-modal-why" style="margin-top:10px;display:none">
+      <summary style="cursor:pointer;font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.3px;text-transform:uppercase;padding:4px 0">Warum diese Wette?</summary>
+      <div class="modal-row"><span class="mr-label">Modell</span><span class="mr-val" id="bet-modal-model-pct">—</span></div>
+      <div class="modal-row"><span class="mr-label">Markt (fair)</span><span class="mr-val" id="bet-modal-fair-pct">—</span></div>
+      <div class="modal-row"><span class="mr-label">Edge</span><span class="mr-val" id="bet-modal-edge-pp">—</span></div>
+    </details>
 
     <div style="margin-top:14px">
       <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Einsatz (€)</div>
@@ -646,6 +654,18 @@
     <div class="modal-buttons">
       <button class="modal-btn cancel" id="bet-modal-cancel" type="button">Abbrechen</button>
       <button class="modal-btn confirm" id="bet-modal-confirm" type="button">Wette eintragen</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="onb-modal-bd" role="dialog" aria-modal="true" aria-labelledby="onb-modal-title">
+  <div class="modal">
+    <h3 id="onb-modal-title">👋 Willkommen bei SportsBrain</h3>
+    <div class="modal-sub" id="onb-step-text">—</div>
+    <div id="onb-step-indicator" style="display:flex;gap:6px;justify-content:center;margin:14px 0 6px"></div>
+    <div class="modal-buttons">
+      <button class="modal-btn cancel" id="onb-skip" type="button">Überspringen</button>
+      <button class="modal-btn confirm" id="onb-next" type="button">Weiter</button>
     </div>
   </div>
 </div>
@@ -802,6 +822,10 @@
       <div class="skel"></div><div class="skel"></div>
     </div>
   </section>
+
+  <footer id="app-footer" style="text-align:center;padding:18px 12px 90px;color:var(--muted);font-size:11px;letter-spacing:.3px">
+    <span id="build-pill" class="conf-badge conf-LOW" style="display:none">SportsBrain</span>
+  </footer>
 </main>
 
 <nav class="bottom-nav" role="tablist" aria-label="Hauptnavigation">
@@ -1690,6 +1714,7 @@ function sigCard(s, showMatch) {
     `data-stake="${s.stake_eur}"`,
     `data-ev="${s.ev_pct}"`,
     `data-model-prob="${s.model_prob || 0}"`,
+    `data-fair-prob="${s.fair_prob || 0}"`,
     `data-confidence="${esc(s.confidence||'')}"`,
     `data-kickoff="${esc(s.kickoff||'')}"`,
     `data-sport="${esc(s.sport||'')}"`,
@@ -1733,7 +1758,7 @@ function sigCard(s, showMatch) {
     <div class="card-footer">
       <span class="odds-btn">${s.odds.toFixed(2)}</span>
       <span class="ev-chip ${evCls}">EV +${s.ev_pct}%${infoTip(`Expected Value = Modell-Wahrscheinlichkeit × Quote − 1. +${s.ev_pct}% heißt: langfristig +€${(s.ev_pct/100*s.stake_eur).toFixed(2)} Gewinn bei €${s.stake_eur.toFixed(0)} Einsatz. SportsBrain wettet nur bei EV ≥ 3%.`)}</span>
-      <span class="conf-badge conf-${s.confidence}">${s.confidence}${infoTip(s.confidence === 'HIGH' ? 'HIGH = höchste Modell-Übereinstimmung. Fußball: Dixon-Coles UND LightGBM tippen dasselbe. Tennis: starker Edge (WTA ≥8%, ATP ≥15%). Stake wird automatisch +10% skaliert.' : 'MEDIUM = Standard-Confidence. Solider EV (≥3%), aber kein voller Modell-Konsens. Stake bleibt im €5–15 Standardbereich.')}</span>
+      <span class="conf-badge conf-${s.confidence}">${s.confidence}${infoTip(s.confidence === 'HIGH' ? 'HIGH = höchste Modell-Übereinstimmung. Fußball: Dixon-Coles UND LightGBM tippen dasselbe. Tennis: starker Edge (WTA ≥8%, ATP ≥15%). Stake wird automatisch +10% skaliert.' : s.confidence === 'LOW' ? 'LOW = grenzwertiger EV oder geringe Modell-Konvergenz. Stake bleibt klein (≤€5).' : 'MEDIUM = Standard-Confidence. Solider EV (≥3%), aber kein voller Modell-Konsens. Stake bleibt im €5–15 Standardbereich.')}</span>
       ${dotsHtml}
       ${lineMvHtml}
       <span class="stake-val">${stakeLabel}</span>
@@ -2139,6 +2164,7 @@ function _openBetModalFromBtn(btn) {
     sport: d.sport || '',
     source,
     model_prob: modelProb,
+    fair_prob: parseFloat(d.fairProb || '0'),
   };
   const [h, a] = _pendingBet.match.split(' vs ').map(x => x.trim());
   document.getElementById('bet-modal-sub').textContent = `${h} vs ${a} · ${marketLabel(_pendingBet.market, h, a)}`;
@@ -2158,6 +2184,17 @@ function _openBetModalFromBtn(btn) {
       badge.style.color = 'var(--green)';
       badge.style.border = '1px solid rgba(0,200,83,.4)';
       badge.style.display = 'inline-block';
+    }
+  }
+  const tierBadge = document.getElementById('bet-modal-tier-badge');
+  if (tierBadge) {
+    const t = (_pendingBet.confidence || '').toUpperCase();
+    if (t === 'HIGH' || t === 'MEDIUM' || t === 'LOW') {
+      tierBadge.className = 'conf-badge conf-' + t;
+      tierBadge.textContent = t;
+      tierBadge.style.display = 'inline-block';
+    } else {
+      tierBadge.style.display = 'none';
     }
   }
   const inp = document.getElementById('bet-modal-stake');
@@ -2206,6 +2243,27 @@ function _updateBetModalCalcs() {
       const sign = evPct >= 0 ? '+' : '';
       evEl.textContent = sign + evPct.toFixed(1) + '%';
       evEl.style.color = evPct >= 0 ? 'var(--green)' : 'var(--red)';
+    }
+  }
+  // C1: Why-this-bet Drawer — Modell% / Markt-fair% / Edge pp
+  const drawer = document.getElementById('bet-modal-why');
+  if (drawer) {
+    const mpct = (_pendingBet.model_prob > 0) ? _pendingBet.model_prob * 100 : null;
+    let fpct = (_pendingBet.fair_prob > 0) ? _pendingBet.fair_prob : null;
+    if (fpct == null && odds > 1) fpct = 100 / odds; // Fallback: raw implied
+    if (mpct !== null && fpct !== null) {
+      const edge = mpct - fpct;
+      document.getElementById('bet-modal-model-pct').textContent = mpct.toFixed(1) + '%';
+      const fairEl = document.getElementById('bet-modal-fair-pct');
+      fairEl.textContent = fpct.toFixed(1) + '%' + (_pendingBet.fair_prob > 0 ? '' : ' *');
+      fairEl.title = _pendingBet.fair_prob > 0 ? 'Shin-fair aus Markt-Konsens' : '* aus 1/Quote (kein Shin-Konsens verfügbar)';
+      const edgeEl = document.getElementById('bet-modal-edge-pp');
+      const sign = edge >= 0 ? '+' : '';
+      edgeEl.textContent = sign + edge.toFixed(1) + 'pp';
+      edgeEl.style.color = edge >= 0 ? 'var(--green)' : 'var(--red)';
+      drawer.style.display = '';
+    } else {
+      drawer.style.display = 'none';
     }
   }
   const warn = document.getElementById('bet-modal-warn');
@@ -3190,10 +3248,46 @@ function _buildJournalKpis(rows) {
   </div>`;
 }
 
+function _buildWeeklyRecap() {
+  const sb = _settledBets || [];
+  if (!sb.length) return '';
+  const cutoff = Date.now() - 7*86400000;
+  const recent = sb.filter(b => {
+    if (!b.match_date) return false;
+    const t = new Date(b.match_date + 'T00:00:00Z').getTime();
+    return t >= cutoff;
+  });
+  if (!recent.length) return '';
+  let w=0, l=0, v=0, stake=0, pnl=0, clvSum=0, clvN=0;
+  for (const b of recent) {
+    const s = (b.status || '').toLowerCase();
+    if (s === 'won') w++; else if (s === 'lost') l++; else if (s === 'void') v++;
+    stake += +b.stake || 0;
+    pnl   += +b.pnl   || 0;
+    if (b.clv != null && Number.isFinite(+b.clv)) { clvSum += +b.clv; clvN++; }
+  }
+  const roi = stake > 0 ? (pnl / stake * 100) : 0;
+  const clvAvg = clvN > 0 ? (clvSum / clvN * 100) : null;
+  const pnlCls = pnl >= 0 ? 'pos' : 'neg';
+  const roiCls = roi >= 0 ? 'pos' : 'neg';
+  const clvCls = clvAvg == null ? 'neu' : clvAvg > 0.5 ? 'pos' : clvAvg < -0.5 ? 'neg' : 'neu';
+  const clvStr = clvAvg == null ? '—' : ((clvAvg >= 0 ? '+' : '') + clvAvg.toFixed(1) + '%');
+  return `<div class="je-card" style="margin-bottom:12px">
+    <div class="je-title">📅 Letzte 7 Tage</div>
+    <div class="je-sub">${recent.length} Wett${recent.length===1?'e':'en'} · ${w}W / ${v}V / ${l}L</div>
+    <div style="display:flex;gap:14px;margin-top:8px;flex-wrap:wrap">
+      <div><div class="je-sub">P&amp;L</div><div class="${pnlCls}" style="font-weight:800">${pnl>=0?'+':''}€${pnl.toFixed(2)}</div></div>
+      <div><div class="je-sub">ROI</div><div class="${roiCls}" style="font-weight:800">${roi>=0?'+':''}${roi.toFixed(1)}%</div></div>
+      <div><div class="je-sub">Ø CLV</div><div class="${clvCls}" style="font-weight:800">${clvStr}</div></div>
+    </div>
+  </div>`;
+}
+
 function renderJournal(history) {
   if (history) _journalHistory = history;
   const c = document.getElementById('journal-container');
   const all = _journalHistory || [];
+  const recapHtml = _buildWeeklyRecap();
   const chipsHtml = `<div class="filter-chips" role="tablist" aria-label="Journal-Filter">
     ${['all','win','loss','7d'].map(f => {
       const lbl = f==='all'?'Alle':f==='win'?'Gewinn-Tage':f==='loss'?'Verlust-Tage':'Letzte 7 Tage';
@@ -3202,7 +3296,7 @@ function renderJournal(history) {
   </div>`;
 
   if (!all.length) {
-    c.innerHTML = chipsHtml + `<div class="empty"><div class="icon">📭</div><div>Noch keine abgeschlossenen Wetten.</div></div>`;
+    c.innerHTML = recapHtml + chipsHtml + `<div class="empty"><div class="icon">📭</div><div>Noch keine abgeschlossenen Wetten.</div></div>`;
     _bindJournalChips();
     return;
   }
@@ -3218,7 +3312,7 @@ function renderJournal(history) {
   const kpisHtml = _buildJournalKpis(filtered);
 
   if (!filtered.length) {
-    c.innerHTML = chipsHtml + kpisHtml + `<div class="empty"><div class="icon">📭</div><div>Keine Einträge in diesem Filter.</div></div>`;
+    c.innerHTML = recapHtml + chipsHtml + kpisHtml + `<div class="empty"><div class="icon">📭</div><div>Keine Einträge in diesem Filter.</div></div>`;
     _bindJournalChips();
     return;
   }
@@ -3250,7 +3344,7 @@ function renderJournal(history) {
 
   const tot = filtered.reduce((s,d)=>s+d.pnl,0);
   const tc = tot >= 0 ? 'pos' : 'neg';
-  c.innerHTML = chipsHtml + kpisHtml + `<div class="journal-wrap">
+  c.innerHTML = recapHtml + chipsHtml + kpisHtml + `<div class="journal-wrap">
     <table class="journal-table">
       <thead><tr><th>Tag</th><th>#</th><th>P&amp;L</th><th>ROI</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
@@ -3373,15 +3467,15 @@ let _fcSort = (() => {
 })();
 
 const _FC_COLS = [
-  { key: 'group',      lbl: 'G',    fmt: v => v },
-  { key: 'team',       lbl: 'Team', fmt: v => `${teamFlag(v)} ${esc(v)}` },
-  { key: 'p_first',    lbl: '1.',   pct: true },
-  { key: 'p_advance',  lbl: 'R32',  pct: true },
-  { key: 'p_r16',      lbl: 'R16',  pct: true },
-  { key: 'p_qf',       lbl: 'QF',   pct: true },
-  { key: 'p_sf',       lbl: 'SF',   pct: true },
-  { key: 'p_final',    lbl: 'Final', pct: true },
-  { key: 'p_champion', lbl: '🏆',   pct: true, isChamp: true },
+  { key: 'group',      lbl: 'G',    fmt: v => v,                                    tip: 'WM-Gruppe' },
+  { key: 'team',       lbl: 'Team', fmt: v => `${teamFlag(v)} ${esc(v)}`,           tip: 'Nation' },
+  { key: 'p_first',    lbl: '1.',   pct: true,                                      tip: 'P(Gruppensieger)' },
+  { key: 'p_advance',  lbl: 'R32',  pct: true,                                      tip: 'P(Einzug in die K.o.-Runde der letzten 32)' },
+  { key: 'p_r16',      lbl: 'R16',  pct: true,                                      tip: 'P(Achtelfinale oder weiter)' },
+  { key: 'p_qf',       lbl: 'QF',   pct: true,                                      tip: 'P(Viertelfinale oder weiter)' },
+  { key: 'p_sf',       lbl: 'SF',   pct: true,                                      tip: 'P(Halbfinale oder weiter)' },
+  { key: 'p_final',    lbl: 'Final', pct: true,                                     tip: 'P(Finale oder Titel)' },
+  { key: 'p_champion', lbl: '🏆',   pct: true, isChamp: true,                       tip: 'P(Weltmeister)' },
 ];
 
 function _fcCls(v, isChamp) {
@@ -3437,7 +3531,8 @@ function renderForecast() {
   const head = _FC_COLS.map(col => {
     let sortCls = '';
     if (_fcSort.col === col.key) sortCls = _fcSort.dir === 'asc' ? 'sorted-asc' : 'sorted-desc';
-    return `<th class="${sortCls}" data-fc-sort="${col.key}">${col.lbl}</th>`;
+    const tip = col.tip ? ` title="${esc(col.tip)}"` : '';
+    return `<th class="${sortCls}" data-fc-sort="${col.key}"${tip}>${col.lbl}</th>`;
   }).join('');
   const rows = teams.map(t => {
     const cells = _FC_COLS.map(col => {
@@ -3491,6 +3586,7 @@ function renderForecast() {
   c.innerHTML = `<div class="fc-header">
     <div class="fc-title">🔮 WM 2026 Forecast</div>
     <div class="fc-sub">Monte-Carlo, ${d.n_trials || 0} Simulationen · ${d.n_played || 0} Spiele gespielt · ${d.n_remaining_group || 0} Gruppenspiele offen · zuletzt ${updated}</div>
+    <div class="fc-sub" style="margin-top:6px;color:var(--muted)">Jede Spalte zeigt die Wahrscheinlichkeit, mindestens diese Runde zu erreichen. Spaltenkopf antippen für Erklärung.</div>
   </div>
   <div class="fc-table-wrap">
     <table class="fc-table">
@@ -3614,6 +3710,17 @@ async function _load() {
   document.getElementById('stale-banner').style.display = age > 1.5 ? 'block' : 'none';
   document.getElementById('dot').style.background = age > 1.5 ? 'var(--yellow)' : 'var(--green)';
 
+  // C5: Build-Info Pille im Footer (aus signals.json.build_info)
+  const bi = d.build_info || {};
+  const pill = document.getElementById('build-pill');
+  if (pill && (bi.sha || bi.date)) {
+    const dateStr = bi.date ? String(bi.date).slice(0,10) : '';
+    const shaStr  = bi.sha  ? String(bi.sha).slice(0,7)   : '';
+    pill.textContent = `v${dateStr}${dateStr && shaStr ? ' · ' : ''}${shaStr}`;
+    pill.title = `Build ${shaStr || '?'} · ${bi.date || '?'}`;
+    pill.style.display = 'inline-block';
+  }
+
   _signals = [...(d.football||[]), ...(d.tennis||[])];
   _schedule = d.schedule || [];
   _allOdds = d.all_odds || {};
@@ -3674,13 +3781,26 @@ async function _load() {
     });
 }
 
+function _renderApiFailEmpty(msg) {
+  const containers = ['home-container', 'bets-container', 'journal-container', 'forecast-container', 'football-container', 'tennis-container'];
+  const html = `<div class="empty"><div class="icon">⚠️</div>
+    <div>Daten konnten nicht geladen werden.<br><small style="color:var(--muted)">${esc(msg)}</small></div>
+    <button class="modal-btn confirm" type="button" onclick="load()" style="margin-top:14px;min-width:140px">↺ Neu laden</button>
+  </div>`;
+  for (const id of containers) {
+    const el = document.getElementById(id);
+    if (el && (el.querySelector('.skel') || el.querySelector('.empty') || !el.children.length)) {
+      el.innerHTML = html;
+    }
+  }
+}
+
 async function load() {
   const btn = document.getElementById('refresh-btn');
   btn.textContent = '↺…';
   _spinner(true);
   try { await _load(); } catch(e) {
-    document.getElementById('home-container').innerHTML =
-      `<div class="empty"><div class="icon">⚠️</div><div>Fehler: ${esc(e.message)}</div></div>`;
+    _renderApiFailEmpty(e.message);
     showToast('⚠️ Daten konnten nicht geladen werden: ' + e.message, 'error');
   } finally { btn.textContent = '↺'; _spinner(false); }
 }
@@ -3784,7 +3904,45 @@ document.addEventListener('keydown', e => {
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW register failed:', err));
 }
+
+// C7: Onboarding-Overlay (3 Steps, einmalig)
+const ONB_STEPS = [
+  { title: '👋 Willkommen bei SportsBrain', text: 'Modell-basierte Value-Bets für die WM 2026. Wir zeigen dir nur Wetten mit positivem Expected Value (EV ≥ 3%).' },
+  { title: '💡 Wie liest du eine Wette?', text: 'Jede Karte zeigt Quote, EV%, Confidence-Tier (HIGH/MED/LOW) und den vorgeschlagenen Einsatz. Tippe auf eine Wette für Details + „Warum diese Wette?".' },
+  { title: '📅 Journal & Forecast', text: 'Im Journal siehst du den 7-Tage-Recap mit ROI und CLV. Im Forecast-Tab läuft eine Monte-Carlo-Simulation der WM. Viel Erfolg!' },
+];
+let _onbStep = 0;
+function _onbRender() {
+  const s = ONB_STEPS[_onbStep];
+  document.getElementById('onb-modal-title').textContent = s.title;
+  document.getElementById('onb-step-text').textContent = s.text;
+  document.getElementById('onb-step-indicator').innerHTML = ONB_STEPS.map((_,i) =>
+    `<span style="width:8px;height:8px;border-radius:50%;background:${i===_onbStep?'var(--green)':'var(--border)'}"></span>`
+  ).join('');
+  document.getElementById('onb-next').textContent = _onbStep < ONB_STEPS.length - 1 ? 'Weiter' : 'Los geht\'s';
+}
+function _onbClose() {
+  document.getElementById('onb-modal-bd').classList.remove('show');
+  document.body.style.overflow = '';
+  try { localStorage.setItem('sb_seen_onboarding', '1'); } catch {}
+}
+function _onbMaybeShow() {
+  try { if (localStorage.getItem('sb_seen_onboarding') === '1') return; } catch { return; }
+  _onbStep = 0;
+  _onbRender();
+  document.getElementById('onb-modal-bd').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+document.getElementById('onb-next').addEventListener('click', () => {
+  if (_onbStep < ONB_STEPS.length - 1) { _onbStep++; _onbRender(); } else { _onbClose(); }
+});
+document.getElementById('onb-skip').addEventListener('click', _onbClose);
+document.getElementById('onb-modal-bd').addEventListener('click', (e) => {
+  if (e.target.id === 'onb-modal-bd') _onbClose();
+});
+
 load();
+_onbMaybeShow();
 </script>
 </body>
 </html>

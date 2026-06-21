@@ -115,7 +115,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ---
 
-## 🟦 C. Block 2 — Trust-UI (P1, ≈ 4–6 h)
+## 🟦 C. Block 2 — Trust-UI (P1, ≈ 4–6 h) ✅ erledigt 2026-06-21
 
 ### C1. „Why this bet?"-Drawer im Bet-Modal
 - **Was**: Aufklappbarer Drawer mit Model-Prob, Market-Prob (Shin-fair), Edge (pp).
@@ -451,7 +451,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **3** | G3 (Wikipedia-Verify), G2 (Sperren-Auto) | ✅ erledigt 2026-06-20 | 2-4 h |
 | **4** | G1 (PPDA Shadow) | ✅ erledigt 2026-06-20 | 4-6 h |
 | **5** | F3, F4 (CLV-Audit + UI) | ✅ erledigt 2026-06-21 | 2-3 h |
-| **6** | C1–C7 (Trust-UI) | Tag 4-6 | 4-6 h |
+| **6** | C1–C7 (Trust-UI) | ✅ erledigt 2026-06-21 | 4-6 h |
 | **7** | D1–D3 (Risiko & Multi-User) | Tag 7 | 2-3 h |
 | **8** | E1–E4 (Refactor) | Tag 8-12 | 6-8 h |
 | **9** | I6 (Home Advantage Gastgeber) | vor KO-Phase 2026-07-04 | 1-3 h |
@@ -485,4 +485,5 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **2026-06-21**: BTTS und Goals 2-4 aus Scanner deaktiviert nach Backtest-Validierung (392 Spiele): BTTS 13pp Kalibrierungslücke, Goals 2-4 9pp Lücke + falsche Richtung. AH ±0.5 und O/U bleiben aktiv (≤2pp Gap). `GOALS_RANGE_ENABLED=False`, BTTS-Block entfernt. Neues Skript `scripts/backtest_special_markets.py`.
 - **2026-06-21**: + L1 NEU (Gruppen-Standings-Fix, P0 — Gruppen stimmen nicht), + L2 NEU (Forecast-Fix, P1, abhängig L1), + L3 NEU (Journal-Fix, P1). Neue Section 🟥 L. Hot Fixes — laufende WM. Statistik: 49 → 52 Items.
 - **2026-06-20**: ~ Phase 4 (G1) erledigt. Neue Module `src/data/statsbomb_ppda.py` (Event-Parser, PPDA pro Match aus Pässen-in-Opp-60% / Def-Aktionen-im-Press-Bereich x≥48, Denominator-Floor 5 → NaN-Schutz, eigener 24h-Cache) und `src/data/fbref_ppda.py` (Saison-PPDA-Snapshot-Fallback). `src/features/ppda.py`: Rolling-Window N=10 mit Bayes-Shrinkage gegen Konföderations-Prior (Fallback-Kaskade Konföderation → FBref → 11.5). `src/features/builder.py` bekommt `ppda_df`/`force_ppda`-Parameter; Live bleibt off durch `PPDA_LIVE_ENABLED=False`. `scripts/backtest_with_ppda.py` vergleicht Brier + ROI-Proxy auf identischem Train/Val-Split, schreibt `results/audits/g1_ppda_backtest_*.json`. I5-Gate-Kriterium: Δ Brier ≥ 0.001 UND Δ ROI ≥ 0.5pp. 14 Unit-Tests neu, Gesamt-Suite 460/460. Nächste Phase: F3/F4 (CLV-Audit + UI).
+- **2026-06-21**: ~ Phase 6 (C1–C7) erledigt. C1: aufklappbarer „Warum diese Wette?"-Drawer im Bet-Modal mit Modell% / Markt-fair% / Edge pp (Shin-fair aus `s.fair_prob` thread via `data-fair-prob`, Fallback `100/odds` mit `*`-Hinweis). C2: LOW-Tier-CSS ergänzt, Tier-Pille im Modal-Header neben Kind-Badge, infoTip für LOW im Bet-Card. C3: Forecast-Spaltenkopf bekommt `title=`-Tooltips via `_FC_COLS[].tip`, plus 1-Zeilen-Erklärung über der Tabelle. C4: `_buildWeeklyRecap()` aggregiert `_settledBets` der letzten 7 Tage (W/V/L, P&L, ROI, Ø CLV) als oberste Journal-Karte. C5: `_build_info()` in `web_dashboard.py` schreibt `{sha, date}` in `signals.json`, Frontend rendert Pille in neuem `<footer id="app-footer">`. C6: `_renderApiFailEmpty(msg)` ersetzt Skeletons in allen Haupt-Containern durch Retry-Button bei Load-Fehler. C7: 3-Step Onboarding-Overlay via `localStorage.sb_seen_onboarding`. Gesamt-Suite 488/488 grün. Nächste Phase: D1–D3 (Risiko & Multi-User).
 - **2026-06-21**: ~ Phase 5 (F3, F4) erledigt. F3 (Commit `92cf85b`): drei Root-Causes für 41/43 leere CLVs gefunden — Pandas NaN-Truthiness im Backfill-Check, unvollständige Markt-Map, fehlender Void-Status. `_resolve_closing_odds()`-Helper deckt jetzt auch Quarter-Ball-O/Us und arbiträre Handicaps via dynamische `totals_lines`/`spreads`-Dicts ab. 16 historische Bets erfolgreich backfilled, 25 Tests neu. F4 (Commit `c2df64c`): farbcodierte CLV-Pille pro Settled-Bet + "Ø CLV letzte 30 Tage"-Karte zusätzlich zur Lifetime-Karte; Backend liefert `clv`/`closing_odds` in settled_bets und `mean_clv_30d`/`n_clv_30d` in summary; Void-Bets fließen in CLV-Aggregation (nicht Hit-Rate). Gesamt-Suite 488/488. Nächste Phase: C1–C7 (Trust-UI).

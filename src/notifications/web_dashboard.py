@@ -8,11 +8,31 @@ import csv
 import json
 import os
 import re
+import subprocess
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from src.betting.value_detector import BetSignal
+
+
+def _build_info() -> dict:
+    """Return {sha, date} for footer pill. SHA from env (CI) or git, never raises."""
+    sha = os.environ.get("GITHUB_SHA") or os.environ.get("GIT_SHA") or ""
+    if not sha:
+        try:
+            sha = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"],
+                cwd=Path(__file__).resolve().parents[2],
+                stderr=subprocess.DEVNULL,
+                timeout=2,
+            ).decode().strip()
+        except Exception:
+            sha = ""
+    return {
+        "sha": sha[:7],
+        "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+    }
 
 ROOT = Path(__file__).parent.parent.parent
 _JSON_PATH = ROOT / "docs" / "data" / "signals.json"
@@ -658,6 +678,7 @@ def write_signals_json(
 
     payload = {
         "updated":        updated,
+        "build_info":     _build_info(),
         "meta": {
             "stale_odds": bool(_stale_odds_flag),
         },
