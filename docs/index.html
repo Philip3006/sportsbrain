@@ -3800,6 +3800,8 @@ function squadSection(home, away) {
 // ── Load ─────────────────────────────────────────────────────
 let _cloudHealthy = true;
 async function _load() {
+  // Während aktiver Walkthrough-Demo keine Live-Daten ziehen/überschreiben
+  if (_walkDemoActive) return;
   const ts = '?t=' + Date.now();
   let r, cloudFailed = false;
   if (CLOUD_URL) {
@@ -4117,6 +4119,83 @@ document.getElementById('glossary-modal-bd').addEventListener('click', (e) => {
 });
 
 // ── M3: Walkthrough mit Spotlight ──
+// Demo-Modus: injiziert synthetische Daten in alle Views, damit die Tour
+// auch ohne aktive Spiele/Wetten konsistent läuft. Wird beim Tour-Ende
+// vollständig zurückgesetzt; _load() überspringt Daten-Updates während Demo.
+let _walkDemoActive = false;
+let _walkDemoBackup = null;
+
+function _walkDemoEnable() {
+  if (_walkDemoActive) return;
+  _walkDemoBackup = {
+    signals: _signals, schedule: _schedule, allOdds: _allOdds,
+    openBets: _openBets, settledBets: _settledBets,
+    liveScores: _liveScores, journalHistory: _journalHistory,
+  };
+  const koSoon = new Date(Date.now() + 3*3600000).toISOString();
+  const todayIso = new Date().toISOString();
+  const yIso = new Date(Date.now() - 86400000).toISOString();
+  const y2Iso = new Date(Date.now() - 2*86400000).toISOString();
+  const tomIso = new Date(Date.now() + 26*3600000).toISOString();
+  _signals = [{
+    sport: 'football', match: 'Demo United vs Tour Town', kickoff: koSoon,
+    market: 'home', odds: 2.10, ev_pct: 8.5, confidence: 'HIGH',
+    stake_eur: 10, stake_pct: 1.5, model_prob: 55.5, fair_prob: 47.0,
+    n_models_agree: 3, tour: 'WM 2026',
+  }];
+  _schedule = [{ sport: 'football', home: 'Demo United', away: 'Tour Town', kickoff: koSoon, tour: 'WM 2026' }];
+  _allOdds = { 'Demo United vs Tour Town': { home: 2.10, draw: 3.40, away: 3.20 } };
+  _openBets = [
+    { home: 'Demo United', away: 'Tour Town', match: 'Demo United vs Tour Town',
+      market: 'home', entry_odds: 2.10, stake: 10, confidence: 'HIGH',
+      match_date: tomIso, drift_pct: -2.5, clv_signal: 'pending',
+      current_odds: 2.05, is_live: false, model_edge_pct: 8.5 },
+    { home: 'Beispiel FC', away: 'Demo City', match: 'Beispiel FC vs Demo City',
+      market: 'away', entry_odds: 2.80, stake: 8, confidence: 'MEDIUM',
+      match_date: todayIso, drift_pct: 1.2, clv_signal: 'pending',
+      current_odds: 2.85, is_live: true, model_edge_pct: 4.2 },
+  ];
+  _settledBets = [
+    { home: 'Test Athletic', away: 'Walkthrough FC', market: 'home',
+      entry_odds: 2.20, stake: 10, status: 'won', pnl: 12,
+      clv: 0.025, closing_odds: 2.15, match_date: yIso },
+    { home: 'Showcase SC', away: 'Demo Wanderers', market: 'away',
+      entry_odds: 3.10, stake: 8, status: 'lost', pnl: -8,
+      clv: -0.015, closing_odds: 3.20, match_date: y2Iso },
+    { home: 'Tutorial Town', away: 'Onboarding United', market: 'draw',
+      entry_odds: 3.50, stake: 5, status: 'void', pnl: 0,
+      clv: 0, closing_odds: 3.50, match_date: y2Iso },
+  ];
+  _liveScores = { 'beispielfc_vs_democity': { home_score: 0, away_score: 1 } };
+  _journalHistory = [
+    { date: todayIso.slice(0,10), pnl: 4, bets: 2, roi: 5.0 },
+    { date: yIso.slice(0,10), pnl: 12, bets: 1, roi: 10.0 },
+    { date: y2Iso.slice(0,10), pnl: -8, bets: 2, roi: -8.0 },
+  ];
+  _walkDemoActive = true;
+  try { renderHome(); } catch {}
+  try { renderSport('football'); } catch {}
+  try { renderBets(); } catch {}
+  try { renderJournal(_journalHistory); } catch {}
+}
+
+function _walkDemoDisable() {
+  if (!_walkDemoActive || !_walkDemoBackup) return;
+  _signals = _walkDemoBackup.signals;
+  _schedule = _walkDemoBackup.schedule;
+  _allOdds = _walkDemoBackup.allOdds;
+  _openBets = _walkDemoBackup.openBets;
+  _settledBets = _walkDemoBackup.settledBets;
+  _liveScores = _walkDemoBackup.liveScores;
+  _journalHistory = _walkDemoBackup.journalHistory;
+  _walkDemoBackup = null;
+  _walkDemoActive = false;
+  try { renderHome(); } catch {}
+  try { renderSport('football'); } catch {}
+  try { renderBets(); } catch {}
+  try { renderJournal(_journalHistory); } catch {}
+}
+
 const WALK_STEPS = [
   { sel: '.nav-tab[data-view="home"]',
     title: '🏠 Schritt 1: Home',
@@ -4311,6 +4390,8 @@ function _walkTick() {
 function _startWalkthrough() {
   if (_walkBackdropEl) _walkEnd();
   _walkStep = 0;
+  // Demo-Daten injizieren — Tour läuft auch ohne aktive Spiele/Wetten
+  try { _walkDemoEnable(); } catch {}
   // Navigate to home so .sig-card is in DOM
   try {
     const homeTab = document.querySelector('.nav-tab[data-view="home"]');
@@ -4357,6 +4438,8 @@ function _walkEnd() {
   if (_walkTooltipEl) { _walkTooltipEl.remove(); _walkTooltipEl = null; }
   if (_walkFabEl) { _walkFabEl.remove(); _walkFabEl = null; }
   if (_walkSkipEl) { _walkSkipEl.remove(); _walkSkipEl = null; }
+  // Demo-Daten zurücksetzen, echte Live-Daten neu zeichnen
+  try { _walkDemoDisable(); } catch {}
 }
 
 load();
