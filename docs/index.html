@@ -726,6 +726,11 @@
   <div class="modal">
     <h3 id="onb-modal-title">👋 Willkommen bei SportsBrain</h3>
     <div class="modal-sub" id="onb-step-text">—</div>
+    <div id="onb-bankroll-input" style="display:none;margin:14px 0 4px">
+      <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Deine Startbankroll (€)</label>
+      <input id="onb-bankroll-val" type="number" min="10" max="100000" step="5" placeholder="z.B. 100"
+        style="width:100%;box-sizing:border-box;padding:10px 12px;background:#1a2030;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:18px;font-weight:700;text-align:center">
+    </div>
     <div id="onb-step-indicator" style="display:flex;gap:6px;justify-content:center;margin:14px 0 6px"></div>
     <div class="modal-buttons">
       <button class="modal-btn cancel" id="onb-skip" type="button">Überspringen</button>
@@ -2238,6 +2243,13 @@ setInterval(_tickCountdowns, 1000);
 // ── Bet-Modal & Worker-Submit ─────────────────────────────────
 const WORKER_BASE = CLOUD_URL.replace(/\/signals\.json$/, '');
 const BANKROLL_START = 100; // 5%-Regel-Referenz; ggf. später aus _bankrollState.start ableiten
+function _applyUserBankroll(amount) {
+  if (!amount || amount < 10) return;
+  // Nur übernehmen, wenn kein echtes Backend-Bankroll da ist (neuer User)
+  if (_bankrollState && _bankrollState.start) return;
+  _bankrollState = { start: amount, free: amount, pnl_closed: 0, staked: 0, exposure_pct: 0, max_win: 0 };
+  renderBankrollStrip();
+}
 let _pendingBet = null;
 let _pwaPendingIds = JSON.parse(localStorage.getItem('sb_pwa_pending') || '[]');
 
@@ -4065,6 +4077,13 @@ async function _load() {
   _openBets = d.open_bets || [];
   _settledBets = d.settled_bets || [];
   _bankrollState = d.bankroll_state || {};
+  // Neue User ohne Backend-Bankroll: lokalen Wert übernehmen
+  if (!_bankrollState.start) {
+    try {
+      const saved = parseFloat(localStorage.getItem('sb_bankroll_start'));
+      if (saved >= 10) _bankrollState = { start: saved, free: saved, pnl_closed: 0, staked: 0, exposure_pct: 0, max_win: 0 };
+    } catch {}
+  }
   _meta = d.meta || {};
   _oddsHistory = d.odds_history || {};
   // Index wm_results by matchKey for fast lookup in Home tab
@@ -4250,6 +4269,11 @@ const ONB_STEPS = [
     text: 'SportsBrain ist deine KI-Assistenz für Sportwetten. Wir analysieren tausende Spiele und zeigen dir nur Wetten, bei denen die KI denkt: <b>hier liegt der Markt daneben</b>. <br><br>⚠️ <b>Wichtig:</b> Auch bei positivem Edge gibt es <u>keine Gewinngarantie</u>. Sportwetten bleiben Glücksspiel mit Risiko — einzelne Wetten können verlieren, und auch über viele Wetten kann die Bilanz negativ sein. Setze nur Geld ein, dessen Verlust du verkraften kannst.'
   },
   {
+    title: '💰 Deine Startbankroll',
+    text: 'Wie viel Kapital möchtest du für Sportwetten einsetzen? Der Betrag wird lokal gespeichert und für Einsatz-Empfehlungen (Kelly-Criterion) verwendet.',
+    input: 'bankroll'
+  },
+  {
     title: '🟢 Die wichtigsten Zahlen',
     text: '<b>EV +5%</b> = erwarteter Gewinn pro Wette.<br><b>Edge +3pp</b> = Vorteil ggü. den Buchmachern.<br><b>HIGH/MED/LOW</b> = wie sicher sich die KI ist.<br><br>Keine Sorge — alles ist auch live in der App erklärt (💡-Drawer auf jeder Karte, 📖 Begriffe im Footer).'
   },
@@ -4267,12 +4291,31 @@ function _onbRender() {
   const s = ONB_STEPS[_onbStep];
   document.getElementById('onb-modal-title').textContent = s.title;
   document.getElementById('onb-step-text').innerHTML = s.text;
+  const inputEl = document.getElementById('onb-bankroll-input');
+  const inputVal = document.getElementById('onb-bankroll-val');
+  if (s.input === 'bankroll') {
+    inputEl.style.display = 'block';
+    const saved = localStorage.getItem('sb_bankroll_start');
+    if (saved && !inputVal.value) inputVal.value = saved;
+    setTimeout(() => inputVal.focus(), 100);
+  } else {
+    inputEl.style.display = 'none';
+  }
   document.getElementById('onb-step-indicator').innerHTML = ONB_STEPS.map((_,i) =>
     `<span style="width:8px;height:8px;border-radius:50%;background:${i===_onbStep?'var(--green)':'var(--border)'}"></span>`
   ).join('');
   const isLast = _onbStep === ONB_STEPS.length - 1;
   document.getElementById('onb-next').textContent = isLast ? '🎯 Tour starten' : 'Weiter';
   document.getElementById('onb-skip').textContent = isLast ? 'Ohne Tour starten' : 'Überspringen';
+}
+function _onbSaveBankrollIfNeeded() {
+  const s = ONB_STEPS[_onbStep];
+  if (s.input !== 'bankroll') return;
+  const v = parseFloat(document.getElementById('onb-bankroll-val').value);
+  if (v >= 10) {
+    try { localStorage.setItem('sb_bankroll_start', String(v)); } catch {}
+    _applyUserBankroll(v);
+  }
 }
 function _onbClose(startWalk) {
   document.getElementById('onb-modal-bd').classList.remove('show');
@@ -4295,6 +4338,7 @@ function _restartOnboarding() {
   _onbShow();
 }
 document.getElementById('onb-next').addEventListener('click', () => {
+  _onbSaveBankrollIfNeeded();
   if (_onbStep < ONB_STEPS.length - 1) { _onbStep++; _onbRender(); }
   else { _onbClose(true); }
 });
