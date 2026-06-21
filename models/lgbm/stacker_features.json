@@ -20,6 +20,6 @@
   ],
   "n_training_samples": 428,
   "wm2026_matches_at_train": 36,
-  "in_sample_brier": 0.5793294209304917,
-  "in_sample_ece": 0.038518694618235226
+  "in_sample_brier": 0.5835106039021308,
+  "in_sample_ece": 0.0331200397215084
 }
