@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-06-21T10:41:43Z",
+  "generated_at": "2026-06-21T11:30:32Z",
   "overall": "degraded",
   "jobs": [
     {
       "job": "daily_scan",
-      "status": "stale",
-      "last_run_at": "2026-06-20T06:28:47Z",
-      "duration_s": 4375.0,
+      "status": "ok",
+      "last_run_at": "2026-06-21T11:30:32Z",
+      "duration_s": null,
       "exit_code": 0,
-      "error": "last run was at 2026-06-20T06:28:47Z — overdue (>93600s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 86400,
       "cadence": "1×/Tag 07:00"
@@ -26,22 +26,22 @@
     },
     {
       "job": "closing_odds",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-06-20T22:10:07Z",
       "duration_s": null,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-06-20T22:10:07Z — overdue (>46800s)",
       "fallback_used": null,
       "next_expected_in_s": 43200,
       "cadence": "2×/Tag 14:00 + 18:00"
     },
     {
       "job": "consume_pending_bets",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-06-21T10:41:43Z",
       "duration_s": null,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-06-21T10:41:43Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
