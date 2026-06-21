@@ -1,7 +1,7 @@
 {
-  "updated": "2026-06-21T14:38:16Z",
+  "updated": "2026-06-21T16:46:46Z",
   "build_info": {
-    "sha": "4dc27dc",
+    "sha": "abdab12",
     "date": "2026-06-21"
   },
   "meta": {
@@ -7854,7 +7854,7 @@
       "stake": 5.0,
       "match_date": "2026-06-21",
       "model_edge_pct": null,
-      "is_live": false
+      "is_live": true
     }
   ],
   "settled_bets": [
