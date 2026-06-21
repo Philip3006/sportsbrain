@@ -1,11 +1,12 @@
 {
-  "updated": "2026-06-21T19:37:06Z",
+  "updated": "2026-06-21T20:26:09Z",
   "build_info": {
-    "sha": "c74971b",
+    "sha": "0b1e6e3",
     "date": "2026-06-21"
   },
   "meta": {
-    "stale_odds": false
+    "stale_odds": false,
+    "default_user": "philip"
   },
   "schedule": [
     {
@@ -7906,7 +7907,7 @@
       "pnl": -5.0,
       "match_date": "2026-06-21",
       "status": "lost",
-      "clv": null,
+      "clv": 0.0149,
       "closing_odds": 3.35
     },
     {
