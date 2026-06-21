@@ -465,6 +465,15 @@
     .stats-table tr:last-child td { border-bottom: none; }
 
     /* ── Group Standings ── */
+    .br-match { background: rgba(48,54,61,.22); border-radius: 8px; padding: 6px 8px; margin-bottom: 6px; }
+    .br-match:last-child { margin-bottom: 0; }
+    .br-team { display: flex; align-items: center; gap: 8px; padding: 4px 4px; font-size: 12px; color: var(--muted); border-radius: 5px; }
+    .br-team.br-win { color: var(--text); font-weight: 800; background: rgba(0,200,83,.08); }
+    .br-team.br-win .br-pct { color: var(--green); }
+    .br-seed { display: inline-block; min-width: 22px; text-align: right; color: var(--muted); font-size: 10px; font-weight: 700; }
+    .br-flag { font-size: 14px; line-height: 1; }
+    .br-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .br-pct { font-size: 11px; font-weight: 700; color: var(--muted); }
     .standings-group { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; margin-bottom: 10px; }
     .standings-group-header { background: rgba(0,200,83,.08); border-bottom: 1px solid rgba(0,200,83,.2); padding: 8px 12px; font-size: 11px; font-weight: 800; color: var(--green); text-transform: uppercase; letter-spacing: .6px; }
     .standings-table { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -3727,6 +3736,9 @@ function renderForecast() {
   <div class="section-title" style="margin-top:14px">Gruppen-Stände (live)</div>
   <div id="forecast-standings-container" style="padding:0 2px 8px"></div>
 
+  <div class="section-title" style="margin-top:14px">🏆 Vorhersage-Bracket</div>
+  <div id="forecast-bracket-container" style="padding:0 2px 8px"></div>
+
   <div class="section-title" style="margin-top:14px">Stage-Wahrscheinlichkeiten</div>
   <div class="fc-sub" style="padding:0 2px 8px;color:var(--muted)">Jede Spalte = P(mindestens diese Runde erreichen). Spaltenkopf antippen zum Sortieren / Tooltip.</div>
   <div class="fc-table-wrap">
@@ -3740,7 +3752,63 @@ function renderForecast() {
   ${xpHtml}`;
   // Embed live group standings at top
   try { renderStandings('forecast-standings-container'); } catch {}
+  // Render bracket preview
+  try { _renderBracket(d.bracket); } catch (e) { console.warn('bracket render failed', e); }
   _bindForecastHeaders();
+}
+
+function _renderBracket(bracket) {
+  const c = document.getElementById('forecast-bracket-container');
+  if (!c) return;
+  if (!bracket || bracket.error || !Array.isArray(bracket.rounds) || !bracket.rounds.length) {
+    c.innerHTML = `<div class="fc-sub" style="color:var(--muted);padding:8px 4px">Bracket-Vorschau noch nicht verfügbar.</div>`;
+    return;
+  }
+  const champ = bracket.champion;
+  let html = '';
+  if (champ) {
+    html += `<div style="background:linear-gradient(135deg,rgba(0,200,83,.12),rgba(0,200,83,.04));border:1px solid rgba(0,200,83,.3);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px">
+      <div style="font-size:28px">🏆</div>
+      <div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.4px;color:var(--green);text-transform:uppercase">Vorhersage Champion</div>
+        <div style="font-size:18px;font-weight:900;color:var(--text);margin-top:2px">${teamFlag(champ.team)} ${esc(champ.team)} <span style="font-size:11px;font-weight:700;color:var(--muted);margin-left:6px">Gruppe ${esc(champ.group)}</span></div>
+      </div>
+    </div>`;
+  }
+  bracket.rounds.forEach((r, idx) => {
+    const isLast = idx === bracket.rounds.length - 1;
+    const openAttr = (r.stage === 'r32' || r.stage === 'final') ? 'open' : '';
+    const matchHtml = r.matches.map(m => {
+      const homeWin = m.winner === m.home;
+      const hCls = homeWin ? 'br-team br-win' : 'br-team';
+      const aCls = !homeWin ? 'br-team br-win' : 'br-team';
+      return `<div class="br-match">
+        <div class="${hCls}">
+          <span class="br-seed">${m.home_seed}</span>
+          <span class="br-flag">${teamFlag(m.home)}</span>
+          <span class="br-name">${esc(m.home)}</span>
+          <span class="br-pct">${m.p_home.toFixed(1)}%</span>
+        </div>
+        <div class="${aCls}">
+          <span class="br-seed">${m.away_seed}</span>
+          <span class="br-flag">${teamFlag(m.away)}</span>
+          <span class="br-name">${esc(m.away)}</span>
+          <span class="br-pct">${m.p_away.toFixed(1)}%</span>
+        </div>
+      </div>`;
+    }).join('');
+    html += `<details class="br-round" ${openAttr} style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:8px;overflow:hidden">
+      <summary style="cursor:pointer;list-style:none;padding:10px 14px;font-weight:800;color:var(--text);font-size:13px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)">
+        <span>${esc(r.label)} <span style="color:var(--muted);font-weight:600;font-size:11px;margin-left:6px">${r.matches.length} ${r.matches.length === 1 ? 'Spiel' : 'Spiele'}</span></span>
+        <span style="color:var(--muted);font-size:11px;font-weight:600">▾</span>
+      </summary>
+      <div style="padding:8px">${matchHtml}</div>
+    </details>`;
+  });
+  if (bracket.note) {
+    html += `<div class="fc-note" style="margin-top:8px;font-style:italic;font-size:11px;color:var(--muted)">ℹ️ ${esc(bracket.note)}</div>`;
+  }
+  c.innerHTML = html;
 }
 
 function _bindForecastHeaders() {

@@ -460,6 +460,7 @@ def run_forecast(n: int = 2000, seed: int = 42) -> dict:
         })
     teams_out.sort(key=lambda x: -x["p_champion"])
     xpoints = _build_xpoints(params, elo, results)
+    bracket = _build_bracket_preview(teams_out, params, elo)
     return {
         "updated":    datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "n_trials":   n,
@@ -467,6 +468,112 @@ def run_forecast(n: int = 2000, seed: int = 42) -> dict:
         "n_remaining_group": len(remaining),
         "teams":      teams_out,
         "xpoints":    xpoints,
+        "bracket":    bracket,
+    }
+
+
+def _build_bracket_preview(teams_out: list[dict], params, elo: dict) -> dict:
+    """Deterministische Bracket-Vorschau für den aktuellen Stand.
+
+    Methode:
+      1. Wähle Top-2 jeder Gruppe (nach p_first+p_second) und die 8 besten
+         Drittplatzierten (nach p_advance unter Nicht-Top-2) → 32 Qualifizierte.
+      2. Setze sie nach p_qf absteigend (1=stärkster Pfad-Erwartungswert).
+      3. Klassisches Seeded-Bracket: seed1 vs seed32, seed2 vs seed31, ...
+      4. Pro Paarung: DC-Vorhersage neutral, höhere P(Sieg) gewinnt (deterministisch).
+      5. Wiederhole für R32 → R16 → QF → SF → Final.
+
+    Vereinfachung: Kein offizielles FIFA-Bracket-Mapping (folgt nach Auslosung).
+    Daher als "Approximation" im Frontend markieren.
+    """
+    from src.models.dixon_coles import predict_match_staged
+
+    by_grp: dict[str, list[dict]] = defaultdict(list)
+    for t in teams_out:
+        by_grp[t["group"]].append(t)
+
+    qual: list[dict] = []
+    third_cands: list[dict] = []
+    for grp, rows in by_grp.items():
+        rows_sorted = sorted(rows, key=lambda x: -(x["p_first"] + x["p_second"]))
+        top2 = rows_sorted[:2]
+        for t in top2:
+            qual.append(t)
+        # 3.: most-likely non-top2 to be in best-3rds bucket
+        rest = [r for r in rows if r not in top2]
+        rest_sorted = sorted(rest, key=lambda x: -x["p_advance"])
+        if rest_sorted:
+            third_cands.append(rest_sorted[0])
+
+    third_cands.sort(key=lambda x: -x["p_advance"])
+    qual.extend(third_cands[:8])
+
+    if len(qual) != 32:
+        return {"error": f"need 32 qualifiers, got {len(qual)}", "rounds": []}
+
+    qual.sort(key=lambda x: -x["p_qf"])  # seed 1 = strongest path
+    bracket_seeds = qual[:]
+
+    def _predict_winner(home_team: str, away_team: str) -> dict:
+        ch, ca = canonical_name(home_team), canonical_name(away_team)
+        if ch not in params.attack or ca not in params.attack:
+            return {"home": home_team, "away": away_team,
+                    "p_home": 0.5, "p_draw": 0.0, "p_away": 0.5,
+                    "winner": home_team, "p_winner": 0.5}
+        try:
+            probs = predict_match_staged(
+                ch, ca, params, is_knockout=True, stage="r16", neutral=True,
+                elo_home=elo.get(ch), elo_away=elo.get(ca),
+            )
+        except Exception:
+            return {"home": home_team, "away": away_team,
+                    "p_home": 0.5, "p_draw": 0.0, "p_away": 0.5,
+                    "winner": home_team, "p_winner": 0.5}
+        ph, pa, pd = probs["p_home"], probs["p_away"], probs["p_draw"]
+        # KO: draw aufteilen 50/50 → effektive Sieg-Wkt.
+        p_h_eff = ph + pd / 2
+        p_a_eff = pa + pd / 2
+        winner = home_team if p_h_eff >= p_a_eff else away_team
+        return {
+            "home": home_team, "away": away_team,
+            "p_home": round(p_h_eff * 100, 1),
+            "p_draw": round(pd * 100, 1),
+            "p_away": round(p_a_eff * 100, 1),
+            "winner": winner,
+            "p_winner": round(max(p_h_eff, p_a_eff) * 100, 1),
+        }
+
+    rounds_out: list[dict] = []
+    stage_labels = [("r32", "Sechzehntelfinale (R32)"),
+                    ("r16", "Achtelfinale (R16)"),
+                    ("qf",  "Viertelfinale"),
+                    ("sf",  "Halbfinale"),
+                    ("final", "Finale")]
+    current = bracket_seeds[:]
+    for stage_key, stage_lbl in stage_labels:
+        matches = []
+        next_round = []
+        # Classic seeded pairing within current list
+        n_cur = len(current)
+        for i in range(n_cur // 2):
+            h, a = current[i], current[n_cur - 1 - i]
+            m = _predict_winner(h["team"], a["team"])
+            m["home_group"] = h["group"]
+            m["away_group"] = a["group"]
+            m["home_seed"] = i + 1
+            m["away_seed"] = n_cur - i
+            matches.append(m)
+            winner_obj = h if m["winner"] == h["team"] else a
+            next_round.append(winner_obj)
+        rounds_out.append({"stage": stage_key, "label": stage_lbl, "matches": matches})
+        current = next_round
+
+    champion = current[0] if current else None
+    return {
+        "rounds": rounds_out,
+        "champion": {"team": champion["team"], "group": champion["group"]} if champion else None,
+        "note": "Vereinfachte Approximation — offizielles FIFA-Bracket-Mapping folgt nach Auslosung. "
+                "Seeded-Pairing nach P(QF) Σ, deterministische Auswahl je Match (höhere DC-Sieg-Wkt.).",
     }
 
 
