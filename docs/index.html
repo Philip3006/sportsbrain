@@ -4117,11 +4117,53 @@ document.getElementById('glossary-modal-bd').addEventListener('click', (e) => {
 
 // ── M3: Walkthrough mit Spotlight ──
 const WALK_STEPS = [
-  { sel: '#nav-tab-home, .nav-tab[data-view="home"]', title: '🏠 Home', text: 'Hier siehst du die wichtigsten Spiele für heute & morgen. Tippe auf ein Spiel für Details.' },
-  { sel: '.sig-card', title: '🎯 Signal-Karte', text: 'Jede Karte zeigt eine empfohlene Wette: Quote, EV%, Confidence-Tier und Einsatz. Die KI hat hier einen Vorteil ggü. dem Markt erkannt.' },
-  { sel: '.why-inline', title: '💡 Warum diese Wette?', text: 'Klick auf diesen Drawer öffnet die Begründung: KI-% vs Markt-%, Edge in Prozentpunkten, plus eine Klartext-Erklärung.' },
-  { sel: '.place-bet-btn', title: '✅ Wette platzieren', text: 'Hier öffnest du das Bet-Modal. Stake wird via Kelly vorgeschlagen, du kannst ihn anpassen. Wird beim nächsten Sync ins Journal geschrieben.' },
-  { sel: '.nav-tab[data-view="journal"], #nav-tab-journal', title: '📅 Journal & CLV', text: 'Im Journal siehst du dein P&L, den 7-Tage-Recap und den Closing-Line-Value (CLV) — der zeigt langfristig, ob du den Markt schlägst.' },
+  { sel: '.nav-tab[data-view="home"]',
+    title: '🏠 Schritt 1: Home',
+    text: 'Hier startest du. Home zeigt alle Wett-Signale für heute & morgen — sortiert nach Confidence. Wenn die KI nichts Lohnendes findet, ist die Liste leer (das ist ok!).',
+    before: () => { try { const t = document.querySelector('.nav-tab[data-view="home"]'); if (t && typeof navTo === 'function') navTo(t); } catch {} } },
+  { sel: '.sig-card',
+    title: '🎯 Schritt 2: Eine Signal-Karte',
+    text: 'Jede Karte = ein Wett-Vorschlag. Oben steht das Spiel, darunter die Markt-Quote, EV%, Tier und der vorgeschlagene Einsatz. Wir gehen jetzt jedes Element einzeln durch.' },
+  { sel: '.sig-card .conf-badge',
+    title: '🏷️ Schritt 3: Tier-Badge',
+    text: 'HIGH / MEDIUM / LOW = wie überzeugt die KI ist. HIGH = mehrere Modelle stimmen überein (+10% Einsatz). LOW = grenzwertig, Mini-Einsatz ≤€5. MEDIUM = solide, Standard-Einsatz.' },
+  { sel: '.sig-card .ev-chip',
+    title: '📈 Schritt 4: EV% (Expected Value)',
+    text: 'EV% = der erwartete Vorteil über den Markt. EV +5% heißt: würdest du diese Wette 100× spielen, wärst du am Ende durchschnittlich +5% vom Einsatz vorn — wenn die KI im Schnitt recht hat. Wir zeigen nur Wetten ab EV ≥3%.' },
+  { sel: '.sig-card .edge-bars',
+    title: '📊 Schritt 5: Markt vs Modell',
+    text: 'Die zwei Balken sind das Herzstück: oben die Markt-Wahrscheinlichkeit (was die Buchmacher denken), unten die KI-Wahrscheinlichkeit. Der Unterschied = der Edge in Prozentpunkten. Je größer, desto mehr Vorteil.' },
+  { sel: '.sig-card .why-inline',
+    title: '💡 Schritt 6: „Warum diese Wette?"',
+    text: 'Tippe auf diesen Drawer für die Begründung im Klartext. Bei HIGH-Tier ist er standardmäßig offen — du siehst sofort die Logik hinter dem Vorschlag.' },
+  { sel: '.sig-card .place-bet-btn',
+    title: '✅ Schritt 7: Wette platzieren',
+    text: 'Bist du überzeugt? Tippe hier. Wir öffnen jetzt das Bet-Modal und zeigen dir, was du dort einstellen kannst.',
+    before: () => { try { const b = document.querySelector('.sig-card .place-bet-btn'); if (b) setTimeout(() => b.click(), 300); } catch {} } },
+  { sel: '#bet-modal-odds-input',
+    title: '💰 Schritt 8: Quote anpassen',
+    text: 'Falls dein Bookmaker eine etwas andere Quote anbietet, kannst du sie hier ändern — EV & Stake-Vorschlag berechnen sich live neu.' },
+  { sel: '#bet-modal-stake',
+    title: '🪙 Schritt 9: Einsatz',
+    text: 'Der vorgeschlagene Einsatz kommt aus Kelly-Criterion + Tier-Anpassung + Bankroll-Schutz (max 5%). Du kannst ihn anpassen — Quick-Buttons darunter helfen.' },
+  { sel: '#bet-modal-confirm',
+    title: '📥 Schritt 10: Eintragen',
+    text: 'Klick speichert die Wette als „pending" im Journal. Den echten Stake setzt du wie gewohnt im Bookmaker. Beim nächsten Sync (alle 2 Min) wandert die Wette in „Offen".',
+    after: () => { try { document.getElementById('bet-modal-cancel')?.click(); } catch {} } },
+  { sel: '.nav-tab[data-view="bets"]',
+    title: '📋 Schritt 11: Wetten-Tab',
+    text: 'Hier verfolgst du den Status all deiner Wetten in 3 Phasen — wir schauen sie uns kurz an.',
+    before: () => { try { const t = document.querySelector('.nav-tab[data-view="bets"]'); if (t && typeof navTo === 'function') navTo(t); } catch {} } },
+  { sel: '.bet-tab',
+    title: '🔄 Schritt 12: Offen / Live / Abgerechnet',
+    text: '„Offen" = noch nicht angepfiffen. „🔴 Live" = läuft gerade, mit Live-Score-Push. „Abgerechnet" = fertig, mit P&L und CLV. Bets wandern automatisch durch.' },
+  { sel: '.nav-tab[data-view="journal"]',
+    title: '📅 Schritt 13: Journal',
+    text: 'Das Journal zeigt deinen 7-Tage-Recap: Bankroll-Verlauf, ROI, Hit-Rate und vor allem CLV — Closing Line Value.',
+    before: () => { try { const t = document.querySelector('.nav-tab[data-view="journal"]'); if (t && typeof navTo === 'function') navTo(t); } catch {} } },
+  { sel: '.kpi-card',
+    title: '📊 Schritt 14: KPI-Karten & CLV',
+    text: 'CLV ist der wichtigste Langzeit-Indikator. Positiver CLV = du hast besser eingeschätzt als der Schluss-Markt = du wirst langfristig wahrscheinlich profitabel sein. Negativer CLV = umgekehrt. Setzt sich erst nach 30-50 Wetten als Signal durch — bis dahin: Varianz!' },
 ];
 let _walkStep = 0;
 let _walkBackdropEl = null;
@@ -4156,6 +4198,15 @@ function _walkReposition() {
   if (!_walkTargetEl || !_walkBackdropEl) return;
   const r = _walkTargetEl.getBoundingClientRect();
   const spot = _walkBackdropEl.querySelector('.walk-spot');
+  const vh = window.innerHeight, vw = window.innerWidth;
+  const offscreen = r.bottom < 0 || r.top > vh || r.right < 0 || r.left > vw || (r.width === 0 && r.height === 0);
+  if (offscreen) {
+    spot.style.display = 'none';
+    if (_walkTooltipEl) _walkTooltipEl.style.display = 'none';
+    return;
+  }
+  spot.style.display = 'block';
+  if (_walkTooltipEl) _walkTooltipEl.style.display = 'block';
   const pad = 6;
   spot.style.top = (r.top - pad) + 'px';
   spot.style.left = (r.left - pad) + 'px';
@@ -4165,26 +4216,35 @@ function _walkReposition() {
 }
 function _walkRender() {
   const step = WALK_STEPS[_walkStep];
-  const el = _walkFindEl(step.sel);
-  const spot = _walkBackdropEl.querySelector('.walk-spot');
-  if (el) {
-    _walkTargetEl = el;
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => {
-      spot.style.display = 'block';
-      _walkTooltipEl.style.display = 'block';
-      _walkTooltipEl.querySelector('.walk-tooltip-title').textContent = step.title;
-      _walkTooltipEl.querySelector('.walk-tooltip-text').textContent = step.text;
-      _walkTooltipEl.querySelector('.walk-step-dots').innerHTML = WALK_STEPS.map((_,i) =>
-        `<span class="${i===_walkStep?'active':''}"></span>`).join('');
-      _walkTooltipEl.querySelector('.walk-btn.next').textContent = _walkStep < WALK_STEPS.length - 1 ? 'Weiter →' : 'Fertig ✓';
-      if (_walkFabEl) _walkFabEl.textContent = _walkStep < WALK_STEPS.length - 1 ? 'Weiter →' : 'Fertig ✓';
-      _walkReposition();
-    }, 350);
-  } else {
-    if (_walkStep < WALK_STEPS.length - 1) { _walkStep++; _walkRender(); }
-    else { _walkEnd(); }
-  }
+  if (step.before) { try { step.before(); } catch {} }
+  // Delay element lookup so before-hooks (modal open, tab switch) have time to render
+  setTimeout(() => {
+    const el = _walkFindEl(step.sel);
+    const spot = _walkBackdropEl.querySelector('.walk-spot');
+    if (el) {
+      _walkTargetEl = el;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => {
+        spot.style.display = 'block';
+        _walkTooltipEl.style.display = 'block';
+        _walkTooltipEl.querySelector('.walk-tooltip-title').textContent = step.title;
+        _walkTooltipEl.querySelector('.walk-tooltip-text').textContent = step.text;
+        _walkTooltipEl.querySelector('.walk-step-dots').innerHTML = WALK_STEPS.map((_,i) =>
+          `<span class="${i===_walkStep?'active':''}"></span>`).join('');
+        if (_walkFabEl) _walkFabEl.textContent = _walkStep < WALK_STEPS.length - 1 ? 'Weiter →' : 'Fertig ✓';
+        _walkReposition();
+      }, 350);
+    } else {
+      if (_walkStep < WALK_STEPS.length - 1) { _walkStep++; _walkRender(); }
+      else { _walkEnd(); }
+    }
+  }, step.before ? 500 : 0);
+}
+function _walkAdvance() {
+  const cur = WALK_STEPS[_walkStep];
+  if (cur && cur.after) { try { cur.after(); } catch {} }
+  if (_walkStep < WALK_STEPS.length - 1) { _walkStep++; _walkRender(); }
+  else { _walkEnd(); }
 }
 function _walkTick() {
   _walkReposition();
@@ -4209,10 +4269,7 @@ function _startWalkthrough() {
   fab.type = 'button';
   fab.className = 'walk-fab';
   fab.textContent = 'Weiter →';
-  fab.addEventListener('click', () => {
-    if (_walkStep < WALK_STEPS.length - 1) { _walkStep++; _walkRender(); }
-    else { _walkEnd(); }
-  });
+  fab.addEventListener('click', _walkAdvance);
   document.body.appendChild(fab);
   _walkFabEl = fab;
   const sk = document.createElement('button');
@@ -4228,20 +4285,9 @@ function _startWalkthrough() {
   tt.innerHTML = `
     <div class="walk-tooltip-title">—</div>
     <div class="walk-tooltip-text">—</div>
-    <div class="walk-tooltip-footer">
-      <div class="walk-step-dots"></div>
-      <div style="display:flex;gap:6px">
-        <button class="walk-btn skip" type="button">Beenden</button>
-        <button class="walk-btn next" type="button">Weiter →</button>
-      </div>
-    </div>`;
+    <div class="walk-step-dots" style="justify-content:center;margin-top:8px"></div>`;
   document.body.appendChild(tt);
   _walkTooltipEl = tt;
-  tt.querySelector('.walk-btn.next').addEventListener('click', () => {
-    if (_walkStep < WALK_STEPS.length - 1) { _walkStep++; _walkRender(); }
-    else { _walkEnd(); }
-  });
-  tt.querySelector('.walk-btn.skip').addEventListener('click', _walkEnd);
   setTimeout(_walkRender, 200);
   if (_walkRaf) cancelAnimationFrame(_walkRaf);
   _walkTick();
