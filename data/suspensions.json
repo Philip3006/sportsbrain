@@ -1,7 +1,7 @@
 {
   "_comment": "WM 2026 Verletzungen & Sperren — Stand: 10. Juni 2026. Quellen: ESPN, Goal.com, FIFA.com, Sports Mole.",
   "_format": "team_name: [player_name, ...] — availability=0 im Modell gesetzt",
-  "_injuries_last_updated": "2026-06-20",
+  "_injuries_last_updated": "2026-06-21",
   "Czech Republic": [
     "Václav Cerný"
   ],
@@ -23,7 +23,7 @@
   "Switzerland": [],
   "Brazil": [
     "Wesley França",
-    "Neymar"
+    "Raphinha"
   ],
   "Haiti": [],
   "Morocco": [
@@ -87,7 +87,8 @@
   "Spain": [
     "Dani Carvajal",
     "Fermin Lopez",
-    "Lamine Yamal"
+    "Lamine Yamal",
+    "Nico Williams"
   ],
   "Uruguay": [
     "Giorgian de Arrascaeta",
@@ -131,11 +132,14 @@
     "Tino Livramento",
     "Reece James",
     "Ezri Konsa",
-    "Noni Madueke"
+    "Noni Madueke",
+    "Declan Rice"
   ],
   "Ghana": [
     "Mohammed Kudus",
-    "Mohammed Salisu"
+    "Mohammed Salisu",
+    "Lawrence Ati-Zigi",
+    "Benjamin Asare"
   ],
   "Panama": [
     "Adalberto Carrasquilla"

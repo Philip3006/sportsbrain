@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-20",
+  "updated": "2026-06-21",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -848,7 +848,7 @@
       "ampel": "🟢",
       "suspended": [
         "Wesley França",
-        "Neymar"
+        "Raphinha"
       ],
       "players": [
         {
@@ -899,12 +899,12 @@
         {
           "name": "Neymar",
           "pos": "FWD",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Raphinha",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Weverton",
@@ -2252,7 +2252,8 @@
         "Tino Livramento",
         "Reece James",
         "Ezri Konsa",
-        "Noni Madueke"
+        "Noni Madueke",
+        "Declan Rice"
       ],
       "players": [
         {
@@ -2273,7 +2274,7 @@
         {
           "name": "Declan Rice",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "John Stones",
@@ -2676,13 +2677,15 @@
       "ampel": "🟢",
       "suspended": [
         "Mohammed Kudus",
-        "Mohammed Salisu"
+        "Mohammed Salisu",
+        "Lawrence Ati-Zigi",
+        "Benjamin Asare"
       ],
       "players": [
         {
           "name": "Lawrence Ati-Zigi",
           "pos": "GK",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Alidu Seidu",
@@ -2757,7 +2760,7 @@
         {
           "name": "Benjamin Asare",
           "pos": "GK",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Abdul Rahman Baba",
@@ -5633,7 +5636,8 @@
       "suspended": [
         "Dani Carvajal",
         "Fermin Lopez",
-        "Lamine Yamal"
+        "Lamine Yamal",
+        "Nico Williams"
       ],
       "players": [
         {
@@ -5719,7 +5723,7 @@
         {
           "name": "Nico Williams",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Martín Zubimendi",
