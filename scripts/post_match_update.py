@@ -11,17 +11,18 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from dotenv import load_dotenv
 load_dotenv()
 
-from src.betting.ledger import settle_from_results, LEDGER_PATH
-from src.notifications.web_dashboard import write_signals_json
+from src.betting.ledger import settle_from_results
+from src.notifications.web_dashboard import write_signals_json_all_users, list_known_users
 
 
 def main() -> None:
-    print("Settling open bets against latest results...")
-    n = settle_from_results(LEDGER_PATH)
-    print(f"  Settled: {n} bet(s)")
+    print("Settling open bets against latest results (all users)...")
+    for u in list_known_users():
+        n = settle_from_results(user=u)
+        print(f"  {u}: settled {n} bet(s)")
 
-    print("Refreshing signals.json (portfolio + signal cleanup)...")
-    write_signals_json()  # keeps existing signals, removes expired ones, uploads to cloud
+    print("Refreshing signals.json (portfolio + signal cleanup, all users)...")
+    write_signals_json_all_users()  # keeps existing signals, removes expired ones, uploads to cloud
     print("  Done.")
 
 

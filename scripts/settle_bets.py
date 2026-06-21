@@ -21,7 +21,8 @@ import requests
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
-LEDGER = ROOT / "results" / "ledger.csv"
+from src.config import ledger_path_for, DEFAULT_USER
+LEDGER = ledger_path_for(DEFAULT_USER)
 API_URL = "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/scores/"
 
 
@@ -240,18 +241,15 @@ def _pnl(result: str, odds: float, stake: float) -> float:
     return 0.0  # push = refund
 
 
-def settle(dry_run: bool = False) -> int:
-    if not LEDGER.exists():
-        print("Ledger not found.")
+def _settle_one_user(ledger_path: Path, scores: dict, user: str, dry_run: bool) -> int:
+    """Settle open bets for one user's ledger against `scores`."""
+    if not ledger_path.exists():
         return 0
-
-    scores = fetch_scores()
-    print(f"Scores API: {len(scores)//2} completed matches")
-
-    rows = list(csv.DictReader(LEDGER.open()))
+    rows = list(csv.DictReader(ledger_path.open()))
     open_bets = [r for r in rows if r["status"] == "open"]
-    print(f"Open bets: {len(open_bets)}")
-
+    if not open_bets:
+        return 0
+    print(f"[{user}] Open bets: {len(open_bets)}")
     settled = 0
     for r in open_bets:
         home, away = r["home"], r["away"]
@@ -259,39 +257,48 @@ def settle(dry_run: bool = False) -> int:
         sc = scores.get(r["match_id"]) or scores.get(match_key)
         if not sc:
             continue
-
         result = _settle_market(r["market"], sc["home_score"], sc["away_score"])
         if result is None:
             print(f"  ⚠️  Unknown market: {r['market']} — skipping")
             continue
-
         odds = float(r["decimal_odds"])
         stake = float(r["stake_amount"])
         profit = _pnl(result, odds, stake)
         icon = "✅ WON" if result == "won" else ("↩️ PUSH" if result == "push" else "❌ LOST")
-
-        print(f"  {icon} {home} vs {away} [{sc['home_score']}-{sc['away_score']}] "
+        print(f"  [{user}] {icon} {home} vs {away} [{sc['home_score']}-{sc['away_score']}] "
               f"{r['market']} @ {odds} → P&L: {profit:+.2f}€")
-
         if not dry_run:
             r["status"] = result if result in ("won", "lost") else "push"
             r["pnl"] = str(profit)
-
         settled += 1
-
     if not dry_run and settled:
         fieldnames = rows[0].keys()
-        with LEDGER.open("w", newline="") as f:
+        with ledger_path.open("w", newline="") as f:
             w = csv.DictWriter(f, fieldnames=fieldnames)
             w.writeheader()
             w.writerows(rows)
-        print(f"\n✓ {settled} bet(s) settled and ledger updated.")
-    elif dry_run:
-        print(f"\n[dry-run] {settled} bet(s) would be settled.")
-    else:
-        print("\nNo bets to settle yet.")
-
+        print(f"[{user}] ✓ {settled} bet(s) settled.")
     return settled
+
+
+def settle(dry_run: bool = False) -> int:
+    """Settle bets for all known users against the same fetched scores."""
+    scores = fetch_scores()
+    print(f"Scores API: {len(scores)//2} completed matches")
+
+    from src.notifications.web_dashboard import list_known_users
+    total = 0
+    for u in list_known_users():
+        total += _settle_one_user(ledger_path_for(u), scores, u, dry_run)
+
+    if total == 0:
+        print("\nNo bets to settle yet (any user)." if not dry_run else
+              f"\n[dry-run] 0 bet(s) across all users.")
+    elif dry_run:
+        print(f"\n[dry-run] {total} bet(s) would be settled across all users.")
+    else:
+        print(f"\n✓ Total {total} bet(s) settled across all users.")
+    return total
 
 
 if __name__ == "__main__":

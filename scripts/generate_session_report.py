@@ -24,7 +24,8 @@ from typing import Iterable
 ROOT = Path(__file__).resolve().parent.parent
 HEALTH_DIR = ROOT / "results" / "health"
 AUDITS_DIR = ROOT / "results" / "audits"
-LEDGER = ROOT / "results" / "ledger.csv"
+from src.config import ledger_path_for, DEFAULT_USER
+LEDGER = ledger_path_for(DEFAULT_USER)
 LOG_DIR = ROOT / "results"
 REPORT_OUT = ROOT / "results" / "session_report.md"
 

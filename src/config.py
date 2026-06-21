@@ -49,6 +49,12 @@ def bankroll_snapshot_path_for(user: str = DEFAULT_USER):
     Default-User-Slot migriert."""
     return DATA_CACHE / f"bankroll_snapshot_{user}.json"
 
+
+def ledger_path_for(user: str = DEFAULT_USER):
+    """Per-User-Ledger-Pfad. Legacy `results/ledger.csv` wird beim ersten
+    Aufruf in den Default-User-Slot (`ledger_philip.csv`) migriert."""
+    return RESULTS_DIR / f"ledger_{user}.csv"
+
 # Phase 2 feature flags — keep new components off-by-default until the
 # Backtest Gate (Brier vs current blend) has validated each on its own.
 STACKER_ENABLED = True             # src/ensemble/stacking.py

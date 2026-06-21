@@ -35,7 +35,8 @@ _ROOT = _THIS_DIR.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from src.betting.ledger import LEDGER_PATH, _FIELDS, _load, _save, _file_lock
+from src.betting.ledger import _FIELDS, _load, _save, _file_lock, _resolve_ledger_path
+from src.config import DEFAULT_USER
 
 
 def _worker_base() -> str:
@@ -103,11 +104,12 @@ def _row_from_bet(bet: dict, today: str) -> dict | None:
     }
 
 
-def _append_rows(rows: list[dict]) -> int:
+def _append_rows(rows: list[dict], user: str = DEFAULT_USER) -> int:
     if not rows:
         return 0
-    with _file_lock(LEDGER_PATH):
-        df = _load(LEDGER_PATH)
+    ledger_path = _resolve_ledger_path(None, user)
+    with _file_lock(ledger_path):
+        df = _load(ledger_path)
         existing = set(zip(
             df.get("match_id", pd.Series([], dtype=str)),
             df.get("market", pd.Series([], dtype=str)),
@@ -116,38 +118,37 @@ def _append_rows(rows: list[dict]) -> int:
         if new_rows:
             new_df = pd.DataFrame(new_rows, columns=_FIELDS)
             df = pd.concat([df, new_df], ignore_index=True)
-            _save(df, LEDGER_PATH)
+            _save(df, ledger_path)
     return len(new_rows)
 
 
-def main() -> int:
-    base = _worker_base()
-    token = _token()
-    headers = {"Authorization": f"Bearer {token}"}
-
+def _consume_user(base: str, headers: dict, user: str) -> int:
+    """Consume pending_bets for `user` and append to per-user ledger.
+    Master-token uses ?user= query param to target a specific slot.
+    Returns rows added."""
+    suffix = "" if user == DEFAULT_USER else f"?user={user}"
     try:
         r = retry_request(
             "GET",
-            f"{base}/pending_bets",
+            f"{base}/pending_bets{suffix}",
             headers=headers,
             timeout=15,
-            log_prefix="[consume]",
+            log_prefix=f"[consume:{user}]",
         )
     except requests.RequestException as e:
-        print(f"[consume] fetch failed: {e}", file=sys.stderr)
-        return 1
+        print(f"[consume:{user}] fetch failed: {e}", file=sys.stderr)
+        return 0
     if r.status_code != 200:
-        print(f"[consume] HTTP {r.status_code}: {r.text[:200]}", file=sys.stderr)
-        return 1
+        print(f"[consume:{user}] HTTP {r.status_code}: {r.text[:200]}", file=sys.stderr)
+        return 0
 
     bets = (r.json() or {}).get("bets") or []
     if not bets:
-        print("[consume] no pending bets")
         return 0
 
     today = pd.Timestamp.now().strftime("%Y-%m-%d")
     rows = []
-    ids_for_row: list[tuple[str, str]] = []  # (id, "ok"|"skip"|"invalid")
+    ids_for_row: list[tuple[str, str]] = []
     for b in bets:
         row = _row_from_bet(b, today)
         if row is None:
@@ -156,31 +157,47 @@ def main() -> int:
         rows.append(row)
         ids_for_row.append((b.get("id", ""), "ok"))
 
-    added = _append_rows(rows)
-    print(f"[consume] received={len(bets)} appended={added} (duplicates skipped: {len(rows) - added})")
+    added = _append_rows(rows, user=user)
+    print(f"[consume:{user}] received={len(bets)} appended={added} (dup-skip={len(rows) - added})")
 
-    # Delete consumed entries (also delete invalid ones so they don't pile up)
-    for bid, status in ids_for_row:
+    for bid, _status in ids_for_row:
         if not bid:
             continue
         try:
             d = retry_request(
                 "DELETE",
-                f"{base}/pending_bets/{bid}",
+                f"{base}/pending_bets/{bid}{suffix}",
                 headers=headers,
                 timeout=15,
-                log_prefix="[consume]",
+                log_prefix=f"[consume:{user}]",
             )
             if d.status_code != 200:
-                print(f"[consume] DELETE {bid} → HTTP {d.status_code}", file=sys.stderr)
+                print(f"[consume:{user}] DELETE {bid} → HTTP {d.status_code}", file=sys.stderr)
         except requests.RequestException as e:
-            print(f"[consume] DELETE {bid} failed: {e}", file=sys.stderr)
+            print(f"[consume:{user}] DELETE {bid} failed: {e}", file=sys.stderr)
+    return added
+
+
+def main() -> int:
+    base = _worker_base()
+    token = _token()
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # D4: consume per known user. Master-token routes via ?user= query.
+    from src.notifications.web_dashboard import list_known_users
+    added = 0
+    for u in list_known_users():
+        added += _consume_user(base, headers, u)
+
+    if added == 0:
+        print("[consume] no pending bets (across all users)")
+        return 0
 
     # Refresh KV immediately so app shows updated open_bets + bankroll_state
     if added > 0:
         try:
-            from src.notifications.web_dashboard import write_signals_json
-            write_signals_json()
+            from src.notifications.web_dashboard import write_signals_json_all_users
+            write_signals_json_all_users()
             print("[consume] KV state refreshed")
         except Exception as e:
             print(f"[consume] KV refresh failed (non-fatal): {e}", file=sys.stderr)
@@ -193,9 +210,10 @@ def main() -> int:
             def _g(*args):
                 return subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
                                       text=True, timeout=30)
-            # Only the ledger — no other files (avoid pushing local-only state).
-            _g("add", "results/ledger.csv")
-            staged = _g("diff", "--cached", "--quiet", "results/ledger.csv")
+            # Only the ledger files — no other files (avoid pushing local-only state).
+            # Add all per-user ledger files that may have changed.
+            _g("add", "results/ledger_*.csv")
+            staged = _g("diff", "--cached", "--quiet", "--", "results")
             if staged.returncode != 0:  # there are staged changes
                 commit_msg = f"auto: ledger sync {added} bet(s)"
                 _g("commit", "-m", commit_msg,
