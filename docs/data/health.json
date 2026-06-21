@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-21T11:30:32Z",
+  "generated_at": "2026-06-21T12:00:58Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -70,11 +70,11 @@
     },
     {
       "job": "settle",
-      "status": "stale",
-      "last_run_at": "2026-06-21T09:10:48Z",
+      "status": "ok",
+      "last_run_at": "2026-06-21T12:00:58Z",
       "duration_s": null,
       "exit_code": 0,
-      "error": "last run was at 2026-06-21T09:10:48Z — overdue (>4200s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 3600,
       "cadence": "stündlich 00:30–04:30"
