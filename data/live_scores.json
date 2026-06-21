@@ -116,7 +116,7 @@
     "home_score": 1,
     "away_score": 1,
     "completed": false,
-    "ht_sent": false,
-    "updated": "2026-06-21T22:48:32.986306+00:00"
+    "ht_sent": true,
+    "updated": "2026-06-21T22:50:37.301376+00:00"
   }
 }
