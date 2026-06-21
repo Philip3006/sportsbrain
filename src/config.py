@@ -59,12 +59,14 @@ DRIFT_MONITOR_ENABLED = True
 PINNACLE_CLV_ENABLED = True
 PER_CLUSTER_CALIBRATION_ENABLED = True
 
-# Roadmap G1 — PPDA Shadow Feature.
-# Wenn False: builder berechnet das Feature nicht für Live-Scans (gibt 0.0 zurück),
-# Backtest-Skripte (scripts/backtest_with_ppda.py) können das Flag temporär
-# überschreiben, um die ROI-Diff zu messen. Wechsel auf True erst nach
-# I5-Gate (ROI-Improvement ≥ 0.5pp UND Brier-Improvement ≥ 0.001).
-PPDA_LIVE_ENABLED = False
+# Roadmap G1 — PPDA als Live-Feature im 1X2-LGBM-Stacker.
+# Aktiviert 2026-06-21 nach Sprint-2-Backtest: Brier +0.0035 ✅, Markt-aware
+# ROI +11.85pp ✅ (97 Val-Matches mit echten Closing-Quoten). Sprint 1 (DC-
+# Lambda-Multiplier für AH/O-U/BTTS) und Sprint 3 (Scorer-xG-Multiplier) waren
+# erfolglos — diese Märkte nutzen PPDA bewusst NICHT (eigener Pfad in builder.py).
+# Rückrollung: False setzen → builder droppt PPDA-Spalten → scanner-reindex
+# füllt 0.0, Modell-Inferenz bleibt stabil.
+PPDA_LIVE_ENABLED = True
 
 # Confederation per team — used for asymmetric divergence threshold.
 # Non-UEFA/CONMEBOL away teams have higher confederation-bias risk in DC model
