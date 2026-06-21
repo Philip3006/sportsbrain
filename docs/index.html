@@ -2245,8 +2245,13 @@ const WORKER_BASE = CLOUD_URL.replace(/\/signals\.json$/, '');
 const BANKROLL_START = 100; // 5%-Regel-Referenz; ggf. später aus _bankrollState.start ableiten
 function _applyUserBankroll(amount) {
   if (!amount || amount < 10) return;
-  // Nur übernehmen, wenn kein echtes Backend-Bankroll da ist (neuer User)
-  if (_bankrollState && _bankrollState.start) return;
+  // D4/D5: localStorage-Wert hat Vorrang, wenn Backend nur den €100-Default
+  // zeigt UND der User noch keine Aktivität hat. Sobald PnL oder offene
+  // Stakes auftauchen, gewinnt das Backend (echte Bankroll-Historie).
+  const bs = _bankrollState || {};
+  const hasActivity = (bs.pnl_closed && bs.pnl_closed !== 0) ||
+                      (bs.staked && bs.staked > 0);
+  if (hasActivity) return;
   _bankrollState = { start: amount, free: amount, pnl_closed: 0, staked: 0, exposure_pct: 0, max_win: 0 };
   renderBankrollStrip();
 }
@@ -4077,13 +4082,18 @@ async function _load() {
   _openBets = d.open_bets || [];
   _settledBets = d.settled_bets || [];
   _bankrollState = d.bankroll_state || {};
-  // Neue User ohne Backend-Bankroll: lokalen Wert übernehmen
-  if (!_bankrollState.start) {
-    try {
-      const saved = parseFloat(localStorage.getItem('sb_bankroll_start'));
-      if (saved >= 10) _bankrollState = { start: saved, free: saved, pnl_closed: 0, staked: 0, exposure_pct: 0, max_win: 0 };
-    } catch {}
-  }
+  // D4/D5: localStorage-Bankroll übernimmt, wenn Backend nur den €100-Default
+  // liefert UND der User noch keine Aktivität hat (neuer User-Slot).
+  try {
+    const saved = parseFloat(localStorage.getItem('sb_bankroll_start'));
+    const bs = _bankrollState;
+    const hasActivity = (bs && bs.pnl_closed && bs.pnl_closed !== 0) ||
+                        (bs && bs.staked && bs.staked > 0);
+    const isDefault = !bs || !bs.start || bs.start === 100;
+    if (saved >= 10 && isDefault && !hasActivity) {
+      _bankrollState = { start: saved, free: saved, pnl_closed: 0, staked: 0, exposure_pct: 0, max_win: 0 };
+    }
+  } catch {}
   _meta = d.meta || {};
   _oddsHistory = d.odds_history || {};
   // Index wm_results by matchKey for fast lookup in Home tab
