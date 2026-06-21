@@ -408,6 +408,16 @@ def run_daily_scan(
     except Exception as _e:
         print(f"  [player_xg] skipped: {_e}")
 
+    ppda_df = pd.DataFrame()
+    try:
+        from src.config import PPDA_LIVE_ENABLED
+        if PPDA_LIVE_ENABLED:
+            from src.data.statsbomb_ppda import fetch_statsbomb_ppda
+            ppda_df = fetch_statsbomb_ppda()
+            print(f"  {len(ppda_df)} PPDA match-rows loaded.")
+    except Exception as _e:
+        print(f"  [ppda] skipped: {_e}")
+
     fotmob_ratings_df = pd.DataFrame()
     try:
         import pickle
@@ -487,6 +497,7 @@ def run_daily_scan(
                     statsbomb_xg=statsbomb_xg if not statsbomb_xg.empty else None,
                     player_xg_df=player_xg_df if not player_xg_df.empty else None,
                     fotmob_ratings_df=fotmob_ratings_df if not fotmob_ratings_df.empty else None,
+                    ppda_df=ppda_df if not ppda_df.empty else None,
                 )
                 X = pd.DataFrame([feat])
                 # Align to model's trained feature set

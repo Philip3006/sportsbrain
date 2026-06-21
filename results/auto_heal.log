@@ -55,3 +55,27 @@
 [2026-06-20 22:45:20 UTC] [cloud_healer] live_score_push: erfolgreich ausgelöst
 [2026-06-20 22:45:21 UTC] [cloud_healer] prematch_scan: status=stale — triggere prematch_scan.yml
 [2026-06-20 22:45:22 UTC] [cloud_healer] prematch_scan: erfolgreich ausgelöst
+[2026-06-21 01:51:24 CEST] [auto_heal] 1 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-21 02:01:24 CEST] [auto_heal] 1 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-21 02:11:25 CEST] [auto_heal] 1 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-21 02:21:25 CEST] [auto_heal] 1 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-21 02:31:25 CEST] [auto_heal] 2 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-21 02:41:25 CEST] [auto_heal] 2 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-21 02:51:25 CEST] [auto_heal] 2 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-21 03:01:26 CEST] [auto_heal] 2 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-21 03:11:26 CEST] [auto_heal] 2 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-21 03:21:26 CEST] [auto_heal] 2 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-21T03:16:36Z] [layer2] prematch_scan transient (cron-stale, exit_code=0, Layer-1 cloud-healer handles re-trigger) — no action
+[2026-06-21T03:16:36Z] [layer2] aggregate_health transient (cron-stale, exit_code=0, huckepack on parent) — no action
+[2026-06-21 06:46:51 CEST] [auto_heal] 2 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-21T11:17:36Z] [layer2] aggregate_health transient (cron-stale recurring, exit_code=0, last run 07:32, intermittent) — no action
+[2026-06-21 11:35:52 UTC] [auto_heal_ai] analyzing daily_scan (status=stale, fallback=None)
+[2026-06-21 11:35:56 UTC] [auto_heal_ai] daily_scan: response → UNCLEAR: No log file available to diagnose root cause. Health status is 'stale' with no fallback active, indicating the 
+[2026-06-21 11:35:56 UTC] [auto_heal_ai] daily_scan: unclear — pushing notification
+[2026-06-21 11:35:57 UTC] [auto_heal_ai] analyzing closing_odds (status=stale, fallback=None)
+[2026-06-21 11:36:41 UTC] [auto_heal_ai] closing_odds: response → TRANSIENT: No log file available; stale health status with no fallback indicates the cron job failed to execute or log o
+[2026-06-21 11:36:41 UTC] [auto_heal_ai] closing_odds: transient — no action. TRANSIENT: No log file available; stale health status with no fallback indicates the cron job failed to execute or log output. This is typically caused by a temporary execution failure, missed scheduling window, or log rotation issue. The job should be monitored for recovery on next scheduled run.
+[2026-06-21 11:36:41 UTC] [auto_heal_ai] analyzing prematch_scan (status=stale, fallback=None)
+[2026-06-21 11:36:43 UTC] [auto_heal_ai] prematch_scan: response → UNCLEAR: No log file available to diagnose root cause. The 'stale' health status with no fallback indicates the cron job
+[2026-06-21 11:36:43 UTC] [auto_heal_ai] prematch_scan: unclear — pushing notification
+[2026-06-21 14:07:27 CEST] [auto_heal] 3 commit(s) not pushed — running _git_safe_push.sh

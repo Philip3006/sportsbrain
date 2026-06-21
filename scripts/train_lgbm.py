@@ -112,11 +112,23 @@ def main(
     except Exception as e:
         print(f"  Warning: Fotmob ratings not available ({e}) — skipping")
 
+    # PPDA shadow-feature (Roadmap G1): aus StatsBomb-Events. Training läuft
+    # immer force_ppda=True, damit das Modell die Features sieht; ob es live
+    # eingesetzt wird, steuert config.PPDA_LIVE_ENABLED am Inference-Pfad.
+    ppda_df = None
+    try:
+        from src.data.statsbomb_ppda import fetch_statsbomb_ppda
+        ppda_df = fetch_statsbomb_ppda()
+        print(f"  StatsBomb PPDA: {len(ppda_df)} match-rows loaded")
+    except Exception as e:
+        print(f"  Warning: StatsBomb PPDA not available ({e}) — training without PPDA features")
+
     print("Building feature matrix (this may take a few minutes)...")
     X, y = build_training_matrix(matches, all_matches, elo_series, dc_snapshot_map,
                                  odds_lookup=odds_lookup, statsbomb_xg=statsbomb_xg,
                                  player_xg_df=player_xg_df,
-                                 fotmob_ratings_df=fotmob_ratings_df)
+                                 fotmob_ratings_df=fotmob_ratings_df,
+                                 ppda_df=ppda_df, force_ppda=ppda_df is not None)
     print(f"  Features: {X.shape[1]}, Samples: {len(X)}")
 
     # WC2022 ensemble holdout — pulled out before train/val split so the gate is honest.
