@@ -795,6 +795,14 @@
 
     <div class="settings-row">
       <div class="settings-row-text">
+        <div class="settings-row-title">🔄 Token rotieren</div>
+        <div class="settings-row-sub" id="settings-rotate-status">Erzeugt neuen Worker-Token. Alter bleibt 24h gültig (Grace-Period).</div>
+      </div>
+      <button class="settings-toggle" type="button" onclick="_rotateToken()">Rotieren</button>
+    </div>
+
+    <div class="settings-row">
+      <div class="settings-row-text">
         <div class="settings-row-title">🛡️ System-Status</div>
         <div class="settings-row-sub" id="settings-health-summary">Status wird geprüft …</div>
       </div>
@@ -2642,6 +2650,47 @@ function _promptUserSlot() {
     _renderSettingsState();
   } else {
     showToast('Ungültiger Slot-Name', 'error');
+  }
+}
+
+// D2 — Token rotieren
+async function _rotateToken() {
+  const token = (() => { try { return localStorage.getItem('sb_token') || ''; } catch { return ''; } })();
+  if (!token) {
+    showToast('Kein Worker-Token gesetzt — erst eintragen, dann rotieren.', 'error');
+    return;
+  }
+  const user = _getUserSlot();
+  if (!confirm(
+    'Token rotieren für User „' + user + '"?\n\n' +
+    'Es wird ein neuer Token erzeugt und automatisch in dieser PWA gespeichert.\n' +
+    'Der alte Token bleibt 24h gültig (Grace-Period), damit andere Geräte umgestellt werden können.'
+  )) return;
+  try {
+    const r = await fetch(WORKER_BASE + '/rotate_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ user }),
+    });
+    if (r.status === 401) {
+      showToast('Aktueller Token ungültig — bitte manuell setzen.', 'error');
+      return;
+    }
+    if (!r.ok) {
+      showToast('Rotate fehlgeschlagen (HTTP ' + r.status + ')', 'error');
+      return;
+    }
+    const data = await r.json();
+    if (!data.ok || !data.token) {
+      showToast('Rotate fehlgeschlagen (kein Token in Antwort)', 'error');
+      return;
+    }
+    try { localStorage.setItem('sb_token', data.token); } catch {}
+    const exp = data.previous_expires_at ? new Date(data.previous_expires_at).toLocaleString() : '—';
+    showToast('Token rotiert (alter gültig bis ' + exp + ')', 'success');
+    _renderSettingsState();
+  } catch (e) {
+    showToast('Netzwerk-Fehler: ' + (e && e.message || e), 'error');
   }
 }
 

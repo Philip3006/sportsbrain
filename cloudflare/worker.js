@@ -8,6 +8,17 @@
 //   POST   /pending_bets       → append one bet to KV array (Bearer token)
 //   GET    /pending_bets       → list (Bearer token)
 //   DELETE /pending_bets/{id}  → remove by id (Bearer token)
+//
+// D2 — Token-Rotation (Master + Per-User-Tokens, KV "user_tokens"):
+//   POST  /rotate_token   → generate new user-token, old one 24h grace (Bearer)
+//   GET   /token_status   → has_active + grace state (Bearer)
+//
+// Auth-Modell:
+//   • env.API_TOKEN ist der MASTER-Token: bleibt immer gültig, wird via
+//     `wrangler secret put API_TOKEN` gesetzt. Python-Cron-Jobs nutzen ihn.
+//   • Per-User-Tokens werden vom Master oder von einem laufenden User-Token
+//     rotiert; alter Token bleibt 24h gültig (Grace-Period), damit ein
+//     PWA-Bug nicht sofort den Zugang killt.
 
 const ALLOWED_MARKETS = new Set([
   'home', 'draw', 'away',
@@ -37,9 +48,61 @@ function jsonResponse(obj, status = 200, corsHeaders = {}) {
   });
 }
 
-function requireAuth(request, env) {
+function _extractBearer(request) {
   const auth = request.headers.get('Authorization') || '';
-  return auth === `Bearer ${env.API_TOKEN}`;
+  return auth.startsWith('Bearer ') ? auth.slice(7) : '';
+}
+
+// ── D2 — User-Token-KV ────────────────────────────────────────
+// Storage: KV key `user_tokens` → { [user]: { active, previous: { token, expires_at } | null, rotated_at } }
+async function readUserTokens(env) {
+  const raw = await env.SIGNALS.get('user_tokens');
+  if (!raw) return {};
+  try { const obj = JSON.parse(raw); return (obj && typeof obj === 'object') ? obj : {}; }
+  catch { return {}; }
+}
+async function writeUserTokens(env, obj) {
+  await env.SIGNALS.put('user_tokens', JSON.stringify(obj));
+}
+
+function _sanitizeUser(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 32);
+}
+
+function _randomToken() {
+  const buf = new Uint8Array(32);
+  crypto.getRandomValues(buf);
+  return Array.from(buf).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// Returns { ok, user, viaMaster }. `user` is the matched user-slot (null for master).
+async function authResolve(request, env) {
+  const token = _extractBearer(request);
+  if (!token) return { ok: false, user: null, viaMaster: false };
+  if (env.API_TOKEN && token === env.API_TOKEN) {
+    return { ok: true, user: null, viaMaster: true };
+  }
+  const ut = await readUserTokens(env);
+  const now = Date.now();
+  for (const [user, slot] of Object.entries(ut)) {
+    if (!slot) continue;
+    if (slot.active && slot.active === token) {
+      return { ok: true, user, viaMaster: false };
+    }
+    if (slot.previous && slot.previous.token === token) {
+      const exp = Date.parse(slot.previous.expires_at || '');
+      if (Number.isFinite(exp) && exp > now) {
+        return { ok: true, user, viaMaster: false };
+      }
+    }
+  }
+  return { ok: false, user: null, viaMaster: false };
+}
+
+// Backward-compatible shim for existing endpoint guards.
+async function requireAuth(request, env) {
+  const r = await authResolve(request, env);
+  return r.ok;
 }
 
 async function readPending(env) {
@@ -108,7 +171,7 @@ export default {
 
     // ── POST /signals (write signals snapshot) ──
     if (request.method === 'POST' && path === '/signals') {
-      if (!requireAuth(request, env)) return new Response('Unauthorized', { status: 401 });
+      if (!(await requireAuth(request, env))) return new Response('Unauthorized', { status: 401 });
       const body = await request.text();
       try { JSON.parse(body); } catch { return new Response('Invalid JSON', { status: 400 }); }
       await env.SIGNALS.put('signals_json', body);
@@ -117,7 +180,7 @@ export default {
 
     // ── /pending_bets ──
     if (path === '/pending_bets' || path.startsWith('/pending_bets/')) {
-      if (!requireAuth(request, env)) {
+      if (!(await requireAuth(request, env))) {
         return new Response('Unauthorized', { status: 401, headers: ch });
       }
 
@@ -215,14 +278,14 @@ export default {
 
     // ── /push/list (AUTH — Python liest Subscriptions zum Senden) ──
     if (request.method === 'GET' && path === '/push/list') {
-      if (!requireAuth(request, env)) return new Response('Unauthorized', { status: 401, headers: ch });
+      if (!(await requireAuth(request, env))) return new Response('Unauthorized', { status: 401, headers: ch });
       const arr = await readPushSubs(env);
       return jr({ subs: arr });
     }
 
     // ── /push/prune (AUTH — Python entfernt expired Subs nach 410-Status) ──
     if (request.method === 'POST' && path === '/push/prune') {
-      if (!requireAuth(request, env)) return new Response('Unauthorized', { status: 401, headers: ch });
+      if (!(await requireAuth(request, env))) return new Response('Unauthorized', { status: 401, headers: ch });
       let body;
       try { body = await request.json(); } catch { return jr({ error: 'invalid json' }, 400); }
       const endpoints = (body && Array.isArray(body.endpoints)) ? body.endpoints : [];
@@ -231,6 +294,53 @@ export default {
       const next = arr.filter(s => !endpoints.includes(s.endpoint));
       await writePushSubs(env, next);
       return jr({ ok: true, removed: arr.length - next.length });
+    }
+
+    // ── D2 — POST /rotate_token (AUTH, Master oder gültiger User-Token) ──
+    if (request.method === 'POST' && path === '/rotate_token') {
+      const auth = await authResolve(request, env);
+      if (!auth.ok) return new Response('Unauthorized', { status: 401, headers: ch });
+      let body = {};
+      try { body = await request.json(); } catch {}
+      let user = _sanitizeUser(body.user || auth.user || 'philip');
+      if (!user) user = 'philip';
+      const ut = await readUserTokens(env);
+      const slot = ut[user] || { active: null, previous: null };
+      const newToken = _randomToken();
+      const oldActive = slot.active;
+      const previous = oldActive ? {
+        token: oldActive,
+        expires_at: new Date(Date.now() + 24*3600*1000).toISOString(),
+      } : null;
+      ut[user] = {
+        active: newToken,
+        previous,
+        rotated_at: new Date().toISOString(),
+      };
+      await writeUserTokens(env, ut);
+      return jr({
+        ok: true,
+        user,
+        token: newToken,
+        previous_expires_at: previous ? previous.expires_at : null,
+      });
+    }
+
+    // ── D2 — GET /token_status?user=philip (AUTH) ──
+    if (request.method === 'GET' && path === '/token_status') {
+      const auth = await authResolve(request, env);
+      if (!auth.ok) return new Response('Unauthorized', { status: 401, headers: ch });
+      const user = _sanitizeUser(url.searchParams.get('user') || auth.user || 'philip') || 'philip';
+      const ut = await readUserTokens(env);
+      const slot = ut[user] || null;
+      const graceExp = slot && slot.previous ? Date.parse(slot.previous.expires_at || '') : NaN;
+      return jr({
+        user,
+        has_active: !!(slot && slot.active),
+        rotated_at: (slot && slot.rotated_at) || null,
+        previous_expires_at: (slot && slot.previous && slot.previous.expires_at) || null,
+        grace_active: Number.isFinite(graceExp) && graceExp > Date.now(),
+      });
     }
 
     return new Response('Not Found', { status: 404, headers: ch });
