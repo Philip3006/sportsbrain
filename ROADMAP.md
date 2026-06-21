@@ -282,6 +282,41 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ---
 
+## 🟥 L. Hot Fixes — laufende WM (P0/P1)
+
+### L1. + NEU Gruppen-Standings-Fix (Gruppen stimmen nicht)
+- **Was**: Gruppe-Tabellen in PWA/Forecast-Tab zeigen falsche Stände (Punkte, Tordiff, Rang). Ursache ermitteln (falsche Aggregation aus `signals.json`, veralteter Gruppen-Cache, Sortier-Bug im Frontend) → beheben.
+- **Warum**: Falsche Gruppen-Stände verzerren Forecast-Prognosen (Qualifikations-Wkt. falsch), KO-Phase-Simulationen unbrauchbar und alle WM-Bet-Entscheidungen ab Gruppenfinale.
+- **Impact**: 🟢 — direkt sichtbarer Fehler, alle 48 Gruppenspiel-Vorhersagen betroffen
+- **Aufwand**: 🟡 (1-3 h: Diagnose welche Schicht falsch rechnet, dann Fix + Smoke-Test)
+- **Risiko**: 🟡 — Fix in `daily_scan.py`/`index.html` kann Render-Regressions auslösen
+- **Priorität**: P0 — WM-Gruppenphase endet 2026-06-26, danach KO-Runde
+- **Dateien**: `src/scanner/daily_scan.py` (Gruppen-Aggregator), `docs/index.html` (`renderForecast`/`renderGroups`), `data/cache/group_standings_*.json` (falls vorhanden)
+- **Verifikation**: Standings manuell gegen FIFA-Tabelle vergleichen — alle 8 Gruppen exakt korrekt (Pkt/Tore/GD/Rang)
+
+### L2. + NEU Forecast-Fix
+- **Was**: Forecast-Tab (`view-forecast`) zeigt fehlerhafte Ausgaben — Wahrscheinlichkeiten, Gruppen-Advance-Wkt., KO-Simulationen oder Spalten-Werte stimmen nicht. Konkrete Diagnose vor Fix nötig.
+- **Warum**: Forecast ist primäres Entscheidungs-Werkzeug für KO-Phase-Bets; falsche Advance-Wkt. = falsche EV-Berechnung.
+- **Impact**: 🟢 — KO-Phase ab 2026-07-04, alle Long-Range-Value-Bets hängen daran
+- **Aufwand**: 🟡 (2-4 h: abhängig von L1, da Gruppen-Daten Forecast speisen)
+- **Risiko**: 🟡 — Forecast-Simulation berührt DC-Modell-Output; Regressionstest nötig
+- **Priorität**: P1 — nach L1 (Gruppen-Fix), vor 2026-07-04 (KO-Start)
+- **Dateien**: `docs/index.html` (`renderForecast`, Monte-Carlo-Code), `src/models/dixon_coles.py` (`simulate_group`/`predict_scoreline`), `scripts/daily_scan.py`
+- **Abhängigkeiten**: L1
+- **Verifikation**: Forecast für 2 bereits abgeschlossene WM-Gruppen gegen tatsächliche Ergebnisse prüfen — Advance-Wkt. der Qualifizierten >50%
+
+### L3. + NEU Journal-Fix
+- **Was**: Journal-Tab zeigt fehlerhafte Einträge, fehlt Bets oder stellt Status/P&L falsch dar. Bugfix für bestehenden Render-Code — kein neues Feature (C4/F4 sind separate Feature-Items).
+- **Warum**: Journal ist Abrechnungs-Basis; falsche Darstellung macht P&L-Tracking unzuverlässig.
+- **Impact**: 🟡 — operativer Fehler, kein Modell-Risiko
+- **Aufwand**: 🟢 (< 1 h falls nur Render-Bug, 🟡 wenn Daten-Schema kaputt)
+- **Risiko**: 🟢 — Journal ist read-only; kein Ledger-Schreibzugriff aus Frontend
+- **Priorität**: P1
+- **Dateien**: `docs/index.html` (`renderBets`/Journal-View), `signals.json` (`settled_bets`-Feld)
+- **Verifikation**: Alle settled Bets aus `results/ledger.csv` erscheinen im Journal mit korrektem Status (void/won/lost) und P&L
+
+---
+
 ## 🟦 H. Polish (P2, anytime)
 
 ### H1. Push-Notification-Deep-Link
@@ -425,10 +460,10 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ## 📊 Statistik
 
-- **Insgesamt**: 49 konkrete Items (+2 neu: I6, I7)
-- **P0**: 11 (sofort) — davon 11 ✅ (Phase 0 + Phase 1 vollständig)
-- **P1**: 19 (diese Woche / vor KO-Phase) — inkl. I6 (Home Advantage, neu)
-- **P2**: 15 (dieser Monat / Refactor) — inkl. I7 (Monte Carlo, neu)
+- **Insgesamt**: 52 konkrete Items (+3 neu: L1, L2, L3)
+- **P0**: 12 (sofort) — davon 11 ✅ (Phase 0 + Phase 1 vollständig); L1 offen
+- **P1**: 21 (diese Woche / vor KO-Phase) — inkl. I6, L2, L3 (neu)
+- **P2**: 15 (dieser Monat / Refactor) — inkl. I7 (Monte Carlo)
 - **P3**: 4 (Q4 2026)
 - **Veto**: 11 (bewusst nicht gebaut)
 
@@ -442,4 +477,5 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **2026-06-20**: ~ Phase 3 (G3, G2) erledigt. G3: Stichprobe Tunisia/Senegal/Jordan (Seed 20260620) liefert 26 Spieler aus `_fetch_wc_squads_page`; Per-Team-Wikipedia-Seiten sind faktisch 404 → echter Fallback ist die konsolidierte WC-Squads-Page. G2: Multi-Source-Scraper (FIFA/UEFA/BBC/ESPN) mit Confidence-Score (Source-Gewicht + Squad-Verifikation + Multi-Source-Bonus), Auto-Merge ab Score ≥ 5, sonst Kandidaten-Datei für manuelle Review. Workflow täglich 06:00 UTC. 446/446 Tests grün (+15). Nächste Phase: G1 (PPDA Shadow) bis 2026-07-15.
 - **2026-06-21**: + I6 NEU (Home-Advantage Gastgeber-Länder, P1 vor KO-Phase), + I7 NEU (Monte Carlo Simulationen, P2). Statistik: 47 → 49 Items. Priorisierung: I6 vor I1-I5.
 - **2026-06-21**: BTTS und Goals 2-4 aus Scanner deaktiviert nach Backtest-Validierung (392 Spiele): BTTS 13pp Kalibrierungslücke, Goals 2-4 9pp Lücke + falsche Richtung. AH ±0.5 und O/U bleiben aktiv (≤2pp Gap). `GOALS_RANGE_ENABLED=False`, BTTS-Block entfernt. Neues Skript `scripts/backtest_special_markets.py`.
+- **2026-06-21**: + L1 NEU (Gruppen-Standings-Fix, P0 — Gruppen stimmen nicht), + L2 NEU (Forecast-Fix, P1, abhängig L1), + L3 NEU (Journal-Fix, P1). Neue Section 🟥 L. Hot Fixes — laufende WM. Statistik: 49 → 52 Items.
 - **2026-06-20**: ~ Phase 4 (G1) erledigt. Neue Module `src/data/statsbomb_ppda.py` (Event-Parser, PPDA pro Match aus Pässen-in-Opp-60% / Def-Aktionen-im-Press-Bereich x≥48, Denominator-Floor 5 → NaN-Schutz, eigener 24h-Cache) und `src/data/fbref_ppda.py` (Saison-PPDA-Snapshot-Fallback). `src/features/ppda.py`: Rolling-Window N=10 mit Bayes-Shrinkage gegen Konföderations-Prior (Fallback-Kaskade Konföderation → FBref → 11.5). `src/features/builder.py` bekommt `ppda_df`/`force_ppda`-Parameter; Live bleibt off durch `PPDA_LIVE_ENABLED=False`. `scripts/backtest_with_ppda.py` vergleicht Brier + ROI-Proxy auf identischem Train/Val-Split, schreibt `results/audits/g1_ppda_backtest_*.json`. I5-Gate-Kriterium: Δ Brier ≥ 0.001 UND Δ ROI ≥ 0.5pp. 14 Unit-Tests neu, Gesamt-Suite 460/460. Nächste Phase: F3/F4 (CLV-Audit + UI).
