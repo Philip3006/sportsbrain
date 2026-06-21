@@ -1,5 +1,9 @@
 {
-  "updated": "2026-06-21T12:39:46Z",
+  "updated": "2026-06-21T14:14:30Z",
+  "build_info": {
+    "sha": "8e499db",
+    "date": "2026-06-21"
+  },
   "meta": {
     "stale_odds": false
   },
