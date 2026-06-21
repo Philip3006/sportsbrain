@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-21T12:24:15Z",
+  "updated": "2026-06-21T12:39:46Z",
   "meta": {
     "stale_odds": false
   },
@@ -7808,7 +7808,9 @@
       "stake": 15.0,
       "pnl": 0.0,
       "match_date": "2026-06-21",
-      "status": "void"
+      "status": "void",
+      "clv": 0.0,
+      "closing_odds": 4.75
     },
     {
       "match": "Tunisia vs Japan",
@@ -7819,7 +7821,9 @@
       "stake": 10.0,
       "pnl": -10.0,
       "match_date": "2026-06-21",
-      "status": "lost"
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "Turkey vs Paraguay",
@@ -7830,7 +7834,9 @@
       "stake": 15.0,
       "pnl": 0.0,
       "match_date": "2026-06-20",
-      "status": "void"
+      "status": "void",
+      "clv": 0.0141,
+      "closing_odds": 3.55
     },
     {
       "match": "Morocco vs Scotland",
@@ -7841,7 +7847,9 @@
       "stake": 20.0,
       "pnl": -20.0,
       "match_date": "2026-06-20",
-      "status": "lost"
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "Brazil vs Haiti",
@@ -7852,7 +7860,9 @@
       "stake": 10.0,
       "pnl": -10.0,
       "match_date": "2026-06-20",
-      "status": "lost"
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "Netherlands vs Sweden",
@@ -7863,7 +7873,9 @@
       "stake": 10.0,
       "pnl": -10.0,
       "match_date": "2026-06-20",
-      "status": "lost"
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "Netherlands vs Sweden",
@@ -7874,7 +7886,9 @@
       "stake": 10.0,
       "pnl": 14.5,
       "match_date": "2026-06-20",
-      "status": "won"
+      "status": "won",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "Alba Berlin vs Bayern München",
@@ -7885,7 +7899,9 @@
       "stake": 10.0,
       "pnl": 15.0,
       "match_date": "2026-06-19",
-      "status": "won"
+      "status": "won",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "USA vs Australia",
@@ -7896,7 +7912,9 @@
       "stake": 10.0,
       "pnl": -10.0,
       "match_date": "2026-06-19",
-      "status": "lost"
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "USA vs Australia",
@@ -7907,7 +7925,9 @@
       "stake": 10.0,
       "pnl": -10.0,
       "match_date": "2026-06-19",
-      "status": "lost"
+      "status": "lost",
+      "clv": 0.3694,
+      "closing_odds": 1.57
     },
     {
       "match": "Czechia vs South Africa",
@@ -7918,7 +7938,9 @@
       "stake": 10.0,
       "pnl": -10.0,
       "match_date": "2026-06-18",
-      "status": "lost"
+      "status": "lost",
+      "clv": -0.0909,
+      "closing_odds": 1.98
     },
     {
       "match": "Czechia vs South Africa",
@@ -7929,7 +7951,9 @@
       "stake": 20.0,
       "pnl": -20.0,
       "match_date": "2026-06-18",
-      "status": "lost"
+      "status": "lost",
+      "clv": -0.0969,
+      "closing_odds": 2.27
     },
     {
       "match": "Switzerland vs Bosnia & Herzegovina",
@@ -7940,7 +7964,9 @@
       "stake": 10.0,
       "pnl": -10.0,
       "match_date": "2026-06-18",
-      "status": "lost"
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "Switzerland vs Bosnia & Herzegovina",
@@ -7951,7 +7977,9 @@
       "stake": 10.0,
       "pnl": -10.0,
       "match_date": "2026-06-18",
-      "status": "lost"
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "England vs Croatia",
@@ -7962,7 +7990,9 @@
       "stake": 15.0,
       "pnl": 0.0,
       "match_date": "2026-06-17",
-      "status": "void"
+      "status": "void",
+      "clv": 0.0,
+      "closing_odds": 1.79
     },
     {
       "match": "Argentina vs Algeria",
@@ -7973,7 +8003,9 @@
       "stake": 20.0,
       "pnl": -20.0,
       "match_date": "2026-06-17",
-      "status": "lost"
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "Argentina vs Algeria",
@@ -7984,7 +8016,9 @@
       "stake": 20.0,
       "pnl": 0.0,
       "match_date": "2026-06-17",
-      "status": "void"
+      "status": "void",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "Austria vs Jordan",
@@ -7995,7 +8029,9 @@
       "stake": 8.43,
       "pnl": -8.43,
       "match_date": "2026-06-17",
-      "status": "lost"
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "Portugal vs DR Congo",
@@ -8006,7 +8042,9 @@
       "stake": 10.58,
       "pnl": 47.61,
       "match_date": "2026-06-17",
-      "status": "won"
+      "status": "won",
+      "clv": 0.746,
+      "closing_odds": 3.15
     },
     {
       "match": "Portugal vs DR Congo",
@@ -8017,7 +8055,9 @@
       "stake": 20.0,
       "pnl": 7.4,
       "match_date": "2026-06-17",
-      "status": "won"
+      "status": "won",
+      "clv": -0.1437,
+      "closing_odds": 1.6
     },
     {
       "match": "England vs Croatia",
@@ -8028,7 +8068,9 @@
       "stake": 14.15,
       "pnl": 0.0,
       "match_date": "2026-06-17",
-      "status": "void"
+      "status": "void",
+      "clv": -0.0171,
+      "closing_odds": 1.75
     },
     {
       "match": "England vs Croatia",
@@ -8039,7 +8081,9 @@
       "stake": 20.0,
       "pnl": -20.0,
       "match_date": "2026-06-17",
-      "status": "lost"
+      "status": "lost",
+      "clv": -0.0667,
+      "closing_odds": 1.8
     },
     {
       "match": "England vs Croatia",
@@ -8050,7 +8094,9 @@
       "stake": 20.0,
       "pnl": 0.0,
       "match_date": "2026-06-17",
-      "status": "void"
+      "status": "void",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "England vs Croatia",
@@ -8061,7 +8107,9 @@
       "stake": 10.0,
       "pnl": 20.0,
       "match_date": "2026-06-17",
-      "status": "won"
+      "status": "won",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "Ghana vs Panama",
@@ -8072,7 +8120,9 @@
       "stake": 10.01,
       "pnl": -10.01,
       "match_date": "2026-06-17",
-      "status": "lost"
+      "status": "lost",
+      "clv": 0.0877,
+      "closing_odds": 2.85
     },
     {
       "match": "Ghana vs Panama",
@@ -8083,7 +8133,9 @@
       "stake": 15.0,
       "pnl": -15.0,
       "match_date": "2026-06-17",
-      "status": "lost"
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "Iran vs New Zealand",
@@ -8094,7 +8146,9 @@
       "stake": 10.0,
       "pnl": -10.0,
       "match_date": "2026-06-16",
-      "status": "lost"
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "Iran vs New Zealand",
@@ -8105,7 +8159,9 @@
       "stake": 14.0,
       "pnl": 18.48,
       "match_date": "2026-06-16",
-      "status": "won"
+      "status": "won",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "France vs Senegal",
@@ -8116,7 +8172,9 @@
       "stake": 11.44,
       "pnl": -11.44,
       "match_date": "2026-06-16",
-      "status": "lost"
+      "status": "lost",
+      "clv": -0.0766,
+      "closing_odds": 2.22
     },
     {
       "match": "France vs Senegal",
@@ -8127,7 +8185,9 @@
       "stake": 15.0,
       "pnl": -15.0,
       "match_date": "2026-06-16",
-      "status": "lost"
+      "status": "lost",
+      "clv": -0.0122,
+      "closing_odds": 1.64
     },
     {
       "match": "Iraq vs Norway",
@@ -8138,7 +8198,9 @@
       "stake": 11.97,
       "pnl": 16.4,
       "match_date": "2026-06-16",
-      "status": "won"
+      "status": "won",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "Belgium vs Egypt",
@@ -8149,7 +8211,9 @@
       "stake": 9.42,
       "pnl": 29.39,
       "match_date": "2026-06-15",
-      "status": "won"
+      "status": "won",
+      "clv": 1.4819,
+      "closing_odds": 1.66
     },
     {
       "match": "Belgium vs Egypt",
@@ -8160,7 +8224,9 @@
       "stake": 15.0,
       "pnl": 14.4,
       "match_date": "2026-06-15",
-      "status": "won"
+      "status": "won",
+      "clv": 0.0262,
+      "closing_odds": 1.91
     },
     {
       "match": "Saudi Arabia vs Uruguay",
@@ -8171,7 +8237,9 @@
       "stake": 15.0,
       "pnl": 9.75,
       "match_date": "2026-06-15",
-      "status": "won"
+      "status": "won",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "Saudi Arabia vs Uruguay",
@@ -8182,7 +8250,9 @@
       "stake": 15.0,
       "pnl": 10.2,
       "match_date": "2026-06-15",
-      "status": "won"
+      "status": "won",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "Haiti vs Scotland",
@@ -8193,7 +8263,9 @@
       "stake": 15.0,
       "pnl": 7.5,
       "match_date": "2026-06-14",
-      "status": "won"
+      "status": "won",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "United States vs Paraguay",
@@ -8204,7 +8276,9 @@
       "stake": 15.0,
       "pnl": 21.75,
       "match_date": "2026-06-13",
-      "status": "won"
+      "status": "won",
+      "clv": -0.0577,
+      "closing_odds": 2.6
     },
     {
       "match": "Brazil vs Morocco",
@@ -8215,7 +8289,9 @@
       "stake": 10.0,
       "pnl": -10.0,
       "match_date": "2026-06-13",
-      "status": "lost"
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "Switzerland vs Qatar",
@@ -8226,7 +8302,9 @@
       "stake": 11.86,
       "pnl": -11.86,
       "match_date": "2026-06-13",
-      "status": "lost"
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "South Korea vs Czechia",
@@ -8237,7 +8315,9 @@
       "stake": 11.4,
       "pnl": 13.11,
       "match_date": "2026-06-12",
-      "status": "won"
+      "status": "won",
+      "clv": null,
+      "closing_odds": null
     },
     {
       "match": "Canada vs Bosnia and Herzegovina",
@@ -8248,7 +8328,9 @@
       "stake": 8.0,
       "pnl": -8.0,
       "match_date": "2026-06-12",
-      "status": "lost"
+      "status": "lost",
+      "clv": null,
+      "closing_odds": 23.0
     }
   ],
   "bankroll_state": {
@@ -8360,8 +8442,8 @@
       "bins": [
         7,
         0,
-        1,
-        0,
+        2,
+        5,
         1,
         4
       ]
@@ -8389,9 +8471,11 @@
       "staked": 442.11,
       "pnl": -14.25,
       "yield_pct": -3.22,
-      "mean_clv": 9.58,
+      "mean_clv": 6.54,
+      "mean_clv_30d": 6.54,
       "mean_edge": 7.0,
-      "n_clv": 13,
+      "n_clv": 19,
+      "n_clv_30d": 19,
       "n_edge": 9
     },
     "per_team_market": {

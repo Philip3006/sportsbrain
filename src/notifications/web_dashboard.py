@@ -192,7 +192,12 @@ def _build_wm_stats() -> dict:
         edge_labels = ["≤0pp", "0-3pp", "3-6pp", "6-10pp", "10-15pp", "≥15pp"]
         edge_bins = [0] * len(edge_labels)
         clv_values: list[float] = []
+        clv_values_30d: list[float] = []
         edge_values: list[float] = []
+        # 30-day rolling window threshold (placed_date)
+        from datetime import timedelta as _td
+        _today_dt = datetime.now(timezone.utc).date()
+        _cutoff_30d = (_today_dt - _td(days=30)).isoformat()
         total_staked = 0.0
         total_pnl = 0.0
         total_n = 0
@@ -203,8 +208,11 @@ def _build_wm_stats() -> dict:
         with open(_LEDGER_PATH, newline="") as f:
             for row in sorted(csv.DictReader(f), key=lambda r: r.get("match_date", "")):
                 status = row.get("status", "")
-                if status not in ("won", "lost", "push"):
+                if status not in ("won", "lost", "push", "void"):
                     continue
+                # Void: only contribute to CLV aggregation (closing-line value still meaningful),
+                # not to hit-rate / market-stats (staked is returned, no edge realized).
+                _is_void = status == "void"
                 mkt = row.get("market", "")
                 stake = float(row.get("stake_amount", 0))
                 pnl = float(row.get("pnl", 0))
@@ -218,54 +226,62 @@ def _build_wm_stats() -> dict:
                     grp = "btts"
                 else:
                     grp = "other"
-                stats[grp]["n"] += 1
-                stats[grp]["won"] += 1 if status == "won" else 0
-                stats[grp]["staked"] += stake
-                stats[grp]["pnl"] += pnl
-                balance += pnl
-                if date:
-                    daily_balance[date] = round(balance, 2)
-                total_staked += stake
-                total_pnl += pnl
-                total_n += 1
-                # Per-Team-Markt-Aggregate (für beide Teams im Match)
+                if not _is_void:
+                    stats[grp]["n"] += 1
+                    stats[grp]["won"] += 1 if status == "won" else 0
+                    stats[grp]["staked"] += stake
+                    stats[grp]["pnl"] += pnl
+                    balance += pnl
+                    if date:
+                        daily_balance[date] = round(balance, 2)
+                    total_staked += stake
+                    total_pnl += pnl
+                    total_n += 1
+                # Per-Team-Markt-Aggregate (für beide Teams im Match) — void aus Bias-Korrektur ausgeschlossen
                 home_team = (row.get("home", "") or "").strip()
                 away_team = (row.get("away", "") or "").strip()
-                mg = _market_group(mkt)
-                for team in (home_team, away_team):
-                    if not team:
-                        continue
-                    per_team_market.setdefault(team, {}).setdefault(mg, {
+                if not _is_void:
+                    mg = _market_group(mkt)
+                    for team in (home_team, away_team):
+                        if not team:
+                            continue
+                        per_team_market.setdefault(team, {}).setdefault(mg, {
+                            "n": 0, "won": 0, "staked": 0.0, "pnl": 0.0,
+                        })
+                        bucket = per_team_market[team][mg]
+                        bucket["n"] += 1
+                        bucket["won"] += 1 if status == "won" else 0
+                        bucket["staked"] += stake
+                        bucket["pnl"] += pnl
+                    # Per-Konföderation (klassifiziere via Home-Team)
+                    confed = _confederation(home_team) if home_team else "Other"
+                    by_confed.setdefault(confed, {
                         "n": 0, "won": 0, "staked": 0.0, "pnl": 0.0,
                     })
-                    bucket = per_team_market[team][mg]
-                    bucket["n"] += 1
-                    bucket["won"] += 1 if status == "won" else 0
-                    bucket["staked"] += stake
-                    bucket["pnl"] += pnl
-                # Per-Konföderation (klassifiziere via Home-Team)
-                confed = _confederation(home_team) if home_team else "Other"
-                by_confed.setdefault(confed, {
-                    "n": 0, "won": 0, "staked": 0.0, "pnl": 0.0,
-                })
-                by_confed[confed]["n"] += 1
-                by_confed[confed]["won"] += 1 if status == "won" else 0
-                by_confed[confed]["staked"] += stake
-                by_confed[confed]["pnl"] += pnl
+                    by_confed[confed]["n"] += 1
+                    by_confed[confed]["won"] += 1 if status == "won" else 0
+                    by_confed[confed]["staked"] += stake
+                    by_confed[confed]["pnl"] += pnl
                 # CLV in % (placed_odds / closing_odds - 1) * 100  — positiv = wir hatten bessere Quote als Markt am Schluss
+                # Void wird HIER mitgezählt: Closing-Line-Value bleibt aussagekräftig auch wenn Wette annulliert.
                 try:
                     placed_odds = float(row.get("decimal_odds") or 0)
                     closing_odds = float(row.get("closing_odds") or 0)
                     if placed_odds > 1.0 and closing_odds > 1.0:
                         clv_pct = (placed_odds / closing_odds - 1.0) * 100.0
                         clv_values.append(clv_pct)
+                        placed_date = (row.get("placed_date", "") or "")[:10]
+                        if placed_date and placed_date >= _cutoff_30d:
+                            clv_values_30d.append(clv_pct)
                         for i in range(len(clv_labels)):
                             if clv_edges[i] <= clv_pct < clv_edges[i + 1]:
                                 clv_bins[i] += 1
                                 break
                 except (TypeError, ValueError):
                     pass
-                # Edge in pp (Modell-% − Markt-implied-%)
+                # Edge in pp (Modell-% − Markt-implied-%) — nur für non-void
+                if _is_void:
+                    continue
                 try:
                     model_prob = float(row.get("model_prob") or 0)
                     placed_odds = float(row.get("decimal_odds") or 0)
@@ -316,17 +332,20 @@ def _build_wm_stats() -> dict:
         }
         # Summary
         mean_clv = round(sum(clv_values) / len(clv_values), 2) if clv_values else None
+        mean_clv_30d = round(sum(clv_values_30d) / len(clv_values_30d), 2) if clv_values_30d else None
         mean_edge = round(sum(edge_values) / len(edge_values), 2) if edge_values else None
         yield_pct = round(total_pnl / total_staked * 100.0, 2) if total_staked > 0 else None
         summary = {
-            "n_settled":  total_n,
-            "staked":     round(total_staked, 2),
-            "pnl":        round(total_pnl, 2),
-            "yield_pct":  yield_pct,
-            "mean_clv":   mean_clv,
-            "mean_edge":  mean_edge,
-            "n_clv":      len(clv_values),
-            "n_edge":     len(edge_values),
+            "n_settled":   total_n,
+            "staked":      round(total_staked, 2),
+            "pnl":         round(total_pnl, 2),
+            "yield_pct":   yield_pct,
+            "mean_clv":    mean_clv,
+            "mean_clv_30d": mean_clv_30d,
+            "mean_edge":   mean_edge,
+            "n_clv":       len(clv_values),
+            "n_clv_30d":   len(clv_values_30d),
+            "n_edge":      len(edge_values),
         }
         # Per-Team-Markt: Hit-Rate + ROI berechnen
         ptm_out: dict[str, dict[str, dict]] = {}
@@ -389,16 +408,32 @@ def _get_settled_bets_for_dashboard() -> list[dict]:
                 # Skip bets whose match hasn't happened yet (future-voided anomalies)
                 if r.get("match_date", "") > today_str:
                     continue
+                clv_val: float | None = None
+                closing_val: float | None = None
+                try:
+                    co = float(r.get("closing_odds") or 0)
+                    if co > 1.0:
+                        closing_val = co
+                except (TypeError, ValueError):
+                    pass
+                try:
+                    cv = (r.get("clv") or "").strip()
+                    if cv:
+                        clv_val = float(cv)
+                except (TypeError, ValueError):
+                    pass
                 rows.append({
-                    "match":      f"{r['home']} vs {r['away']}",
-                    "home":       r["home"],
-                    "away":       r["away"],
-                    "market":     r["market"],
-                    "entry_odds": float(r["decimal_odds"]),
-                    "stake":      float(r["stake_amount"]),
-                    "pnl":        float(r.get("pnl") or 0),
-                    "match_date": r.get("match_date", ""),
-                    "status":     r["status"],
+                    "match":        f"{r['home']} vs {r['away']}",
+                    "home":         r["home"],
+                    "away":         r["away"],
+                    "market":       r["market"],
+                    "entry_odds":   float(r["decimal_odds"]),
+                    "stake":        float(r["stake_amount"]),
+                    "pnl":          float(r.get("pnl") or 0),
+                    "match_date":   r.get("match_date", ""),
+                    "status":       r["status"],
+                    "clv":          clv_val,
+                    "closing_odds": closing_val,
                 })
         rows.sort(key=lambda x: x["match_date"], reverse=True)
         return rows
