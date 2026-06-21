@@ -548,11 +548,12 @@
     /* ── M3: Walkthrough-Spotlight ── */
     .walk-backdrop { position: fixed; inset: 0; z-index: 450; display: none; pointer-events: none; background: transparent; }
     .walk-backdrop.show { display: block; }
-    .walk-fab { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 470; background: var(--green); color: #0d1117; font-weight: 900; font-size: 15px; padding: 14px 28px; border-radius: 30px; border: none; box-shadow: 0 8px 24px rgba(0,200,83,.5); cursor: pointer; pointer-events: auto; -webkit-tap-highlight-color: transparent; }
+    .walk-fab { position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%); z-index: 470; background: var(--green); color: #0d1117; font-weight: 900; font-size: 17px; padding: 18px 38px; border-radius: 34px; border: none; box-shadow: 0 10px 32px rgba(0,200,83,.6), 0 0 0 4px rgba(0,200,83,.18); cursor: pointer; pointer-events: auto; -webkit-tap-highlight-color: transparent; letter-spacing: .3px; min-width: 160px; }
     .walk-fab:active { transform: translateX(-50%) scale(.96); }
-    .walk-fab-skip { position: fixed; top: 16px; right: 16px; z-index: 470; background: rgba(0,0,0,.6); color: #fff; font-size: 12px; padding: 8px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,.2); cursor: pointer; pointer-events: auto; }
-    .walk-spot { position: fixed; border-radius: 12px; border: 3px solid var(--green); box-shadow: 0 0 0 4px rgba(0,200,83,.25), 0 0 24px rgba(0,200,83,.7); transition: top .15s linear, left .15s linear, width .15s linear, height .15s linear; pointer-events: none; animation: walk-pulse 1.6s ease-in-out infinite; z-index: 455; }
-    @keyframes walk-pulse { 0%,100% { box-shadow: 0 0 0 4px rgba(0,200,83,.25), 0 0 24px rgba(0,200,83,.7);} 50% { box-shadow: 0 0 0 8px rgba(0,200,83,.15), 0 0 40px rgba(0,200,83,.9);} }
+    .walk-fab-skip { position: fixed; top: 18px; right: 16px; z-index: 470; background: var(--red); color: #fff; font-size: 13px; font-weight: 800; padding: 10px 18px; border-radius: 22px; border: 2px solid #fff; cursor: pointer; pointer-events: auto; box-shadow: 0 4px 14px rgba(0,0,0,.5); -webkit-tap-highlight-color: transparent; }
+    .walk-fab-skip:active { transform: scale(.94); }
+    .walk-spot { position: fixed; border-radius: 12px; border: 3px solid var(--green); box-shadow: 0 0 0 9999px rgba(0,0,0,.55), 0 0 0 4px rgba(0,200,83,.35), 0 0 28px rgba(0,200,83,.85); transition: top .15s linear, left .15s linear, width .15s linear, height .15s linear; pointer-events: none; animation: walk-pulse 1.8s ease-in-out infinite; z-index: 455; }
+    @keyframes walk-pulse { 0%,100% { box-shadow: 0 0 0 9999px rgba(0,0,0,.55), 0 0 0 4px rgba(0,200,83,.35), 0 0 28px rgba(0,200,83,.85);} 50% { box-shadow: 0 0 0 9999px rgba(0,0,0,.55), 0 0 0 8px rgba(0,200,83,.22), 0 0 44px rgba(0,200,83,1);} }
     .walk-tooltip { position: fixed; background: var(--card); border: 1.5px solid var(--green); border-radius: 12px; padding: 14px 16px; max-width: min(340px, 88vw); box-shadow: 0 12px 32px rgba(0,0,0,.7); z-index: 460; pointer-events: auto; }
     .walk-tooltip-title { font-size: 14px; font-weight: 900; color: var(--green); margin-bottom: 6px; }
     .walk-tooltip-text { font-size: 12.5px; line-height: 1.5; color: var(--text); margin-bottom: 12px; }
@@ -4139,11 +4140,15 @@ const WALK_STEPS = [
     text: 'Tippe auf diesen Drawer für die Begründung im Klartext. Bei HIGH-Tier ist er standardmäßig offen — du siehst sofort die Logik hinter dem Vorschlag.' },
   { sel: '.sig-card .place-bet-btn',
     title: '✅ Schritt 7: Wette platzieren',
-    text: 'Bist du überzeugt? Tippe hier. Wir öffnen jetzt das Bet-Modal und zeigen dir, was du dort einstellen kannst.',
-    before: () => { try { const b = document.querySelector('.sig-card .place-bet-btn'); if (b) setTimeout(() => b.click(), 300); } catch {} } },
+    text: 'Bist du überzeugt? Hier startest du die Wette. Tippe „Weiter" — wir öffnen das Bet-Modal automatisch.',
+    after: () => { try {
+      const cards = document.querySelectorAll('.sig-card .place-bet-btn');
+      for (const b of cards) { const r = b.getBoundingClientRect(); if (r.width > 0) { b.click(); break; } }
+    } catch {} } },
   { sel: '#bet-modal-odds-input',
     title: '💰 Schritt 8: Quote anpassen',
-    text: 'Falls dein Bookmaker eine etwas andere Quote anbietet, kannst du sie hier ändern — EV & Stake-Vorschlag berechnen sich live neu.' },
+    text: 'Falls dein Bookmaker eine etwas andere Quote anbietet, kannst du sie hier ändern — EV & Stake-Vorschlag berechnen sich live neu.',
+    before: () => {} },
   { sel: '#bet-modal-stake',
     title: '🪙 Schritt 9: Einsatz',
     text: 'Der vorgeschlagene Einsatz kommt aus Kelly-Criterion + Tier-Anpassung + Bankroll-Schutz (max 5%). Du kannst ihn anpassen — Quick-Buttons darunter helfen.' },
