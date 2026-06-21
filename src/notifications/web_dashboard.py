@@ -37,7 +37,39 @@ def _build_info() -> dict:
 
 ROOT = Path(__file__).parent.parent.parent
 _JSON_PATH = ROOT / "docs" / "data" / "signals.json"
-_LEDGER_PATH = ROOT / "results" / "ledger.csv"
+# Multi-User-Schema (D4): default user's ledger is the legacy single-user
+# input. `build()` accepts an explicit `user` to write `signals_{user}.json`.
+from src.config import ledger_path_for as _ledger_path_for, DEFAULT_USER as _DEFAULT_USER_CFG
+_LEDGER_PATH = _ledger_path_for(_DEFAULT_USER_CFG)
+
+
+def list_known_users() -> list[str]:
+    """Returns sorted user-slugs discovered from `results/ledger_{user}.csv` files.
+    The default user is always included even if no ledger has been created yet.
+    Backup/intermediate files (e.g. `ledger_pre_clv_backfill_*.csv`) are excluded."""
+    users: set[str] = {_DEFAULT_USER_CFG}
+    for p in (ROOT / "results").glob("ledger_*.csv"):
+        slug = p.stem[len("ledger_"):]
+        if not slug or len(slug) > 32:
+            continue
+        # exclude generated backup/intermediate files
+        if any(k in slug for k in ("backup", "backfill", "snapshot")):
+            continue
+        # only [a-z0-9_-]
+        cleaned = "".join(c for c in slug.lower() if c.isalnum() or c in "_-")
+        if cleaned != slug.lower():
+            continue
+        users.add(slug)
+    return sorted(users)
+
+
+def write_signals_json_all_users(**kwargs) -> None:
+    """D4: Calls `write_signals_json` once per known user (auto-discovery via
+    `list_known_users`). Each call uses the user's own ledger for per-user
+    bankroll/open/settled state but identical scored signals."""
+    kwargs.pop("user", None)
+    for u in list_known_users():
+        write_signals_json(user=u, **kwargs)
 
 # FIFA-Konföderation-Mapping (WM 2026 Teams + WM-Qualifikations-Backtest)
 CONFEDERATION_MAP: dict[str, str] = {
@@ -130,13 +162,14 @@ def _market_group(mkt: str) -> str:
     return "Sonstige"
 
 
-def _build_history(n_days: int = 30) -> list[dict]:
+def _build_history(n_days: int = 30, ledger_path: Path | None = None) -> list[dict]:
     """Read ledger CSV and return daily P&L history (most recent first)."""
-    if not _LEDGER_PATH.exists():
+    lp = ledger_path or _LEDGER_PATH
+    if not lp.exists():
         return []
     try:
         daily: dict[str, dict] = defaultdict(lambda: {"n_bets": 0, "staked": 0.0, "pnl": 0.0})
-        with open(_LEDGER_PATH, newline="") as f:
+        with open(lp, newline="") as f:
             for row in csv.DictReader(f):
                 date = (row.get("placed_date") or row.get("match_date") or "")[:10].strip()
                 if not date:
@@ -185,14 +218,15 @@ def _signal_to_dict(
     return d
 
 
-def _build_wm_stats() -> dict:
+def _build_wm_stats(ledger_path: Path | None = None) -> dict:
     """Aggregiert WM-Performance-Stats aus dem Ledger.
 
     Liefert: stats (per Markt), series (Bankroll-Verlauf täglich),
     drawdown (current/max + Peak), clv_dist + edge_dist (Histogramme),
     summary (Lifetime ROI/Yield/Mean-CLV/Mean-Edge).
     """
-    if not _LEDGER_PATH.exists():
+    lp = ledger_path or _LEDGER_PATH
+    if not lp.exists():
         return {}
     try:
         stats = {
@@ -226,7 +260,7 @@ def _build_wm_stats() -> dict:
         per_team_market: dict[str, dict[str, dict]] = {}
         # Per-Konföderation-Aggregat (für Journal)
         by_confed: dict[str, dict] = {}
-        with open(_LEDGER_PATH, newline="") as f:
+        with open(lp, newline="") as f:
             for row in sorted(csv.DictReader(f), key=lambda r: r.get("match_date", "")):
                 status = row.get("status", "")
                 if status not in ("won", "lost", "push", "void"):
@@ -406,23 +440,25 @@ def _build_wm_stats() -> dict:
         return {}
 
 
-def _get_closed_bets() -> list[dict]:
-    if not _LEDGER_PATH.exists():
+def _get_closed_bets(ledger_path: Path | None = None) -> list[dict]:
+    lp = ledger_path or _LEDGER_PATH
+    if not lp.exists():
         return []
     try:
-        with open(_LEDGER_PATH, newline="") as f:
+        with open(lp, newline="") as f:
             return [r for r in csv.DictReader(f) if r.get("status") in ("won", "lost", "push")]
     except Exception:
         return []
 
 
-def _get_settled_bets_for_dashboard() -> list[dict]:
-    if not _LEDGER_PATH.exists():
+def _get_settled_bets_for_dashboard(ledger_path: Path | None = None) -> list[dict]:
+    lp = ledger_path or _LEDGER_PATH
+    if not lp.exists():
         return []
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     try:
         rows = []
-        with open(_LEDGER_PATH, newline="") as f:
+        with open(lp, newline="") as f:
             for r in csv.DictReader(f):
                 if r.get("status") not in ("won", "lost", "push", "void"):
                     continue
@@ -481,17 +517,18 @@ def _market_to_odds_key(market: str) -> str | None:
     return None
 
 
-def _get_open_bets_from_ledger(all_odds: dict | None = None) -> list[dict]:
+def _get_open_bets_from_ledger(all_odds: dict | None = None, ledger_path: Path | None = None) -> list[dict]:
     """Read open bets directly from ledger — always authoritative, never stale.
 
     If all_odds is provided, enrich each bet with current_odds, drift_pct,
     and clv_signal using the current market prices.
     """
-    if not _LEDGER_PATH.exists():
+    lp = ledger_path or _LEDGER_PATH
+    if not lp.exists():
         return []
     try:
         rows = []
-        with open(_LEDGER_PATH, newline="") as f:
+        with open(lp, newline="") as f:
             for r in csv.DictReader(f):
                 if r.get("status") != "open":
                     continue
@@ -574,9 +611,11 @@ def write_signals_json(
     open_bets: list[dict] | None = None,
     odds_history: dict | None = None,  # {match_key: [{date, home, draw, away}]}
     wm_results: list[dict] | None = None,  # [{home, away, home_score, away_score, commence_time}]
+    user: str = _DEFAULT_USER,  # D4: writes signals_{user}.json; default user mirrors signals.json
 ) -> None:
     """
-    Writes (or merges into) docs/data/signals.json.
+    Writes (or merges into) docs/data/signals_{user}.json (and `signals.json`
+    for the default user, for backward compat).
     Merges football and tennis so each scanner can call independently.
 
     schedule: optional list of all upcoming matches (not just value bets) —
@@ -584,6 +623,9 @@ def write_signals_json(
     tennis_tour_map: optional {match_id: "atp"|"wta"} — adds tour field to tennis signals
     kickoff_map: optional {match_id: "ISO-8601"} — adds kickoff time to all signals
     """
+    # Per-user routing (D4)
+    json_path = ROOT / "docs" / "data" / f"signals_{user}.json"
+    ledger_path = _ledger_path_for(user)
     football = football or []
     tennis = tennis or []
     portfolio = portfolio or {}
@@ -593,9 +635,9 @@ def write_signals_json(
 
     # Load existing JSON to merge sport sections
     existing: dict = {}
-    if _JSON_PATH.exists():
+    if json_path.exists():
         try:
-            existing = json.loads(_JSON_PATH.read_text())
+            existing = json.loads(json_path.read_text())
         except Exception:
             existing = {}
 
@@ -640,7 +682,8 @@ def write_signals_json(
     # Compute bankroll state from ledger — always read from ledger when not explicitly passed
     # (avoids stale phantom bets persisting in KV from old JSON)
     _resolved_open_bets = open_bets if open_bets is not None else _get_open_bets_from_ledger(
-        all_odds=all_odds_data if all_odds_data else None
+        all_odds=all_odds_data if all_odds_data else None,
+        ledger_path=ledger_path,
     )
 
     # Enrich open bets with is_live flag (same [-5, 115] min window as live_score_push.py)
@@ -667,7 +710,7 @@ def write_signals_json(
         if b.get("current_odds") or b.get("entry_odds")
     )
     _bankroll_start = 100.0
-    _pnl_closed = sum(float(row.get("pnl", 0)) for row in _get_closed_bets())
+    _pnl_closed = sum(float(row.get("pnl", 0)) for row in _get_closed_bets(ledger_path=ledger_path))
     _free = round(_bankroll_start + _pnl_closed - _staked, 2)
     _exposure_pct = round(_staked / _bankroll_start * 100, 1)
 
@@ -685,6 +728,7 @@ def write_signals_json(
         "meta": {
             "stale_odds": bool(_stale_odds_flag),
             "default_user": _DEFAULT_USER,
+            "user": user,
         },
         "schedule":       schedule_data,
         "all_odds":       all_odds_data,
@@ -693,9 +737,9 @@ def write_signals_json(
         "tennis":         tennis_data,
         "portfolio":      portfolio if portfolio else existing.get("portfolio", {}),
         "top_elo":        [{"name": n, "rating": round(r)} for n, r in top_elo] if top_elo else existing.get("top_elo", []),
-        "history":        _build_history(),
+        "history":        _build_history(ledger_path=ledger_path),
         "open_bets":      _resolved_open_bets,
-        "settled_bets":   _get_settled_bets_for_dashboard(),
+        "settled_bets":   _get_settled_bets_for_dashboard(ledger_path=ledger_path),
         "bankroll_state": {
             "start":        _bankroll_start,
             "free":         round(_free, 2),
@@ -704,7 +748,7 @@ def write_signals_json(
             "max_win":      round(_max_win, 2),
             "pnl_closed":   round(_pnl_closed, 2),
         },
-        "wm_stats": _build_wm_stats(),
+        "wm_stats": _build_wm_stats(ledger_path=ledger_path),
     }
     payload["odds_history"] = odds_history if odds_history is not None else existing.get("odds_history", {})
 
@@ -739,12 +783,15 @@ def write_signals_json(
         pass  # silently keep existing wm_results on any error
     payload["wm_results"] = _wm_results_base
 
-    _JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
-    _JSON_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2))
-    upload_signals_to_cloud()
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2))
+    # Backward-compat: default user also writes the legacy `signals.json`.
+    if user == _DEFAULT_USER:
+        _JSON_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2))
+    upload_signals_to_cloud(path=json_path, user=user)
 
 
-def upload_signals_to_cloud(path: Path | None = None) -> bool:
+def upload_signals_to_cloud(path: Path | None = None, user: str = _DEFAULT_USER) -> bool:
     """Upload signals.json to Cloudflare Worker KV. No-op if env vars not set."""
     try:
         import requests as _req
@@ -758,6 +805,10 @@ def upload_signals_to_cloud(path: Path | None = None) -> bool:
 
     # Worker POST endpoint is /signals, GET is /signals.json — strip suffix for write
     post_url = url[: -len("/signals.json")] + "/signals" if url.endswith("/signals.json") else url
+    # D4: master-token can target a specific user slot via ?user=
+    if user and user != _DEFAULT_USER:
+        sep = "&" if "?" in post_url else "?"
+        post_url = f"{post_url}{sep}user={user}"
 
     target = path or _JSON_PATH
     if not target.exists():

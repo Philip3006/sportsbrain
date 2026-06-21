@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.scanner.daily_scan import run_daily_scan
 from src.betting.ledger import append_bets, ledger_summary, LEDGER_PATH
-from src.notifications.web_dashboard import write_signals_json
+from src.notifications.web_dashboard import write_signals_json, write_signals_json_all_users
 from src.data.odds_api import fetch_upcoming_matches, fetch_wm_scores
 
 
@@ -348,7 +348,7 @@ if __name__ == "__main__":
     import csv as _csv
     _open_bets = []
     try:
-        _ledger_path = Path(__file__).parent.parent / "results" / "ledger.csv"
+        from src.betting.ledger import LEDGER_PATH as _ledger_path
         if _ledger_path.exists():
             with open(_ledger_path) as _f:
                 for _row in _csv.DictReader(_f):
@@ -400,18 +400,20 @@ if __name__ == "__main__":
         except Exception as _e:
             print(f"  Scores fetch failed: {_e}")
 
-    write_signals_json(
+    write_signals_json_all_users(
         football=all_signals,
         portfolio=portfolio,
         kickoff_map=kickoff_map,
         schedule=schedule,
         all_odds=all_odds,
         model_tips=model_tips if model_tips else None,
-        open_bets=_open_bets,
+        # open_bets pinned to philip's view at scan time; per-user write reads
+        # each user's own ledger inside write_signals_json when None.
+        open_bets=None,
         odds_history=_odds_hist_for_dashboard,
         wm_results=_wm_results if _wm_results else None,
     )
-    print("Dashboard: docs/data/signals.json updated.")
+    print("Dashboard: docs/data/signals_{user}.json updated (all known users).")
 
     # Interactive confirmation (skipped with --auto-log)
     if not args.auto_log and selected_signals:

@@ -27,7 +27,7 @@ from src.models.tennis_elo import compute_tennis_elo, predict_winner, top_player
 from src.betting.tennis_detector import detect_value_tennis
 from src.betting.ledger import append_bets, ledger_summary
 from src.notifications.web_push import send_scan_alert as _web_push_scan_alert
-from src.notifications.web_dashboard import write_signals_json
+from src.notifications.web_dashboard import write_signals_json, write_signals_json_all_users
 
 _SPORT_WIMBLEDON = "tennis_atp_wimbledon"
 _SPORT_WTA_WIMBLEDON = "tennis_wta_wimbledon"
@@ -421,7 +421,7 @@ def main() -> None:
         }
         for m in upcoming
     ]
-    write_signals_json(
+    write_signals_json_all_users(
         tennis=all_signals,
         portfolio=dashboard_summary,
         top_elo=top_grass,

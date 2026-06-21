@@ -23,7 +23,8 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
-LEDGER = ROOT / "results" / "ledger.csv"
+from src.config import ledger_path_for, DEFAULT_USER
+LEDGER = ledger_path_for(DEFAULT_USER)
 SIGNALS = ROOT / "docs" / "data" / "signals.json"
 CACHE_PATH = ROOT / "data" / "live_scores.json"
 

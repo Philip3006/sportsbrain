@@ -105,8 +105,17 @@ async function requireAuth(request, env) {
   return r.ok;
 }
 
-async function readPending(env) {
-  const raw = await env.SIGNALS.get('pending_bets');
+// D4 — Default user mirrors the legacy single-user KV-key for backward-compat.
+const DEFAULT_USER = 'philip';
+function _pendingKey(user) {
+  return (user && user !== DEFAULT_USER) ? `pending_bets_${user}` : 'pending_bets';
+}
+function _signalsKey(user) {
+  return (user && user !== DEFAULT_USER) ? `signals_json_${user}` : 'signals_json';
+}
+
+async function readPending(env, user = DEFAULT_USER) {
+  const raw = await env.SIGNALS.get(_pendingKey(user));
   if (!raw) return [];
   try {
     const arr = JSON.parse(raw);
@@ -116,8 +125,8 @@ async function readPending(env) {
   }
 }
 
-async function writePending(env, arr) {
-  await env.SIGNALS.put('pending_bets', JSON.stringify(arr));
+async function writePending(env, arr, user = DEFAULT_USER) {
+  await env.SIGNALS.put(_pendingKey(user), JSON.stringify(arr));
 }
 
 // ── Push Subscriptions (Web Push) ─────────────────────────────
@@ -154,12 +163,21 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // ── /signals.json (public read of latest signals snapshot) ──
+    // ── /signals.json (public read; user-aware via auth or ?user=) ──
+    // D4: if a valid user-token is presented OR ?user= is given (master-only),
+    // serve signals_json_{user}; otherwise the legacy default-user snapshot.
     if (request.method === 'GET' && (path === '/signals.json' || path === '/')) {
-      const data = await env.SIGNALS.get('signals_json');
-      if (!data) {
-        return jr({ error: 'no data yet' }, 404);
+      let user = DEFAULT_USER;
+      const auth = await authResolve(request, env);
+      if (auth.ok && auth.user) user = auth.user;
+      const qUser = _sanitizeUser(url.searchParams.get('user') || '');
+      if (qUser && (auth.viaMaster || qUser === auth.user)) user = qUser;
+      let data = await env.SIGNALS.get(_signalsKey(user));
+      // Fallback: if per-user snapshot doesn't exist yet, serve default.
+      if (!data && user !== DEFAULT_USER) {
+        data = await env.SIGNALS.get(_signalsKey(DEFAULT_USER));
       }
+      if (!data) return jr({ error: 'no data yet' }, 404);
       return new Response(data, {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
@@ -169,23 +187,32 @@ export default {
       });
     }
 
-    // ── POST /signals (write signals snapshot) ──
+    // ── POST /signals (write signals snapshot; user-aware) ──
     if (request.method === 'POST' && path === '/signals') {
-      if (!(await requireAuth(request, env))) return new Response('Unauthorized', { status: 401 });
+      const auth = await authResolve(request, env);
+      if (!auth.ok) return new Response('Unauthorized', { status: 401 });
+      // Master can write any user via ?user=; user-tokens write their own slot.
+      let user = auth.user || DEFAULT_USER;
+      const qUser = _sanitizeUser(url.searchParams.get('user') || '');
+      if (qUser && auth.viaMaster) user = qUser;
       const body = await request.text();
       try { JSON.parse(body); } catch { return new Response('Invalid JSON', { status: 400 }); }
-      await env.SIGNALS.put('signals_json', body);
+      await env.SIGNALS.put(_signalsKey(user), body);
       return new Response('OK', { headers: ch });
     }
 
-    // ── /pending_bets ──
+    // ── /pending_bets (per-user via auth; master may target ?user=) ──
     if (path === '/pending_bets' || path.startsWith('/pending_bets/')) {
-      if (!(await requireAuth(request, env))) {
+      const auth = await authResolve(request, env);
+      if (!auth.ok) {
         return new Response('Unauthorized', { status: 401, headers: ch });
       }
+      let pUser = auth.user || DEFAULT_USER;
+      const qUser = _sanitizeUser(url.searchParams.get('user') || '');
+      if (qUser && auth.viaMaster) pUser = qUser;
 
       if (request.method === 'GET' && path === '/pending_bets') {
-        const arr = await readPending(env);
+        const arr = await readPending(env, pUser);
         return jr({ bets: arr });
       }
 
@@ -223,7 +250,7 @@ export default {
           placed_at: new Date().toISOString(),
         };
 
-        const arr = await readPending(env);
+        const arr = await readPending(env, pUser);
         // Soft duplicate guard: same match+market+odds within 60s
         const recent = arr.find(b =>
           b.match === entry.match && b.market === entry.market &&
@@ -233,15 +260,15 @@ export default {
         if (recent) return jr({ ok: true, id: recent.id, duplicate: true });
 
         arr.push(entry);
-        await writePending(env, arr);
+        await writePending(env, arr, pUser);
         return jr({ ok: true, id });
       }
 
       if (request.method === 'DELETE' && path.startsWith('/pending_bets/')) {
         const id = path.slice('/pending_bets/'.length);
-        const arr = await readPending(env);
+        const arr = await readPending(env, pUser);
         const next = arr.filter(b => b.id !== id);
-        await writePending(env, next);
+        await writePending(env, next, pUser);
         return jr({ ok: true, removed: arr.length - next.length });
       }
     }

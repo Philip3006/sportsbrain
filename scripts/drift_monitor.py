@@ -37,7 +37,8 @@ _MIN_BETS_CALIB = 10
 
 
 def _load_ledger() -> pd.DataFrame:
-    path = RESULTS_DIR / "ledger.csv"
+    from src.config import ledger_path_for, DEFAULT_USER
+    path = ledger_path_for(DEFAULT_USER)
     if not path.exists():
         return pd.DataFrame()
     try:

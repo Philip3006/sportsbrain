@@ -18,10 +18,39 @@ import pandas as pd
 import json
 from datetime import date
 
-from src.config import RESULTS_DIR, BANKROLL_SNAPSHOT_PATH, BANKROLL_START, DEFAULT_USER, bankroll_snapshot_path_for
+from src.config import (
+    RESULTS_DIR, BANKROLL_SNAPSHOT_PATH, BANKROLL_START, DEFAULT_USER,
+    bankroll_snapshot_path_for, ledger_path_for,
+)
 from src.betting.value_detector import BetSignal
 
-LEDGER_PATH = RESULTS_DIR / "ledger.csv"
+# Legacy single-user ledger path (used as the migration source).
+_LEGACY_LEDGER_PATH = RESULTS_DIR / "ledger.csv"
+
+
+def _resolve_ledger_path(ledger_path: "Path | None" = None, user: str = DEFAULT_USER) -> "Path":
+    """Resolves the per-user ledger path. Migrates the legacy `ledger.csv`
+    into the default user's slot on first call (one-shot rename).
+
+    Sentinel paths (`None`, the legacy `ledger.csv`, or the resolved default
+    user path) trigger per-user resolution + migration. Explicit other paths
+    (tests/manual overrides) are returned unchanged."""
+    sentinels = {None, _LEGACY_LEDGER_PATH, ledger_path_for(DEFAULT_USER)}
+    if ledger_path not in sentinels:
+        return ledger_path
+    user_path = ledger_path_for(user)
+    if (not user_path.exists()
+            and user == DEFAULT_USER
+            and _LEGACY_LEDGER_PATH.exists()):
+        user_path.parent.mkdir(parents=True, exist_ok=True)
+        _LEGACY_LEDGER_PATH.rename(user_path)
+    return user_path
+
+
+# Public alias — resolved at import to the default user's per-user file.
+# Scripts importing `LEDGER_PATH` automatically use `results/ledger_philip.csv`
+# (with one-shot migration of the legacy file).
+LEDGER_PATH = _resolve_ledger_path(None, DEFAULT_USER)
 
 
 @contextlib.contextmanager
@@ -153,8 +182,10 @@ def _save(df: pd.DataFrame, path: Path) -> None:
 def append_bets(
     signals: list[BetSignal],
     bankroll: float,
-    path: Path = LEDGER_PATH,
+    path: Path | None = None,
     match_date: str = "",
+    *,
+    user: str = DEFAULT_USER,
 ) -> int:
     """
     Appends new BetSignals as 'open' to the ledger CSV.
@@ -164,6 +195,7 @@ def append_bets(
     if not signals:
         return 0
 
+    path = _resolve_ledger_path(path, user)
     with _file_lock(path):
         df = _load(path)
         existing = set(zip(df.get("match_id", pd.Series([])), df.get("market", pd.Series([]))))
@@ -202,8 +234,10 @@ def append_bets(
 
 
 def settle_from_results(
-    ledger_path: Path = LEDGER_PATH,
+    ledger_path: Path | None = None,
     results: pd.DataFrame | None = None,
+    *,
+    user: str = DEFAULT_USER,
 ) -> int:
     """
     Settles open bets against martj42 results.
@@ -211,6 +245,7 @@ def settle_from_results(
     O/U: home_score + away_score vs 2.5.
     Returns number of newly settled bets.
     """
+    ledger_path = _resolve_ledger_path(ledger_path, user)
     with _file_lock(ledger_path):
         return _settle_from_results_locked(ledger_path, results)
 
@@ -476,18 +511,20 @@ def _settle_from_results_locked(
     return settled
 
 
-def count_open_bets(path: Path = LEDGER_PATH) -> int:
+def count_open_bets(path: Path | None = None, *, user: str = DEFAULT_USER) -> int:
     """Returns number of bets with status='open'. 0 if ledger doesn't exist."""
+    path = _resolve_ledger_path(path, user)
     df = _load(path)
     if df.empty:
         return 0
     return int((df["status"] == "open").sum())
 
 
-def ledger_summary(path: Path = LEDGER_PATH) -> dict:
+def ledger_summary(path: Path | None = None, *, user: str = DEFAULT_USER) -> dict:
     """
     Returns summary stats: n_bets, n_open, n_won, n_lost, total_staked, total_pnl, roi_pct, win_rate.
     """
+    path = _resolve_ledger_path(path, user)
     df = _load(path)
     if df.empty:
         return {
@@ -549,9 +586,9 @@ def _current_iso_week(today: date | None = None) -> tuple[int, int]:
     return iso[0], iso[1]
 
 
-def _live_bankroll(ledger_path: Path = LEDGER_PATH) -> float:
+def _live_bankroll(ledger_path: Path | None = None, *, user: str = DEFAULT_USER) -> float:
     """BANKROLL_START + total realized P&L (excluding open bets)."""
-    s = ledger_summary(ledger_path)
+    s = ledger_summary(ledger_path, user=user)
     return round(BANKROLL_START + s["total_pnl"], 2)
 
 
@@ -573,7 +610,7 @@ def _resolve_snapshot_path(snapshot_path: Path | None, user: str) -> Path:
 
 def peek_bankroll_snapshot(
     snapshot_path: Path | None = None,
-    ledger_path: Path = LEDGER_PATH,
+    ledger_path: Path | None = None,
     user: str = DEFAULT_USER,
 ) -> float:
     """Read-only: returns cached snapshot if valid for current ISO week,
@@ -587,12 +624,12 @@ def peek_bankroll_snapshot(
                 return float(data["bankroll"])
         except (json.JSONDecodeError, KeyError, ValueError):
             pass
-    return _live_bankroll(ledger_path)
+    return _live_bankroll(ledger_path, user=user)
 
 
 def get_bankroll_snapshot(
     snapshot_path: Path | None = None,
-    ledger_path: Path = LEDGER_PATH,
+    ledger_path: Path | None = None,
     user: str = DEFAULT_USER,
 ) -> float:
     """Returns bankroll for the current ISO week. On the first call of a new
@@ -608,7 +645,7 @@ def get_bankroll_snapshot(
                 return float(data["bankroll"])
         except (json.JSONDecodeError, KeyError, ValueError):
             pass
-    bankroll = _live_bankroll(ledger_path)
+    bankroll = _live_bankroll(ledger_path, user=user)
     snapshot_path.parent.mkdir(parents=True, exist_ok=True)
     snapshot_path.write_text(json.dumps({
         "iso_year": year,
