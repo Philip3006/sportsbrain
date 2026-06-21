@@ -786,6 +786,14 @@
       <button class="settings-toggle" type="button" onclick="_closeSettings();_startWalkthrough()">Starten</button>
     </div>
 
+    <div class="settings-row">
+      <div class="settings-row-text">
+        <div class="settings-row-title">👋 Onboarding nochmal zeigen</div>
+        <div class="settings-row-sub">Die 4-Step-Einführung von vorn — mit Tour-Option am Ende.</div>
+      </div>
+      <button class="settings-toggle" type="button" onclick="_closeSettings();_restartOnboarding()">Zeigen</button>
+    </div>
+
     <div class="settings-info" id="settings-ios-hint" style="display:none">
       ℹ️ <b>iOS-Hinweis:</b> Push-Benachrichtigungen funktionieren auf iPhone nur, wenn diese PWA über den Safari-Share-Button → "Zum Home-Bildschirm" hinzugefügt und dann als App gestartet wird.
     </div>
@@ -4042,12 +4050,19 @@ function _onbClose(startWalk) {
   try { localStorage.setItem('sb_seen_onboarding', '1'); } catch {}
   if (startWalk) setTimeout(_startWalkthrough, 250);
 }
-function _onbMaybeShow() {
-  try { if (localStorage.getItem('sb_seen_onboarding') === '1') return; } catch { return; }
+function _onbShow() {
   _onbStep = 0;
   _onbRender();
   document.getElementById('onb-modal-bd').classList.add('show');
   document.body.style.overflow = 'hidden';
+}
+function _onbMaybeShow() {
+  try { if (localStorage.getItem('sb_seen_onboarding') === '1') return; } catch { return; }
+  _onbShow();
+}
+function _restartOnboarding() {
+  try { localStorage.removeItem('sb_seen_onboarding'); } catch {}
+  _onbShow();
 }
 document.getElementById('onb-next').addEventListener('click', () => {
   if (_onbStep < ONB_STEPS.length - 1) { _onbStep++; _onbRender(); }
