@@ -4154,15 +4154,24 @@ const WALK_STEPS = [
     title: '📋 Schritt 11: Wetten-Tab',
     text: 'Hier verfolgst du den Status all deiner Wetten in 3 Phasen — wir schauen sie uns kurz an.',
     before: () => { try { const t = document.querySelector('.nav-tab[data-view="bets"]'); if (t && typeof navTo === 'function') navTo(t); } catch {} } },
-  { sel: '.bet-tab',
-    title: '🔄 Schritt 12: Offen / Live / Abgerechnet',
-    text: '„Offen" = noch nicht angepfiffen. „🔴 Live" = läuft gerade, mit Live-Score-Push. „Abgerechnet" = fertig, mit P&L und CLV. Bets wandern automatisch durch.' },
+  { sel: '.bet-tab:nth-child(1)',
+    title: '📂 Schritt 12: „Offen"',
+    text: 'Hier landen Wetten, die du eingetragen hast, aber das Spiel hat noch nicht angefangen. Du kannst die Quote noch im Bookmaker setzen.',
+    before: () => { try { if (typeof _setBetTab === 'function') _setBetTab('open'); } catch {} } },
+  { sel: '.bet-tab:nth-child(2)',
+    title: '🔴 Schritt 13: „Live"',
+    text: 'Sobald das Spiel läuft, wandert die Wette hierher. Mit Live-Score-Push (Push-Benachrichtigung bei Toren) und Echtzeit-Status.',
+    before: () => { try { if (typeof _setBetTab === 'function') _setBetTab('live'); } catch {} } },
+  { sel: '.bet-tab:nth-child(3)',
+    title: '✅ Schritt 14: „Abgerechnet"',
+    text: 'Nach Abpfiff: gewonnen / verloren / void, mit P&L in € und CLV-Pille. Hier siehst du die Ergebnis-Historie und kannst deine Performance bewerten.',
+    before: () => { try { if (typeof _setBetTab === 'function') _setBetTab('settled'); } catch {} } },
   { sel: '.nav-tab[data-view="journal"]',
-    title: '📅 Schritt 13: Journal',
+    title: '📅 Schritt 15: Journal',
     text: 'Das Journal zeigt deinen 7-Tage-Recap: Bankroll-Verlauf, ROI, Hit-Rate und vor allem CLV — Closing Line Value.',
     before: () => { try { const t = document.querySelector('.nav-tab[data-view="journal"]'); if (t && typeof navTo === 'function') navTo(t); } catch {} } },
   { sel: '.kpi-card',
-    title: '📊 Schritt 14: KPI-Karten & CLV',
+    title: '📊 Schritt 16: KPI-Karten & CLV',
     text: 'CLV ist der wichtigste Langzeit-Indikator. Positiver CLV = du hast besser eingeschätzt als der Schluss-Markt = du wirst langfristig wahrscheinlich profitabel sein. Negativer CLV = umgekehrt. Setzt sich erst nach 30-50 Wetten als Signal durch — bis dahin: Varianz!' },
 ];
 let _walkStep = 0;
@@ -4183,10 +4192,21 @@ function _walkPlaceTooltip(targetRect) {
   const tt = _walkTooltipEl;
   const vh = window.innerHeight, vw = window.innerWidth;
   const ttRect = tt.getBoundingClientRect();
+  // FAB blockiert untere ~150px (bottom:80 + 14px Padding + Höhe ~50)
+  const FAB_GUARD = 150;
+  const maxBottom = vh - FAB_GUARD;
   const below = targetRect.bottom + 12;
   const above = targetRect.top - ttRect.height - 12;
-  const useBelow = below + ttRect.height < vh - 20;
-  tt.style.top = (useBelow ? below : Math.max(20, above)) + 'px';
+  const fitsBelow = below + ttRect.height < maxBottom;
+  const fitsAbove = above > 20;
+  let top;
+  if (fitsBelow) top = below;
+  else if (fitsAbove) top = above;
+  else {
+    // Weder oben noch unten Platz → oben pinnen, ggf. Target nicht zentriert
+    top = Math.max(20, Math.min(maxBottom - ttRect.height, 20));
+  }
+  tt.style.top = top + 'px';
   let left = targetRect.left + targetRect.width/2 - ttRect.width/2;
   left = Math.max(8, Math.min(vw - ttRect.width - 8, left));
   tt.style.left = left + 'px';
