@@ -235,18 +235,24 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Dateien**: `scripts/_http_retry.py` (neu, 95 Z.), `tests/scripts/test_http_retry.py` (7 Tests). Migrierte Call-Sites: `scripts/consume_pending_bets.py` (GET+DELETE), `scripts/settle_bets.py` (TheOddsAPI), `scripts/tennis_scan.py`, `src/data/odds_api.py` (3 Stellen inkl. ESPN), `src/data/sofascore.py`, `src/data/statsbomb.py`, `src/data/fotmob.py`, `src/data/injury_data.py`, `src/data/squad_availability.py`, `src/data/football_data.py`, `src/data/btts_odds.py`, `src/data/international.py`, `src/data/football_data_intl.py`, `src/data/tennis_data.py`.
 - **Status (2026-06-20)**: Erledigt. 431 Tests grün (+9 ggü. Baseline 422). odds_api's eigene `_http_get_with_retry` (mit 422-spezifischer Logik) bleibt absichtlich erhalten — projekt-spezifisches Verhalten.
 
-### F3. CLV-Pre-1600-Bug: Stichprobe + Entscheidung
+### F3. CLV-Pre-1600-Bug: Stichprobe + Entscheidung ✅
 - **Was**: 10 abgerechnete Bets prüfen: wie viele `clv=""`? Wenn >2: Fix; wenn ≤2: akzeptieren.
 - **Warum**: Vor F4 (CLV-UI) müssen Daten sauber sein.
 - **Impact/Aufwand/Risiko**: 🟡 · 🟢 · 🟢 (Stichprobe), 🔴 wenn Fix nötig
-- **Dateien**: `results/ledger.csv`, evtl. `src/betting/ledger.py`, `scripts/update_closing_odds.py`
+- **Dateien**: `results/ledger.csv`, `scripts/update_closing_odds.py`, `tests/scripts/test_update_closing_odds.py`
+- **Status (2026-06-21)**: Erledigt in Commit `92cf85b`. Stichprobe ergab 41/43 leeren CLVs — systemischer Bug, kein Einzelfall. Drei Root-Causes:
+  1. **Pandas NaN-Bug**: leere CSV-Felder werden als NaN geladen, `str(NaN).strip()` → `"nan"` → truthy → der `continue` in der CLV-Backfill-Schleife skipt JEDE Zeile. Fix via `pd.isna(v) or not str(v).strip()`.
+  2. **Markt-Map unvollständig**: `_MARKET_ODDS_KEY` (13 Märkte) → durch dynamischen `_resolve_closing_odds()` ersetzt mit Fallback auf `totals_lines`/`spreads`-Dict für Quarter-Balls und arbiträre Handicaps (`o/u3.0_*`, `ah+0.5_home` etc.).
+  3. **Void-Status ausgeschlossen**: `settled_mask = ["won","lost"]` → erweitert um `"void"`.
+  - `--backfill-only`-Flag für API-freie Re-Computation. 25 Tests neu (Resolver + NaN-Regression). Nach Backfill: 18/43 CLV gefüllt (Rest hat keine validen closing_odds — meist 0.0 oder Daten-Korruption mit ratio >3).
 
-### F4. CLV im Journal anzeigen (abhängig von F3)
+### F4. CLV im Journal anzeigen (abhängig von F3) ✅
 - **Was**: Pro Bet CLV-Pille + Aggregat oben im Journal-Tab.
 - **Warum**: CLV ist langfristig wichtigster Profitabilitäts-Indikator.
 - **Impact/Aufwand/Risiko**: 🟢 · 🟡 · 🟢
-- **Dateien**: `docs/index.html` (`renderBets`), `signals.json`-Schema
+- **Dateien**: `docs/index.html` (`_renderSettledCards`, `renderJournalStats`), `src/notifications/web_dashboard.py`
 - **Abhängigkeiten**: F3
+- **Status (2026-06-21)**: Erledigt in Commit `c2df64c`. (a) Per-Bet CLV-Pille im Settled-Tab — farbcodiert (grün >+0.5%, rot <-0.5%, sonst neutral) mit Title-Tooltip (entry → closing). (b) "Ø CLV letzte 30 Tage"-Karte zusätzlich zur Lifetime-Karte im Journal. (c) Backend: `settled_bets` liefert jetzt `clv` (decimal) + `closing_odds`; `summary` erweitert um `mean_clv_30d`/`n_clv_30d` (rolling 30-Tage via `placed_date`). (d) Void-Bets fließen in CLV-Aggregation ein (CLV bleibt aussagekräftig auch bei Annullierung), bleiben aber aus Hit-Rate/Per-Team/Per-Konföderation ausgeschlossen. Aktuell: 19 Wetten mit CLV, Ø +6.54%.
 
 ---
 
@@ -444,7 +450,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **2** | F1, F2 (Stabilität) | ✅ erledigt 2026-06-20 | 2 h |
 | **3** | G3 (Wikipedia-Verify), G2 (Sperren-Auto) | ✅ erledigt 2026-06-20 | 2-4 h |
 | **4** | G1 (PPDA Shadow) | ✅ erledigt 2026-06-20 | 4-6 h |
-| **5** | F3, F4 (CLV-Audit + UI) | Tag 3-4 | 2-3 h |
+| **5** | F3, F4 (CLV-Audit + UI) | ✅ erledigt 2026-06-21 | 2-3 h |
 | **6** | C1–C7 (Trust-UI) | Tag 4-6 | 4-6 h |
 | **7** | D1–D3 (Risiko & Multi-User) | Tag 7 | 2-3 h |
 | **8** | E1–E4 (Refactor) | Tag 8-12 | 6-8 h |
@@ -479,3 +485,4 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **2026-06-21**: BTTS und Goals 2-4 aus Scanner deaktiviert nach Backtest-Validierung (392 Spiele): BTTS 13pp Kalibrierungslücke, Goals 2-4 9pp Lücke + falsche Richtung. AH ±0.5 und O/U bleiben aktiv (≤2pp Gap). `GOALS_RANGE_ENABLED=False`, BTTS-Block entfernt. Neues Skript `scripts/backtest_special_markets.py`.
 - **2026-06-21**: + L1 NEU (Gruppen-Standings-Fix, P0 — Gruppen stimmen nicht), + L2 NEU (Forecast-Fix, P1, abhängig L1), + L3 NEU (Journal-Fix, P1). Neue Section 🟥 L. Hot Fixes — laufende WM. Statistik: 49 → 52 Items.
 - **2026-06-20**: ~ Phase 4 (G1) erledigt. Neue Module `src/data/statsbomb_ppda.py` (Event-Parser, PPDA pro Match aus Pässen-in-Opp-60% / Def-Aktionen-im-Press-Bereich x≥48, Denominator-Floor 5 → NaN-Schutz, eigener 24h-Cache) und `src/data/fbref_ppda.py` (Saison-PPDA-Snapshot-Fallback). `src/features/ppda.py`: Rolling-Window N=10 mit Bayes-Shrinkage gegen Konföderations-Prior (Fallback-Kaskade Konföderation → FBref → 11.5). `src/features/builder.py` bekommt `ppda_df`/`force_ppda`-Parameter; Live bleibt off durch `PPDA_LIVE_ENABLED=False`. `scripts/backtest_with_ppda.py` vergleicht Brier + ROI-Proxy auf identischem Train/Val-Split, schreibt `results/audits/g1_ppda_backtest_*.json`. I5-Gate-Kriterium: Δ Brier ≥ 0.001 UND Δ ROI ≥ 0.5pp. 14 Unit-Tests neu, Gesamt-Suite 460/460. Nächste Phase: F3/F4 (CLV-Audit + UI).
+- **2026-06-21**: ~ Phase 5 (F3, F4) erledigt. F3 (Commit `92cf85b`): drei Root-Causes für 41/43 leere CLVs gefunden — Pandas NaN-Truthiness im Backfill-Check, unvollständige Markt-Map, fehlender Void-Status. `_resolve_closing_odds()`-Helper deckt jetzt auch Quarter-Ball-O/Us und arbiträre Handicaps via dynamische `totals_lines`/`spreads`-Dicts ab. 16 historische Bets erfolgreich backfilled, 25 Tests neu. F4 (Commit `c2df64c`): farbcodierte CLV-Pille pro Settled-Bet + "Ø CLV letzte 30 Tage"-Karte zusätzlich zur Lifetime-Karte; Backend liefert `clv`/`closing_odds` in settled_bets und `mean_clv_30d`/`n_clv_30d` in summary; Void-Bets fließen in CLV-Aggregation (nicht Hit-Rate). Gesamt-Suite 488/488. Nächste Phase: C1–C7 (Trust-UI).
