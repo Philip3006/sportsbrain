@@ -19,7 +19,7 @@ def _is_wm_active(today: datetime | None = None) -> bool:
     # Include the full final day (+1 day buffer so July 19 games are covered)
     return _WM_2026_START <= today <= _WM_2026_END + timedelta(days=1)
 
-from src.config import MODELS_DIR, RESULTS_DIR, canonical_name, MAX_ACTIVE_BETS, MAX_EV, TEAM_CONFEDERATION, GOALS_RANGE_ENABLED, GOALS_RANGE_MAX_STAKE
+from src.config import MODELS_DIR, RESULTS_DIR, canonical_name, MAX_ACTIVE_BETS, MAX_EV, TEAM_CONFEDERATION, GOALS_RANGE_ENABLED, GOALS_RANGE_MAX_STAKE, HOST_BOOST_ENABLED, HOST_LAMBDA_BOOST, HOST_NATIONS
 from src.betting.value_detector import (
     BetSignal, detect_value, set_confidence,
     detect_value_totals, detect_value_totals_quarter,
@@ -445,6 +445,10 @@ def run_daily_scan(
         # Normalize team names to match DC model's canonical names
         home = canonical_name(match["home_team"])
         away = canonical_name(match["away_team"])
+        # I6: WM-2026-Host-Boost — angewendet, wenn das Heim-Team Gastgeber-Nation ist
+        # (USA/Canada/Mexico). TheOddsAPI listet WM-Matches mit Gastgeber als "home"
+        # bei Heim-Spielen, daher reicht die Home-Team-Heuristik.
+        host_boost = HOST_LAMBDA_BOOST if (HOST_BOOST_ENABLED and home in HOST_NATIONS) else 1.0
         raw_odds = (
             float(match.get("home_odds", 0)),
             float(match.get("draw_odds", 0)),
@@ -463,6 +467,7 @@ def run_daily_scan(
                 home, away, dc_params, is_knockout=is_ko, neutral=True,
                 elo_home=elo_ratings.get(home, 1500.0),
                 elo_away=elo_ratings.get(away, 1500.0),
+                host_boost=host_boost,
             )
         except ValueError as e:
             # Team not in DC model — skip rather than predict with wrong λ=1.0 default.
@@ -599,6 +604,7 @@ def run_daily_scan(
                 home, away, dc_params, neutral=True,
                 elo_home=elo_ratings.get(home, 1500.0),
                 elo_away=elo_ratings.get(away, 1500.0),
+                host_boost=host_boost,
             )
             _mg = _score_matrix.shape[0] - 1
             _lambda_home = float(sum(i * _score_matrix[i, :].sum() for i in range(_mg + 1)))
@@ -714,7 +720,8 @@ def run_daily_scan(
                 continue
             if ou_line not in totals_cache:
                 totals_cache[ou_line] = dc.predict_totals_all(
-                    home, away, dc_params, line=ou_line, neutral=True, rho_override=rho_staged
+                    home, away, dc_params, line=ou_line, neutral=True, rho_override=rho_staged,
+                    host_boost=host_boost,
                 )
             totals_p = totals_cache[ou_line]
             under_me = _UNDER_BIAS.get(ou_line, _MIN_EDGE + 0.03)
@@ -743,7 +750,8 @@ def run_daily_scan(
             if ah_line not in ah_cache:
                 try:
                     ah_cache[ah_line] = dc.predict_asian_handicap_all(
-                        home, away, dc_params, line=ah_line, neutral=True, rho_override=rho_staged
+                        home, away, dc_params, line=ah_line, neutral=True, rho_override=rho_staged,
+                        host_boost=host_boost,
                     )
                 except ValueError:
                     continue  # unsupported line (outside ±2.5 range)
@@ -771,12 +779,15 @@ def run_daily_scan(
                 home, away, dc_params, min_g=2, max_g=4,
                 neutral=True, rho_override=rho_staged,
                 elo_home=elo_home_rating, elo_away=elo_away_rating,
+                host_boost=host_boost,
             )
             _h1_probs = dc.predict_half_goals_range(
                 home, away, dc_params, min_g=2, max_g=4, half=1, neutral=True,
+                host_boost=host_boost,
             )
             _h2_probs = dc.predict_half_goals_range(
                 home, away, dc_params, min_g=2, max_g=4, half=2, neutral=True,
+                host_boost=host_boost,
             )
             # Vollspiel: echte EV-Signale wenn implied_p verfügbar
             if _implied_p_range is not None:
@@ -801,7 +812,7 @@ def run_daily_scan(
         ftts_home_odds = float(match.get("ftts_home_odds", 0))
         ftts_away_odds = float(match.get("ftts_away_odds", 0))
         if ftts_home_odds > 1.0 or ftts_away_odds > 1.0:
-            ftts_probs = dc.predict_first_scorer(home, away, dc_params, neutral=True)
+            ftts_probs = dc.predict_first_scorer(home, away, dc_params, neutral=True, host_boost=host_boost)
             signals.extend(detect_value_ftts(
                 home, away, ftts_probs, ftts_home_odds, ftts_away_odds,
                 bankroll=bankroll, match_id=match_id,

@@ -68,6 +68,18 @@ PER_CLUSTER_CALIBRATION_ENABLED = True
 # füllt 0.0, Modell-Inferenz bleibt stabil.
 PPDA_LIVE_ENABLED = True
 
+# Roadmap I6 — Home-Advantage für WM-2026-Gastgeber USA/Canada/Mexico.
+# Gastgeber spielen ihre Gruppenspiele (und ggf. KO-Matches) im eigenen Land vor
+# Heim-Publikum. Scanner setzt sonst neutral=True für alle WM-Matches (DC-Training
+# qualifier-lastig → home_adv verzerrt). HOST_LAMBDA_BOOST multipliziert lh nur
+# für Host-Heim-Matches; la bleibt unverändert (kein Doppel-Effekt).
+# Wert 1.05 = Literatur-Konsens (Pollard 2006, Clarke); empirische Kalibrierung
+# auf WC 2006-2022 lieferte kein robustes Signal (n=25, 95% CI [0.50, 1.19]).
+# Rückrollung: HOST_BOOST_ENABLED=False → host_boost=1.0 in daily_scan.
+HOST_BOOST_ENABLED = True
+HOST_LAMBDA_BOOST = 1.05
+HOST_NATIONS: set[str] = {"United States", "Canada", "Mexico"}
+
 # Confederation per team — used for asymmetric divergence threshold.
 # Non-UEFA/CONMEBOL away teams have higher confederation-bias risk in DC model
 # (training data dominated by qualifier blowouts). Stricter filter applied.

@@ -290,7 +290,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ## 🟥 L. Hot Fixes — laufende WM (P0/P1)
 
-### L1. + NEU Gruppen-Standings-Fix (Gruppen stimmen nicht)
+### L1. ✅ Gruppen-Standings-Fix (Team-Namens-Mismatch)
 - **Was**: Gruppe-Tabellen in PWA/Forecast-Tab zeigen falsche Stände (Punkte, Tordiff, Rang). Ursache ermitteln (falsche Aggregation aus `signals.json`, veralteter Gruppen-Cache, Sortier-Bug im Frontend) → beheben.
 - **Warum**: Falsche Gruppen-Stände verzerren Forecast-Prognosen (Qualifikations-Wkt. falsch), KO-Phase-Simulationen unbrauchbar und alle WM-Bet-Entscheidungen ab Gruppenfinale.
 - **Impact**: 🟢 — direkt sichtbarer Fehler, alle 48 Gruppenspiel-Vorhersagen betroffen
@@ -299,8 +299,9 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Priorität**: P0 — WM-Gruppenphase endet 2026-06-26, danach KO-Runde
 - **Dateien**: `src/scanner/daily_scan.py` (Gruppen-Aggregator), `docs/index.html` (`renderForecast`/`renderGroups`), `data/cache/group_standings_*.json` (falls vorhanden)
 - **Verifikation**: Standings manuell gegen FIFA-Tabelle vergleichen — alle 8 Gruppen exakt korrekt (Pkt/Tore/GD/Rang)
+- **Status (2026-06-21)**: Erledigt in Commit `75db4f9`. Root-Cause: `renderStandings()` matchte Roh-Namen aus `wm_results` (`"Bosnia & Herzegovina"`, `"USA"`, `"Ivory Coast"`, `"Czechia"`) nicht gegen die canonical WM_GROUPS-Namen → 3 von 11 gespielten Matches wurden im Lookup geskippt, Schweiz/Deutschland/USA/Cote d'Ivoire zeigten 0 Spiele. Fix: inverse Lookup-Map (`normTeam` + `TEAM_ALIASES` + Reverse-Alias → canonical) übersetzt Match-Teams vor `stats[]`-Zugriff. Verifikation 2026-06-21 nachgezogen: alle 36 `wm_results` matchen sauber, 0 Kollisionen im `matchKey`, Mexico/USA/Germany je 6pt nach 2 Spielen korrekt.
 
-### L2. ~ GEÄNDERT Forecast-Tab Umbau (Gruppen + Bracket + Cleanup)
+### L2. ✅ Forecast-Tab Umbau (Gruppen + Bracket + Cleanup)
 - **Was**: (a) Gruppen-Standings (renderStandings-Output) oben im Forecast-Tab einbetten, (b) Bracket-Vorschau R32→Finale basierend auf wahrscheinlichsten Qualifizierten + DC-Predictions pro Paarung, (c) Layout aufräumen: xPoints einklappbar, kompaktere Spalten, klare Sektionen.
 - **Warum**: Diagnose 2026-06-21 zeigte: Forecast-Werte rechnen mathematisch korrekt (ΣP=100, Σadvance=3200). Was als "fehlerhaft" wirkte: (1) L1's Standings-Bug spillte in PWA-Forecast-Eindruck, (2) Tab zu unübersichtlich, (3) Bracket-Vorschau (wer-vs-wen R16/QF/SF/Final beim aktuellen Stand) fehlt komplett — Forecast ist heute nur Wkt.-Tabelle ohne Pfad-Visualisierung.
 - **Impact**: 🟢 — Forecast wird endlich Entscheidungs-Werkzeug für KO-Bets, nicht nur abstrakte Tabelle
@@ -310,6 +311,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Dateien**: `docs/index.html` (`renderForecast`, neue `_renderBracket`), `scripts/build_wm_forecast.py` (neuer Block `most_likely_qualifiers` + `bracket_preview`)
 - **Abhängigkeiten**: L1 ✅
 - **Verifikation**: Bracket-Vorschau zeigt 16 R16-Paarungen, jedes Match einen wahrscheinlicheren Sieger, Pfad bis zum Finale plausibel
+- **Status (2026-06-21)**: Erledigt in zwei Commits. **Step 1** (`188c99e`): `renderStandings()` nimmt jetzt optionalen `targetId`-Parameter und rendert zusätzlich in `forecast-standings-container`; Forecast-Layout neu (Header → Gruppen-Stände → Stage-Wahrscheinlichkeiten → xPoints in `<details>` einklappbar). **Step 2** (`5170b9c`): neue `_build_bracket_preview()` in `scripts/build_wm_forecast.py` — deterministisch 32 wahrscheinlichste Qualifizierte (Top-2 nach `p_first+p_second`, Best-8 Drittplatzierte), Seeded-Pairing (1v32, 2v31...), pro Match DC-Vorhersage (höhere P(Sieg) gewinnt), 5 Rounds R32→Finale. Frontend: Champion-Banner + Round-`<details>`-Blöcke (R32 + Finale offen) mit Sieger-Highlight, Seeds, Flags. 488/488 Tests grün. Hinweis-Banner zur Approximation (echtes FIFA-Mapping folgt via M5 nach Auslosung 2026-06-27).
 
 ### L3. ✅ Journal-Fix — Future-dated Voids waren ausgefiltert
 - **Was**: Journal-Tab zeigt fehlerhafte Einträge, fehlt Bets oder stellt Status/P&L falsch dar. Bugfix für bestehenden Render-Code — kein neues Feature (C4/F4 sind separate Feature-Items).
@@ -418,7 +420,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Impact/Aufwand/Risiko**: 🟡 · 🟢 · 🟡
 - **Abhängigkeiten**: G1
 
-### I6. + NEU Home-Advantage Gastgeber-Länder (WM 2026)
+### I6. ✅ Home-Advantage Gastgeber-Länder (WM 2026)
 - **Was**: Separate `host_boost` Parameter in `dc.predict_match()`: wenn Team in `HOST_NATIONS = {"United States", "Canada", "Mexico"}` und das Spiel im jeweiligen Heimland stattfindet, wird Lambda_home mit einem Faktor `HOST_LAMBDA_BOOST` (default 1.08, aus historischen Daten WC 2006/2010/2014/2018 kalibriert) multipliziert. Venue-Erkennung via `match.get("venue_country")` aus TheOddsAPI. Falls kein Venue: Host-Match via fixture-Daten (Wikipedia/ESPN) annotieren.
 - **Warum**: Gastgeber-Vorteil ist statistisch messbar (+3–8% Gewinnwahrscheinlichkeit, bes. Gruppenphase). USA/Kanada/Mexiko spielen vor Heim-Publikum — aktuell wird `neutral=True` gesetzt was diesen Vorteil ignoriert.
 - **Impact**: 🟢 — direkte Qualitätsverbesserung für 16 von 64 WM-Matches (je ~5 Gruppenspiele + KO pro Gastgeber)
@@ -428,6 +430,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Dateien**: `src/models/dixon_coles.py` (`predict_match`, `fit`), `src/config.py` (`HOST_NATIONS`, `HOST_LAMBDA_BOOST`), `src/scanner/daily_scan.py` (Venue-Übergabe), `scripts/run_backtest.py` (Verifikation)
 - **Abhängigkeiten**: G1 (DC-Modell stabil), historische WM-Daten (vorhanden)
 - **Verifikation**: Brier auf WC2006/2010/2014/2018 Gastgeber-Matches verbessert sich; WM2026-Prognosen USA/CAN/MEX zeigen plausiblen Boost von ~3-8pp gegenüber Baseline
+- **Status (2026-06-21)**: Erledigt. **Kalibrierung**: Empirische Auswertung WC 2006-2022 (n=25 Host-Heim-Matches) lieferte kein robustes Signal (95% CI [0.50, 1.19], dominiert von Confounds: Gastgeber-Team-Stärke 2006/2014/2018 sehr hoch, Qatar 2022 Ausreißer nach unten). Entscheidung: **Literatur-Default `HOST_LAMBDA_BOOST = 1.05`** (konservativer Pollard/Clarke-Wert) statt empirisch-volatilem Wert. **API**: `_lambdas()` bekommt optionalen `host_boost`-Parameter (multipliziert nur `lh`, `la` bleibt unverändert — kein Doppel-Effekt). 14 Predict-Funktionen propagieren den Parameter durch (predict_match/_staged/_scoreline/_totals/_totals_all/_btts/_asian_handicap/_asian_handicap_all/_goals_range/_half_goals_range/_xg/_first_scorer). **Wiring**: `daily_scan.py` setzt `host_boost = HOST_LAMBDA_BOOST if home in HOST_NATIONS else 1.0` einmal pro Match und schleift ihn an 8 DC-Call-Stellen durch. **Backtest-Gate**: ΔBrier +0.0051 auf 25 historische Host-Heim-Matches (Gate ≥0.001 ✅). Predicted P(host_win) rückt 0.315 → 0.327 näher an actual 0.440 (zeigt: 1.05 ist konservativ, könnte später nachgezogen werden). **Tests**: 8 neue Unit-Tests (`tests/models/test_dixon_coles_host_boost.py`), 496/496 Gesamt-Suite grün (+8). **Rückrollung**: `HOST_BOOST_ENABLED=False` → host_boost=1.0 in scanner.
 
 ### I7. + NEU Monte Carlo Simulationen (Scoreline-Verteilung)
 - **Was**: `src/analysis/monte_carlo.py` mit `simulate_match(home, away, params, n=10000)` → zieht N mal aus der DC-Scoreline-Matrix (Poisson-Sampler), gibt zurück: Top-5 wahrscheinlichste Scores, kumulative Tor-Verteilung (P(0), P(1), ..., P(5+)), Most-Likely-Score, Most-Likely-Result (H/D/A). Integration in PWA-Forecast-Tab als „Wahrscheinlichste Ergebnisse" unter den Prognosen.
@@ -503,7 +506,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **7** | D1–D3 (Risiko & Multi-User) | Tag 7 | 2-3 h |
 | **8** | E1–E4 (Refactor) | Tag 8-12 | 6-8 h |
 | **8b** | M5 (FIFA-Bracket-Mapping nach Auslosung) | ab 2026-06-27 (Auslosung), vor 2026-07-04 | 1-2 h |
-| **9** | I6 (Home Advantage Gastgeber) | vor KO-Phase 2026-07-04 | 1-3 h |
+| **9** | I6 (Home Advantage Gastgeber) | ✅ erledigt 2026-06-21 | 1-3 h |
 | **9b** | I1–I5 (Post-WM Snapshot + Retrain) | 2026-07-20 bis 2026-07-31 | 8-12 h |
 | **9c** | I7 (Monte Carlo Sims) | nach I6, anytime | < 2 h |
 | **10** | H1, H2 (Push-Deep-Link, Legal-Stub) | anytime ab Tag 10 | 1-2 h |
@@ -516,7 +519,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 ## 📊 Statistik
 
 - **Insgesamt**: 56 konkrete Items (+4 neu: M1, M2, M3, M4)
-- **P0**: 12 (sofort) — davon 11 ✅ (Phase 0 + Phase 1 vollständig); L1 offen
+- **P0**: 12 (sofort) — davon 12 ✅ (Phase 0 + Phase 1 + L1 vollständig)
 - **P1**: 25 (diese Woche / vor KO-Phase) — inkl. I6, L2, L3, M1-M4 (neu)
 - **P2**: 15 (dieser Monat / Refactor) — inkl. I7 (Monte Carlo)
 - **P3**: 4 (Q4 2026)
@@ -537,4 +540,6 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **2026-06-21**: ~ Phase 6 (C1–C7) erledigt. C1: aufklappbarer „Warum diese Wette?"-Drawer im Bet-Modal mit Modell% / Markt-fair% / Edge pp (Shin-fair aus `s.fair_prob` thread via `data-fair-prob`, Fallback `100/odds` mit `*`-Hinweis). C2: LOW-Tier-CSS ergänzt, Tier-Pille im Modal-Header neben Kind-Badge, infoTip für LOW im Bet-Card. C3: Forecast-Spaltenkopf bekommt `title=`-Tooltips via `_FC_COLS[].tip`, plus 1-Zeilen-Erklärung über der Tabelle. C4: `_buildWeeklyRecap()` aggregiert `_settledBets` der letzten 7 Tage (W/V/L, P&L, ROI, Ø CLV) als oberste Journal-Karte. C5: `_build_info()` in `web_dashboard.py` schreibt `{sha, date}` in `signals.json`, Frontend rendert Pille in neuem `<footer id="app-footer">`. C6: `_renderApiFailEmpty(msg)` ersetzt Skeletons in allen Haupt-Containern durch Retry-Button bei Load-Fehler. C7: 3-Step Onboarding-Overlay via `localStorage.sb_seen_onboarding`. Gesamt-Suite 488/488 grün. Nächste Phase: D1–D3 (Risiko & Multi-User).
 - **2026-06-21**: + M NEU (Trust-UI v2: M1 Inline-Drawer, M2 Noob-Texte, M3 Walkthrough, M4 Glossar). Direkt nach C1–C7 als Folge-Iteration: Drawer im Modal zu unscheinbar → inline an Karte; Onboarding zu kompliziert → Walkthrough mit Spotlight; CLV/ROI/EV undefiniert → Glossar-Modal. Statistik: 52 → 56 Items. Reihenfolge-Slot 6b (zwischen Phase 6 und 7).
 - **2026-06-21**: ~ Phase 6b (M1–M4) erledigt in Commit `d5e2eb2` + 11 Folge-Fixes (`a76add5`, `44d0ed0`, `2a44e18`, `dab6e82`, `f25190a`, `8bd2416`, `f16cd13`, `27f7358`, `dfca5f8`, `8e499db`, `4dc27dc`). M1: `why-inline`-`<details>`-Drawer per Default eingeklappt mit Modell% / Markt-fair% / Edge pp + Klartext-Begründung + „Begriffe erklärt →"-Link zum Glossar. M2: alle Tooltips in Alltagssprache (Edge, EV als €-Beispiel, CLV als „Markt hat dir nachgegeben", Tier-Erklärungen). M3: `WALK_STEPS` mit 14 Stufen (Home → Football-Tab → Bet-Karte → Drawer → EV/Tier → Offen/Live/Abgerechnet → Journal-CLV → Schluss), Spotlight-Ring scrollt mit, FAB-Guard bei dynamischem Render, Off-Screen-Hide, Demo-Modus mit synthetischen Daten (`_walkDemoActive`), Trigger nur manuell via Settings + Footer + Onboarding-Disclaimer. M4: `GLOSSARY`-Modal mit 12+ Einträgen, erreichbar aus Footer-Link, Settings-Row und aus M1-Drawer („Begriffe erklärt →"). Nächste Phase: L1–L3 (Hot Fixes) vor 2026-06-26 (Gruppenende) bzw. 2026-07-04 (KO-Phase).
+- **2026-06-21**: ✅ Phase 9 (I6) erledigt. Host-Boost für WM-2026-Gastgeber USA/CAN/MEX. Empirische Kalibrierung auf WC 2006-2022 (n=25) lieferte kein robustes Signal (95% CI [0.50, 1.19]) — Literatur-Default `HOST_LAMBDA_BOOST = 1.05` als konservativer Pollard/Clarke-Wert. `_lambdas()` + 14 Predict-Funktionen propagieren neuen `host_boost`-Parameter (multipliziert nur `lh`). `daily_scan.py` setzt Boost via Home-Team-Heuristik. Backtest-Gate ✅: ΔBrier +0.0051 auf 25 historische Host-Matches, predicted P(host_win) rückt 0.315 → 0.327 näher an actual 0.440. 8 neue Unit-Tests, 496/496 Suite grün. Rückrollung via `HOST_BOOST_ENABLED=False`. Nächste Phase: **M5** (FIFA-Bracket-Mapping nach Auslosung 2026-06-27) oder **Phase 7** (D1–D3 Risiko/Multi-User).
+- **2026-06-21**: ✅ Hot-Fixes L1 + L2 erledigt (vorher schon committed in `75db4f9`/`188c99e`/`5170b9c`, jetzt Roadmap-Status nachgezogen). L1: `renderStandings()` Team-Namens-Mismatch (USA/BIH/Ivory Coast wurden geskippt) via inverse Lookup-Map gefixt. L2: Forecast-Tab umgebaut — Standings eingebettet, Bracket-Vorschau R32→Finale, xPoints einklappbar. Verifikation: alle 36 wm_results matchen, Standings rechnen korrekt (Mexico/USA/Germany je 6pt). Nächste Phase: **I6** (Home-Advantage Gastgeber) vor KO 2026-07-04.
 - **2026-06-21**: ~ Phase 5 (F3, F4) erledigt. F3 (Commit `92cf85b`): drei Root-Causes für 41/43 leere CLVs gefunden — Pandas NaN-Truthiness im Backfill-Check, unvollständige Markt-Map, fehlender Void-Status. `_resolve_closing_odds()`-Helper deckt jetzt auch Quarter-Ball-O/Us und arbiträre Handicaps via dynamische `totals_lines`/`spreads`-Dicts ab. 16 historische Bets erfolgreich backfilled, 25 Tests neu. F4 (Commit `c2df64c`): farbcodierte CLV-Pille pro Settled-Bet + "Ø CLV letzte 30 Tage"-Karte zusätzlich zur Lifetime-Karte; Backend liefert `clv`/`closing_odds` in settled_bets und `mean_clv_30d`/`n_clv_30d` in summary; Void-Bets fließen in CLV-Aggregation (nicht Hit-Rate). Gesamt-Suite 488/488. Nächste Phase: C1–C7 (Trust-UI).
