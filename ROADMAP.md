@@ -164,26 +164,29 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ---
 
-## 🟦 D. Block 3 — Risiko & Multi-User-Vorbereitung (P1, ≈ 2–3 h)
+## 🟦 D. Block 3 — Risiko & Multi-User-Vorbereitung (P1, ≈ 2–3 h) ✅ erledigt 2026-06-21/22
 
-### D1. Drawdown-Warnung als Banner
+### D1. ✅ Drawdown-Warnung als Banner
 - **Was**: Bei Bankroll < 0.85 × `BANKROLL_START`: Warn-Banner. **Keine** Sperre.
 - **Warum**: Selbstdisziplin-Anker ohne Auto-Pause.
 - **Impact/Aufwand/Risiko**: 🟢 · 🟡 · 🟢
-- **Dateien**: `docs/index.html`, ggf. `src/betting/ledger.py`
+- **Dateien**: `docs/index.html` (`_buildDrawdownBanner`, `.dd-banner` CSS, `renderJournal` Wiring)
+- **Status (2026-06-21)**: Erledigt in Commit `bc67d8f`. Banner als oberste Karte im Journal-Tab. Trigger: `total_equity = start + pnl_closed < 0.85 × start`. Zeigt aktuelle Bankroll, Drawdown%, klares „Kein Auto-Stop"-Hinweis. Bei aktueller Bankroll €112.50 inaktiv (gewollt). `.gitignore` zusätzlich um `.claude/worktrees/`, `.swarm/`, `ruvector.db` erweitert.
 
-### D2. Token-Rotation
+### D2. ✅ Token-Rotation (Master + Per-User-Token + 24h-Grace)
 - **Was**: Worker-Endpoint `POST /rotate_token` + Settings-UI-Button.
 - **Warum**: Token-Wechsel ohne Worker-Redeploy. Wichtig für Freunde-Onboarding.
 - **Impact/Aufwand/Risiko**: 🟡 · 🟡 · 🟡 (Token-Bug → PWA offline)
 - **Dateien**: `cloudflare/worker.js`, `docs/index.html`
 - **Abhängigkeiten**: B2
+- **Status (2026-06-22)**: Erledigt in Commit `f3e98fa`. **Worker**: Master-Token (env.API_TOKEN) bleibt unverändert für Python-Cron-Jobs; neue KV-Struktur `user_tokens` → `{[user]: {active, previous: {token, expires_at}|null, rotated_at}}`. `authResolve()` akzeptiert Master ODER aktiven User-Token ODER alten Token während 24h Grace. POST `/rotate_token {user}` generiert 256-bit Random-Token, alter wandert als `previous` mit `expires_at=+24h`. GET `/token_status?user=...` liefert `has_active`/`grace_active`/`rotated_at`. **PWA**: Settings-Row „🔄 Token rotieren" → confirm + POST mit aktuellem `sb_token` → speichert neuen Token in localStorage, zeigt Ablaufdatum des alten Tokens als Toast. **Rollback** bei Bug: `wrangler kv key delete user_tokens` setzt Schema zurück, Master-Token bleibt gültig. **⚠ Deploy-Pflicht**: `cd cloudflare && wrangler deploy` vor Live-Schaltung.
 
-### D3. Multi-Bankroll-Snapshot-Schema
+### D3. ✅ Multi-Bankroll-Snapshot-Schema
 - **Was**: `bankroll_snapshot.json` → `bankroll_snapshot_{user}.json` (Default `philip`).
 - **Warum**: Friction-freier Onboarding-Pfad für Freund X.
 - **Impact/Aufwand/Risiko**: 🟡 · 🟡 · 🟡
-- **Dateien**: `src/betting/ledger.py`, `src/config.py`, `data/cache/`
+- **Dateien**: `src/betting/ledger.py`, `src/config.py`, `src/notifications/web_dashboard.py`, `docs/index.html`, `tests/betting/test_bankroll_snapshot.py`
+- **Status (2026-06-21)**: Erledigt in Commit `1ed3bd3`. **Backend**: `src/config.py` bekommt `DEFAULT_USER = "philip"` + Helper `bankroll_snapshot_path_for(user) → data/cache/bankroll_snapshot_{user}.json`. `peek_/get_bankroll_snapshot()` bekommen `user`-Parameter (default DEFAULT_USER); Erstaufruf migriert die alte `bankroll_snapshot.json` automatisch in den Default-Slot (`_resolve_snapshot_path`). Explizit übergebene Pfade (Tests) bleiben unverändert. `signals.json.meta.default_user` neu. **PWA**: localStorage `sb_user` (Default `philip`), Settings-Row „👤 Aktiver User" mit Prompt-basiertem Slot-Wechsel; `_meta`-Global. **Tests**: 2 neue (`test_legacy_snapshot_migrates_into_default_user_slot`, `test_per_user_snapshots_are_isolated`) — 498/498 grün. **Hinweis**: Backend liest aktuell nur den Default-User; weitere Slots sind vorbereitet, bekommen aber noch keine eigenen Daten. Multi-User-Routing für Friends-Onboarding wird erst aktiv, wenn `signals_{user}.json`-Pipeline pro User gebaut wird.
 
 ---
 
@@ -503,7 +506,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **5** | F3, F4 (CLV-Audit + UI) | ✅ erledigt 2026-06-21 | 2-3 h |
 | **6** | C1–C7 (Trust-UI) | ✅ erledigt 2026-06-21 | 4-6 h |
 | **6b** | M1–M4 (Trust-UI v2: Inline-Drawer, Noob-Texte, Walkthrough, Glossar) | ✅ erledigt 2026-06-21 | 3-5 h |
-| **7** | D1–D3 (Risiko & Multi-User) | Tag 7 | 2-3 h |
+| **7** | D1–D3 (Risiko & Multi-User) | ✅ erledigt 2026-06-21/22 | 2-3 h |
 | **8** | E1–E4 (Refactor) | Tag 8-12 | 6-8 h |
 | **8b** | M5 (FIFA-Bracket-Mapping nach Auslosung) | ab 2026-06-27 (Auslosung), vor 2026-07-04 | 1-2 h |
 | **9** | I6 (Home Advantage Gastgeber) | ✅ erledigt 2026-06-21 | 1-3 h |
@@ -542,4 +545,5 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **2026-06-21**: ~ Phase 6b (M1–M4) erledigt in Commit `d5e2eb2` + 11 Folge-Fixes (`a76add5`, `44d0ed0`, `2a44e18`, `dab6e82`, `f25190a`, `8bd2416`, `f16cd13`, `27f7358`, `dfca5f8`, `8e499db`, `4dc27dc`). M1: `why-inline`-`<details>`-Drawer per Default eingeklappt mit Modell% / Markt-fair% / Edge pp + Klartext-Begründung + „Begriffe erklärt →"-Link zum Glossar. M2: alle Tooltips in Alltagssprache (Edge, EV als €-Beispiel, CLV als „Markt hat dir nachgegeben", Tier-Erklärungen). M3: `WALK_STEPS` mit 14 Stufen (Home → Football-Tab → Bet-Karte → Drawer → EV/Tier → Offen/Live/Abgerechnet → Journal-CLV → Schluss), Spotlight-Ring scrollt mit, FAB-Guard bei dynamischem Render, Off-Screen-Hide, Demo-Modus mit synthetischen Daten (`_walkDemoActive`), Trigger nur manuell via Settings + Footer + Onboarding-Disclaimer. M4: `GLOSSARY`-Modal mit 12+ Einträgen, erreichbar aus Footer-Link, Settings-Row und aus M1-Drawer („Begriffe erklärt →"). Nächste Phase: L1–L3 (Hot Fixes) vor 2026-06-26 (Gruppenende) bzw. 2026-07-04 (KO-Phase).
 - **2026-06-21**: ✅ Phase 9 (I6) erledigt. Host-Boost für WM-2026-Gastgeber USA/CAN/MEX. Empirische Kalibrierung auf WC 2006-2022 (n=25) lieferte kein robustes Signal (95% CI [0.50, 1.19]) — Literatur-Default `HOST_LAMBDA_BOOST = 1.05` als konservativer Pollard/Clarke-Wert. `_lambdas()` + 14 Predict-Funktionen propagieren neuen `host_boost`-Parameter (multipliziert nur `lh`). `daily_scan.py` setzt Boost via Home-Team-Heuristik. Backtest-Gate ✅: ΔBrier +0.0051 auf 25 historische Host-Matches, predicted P(host_win) rückt 0.315 → 0.327 näher an actual 0.440. 8 neue Unit-Tests, 496/496 Suite grün. Rückrollung via `HOST_BOOST_ENABLED=False`. Nächste Phase: **M5** (FIFA-Bracket-Mapping nach Auslosung 2026-06-27) oder **Phase 7** (D1–D3 Risiko/Multi-User).
 - **2026-06-21**: ✅ Hot-Fixes L1 + L2 erledigt (vorher schon committed in `75db4f9`/`188c99e`/`5170b9c`, jetzt Roadmap-Status nachgezogen). L1: `renderStandings()` Team-Namens-Mismatch (USA/BIH/Ivory Coast wurden geskippt) via inverse Lookup-Map gefixt. L2: Forecast-Tab umgebaut — Standings eingebettet, Bracket-Vorschau R32→Finale, xPoints einklappbar. Verifikation: alle 36 wm_results matchen, Standings rechnen korrekt (Mexico/USA/Germany je 6pt). Nächste Phase: **I6** (Home-Advantage Gastgeber) vor KO 2026-07-04.
+- **2026-06-21/22**: ~ Phase 7 (D1, D2, D3) erledigt. **D1** (`bc67d8f`): Drawdown-Warnbanner als oberste Karte im Journal-Tab, triggert bei `start + pnl_closed < 0.85 × start`, kein Auto-Stop. **D3** (`1ed3bd3`): Multi-User-Schema vorbereitet — `DEFAULT_USER`-Konstante + `bankroll_snapshot_path_for(user)`-Helper; per-user-Snapshot-Dateien mit Auto-Migration der Legacy-Datei; `signals.json.meta.default_user`; PWA-Settings „👤 Aktiver User" mit `localStorage.sb_user`. 2 neue Tests, 498/498 grün. **D2** (`f3e98fa`): Token-Rotation mit Master + Per-User-Token + 24h-Grace. Worker bekommt `user_tokens`-KV-Struktur, `authResolve()`-Async-Funktion mit drei Akzeptanzpfaden (Master/aktiver User-Token/alter Token in Grace), Endpunkte `POST /rotate_token` + `GET /token_status`. PWA-Settings „🔄 Token rotieren" mit Auto-Switch. ⚠ `wrangler deploy` nötig vor Live-Schaltung. Nächste Phase: **8** (E1–E4 Refactor) oder **8b** (M5 FIFA-Bracket nach Auslosung 2026-06-27).
 - **2026-06-21**: ~ Phase 5 (F3, F4) erledigt. F3 (Commit `92cf85b`): drei Root-Causes für 41/43 leere CLVs gefunden — Pandas NaN-Truthiness im Backfill-Check, unvollständige Markt-Map, fehlender Void-Status. `_resolve_closing_odds()`-Helper deckt jetzt auch Quarter-Ball-O/Us und arbiträre Handicaps via dynamische `totals_lines`/`spreads`-Dicts ab. 16 historische Bets erfolgreich backfilled, 25 Tests neu. F4 (Commit `c2df64c`): farbcodierte CLV-Pille pro Settled-Bet + "Ø CLV letzte 30 Tage"-Karte zusätzlich zur Lifetime-Karte; Backend liefert `clv`/`closing_odds` in settled_bets und `mean_clv_30d`/`n_clv_30d` in summary; Void-Bets fließen in CLV-Aggregation (nicht Hit-Rate). Gesamt-Suite 488/488. Nächste Phase: C1–C7 (Trust-UI).
