@@ -1,7 +1,7 @@
 {
-  "updated": "2026-06-21T16:46:46Z",
+  "updated": "2026-06-21T18:20:16Z",
   "build_info": {
-    "sha": "abdab12",
+    "sha": "d8a0dda",
     "date": "2026-06-21"
   },
   "meta": {
@@ -6910,20 +6910,6 @@
     },
     {
       "sport": "football",
-      "match": "Spain vs Saudi Arabia",
-      "market": "draw",
-      "odds": 13.5,
-      "model_prob": 9.9,
-      "fair_prob": 7.5,
-      "ev_pct": 33.2,
-      "stake_eur": 20.0,
-      "stake_pct": 11.5,
-      "confidence": "LOW",
-      "n_models_agree": 1,
-      "kickoff": "2026-06-21T16:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Jordan vs Argentina",
       "market": "o/u2.5_over",
       "odds": 1.57,
@@ -7313,20 +7299,6 @@
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-27T23:30:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Spain vs Saudi Arabia",
-      "market": "o/u3.5_under",
-      "odds": 2.04,
-      "model_prob": 57.3,
-      "fair_prob": 57.3,
-      "ev_pct": 16.9,
-      "stake_eur": 19.17,
-      "stake_pct": 11.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-21T16:00:00Z"
     },
     {
       "sport": "football",
@@ -7854,7 +7826,7 @@
       "stake": 5.0,
       "match_date": "2026-06-21",
       "model_edge_pct": null,
-      "is_live": true
+      "is_live": false
     }
   ],
   "settled_bets": [
