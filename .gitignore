@@ -18,3 +18,6 @@ models/dixon_coles/_archive/
 __pycache__/
 *.pyc
 .DS_Store
+.claude/worktrees/
+.swarm/
+ruvector.db
