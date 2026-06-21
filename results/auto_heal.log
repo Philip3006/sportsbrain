@@ -81,3 +81,4 @@
 [2026-06-21 14:51:47 UTC] [auto_heal_ai] analyzing prematch_scan (status=degraded, fallback=espn)
 [2026-06-21 14:51:50 UTC] [auto_heal_ai] prematch_scan: response → DEGRADED_OK: Fallback to ESPN is active, indicating primary data source (likely a preferred sports API) is unavailable o
 [2026-06-21T14:53:11Z] [layer2] prematch_scan degraded/fallback (espn) — monitoring
+[2026-06-21 20:14:24 UTC] [cloud_healer] live_score_push: Workflow bereits aktiv (in_progress) — übersprungen
