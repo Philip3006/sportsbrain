@@ -991,7 +991,8 @@
       "suspended": [
         "Marcelo Flores",
         "Moïse Bombito",
-        "Ismaël Koné"
+        "Ismaël Koné",
+        "Jonathan David"
       ],
       "players": [
         {
@@ -1042,7 +1043,7 @@
         {
           "name": "Jonathan David",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Liam Millar",
@@ -2249,11 +2250,7 @@
       "ampel": "🟢",
       "suspended": [
         "Bukayo Saka",
-        "Tino Livramento",
-        "Reece James",
-        "Ezri Konsa",
-        "Noni Madueke",
-        "Declan Rice"
+        "Tino Livramento"
       ],
       "players": [
         {
@@ -2264,7 +2261,7 @@
         {
           "name": "Ezri Konsa",
           "pos": "DEF",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Nico O'Reilly",
@@ -2274,7 +2271,7 @@
         {
           "name": "Declan Rice",
           "pos": "MID",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "John Stones",
@@ -2354,7 +2351,7 @@
         {
           "name": "Noni Madueke",
           "pos": "FWD",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Eberechi Eze",
@@ -2374,7 +2371,7 @@
         {
           "name": "Reece James",
           "pos": "DEF",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Djed Spence",
@@ -3383,8 +3380,7 @@
       "suspended": [
         "Kaoru Mitoma",
         "Takumi Minamino",
-        "Wataru Endo",
-        "Takefusa Kubo"
+        "Wataru Endo"
       ],
       "players": [
         {
@@ -3425,7 +3421,7 @@
         {
           "name": "Takefusa Kubo",
           "pos": "MID",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Keisuke Gotō",
@@ -5635,9 +5631,7 @@
       "ampel": "🟢",
       "suspended": [
         "Dani Carvajal",
-        "Fermin Lopez",
-        "Lamine Yamal",
-        "Nico Williams"
+        "Fermin Lopez"
       ],
       "players": [
         {
@@ -5723,7 +5717,7 @@
         {
           "name": "Nico Williams",
           "pos": "FWD",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Martín Zubimendi",
@@ -5733,7 +5727,7 @@
         {
           "name": "Lamine Yamal",
           "pos": "FWD",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Pedri",
@@ -6482,8 +6476,7 @@
       "ampel": "🟢",
       "suspended": [
         "Giorgian de Arrascaeta",
-        "Ronald Araujo",
-        "Rodrigo Bentancur"
+        "Ronald Araujo"
       ],
       "players": [
         {
@@ -6514,7 +6507,7 @@
         {
           "name": "Rodrigo Bentancur",
           "pos": "MID",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Nicolás de la Cruz",
