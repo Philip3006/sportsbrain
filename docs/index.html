@@ -67,6 +67,15 @@
     /* ── Stale banner ── */
     .stale-banner { background: var(--yellow-d); border-bottom: 1px solid var(--yellow); color: var(--yellow); text-align: center; padding: 7px; font-size: 12px; font-weight: 600; display: none; }
 
+    /* ── Drawdown banner (D1) ── */
+    .dd-banner { background: linear-gradient(135deg, rgba(255,180,0,.14), rgba(255,90,90,.10)); border: 1.5px solid var(--yellow); border-radius: var(--r-lg); margin: 0 16px 12px; padding: 12px 14px; display: flex; gap: 12px; align-items: flex-start; }
+    .dd-banner-icon { font-size: 22px; line-height: 1; flex-shrink: 0; }
+    .dd-banner-body { flex: 1; font-size: 13px; line-height: 1.45; }
+    .dd-banner-title { font-weight: 800; color: var(--yellow); margin-bottom: 3px; }
+    .dd-banner-sub { color: var(--text); }
+    .dd-banner-num { font-weight: 800; color: var(--red); font-variant-numeric: tabular-nums; }
+    .dd-banner-hint { color: var(--muted); font-size: 11px; margin-top: 4px; }
+
     /* ── Views ── */
     main { padding-bottom: var(--nav-h); max-width: 600px; margin: 0 auto; }
     .view { display: none; }
@@ -3405,10 +3414,31 @@ function _buildWeeklyRecap() {
   </div>`;
 }
 
+function _buildDrawdownBanner() {
+  const start = (_bankrollState && _bankrollState.start) ? Number(_bankrollState.start) : BANKROLL_START;
+  const pnl   = (_bankrollState && typeof _bankrollState.pnl_closed === 'number') ? Number(_bankrollState.pnl_closed) : 0;
+  if (!start) return '';
+  const equity = start + pnl;
+  const ratio  = equity / start;
+  if (ratio >= 0.85) return '';
+  const ddPct = ((1 - ratio) * 100).toFixed(1);
+  const eqStr = equity.toFixed(2);
+  const stStr = start.toFixed(2);
+  return `<div class="dd-banner" role="alert" aria-live="polite">
+    <div class="dd-banner-icon">⚠️</div>
+    <div class="dd-banner-body">
+      <div class="dd-banner-title">Drawdown-Warnung</div>
+      <div class="dd-banner-sub">Aktuelle Bankroll <b>${eqStr}€</b> liegt <span class="dd-banner-num">-${ddPct}%</span> unter Startwert (${stStr}€).</div>
+      <div class="dd-banner-hint">Kein Auto-Stop — nur ein Disziplin-Hinweis. Stake-Größen prüfen, keine Tilt-Wetten.</div>
+    </div>
+  </div>`;
+}
+
 function renderJournal(history) {
   if (history) _journalHistory = history;
   const c = document.getElementById('journal-container');
   const all = _journalHistory || [];
+  const ddHtml = _buildDrawdownBanner();
   const recapHtml = _buildWeeklyRecap();
   const chipsHtml = `<div class="filter-chips" role="tablist" aria-label="Journal-Filter">
     ${['all','win','loss','7d'].map(f => {
@@ -3418,7 +3448,7 @@ function renderJournal(history) {
   </div>`;
 
   if (!all.length) {
-    c.innerHTML = recapHtml + chipsHtml + `<div class="empty"><div class="icon">📭</div><div>Noch keine abgeschlossenen Wetten.</div></div>`;
+    c.innerHTML = ddHtml + recapHtml + chipsHtml + `<div class="empty"><div class="icon">📭</div><div>Noch keine abgeschlossenen Wetten.</div></div>`;
     _bindJournalChips();
     return;
   }
@@ -3434,7 +3464,7 @@ function renderJournal(history) {
   const kpisHtml = _buildJournalKpis(filtered);
 
   if (!filtered.length) {
-    c.innerHTML = recapHtml + chipsHtml + kpisHtml + `<div class="empty"><div class="icon">📭</div><div>Keine Einträge in diesem Filter.</div></div>`;
+    c.innerHTML = ddHtml + recapHtml + chipsHtml + kpisHtml + `<div class="empty"><div class="icon">📭</div><div>Keine Einträge in diesem Filter.</div></div>`;
     _bindJournalChips();
     return;
   }
@@ -3466,7 +3496,7 @@ function renderJournal(history) {
 
   const tot = filtered.reduce((s,d)=>s+d.pnl,0);
   const tc = tot >= 0 ? 'pos' : 'neg';
-  c.innerHTML = recapHtml + chipsHtml + kpisHtml + `<div class="journal-wrap">
+  c.innerHTML = ddHtml + recapHtml + chipsHtml + kpisHtml + `<div class="journal-wrap">
     <table class="journal-table">
       <thead><tr><th>Tag</th><th>#</th><th>P&amp;L</th><th>ROI</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
