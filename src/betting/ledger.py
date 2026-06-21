@@ -18,7 +18,7 @@ import pandas as pd
 import json
 from datetime import date
 
-from src.config import RESULTS_DIR, BANKROLL_SNAPSHOT_PATH, BANKROLL_START
+from src.config import RESULTS_DIR, BANKROLL_SNAPSHOT_PATH, BANKROLL_START, DEFAULT_USER, bankroll_snapshot_path_for
 from src.betting.value_detector import BetSignal
 
 LEDGER_PATH = RESULTS_DIR / "ledger.csv"
@@ -555,12 +555,30 @@ def _live_bankroll(ledger_path: Path = LEDGER_PATH) -> float:
     return round(BANKROLL_START + s["total_pnl"], 2)
 
 
+def _resolve_snapshot_path(snapshot_path: Path | None, user: str) -> Path:
+    """Resolves the per-user snapshot path and migrates legacy single-user
+    `bankroll_snapshot.json` into the default user's slot on first call.
+
+    Explicit `snapshot_path` (e.g. from tests) bypasses migration and is used
+    as-is."""
+    if snapshot_path is not None:
+        return snapshot_path
+    user_path = bankroll_snapshot_path_for(user)
+    if not user_path.exists() and user == DEFAULT_USER and BANKROLL_SNAPSHOT_PATH.exists():
+        # one-shot migration: rename legacy file into the default user's slot.
+        user_path.parent.mkdir(parents=True, exist_ok=True)
+        BANKROLL_SNAPSHOT_PATH.rename(user_path)
+    return user_path
+
+
 def peek_bankroll_snapshot(
-    snapshot_path: Path = BANKROLL_SNAPSHOT_PATH,
+    snapshot_path: Path | None = None,
     ledger_path: Path = LEDGER_PATH,
+    user: str = DEFAULT_USER,
 ) -> float:
     """Read-only: returns cached snapshot if valid for current ISO week,
     otherwise the live computed bankroll. Does NOT write to disk."""
+    snapshot_path = _resolve_snapshot_path(snapshot_path, user)
     year, week = _current_iso_week()
     if snapshot_path.exists():
         try:
@@ -573,13 +591,15 @@ def peek_bankroll_snapshot(
 
 
 def get_bankroll_snapshot(
-    snapshot_path: Path = BANKROLL_SNAPSHOT_PATH,
+    snapshot_path: Path | None = None,
     ledger_path: Path = LEDGER_PATH,
+    user: str = DEFAULT_USER,
 ) -> float:
     """Returns bankroll for the current ISO week. On the first call of a new
     ISO week, recomputes from the ledger and persists the snapshot. Within
     the same week, returns the cached value so stakes stay stable across
     intra-week wins/losses (drawdown smoothing — user choice over HWM)."""
+    snapshot_path = _resolve_snapshot_path(snapshot_path, user)
     year, week = _current_iso_week()
     if snapshot_path.exists():
         try:
@@ -595,5 +615,6 @@ def get_bankroll_snapshot(
         "iso_week": week,
         "snapshot_date": date.today().isoformat(),
         "bankroll": bankroll,
+        "user": user,
     }, indent=2))
     return bankroll

@@ -787,6 +787,14 @@
 
     <div class="settings-row">
       <div class="settings-row-text">
+        <div class="settings-row-title">👤 Aktiver User</div>
+        <div class="settings-row-sub" id="settings-user-status">—</div>
+      </div>
+      <button class="settings-toggle" type="button" onclick="_promptUserSlot()">Ändern</button>
+    </div>
+
+    <div class="settings-row">
+      <div class="settings-row-text">
         <div class="settings-row-title">🛡️ System-Status</div>
         <div class="settings-row-sub" id="settings-health-summary">Status wird geprüft …</div>
       </div>
@@ -977,6 +985,7 @@ let _settledBets = [];
 let _activeBetTab = 'open';
 let _liveScores = {};
 let _bankrollState = {};
+let _meta = {};
 let _squads = {};
 let _oddsHistory = {};
 let _wmResults = {};  // {matchKey: {home_score, away_score}}
@@ -2598,6 +2607,42 @@ async function _renderSettingsState() {
       ts.textContent = t ? 'Gesetzt · ••••' + t.slice(-4) : 'Nicht gesetzt';
     } catch { ts.textContent = '—'; }
   }
+  // D3 — User-Slot
+  const us = document.getElementById('settings-user-status');
+  if (us) {
+    const u = _getUserSlot();
+    const def = (_meta && _meta.default_user) || 'philip';
+    us.textContent = (u === def) ? `${u} (Default)` : u;
+  }
+}
+
+// D3 — Multi-User-Schema
+function _getUserSlot() {
+  try { return (localStorage.getItem('sb_user') || 'philip').trim() || 'philip'; }
+  catch { return 'philip'; }
+}
+function _setUserSlot(name) {
+  const clean = String(name || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  if (!clean) return false;
+  try { localStorage.setItem('sb_user', clean); } catch { return false; }
+  return true;
+}
+function _promptUserSlot() {
+  const current = _getUserSlot();
+  const v = prompt(
+    'User-Slot ändern\n\n' +
+    'Aktuell: ' + current + '\n\n' +
+    'Nur Buchstaben/Ziffern/-/_. Backend nutzt aktuell nur den Default-User; ' +
+    'andere Slots sind vorbereitet, bekommen aber noch keine eigenen Daten.',
+    current
+  );
+  if (v === null) return;
+  if (_setUserSlot(v)) {
+    showToast('User-Slot: ' + _getUserSlot(), 'ok');
+    _renderSettingsState();
+  } else {
+    showToast('Ungültiger Slot-Name', 'error');
+  }
 }
 
 function _toggleCompactFromSettings() {
@@ -3971,6 +4016,7 @@ async function _load() {
   _openBets = d.open_bets || [];
   _settledBets = d.settled_bets || [];
   _bankrollState = d.bankroll_state || {};
+  _meta = d.meta || {};
   _oddsHistory = d.odds_history || {};
   // Index wm_results by matchKey for fast lookup in Home tab
   _wmResults = {};

@@ -35,8 +35,19 @@ STAKE_TIERS: list[tuple[float, float, float]] = [
 # Goals-Range cap derives from the tier band: min + GOALS_RANGE_TIER_PCT × (max − min)
 GOALS_RANGE_TIER_PCT = 0.2
 
-BANKROLL_SNAPSHOT_PATH = DATA_CACHE / "bankroll_snapshot.json"
+BANKROLL_SNAPSHOT_PATH = DATA_CACHE / "bankroll_snapshot.json"  # legacy single-user pfad (Migration)
 BANKROLL_START = 100.0
+
+# D3 — Multi-User-Schema (Roadmap Phase 7)
+# Default-User; Frontend kann per localStorage 'sb_user' wechseln, Backend liest aktuell den Default.
+DEFAULT_USER = "philip"
+
+
+def bankroll_snapshot_path_for(user: str = DEFAULT_USER):
+    """Per-User-Bankroll-Snapshot-Pfad. Legacy `bankroll_snapshot.json` bleibt
+    für Backward-Compat erhalten und wird beim ersten Aufruf in den
+    Default-User-Slot migriert."""
+    return DATA_CACHE / f"bankroll_snapshot_{user}.json"
 
 # Phase 2 feature flags — keep new components off-by-default until the
 # Backtest Gate (Brier vs current blend) has validated each on its own.
