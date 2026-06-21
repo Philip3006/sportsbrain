@@ -538,6 +538,47 @@
     .modal-token-input { width: 100%; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r-md); color: var(--text); font-size: 13px; padding: 10px 12px; outline: none; margin: 10px 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
     .modal-token-input:focus { border-color: var(--green); }
 
+    /* ── M4: Glossar-Modal ── */
+    .glossary-item { padding: 10px 0; border-bottom: 1px solid rgba(48,54,61,.4); }
+    .glossary-item:last-child { border-bottom: none; }
+    .glossary-term { font-size: 13px; font-weight: 900; color: var(--green); letter-spacing: .2px; margin-bottom: 4px; }
+    .glossary-def { font-size: 12px; line-height: 1.5; color: var(--text); margin-bottom: 4px; }
+    .glossary-example { font-size: 11px; line-height: 1.4; color: var(--muted); font-style: italic; }
+
+    /* ── M3: Walkthrough-Spotlight ── */
+    .walk-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 450; display: none; pointer-events: auto; }
+    .walk-backdrop.show { display: block; }
+    .walk-spot { position: absolute; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,.75), 0 0 0 3px var(--green), 0 0 32px rgba(0,200,83,.6); transition: all .25s ease; pointer-events: none; }
+    .walk-tooltip { position: absolute; background: var(--card); border: 1.5px solid var(--green); border-radius: 12px; padding: 14px 16px; max-width: min(340px, 88vw); box-shadow: 0 12px 32px rgba(0,0,0,.7); z-index: 460; }
+    .walk-tooltip-title { font-size: 14px; font-weight: 900; color: var(--green); margin-bottom: 6px; }
+    .walk-tooltip-text { font-size: 12.5px; line-height: 1.5; color: var(--text); margin-bottom: 12px; }
+    .walk-tooltip-footer { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .walk-step-dots { display: flex; gap: 4px; }
+    .walk-step-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
+    .walk-step-dots span.active { background: var(--green); }
+    .walk-btn { font-size: 12px; font-weight: 800; padding: 7px 14px; border-radius: 8px; cursor: pointer; -webkit-tap-highlight-color: transparent; border: 1px solid var(--border); }
+    .walk-btn.skip { background: transparent; color: var(--muted); }
+    .walk-btn.next { background: var(--green); color: #0d1117; border-color: var(--green); }
+
+    /* ── M1: Inline "Warum?"-Drawer auf sig-card ── */
+    .why-inline { margin-top: 10px; background: rgba(0,200,83,.05); border: 1px solid rgba(0,200,83,.22); border-radius: 8px; overflow: hidden; }
+    .why-inline > summary { list-style: none; cursor: pointer; padding: 8px 12px; font-size: 11px; font-weight: 800; color: var(--green); letter-spacing: .4px; text-transform: uppercase; display: flex; align-items: center; justify-content: space-between; -webkit-tap-highlight-color: transparent; user-select: none; }
+    .why-inline > summary::-webkit-details-marker { display: none; }
+    .why-inline > summary::after { content: '▾'; font-size: 12px; transition: transform .15s ease; }
+    .why-inline[open] > summary::after { transform: rotate(180deg); }
+    .why-inline-body { padding: 4px 12px 12px; }
+    .why-inline-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; padding: 5px 0; border-bottom: 1px solid rgba(48,54,61,.4); }
+    .why-inline-row:last-of-type { border-bottom: none; }
+    .why-inline-row .wir-label { color: var(--muted); font-weight: 700; }
+    .why-inline-row .wir-val { font-weight: 800; color: var(--text); }
+    .why-inline-row .wir-val.pos { color: var(--green); }
+    .why-inline-row .wir-val.neg { color: var(--red); }
+    .why-inline-text { margin-top: 8px; font-size: 12px; line-height: 1.5; color: var(--text); font-weight: 500; }
+    .why-inline-text b { color: var(--green); font-weight: 800; }
+    .why-inline-text b.neg { color: var(--red); }
+    .why-inline-foot { margin-top: 8px; font-size: 10px; color: var(--muted); text-align: right; }
+    .why-inline-foot a { color: var(--green); text-decoration: none; font-weight: 700; cursor: pointer; }
+
     /* ── Place-Bet-Button in signal card ── */
     .place-bet-btn { display: block; width: 100%; margin-top: 12px; background: var(--green); color: #0d1117; border: none; border-radius: var(--r-md); padding: 11px; font-size: 14px; font-weight: 900; cursor: pointer; -webkit-tap-highlight-color: transparent; letter-spacing: .2px; }
     .place-bet-btn:active { transform: scale(.98); }
@@ -670,6 +711,17 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="glossary-modal-bd" role="dialog" aria-modal="true" aria-labelledby="glossary-modal-title">
+  <div class="modal">
+    <h3 id="glossary-modal-title">📖 Begriffe erklärt</h3>
+    <div class="modal-sub">Kurz und klar — Fachbegriffe in Alltagssprache.</div>
+    <div id="glossary-list" style="max-height:60vh;overflow-y:auto;margin:6px 0"></div>
+    <div class="modal-buttons" style="grid-template-columns:1fr">
+      <button class="modal-btn confirm" type="button" onclick="_closeGlossary()">Verstanden</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="token-modal-bd" role="dialog" aria-modal="true" aria-labelledby="token-modal-title">
   <div class="modal">
     <h3 id="token-modal-title">Worker-Token einmalig eintragen</h3>
@@ -716,6 +768,22 @@
         <div class="settings-row-sub" id="settings-health-summary">Status wird geprüft …</div>
       </div>
       <button class="settings-toggle" type="button" onclick="_openHealthDetail()">Details</button>
+    </div>
+
+    <div class="settings-row">
+      <div class="settings-row-text">
+        <div class="settings-row-title">📖 Begriffe erklärt</div>
+        <div class="settings-row-sub">EV, CLV, ROI, Edge & Co. — alle Fachbegriffe in Alltagssprache.</div>
+      </div>
+      <button class="settings-toggle" type="button" onclick="_closeSettings();_openGlossary()">Öffnen</button>
+    </div>
+
+    <div class="settings-row">
+      <div class="settings-row-text">
+        <div class="settings-row-title">🎯 App-Tour neu starten</div>
+        <div class="settings-row-sub">Geführter Walkthrough durch die wichtigsten Funktionen.</div>
+      </div>
+      <button class="settings-toggle" type="button" onclick="_closeSettings();_startWalkthrough()">Starten</button>
     </div>
 
     <div class="settings-info" id="settings-ios-hint" style="display:none">
@@ -825,6 +893,10 @@
 
   <footer id="app-footer" style="text-align:center;padding:18px 12px 90px;color:var(--muted);font-size:11px;letter-spacing:.3px">
     <span id="build-pill" class="conf-badge conf-LOW" style="display:none">SportsBrain</span>
+    <div style="margin-top:10px;display:flex;gap:14px;justify-content:center">
+      <a onclick="_openGlossary()" style="color:var(--green);cursor:pointer;text-decoration:none;font-weight:700">📖 Begriffe</a>
+      <a onclick="_startWalkthrough()" style="color:var(--green);cursor:pointer;text-decoration:none;font-weight:700">🎯 App-Tour</a>
+    </div>
   </footer>
 </main>
 
@@ -1752,18 +1824,46 @@ function sigCard(s, showMatch) {
   const lineMvHtml = ['home','draw','away'].includes(s.market)
     ? _oddsSparkline(s.match, s.market, s.odds)
     : '';
+  // M1+M2: Inline-Drawer „Warum diese Wette?" mit Plain-Language-Erklärung
+  let whyInline = '';
+  if (_edge !== null) {
+    const fpct = s.fair_prob.toFixed(1);
+    const mpct = s.model_prob.toFixed(1);
+    const edgePp = _edge.toFixed(1);
+    const edgeSign = _edge >= 0 ? '+' : '';
+    const valCls = _edge >= 0 ? 'pos' : 'neg';
+    const profitEur = (s.ev_pct/100*s.stake_eur).toFixed(2);
+    let plain;
+    if (_edge >= 0) {
+      plain = `Unsere KI schätzt die Chance auf <b>${mpct}%</b>, der Markt nur auf <b>${fpct}%</b>. Das sind <b>${edgeSign}${edgePp} Prozentpunkte</b> mehr als die Buchmacher — wenn die KI im Schnitt recht hat, machst du bei €${s.stake_eur.toFixed(0)} Einsatz langfristig <b>~€${profitEur} Gewinn pro Wette</b>.`;
+    } else {
+      plain = `Modell ${mpct}% vs Markt ${fpct}% — kein klarer Edge. Trotzdem im Scanner, weil andere Indikatoren (Form/Modell-Konsens) das ausgleichen.`;
+    }
+    const openAttr = s.confidence === 'HIGH' ? ' open' : '';
+    whyInline = `<details class="why-inline"${openAttr}>
+      <summary>💡 Warum diese Wette?</summary>
+      <div class="why-inline-body">
+        <div class="why-inline-row"><span class="wir-label">KI sagt</span><span class="wir-val">${mpct}%</span></div>
+        <div class="why-inline-row"><span class="wir-label">Markt (fair)</span><span class="wir-val">${fpct}%</span></div>
+        <div class="why-inline-row"><span class="wir-label">Dein Vorteil</span><span class="wir-val ${valCls}">${edgeSign}${edgePp} pp</span></div>
+        <div class="why-inline-text">${plain}</div>
+        <div class="why-inline-foot"><a onclick="event.stopPropagation();_openGlossary()">Begriffe erklärt →</a></div>
+      </div>
+    </details>`;
+  }
   return `<div class="sig-card ${cls}">
     ${matchLine}
     <div class="card-market">${marketLabel(s.market, s.match)}</div>
     <div class="card-footer">
       <span class="odds-btn">${s.odds.toFixed(2)}</span>
-      <span class="ev-chip ${evCls}">EV +${s.ev_pct}%${infoTip(`Expected Value = Modell-Wahrscheinlichkeit × Quote − 1. +${s.ev_pct}% heißt: langfristig +€${(s.ev_pct/100*s.stake_eur).toFixed(2)} Gewinn bei €${s.stake_eur.toFixed(0)} Einsatz. SportsBrain wettet nur bei EV ≥ 3%.`)}</span>
-      <span class="conf-badge conf-${s.confidence}">${s.confidence}${infoTip(s.confidence === 'HIGH' ? 'HIGH = höchste Modell-Übereinstimmung. Fußball: Dixon-Coles UND LightGBM tippen dasselbe. Tennis: starker Edge (WTA ≥8%, ATP ≥15%). Stake wird automatisch +10% skaliert.' : s.confidence === 'LOW' ? 'LOW = grenzwertiger EV oder geringe Modell-Konvergenz. Stake bleibt klein (≤€5).' : 'MEDIUM = Standard-Confidence. Solider EV (≥3%), aber kein voller Modell-Konsens. Stake bleibt im €5–15 Standardbereich.')}</span>
+      <span class="ev-chip ${evCls}">EV +${s.ev_pct}%${infoTip(`Expected Value (erwarteter Gewinn). +${s.ev_pct}% heißt: wenn du diese Wette 100× spielen würdest, gewinnst du im Schnitt €${(s.ev_pct/100*s.stake_eur).toFixed(2)} pro Wette. SportsBrain zeigt nur Wetten ab EV ≥ 3%.`)}</span>
+      <span class="conf-badge conf-${s.confidence}">${s.confidence}${infoTip(s.confidence === 'HIGH' ? 'HIGH = mehrere KI-Modelle sind sich einig. Höchster Vertrauenswert — Einsatz wird +10% erhöht.' : s.confidence === 'LOW' ? 'LOW = grenzwertige Vorhersage. KI ist sich weniger sicher — Einsatz bleibt klein (≤€5) zum Schutz der Bankroll.' : 'MEDIUM = solide Vorhersage, aber nicht alle Modelle stimmen voll überein. Standard-Einsatz €5–15.')}</span>
       ${dotsHtml}
       ${lineMvHtml}
       <span class="stake-val">${stakeLabel}</span>
     </div>
     ${probRow}
+    ${whyInline}
     ${['h1_goals_2_4','h2_goals_2_4','h1_goals_2_4_no','h2_goals_2_4_no'].includes(s.market)
       ? `<div style="font-size:10px;color:var(--muted);padding:2px 8px 6px">⚠ HZ-Settlement manuell — Quote beim Buchmacher prüfen</div>`
       : `<button class="place-bet-btn" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="Wette platzieren">Wette platzieren · €${s.stake_eur.toFixed(0)}</button>`}
@@ -3905,26 +4005,42 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW register failed:', err));
 }
 
-// C7: Onboarding-Overlay (3 Steps, einmalig)
+// ── M3: Onboarding-Overlay (noob-freundlich, einmalig + nachträglich startbar) ──
 const ONB_STEPS = [
-  { title: '👋 Willkommen bei SportsBrain', text: 'Modell-basierte Value-Bets für die WM 2026. Wir zeigen dir nur Wetten mit positivem Expected Value (EV ≥ 3%).' },
-  { title: '💡 Wie liest du eine Wette?', text: 'Jede Karte zeigt Quote, EV%, Confidence-Tier (HIGH/MED/LOW) und den vorgeschlagenen Einsatz. Tippe auf eine Wette für Details + „Warum diese Wette?".' },
-  { title: '📅 Journal & Forecast', text: 'Im Journal siehst du den 7-Tage-Recap mit ROI und CLV. Im Forecast-Tab läuft eine Monte-Carlo-Simulation der WM. Viel Erfolg!' },
+  {
+    title: '👋 Hi, willkommen!',
+    text: 'SportsBrain ist deine KI-Assistenz für Sportwetten. Wir analysieren tausende Spiele und zeigen dir nur die Wetten, bei denen die KI denkt: <b>hier liegt der Markt daneben</b>. Wenn du langfristig wettest, bringt dir das Plus.'
+  },
+  {
+    title: '🟢 Die wichtigsten Zahlen',
+    text: '<b>EV +5%</b> = erwarteter Gewinn pro Wette.<br><b>Edge +3pp</b> = Vorteil ggü. den Buchmachern.<br><b>HIGH/MED/LOW</b> = wie sicher sich die KI ist.<br><br>Keine Sorge — alles ist auch live in der App erklärt (💡-Drawer auf jeder Karte, 📖 Begriffe im Footer).'
+  },
+  {
+    title: '💰 So setzt du eine Wette',
+    text: '1. Wette antippen → Details öffnen sich<br>2. „Warum diese Wette?" lesen → KI vs Markt<br>3. Stake bestätigen → wird ins Journal geschrieben<br><br>Den echten Einsatz setzt du beim Buchmacher. Wir tracken nur P&L + CLV.'
+  },
+  {
+    title: '📅 Journal & Tour',
+    text: 'Im <b>Journal</b> siehst du dein P&L, ROI der letzten 7 Tage und den Closing-Line-Value (CLV) — der wichtigste Profit-Indikator langfristig.<br><br>Möchtest du eine geführte App-Tour mit Highlights auf den echten Buttons?'
+  },
 ];
 let _onbStep = 0;
 function _onbRender() {
   const s = ONB_STEPS[_onbStep];
   document.getElementById('onb-modal-title').textContent = s.title;
-  document.getElementById('onb-step-text').textContent = s.text;
+  document.getElementById('onb-step-text').innerHTML = s.text;
   document.getElementById('onb-step-indicator').innerHTML = ONB_STEPS.map((_,i) =>
     `<span style="width:8px;height:8px;border-radius:50%;background:${i===_onbStep?'var(--green)':'var(--border)'}"></span>`
   ).join('');
-  document.getElementById('onb-next').textContent = _onbStep < ONB_STEPS.length - 1 ? 'Weiter' : 'Los geht\'s';
+  const isLast = _onbStep === ONB_STEPS.length - 1;
+  document.getElementById('onb-next').textContent = isLast ? '🎯 Tour starten' : 'Weiter';
+  document.getElementById('onb-skip').textContent = isLast ? 'Ohne Tour starten' : 'Überspringen';
 }
-function _onbClose() {
+function _onbClose(startWalk) {
   document.getElementById('onb-modal-bd').classList.remove('show');
   document.body.style.overflow = '';
   try { localStorage.setItem('sb_seen_onboarding', '1'); } catch {}
+  if (startWalk) setTimeout(_startWalkthrough, 250);
 }
 function _onbMaybeShow() {
   try { if (localStorage.getItem('sb_seen_onboarding') === '1') return; } catch { return; }
@@ -3934,12 +4050,154 @@ function _onbMaybeShow() {
   document.body.style.overflow = 'hidden';
 }
 document.getElementById('onb-next').addEventListener('click', () => {
-  if (_onbStep < ONB_STEPS.length - 1) { _onbStep++; _onbRender(); } else { _onbClose(); }
+  if (_onbStep < ONB_STEPS.length - 1) { _onbStep++; _onbRender(); }
+  else { _onbClose(true); }
 });
-document.getElementById('onb-skip').addEventListener('click', _onbClose);
+document.getElementById('onb-skip').addEventListener('click', () => _onbClose(false));
 document.getElementById('onb-modal-bd').addEventListener('click', (e) => {
-  if (e.target.id === 'onb-modal-bd') _onbClose();
+  if (e.target.id === 'onb-modal-bd') _onbClose(false);
 });
+
+// ── M4: Glossar-Modal ──
+const GLOSSARY = [
+  { term: 'EV (Expected Value)', def: 'Der erwartete Gewinn pro Wette, in Prozent vom Einsatz.', example: 'EV +5% bei €10 Einsatz = im Schnitt +€0.50 Gewinn pro Wette (über viele Wetten gemittelt).' },
+  { term: 'Edge', def: 'Wie viel besser die KI-Wahrscheinlichkeit ist als die Markt-Wahrscheinlichkeit, in Prozentpunkten (pp).', example: 'KI: 55%, Markt: 50% → Edge = +5pp. Je größer, desto besser.' },
+  { term: 'CLV (Closing Line Value)', def: 'Vergleicht deine Einstiegsquote mit der Endquote kurz vor Anpfiff. Der langfristig wichtigste Profit-Indikator.', example: 'Du wettest @2.50, Quote fällt auf @2.30 → CLV +8.7% = du warst früher schlauer als der Markt.' },
+  { term: 'ROI (Return on Investment)', def: 'Dein realer Gewinn geteilt durch den gesamten Einsatz, in Prozent.', example: '€100 eingesetzt, €108 zurück → ROI +8%.' },
+  { term: 'Stake (Einsatz)', def: 'Der Geldbetrag, den du auf eine Wette setzt. Bei uns: automatisch via fractional Kelly auf 5% Bankroll begrenzt.', example: 'Bei €100 Bankroll: Stake meist €5–15, max €25.' },
+  { term: 'Tier (HIGH/MED/LOW)', def: 'Vertrauenswert der KI. HIGH = mehrere Modelle einig, LOW = grenzwertig.', example: 'HIGH → Einsatz +10%, LOW → Einsatz auf €5 gedeckelt.' },
+  { term: 'Quote (Odds)', def: 'Wie viel der Buchmacher pro €1 Einsatz auszahlt, wenn du gewinnst.', example: 'Quote 2.50 + €10 Einsatz = €25 Rückgabe (€15 Gewinn).' },
+  { term: 'Fair-Quote / Fair-Probability', def: 'Die „echte" Markt-Wahrscheinlichkeit ohne Buchmacher-Marge (Vig). Berechnet via Shin-Methode aus mehreren Bookies.', example: 'Quote 2.00 → 50% implied. Nach Vig-Bereinigung: 47% fair.' },
+  { term: 'Vig / Margin', def: 'Die Buchmacher-Marge — der Aufschlag, der ihre Gewinn-Garantie ist. Typisch 4–8%.', example: 'Heim+Unentschieden+Auswärts addieren in implied % zu ~105% — die 5% sind die Vig.' },
+  { term: 'Kelly-Criterion', def: 'Mathematische Formel für die optimale Einsatzgröße basierend auf Edge und Quote. Wir nutzen 25% fractional Kelly = vorsichtig.', example: 'Bei EV +10% und Quote 2.00: Voll-Kelly = 10%, wir wetten 2.5%.' },
+  { term: 'Bankroll', def: 'Dein gesamtes Wett-Kapital. Max 5% pro Einzelwette, max 3 aktive Wetten gleichzeitig.', example: '€100 Bankroll → max €5 pro Wette, max €15 in offenen Wetten gleichzeitig.' },
+  { term: 'Void (annulliert)', def: 'Wette wird ohne Gewinn/Verlust zurückgegeben — Einsatz kommt zurück. Tritt bei Spielabsagen oder bestimmten Push-Märkten auf.', example: 'AH+0.0 endet 1:1 → void, du bekommst deinen Stake zurück.' },
+  { term: 'Hit-Rate', def: 'Anteil der gewonnenen Wetten. Hohe Hit-Rate ≠ profitabel — entscheidend ist EV × Stake.', example: '40% Hit-Rate bei Ø-Quote 3.0 = profitabel (0.40 × 3.0 = 1.20 → +20% ROI).' },
+];
+function _renderGlossary() {
+  document.getElementById('glossary-list').innerHTML = GLOSSARY.map(g =>
+    `<div class="glossary-item">
+      <div class="glossary-term">${g.term}</div>
+      <div class="glossary-def">${g.def}</div>
+      <div class="glossary-example">📌 ${g.example}</div>
+    </div>`
+  ).join('');
+}
+function _openGlossary() {
+  _renderGlossary();
+  document.getElementById('glossary-modal-bd').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function _closeGlossary() {
+  document.getElementById('glossary-modal-bd').classList.remove('show');
+  document.body.style.overflow = '';
+}
+document.getElementById('glossary-modal-bd').addEventListener('click', (e) => {
+  if (e.target.id === 'glossary-modal-bd') _closeGlossary();
+});
+
+// ── M3: Walkthrough mit Spotlight ──
+const WALK_STEPS = [
+  { sel: '#nav-tab-home, .nav-tab[data-view="home"]', title: '🏠 Home', text: 'Hier siehst du die wichtigsten Spiele für heute & morgen. Tippe auf ein Spiel für Details.' },
+  { sel: '.sig-card', title: '🎯 Signal-Karte', text: 'Jede Karte zeigt eine empfohlene Wette: Quote, EV%, Confidence-Tier und Einsatz. Die KI hat hier einen Vorteil ggü. dem Markt erkannt.' },
+  { sel: '.why-inline', title: '💡 Warum diese Wette?', text: 'Klick auf diesen Drawer öffnet die Begründung: KI-% vs Markt-%, Edge in Prozentpunkten, plus eine Klartext-Erklärung.' },
+  { sel: '.place-bet-btn', title: '✅ Wette platzieren', text: 'Hier öffnest du das Bet-Modal. Stake wird via Kelly vorgeschlagen, du kannst ihn anpassen. Wird beim nächsten Sync ins Journal geschrieben.' },
+  { sel: '.nav-tab[data-view="journal"], #nav-tab-journal', title: '📅 Journal & CLV', text: 'Im Journal siehst du dein P&L, den 7-Tage-Recap und den Closing-Line-Value (CLV) — der zeigt langfristig, ob du den Markt schlägst.' },
+];
+let _walkStep = 0;
+let _walkBackdropEl = null;
+let _walkTooltipEl = null;
+
+function _walkFindEl(selectors) {
+  for (const sel of selectors.split(',')) {
+    const el = document.querySelector(sel.trim());
+    if (el && el.offsetParent !== null) return el;
+  }
+  return null;
+}
+
+function _walkPlaceTooltip(targetRect) {
+  const tt = _walkTooltipEl;
+  const vh = window.innerHeight, vw = window.innerWidth;
+  const ttRect = tt.getBoundingClientRect();
+  const below = targetRect.bottom + 12;
+  const above = targetRect.top - ttRect.height - 12;
+  const useBelow = below + ttRect.height < vh - 20;
+  tt.style.top = (useBelow ? below : Math.max(20, above)) + 'px';
+  let left = targetRect.left + targetRect.width/2 - ttRect.width/2;
+  left = Math.max(8, Math.min(vw - ttRect.width - 8, left));
+  tt.style.left = left + 'px';
+}
+
+function _walkRender() {
+  const step = WALK_STEPS[_walkStep];
+  const el = _walkFindEl(step.sel);
+  const spot = _walkBackdropEl.querySelector('.walk-spot');
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => {
+      const r = el.getBoundingClientRect();
+      const pad = 6;
+      spot.style.top = (r.top - pad) + 'px';
+      spot.style.left = (r.left - pad) + 'px';
+      spot.style.width = (r.width + pad*2) + 'px';
+      spot.style.height = (r.height + pad*2) + 'px';
+      spot.style.display = 'block';
+      _walkTooltipEl.style.display = 'block';
+      _walkTooltipEl.querySelector('.walk-tooltip-title').textContent = step.title;
+      _walkTooltipEl.querySelector('.walk-tooltip-text').textContent = step.text;
+      _walkTooltipEl.querySelector('.walk-step-dots').innerHTML = WALK_STEPS.map((_,i) =>
+        `<span class="${i===_walkStep?'active':''}"></span>`).join('');
+      _walkTooltipEl.querySelector('.walk-next').textContent = _walkStep < WALK_STEPS.length - 1 ? 'Weiter →' : 'Fertig ✓';
+      _walkPlaceTooltip(r);
+    }, 350);
+  } else {
+    // Element nicht da → skip step
+    if (_walkStep < WALK_STEPS.length - 1) { _walkStep++; _walkRender(); }
+    else { _walkEnd(); }
+  }
+}
+
+function _startWalkthrough() {
+  if (_walkBackdropEl) _walkEnd();
+  _walkStep = 0;
+  // Navigate to home so .sig-card is in DOM
+  try {
+    const homeTab = document.querySelector('.nav-tab[data-view="home"]');
+    if (homeTab && typeof navTo === 'function') navTo(homeTab);
+  } catch {}
+  const bd = document.createElement('div');
+  bd.className = 'walk-backdrop show';
+  bd.innerHTML = '<div class="walk-spot"></div>';
+  document.body.appendChild(bd);
+  _walkBackdropEl = bd;
+  const tt = document.createElement('div');
+  tt.className = 'walk-tooltip';
+  tt.style.display = 'none';
+  tt.innerHTML = `
+    <div class="walk-tooltip-title">—</div>
+    <div class="walk-tooltip-text">—</div>
+    <div class="walk-tooltip-footer">
+      <div class="walk-step-dots"></div>
+      <div style="display:flex;gap:6px">
+        <button class="walk-btn skip" type="button">Beenden</button>
+        <button class="walk-btn next" type="button">Weiter →</button>
+      </div>
+    </div>`;
+  document.body.appendChild(tt);
+  _walkTooltipEl = tt;
+  tt.querySelector('.walk-btn.next').addEventListener('click', () => {
+    if (_walkStep < WALK_STEPS.length - 1) { _walkStep++; _walkRender(); }
+    else { _walkEnd(); }
+  });
+  tt.querySelector('.walk-btn.skip').addEventListener('click', _walkEnd);
+  setTimeout(_walkRender, 200);
+}
+
+function _walkEnd() {
+  if (_walkBackdropEl) { _walkBackdropEl.remove(); _walkBackdropEl = null; }
+  if (_walkTooltipEl) { _walkTooltipEl.remove(); _walkTooltipEl = null; }
+}
 
 load();
 _onbMaybeShow();

@@ -323,6 +323,39 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ---
 
+## 🟦 M. + NEU Trust-UI v2 — Onboarding & Erklärbarkeit (P1, ≈ 3–5 h)
+
+> Folge-Phase aus C1–C7-Feedback (2026-06-21): „Drawer im Modal zu unscheinbar, brauche ihn schon am Bet-Kärtchen; Onboarding zu kompliziert; Begriffe (CLV/ROI/EV/Edge) müssen erklärt werden; Walkthrough wäre cool."
+
+### M1. „Warum diese Wette?"-Drawer inline auf der Bet-Karte
+- **Was**: Den heutigen Modal-Drawer (C1) zusätzlich direkt auf jeder `sig-card` als `<details>`-Element rendern — sichtbar **vor** Klick auf „Wette platzieren". Inhalt: Modell% / Markt-fair% / Edge pp + 2-Zeilen-Klartext-Begründung („KI hält X für wahrscheinlicher als der Markt — daraus ergibt sich +Ypp Vorteil").
+- **Warum**: Aktuell muss man erst das Bet-Modal öffnen um die Begründung zu sehen — UX-Friction, Vertrauen leidet. Inline-Drawer macht Trust auf einen Blick erkennbar.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟡 · 🟢
+- **Dateien**: `docs/index.html` (`sigCard`, neuer CSS-Block `.why-bet-inline`)
+- **Verifikation**: 5 Bet-Karten haben aufklappbaren Drawer; Werte = Modal-Werte.
+
+### M2. Noob-freundliche Erklärtexte
+- **Was**: Drawer/Tooltips in Alltagssprache. Statt „Edge +5.2pp" → „+5.2 Prozentpunkte mehr als der Markt – wenn die KI recht hat, gewinnst du langfristig". EV-Tooltip → konkretes €-Beispiel. CLV-Tooltip → „Markt hat dir nachgegeben = du warst früher schlauer".
+- **Warum**: Ich (Philip) + Freunde sind keine Quant-Profis. Begriffe wie „Implied Probability" oder „Shin-fair" überfordern.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟢 · 🟢
+- **Dateien**: `docs/index.html` (Tooltip-Strings in `sigCard`, `_buildSettledCard`, ggf. `_buildWeeklyRecap`)
+
+### M3. Onboarding-Rewrite + interaktiver Walkthrough
+- **Was**: (a) Onboarding-Overlay-Text vereinfachen (Eltern-tauglich). (b) Neuer „Tour starten"-Knopf am Ende → ein Overlay-Spotlight führt durch 5 echte UI-Elemente (Home-Karte → Bet-Karte → Warum-Drawer → EV/Tier → Journal-CLV). Highlight via halbtransparentem Backdrop + scrollIntoView. (c) „Onboarding neu starten" in Settings-Modal.
+- **Warum**: Aktuelles 3-Step-Onboarding ist statischer Text-Wall. Walkthrough macht Features greifbar; Re-Start für Demo bei Freunden.
+- **Impact/Aufwand/Risiko**: 🟡 · 🟡 · 🟡 (Walkthrough-Selector kann bei dynamischem Render fehlen → defensive Fallbacks)
+- **Dateien**: `docs/index.html` (`ONB_STEPS`, neue `WALK_STEPS` + `_walkStart/_walkNext/_walkEnd`, Settings-Row)
+- **Verifikation**: `localStorage.clear()` → Onboarding zeigt sich; Klick „Tour starten" → 5 Highlights nacheinander; Settings → „Tour neu starten" funktioniert.
+
+### M4. Glossar-Modal („Begriffe erklärt")
+- **Was**: Neues Modal mit allen Fachbegriffen: EV, Edge, CLV, ROI, Kelly, Stake, Tier (HIGH/MED/LOW), Fair-Quote, Vig, Implied Probability, Void, Hit-Rate. Pro Eintrag: 1-Satz-Definition + konkretes Mini-Beispiel.
+- **Warum**: Single Source of Truth statt verstreuter Tooltips. Erreichbar via Footer-Link + Settings-Row + Onboarding-Link.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟢 · 🟢
+- **Dateien**: `docs/index.html` (Glossar-Modal-DOM + `GLOSSARY` array + `_openGlossary()`)
+- **Verifikation**: Modal öffnet sich von 3 Stellen; 12 Einträge sichtbar.
+
+---
+
 ## 🟦 H. Polish (P2, anytime)
 
 ### H1. Push-Notification-Deep-Link
@@ -452,6 +485,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **4** | G1 (PPDA Shadow) | ✅ erledigt 2026-06-20 | 4-6 h |
 | **5** | F3, F4 (CLV-Audit + UI) | ✅ erledigt 2026-06-21 | 2-3 h |
 | **6** | C1–C7 (Trust-UI) | ✅ erledigt 2026-06-21 | 4-6 h |
+| **6b** | + NEU M1–M4 (Trust-UI v2: Inline-Drawer, Noob-Texte, Walkthrough, Glossar) | Tag 6b | 3-5 h |
 | **7** | D1–D3 (Risiko & Multi-User) | Tag 7 | 2-3 h |
 | **8** | E1–E4 (Refactor) | Tag 8-12 | 6-8 h |
 | **9** | I6 (Home Advantage Gastgeber) | vor KO-Phase 2026-07-04 | 1-3 h |
@@ -466,9 +500,9 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ## 📊 Statistik
 
-- **Insgesamt**: 52 konkrete Items (+3 neu: L1, L2, L3)
+- **Insgesamt**: 56 konkrete Items (+4 neu: M1, M2, M3, M4)
 - **P0**: 12 (sofort) — davon 11 ✅ (Phase 0 + Phase 1 vollständig); L1 offen
-- **P1**: 21 (diese Woche / vor KO-Phase) — inkl. I6, L2, L3 (neu)
+- **P1**: 25 (diese Woche / vor KO-Phase) — inkl. I6, L2, L3, M1-M4 (neu)
 - **P2**: 15 (dieser Monat / Refactor) — inkl. I7 (Monte Carlo)
 - **P3**: 4 (Q4 2026)
 - **Veto**: 11 (bewusst nicht gebaut)
@@ -486,4 +520,5 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **2026-06-21**: + L1 NEU (Gruppen-Standings-Fix, P0 — Gruppen stimmen nicht), + L2 NEU (Forecast-Fix, P1, abhängig L1), + L3 NEU (Journal-Fix, P1). Neue Section 🟥 L. Hot Fixes — laufende WM. Statistik: 49 → 52 Items.
 - **2026-06-20**: ~ Phase 4 (G1) erledigt. Neue Module `src/data/statsbomb_ppda.py` (Event-Parser, PPDA pro Match aus Pässen-in-Opp-60% / Def-Aktionen-im-Press-Bereich x≥48, Denominator-Floor 5 → NaN-Schutz, eigener 24h-Cache) und `src/data/fbref_ppda.py` (Saison-PPDA-Snapshot-Fallback). `src/features/ppda.py`: Rolling-Window N=10 mit Bayes-Shrinkage gegen Konföderations-Prior (Fallback-Kaskade Konföderation → FBref → 11.5). `src/features/builder.py` bekommt `ppda_df`/`force_ppda`-Parameter; Live bleibt off durch `PPDA_LIVE_ENABLED=False`. `scripts/backtest_with_ppda.py` vergleicht Brier + ROI-Proxy auf identischem Train/Val-Split, schreibt `results/audits/g1_ppda_backtest_*.json`. I5-Gate-Kriterium: Δ Brier ≥ 0.001 UND Δ ROI ≥ 0.5pp. 14 Unit-Tests neu, Gesamt-Suite 460/460. Nächste Phase: F3/F4 (CLV-Audit + UI).
 - **2026-06-21**: ~ Phase 6 (C1–C7) erledigt. C1: aufklappbarer „Warum diese Wette?"-Drawer im Bet-Modal mit Modell% / Markt-fair% / Edge pp (Shin-fair aus `s.fair_prob` thread via `data-fair-prob`, Fallback `100/odds` mit `*`-Hinweis). C2: LOW-Tier-CSS ergänzt, Tier-Pille im Modal-Header neben Kind-Badge, infoTip für LOW im Bet-Card. C3: Forecast-Spaltenkopf bekommt `title=`-Tooltips via `_FC_COLS[].tip`, plus 1-Zeilen-Erklärung über der Tabelle. C4: `_buildWeeklyRecap()` aggregiert `_settledBets` der letzten 7 Tage (W/V/L, P&L, ROI, Ø CLV) als oberste Journal-Karte. C5: `_build_info()` in `web_dashboard.py` schreibt `{sha, date}` in `signals.json`, Frontend rendert Pille in neuem `<footer id="app-footer">`. C6: `_renderApiFailEmpty(msg)` ersetzt Skeletons in allen Haupt-Containern durch Retry-Button bei Load-Fehler. C7: 3-Step Onboarding-Overlay via `localStorage.sb_seen_onboarding`. Gesamt-Suite 488/488 grün. Nächste Phase: D1–D3 (Risiko & Multi-User).
+- **2026-06-21**: + M NEU (Trust-UI v2: M1 Inline-Drawer, M2 Noob-Texte, M3 Walkthrough, M4 Glossar). Direkt nach C1–C7 als Folge-Iteration: Drawer im Modal zu unscheinbar → inline an Karte; Onboarding zu kompliziert → Walkthrough mit Spotlight; CLV/ROI/EV undefiniert → Glossar-Modal. Statistik: 52 → 56 Items. Reihenfolge-Slot 6b (zwischen Phase 6 und 7).
 - **2026-06-21**: ~ Phase 5 (F3, F4) erledigt. F3 (Commit `92cf85b`): drei Root-Causes für 41/43 leere CLVs gefunden — Pandas NaN-Truthiness im Backfill-Check, unvollständige Markt-Map, fehlender Void-Status. `_resolve_closing_odds()`-Helper deckt jetzt auch Quarter-Ball-O/Us und arbiträre Handicaps via dynamische `totals_lines`/`spreads`-Dicts ab. 16 historische Bets erfolgreich backfilled, 25 Tests neu. F4 (Commit `c2df64c`): farbcodierte CLV-Pille pro Settled-Bet + "Ø CLV letzte 30 Tage"-Karte zusätzlich zur Lifetime-Karte; Backend liefert `clv`/`closing_odds` in settled_bets und `mean_clv_30d`/`n_clv_30d` in summary; Void-Bets fließen in CLV-Aggregation (nicht Hit-Rate). Gesamt-Suite 488/488. Nächste Phase: C1–C7 (Trust-UI).
