@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-06-21T12:42:29Z",
-  "overall": "ok",
+  "generated_at": "2026-06-21T13:30:34Z",
+  "overall": "degraded",
   "jobs": [
     {
       "job": "daily_scan",
@@ -16,8 +16,8 @@
     {
       "job": "auto_retrain",
       "status": "ok",
-      "last_run_at": "2026-06-21T04:03:40Z",
-      "duration_s": 3.0,
+      "last_run_at": "2026-06-21T13:30:34Z",
+      "duration_s": null,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -37,33 +37,33 @@
     },
     {
       "job": "consume_pending_bets",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-06-21T12:42:29Z",
       "duration_s": 8.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-06-21T12:42:29Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
     },
     {
       "job": "live_score_push",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-06-21T12:40:21Z",
       "duration_s": 11.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-06-21T12:40:21Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
     },
     {
       "job": "prematch_scan",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-06-21T12:35:47Z",
       "duration_s": 0.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-06-21T12:35:47Z — overdue (>2700s)",
       "fallback_used": null,
       "next_expected_in_s": 1800,
       "cadence": "alle 30 Min (im Fenster)"
@@ -81,11 +81,11 @@
     },
     {
       "job": "aggregate_health",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-06-21T12:40:21Z",
       "duration_s": 18.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-06-21T12:40:21Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min (huckepack)"
