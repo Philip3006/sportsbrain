@@ -1,42 +1,42 @@
 match_id,match_date,home,away,market,decimal_odds,stake_pct,stake_amount,placed_date,status,pnl,closing_odds,clv,pinnacle_ref_odds,source,model_prob
-689096c8cd7e2753b9fec95321943c5d,2026-06-17,England,Croatia,o/u2.5_under,1.79,0.15,15.0,2026-06-11,void,0.0,1.79,0.0000,,value,
-8756200e539155e571557c4f2e0d7f05,2026-06-28,Algeria,Austria,home,3.85,0.15,15.0,2026-06-11,void,0.0,3.85,0.0000,,value,
-852a3abe6d46820720febc0fedebff9a,2026-06-21,Uruguay,Cape Verde,draw,4.75,0.15,15.0,2026-06-11,void,0.0,4.75,0.0000,,value,
-f955d4b3395ce6e3b5ac1031ca52ca4e,2026-06-20,Turkey,Paraguay,away,3.6,0.15,15.0,2026-06-11,void,0.0,3.55,0.0141,,value,
-c9ef5822ee64fd5275f7c73251bb56c7,2026-06-24,Switzerland,Canada,away,3.69,0.15,15.0,2026-06-11,void,0.0,3.69,0.0000,,value,
+689096c8cd7e2753b9fec95321943c5d,2026-06-17,England,Croatia,o/u2.5_under,1.79,0.15,15.0,2026-06-11,void,0.0,1.79,,,value,
+8756200e539155e571557c4f2e0d7f05,2026-06-28,Algeria,Austria,home,3.85,0.15,15.0,2026-06-11,void,0.0,3.85,,,value,
+852a3abe6d46820720febc0fedebff9a,2026-06-21,Uruguay,Cape Verde,draw,4.75,0.15,15.0,2026-06-11,void,0.0,4.75,,,value,
+f955d4b3395ce6e3b5ac1031ca52ca4e,2026-06-20,Turkey,Paraguay,away,3.6,0.15,15.0,2026-06-11,void,0.0,3.55,,,value,
+c9ef5822ee64fd5275f7c73251bb56c7,2026-06-24,Switzerland,Canada,away,3.69,0.15,15.0,2026-06-11,void,0.0,3.69,,,value,
 384cbb5d76b535896a24fe65f93cfac8,2026-06-12,South Korea,Czechia,o/u2.5_over,2.15,0.114,11.4,2026-06-12,won,13.11,,,,value,
 a84f52fd74f98ad89ff2bcfa278ad5ca,2026-06-12,Canada,Bosnia and Herzegovina,home,1.8,0.08,8.0,2026-06-12,lost,-8.0,23.0,,,value,
 5a7ad4083801bcd19485ac982fd435e7,2026-06-13,United States,Paraguay,o/u2.5_over,2.45,0.15,15.0,2026-06-12,won,21.75,2.6,-0.0577,,value,
 44b678839de3bf56d822c93877fec120,2026-06-13,Brazil,Morocco,o/u2.5_over,0.0,0.1000,10.0,2026-06-14,lost,-10.0,,,,value,
 ca13c579cd8a0175f30056f4aff04ca4,2026-06-13,Switzerland,Qatar,ah-1.0_home,0.0,0.1186,11.86,2026-06-14,lost,-11.86,,,,value,
 3497deb1533ad37f48790baf3316e2eb,2026-06-14,Haiti,Scotland,away,1.5,0.1500,15.0,2026-06-14,won,7.5,,,,value,
-f543f939bbc965eda1ec451fb4e2bdde,2026-06-15,Belgium,Egypt,draw,4.1200,0.0,9.42,2026-06-15,won,29.39,1.6600,1.4819,,value,
-f543f939bbc965eda1ec451fb4e2bdde,2026-06-15,Belgium,Egypt,o/u2.5_under,1.9600,0.0,15.00,2026-06-15,won,14.4,1.9100,0.0262,,value,
+f543f939bbc965eda1ec451fb4e2bdde,2026-06-15,Belgium,Egypt,draw,4.1200,0.0,9.42,2026-06-15,won,29.39,1.6600,,,value,
+f543f939bbc965eda1ec451fb4e2bdde,2026-06-15,Belgium,Egypt,o/u2.5_under,1.9600,0.0,15.00,2026-06-15,won,14.4,1.9100,,,value,
 5cd7c156d6791429e020b8bbc852fb1d,2026-06-15,Saudi Arabia,Uruguay,ah+1.5_home,1.6500,0.0,15.00,2026-06-15,won,9.75,0.0,,,value,
 fa530ba24aba29191e85bdaf4abb5837,2026-06-16,Iran,New Zealand,ah-1.5_home,3.3000,0.0,10.00,2026-06-15,lost,-10.0,0.0,,,value,0.000000
 fa530ba24aba29191e85bdaf4abb5837,2026-06-16,Iran,New Zealand,o/u2.5_over,2.3200,0.0,14.00,2026-06-15,won,18.48,0.0,,,value,0.000000
 5cd7c156d6791429e020b8bbc852fb1d,2026-06-15,Saudi Arabia,Uruguay,o/u3.0_under,1.6800,0.0,15.00,2026-06-15,won,10.20,0.0,,,value,0.000000
-d46ffa055d4550e9a7c70d41e3ffe68c,2026-06-16,France,Senegal,o/u2.5_under,2.0500,0.0,11.44,2026-06-16,lost,-11.44,2.2200,-0.0766,,value,0.000000
-d46ffa055d4550e9a7c70d41e3ffe68c,2026-06-16,France,Senegal,ah+1.5_away,1.6200,0.0,15.00,2026-06-16,lost,-15.0,1.6400,-0.0122,,value,0.000000
+d46ffa055d4550e9a7c70d41e3ffe68c,2026-06-16,France,Senegal,o/u2.5_under,2.0500,0.0,11.44,2026-06-16,lost,-11.44,2.2200,,,value,0.000000
+d46ffa055d4550e9a7c70d41e3ffe68c,2026-06-16,France,Senegal,ah+1.5_away,1.6200,0.0,15.00,2026-06-16,lost,-15.0,1.6400,,,value,0.000000
 5d868213a23eae7a8c6e1f5cf8e7f686,2026-06-17,Argentina,Algeria,o/u3.0_under,1.8600,0.0,20.00,2026-06-16,lost,-20.0,0.0,,,value,0.000000
 e2beab700e314cf318d16cedc21c8be0,2026-06-16,Iraq,Norway,btts_yes,2.37,0.1064,11.97,2026-06-16,won,16.4,,,,manual,
 5d868213a23eae7a8c6e1f5cf8e7f686,2026-06-17,Argentina,Algeria,scorer_Julián Álvarez,2.5000,0.0,20.00,2026-06-16,void,0.0,0.0,,,value,0.000000
 6476838eb64ff32945574c469d874d70,2026-06-17,Austria,Jordan,draw,5.0000,0.0,8.43,2026-06-17,lost,-8.43,0.0,,,value,0.327000
-daf23963f758cd85ad89fe7cac16362a,2026-06-17,Portugal,DR Congo,draw,5.5000,0.0,10.58,2026-06-17,won,47.61,3.1500,0.7460,,value,0.000000
-daf23963f758cd85ad89fe7cac16362a,2026-06-17,Portugal,DR Congo,o/u3.5_under,1.3700,0.0,20.00,2026-06-17,won,7.4,1.6000,-0.1437,,value,0.000000
-2169d51f3218f795e80e7294d6071bfd,2026-06-17,England,Croatia,home,1.7200,0.0,14.15,2026-06-17,void,0.0,1.7500,-0.0171,,value,0.000000
-2169d51f3218f795e80e7294d6071bfd,2026-06-17,England,Croatia,o/u2.5_under,1.6800,0.0,20.00,2026-06-17,lost,-20.0,1.8000,-0.0667,,value,0.000000
+daf23963f758cd85ad89fe7cac16362a,2026-06-17,Portugal,DR Congo,draw,5.5000,0.0,10.58,2026-06-17,won,47.61,3.1500,,,value,0.000000
+daf23963f758cd85ad89fe7cac16362a,2026-06-17,Portugal,DR Congo,o/u3.5_under,1.3700,0.0,20.00,2026-06-17,won,7.4,1.6000,,,value,0.000000
+2169d51f3218f795e80e7294d6071bfd,2026-06-17,England,Croatia,home,1.7200,0.0,14.15,2026-06-17,void,0.0,1.7500,,,value,0.000000
+2169d51f3218f795e80e7294d6071bfd,2026-06-17,England,Croatia,o/u2.5_under,1.6800,0.0,20.00,2026-06-17,lost,-20.0,1.8000,,,value,0.000000
 2169d51f3218f795e80e7294d6071bfd,2026-06-17,England,Croatia,scorer_Ivan Toney,2.5000,0.0,20.00,2026-06-17,void,0.0,0.0,,,value,0.000000
 2169d51f3218f795e80e7294d6071bfd,2026-06-17,England,Croatia,scorer_Harry Kane,3.0000,0.0,10.00,2026-06-17,won,20.0,0.0,,,value,0.420000
 a372f98a0a9f0db39c68227d52d86fe2,2026-06-17,Ghana,Panama,draw,3.1000,0.0,10.01,2026-06-17,lost,-10.01,2.8500,0.0877,,value,0.380000
 a372f98a0a9f0db39c68227d52d86fe2,2026-06-17,Ghana,Panama,btts_yes,1.9700,0.0,15.00,2026-06-17,lost,-15.00,0.0,,,manual,
-087ef08a6bd3374f89b4e25625d07b18,2026-06-18,Czechia,South Africa,home,1.80,0.0573,10.0,2026-06-18,lost,-10.0,1.9800,-0.0909,,manual,0.365
-087ef08a6bd3374f89b4e25625d07b18,2026-06-18,Czechia,South Africa,o/u2.5_over,2.05,0.1146,20.0,2026-06-18,lost,-20.0,2.2700,-0.0969,,manual,0.000
+087ef08a6bd3374f89b4e25625d07b18,2026-06-18,Czechia,South Africa,home,1.80,0.0573,10.0,2026-06-18,lost,-10.0,1.9800,,,manual,0.365
+087ef08a6bd3374f89b4e25625d07b18,2026-06-18,Czechia,South Africa,o/u2.5_over,2.05,0.1146,20.0,2026-06-18,lost,-20.0,2.2700,,,manual,0.000
 af6afac8dd8031e598faf3a45c8d8f50,2026-06-18,Switzerland,Bosnia & Herzegovina,draw,4.00,0.0573,10.0,2026-06-18,lost,-10.0,,,,manual,0.296
 af6afac8dd8031e598faf3a45c8d8f50,2026-06-18,Switzerland,Bosnia & Herzegovina,scorer_Breel Embolo,2.20,0.0573,10.0,2026-06-18,lost,-10.0,,,,manual,0.534
 26a9eabb9be41a54876aee4f56de562c,2026-06-19,Alba Berlin,Bayern München,home,2.50,0.0,10.0,2026-06-19,won,15.0,,,,manual,
 bc3136be8ad4073dac5b471f555a0028,2026-06-19,USA,Australia,btts_yes,2.25,0.0,10.0,2026-06-19,lost,-10.0,,,,manual,
-bc3136be8ad4073dac5b471f555a0028,2026-06-19,USA,Australia,o/u2.5_over,2.15,0.0,10.0,2026-06-19,lost,-10.0,1.5700,0.3694,,manual,
+bc3136be8ad4073dac5b471f555a0028,2026-06-19,USA,Australia,o/u2.5_over,2.15,0.0,10.0,2026-06-19,lost,-10.0,1.5700,,,manual,
 d7f1a3b8e92c054619dab7c30f582e41,2026-06-20,Morocco,Scotland,ah+0.5,2.20,0.0,20.0,2026-06-20,lost,-20.0,,,,manual,
 6b57731bcdf2ee021221e3b59c4c2824,2026-06-20,Brazil,Haiti,o/u3.0_under,3.4000,0.0,10.00,2026-06-20,lost,-10.0,0.0,,,value,0.000000
 6114638b341257030f17bd686d3d8732,2026-06-20,Netherlands,Sweden,scorer_Alexander_Isak,5.0000,0.088889,10.00,2026-06-20,lost,-10.0,0.0,,5.0000,value,0.377000
