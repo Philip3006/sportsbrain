@@ -106,3 +106,55 @@ def test_corrupt_snapshot_recovers_gracefully(tmp_paths):
     assert br == 120.0
     # And it overwrites with a valid one
     assert json.loads(snapshot.read_text())["bankroll"] == 120.0
+
+
+# ───────────── D3 Multi-User-Schema ─────────────
+
+def test_legacy_snapshot_migrates_into_default_user_slot(tmp_path, monkeypatch):
+    """When no per-user snapshot exists yet but the legacy file does, it
+    is renamed into the default user's slot on first call."""
+    import src.config as cfg
+
+    data_cache = tmp_path / "cache"
+    data_cache.mkdir()
+    legacy = data_cache / "bankroll_snapshot.json"
+    legacy.write_text(json.dumps({
+        "iso_year": 1970, "iso_week": 1,
+        "snapshot_date": "1970-01-01", "bankroll": 42.0,
+    }))
+    monkeypatch.setattr(cfg, "BANKROLL_SNAPSHOT_PATH", legacy)
+    monkeypatch.setattr(cfg, "DATA_CACHE", data_cache)
+    monkeypatch.setattr(ledger_mod, "BANKROLL_SNAPSHOT_PATH", legacy)
+
+    ledger = tmp_path / "ledger.csv"
+    _write_ledger(ledger, total_pnl=10.0)
+
+    # First call without explicit snapshot_path → triggers migration
+    get_bankroll_snapshot(ledger_path=ledger, user="philip")
+
+    user_path = data_cache / "bankroll_snapshot_philip.json"
+    assert user_path.exists(), "user slot file should exist after migration"
+    assert not legacy.exists(), "legacy file should be renamed away"
+
+
+def test_per_user_snapshots_are_isolated(tmp_path, monkeypatch):
+    """Two different users get independent snapshot files."""
+    import src.config as cfg
+
+    data_cache = tmp_path / "cache"
+    data_cache.mkdir()
+    legacy = data_cache / "bankroll_snapshot.json"
+    monkeypatch.setattr(cfg, "BANKROLL_SNAPSHOT_PATH", legacy)
+    monkeypatch.setattr(cfg, "DATA_CACHE", data_cache)
+    monkeypatch.setattr(ledger_mod, "BANKROLL_SNAPSHOT_PATH", legacy)
+
+    ledger = tmp_path / "ledger.csv"
+    _write_ledger(ledger, total_pnl=23.0)
+
+    a = get_bankroll_snapshot(ledger_path=ledger, user="philip")
+    b = get_bankroll_snapshot(ledger_path=ledger, user="alice")
+    assert a == b == 123.0
+    assert (data_cache / "bankroll_snapshot_philip.json").exists()
+    assert (data_cache / "bankroll_snapshot_alice.json").exists()
+    # And the philip-slot has a `user` field for traceability
+    assert json.loads((data_cache / "bankroll_snapshot_philip.json").read_text())["user"] == "philip"

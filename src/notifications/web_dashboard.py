@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from src.betting.value_detector import BetSignal
+from src.config import DEFAULT_USER as _DEFAULT_USER
 
 
 def _build_info() -> dict:
@@ -683,6 +684,7 @@ def write_signals_json(
         "build_info":     _build_info(),
         "meta": {
             "stale_odds": bool(_stale_odds_flag),
+            "default_user": _DEFAULT_USER,
         },
         "schedule":       schedule_data,
         "all_odds":       all_odds_data,
