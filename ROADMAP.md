@@ -311,7 +311,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Abhängigkeiten**: L1 ✅
 - **Verifikation**: Bracket-Vorschau zeigt 16 R16-Paarungen, jedes Match einen wahrscheinlicheren Sieger, Pfad bis zum Finale plausibel
 
-### L3. + NEU Journal-Fix
+### L3. ✅ Journal-Fix — Future-dated Voids waren ausgefiltert
 - **Was**: Journal-Tab zeigt fehlerhafte Einträge, fehlt Bets oder stellt Status/P&L falsch dar. Bugfix für bestehenden Render-Code — kein neues Feature (C4/F4 sind separate Feature-Items).
 - **Warum**: Journal ist Abrechnungs-Basis; falsche Darstellung macht P&L-Tracking unzuverlässig.
 - **Impact**: 🟡 — operativer Fehler, kein Modell-Risiko
@@ -320,6 +320,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Priorität**: P1
 - **Dateien**: `docs/index.html` (`renderBets`/Journal-View), `signals.json` (`settled_bets`-Feld)
 - **Verifikation**: Alle settled Bets aus `results/ledger.csv` erscheinen im Journal mit korrektem Status (void/won/lost) und P&L
+- **Status (2026-06-21)**: Erledigt. Root-Cause: `_get_settled_bets_for_dashboard()` filterte ALLE Bets mit `match_date > today` (Future-Anomalie-Schutz). Das blockte aber legitim früh annullierte Bets, deren Match noch nicht stattfand (z.B. Algeria vs Austria 2026-06-28 void, Switzerland vs Canada 2026-06-24 void — gekillt wegen Lineup/Market-Close). Filter umgebaut: skip future-dated NUR für `won`/`lost`/`push` (echte Daten-Anomalien); `void` mit Future-Datum zeigt immer (legitim). Journal-Anzahl 41 → 43, Void-Count 6 → 8 = exakt ledger.csv (8 void/14 won/21 lost = 43). 488/488 Tests grün.
 
 ---
 

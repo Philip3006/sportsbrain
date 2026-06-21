@@ -425,8 +425,10 @@ def _get_settled_bets_for_dashboard() -> list[dict]:
             for r in csv.DictReader(f):
                 if r.get("status") not in ("won", "lost", "push", "void"):
                     continue
-                # Skip bets whose match hasn't happened yet (future-voided anomalies)
-                if r.get("match_date", "") > today_str:
+                # Skip future-dated won/lost/push only (genuine data anomalies — match
+                # not played yet but marked settled). Void with future date is
+                # legitimate: bet was killed early (lineup change, market close).
+                if r.get("status") in ("won", "lost", "push") and r.get("match_date", "") > today_str:
                     continue
                 clv_val: float | None = None
                 closing_val: float | None = None
