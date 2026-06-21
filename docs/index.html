@@ -546,9 +546,12 @@
     .glossary-example { font-size: 11px; line-height: 1.4; color: var(--muted); font-style: italic; }
 
     /* ── M3: Walkthrough-Spotlight ── */
-    .walk-backdrop { position: fixed; inset: 0; z-index: 450; display: none; pointer-events: none; }
+    .walk-backdrop { position: fixed; inset: 0; z-index: 450; display: none; pointer-events: none; background: transparent; }
     .walk-backdrop.show { display: block; }
-    .walk-spot { position: fixed; border-radius: 12px; border: 3px solid var(--green); box-shadow: 0 0 0 4px rgba(0,200,83,.25), 0 0 24px rgba(0,200,83,.7); transition: top .15s linear, left .15s linear, width .15s linear, height .15s linear; pointer-events: none; animation: walk-pulse 1.6s ease-in-out infinite; }
+    .walk-fab { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 470; background: var(--green); color: #0d1117; font-weight: 900; font-size: 15px; padding: 14px 28px; border-radius: 30px; border: none; box-shadow: 0 8px 24px rgba(0,200,83,.5); cursor: pointer; pointer-events: auto; -webkit-tap-highlight-color: transparent; }
+    .walk-fab:active { transform: translateX(-50%) scale(.96); }
+    .walk-fab-skip { position: fixed; top: 16px; right: 16px; z-index: 470; background: rgba(0,0,0,.6); color: #fff; font-size: 12px; padding: 8px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,.2); cursor: pointer; pointer-events: auto; }
+    .walk-spot { position: fixed; border-radius: 12px; border: 3px solid var(--green); box-shadow: 0 0 0 4px rgba(0,200,83,.25), 0 0 24px rgba(0,200,83,.7); transition: top .15s linear, left .15s linear, width .15s linear, height .15s linear; pointer-events: none; animation: walk-pulse 1.6s ease-in-out infinite; z-index: 455; }
     @keyframes walk-pulse { 0%,100% { box-shadow: 0 0 0 4px rgba(0,200,83,.25), 0 0 24px rgba(0,200,83,.7);} 50% { box-shadow: 0 0 0 8px rgba(0,200,83,.15), 0 0 40px rgba(0,200,83,.9);} }
     .walk-tooltip { position: fixed; background: var(--card); border: 1.5px solid var(--green); border-radius: 12px; padding: 14px 16px; max-width: min(340px, 88vw); box-shadow: 0 12px 32px rgba(0,0,0,.7); z-index: 460; pointer-events: auto; }
     .walk-tooltip-title { font-size: 14px; font-weight: 900; color: var(--green); margin-bottom: 6px; }
@@ -1844,7 +1847,7 @@ function sigCard(s, showMatch) {
     const profitEur = (s.ev_pct/100*s.stake_eur).toFixed(2);
     let plain;
     if (_edge >= 0) {
-      plain = `Unsere KI schätzt die Chance auf <b>${mpct}%</b>, der Markt nur auf <b>${fpct}%</b>. Das sind <b>${edgeSign}${edgePp} Prozentpunkte</b> mehr als die Buchmacher — wenn die KI im Schnitt recht hat, machst du bei €${s.stake_eur.toFixed(0)} Einsatz langfristig <b>~€${profitEur} Gewinn pro Wette</b>.`;
+      plain = `Unsere KI schätzt die Chance auf <b>${mpct}%</b>, der Markt nur auf <b>${fpct}%</b>. Das sind <b>${edgeSign}${edgePp} Prozentpunkte</b> mehr als die Buchmacher. <i>Wenn</i> die KI im Schnitt recht hat, wäre der erwartete Gewinn bei €${s.stake_eur.toFixed(0)} Einsatz <b>~€${profitEur} pro Wette</b> — keine Garantie, einzelne Wetten können verlieren.`;
     } else {
       plain = `Modell ${mpct}% vs Markt ${fpct}% — kein klarer Edge. Trotzdem im Scanner, weil andere Indikatoren (Form/Modell-Konsens) das ausgleichen.`;
     }
@@ -4018,7 +4021,7 @@ if ('serviceWorker' in navigator) {
 const ONB_STEPS = [
   {
     title: '👋 Hi, willkommen!',
-    text: 'SportsBrain ist deine KI-Assistenz für Sportwetten. Wir analysieren tausende Spiele und zeigen dir nur die Wetten, bei denen die KI denkt: <b>hier liegt der Markt daneben</b>. Wenn du langfristig wettest, bringt dir das Plus.'
+    text: 'SportsBrain ist deine KI-Assistenz für Sportwetten. Wir analysieren tausende Spiele und zeigen dir nur Wetten, bei denen die KI denkt: <b>hier liegt der Markt daneben</b>. <br><br>⚠️ <b>Wichtig:</b> Auch bei positivem Edge gibt es <u>keine Gewinngarantie</u>. Sportwetten bleiben Glücksspiel mit Risiko — einzelne Wetten können verlieren, und auch über viele Wetten kann die Bilanz negativ sein. Setze nur Geld ein, dessen Verlust du verkraften kannst.'
   },
   {
     title: '🟢 Die wichtigsten Zahlen',
@@ -4123,6 +4126,8 @@ const WALK_STEPS = [
 let _walkStep = 0;
 let _walkBackdropEl = null;
 let _walkTooltipEl = null;
+let _walkFabEl = null;
+let _walkSkipEl = null;
 
 function _walkFindEl(selectors) {
   for (const sel of selectors.split(',')) {
@@ -4173,6 +4178,7 @@ function _walkRender() {
       _walkTooltipEl.querySelector('.walk-step-dots').innerHTML = WALK_STEPS.map((_,i) =>
         `<span class="${i===_walkStep?'active':''}"></span>`).join('');
       _walkTooltipEl.querySelector('.walk-btn.next').textContent = _walkStep < WALK_STEPS.length - 1 ? 'Weiter →' : 'Fertig ✓';
+      if (_walkFabEl) _walkFabEl.textContent = _walkStep < WALK_STEPS.length - 1 ? 'Weiter →' : 'Fertig ✓';
       _walkReposition();
     }, 350);
   } else {
@@ -4198,6 +4204,24 @@ function _startWalkthrough() {
   bd.innerHTML = '<div class="walk-spot"></div>';
   document.body.appendChild(bd);
   _walkBackdropEl = bd;
+  // Persistente FABs: Weiter (unten) + Skip (oben rechts)
+  const fab = document.createElement('button');
+  fab.type = 'button';
+  fab.className = 'walk-fab';
+  fab.textContent = 'Weiter →';
+  fab.addEventListener('click', () => {
+    if (_walkStep < WALK_STEPS.length - 1) { _walkStep++; _walkRender(); }
+    else { _walkEnd(); }
+  });
+  document.body.appendChild(fab);
+  _walkFabEl = fab;
+  const sk = document.createElement('button');
+  sk.type = 'button';
+  sk.className = 'walk-fab-skip';
+  sk.textContent = '✕ Tour beenden';
+  sk.addEventListener('click', _walkEnd);
+  document.body.appendChild(sk);
+  _walkSkipEl = sk;
   const tt = document.createElement('div');
   tt.className = 'walk-tooltip';
   tt.style.display = 'none';
@@ -4228,6 +4252,8 @@ function _walkEnd() {
   _walkTargetEl = null;
   if (_walkBackdropEl) { _walkBackdropEl.remove(); _walkBackdropEl = null; }
   if (_walkTooltipEl) { _walkTooltipEl.remove(); _walkTooltipEl = null; }
+  if (_walkFabEl) { _walkFabEl.remove(); _walkFabEl = null; }
+  if (_walkSkipEl) { _walkSkipEl.remove(); _walkSkipEl = null; }
 }
 
 load();
