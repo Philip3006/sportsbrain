@@ -324,6 +324,19 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ---
 
+## 🟦 M5. + NEU FIFA-2026-Bracket-Mapping (P1, vor KO-Phase 2026-07-04)
+- **Was**: Aktuelles Bracket-Vorschau in `_build_bracket_preview()` (build_wm_forecast.py) nutzt **Seeded-Pairing** (Seed 1 vs 32, etc.) als Approximation. Nach offizieller FIFA-KO-Auslosung am 2026-06-27 in Las Vegas wird das echte R32-Slot-Mapping verkündet (z.B. „1A vs 3C/D/E"). Hardcoded `FIFA_R32_SLOTS` einbauen, der die 32 Qualifizierten den 16 R32-Matches gemäß offiziellem Bracket zuweist.
+- **Warum**: Aktuelle Approximation ist mathematisch fair, aber NICHT die echte Paarung. Für KO-Bet-Entscheidungen ab 2026-07-04 brauchen wir die korrekten Slots (z.B. Argentina nicht zwangsläufig gegen den schwächsten Drittplatzierten).
+- **Impact**: 🟢 — KO-Bet-Genauigkeit pro Match, korrekte Pfad-Wahrscheinlichkeiten Champion
+- **Aufwand**: 🟢 (1-2 h: Slot-Tabelle eintragen + Logik anpassen + Tests)
+- **Risiko**: 🟢 — reiner Lookup, Backend-Output-Schema identisch
+- **Priorität**: P1 — nach FIFA-Auslosung 2026-06-27, vor KO-Start 2026-07-04
+- **Dateien**: `scripts/build_wm_forecast.py` (`_build_bracket_preview`, neuer Konstanten-Block `FIFA_2026_R32_SLOTS`), evtl. `docs/index.html` (Hinweis-Text entfernen)
+- **Abhängigkeiten**: L2 ✅ (Bracket-Infrastruktur), FIFA-Auslosung 2026-06-27
+- **Verifikation**: 16 R32-Paarungen exakt nach FIFA-Bracket, manuell gegen FIFA.com-Bracket-PDF
+
+---
+
 ## 🟦 M. Trust-UI v2 — Onboarding & Erklärbarkeit (P1, ≈ 3–5 h) ✅ erledigt 2026-06-21
 
 > Folge-Phase aus C1–C7-Feedback (2026-06-21): „Drawer im Modal zu unscheinbar, brauche ihn schon am Bet-Kärtchen; Onboarding zu kompliziert; Begriffe (CLV/ROI/EV/Edge) müssen erklärt werden; Walkthrough wäre cool."
@@ -489,6 +502,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **6b** | M1–M4 (Trust-UI v2: Inline-Drawer, Noob-Texte, Walkthrough, Glossar) | ✅ erledigt 2026-06-21 | 3-5 h |
 | **7** | D1–D3 (Risiko & Multi-User) | Tag 7 | 2-3 h |
 | **8** | E1–E4 (Refactor) | Tag 8-12 | 6-8 h |
+| **8b** | M5 (FIFA-Bracket-Mapping nach Auslosung) | ab 2026-06-27 (Auslosung), vor 2026-07-04 | 1-2 h |
 | **9** | I6 (Home Advantage Gastgeber) | vor KO-Phase 2026-07-04 | 1-3 h |
 | **9b** | I1–I5 (Post-WM Snapshot + Retrain) | 2026-07-20 bis 2026-07-31 | 8-12 h |
 | **9c** | I7 (Monte Carlo Sims) | nach I6, anytime | < 2 h |
