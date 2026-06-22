@@ -146,7 +146,8 @@ function _renderOpenBetCards(bets, isLive) {
       }
     }
 
-    h += `<div class="bet-card" style="cursor:pointer" onclick="if(!event.target.closest('textarea,a,button'))_openMatchDetailFromSignal(${JSON.stringify(home.trim())},${JSON.stringify(away.trim())})">
+    const _escA = s => s.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+    h += `<div class="bet-card" style="cursor:pointer" data-match-home="${_escA(home.trim())}" data-match-away="${_escA(away.trim())}" onclick="if(!event.target.closest('textarea,a,button'))_openMatchDetailFromSignal(this.dataset.matchHome,this.dataset.matchAway)">
       <div class="bet-card-top">
         <div class="bet-card-header">
           <span class="bet-match">${flagH} ${esc(home)} vs ${flagA} ${esc(away)}</span>
