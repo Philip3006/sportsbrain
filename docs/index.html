@@ -731,6 +731,12 @@
       <input id="onb-bankroll-val" type="number" min="10" max="100000" step="5" placeholder="z.B. 100"
         style="width:100%;box-sizing:border-box;padding:10px 12px;background:#1a2030;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:18px;font-weight:700;text-align:center">
     </div>
+    <div id="onb-username-input" style="display:none;margin:14px 0 4px">
+      <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Dein Username (3–20 Zeichen, a-z, 0-9, _, -)</label>
+      <input id="onb-username-val" type="text" minlength="3" maxlength="20" pattern="[a-z0-9_-]{3,20}" placeholder="z.B. alice"
+        style="width:100%;box-sizing:border-box;padding:10px 12px;background:#1a2030;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:18px;font-weight:700;text-align:center">
+      <div id="onb-username-err" style="display:none;color:#ef4444;font-size:12px;margin-top:6px;text-align:center"></div>
+    </div>
     <div id="onb-step-indicator" style="display:flex;gap:6px;justify-content:center;margin:14px 0 6px"></div>
     <div class="modal-buttons">
       <button class="modal-btn cancel" id="onb-skip" type="button">Überspringen</button>
@@ -804,6 +810,14 @@
         <div class="settings-row-sub" id="settings-rotate-status">Erzeugt neuen Worker-Token. Alter bleibt 24h gültig (Grace-Period).</div>
       </div>
       <button class="settings-toggle" type="button" onclick="_rotateToken()">Rotieren</button>
+    </div>
+
+    <div class="settings-row">
+      <div class="settings-row-text">
+        <div class="settings-row-title">🎟️ Freund einladen</div>
+        <div class="settings-row-sub">Erzeugt einen Invite-Link. Empfänger wählt Username + Bankroll selbst.</div>
+      </div>
+      <button class="settings-toggle" type="button" onclick="_createInvite()">Link erstellen</button>
     </div>
 
     <div class="settings-row">
@@ -2711,6 +2725,41 @@ async function _rotateToken() {
   }
 }
 
+// D6: Master-Token erzeugt einen Invite-Link. Empfänger wählt Username + Bankroll
+// im Onboarding-Flow selbst (Username-Step erscheint nur mit sb_invite_pending).
+async function _createInvite() {
+  const token = (() => { try { return localStorage.getItem('sb_token') || ''; } catch { return ''; } })();
+  if (!token) {
+    showToast('Kein Worker-Token gesetzt — Master-Token nötig.', 'error');
+    return;
+  }
+  try {
+    const r = await fetch(WORKER_BASE + '/invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({}),
+    });
+    if (r.status === 401) {
+      showToast('Nur Master-Token kann Invites erstellen.', 'error');
+      return;
+    }
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.ok || !j.invite_token) {
+      showToast('Invite fehlgeschlagen (HTTP ' + r.status + ')', 'error');
+      return;
+    }
+    const link = window.location.origin + window.location.pathname + '?invite=' + j.invite_token;
+    try {
+      await navigator.clipboard.writeText(link);
+      showToast('Invite-Link in Zwischenablage kopiert.', 'success');
+    } catch {}
+    // Show in a modal-like prompt as fallback
+    window.prompt('Invite-Link (einmal nutzbar, läuft nach erster Registrierung ab):', link);
+  } catch (e) {
+    showToast('Netzwerk-Fehler: ' + (e && e.message || e), 'error');
+  }
+}
+
 function _toggleCompactFromSettings() {
   toggleCompact();
   _renderSettingsState();
@@ -4272,12 +4321,36 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW register failed:', err));
 }
 
+// ── D6: Invite-Link-Handling beim ersten Aufruf ──
+// URL-Param ?invite=TOKEN setzt sb_invite_pending, räumt URL und zeigt
+// Username-Step im Onboarding.
+(function _consumeInviteParam() {
+  try {
+    const u = new URL(window.location.href);
+    const inv = u.searchParams.get('invite');
+    if (inv && inv.length >= 16) {
+      localStorage.setItem('sb_invite_pending', inv);
+      u.searchParams.delete('invite');
+      const clean = u.pathname + (u.searchParams.toString() ? '?' + u.searchParams.toString() : '') + u.hash;
+      window.history.replaceState({}, '', clean);
+    }
+  } catch {}
+})();
+
 // ── M3: Onboarding-Overlay (noob-freundlich, einmalig + nachträglich startbar) ──
+const _HAS_INVITE = (() => {
+  try { return !!localStorage.getItem('sb_invite_pending'); } catch { return false; }
+})();
 const ONB_STEPS = [
   {
     title: '👋 Hi, willkommen!',
     text: 'SportsBrain ist deine KI-Assistenz für Sportwetten. Wir analysieren tausende Spiele und zeigen dir nur Wetten, bei denen die KI denkt: <b>hier liegt der Markt daneben</b>. <br><br>⚠️ <b>Wichtig:</b> Auch bei positivem Edge gibt es <u>keine Gewinngarantie</u>. Sportwetten bleiben Glücksspiel mit Risiko — einzelne Wetten können verlieren, und auch über viele Wetten kann die Bilanz negativ sein. Setze nur Geld ein, dessen Verlust du verkraften kannst.'
   },
+  ...(_HAS_INVITE ? [{
+    title: '👤 Wähle deinen Username',
+    text: 'Dein Username ist der Schlüssel zu allen deinen Daten — Ledger, Wetten, Bankroll. Wähle einen kurzen Namen, den nur du kennst.',
+    input: 'username'
+  }] : []),
   {
     title: '💰 Deine Startbankroll',
     text: 'Wie viel Kapital möchtest du für Sportwetten einsetzen? Der Betrag wird lokal gespeichert und für Einsatz-Empfehlungen (Kelly-Criterion) verwendet.',
@@ -4301,15 +4374,20 @@ function _onbRender() {
   const s = ONB_STEPS[_onbStep];
   document.getElementById('onb-modal-title').textContent = s.title;
   document.getElementById('onb-step-text').innerHTML = s.text;
-  const inputEl = document.getElementById('onb-bankroll-input');
-  const inputVal = document.getElementById('onb-bankroll-val');
+  const brEl = document.getElementById('onb-bankroll-input');
+  const brVal = document.getElementById('onb-bankroll-val');
+  const unEl = document.getElementById('onb-username-input');
+  const unVal = document.getElementById('onb-username-val');
+  const unErr = document.getElementById('onb-username-err');
+  brEl.style.display = (s.input === 'bankroll') ? 'block' : 'none';
+  unEl.style.display = (s.input === 'username') ? 'block' : 'none';
   if (s.input === 'bankroll') {
-    inputEl.style.display = 'block';
     const saved = localStorage.getItem('sb_bankroll_start');
-    if (saved && !inputVal.value) inputVal.value = saved;
-    setTimeout(() => inputVal.focus(), 100);
-  } else {
-    inputEl.style.display = 'none';
+    if (saved && !brVal.value) brVal.value = saved;
+    setTimeout(() => brVal.focus(), 100);
+  } else if (s.input === 'username') {
+    unErr.style.display = 'none';
+    setTimeout(() => unVal.focus(), 100);
   }
   document.getElementById('onb-step-indicator').innerHTML = ONB_STEPS.map((_,i) =>
     `<span style="width:8px;height:8px;border-radius:50%;background:${i===_onbStep?'var(--green)':'var(--border)'}"></span>`
@@ -4327,6 +4405,43 @@ function _onbSaveBankrollIfNeeded() {
     _applyUserBankroll(v);
   }
 }
+// D6: konsumiert sb_invite_pending + gewählten Username, registriert beim Worker.
+// Bei Erfolg: speichert sb_user + sb_token, räumt invite. Liefert true/false.
+async function _onbRegisterUserIfNeeded() {
+  const s = ONB_STEPS[_onbStep];
+  if (s.input !== 'username') return true;
+  const unVal = document.getElementById('onb-username-val');
+  const unErr = document.getElementById('onb-username-err');
+  const showErr = (m) => { unErr.textContent = m; unErr.style.display = 'block'; };
+  const raw = (unVal.value || '').trim().toLowerCase();
+  const clean = raw.replace(/[^a-z0-9_-]/g, '');
+  if (clean.length < 3 || clean.length > 20) { showErr('Username muss 3–20 Zeichen lang sein.'); return false; }
+  if (clean === 'philip') { showErr('Dieser Username ist reserviert.'); return false; }
+  let invite = '';
+  try { invite = localStorage.getItem('sb_invite_pending') || ''; } catch {}
+  if (!invite) { showErr('Kein Invite-Token gefunden. Bitte Link erneut anklicken.'); return false; }
+  try {
+    const r = await fetch(WORKER_BASE + '/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invite, user: clean }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.ok) {
+      showErr(j.error ? `Fehler: ${j.error}` : `HTTP ${r.status}`);
+      return false;
+    }
+    try {
+      localStorage.setItem('sb_user', j.user);
+      localStorage.setItem('sb_token', j.token);
+      localStorage.removeItem('sb_invite_pending');
+    } catch {}
+    return true;
+  } catch (e) {
+    showErr('Netzwerkfehler: ' + (e.message || e));
+    return false;
+  }
+}
 function _onbClose(startWalk) {
   document.getElementById('onb-modal-bd').classList.remove('show');
   document.body.style.overflow = '';
@@ -4340,14 +4455,20 @@ function _onbShow() {
   document.body.style.overflow = 'hidden';
 }
 function _onbMaybeShow() {
-  try { if (localStorage.getItem('sb_seen_onboarding') === '1') return; } catch { return; }
+  // D6: invite pending überstimmt seen-onboarding → Username-Step zeigen.
+  try {
+    if (localStorage.getItem('sb_invite_pending')) { _onbShow(); return; }
+    if (localStorage.getItem('sb_seen_onboarding') === '1') return;
+  } catch { return; }
   _onbShow();
 }
 function _restartOnboarding() {
   try { localStorage.removeItem('sb_seen_onboarding'); } catch {}
   _onbShow();
 }
-document.getElementById('onb-next').addEventListener('click', () => {
+document.getElementById('onb-next').addEventListener('click', async () => {
+  const ok = await _onbRegisterUserIfNeeded();
+  if (!ok) return;  // Stay on username step until backend confirms
   _onbSaveBankrollIfNeeded();
   if (_onbStep < ONB_STEPS.length - 1) { _onbStep++; _onbRender(); }
   else { _onbClose(true); }
