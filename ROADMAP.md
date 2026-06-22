@@ -252,6 +252,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Impact/Aufwand/Risiko**: 🟡 · 🔴 · 🟡
 - **Dateien**: `src/scanner/`, Test-Imports
 - **Verifikation**: `pytest`, `daily_scan --mock` Diff = identisch.
+- **Status (2026-06-22)**: ✅ Erledigt. `prep.py` 185 Z., `scoring.py` 627 Z. (per-Match-Loop ist 508 Z., physisch nicht weiter teilbar), `output.py` 317 Z., `daily_scan.py` 309 Z. Externe Imports angepasst: `_confederation_min_edge`/`_count_model_agreement` → `src.scanner.scoring`, `_load_latest_dc_params` → `src.scanner.prep`. 523/523 Tests grün. Commit `3cb5d2f`.
 
 ### E4. `src/data/squad_availability.py` splitten (1 025 Z.)
 - **Was**: `squad_transfermarkt.py`, `squad_wikipedia.py`, `squad_covers.py`, `squad_merger.py`.
