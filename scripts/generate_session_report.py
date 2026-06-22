@@ -17,11 +17,15 @@ from __future__ import annotations
 import csv
 import json
 import re
+import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Iterable
 
 ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 HEALTH_DIR = ROOT / "results" / "health"
 AUDITS_DIR = ROOT / "results" / "audits"
 from src.config import ledger_path_for, DEFAULT_USER
