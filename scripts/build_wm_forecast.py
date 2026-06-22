@@ -35,6 +35,22 @@ from src.config import canonical_name, MODELS_DIR  # noqa: E402
 from src.models import dixon_coles as dc  # noqa: E402
 from src.models.dixon_coles import predict_scoreline, get_stage_rho  # noqa: E402
 from src.analysis.monte_carlo import scoreline_distribution  # noqa: E402
+from src.analysis.empirical_prior import build_wc_prior  # noqa: E402
+
+_PRIOR_ALPHA = 0.6  # DC weight; 0.4 geht an historischen WC-Prior
+_WC_PRIOR: np.ndarray | None = None
+
+
+def _get_wc_prior() -> np.ndarray | None:
+    global _WC_PRIOR
+    if _WC_PRIOR is None:
+        try:
+            _WC_PRIOR = build_wc_prior()
+            print(f"WC-Prior geladen: {_WC_PRIOR.sum():.3f} (normiert)")
+        except Exception as e:
+            print(f"[warn] WC-Prior konnte nicht geladen werden: {e}")
+            _WC_PRIOR = None
+    return _WC_PRIOR
 
 # WM 2026 Gruppen (Display-Namen wie im Frontend)
 WM_GROUPS: dict[str, list[str]] = {
@@ -113,7 +129,7 @@ def _sample_score(matrix: np.ndarray, rng: random.Random) -> tuple[int, int]:
 
 def _match_scoreline(home: str, away: str, params, elo: dict,
                      stage: str = "group", neutral: bool = True) -> dict | None:
-    """Liefert scoreline_distribution für ein einzelnes Match oder None bei Fehler."""
+    """Liefert scoreline_distribution (DC + WC-Prior) für ein Match oder None bei Fehler."""
     ch, ca = canonical_name(home), canonical_name(away)
     if ch not in params.attack or ca not in params.attack:
         return None
@@ -122,7 +138,7 @@ def _match_scoreline(home: str, away: str, params, elo: dict,
         m = predict_scoreline(ch, ca, params, neutral=neutral,
                               rho_override=rho,
                               elo_home=elo.get(ch), elo_away=elo.get(ca))
-        return scoreline_distribution(m)
+        return scoreline_distribution(m, prior_matrix=_get_wc_prior(), alpha=_PRIOR_ALPHA)
     except Exception:
         return None
 
