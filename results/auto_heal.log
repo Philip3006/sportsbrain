@@ -93,3 +93,12 @@
 [2026-06-22 00:07:13 UTC] [auto_heal_ai] analyzing prematch_scan (status=degraded, fallback=espn)
 [2026-06-22 00:07:15 UTC] [auto_heal_ai] prematch_scan: response → DEGRADED_OK: Fallback to ESPN is active and functioning. Primary data source unavailable but job is operating normally v
 [2026-06-22T00:08:22Z] [layer2] prematch_scan degraded/fallback (espn) — monitoring
+[2026-06-22T00:23:06Z] [layer2] prematch_scan degraded/fallback (espn) — monitoring
+[2026-06-22T05:28:26Z] [layer2] closing_odds transient (overdue, exit_code=0 — cron schedule lag, cloud_healer handles) — no action
+[2026-06-22T05:28:26Z] [layer2] live_score_push transient (overdue, exit_code=0 — cron schedule lag, cloud_healer handles) — no action
+[2026-06-22T05:28:26Z] [layer2] prematch_scan transient (overdue, exit_code=0 — cron schedule lag, cloud_healer handles) — no action
+[2026-06-22T05:28:26Z] [layer2] aggregate_health transient (overdue, exit_code=0 — cron schedule lag, cloud_healer handles) — no action
+[2026-06-22T06:08:28Z] [layer2] closing_odds transient (cron lag + gh API timeout at 05:28 UTC, exit_code=0) — no action
+[2026-06-22T06:08:28Z] [layer2] live_score_push transient (cron lag + gh API timeout at 05:28 UTC, exit_code=0) — no action
+[2026-06-22T06:08:28Z] [layer2] prematch_scan transient (cron lag + gh API timeout at 05:28 UTC, exit_code=0) — no action
+[2026-06-22T06:08:28Z] [layer2] aggregate_health transient (cron lag + gh API timeout at 05:28 UTC, exit_code=0) — no action
