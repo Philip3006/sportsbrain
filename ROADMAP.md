@@ -372,16 +372,17 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ---
 
-## 🟦 M5. + NEU FIFA-2026-Bracket-Mapping (P1, vor KO-Phase 2026-07-04)
+## 🟦 M5. + NEU FIFA-2026-Bracket-Mapping (P1, vor KO-Phase 2026-07-04) 🔧 Gerüst fertig
 - **Was**: Aktuelles Bracket-Vorschau in `_build_bracket_preview()` (build_wm_forecast.py) nutzt **Seeded-Pairing** (Seed 1 vs 32, etc.) als Approximation. Nach offizieller FIFA-KO-Auslosung am 2026-06-27 in Las Vegas wird das echte R32-Slot-Mapping verkündet (z.B. „1A vs 3C/D/E"). Hardcoded `FIFA_R32_SLOTS` einbauen, der die 32 Qualifizierten den 16 R32-Matches gemäß offiziellem Bracket zuweist.
 - **Warum**: Aktuelle Approximation ist mathematisch fair, aber NICHT die echte Paarung. Für KO-Bet-Entscheidungen ab 2026-07-04 brauchen wir die korrekten Slots (z.B. Argentina nicht zwangsläufig gegen den schwächsten Drittplatzierten).
 - **Impact**: 🟢 — KO-Bet-Genauigkeit pro Match, korrekte Pfad-Wahrscheinlichkeiten Champion
 - **Aufwand**: 🟢 (1-2 h: Slot-Tabelle eintragen + Logik anpassen + Tests)
 - **Risiko**: 🟢 — reiner Lookup, Backend-Output-Schema identisch
 - **Priorität**: P1 — nach FIFA-Auslosung 2026-06-27, vor KO-Start 2026-07-04
-- **Dateien**: `scripts/build_wm_forecast.py` (`_build_bracket_preview`, neuer Konstanten-Block `FIFA_2026_R32_SLOTS`), evtl. `docs/index.html` (Hinweis-Text entfernen)
+- **Dateien**: `scripts/build_wm_forecast.py` (`_build_bracket_preview`, `_resolve_slot`, `FIFA_2026_R32_SLOTS`)
 - **Abhängigkeiten**: L2 ✅ (Bracket-Infrastruktur), FIFA-Auslosung 2026-06-27
 - **Verifikation**: 16 R32-Paarungen exakt nach FIFA-Bracket, manuell gegen FIFA.com-Bracket-PDF
+- **Stand (2026-06-22)**: 🔧 Gerüst committed. `FIFA_2026_R32_SLOTS = [None × 16]` als Konstante. `_resolve_slot("1A"/"2C"/"3G")` löst Gruppen-Position auf besten Team-Dict auf. `_build_bracket_preview()` prüft `slots_ready` (alle 16 non-None) → offizieller Pfad; sonst → Seeded-Pairing-Fallback (mit note). `note`-Feld fehlt im Output wenn Slots gesetzt → Approximations-Banner verschwindet auto im Frontend. **Nach Auslosung 2026-06-27**: `FIFA_2026_R32_SLOTS` mit 16 Tupeln füllen, `None`s entfernen.
 
 ---
 

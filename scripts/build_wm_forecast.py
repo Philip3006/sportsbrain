@@ -71,6 +71,32 @@ WM_GROUPS: dict[str, list[str]] = {
 # KO-Stages (in Reihenfolge)
 KO_STAGES = ["r32", "r16", "qf", "sf", "final"]
 
+# ── M5: Offizielles FIFA-2026-R32-Bracket-Slot-Mapping ──────────
+# Nach Auslosung am 2026-06-27 (Las Vegas) eintragen.
+# Format: Liste von 16 Tupeln (slot_home, slot_away).
+# slot = "{Rang}{Gruppe}", z.B. "1A" = Gruppensieger A, "2C" = Zweiter C,
+# "3G" = Drittplatzierter Gruppe G (best third-place bucket).
+# Solange mind. ein Wert None ist → Fallback auf Seeded-Pairing-Approximation.
+# TODO: nach Auslosung 2026-06-27 ausfüllen und None entfernen.
+FIFA_2026_R32_SLOTS: list[tuple[str, str] | None] | None = [
+    None,  # Match 1:  z.B. ("1A", "2C")
+    None,  # Match 2:  z.B. ("1B", "3D/E/F")
+    None,  # Match 3
+    None,  # Match 4
+    None,  # Match 5
+    None,  # Match 6
+    None,  # Match 7
+    None,  # Match 8
+    None,  # Match 9
+    None,  # Match 10
+    None,  # Match 11
+    None,  # Match 12
+    None,  # Match 13
+    None,  # Match 14
+    None,  # Match 15
+    None,  # Match 16
+]
+
 
 def _load_latest_dc_params():
     snap_dir = MODELS_DIR / "dixon_coles"
@@ -523,19 +549,43 @@ def run_forecast(n: int = 2000, seed: int = 42) -> dict:
     }
 
 
+def _resolve_slot(slot: str, by_grp: dict[str, list[dict]]) -> dict | None:
+    """Löst einen FIFA-Slot-String (z.B. '1A', '2C', '3G') zu einem Team-Dict auf.
+
+    Rang 1 = Gruppensieger (max p_first), Rang 2 = Zweiter (max p_second unter Rest),
+    Rang 3 = bester Drittplatzierter aus dieser Gruppe (max p_advance unter Rest).
+    """
+    if len(slot) < 2:
+        return None
+    rank, grp = int(slot[0]), slot[1:]
+    rows = by_grp.get(grp, [])
+    if not rows:
+        return None
+    if rank == 1:
+        return max(rows, key=lambda x: x["p_first"])
+    if rank == 2:
+        top1 = max(rows, key=lambda x: x["p_first"])
+        rest = [r for r in rows if r is not top1]
+        return max(rest, key=lambda x: x["p_second"]) if rest else None
+    if rank == 3:
+        top1 = max(rows, key=lambda x: x["p_first"])
+        top2_rest = [r for r in rows if r is not top1]
+        top2 = max(top2_rest, key=lambda x: x["p_second"]) if top2_rest else None
+        thirds = [r for r in rows if r is not top1 and r is not top2]
+        return max(thirds, key=lambda x: x["p_advance"]) if thirds else None
+    return None
+
+
 def _build_bracket_preview(teams_out: list[dict], params, elo: dict) -> dict:
     """Deterministische Bracket-Vorschau für den aktuellen Stand.
 
-    Methode:
-      1. Wähle Top-2 jeder Gruppe (nach p_first+p_second) und die 8 besten
-         Drittplatzierten (nach p_advance unter Nicht-Top-2) → 32 Qualifizierte.
-      2. Setze sie nach p_qf absteigend (1=stärkster Pfad-Erwartungswert).
-      3. Klassisches Seeded-Bracket: seed1 vs seed32, seed2 vs seed31, ...
-      4. Pro Paarung: DC-Vorhersage neutral, höhere P(Sieg) gewinnt (deterministisch).
-      5. Wiederhole für R32 → R16 → QF → SF → Final.
+    Wenn FIFA_2026_R32_SLOTS vollständig gefüllt (kein None-Eintrag):
+      → Offizielle Paarungen aus dem Slot-Mapping (nach Auslosung 2026-06-27).
+    Sonst (Fallback):
+      → Seeded-Pairing nach p_qf (Approximation, mit note im Output).
 
-    Vereinfachung: Kein offizielles FIFA-Bracket-Mapping (folgt nach Auslosung).
-    Daher als "Approximation" im Frontend markieren.
+    Pro Paarung: DC-Vorhersage neutral, höhere P(Sieg) gewinnt (deterministisch).
+    R32 → R16 → QF → SF → Final mit Seeded-Pairing ab R16.
     """
     from src.models.dixon_coles import predict_match_staged
 
@@ -550,7 +600,6 @@ def _build_bracket_preview(teams_out: list[dict], params, elo: dict) -> dict:
         top2 = rows_sorted[:2]
         for t in top2:
             qual.append(t)
-        # 3.: most-likely non-top2 to be in best-3rds bucket
         rest = [r for r in rows if r not in top2]
         rest_sorted = sorted(rest, key=lambda x: -x["p_advance"])
         if rest_sorted:
@@ -561,9 +610,6 @@ def _build_bracket_preview(teams_out: list[dict], params, elo: dict) -> dict:
 
     if len(qual) != 32:
         return {"error": f"need 32 qualifiers, got {len(qual)}", "rounds": []}
-
-    qual.sort(key=lambda x: -x["p_qf"])  # seed 1 = strongest path
-    bracket_seeds = qual[:]
 
     def _predict_winner(home_team: str, away_team: str) -> dict:
         ch, ca = canonical_name(home_team), canonical_name(away_team)
@@ -581,7 +627,6 @@ def _build_bracket_preview(teams_out: list[dict], params, elo: dict) -> dict:
                     "p_home": 0.5, "p_draw": 0.0, "p_away": 0.5,
                     "winner": home_team, "p_winner": 0.5}
         ph, pa, pd = probs["p_home"], probs["p_away"], probs["p_draw"]
-        # KO: draw aufteilen 50/50 → effektive Sieg-Wkt.
         p_h_eff = ph + pd / 2
         p_a_eff = pa + pd / 2
         winner = home_team if p_h_eff >= p_a_eff else away_team
@@ -596,17 +641,62 @@ def _build_bracket_preview(teams_out: list[dict], params, elo: dict) -> dict:
             "scoreline": sl,
         }
 
-    rounds_out: list[dict] = []
     stage_labels = [("r32", "Sechzehntelfinale (R32)"),
                     ("r16", "Achtelfinale (R16)"),
                     ("qf",  "Viertelfinale"),
                     ("sf",  "Halbfinale"),
                     ("final", "Finale")]
+
+    # Prüfe ob offizielle Slots vollständig gefüllt sind
+    slots_ready = (
+        FIFA_2026_R32_SLOTS is not None
+        and len(FIFA_2026_R32_SLOTS) == 16
+        and all(s is not None for s in FIFA_2026_R32_SLOTS)
+    )
+
+    if slots_ready:
+        # ── Offizieller Pfad: Slots aus FIFA-Auslosung ───────────
+        r32_pairs: list[tuple[dict, dict]] = []
+        for slot_pair in FIFA_2026_R32_SLOTS:  # type: ignore[union-attr]
+            slot_h, slot_a = slot_pair  # type: ignore[misc]
+            h_obj = _resolve_slot(slot_h, by_grp)
+            a_obj = _resolve_slot(slot_a, by_grp)
+            if h_obj is None or a_obj is None:
+                return {"error": f"Slot nicht auflösbar: {slot_pair}", "rounds": []}
+            r32_pairs.append((h_obj, a_obj))
+
+        rounds_out: list[dict] = []
+        current_pairs = r32_pairs
+        for stage_key, stage_lbl in stage_labels:
+            matches = []
+            next_winners: list[dict] = []
+            for idx, (h, a) in enumerate(current_pairs):
+                m = _predict_winner(h["team"], a["team"])
+                m["home_group"] = h["group"]
+                m["away_group"] = a["group"]
+                m["home_seed"] = idx * 2 + 1
+                m["away_seed"] = idx * 2 + 2
+                matches.append(m)
+                next_winners.append(h if m["winner"] == h["team"] else a)
+            rounds_out.append({"stage": stage_key, "label": stage_lbl, "matches": matches})
+            # Ab R16: Seeded-Pairing der verbleibenden Sieger
+            n = len(next_winners)
+            current_pairs = [(next_winners[i], next_winners[n - 1 - i]) for i in range(n // 2)]
+
+        champion = next_winners[0] if next_winners else None
+        return {
+            "rounds": rounds_out,
+            "champion": {"team": champion["team"], "group": champion["group"]} if champion else None,
+        }
+
+    # ── Fallback: Seeded-Pairing-Approximation ───────────────────
+    qual.sort(key=lambda x: -x["p_qf"])
+    bracket_seeds = qual[:]
+    rounds_out = []
     current = bracket_seeds[:]
     for stage_key, stage_lbl in stage_labels:
         matches = []
         next_round = []
-        # Classic seeded pairing within current list
         n_cur = len(current)
         for i in range(n_cur // 2):
             h, a = current[i], current[n_cur - 1 - i]
