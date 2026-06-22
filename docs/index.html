@@ -4607,31 +4607,64 @@ function _openMatchDetail(match) {
 
   const sl = match.scoreline;
   if (sl) {
+    const nMc = sl.n_mc ? sl.n_mc.toLocaleString('de') : '10.000';
+
+    // ── Wahrscheinlichste Ergebnisse: Analytisch vs MC ──
     body += `<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Wahrscheinlichste Ergebnisse</div>`;
-    body += `<div style="display:flex;gap:6px;margin-bottom:14px">`;
-    (sl.top_scores || []).forEach((s, i) => {
-      const bg = i === 0 ? 'rgba(0,200,83,.12)' : 'var(--surface)';
-      const border = i === 0 ? '1px solid rgba(0,200,83,.3)' : '1px solid var(--border)';
-      body += `<div style="flex:1;text-align:center;background:${bg};border:${border};border-radius:var(--r-md);padding:8px 4px">
-        <div style="font-size:18px;font-weight:900;color:var(--text)">${s.h}–${s.a}</div>
-        <div style="font-size:11px;color:var(--muted);font-weight:600">${s.p}%</div>
-      </div>`;
-    });
+
+    // Header-Zeile
+    body += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px">
+      <div style="text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px">Analytisch (DC)</div>
+      <div style="text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px">Monte Carlo (${nMc} Sims)</div>
+    </div>`;
+
+    // Top-3 Scores: analytical links, MC rechts
+    const aScores = sl.top_scores || [];
+    const mScores = sl.mc_top_scores || [];
+    const maxRows = Math.max(aScores.length, mScores.length);
+    body += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:12px">`;
+    for (let i = 0; i < maxRows; i++) {
+      const a = aScores[i], m = mScores[i];
+      const aBg = i === 0 ? 'rgba(0,200,83,.12)' : 'var(--surface)';
+      const aBorder = i === 0 ? '1px solid rgba(0,200,83,.3)' : '1px solid var(--border)';
+      const mBg = i === 0 ? 'rgba(56,139,253,.12)' : 'var(--surface)';
+      const mBorder = i === 0 ? '1px solid rgba(56,139,253,.3)' : '1px solid var(--border)';
+      body += a ? `<div style="text-align:center;background:${aBg};border:${aBorder};border-radius:var(--r-md);padding:7px 4px">
+        <div style="font-size:17px;font-weight:900;color:var(--text)">${a.h}–${a.a}</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600">${a.p}%</div>
+      </div>` : '<div></div>';
+      body += m ? `<div style="text-align:center;background:${mBg};border:${mBorder};border-radius:var(--r-md);padding:7px 4px">
+        <div style="font-size:17px;font-weight:900;color:var(--text)">${m.h}–${m.a}</div>
+        <div style="font-size:11px;color:rgba(56,139,253,.9);font-weight:600">${m.p}%</div>
+      </div>` : '<div></div>';
+    }
     body += `</div>`;
 
-    const gd = sl.goal_dist || {};
-    const gdEntries = [['0 Tore', gd['0']], ['1 Tor', gd['1']], ['2 Tore', gd['2']], ['3+ Tore', gd['3+']]].filter(([,v]) => v !== undefined);
-    if (gdEntries.length) {
+    // ── Tor-Verteilung: beide Methoden als Doppelbalken ──
+    const aGd = sl.goal_dist || {};
+    const mGd = sl.mc_goal_dist || {};
+    const gdLabels = [['0 Tore', '0'], ['1 Tor', '1'], ['2 Tore', '2'], ['3+ Tore', '3+']];
+    const hasGd = gdLabels.some(([, k]) => aGd[k] !== undefined || mGd[k] !== undefined);
+    if (hasGd) {
       body += `<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Tor-Verteilung (gesamt)</div>`;
-      body += `<div style="display:flex;flex-direction:column;gap:5px">`;
-      gdEntries.forEach(([label, val]) => {
-        const w = Math.min(100, val || 0);
+      body += `<div style="display:flex;gap:8px;margin-bottom:6px">
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;border-radius:2px;background:rgba(0,200,83,.7)"></div><span style="font-size:10px;color:var(--muted);font-weight:600">DC analytisch</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;border-radius:2px;background:rgba(56,139,253,.7)"></div><span style="font-size:10px;color:var(--muted);font-weight:600">Monte Carlo</span></div>
+      </div>`;
+      body += `<div style="display:flex;flex-direction:column;gap:6px">`;
+      gdLabels.forEach(([label, key]) => {
+        const av = aGd[key] ?? 0, mv = mGd[key] ?? 0;
         body += `<div style="display:flex;align-items:center;gap:8px">
           <div style="width:52px;font-size:11px;color:var(--muted);font-weight:600;text-align:right">${esc(label)}</div>
-          <div style="flex:1;background:var(--surface);border-radius:4px;height:14px;overflow:hidden">
-            <div style="width:${w}%;height:100%;background:var(--green);opacity:.7;border-radius:4px;transition:width .3s"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:2px">
+            <div style="background:var(--surface);border-radius:3px;height:8px;overflow:hidden">
+              <div style="width:${Math.min(100, av)}%;height:100%;background:rgba(0,200,83,.7);border-radius:3px"></div>
+            </div>
+            <div style="background:var(--surface);border-radius:3px;height:8px;overflow:hidden">
+              <div style="width:${Math.min(100, mv)}%;height:100%;background:rgba(56,139,253,.7);border-radius:3px"></div>
+            </div>
           </div>
-          <div style="width:36px;font-size:11px;font-weight:700;color:var(--text)">${val}%</div>
+          <div style="width:72px;font-size:10px;font-weight:700;color:var(--muted);text-align:right">${av}% / ${mv}%</div>
         </div>`;
       });
       body += `</div>`;
