@@ -43,8 +43,9 @@ d7f1a3b8e92c054619dab7c30f582e41,2026-06-20,Morocco,Scotland,ah+0.5,2.20,0.0,20.
 de2e966a91c26463141af53e2f26b607,2026-06-20,Netherlands,Sweden,o/u3.0_over,2.4500,0.0,10.00,2026-06-20,won,14.5,0.0,,,value,0.571000
 9d476ed7c26dc35050773708e9f804b5,2026-06-21,Tunisia,Japan,ah+0.5_home,2.4500,0.0,10.00,2026-06-21,lost,-10.0,0.0,,,value,0.492000
 3ba2ed2998ec06d4476557f30dd7a7e9,2026-06-21,Spain,Saudi Arabia,o/u2.5_under,3.4000,0.0,5.00,2026-06-21,lost,-5.0,3.3500,,,value,0.353000
-023dd89a2190748eec0a4d863fced6d3,2026-06-21,Belgium,Iran,o/u2.5_over,1.7600,0.0,12.25,2026-06-21,open,0.0,0.0,,,value,0.596000
-023dd89a2190748eec0a4d863fced6d3,2026-06-21,Belgium,Iran,ah+1.5_away,1.6700,0.0,10.00,2026-06-21,open,0.0,0.0,,,value,0.769000
+023dd89a2190748eec0a4d863fced6d3,2026-06-21,Belgium,Iran,o/u2.5_over,1.7600,0.0,12.25,2026-06-21,lost,-12.25,0.0,,,value,0.596000
+023dd89a2190748eec0a4d863fced6d3,2026-06-21,Belgium,Iran,ah+1.5_away,1.6700,0.0,10.00,2026-06-21,won,6.7,0.0,,,value,0.769000
 fdac05b12a69e594de8ed2f803d501ab,2026-06-21,Uruguay,Cape Verde,scorer_Federico Santiago Valverde Dipetta,3.7500,0.0,7.50,2026-06-21,open,0.0,0.0,,,value,0.466000
 fdac05b12a69e594de8ed2f803d501ab,2026-06-21,Uruguay,Cape Verde,draw,4.3300,0.0,7.50,2026-06-21,open,0.0,0.0,,,value,0.249000
 m1,2026-06-22,A,B,home,2.0000,0.100000,10.00,2026-06-22,open,0.0,0.0,,,value,0.600000
+ff775050b9904312f3d92e5f2af22cd5,2026-06-22,New Zealand,Egypt,o/u2.5_under,1.8600,0.0,11.70,2026-06-22,open,0.0,0.0,,,value,0.593000

@@ -85,7 +85,8 @@
 [2026-06-21 21:57:08 UTC] [cloud_healer] live_score_push: Workflow bereits aktiv (in_progress) — übersprungen
 [2026-06-21 21:57:08 UTC] [cloud_healer] prematch_scan: status=stale — triggere prematch_scan.yml
 [2026-06-21 21:57:09 UTC] [cloud_healer] prematch_scan: erfolgreich ausgelöst
-[2026-06-21 23:25:23 UTC] [cloud_healer] live_score_push: Workflow bereits aktiv (in_progress) — übersprungen
-[2026-06-21 23:25:24 UTC] [cloud_healer] prematch_scan: status=stale — triggere prematch_scan.yml
-[2026-06-21 23:25:25 UTC] [cloud_healer] prematch_scan: erfolgreich ausgelöst
-[2026-06-21 23:25:25 UTC] [cloud_healer] settle: Workflow bereits aktiv (in_progress) — übersprungen
+[2026-06-22 01:17:43 CEST] [auto_heal] 2 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-22 01:27:43 CEST] [auto_heal] 2 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-22 01:37:43 CEST] [auto_heal] 2 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-22 01:47:43 CEST] [auto_heal] 2 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-22 01:57:44 CEST] [auto_heal] 2 commit(s) not pushed — running _git_safe_push.sh
