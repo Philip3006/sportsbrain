@@ -237,6 +237,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Impact/Aufwand/Risiko**: 🟢 · 🟡 · 🟢
 - **Dateien**: `tests/frontend/test_pwa_smoke.py` (neu)
 - **Verifikation**: `pytest tests/frontend/ -q` grün.
+- **Status**: ✅ Erledigt. 3/3 Tests grün.
 
 ### E2. `docs/index.html` aufteilen (3 875 → ~5 Files)
 - **Was**: `index.html` (Markup), `css/app.css`, `js/app.js`, `js/views.js`, `js/bets.js`.
@@ -245,6 +246,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Dateien**: `docs/index.html` + 4 neue
 - **Abhängigkeiten**: E1
 - **Verifikation**: PWA visuell identisch; Smoke-Test grün.
+- **Status**: ✅ Erledigt. `index.html` 370 Z., `css/app.css` 639 Z., `js/app.js` 626 Z., `js/views.js` 2450 Z., `js/bets.js` 933 Z. Smoke-Test grün.
 
 ### E3. `src/scanner/daily_scan.py` splitten (1 337 → <500/Datei)
 - **Was**: `prep.py`, `scoring.py`, `output.py`, `daily_scan.py` (Orchestrator).
@@ -564,7 +566,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Insgesamt**: 59 konkrete Items
 - **P0**: 12 (sofort) — davon 12 ✅
 - **P1**: 25 — davon 23 ✅ (offen: M5 blockiert bis 2026-06-27)
-- **P2**: 15 — davon 2 ✅ (I6, I7); offen: E1–E4, H1, H2, I1–I5, J3, J4
+- **P2**: 15 — davon 6 ✅ (E1, E2, E3, E4, I6, I7); offen: H1, H2, I1–I5, J3, J4
 - **P3**: 4 (Q4 2026)
 - **Veto**: 11 (bewusst nicht gebaut)
 

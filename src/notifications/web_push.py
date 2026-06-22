@@ -260,10 +260,18 @@ def send_scan_alert(
         body_lines.append(f"… +{len(actionable) - 3} weitere")
     body_lines.append(f"({n_high} HIGH, {n_med} MEDIUM)")
 
+    # Deep-link: bei genau 1 Signal direkt das Bet-Modal verlinken
+    from urllib.parse import quote
+    if len(top) == 1:
+        bet_id = quote(f"{top[0].home} vs {top[0].away}:{top[0].market}", safe="")
+        push_url = f"/sportsbrain/?bet={bet_id}#football"
+    else:
+        push_url = "/sportsbrain/#football"
+
     sent = _send_notification(
         title=title,
         body="\n".join(body_lines),
-        url="/sportsbrain/#football",
+        url=push_url,
         kind="scan",
         tag=f"scan-{scan_date}",
         require=False,

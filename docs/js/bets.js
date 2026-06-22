@@ -1,3 +1,29 @@
+// ── Deep-link: öffnet Bet-Modal direkt aus ?bet=MATCH:MARKET ──
+function _openBetModalForBetId(betId) {
+  const colonIdx = betId.lastIndexOf(':');
+  if (colonIdx < 0) return;
+  const matchStr = decodeURIComponent(betId.slice(0, colonIdx));
+  const market   = decodeURIComponent(betId.slice(colonIdx + 1));
+  const sig = _signals.find(s => s.match === matchStr && s.market === market);
+  if (!sig) return;
+  // Navigate to right tab first
+  const tab = document.querySelector(`[data-view="${sig.sport || 'football'}"]`);
+  if (tab) navTo(tab);
+  // Synthetic button carries all dataset attrs _openBetModalFromBtn expects
+  const btn = document.createElement('button');
+  btn.dataset.match      = sig.match;
+  btn.dataset.market     = sig.market;
+  btn.dataset.odds       = sig.odds;
+  btn.dataset.stake      = sig.stake_eur;
+  btn.dataset.ev         = sig.ev_pct;
+  btn.dataset.modelProb  = sig.model_prob || 0;
+  btn.dataset.fairProb   = sig.fair_prob || 0;
+  btn.dataset.confidence = sig.confidence || '';
+  btn.dataset.kickoff    = sig.kickoff || '';
+  btn.dataset.sport      = sig.sport || '';
+  _openBetModalFromBtn(btn);
+}
+
 // ── Render open bets tab ─────────────────────────────────────
 function _pwaPendingHtml() {
   if (!_pwaPendingIds.length) return '';
