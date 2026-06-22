@@ -1,7 +1,7 @@
 # SportsBrain — ROADMAP
 
 > **Lebende Quelle der Wahrheit** für alle Audit-Befunde, Entscheidungen und geplanten Arbeiten.
-> Aktualisiert: 2026-06-21
+> Aktualisiert: 2026-06-22
 
 ---
 
@@ -474,16 +474,14 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Verifikation**: Brier auf WC2006/2010/2014/2018 Gastgeber-Matches verbessert sich; WM2026-Prognosen USA/CAN/MEX zeigen plausiblen Boost von ~3-8pp gegenüber Baseline
 - **Status (2026-06-21)**: Erledigt. **Kalibrierung**: Empirische Auswertung WC 2006-2022 (n=25 Host-Heim-Matches) lieferte kein robustes Signal (95% CI [0.50, 1.19], dominiert von Confounds: Gastgeber-Team-Stärke 2006/2014/2018 sehr hoch, Qatar 2022 Ausreißer nach unten). Entscheidung: **Literatur-Default `HOST_LAMBDA_BOOST = 1.05`** (konservativer Pollard/Clarke-Wert) statt empirisch-volatilem Wert. **API**: `_lambdas()` bekommt optionalen `host_boost`-Parameter (multipliziert nur `lh`, `la` bleibt unverändert — kein Doppel-Effekt). 14 Predict-Funktionen propagieren den Parameter durch (predict_match/_staged/_scoreline/_totals/_totals_all/_btts/_asian_handicap/_asian_handicap_all/_goals_range/_half_goals_range/_xg/_first_scorer). **Wiring**: `daily_scan.py` setzt `host_boost = HOST_LAMBDA_BOOST if home in HOST_NATIONS else 1.0` einmal pro Match und schleift ihn an 8 DC-Call-Stellen durch. **Backtest-Gate**: ΔBrier +0.0051 auf 25 historische Host-Heim-Matches (Gate ≥0.001 ✅). Predicted P(host_win) rückt 0.315 → 0.327 näher an actual 0.440 (zeigt: 1.05 ist konservativ, könnte später nachgezogen werden). **Tests**: 8 neue Unit-Tests (`tests/models/test_dixon_coles_host_boost.py`), 496/496 Gesamt-Suite grün (+8). **Rückrollung**: `HOST_BOOST_ENABLED=False` → host_boost=1.0 in scanner.
 
-### I7. + NEU Monte Carlo Simulationen (Scoreline-Verteilung)
-- **Was**: `src/analysis/monte_carlo.py` mit `simulate_match(home, away, params, n=10000)` → zieht N mal aus der DC-Scoreline-Matrix (Poisson-Sampler), gibt zurück: Top-5 wahrscheinlichste Scores, kumulative Tor-Verteilung (P(0), P(1), ..., P(5+)), Most-Likely-Score, Most-Likely-Result (H/D/A). Integration in PWA-Forecast-Tab als „Wahrscheinlichste Ergebnisse" unter den Prognosen.
-- **Warum**: DC `predict_scoreline()` liefert bereits die volle Matrix — Monte Carlo ist nur ein Sampler drüber und macht die Outputs für dich intuitiv lesbar. Zusätzlicher Nutzen: komplexe Märkte (Correct Score, beide Teams treffen in Halbzeit X) können exakt aus Sims abgeleitet werden ohne analytische Näherung.
-- **Impact**: 🟡 — visueller Mehrwert in PWA + Basis für spätere Correct-Score-Märkte (falls re-enablet)
-- **Aufwand**: 🟢 (< 2h: Sampler ~50 Zeilen, PWA-Integration ~30 Zeilen)
+### I7. ✅ Monte Carlo Simulationen (Scoreline-Verteilung)
+- **Was**: `src/analysis/monte_carlo.py` mit `scoreline_distribution(matrix)` — analytisch aus DC-Scoreline-Matrix: Top-3 wahrscheinlichste Scores + kumulative Tor-Verteilung (P(0)/P(1)/P(2)/P(3+)). Integration in PWA: Bracket-Karten und anstehende Gruppenspiele klickbar → Match-Detail-Modal.
+- **Warum**: DC `predict_scoreline()` liefert die volle Matrix — analytische Ableitung ist exakter als N=10k Sampling und sofort. Basis für spätere Correct-Score-Märkte.
+- **Impact**: 🟡 — visueller Mehrwert in PWA + Basis für spätere Correct-Score-Märkte
+- **Aufwand**: 🟢
 - **Risiko**: 🟢 — keine Modell-Änderung; nur Display
-- **Priorität**: P2 — nach I6 (Home Advantage), da dort die Scoreline-Matrix ohnehin verbessert wird
-- **Dateien**: `src/analysis/monte_carlo.py` (neu), `docs/index.html` (Forecast-Tab C3-Erweiterung), `signals.json` (neues Feld `top_scores` pro Match)
-- **Abhängigkeiten**: G1 (DC-Modell), C3 (Forecast-Tab Tooltip)
-- **Verifikation**: Top-5 Scores für 5 WM-Spiele manuell gegen analytische Matrix-Diagonale gegenprüfen (Max-Abweichung <1pp bei N=10000)
+- **Dateien**: `src/analysis/monte_carlo.py` (neu), `scripts/build_wm_forecast.py` (`_match_scoreline`, `group_matches` in Output, Bracket-Matches mit `scoreline`), `docs/index.html` (`_renderGroupMatches`, `_openMatchDetail`, `_closeMatchDetail`, Match-Detail-Modal-DOM)
+- **Status (2026-06-22)**: ✅ Erledigt in Commit `c847425`. 7 Unit-Tests, 510/510 Suite grün. `wm_forecast.json` enthält jetzt `group_matches` (72 Total, 60 pending mit Scoreline) + `scoreline` pro Bracket-Match. Forecast-Tab zeigt „Anstehende Gruppenspiele" mit Most-Likely-Score als Vorschau; Klick öffnet Modal mit Win-Wkt., Top-3 Scores, Tor-Balkendiagramm.
 
 ---
 
@@ -551,7 +549,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **8b** | M5 (FIFA-Bracket-Mapping nach Auslosung) | ab 2026-06-27 (Auslosung), vor 2026-07-04 | 1-2 h |
 | **9** | I6 (Home Advantage Gastgeber) | ✅ erledigt 2026-06-21 | 1-3 h |
 | **9b** | I1–I5 (Post-WM Snapshot + Retrain) | 2026-07-20 bis 2026-07-31 | 8-12 h |
-| **9c** | I7 (Monte Carlo Sims) | nach I6, anytime | < 2 h |
+| **9c** | I7 (Monte Carlo Sims) | ✅ erledigt 2026-06-22 | < 2 h |
 | **10** | H1, H2 (Push-Deep-Link, Legal-Stub) | anytime ab Tag 10 | 1-2 h |
 | **11** | J1 (Basketball) | ab 2026-08-15 | 30-50 h |
 | **12** | J2 (Tennis-Ausbau) | nach Spec-Klärung | 8-12 h |
@@ -561,10 +559,10 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ## 📊 Statistik
 
-- **Insgesamt**: 59 konkrete Items (+1 neu: D6 Invite-Link Self-Onboarding)
-- **P0**: 12 (sofort) — davon 12 ✅ (Phase 0 + Phase 1 + L1 vollständig)
-- **P1**: 25 (diese Woche / vor KO-Phase) — inkl. I6, L2, L3, M1-M4 (neu)
-- **P2**: 15 (dieser Monat / Refactor) — inkl. I7 (Monte Carlo)
+- **Insgesamt**: 59 konkrete Items
+- **P0**: 12 (sofort) — davon 12 ✅
+- **P1**: 25 — davon 23 ✅ (offen: M5 blockiert bis 2026-06-27)
+- **P2**: 15 — davon 2 ✅ (I6, I7); offen: E1–E4, H1, H2, I1–I5, J3, J4
 - **P3**: 4 (Q4 2026)
 - **Veto**: 11 (bewusst nicht gebaut)
 
