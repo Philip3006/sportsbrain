@@ -102,3 +102,5 @@
 [2026-06-22T06:08:28Z] [layer2] live_score_push transient (cron lag + gh API timeout at 05:28 UTC, exit_code=0) — no action
 [2026-06-22T06:08:28Z] [layer2] prematch_scan transient (cron lag + gh API timeout at 05:28 UTC, exit_code=0) — no action
 [2026-06-22T06:08:28Z] [layer2] aggregate_health transient (cron lag + gh API timeout at 05:28 UTC, exit_code=0) — no action
+[2026-06-22 08:41:04 UTC] [cloud_healer] closing_odds: status=stale — triggere closing_odds.yml
+[2026-06-22 08:41:06 UTC] [cloud_healer] closing_odds: erfolgreich ausgelöst
