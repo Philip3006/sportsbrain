@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-21",
+  "updated": "2026-06-22",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -567,7 +567,8 @@
       "ampel": "🟢",
       "suspended": [
         "Romelu Lukaku",
-        "Zeno Debast"
+        "Zeno Debast",
+        "Jérémy Doku"
       ],
       "players": [
         {
@@ -623,7 +624,7 @@
         {
           "name": "Jérémy Doku",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Senne Lammens",
@@ -848,7 +849,8 @@
       "ampel": "🟢",
       "suspended": [
         "Wesley França",
-        "Raphinha"
+        "Raphinha",
+        "Neymar"
       ],
       "players": [
         {
@@ -899,7 +901,7 @@
         {
           "name": "Neymar",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Raphinha",
@@ -2109,7 +2111,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Mohamed Salah"
+      ],
       "players": [
         {
           "name": "Mohamed El Shenawy",
@@ -2159,7 +2163,7 @@
         {
           "name": "Mohamed Salah",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Mostafa Ziko",
@@ -2250,7 +2254,8 @@
       "ampel": "🟢",
       "suspended": [
         "Bukayo Saka",
-        "Tino Livramento"
+        "Tino Livramento",
+        "Declan Rice"
       ],
       "players": [
         {
@@ -2271,7 +2276,7 @@
         {
           "name": "Declan Rice",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "John Stones",
