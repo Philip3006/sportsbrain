@@ -187,3 +187,15 @@
 [2026-06-22 14:44:40 CEST] [auto_heal] 1 commit(s) not pushed — running _git_safe_push.sh
 [2026-06-22 17:14:43 CEST] [auto_heal] 1 commit(s) not pushed — running _git_safe_push.sh
 [2026-06-22 17:24:43 CEST] [auto_heal] 1 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-22T15:44:30Z] [layer2] prematch_scan degraded/fallback (espn) — monitoring
+[2026-06-22 15:45:21 UTC] [auto_heal_ai] analyzing prematch_scan (status=degraded, fallback=espn)
+[2026-06-22 15:45:24 UTC] [auto_heal_ai] prematch_scan: response → DEGRADED_OK: Fallback to ESPN is active and functioning; prematch_scan is operating in degraded mode but completing succ
+[2026-06-22T15:57:00Z] [layer2] prematch_scan degraded/fallback (espn) — monitoring
+[2026-06-22 16:00:24 UTC] [auto_heal_ai] analyzing prematch_scan (status=degraded, fallback=espn)
+[2026-06-22 16:00:28 UTC] [auto_heal_ai] prematch_scan: response → DEGRADED_OK: Fallback to ESPN data source is active. Primary data source unavailable but job continues functioning with 
+[2026-06-22T16:09:31Z] [layer2] prematch_scan degraded/fallback (espn — sofascore 429 quota exhausted) — monitoring
+[2026-06-22 16:15:28 UTC] [auto_heal_ai] analyzing prematch_scan (status=degraded, fallback=espn)
+[2026-06-22 16:15:31 UTC] [auto_heal_ai] prematch_scan: response → DEGRADED_OK: Fallback to ESPN is active and functioning. The 'prematch_scan' cron job is operating in degraded mode but 
+[2026-06-22T16:23:08Z] [layer2] prematch_scan degraded/fallback (espn — sofascore 429 quota exhausted) — monitoring
+[2026-06-22T16:48:12Z] [layer2] aggregate_health transient (stale — ~12min launchd gap, likely Mac sleep; cron resumed at 16:44:55Z, self-resolves on next tick) — no action
+[2026-06-22 18:55:12 CEST] [auto_heal] 1 commit(s) not pushed — running _git_safe_push.sh

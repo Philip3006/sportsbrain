@@ -469,7 +469,8 @@ function sigCard(s, showMatch) {
       </div>
     </details>`;
   }
-  return `<div class="sig-card ${cls}" style="cursor:pointer" onclick="if(!event.target.closest('.place-bet-btn,.why-inline,button,a'))_openMatchDetailFromSignal(${JSON.stringify(sh)},${JSON.stringify(sa)})">
+  const _escA = s => s.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+  return `<div class="sig-card ${cls}" style="cursor:pointer" data-match-home="${_escA(sh)}" data-match-away="${_escA(sa)}" onclick="if(!event.target.closest('.place-bet-btn,.why-inline,button,a'))_openMatchDetailFromSignal(this.dataset.matchHome,this.dataset.matchAway)">
     ${matchLine}
     <div class="card-market">${marketLabel(s.market, s.match)}</div>
     <div class="card-footer">
