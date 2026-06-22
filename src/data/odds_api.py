@@ -591,6 +591,7 @@ def _fetch_espn_wm_scores() -> list[dict]:
                 pass
         results.append({
             "match_id":      f"espn_{e.get('id', '')}",
+            "espn_id":       str(e.get("id", "")),
             "home":          home_c.get("team", {}).get("displayName", ""),
             "away":          away_c.get("team", {}).get("displayName", ""),
             "home_score":    home_score,
@@ -600,6 +601,78 @@ def _fetch_espn_wm_scores() -> list[dict]:
             "last_update":   now_iso,
         })
     return results
+
+
+def find_espn_event_id(home: str, away: str, match_date: str) -> str | None:
+    """Find ESPN event ID by searching the scoreboard for the given date.
+
+    match_date: 'YYYY-MM-DD'
+    Tries the match date and the day before/after to handle UTC offset issues.
+    """
+    from scripts._http_retry import retry_request
+    url = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard"
+    home_l, away_l = home.lower(), away.lower()
+
+    def _token_match(espn_name: str, ledger_name: str) -> bool:
+        tokens = ledger_name.lower().split()
+        espn_l = espn_name.lower()
+        return any(t in espn_l for t in tokens if len(t) > 3)
+
+    # Try the match date and ±1 day
+    date_str = match_date.replace("-", "")
+    candidates = [date_str]
+    try:
+        from datetime import datetime, timedelta
+        d = datetime.strptime(match_date, "%Y-%m-%d")
+        candidates = [
+            (d - timedelta(days=1)).strftime("%Y%m%d"),
+            date_str,
+            (d + timedelta(days=1)).strftime("%Y%m%d"),
+        ]
+    except ValueError:
+        pass
+
+    for d in candidates:
+        try:
+            resp = retry_request("GET", url, params={"dates": d}, timeout=10, log_prefix="[espn_lookup]")
+            resp.raise_for_status()
+        except Exception:
+            continue
+        for e in resp.json().get("events", []):
+            comp = e.get("competitions", [{}])[0]
+            competitors = comp.get("competitors", [])
+            h = next((c.get("team", {}).get("displayName", "") for c in competitors if c.get("homeAway") == "home"), "")
+            a = next((c.get("team", {}).get("displayName", "") for c in competitors if c.get("homeAway") == "away"), "")
+            if (_token_match(h, home) or _token_match(home, h)) and \
+               (_token_match(a, away) or _token_match(away, a)):
+                return str(e.get("id", ""))
+    return None
+
+
+def fetch_espn_goal_scorers(event_id: str) -> list[str]:
+    """Fetch list of player names who scored in the given ESPN event.
+
+    Parses keyEvents text: 'Goal! Home X, Away Y. Player Name (Team) ...'
+    """
+    import re
+    from scripts._http_retry import retry_request
+    url = f"https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary"
+    try:
+        resp = retry_request("GET", url, params={"event": event_id}, timeout=15, log_prefix="[espn_scorers]")
+        resp.raise_for_status()
+    except Exception as exc:
+        print(f"[espn_scorers] fetch failed for event {event_id}: {exc}")
+        return []
+    scorers: list[str] = []
+    for ev in resp.json().get("keyEvents", []):
+        if "goal" not in ev.get("type", {}).get("type", "").lower():
+            continue
+        text = ev.get("text", "")
+        # Pattern: "Goal! Score. Player Name (Team) ..."
+        m = re.search(r"\d+\.\s+(.+?)\s*\(", text)
+        if m:
+            scorers.append(m.group(1).strip())
+    return scorers
 
 
 def fetch_wm_live_scores(

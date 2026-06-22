@@ -1,7 +1,7 @@
 {
-  "updated": "2026-06-22T00:13:05Z",
+  "updated": "2026-06-22T00:19:39Z",
   "build_info": {
-    "sha": "8f991df",
+    "sha": "1461107",
     "date": "2026-06-22"
   },
   "meta": {
@@ -7449,15 +7449,15 @@
   ],
   "tennis": [],
   "portfolio": {
-    "n_bets": 50,
-    "n_open": 3,
+    "n_bets": 49,
+    "n_open": 1,
     "n_won": 16,
-    "n_lost": 23,
+    "n_lost": 24,
     "n_void": 8,
-    "total_staked": 606.01,
-    "total_pnl": 0.18000000000000682,
-    "roi_pct": 0.029702480157094244,
-    "win_rate": 41.02564102564102,
+    "total_staked": 613.51,
+    "total_pnl": -7.320000000000007,
+    "roi_pct": -1.1931345862333145,
+    "win_rate": 40.0,
     "mean_clv": 0.18054166666666668,
     "by_market": {
       "ah+0.5": {
@@ -7579,6 +7579,13 @@
         "won": 0,
         "lost": 1
       },
+      "scorer_Federico Santiago Valverde Dipetta": {
+        "n": 1,
+        "pnl": -7.5,
+        "roi_pct": -100.0,
+        "won": 0,
+        "lost": 1
+      },
       "scorer_Harry Kane": {
         "n": 1,
         "pnl": 20.0,
@@ -7606,15 +7613,15 @@
   "history": [
     {
       "date": "2026-06-22",
-      "n_bets": 2,
+      "n_bets": 1,
       "pnl": 0.0,
       "roi_pct": 0.0
     },
     {
       "date": "2026-06-21",
       "n_bets": 6,
-      "pnl": 4.43,
-      "roi_pct": 8.5
+      "pnl": -3.07,
+      "roi_pct": -5.9
     },
     {
       "date": "2026-06-20",
@@ -7672,34 +7679,6 @@
     }
   ],
   "open_bets": [
-    {
-      "match": "Uruguay vs Cape Verde",
-      "home": "Uruguay",
-      "away": "Cape Verde",
-      "market": "scorer_Federico Santiago Valverde Dipetta",
-      "entry_odds": 3.75,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
-      "stake": 7.5,
-      "match_date": "2026-06-21",
-      "model_edge_pct": null,
-      "is_live": false
-    },
-    {
-      "match": "A vs B",
-      "home": "A",
-      "away": "B",
-      "market": "home",
-      "entry_odds": 2.0,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
-      "stake": 10.0,
-      "match_date": "2026-06-22",
-      "model_edge_pct": null,
-      "is_live": false
-    },
     {
       "match": "New Zealand vs Egypt",
       "home": "New Zealand",
@@ -7804,6 +7783,19 @@
       "pnl": 6.7,
       "match_date": "2026-06-21",
       "status": "won",
+      "clv": null,
+      "closing_odds": null
+    },
+    {
+      "match": "Uruguay vs Cape Verde",
+      "home": "Uruguay",
+      "away": "Cape Verde",
+      "market": "scorer_Federico Santiago Valverde Dipetta",
+      "entry_odds": 3.75,
+      "stake": 7.5,
+      "pnl": -7.5,
+      "match_date": "2026-06-21",
+      "status": "lost",
       "clv": null,
       "closing_odds": null
     },
@@ -8330,11 +8322,11 @@
   ],
   "bankroll_state": {
     "start": 100.0,
-    "free": 70.98,
-    "staked": 29.2,
-    "exposure_pct": 29.2,
-    "max_win": 41.04,
-    "pnl_closed": 0.18
+    "free": 80.98,
+    "staked": 11.7,
+    "exposure_pct": 11.7,
+    "max_win": 10.41,
+    "pnl_closed": -7.32
   },
   "wm_stats": {
     "stats": {
@@ -8363,12 +8355,12 @@
         "roi": -23.3
       },
       "other": {
-        "n": 14,
+        "n": 15,
         "won": 5,
-        "staked": 176.86,
-        "pnl": -55.71,
-        "hit_rate": 35.7,
-        "roi": -31.5
+        "staked": 184.36,
+        "pnl": -63.21,
+        "hit_rate": 33.3,
+        "roi": -34.3
       }
     },
     "series": [
@@ -8414,16 +8406,16 @@
       },
       {
         "date": "2026-06-21",
-        "balance": 100.18
+        "balance": 92.68
       }
     ],
     "drawdown": {
       "peak": 176.25,
-      "current": 100.18,
-      "current_dd": 76.07,
-      "current_dd_pct": 43.16,
-      "max_dd": 80.5,
-      "max_dd_pct": 45.67
+      "current": 92.68,
+      "current_dd": 83.57,
+      "current_dd_pct": 47.42,
+      "max_dd": 83.57,
+      "max_dd_pct": 47.42
     },
     "clv_dist": {
       "labels": [
@@ -8458,20 +8450,20 @@
         3,
         3,
         1,
-        3
+        4
       ]
     },
     "summary": {
-      "n_settled": 39,
-      "staked": 476.86,
-      "pnl": 0.18,
-      "yield_pct": 0.04,
+      "n_settled": 40,
+      "staked": 484.36,
+      "pnl": -7.32,
+      "yield_pct": -1.51,
       "mean_clv": 6.28,
       "mean_clv_30d": 6.28,
-      "mean_edge": 6.96,
+      "mean_edge": 7.89,
       "n_clv": 20,
       "n_clv_30d": 20,
-      "n_edge": 13
+      "n_edge": 14
     },
     "per_team_market": {
       "South Korea": {
@@ -8736,6 +8728,14 @@
           "pnl": 10.2,
           "hit_rate": 100.0,
           "roi": 68.0
+        },
+        "Sonstige": {
+          "n": 1,
+          "won": 0,
+          "staked": 7.5,
+          "pnl": -7.5,
+          "hit_rate": 0.0,
+          "roi": -100.0
         },
         "1X2": {
           "n": 1,
@@ -9145,6 +9145,14 @@
         }
       },
       "Cape Verde": {
+        "Sonstige": {
+          "n": 1,
+          "won": 0,
+          "staked": 7.5,
+          "pnl": -7.5,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        },
         "1X2": {
           "n": 1,
           "won": 1,
@@ -9173,12 +9181,12 @@
         "roi": 2.2
       },
       "CONMEBOL": {
-        "n": 4,
+        "n": 5,
         "won": 1,
-        "staked": 47.5,
-        "pnl": -15.02,
-        "hit_rate": 25.0,
-        "roi": -31.6
+        "staked": 55.0,
+        "pnl": -22.52,
+        "hit_rate": 20.0,
+        "roi": -40.9
       },
       "UEFA": {
         "n": 19,
