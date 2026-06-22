@@ -259,6 +259,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Warum**: Klare Verantwortlichkeiten.
 - **Impact/Aufwand/Risiko**: 🟡 · 🔴 · 🟡
 - **Dateien**: `src/data/`
+- **Status (2026-06-22)**: ✅ Erledigt. 5 Sub-Module: `squad_models.py` (Types + Cache-Helpers), `squad_covers.py`, `squad_wikipedia.py`, `squad_transfermarkt.py`, `squad_merger.py`. `squad_availability.py` → Backward-Compat-Shim. Monkeypatch-Pfade in `test_suspensions.py` + `test_squad_wikipedia.py` auf korrekte Sub-Module aktualisiert. 523/523 Tests grün. Commit `b4d5562`.
 
 ---
 
