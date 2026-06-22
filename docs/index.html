@@ -4612,9 +4612,11 @@ function _openMatchDetail(match) {
     // ── Wahrscheinlichste Ergebnisse: Analytisch vs MC ──
     body += `<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Wahrscheinlichste Ergebnisse</div>`;
 
+    const priorUsed = sl.prior_used === true;
+    const dcLabel = priorUsed ? `DC + WC-Prior (${Math.round(sl.alpha * 100)}/${Math.round((1 - sl.alpha) * 100)})` : 'Analytisch (DC)';
     // Header-Zeile
     body += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px">
-      <div style="text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px">Analytisch (DC)</div>
+      <div style="text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px">${esc(dcLabel)}</div>
       <div style="text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px">Monte Carlo (${nMc} Sims)</div>
     </div>`;
 
@@ -4648,7 +4650,7 @@ function _openMatchDetail(match) {
     if (hasGd) {
       body += `<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Tor-Verteilung (gesamt)</div>`;
       body += `<div style="display:flex;gap:8px;margin-bottom:6px">
-        <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;border-radius:2px;background:rgba(0,200,83,.7)"></div><span style="font-size:10px;color:var(--muted);font-weight:600">DC analytisch</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;border-radius:2px;background:rgba(0,200,83,.7)"></div><span style="font-size:10px;color:var(--muted);font-weight:600">${esc(dcLabel)}</span></div>
         <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;border-radius:2px;background:rgba(56,139,253,.7)"></div><span style="font-size:10px;color:var(--muted);font-weight:600">Monte Carlo</span></div>
       </div>`;
       body += `<div style="display:flex;flex-direction:column;gap:6px">`;
