@@ -65,6 +65,17 @@ async function writeUserTokens(env, obj) {
   await env.SIGNALS.put('user_tokens', JSON.stringify(obj));
 }
 
+// D6 — Invite-Tokens (Storage: KV "invites" → { [invite_token]: {created_at, note, used_by, used_at} })
+async function readInvites(env) {
+  const raw = await env.SIGNALS.get('invites');
+  if (!raw) return {};
+  try { const obj = JSON.parse(raw); return (obj && typeof obj === 'object') ? obj : {}; }
+  catch { return {}; }
+}
+async function writeInvites(env, obj) {
+  await env.SIGNALS.put('invites', JSON.stringify(obj));
+}
+
 function _sanitizeUser(s) {
   return String(s || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 32);
 }
@@ -321,6 +332,50 @@ export default {
       const next = arr.filter(s => !endpoints.includes(s.endpoint));
       await writePushSubs(env, next);
       return jr({ ok: true, removed: arr.length - next.length });
+    }
+
+    // ── D6 — POST /invite (Master-Token: erzeugt unbound Invite-Token) ──
+    //   Body: optional {note}. Liefert {invite_token, invite_url_hint}.
+    if (request.method === 'POST' && path === '/invite') {
+      const auth = await authResolve(request, env);
+      if (!auth.ok || !auth.viaMaster) return new Response('Master only', { status: 401, headers: ch });
+      let body = {};
+      try { body = await request.json(); } catch {}
+      const invites = await readInvites(env);
+      const invite = _randomToken();
+      invites[invite] = {
+        created_at: new Date().toISOString(),
+        note: typeof body.note === 'string' ? body.note.slice(0, 200) : '',
+        used_by: null,
+      };
+      await writeInvites(env, invites);
+      return jr({ ok: true, invite_token: invite });
+    }
+
+    // ── D6 — POST /register (no-auth, Body: {invite, user}) ──
+    //   Konsumiert einen Invite-Token, sanitisiert Username, prüft Eindeutigkeit,
+    //   legt User-Slot mit frischem Per-User-Token an. Username einmalig.
+    if (request.method === 'POST' && path === '/register') {
+      let body = {};
+      try { body = await request.json(); } catch { return jr({ error: 'invalid json' }, 400); }
+      const invite = String(body.invite || '').trim();
+      const user = _sanitizeUser(body.user || '');
+      if (!invite) return jr({ error: 'invite required' }, 400);
+      if (!user || user.length < 3) return jr({ error: 'username must be ≥3 chars (a-z, 0-9, _, -)' }, 400);
+      if (user === DEFAULT_USER) return jr({ error: 'username reserved' }, 400);
+      const invites = await readInvites(env);
+      const inv = invites[invite];
+      if (!inv) return jr({ error: 'unknown invite token' }, 400);
+      if (inv.used_by) return jr({ error: 'invite already used' }, 400);
+      const ut = await readUserTokens(env);
+      if (ut[user]) return jr({ error: 'username taken' }, 400);
+      const token = _randomToken();
+      ut[user] = { active: token, previous: null, rotated_at: new Date().toISOString() };
+      inv.used_by = user;
+      inv.used_at = new Date().toISOString();
+      await writeUserTokens(env, ut);
+      await writeInvites(env, invites);
+      return jr({ ok: true, user, token });
     }
 
     // ── D2 — POST /rotate_token (AUTH, Master oder gültiger User-Token) ──
