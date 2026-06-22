@@ -49,7 +49,7 @@ class TestLoadSuspensions:
 
     def test_returns_empty_when_file_missing(self, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "src.data.squad_availability._SUSPENSIONS_FILE",
+            "src.data.squad_merger._SUSPENSIONS_FILE",
             tmp_path / "nonexistent.json",
         )
         assert load_suspensions() == {}
@@ -57,7 +57,7 @@ class TestLoadSuspensions:
     def test_returns_empty_on_invalid_json(self, tmp_path, monkeypatch):
         bad_file = tmp_path / "suspensions.json"
         bad_file.write_text("not valid json {{{")
-        monkeypatch.setattr("src.data.squad_availability._SUSPENSIONS_FILE", bad_file)
+        monkeypatch.setattr("src.data.squad_merger._SUSPENSIONS_FILE", bad_file)
         assert load_suspensions() == {}
 
     def test_filters_comment_keys(self, tmp_path, monkeypatch):
@@ -67,7 +67,7 @@ class TestLoadSuspensions:
             "_format": "also ignore",
             "Brazil": ["Rodrygo"],
         }))
-        monkeypatch.setattr("src.data.squad_availability._SUSPENSIONS_FILE", f)
+        monkeypatch.setattr("src.data.squad_merger._SUSPENSIONS_FILE", f)
         result = load_suspensions()
         assert "_comment" not in result
         assert "_format" not in result
@@ -80,14 +80,14 @@ class TestLoadSuspensions:
             "Germany": ["Musiala"],
             "France": ["Tchouameni", "Kante"],
         }))
-        monkeypatch.setattr("src.data.squad_availability._SUSPENSIONS_FILE", f)
+        monkeypatch.setattr("src.data.squad_merger._SUSPENSIONS_FILE", f)
         result = load_suspensions()
         assert result == {"Germany": ["Musiala"], "France": ["Tchouameni", "Kante"]}
 
     def test_returns_empty_dict_for_empty_suspensions_file(self, tmp_path, monkeypatch):
         f = tmp_path / "suspensions.json"
         f.write_text(json.dumps({"_comment": "no suspensions yet"}))
-        monkeypatch.setattr("src.data.squad_availability._SUSPENSIONS_FILE", f)
+        monkeypatch.setattr("src.data.squad_merger._SUSPENSIONS_FILE", f)
         result = load_suspensions()
         assert result == {}
 
@@ -101,24 +101,24 @@ class TestGetSuspendedPlayers:
     def test_exact_match(self, tmp_path, monkeypatch):
         f = tmp_path / "suspensions.json"
         f.write_text(json.dumps({"Brazil": ["Rodrygo"]}))
-        monkeypatch.setattr("src.data.squad_availability._SUSPENSIONS_FILE", f)
+        monkeypatch.setattr("src.data.squad_merger._SUSPENSIONS_FILE", f)
         assert get_suspended_players("Brazil") == ["Rodrygo"]
 
     def test_case_insensitive_match(self, tmp_path, monkeypatch):
         f = tmp_path / "suspensions.json"
         f.write_text(json.dumps({"brazil": ["Rodrygo"]}))
-        monkeypatch.setattr("src.data.squad_availability._SUSPENSIONS_FILE", f)
+        monkeypatch.setattr("src.data.squad_merger._SUSPENSIONS_FILE", f)
         assert get_suspended_players("Brazil") == ["Rodrygo"]
 
     def test_returns_empty_for_unknown_team(self, tmp_path, monkeypatch):
         f = tmp_path / "suspensions.json"
         f.write_text(json.dumps({"Germany": ["Musiala"]}))
-        monkeypatch.setattr("src.data.squad_availability._SUSPENSIONS_FILE", f)
+        monkeypatch.setattr("src.data.squad_merger._SUSPENSIONS_FILE", f)
         assert get_suspended_players("Argentina") == []
 
     def test_returns_empty_when_file_missing(self, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "src.data.squad_availability._SUSPENSIONS_FILE",
+            "src.data.squad_merger._SUSPENSIONS_FILE",
             tmp_path / "missing.json",
         )
         assert get_suspended_players("Brazil") == []
@@ -128,7 +128,7 @@ class TestGetSuspendedPlayers:
         f.write_text(json.dumps({
             "France": ["Tchouameni", "Kante", "Camavinga"],
         }))
-        monkeypatch.setattr("src.data.squad_availability._SUSPENSIONS_FILE", f)
+        monkeypatch.setattr("src.data.squad_merger._SUSPENSIONS_FILE", f)
         result = get_suspended_players("France")
         assert len(result) == 3
         assert "Kante" in result
@@ -143,7 +143,7 @@ class TestApplySuspensionOverlay:
     def test_marks_matching_player_as_suspended(self, tmp_path, monkeypatch):
         f = tmp_path / "suspensions.json"
         f.write_text(json.dumps({"Brazil": ["Rodrygo"]}))
-        monkeypatch.setattr("src.data.squad_availability._SUSPENSIONS_FILE", f)
+        monkeypatch.setattr("src.data.squad_merger._SUSPENSIONS_FILE", f)
 
         players = [_make_player("Rodrygo Goes"), _make_player("Vinicius Junior")]
         updated, count = _apply_suspension_overlay_to_statuses(players, "Brazil")
@@ -156,7 +156,7 @@ class TestApplySuspensionOverlay:
     def test_non_matching_player_stays_fit(self, tmp_path, monkeypatch):
         f = tmp_path / "suspensions.json"
         f.write_text(json.dumps({"Brazil": ["Rodrygo"]}))
-        monkeypatch.setattr("src.data.squad_availability._SUSPENSIONS_FILE", f)
+        monkeypatch.setattr("src.data.squad_merger._SUSPENSIONS_FILE", f)
 
         players = [_make_player("Rodrygo Goes"), _make_player("Vinicius Junior")]
         updated, _ = _apply_suspension_overlay_to_statuses(players, "Brazil")
@@ -167,7 +167,7 @@ class TestApplySuspensionOverlay:
 
     def test_no_suspensions_returns_unchanged(self, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "src.data.squad_availability._SUSPENSIONS_FILE",
+            "src.data.squad_merger._SUSPENSIONS_FILE",
             tmp_path / "missing.json",
         )
         players = [_make_player("Musiala"), _make_player("Kimmich")]
@@ -179,7 +179,7 @@ class TestApplySuspensionOverlay:
         """Suspension entry 'Musiala' matches player 'Jamal Musiala'."""
         f = tmp_path / "suspensions.json"
         f.write_text(json.dumps({"Germany": ["Musiala"]}))
-        monkeypatch.setattr("src.data.squad_availability._SUSPENSIONS_FILE", f)
+        monkeypatch.setattr("src.data.squad_merger._SUSPENSIONS_FILE", f)
 
         players = [_make_player("Jamal Musiala"), _make_player("Joshua Kimmich")]
         updated, count = _apply_suspension_overlay_to_statuses(players, "Germany")
@@ -191,7 +191,7 @@ class TestApplySuspensionOverlay:
     def test_count_reflects_number_of_suspensions_applied(self, tmp_path, monkeypatch):
         f = tmp_path / "suspensions.json"
         f.write_text(json.dumps({"France": ["Tchouameni", "Kante"]}))
-        monkeypatch.setattr("src.data.squad_availability._SUSPENSIONS_FILE", f)
+        monkeypatch.setattr("src.data.squad_merger._SUSPENSIONS_FILE", f)
 
         players = [
             _make_player("Aurelien Tchouameni"),
@@ -208,15 +208,15 @@ class TestApplySuspensionOverlay:
 
 class TestSquadReportSuspendedCount:
 
-    @patch("src.data.squad_availability._fetch_wikipedia_squad")
-    @patch("src.data.squad_availability._fetch_wc_squads_page")
-    @patch("src.data.squad_availability._fetch_covers_squad")
-    @patch("src.data.squad_availability.fetch_transfermarkt_squad")
+    @patch("src.data.squad_merger._fetch_wikipedia_squad")
+    @patch("src.data.squad_merger._fetch_wc_squads_page")
+    @patch("src.data.squad_merger._fetch_covers_squad")
+    @patch("src.data.squad_merger.fetch_transfermarkt_squad")
     def test_suspended_count_in_tm_report(self, mock_tm, mock_covers, mock_wc, mock_wiki, tmp_path, monkeypatch):
-        monkeypatch.setattr("src.data.squad_availability._CACHE_DIR", tmp_path / "squad")
+        monkeypatch.setattr("src.data.squad_models._CACHE_DIR", tmp_path / "squad")
         f = tmp_path / "suspensions.json"
         f.write_text(json.dumps({"Germany": ["Musiala"]}))
-        monkeypatch.setattr("src.data.squad_availability._SUSPENSIONS_FILE", f)
+        monkeypatch.setattr("src.data.squad_merger._SUSPENSIONS_FILE", f)
 
         mock_covers.return_value = []
         mock_tm.return_value = [
@@ -230,15 +230,15 @@ class TestSquadReportSuspendedCount:
         assert report.data_source == "transfermarkt"
         assert report.suspended_count == 1
 
-    @patch("src.data.squad_availability._fetch_wikipedia_squad")
-    @patch("src.data.squad_availability._fetch_wc_squads_page")
-    @patch("src.data.squad_availability._fetch_covers_squad")
-    @patch("src.data.squad_availability.fetch_transfermarkt_squad")
+    @patch("src.data.squad_merger._fetch_wikipedia_squad")
+    @patch("src.data.squad_merger._fetch_wc_squads_page")
+    @patch("src.data.squad_merger._fetch_covers_squad")
+    @patch("src.data.squad_merger.fetch_transfermarkt_squad")
     def test_suspended_count_in_wiki_report(self, mock_tm, mock_covers, mock_wc, mock_wiki, tmp_path, monkeypatch):
-        monkeypatch.setattr("src.data.squad_availability._CACHE_DIR", tmp_path / "squad")
+        monkeypatch.setattr("src.data.squad_models._CACHE_DIR", tmp_path / "squad")
         f = tmp_path / "suspensions.json"
         f.write_text(json.dumps({"Brazil": ["Rodrygo"]}))
-        monkeypatch.setattr("src.data.squad_availability._SUSPENSIONS_FILE", f)
+        monkeypatch.setattr("src.data.squad_merger._SUSPENSIONS_FILE", f)
 
         mock_covers.return_value = []
         mock_tm.return_value = []
@@ -252,16 +252,16 @@ class TestSquadReportSuspendedCount:
         assert report.data_source == "wikipedia"
         assert report.suspended_count == 1
 
-    @patch("src.data.squad_availability._fetch_wikipedia_squad")
-    @patch("src.data.squad_availability._fetch_wc_squads_page")
-    @patch("src.data.squad_availability._fetch_covers_squad")
-    @patch("src.data.squad_availability.fetch_transfermarkt_squad")
+    @patch("src.data.squad_merger._fetch_wikipedia_squad")
+    @patch("src.data.squad_merger._fetch_wc_squads_page")
+    @patch("src.data.squad_merger._fetch_covers_squad")
+    @patch("src.data.squad_merger.fetch_transfermarkt_squad")
     def test_suspended_count_zero_when_no_suspensions(
         self, mock_tm, mock_covers, mock_wc, mock_wiki, tmp_path, monkeypatch
     ):
-        monkeypatch.setattr("src.data.squad_availability._CACHE_DIR", tmp_path / "squad")
+        monkeypatch.setattr("src.data.squad_models._CACHE_DIR", tmp_path / "squad")
         monkeypatch.setattr(
-            "src.data.squad_availability._SUSPENSIONS_FILE",
+            "src.data.squad_merger._SUSPENSIONS_FILE",
             tmp_path / "missing.json",
         )
         mock_covers.return_value = []
@@ -272,15 +272,15 @@ class TestSquadReportSuspendedCount:
         report = squad_report("Germany", pd.Timestamp("2026-07-10"))
         assert report.suspended_count == 0
 
-    @patch("src.data.squad_availability._fetch_wikipedia_squad")
-    @patch("src.data.squad_availability._fetch_wc_squads_page")
-    @patch("src.data.squad_availability._fetch_covers_squad")
-    @patch("src.data.squad_availability.fetch_transfermarkt_squad")
+    @patch("src.data.squad_merger._fetch_wikipedia_squad")
+    @patch("src.data.squad_merger._fetch_wc_squads_page")
+    @patch("src.data.squad_merger._fetch_covers_squad")
+    @patch("src.data.squad_merger.fetch_transfermarkt_squad")
     def test_suspended_count_in_default_report(self, mock_tm, mock_covers, mock_wc, mock_wiki, tmp_path, monkeypatch):
-        monkeypatch.setattr("src.data.squad_availability._CACHE_DIR", tmp_path / "squad")
+        monkeypatch.setattr("src.data.squad_models._CACHE_DIR", tmp_path / "squad")
         f = tmp_path / "suspensions.json"
         f.write_text(json.dumps({"Argentina": ["Messi", "De Paul"]}))
-        monkeypatch.setattr("src.data.squad_availability._SUSPENSIONS_FILE", f)
+        monkeypatch.setattr("src.data.squad_merger._SUSPENSIONS_FILE", f)
 
         mock_covers.return_value = []
         mock_tm.return_value = []
