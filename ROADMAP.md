@@ -426,12 +426,14 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Impact/Aufwand/Risiko**: 🟡 · 🟡 · 🟢
 - **Dateien**: `docs/sw.js`, `docs/index.html`, `cloudflare/worker.js`, `src/notifications/web_push.py`
 - **Abhängigkeiten**: B2, C1
+- **Status (2026-06-22)**: ✅ Erledigt. `send_scan_alert()` baut `?bet=MATCH:MARKET`-URL wenn 1 Top-Signal. SW nutzt bereits `notification.data.url`. Frontend: `_openBetModalForBetId()` + `?bet=`-Check in `_load()` mit `history.replaceState`-Cleanup. Commit `5c4808c`.
 
 ### H2. Legal/Impressum/DSGVO-Stub
 - **Was**: Leeres `docs/legal.html` mit Sektionen + Footer-Link.
 - **Warum**: Vor Public-Launch füllen.
 - **Impact/Aufwand/Risiko**: ⚪ · 🟢 · 🟢
 - **Dateien**: `docs/legal.html` (neu), `docs/index.html`
+- **Status (2026-06-22)**: ✅ Erledigt. `docs/legal.html` mit Impressum/DSGVO-Stub (Platzhalter für Public-Launch). Footer-Link in `index.html` ergänzt. Smoke-Tests grün.
 
 ---
 
@@ -566,7 +568,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Insgesamt**: 59 konkrete Items
 - **P0**: 12 (sofort) — davon 12 ✅
 - **P1**: 25 — davon 23 ✅ (offen: M5 blockiert bis 2026-06-27)
-- **P2**: 15 — davon 6 ✅ (E1, E2, E3, E4, I6, I7); offen: H1, H2, I1–I5, J3, J4
+- **P2**: 15 — davon 8 ✅ (E1, E2, E3, E4, H1, H2, I6, I7); offen: I1–I5, J3, J4
 - **P3**: 4 (Q4 2026)
 - **Veto**: 11 (bewusst nicht gebaut)
 
