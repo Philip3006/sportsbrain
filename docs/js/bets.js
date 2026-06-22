@@ -146,7 +146,7 @@ function _renderOpenBetCards(bets, isLive) {
       }
     }
 
-    h += `<div class="bet-card">
+    h += `<div class="bet-card" style="cursor:pointer" onclick="if(!event.target.closest('textarea,a,button'))_openMatchDetailFromSignal(${JSON.stringify(home.trim())},${JSON.stringify(away.trim())})">
       <div class="bet-card-top">
         <div class="bet-card-header">
           <span class="bet-match">${flagH} ${esc(home)} vs ${flagA} ${esc(away)}</span>

@@ -469,7 +469,7 @@ function sigCard(s, showMatch) {
       </div>
     </details>`;
   }
-  return `<div class="sig-card ${cls}">
+  return `<div class="sig-card ${cls}" style="cursor:pointer" onclick="if(!event.target.closest('.place-bet-btn,.why-inline,button,a'))_openMatchDetailFromSignal(${JSON.stringify(sh)},${JSON.stringify(sa)})">
     ${matchLine}
     <div class="card-market">${marketLabel(s.market, s.match)}</div>
     <div class="card-footer">
@@ -2014,9 +2014,10 @@ function _openMatchDetail(match) {
   const title = `${teamFlag(match.home)} ${esc(match.home)} vs ${teamFlag(match.away)} ${esc(match.away)}`;
   document.getElementById('match-detail-modal-title').innerHTML = title;
 
+  const groupPart = match.group ? `Gruppe ${esc(match.group)} · ` : '';
   const sub = match.played
-    ? `Gruppe ${esc(match.group || '?')} · Gespielt: ${match.home_score}–${match.away_score}`
-    : `Gruppe ${esc(match.group || '?')} · DC-Modell Prognose`;
+    ? `${groupPart}Gespielt: ${match.home_score}–${match.away_score}`
+    : `${groupPart}DC-Modell Prognose`;
   document.getElementById('match-detail-modal-sub').textContent = sub;
 
   let body = '';
@@ -2119,6 +2120,37 @@ function _openMatchDetail(match) {
 function _closeMatchDetail() {
   document.getElementById('match-detail-modal-bd').classList.remove('show');
   document.body.style.overflow = '';
+}
+
+async function _openMatchDetailFromSignal(home, away) {
+  const fd = _forecastData || await loadForecast();
+  let match = null;
+  const nk = matchKey(home, away);
+  for (const m of (fd && fd.group_matches) || []) {
+    if (matchKey(m.home, m.away) === nk) { match = m; break; }
+  }
+  if (!match && fd && fd.bracket) {
+    outer: for (const round of fd.bracket.rounds || []) {
+      for (const m of round.matches || []) {
+        if (matchKey(m.home, m.away) === nk) { match = m; break outer; }
+      }
+    }
+  }
+  if (!match) {
+    const sigs = _signals.filter(s => {
+      const [sh, sa] = s.match.split(' vs ').map(x => x.trim());
+      return matchKey(sh, sa) === nk;
+    });
+    const get = mkt => sigs.find(s => s.market === mkt);
+    const hS = get('home'), aS = get('away'), dS = get('draw');
+    match = {
+      home, away,
+      p_home: hS?.model_prob ?? null,
+      p_away: aS?.model_prob ?? null,
+      p_draw: dS?.model_prob ?? null,
+    };
+  }
+  _openMatchDetail(match);
 }
 document.getElementById('match-detail-modal-bd').addEventListener('click', (e) => {
   if (e.target.id === 'match-detail-modal-bd') _closeMatchDetail();
