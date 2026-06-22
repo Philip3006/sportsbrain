@@ -102,5 +102,45 @@
 [2026-06-22T06:08:28Z] [layer2] live_score_push transient (cron lag + gh API timeout at 05:28 UTC, exit_code=0) — no action
 [2026-06-22T06:08:28Z] [layer2] prematch_scan transient (cron lag + gh API timeout at 05:28 UTC, exit_code=0) — no action
 [2026-06-22T06:08:28Z] [layer2] aggregate_health transient (cron lag + gh API timeout at 05:28 UTC, exit_code=0) — no action
-[2026-06-22 08:41:04 UTC] [cloud_healer] closing_odds: status=stale — triggere closing_odds.yml
-[2026-06-22 08:41:06 UTC] [cloud_healer] closing_odds: erfolgreich ausgelöst
+[2026-06-22 06:14:00 UTC] [auto_heal_ai] analyzing closing_odds (status=stale, fallback=None)
+[2026-06-22 06:14:03 UTC] [auto_heal_ai] closing_odds: response → TRANSIENT: No log file present indicates the cron job failed to start or write logs. This is typically caused by a tempo
+[2026-06-22 06:14:03 UTC] [auto_heal_ai] closing_odds: transient — no action. TRANSIENT: No log file present indicates the cron job failed to start or write logs. This is typically caused by a temporary execution environment issue, missing dependencies at runtime, or a transient scheduler failure. The 'stale' status with no fallback active suggests the job hasn't completed recently due to a temporary fault rather than a code bug.
+[2026-06-22T06:23:31Z] [layer2] closing_odds stale flag — scheduled cadence gap (last 2026-06-21 18:00 CEST, next 2026-06-22 14:00 CEST), no action
+[2026-06-22 06:29:04 UTC] [auto_heal_ai] analyzing closing_odds (status=stale, fallback=None)
+[2026-06-22 06:29:06 UTC] [auto_heal_ai] closing_odds: response → TRANSIENT: No log file available; stale health status with no fallback indicates the job failed to execute or log output
+[2026-06-22 06:29:06 UTC] [auto_heal_ai] closing_odds: transient — no action. TRANSIENT: No log file available; stale health status with no fallback indicates the job failed to execute or log output. This is likely a temporary execution failure, network timeout, or API connectivity issue preventing the closing_odds job from completing.
+[2026-06-22 06:44:06 UTC] [auto_heal_ai] analyzing closing_odds (status=stale, fallback=None)
+[2026-06-22 06:44:09 UTC] [auto_heal_ai] closing_odds: response → UNCLEAR: No log file available to diagnose the root cause. The 'closing_odds' cron job shows 'stale' health status with 
+[2026-06-22 06:44:09 UTC] [auto_heal_ai] closing_odds: unclear — pushing notification
+[2026-06-22 06:59:11 UTC] [auto_heal_ai] analyzing closing_odds (status=stale, fallback=None)
+[2026-06-22 06:59:14 UTC] [auto_heal_ai] closing_odds: response → UNCLEAR: No log file available to diagnose root cause. The 'closing_odds' cron job has stale health status with no fallb
+[2026-06-22 06:59:14 UTC] [auto_heal_ai] closing_odds: unclear — pushing notification
+[2026-06-22 07:14:14 UTC] [auto_heal_ai] analyzing closing_odds (status=stale, fallback=None)
+[2026-06-22 07:14:17 UTC] [auto_heal_ai] closing_odds: response → TRANSIENT: No log file available; 'stale' status with no fallback indicates the closing_odds job failed to complete with
+[2026-06-22 07:14:17 UTC] [auto_heal_ai] closing_odds: transient — no action. TRANSIENT: No log file available; 'stale' status with no fallback indicates the closing_odds job failed to complete within its expected window, likely due to a temporary external dependency issue (API timeout, network connectivity, or data source unavailability).
+[2026-06-22 07:29:17 UTC] [auto_heal_ai] analyzing closing_odds (status=stale, fallback=None)
+[2026-06-22 07:29:20 UTC] [auto_heal_ai] closing_odds: response → DEGRADED_OK: Job health status is 'stale' with no fallback currently in use (fallback_used: None), indicating the primar
+[2026-06-22 07:44:20 UTC] [auto_heal_ai] analyzing closing_odds (status=stale, fallback=None)
+[2026-06-22 07:44:23 UTC] [auto_heal_ai] closing_odds: response → TRANSIENT: No log file available; cron job 'closing_odds' marked stale with no fallback triggered. Likely a temporary ex
+[2026-06-22 07:44:23 UTC] [auto_heal_ai] closing_odds: transient — no action. TRANSIENT: No log file available; cron job 'closing_odds' marked stale with no fallback triggered. Likely a temporary execution failure (network timeout, API unavailability, or scheduler issue). Monitor next execution cycle.
+[2026-06-22 07:59:24 UTC] [auto_heal_ai] analyzing closing_odds (status=stale, fallback=None)
+[2026-06-22 07:59:27 UTC] [auto_heal_ai] closing_odds: response → UNCLEAR: No log file available to diagnose the 'closing_odds' cron job stale health status. The absence of logs prevents
+[2026-06-22 07:59:27 UTC] [auto_heal_ai] closing_odds: unclear — pushing notification
+[2026-06-22T08:10:34Z] [layer2] closing_odds degraded/stale — last run 2026-06-21T18:00 CEST successful (exit 0), next due 2026-06-22T14:00 CEST; health threshold 43200s too tight for 14h overnight gap — monitoring
+[2026-06-22 08:14:27 UTC] [auto_heal_ai] analyzing closing_odds (status=stale, fallback=None)
+[2026-06-22 08:14:30 UTC] [auto_heal_ai] closing_odds: response → UNCLEAR: No log file available to diagnose root cause. Health status is 'stale' with no fallback active, suggesting the 
+[2026-06-22 08:14:30 UTC] [auto_heal_ai] closing_odds: unclear — pushing notification
+[2026-06-22T08:23:09Z] [layer2] closing_odds degraded/stale — same overnight gap, next due 2026-06-22T14:00 CEST, monitoring
+[2026-06-22 08:29:30 UTC] [auto_heal_ai] analyzing closing_odds (status=stale, fallback=None)
+[2026-06-22 08:29:33 UTC] [auto_heal_ai] closing_odds: response → UNCLEAR: No log file available to diagnose root cause. The 'closing_odds' cron job has stale health status with no fallb
+[2026-06-22 08:29:33 UTC] [auto_heal_ai] closing_odds: unclear — pushing notification
+[2026-06-22T08:38:17Z] [layer2] closing_odds degraded/stale — overnight gap (last ok 2026-06-21T18:00 CEST), next due 2026-06-22T14:00 CEST — monitoring
+[2026-06-22 08:44:34 UTC] [auto_heal_ai] analyzing closing_odds (status=stale, fallback=None)
+[2026-06-22 08:44:37 UTC] [auto_heal_ai] closing_odds: response → UNCLEAR: No log file available to diagnose root cause. Health status is 'stale' with no fallback active, indicating the 
+[2026-06-22 08:44:37 UTC] [auto_heal_ai] closing_odds: unclear — pushing notification
+[2026-06-22T08:53:35Z] [layer2] closing_odds stale — overnight gap 18:00→14:00 CEST (~20h) exceeds 43200s threshold but is expected (cadence 2×/Tag); last run exit_code=0 — monitoring
+[2026-06-22 08:59:37 UTC] [auto_heal_ai] analyzing closing_odds (status=stale, fallback=None)
+[2026-06-22 08:59:40 UTC] [auto_heal_ai] closing_odds: response → DEGRADED_OK: Cron job 'closing_odds' has stale health status with no fallback currently active (fallback_used: None), in
+[2026-06-22 09:14:40 UTC] [auto_heal_ai] analyzing closing_odds (status=stale, fallback=None)
+[2026-06-22 09:14:44 UTC] [auto_heal_ai] closing_odds: response → UNCLEAR: No log file available to diagnose the cause of the 'closing_odds' cron job staleness. Unable to determine if th
+[2026-06-22 09:14:44 UTC] [auto_heal_ai] closing_odds: unclear — pushing notification
