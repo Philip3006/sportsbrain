@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-21T23:25:39Z",
+  "generated_at": "2026-06-22T00:01:00Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -37,11 +37,11 @@
     },
     {
       "job": "consume_pending_bets",
-      "status": "stale",
-      "last_run_at": "2026-06-21T22:49:19Z",
+      "status": "ok",
+      "last_run_at": "2026-06-22T00:01:00Z",
       "duration_s": null,
       "exit_code": 0,
-      "error": "last run was at 2026-06-21T22:49:19Z — overdue (>420s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
