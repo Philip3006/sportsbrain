@@ -586,6 +586,15 @@ async function _load() {
   renderBets();
   _updateClock();
 
+  // H1: Deep-link aus Push-Notification (?bet=match:market → Modal sofort öffnen)
+  try {
+    const _betParam = new URLSearchParams(location.search).get('bet');
+    if (_betParam) {
+      history.replaceState({}, '', location.pathname);
+      _openBetModalForBetId(_betParam);
+    }
+  } catch {}
+
   // Load squads in background (non-blocking)
   fetch(SQUADS_URL + '?t=' + Date.now(), { cache: 'no-store' })
     .then(r => r.ok ? r.json() : null)
