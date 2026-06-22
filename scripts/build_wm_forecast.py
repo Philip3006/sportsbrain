@@ -34,6 +34,7 @@ sys.path.insert(0, str(ROOT))
 from src.config import canonical_name, MODELS_DIR  # noqa: E402
 from src.models import dixon_coles as dc  # noqa: E402
 from src.models.dixon_coles import predict_scoreline, get_stage_rho  # noqa: E402
+from src.analysis.monte_carlo import scoreline_distribution  # noqa: E402
 
 # WM 2026 Gruppen (Display-Namen wie im Frontend)
 WM_GROUPS: dict[str, list[str]] = {
@@ -108,6 +109,22 @@ def _sample_score(matrix: np.ndarray, rng: random.Random) -> tuple[int, int]:
         if r <= cum:
             return divmod(k, matrix.shape[1])
     return divmod(n - 1, matrix.shape[1])
+
+
+def _match_scoreline(home: str, away: str, params, elo: dict,
+                     stage: str = "group", neutral: bool = True) -> dict | None:
+    """Liefert scoreline_distribution für ein einzelnes Match oder None bei Fehler."""
+    ch, ca = canonical_name(home), canonical_name(away)
+    if ch not in params.attack or ca not in params.attack:
+        return None
+    rho = get_stage_rho(params, stage=stage, is_knockout=(stage != "group"))
+    try:
+        m = predict_scoreline(ch, ca, params, neutral=neutral,
+                              rho_override=rho,
+                              elo_home=elo.get(ch), elo_away=elo.get(ca))
+        return scoreline_distribution(m)
+    except Exception:
+        return None
 
 
 def _build_matrix_cache(params, elo: dict, stage: str,
@@ -461,6 +478,23 @@ def run_forecast(n: int = 2000, seed: int = 42) -> dict:
     teams_out.sort(key=lambda x: -x["p_champion"])
     xpoints = _build_xpoints(params, elo, results)
     bracket = _build_bracket_preview(teams_out, params, elo)
+
+    # Scoreline-Daten für anstehende Gruppenspiele
+    group_matches: list[dict] = []
+    for grp, h, a in remaining:
+        sl = _match_scoreline(h, a, params, elo, stage="group", neutral=True)
+        group_matches.append({
+            "group": grp, "home": h, "away": a, "played": False,
+            "scoreline": sl,
+        })
+    # Bereits gespielte Matches (mit realem Score, ohne Scoreline-Prognose)
+    for pk, (hs, as_, h, a) in fixed.items():
+        grp = next((g for g, ts in WM_GROUPS.items() if h in ts), "?")
+        group_matches.append({
+            "group": grp, "home": h, "away": a, "played": True,
+            "home_score": hs, "away_score": as_, "scoreline": None,
+        })
+
     return {
         "updated":    datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "n_trials":   n,
@@ -469,6 +503,7 @@ def run_forecast(n: int = 2000, seed: int = 42) -> dict:
         "teams":      teams_out,
         "xpoints":    xpoints,
         "bracket":    bracket,
+        "group_matches": group_matches,
     }
 
 
@@ -534,6 +569,7 @@ def _build_bracket_preview(teams_out: list[dict], params, elo: dict) -> dict:
         p_h_eff = ph + pd / 2
         p_a_eff = pa + pd / 2
         winner = home_team if p_h_eff >= p_a_eff else away_team
+        sl = _match_scoreline(home_team, away_team, params, elo, stage="r16", neutral=True)
         return {
             "home": home_team, "away": away_team,
             "p_home": round(p_h_eff * 100, 1),
@@ -541,6 +577,7 @@ def _build_bracket_preview(teams_out: list[dict], params, elo: dict) -> dict:
             "p_away": round(p_a_eff * 100, 1),
             "winner": winner,
             "p_winner": round(max(p_h_eff, p_a_eff) * 100, 1),
+            "scoreline": sl,
         }
 
     rounds_out: list[dict] = []
