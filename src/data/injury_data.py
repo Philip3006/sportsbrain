@@ -123,10 +123,8 @@ def _fetch_covers_injuries() -> list[dict]:
 
     soup = BeautifulSoup(resp.text, "html.parser")
     injuries: list[dict] = []
-    current_status = "out"
 
-    # Try table-based structure first
-    # covers.com: the only table on this page is "Players ruled out" → all entries are out
+    # 1) Table: "Players ruled out" (all entries are confirmed out)
     for table in soup.find_all("table"):
         headers = [th.get_text(strip=True).lower() for th in table.find_all("th")]
         has_player = any("player" in h or "name" in h for h in headers)
@@ -139,9 +137,7 @@ def _fetch_covers_injuries() -> list[dict]:
                 continue
             player = cells[0].get_text(strip=True)
             team = cells[1].get_text(strip=True)
-            injury_type = cells[-1].get_text(strip=True) if len(cells) > 2 else "injury"
             if player and team:
-                # All rows in this table are confirmed "ruled out" players
                 injuries.append({
                     "player": player,
                     "team": _normalize_team(team),
@@ -149,11 +145,55 @@ def _fetch_covers_injuries() -> list[dict]:
                     "availability": 0.0,
                 })
 
+    # 2) h3 sections: "Biggest injury concerns" and "Recently cleared" players
+    # Each h3 is "Player Name (Country)", followed by a sibling containing "Status: ..."
+    _h3_player_re = re.compile(r"^(.+?)\s*\(([^)]+)\)\s*$")
+    _status_re = re.compile(r"status\s*:?\s*(.+?)(?:\s+for\s+.+)?$", re.IGNORECASE)
+    ruled_out_names = {i["player"].lower() for i in injuries}
+
+    for h3 in soup.find_all("h3"):
+        text = h3.get_text(strip=True)
+        m = _h3_player_re.match(text)
+        if not m:
+            continue
+        player = m.group(1).strip()
+        team = _normalize_team(m.group(2).strip())
+        if player.lower() in ruled_out_names:
+            continue
+
+        # Look for status in the immediately following sibling text
+        avail = 0.7  # default: questionable
+        status = "questionable"
+        sib = h3.find_next_sibling()
+        for _ in range(3):
+            if sib is None or (sib.name and sib.name in ("h2", "h3")):
+                break
+            sib_text = sib.get_text(separator=" ", strip=True).lower()
+            sm = _status_re.search(sib_text)
+            if sm:
+                raw_status = sm.group(1).strip()
+                for key, weight in _STATUS_WEIGHT.items():
+                    if key in raw_status:
+                        status = key
+                        avail = weight
+                        break
+                break
+            sib = sib.find_next_sibling()
+
+        # Skip "recently cleared" players with full availability — not useful as injury signal
+        if avail >= 1.0:
+            continue
+        injuries.append({
+            "player": player,
+            "team": team,
+            "status": status,
+            "availability": avail,
+        })
+
     if injuries:
         return injuries
 
-    # Fallback: h3/section-based structure
-    # Pattern: section heading → player entries with "(Country)" or team listed separately
+    # Fallback: h3/section-based structure (legacy — kept in case page structure changes)
     _section_keywords = {
         "ruled out": 0.0, "season-ending": 0.0,
         "questionable": 0.7, "doubtful": 0.5,

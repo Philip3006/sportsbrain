@@ -35,6 +35,7 @@ _CACHE_STALE_MAX_H = 48.0  # graceful-degradation ceiling — if API is down/rat
 _TEAM_IDS_CACHE = DATA_CACHE / "sofascore_team_ids.json"
 _PLAYER_VALUES_CACHE = DATA_CACHE / "sofascore_player_values"
 _PLAYER_VALUES_MAX_AGE_DAYS = 30.0  # player MVs change slowly
+_quota_exhausted = False  # circuit breaker — set on first 429, clears on process restart
 
 _HOST = "sofascore.p.rapidapi.com"
 _BASE = f"https://{_HOST}"
@@ -266,7 +267,9 @@ def fetch_team_player_values(team_id: int, force: bool = False) -> dict[str, flo
     Uses teams/get-squad to enumerate, then players/detail for each player's
     proposedMarketValue. Result cached 30 days (market values change slowly).
     Skips network entirely when cache is fresh; one batch is ~27 API calls.
+    Circuit breaker: skips all API calls once a 429 is seen in this process run.
     """
+    global _quota_exhausted
     import json as _json
     path = _team_value_cache_path(team_id)
     if not force and _value_cache_fresh(path):
@@ -275,7 +278,13 @@ def fetch_team_player_values(team_id: int, force: bool = False) -> dict[str, flo
         except Exception:
             pass
 
-    if not _get_api_key():
+    # Return stale cache if quota is exhausted or API key missing
+    if _quota_exhausted or not _get_api_key():
+        if path.exists():
+            try:
+                return {k: float(v) for k, v in _json.loads(path.read_text()).items()}
+            except Exception:
+                pass
         return {}
 
     try:
@@ -287,7 +296,16 @@ def fetch_team_player_values(team_id: int, force: bool = False) -> dict[str, flo
         )
         r.raise_for_status()
     except Exception as e:
-        print(f"  [sofascore] team {team_id} squad fetch failed: {e}")
+        if "429" in str(e):
+            _quota_exhausted = True
+            print(f"  [sofascore] 429 quota exhausted — skipping further squad fetches this run")
+        else:
+            print(f"  [sofascore] team {team_id} squad fetch failed: {e}")
+        if path.exists():
+            try:
+                return {k: float(v) for k, v in _json.loads(path.read_text()).items()}
+            except Exception:
+                pass
         return {}
 
     players = (r.json() or {}).get("players", []) or []
