@@ -131,10 +131,10 @@ class TestParseWikipediaSquadHtml:
 
 class TestFetchWikipediaSquad:
 
-    @patch("src.data.squad_availability.retry_request")
+    @patch("src.data.squad_wikipedia.retry_request")
     def test_returns_players_on_200(self, mock_get, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "src.data.squad_availability._CACHE_DIR", tmp_path / "squad"
+            "src.data.squad_models._CACHE_DIR", tmp_path / "squad"
         )
         mock_resp = MagicMock()
         mock_resp.status_code = 200
@@ -145,10 +145,10 @@ class TestFetchWikipediaSquad:
         assert len(result) == 4
         assert result[0].status == "fit"
 
-    @patch("src.data.squad_availability.retry_request")
+    @patch("src.data.squad_wikipedia.retry_request")
     def test_returns_empty_on_404(self, mock_get, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "src.data.squad_availability._CACHE_DIR", tmp_path / "squad"
+            "src.data.squad_models._CACHE_DIR", tmp_path / "squad"
         )
         mock_resp = MagicMock()
         mock_resp.status_code = 404
@@ -157,20 +157,20 @@ class TestFetchWikipediaSquad:
         result = _fetch_wikipedia_squad("Saudi Arabia", pd.Timestamp("2026-06-15"))
         assert result == []
 
-    @patch("src.data.squad_availability.retry_request")
+    @patch("src.data.squad_wikipedia.retry_request")
     def test_returns_empty_on_request_exception(self, mock_get, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "src.data.squad_availability._CACHE_DIR", tmp_path / "squad"
+            "src.data.squad_models._CACHE_DIR", tmp_path / "squad"
         )
         mock_get.side_effect = ConnectionError("network unreachable")
 
         result = _fetch_wikipedia_squad("Iran", pd.Timestamp("2026-06-15"))
         assert result == []
 
-    @patch("src.data.squad_availability.retry_request")
+    @patch("src.data.squad_wikipedia.retry_request")
     def test_writes_cache_on_success(self, mock_get, tmp_path, monkeypatch):
         cache_dir = tmp_path / "squad"
-        monkeypatch.setattr("src.data.squad_availability._CACHE_DIR", cache_dir)
+        monkeypatch.setattr("src.data.squad_models._CACHE_DIR", cache_dir)
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.text = _SAMPLE_HTML
@@ -180,10 +180,10 @@ class TestFetchWikipediaSquad:
         cache_files = list(cache_dir.glob("*_wiki.json"))
         assert len(cache_files) == 1
 
-    @patch("src.data.squad_availability.retry_request")
+    @patch("src.data.squad_wikipedia.retry_request")
     def test_uses_cache_when_fresh(self, mock_get, tmp_path, monkeypatch):
         cache_dir = tmp_path / "squad"
-        monkeypatch.setattr("src.data.squad_availability._CACHE_DIR", cache_dir)
+        monkeypatch.setattr("src.data.squad_models._CACHE_DIR", cache_dir)
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.text = _SAMPLE_HTML
@@ -198,10 +198,10 @@ class TestFetchWikipediaSquad:
         assert mock_get.call_count == 1  # still 1
         assert len(result) == 4
 
-    @patch("src.data.squad_availability.retry_request")
+    @patch("src.data.squad_wikipedia.retry_request")
     def test_url_slug_built_correctly(self, mock_get, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "src.data.squad_availability._CACHE_DIR", tmp_path / "squad"
+            "src.data.squad_models._CACHE_DIR", tmp_path / "squad"
         )
         mock_resp = MagicMock()
         mock_resp.status_code = 404
@@ -212,10 +212,10 @@ class TestFetchWikipediaSquad:
         assert "Saudi_Arabia" in called_url
         assert "2026_FIFA_World_Cup" in called_url
 
-    @patch("src.data.squad_availability.retry_request")
+    @patch("src.data.squad_wikipedia.retry_request")
     def test_dr_congo_slug_override(self, mock_get, tmp_path, monkeypatch):
         monkeypatch.setattr(
-            "src.data.squad_availability._CACHE_DIR", tmp_path / "squad"
+            "src.data.squad_models._CACHE_DIR", tmp_path / "squad"
         )
         mock_resp = MagicMock()
         mock_resp.status_code = 404
@@ -232,15 +232,15 @@ class TestFetchWikipediaSquad:
 
 class TestSquadReportWikipediaFallback:
 
-    @patch("src.data.squad_availability._fetch_wikipedia_squad")
-    @patch("src.data.squad_availability._fetch_wc_squads_page")
-    @patch("src.data.squad_availability._fetch_covers_squad")
-    @patch("src.data.squad_availability.fetch_transfermarkt_squad")
+    @patch("src.data.squad_merger._fetch_wikipedia_squad")
+    @patch("src.data.squad_merger._fetch_wc_squads_page")
+    @patch("src.data.squad_merger._fetch_covers_squad")
+    @patch("src.data.squad_merger.fetch_transfermarkt_squad")
     def test_uses_wikipedia_when_tm_empty(self, mock_tm, mock_covers, mock_wc, mock_wiki, tmp_path, monkeypatch):
         from src.data.squad_availability import PlayerStatus
 
         monkeypatch.setattr(
-            "src.data.squad_availability._CACHE_DIR", tmp_path / "squad"
+            "src.data.squad_models._CACHE_DIR", tmp_path / "squad"
         )
         mock_tm.return_value = []      # TM blocked
         mock_covers.return_value = []  # covers.com: no injuries
@@ -255,14 +255,14 @@ class TestSquadReportWikipediaFallback:
         assert len(report.players) == 1
         assert report.availability_score == 1.0
 
-    @patch("src.data.squad_availability._fetch_wikipedia_squad")
-    @patch("src.data.squad_availability._fetch_covers_squad")
-    @patch("src.data.squad_availability.fetch_transfermarkt_squad")
+    @patch("src.data.squad_merger._fetch_wikipedia_squad")
+    @patch("src.data.squad_merger._fetch_covers_squad")
+    @patch("src.data.squad_merger.fetch_transfermarkt_squad")
     def test_uses_tm_when_available(self, mock_tm, mock_covers, mock_wiki, tmp_path, monkeypatch):
         from src.data.squad_availability import PlayerStatus
 
         monkeypatch.setattr(
-            "src.data.squad_availability._CACHE_DIR", tmp_path / "squad"
+            "src.data.squad_models._CACHE_DIR", tmp_path / "squad"
         )
         mock_covers.return_value = []  # no covers data for this test
         mock_tm.return_value = [
@@ -274,13 +274,13 @@ class TestSquadReportWikipediaFallback:
         assert report.data_source == "transfermarkt"
         mock_wiki.assert_not_called()
 
-    @patch("src.data.squad_availability._fetch_wikipedia_squad")
-    @patch("src.data.squad_availability.fetch_transfermarkt_squad")
+    @patch("src.data.squad_merger._fetch_wikipedia_squad")
+    @patch("src.data.squad_merger.fetch_transfermarkt_squad")
     def test_falls_back_to_default_when_both_empty(
         self, mock_tm, mock_wiki, tmp_path, monkeypatch
     ):
         monkeypatch.setattr(
-            "src.data.squad_availability._CACHE_DIR", tmp_path / "squad"
+            "src.data.squad_models._CACHE_DIR", tmp_path / "squad"
         )
         mock_tm.return_value = []
         mock_wiki.return_value = []
