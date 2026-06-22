@@ -2127,13 +2127,15 @@ async function _openMatchDetailFromSignal(home, away) {
   const fd = _forecastData || await loadForecast();
   let match = null;
   const nk = matchKey(home, away);
+  const nkRev = matchKey(away, home);
+  const _mkMatch = m => { const k = matchKey(m.home, m.away); return k === nk || k === nkRev; };
   for (const m of (fd && fd.group_matches) || []) {
-    if (matchKey(m.home, m.away) === nk) { match = m; break; }
+    if (_mkMatch(m)) { match = m; break; }
   }
   if (!match && fd && fd.bracket) {
     outer: for (const round of fd.bracket.rounds || []) {
       for (const m of round.matches || []) {
-        if (matchKey(m.home, m.away) === nk) { match = m; break outer; }
+        if (_mkMatch(m)) { match = m; break outer; }
       }
     }
   }
