@@ -217,7 +217,7 @@ if __name__ == "__main__":
         import re as _re
         import unicodedata as _ud
         import json as _jsc
-        from src.scanner.daily_scan import _load_latest_dc_params
+        from src.scanner.prep import _load_latest_dc_params
         from src.models.dixon_coles import predict_match, predict_xg, predict_btts, predict_totals
         from src.config import canonical_name, DATA_CACHE
         from src.betting.goalscorer import get_top_goalscorer_predictions

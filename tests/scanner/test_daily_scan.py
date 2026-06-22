@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from src.scanner.daily_scan import _confederation_min_edge, _count_model_agreement
+from src.scanner.scoring import _confederation_min_edge, _count_model_agreement
 from src.betting.value_detector import BetSignal
 
 
