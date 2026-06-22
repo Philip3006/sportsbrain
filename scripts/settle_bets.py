@@ -176,6 +176,41 @@ def fetch_scores() -> dict[str, dict]:
     return espn
 
 
+def _settle_scorer(player_market: str, home: str, away: str, match_date: str) -> str | None:
+    """Settle a scorer_* market via ESPN goal scorer data.
+
+    player_market: 'scorer_Firstname Lastname' (full name from ledger)
+    Returns 'won', 'lost', or None if unresolvable.
+    """
+    from src.data.odds_api import find_espn_event_id, fetch_espn_goal_scorers
+    player_name = player_market[len("scorer_"):].strip()
+    if not player_name:
+        return None
+
+    event_id = find_espn_event_id(home, away, match_date)
+    if not event_id:
+        print(f"  [scorer] ESPN event not found for {home} vs {away} on {match_date}")
+        return None
+
+    scorers = fetch_espn_goal_scorers(event_id)
+    if not scorers:
+        print(f"  [scorer] No scorers returned for event {event_id}")
+        return None
+
+    print(f"  [scorer] Event {event_id} scorers: {scorers}")
+
+    # Name matching: check if any token (>3 chars) of player_name appears in any scorer name
+    player_tokens = [t for t in player_name.lower().split() if len(t) > 3]
+    for sc in scorers:
+        sc_l = sc.lower()
+        if any(tok in sc_l for tok in player_tokens):
+            print(f"  [scorer] MATCH: '{player_name}' → '{sc}'")
+            return "won"
+
+    print(f"  [scorer] '{player_name}' did not score (scorers: {scorers})")
+    return "lost"
+
+
 def _settle_market(market: str, home_g: int, away_g: int) -> str | None:
     """
     Returns 'won', 'lost', 'push', or None (unsupported/unresolvable).
@@ -257,7 +292,10 @@ def _settle_one_user(ledger_path: Path, scores: dict, user: str, dry_run: bool) 
         sc = scores.get(r["match_id"]) or scores.get(match_key)
         if not sc:
             continue
-        result = _settle_market(r["market"], sc["home_score"], sc["away_score"])
+        if r["market"].startswith("scorer_"):
+            result = _settle_scorer(r["market"], home, away, r.get("match_date", ""))
+        else:
+            result = _settle_market(r["market"], sc["home_score"], sc["away_score"])
         if result is None:
             print(f"  ⚠️  Unknown market: {r['market']} — skipping")
             continue
