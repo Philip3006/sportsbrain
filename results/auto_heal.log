@@ -90,3 +90,6 @@
 [2026-06-22 01:37:43 CEST] [auto_heal] 2 commit(s) not pushed — running _git_safe_push.sh
 [2026-06-22 01:47:43 CEST] [auto_heal] 2 commit(s) not pushed — running _git_safe_push.sh
 [2026-06-22 01:57:44 CEST] [auto_heal] 2 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-22 00:07:13 UTC] [auto_heal_ai] analyzing prematch_scan (status=degraded, fallback=espn)
+[2026-06-22 00:07:15 UTC] [auto_heal_ai] prematch_scan: response → DEGRADED_OK: Fallback to ESPN is active and functioning. Primary data source unavailable but job is operating normally v
+[2026-06-22T00:08:22Z] [layer2] prematch_scan degraded/fallback (espn) — monitoring
