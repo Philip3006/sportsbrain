@@ -756,6 +756,17 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="match-detail-modal-bd" role="dialog" aria-modal="true" aria-labelledby="match-detail-modal-title">
+  <div class="modal">
+    <h3 id="match-detail-modal-title" style="font-size:15px">—</h3>
+    <div class="modal-sub" id="match-detail-modal-sub">—</div>
+    <div id="match-detail-modal-body"></div>
+    <div class="modal-buttons" style="grid-template-columns:1fr;margin-top:14px">
+      <button class="modal-btn confirm" type="button" onclick="_closeMatchDetail()">Schließen</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="token-modal-bd" role="dialog" aria-modal="true" aria-labelledby="token-modal-title">
   <div class="modal">
     <h3 id="token-modal-title">Worker-Token einmalig eintragen</h3>
@@ -3926,6 +3937,9 @@ function renderForecast() {
   <div class="section-title" style="margin-top:14px">Gruppen-Stände (live)</div>
   <div id="forecast-standings-container" style="padding:0 2px 8px"></div>
 
+  <div class="section-title" style="margin-top:14px">⚽ Anstehende Gruppenspiele</div>
+  <div id="forecast-group-matches-container" style="padding:0 2px 8px"></div>
+
   <div class="section-title" style="margin-top:14px">🏆 Vorhersage-Bracket</div>
   <div id="forecast-bracket-container" style="padding:0 2px 8px"></div>
 
@@ -3942,9 +3956,48 @@ function renderForecast() {
   ${xpHtml}`;
   // Embed live group standings at top
   try { renderStandings('forecast-standings-container'); } catch {}
+  // Render upcoming group matches
+  try { _renderGroupMatches(d.group_matches); } catch (e) { console.warn('group matches render failed', e); }
   // Render bracket preview
   try { _renderBracket(d.bracket); } catch (e) { console.warn('bracket render failed', e); }
   _bindForecastHeaders();
+}
+
+function _renderGroupMatches(matches) {
+  const c = document.getElementById('forecast-group-matches-container');
+  if (!c) return;
+  const pending = (matches || []).filter(m => !m.played);
+  if (!pending.length) {
+    c.innerHTML = `<div class="fc-sub" style="color:var(--muted);padding:4px">Alle Gruppenspiele gespielt.</div>`;
+    return;
+  }
+  // Group by group letter
+  const byGrp = {};
+  pending.forEach(m => { (byGrp[m.group] = byGrp[m.group] || []).push(m); });
+  let html = '';
+  Object.keys(byGrp).sort().forEach(grp => {
+    html += `<div style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin:8px 0 4px 2px">Gruppe ${esc(grp)}</div>`;
+    byGrp[grp].forEach(m => {
+      const hasSL = m.scoreline && (m.scoreline.top_scores || []).length > 0;
+      const topScore = hasSL ? m.scoreline.top_scores[0] : null;
+      const topScoreHtml = topScore
+        ? `<span style="font-size:11px;color:var(--muted);font-weight:600">${topScore.h}–${topScore.a} (${topScore.p}%)</span>`
+        : '';
+      html += `<div class="br-match" style="cursor:pointer;margin-bottom:6px" onclick="_openMatchDetail(${JSON.stringify(m).replace(/</g,'\\u003c')})" title="Match-Details">
+        <div class="br-team">
+          <span class="br-flag">${teamFlag(m.home)}</span>
+          <span class="br-name">${esc(m.home)}</span>
+          <span class="br-pct" style="color:var(--muted)">${topScoreHtml}</span>
+        </div>
+        <div class="br-team">
+          <span class="br-flag">${teamFlag(m.away)}</span>
+          <span class="br-name">${esc(m.away)}</span>
+          <span class="br-pct" style="font-size:10px;color:var(--muted)">Tippen für Details</span>
+        </div>
+      </div>`;
+    });
+  });
+  c.innerHTML = html;
 }
 
 function _renderBracket(bracket) {
@@ -3972,7 +4025,9 @@ function _renderBracket(bracket) {
       const homeWin = m.winner === m.home;
       const hCls = homeWin ? 'br-team br-win' : 'br-team';
       const aCls = !homeWin ? 'br-team br-win' : 'br-team';
-      return `<div class="br-match">
+      const hasSL = m.scoreline && (m.scoreline.top_scores || []).length > 0;
+      const slHint = hasSL ? `<div style="font-size:10px;color:var(--muted);font-weight:600;margin-top:4px;text-align:right">Tippen für Details</div>` : '';
+      return `<div class="br-match" style="cursor:pointer" onclick="_openMatchDetail(${JSON.stringify(m).replace(/</g,'\\u003c')})" title="Match-Details anzeigen">
         <div class="${hCls}">
           <span class="br-seed">${m.home_seed}</span>
           <span class="br-flag">${teamFlag(m.home)}</span>
@@ -3985,6 +4040,7 @@ function _renderBracket(bracket) {
           <span class="br-name">${esc(m.away)}</span>
           <span class="br-pct">${m.p_away.toFixed(1)}%</span>
         </div>
+        ${slHint}
       </div>`;
     }).join('');
     html += `<details class="br-round" ${openAttr} style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:8px;overflow:hidden">
@@ -4514,6 +4570,86 @@ function _closeGlossary() {
 }
 document.getElementById('glossary-modal-bd').addEventListener('click', (e) => {
   if (e.target.id === 'glossary-modal-bd') _closeGlossary();
+});
+
+// ── Match-Detail-Modal (I7) ──
+function _openMatchDetail(match) {
+  const title = `${teamFlag(match.home)} ${esc(match.home)} vs ${teamFlag(match.away)} ${esc(match.away)}`;
+  document.getElementById('match-detail-modal-title').innerHTML = title;
+
+  const sub = match.played
+    ? `Gruppe ${esc(match.group || '?')} · Gespielt: ${match.home_score}–${match.away_score}`
+    : `Gruppe ${esc(match.group || '?')} · DC-Modell Prognose`;
+  document.getElementById('match-detail-modal-sub').textContent = sub;
+
+  let body = '';
+  if (match.played) {
+    body = `<div class="modal-info" style="text-align:center;font-size:22px;font-weight:900;letter-spacing:1px">${match.home_score} – ${match.away_score}</div>`;
+  } else if (match.p_home !== undefined) {
+    const ph = match.p_home, pa = match.p_away, pd = match.p_draw ?? 0;
+    body += `<div style="display:flex;gap:6px;margin-bottom:12px">
+      <div style="flex:1;text-align:center;background:var(--surface);border-radius:var(--r-md);padding:10px 4px">
+        <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Heim</div>
+        <div style="font-size:22px;font-weight:900;color:var(--green)">${ph.toFixed(1)}%</div>
+        <div style="font-size:11px;color:var(--text);font-weight:600">${esc(match.home)}</div>
+      </div>
+      <div style="flex:1;text-align:center;background:var(--surface);border-radius:var(--r-md);padding:10px 4px">
+        <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Unentsch.</div>
+        <div style="font-size:22px;font-weight:900;color:var(--muted)">${pd.toFixed(1)}%</div>
+      </div>
+      <div style="flex:1;text-align:center;background:var(--surface);border-radius:var(--r-md);padding:10px 4px">
+        <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Auswärts</div>
+        <div style="font-size:22px;font-weight:900;color:var(--amber)">${pa.toFixed(1)}%</div>
+        <div style="font-size:11px;color:var(--text);font-weight:600">${esc(match.away)}</div>
+      </div>
+    </div>`;
+  }
+
+  const sl = match.scoreline;
+  if (sl) {
+    body += `<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Wahrscheinlichste Ergebnisse</div>`;
+    body += `<div style="display:flex;gap:6px;margin-bottom:14px">`;
+    (sl.top_scores || []).forEach((s, i) => {
+      const bg = i === 0 ? 'rgba(0,200,83,.12)' : 'var(--surface)';
+      const border = i === 0 ? '1px solid rgba(0,200,83,.3)' : '1px solid var(--border)';
+      body += `<div style="flex:1;text-align:center;background:${bg};border:${border};border-radius:var(--r-md);padding:8px 4px">
+        <div style="font-size:18px;font-weight:900;color:var(--text)">${s.h}–${s.a}</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600">${s.p}%</div>
+      </div>`;
+    });
+    body += `</div>`;
+
+    const gd = sl.goal_dist || {};
+    const gdEntries = [['0 Tore', gd['0']], ['1 Tor', gd['1']], ['2 Tore', gd['2']], ['3+ Tore', gd['3+']]].filter(([,v]) => v !== undefined);
+    if (gdEntries.length) {
+      body += `<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Tor-Verteilung (gesamt)</div>`;
+      body += `<div style="display:flex;flex-direction:column;gap:5px">`;
+      gdEntries.forEach(([label, val]) => {
+        const w = Math.min(100, val || 0);
+        body += `<div style="display:flex;align-items:center;gap:8px">
+          <div style="width:52px;font-size:11px;color:var(--muted);font-weight:600;text-align:right">${esc(label)}</div>
+          <div style="flex:1;background:var(--surface);border-radius:4px;height:14px;overflow:hidden">
+            <div style="width:${w}%;height:100%;background:var(--green);opacity:.7;border-radius:4px;transition:width .3s"></div>
+          </div>
+          <div style="width:36px;font-size:11px;font-weight:700;color:var(--text)">${val}%</div>
+        </div>`;
+      });
+      body += `</div>`;
+    }
+  }
+
+  if (!body) body = `<div class="modal-sub" style="text-align:center">Keine Prognose-Daten verfügbar.</div>`;
+
+  document.getElementById('match-detail-modal-body').innerHTML = body;
+  document.getElementById('match-detail-modal-bd').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function _closeMatchDetail() {
+  document.getElementById('match-detail-modal-bd').classList.remove('show');
+  document.body.style.overflow = '';
+}
+document.getElementById('match-detail-modal-bd').addEventListener('click', (e) => {
+  if (e.target.id === 'match-detail-modal-bd') _closeMatchDetail();
 });
 
 // ── M3: Walkthrough mit Spotlight ──
