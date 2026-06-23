@@ -2263,7 +2263,6 @@
       "availability_score": 1.0,
       "ampel": "🟢",
       "suspended": [
-        "Bukayo Saka",
         "Marcus Rashford",
         "Tino Livramento"
       ],
@@ -2301,7 +2300,7 @@
         {
           "name": "Bukayo Saka",
           "pos": "FWD",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Elliot Anderson",
