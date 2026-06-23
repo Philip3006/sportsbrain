@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-23T19:24:26Z",
+  "generated_at": "2026-06-23T19:47:17Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -16,8 +16,8 @@
     {
       "job": "auto_retrain",
       "status": "ok",
-      "last_run_at": "2026-06-23T16:00:07Z",
-      "duration_s": 3.0,
+      "last_run_at": "2026-06-23T19:47:17Z",
+      "duration_s": null,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
