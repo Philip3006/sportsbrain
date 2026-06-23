@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-22",
+  "updated": "2026-06-23",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -849,8 +849,7 @@
       "ampel": "🟢",
       "suspended": [
         "Wesley França",
-        "Raphinha",
-        "Neymar"
+        "Raphinha"
       ],
       "players": [
         {
@@ -901,7 +900,7 @@
         {
           "name": "Neymar",
           "pos": "FWD",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Raphinha",
@@ -2537,7 +2536,8 @@
       "availability_score": 1.0,
       "ampel": "🟢",
       "suspended": [
-        "Lennart Karl"
+        "Lennart Karl",
+        "Nico Schlotterbeck"
       ],
       "players": [
         {
@@ -2613,7 +2613,7 @@
         {
           "name": "Nico Schlotterbeck",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Angelo Stiller",
@@ -4657,7 +4657,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Cristiano Ronaldo"
+      ],
       "players": [
         {
           "name": "Diogo Costa",
@@ -4692,7 +4694,7 @@
         {
           "name": "Cristiano Ronaldo",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Bruno Fernandes",
@@ -6338,9 +6340,7 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [
-        "Christian Pulisic"
-      ],
+      "suspended": [],
       "players": [
         {
           "name": "Matt Turner",
@@ -6390,7 +6390,7 @@
         {
           "name": "Christian Pulisic",
           "pos": "FWD",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Brenden Aaronson",
