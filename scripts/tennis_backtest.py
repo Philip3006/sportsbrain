@@ -20,10 +20,10 @@ sys.path.insert(0, str(ROOT))
 import numpy as np
 import pandas as pd
 
-from src.config import MIN_EDGE, MAX_EV
+from src.config import MIN_EDGE, MAX_EV, TENNIS_MIN_EDGE_BY_CATEGORY
 from src.betting.kelly import dynamic_stake_eur, kelly_fraction, expected_value
 from src.data.tennis_data import fetch_atp_matches, fetch_wta_matches
-from src.data.tennis_odds import fetch_grand_slam_odds
+from src.data.tennis_odds import fetch_grand_slam_odds, fetch_full_tour_odds, categorize_series
 from src.models.tennis_elo import TennisEloRatings, _k, _expected, _apply_decay, _DEFAULT_RATING
 
 
@@ -79,14 +79,19 @@ def _tourney_slug(name: str) -> str | None:
 
 def _build_walkforward_elo(
     matches: pd.DataFrame,
+    snapshot_all_events: bool = False,
 ) -> dict[tuple[str, str, str, int], dict[str, float]]:
     """
-    Returns a dict keyed by (_norm(winner), _norm(loser), tourney_slug, year) →
+    Returns a dict keyed by (_norm(winner), _norm(loser), tourney_key, year) →
     pre-match ratings snapshot. Iterates chronologically, updating AFTER snapshot.
 
     Sackmann stores the tournament START date for all matches in a tournament,
     not the individual match date — so we key on (winner, loser, tournament, year)
     instead of the actual date. Single-elimination ensures uniqueness per pair.
+
+    snapshot_all_events: wenn True, wird für JEDES Match ein Snapshot gespeichert
+    (key = normalized tourney_name); sonst nur Grand Slams (J2-B-Modus für
+    full-tour-Backtest).
     """
     overall: dict[str, float] = {}
     by_surface: dict[str, dict[str, float]] = {}
@@ -111,10 +116,16 @@ def _build_walkforward_elo(
                     _apply_decay(s_pool)
             current_year = match_year
 
-        # Record pre-match snapshot (Grand Slams only — that's where we have odds)
+        # Record pre-match snapshot
+        snap_key = None
         if slug is not None:
-            key = (winner, loser, slug, match_year)
-            snapshots[key] = {
+            snap_key = (winner, loser, slug, match_year)
+        elif snapshot_all_events and tourney_name:
+            # Full-tour-Backtest: tourney_name in lowercased Form als Key
+            snap_key = (winner, loser, tourney_name.lower().strip(), match_year)
+
+        if snap_key is not None:
+            snapshots[snap_key] = {
                 "r_w_overall": overall.get(winner, _DEFAULT_RATING),
                 "r_l_overall": overall.get(loser, _DEFAULT_RATING),
                 "r_w_surface": by_surface.get(surface, {}).get(winner, _DEFAULT_RATING),
@@ -177,6 +188,8 @@ def run_backtest(
     w_surface: float | None = None,
     odds_source: str = "max",
     min_prob: float = 0.35,
+    full_tour: bool = False,
+    use_category_min_edge: bool = False,
 ) -> pd.DataFrame:
     """
     Runs walk-forward backtest. Returns DataFrame with one row per bet.
@@ -206,11 +219,15 @@ def run_backtest(
     print(f"  {len(all_matches)} total matches loaded")
 
     print("Building walk-forward Elo snapshots...")
-    snapshots = _build_walkforward_elo(all_matches)
+    snapshots = _build_walkforward_elo(all_matches, snapshot_all_events=full_tour)
     print(f"  {len(snapshots)} snapshots built")
 
-    print("Loading Grand Slam odds (tennis-data.co.uk)...")
-    odds_df = fetch_grand_slam_odds(tours=[t for t in tours])
+    if full_tour:
+        print("Loading FULL-TOUR odds (tennis-data.co.uk annual XLSX)...")
+        odds_df = fetch_full_tour_odds(tours=[t for t in tours])
+    else:
+        print("Loading Grand Slam odds (tennis-data.co.uk)...")
+        odds_df = fetch_grand_slam_odds(tours=[t for t in tours])
     print(f"  {len(odds_df)} odds rows loaded")
 
     if odds_df.empty:
@@ -241,19 +258,35 @@ def run_backtest(
             skipped_no_snap += 1
             continue
         surface = str(row.get("surface_std", "hard"))
-        tournament = str(row.get("tournament", ""))
         tour_r = str(row.get("tour", "ATP"))
         match_year = row["Date"].year
         rnd = str(row.get("Round", ""))
 
-        # Lookup pre-match Elo snapshot by (winner, loser, tournament, year)
-        snap = snapshots.get((winner, loser, tournament, match_year))
+        # Full-tour: tournament-name aus Spalte 'Tournament', Category aus 'category'
+        # Slam-only: tournament=slug (wimbledon/usopen/...), Category=grand_slam
+        if full_tour:
+            tournament_name = str(row.get("Tournament", "")).strip()
+            tournament_key = tournament_name.lower()
+            category = str(row.get("category", "atp250"))
+        else:
+            tournament_name = str(row.get("tournament", ""))
+            tournament_key = tournament_name
+            category = "grand_slam"
+
+        # Lookup pre-match Elo snapshot
+        snap = snapshots.get((winner, loser, tournament_key, match_year))
         if snap is None:
             skipped_no_snap += 1
             continue
         matched += 1
 
         p_w, p_l = _predict_from_snapshot(snap, surface, w_surface)
+
+        # Per-Category-Edge wenn aktiviert, sonst globaler MIN_EDGE
+        cat_min_edge = (
+            TENNIS_MIN_EDGE_BY_CATEGORY.get(category, MIN_EDGE)
+            if use_category_min_edge else MIN_EDGE
+        )
 
         # Check each side for value (skip extreme underdogs)
         for side, model_p, odds, outcome in [
@@ -264,7 +297,7 @@ def run_backtest(
                 skipped_no_edge += 1
                 continue
             ev = expected_value(model_p, odds)
-            if ev < MIN_EDGE or ev > MAX_EV:
+            if ev < cat_min_edge or ev > MAX_EV:
                 skipped_no_edge += 1
                 continue
 
@@ -274,22 +307,23 @@ def run_backtest(
             pnl = stake * (odds - 1) if won else -stake
 
             records.append({
-                "date":       str(row["Date"].date()),
-                "year":       match_year,
-                "tour":       tour_r,
-                "tournament": tournament,
-                "surface":    surface,
-                "round":      rnd,
-                "winner":     winner,
-                "loser":      loser,
-                "side":       side,
+                "date":        str(row["Date"].date()),
+                "year":        match_year,
+                "tour":        tour_r,
+                "tournament":  tournament_name,
+                "category":    category,
+                "surface":     surface,
+                "round":       rnd,
+                "winner":      winner,
+                "loser":       loser,
+                "side":        side,
                 "model_prob":  round(model_p, 4),
                 "market_odds": odds,
-                "ev":         round(ev, 4),
-                "kelly_f":    round(kf, 4),
-                "stake":      round(stake, 2),
-                "won":        int(won),
-                "pnl":        round(pnl, 2),
+                "ev":          round(ev, 4),
+                "kelly_f":     round(kf, 4),
+                "stake":       round(stake, 2),
+                "won":         int(won),
+                "pnl":         round(pnl, 2),
             })
 
     print(f"\nMatched: {matched} / {len(odds_df)}  (skipped no-snap: {skipped_no_snap})")
@@ -392,6 +426,73 @@ def print_results(df: pd.DataFrame) -> None:
     print(SEP)
 
 
+_VERDICT_LIVE_N_HIGH = 50
+_VERDICT_LIVE_ROI_HIGH = 0.03  # 3%
+_VERDICT_LIVE_N_LOW = 30
+_VERDICT_LIVE_ROI_LOW = 0.05   # 5%
+_VERDICT_BLACKLIST_ROI = -0.05  # -5%
+
+
+def _category_verdict(n: int, roi: float) -> str:
+    """Live-Gate aus Plan: ROI≥3% bei n≥50 ODER ROI≥5% bei n≥30 → LIVE.
+    ROI ≤ -5% → BLACKLIST. Sonst SHADOW.
+    """
+    if n >= _VERDICT_LIVE_N_HIGH and roi >= _VERDICT_LIVE_ROI_HIGH:
+        return "LIVE"
+    if n >= _VERDICT_LIVE_N_LOW and roi >= _VERDICT_LIVE_ROI_LOW:
+        return "LIVE"
+    if roi <= _VERDICT_BLACKLIST_ROI:
+        return "BLACKLIST"
+    return "SHADOW"
+
+
+def write_j2_report(df: pd.DataFrame, out_path: Path) -> None:
+    """Schreibt Markdown-Bericht mit Per-Category-Verdicts (Roadmap J2-B)."""
+    from datetime import date
+    lines = [
+        f"# Tennis J2 Backtest — {date.today().isoformat()}",
+        "",
+        f"**Bets:** {len(df)} · **Staked:** {df['stake'].sum():.0f} EUR · "
+        f"**P&L:** {df['pnl'].sum():+.0f} EUR · "
+        f"**ROI:** {df['pnl'].sum() / df['stake'].sum() * 100:+.1f}% · "
+        f"**Brier:** {_brier(df):.4f}",
+        "",
+        "## Gate-Verdict pro Kategorie",
+        "",
+        "Live-Gate: ROI≥3% bei n≥50 ODER ROI≥5% bei n≥30. BLACKLIST: ROI≤-5%. Sonst SHADOW.",
+        "",
+        "| Kategorie | Tour | N | Hit% | ROI | Brier | Verdict |",
+        "|---|---|---:|---:|---:|---:|---|",
+    ]
+    if "category" not in df.columns:
+        df = df.copy()
+        df["category"] = "grand_slam"
+
+    for (cat, tour), grp in df.groupby(["category", "tour"]):
+        n = len(grp)
+        st = grp["stake"].sum()
+        roi = grp["pnl"].sum() / st if st > 0 else 0
+        wr = grp["won"].mean()
+        br = _brier(grp)
+        v = _category_verdict(n, roi)
+        emoji = {"LIVE": "✅", "SHADOW": "⚠️", "BLACKLIST": "🚫"}[v]
+        lines.append(f"| {cat} | {tour} | {n} | {wr*100:.1f}% | {roi*100:+.1f}% | {br:.4f} | {emoji} {v} |")
+
+    # Surface × Category Breakdown
+    lines += ["", "## Surface × Kategorie", "",
+              "| Kategorie | Surface | N | ROI | Verdict |", "|---|---|---:|---:|---|"]
+    for (cat, surf), grp in df.groupby(["category", "surface"]):
+        n = len(grp)
+        st = grp["stake"].sum()
+        roi = grp["pnl"].sum() / st if st > 0 else 0
+        v = _category_verdict(n, roi)
+        emoji = {"LIVE": "✅", "SHADOW": "⚠️", "BLACKLIST": "🚫"}[v]
+        lines.append(f"| {cat} | {surf} | {n} | {roi*100:+.1f}% | {emoji} |")
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text("\n".join(lines))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Tennis Elo walk-forward backtest")
     parser.add_argument("--tour", default="both", choices=["atp", "wta", "both"])
@@ -406,6 +507,12 @@ def main() -> None:
                         help="Min model probability to bet (default: 0.35, filters extreme underdogs)")
     parser.add_argument("--save", action="store_true",
                         help="Save results CSV to results/tennis_backtest.csv")
+    parser.add_argument("--full-tour", action="store_true",
+                        help="J2-B: use annual XLSX (all tour events) instead of Slam-only CSVs")
+    parser.add_argument("--use-category-edge", action="store_true",
+                        help="J2-B: per-category min_edge from TENNIS_MIN_EDGE_BY_CATEGORY")
+    parser.add_argument("--j2-report", action="store_true",
+                        help="J2-B: write Per-Category-Verdict markdown to results/audits/")
     args = parser.parse_args()
 
     results = run_backtest(
@@ -415,6 +522,8 @@ def main() -> None:
         bankroll=args.bankroll,
         odds_source=args.odds,
         min_prob=args.min_prob,
+        full_tour=args.full_tour,
+        use_category_min_edge=args.use_category_edge,
     )
 
     print_results(results)
@@ -423,6 +532,12 @@ def main() -> None:
         out = ROOT / "results" / "tennis_backtest.csv"
         results.to_csv(out, index=False)
         print(f"\nSaved: {out}")
+
+    if args.j2_report and not results.empty:
+        from datetime import date
+        report_path = ROOT / "results" / "audits" / f"tennis_j2_backtest_{date.today().isoformat()}.md"
+        write_j2_report(results, report_path)
+        print(f"J2-Report: {report_path}")
 
 
 if __name__ == "__main__":
