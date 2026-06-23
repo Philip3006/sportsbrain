@@ -272,3 +272,7 @@
 [2026-06-23 15:20:18 CEST] [auto_heal] 1 commit(s) not pushed — running _git_safe_push.sh
 [2026-06-23 15:46:46 UTC] [auto_heal_ai] analyzing prematch_scan (status=degraded, fallback=espn)
 [2026-06-23 15:46:51 UTC] [auto_heal_ai] prematch_scan: response → DEGRADED_OK: Fallback to ESPN is active, indicating primary data source (likely primary sports API) is unavailable or un
+[2026-06-23 20:39:45 UTC] [cloud_healer] live_score_push: status=stale — triggere live_score_push.yml
+[2026-06-23 20:39:47 UTC] [cloud_healer] live_score_push: erfolgreich ausgelöst
+[2026-06-23 20:39:47 UTC] [cloud_healer] prematch_scan: status=stale — triggere prematch_scan.yml
+[2026-06-23 20:39:48 UTC] [cloud_healer] prematch_scan: erfolgreich ausgelöst
