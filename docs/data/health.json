@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-06-23T01:57:24Z",
+  "generated_at": "2026-06-23T08:54:20Z",
   "overall": "degraded",
   "jobs": [
     {
       "job": "daily_scan",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-06-22T06:11:18Z",
       "duration_s": 3605.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-06-22T06:11:18Z — overdue (>93600s)",
       "fallback_used": null,
       "next_expected_in_s": 86400,
       "cadence": "1×/Tag 07:00"
@@ -16,7 +16,7 @@
     {
       "job": "auto_retrain",
       "status": "ok",
-      "last_run_at": "2026-06-23T01:57:24Z",
+      "last_run_at": "2026-06-23T08:54:20Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -26,11 +26,11 @@
     },
     {
       "job": "closing_odds",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-06-22T16:00:10Z",
       "duration_s": 5.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-06-22T16:00:10Z — overdue (>46800s)",
       "fallback_used": null,
       "next_expected_in_s": 43200,
       "cadence": "2×/Tag 14:00 + 18:00"
