@@ -199,6 +199,15 @@
 [2026-06-22T16:23:08Z] [layer2] prematch_scan degraded/fallback (espn — sofascore 429 quota exhausted) — monitoring
 [2026-06-22T16:48:12Z] [layer2] aggregate_health transient (stale — ~12min launchd gap, likely Mac sleep; cron resumed at 16:44:55Z, self-resolves on next tick) — no action
 [2026-06-22 18:55:12 CEST] [auto_heal] 1 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-22 19:44:28 UTC] [auto_heal_ai] analyzing prematch_scan (status=stale, fallback=None)
+[2026-06-22 19:44:32 UTC] [auto_heal_ai] prematch_scan: response → UNCLEAR: No log file available to diagnose the 'stale' health status. The absence of logs prevents root cause analysis.
+[2026-06-22 19:44:32 UTC] [auto_heal_ai] prematch_scan: unclear — pushing notification
+[2026-06-22 19:59:34 UTC] [auto_heal_ai] analyzing prematch_scan (status=degraded, fallback=espn)
+[2026-06-22 19:59:35 UTC] [auto_heal_ai] prematch_scan: response → DEGRADED_OK: Fallback to ESPN is active and functioning; primary data source unavailable but job is operational via fall
+[2026-06-22 20:14:36 UTC] [auto_heal_ai] analyzing prematch_scan (status=degraded, fallback=espn)
+[2026-06-22 20:14:39 UTC] [auto_heal_ai] prematch_scan: response → DEGRADED_OK: Fallback to ESPN is active, indicating primary data source unavailable but job is functioning with secondar
+[2026-06-22 20:29:39 UTC] [auto_heal_ai] analyzing prematch_scan (status=degraded, fallback=espn)
+[2026-06-22 20:29:42 UTC] [auto_heal_ai] prematch_scan: response → DEGRADED_OK: Fallback to ESPN is active and functioning; prematch_scan is operational but using secondary data source, l
 [2026-06-22 21:34:00 UTC] [cloud_healer] live_score_push: status=stale — triggere live_score_push.yml
 [2026-06-22 21:34:02 UTC] [cloud_healer] live_score_push: erfolgreich ausgelöst
 [2026-06-22 21:34:02 UTC] [cloud_healer] prematch_scan: status=stale — triggere prematch_scan.yml
@@ -233,3 +242,30 @@
 [2026-06-23 10:12:19 UTC] [cloud_healer] prematch_scan: erfolgreich ausgelöst
 [2026-06-23 10:12:20 UTC] [cloud_healer] settle: status=stale — triggere settle.yml
 [2026-06-23 10:12:21 UTC] [cloud_healer] settle: erfolgreich ausgelöst
+[2026-06-23 02:12:29 UTC] [auto_heal_ai] analyzing prematch_scan (status=stale, fallback=None)
+[2026-06-23 02:12:33 UTC] [auto_heal_ai] prematch_scan: response → UNCLEAR: No log file available to diagnose root cause. The 'stale' health status with no fallback indicates the job is n
+[2026-06-23 02:12:33 UTC] [auto_heal_ai] prematch_scan: unclear — pushing notification
+[2026-06-23 06:14:04 CEST] [auto_heal] 1 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-23 08:47:34 UTC] [auto_heal_ai] analyzing daily_scan (status=stale, fallback=None)
+[2026-06-23 08:47:39 UTC] [auto_heal_ai] daily_scan: response → UNCLEAR: No log file available to diagnose root cause. The 'stale' health status with no fallback_used and no logs sugge
+[2026-06-23 08:47:39 UTC] [auto_heal_ai] daily_scan: unclear — pushing notification
+[2026-06-23 08:47:42 UTC] [auto_heal_ai] analyzing closing_odds (status=stale, fallback=None)
+[2026-06-23 08:47:48 UTC] [auto_heal_ai] closing_odds: response → UNCLEAR: No log file available to diagnose root cause. The 'stale' health status with no fallback indicates the job fail
+[2026-06-23 08:47:48 UTC] [auto_heal_ai] closing_odds: unclear — pushing notification
+[2026-06-23 10:16:21 CEST] [auto_heal] 1 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-23 10:59:17 UTC] [auto_heal_ai] analyzing daily_scan (status=stale, fallback=None)
+[2026-06-23 10:59:20 UTC] [auto_heal_ai] daily_scan: response → UNCLEAR: No log file available to diagnose root cause. Health status is 'stale' with no fallback in use, but without log
+[2026-06-23 10:59:20 UTC] [auto_heal_ai] daily_scan: unclear — pushing notification
+[2026-06-23 10:59:20 UTC] [auto_heal_ai] analyzing closing_odds (status=stale, fallback=None)
+[2026-06-23 10:59:22 UTC] [auto_heal_ai] closing_odds: response → UNCLEAR: No log file available to diagnose root cause. Health status is 'stale' with no fallback active (fallback_used:
+[2026-06-23 10:59:22 UTC] [auto_heal_ai] closing_odds: unclear — pushing notification
+[2026-06-23 10:59:22 UTC] [auto_heal_ai] analyzing prematch_scan (status=stale, fallback=None)
+[2026-06-23 10:59:24 UTC] [auto_heal_ai] prematch_scan: response → UNCLEAR: No log file available to diagnose root cause. Health status is 'stale' with no fallback active, but absence of
+[2026-06-23 10:59:24 UTC] [auto_heal_ai] prematch_scan: unclear — pushing notification
+[2026-06-23 11:54:13 CEST] [auto_heal] 1 commit(s) not pushed — running _git_safe_push.sh
+[2026-06-23 11:31:36 UTC] [auto_heal_ai] analyzing closing_odds (status=stale, fallback=None)
+[2026-06-23 11:31:40 UTC] [auto_heal_ai] closing_odds: response → UNCLEAR: No log file available to diagnose root cause. The 'closing_odds' cron job shows 'stale' health status with no f
+[2026-06-23 11:31:40 UTC] [auto_heal_ai] closing_odds: unclear — pushing notification
+[2026-06-23 11:46:40 UTC] [auto_heal_ai] analyzing closing_odds (status=stale, fallback=None)
+[2026-06-23 11:46:44 UTC] [auto_heal_ai] closing_odds: response → UNCLEAR: No log file available to diagnose the stale health status. The 'closing_odds' cron job is not producing logs, w
+[2026-06-23 11:46:44 UTC] [auto_heal_ai] closing_odds: unclear — pushing notification
