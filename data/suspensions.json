@@ -3,28 +3,39 @@
   "_format": "team_name: [player_name, ...] — availability=0 im Modell gesetzt",
   "_injuries_last_updated": "2026-06-23",
   "Czech Republic": [
+    "David Jurasek",
     "Václav Cerný"
   ],
   "Mexico": [
-    "Marcel Ruiz",
-    "Luis Ángel Malagón"
+    "Luis Ángel Malagón",
+    "Marcel Ruiz"
   ],
-  "South Africa": [],
+  "South Africa": [
+    "Teboho Mokoena",
+    "Themba Zwane"
+  ],
   "South Korea": [
     "Cho Yu-min"
   ],
-  "Bosnia and Herzegovina": [],
-  "Canada": [
-    "Marcelo Flores",
-    "Moïse Bombito",
-    "Ismaël Koné",
-    "Jonathan David"
+  "Bosnia and Herzegovina": [
+    "Nidal Celik",
+    "Tarik Muharemovic"
   ],
-  "Qatar": [],
+  "Canada": [
+    "Alfie Jones",
+    "Ismaël Koné",
+    "Jonathan David",
+    "Marcelo Flores",
+    "Moïse Bombito"
+  ],
+  "Qatar": [
+    "Assim Madibo",
+    "Homam Ahmed"
+  ],
   "Switzerland": [],
   "Brazil": [
-    "Wesley França",
-    "Raphinha"
+    "Raphinha",
+    "Wesley França"
   ],
   "Haiti": [],
   "Morocco": [
@@ -32,16 +43,22 @@
     "Nayef Aguerd"
   ],
   "Scotland": [
-    "Billy Gilmour"
+    "Aaron Hickey",
+    "Billy Gilmour",
+    "Lewis Ferguson",
+    "Scott McKenna"
   ],
   "Australia": [
+    "Lewis Miller",
     "Riley McGree"
   ],
   "Paraguay": [
     "Julio Enciso"
   ],
   "Turkey": [],
-  "United States": [],
+  "United States": [
+    "Christian Pulisic"
+  ],
   "Curacao": [],
   "Ecuador": [],
   "Germany": [
@@ -53,12 +70,19 @@
     "Sébastien Haller"
   ],
   "Japan": [
+    "Hidemasa Morita",
     "Kaoru Mitoma",
+    "Takefusa Kubo",
     "Takumi Minamino",
     "Wataru Endo"
   ],
   "Netherlands": [
-    "Jurriën Timber"
+    "Jerdy Schouten",
+    "Jurrien Timber",
+    "Jurriën Timber",
+    "Matthijs de Ligt",
+    "Stefan de Vrij",
+    "Xavi Simons"
   ],
   "Sweden": [
     "Dejan Kulusevski",
@@ -69,20 +93,24 @@
     "Mohamed Ali Ben Romdhane"
   ],
   "Belgium": [
+    "Jeremy Doku",
+    "Jérémy Doku",
     "Romelu Lukaku",
-    "Zeno Debast",
-    "Jérémy Doku"
+    "Zeno Debast"
   ],
   "Egypt": [
     "Mohamed Salah"
   ],
   "Iran": [
-    "Ali Gholizadeh"
+    "Ali Gholizadeh",
+    "Alireza Jahanbakhsh",
+    "Roozbeh Cheshmi",
+    "Saman Ghoddos"
   ],
   "New Zealand": [
-    "Sarpreet Singh",
+    "Liberato Cacace",
     "Matthew Garbett",
-    "Liberato Cacace"
+    "Sarpreet Singh"
   ],
   "Cape Verde": [],
   "Saudi Arabia": [],
@@ -95,51 +123,67 @@
     "Ronald Araujo"
   ],
   "France": [
-    "Hugo Ekitike"
+    "Hugo Ekitike",
+    "William Saliba"
   ],
-  "Iraq": [],
+  "Iraq": [
+    "Ahmed Yahya",
+    "Jalal Hassan"
+  ],
   "Norway": [
     "Martin Odegaard"
   ],
-  "Senegal": [],
+  "Senegal": [
+    "Kalidou Koulibaly"
+  ],
   "Algeria": [
-    "Youcef Atal",
     "Ismael Bennacer",
-    "Ramy Bensebaini"
+    "Mohamed Amoura",
+    "Ramy Bensebaini",
+    "Youcef Atal"
   ],
   "Argentina": [
+    "Cristian Romero",
+    "Gonzalo Montiel",
+    "Joaquín Panichelli",
+    "Juan Foyth",
     "Leonardo Balerdi",
-    "Nahuel Molina",
-    "Gonzalo Montiel"
+    "Nahuel Molina"
   ],
   "Austria": [
-    "Christoph Baumgartner",
-    "David Alaba"
+    "Christoph Baumgartner"
   ],
   "Jordan": [
+    "Ibrahim Sabra",
+    "Yazan Al Naimat",
     "Yazan Alnemat"
   ],
   "Colombia": [],
   "DR Congo": [
-    "Rocky Bushiri"
+    "Rocky Bushiri",
+    "Théo Bongonda"
   ],
   "Portugal": [
-    "Cristiano Ronaldo"
+    "Cristiano Ronaldo",
+    "Tomás Araújo"
   ],
-  "Uzbekistan": [],
+  "Uzbekistan": [
+    "Ibrokhimkhalil Yuldoshev"
+  ],
   "Croatia": [],
   "England": [
     "Bukayo Saka",
-    "Tino Livramento",
-    "Declan Rice"
+    "Marcus Rashford",
+    "Tino Livramento"
   ],
   "Ghana": [
-    "Mohammed Kudus",
-    "Mohammed Salisu",
+    "Benjamin Asare",
     "Lawrence Ati-Zigi",
-    "Benjamin Asare"
+    "Mohammed Kudus",
+    "Mohammed Salisu"
   ],
   "Panama": [
     "Adalberto Carrasquilla"
-  ]
+  ],
+  "_source": "agent-websearch-10x"
 }
