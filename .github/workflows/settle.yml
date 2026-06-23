@@ -56,13 +56,16 @@ jobs:
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
+          git add -u || true
           git add results/ledger.csv docs/data/health.json || true
           git diff --staged --quiet || git commit -m "auto: settle bets $(date +%Y-%m-%d\ %H:%M) UTC"
           for i in 1 2 3 4 5; do
             git fetch origin main
+            git stash || true
             git rebase --strategy-option=theirs origin/main \
-              || { git rebase --abort 2>/dev/null || true; echo "[push] rebase conflict attempt $i"; }
-            git push origin main && exit 0
+              || { git rebase --abort 2>/dev/null || true; git stash pop 2>/dev/null || true; echo "[push] rebase conflict attempt $i"; continue; }
+            git push origin main && { git stash pop 2>/dev/null || true; exit 0; }
+            git stash pop 2>/dev/null || true
             echo "[push] attempt $i failed, backoff..."
             sleep $((RANDOM % 20 + 10))
           done
