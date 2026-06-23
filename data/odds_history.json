@@ -4182,7 +4182,7 @@
     }
   },
   {
-    "ts": "2026-06-23T10:59:48Z",
+    "ts": "2026-06-23T15:43:59Z",
     "date": "2026-06-23",
     "odds": {
       "Qatar vs Switzerland": {
@@ -4386,54 +4386,54 @@
         "away": 1.6
       },
       "Portugal vs Uzbekistan": {
-        "home": 1.16,
-        "draw": 9.0,
-        "away": 21.0
+        "home": 1.19,
+        "draw": 9.5,
+        "away": 25.0
       },
       "England vs Ghana": {
         "home": 1.21,
-        "draw": 7.5,
-        "away": 17.0
+        "draw": 8.5,
+        "away": 20.0
       },
       "Panama vs Croatia": {
-        "home": 7.5,
-        "draw": 4.45,
-        "away": 1.51
+        "home": 7.8,
+        "draw": 4.6,
+        "away": 1.52
       },
       "Colombia vs DR Congo": {
-        "home": 1.56,
-        "draw": 4.15,
-        "away": 7.0
+        "home": 1.58,
+        "draw": 4.2,
+        "away": 7.6
       },
       "Bosnia & Herzegovina vs Qatar": {
         "home": 1.45,
-        "draw": 5.4,
-        "away": 8.0
+        "draw": 5.5,
+        "away": 8.4
       },
       "Switzerland vs Canada": {
-        "home": 2.48,
-        "draw": 3.2,
-        "away": 3.5
+        "home": 2.45,
+        "draw": 3.25,
+        "away": 3.55
       },
       "Scotland vs Brazil": {
-        "home": 9.5,
-        "draw": 5.6,
+        "home": 9.6,
+        "draw": 5.5,
         "away": 1.41
       },
       "Morocco vs Haiti": {
         "home": 1.23,
-        "draw": 7.8,
-        "away": 21.01
+        "draw": 8.2,
+        "away": 22.0
       },
       "Czech Republic vs Mexico": {
         "home": 4.0,
-        "draw": 4.14,
+        "draw": 4.05,
         "away": 2.01
       },
       "South Africa vs South Korea": {
         "home": 6.0,
         "draw": 4.0,
-        "away": 1.74
+        "away": 1.75
       },
       "Curaçao vs Ivory Coast": {
         "home": 25.0,
@@ -4442,72 +4442,72 @@
       },
       "Ecuador vs Germany": {
         "home": 4.0,
-        "draw": 4.3,
+        "draw": 4.1,
         "away": 2.0
       },
       "Japan vs Sweden": {
         "home": 2.0,
-        "draw": 3.7,
+        "draw": 3.65,
         "away": 4.5
       },
       "Tunisia vs Netherlands": {
-        "home": 27.03,
+        "home": 28.0,
         "draw": 10.5,
         "away": 1.16
       },
       "Paraguay vs Australia": {
-        "home": 3.04,
-        "draw": 2.33,
-        "away": 4.25
+        "home": 3.02,
+        "draw": 2.38,
+        "away": 4.3
       },
       "Turkey vs USA": {
         "home": 3.75,
         "draw": 4.3,
-        "away": 2.0
+        "away": 1.99
       },
       "Norway vs France": {
         "home": 5.5,
-        "draw": 4.5,
-        "away": 1.73
+        "draw": 4.6,
+        "away": 1.69
       },
       "Senegal vs Iraq": {
         "home": 1.27,
         "draw": 7.0,
-        "away": 15.0
+        "away": 14.5
       },
       "Cape Verde vs Saudi Arabia": {
-        "home": 2.46,
+        "home": 2.5,
         "draw": 3.66,
         "away": 3.1
       },
       "Uruguay vs Spain": {
-        "home": 8.0,
+        "home": 7.8,
         "draw": 4.4,
-        "away": 1.54
+        "away": 1.55
       },
       "New Zealand vs Belgium": {
-        "home": 17.5,
+        "home": 17.0,
         "draw": 7.8,
         "away": 1.23
       },
       "Egypt vs Iran": {
-        "home": 2.54,
+        "home": 2.6,
         "draw": 2.8,
         "away": 4.1
       },
       "Croatia vs Ghana": {
-        "home": 1.72,
+        "home": 1.78,
         "draw": 3.95,
-        "away": 6.6
+        "away": 6.4
       },
       "Panama vs England": {
-        "home": 17.0,
-        "draw": 9.5,
+        "home": 15.5,
+        "draw": 8.2,
         "away": 1.26
       },
       "Colombia vs Portugal": {
         "home": 3.8,
-        "draw": 3.85,
+        "draw": 3.75,
         "away": 2.1
       },
       "DR Congo vs Uzbekistan": {
@@ -4521,9 +4521,9 @@
         "away": 2.92
       },
       "Jordan vs Argentina": {
-        "home": 18.5,
+        "home": 18.0,
         "draw": 7.4,
-        "away": 1.23
+        "away": 1.22
       }
     }
   }

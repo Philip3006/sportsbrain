@@ -1770,8 +1770,10 @@ function squadSection(home, away) {
     const susp = d.suspended || [];
     let rows = '';
     let lastPos = '';
+    const shownNames = new Set();
     for (const p of players) {
-      if (p.status !== 'fit' || susp.includes(p.name)) {
+      if (p.status !== 'fit') {
+        shownNames.add(p.name);
         if (p.pos !== lastPos) {
           rows += `<div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;padding:6px 12px 3px;border-bottom:1px solid rgba(48,54,61,.3)">${esc(posLabels[p.pos]||p.pos)}</div>`;
           lastPos = p.pos;
@@ -1785,15 +1787,17 @@ function squadSection(home, away) {
         </div>`;
       }
     }
-    for (const s of susp) {
+    const suspOnly = susp.filter(s => !shownNames.has(s));
+    for (const s of suspOnly) {
       rows += `<div class="squad-player-row" style="padding:7px 12px">
         <span class="squad-player-pos">—</span>
         <span class="squad-player-name">${esc(s)}</span>
         <span class="squad-player-status status-suspended">🟡 suspended</span>
       </div>`;
     }
-    const statusLine = injured.length > 0 || susp.length > 0
-      ? `<span style="color:var(--red);font-size:11px">${injured.length + susp.length} Ausfall${injured.length + susp.length !== 1 ? 'e' : ''}</span>`
+    const totalOut = injured.length + suspOnly.length;
+    const statusLine = totalOut > 0
+      ? `<span style="color:var(--red);font-size:11px">${totalOut} Ausfall${totalOut !== 1 ? 'e' : ''}</span>`
       : `<span style="color:var(--green);font-size:11px">Kein Ausfall ${d.ampel||'🟢'}</span>`;
     return `<div style="flex:1;min-width:0">
       <div style="font-size:12px;font-weight:800;padding:0 0 5px">${esc(key)} ${statusLine}</div>

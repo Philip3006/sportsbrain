@@ -270,13 +270,5 @@
 [2026-06-23 11:46:44 UTC] [auto_heal_ai] closing_odds: response → UNCLEAR: No log file available to diagnose the stale health status. The 'closing_odds' cron job is not producing logs, w
 [2026-06-23 11:46:44 UTC] [auto_heal_ai] closing_odds: unclear — pushing notification
 [2026-06-23 15:20:18 CEST] [auto_heal] 1 commit(s) not pushed — running _git_safe_push.sh
-[2026-06-23 16:11:50 UTC] [cloud_healer] live_score_push: Workflow bereits aktiv (in_progress) — übersprungen
-[2026-06-23 16:11:50 UTC] [cloud_healer] prematch_scan: status=stale — triggere prematch_scan.yml
-[2026-06-23 16:11:52 UTC] [cloud_healer] prematch_scan: erfolgreich ausgelöst
-[2026-06-23 16:11:52 UTC] [cloud_healer] settle: status=stale — triggere settle.yml
-[2026-06-23 16:11:54 UTC] [cloud_healer] settle: erfolgreich ausgelöst
-[2026-06-23 18:23:03 UTC] [cloud_healer] live_score_push: Workflow bereits aktiv (in_progress) — übersprungen
-[2026-06-23 18:23:03 UTC] [cloud_healer] prematch_scan: status=stale — triggere prematch_scan.yml
-[2026-06-23 18:23:05 UTC] [cloud_healer] prematch_scan: erfolgreich ausgelöst
-[2026-06-23 18:23:05 UTC] [cloud_healer] settle: status=stale — triggere settle.yml
-[2026-06-23 18:23:07 UTC] [cloud_healer] settle: erfolgreich ausgelöst
+[2026-06-23 15:46:46 UTC] [auto_heal_ai] analyzing prematch_scan (status=degraded, fallback=espn)
+[2026-06-23 15:46:51 UTC] [auto_heal_ai] prematch_scan: response → DEGRADED_OK: Fallback to ESPN is active, indicating primary data source (likely primary sports API) is unavailable or un
