@@ -502,11 +502,21 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Abhängigkeiten**: I1
 - **Verifikation**: Backtest auf historischen Saisons; Live erst nach 100+ Mock-Predictions.
 
-### J2. Tennis-Modul ausbauen
-- **Was**: Umfang separat besprechen. Erweiterung auf US-Open, Year-Round, MIN_EV-Anpassung.
-- **Warum**: Backtest zeigt selektiv profitable Märkte (Wimbledon WTA +8.5%).
-- **Impact/Aufwand/Risiko**: 🟡 · 🟡 · 🟡
-- **Dateien**: `src/tennis/`, `scripts/tennis_scan.py`
+### J2. ~ GEÄNDERT Tennis-Modul Full-Tour-Ausbau (P1, in Umsetzung)
+- **Was**: Ganzjähriger Tennis-Betrieb für alle ATP/WTA-Turniere ab 250 aufwärts (Grand Slams + ATP/WTA 1000/500/250, ~80 Events/Jahr). Maximale Markt-Breite: Match Winner, Set AH ±1.5, First Set, O/U Sets, Total Games O/U. Backtest-First-Roll-out: pro Kategorie ROI-Gate vor Live-Schaltung.
+- **Warum**: WM endet 2026-07-20, Bundesliga startet 2026-08-15 — dazwischen Lücke. US-Open-Serie startet 2026-08-10 als natürlicher Einstiegspunkt. Wimbledon-Backtest validiert WTA +8.5% ROI — Übertragbarkeit auf andere Slams/Surfaces ist Phase-B-Frage.
+- **Impact/Aufwand/Risiko**: 🟢 · 🔴 (17h) · 🟡 (Tournament-Drift bei TheOddsAPI; pro Kategorie Shadow-Gate schützt Bankroll)
+- **Priorität**: P1 (aus P2 hochgestuft, weil Saison-Gap nach WM)
+- **Plan-Datei**: `~/.claude/plans/rippling-brewing-deer.md`
+- **Sub-Phasen**:
+  - **A. Tournament-Abstraktion** ✅ (3h) — `src/tennis/tournaments.py` Registry (49 Events), `src/tennis/discovery.py` TheOddsAPI /sports + 1h-Cache + Stale-Fallback, `src/config.py` `TENNIS_MIN_EDGE_BY_CATEGORY` + `TENNIS_CATEGORY_MODE` (alle außer grand_slam initial Shadow). 30 Tests grün, Suite 556/556. **Status 2026-06-23**.
+  - **B. Backtest-Erweiterung** ⏳ (4h) — `tennis_odds.py::fetch_all_tour_odds()`, `tennis_backtest.py` per-category-Reporting + Verdicts (✅LIVE / ⚠SHADOW / 🚫BLACKLIST), Output `results/audits/tennis_j2_backtest_*.md`.
+  - **C. Markt-Erweiterung** ⏳ (3h) — `src/tennis/sim.py` Game-Monte-Carlo, `tennis_detector.detect_total_sets()` + `detect_total_games()`, neue Tests.
+  - **D. Scanner-Refactor** ⏳ (3h) — `tennis_scan.py` Dispatcher-Pattern, Wimbledon-Hardcode raus, WebSearch-Fallback bei <3 Bookies.
+  - **E. PWA-Anzeige** ⏳ (2h) — Tournament-Gruppierung im Tennis-Tab + Surface-Icons + Filter-Pille Kategorie.
+  - **F. CI/Cron + Roll-out** ⏳ (2h) — `tennis_scan.yml` 4×/Tag ganzjährig, `--shadow` Flag, Gate-Review-Script.
+- **Dateien**: `src/tennis/` (NEU), `src/config.py`, `src/data/tennis_odds.py`, `src/betting/tennis_detector.py`, `scripts/tennis_scan.py`, `scripts/tennis_backtest.py`, `docs/js/views.js`, `.github/workflows/tennis_scan.yml`, `tests/tennis/`
+- **Abhängigkeiten**: I3 (Multi-Liga-Retrain) optional
 
 ### J3. Brier-Ziel <0.52 reevaluieren
 - **Was**: Mit Multi-Liga-Daten erneuter Retrain → Brier-Audit.
@@ -561,6 +571,8 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **11** | J1 (Basketball) | ab 2026-08-15 | 30-50 h |
 | **12** | J2 (Tennis-Ausbau) | nach Spec-Klärung | 8-12 h |
 | **13** | J3, J4 (Brier, CONMEBOL Audit) | Q4 2026 | 2-3 h |
+| **12b** | J2 Phase A ✅ (Tournament-Registry + Discovery) | erledigt 2026-06-23 | 3 h |
+| **12c** | J2 Phase B-F (Backtest + Markt-Erweiterung + Scanner-Refactor + PWA + Roll-out) | bis 2026-08-10 (US-Open-Start) | 14 h |
 
 ---
 
@@ -594,4 +606,5 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **2026-06-21/22**: ~ Phase 7 (D1, D2, D3) erledigt. **D1** (`bc67d8f`): Drawdown-Warnbanner als oberste Karte im Journal-Tab, triggert bei `start + pnl_closed < 0.85 × start`, kein Auto-Stop. **D3** (`1ed3bd3`): Multi-User-Schema vorbereitet — `DEFAULT_USER`-Konstante + `bankroll_snapshot_path_for(user)`-Helper; per-user-Snapshot-Dateien mit Auto-Migration der Legacy-Datei; `signals.json.meta.default_user`; PWA-Settings „👤 Aktiver User" mit `localStorage.sb_user`. 2 neue Tests, 498/498 grün. **D2** (`f3e98fa`): Token-Rotation mit Master + Per-User-Token + 24h-Grace. Worker bekommt `user_tokens`-KV-Struktur, `authResolve()`-Async-Funktion mit drei Akzeptanzpfaden (Master/aktiver User-Token/alter Token in Grace), Endpunkte `POST /rotate_token` + `GET /token_status`. PWA-Settings „🔄 Token rotieren" mit Auto-Switch. ⚠ `wrangler deploy` nötig vor Live-Schaltung. Nächste Phase: **8** (E1–E4 Refactor) oder **8b** (M5 FIFA-Bracket nach Auslosung 2026-06-27).
 - **2026-06-21**: ~ Phase 5 (F3, F4) erledigt. F3 (Commit `92cf85b`): drei Root-Causes für 41/43 leere CLVs gefunden — Pandas NaN-Truthiness im Backfill-Check, unvollständige Markt-Map, fehlender Void-Status. `_resolve_closing_odds()`-Helper deckt jetzt auch Quarter-Ball-O/Us und arbiträre Handicaps via dynamische `totals_lines`/`spreads`-Dicts ab. 16 historische Bets erfolgreich backfilled, 25 Tests neu. F4 (Commit `c2df64c`): farbcodierte CLV-Pille pro Settled-Bet + "Ø CLV letzte 30 Tage"-Karte zusätzlich zur Lifetime-Karte; Backend liefert `clv`/`closing_odds` in settled_bets und `mean_clv_30d`/`n_clv_30d` in summary; Void-Bets fließen in CLV-Aggregation (nicht Hit-Rate). Gesamt-Suite 488/488. Nächste Phase: C1–C7 (Trust-UI).
 - **2026-06-22**: + D5 NEU (Multi-User v2 End-to-End) ✅ erledigt. D3-Foundation um echte Multi-Tenant-Trennung erweitert: Ledger-Split (`ledger_{user}.csv` mit Auto-Migration analog Snapshot-Pattern), per-user `signals_{user}.json` + `write_signals_json_all_users()`-Loop, Worker-Routing über `authResolve()` + KV-Keys `signals_json_{user}` & `pending_bets_{user}` (Default-User auf Legacy-Keys ohne Suffix für Backward-Compat), Master-Token mit `?user=`-Query, daily_scan/tennis_scan/post_match_update/consume_pending_bets/settle_bets loopen über `list_known_users()`. Architektur: einmal scoren, pro User filtern (Bankroll/Stake/Ledger). User-Onboarding implizit via `POST /rotate_token {user}` mit Master-Token. Worker-Deploy `2e3b3888`. 5 neue Tests in `test_ledger_multiuser.py`, 503/503 Suite grün. Nächste Phase: **8** (E1–E4 Refactor).
+- **2026-06-23**: ~ J2 Phase A ✅ erledigt. Tennis-Modul von Wimbledon-Single-Tournament-Hardcode zur Tournament-Registry umgebaut. Neue Module: `src/tennis/tournaments.py` (49 Events: 8 Slams + 9 ATP Masters + 6 WTA 1000 + 13 ATP 500/250 + 10 WTA 500/250 + 2 Tour Finals; Dataclass + Lookup-Indizes), `src/tennis/discovery.py` (TheOddsAPI `/sports`-Pull mit 1h-Cache, Stale-Fallback bei API-Down, unknown_sport_key-Wrap für Drift). `src/config.py`: `TENNIS_MIN_EDGE_BY_CATEGORY` (grand_slam 5%, m1000 8%, wta1000 4%, atp500 10%, wta500 6%, atp250 12%, wta250 8%) und `TENNIS_CATEGORY_MODE` (alle außer grand_slam initial Shadow — wird durch Phase-B-Backtest entschieden). 30 neue Tests in `tests/tennis/`; 556/556 Suite grün. **Roadmap-Hochstufung J2: P2 → P1** (Saison-Gap WM-Ende → Bundesliga-Start). Nächste Phase: J2-B (Backtest-Erweiterung auf full-tour-Quoten, Per-Category-Gate-Verdicts).
 - **2026-06-22**: + D6 NEU ✅ (Invite-Link + Self-Onboarding). Admin generiert Invite via `POST /invite` (Master-Auth) → schickt Link `?invite=TOKEN` → Empfänger wählt eigenen Username im Onboarding → `POST /register {invite, user}` legt Worker-Slot mit gewähltem Namen an, alle nachgelagerten Dateien (`ledger_{user}.csv`, `signals_{user}.json`, KV `pending_bets_{user}`) verwenden diesen Namen. Invite-Tokens einmalig, KV `invites` mit used_by-Tracking. PWA-IIFE liest URL, räumt sie via replaceState. Worker-Deploy `f0f84701`. 503/503 Tests grün. **Damit ist „Link senden = Tool teilen" Realität.** Nächste Phase: **8** (E1–E4 Refactor) oder **9c** (I7 Monte Carlo).

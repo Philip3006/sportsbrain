@@ -71,6 +71,34 @@ GOALS_RANGE_ENABLED = False
 GOALS_RANGE_MAX_STAKE = 7.0   # start konservativ; nach 30+ echten Wetten erhöhen
 LINE_SHOPPING_REGIONS = ["eu", "us", "uk", "au"]  # best-price across all regions
 
+# Roadmap J2 — Tennis Full-Tour-Ausbau.
+# Min-Edge pro Kategorie. Slams/Top-Events haben enge Märkte → niedrige Edge reicht;
+# kleinere ATP/WTA 250er haben höhere Margins → strikter Edge-Floor verhindert -ROI.
+# Empirie aus Wimbledon-Backtest (WTA Grass: +8.5% ROI ab Edge 3%, ATP: -6.4% bei
+# Edge 3% → 10% Floor nötig). Für Live-Schaltung pro Kategorie siehe Phase B-Gate.
+TENNIS_MIN_EDGE_BY_CATEGORY: dict[str, float] = {
+    "grand_slam":  0.05,   # ATP Slam: 5% floor (BO5 reduziert Varianz); WTA Slam: profitabler
+    "m1000":       0.08,   # ATP Masters: enge Märkte, aber kürzeres Format
+    "wta1000":     0.04,   # WTA-Märkte historisch +ROI bei niedrigerer Edge
+    "atp500":      0.10,   # weniger Bookmaker-Coverage, höhere Vig
+    "wta500":      0.06,
+    "atp250":      0.12,   # tour-tiefe Events: konservativ, viele Lineup-Surprises
+    "wta250":      0.08,
+    "tour_final":  0.06,   # Top-8-only → starke Spieler, kalibrierte Märkte
+}
+# Live-Gate pro Kategorie: 'live' = Bets in Ledger, 'shadow' = nur Logging.
+# Wird via Phase-B-Backtest gesetzt; Default 'shadow' für Sicherheit.
+TENNIS_CATEGORY_MODE: dict[str, str] = {
+    "grand_slam":  "live",   # Wimbledon WTA validiert
+    "m1000":       "shadow",
+    "wta1000":     "shadow",
+    "atp500":      "shadow",
+    "wta500":      "shadow",
+    "atp250":      "shadow",
+    "wta250":      "shadow",
+    "tour_final":  "shadow",
+}
+
 # Phase 4 lern-loop
 DRIFT_MONITOR_ENABLED = True
 PINNACLE_CLV_ENABLED = True
