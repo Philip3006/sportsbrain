@@ -136,5 +136,14 @@
     "completed": false,
     "ht_sent": true,
     "updated": "2026-06-22T18:46:06.852792+00:00"
+  },
+  "espn_760454": {
+    "home": "Norway",
+    "away": "Senegal",
+    "home_score": 0,
+    "away_score": 0,
+    "completed": false,
+    "ht_sent": false,
+    "updated": "2026-06-23T00:10:38.588130+00:00"
   }
 }
