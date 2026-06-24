@@ -24,6 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 HEALTH_JSON = ROOT / "docs" / "data" / "health.json"
 HEAL_LOG = ROOT / "results" / "auto_heal.log"
+COOLDOWN_STATE = ROOT / "results" / "health" / "auto_heal_cooldown.json"
 
 # Jobs handled by Layer 1 bash (2-min auto-retry) — skip here
 _SKIP_JOBS = {"consume_pending_bets", "live_score_push", "aggregate_health"}
@@ -192,6 +193,35 @@ def _apply_fix(response: str, job: str) -> bool:
     return True
 
 
+def _load_cooldown() -> dict:
+    if not COOLDOWN_STATE.exists():
+        return {}
+    try:
+        return json.loads(COOLDOWN_STATE.read_text())
+    except Exception:
+        return {}
+
+
+def _recently_pushed(job: str, hours: int = 6) -> bool:
+    state = _load_cooldown()
+    iso = state.get(job, "")
+    if not iso:
+        return False
+    try:
+        last = datetime.fromisoformat(iso.replace("Z", "+00:00"))
+    except Exception:
+        return False
+    age_h = (datetime.now(timezone.utc) - last).total_seconds() / 3600
+    return age_h < hours
+
+
+def _mark_pushed(job: str) -> None:
+    state = _load_cooldown()
+    state[job] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    COOLDOWN_STATE.parent.mkdir(parents=True, exist_ok=True)
+    COOLDOWN_STATE.write_text(json.dumps(state, indent=2))
+
+
 def _vapid_push(msg: str) -> None:
     """Send a push notification for errors needing human review."""
     try:
@@ -204,7 +234,100 @@ def _vapid_push(msg: str) -> None:
         pass
 
 
+_ACTION_MAP = {
+    "re-run-settle": ["python3", "scripts/settle_bets.py"],
+    "re-consume": ["python3", "scripts/consume_pending_bets.py"],
+    "force-refresh-signals": ["python3", "scripts/daily_scan.py", "--force"],
+    "re-test-vapid": ["python3", "-m", "src.notifications.health_push", "auto_heal_ai", "vapid-test"],
+    "prompt-resubscribe": None,  # nicht autom. heilbar — direkt eskalieren
+    "none": None,
+}
+
+
+def _run_outcome_action(action: str, sym_id: str) -> tuple[bool, str]:
+    """Führt eine deterministische Heil-Action aus.
+
+    Returns (success, stdout_tail).
+    """
+    cmd = _ACTION_MAP.get(action)
+    if cmd is None:
+        return False, f"action {action!r} hat keine ausführbare Map (eskaliert)"
+    try:
+        proc = subprocess.run(
+            cmd, cwd=ROOT, capture_output=True, text=True, timeout=600,
+        )
+    except subprocess.TimeoutExpired:
+        return False, "timeout (>600s)"
+    except Exception as e:
+        return False, f"exception: {e}"
+    tail = (proc.stdout or "")[-200:].strip()
+    return proc.returncode == 0, tail
+
+
+def _handle_outcome_symptoms() -> None:
+    """Outcome-Checks → deterministische Action → optional Push.
+
+    Läuft immer (auch bei overall=ok), weil Outcome-Probleme jobspezifische
+    Health-Status nicht spiegeln müssen.
+    """
+    try:
+        from src.monitoring.outcome_checks import run_all_checks, Symptom
+    except Exception as e:
+        _log(f"outcome_checks import failed: {e}")
+        return
+
+    symptoms: list = run_all_checks()
+    if not symptoms:
+        return
+
+    for sym in symptoms:
+        _log(f"outcome-symptom: {sym.id} [{sym.severity}] → {sym.summary}")
+        action = sym.suggested_action
+
+        if action in (None, "none"):
+            # Direkt eskalieren
+            if not _recently_pushed(sym.id, hours=24):
+                _log(f"{sym.id}: no action available — pushing")
+                _vapid_push(f"{sym.id}: {sym.summary}")
+                _mark_pushed(sym.id)
+            continue
+
+        if action == "prompt-resubscribe":
+            # Browser-Resubscribe braucht User-Eingriff — eskalieren mit 24h cooldown
+            if not _recently_pushed(sym.id, hours=24):
+                _log(f"{sym.id}: needs human (resubscribe) — pushing")
+                _vapid_push(f"{sym.id}: {sym.summary}")
+                _mark_pushed(sym.id)
+            continue
+
+        ok, tail = _run_outcome_action(action, sym.id)
+        if ok:
+            _log(f"auto-action: {sym.id} → ok ({action})")
+        else:
+            _log(f"auto-action: {sym.id} → failed ({action}): {tail[:120]}")
+
+        # Re-check: ist Symptom weg?
+        try:
+            still = [s for s in run_all_checks() if s.id == sym.id]
+        except Exception:
+            still = []
+        if not still:
+            _log(f"{sym.id}: resolved nach Auto-Action ✅")
+            continue
+
+        # Symptom hartnäckig → einmal eskalieren mit 24h Cooldown
+        if _recently_pushed(sym.id, hours=24):
+            _log(f"{sym.id}: persistiert, aber im 24h-Cooldown — skip push")
+            continue
+        _log(f"{sym.id}: persistiert nach Auto-Action — pushing")
+        _vapid_push(f"{sym.id}: {sym.summary}")
+        _mark_pushed(sym.id)
+
+
 def main() -> None:
+    # Outcome-Layer läuft IMMER — unabhängig von job-status oder API-Key.
+    _handle_outcome_symptoms()
+
     if not _api_key():
         return  # Silent — ANTHROPIC_API_KEY not configured yet
 
@@ -243,8 +366,18 @@ def main() -> None:
         elif response.startswith("DEGRADED_OK:"):
             pass  # Normal fallback — silent
         elif response.startswith("UNCLEAR:"):
+            # Skip non-actionable "no log file" verdicts entirely — they spam
+            # whenever a stale job hasn't written a log this hour.
+            if "no log file" in response.lower():
+                _log(f"{job}: unclear (no log) — skipping push")
+                continue
+            # Debounce: same job not more than once per 6h.
+            if _recently_pushed(job, hours=6):
+                _log(f"{job}: unclear — within 6h cooldown, skipping push")
+                continue
             _log(f"{job}: unclear — pushing notification")
             _vapid_push(f"{job}: {response}")
+            _mark_pushed(job)
         else:
             _log(f"{job}: unexpected response format — {response[:80]}")
 

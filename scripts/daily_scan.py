@@ -186,11 +186,12 @@ if __name__ == "__main__":
     # Log daily odds snapshot for line movement tracking
     try:
         import json as _json2
-        from datetime import datetime as _dt2
+        from datetime import datetime as _dt2, timezone as _tz2
         _hist_path = ROOT / "data" / "odds_history.json"
+        _now_utc = _dt2.now(_tz2.utc)
         _today_snap = {
-            "ts": _dt2.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "date": _dt2.utcnow().strftime("%Y-%m-%d"),
+            "ts": _now_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "date": _now_utc.strftime("%Y-%m-%d"),
             "odds": {k: {"home": v["home"], "draw": v["draw"], "away": v["away"]} for k, v in all_odds.items()},
         }
         # Load existing history, append today's snapshot (keep last 14 entries)
