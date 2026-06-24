@@ -2,7 +2,14 @@
 Report formatting functions for the daily scan pipeline.
 All functions here are pure display/text generators — no model inference or I/O.
 """
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
 import pandas as pd
+
+_ROOT = Path(__file__).resolve().parent.parent.parent
+SIGNAL_HISTORY = _ROOT / "data" / "cache" / "signal_history.jsonl"
 
 from src.betting.ledger import ledger_summary, LEDGER_PATH
 from src.betting.value_detector import BetSignal
@@ -315,3 +322,56 @@ def _format_report(
         "*SportsBrain — model output only. No estimates. EV > 0 required.*",
     ]
     return "\n".join(lines)
+
+
+def archive_signals(
+    all_signals: list["BetSignal"],
+    selected_ids: set[tuple[str, str]],
+    scan_ts: str,
+    sport: str = "football",
+) -> int:
+    """Append all signals to signal_history.jsonl. Returns count of new entries written.
+
+    Deduplicates by (match_id, market, scan_date) so re-runs don't double-write.
+    selected_ids: set of (match_id, market) tuples that were actually placed.
+    """
+    SIGNAL_HISTORY.parent.mkdir(parents=True, exist_ok=True)
+    scan_date = scan_ts[:10]
+
+    existing: set[tuple[str, str, str]] = set()
+    if SIGNAL_HISTORY.exists():
+        for line in SIGNAL_HISTORY.read_text(encoding="utf-8").splitlines():
+            try:
+                row = json.loads(line)
+                existing.add((row["match_id"], row["market"], row["scan_date"]))
+            except Exception:
+                pass
+
+    written = 0
+    with SIGNAL_HISTORY.open("a", encoding="utf-8") as f:
+        for s in all_signals:
+            key = (s.match_id, s.market, scan_date)
+            if key in existing:
+                continue
+            entry = {
+                "scan_ts": scan_ts,
+                "scan_date": scan_date,
+                "sport": sport,
+                "match_id": s.match_id,
+                "home": s.home,
+                "away": s.away,
+                "market": s.market,
+                "model_prob": round(s.model_prob, 4),
+                "fair_prob": round(s.fair_prob, 4),
+                "decimal_odds": round(s.decimal_odds, 4),
+                "ev_pct": round(s.ev * 100, 2),
+                "confidence": s.confidence,
+                "n_models_agree": s.n_models_agree,
+                "placed": (s.match_id, s.market) in selected_ids,
+                "outcome": None,
+                "outcome_ts": None,
+            }
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+            existing.add(key)
+            written += 1
+    return written

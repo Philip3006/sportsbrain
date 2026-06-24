@@ -590,6 +590,14 @@ def main() -> None:
     print(f"\n=== Summary ===")
     print(f"Live-Signals: {len(all_live_signals)} (über {sum(1 for v in per_tournament.values() if v['mode']=='live')} Live-Kategorien)")
 
+    # ---- Signal Archive (I9) ----
+    _all_tennis_signals = [s for v in per_tournament.values() for s in v["signals"]]
+    _tennis_selected = {(s.match_id, s.market) for s in all_live_signals}
+    from src.scanner.output import archive_signals
+    _n_archived = archive_signals(_all_tennis_signals, _tennis_selected, scan_date, sport="tennis")
+    if _n_archived:
+        print(f"Archive: {_n_archived} neue Tennis-Signals archiviert.")
+
     # ---- 4. Report ----
     report_path = ROOT / "results" / f"tennis_scan_{scan_date}.md"
     report_path.parent.mkdir(parents=True, exist_ok=True)

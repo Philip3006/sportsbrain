@@ -211,7 +211,7 @@ def _settle_scorer(player_market: str, home: str, away: str, match_date: str) ->
     return "lost"
 
 
-def _settle_market(market: str, home_g: int, away_g: int) -> str | None:
+def settle_market(market: str, home_g: int, away_g: int) -> str | None:
     """
     Returns 'won', 'lost', 'push', or None (unsupported/unresolvable).
     """
@@ -295,7 +295,7 @@ def _settle_one_user(ledger_path: Path, scores: dict, user: str, dry_run: bool) 
         if r["market"].startswith("scorer_"):
             result = _settle_scorer(r["market"], home, away, r.get("match_date", ""))
         else:
-            result = _settle_market(r["market"], sc["home_score"], sc["away_score"])
+            result = settle_market(r["market"], sc["home_score"], sc["away_score"])
         if result is None:
             print(f"  ⚠️  Unknown market: {r['market']} — skipping")
             continue
