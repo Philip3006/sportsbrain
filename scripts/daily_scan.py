@@ -89,6 +89,14 @@ if __name__ == "__main__":
         force=args.force,
     )
 
+    from datetime import date as _date
+    from src.scanner.output import archive_signals
+    _scan_ts = args.date or _date.today().isoformat()
+    _selected_ids = {(s.match_id, s.market) for s in selected_signals}
+    _n_archived = archive_signals(all_signals, _selected_ids, _scan_ts, sport="football")
+    if _n_archived:
+        print(f"Archive: {_n_archived} neue Football-Signals archiviert.")
+
     if not signals_df.empty:
         print("\n=== Value Bets ===")
         print(signals_df.to_string(index=False))

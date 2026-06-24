@@ -1,6 +1,7 @@
 .env*
 !.env.example
 data/cache/
+!data/cache/signal_performance.json
 data/raw/
 results/scans/
 results/backtests/
