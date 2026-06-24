@@ -39,7 +39,7 @@ _ALIASES: dict[str, str] = {
 
 
 def _norm(s: str) -> str:
-    n = (s or "").lower().strip()
+    n = (s or "").lower().strip().replace(" & ", " and ")
     return _ALIASES.get(n, n)
 
 

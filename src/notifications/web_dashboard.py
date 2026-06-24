@@ -698,12 +698,14 @@ def write_signals_json(
 
     # Enrich open bets with is_live flag (same [-5, 115] min window as live_score_push.py)
     _now_utc = datetime.now(timezone.utc)
+    def _name_key(s: str) -> str:
+        return (s or "").lower().strip().replace(" & ", " and ")
     _ko_lookup = {
-        (g.get("home", "").lower(), g.get("away", "").lower()): g.get("kickoff", "")
+        (_name_key(g.get("home", "")), _name_key(g.get("away", ""))): g.get("kickoff", "")
         for g in (schedule_data or [])
     }
     for _bet in (_resolved_open_bets or []):
-        _ko = _ko_lookup.get((_bet["home"].lower(), _bet["away"].lower()), "")
+        _ko = _ko_lookup.get((_name_key(_bet["home"]), _name_key(_bet["away"])), "")
         _bet["is_live"] = False
         if _ko:
             try:
