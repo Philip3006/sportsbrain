@@ -497,14 +497,19 @@ def predict_scoreline(
     elo_away: float | None = None,
     elo_scale: float = DC_ELO_SCALE,
     host_boost: float = 1.0,
+    altitude_factors: tuple[float, float] | None = None,
+    turf_penalty: float = 1.0,
 ) -> np.ndarray:
     """Returns (max_goals+1 x max_goals+1) matrix of P(home_goals=i, away_goals=j).
     rho_override: replaces params.rho when set (used for stage-specific calibration).
     elo_home/elo_away: current Elo ratings; when provided, applies the same quality
         adjustment used during training so predictions are cross-confederation calibrated.
     host_boost: multiplier on home-team lambda (>1.0 for WM-2026 host nations).
+    altitude_factors: (lh_factor, la_factor) from ALTITUDE_BOOST_MAP (I12).
+    turf_penalty: multiplier on away lambda for artificial turf stadiums (I12).
     """
-    lh, la = _lambdas(home, away, params, neutral, elo_home, elo_away, elo_scale, host_boost)
+    lh, la = _lambdas(home, away, params, neutral, elo_home, elo_away, elo_scale, host_boost,
+                      altitude_factors=altitude_factors, turf_penalty=turf_penalty)
     rho = rho_override if rho_override is not None else params.rho
     matrix = np.zeros((max_goals + 1, max_goals + 1))
     for i in range(max_goals + 1):
@@ -529,16 +534,20 @@ def predict_match(
     elo_away: float | None = None,
     elo_scale: float = DC_ELO_SCALE,
     host_boost: float = 1.0,
+    altitude_factors: tuple[float, float] | None = None,
+    turf_penalty: float = 1.0,
 ) -> dict[str, float]:
     """Returns {'p_home': float, 'p_draw': float, 'p_away': float}.
     rho_override: applies stage-specific low-score correction (see predict_match_staged).
     elo_home/elo_away: when provided, applies Elo quality adjustment at inference
         (must match the scale used during training for consistent results).
     host_boost: multiplier on home-team lambda (WM-2026 host nations).
+    altitude_factors/turf_penalty: I12 environmental adjustments.
     """
     matrix = predict_scoreline(home, away, params, max_goals, neutral, rho_override,
                                 elo_home=elo_home, elo_away=elo_away, elo_scale=elo_scale,
-                                host_boost=host_boost)
+                                host_boost=host_boost,
+                                altitude_factors=altitude_factors, turf_penalty=turf_penalty)
     p_home = float(np.tril(matrix, -1).sum())
     p_draw = float(np.trace(matrix))
     p_away = float(np.triu(matrix, 1).sum())
@@ -589,6 +598,8 @@ def predict_match_staged(
     elo_away: float | None = None,
     elo_scale: float = DC_ELO_SCALE,
     host_boost: float = 1.0,
+    altitude_factors: tuple[float, float] | None = None,
+    turf_penalty: float = 1.0,
 ) -> dict[str, float]:
     """
     Stage-aware prediction. Rho factors are loaded from rho_stages.json
@@ -614,7 +625,8 @@ def predict_match_staged(
     rho = params.rho * rho_factor
     return predict_match(home, away, params, neutral=neutral, rho_override=rho,
                          elo_home=elo_home, elo_away=elo_away, elo_scale=elo_scale,
-                         host_boost=host_boost)
+                         host_boost=host_boost,
+                         altitude_factors=altitude_factors, turf_penalty=turf_penalty)
 
 
 def get_stage_rho(params: DixonColesParams, stage: str | None,
@@ -663,6 +675,8 @@ def predict_asian_handicap(
     neutral: bool = False,
     rho_override: float | None = None,
     host_boost: float = 1.0,
+    altitude_factors: tuple[float, float] | None = None,
+    turf_penalty: float = 1.0,
 ) -> dict[str, float]:
     """
     Asian Handicap prediction for line values: -0.5, -1.0, -1.5, +0.5, +1.0, +1.5.
@@ -685,7 +699,8 @@ def predict_asian_handicap(
         raise ValueError(f"Unsupported AH line: {line}. Supported: {sorted(_SUPPORTED_LINES)}")
 
     matrix = predict_scoreline(home, away, params, max_goals, neutral, rho_override,
-                                host_boost=host_boost)
+                                host_boost=host_boost,
+                                altitude_factors=altitude_factors, turf_penalty=turf_penalty)
 
     p_ah_home = 0.0
     p_ah_away = 0.0
@@ -780,13 +795,16 @@ def predict_totals(
     neutral: bool = False,
     rho_override: float | None = None,
     host_boost: float = 1.0,
+    altitude_factors: tuple[float, float] | None = None,
+    turf_penalty: float = 1.0,
 ) -> dict[str, float]:
     """Returns P(total goals > line), P(push), P(under) from scoreline matrix.
     Whole-ball lines (e.g., 2.0, 3.0) have p_push > 0 at the exact goal total.
     Half-ball lines (e.g., 2.5) have p_push = 0.
     """
     matrix = predict_scoreline(home, away, params, max_goals, neutral, rho_override,
-                                host_boost=host_boost)
+                                host_boost=host_boost,
+                                altitude_factors=altitude_factors, turf_penalty=turf_penalty)
     is_whole = abs(line % 1) < 0.001
     p_over = 0.0
     p_push = 0.0
@@ -814,6 +832,8 @@ def predict_totals_all(
     neutral: bool = False,
     rho_override: float | None = None,
     host_boost: float = 1.0,
+    altitude_factors: tuple[float, float] | None = None,
+    turf_penalty: float = 1.0,
 ) -> dict:
     """Predict O/U for any line type: half-ball (.5), whole-ball (.0), or quarter-ball (.25/.75).
     Quarter-ball lines return lower_probs/upper_probs for EV computation.
@@ -823,8 +843,10 @@ def predict_totals_all(
     if remainder == 1:
         lower = math.floor(line * 2) / 2  # e.g., 2.25 → 2.0
         upper = math.ceil(line * 2) / 2   # e.g., 2.25 → 2.5
-        p_lower = predict_totals(home, away, params, lower, max_goals, neutral, rho_override, host_boost)
-        p_upper = predict_totals(home, away, params, upper, max_goals, neutral, rho_override, host_boost)
+        p_lower = predict_totals(home, away, params, lower, max_goals, neutral, rho_override,
+                                  host_boost, altitude_factors=altitude_factors, turf_penalty=turf_penalty)
+        p_upper = predict_totals(home, away, params, upper, max_goals, neutral, rho_override,
+                                  host_boost, altitude_factors=altitude_factors, turf_penalty=turf_penalty)
         return {
             "p_over": 0.5 * (p_lower["p_over"] + p_upper["p_over"]),
             "p_under": 0.5 * (p_lower["p_under"] + p_upper["p_under"]),
@@ -834,7 +856,8 @@ def predict_totals_all(
             "quarter_ball": True,
             "line": line,
         }
-    return predict_totals(home, away, params, line, max_goals, neutral, rho_override, host_boost)
+    return predict_totals(home, away, params, line, max_goals, neutral, rho_override,
+                          host_boost, altitude_factors=altitude_factors, turf_penalty=turf_penalty)
 
 
 def predict_asian_handicap_all(
@@ -846,6 +869,8 @@ def predict_asian_handicap_all(
     neutral: bool = False,
     rho_override: float | None = None,
     host_boost: float = 1.0,
+    altitude_factors: tuple[float, float] | None = None,
+    turf_penalty: float = 1.0,
 ) -> dict:
     """Predict AH for any line type, including quarter-ball (e.g., -1.25, -0.75).
     Quarter-ball lines return lower_probs/upper_probs for direct EV computation.
@@ -855,8 +880,10 @@ def predict_asian_handicap_all(
     if remainder == 1:
         lower = math.ceil(line * 2) / 2   # less aggressive (closer to 0)
         upper = math.floor(line * 2) / 2  # more aggressive (farther from 0)
-        p_lower = predict_asian_handicap(home, away, params, lower, max_goals, neutral, rho_override, host_boost)
-        p_upper = predict_asian_handicap(home, away, params, upper, max_goals, neutral, rho_override, host_boost)
+        p_lower = predict_asian_handicap(home, away, params, lower, max_goals, neutral, rho_override,
+                                          host_boost, altitude_factors=altitude_factors, turf_penalty=turf_penalty)
+        p_upper = predict_asian_handicap(home, away, params, upper, max_goals, neutral, rho_override,
+                                          host_boost, altitude_factors=altitude_factors, turf_penalty=turf_penalty)
         return {
             "p_ah_home": 0.5 * (p_lower["p_ah_home"] + p_upper["p_ah_home"]),
             "p_ah_away": 0.5 * (p_lower["p_ah_away"] + p_upper["p_ah_away"]),
@@ -866,7 +893,8 @@ def predict_asian_handicap_all(
             "quarter_ball": True,
             "line": line,
         }
-    return predict_asian_handicap(home, away, params, line, max_goals, neutral, rho_override, host_boost)
+    return predict_asian_handicap(home, away, params, line, max_goals, neutral, rho_override,
+                                   host_boost, altitude_factors=altitude_factors, turf_penalty=turf_penalty)
 
 
 def predict_btts(
@@ -877,10 +905,13 @@ def predict_btts(
     neutral: bool = False,
     rho_override: float | None = None,
     host_boost: float = 1.0,
+    altitude_factors: tuple[float, float] | None = None,
+    turf_penalty: float = 1.0,
 ) -> dict[str, float]:
     """Returns P(both teams score >= 1) and P(at least one team scores 0)."""
     matrix = predict_scoreline(home, away, params, max_goals, neutral, rho_override,
-                                host_boost=host_boost)
+                                host_boost=host_boost,
+                                altitude_factors=altitude_factors, turf_penalty=turf_penalty)
     p_yes = float(matrix[1:, 1:].sum())  # all cells where home >= 1 AND away >= 1
     return {"p_btts_yes": p_yes, "p_btts_no": float(1.0 - p_yes)}
 
@@ -898,11 +929,13 @@ def predict_goals_range(
     elo_away: float | None = None,
     elo_scale: float = DC_ELO_SCALE,
     host_boost: float = 1.0,
+    altitude_factors: tuple[float, float] | None = None,
+    turf_penalty: float = 1.0,
 ) -> dict[str, float]:
     """P(total goals in [min_g, max_g]) from full-match scoreline matrix."""
     matrix = predict_scoreline(
         home, away, params, max_goals, neutral, rho_override, elo_home, elo_away, elo_scale,
-        host_boost=host_boost,
+        host_boost=host_boost, altitude_factors=altitude_factors, turf_penalty=turf_penalty,
     )
     rows, cols = matrix.shape
     p_in = float(sum(
@@ -914,8 +947,7 @@ def predict_goals_range(
     return {"p_in": p_in, "p_out": 1.0 - p_in}
 
 
-_H1_FACTOR = 0.43  # empirical: ~43% of goals fall in 1st half (WM calibration)
-_H2_FACTOR = 0.57
+from src.analysis.halftime_sim import H1_SPLIT as _H1_FACTOR, H2_SPLIT as _H2_FACTOR
 
 
 def predict_half_goals_range(
@@ -927,14 +959,18 @@ def predict_half_goals_range(
     half: int = 1,
     neutral: bool = False,
     host_boost: float = 1.0,
+    altitude_factors: tuple[float, float] | None = None,
+    turf_penalty: float = 1.0,
 ) -> dict[str, float]:
     """P(half-time goals in [min_g, max_g]) using scaled Poisson rates.
 
     DC correction (τ) is omitted — it is calibrated for full-match scorelines
     and would bias half-time estimates. Independent Poisson is the safer
     approximation when no half-time parameters are available.
+    H1_FACTOR/H2_FACTOR from halftime_sim.py (StatsBomb calibration, Bundesliga 2021-2023).
     """
-    lh, la = _lambdas(home, away, params, neutral, host_boost=host_boost)
+    lh, la = _lambdas(home, away, params, neutral, host_boost=host_boost,
+                      altitude_factors=altitude_factors, turf_penalty=turf_penalty)
     factor = _H1_FACTOR if half == 1 else _H2_FACTOR
     lh_h, la_h = lh * factor, la * factor
     p_in = float(sum(
@@ -952,9 +988,12 @@ def predict_xg(
     params: DixonColesParams,
     neutral: bool = False,
     host_boost: float = 1.0,
+    altitude_factors: tuple[float, float] | None = None,
+    turf_penalty: float = 1.0,
 ) -> tuple[float, float]:
     """Returns (xg_home, xg_away) — the Poisson goal rates for each team."""
-    lh, la = _lambdas(home, away, params, neutral, host_boost=host_boost)
+    lh, la = _lambdas(home, away, params, neutral, host_boost=host_boost,
+                      altitude_factors=altitude_factors, turf_penalty=turf_penalty)
     return float(lh), float(la)
 
 
@@ -964,9 +1003,12 @@ def predict_first_scorer(
     params: DixonColesParams,
     neutral: bool = False,
     host_boost: float = 1.0,
+    altitude_factors: tuple[float, float] | None = None,
+    turf_penalty: float = 1.0,
 ) -> dict[str, float]:
     """P(home scores first) — exponential race: each team's rate is λ, first scorer wins."""
-    lh, la = _lambdas(home, away, params, neutral=neutral, host_boost=host_boost)
+    lh, la = _lambdas(home, away, params, neutral=neutral, host_boost=host_boost,
+                      altitude_factors=altitude_factors, turf_penalty=turf_penalty)
     p_home = lh / (lh + la)
     return {"p_home_first": float(p_home), "p_away_first": float(1.0 - p_home)}
 

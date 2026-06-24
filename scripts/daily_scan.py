@@ -15,6 +15,7 @@ from src.scanner.daily_scan import run_daily_scan
 from src.betting.ledger import append_bets, ledger_summary, LEDGER_PATH
 from src.notifications.web_dashboard import write_signals_json, write_signals_json_all_users
 from src.data.odds_api import fetch_upcoming_matches, fetch_wm_scores
+from src.data.football_discovery import discover_active_leagues
 
 
 def _confirm_bets(selected_signals: list, bankroll: float) -> list:
@@ -78,6 +79,12 @@ if __name__ == "__main__":
         print("--- Auto-Retraining ---")
         subprocess.run([sys.executable, "scripts/auto_retrain.py"], check=True)
         print("--- Scan ---")
+
+    # I11: Football Liga Auto-Discovery — loggt aktive Ligen (post-WM genutzt für Multi-Liga-Scan)
+    import os as _os_disc
+    _active_leagues = discover_active_leagues(api_key=_os_disc.getenv("ODDS_API_KEY", ""))
+    if _active_leagues:
+        print(f"Football Discovery: {len(_active_leagues)} aktive Ligen — {', '.join(_active_leagues[:5])}{'...' if len(_active_leagues) > 5 else ''}")
 
     signals_df, all_signals, selected_signals, match_date_lookup, _match_contexts = run_daily_scan(
         bankroll=args.bankroll,
