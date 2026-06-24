@@ -158,11 +158,11 @@
   "espn_760464": {
     "home": "Morocco",
     "away": "Haiti",
-    "home_score": 2,
+    "home_score": 3,
     "away_score": 2,
     "completed": false,
     "ht_sent": true,
-    "updated": "2026-06-24T23:40:02.904227+00:00"
+    "updated": "2026-06-24T23:42:03.608513+00:00"
   },
   "espn_760465": {
     "home": "Scotland",
@@ -171,6 +171,6 @@
     "away_score": 3,
     "completed": false,
     "ht_sent": true,
-    "updated": "2026-06-24T23:40:02.904227+00:00"
+    "updated": "2026-06-24T23:42:03.608513+00:00"
   }
 }
