@@ -18,18 +18,56 @@
 # the CI version is generally authoritative because it runs unconditionally
 # even when MacBook is asleep.
 
+# Pre-flight: resolve any stuck unmerged files left by a previous failed autostash apply.
+# This happens when git pull --rebase --autostash hits a conflict during stash pop:
+# the rebase itself finishes but the autostash apply leaves unmerged index entries,
+# blocking all subsequent git operations. We resolve by taking the working-tree version
+# (which is already the merged result from the failed apply) and staging it.
+_git_clear_unmerged() {
+  local LOG="$1"
+  local TS
+  TS="$(date '+%Y-%m-%d %H:%M:%S %Z')"
+  local unmerged
+  unmerged=$(git ls-files --unmerged | awk '{print $4}' | sort -u)
+  if [ -z "$unmerged" ]; then
+    return 0
+  fi
+  echo "[$TS] git_safe_push: unmerged files detected, force-staging working-tree versions" >> "$LOG"
+  echo "$unmerged" | while IFS= read -r f; do
+    # Remove conflict markers if present, take working tree version
+    if grep -qP '^(<{7}|={7}|>{7})' "$f" 2>/dev/null; then
+      # Has actual conflict markers — take theirs (remote/upstream) as authoritative
+      git checkout --theirs -- "$f" >> "$LOG" 2>&1 || true
+    fi
+    git add -- "$f" >> "$LOG" 2>&1 || true
+    echo "[$TS] git_safe_push: staged $f" >> "$LOG"
+  done
+  # Commit the resolution so the index is clean
+  git commit -m "fix: auto-resolve unmerged files (theirs)" --no-edit >> "$LOG" 2>&1 || true
+}
+
 # Internal: the actual push logic (called while holding the process lock).
 _git_safe_push_body() {
   local LOG="$1"
   local TS
   TS="$(date '+%Y-%m-%d %H:%M:%S %Z')"
 
+  # Recover from any stuck unmerged state before attempting git operations
+  _git_clear_unmerged "$LOG"
+
   git fetch origin main >> "$LOG" 2>&1
 
   if ! git pull --rebase --autostash --strategy-option=theirs origin main >> "$LOG" 2>&1; then
     echo "[$TS] git_safe_push: rebase conflict, aborting" >> "$LOG"
     git rebase --abort >> "$LOG" 2>&1 || true
-    return 1
+    # Second chance: clear any unmerged state left by autostash and retry once
+    _git_clear_unmerged "$LOG"
+    git fetch origin main >> "$LOG" 2>&1
+    if ! git pull --rebase --autostash --strategy-option=theirs origin main >> "$LOG" 2>&1; then
+      echo "[$TS] git_safe_push: rebase failed after unmerged-clear, giving up" >> "$LOG"
+      git rebase --abort >> "$LOG" 2>&1 || true
+      return 1
+    fi
   fi
 
   if git push origin main >> "$LOG" 2>&1; then

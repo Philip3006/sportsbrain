@@ -36,7 +36,7 @@ jobs:
           from pathlib import Path
 
           HEALTH = Path("docs/data/health.json")
-          HEAL_LOG = Path("results/auto_heal.log")
+          HEAL_LOG = Path("results/auto_heal_cloud.log")
           HEAL_LOG.parent.mkdir(exist_ok=True)
 
           # Jobs that run too frequently or are handled by their own retry cadence
@@ -121,7 +121,7 @@ jobs:
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add results/auto_heal.log || true
+          git add results/auto_heal_cloud.log || true
           git diff --staged --quiet && exit 0
           git commit -m "auto: cloud-healer retry $(date +%Y-%m-%d\ %H:%M) UTC"
           git fetch origin main

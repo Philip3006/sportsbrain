@@ -90,12 +90,38 @@ def collect_health() -> tuple[list[dict], list[dict], list[dict]]:
     return failures, degraded, ok
 
 
-def collect_recent_log_errors() -> dict[str, list[str]]:
-    """Greps cron logs for error keywords in the last ~24h.
+_LOG_TS_PAT = re.compile(
+    r"\[?(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2}| UTC| CEST| CET| \w+)?)\]?"
+)
+_LOG_MAX_AGE_H = 4  # only surface errors from the last 4 hours
 
-    Returns {job: [line, ...]} truncated. We can't perfectly time-filter the
-    log file content, so we just take the last N matching lines per file
-    as a proxy.
+
+def _log_line_recent(line: str, cutoff: datetime) -> bool:
+    """Return True if the log line carries a timestamp newer than cutoff."""
+    m = _LOG_TS_PAT.search(line)
+    if not m:
+        return False  # no timestamp → can't confirm recency, exclude
+    raw = m.group(1).strip()
+    # Normalise common non-standard suffixes
+    for tz_str, offset in ((" UTC", "+00:00"), (" CEST", "+02:00"), (" CET", "+01:00")):
+        if raw.endswith(tz_str):
+            raw = raw[: -len(tz_str)] + offset
+            break
+    raw = raw.replace(" ", "T", 1) if "T" not in raw else raw
+    try:
+        dt = datetime.fromisoformat(raw)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt >= cutoff
+    except Exception:
+        return False
+
+
+def collect_recent_log_errors() -> dict[str, list[str]]:
+    """Greps cron logs for error keywords in the last _LOG_MAX_AGE_H hours.
+
+    Only lines with a parseable timestamp within the window are included so that
+    old resolved errors don't show up as active issues in the session report.
     """
     job_files = {
         "scan":                  "scan_cron.log",
@@ -108,6 +134,7 @@ def collect_recent_log_errors() -> dict[str, list[str]]:
     }
     pat = re.compile(r"error|exception|traceback|timeout|rejected|401|403|500|502|504",
                      re.IGNORECASE)
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=_LOG_MAX_AGE_H)
     out: dict[str, list[str]] = {}
     for job, fname in job_files.items():
         path = LOG_DIR / fname
@@ -117,7 +144,9 @@ def collect_recent_log_errors() -> dict[str, list[str]]:
             lines = path.read_text(errors="ignore").splitlines()
         except Exception:
             continue
-        matches = [ln.strip() for ln in lines[-300:] if pat.search(ln)]
+        # Only scan recent tail (last 500 lines) then time-filter
+        recent_lines = [ln.strip() for ln in lines[-500:] if _log_line_recent(ln, cutoff)]
+        matches = [ln for ln in recent_lines if pat.search(ln)]
         if matches:
             # Last 3 distinct messages so the report stays readable.
             seen, kept = set(), []
@@ -277,11 +306,17 @@ def render() -> str:
     parts.append("## 🔧 Empfohlene Fixes für die nächste Session")
     suggestions: list[str] = []
     for j in failures:
-        suggestions.append(f"- {j['job']}: prüfen warum exit={j.get('exit_code')} — `{(j.get('error') or '')[:120]}`")
+        suggestions.append(f"- **{j['job']}**: exit={j.get('exit_code')} — `{(j.get('error') or '')[:120]}`")
     for j in deg_with_fb:
-        suggestions.append(f"- {j['job']}: läuft auf Fallback `{j.get('fallback_used')}`, primäre Quelle prüfen")
+        suggestions.append(f"- **{j['job']}**: läuft auf Fallback `{j.get('fallback_used')}`, primäre Quelle prüfen")
     if isinstance(audit, dict) and audit.get("status") == "blocked":
         suggestions.append("- Publish-Audit: Blocker-Match prüfen, ggf. DC-Retrain erzwingen")
+    # Surface log errors (already time-filtered to last 4h) that aren't covered by health JSON
+    jobs_with_health_issue = {j["job"] for j in failures + deg_with_fb}
+    for job, lines in log_errors.items():
+        if job not in jobs_with_health_issue:
+            snippet = lines[-1][:120] if lines else ""
+            suggestions.append(f"- **{job}** (Log-Fehler letzte 4h): `{snippet}`")
     if not suggestions:
         suggestions.append("- nichts kritisches — System läuft sauber ✅")
     parts += suggestions
