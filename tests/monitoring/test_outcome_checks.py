@@ -60,9 +60,9 @@ def test_stuck_open_bets_clean(tmp_paths):
 
 
 def test_signals_stale_detected(tmp_paths):
-    stale = (datetime.now(timezone.utc) - timedelta(hours=3)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    stale = (datetime.now(timezone.utc) - timedelta(minutes=45)).strftime("%Y-%m-%dT%H:%M:%SZ")
     tmp_paths["signals"].write_text(json.dumps({"updated": stale}))
-    sym = oc.check_signals_freshness(max_age_min=90)
+    sym = oc.check_signals_freshness()
     assert sym is not None
     assert sym.id == oc.SYM_SIGNALS_STALE
     assert sym.suggested_action == "force-refresh-signals"
@@ -72,6 +72,22 @@ def test_signals_fresh_clean(tmp_paths):
     fresh = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     tmp_paths["signals"].write_text(json.dumps({"updated": fresh}))
     assert oc.check_signals_freshness() is None
+
+
+def test_signals_live_window_uses_tighter_threshold(tmp_paths):
+    """Wenn ein open bet auf heute steht, gilt 10-min-Grenze statt 30."""
+    today = datetime.now(timezone.utc).date().isoformat()
+    _write_ledger(tmp_paths["ledger"], [
+        {"match_id": "m1", "match_date": today, "home": "A", "away": "B",
+         "market": "home", "status": "open"},
+    ])
+    # 20 min stale: normal noch ok, im Live-Fenster schon Symptom
+    twenty_min_ago = (datetime.now(timezone.utc) - timedelta(minutes=20)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    tmp_paths["signals"].write_text(json.dumps({"updated": twenty_min_ago}))
+    sym = oc.check_signals_freshness()
+    assert sym is not None
+    assert sym.payload["live_window"] is True
+    assert sym.severity == "error"
 
 
 def test_push_expired_majority(tmp_paths):
