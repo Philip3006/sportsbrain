@@ -1,7 +1,7 @@
 {
-  "updated": "2026-06-24T17:47:41Z",
+  "updated": "2026-06-24T22:23:40Z",
   "build_info": {
-    "sha": "fb08ab1",
+    "sha": "2200a50",
     "date": "2026-06-24"
   },
   "meta": {
@@ -3463,20 +3463,6 @@
     },
     {
       "sport": "football",
-      "match": "Bosnia and Herzegovina vs Qatar",
-      "market": "scorer_Almoez Ali Zainalabiddin Abdulla",
-      "odds": 5.0,
-      "model_prob": 27.6,
-      "fair_prob": 20.0,
-      "ev_pct": 37.9,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-24T19:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Panama vs England",
       "market": "o/u3.25_under",
       "odds": 1.96,
@@ -3659,20 +3645,6 @@
     },
     {
       "sport": "football",
-      "match": "Switzerland vs Canada",
-      "market": "ah+0.5_away",
-      "odds": 1.59,
-      "model_prob": 81.4,
-      "fair_prob": 81.4,
-      "ev_pct": 29.5,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-24T19:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Tunisia vs Netherlands",
       "market": "o/u2.5_over",
       "odds": 1.43,
@@ -3740,20 +3712,6 @@
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-27T23:30:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Switzerland vs Canada",
-      "market": "o/u2.5_over",
-      "odds": 2.34,
-      "model_prob": 53.4,
-      "fair_prob": 53.4,
-      "ev_pct": 25.0,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-24T19:00:00Z"
     },
     {
       "sport": "football",
@@ -3869,20 +3827,6 @@
     },
     {
       "sport": "football",
-      "match": "Bosnia and Herzegovina vs Qatar",
-      "market": "ah+1.5_away",
-      "odds": 1.95,
-      "model_prob": 57.9,
-      "fair_prob": 57.9,
-      "ev_pct": 12.9,
-      "stake_eur": 11.93,
-      "stake_pct": 11.9,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-24T19:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Uruguay vs Spain",
       "market": "away",
       "odds": 1.56,
@@ -3908,20 +3852,6 @@
       "confidence": "LOW",
       "n_models_agree": 2,
       "kickoff": "2026-06-27T23:30:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Bosnia and Herzegovina vs Qatar",
-      "market": "o/u2.5_under",
-      "odds": 2.55,
-      "model_prob": 43.2,
-      "fair_prob": 43.2,
-      "ev_pct": 10.1,
-      "stake_eur": 12.99,
-      "stake_pct": 13.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-24T19:00:00Z"
     },
     {
       "sport": "football",
@@ -3954,15 +3884,15 @@
   ],
   "tennis": [],
   "portfolio": {
-    "n_bets": 61,
-    "n_open": 3,
-    "n_won": 21,
+    "n_bets": 63,
+    "n_open": 4,
+    "n_won": 22,
     "n_lost": 27,
     "n_void": 8,
-    "total_staked": 693.71,
-    "total_pnl": 18.150000000000006,
-    "roi_pct": 2.616367069813035,
-    "win_rate": 43.75,
+    "total_staked": 703.71,
+    "total_pnl": 27.750000000000007,
+    "roi_pct": 3.9433857697062717,
+    "win_rate": 44.89795918367347,
     "mean_clv": 0.13952666666666666,
     "by_market": {
       "ah+0.5": {
@@ -4043,10 +3973,10 @@
         "lost": 2
       },
       "o/u2.5_over": {
-        "n": 8,
-        "pnl": -8.909999999999997,
-        "roi_pct": -8.67998051631758,
-        "won": 3,
+        "n": 9,
+        "pnl": 0.690000000000003,
+        "roi_pct": 0.6125166444740373,
+        "won": 4,
         "lost": 5
       },
       "o/u2.5_under": {
@@ -4173,9 +4103,9 @@
   "history": [
     {
       "date": "2026-06-24",
-      "n_bets": 5,
-      "pnl": 5.27,
-      "roi_pct": 12.1
+      "n_bets": 7,
+      "pnl": 14.87,
+      "roi_pct": 23.6
     },
     {
       "date": "2026-06-23",
@@ -4252,20 +4182,6 @@
   ],
   "open_bets": [
     {
-      "match": "Switzerland vs Canada",
-      "home": "Switzerland",
-      "away": "Canada",
-      "market": "o/u2.5_over",
-      "entry_odds": 1.96,
-      "current_odds": 2.34,
-      "drift_pct": 19.4,
-      "clv_signal": "good",
-      "stake": 10.0,
-      "match_date": "2026-06-24",
-      "model_edge_pct": null,
-      "is_live": false
-    },
-    {
       "match": "Bosnia and Herzegovina vs Qatar",
       "home": "Bosnia and Herzegovina",
       "away": "Qatar",
@@ -4288,6 +4204,34 @@
       "current_odds": null,
       "drift_pct": null,
       "clv_signal": null,
+      "stake": 10.0,
+      "match_date": "2026-06-24",
+      "model_edge_pct": null,
+      "is_live": false
+    },
+    {
+      "match": "Scotland vs Brazil",
+      "home": "Scotland",
+      "away": "Brazil",
+      "market": "o/u3.0_under",
+      "entry_odds": 1.52,
+      "current_odds": 2.12,
+      "drift_pct": 39.5,
+      "clv_signal": "good",
+      "stake": 9.6,
+      "match_date": "2026-06-24",
+      "model_edge_pct": null,
+      "is_live": false
+    },
+    {
+      "match": "Morocco vs Haiti",
+      "home": "Morocco",
+      "away": "Haiti",
+      "market": "o/u3.5_under",
+      "entry_odds": 1.49,
+      "current_odds": 2.5,
+      "drift_pct": 67.8,
+      "clv_signal": "good",
       "stake": 10.0,
       "match_date": "2026-06-24",
       "model_edge_pct": null,
@@ -4333,6 +4277,19 @@
       "status": "won",
       "clv": null,
       "closing_odds": null
+    },
+    {
+      "match": "Switzerland vs Canada",
+      "home": "Switzerland",
+      "away": "Canada",
+      "market": "o/u2.5_over",
+      "entry_odds": 1.96,
+      "stake": 10.0,
+      "pnl": 9.6,
+      "match_date": "2026-06-24",
+      "status": "won",
+      "clv": null,
+      "closing_odds": 2.32
     },
     {
       "match": "Norway vs Senegal",
@@ -5040,10 +4997,10 @@
   "bankroll_state": {
     "start": 100.0,
     "free": 93.15,
-    "staked": 25.0,
-    "exposure_pct": 25.0,
-    "max_win": 60.0,
-    "pnl_closed": 18.15
+    "staked": 34.6,
+    "exposure_pct": 34.6,
+    "max_win": 72.35,
+    "pnl_closed": 27.75
   },
   "wm_stats": {
     "stats": {
@@ -5056,12 +5013,12 @@
         "roi": 75.7
       },
       "ou25": {
-        "n": 17,
-        "won": 7,
-        "staked": 214.29,
-        "pnl": -28.48,
-        "hit_rate": 41.2,
-        "roi": -13.3
+        "n": 18,
+        "won": 8,
+        "staked": 224.29,
+        "pnl": -18.88,
+        "hit_rate": 44.4,
+        "roi": -8.4
       },
       "btts": {
         "n": 3,
@@ -5135,14 +5092,14 @@
       },
       {
         "date": "2026-06-24",
-        "balance": 118.15
+        "balance": 127.75
       }
     ],
     "drawdown": {
       "peak": 176.25,
-      "current": 118.15,
-      "current_dd": 58.1,
-      "current_dd_pct": 32.96,
+      "current": 127.75,
+      "current_dd": 48.5,
+      "current_dd_pct": 27.52,
       "max_dd": 100.87,
       "max_dd_pct": 57.23
     },
@@ -5156,7 +5113,7 @@
         "≥+5%"
       ],
       "bins": [
-        8,
+        9,
         1,
         2,
         6,
@@ -5175,7 +5132,7 @@
       ],
       "bins": [
         2,
-        3,
+        4,
         4,
         4,
         3,
@@ -5183,16 +5140,16 @@
       ]
     },
     "summary": {
-      "n_settled": 49,
-      "staked": 568.56,
-      "pnl": 18.15,
-      "yield_pct": 3.19,
-      "mean_clv": 5.31,
-      "mean_clv_30d": 5.31,
-      "mean_edge": 8.51,
-      "n_clv": 22,
-      "n_clv_30d": 22,
-      "n_edge": 23
+      "n_settled": 50,
+      "staked": 578.56,
+      "pnl": 27.75,
+      "yield_pct": 4.8,
+      "mean_clv": 4.4,
+      "mean_clv_30d": 4.4,
+      "mean_edge": 8.28,
+      "n_clv": 23,
+      "n_clv_30d": 23,
+      "n_edge": 24
     },
     "per_team_market": {
       "South Korea": {
@@ -5231,6 +5188,14 @@
           "pnl": -8.0,
           "hit_rate": 0.0,
           "roi": -100.0
+        },
+        "Over": {
+          "n": 1,
+          "won": 1,
+          "staked": 10.0,
+          "pnl": 9.6,
+          "hit_rate": 100.0,
+          "roi": 96.0
         }
       },
       "Bosnia and Herzegovina": {
@@ -5323,6 +5288,14 @@
           "pnl": -10.0,
           "hit_rate": 0.0,
           "roi": -100.0
+        },
+        "Over": {
+          "n": 1,
+          "won": 1,
+          "staked": 10.0,
+          "pnl": 9.6,
+          "hit_rate": 100.0,
+          "roi": 96.0
         }
       },
       "Qatar": {
@@ -6026,12 +5999,12 @@
         "roi": -27.4
       },
       "UEFA": {
-        "n": 22,
-        "won": 10,
-        "staked": 258.98,
-        "pnl": 43.52,
-        "hit_rate": 45.5,
-        "roi": 16.8
+        "n": 23,
+        "won": 11,
+        "staked": 268.98,
+        "pnl": 53.12,
+        "hit_rate": 47.8,
+        "roi": 19.7
       },
       "CAF": {
         "n": 4,
