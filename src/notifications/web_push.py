@@ -212,7 +212,50 @@ def _send_notification(title: str, body: str, *, url: str = "/", kind: str = "ge
     if expired:
         _prune_subscriptions(expired)
         print(f"  [web_push] {len(expired)} expired subscriptions pruned.")
+    _record_delivery(attempted=len(subs), sent=sent, pruned_410=len(expired))
     return sent
+
+
+# ── Delivery-Counter (für outcome_checks) ────────────────────────
+_DELIVERY_PATH = Path(__file__).resolve().parent.parent.parent / "results" / "health" / "push_delivery.json"
+
+
+def _record_delivery(attempted: int, sent: int, pruned_410: int) -> None:
+    """Persistiert Push-Delivery-Zähler. Form:
+       { "last_send_at": "ISO", "<YYYY-MM-DD>": {"attempted": N, "sent": N, "pruned_410": N} }
+       Pro Tag aggregiert, damit outcome_checks.check_push_delivery_health()
+       eine echte Quelle hat.
+    """
+    if attempted <= 0:
+        return
+    try:
+        _DELIVERY_PATH.parent.mkdir(parents=True, exist_ok=True)
+        state: dict = {}
+        if _DELIVERY_PATH.exists():
+            try:
+                state = json.loads(_DELIVERY_PATH.read_text())
+            except Exception:
+                state = {}
+        from datetime import datetime as _dt, timezone as _tz
+        now_utc = _dt.now(_tz.utc)
+        day = now_utc.strftime("%Y-%m-%d")
+        bucket = state.get(day) or {"attempted": 0, "sent": 0, "pruned_410": 0}
+        bucket["attempted"] = int(bucket.get("attempted", 0)) + attempted
+        bucket["sent"]      = int(bucket.get("sent", 0)) + sent
+        bucket["pruned_410"] = int(bucket.get("pruned_410", 0)) + pruned_410
+        state[day] = bucket
+        state["last_send_at"] = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        # Tagesbuckets älter als 30 Tage prunen
+        cutoff = (now_utc.date() - __import__("datetime").timedelta(days=30)).isoformat()
+        for k in list(state.keys()):
+            if len(k) == 10 and k < cutoff:
+                state.pop(k, None)
+        tmp = _DELIVERY_PATH.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(state, ensure_ascii=False, indent=2))
+        os.replace(tmp, _DELIVERY_PATH)
+    except Exception:
+        # Counter-Schreiben darf nie eine Notification verhindern.
+        pass
 
 
 # ── Public API: Scan Alert ───────────────────────────────────────

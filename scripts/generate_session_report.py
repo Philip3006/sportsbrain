@@ -166,6 +166,68 @@ def collect_audit_blocker() -> dict | None:
     return _read_json(AUDITS_DIR / "publish_failure_latest.json")
 
 
+def collect_outcome_symptoms() -> list[dict]:
+    """Run outcome-checks und liefere serialisierte Symptome."""
+    try:
+        from src.monitoring.outcome_checks import run_all_checks, to_dicts
+    except Exception:
+        return []
+    try:
+        return to_dicts(run_all_checks())
+    except Exception:
+        return []
+
+
+def collect_self_heal_activity_24h() -> list[dict]:
+    """Parsed results/auto_heal.log für die letzten 24h.
+
+    Liefert sortierte Liste von Ereignissen: outcome-symptom, auto-action, resolved.
+    """
+    log = ROOT / "results" / "auto_heal.log"
+    if not log.exists():
+        return []
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+    pat_ts = re.compile(r"\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) UTC\] \[auto_heal_ai\] (.+)")
+    out: list[dict] = []
+    try:
+        lines = log.read_text(errors="ignore").splitlines()[-2000:]
+    except Exception:
+        return []
+    for ln in lines:
+        m = pat_ts.match(ln)
+        if not m:
+            continue
+        try:
+            dt = datetime.fromisoformat(m.group(1)).replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+        if dt < cutoff:
+            continue
+        msg = m.group(2)
+        kind = None
+        for key in ("auto-action:", "outcome-symptom:", "resolved nach", "needs human", "persistiert"):
+            if key in msg:
+                kind = key.rstrip(":")
+                break
+        if kind is None:
+            continue
+        out.append({"ts": m.group(1), "kind": kind, "msg": msg[:200]})
+    return out
+
+
+def collect_push_delivery_24h() -> dict | None:
+    p = ROOT / "results" / "health" / "push_delivery.json"
+    state = _read_json(p)
+    if not isinstance(state, dict):
+        return None
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    bucket = state.get(today) or {}
+    return {
+        "today": bucket,
+        "last_send_at": state.get("last_send_at"),
+    }
+
+
 def collect_ledger_24h() -> dict:
     """Counts wins/losses/voids in last 24h and sums P&L."""
     if not LEDGER.exists():
@@ -229,6 +291,9 @@ def render() -> str:
     log_errors = collect_recent_log_errors()
     audit = collect_audit_blocker()
     ledger = collect_ledger_24h()
+    symptoms = collect_outcome_symptoms()
+    heal_events = collect_self_heal_activity_24h()
+    push_stats = collect_push_delivery_24h()
 
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     parts: list[str] = []
@@ -271,6 +336,48 @@ def render() -> str:
         parts.append("- noch keine ok-Snapshots vorhanden")
     parts.append("")
 
+    # --- Outcome-Symptome (End-State-Checks jenseits exit_code) ---
+    parts.append("## 🟠 Stille Degradationen (Outcome-Level)")
+    if symptoms:
+        for s in symptoms:
+            parts.append(
+                f"- **[{s['severity']}] {s['id']}** — {s['summary']}"
+                f"\n  - suggested action: `{s['suggested_action']}`"
+            )
+    else:
+        parts.append("- keine — Outcomes konsistent mit erwartetem Verhalten ✅")
+    parts.append("")
+
+    # --- Self-Heal-Aktivität letzte 24h ---
+    parts.append("## 🛠 Self-Heal-Aktivität (24h)")
+    if heal_events:
+        # Aggregieren: zähle pro (kind, sym_id) — die Liste sonst zu lang
+        from collections import Counter
+        cnt: Counter = Counter()
+        last_seen: dict[str, str] = {}
+        for ev in heal_events:
+            key = ev["msg"].split(":")[0][:60] + " | " + ev["kind"]
+            cnt[key] += 1
+            last_seen[key] = ev["ts"]
+        for key, n in cnt.most_common(15):
+            parts.append(f"- {key} ×{n} (zuletzt {last_seen[key]} UTC)")
+    else:
+        parts.append("- keine Auto-Heal-Aktivität geloggt")
+    parts.append("")
+
+    # --- Push-Delivery ---
+    parts.append("## 📲 Push-Delivery (heute)")
+    if push_stats and push_stats.get("today"):
+        t = push_stats["today"]
+        last = push_stats.get("last_send_at", "—")
+        parts.append(
+            f"- attempted {t.get('attempted',0)} · sent {t.get('sent',0)} · "
+            f"pruned_410 {t.get('pruned_410',0)} — letzter Send: {last}"
+        )
+    else:
+        parts.append("- noch keine Push-Versuche heute")
+    parts.append("")
+
     # --- Recent log errors ---
     if log_errors:
         parts.append("## 📜 Auffällige Log-Zeilen (Cron-Logs)")
@@ -309,6 +416,10 @@ def render() -> str:
         suggestions.append(f"- **{j['job']}**: exit={j.get('exit_code')} — `{(j.get('error') or '')[:120]}`")
     for j in deg_with_fb:
         suggestions.append(f"- **{j['job']}**: läuft auf Fallback `{j.get('fallback_used')}`, primäre Quelle prüfen")
+    for s in symptoms:
+        suggestions.append(
+            f"- **{s['id']}** ({s['severity']}): {s['summary']} — Action: `{s['suggested_action']}`"
+        )
     if isinstance(audit, dict) and audit.get("status") == "blocked":
         suggestions.append("- Publish-Audit: Blocker-Match prüfen, ggf. DC-Retrain erzwingen")
     # Surface log errors (already time-filtered to last 4h) that aren't covered by health JSON
