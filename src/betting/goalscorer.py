@@ -195,7 +195,10 @@ def detect_value_goalscorer(
     from src.betting.value_detector import BetSignal
 
     signals = []
-    for pred in (*home_preds, *away_preds):
+    for pred_side, pred in [
+        *(("home", p) for p in home_preds),
+        *(("away", p) for p in away_preds),
+    ]:
         if pred.get("n_games", 0) < 2:
             continue
         sb_name = pred["player"]
@@ -205,8 +208,8 @@ def detect_value_goalscorer(
                 ev = model_p * odds - 1.0
                 if min_ev <= ev <= MAX_EV:
                     kf = kelly_fraction(model_p, odds)
-                    stake_eur = dynamic_stake_eur(ev, "LOW", bankroll)
-                    signals.append(BetSignal(
+                    stake_eur = dynamic_stake_eur(ev, "LOW", bankroll, decimal_odds=odds)
+                    sig = BetSignal(
                         match_id=match_id,
                         home=home, away=away,
                         market=f"scorer_{sb_name}",
@@ -218,6 +221,8 @@ def detect_value_goalscorer(
                         stake_pct=stake_eur / bankroll if bankroll > 0 else 0.0,
                         confidence="LOW",
                         stake_eur=stake_eur,
-                    ))
+                    )
+                    sig.player_team = pred_side  # Stake-v2: for correlation detection
+                    signals.append(sig)
                 break
     return signals

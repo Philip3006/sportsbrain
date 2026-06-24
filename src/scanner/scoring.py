@@ -560,7 +560,7 @@ def score_matches(
                 if upgrade:
                     s.confidence = "HIGH"
                     bankroll_est = s.stake_eur / s.stake_pct if s.stake_pct > 0 else bankroll
-                    s.stake_eur = dynamic_stake_eur(s.ev, "HIGH", bankroll_est)
+                    s.stake_eur = dynamic_stake_eur(s.ev, "HIGH", bankroll_est, decimal_odds=s.decimal_odds)
                     s.stake_pct = s.stake_eur / bankroll_est
 
         # Phase 2.3: Conformal gate — downgrade 1X2 confidence when DC prediction
@@ -591,7 +591,7 @@ def score_matches(
             if s.market.startswith(("goals_", "h1_goals_", "h2_goals_")) and s.confidence == "HIGH":
                 from src.betting.kelly import dynamic_stake_eur, goals_range_max_for
                 s.confidence = "MEDIUM"
-                s.stake_eur = min(dynamic_stake_eur(s.ev, "MEDIUM", bankroll), goals_range_max_for(bankroll))
+                s.stake_eur = min(dynamic_stake_eur(s.ev, "MEDIUM", bankroll, decimal_odds=s.decimal_odds), goals_range_max_for(bankroll))
                 s.stake_pct = s.stake_eur / bankroll if bankroll > 0 else 0.0
 
         # Goalscorer value bets — independent third bucket (never blocks match slots)

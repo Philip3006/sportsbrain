@@ -60,6 +60,24 @@ STAKE_TIERS: list[tuple[float, float, float]] = [
 # Goals-Range cap derives from the tier band: min + GOALS_RANGE_TIER_PCT × (max − min)
 GOALS_RANGE_TIER_PCT = 0.2
 
+# Stake-v2: Odds-Bucket-Cap. Stakes oberhalb dieser Quoten werden auf
+# (factor × tier_hi) gedeckelt, da längere Quoten höhere Varianz haben.
+# Tuple-Liste sortiert nach Quoten-Obergrenze (aufsteigend).
+ODDS_BUCKET_CAPS: list[tuple[float, float]] = [
+    (2.00, 1.00),
+    (3.00, 0.75),
+    (5.00, 0.55),
+    (float("inf"), 0.35),
+]
+
+# Stake-v2: Korrelations-Adjustment je Match.
+# MAX_MATCH_EXPOSURE_MULT: Σ stake aller Legs eines Matches ≤ tier_hi × diesem Faktor.
+# NEG_CORR_DISCOUNT:       Underdog-Leg bei Heim/Auswärts-Konflikt × diesem Faktor.
+# POS_CORR_DISCOUNT:       Beide Legs bei positiv-korrelierten Wetten × diesem Faktor.
+MAX_MATCH_EXPOSURE_MULT = 1.5
+NEG_CORR_DISCOUNT = 0.50
+POS_CORR_DISCOUNT = 0.70
+
 BANKROLL_SNAPSHOT_PATH = DATA_CACHE / "bankroll_snapshot.json"  # legacy single-user pfad (Migration)
 BANKROLL_START = 100.0
 

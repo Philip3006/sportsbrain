@@ -141,7 +141,7 @@ _FIELDS = [
     "decimal_odds", "stake_pct", "stake_amount",
     "placed_date", "status", "pnl", "closing_odds", "clv",
     "pinnacle_ref_odds",
-    "source", "model_prob",
+    "source", "model_prob", "stake_reason",
 ]
 
 
@@ -171,6 +171,8 @@ def _load(path: Path) -> pd.DataFrame:
         df["source"] = df["source"].fillna("value").replace("", "value")
     if "model_prob" not in df.columns:
         df["model_prob"] = ""
+    if "stake_reason" not in df.columns:
+        df["stake_reason"] = ""
     return df
 
 
@@ -223,6 +225,7 @@ def append_bets(
                 "pinnacle_ref_odds": f"{s.b365_odds:.4f}" if s.b365_odds > 1.0 else "",
                 "source":        "value",
                 "model_prob":    f"{s.model_prob:.6f}" if getattr(s, "model_prob", 0.0) > 0 else "",
+                "stake_reason":  getattr(s, "stake_reason", "") or "",
             })
 
         if new_rows:

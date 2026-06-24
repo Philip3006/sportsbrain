@@ -4,7 +4,23 @@ from src.config import (
     MAX_STAKE_EUR,
     STAKE_TIERS,
     GOALS_RANGE_TIER_PCT,
+    ODDS_BUCKET_CAPS,
 )
+
+
+def odds_cap_factor(decimal_odds: float | None) -> float:
+    """Returns the tier_hi multiplier for a given decimal odds value.
+
+    Longer odds carry higher variance — we cap the maximum stake proportionally
+    so a €20 max-stake doesn't land on a 5.5er Scorer-Quote. Returns 1.0 when
+    decimal_odds is None (legacy callers / tests without odds context).
+    """
+    if decimal_odds is None or decimal_odds <= 0:
+        return 1.0
+    for upper, factor in ODDS_BUCKET_CAPS:
+        if decimal_odds <= upper:
+            return factor
+    return ODDS_BUCKET_CAPS[-1][1]
 
 
 def get_stake_bounds(bankroll: float) -> tuple[float, float]:
@@ -34,6 +50,7 @@ def dynamic_stake_eur(
     ev: float,
     confidence: str,
     bankroll: float | None = None,
+    decimal_odds: float | None = None,
 ) -> float:
     """
     Returns absolute stake in EUR. Scales linearly from min→max across EV 3%→20%.
@@ -42,6 +59,10 @@ def dynamic_stake_eur(
 
     bankroll=None preserves legacy Tier-0 behaviour (€5–€15) for tests and
     callers that haven't been migrated yet.
+
+    decimal_odds (Stake-v2): when provided, the tier MAX is reduced via
+    ``odds_cap_factor`` so longshot bets get smaller stakes than favourites.
+    None preserves legacy behaviour.
     """
     if ev <= 0:
         return 0.0
@@ -49,12 +70,13 @@ def dynamic_stake_eur(
         lo, hi = MIN_STAKE_EUR, MAX_STAKE_EUR
     else:
         lo, hi = get_stake_bounds(bankroll)
+    effective_hi = max(lo, hi * odds_cap_factor(decimal_odds))
     ev_clipped = min(ev, 0.20)
     ev_range = 0.20 - 0.03  # min_edge = 3%
-    amount = lo + (ev_clipped - 0.03) / ev_range * (hi - lo)
-    amount = max(lo, min(hi, amount))
+    amount = lo + (ev_clipped - 0.03) / ev_range * (effective_hi - lo)
+    amount = max(lo, min(effective_hi, amount))
     if confidence == "HIGH":
-        amount = min(amount * 1.10, hi)
+        amount = min(amount * 1.10, effective_hi)
     return amount
 
 
