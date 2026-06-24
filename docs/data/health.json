@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-24T16:10:56Z",
+  "generated_at": "2026-06-24T17:28:54Z",
   "overall": "ok",
   "jobs": [
     {
@@ -38,8 +38,8 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-06-24T16:10:56Z",
-      "duration_s": 1.0,
+      "last_run_at": "2026-06-24T17:28:54Z",
+      "duration_s": 2.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -49,8 +49,8 @@
     {
       "job": "live_score_push",
       "status": "ok",
-      "last_run_at": "2026-06-24T16:09:39Z",
-      "duration_s": 2.0,
+      "last_run_at": "2026-06-24T17:27:46Z",
+      "duration_s": 3.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -60,7 +60,7 @@
     {
       "job": "prematch_scan",
       "status": "ok",
-      "last_run_at": "2026-06-24T15:57:42Z",
+      "last_run_at": "2026-06-24T17:17:43Z",
       "duration_s": 0.0,
       "exit_code": 0,
       "error": null,
@@ -71,8 +71,8 @@
     {
       "job": "settle",
       "status": "ok",
-      "last_run_at": "2026-06-24T15:30:04Z",
-      "duration_s": 2.0,
+      "last_run_at": "2026-06-24T16:30:06Z",
+      "duration_s": 1.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -82,7 +82,7 @@
     {
       "job": "aggregate_health",
       "status": "ok",
-      "last_run_at": "2026-06-24T16:08:55Z",
+      "last_run_at": "2026-06-24T17:26:52Z",
       "duration_s": 1.0,
       "exit_code": 0,
       "error": null,
