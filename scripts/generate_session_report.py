@@ -331,7 +331,7 @@ def render() -> str:
     # --- Erfolgreich ---
     parts.append("## ✅ Erfolgreich (letzte Runs)")
     if ok:
-        parts.append("- " + ", ".join(j["job"] for j in ok))
+        parts.append("- " + ", ".join(j["job"] for j in ok if isinstance(j, dict) and "job" in j))
     else:
         parts.append("- noch keine ok-Snapshots vorhanden")
     parts.append("")

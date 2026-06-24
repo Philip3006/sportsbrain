@@ -94,6 +94,11 @@ def _fetch_scores_espn_fallback() -> dict[str, dict]:
         }
         results[m.get("match_id", f"espn_{home}_vs_{away}")] = entry
         results[f"{home} vs {away}"] = entry
+        # Canonical-Form indizieren (ESPN-Namen ≠ Ledger-Namen möglich).
+        from src.config import canonical_name
+        ckey = f"{canonical_name(home)} vs {canonical_name(away)}"
+        if ckey not in results:
+            results[ckey] = entry
         # Also register alias keys so ledger entries with short names resolve.
         home_aliases = _ALIASES.get(home, [])
         away_aliases = _ALIASES.get(away, [])
@@ -159,8 +164,15 @@ def fetch_scores() -> dict[str, dict]:
                 "home_score": scores.get(home, 0),
                 "away_score": scores.get(away, 0),
             }
-            # Also index by "Home vs Away" string for fallback matching
+            # Also index by "Home vs Away" string for fallback matching.
+            # Index unter API-Form UND canonical-Form, weil API-Namen
+            # ("Bosnia & Herzegovina") nicht zwingend mit der Ledger-Form
+            # ("Bosnia and Herzegovina") übereinstimmen.
+            from src.config import canonical_name
             results[f"{home} vs {away}"] = results[m["id"]]
+            ckey = f"{canonical_name(home)} vs {canonical_name(away)}"
+            if ckey not in results:
+                results[ckey] = results[m["id"]]
         LAST_SCORES_SOURCE = "odds_api"
         return results
 
