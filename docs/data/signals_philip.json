@@ -1,7 +1,7 @@
 {
-  "updated": "2026-06-24T06:48:55Z",
+  "updated": "2026-06-24T08:58:41Z",
   "build_info": {
-    "sha": "9c9baa8",
+    "sha": "ad49e1b",
     "date": "2026-06-24"
   },
   "meta": {
@@ -3530,8 +3530,8 @@
   ],
   "tennis": [],
   "portfolio": {
-    "n_bets": 57,
-    "n_open": 0,
+    "n_bets": 61,
+    "n_open": 4,
     "n_won": 21,
     "n_lost": 27,
     "n_void": 8,
@@ -3749,9 +3749,9 @@
   "history": [
     {
       "date": "2026-06-24",
-      "n_bets": 1,
+      "n_bets": 5,
       "pnl": 5.27,
-      "roi_pct": 62.0
+      "roi_pct": 12.1
     },
     {
       "date": "2026-06-23",
@@ -3826,7 +3826,64 @@
       "roi_pct": 0.0
     }
   ],
-  "open_bets": [],
+  "open_bets": [
+    {
+      "match": "Switzerland vs Canada",
+      "home": "Switzerland",
+      "away": "Canada",
+      "market": "o/u2.5_over",
+      "entry_odds": 1.96,
+      "current_odds": 2.18,
+      "drift_pct": 11.2,
+      "clv_signal": "good",
+      "stake": 10.0,
+      "match_date": "2026-06-24",
+      "model_edge_pct": null,
+      "is_live": false
+    },
+    {
+      "match": "Switzerland vs Canada",
+      "home": "Switzerland",
+      "away": "Canada",
+      "market": "ah+0.5_away",
+      "entry_odds": 1.595,
+      "current_odds": null,
+      "drift_pct": null,
+      "clv_signal": null,
+      "stake": 10.0,
+      "match_date": "2026-06-24",
+      "model_edge_pct": null,
+      "is_live": false
+    },
+    {
+      "match": "Bosnia and Herzegovina vs Qatar",
+      "home": "Bosnia and Herzegovina",
+      "away": "Qatar",
+      "market": "o/u3.0_under",
+      "entry_odds": 2.32,
+      "current_odds": null,
+      "drift_pct": null,
+      "clv_signal": null,
+      "stake": 5.0,
+      "match_date": "2026-06-24",
+      "model_edge_pct": null,
+      "is_live": false
+    },
+    {
+      "match": "Bosnia and Herzegovina vs Qatar",
+      "home": "Bosnia and Herzegovina",
+      "away": "Qatar",
+      "market": "draw",
+      "entry_odds": 5.0,
+      "current_odds": null,
+      "drift_pct": null,
+      "clv_signal": null,
+      "stake": 10.0,
+      "match_date": "2026-06-24",
+      "model_edge_pct": null,
+      "is_live": false
+    }
+  ],
   "settled_bets": [
     {
       "match": "Algeria vs Austria",
@@ -4572,10 +4629,10 @@
   ],
   "bankroll_state": {
     "start": 100.0,
-    "free": 118.15,
-    "staked": 0,
-    "exposure_pct": 0.0,
-    "max_win": 0,
+    "free": 83.15,
+    "staked": 35.0,
+    "exposure_pct": 35.0,
+    "max_win": 64.35,
     "pnl_closed": 18.15
   },
   "wm_stats": {
