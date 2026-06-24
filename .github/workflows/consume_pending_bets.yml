@@ -62,8 +62,8 @@ jobs:
           git commit -m "auto: consume pending bets $(date +%Y-%m-%d\ %H:%M) UTC"
           for i in 1 2 3 4 5; do
             git fetch origin main
-            git rebase --strategy-option=theirs origin/main \
-              || { git rebase --abort 2>/dev/null || true; echo "[push] rebase conflict attempt $i"; }
+            git rebase --autostash --strategy-option=theirs origin/main \
+              || { git rebase --abort 2>/dev/null || true; echo "[push] rebase conflict attempt $i"; continue; }
             git push origin main && exit 0
             sleep $((RANDOM % 15 + 5))
           done
