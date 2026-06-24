@@ -197,6 +197,7 @@ def _signal_to_dict(
     sport: str = "football",
     tour: str = "",
     kickoff: str = "",
+    tournament_meta: dict | None = None,
 ) -> dict:
     d = {
         "sport":           sport,
@@ -215,6 +216,12 @@ def _signal_to_dict(
         d["tour"] = tour
     if kickoff:
         d["kickoff"] = kickoff
+    if tournament_meta:
+        # J2-E: Tennis-Tournament-Meta für PWA-Gruppierung
+        d["tournament"] = tournament_meta.get("name", "")
+        d["category"]   = tournament_meta.get("category", "")
+        d["surface"]    = tournament_meta.get("surface", "")
+        d["best_of"]    = tournament_meta.get("best_of", 0)
     return d
 
 
@@ -604,6 +611,7 @@ def write_signals_json(
     portfolio: dict | None = None,
     top_elo: list[tuple[str, float]] | None = None,
     tennis_tour_map: dict[str, str] | None = None,
+    tennis_tournament_map: dict[str, dict] | None = None,  # J2-E: {match_id: {name, category, surface, best_of}}
     kickoff_map: dict[str, str] | None = None,
     schedule: list[dict] | None = None,
     all_odds: dict[str, dict] | None = None,
@@ -631,6 +639,7 @@ def write_signals_json(
     portfolio = portfolio or {}
     top_elo = top_elo or []
     tennis_tour_map = tennis_tour_map or {}
+    tennis_tournament_map = tennis_tournament_map or {}
     kickoff_map = kickoff_map or {}
 
     # Load existing JSON to merge sport sections
@@ -654,6 +663,7 @@ def write_signals_json(
                 s, "tennis",
                 tour=tennis_tour_map.get(s.match_id, ""),
                 kickoff=kickoff_map.get(s.match_id, ""),
+                tournament_meta=tennis_tournament_map.get(s.match_id),
             )
             for s in tennis
         ]
