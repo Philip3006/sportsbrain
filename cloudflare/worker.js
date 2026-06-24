@@ -224,8 +224,9 @@ export default {
       return new Response('OK', { headers: ch });
     }
 
-    // ── /pending_bets (per-user via auth; master may target ?user=) ──
-    if (path === '/pending_bets' || path.startsWith('/pending_bets/')) {
+    // ── /pending_bets + /cancel_bet + /cancel_requests (per-user via auth) ──
+    if (path === '/pending_bets' || path.startsWith('/pending_bets/') ||
+        path === '/cancel_bet' || path === '/cancel_requests') {
       const auth = await authResolve(request, env);
       if (!auth.ok) {
         return new Response('Unauthorized', { status: 401, headers: ch });
