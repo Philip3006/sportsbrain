@@ -38,10 +38,12 @@ def _signal(
     odds: float,
     bankroll: float,
     min_edge: float = MIN_EDGE,
+    min_prob: float = _MIN_PROB,
+    max_odds: float = _MAX_ODDS,
 ) -> BetSignal | None:
-    if model_p < _MIN_PROB:
+    if model_p < min_prob:
         return None
-    if odds > _MAX_ODDS:
+    if odds > max_odds:
         return None
     ev = expected_value(model_p, odds)
     if ev < min_edge or ev > MAX_EV:
@@ -140,6 +142,128 @@ _HIGH_EV_WTA  = 0.08  # WTA grass has +10.3% ROI: smaller edge required for HIGH
 def _confidence_for(ev: float, tour: str) -> str:
     threshold = _HIGH_EV_WTA if tour.lower() == "wta" else _HIGH_EV_ATP
     return "HIGH" if ev >= threshold else "MEDIUM"
+
+
+# ---------------------------------------------------------------------------
+# Phase J2-C: Total Sets + Total Games + Set Betting
+# ---------------------------------------------------------------------------
+
+def detect_total_sets(
+    player_a: str,
+    player_b: str,
+    p_match_a: float,
+    odds_over: float,
+    odds_under: float,
+    line: float,
+    best_of: int,
+    bankroll: float,
+    match_id: str = "",
+    min_edge: float = MIN_EDGE,
+    tour: str = "atp",
+) -> list[BetSignal]:
+    """O/U Total Sets (z.B. line=2.5 für BO3, 3.5 für BO5)."""
+    from src.tennis.sim import p_total_sets_over
+
+    bo5 = best_of == 5
+    if p_match_a <= 0 or p_match_a >= 1 or odds_over <= 1 or odds_under <= 1:
+        return []
+    p_set = _p_set_from_p_match(p_match_a, bo5=bo5)
+    p_over = p_total_sets_over(p_set, best_of, line)
+    p_under = 1.0 - p_over
+    fair_over, fair_under = _devig_2way(odds_over, odds_under)
+
+    out: list[BetSignal] = []
+    sig = _signal(match_id, player_a, player_b, f"o/u_sets_{line}_over",
+                  p_over, fair_over, odds_over, bankroll, min_edge,
+                  min_prob=0.10, max_odds=10.0)
+    if sig:
+        out.append(sig)
+    sig = _signal(match_id, player_a, player_b, f"o/u_sets_{line}_under",
+                  p_under, fair_under, odds_under, bankroll, min_edge,
+                  min_prob=0.10, max_odds=10.0)
+    if sig:
+        out.append(sig)
+    return out
+
+
+def detect_total_games(
+    player_a: str,
+    player_b: str,
+    p_match_a: float,
+    odds_over: float,
+    odds_under: float,
+    line: float,
+    best_of: int,
+    bankroll: float,
+    match_id: str = "",
+    min_edge: float = MIN_EDGE,
+    tour: str = "atp",
+    n_sim: int = 2000,
+) -> list[BetSignal]:
+    """O/U Total Games. Monte-Carlo via src.tennis.sim.simulate_match."""
+    from src.tennis.sim import simulate_match, p_total_games_over
+
+    bo5 = best_of == 5
+    if p_match_a <= 0 or p_match_a >= 1 or odds_over <= 1 or odds_under <= 1:
+        return []
+    p_set = _p_set_from_p_match(p_match_a, bo5=bo5)
+    sim = simulate_match(p_set, best_of, tour, n_sim=n_sim, seed=42)
+    p_over = p_total_games_over(sim, line)
+    p_under = 1.0 - p_over
+    fair_over, fair_under = _devig_2way(odds_over, odds_under)
+
+    out: list[BetSignal] = []
+    sig = _signal(match_id, player_a, player_b, f"o/u_games_{line}_over",
+                  p_over, fair_over, odds_over, bankroll, min_edge,
+                  min_prob=0.10, max_odds=10.0)
+    if sig:
+        out.append(sig)
+    sig = _signal(match_id, player_a, player_b, f"o/u_games_{line}_under",
+                  p_under, fair_under, odds_under, bankroll, min_edge,
+                  min_prob=0.10, max_odds=10.0)
+    if sig:
+        out.append(sig)
+    return out
+
+
+def detect_set_betting(
+    player_a: str,
+    player_b: str,
+    p_match_a: float,
+    scoreline_odds: dict[str, float],
+    best_of: int,
+    bankroll: float,
+    match_id: str = "",
+    min_edge: float = MIN_EDGE,
+    tour: str = "atp",
+) -> list[BetSignal]:
+    """Exakte Set-Endergebnisse (Correct-Score-Stil).
+
+    scoreline_odds: {"2-0": 1.85, "2-1": 3.40, ...} — nur Lines mit Quote werden geprüft.
+    """
+    from src.tennis.sim import set_score_probs
+
+    bo5 = best_of == 5
+    if p_match_a <= 0 or p_match_a >= 1:
+        return []
+    p_set = _p_set_from_p_match(p_match_a, bo5=bo5)
+    probs = set_score_probs(p_set, best_of)
+
+    # fair_prob aus de-vig der gegebenen Quoten (sum aller invers)
+    if not scoreline_odds:
+        return []
+    inv_total = sum(1.0 / o for o in scoreline_odds.values() if o > 1.0)
+    out: list[BetSignal] = []
+    for score, odds in scoreline_odds.items():
+        if odds <= 1.0 or score not in probs:
+            continue
+        fair_p = (1.0 / odds) / inv_total if inv_total > 0 else 1.0 / odds
+        sig = _signal(match_id, player_a, player_b, f"score_{score}",
+                      probs[score], fair_p, odds, bankroll, min_edge,
+                      min_prob=0.02, max_odds=30.0)
+        if sig:
+            out.append(sig)
+    return out
 
 
 def detect_value_tennis(
