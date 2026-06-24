@@ -1,7 +1,7 @@
 {
-  "updated": "2026-06-24T13:10:15Z",
+  "updated": "2026-06-24T07:18:26Z",
   "build_info": {
-    "sha": "b0df275",
+    "sha": "d5de758",
     "date": "2026-06-24"
   },
   "meta": {
@@ -3530,8 +3530,8 @@
   ],
   "tennis": [],
   "portfolio": {
-    "n_bets": 61,
-    "n_open": 4,
+    "n_bets": 57,
+    "n_open": 0,
     "n_won": 21,
     "n_lost": 27,
     "n_void": 8,
