@@ -14,3 +14,7 @@
 [2026-06-24 13:38:57 UTC] [cloud_healer] live_score_push: erfolgreich ausgelöst
 [2026-06-24 13:38:57 UTC] [cloud_healer] prematch_scan: status=stale — triggere prematch_scan.yml
 [2026-06-24 13:38:59 UTC] [cloud_healer] prematch_scan: erfolgreich ausgelöst
+[2026-06-24 18:20:02 UTC] [cloud_healer] live_score_push: status=stale — triggere live_score_push.yml
+[2026-06-24 18:20:04 UTC] [cloud_healer] live_score_push: erfolgreich ausgelöst
+[2026-06-24 18:20:04 UTC] [cloud_healer] prematch_scan: status=stale — triggere prematch_scan.yml
+[2026-06-24 18:20:05 UTC] [cloud_healer] prematch_scan: erfolgreich ausgelöst
