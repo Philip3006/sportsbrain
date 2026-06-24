@@ -36,6 +36,7 @@ from scripts._http_retry import retry_request
 from src.config import (
     MIN_EDGE,
     TENNIS_CATEGORY_MODE,
+    TENNIS_CATEGORY_SURFACE_MODE,
     TENNIS_MIN_EDGE_BY_CATEGORY,
 )
 from src.models.tennis_elo import compute_tennis_elo, predict_winner, top_players
@@ -65,10 +66,14 @@ def category_min_edge(category: str) -> float:
     return TENNIS_MIN_EDGE_BY_CATEGORY.get(category, MIN_EDGE)
 
 
-def category_mode(category: str, all_live: bool = False) -> str:
-    """'live'|'shadow' für die Kategorie. --all-live override (Backtest-Bypass)."""
+def category_mode(category: str, surface: str = "", all_live: bool = False) -> str:
+    """'live'|'shadow'. Surface-spezifischer Lookup (J2-H) schlägt Category-Default."""
     if all_live:
         return "live"
+    if surface:
+        surface_key = (category, surface.lower())
+        if surface_key in TENNIS_CATEGORY_SURFACE_MODE:
+            return TENNIS_CATEGORY_SURFACE_MODE[surface_key]
     return TENNIS_CATEGORY_MODE.get(category, "shadow")
 
 
@@ -550,7 +555,7 @@ def main() -> None:
     all_live_signals: list = []
 
     for t in tournaments:
-        mode = category_mode(t.category, all_live=args.all_live)
+        mode = category_mode(t.category, surface=t.surface, all_live=args.all_live)
         min_edge = category_min_edge(t.category)
 
         # Odds holen

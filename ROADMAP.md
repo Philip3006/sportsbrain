@@ -436,6 +436,15 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Dateien**: `docs/legal.html` (neu), `docs/index.html`
 - **Status (2026-06-22)**: ✅ Erledigt. `docs/legal.html` mit Impressum/DSGVO-Stub (Platzhalter für Public-Launch). Footer-Link in `index.html` ergänzt. Smoke-Tests grün.
 
+### H3. + NEU Wette aus Wetten-Tab canceln (Bet-Cancel-Flow)
+- **Was**: Auf jeder offenen Bet-Karte im „Wetten"-Tab (Offen-Sektion) ein Cancel-Button (🗑️ / „Wette verwerfen"). Klick → Confirm-Dialog („Wette XY wirklich verwerfen? Eintrag wird aus Ledger entfernt, Stake an Bankroll zurückerstattet."). Bei Bestätigung: (a) PWA ruft `POST /cancel_bet {bet_id}` am Worker, (b) Worker entfernt Eintrag aus `pending_bets_{user}` KV und schreibt Audit-Eintrag, (c) `src/betting/ledger.py::cancel_bet(bet_id, user)` markiert Bet im Ledger als `status=cancelled` (NICHT löschen — Audit-Trail!), Stake wird **nicht** zur P&L gezählt, Bankroll-Snapshot bekommt Stake zurück. Frontend re-rendert Offen-Liste ohne die gecancelte Wette.
+- **Warum**: Aktuell gibt es keinen Weg, eine bereits eingetragene Wette wieder loszuwerden, wenn man sich kurz nach Eintrag dagegen entscheidet (Lineup-News, Quoten-Drop, Bauchgefühl). Workaround heute: manueller CSV-Edit im Ledger + Snapshot-Korrektur — fehleranfällig und für Multi-User-Setup (D5/D6) gar nicht praktikabel. Cancel-Flow macht das Verwerfen zum 2-Klick-Vorgang und hält Audit-Trail sauber.
+- **Impact/Aufwand/Risiko**: 🟢 (UX-Lücke schließt) · 🟡 (2-4 h: Ledger-Cancel-Helper + Worker-Route + Frontend-Button + Tests) · 🟡 (Datenintegrität: Cancel nach Settle muss blockiert sein; Race mit `consume_pending_bets`-Cron darf nicht zu Doppel-Eintrag führen — Idempotenz-Key auf `bet_id`)
+- **Priorität**: P1 — dringend hochgestuft 2026-06-24; Workaround (CSV-Edit) ist für Multi-User (D5/D6) nicht praktikabel
+- **Dateien**: `src/betting/ledger.py` (neuer `cancel_bet(bet_id, user)` → Status `cancelled`, Bankroll-Snapshot-Refund), `cloudflare/worker.js` (neuer `POST /cancel_bet`-Endpoint mit User-Auth, KV-Cleanup für `pending_bets_{user}`), `scripts/consume_pending_bets.py` (Cancel-Marker respektieren — kein Re-Insert), `docs/js/bets.js` (Cancel-Button-DOM + Confirm-Modal + Fetch + Re-Render), `docs/css/app.css` (Button-Styling), `tests/betting/test_ledger_cancel.py` (NEU: Cancel-Idempotenz, Cancel-nach-Settle blockiert, Multi-User-Isolation, Bankroll-Refund), `tests/scripts/test_cancel_bet_worker.py` (Worker-Route)
+- **Abhängigkeiten**: D5 (Multi-User-Ledger) ✅, B2 (Worker-CORS) ✅
+- **Verifikation**: (a) Cancel-Button erscheint nur bei `status=open`-Bets, nicht bei live/settled. (b) Cancel → Bet verschwindet aus Offen-Tab, taucht NICHT in Live/Settled auf, Bankroll +Stake. (c) Cancel-Aufruf auf bereits gecancelte Bet → 200 OK, kein Doppel-Refund (Idempotenz). (d) Cancel-Aufruf nach Settle → 409 Conflict. (e) `consume_pending_bets`-Cron 5 min später läuft → keine Re-Aufnahme der gecancelten Bet. (f) Multi-User: alice canceln darf nicht philip's Bet treffen.
+
 ---
 
 ## 🟦 I. Nach WM-Ende (P1, ab 2026-07-20)
@@ -524,7 +533,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Impact/Aufwand/Risiko**: ⚪ · 🟡 · 🟢
 - **Abhängigkeiten**: I3, J1 (mind. 1 Monat Daten)
 
-### J2-H. ~ GEÄNDERT Surface-aware TENNIS_CATEGORY_MODE (P1 — vor Wimbledon)
+### J2-H. ✅ erledigt 2026-06-24 Surface-aware TENNIS_CATEGORY_MODE (P1 — vor Wimbledon)
 - **Was**: Aktueller `TENNIS_CATEGORY_MODE` ist nur per Kategorie. J2-G-Backtest zeigt: Surface-Edge dominiert — atp500 grass +18.6% vs hard -8.8%, wta250 grass +16% vs hard -2%. Einführung `TENNIS_CATEGORY_SURFACE_MODE: dict[(category, surface), str]` damit profitable Kombinationen freigeschaltet werden ohne pauschale Kategorie-Risiken. Lookup-Reihenfolge im Scanner: `(category, surface)` → `category` (fallback) → `"shadow"` (default).
 - **Warum**: Aktuell blockiert. 6 profitable LIVE-Kombinationen aus J2-G fallen unter `shadow`-Default, weil ihre Kategorie negative Gesamt-ROI hat. Konkret für die kommenden 4 Wochen blockiert: **Bad Homburg WTA** (läuft jetzt, wta500 grass +8.1%), **Eastbourne ATP/WTA** (~22.06.-28.06.), **Newport ATP** (~14.-20.07., atp250 grass), **WTA Wimbledon-Vorbereitung** allgemein. Ab Mitte Juli folgt Hartplatzsaison ATP 250 (atp250 hard +5.3%, blockiert da `atp250=shadow`). **Ohne J2-H bleibt das Tennis-System bis weit ins Q3 hinein nahezu inaktiv**.
 - **Impact/Aufwand/Risiko**: 🟢 (6+ zusätzliche LIVE-Kombinationen sofort verfügbar) · 🟢 (3-4 h: Map + Lookup + Tests, kein neuer Detector-Code) · 🟡 (kleinere Stichproben pro (cat,surface) — n≥50/30-Gate gilt weiter; Drift wenn Surface unbekannt → Fallback auf Kategorie-Default)
@@ -539,6 +548,91 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Priorität**: P1 — Voraussetzung für Wimbledon 2026
 - **Dateien**: `src/tennis/elo_source.py` (NEU), `scripts/tennis_scan.py` (`_websearch_tennis_fallback` echte 2-way-Impl, `_fetch_events_only` für 422-Fall, `_fetch_both_tours` nutzt neuen Loader), `tests/tennis/test_elo_source.py` + `tests/tennis/test_websearch_fallback.py` (14 neue Tests)
 - **Verifikation**: 662/662 Suite grün; nächster Live-Scan-Run loggt `[elo] XLSX-Fallback` + ggf. `[websearch]` pro Match
+
+### J2-J. + NEU Tennis Signal-Archive — I9-Integration für Tennis-Signale (P1, vor Wimbledon 2026-06-29)
+- **Was**: `_archive_signals()` in `src/scanner/output.py` (I9) wird aktuell nur vom Fußball-Scanner aufgerufen. `scripts/tennis_scan.py` archiviert keine Signale. Tennis-Signale sollen in dieselbe `signal_history.jsonl` geschrieben werden — mit `sport="tennis"` + `tournament`-Feld, damit I8/I9-Feedback-Loop auch für Tennis funktioniert.
+- **Warum**: I9 wurde ohne Tennis gebaut (Feedback-Memory: "I9/archive_signals() muss bei jedem neuen Sport/Saison von Tag 1 integriert sein"). Wimbledon startet 2026-06-29 — alle Signale gehen verloren ohne Archive.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟢 (~1 h, I9 bereits gebaut) · 🟢
+- **Priorität**: P1 — vor Wimbledon 2026-06-29
+- **Dateien**: `scripts/tennis_scan.py` (`_archive_signals()`-Call mit `sport="tennis"`), `src/scanner/output.py` (sport-Parameter ergänzen falls fehlt), `scripts/backfill_signal_outcomes.py` (Tennis-Outcome-Lookup via ESPN/TheOddsAPI)
+- **Abhängigkeiten**: I9 (Tennis-Integration gleichzeitig mit I9 bauen)
+- **Verifikation**: Nach Tennis-Scan: `signal_history.jsonl` enthält Zeilen mit `"sport": "tennis"`.
+
+### J2-K. + NEU Tennis ML-Modell + Feature Engineering (P2, vor US-Open-Serie 2026-08-10)
+- **Was**: LightGBM/HistGradientBoosting analog `src/models/lgbm_model.py` für Tennis. Features: H2H-Bilanz (surface-spezifisch), Form (letzte N Matches), Serve-Stats (Aces/First-Serve%, Break%), Surface-Elo-Delta, Tournament-Level, Travel-Fatigue. Walk-forward-Gate: ML-ROI ≥ Elo-Baseline auf 2024-2025-Holdout. Output: Ensemble aus Elo + ML analog Fußball DC + LGBM.
+- **Warum**: Aktuell nur Elo → kein Ensemble, kein SHAP, keine H2H/Form-Nutzung. Tennis-Backtest zeigt ROI-Varianz zwischen Surfaces (atp500 grass +18.6% vs hard −8.8%) — ML kann diese Signale kombinieren und Surface-Kontext stärker gewichten als lineares Elo.
+- **Impact/Aufwand/Risiko**: 🟢 · 🔴 · 🟡 (Overfitting-Risiko bei kleinen Stichproben; Walk-forward-Gate Pflicht)
+- **Priorität**: P2 — nach WM, vor US-Open-Serie (ab 2026-08-10)
+- **Dateien**: `src/tennis/features.py` (neu), `src/models/tennis_lgbm.py` (neu), `scripts/tennis_train.py` (neu), `tests/tennis/test_tennis_features.py` (neu)
+- **Abhängigkeiten**: J2 ✅, J2-G ✅ (Datenbasis)
+- **Verifikation**: Walk-forward-ROI Tennis-ML ≥ Elo-Baseline auf Holdout 2024-2025; Brier-Improvement ≥ 0.005.
+
+### J2-L. + NEU Tennis Walk-forward Backtest + CLV-Tracking (P2)
+- **Was**: `scripts/tennis_backtest.py` hat ROI-Auswertung aber kein Walk-forward (kein Time-Split, kein CLV-Tracking). Analog `src/backtest/walk_forward.py` + `src/backtest/clv_tracker.py` für Tennis: rollierendes Fenster (Train 3 Jahre, Val 6 Monate), Closing-Odds aus Tennis-XLSX-Spalten B365W/B365L, CLV-Delta pro Bet. CLV-Backfill für bestehende Tennis-Bets im Ledger.
+- **Warum**: Aktuell kein formaler Zeitreihen-Backtest für Tennis — ROI-Werte aus J2-G sind Gesamt-Sample, nicht zeitstabil. CLV fehlt komplett für Tennis-Bets (nur Fußball hat CLV-Tracking via F3/F4).
+- **Impact/Aufwand/Risiko**: 🟡 · 🟡 · 🟢
+- **Priorität**: P2 — parallel zu J2-K
+- **Dateien**: `src/backtest/tennis_walk_forward.py` (neu), `scripts/tennis_clv_backtest.py` (neu), `src/betting/ledger.py` (Tennis-CLV-Backfill-Support)
+- **Abhängigkeiten**: J2-G ✅ (Datenbasis), J2-K (Tennis-ML optionale Integration)
+- **Verifikation**: Output mit Walk-forward-ROI + CLV-Histogramm pro Kategorie. Tennis-Bets im Ledger haben `clv`-Feld gefüllt.
+
+### J2-M. + NEU Tennis Live-Statistiken als zweite Datenquelle (P3)
+- **Was**: Tennis nutzt aktuell nur historische XLSX-Daten und Elo. Keine Live-Stats (Aces, First-Serve%, Break-Punkte). Mögliche Quellen: Tennis Abstract API (Match-Stats, kostenfrei), WTA/ATP Tour APIs, Sofascore Tennis-Endpunkt. Feature-Input für J2-K ML-Modell.
+- **Warum**: Serve%-Stats sind stärkster Tennis-Predictor — Held-Service-Rate korreliert direkt mit Match-Ausgang. Surface-spezifische Serve-Stats würden J2-K-Features deutlich verbessern.
+- **Impact/Aufwand/Risiko**: 🟡 · 🔴 · 🟡 (API-Stabilität, Rate-Limits)
+- **Priorität**: P3 — erst nach J2-K (ML-Modell braucht die Features)
+- **Dateien**: `src/data/tennis_stats.py` (neu), `src/tennis/features.py`
+- **Abhängigkeiten**: J2-K
+
+### I8. + NEU Market-Performance-Feedback-Loop (System lernt aus Losern und Winnern)
+- **Was**: Per-Markt-ROI aus dem Ledger berechnen und in die Signalgenerierung zurückführen. Konkret: nach Settle werden für jeden Markt `(bets, won, lost, stake, pnl, roi)` aggregiert; Märkte mit ROI < −20 % bei ≥ 10 settled Bets bekommen automatisch einen erhöhten `min_edge` (+5 pp Penalty). Märkte mit ROI > +15 % bei ≥ 10 Bets können optional einen niedrigeren Threshold erhalten (−2 pp Bonus). Die resultierende Per-Markt-Edge-Map wird als `data/cache/market_performance.json` persistiert und beim nächsten Scan-Run geladen. Zwei Ausbaustufen: **A (regelbasiert, 1–2 h)** feste Schwellwerte; **B (adaptiv, 4–6 h)** gleitender ROI über Rolling-Window + Bayesianischer Shrinkage gegen globalen Prior.
+- **Warum**: Aktuell ist `MIN_EDGE = 0.03` für alle Märkte identisch — das Ledger wird nur geöffnet, um Duplikate zu verhindern, nie um zu lernen. Stand 2026-06-24 (56 settled Bets): `o/u2.5_under` −39.8 % ROI bei 8 Bets, `o/u3.0_under` −44 % bei 3 Bets, `btts_yes` −23 % bei 3 Bets — das System schlägt trotzdem täglich Under- und BTTS-Wetten vor. Gleichzeitig lässt es profitable Märkte (`draw` +103.7 %, `o/u3.0_over` +192.5 %) unbelohnt durch. Kein Feedback-Loop = das System wiederholt Fehler strukturell.
+- **Impact**: 🟢 — direkte Verbesserung der Signal-Qualität; weniger Noise bei nachweislich schlechten Märkten
+- **Aufwand**: 🟡 (Variante A: 1–2 h; Variante B: 4–6 h)
+- **Risiko**: 🟡 — kleine Stichproben (<10 Bets) können echten Edge fälschlicherweise sperren → Minimum-Bet-Gate ist Pflicht; Variante A vermeidet Overfitting durch harte Schwellen
+- **Priorität**: P2 — nach WM, sobald 15+ Bets pro Markt akkumuliert (aktuell: Under/Draw/Over haben ausreichend Daten)
+- **Dateien**: `data/cache/market_performance.json` (neu), `scripts/settle_bets.py` (Aggregat schreiben nach Settle), `src/scanner/scoring.py` (`_load_market_performance()` → `min_edge_override` pro Markt), `src/config.py` (`MARKET_PERF_MIN_BETS=10`, `MARKET_PERF_ROI_PENALTY_THRESHOLD=-0.20`, `MARKET_PERF_PENALTY_PP=0.05`)
+- **Abhängigkeiten**: I3 (Retrain optional); funktioniert sofort mit vorhandenen 56 Bets
+- **Verifikation**: (a) Nach Settle: `market_performance.json` enthält ROI pro Markt. (b) Nächster Scan: o/u2.5_under bekommt `min_edge = 0.08` statt 0.03 → deutlich weniger Under-Signale. (c) Smoke-Test: Variante A on/off — gleicher Score-Run, Anzahl Under-Signale fällt
+
+
+### I9. + NEU Signal-Archive & Lernen aus allen generierten Signalen (nicht nur platzierten Wetten)
+- **Was**: Jeden Scan-Run alle generierten Signale (inkl. nicht-platzierter) in ein persistentes Archiv schreiben (`data/cache/signal_history.jsonl` — eine JSON-Zeile pro Signal, append-only). Nach Match-Ende: Ergebnis via bestehenden Settle-Quellen (martj42/ESPN/TheOddsAPI) nachschlagen und rückwirkend pro Signal `outcome` (correct/wrong/void) eintragen. Aggregat: Pro Markt/Konföderation/Surface `n_signals, n_correct, accuracy, mean_ev, realized_roi` — auch für Signale die nie platziert wurden. Dieses Signal-Performance-Dict ersetzt/ergänzt den Ledger-basierten Feedback aus I8 und liefert 5–10× mehr Datenpunkte.
+- **Warum**: I8 lernt nur aus platzierten Bets — typischerweise 30–50% aller Signale. Alle verworfenen Signale landen im Nichts, obwohl das Modell sie für Edge-positiv hielt: (a) Märkte mit wenigen platzierten Bets (z.B. `o/u3.0_over` 2 Bets) haben nach I8 keine statistische Basis — im Signal-Archiv wären es vielleicht 20+ Datenpunkte. (b) Systematische Modell-Schwächen (z.B. Under-Überschätzung) bleiben unsichtbar bis genug Geld verloren ist. (c) Kalibrierung kann nur verbessert werden wenn der Output auch gegen Outcomes gemessen wird, die nie gewettet wurden.
+- **Impact**: 🟢 — reichste verfügbare Feedback-Quelle; Basis für Modell-Kalibrierung und Konföderation-Bias-Erkennung über I8 hinaus
+- **Aufwand**: 🔴 (6–10 h: Signal-Archive-Writer in Scanner + Outcome-Backfill-Script + Aggregat-Berechnung + optionaler Dashboard-Tab)
+- **Risiko**: 🟡 — Archive wächst schnell (→ JSONL-Rotation nach 90 Tagen nötig); Outcome-Lookup kann fehlschlagen wenn API-Daten nicht mehr verfügbar
+- **Priorität**: P1 — dringend hochgestuft 2026-06-24; Signal-Archive ab sofort starten damit nach WM ausreichend Daten vorhanden sind
+- **Dateien**: `data/cache/signal_history.jsonl` (neu, append-only), `src/scanner/output.py` (`_archive_signals()` — schreibt pro Signal: match_id, home, away, market, model_prob, fair_prob, ev_pct, odds, scan_ts), `scripts/backfill_signal_outcomes.py` (neu — liest Archive, holt Ergebnisse via martj42/ESPN, schreibt outcome zurück), `data/cache/signal_performance.json` (aggregiertes Dict, Input für I8-Feedback-Loop)
+- **Abhängigkeiten**: I8 — I9 liefert reichere Datenbasis für dieselbe min_edge-Anpassungslogik; I9-Daten überschreiben I8-Daten wenn vorhanden
+- **Verifikation**: (a) Nach Scan: `signal_history.jsonl` erhält neue Zeilen inkl. nicht-platzierter Signale. (b) Nach Backfill: Signale haben `outcome`-Feld. (c) `signal_performance.json` zeigt per-Markt-Accuracy mit 5–10× mehr Samples als Ledger.
+
+### I10. + NEU Fußball Halbzeit-Simulation / Sub-Match-Level-Verteilung (P1 dringend)
+- **Was**: Tennis hat `src/tennis/sim.py` (analytisch + Monte Carlo auf Set-/Game-Ebene). Fußball hat DC-Scoreline-Matrix (`predict_scoreline()`), aber keine Halbzeit-Simulation. Neues `src/analysis/halftime_sim.py`: aus DC-Lambdas Halbzeit-Tore unabhängig schätzen (λ_H1 ≈ λ_total × 0.45, λ_H2 ≈ × 0.55 — empirisch aus StatsBomb kalibrierbar), daraus H1-O/U-Verteilung, H2-O/U und H1-Correct-Score-Markt.
+- **Warum**: H1-Märkte (`predict_half_goals_range()`) fehlt eine echte Kalibrierungsgrundlage für den Halbzeit-Split. Tennis hat diese analytische Tiefe auf Set-Ebene — Fußball sollte sie auf Halbzeit-Ebene haben. Korrekte H1-Lambdas ermöglichen außerdem einen neuen H1-Correct-Score-Markt (heute nicht vorhanden).
+- **Impact/Aufwand/Risiko**: 🟡 · 🟡 · 🟡 (Kalibrierungsfaktor λ_H1/λ_total muss aus Daten kommen, nicht geraten)
+- **Priorität**: P1 dringend — vor Bundesliga-Start 2026-08-15
+- **Dateien**: `src/analysis/halftime_sim.py` (neu), `src/models/dixon_coles.py` (H1-Lambda-Kalibrierung via StatsBomb), `scripts/calibrate_halftime_split.py` (neu), `src/betting/value_detector.py` (H1-Correct-Score-Markt optional)
+- **Verifikation**: H1-Split-Kalibrierung auf WM-2022-Daten: ΔBrier H1-O/U vs. aktuelle `predict_half_goals_range()` verbessert sich (Gate ≥ 0.001).
+
+### I11. + NEU Fußball Liga/Wettbewerb Auto-Discovery via TheOddsAPI (P1 dringend)
+- **Was**: Tennis hat `src/tennis/discovery.py` — ruft TheOddsAPI `/sports` auf, erkennt aktive Turniere automatisch, 1h-Cache, Fallback bei API-Down. Fußball hat eine statische Liga-Liste in `src/config.py`. Neues `src/data/football_discovery.py` analog `discovery.py`: aktive Soccer-Sports via `/sports?group=soccer` holen, gegen Whitelist filtern, unbekannte Sport-Keys loggen (analog `unknown_sport_key`).
+- **Warum**: Nach WM kommen Bundesliga, Premier League, La Liga, Serie A gleichzeitig zurück. Statische Liste muss manuell gepflegt werden — Tennis-Auto-Discovery hat bereits bewiesen, dass sie robuster ist (J2-I live getestet). Verhindert verpasste Ligas bei Saison-Start.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟢 (~2 h, Pattern 1:1 von `src/tennis/discovery.py` übertragbar) · 🟢
+- **Priorität**: P1 dringend — vor Bundesliga-Start 2026-08-15
+- **Dateien**: `src/data/football_discovery.py` (neu, analog `src/tennis/discovery.py`), `src/config.py` (`FOOTBALL_LEAGUES_WHITELIST` statt hardcoded), `scripts/daily_scan.py` (Discovery-Call einbauen)
+- **Verifikation**: `python3 -c "from src.data.football_discovery import discover_active_leagues; print(discover_active_leagues())"` gibt alle aktiven Soccer-Sport-Keys zurück.
+
+### I12. + NEU Fußball Umwelt- und Untergrund-Faktoren (P1 dringend)
+- **Was**: Tennis hat Surface-aware Elo (hard/clay/grass/overall getrennte Ratings). Fußball hat keinen Umwelt-Kontext. Drei Faktoren analog Tennis-Surface:
+  1. **Höhenlage** (>2000m): Bogotá/Quito/Mexico City — Heim-Vorteil signifikant stärker, weniger Tore, Auswärts-Ermüdung. DC-Lambda-Adjustment analog `host_boost` (I6). Statische `ALTITUDE_BOOST_MAP`.
+  2. **Kunstrasen-Penalty**: Teams auf Kunstrasen (bestimmte Ligen/Stadien). DC-Lambda-Malus für Auswärtsteams. Statische `ARTIFICIAL_TURF_STADIUMS`.
+  3. **Wetter-Faktor** (P3, optional): Starkregen/Wind senkt xG ~8%. Datenquelle: Open-Meteo (kostenlos).
+- **Warum**: Tennis-Surface ist der stärkste einzelne Predictor. Analoger Effekt im Fußball ist Höhe + Untergrund — aktuell komplett ignoriert. I6-Host-Boost deckt nur WM-Gastgeber, nicht allgemeine Höhenlage. Besonders relevant für CONMEBOL (Copa Libertadores) und Skandinavien/Russland-Kunstrasen-Ligen.
+- **Impact/Aufwand/Risiko**: 🟡 · 🟡 · 🟡 (Kalibrierung zwingend; falscher Faktor verzerrt EV)
+- **Priorität**: P1 dringend — besonders CONMEBOL-Märkte nach WM
+- **Dateien**: `src/config.py` (`ALTITUDE_BOOST_MAP`, `ARTIFICIAL_TURF_STADIUMS`), `src/models/dixon_coles.py` (`altitude_boost`-Parameter analog `host_boost`, `turf_penalty`), `src/scanner/daily_scan.py` (Venue-Lookup für Höhe + Untergrund), `data/cache/venue_metadata.json` (neu, statisch), `scripts/calibrate_env_factors.py` (neu)
+- **Verifikation**: Brier-Gate auf historischen CONMEBOL-Hochland-Matches (n ≥ 20): ΔBrier ≥ 0.001.
 
 ### J4. CONMEBOL Away-Bias Post-Mortem
 - **Was**: WM-CONMEBOL-Outcomes vs. Confederation-Filter-Threshold. Wenn Bias aufgelöst: Filter relaxen.
@@ -583,24 +677,33 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **8b** | M5 (FIFA-Bracket-Mapping nach Auslosung) | ab 2026-06-27 (Auslosung), vor 2026-07-04 | 1-2 h |
 | **9** | I6 (Home Advantage Gastgeber) | ✅ erledigt 2026-06-21 | 1-3 h |
 | **9b** | I1–I5 (Post-WM Snapshot + Retrain) | 2026-07-20 bis 2026-07-31 | 8-12 h |
+| **9d** | I8 (Market-Performance-Feedback-Loop) | nach WM-Ende, sobald 15+ Bets/Markt | 1-2 h (Var. A) |
+| **9e** | **I9 (Signal-Archive — lernen aus allen Signalen) P1 dringend** | ab sofort starten (Archive braucht Vorlaufzeit) | 6-10 h |
 | **9c** | I7 (Monte Carlo Sims) | ✅ erledigt 2026-06-22 | < 2 h |
-| **10** | H1, H2 (Push-Deep-Link, Legal-Stub) | anytime ab Tag 10 | 1-2 h |
+| **10** | H1, H2 (Push-Deep-Link, Legal-Stub) ✅ · **H3 (Bet-Cancel-Flow) P1 dringend** | anytime ab Tag 10 | 2-4 h |
 | **11** | J1 (Basketball) | ab 2026-08-15 | 30-50 h |
 | **12** | J2 (Tennis-Ausbau) | nach Spec-Klärung | 8-12 h |
 | **13** | J3, J4 (Brier, CONMEBOL Audit) | Q4 2026 | 2-3 h |
 | **12b** | J2 Phase A-F ✅ (Tournament-Registry + Backtest + Markt-Erweiterung + Scanner + PWA + Roll-out) | erledigt 2026-06-23/24 | ~14 h |
 | **12c** | J2-G ✅ Comprehensive Backtest (alle Märkte × Touren × Surfaces) + J2-I ✅ Fallback-Stack (XLSX-Elo + WebSearch + /events) | erledigt 2026-06-24 | ~6 h |
 | **12e** | **J2-H Surface-aware MODE** — schaltet Bad Homburg / Eastbourne / Newport / Sommer-ATP250-hard live | **vor 2026-06-28** (Wimbledon-Vortag) | 3-4 h |
+| **12f** | **J2-J Tennis Signal-Archive** — I9-Integration für Tennis-Signale (`sport="tennis"` in signal_history.jsonl) | **vor 2026-06-29** (Wimbledon) | ~1 h |
+| **9f** | **I11 Fußball Liga Auto-Discovery** — statische config-Liste → TheOddsAPI-Discovery analog Tennis | **vor 2026-08-15** (Bundesliga-Start) | ~2 h |
+| **9g** | **I10 Fußball Halbzeit-Simulation** — DC-H1-Lambda-Kalibrierung + halftime_sim.py analog tennis/sim.py | **nach WM, parallel zu I3** | 3-4 h |
+| **9h** | **I12 Fußball Umwelt-Faktoren** — Höhenlage + Kunstrasen, DC-Adjustment analog host_boost/Tennis Surface | **nach I10/I11** | 3-4 h |
+| **12g** | **J2-K Tennis ML-Modell** — LightGBM + H2H/Form/Serve-Features, Walk-forward-Gate vs. Elo-Baseline | **vor US-Open 2026-08-10** | 8-12 h |
+| **12h** | **J2-L Tennis Walk-forward + CLV** — zeitstabiler Backtest + CLV-Backfill im Ledger für Tennis-Bets | **parallel zu J2-K** | 3-4 h |
+| **13b** | **J2-M Tennis Live-Stats** — Tennis Abstract / Sofascore Tennis als zweite Datenquelle (Feature-Input J2-K) | **P3, nach J2-K** | 8-12 h |
 
 ---
 
 ## 📊 Statistik
 
-- **Insgesamt**: 59 konkrete Items
+- **Insgesamt**: 68 konkrete Items (+7: J2-J/K/L/M Tennis-Lücken, I10/I11/I12 Fußball-Lücken)
 - **P0**: 12 (sofort) — davon 12 ✅
-- **P1**: 27 — davon 25 ✅ (J2 Phase A-G + J2-I erledigt 2026-06-23/24; offen: **J2-H (vor 2026-06-28)**, M5 blockiert bis 2026-06-27)
-- **P2**: 13 — davon 8 ✅ (E1, E2, E3, E4, H1, H2, I6, I7); offen: I1–I5, J3, J4
-- **P3**: 4 (Q4 2026)
+- **P1**: 33 — davon 25 ✅ (J2 Phase A-G + J2-I erledigt 2026-06-23/24; offen: **J2-H (vor 2026-06-28)**, **J2-J (vor 2026-06-29)**, M5 blockiert bis 2026-06-27, **H3**, **I9**, **I10**, **I11**, **I12**)
+- **P2**: 15 — davon 8 ✅ (E1, E2, E3, E4, H1, H2, I6, I7); offen: I1–I5, I8, J2-K, J2-L, J3, J4
+- **P3**: 5 — J2-M (Tennis Live-Stats) + 4 weitere Q4 2026
 - **Veto**: 11 (bewusst nicht gebaut)
 
 ---
@@ -625,6 +728,11 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **2026-06-21**: ~ Phase 5 (F3, F4) erledigt. F3 (Commit `92cf85b`): drei Root-Causes für 41/43 leere CLVs gefunden — Pandas NaN-Truthiness im Backfill-Check, unvollständige Markt-Map, fehlender Void-Status. `_resolve_closing_odds()`-Helper deckt jetzt auch Quarter-Ball-O/Us und arbiträre Handicaps via dynamische `totals_lines`/`spreads`-Dicts ab. 16 historische Bets erfolgreich backfilled, 25 Tests neu. F4 (Commit `c2df64c`): farbcodierte CLV-Pille pro Settled-Bet + "Ø CLV letzte 30 Tage"-Karte zusätzlich zur Lifetime-Karte; Backend liefert `clv`/`closing_odds` in settled_bets und `mean_clv_30d`/`n_clv_30d` in summary; Void-Bets fließen in CLV-Aggregation (nicht Hit-Rate). Gesamt-Suite 488/488. Nächste Phase: C1–C7 (Trust-UI).
 - **2026-06-22**: + D5 NEU (Multi-User v2 End-to-End) ✅ erledigt. D3-Foundation um echte Multi-Tenant-Trennung erweitert: Ledger-Split (`ledger_{user}.csv` mit Auto-Migration analog Snapshot-Pattern), per-user `signals_{user}.json` + `write_signals_json_all_users()`-Loop, Worker-Routing über `authResolve()` + KV-Keys `signals_json_{user}` & `pending_bets_{user}` (Default-User auf Legacy-Keys ohne Suffix für Backward-Compat), Master-Token mit `?user=`-Query, daily_scan/tennis_scan/post_match_update/consume_pending_bets/settle_bets loopen über `list_known_users()`. Architektur: einmal scoren, pro User filtern (Bankroll/Stake/Ledger). User-Onboarding implizit via `POST /rotate_token {user}` mit Master-Token. Worker-Deploy `2e3b3888`. 5 neue Tests in `test_ledger_multiuser.py`, 503/503 Suite grün. Nächste Phase: **8** (E1–E4 Refactor).
 - **2026-06-24**: ~ **J2-H Priorität P2 → P1 hochgestuft + Slot 12e in Umsetzungs-Reihenfolge eingetragen**. Begründung: Tennis-Saison läuft, Wimbledon-Hauptfeld startet Mo 29.06., danach Bad Homburg/Eastbourne/Newport/Sommer-Hardcourt-Saison ohne Pause. Mit aktuellem kategorie-only-MODE würde das Tennis-System bis weit ins Q3 inaktiv bleiben, weil 6 profitable Surface-Kombinationen (atp500 grass +18.6%, wta250 grass +16%, wta1000 clay +8.4%, wta500 grass +8.1%, atp250 clay/hard +3.8%/+5.3%) unter `shadow`-Default fallen. Deadline **2026-06-28** (Wimbledon-Vortag). Aufwand 3-4 h. Doku in J2-H-Item finalisiert (Lookup-Reihenfolge, Fallback-Kaskade, Test-Plan).
+- **2026-06-24**: ~ **I9 + H3 Priorität P2 → P1 hochgestuft**. I9: Signal-Archive muss sofort starten damit nach WM ausreichend Daten vorhanden sind (~200–500 Signale brauchen 4 Wochen Vorlaufzeit). H3: Bet-Cancel-Flow ist im Multi-User-Setup (D5/D6) kein optionales Polish mehr — CSV-manuell-Edit ist für Freunde-User nicht praktikabel. P1-Zähler: 27 → 29.
+- **2026-06-24**: + **I9 NEU** (Signal-Archive & Lernen aus allen generierten Signalen). Erweiterung zu I8: I8 lernt nur aus platzierten Bets (30–50% aller Signale). I9 archiviert ALLE generierten Signale in `signal_history.jsonl` (append-only), backfilliert Outcomes nach Match-Ende und aggregiert per-Markt-Accuracy/ROI aus 5–10× mehr Datenpunkten als das Ledger. Basis für Modell-Kalibrierung + Konföderation-Bias-Erkennung. P2, nach WM. Statistik: 60 → 61 Items.
+- **2026-06-24**: + **I8 NEU** (Market-Performance-Feedback-Loop — System lernt aus Losern und Winnern). Root-Cause-Analyse: `MIN_EDGE=0.03` ist für alle Märkte fix; Ledger wird nie ausgewertet. Stand 56 Bets: `o/u2.5_under` −39.8% ROI, `o/u3.0_under` −44%, `btts_yes` −23% — das System schlägt diese Märkte trotzdem täglich vor. Lösung: Per-Markt-ROI aus Settle aggregieren → `market_performance.json` → per-Markt `min_edge_override` im Scanner. Variante A (regelbasiert) +5pp Penalty bei ROI <−20% nach ≥10 Bets. P2, nach WM. Statistik: 59 → 60 Items.
+- **2026-06-24**: + **H3 NEU** (Bet-Cancel-Flow im Wetten-Tab). UX-Lücke: aktuell keine Möglichkeit, eine eingetragene Wette nach Umentscheidung zu verwerfen — nur manueller CSV-Edit, untauglich für Multi-User (D5/D6). H3 fügt `cancel_bet(bet_id, user)`-Helper im Ledger (`status=cancelled` statt Löschen → Audit-Trail), `POST /cancel_bet`-Worker-Route mit KV-Cleanup, Cancel-Button auf jeder Offen-Karte mit Confirm + Bankroll-Refund. Idempotenz über `bet_id`, Cancel-nach-Settle blockiert (409). P2 Polish. Statistik: 60 → 61 Items.
+- **2026-06-24**: + **7 NEU — Strukturlücken Tennis + Fußball** aus Modul-Vergleich aufgenommen. **Tennis**: J2-J (Signal-Archive I9-Integration, P1 vor Wimbledon 29.06.), J2-K (Tennis ML-Modell LightGBM + H2H/Form/Serve-Features, P2 vor US-Open), J2-L (Tennis Walk-forward Backtest + CLV-Tracking, P2), J2-M (Tennis Live-Stats als zweite Datenquelle, P3). **Fußball**: I10 (Halbzeit-Simulation analog tennis/sim.py, P1 vor Bundesliga), I11 (Liga Auto-Discovery analog tennis/discovery.py, P1 vor Bundesliga), I12 (Umwelt-Faktoren Höhenlage + Kunstrasen analog Tennis Surface-Elo, P1 CONMEBOL). Statistik: 61 → 68 Items. P1: 29 → 33, P2: 13 → 15, P3: 4 → 5.
 - **2026-06-24**: + **J2-I Tennis-Scanner Fallback-Stack ✅ erledigt** (nach J2-G). Live-Scan vom 06:34 UTC lieferte 0 Signale (Sackmann seit Juni down → Default-Elo; TheOddsAPI /odds liefert HTTP 422 für Wimbledon — Markt öffnet erst 1-3 Tage vor Start). Fix: **(a) Elo-Fallback** `src/tennis/elo_source.py` mit `load_match_history()` (Sackmann primary → tennis-data.co.uk XLSX fallback → "empty"-Tag für Logging). **(b) 2-way WebSearch-Fallback** für Tennis (analog Football, aber 2 Outcomes, Overround-Check 0.95-1.15) ersetzt den Stub in `_websearch_tennis_fallback`. **(c) 48h-/events-Pfad**: wenn `/odds` 422 zurückgibt, holt neuer `_fetch_events_only()` die `/events`-Liste; alle Matches mit `commence_time` ≤48h werden via WebSearch geparst (statt komplett skippen). 14 neue Tests, 662/662 Suite grün. Nächster Scan-Run loggt `[elo] XLSX-Fallback` bzw. `[websearch]`-Treffer pro Match.
 - **2026-06-24**: + **J2-G Comprehensive Backtest ✅ erledigt** (nach Phase F). `scripts/tennis_full_backtest.py` (NEU) + `src/tennis/calibration.py` (NEU) erlauben Backtest über **alle Märkte × Touren × Surfaces × Kategorien**. Datenbasis tennis-data.co.uk XLSX 2019-2025 (32 707 Match-Zeilen, 27 335 Snapshot-Matches, 7 772 Match-Winner-Bets). **Bugfix tennis_odds.py**: `Surface`-Duplikat in `_KEEP+keep_extra` führte zu DataFrame-statt-Series-Crash (silent fail in try-Block); WTA-XLSX nutzt `Tier` statt `Series`-Spalte. **Sackmann-Repos sind ab 2026-06 nicht mehr öffentlich** → Elo direkt aus XLSX-Outcomes walk-forward. **Verdicts**: 6 LIVE (atp500 grass +18.6%, wta250 grass +16%, wta1000 clay +8.4% u.a.), 5 BLACKLIST (Wimbledon ATP -9.5%, m1000 ATP clay -9.4%, atp500 ATP hard -8.8%, tour_final WTA hard, wta1000 WTA hard). Set-Märkte Brier 65/127 kalibriert, Game-Märkte nur 3/21. Report: `results/audits/tennis_full_backtest_2026-06-24.md`. Memory `tennis_module.md` mit empfohlenem TENNIS_CATEGORY_MODE-Diff aktualisiert. Neue Sub-Phase **J2-H** (Surface-aware Mode) in Roadmap aufgenommen. 13 neue Tests, 648/648 Suite grün.
 - **2026-06-24**: ~ J2 **Phase B-F ✅ erledigt** (in einer Sitzung nach Phase A). **B** (Backtest, Commit 99e4af1): `fetch_full_tour_odds()` + `categorize_series()` + `tennis_backtest.py --full-tour --use-category-edge --j2-report` mit Verdict-Tabelle. **C** (Märkte, Commit 98b03af): `src/tennis/sim.py` (closed-form Set-Distribution + Monte-Carlo Game-Total), neue Detector-Funktionen `detect_total_sets/games/set_betting`. **D** (Scanner, Commit ad34e15): `tennis_scan.py` Multi-Tournament-Dispatcher, Wimbledon-Hardcode entfernt, alle 6 Märkte aggregiert, --all-live/--tournament-Flags. **E** (PWA, Commit 2105a1b): tournament_meta-Pfad bis ins JSON + `renderSport('tennis')` mit Tournament-Gruppierung, Surface-Icons, Kategorie-Pille. **F** (CI/Roll-out): `tennis_scan.yml` ganzjährig 4×/Tag, `scripts/tennis_gate_review.py` (Live-vs-Backtest-Vergleich mit PROMOTE/DEMOTE/BLACKLIST-Empfehlungen). Suite 627/627 grün (+71 Tests Tennis gesamt seit Phase-A-Start). **Damit ist Tennis production-ready für alle ATP/WTA-Turniere ab 250 aufwärts ganzjährig** — nur grand_slam initial live, Rest shadow bis erster Backtest-Run mit `--full-tour --j2-report` Live-Daten liefert.

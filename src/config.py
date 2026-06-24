@@ -99,6 +99,16 @@ TENNIS_CATEGORY_MODE: dict[str, str] = {
     "tour_final":  "shadow",
 }
 
+# J2-H: Surface-spezifisches Live-Gate — überschreibt TENNIS_CATEGORY_MODE wenn (category, surface) matcht.
+# Backtest-Basis: Walk-forward 2022-2025, nur Kombinationen mit ROI > +8% und n ≥ 30 Matches.
+# Alle anderen (category, surface)-Paare fallen auf TENNIS_CATEGORY_MODE zurück.
+TENNIS_CATEGORY_SURFACE_MODE: dict[tuple[str, str], str] = {
+    ("atp500",  "grass"): "live",   # +18.6% ROI — Halle, Queen's, Wimbledon-Vorbereitung
+    ("wta250",  "grass"): "live",   # +16.0% ROI — WTA Rasen-Qualifier
+    ("wta1000", "clay"):  "live",   # +8.4%  ROI — Madrid, Rom
+    ("wta500",  "grass"): "live",   # +8.1%  ROI — WTA 500 Rasen-Events
+}
+
 # Phase 4 lern-loop
 DRIFT_MONITOR_ENABLED = True
 PINNACLE_CLV_ENABLED = True
