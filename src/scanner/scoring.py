@@ -15,6 +15,7 @@ from src.betting.value_detector import (
 from src.config import (
     MAX_EV, TEAM_CONFEDERATION, GOALS_RANGE_ENABLED,
     HOST_BOOST_ENABLED, HOST_LAMBDA_BOOST, HOST_NATIONS,
+    ALTITUDE_BOOST_MAP, ARTIFICIAL_TURF_STADIUMS, TURF_AWAY_PENALTY,
 )
 from src.models import dixon_coles as dc
 from src.models.elo import elo_win_probability
@@ -117,10 +118,12 @@ def score_matches(
         from src.config import canonical_name
         home = canonical_name(match["home_team"])
         away = canonical_name(match["away_team"])
-        # I6: WM-2026-Host-Boost — angewendet, wenn das Heim-Team Gastgeber-Nation ist
-        # (USA/Canada/Mexico). TheOddsAPI listet WM-Matches mit Gastgeber als "home"
-        # bei Heim-Spielen, daher reicht die Home-Team-Heuristik.
+        # I6: WM-2026-Host-Boost
         host_boost = HOST_LAMBDA_BOOST if (HOST_BOOST_ENABLED and home in HOST_NATIONS) else 1.0
+        # I12: Höhenlage + Kunstrasen — kein Effekt auf WM (Nationalteam-Platzhalter haben (0,0))
+        _alt = ALTITUDE_BOOST_MAP.get(home)
+        altitude_factors = _alt if (_alt and _alt[0] > 0.0) else None
+        turf_penalty = TURF_AWAY_PENALTY if home in ARTIFICIAL_TURF_STADIUMS else 1.0
         raw_odds = (
             float(match.get("home_odds", 0)),
             float(match.get("draw_odds", 0)),
@@ -140,6 +143,7 @@ def score_matches(
                 elo_home=elo_ratings.get(home, 1500.0),
                 elo_away=elo_ratings.get(away, 1500.0),
                 host_boost=host_boost,
+                altitude_factors=altitude_factors, turf_penalty=turf_penalty,
             )
         except ValueError as e:
             # Team not in DC model — skip rather than predict with wrong λ=1.0 default.
@@ -277,6 +281,7 @@ def score_matches(
                 elo_home=elo_ratings.get(home, 1500.0),
                 elo_away=elo_ratings.get(away, 1500.0),
                 host_boost=host_boost,
+                altitude_factors=altitude_factors, turf_penalty=turf_penalty,
             )
             _mg = _score_matrix.shape[0] - 1
             _lambda_home = float(sum(i * _score_matrix[i, :].sum() for i in range(_mg + 1)))
@@ -394,6 +399,7 @@ def score_matches(
                 totals_cache[ou_line] = dc.predict_totals_all(
                     home, away, dc_params, line=ou_line, neutral=True, rho_override=rho_staged,
                     host_boost=host_boost,
+                    altitude_factors=altitude_factors, turf_penalty=turf_penalty,
                 )
             totals_p = totals_cache[ou_line]
             under_me = _UNDER_BIAS.get(ou_line, _MIN_EDGE + 0.03)
@@ -424,6 +430,7 @@ def score_matches(
                     ah_cache[ah_line] = dc.predict_asian_handicap_all(
                         home, away, dc_params, line=ah_line, neutral=True, rho_override=rho_staged,
                         host_boost=host_boost,
+                        altitude_factors=altitude_factors, turf_penalty=turf_penalty,
                     )
                 except ValueError:
                     continue  # unsupported line (outside ±2.5 range)
@@ -452,14 +459,17 @@ def score_matches(
                 neutral=True, rho_override=rho_staged,
                 elo_home=elo_home_rating, elo_away=elo_away_rating,
                 host_boost=host_boost,
+                altitude_factors=altitude_factors, turf_penalty=turf_penalty,
             )
             _h1_probs = dc.predict_half_goals_range(
                 home, away, dc_params, min_g=2, max_g=4, half=1, neutral=True,
                 host_boost=host_boost,
+                altitude_factors=altitude_factors, turf_penalty=turf_penalty,
             )
             _h2_probs = dc.predict_half_goals_range(
                 home, away, dc_params, min_g=2, max_g=4, half=2, neutral=True,
                 host_boost=host_boost,
+                altitude_factors=altitude_factors, turf_penalty=turf_penalty,
             )
             # Vollspiel: echte EV-Signale wenn implied_p verfügbar
             if _implied_p_range is not None:
@@ -484,7 +494,8 @@ def score_matches(
         ftts_home_odds = float(match.get("ftts_home_odds", 0))
         ftts_away_odds = float(match.get("ftts_away_odds", 0))
         if ftts_home_odds > 1.0 or ftts_away_odds > 1.0:
-            ftts_probs = dc.predict_first_scorer(home, away, dc_params, neutral=True, host_boost=host_boost)
+            ftts_probs = dc.predict_first_scorer(home, away, dc_params, neutral=True, host_boost=host_boost,
+                                                   altitude_factors=altitude_factors, turf_penalty=turf_penalty)
             signals.extend(detect_value_ftts(
                 home, away, ftts_probs, ftts_home_odds, ftts_away_odds,
                 bankroll=bankroll, match_id=match_id,
