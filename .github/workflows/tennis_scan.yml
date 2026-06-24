@@ -1,10 +1,19 @@
-name: Wimbledon Tennis Scan
+name: Tennis Scan (year-round, multi-tournament)
 
 on:
   schedule:
-    # Wimbledon 2026: 29. Juni – 13. Juli — davor kein aktiver Scan nötig
-    - cron: '0 9 * 7 *'   # täglich 09:00 UTC im Juli
+    # J2-F: 4× täglich ganzjährig — Discovery filtert via TheOddsAPI /sports
+    # auf aktive Turniere. Vor Saison/Off-Season einfach kein Match → no-op.
+    - cron: '0 6 * * *'
+    - cron: '0 11 * * *'
+    - cron: '0 16 * * *'
+    - cron: '0 21 * * *'
   workflow_dispatch:        # manuell auslösbar
+    inputs:
+      all_live:
+        description: 'Override: erzwingt mode=live für alle Kategorien'
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}
@@ -32,7 +41,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run tennis scan (ATP + WTA)
+      - name: Run tennis scan (multi-tournament)
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
@@ -40,14 +49,20 @@ jobs:
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           VAPID_SUB: ${{ secrets.VAPID_SUB }}
         run: |
-          # WTA is the primary focus (+8.5% Wimbledon ROI); ATP uses stricter 10% edge floor
-          python scripts/tennis_scan.py --bankroll 100 --tour both
+          # J2-D: Dispatcher iteriert über alle aktiven Turniere.
+          # Mode pro Kategorie: src.config.TENNIS_CATEGORY_MODE
+          # (initial nur grand_slam = live, Rest = shadow bis Phase-B-Backtest)
+          ALL_LIVE_FLAG=""
+          if [ "${{ inputs.all_live }}" = "true" ]; then
+            ALL_LIVE_FLAG="--all-live"
+          fi
+          python scripts/tennis_scan.py --bankroll 100 $ALL_LIVE_FLAG
 
-      - name: Commit results (NO ledger — manual confirmation required)
+      - name: Commit results
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add results/tennis_scan_*.md docs/data/signals.json || true
+          git add results/tennis_scan_*.md docs/data/signals*.json || true
           git diff --staged --quiet || git commit -m "auto: tennis scan $(date +%Y-%m-%d)"
           for i in 1 2 3 4 5; do
             git fetch origin main
