@@ -106,8 +106,16 @@ def check_stuck_open_bets() -> Symptom | None:
     )
 
 
-def check_signals_freshness(max_age_min: int = 90) -> Symptom | None:
-    """signals.json wurde seit max_age_min nicht aktualisiert."""
+def check_signals_freshness(
+    max_age_min: int = 30, live_window_max_age_min: int = 10
+) -> Symptom | None:
+    """signals.json wurde seit max_age_min nicht aktualisiert.
+
+    Während eines Live-Fensters (offene Bets mit Match heute oder gestern)
+    gilt eine strengere Grenze (`live_window_max_age_min`), weil dann sowohl
+    Live-Score-Push als auch der Halbzeit-Scanner die Datei häufig
+    aktualisieren sollten.
+    """
     sig = _read_json(SIGNALS_PATH)
     if not isinstance(sig, dict):
         return None
@@ -115,15 +123,49 @@ def check_signals_freshness(max_age_min: int = 90) -> Symptom | None:
     if updated is None:
         return None
     age_min = (_now() - updated).total_seconds() / 60
-    if age_min <= max_age_min:
+
+    # Live-Window-Erkennung: ist ein open bet auf ein Match heute/gestern offen?
+    in_live_window = _has_live_window_open_bet(_now())
+    threshold = live_window_max_age_min if in_live_window else max_age_min
+
+    if age_min <= threshold:
         return None
     return Symptom(
         id=SYM_SIGNALS_STALE,
-        severity="warn",
-        summary=f"signals.json ist {int(age_min)} Min alt (Grenze {max_age_min}).",
+        severity="error" if in_live_window else "warn",
+        summary=(
+            f"signals.json ist {int(age_min)} Min alt "
+            f"(Grenze {threshold}{' · live-Fenster' if in_live_window else ''})."
+        ),
         suggested_action="force-refresh-signals",
-        payload={"updated": sig.get("updated"), "age_min": int(age_min)},
+        payload={
+            "updated": sig.get("updated"),
+            "age_min": int(age_min),
+            "live_window": in_live_window,
+        },
     )
+
+
+def _has_live_window_open_bet(now: datetime) -> bool:
+    if not LEDGER_PATH.exists():
+        return False
+    today = now.date()
+    yest = (now - timedelta(days=1)).date()
+    try:
+        with LEDGER_PATH.open() as f:
+            for r in csv.DictReader(f):
+                if (r.get("status") or "").strip().lower() != "open":
+                    continue
+                date_str = (r.get("match_date") or "").strip()
+                try:
+                    md = datetime.fromisoformat(date_str).date()
+                except (ValueError, TypeError):
+                    continue
+                if md in (today, yest):
+                    return True
+    except Exception:
+        return False
+    return False
 
 
 def check_push_delivery_health() -> Symptom | None:
