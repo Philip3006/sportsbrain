@@ -655,3 +655,54 @@ def get_bankroll_snapshot(
         "user": user,
     }, indent=2))
     return bankroll
+
+
+def cancel_bet(
+    home: str,
+    away: str,
+    market: str,
+    path: Path | None = None,
+    snapshot_path: Path | None = None,
+    *,
+    user: str = DEFAULT_USER,
+) -> str:
+    """Mark a bet as cancelled (status=cancelled) and refund stake to snapshot.
+
+    Returns: "ok" | "already_cancelled" | "not_found" | "already_settled"
+    Idempotent: calling twice returns "already_cancelled" without double-refund.
+    """
+    path = _resolve_ledger_path(path, user)
+    with _file_lock(path):
+        df = _load(path)
+        mask = (
+            (df["home"].str.strip().str.lower() == home.strip().lower()) &
+            (df["away"].str.strip().str.lower() == away.strip().lower()) &
+            (df["market"].str.strip() == market.strip())
+        )
+        matches = df[mask]
+        if matches.empty:
+            return "not_found"
+
+        idx = matches.index[-1]
+        current_status = df.at[idx, "status"]
+
+        if current_status == "cancelled":
+            return "already_cancelled"
+        if current_status in ("won", "lost", "void"):
+            return "already_settled"
+
+        stake = float(df.at[idx, "stake_amount"] or 0)
+        df.at[idx, "status"] = "cancelled"
+        _save(df, path)
+
+    # Refund stake to snapshot (adjust bankroll up by stake amount)
+    snap_path = _resolve_snapshot_path(snapshot_path, user)
+    if snap_path.exists() and stake > 0:
+        try:
+            data = json.loads(snap_path.read_text())
+            data["bankroll"] = round(float(data.get("bankroll", 0)) + stake, 2)
+            snap_path.write_text(json.dumps(data, indent=2))
+        except Exception:
+            pass
+
+    return "ok"

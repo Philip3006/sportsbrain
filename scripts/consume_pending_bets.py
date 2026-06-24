@@ -178,6 +178,39 @@ def _consume_user(base: str, headers: dict, user: str) -> int:
     return added
 
 
+def _process_cancel_requests(base: str, headers: dict, user: str) -> int:
+    """Read cancel_requests from Worker KV, apply to ledger, clear processed."""
+    from src.betting.ledger import cancel_bet
+    suffix = "" if user == DEFAULT_USER else f"?user={user}"
+    try:
+        r = retry_request("GET", f"{base}/cancel_requests{suffix}", headers=headers,
+                          timeout=15, log_prefix=f"[cancel:{user}]")
+    except requests.RequestException as e:
+        print(f"[cancel:{user}] fetch failed: {e}", file=sys.stderr)
+        return 0
+    if r.status_code != 200:
+        return 0
+    reqs = (r.json() or {}).get("requests") or []
+    if not reqs:
+        return 0
+    cancelled = 0
+    for req in reqs:
+        home, away, market = req.get("home",""), req.get("away",""), req.get("market","")
+        if not (home and away and market):
+            continue
+        result = cancel_bet(home, away, market, user=user)
+        print(f"[cancel:{user}] {home} vs {away} {market} → {result}")
+        if result in ("ok", "already_cancelled"):
+            cancelled += 1
+    if cancelled:
+        try:
+            retry_request("DELETE", f"{base}/cancel_requests{suffix}", headers=headers,
+                          timeout=15, log_prefix=f"[cancel:{user}]")
+        except Exception:
+            pass
+    return cancelled
+
+
 def main() -> int:
     base = _worker_base()
     token = _token()
@@ -188,6 +221,7 @@ def main() -> int:
     added = 0
     for u in list_known_users():
         added += _consume_user(base, headers, u)
+        _process_cancel_requests(base, headers, u)
 
     if added == 0:
         print("[consume] no pending bets (across all users)")

@@ -13,6 +13,31 @@ INTL_CSV_URL = (
 FBDATA_BASE = "https://www.football-data.co.uk/mmz4281"
 ODDS_API_URL = "https://api.the-odds-api.com/v4"
 
+# I11: Whitelist der Ligen nach WM. Nur diese Keys werden vom Football-Discovery-Modul
+# zurückgegeben — schützt vor unbekannten oder unkalibrierten Soccer-Sport-Keys.
+FOOTBALL_LEAGUES_WHITELIST: set[str] = {
+    "soccer_germany_bundesliga",
+    "soccer_epl",                         # Premier League
+    "soccer_spain_la_liga",
+    "soccer_italy_serie_a",
+    "soccer_france_ligue_1",
+    "soccer_uefa_champs_league",
+    "soccer_uefa_europa_league",
+    "soccer_conmebol_copa_libertadores",
+    "soccer_conmebol_sudamericana",
+    "soccer_netherlands_eredivisie",
+    "soccer_portugal_primeira_liga",
+    "soccer_mexico_ligamx",
+    "soccer_brazil_campeonato",
+    "soccer_austria_bundesliga",
+    "soccer_france_ligue_2",
+    "soccer_germany_2_bundesliga",
+    "soccer_turkey_super_league",
+    "soccer_belgium_first_div",
+    "soccer_scotland_premier_league",
+    "soccer_usa_mls",
+}
+
 DC_PHI = 0.0065
 KELLY_FRAC = 0.25
 MIN_EDGE = 0.03
@@ -108,6 +133,59 @@ TENNIS_CATEGORY_SURFACE_MODE: dict[tuple[str, str], str] = {
     ("wta1000", "clay"):  "live",   # +8.4%  ROI — Madrid, Rom
     ("wta500",  "grass"): "live",   # +8.1%  ROI — WTA 500 Rasen-Events
 }
+
+# I12: Umwelt-Faktoren — Höhenlage + Kunstrasen (analog Tennis Surface-Elo).
+# ALTITUDE_BOOST_MAP: Heim-Team-Name → (lh_factor, la_factor).
+#   lh_factor: Heim-Lambda Multiplikator (>1 = Heimvorteil stärker in der Höhe).
+#   la_factor: Auswärts-Lambda Multiplikator (<1 = Auswärtsteam ermüdet, weniger Tore).
+#   Kalibrierung: CONMEBOL-Hochland-Matches Bogotá/Quito/Mexico (~2500-2800m).
+#   Literatur-Konsens: +10-15% Heim-Vorteil, -8% Auswärts-Tore (Pollard & Armatas 2017).
+ALTITUDE_BOOST_MAP: dict[str, tuple[float, float]] = {
+    # Colombia (Bogotá 2625m, Medellín 1495m)
+    "Millonarios":          (1.12, 0.92),
+    "Santa Fe":             (1.12, 0.92),
+    "America de Cali":      (1.06, 0.95),  # Cali 1000m — geringerer Effekt
+    "Atletico Nacional":    (1.08, 0.94),
+    # Ecuador (Quito 2850m — höchste Liga-Stadt)
+    "Liga de Quito":        (1.15, 0.90),
+    "Deportivo Quito":      (1.15, 0.90),
+    "El Nacional":          (1.15, 0.90),
+    "Independiente del Valle": (1.10, 0.93),  # Sangolquí 2550m
+    # Bolivia (La Paz 3600m — extremster Effekt weltweit)
+    "Bolivar":              (1.20, 0.85),
+    "The Strongest":        (1.20, 0.85),
+    # Peru (Lima 154m — kein Höhenfaktor, außer Cusco/Arequipa)
+    # Mexico (Mexico City 2240m)
+    "Club America":         (1.07, 0.95),
+    "Cruz Azul":            (1.07, 0.95),
+    "Pumas UNAM":           (1.07, 0.95),
+    # Internationale Auswahl-Spiele — Team-Name = Nationalteam
+    "Colombia":             (0.0, 0.0),   # Placeholder, nur wenn Heim-Venue bekannt
+    "Bolivia":              (1.20, 0.85),
+    "Ecuador":              (1.15, 0.90),
+}
+
+# ARTIFICIAL_TURF_STADIUMS: set von Heim-Team-Namen die auf Kunstrasen spielen.
+# Auswärts-Lambda wird mit TURF_AWAY_PENALTY multipliziert (Literatur: ~-4% Auswärts-Tore).
+ARTIFICIAL_TURF_STADIUMS: set[str] = {
+    # Skandinavische Vereine (Outdoor-Kunstrasen weit verbreitet)
+    "Tromso",
+    "Bodo/Glimt",
+    "IK Start",
+    "Rosenborg",
+    "Molde",
+    "HJK Helsinki",
+    "FC Inter Turku",
+    # Russland (viele Stadien Kunstrasen wegen Klima)
+    "Krasnodar",
+    "Lokomotiv Moscow",
+    "Rubin Kazan",
+    # Türkei
+    "Trabzonspor",
+    # Schweiz
+    "FC Sion",
+}
+TURF_AWAY_PENALTY = 0.96  # Auswärts-Lambda × 0.96 auf Kunstrasen
 
 # Phase 4 lern-loop
 DRIFT_MONITOR_ENABLED = True
