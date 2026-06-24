@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-06-24T09:02:18Z",
+  "generated_at": "2026-06-24T11:00:34Z",
   "overall": "degraded",
   "jobs": [
     {
       "job": "daily_scan",
       "status": "ok",
-      "last_run_at": "2026-06-24T06:31:04Z",
-      "duration_s": 5453.0,
+      "last_run_at": "2026-06-24T11:00:34Z",
+      "duration_s": null,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
