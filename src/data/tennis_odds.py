@@ -41,7 +41,9 @@ _SURFACE_MAP = {
 
 _KEEP = ["Date", "Winner", "Loser", "WRank", "LRank", "Round",
          "Surface", "B365W", "B365L", "AvgW", "AvgL", "MaxW", "MaxL",
-         "Wsets", "Lsets", "Best of"]
+         "Wsets", "Lsets", "Best of",
+         # Per-Set game scores (J2-G full-backtest, optional)
+         "W1", "L1", "W2", "L2", "W3", "L3", "W4", "L4", "W5", "L5"]
 
 
 def _fetch_one(year: int, tournament: str, tour: str) -> pd.DataFrame | None:
@@ -163,9 +165,13 @@ def _fetch_full_year_xlsx(year: int, tour: str) -> pd.DataFrame | None:
         df = pd.read_excel(io.BytesIO(r.content), engine="openpyxl")
         if "Winner" not in df.columns or "B365W" not in df.columns:
             return None
-        # Spalten-Normalisierung
-        keep_extra = ["Tournament", "Series", "Court", "Surface"]
-        keep = [c for c in _KEEP + keep_extra if c in df.columns]
+        # Spalten-Normalisierung (Dedup gegen Duplikate in _KEEP)
+        keep_extra = ["Tournament", "Series", "Tier", "Court"]
+        seen: set[str] = set()
+        keep: list[str] = []
+        for c in _KEEP + keep_extra:
+            if c in df.columns and c not in seen:
+                keep.append(c); seen.add(c)
         df = df[keep].copy()
         df["year"] = year
         df["tour"] = tour.upper()
@@ -213,16 +219,15 @@ def fetch_full_tour_odds(
     combined["B365L"] = pd.to_numeric(combined["B365L"], errors="coerce")
     combined = combined.dropna(subset=["B365W", "B365L"])
 
-    # Kategorie-Spalte ableiten
-    if "Series" in combined.columns:
-        combined["category"] = combined.apply(
-            lambda r: categorize_series(r.get("Series", ""), r.get("tour", "ATP")),
-            axis=1,
-        )
-    else:
-        combined["category"] = combined["tour"].apply(
-            lambda t: "wta250" if str(t).lower() == "wta" else "atp250"
-        )
+    # Kategorie-Spalte ableiten (ATP: 'Series', WTA: 'Tier')
+    def _category_from_row(r):
+        for col in ("Series", "Tier"):
+            val = r.get(col)
+            if isinstance(val, str) and val.strip():
+                return categorize_series(val, r.get("tour", "ATP"))
+        return "wta250" if str(r.get("tour", "ATP")).lower() == "wta" else "atp250"
+
+    combined["category"] = combined.apply(_category_from_row, axis=1)
 
     combined = combined.sort_values("Date").reset_index(drop=True)
 
