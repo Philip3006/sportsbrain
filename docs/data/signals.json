@@ -1,7 +1,7 @@
 {
-  "updated": "2026-06-24T06:34:42Z",
+  "updated": "2026-06-24T06:48:55Z",
   "build_info": {
-    "sha": "078c207",
+    "sha": "9c9baa8",
     "date": "2026-06-24"
   },
   "meta": {
@@ -11,3264 +11,26 @@
   },
   "schedule": [],
   "all_odds": {
-    "Qatar vs Switzerland": {
-      "home": 17.5,
-      "draw": 8.0,
-      "away": 1.24,
-      "over25": 1.65,
-      "under25": 2.39
-    },
-    "Brazil vs Morocco": {
-      "home": 1.73,
-      "draw": 4.0,
-      "away": 6.0,
-      "over25": 2.23,
-      "under25": 1.76
-    },
-    "Haiti vs Scotland": {
-      "home": 16.5,
-      "draw": 5.2,
-      "away": 1.34,
-      "over25": 2.64,
-      "under25": 1.79,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over20": 1.65,
-      "under20": 2.25,
-      "ah0.25_home": 1.78,
-      "ah0.25_away": 2.13,
-      "ah1.5_home": 1.52,
-      "ah1.5_away": 2.88
-    },
-    "Australia vs Turkey": {
-      "home": 2.18,
-      "draw": 3.05,
-      "away": 4.61,
-      "over25": 2.4,
-      "under25": 1.69,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over225": 1.98,
-      "under225": 1.9,
-      "ah0.5_home": 2.07,
-      "ah0.5_away": 1.83,
-      "ah-0.5_home": 2.18,
-      "ah-0.5_away": 1.83
-    },
-    "Germany vs Curaçao": {
-      "home": 1.06,
-      "draw": 26.0,
-      "away": 60.0,
-      "over25": 1.19,
-      "under25": 4.8,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over45": 2.2,
-      "under45": 1.8,
-      "over425": 1.93,
-      "under425": 1.94,
-      "over50": 2.8,
-      "under50": 1.43,
-      "ah-3.5_home": 1.95,
-      "ah-3.5_away": 2.02
-    },
-    "Netherlands vs Japan": {
-      "home": 2.12,
-      "draw": 3.7,
-      "away": 3.95,
-      "over25": 2.12,
-      "under25": 1.87,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over225": 1.83,
-      "under225": 2.09,
-      "over30": 2.7,
-      "under30": 1.49,
-      "ah-0.5_home": 2.12,
-      "ah-0.5_away": 1.87,
-      "ah0.0_home": 1.51,
-      "ah0.0_away": 2.61,
-      "ah-1.5_home": 4.0,
-      "ah-1.5_away": 1.22
-    },
-    "Ivory Coast vs Ecuador": {
-      "home": 3.45,
-      "draw": 2.95,
-      "away": 2.68,
-      "over25": 2.95,
-      "under25": 1.41,
-      "over15": 1.69,
-      "under15": 2.42,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over175": 1.88,
-      "under175": 2.03,
-      "over20": 2.25,
-      "under20": 1.75,
-      "ah0.25_home": 1.8,
-      "ah0.25_away": 2.22,
-      "ah0.0_home": 2.22,
-      "ah0.0_away": 1.78,
-      "ah0.5_home": 1.53,
-      "ah0.5_away": 2.5,
-      "ah1.5_home": 1.13,
-      "ah1.5_away": 5.75
-    },
-    "Sweden vs Tunisia": {
-      "home": 2.0,
-      "draw": 3.55,
-      "away": 4.6,
-      "over25": 2.25,
-      "under25": 1.75,
-      "over15": 1.38,
-      "under15": 3.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over225": 1.93,
-      "under225": 1.97,
-      "over20": 1.65,
-      "under20": 2.36,
-      "ah-0.5_home": 2.0,
-      "ah-0.5_away": 1.98,
-      "ah0.0_home": 1.42,
-      "ah0.0_away": 2.93,
-      "ah-1.5_home": 3.7,
-      "ah-1.5_away": 1.28
-    },
-    "Spain vs Cape Verde": {
-      "home": 1.52,
-      "draw": 2.87,
-      "away": 18.38,
-      "over25": 0.0,
-      "under25": 0.0,
-      "over15": 2.8,
-      "under15": 1.41,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over05": 1.48,
-      "under05": 3.5,
-      "over125": 2.19,
-      "under125": 1.72,
-      "over10": 2.0,
-      "under10": 1.85,
-      "over30": 13.5,
-      "ah-1.0_home": 2.19,
-      "ah-1.0_away": 1.73,
-      "ah-0.75_home": 1.77,
-      "ah-0.75_away": 2.1,
-      "ah-1.5_home": 3.3,
-      "ah-1.5_away": 1.62,
-      "ah-0.5_home": 1.55,
-      "ah-0.5_away": 2.3
-    },
-    "Belgium vs Egypt": {
-      "home": 3.55,
-      "draw": 3.2,
-      "away": 2.77,
-      "over25": 1.93,
-      "under25": 2.06,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over275": 2.0,
-      "under275": 1.88,
-      "ah-1.0_home": 2.0,
-      "ah-1.0_away": 1.9,
-      "ah0.25_home": 1.83,
-      "ah0.25_away": 2.0,
-      "ah0.5_home": 1.55,
-      "ah0.5_away": 2.3,
-      "ah-0.5_home": 3.55,
-      "ah-0.5_away": 1.39
-    },
-    "Saudi Arabia vs Uruguay": {
-      "home": 1.62,
-      "draw": 3.06,
-      "away": 9.16,
-      "over25": 2.68,
-      "under25": 1.91,
-      "over15": 1.99,
-      "under15": 1.88,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "ah0.25_home": 2.13,
-      "ah0.25_away": 2.25,
-      "ah-0.5_home": 1.6,
-      "ah-0.5_away": 2.15,
-      "ah0.5_home": 1.41,
-      "ah0.5_away": 3.35
-    },
-    "Iran vs New Zealand": {
-      "home": 1.86,
-      "draw": 3.7,
-      "away": 5.2,
-      "over25": 2.45,
-      "under25": 1.61,
-      "over15": 1.45,
-      "under15": 2.7,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over20": 1.85,
-      "under20": 2.1,
-      "ah-0.75_home": 2.12,
-      "ah-0.75_away": 1.87,
-      "ah-0.5_home": 1.81,
-      "ah-0.5_away": 2.12,
-      "ah-1.5_home": 3.44,
-      "ah-1.5_away": 1.34
-    },
-    "France vs Senegal": {
-      "home": 1.53,
-      "draw": 4.75,
-      "away": 7.6,
-      "over25": 1.89,
-      "under25": 2.12,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over275": 2.05,
-      "under275": 1.86,
-      "over30": 2.12,
-      "under30": 1.73,
-      "over20": 1.38,
-      "under20": 3.0,
-      "ah-1.0_home": 1.88,
-      "ah-1.0_away": 2.15,
-      "ah-1.5_home": 2.39,
-      "ah-1.5_away": 1.62,
-      "bookmakers_h2h": [
-        {
-          "key": "sportsbet",
-          "title": "SportsBet",
-          "home": 1.47,
-          "draw": 4.4,
-          "away": 7.0
-        },
-        {
-          "key": "betmgm",
-          "title": "BetMGM",
-          "home": 1.5,
-          "draw": 4.5,
-          "away": 6.0
-        },
-        {
-          "key": "fanduel",
-          "title": "FanDuel",
-          "home": 1.48,
-          "draw": 4.4,
-          "away": 7.0
-        },
-        {
-          "key": "paddypower",
-          "title": "Paddy Power",
-          "home": 1.44,
-          "draw": 4.33,
-          "away": 7.0
-        },
-        {
-          "key": "skybet",
-          "title": "Sky Bet",
-          "home": 1.44,
-          "draw": 4.5,
-          "away": 6.5
-        },
-        {
-          "key": "pinnacle",
-          "title": "Pinnacle",
-          "home": 1.5,
-          "draw": 4.55,
-          "away": 7.5
-        },
-        {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 1.47,
-          "draw": 4.3,
-          "away": 7.0
-        },
-        {
-          "key": "betfair_ex_au",
-          "title": "Betfair",
-          "home": 1.52,
-          "draw": 4.7,
-          "away": 7.6
-        },
-        {
-          "key": "betfair_ex_uk",
-          "title": "Betfair",
-          "home": 1.52,
-          "draw": 4.6,
-          "away": 7.6
-        },
-        {
-          "key": "betfair_ex_eu",
-          "title": "Betfair",
-          "home": 1.52,
-          "draw": 4.7,
-          "away": 7.6
-        }
-      ]
-    },
-    "Iraq vs Norway": {
-      "home": 61.0,
-      "draw": 9.0,
-      "away": 1.16,
-      "over25": 0.0,
-      "under25": 0.0,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 1.82,
-      "under35": 2.3,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over40": 2.17,
-      "under40": 1.74,
-      "over45": 4.2,
-      "under45": 1.18,
-      "ah0.25_home": 1.99,
-      "ah0.25_away": 1.88,
-      "ah1.25_home": 1.83,
-      "ah1.25_away": 2.0,
-      "ah1.5_home": 1.57,
-      "ah1.5_away": 2.72,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 36.0,
-          "draw": 7.5,
-          "away": 1.11
-        },
-        {
-          "key": "smarkets",
-          "title": "Smarkets",
-          "home": 46.08,
-          "draw": 8.0,
-          "away": 1.15
-        },
-        {
-          "key": "tabtouch",
-          "title": "TABtouch",
-          "home": 35.0,
-          "draw": 7.5,
-          "away": 1.08
-        },
-        {
-          "key": "casumo",
-          "title": "Casumo",
-          "home": 41.0,
-          "draw": 8.5,
-          "away": 1.09
-        },
-        {
-          "key": "livescorebet",
-          "title": "LiveScore Bet",
-          "home": 36.0,
-          "draw": 7.5,
-          "away": 1.08
-        },
-        {
-          "key": "unibet_uk",
-          "title": "Unibet (UK)",
-          "home": 51.0,
-          "draw": 6.5,
-          "away": 1.12
-        },
-        {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 36.0,
-          "draw": 7.5,
-          "away": 1.08
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 34.0,
-          "draw": 7.5,
-          "away": 1.07
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 36.0,
-          "draw": 7.5,
-          "away": 1.06
-        },
-        {
-          "key": "tab",
-          "title": "TAB",
-          "home": 26.0,
-          "draw": 7.0,
-          "away": 1.14
-        }
-      ]
-    },
-    "Argentina vs Algeria": {
-      "home": 1.49,
-      "draw": 4.75,
-      "away": 9.0,
-      "over25": 2.0,
-      "under25": 1.93,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over30": 2.8,
-      "under30": 1.47,
-      "ah-1.25_home": 2.16,
-      "ah-1.25_away": 1.83,
-      "ah-1.0_home": 1.78,
-      "ah-1.0_away": 2.2,
-      "ah-1.5_home": 2.32,
-      "ah-1.5_away": 1.68,
-      "bookmakers_h2h": [
-        {
-          "key": "sportsbet",
-          "title": "SportsBet",
-          "home": 1.44,
-          "draw": 4.4,
-          "away": 8.0
-        },
-        {
-          "key": "betmgm",
-          "title": "BetMGM",
-          "home": 1.43,
-          "draw": 4.6,
-          "away": 6.75
-        },
-        {
-          "key": "fanduel",
-          "title": "FanDuel",
-          "home": 1.43,
-          "draw": 4.4,
-          "away": 7.5
-        },
-        {
-          "key": "paddypower",
-          "title": "Paddy Power",
-          "home": 1.4,
-          "draw": 4.33,
-          "away": 8.0
-        },
-        {
-          "key": "skybet",
-          "title": "Sky Bet",
-          "home": 1.4,
-          "draw": 4.5,
-          "away": 7.5
-        },
-        {
-          "key": "pinnacle",
-          "title": "Pinnacle",
-          "home": 1.47,
-          "draw": 4.5,
-          "away": 8.6
-        },
-        {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 1.4,
-          "draw": 4.5,
-          "away": 8.5
-        },
-        {
-          "key": "betfair_ex_eu",
-          "title": "Betfair",
-          "home": 1.49,
-          "draw": 4.6,
-          "away": 8.6
-        },
-        {
-          "key": "betfair_ex_uk",
-          "title": "Betfair",
-          "home": 1.48,
-          "draw": 4.6,
-          "away": 8.6
-        },
-        {
-          "key": "betfair_ex_au",
-          "title": "Betfair",
-          "home": 1.49,
-          "draw": 4.6,
-          "away": 8.6
-        }
-      ]
-    },
-    "Austria vs Jordan": {
-      "home": 1.39,
-      "draw": 5.4,
-      "away": 10.0,
-      "over25": 1.86,
-      "under25": 2.08,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over30": 2.49,
-      "under30": 1.6,
-      "over20": 1.41,
-      "under20": 2.95,
-      "ah-1.25_home": 1.88,
-      "ah-1.25_away": 2.09,
-      "ah-1.5_home": 2.1,
-      "ah-1.5_away": 1.8,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 1.34,
-          "draw": 5.1,
-          "away": 9.0
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 1.33,
-          "draw": 5.0,
-          "away": 8.5
-        },
-        {
-          "key": "livescorebet",
-          "title": "LiveScore Bet",
-          "home": 1.33,
-          "draw": 5.0,
-          "away": 8.5
-        },
-        {
-          "key": "casumo",
-          "title": "Casumo",
-          "home": 1.34,
-          "draw": 5.1,
-          "away": 9.0
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 1.34,
-          "draw": 5.1,
-          "away": 9.0
-        },
-        {
-          "key": "unibet_nl",
-          "title": "Unibet (NL)",
-          "home": 1.36,
-          "draw": 5.3,
-          "away": 9.5
-        },
-        {
-          "key": "pmu_fr",
-          "title": "PMU (FR)",
-          "home": 1.36,
-          "draw": 5.3,
-          "away": 9.5
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 1.36,
-          "draw": 5.3,
-          "away": 9.5
-        },
-        {
-          "key": "leovegas_se",
-          "title": "LeoVegas (SE)",
-          "home": 1.34,
-          "draw": 5.1,
-          "away": 9.0
-        },
-        {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 1.34,
-          "draw": 5.1,
-          "away": 9.0
-        }
-      ]
-    },
-    "Portugal vs DR Congo": {
-      "home": 1.34,
-      "draw": 6.0,
-      "away": 13.5,
-      "over25": 1.87,
-      "under25": 2.12,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 3.0,
-      "under35": 1.4,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "dc_1x": 0.0,
-      "dc_x2": 0.0,
-      "dc_12": 0.0,
-      "over275": 2.02,
-      "under275": 1.82,
-      "ah-1.5_home": 1.93,
-      "ah-1.5_away": 2.04,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 1.29,
-          "draw": 5.4,
-          "away": 11.0
-        },
-        {
-          "key": "unibet_uk",
-          "title": "Unibet (UK)",
-          "home": 1.27,
-          "draw": 5.5,
-          "away": 12.0
-        },
-        {
-          "key": "casumo",
-          "title": "Casumo",
-          "home": 1.29,
-          "draw": 5.4,
-          "away": 11.0
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 1.3,
-          "draw": 5.6,
-          "away": 12.0
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 1.29,
-          "draw": 5.4,
-          "away": 11.0
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 1.28,
-          "draw": 5.25,
-          "away": 10.5
-        },
-        {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 1.29,
-          "draw": 5.4,
-          "away": 11.0
-        },
-        {
-          "key": "livescorebet",
-          "title": "LiveScore Bet",
-          "home": 1.28,
-          "draw": 5.25,
-          "away": 10.5
-        },
-        {
-          "key": "unibet_fr",
-          "title": "Unibet (FR)",
-          "home": 1.28,
-          "draw": 5.8,
-          "away": 12.0
-        },
-        {
-          "key": "leovegas_se",
-          "title": "LeoVegas (SE)",
-          "home": 1.29,
-          "draw": 5.4,
-          "away": 11.0
-        }
-      ]
-    },
-    "England vs Croatia": {
-      "home": 1.76,
-      "draw": 3.9,
-      "away": 5.6,
-      "over25": 2.15,
-      "under25": 1.78,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "dc_1x": 0.0,
-      "dc_x2": 0.0,
-      "dc_12": 0.0,
-      "over225": 1.88,
-      "under225": 2.03,
-      "over30": 3.1,
-      "under30": 1.36,
-      "ah-0.75_home": 1.97,
-      "ah-0.75_away": 2.0,
-      "ah-1.0_home": 2.32,
-      "ah-1.0_away": 1.67,
-      "ah-0.5_home": 1.74,
-      "ah-0.5_away": 2.16,
-      "ah-1.5_home": 3.02,
-      "ah-1.5_away": 1.42,
-      "bookmakers_h2h": [
-        {
-          "key": "sportsbet",
-          "title": "SportsBet",
-          "home": 1.7,
-          "draw": 3.75,
-          "away": 5.0
-        },
-        {
-          "key": "betmgm",
-          "title": "BetMGM",
-          "home": 1.69,
-          "draw": 3.7,
-          "away": 4.8
-        },
-        {
-          "key": "fanduel",
-          "title": "FanDuel",
-          "home": 1.69,
-          "draw": 3.7,
-          "away": 5.2
-        },
-        {
-          "key": "paddypower",
-          "title": "Paddy Power",
-          "home": 1.67,
-          "draw": 3.6,
-          "away": 5.0
-        },
-        {
-          "key": "skybet",
-          "title": "Sky Bet",
-          "home": 1.67,
-          "draw": 3.75,
-          "away": 5.0
-        },
-        {
-          "key": "pinnacle",
-          "title": "Pinnacle",
-          "home": 1.74,
-          "draw": 3.84,
-          "away": 5.34
-        },
-        {
-          "key": "betfair_ex_uk",
-          "title": "Betfair",
-          "home": 1.76,
-          "draw": 3.9,
-          "away": 5.6
-        },
-        {
-          "key": "betfair_ex_eu",
-          "title": "Betfair",
-          "home": 1.76,
-          "draw": 3.9,
-          "away": 5.6
-        },
-        {
-          "key": "betfair_ex_au",
-          "title": "Betfair",
-          "home": 1.76,
-          "draw": 3.9,
-          "away": 5.6
-        },
-        {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 1.7,
-          "draw": 3.65,
-          "away": 5.25
-        }
-      ]
-    },
-    "Ghana vs Panama": {
-      "home": 2.42,
-      "draw": 3.35,
-      "away": 3.4,
-      "over25": 2.5,
-      "under25": 1.65,
-      "over15": 1.42,
-      "under15": 2.9,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "dc_1x": 0.0,
-      "dc_x2": 0.0,
-      "dc_12": 0.0,
-      "over225": 2.11,
-      "under225": 1.81,
-      "over20": 1.82,
-      "under20": 2.13,
-      "ah-0.25_home": 2.05,
-      "ah-0.25_away": 1.92,
-      "ah-0.5_home": 2.38,
-      "ah-0.5_away": 1.69,
-      "ah0.0_home": 1.68,
-      "ah0.0_away": 2.27,
-      "ah-1.5_home": 4.85,
-      "ah-1.5_away": 1.17,
-      "bookmakers_h2h": [
-        {
-          "key": "sportsbet",
-          "title": "SportsBet",
-          "home": 2.3,
-          "draw": 3.25,
-          "away": 3.3
-        },
-        {
-          "key": "betmgm",
-          "title": "BetMGM",
-          "home": 2.3,
-          "draw": 3.1,
-          "away": 3.2
-        },
-        {
-          "key": "fanduel",
-          "title": "FanDuel",
-          "home": 2.3,
-          "draw": 3.2,
-          "away": 3.2
-        },
-        {
-          "key": "paddypower",
-          "title": "Paddy Power",
-          "home": 2.3,
-          "draw": 3.1,
-          "away": 3.2
-        },
-        {
-          "key": "skybet",
-          "title": "Sky Bet",
-          "home": 2.3,
-          "draw": 3.25,
-          "away": 3.2
-        },
-        {
-          "key": "pinnacle",
-          "title": "Pinnacle",
-          "home": 2.41,
-          "draw": 3.26,
-          "away": 3.32
-        },
-        {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 2.35,
-          "draw": 3.15,
-          "away": 3.2
-        },
-        {
-          "key": "betfair_ex_au",
-          "title": "Betfair",
-          "home": 2.42,
-          "draw": 3.35,
-          "away": 3.4
-        },
-        {
-          "key": "betfair_ex_uk",
-          "title": "Betfair",
-          "home": 2.42,
-          "draw": 3.35,
-          "away": 3.4
-        },
-        {
-          "key": "betfair_ex_eu",
-          "title": "Betfair",
-          "home": 2.42,
-          "draw": 3.35,
-          "away": 3.4
-        }
-      ]
-    },
-    "Uzbekistan vs Colombia": {
-      "home": 10.5,
-      "draw": 5.1,
-      "away": 1.42,
-      "over25": 1.98,
-      "under25": 2.0,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "dc_1x": 0.0,
-      "dc_x2": 0.0,
-      "dc_12": 0.0,
-      "over20": 1.48,
-      "under20": 2.75,
-      "ah1.25_home": 2.06,
-      "ah1.25_away": 1.91,
-      "ah1.5_home": 1.77,
-      "ah1.5_away": 2.15,
-      "bookmakers_h2h": [
-        {
-          "key": "sportsbet",
-          "title": "SportsBet",
-          "home": 9.5,
-          "draw": 4.75,
-          "away": 1.36
-        },
-        {
-          "key": "fanduel",
-          "title": "FanDuel",
-          "home": 9.5,
-          "draw": 4.7,
-          "away": 1.36
-        },
-        {
-          "key": "betmgm",
-          "title": "BetMGM",
-          "home": 8.25,
-          "draw": 4.6,
-          "away": 1.36
-        },
-        {
-          "key": "paddypower",
-          "title": "Paddy Power",
-          "home": 9.5,
-          "draw": 4.5,
-          "away": 1.33
-        },
-        {
-          "key": "skybet",
-          "title": "Sky Bet",
-          "home": 8.5,
-          "draw": 5.0,
-          "away": 1.33
-        },
-        {
-          "key": "pinnacle",
-          "title": "Pinnacle",
-          "home": 9.75,
-          "draw": 4.95,
-          "away": 1.39
-        },
-        {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 9.5,
-          "draw": 4.9,
-          "away": 1.34
-        },
-        {
-          "key": "betfair_ex_eu",
-          "title": "Betfair",
-          "home": 10.5,
-          "draw": 5.0,
-          "away": 1.4
-        },
-        {
-          "key": "betfair_ex_uk",
-          "title": "Betfair",
-          "home": 10.5,
-          "draw": 5.0,
-          "away": 1.4
-        },
-        {
-          "key": "betfair_ex_au",
-          "title": "Betfair",
-          "home": 10.5,
-          "draw": 5.0,
-          "away": 1.4
-        }
-      ]
-    },
-    "Czech Republic vs South Africa": {
-      "home": 1.89,
-      "draw": 3.7,
-      "away": 5.0,
-      "over25": 2.18,
-      "under25": 1.75,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "dc_1x": 0.0,
-      "dc_x2": 0.0,
-      "dc_12": 0.0,
-      "over225": 1.94,
-      "under225": 1.96,
-      "over30": 3.1,
-      "under30": 1.36,
-      "ah-0.5_home": 1.87,
-      "ah-0.5_away": 2.12,
-      "ah0.0_home": 1.36,
-      "ah0.0_away": 3.31,
-      "ah-1.5_home": 3.4,
-      "ah-1.5_away": 1.3,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 1.78,
-          "draw": 3.5,
-          "away": 4.8
-        },
-        {
-          "key": "leovegas_se",
-          "title": "LeoVegas (SE)",
-          "home": 1.79,
-          "draw": 3.5,
-          "away": 4.8
-        },
-        {
-          "key": "tabtouch",
-          "title": "TABtouch",
-          "home": 1.76,
-          "draw": 3.4,
-          "away": 4.7
-        },
-        {
-          "key": "livescorebet",
-          "title": "LiveScore Bet",
-          "home": 1.76,
-          "draw": 3.4,
-          "away": 4.7
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 1.79,
-          "draw": 3.5,
-          "away": 4.8
-        },
-        {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 1.76,
-          "draw": 3.4,
-          "away": 4.7
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 1.82,
-          "draw": 3.6,
-          "away": 5.0
-        },
-        {
-          "key": "casumo",
-          "title": "Casumo",
-          "home": 1.79,
-          "draw": 3.5,
-          "away": 4.8
-        },
-        {
-          "key": "betrivers",
-          "title": "BetRivers",
-          "home": 1.79,
-          "draw": 3.5,
-          "away": 4.8
-        },
-        {
-          "key": "gtbets",
-          "title": "GTbets",
-          "home": 1.86,
-          "draw": 3.64,
-          "away": 4.32
-        }
-      ]
-    },
-    "Switzerland vs Bosnia & Herzegovina": {
-      "home": 2.41,
-      "draw": 1.93,
-      "away": 8.77,
-      "over25": 2.66,
-      "under25": 1.62,
-      "over15": 2.0,
-      "under15": 1.8,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "dc_1x": 0.0,
-      "dc_x2": 0.0,
-      "dc_12": 0.0,
-      "over05": 1.7,
-      "under05": 1.7,
-      "over075": 2.11,
-      "under075": 1.78,
-      "ah-0.5_home": 2.45,
-      "ah-0.5_away": 1.5,
-      "ah-0.25_home": 1.83,
-      "ah-0.25_away": 2.07,
-      "ah-2.25_home": 2.05,
-      "ah-2.25_away": 1.8,
-      "ah-2.5_home": 3.05,
-      "ah-2.5_away": 1.39,
-      "bookmakers_h2h": [
-        {
-          "key": "leovegas_se",
-          "title": "LeoVegas (SE)",
-          "home": 1.01,
-          "draw": 13.0,
-          "away": 81.0
-        },
-        {
-          "key": "winamax_fr",
-          "title": "Winamax (FR)",
-          "home": 1.02,
-          "draw": 12.5,
-          "away": 100.0
-        },
-        {
-          "key": "tipico_de",
-          "title": "Tipico",
-          "home": 1.04,
-          "draw": 8.5,
-          "away": 100.0
-        },
-        {
-          "key": "unibet_uk",
-          "title": "Unibet (UK)",
-          "home": 1.04,
-          "draw": 11.0,
-          "away": 201.0
-        },
-        {
-          "key": "mybookieag",
-          "title": "MyBookie.ag",
-          "home": 2.45,
-          "draw": 1.85,
-          "away": 6.5
-        },
-        {
-          "key": "skybet",
-          "title": "Sky Bet",
-          "home": 1.0,
-          "draw": 276.0,
-          "away": 451.0
-        },
-        {
-          "key": "fanduel",
-          "title": "FanDuel",
-          "home": 1.02,
-          "draw": 14.0,
-          "away": 301.0
-        },
-        {
-          "key": "smarkets",
-          "title": "Smarkets",
-          "home": 1.0,
-          "draw": 303.03,
-          "away": 500.0
-        },
-        {
-          "key": "paddypower",
-          "title": "Paddy Power",
-          "home": 1.0,
-          "draw": 301.0,
-          "away": 451.0
-        },
-        {
-          "key": "betfair_ex_uk",
-          "title": "Betfair",
-          "home": 1.05,
-          "draw": 18.5,
-          "away": 530.0
-        }
-      ]
-    },
-    "Canada vs Qatar": {
-      "home": 1.31,
-      "draw": 6.5,
-      "away": 14.5,
-      "over25": 1.75,
-      "under25": 2.25,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 2.6,
-      "under35": 1.53,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over30": 2.2,
-      "under30": 1.75,
-      "over275": 1.93,
-      "under275": 1.98,
-      "ah-1.5_home": 1.85,
-      "ah-1.5_away": 2.18,
-      "ah-1.75_home": 2.02,
-      "ah-1.75_away": 1.95,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 1.26,
-          "draw": 5.75,
-          "away": 11.5
-        },
-        {
-          "key": "winamax_de",
-          "title": "Winamax (DE)",
-          "home": 1.25,
-          "draw": 6.0,
-          "away": 11.5
-        },
-        {
-          "key": "leovegas_se",
-          "title": "LeoVegas (SE)",
-          "home": 1.26,
-          "draw": 5.8,
-          "away": 11.5
-        },
-        {
-          "key": "tabtouch",
-          "title": "TABtouch",
-          "home": 1.25,
-          "draw": 5.6,
-          "away": 11.0
-        },
-        {
-          "key": "livescorebet",
-          "title": "LiveScore Bet",
-          "home": 1.25,
-          "draw": 5.6,
-          "away": 11.0
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 1.26,
-          "draw": 5.8,
-          "away": 11.5
-        },
-        {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 1.25,
-          "draw": 5.6,
-          "away": 11.0
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 1.28,
-          "draw": 6.1,
-          "away": 12.5
-        },
-        {
-          "key": "casumo",
-          "title": "Casumo",
-          "home": 1.26,
-          "draw": 5.8,
-          "away": 11.5
-        },
-        {
-          "key": "betrivers",
-          "title": "BetRivers",
-          "home": 1.26,
-          "draw": 5.8,
-          "away": 11.5
-        }
-      ]
-    },
-    "Mexico vs South Korea": {
-      "home": 2.12,
-      "draw": 3.4,
-      "away": 4.3,
-      "over25": 2.22,
-      "under25": 1.76,
-      "over15": 1.4,
-      "under15": 3.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over20": 1.71,
-      "under20": 2.34,
-      "over225": 1.96,
-      "under225": 1.94,
-      "ah-0.5_home": 2.1,
-      "ah-0.5_away": 1.9,
-      "ah0.0_home": 1.48,
-      "ah0.0_away": 2.77,
-      "ah-1.5_home": 3.85,
-      "ah-1.5_away": 1.25,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 2.05,
-          "draw": 3.25,
-          "away": 3.9
-        },
-        {
-          "key": "leovegas_se",
-          "title": "LeoVegas (SE)",
-          "home": 2.06,
-          "draw": 3.25,
-          "away": 3.9
-        },
-        {
-          "key": "tabtouch",
-          "title": "TABtouch",
-          "home": 2.02,
-          "draw": 3.15,
-          "away": 3.8
-        },
-        {
-          "key": "livescorebet",
-          "title": "LiveScore Bet",
-          "home": 2.02,
-          "draw": 3.15,
-          "away": 3.8
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 2.06,
-          "draw": 3.25,
-          "away": 3.9
-        },
-        {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 2.02,
-          "draw": 3.15,
-          "away": 3.8
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 2.1,
-          "draw": 3.35,
-          "away": 4.1
-        },
-        {
-          "key": "casumo",
-          "title": "Casumo",
-          "home": 2.06,
-          "draw": 3.25,
-          "away": 3.9
-        },
-        {
-          "key": "betrivers",
-          "title": "BetRivers",
-          "home": 2.06,
-          "draw": 3.25,
-          "away": 3.9
-        },
-        {
-          "key": "unibet_uk",
-          "title": "Unibet (UK)",
-          "home": 2.08,
-          "draw": 3.3,
-          "away": 3.8
-        }
-      ]
-    },
-    "USA vs Australia": {
-      "home": 1.02,
-      "draw": 52.0,
-      "away": 451.0,
-      "over25": 1.95,
-      "under25": 2.28,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over30": 1.96,
-      "under30": 1.92,
-      "ah-0.5_home": 2.0,
-      "ah-0.5_away": 1.9,
-      "ah-2.25_home": 2.0,
-      "ah-2.25_away": 1.83,
-      "ah-2.5_home": 2.72,
-      "ah-2.5_away": 1.5,
-      "bookmakers_h2h": [
-        {
-          "key": "fanduel",
-          "title": "FanDuel",
-          "home": 1.0,
-          "draw": 36.0,
-          "away": 201.0
-        },
-        {
-          "key": "skybet",
-          "title": "Sky Bet",
-          "home": 1.01,
-          "draw": 51.0,
-          "away": 451.0
-        },
-        {
-          "key": "paddypower",
-          "title": "Paddy Power",
-          "home": 1.01,
-          "draw": 51.0,
-          "away": 451.0
-        },
-        {
-          "key": "betfair_ex_uk",
-          "title": "Betfair",
-          "home": 1.02,
-          "draw": 42.0,
-          "away": 260.0
-        },
-        {
-          "key": "betfair_ex_eu",
-          "title": "Betfair",
-          "home": 1.02,
-          "draw": 44.0,
-          "away": 260.0
-        },
-        {
-          "key": "betfair_ex_au",
-          "title": "Betfair",
-          "home": 1.02,
-          "draw": 42.0,
-          "away": 230.0
-        },
-        {
-          "key": "winamax_fr",
-          "title": "Winamax (FR)",
-          "home": 1.0,
-          "draw": 40.0,
-          "away": 180.0
-        },
-        {
-          "key": "winamax_de",
-          "title": "Winamax (DE)",
-          "home": 1.01,
-          "draw": 42.0,
-          "away": 180.0
-        },
-        {
-          "key": "unibet_uk",
-          "title": "Unibet (UK)",
-          "home": 1.02,
-          "draw": 18.0,
-          "away": 111.0
-        },
-        {
-          "key": "coolbet",
-          "title": "Coolbet",
-          "home": 1.01,
-          "draw": 52.0,
-          "away": 150.0
-        }
-      ]
-    },
-    "Scotland vs Morocco": {
-      "home": 23.0,
-      "draw": 6.0,
-      "away": 1.26,
-      "over25": 2.68,
-      "under25": 1.58,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over225": 2.0,
-      "under225": 1.88,
-      "over20": 1.7,
-      "under20": 2.2,
-      "over30": 1.88,
-      "under30": 1.82,
-      "ah1.5_home": 1.62,
-      "ah1.5_away": 2.52,
-      "ah0.25_home": 1.87,
-      "ah0.25_away": 2.03,
-      "ah1.25_home": 1.83,
-      "ah1.25_away": 2.0,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 20.0,
-          "draw": 5.5,
-          "away": 1.2
-        },
-        {
-          "key": "winamax_de",
-          "title": "Winamax (DE)",
-          "home": 16.0,
-          "draw": 5.3,
-          "away": 1.22
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 20.0,
-          "draw": 5.4,
-          "away": 1.21
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 17.0,
-          "draw": 5.0,
-          "away": 1.17
-        },
-        {
-          "key": "livescorebet",
-          "title": "LiveScore Bet",
-          "home": 17.0,
-          "draw": 5.1,
-          "away": 1.18
-        },
-        {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 18.0,
-          "draw": 5.1,
-          "away": 1.19
-        },
-        {
-          "key": "casumo",
-          "title": "Casumo",
-          "home": 20.0,
-          "draw": 5.4,
-          "away": 1.21
-        },
-        {
-          "key": "betrivers",
-          "title": "BetRivers",
-          "home": 18.0,
-          "draw": 5.1,
-          "away": 1.19
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 17.0,
-          "draw": 5.1,
-          "away": 1.18
-        },
-        {
-          "key": "winamax_fr",
-          "title": "Winamax (FR)",
-          "home": 15.0,
-          "draw": 4.8,
-          "away": 1.2
-        }
-      ]
-    },
-    "Brazil vs Haiti": {
-      "home": 1.13,
-      "draw": 13.0,
-      "away": 26.0,
-      "over25": 1.29,
-      "under25": 3.65,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 1.87,
-      "under35": 2.14,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over375": 1.96,
-      "under375": 1.93,
-      "over30": 1.4,
-      "under30": 3.0,
-      "ah-2.5_home": 1.92,
-      "ah-2.5_away": 2.06,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 1.09,
-          "draw": 11.0,
-          "away": 23.0
-        },
-        {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 1.09,
-          "draw": 10.5,
-          "away": 21.0
-        },
-        {
-          "key": "casumo",
-          "title": "Casumo",
-          "home": 1.09,
-          "draw": 11.0,
-          "away": 23.0
-        },
-        {
-          "key": "betrivers",
-          "title": "BetRivers",
-          "home": 1.09,
-          "draw": 11.0,
-          "away": 23.0
-        },
-        {
-          "key": "gtbets",
-          "title": "GTbets",
-          "home": 1.08,
-          "draw": 10.28,
-          "away": 21.37
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 1.08,
-          "draw": 10.5,
-          "away": 21.0
-        },
-        {
-          "key": "pmu_fr",
-          "title": "PMU (FR)",
-          "home": 1.11,
-          "draw": 11.5,
-          "away": 21.0
-        },
-        {
-          "key": "unibet_nl",
-          "title": "Unibet (NL)",
-          "home": 1.11,
-          "draw": 12.0,
-          "away": 26.0
-        },
-        {
-          "key": "tipico_de",
-          "title": "Tipico",
-          "home": 1.11,
-          "draw": 10.0,
-          "away": 18.0
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 1.09,
-          "draw": 11.0,
-          "away": 23.0
-        }
-      ]
-    },
-    "Turkey vs Paraguay": {
-      "home": 2.12,
-      "draw": 3.6,
-      "away": 4.0,
-      "over25": 2.16,
-      "under25": 1.85,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over225": 1.86,
-      "under225": 2.05,
-      "over30": 2.9,
-      "under30": 1.42,
-      "ah-0.5_home": 2.1,
-      "ah-0.5_away": 1.88,
-      "ah0.0_home": 1.48,
-      "ah0.0_away": 2.76,
-      "ah-1.5_home": 4.1,
-      "ah-1.5_away": 1.22,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 2.0,
-          "draw": 3.35,
-          "away": 3.85
-        },
-        {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 2.0,
-          "draw": 3.3,
-          "away": 3.75
-        },
-        {
-          "key": "unibet_nl",
-          "title": "Unibet (NL)",
-          "home": 2.07,
-          "draw": 3.5,
-          "away": 4.0
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 2.05,
-          "draw": 3.45,
-          "away": 3.95
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 1.98,
-          "draw": 3.3,
-          "away": 3.75
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 2.02,
-          "draw": 3.4,
-          "away": 3.85
-        },
-        {
-          "key": "tabtouch",
-          "title": "TABtouch",
-          "home": 1.97,
-          "draw": 3.3,
-          "away": 3.75
-        },
-        {
-          "key": "gtbets",
-          "title": "GTbets",
-          "home": 2.07,
-          "draw": 3.37,
-          "away": 3.82
-        },
-        {
-          "key": "winamax_fr",
-          "title": "Winamax (FR)",
-          "home": 2.0,
-          "draw": 3.5,
-          "away": 3.6
-        },
-        {
-          "key": "leovegas_se",
-          "title": "LeoVegas (SE)",
-          "home": 2.02,
-          "draw": 3.4,
-          "away": 3.85
-        }
-      ]
-    },
-    "Netherlands vs Sweden": {
-      "home": 1.79,
-      "draw": 4.2,
-      "away": 5.0,
-      "over25": 1.72,
-      "under25": 2.42,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 2.5,
-      "under35": 1.56,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over30": 2.04,
-      "under30": 1.87,
-      "ah-0.5_home": 1.74,
-      "ah-0.5_away": 2.25,
-      "ah-1.5_home": 2.91,
-      "ah-1.5_away": 1.44,
-      "ah-0.75_home": 2.0,
-      "ah-0.75_away": 1.99,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 1.72,
-          "draw": 3.95,
-          "away": 4.5
-        },
-        {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 1.72,
-          "draw": 3.9,
-          "away": 4.5
-        },
-        {
-          "key": "betrivers",
-          "title": "BetRivers",
-          "home": 1.73,
-          "draw": 3.95,
-          "away": 4.6
-        },
-        {
-          "key": "pmu_fr",
-          "title": "PMU (FR)",
-          "home": 1.74,
-          "draw": 4.0,
-          "away": 4.7
-        },
-        {
-          "key": "unibet_nl",
-          "title": "Unibet (NL)",
-          "home": 1.77,
-          "draw": 4.2,
-          "away": 4.8
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 1.77,
-          "draw": 4.2,
-          "away": 4.8
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 1.71,
-          "draw": 3.85,
-          "away": 4.4
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 1.73,
-          "draw": 4.0,
-          "away": 4.6
-        },
-        {
-          "key": "unibet_fr",
-          "title": "Unibet (FR)",
-          "home": 1.7,
-          "draw": 4.15,
-          "away": 4.9
-        },
-        {
-          "key": "tabtouch",
-          "title": "TABtouch",
-          "home": 1.71,
-          "draw": 3.9,
-          "away": 4.4
-        }
-      ]
-    },
-    "Germany vs Ivory Coast": {
-      "home": 1.55,
-      "draw": 4.9,
-      "away": 7.0,
-      "over25": 1.65,
-      "under25": 2.52,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 2.5,
-      "under35": 1.6,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over30": 2.0,
-      "under30": 1.91,
-      "ah-1.5_home": 2.35,
-      "ah-1.5_away": 1.64,
-      "ah-1.0_home": 1.85,
-      "ah-1.0_away": 2.13,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 1.45,
-          "draw": 4.7,
-          "away": 6.5
-        },
-        {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 1.44,
-          "draw": 4.6,
-          "away": 6.4
-        },
-        {
-          "key": "betrivers",
-          "title": "BetRivers",
-          "home": 1.45,
-          "draw": 4.7,
-          "away": 6.5
-        },
-        {
-          "key": "pmu_fr",
-          "title": "PMU (FR)",
-          "home": 1.48,
-          "draw": 4.8,
-          "away": 6.5
-        },
-        {
-          "key": "unibet_nl",
-          "title": "Unibet (NL)",
-          "home": 1.48,
-          "draw": 4.8,
-          "away": 6.75
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 1.48,
-          "draw": 4.8,
-          "away": 6.75
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 1.44,
-          "draw": 4.6,
-          "away": 6.4
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 1.45,
-          "draw": 4.7,
-          "away": 6.5
-        },
-        {
-          "key": "unibet_fr",
-          "title": "Unibet (FR)",
-          "home": 1.49,
-          "draw": 4.8,
-          "away": 6.5
-        },
-        {
-          "key": "tabtouch",
-          "title": "TABtouch",
-          "home": 1.43,
-          "draw": 4.6,
-          "away": 6.4
-        }
-      ]
-    },
-    "Ecuador vs Curaçao": {
-      "home": 1.16,
-      "draw": 10.5,
-      "away": 31.0,
-      "over25": 1.61,
-      "under25": 2.62,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 2.4,
-      "under35": 1.57,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over30": 1.98,
-      "under30": 1.93,
-      "ah-2.5_home": 2.23,
-      "ah-2.5_away": 1.75,
-      "ah-2.0_home": 1.72,
-      "ah-2.0_away": 2.13,
-      "ah-2.25_home": 2.02,
-      "ah-2.25_away": 1.95,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 1.11,
-          "draw": 9.5,
-          "away": 23.0
-        },
-        {
-          "key": "winamax_de",
-          "title": "Winamax (DE)",
-          "home": 1.12,
-          "draw": 10.0,
-          "away": 18.0
-        },
-        {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 1.11,
-          "draw": 9.0,
-          "away": 21.0
-        },
-        {
-          "key": "betrivers",
-          "title": "BetRivers",
-          "home": 1.11,
-          "draw": 9.5,
-          "away": 23.0
-        },
-        {
-          "key": "pmu_fr",
-          "title": "PMU (FR)",
-          "home": 1.13,
-          "draw": 10.5,
-          "away": 21.0
-        },
-        {
-          "key": "unibet_nl",
-          "title": "Unibet (NL)",
-          "home": 1.13,
-          "draw": 10.5,
-          "away": 23.0
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 1.13,
-          "draw": 10.5,
-          "away": 23.0
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 1.1,
-          "draw": 9.0,
-          "away": 21.0
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 1.11,
-          "draw": 9.5,
-          "away": 23.0
-        },
-        {
-          "key": "unibet_fr",
-          "title": "Unibet (FR)",
-          "home": 1.13,
-          "draw": 10.2,
-          "away": 23.0
-        }
-      ]
-    },
-    "Tunisia vs Japan": {
-      "home": 7.6,
-      "draw": 4.5,
-      "away": 1.61,
-      "over25": 2.12,
-      "under25": 1.85,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over225": 1.86,
-      "under225": 2.05,
-      "over30": 3.05,
-      "under30": 1.39,
-      "ah0.5_home": 2.45,
-      "ah0.5_away": 1.59,
-      "ah1.5_home": 1.54,
-      "ah1.5_away": 2.6,
-      "ah1.0_home": 1.97,
-      "ah1.0_away": 1.99,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 7.0,
-          "draw": 4.25,
-          "away": 1.46
-        },
-        {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 7.0,
-          "draw": 4.2,
-          "away": 1.45
-        },
-        {
-          "key": "betrivers",
-          "title": "BetRivers",
-          "home": 7.5,
-          "draw": 4.3,
-          "away": 1.47
-        },
-        {
-          "key": "pmu_fr",
-          "title": "PMU (FR)",
-          "home": 7.5,
-          "draw": 4.5,
-          "away": 1.5
-        },
-        {
-          "key": "unibet_nl",
-          "title": "Unibet (NL)",
-          "home": 7.5,
-          "draw": 4.5,
-          "away": 1.5
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 7.5,
-          "draw": 4.5,
-          "away": 1.5
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 7.0,
-          "draw": 4.2,
-          "away": 1.45
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 7.5,
-          "draw": 4.3,
-          "away": 1.47
-        },
-        {
-          "key": "unibet_fr",
-          "title": "Unibet (FR)",
-          "home": 7.4,
-          "draw": 4.25,
-          "away": 1.53
-        },
-        {
-          "key": "tabtouch",
-          "title": "TABtouch",
-          "home": 7.0,
-          "draw": 4.2,
-          "away": 1.44
-        }
-      ]
-    },
-    "Spain vs Saudi Arabia": {
-      "home": 1.12,
-      "draw": 13.5,
-      "away": 38.0,
-      "over25": 1.35,
-      "under25": 3.3,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 1.95,
-      "under35": 2.04,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over40": 2.45,
-      "under40": 1.57,
-      "ah-2.5_home": 1.79,
-      "ah-2.5_away": 2.14,
-      "ah-2.75_home": 2.0,
-      "ah-2.75_away": 1.97,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 1.07,
-          "draw": 11.5,
-          "away": 26.0
-        },
-        {
-          "key": "onexbet",
-          "title": "1xBet",
-          "home": 1.11,
-          "draw": 11.5,
-          "away": 38.0
-        },
-        {
-          "key": "pmu_fr",
-          "title": "PMU (FR)",
-          "home": 1.08,
-          "draw": 11.5,
-          "away": 26.0
-        },
-        {
-          "key": "unibet_nl",
-          "title": "Unibet (NL)",
-          "home": 1.1,
-          "draw": 13.0,
-          "away": 26.0
-        },
-        {
-          "key": "betrivers",
-          "title": "BetRivers",
-          "home": 1.08,
-          "draw": 11.5,
-          "away": 26.0
-        },
-        {
-          "key": "livescorebet",
-          "title": "LiveScore Bet",
-          "home": 1.07,
-          "draw": 11.0,
-          "away": 26.0
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 1.1,
-          "draw": 13.0,
-          "away": 26.0
-        },
-        {
-          "key": "casumo",
-          "title": "Casumo",
-          "home": 1.08,
-          "draw": 11.5,
-          "away": 26.0
-        },
-        {
-          "key": "unibet_fr",
-          "title": "Unibet (FR)",
-          "home": 1.1,
-          "draw": 11.0,
-          "away": 24.0
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 1.08,
-          "draw": 11.5,
-          "away": 26.0
-        }
-      ]
-    },
-    "Belgium vs Iran": {
+    "Bosnia & Herzegovina vs Qatar": {
       "home": 1.45,
-      "draw": 5.15,
-      "away": 9.0,
-      "over25": 1.85,
-      "under25": 2.09,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over20": 1.4,
-      "under20": 3.0,
-      "ah-1.25_home": 2.0,
-      "ah-1.25_away": 1.96,
-      "ah-1.5_home": 2.2,
-      "ah-1.5_away": 1.74,
-      "bookmakers_h2h": [
-        {
-          "key": "pinnacle",
-          "title": "Pinnacle",
-          "home": 1.43,
-          "draw": 4.95,
-          "away": 8.25
-        },
-        {
-          "key": "tipico_de",
-          "title": "Tipico",
-          "home": 1.37,
-          "draw": 4.9,
-          "away": 8.0
-        },
-        {
-          "key": "unibet_fr",
-          "title": "Unibet (FR)",
-          "home": 1.41,
-          "draw": 5.0,
-          "away": 8.2
-        },
-        {
-          "key": "mybookieag",
-          "title": "MyBookie.ag",
-          "home": 1.41,
-          "draw": 4.6,
-          "away": 7.7
-        },
-        {
-          "key": "coolbet",
-          "title": "Coolbet",
-          "home": 1.45,
-          "draw": 4.85,
-          "away": 8.0
-        },
-        {
-          "key": "winamax_fr",
-          "title": "Winamax (FR)",
-          "home": 1.41,
-          "draw": 4.8,
-          "away": 7.25
-        },
-        {
-          "key": "betr_au",
-          "title": "Betr",
-          "home": 1.4,
-          "draw": 4.4,
-          "away": 7.5
-        },
-        {
-          "key": "onexbet",
-          "title": "1xBet",
-          "home": 1.45,
-          "draw": 4.79,
-          "away": 8.35
-        },
-        {
-          "key": "smarkets",
-          "title": "Smarkets",
-          "home": 1.45,
-          "draw": 5.1,
-          "away": 8.6
-        },
-        {
-          "key": "pointsbetau",
-          "title": "PointsBet (AU)",
-          "home": 1.4,
-          "draw": 4.5,
-          "away": 7.5
-        }
-      ]
-    },
-    "Uruguay vs Cape Verde": {
-      "home": 2.85,
-      "draw": 1.96,
-      "away": 14.0,
-      "over25": 0.0,
-      "under25": 0.0,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over45": 2.06,
-      "under45": 2.11,
-      "ah-0.5_home": 2.76,
-      "ah-0.5_away": 1.56,
-      "ah-0.25_home": 1.84,
-      "ah-0.25_away": 2.07,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 2.65,
-          "draw": 1.66,
-          "away": 11.5
-        },
-        {
-          "key": "pmu_fr",
-          "title": "PMU (FR)",
-          "home": 2.5,
-          "draw": 1.73,
-          "away": 11.0
-        },
-        {
-          "key": "unibet_nl",
-          "title": "Unibet (NL)",
-          "home": 2.6,
-          "draw": 1.68,
-          "away": 11.5
-        },
-        {
-          "key": "livescorebet",
-          "title": "LiveScore Bet",
-          "home": 2.55,
-          "draw": 1.61,
-          "away": 10.5
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 2.43,
-          "draw": 1.64,
-          "away": 10.0
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 2.55,
-          "draw": 1.71,
-          "away": 11.5
-        },
-        {
-          "key": "tipico_de",
-          "title": "Tipico",
-          "home": 2.5,
-          "draw": 1.75,
-          "away": 8.5
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 2.48,
-          "draw": 1.64,
-          "away": 10.5
-        },
-        {
-          "key": "betrivers",
-          "title": "BetRivers",
-          "home": 2.65,
-          "draw": 1.66,
-          "away": 11.5
-        },
-        {
-          "key": "leovegas_se",
-          "title": "LeoVegas (SE)",
-          "home": 2.43,
-          "draw": 1.61,
-          "away": 10.5
-        }
-      ]
-    },
-    "New Zealand vs Egypt": {
-      "home": 6.6,
-      "draw": 4.3,
-      "away": 1.64,
-      "over25": 2.1,
-      "under25": 1.89,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over30": 2.85,
-      "under30": 1.43,
-      "ah0.5_home": 2.52,
-      "ah0.5_away": 1.59,
-      "ah1.5_home": 1.5,
-      "ah1.5_away": 2.72,
-      "ah1.0_home": 1.91,
-      "ah1.0_away": 2.06,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 6.1,
-          "draw": 3.9,
-          "away": 1.57
-        },
-        {
-          "key": "pmu_fr",
-          "title": "PMU (FR)",
-          "home": 6.25,
-          "draw": 4.0,
-          "away": 1.6
-        },
-        {
-          "key": "unibet_nl",
-          "title": "Unibet (NL)",
-          "home": 6.4,
-          "draw": 4.0,
-          "away": 1.6
-        },
-        {
-          "key": "livescorebet",
-          "title": "LiveScore Bet",
-          "home": 6.0,
-          "draw": 3.85,
-          "away": 1.56
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 6.1,
-          "draw": 3.95,
-          "away": 1.57
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 6.4,
-          "draw": 4.0,
-          "away": 1.6
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 6.0,
-          "draw": 3.85,
-          "away": 1.56
-        },
-        {
-          "key": "betrivers",
-          "title": "BetRivers",
-          "home": 6.1,
-          "draw": 3.95,
-          "away": 1.57
-        },
-        {
-          "key": "leovegas_se",
-          "title": "LeoVegas (SE)",
-          "home": 6.1,
-          "draw": 3.95,
-          "away": 1.57
-        },
-        {
-          "key": "tabtouch",
-          "title": "TABtouch",
-          "home": 6.0,
-          "draw": 3.85,
-          "away": 1.56
-        }
-      ]
-    },
-    "Argentina vs Austria": {
-      "home": 1.53,
-      "draw": 4.65,
-      "away": 8.8,
-      "over25": 2.02,
-      "under25": 1.95,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over30": 2.75,
-      "under30": 1.44,
-      "ah-1.5_home": 2.37,
-      "ah-1.5_away": 1.63,
-      "ah-1.0_home": 1.82,
-      "ah-1.0_away": 2.2,
-      "ah-1.25_home": 2.16,
-      "ah-1.25_away": 1.84,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 1.45,
-          "draw": 4.3,
-          "away": 7.5
-        },
-        {
-          "key": "unibet_uk",
-          "title": "Unibet (UK)",
-          "home": 1.45,
-          "draw": 4.5,
-          "away": 7.5
-        },
-        {
-          "key": "pmu_fr",
-          "title": "PMU (FR)",
-          "home": 1.48,
-          "draw": 4.5,
-          "away": 8.0
-        },
-        {
-          "key": "unibet_nl",
-          "title": "Unibet (NL)",
-          "home": 1.48,
-          "draw": 4.5,
-          "away": 8.0
-        },
-        {
-          "key": "unibet_fr",
-          "title": "Unibet (FR)",
-          "home": 1.45,
-          "draw": 4.6,
-          "away": 8.75
-        },
-        {
-          "key": "livescorebet",
-          "title": "LiveScore Bet",
-          "home": 1.44,
-          "draw": 4.2,
-          "away": 7.5
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 1.45,
-          "draw": 4.3,
-          "away": 7.5
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 1.48,
-          "draw": 4.5,
-          "away": 8.0
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 1.44,
-          "draw": 4.2,
-          "away": 7.5
-        },
-        {
-          "key": "betrivers",
-          "title": "BetRivers",
-          "home": 1.45,
-          "draw": 4.3,
-          "away": 7.5
-        }
-      ]
-    },
-    "France vs Iraq": {
-      "home": 1.12,
-      "draw": 15.0,
-      "away": 46.08,
-      "over25": 1.35,
-      "under25": 3.5,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 1.86,
-      "under35": 2.14,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over375": 2.0,
-      "under375": 1.89,
-      "over40": 2.25,
-      "under40": 1.65,
-      "ah-2.5_home": 1.72,
-      "ah-2.5_away": 2.4,
-      "ah-3.0_home": 2.05,
-      "ah-3.0_away": 1.78,
-      "ah-2.75_home": 1.85,
-      "ah-2.75_away": 2.12,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 1.07,
-          "draw": 12.0,
-          "away": 34.0
-        },
-        {
-          "key": "unibet_uk",
-          "title": "Unibet (UK)",
-          "home": 1.07,
-          "draw": 12.0,
-          "away": 36.0
-        },
-        {
-          "key": "pmu_fr",
-          "title": "PMU (FR)",
-          "home": 1.08,
-          "draw": 13.0,
-          "away": 30.0
-        },
-        {
-          "key": "unibet_nl",
-          "title": "Unibet (NL)",
-          "home": 1.08,
-          "draw": 13.0,
-          "away": 36.0
-        },
-        {
-          "key": "unibet_fr",
-          "title": "Unibet (FR)",
-          "home": 1.08,
-          "draw": 13.0,
-          "away": 30.0
-        },
-        {
-          "key": "livescorebet",
-          "title": "LiveScore Bet",
-          "home": 1.06,
-          "draw": 11.5,
-          "away": 30.0
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 1.07,
-          "draw": 12.0,
-          "away": 34.0
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 1.08,
-          "draw": 13.0,
-          "away": 36.0
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 1.06,
-          "draw": 11.5,
-          "away": 30.0
-        },
-        {
-          "key": "betrivers",
-          "title": "BetRivers",
-          "home": 1.07,
-          "draw": 12.0,
-          "away": 34.0
-        }
-      ]
-    },
-    "Norway vs Senegal": {
-      "home": 2.36,
-      "draw": 3.55,
-      "away": 3.4,
-      "over25": 2.0,
-      "under25": 1.98,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over30": 2.6,
-      "under30": 1.53,
-      "ah0.0_home": 1.67,
-      "ah0.0_away": 2.32,
-      "ah-0.5_home": 2.34,
-      "ah-0.5_away": 1.68,
-      "ah-0.25_home": 2.01,
-      "ah-0.25_away": 1.96,
-      "ah-1.5_home": 4.4,
-      "ah-1.5_away": 1.2,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 2.23,
-          "draw": 3.3,
-          "away": 3.3
-        },
-        {
-          "key": "onexbet",
-          "title": "1xBet",
-          "home": 2.35,
-          "draw": 3.48,
-          "away": 3.31
-        },
-        {
-          "key": "unibet_nl",
-          "title": "Unibet (NL)",
-          "home": 2.28,
-          "draw": 3.4,
-          "away": 3.4
-        },
-        {
-          "key": "pmu_fr",
-          "title": "PMU (FR)",
-          "home": 2.28,
-          "draw": 3.4,
-          "away": 3.4
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 2.23,
-          "draw": 3.3,
-          "away": 3.3
-        },
-        {
-          "key": "livescorebet",
-          "title": "LiveScore Bet",
-          "home": 2.2,
-          "draw": 3.25,
-          "away": 3.25
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 2.2,
-          "draw": 3.25,
-          "away": 3.25
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 2.28,
-          "draw": 3.4,
-          "away": 3.4
-        },
-        {
-          "key": "betrivers",
-          "title": "BetRivers",
-          "home": 2.23,
-          "draw": 3.3,
-          "away": 3.3
-        },
-        {
-          "key": "casumo",
-          "title": "Casumo",
-          "home": 2.23,
-          "draw": 3.3,
-          "away": 3.3
-        }
-      ]
-    },
-    "Jordan vs Algeria": {
-      "home": 6.87,
-      "draw": 4.5,
-      "away": 1.6,
-      "over25": 2.0,
-      "under25": 1.98,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over30": 2.7,
-      "under30": 1.45,
-      "ah1.5_home": 1.56,
-      "ah1.5_away": 2.54,
-      "ah1.0_home": 2.04,
-      "ah1.0_away": 1.94,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 6.4,
-          "draw": 4.25,
-          "away": 1.5
-        },
-        {
-          "key": "onexbet",
-          "title": "1xBet",
-          "home": 6.87,
-          "draw": 4.39,
-          "away": 1.56
-        },
-        {
-          "key": "unibet_nl",
-          "title": "Unibet (NL)",
-          "home": 6.75,
-          "draw": 4.35,
-          "away": 1.53
-        },
-        {
-          "key": "pmu_fr",
-          "title": "PMU (FR)",
-          "home": 6.4,
-          "draw": 4.35,
-          "away": 1.53
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 6.4,
-          "draw": 4.25,
-          "away": 1.51
-        },
-        {
-          "key": "livescorebet",
-          "title": "LiveScore Bet",
-          "home": 6.25,
-          "draw": 4.1,
-          "away": 1.49
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 6.25,
-          "draw": 4.1,
-          "away": 1.49
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 6.75,
-          "draw": 4.35,
-          "away": 1.53
-        },
-        {
-          "key": "tipico_de",
-          "title": "Tipico",
-          "home": 6.7,
-          "draw": 4.2,
-          "away": 1.5
-        },
-        {
-          "key": "betrivers",
-          "title": "BetRivers",
-          "home": 6.4,
-          "draw": 4.25,
-          "away": 1.51
-        }
-      ]
-    },
-    "Portugal vs Uzbekistan": {
-      "home": 1.02,
-      "draw": 1001.0,
-      "away": 1001.0,
-      "over25": 0.0,
-      "under25": 0.0,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over45": 1.93,
-      "under45": 2.1,
-      "over50": 3.9,
-      "under50": 1.24,
-      "ah-4.5_home": 2.1,
-      "ah-4.5_away": 1.65,
-      "ah-0.25_home": 1.78,
-      "ah-0.25_away": 2.11,
-      "ah-4.25_home": 1.68,
-      "ah-4.25_away": 2.22,
-      "bookmakers_h2h": [
-        {
-          "key": "skybet",
-          "title": "Sky Bet",
-          "home": 1.0,
-          "draw": 451.0,
-          "away": 451.0
-        },
-        {
-          "key": "paddypower",
-          "title": "Paddy Power",
-          "home": 1.0,
-          "draw": 451.0,
-          "away": 451.0
-        },
-        {
-          "key": "ladbrokes_uk",
-          "title": "Ladbrokes",
-          "home": 1.02,
-          "draw": 1.02,
-          "away": 1.02
-        },
-        {
-          "key": "coral",
-          "title": "Coral",
-          "home": 1.02,
-          "draw": 1.02,
-          "away": 1.02
-        },
-        {
-          "key": "betclic_fr",
-          "title": "Betclic (FR)",
-          "home": 1.0,
-          "draw": 100.0,
-          "away": 100.0
-        },
-        {
-          "key": "betway",
-          "title": "Betway",
-          "home": 1.0,
-          "draw": 1001.0,
-          "away": 1001.0
-        },
-        {
-          "key": "williamhill_us",
-          "title": "Caesars",
-          "home": 1.01,
-          "draw": 21.0,
-          "away": 36.0
-        },
-        {
-          "key": "nordicbet",
-          "title": "Nordic Bet",
-          "home": 1.0,
-          "draw": 201.0,
-          "away": 201.0
-        },
-        {
-          "key": "betsson",
-          "title": "Betsson",
-          "home": 1.0,
-          "draw": 201.0,
-          "away": 201.0
-        }
-      ]
-    },
-    "England vs Ghana": {
-      "home": 1.21,
-      "draw": 8.4,
-      "away": 19.5,
-      "over25": 1.56,
+      "draw": 5.5,
+      "away": 8.2,
+      "over25": 1.59,
       "under25": 2.48,
       "over15": 0.0,
       "under15": 0.0,
-      "over35": 2.4,
-      "under35": 1.63,
+      "over35": 2.45,
+      "under35": 1.57,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over30": 1.87,
-      "under30": 2.02,
-      "ah-2.5_home": 2.43,
-      "ah-2.5_away": 1.6,
-      "ah-2.0_home": 1.97,
-      "ah-2.0_away": 2.0,
-      "ah-1.5_home": 1.57,
-      "ah-1.5_away": 2.54,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 1.17,
-          "draw": 7.5,
-          "away": 17.0
-        },
-        {
-          "key": "winamax_de",
-          "title": "Winamax (DE)",
-          "home": 1.18,
-          "draw": 7.75,
-          "away": 14.5
-        },
-        {
-          "key": "pmu_fr",
-          "title": "PMU (FR)",
-          "home": 1.16,
-          "draw": 7.0,
-          "away": 16.0
-        },
-        {
-          "key": "unibet_nl",
-          "title": "Unibet (NL)",
-          "home": 1.18,
-          "draw": 7.5,
-          "away": 18.0
-        },
-        {
-          "key": "tipico_de",
-          "title": "Tipico",
-          "home": 1.16,
-          "draw": 7.5,
-          "away": 17.0
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 1.17,
-          "draw": 7.5,
-          "away": 17.0
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 1.16,
-          "draw": 7.0,
-          "away": 16.0
-        },
-        {
-          "key": "casumo",
-          "title": "Casumo",
-          "home": 1.17,
-          "draw": 7.5,
-          "away": 17.0
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 1.18,
-          "draw": 7.5,
-          "away": 18.0
-        },
-        {
-          "key": "unibet_fr",
-          "title": "Unibet (FR)",
-          "home": 1.16,
-          "draw": 8.0,
-          "away": 18.0
-        }
-      ]
-    },
-    "Panama vs Croatia": {
-      "home": 8.0,
-      "draw": 4.7,
-      "away": 1.52,
-      "over25": 1.72,
-      "under25": 2.36,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 2.7,
-      "under35": 1.5,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over30": 2.18,
-      "under30": 1.77,
-      "over275": 1.85,
-      "under275": 2.07,
-      "ah1.5_home": 1.67,
-      "ah1.5_away": 2.32,
-      "ah1.0_home": 2.17,
-      "ah1.0_away": 1.75,
-      "ah1.25_home": 1.9,
-      "ah1.25_away": 2.06,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 7.5,
-          "draw": 4.35,
-          "away": 1.45
-        },
-        {
-          "key": "winamax_de",
-          "title": "Winamax (DE)",
-          "home": 6.75,
-          "draw": 4.7,
-          "away": 1.46
-        },
-        {
-          "key": "pmu_fr",
-          "title": "PMU (FR)",
-          "home": 7.0,
-          "draw": 4.5,
-          "away": 1.47
-        },
-        {
-          "key": "unibet_uk",
-          "title": "Unibet (UK)",
-          "home": 6.5,
-          "draw": 4.6,
-          "away": 1.48
-        },
-        {
-          "key": "unibet_nl",
-          "title": "Unibet (NL)",
-          "home": 7.5,
-          "draw": 4.5,
-          "away": 1.47
-        },
-        {
-          "key": "tipico_de",
-          "title": "Tipico",
-          "home": 7.5,
-          "draw": 4.6,
-          "away": 1.42
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 7.5,
-          "draw": 4.35,
-          "away": 1.44
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 7.0,
-          "draw": 4.25,
-          "away": 1.43
-        },
-        {
-          "key": "casumo",
-          "title": "Casumo",
-          "home": 7.5,
-          "draw": 4.35,
-          "away": 1.44
-        },
-        {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 7.5,
-          "draw": 4.5,
-          "away": 1.47
-        }
-      ]
-    },
-    "Colombia vs DR Congo": {
-      "home": 1.59,
-      "draw": 4.25,
-      "away": 7.5,
-      "over25": 2.25,
-      "under25": 1.75,
-      "over15": 1.37,
-      "under15": 3.1,
-      "over35": 0.0,
-      "under35": 0.0,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over225": 1.91,
-      "under225": 2.0,
-      "ah-0.5_home": 1.56,
-      "ah-0.5_away": 2.43,
-      "ah-1.5_home": 2.69,
-      "ah-1.5_away": 1.51,
-      "ah-1.0_home": 2.06,
-      "ah-1.0_away": 1.91,
-      "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 1.53,
-          "draw": 3.9,
-          "away": 6.75
-        },
-        {
-          "key": "livescorebet",
-          "title": "LiveScore Bet",
-          "home": 1.52,
-          "draw": 3.85,
-          "away": 6.5
-        },
-        {
-          "key": "tabtouch",
-          "title": "TABtouch",
-          "home": 1.51,
-          "draw": 3.85,
-          "away": 6.5
-        },
-        {
-          "key": "casumo",
-          "title": "Casumo",
-          "home": 1.54,
-          "draw": 3.95,
-          "away": 6.75
-        },
-        {
-          "key": "leovegas",
-          "title": "LeoVegas",
-          "home": 1.54,
-          "draw": 3.95,
-          "away": 6.75
-        },
-        {
-          "key": "unibet_nl",
-          "title": "Unibet (NL)",
-          "home": 1.56,
-          "draw": 4.1,
-          "away": 7.0
-        },
-        {
-          "key": "unibet_uk",
-          "title": "Unibet (UK)",
-          "home": 1.55,
-          "draw": 4.0,
-          "away": 6.5
-        },
-        {
-          "key": "unibet_fr",
-          "title": "Unibet (FR)",
-          "home": 1.54,
-          "draw": 4.25,
-          "away": 7.0
-        },
-        {
-          "key": "betrivers",
-          "title": "BetRivers",
-          "home": 1.54,
-          "draw": 3.95,
-          "away": 6.75
-        },
-        {
-          "key": "winamax_fr",
-          "title": "Winamax (FR)",
-          "home": 1.54,
-          "draw": 4.1,
-          "away": 6.0
-        }
-      ]
-    },
-    "Bosnia & Herzegovina vs Qatar": {
-      "home": 1.45,
-      "draw": 5.6,
-      "away": 8.5,
-      "over25": 1.61,
-      "under25": 2.45,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 2.55,
-      "under35": 1.55,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over30": 2.0,
-      "under30": 1.97,
-      "ah-1.5_home": 2.1,
-      "ah-1.5_away": 1.88,
-      "ah-1.0_home": 1.65,
-      "ah-1.0_away": 2.36,
+      "over30": 1.99,
+      "under30": 1.95,
+      "ah-1.5_home": 2.17,
+      "ah-1.5_away": 1.78,
+      "ah-1.25_home": 1.94,
+      "ah-1.25_away": 2.02,
+      "ah-1.0_home": 1.64,
+      "ah-1.0_away": 2.38,
       "bookmakers_h2h": [
         {
           "key": "sportsbet",
@@ -3280,50 +42,50 @@
         {
           "key": "coolbet",
           "title": "Coolbet",
-          "home": 1.41,
+          "home": 1.43,
           "draw": 5.3,
-          "away": 8.0
+          "away": 7.5
         },
         {
           "key": "unibet_fr",
           "title": "Unibet (FR)",
-          "home": 1.35,
-          "draw": 5.5,
+          "home": 1.37,
+          "draw": 5.4,
           "away": 8.0
         },
         {
           "key": "betr_au",
           "title": "Betr",
-          "home": 1.38,
-          "draw": 4.7,
-          "away": 7.5
+          "home": 1.4,
+          "draw": 4.6,
+          "away": 7.0
         },
         {
           "key": "tipico_de",
           "title": "Tipico",
-          "home": 1.35,
-          "draw": 5.5,
-          "away": 7.5
+          "home": 1.37,
+          "draw": 5.3,
+          "away": 7.2
         },
         {
           "key": "onexbet",
           "title": "1xBet",
-          "home": 1.43,
-          "draw": 5.33,
-          "away": 7.9
+          "home": 1.44,
+          "draw": 5.25,
+          "away": 7.75
         },
         {
           "key": "winamax_fr",
           "title": "Winamax (FR)",
-          "home": 1.35,
-          "draw": 5.2,
-          "away": 6.75
+          "home": 1.38,
+          "draw": 5.1,
+          "away": 6.5
         },
         {
           "key": "fanduel",
           "title": "FanDuel",
-          "home": 1.37,
-          "draw": 5.2,
+          "home": 1.38,
+          "draw": 5.1,
           "away": 7.0
         },
         {
@@ -3336,218 +98,216 @@
         {
           "key": "unibet_uk",
           "title": "Unibet (UK)",
-          "home": 1.37,
-          "draw": 5.25,
-          "away": 7.5
+          "home": 1.4,
+          "draw": 5.0,
+          "away": 7.0
         }
       ]
     },
     "Switzerland vs Canada": {
-      "home": 2.45,
-      "draw": 3.25,
-      "away": 3.6,
-      "over25": 2.12,
-      "under25": 1.87,
+      "home": 2.46,
+      "draw": 3.2,
+      "away": 3.5,
+      "over25": 2.18,
+      "under25": 1.83,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over225": 1.83,
-      "under225": 2.07,
+      "over225": 1.87,
+      "under225": 2.02,
       "over20": 1.54,
       "under20": 2.55,
-      "ah0.0_home": 1.65,
-      "ah0.0_away": 2.36,
+      "ah0.0_home": 1.66,
+      "ah0.0_away": 2.3,
       "ah-0.5_home": 2.37,
-      "ah-0.5_away": 1.64,
-      "ah-0.25_home": 2.04,
-      "ah-0.25_away": 1.95,
-      "ah-1.5_home": 4.5,
+      "ah-0.5_away": 1.65,
+      "ah-0.25_home": 2.08,
+      "ah-0.25_away": 1.91,
+      "ah-1.5_home": 4.75,
       "ah-1.5_away": 1.18,
       "bookmakers_h2h": [
         {
           "key": "sportsbet",
           "title": "SportsBet",
-          "home": 2.3,
+          "home": 2.37,
           "draw": 3.1,
-          "away": 3.4
+          "away": 3.3
         },
         {
           "key": "coolbet",
           "title": "Coolbet",
-          "home": 2.45,
-          "draw": 3.1,
-          "away": 3.45
+          "home": 2.4,
+          "draw": 3.15,
+          "away": 3.49
         },
         {
           "key": "betr_au",
           "title": "Betr",
           "home": 2.35,
-          "draw": 3.1,
-          "away": 3.1
+          "draw": 3.0,
+          "away": 3.15
         },
         {
           "key": "tipico_de",
           "title": "Tipico",
-          "home": 2.25,
+          "home": 2.3,
           "draw": 3.1,
-          "away": 3.5
+          "away": 3.4
         },
         {
           "key": "winamax_de",
           "title": "Winamax (DE)",
           "home": 2.25,
-          "draw": 3.15,
+          "draw": 3.2,
           "away": 3.2
         },
         {
           "key": "onexbet",
           "title": "1xBet",
-          "home": 2.41,
-          "draw": 3.18,
-          "away": 3.49
+          "home": 2.44,
+          "draw": 3.17,
+          "away": 3.44
         },
         {
           "key": "betfred_uk",
           "title": "Betfred (UK)",
-          "home": 2.4,
-          "draw": 3.25,
-          "away": 3.1
+          "home": 2.3,
+          "draw": 3.2,
+          "away": 3.2
         },
         {
           "key": "winamax_fr",
           "title": "Winamax (FR)",
           "home": 2.25,
-          "draw": 3.1,
+          "draw": 3.15,
           "away": 3.15
         },
         {
           "key": "fanduel",
           "title": "FanDuel",
-          "home": 2.3,
-          "draw": 3.0,
-          "away": 3.4
+          "home": 2.35,
+          "draw": 3.1,
+          "away": 3.3
         },
         {
           "key": "paddypower",
           "title": "Paddy Power",
-          "home": 2.25,
+          "home": 2.3,
           "draw": 3.0,
-          "away": 3.4
+          "away": 3.3
         }
       ]
     },
     "Scotland vs Brazil": {
-      "home": 9.6,
-      "draw": 5.5,
+      "home": 10.3,
+      "draw": 5.8,
       "away": 1.41,
-      "over25": 1.92,
-      "under25": 2.06,
+      "over25": 1.89,
+      "under25": 2.12,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over30": 2.6,
-      "under30": 1.53,
-      "ah1.5_home": 1.8,
-      "ah1.5_away": 2.17,
-      "ah1.25_home": 2.08,
-      "ah1.25_away": 1.89,
+      "over30": 2.55,
+      "under30": 1.54,
+      "ah1.5_home": 1.89,
+      "ah1.5_away": 2.08,
       "bookmakers_h2h": [
         {
           "key": "unibet",
           "title": "Unibet",
-          "home": 8.0,
-          "draw": 5.2,
-          "away": 1.35
+          "home": 9.0,
+          "draw": 5.4,
+          "away": 1.32
         },
         {
           "key": "pmu_fr",
           "title": "PMU (FR)",
-          "home": 8.0,
-          "draw": 5.1,
-          "away": 1.34
+          "home": 8.5,
+          "draw": 5.25,
+          "away": 1.3
         },
         {
           "key": "unibet_nl",
           "title": "Unibet (NL)",
-          "home": 8.5,
-          "draw": 5.4,
-          "away": 1.36
+          "home": 9.5,
+          "draw": 5.6,
+          "away": 1.34
         },
         {
           "key": "tipico_de",
           "title": "Tipico",
-          "home": 8.2,
-          "draw": 5.2,
-          "away": 1.35
+          "home": 9.5,
+          "draw": 5.5,
+          "away": 1.3
         },
         {
           "key": "leovegas",
           "title": "LeoVegas",
-          "home": 8.0,
-          "draw": 5.2,
-          "away": 1.36
+          "home": 9.0,
+          "draw": 5.4,
+          "away": 1.33
         },
         {
           "key": "virginbet",
           "title": "Virgin Bet",
-          "home": 8.0,
-          "draw": 5.1,
-          "away": 1.34
+          "home": 8.5,
+          "draw": 5.25,
+          "away": 1.3
         },
         {
           "key": "casumo",
           "title": "Casumo",
-          "home": 8.0,
-          "draw": 5.2,
-          "away": 1.36
+          "home": 9.0,
+          "draw": 5.5,
+          "away": 1.32
         },
         {
           "key": "unibet_se",
           "title": "Unibet (SE)",
-          "home": 8.5,
-          "draw": 5.4,
-          "away": 1.36
+          "home": 9.5,
+          "draw": 5.6,
+          "away": 1.34
         },
         {
           "key": "livescorebet",
           "title": "LiveScore Bet",
-          "home": 8.0,
-          "draw": 5.1,
-          "away": 1.34
+          "home": 8.5,
+          "draw": 5.25,
+          "away": 1.3
         },
         {
           "key": "betrivers",
           "title": "BetRivers",
-          "home": 8.0,
-          "draw": 5.2,
-          "away": 1.36
+          "home": 9.0,
+          "draw": 5.4,
+          "away": 1.33
         }
       ]
     },
     "Morocco vs Haiti": {
       "home": 1.23,
-      "draw": 9.0,
-      "away": 31.0,
+      "draw": 8.0,
+      "away": 20.0,
       "over25": 1.55,
-      "under25": 2.48,
+      "under25": 2.52,
       "over15": 0.0,
       "under15": 0.0,
-      "over35": 2.36,
-      "under35": 1.67,
+      "over35": 2.34,
+      "under35": 1.64,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over30": 1.88,
-      "under30": 2.01,
-      "ah-2.5_home": 2.37,
-      "ah-2.5_away": 1.63,
-      "ah-2.0_home": 1.94,
-      "ah-2.0_away": 2.0,
+      "over30": 1.89,
+      "under30": 2.04,
+      "ah-1.5_home": 1.61,
+      "ah-1.5_away": 2.42,
+      "ah-2.0_home": 2.0,
+      "ah-2.0_away": 1.95,
       "bookmakers_h2h": [
         {
           "key": "sportsbet",
@@ -3559,30 +319,30 @@
         {
           "key": "tipico_de",
           "title": "Tipico",
-          "home": 1.15,
-          "draw": 7.8,
+          "home": 1.16,
+          "draw": 7.5,
           "away": 17.0
         },
         {
           "key": "unibet_uk",
           "title": "Unibet (UK)",
-          "home": 1.17,
-          "draw": 7.5,
-          "away": 18.0
+          "home": 1.19,
+          "draw": 7.0,
+          "away": 16.0
         },
         {
           "key": "unibet_fr",
           "title": "Unibet (FR)",
-          "home": 1.13,
-          "draw": 7.6,
-          "away": 31.0
+          "home": 1.16,
+          "draw": 7.7,
+          "away": 18.0
         },
         {
           "key": "betfred_uk",
           "title": "Betfred (UK)",
           "home": 1.2,
           "draw": 6.5,
-          "away": 17.0
+          "away": 15.0
         },
         {
           "key": "coolbet",
@@ -3594,9 +354,9 @@
         {
           "key": "winamax_fr",
           "title": "Winamax (FR)",
-          "home": 1.15,
-          "draw": 7.5,
-          "away": 13.5
+          "home": 1.17,
+          "draw": 7.25,
+          "away": 12.5
         },
         {
           "key": "fanduel",
@@ -3608,47 +368,45 @@
         {
           "key": "winamax_de",
           "title": "Winamax (DE)",
-          "home": 1.16,
-          "draw": 7.75,
-          "away": 14.0
+          "home": 1.17,
+          "draw": 7.5,
+          "away": 12.5
         },
         {
           "key": "gtbets",
           "title": "GTbets",
           "home": 1.23,
           "draw": 7.04,
-          "away": 16.83
+          "away": 14.85
         }
       ]
     },
     "Czech Republic vs Mexico": {
-      "home": 3.89,
-      "draw": 4.2,
-      "away": 2.02,
+      "home": 4.0,
+      "draw": 4.05,
+      "away": 2.0,
       "over25": 2.14,
-      "under25": 1.84,
+      "under25": 1.83,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over225": 1.85,
-      "under225": 2.04,
       "over30": 3.0,
       "under30": 1.38,
-      "ah0.5_home": 2.0,
-      "ah0.5_away": 1.99,
+      "ah0.5_home": 2.02,
+      "ah0.5_away": 1.97,
       "ah1.5_home": 1.25,
-      "ah1.5_away": 3.7,
-      "ah0.0_home": 2.69,
-      "ah0.0_away": 1.5,
+      "ah1.5_away": 3.85,
+      "ah0.0_home": 2.8,
+      "ah0.0_away": 1.47,
       "bookmakers_h2h": [
         {
           "key": "sportsbet",
           "title": "SportsBet",
-          "home": 3.6,
-          "draw": 4.0,
+          "home": 3.9,
+          "draw": 3.9,
           "away": 1.9
         },
         {
@@ -3675,23 +433,23 @@
         {
           "key": "unibet_uk",
           "title": "Unibet (UK)",
-          "home": 3.75,
+          "home": 3.8,
           "draw": 3.75,
-          "away": 2.0
+          "away": 1.95
         },
         {
           "key": "winamax_fr",
           "title": "Winamax (FR)",
-          "home": 3.35,
-          "draw": 3.9,
-          "away": 1.92
+          "home": 3.5,
+          "draw": 3.95,
+          "away": 1.86
         },
         {
           "key": "fanduel",
           "title": "FanDuel",
-          "home": 3.6,
-          "draw": 4.0,
-          "away": 1.91
+          "home": 3.8,
+          "draw": 3.8,
+          "away": 1.87
         },
         {
           "key": "gtbets",
@@ -3703,39 +461,39 @@
         {
           "key": "skybet",
           "title": "Sky Bet",
-          "home": 3.5,
-          "draw": 3.9,
-          "away": 1.91
+          "home": 3.75,
+          "draw": 3.8,
+          "away": 1.85
         },
         {
           "key": "paddypower",
           "title": "Paddy Power",
-          "home": 3.6,
-          "draw": 3.8,
-          "away": 1.9
+          "home": 3.75,
+          "draw": 3.75,
+          "away": 1.87
         }
       ]
     },
     "South Africa vs South Korea": {
-      "home": 6.0,
+      "home": 6.25,
       "draw": 4.0,
-      "away": 1.73,
-      "over25": 2.13,
-      "under25": 1.79,
+      "away": 1.71,
+      "over25": 2.1,
+      "under25": 1.87,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over225": 1.85,
-      "under225": 2.05,
-      "ah0.5_home": 2.25,
+      "over30": 2.9,
+      "under30": 1.42,
+      "ah0.5_home": 2.28,
       "ah0.5_away": 1.69,
-      "ah0.75_home": 2.04,
-      "ah0.75_away": 1.93,
+      "ah0.75_home": 2.08,
+      "ah0.75_away": 1.9,
       "ah1.5_home": 1.44,
-      "ah1.5_away": 2.94,
+      "ah1.5_away": 2.91,
       "bookmakers_h2h": [
         {
           "key": "sportsbet",
@@ -3761,9 +519,9 @@
         {
           "key": "coolbet",
           "title": "Coolbet",
-          "home": 5.5,
-          "draw": 3.85,
-          "away": 1.72
+          "home": 5.7,
+          "draw": 3.9,
+          "away": 1.69
         },
         {
           "key": "winamax_fr",
@@ -3775,8 +533,8 @@
         {
           "key": "fanduel",
           "title": "FanDuel",
-          "home": 5.4,
-          "draw": 3.9,
+          "home": 5.5,
+          "draw": 3.8,
           "away": 1.65
         },
         {
@@ -3796,7 +554,7 @@
         {
           "key": "skybet",
           "title": "Sky Bet",
-          "home": 5.25,
+          "home": 5.0,
           "draw": 3.8,
           "away": 1.62
         },
@@ -3804,36 +562,36 @@
           "key": "paddypower",
           "title": "Paddy Power",
           "home": 5.0,
-          "draw": 3.8,
+          "draw": 3.75,
           "away": 1.62
         }
       ]
     },
     "Curaçao vs Ivory Coast": {
       "home": 25.0,
-      "draw": 9.2,
-      "away": 1.18,
+      "draw": 10.0,
+      "away": 1.19,
       "over25": 1.52,
-      "under25": 2.6,
+      "under25": 2.58,
       "over15": 0.0,
       "under15": 0.0,
-      "over35": 2.35,
-      "under35": 1.67,
+      "over35": 2.3,
+      "under35": 1.68,
       "btts_yes": 0.0,
       "btts_no": 0.0,
       "over30": 1.85,
       "under30": 2.04,
-      "ah2.5_home": 1.71,
+      "ah2.5_home": 1.7,
       "ah2.5_away": 2.23,
-      "ah2.0_home": 2.07,
+      "ah2.0_home": 2.08,
       "ah2.0_away": 1.81,
-      "ah2.25_home": 1.88,
+      "ah2.25_home": 1.87,
       "ah2.25_away": 2.08,
       "bookmakers_h2h": [
         {
           "key": "sportsbet",
           "title": "SportsBet",
-          "home": 17.0,
+          "home": 18.0,
           "draw": 8.5,
           "away": 1.15
         },
@@ -3841,7 +599,7 @@
           "key": "unibet_uk",
           "title": "Unibet (UK)",
           "home": 19.0,
-          "draw": 7.5,
+          "draw": 8.0,
           "away": 1.15
         },
         {
@@ -3870,7 +628,7 @@
           "title": "FanDuel",
           "home": 17.0,
           "draw": 8.0,
-          "away": 1.14
+          "away": 1.15
         },
         {
           "key": "betr_au",
@@ -3883,7 +641,7 @@
           "key": "skybet",
           "title": "Sky Bet",
           "home": 13.0,
-          "draw": 8.5,
+          "draw": 8.0,
           "away": 1.14
         },
         {
@@ -3897,17 +655,17 @@
           "key": "betfair_ex_au",
           "title": "Betfair",
           "home": 20.0,
-          "draw": 9.2,
-          "away": 1.18
+          "draw": 8.8,
+          "away": 1.19
         }
       ]
     },
     "Ecuador vs Germany": {
-      "home": 4.0,
-      "draw": 4.2,
-      "away": 2.0,
-      "over25": 1.83,
-      "under25": 2.15,
+      "home": 4.1,
+      "draw": 4.4,
+      "away": 1.92,
+      "over25": 1.78,
+      "under25": 2.19,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
@@ -3915,41 +673,41 @@
       "btts_yes": 0.0,
       "btts_no": 0.0,
       "over275": 1.96,
-      "under275": 1.91,
-      "ah0.5_home": 2.04,
-      "ah0.5_away": 1.94,
+      "under275": 1.9,
+      "ah0.5_home": 2.08,
+      "ah0.5_away": 1.91,
       "ah1.5_home": 1.3,
-      "ah1.5_away": 3.35,
-      "ah0.0_home": 2.87,
-      "ah0.0_away": 1.45,
+      "ah1.5_away": 3.3,
+      "ah0.0_home": 2.92,
+      "ah0.0_away": 1.44,
       "bookmakers_h2h": [
         {
           "key": "sportsbet",
           "title": "SportsBet",
+          "home": 3.9,
+          "draw": 4.2,
+          "away": 1.85
+        },
+        {
+          "key": "unibet_uk",
+          "title": "Unibet (UK)",
           "home": 3.8,
           "draw": 4.0,
           "away": 1.9
         },
         {
-          "key": "unibet_uk",
-          "title": "Unibet (UK)",
-          "home": 3.6,
-          "draw": 3.8,
-          "away": 1.9
-        },
-        {
           "key": "winamax_fr",
           "title": "Winamax (FR)",
-          "home": 3.5,
-          "draw": 3.9,
-          "away": 1.86
+          "home": 3.55,
+          "draw": 4.0,
+          "away": 1.82
         },
         {
           "key": "coolbet",
           "title": "Coolbet",
-          "home": 3.7,
-          "draw": 4.05,
-          "away": 1.98
+          "home": 3.85,
+          "draw": 4.2,
+          "away": 1.9
         },
         {
           "key": "betr_au",
@@ -3963,14 +721,14 @@
           "title": "GTbets",
           "home": 3.56,
           "draw": 3.93,
-          "away": 2.0
+          "away": 1.9
         },
         {
           "key": "skybet",
           "title": "Sky Bet",
-          "home": 3.6,
-          "draw": 3.9,
-          "away": 1.85
+          "home": 3.75,
+          "draw": 4.0,
+          "away": 1.8
         },
         {
           "key": "betfred_uk",
@@ -3982,23 +740,23 @@
         {
           "key": "fanduel",
           "title": "FanDuel",
-          "home": 3.7,
-          "draw": 4.0,
-          "away": 1.87
+          "home": 3.8,
+          "draw": 4.2,
+          "away": 1.83
         },
         {
           "key": "smarkets",
           "title": "Smarkets",
-          "home": 3.9,
-          "draw": 4.2,
-          "away": 1.94
+          "home": 3.95,
+          "draw": 4.3,
+          "away": 1.88
         }
       ]
     },
     "Japan vs Sweden": {
-      "home": 2.0,
-      "draw": 3.65,
-      "away": 4.5,
+      "home": 1.99,
+      "draw": 3.7,
+      "away": 4.6,
       "over25": 1.8,
       "under25": 2.16,
       "over15": 0.0,
@@ -4011,17 +769,17 @@
       "under275": 1.87,
       "over30": 2.3,
       "under30": 1.62,
-      "ah-0.5_home": 1.95,
+      "ah-0.5_home": 1.94,
       "ah-0.5_away": 2.04,
-      "ah-1.5_home": 3.4,
+      "ah-1.5_home": 3.35,
       "ah-1.5_away": 1.3,
-      "ah0.0_home": 1.42,
-      "ah0.0_away": 3.0,
+      "ah0.0_home": 1.4,
+      "ah0.0_away": 3.1,
       "bookmakers_h2h": [
         {
           "key": "sportsbet",
           "title": "SportsBet",
-          "home": 1.9,
+          "home": 1.86,
           "draw": 3.5,
           "away": 4.4
         },
@@ -4056,9 +814,9 @@
         {
           "key": "unibet_uk",
           "title": "Unibet (UK)",
-          "home": 1.91,
-          "draw": 3.4,
-          "away": 4.0
+          "home": 1.95,
+          "draw": 3.5,
+          "away": 4.2
         },
         {
           "key": "winamax_fr",
@@ -4091,11 +849,11 @@
       ]
     },
     "Tunisia vs Netherlands": {
-      "home": 28.0,
-      "draw": 10.5,
+      "home": 29.0,
+      "draw": 10.0,
       "away": 1.16,
-      "over25": 1.46,
-      "under25": 2.75,
+      "over25": 1.47,
+      "under25": 2.72,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 2.24,
@@ -4103,13 +861,13 @@
       "btts_yes": 0.0,
       "btts_no": 0.0,
       "over30": 1.75,
-      "under30": 2.15,
-      "over325": 1.97,
-      "under325": 1.88,
-      "ah2.5_home": 1.77,
-      "ah2.5_away": 2.12,
+      "under30": 2.22,
+      "over325": 1.96,
+      "under325": 1.89,
+      "ah2.5_home": 1.78,
+      "ah2.5_away": 2.14,
       "ah2.25_home": 2.02,
-      "ah2.25_away": 1.93,
+      "ah2.25_away": 1.92,
       "ah2.0_home": 2.25,
       "ah2.0_away": 1.69,
       "bookmakers_h2h": [
@@ -4124,15 +882,15 @@
           "key": "skybet",
           "title": "Sky Bet",
           "home": 19.0,
-          "draw": 9.0,
+          "draw": 8.5,
           "away": 1.1
         },
         {
           "key": "unibet_uk",
           "title": "Unibet (UK)",
           "home": 23.0,
-          "draw": 8.0,
-          "away": 1.12
+          "draw": 8.5,
+          "away": 1.13
         },
         {
           "key": "betfred_uk",
@@ -4159,13 +917,13 @@
           "key": "smarkets",
           "title": "Smarkets",
           "home": 27.03,
-          "draw": 10.5,
+          "draw": 10.0,
           "away": 1.14
         },
         {
           "key": "fanduel",
           "title": "FanDuel",
-          "home": 21.0,
+          "home": 23.0,
           "draw": 9.5,
           "away": 1.11
         },
@@ -4186,27 +944,25 @@
       ]
     },
     "Paraguay vs Australia": {
-      "home": 3.1,
+      "home": 3.2,
       "draw": 2.32,
-      "away": 4.25,
-      "over25": 2.95,
-      "under25": 1.41,
+      "away": 4.21,
+      "over25": 3.0,
+      "under25": 1.42,
       "over15": 1.71,
-      "under15": 2.4,
+      "under15": 2.38,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
       "over20": 2.3,
-      "under20": 1.71,
-      "over175": 1.83,
-      "under175": 2.01,
-      "ah-0.5_home": 2.86,
-      "ah-0.5_away": 1.43,
-      "ah0.0_home": 1.68,
-      "ah0.0_away": 2.35,
-      "ah-0.25_home": 2.35,
-      "ah-0.25_away": 1.71,
+      "under20": 1.73,
+      "over175": 1.84,
+      "under175": 2.0,
+      "ah0.5_home": 1.33,
+      "ah0.5_away": 3.37,
+      "ah0.0_home": 1.71,
+      "ah0.0_away": 2.4,
       "ah-1.5_home": 5.75,
       "ah-1.5_away": 1.12,
       "bookmakers_h2h": [
@@ -4215,7 +971,7 @@
           "title": "SportsBet",
           "home": 2.87,
           "draw": 2.25,
-          "away": 4.1
+          "away": 3.9
         },
         {
           "key": "winamax_de",
@@ -4227,9 +983,9 @@
         {
           "key": "neds",
           "title": "Neds",
-          "home": 2.9,
-          "draw": 2.15,
-          "away": 3.9
+          "home": 2.95,
+          "draw": 2.2,
+          "away": 3.7
         },
         {
           "key": "winamax_fr",
@@ -4241,9 +997,9 @@
         {
           "key": "ladbrokes_au",
           "title": "Ladbrokes",
-          "home": 2.9,
-          "draw": 2.15,
-          "away": 3.9
+          "home": 2.95,
+          "draw": 2.2,
+          "away": 3.7
         },
         {
           "key": "tipico_de",
@@ -4255,7 +1011,7 @@
         {
           "key": "unibet_uk",
           "title": "Unibet (UK)",
-          "home": 2.8,
+          "home": 2.88,
           "draw": 2.25,
           "away": 3.8
         },
@@ -4283,11 +1039,11 @@
       ]
     },
     "Turkey vs USA": {
-      "home": 3.75,
+      "home": 4.0,
       "draw": 4.3,
-      "away": 2.0,
+      "away": 1.99,
       "over25": 1.76,
-      "under25": 2.16,
+      "under25": 2.19,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
@@ -4298,8 +1054,8 @@
       "under275": 1.92,
       "over30": 2.25,
       "under30": 1.65,
-      "ah0.5_home": 2.0,
-      "ah0.5_away": 1.98,
+      "ah0.5_home": 2.02,
+      "ah0.5_away": 1.96,
       "ah1.5_home": 1.28,
       "ah1.5_away": 3.4,
       "ah0.0_home": 2.69,
@@ -4329,9 +1085,9 @@
         {
           "key": "unibet_uk",
           "title": "Unibet (UK)",
-          "home": 3.5,
-          "draw": 3.8,
-          "away": 1.91
+          "home": 3.6,
+          "draw": 4.0,
+          "away": 1.95
         },
         {
           "key": "betfred_uk",
@@ -4343,8 +1099,8 @@
         {
           "key": "betr_au",
           "title": "Betr",
-          "home": 3.4,
-          "draw": 3.8,
+          "home": 3.5,
+          "draw": 3.75,
           "away": 1.9
         },
         {
@@ -4372,132 +1128,134 @@
           "key": "smarkets",
           "title": "Smarkets",
           "home": 3.75,
-          "draw": 4.0,
-          "away": 1.97
+          "draw": 4.2,
+          "away": 1.96
         }
       ]
     },
     "Norway vs France": {
-      "home": 5.5,
-      "draw": 4.6,
-      "away": 1.69,
+      "home": 5.35,
+      "draw": 4.9,
+      "away": 1.73,
       "over25": 1.72,
-      "under25": 2.3,
+      "under25": 2.28,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over30": 2.1,
-      "under30": 1.79,
-      "over275": 1.88,
-      "under275": 2.02,
-      "ah0.5_home": 2.31,
-      "ah0.5_away": 1.62,
-      "ah1.0_home": 1.86,
-      "ah1.0_away": 2.1,
-      "ah1.5_home": 1.49,
-      "ah1.5_away": 2.73,
+      "over30": 2.19,
+      "under30": 1.74,
+      "over275": 1.9,
+      "under275": 1.97,
+      "ah0.5_home": 2.3,
+      "ah0.5_away": 1.68,
+      "ah0.75_home": 2.08,
+      "ah0.75_away": 1.88,
+      "ah1.0_home": 1.76,
+      "ah1.0_away": 2.16,
+      "ah1.5_home": 1.46,
+      "ah1.5_away": 2.84,
       "bookmakers_h2h": [
         {
           "key": "sportsbet",
           "title": "SportsBet",
-          "home": 5.0,
-          "draw": 4.33,
-          "away": 1.61
+          "home": 4.5,
+          "draw": 4.6,
+          "away": 1.65
         },
         {
           "key": "smarkets",
           "title": "Smarkets",
-          "home": 5.4,
-          "draw": 4.5,
-          "away": 1.65
+          "home": 4.7,
+          "draw": 4.9,
+          "away": 1.7
         },
         {
           "key": "gtbets",
           "title": "GTbets",
-          "home": 4.99,
+          "home": 4.7,
           "draw": 4.08,
           "away": 1.69
         },
         {
           "key": "skybet",
           "title": "Sky Bet",
-          "home": 4.8,
-          "draw": 4.2,
-          "away": 1.6
+          "home": 4.33,
+          "draw": 4.33,
+          "away": 1.62
         },
         {
           "key": "unibet_uk",
           "title": "Unibet (UK)",
           "home": 5.0,
           "draw": 4.2,
-          "away": 1.6
+          "away": 1.62
         },
         {
           "key": "betfred_uk",
           "title": "Betfred (UK)",
-          "home": 5.0,
-          "draw": 4.33,
+          "home": 4.5,
+          "draw": 4.0,
           "away": 1.62
         },
         {
           "key": "winamax_fr",
           "title": "Winamax (FR)",
-          "home": 4.8,
+          "home": 4.3,
           "draw": 4.2,
-          "away": 1.58
+          "away": 1.64
         },
         {
           "key": "coolbet",
           "title": "Coolbet",
-          "home": 5.15,
+          "home": 4.65,
           "draw": 4.5,
-          "away": 1.63
+          "away": 1.71
         },
         {
           "key": "fanduel",
           "title": "FanDuel",
-          "home": 5.1,
-          "draw": 4.3,
-          "away": 1.61
+          "home": 4.5,
+          "draw": 4.6,
+          "away": 1.65
         },
         {
           "key": "betr_au",
           "title": "Betr",
-          "home": 5.0,
-          "draw": 4.0,
-          "away": 1.62
+          "home": 4.4,
+          "draw": 4.2,
+          "away": 1.7
         }
       ]
     },
     "Senegal vs Iraq": {
-      "home": 1.27,
-      "draw": 7.0,
-      "away": 14.5,
+      "home": 1.26,
+      "draw": 7.5,
+      "away": 14.7,
       "over25": 1.55,
       "under25": 2.6,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 2.4,
-      "under35": 1.61,
+      "under35": 1.63,
       "btts_yes": 0.0,
       "btts_no": 0.0,
       "over30": 1.93,
-      "under30": 2.01,
-      "ah-1.5_home": 1.73,
-      "ah-1.5_away": 2.19,
-      "ah-1.75_home": 1.9,
-      "ah-1.75_away": 2.04,
-      "ah-2.0_home": 2.08,
-      "ah-2.0_away": 1.67,
+      "under30": 2.02,
+      "ah-1.5_home": 1.71,
+      "ah-1.5_away": 2.24,
+      "ah-1.75_home": 1.88,
+      "ah-1.75_away": 2.06,
+      "ah-2.0_home": 2.15,
+      "ah-2.0_away": 1.8,
       "bookmakers_h2h": [
         {
           "key": "sportsbet",
           "title": "SportsBet",
           "home": 1.22,
-          "draw": 6.0,
+          "draw": 6.5,
           "away": 13.0
         },
         {
@@ -4511,7 +1269,7 @@
           "key": "gtbets",
           "title": "GTbets",
           "home": 1.24,
-          "draw": 6.0,
+          "draw": 6.47,
           "away": 12.54
         },
         {
@@ -4531,62 +1289,60 @@
         {
           "key": "unibet_uk",
           "title": "Unibet (UK)",
-          "home": 1.23,
+          "home": 1.22,
           "draw": 6.0,
           "away": 12.0
         },
         {
           "key": "betr_au",
           "title": "Betr",
-          "home": 1.25,
-          "draw": 5.5,
-          "away": 11.0
+          "home": 1.24,
+          "draw": 5.75,
+          "away": 11.5
         },
         {
           "key": "winamax_fr",
           "title": "Winamax (FR)",
-          "home": 1.22,
+          "home": 1.21,
           "draw": 6.5,
           "away": 10.0
         },
         {
           "key": "smarkets",
           "title": "Smarkets",
-          "home": 1.27,
-          "draw": 6.6,
+          "home": 1.26,
+          "draw": 7.0,
           "away": 14.01
         },
         {
           "key": "winamax_de",
           "title": "Winamax (DE)",
           "home": 1.22,
-          "draw": 6.5,
+          "draw": 6.75,
           "away": 10.5
         }
       ]
     },
     "Cape Verde vs Saudi Arabia": {
-      "home": 2.54,
-      "draw": 3.66,
+      "home": 2.52,
+      "draw": 3.6,
       "away": 3.05,
-      "over25": 2.08,
-      "under25": 1.91,
+      "over25": 2.14,
+      "under25": 1.87,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over30": 2.75,
-      "under30": 1.48,
-      "ah-0.5_home": 2.34,
-      "ah-0.5_away": 1.61,
-      "ah-0.25_home": 2.13,
-      "ah-0.25_away": 1.82,
-      "ah0.0_home": 1.82,
-      "ah0.0_away": 2.16,
-      "ah-1.5_home": 4.6,
+      "over30": 2.9,
+      "under30": 1.42,
+      "ah-1.5_home": 5.04,
       "ah-1.5_away": 1.17,
+      "ah0.0_home": 1.79,
+      "ah0.0_away": 2.13,
+      "ah-0.25_home": 2.16,
+      "ah-0.25_away": 1.84,
       "bookmakers_h2h": [
         {
           "key": "sportsbet",
@@ -4599,8 +1355,8 @@
           "key": "tipico_de",
           "title": "Tipico",
           "home": 2.4,
-          "draw": 3.4,
-          "away": 2.9
+          "draw": 3.3,
+          "away": 3.0
         },
         {
           "key": "unibet_uk",
@@ -4647,9 +1403,9 @@
         {
           "key": "skybet",
           "title": "Sky Bet",
-          "home": 2.4,
+          "home": 2.38,
           "draw": 3.3,
-          "away": 2.8
+          "away": 2.88
         },
         {
           "key": "betfred_uk",
@@ -4661,10 +1417,10 @@
       ]
     },
     "Uruguay vs Spain": {
-      "home": 7.8,
+      "home": 8.0,
       "draw": 4.4,
-      "away": 1.55,
-      "over25": 1.91,
+      "away": 1.56,
+      "over25": 1.88,
       "under25": 2.07,
       "over15": 0.0,
       "under15": 0.0,
@@ -4675,15 +1431,15 @@
       "over20": 1.4,
       "under20": 3.0,
       "ah1.5_home": 1.6,
-      "ah1.5_away": 2.44,
+      "ah1.5_away": 2.45,
       "ah1.0_home": 2.08,
       "ah1.0_away": 1.89,
       "bookmakers_h2h": [
         {
           "key": "sportsbet",
           "title": "SportsBet",
-          "home": 7.5,
-          "draw": 4.2,
+          "home": 7.0,
+          "draw": 4.1,
           "away": 1.5
         },
         {
@@ -4704,8 +1460,8 @@
           "key": "unibet_uk",
           "title": "Unibet (UK)",
           "home": 6.5,
-          "draw": 4.2,
-          "away": 1.5
+          "draw": 4.25,
+          "away": 1.48
         },
         {
           "key": "betfred_uk",
@@ -4726,51 +1482,49 @@
           "title": "Winamax (FR)",
           "home": 6.0,
           "draw": 4.3,
-          "away": 1.49
+          "away": 1.47
         },
         {
           "key": "smarkets",
           "title": "Smarkets",
-          "home": 7.8,
-          "draw": 4.4,
-          "away": 1.54
+          "home": 8.0,
+          "draw": 4.2,
+          "away": 1.53
         },
         {
           "key": "fanduel",
           "title": "FanDuel",
           "home": 7.0,
-          "draw": 4.2,
-          "away": 1.48
+          "draw": 4.1,
+          "away": 1.5
         },
         {
           "key": "winamax_de",
           "title": "Winamax (DE)",
-          "home": 6.0,
+          "home": 6.25,
           "draw": 4.3,
-          "away": 1.49
+          "away": 1.48
         }
       ]
     },
     "New Zealand vs Belgium": {
-      "home": 18.0,
+      "home": 18.5,
       "draw": 8.0,
       "away": 1.23,
-      "over25": 1.57,
-      "under25": 2.55,
+      "over25": 1.58,
+      "under25": 2.5,
       "over15": 0.0,
       "under15": 0.0,
-      "over35": 2.43,
-      "under35": 1.6,
+      "over35": 2.4,
+      "under35": 1.61,
       "btts_yes": 0.0,
       "btts_no": 0.0,
       "over30": 1.93,
       "under30": 1.98,
-      "ah1.5_home": 2.4,
+      "ah1.5_home": 2.42,
       "ah1.5_away": 1.64,
-      "ah2.0_home": 1.96,
-      "ah2.0_away": 1.98,
-      "ah1.75_home": 2.12,
-      "ah1.75_away": 1.78,
+      "ah2.0_home": 1.97,
+      "ah2.0_away": 1.99,
       "bookmakers_h2h": [
         {
           "key": "sportsbet",
@@ -4782,9 +1536,9 @@
         {
           "key": "betr_au",
           "title": "Betr",
-          "home": 13.0,
+          "home": 14.0,
           "draw": 6.5,
-          "away": 1.19
+          "away": 1.18
         },
         {
           "key": "betfred_uk",
@@ -4798,7 +1552,7 @@
           "title": "Smarkets",
           "home": 16.0,
           "draw": 7.6,
-          "away": 1.22
+          "away": 1.21
         },
         {
           "key": "coolbet",
@@ -4845,25 +1599,25 @@
       ]
     },
     "Egypt vs Iran": {
-      "home": 2.6,
+      "home": 2.55,
       "draw": 2.8,
-      "away": 4.0,
-      "over25": 2.9,
-      "under25": 1.42,
-      "over15": 1.6,
-      "under15": 2.56,
+      "away": 4.1,
+      "over25": 2.72,
+      "under25": 1.47,
+      "over15": 1.61,
+      "under15": 2.5,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over20": 2.1,
+      "over20": 2.07,
       "under20": 1.83,
-      "ah0.5_home": 1.29,
-      "ah0.5_away": 3.66,
+      "ah-0.5_home": 2.44,
+      "ah-0.5_away": 1.61,
       "ah-0.25_home": 2.06,
       "ah-0.25_away": 1.91,
-      "ah0.0_home": 1.61,
-      "ah0.0_away": 2.4,
+      "ah0.0_home": 1.59,
+      "ah0.0_away": 2.48,
       "ah-1.5_home": 5.0,
       "ah-1.5_away": 1.15,
       "bookmakers_h2h": [
@@ -4877,9 +1631,9 @@
         {
           "key": "smarkets",
           "title": "Smarkets",
-          "home": 2.5,
-          "draw": 2.74,
-          "away": 3.95
+          "home": 2.52,
+          "draw": 2.7,
+          "away": 4.0
         },
         {
           "key": "gtbets",
@@ -4912,16 +1666,16 @@
         {
           "key": "betr_au",
           "title": "Betr",
-          "home": 2.5,
-          "draw": 2.8,
-          "away": 3.2
+          "home": 2.55,
+          "draw": 2.7,
+          "away": 3.25
         },
         {
           "key": "betfred_uk",
           "title": "Betfred (UK)",
-          "home": 2.6,
+          "home": 2.5,
           "draw": 2.8,
-          "away": 3.25
+          "away": 3.3
         },
         {
           "key": "skybet",
@@ -4940,433 +1694,427 @@
       ]
     },
     "Croatia vs Ghana": {
-      "home": 1.76,
-      "draw": 3.95,
-      "away": 6.6,
-      "over25": 2.14,
-      "under25": 1.8,
+      "home": 1.82,
+      "draw": 3.5,
+      "away": 6.0,
+      "over25": 2.3,
+      "under25": 1.71,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over225": 1.85,
-      "under225": 1.98,
-      "ah-0.5_home": 1.68,
-      "ah-0.5_away": 2.21,
-      "ah-0.75_home": 1.97,
-      "ah-0.75_away": 2.0,
-      "ah-1.0_home": 2.19,
-      "ah-1.0_away": 1.74,
-      "ah-1.5_home": 2.94,
-      "ah-1.5_away": 1.44,
+      "over225": 1.95,
+      "under225": 1.87,
+      "ah-1.5_home": 3.15,
+      "ah-1.5_away": 1.4,
+      "ah-0.75_home": 2.06,
+      "ah-0.75_away": 1.91,
+      "ah-0.5_home": 1.77,
+      "ah-0.5_away": 2.14,
       "bookmakers_h2h": [
         {
           "key": "sportsbet",
           "title": "SportsBet",
-          "home": 1.7,
-          "draw": 3.3,
-          "away": 6.0
+          "home": 1.75,
+          "draw": 3.4,
+          "away": 5.5
         },
         {
           "key": "tipico_de",
           "title": "Tipico",
-          "home": 1.67,
+          "home": 1.7,
           "draw": 3.5,
-          "away": 5.8
+          "away": 5.5
         },
         {
           "key": "unibet_uk",
           "title": "Unibet (UK)",
-          "home": 1.67,
-          "draw": 3.6,
-          "away": 5.5
+          "home": 1.73,
+          "draw": 3.4,
+          "away": 5.25
         },
         {
           "key": "winamax_fr",
           "title": "Winamax (FR)",
-          "home": 1.54,
-          "draw": 3.2,
-          "away": 4.6
-        },
-        {
-          "key": "coolbet",
-          "title": "Coolbet",
-          "home": 1.68,
-          "draw": 3.65,
-          "away": 6.1
+          "home": 1.7,
+          "draw": 3.45,
+          "away": 5.0
         },
         {
           "key": "winamax_de",
           "title": "Winamax (DE)",
-          "home": 1.58,
-          "draw": 3.4,
-          "away": 4.9
+          "home": 1.72,
+          "draw": 3.45,
+          "away": 5.1
         },
         {
           "key": "gtbets",
           "title": "GTbets",
-          "home": 1.65,
-          "draw": 3.5,
-          "away": 5.93
+          "home": 1.76,
+          "draw": 3.32,
+          "away": 5.54
         },
         {
           "key": "skybet",
           "title": "Sky Bet",
-          "home": 1.67,
+          "home": 1.73,
           "draw": 3.25,
-          "away": 6.0
+          "away": 5.25
         },
         {
           "key": "betfred_uk",
           "title": "Betfred (UK)",
-          "home": 1.67,
-          "draw": 3.75,
+          "home": 1.73,
+          "draw": 3.5,
           "away": 5.5
         },
         {
           "key": "fanduel",
           "title": "FanDuel",
-          "home": 1.69,
+          "home": 1.74,
           "draw": 3.3,
-          "away": 6.0
-        }
-      ]
-    },
-    "Panama vs England": {
-      "home": 15.5,
-      "draw": 8.2,
-      "away": 1.26,
-      "over25": 1.54,
-      "under25": 2.5,
-      "over15": 0.0,
-      "under15": 0.0,
-      "over35": 2.35,
-      "under35": 1.66,
-      "btts_yes": 0.0,
-      "btts_no": 0.0,
-      "over30": 1.87,
-      "under30": 2.0,
-      "over325": 2.02,
-      "under325": 1.82,
-      "ah1.5_home": 2.34,
-      "ah1.5_away": 1.65,
-      "ah2.0_home": 1.94,
-      "ah2.0_away": 2.0,
-      "ah1.75_home": 2.1,
-      "ah1.75_away": 1.79,
-      "bookmakers_h2h": [
-        {
-          "key": "sportsbet",
-          "title": "SportsBet",
-          "home": 15.0,
-          "draw": 7.5,
-          "away": 1.18
+          "away": 5.6
         },
         {
           "key": "betr_au",
           "title": "Betr",
-          "home": 12.5,
-          "draw": 6.5,
-          "away": 1.2
+          "home": 1.72,
+          "draw": 3.5,
+          "away": 5.0
+        }
+      ]
+    },
+    "Panama vs England": {
+      "home": 19.5,
+      "draw": 8.8,
+      "away": 1.21,
+      "over25": 1.49,
+      "under25": 2.65,
+      "over15": 0.0,
+      "under15": 0.0,
+      "over35": 2.18,
+      "under35": 1.74,
+      "btts_yes": 0.0,
+      "btts_no": 0.0,
+      "over325": 1.91,
+      "under325": 1.91,
+      "over30": 1.7,
+      "under30": 2.25,
+      "ah2.5_home": 1.67,
+      "ah2.5_away": 2.35,
+      "ah2.0_home": 2.08,
+      "ah2.0_away": 1.87,
+      "ah1.75_home": 2.39,
+      "ah1.75_away": 1.63,
+      "bookmakers_h2h": [
+        {
+          "key": "sportsbet",
+          "title": "SportsBet",
+          "home": 17.0,
+          "draw": 8.0,
+          "away": 1.15
+        },
+        {
+          "key": "betr_au",
+          "title": "Betr",
+          "home": 14.0,
+          "draw": 7.0,
+          "away": 1.17
         },
         {
           "key": "fanduel",
           "title": "FanDuel",
-          "home": 14.0,
+          "home": 16.0,
           "draw": 7.5,
-          "away": 1.18
+          "away": 1.15
         },
         {
           "key": "tipico_de",
           "title": "Tipico",
-          "home": 13.0,
-          "draw": 7.5,
-          "away": 1.18
+          "home": 16.0,
+          "draw": 8.2,
+          "away": 1.15
         },
         {
           "key": "unibet_uk",
           "title": "Unibet (UK)",
-          "home": 14.0,
-          "draw": 6.5,
-          "away": 1.2
+          "home": 15.0,
+          "draw": 7.0,
+          "away": 1.17
         },
         {
           "key": "winamax_fr",
           "title": "Winamax (FR)",
-          "home": 9.0,
-          "draw": 5.5,
-          "away": 1.13
+          "home": 11.5,
+          "draw": 7.5,
+          "away": 1.16
         },
         {
           "key": "betfred_uk",
           "title": "Betfred (UK)",
           "home": 11.0,
-          "draw": 6.5,
-          "away": 1.22
-        },
-        {
-          "key": "coolbet",
-          "title": "Coolbet",
-          "home": 15.0,
           "draw": 7.0,
-          "away": 1.22
+          "away": 1.18
         },
         {
           "key": "winamax_de",
           "title": "Winamax (DE)",
-          "home": 10.0,
-          "draw": 6.25,
-          "away": 1.15
+          "home": 12.0,
+          "draw": 7.75,
+          "away": 1.17
         },
         {
           "key": "gtbets",
           "title": "GTbets",
-          "home": 11.86,
-          "draw": 6.98,
-          "away": 1.26
+          "home": 13.76,
+          "draw": 7.8,
+          "away": 1.19
+        },
+        {
+          "key": "skybet",
+          "title": "Sky Bet",
+          "home": 13.0,
+          "draw": 8.0,
+          "away": 1.14
         }
       ]
     },
     "Colombia vs Portugal": {
-      "home": 4.0,
-      "draw": 3.9,
-      "away": 2.1,
-      "over25": 2.12,
-      "under25": 1.84,
+      "home": 4.3,
+      "draw": 4.0,
+      "away": 2.0,
+      "over25": 2.11,
+      "under25": 1.85,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over225": 1.83,
-      "under225": 2.05,
-      "ah0.5_home": 1.98,
-      "ah0.5_away": 2.0,
-      "ah0.0_home": 2.73,
-      "ah0.0_away": 1.49,
+      "over225": 1.78,
+      "under225": 2.02,
+      "ah0.5_home": 2.06,
+      "ah0.5_away": 1.93,
+      "ah1.5_home": 1.28,
+      "ah1.5_away": 3.5,
+      "ah0.0_home": 2.87,
+      "ah0.0_away": 1.45,
       "bookmakers_h2h": [
         {
           "key": "unibet",
           "title": "Unibet",
-          "home": 4.0,
+          "home": 4.3,
           "draw": 3.45,
-          "away": 1.98
+          "away": 1.91
         },
         {
           "key": "grosvenor",
           "title": "Grosvenor",
-          "home": 4.0,
+          "home": 4.3,
           "draw": 3.45,
-          "away": 1.97
+          "away": 1.91
         },
         {
           "key": "leovegas_se",
           "title": "LeoVegas (SE)",
-          "home": 4.0,
+          "home": 4.3,
           "draw": 3.45,
-          "away": 1.97
+          "away": 1.91
         },
         {
           "key": "unibet_se",
           "title": "Unibet (SE)",
-          "home": 4.0,
+          "home": 4.3,
           "draw": 3.45,
-          "away": 1.97
+          "away": 1.91
         },
         {
           "key": "tabtouch",
           "title": "TABtouch",
-          "home": 3.9,
+          "home": 4.1,
           "draw": 3.35,
-          "away": 1.93
+          "away": 1.87
         },
         {
           "key": "pmu_fr",
           "title": "PMU (FR)",
-          "home": 3.9,
+          "home": 4.1,
           "draw": 3.35,
-          "away": 1.93
+          "away": 1.87
         },
         {
           "key": "winamax_fr",
           "title": "Winamax (FR)",
-          "home": 3.3,
-          "draw": 3.2,
-          "away": 1.78
+          "home": 3.85,
+          "draw": 3.6,
+          "away": 1.86
         },
         {
           "key": "betrivers",
           "title": "BetRivers",
-          "home": 4.0,
+          "home": 4.3,
           "draw": 3.45,
-          "away": 1.97
+          "away": 1.91
         },
         {
           "key": "virginbet",
           "title": "Virgin Bet",
-          "home": 3.9,
+          "home": 4.1,
           "draw": 3.35,
-          "away": 1.94
+          "away": 1.87
         },
         {
           "key": "casumo",
           "title": "Casumo",
-          "home": 4.0,
+          "home": 4.3,
           "draw": 3.45,
-          "away": 1.97
+          "away": 1.91
         }
       ]
     },
     "DR Congo vs Uzbekistan": {
-      "home": 2.05,
-      "draw": 4.1,
-      "away": 3.9,
-      "over25": 2.16,
-      "under25": 1.8,
+      "home": 1.9,
+      "draw": 4.2,
+      "away": 4.33,
+      "over25": 2.05,
+      "under25": 1.99,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over225": 1.82,
-      "under225": 2.07,
-      "ah0.5_home": 1.31,
-      "ah0.5_away": 3.48,
-      "ah-0.5_home": 1.98,
-      "ah-0.5_away": 2.0,
-      "ah-0.25_home": 1.77,
-      "ah-0.25_away": 2.14,
-      "ah0.0_home": 1.5,
-      "ah0.0_away": 2.69,
+      "ah-0.5_home": 1.85,
+      "ah-0.5_away": 2.14,
+      "ah-1.5_home": 3.15,
+      "ah-1.5_away": 1.33,
+      "ah0.0_home": 1.43,
+      "ah0.0_away": 2.99,
       "bookmakers_h2h": [
         {
           "key": "sportsbet",
           "title": "SportsBet",
-          "home": 1.9,
-          "draw": 3.9,
-          "away": 3.75
+          "home": 1.8,
+          "draw": 4.0,
+          "away": 4.1
         },
         {
           "key": "betfred_uk",
           "title": "Betfred (UK)",
-          "home": 2.0,
-          "draw": 3.6,
-          "away": 3.6
+          "home": 1.83,
+          "draw": 3.75,
+          "away": 4.2
         },
         {
           "key": "betr_au",
           "title": "Betr",
-          "home": 2.0,
-          "draw": 3.5,
-          "away": 3.5
+          "home": 1.82,
+          "draw": 3.7,
+          "away": 4.0
         },
         {
           "key": "winamax_de",
           "title": "Winamax (DE)",
-          "home": 1.84,
-          "draw": 3.5,
-          "away": 3.3
+          "home": 1.78,
+          "draw": 4.0,
+          "away": 3.9
         },
         {
           "key": "unibet_uk",
           "title": "Unibet (UK)",
-          "home": 1.95,
-          "draw": 3.6,
-          "away": 3.75
+          "home": 1.8,
+          "draw": 3.8,
+          "away": 4.0
         },
         {
           "key": "tipico_de",
           "title": "Tipico",
-          "home": 1.87,
-          "draw": 3.9,
-          "away": 3.8
+          "home": 1.8,
+          "draw": 4.0,
+          "away": 4.0
         },
         {
           "key": "winamax_fr",
           "title": "Winamax (FR)",
           "home": 1.78,
-          "draw": 3.35,
-          "away": 3.15
+          "draw": 3.95,
+          "away": 3.9
         },
         {
           "key": "fanduel",
           "title": "FanDuel",
-          "home": 1.91,
-          "draw": 3.9,
-          "away": 3.7
+          "home": 1.77,
+          "draw": 4.0,
+          "away": 4.1
         },
         {
           "key": "gtbets",
           "title": "GTbets",
-          "home": 2.02,
-          "draw": 3.63,
-          "away": 3.61
+          "home": 1.9,
+          "draw": 3.82,
+          "away": 3.88
         },
         {
           "key": "skybet",
           "title": "Sky Bet",
-          "home": 1.85,
-          "draw": 3.8,
-          "away": 3.6
+          "home": 1.75,
+          "draw": 3.9,
+          "away": 4.0
         }
       ]
     },
     "Algeria vs Austria": {
-      "home": 4.05,
+      "home": 4.2,
       "draw": 2.46,
-      "away": 2.9,
-      "over25": 2.72,
-      "under25": 1.56,
-      "over15": 1.45,
+      "away": 3.0,
+      "over25": 2.7,
+      "under25": 1.48,
+      "over15": 1.6,
       "under15": 2.7,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over20": 1.93,
-      "under20": 1.95,
-      "over225": 2.29,
-      "under225": 1.68,
-      "ah0.5_home": 1.51,
-      "ah0.5_away": 2.57,
-      "ah0.0_home": 2.25,
-      "ah0.0_away": 1.67,
-      "ah0.25_home": 1.77,
-      "ah0.25_away": 2.26,
-      "ah1.5_home": 1.14,
-      "ah1.5_away": 5.25,
+      "over20": 2.04,
+      "under20": 1.9,
+      "ah-0.5_home": 3.4,
+      "ah-0.5_away": 1.32,
+      "ah0.25_home": 1.74,
+      "ah0.25_away": 2.3,
+      "ah0.0_home": 2.31,
+      "ah0.0_away": 1.68,
+      "ah1.5_home": 1.13,
+      "ah1.5_away": 5.5,
       "bookmakers_h2h": [
         {
           "key": "sportsbet",
           "title": "SportsBet",
-          "home": 3.9,
+          "home": 4.0,
           "draw": 2.3,
-          "away": 2.75
+          "away": 2.8
         },
         {
           "key": "unibet_uk",
           "title": "Unibet (UK)",
-          "home": 3.6,
-          "draw": 2.4,
-          "away": 2.7
+          "home": 3.8,
+          "draw": 2.3,
+          "away": 2.75
         },
         {
           "key": "winamax_fr",
           "title": "Winamax (FR)",
           "home": 3.65,
-          "draw": 2.35,
+          "draw": 2.3,
           "away": 2.65
         },
         {
           "key": "coolbet",
           "title": "Coolbet",
-          "home": 4.05,
-          "draw": 2.36,
-          "away": 2.75
+          "home": 3.95,
+          "draw": 2.35,
+          "away": 2.9
         },
         {
           "key": "gtbets",
@@ -5378,45 +2126,45 @@
         {
           "key": "skybet",
           "title": "Sky Bet",
-          "home": 3.75,
-          "draw": 2.3,
-          "away": 2.7
+          "home": 3.8,
+          "draw": 2.25,
+          "away": 2.75
         },
         {
           "key": "fanduel",
           "title": "FanDuel",
-          "home": 3.9,
+          "home": 4.0,
           "draw": 2.3,
-          "away": 2.75
+          "away": 2.8
         },
         {
           "key": "betfred_uk",
           "title": "Betfred (UK)",
-          "home": 3.6,
-          "draw": 2.3,
-          "away": 2.88
+          "home": 3.4,
+          "draw": 2.38,
+          "away": 3.0
         },
         {
           "key": "paddypower",
           "title": "Paddy Power",
           "home": 3.8,
-          "draw": 2.3,
-          "away": 2.7
+          "draw": 2.25,
+          "away": 2.75
         },
         {
-          "key": "smarkets",
-          "title": "Smarkets",
-          "home": 4.0,
-          "draw": 2.42,
-          "away": 2.86
+          "key": "unibet_fr",
+          "title": "Unibet (FR)",
+          "home": 3.75,
+          "draw": 2.25,
+          "away": 2.7
         }
       ]
     },
     "Jordan vs Argentina": {
-      "home": 18.0,
-      "draw": 7.8,
+      "home": 18.5,
+      "draw": 8.2,
       "away": 1.22,
-      "over25": 1.62,
+      "over25": 1.63,
       "under25": 2.43,
       "over15": 0.0,
       "under15": 0.0,
@@ -5424,20 +2172,20 @@
       "under35": 1.51,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over30": 2.08,
+      "over30": 2.06,
       "under30": 1.85,
-      "ah1.5_home": 2.2,
-      "ah1.5_away": 1.7,
-      "ah1.75_home": 2.08,
-      "ah1.75_away": 1.85,
-      "ah2.0_home": 1.74,
-      "ah2.0_away": 2.2,
+      "ah1.5_home": 2.35,
+      "ah1.5_away": 1.68,
+      "ah1.75_home": 2.04,
+      "ah1.75_away": 1.83,
+      "ah2.0_home": 1.84,
+      "ah2.0_away": 2.1,
       "bookmakers_h2h": [
         {
           "key": "sportsbet",
           "title": "SportsBet",
-          "home": 16.0,
-          "draw": 7.0,
+          "home": 17.0,
+          "draw": 7.5,
           "away": 1.18
         },
         {
@@ -5450,7 +2198,7 @@
         {
           "key": "unibet_uk",
           "title": "Unibet (UK)",
-          "home": 14.0,
+          "home": 15.0,
           "draw": 6.5,
           "away": 1.2
         },
@@ -5464,9 +2212,9 @@
         {
           "key": "winamax_fr",
           "title": "Winamax (FR)",
-          "home": 11.0,
-          "draw": 6.75,
-          "away": 1.19
+          "home": 12.0,
+          "draw": 7.0,
+          "away": 1.18
         },
         {
           "key": "coolbet",
@@ -5478,15 +2226,15 @@
         {
           "key": "winamax_de",
           "title": "Winamax (DE)",
-          "home": 11.5,
-          "draw": 7.0,
-          "away": 1.2
+          "home": 12.0,
+          "draw": 7.25,
+          "away": 1.18
         },
         {
           "key": "smarkets",
           "title": "Smarkets",
-          "home": 17.51,
-          "draw": 7.6,
+          "home": 17.99,
+          "draw": 8.0,
           "away": 1.21
         },
         {
@@ -5499,7 +2247,7 @@
         {
           "key": "gtbets",
           "title": "GTbets",
-          "home": 12.46,
+          "home": 14.51,
           "draw": 6.77,
           "away": 1.21
         }
@@ -5507,136 +2255,6 @@
     }
   },
   "model_tips": {
-    "Portugal vs Uzbekistan": {
-      "p_home": 0.654,
-      "p_draw": 0.209,
-      "p_away": 0.137,
-      "xg_home": 2.91,
-      "xg_away": 1.39,
-      "p_btts_yes": 0.73,
-      "p_btts_no": 0.27,
-      "p_over25": 0.795,
-      "p_under25": 0.205,
-      "top_scorers_home": [
-        {
-          "name": "Bernardo Silva",
-          "p": 0.575
-        },
-        {
-          "name": "Nuno Mendes",
-          "p": 0.57
-        },
-        {
-          "name": "João Félix",
-          "p": 0.521
-        }
-      ],
-      "top_scorers_away": []
-    },
-    "England vs Ghana": {
-      "p_home": 0.066,
-      "p_draw": 0.317,
-      "p_away": 0.617,
-      "xg_home": 0.57,
-      "xg_away": 1.77,
-      "p_btts_yes": 0.406,
-      "p_btts_no": 0.594,
-      "p_over25": 0.413,
-      "p_under25": 0.587,
-      "top_scorers_home": [
-        {
-          "name": "Harry Kane",
-          "p": 0.454
-        },
-        {
-          "name": "Ivan Toney",
-          "p": 0.412
-        },
-        {
-          "name": "Jude Bellingham",
-          "p": 0.334
-        }
-      ],
-      "top_scorers_away": [
-        {
-          "name": "Thomas Partey",
-          "p": 0.133
-        },
-        {
-          "name": "Antoine Semenyo",
-          "p": 0.096
-        },
-        {
-          "name": "Iñaki Williams",
-          "p": 0.073
-        }
-      ]
-    },
-    "Panama vs Croatia": {
-      "p_home": 0.265,
-      "p_draw": 0.462,
-      "p_away": 0.274,
-      "xg_home": 0.88,
-      "xg_away": 0.9,
-      "p_btts_yes": 0.413,
-      "p_btts_no": 0.587,
-      "p_over25": 0.265,
-      "p_under25": 0.735,
-      "top_scorers_home": [
-        {
-          "name": "José Fajardo",
-          "p": 0.199
-        },
-        {
-          "name": "Roderick Miller",
-          "p": 0.152
-        },
-        {
-          "name": "Yoel Bárcenas",
-          "p": 0.15
-        }
-      ],
-      "top_scorers_away": [
-        {
-          "name": "Luka Modrić",
-          "p": 0.426
-        },
-        {
-          "name": "Andrej Kramarić",
-          "p": 0.303
-        },
-        {
-          "name": "Josip Šutalo",
-          "p": 0.287
-        }
-      ]
-    },
-    "Colombia vs DR Congo": {
-      "p_home": 0.502,
-      "p_draw": 0.412,
-      "p_away": 0.086,
-      "xg_home": 1.2,
-      "xg_away": 0.44,
-      "p_btts_yes": 0.3,
-      "p_btts_no": 0.7,
-      "p_over25": 0.228,
-      "p_under25": 0.772,
-      "top_scorers_home": [
-        {
-          "name": "Davinson Sánchez",
-          "p": 0.44
-        },
-        {
-          "name": "Jhon Córdoba",
-          "p": 0.321
-        },
-        {
-          "name": "James Rodríguez",
-          "p": 0.318
-        }
-      ],
-      "top_scorers_away": []
-    },
     "Bosnia & Herzegovina vs Qatar": {
       "p_home": 0.613,
       "p_draw": 0.289,
@@ -5727,10 +2345,6 @@
         }
       ],
       "top_scorers_away": [
-        {
-          "name": "Neymar",
-          "p": 0.579
-        },
         {
           "name": "Gabriel Martinelli",
           "p": 0.483
@@ -6355,31 +2969,31 @@
   "football": [
     {
       "sport": "football",
-      "match": "New Zealand vs Belgium",
-      "market": "ah+1.5_home",
-      "odds": 2.4,
-      "model_prob": 58.3,
-      "fair_prob": 58.3,
-      "ev_pct": 39.9,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "match": "Tunisia vs Netherlands",
+      "market": "ah+2.25_away",
+      "odds": 1.92,
+      "model_prob": 69.0,
+      "fair_prob": 69.0,
+      "ev_pct": 39.8,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "LOW",
       "n_models_agree": 0,
-      "kickoff": "2026-06-27T03:00:00Z"
+      "kickoff": "2026-06-25T23:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Cape Verde vs Saudi Arabia",
-      "market": "o/u3.0_under",
-      "odds": 1.48,
-      "model_prob": 89.1,
-      "fair_prob": 89.1,
-      "ev_pct": 39.8,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "match": "Croatia vs Ghana",
+      "market": "ah+1.5_away",
+      "odds": 1.4,
+      "model_prob": 99.3,
+      "fair_prob": 99.3,
+      "ev_pct": 39.1,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "LOW",
       "n_models_agree": 0,
-      "kickoff": "2026-06-27T00:00:00Z"
+      "kickoff": "2026-06-27T21:00:00Z"
     },
     {
       "sport": "football",
@@ -6389,39 +3003,95 @@
       "model_prob": 91.3,
       "fair_prob": 91.3,
       "ev_pct": 38.8,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-25T20:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Morocco vs Haiti",
-      "market": "o/u3.5_under",
-      "odds": 1.67,
-      "model_prob": 82.3,
-      "fair_prob": 82.3,
-      "ev_pct": 37.4,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-24T22:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Jordan vs Argentina",
       "market": "o/u2.5_over",
-      "odds": 1.62,
+      "odds": 1.63,
       "model_prob": 84.3,
       "fair_prob": 84.3,
-      "ev_pct": 36.6,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "ev_pct": 37.5,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-28T02:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Senegal vs Iraq",
+      "market": "ah+2.0_away",
+      "odds": 1.8,
+      "model_prob": 65.2,
+      "fair_prob": 65.2,
+      "ev_pct": 37.0,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
+      "confidence": "LOW",
+      "n_models_agree": 0,
+      "kickoff": "2026-06-26T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Panama vs England",
+      "market": "o/u3.0_under",
+      "odds": 2.25,
+      "model_prob": 50.5,
+      "fair_prob": 50.5,
+      "ev_pct": 35.5,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
+      "confidence": "LOW",
+      "n_models_agree": 0,
+      "kickoff": "2026-06-27T21:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Egypt vs Iran",
+      "market": "away",
+      "odds": 4.1,
+      "model_prob": 33.0,
+      "fair_prob": 24.6,
+      "ev_pct": 35.2,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
+      "confidence": "LOW",
+      "n_models_agree": 2,
+      "kickoff": "2026-06-27T03:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Switzerland vs Canada",
+      "market": "ah+0.5_away",
+      "odds": 1.65,
+      "model_prob": 81.9,
+      "fair_prob": 81.9,
+      "ev_pct": 35.2,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
+      "confidence": "LOW",
+      "n_models_agree": 0,
+      "kickoff": "2026-06-24T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Morocco vs Haiti",
+      "market": "o/u3.5_under",
+      "odds": 1.64,
+      "model_prob": 82.3,
+      "fair_prob": 82.3,
+      "ev_pct": 34.9,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
+      "confidence": "LOW",
+      "n_models_agree": 0,
+      "kickoff": "2026-06-24T22:00:00Z"
     },
     {
       "sport": "football",
@@ -6431,39 +3101,25 @@
       "model_prob": 92.3,
       "fair_prob": 92.3,
       "ev_pct": 34.9,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-27T00:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Switzerland vs Canada",
-      "market": "ah+0.5_away",
-      "odds": 1.64,
-      "model_prob": 81.9,
-      "fair_prob": 81.9,
-      "ev_pct": 34.3,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "match": "Cape Verde vs Saudi Arabia",
+      "market": "o/u3.0_under",
+      "odds": 1.42,
+      "model_prob": 89.1,
+      "fair_prob": 89.1,
+      "ev_pct": 34.5,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "LOW",
       "n_models_agree": 0,
-      "kickoff": "2026-06-24T19:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Egypt vs Iran",
-      "market": "away",
-      "odds": 4.0,
-      "model_prob": 33.5,
-      "fair_prob": 25.2,
-      "ev_pct": 33.8,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 2,
-      "kickoff": "2026-06-27T03:00:00Z"
+      "kickoff": "2026-06-27T00:00:00Z"
     },
     {
       "sport": "football",
@@ -6473,53 +3129,95 @@
       "model_prob": 59.5,
       "fair_prob": 59.5,
       "ev_pct": 33.6,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-27T03:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Bosnia and Herzegovina vs Qatar",
-      "market": "draw",
-      "odds": 5.6,
-      "model_prob": 23.8,
-      "fair_prob": 18.1,
-      "ev_pct": 33.6,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "match": "DR Congo vs Uzbekistan",
+      "market": "away",
+      "odds": 4.33,
+      "model_prob": 30.8,
+      "fair_prob": 23.2,
+      "ev_pct": 33.5,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "LOW",
-      "n_models_agree": 1,
-      "kickoff": "2026-06-24T19:00:00Z"
+      "n_models_agree": 3,
+      "kickoff": "2026-06-27T23:30:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Senegal vs Iraq",
+      "market": "o/u3.5_under",
+      "odds": 1.63,
+      "model_prob": 81.9,
+      "fair_prob": 81.9,
+      "ev_pct": 33.5,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
+      "confidence": "LOW",
+      "n_models_agree": 0,
+      "kickoff": "2026-06-26T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "New Zealand vs Belgium",
+      "market": "ah+2.0_home",
+      "odds": 1.97,
+      "model_prob": 58.3,
+      "fair_prob": 58.3,
+      "ev_pct": 32.4,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
+      "confidence": "LOW",
+      "n_models_agree": 0,
+      "kickoff": "2026-06-27T03:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Norway vs France",
+      "market": "ah-1.0_away",
+      "odds": 2.16,
+      "model_prob": 53.6,
+      "fair_prob": 53.6,
+      "ev_pct": 32.4,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
+      "confidence": "LOW",
+      "n_models_agree": 0,
+      "kickoff": "2026-06-26T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Scotland vs Brazil",
+      "market": "o/u3.0_under",
+      "odds": 1.54,
+      "model_prob": 76.3,
+      "fair_prob": 76.3,
+      "ev_pct": 32.3,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
+      "confidence": "LOW",
+      "n_models_agree": 0,
+      "kickoff": "2026-06-24T22:00:00Z"
     },
     {
       "sport": "football",
       "match": "Cape Verde vs Saudi Arabia",
       "market": "away",
       "odds": 3.05,
-      "model_prob": 43.3,
-      "fair_prob": 33.0,
-      "ev_pct": 32.0,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "model_prob": 43.2,
+      "fair_prob": 32.7,
+      "ev_pct": 31.8,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "LOW",
       "n_models_agree": 2,
       "kickoff": "2026-06-27T00:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Senegal vs Iraq",
-      "market": "o/u3.5_under",
-      "odds": 1.61,
-      "model_prob": 81.9,
-      "fair_prob": 81.9,
-      "ev_pct": 31.9,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-26T19:00:00Z"
     },
     {
       "sport": "football",
@@ -6529,109 +3227,81 @@
       "model_prob": 64.4,
       "fair_prob": 64.4,
       "ev_pct": 31.8,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-25T20:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Scotland vs Brazil",
-      "market": "o/u3.0_under",
-      "odds": 1.53,
-      "model_prob": 76.3,
-      "fair_prob": 76.3,
-      "ev_pct": 31.5,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "match": "Bosnia and Herzegovina vs Qatar",
+      "market": "draw",
+      "odds": 5.5,
+      "model_prob": 24.0,
+      "fair_prob": 18.3,
+      "ev_pct": 31.8,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-24T22:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Tunisia vs Netherlands",
-      "market": "ah-2.0_away",
-      "odds": 1.69,
-      "model_prob": 69.0,
-      "fair_prob": 69.0,
-      "ev_pct": 31.2,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-25T23:00:00Z"
+      "n_models_agree": 1,
+      "kickoff": "2026-06-24T19:00:00Z"
     },
     {
       "sport": "football",
       "match": "Tunisia vs Netherlands",
       "market": "o/u2.5_over",
-      "odds": 1.46,
+      "odds": 1.47,
       "model_prob": 89.6,
       "fair_prob": 89.6,
-      "ev_pct": 30.8,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "ev_pct": 31.7,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-25T23:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Norway vs France",
-      "market": "ah-1.0_away",
-      "odds": 2.1,
-      "model_prob": 53.6,
-      "fair_prob": 53.6,
-      "ev_pct": 29.2,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "HIGH",
+      "match": "Egypt vs Iran",
+      "market": "o/u2.5_under",
+      "odds": 1.47,
+      "model_prob": 89.1,
+      "fair_prob": 89.1,
+      "ev_pct": 30.9,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
+      "confidence": "LOW",
       "n_models_agree": 0,
-      "kickoff": "2026-06-26T19:00:00Z"
+      "kickoff": "2026-06-27T03:00:00Z"
     },
     {
       "sport": "football",
-      "match": "DR Congo vs Uzbekistan",
+      "match": "Algeria vs Austria",
       "market": "away",
-      "odds": 3.9,
-      "model_prob": 33.1,
-      "fair_prob": 25.9,
-      "ev_pct": 29.1,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "odds": 3.0,
+      "model_prob": 43.5,
+      "fair_prob": 34.1,
+      "ev_pct": 30.5,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "LOW",
       "n_models_agree": 3,
-      "kickoff": "2026-06-27T23:30:00Z"
+      "kickoff": "2026-06-28T02:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Morocco vs Haiti",
-      "market": "draw",
-      "odds": 9.0,
-      "model_prob": 14.3,
-      "fair_prob": 11.6,
-      "ev_pct": 28.8,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 1,
-      "kickoff": "2026-06-24T22:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Senegal vs Iraq",
-      "market": "ah+2.0_away",
-      "odds": 1.67,
-      "model_prob": 65.2,
-      "fair_prob": 65.2,
-      "ev_pct": 28.5,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "match": "Scotland vs Brazil",
+      "market": "ah+1.5_home",
+      "odds": 1.89,
+      "model_prob": 68.3,
+      "fair_prob": 68.3,
+      "ev_pct": 29.0,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "LOW",
       "n_models_agree": 0,
-      "kickoff": "2026-06-26T19:00:00Z"
+      "kickoff": "2026-06-24T22:00:00Z"
     },
     {
       "sport": "football",
@@ -6641,136 +3311,66 @@
       "model_prob": 23.3,
       "fair_prob": 18.2,
       "ev_pct": 27.9,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-27T00:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Egypt vs Iran",
+      "match": "DR Congo vs Uzbekistan",
       "market": "o/u2.5_under",
-      "odds": 1.42,
-      "model_prob": 89.1,
-      "fair_prob": 89.1,
-      "ev_pct": 26.5,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "odds": 1.99,
+      "model_prob": 64.2,
+      "fair_prob": 64.2,
+      "ev_pct": 27.7,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "LOW",
       "n_models_agree": 0,
-      "kickoff": "2026-06-27T03:00:00Z"
+      "kickoff": "2026-06-27T23:30:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "South Africa vs South Korea",
+      "market": "o/u3.0_over",
+      "odds": 2.9,
+      "model_prob": 34.6,
+      "fair_prob": 34.6,
+      "ev_pct": 22.8,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
+      "confidence": "LOW",
+      "n_models_agree": 0,
+      "kickoff": "2026-06-25T01:00:00Z"
     },
     {
       "sport": "football",
       "match": "Ecuador vs Germany",
       "market": "away",
-      "odds": 2.0,
-      "model_prob": 63.1,
-      "fair_prob": 50.6,
-      "ev_pct": 26.3,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "odds": 1.92,
+      "model_prob": 63.9,
+      "fair_prob": 52.5,
+      "ev_pct": 22.7,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "LOW",
       "n_models_agree": 3,
       "kickoff": "2026-06-25T20:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Panama vs England",
-      "market": "o/u2.5_under",
-      "odds": 2.5,
-      "model_prob": 50.5,
-      "fair_prob": 50.5,
-      "ev_pct": 26.2,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-27T21:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Algeria vs Austria",
-      "market": "away",
-      "odds": 2.9,
-      "model_prob": 43.4,
-      "fair_prob": 34.5,
-      "ev_pct": 25.9,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 3,
-      "kickoff": "2026-06-28T02:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Norway vs France",
-      "market": "scorer_Ousmane Dembélé",
-      "odds": 2.96,
-      "model_prob": 42.3,
-      "fair_prob": 33.8,
-      "ev_pct": 25.2,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-26T19:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Scotland vs Brazil",
-      "market": "ah+1.25_home",
-      "odds": 2.08,
-      "model_prob": 37.1,
-      "fair_prob": 37.1,
-      "ev_pct": 25.1,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-24T22:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Croatia vs Ghana",
-      "market": "away",
-      "odds": 6.6,
-      "model_prob": 18.9,
-      "fair_prob": 15.6,
-      "ev_pct": 24.9,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 3,
-      "kickoff": "2026-06-27T21:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "South Africa vs South Korea",
       "market": "away",
-      "odds": 1.73,
-      "model_prob": 71.3,
-      "fair_prob": 58.1,
-      "ev_pct": 23.3,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "odds": 1.71,
+      "model_prob": 71.7,
+      "fair_prob": 58.8,
+      "ev_pct": 22.6,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "LOW",
       "n_models_agree": 3,
-      "kickoff": "2026-06-25T01:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "South Africa vs South Korea",
-      "market": "o/u2.5_over",
-      "odds": 2.13,
-      "model_prob": 57.0,
-      "fair_prob": 57.0,
-      "ev_pct": 21.4,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
       "kickoff": "2026-06-25T01:00:00Z"
     },
     {
@@ -6781,50 +3381,50 @@
       "model_prob": 44.5,
       "fair_prob": 44.5,
       "ev_pct": 20.3,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
+      "stake_eur": 15.0,
+      "stake_pct": 19.9,
       "confidence": "HIGH",
       "n_models_agree": 0,
       "kickoff": "2026-06-28T02:00:00Z"
     },
     {
       "sport": "football",
-      "match": "Croatia vs Ghana",
-      "market": "o/u2.5_under",
-      "odds": 1.8,
-      "model_prob": 65.5,
-      "fair_prob": 65.5,
-      "ev_pct": 18.0,
-      "stake_eur": 18.34,
-      "stake_pct": 18.3,
+      "match": "Morocco vs Haiti",
+      "market": "draw",
+      "odds": 8.0,
+      "model_prob": 14.9,
+      "fair_prob": 12.7,
+      "ev_pct": 19.1,
+      "stake_eur": 14.5,
+      "stake_pct": 19.3,
       "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-27T21:00:00Z"
+      "n_models_agree": 1,
+      "kickoff": "2026-06-24T22:00:00Z"
     },
     {
       "sport": "football",
-      "match": "DR Congo vs Uzbekistan",
-      "market": "o/u2.25_under",
-      "odds": 2.07,
-      "model_prob": 49.8,
-      "fair_prob": 49.8,
-      "ev_pct": 17.5,
-      "stake_eur": 17.93,
-      "stake_pct": 17.9,
+      "match": "Norway vs France",
+      "market": "scorer_Ousmane Dembélé",
+      "odds": 2.8,
+      "model_prob": 42.3,
+      "fair_prob": 35.7,
+      "ev_pct": 18.4,
+      "stake_eur": 14.07,
+      "stake_pct": 18.7,
       "confidence": "LOW",
       "n_models_agree": 0,
-      "kickoff": "2026-06-27T23:30:00Z"
+      "kickoff": "2026-06-26T19:00:00Z"
     },
     {
       "sport": "football",
       "match": "Switzerland vs Canada",
       "market": "o/u2.5_over",
-      "odds": 2.12,
+      "odds": 2.18,
       "model_prob": 54.0,
       "fair_prob": 54.0,
-      "ev_pct": 14.4,
-      "stake_eur": 16.92,
-      "stake_pct": 16.9,
+      "ev_pct": 17.6,
+      "stake_eur": 14.96,
+      "stake_pct": 19.9,
       "confidence": "HIGH",
       "n_models_agree": 0,
       "kickoff": "2026-06-24T19:00:00Z"
@@ -6832,14 +3432,14 @@
     {
       "sport": "football",
       "match": "Colombia vs Portugal",
-      "market": "o/u2.5_over",
-      "odds": 2.12,
-      "model_prob": 53.5,
-      "fair_prob": 53.5,
-      "ev_pct": 13.4,
-      "stake_eur": 16.05,
-      "stake_pct": 16.1,
-      "confidence": "HIGH",
+      "market": "ah+1.5_home",
+      "odds": 1.28,
+      "model_prob": 90.4,
+      "fair_prob": 90.4,
+      "ev_pct": 15.7,
+      "stake_eur": 12.49,
+      "stake_pct": 16.6,
+      "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-27T23:30:00Z"
     },
@@ -6851,67 +3451,81 @@
       "model_prob": 27.6,
       "fair_prob": 24.4,
       "ev_pct": 13.1,
-      "stake_eur": 14.28,
-      "stake_pct": 14.3,
+      "stake_eur": 10.92,
+      "stake_pct": 14.5,
       "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-24T19:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Uruguay vs Spain",
-      "market": "away",
-      "odds": 1.55,
-      "model_prob": 70.5,
-      "fair_prob": 64.5,
-      "ev_pct": 9.2,
-      "stake_eur": 11.14,
-      "stake_pct": 11.1,
-      "confidence": "LOW",
-      "n_models_agree": 2,
-      "kickoff": "2026-06-27T00:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Panama vs England",
-      "market": "draw",
-      "odds": 8.2,
-      "model_prob": 13.2,
-      "fair_prob": 12.4,
-      "ev_pct": 8.2,
-      "stake_eur": 10.25,
-      "stake_pct": 10.3,
-      "confidence": "LOW",
-      "n_models_agree": 1,
-      "kickoff": "2026-06-27T21:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Bosnia and Herzegovina vs Qatar",
-      "market": "o/u3.0_under",
-      "odds": 1.97,
-      "model_prob": 43.3,
-      "fair_prob": 43.3,
-      "ev_pct": 7.7,
-      "stake_eur": 9.87,
-      "stake_pct": 9.9,
-      "confidence": "MEDIUM",
       "n_models_agree": 0,
       "kickoff": "2026-06-24T19:00:00Z"
     },
     {
       "sport": "football",
       "match": "Colombia vs Portugal",
-      "market": "draw",
-      "odds": 3.9,
-      "model_prob": 27.4,
-      "fair_prob": 26.1,
-      "ev_pct": 6.9,
-      "stake_eur": 9.19,
-      "stake_pct": 9.2,
-      "confidence": "LOW",
-      "n_models_agree": 1,
+      "market": "o/u2.5_over",
+      "odds": 2.11,
+      "model_prob": 53.5,
+      "fair_prob": 53.5,
+      "ev_pct": 12.9,
+      "stake_eur": 11.9,
+      "stake_pct": 15.8,
+      "confidence": "HIGH",
+      "n_models_agree": 0,
       "kickoff": "2026-06-27T23:30:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Panama vs England",
+      "market": "draw",
+      "odds": 8.8,
+      "model_prob": 12.7,
+      "fair_prob": 11.5,
+      "ev_pct": 12.2,
+      "stake_eur": 11.44,
+      "stake_pct": 15.2,
+      "confidence": "LOW",
+      "n_models_agree": 2,
+      "kickoff": "2026-06-27T21:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Croatia vs Ghana",
+      "market": "o/u2.5_under",
+      "odds": 1.71,
+      "model_prob": 65.5,
+      "fair_prob": 65.5,
+      "ev_pct": 12.1,
+      "stake_eur": 10.34,
+      "stake_pct": 13.8,
+      "confidence": "LOW",
+      "n_models_agree": 0,
+      "kickoff": "2026-06-27T21:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Uruguay vs Spain",
+      "market": "away",
+      "odds": 1.56,
+      "model_prob": 70.6,
+      "fair_prob": 64.5,
+      "ev_pct": 10.1,
+      "stake_eur": 9.18,
+      "stake_pct": 12.2,
+      "confidence": "LOW",
+      "n_models_agree": 2,
+      "kickoff": "2026-06-27T00:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Bosnia and Herzegovina vs Qatar",
+      "market": "o/u3.0_under",
+      "odds": 1.95,
+      "model_prob": 43.3,
+      "fair_prob": 43.3,
+      "ev_pct": 6.8,
+      "stake_eur": 7.25,
+      "stake_pct": 9.6,
+      "confidence": "MEDIUM",
+      "n_models_agree": 0,
+      "kickoff": "2026-06-24T19:00:00Z"
     }
   ],
   "tennis": [],
@@ -7090,7 +3704,48 @@
       }
     }
   },
-  "top_elo": [],
+  "top_elo": [
+    {
+      "name": "Alcaraz C.",
+      "rating": 1668
+    },
+    {
+      "name": "Fritz T.",
+      "rating": 1642
+    },
+    {
+      "name": "Sinner J.",
+      "rating": 1631
+    },
+    {
+      "name": "Djokovic N.",
+      "rating": 1621
+    },
+    {
+      "name": "Swiatek I.",
+      "rating": 1615
+    },
+    {
+      "name": "Alexandrova E.",
+      "rating": 1591
+    },
+    {
+      "name": "Anisimova A.",
+      "rating": 1588
+    },
+    {
+      "name": "Sabalenka A.",
+      "rating": 1577
+    },
+    {
+      "name": "Bublik A.",
+      "rating": 1577
+    },
+    {
+      "name": "Medvedev D.",
+      "rating": 1576
+    }
+  ],
   "history": [
     {
       "date": "2026-06-24",
@@ -12578,6 +9233,12 @@
         "home": 1.45,
         "draw": 5.6,
         "away": 8.5
+      },
+      {
+        "date": "2026-06-24",
+        "home": 1.45,
+        "draw": 5.5,
+        "away": 8.2
       }
     ],
     "Switzerland vs Canada": [
@@ -12658,6 +9319,12 @@
         "home": 2.45,
         "draw": 3.25,
         "away": 3.6
+      },
+      {
+        "date": "2026-06-24",
+        "home": 2.46,
+        "draw": 3.2,
+        "away": 3.5
       }
     ],
     "Scotland vs Brazil": [
@@ -12737,6 +9404,12 @@
         "date": "2026-06-23",
         "home": 9.6,
         "draw": 5.5,
+        "away": 1.41
+      },
+      {
+        "date": "2026-06-24",
+        "home": 10.3,
+        "draw": 5.8,
         "away": 1.41
       }
     ],
@@ -12818,6 +9491,12 @@
         "home": 1.23,
         "draw": 9.0,
         "away": 31.0
+      },
+      {
+        "date": "2026-06-24",
+        "home": 1.23,
+        "draw": 8.0,
+        "away": 20.0
       }
     ],
     "Czech Republic vs Mexico": [
@@ -12898,6 +9577,12 @@
         "home": 3.89,
         "draw": 4.2,
         "away": 2.02
+      },
+      {
+        "date": "2026-06-24",
+        "home": 4.0,
+        "draw": 4.05,
+        "away": 2.0
       }
     ],
     "South Africa vs South Korea": [
@@ -12978,6 +9663,12 @@
         "home": 6.0,
         "draw": 4.0,
         "away": 1.73
+      },
+      {
+        "date": "2026-06-24",
+        "home": 6.25,
+        "draw": 4.0,
+        "away": 1.71
       }
     ],
     "Curaçao vs Ivory Coast": [
@@ -13058,6 +9749,12 @@
         "home": 25.0,
         "draw": 9.2,
         "away": 1.18
+      },
+      {
+        "date": "2026-06-24",
+        "home": 25.0,
+        "draw": 10.0,
+        "away": 1.19
       }
     ],
     "Ecuador vs Germany": [
@@ -13138,6 +9835,12 @@
         "home": 4.0,
         "draw": 4.2,
         "away": 2.0
+      },
+      {
+        "date": "2026-06-24",
+        "home": 4.1,
+        "draw": 4.4,
+        "away": 1.92
       }
     ],
     "Japan vs Sweden": [
@@ -13218,6 +9921,12 @@
         "home": 2.0,
         "draw": 3.65,
         "away": 4.5
+      },
+      {
+        "date": "2026-06-24",
+        "home": 1.99,
+        "draw": 3.7,
+        "away": 4.6
       }
     ],
     "Tunisia vs Netherlands": [
@@ -13297,6 +10006,12 @@
         "date": "2026-06-23",
         "home": 28.0,
         "draw": 10.5,
+        "away": 1.16
+      },
+      {
+        "date": "2026-06-24",
+        "home": 29.0,
+        "draw": 10.0,
         "away": 1.16
       }
     ],
@@ -13378,6 +10093,12 @@
         "home": 3.1,
         "draw": 2.32,
         "away": 4.25
+      },
+      {
+        "date": "2026-06-24",
+        "home": 3.2,
+        "draw": 2.32,
+        "away": 4.21
       }
     ],
     "Turkey vs USA": [
@@ -13458,6 +10179,12 @@
         "home": 3.75,
         "draw": 4.3,
         "away": 2.0
+      },
+      {
+        "date": "2026-06-24",
+        "home": 4.0,
+        "draw": 4.3,
+        "away": 1.99
       }
     ],
     "Norway vs France": [
@@ -13538,6 +10265,12 @@
         "home": 5.5,
         "draw": 4.6,
         "away": 1.69
+      },
+      {
+        "date": "2026-06-24",
+        "home": 5.35,
+        "draw": 4.9,
+        "away": 1.73
       }
     ],
     "Senegal vs Iraq": [
@@ -13618,6 +10351,12 @@
         "home": 1.27,
         "draw": 7.0,
         "away": 14.5
+      },
+      {
+        "date": "2026-06-24",
+        "home": 1.26,
+        "draw": 7.5,
+        "away": 14.7
       }
     ],
     "Cape Verde vs Saudi Arabia": [
@@ -13697,6 +10436,12 @@
         "date": "2026-06-23",
         "home": 2.54,
         "draw": 3.66,
+        "away": 3.05
+      },
+      {
+        "date": "2026-06-24",
+        "home": 2.52,
+        "draw": 3.6,
         "away": 3.05
       }
     ],
@@ -13778,6 +10523,12 @@
         "home": 7.8,
         "draw": 4.4,
         "away": 1.55
+      },
+      {
+        "date": "2026-06-24",
+        "home": 8.0,
+        "draw": 4.4,
+        "away": 1.56
       }
     ],
     "New Zealand vs Belgium": [
@@ -13856,6 +10607,12 @@
       {
         "date": "2026-06-23",
         "home": 18.0,
+        "draw": 8.0,
+        "away": 1.23
+      },
+      {
+        "date": "2026-06-24",
+        "home": 18.5,
         "draw": 8.0,
         "away": 1.23
       }
@@ -13938,6 +10695,12 @@
         "home": 2.6,
         "draw": 2.8,
         "away": 4.0
+      },
+      {
+        "date": "2026-06-24",
+        "home": 2.55,
+        "draw": 2.8,
+        "away": 4.1
       }
     ],
     "Croatia vs Ghana": [
@@ -14018,6 +10781,12 @@
         "home": 1.76,
         "draw": 3.95,
         "away": 6.6
+      },
+      {
+        "date": "2026-06-24",
+        "home": 1.82,
+        "draw": 3.5,
+        "away": 6.0
       }
     ],
     "Panama vs England": [
@@ -14098,6 +10867,12 @@
         "home": 15.5,
         "draw": 8.2,
         "away": 1.26
+      },
+      {
+        "date": "2026-06-24",
+        "home": 19.5,
+        "draw": 8.8,
+        "away": 1.21
       }
     ],
     "Colombia vs Portugal": [
@@ -14178,6 +10953,12 @@
         "home": 4.0,
         "draw": 3.9,
         "away": 2.1
+      },
+      {
+        "date": "2026-06-24",
+        "home": 4.3,
+        "draw": 4.0,
+        "away": 2.0
       }
     ],
     "DR Congo vs Uzbekistan": [
@@ -14258,6 +11039,12 @@
         "home": 2.05,
         "draw": 4.1,
         "away": 3.9
+      },
+      {
+        "date": "2026-06-24",
+        "home": 1.9,
+        "draw": 4.2,
+        "away": 4.33
       }
     ],
     "Algeria vs Austria": [
@@ -14338,6 +11125,12 @@
         "home": 4.05,
         "draw": 2.46,
         "away": 2.9
+      },
+      {
+        "date": "2026-06-24",
+        "home": 4.2,
+        "draw": 2.46,
+        "away": 3.0
       }
     ],
     "Jordan vs Argentina": [
@@ -14418,34 +11211,16 @@
         "home": 18.0,
         "draw": 7.8,
         "away": 1.22
+      },
+      {
+        "date": "2026-06-24",
+        "home": 18.5,
+        "draw": 8.2,
+        "away": 1.22
       }
     ]
   },
   "wm_results": [
-    {
-      "match_id": "f1ab0f69832972a329243522ceaa7804",
-      "home": "Germany",
-      "away": "Ivory Coast",
-      "home_score": 2,
-      "away_score": 1,
-      "commence_time": "2026-06-20T20:00:00Z"
-    },
-    {
-      "match_id": "681895f294b670b4c7b14495dfb583bc",
-      "home": "Ecuador",
-      "away": "Curaçao",
-      "home_score": 0,
-      "away_score": 0,
-      "commence_time": "2026-06-21T00:00:00Z"
-    },
-    {
-      "match_id": "dfc5202cf1b8ae002cf952cd04f235b9",
-      "home": "Tunisia",
-      "away": "Japan",
-      "home_score": 0,
-      "away_score": 4,
-      "commence_time": "2026-06-21T04:00:00Z"
-    },
     {
       "match_id": "73529a242e319a86bf3d00ddb4accc37",
       "home": "Spain",
@@ -14509,6 +11284,38 @@
       "home_score": 1,
       "away_score": 2,
       "commence_time": "2026-06-23T03:00:00Z"
+    },
+    {
+      "match_id": "8ba93d190f1f934e33862a97a6353a6e",
+      "home": "Portugal",
+      "away": "Uzbekistan",
+      "home_score": 5,
+      "away_score": 0,
+      "commence_time": "2026-06-23T17:00:00Z"
+    },
+    {
+      "match_id": "2f49dd8deae3079dc4eb2d634d18a99c",
+      "home": "England",
+      "away": "Ghana",
+      "home_score": 0,
+      "away_score": 0,
+      "commence_time": "2026-06-23T20:00:00Z"
+    },
+    {
+      "match_id": "c1bc8c26480cd42b89a0de5329581314",
+      "home": "Panama",
+      "away": "Croatia",
+      "home_score": 0,
+      "away_score": 1,
+      "commence_time": "2026-06-23T23:00:00Z"
+    },
+    {
+      "match_id": "68bfc965eb267508e04d8e8d75c1a0ae",
+      "home": "Colombia",
+      "away": "DR Congo",
+      "home_score": 1,
+      "away_score": 0,
+      "commence_time": "2026-06-24T02:00:00Z"
     }
   ]
 }
