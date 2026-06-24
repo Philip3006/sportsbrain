@@ -957,6 +957,69 @@ function renderSport(sport) {
   }
 
   let h = controlsHtml + '<div class="sport-view-inner">';
+
+  // J2-E: Tennis-Tab gruppiert zusätzlich nach Tournament (Slam → 1000 → 500 → 250)
+  if (sport === 'tennis') {
+    // Sortier-Reihenfolge der Kategorien
+    const CAT_ORDER = ['grand_slam','m1000','wta1000','atp500','wta500','atp250','wta250','tour_final'];
+    const CAT_LABEL = {
+      grand_slam: 'Grand Slam', m1000: 'ATP Masters 1000', wta1000: 'WTA 1000',
+      atp500: 'ATP 500', wta500: 'WTA 500', atp250: 'ATP 250', wta250: 'WTA 250',
+      tour_final: 'Tour Finals',
+    };
+    const SURFACE_ICON = { grass: '🌱', clay: '🟧', hard: '🟦', carpet: '⬛', unknown: '❓' };
+    // Match → Tournament-Bucket
+    const byTournament = new Map();
+    for (const [match, mSigs] of sortedGroups) {
+      const s0 = mSigs[0];
+      const tName = s0.tournament || 'Tennis';
+      if (!byTournament.has(tName)) {
+        byTournament.set(tName, {
+          tournament: tName,
+          category: s0.category || '',
+          surface: s0.surface || 'unknown',
+          best_of: s0.best_of || 3,
+          matches: [],
+        });
+      }
+      byTournament.get(tName).matches.push([match, mSigs]);
+    }
+    // Buckets nach Kategorie-Order sortieren
+    const buckets = [...byTournament.values()].sort((a, b) => {
+      const ia = CAT_ORDER.indexOf(a.category); const ib = CAT_ORDER.indexOf(b.category);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    });
+
+    for (const bk of buckets) {
+      const icon = SURFACE_ICON[bk.surface] || '❓';
+      const catLabel = CAT_LABEL[bk.category] || bk.category || '';
+      const boStr = bk.best_of ? `BO${bk.best_of}` : '';
+      h += `<div class="tennis-tournament-header" style="padding:10px 16px;background:rgba(40,46,52,.55);border-top:1px solid rgba(48,54,61,.5);border-bottom:1px solid rgba(48,54,61,.5);display:flex;align-items:center;gap:8px">
+        <span style="font-size:16px">${icon}</span>
+        <span style="font-weight:800;font-size:14px">${esc(bk.tournament)}</span>
+        <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:9px;background:#1f2832;color:#a4c6ff">${esc(catLabel)}</span>
+        <span style="font-size:10px;color:var(--muted);margin-left:auto">${esc(boStr)} · ${bk.matches.length} Match(es)</span>
+      </div>`;
+      for (const [match, mSigs] of bk.matches) {
+        const s0 = mSigs[0];
+        const [mh, ma] = match.split(' vs ').map(x => x.trim());
+        const timeStr = s0.kickoff ? fmtKickoff(s0.kickoff) : '';
+        const tourStr = (s0.tour||'').toUpperCase();
+        h += `<div style="padding:14px 16px 6px;border-bottom:1px solid rgba(48,54,61,.4)">
+          <div style="font-size:16px;font-weight:900;letter-spacing:-.3px;margin-bottom:3px">${esc(mh)} <span style="color:var(--muted);font-weight:500">vs</span> ${esc(ma)}</div>
+          <div style="font-size:11px;color:var(--muted);font-weight:600">${esc(tourStr)}${timeStr ? ' · ' + timeStr : ''}</div>
+        </div>`;
+        const ouS = mSigs.filter(s => /^o\/u/.test(s.market));
+        const otherS = mSigs.filter(s => !/^o\/u/.test(s.market));
+        h += `<div class="match-group-cards">${otherS.map(s => sigCard(s, false)).join('')}${buildOuAccordion(ouS, otherS.length === 0 || ouS.some(s => s.confidence === 'HIGH'))}</div>`;
+      }
+    }
+    h += '</div>';
+    c.innerHTML = h;
+    _bindSportControls(sport);
+    return;
+  }
+
   for (const [match, mSigs] of sortedGroups) {
     const s0 = mSigs[0];
     const [mh, ma] = match.split(' vs ').map(x => x.trim());

@@ -509,31 +509,37 @@ def main() -> None:
 
     # ---- 7. Dashboard-JSON ----
     dashboard_summary = ledger_summary()
-    match_tour_map = {}
-    kickoff_map = {}
+    match_tour_map: dict[str, str] = {}
+    match_tournament_map: dict[str, dict] = {}
+    kickoff_map: dict[str, str] = {}
     schedule = []
+    # Pro Signal: Match-Tour + Tournament-Meta hinterlegen (J2-E)
     for slug, info in per_tournament.items():
         t = info["tournament"]
-        # Schedule-Build aus Mock oder Live
+        meta = {
+            "name": t.name, "category": t.category,
+            "surface": t.surface, "best_of": t.best_of,
+        }
+        for s in info["signals"]:
+            match_tour_map[s.match_id] = t.tour
+            match_tournament_map[s.match_id] = meta
+        # Schedule (nur Mock — Live-Fetch wäre Doppel-API-Call)
         if args.mock and mock_map:
-            ms = mock_map.get(slug, [])
-        else:
-            ms = []  # Live-Matches sind in per_tournament-Signals enthalten; schedule wäre Doppel-Fetch
-        for m in ms:
-            mid = m["match_id"]
-            match_tour_map[mid] = t.tour
-            kickoff_map[mid] = m.get("commence_time", "")
-            schedule.append({
-                "sport": "tennis", "home": m["player_a"], "away": m["player_b"],
-                "kickoff": m.get("commence_time", ""), "tour": t.tour,
-                "tournament": t.name, "category": t.category, "surface": t.surface,
-            })
+            for m in mock_map.get(slug, []):
+                mid = m["match_id"]
+                kickoff_map[mid] = m.get("commence_time", "")
+                schedule.append({
+                    "sport": "tennis", "home": m["player_a"], "away": m["player_b"],
+                    "kickoff": m.get("commence_time", ""), "tour": t.tour,
+                    "tournament": t.name, "category": t.category, "surface": t.surface,
+                })
 
     write_signals_json_all_users(
         tennis=all_live_signals,
         portfolio=dashboard_summary,
         top_elo=top_grass,
         tennis_tour_map=match_tour_map,
+        tennis_tournament_map=match_tournament_map,
         kickoff_map=kickoff_map,
         schedule=schedule,
     )
