@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-23",
+  "updated": "2026-06-24",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -857,7 +857,8 @@
       "ampel": "🟢",
       "suspended": [
         "Raphinha",
-        "Wesley França"
+        "Wesley França",
+        "Neymar"
       ],
       "players": [
         {
@@ -908,7 +909,7 @@
         {
           "name": "Neymar",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Raphinha",
@@ -3117,7 +3118,8 @@
       "ampel": "🟢",
       "suspended": [
         "Ahmed Yahya",
-        "Jalal Hassan"
+        "Jalal Hassan",
+        "Aymen Hussein"
       ],
       "players": [
         {
@@ -3208,7 +3210,7 @@
         {
           "name": "Aymen Hussein",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Kevin Yakob",

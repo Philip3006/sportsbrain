@@ -278,6 +278,9 @@
 [2026-06-23 16:16:56 UTC] [auto_heal_ai] prematch_scan: response → DEGRADED_OK: Fallback to ESPN data source is active, indicating primary data source unavailable or unhealthy. Job is fun
 [2026-06-23 19:01:57 UTC] [auto_heal_ai] analyzing prematch_scan (status=degraded, fallback=espn)
 [2026-06-23 19:02:00 UTC] [auto_heal_ai] prematch_scan: response → DEGRADED_OK: Fallback to ESPN is active, indicating primary data source (likely primary sports API) is unavailable or un
+[2026-06-24 03:43:20 UTC] [auto_heal_ai] analyzing prematch_scan (status=stale, fallback=None)
+[2026-06-24 03:43:23 UTC] [auto_heal_ai] prematch_scan: response → UNCLEAR: No log file available to diagnose root cause. The 'stale' health status with no fallback indicates the job is n
+[2026-06-24 03:43:23 UTC] [auto_heal_ai] prematch_scan: unclear — pushing notification
 [2026-06-24 04:15:16 UTC] [cloud_healer] live_score_push: status=stale — triggere live_score_push.yml
 [2026-06-24 04:15:17 UTC] [cloud_healer] live_score_push: erfolgreich ausgelöst
 [2026-06-24 04:15:17 UTC] [cloud_healer] prematch_scan: status=stale — triggere prematch_scan.yml
