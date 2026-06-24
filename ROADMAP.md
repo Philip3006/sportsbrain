@@ -467,16 +467,18 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Impact/Aufwand/Risiko**: 🟢 · 🟡 · 🟡 (Brier-Regression möglich, dann Rollback)
 - **Abhängigkeiten**: I1, I2
 
-### I4. Backtest-Inkonsistenz MAX_EV beheben
+### I4. ✅ erledigt 2026-06-24 Backtest-Inkonsistenz MAX_EV beheben
 - **Was**: `src/backtest/walk_forward.py` bekommt `apply_live_filters=True` Default. EV>40%-Filter, Confederation-Filter, MAX_ACTIVE_BETS im Backtest aktiv.
 - **Warum**: Backtests sind nur valide, wenn sie das Live-System nachbilden.
-- **Impact/Aufwand/Risiko**: 🟡 · 🔴 · 🟡
-- **Dateien**: `src/backtest/walk_forward.py`, `scripts/backtest_*.py`, Tests
+- **Impact/Aufwand/Risiko**: 🟡 · 🟡 · 🟡
+- **Dateien**: `src/backtest/walk_forward.py`, `tests/backtest/test_walk_forward_live_filters.py` (6 neue Tests)
+- **Status**: `apply_live_filters=True` als Default in `run_event_backtest` + `run_all_backtests`. EV-Cap (MAX_EV=0.40) filtert Qualifier-Artefakte. Daily-Bet-Cap (MAX_ACTIVE_BETS=5, sortiert nach EV) verhindert Overtrading. Confederation-min_edge war bereits aktiv. 673/673 Tests grün.
 
-### I5. PPDA scharfschalten (nach Backtest-Gate)
+### I5. ✅ erledigt 2026-06-21 PPDA scharfschalten (nach Backtest-Gate)
 - **Was**: `PPDA_LIVE_ENABLED=True`, **falls** Backtest-Gate (G1) ROI-Improvement ≥ 0.5pp UND Brier-Improvement ≥ 0.001.
 - **Impact/Aufwand/Risiko**: 🟡 · 🟢 · 🟡
 - **Abhängigkeiten**: G1
+- **Status**: Sprint-2-Backtest (2026-06-21) ergab Brier +0.0035 ✅, Markt-ROI +11.85pp ✅ → `PPDA_LIVE_ENABLED = True` gesetzt.
 
 ### I6. ✅ Home-Advantage Gastgeber-Länder (WM 2026)
 - **Was**: Separate `host_boost` Parameter in `dc.predict_match()`: wenn Team in `HOST_NATIONS = {"United States", "Canada", "Mexico"}` und das Spiel im jeweiligen Heimland stattfindet, wird Lambda_home mit einem Faktor `HOST_LAMBDA_BOOST` (default 1.08, aus historischen Daten WC 2006/2010/2014/2018 kalibriert) multipliziert. Venue-Erkennung via `match.get("venue_country")` aus TheOddsAPI. Falls kein Venue: Host-Match via fixture-Daten (Wikipedia/ESPN) annotieren.
@@ -702,7 +704,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Insgesamt**: 68 konkrete Items (+7: J2-J/K/L/M Tennis-Lücken, I10/I11/I12 Fußball-Lücken)
 - **P0**: 12 (sofort) — davon 12 ✅
 - **P1**: 33 — davon 33 ✅ (alle P1-Items erledigt 2026-06-24; M5 blockiert bis FIFA-Draw 2026-06-27)
-- **P2**: 15 — davon 8 ✅ (E1, E2, E3, E4, H1, H2, I6, I7); offen: I1–I5, I8, J2-K, J2-L, J3, J4
+- **P2**: 15 — davon 10 ✅ (E1, E2, E3, E4, H1, H2, I4, I5, I6, I7); offen: I1–I3, I8, J2-K, J2-L, J3, J4
 - **P3**: 5 — J2-M (Tennis Live-Stats) + 4 weitere Q4 2026
 - **Veto**: 11 (bewusst nicht gebaut)
 
@@ -728,6 +730,8 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **2026-06-21**: ~ Phase 5 (F3, F4) erledigt. F3 (Commit `92cf85b`): drei Root-Causes für 41/43 leere CLVs gefunden — Pandas NaN-Truthiness im Backfill-Check, unvollständige Markt-Map, fehlender Void-Status. `_resolve_closing_odds()`-Helper deckt jetzt auch Quarter-Ball-O/Us und arbiträre Handicaps via dynamische `totals_lines`/`spreads`-Dicts ab. 16 historische Bets erfolgreich backfilled, 25 Tests neu. F4 (Commit `c2df64c`): farbcodierte CLV-Pille pro Settled-Bet + "Ø CLV letzte 30 Tage"-Karte zusätzlich zur Lifetime-Karte; Backend liefert `clv`/`closing_odds` in settled_bets und `mean_clv_30d`/`n_clv_30d` in summary; Void-Bets fließen in CLV-Aggregation (nicht Hit-Rate). Gesamt-Suite 488/488. Nächste Phase: C1–C7 (Trust-UI).
 - **2026-06-22**: + D5 NEU (Multi-User v2 End-to-End) ✅ erledigt. D3-Foundation um echte Multi-Tenant-Trennung erweitert: Ledger-Split (`ledger_{user}.csv` mit Auto-Migration analog Snapshot-Pattern), per-user `signals_{user}.json` + `write_signals_json_all_users()`-Loop, Worker-Routing über `authResolve()` + KV-Keys `signals_json_{user}` & `pending_bets_{user}` (Default-User auf Legacy-Keys ohne Suffix für Backward-Compat), Master-Token mit `?user=`-Query, daily_scan/tennis_scan/post_match_update/consume_pending_bets/settle_bets loopen über `list_known_users()`. Architektur: einmal scoren, pro User filtern (Bankroll/Stake/Ledger). User-Onboarding implizit via `POST /rotate_token {user}` mit Master-Token. Worker-Deploy `2e3b3888`. 5 neue Tests in `test_ledger_multiuser.py`, 503/503 Suite grün. Nächste Phase: **8** (E1–E4 Refactor).
 - **2026-06-24**: ✅ **H3 + I10 + I11 + I12 erledigt** (P1: 28 → 33 ✅ — alle P1-Items done). H3: `cancel_bet()` in ledger.py + Worker `POST /cancel_bet` + `GET/DELETE /cancel_requests` + consume_pending_bets.py-Integration + Cancel-Button in bets.js (Confirm-Dialog, sofortiger DOM-Remove). I10: `src/analysis/halftime_sim.py` (H1-Split=0.447 empirisch, `predict_halftime_ou()`, `predict_halftime_scoreline()`). I11: `src/data/football_discovery.py` analog tennis/discovery.py + `FOOTBALL_LEAGUES_WHITELIST` (20 Ligen) in config.py. I12: `ALTITUDE_BOOST_MAP` (16 Hochland-Teams, Bolivar 1.20/0.85, LigaQuito 1.15/0.90) + `ARTIFICIAL_TURF_STADIUMS` (14 Teams) + `TURF_AWAY_PENALTY=0.96` in config.py; `_lambdas()` in dixon_coles.py um `altitude_factors` + `turf_penalty` Parameter erweitert.
+- **2026-06-24**: ✅ **I4 + I5 erledigt**. I4: `apply_live_filters=True` Default in `walk_forward.py` — EV-Cap (MAX_EV=0.40), Daily-Bet-Cap (MAX_ACTIVE_BETS=5 sortiert nach EV), Confederation-min_edge bereits aktiv. 6 neue Tests. I5: PPDA war bereits live seit 2026-06-21 (Sprint-2-Backtest Gate ✅), nur ROADMAP-Status nachgezogen. P2: 8 → 10 ✅.
+- **2026-06-24**: ✅ **I10+I11+I12 vollständig verdrahtet** — altitude_factors/turf_penalty durch alle 11 predict_*-Funktionen; scoring.py liest Maps pro Match; _H1_FACTOR angleichen (0.43→0.447); Football Discovery Startup-Log; Worker Deploy 54e6b18e (H3 /cancel_bet live).
 - **2026-06-24**: ✅ **J2-H + J2-J + I9 erledigt**. J2-H: `TENNIS_CATEGORY_SURFACE_MODE` live — atp500/grass, wta250/grass, wta1000/clay, wta500/grass jetzt im Live-Gate. J2-J + I9: `archive_signals()` bereits in beiden Scannern integriert (tennis_scan.py + daily_scan.py), Signal-History für Tennis + Football aktiv. P1-Count: 25 → 28 ✅.
 - **2026-06-24**: ~ **J2-H Priorität P2 → P1 hochgestuft + Slot 12e in Umsetzungs-Reihenfolge eingetragen**. Begründung: Tennis-Saison läuft, Wimbledon-Hauptfeld startet Mo 29.06., danach Bad Homburg/Eastbourne/Newport/Sommer-Hardcourt-Saison ohne Pause. Mit aktuellem kategorie-only-MODE würde das Tennis-System bis weit ins Q3 inaktiv bleiben, weil 6 profitable Surface-Kombinationen (atp500 grass +18.6%, wta250 grass +16%, wta1000 clay +8.4%, wta500 grass +8.1%, atp250 clay/hard +3.8%/+5.3%) unter `shadow`-Default fallen. Deadline **2026-06-28** (Wimbledon-Vortag). Aufwand 3-4 h. Doku in J2-H-Item finalisiert (Lookup-Reihenfolge, Fallback-Kaskade, Test-Plan).
 - **2026-06-24**: ~ **I9 + H3 Priorität P2 → P1 hochgestuft**. I9: Signal-Archive muss sofort starten damit nach WM ausreichend Daten vorhanden sind (~200–500 Signale brauchen 4 Wochen Vorlaufzeit). H3: Bet-Cancel-Flow ist im Multi-User-Setup (D5/D6) kein optionales Polish mehr — CSV-manuell-Edit ist für Freunde-User nicht praktikabel. P1-Zähler: 27 → 29.
