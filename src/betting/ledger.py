@@ -495,9 +495,6 @@ def _settle_from_results_locked(
 
     if settled:
         _save(df, ledger_path)
-        # Send Web Push notification for each newly settled bet.
-        # Skip under pytest: tests use fake fixtures (Brazil vs Argentina etc.) and
-        # would otherwise fire real VAPID pushes to subscribed devices.
         import os
         if not os.getenv("PYTEST_CURRENT_TEST"):
             try:
@@ -507,6 +504,7 @@ def _settle_from_results_locked(
                     send_settlement_alert(df.loc[idx].to_dict(), summary)
             except Exception:
                 pass
+            _refresh_dashboard(user)
 
     return settled
 
@@ -657,6 +655,14 @@ def get_bankroll_snapshot(
     return bankroll
 
 
+def _refresh_dashboard(user: str = DEFAULT_USER) -> None:
+    try:
+        from src.notifications.web_dashboard import write_signals_json
+        write_signals_json(user=user)
+    except Exception:
+        pass
+
+
 def cancel_bet(
     home: str,
     away: str,
@@ -705,4 +711,7 @@ def cancel_bet(
         except Exception:
             pass
 
+    import os
+    if not os.getenv("PYTEST_CURRENT_TEST"):
+        _refresh_dashboard(user)
     return "ok"
