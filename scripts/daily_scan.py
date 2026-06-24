@@ -233,7 +233,8 @@ if __name__ == "__main__":
         import unicodedata as _ud
         import json as _jsc
         from src.scanner.prep import _load_latest_dc_params
-        from src.models.dixon_coles import predict_match, predict_xg, predict_btts, predict_totals
+        from src.models.dixon_coles import predict_match, predict_xg, predict_btts, predict_totals, predict_scoreline
+        from src.analysis.monte_carlo import scoreline_distribution
         from src.config import canonical_name, DATA_CACHE
         from src.betting.goalscorer import get_top_goalscorer_predictions
         import pickle as _pkl
@@ -321,6 +322,15 @@ if __name__ == "__main__":
                     _btts = predict_btts(_h, _a, _dc_params, neutral=True)
                     _totals = predict_totals(_h, _a, _dc_params, neutral=True)
 
+                    # Top scorelines via Poisson/DC matrix
+                    _top_scores = []
+                    try:
+                        _matrix = predict_scoreline(_h, _a, _dc_params, neutral=True)
+                        _sl = scoreline_distribution(_matrix)
+                        _top_scores = _sl["top_scores"]
+                    except Exception:
+                        pass
+
                     # Goalscorer predictions — squad-filtered, opponent-adjusted xG
                     _home_sc, _away_sc = [], []
                     if _player_xg_df is not None:
@@ -350,6 +360,7 @@ if __name__ == "__main__":
                         "p_under25": round(_totals["p_under"], 3),
                         "top_scorers_home": _home_sc,
                         "top_scorers_away": _away_sc,
+                        "top_scores": _top_scores,
                     }
                 except Exception:
                     pass

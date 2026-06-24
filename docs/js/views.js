@@ -204,6 +204,21 @@ function predCard(home, away, tip, odds, nk, kickoff, sport) {
         <div style="font-size:10px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid rgba(48,54,61,.4)">StatsBomb xG · gegnerstärke-korrigiert · nur aktuelle Kaderspieler</div>
       </div>`;
     })()}
+    ${(() => {
+      const ts = tip.top_scores || [];
+      if (!ts.length) return '';
+      const scoreColor = p => p >= 15 ? 'var(--green)' : p >= 9 ? 'var(--yellow)' : 'var(--muted)';
+      return `<div style="margin-top:12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:12px 14px">
+        <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">🎰 Wahrscheinlichste Ergebnisse</div>
+        <div style="display:flex;gap:8px;justify-content:space-between">
+          ${ts.map((s, i) => `<div style="flex:1;text-align:center;background:rgba(255,255,255,.04);border-radius:8px;padding:10px 6px">
+            <div style="font-size:20px;font-weight:900;color:var(--text);letter-spacing:1px">${s.h}:${s.a}</div>
+            <div style="font-size:13px;font-weight:800;color:${scoreColor(s.p)};margin-top:4px">${s.p}%</div>
+          </div>`).join('')}
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid rgba(48,54,61,.4)">Dixon-Coles · Poisson-Verteilung · analytisch</div>
+      </div>`;
+    })()}
   </div>`;
 }
 
