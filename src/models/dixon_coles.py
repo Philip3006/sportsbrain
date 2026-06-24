@@ -52,6 +52,8 @@ def _lambdas(
     elo_away: float | None = None,
     elo_scale: float = DC_ELO_SCALE,
     host_boost: float = 1.0,
+    altitude_factors: tuple[float, float] | None = None,
+    turf_penalty: float = 1.0,
 ) -> tuple[float, float]:
     unknown = [t for t in (home, away) if t not in params.attack]
     if unknown:
@@ -67,11 +69,19 @@ def _lambdas(
         lh *= elo_adj
         la /= elo_adj
     # I6: WM-2026-Host-Boost (USA/CAN/MEX) — multipliziert nur lh.
-    # la bleibt unverändert, sonst Doppel-Effekt (Heim-Lambda hoch + Auswärts-Lambda gleich).
     if host_boost != 1.0:
         lh *= host_boost
-    # Hard cap at inference: protects downstream consumers (totals/AH/audit)
-    # from runaway poisson tails on edge teams without re-fitting the model.
+    # I12: Höhenlage — (lh_factor, la_factor) aus ALTITUDE_BOOST_MAP.
+    if altitude_factors is not None:
+        lh_f, la_f = altitude_factors
+        if lh_f > 0:
+            lh *= lh_f
+        if la_f > 0:
+            la *= la_f
+    # I12: Kunstrasen — Auswärts-Lambda Penalty.
+    if turf_penalty != 1.0:
+        la *= turf_penalty
+    # Hard cap at inference: protects downstream consumers from runaway Poisson tails.
     lh = min(lh, _MAX_LAMBDA)
     la = min(la, _MAX_LAMBDA)
     return lh, la

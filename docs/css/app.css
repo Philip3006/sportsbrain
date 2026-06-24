@@ -406,6 +406,9 @@
     .bet-money-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
     .bet-money-win { color: var(--green); }
     .bet-card-footer { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 14px; background: rgba(255,255,255,.02); }
+    .cancel-bet-btn { margin-left: auto; font-size: 11px; padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(255,80,80,.4); background: transparent; color: rgba(255,100,100,.8); cursor: pointer; font-weight: 600; transition: background .15s; }
+    .cancel-bet-btn:hover { background: rgba(255,80,80,.15); color: #ff6060; }
+    .cancel-bet-btn:disabled { opacity: .5; cursor: default; }
     .bet-stake { font-size: 12px; color: var(--muted); font-weight: 600; }
     .bet-edge { font-size: 12px; font-weight: 800; }
     .clv-pill { font-size: 10px; font-weight: 800; border-radius: 20px; padding: 2px 8px; }

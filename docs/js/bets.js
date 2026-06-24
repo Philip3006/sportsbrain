@@ -186,6 +186,7 @@ function _renderOpenBetCards(bets, isLive) {
       <div class="bet-card-footer">
         ${edgeStr ? `<span class="bet-edge ${edgePct > 0 ? 'drift-good' : 'drift-bad'}">${esc(edgeStr)}</span>` : ''}
         <span class="clv-pill ${clvCls}">${clvLabel}${infoTip('CLV = Closing Line Value. Vergleicht deine Einstiegsquote mit der Endquote kurz vor Anpfiff (Markt-Konsens). ✓ positiv = du hast besser eingeschätzt als der Markt → langfristig der stärkste Profit-Indikator. ✗ negativ = der Markt war schlauer.')}</span>
+        <button class="cancel-bet-btn" onclick="event.stopPropagation();_cancelBet(this,'${_escA(home)}','${_escA(away)}','${_escA(b.market||'')}')">Verwerfen</button>
       </div>
       <div class="bet-notes-row">
         <div class="bet-notes-label">📝 Notiz <span class="bet-notes-saved" id="notes-saved-${esc(_betNoteKey(home, away, b.market || ''))}">gespeichert</span></div>
@@ -561,6 +562,31 @@ async function _submitBet() {
     showToast('Netzwerk-Fehler: ' + e.message, 'error');
   } finally {
     btn.disabled = false; btn.textContent = 'Wette eintragen';
+  }
+}
+
+// ── H3: Bet-Cancel-Flow ───────────────────────────────────────
+async function _cancelBet(btn, home, away, market) {
+  const label = `${home} vs ${away} (${market})`;
+  if (!confirm(`Wette wirklich verwerfen?\n\n${label}\n\nDer Einsatz wird an deine Bankroll zurückerstattet.`)) return;
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    const token = localStorage.getItem('sb_token');
+    if (!token) { _openTokenModal(); btn.disabled = false; btn.textContent = 'Verwerfen'; return; }
+    const resp = await fetch(WORKER_BASE + '/cancel_bet', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ home, away, market }),
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    // Remove card from DOM immediately for instant feedback
+    const card = btn.closest('.bet-card');
+    if (card) card.remove();
+    showToast('Wette verworfen — Einsatz wird zurückerstattet.', 'success');
+  } catch (e) {
+    btn.disabled = false; btn.textContent = 'Verwerfen';
+    showToast('Fehler beim Verwerfen: ' + e.message, 'error');
   }
 }
 

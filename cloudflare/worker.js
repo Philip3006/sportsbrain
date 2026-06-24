@@ -140,6 +140,18 @@ async function writePending(env, arr, user = DEFAULT_USER) {
   await env.SIGNALS.put(_pendingKey(user), JSON.stringify(arr));
 }
 
+function _cancelKey(user) {
+  return (user && user !== DEFAULT_USER) ? `cancel_requests_${user}` : 'cancel_requests';
+}
+async function readCancelRequests(env, user = DEFAULT_USER) {
+  const raw = await env.SIGNALS.get(_cancelKey(user));
+  if (!raw) return [];
+  try { const a = JSON.parse(raw); return Array.isArray(a) ? a : []; } catch { return []; }
+}
+async function writeCancelRequests(env, arr, user = DEFAULT_USER) {
+  await env.SIGNALS.put(_cancelKey(user), JSON.stringify(arr));
+}
+
 // ── Push Subscriptions (Web Push) ─────────────────────────────
 // Stored as a JSON array under KV-key "push_subs":
 //   [{ endpoint, keys: { p256dh, auth }, created_at, ua? }, ...]
@@ -281,6 +293,44 @@ export default {
         const next = arr.filter(b => b.id !== id);
         await writePending(env, next, pUser);
         return jr({ ok: true, removed: arr.length - next.length });
+      }
+
+      // H3: Cancel a placed bet (remove from pending KV + queue for ledger cancel)
+      if (request.method === 'POST' && path === '/cancel_bet') {
+        let body;
+        try { body = await request.json(); } catch { return jr({ error: 'invalid json' }, 400); }
+        const home = (body.home || '').toString().trim();
+        const away = (body.away || '').toString().trim();
+        const market = (body.market || '').toString().trim();
+        if (!home || !away || !market) return jr({ error: 'home, away, market required' }, 400);
+
+        // Remove from pending_bets if still there
+        const pending = await readPending(env, pUser);
+        const matchStr = `${home} vs ${away}`;
+        const pendingFiltered = pending.filter(b => !(b.match === matchStr && b.market === market));
+        if (pendingFiltered.length < pending.length) {
+          await writePending(env, pendingFiltered, pUser);
+        }
+
+        // Queue cancel request for Python ledger (consume_pending_bets picks this up)
+        const cancelReqs = await readCancelRequests(env, pUser);
+        const alreadyQueued = cancelReqs.some(r => r.home === home && r.away === away && r.market === market);
+        if (!alreadyQueued) {
+          cancelReqs.push({ home, away, market, requested_at: new Date().toISOString() });
+          await writeCancelRequests(env, cancelReqs, pUser);
+        }
+        return jr({ ok: true });
+      }
+
+      // H3: Cancel-Request-Queue read + clear (for Python consume_pending_bets)
+      if (path === '/cancel_requests') {
+        if (request.method === 'GET') {
+          return jr({ requests: await readCancelRequests(env, pUser) });
+        }
+        if (request.method === 'DELETE') {
+          await writeCancelRequests(env, [], pUser);
+          return jr({ ok: true });
+        }
       }
     }
 
