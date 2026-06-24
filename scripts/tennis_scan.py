@@ -1,9 +1,20 @@
 #!/usr/bin/env python3
 """
-Daily tennis scanner — Wimbledon 2026 (30 June – 13 July).
+Tennis-Scanner (Roadmap J2-D) — Multi-Tournament-Dispatcher.
+
+Ganzjähriger Betrieb: ruft Discovery (TheOddsAPI /sports), iteriert über alle
+aktiven ATP/WTA-Turniere ab Kategorie 250 aufwärts, holt Quoten via TheOddsAPI,
+detektiert Value pro Match (Match Winner + Set AH + First Set + O/U Sets +
+O/U Games + Set Betting), schreibt Ledger + Push + Dashboard-JSON.
+
+Mode-Flag pro Kategorie (src.config.TENNIS_CATEGORY_MODE):
+  'live'   → Bets ins Ledger
+  'shadow' → nur Logging in results/tennis_scan_shadow_*.md, kein Ledger-Write
 
 Usage:
-  python3 scripts/tennis_scan.py [--mock] [--bankroll 100] [--surface grass] [--tour atp|wta|both]
+  python3 scripts/tennis_scan.py [--mock] [--bankroll 100] [--all-live]
+                                 [--no-ledger] [--no-push]
+  python3 scripts/tennis_scan.py --tournament wimbledon_atp   # nur ein Event
 """
 from __future__ import annotations
 
@@ -22,30 +33,46 @@ load_dotenv(ROOT / ".env")
 import requests
 
 from scripts._http_retry import retry_request
+from src.config import (
+    MIN_EDGE,
+    TENNIS_CATEGORY_MODE,
+    TENNIS_MIN_EDGE_BY_CATEGORY,
+)
 from src.data.tennis_data import fetch_atp_matches, fetch_wta_matches
 from src.models.tennis_elo import compute_tennis_elo, predict_winner, top_players
-from src.betting.tennis_detector import detect_value_tennis
+from src.betting.tennis_detector import (
+    detect_set_betting,
+    detect_total_games,
+    detect_total_sets,
+    detect_value_tennis,
+)
 from src.betting.ledger import append_bets, ledger_summary
 from src.notifications.web_push import send_scan_alert as _web_push_scan_alert
-from src.notifications.web_dashboard import write_signals_json, write_signals_json_all_users
+from src.notifications.web_dashboard import write_signals_json_all_users
+from src.tennis.discovery import discover_active_tournaments
+from src.tennis.tournaments import Tournament, get_tournament
 
-_SPORT_WIMBLEDON = "tennis_atp_wimbledon"
-_SPORT_WTA_WIMBLEDON = "tennis_wta_wimbledon"
 _ODDS_API_URL = "https://api.the-odds-api.com/v4"
-
-_ATP_MIN_EDGE = 0.10  # ATP Wimbledon backtest: -6.4% ROI → tight market requires 10% edge
-
-
-def min_edge_for(match_tour: str) -> float:
-    """Returns minimum EV edge threshold per tour.
-    ATP: 10% (backtest -6.4% ROI — market is efficient)
-    WTA: 3%  (backtest +8.5% ROI — market is less efficient)
-    """
-    from src.config import MIN_EDGE
-    return _ATP_MIN_EDGE if match_tour.lower() == "atp" else MIN_EDGE
+_MIN_BOOKMAKERS = 3
 
 
-def _fetch_both_tours() -> "pd.DataFrame":
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def category_min_edge(category: str) -> float:
+    """Per-Category Edge-Floor mit globalem MIN_EDGE als Fallback."""
+    return TENNIS_MIN_EDGE_BY_CATEGORY.get(category, MIN_EDGE)
+
+
+def category_mode(category: str, all_live: bool = False) -> str:
+    """'live'|'shadow' für die Kategorie. --all-live override (Backtest-Bypass)."""
+    if all_live:
+        return "live"
+    return TENNIS_CATEGORY_MODE.get(category, "shadow")
+
+
+def _fetch_both_tours():
     import pandas as pd
     try:
         atp = fetch_atp_matches()
@@ -62,27 +89,133 @@ def _fetch_both_tours() -> "pd.DataFrame":
     return pd.concat([atp, wta], ignore_index=True).sort_values("tourney_date").reset_index(drop=True)
 
 
-def _fetch_wimbledon_odds(api_key: str, tour: str = "atp") -> list[dict]:
+# ---------------------------------------------------------------------------
+# Odds-Fetch (TheOddsAPI primär, WebSearch-Fallback Stub)
+# ---------------------------------------------------------------------------
+
+def _websearch_tennis_fallback(player_a: str, player_b: str) -> dict | None:
+    """Stub für WebSearch-Fallback bei <3 Bookies (siehe Roadmap J2-D-Follow-up).
+
+    Aktuell nicht implementiert — `odds_api._websearch_odds_fallback` ist
+    football-spezifisch (h2h+draw). Tennis braucht 2-way-Anpassung.
+    Bis dahin: Bet skippen + Warning loggen.
     """
-    Fetches live Wimbledon match odds from TheOddsAPI.
-    Markets: h2h (match winner) + spreads (set handicap).
-    Returns list of match dicts.
-    """
-    sport = _SPORT_WTA_WIMBLEDON if tour.lower() == "wta" else _SPORT_WIMBLEDON
-    url = f"{_ODDS_API_URL}/sports/{sport}/odds"
+    return None
+
+
+def _parse_event_markets(event: dict, sport_key: str) -> dict | None:
+    """Aggregiert beste Quoten aus event.bookmakers über alle benötigten Märkte."""
+    home = event.get("home_team", "")
+    away = event.get("away_team", "")
+    match_id = event.get("id", f"{home}_vs_{away}")
+    commence = event.get("commence_time", "")
+
+    bookmakers = event.get("bookmakers", [])
+    if len(bookmakers) < _MIN_BOOKMAKERS:
+        ws = _websearch_tennis_fallback(home, away)
+        if not ws:
+            print(f"  [skip] {home} vs {away} — nur {len(bookmakers)} Bookies + no WebSearch")
+            return None
+
+    best = {
+        "h2h_a": 0.0, "h2h_b": 0.0,
+        "spread_a": 0.0, "spread_b": 0.0,
+        "fs_a": 0.0, "fs_b": 0.0,
+        "totals_over": {}, "totals_under": {},   # line → best odds
+        "games_over": {}, "games_under": {},     # line → best odds
+        "scorelines": {},                         # "2-1" → best odds
+    }
+
+    for bm in bookmakers:
+        for mkt in bm.get("markets", []):
+            key = mkt.get("key", "")
+            outcomes = mkt.get("outcomes", [])
+
+            if key == "h2h":
+                for o in outcomes:
+                    if o["name"] == home:
+                        best["h2h_a"] = max(best["h2h_a"], o["price"])
+                    elif o["name"] == away:
+                        best["h2h_b"] = max(best["h2h_b"], o["price"])
+
+            elif key == "spreads":
+                for o in outcomes:
+                    if abs(abs(o.get("point", 0)) - 1.5) < 0.1:
+                        if o["name"] == home:
+                            best["spread_a"] = max(best["spread_a"], o["price"])
+                        elif o["name"] == away:
+                            best["spread_b"] = max(best["spread_b"], o["price"])
+
+            elif key == "set_winner":
+                for o in outcomes:
+                    desc = o.get("description", "").lower()
+                    if "set 1" in desc or "1st set" in desc:
+                        if o["name"] == home:
+                            best["fs_a"] = max(best["fs_a"], o["price"])
+                        elif o["name"] == away:
+                            best["fs_b"] = max(best["fs_b"], o["price"])
+
+            elif key in ("totals", "alternate_totals"):
+                # TheOddsAPI: name="Over"/"Under", point=line
+                for o in outcomes:
+                    line = float(o.get("point", 0))
+                    if o.get("name", "").lower() == "over":
+                        prev = best["totals_over"].get(line, 0.0)
+                        best["totals_over"][line] = max(prev, o["price"])
+                    elif o.get("name", "").lower() == "under":
+                        prev = best["totals_under"].get(line, 0.0)
+                        best["totals_under"][line] = max(prev, o["price"])
+
+            elif key == "set_betting":
+                # name like "2-0", "3-1" usw.
+                for o in outcomes:
+                    sc = o.get("name", "")
+                    if "-" in sc:
+                        prev = best["scorelines"].get(sc, 0.0)
+                        best["scorelines"][sc] = max(prev, o["price"])
+
+    if not best["h2h_a"] or not best["h2h_b"]:
+        return None
+
+    return {
+        "match_id": match_id,
+        "commence_time": commence,
+        "player_a": home,
+        "player_b": away,
+        "odds_a": best["h2h_a"],
+        "odds_b": best["h2h_b"],
+        "ah_odds_a": best["spread_a"],
+        "ah_odds_b": best["spread_b"],
+        "first_set_odds_a": best["fs_a"],
+        "first_set_odds_b": best["fs_b"],
+        "totals_over": best["totals_over"],
+        "totals_under": best["totals_under"],
+        "scorelines": best["scorelines"],
+        "sport_key": sport_key,
+    }
+
+
+def fetch_tournament_odds(api_key: str, sport_key: str) -> list[dict]:
+    """TheOddsAPI-Odds für ein Turnier. Multi-Market: h2h + spreads + set_winner
+    + totals + set_betting. Returns leere Liste bei 404/422 (Markt nicht offen)."""
+    url = f"{_ODDS_API_URL}/sports/{sport_key}/odds"
     params = {
         "apiKey": api_key,
         "regions": "eu",
-        "markets": "h2h,spreads,set_winner",
+        "markets": "h2h,spreads,set_winner,totals,set_betting",
         "oddsFormat": "decimal",
     }
-    resp = retry_request("GET", url, params=params, timeout=15, log_prefix="[tennis_scan]")
-    resp.raise_for_status()
+    try:
+        resp = retry_request("GET", url, params=params, timeout=15, log_prefix=f"[tennis:{sport_key}]")
+        resp.raise_for_status()
+    except requests.HTTPError as e:
+        code = getattr(e.response, "status_code", None)
+        if code in (404, 422):
+            print(f"  [{sport_key}] Markt nicht offen (HTTP {code})")
+            return []
+        raise
 
     remaining = int(resp.headers.get("x-requests-remaining", 999))
-    used = int(resp.headers.get("x-requests-used", 0))
-    print(f"  API quota: {used} used / {remaining} remaining")
-
     if remaining < 20:
         try:
             from src.notifications.web_push import send_quota_alert
@@ -92,349 +225,319 @@ def _fetch_wimbledon_odds(api_key: str, tour: str = "atp") -> list[dict]:
 
     matches = []
     for event in resp.json():
-        home = event.get("home_team", "")
-        away = event.get("away_team", "")
-        match_id = event.get("id", f"{home}_vs_{away}")
-        commence = event.get("commence_time", "")
-
-        best_h2h_home = best_h2h_away = 0.0
-        best_spread_home = best_spread_away = 0.0
-        best_fs_home = best_fs_away = 0.0
-
-        for bm in event.get("bookmakers", []):
-            for mkt in bm.get("markets", []):
-                key = mkt.get("key")
-                if key == "h2h":
-                    for o in mkt.get("outcomes", []):
-                        if o["name"] == home:
-                            best_h2h_home = max(best_h2h_home, o["price"])
-                        elif o["name"] == away:
-                            best_h2h_away = max(best_h2h_away, o["price"])
-                elif key == "spreads":
-                    for o in mkt.get("outcomes", []):
-                        if abs(abs(o.get("point", 0)) - 1.5) < 0.1:  # ±1.5 set handicap
-                            if o["name"] == home:
-                                best_spread_home = max(best_spread_home, o["price"])
-                            elif o["name"] == away:
-                                best_spread_away = max(best_spread_away, o["price"])
-                elif key == "set_winner":
-                    for o in mkt.get("outcomes", []):
-                        desc = o.get("description", "").lower()
-                        if "set 1" in desc or "1st set" in desc:
-                            if o["name"] == home:
-                                best_fs_home = max(best_fs_home, o["price"])
-                            elif o["name"] == away:
-                                best_fs_away = max(best_fs_away, o["price"])
-
-        if not best_h2h_home or not best_h2h_away:
-            continue
-
-        matches.append({
-            "match_id": match_id,
-            "commence_time": commence,
-            "player_a": home,
-            "player_b": away,
-            "odds_a": best_h2h_home,
-            "odds_b": best_h2h_away,
-            "ah_odds_a": best_spread_home,
-            "ah_odds_b": best_spread_away,
-            "first_set_odds_a": best_fs_home,
-            "first_set_odds_b": best_fs_away,
-            "tour": tour.lower(),
-        })
-
+        parsed = _parse_event_markets(event, sport_key)
+        if parsed:
+            matches.append(parsed)
     return matches
 
 
-def _mock_wimbledon_matches() -> list[dict]:
-    """Synthetic Wimbledon matches for dry-run testing (ATP + WTA)."""
-    return [
+# ---------------------------------------------------------------------------
+# Pro-Match Value-Detection (alle Märkte)
+# ---------------------------------------------------------------------------
+
+def detect_all_markets(
+    m: dict,
+    probs: dict,
+    bankroll: float,
+    min_edge: float,
+    tournament: Tournament,
+) -> list:
+    """Aggregiert alle Detector-Outputs für ein Match."""
+    signals = []
+
+    # 1. Match Winner + Set AH + First Set (bestehend)
+    signals.extend(detect_value_tennis(
+        player_a=m["player_a"],
+        player_b=m["player_b"],
+        probs=probs,
+        odds_a=m["odds_a"],
+        odds_b=m["odds_b"],
+        bankroll=bankroll,
+        match_id=m["match_id"],
+        ah_odds_a=m.get("ah_odds_a", 0.0),
+        ah_odds_b=m.get("ah_odds_b", 0.0),
+        first_set_odds_a=m.get("first_set_odds_a", 0.0),
+        first_set_odds_b=m.get("first_set_odds_b", 0.0),
+        min_edge=min_edge,
+        tour=tournament.tour,
+    ))
+
+    # 2. O/U Sets (Phase C)
+    totals_over = m.get("totals_over") or {}
+    totals_under = m.get("totals_under") or {}
+    # Heuristik: line muss zum Format passen — BO3 typisch 2.5, BO5 typisch 3.5
+    expected_line = 3.5 if tournament.best_of == 5 else 2.5
+    for line, odds_over in totals_over.items():
+        if abs(line - expected_line) > 0.6:
+            continue  # Game-Total-Lines (z.B. 21.5) hier nicht — getrennt unten
+        odds_under = totals_under.get(line, 0.0)
+        if odds_under <= 1.0:
+            continue
+        signals.extend(detect_total_sets(
+            player_a=m["player_a"], player_b=m["player_b"],
+            p_match_a=probs["p_a"],
+            odds_over=odds_over, odds_under=odds_under,
+            line=line, best_of=tournament.best_of,
+            bankroll=bankroll, match_id=m["match_id"],
+            min_edge=min_edge, tour=tournament.tour,
+        ))
+
+    # 3. O/U Games (Lines typischerweise 15-30)
+    for line, odds_over in totals_over.items():
+        if line < 10 or line > 50:
+            continue
+        odds_under = totals_under.get(line, 0.0)
+        if odds_under <= 1.0:
+            continue
+        signals.extend(detect_total_games(
+            player_a=m["player_a"], player_b=m["player_b"],
+            p_match_a=probs["p_a"],
+            odds_over=odds_over, odds_under=odds_under,
+            line=line, best_of=tournament.best_of,
+            bankroll=bankroll, match_id=m["match_id"],
+            min_edge=min_edge, tour=tournament.tour,
+        ))
+
+    # 4. Set Betting (exakte Scorelines)
+    scorelines = m.get("scorelines") or {}
+    if scorelines:
+        signals.extend(detect_set_betting(
+            player_a=m["player_a"], player_b=m["player_b"],
+            p_match_a=probs["p_a"],
+            scoreline_odds=scorelines,
+            best_of=tournament.best_of,
+            bankroll=bankroll, match_id=m["match_id"],
+            min_edge=min_edge, tour=tournament.tour,
+        ))
+
+    return signals
+
+
+# ---------------------------------------------------------------------------
+# Mock-Setup (für --mock)
+# ---------------------------------------------------------------------------
+
+def _mock_tournament_matches() -> tuple[Tournament, list[dict]]:
+    """Synthetic Wimbledon + mock matches für Dry-Run-Tests."""
+    t = get_tournament("wimbledon_atp")
+    matches = [
         {
             "match_id": "mock_alcaraz_djokovic",
             "commence_time": "2026-07-06T13:00:00Z",
             "player_a": "Carlos Alcaraz",
             "player_b": "Novak Djokovic",
-            "odds_a": 1.75,
-            "odds_b": 2.10,
-            "ah_odds_a": 2.00,
-            "ah_odds_b": 1.85,
-            "first_set_odds_a": 1.72,
-            "first_set_odds_b": 2.10,
-            "tour": "atp",
-        },
-        {
-            "match_id": "mock_sinner_medvedev",
-            "commence_time": "2026-07-07T11:00:00Z",
-            "player_a": "Jannik Sinner",
-            "player_b": "Daniil Medvedev",
-            "odds_a": 1.55,
-            "odds_b": 2.55,
-            "ah_odds_a": 2.20,
-            "ah_odds_b": 1.65,
-            "first_set_odds_a": 1.68,
-            "first_set_odds_b": 2.20,
-            "tour": "atp",
-        },
-        {
-            "match_id": "mock_swiatek_sabalenka",
-            "commence_time": "2026-07-06T11:00:00Z",
-            "player_a": "Iga Swiatek",
-            "player_b": "Aryna Sabalenka",
-            "odds_a": 1.90,
-            "odds_b": 2.00,
-            # WTA BO3: ah-1.5_a = wins 2:0 straight sets (~23% for near-even match)
-            # Realistic: odds ~4.00/1.30 (not ATP-style 2.10/1.80)
-            "ah_odds_a": 4.00,
-            "ah_odds_b": 1.30,
-            "first_set_odds_a": 1.92,
-            "first_set_odds_b": 1.95,
-            "tour": "wta",
+            "odds_a": 1.75, "odds_b": 2.10,
+            "ah_odds_a": 2.00, "ah_odds_b": 1.85,
+            "first_set_odds_a": 1.72, "first_set_odds_b": 2.10,
+            "totals_over": {3.5: 1.95}, "totals_under": {3.5: 1.85},
+            "scorelines": {"3-0": 4.50, "3-1": 3.80, "3-2": 4.80,
+                           "2-3": 8.0, "1-3": 11.0, "0-3": 21.0},
+            "sport_key": "tennis_atp_wimbledon",
         },
     ]
+    return t, matches
 
 
-def _tennis_market_label(market: str, player_a: str, player_b: str) -> str:
+# ---------------------------------------------------------------------------
+# Reporting
+# ---------------------------------------------------------------------------
+
+def _market_label(market: str, a: str, b: str) -> str:
     labels = {
-        "home":        f"Match Winner: {player_a}",
-        "away":        f"Match Winner: {player_b}",
-        "ah-1.5_a":   f"{player_a} gewinnt 3:0 oder 3:1 (Set AH -1.5)",
-        "ah+1.5_b":   f"{player_b} gewinnt oder verliert max. 1 Satz (Set AH +1.5)",
-        "first_set_a": f"1. Satz: {player_a} gewinnt",
-        "first_set_b": f"1. Satz: {player_b} gewinnt",
+        "home": f"Match Winner: {a}", "away": f"Match Winner: {b}",
+        "ah-1.5_a": f"{a} Set AH -1.5", "ah+1.5_b": f"{b} Set AH +1.5",
+        "first_set_a": f"1. Satz: {a}", "first_set_b": f"1. Satz: {b}",
     }
-    return labels.get(market, market)
+    if market in labels:
+        return labels[market]
+    if market.startswith("o/u_sets_"):
+        return f"O/U Sätze {market.split('_')[-2]} {market.split('_')[-1]}"
+    if market.startswith("o/u_games_"):
+        return f"O/U Games {market.split('_')[-2]} {market.split('_')[-1]}"
+    if market.startswith("score_"):
+        return f"Set-Score {market[6:]}"
+    return market
 
 
-def _format_report(
-    signals: list,
+def format_scan_report(
+    per_tournament: dict[str, dict],
     scan_date: str,
-    surface: str,
-    top_grass: list,
 ) -> str:
-    lines = [
-        f"# Tennis Scan — Wimbledon {scan_date}",
-        f"Surface: {surface.upper()}",
-        "",
-    ]
-
-    if not signals:
-        lines.append("*No value bets found today.*")
-    else:
+    lines = [f"# Tennis Scan {scan_date}\n"]
+    total_sigs = sum(len(v["signals"]) for v in per_tournament.values())
+    lines += [f"**Aktive Turniere:** {len(per_tournament)} · "
+              f"**Signals total:** {total_sigs}\n"]
+    for slug, info in per_tournament.items():
+        t: Tournament = info["tournament"]
+        signals = info["signals"]
+        mode = info["mode"]
+        emoji = "🔴 LIVE" if mode == "live" else "👤 SHADOW"
+        lines += [f"\n## {t.name} ({t.tour.upper()}) · {t.category} · {emoji}",
+                  f"Surface: {t.surface} · Best of: {t.best_of} · Matches gescannt: {info['n_matches']}"]
+        if not signals:
+            lines.append("_Keine Value-Signals._")
+            continue
         for s in sorted(signals, key=lambda x: x.ev, reverse=True):
-            ev_pct = s.ev * 100
             lines += [
-                f"## {s.home} vs {s.away}",
-                f"Market:  {_tennis_market_label(s.market, s.home, s.away)}",
-                f"Odds:    {s.decimal_odds:.2f}",
-                f"Model:   {s.model_prob*100:.1f}%  EV: +{ev_pct:.1f}%  ({s.confidence})",
-                f"Stake:   {s.stake_eur:.2f} EUR",
-                "",
+                f"- **{s.home} vs {s.away}** · {_market_label(s.market, s.home, s.away)}",
+                f"  Quote {s.decimal_odds:.2f} · Modell {s.model_prob*100:.1f}% · "
+                f"EV +{s.ev*100:.1f}% · Stake {s.stake_eur:.2f}€ · {s.confidence}",
             ]
-
-    lines += [
-        "---",
-        "## Top Grass Elo",
-    ]
-    for name, rating in top_grass:
-        lines.append(f"  {name}: {rating:.0f}")
-
-    lines += [
-        "",
-        "---",
-        "## Backtest (2021-2025, Max Odds, p≥35%)",
-        "  WTA Wimbledon:   +8.5% ROI  ← primary focus (216 Bets, 2021-2025)",
-        "  ATP Wimbledon:   -6.4% ROI",
-        "  WTA overall:     +6.9% ROI",
-        "  Clay/FO:         -7.8% ROI  ← avoid",
-    ]
-
     return "\n".join(lines)
 
 
-def _send_tennis_alert(signals: list, scan_date: str, summary: dict, tour: str = "atp") -> None:
-    """Tennis-Scan-Alert via Web Push."""
-    if not signals:
-        return
-    _web_push_scan_alert(signals, summary, scan_date)
-
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Tennis value bet scanner (Wimbledon)")
-    parser.add_argument("--mock", action="store_true", help="Use mock data (no API call)")
+    parser = argparse.ArgumentParser(description="Tennis value bet scanner (multi-tournament)")
+    parser.add_argument("--mock", action="store_true", help="Use mock tournament (Wimbledon)")
     parser.add_argument("--bankroll", type=float, default=100.0)
-    parser.add_argument("--surface", default="grass", choices=["grass", "clay", "hard"])
-    parser.add_argument("--no-ledger", action="store_true", help="Skip writing to ledger")
+    parser.add_argument("--no-ledger", action="store_true")
     parser.add_argument("--no-push", "--no-telegram", action="store_true", dest="no_push",
-                        help="Skip Web-Push notification (--no-telegram als Alias für Legacy-Cron-Calls)")
-    parser.add_argument("--tour", default="both", choices=["atp", "wta", "both"],
-                        help="ATP, WTA oder beide (default: both — WTA hat +8.5%% ROI Wimbledon)")
+                        help="Skip Web-Push (--no-telegram als Alias für Legacy-Cron-Calls)")
+    parser.add_argument("--all-live", action="store_true",
+                        help="J2-D: erzwingt mode=live für alle Kategorien (Backtest-Bypass)")
+    parser.add_argument("--tournament", default=None,
+                        help="Nur ein Turnier scannen (slug aus Registry, z.B. wimbledon_atp)")
     args = parser.parse_args()
 
     scan_date = datetime.now().strftime("%Y-%m-%d")
-    print(f"Tennis Scan — {scan_date} (surface: {args.surface}, tour: {args.tour})")
+    print(f"Tennis Scan — {scan_date}")
 
-    # Wimbledon date guard
-    today = date.today()
-    wimbledon_active = date(2026, 6, 29) <= today <= date(2026, 7, 13)
-    if not wimbledon_active and not args.mock:
-        print(f"Wimbledon nicht aktiv (heute: {today}). Nutze --mock für Tests.")
+    # ---- 1. Discovery aktiver Turniere ----
+    if args.mock:
+        t, matches = _mock_tournament_matches()
+        tournaments = [t]
+        mock_map = {t.slug: matches}
+    elif args.tournament:
+        t = get_tournament(args.tournament)
+        if not t:
+            print(f"ERROR: Unbekannter slug '{args.tournament}'.")
+            sys.exit(1)
+        tournaments = [t]
+        mock_map = None
+    else:
+        api_key = os.getenv("ODDS_API_KEY", "")
+        if not api_key:
+            print("ERROR: ODDS_API_KEY not set.")
+            sys.exit(1)
+        tournaments = discover_active_tournaments(api_key=api_key)
+
+    if not tournaments:
+        print("Keine aktiven Turniere — beende.")
         sys.exit(0)
 
-    # 1. Load historical match data and compute Elo ratings
-    tour_label_load = "ATP" if args.tour == "atp" else ("WTA" if args.tour == "wta" else "ATP+WTA")
-    print(f"Loading {tour_label_load} match data...")
-    try:
-        if args.tour == "both":
-            matches = _fetch_both_tours()
-        else:
-            from src.data.tennis_data import fetch_matches
-            matches = fetch_matches(args.tour)
-        print(f"  {len(matches)} matches loaded")
-    except Exception as e:
-        print(f"  ERROR loading match data: {e}")
-        matches = None
+    tournament_names = ", ".join(t.slug for t in tournaments)
+    print(f"  Aktive Turniere ({len(tournaments)}): {tournament_names}")
 
-    if matches is not None and not matches.empty:
-        print("Computing surface-adjusted Elo ratings (recency-weighted)...")
-        ratings = compute_tennis_elo(matches, reference_date=datetime.now())
-        top_grass = top_players(ratings, surface="grass", n=10)
-        print(f"  Top grass Elo: {top_grass[0][0] if top_grass else 'n/a'}")
-    else:
-        print("  WARNING: No match data — using default Elo ratings.")
+    # ---- 2. Match-Daten + Elo ----
+    print("Loading ATP+WTA match data...")
+    all_matches = _fetch_both_tours()
+    if all_matches is None or all_matches.empty:
+        print("WARNING: Keine Match-Daten — Default-Elo verwendet.")
         from src.models.tennis_elo import TennisEloRatings
         ratings = TennisEloRatings()
         top_grass = []
-
-    # 2. Fetch upcoming Wimbledon odds
-    if args.mock:
-        print("Loading mock Wimbledon matches...")
-        upcoming = _mock_wimbledon_matches()
-    elif args.tour == "both":
-        api_key = os.getenv("ODDS_API_KEY", "")
-        if not api_key:
-            print("ERROR: ODDS_API_KEY not set.")
-            sys.exit(1)
-        print("Fetching Wimbledon odds (ATP + WTA) from TheOddsAPI...")
-        try:
-            upcoming_atp = _fetch_wimbledon_odds(api_key, tour="atp")
-            upcoming_wta = _fetch_wimbledon_odds(api_key, tour="wta")
-            upcoming = upcoming_atp + upcoming_wta
-        except requests.HTTPError as e:
-            code = getattr(e.response, "status_code", None)
-            if code in (404, 422):
-                # Wimbledon-Slot bei TheOddsAPI noch nicht offen (zu früh im Jahr) —
-                # kein echter Fehler, nur „keine Matches im Markt".
-                print(f"WARN: Wimbledon-Markt noch nicht offen bei TheOddsAPI (HTTP {code}). "
-                      "Scan endet ohne Signals.")
-                sys.exit(0)
-            print(f"ERROR fetching odds: {e}")
-            sys.exit(1)
-        except Exception as e:
-            print(f"ERROR fetching odds: {e}")
-            sys.exit(1)
     else:
-        api_key = os.getenv("ODDS_API_KEY", "")
-        if not api_key:
-            print("ERROR: ODDS_API_KEY not set.")
-            sys.exit(1)
-        print(f"Fetching Wimbledon odds ({args.tour.upper()}) from TheOddsAPI...")
-        try:
-            upcoming = _fetch_wimbledon_odds(api_key, tour=args.tour)
-        except requests.HTTPError as e:
-            code = getattr(e.response, "status_code", None)
-            if code in (404, 422):
-                # Wimbledon-Slot bei TheOddsAPI noch nicht offen (zu früh im Jahr) —
-                # kein echter Fehler, nur „keine Matches im Markt".
-                print(f"WARN: Wimbledon-Markt noch nicht offen bei TheOddsAPI (HTTP {code}). "
-                      "Scan endet ohne Signals.")
-                sys.exit(0)
-            print(f"ERROR fetching odds: {e}")
-            sys.exit(1)
-        except Exception as e:
-            print(f"ERROR fetching odds: {e}")
-            sys.exit(1)
+        print(f"  {len(all_matches)} matches loaded; computing Elo...")
+        ratings = compute_tennis_elo(all_matches, reference_date=datetime.now())
+        top_grass = top_players(ratings, surface="grass", n=10)
 
-    print(f"  {len(upcoming)} upcoming matches found")
+    # ---- 3. Pro Turnier scannen ----
+    per_tournament: dict[str, dict] = {}
+    all_live_signals: list = []
 
-    # 3. Predict and detect value
-    all_signals = []
-    for m in upcoming:
-        pa, pb = m["player_a"], m["player_b"]
-        probs = predict_winner(pa, pb, ratings, args.surface)
-        match_tour = m.get("tour", args.tour)
+    for t in tournaments:
+        mode = category_mode(t.category, all_live=args.all_live)
+        min_edge = category_min_edge(t.category)
 
-        signals = detect_value_tennis(
-            player_a=pa,
-            player_b=pb,
-            probs=probs,
-            odds_a=m["odds_a"],
-            odds_b=m["odds_b"],
-            bankroll=args.bankroll,
-            match_id=m["match_id"],
-            ah_odds_a=m.get("ah_odds_a", 0.0),
-            ah_odds_b=m.get("ah_odds_b", 0.0),
-            first_set_odds_a=m.get("first_set_odds_a", 0.0),
-            first_set_odds_b=m.get("first_set_odds_b", 0.0),
-            min_edge=min_edge_for(match_tour),
-            tour=match_tour,
-        )
-
-        if signals:
-            for s in signals:
-                print(f"  VALUE: {pa} vs {pb} — {s.market}  EV:{s.ev*100:.1f}%  odds:{s.decimal_odds:.2f}")
+        # Odds holen
+        if args.mock:
+            upcoming = mock_map.get(t.slug, [])
         else:
-            print(f"  No value: {pa} vs {pb}  (p_a={probs['p_a']*100:.1f}%)")
+            api_key = os.getenv("ODDS_API_KEY", "")
+            sport_key = t.sport_keys[0] if t.sport_keys else t.slug
+            try:
+                upcoming = fetch_tournament_odds(api_key, sport_key)
+            except Exception as exc:
+                print(f"  [{t.slug}] Odds-Fehler: {exc} — skip")
+                continue
 
-        all_signals.extend(signals)
+        if not upcoming:
+            per_tournament[t.slug] = {
+                "tournament": t, "signals": [], "n_matches": 0, "mode": mode,
+            }
+            continue
 
-    print(f"\n{len(all_signals)} value signal(s) found.")
+        # Pro Match Predict + Detect
+        signals = []
+        for m in upcoming:
+            pa, pb = m["player_a"], m["player_b"]
+            probs = predict_winner(pa, pb, ratings, t.surface)
+            sigs = detect_all_markets(m, probs, args.bankroll, min_edge, t)
+            signals.extend(sigs)
+            for s in sigs:
+                print(f"  [{t.slug}] {pa} vs {pb} — {s.market} EV+{s.ev*100:.1f}% @{s.decimal_odds:.2f}")
 
-    # 4. Write report
+        per_tournament[t.slug] = {
+            "tournament": t, "signals": signals, "n_matches": len(upcoming), "mode": mode,
+        }
+        if mode == "live":
+            all_live_signals.extend(signals)
+
+    print(f"\n=== Summary ===")
+    print(f"Live-Signals: {len(all_live_signals)} (über {sum(1 for v in per_tournament.values() if v['mode']=='live')} Live-Kategorien)")
+
+    # ---- 4. Report ----
     report_path = ROOT / "results" / f"tennis_scan_{scan_date}.md"
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    report = _format_report(all_signals, scan_date, args.surface, top_grass)
-    report_path.write_text(report)
+    report_path.write_text(format_scan_report(per_tournament, scan_date))
     print(f"Report: {report_path}")
 
-    # 5. Write to ledger
-    if all_signals and not args.no_ledger:
-        n = append_bets(all_signals, args.bankroll)
-        print(f"Ledger: {n} new bet(s) recorded.")
+    # ---- 5. Ledger (nur Live-Signals) ----
+    if all_live_signals and not args.no_ledger:
+        n = append_bets(all_live_signals, args.bankroll)
+        print(f"Ledger: {n} Live-Bets eingetragen.")
 
-    # 6. Web-Push notification
-    if not args.no_push:
+    # ---- 6. Push ----
+    if not args.no_push and all_live_signals:
         summary = ledger_summary()
-        _send_tennis_alert(all_signals, scan_date, summary, tour=args.tour)
-        print("Push: notification sent.")
+        _web_push_scan_alert(all_live_signals, summary, scan_date)
+        print("Push: Notification gesendet.")
 
-    # 7. Write web dashboard JSON (with per-match tour info + kickoff times)
+    # ---- 7. Dashboard-JSON ----
     dashboard_summary = ledger_summary()
-    match_tour_map = {m["match_id"]: m.get("tour", args.tour) for m in upcoming}
-    kickoff_map = {m["match_id"]: m.get("commence_time", "") for m in upcoming}
-    tennis_schedule = [
-        {
-            "sport": "tennis",
-            "home": m["player_a"],
-            "away": m["player_b"],
-            "kickoff": m.get("commence_time", ""),
-            "tour": m.get("tour", ""),
-        }
-        for m in upcoming
-    ]
+    match_tour_map = {}
+    kickoff_map = {}
+    schedule = []
+    for slug, info in per_tournament.items():
+        t = info["tournament"]
+        # Schedule-Build aus Mock oder Live
+        if args.mock and mock_map:
+            ms = mock_map.get(slug, [])
+        else:
+            ms = []  # Live-Matches sind in per_tournament-Signals enthalten; schedule wäre Doppel-Fetch
+        for m in ms:
+            mid = m["match_id"]
+            match_tour_map[mid] = t.tour
+            kickoff_map[mid] = m.get("commence_time", "")
+            schedule.append({
+                "sport": "tennis", "home": m["player_a"], "away": m["player_b"],
+                "kickoff": m.get("commence_time", ""), "tour": t.tour,
+                "tournament": t.name, "category": t.category, "surface": t.surface,
+            })
+
     write_signals_json_all_users(
-        tennis=all_signals,
+        tennis=all_live_signals,
         portfolio=dashboard_summary,
         top_elo=top_grass,
         tennis_tour_map=match_tour_map,
         kickoff_map=kickoff_map,
-        schedule=tennis_schedule,
+        schedule=schedule,
     )
-    print("Dashboard: docs/data/signals.json updated.")
-
-    # Print summary
-    print("\n--- Top Grass Elo ---")
-    for name, rating in top_grass[:5]:
-        print(f"  {name}: {rating:.0f}")
+    print("Dashboard: docs/data/signals.json aktualisiert.")
 
 
 if __name__ == "__main__":
