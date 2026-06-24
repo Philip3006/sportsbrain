@@ -26,6 +26,32 @@ from src.features.squad_context import tournament_stage_features
 from .prep import _squad_adjust, _rank_adjust, _form_context, _match_ts_utc
 from .output import _top_scorelines
 
+_LEDGER_GATE_MIN_BETS = 5
+_LEDGER_GATE_ROI_THRESH = -0.20
+
+
+def _blocked_markets() -> dict[str, float]:
+    """Return {market: roi} for markets that need HIGH-confidence gate."""
+    try:
+        from src.betting.ledger import ledger_summary
+        by_market = ledger_summary().get("by_market", {})
+        return {
+            m: d["roi_pct"] / 100.0
+            for m, d in by_market.items()
+            if d.get("won", 0) + d.get("lost", 0) >= _LEDGER_GATE_MIN_BETS
+            and d.get("roi_pct", 0) / 100.0 < _LEDGER_GATE_ROI_THRESH
+        }
+    except Exception:
+        return {}
+
+
+def _apply_ledger_performance_gate(signals: list) -> list:
+    """Drop LOW/MEDIUM signals for markets with poor ledger ROI."""
+    blocked = _blocked_markets()
+    if not blocked:
+        return signals
+    return [s for s in signals if s.market not in blocked or s.confidence == "HIGH"]
+
 
 def _confederation_min_edge(home: str, away: str, market: str, base_min_edge: float) -> float:
     """
@@ -555,6 +581,10 @@ def score_matches(
             s for s in signals
             if s.ev <= (_GOALS_RANGE_MAX_EV if s.market.startswith(("goals_", "h1_goals_", "h2_goals_")) else MAX_EV)
         ]
+        # Ledger-Performance-Gate: Märkte mit ROI < -20% über ≥5 settled Bets
+        # → nur HIGH-confidence Signale durchlassen.
+        signals = _apply_ledger_performance_gate(signals)
+
         # Tore-Bereich confidence cap: implied prob is synthetic (O/U Poisson).
         # set_confidence() can upgrade to HIGH, but that's misleading — cap at MEDIUM.
         for s in signals:
