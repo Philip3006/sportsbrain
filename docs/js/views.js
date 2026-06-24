@@ -447,9 +447,12 @@ function sigCard(s, showMatch) {
       <div class="edge-bar-delta ${edgeCls}">Edge ${edgeSign}${_edge.toFixed(1)}pp</div>
     </div>`;
   }
+  const corrBadge = s.correlation_note
+    ? ` <span class="corr-badge" title="${s.correlation_note}" style="background:#ff8c00;color:#fff;padding:1px 6px;border-radius:8px;font-size:0.7em;font-weight:600;">↓ Korr</span>`
+    : '';
   const stakeLabel = s.stake_pct > 0
-    ? `€${s.stake_eur.toFixed(0)} <span class="stake-pct">(${s.stake_pct.toFixed(1)}%)</span>`
-    : `€${s.stake_eur.toFixed(0)}`;
+    ? `€${s.stake_eur.toFixed(0)}${corrBadge} <span class="stake-pct">(${s.stake_pct.toFixed(1)}%)</span>`
+    : `€${s.stake_eur.toFixed(0)}${corrBadge}`;
   const dotsHtml = s.n_models_agree > 0
     ? `<span class="models-dots" title="${s.n_models_agree}/3 Modelle einig">${_modelDots(s.n_models_agree)}</span>`
     : '';

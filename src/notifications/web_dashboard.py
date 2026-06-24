@@ -212,6 +212,8 @@ def _signal_to_dict(
         "confidence":      s.confidence,
         "n_models_agree":  s.n_models_agree,
     }
+    if getattr(s, "stake_reason", ""):
+        d["correlation_note"] = s.stake_reason
     if tour:
         d["tour"] = tour
     if kickoff:

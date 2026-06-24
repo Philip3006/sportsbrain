@@ -24,6 +24,8 @@ class BetSignal:
     b365_odds: float = 0.0    # Pinnacle reference quote (0 = not available)
     elo_prob: float = 0.0     # Elo win probability for the bet's outcome (0 = not computed)
     n_models_agree: int = 0   # how many of [DC, Elo, LGBM] see value (0–3); 0 = not computed / non-1X2 market
+    stake_reason: str = ""    # Stake-v2: warum reduziert (z.B. "neg_corr_vs_ah-0.5_away", "match_cap")
+    player_team: str = ""     # Stake-v2: für Scorer-Märkte "home" oder "away" (Korrelations-Detektion)
 
 
 _MARKETS = ["home", "draw", "away"]
@@ -38,7 +40,7 @@ def _make_signal(
     model_p: float, fair_p: float, odds: float, ev: float,
     kf: float, confidence: str, bankroll: float,
 ) -> BetSignal:
-    stake_eur = dynamic_stake_eur(ev, confidence, bankroll)
+    stake_eur = dynamic_stake_eur(ev, confidence, bankroll, decimal_odds=odds)
     return BetSignal(
         match_id=match_id or f"{home}_vs_{away}",
         home=home, away=away, market=market,
@@ -671,7 +673,7 @@ def set_confidence(signal: BetSignal, dc_probs: dict, lgbm_probs: np.ndarray) ->
         if signal.confidence != "LOW" and signal.model_prob * signal.decimal_odds > 1.10:
             signal.confidence = "HIGH"
             bankroll = signal.stake_eur / signal.stake_pct if signal.stake_pct > 0 else 1000.0
-            new_eur = dynamic_stake_eur(signal.ev, "HIGH", bankroll)
+            new_eur = dynamic_stake_eur(signal.ev, "HIGH", bankroll, decimal_odds=signal.decimal_odds)
             signal.stake_eur = new_eur
             signal.stake_pct = new_eur / bankroll
         return signal
@@ -682,7 +684,7 @@ def set_confidence(signal: BetSignal, dc_probs: dict, lgbm_probs: np.ndarray) ->
     if signal.confidence != "LOW" and (dc_p * signal.decimal_odds > 1.0) and (lgbm_p * signal.decimal_odds > 1.0):
         signal.confidence = "HIGH"
         bankroll = signal.stake_eur / signal.stake_pct if signal.stake_pct > 0 else 1000.0
-        new_eur = dynamic_stake_eur(signal.ev, "HIGH", bankroll)
+        new_eur = dynamic_stake_eur(signal.ev, "HIGH", bankroll, decimal_odds=signal.decimal_odds)
         signal.stake_eur = new_eur
         signal.stake_pct = new_eur / bankroll
     return signal

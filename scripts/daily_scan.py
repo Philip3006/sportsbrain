@@ -35,11 +35,12 @@ def _confirm_bets(selected_signals: list, bankroll: float) -> list:
     print("\n=== Offene Slots — Bestätigung erforderlich ===")
     confirmed = []
     for s in selected_signals:
-        stake = s.stake_pct * bankroll
+        stake = s.stake_eur if s.stake_eur > 0 else s.stake_pct * bankroll
+        korr_marker = f"  ⚠ KORR-↓ [{s.stake_reason}]" if s.stake_reason else ""
         print(
             f"\n  {s.home} vs {s.away} | {s.market.upper()} | "
             f"@ {s.decimal_odds:.2f} | EV +{s.ev*100:.1f}% | "
-            f"€{stake:.2f} | {s.confidence}"
+            f"€{stake:.2f} | {s.confidence}{korr_marker}"
         )
         try:
             ans = input("  Wette eingehen? (j/n): ").strip().lower()
@@ -95,6 +96,24 @@ if __name__ == "__main__":
         scan_date_filter=args.date,
         force=args.force,
     )
+
+    # Stake-v2: Korrelations-Adjustment vor Bestätigung/Dashboard.
+    # Reduziert Underdog-Legs und cappt Match-Exposure.
+    from src.betting.correlation import apply_correlation_adjustments
+    _pre_stakes = {(s.match_id, s.market): s.stake_eur for s in selected_signals}
+    selected_signals = apply_correlation_adjustments(selected_signals, args.bankroll)
+    _korr_changes = [
+        (s, _pre_stakes[(s.match_id, s.market)])
+        for s in selected_signals
+        if s.stake_reason and _pre_stakes.get((s.match_id, s.market), s.stake_eur) != s.stake_eur
+    ]
+    if _korr_changes:
+        print("\n=== Stake-v2 Korrelations-Anpassungen ===")
+        for s, old_stake in _korr_changes:
+            print(
+                f"  ⚠ KORR-↓ {s.home} vs {s.away} | {s.market} | "
+                f"€{old_stake:.2f} → €{s.stake_eur:.2f}  [{s.stake_reason}]"
+            )
 
     from datetime import date as _date
     from src.scanner.output import archive_signals
