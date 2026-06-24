@@ -38,8 +38,8 @@ from src.config import (
     TENNIS_CATEGORY_MODE,
     TENNIS_MIN_EDGE_BY_CATEGORY,
 )
-from src.data.tennis_data import fetch_atp_matches, fetch_wta_matches
 from src.models.tennis_elo import compute_tennis_elo, predict_winner, top_players
+from src.tennis.elo_source import load_match_history
 from src.betting.tennis_detector import (
     detect_set_betting,
     detect_total_games,
@@ -73,34 +73,104 @@ def category_mode(category: str, all_live: bool = False) -> str:
 
 
 def _fetch_both_tours():
-    import pandas as pd
-    try:
-        atp = fetch_atp_matches()
-    except Exception:
-        atp = pd.DataFrame()
-    try:
-        wta = fetch_wta_matches()
-    except Exception:
-        wta = pd.DataFrame()
-    if atp.empty:
-        return wta
-    if wta.empty:
-        return atp
-    return pd.concat([atp, wta], ignore_index=True).sort_values("tourney_date").reset_index(drop=True)
+    """Sackmann primary, tennis-data.co.uk XLSX als Fallback (J2-I)."""
+    df, source = load_match_history()
+    if source == "xlsx-fallback":
+        print(f"  [elo] Sackmann nicht verfügbar → XLSX-Fallback ({len(df)} Matches)")
+    elif source == "empty":
+        print("  [elo] WARNING: weder Sackmann noch XLSX verfügbar — Default-Elo")
+    return df
 
 
 # ---------------------------------------------------------------------------
 # Odds-Fetch (TheOddsAPI primär, WebSearch-Fallback Stub)
 # ---------------------------------------------------------------------------
 
-def _websearch_tennis_fallback(player_a: str, player_b: str) -> dict | None:
-    """Stub für WebSearch-Fallback bei <3 Bookies (siehe Roadmap J2-D-Follow-up).
+def _websearch_tennis_fallback(player_a: str, player_b: str,
+                                tournament: str = "") -> dict | None:
+    """2-way Tennis-Odds via DuckDuckGo (Roadmap J2-I).
 
-    Aktuell nicht implementiert — `odds_api._websearch_odds_fallback` ist
-    football-spezifisch (h2h+draw). Tennis braucht 2-way-Anpassung.
-    Bis dahin: Bet skippen + Warning loggen.
+    Returns {"a": float, "b": float} oder None. Sanity-Check: 1/a+1/b ∈ [0.95, 1.15].
     """
+    try:
+        import json as _json
+        import re
+        import requests as _req
+        from ddgs import DDGS
+    except Exception:
+        return None
+
+    suffix = f" {tournament}" if tournament else ""
+    query = f"{player_a} vs {player_b}{suffix} tennis odds decimal"
+    try:
+        results = DDGS().text(query, max_results=4)
+    except Exception:
+        return None
+    if not results:
+        return None
+
+    headers = {"User-Agent": "Mozilla/5.0 (compatible; SportsBrainBot/1.0)"}
+    for r in results:
+        url = r.get("href", "")
+        if not url or any(skip in url for skip in ("twitter", "youtube", "instagram")):
+            continue
+        try:
+            resp = _req.get(url, headers=headers, timeout=8)
+            if resp.status_code != 200:
+                continue
+            html = resp.text
+
+            # JSON-LD strukturierte Sportdaten
+            for block in re.findall(
+                r'<script[^>]+type="application/ld\+json"[^>]*>(.*?)</script>',
+                html, re.DOTALL,
+            ):
+                try:
+                    ld = _json.loads(block)
+                    items = ld if isinstance(ld, list) else [ld]
+                    for item in items:
+                        if item.get("@type") in ("SportsEvent", "Event"):
+                            offers = item.get("offers", [])
+                            if isinstance(offers, list) and len(offers) >= 2:
+                                prices = [float(o.get("price", 0))
+                                          for o in offers if o.get("price")]
+                                if len(prices) >= 2 and all(1.01 < p < 50 for p in prices[:2]):
+                                    a, b = prices[0], prices[1]
+                                    if 0.95 <= (1/a + 1/b) <= 1.15:
+                                        return {"a": a, "b": b}
+                except Exception:
+                    continue
+
+            # Regex-Fallback: zwei aufeinanderfolgende Decimal-Quoten
+            # Muster: "Player A 1.85 ... Player B 2.05"
+            pa_short = player_a.split()[-1] if " " in player_a else player_a
+            pb_short = player_b.split()[-1] if " " in player_b else player_b
+            pat = rf'{re.escape(pa_short)}[^\d]{{0,40}}(\d\.\d{{2}})[^\d]{{0,80}}{re.escape(pb_short)}[^\d]{{0,40}}(\d\.\d{{2}})'
+            m = re.search(pat, html, re.IGNORECASE)
+            if m:
+                a, b = float(m.group(1)), float(m.group(2))
+                if all(1.01 < x < 50 for x in (a, b)) and 0.95 <= (1/a + 1/b) <= 1.15:
+                    return {"a": a, "b": b}
+        except Exception:
+            continue
     return None
+
+
+def _fetch_events_only(api_key: str, sport_key: str) -> list[dict]:
+    """TheOddsAPI /events-Endpoint (kein Quoten-Pull, kein Quota-Verbrauch).
+
+    Genutzt als Fallback wenn /odds 422 liefert aber Turnier kurz vorm Start
+    ist — gibt mindestens Paarungen + commence_time zurück, sodass WebSearch
+    pro Match versuchen kann.
+    """
+    url = f"{_ODDS_API_URL}/sports/{sport_key}/events"
+    try:
+        resp = retry_request("GET", url, params={"apiKey": api_key}, timeout=15,
+                             log_prefix=f"[tennis-events:{sport_key}]")
+        resp.raise_for_status()
+        return resp.json()
+    except Exception:
+        return []
 
 
 def _parse_event_markets(event: dict, sport_key: str) -> dict | None:
@@ -111,11 +181,14 @@ def _parse_event_markets(event: dict, sport_key: str) -> dict | None:
     commence = event.get("commence_time", "")
 
     bookmakers = event.get("bookmakers", [])
+    ws_h2h: dict | None = None
     if len(bookmakers) < _MIN_BOOKMAKERS:
-        ws = _websearch_tennis_fallback(home, away)
-        if not ws:
+        ws_h2h = _websearch_tennis_fallback(home, away, tournament=sport_key)
+        if not ws_h2h:
             print(f"  [skip] {home} vs {away} — nur {len(bookmakers)} Bookies + no WebSearch")
             return None
+        print(f"  [websearch] {home} vs {away} — h2h via WebSearch "
+              f"({ws_h2h['a']:.2f}/{ws_h2h['b']:.2f})")
 
     best = {
         "h2h_a": 0.0, "h2h_b": 0.0,
@@ -174,6 +247,10 @@ def _parse_event_markets(event: dict, sport_key: str) -> dict | None:
                         prev = best["scorelines"].get(sc, 0.0)
                         best["scorelines"][sc] = max(prev, o["price"])
 
+    if (not best["h2h_a"] or not best["h2h_b"]) and ws_h2h:
+        best["h2h_a"] = ws_h2h["a"]
+        best["h2h_b"] = ws_h2h["b"]
+
     if not best["h2h_a"] or not best["h2h_b"]:
         return None
 
@@ -211,8 +288,31 @@ def fetch_tournament_odds(api_key: str, sport_key: str) -> list[dict]:
     except requests.HTTPError as e:
         code = getattr(e.response, "status_code", None)
         if code in (404, 422):
-            print(f"  [{sport_key}] Markt nicht offen (HTTP {code})")
-            return []
+            # J2-I: Quoten-Markt zu, aber /events ist oft schon offen.
+            # Bei Match-Start <48h: WebSearch-Fallback pro Paarung versuchen.
+            events = _fetch_events_only(api_key, sport_key)
+            now_utc = datetime.utcnow()
+            soon = []
+            for ev in events:
+                try:
+                    ct = datetime.fromisoformat(ev["commence_time"].replace("Z", "+00:00"))
+                    hours = (ct.replace(tzinfo=None) - now_utc).total_seconds() / 3600
+                except Exception:
+                    continue
+                if 0 < hours <= 48:
+                    soon.append(ev)
+            if not soon:
+                print(f"  [{sport_key}] Markt nicht offen (HTTP {code}) — kein Event in 48h-Fenster")
+                return []
+            print(f"  [{sport_key}] Markt nicht offen (HTTP {code}) — "
+                  f"{len(soon)} Matches <48h → WebSearch-Pfad")
+            matches = []
+            for ev in soon:
+                ev.setdefault("bookmakers", [])
+                parsed = _parse_event_markets(ev, sport_key)
+                if parsed:
+                    matches.append(parsed)
+            return matches
         raise
 
     remaining = int(resp.headers.get("x-requests-remaining", 999))
