@@ -11,6 +11,8 @@ results/*_cron.log
 results/launchd_*.log
 results/settle.log
 results/consume_pending_bets.log
+results/auto_heal.log
+results/auto_heal_state.json
 results/*.lock
 results/*.bak_*
 results/_archive/
