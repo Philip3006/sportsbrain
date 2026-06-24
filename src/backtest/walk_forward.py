@@ -44,6 +44,7 @@ def run_event_backtest(
     phi: float = 0.0065,
     min_edge: float = 0.03,
     bankroll: float = 1000.0,
+    apply_live_filters: bool = True,
 ) -> pd.DataFrame:
     """
     Walk-forward backtest for a single tournament event.
@@ -51,6 +52,10 @@ def run_event_backtest(
     Predicts each event match, checks odds_lookup for market prices.
     odds_lookup: DataFrame with columns [match_id, home_odds, draw_odds, away_odds,
                                           home_score, away_score].
+    apply_live_filters: wenn True, werden dieselben Gates wie im Live-System angewendet:
+        - EV > MAX_EV (0.40) → Signal verworfen (Qualifier-Artifact-Schutz)
+        - MAX_ACTIVE_BETS (5) pro Match-Tag → überschüssige Signale verworfen (nach EV sortiert)
+        - Confederation-min_edge bereits aktiv (CONMEBOL 1.5x, CONCACAF 1.3x)
     Returns DataFrame of bet results.
     """
     start = pd.Timestamp(event["start"])
@@ -71,6 +76,10 @@ def run_event_backtest(
 
     if event_matches.empty:
         return pd.DataFrame()
+
+    from src.config import MAX_EV, MAX_ACTIVE_BETS
+    # Track how many bets have been placed per match day (daily cap = MAX_ACTIVE_BETS)
+    daily_bet_count: dict[str, int] = {}
 
     results = []
     for _, row in event_matches.iterrows():
@@ -140,6 +149,16 @@ def run_event_backtest(
                 bankroll=bankroll, min_edge=min_edge, match_id=match_id,
                 min_edge_override=edge_overrides,
             )
+            # I4: Live-Filter — EV-Cap + MAX_ACTIVE_BETS-Cap (pro Match-Tag)
+            if apply_live_filters:
+                signals = [s for s in signals if s.ev <= MAX_EV]
+                date_key = str(row["date"].date())
+                slots_left = MAX_ACTIVE_BETS - daily_bet_count.get(date_key, 0)
+                if slots_left <= 0:
+                    signals = []
+                elif len(signals) > slots_left:
+                    signals = sorted(signals, key=lambda s: s.ev, reverse=True)[:slots_left]
+
             for sig in signals:
                 market_outcome = {"home": 2, "draw": 1, "away": 0}[sig.market]
                 won = int(outcome == market_outcome)
@@ -155,6 +174,8 @@ def run_event_backtest(
                     if close_val > 1.0 and sig.decimal_odds > 1.0:
                         odds_gap = close_val / sig.decimal_odds - 1.0
 
+                date_key = str(row["date"].date())
+                daily_bet_count[date_key] = daily_bet_count.get(date_key, 0) + 1
                 results.append({
                     **base_row,
                     "market":       sig.market,
@@ -177,14 +198,17 @@ def run_event_backtest(
 def run_all_backtests(
     all_matches: pd.DataFrame,
     odds_lookup: pd.DataFrame | None = None,
+    apply_live_filters: bool = True,
 ) -> tuple[pd.DataFrame, dict[str, float]]:
     """
     Runs walk-forward over all TOURNAMENT_EVENTS.
     Returns (results_df, summary_metrics).
+    apply_live_filters: propagiert an run_event_backtest (I4-Gate).
     """
     frames = []
     for event in TOURNAMENT_EVENTS:
-        df = run_event_backtest(event, all_matches, odds_lookup)
+        df = run_event_backtest(event, all_matches, odds_lookup,
+                                apply_live_filters=apply_live_filters)
         if not df.empty:
             frames.append(df)
 
