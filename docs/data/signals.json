@@ -1,7 +1,7 @@
 {
-  "updated": "2026-06-25T18:02:19Z",
+  "updated": "2026-06-25T22:25:52Z",
   "build_info": {
-    "sha": "ea46a13",
+    "sha": "fad483d",
     "date": "2026-06-25"
   },
   "meta": {
@@ -3308,34 +3308,6 @@
   "football": [
     {
       "sport": "football",
-      "match": "Curacao vs Cote d'Ivoire",
-      "market": "ah+2.25_away",
-      "odds": 2.08,
-      "model_prob": 63.5,
-      "fair_prob": 63.5,
-      "ev_pct": 39.7,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-25T20:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Curacao vs Cote d'Ivoire",
-      "market": "o/u2.5_over",
-      "odds": 1.52,
-      "model_prob": 91.7,
-      "fair_prob": 91.7,
-      "ev_pct": 39.3,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-25T20:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Norway vs France",
       "market": "scorer_Ousmane Dembélé",
       "odds": 3.0,
@@ -3571,20 +3543,6 @@
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-27T23:30:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Ecuador vs Germany",
-      "market": "away",
-      "odds": 1.9,
-      "model_prob": 65.1,
-      "fair_prob": 53.3,
-      "ev_pct": 23.7,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 3,
-      "kickoff": "2026-06-25T20:00:00Z"
     },
     {
       "sport": "football",
