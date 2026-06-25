@@ -660,7 +660,8 @@ function renderHome() {
         ? oddsBtn(nk,'home',g) + oddsBtn(nk,'draw',g) + oddsBtn(nk,'away',g)
         : oddsBtn(nk,'home',g) + oddsBtn(nk,'away',g);
 
-      todayHtml += `<div class="b365-row today-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)}" onclick='openMatch(${JSON.stringify(mk)})' onkeydown='if(event.key==="Enter"||event.key===" "){event.preventDefault();openMatch(${JSON.stringify(mk)});}'>
+      const _mkAttr = mk.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+      todayHtml += `<div class="b365-row today-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)}" data-match-key="${_mkAttr}" onclick="openMatch(this.dataset.matchKey)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMatch(this.dataset.matchKey);}">
         <div class="b365-left">
           <div class="b365-time">
             ${timeStr}
@@ -826,7 +827,8 @@ function renderHome() {
             : oddsBtn(nk,'home',g) + oddsBtn(nk,'away',g);
         }
 
-        h += `<div class="b365-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)}" onclick='openMatch(${JSON.stringify(mk)})' onkeydown='if(event.key==="Enter"||event.key===" "){event.preventDefault();openMatch(${JSON.stringify(mk)});}'>
+        const _mkAttr2 = mk.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+        h += `<div class="b365-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)}" data-match-key="${_mkAttr2}" onclick="openMatch(this.dataset.matchKey)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMatch(this.dataset.matchKey);}">
           <div class="b365-left">
             <div class="b365-time">${timeStr}${isCompleted?` <span style="font-size:10px;color:var(--muted);font-weight:700">FT</span>`:''} ${n>0&&!isCompleted?` <span class="b365-val-tag">${n} Value</span>`:''}</div>
             <div class="b365-teams">
