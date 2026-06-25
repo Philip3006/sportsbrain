@@ -165,14 +165,28 @@ def _push_to_cloud(payload: dict[str, Any]) -> bool:
     post_url = url[: -len("/signals.json")] + "/signals" if url.endswith("/signals.json") else url
 
     # Fetch current cloud signals and inject the health key, then re-post.
+    # CRITICAL: If GET fails or returns a payload without core keys, do NOT
+    # re-post — a bare {"health": ...} would wipe schedule/odds/model_tips
+    # from the cloud KV (vorheriger Vorfall: PWA zeigte "Invalid Date" und 0
+    # Spiele). Fallback auf lokale signals.json wenn vorhanden.
+    current: dict[str, Any] | None = None
     try:
         get_resp = requests.get(url, timeout=10)
         if get_resp.status_code == 200:
-            current = get_resp.json()
-        else:
-            current = {}
+            j = get_resp.json()
+            if isinstance(j, dict) and ("schedule" in j or "updated" in j or "football" in j):
+                current = j
     except Exception:
-        current = {}
+        current = None
+
+    if current is None:
+        # Fallback: lokale signals.json verwenden, statt Cloud zu nuken
+        local_path = Path(__file__).resolve().parents[2] / "docs" / "data" / "signals.json"
+        try:
+            current = json.loads(local_path.read_text())
+        except Exception:
+            print("[health] cloud GET failed and no local signals.json — skip upload")
+            return False
 
     current["health"] = payload
 
