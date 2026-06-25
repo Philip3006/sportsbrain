@@ -37,7 +37,7 @@ jobs:
         env:
           SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
           SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
-        run: python3 scripts/consume_pending_bets.py
+        run: python3 -m scripts.consume_pending_bets
 
       - name: Check window + settle
         id: window
