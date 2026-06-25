@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-06-25T06:16:31Z",
+  "generated_at": "2026-06-25T08:57:48Z",
   "overall": "degraded",
   "jobs": [
     {
       "job": "daily_scan",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-06-24T06:31:04Z",
       "duration_s": 5453.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-06-24T06:31:04Z — overdue (>93600s)",
       "fallback_used": null,
       "next_expected_in_s": 86400,
       "cadence": "1×/Tag 07:00"
@@ -16,7 +16,7 @@
     {
       "job": "auto_retrain",
       "status": "ok",
-      "last_run_at": "2026-06-25T02:00:18Z",
+      "last_run_at": "2026-06-25T08:57:48Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -70,11 +70,11 @@
     },
     {
       "job": "settle",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-06-25T06:16:31Z",
       "duration_s": null,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-06-25T06:16:31Z — overdue (>4200s)",
       "fallback_used": null,
       "next_expected_in_s": 3600,
       "cadence": "stündlich 00:30–04:30"
