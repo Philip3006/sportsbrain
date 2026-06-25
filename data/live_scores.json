@@ -172,5 +172,14 @@
     "completed": false,
     "ht_sent": true,
     "updated": "2026-06-24T23:54:52.526420+00:00"
+  },
+  "espn_760466": {
+    "home": "South Africa",
+    "away": "South Korea",
+    "home_score": 0,
+    "away_score": 0,
+    "completed": false,
+    "ht_sent": false,
+    "updated": "2026-06-25T01:01:57.601406+00:00"
   }
 }
