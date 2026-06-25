@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-25T02:00:19Z",
+  "generated_at": "2026-06-25T06:16:31Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -26,11 +26,11 @@
     },
     {
       "job": "closing_odds",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-06-24T16:00:10Z",
       "duration_s": 5.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-06-24T16:00:10Z — overdue (>46800s)",
       "fallback_used": null,
       "next_expected_in_s": 43200,
       "cadence": "2×/Tag 14:00 + 18:00"
@@ -70,11 +70,11 @@
     },
     {
       "job": "settle",
-      "status": "stale",
-      "last_run_at": "2026-06-24T23:16:29Z",
+      "status": "ok",
+      "last_run_at": "2026-06-25T06:16:31Z",
       "duration_s": null,
       "exit_code": 0,
-      "error": "last run was at 2026-06-24T23:16:29Z — overdue (>4200s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 3600,
       "cadence": "stündlich 00:30–04:30"
