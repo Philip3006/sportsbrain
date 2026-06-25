@@ -60,9 +60,9 @@ bd729b7980f3e8ddf5390464e597ef85,2026-06-23,Portugal,Uzbekistan,o/u3.5_over,2.15
 32af0907e14d6fc2bc8e5013a0031a1c,2026-06-24,Switzerland,Canada,ah+0.5_away,1.5950,0.0,10.00,2026-06-24,cancelled,0.0,1.5800,,,value,0.819000
 fc5467913e197699e1017d2961bf5ce0,2026-06-24,Bosnia and Herzegovina,Qatar,o/u3.0_under,2.3200,0.0,5.00,2026-06-24,lost,-5.0,1.9600,,,value,0.433000
 fc5467913e197699e1017d2961bf5ce0,2026-06-24,Bosnia and Herzegovina,Qatar,draw,5.0000,0.0,10.00,2026-06-24,lost,-10.0,5.8000,,,value,0.240000
-ee4df27a504fce4c59a90ea3ee26c884,2026-06-24,Scotland,Brazil,o/u3.0_under,1.5200,0.0,9.60,2026-06-24,open,0.0,0.0,,,value,0.756000
-10affef138b4ea5b56ad42ecdf2babc2,2026-06-24,Morocco,Haiti,o/u3.5_under,1.4900,0.0,10.00,2026-06-24,open,0.0,0.0,,,value,0.831000
-881a3693cc0ef80b6c491e3fc2db1be1,2026-06-25,South Africa,South Korea,away,1.6000,0.0,6.00,2026-06-25,open,0.0,0.0,,,value,0.768000
-881a3693cc0ef80b6c491e3fc2db1be1,2026-06-25,South Africa,South Korea,o/u3.0_over,2.8500,0.0,4.00,2026-06-25,open,0.0,0.0,,,value,0.354000
-e3c04fc6b5201083a1ecd130613158e9,2026-06-25,Czechia,Mexico,ah-0.5_away,1.8150,0.0,8.00,2026-06-25,open,0.0,0.0,,,value,0.695000
-e3c04fc6b5201083a1ecd130613158e9,2026-06-25,Czechia,Mexico,scorer_Adam Hložek,5.5000,0.0,2.00,2026-06-25,open,0.0,0.0,,,value,0.218000
+ee4df27a504fce4c59a90ea3ee26c884,2026-06-24,Scotland,Brazil,o/u3.0_under,1.5200,0.0,9.60,2026-06-24,lost,-9.6,0.0,,,value,0.756000
+10affef138b4ea5b56ad42ecdf2babc2,2026-06-24,Morocco,Haiti,o/u3.5_under,1.4900,0.0,10.00,2026-06-24,lost,-10.0,0.0,,,value,0.831000
+881a3693cc0ef80b6c491e3fc2db1be1,2026-06-25,South Africa,South Korea,away,1.6000,0.0,6.00,2026-06-25,lost,-6.0,0.0,,,value,0.768000
+881a3693cc0ef80b6c491e3fc2db1be1,2026-06-25,South Africa,South Korea,o/u3.0_over,2.8500,0.0,4.00,2026-06-25,lost,-4.0,0.0,,,value,0.354000
+e3c04fc6b5201083a1ecd130613158e9,2026-06-25,Czechia,Mexico,ah-0.5_away,1.8150,0.0,8.00,2026-06-25,won,6.52,0.0,,,value,0.695000
+e3c04fc6b5201083a1ecd130613158e9,2026-06-25,Czechia,Mexico,scorer_Adam Hložek,5.5000,0.0,2.00,2026-06-25,lost,-2.0,0.0,,,value,0.218000
