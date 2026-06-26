@@ -1,7 +1,7 @@
 {
-  "updated": "2026-06-26T11:02:56Z",
+  "updated": "2026-06-26T17:29:37Z",
   "build_info": {
-    "sha": "5e70c5a",
+    "sha": "3148e05",
     "date": "2026-06-26"
   },
   "meta": {
@@ -9,104 +9,7 @@
     "default_user": "philip",
     "user": "philip"
   },
-  "schedule": [
-    {
-      "sport": "football",
-      "home": "Norway",
-      "away": "France",
-      "kickoff": "2026-06-26T19:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "Senegal",
-      "away": "Iraq",
-      "kickoff": "2026-06-26T19:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "Cape Verde",
-      "away": "Saudi Arabia",
-      "kickoff": "2026-06-27T00:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "Uruguay",
-      "away": "Spain",
-      "kickoff": "2026-06-27T00:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "New Zealand",
-      "away": "Belgium",
-      "kickoff": "2026-06-27T03:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "Egypt",
-      "away": "Iran",
-      "kickoff": "2026-06-27T03:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "Croatia",
-      "away": "Ghana",
-      "kickoff": "2026-06-27T21:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "Panama",
-      "away": "England",
-      "kickoff": "2026-06-27T21:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "Colombia",
-      "away": "Portugal",
-      "kickoff": "2026-06-27T23:30:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "DR Congo",
-      "away": "Uzbekistan",
-      "kickoff": "2026-06-27T23:30:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "Algeria",
-      "away": "Austria",
-      "kickoff": "2026-06-28T02:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "Jordan",
-      "away": "Argentina",
-      "kickoff": "2026-06-28T02:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "South Africa",
-      "away": "Canada",
-      "kickoff": "2026-06-28T19:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "Brazil",
-      "away": "Japan",
-      "kickoff": "2026-06-29T17:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "Netherlands",
-      "away": "Morocco",
-      "kickoff": "2026-06-30T01:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "USA",
-      "away": "Bosnia & Herzegovina",
-      "kickoff": "2026-07-02T00:00:00Z"
-    }
-  ],
+  "schedule": [],
   "all_odds": {
     "Bosnia & Herzegovina vs Qatar": {
       "home": 1.39,
@@ -3877,7 +3780,7 @@
     "total_pnl": -12.329999999999998,
     "roi_pct": -1.6259840962139493,
     "win_rate": 40.35087719298245,
-    "mean_clv": 0.13952666666666666,
+    "mean_clv": 0.11019444444444444,
     "by_market": {
       "ah+0.5": {
         "n": 1,
@@ -4287,7 +4190,7 @@
       "pnl": 9.6,
       "match_date": "2026-06-24",
       "status": "won",
-      "clv": null,
+      "clv": -0.1552,
       "closing_odds": 2.32
     },
     {
@@ -4300,7 +4203,7 @@
       "pnl": -5.0,
       "match_date": "2026-06-24",
       "status": "lost",
-      "clv": null,
+      "clv": 0.1837,
       "closing_odds": 1.96
     },
     {
@@ -4313,7 +4216,7 @@
       "pnl": -10.0,
       "match_date": "2026-06-24",
       "status": "lost",
-      "clv": null,
+      "clv": -0.1379,
       "closing_odds": 5.8
     },
     {
