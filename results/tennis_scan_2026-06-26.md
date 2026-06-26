@@ -1,7 +1,11 @@
 # Tennis Scan 2026-06-26
 
-**Aktive Turniere:** 1 · **Signals total:** 0
+**Aktive Turniere:** 2 · **Signals total:** 0
 
+
+## Wimbledon (ATP) · grand_slam · 🔴 LIVE
+Surface: grass · Best of: 5 · Matches gescannt: 0
+_Keine Value-Signals._
 
 ## Wta Bad Homburg Open (WTA) · wta250 · 👤 SHADOW
 Surface: unknown · Best of: 3 · Matches gescannt: 0
