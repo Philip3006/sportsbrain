@@ -1,7 +1,7 @@
 {
-  "updated": "2026-06-26T17:29:37Z",
+  "updated": "2026-06-26T22:19:12Z",
   "build_info": {
-    "sha": "3148e05",
+    "sha": "542f445",
     "date": "2026-06-26"
   },
   "meta": {
@@ -3392,20 +3392,6 @@
   "football": [
     {
       "sport": "football",
-      "match": "Senegal vs Iraq",
-      "market": "draw",
-      "odds": 7.25,
-      "model_prob": 19.2,
-      "fair_prob": 13.8,
-      "ev_pct": 39.3,
-      "stake_eur": 7.0,
-      "stake_pct": 7.0,
-      "confidence": "LOW",
-      "n_models_agree": 2,
-      "kickoff": "2026-06-26T19:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Cape Verde vs Saudi Arabia",
       "market": "ah+0.5_home",
       "odds": 1.5,
@@ -3417,20 +3403,6 @@
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-27T00:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Norway vs France",
-      "market": "ah+0.75_away",
-      "odds": 1.86,
-      "model_prob": 62.9,
-      "fair_prob": 62.9,
-      "ev_pct": 37.3,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-26T19:00:00Z"
     },
     {
       "sport": "football",
