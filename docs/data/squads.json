@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-24",
+  "updated": "2026-06-26",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -5820,7 +5820,8 @@
       "ampel": "🟢",
       "suspended": [
         "Dejan Kulusevski",
-        "Emil Holm"
+        "Emil Holm",
+        "Eric Smith"
       ],
       "players": [
         {
@@ -5921,7 +5922,7 @@
         {
           "name": "Eric Smith",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Alexander Bernhardsson",
@@ -6381,7 +6382,8 @@
       "availability_score": 1.0,
       "ampel": "🟢",
       "suspended": [
-        "Christian Pulisic"
+        "Christian Pulisic",
+        "Cristian Roldan"
       ],
       "players": [
         {
@@ -6457,7 +6459,7 @@
         {
           "name": "Cristian Roldan",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Alex Freeman",
