@@ -644,13 +644,26 @@ def write_signals_json(
     tennis_tournament_map = tennis_tournament_map or {}
     kickoff_map = kickoff_map or {}
 
-    # Load existing JSON to merge sport sections
+    # Load existing JSON to merge sport sections.
+    # HART FAIL bei beschädigter Existing-Datei: ein stilles `existing = {}`
+    # hat 2026-06-26 dazu geführt, dass tennis_scan einen leeren Payload
+    # geschrieben und an die Cloud gepusht hat (PWA zeigte 0 Spiele). Lieber
+    # crashen als Daten still überschreiben.
     existing: dict = {}
     if json_path.exists():
+        raw = json_path.read_text()
+        if "<<<<<<< " in raw or "\n=======\n" in raw or ">>>>>>> " in raw:
+            raise RuntimeError(
+                f"{json_path} enthält Git-Konflikt-Marker — Schreiben abgebrochen, "
+                "um stilles Daten-Wipe zu verhindern. Konflikt manuell auflösen."
+            )
         try:
-            existing = json.loads(json_path.read_text())
-        except Exception:
-            existing = {}
+            existing = json.loads(raw)
+        except json.JSONDecodeError as e:
+            raise RuntimeError(
+                f"{json_path} ist kein gültiges JSON ({e}). Schreiben abgebrochen, "
+                "um stilles Daten-Wipe zu verhindern."
+            ) from e
 
     updated = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
