@@ -35,9 +35,25 @@ _git_clear_unmerged() {
   echo "[$TS] git_safe_push: unmerged files detected, force-staging working-tree versions" >> "$LOG"
   echo "$unmerged" | while IFS= read -r f; do
     # Remove conflict markers if present, take working tree version
-    if grep -qP '^(<{7}|={7}|>{7})' "$f" 2>/dev/null; then
+    if grep -qE '^(<{7}|={7}|>{7})' "$f" 2>/dev/null; then
       # Has actual conflict markers — take theirs (remote/upstream) as authoritative
       git checkout --theirs -- "$f" >> "$LOG" 2>&1 || true
+      # Fallback if --theirs didn't apply (e.g. stash conflict without stage 3):
+      # try --ours; if BOTH still leave markers, hard-reset the file to HEAD so
+      # the next scan can regenerate it cleanly. NEVER commit a file with
+      # conflict markers — that crashed write_signals_json on 2026-06-26.
+      if grep -qE '^(<{7}|={7}|>{7})' "$f" 2>/dev/null; then
+        git checkout --ours -- "$f" >> "$LOG" 2>&1 || true
+      fi
+      if grep -qE '^(<{7}|={7}|>{7})' "$f" 2>/dev/null; then
+        echo "[$TS] git_safe_push: WARN $f still has markers — resetting to HEAD" >> "$LOG"
+        git checkout HEAD -- "$f" >> "$LOG" 2>&1 || true
+      fi
+    fi
+    # Final guard: refuse to stage a file that still contains conflict markers.
+    if grep -qE '^(<{7}|={7}|>{7})' "$f" 2>/dev/null; then
+      echo "[$TS] git_safe_push: ERROR $f STILL has markers, skipping stage" >> "$LOG"
+      continue
     fi
     git add -- "$f" >> "$LOG" 2>&1 || true
     echo "[$TS] git_safe_push: staged $f" >> "$LOG"
