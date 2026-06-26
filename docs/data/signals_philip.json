@@ -1,8 +1,8 @@
 {
-  "updated": "2026-06-25T22:25:52Z",
+  "updated": "2026-06-26T08:55:28Z",
   "build_info": {
-    "sha": "fad483d",
-    "date": "2026-06-25"
+    "sha": "e57ee70",
+    "date": "2026-06-26"
   },
   "meta": {
     "stale_odds": false,
@@ -3361,34 +3361,6 @@
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-27T21:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Tunisia vs Netherlands",
-      "market": "ah-2.5_away",
-      "odds": 1.99,
-      "model_prob": 69.2,
-      "fair_prob": 69.2,
-      "ev_pct": 37.6,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-25T23:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Tunisia vs Netherlands",
-      "market": "o/u3.0_over",
-      "odds": 1.62,
-      "model_prob": 76.9,
-      "fair_prob": 76.9,
-      "ev_pct": 37.2,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-25T23:00:00Z"
     },
     {
       "sport": "football",
