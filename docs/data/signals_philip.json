@@ -1,8 +1,8 @@
 {
-  "updated": "2026-06-26T22:19:12Z",
+  "updated": "2026-06-27T08:30:33Z",
   "build_info": {
-    "sha": "542f445",
-    "date": "2026-06-26"
+    "sha": "3ca379e",
+    "date": "2026-06-27"
   },
   "meta": {
     "stale_odds": false,
@@ -3392,20 +3392,6 @@
   "football": [
     {
       "sport": "football",
-      "match": "Cape Verde vs Saudi Arabia",
-      "market": "ah+0.5_home",
-      "odds": 1.5,
-      "model_prob": 92.6,
-      "fair_prob": 92.6,
-      "ev_pct": 38.9,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-27T00:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Brazil vs Japan",
       "market": "o/u2.25_under",
       "odds": 2.07,
@@ -3448,20 +3434,6 @@
     },
     {
       "sport": "football",
-      "match": "New Zealand vs Belgium",
-      "market": "ah+2.25_home",
-      "odds": 1.9,
-      "model_prob": 58.0,
-      "fair_prob": 58.0,
-      "ev_pct": 35.8,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-27T03:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "DR Congo vs Uzbekistan",
       "market": "o/u2.0_under",
       "odds": 2.8,
@@ -3501,20 +3473,6 @@
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-30T01:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Uruguay vs Spain",
-      "market": "scorer_Fabián Ruiz Peña",
-      "odds": 5.5,
-      "model_prob": 23.2,
-      "fair_prob": 18.2,
-      "ev_pct": 27.7,
-      "stake_eur": 7.0,
-      "stake_pct": 7.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-27T00:00:00Z"
     },
     {
       "sport": "football",
@@ -3588,20 +3546,6 @@
     },
     {
       "sport": "football",
-      "match": "New Zealand vs Belgium",
-      "market": "o/u3.75_over",
-      "odds": 1.98,
-      "model_prob": 59.5,
-      "fair_prob": 59.5,
-      "ev_pct": 17.8,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-27T03:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Brazil vs Japan",
       "market": "ah-0.75_away",
       "odds": 1.97,
@@ -3616,20 +3560,6 @@
     },
     {
       "sport": "football",
-      "match": "Uruguay vs Spain",
-      "market": "away",
-      "odds": 1.67,
-      "model_prob": 69.1,
-      "fair_prob": 60.9,
-      "ev_pct": 15.3,
-      "stake_eur": 16.15,
-      "stake_pct": 16.1,
-      "confidence": "LOW",
-      "n_models_agree": 2,
-      "kickoff": "2026-06-27T00:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Algeria vs Austria",
       "market": "o/u1.5_under",
       "odds": 2.48,
@@ -3641,20 +3571,6 @@
       "confidence": "HIGH",
       "n_models_agree": 0,
       "kickoff": "2026-06-28T02:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Egypt vs Iran",
-      "market": "away",
-      "odds": 4.13,
-      "model_prob": 27.1,
-      "fair_prob": 24.4,
-      "ev_pct": 11.9,
-      "stake_eur": 8.61,
-      "stake_pct": 8.6,
-      "confidence": "LOW",
-      "n_models_agree": 2,
-      "kickoff": "2026-06-27T03:00:00Z"
     },
     {
       "sport": "football",
