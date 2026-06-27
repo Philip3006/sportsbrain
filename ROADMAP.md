@@ -292,6 +292,42 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
   3. **Void-Status ausgeschlossen**: `settled_mask = ["won","lost"]` → erweitert um `"void"`.
   - `--backfill-only`-Flag für API-freie Re-Computation. 25 Tests neu (Resolver + NaN-Regression). Nach Backfill: 18/43 CLV gefüllt (Rest hat keine validen closing_odds — meist 0.0 oder Daten-Korruption mit ratio >3).
 
+### F5. + NEU Live-Loops raus aus GitHub Actions → Cloudflare Worker Cron (P1)
+- **Was**: Hochfrequente Loops (`live_score_push` alle 2 Min, `consume_pending_bets` alle 2 Min, `cloud_healer` alle 30 Min) wandern aus GH Actions in einen Cloudflare Worker mit `crons`-Trigger. Worker-Cron ist verlässlich (echtes 2-min-Raster), kein freies Skippen wie bei GH-Actions-Cron. Worker ruft die Python-Logik nicht selbst auf — er triggert die Endpunkte (TheOddsAPI für Live-Scores direkt, Settle/Push via existierender Worker-KV-Routen) bzw. löst bei Bedarf einen GH-Workflow per `repository_dispatch` aus, wenn schwerer Python-Code laufen muss. Architektur-Skizze:
+  - **A. Live-Scores**: Worker pollt TheOddsAPI `/scores` direkt alle 2 Min, schreibt Diff in KV `live_scores`, PWA pollt KV. Kein GH-Run mehr nötig.
+  - **B. Push-Notifications**: VAPID-Send direkt aus Worker (Web-Push-Lib läuft im Worker-Edge-Runtime). Subscriptions liegen schon in KV `push_subs`.
+  - **C. Consume Pending Bets**: Worker kann Bets aus `pending_bets_{user}` direkt zum Ledger nicht schreiben (Python-only) — stattdessen `repository_dispatch` an GH Actions, aber nur wenn KV nicht leer (Throttle = 0 Calls bei 0 pendings statt 720 leerer Runs/Tag).
+  - **D. Cloud-Healer**: Worker liest `health.json` aus KV, triggert nur bei `status != ok` `workflow_dispatch` der betroffenen Workflows.
+- **Warum**: Aktuelles Pattern produziert 14× cloud-healer-Retry-Commits + Commit-Flut + Stale-Banner pro Tag. Root-Cause ist GH-Actions-Cron-Unzuverlässigkeit (`*/30 * * * *` läuft real eher 1–2×/h unter Last; `*/2 * * * *` ist GH-offiziell „best effort"). Cloudflare Worker Cron hat dagegen ein hartes Raster und ist im Free-Tier ausreichend (100k Calls/Tag).
+- **Impact**: 🟢 — Stale-Banner verschwindet, Commit-Volumen sinkt ~70%, schnellere Push-Latenz, weniger CI-Minuten verbrannt.
+- **Aufwand**: 🔴 (8–14 h: Worker-Routen + KV-Schema-Migration für `live_scores` + VAPID im Worker + repository_dispatch-Flow + Rollback-Plan; jeder Teilbereich für sich testbar)
+- **Risiko**: 🟡 — Worker-Bug killt Live-Scores für alle User; Migration in 4 Stufen (A→D) mit Schattenbetrieb gegen GH-Cron, dann Cutover, dann GH-Workflows deaktivieren.
+- **Priorität**: **P1** — heutige Diagnose zeigte 3.2h-Stale-Daten + 14 Retry-Commits/48h; Aktivierung hilft jetzt schon, nicht erst nach WM.
+- **Dateien**: `cloudflare/worker.js` (neue Cron-Handler `scheduled()`, KV `live_scores`/Push-Send/Healer-Trigger), `cloudflare/wrangler.toml` (`[triggers] crons`), `.github/workflows/live_score_push.yml`/`consume_pending_bets.yml`/`cloud_healer.yml` (Stufenweise auf `workflow_dispatch`-only umstellen, später entfernen), `docs/js/app.js` (Live-Score-Poll-URL ggf. anpassen), `src/notifications/web_push.py` (Server-Side-Send bleibt Fallback)
+- **Abhängigkeiten**: B2 (Worker-Allowlist) ✅, D5 (Per-User-KV) ✅
+- **Verifikation**: (a) Cloudflare-Logs zeigen Worker-Cron-Trigger im 2-min-Raster konstant. (b) `health.json` zeigt `live_score_push` älter als 5 Min nie. (c) Stale-Banner triggert nicht mehr ohne echten Failure. (d) GH-Actions-Minuten sinken nach Cutover um ≥70%. (e) Push-Latenz beim Test-Send < 30s (vorher: bis 5 Min wegen GH-Queue).
+
+### F6. + NEU Cloud-Healer No-Commit-Mode (P2)
+- **Was**: `cloud_healer.yml` committet aktuell jeden Retry-Log-Eintrag in `results/auto_heal_cloud.log` (14 Commits in 48h). Stattdessen: Healer schreibt Log nur in den Workflow-Run (visible in GH-UI), nicht ins Repo. Optional: aggregiert Log alle 24h einmal als ein Commit. Eliminiert die größte Single-Source der Commit-Flut.
+- **Warum**: Jeder Retry produziert einen sichtbaren Bot-Commit der wie ein Failure wirkt, obwohl er nur „Selbstheilung lief" bedeutet. Verzerrt die History und triggert Merge-Konflikte mit echten Scans.
+- **Impact**: 🟢 — sauberere Git-History, weniger Merge-Konflikte (siehe L5).
+- **Aufwand**: 🟢 (~30 min: `git add` + `git commit` in `cloud_healer.yml` entfernen, dafür `actions/upload-artifact` für Log-File)
+- **Risiko**: 🟢 — reine Workflow-Änderung, keine Logik
+- **Priorität**: **P2** — entlastet, wird durch F5 evtl. obsolet (wenn Healer im Worker läuft, gibt es gar kein Repo-Commit mehr)
+- **Dateien**: `.github/workflows/cloud_healer.yml` (Commit-Step entfernen, `actions/upload-artifact@v4` hinzufügen)
+- **Abhängigkeiten**: keine; sofort umsetzbar
+- **Verifikation**: Nach Healer-Run kein neuer `auto: cloud-healer retry`-Commit; Log als Artifact am Workflow-Run anhängbar.
+
+### F7. + NEU tennis_scan überschreibt football-Schedule (P2)
+- **Was**: `scripts/tennis_scan.py` ruft `write_signals_json_all_users(schedule=schedule)` mit einer **tennis-only** Schedule (außerhalb `--mock` ist es eine leere Liste). `write_signals_json::schedule_data = schedule` (wenn `schedule is not None`) überschreibt damit den gesamten Football-Schedule auf `[]`. Heute harmlos weil der nächste `prematch_scan` ihn wiederherstellt, aber latente Race-Condition: läuft tennis_scan kurz vor PWA-Refresh, sieht der User 0 Football-Spiele bis zum nächsten Football-Scan. Fix: tennis_scan übergibt nur den **eigenen Tennis-Anteil** des Schedules und mergt mit Football-Schedule aus `existing` (analog wie `football_data` und `tennis_data` schon getrennt gemergt werden); oder `schedule`-Parameter wird auf `partial_schedule_sport='tennis'` umgestellt.
+- **Warum**: Konsistenz mit dem vorhandenen Sport-Merge-Pattern für `football`/`tennis`-Signale. Vermeidet User-sichtbare 0-Spiele-Lücken zwischen Scans.
+- **Impact**: 🟡 — kleine UX-Verbesserung, eliminiert eine Klasse von „warum verschwinden Spiele plötzlich"-Bugs.
+- **Aufwand**: 🟢 (~1 h: in `web_dashboard.py::write_signals_json` Schedule pro Sport mergen analog `football_data`/`tennis_data`; Test + Smoke)
+- **Risiko**: 🟢
+- **Priorität**: P2 — kein akutes Problem heute (PWA bekommt Football-Schedule beim nächsten prematch_scan zurück), aber Hygiene
+- **Dateien**: `src/notifications/web_dashboard.py` (`write_signals_json` — Schedule-Merge per Sport), `scripts/tennis_scan.py` (`schedule`-Übergabe als tennis-only markieren), `tests/notifications/test_signals_json_schedule_merge.py` (neu)
+- **Verifikation**: Smoke: erst football-scan mit 16 Schedule, dann tennis-scan ohne Tennis-Spiele → resultierende `signals.json` hat weiterhin 16 Football-Schedule-Einträge.
+
 ### F4. CLV im Journal anzeigen (abhängig von F3) ✅
 - **Was**: Pro Bet CLV-Pille + Aggregat oben im Journal-Tab.
 - **Warum**: CLV ist langfristig wichtigster Profitabilitäts-Indikator.
@@ -374,6 +410,19 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Dateien**: `src/config.py` (4 neue Konstanten), `src/betting/kelly.py` (odds_cap_factor + Signatur), `src/betting/value_detector.py` (`stake_reason`+`player_team`-Felder, Signatur-Update), `src/betting/correlation.py` (NEU), `src/betting/goalscorer.py` + `src/betting/tennis_detector.py` + `src/scanner/scoring.py` (Signatur-Updates), `src/betting/ledger.py` (stake_reason-Spalte+Migration), `src/notifications/web_dashboard.py` (correlation_note durchreichen), `docs/js/views.js` (Badge), `scripts/daily_scan.py` (Sammel-und-adjust-Flow), `tests/betting/test_kelly_odds_cap.py` (NEU, 17 Tests), `tests/betting/test_correlation_staking.py` (NEU, 6 Tests).
 - **Verifikation**: 265/265 Tests grün (betting+scanner). Trockenlauf gegen heutigen Slate: Scorer-Quote 5.5 mit EV 15% bei BR 100 → max €7 statt €20.
 - **Status (2026-06-25)**: Erledigt.
+
+### L5. + NEU ✅ signals.json Conflict-Marker → Cloud-Wipe → PWA-Blackout (2026-06-26)
+- **Was**: PWA zeigte 0 Spiele. Cloudflare-KV `signals_json_philip` lieferte `football:[], schedule:[], all_odds:{}, model_tips:{}`. Lokale `docs/data/signals.json` war gesund (11:02 UTC, 27 Football-Signals, 16 Schedule).
+- **Root-Cause**: `docs/data/signals_philip.json` enthielt unaufgelöste Git-Konflikt-Marker (`<<<<<<< Updated upstream` / `>>>>>>> Stashed changes`) aus einem fehlgeschlagenen `git stash pop` nach Rebase. `scripts/_git_safe_push.sh::_git_clear_unmerged` hatte sie nicht entfernt (`git checkout --theirs` funktioniert bei stash-Konflikten ohne Stage-3-Eintrag nicht zuverlässig). Resolve-Commit `5e57333` committete die Datei mit Markern. Beim nächsten `tennis_scan` crashte `json.loads()` auf dieser Datei → `web_dashboard.py::write_signals_json` fing den Fehler still ab (`existing = {}`), schrieb leeren Payload und pushte ihn via `aggregate_health._push_to_cloud` an den Worker.
+- **Fix** (Commits `24ca28b`/`47839bf`):
+  - `web_dashboard.py::write_signals_json` wirft jetzt `RuntimeError` bei Konflikt-Markern oder ungültigem JSON in `existing` — kein stilles Daten-Wipe mehr.
+  - `_git_safe_push.sh::_git_clear_unmerged` Kaskade: `--theirs` → `--ours` → `HEAD-Reset`; finaler Guard verhindert Staging einer Datei mit Markern.
+  - `signals_philip.json` mit gültiger `signals.json` synchronisiert + Cloud manuell via `curl -X POST` wiederhergestellt.
+- **Impact**: 🟢 — verhindert komplette Daten-Wipes der Cloud-KV durch Git-Hygiene-Fehler. Hat heute zur PWA-Blackout geführt; ohne Guards würde der Bug bei jedem Konflikt-Vorfall wieder auftreten.
+- **Aufwand/Risiko**: 🟢 / 🟢 (3 Files geändert, Tests vorhanden)
+- **Verifikation**: (a) Manueller Test: `signals_{user}.json` mit Konflikt-Markern → `write_signals_json` crasht statt zu schreiben. (b) `_git_clear_unmerged` mit künstlich gemarkerter Datei → File wird auf HEAD zurückgesetzt, nicht gestaged. (c) Cloud-KV nach Manual-Restore: 27 Football, 16 Schedule, PWA rendert wieder Spiele.
+- **Folgeitem**: K5 („`_git_safe_push.sh` weiter härten") sollte aus der Veto-Liste entfernt werden — heutiger Vorfall zeigt, dass weiteres Härten doch gerechtfertigt war.
+- **Status (2026-06-26)**: Erledigt.
 
 ### L3. ✅ Journal-Fix — Future-dated Voids waren ausgefiltert
 - **Was**: Journal-Tab zeigt fehlerhafte Einträge, fehlt Bets oder stellt Status/P&L falsch dar. Bugfix für bestehenden Render-Code — kein neues Feature (C4/F4 sind separate Feature-Items).
@@ -667,7 +716,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | K2 | PPDA direkt live ohne Backtest-Gate | Verzerrung existierender EV-Signale |
 | K3 | Sport-Key-Config-Refactor jetzt | YAGNI — erst bei Bundesliga-Bau |
 | K4 | Telegram als Backup-Kanal | PWA-Push reicht; doppelte Wartung |
-| K5 | `_git_safe_push.sh` weiter härten | Iter #88/#89 reichen, abgehakt |
+| ~~K5~~ | ~~`_git_safe_push.sh` weiter härten~~ | **VETO AUFGEHOBEN 2026-06-26** — siehe L5: Konflikt-Marker im Snapshot führten zu Cloud-Wipe. Weiteres Härten war nötig, jetzt umgesetzt in L5. |
 | K6 | Bookmaker-Auto-Bet via Bookie-API | Legal/ToS-Risiko |
 | K7 | Social-Feed / Public-Leaderboard / Pick-Sharing | Lenkt vom Quant-Edge ab |
 | K8 | Native iOS/Android-App | PWA reicht; App-Store-Reviews bei Gambling brutal |
@@ -699,6 +748,10 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **9e** | **I9 (Signal-Archive — lernen aus allen Signalen) P1 dringend** | ab sofort starten (Archive braucht Vorlaufzeit) | 6-10 h |
 | **9c** | I7 (Monte Carlo Sims) | ✅ erledigt 2026-06-22 | < 2 h |
 | **10** | H1, H2 (Push-Deep-Link, Legal-Stub) ✅ · **H3 (Bet-Cancel-Flow) P1 dringend** | anytime ab Tag 10 | 2-4 h |
+| **10b** | **F5 Live-Loops auf Cloudflare Worker Cron** — eliminiert Stale-Banner + Commit-Flut | **P1, sofort startbar** | 8-14 h |
+| **10c** | **F6 Cloud-Healer No-Commit-Mode** — 70% Bot-Commits weg, evtl. obsolet durch F5 | parallel zu F5 oder vorher | 30 min |
+| **10d** | **F7 tennis_scan Schedule-Race-Condition** — Sport-getrennter Schedule-Merge in write_signals_json | nach F5 | 1 h |
+| **10e** | **L5 ✅ erledigt 2026-06-26** — signals.json Conflict-Marker Cloud-Wipe Hot-Fix (Guards in web_dashboard.py + _git_safe_push.sh) | erledigt | 1 h |
 | **11** | J1 (Basketball) | ab 2026-08-15 | 30-50 h |
 | **12** | J2 (Tennis-Ausbau) | nach Spec-Klärung | 8-12 h |
 | **13** | J3, J4 (Brier, CONMEBOL Audit) | Q4 2026 | 2-3 h |
@@ -717,12 +770,12 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ## 📊 Statistik
 
-- **Insgesamt**: 69 konkrete Items (+1: L4 Stake-System v2)
+- **Insgesamt**: 73 konkrete Items (+4 ggü. 2026-06-25: F5 Worker-Cron, F6 Healer-No-Commit, F7 Schedule-Race, L5 Conflict-Wipe-Hotfix)
 - **P0**: 13 (sofort) — davon 13 ✅
-- **P1**: 33 — davon 33 ✅ (alle P1-Items erledigt 2026-06-24; M5 blockiert bis FIFA-Draw 2026-06-27)
-- **P2**: 15 — davon 10 ✅ (E1, E2, E3, E4, H1, H2, I4, I5, I6, I7); offen: I1–I3, I8, J2-K, J2-L, J3, J4
+- **P1**: 35 — davon 34 ✅ (neu: F5 offen, alle anderen P1 erledigt; M5 blockiert bis FIFA-Draw 2026-06-27)
+- **P2**: 17 — davon 10 ✅ (E1, E2, E3, E4, H1, H2, I4, I5, I6, I7); offen: I1–I3, I8, J2-K, J2-L, J3, J4, F6, F7
 - **P3**: 5 — J2-M (Tennis Live-Stats) + 4 weitere Q4 2026
-- **Veto**: 11 (bewusst nicht gebaut)
+- **Veto**: 10 (K5 aufgehoben 2026-06-26)
 
 ---
 
@@ -760,4 +813,5 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **2026-06-24**: ~ J2 **Phase B-F ✅ erledigt** (in einer Sitzung nach Phase A). **B** (Backtest, Commit 99e4af1): `fetch_full_tour_odds()` + `categorize_series()` + `tennis_backtest.py --full-tour --use-category-edge --j2-report` mit Verdict-Tabelle. **C** (Märkte, Commit 98b03af): `src/tennis/sim.py` (closed-form Set-Distribution + Monte-Carlo Game-Total), neue Detector-Funktionen `detect_total_sets/games/set_betting`. **D** (Scanner, Commit ad34e15): `tennis_scan.py` Multi-Tournament-Dispatcher, Wimbledon-Hardcode entfernt, alle 6 Märkte aggregiert, --all-live/--tournament-Flags. **E** (PWA, Commit 2105a1b): tournament_meta-Pfad bis ins JSON + `renderSport('tennis')` mit Tournament-Gruppierung, Surface-Icons, Kategorie-Pille. **F** (CI/Roll-out): `tennis_scan.yml` ganzjährig 4×/Tag, `scripts/tennis_gate_review.py` (Live-vs-Backtest-Vergleich mit PROMOTE/DEMOTE/BLACKLIST-Empfehlungen). Suite 627/627 grün (+71 Tests Tennis gesamt seit Phase-A-Start). **Damit ist Tennis production-ready für alle ATP/WTA-Turniere ab 250 aufwärts ganzjährig** — nur grand_slam initial live, Rest shadow bis erster Backtest-Run mit `--full-tour --j2-report` Live-Daten liefert.
 - **2026-06-23**: ~ J2 Phase A ✅ erledigt. Tennis-Modul von Wimbledon-Single-Tournament-Hardcode zur Tournament-Registry umgebaut. Neue Module: `src/tennis/tournaments.py` (49 Events: 8 Slams + 9 ATP Masters + 6 WTA 1000 + 13 ATP 500/250 + 10 WTA 500/250 + 2 Tour Finals; Dataclass + Lookup-Indizes), `src/tennis/discovery.py` (TheOddsAPI `/sports`-Pull mit 1h-Cache, Stale-Fallback bei API-Down, unknown_sport_key-Wrap für Drift). `src/config.py`: `TENNIS_MIN_EDGE_BY_CATEGORY` (grand_slam 5%, m1000 8%, wta1000 4%, atp500 10%, wta500 6%, atp250 12%, wta250 8%) und `TENNIS_CATEGORY_MODE` (alle außer grand_slam initial Shadow — wird durch Phase-B-Backtest entschieden). 30 neue Tests in `tests/tennis/`; 556/556 Suite grün. **Roadmap-Hochstufung J2: P2 → P1** (Saison-Gap WM-Ende → Bundesliga-Start). Nächste Phase: J2-B (Backtest-Erweiterung auf full-tour-Quoten, Per-Category-Gate-Verdicts).
 - **2026-06-25**: + **L4 NEU ✅** (Stake-System v2 — Odds-Bucket-Cap + Korrelations-Adjustment). User-Audit der letzten 4 Wetten (CZE–MEX, ZAF–KOR) deckte zwei strukturelle Bugs auf: (a) Sizing skalierte nur über EV → €20 Stake auf 5.5er Quote möglich; (b) negative Korrelation (Mexico-AH + Hložek-Scorer) und positive Korrelation (Korea-Sieg + Over 3.0) wurden nicht erkannt. Fix: ODDS_BUCKET_CAPS (≤2.0→100% bis >5→35%), neues `correlation.py`-Modul mit Neg-Korr-Discount (Underdog-Leg ×0.50, markiert), Pos-Korr-Discount (beide Legs ×0.70) und Match-Exposure-Cap (Σ stake ≤ tier_hi×1.5). Kennzeichnung via `stake_reason`/`correlation_note`/orange „↓ Korr"-Badge in PWA + CLI `⚠ KORR-↓`. 265/265 Tests grün, 23 neue Tests. Statistik: 68 → 69 Items.
+- **2026-06-26**: + **F5/F6/F7/L5 NEU** aus Vorfall-Analyse (PWA-Blackout + Stale-Daten + 14 Healer-Retry-Commits/48h). **F5** (P1): Live-Loops `live_score_push`/`consume_pending_bets`/`cloud_healer` raus aus GH Actions, rein in Cloudflare Worker Cron — GH-Cron-Unzuverlässigkeit ist Root-Cause für Stale-Banner + Commit-Flut. **F6** (P2): Cloud-Healer-Workflow soll Logs als Artifact statt als Commit speichern (70% Bot-Commits weg). **F7** (P2): `tennis_scan.py` übergibt `schedule=[]` und überschreibt damit Football-Schedule — Sport-getrennter Merge in `write_signals_json` nötig. **L5** (P1, ✅ erledigt heute): Hot-Fix für signals.json Conflict-Marker → Cloud-Wipe → PWA-Blackout. Guards in `web_dashboard.py` (`RuntimeError` statt stilles Wipe) + `_git_safe_push.sh` (Kaskade `--theirs`→`--ours`→`HEAD-reset` + Final-Guard gegen Markers-Staging). Commits `24ca28b`/`47839bf`. **K5 aus Veto-Liste entfernt** (`_git_safe_push.sh` Härtung war doch nötig). Statistik: 69 → 73 Items. P1: 33 → 35, P2: 15 → 17.
 - **2026-06-22**: + D6 NEU ✅ (Invite-Link + Self-Onboarding). Admin generiert Invite via `POST /invite` (Master-Auth) → schickt Link `?invite=TOKEN` → Empfänger wählt eigenen Username im Onboarding → `POST /register {invite, user}` legt Worker-Slot mit gewähltem Namen an, alle nachgelagerten Dateien (`ledger_{user}.csv`, `signals_{user}.json`, KV `pending_bets_{user}`) verwenden diesen Namen. Invite-Tokens einmalig, KV `invites` mit used_by-Tracking. PWA-IIFE liest URL, räumt sie via replaceState. Worker-Deploy `f0f84701`. 503/503 Tests grün. **Damit ist „Link senden = Tool teilen" Realität.** Nächste Phase: **8** (E1–E4 Refactor) oder **9c** (I7 Monte Carlo).
