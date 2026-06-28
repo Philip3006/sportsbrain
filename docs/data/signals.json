@@ -1,7 +1,7 @@
 {
-  "updated": "2026-06-28T16:58:06Z",
+  "updated": "2026-06-28T22:07:21Z",
   "build_info": {
-    "sha": "f0750c0",
+    "sha": "bfc42be",
     "date": "2026-06-28"
   },
   "meta": {
@@ -3420,20 +3420,6 @@
     },
     {
       "sport": "football",
-      "match": "South Africa vs Canada",
-      "market": "away",
-      "odds": 1.77,
-      "model_prob": 71.3,
-      "fair_prob": 56.4,
-      "ev_pct": 26.2,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "LOW",
-      "n_models_agree": 2,
-      "kickoff": "2026-06-28T19:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Netherlands vs Morocco",
       "market": "o/u2.5_over",
       "odds": 2.34,
@@ -3445,20 +3431,6 @@
       "confidence": "HIGH",
       "n_models_agree": 0,
       "kickoff": "2026-06-30T01:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "South Africa vs Canada",
-      "market": "scorer_Jonathan David",
-      "odds": 2.4,
-      "model_prob": 50.1,
-      "fair_prob": 41.7,
-      "ev_pct": 20.2,
-      "stake_eur": 15.0,
-      "stake_pct": 15.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-28T19:00:00Z"
     },
     {
       "sport": "football",
@@ -3487,20 +3459,6 @@
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-06-30T01:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "South Africa vs Canada",
-      "market": "o/u2.25_over",
-      "odds": 1.99,
-      "model_prob": 61.4,
-      "fair_prob": 61.4,
-      "ev_pct": 9.3,
-      "stake_eur": 11.15,
-      "stake_pct": 11.2,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-28T19:00:00Z"
     }
   ],
   "tennis": [],
