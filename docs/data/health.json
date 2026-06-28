@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-06-28T08:52:34Z",
+  "generated_at": "2026-06-28T10:38:05Z",
   "overall": "degraded",
   "jobs": [
     {
       "job": "daily_scan",
-      "status": "stale",
-      "last_run_at": "2026-06-26T06:00:14Z",
-      "duration_s": 3197.0,
+      "status": "ok",
+      "last_run_at": "2026-06-28T10:38:05Z",
+      "duration_s": null,
       "exit_code": 0,
-      "error": "last run was at 2026-06-26T06:00:14Z — overdue (>93600s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 86400,
       "cadence": "1×/Tag 07:00"
