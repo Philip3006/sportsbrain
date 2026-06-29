@@ -1,257 +1,327 @@
 {
-  "updated": "2026-06-28T10:38:05Z",
+  "updated": "2026-06-29T12:41:09Z",
   "n_trials": 2000,
-  "n_played": 18,
-  "n_remaining_group": 54,
+  "n_played": 13,
+  "n_remaining_group": 60,
   "teams": [
-    {
-      "team": "Argentina",
-      "group": "J",
-      "p_first": 99.4,
-      "p_second": 0.6,
-      "p_third": 0.0,
-      "p_fourth": 0.0,
-      "p_advance": 100.0,
-      "p_r16": 87.4,
-      "p_qf": 70.9,
-      "p_sf": 54.3,
-      "p_final": 38.1,
-      "p_champion": 25.55
-    },
     {
       "team": "Spain",
       "group": "H",
-      "p_first": 99.2,
-      "p_second": 0.8,
+      "p_first": 98.9,
+      "p_second": 1.1,
       "p_third": 0.1,
       "p_fourth": 0.0,
       "p_advance": 100.0,
-      "p_r16": 85.7,
-      "p_qf": 68.0,
-      "p_sf": 49.7,
-      "p_final": 33.5,
-      "p_champion": 19.35
+      "p_r16": 85.4,
+      "p_qf": 66.3,
+      "p_sf": 51.1,
+      "p_final": 35.2,
+      "p_champion": 21.6
+    },
+    {
+      "team": "Argentina",
+      "group": "J",
+      "p_first": 99.2,
+      "p_second": 0.7,
+      "p_third": 0.1,
+      "p_fourth": 0.0,
+      "p_advance": 100.0,
+      "p_r16": 86.1,
+      "p_qf": 68.2,
+      "p_sf": 49.4,
+      "p_final": 33.9,
+      "p_champion": 20.75
     },
     {
       "team": "Brazil",
       "group": "C",
-      "p_first": 76.5,
-      "p_second": 23.2,
-      "p_third": 0.2,
-      "p_fourth": 0.1,
+      "p_first": 76.8,
+      "p_second": 22.7,
+      "p_third": 0.5,
+      "p_fourth": 0.0,
       "p_advance": 99.9,
-      "p_r16": 83.8,
-      "p_qf": 67.3,
-      "p_sf": 48.4,
-      "p_final": 29.3,
-      "p_champion": 17.2
+      "p_r16": 84.9,
+      "p_qf": 67.6,
+      "p_sf": 50.0,
+      "p_final": 32.4,
+      "p_champion": 18.75
     },
     {
       "team": "Mexico",
       "group": "A",
-      "p_first": 94.9,
-      "p_second": 4.5,
-      "p_third": 0.7,
-      "p_fourth": 0.0,
-      "p_advance": 99.9,
-      "p_r16": 72.7,
-      "p_qf": 49.1,
-      "p_sf": 29.7,
-      "p_final": 16.2,
-      "p_champion": 8.15
+      "p_first": 95.6,
+      "p_second": 4.2,
+      "p_third": 0.1,
+      "p_fourth": 0.1,
+      "p_advance": 100.0,
+      "p_r16": 73.8,
+      "p_qf": 50.0,
+      "p_sf": 29.9,
+      "p_final": 16.4,
+      "p_champion": 8.5
     },
     {
       "team": "England",
       "group": "L",
-      "p_first": 84.0,
-      "p_second": 14.9,
-      "p_third": 1.1,
+      "p_first": 86.2,
+      "p_second": 13.2,
+      "p_third": 0.7,
       "p_fourth": 0.0,
-      "p_advance": 99.9,
-      "p_r16": 80.3,
-      "p_qf": 57.1,
+      "p_advance": 100.0,
+      "p_r16": 79.0,
+      "p_qf": 54.6,
       "p_sf": 34.2,
-      "p_final": 17.4,
-      "p_champion": 7.5
+      "p_final": 18.1,
+      "p_champion": 8.2
     },
     {
       "team": "France",
       "group": "I",
-      "p_first": 94.5,
-      "p_second": 5.4,
+      "p_first": 93.7,
+      "p_second": 6.2,
       "p_third": 0.1,
       "p_fourth": 0.0,
       "p_advance": 100.0,
-      "p_r16": 78.5,
-      "p_qf": 57.0,
-      "p_sf": 33.9,
-      "p_final": 16.7,
-      "p_champion": 7.2
+      "p_r16": 79.0,
+      "p_qf": 56.4,
+      "p_sf": 33.7,
+      "p_final": 17.0,
+      "p_champion": 7.65
     },
     {
       "team": "Netherlands",
       "group": "F",
-      "p_first": 71.5,
-      "p_second": 23.5,
-      "p_third": 5.0,
-      "p_fourth": 0.0,
-      "p_advance": 99.7,
-      "p_r16": 77.1,
-      "p_qf": 52.6,
-      "p_sf": 27.8,
-      "p_final": 12.2,
-      "p_champion": 4.3
+      "p_first": 68.0,
+      "p_second": 27.1,
+      "p_third": 4.9,
+      "p_fourth": 0.1,
+      "p_advance": 99.8,
+      "p_r16": 76.8,
+      "p_qf": 51.6,
+      "p_sf": 26.2,
+      "p_final": 11.1,
+      "p_champion": 4.25
+    },
+    {
+      "team": "Colombia",
+      "group": "K",
+      "p_first": 37.9,
+      "p_second": 54.4,
+      "p_third": 7.4,
+      "p_fourth": 0.2,
+      "p_advance": 99.8,
+      "p_r16": 63.5,
+      "p_qf": 36.0,
+      "p_sf": 16.8,
+      "p_final": 7.3,
+      "p_champion": 2.75
     },
     {
       "team": "Portugal",
       "group": "K",
-      "p_first": 60.0,
-      "p_second": 33.1,
-      "p_third": 6.7,
-      "p_fourth": 0.2,
-      "p_advance": 99.8,
-      "p_r16": 67.7,
-      "p_qf": 39.0,
-      "p_sf": 20.0,
-      "p_final": 8.6,
-      "p_champion": 3.15
+      "p_first": 57.7,
+      "p_second": 35.4,
+      "p_third": 6.8,
+      "p_fourth": 0.1,
+      "p_advance": 99.7,
+      "p_r16": 67.2,
+      "p_qf": 38.8,
+      "p_sf": 18.4,
+      "p_final": 6.8,
+      "p_champion": 2.45
     },
     {
       "team": "Morocco",
       "group": "C",
       "p_first": 23.1,
-      "p_second": 73.5,
+      "p_second": 73.7,
       "p_third": 3.1,
-      "p_fourth": 0.3,
-      "p_advance": 99.0,
-      "p_r16": 69.1,
-      "p_qf": 42.2,
-      "p_sf": 22.1,
-      "p_final": 8.0,
-      "p_champion": 2.95
-    },
-    {
-      "team": "Colombia",
-      "group": "K",
-      "p_first": 35.5,
-      "p_second": 53.8,
-      "p_third": 10.5,
       "p_fourth": 0.1,
-      "p_advance": 99.5,
-      "p_r16": 61.4,
-      "p_qf": 33.0,
-      "p_sf": 14.4,
-      "p_final": 6.0,
-      "p_champion": 2.2
+      "p_advance": 99.2,
+      "p_r16": 70.7,
+      "p_qf": 42.2,
+      "p_sf": 20.2,
+      "p_final": 7.5,
+      "p_champion": 2.4
     },
     {
       "team": "Japan",
       "group": "F",
-      "p_first": 23.4,
-      "p_second": 54.1,
-      "p_third": 21.9,
-      "p_fourth": 0.5,
-      "p_advance": 98.0,
-      "p_r16": 65.8,
-      "p_qf": 37.3,
-      "p_sf": 15.7,
-      "p_final": 5.9,
-      "p_champion": 1.5
+      "p_first": 28.4,
+      "p_second": 54.4,
+      "p_third": 16.9,
+      "p_fourth": 0.2,
+      "p_advance": 99.3,
+      "p_r16": 66.5,
+      "p_qf": 39.1,
+      "p_sf": 17.5,
+      "p_final": 6.0,
+      "p_champion": 1.55
     },
     {
       "team": "Croatia",
       "group": "L",
-      "p_first": 16.0,
-      "p_second": 80.1,
-      "p_third": 3.8,
+      "p_first": 13.6,
+      "p_second": 83.2,
+      "p_third": 3.1,
       "p_fourth": 0.1,
-      "p_advance": 99.5,
-      "p_r16": 58.0,
-      "p_qf": 27.3,
-      "p_sf": 8.9,
-      "p_final": 2.2,
-      "p_champion": 0.35
+      "p_advance": 99.9,
+      "p_r16": 58.4,
+      "p_qf": 25.6,
+      "p_sf": 8.8,
+      "p_final": 1.8,
+      "p_champion": 0.3
     },
     {
-      "team": "Cote d'Ivoire",
-      "group": "E",
-      "p_first": 30.9,
-      "p_second": 25.4,
-      "p_third": 43.5,
+      "team": "Canada",
+      "group": "B",
+      "p_first": 66.7,
+      "p_second": 31.3,
+      "p_third": 1.9,
       "p_fourth": 0.1,
-      "p_advance": 98.2,
-      "p_r16": 42.6,
-      "p_qf": 12.9,
-      "p_sf": 2.8,
-      "p_final": 0.6,
+      "p_advance": 99.9,
+      "p_r16": 44.8,
+      "p_qf": 15.2,
+      "p_sf": 3.8,
+      "p_final": 0.9,
       "p_champion": 0.2
     },
     {
       "team": "Switzerland",
       "group": "B",
-      "p_first": 64.8,
-      "p_second": 31.6,
-      "p_third": 3.5,
-      "p_fourth": 0.0,
-      "p_advance": 99.8,
-      "p_r16": 48.0,
-      "p_qf": 18.6,
-      "p_sf": 5.2,
-      "p_final": 1.1,
-      "p_champion": 0.15
-    },
-    {
-      "team": "Australia",
-      "group": "D",
-      "p_first": 15.3,
-      "p_second": 23.6,
-      "p_third": 37.0,
-      "p_fourth": 24.1,
-      "p_advance": 61.6,
-      "p_r16": 21.4,
-      "p_qf": 5.3,
-      "p_sf": 1.4,
-      "p_final": 0.3,
-      "p_champion": 0.1
+      "p_first": 32.5,
+      "p_second": 60.9,
+      "p_third": 6.6,
+      "p_fourth": 0.1,
+      "p_advance": 99.7,
+      "p_r16": 51.0,
+      "p_qf": 19.6,
+      "p_sf": 5.3,
+      "p_final": 0.9,
+      "p_champion": 0.2
     },
     {
       "team": "Ghana",
       "group": "L",
-      "p_first": 0.1,
-      "p_second": 4.2,
-      "p_third": 85.5,
-      "p_fourth": 10.1,
-      "p_advance": 37.0,
-      "p_r16": 17.2,
-      "p_qf": 6.5,
-      "p_sf": 1.9,
+      "p_first": 0.2,
+      "p_second": 3.0,
+      "p_third": 87.2,
+      "p_fourth": 9.6,
+      "p_advance": 40.0,
+      "p_r16": 17.1,
+      "p_qf": 7.6,
+      "p_sf": 2.9,
       "p_final": 0.4,
       "p_champion": 0.1
     },
     {
-      "team": "Canada",
-      "group": "B",
-      "p_first": 32.9,
-      "p_second": 53.5,
-      "p_third": 13.1,
-      "p_fourth": 0.5,
-      "p_advance": 98.4,
-      "p_r16": 37.2,
-      "p_qf": 9.5,
-      "p_sf": 1.4,
+      "team": "Australia",
+      "group": "D",
+      "p_first": 19.6,
+      "p_second": 33.6,
+      "p_third": 28.8,
+      "p_fourth": 18.1,
+      "p_advance": 71.8,
+      "p_r16": 24.3,
+      "p_qf": 7.0,
+      "p_sf": 1.2,
+      "p_final": 0.1,
+      "p_champion": 0.05
+    },
+    {
+      "team": "Germany",
+      "group": "E",
+      "p_first": 68.1,
+      "p_second": 24.8,
+      "p_third": 6.9,
+      "p_fourth": 0.3,
+      "p_advance": 99.4,
+      "p_r16": 52.7,
+      "p_qf": 19.1,
+      "p_sf": 5.9,
+      "p_final": 0.8,
+      "p_champion": 0.05
+    },
+    {
+      "team": "Cote d'Ivoire",
+      "group": "E",
+      "p_first": 26.0,
+      "p_second": 53.0,
+      "p_third": 19.7,
+      "p_fourth": 1.4,
+      "p_advance": 95.7,
+      "p_r16": 41.7,
+      "p_qf": 14.4,
+      "p_sf": 3.2,
+      "p_final": 0.8,
+      "p_champion": 0.05
+    },
+    {
+      "team": "Ecuador",
+      "group": "E",
+      "p_first": 5.8,
+      "p_second": 21.6,
+      "p_third": 65.5,
+      "p_fourth": 7.1,
+      "p_advance": 69.9,
+      "p_r16": 24.6,
+      "p_qf": 7.3,
+      "p_sf": 2.1,
+      "p_final": 0.4,
+      "p_champion": 0.05
+    },
+    {
+      "team": "Sweden",
+      "group": "F",
+      "p_first": 3.6,
+      "p_second": 18.1,
+      "p_third": 74.2,
+      "p_fourth": 4.0,
+      "p_advance": 82.8,
+      "p_r16": 40.5,
+      "p_qf": 15.7,
+      "p_sf": 3.5,
+      "p_final": 0.2,
+      "p_champion": 0.05
+    },
+    {
+      "team": "Egypt",
+      "group": "G",
+      "p_first": 27.4,
+      "p_second": 42.8,
+      "p_third": 27.8,
+      "p_fourth": 2.1,
+      "p_advance": 96.2,
+      "p_r16": 36.1,
+      "p_qf": 9.8,
+      "p_sf": 2.1,
+      "p_final": 0.1,
+      "p_champion": 0.05
+    },
+    {
+      "team": "Austria",
+      "group": "J",
+      "p_first": 0.4,
+      "p_second": 60.2,
+      "p_third": 31.6,
+      "p_fourth": 7.8,
+      "p_advance": 82.8,
+      "p_r16": 31.0,
+      "p_qf": 7.3,
+      "p_sf": 1.5,
       "p_final": 0.1,
       "p_champion": 0.05
     },
     {
       "team": "South Africa",
       "group": "A",
-      "p_first": 2.8,
-      "p_second": 45.2,
-      "p_third": 32.3,
-      "p_fourth": 19.7,
-      "p_advance": 66.1,
-      "p_r16": 13.0,
-      "p_qf": 1.4,
+      "p_first": 1.9,
+      "p_second": 38.0,
+      "p_third": 34.2,
+      "p_fourth": 25.8,
+      "p_advance": 60.1,
+      "p_r16": 9.7,
+      "p_qf": 1.0,
       "p_sf": 0.1,
       "p_final": 0.0,
       "p_champion": 0.0
@@ -259,13 +329,13 @@
     {
       "team": "South Korea",
       "group": "A",
-      "p_first": 1.7,
-      "p_second": 32.9,
-      "p_third": 38.7,
-      "p_fourth": 26.7,
-      "p_advance": 54.0,
-      "p_r16": 10.8,
-      "p_qf": 1.2,
+      "p_first": 1.8,
+      "p_second": 38.0,
+      "p_third": 37.9,
+      "p_fourth": 22.4,
+      "p_advance": 61.1,
+      "p_r16": 11.1,
+      "p_qf": 1.1,
       "p_sf": 0.1,
       "p_final": 0.0,
       "p_champion": 0.0
@@ -274,12 +344,12 @@
       "team": "Czechia",
       "group": "A",
       "p_first": 0.7,
-      "p_second": 17.4,
-      "p_third": 28.3,
-      "p_fourth": 53.6,
-      "p_advance": 30.4,
-      "p_r16": 3.6,
-      "p_qf": 0.3,
+      "p_second": 19.7,
+      "p_third": 27.8,
+      "p_fourth": 51.8,
+      "p_advance": 35.4,
+      "p_r16": 3.0,
+      "p_qf": 0.1,
       "p_sf": 0.0,
       "p_final": 0.0,
       "p_champion": 0.0
@@ -287,14 +357,14 @@
     {
       "team": "Bosnia and Herzegovina",
       "group": "B",
-      "p_first": 2.3,
-      "p_second": 14.4,
-      "p_third": 74.6,
-      "p_fourth": 8.6,
-      "p_advance": 65.8,
-      "p_r16": 11.6,
-      "p_qf": 1.5,
-      "p_sf": 0.3,
+      "p_first": 0.9,
+      "p_second": 7.5,
+      "p_third": 81.7,
+      "p_fourth": 10.0,
+      "p_advance": 68.2,
+      "p_r16": 13.1,
+      "p_qf": 2.0,
+      "p_sf": 0.1,
       "p_final": 0.0,
       "p_champion": 0.0
     },
@@ -302,12 +372,12 @@
       "team": "Qatar",
       "group": "B",
       "p_first": 0.0,
-      "p_second": 0.4,
-      "p_third": 8.8,
-      "p_fourth": 90.8,
-      "p_advance": 3.2,
+      "p_second": 0.3,
+      "p_third": 9.9,
+      "p_fourth": 89.8,
+      "p_advance": 4.6,
       "p_r16": 0.3,
-      "p_qf": 0.0,
+      "p_qf": 0.1,
       "p_sf": 0.0,
       "p_final": 0.0,
       "p_champion": 0.0
@@ -315,27 +385,27 @@
     {
       "team": "Haiti",
       "group": "C",
-      "p_first": 0.1,
-      "p_second": 0.9,
-      "p_third": 39.2,
-      "p_fourth": 59.8,
-      "p_advance": 10.7,
-      "p_r16": 2.5,
-      "p_qf": 0.3,
+      "p_first": 0.0,
+      "p_second": 1.4,
+      "p_third": 39.1,
+      "p_fourth": 59.6,
+      "p_advance": 14.1,
+      "p_r16": 2.8,
+      "p_qf": 0.7,
       "p_sf": 0.1,
-      "p_final": 0.0,
+      "p_final": 0.1,
       "p_champion": 0.0
     },
     {
       "team": "Scotland",
       "group": "C",
-      "p_first": 0.2,
+      "p_first": 0.1,
       "p_second": 2.4,
-      "p_third": 57.5,
-      "p_fourth": 39.9,
-      "p_advance": 18.6,
-      "p_r16": 5.3,
-      "p_qf": 1.0,
+      "p_third": 57.2,
+      "p_fourth": 40.3,
+      "p_advance": 22.0,
+      "p_r16": 6.4,
+      "p_qf": 1.7,
       "p_sf": 0.1,
       "p_final": 0.0,
       "p_champion": 0.0
@@ -343,108 +413,66 @@
     {
       "team": "United States",
       "group": "D",
-      "p_first": 23.6,
-      "p_second": 32.8,
-      "p_third": 24.4,
-      "p_fourth": 19.2,
-      "p_advance": 77.3,
-      "p_r16": 28.3,
-      "p_qf": 6.8,
-      "p_sf": 1.1,
-      "p_final": 0.1,
+      "p_first": 59.8,
+      "p_second": 23.0,
+      "p_third": 10.6,
+      "p_fourth": 6.7,
+      "p_advance": 92.2,
+      "p_r16": 32.0,
+      "p_qf": 7.8,
+      "p_sf": 1.2,
+      "p_final": 0.2,
       "p_champion": 0.0
     },
     {
       "team": "Paraguay",
       "group": "D",
-      "p_first": 7.7,
-      "p_second": 12.2,
-      "p_third": 29.3,
-      "p_fourth": 50.7,
-      "p_advance": 39.1,
-      "p_r16": 9.3,
-      "p_qf": 1.4,
-      "p_sf": 0.2,
-      "p_final": 0.1,
+      "p_first": 6.7,
+      "p_second": 19.0,
+      "p_third": 28.3,
+      "p_fourth": 46.0,
+      "p_advance": 42.9,
+      "p_r16": 10.3,
+      "p_qf": 1.8,
+      "p_sf": 0.0,
+      "p_final": 0.0,
       "p_champion": 0.0
     },
     {
       "team": "Turkey",
       "group": "D",
-      "p_first": 53.4,
-      "p_second": 31.4,
-      "p_third": 9.2,
-      "p_fourth": 5.9,
-      "p_advance": 93.4,
-      "p_r16": 22.4,
-      "p_qf": 4.2,
-      "p_sf": 0.2,
-      "p_final": 0.1,
-      "p_champion": 0.0
-    },
-    {
-      "team": "Germany",
-      "group": "E",
-      "p_first": 31.6,
-      "p_second": 31.9,
-      "p_third": 35.8,
-      "p_fourth": 0.8,
-      "p_advance": 97.3,
-      "p_r16": 52.9,
-      "p_qf": 20.3,
-      "p_sf": 5.5,
-      "p_final": 0.9,
+      "p_first": 14.0,
+      "p_second": 24.4,
+      "p_third": 32.2,
+      "p_fourth": 29.3,
+      "p_advance": 60.7,
+      "p_r16": 14.2,
+      "p_qf": 2.5,
+      "p_sf": 0.1,
+      "p_final": 0.0,
       "p_champion": 0.0
     },
     {
       "team": "Curacao",
       "group": "E",
-      "p_first": 0.0,
-      "p_second": 0.1,
-      "p_third": 0.9,
-      "p_fourth": 99.1,
-      "p_advance": 0.6,
-      "p_r16": 0.1,
+      "p_first": 0.1,
+      "p_second": 0.7,
+      "p_third": 8.0,
+      "p_fourth": 91.2,
+      "p_advance": 4.0,
+      "p_r16": 0.3,
       "p_qf": 0.0,
       "p_sf": 0.0,
       "p_final": 0.0,
       "p_champion": 0.0
     },
     {
-      "team": "Ecuador",
-      "group": "E",
-      "p_first": 37.5,
-      "p_second": 42.5,
-      "p_third": 19.9,
-      "p_fourth": 0.1,
-      "p_advance": 99.7,
-      "p_r16": 33.5,
-      "p_qf": 9.0,
-      "p_sf": 1.8,
-      "p_final": 0.2,
-      "p_champion": 0.0
-    },
-    {
-      "team": "Sweden",
-      "group": "F",
-      "p_first": 5.0,
-      "p_second": 22.1,
-      "p_third": 69.2,
-      "p_fourth": 3.6,
-      "p_advance": 92.0,
-      "p_r16": 46.5,
-      "p_qf": 17.8,
-      "p_sf": 4.0,
-      "p_final": 0.4,
-      "p_champion": 0.0
-    },
-    {
       "team": "Tunisia",
       "group": "F",
       "p_first": 0.0,
-      "p_second": 0.2,
-      "p_third": 3.9,
-      "p_fourth": 95.9,
+      "p_second": 0.4,
+      "p_third": 4.0,
+      "p_fourth": 95.6,
       "p_advance": 2.1,
       "p_r16": 0.3,
       "p_qf": 0.1,
@@ -455,54 +483,40 @@
     {
       "team": "Belgium",
       "group": "G",
-      "p_first": 59.4,
+      "p_first": 60.5,
       "p_second": 24.3,
-      "p_third": 16.2,
+      "p_third": 15.2,
       "p_fourth": 0.0,
       "p_advance": 100.0,
-      "p_r16": 42.1,
-      "p_qf": 13.9,
-      "p_sf": 2.8,
-      "p_final": 0.4,
-      "p_champion": 0.0
-    },
-    {
-      "team": "Egypt",
-      "group": "G",
-      "p_first": 28.5,
-      "p_second": 43.0,
-      "p_third": 26.2,
-      "p_fourth": 2.3,
-      "p_advance": 96.0,
-      "p_r16": 37.1,
-      "p_qf": 10.8,
-      "p_sf": 2.4,
-      "p_final": 0.1,
+      "p_r16": 43.5,
+      "p_qf": 15.3,
+      "p_sf": 3.4,
+      "p_final": 0.5,
       "p_champion": 0.0
     },
     {
       "team": "Iran",
       "group": "G",
-      "p_first": 12.0,
-      "p_second": 31.9,
-      "p_third": 48.3,
-      "p_fourth": 7.8,
-      "p_advance": 87.0,
-      "p_r16": 21.6,
-      "p_qf": 4.1,
-      "p_sf": 0.6,
-      "p_final": 0.0,
+      "p_first": 12.2,
+      "p_second": 32.2,
+      "p_third": 49.3,
+      "p_fourth": 6.3,
+      "p_advance": 89.2,
+      "p_r16": 23.9,
+      "p_qf": 4.5,
+      "p_sf": 0.4,
+      "p_final": 0.1,
       "p_champion": 0.0
     },
     {
       "team": "New Zealand",
       "group": "G",
-      "p_first": 0.1,
-      "p_second": 0.8,
-      "p_third": 9.2,
-      "p_fourth": 89.9,
-      "p_advance": 4.8,
-      "p_r16": 0.5,
+      "p_first": 0.0,
+      "p_second": 0.7,
+      "p_third": 7.8,
+      "p_fourth": 91.6,
+      "p_advance": 4.9,
+      "p_r16": 0.4,
       "p_qf": 0.1,
       "p_sf": 0.0,
       "p_final": 0.0,
@@ -511,27 +525,27 @@
     {
       "team": "Cape Verde",
       "group": "H",
-      "p_first": 0.8,
-      "p_second": 30.9,
-      "p_third": 55.5,
-      "p_fourth": 13.0,
-      "p_advance": 36.4,
-      "p_r16": 12.7,
-      "p_qf": 3.5,
-      "p_sf": 0.6,
-      "p_final": 0.0,
+      "p_first": 0.7,
+      "p_second": 29.5,
+      "p_third": 57.0,
+      "p_fourth": 12.8,
+      "p_advance": 35.4,
+      "p_r16": 12.4,
+      "p_qf": 3.2,
+      "p_sf": 0.7,
+      "p_final": 0.1,
       "p_champion": 0.0
     },
     {
       "team": "Saudi Arabia",
       "group": "H",
-      "p_first": 0.0,
-      "p_second": 4.2,
-      "p_third": 16.4,
-      "p_fourth": 79.4,
-      "p_advance": 6.2,
-      "p_r16": 0.8,
-      "p_qf": 0.2,
+      "p_first": 0.1,
+      "p_second": 5.4,
+      "p_third": 16.2,
+      "p_fourth": 78.3,
+      "p_advance": 7.4,
+      "p_r16": 1.1,
+      "p_qf": 0.1,
       "p_sf": 0.0,
       "p_final": 0.0,
       "p_champion": 0.0
@@ -539,27 +553,27 @@
     {
       "team": "Uruguay",
       "group": "H",
-      "p_first": 0.1,
-      "p_second": 64.1,
-      "p_third": 28.1,
-      "p_fourth": 7.6,
-      "p_advance": 85.8,
-      "p_r16": 32.5,
-      "p_qf": 8.3,
-      "p_sf": 1.5,
+      "p_first": 0.4,
+      "p_second": 64.0,
+      "p_third": 26.7,
+      "p_fourth": 8.8,
+      "p_advance": 87.8,
+      "p_r16": 31.4,
+      "p_qf": 7.6,
+      "p_sf": 1.1,
       "p_final": 0.1,
       "p_champion": 0.0
     },
     {
       "team": "Senegal",
       "group": "I",
-      "p_first": 5.2,
-      "p_second": 57.6,
-      "p_third": 37.1,
+      "p_first": 6.0,
+      "p_second": 56.3,
+      "p_third": 37.6,
       "p_fourth": 0.0,
-      "p_advance": 97.0,
-      "p_r16": 40.8,
-      "p_qf": 11.6,
+      "p_advance": 98.4,
+      "p_r16": 42.2,
+      "p_qf": 12.2,
       "p_sf": 2.5,
       "p_final": 0.5,
       "p_champion": 0.0
@@ -569,11 +583,11 @@
       "group": "I",
       "p_first": 0.0,
       "p_second": 0.0,
-      "p_third": 0.4,
-      "p_fourth": 99.6,
-      "p_advance": 0.1,
-      "p_r16": 0.0,
-      "p_qf": 0.0,
+      "p_third": 0.7,
+      "p_fourth": 99.4,
+      "p_advance": 0.2,
+      "p_r16": 0.1,
+      "p_qf": 0.1,
       "p_sf": 0.0,
       "p_final": 0.0,
       "p_champion": 0.0
@@ -582,41 +596,27 @@
       "team": "Norway",
       "group": "I",
       "p_first": 0.3,
-      "p_second": 37.0,
-      "p_third": 62.3,
-      "p_fourth": 0.4,
-      "p_advance": 89.1,
-      "p_r16": 35.3,
-      "p_qf": 10.5,
-      "p_sf": 1.8,
+      "p_second": 37.5,
+      "p_third": 61.6,
+      "p_fourth": 0.7,
+      "p_advance": 91.6,
+      "p_r16": 34.9,
+      "p_qf": 8.3,
+      "p_sf": 1.4,
       "p_final": 0.1,
       "p_champion": 0.0
     },
     {
       "team": "Algeria",
       "group": "J",
-      "p_first": 0.2,
-      "p_second": 31.7,
-      "p_third": 48.8,
-      "p_fourth": 19.4,
-      "p_advance": 62.3,
-      "p_r16": 19.4,
-      "p_qf": 4.0,
-      "p_sf": 0.5,
-      "p_final": 0.1,
-      "p_champion": 0.0
-    },
-    {
-      "team": "Austria",
-      "group": "J",
-      "p_first": 0.4,
-      "p_second": 60.4,
-      "p_third": 30.2,
-      "p_fourth": 9.0,
-      "p_advance": 81.3,
-      "p_r16": 30.9,
-      "p_qf": 8.0,
-      "p_sf": 1.1,
+      "p_first": 0.3,
+      "p_second": 33.3,
+      "p_third": 49.3,
+      "p_fourth": 17.1,
+      "p_advance": 66.2,
+      "p_r16": 18.9,
+      "p_qf": 3.8,
+      "p_sf": 0.4,
       "p_final": 0.0,
       "p_champion": 0.0
     },
@@ -624,28 +624,28 @@
       "team": "Jordan",
       "group": "J",
       "p_first": 0.0,
-      "p_second": 7.3,
-      "p_third": 21.1,
-      "p_fourth": 71.6,
-      "p_advance": 18.9,
-      "p_r16": 3.1,
-      "p_qf": 0.4,
-      "p_sf": 0.1,
+      "p_second": 5.9,
+      "p_third": 19.1,
+      "p_fourth": 75.0,
+      "p_advance": 18.2,
+      "p_r16": 3.4,
+      "p_qf": 0.3,
+      "p_sf": 0.0,
       "p_final": 0.0,
       "p_champion": 0.0
     },
     {
       "team": "DR Congo",
       "group": "K",
-      "p_first": 4.5,
-      "p_second": 13.0,
-      "p_third": 82.5,
+      "p_first": 4.4,
+      "p_second": 10.2,
+      "p_third": 85.4,
       "p_fourth": 0.0,
-      "p_advance": 92.9,
-      "p_r16": 28.5,
-      "p_qf": 5.7,
-      "p_sf": 1.1,
-      "p_final": 0.2,
+      "p_advance": 95.6,
+      "p_r16": 29.1,
+      "p_qf": 6.2,
+      "p_sf": 0.7,
+      "p_final": 0.1,
       "p_champion": 0.0
     },
     {
@@ -654,9 +654,9 @@
       "p_first": 0.0,
       "p_second": 0.0,
       "p_third": 0.4,
-      "p_fourth": 99.7,
-      "p_advance": 0.1,
-      "p_r16": 0.0,
+      "p_fourth": 99.6,
+      "p_advance": 0.2,
+      "p_r16": 0.1,
       "p_qf": 0.0,
       "p_sf": 0.0,
       "p_final": 0.0,
@@ -666,59 +666,45 @@
       "team": "Panama",
       "group": "L",
       "p_first": 0.0,
-      "p_second": 0.8,
-      "p_third": 9.5,
-      "p_fourth": 89.8,
+      "p_second": 0.6,
+      "p_third": 9.0,
+      "p_fourth": 90.4,
       "p_advance": 1.8,
-      "p_r16": 0.2,
+      "p_r16": 0.3,
       "p_qf": 0.1,
-      "p_sf": 0.0,
+      "p_sf": 0.1,
       "p_final": 0.0,
       "p_champion": 0.0
     }
   ],
   "xpoints": [
     {
-      "team": "Ecuador",
-      "group": "E",
-      "n": 1,
-      "pts": 3,
-      "xpts": 0.53,
-      "diff": 2.47,
-      "gf": 2,
-      "ga": 1,
-      "xgf": 0.75,
-      "xga": 1.38,
-      "gf_diff": 1.25,
-      "ga_diff": -0.38
-    },
-    {
-      "team": "Turkey",
-      "group": "D",
-      "n": 1,
-      "pts": 3,
-      "xpts": 0.74,
-      "diff": 2.26,
-      "gf": 3,
-      "ga": 2,
-      "xgf": 1.69,
-      "xga": 3.09,
-      "gf_diff": 1.31,
-      "ga_diff": -1.09
-    },
-    {
       "team": "Croatia",
       "group": "L",
       "n": 1,
       "pts": 3,
-      "xpts": 1.72,
-      "diff": 1.28,
+      "xpts": 1.85,
+      "diff": 1.15,
       "gf": 2,
       "ga": 1,
-      "xgf": 0.96,
-      "xga": 1.05,
-      "gf_diff": 1.04,
-      "ga_diff": -0.05
+      "xgf": 1.15,
+      "xga": 1.14,
+      "gf_diff": 0.85,
+      "ga_diff": -0.14
+    },
+    {
+      "team": "Canada",
+      "group": "B",
+      "n": 1,
+      "pts": 3,
+      "xpts": 2.34,
+      "diff": 0.66,
+      "gf": 1,
+      "ga": 0,
+      "xgf": 1.46,
+      "xga": 0.4,
+      "gf_diff": -0.46,
+      "ga_diff": -0.4
     },
     {
       "team": "Saudi Arabia",
@@ -729,164 +715,108 @@
       "diff": 0.41,
       "gf": 0,
       "ga": 0,
-      "xgf": 0.3,
-      "xga": 1.0,
-      "gf_diff": -0.3,
-      "ga_diff": -1.0
+      "xgf": 0.34,
+      "xga": 1.06,
+      "gf_diff": -0.34,
+      "ga_diff": -1.06
     },
     {
       "team": "DR Congo",
       "group": "K",
       "n": 1,
       "pts": 3,
-      "xpts": 2.65,
-      "diff": 0.35,
+      "xpts": 2.66,
+      "diff": 0.34,
       "gf": 3,
       "ga": 1,
-      "xgf": 2.74,
-      "xga": 0.9,
-      "gf_diff": 0.26,
-      "ga_diff": 0.1
-    },
-    {
-      "team": "Sweden",
-      "group": "F",
-      "n": 1,
-      "pts": 1,
-      "xpts": 0.68,
-      "diff": 0.32,
-      "gf": 1,
-      "ga": 1,
-      "xgf": 1.14,
-      "xga": 2.22,
-      "gf_diff": -0.14,
-      "ga_diff": -1.22
-    },
-    {
-      "team": "Cote d'Ivoire",
-      "group": "E",
-      "n": 1,
-      "pts": 3,
-      "xpts": 2.81,
-      "diff": 0.19,
-      "gf": 2,
-      "ga": 0,
-      "xgf": 2.22,
-      "xga": 0.35,
-      "gf_diff": -0.22,
-      "ga_diff": -0.35
+      "xgf": 2.92,
+      "xga": 1.01,
+      "gf_diff": 0.08,
+      "ga_diff": -0.01
     },
     {
       "team": "Belgium",
       "group": "G",
       "n": 1,
       "pts": 3,
-      "xpts": 2.83,
-      "diff": 0.17,
+      "xpts": 2.84,
+      "diff": 0.16,
       "gf": 5,
       "ga": 1,
-      "xgf": 4.18,
-      "xga": 1.19,
-      "gf_diff": 0.82,
-      "ga_diff": -0.19
+      "xgf": 4.23,
+      "xga": 1.16,
+      "gf_diff": 0.77,
+      "ga_diff": -0.16
     },
     {
       "team": "France",
       "group": "I",
       "n": 1,
       "pts": 3,
-      "xpts": 2.84,
-      "diff": 0.16,
+      "xpts": 2.85,
+      "diff": 0.15,
       "gf": 4,
       "ga": 1,
-      "xgf": 3.56,
-      "xga": 1.19,
-      "gf_diff": 0.44,
-      "ga_diff": -0.19
+      "xgf": 3.5,
+      "xga": 1.12,
+      "gf_diff": 0.5,
+      "ga_diff": -0.12
     },
     {
       "team": "England",
       "group": "L",
       "n": 1,
       "pts": 3,
-      "xpts": 2.88,
-      "diff": 0.12,
+      "xpts": 2.86,
+      "diff": 0.14,
       "gf": 2,
       "ga": 0,
-      "xgf": 1.71,
-      "xga": 0.1,
-      "gf_diff": 0.29,
-      "ga_diff": -0.1
+      "xgf": 1.61,
+      "xga": 0.07,
+      "gf_diff": 0.39,
+      "ga_diff": -0.07
     },
     {
       "team": "Spain",
       "group": "H",
       "n": 1,
       "pts": 3,
-      "xpts": 2.89,
-      "diff": 0.11,
+      "xpts": 2.88,
+      "diff": 0.12,
       "gf": 1,
       "ga": 0,
-      "xgf": 2.37,
-      "xga": 0.43,
-      "gf_diff": -1.37,
-      "ga_diff": -0.43
-    },
-    {
-      "team": "Netherlands",
-      "group": "F",
-      "n": 1,
-      "pts": 3,
-      "xpts": 2.91,
-      "diff": 0.09,
-      "gf": 3,
-      "ga": 1,
-      "xgf": 4.5,
-      "xga": 0.88,
-      "gf_diff": -1.5,
-      "ga_diff": 0.12
+      "xgf": 2.2,
+      "xga": 0.32,
+      "gf_diff": -1.2,
+      "ga_diff": -0.32
     },
     {
       "team": "Iran",
       "group": "G",
       "n": 1,
       "pts": 1,
-      "xpts": 0.91,
-      "diff": 0.09,
-      "gf": 1,
-      "ga": 1,
-      "xgf": 0.48,
-      "xga": 0.8,
-      "gf_diff": 0.52,
-      "ga_diff": 0.2
-    },
-    {
-      "team": "Algeria",
-      "group": "J",
-      "n": 1,
-      "pts": 1,
       "xpts": 0.93,
       "diff": 0.07,
-      "gf": 3,
-      "ga": 3,
-      "xgf": 1.71,
-      "xga": 2.3,
-      "gf_diff": 1.29,
-      "ga_diff": 0.7
+      "gf": 1,
+      "ga": 1,
+      "xgf": 0.5,
+      "xga": 0.8,
+      "gf_diff": 0.5,
+      "ga_diff": 0.2
     },
     {
       "team": "Senegal",
       "group": "I",
       "n": 1,
       "pts": 3,
-      "xpts": 2.94,
-      "diff": 0.06,
+      "xpts": 2.95,
+      "diff": 0.05,
       "gf": 5,
       "ga": 0,
-      "xgf": 3.21,
-      "xga": 0.37,
-      "gf_diff": 1.79,
-      "ga_diff": -0.37
+      "xgf": 3.39,
+      "xga": 0.35,
+      "gf_diff": 1.61,
+      "ga_diff": -0.35
     },
     {
       "team": "Argentina",
@@ -897,24 +827,24 @@
       "diff": 0.04,
       "gf": 3,
       "ga": 1,
-      "xgf": 3.08,
-      "xga": 0.24,
-      "gf_diff": -0.08,
-      "ga_diff": 0.76
+      "xgf": 2.94,
+      "xga": 0.26,
+      "gf_diff": 0.06,
+      "ga_diff": 0.74
     },
     {
-      "team": "Paraguay",
-      "group": "D",
+      "team": "Algeria",
+      "group": "J",
       "n": 1,
       "pts": 1,
-      "xpts": 0.99,
-      "diff": 0.01,
-      "gf": 0,
-      "ga": 0,
-      "xgf": 0.3,
-      "xga": 0.43,
-      "gf_diff": -0.3,
-      "ga_diff": -0.43
+      "xpts": 0.96,
+      "diff": 0.04,
+      "gf": 3,
+      "ga": 3,
+      "xgf": 1.87,
+      "xga": 2.42,
+      "gf_diff": 1.13,
+      "ga_diff": 0.58
     },
     {
       "team": "Jordan",
@@ -925,10 +855,10 @@
       "diff": -0.02,
       "gf": 1,
       "ga": 3,
-      "xgf": 0.24,
-      "xga": 3.08,
-      "gf_diff": 0.76,
-      "ga_diff": -0.08
+      "xgf": 0.26,
+      "xga": 2.94,
+      "gf_diff": 0.74,
+      "ga_diff": 0.06
     },
     {
       "team": "Iraq",
@@ -939,24 +869,10 @@
       "diff": -0.03,
       "gf": 0,
       "ga": 5,
-      "xgf": 0.37,
-      "xga": 3.21,
-      "gf_diff": -0.37,
-      "ga_diff": 1.79
-    },
-    {
-      "team": "Tunisia",
-      "group": "F",
-      "n": 1,
-      "pts": 0,
-      "xpts": 0.06,
-      "diff": -0.06,
-      "gf": 1,
-      "ga": 3,
-      "xgf": 0.88,
-      "xga": 4.5,
-      "gf_diff": 0.12,
-      "ga_diff": -1.5
+      "xgf": 0.35,
+      "xga": 3.39,
+      "gf_diff": -0.35,
+      "ga_diff": 1.61
     },
     {
       "team": "Uruguay",
@@ -967,10 +883,10 @@
       "diff": -0.07,
       "gf": 0,
       "ga": 1,
-      "xgf": 0.43,
-      "xga": 2.37,
-      "gf_diff": -0.43,
-      "ga_diff": -1.37
+      "xgf": 0.32,
+      "xga": 2.2,
+      "gf_diff": -0.32,
+      "ga_diff": -1.2
     },
     {
       "team": "Panama",
@@ -981,52 +897,38 @@
       "diff": -0.07,
       "gf": 0,
       "ga": 2,
-      "xgf": 0.1,
-      "xga": 1.71,
-      "gf_diff": -0.1,
-      "ga_diff": 0.29
-    },
-    {
-      "team": "Curacao",
-      "group": "E",
-      "n": 1,
-      "pts": 0,
-      "xpts": 0.12,
-      "diff": -0.12,
-      "gf": 0,
-      "ga": 2,
-      "xgf": 0.35,
-      "xga": 2.22,
-      "gf_diff": -0.35,
-      "ga_diff": -0.22
+      "xgf": 0.07,
+      "xga": 1.61,
+      "gf_diff": -0.07,
+      "ga_diff": 0.39
     },
     {
       "team": "New Zealand",
       "group": "G",
       "n": 1,
       "pts": 0,
-      "xpts": 0.12,
-      "diff": -0.12,
+      "xpts": 0.11,
+      "diff": -0.11,
       "gf": 1,
       "ga": 5,
-      "xgf": 1.19,
-      "xga": 4.18,
-      "gf_diff": -0.19,
-      "ga_diff": 0.82
+      "xgf": 1.16,
+      "xga": 4.23,
+      "gf_diff": -0.16,
+      "ga_diff": 0.77
     },
     {
       "team": "Norway",
       "group": "I",
       "n": 1,
       "pts": 0,
-      "xpts": 0.12,
-      "diff": -0.12,
+      "xpts": 0.11,
+      "diff": -0.11,
       "gf": 1,
       "ga": 4,
-      "xgf": 1.19,
-      "xga": 3.56,
-      "gf_diff": -0.19,
-      "ga_diff": 0.44
+      "xgf": 1.12,
+      "xga": 3.5,
+      "gf_diff": -0.12,
+      "ga_diff": 0.5
     },
     {
       "team": "Colombia",
@@ -1037,150 +939,108 @@
       "diff": -0.17,
       "gf": 0,
       "ga": 0,
-      "xgf": 0.43,
-      "xga": 0.46,
-      "gf_diff": -0.43,
-      "ga_diff": -0.46
+      "xgf": 0.36,
+      "xga": 0.38,
+      "gf_diff": -0.36,
+      "ga_diff": -0.38
     },
     {
       "team": "Uzbekistan",
       "group": "K",
       "n": 1,
       "pts": 0,
-      "xpts": 0.26,
-      "diff": -0.26,
+      "xpts": 0.25,
+      "diff": -0.25,
       "gf": 1,
       "ga": 3,
-      "xgf": 0.9,
-      "xga": 2.74,
-      "gf_diff": 0.1,
-      "ga_diff": 0.26
+      "xgf": 1.01,
+      "xga": 2.92,
+      "gf_diff": -0.01,
+      "ga_diff": 0.08
     },
     {
       "team": "Portugal",
       "group": "K",
       "n": 1,
       "pts": 1,
-      "xpts": 1.33,
-      "diff": -0.33,
+      "xpts": 1.29,
+      "diff": -0.29,
       "gf": 0,
       "ga": 0,
-      "xgf": 0.46,
-      "xga": 0.43,
-      "gf_diff": -0.46,
-      "ga_diff": -0.43
+      "xgf": 0.38,
+      "xga": 0.36,
+      "gf_diff": -0.38,
+      "ga_diff": -0.36
     },
     {
-      "team": "Australia",
-      "group": "D",
+      "team": "South Africa",
+      "group": "A",
       "n": 1,
-      "pts": 1,
-      "xpts": 1.48,
-      "diff": -0.48,
+      "pts": 0,
+      "xpts": 0.44,
+      "diff": -0.44,
       "gf": 0,
-      "ga": 0,
-      "xgf": 0.43,
-      "xga": 0.3,
-      "gf_diff": -0.43,
-      "ga_diff": -0.3
+      "ga": 1,
+      "xgf": 0.4,
+      "xga": 1.46,
+      "gf_diff": -0.4,
+      "ga_diff": -0.46
     },
     {
       "team": "Egypt",
       "group": "G",
       "n": 1,
       "pts": 1,
-      "xpts": 1.71,
-      "diff": -0.71,
+      "xpts": 1.69,
+      "diff": -0.69,
       "gf": 1,
       "ga": 1,
       "xgf": 0.8,
-      "xga": 0.48,
+      "xga": 0.5,
       "gf_diff": 0.2,
-      "ga_diff": 0.52
+      "ga_diff": 0.5
     },
     {
       "team": "Austria",
       "group": "J",
       "n": 1,
       "pts": 1,
-      "xpts": 1.88,
-      "diff": -0.88,
+      "xpts": 1.86,
+      "diff": -0.86,
       "gf": 3,
       "ga": 3,
-      "xgf": 2.3,
-      "xga": 1.71,
-      "gf_diff": 0.7,
-      "ga_diff": 1.29
+      "xgf": 2.42,
+      "xga": 1.87,
+      "gf_diff": 0.58,
+      "ga_diff": 1.13
     },
     {
       "team": "Ghana",
       "group": "L",
       "n": 1,
       "pts": 0,
-      "xpts": 0.99,
-      "diff": -0.99,
+      "xpts": 0.89,
+      "diff": -0.89,
       "gf": 1,
       "ga": 2,
-      "xgf": 1.05,
-      "xga": 0.96,
-      "gf_diff": -0.05,
-      "ga_diff": 1.04
+      "xgf": 1.14,
+      "xga": 1.15,
+      "gf_diff": -0.14,
+      "ga_diff": 0.85
     },
     {
       "team": "Cape Verde",
       "group": "H",
       "n": 1,
       "pts": 1,
-      "xpts": 2.08,
-      "diff": -1.08,
+      "xpts": 2.09,
+      "diff": -1.09,
       "gf": 0,
       "ga": 0,
-      "xgf": 1.0,
-      "xga": 0.3,
-      "gf_diff": -1.0,
-      "ga_diff": -0.3
-    },
-    {
-      "team": "Japan",
-      "group": "F",
-      "n": 1,
-      "pts": 1,
-      "xpts": 2.14,
-      "diff": -1.14,
-      "gf": 1,
-      "ga": 1,
-      "xgf": 2.22,
-      "xga": 1.14,
-      "gf_diff": -1.22,
-      "ga_diff": -0.14
-    },
-    {
-      "team": "United States",
-      "group": "D",
-      "n": 1,
-      "pts": 0,
-      "xpts": 2.1,
-      "diff": -2.1,
-      "gf": 2,
-      "ga": 3,
-      "xgf": 3.09,
-      "xga": 1.69,
-      "gf_diff": -1.09,
-      "ga_diff": 1.31
-    },
-    {
-      "team": "Germany",
-      "group": "E",
-      "n": 1,
-      "pts": 0,
-      "xpts": 2.26,
-      "diff": -2.26,
-      "gf": 1,
-      "ga": 2,
-      "xgf": 1.38,
-      "xga": 0.75,
-      "gf_diff": -0.38,
-      "ga_diff": 1.25
+      "xgf": 1.06,
+      "xga": 0.34,
+      "gf_diff": -1.06,
+      "ga_diff": -0.34
     }
   ],
   "bracket": {
@@ -1192,57 +1052,57 @@
           {
             "home": "Argentina",
             "away": "South Africa",
-            "p_home": 99.1,
-            "p_draw": 1.6,
-            "p_away": 0.9,
+            "p_home": 98.6,
+            "p_draw": 2.4,
+            "p_away": 1.4,
             "winner": "Argentina",
-            "p_winner": 99.1,
+            "p_winner": 98.6,
             "scoreline": {
               "top_scores": [
                 {
-                  "h": 4,
-                  "a": 0,
-                  "p": 11.9
-                },
-                {
                   "h": 3,
                   "a": 0,
-                  "p": 11.7
+                  "p": 13.3
                 },
-                {
-                  "h": 5,
-                  "a": 0,
-                  "p": 10.1
-                }
-              ],
-              "goal_dist": {
-                "0": 3.8,
-                "1": 10.3,
-                "2": 15.9,
-                "3+": 70.0
-              },
-              "mc_top_scores": [
                 {
                   "h": 4,
                   "a": 0,
                   "p": 12.2
                 },
                 {
-                  "h": 3,
+                  "h": 2,
                   "a": 0,
                   "p": 11.7
+                }
+              ],
+              "goal_dist": {
+                "0": 4.2,
+                "1": 11.7,
+                "2": 17.9,
+                "3+": 66.1
+              },
+              "mc_top_scores": [
+                {
+                  "h": 3,
+                  "a": 0,
+                  "p": 12.8
                 },
                 {
-                  "h": 5,
+                  "h": 4,
                   "a": 0,
-                  "p": 10.1
+                  "p": 12.5
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 11.8
                 }
               ],
               "mc_goal_dist": {
-                "0": 4.0,
-                "1": 10.2,
-                "2": 15.3,
-                "3+": 70.5
+                "0": 4.4,
+                "1": 12.6,
+                "2": 18.2,
+                "3+": 64.7
               },
               "n_mc": 10000,
               "alpha": 0.6,
@@ -1254,59 +1114,123 @@
             "away_seed": 32
           },
           {
-            "home": "Spain",
-            "away": "Bosnia and Herzegovina",
-            "p_home": 98.8,
-            "p_draw": 1.9,
-            "p_away": 1.2,
-            "winner": "Spain",
-            "p_winner": 98.8,
+            "home": "Brazil",
+            "away": "South Korea",
+            "p_home": 98.9,
+            "p_draw": 1.8,
+            "p_away": 1.1,
+            "winner": "Brazil",
+            "p_winner": 98.9,
             "scoreline": {
               "top_scores": [
+                {
+                  "h": 3,
+                  "a": 0,
+                  "p": 12.4
+                },
+                {
+                  "h": 4,
+                  "a": 0,
+                  "p": 12.1
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 10.4
+                }
+              ],
+              "goal_dist": {
+                "0": 3.9,
+                "1": 10.8,
+                "2": 16.6,
+                "3+": 68.6
+              },
+              "mc_top_scores": [
+                {
+                  "h": 3,
+                  "a": 0,
+                  "p": 12.3
+                },
+                {
+                  "h": 4,
+                  "a": 0,
+                  "p": 12.2
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 10.7
+                }
+              ],
+              "mc_goal_dist": {
+                "0": 3.9,
+                "1": 10.5,
+                "2": 16.9,
+                "3+": 68.8
+              },
+              "n_mc": 10000,
+              "alpha": 0.6,
+              "prior_used": true
+            },
+            "home_group": "C",
+            "away_group": "A",
+            "home_seed": 2,
+            "away_seed": 31
+          },
+          {
+            "home": "Spain",
+            "away": "Bosnia and Herzegovina",
+            "p_home": 98.9,
+            "p_draw": 1.8,
+            "p_away": 1.1,
+            "winner": "Spain",
+            "p_winner": 98.9,
+            "scoreline": {
+              "top_scores": [
+                {
+                  "h": 4,
+                  "a": 0,
+                  "p": 11.1
+                },
+                {
+                  "h": 3,
+                  "a": 0,
+                  "p": 10.9
+                },
+                {
+                  "h": 5,
+                  "a": 0,
+                  "p": 9.6
+                }
+              ],
+              "goal_dist": {
+                "0": 3.7,
+                "1": 10.0,
+                "2": 15.4,
+                "3+": 70.8
+              },
+              "mc_top_scores": [
+                {
+                  "h": 3,
+                  "a": 0,
+                  "p": 10.9
+                },
                 {
                   "h": 4,
                   "a": 0,
                   "p": 10.8
                 },
                 {
-                  "h": 3,
-                  "a": 0,
-                  "p": 10.6
-                },
-                {
                   "h": 5,
-                  "a": 0,
-                  "p": 9.3
-                }
-              ],
-              "goal_dist": {
-                "0": 3.7,
-                "1": 10.0,
-                "2": 15.3,
-                "3+": 71.1
-              },
-              "mc_top_scores": [
-                {
-                  "h": 3,
-                  "a": 0,
-                  "p": 10.6
-                },
-                {
-                  "h": 4,
                   "a": 0,
                   "p": 10.2
-                },
-                {
-                  "h": 5,
-                  "a": 0,
-                  "p": 9.3
                 }
               ],
               "mc_goal_dist": {
-                "0": 3.6,
+                "0": 3.9,
                 "1": 9.9,
-                "2": 15.6,
-                "3+": 70.9
+                "2": 15.7,
+                "3+": 70.5
               },
               "n_mc": 10000,
               "alpha": 0.6,
@@ -1314,83 +1238,106 @@
             },
             "home_group": "H",
             "away_group": "B",
-            "home_seed": 2,
-            "away_seed": 31
+            "home_seed": 3,
+            "away_seed": 30
           },
           {
-            "home": "Brazil",
+            "home": "France",
             "away": "Algeria",
-            "p_home": 98.5,
-            "p_draw": 2.2,
-            "p_away": 1.5,
-            "winner": "Brazil",
-            "p_winner": 98.5,
+            "p_home": 97.0,
+            "p_draw": 3.7,
+            "p_away": 3.0,
+            "winner": "France",
+            "p_winner": 97.0,
             "scoreline": {
               "top_scores": [
                 {
-                  "h": 4,
-                  "a": 0,
-                  "p": 10.2
-                },
-                {
                   "h": 3,
                   "a": 0,
-                  "p": 10.1
+                  "p": 9.5
                 },
                 {
-                  "h": 5,
+                  "h": 4,
                   "a": 0,
-                  "p": 8.8
+                  "p": 9.0
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 8.5
                 }
               ],
               "goal_dist": {
                 "0": 3.7,
-                "1": 9.8,
-                "2": 15.0,
-                "3+": 71.5
+                "1": 10.1,
+                "2": 15.5,
+                "3+": 70.6
               },
               "mc_top_scores": [
                 {
-                  "h": 4,
-                  "a": 0,
-                  "p": 10.3
-                },
-                {
                   "h": 3,
                   "a": 0,
-                  "p": 9.9
+                  "p": 9.3
                 },
                 {
-                  "h": 5,
+                  "h": 4,
                   "a": 0,
-                  "p": 9.2
+                  "p": 9.0
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 8.6
                 }
               ],
               "mc_goal_dist": {
                 "0": 3.6,
-                "1": 10.6,
-                "2": 14.6,
-                "3+": 71.2
+                "1": 9.8,
+                "2": 15.7,
+                "3+": 70.9
               },
               "n_mc": 10000,
               "alpha": 0.6,
               "prior_used": true
             },
-            "home_group": "C",
+            "home_group": "I",
             "away_group": "J",
-            "home_seed": 3,
-            "away_seed": 30
+            "home_seed": 4,
+            "away_seed": 29
           },
           {
             "home": "England",
             "away": "Iran",
-            "p_home": 97.1,
-            "p_draw": 4.3,
-            "p_away": 2.9,
+            "p_home": 96.9,
+            "p_draw": 4.5,
+            "p_away": 3.1,
             "winner": "England",
-            "p_winner": 97.1,
+            "p_winner": 96.9,
             "scoreline": {
               "top_scores": [
+                {
+                  "h": 3,
+                  "a": 0,
+                  "p": 12.5
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 11.9
+                },
+                {
+                  "h": 4,
+                  "a": 0,
+                  "p": 10.4
+                }
+              ],
+              "goal_dist": {
+                "0": 4.5,
+                "1": 12.6,
+                "2": 19.0,
+                "3+": 64.0
+              },
+              "mc_top_scores": [
                 {
                   "h": 3,
                   "a": 0,
@@ -1399,42 +1346,19 @@
                 {
                   "h": 2,
                   "a": 0,
-                  "p": 11.5
+                  "p": 12.1
                 },
                 {
                   "h": 4,
                   "a": 0,
-                  "p": 10.5
-                }
-              ],
-              "goal_dist": {
-                "0": 4.4,
-                "1": 12.2,
-                "2": 18.6,
-                "3+": 64.8
-              },
-              "mc_top_scores": [
-                {
-                  "h": 3,
-                  "a": 0,
-                  "p": 12.2
-                },
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 11.5
-                },
-                {
-                  "h": 4,
-                  "a": 0,
-                  "p": 10.0
+                  "p": 9.7
                 }
               ],
               "mc_goal_dist": {
-                "0": 4.2,
-                "1": 12.4,
-                "2": 18.8,
-                "3+": 64.5
+                "0": 4.6,
+                "1": 12.3,
+                "2": 18.9,
+                "3+": 64.2
               },
               "n_mc": 10000,
               "alpha": 0.6,
@@ -1442,179 +1366,156 @@
             },
             "home_group": "L",
             "away_group": "G",
-            "home_seed": 4,
-            "away_seed": 29
-          },
-          {
-            "home": "France",
-            "away": "Turkey",
-            "p_home": 97.2,
-            "p_draw": 3.8,
-            "p_away": 2.8,
-            "winner": "France",
-            "p_winner": 97.2,
-            "scoreline": {
-              "top_scores": [
-                {
-                  "h": 3,
-                  "a": 0,
-                  "p": 11.1
-                },
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 10.0
-                },
-                {
-                  "h": 4,
-                  "a": 0,
-                  "p": 10.0
-                }
-              ],
-              "goal_dist": {
-                "0": 4.0,
-                "1": 11.1,
-                "2": 17.0,
-                "3+": 67.9
-              },
-              "mc_top_scores": [
-                {
-                  "h": 3,
-                  "a": 0,
-                  "p": 11.5
-                },
-                {
-                  "h": 4,
-                  "a": 0,
-                  "p": 9.9
-                },
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 9.8
-                }
-              ],
-              "mc_goal_dist": {
-                "0": 3.8,
-                "1": 11.0,
-                "2": 16.5,
-                "3+": 68.7
-              },
-              "n_mc": 10000,
-              "alpha": 0.6,
-              "prior_used": true
-            },
-            "home_group": "I",
-            "away_group": "D",
             "home_seed": 5,
             "away_seed": 28
           },
           {
             "home": "Netherlands",
-            "away": "Australia",
-            "p_home": 89.5,
-            "p_draw": 14.3,
-            "p_away": 10.5,
+            "away": "DR Congo",
+            "p_home": 96.0,
+            "p_draw": 5.1,
+            "p_away": 4.0,
             "winner": "Netherlands",
-            "p_winner": 89.5,
+            "p_winner": 96.0,
             "scoreline": {
               "top_scores": [
                 {
-                  "h": 1,
+                  "h": 3,
                   "a": 0,
-                  "p": 15.7
+                  "p": 10.8
                 },
                 {
                   "h": 2,
                   "a": 0,
-                  "p": 15.7
+                  "p": 10.3
                 },
                 {
-                  "h": 3,
+                  "h": 4,
                   "a": 0,
-                  "p": 11.3
+                  "p": 9.3
                 }
               ],
               "goal_dist": {
-                "0": 8.3,
-                "1": 20.0,
-                "2": 24.7,
-                "3+": 47.0
+                "0": 4.2,
+                "1": 11.6,
+                "2": 17.7,
+                "3+": 66.5
               },
               "mc_top_scores": [
                 {
-                  "h": 1,
+                  "h": 3,
                   "a": 0,
-                  "p": 15.9
+                  "p": 11.0
                 },
                 {
                   "h": 2,
                   "a": 0,
-                  "p": 15.0
+                  "p": 10.0
                 },
                 {
-                  "h": 3,
+                  "h": 4,
                   "a": 0,
-                  "p": 11.4
+                  "p": 9.1
                 }
               ],
               "mc_goal_dist": {
-                "0": 8.1,
-                "1": 20.3,
-                "2": 24.5,
-                "3+": 47.1
+                "0": 4.0,
+                "1": 11.4,
+                "2": 17.4,
+                "3+": 67.1
               },
               "n_mc": 10000,
               "alpha": 0.6,
               "prior_used": true
             },
             "home_group": "F",
-            "away_group": "D",
+            "away_group": "K",
             "home_seed": 6,
             "away_seed": 27
           },
           {
             "home": "Mexico",
-            "away": "DR Congo",
-            "p_home": 81.1,
-            "p_draw": 32.3,
-            "p_away": 18.9,
+            "away": "Australia",
+            "p_home": 72.0,
+            "p_draw": 51.0,
+            "p_away": 28.0,
             "winner": "Mexico",
-            "p_winner": 81.1,
+            "p_winner": 72.0,
+            "scoreline": {
+              "top_scores": [
+                {
+                  "h": 0,
+                  "a": 0,
+                  "p": 32.8
+                },
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 23.8
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 9.6
+                }
+              ],
+              "goal_dist": {
+                "0": 32.8,
+                "1": 28.3,
+                "2": 16.5,
+                "3+": 22.4
+              },
+              "mc_top_scores": [
+                {
+                  "h": 0,
+                  "a": 0,
+                  "p": 33.0
+                },
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 23.2
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 9.9
+                }
+              ],
+              "mc_goal_dist": {
+                "0": 33.0,
+                "1": 28.0,
+                "2": 16.7,
+                "3+": 22.4
+              },
+              "n_mc": 10000,
+              "alpha": 0.6,
+              "prior_used": true
+            },
+            "home_group": "A",
+            "away_group": "D",
+            "home_seed": 7,
+            "away_seed": 26
+          },
+          {
+            "home": "Morocco",
+            "away": "Ecuador",
+            "p_home": 80.9,
+            "p_draw": 28.0,
+            "p_away": 19.1,
+            "winner": "Morocco",
+            "p_winner": 80.9,
             "scoreline": {
               "top_scores": [
                 {
                   "h": 1,
                   "a": 0,
-                  "p": 24.4
+                  "p": 21.9
                 },
                 {
                   "h": 0,
                   "a": 0,
-                  "p": 20.7
-                },
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 14.7
-                }
-              ],
-              "goal_dist": {
-                "0": 20.7,
-                "1": 28.9,
-                "2": 22.4,
-                "3+": 27.9
-              },
-              "mc_top_scores": [
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 24.2
-                },
-                {
-                  "h": 0,
-                  "a": 0,
-                  "p": 20.1
+                  "p": 16.5
                 },
                 {
                   "h": 2,
@@ -1622,173 +1523,778 @@
                   "p": 14.8
                 }
               ],
-              "mc_goal_dist": {
-                "0": 20.1,
-                "1": 28.8,
-                "2": 23.0,
-                "3+": 28.1
+              "goal_dist": {
+                "0": 16.5,
+                "1": 27.4,
+                "2": 24.2,
+                "3+": 31.9
               },
-              "n_mc": 10000,
-              "alpha": 0.6,
-              "prior_used": true
-            },
-            "home_group": "A",
-            "away_group": "K",
-            "home_seed": 7,
-            "away_seed": 26
-          },
-          {
-            "home": "Morocco",
-            "away": "United States",
-            "p_home": 93.5,
-            "p_draw": 5.9,
-            "p_away": 6.5,
-            "winner": "Morocco",
-            "p_winner": 93.5,
-            "scoreline": {
-              "top_scores": [
+              "mc_top_scores": [
                 {
-                  "h": 3,
+                  "h": 1,
                   "a": 0,
-                  "p": 5.9
+                  "p": 21.9
+                },
+                {
+                  "h": 0,
+                  "a": 0,
+                  "p": 16.9
                 },
                 {
                   "h": 2,
                   "a": 0,
-                  "p": 5.7
-                },
-                {
-                  "h": 4,
-                  "a": 0,
-                  "p": 5.4
-                }
-              ],
-              "goal_dist": {
-                "0": 3.4,
-                "1": 8.7,
-                "2": 12.8,
-                "3+": 75.1
-              },
-              "mc_top_scores": [
-                {
-                  "h": 3,
-                  "a": 0,
-                  "p": 6.1
-                },
-                {
-                  "h": 4,
-                  "a": 0,
-                  "p": 5.5
-                },
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 5.5
+                  "p": 13.8
                 }
               ],
               "mc_goal_dist": {
-                "0": 3.4,
-                "1": 8.7,
-                "2": 12.4,
-                "3+": 75.4
+                "0": 16.9,
+                "1": 27.7,
+                "2": 23.2,
+                "3+": 32.2
               },
               "n_mc": 10000,
               "alpha": 0.6,
               "prior_used": true
             },
             "home_group": "C",
-            "away_group": "D",
+            "away_group": "E",
             "home_seed": 8,
             "away_seed": 25
           },
           {
-            "home": "Portugal",
+            "home": "Japan",
             "away": "Austria",
-            "p_home": 85.1,
-            "p_draw": 14.5,
-            "p_away": 14.9,
-            "winner": "Portugal",
-            "p_winner": 85.1,
+            "p_home": 86.1,
+            "p_draw": 12.5,
+            "p_away": 13.9,
+            "winner": "Japan",
+            "p_winner": 86.1,
             "scoreline": {
               "top_scores": [
                 {
                   "h": 2,
                   "a": 0,
-                  "p": 11.1
+                  "p": 9.2
                 },
                 {
                   "h": 1,
                   "a": 0,
-                  "p": 10.6
+                  "p": 8.4
                 },
                 {
                   "h": 3,
                   "a": 0,
-                  "p": 8.9
+                  "p": 8.1
                 }
               ],
               "goal_dist": {
-                "0": 5.6,
-                "1": 15.2,
-                "2": 21.7,
-                "3+": 57.4
+                "0": 4.5,
+                "1": 12.6,
+                "2": 19.0,
+                "3+": 63.8
               },
               "mc_top_scores": [
                 {
-                  "h": 2,
-                  "a": 0,
-                  "p": 11.5
-                },
-                {
                   "h": 1,
                   "a": 0,
-                  "p": 10.2
+                  "p": 8.9
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 8.8
                 },
                 {
                   "h": 3,
                   "a": 0,
-                  "p": 8.9
+                  "p": 8.0
                 }
               ],
               "mc_goal_dist": {
-                "0": 5.7,
-                "1": 14.9,
-                "2": 22.5,
-                "3+": 56.9
+                "0": 4.2,
+                "1": 12.9,
+                "2": 18.1,
+                "3+": 64.8
+              },
+              "n_mc": 10000,
+              "alpha": 0.6,
+              "prior_used": true
+            },
+            "home_group": "F",
+            "away_group": "J",
+            "home_seed": 9,
+            "away_seed": 24
+          },
+          {
+            "home": "Portugal",
+            "away": "Uruguay",
+            "p_home": 83.6,
+            "p_draw": 18.4,
+            "p_away": 16.4,
+            "winner": "Portugal",
+            "p_winner": 83.6,
+            "scoreline": {
+              "top_scores": [
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 14.8
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 13.6
+                },
+                {
+                  "h": 3,
+                  "a": 0,
+                  "p": 9.1
+                }
+              ],
+              "goal_dist": {
+                "0": 8.4,
+                "1": 20.1,
+                "2": 24.7,
+                "3+": 46.7
+              },
+              "mc_top_scores": [
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 15.5
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 13.4
+                },
+                {
+                  "h": 3,
+                  "a": 0,
+                  "p": 9.2
+                }
+              ],
+              "mc_goal_dist": {
+                "0": 8.5,
+                "1": 20.8,
+                "2": 24.9,
+                "3+": 45.8
               },
               "n_mc": 10000,
               "alpha": 0.6,
               "prior_used": true
             },
             "home_group": "K",
-            "away_group": "J",
-            "home_seed": 9,
-            "away_seed": 24
+            "away_group": "H",
+            "home_seed": 10,
+            "away_seed": 23
           },
           {
-            "home": "Japan",
-            "away": "Uruguay",
-            "p_home": 83.4,
-            "p_draw": 16.1,
-            "p_away": 16.6,
-            "winner": "Japan",
-            "p_winner": 83.4,
+            "home": "Colombia",
+            "away": "United States",
+            "p_home": 84.9,
+            "p_draw": 15.8,
+            "p_away": 15.1,
+            "winner": "Colombia",
+            "p_winner": 84.9,
             "scoreline": {
               "top_scores": [
                 {
                   "h": 2,
                   "a": 0,
-                  "p": 11.6
+                  "p": 12.4
                 },
                 {
                   "h": 1,
                   "a": 0,
-                  "p": 11.5
+                  "p": 12.3
                 },
                 {
                   "h": 3,
                   "a": 0,
+                  "p": 9.2
+                }
+              ],
+              "goal_dist": {
+                "0": 6.6,
+                "1": 17.2,
+                "2": 23.2,
+                "3+": 53.0
+              },
+              "mc_top_scores": [
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 13.2
+                },
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 12.6
+                },
+                {
+                  "h": 3,
+                  "a": 0,
+                  "p": 9.1
+                }
+              ],
+              "mc_goal_dist": {
+                "0": 6.4,
+                "1": 17.8,
+                "2": 23.4,
+                "3+": 52.4
+              },
+              "n_mc": 10000,
+              "alpha": 0.6,
+              "prior_used": true
+            },
+            "home_group": "K",
+            "away_group": "D",
+            "home_seed": 11,
+            "away_seed": 22
+          },
+          {
+            "home": "Croatia",
+            "away": "Norway",
+            "p_home": 78.3,
+            "p_draw": 11.6,
+            "p_away": 21.7,
+            "winner": "Croatia",
+            "p_winner": 78.3,
+            "scoreline": {
+              "top_scores": [
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 4.6
+                },
+                {
+                  "h": 1,
+                  "a": 1,
+                  "p": 4.5
+                },
+                {
+                  "h": 2,
+                  "a": 1,
+                  "p": 4.0
+                }
+              ],
+              "goal_dist": {
+                "0": 3.2,
+                "1": 7.8,
+                "2": 10.6,
+                "3+": 78.4
+              },
+              "mc_top_scores": [
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 4.9
+                },
+                {
+                  "h": 1,
+                  "a": 1,
+                  "p": 4.4
+                },
+                {
+                  "h": 2,
+                  "a": 1,
+                  "p": 4.1
+                }
+              ],
+              "mc_goal_dist": {
+                "0": 3.3,
+                "1": 8.0,
+                "2": 10.4,
+                "3+": 78.4
+              },
+              "n_mc": 10000,
+              "alpha": 0.6,
+              "prior_used": true
+            },
+            "home_group": "L",
+            "away_group": "I",
+            "home_seed": 12,
+            "away_seed": 21
+          },
+          {
+            "home": "Switzerland",
+            "away": "Egypt",
+            "p_home": 67.2,
+            "p_draw": 27.2,
+            "p_away": 32.8,
+            "winner": "Switzerland",
+            "p_winner": 67.2,
+            "scoreline": {
+              "top_scores": [
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 14.2
+                },
+                {
+                  "h": 1,
+                  "a": 1,
+                  "p": 11.1
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 10.3
+                }
+              ],
+              "goal_dist": {
+                "0": 10.1,
+                "1": 22.4,
+                "2": 25.3,
+                "3+": 42.2
+              },
+              "mc_top_scores": [
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 14.4
+                },
+                {
+                  "h": 1,
+                  "a": 1,
+                  "p": 11.4
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 10.5
+                }
+              ],
+              "mc_goal_dist": {
+                "0": 9.7,
+                "1": 22.8,
+                "2": 25.9,
+                "3+": 41.6
+              },
+              "n_mc": 10000,
+              "alpha": 0.6,
+              "prior_used": true
+            },
+            "home_group": "B",
+            "away_group": "G",
+            "home_seed": 13,
+            "away_seed": 20
+          },
+          {
+            "home": "Germany",
+            "away": "Senegal",
+            "p_home": 70.0,
+            "p_draw": 14.0,
+            "p_away": 30.0,
+            "winner": "Germany",
+            "p_winner": 70.0,
+            "scoreline": {
+              "top_scores": [
+                {
+                  "h": 1,
+                  "a": 1,
+                  "p": 4.8
+                },
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 4.7
+                },
+                {
+                  "h": 2,
+                  "a": 1,
+                  "p": 4.4
+                }
+              ],
+              "goal_dist": {
+                "0": 3.2,
+                "1": 8.0,
+                "2": 11.1,
+                "3+": 77.7
+              },
+              "mc_top_scores": [
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 4.8
+                },
+                {
+                  "h": 1,
+                  "a": 1,
+                  "p": 4.7
+                },
+                {
+                  "h": 2,
+                  "a": 1,
+                  "p": 4.2
+                }
+              ],
+              "mc_goal_dist": {
+                "0": 3.2,
+                "1": 8.1,
+                "2": 10.7,
+                "3+": 78.0
+              },
+              "n_mc": 10000,
+              "alpha": 0.6,
+              "prior_used": true
+            },
+            "home_group": "E",
+            "away_group": "I",
+            "home_seed": 14,
+            "away_seed": 19
+          },
+          {
+            "home": "Sweden",
+            "away": "Cote d'Ivoire",
+            "p_home": 58.4,
+            "p_draw": 24.2,
+            "p_away": 41.6,
+            "winner": "Sweden",
+            "p_winner": 58.4,
+            "scoreline": {
+              "top_scores": [
+                {
+                  "h": 1,
+                  "a": 1,
+                  "p": 10.7
+                },
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 9.7
+                },
+                {
+                  "h": 2,
+                  "a": 1,
+                  "p": 8.2
+                }
+              ],
+              "goal_dist": {
+                "0": 6.4,
+                "1": 16.9,
+                "2": 23.0,
+                "3+": 53.7
+              },
+              "mc_top_scores": [
+                {
+                  "h": 1,
+                  "a": 1,
+                  "p": 10.8
+                },
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 9.4
+                },
+                {
+                  "h": 2,
+                  "a": 1,
+                  "p": 8.0
+                }
+              ],
+              "mc_goal_dist": {
+                "0": 6.7,
+                "1": 16.3,
+                "2": 22.9,
+                "3+": 54.1
+              },
+              "n_mc": 10000,
+              "alpha": 0.6,
+              "prior_used": true
+            },
+            "home_group": "F",
+            "away_group": "E",
+            "home_seed": 15,
+            "away_seed": 18
+          },
+          {
+            "home": "Belgium",
+            "away": "Canada",
+            "p_home": 47.1,
+            "p_draw": 33.3,
+            "p_away": 52.9,
+            "winner": "Canada",
+            "p_winner": 52.9,
+            "scoreline": {
+              "top_scores": [
+                {
+                  "h": 0,
+                  "a": 0,
+                  "p": 13.5
+                },
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 12.9
+                },
+                {
+                  "h": 0,
+                  "a": 1,
+                  "p": 12.7
+                }
+              ],
+              "goal_dist": {
+                "0": 13.5,
+                "1": 25.6,
+                "2": 25.1,
+                "3+": 35.8
+              },
+              "mc_top_scores": [
+                {
+                  "h": 0,
+                  "a": 0,
+                  "p": 13.6
+                },
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 12.6
+                },
+                {
+                  "h": 0,
+                  "a": 1,
+                  "p": 12.1
+                }
+              ],
+              "mc_goal_dist": {
+                "0": 13.6,
+                "1": 24.7,
+                "2": 25.2,
+                "3+": 36.5
+              },
+              "n_mc": 10000,
+              "alpha": 0.6,
+              "prior_used": true
+            },
+            "home_group": "G",
+            "away_group": "B",
+            "home_seed": 16,
+            "away_seed": 17
+          }
+        ]
+      },
+      {
+        "stage": "r16",
+        "label": "Achtelfinale (R16)",
+        "matches": [
+          {
+            "home": "Argentina",
+            "away": "Canada",
+            "p_home": 91.2,
+            "p_draw": 13.0,
+            "p_away": 8.8,
+            "winner": "Argentina",
+            "p_winner": 91.2,
+            "scoreline": {
+              "top_scores": [
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 16.4
+                },
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 16.0
+                },
+                {
+                  "h": 3,
+                  "a": 0,
+                  "p": 12.0
+                }
+              ],
+              "goal_dist": {
+                "0": 8.3,
+                "1": 20.1,
+                "2": 24.7,
+                "3+": 46.9
+              },
+              "mc_top_scores": [
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 17.0
+                },
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 16.2
+                },
+                {
+                  "h": 3,
+                  "a": 0,
+                  "p": 12.0
+                }
+              ],
+              "mc_goal_dist": {
+                "0": 8.1,
+                "1": 20.1,
+                "2": 24.9,
+                "3+": 46.9
+              },
+              "n_mc": 10000,
+              "alpha": 0.6,
+              "prior_used": true
+            },
+            "home_group": "J",
+            "away_group": "B",
+            "home_seed": 1,
+            "away_seed": 16
+          },
+          {
+            "home": "Brazil",
+            "away": "Sweden",
+            "p_home": 95.7,
+            "p_draw": 5.1,
+            "p_away": 4.3,
+            "winner": "Brazil",
+            "p_winner": 95.7,
+            "scoreline": {
+              "top_scores": [
+                {
+                  "h": 3,
+                  "a": 0,
+                  "p": 9.3
+                },
+                {
+                  "h": 2,
+                  "a": 0,
                   "p": 8.7
+                },
+                {
+                  "h": 4,
+                  "a": 0,
+                  "p": 8.3
+                }
+              ],
+              "goal_dist": {
+                "0": 3.9,
+                "1": 10.5,
+                "2": 16.1,
+                "3+": 69.5
+              },
+              "mc_top_scores": [
+                {
+                  "h": 3,
+                  "a": 0,
+                  "p": 9.5
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 8.5
+                },
+                {
+                  "h": 4,
+                  "a": 0,
+                  "p": 8.3
+                }
+              ],
+              "mc_goal_dist": {
+                "0": 4.0,
+                "1": 11.1,
+                "2": 15.5,
+                "3+": 69.4
+              },
+              "n_mc": 10000,
+              "alpha": 0.6,
+              "prior_used": true
+            },
+            "home_group": "C",
+            "away_group": "F",
+            "home_seed": 2,
+            "away_seed": 15
+          },
+          {
+            "home": "Spain",
+            "away": "Germany",
+            "p_home": 96.9,
+            "p_draw": 3.6,
+            "p_away": 3.1,
+            "winner": "Spain",
+            "p_winner": 96.9,
+            "scoreline": {
+              "top_scores": [
+                {
+                  "h": 3,
+                  "a": 0,
+                  "p": 8.3
+                },
+                {
+                  "h": 4,
+                  "a": 0,
+                  "p": 8.1
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 7.3
+                }
+              ],
+              "goal_dist": {
+                "0": 3.6,
+                "1": 9.4,
+                "2": 14.3,
+                "3+": 72.7
+              },
+              "mc_top_scores": [
+                {
+                  "h": 4,
+                  "a": 0,
+                  "p": 8.4
+                },
+                {
+                  "h": 3,
+                  "a": 0,
+                  "p": 8.4
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 7.2
+                }
+              ],
+              "mc_goal_dist": {
+                "0": 3.6,
+                "1": 9.3,
+                "2": 13.7,
+                "3+": 73.4
+              },
+              "n_mc": 10000,
+              "alpha": 0.6,
+              "prior_used": true
+            },
+            "home_group": "H",
+            "away_group": "E",
+            "home_seed": 3,
+            "away_seed": 14
+          },
+          {
+            "home": "France",
+            "away": "Switzerland",
+            "p_home": 84.9,
+            "p_draw": 15.3,
+            "p_away": 15.1,
+            "winner": "France",
+            "p_winner": 84.9,
+            "scoreline": {
+              "top_scores": [
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 11.9
+                },
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 11.6
+                },
+                {
+                  "h": 3,
+                  "a": 0,
+                  "p": 9.1
                 }
               ],
               "goal_dist": {
@@ -1801,740 +2307,94 @@
                 {
                   "h": 2,
                   "a": 0,
-                  "p": 11.7
+                  "p": 11.9
                 },
                 {
                   "h": 1,
                   "a": 0,
-                  "p": 11.4
+                  "p": 11.8
                 },
                 {
-                  "h": 2,
-                  "a": 1,
+                  "h": 3,
+                  "a": 0,
                   "p": 8.6
                 }
               ],
               "mc_goal_dist": {
-                "0": 6.0,
-                "1": 16.4,
-                "2": 22.7,
-                "3+": 54.9
-              },
-              "n_mc": 10000,
-              "alpha": 0.6,
-              "prior_used": true
-            },
-            "home_group": "F",
-            "away_group": "H",
-            "home_seed": 10,
-            "away_seed": 23
-          },
-          {
-            "home": "Colombia",
-            "away": "Ecuador",
-            "p_home": 68.4,
-            "p_draw": 52.0,
-            "p_away": 31.6,
-            "winner": "Colombia",
-            "p_winner": 68.4,
-            "scoreline": {
-              "top_scores": [
-                {
-                  "h": 0,
-                  "a": 0,
-                  "p": 32.5
-                },
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 22.3
-                },
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 8.7
-                }
-              ],
-              "goal_dist": {
-                "0": 32.5,
-                "1": 28.4,
-                "2": 16.7,
-                "3+": 22.5
-              },
-              "mc_top_scores": [
-                {
-                  "h": 0,
-                  "a": 0,
-                  "p": 32.5
-                },
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 22.3
-                },
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 8.9
-                }
-              ],
-              "mc_goal_dist": {
-                "0": 32.5,
-                "1": 28.4,
-                "2": 16.9,
-                "3+": 22.2
-              },
-              "n_mc": 10000,
-              "alpha": 0.6,
-              "prior_used": true
-            },
-            "home_group": "K",
-            "away_group": "E",
-            "home_seed": 11,
-            "away_seed": 22
-          },
-          {
-            "home": "Croatia",
-            "away": "Canada",
-            "p_home": 80.5,
-            "p_draw": 13.5,
-            "p_away": 19.5,
-            "winner": "Croatia",
-            "p_winner": 80.5,
-            "scoreline": {
-              "top_scores": [
-                {
-                  "h": 2,
-                  "a": 1,
-                  "p": 6.8
-                },
-                {
-                  "h": 1,
-                  "a": 1,
-                  "p": 6.5
-                },
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 6.3
-                }
-              ],
-              "goal_dist": {
-                "0": 3.7,
-                "1": 10.0,
-                "2": 15.3,
-                "3+": 71.0
-              },
-              "mc_top_scores": [
-                {
-                  "h": 2,
-                  "a": 1,
-                  "p": 7.2
-                },
-                {
-                  "h": 1,
-                  "a": 1,
-                  "p": 6.4
-                },
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 6.2
-                }
-              ],
-              "mc_goal_dist": {
-                "0": 3.7,
-                "1": 10.0,
-                "2": 14.8,
-                "3+": 71.5
-              },
-              "n_mc": 10000,
-              "alpha": 0.6,
-              "prior_used": true
-            },
-            "home_group": "L",
-            "away_group": "B",
-            "home_seed": 12,
-            "away_seed": 21
-          },
-          {
-            "home": "Germany",
-            "away": "Norway",
-            "p_home": 67.9,
-            "p_draw": 13.3,
-            "p_away": 32.1,
-            "winner": "Germany",
-            "p_winner": 67.9,
-            "scoreline": {
-              "top_scores": [
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 4.5
-                },
-                {
-                  "h": 1,
-                  "a": 1,
-                  "p": 4.3
-                },
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 3.5
-                }
-              ],
-              "goal_dist": {
-                "0": 3.2,
-                "1": 7.6,
-                "2": 10.0,
-                "3+": 79.3
-              },
-              "mc_top_scores": [
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 4.5
-                },
-                {
-                  "h": 1,
-                  "a": 1,
-                  "p": 4.3
-                },
-                {
-                  "h": 2,
-                  "a": 1,
-                  "p": 3.5
-                }
-              ],
-              "mc_goal_dist": {
-                "0": 3.2,
-                "1": 7.5,
-                "2": 9.6,
-                "3+": 79.6
-              },
-              "n_mc": 10000,
-              "alpha": 0.6,
-              "prior_used": true
-            },
-            "home_group": "E",
-            "away_group": "I",
-            "home_seed": 13,
-            "away_seed": 20
-          },
-          {
-            "home": "Switzerland",
-            "away": "Egypt",
-            "p_home": 64.1,
-            "p_draw": 28.9,
-            "p_away": 35.9,
-            "winner": "Switzerland",
-            "p_winner": 64.1,
-            "scoreline": {
-              "top_scores": [
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 14.4
-                },
-                {
-                  "h": 1,
-                  "a": 1,
-                  "p": 11.4
-                },
-                {
-                  "h": 0,
-                  "a": 0,
-                  "p": 10.9
-                }
-              ],
-              "goal_dist": {
-                "0": 10.9,
-                "1": 23.2,
-                "2": 25.4,
-                "3+": 40.4
-              },
-              "mc_top_scores": [
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 14.6
-                },
-                {
-                  "h": 1,
-                  "a": 1,
-                  "p": 11.0
-                },
-                {
-                  "h": 0,
-                  "a": 0,
-                  "p": 10.6
-                }
-              ],
-              "mc_goal_dist": {
-                "0": 10.6,
-                "1": 23.3,
-                "2": 24.9,
-                "3+": 41.2
-              },
-              "n_mc": 10000,
-              "alpha": 0.6,
-              "prior_used": true
-            },
-            "home_group": "B",
-            "away_group": "G",
-            "home_seed": 14,
-            "away_seed": 19
-          },
-          {
-            "home": "Sweden",
-            "away": "Senegal",
-            "p_home": 61.3,
-            "p_draw": 18.9,
-            "p_away": 38.7,
-            "winner": "Sweden",
-            "p_winner": 61.3,
-            "scoreline": {
-              "top_scores": [
-                {
-                  "h": 1,
-                  "a": 1,
-                  "p": 7.4
-                },
-                {
-                  "h": 2,
-                  "a": 1,
-                  "p": 7.0
-                },
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 6.2
-                }
-              ],
-              "goal_dist": {
-                "0": 3.9,
-                "1": 10.6,
-                "2": 16.3,
-                "3+": 69.2
-              },
-              "mc_top_scores": [
-                {
-                  "h": 1,
-                  "a": 1,
-                  "p": 8.0
-                },
-                {
-                  "h": 2,
-                  "a": 1,
-                  "p": 7.5
-                },
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 6.2
-                }
-              ],
-              "mc_goal_dist": {
-                "0": 3.9,
-                "1": 10.5,
-                "2": 16.7,
-                "3+": 68.9
-              },
-              "n_mc": 10000,
-              "alpha": 0.6,
-              "prior_used": true
-            },
-            "home_group": "F",
-            "away_group": "I",
-            "home_seed": 15,
-            "away_seed": 18
-          },
-          {
-            "home": "Belgium",
-            "away": "Cote d'Ivoire",
-            "p_home": 50.0,
-            "p_draw": 34.6,
-            "p_away": 50.0,
-            "winner": "Belgium",
-            "p_winner": 50.0,
-            "scoreline": {
-              "top_scores": [
-                {
-                  "h": 0,
-                  "a": 0,
-                  "p": 14.6
-                },
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 13.8
-                },
-                {
-                  "h": 0,
-                  "a": 1,
-                  "p": 12.5
-                }
-              ],
-              "goal_dist": {
-                "0": 14.6,
-                "1": 26.3,
-                "2": 24.9,
-                "3+": 34.2
-              },
-              "mc_top_scores": [
-                {
-                  "h": 0,
-                  "a": 0,
-                  "p": 14.8
-                },
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 13.7
-                },
-                {
-                  "h": 0,
-                  "a": 1,
-                  "p": 12.4
-                }
-              ],
-              "mc_goal_dist": {
-                "0": 14.8,
-                "1": 26.2,
-                "2": 24.9,
-                "3+": 34.2
-              },
-              "n_mc": 10000,
-              "alpha": 0.6,
-              "prior_used": true
-            },
-            "home_group": "G",
-            "away_group": "E",
-            "home_seed": 16,
-            "away_seed": 17
-          }
-        ]
-      },
-      {
-        "stage": "r16",
-        "label": "Achtelfinale (R16)",
-        "matches": [
-          {
-            "home": "Argentina",
-            "away": "Belgium",
-            "p_home": 92.0,
-            "p_draw": 12.4,
-            "p_away": 8.0,
-            "winner": "Argentina",
-            "p_winner": 92.0,
-            "scoreline": {
-              "top_scores": [
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 17.0
-                },
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 16.5
-                },
-                {
-                  "h": 3,
-                  "a": 0,
-                  "p": 12.5
-                }
-              ],
-              "goal_dist": {
-                "0": 8.5,
-                "1": 20.3,
-                "2": 24.8,
-                "3+": 46.3
-              },
-              "mc_top_scores": [
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 16.8
-                },
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 16.7
-                },
-                {
-                  "h": 3,
-                  "a": 0,
-                  "p": 13.1
-                }
-              ],
-              "mc_goal_dist": {
-                "0": 8.4,
-                "1": 20.4,
-                "2": 24.9,
-                "3+": 46.3
-              },
-              "n_mc": 10000,
-              "alpha": 0.6,
-              "prior_used": true
-            },
-            "home_group": "J",
-            "away_group": "G",
-            "home_seed": 1,
-            "away_seed": 16
-          },
-          {
-            "home": "Spain",
-            "away": "Sweden",
-            "p_home": 95.3,
-            "p_draw": 5.6,
-            "p_away": 4.7,
-            "winner": "Spain",
-            "p_winner": 95.3,
-            "scoreline": {
-              "top_scores": [
-                {
-                  "h": 3,
-                  "a": 0,
-                  "p": 10.1
-                },
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 9.6
-                },
-                {
-                  "h": 4,
-                  "a": 0,
-                  "p": 8.6
-                }
-              ],
-              "goal_dist": {
-                "0": 4.1,
-                "1": 11.2,
-                "2": 17.2,
-                "3+": 67.5
-              },
-              "mc_top_scores": [
-                {
-                  "h": 3,
-                  "a": 0,
-                  "p": 9.9
-                },
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 9.5
-                },
-                {
-                  "h": 4,
-                  "a": 0,
-                  "p": 8.7
-                }
-              ],
-              "mc_goal_dist": {
-                "0": 4.0,
-                "1": 11.1,
-                "2": 17.1,
-                "3+": 67.8
-              },
-              "n_mc": 10000,
-              "alpha": 0.6,
-              "prior_used": true
-            },
-            "home_group": "H",
-            "away_group": "F",
-            "home_seed": 2,
-            "away_seed": 15
-          },
-          {
-            "home": "Brazil",
-            "away": "Switzerland",
-            "p_home": 91.9,
-            "p_draw": 10.2,
-            "p_away": 8.1,
-            "winner": "Brazil",
-            "p_winner": 91.9,
-            "scoreline": {
-              "top_scores": [
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 13.4
-                },
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 11.7
-                },
-                {
-                  "h": 3,
-                  "a": 0,
-                  "p": 11.5
-                }
-              ],
-              "goal_dist": {
-                "0": 5.9,
-                "1": 15.7,
-                "2": 22.1,
-                "3+": 56.3
-              },
-              "mc_top_scores": [
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 13.5
-                },
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 11.7
-                },
-                {
-                  "h": 3,
-                  "a": 0,
-                  "p": 11.0
-                }
-              ],
-              "mc_goal_dist": {
-                "0": 6.0,
-                "1": 15.3,
-                "2": 21.9,
-                "3+": 56.8
-              },
-              "n_mc": 10000,
-              "alpha": 0.6,
-              "prior_used": true
-            },
-            "home_group": "C",
-            "away_group": "B",
-            "home_seed": 3,
-            "away_seed": 14
-          },
-          {
-            "home": "England",
-            "away": "Germany",
-            "p_home": 89.8,
-            "p_draw": 7.8,
-            "p_away": 10.2,
-            "winner": "England",
-            "p_winner": 89.8,
-            "scoreline": {
-              "top_scores": [
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 5.1
-                },
-                {
-                  "h": 1,
-                  "a": 1,
-                  "p": 4.9
-                },
-                {
-                  "h": 3,
-                  "a": 1,
-                  "p": 4.9
-                }
-              ],
-              "goal_dist": {
-                "0": 3.3,
-                "1": 8.3,
-                "2": 12.0,
-                "3+": 76.4
-              },
-              "mc_top_scores": [
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 4.9
-                },
-                {
-                  "h": 4,
-                  "a": 1,
-                  "p": 4.9
-                },
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 4.9
-                }
-              ],
-              "mc_goal_dist": {
-                "0": 3.5,
-                "1": 8.2,
-                "2": 11.5,
-                "3+": 76.7
-              },
-              "n_mc": 10000,
-              "alpha": 0.6,
-              "prior_used": true
-            },
-            "home_group": "L",
-            "away_group": "E",
-            "home_seed": 4,
-            "away_seed": 13
-          },
-          {
-            "home": "France",
-            "away": "Croatia",
-            "p_home": 83.8,
-            "p_draw": 12.5,
-            "p_away": 16.2,
-            "winner": "France",
-            "p_winner": 83.8,
-            "scoreline": {
-              "top_scores": [
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 7.1
-                },
-                {
-                  "h": 2,
-                  "a": 1,
-                  "p": 7.0
-                },
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 6.7
-                }
-              ],
-              "goal_dist": {
-                "0": 3.9,
-                "1": 10.5,
-                "2": 16.2,
-                "3+": 69.4
-              },
-              "mc_top_scores": [
-                {
-                  "h": 2,
-                  "a": 1,
-                  "p": 7.7
-                },
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 7.2
-                },
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 6.8
-                }
-              ],
-              "mc_goal_dist": {
-                "0": 3.7,
-                "1": 10.7,
-                "2": 16.4,
-                "3+": 69.1
+                "0": 6.2,
+                "1": 17.0,
+                "2": 22.6,
+                "3+": 54.2
               },
               "n_mc": 10000,
               "alpha": 0.6,
               "prior_used": true
             },
             "home_group": "I",
+            "away_group": "B",
+            "home_seed": 4,
+            "away_seed": 13
+          },
+          {
+            "home": "England",
+            "away": "Croatia",
+            "p_home": 88.3,
+            "p_draw": 8.9,
+            "p_away": 11.7,
+            "winner": "England",
+            "p_winner": 88.3,
+            "scoreline": {
+              "top_scores": [
+                {
+                  "h": 2,
+                  "a": 1,
+                  "p": 5.4
+                },
+                {
+                  "h": 3,
+                  "a": 1,
+                  "p": 5.4
+                },
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 5.3
+                }
+              ],
+              "goal_dist": {
+                "0": 3.4,
+                "1": 8.7,
+                "2": 12.9,
+                "3+": 75.0
+              },
+              "mc_top_scores": [
+                {
+                  "h": 1,
+                  "a": 1,
+                  "p": 5.6
+                },
+                {
+                  "h": 3,
+                  "a": 1,
+                  "p": 5.5
+                },
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 5.3
+                }
+              ],
+              "mc_goal_dist": {
+                "0": 3.4,
+                "1": 8.5,
+                "2": 12.9,
+                "3+": 75.1
+              },
+              "n_mc": 10000,
+              "alpha": 0.6,
+              "prior_used": true
+            },
+            "home_group": "L",
             "away_group": "L",
             "home_seed": 5,
             "away_seed": 12
@@ -2542,22 +2402,45 @@
           {
             "home": "Netherlands",
             "away": "Colombia",
-            "p_home": 62.0,
-            "p_draw": 33.1,
-            "p_away": 38.0,
+            "p_home": 60.8,
+            "p_draw": 35.4,
+            "p_away": 39.2,
             "winner": "Netherlands",
-            "p_winner": 62.0,
+            "p_winner": 60.8,
             "scoreline": {
               "top_scores": [
                 {
                   "h": 1,
                   "a": 0,
-                  "p": 16.2
+                  "p": 16.7
                 },
                 {
                   "h": 0,
                   "a": 0,
-                  "p": 14.4
+                  "p": 16.2
+                },
+                {
+                  "h": 1,
+                  "a": 1,
+                  "p": 11.0
+                }
+              ],
+              "goal_dist": {
+                "0": 16.2,
+                "1": 27.3,
+                "2": 24.3,
+                "3+": 32.1
+              },
+              "mc_top_scores": [
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 17.1
+                },
+                {
+                  "h": 0,
+                  "a": 0,
+                  "p": 16.3
                 },
                 {
                   "h": 1,
@@ -2565,34 +2448,11 @@
                   "p": 11.2
                 }
               ],
-              "goal_dist": {
-                "0": 14.4,
-                "1": 26.2,
-                "2": 24.9,
-                "3+": 34.5
-              },
-              "mc_top_scores": [
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 16.3
-                },
-                {
-                  "h": 0,
-                  "a": 0,
-                  "p": 14.3
-                },
-                {
-                  "h": 1,
-                  "a": 1,
-                  "p": 10.9
-                }
-              ],
               "mc_goal_dist": {
-                "0": 14.3,
-                "1": 26.4,
+                "0": 16.3,
+                "1": 27.3,
                 "2": 24.7,
-                "3+": 34.6
+                "3+": 31.6
               },
               "n_mc": 10000,
               "alpha": 0.6,
@@ -2605,129 +2465,129 @@
           },
           {
             "home": "Mexico",
-            "away": "Japan",
-            "p_home": 61.6,
-            "p_draw": 49.7,
-            "p_away": 38.4,
+            "away": "Portugal",
+            "p_home": 58.0,
+            "p_draw": 60.1,
+            "p_away": 42.0,
             "winner": "Mexico",
-            "p_winner": 61.6,
+            "p_winner": 58.0,
             "scoreline": {
               "top_scores": [
                 {
                   "h": 0,
                   "a": 0,
-                  "p": 28.9
+                  "p": 36.7
                 },
                 {
                   "h": 1,
                   "a": 0,
-                  "p": 19.5
+                  "p": 17.6
                 },
                 {
                   "h": 0,
                   "a": 1,
-                  "p": 9.6
+                  "p": 9.3
                 }
               ],
               "goal_dist": {
-                "0": 28.9,
-                "1": 29.1,
-                "2": 18.4,
-                "3+": 23.6
+                "0": 36.7,
+                "1": 26.9,
+                "2": 14.8,
+                "3+": 21.6
               },
               "mc_top_scores": [
                 {
                   "h": 0,
                   "a": 0,
-                  "p": 28.2
+                  "p": 36.8
                 },
                 {
                   "h": 1,
                   "a": 0,
-                  "p": 19.0
+                  "p": 17.3
                 },
                 {
                   "h": 0,
                   "a": 1,
-                  "p": 10.0
+                  "p": 9.4
                 }
               ],
               "mc_goal_dist": {
-                "0": 28.2,
-                "1": 29.0,
-                "2": 19.0,
-                "3+": 23.9
+                "0": 36.8,
+                "1": 26.7,
+                "2": 14.9,
+                "3+": 21.7
               },
               "n_mc": 10000,
               "alpha": 0.6,
               "prior_used": true
             },
             "home_group": "A",
-            "away_group": "F",
+            "away_group": "K",
             "home_seed": 7,
             "away_seed": 10
           },
           {
             "home": "Morocco",
-            "away": "Portugal",
-            "p_home": 53.2,
-            "p_draw": 34.1,
-            "p_away": 46.8,
+            "away": "Japan",
+            "p_home": 55.1,
+            "p_draw": 29.9,
+            "p_away": 44.9,
             "winner": "Morocco",
-            "p_winner": 53.2,
+            "p_winner": 55.1,
             "scoreline": {
               "top_scores": [
                 {
                   "h": 1,
                   "a": 0,
-                  "p": 14.4
+                  "p": 12.9
+                },
+                {
+                  "h": 1,
+                  "a": 1,
+                  "p": 11.9
                 },
                 {
                   "h": 0,
                   "a": 0,
-                  "p": 14.3
-                },
-                {
-                  "h": 0,
-                  "a": 1,
-                  "p": 11.7
+                  "p": 10.6
                 }
               ],
               "goal_dist": {
-                "0": 14.3,
-                "1": 26.1,
-                "2": 25.0,
-                "3+": 34.7
+                "0": 10.6,
+                "1": 22.9,
+                "2": 25.4,
+                "3+": 41.1
               },
               "mc_top_scores": [
                 {
                   "h": 1,
                   "a": 0,
-                  "p": 14.8
+                  "p": 12.5
                 },
                 {
-                  "h": 0,
-                  "a": 0,
-                  "p": 13.7
+                  "h": 1,
+                  "a": 1,
+                  "p": 11.7
                 },
                 {
                   "h": 0,
                   "a": 1,
-                  "p": 12.0
+                  "p": 10.2
                 }
               ],
               "mc_goal_dist": {
-                "0": 13.7,
-                "1": 26.8,
-                "2": 24.4,
-                "3+": 35.1
+                "0": 10.0,
+                "1": 22.8,
+                "2": 25.4,
+                "3+": 41.8
               },
               "n_mc": 10000,
               "alpha": 0.6,
               "prior_used": true
             },
             "home_group": "C",
-            "away_group": "K",
+            "away_group": "F",
             "home_seed": 8,
             "away_seed": 9
           }
@@ -2740,22 +2600,45 @@
           {
             "home": "Argentina",
             "away": "Morocco",
-            "p_home": 75.9,
-            "p_draw": 28.6,
-            "p_away": 24.1,
+            "p_home": 75.5,
+            "p_draw": 27.6,
+            "p_away": 24.5,
             "winner": "Argentina",
-            "p_winner": 75.9,
+            "p_winner": 75.5,
             "scoreline": {
               "top_scores": [
                 {
                   "h": 1,
                   "a": 0,
-                  "p": 19.2
+                  "p": 18.3
                 },
                 {
                   "h": 0,
                   "a": 0,
-                  "p": 14.4
+                  "p": 13.3
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 12.9
+                }
+              ],
+              "goal_dist": {
+                "0": 13.3,
+                "1": 25.4,
+                "2": 25.2,
+                "3+": 36.1
+              },
+              "mc_top_scores": [
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 18.3
+                },
+                {
+                  "h": 0,
+                  "a": 0,
+                  "p": 13.2
                 },
                 {
                   "h": 2,
@@ -2763,34 +2646,11 @@
                   "p": 13.1
                 }
               ],
-              "goal_dist": {
-                "0": 14.4,
-                "1": 26.2,
-                "2": 24.9,
-                "3+": 34.5
-              },
-              "mc_top_scores": [
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 19.1
-                },
-                {
-                  "h": 0,
-                  "a": 0,
-                  "p": 14.3
-                },
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 13.0
-                }
-              ],
               "mc_goal_dist": {
-                "0": 14.3,
-                "1": 26.0,
-                "2": 25.4,
-                "3+": 34.3
+                "0": 13.2,
+                "1": 25.3,
+                "2": 24.8,
+                "3+": 36.7
               },
               "n_mc": 10000,
               "alpha": 0.6,
@@ -2802,166 +2662,143 @@
             "away_seed": 8
           },
           {
-            "home": "Spain",
-            "away": "Mexico",
-            "p_home": 55.9,
-            "p_draw": 57.1,
-            "p_away": 44.1,
-            "winner": "Spain",
-            "p_winner": 55.9,
-            "scoreline": {
-              "top_scores": [
-                {
-                  "h": 0,
-                  "a": 0,
-                  "p": 34.1
-                },
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 17.0
-                },
-                {
-                  "h": 0,
-                  "a": 1,
-                  "p": 10.8
-                }
-              ],
-              "goal_dist": {
-                "0": 34.1,
-                "1": 27.8,
-                "2": 15.9,
-                "3+": 22.1
-              },
-              "mc_top_scores": [
-                {
-                  "h": 0,
-                  "a": 0,
-                  "p": 34.2
-                },
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 17.1
-                },
-                {
-                  "h": 0,
-                  "a": 1,
-                  "p": 10.6
-                }
-              ],
-              "mc_goal_dist": {
-                "0": 34.2,
-                "1": 27.7,
-                "2": 16.4,
-                "3+": 21.7
-              },
-              "n_mc": 10000,
-              "alpha": 0.6,
-              "prior_used": true
-            },
-            "home_group": "H",
-            "away_group": "A",
-            "home_seed": 2,
-            "away_seed": 7
-          },
-          {
             "home": "Brazil",
-            "away": "Netherlands",
-            "p_home": 72.1,
-            "p_draw": 22.0,
-            "p_away": 27.9,
+            "away": "Mexico",
+            "p_home": 54.6,
+            "p_draw": 58.3,
+            "p_away": 45.4,
             "winner": "Brazil",
-            "p_winner": 72.1,
+            "p_winner": 54.6,
             "scoreline": {
               "top_scores": [
                 {
-                  "h": 1,
+                  "h": 0,
                   "a": 0,
-                  "p": 11.5
+                  "p": 35.0
                 },
                 {
                   "h": 1,
+                  "a": 0,
+                  "p": 16.4
+                },
+                {
+                  "h": 0,
                   "a": 1,
-                  "p": 10.1
-                },
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 10.0
+                  "p": 11.2
                 }
               ],
               "goal_dist": {
-                "0": 7.0,
-                "1": 17.9,
-                "2": 23.6,
-                "3+": 51.5
+                "0": 35.0,
+                "1": 27.5,
+                "2": 15.5,
+                "3+": 21.9
               },
               "mc_top_scores": [
                 {
-                  "h": 1,
+                  "h": 0,
                   "a": 0,
-                  "p": 11.6
+                  "p": 34.9
                 },
                 {
                   "h": 1,
+                  "a": 0,
+                  "p": 16.3
+                },
+                {
+                  "h": 0,
                   "a": 1,
-                  "p": 10.6
-                },
-                {
-                  "h": 2,
-                  "a": 0,
-                  "p": 10.3
+                  "p": 11.4
                 }
               ],
               "mc_goal_dist": {
-                "0": 6.7,
-                "1": 18.1,
-                "2": 24.4,
-                "3+": 50.8
+                "0": 34.9,
+                "1": 27.7,
+                "2": 15.8,
+                "3+": 21.6
               },
               "n_mc": 10000,
               "alpha": 0.6,
               "prior_used": true
             },
             "home_group": "C",
+            "away_group": "A",
+            "home_seed": 2,
+            "away_seed": 7
+          },
+          {
+            "home": "Spain",
+            "away": "Netherlands",
+            "p_home": 74.3,
+            "p_draw": 24.4,
+            "p_away": 25.7,
+            "winner": "Spain",
+            "p_winner": 74.3,
+            "scoreline": {
+              "top_scores": [
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 14.9
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 11.8
+                },
+                {
+                  "h": 1,
+                  "a": 1,
+                  "p": 10.2
+                }
+              ],
+              "goal_dist": {
+                "0": 9.7,
+                "1": 21.9,
+                "2": 25.2,
+                "3+": 43.2
+              },
+              "mc_top_scores": [
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 14.8
+                },
+                {
+                  "h": 2,
+                  "a": 0,
+                  "p": 11.9
+                },
+                {
+                  "h": 1,
+                  "a": 1,
+                  "p": 10.4
+                }
+              ],
+              "mc_goal_dist": {
+                "0": 9.9,
+                "1": 21.8,
+                "2": 25.3,
+                "3+": 43.0
+              },
+              "n_mc": 10000,
+              "alpha": 0.6,
+              "prior_used": true
+            },
+            "home_group": "H",
             "away_group": "F",
             "home_seed": 3,
             "away_seed": 6
           },
           {
-            "home": "England",
-            "away": "France",
-            "p_home": 52.1,
-            "p_draw": 25.8,
-            "p_away": 47.9,
+            "home": "France",
+            "away": "England",
+            "p_home": 48.4,
+            "p_draw": 26.9,
+            "p_away": 51.6,
             "winner": "England",
-            "p_winner": 52.1,
+            "p_winner": 51.6,
             "scoreline": {
               "top_scores": [
-                {
-                  "h": 1,
-                  "a": 1,
-                  "p": 11.2
-                },
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 10.0
-                },
-                {
-                  "h": 0,
-                  "a": 1,
-                  "p": 8.3
-                }
-              ],
-              "goal_dist": {
-                "0": 7.2,
-                "1": 18.3,
-                "2": 23.9,
-                "3+": 50.6
-              },
-              "mc_top_scores": [
                 {
                   "h": 1,
                   "a": 1,
@@ -2975,21 +2812,44 @@
                 {
                   "h": 0,
                   "a": 1,
-                  "p": 8.2
+                  "p": 9.3
+                }
+              ],
+              "goal_dist": {
+                "0": 8.0,
+                "1": 19.5,
+                "2": 24.5,
+                "3+": 48.0
+              },
+              "mc_top_scores": [
+                {
+                  "h": 1,
+                  "a": 1,
+                  "p": 11.3
+                },
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 9.8
+                },
+                {
+                  "h": 0,
+                  "a": 1,
+                  "p": 9.5
                 }
               ],
               "mc_goal_dist": {
-                "0": 7.5,
-                "1": 18.5,
-                "2": 24.4,
-                "3+": 49.5
+                "0": 8.1,
+                "1": 19.3,
+                "2": 24.6,
+                "3+": 48.0
               },
               "n_mc": 10000,
               "alpha": 0.6,
               "prior_used": true
             },
-            "home_group": "L",
-            "away_group": "I",
+            "home_group": "I",
+            "away_group": "L",
             "home_seed": 4,
             "away_seed": 5
           }
@@ -3002,57 +2862,57 @@
           {
             "home": "Argentina",
             "away": "England",
-            "p_home": 69.8,
-            "p_draw": 29.2,
-            "p_away": 30.2,
+            "p_home": 67.0,
+            "p_draw": 30.4,
+            "p_away": 33.0,
             "winner": "Argentina",
-            "p_winner": 69.8,
+            "p_winner": 67.0,
             "scoreline": {
               "top_scores": [
                 {
                   "h": 1,
                   "a": 0,
-                  "p": 16.7
+                  "p": 16.4
                 },
                 {
                   "h": 0,
                   "a": 0,
-                  "p": 12.6
+                  "p": 13.0
                 },
                 {
-                  "h": 2,
-                  "a": 0,
-                  "p": 11.2
+                  "h": 1,
+                  "a": 1,
+                  "p": 10.9
                 }
               ],
               "goal_dist": {
-                "0": 12.6,
-                "1": 24.9,
-                "2": 25.3,
-                "3+": 37.2
+                "0": 13.0,
+                "1": 25.2,
+                "2": 25.2,
+                "3+": 36.6
               },
               "mc_top_scores": [
                 {
                   "h": 1,
                   "a": 0,
-                  "p": 16.7
+                  "p": 15.8
                 },
                 {
                   "h": 0,
                   "a": 0,
-                  "p": 12.6
+                  "p": 13.2
                 },
                 {
                   "h": 2,
                   "a": 0,
-                  "p": 11.6
+                  "p": 10.9
                 }
               ],
               "mc_goal_dist": {
-                "0": 12.6,
-                "1": 24.9,
-                "2": 25.0,
-                "3+": 37.6
+                "0": 13.2,
+                "1": 24.6,
+                "2": 25.3,
+                "3+": 36.9
               },
               "n_mc": 10000,
               "alpha": 0.6,
@@ -3064,66 +2924,66 @@
             "away_seed": 4
           },
           {
-            "home": "Spain",
-            "away": "Brazil",
-            "p_home": 51.4,
-            "p_draw": 38.8,
-            "p_away": 48.6,
+            "home": "Brazil",
+            "away": "Spain",
+            "p_home": 46.3,
+            "p_draw": 43.3,
+            "p_away": 53.7,
             "winner": "Spain",
-            "p_winner": 51.4,
+            "p_winner": 53.7,
             "scoreline": {
               "top_scores": [
                 {
                   "h": 0,
                   "a": 0,
-                  "p": 18.4
-                },
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 15.1
+                  "p": 22.5
                 },
                 {
                   "h": 0,
                   "a": 1,
-                  "p": 13.1
+                  "p": 15.1
+                },
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 14.2
                 }
               ],
               "goal_dist": {
-                "0": 18.4,
-                "1": 28.2,
-                "2": 23.5,
-                "3+": 29.9
+                "0": 22.5,
+                "1": 29.3,
+                "2": 21.6,
+                "3+": 26.7
               },
               "mc_top_scores": [
                 {
                   "h": 0,
                   "a": 0,
-                  "p": 18.2
-                },
-                {
-                  "h": 1,
-                  "a": 0,
-                  "p": 15.4
+                  "p": 22.3
                 },
                 {
                   "h": 0,
                   "a": 1,
-                  "p": 13.5
+                  "p": 14.8
+                },
+                {
+                  "h": 1,
+                  "a": 0,
+                  "p": 13.8
                 }
               ],
               "mc_goal_dist": {
-                "0": 18.2,
-                "1": 28.9,
-                "2": 23.7,
-                "3+": 29.3
+                "0": 22.3,
+                "1": 28.6,
+                "2": 21.3,
+                "3+": 27.8
               },
               "n_mc": 10000,
               "alpha": 0.6,
               "prior_used": true
             },
-            "home_group": "H",
-            "away_group": "C",
+            "home_group": "C",
+            "away_group": "H",
             "home_seed": 2,
             "away_seed": 3
           }
@@ -3136,57 +2996,57 @@
           {
             "home": "Argentina",
             "away": "Spain",
-            "p_home": 54.6,
-            "p_draw": 45.1,
-            "p_away": 45.4,
-            "winner": "Argentina",
-            "p_winner": 54.6,
+            "p_home": 49.4,
+            "p_draw": 49.1,
+            "p_away": 50.6,
+            "winner": "Spain",
+            "p_winner": 50.6,
             "scoreline": {
               "top_scores": [
                 {
                   "h": 0,
                   "a": 0,
-                  "p": 24.1
+                  "p": 27.4
                 },
                 {
                   "h": 1,
                   "a": 0,
-                  "p": 16.8
+                  "p": 15.1
                 },
                 {
                   "h": 0,
                   "a": 1,
-                  "p": 12.6
+                  "p": 14.2
                 }
               ],
               "goal_dist": {
-                "0": 24.1,
-                "1": 29.4,
-                "2": 20.8,
-                "3+": 25.7
+                "0": 27.4,
+                "1": 29.3,
+                "2": 19.1,
+                "3+": 24.2
               },
               "mc_top_scores": [
                 {
                   "h": 0,
                   "a": 0,
-                  "p": 25.1
+                  "p": 27.5
                 },
                 {
                   "h": 1,
                   "a": 0,
-                  "p": 16.6
+                  "p": 15.0
                 },
                 {
                   "h": 0,
                   "a": 1,
-                  "p": 12.3
+                  "p": 14.6
                 }
               ],
               "mc_goal_dist": {
-                "0": 25.1,
-                "1": 28.9,
-                "2": 21.1,
-                "3+": 24.9
+                "0": 27.5,
+                "1": 29.6,
+                "2": 18.5,
+                "3+": 24.4
               },
               "n_mc": 10000,
               "alpha": 0.6,
@@ -3201,8 +3061,8 @@
       }
     ],
     "champion": {
-      "team": "Argentina",
-      "group": "J"
+      "team": "Spain",
+      "group": "H"
     },
     "note": "Vereinfachte Approximation — offizielles FIFA-Bracket-Mapping folgt nach Auslosung. Seeded-Pairing nach P(QF) Σ, deterministische Auswahl je Match (höhere DC-Sieg-Wkt.)."
   },
@@ -3217,47 +3077,47 @@
           {
             "h": 1,
             "a": 0,
-            "p": 20.3
+            "p": 22.9
           },
           {
             "h": 2,
             "a": 0,
-            "p": 18.1
+            "p": 17.9
           },
           {
             "h": 0,
             "a": 0,
-            "p": 11.7
+            "p": 14.9
           }
         ],
         "goal_dist": {
-          "0": 11.7,
-          "1": 24.0,
-          "2": 25.4,
-          "3+": 38.9
+          "0": 14.9,
+          "1": 26.5,
+          "2": 24.8,
+          "3+": 33.8
         },
         "mc_top_scores": [
           {
             "h": 1,
             "a": 0,
-            "p": 19.5
+            "p": 22.4
           },
           {
             "h": 2,
             "a": 0,
-            "p": 18.3
+            "p": 17.9
           },
           {
-            "h": 3,
+            "h": 0,
             "a": 0,
-            "p": 11.7
+            "p": 15.0
           }
         ],
         "mc_goal_dist": {
-          "0": 11.3,
-          "1": 23.4,
-          "2": 26.0,
-          "3+": 39.4
+          "0": 15.0,
+          "1": 26.0,
+          "2": 25.0,
+          "3+": 34.0
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -3274,12 +3134,12 @@
           {
             "h": 1,
             "a": 0,
-            "p": 23.5
+            "p": 23.6
           },
           {
             "h": 2,
             "a": 0,
-            "p": 17.5
+            "p": 17.6
           },
           {
             "h": 0,
@@ -3291,30 +3151,30 @@
           "0": 16.1,
           "1": 27.2,
           "2": 24.4,
-          "3+": 32.4
+          "3+": 32.3
         },
         "mc_top_scores": [
           {
             "h": 1,
             "a": 0,
-            "p": 23.9
+            "p": 23.4
           },
           {
             "h": 2,
             "a": 0,
-            "p": 17.1
+            "p": 17.7
           },
           {
             "h": 0,
             "a": 0,
-            "p": 15.9
+            "p": 16.0
           }
         ],
         "mc_goal_dist": {
-          "0": 15.9,
-          "1": 27.7,
-          "2": 24.1,
-          "3+": 32.3
+          "0": 16.0,
+          "1": 27.0,
+          "2": 25.0,
+          "3+": 31.9
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -3331,47 +3191,47 @@
           {
             "h": 3,
             "a": 0,
-            "p": 14.1
+            "p": 14.0
           },
           {
             "h": 2,
             "a": 0,
-            "p": 13.6
+            "p": 13.2
           },
           {
             "h": 4,
             "a": 0,
-            "p": 11.6
+            "p": 11.9
           }
         ],
         "goal_dist": {
-          "0": 4.9,
-          "1": 13.5,
-          "2": 20.1,
-          "3+": 61.4
+          "0": 4.7,
+          "1": 13.1,
+          "2": 19.6,
+          "3+": 62.6
         },
         "mc_top_scores": [
           {
             "h": 3,
             "a": 0,
-            "p": 14.3
+            "p": 14.1
           },
           {
             "h": 2,
             "a": 0,
-            "p": 13.3
+            "p": 12.8
           },
           {
             "h": 4,
             "a": 0,
-            "p": 11.8
+            "p": 12.0
           }
         ],
         "mc_goal_dist": {
-          "0": 4.9,
-          "1": 13.5,
-          "2": 20.1,
-          "3+": 61.5
+          "0": 5.0,
+          "1": 13.2,
+          "2": 19.7,
+          "3+": 62.0
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -3388,30 +3248,30 @@
           {
             "h": 0,
             "a": 0,
-            "p": 19.0
+            "p": 23.1
           },
           {
             "h": 1,
             "a": 0,
-            "p": 16.2
+            "p": 15.9
           },
           {
             "h": 0,
             "a": 1,
-            "p": 12.3
+            "p": 13.5
           }
         ],
         "goal_dist": {
-          "0": 19.0,
-          "1": 28.4,
-          "2": 23.2,
-          "3+": 29.4
+          "0": 23.1,
+          "1": 29.3,
+          "2": 21.2,
+          "3+": 26.3
         },
         "mc_top_scores": [
           {
             "h": 0,
             "a": 0,
-            "p": 18.7
+            "p": 23.2
           },
           {
             "h": 1,
@@ -3421,14 +3281,14 @@
           {
             "h": 0,
             "a": 1,
-            "p": 12.3
+            "p": 12.8
           }
         ],
         "mc_goal_dist": {
-          "0": 18.7,
-          "1": 28.7,
-          "2": 23.6,
-          "3+": 29.0
+          "0": 23.2,
+          "1": 29.1,
+          "2": 21.4,
+          "3+": 26.3
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -3445,47 +3305,47 @@
           {
             "h": 1,
             "a": 0,
-            "p": 10.7
+            "p": 12.1
           },
           {
             "h": 1,
             "a": 1,
-            "p": 10.6
+            "p": 11.5
           },
           {
-            "h": 2,
+            "h": 0,
             "a": 0,
             "p": 8.8
           }
         ],
         "goal_dist": {
-          "0": 6.8,
-          "1": 17.7,
-          "2": 23.5,
-          "3+": 52.0
+          "0": 8.8,
+          "1": 20.7,
+          "2": 24.9,
+          "3+": 45.6
         },
         "mc_top_scores": [
           {
             "h": 1,
             "a": 0,
-            "p": 11.0
+            "p": 11.8
           },
           {
             "h": 1,
             "a": 1,
-            "p": 10.7
+            "p": 11.4
           },
           {
             "h": 2,
             "a": 0,
-            "p": 8.5
+            "p": 9.0
           }
         ],
         "mc_goal_dist": {
-          "0": 6.9,
-          "1": 18.0,
-          "2": 23.2,
-          "3+": 51.9
+          "0": 8.8,
+          "1": 20.3,
+          "2": 24.6,
+          "3+": 46.3
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -3502,47 +3362,47 @@
           {
             "h": 1,
             "a": 0,
-            "p": 13.9
-          },
-          {
-            "h": 0,
-            "a": 0,
-            "p": 12.0
+            "p": 12.9
           },
           {
             "h": 1,
             "a": 1,
             "p": 11.9
+          },
+          {
+            "h": 0,
+            "a": 0,
+            "p": 10.5
           }
         ],
         "goal_dist": {
-          "0": 12.0,
-          "1": 24.3,
+          "0": 10.5,
+          "1": 22.8,
           "2": 25.4,
-          "3+": 38.4
+          "3+": 41.4
         },
         "mc_top_scores": [
           {
             "h": 1,
             "a": 0,
-            "p": 13.6
-          },
-          {
-            "h": 0,
-            "a": 0,
-            "p": 12.2
+            "p": 13.8
           },
           {
             "h": 1,
             "a": 1,
-            "p": 11.8
+            "p": 11.9
+          },
+          {
+            "h": 0,
+            "a": 0,
+            "p": 10.2
           }
         ],
         "mc_goal_dist": {
-          "0": 12.2,
-          "1": 24.1,
-          "2": 25.8,
-          "3+": 37.8
+          "0": 10.2,
+          "1": 24.0,
+          "2": 25.2,
+          "3+": 40.6
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -3559,47 +3419,47 @@
           {
             "h": 2,
             "a": 0,
-            "p": 8.9
+            "p": 10.4
           },
           {
             "h": 1,
             "a": 0,
-            "p": 8.8
+            "p": 10.2
           },
           {
             "h": 1,
             "a": 1,
-            "p": 8.3
+            "p": 8.5
           }
         ],
         "goal_dist": {
-          "0": 4.9,
-          "1": 13.6,
-          "2": 20.1,
-          "3+": 61.3
+          "0": 5.6,
+          "1": 15.2,
+          "2": 21.7,
+          "3+": 57.6
         },
         "mc_top_scores": [
           {
+            "h": 2,
+            "a": 0,
+            "p": 10.7
+          },
+          {
             "h": 1,
             "a": 0,
-            "p": 8.5
+            "p": 10.2
           },
           {
-            "h": 2,
+            "h": 1,
             "a": 1,
-            "p": 8.4
-          },
-          {
-            "h": 2,
-            "a": 0,
-            "p": 8.2
+            "p": 8.8
           }
         ],
         "mc_goal_dist": {
-          "0": 4.4,
-          "1": 13.5,
-          "2": 19.5,
-          "3+": 62.7
+          "0": 5.9,
+          "1": 14.9,
+          "2": 22.2,
+          "3+": 57.1
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -3616,47 +3476,47 @@
           {
             "h": 3,
             "a": 0,
-            "p": 9.6
+            "p": 10.8
           },
           {
             "h": 2,
             "a": 0,
-            "p": 8.8
+            "p": 10.0
           },
           {
             "h": 4,
             "a": 0,
-            "p": 8.8
+            "p": 9.5
           }
         ],
         "goal_dist": {
-          "0": 3.8,
-          "1": 10.5,
-          "2": 16.1,
-          "3+": 69.6
+          "0": 4.1,
+          "1": 11.3,
+          "2": 17.3,
+          "3+": 67.3
         },
         "mc_top_scores": [
           {
             "h": 3,
             "a": 0,
-            "p": 9.2
-          },
-          {
-            "h": 4,
-            "a": 0,
-            "p": 9.0
+            "p": 10.8
           },
           {
             "h": 2,
             "a": 0,
-            "p": 9.0
+            "p": 9.7
+          },
+          {
+            "h": 4,
+            "a": 0,
+            "p": 9.6
           }
         ],
         "mc_goal_dist": {
-          "0": 4.1,
-          "1": 10.5,
-          "2": 16.1,
-          "3+": 69.3
+          "0": 4.0,
+          "1": 10.7,
+          "2": 17.0,
+          "3+": 68.3
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -3673,47 +3533,47 @@
           {
             "h": 1,
             "a": 1,
-            "p": 10.9
+            "p": 11.7
           },
           {
             "h": 0,
             "a": 1,
-            "p": 9.6
+            "p": 10.8
           },
           {
             "h": 1,
             "a": 0,
-            "p": 8.6
+            "p": 10.4
           }
         ],
         "goal_dist": {
-          "0": 7.2,
-          "1": 18.2,
-          "2": 23.8,
-          "3+": 50.7
+          "0": 9.2,
+          "1": 21.2,
+          "2": 25.1,
+          "3+": 44.5
         },
         "mc_top_scores": [
           {
             "h": 1,
             "a": 1,
-            "p": 10.9
+            "p": 12.0
           },
           {
             "h": 0,
             "a": 1,
-            "p": 9.6
+            "p": 10.5
           },
           {
             "h": 1,
             "a": 0,
-            "p": 8.6
+            "p": 10.2
           }
         ],
         "mc_goal_dist": {
-          "0": 7.0,
-          "1": 18.2,
-          "2": 23.6,
-          "3+": 51.1
+          "0": 9.2,
+          "1": 20.7,
+          "2": 25.4,
+          "3+": 44.7
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -3730,10 +3590,28 @@
           {
             "h": 2,
             "a": 0,
-            "p": 8.9
+            "p": 8.4
           },
           {
             "h": 1,
+            "a": 0,
+            "p": 7.7
+          },
+          {
+            "h": 3,
+            "a": 0,
+            "p": 7.6
+          }
+        ],
+        "goal_dist": {
+          "0": 4.2,
+          "1": 11.7,
+          "2": 17.8,
+          "3+": 66.3
+        },
+        "mc_top_scores": [
+          {
+            "h": 2,
             "a": 0,
             "p": 8.1
           },
@@ -3741,36 +3619,18 @@
             "h": 3,
             "a": 0,
             "p": 7.8
-          }
-        ],
-        "goal_dist": {
-          "0": 4.4,
-          "1": 12.2,
-          "2": 18.6,
-          "3+": 64.8
-        },
-        "mc_top_scores": [
-          {
-            "h": 2,
-            "a": 0,
-            "p": 8.6
           },
           {
             "h": 2,
             "a": 1,
-            "p": 7.9
-          },
-          {
-            "h": 1,
-            "a": 0,
-            "p": 7.8
+            "p": 7.5
           }
         ],
         "mc_goal_dist": {
-          "0": 4.3,
-          "1": 11.7,
-          "2": 18.6,
-          "3+": 65.3
+          "0": 4.0,
+          "1": 11.6,
+          "2": 17.8,
+          "3+": 66.6
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -3787,47 +3647,47 @@
           {
             "h": 0,
             "a": 2,
-            "p": 7.8
+            "p": 7.3
           },
           {
             "h": 0,
             "a": 3,
-            "p": 7.4
+            "p": 7.1
           },
           {
             "h": 1,
             "a": 1,
-            "p": 6.8
+            "p": 6.6
           }
         ],
         "goal_dist": {
-          "0": 4.3,
-          "1": 12.0,
-          "2": 18.3,
-          "3+": 65.4
+          "0": 4.1,
+          "1": 11.4,
+          "2": 17.5,
+          "3+": 66.9
         },
         "mc_top_scores": [
           {
             "h": 0,
-            "a": 2,
-            "p": 7.4
-          },
-          {
-            "h": 0,
             "a": 3,
-            "p": 7.2
+            "p": 7.3
           },
           {
             "h": 0,
-            "a": 1,
-            "p": 6.9
+            "a": 2,
+            "p": 7.1
+          },
+          {
+            "h": 1,
+            "a": 2,
+            "p": 6.4
           }
         ],
         "mc_goal_dist": {
-          "0": 4.3,
-          "1": 12.0,
-          "2": 17.8,
-          "3+": 65.9
+          "0": 3.8,
+          "1": 11.8,
+          "2": 17.1,
+          "3+": 67.3
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -3844,24 +3704,24 @@
           {
             "h": 0,
             "a": 4,
-            "p": 8.5
+            "p": 8.4
           },
           {
             "h": 0,
             "a": 3,
-            "p": 8.3
+            "p": 8.2
           },
           {
             "h": 0,
             "a": 5,
-            "p": 7.4
+            "p": 7.3
           }
         ],
         "goal_dist": {
           "0": 3.6,
           "1": 9.6,
-          "2": 14.7,
-          "3+": 72.1
+          "2": 14.6,
+          "3+": 72.2
         },
         "mc_top_scores": [
           {
@@ -3872,19 +3732,19 @@
           {
             "h": 0,
             "a": 4,
-            "p": 8.1
+            "p": 7.8
           },
           {
             "h": 0,
             "a": 5,
-            "p": 7.3
+            "p": 7.2
           }
         ],
         "mc_goal_dist": {
-          "0": 3.4,
-          "1": 9.6,
-          "2": 14.6,
-          "3+": 72.4
+          "0": 3.5,
+          "1": 10.0,
+          "2": 15.1,
+          "3+": 71.4
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -3901,47 +3761,47 @@
           {
             "h": 1,
             "a": 0,
-            "p": 16.1
+            "p": 15.7
           },
           {
             "h": 2,
             "a": 0,
-            "p": 11.9
+            "p": 12.2
           },
           {
             "h": 0,
             "a": 0,
-            "p": 11.1
+            "p": 10.4
           }
         ],
         "goal_dist": {
-          "0": 11.1,
-          "1": 23.4,
-          "2": 25.4,
-          "3+": 40.0
+          "0": 10.4,
+          "1": 22.7,
+          "2": 25.3,
+          "3+": 41.6
         },
         "mc_top_scores": [
           {
             "h": 1,
             "a": 0,
-            "p": 16.6
+            "p": 16.4
           },
           {
             "h": 2,
             "a": 0,
-            "p": 11.5
+            "p": 12.0
           },
           {
             "h": 0,
             "a": 0,
-            "p": 11.2
+            "p": 10.2
           }
         ],
         "mc_goal_dist": {
-          "0": 11.2,
-          "1": 23.9,
+          "0": 10.2,
+          "1": 22.9,
           "2": 24.6,
-          "3+": 40.4
+          "3+": 42.3
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -3958,47 +3818,47 @@
           {
             "h": 4,
             "a": 0,
-            "p": 10.3
+            "p": 10.5
           },
           {
             "h": 3,
             "a": 0,
-            "p": 10.2
+            "p": 10.3
           },
           {
             "h": 5,
             "a": 0,
-            "p": 8.9
+            "p": 9.0
           }
         ],
         "goal_dist": {
           "0": 3.7,
           "1": 9.9,
           "2": 15.1,
-          "3+": 71.4
+          "3+": 71.3
         },
         "mc_top_scores": [
           {
-            "h": 3,
-            "a": 0,
-            "p": 10.5
-          },
-          {
             "h": 4,
             "a": 0,
-            "p": 10.1
+            "p": 10.6
           },
           {
-            "h": 2,
+            "h": 3,
             "a": 0,
-            "p": 8.6
+            "p": 10.0
+          },
+          {
+            "h": 5,
+            "a": 0,
+            "p": 9.0
           }
         ],
         "mc_goal_dist": {
-          "0": 4.0,
-          "1": 9.7,
-          "2": 15.1,
-          "3+": 71.3
+          "0": 3.5,
+          "1": 10.0,
+          "2": 15.6,
+          "3+": 71.0
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -4015,12 +3875,35 @@
           {
             "h": 2,
             "a": 0,
-            "p": 17.5
+            "p": 17.8
           },
           {
             "h": 1,
             "a": 0,
-            "p": 15.9
+            "p": 16.5
+          },
+          {
+            "h": 3,
+            "a": 0,
+            "p": 13.8
+          }
+        ],
+        "goal_dist": {
+          "0": 8.3,
+          "1": 19.9,
+          "2": 24.7,
+          "3+": 47.1
+        },
+        "mc_top_scores": [
+          {
+            "h": 2,
+            "a": 0,
+            "p": 18.2
+          },
+          {
+            "h": 1,
+            "a": 0,
+            "p": 16.4
           },
           {
             "h": 3,
@@ -4028,34 +3911,11 @@
             "p": 13.9
           }
         ],
-        "goal_dist": {
-          "0": 7.9,
-          "1": 19.4,
-          "2": 24.4,
-          "3+": 48.4
-        },
-        "mc_top_scores": [
-          {
-            "h": 2,
-            "a": 0,
-            "p": 18.0
-          },
-          {
-            "h": 1,
-            "a": 0,
-            "p": 16.2
-          },
-          {
-            "h": 3,
-            "a": 0,
-            "p": 14.2
-          }
-        ],
         "mc_goal_dist": {
-          "0": 7.9,
-          "1": 19.8,
-          "2": 24.8,
-          "3+": 47.4
+          "0": 8.0,
+          "1": 19.9,
+          "2": 25.0,
+          "3+": 47.1
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -4072,12 +3932,35 @@
           {
             "h": 3,
             "a": 0,
+            "p": 8.7
+          },
+          {
+            "h": 4,
+            "a": 0,
+            "p": 8.4
+          },
+          {
+            "h": 2,
+            "a": 0,
+            "p": 7.7
+          }
+        ],
+        "goal_dist": {
+          "0": 3.6,
+          "1": 9.6,
+          "2": 14.6,
+          "3+": 72.2
+        },
+        "mc_top_scores": [
+          {
+            "h": 3,
+            "a": 0,
             "p": 8.9
           },
           {
             "h": 4,
             "a": 0,
-            "p": 8.6
+            "p": 8.4
           },
           {
             "h": 2,
@@ -4085,34 +3968,11 @@
             "p": 7.9
           }
         ],
-        "goal_dist": {
-          "0": 3.7,
-          "1": 9.8,
-          "2": 14.9,
-          "3+": 71.7
-        },
-        "mc_top_scores": [
-          {
-            "h": 3,
-            "a": 0,
-            "p": 9.1
-          },
-          {
-            "h": 4,
-            "a": 0,
-            "p": 8.8
-          },
-          {
-            "h": 2,
-            "a": 0,
-            "p": 8.2
-          }
-        ],
         "mc_goal_dist": {
-          "0": 3.3,
-          "1": 9.6,
-          "2": 15.4,
-          "3+": 71.7
+          "0": 3.5,
+          "1": 9.7,
+          "2": 14.7,
+          "3+": 72.1
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -4129,7 +3989,7 @@
           {
             "h": 1,
             "a": 0,
-            "p": 19.5
+            "p": 19.6
           },
           {
             "h": 2,
@@ -4139,37 +3999,37 @@
           {
             "h": 0,
             "a": 0,
-            "p": 11.6
+            "p": 11.8
           }
         ],
         "goal_dist": {
-          "0": 11.6,
-          "1": 23.9,
+          "0": 11.8,
+          "1": 24.1,
           "2": 25.4,
-          "3+": 39.1
+          "3+": 38.7
         },
         "mc_top_scores": [
           {
             "h": 1,
             "a": 0,
-            "p": 19.1
+            "p": 20.4
           },
           {
             "h": 2,
             "a": 0,
-            "p": 16.5
+            "p": 16.6
           },
           {
             "h": 0,
             "a": 0,
-            "p": 11.6
+            "p": 11.3
           }
         ],
         "mc_goal_dist": {
-          "0": 11.6,
-          "1": 23.7,
-          "2": 25.1,
-          "3+": 39.6
+          "0": 11.3,
+          "1": 25.1,
+          "2": 25.3,
+          "3+": 38.3
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -4186,7 +4046,30 @@
           {
             "h": 0,
             "a": 0,
-            "p": 17.1
+            "p": 18.4
+          },
+          {
+            "h": 1,
+            "a": 0,
+            "p": 15.7
+          },
+          {
+            "h": 0,
+            "a": 1,
+            "p": 12.6
+          }
+        ],
+        "goal_dist": {
+          "0": 18.4,
+          "1": 28.3,
+          "2": 23.4,
+          "3+": 29.8
+        },
+        "mc_top_scores": [
+          {
+            "h": 0,
+            "a": 0,
+            "p": 19.3
           },
           {
             "h": 1,
@@ -4196,37 +4079,14 @@
           {
             "h": 0,
             "a": 1,
-            "p": 12.4
-          }
-        ],
-        "goal_dist": {
-          "0": 17.1,
-          "1": 27.7,
-          "2": 24.0,
-          "3+": 31.2
-        },
-        "mc_top_scores": [
-          {
-            "h": 0,
-            "a": 0,
-            "p": 17.9
-          },
-          {
-            "h": 1,
-            "a": 0,
-            "p": 15.4
-          },
-          {
-            "h": 0,
-            "a": 1,
-            "p": 12.3
+            "p": 12.0
           }
         ],
         "mc_goal_dist": {
-          "0": 17.9,
-          "1": 27.7,
-          "2": 23.6,
-          "3+": 30.9
+          "0": 19.3,
+          "1": 27.3,
+          "2": 23.0,
+          "3+": 30.4
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -4241,49 +4101,49 @@
       "scoreline": {
         "top_scores": [
           {
-            "h": 2,
-            "a": 0,
-            "p": 9.1
-          },
-          {
             "h": 1,
-            "a": 0,
-            "p": 9.1
-          },
-          {
-            "h": 1,
-            "a": 1,
-            "p": 8.5
-          }
-        ],
-        "goal_dist": {
-          "0": 5.1,
-          "1": 14.0,
-          "2": 20.6,
-          "3+": 60.4
-        },
-        "mc_top_scores": [
-          {
-            "h": 2,
             "a": 0,
             "p": 9.2
+          },
+          {
+            "h": 2,
+            "a": 0,
+            "p": 9.1
           },
           {
             "h": 1,
             "a": 1,
             "p": 8.7
-          },
+          }
+        ],
+        "goal_dist": {
+          "0": 5.2,
+          "1": 14.2,
+          "2": 20.8,
+          "3+": 59.9
+        },
+        "mc_top_scores": [
           {
             "h": 1,
             "a": 0,
-            "p": 8.6
+            "p": 9.3
+          },
+          {
+            "h": 2,
+            "a": 0,
+            "p": 8.9
+          },
+          {
+            "h": 1,
+            "a": 1,
+            "p": 8.8
           }
         ],
         "mc_goal_dist": {
-          "0": 4.6,
-          "1": 13.2,
-          "2": 20.9,
-          "3+": 61.3
+          "0": 5.3,
+          "1": 14.4,
+          "2": 20.4,
+          "3+": 59.9
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -4300,7 +4160,7 @@
           {
             "h": 1,
             "a": 0,
-            "p": 12.4
+            "p": 12.3
           },
           {
             "h": 1,
@@ -4310,37 +4170,151 @@
           {
             "h": 0,
             "a": 0,
-            "p": 9.2
+            "p": 9.3
           }
         ],
         "goal_dist": {
-          "0": 9.2,
-          "1": 21.3,
+          "0": 9.3,
+          "1": 21.4,
           "2": 25.1,
-          "3+": 44.4
+          "3+": 44.1
         },
         "mc_top_scores": [
           {
             "h": 1,
             "a": 0,
-            "p": 12.9
+            "p": 12.2
           },
           {
             "h": 1,
             "a": 1,
-            "p": 11.4
+            "p": 10.7
           },
           {
             "h": 0,
             "a": 0,
-            "p": 9.2
+            "p": 9.8
           }
         ],
         "mc_goal_dist": {
-          "0": 9.2,
-          "1": 21.3,
-          "2": 24.9,
-          "3+": 44.5
+          "0": 9.8,
+          "1": 20.9,
+          "2": 24.4,
+          "3+": 44.9
+        },
+        "n_mc": 10000,
+        "alpha": 0.6,
+        "prior_used": true
+      }
+    },
+    {
+      "group": "D",
+      "home": "United States",
+      "away": "Turkey",
+      "played": false,
+      "scoreline": {
+        "top_scores": [
+          {
+            "h": 2,
+            "a": 1,
+            "p": 6.7
+          },
+          {
+            "h": 1,
+            "a": 1,
+            "p": 6.6
+          },
+          {
+            "h": 1,
+            "a": 0,
+            "p": 5.9
+          }
+        ],
+        "goal_dist": {
+          "0": 3.7,
+          "1": 9.8,
+          "2": 15.0,
+          "3+": 71.5
+        },
+        "mc_top_scores": [
+          {
+            "h": 1,
+            "a": 1,
+            "p": 6.8
+          },
+          {
+            "h": 2,
+            "a": 1,
+            "p": 6.3
+          },
+          {
+            "h": 1,
+            "a": 0,
+            "p": 5.6
+          }
+        ],
+        "mc_goal_dist": {
+          "0": 3.9,
+          "1": 9.3,
+          "2": 14.8,
+          "3+": 72.0
+        },
+        "n_mc": 10000,
+        "alpha": 0.6,
+        "prior_used": true
+      }
+    },
+    {
+      "group": "D",
+      "home": "Paraguay",
+      "away": "Australia",
+      "played": false,
+      "scoreline": {
+        "top_scores": [
+          {
+            "h": 0,
+            "a": 0,
+            "p": 32.9
+          },
+          {
+            "h": 0,
+            "a": 1,
+            "p": 16.6
+          },
+          {
+            "h": 1,
+            "a": 0,
+            "p": 11.6
+          }
+        ],
+        "goal_dist": {
+          "0": 32.9,
+          "1": 28.2,
+          "2": 16.5,
+          "3+": 22.4
+        },
+        "mc_top_scores": [
+          {
+            "h": 0,
+            "a": 0,
+            "p": 32.8
+          },
+          {
+            "h": 0,
+            "a": 1,
+            "p": 16.3
+          },
+          {
+            "h": 1,
+            "a": 0,
+            "p": 11.6
+          }
+        ],
+        "mc_goal_dist": {
+          "0": 32.8,
+          "1": 27.9,
+          "2": 16.4,
+          "3+": 22.9
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -4357,30 +4331,30 @@
           {
             "h": 0,
             "a": 0,
-            "p": 17.0
+            "p": 18.3
           },
           {
             "h": 0,
             "a": 1,
-            "p": 15.0
+            "p": 15.2
           },
           {
             "h": 1,
             "a": 0,
-            "p": 12.7
+            "p": 13.0
           }
         ],
         "goal_dist": {
-          "0": 17.0,
-          "1": 27.7,
-          "2": 24.0,
-          "3+": 31.3
+          "0": 18.3,
+          "1": 28.2,
+          "2": 23.5,
+          "3+": 30.0
         },
         "mc_top_scores": [
           {
             "h": 0,
             "a": 0,
-            "p": 16.9
+            "p": 18.2
           },
           {
             "h": 0,
@@ -4390,14 +4364,14 @@
           {
             "h": 1,
             "a": 0,
-            "p": 13.0
+            "p": 13.4
           }
         ],
         "mc_goal_dist": {
-          "0": 16.9,
-          "1": 28.3,
-          "2": 23.3,
-          "3+": 31.6
+          "0": 18.2,
+          "1": 28.7,
+          "2": 23.1,
+          "3+": 29.9
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -4414,7 +4388,30 @@
           {
             "h": 0,
             "a": 0,
-            "p": 23.9
+            "p": 25.2
+          },
+          {
+            "h": 1,
+            "a": 0,
+            "p": 16.9
+          },
+          {
+            "h": 0,
+            "a": 1,
+            "p": 12.5
+          }
+        ],
+        "goal_dist": {
+          "0": 25.2,
+          "1": 29.4,
+          "2": 20.2,
+          "3+": 25.2
+        },
+        "mc_top_scores": [
+          {
+            "h": 0,
+            "a": 0,
+            "p": 24.5
           },
           {
             "h": 1,
@@ -4424,37 +4421,14 @@
           {
             "h": 0,
             "a": 1,
-            "p": 12.6
-          }
-        ],
-        "goal_dist": {
-          "0": 23.9,
-          "1": 29.4,
-          "2": 20.9,
-          "3+": 25.9
-        },
-        "mc_top_scores": [
-          {
-            "h": 0,
-            "a": 0,
-            "p": 24.0
-          },
-          {
-            "h": 1,
-            "a": 0,
-            "p": 16.3
-          },
-          {
-            "h": 0,
-            "a": 1,
-            "p": 12.7
+            "p": 13.4
           }
         ],
         "mc_goal_dist": {
-          "0": 24.0,
-          "1": 29.0,
-          "2": 21.4,
-          "3+": 25.6
+          "0": 24.5,
+          "1": 30.3,
+          "2": 20.7,
+          "3+": 24.6
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -4492,26 +4466,26 @@
         },
         "mc_top_scores": [
           {
-            "h": 3,
-            "a": 0,
-            "p": 8.4
-          },
-          {
             "h": 4,
             "a": 0,
-            "p": 8.2
+            "p": 9.0
+          },
+          {
+            "h": 3,
+            "a": 0,
+            "p": 8.3
           },
           {
             "h": 2,
             "a": 0,
-            "p": 7.7
+            "p": 7.8
           }
         ],
         "mc_goal_dist": {
-          "0": 3.4,
-          "1": 8.8,
-          "2": 14.4,
-          "3+": 73.4
+          "0": 3.7,
+          "1": 9.5,
+          "2": 14.3,
+          "3+": 72.5
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -4528,12 +4502,12 @@
           {
             "h": 1,
             "a": 1,
-            "p": 7.7
+            "p": 7.9
           },
           {
             "h": 2,
             "a": 1,
-            "p": 7.5
+            "p": 7.4
           },
           {
             "h": 1,
@@ -4543,15 +4517,15 @@
         ],
         "goal_dist": {
           "0": 4.1,
-          "1": 11.2,
-          "2": 17.2,
-          "3+": 67.5
+          "1": 11.4,
+          "2": 17.4,
+          "3+": 67.1
         },
         "mc_top_scores": [
           {
             "h": 1,
             "a": 1,
-            "p": 7.6
+            "p": 7.9
           },
           {
             "h": 2,
@@ -4559,16 +4533,130 @@
             "p": 7.4
           },
           {
-            "h": 2,
+            "h": 1,
             "a": 0,
-            "p": 6.6
+            "p": 6.8
           }
         ],
         "mc_goal_dist": {
-          "0": 4.4,
-          "1": 10.9,
-          "2": 17.4,
-          "3+": 67.3
+          "0": 4.2,
+          "1": 11.7,
+          "2": 17.9,
+          "3+": 66.2
+        },
+        "n_mc": 10000,
+        "alpha": 0.6,
+        "prior_used": true
+      }
+    },
+    {
+      "group": "E",
+      "home": "Germany",
+      "away": "Ecuador",
+      "played": false,
+      "scoreline": {
+        "top_scores": [
+          {
+            "h": 1,
+            "a": 0,
+            "p": 13.7
+          },
+          {
+            "h": 2,
+            "a": 0,
+            "p": 12.0
+          },
+          {
+            "h": 1,
+            "a": 1,
+            "p": 9.6
+          }
+        ],
+        "goal_dist": {
+          "0": 8.1,
+          "1": 19.8,
+          "2": 24.6,
+          "3+": 47.5
+        },
+        "mc_top_scores": [
+          {
+            "h": 1,
+            "a": 0,
+            "p": 13.8
+          },
+          {
+            "h": 2,
+            "a": 0,
+            "p": 12.5
+          },
+          {
+            "h": 1,
+            "a": 1,
+            "p": 9.7
+          }
+        ],
+        "mc_goal_dist": {
+          "0": 8.1,
+          "1": 19.8,
+          "2": 25.3,
+          "3+": 46.8
+        },
+        "n_mc": 10000,
+        "alpha": 0.6,
+        "prior_used": true
+      }
+    },
+    {
+      "group": "E",
+      "home": "Curacao",
+      "away": "Cote d'Ivoire",
+      "played": false,
+      "scoreline": {
+        "top_scores": [
+          {
+            "h": 0,
+            "a": 2,
+            "p": 13.4
+          },
+          {
+            "h": 0,
+            "a": 3,
+            "p": 12.1
+          },
+          {
+            "h": 0,
+            "a": 1,
+            "p": 11.0
+          }
+        ],
+        "goal_dist": {
+          "0": 5.9,
+          "1": 15.9,
+          "2": 22.3,
+          "3+": 55.8
+        },
+        "mc_top_scores": [
+          {
+            "h": 0,
+            "a": 2,
+            "p": 13.7
+          },
+          {
+            "h": 0,
+            "a": 3,
+            "p": 11.2
+          },
+          {
+            "h": 0,
+            "a": 1,
+            "p": 11.0
+          }
+        ],
+        "mc_goal_dist": {
+          "0": 5.7,
+          "1": 15.8,
+          "2": 22.8,
+          "3+": 55.8
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -4585,12 +4673,12 @@
           {
             "h": 0,
             "a": 1,
-            "p": 21.3
+            "p": 21.7
           },
           {
             "h": 0,
             "a": 0,
-            "p": 20.4
+            "p": 21.0
           },
           {
             "h": 0,
@@ -4599,33 +4687,33 @@
           }
         ],
         "goal_dist": {
-          "0": 20.4,
-          "1": 28.9,
-          "2": 22.5,
-          "3+": 28.2
+          "0": 21.0,
+          "1": 29.0,
+          "2": 22.3,
+          "3+": 27.7
         },
         "mc_top_scores": [
           {
             "h": 0,
-            "a": 1,
-            "p": 21.6
+            "a": 0,
+            "p": 21.2
           },
           {
             "h": 0,
-            "a": 0,
-            "p": 19.9
+            "a": 1,
+            "p": 20.7
           },
           {
             "h": 0,
             "a": 2,
-            "p": 11.6
+            "p": 11.9
           }
         ],
         "mc_goal_dist": {
-          "0": 19.9,
-          "1": 29.2,
-          "2": 22.2,
-          "3+": 28.6
+          "0": 21.2,
+          "1": 28.0,
+          "2": 22.9,
+          "3+": 27.9
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -4642,7 +4730,7 @@
           {
             "h": 0,
             "a": 0,
-            "p": 27.3
+            "p": 28.9
           },
           {
             "h": 1,
@@ -4652,25 +4740,25 @@
           {
             "h": 0,
             "a": 1,
-            "p": 10.2
+            "p": 10.1
           }
         ],
         "goal_dist": {
-          "0": 27.3,
-          "1": 29.3,
-          "2": 19.1,
-          "3+": 24.2
+          "0": 28.9,
+          "1": 29.1,
+          "2": 18.4,
+          "3+": 23.6
         },
         "mc_top_scores": [
           {
             "h": 0,
             "a": 0,
-            "p": 27.5
+            "p": 28.7
           },
           {
             "h": 1,
             "a": 0,
-            "p": 19.3
+            "p": 19.1
           },
           {
             "h": 0,
@@ -4679,10 +4767,10 @@
           }
         ],
         "mc_goal_dist": {
-          "0": 27.5,
-          "1": 29.1,
-          "2": 19.6,
-          "3+": 23.8
+          "0": 28.7,
+          "1": 28.9,
+          "2": 18.6,
+          "3+": 23.7
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -4704,7 +4792,7 @@
           {
             "h": 1,
             "a": 0,
-            "p": 10.2
+            "p": 10.1
           },
           {
             "h": 2,
@@ -4713,33 +4801,33 @@
           }
         ],
         "goal_dist": {
-          "0": 6.4,
-          "1": 16.8,
-          "2": 23.0,
-          "3+": 53.8
+          "0": 6.3,
+          "1": 16.7,
+          "2": 22.9,
+          "3+": 54.1
         },
         "mc_top_scores": [
           {
             "h": 1,
             "a": 1,
-            "p": 10.5
+            "p": 10.2
           },
           {
             "h": 1,
             "a": 0,
-            "p": 10.5
+            "p": 10.0
           },
           {
             "h": 2,
             "a": 1,
-            "p": 8.6
+            "p": 8.9
           }
         ],
         "mc_goal_dist": {
-          "0": 6.5,
-          "1": 17.1,
-          "2": 23.1,
-          "3+": 53.3
+          "0": 6.3,
+          "1": 16.8,
+          "2": 22.8,
+          "3+": 54.1
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -4777,26 +4865,140 @@
         },
         "mc_top_scores": [
           {
-            "h": 2,
-            "a": 1,
-            "p": 5.3
+            "h": 1,
+            "a": 0,
+            "p": 5.4
           },
           {
-            "h": 2,
-            "a": 0,
-            "p": 5.2
+            "h": 4,
+            "a": 1,
+            "p": 5.0
           },
           {
             "h": 3,
             "a": 0,
-            "p": 5.1
+            "p": 4.8
           }
         ],
         "mc_goal_dist": {
-          "0": 3.3,
-          "1": 8.2,
-          "2": 12.1,
-          "3+": 76.4
+          "0": 3.1,
+          "1": 9.0,
+          "2": 11.8,
+          "3+": 76.1
+        },
+        "n_mc": 10000,
+        "alpha": 0.6,
+        "prior_used": true
+      }
+    },
+    {
+      "group": "F",
+      "home": "Netherlands",
+      "away": "Tunisia",
+      "played": false,
+      "scoreline": {
+        "top_scores": [
+          {
+            "h": 3,
+            "a": 0,
+            "p": 8.7
+          },
+          {
+            "h": 4,
+            "a": 0,
+            "p": 8.7
+          },
+          {
+            "h": 2,
+            "a": 0,
+            "p": 7.6
+          }
+        ],
+        "goal_dist": {
+          "0": 3.6,
+          "1": 9.5,
+          "2": 14.4,
+          "3+": 72.5
+        },
+        "mc_top_scores": [
+          {
+            "h": 3,
+            "a": 0,
+            "p": 8.7
+          },
+          {
+            "h": 4,
+            "a": 0,
+            "p": 8.3
+          },
+          {
+            "h": 2,
+            "a": 0,
+            "p": 7.8
+          }
+        ],
+        "mc_goal_dist": {
+          "0": 3.7,
+          "1": 9.8,
+          "2": 14.6,
+          "3+": 71.9
+        },
+        "n_mc": 10000,
+        "alpha": 0.6,
+        "prior_used": true
+      }
+    },
+    {
+      "group": "F",
+      "home": "Japan",
+      "away": "Sweden",
+      "played": false,
+      "scoreline": {
+        "top_scores": [
+          {
+            "h": 1,
+            "a": 0,
+            "p": 8.9
+          },
+          {
+            "h": 1,
+            "a": 1,
+            "p": 8.8
+          },
+          {
+            "h": 2,
+            "a": 0,
+            "p": 8.6
+          }
+        ],
+        "goal_dist": {
+          "0": 5.1,
+          "1": 14.0,
+          "2": 20.5,
+          "3+": 60.4
+        },
+        "mc_top_scores": [
+          {
+            "h": 1,
+            "a": 0,
+            "p": 8.7
+          },
+          {
+            "h": 2,
+            "a": 0,
+            "p": 8.6
+          },
+          {
+            "h": 1,
+            "a": 1,
+            "p": 8.6
+          }
+        ],
+        "mc_goal_dist": {
+          "0": 4.9,
+          "1": 13.6,
+          "2": 20.4,
+          "3+": 61.1
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -4811,49 +5013,49 @@
       "scoreline": {
         "top_scores": [
           {
-            "h": 3,
-            "a": 0,
-            "p": 9.2
-          },
-          {
             "h": 4,
             "a": 0,
-            "p": 9.1
+            "p": 9.3
+          },
+          {
+            "h": 3,
+            "a": 0,
+            "p": 9.3
           },
           {
             "h": 2,
             "a": 0,
-            "p": 7.9
+            "p": 8.0
           }
         ],
         "goal_dist": {
           "0": 3.6,
           "1": 9.6,
-          "2": 14.6,
-          "3+": 72.2
+          "2": 14.7,
+          "3+": 72.1
         },
         "mc_top_scores": [
           {
             "h": 3,
             "a": 0,
-            "p": 9.4
+            "p": 9.7
           },
           {
             "h": 4,
             "a": 0,
-            "p": 9.2
+            "p": 9.3
           },
           {
             "h": 5,
             "a": 0,
-            "p": 8.1
+            "p": 7.9
           }
         ],
         "mc_goal_dist": {
-          "0": 3.6,
+          "0": 3.7,
           "1": 9.8,
-          "2": 14.3,
-          "3+": 72.3
+          "2": 14.4,
+          "3+": 72.2
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -4870,12 +5072,35 @@
           {
             "h": 3,
             "a": 0,
-            "p": 6.1
+            "p": 6.2
           },
           {
             "h": 2,
             "a": 0,
-            "p": 5.8
+            "p": 5.9
+          },
+          {
+            "h": 4,
+            "a": 0,
+            "p": 5.9
+          }
+        ],
+        "goal_dist": {
+          "0": 3.4,
+          "1": 8.8,
+          "2": 13.1,
+          "3+": 74.7
+        },
+        "mc_top_scores": [
+          {
+            "h": 3,
+            "a": 0,
+            "p": 6.0
+          },
+          {
+            "h": 2,
+            "a": 0,
+            "p": 5.9
           },
           {
             "h": 4,
@@ -4883,34 +5108,11 @@
             "p": 5.7
           }
         ],
-        "goal_dist": {
-          "0": 3.4,
-          "1": 8.7,
-          "2": 13.0,
-          "3+": 74.9
-        },
-        "mc_top_scores": [
-          {
-            "h": 3,
-            "a": 0,
-            "p": 6.3
-          },
-          {
-            "h": 2,
-            "a": 0,
-            "p": 5.7
-          },
-          {
-            "h": 3,
-            "a": 1,
-            "p": 5.6
-          }
-        ],
         "mc_goal_dist": {
-          "0": 3.3,
-          "1": 8.3,
-          "2": 12.3,
-          "3+": 76.1
+          "0": 3.5,
+          "1": 9.0,
+          "2": 12.7,
+          "3+": 74.8
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -4925,33 +5127,28 @@
       "scoreline": {
         "top_scores": [
           {
-            "h": 0,
-            "a": 0,
-            "p": 15.9
-          },
-          {
             "h": 1,
-            "a": 0,
-            "p": 15.4
-          },
-          {
-            "h": 0,
-            "a": 1,
-            "p": 11.7
-          }
-        ],
-        "goal_dist": {
-          "0": 15.9,
-          "1": 27.1,
-          "2": 24.5,
-          "3+": 32.5
-        },
-        "mc_top_scores": [
-          {
-            "h": 0,
             "a": 0,
             "p": 15.6
           },
+          {
+            "h": 0,
+            "a": 0,
+            "p": 15.5
+          },
+          {
+            "h": 1,
+            "a": 1,
+            "p": 11.4
+          }
+        ],
+        "goal_dist": {
+          "0": 15.5,
+          "1": 26.9,
+          "2": 24.6,
+          "3+": 33.1
+        },
+        "mc_top_scores": [
           {
             "h": 1,
             "a": 0,
@@ -4959,15 +5156,20 @@
           },
           {
             "h": 0,
+            "a": 0,
+            "p": 15.3
+          },
+          {
+            "h": 1,
             "a": 1,
-            "p": 12.1
+            "p": 11.5
           }
         ],
         "mc_goal_dist": {
-          "0": 15.6,
-          "1": 27.4,
-          "2": 25.0,
-          "3+": 32.0
+          "0": 15.3,
+          "1": 26.3,
+          "2": 24.7,
+          "3+": 33.6
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -4984,35 +5186,12 @@
           {
             "h": 1,
             "a": 0,
-            "p": 19.1
+            "p": 19.0
           },
           {
             "h": 0,
             "a": 0,
-            "p": 17.5
-          },
-          {
-            "h": 2,
-            "a": 0,
-            "p": 10.8
-          }
-        ],
-        "goal_dist": {
-          "0": 17.5,
-          "1": 27.9,
-          "2": 23.8,
-          "3+": 30.8
-        },
-        "mc_top_scores": [
-          {
-            "h": 1,
-            "a": 0,
-            "p": 18.4
-          },
-          {
-            "h": 0,
-            "a": 0,
-            "p": 17.8
+            "p": 17.2
           },
           {
             "h": 2,
@@ -5020,11 +5199,34 @@
             "p": 11.0
           }
         ],
+        "goal_dist": {
+          "0": 17.2,
+          "1": 27.7,
+          "2": 24.0,
+          "3+": 31.1
+        },
+        "mc_top_scores": [
+          {
+            "h": 1,
+            "a": 0,
+            "p": 19.1
+          },
+          {
+            "h": 0,
+            "a": 0,
+            "p": 17.4
+          },
+          {
+            "h": 2,
+            "a": 0,
+            "p": 10.7
+          }
+        ],
         "mc_goal_dist": {
-          "0": 17.8,
-          "1": 27.1,
-          "2": 23.7,
-          "3+": 31.4
+          "0": 17.4,
+          "1": 27.7,
+          "2": 23.5,
+          "3+": 31.5
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -5041,24 +5243,24 @@
           {
             "h": 3,
             "a": 0,
-            "p": 6.5
-          },
-          {
-            "h": 4,
-            "a": 0,
-            "p": 6.1
+            "p": 6.4
           },
           {
             "h": 2,
             "a": 0,
-            "p": 6.1
+            "p": 6.0
+          },
+          {
+            "h": 4,
+            "a": 0,
+            "p": 6.0
           }
         ],
         "goal_dist": {
           "0": 3.4,
           "1": 8.9,
           "2": 13.2,
-          "3+": 74.5
+          "3+": 74.6
         },
         "mc_top_scores": [
           {
@@ -5069,19 +5271,19 @@
           {
             "h": 4,
             "a": 0,
-            "p": 6.3
+            "p": 6.0
           },
           {
             "h": 2,
             "a": 0,
-            "p": 6.1
+            "p": 5.9
           }
         ],
         "mc_goal_dist": {
           "0": 3.6,
-          "1": 8.2,
-          "2": 13.4,
-          "3+": 74.7
+          "1": 8.8,
+          "2": 13.3,
+          "3+": 74.3
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -5108,36 +5310,36 @@
           {
             "h": 1,
             "a": 0,
-            "p": 7.3
+            "p": 7.2
           }
         ],
         "goal_dist": {
           "0": 4.1,
-          "1": 11.3,
-          "2": 17.3,
-          "3+": 67.3
+          "1": 11.2,
+          "2": 17.2,
+          "3+": 67.5
         },
         "mc_top_scores": [
           {
             "h": 2,
             "a": 0,
-            "p": 7.7
+            "p": 7.5
           },
           {
             "h": 2,
             "a": 1,
-            "p": 7.6
+            "p": 7.5
           },
           {
             "h": 1,
             "a": 0,
-            "p": 7.2
+            "p": 7.3
           }
         ],
         "mc_goal_dist": {
-          "0": 4.0,
-          "1": 11.3,
-          "2": 17.0,
+          "0": 4.2,
+          "1": 11.1,
+          "2": 16.8,
           "3+": 67.8
         },
         "n_mc": 10000,
@@ -5153,49 +5355,49 @@
       "scoreline": {
         "top_scores": [
           {
-            "h": 2,
-            "a": 0,
-            "p": 17.3
-          },
-          {
             "h": 1,
             "a": 0,
-            "p": 17.2
+            "p": 17.9
+          },
+          {
+            "h": 2,
+            "a": 0,
+            "p": 17.8
           },
           {
             "h": 3,
             "a": 0,
-            "p": 12.4
+            "p": 12.7
           }
         ],
         "goal_dist": {
-          "0": 9.1,
-          "1": 21.1,
-          "2": 25.0,
-          "3+": 44.8
+          "0": 9.4,
+          "1": 21.5,
+          "2": 25.2,
+          "3+": 43.9
         },
         "mc_top_scores": [
           {
-            "h": 1,
-            "a": 0,
-            "p": 17.4
-          },
-          {
             "h": 2,
             "a": 0,
-            "p": 17.2
+            "p": 18.6
+          },
+          {
+            "h": 1,
+            "a": 0,
+            "p": 17.0
           },
           {
             "h": 3,
             "a": 0,
-            "p": 13.0
+            "p": 13.1
           }
         ],
         "mc_goal_dist": {
-          "0": 8.3,
-          "1": 21.2,
-          "2": 25.1,
-          "3+": 45.5
+          "0": 9.6,
+          "1": 20.7,
+          "2": 25.8,
+          "3+": 43.9
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -5212,17 +5414,17 @@
           {
             "h": 4,
             "a": 0,
-            "p": 12.0
+            "p": 12.1
           },
           {
             "h": 3,
             "a": 0,
-            "p": 11.7
+            "p": 11.8
           },
           {
             "h": 5,
             "a": 0,
-            "p": 10.4
+            "p": 10.5
           }
         ],
         "goal_dist": {
@@ -5233,26 +5435,26 @@
         },
         "mc_top_scores": [
           {
-            "h": 3,
-            "a": 0,
-            "p": 11.7
-          },
-          {
             "h": 4,
             "a": 0,
-            "p": 11.7
+            "p": 12.1
+          },
+          {
+            "h": 3,
+            "a": 0,
+            "p": 12.0
           },
           {
             "h": 5,
             "a": 0,
-            "p": 10.8
+            "p": 10.3
           }
         ],
         "mc_goal_dist": {
-          "0": 3.7,
-          "1": 10.3,
+          "0": 3.6,
+          "1": 9.9,
           "2": 15.8,
-          "3+": 70.2
+          "3+": 70.7
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -5269,7 +5471,7 @@
           {
             "h": 0,
             "a": 0,
-            "p": 13.4
+            "p": 13.0
           },
           {
             "h": 0,
@@ -5279,37 +5481,37 @@
           {
             "h": 1,
             "a": 0,
-            "p": 12.6
+            "p": 12.3
           }
         ],
         "goal_dist": {
-          "0": 13.4,
-          "1": 25.5,
+          "0": 13.0,
+          "1": 25.2,
           "2": 25.2,
-          "3+": 36.0
+          "3+": 36.6
         },
         "mc_top_scores": [
           {
             "h": 0,
-            "a": 1,
-            "p": 13.2
-          },
-          {
-            "h": 0,
             "a": 0,
-            "p": 13.1
+            "p": 13.0
           },
           {
             "h": 1,
             "a": 0,
-            "p": 12.7
+            "p": 12.6
+          },
+          {
+            "h": 1,
+            "a": 1,
+            "p": 11.9
           }
         ],
         "mc_goal_dist": {
-          "0": 13.1,
-          "1": 25.9,
-          "2": 25.1,
-          "3+": 35.8
+          "0": 13.0,
+          "1": 24.5,
+          "2": 25.6,
+          "3+": 36.9
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -5326,35 +5528,35 @@
           {
             "h": 0,
             "a": 2,
-            "p": 12.2
+            "p": 11.8
           },
           {
             "h": 0,
             "a": 1,
-            "p": 12.0
+            "p": 11.3
           },
           {
             "h": 0,
             "a": 3,
-            "p": 9.0
+            "p": 8.9
           }
         ],
         "goal_dist": {
-          "0": 7.1,
-          "1": 18.0,
-          "2": 23.7,
-          "3+": 51.1
+          "0": 6.7,
+          "1": 17.4,
+          "2": 23.3,
+          "3+": 52.7
         },
         "mc_top_scores": [
           {
             "h": 0,
             "a": 2,
-            "p": 12.4
+            "p": 11.6
           },
           {
             "h": 0,
             "a": 1,
-            "p": 12.1
+            "p": 11.1
           },
           {
             "h": 0,
@@ -5363,10 +5565,10 @@
           }
         ],
         "mc_goal_dist": {
-          "0": 6.7,
-          "1": 18.2,
-          "2": 24.1,
-          "3+": 50.9
+          "0": 7.0,
+          "1": 17.8,
+          "2": 22.9,
+          "3+": 52.3
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -5383,7 +5585,7 @@
           {
             "h": 2,
             "a": 0,
-            "p": 10.2
+            "p": 10.0
           },
           {
             "h": 3,
@@ -5393,37 +5595,37 @@
           {
             "h": 1,
             "a": 0,
-            "p": 8.7
+            "p": 8.5
           }
         ],
         "goal_dist": {
-          "0": 4.5,
-          "1": 12.5,
-          "2": 18.9,
-          "3+": 64.1
+          "0": 4.4,
+          "1": 12.3,
+          "2": 18.6,
+          "3+": 64.7
         },
         "mc_top_scores": [
           {
-            "h": 2,
+            "h": 3,
             "a": 0,
             "p": 10.3
           },
           {
-            "h": 3,
+            "h": 2,
             "a": 0,
-            "p": 10.2
+            "p": 9.2
           },
           {
             "h": 1,
             "a": 0,
-            "p": 8.7
+            "p": 8.6
           }
         ],
         "mc_goal_dist": {
-          "0": 4.8,
+          "0": 4.6,
           "1": 12.5,
-          "2": 18.9,
-          "3+": 63.8
+          "2": 18.1,
+          "3+": 64.8
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -5440,47 +5642,47 @@
           {
             "h": 4,
             "a": 0,
-            "p": 11.8
+            "p": 11.9
           },
           {
             "h": 3,
             "a": 0,
-            "p": 11.5
+            "p": 11.6
           },
           {
             "h": 5,
             "a": 0,
-            "p": 10.2
+            "p": 10.3
           }
         ],
         "goal_dist": {
           "0": 3.8,
           "1": 10.2,
-          "2": 15.6,
+          "2": 15.7,
           "3+": 70.4
         },
         "mc_top_scores": [
           {
             "h": 3,
             "a": 0,
-            "p": 11.7
+            "p": 11.8
           },
           {
             "h": 4,
             "a": 0,
-            "p": 11.2
+            "p": 11.8
           },
           {
             "h": 5,
             "a": 0,
-            "p": 9.8
+            "p": 10.5
           }
         ],
         "mc_goal_dist": {
-          "0": 3.9,
-          "1": 10.2,
-          "2": 15.5,
-          "3+": 70.4
+          "0": 3.7,
+          "1": 10.1,
+          "2": 15.7,
+          "3+": 70.5
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -5497,47 +5699,47 @@
           {
             "h": 1,
             "a": 1,
-            "p": 6.2
+            "p": 6.0
           },
           {
             "h": 2,
             "a": 1,
-            "p": 5.8
+            "p": 5.6
           },
           {
             "h": 1,
             "a": 0,
-            "p": 5.3
+            "p": 5.2
           }
         ],
         "goal_dist": {
           "0": 3.5,
-          "1": 9.2,
-          "2": 13.8,
-          "3+": 73.5
+          "1": 9.0,
+          "2": 13.4,
+          "3+": 74.2
         },
         "mc_top_scores": [
           {
             "h": 1,
             "a": 1,
-            "p": 6.6
+            "p": 5.9
           },
           {
             "h": 2,
             "a": 1,
-            "p": 5.8
+            "p": 5.7
           },
           {
-            "h": 2,
-            "a": 2,
-            "p": 5.6
+            "h": 1,
+            "a": 0,
+            "p": 5.5
           }
         ],
         "mc_goal_dist": {
-          "0": 3.4,
-          "1": 9.1,
-          "2": 14.7,
-          "3+": 72.8
+          "0": 3.7,
+          "1": 9.4,
+          "2": 13.5,
+          "3+": 73.5
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -5554,46 +5756,46 @@
           {
             "h": 0,
             "a": 4,
-            "p": 8.1
+            "p": 8.4
           },
           {
             "h": 0,
             "a": 3,
-            "p": 8.0
+            "p": 8.2
           },
           {
             "h": 0,
             "a": 5,
-            "p": 7.1
+            "p": 7.3
           }
         ],
         "goal_dist": {
           "0": 3.6,
-          "1": 9.5,
-          "2": 14.5,
-          "3+": 72.4
+          "1": 9.6,
+          "2": 14.6,
+          "3+": 72.2
         },
         "mc_top_scores": [
           {
             "h": 0,
-            "a": 3,
-            "p": 7.7
+            "a": 4,
+            "p": 8.8
           },
           {
             "h": 0,
-            "a": 4,
-            "p": 7.7
+            "a": 3,
+            "p": 8.2
           },
           {
             "h": 0,
             "a": 5,
-            "p": 7.2
+            "p": 7.0
           }
         ],
         "mc_goal_dist": {
-          "0": 3.6,
-          "1": 9.7,
-          "2": 14.3,
+          "0": 3.8,
+          "1": 9.4,
+          "2": 14.5,
           "3+": 72.4
         },
         "n_mc": 10000,
@@ -5611,47 +5813,47 @@
           {
             "h": 3,
             "a": 0,
-            "p": 11.9
+            "p": 11.5
           },
           {
             "h": 4,
             "a": 0,
-            "p": 11.3
+            "p": 11.0
           },
           {
             "h": 2,
             "a": 0,
-            "p": 10.4
+            "p": 9.9
           }
         ],
         "goal_dist": {
-          "0": 4.0,
-          "1": 11.0,
-          "2": 16.9,
-          "3+": 68.2
+          "0": 3.9,
+          "1": 10.7,
+          "2": 16.5,
+          "3+": 68.9
         },
         "mc_top_scores": [
           {
-            "h": 4,
-            "a": 0,
-            "p": 11.9
-          },
-          {
             "h": 3,
             "a": 0,
-            "p": 11.8
+            "p": 11.6
+          },
+          {
+            "h": 4,
+            "a": 0,
+            "p": 10.8
           },
           {
             "h": 2,
             "a": 0,
-            "p": 10.3
+            "p": 10.0
           }
         ],
         "mc_goal_dist": {
-          "0": 3.9,
+          "0": 4.0,
           "1": 10.9,
-          "2": 16.7,
-          "3+": 68.5
+          "2": 16.5,
+          "3+": 68.6
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -5668,47 +5870,47 @@
           {
             "h": 3,
             "a": 0,
-            "p": 10.7
+            "p": 10.4
           },
           {
             "h": 4,
             "a": 0,
-            "p": 10.3
+            "p": 10.0
           },
           {
             "h": 2,
             "a": 0,
-            "p": 9.2
+            "p": 9.0
           }
         ],
         "goal_dist": {
           "0": 3.8,
-          "1": 10.4,
-          "2": 15.9,
-          "3+": 69.9
+          "1": 10.2,
+          "2": 15.7,
+          "3+": 70.3
         },
         "mc_top_scores": [
           {
-            "h": 4,
-            "a": 0,
-            "p": 10.5
-          },
-          {
             "h": 3,
             "a": 0,
-            "p": 10.3
+            "p": 10.2
+          },
+          {
+            "h": 4,
+            "a": 0,
+            "p": 10.0
           },
           {
             "h": 2,
             "a": 0,
-            "p": 9.8
+            "p": 9.0
           }
         ],
         "mc_goal_dist": {
           "0": 3.8,
-          "1": 10.5,
-          "2": 16.7,
-          "3+": 69.1
+          "1": 10.2,
+          "2": 16.4,
+          "3+": 69.6
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -5725,47 +5927,47 @@
           {
             "h": 1,
             "a": 1,
-            "p": 9.0
+            "p": 8.7
           },
           {
             "h": 1,
             "a": 0,
-            "p": 8.7
+            "p": 8.5
           },
           {
             "h": 2,
             "a": 1,
-            "p": 8.4
+            "p": 8.3
           }
         ],
         "goal_dist": {
-          "0": 5.1,
-          "1": 13.9,
-          "2": 20.5,
-          "3+": 60.5
+          "0": 4.9,
+          "1": 13.6,
+          "2": 20.1,
+          "3+": 61.4
         },
         "mc_top_scores": [
           {
             "h": 1,
             "a": 1,
-            "p": 9.0
-          },
-          {
-            "h": 1,
-            "a": 0,
-            "p": 8.7
+            "p": 9.5
           },
           {
             "h": 2,
             "a": 1,
-            "p": 8.6
+            "p": 8.3
+          },
+          {
+            "h": 1,
+            "a": 0,
+            "p": 8.0
           }
         ],
         "mc_goal_dist": {
-          "0": 5.1,
-          "1": 14.1,
-          "2": 20.0,
-          "3+": 60.8
+          "0": 4.5,
+          "1": 13.1,
+          "2": 20.9,
+          "3+": 61.5
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -5782,47 +5984,47 @@
           {
             "h": 2,
             "a": 0,
-            "p": 6.4
+            "p": 6.5
           },
           {
             "h": 2,
             "a": 1,
-            "p": 6.4
+            "p": 6.5
           },
           {
             "h": 1,
             "a": 0,
-            "p": 6.1
+            "p": 6.2
           }
         ],
         "goal_dist": {
-          "0": 3.6,
-          "1": 9.7,
-          "2": 14.8,
-          "3+": 71.9
+          "0": 3.7,
+          "1": 9.8,
+          "2": 14.9,
+          "3+": 71.6
         },
         "mc_top_scores": [
           {
             "h": 2,
             "a": 0,
-            "p": 6.8
+            "p": 6.9
           },
           {
             "h": 2,
             "a": 1,
-            "p": 6.3
+            "p": 6.6
           },
           {
             "h": 1,
-            "a": 1,
-            "p": 6.1
+            "a": 0,
+            "p": 6.5
           }
         ],
         "mc_goal_dist": {
           "0": 3.9,
-          "1": 9.8,
-          "2": 15.5,
-          "3+": 70.8
+          "1": 10.0,
+          "2": 15.4,
+          "3+": 70.7
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -5839,47 +6041,47 @@
           {
             "h": 1,
             "a": 0,
-            "p": 19.4
+            "p": 20.1
           },
           {
             "h": 2,
             "a": 0,
-            "p": 15.4
+            "p": 15.5
           },
           {
             "h": 0,
             "a": 0,
-            "p": 12.6
+            "p": 13.3
           }
         ],
         "goal_dist": {
-          "0": 12.6,
-          "1": 24.8,
-          "2": 25.3,
-          "3+": 37.3
+          "0": 13.3,
+          "1": 25.4,
+          "2": 25.2,
+          "3+": 36.1
         },
         "mc_top_scores": [
           {
             "h": 1,
             "a": 0,
-            "p": 19.1
+            "p": 19.8
           },
           {
             "h": 2,
             "a": 0,
-            "p": 15.7
+            "p": 15.6
           },
           {
             "h": 0,
             "a": 0,
-            "p": 12.7
+            "p": 13.1
           }
         ],
         "mc_goal_dist": {
-          "0": 12.7,
-          "1": 24.2,
-          "2": 25.9,
-          "3+": 37.2
+          "0": 13.1,
+          "1": 25.3,
+          "2": 25.0,
+          "3+": 36.5
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -5896,7 +6098,7 @@
           {
             "h": 4,
             "a": 0,
-            "p": 9.7
+            "p": 9.8
           },
           {
             "h": 3,
@@ -5906,37 +6108,37 @@
           {
             "h": 5,
             "a": 0,
-            "p": 8.3
+            "p": 8.4
           }
         ],
         "goal_dist": {
           "0": 3.6,
           "1": 9.7,
           "2": 14.9,
-          "3+": 71.8
+          "3+": 71.7
         },
         "mc_top_scores": [
           {
             "h": 4,
             "a": 0,
-            "p": 9.9
+            "p": 9.8
           },
           {
             "h": 3,
             "a": 0,
-            "p": 9.5
+            "p": 9.6
           },
           {
-            "h": 2,
+            "h": 5,
             "a": 0,
-            "p": 8.9
+            "p": 8.6
           }
         ],
         "mc_goal_dist": {
-          "0": 3.8,
-          "1": 9.9,
-          "2": 15.3,
-          "3+": 70.9
+          "0": 3.6,
+          "1": 10.0,
+          "2": 14.1,
+          "3+": 72.4
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -5953,47 +6155,47 @@
           {
             "h": 0,
             "a": 0,
-            "p": 21.7
+            "p": 22.8
           },
           {
             "h": 0,
             "a": 1,
-            "p": 21.4
+            "p": 21.8
           },
           {
             "h": 0,
             "a": 2,
-            "p": 11.2
+            "p": 11.0
           }
         ],
         "goal_dist": {
-          "0": 21.7,
-          "1": 29.1,
-          "2": 22.0,
-          "3+": 27.2
+          "0": 22.8,
+          "1": 29.3,
+          "2": 21.4,
+          "3+": 26.5
         },
         "mc_top_scores": [
           {
             "h": 0,
             "a": 0,
-            "p": 22.0
+            "p": 23.2
           },
           {
             "h": 0,
             "a": 1,
-            "p": 21.2
+            "p": 20.9
           },
           {
             "h": 0,
             "a": 2,
-            "p": 11.5
+            "p": 11.0
           }
         ],
         "mc_goal_dist": {
-          "0": 22.0,
-          "1": 28.8,
-          "2": 22.2,
-          "3+": 27.0
+          "0": 23.2,
+          "1": 29.1,
+          "2": 21.6,
+          "3+": 26.1
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -6010,30 +6212,7 @@
           {
             "h": 0,
             "a": 4,
-            "p": 9.7
-          },
-          {
-            "h": 0,
-            "a": 3,
-            "p": 9.4
-          },
-          {
-            "h": 0,
-            "a": 5,
-            "p": 8.5
-          }
-        ],
-        "goal_dist": {
-          "0": 3.7,
-          "1": 9.9,
-          "2": 15.1,
-          "3+": 71.3
-        },
-        "mc_top_scores": [
-          {
-            "h": 0,
-            "a": 4,
-            "p": 9.7
+            "p": 9.8
           },
           {
             "h": 0,
@@ -6046,11 +6225,34 @@
             "p": 8.6
           }
         ],
+        "goal_dist": {
+          "0": 3.7,
+          "1": 9.9,
+          "2": 15.2,
+          "3+": 71.2
+        },
+        "mc_top_scores": [
+          {
+            "h": 0,
+            "a": 4,
+            "p": 10.1
+          },
+          {
+            "h": 0,
+            "a": 3,
+            "p": 9.2
+          },
+          {
+            "h": 0,
+            "a": 5,
+            "p": 8.6
+          }
+        ],
         "mc_goal_dist": {
-          "0": 3.5,
-          "1": 9.5,
-          "2": 15.3,
-          "3+": 71.7
+          "0": 3.8,
+          "1": 9.1,
+          "2": 14.6,
+          "3+": 72.5
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -6067,7 +6269,7 @@
           {
             "h": 2,
             "a": 1,
-            "p": 5.5
+            "p": 5.4
           },
           {
             "h": 3,
@@ -6077,37 +6279,37 @@
           {
             "h": 1,
             "a": 0,
-            "p": 5.4
+            "p": 5.3
           }
         ],
         "goal_dist": {
           "0": 3.4,
-          "1": 8.8,
-          "2": 13.0,
-          "3+": 74.8
+          "1": 8.7,
+          "2": 12.9,
+          "3+": 75.0
         },
         "mc_top_scores": [
           {
             "h": 2,
             "a": 1,
-            "p": 5.7
+            "p": 5.6
           },
           {
             "h": 3,
             "a": 1,
-            "p": 5.6
+            "p": 5.5
           },
           {
             "h": 1,
             "a": 0,
-            "p": 5.5
+            "p": 5.4
           }
         ],
         "mc_goal_dist": {
-          "0": 3.8,
+          "0": 3.3,
           "1": 8.8,
-          "2": 13.4,
-          "3+": 74.0
+          "2": 12.7,
+          "3+": 75.2
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -6124,47 +6326,47 @@
           {
             "h": 1,
             "a": 0,
-            "p": 18.9
+            "p": 18.0
           },
           {
             "h": 2,
             "a": 0,
-            "p": 14.3
+            "p": 14.8
           },
           {
             "h": 0,
             "a": 0,
-            "p": 12.8
+            "p": 11.2
           }
         ],
         "goal_dist": {
-          "0": 12.8,
-          "1": 25.0,
-          "2": 25.3,
-          "3+": 37.0
+          "0": 11.2,
+          "1": 23.5,
+          "2": 25.4,
+          "3+": 39.9
         },
         "mc_top_scores": [
           {
             "h": 1,
             "a": 0,
-            "p": 18.3
+            "p": 18.0
           },
           {
             "h": 2,
             "a": 0,
-            "p": 13.9
+            "p": 15.1
           },
           {
             "h": 0,
             "a": 0,
-            "p": 12.9
+            "p": 11.5
           }
         ],
         "mc_goal_dist": {
-          "0": 12.9,
-          "1": 24.2,
-          "2": 25.2,
-          "3+": 37.7
+          "0": 11.5,
+          "1": 23.6,
+          "2": 25.4,
+          "3+": 39.6
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -6181,47 +6383,47 @@
           {
             "h": 2,
             "a": 0,
-            "p": 16.5
+            "p": 17.0
           },
           {
             "h": 1,
             "a": 0,
-            "p": 14.9
+            "p": 15.3
           },
           {
             "h": 3,
             "a": 0,
-            "p": 13.3
+            "p": 13.8
           }
         ],
         "goal_dist": {
-          "0": 7.4,
-          "1": 18.6,
-          "2": 24.0,
-          "3+": 50.0
+          "0": 7.5,
+          "1": 18.8,
+          "2": 24.1,
+          "3+": 49.5
         },
         "mc_top_scores": [
           {
             "h": 2,
             "a": 0,
-            "p": 16.6
+            "p": 16.9
           },
           {
             "h": 1,
             "a": 0,
-            "p": 15.2
+            "p": 14.8
           },
           {
             "h": 3,
             "a": 0,
-            "p": 13.3
+            "p": 13.7
           }
         ],
         "mc_goal_dist": {
           "0": 7.2,
-          "1": 18.6,
+          "1": 18.3,
           "2": 24.2,
-          "3+": 50.0
+          "3+": 50.4
         },
         "n_mc": 10000,
         "alpha": 0.6,
@@ -6238,12 +6440,12 @@
           {
             "h": 0,
             "a": 0,
-            "p": 35.0
+            "p": 35.4
           },
           {
             "h": 1,
             "a": 0,
-            "p": 22.8
+            "p": 23.0
           },
           {
             "h": 2,
@@ -6252,92 +6454,38 @@
           }
         ],
         "goal_dist": {
-          "0": 35.0,
-          "1": 27.5,
-          "2": 15.5,
-          "3+": 21.9
+          "0": 35.4,
+          "1": 27.4,
+          "2": 15.4,
+          "3+": 21.8
         },
         "mc_top_scores": [
           {
             "h": 0,
             "a": 0,
-            "p": 35.0
+            "p": 36.0
           },
           {
             "h": 1,
             "a": 0,
-            "p": 23.1
+            "p": 22.2
           },
           {
             "h": 2,
             "a": 0,
-            "p": 8.6
+            "p": 9.0
           }
         ],
         "mc_goal_dist": {
-          "0": 35.0,
-          "1": 27.6,
-          "2": 15.5,
-          "3+": 21.9
+          "0": 36.0,
+          "1": 26.4,
+          "2": 16.0,
+          "3+": 21.6
         },
         "n_mc": 10000,
         "alpha": 0.6,
         "prior_used": true
       }
-    },
-    {
-      "group": "E",
-      "home": "Curacao",
-      "away": "Cote d'Ivoire",
-      "played": true,
-      "home_score": 0,
-      "away_score": 2,
-      "scoreline": null
-    },
-    {
-      "group": "E",
-      "home": "Ecuador",
-      "away": "Germany",
-      "played": true,
-      "home_score": 2,
-      "away_score": 1,
-      "scoreline": null
-    },
-    {
-      "group": "F",
-      "home": "Japan",
-      "away": "Sweden",
-      "played": true,
-      "home_score": 1,
-      "away_score": 1,
-      "scoreline": null
-    },
-    {
-      "group": "F",
-      "home": "Tunisia",
-      "away": "Netherlands",
-      "played": true,
-      "home_score": 1,
-      "away_score": 3,
-      "scoreline": null
-    },
-    {
-      "group": "D",
-      "home": "Paraguay",
-      "away": "Australia",
-      "played": true,
-      "home_score": 0,
-      "away_score": 0,
-      "scoreline": null
-    },
-    {
-      "group": "D",
-      "home": "Turkey",
-      "away": "United States",
-      "played": true,
-      "home_score": 3,
-      "away_score": 2,
-      "scoreline": null
     },
     {
       "group": "I",
@@ -6445,6 +6593,15 @@
       "played": true,
       "home_score": 1,
       "away_score": 3,
+      "scoreline": null
+    },
+    {
+      "group": "A",
+      "home": "South Africa",
+      "away": "Canada",
+      "played": true,
+      "home_score": 0,
+      "away_score": 1,
       "scoreline": null
     }
   ]
