@@ -1,7 +1,7 @@
 {
-  "updated": "2026-06-29T18:03:49Z",
+  "updated": "2026-06-29T22:15:54Z",
   "build_info": {
-    "sha": "196d6c3",
+    "sha": "dc99428",
     "date": "2026-06-29"
   },
   "meta": {
@@ -3392,20 +3392,6 @@
   "football": [
     {
       "sport": "football",
-      "match": "Brazil vs Japan",
-      "market": "o/u2.25_under",
-      "odds": 2.07,
-      "model_prob": 59.1,
-      "fair_prob": 59.1,
-      "ev_pct": 36.3,
-      "stake_eur": 15.0,
-      "stake_pct": 15.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-29T17:00:00Z"
-    },
-    {
-      "sport": "football",
       "match": "Netherlands vs Morocco",
       "market": "scorer_Memphis Depay",
       "odds": 3.4,
@@ -3431,20 +3417,6 @@
       "confidence": "HIGH",
       "n_models_agree": 0,
       "kickoff": "2026-06-30T01:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Brazil vs Japan",
-      "market": "ah-0.75_away",
-      "odds": 1.97,
-      "model_prob": 51.9,
-      "fair_prob": 51.9,
-      "ev_pct": 15.3,
-      "stake_eur": 16.17,
-      "stake_pct": 16.2,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-29T17:00:00Z"
     },
     {
       "sport": "football",
@@ -3654,11 +3626,11 @@
   "top_elo": [
     {
       "name": "Alcaraz C.",
-      "rating": 1668
+      "rating": 1667
     },
     {
       "name": "Fritz T.",
-      "rating": 1641
+      "rating": 1639
     },
     {
       "name": "Sinner J.",
@@ -3666,7 +3638,7 @@
     },
     {
       "name": "Djokovic N.",
-      "rating": 1621
+      "rating": 1616
     },
     {
       "name": "Swiatek I.",
@@ -3686,11 +3658,11 @@
     },
     {
       "name": "Bublik A.",
-      "rating": 1577
+      "rating": 1576
     },
     {
       "name": "Medvedev D.",
-      "rating": 1576
+      "rating": 1574
     }
   ],
   "history": [
