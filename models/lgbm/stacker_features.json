@@ -18,8 +18,8 @@
     "dc_vs_lgbm_draw",
     "dc_vs_lgbm_away"
   ],
-  "n_training_samples": 464,
-  "wm2026_matches_at_train": 72,
-  "in_sample_brier": 0.5734349419263377,
-  "in_sample_ece": 0.04042719789566445
+  "n_training_samples": 468,
+  "wm2026_matches_at_train": 76,
+  "in_sample_brier": 0.5724507394535243,
+  "in_sample_ece": 0.03431317850266717
 }
