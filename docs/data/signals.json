@@ -1,8 +1,8 @@
 {
-  "updated": "2026-06-29T22:15:54Z",
+  "updated": "2026-06-30T09:23:47Z",
   "build_info": {
-    "sha": "dc99428",
-    "date": "2026-06-29"
+    "sha": "ebf236a",
+    "date": "2026-06-30"
   },
   "meta": {
     "stale_odds": false,
@@ -3389,50 +3389,7 @@
       ]
     }
   },
-  "football": [
-    {
-      "sport": "football",
-      "match": "Netherlands vs Morocco",
-      "market": "scorer_Memphis Depay",
-      "odds": 3.4,
-      "model_prob": 37.7,
-      "fair_prob": 29.4,
-      "ev_pct": 28.1,
-      "stake_eur": 11.0,
-      "stake_pct": 11.0,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-30T01:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Netherlands vs Morocco",
-      "market": "o/u2.5_over",
-      "odds": 2.34,
-      "model_prob": 53.1,
-      "fair_prob": 53.1,
-      "ev_pct": 24.3,
-      "stake_eur": 15.0,
-      "stake_pct": 15.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-30T01:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Netherlands vs Morocco",
-      "market": "ah+0.5_away",
-      "odds": 1.75,
-      "model_prob": 63.5,
-      "fair_prob": 63.5,
-      "ev_pct": 11.2,
-      "stake_eur": 12.76,
-      "stake_pct": 12.8,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-06-30T01:00:00Z"
-    }
-  ],
+  "football": [],
   "tennis": [],
   "portfolio": {
     "n_bets": 67,
@@ -3626,11 +3583,11 @@
   "top_elo": [
     {
       "name": "Alcaraz C.",
-      "rating": 1667
+      "rating": 1668
     },
     {
       "name": "Fritz T.",
-      "rating": 1639
+      "rating": 1641
     },
     {
       "name": "Sinner J.",
@@ -3638,7 +3595,7 @@
     },
     {
       "name": "Djokovic N.",
-      "rating": 1616
+      "rating": 1621
     },
     {
       "name": "Swiatek I.",
@@ -3658,11 +3615,11 @@
     },
     {
       "name": "Bublik A.",
-      "rating": 1576
+      "rating": 1577
     },
     {
       "name": "Medvedev D.",
-      "rating": 1574
+      "rating": 1576
     }
   ],
   "history": [
