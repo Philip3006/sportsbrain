@@ -1,8 +1,8 @@
 {
-  "updated": "2026-06-30T22:19:24Z",
+  "updated": "2026-07-01T09:36:20Z",
   "build_info": {
-    "sha": "973de9c",
-    "date": "2026-06-30"
+    "sha": "d77d706",
+    "date": "2026-07-01"
   },
   "meta": {
     "stale_odds": false,
@@ -3611,11 +3611,11 @@
     },
     {
       "name": "Sabalenka A.",
-      "rating": 1577
+      "rating": 1576
     },
     {
       "name": "Bublik A.",
-      "rating": 1577
+      "rating": 1576
     },
     {
       "name": "Medvedev D.",
