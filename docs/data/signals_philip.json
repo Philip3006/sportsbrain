@@ -1,8 +1,8 @@
 {
-  "updated": "2026-07-01T22:23:20Z",
+  "updated": "2026-07-02T08:46:44Z",
   "build_info": {
-    "sha": "51ccd3d",
-    "date": "2026-07-01"
+    "sha": "7d1a9c4",
+    "date": "2026-07-02"
   },
   "meta": {
     "stale_odds": false,
@@ -3591,7 +3591,7 @@
     },
     {
       "name": "Sinner J.",
-      "rating": 1631
+      "rating": 1630
     },
     {
       "name": "Djokovic N.",
@@ -3603,7 +3603,7 @@
     },
     {
       "name": "Alexandrova E.",
-      "rating": 1591
+      "rating": 1590
     },
     {
       "name": "Anisimova A.",
