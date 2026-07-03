@@ -1,7 +1,7 @@
 {
-  "updated": "2026-07-03T12:52:00Z",
+  "updated": "2026-07-03T17:12:44Z",
   "build_info": {
-    "sha": "75b952f",
+    "sha": "ed0b220",
     "date": "2026-07-03"
   },
   "meta": {
@@ -3599,15 +3599,19 @@
     },
     {
       "name": "Swiatek I.",
-      "rating": 1611
+      "rating": 1614
     },
     {
       "name": "Alexandrova E.",
-      "rating": 1581
+      "rating": 1590
     },
     {
       "name": "Anisimova A.",
-      "rating": 1580
+      "rating": 1588
+    },
+    {
+      "name": "Sabalenka A.",
+      "rating": 1576
     },
     {
       "name": "Bublik A.",
@@ -3616,10 +3620,6 @@
     {
       "name": "Medvedev D.",
       "rating": 1576
-    },
-    {
-      "name": "Samsonova L.",
-      "rating": 1573
     }
   ],
   "history": [
