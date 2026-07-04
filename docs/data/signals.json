@@ -1,8 +1,8 @@
 {
-  "updated": "2026-07-03T22:10:59Z",
+  "updated": "2026-07-04T08:29:40Z",
   "build_info": {
-    "sha": "056ef84",
-    "date": "2026-07-03"
+    "sha": "fd20ff7",
+    "date": "2026-07-04"
   },
   "meta": {
     "stale_odds": false,
@@ -3583,7 +3583,7 @@
   "top_elo": [
     {
       "name": "Alcaraz C.",
-      "rating": 1668
+      "rating": 1667
     },
     {
       "name": "Fritz T.",
