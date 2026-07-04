@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-04T22:06:42Z",
+  "generated_at": "2026-07-04T23:10:24Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -71,7 +71,7 @@
     {
       "job": "settle",
       "status": "ok",
-      "last_run_at": "2026-07-04T22:06:42Z",
+      "last_run_at": "2026-07-04T23:10:24Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
