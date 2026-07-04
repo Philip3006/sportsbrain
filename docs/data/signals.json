@@ -1,7 +1,7 @@
 {
-  "updated": "2026-07-04T16:53:06Z",
+  "updated": "2026-07-04T22:04:21Z",
   "build_info": {
-    "sha": "d67f232",
+    "sha": "df74b8f",
     "date": "2026-07-04"
   },
   "meta": {
@@ -3587,7 +3587,7 @@
     },
     {
       "name": "Fritz T.",
-      "rating": 1641
+      "rating": 1639
     },
     {
       "name": "Sinner J.",
@@ -3595,7 +3595,7 @@
     },
     {
       "name": "Djokovic N.",
-      "rating": 1621
+      "rating": 1616
     },
     {
       "name": "Swiatek I.",
@@ -3619,7 +3619,7 @@
     },
     {
       "name": "Medvedev D.",
-      "rating": 1576
+      "rating": 1574
     }
   ],
   "history": [
