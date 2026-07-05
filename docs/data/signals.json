@@ -1,8 +1,8 @@
 {
-  "updated": "2026-07-04T22:04:21Z",
+  "updated": "2026-07-05T08:46:20Z",
   "build_info": {
-    "sha": "df74b8f",
-    "date": "2026-07-04"
+    "sha": "831cbda",
+    "date": "2026-07-05"
   },
   "meta": {
     "stale_odds": false,
@@ -3587,7 +3587,7 @@
     },
     {
       "name": "Fritz T.",
-      "rating": 1639
+      "rating": 1641
     },
     {
       "name": "Sinner J.",
@@ -3595,7 +3595,7 @@
     },
     {
       "name": "Djokovic N.",
-      "rating": 1616
+      "rating": 1621
     },
     {
       "name": "Swiatek I.",
@@ -3607,7 +3607,7 @@
     },
     {
       "name": "Anisimova A.",
-      "rating": 1588
+      "rating": 1587
     },
     {
       "name": "Sabalenka A.",
@@ -3619,7 +3619,7 @@
     },
     {
       "name": "Medvedev D.",
-      "rating": 1574
+      "rating": 1576
     }
   ],
   "history": [
