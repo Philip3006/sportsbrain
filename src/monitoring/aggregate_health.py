@@ -124,6 +124,46 @@ def _overall(jobs: list[dict[str, Any]]) -> str:
     return "ok"
 
 
+# Data-freshness pseudo-jobs — surface stale outputs even when the producing
+# job reports "ok" (2026-07-06 incident: daily_scan grün, signals.json 11h alt).
+# Format: (job_name, path, max_age_s, cadence_string)
+_FRESHNESS_TARGETS = [
+    ("signals_data_fresh", ROOT / "docs" / "data" / "signals.json", 90 * 60, "≤90min"),
+    ("live_scores_fresh",  ROOT / "docs" / "data" / "live_scores.json", 4 * 3600, "≤4h"),
+]
+
+
+def _freshness_entries() -> list[dict[str, Any]]:
+    now = datetime.now(timezone.utc)
+    out: list[dict[str, Any]] = []
+    for job, path, max_age_s, cadence in _FRESHNESS_TARGETS:
+        if not path.exists():
+            out.append({
+                "job": job, "status": "error",
+                "last_run_at": None, "duration_s": None, "exit_code": None,
+                "error": f"{path.name} missing",
+                "fallback_used": None,
+                "next_expected_in_s": max_age_s, "cadence": cadence,
+            })
+            continue
+        mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+        age_s = (now - mtime).total_seconds()
+        if age_s > max_age_s:
+            status = "degraded"
+            err = f"{path.name} is {int(age_s / 60)}min old (limit {max_age_s // 60}min)"
+        else:
+            status = "ok"
+            err = None
+        out.append({
+            "job": job, "status": status,
+            "last_run_at": mtime.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "duration_s": None, "exit_code": None,
+            "error": err, "fallback_used": None,
+            "next_expected_in_s": max_age_s, "cadence": cadence,
+        })
+    return out
+
+
 def aggregate(merge_from_committed: bool = False) -> dict[str, Any]:
     HEALTH_DIR.mkdir(parents=True, exist_ok=True)
     baseline = _load_baseline() if merge_from_committed else {}
@@ -137,6 +177,8 @@ def aggregate(merge_from_committed: bool = False) -> dict[str, Any]:
         else:
             raw = None
         jobs.append(_job_entry(job, raw))
+
+    jobs.extend(_freshness_entries())
 
     payload = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),

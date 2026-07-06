@@ -62,8 +62,20 @@ def _save_cache(cache: dict) -> None:
     docs_path.write_text(payload)
 
 
+def _touch_heartbeat(reason: str) -> None:
+    """Rewrites live_scores.json with fresh mtime + heartbeat metadata even
+    when no live matches exist, so the aggregate_health freshness check can
+    distinguish "job ran and had nothing to do" from "job hasn't run in days".
+    Preserves existing per-match cache; only injects _meta."""
+    now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    cache = _load_cache()
+    cache["_meta"] = {"heartbeat_at": now_iso, "reason": reason}
+    _save_cache(cache)
+
+
 def main() -> int:
     if not LEDGER.exists() or not SIGNALS.exists():
+        _touch_heartbeat("no ledger or signals")
         return 0
 
     # 1. Open bets
@@ -74,6 +86,7 @@ def main() -> int:
                 open_bets.append(r)
     if not open_bets:
         print("Keine offenen Wetten — Skip.")
+        _touch_heartbeat("no open bets")
         return 0
 
     # 2. Schedule (Kickoff-Map)
@@ -109,6 +122,7 @@ def main() -> int:
 
     if not live_match_keys:
         print("Keine offenen Wetten haben aktuell ein Live-Match — Skip (kein API-Call).")
+        _touch_heartbeat("no live match in kickoff window")
         return 0
 
     print(f"Live-Polling für {len(live_match_keys)} Match(es)...")

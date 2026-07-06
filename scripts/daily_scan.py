@@ -161,8 +161,8 @@ if __name__ == "__main__":
         import json as _json0
         _existing_sig = _json0.loads((ROOT / "docs" / "data" / "signals.json").read_text()) if (ROOT / "docs" / "data" / "signals.json").exists() else {}
         all_odds = _existing_sig.get("all_odds", {})
-    except Exception:
-        pass
+    except Exception as _e:
+        print(f"[daily_scan] WARN: failed to seed all_odds from signals.json: {type(_e).__name__}: {_e}", flush=True)
     try:
         for _m in raw_all:
             _home, _away = _m["home_team"], _m["away_team"]
@@ -348,8 +348,8 @@ if __name__ == "__main__":
                         _matrix = predict_scoreline(_h, _a, _dc_params, neutral=True)
                         _sl = scoreline_distribution(_matrix)
                         _top_scores = _sl["top_scores"]
-                    except Exception:
-                        pass
+                    except Exception as _e_sl:
+                        print(f"  [scoreline] {_h}-{_a}: {type(_e_sl).__name__}: {_e_sl}", flush=True)
 
                     # Goalscorer predictions — squad-filtered, opponent-adjusted xG
                     _home_sc, _away_sc = [], []
@@ -365,8 +365,8 @@ if __name__ == "__main__":
                             )
                             _home_sc = _filter_by_squad(_raw_h, _h)[:3]
                             _away_sc = _filter_by_squad(_raw_a, _a)[:3]
-                        except Exception:
-                            pass
+                        except Exception as _e_gs:
+                            print(f"  [goalscorer] {_h}-{_a}: {type(_e_gs).__name__}: {_e_gs}", flush=True)
 
                     model_tips[f"{_h_raw} vs {_a_raw}"] = {
                         "p_home": round(_probs["p_home"], 3),
@@ -382,8 +382,8 @@ if __name__ == "__main__":
                         "top_scorers_away": _away_sc,
                         "top_scores": _top_scores,
                     }
-                except Exception:
-                    pass
+                except Exception as _e_mt:
+                    print(f"  [model_tips] {_h_raw}-{_a_raw}: {type(_e_mt).__name__}: {_e_mt}", flush=True)
             print(f"  Model tips: {len(model_tips)} matches computed")
         else:
             print("  Model tips: no DC params found — skipping")
@@ -446,7 +446,7 @@ if __name__ == "__main__":
         except Exception as _e:
             print(f"  Scores fetch failed: {_e}")
 
-    write_signals_json_all_users(
+    _upload_failed_users = write_signals_json_all_users(
         football=all_signals,
         portfolio=portfolio,
         kickoff_map=kickoff_map,
@@ -459,6 +459,15 @@ if __name__ == "__main__":
         odds_history=_odds_hist_for_dashboard,
         wm_results=_wm_results if _wm_results else None,
     )
+    if _upload_failed_users:
+        # Fail loud — silent cloud-upload failure caused the 2026-07-06 PWA
+        # staleness incident (GH Actions grün, dashboard 11h alt).
+        print(
+            f"[daily_scan] ERROR: cloud upload failed for users={_upload_failed_users}. "
+            "Local signals_{user}.json was written but Cloudflare KV is stale.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
     print("Dashboard: docs/data/signals_{user}.json updated (all known users).")
 
     # Interactive confirmation (skipped with --auto-log)

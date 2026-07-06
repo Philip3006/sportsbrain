@@ -339,13 +339,20 @@ def archive_signals(
     scan_date = scan_ts[:10]
 
     existing: set[tuple[str, str, str]] = set()
+    _corrupt = 0
     if SIGNAL_HISTORY.exists():
-        for line in SIGNAL_HISTORY.read_text(encoding="utf-8").splitlines():
+        for _lineno, line in enumerate(SIGNAL_HISTORY.read_text(encoding="utf-8").splitlines(), 1):
+            if not line.strip():
+                continue
             try:
                 row = json.loads(line)
                 existing.add((row["match_id"], row["market"], row["scan_date"]))
-            except Exception:
-                pass
+            except Exception as e:
+                _corrupt += 1
+                if _corrupt <= 3:
+                    print(f"[archive_signals] corrupt line {_lineno}: {type(e).__name__}: {e}", flush=True)
+    if _corrupt:
+        print(f"[archive_signals] WARN: {_corrupt} corrupt lines skipped in {SIGNAL_HISTORY.name}", flush=True)
 
     written = 0
     with SIGNAL_HISTORY.open("a", encoding="utf-8") as f:
