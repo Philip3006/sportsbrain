@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-06T16:26:50Z",
+  "generated_at": "2026-07-06T19:02:58Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -71,7 +71,7 @@
     {
       "job": "settle",
       "status": "ok",
-      "last_run_at": "2026-07-06T16:26:50Z",
+      "last_run_at": "2026-07-06T19:02:58Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -89,6 +89,28 @@
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min (huckepack)"
+    },
+    {
+      "job": "signals_data_fresh",
+      "status": "ok",
+      "last_run_at": "2026-07-06T19:02:27Z",
+      "duration_s": null,
+      "exit_code": null,
+      "error": null,
+      "fallback_used": null,
+      "next_expected_in_s": 5400,
+      "cadence": "≤90min"
+    },
+    {
+      "job": "live_scores_fresh",
+      "status": "ok",
+      "last_run_at": "2026-07-06T19:02:27Z",
+      "duration_s": null,
+      "exit_code": null,
+      "error": null,
+      "fallback_used": null,
+      "next_expected_in_s": 14400,
+      "cadence": "≤4h"
     }
   ]
 }
