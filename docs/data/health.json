@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-07-06T11:14:51Z",
+  "generated_at": "2026-07-06T12:16:13Z",
   "overall": "degraded",
   "jobs": [
     {
       "job": "daily_scan",
       "status": "ok",
-      "last_run_at": "2026-07-05T10:20:49Z",
+      "last_run_at": "2026-07-06T12:16:13Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
