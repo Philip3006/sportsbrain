@@ -23,6 +23,60 @@
 # the rebase itself finishes but the autostash apply leaves unmerged index entries,
 # blocking all subsequent git operations. We resolve by taking the working-tree version
 # (which is already the merged result from the failed apply) and staging it.
+# Signals-specific merge: try to preserve the union of football/tennis signals
+# instead of blindly taking --theirs, which has repeatedly wiped locally-scanned
+# signals during the incident window (2026-07-06 audit: only 7 match_ids left).
+# Requires jq — falls back to caller's default resolution otherwise.
+_git_signals_json_merge() {
+  local f="$1"
+  local LOG="$2"
+  local TS
+  TS="$(date '+%Y-%m-%d %H:%M:%S %Z')"
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "[$TS] git_safe_push: jq missing — skipping signals merge for $f" >> "$LOG"
+    return 1
+  fi
+  local ours_tmp theirs_tmp merged_tmp
+  ours_tmp="$(mktemp)"; theirs_tmp="$(mktemp)"; merged_tmp="$(mktemp)"
+  if ! git show ":2:$f" > "$ours_tmp" 2>>"$LOG" || ! git show ":3:$f" > "$theirs_tmp" 2>>"$LOG"; then
+    echo "[$TS] git_safe_push: cannot extract stages for $f" >> "$LOG"
+    rm -f "$ours_tmp" "$theirs_tmp" "$merged_tmp"
+    return 1
+  fi
+  # Base = theirs (remote); union in ours' football/tennis signals by (match_id, market).
+  # Ours' all_odds and model_tips also unioned (theirs wins on key collision — remote is newer).
+  if jq -s '
+    def by_key(k1;k2): [.[] | {k: (.[k1] // "") + "|" + (.[k2] // ""), v: .}] | from_entries;
+    .[1] as $theirs | .[0] as $ours |
+    ($theirs.football // []) as $tf | ($ours.football // []) as $of |
+    ($tf | by_key("match_id";"market")) as $tfm |
+    ($of | by_key("match_id";"market")) as $ofm |
+    ($theirs.tennis // []) as $tt | ($ours.tennis // []) as $ot |
+    ($tt | by_key("match_id";"market")) as $ttm |
+    ($ot | by_key("match_id";"market")) as $otm |
+    $theirs
+      | .football = (($ofm + $tfm) | to_entries | map(.value))
+      | .tennis   = (($otm + $ttm) | to_entries | map(.value))
+      | .all_odds   = (($ours.all_odds   // {}) + ($theirs.all_odds   // {}))
+      | .model_tips = (($ours.model_tips // {}) + ($theirs.model_tips // {}))
+  ' "$ours_tmp" "$theirs_tmp" > "$merged_tmp" 2>>"$LOG"; then
+    # Sanity check: merged must have same or more football+tennis entries than theirs
+    local n_ours n_theirs n_merged
+    n_ours=$(jq '((.football // []) | length) + ((.tennis // []) | length)' "$ours_tmp" 2>/dev/null || echo 0)
+    n_theirs=$(jq '((.football // []) | length) + ((.tennis // []) | length)' "$theirs_tmp" 2>/dev/null || echo 0)
+    n_merged=$(jq '((.football // []) | length) + ((.tennis // []) | length)' "$merged_tmp" 2>/dev/null || echo 0)
+    if [ "$n_merged" -ge "$n_theirs" ] && [ "$n_merged" -ge "$n_ours" ]; then
+      mv "$merged_tmp" "$f"
+      echo "[$TS] git_safe_push: signals merged (ours=$n_ours theirs=$n_theirs → merged=$n_merged) for $f" >> "$LOG"
+      rm -f "$ours_tmp" "$theirs_tmp"
+      return 0
+    fi
+    echo "[$TS] git_safe_push: signals merge sanity failed (ours=$n_ours theirs=$n_theirs merged=$n_merged)" >> "$LOG"
+  fi
+  rm -f "$ours_tmp" "$theirs_tmp" "$merged_tmp"
+  return 1
+}
+
 _git_clear_unmerged() {
   local LOG="$1"
   local TS
@@ -34,6 +88,17 @@ _git_clear_unmerged() {
   fi
   echo "[$TS] git_safe_push: unmerged files detected, force-staging working-tree versions" >> "$LOG"
   echo "$unmerged" | while IFS= read -r f; do
+    # Signals.json gets a jq-based union merge before the generic path — avoids
+    # silent data-loss when --theirs wipes locally-scanned football/tennis rows.
+    case "$f" in
+      docs/data/signals.json|docs/data/signals_*.json)
+        if _git_signals_json_merge "$f" "$LOG"; then
+          git add -- "$f" >> "$LOG" 2>&1 || true
+          echo "[$TS] git_safe_push: staged merged $f" >> "$LOG"
+          continue
+        fi
+        ;;
+    esac
     # Remove conflict markers if present, take working tree version
     if grep -qE '^(<{7}|={7}|>{7})' "$f" 2>/dev/null; then
       # Has actual conflict markers — take theirs (remote/upstream) as authoritative

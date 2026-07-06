@@ -63,13 +63,22 @@ def list_known_users() -> list[str]:
     return sorted(users)
 
 
-def write_signals_json_all_users(**kwargs) -> None:
+def write_signals_json_all_users(**kwargs) -> list[str]:
     """D4: Calls `write_signals_json` once per known user (auto-discovery via
     `list_known_users`). Each call uses the user's own ledger for per-user
-    bankroll/open/settled state but identical scored signals."""
+    bankroll/open/settled state but identical scored signals.
+
+    Returns list of users whose cloud upload FAILED. Callers must check this
+    and fail loud — silent cloud-upload failures were the root cause of the
+    2026-07-06 PWA staleness incident.
+    """
     kwargs.pop("user", None)
+    failed: list[str] = []
     for u in list_known_users():
-        write_signals_json(user=u, **kwargs)
+        ok = write_signals_json(user=u, **kwargs)
+        if ok is False:
+            failed.append(u)
+    return failed
 
 # FIFA-Konföderation-Mapping (WM 2026 Teams + WM-Qualifikations-Backtest)
 CONFEDERATION_MAP: dict[str, str] = {
@@ -622,11 +631,16 @@ def write_signals_json(
     odds_history: dict | None = None,  # {match_key: [{date, home, draw, away}]}
     wm_results: list[dict] | None = None,  # [{home, away, home_score, away_score, commence_time}]
     user: str = _DEFAULT_USER,  # D4: writes signals_{user}.json; default user mirrors signals.json
-) -> None:
+) -> bool:
     """
     Writes (or merges into) docs/data/signals_{user}.json (and `signals.json`
     for the default user, for backward compat).
     Merges football and tennis so each scanner can call independently.
+
+    Returns True iff the local write succeeded AND the cloud upload succeeded
+    (or was skipped because env vars are unset — that's not treated as a
+    failure). Returns False when the cloud POST actually failed, so callers
+    can fail loud.
 
     schedule: optional list of all upcoming matches (not just value bets) —
               each dict: {sport, home, away, kickoff, tour?}
@@ -815,20 +829,28 @@ def write_signals_json(
     # Backward-compat: default user also writes the legacy `signals.json`.
     if user == _DEFAULT_USER:
         _JSON_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2))
-    upload_signals_to_cloud(path=json_path, user=user)
+    return upload_signals_to_cloud(path=json_path, user=user)
 
 
 def upload_signals_to_cloud(path: Path | None = None, user: str = _DEFAULT_USER) -> bool:
-    """Upload signals.json to Cloudflare Worker KV. No-op if env vars not set."""
+    """Upload signals.json to Cloudflare Worker KV.
+
+    Returns True on success OR when cloud env vars are unset (no-op is not
+    treated as failure). Returns False only when a real POST attempt failed —
+    that's the signal for callers to fail loud (see incident 2026-07-06).
+    All failure paths log the reason (previously all silent).
+    """
     try:
         import requests as _req
     except ImportError:
-        return False
+        print("[cloud-upload] requests not installed — skipping", flush=True)
+        return True
 
     url = os.getenv("SIGNALS_CLOUD_URL")
     token = os.getenv("SIGNALS_API_TOKEN")
     if not url or not token:
-        return False
+        print("[cloud-upload] SIGNALS_CLOUD_URL/SIGNALS_API_TOKEN unset — skipping", flush=True)
+        return True
 
     # Worker POST endpoint is /signals, GET is /signals.json — strip suffix for write
     post_url = url[: -len("/signals.json")] + "/signals" if url.endswith("/signals.json") else url
@@ -839,6 +861,7 @@ def upload_signals_to_cloud(path: Path | None = None, user: str = _DEFAULT_USER)
 
     target = path or _JSON_PATH
     if not target.exists():
+        print(f"[cloud-upload] target {target} missing — skipping", flush=True)
         return False
 
     try:
@@ -852,6 +875,15 @@ def upload_signals_to_cloud(path: Path | None = None, user: str = _DEFAULT_USER)
             },
             timeout=15,
         )
-        return r.status_code == 200
-    except Exception:
+        if r.status_code == 200:
+            print(f"[cloud-upload] ok user={user} ({len(data)} bytes)", flush=True)
+            return True
+        print(
+            f"[cloud-upload] FAILED user={user} status={r.status_code} "
+            f"body={r.text[:200]!r}",
+            flush=True,
+        )
+        return False
+    except Exception as e:
+        print(f"[cloud-upload] EXCEPTION user={user}: {type(e).__name__}: {e}", flush=True)
         return False

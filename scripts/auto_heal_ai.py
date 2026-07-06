@@ -22,6 +22,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
+# Ensure `from src...` works when launched by launchd (no PYTHONPATH from shell).
+# Previously auto_heal_ai spammed "No module named 'src'" for hours and skipped
+# every outcome check silently (incident 2026-07-06).
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 HEALTH_JSON = ROOT / "docs" / "data" / "health.json"
 HEAL_LOG = ROOT / "results" / "auto_heal.log"
 COOLDOWN_STATE = ROOT / "results" / "health" / "auto_heal_cooldown.json"
@@ -273,7 +278,7 @@ def _handle_outcome_symptoms() -> None:
     try:
         from src.monitoring.outcome_checks import run_all_checks, Symptom
     except Exception as e:
-        _log(f"outcome_checks import failed: {e}")
+        _log(f"outcome_checks import failed: {type(e).__name__}: {e} (sys.path[0]={sys.path[0]!r})")
         return
 
     symptoms: list = run_all_checks()
