@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-07T11:59:04Z",
+  "generated_at": "2026-07-07T14:01:20Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -16,8 +16,8 @@
     {
       "job": "auto_retrain",
       "status": "ok",
-      "last_run_at": "2026-07-07T04:10:34Z",
-      "duration_s": 4.0,
+      "last_run_at": "2026-07-07T14:01:20Z",
+      "duration_s": null,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -37,11 +37,11 @@
     },
     {
       "job": "consume_pending_bets",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-07-07T11:59:04Z",
       "duration_s": 2.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-07-07T11:59:04Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
@@ -70,11 +70,11 @@
     },
     {
       "job": "settle",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-07-07T11:30:55Z",
       "duration_s": 1.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-07-07T11:30:55Z — overdue (>4200s)",
       "fallback_used": null,
       "next_expected_in_s": 3600,
       "cadence": "stündlich 00:30–04:30"
@@ -92,22 +92,22 @@
     },
     {
       "job": "signals_data_fresh",
-      "status": "degraded",
-      "last_run_at": "2026-07-07T05:34:26Z",
+      "status": "ok",
+      "last_run_at": "2026-07-07T14:00:45Z",
       "duration_s": null,
       "exit_code": null,
-      "error": "signals.json is 384min old (limit 90min)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 5400,
       "cadence": "≤90min"
     },
     {
       "job": "live_scores_fresh",
-      "status": "degraded",
-      "last_run_at": "2026-07-07T05:34:26Z",
+      "status": "ok",
+      "last_run_at": "2026-07-07T14:00:45Z",
       "duration_s": null,
       "exit_code": null,
-      "error": "live_scores.json is 384min old (limit 240min)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 14400,
       "cadence": "≤4h"
