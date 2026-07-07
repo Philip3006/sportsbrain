@@ -1,7 +1,7 @@
 {
-  "updated": "2026-07-07T05:34:20Z",
+  "updated": "2026-07-07T13:10:43Z",
   "build_info": {
-    "sha": "64b8889",
+    "sha": "99b0536",
     "date": "2026-07-07"
   },
   "meta": {
@@ -9,38 +9,7 @@
     "default_user": "philip",
     "user": "philip"
   },
-  "schedule": [
-    {
-      "sport": "football",
-      "home": "Argentina",
-      "away": "Egypt",
-      "kickoff": "2026-07-07T16:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "Switzerland",
-      "away": "Colombia",
-      "kickoff": "2026-07-07T20:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "France",
-      "away": "Morocco",
-      "kickoff": "2026-07-09T20:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "Spain",
-      "away": "Belgium",
-      "kickoff": "2026-07-10T19:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "Norway",
-      "away": "England",
-      "kickoff": "2026-07-11T21:00:00Z"
-    }
-  ],
+  "schedule": [],
   "all_odds": {
     "Bosnia & Herzegovina vs Qatar": {
       "home": 1.39,
@@ -3865,7 +3834,7 @@
     },
     {
       "name": "Fritz T.",
-      "rating": 1641
+      "rating": 1638
     },
     {
       "name": "Sinner J.",
@@ -3873,7 +3842,7 @@
     },
     {
       "name": "Djokovic N.",
-      "rating": 1620
+      "rating": 1615
     },
     {
       "name": "Swiatek I.",
@@ -3888,16 +3857,16 @@
       "rating": 1587
     },
     {
-      "name": "Bublik A.",
-      "rating": 1576
-    },
-    {
       "name": "Sabalenka A.",
       "rating": 1576
     },
     {
+      "name": "Bublik A.",
+      "rating": 1576
+    },
+    {
       "name": "Medvedev D.",
-      "rating": 1575
+      "rating": 1574
     }
   ],
   "history": [
