@@ -1,7 +1,7 @@
 {
   "_comment": "WM 2026 Verletzungen & Sperren — Stand: 10. Juni 2026. Quellen: ESPN, Goal.com, FIFA.com, Sports Mole.",
   "_format": "team_name: [player_name, ...] — availability=0 im Modell gesetzt",
-  "_injuries_last_updated": "2026-06-26",
+  "_injuries_last_updated": "2026-07-07",
   "Czech Republic": [
     "David Jurasek",
     "Václav Cerný"
@@ -26,7 +26,8 @@
     "Ismaël Koné",
     "Jonathan David",
     "Marcelo Flores",
-    "Moïse Bombito"
+    "Moïse Bombito",
+    "Alphonso Davies"
   ],
   "Qatar": [
     "Assim Madibo",
@@ -177,7 +178,9 @@
   "Croatia": [],
   "England": [
     "Marcus Rashford",
-    "Tino Livramento"
+    "Tino Livramento",
+    "Jordan Henderson",
+    "Reece James"
   ],
   "Ghana": [
     "Benjamin Asare",

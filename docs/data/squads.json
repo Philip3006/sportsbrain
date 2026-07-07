@@ -1,5 +1,5 @@
 {
-  "updated": "2026-06-26",
+  "updated": "2026-07-07",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -1003,7 +1003,8 @@
         "Ismaël Koné",
         "Jonathan David",
         "Marcelo Flores",
-        "Moïse Bombito"
+        "Moïse Bombito",
+        "Alphonso Davies"
       ],
       "players": [
         {
@@ -1099,7 +1100,7 @@
         {
           "name": "Alphonso Davies",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Ali Ahmed",
@@ -2265,7 +2266,9 @@
       "ampel": "🟢",
       "suspended": [
         "Marcus Rashford",
-        "Tino Livramento"
+        "Tino Livramento",
+        "Jordan Henderson",
+        "Reece James"
       ],
       "players": [
         {
@@ -2336,7 +2339,7 @@
         {
           "name": "Jordan Henderson",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Dan Burn",
@@ -2386,7 +2389,7 @@
         {
           "name": "Reece James",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Djed Spence",
