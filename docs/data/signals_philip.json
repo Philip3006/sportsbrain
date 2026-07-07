@@ -1,8 +1,8 @@
 {
-  "updated": "2026-07-06T22:19:47Z",
+  "updated": "2026-07-07T09:31:31Z",
   "build_info": {
-    "sha": "b2ed6dd",
-    "date": "2026-07-06"
+    "sha": "a01d257",
+    "date": "2026-07-07"
   },
   "meta": {
     "stale_odds": false,
@@ -3595,7 +3595,7 @@
     },
     {
       "name": "Djokovic N.",
-      "rating": 1621
+      "rating": 1620
     },
     {
       "name": "Swiatek I.",
@@ -3619,7 +3619,7 @@
     },
     {
       "name": "Medvedev D.",
-      "rating": 1576
+      "rating": 1575
     }
   ],
   "history": [
