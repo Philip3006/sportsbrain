@@ -1,7 +1,7 @@
 {
-  "updated": "2026-07-07T17:51:35Z",
+  "updated": "2026-07-07T22:16:51Z",
   "build_info": {
-    "sha": "299ae5e",
+    "sha": "ddd2437",
     "date": "2026-07-07"
   },
   "meta": {
@@ -3621,20 +3621,6 @@
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-07-11T21:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Switzerland vs Colombia",
-      "market": "away",
-      "odds": 2.32,
-      "model_prob": 47.9,
-      "fair_prob": 43.4,
-      "ev_pct": 11.1,
-      "stake_eur": 7.98,
-      "stake_pct": 9.1,
-      "confidence": "LOW",
-      "n_models_agree": 2,
-      "kickoff": "2026-07-07T20:00:00Z"
     }
   ],
   "tennis": [],
