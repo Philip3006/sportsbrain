@@ -3698,7 +3698,7 @@
     }
   },
   {
-    "ts": "2026-07-07T05:24:57Z",
+    "ts": "2026-07-07T14:50:01Z",
     "date": "2026-07-07",
     "odds": {
       "Bosnia & Herzegovina vs Qatar": {
@@ -3841,40 +3841,30 @@
         "draw": 4.6,
         "away": 7.8
       },
-      "Portugal vs Spain": {
-        "home": 7.19,
-        "draw": 1.67,
-        "away": 3.25
-      },
-      "USA vs Belgium": {
-        "home": 2.62,
-        "draw": 3.55,
-        "away": 2.98
-      },
       "Argentina vs Egypt": {
-        "home": 1.41,
+        "home": 1.38,
         "draw": 5.2,
-        "away": 11.5
+        "away": 13.0
       },
       "Switzerland vs Colombia": {
-        "home": 3.95,
-        "draw": 3.23,
-        "away": 2.32
+        "home": 3.8,
+        "draw": 3.2,
+        "away": 2.35
       },
       "France vs Morocco": {
-        "home": 1.64,
+        "home": 1.62,
         "draw": 4.1,
-        "away": 6.8
-      },
-      "Norway vs England": {
-        "home": 4.3,
-        "draw": 3.81,
-        "away": 1.95
+        "away": 6.81
       },
       "Spain vs Belgium": {
-        "home": 1.7,
-        "draw": 4.1,
-        "away": 5.98
+        "home": 1.65,
+        "draw": 4.2,
+        "away": 6.2
+      },
+      "Norway vs England": {
+        "home": 4.5,
+        "draw": 3.83,
+        "away": 1.95
       }
     }
   }
