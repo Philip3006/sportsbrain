@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-08T15:29:49Z",
+  "generated_at": "2026-07-08T17:48:09Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -71,7 +71,7 @@
     {
       "job": "settle",
       "status": "ok",
-      "last_run_at": "2026-07-08T15:29:49Z",
+      "last_run_at": "2026-07-08T17:48:09Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -93,7 +93,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-07-08T15:29:19Z",
+      "last_run_at": "2026-07-08T17:47:41Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -104,7 +104,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-07-08T15:29:19Z",
+      "last_run_at": "2026-07-08T17:47:41Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
