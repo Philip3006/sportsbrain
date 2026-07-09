@@ -1,7 +1,7 @@
 {
-  "updated": "2026-07-09T11:05:08Z",
+  "updated": "2026-07-09T11:50:13Z",
   "build_info": {
-    "sha": "8a05908",
+    "sha": "1aae24f",
     "date": "2026-07-09"
   },
   "meta": {
@@ -3651,25 +3651,11 @@
       "model_prob": 59.3,
       "fair_prob": 59.3,
       "ev_pct": 36.7,
-      "stake_eur": 15.0,
-      "stake_pct": 17.1,
+      "stake_eur": 20.0,
+      "stake_pct": 20.0,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-07-09T20:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Norway vs England",
-      "market": "ah-1.5_away",
-      "odds": 3.3,
-      "model_prob": 38.7,
-      "fair_prob": 38.7,
-      "ev_pct": 27.8,
-      "stake_eur": 8.25,
-      "stake_pct": 9.4,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-07-11T21:00:00Z"
     },
     {
       "sport": "football",
@@ -3679,8 +3665,22 @@
       "model_prob": 92.1,
       "fair_prob": 92.1,
       "ev_pct": 27.4,
-      "stake_eur": 15.0,
-      "stake_pct": 17.1,
+      "stake_eur": 20.0,
+      "stake_pct": 20.0,
+      "confidence": "LOW",
+      "n_models_agree": 0,
+      "kickoff": "2026-07-11T21:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "Norway vs England",
+      "market": "ah-1.5_away",
+      "odds": 3.25,
+      "model_prob": 38.7,
+      "fair_prob": 38.7,
+      "ev_pct": 25.9,
+      "stake_eur": 11.0,
+      "stake_pct": 11.0,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-07-11T21:00:00Z"
@@ -3689,12 +3689,12 @@
       "sport": "football",
       "match": "Argentina vs Switzerland",
       "market": "ah+0.5_away",
-      "odds": 2.22,
+      "odds": 2.23,
       "model_prob": 53.9,
       "fair_prob": 53.9,
-      "ev_pct": 19.6,
-      "stake_eur": 11.25,
-      "stake_pct": 12.8,
+      "ev_pct": 20.2,
+      "stake_eur": 15.0,
+      "stake_pct": 15.0,
       "confidence": "HIGH",
       "n_models_agree": 0,
       "kickoff": "2026-07-12T01:00:00Z"
@@ -3707,8 +3707,8 @@
       "model_prob": 28.1,
       "fair_prob": 28.1,
       "ev_pct": 19.0,
-      "stake_eur": 8.06,
-      "stake_pct": 9.2,
+      "stake_eur": 10.71,
+      "stake_pct": 10.7,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-07-12T01:00:00Z"
@@ -3721,8 +3721,8 @@
       "model_prob": 48.9,
       "fair_prob": 43.5,
       "ev_pct": 12.5,
-      "stake_eur": 8.51,
-      "stake_pct": 9.7,
+      "stake_eur": 11.05,
+      "stake_pct": 11.1,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-07-11T21:00:00Z"
