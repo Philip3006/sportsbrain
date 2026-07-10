@@ -1,8 +1,8 @@
 {
-  "updated": "2026-07-09T22:37:06Z",
+  "updated": "2026-07-10T09:24:51Z",
   "build_info": {
-    "sha": "a25b13a",
-    "date": "2026-07-09"
+    "sha": "b290fc3",
+    "date": "2026-07-10"
   },
   "meta": {
     "stale_odds": false,
@@ -3806,7 +3806,7 @@
     },
     {
       "name": "Fritz T.",
-      "rating": 1641
+      "rating": 1640
     },
     {
       "name": "Sinner J.",
@@ -3818,7 +3818,7 @@
     },
     {
       "name": "Swiatek I.",
-      "rating": 1614
+      "rating": 1613
     },
     {
       "name": "Alexandrova E.",
