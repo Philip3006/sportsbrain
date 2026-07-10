@@ -1,7 +1,7 @@
 {
-  "updated": "2026-07-10T09:53:40Z",
+  "updated": "2026-07-10T11:48:03Z",
   "build_info": {
-    "sha": "06c4c12",
+    "sha": "1855ec3",
     "date": "2026-07-10"
   },
   "meta": {
@@ -3144,10 +3144,10 @@
       ]
     },
     "Spain vs Belgium": {
-      "home": 1.68,
-      "draw": 4.12,
-      "away": 6.2,
-      "over25": 1.85,
+      "home": 1.67,
+      "draw": 4.17,
+      "away": 6.3,
+      "over25": 1.84,
       "under25": 2.14,
       "over15": 0.0,
       "under15": 0.0,
@@ -3155,25 +3155,23 @@
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over275": 2.04,
+      "over275": 2.03,
       "under275": 1.88,
       "over20": 1.35,
       "under20": 3.15,
       "ah-1.0_home": 2.15,
-      "ah-1.0_away": 1.85,
+      "ah-1.0_away": 1.86,
       "ah-0.5_home": 1.65,
       "ah-0.5_away": 2.32,
-      "ah-1.5_home": 2.7,
+      "ah-1.5_home": 2.69,
       "ah-1.5_away": 1.5,
-      "ah-0.75_home": 1.78,
-      "ah-0.75_away": 2.08,
       "bookmakers_h2h": [
         {
           "key": "pinnacle",
           "title": "Pinnacle",
           "home": 1.65,
-          "draw": 4.01,
-          "away": 5.86
+          "draw": 4.03,
+          "away": 5.92
         },
         {
           "key": "gtbets",
@@ -3185,44 +3183,44 @@
         {
           "key": "onexbet",
           "title": "1xBet",
-          "home": 1.65,
-          "draw": 4.12,
-          "away": 5.98
+          "home": 1.64,
+          "draw": 4.17,
+          "away": 6.03
         },
         {
           "key": "leovegas",
           "title": "LeoVegas",
-          "home": 1.65,
-          "draw": 3.9,
+          "home": 1.62,
+          "draw": 4.0,
           "away": 5.5
         },
         {
           "key": "tipico_de",
           "title": "Tipico",
-          "home": 1.6,
-          "draw": 4.0,
-          "away": 5.7
+          "home": 1.57,
+          "draw": 4.1,
+          "away": 6.0
         },
         {
           "key": "unibet_uk",
           "title": "Unibet (UK)",
-          "home": 1.65,
+          "home": 1.62,
           "draw": 4.0,
-          "away": 5.25
+          "away": 5.5
         },
         {
           "key": "marathonbet",
           "title": "Marathon Bet",
-          "home": 1.6,
-          "draw": 4.0,
-          "away": 5.8
+          "home": 1.59,
+          "draw": 4.05,
+          "away": 5.85
         },
         {
           "key": "unibet_fr",
           "title": "Unibet (FR)",
           "home": 1.58,
-          "draw": 4.1,
-          "away": 6.2
+          "draw": 4.15,
+          "away": 6.3
         },
         {
           "key": "coral",
@@ -3243,8 +3241,8 @@
     "Norway vs England": {
       "home": 4.4,
       "draw": 3.85,
-      "away": 1.94,
-      "over25": 1.78,
+      "away": 1.95,
+      "over25": 1.76,
       "under25": 2.2,
       "over15": 0.0,
       "under15": 0.0,
@@ -3282,7 +3280,7 @@
           "title": "SportsBet",
           "home": 4.2,
           "draw": 3.6,
-          "away": 1.86
+          "away": 1.87
         },
         {
           "key": "virginbet",
@@ -3294,16 +3292,16 @@
         {
           "key": "winamax_fr",
           "title": "Winamax (FR)",
-          "home": 4.0,
-          "draw": 3.7,
-          "away": 1.82
+          "home": 3.95,
+          "draw": 3.65,
+          "away": 1.86
         },
         {
           "key": "coral",
           "title": "Coral",
-          "home": 4.0,
+          "home": 3.9,
           "draw": 3.6,
-          "away": 1.85
+          "away": 1.91
         },
         {
           "key": "unibet_se",
@@ -3322,9 +3320,9 @@
         {
           "key": "ladbrokes_uk",
           "title": "Ladbrokes",
-          "home": 4.0,
+          "home": 3.8,
           "draw": 3.6,
-          "away": 1.85
+          "away": 1.91
         },
         {
           "key": "tabtouch",
@@ -3338,7 +3336,7 @@
     "Argentina vs Switzerland": {
       "home": 1.75,
       "draw": 3.7,
-      "away": 6.4,
+      "away": 6.2,
       "over25": 2.24,
       "under25": 1.7,
       "over15": 0.0,
@@ -3347,7 +3345,7 @@
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over20": 1.69,
+      "over20": 1.7,
       "under20": 2.3,
       "over225": 1.98,
       "under225": 1.9,
@@ -3599,8 +3597,8 @@
       "model_prob": 92.1,
       "fair_prob": 92.1,
       "ev_pct": 29.3,
-      "stake_eur": 15.0,
-      "stake_pct": 17.1,
+      "stake_eur": 20.0,
+      "stake_pct": 20.0,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-07-11T21:00:00Z"
@@ -3613,8 +3611,8 @@
       "model_prob": 38.7,
       "fair_prob": 38.7,
       "ev_pct": 25.9,
-      "stake_eur": 8.25,
-      "stake_pct": 9.4,
+      "stake_eur": 11.0,
+      "stake_pct": 11.0,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-07-11T21:00:00Z"
@@ -3627,8 +3625,8 @@
       "model_prob": 53.9,
       "fair_prob": 53.9,
       "ev_pct": 22.9,
-      "stake_eur": 11.25,
-      "stake_pct": 12.8,
+      "stake_eur": 15.0,
+      "stake_pct": 15.0,
       "confidence": "HIGH",
       "n_models_agree": 0,
       "kickoff": "2026-07-12T01:00:00Z"
@@ -3637,12 +3635,12 @@
       "sport": "football",
       "match": "Argentina vs Switzerland",
       "market": "o/u3.0_over",
-      "odds": 3.45,
+      "odds": 3.4,
       "model_prob": 28.1,
       "fair_prob": 28.1,
-      "ev_pct": 19.0,
-      "stake_eur": 8.06,
-      "stake_pct": 9.2,
+      "ev_pct": 17.6,
+      "stake_eur": 10.29,
+      "stake_pct": 10.3,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-07-12T01:00:00Z"
@@ -3655,8 +3653,8 @@
       "model_prob": 48.9,
       "fair_prob": 42.0,
       "ev_pct": 16.5,
-      "stake_eur": 9.95,
-      "stake_pct": 11.3,
+      "stake_eur": 13.13,
+      "stake_pct": 13.1,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-07-11T21:00:00Z"
@@ -10055,7 +10053,7 @@
         "date": "2026-07-10",
         "home": 4.4,
         "draw": 3.85,
-        "away": 1.94
+        "away": 1.95
       }
     ],
     "Spain vs Belgium": [
@@ -10079,9 +10077,9 @@
       },
       {
         "date": "2026-07-10",
-        "home": 1.68,
-        "draw": 4.12,
-        "away": 6.2
+        "home": 1.67,
+        "draw": 4.17,
+        "away": 6.3
       }
     ],
     "Argentina vs Switzerland": [
@@ -10107,7 +10105,7 @@
         "date": "2026-07-10",
         "home": 1.75,
         "draw": 3.7,
-        "away": 6.4
+        "away": 6.2
       }
     ]
   },
