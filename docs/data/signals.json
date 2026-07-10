@@ -1,7 +1,7 @@
 {
-  "updated": "2026-07-10T11:48:03Z",
+  "updated": "2026-07-10T14:19:35Z",
   "build_info": {
-    "sha": "1855ec3",
+    "sha": "a24c3de",
     "date": "2026-07-10"
   },
   "meta": {
@@ -3144,34 +3144,34 @@
       ]
     },
     "Spain vs Belgium": {
-      "home": 1.67,
-      "draw": 4.17,
-      "away": 6.3,
-      "over25": 1.84,
-      "under25": 2.14,
+      "home": 1.66,
+      "draw": 4.2,
+      "away": 6.2,
+      "over25": 1.83,
+      "under25": 2.16,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over275": 2.03,
+      "over275": 2.02,
       "under275": 1.88,
-      "over20": 1.35,
-      "under20": 3.15,
-      "ah-1.0_home": 2.15,
-      "ah-1.0_away": 1.86,
+      "over20": 1.34,
+      "under20": 3.2,
+      "ah-1.0_home": 2.12,
+      "ah-1.0_away": 1.88,
       "ah-0.5_home": 1.65,
       "ah-0.5_away": 2.32,
-      "ah-1.5_home": 2.69,
-      "ah-1.5_away": 1.5,
+      "ah-1.5_home": 2.68,
+      "ah-1.5_away": 1.51,
       "bookmakers_h2h": [
         {
           "key": "pinnacle",
           "title": "Pinnacle",
           "home": 1.65,
-          "draw": 4.03,
-          "away": 5.92
+          "draw": 4.04,
+          "away": 5.89
         },
         {
           "key": "gtbets",
@@ -3219,14 +3219,14 @@
           "key": "unibet_fr",
           "title": "Unibet (FR)",
           "home": 1.58,
-          "draw": 4.15,
-          "away": 6.3
+          "draw": 4.2,
+          "away": 6.2
         },
         {
           "key": "coral",
           "title": "Coral",
-          "home": 1.61,
-          "draw": 4.0,
+          "home": 1.65,
+          "draw": 3.9,
           "away": 5.25
         },
         {
@@ -3239,10 +3239,10 @@
       ]
     },
     "Norway vs England": {
-      "home": 4.4,
+      "home": 4.35,
       "draw": 3.85,
       "away": 1.95,
-      "over25": 1.76,
+      "over25": 1.77,
       "under25": 2.2,
       "over15": 0.0,
       "under15": 0.0,
@@ -3250,16 +3250,16 @@
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over275": 1.96,
-      "under275": 1.93,
+      "over275": 1.97,
+      "under275": 1.92,
       "over20": 1.34,
-      "under20": 3.2,
+      "under20": 3.25,
       "ah0.5_home": 2.04,
-      "ah0.5_away": 1.94,
+      "ah0.5_away": 1.95,
       "ah1.5_home": 1.3,
       "ah1.5_away": 3.25,
-      "ah0.0_home": 3.08,
-      "ah0.0_away": 1.41,
+      "ah0.0_home": 3.02,
+      "ah0.0_away": 1.42,
       "bookmakers_h2h": [
         {
           "key": "unibet",
@@ -3278,9 +3278,9 @@
         {
           "key": "sportsbet",
           "title": "SportsBet",
-          "home": 4.2,
+          "home": 4.1,
           "draw": 3.6,
-          "away": 1.87
+          "away": 1.88
         },
         {
           "key": "virginbet",
@@ -3306,7 +3306,7 @@
         {
           "key": "unibet_se",
           "title": "Unibet (SE)",
-          "home": 4.3,
+          "home": 4.35,
           "draw": 3.7,
           "away": 1.91
         },
@@ -3336,27 +3336,27 @@
     "Argentina vs Switzerland": {
       "home": 1.75,
       "draw": 3.7,
-      "away": 6.2,
-      "over25": 2.24,
-      "under25": 1.7,
+      "away": 6.4,
+      "over25": 2.25,
+      "under25": 1.71,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over20": 1.7,
+      "over20": 1.69,
       "under20": 2.3,
       "over225": 1.98,
       "under225": 1.9,
       "over30": 3.4,
       "under30": 1.31,
-      "ah-0.5_home": 1.72,
+      "ah-0.5_home": 1.69,
       "ah-0.5_away": 2.28,
       "ah-1.5_home": 3.29,
       "ah-1.5_away": 1.37,
-      "ah-0.75_home": 1.96,
-      "ah-0.75_away": 2.02,
+      "ah-0.75_home": 1.97,
+      "ah-0.75_away": 2.0,
       "bookmakers_h2h": [
         {
           "key": "unibet",
@@ -3619,6 +3619,20 @@
     },
     {
       "sport": "football",
+      "match": "Norway vs England",
+      "market": "scorer_Ivan Toney",
+      "odds": 2.54,
+      "model_prob": 48.9,
+      "fair_prob": 39.4,
+      "ev_pct": 24.3,
+      "stake_eur": 15.0,
+      "stake_pct": 15.0,
+      "confidence": "LOW",
+      "n_models_agree": 0,
+      "kickoff": "2026-07-11T21:00:00Z"
+    },
+    {
+      "sport": "football",
       "match": "Argentina vs Switzerland",
       "market": "ah+0.5_away",
       "odds": 2.28,
@@ -3644,20 +3658,6 @@
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-07-12T01:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Norway vs England",
-      "market": "scorer_Ivan Toney",
-      "odds": 2.38,
-      "model_prob": 48.9,
-      "fair_prob": 42.0,
-      "ev_pct": 16.5,
-      "stake_eur": 13.13,
-      "stake_pct": 13.1,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-07-11T21:00:00Z"
     }
   ],
   "tennis": [],
@@ -10051,7 +10051,7 @@
       },
       {
         "date": "2026-07-10",
-        "home": 4.4,
+        "home": 4.35,
         "draw": 3.85,
         "away": 1.95
       }
@@ -10077,9 +10077,9 @@
       },
       {
         "date": "2026-07-10",
-        "home": 1.67,
-        "draw": 4.17,
-        "away": 6.3
+        "home": 1.66,
+        "draw": 4.2,
+        "away": 6.2
       }
     ],
     "Argentina vs Switzerland": [
@@ -10105,7 +10105,7 @@
         "date": "2026-07-10",
         "home": 1.75,
         "draw": 3.7,
-        "away": 6.2
+        "away": 6.4
       }
     ]
   },
