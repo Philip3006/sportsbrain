@@ -1,8 +1,8 @@
 {
-  "updated": "2026-07-11T21:56:50Z",
+  "updated": "2026-07-12T08:07:22Z",
   "build_info": {
-    "sha": "f570427",
-    "date": "2026-07-11"
+    "sha": "51c546f",
+    "date": "2026-07-12"
   },
   "meta": {
     "stale_odds": false,
@@ -3565,50 +3565,7 @@
       ]
     }
   },
-  "football": [
-    {
-      "sport": "football",
-      "match": "Norway vs England",
-      "market": "scorer_Bukayo Saka",
-      "odds": 4.0,
-      "model_prob": 34.9,
-      "fair_prob": 25.0,
-      "ev_pct": 39.6,
-      "stake_eur": 8.25,
-      "stake_pct": 9.4,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-07-11T21:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Norway vs England",
-      "market": "ah-1.5_away",
-      "odds": 3.35,
-      "model_prob": 39.6,
-      "fair_prob": 39.6,
-      "ev_pct": 32.8,
-      "stake_eur": 8.25,
-      "stake_pct": 9.4,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-07-11T21:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Norway vs England",
-      "market": "o/u2.0_over",
-      "odds": 1.34,
-      "model_prob": 90.9,
-      "fair_prob": 90.9,
-      "ev_pct": 28.5,
-      "stake_eur": 15.0,
-      "stake_pct": 17.1,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-07-11T21:00:00Z"
-    }
-  ],
+  "football": [],
   "tennis": [],
   "portfolio": {
     "n_bets": 67,
@@ -4943,10 +4900,10 @@
       "pnl": -12.33,
       "yield_pct": -1.95,
       "mean_clv": 4.23,
-      "mean_clv_30d": 4.23,
+      "mean_clv_30d": 5.22,
       "mean_edge": 8.17,
       "n_clv": 25,
-      "n_clv_30d": 25,
+      "n_clv_30d": 20,
       "n_edge": 32
     },
     "per_team_market": {
