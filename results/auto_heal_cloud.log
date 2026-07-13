@@ -1310,3 +1310,11 @@
 [2026-07-13 21:30:11 UTC] [cloud_healer] live_score_push: Workflow bereits aktiv (in_progress) — übersprungen
 [2026-07-13 21:30:12 UTC] [cloud_healer] prematch_scan: status=stale — triggere prematch_scan.yml
 [2026-07-13 21:30:13 UTC] [cloud_healer] prematch_scan: erfolgreich ausgelöst
+[2026-07-13 23:02:10 UTC] [cloud_healer] daily_scan: status=stale — triggere daily_scan.yml
+[2026-07-13 23:02:11 UTC] [cloud_healer] daily_scan: erfolgreich ausgelöst
+[2026-07-13 23:02:12 UTC] [cloud_healer] closing_odds: status=stale — triggere closing_odds.yml
+[2026-07-13 23:02:13 UTC] [cloud_healer] closing_odds: erfolgreich ausgelöst
+[2026-07-13 23:02:13 UTC] [cloud_healer] live_score_push: status=stale — triggere live_score_push.yml
+[2026-07-13 23:02:14 UTC] [cloud_healer] live_score_push: erfolgreich ausgelöst
+[2026-07-13 23:02:15 UTC] [cloud_healer] prematch_scan: status=stale — triggere prematch_scan.yml
+[2026-07-13 23:02:16 UTC] [cloud_healer] prematch_scan: erfolgreich ausgelöst
