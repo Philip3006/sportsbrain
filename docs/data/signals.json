@@ -1,7 +1,7 @@
 {
-  "updated": "2026-07-13T11:45:24Z",
+  "updated": "2026-07-13T15:50:34Z",
   "build_info": {
-    "sha": "0ef3f35",
+    "sha": "0e1bc7b",
     "date": "2026-07-13"
   },
   "meta": {
@@ -3381,10 +3381,10 @@
       ]
     },
     "France vs Spain": {
-      "home": 2.42,
+      "home": 2.44,
       "draw": 3.4,
       "away": 3.4,
-      "over25": 1.97,
+      "over25": 1.96,
       "under25": 2.0,
       "over15": 0.0,
       "under15": 0.0,
@@ -3400,24 +3400,22 @@
       "ah-0.5_away": 1.65,
       "ah0.0_home": 1.65,
       "ah0.0_away": 2.35,
-      "ah-1.5_home": 4.4,
+      "ah-1.5_home": 4.35,
       "ah-1.5_away": 1.19,
-      "ah0.5_home": 1.36,
-      "ah0.5_away": 3.16,
       "bookmakers_h2h": [
         {
           "key": "unibet",
           "title": "Unibet",
-          "home": 2.28,
-          "draw": 3.2,
-          "away": 3.3
+          "home": 2.32,
+          "draw": 3.15,
+          "away": 3.25
         },
         {
           "key": "fanatics",
           "title": "Fanatics",
           "home": 2.35,
-          "draw": 3.1,
-          "away": 3.3
+          "draw": 3.2,
+          "away": 3.1
         },
         {
           "key": "smarkets",
@@ -3436,53 +3434,53 @@
         {
           "key": "casumo",
           "title": "Casumo",
-          "home": 2.3,
+          "home": 2.33,
           "draw": 3.2,
-          "away": 3.3
+          "away": 3.25
         },
         {
           "key": "williamhill",
           "title": "William Hill",
           "home": 2.3,
           "draw": 3.3,
-          "away": 3.0
+          "away": 2.9
         },
         {
           "key": "livescorebet",
           "title": "LiveScore Bet",
-          "home": 2.25,
+          "home": 2.3,
           "draw": 3.1,
-          "away": 3.25
+          "away": 3.2
         },
         {
           "key": "tabtouch",
           "title": "TABtouch",
-          "home": 2.25,
+          "home": 2.3,
           "draw": 3.1,
-          "away": 3.25
+          "away": 3.2
         },
         {
           "key": "tipico_de",
           "title": "Tipico",
           "home": 2.3,
-          "draw": 3.3,
-          "away": 3.2
+          "draw": 3.2,
+          "away": 3.3
         },
         {
           "key": "pinnacle",
           "title": "Pinnacle",
-          "home": 2.37,
+          "home": 2.41,
           "draw": 3.24,
-          "away": 3.31
+          "away": 3.24
         }
       ]
     },
     "England vs Argentina": {
-      "home": 2.76,
-      "draw": 3.1,
+      "home": 2.74,
+      "draw": 3.08,
       "away": 3.2,
       "over25": 2.44,
-      "under25": 1.67,
+      "under25": 1.68,
       "over15": 1.4,
       "under15": 3.0,
       "over35": 0.0,
@@ -3493,7 +3491,7 @@
       "under225": 1.84,
       "over20": 1.72,
       "under20": 2.23,
-      "ah0.0_home": 1.84,
+      "ah0.0_home": 1.85,
       "ah0.0_away": 2.16,
       "ah-0.5_home": 2.52,
       "ah-0.5_away": 1.56,
@@ -3503,71 +3501,71 @@
         {
           "key": "pinnacle",
           "title": "Pinnacle",
-          "home": 2.7,
+          "home": 2.69,
           "draw": 2.92,
-          "away": 3.11
+          "away": 3.13
         },
         {
           "key": "livescorebet",
           "title": "LiveScore Bet",
-          "home": 2.55,
-          "draw": 2.85,
+          "home": 2.6,
+          "draw": 2.8,
           "away": 3.0
         },
         {
           "key": "pmu_fr",
           "title": "PMU (FR)",
-          "home": 2.55,
-          "draw": 3.0,
+          "home": 2.6,
+          "draw": 2.9,
           "away": 3.05
         },
         {
           "key": "leovegas_se",
           "title": "LeoVegas (SE)",
-          "home": 2.63,
-          "draw": 2.9,
+          "home": 2.65,
+          "draw": 2.88,
           "away": 3.05
         },
         {
           "key": "casumo",
           "title": "Casumo",
-          "home": 2.63,
-          "draw": 2.9,
+          "home": 2.65,
+          "draw": 2.88,
           "away": 3.05
         },
         {
           "key": "betrivers",
           "title": "BetRivers",
-          "home": 2.63,
-          "draw": 2.9,
+          "home": 2.65,
+          "draw": 2.88,
           "away": 3.05
         },
         {
           "key": "unibet_se",
           "title": "Unibet (SE)",
           "home": 2.7,
-          "draw": 3.0,
-          "away": 3.15
+          "draw": 2.9,
+          "away": 3.1
         },
         {
           "key": "unibet",
           "title": "Unibet",
-          "home": 2.6,
-          "draw": 2.9,
+          "home": 2.65,
+          "draw": 2.85,
           "away": 3.05
         },
         {
           "key": "grosvenor",
           "title": "Grosvenor",
           "home": 2.6,
-          "draw": 3.0,
+          "draw": 2.9,
           "away": 3.0
         },
         {
           "key": "virginbet",
           "title": "Virgin Bet",
-          "home": 2.55,
-          "draw": 2.85,
+          "home": 2.6,
+          "draw": 2.8,
           "away": 3.0
         }
       ]
@@ -3708,8 +3706,8 @@
       "market": "away",
       "odds": 3.2,
       "model_prob": 37.9,
-      "fair_prob": 31.3,
-      "ev_pct": 21.4,
+      "fair_prob": 31.2,
+      "ev_pct": 21.1,
       "stake_eur": 11.0,
       "stake_pct": 11.0,
       "confidence": "LOW",
@@ -3733,13 +3731,13 @@
     {
       "sport": "football",
       "match": "England vs Argentina",
-      "market": "scorer_Harry Kane",
-      "odds": 2.6,
-      "model_prob": 45.1,
-      "fair_prob": 38.5,
-      "ev_pct": 17.2,
-      "stake_eur": 13.51,
-      "stake_pct": 13.5,
+      "market": "scorer_Lionel Andrés Messi Cuccittini",
+      "odds": 2.58,
+      "model_prob": 46.2,
+      "fair_prob": 38.8,
+      "ev_pct": 19.3,
+      "stake_eur": 14.6,
+      "stake_pct": 14.6,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-07-15T19:00:00Z"
@@ -9632,7 +9630,7 @@
       },
       {
         "date": "2026-07-13",
-        "home": 2.42,
+        "home": 2.44,
         "draw": 3.4,
         "away": 3.4
       }
@@ -9646,8 +9644,8 @@
       },
       {
         "date": "2026-07-13",
-        "home": 2.76,
-        "draw": 3.1,
+        "home": 2.74,
+        "draw": 3.08,
         "away": 3.2
       }
     ]
