@@ -1,7 +1,7 @@
 {
-  "updated": "2026-07-13T17:48:25Z",
+  "updated": "2026-07-13T22:02:21Z",
   "build_info": {
-    "sha": "b60054a",
+    "sha": "40c6508",
     "date": "2026-07-13"
   },
   "meta": {
@@ -3759,11 +3759,11 @@
   "top_elo": [
     {
       "name": "Alcaraz C.",
-      "rating": 1667
+      "rating": 1666
     },
     {
       "name": "Fritz T.",
-      "rating": 1640
+      "rating": 1638
     },
     {
       "name": "Sinner J.",
@@ -3771,7 +3771,7 @@
     },
     {
       "name": "Djokovic N.",
-      "rating": 1620
+      "rating": 1615
     },
     {
       "name": "Swiatek I.",
@@ -3786,16 +3786,16 @@
       "rating": 1587
     },
     {
-      "name": "Bublik A.",
-      "rating": 1576
-    },
-    {
       "name": "Sabalenka A.",
       "rating": 1576
     },
     {
-      "name": "Medvedev D.",
+      "name": "Bublik A.",
       "rating": 1575
+    },
+    {
+      "name": "Medvedev D.",
+      "rating": 1574
     }
   ],
   "history": [
