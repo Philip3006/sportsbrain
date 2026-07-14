@@ -1,8 +1,8 @@
 {
-  "updated": "2026-07-13T22:02:21Z",
+  "updated": "2026-07-14T07:53:01Z",
   "build_info": {
-    "sha": "40c6508",
-    "date": "2026-07-13"
+    "sha": "74cafcf",
+    "date": "2026-07-14"
   },
   "meta": {
     "stale_odds": false,
@@ -3759,11 +3759,11 @@
   "top_elo": [
     {
       "name": "Alcaraz C.",
-      "rating": 1666
+      "rating": 1667
     },
     {
       "name": "Fritz T.",
-      "rating": 1638
+      "rating": 1640
     },
     {
       "name": "Sinner J.",
@@ -3771,7 +3771,7 @@
     },
     {
       "name": "Djokovic N.",
-      "rating": 1615
+      "rating": 1620
     },
     {
       "name": "Swiatek I.",
@@ -3786,16 +3786,16 @@
       "rating": 1587
     },
     {
+      "name": "Bublik A.",
+      "rating": 1576
+    },
+    {
       "name": "Sabalenka A.",
       "rating": 1576
     },
     {
-      "name": "Bublik A.",
-      "rating": 1575
-    },
-    {
       "name": "Medvedev D.",
-      "rating": 1574
+      "rating": 1575
     }
   ],
   "history": [
