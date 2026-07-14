@@ -1336,3 +1336,11 @@
 [2026-07-14 04:08:48 UTC] [cloud_healer] prematch_scan: erfolgreich ausgelöst
 [2026-07-14 04:08:48 UTC] [cloud_healer] settle: status=stale — triggere settle.yml
 [2026-07-14 04:08:49 UTC] [cloud_healer] settle: erfolgreich ausgelöst
+[2026-07-14 06:36:06 UTC] [cloud_healer] daily_scan: status=stale — triggere daily_scan.yml
+[2026-07-14 06:36:08 UTC] [cloud_healer] daily_scan: erfolgreich ausgelöst
+[2026-07-14 06:36:08 UTC] [cloud_healer] closing_odds: status=stale — triggere closing_odds.yml
+[2026-07-14 06:36:09 UTC] [cloud_healer] closing_odds: erfolgreich ausgelöst
+[2026-07-14 06:36:10 UTC] [cloud_healer] live_score_push: status=stale — triggere live_score_push.yml
+[2026-07-14 06:36:11 UTC] [cloud_healer] live_score_push: erfolgreich ausgelöst
+[2026-07-14 06:36:12 UTC] [cloud_healer] prematch_scan: status=stale — triggere prematch_scan.yml
+[2026-07-14 06:36:13 UTC] [cloud_healer] prematch_scan: erfolgreich ausgelöst
