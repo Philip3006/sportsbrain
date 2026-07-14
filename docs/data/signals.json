@@ -1,7 +1,7 @@
 {
-  "updated": "2026-07-14T05:42:51Z",
+  "updated": "2026-07-14T09:50:10Z",
   "build_info": {
-    "sha": "63e1f49",
+    "sha": "60af7e3",
     "date": "2026-07-14"
   },
   "meta": {
@@ -3382,10 +3382,10 @@
     },
     "France vs Spain": {
       "home": 2.5,
-      "draw": 3.4,
+      "draw": 3.3,
       "away": 3.35,
       "over25": 2.0,
-      "under25": 1.99,
+      "under25": 1.97,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
@@ -3396,33 +3396,33 @@
       "under20": 3.0,
       "ah-0.25_home": 2.12,
       "ah-0.25_away": 1.88,
-      "ah-0.5_home": 2.4,
-      "ah-0.5_away": 1.63,
       "ah0.0_home": 1.7,
       "ah0.0_away": 2.3,
-      "ah-1.5_home": 4.5,
-      "ah-1.5_away": 1.19,
+      "ah-1.5_home": 4.75,
+      "ah-1.5_away": 1.18,
+      "ah-0.5_home": 2.4,
+      "ah-0.5_away": 1.62,
       "bookmakers_h2h": [
         {
           "key": "unibet",
           "title": "Unibet",
-          "home": 2.32,
-          "draw": 3.2,
-          "away": 3.15
+          "home": 2.43,
+          "draw": 3.1,
+          "away": 3.1
         },
         {
           "key": "fanatics",
           "title": "Fanatics",
-          "home": 2.35,
-          "draw": 3.2,
+          "home": 2.4,
+          "draw": 3.1,
           "away": 3.1
         },
         {
           "key": "smarkets",
           "title": "Smarkets",
-          "home": 2.48,
+          "home": 2.5,
           "draw": 3.3,
-          "away": 3.35
+          "away": 3.3
         },
         {
           "key": "coral",
@@ -3434,9 +3434,9 @@
         {
           "key": "casumo",
           "title": "Casumo",
-          "home": 2.33,
-          "draw": 3.25,
-          "away": 3.2
+          "home": 2.45,
+          "draw": 3.15,
+          "away": 3.1
         },
         {
           "key": "williamhill",
@@ -3448,16 +3448,16 @@
         {
           "key": "livescorebet",
           "title": "LiveScore Bet",
-          "home": 2.3,
-          "draw": 3.15,
-          "away": 3.1
+          "home": 2.4,
+          "draw": 3.05,
+          "away": 3.05
         },
         {
           "key": "tabtouch",
           "title": "TABtouch",
-          "home": 2.3,
-          "draw": 3.15,
-          "away": 3.1
+          "home": 2.4,
+          "draw": 3.05,
+          "away": 3.05
         },
         {
           "key": "tipico_de",
@@ -3469,14 +3469,14 @@
         {
           "key": "pinnacle",
           "title": "Pinnacle",
-          "home": 2.44,
-          "draw": 3.17,
+          "home": 2.46,
+          "draw": 3.21,
           "away": 3.26
         }
       ]
     },
     "England vs Argentina": {
-      "home": 2.78,
+      "home": 2.76,
       "draw": 3.08,
       "away": 3.2,
       "over25": 2.44,
@@ -3491,7 +3491,7 @@
       "under225": 1.83,
       "over20": 1.72,
       "under20": 2.25,
-      "ah0.0_home": 1.86,
+      "ah0.0_home": 1.85,
       "ah0.0_away": 2.14,
       "ah-0.5_home": 2.52,
       "ah-0.5_away": 1.56,
@@ -3501,58 +3501,58 @@
         {
           "key": "pinnacle",
           "title": "Pinnacle",
-          "home": 2.72,
-          "draw": 2.92,
-          "away": 3.09
+          "home": 2.7,
+          "draw": 2.93,
+          "away": 3.12
         },
         {
           "key": "livescorebet",
           "title": "LiveScore Bet",
-          "home": 2.6,
+          "home": 2.65,
           "draw": 2.8,
-          "away": 3.0
+          "away": 2.95
         },
         {
           "key": "pmu_fr",
           "title": "PMU (FR)",
-          "home": 2.6,
-          "draw": 2.95,
-          "away": 3.05
+          "home": 2.65,
+          "draw": 2.88,
+          "away": 3.0
         },
         {
           "key": "leovegas_se",
           "title": "LeoVegas (SE)",
-          "home": 2.65,
-          "draw": 2.88,
+          "home": 2.7,
+          "draw": 2.85,
           "away": 3.05
         },
         {
           "key": "casumo",
           "title": "Casumo",
-          "home": 2.65,
-          "draw": 2.88,
+          "home": 2.7,
+          "draw": 2.85,
           "away": 3.05
         },
         {
           "key": "betrivers",
           "title": "BetRivers",
-          "home": 2.65,
-          "draw": 2.88,
+          "home": 2.7,
+          "draw": 2.85,
           "away": 3.05
         },
         {
           "key": "unibet_se",
           "title": "Unibet (SE)",
-          "home": 2.7,
-          "draw": 2.95,
-          "away": 3.15
+          "home": 2.75,
+          "draw": 2.88,
+          "away": 3.1
         },
         {
           "key": "unibet",
           "title": "Unibet",
-          "home": 2.65,
-          "draw": 2.85,
-          "away": 3.05
+          "home": 2.7,
+          "draw": 2.8,
+          "away": 3.0
         },
         {
           "key": "grosvenor",
@@ -3564,9 +3564,9 @@
         {
           "key": "virginbet",
           "title": "Virgin Bet",
-          "home": 2.6,
+          "home": 2.65,
           "draw": 2.8,
-          "away": 3.0
+          "away": 2.95
         }
       ]
     }
@@ -3694,8 +3694,8 @@
       "model_prob": 45.6,
       "fair_prob": 34.7,
       "ev_pct": 31.3,
-      "stake_eur": 11.25,
-      "stake_pct": 12.8,
+      "stake_eur": 15.0,
+      "stake_pct": 15.0,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-07-15T19:00:00Z"
@@ -3708,11 +3708,25 @@
       "model_prob": 91.9,
       "fair_prob": 91.9,
       "ev_pct": 26.8,
-      "stake_eur": 15.0,
-      "stake_pct": 17.1,
+      "stake_eur": 20.0,
+      "stake_pct": 20.0,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-07-15T19:00:00Z"
+    },
+    {
+      "sport": "football",
+      "match": "France vs Spain",
+      "market": "scorer_Nicholas Williams Arthuer",
+      "odds": 5.0,
+      "model_prob": 24.6,
+      "fair_prob": 20.0,
+      "ev_pct": 22.8,
+      "stake_eur": 11.0,
+      "stake_pct": 11.0,
+      "confidence": "LOW",
+      "n_models_agree": 0,
+      "kickoff": "2026-07-14T19:00:00Z"
     },
     {
       "sport": "football",
@@ -3722,8 +3736,8 @@
       "model_prob": 23.0,
       "fair_prob": 23.0,
       "ev_pct": 20.6,
-      "stake_eur": 5.25,
-      "stake_pct": 6.0,
+      "stake_eur": 7.0,
+      "stake_pct": 7.0,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-07-15T19:00:00Z"
@@ -3732,26 +3746,12 @@
       "sport": "football",
       "match": "France vs Spain",
       "market": "ah+0.5_away",
-      "odds": 1.63,
+      "odds": 1.62,
       "model_prob": 72.9,
       "fair_prob": 72.9,
-      "ev_pct": 18.8,
-      "stake_eur": 14.27,
-      "stake_pct": 16.3,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-07-14T19:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "France vs Spain",
-      "market": "scorer_Lamine Yamal Nasraoui Ebana",
-      "odds": 3.95,
-      "model_prob": 29.4,
-      "fair_prob": 25.3,
-      "ev_pct": 16.3,
-      "stake_eur": 7.55,
-      "stake_pct": 8.6,
+      "ev_pct": 18.0,
+      "stake_eur": 18.38,
+      "stake_pct": 18.4,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-07-14T19:00:00Z"
@@ -9459,7 +9459,7 @@
       {
         "date": "2026-07-14",
         "home": 2.5,
-        "draw": 3.4,
+        "draw": 3.3,
         "away": 3.35
       }
     ],
@@ -9478,7 +9478,7 @@
       },
       {
         "date": "2026-07-14",
-        "home": 2.78,
+        "home": 2.76,
         "draw": 3.08,
         "away": 3.2
       }
