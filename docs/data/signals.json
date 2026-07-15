@@ -1,7 +1,7 @@
 {
-  "updated": "2026-07-15T11:54:02Z",
+  "updated": "2026-07-15T15:36:44Z",
   "build_info": {
-    "sha": "15cabb5",
+    "sha": "f8e30c3",
     "date": "2026-07-15"
   },
   "meta": {
@@ -3470,21 +3470,21 @@
       ]
     },
     "England vs Argentina": {
-      "home": 2.86,
+      "home": 2.82,
       "draw": 3.04,
-      "away": 3.15,
-      "over25": 2.56,
-      "under25": 1.63,
+      "away": 3.2,
+      "over25": 2.54,
+      "under25": 1.64,
       "over15": 1.43,
-      "under15": 2.85,
+      "under15": 2.8,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over20": 1.83,
+      "over20": 1.82,
       "under20": 2.15,
-      "ah0.0_home": 1.88,
-      "ah0.0_away": 2.1,
+      "ah0.0_home": 1.85,
+      "ah0.0_away": 2.14,
       "ah-0.5_home": 2.63,
       "ah-0.5_away": 1.52,
       "ah-1.5_home": 5.75,
@@ -3493,72 +3493,72 @@
         {
           "key": "pinnacle",
           "title": "Pinnacle",
-          "home": 2.79,
-          "draw": 2.89,
+          "home": 2.74,
+          "draw": 2.94,
           "away": 3.1
         },
         {
           "key": "livescorebet",
           "title": "LiveScore Bet",
-          "home": 2.7,
-          "draw": 2.85,
-          "away": 2.85
+          "home": 2.6,
+          "draw": 2.8,
+          "away": 3.0
         },
         {
           "key": "pmu_fr",
           "title": "PMU (FR)",
-          "home": 2.75,
-          "draw": 3.0,
-          "away": 3.0
+          "home": 2.65,
+          "draw": 2.9,
+          "away": 3.15
         },
         {
           "key": "leovegas_se",
           "title": "LeoVegas (SE)",
-          "home": 2.75,
-          "draw": 2.9,
-          "away": 2.9
+          "home": 2.65,
+          "draw": 2.85,
+          "away": 3.1
         },
         {
           "key": "casumo",
           "title": "Casumo",
-          "home": 2.75,
-          "draw": 2.9,
-          "away": 2.9
+          "home": 2.65,
+          "draw": 2.85,
+          "away": 3.1
         },
         {
           "key": "betrivers",
           "title": "BetRivers",
-          "home": 2.75,
-          "draw": 2.9,
-          "away": 2.9
+          "home": 2.65,
+          "draw": 2.85,
+          "away": 3.1
         },
         {
           "key": "unibet_se",
           "title": "Unibet (SE)",
-          "home": 2.8,
-          "draw": 3.0,
-          "away": 3.0
+          "home": 2.7,
+          "draw": 2.9,
+          "away": 3.15
         },
         {
           "key": "unibet",
           "title": "Unibet",
-          "home": 2.7,
-          "draw": 2.9,
-          "away": 2.9
+          "home": 2.65,
+          "draw": 2.85,
+          "away": 3.05
         },
         {
           "key": "grosvenor",
           "title": "Grosvenor",
-          "home": 2.63,
+          "home": 2.7,
           "draw": 2.88,
           "away": 3.0
         },
         {
           "key": "virginbet",
           "title": "Virgin Bet",
-          "home": 2.7,
-          "draw": 2.85,
-          "away": 2.85
+          "home": 2.6,
+          "draw": 2.8,
+          "away": 3.0
         }
       ]
     }
@@ -3625,13 +3625,13 @@
     {
       "sport": "football",
       "match": "England vs Argentina",
-      "market": "o/u1.5_over",
-      "odds": 1.42,
-      "model_prob": 91.9,
-      "fair_prob": 91.9,
-      "ev_pct": 30.5,
-      "stake_eur": 15.0,
-      "stake_pct": 17.1,
+      "market": "ah-1.5_home",
+      "odds": 5.75,
+      "model_prob": 23.0,
+      "fair_prob": 23.0,
+      "ev_pct": 32.0,
+      "stake_eur": 7.0,
+      "stake_pct": 7.0,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-07-15T19:00:00Z"
@@ -3639,13 +3639,13 @@
     {
       "sport": "football",
       "match": "England vs Argentina",
-      "market": "ah-1.5_home",
-      "odds": 5.5,
-      "model_prob": 23.0,
-      "fair_prob": 23.0,
-      "ev_pct": 26.3,
-      "stake_eur": 5.25,
-      "stake_pct": 6.0,
+      "market": "o/u1.5_over",
+      "odds": 1.43,
+      "model_prob": 91.9,
+      "fair_prob": 91.9,
+      "ev_pct": 31.4,
+      "stake_eur": 20.0,
+      "stake_pct": 20.0,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-07-15T19:00:00Z"
@@ -3654,12 +3654,12 @@
       "sport": "football",
       "match": "England vs Argentina",
       "market": "scorer_Lionel Andrés Messi Cuccittini",
-      "odds": 2.66,
+      "odds": 2.7,
       "model_prob": 46.2,
-      "fair_prob": 37.6,
-      "ev_pct": 23.0,
-      "stake_eur": 11.25,
-      "stake_pct": 12.8,
+      "fair_prob": 37.0,
+      "ev_pct": 24.8,
+      "stake_eur": 15.0,
+      "stake_pct": 15.0,
       "confidence": "LOW",
       "n_models_agree": 0,
       "kickoff": "2026-07-15T19:00:00Z"
@@ -9206,9 +9206,9 @@
       },
       {
         "date": "2026-07-15",
-        "home": 2.86,
+        "home": 2.82,
         "draw": 3.04,
-        "away": 3.15
+        "away": 3.2
       }
     ]
   },
