@@ -1,8 +1,8 @@
 {
-  "updated": "2026-07-15T22:07:49Z",
+  "updated": "2026-07-16T08:03:05Z",
   "build_info": {
-    "sha": "618b2aa",
-    "date": "2026-07-15"
+    "sha": "60c7b91",
+    "date": "2026-07-16"
   },
   "meta": {
     "stale_odds": false,
@@ -3759,7 +3759,7 @@
   "top_elo": [
     {
       "name": "Alcaraz C.",
-      "rating": 1667
+      "rating": 1666
     },
     {
       "name": "Fritz T.",
@@ -4900,10 +4900,10 @@
       "pnl": -12.33,
       "yield_pct": -1.95,
       "mean_clv": 4.23,
-      "mean_clv_30d": 11.24,
+      "mean_clv_30d": 3.22,
       "mean_edge": 8.17,
       "n_clv": 25,
-      "n_clv_30d": 18,
+      "n_clv_30d": 16,
       "n_edge": 32
     },
     "per_team_market": {
