@@ -1,12 +1,12 @@
 {
   "holdout": "wc2022",
   "n_matches": 64,
-  "dc_only_brier": 0.6424500858662986,
-  "lgbm_only_brier": 0.6167122403162166,
-  "blend_brier": 0.6015268502628761,
-  "improvement_vs_dc": 0.04092323560342248,
+  "dc_only_brier": 0.6438437999652467,
+  "lgbm_only_brier": 0.6276830295627134,
+  "blend_brier": 0.6110507435568725,
+  "improvement_vs_dc": 0.032793056408374155,
   "dc_weight": 0.4,
   "min_improvement_required": 0.01,
   "passed": true,
-  "reason": "blend improves DC-only by 0.0409 (\u2265 0.01)"
+  "reason": "blend improves DC-only by 0.0328 (\u2265 0.01)"
 }
