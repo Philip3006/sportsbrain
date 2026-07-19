@@ -1,8 +1,8 @@
 {
-  "updated": "2026-07-18T21:56:54Z",
+  "updated": "2026-07-19T08:06:41Z",
   "build_info": {
-    "sha": "05b6663",
-    "date": "2026-07-18"
+    "sha": "1e6794a",
+    "date": "2026-07-19"
   },
   "meta": {
     "stale_odds": false,
@@ -4900,10 +4900,10 @@
       "pnl": -12.33,
       "yield_pct": -1.95,
       "mean_clv": 4.23,
-      "mean_clv_30d": -0.02,
+      "mean_clv_30d": 2.66,
       "mean_edge": 8.17,
       "n_clv": 25,
-      "n_clv_30d": 9,
+      "n_clv_30d": 7,
       "n_edge": 32
     },
     "per_team_market": {
