@@ -1,7 +1,7 @@
 {
-  "updated": "2026-07-20T08:47:55Z",
+  "updated": "2026-07-20T10:50:14Z",
   "build_info": {
-    "sha": "bc0f8d4",
+    "sha": "007fc02",
     "date": "2026-07-20"
   },
   "meta": {
@@ -5872,12 +5872,6 @@
   "odds_history": {
     "Qatar vs Switzerland": [
       {
-        "date": "2026-06-15",
-        "home": 17.5,
-        "draw": 8.0,
-        "away": 1.24
-      },
-      {
         "date": "2026-06-16",
         "home": 17.5,
         "draw": 8.0,
@@ -5927,12 +5921,6 @@
       }
     ],
     "Brazil vs Morocco": [
-      {
-        "date": "2026-06-15",
-        "home": 1.73,
-        "draw": 4.0,
-        "away": 6.0
-      },
       {
         "date": "2026-06-16",
         "home": 1.73,
@@ -5984,12 +5972,6 @@
     ],
     "Haiti vs Scotland": [
       {
-        "date": "2026-06-15",
-        "home": 16.5,
-        "draw": 5.2,
-        "away": 1.34
-      },
-      {
         "date": "2026-06-16",
         "home": 16.5,
         "draw": 5.2,
@@ -6039,12 +6021,6 @@
       }
     ],
     "Australia vs Turkey": [
-      {
-        "date": "2026-06-15",
-        "home": 2.18,
-        "draw": 3.05,
-        "away": 4.61
-      },
       {
         "date": "2026-06-16",
         "home": 2.18,
@@ -6096,12 +6072,6 @@
     ],
     "Germany vs Curaçao": [
       {
-        "date": "2026-06-15",
-        "home": 1.06,
-        "draw": 26.0,
-        "away": 60.0
-      },
-      {
         "date": "2026-06-16",
         "home": 1.06,
         "draw": 26.0,
@@ -6151,12 +6121,6 @@
       }
     ],
     "Netherlands vs Japan": [
-      {
-        "date": "2026-06-15",
-        "home": 2.12,
-        "draw": 3.7,
-        "away": 3.95
-      },
       {
         "date": "2026-06-16",
         "home": 2.12,
@@ -6208,12 +6172,6 @@
     ],
     "Ivory Coast vs Ecuador": [
       {
-        "date": "2026-06-15",
-        "home": 3.45,
-        "draw": 2.95,
-        "away": 2.68
-      },
-      {
         "date": "2026-06-16",
         "home": 3.45,
         "draw": 2.95,
@@ -6263,12 +6221,6 @@
       }
     ],
     "Sweden vs Tunisia": [
-      {
-        "date": "2026-06-15",
-        "home": 2.0,
-        "draw": 3.55,
-        "away": 4.6
-      },
       {
         "date": "2026-06-16",
         "home": 2.0,
@@ -6320,12 +6272,6 @@
     ],
     "Spain vs Cape Verde": [
       {
-        "date": "2026-06-15",
-        "home": 1.52,
-        "draw": 2.87,
-        "away": 18.38
-      },
-      {
         "date": "2026-06-16",
         "home": 1.52,
         "draw": 2.87,
@@ -6375,12 +6321,6 @@
       }
     ],
     "Belgium vs Egypt": [
-      {
-        "date": "2026-06-15",
-        "home": 3.55,
-        "draw": 3.2,
-        "away": 2.77
-      },
       {
         "date": "2026-06-16",
         "home": 3.55,
@@ -6432,12 +6372,6 @@
     ],
     "Saudi Arabia vs Uruguay": [
       {
-        "date": "2026-06-15",
-        "home": 1.62,
-        "draw": 3.06,
-        "away": 9.16
-      },
-      {
         "date": "2026-06-16",
         "home": 1.62,
         "draw": 3.06,
@@ -6487,12 +6421,6 @@
       }
     ],
     "Iran vs New Zealand": [
-      {
-        "date": "2026-06-15",
-        "home": 1.86,
-        "draw": 3.7,
-        "away": 5.2
-      },
       {
         "date": "2026-06-16",
         "home": 1.86,
@@ -6544,12 +6472,6 @@
     ],
     "France vs Senegal": [
       {
-        "date": "2026-06-15",
-        "home": 1.52,
-        "draw": 4.6,
-        "away": 8.0
-      },
-      {
         "date": "2026-06-16",
         "home": 1.53,
         "draw": 4.75,
@@ -6599,12 +6521,6 @@
       }
     ],
     "Iraq vs Norway": [
-      {
-        "date": "2026-06-15",
-        "home": 18.5,
-        "draw": 8.5,
-        "away": 1.22
-      },
       {
         "date": "2026-06-16",
         "home": 17.0,
@@ -6656,12 +6572,6 @@
     ],
     "Argentina vs Algeria": [
       {
-        "date": "2026-06-15",
-        "home": 1.45,
-        "draw": 5.0,
-        "away": 10.5
-      },
-      {
         "date": "2026-06-16",
         "home": 1.48,
         "draw": 4.7,
@@ -6711,12 +6621,6 @@
       }
     ],
     "Austria vs Jordan": [
-      {
-        "date": "2026-06-15",
-        "home": 1.39,
-        "draw": 5.8,
-        "away": 10.5
-      },
       {
         "date": "2026-06-16",
         "home": 1.39,
@@ -6768,12 +6672,6 @@
     ],
     "Portugal vs DR Congo": [
       {
-        "date": "2026-06-15",
-        "home": 1.33,
-        "draw": 6.0,
-        "away": 13.0
-      },
-      {
         "date": "2026-06-16",
         "home": 1.36,
         "draw": 6.1,
@@ -6823,12 +6721,6 @@
       }
     ],
     "England vs Croatia": [
-      {
-        "date": "2026-06-15",
-        "home": 1.79,
-        "draw": 3.95,
-        "away": 5.5
-      },
       {
         "date": "2026-06-16",
         "home": 1.79,
@@ -6880,12 +6772,6 @@
     ],
     "Ghana vs Panama": [
       {
-        "date": "2026-06-15",
-        "home": 2.28,
-        "draw": 3.55,
-        "away": 3.65
-      },
-      {
         "date": "2026-06-16",
         "home": 2.33,
         "draw": 3.45,
@@ -6935,12 +6821,6 @@
       }
     ],
     "Uzbekistan vs Colombia": [
-      {
-        "date": "2026-06-15",
-        "home": 10.5,
-        "draw": 5.1,
-        "away": 1.42
-      },
       {
         "date": "2026-06-16",
         "home": 11.5,
@@ -6992,12 +6872,6 @@
     ],
     "Czech Republic vs South Africa": [
       {
-        "date": "2026-06-15",
-        "home": 1.83,
-        "draw": 3.94,
-        "away": 5.0
-      },
-      {
         "date": "2026-06-16",
         "home": 1.85,
         "draw": 3.9,
@@ -7047,12 +6921,6 @@
       }
     ],
     "Switzerland vs Bosnia & Herzegovina": [
-      {
-        "date": "2026-06-15",
-        "home": 1.62,
-        "draw": 4.3,
-        "away": 6.8
-      },
       {
         "date": "2026-06-16",
         "home": 1.62,
@@ -7104,12 +6972,6 @@
     ],
     "Canada vs Qatar": [
       {
-        "date": "2026-06-15",
-        "home": 1.31,
-        "draw": 6.25,
-        "away": 14.0
-      },
-      {
         "date": "2026-06-16",
         "home": 1.32,
         "draw": 6.1,
@@ -7159,12 +7021,6 @@
       }
     ],
     "Mexico vs South Korea": [
-      {
-        "date": "2026-06-15",
-        "home": 2.06,
-        "draw": 3.5,
-        "away": 4.25
-      },
       {
         "date": "2026-06-16",
         "home": 2.08,
@@ -7216,12 +7072,6 @@
     ],
     "USA vs Australia": [
       {
-        "date": "2026-06-15",
-        "home": 1.63,
-        "draw": 4.5,
-        "away": 6.0
-      },
-      {
         "date": "2026-06-16",
         "home": 1.64,
         "draw": 4.5,
@@ -7271,12 +7121,6 @@
       }
     ],
     "Scotland vs Morocco": [
-      {
-        "date": "2026-06-15",
-        "home": 5.8,
-        "draw": 3.75,
-        "away": 1.81
-      },
       {
         "date": "2026-06-16",
         "home": 5.8,
@@ -7328,12 +7172,6 @@
     ],
     "Brazil vs Haiti": [
       {
-        "date": "2026-06-15",
-        "home": 1.13,
-        "draw": 13.0,
-        "away": 29.0
-      },
-      {
         "date": "2026-06-16",
         "home": 1.13,
         "draw": 13.0,
@@ -7383,12 +7221,6 @@
       }
     ],
     "Turkey vs Paraguay": [
-      {
-        "date": "2026-06-15",
-        "home": 2.12,
-        "draw": 3.5,
-        "away": 4.2
-      },
       {
         "date": "2026-06-16",
         "home": 2.1,
@@ -7440,12 +7272,6 @@
     ],
     "Netherlands vs Sweden": [
       {
-        "date": "2026-06-15",
-        "home": 1.75,
-        "draw": 4.11,
-        "away": 5.4
-      },
-      {
         "date": "2026-06-16",
         "home": 1.76,
         "draw": 4.1,
@@ -7495,12 +7321,6 @@
       }
     ],
     "Germany vs Ivory Coast": [
-      {
-        "date": "2026-06-15",
-        "home": 1.59,
-        "draw": 4.7,
-        "away": 6.4
-      },
       {
         "date": "2026-06-16",
         "home": 1.58,
@@ -7552,12 +7372,6 @@
     ],
     "Ecuador vs Curaçao": [
       {
-        "date": "2026-06-15",
-        "home": 1.14,
-        "draw": 12.3,
-        "away": 35.0
-      },
-      {
         "date": "2026-06-16",
         "home": 1.14,
         "draw": 12.3,
@@ -7607,12 +7421,6 @@
       }
     ],
     "Tunisia vs Japan": [
-      {
-        "date": "2026-06-15",
-        "home": 7.8,
-        "draw": 4.3,
-        "away": 1.61
-      },
       {
         "date": "2026-06-16",
         "home": 8.0,
@@ -7664,12 +7472,6 @@
     ],
     "Spain vs Saudi Arabia": [
       {
-        "date": "2026-06-15",
-        "home": 1.12,
-        "draw": 13.0,
-        "away": 37.0
-      },
-      {
         "date": "2026-06-16",
         "home": 1.13,
         "draw": 12.0,
@@ -7719,12 +7521,6 @@
       }
     ],
     "Belgium vs Iran": [
-      {
-        "date": "2026-06-15",
-        "home": 1.45,
-        "draw": 5.3,
-        "away": 9.5
-      },
       {
         "date": "2026-06-16",
         "home": 1.47,
@@ -7776,12 +7572,6 @@
     ],
     "Uruguay vs Cape Verde": [
       {
-        "date": "2026-06-15",
-        "home": 1.55,
-        "draw": 4.4,
-        "away": 7.5
-      },
-      {
         "date": "2026-06-16",
         "home": 1.54,
         "draw": 4.4,
@@ -7831,12 +7621,6 @@
       }
     ],
     "New Zealand vs Egypt": [
-      {
-        "date": "2026-06-15",
-        "home": 5.53,
-        "draw": 4.3,
-        "away": 1.73
-      },
       {
         "date": "2026-06-16",
         "home": 6.0,
@@ -7888,12 +7672,6 @@
     ],
     "Argentina vs Austria": [
       {
-        "date": "2026-06-15",
-        "home": 1.7,
-        "draw": 4.2,
-        "away": 6.0
-      },
-      {
         "date": "2026-06-16",
         "home": 1.7,
         "draw": 4.1,
@@ -7943,12 +7721,6 @@
       }
     ],
     "France vs Iraq": [
-      {
-        "date": "2026-06-15",
-        "home": 1.13,
-        "draw": 11.0,
-        "away": 35.0
-      },
       {
         "date": "2026-06-16",
         "home": 1.14,
@@ -8000,12 +7772,6 @@
     ],
     "Norway vs Senegal": [
       {
-        "date": "2026-06-15",
-        "home": 2.22,
-        "draw": 3.6,
-        "away": 3.6
-      },
-      {
         "date": "2026-06-16",
         "home": 2.44,
         "draw": 3.6,
@@ -8055,12 +7821,6 @@
       }
     ],
     "Jordan vs Algeria": [
-      {
-        "date": "2026-06-15",
-        "home": 7.6,
-        "draw": 4.5,
-        "away": 1.56
-      },
       {
         "date": "2026-06-16",
         "home": 7.6,
@@ -8112,12 +7872,6 @@
     ],
     "Portugal vs Uzbekistan": [
       {
-        "date": "2026-06-15",
-        "home": 1.28,
-        "draw": 7.0,
-        "away": 15.0
-      },
-      {
         "date": "2026-06-16",
         "home": 1.28,
         "draw": 7.0,
@@ -8167,12 +7921,6 @@
       }
     ],
     "England vs Ghana": [
-      {
-        "date": "2026-06-15",
-        "home": 1.34,
-        "draw": 6.2,
-        "away": 11.3
-      },
       {
         "date": "2026-06-16",
         "home": 1.35,
@@ -8224,12 +7972,6 @@
     ],
     "Panama vs Croatia": [
       {
-        "date": "2026-06-15",
-        "home": 7.2,
-        "draw": 4.2,
-        "away": 1.6
-      },
-      {
         "date": "2026-06-16",
         "home": 7.2,
         "draw": 4.1,
@@ -8280,12 +8022,6 @@
     ],
     "Colombia vs DR Congo": [
       {
-        "date": "2026-06-15",
-        "home": 1.5,
-        "draw": 4.5,
-        "away": 8.5
-      },
-      {
         "date": "2026-06-16",
         "home": 1.51,
         "draw": 4.6,
@@ -8335,12 +8071,6 @@
       }
     ],
     "Bosnia & Herzegovina vs Qatar": [
-      {
-        "date": "2026-06-15",
-        "home": 1.61,
-        "draw": 4.3,
-        "away": 7.0
-      },
       {
         "date": "2026-06-16",
         "home": 1.62,
@@ -8418,15 +8148,15 @@
         "home": 1.39,
         "draw": 5.8,
         "away": 9.25
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.39,
+        "draw": 5.8,
+        "away": 9.25
       }
     ],
     "Switzerland vs Canada": [
-      {
-        "date": "2026-06-15",
-        "home": 2.22,
-        "draw": 3.6,
-        "away": 3.65
-      },
       {
         "date": "2026-06-16",
         "home": 2.2,
@@ -8504,15 +8234,15 @@
         "home": 2.6,
         "draw": 3.13,
         "away": 3.45
+      },
+      {
+        "date": "2026-07-20",
+        "home": 2.6,
+        "draw": 3.13,
+        "away": 3.45
       }
     ],
     "Scotland vs Brazil": [
-      {
-        "date": "2026-06-15",
-        "home": 8.0,
-        "draw": 5.5,
-        "away": 1.48
-      },
       {
         "date": "2026-06-16",
         "home": 8.5,
@@ -8590,15 +8320,15 @@
         "home": 39.37,
         "draw": 8.0,
         "away": 1.12
+      },
+      {
+        "date": "2026-07-20",
+        "home": 39.37,
+        "draw": 8.0,
+        "away": 1.12
       }
     ],
     "Morocco vs Haiti": [
-      {
-        "date": "2026-06-15",
-        "home": 1.32,
-        "draw": 6.0,
-        "away": 12.9
-      },
       {
         "date": "2026-06-16",
         "home": 1.32,
@@ -8676,15 +8406,15 @@
         "home": 1.97,
         "draw": 3.13,
         "away": 4.26
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.97,
+        "draw": 3.13,
+        "away": 4.26
       }
     ],
     "Czech Republic vs Mexico": [
-      {
-        "date": "2026-06-15",
-        "home": 5.0,
-        "draw": 3.67,
-        "away": 1.9
-      },
       {
         "date": "2026-06-16",
         "home": 5.0,
@@ -8762,15 +8492,15 @@
         "home": 4.0,
         "draw": 4.1,
         "away": 2.0
+      },
+      {
+        "date": "2026-07-20",
+        "home": 4.0,
+        "draw": 4.1,
+        "away": 2.0
       }
     ],
     "South Africa vs South Korea": [
-      {
-        "date": "2026-06-15",
-        "home": 6.1,
-        "draw": 4.5,
-        "away": 1.66
-      },
       {
         "date": "2026-06-16",
         "home": 6.25,
@@ -8848,15 +8578,15 @@
         "home": 6.5,
         "draw": 4.12,
         "away": 1.66
+      },
+      {
+        "date": "2026-07-20",
+        "home": 6.5,
+        "draw": 4.12,
+        "away": 1.66
       }
     ],
     "Curaçao vs Ivory Coast": [
-      {
-        "date": "2026-06-15",
-        "home": 26.0,
-        "draw": 9.3,
-        "away": 1.19
-      },
       {
         "date": "2026-06-16",
         "home": 23.0,
@@ -8934,15 +8664,15 @@
         "home": 24.0,
         "draw": 9.5,
         "away": 1.19
+      },
+      {
+        "date": "2026-07-20",
+        "home": 24.0,
+        "draw": 9.5,
+        "away": 1.19
       }
     ],
     "Ecuador vs Germany": [
-      {
-        "date": "2026-06-15",
-        "home": 5.1,
-        "draw": 4.04,
-        "away": 1.8
-      },
       {
         "date": "2026-06-16",
         "home": 5.1,
@@ -9020,15 +8750,15 @@
         "home": 4.2,
         "draw": 4.5,
         "away": 1.9
+      },
+      {
+        "date": "2026-07-20",
+        "home": 4.2,
+        "draw": 4.5,
+        "away": 1.9
       }
     ],
     "Japan vs Sweden": [
-      {
-        "date": "2026-06-15",
-        "home": 2.23,
-        "draw": 3.53,
-        "away": 3.75
-      },
       {
         "date": "2026-06-16",
         "home": 2.18,
@@ -9106,15 +8836,15 @@
         "home": 1.96,
         "draw": 3.65,
         "away": 4.7
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.96,
+        "draw": 3.65,
+        "away": 4.7
       }
     ],
     "Tunisia vs Netherlands": [
-      {
-        "date": "2026-06-15",
-        "home": 10.3,
-        "draw": 5.7,
-        "away": 1.37
-      },
       {
         "date": "2026-06-16",
         "home": 10.0,
@@ -9192,15 +8922,15 @@
         "home": 34.0,
         "draw": 11.8,
         "away": 1.16
+      },
+      {
+        "date": "2026-07-20",
+        "home": 34.0,
+        "draw": 11.8,
+        "away": 1.16
       }
     ],
     "Paraguay vs Australia": [
-      {
-        "date": "2026-06-15",
-        "home": 2.25,
-        "draw": 3.4,
-        "away": 3.61
-      },
       {
         "date": "2026-06-16",
         "home": 2.24,
@@ -9278,15 +9008,15 @@
         "home": 3.03,
         "draw": 2.38,
         "away": 4.43
+      },
+      {
+        "date": "2026-07-20",
+        "home": 3.03,
+        "draw": 2.38,
+        "away": 4.43
       }
     ],
     "Turkey vs USA": [
-      {
-        "date": "2026-06-15",
-        "home": 2.9,
-        "draw": 3.8,
-        "away": 2.52
-      },
       {
         "date": "2026-06-16",
         "home": 2.9,
@@ -9364,15 +9094,15 @@
         "home": 3.75,
         "draw": 4.3,
         "away": 2.0
+      },
+      {
+        "date": "2026-07-20",
+        "home": 3.75,
+        "draw": 4.3,
+        "away": 2.0
       }
     ],
     "Norway vs France": [
-      {
-        "date": "2026-06-15",
-        "home": 4.5,
-        "draw": 3.9,
-        "away": 1.87
-      },
       {
         "date": "2026-06-16",
         "home": 4.5,
@@ -9450,15 +9180,15 @@
         "home": 4.9,
         "draw": 4.9,
         "away": 1.69
+      },
+      {
+        "date": "2026-07-20",
+        "home": 4.9,
+        "draw": 4.9,
+        "away": 1.69
       }
     ],
     "Senegal vs Iraq": [
-      {
-        "date": "2026-06-15",
-        "home": 1.45,
-        "draw": 5.0,
-        "away": 9.0
-      },
       {
         "date": "2026-06-16",
         "home": 1.45,
@@ -9536,15 +9266,15 @@
         "home": 1.26,
         "draw": 7.25,
         "away": 14.1
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.26,
+        "draw": 7.25,
+        "away": 14.1
       }
     ],
     "Cape Verde vs Saudi Arabia": [
-      {
-        "date": "2026-06-15",
-        "home": 2.75,
-        "draw": 3.95,
-        "away": 2.75
-      },
       {
         "date": "2026-06-16",
         "home": 2.94,
@@ -9622,15 +9352,15 @@
         "home": 2.78,
         "draw": 3.45,
         "away": 2.86
+      },
+      {
+        "date": "2026-07-20",
+        "home": 2.78,
+        "draw": 3.45,
+        "away": 2.86
       }
     ],
     "Uruguay vs Spain": [
-      {
-        "date": "2026-06-15",
-        "home": 6.5,
-        "draw": 4.5,
-        "away": 1.61
-      },
       {
         "date": "2026-06-16",
         "home": 6.5,
@@ -9708,15 +9438,15 @@
         "home": 7.8,
         "draw": 3.9,
         "away": 1.67
+      },
+      {
+        "date": "2026-07-20",
+        "home": 7.8,
+        "draw": 3.9,
+        "away": 1.67
       }
     ],
     "New Zealand vs Belgium": [
-      {
-        "date": "2026-06-15",
-        "home": 13.0,
-        "draw": 6.6,
-        "away": 1.3
-      },
       {
         "date": "2026-06-16",
         "home": 14.0,
@@ -9794,15 +9524,15 @@
         "home": 17.5,
         "draw": 8.5,
         "away": 1.22
+      },
+      {
+        "date": "2026-07-20",
+        "home": 17.5,
+        "draw": 8.5,
+        "away": 1.22
       }
     ],
     "Egypt vs Iran": [
-      {
-        "date": "2026-06-15",
-        "home": 2.28,
-        "draw": 3.35,
-        "away": 3.75
-      },
       {
         "date": "2026-06-16",
         "home": 2.2,
@@ -9880,15 +9610,15 @@
         "home": 2.6,
         "draw": 2.75,
         "away": 4.13
+      },
+      {
+        "date": "2026-07-20",
+        "home": 2.6,
+        "draw": 2.75,
+        "away": 4.13
       }
     ],
     "Croatia vs Ghana": [
-      {
-        "date": "2026-06-15",
-        "home": 1.67,
-        "draw": 3.95,
-        "away": 6.0
-      },
       {
         "date": "2026-06-16",
         "home": 1.67,
@@ -9966,15 +9696,15 @@
         "home": 1.83,
         "draw": 3.4,
         "away": 6.2
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.83,
+        "draw": 3.4,
+        "away": 6.2
       }
     ],
     "Panama vs England": [
-      {
-        "date": "2026-06-15",
-        "home": 13.0,
-        "draw": 7.0,
-        "away": 1.32
-      },
       {
         "date": "2026-06-16",
         "home": 12.0,
@@ -10052,15 +9782,15 @@
         "home": 22.0,
         "draw": 9.2,
         "away": 1.2
+      },
+      {
+        "date": "2026-07-20",
+        "home": 22.0,
+        "draw": 9.2,
+        "away": 1.2
       }
     ],
     "Colombia vs Portugal": [
-      {
-        "date": "2026-06-15",
-        "home": 3.6,
-        "draw": 3.45,
-        "away": 2.2
-      },
       {
         "date": "2026-06-16",
         "home": 3.6,
@@ -10138,15 +9868,15 @@
         "home": 4.33,
         "draw": 3.95,
         "away": 1.92
+      },
+      {
+        "date": "2026-07-20",
+        "home": 4.33,
+        "draw": 3.95,
+        "away": 1.92
       }
     ],
     "DR Congo vs Uzbekistan": [
-      {
-        "date": "2026-06-15",
-        "home": 2.38,
-        "draw": 3.35,
-        "away": 3.3
-      },
       {
         "date": "2026-06-16",
         "home": 2.4,
@@ -10224,15 +9954,15 @@
         "home": 1.83,
         "draw": 4.25,
         "away": 4.6
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.83,
+        "draw": 4.25,
+        "away": 4.6
       }
     ],
     "Algeria vs Austria": [
-      {
-        "date": "2026-06-15",
-        "home": 3.85,
-        "draw": 3.35,
-        "away": 2.3
-      },
       {
         "date": "2026-06-16",
         "home": 3.9,
@@ -10310,15 +10040,15 @@
         "home": 4.33,
         "draw": 2.38,
         "away": 3.0
+      },
+      {
+        "date": "2026-07-20",
+        "home": 4.33,
+        "draw": 2.38,
+        "away": 3.0
       }
     ],
     "Jordan vs Argentina": [
-      {
-        "date": "2026-06-15",
-        "home": 17.0,
-        "draw": 7.5,
-        "away": 1.21
-      },
       {
         "date": "2026-06-16",
         "home": 17.0,
@@ -10396,6 +10126,12 @@
         "home": 19.5,
         "draw": 9.2,
         "away": 1.21
+      },
+      {
+        "date": "2026-07-20",
+        "home": 19.5,
+        "draw": 9.2,
+        "away": 1.21
       }
     ],
     "South Africa vs Canada": [
@@ -10419,6 +10155,12 @@
       },
       {
         "date": "2026-07-07",
+        "home": 5.9,
+        "draw": 3.75,
+        "away": 1.77
+      },
+      {
+        "date": "2026-07-20",
         "home": 5.9,
         "draw": 3.75,
         "away": 1.77
@@ -10448,6 +10190,12 @@
         "home": 1.57,
         "draw": 4.6,
         "away": 7.8
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.57,
+        "draw": 4.6,
+        "away": 7.8
       }
     ],
     "Brazil vs Japan": [
@@ -10465,6 +10213,12 @@
       },
       {
         "date": "2026-07-07",
+        "home": 1.78,
+        "draw": 3.85,
+        "away": 5.5
+      },
+      {
+        "date": "2026-07-20",
         "home": 1.78,
         "draw": 3.85,
         "away": 5.5
@@ -10488,6 +10242,12 @@
         "home": 2.24,
         "draw": 3.45,
         "away": 3.8
+      },
+      {
+        "date": "2026-07-20",
+        "home": 2.24,
+        "draw": 3.45,
+        "away": 3.8
       }
     ],
     "Portugal vs Spain": [
@@ -10499,6 +10259,12 @@
       },
       {
         "date": "2026-07-07",
+        "home": 7.19,
+        "draw": 1.67,
+        "away": 3.25
+      },
+      {
+        "date": "2026-07-20",
         "home": 7.19,
         "draw": 1.67,
         "away": 3.25
@@ -10516,6 +10282,12 @@
         "home": 2.62,
         "draw": 3.55,
         "away": 2.98
+      },
+      {
+        "date": "2026-07-20",
+        "home": 2.62,
+        "draw": 3.55,
+        "away": 2.98
       }
     ],
     "Argentina vs Egypt": [
@@ -10527,6 +10299,12 @@
       },
       {
         "date": "2026-07-07",
+        "home": 1.41,
+        "draw": 5.2,
+        "away": 11.5
+      },
+      {
+        "date": "2026-07-20",
         "home": 1.41,
         "draw": 5.2,
         "away": 11.5
@@ -10544,6 +10322,12 @@
         "home": 3.95,
         "draw": 3.23,
         "away": 2.32
+      },
+      {
+        "date": "2026-07-20",
+        "home": 3.95,
+        "draw": 3.23,
+        "away": 2.32
       }
     ],
     "France vs Morocco": [
@@ -10555,6 +10339,12 @@
       },
       {
         "date": "2026-07-07",
+        "home": 1.64,
+        "draw": 4.1,
+        "away": 6.8
+      },
+      {
+        "date": "2026-07-20",
         "home": 1.64,
         "draw": 4.1,
         "away": 6.8
@@ -10572,6 +10362,12 @@
         "home": 4.3,
         "draw": 3.81,
         "away": 1.95
+      },
+      {
+        "date": "2026-07-20",
+        "home": 4.3,
+        "draw": 3.81,
+        "away": 1.95
       }
     ],
     "Spain vs Belgium": [
@@ -10580,57 +10376,31 @@
         "home": 1.7,
         "draw": 4.1,
         "away": 5.98
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.7,
+        "draw": 4.1,
+        "away": 5.98
       }
     ]
   },
   "wm_results": [
     {
-      "match_id": "9c7073ae2c29ee4881bb695f92168c68",
-      "home": "Canada",
-      "away": "Morocco",
-      "home_score": 0,
-      "away_score": 3,
-      "commence_time": "2026-07-04T17:00:00Z"
-    },
-    {
-      "match_id": "c798a1ffdeda28e82d930e7145a8ff10",
-      "home": "Paraguay",
-      "away": "France",
-      "home_score": 0,
-      "away_score": 1,
-      "commence_time": "2026-07-04T21:03:00Z"
-    },
-    {
-      "match_id": "a4634eae056c18d705e3feffb347163f",
-      "home": "Brazil",
-      "away": "Norway",
-      "home_score": 1,
-      "away_score": 2,
-      "commence_time": "2026-07-05T20:00:00Z"
-    },
-    {
-      "match_id": "e61a7b471cadc8e3849158ed59d49cab",
-      "home": "Mexico",
+      "match_id": "7a49e7985534a5ff3428740d0b630fd7",
+      "home": "France",
       "away": "England",
-      "home_score": 2,
-      "away_score": 3,
-      "commence_time": "2026-07-06T01:00:00Z"
+      "home_score": 4,
+      "away_score": 6,
+      "commence_time": "2026-07-18T21:00:00Z"
     },
     {
-      "match_id": "16ed3adcf661b3a9bea39871a2d204df",
-      "home": "Portugal",
-      "away": "Spain",
-      "home_score": 0,
-      "away_score": 1,
-      "commence_time": "2026-07-06T19:00:00Z"
-    },
-    {
-      "match_id": "810f80b3ae79f5e86b3747ca15718ed8",
-      "home": "USA",
-      "away": "Belgium",
+      "match_id": "fb30113e43d113f1ace48b8563ba1ee9",
+      "home": "Spain",
+      "away": "Argentina",
       "home_score": 1,
-      "away_score": 4,
-      "commence_time": "2026-07-07T00:00:00Z"
+      "away_score": 0,
+      "commence_time": "2026-07-19T19:05:00Z"
     }
   ]
 }
