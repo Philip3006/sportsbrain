@@ -1997,3 +1997,9 @@
 [2026-07-21 21:19:12 UTC] [cloud_healer] live_score_push: erfolgreich ausgelöst
 [2026-07-21 21:19:13 UTC] [cloud_healer] prematch_scan: status=stale — triggere prematch_scan.yml
 [2026-07-21 21:19:19 UTC] [cloud_healer] prematch_scan: Trigger fehlgeschlagen: could not create workflow dispatch event: HTTP 500: Failed to run workflow dispatch (https://api.github.com/repos/Philip3006/sportsbrain/actions/workflows/289458017/dispatches)
+[2026-07-21 22:28:52 UTC] [cloud_healer] closing_odds: status=stale — triggere closing_odds.yml
+[2026-07-21 22:28:53 UTC] [cloud_healer] closing_odds: erfolgreich ausgelöst
+[2026-07-21 22:28:54 UTC] [cloud_healer] live_score_push: status=stale — triggere live_score_push.yml
+[2026-07-21 22:28:55 UTC] [cloud_healer] live_score_push: erfolgreich ausgelöst
+[2026-07-21 22:28:56 UTC] [cloud_healer] prematch_scan: status=stale — triggere prematch_scan.yml
+[2026-07-21 22:28:57 UTC] [cloud_healer] prematch_scan: erfolgreich ausgelöst
