@@ -1,8 +1,8 @@
 {
-  "updated": "2026-07-22T22:10:45Z",
+  "updated": "2026-07-23T08:20:30Z",
   "build_info": {
-    "sha": "6beea7d",
-    "date": "2026-07-22"
+    "sha": "cdf4569",
+    "date": "2026-07-23"
   },
   "meta": {
     "stale_odds": false,
@@ -3771,7 +3771,7 @@
     },
     {
       "name": "Djokovic N.",
-      "rating": 1620
+      "rating": 1619
     },
     {
       "name": "Swiatek I.",
@@ -4900,10 +4900,10 @@
       "pnl": -12.33,
       "yield_pct": -1.95,
       "mean_clv": 4.23,
-      "mean_clv_30d": -3.96,
+      "mean_clv_30d": -3.65,
       "mean_edge": 8.17,
       "n_clv": 25,
-      "n_clv_30d": 5,
+      "n_clv_30d": 3,
       "n_edge": 32
     },
     "per_team_market": {
