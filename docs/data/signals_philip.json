@@ -1,8 +1,8 @@
 {
-  "updated": "2026-07-24T22:11:10Z",
+  "updated": "2026-07-25T07:57:28Z",
   "build_info": {
-    "sha": "8925425",
-    "date": "2026-07-24"
+    "sha": "d5bba26",
+    "date": "2026-07-25"
   },
   "meta": {
     "stale_odds": false,
@@ -3775,7 +3775,7 @@
     },
     {
       "name": "Swiatek I.",
-      "rating": 1613
+      "rating": 1612
     },
     {
       "name": "Alexandrova E.",
@@ -3783,7 +3783,7 @@
     },
     {
       "name": "Anisimova A.",
-      "rating": 1587
+      "rating": 1586
     },
     {
       "name": "Bublik A.",
@@ -4900,10 +4900,10 @@
       "pnl": -12.33,
       "yield_pct": -1.95,
       "mean_clv": 4.23,
-      "mean_clv_30d": -3.65,
+      "mean_clv_30d": null,
       "mean_edge": 8.17,
       "n_clv": 25,
-      "n_clv_30d": 3,
+      "n_clv_30d": 0,
       "n_edge": 32
     },
     "per_team_market": {
