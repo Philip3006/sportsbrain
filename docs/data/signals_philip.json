@@ -1,7 +1,7 @@
 {
-  "updated": "2026-07-27T09:39:31Z",
+  "updated": "2026-07-27T13:32:21Z",
   "build_info": {
-    "sha": "f8812aa",
+    "sha": "967b886",
     "date": "2026-07-27"
   },
   "meta": {
@@ -3759,23 +3759,23 @@
   "top_elo": [
     {
       "name": "Alcaraz C.",
-      "rating": 1666
+      "rating": 1664
     },
     {
       "name": "Fritz T.",
-      "rating": 1639
+      "rating": 1637
     },
     {
       "name": "Sinner J.",
-      "rating": 1629
-    },
-    {
-      "name": "Djokovic N.",
-      "rating": 1619
+      "rating": 1630
     },
     {
       "name": "Swiatek I.",
       "rating": 1612
+    },
+    {
+      "name": "Djokovic N.",
+      "rating": 1609
     },
     {
       "name": "Alexandrova E.",
@@ -3786,16 +3786,16 @@
       "rating": 1586
     },
     {
-      "name": "Bublik A.",
-      "rating": 1575
-    },
-    {
       "name": "Sabalenka A.",
       "rating": 1575
     },
     {
-      "name": "Medvedev D.",
-      "rating": 1575
+      "name": "Rybakina E.",
+      "rating": 1572
+    },
+    {
+      "name": "Bublik A.",
+      "rating": 1572
     }
   ],
   "history": [
