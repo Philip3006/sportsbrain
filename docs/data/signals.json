@@ -1,8 +1,8 @@
 {
-  "updated": "2026-07-26T22:04:57Z",
+  "updated": "2026-07-27T09:39:31Z",
   "build_info": {
-    "sha": "1b21204",
-    "date": "2026-07-26"
+    "sha": "f8812aa",
+    "date": "2026-07-27"
   },
   "meta": {
     "stale_odds": false,
@@ -3779,7 +3779,7 @@
     },
     {
       "name": "Alexandrova E.",
-      "rating": 1590
+      "rating": 1589
     },
     {
       "name": "Anisimova A.",
