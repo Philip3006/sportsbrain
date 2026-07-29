@@ -1,8 +1,8 @@
 {
-  "updated": "2026-07-28T22:11:28Z",
+  "updated": "2026-07-29T08:29:26Z",
   "build_info": {
-    "sha": "745b3a7",
-    "date": "2026-07-28"
+    "sha": "562f63a",
+    "date": "2026-07-29"
   },
   "meta": {
     "stale_odds": false,
@@ -3767,7 +3767,7 @@
     },
     {
       "name": "Sinner J.",
-      "rating": 1629
+      "rating": 1628
     },
     {
       "name": "Djokovic N.",
