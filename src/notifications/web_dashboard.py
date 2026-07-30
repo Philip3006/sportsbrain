@@ -458,6 +458,148 @@ def _build_wm_stats(ledger_path: Path | None = None) -> dict:
         return {}
 
 
+def _build_tennis_stats(ledger_path: Path | None = None) -> dict:
+    """Tennis-Performance-Stats aus dem Ledger (Roadmap TENNIS P1.5).
+
+    Aggregiert Tennis-Bets nach Kategorie/Surface/Markt/Tour + liefert
+    aktive Turniere und Live-Gate-Status. Leerer Return {} nur bei
+    komplettem Fehler - normales Off-Season-Empty ist Zero-Aggregates.
+    """
+    from src.betting.tennis_settlement import is_tennis_market
+    lp = ledger_path or _LEDGER_PATH
+    if not lp.exists():
+        return {}
+
+    # ── Aktive Turniere holen (Discovery) ─────────────────────────────────
+    active_tournaments: list[dict] = []
+    try:
+        from src.tennis.discovery import discover_active_tournaments
+        for t in discover_active_tournaments():
+            active_tournaments.append({
+                "slug": t.slug,
+                "name": t.name,
+                "category": t.category,
+                "surface": t.surface,
+                "best_of": t.best_of,
+            })
+    except Exception:
+        pass
+
+    # ── Live-Gate-Status ──────────────────────────────────────────────────
+    try:
+        from src.config import TENNIS_CATEGORY_MODE, TENNIS_CATEGORY_SURFACE_MODE
+        gate_status = {
+            "category_mode": dict(TENNIS_CATEGORY_MODE),
+            "surface_overrides": [
+                {"category": k[0], "surface": k[1], "mode": v}
+                for k, v in TENNIS_CATEGORY_SURFACE_MODE.items()
+            ],
+        }
+    except Exception:
+        gate_status = {}
+
+    # ── Ledger-Aggregation ────────────────────────────────────────────────
+    stats = {
+        "n_bets_all": 0, "n_bets_settled": 0, "n_open": 0,
+        "n_won": 0, "n_lost": 0, "n_push": 0,
+        "total_staked": 0.0, "total_pnl": 0.0,
+        "roi_pct": None, "clv_mean": None,
+        "by_market": {},
+        "by_tour": {"atp": {"n": 0, "won": 0, "pnl": 0.0, "staked": 0.0},
+                    "wta": {"n": 0, "won": 0, "pnl": 0.0, "staked": 0.0}},
+    }
+
+    try:
+        with open(lp, newline="") as f:
+            rows = list(csv.DictReader(f))
+    except Exception:
+        rows = []
+
+    tennis_rows = []
+    for r in rows:
+        market = r.get("market", "")
+        src = (r.get("source") or "").lower()
+        reason = (r.get("stake_reason") or "").lower()
+        if is_tennis_market(market) or "tennis" in src or "tennis" in reason:
+            tennis_rows.append(r)
+
+    stats["n_bets_all"] = len(tennis_rows)
+    clv_values: list[float] = []
+
+    for r in tennis_rows:
+        status = r.get("status", "").lower()
+        market = r.get("market", "")
+        row_src = (r.get("source") or "").lower()
+        row_reason = (r.get("stake_reason") or "").lower()
+        try:
+            stake = float(r.get("stake_amount", 0) or 0)
+            pnl = float(r.get("pnl", 0) or 0)
+        except (ValueError, TypeError):
+            stake, pnl = 0.0, 0.0
+
+        if status == "open":
+            stats["n_open"] += 1
+            continue
+        if status in ("won", "lost", "push"):
+            stats["n_bets_settled"] += 1
+            stats[f"n_{status}"] += 1
+            stats["total_staked"] += stake
+            stats["total_pnl"] += pnl
+
+            # by_market
+            bm = stats["by_market"].setdefault(market, {"n": 0, "won": 0, "pnl": 0.0, "staked": 0.0})
+            bm["n"] += 1
+            bm["staked"] += stake
+            bm["pnl"] += pnl
+            if status == "won":
+                bm["won"] += 1
+
+            # by_tour - heuristic: source/stake_reason/match_id contains 'wta' or 'atp'
+            tour = None
+            for hint in (row_src, row_reason, str(r.get("match_id", "")).lower()):
+                if "wta" in hint:
+                    tour = "wta"; break
+                if "atp" in hint:
+                    tour = "atp"; break
+            if tour:
+                bt = stats["by_tour"][tour]
+                bt["n"] += 1
+                bt["staked"] += stake
+                bt["pnl"] += pnl
+                if status == "won":
+                    bt["won"] += 1
+
+            # CLV
+            try:
+                clv = float(r.get("clv") or "nan")
+                if -1 < clv < 3:
+                    clv_values.append(clv)
+            except (ValueError, TypeError):
+                pass
+
+    if stats["total_staked"] > 0:
+        stats["roi_pct"] = round(100 * stats["total_pnl"] / stats["total_staked"], 3)
+    if clv_values:
+        stats["clv_mean"] = round(sum(clv_values) / len(clv_values), 4)
+
+    # Round monetary sums
+    stats["total_staked"] = round(stats["total_staked"], 2)
+    stats["total_pnl"] = round(stats["total_pnl"], 2)
+    for bm in stats["by_market"].values():
+        bm["pnl"] = round(bm["pnl"], 2)
+        bm["staked"] = round(bm["staked"], 2)
+    for bt in stats["by_tour"].values():
+        bt["pnl"] = round(bt["pnl"], 2)
+        bt["staked"] = round(bt["staked"], 2)
+
+    return {
+        "updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "active_tournaments": active_tournaments,
+        "live_gate_status": gate_status,
+        "stats": stats,
+    }
+
+
 def _get_closed_bets(ledger_path: Path | None = None) -> list[dict]:
     lp = ledger_path or _LEDGER_PATH
     if not lp.exists():
@@ -790,6 +932,7 @@ def write_signals_json(
             "pnl_closed":   round(_pnl_closed, 2),
         },
         "wm_stats": _build_wm_stats(ledger_path=ledger_path),
+        "tennis_stats": _build_tennis_stats(ledger_path=ledger_path),
     }
     payload["odds_history"] = odds_history if odds_history is not None else existing.get("odds_history", {})
 
