@@ -97,11 +97,24 @@ def _settle_user_ledger(user: str, scores: dict, tennis_match_ids: set[str], dry
         stake = float(r["stake_amount"])
         pnl_val = _pnl(result, odds, stake)
 
-        print(f"  {home} vs {away} | {market} @ {odds} | {result.upper()} → {pnl_val:+.2f} €")
+        # CLV berechnen wenn closing_odds vorhanden (P1.2)
+        clv_str = ""
+        try:
+            closing = float(r.get("closing_odds") or 0)
+            if 1.0 < closing < odds * 3.0:
+                clv = max(-0.99, min(2.00, odds / closing - 1.0))
+                clv_str = f"{clv:.4f}"
+        except (ValueError, TypeError):
+            pass
+
+        clv_info = f" | CLV {clv_str}" if clv_str else ""
+        print(f"  {home} vs {away} | {market} @ {odds} | {result.upper()} → {pnl_val:+.2f} €{clv_info}")
 
         if not dry_run:
             r["status"] = result
             r["pnl"] = f"{pnl_val:.2f}"
+            if clv_str:
+                r["clv"] = clv_str
         settled_count += 1
 
     if not dry_run and settled_count > 0:
