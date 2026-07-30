@@ -1,46 +1,15 @@
 {
-  "updated": "2026-07-07T14:50:02Z",
+  "updated": "2026-07-30T20:05:15Z",
   "build_info": {
-    "sha": "8fab945",
-    "date": "2026-07-07"
+    "sha": "7c7b62a",
+    "date": "2026-07-30"
   },
   "meta": {
     "stale_odds": false,
     "default_user": "philip",
     "user": "philip"
   },
-  "schedule": [
-    {
-      "sport": "football",
-      "home": "Argentina",
-      "away": "Egypt",
-      "kickoff": "2026-07-07T16:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "Switzerland",
-      "away": "Colombia",
-      "kickoff": "2026-07-07T20:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "France",
-      "away": "Morocco",
-      "kickoff": "2026-07-09T20:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "Spain",
-      "away": "Belgium",
-      "kickoff": "2026-07-10T19:00:00Z"
-    },
-    {
-      "sport": "football",
-      "home": "Norway",
-      "away": "England",
-      "kickoff": "2026-07-11T21:00:00Z"
-    }
-  ],
+  "schedule": [],
   "all_odds": {
     "Bosnia & Herzegovina vs Qatar": {
       "home": 1.39,
@@ -2692,8 +2661,194 @@
         }
       ]
     },
+    "Portugal vs Spain": {
+      "home": 7.19,
+      "draw": 1.67,
+      "away": 3.25,
+      "over25": 0.0,
+      "under25": 0.0,
+      "over15": 13.5,
+      "under15": 1.12,
+      "over35": 0.0,
+      "under35": 0.0,
+      "btts_yes": 0.0,
+      "btts_no": 0.0,
+      "over05": 2.03,
+      "under05": 1.85,
+      "ah0.25_home": 1.66,
+      "ah0.25_away": 2.34,
+      "ah0.5_home": 21.0,
+      "ah0.5_away": 1.04,
+      "bookmakers_h2h": [
+        {
+          "key": "unibet",
+          "title": "Unibet",
+          "home": 151.0,
+          "draw": 10.0,
+          "away": 1.03
+        },
+        {
+          "key": "virginbet",
+          "title": "Virgin Bet",
+          "home": 141.0,
+          "draw": 9.5,
+          "away": 1.03
+        },
+        {
+          "key": "casumo",
+          "title": "Casumo",
+          "home": 151.0,
+          "draw": 10.0,
+          "away": 1.03
+        },
+        {
+          "key": "betrivers",
+          "title": "BetRivers",
+          "home": 151.0,
+          "draw": 10.0,
+          "away": 1.03
+        },
+        {
+          "key": "pmu_fr",
+          "title": "PMU (FR)",
+          "home": 151.0,
+          "draw": 10.0,
+          "away": 1.03
+        },
+        {
+          "key": "unibet_se",
+          "title": "Unibet (SE)",
+          "home": 151.0,
+          "draw": 10.0,
+          "away": 1.03
+        },
+        {
+          "key": "leovegas_se",
+          "title": "LeoVegas (SE)",
+          "home": 81.0,
+          "draw": 10.0,
+          "away": 1.02
+        },
+        {
+          "key": "livescorebet",
+          "title": "LiveScore Bet",
+          "home": 141.0,
+          "draw": 9.5,
+          "away": 1.03
+        },
+        {
+          "key": "unibet_nl",
+          "title": "Unibet (NL)",
+          "home": 151.0,
+          "draw": 10.0,
+          "away": 1.03
+        },
+        {
+          "key": "tipico_de",
+          "title": "Tipico",
+          "home": 400.0,
+          "draw": 15.0,
+          "away": 1.01
+        }
+      ]
+    },
+    "USA vs Belgium": {
+      "home": 2.62,
+      "draw": 3.55,
+      "away": 2.98,
+      "over25": 1.74,
+      "under25": 2.3,
+      "over15": 0.0,
+      "under15": 0.0,
+      "over35": 2.75,
+      "under35": 1.48,
+      "btts_yes": 0.0,
+      "btts_no": 0.0,
+      "over30": 2.18,
+      "under30": 1.81,
+      "over275": 1.85,
+      "under275": 2.06,
+      "ah0.0_home": 1.87,
+      "ah0.0_away": 2.12,
+      "ah-1.5_home": 4.75,
+      "ah-1.5_away": 1.18,
+      "ah-0.5_home": 2.44,
+      "ah-0.5_away": 1.56,
+      "bookmakers_h2h": [
+        {
+          "key": "unibet",
+          "title": "Unibet",
+          "home": 2.5,
+          "draw": 3.3,
+          "away": 2.85
+        },
+        {
+          "key": "fanatics",
+          "title": "Fanatics",
+          "home": 2.45,
+          "draw": 3.5,
+          "away": 2.75
+        },
+        {
+          "key": "casumo",
+          "title": "Casumo",
+          "home": 2.5,
+          "draw": 3.3,
+          "away": 2.85
+        },
+        {
+          "key": "tabtouch",
+          "title": "TABtouch",
+          "home": 2.48,
+          "draw": 3.2,
+          "away": 2.8
+        },
+        {
+          "key": "grosvenor",
+          "title": "Grosvenor",
+          "home": 2.4,
+          "draw": 3.35,
+          "away": 2.8
+        },
+        {
+          "key": "leovegas_se",
+          "title": "LeoVegas (SE)",
+          "home": 2.55,
+          "draw": 3.3,
+          "away": 2.85
+        },
+        {
+          "key": "livescorebet",
+          "title": "LiveScore Bet",
+          "home": 2.48,
+          "draw": 3.2,
+          "away": 2.8
+        },
+        {
+          "key": "betrivers",
+          "title": "BetRivers",
+          "home": 2.5,
+          "draw": 3.3,
+          "away": 2.85
+        },
+        {
+          "key": "virginbet",
+          "title": "Virgin Bet",
+          "home": 2.48,
+          "draw": 3.2,
+          "away": 2.8
+        },
+        {
+          "key": "pmu_fr",
+          "title": "PMU (FR)",
+          "home": 2.6,
+          "draw": 3.35,
+          "away": 2.8
+        }
+      ]
+    },
     "Argentina vs Egypt": {
-      "home": 1.38,
+      "home": 1.41,
       "draw": 5.2,
       "away": 13.0,
       "over25": 2.04,
@@ -2741,8 +2896,8 @@
           "key": "tipico_de",
           "title": "Tipico",
           "home": 1.32,
-          "draw": 5.0,
-          "away": 11.0
+          "draw": 5.2,
+          "away": 10.0
         },
         {
           "key": "tabtouch",
@@ -2823,9 +2978,9 @@
         {
           "key": "tipico_de",
           "title": "Tipico",
-          "home": 3.5,
-          "draw": 3.1,
-          "away": 2.25
+          "home": 3.7,
+          "draw": 3.2,
+          "away": 2.15
         },
         {
           "key": "leovegas",
@@ -2879,301 +3034,800 @@
       ]
     },
     "France vs Morocco": {
-      "home": 1.62,
-      "draw": 4.1,
-      "away": 6.81,
-      "over25": 2.04,
-      "under25": 1.92,
+      "home": 1.01,
+      "draw": 501.0,
+      "away": 1001.0,
+      "over25": 26.0,
+      "under25": 1.52,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over30": 2.8,
-      "under30": 1.43,
-      "ah-0.5_home": 1.6,
-      "ah-0.5_away": 2.36,
-      "ah-1.0_home": 2.12,
-      "ah-1.0_away": 1.87,
-      "ah-1.5_home": 2.77,
-      "ah-1.5_away": 1.48,
+      "ah-2.5_home": 5.6,
+      "ah-2.5_away": 1.01,
+      "ah-0.25_home": 2.7,
+      "ah-0.25_away": 1.52,
+      "ah-2.0_home": 1.38,
+      "ah-2.0_away": 3.12,
       "bookmakers_h2h": [
-        {
-          "key": "unibet",
-          "title": "Unibet",
-          "home": 1.57,
-          "draw": 3.9,
-          "away": 6.1
-        },
-        {
-          "key": "unibet_uk",
-          "title": "Unibet (UK)",
-          "home": 1.6,
-          "draw": 4.0,
-          "away": 5.75
-        },
-        {
-          "key": "betmgm",
-          "title": "BetMGM",
-          "home": 1.57,
-          "draw": 3.9,
-          "away": 5.75
-        },
         {
           "key": "ladbrokes_uk",
           "title": "Ladbrokes",
-          "home": 1.57,
-          "draw": 3.9,
-          "away": 5.75
+          "home": 1.0,
+          "draw": 126.0,
+          "away": 751.0
         },
         {
           "key": "winamax_fr",
           "title": "Winamax (FR)",
-          "home": 1.56,
-          "draw": 3.85,
-          "away": 6.25
-        },
-        {
-          "key": "unibet_nl",
-          "title": "Unibet (NL)",
-          "home": 1.61,
-          "draw": 4.1,
-          "away": 6.5
-        },
-        {
-          "key": "casumo",
-          "title": "Casumo",
-          "home": 1.57,
-          "draw": 3.9,
-          "away": 6.25
+          "home": 1.0,
+          "draw": 450.0,
+          "away": 1000.0
         },
         {
           "key": "coral",
           "title": "Coral",
-          "home": 1.6,
-          "draw": 4.0,
-          "away": 5.75
+          "home": 1.0,
+          "draw": 201.0,
+          "away": 1.02
         },
         {
-          "key": "livescorebet",
-          "title": "LiveScore Bet",
-          "home": 1.56,
-          "draw": 3.8,
-          "away": 6.0
+          "key": "smarkets",
+          "title": "Smarkets",
+          "home": 1.0,
+          "draw": 294.12,
+          "away": 303.03
         },
         {
-          "key": "betrivers",
-          "title": "BetRivers",
-          "home": 1.57,
-          "draw": 3.9,
-          "away": 6.25
+          "key": "winamax_de",
+          "title": "Winamax (DE)",
+          "home": 1.0,
+          "draw": 450.0,
+          "away": 1000.0
+        },
+        {
+          "key": "nordicbet",
+          "title": "Nordic Bet",
+          "home": 1.0,
+          "draw": 29.0,
+          "away": 34.0
+        },
+        {
+          "key": "betsson",
+          "title": "Betsson",
+          "home": 1.0,
+          "draw": 29.0,
+          "away": 34.0
+        },
+        {
+          "key": "betway",
+          "title": "Betway",
+          "home": 1.0,
+          "draw": 501.0,
+          "away": 1001.0
+        },
+        {
+          "key": "skybet",
+          "title": "Sky Bet",
+          "home": 1.0,
+          "draw": 276.0,
+          "away": 276.0
+        },
+        {
+          "key": "paddypower",
+          "title": "Paddy Power",
+          "home": 1.0,
+          "draw": 301.0,
+          "away": 301.0
         }
       ]
     },
     "Spain vs Belgium": {
-      "home": 1.65,
-      "draw": 4.2,
-      "away": 6.2,
-      "over25": 1.91,
-      "under25": 2.06,
+      "home": 1.69,
+      "draw": 3.72,
+      "away": 5.42,
+      "over25": 2.32,
+      "under25": 1.93,
       "over15": 0.0,
       "under15": 0.0,
-      "over35": 0.0,
-      "under35": 0.0,
+      "over35": 2.32,
+      "under35": 1.69,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over275": 2.05,
-      "under275": 1.84,
-      "over20": 1.36,
-      "under20": 3.15,
-      "ah-1.0_home": 2.12,
-      "ah-1.0_away": 1.87,
+      "over20": 1.7,
+      "under20": 2.1,
+      "ah-0.75_home": 1.92,
+      "ah-0.75_away": 1.99,
       "ah-0.5_home": 1.65,
-      "ah-0.5_away": 2.25,
-      "ah-1.5_home": 2.81,
-      "ah-1.5_away": 1.47,
+      "ah-0.5_away": 2.05,
       "bookmakers_h2h": [
         {
           "key": "pinnacle",
           "title": "Pinnacle",
-          "home": 1.63,
-          "draw": 4.02,
-          "away": 5.75
-        },
-        {
-          "key": "gtbets",
-          "title": "GTbets",
-          "home": 1.64,
-          "draw": 3.81,
-          "away": 5.31
-        },
-        {
-          "key": "onexbet",
-          "title": "1xBet",
-          "home": 1.64,
-          "draw": 4.17,
-          "away": 6.03
+          "home": 1.69,
+          "draw": 3.72,
+          "away": 5.42
         },
         {
           "key": "leovegas",
           "title": "LeoVegas",
-          "home": 1.62,
-          "draw": 4.0,
-          "away": 5.2
+          "home": 1.16,
+          "draw": 6.5,
+          "away": 18.0
         },
         {
           "key": "tipico_de",
           "title": "Tipico",
-          "home": 1.57,
-          "draw": 4.1,
-          "away": 6.0
+          "home": 1.6,
+          "draw": 3.6,
+          "away": 5.5
         },
         {
           "key": "unibet_uk",
           "title": "Unibet (UK)",
-          "home": 1.62,
-          "draw": 4.0,
-          "away": 5.25
-        },
-        {
-          "key": "marathonbet",
-          "title": "Marathon Bet",
-          "home": 1.59,
-          "draw": 4.05,
-          "away": 5.85
-        },
-        {
-          "key": "unibet_fr",
-          "title": "Unibet (FR)",
-          "home": 1.6,
-          "draw": 4.1,
-          "away": 5.5
+          "home": 1.2,
+          "draw": 6.5,
+          "away": 15.0
         },
         {
           "key": "coral",
           "title": "Coral",
-          "home": 1.61,
-          "draw": 4.0,
+          "home": 1.7,
+          "draw": 3.4,
           "away": 5.25
         },
         {
           "key": "ladbrokes_uk",
           "title": "Ladbrokes",
-          "home": 1.61,
-          "draw": 3.9,
-          "away": 5.25
+          "home": 1.7,
+          "draw": 3.4,
+          "away": 5.0
+        },
+        {
+          "key": "mybookieag",
+          "title": "MyBookie.ag",
+          "home": 1.65,
+          "draw": 3.3,
+          "away": 5.0
+        },
+        {
+          "key": "betway",
+          "title": "Betway",
+          "home": 1.65,
+          "draw": 3.5,
+          "away": 5.0
+        },
+        {
+          "key": "virginbet",
+          "title": "Virgin Bet",
+          "home": 1.18,
+          "draw": 6.4,
+          "away": 14.0
+        },
+        {
+          "key": "livescorebet",
+          "title": "LiveScore Bet",
+          "home": 1.66,
+          "draw": 3.5,
+          "away": 5.4
         }
       ]
     },
     "Norway vs England": {
-      "home": 4.5,
-      "draw": 3.83,
-      "away": 1.95,
-      "over25": 1.79,
-      "under25": 2.2,
+      "home": 11.43,
+      "draw": 1.27,
+      "away": 5.8,
+      "over25": 4.06,
+      "under25": 1.26,
+      "over15": 1.88,
+      "under15": 1.79,
+      "over35": 0.0,
+      "under35": 0.0,
+      "btts_yes": 0.0,
+      "btts_no": 0.0,
+      "ah0.0_home": 3.04,
+      "ah0.0_away": 1.43,
+      "bookmakers_h2h": [
+        {
+          "key": "unibet",
+          "title": "Unibet",
+          "home": 19.0,
+          "draw": 4.6,
+          "away": 1.19
+        },
+        {
+          "key": "tipico_de",
+          "title": "Tipico",
+          "home": 50.0,
+          "draw": 11.0,
+          "away": 1.04
+        },
+        {
+          "key": "pinnacle",
+          "title": "Pinnacle",
+          "home": 11.43,
+          "draw": 1.27,
+          "away": 5.8
+        },
+        {
+          "key": "betfair_ex_uk",
+          "title": "Betfair",
+          "home": 42.0,
+          "draw": 1.04,
+          "away": 36.0
+        },
+        {
+          "key": "betfair_ex_eu",
+          "title": "Betfair",
+          "home": 1.9,
+          "draw": 1.01,
+          "away": 1.55
+        },
+        {
+          "key": "betfair_ex_au",
+          "title": "Betfair",
+          "home": 85.0,
+          "draw": 1.01,
+          "away": 55.0
+        }
+      ]
+    },
+    "Argentina vs Switzerland": {
+      "home": 1.27,
+      "draw": 5.8,
+      "away": 28.0,
+      "over25": 3.6,
+      "under25": 1.4,
+      "over15": 1.45,
+      "under15": 3.0,
+      "over35": 0.0,
+      "under35": 0.0,
+      "btts_yes": 0.0,
+      "btts_no": 0.0,
+      "over20": 2.1,
+      "under20": 2.17,
+      "ah-1.5_home": 2.62,
+      "ah-1.5_away": 1.6,
+      "ah-1.25_home": 2.1,
+      "ah-1.25_away": 1.77,
+      "ah-0.25_home": 2.04,
+      "ah-0.25_away": 1.86,
+      "bookmakers_h2h": [
+        {
+          "key": "unibet",
+          "title": "Unibet",
+          "home": 1.22,
+          "draw": 5.0,
+          "away": 19.0
+        },
+        {
+          "key": "unibet_nl",
+          "title": "Unibet (NL)",
+          "home": 1.22,
+          "draw": 5.0,
+          "away": 19.0
+        },
+        {
+          "key": "virginbet",
+          "title": "Virgin Bet",
+          "home": 1.22,
+          "draw": 5.0,
+          "away": 19.0
+        },
+        {
+          "key": "grosvenor",
+          "title": "Grosvenor",
+          "home": 1.19,
+          "draw": 4.8,
+          "away": 18.0
+        },
+        {
+          "key": "livescorebet",
+          "title": "LiveScore Bet",
+          "home": 1.2,
+          "draw": 5.25,
+          "away": 20.0
+        },
+        {
+          "key": "pmu_fr",
+          "title": "PMU (FR)",
+          "home": 1.2,
+          "draw": 5.25,
+          "away": 20.0
+        },
+        {
+          "key": "casumo",
+          "title": "Casumo",
+          "home": 1.2,
+          "draw": 5.25,
+          "away": 20.0
+        },
+        {
+          "key": "betrivers",
+          "title": "BetRivers",
+          "home": 1.2,
+          "draw": 5.25,
+          "away": 20.0
+        },
+        {
+          "key": "tabtouch",
+          "title": "TABtouch",
+          "home": 1.19,
+          "draw": 4.8,
+          "away": 18.0
+        },
+        {
+          "key": "unibet_se",
+          "title": "Unibet (SE)",
+          "home": 1.2,
+          "draw": 5.25,
+          "away": 20.0
+        }
+      ]
+    },
+    "France vs Spain": {
+      "home": 2.54,
+      "draw": 3.3,
+      "away": 3.42,
+      "over25": 2.0,
+      "under25": 1.98,
       "over15": 0.0,
       "under15": 0.0,
       "over35": 0.0,
       "under35": 0.0,
       "btts_yes": 0.0,
       "btts_no": 0.0,
-      "over275": 1.98,
-      "under275": 1.9,
-      "over20": 1.34,
-      "under20": 3.2,
-      "ah0.5_home": 2.06,
-      "ah0.5_away": 1.93,
-      "ah1.5_home": 1.3,
-      "ah1.5_away": 3.3,
-      "ah0.0_home": 3.04,
-      "ah0.0_away": 1.41,
+      "over20": 1.43,
+      "under20": 2.85,
+      "ah-0.25_home": 2.12,
+      "ah-0.25_away": 1.86,
+      "ah-0.5_home": 2.37,
+      "ah-0.5_away": 1.63,
+      "ah0.0_home": 1.7,
+      "ah0.0_away": 2.31,
+      "ah-1.5_home": 4.75,
+      "ah-1.5_away": 1.18,
       "bookmakers_h2h": [
         {
           "key": "unibet",
           "title": "Unibet",
-          "home": 4.1,
-          "draw": 3.6,
-          "away": 1.88
+          "home": 2.4,
+          "draw": 3.1,
+          "away": 3.2
         },
         {
-          "key": "betright",
-          "title": "Bet Right",
-          "home": 3.9,
-          "draw": 3.6,
-          "away": 1.85
+          "key": "fanatics",
+          "title": "Fanatics",
+          "home": 2.4,
+          "draw": 3.1,
+          "away": 3.2
         },
         {
-          "key": "sportsbet",
-          "title": "SportsBet",
-          "home": 4.3,
-          "draw": 3.6,
-          "away": 1.85
-        },
-        {
-          "key": "virginbet",
-          "title": "Virgin Bet",
-          "home": 4.0,
-          "draw": 3.5,
-          "away": 1.86
-        },
-        {
-          "key": "winamax_fr",
-          "title": "Winamax (FR)",
-          "home": 3.95,
-          "draw": 3.7,
-          "away": 1.84
+          "key": "smarkets",
+          "title": "Smarkets",
+          "home": 2.54,
+          "draw": 3.2,
+          "away": 3.4
         },
         {
           "key": "coral",
           "title": "Coral",
-          "home": 3.9,
-          "draw": 3.75,
-          "away": 1.85
+          "home": 2.37,
+          "draw": 3.1,
+          "away": 3.2
         },
         {
-          "key": "unibet_se",
-          "title": "Unibet (SE)",
-          "home": 4.2,
-          "draw": 3.7,
-          "away": 1.91
+          "key": "casumo",
+          "title": "Casumo",
+          "home": 2.4,
+          "draw": 3.1,
+          "away": 3.2
         },
         {
-          "key": "grosvenor",
-          "title": "Grosvenor",
-          "home": 4.0,
-          "draw": 3.5,
-          "away": 1.83
+          "key": "williamhill",
+          "title": "William Hill",
+          "home": 2.38,
+          "draw": 3.3,
+          "away": 2.9
         },
         {
-          "key": "ladbrokes_uk",
-          "title": "Ladbrokes",
-          "home": 3.9,
-          "draw": 3.75,
-          "away": 1.85
+          "key": "livescorebet",
+          "title": "LiveScore Bet",
+          "home": 2.35,
+          "draw": 3.05,
+          "away": 3.15
         },
         {
           "key": "tabtouch",
           "title": "TABtouch",
-          "home": 4.0,
-          "draw": 3.5,
-          "away": 1.85
+          "home": 2.35,
+          "draw": 3.05,
+          "away": 3.15
+        },
+        {
+          "key": "tipico_de",
+          "title": "Tipico",
+          "home": 2.35,
+          "draw": 3.1,
+          "away": 3.3
+        },
+        {
+          "key": "pinnacle",
+          "title": "Pinnacle",
+          "home": 2.49,
+          "draw": 3.1,
+          "away": 3.34
+        }
+      ]
+    },
+    "England vs Argentina": {
+      "home": 1.41,
+      "draw": 3.64,
+      "away": 13.84,
+      "over25": 0.0,
+      "under25": 0.0,
+      "over15": 1.86,
+      "under15": 2.02,
+      "over35": 9.2,
+      "under35": 1.22,
+      "btts_yes": 0.0,
+      "btts_no": 0.0,
+      "ah0.25_home": 1.68,
+      "ah0.25_away": 2.3,
+      "ah1.0_home": 1.77,
+      "ah1.0_away": 2.1,
+      "ah1.5_home": 1.05,
+      "ah1.5_away": 8.4,
+      "bookmakers_h2h": [
+        {
+          "key": "pinnacle",
+          "title": "Pinnacle",
+          "home": 1.41,
+          "draw": 3.64,
+          "away": 13.84
+        },
+        {
+          "key": "livescorebet",
+          "title": "LiveScore Bet",
+          "home": 91.0,
+          "draw": 10.5,
+          "away": 1.03
+        },
+        {
+          "key": "pmu_fr",
+          "title": "PMU (FR)",
+          "home": 161.0,
+          "draw": 10.5,
+          "away": 1.04
+        },
+        {
+          "key": "leovegas_se",
+          "title": "LeoVegas (SE)",
+          "home": 67.0,
+          "draw": 8.0,
+          "away": 1.02
+        },
+        {
+          "key": "casumo",
+          "title": "Casumo",
+          "home": 161.0,
+          "draw": 10.5,
+          "away": 1.04
+        },
+        {
+          "key": "betrivers",
+          "title": "BetRivers",
+          "home": 91.0,
+          "draw": 10.5,
+          "away": 1.03
+        },
+        {
+          "key": "unibet_se",
+          "title": "Unibet (SE)",
+          "home": 161.0,
+          "draw": 10.5,
+          "away": 1.04
+        },
+        {
+          "key": "unibet",
+          "title": "Unibet",
+          "home": 161.0,
+          "draw": 10.5,
+          "away": 1.04
+        },
+        {
+          "key": "grosvenor",
+          "title": "Grosvenor",
+          "home": 91.0,
+          "draw": 10.5,
+          "away": 1.02
+        },
+        {
+          "key": "virginbet",
+          "title": "Virgin Bet",
+          "home": 91.0,
+          "draw": 10.5,
+          "away": 1.03
+        }
+      ]
+    },
+    "France vs England": {
+      "home": 1.99,
+      "draw": 4.07,
+      "away": 4.07,
+      "over25": 1.48,
+      "under25": 2.75,
+      "over15": 0.0,
+      "under15": 0.0,
+      "over35": 2.2,
+      "under35": 1.81,
+      "btts_yes": 0.0,
+      "btts_no": 0.0,
+      "over325": 1.95,
+      "under325": 1.93,
+      "over30": 1.68,
+      "under30": 2.31,
+      "ah-0.5_home": 1.97,
+      "ah-0.5_away": 2.02,
+      "ah-1.5_home": 3.25,
+      "ah-1.5_away": 1.3,
+      "ah0.0_home": 1.43,
+      "ah0.0_away": 2.98,
+      "bookmakers_h2h": [
+        {
+          "key": "sportsbet",
+          "title": "SportsBet",
+          "home": 1.9,
+          "draw": 3.8,
+          "away": 3.8
+        },
+        {
+          "key": "winamax_de",
+          "title": "Winamax (DE)",
+          "home": 1.85,
+          "draw": 3.9,
+          "away": 3.65
+        },
+        {
+          "key": "winamax_fr",
+          "title": "Winamax (FR)",
+          "home": 1.85,
+          "draw": 3.9,
+          "away": 3.65
+        },
+        {
+          "key": "unibet_se",
+          "title": "Unibet (SE)",
+          "home": 1.95,
+          "draw": 3.85,
+          "away": 3.95
+        },
+        {
+          "key": "livescorebet",
+          "title": "LiveScore Bet",
+          "home": 1.89,
+          "draw": 3.65,
+          "away": 3.7
+        },
+        {
+          "key": "pmu_fr",
+          "title": "PMU (FR)",
+          "home": 1.88,
+          "draw": 3.65,
+          "away": 3.7
+        },
+        {
+          "key": "leovegas_se",
+          "title": "LeoVegas (SE)",
+          "home": 1.92,
+          "draw": 3.7,
+          "away": 3.8
+        },
+        {
+          "key": "grosvenor",
+          "title": "Grosvenor",
+          "home": 1.89,
+          "draw": 3.75,
+          "away": 3.75
+        },
+        {
+          "key": "betrivers",
+          "title": "BetRivers",
+          "home": 1.92,
+          "draw": 3.7,
+          "away": 3.8
+        },
+        {
+          "key": "virginbet",
+          "title": "Virgin Bet",
+          "home": 1.89,
+          "draw": 3.65,
+          "away": 3.7
+        }
+      ]
+    },
+    "Spain vs Argentina": {
+      "home": 2.36,
+      "draw": 3.16,
+      "away": 3.8,
+      "over25": 2.38,
+      "under25": 1.71,
+      "over15": 1.38,
+      "under15": 3.05,
+      "over35": 0.0,
+      "under35": 0.0,
+      "btts_yes": 0.0,
+      "btts_no": 0.0,
+      "over225": 1.98,
+      "under225": 1.91,
+      "over20": 1.69,
+      "under20": 2.25,
+      "ah-0.5_home": 2.32,
+      "ah-0.5_away": 1.69,
+      "ah-0.25_home": 1.97,
+      "ah-0.25_away": 2.0,
+      "ah-1.5_home": 4.5,
+      "ah-1.5_away": 1.18,
+      "ah0.0_home": 1.57,
+      "ah0.0_away": 2.51,
+      "bookmakers_h2h": [
+        {
+          "key": "sportsbet",
+          "title": "SportsBet",
+          "home": 2.25,
+          "draw": 3.0,
+          "away": 3.6
+        },
+        {
+          "key": "betfair_ex_eu",
+          "title": "Betfair",
+          "home": 2.34,
+          "draw": 3.15,
+          "away": 3.8
+        },
+        {
+          "key": "tipico_de",
+          "title": "Tipico",
+          "home": 2.25,
+          "draw": 3.1,
+          "away": 3.5
+        },
+        {
+          "key": "betfair_ex_uk",
+          "title": "Betfair",
+          "home": 2.34,
+          "draw": 3.15,
+          "away": 3.8
+        },
+        {
+          "key": "betfair_ex_au",
+          "title": "Betfair",
+          "home": 2.34,
+          "draw": 3.15,
+          "away": 3.8
+        },
+        {
+          "key": "skybet",
+          "title": "Sky Bet",
+          "home": 2.2,
+          "draw": 2.9,
+          "away": 3.5
+        },
+        {
+          "key": "fanduel",
+          "title": "FanDuel",
+          "home": 2.25,
+          "draw": 3.0,
+          "away": 3.6
+        },
+        {
+          "key": "paddypower",
+          "title": "Paddy Power",
+          "home": 2.2,
+          "draw": 3.0,
+          "away": 3.6
+        },
+        {
+          "key": "betfair_sb_uk",
+          "title": "Betfair Sportsbook",
+          "home": 2.25,
+          "draw": 3.0,
+          "away": 3.6
+        },
+        {
+          "key": "betfred_uk",
+          "title": "Betfred (UK)",
+          "home": 2.25,
+          "draw": 3.0,
+          "away": 3.4
         }
       ]
     }
   },
   "model_tips": {
-    "Argentina vs Egypt": {
-      "p_home": 0.566,
-      "p_draw": 0.342,
-      "p_away": 0.092,
-      "xg_home": 1.61,
-      "xg_away": 0.62,
-      "p_btts_yes": 0.419,
-      "p_btts_no": 0.581,
-      "p_over25": 0.386,
-      "p_under25": 0.614,
+    "France vs England": {
+      "p_home": 0.522,
+      "p_draw": 0.326,
+      "p_away": 0.152,
+      "xg_home": 1.78,
+      "xg_away": 0.95,
+      "p_btts_yes": 0.557,
+      "p_btts_no": 0.443,
+      "p_over25": 0.514,
+      "p_under25": 0.486,
       "top_scorers_home": [
+        {
+          "name": "Jules Koundé",
+          "p": 0.741
+        },
+        {
+          "name": "Bradley Barcola",
+          "p": 0.574
+        },
+        {
+          "name": "Ousmane Dembélé",
+          "p": 0.528
+        }
+      ],
+      "top_scorers_away": [
+        {
+          "name": "Ivan Toney",
+          "p": 0.451
+        },
+        {
+          "name": "Harry Kane",
+          "p": 0.447
+        },
+        {
+          "name": "Jude Bellingham",
+          "p": 0.371
+        }
+      ],
+      "top_scores": [
+        {
+          "h": 1,
+          "a": 1,
+          "p": 15.7
+        },
+        {
+          "h": 0,
+          "a": 0,
+          "p": 11.2
+        },
+        {
+          "h": 2,
+          "a": 0,
+          "p": 10.3
+        }
+      ]
+    },
+    "Spain vs Argentina": {
+      "p_home": 0.629,
+      "p_draw": 0.305,
+      "p_away": 0.066,
+      "xg_home": 1.74,
+      "xg_away": 0.53,
+      "p_btts_yes": 0.378,
+      "p_btts_no": 0.622,
+      "p_over25": 0.394,
+      "p_under25": 0.606,
+      "top_scorers_home": [
+        {
+          "name": "Lamine Yamal",
+          "p": 0.29
+        },
+        {
+          "name": "Fabián Ruiz",
+          "p": 0.251
+        },
+        {
+          "name": "Mikel Oyarzabal",
+          "p": 0.233
+        }
+      ],
+      "top_scorers_away": [
         {
           "name": "Nicolás Otamendi",
           "p": 0.642
@@ -3184,332 +3838,29 @@
         },
         {
           "name": "Lautaro Martínez",
-          "p": 0.484
-        }
-      ],
-      "top_scorers_away": [],
-      "top_scores": [
-        {
-          "h": 1,
-          "a": 1,
-          "p": 15.6
-        },
-        {
-          "h": 0,
-          "a": 0,
-          "p": 15.6
-        },
-        {
-          "h": 2,
-          "a": 0,
-          "p": 13.9
-        }
-      ]
-    },
-    "Switzerland vs Colombia": {
-      "p_home": 0.102,
-      "p_draw": 0.487,
-      "p_away": 0.41,
-      "xg_home": 0.33,
-      "xg_away": 0.81,
-      "p_btts_yes": 0.196,
-      "p_btts_no": 0.804,
-      "p_over25": 0.109,
-      "p_under25": 0.891,
-      "top_scorers_home": [
-        {
-          "name": "Manuel Akanji",
-          "p": 0.606
-        },
-        {
-          "name": "Zeki Amdouni",
-          "p": 0.485
-        },
-        {
-          "name": "Breel Embolo",
           "p": 0.481
         }
       ],
-      "top_scorers_away": [
-        {
-          "name": "Davinson Sánchez",
-          "p": 0.387
-        },
-        {
-          "name": "Jhon Córdoba",
-          "p": 0.297
-        },
-        {
-          "name": "James Rodríguez",
-          "p": 0.289
-        }
-      ],
-      "top_scores": [
-        {
-          "h": 0,
-          "a": 0,
-          "p": 35.7
-        },
-        {
-          "h": 0,
-          "a": 1,
-          "p": 22.0
-        },
-        {
-          "h": 1,
-          "a": 1,
-          "p": 12.4
-        }
-      ]
-    },
-    "France vs Morocco": {
-      "p_home": 0.363,
-      "p_draw": 0.457,
-      "p_away": 0.18,
-      "xg_home": 0.97,
-      "xg_away": 0.65,
-      "p_btts_yes": 0.352,
-      "p_btts_no": 0.648,
-      "p_over25": 0.221,
-      "p_under25": 0.779,
-      "top_scorers_home": [
-        {
-          "name": "Jules Koundé",
-          "p": 0.738
-        },
-        {
-          "name": "Bradley Barcola",
-          "p": 0.571
-        },
-        {
-          "name": "Ousmane Dembélé",
-          "p": 0.526
-        }
-      ],
-      "top_scorers_away": [
-        {
-          "name": "Achraf Hakimi",
-          "p": 0.511
-        }
-      ],
-      "top_scores": [
-        {
-          "h": 0,
-          "a": 0,
-          "p": 25.5
-        },
-        {
-          "h": 1,
-          "a": 1,
-          "p": 18.1
-        },
-        {
-          "h": 1,
-          "a": 0,
-          "p": 13.6
-        }
-      ]
-    },
-    "Spain vs Belgium": {
-      "p_home": 0.64,
-      "p_draw": 0.312,
-      "p_away": 0.047,
-      "xg_home": 1.61,
-      "xg_away": 0.39,
-      "p_btts_yes": 0.298,
-      "p_btts_no": 0.702,
-      "p_over25": 0.323,
-      "p_under25": 0.677,
-      "top_scorers_home": [
-        {
-          "name": "Lamine Yamal",
-          "p": 0.284
-        },
-        {
-          "name": "Fabián Ruiz",
-          "p": 0.254
-        },
-        {
-          "name": "Mikel Oyarzabal",
-          "p": 0.221
-        }
-      ],
-      "top_scorers_away": [
-        {
-          "name": "Kevin De Bruyne",
-          "p": 0.207
-        },
-        {
-          "name": "Dodi Lukébakio",
-          "p": 0.136
-        },
-        {
-          "name": "Leandro Trossard",
-          "p": 0.117
-        }
-      ],
-      "top_scores": [
-        {
-          "h": 1,
-          "a": 0,
-          "p": 17.9
-        },
-        {
-          "h": 2,
-          "a": 0,
-          "p": 17.5
-        },
-        {
-          "h": 0,
-          "a": 0,
-          "p": 17.4
-        }
-      ]
-    },
-    "Norway vs England": {
-      "p_home": 0.253,
-      "p_draw": 0.182,
-      "p_away": 0.566,
-      "xg_home": 2.34,
-      "xg_away": 3.34,
-      "p_btts_yes": 0.88,
-      "p_btts_no": 0.12,
-      "p_over25": 0.918,
-      "p_under25": 0.082,
-      "top_scorers_home": [],
-      "top_scorers_away": [
-        {
-          "name": "Ivan Toney",
-          "p": 0.466
-        },
-        {
-          "name": "Harry Kane",
-          "p": 0.448
-        },
-        {
-          "name": "Jude Bellingham",
-          "p": 0.383
-        }
-      ],
       "top_scores": [
         {
           "h": 2,
-          "a": 3,
-          "p": 5.8
+          "a": 0,
+          "p": 15.7
         },
         {
-          "h": 2,
-          "a": 2,
-          "p": 5.2
+          "h": 0,
+          "a": 0,
+          "p": 14.5
         },
         {
           "h": 1,
-          "a": 3,
-          "p": 4.9
+          "a": 0,
+          "p": 14.0
         }
       ]
     }
   },
-  "football": [
-    {
-      "sport": "football",
-      "match": "France vs Morocco",
-      "market": "ah+1.0_away",
-      "odds": 1.87,
-      "model_prob": 59.5,
-      "fair_prob": 59.5,
-      "ev_pct": 35.8,
-      "stake_eur": 15.0,
-      "stake_pct": 17.1,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-07-09T20:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Norway vs England",
-      "market": "ah-1.5_away",
-      "odds": 3.3,
-      "model_prob": 40.9,
-      "fair_prob": 40.9,
-      "ev_pct": 34.9,
-      "stake_eur": 8.25,
-      "stake_pct": 9.4,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-07-11T21:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Norway vs England",
-      "market": "o/u2.0_over",
-      "odds": 1.34,
-      "model_prob": 92.2,
-      "fair_prob": 92.2,
-      "ev_pct": 29.4,
-      "stake_eur": 15.0,
-      "stake_pct": 17.1,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-07-11T21:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Argentina vs Egypt",
-      "market": "ah+1.5_away",
-      "odds": 1.89,
-      "model_prob": 66.1,
-      "fair_prob": 66.1,
-      "ev_pct": 24.9,
-      "stake_eur": 15.0,
-      "stake_pct": 17.1,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-07-07T16:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Argentina vs Egypt",
-      "market": "scorer_Lautaro Javier Martínez",
-      "odds": 2.5,
-      "model_prob": 48.4,
-      "fair_prob": 40.0,
-      "ev_pct": 20.9,
-      "stake_eur": 11.25,
-      "stake_pct": 12.8,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-07-07T16:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Norway vs England",
-      "market": "scorer_Ivan Toney",
-      "odds": 2.52,
-      "model_prob": 46.6,
-      "fair_prob": 39.7,
-      "ev_pct": 17.4,
-      "stake_eur": 10.28,
-      "stake_pct": 11.7,
-      "confidence": "LOW",
-      "n_models_agree": 0,
-      "kickoff": "2026-07-11T21:00:00Z"
-    },
-    {
-      "sport": "football",
-      "match": "Switzerland vs Colombia",
-      "market": "away",
-      "odds": 2.35,
-      "model_prob": 45.2,
-      "fair_prob": 42.5,
-      "ev_pct": 6.2,
-      "stake_eur": 6.16,
-      "stake_pct": 7.0,
-      "confidence": "LOW",
-      "n_models_agree": 2,
-      "kickoff": "2026-07-07T20:00:00Z"
-    }
-  ],
+  "football": [],
   "tennis": [],
   "portfolio": {
     "n_bets": 67,
@@ -5818,2551 +6169,87 @@
     }
   },
   "odds_history": {
-    "Qatar vs Switzerland": [
-      {
-        "date": "2026-06-15",
-        "home": 17.5,
-        "draw": 8.0,
-        "away": 1.24
-      },
-      {
-        "date": "2026-06-16",
-        "home": 17.5,
-        "draw": 8.0,
-        "away": 1.24
-      },
-      {
-        "date": "2026-06-17",
-        "home": 17.5,
-        "draw": 8.0,
-        "away": 1.24
-      },
-      {
-        "date": "2026-06-18",
-        "home": 17.5,
-        "draw": 8.0,
-        "away": 1.24
-      },
-      {
-        "date": "2026-06-19",
-        "home": 17.5,
-        "draw": 8.0,
-        "away": 1.24
-      },
-      {
-        "date": "2026-06-20",
-        "home": 17.5,
-        "draw": 8.0,
-        "away": 1.24
-      },
-      {
-        "date": "2026-06-21",
-        "home": 17.5,
-        "draw": 8.0,
-        "away": 1.24
-      },
-      {
-        "date": "2026-06-22",
-        "home": 17.5,
-        "draw": 8.0,
-        "away": 1.24
-      },
-      {
-        "date": "2026-06-23",
-        "home": 17.5,
-        "draw": 8.0,
-        "away": 1.24
-      }
-    ],
-    "Brazil vs Morocco": [
-      {
-        "date": "2026-06-15",
-        "home": 1.73,
-        "draw": 4.0,
-        "away": 6.0
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.73,
-        "draw": 4.0,
-        "away": 6.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.73,
-        "draw": 4.0,
-        "away": 6.0
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.73,
-        "draw": 4.0,
-        "away": 6.0
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.73,
-        "draw": 4.0,
-        "away": 6.0
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.73,
-        "draw": 4.0,
-        "away": 6.0
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.73,
-        "draw": 4.0,
-        "away": 6.0
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.73,
-        "draw": 4.0,
-        "away": 6.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.73,
-        "draw": 4.0,
-        "away": 6.0
-      }
-    ],
-    "Haiti vs Scotland": [
-      {
-        "date": "2026-06-15",
-        "home": 16.5,
-        "draw": 5.2,
-        "away": 1.34
-      },
-      {
-        "date": "2026-06-16",
-        "home": 16.5,
-        "draw": 5.2,
-        "away": 1.34
-      },
-      {
-        "date": "2026-06-17",
-        "home": 16.5,
-        "draw": 5.2,
-        "away": 1.34
-      },
-      {
-        "date": "2026-06-18",
-        "home": 16.5,
-        "draw": 5.2,
-        "away": 1.34
-      },
-      {
-        "date": "2026-06-19",
-        "home": 16.5,
-        "draw": 5.2,
-        "away": 1.34
-      },
-      {
-        "date": "2026-06-20",
-        "home": 16.5,
-        "draw": 5.2,
-        "away": 1.34
-      },
-      {
-        "date": "2026-06-21",
-        "home": 16.5,
-        "draw": 5.2,
-        "away": 1.34
-      },
-      {
-        "date": "2026-06-22",
-        "home": 16.5,
-        "draw": 5.2,
-        "away": 1.34
-      },
-      {
-        "date": "2026-06-23",
-        "home": 16.5,
-        "draw": 5.2,
-        "away": 1.34
-      }
-    ],
-    "Australia vs Turkey": [
-      {
-        "date": "2026-06-15",
-        "home": 2.18,
-        "draw": 3.05,
-        "away": 4.61
-      },
-      {
-        "date": "2026-06-16",
-        "home": 2.18,
-        "draw": 3.05,
-        "away": 4.61
-      },
-      {
-        "date": "2026-06-17",
-        "home": 2.18,
-        "draw": 3.05,
-        "away": 4.61
-      },
-      {
-        "date": "2026-06-18",
-        "home": 2.18,
-        "draw": 3.05,
-        "away": 4.61
-      },
-      {
-        "date": "2026-06-19",
-        "home": 2.18,
-        "draw": 3.05,
-        "away": 4.61
-      },
-      {
-        "date": "2026-06-20",
-        "home": 2.18,
-        "draw": 3.05,
-        "away": 4.61
-      },
-      {
-        "date": "2026-06-21",
-        "home": 2.18,
-        "draw": 3.05,
-        "away": 4.61
-      },
-      {
-        "date": "2026-06-22",
-        "home": 2.18,
-        "draw": 3.05,
-        "away": 4.61
-      },
-      {
-        "date": "2026-06-23",
-        "home": 2.18,
-        "draw": 3.05,
-        "away": 4.61
-      }
-    ],
-    "Germany vs Curaçao": [
-      {
-        "date": "2026-06-15",
-        "home": 1.06,
-        "draw": 26.0,
-        "away": 60.0
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.06,
-        "draw": 26.0,
-        "away": 60.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.06,
-        "draw": 26.0,
-        "away": 60.0
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.06,
-        "draw": 26.0,
-        "away": 60.0
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.06,
-        "draw": 26.0,
-        "away": 60.0
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.06,
-        "draw": 26.0,
-        "away": 60.0
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.06,
-        "draw": 26.0,
-        "away": 60.0
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.06,
-        "draw": 26.0,
-        "away": 60.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.06,
-        "draw": 26.0,
-        "away": 60.0
-      }
-    ],
-    "Netherlands vs Japan": [
-      {
-        "date": "2026-06-15",
-        "home": 2.12,
-        "draw": 3.7,
-        "away": 3.95
-      },
-      {
-        "date": "2026-06-16",
-        "home": 2.12,
-        "draw": 3.7,
-        "away": 3.95
-      },
-      {
-        "date": "2026-06-17",
-        "home": 2.12,
-        "draw": 3.7,
-        "away": 3.95
-      },
-      {
-        "date": "2026-06-18",
-        "home": 2.12,
-        "draw": 3.7,
-        "away": 3.95
-      },
-      {
-        "date": "2026-06-19",
-        "home": 2.12,
-        "draw": 3.7,
-        "away": 3.95
-      },
-      {
-        "date": "2026-06-20",
-        "home": 2.12,
-        "draw": 3.7,
-        "away": 3.95
-      },
-      {
-        "date": "2026-06-21",
-        "home": 2.12,
-        "draw": 3.7,
-        "away": 3.95
-      },
-      {
-        "date": "2026-06-22",
-        "home": 2.12,
-        "draw": 3.7,
-        "away": 3.95
-      },
-      {
-        "date": "2026-06-23",
-        "home": 2.12,
-        "draw": 3.7,
-        "away": 3.95
-      }
-    ],
-    "Ivory Coast vs Ecuador": [
-      {
-        "date": "2026-06-15",
-        "home": 3.45,
-        "draw": 2.95,
-        "away": 2.68
-      },
-      {
-        "date": "2026-06-16",
-        "home": 3.45,
-        "draw": 2.95,
-        "away": 2.68
-      },
-      {
-        "date": "2026-06-17",
-        "home": 3.45,
-        "draw": 2.95,
-        "away": 2.68
-      },
-      {
-        "date": "2026-06-18",
-        "home": 3.45,
-        "draw": 2.95,
-        "away": 2.68
-      },
-      {
-        "date": "2026-06-19",
-        "home": 3.45,
-        "draw": 2.95,
-        "away": 2.68
-      },
-      {
-        "date": "2026-06-20",
-        "home": 3.45,
-        "draw": 2.95,
-        "away": 2.68
-      },
-      {
-        "date": "2026-06-21",
-        "home": 3.45,
-        "draw": 2.95,
-        "away": 2.68
-      },
-      {
-        "date": "2026-06-22",
-        "home": 3.45,
-        "draw": 2.95,
-        "away": 2.68
-      },
-      {
-        "date": "2026-06-23",
-        "home": 3.45,
-        "draw": 2.95,
-        "away": 2.68
-      }
-    ],
-    "Sweden vs Tunisia": [
-      {
-        "date": "2026-06-15",
-        "home": 2.0,
-        "draw": 3.55,
-        "away": 4.6
-      },
-      {
-        "date": "2026-06-16",
-        "home": 2.0,
-        "draw": 3.55,
-        "away": 4.6
-      },
-      {
-        "date": "2026-06-17",
-        "home": 2.0,
-        "draw": 3.55,
-        "away": 4.6
-      },
-      {
-        "date": "2026-06-18",
-        "home": 2.0,
-        "draw": 3.55,
-        "away": 4.6
-      },
-      {
-        "date": "2026-06-19",
-        "home": 2.0,
-        "draw": 3.55,
-        "away": 4.6
-      },
-      {
-        "date": "2026-06-20",
-        "home": 2.0,
-        "draw": 3.55,
-        "away": 4.6
-      },
-      {
-        "date": "2026-06-21",
-        "home": 2.0,
-        "draw": 3.55,
-        "away": 4.6
-      },
-      {
-        "date": "2026-06-22",
-        "home": 2.0,
-        "draw": 3.55,
-        "away": 4.6
-      },
-      {
-        "date": "2026-06-23",
-        "home": 2.0,
-        "draw": 3.55,
-        "away": 4.6
-      }
-    ],
-    "Spain vs Cape Verde": [
-      {
-        "date": "2026-06-15",
-        "home": 1.52,
-        "draw": 2.87,
-        "away": 18.38
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.52,
-        "draw": 2.87,
-        "away": 18.38
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.52,
-        "draw": 2.87,
-        "away": 18.38
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.52,
-        "draw": 2.87,
-        "away": 18.38
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.52,
-        "draw": 2.87,
-        "away": 18.38
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.52,
-        "draw": 2.87,
-        "away": 18.38
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.52,
-        "draw": 2.87,
-        "away": 18.38
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.52,
-        "draw": 2.87,
-        "away": 18.38
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.52,
-        "draw": 2.87,
-        "away": 18.38
-      }
-    ],
-    "Belgium vs Egypt": [
-      {
-        "date": "2026-06-15",
-        "home": 3.55,
-        "draw": 3.2,
-        "away": 2.77
-      },
-      {
-        "date": "2026-06-16",
-        "home": 3.55,
-        "draw": 3.2,
-        "away": 2.77
-      },
-      {
-        "date": "2026-06-17",
-        "home": 3.55,
-        "draw": 3.2,
-        "away": 2.77
-      },
-      {
-        "date": "2026-06-18",
-        "home": 3.55,
-        "draw": 3.2,
-        "away": 2.77
-      },
-      {
-        "date": "2026-06-19",
-        "home": 3.55,
-        "draw": 3.2,
-        "away": 2.77
-      },
-      {
-        "date": "2026-06-20",
-        "home": 3.55,
-        "draw": 3.2,
-        "away": 2.77
-      },
-      {
-        "date": "2026-06-21",
-        "home": 3.55,
-        "draw": 3.2,
-        "away": 2.77
-      },
-      {
-        "date": "2026-06-22",
-        "home": 3.55,
-        "draw": 3.2,
-        "away": 2.77
-      },
-      {
-        "date": "2026-06-23",
-        "home": 3.55,
-        "draw": 3.2,
-        "away": 2.77
-      }
-    ],
-    "Saudi Arabia vs Uruguay": [
-      {
-        "date": "2026-06-15",
-        "home": 1.62,
-        "draw": 3.06,
-        "away": 9.16
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.62,
-        "draw": 3.06,
-        "away": 9.16
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.62,
-        "draw": 3.06,
-        "away": 9.16
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.62,
-        "draw": 3.06,
-        "away": 9.16
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.62,
-        "draw": 3.06,
-        "away": 9.16
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.62,
-        "draw": 3.06,
-        "away": 9.16
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.62,
-        "draw": 3.06,
-        "away": 9.16
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.62,
-        "draw": 3.06,
-        "away": 9.16
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.62,
-        "draw": 3.06,
-        "away": 9.16
-      }
-    ],
-    "Iran vs New Zealand": [
-      {
-        "date": "2026-06-15",
-        "home": 1.86,
-        "draw": 3.7,
-        "away": 5.2
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.86,
-        "draw": 3.7,
-        "away": 5.2
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.86,
-        "draw": 3.7,
-        "away": 5.2
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.86,
-        "draw": 3.7,
-        "away": 5.2
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.86,
-        "draw": 3.7,
-        "away": 5.2
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.86,
-        "draw": 3.7,
-        "away": 5.2
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.86,
-        "draw": 3.7,
-        "away": 5.2
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.86,
-        "draw": 3.7,
-        "away": 5.2
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.86,
-        "draw": 3.7,
-        "away": 5.2
-      }
-    ],
-    "France vs Senegal": [
-      {
-        "date": "2026-06-15",
-        "home": 1.52,
-        "draw": 4.6,
-        "away": 8.0
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.53,
-        "draw": 4.75,
-        "away": 7.6
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.53,
-        "draw": 4.75,
-        "away": 7.6
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.53,
-        "draw": 4.75,
-        "away": 7.6
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.53,
-        "draw": 4.75,
-        "away": 7.6
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.53,
-        "draw": 4.75,
-        "away": 7.6
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.53,
-        "draw": 4.75,
-        "away": 7.6
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.53,
-        "draw": 4.75,
-        "away": 7.6
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.53,
-        "draw": 4.75,
-        "away": 7.6
-      }
-    ],
-    "Iraq vs Norway": [
-      {
-        "date": "2026-06-15",
-        "home": 18.5,
-        "draw": 8.5,
-        "away": 1.22
-      },
-      {
-        "date": "2026-06-16",
-        "home": 17.0,
-        "draw": 7.5,
-        "away": 1.26
-      },
-      {
-        "date": "2026-06-17",
-        "home": 61.0,
-        "draw": 9.0,
-        "away": 1.16
-      },
-      {
-        "date": "2026-06-18",
-        "home": 61.0,
-        "draw": 9.0,
-        "away": 1.16
-      },
-      {
-        "date": "2026-06-19",
-        "home": 61.0,
-        "draw": 9.0,
-        "away": 1.16
-      },
-      {
-        "date": "2026-06-20",
-        "home": 61.0,
-        "draw": 9.0,
-        "away": 1.16
-      },
-      {
-        "date": "2026-06-21",
-        "home": 61.0,
-        "draw": 9.0,
-        "away": 1.16
-      },
-      {
-        "date": "2026-06-22",
-        "home": 61.0,
-        "draw": 9.0,
-        "away": 1.16
-      },
-      {
-        "date": "2026-06-23",
-        "home": 61.0,
-        "draw": 9.0,
-        "away": 1.16
-      }
-    ],
-    "Argentina vs Algeria": [
-      {
-        "date": "2026-06-15",
-        "home": 1.45,
-        "draw": 5.0,
-        "away": 10.5
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.48,
-        "draw": 4.7,
-        "away": 9.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.49,
-        "draw": 4.75,
-        "away": 9.0
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.49,
-        "draw": 4.75,
-        "away": 9.0
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.49,
-        "draw": 4.75,
-        "away": 9.0
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.49,
-        "draw": 4.75,
-        "away": 9.0
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.49,
-        "draw": 4.75,
-        "away": 9.0
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.49,
-        "draw": 4.75,
-        "away": 9.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.49,
-        "draw": 4.75,
-        "away": 9.0
-      }
-    ],
-    "Austria vs Jordan": [
-      {
-        "date": "2026-06-15",
-        "home": 1.39,
-        "draw": 5.8,
-        "away": 10.5
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.39,
-        "draw": 5.4,
-        "away": 10.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.39,
-        "draw": 5.4,
-        "away": 10.0
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.39,
-        "draw": 5.4,
-        "away": 10.0
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.39,
-        "draw": 5.4,
-        "away": 10.0
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.39,
-        "draw": 5.4,
-        "away": 10.0
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.39,
-        "draw": 5.4,
-        "away": 10.0
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.39,
-        "draw": 5.4,
-        "away": 10.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.39,
-        "draw": 5.4,
-        "away": 10.0
-      }
-    ],
-    "Portugal vs DR Congo": [
-      {
-        "date": "2026-06-15",
-        "home": 1.33,
-        "draw": 6.0,
-        "away": 13.0
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.36,
-        "draw": 6.1,
-        "away": 13.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.34,
-        "draw": 6.0,
-        "away": 13.5
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.34,
-        "draw": 6.0,
-        "away": 13.5
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.34,
-        "draw": 6.0,
-        "away": 13.5
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.34,
-        "draw": 6.0,
-        "away": 13.5
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.34,
-        "draw": 6.0,
-        "away": 13.5
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.34,
-        "draw": 6.0,
-        "away": 13.5
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.34,
-        "draw": 6.0,
-        "away": 13.5
-      }
-    ],
-    "England vs Croatia": [
-      {
-        "date": "2026-06-15",
-        "home": 1.79,
-        "draw": 3.95,
-        "away": 5.5
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.79,
-        "draw": 3.95,
-        "away": 5.5
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.16,
-        "draw": 6.61,
-        "away": 36.25
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.76,
-        "draw": 3.9,
-        "away": 5.6
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.76,
-        "draw": 3.9,
-        "away": 5.6
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.76,
-        "draw": 3.9,
-        "away": 5.6
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.76,
-        "draw": 3.9,
-        "away": 5.6
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.76,
-        "draw": 3.9,
-        "away": 5.6
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.76,
-        "draw": 3.9,
-        "away": 5.6
-      }
-    ],
-    "Ghana vs Panama": [
-      {
-        "date": "2026-06-15",
-        "home": 2.28,
-        "draw": 3.55,
-        "away": 3.65
-      },
-      {
-        "date": "2026-06-16",
-        "home": 2.33,
-        "draw": 3.45,
-        "away": 3.55
-      },
-      {
-        "date": "2026-06-17",
-        "home": 2.48,
-        "draw": 3.4,
-        "away": 3.45
-      },
-      {
-        "date": "2026-06-18",
-        "home": 2.42,
-        "draw": 3.35,
-        "away": 3.4
-      },
-      {
-        "date": "2026-06-19",
-        "home": 2.42,
-        "draw": 3.35,
-        "away": 3.4
-      },
-      {
-        "date": "2026-06-20",
-        "home": 2.42,
-        "draw": 3.35,
-        "away": 3.4
-      },
-      {
-        "date": "2026-06-21",
-        "home": 2.42,
-        "draw": 3.35,
-        "away": 3.4
-      },
-      {
-        "date": "2026-06-22",
-        "home": 2.42,
-        "draw": 3.35,
-        "away": 3.4
-      },
-      {
-        "date": "2026-06-23",
-        "home": 2.42,
-        "draw": 3.35,
-        "away": 3.4
-      }
-    ],
-    "Uzbekistan vs Colombia": [
-      {
-        "date": "2026-06-15",
-        "home": 10.5,
-        "draw": 5.1,
-        "away": 1.42
-      },
-      {
-        "date": "2026-06-16",
-        "home": 11.5,
-        "draw": 5.3,
-        "away": 1.42
-      },
-      {
-        "date": "2026-06-17",
-        "home": 10.5,
-        "draw": 5.1,
-        "away": 1.42
-      },
-      {
-        "date": "2026-06-18",
-        "home": 10.5,
-        "draw": 5.1,
-        "away": 1.42
-      },
-      {
-        "date": "2026-06-19",
-        "home": 10.5,
-        "draw": 5.1,
-        "away": 1.42
-      },
-      {
-        "date": "2026-06-20",
-        "home": 10.5,
-        "draw": 5.1,
-        "away": 1.42
-      },
-      {
-        "date": "2026-06-21",
-        "home": 10.5,
-        "draw": 5.1,
-        "away": 1.42
-      },
-      {
-        "date": "2026-06-22",
-        "home": 10.5,
-        "draw": 5.1,
-        "away": 1.42
-      },
-      {
-        "date": "2026-06-23",
-        "home": 10.5,
-        "draw": 5.1,
-        "away": 1.42
-      }
-    ],
-    "Czech Republic vs South Africa": [
-      {
-        "date": "2026-06-15",
-        "home": 1.83,
-        "draw": 3.94,
-        "away": 5.0
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.85,
-        "draw": 3.9,
-        "away": 5.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.86,
-        "draw": 3.87,
-        "away": 4.9
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.89,
-        "draw": 3.7,
-        "away": 5.0
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.89,
-        "draw": 3.7,
-        "away": 5.0
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.89,
-        "draw": 3.7,
-        "away": 5.0
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.89,
-        "draw": 3.7,
-        "away": 5.0
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.89,
-        "draw": 3.7,
-        "away": 5.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.89,
-        "draw": 3.7,
-        "away": 5.0
-      }
-    ],
-    "Switzerland vs Bosnia & Herzegovina": [
-      {
-        "date": "2026-06-15",
-        "home": 1.62,
-        "draw": 4.3,
-        "away": 6.8
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.62,
-        "draw": 4.3,
-        "away": 6.9
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.59,
-        "draw": 4.31,
-        "away": 7.0
-      },
-      {
-        "date": "2026-06-18",
-        "home": 2.41,
-        "draw": 1.93,
-        "away": 8.77
-      },
-      {
-        "date": "2026-06-19",
-        "home": 2.41,
-        "draw": 1.93,
-        "away": 8.77
-      },
-      {
-        "date": "2026-06-20",
-        "home": 2.41,
-        "draw": 1.93,
-        "away": 8.77
-      },
-      {
-        "date": "2026-06-21",
-        "home": 2.41,
-        "draw": 1.93,
-        "away": 8.77
-      },
-      {
-        "date": "2026-06-22",
-        "home": 2.41,
-        "draw": 1.93,
-        "away": 8.77
-      },
-      {
-        "date": "2026-06-23",
-        "home": 2.41,
-        "draw": 1.93,
-        "away": 8.77
-      }
-    ],
-    "Canada vs Qatar": [
-      {
-        "date": "2026-06-15",
-        "home": 1.31,
-        "draw": 6.25,
-        "away": 14.0
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.32,
-        "draw": 6.1,
-        "away": 13.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.32,
-        "draw": 6.0,
-        "away": 13.0
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.31,
-        "draw": 6.5,
-        "away": 14.5
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.31,
-        "draw": 6.5,
-        "away": 14.5
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.31,
-        "draw": 6.5,
-        "away": 14.5
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.31,
-        "draw": 6.5,
-        "away": 14.5
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.31,
-        "draw": 6.5,
-        "away": 14.5
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.31,
-        "draw": 6.5,
-        "away": 14.5
-      }
-    ],
-    "Mexico vs South Korea": [
-      {
-        "date": "2026-06-15",
-        "home": 2.06,
-        "draw": 3.5,
-        "away": 4.25
-      },
-      {
-        "date": "2026-06-16",
-        "home": 2.08,
-        "draw": 3.45,
-        "away": 4.21
-      },
-      {
-        "date": "2026-06-17",
-        "home": 2.1,
-        "draw": 3.45,
-        "away": 4.2
-      },
-      {
-        "date": "2026-06-18",
-        "home": 2.12,
-        "draw": 3.4,
-        "away": 4.3
-      },
-      {
-        "date": "2026-06-19",
-        "home": 2.12,
-        "draw": 3.4,
-        "away": 4.3
-      },
-      {
-        "date": "2026-06-20",
-        "home": 2.12,
-        "draw": 3.4,
-        "away": 4.3
-      },
-      {
-        "date": "2026-06-21",
-        "home": 2.12,
-        "draw": 3.4,
-        "away": 4.3
-      },
-      {
-        "date": "2026-06-22",
-        "home": 2.12,
-        "draw": 3.4,
-        "away": 4.3
-      },
-      {
-        "date": "2026-06-23",
-        "home": 2.12,
-        "draw": 3.4,
-        "away": 4.3
-      }
-    ],
-    "USA vs Australia": [
-      {
-        "date": "2026-06-15",
-        "home": 1.63,
-        "draw": 4.5,
-        "away": 6.0
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.64,
-        "draw": 4.5,
-        "away": 6.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.65,
-        "draw": 4.6,
-        "away": 5.8
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.65,
-        "draw": 4.6,
-        "away": 5.67
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.02,
-        "draw": 52.0,
-        "away": 451.0
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.02,
-        "draw": 52.0,
-        "away": 451.0
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.02,
-        "draw": 52.0,
-        "away": 451.0
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.02,
-        "draw": 52.0,
-        "away": 451.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.02,
-        "draw": 52.0,
-        "away": 451.0
-      }
-    ],
-    "Scotland vs Morocco": [
-      {
-        "date": "2026-06-15",
-        "home": 5.8,
-        "draw": 3.75,
-        "away": 1.81
-      },
-      {
-        "date": "2026-06-16",
-        "home": 5.8,
-        "draw": 3.75,
-        "away": 1.81
-      },
-      {
-        "date": "2026-06-17",
-        "home": 6.0,
-        "draw": 3.75,
-        "away": 1.81
-      },
-      {
-        "date": "2026-06-18",
-        "home": 6.0,
-        "draw": 3.7,
-        "away": 1.82
-      },
-      {
-        "date": "2026-06-19",
-        "home": 23.0,
-        "draw": 6.0,
-        "away": 1.26
-      },
-      {
-        "date": "2026-06-20",
-        "home": 23.0,
-        "draw": 6.0,
-        "away": 1.26
-      },
-      {
-        "date": "2026-06-21",
-        "home": 23.0,
-        "draw": 6.0,
-        "away": 1.26
-      },
-      {
-        "date": "2026-06-22",
-        "home": 23.0,
-        "draw": 6.0,
-        "away": 1.26
-      },
-      {
-        "date": "2026-06-23",
-        "home": 23.0,
-        "draw": 6.0,
-        "away": 1.26
-      }
-    ],
-    "Brazil vs Haiti": [
-      {
-        "date": "2026-06-15",
-        "home": 1.13,
-        "draw": 13.0,
-        "away": 29.0
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.13,
-        "draw": 13.0,
-        "away": 31.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.14,
-        "draw": 12.4,
-        "away": 29.0
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.14,
-        "draw": 12.7,
-        "away": 30.0
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.13,
-        "draw": 13.0,
-        "away": 26.0
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.13,
-        "draw": 13.0,
-        "away": 26.0
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.13,
-        "draw": 13.0,
-        "away": 26.0
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.13,
-        "draw": 13.0,
-        "away": 26.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.13,
-        "draw": 13.0,
-        "away": 26.0
-      }
-    ],
-    "Turkey vs Paraguay": [
-      {
-        "date": "2026-06-15",
-        "home": 2.12,
-        "draw": 3.5,
-        "away": 4.2
-      },
-      {
-        "date": "2026-06-16",
-        "home": 2.1,
-        "draw": 3.55,
-        "away": 4.2
-      },
-      {
-        "date": "2026-06-17",
-        "home": 2.1,
-        "draw": 3.5,
-        "away": 4.25
-      },
-      {
-        "date": "2026-06-18",
-        "home": 2.1,
-        "draw": 3.5,
-        "away": 4.2
-      },
-      {
-        "date": "2026-06-19",
-        "home": 2.12,
-        "draw": 3.6,
-        "away": 4.0
-      },
-      {
-        "date": "2026-06-20",
-        "home": 2.12,
-        "draw": 3.6,
-        "away": 4.0
-      },
-      {
-        "date": "2026-06-21",
-        "home": 2.12,
-        "draw": 3.6,
-        "away": 4.0
-      },
-      {
-        "date": "2026-06-22",
-        "home": 2.12,
-        "draw": 3.6,
-        "away": 4.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 2.12,
-        "draw": 3.6,
-        "away": 4.0
-      }
-    ],
-    "Netherlands vs Sweden": [
-      {
-        "date": "2026-06-15",
-        "home": 1.75,
-        "draw": 4.11,
-        "away": 5.4
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.76,
-        "draw": 4.1,
-        "away": 5.3
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.78,
-        "draw": 4.1,
-        "away": 5.25
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.81,
-        "draw": 4.0,
-        "away": 5.0
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.77,
-        "draw": 4.3,
-        "away": 5.0
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.79,
-        "draw": 4.2,
-        "away": 5.0
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.79,
-        "draw": 4.2,
-        "away": 5.0
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.79,
-        "draw": 4.2,
-        "away": 5.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.79,
-        "draw": 4.2,
-        "away": 5.0
-      }
-    ],
-    "Germany vs Ivory Coast": [
-      {
-        "date": "2026-06-15",
-        "home": 1.59,
-        "draw": 4.7,
-        "away": 6.4
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.58,
-        "draw": 4.7,
-        "away": 6.75
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.59,
-        "draw": 4.8,
-        "away": 6.5
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.57,
-        "draw": 4.8,
-        "away": 6.2
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.57,
-        "draw": 4.83,
-        "away": 6.5
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.55,
-        "draw": 4.9,
-        "away": 7.0
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.55,
-        "draw": 4.9,
-        "away": 7.0
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.55,
-        "draw": 4.9,
-        "away": 7.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.55,
-        "draw": 4.9,
-        "away": 7.0
-      }
-    ],
-    "Ecuador vs Curaçao": [
-      {
-        "date": "2026-06-15",
-        "home": 1.14,
-        "draw": 12.3,
-        "away": 35.0
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.14,
-        "draw": 12.3,
-        "away": 41.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.14,
-        "draw": 13.0,
-        "away": 39.0
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.14,
-        "draw": 12.0,
-        "away": 36.0
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.15,
-        "draw": 11.0,
-        "away": 33.0
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.16,
-        "draw": 10.5,
-        "away": 31.0
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.16,
-        "draw": 10.5,
-        "away": 31.0
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.16,
-        "draw": 10.5,
-        "away": 31.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.16,
-        "draw": 10.5,
-        "away": 31.0
-      }
-    ],
-    "Tunisia vs Japan": [
-      {
-        "date": "2026-06-15",
-        "home": 7.8,
-        "draw": 4.3,
-        "away": 1.61
-      },
-      {
-        "date": "2026-06-16",
-        "home": 8.0,
-        "draw": 4.25,
-        "away": 1.61
-      },
-      {
-        "date": "2026-06-17",
-        "home": 7.8,
-        "draw": 4.33,
-        "away": 1.61
-      },
-      {
-        "date": "2026-06-18",
-        "home": 7.5,
-        "draw": 4.4,
-        "away": 1.61
-      },
-      {
-        "date": "2026-06-19",
-        "home": 7.5,
-        "draw": 4.35,
-        "away": 1.61
-      },
-      {
-        "date": "2026-06-20",
-        "home": 7.6,
-        "draw": 4.5,
-        "away": 1.61
-      },
-      {
-        "date": "2026-06-21",
-        "home": 7.6,
-        "draw": 4.5,
-        "away": 1.61
-      },
-      {
-        "date": "2026-06-22",
-        "home": 7.6,
-        "draw": 4.5,
-        "away": 1.61
-      },
-      {
-        "date": "2026-06-23",
-        "home": 7.6,
-        "draw": 4.5,
-        "away": 1.61
-      }
-    ],
-    "Spain vs Saudi Arabia": [
-      {
-        "date": "2026-06-15",
-        "home": 1.12,
-        "draw": 13.0,
-        "away": 37.0
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.13,
-        "draw": 12.0,
-        "away": 34.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.13,
-        "draw": 11.5,
-        "away": 34.0
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.13,
-        "draw": 12.0,
-        "away": 35.0
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.14,
-        "draw": 11.5,
-        "away": 37.0
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.09,
-        "draw": 10.94,
-        "away": 26.28
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.12,
-        "draw": 13.5,
-        "away": 38.0
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.12,
-        "draw": 13.5,
-        "away": 38.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.12,
-        "draw": 13.5,
-        "away": 38.0
-      }
-    ],
-    "Belgium vs Iran": [
-      {
-        "date": "2026-06-15",
-        "home": 1.45,
-        "draw": 5.3,
-        "away": 9.5
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.47,
-        "draw": 4.9,
-        "away": 9.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.47,
-        "draw": 4.9,
-        "away": 9.0
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.48,
-        "draw": 5.0,
-        "away": 9.0
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.48,
-        "draw": 4.8,
-        "away": 8.5
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.47,
-        "draw": 4.82,
-        "away": 8.6
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.45,
-        "draw": 5.15,
-        "away": 9.0
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.45,
-        "draw": 5.15,
-        "away": 9.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.45,
-        "draw": 5.15,
-        "away": 9.0
-      }
-    ],
-    "Uruguay vs Cape Verde": [
-      {
-        "date": "2026-06-15",
-        "home": 1.55,
-        "draw": 4.4,
-        "away": 7.5
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.54,
-        "draw": 4.4,
-        "away": 8.6
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.54,
-        "draw": 4.4,
-        "away": 8.8
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.53,
-        "draw": 4.35,
-        "away": 8.8
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.51,
-        "draw": 4.4,
-        "away": 9.2
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.5,
-        "draw": 4.5,
-        "away": 9.8
-      },
-      {
-        "date": "2026-06-21",
-        "home": 2.85,
-        "draw": 1.96,
-        "away": 14.0
-      },
-      {
-        "date": "2026-06-22",
-        "home": 2.85,
-        "draw": 1.96,
-        "away": 14.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 2.85,
-        "draw": 1.96,
-        "away": 14.0
-      }
-    ],
-    "New Zealand vs Egypt": [
-      {
-        "date": "2026-06-15",
-        "home": 5.53,
-        "draw": 4.3,
-        "away": 1.73
-      },
-      {
-        "date": "2026-06-16",
-        "home": 6.0,
-        "draw": 4.3,
-        "away": 1.68
-      },
-      {
-        "date": "2026-06-17",
-        "home": 6.0,
-        "draw": 4.27,
-        "away": 1.67
-      },
-      {
-        "date": "2026-06-18",
-        "home": 6.0,
-        "draw": 4.24,
-        "away": 1.65
-      },
-      {
-        "date": "2026-06-19",
-        "home": 6.0,
-        "draw": 4.31,
-        "away": 1.65
-      },
-      {
-        "date": "2026-06-20",
-        "home": 6.25,
-        "draw": 4.35,
-        "away": 1.65
-      },
-      {
-        "date": "2026-06-21",
-        "home": 6.6,
-        "draw": 4.3,
-        "away": 1.64
-      },
-      {
-        "date": "2026-06-22",
-        "home": 6.6,
-        "draw": 4.3,
-        "away": 1.64
-      },
-      {
-        "date": "2026-06-23",
-        "home": 6.6,
-        "draw": 4.3,
-        "away": 1.64
-      }
-    ],
-    "Argentina vs Austria": [
-      {
-        "date": "2026-06-15",
-        "home": 1.7,
-        "draw": 4.2,
-        "away": 6.0
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.7,
-        "draw": 4.1,
-        "away": 6.2
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.63,
-        "draw": 4.2,
-        "away": 6.75
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.65,
-        "draw": 4.1,
-        "away": 6.5
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.65,
-        "draw": 4.2,
-        "away": 6.6
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.65,
-        "draw": 4.2,
-        "away": 6.8
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.57,
-        "draw": 4.3,
-        "away": 7.6
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.53,
-        "draw": 4.65,
-        "away": 8.8
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.53,
-        "draw": 4.65,
-        "away": 8.8
-      }
-    ],
-    "France vs Iraq": [
-      {
-        "date": "2026-06-15",
-        "home": 1.13,
-        "draw": 11.0,
-        "away": 35.0
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.14,
-        "draw": 11.0,
-        "away": 34.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.12,
-        "draw": 12.5,
-        "away": 42.0
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.12,
-        "draw": 12.4,
-        "away": 41.0
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.12,
-        "draw": 13.0,
-        "away": 42.0
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.12,
-        "draw": 13.5,
-        "away": 42.0
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.12,
-        "draw": 13.8,
-        "away": 40.0
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.12,
-        "draw": 15.0,
-        "away": 46.08
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.12,
-        "draw": 15.0,
-        "away": 46.08
-      }
-    ],
-    "Norway vs Senegal": [
-      {
-        "date": "2026-06-15",
-        "home": 2.22,
-        "draw": 3.6,
-        "away": 3.6
-      },
-      {
-        "date": "2026-06-16",
-        "home": 2.44,
-        "draw": 3.6,
-        "away": 3.2
-      },
-      {
-        "date": "2026-06-17",
-        "home": 2.46,
-        "draw": 3.6,
-        "away": 3.15
-      },
-      {
-        "date": "2026-06-18",
-        "home": 2.42,
-        "draw": 3.65,
-        "away": 3.15
-      },
-      {
-        "date": "2026-06-19",
-        "home": 2.41,
-        "draw": 3.6,
-        "away": 3.3
-      },
-      {
-        "date": "2026-06-20",
-        "home": 2.37,
-        "draw": 3.6,
-        "away": 3.35
-      },
-      {
-        "date": "2026-06-21",
-        "home": 2.36,
-        "draw": 3.65,
-        "away": 3.3
-      },
-      {
-        "date": "2026-06-22",
-        "home": 2.36,
-        "draw": 3.55,
-        "away": 3.4
-      },
-      {
-        "date": "2026-06-23",
-        "home": 2.36,
-        "draw": 3.55,
-        "away": 3.4
-      }
-    ],
-    "Jordan vs Algeria": [
-      {
-        "date": "2026-06-15",
-        "home": 7.6,
-        "draw": 4.5,
-        "away": 1.56
-      },
-      {
-        "date": "2026-06-16",
-        "home": 7.6,
-        "draw": 4.5,
-        "away": 1.56
-      },
-      {
-        "date": "2026-06-17",
-        "home": 6.6,
-        "draw": 4.4,
-        "away": 1.62
-      },
-      {
-        "date": "2026-06-18",
-        "home": 6.4,
-        "draw": 4.4,
-        "away": 1.62
-      },
-      {
-        "date": "2026-06-19",
-        "home": 6.4,
-        "draw": 4.4,
-        "away": 1.62
-      },
-      {
-        "date": "2026-06-20",
-        "home": 6.75,
-        "draw": 4.5,
-        "away": 1.62
-      },
-      {
-        "date": "2026-06-21",
-        "home": 6.6,
-        "draw": 4.4,
-        "away": 1.61
-      },
-      {
-        "date": "2026-06-22",
-        "home": 6.87,
-        "draw": 4.5,
-        "away": 1.6
-      },
-      {
-        "date": "2026-06-23",
-        "home": 6.87,
-        "draw": 4.5,
-        "away": 1.6
-      }
-    ],
-    "Portugal vs Uzbekistan": [
-      {
-        "date": "2026-06-15",
-        "home": 1.28,
-        "draw": 7.0,
-        "away": 15.0
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.28,
-        "draw": 7.0,
-        "away": 15.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.25,
-        "draw": 7.6,
-        "away": 16.5
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.25,
-        "draw": 7.75,
-        "away": 19.0
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.25,
-        "draw": 7.8,
-        "away": 19.0
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.25,
-        "draw": 7.6,
-        "away": 19.0
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.25,
-        "draw": 7.6,
-        "away": 18.5
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.23,
-        "draw": 8.5,
-        "away": 21.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.02,
-        "draw": 1001.0,
-        "away": 1001.0
-      }
-    ],
-    "England vs Ghana": [
-      {
-        "date": "2026-06-15",
-        "home": 1.34,
-        "draw": 6.2,
-        "away": 11.3
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.35,
-        "draw": 5.9,
-        "away": 11.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.33,
-        "draw": 6.5,
-        "away": 12.9
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.25,
-        "draw": 7.0,
-        "away": 18.5
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.25,
-        "draw": 7.0,
-        "away": 16.5
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.25,
-        "draw": 7.0,
-        "away": 17.5
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.25,
-        "draw": 7.0,
-        "away": 17.5
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.25,
-        "draw": 7.5,
-        "away": 18.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.21,
-        "draw": 8.4,
-        "away": 19.5
-      }
-    ],
-    "Panama vs Croatia": [
-      {
-        "date": "2026-06-15",
-        "home": 7.2,
-        "draw": 4.2,
-        "away": 1.6
-      },
-      {
-        "date": "2026-06-16",
-        "home": 7.2,
-        "draw": 4.1,
-        "away": 1.6
-      },
-      {
-        "date": "2026-06-17",
-        "home": 7.49,
-        "draw": 4.2,
-        "away": 1.59
-      },
-      {
-        "date": "2026-06-18",
-        "home": 7.4,
-        "draw": 4.2,
-        "away": 1.6
-      },
-      {
-        "date": "2026-06-19",
-        "home": 7.5,
-        "draw": 4.2,
-        "away": 1.58
-      },
-      {
-        "date": "2026-06-20",
-        "home": 7.5,
-        "draw": 4.2,
-        "away": 1.59
-      },
-      {
-        "date": "2026-06-21",
-        "home": 7.5,
-        "draw": 4.2,
-        "away": 1.58
-      },
-      {
-        "date": "2026-06-22",
-        "home": 7.5,
-        "draw": 4.4,
-        "away": 1.58
-      },
-      {
-        "date": "2026-06-23",
-        "home": 8.0,
-        "draw": 4.7,
-        "away": 1.52
-      }
-    ],
-    "Colombia vs DR Congo": [
-      {
-        "date": "2026-06-15",
-        "home": 1.5,
-        "draw": 4.5,
-        "away": 8.5
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.51,
-        "draw": 4.6,
-        "away": 8.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.55,
-        "draw": 4.5,
-        "away": 8.0
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.55,
-        "draw": 4.33,
-        "away": 8.0
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.55,
-        "draw": 4.35,
-        "away": 8.0
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.56,
-        "draw": 4.35,
-        "away": 8.0
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.57,
-        "draw": 4.3,
-        "away": 7.8
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.59,
-        "draw": 4.27,
-        "away": 7.5
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.59,
-        "draw": 4.25,
-        "away": 7.5
-      }
-    ],
     "Bosnia & Herzegovina vs Qatar": [
       {
-        "date": "2026-06-15",
-        "home": 1.61,
-        "draw": 4.3,
-        "away": 7.0
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.62,
-        "draw": 4.4,
-        "away": 7.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.62,
-        "draw": 4.3,
-        "away": 6.75
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.65,
-        "draw": 4.4,
-        "away": 6.0
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.49,
-        "draw": 5.05,
-        "away": 7.75
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.49,
-        "draw": 5.1,
-        "away": 8.0
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.48,
-        "draw": 5.1,
-        "away": 7.75
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.48,
-        "draw": 5.1,
-        "away": 7.4
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.45,
-        "draw": 5.6,
-        "away": 8.5
-      },
-      {
-        "date": "2026-06-24",
+        "date": "2026-07-15",
         "home": 1.39,
         "draw": 5.8,
         "away": 9.25
       },
       {
-        "date": "2026-06-25",
+        "date": "2026-07-16",
         "home": 1.39,
         "draw": 5.8,
         "away": 9.25
       },
       {
-        "date": "2026-06-26",
+        "date": "2026-07-17",
         "home": 1.39,
         "draw": 5.8,
         "away": 9.25
       },
       {
-        "date": "2026-07-06",
+        "date": "2026-07-20",
         "home": 1.39,
         "draw": 5.8,
         "away": 9.25
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-21",
+        "home": 1.39,
+        "draw": 5.8,
+        "away": 9.25
+      },
+      {
+        "date": "2026-07-22",
+        "home": 1.39,
+        "draw": 5.8,
+        "away": 9.25
+      },
+      {
+        "date": "2026-07-23",
+        "home": 1.39,
+        "draw": 5.8,
+        "away": 9.25
+      },
+      {
+        "date": "2026-07-24",
+        "home": 1.39,
+        "draw": 5.8,
+        "away": 9.25
+      },
+      {
+        "date": "2026-07-25",
+        "home": 1.39,
+        "draw": 5.8,
+        "away": 9.25
+      },
+      {
+        "date": "2026-07-26",
+        "home": 1.39,
+        "draw": 5.8,
+        "away": 9.25
+      },
+      {
+        "date": "2026-07-27",
+        "home": 1.39,
+        "draw": 5.8,
+        "away": 9.25
+      },
+      {
+        "date": "2026-07-28",
+        "home": 1.39,
+        "draw": 5.8,
+        "away": 9.25
+      },
+      {
+        "date": "2026-07-29",
+        "home": 1.39,
+        "draw": 5.8,
+        "away": 9.25
+      },
+      {
+        "date": "2026-07-30",
         "home": 1.39,
         "draw": 5.8,
         "away": 9.25
@@ -8370,85 +6257,85 @@
     ],
     "Switzerland vs Canada": [
       {
-        "date": "2026-06-15",
-        "home": 2.22,
-        "draw": 3.6,
-        "away": 3.65
-      },
-      {
-        "date": "2026-06-16",
-        "home": 2.2,
-        "draw": 3.5,
-        "away": 3.65
-      },
-      {
-        "date": "2026-06-17",
-        "home": 2.22,
-        "draw": 3.5,
-        "away": 3.64
-      },
-      {
-        "date": "2026-06-18",
-        "home": 2.3,
-        "draw": 3.47,
-        "away": 3.7
-      },
-      {
-        "date": "2026-06-19",
-        "home": 2.58,
-        "draw": 3.2,
-        "away": 3.4
-      },
-      {
-        "date": "2026-06-20",
-        "home": 2.56,
-        "draw": 3.2,
-        "away": 3.35
-      },
-      {
-        "date": "2026-06-21",
-        "home": 2.6,
-        "draw": 3.25,
-        "away": 3.33
-      },
-      {
-        "date": "2026-06-22",
-        "home": 2.6,
-        "draw": 3.2,
-        "away": 3.4
-      },
-      {
-        "date": "2026-06-23",
-        "home": 2.45,
-        "draw": 3.25,
-        "away": 3.6
-      },
-      {
-        "date": "2026-06-24",
+        "date": "2026-07-15",
         "home": 2.6,
         "draw": 3.13,
         "away": 3.45
       },
       {
-        "date": "2026-06-25",
+        "date": "2026-07-16",
         "home": 2.6,
         "draw": 3.13,
         "away": 3.45
       },
       {
-        "date": "2026-06-26",
+        "date": "2026-07-17",
         "home": 2.6,
         "draw": 3.13,
         "away": 3.45
       },
       {
-        "date": "2026-07-06",
+        "date": "2026-07-20",
         "home": 2.6,
         "draw": 3.13,
         "away": 3.45
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-21",
+        "home": 2.6,
+        "draw": 3.13,
+        "away": 3.45
+      },
+      {
+        "date": "2026-07-22",
+        "home": 2.6,
+        "draw": 3.13,
+        "away": 3.45
+      },
+      {
+        "date": "2026-07-23",
+        "home": 2.6,
+        "draw": 3.13,
+        "away": 3.45
+      },
+      {
+        "date": "2026-07-24",
+        "home": 2.6,
+        "draw": 3.13,
+        "away": 3.45
+      },
+      {
+        "date": "2026-07-25",
+        "home": 2.6,
+        "draw": 3.13,
+        "away": 3.45
+      },
+      {
+        "date": "2026-07-26",
+        "home": 2.6,
+        "draw": 3.13,
+        "away": 3.45
+      },
+      {
+        "date": "2026-07-27",
+        "home": 2.6,
+        "draw": 3.13,
+        "away": 3.45
+      },
+      {
+        "date": "2026-07-28",
+        "home": 2.6,
+        "draw": 3.13,
+        "away": 3.45
+      },
+      {
+        "date": "2026-07-29",
+        "home": 2.6,
+        "draw": 3.13,
+        "away": 3.45
+      },
+      {
+        "date": "2026-07-30",
         "home": 2.6,
         "draw": 3.13,
         "away": 3.45
@@ -8456,85 +6343,85 @@
     ],
     "Scotland vs Brazil": [
       {
-        "date": "2026-06-15",
-        "home": 8.0,
-        "draw": 5.5,
-        "away": 1.48
-      },
-      {
-        "date": "2026-06-16",
-        "home": 8.5,
-        "draw": 5.5,
-        "away": 1.48
-      },
-      {
-        "date": "2026-06-17",
-        "home": 8.5,
-        "draw": 5.4,
-        "away": 1.48
-      },
-      {
-        "date": "2026-06-18",
-        "home": 8.5,
-        "draw": 5.3,
-        "away": 1.48
-      },
-      {
-        "date": "2026-06-19",
-        "home": 9.0,
-        "draw": 5.5,
-        "away": 1.44
-      },
-      {
-        "date": "2026-06-20",
-        "home": 9.0,
-        "draw": 5.6,
-        "away": 1.42
-      },
-      {
-        "date": "2026-06-21",
-        "home": 9.0,
-        "draw": 5.6,
-        "away": 1.42
-      },
-      {
-        "date": "2026-06-22",
-        "home": 9.25,
-        "draw": 5.6,
-        "away": 1.42
-      },
-      {
-        "date": "2026-06-23",
-        "home": 9.6,
-        "draw": 5.5,
-        "away": 1.41
-      },
-      {
-        "date": "2026-06-24",
+        "date": "2026-07-15",
         "home": 39.37,
         "draw": 8.0,
         "away": 1.12
       },
       {
-        "date": "2026-06-25",
+        "date": "2026-07-16",
         "home": 39.37,
         "draw": 8.0,
         "away": 1.12
       },
       {
-        "date": "2026-06-26",
+        "date": "2026-07-17",
         "home": 39.37,
         "draw": 8.0,
         "away": 1.12
       },
       {
-        "date": "2026-07-06",
+        "date": "2026-07-20",
         "home": 39.37,
         "draw": 8.0,
         "away": 1.12
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-21",
+        "home": 39.37,
+        "draw": 8.0,
+        "away": 1.12
+      },
+      {
+        "date": "2026-07-22",
+        "home": 39.37,
+        "draw": 8.0,
+        "away": 1.12
+      },
+      {
+        "date": "2026-07-23",
+        "home": 39.37,
+        "draw": 8.0,
+        "away": 1.12
+      },
+      {
+        "date": "2026-07-24",
+        "home": 39.37,
+        "draw": 8.0,
+        "away": 1.12
+      },
+      {
+        "date": "2026-07-25",
+        "home": 39.37,
+        "draw": 8.0,
+        "away": 1.12
+      },
+      {
+        "date": "2026-07-26",
+        "home": 39.37,
+        "draw": 8.0,
+        "away": 1.12
+      },
+      {
+        "date": "2026-07-27",
+        "home": 39.37,
+        "draw": 8.0,
+        "away": 1.12
+      },
+      {
+        "date": "2026-07-28",
+        "home": 39.37,
+        "draw": 8.0,
+        "away": 1.12
+      },
+      {
+        "date": "2026-07-29",
+        "home": 39.37,
+        "draw": 8.0,
+        "away": 1.12
+      },
+      {
+        "date": "2026-07-30",
         "home": 39.37,
         "draw": 8.0,
         "away": 1.12
@@ -8542,85 +6429,85 @@
     ],
     "Morocco vs Haiti": [
       {
-        "date": "2026-06-15",
-        "home": 1.32,
-        "draw": 6.0,
-        "away": 12.9
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.32,
-        "draw": 5.8,
-        "away": 12.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.32,
-        "draw": 5.8,
-        "away": 12.0
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.32,
-        "draw": 6.0,
-        "away": 13.5
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.29,
-        "draw": 6.5,
-        "away": 14.6
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.23,
-        "draw": 7.6,
-        "away": 19.5
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.23,
-        "draw": 7.8,
-        "away": 20.0
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.23,
-        "draw": 8.2,
-        "away": 20.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.23,
-        "draw": 9.0,
-        "away": 31.0
-      },
-      {
-        "date": "2026-06-24",
+        "date": "2026-07-15",
         "home": 1.97,
         "draw": 3.13,
         "away": 4.26
       },
       {
-        "date": "2026-06-25",
+        "date": "2026-07-16",
         "home": 1.97,
         "draw": 3.13,
         "away": 4.26
       },
       {
-        "date": "2026-06-26",
+        "date": "2026-07-17",
         "home": 1.97,
         "draw": 3.13,
         "away": 4.26
       },
       {
-        "date": "2026-07-06",
+        "date": "2026-07-20",
         "home": 1.97,
         "draw": 3.13,
         "away": 4.26
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-21",
+        "home": 1.97,
+        "draw": 3.13,
+        "away": 4.26
+      },
+      {
+        "date": "2026-07-22",
+        "home": 1.97,
+        "draw": 3.13,
+        "away": 4.26
+      },
+      {
+        "date": "2026-07-23",
+        "home": 1.97,
+        "draw": 3.13,
+        "away": 4.26
+      },
+      {
+        "date": "2026-07-24",
+        "home": 1.97,
+        "draw": 3.13,
+        "away": 4.26
+      },
+      {
+        "date": "2026-07-25",
+        "home": 1.97,
+        "draw": 3.13,
+        "away": 4.26
+      },
+      {
+        "date": "2026-07-26",
+        "home": 1.97,
+        "draw": 3.13,
+        "away": 4.26
+      },
+      {
+        "date": "2026-07-27",
+        "home": 1.97,
+        "draw": 3.13,
+        "away": 4.26
+      },
+      {
+        "date": "2026-07-28",
+        "home": 1.97,
+        "draw": 3.13,
+        "away": 4.26
+      },
+      {
+        "date": "2026-07-29",
+        "home": 1.97,
+        "draw": 3.13,
+        "away": 4.26
+      },
+      {
+        "date": "2026-07-30",
         "home": 1.97,
         "draw": 3.13,
         "away": 4.26
@@ -8628,85 +6515,85 @@
     ],
     "Czech Republic vs Mexico": [
       {
-        "date": "2026-06-15",
-        "home": 5.0,
-        "draw": 3.67,
-        "away": 1.9
-      },
-      {
-        "date": "2026-06-16",
-        "home": 5.0,
-        "draw": 3.65,
-        "away": 1.9
-      },
-      {
-        "date": "2026-06-17",
-        "home": 4.75,
-        "draw": 3.65,
-        "away": 1.9
-      },
-      {
-        "date": "2026-06-18",
-        "home": 5.0,
-        "draw": 3.95,
-        "away": 1.88
-      },
-      {
-        "date": "2026-06-19",
-        "home": 3.5,
-        "draw": 4.2,
-        "away": 2.16
-      },
-      {
-        "date": "2026-06-20",
-        "home": 3.75,
-        "draw": 4.1,
-        "away": 2.1
-      },
-      {
-        "date": "2026-06-21",
-        "home": 4.0,
-        "draw": 4.1,
-        "away": 2.03
-      },
-      {
-        "date": "2026-06-22",
-        "home": 4.1,
-        "draw": 4.14,
-        "away": 2.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 3.89,
-        "draw": 4.2,
-        "away": 2.02
-      },
-      {
-        "date": "2026-06-24",
+        "date": "2026-07-15",
         "home": 4.0,
         "draw": 4.1,
         "away": 2.0
       },
       {
-        "date": "2026-06-25",
+        "date": "2026-07-16",
         "home": 4.0,
         "draw": 4.1,
         "away": 2.0
       },
       {
-        "date": "2026-06-26",
+        "date": "2026-07-17",
         "home": 4.0,
         "draw": 4.1,
         "away": 2.0
       },
       {
-        "date": "2026-07-06",
+        "date": "2026-07-20",
         "home": 4.0,
         "draw": 4.1,
         "away": 2.0
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-21",
+        "home": 4.0,
+        "draw": 4.1,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-22",
+        "home": 4.0,
+        "draw": 4.1,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-23",
+        "home": 4.0,
+        "draw": 4.1,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-24",
+        "home": 4.0,
+        "draw": 4.1,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-25",
+        "home": 4.0,
+        "draw": 4.1,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-26",
+        "home": 4.0,
+        "draw": 4.1,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-27",
+        "home": 4.0,
+        "draw": 4.1,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-28",
+        "home": 4.0,
+        "draw": 4.1,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-29",
+        "home": 4.0,
+        "draw": 4.1,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-30",
         "home": 4.0,
         "draw": 4.1,
         "away": 2.0
@@ -8714,85 +6601,85 @@
     ],
     "South Africa vs South Korea": [
       {
-        "date": "2026-06-15",
-        "home": 6.1,
-        "draw": 4.5,
-        "away": 1.66
-      },
-      {
-        "date": "2026-06-16",
-        "home": 6.25,
-        "draw": 4.4,
-        "away": 1.63
-      },
-      {
-        "date": "2026-06-17",
-        "home": 6.25,
-        "draw": 4.3,
-        "away": 1.64
-      },
-      {
-        "date": "2026-06-18",
-        "home": 6.0,
-        "draw": 4.2,
-        "away": 1.68
-      },
-      {
-        "date": "2026-06-19",
-        "home": 6.4,
-        "draw": 4.1,
-        "away": 1.67
-      },
-      {
-        "date": "2026-06-20",
-        "home": 6.2,
-        "draw": 4.1,
-        "away": 1.67
-      },
-      {
-        "date": "2026-06-21",
-        "home": 6.2,
-        "draw": 4.1,
-        "away": 1.67
-      },
-      {
-        "date": "2026-06-22",
-        "home": 6.25,
-        "draw": 4.1,
-        "away": 1.72
-      },
-      {
-        "date": "2026-06-23",
-        "home": 6.0,
-        "draw": 4.0,
-        "away": 1.73
-      },
-      {
-        "date": "2026-06-24",
+        "date": "2026-07-15",
         "home": 6.5,
         "draw": 4.12,
         "away": 1.66
       },
       {
-        "date": "2026-06-25",
+        "date": "2026-07-16",
         "home": 6.5,
         "draw": 4.12,
         "away": 1.66
       },
       {
-        "date": "2026-06-26",
+        "date": "2026-07-17",
         "home": 6.5,
         "draw": 4.12,
         "away": 1.66
       },
       {
-        "date": "2026-07-06",
+        "date": "2026-07-20",
         "home": 6.5,
         "draw": 4.12,
         "away": 1.66
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-21",
+        "home": 6.5,
+        "draw": 4.12,
+        "away": 1.66
+      },
+      {
+        "date": "2026-07-22",
+        "home": 6.5,
+        "draw": 4.12,
+        "away": 1.66
+      },
+      {
+        "date": "2026-07-23",
+        "home": 6.5,
+        "draw": 4.12,
+        "away": 1.66
+      },
+      {
+        "date": "2026-07-24",
+        "home": 6.5,
+        "draw": 4.12,
+        "away": 1.66
+      },
+      {
+        "date": "2026-07-25",
+        "home": 6.5,
+        "draw": 4.12,
+        "away": 1.66
+      },
+      {
+        "date": "2026-07-26",
+        "home": 6.5,
+        "draw": 4.12,
+        "away": 1.66
+      },
+      {
+        "date": "2026-07-27",
+        "home": 6.5,
+        "draw": 4.12,
+        "away": 1.66
+      },
+      {
+        "date": "2026-07-28",
+        "home": 6.5,
+        "draw": 4.12,
+        "away": 1.66
+      },
+      {
+        "date": "2026-07-29",
+        "home": 6.5,
+        "draw": 4.12,
+        "away": 1.66
+      },
+      {
+        "date": "2026-07-30",
         "home": 6.5,
         "draw": 4.12,
         "away": 1.66
@@ -8800,85 +6687,85 @@
     ],
     "Curaçao vs Ivory Coast": [
       {
-        "date": "2026-06-15",
-        "home": 26.0,
-        "draw": 9.3,
-        "away": 1.19
-      },
-      {
-        "date": "2026-06-16",
-        "home": 23.0,
-        "draw": 9.0,
-        "away": 1.19
-      },
-      {
-        "date": "2026-06-17",
-        "home": 23.0,
-        "draw": 10.0,
-        "away": 1.17
-      },
-      {
-        "date": "2026-06-18",
-        "home": 26.0,
-        "draw": 9.2,
-        "away": 1.17
-      },
-      {
-        "date": "2026-06-19",
-        "home": 29.0,
-        "draw": 9.8,
-        "away": 1.17
-      },
-      {
-        "date": "2026-06-20",
-        "home": 29.0,
-        "draw": 9.8,
-        "away": 1.17
-      },
-      {
-        "date": "2026-06-21",
-        "home": 26.0,
-        "draw": 10.0,
-        "away": 1.18
-      },
-      {
-        "date": "2026-06-22",
-        "home": 25.0,
-        "draw": 9.4,
-        "away": 1.18
-      },
-      {
-        "date": "2026-06-23",
-        "home": 25.0,
-        "draw": 9.2,
-        "away": 1.18
-      },
-      {
-        "date": "2026-06-24",
+        "date": "2026-07-15",
         "home": 24.0,
         "draw": 9.5,
         "away": 1.19
       },
       {
-        "date": "2026-06-25",
-        "home": 60.05,
-        "draw": 9.96,
-        "away": 1.08
-      },
-      {
-        "date": "2026-06-26",
-        "home": 60.05,
-        "draw": 9.96,
-        "away": 1.08
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-16",
         "home": 24.0,
         "draw": 9.5,
         "away": 1.19
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-17",
+        "home": 24.0,
+        "draw": 9.5,
+        "away": 1.19
+      },
+      {
+        "date": "2026-07-20",
+        "home": 24.0,
+        "draw": 9.5,
+        "away": 1.19
+      },
+      {
+        "date": "2026-07-21",
+        "home": 24.0,
+        "draw": 9.5,
+        "away": 1.19
+      },
+      {
+        "date": "2026-07-22",
+        "home": 24.0,
+        "draw": 9.5,
+        "away": 1.19
+      },
+      {
+        "date": "2026-07-23",
+        "home": 24.0,
+        "draw": 9.5,
+        "away": 1.19
+      },
+      {
+        "date": "2026-07-24",
+        "home": 24.0,
+        "draw": 9.5,
+        "away": 1.19
+      },
+      {
+        "date": "2026-07-25",
+        "home": 24.0,
+        "draw": 9.5,
+        "away": 1.19
+      },
+      {
+        "date": "2026-07-26",
+        "home": 24.0,
+        "draw": 9.5,
+        "away": 1.19
+      },
+      {
+        "date": "2026-07-27",
+        "home": 24.0,
+        "draw": 9.5,
+        "away": 1.19
+      },
+      {
+        "date": "2026-07-28",
+        "home": 24.0,
+        "draw": 9.5,
+        "away": 1.19
+      },
+      {
+        "date": "2026-07-29",
+        "home": 24.0,
+        "draw": 9.5,
+        "away": 1.19
+      },
+      {
+        "date": "2026-07-30",
         "home": 24.0,
         "draw": 9.5,
         "away": 1.19
@@ -8886,85 +6773,85 @@
     ],
     "Ecuador vs Germany": [
       {
-        "date": "2026-06-15",
-        "home": 5.1,
-        "draw": 4.04,
-        "away": 1.8
-      },
-      {
-        "date": "2026-06-16",
-        "home": 5.1,
-        "draw": 4.04,
-        "away": 1.78
-      },
-      {
-        "date": "2026-06-17",
-        "home": 5.1,
-        "draw": 4.1,
-        "away": 1.78
-      },
-      {
-        "date": "2026-06-18",
-        "home": 5.3,
-        "draw": 4.2,
-        "away": 1.78
-      },
-      {
-        "date": "2026-06-19",
-        "home": 5.23,
-        "draw": 4.04,
-        "away": 1.78
-      },
-      {
-        "date": "2026-06-20",
-        "home": 5.25,
-        "draw": 4.04,
-        "away": 1.78
-      },
-      {
-        "date": "2026-06-21",
-        "home": 3.79,
-        "draw": 4.2,
-        "away": 2.01
-      },
-      {
-        "date": "2026-06-22",
-        "home": 3.9,
-        "draw": 4.1,
-        "away": 2.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 4.0,
-        "draw": 4.2,
-        "away": 2.0
-      },
-      {
-        "date": "2026-06-24",
+        "date": "2026-07-15",
         "home": 4.2,
         "draw": 4.5,
         "away": 1.9
       },
       {
-        "date": "2026-06-25",
-        "home": 4.25,
-        "draw": 2.66,
-        "away": 2.34
-      },
-      {
-        "date": "2026-06-26",
-        "home": 4.25,
-        "draw": 2.66,
-        "away": 2.34
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-16",
         "home": 4.2,
         "draw": 4.5,
         "away": 1.9
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-17",
+        "home": 4.2,
+        "draw": 4.5,
+        "away": 1.9
+      },
+      {
+        "date": "2026-07-20",
+        "home": 4.2,
+        "draw": 4.5,
+        "away": 1.9
+      },
+      {
+        "date": "2026-07-21",
+        "home": 4.2,
+        "draw": 4.5,
+        "away": 1.9
+      },
+      {
+        "date": "2026-07-22",
+        "home": 4.2,
+        "draw": 4.5,
+        "away": 1.9
+      },
+      {
+        "date": "2026-07-23",
+        "home": 4.2,
+        "draw": 4.5,
+        "away": 1.9
+      },
+      {
+        "date": "2026-07-24",
+        "home": 4.2,
+        "draw": 4.5,
+        "away": 1.9
+      },
+      {
+        "date": "2026-07-25",
+        "home": 4.2,
+        "draw": 4.5,
+        "away": 1.9
+      },
+      {
+        "date": "2026-07-26",
+        "home": 4.2,
+        "draw": 4.5,
+        "away": 1.9
+      },
+      {
+        "date": "2026-07-27",
+        "home": 4.2,
+        "draw": 4.5,
+        "away": 1.9
+      },
+      {
+        "date": "2026-07-28",
+        "home": 4.2,
+        "draw": 4.5,
+        "away": 1.9
+      },
+      {
+        "date": "2026-07-29",
+        "home": 4.2,
+        "draw": 4.5,
+        "away": 1.9
+      },
+      {
+        "date": "2026-07-30",
         "home": 4.2,
         "draw": 4.5,
         "away": 1.9
@@ -8972,85 +6859,85 @@
     ],
     "Japan vs Sweden": [
       {
-        "date": "2026-06-15",
-        "home": 2.23,
-        "draw": 3.53,
-        "away": 3.75
-      },
-      {
-        "date": "2026-06-16",
-        "home": 2.18,
-        "draw": 3.55,
-        "away": 3.6
-      },
-      {
-        "date": "2026-06-17",
-        "home": 2.18,
-        "draw": 3.53,
-        "away": 3.6
-      },
-      {
-        "date": "2026-06-18",
-        "home": 2.2,
-        "draw": 3.55,
-        "away": 3.6
-      },
-      {
-        "date": "2026-06-19",
-        "home": 2.3,
-        "draw": 3.55,
-        "away": 3.55
-      },
-      {
-        "date": "2026-06-20",
-        "home": 2.3,
-        "draw": 3.55,
-        "away": 3.5
-      },
-      {
-        "date": "2026-06-21",
-        "home": 2.0,
-        "draw": 3.6,
-        "away": 4.45
-      },
-      {
-        "date": "2026-06-22",
-        "home": 2.02,
-        "draw": 3.6,
-        "away": 4.6
-      },
-      {
-        "date": "2026-06-23",
-        "home": 2.0,
-        "draw": 3.65,
-        "away": 4.5
-      },
-      {
-        "date": "2026-06-24",
+        "date": "2026-07-15",
         "home": 1.96,
         "draw": 3.65,
         "away": 4.7
       },
       {
-        "date": "2026-06-25",
-        "home": 2.1,
-        "draw": 3.6,
-        "away": 4.6
-      },
-      {
-        "date": "2026-06-26",
-        "home": 1.41,
-        "draw": 3.86,
-        "away": 12.76
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-16",
         "home": 1.96,
         "draw": 3.65,
         "away": 4.7
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-17",
+        "home": 1.96,
+        "draw": 3.65,
+        "away": 4.7
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.96,
+        "draw": 3.65,
+        "away": 4.7
+      },
+      {
+        "date": "2026-07-21",
+        "home": 1.96,
+        "draw": 3.65,
+        "away": 4.7
+      },
+      {
+        "date": "2026-07-22",
+        "home": 1.96,
+        "draw": 3.65,
+        "away": 4.7
+      },
+      {
+        "date": "2026-07-23",
+        "home": 1.96,
+        "draw": 3.65,
+        "away": 4.7
+      },
+      {
+        "date": "2026-07-24",
+        "home": 1.96,
+        "draw": 3.65,
+        "away": 4.7
+      },
+      {
+        "date": "2026-07-25",
+        "home": 1.96,
+        "draw": 3.65,
+        "away": 4.7
+      },
+      {
+        "date": "2026-07-26",
+        "home": 1.96,
+        "draw": 3.65,
+        "away": 4.7
+      },
+      {
+        "date": "2026-07-27",
+        "home": 1.96,
+        "draw": 3.65,
+        "away": 4.7
+      },
+      {
+        "date": "2026-07-28",
+        "home": 1.96,
+        "draw": 3.65,
+        "away": 4.7
+      },
+      {
+        "date": "2026-07-29",
+        "home": 1.96,
+        "draw": 3.65,
+        "away": 4.7
+      },
+      {
+        "date": "2026-07-30",
         "home": 1.96,
         "draw": 3.65,
         "away": 4.7
@@ -9058,85 +6945,85 @@
     ],
     "Tunisia vs Netherlands": [
       {
-        "date": "2026-06-15",
-        "home": 10.3,
-        "draw": 5.7,
-        "away": 1.37
-      },
-      {
-        "date": "2026-06-16",
-        "home": 10.0,
-        "draw": 5.6,
-        "away": 1.38
-      },
-      {
-        "date": "2026-06-17",
-        "home": 10.5,
-        "draw": 5.6,
-        "away": 1.37
-      },
-      {
-        "date": "2026-06-18",
-        "home": 10.5,
-        "draw": 5.7,
-        "away": 1.35
-      },
-      {
-        "date": "2026-06-19",
-        "home": 10.5,
-        "draw": 6.0,
-        "away": 1.35
-      },
-      {
-        "date": "2026-06-20",
-        "home": 11.5,
-        "draw": 6.0,
-        "away": 1.35
-      },
-      {
-        "date": "2026-06-21",
-        "home": 25.0,
-        "draw": 10.0,
-        "away": 1.16
-      },
-      {
-        "date": "2026-06-22",
-        "home": 28.0,
-        "draw": 10.5,
-        "away": 1.16
-      },
-      {
-        "date": "2026-06-23",
-        "home": 28.0,
-        "draw": 10.5,
-        "away": 1.16
-      },
-      {
-        "date": "2026-06-24",
+        "date": "2026-07-15",
         "home": 34.0,
         "draw": 11.8,
         "away": 1.16
       },
       {
-        "date": "2026-06-25",
-        "home": 32.0,
-        "draw": 12.0,
-        "away": 1.13
-      },
-      {
-        "date": "2026-06-26",
-        "home": 901.0,
-        "draw": 126.0,
-        "away": 1.12
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-16",
         "home": 34.0,
         "draw": 11.8,
         "away": 1.16
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-17",
+        "home": 34.0,
+        "draw": 11.8,
+        "away": 1.16
+      },
+      {
+        "date": "2026-07-20",
+        "home": 34.0,
+        "draw": 11.8,
+        "away": 1.16
+      },
+      {
+        "date": "2026-07-21",
+        "home": 34.0,
+        "draw": 11.8,
+        "away": 1.16
+      },
+      {
+        "date": "2026-07-22",
+        "home": 34.0,
+        "draw": 11.8,
+        "away": 1.16
+      },
+      {
+        "date": "2026-07-23",
+        "home": 34.0,
+        "draw": 11.8,
+        "away": 1.16
+      },
+      {
+        "date": "2026-07-24",
+        "home": 34.0,
+        "draw": 11.8,
+        "away": 1.16
+      },
+      {
+        "date": "2026-07-25",
+        "home": 34.0,
+        "draw": 11.8,
+        "away": 1.16
+      },
+      {
+        "date": "2026-07-26",
+        "home": 34.0,
+        "draw": 11.8,
+        "away": 1.16
+      },
+      {
+        "date": "2026-07-27",
+        "home": 34.0,
+        "draw": 11.8,
+        "away": 1.16
+      },
+      {
+        "date": "2026-07-28",
+        "home": 34.0,
+        "draw": 11.8,
+        "away": 1.16
+      },
+      {
+        "date": "2026-07-29",
+        "home": 34.0,
+        "draw": 11.8,
+        "away": 1.16
+      },
+      {
+        "date": "2026-07-30",
         "home": 34.0,
         "draw": 11.8,
         "away": 1.16
@@ -9144,85 +7031,85 @@
     ],
     "Paraguay vs Australia": [
       {
-        "date": "2026-06-15",
-        "home": 2.25,
-        "draw": 3.4,
-        "away": 3.61
-      },
-      {
-        "date": "2026-06-16",
-        "home": 2.24,
-        "draw": 3.4,
-        "away": 3.6
-      },
-      {
-        "date": "2026-06-17",
-        "home": 2.24,
-        "draw": 3.4,
-        "away": 3.6
-      },
-      {
-        "date": "2026-06-18",
-        "home": 2.26,
-        "draw": 3.4,
-        "away": 3.6
-      },
-      {
-        "date": "2026-06-19",
-        "home": 2.23,
-        "draw": 3.65,
-        "away": 3.55
-      },
-      {
-        "date": "2026-06-20",
-        "home": 3.0,
-        "draw": 2.4,
-        "away": 4.33
-      },
-      {
-        "date": "2026-06-21",
-        "home": 3.04,
-        "draw": 2.32,
-        "away": 4.25
-      },
-      {
-        "date": "2026-06-22",
-        "home": 3.04,
-        "draw": 2.3,
-        "away": 4.25
-      },
-      {
-        "date": "2026-06-23",
-        "home": 3.1,
-        "draw": 2.32,
-        "away": 4.25
-      },
-      {
-        "date": "2026-06-24",
+        "date": "2026-07-15",
         "home": 3.03,
         "draw": 2.38,
         "away": 4.43
       },
       {
-        "date": "2026-06-25",
-        "home": 2.84,
-        "draw": 2.36,
-        "away": 4.8
-      },
-      {
-        "date": "2026-06-26",
-        "home": 2.88,
-        "draw": 2.42,
-        "away": 4.53
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-16",
         "home": 3.03,
         "draw": 2.38,
         "away": 4.43
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-17",
+        "home": 3.03,
+        "draw": 2.38,
+        "away": 4.43
+      },
+      {
+        "date": "2026-07-20",
+        "home": 3.03,
+        "draw": 2.38,
+        "away": 4.43
+      },
+      {
+        "date": "2026-07-21",
+        "home": 3.03,
+        "draw": 2.38,
+        "away": 4.43
+      },
+      {
+        "date": "2026-07-22",
+        "home": 3.03,
+        "draw": 2.38,
+        "away": 4.43
+      },
+      {
+        "date": "2026-07-23",
+        "home": 3.03,
+        "draw": 2.38,
+        "away": 4.43
+      },
+      {
+        "date": "2026-07-24",
+        "home": 3.03,
+        "draw": 2.38,
+        "away": 4.43
+      },
+      {
+        "date": "2026-07-25",
+        "home": 3.03,
+        "draw": 2.38,
+        "away": 4.43
+      },
+      {
+        "date": "2026-07-26",
+        "home": 3.03,
+        "draw": 2.38,
+        "away": 4.43
+      },
+      {
+        "date": "2026-07-27",
+        "home": 3.03,
+        "draw": 2.38,
+        "away": 4.43
+      },
+      {
+        "date": "2026-07-28",
+        "home": 3.03,
+        "draw": 2.38,
+        "away": 4.43
+      },
+      {
+        "date": "2026-07-29",
+        "home": 3.03,
+        "draw": 2.38,
+        "away": 4.43
+      },
+      {
+        "date": "2026-07-30",
         "home": 3.03,
         "draw": 2.38,
         "away": 4.43
@@ -9230,85 +7117,85 @@
     ],
     "Turkey vs USA": [
       {
-        "date": "2026-06-15",
-        "home": 2.9,
-        "draw": 3.8,
-        "away": 2.52
-      },
-      {
-        "date": "2026-06-16",
-        "home": 2.9,
-        "draw": 3.75,
-        "away": 2.46
-      },
-      {
-        "date": "2026-06-17",
-        "home": 2.94,
-        "draw": 3.8,
-        "away": 2.46
-      },
-      {
-        "date": "2026-06-18",
-        "home": 2.9,
-        "draw": 3.9,
-        "away": 2.5
-      },
-      {
-        "date": "2026-06-19",
-        "home": 2.72,
-        "draw": 4.0,
-        "away": 2.61
-      },
-      {
-        "date": "2026-06-20",
-        "home": 3.25,
-        "draw": 4.14,
-        "away": 2.22
-      },
-      {
-        "date": "2026-06-21",
-        "home": 3.7,
-        "draw": 4.3,
-        "away": 2.09
-      },
-      {
-        "date": "2026-06-22",
-        "home": 3.75,
-        "draw": 4.35,
-        "away": 2.06
-      },
-      {
-        "date": "2026-06-23",
+        "date": "2026-07-15",
         "home": 3.75,
         "draw": 4.3,
         "away": 2.0
       },
       {
-        "date": "2026-06-24",
+        "date": "2026-07-16",
         "home": 3.75,
         "draw": 4.3,
         "away": 2.0
       },
       {
-        "date": "2026-06-25",
-        "home": 4.2,
-        "draw": 4.4,
-        "away": 1.95
-      },
-      {
-        "date": "2026-06-26",
-        "home": 4.1,
-        "draw": 4.5,
-        "away": 1.95
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-17",
         "home": 3.75,
         "draw": 4.3,
         "away": 2.0
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-20",
+        "home": 3.75,
+        "draw": 4.3,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-21",
+        "home": 3.75,
+        "draw": 4.3,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-22",
+        "home": 3.75,
+        "draw": 4.3,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-23",
+        "home": 3.75,
+        "draw": 4.3,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-24",
+        "home": 3.75,
+        "draw": 4.3,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-25",
+        "home": 3.75,
+        "draw": 4.3,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-26",
+        "home": 3.75,
+        "draw": 4.3,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-27",
+        "home": 3.75,
+        "draw": 4.3,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-28",
+        "home": 3.75,
+        "draw": 4.3,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-29",
+        "home": 3.75,
+        "draw": 4.3,
+        "away": 2.0
+      },
+      {
+        "date": "2026-07-30",
         "home": 3.75,
         "draw": 4.3,
         "away": 2.0
@@ -9316,85 +7203,85 @@
     ],
     "Norway vs France": [
       {
-        "date": "2026-06-15",
-        "home": 4.5,
-        "draw": 3.9,
-        "away": 1.87
-      },
-      {
-        "date": "2026-06-16",
-        "home": 4.5,
-        "draw": 3.95,
-        "away": 1.87
-      },
-      {
-        "date": "2026-06-17",
-        "home": 4.5,
-        "draw": 3.9,
-        "away": 1.85
-      },
-      {
-        "date": "2026-06-18",
-        "home": 4.5,
-        "draw": 4.1,
-        "away": 1.85
-      },
-      {
-        "date": "2026-06-19",
-        "home": 4.5,
-        "draw": 4.1,
-        "away": 1.85
-      },
-      {
-        "date": "2026-06-20",
-        "home": 4.5,
-        "draw": 4.0,
-        "away": 1.85
-      },
-      {
-        "date": "2026-06-21",
-        "home": 4.75,
-        "draw": 4.1,
-        "away": 1.84
-      },
-      {
-        "date": "2026-06-22",
-        "home": 4.7,
-        "draw": 4.1,
-        "away": 1.83
-      },
-      {
-        "date": "2026-06-23",
-        "home": 5.5,
-        "draw": 4.6,
-        "away": 1.69
-      },
-      {
-        "date": "2026-06-24",
-        "home": 4.92,
-        "draw": 4.7,
-        "away": 1.71
-      },
-      {
-        "date": "2026-06-25",
-        "home": 5.5,
-        "draw": 4.8,
-        "away": 1.69
-      },
-      {
-        "date": "2026-06-26",
-        "home": 5.4,
-        "draw": 4.9,
-        "away": 1.65
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-15",
         "home": 4.9,
         "draw": 4.9,
         "away": 1.69
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-16",
+        "home": 4.9,
+        "draw": 4.9,
+        "away": 1.69
+      },
+      {
+        "date": "2026-07-17",
+        "home": 4.9,
+        "draw": 4.9,
+        "away": 1.69
+      },
+      {
+        "date": "2026-07-20",
+        "home": 4.9,
+        "draw": 4.9,
+        "away": 1.69
+      },
+      {
+        "date": "2026-07-21",
+        "home": 4.9,
+        "draw": 4.9,
+        "away": 1.69
+      },
+      {
+        "date": "2026-07-22",
+        "home": 4.9,
+        "draw": 4.9,
+        "away": 1.69
+      },
+      {
+        "date": "2026-07-23",
+        "home": 4.9,
+        "draw": 4.9,
+        "away": 1.69
+      },
+      {
+        "date": "2026-07-24",
+        "home": 4.9,
+        "draw": 4.9,
+        "away": 1.69
+      },
+      {
+        "date": "2026-07-25",
+        "home": 4.9,
+        "draw": 4.9,
+        "away": 1.69
+      },
+      {
+        "date": "2026-07-26",
+        "home": 4.9,
+        "draw": 4.9,
+        "away": 1.69
+      },
+      {
+        "date": "2026-07-27",
+        "home": 4.9,
+        "draw": 4.9,
+        "away": 1.69
+      },
+      {
+        "date": "2026-07-28",
+        "home": 4.9,
+        "draw": 4.9,
+        "away": 1.69
+      },
+      {
+        "date": "2026-07-29",
+        "home": 4.9,
+        "draw": 4.9,
+        "away": 1.69
+      },
+      {
+        "date": "2026-07-30",
         "home": 4.9,
         "draw": 4.9,
         "away": 1.69
@@ -9402,85 +7289,85 @@
     ],
     "Senegal vs Iraq": [
       {
-        "date": "2026-06-15",
-        "home": 1.45,
-        "draw": 5.0,
-        "away": 9.0
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.45,
-        "draw": 5.2,
-        "away": 10.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.39,
-        "draw": 5.5,
-        "away": 11.0
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.39,
-        "draw": 5.5,
-        "away": 10.0
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.37,
-        "draw": 5.7,
-        "away": 11.0
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.37,
-        "draw": 5.8,
-        "away": 12.0
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.37,
-        "draw": 5.9,
-        "away": 12.0
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.37,
-        "draw": 5.8,
-        "away": 12.5
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.27,
-        "draw": 7.0,
-        "away": 14.5
-      },
-      {
-        "date": "2026-06-24",
-        "home": 1.25,
-        "draw": 7.5,
-        "away": 14.7
-      },
-      {
-        "date": "2026-06-25",
-        "home": 1.26,
-        "draw": 7.25,
-        "away": 15.0
-      },
-      {
-        "date": "2026-06-26",
-        "home": 1.26,
-        "draw": 7.25,
-        "away": 14.6
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-15",
         "home": 1.26,
         "draw": 7.25,
         "away": 14.1
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-16",
+        "home": 1.26,
+        "draw": 7.25,
+        "away": 14.1
+      },
+      {
+        "date": "2026-07-17",
+        "home": 1.26,
+        "draw": 7.25,
+        "away": 14.1
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.26,
+        "draw": 7.25,
+        "away": 14.1
+      },
+      {
+        "date": "2026-07-21",
+        "home": 1.26,
+        "draw": 7.25,
+        "away": 14.1
+      },
+      {
+        "date": "2026-07-22",
+        "home": 1.26,
+        "draw": 7.25,
+        "away": 14.1
+      },
+      {
+        "date": "2026-07-23",
+        "home": 1.26,
+        "draw": 7.25,
+        "away": 14.1
+      },
+      {
+        "date": "2026-07-24",
+        "home": 1.26,
+        "draw": 7.25,
+        "away": 14.1
+      },
+      {
+        "date": "2026-07-25",
+        "home": 1.26,
+        "draw": 7.25,
+        "away": 14.1
+      },
+      {
+        "date": "2026-07-26",
+        "home": 1.26,
+        "draw": 7.25,
+        "away": 14.1
+      },
+      {
+        "date": "2026-07-27",
+        "home": 1.26,
+        "draw": 7.25,
+        "away": 14.1
+      },
+      {
+        "date": "2026-07-28",
+        "home": 1.26,
+        "draw": 7.25,
+        "away": 14.1
+      },
+      {
+        "date": "2026-07-29",
+        "home": 1.26,
+        "draw": 7.25,
+        "away": 14.1
+      },
+      {
+        "date": "2026-07-30",
         "home": 1.26,
         "draw": 7.25,
         "away": 14.1
@@ -9488,85 +7375,85 @@
     ],
     "Cape Verde vs Saudi Arabia": [
       {
-        "date": "2026-06-15",
-        "home": 2.75,
-        "draw": 3.95,
-        "away": 2.75
-      },
-      {
-        "date": "2026-06-16",
-        "home": 2.94,
-        "draw": 3.9,
-        "away": 2.54
-      },
-      {
-        "date": "2026-06-17",
-        "home": 2.94,
-        "draw": 3.9,
-        "away": 2.55
-      },
-      {
-        "date": "2026-06-18",
-        "home": 2.88,
-        "draw": 3.9,
-        "away": 2.55
-      },
-      {
-        "date": "2026-06-19",
-        "home": 2.96,
-        "draw": 3.84,
-        "away": 2.55
-      },
-      {
-        "date": "2026-06-20",
-        "home": 2.9,
-        "draw": 3.84,
-        "away": 2.55
-      },
-      {
-        "date": "2026-06-21",
-        "home": 2.69,
-        "draw": 4.1,
-        "away": 2.64
-      },
-      {
-        "date": "2026-06-22",
-        "home": 2.48,
-        "draw": 3.66,
-        "away": 3.05
-      },
-      {
-        "date": "2026-06-23",
-        "home": 2.54,
-        "draw": 3.66,
-        "away": 3.05
-      },
-      {
-        "date": "2026-06-24",
-        "home": 2.58,
-        "draw": 3.6,
-        "away": 3.1
-      },
-      {
-        "date": "2026-06-25",
-        "home": 2.84,
-        "draw": 3.55,
-        "away": 2.9
-      },
-      {
-        "date": "2026-06-26",
-        "home": 2.8,
-        "draw": 3.55,
-        "away": 2.9
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-15",
         "home": 2.78,
         "draw": 3.45,
         "away": 2.86
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-16",
+        "home": 2.78,
+        "draw": 3.45,
+        "away": 2.86
+      },
+      {
+        "date": "2026-07-17",
+        "home": 2.78,
+        "draw": 3.45,
+        "away": 2.86
+      },
+      {
+        "date": "2026-07-20",
+        "home": 2.78,
+        "draw": 3.45,
+        "away": 2.86
+      },
+      {
+        "date": "2026-07-21",
+        "home": 2.78,
+        "draw": 3.45,
+        "away": 2.86
+      },
+      {
+        "date": "2026-07-22",
+        "home": 2.78,
+        "draw": 3.45,
+        "away": 2.86
+      },
+      {
+        "date": "2026-07-23",
+        "home": 2.78,
+        "draw": 3.45,
+        "away": 2.86
+      },
+      {
+        "date": "2026-07-24",
+        "home": 2.78,
+        "draw": 3.45,
+        "away": 2.86
+      },
+      {
+        "date": "2026-07-25",
+        "home": 2.78,
+        "draw": 3.45,
+        "away": 2.86
+      },
+      {
+        "date": "2026-07-26",
+        "home": 2.78,
+        "draw": 3.45,
+        "away": 2.86
+      },
+      {
+        "date": "2026-07-27",
+        "home": 2.78,
+        "draw": 3.45,
+        "away": 2.86
+      },
+      {
+        "date": "2026-07-28",
+        "home": 2.78,
+        "draw": 3.45,
+        "away": 2.86
+      },
+      {
+        "date": "2026-07-29",
+        "home": 2.78,
+        "draw": 3.45,
+        "away": 2.86
+      },
+      {
+        "date": "2026-07-30",
         "home": 2.78,
         "draw": 3.45,
         "away": 2.86
@@ -9574,85 +7461,85 @@
     ],
     "Uruguay vs Spain": [
       {
-        "date": "2026-06-15",
-        "home": 6.5,
-        "draw": 4.5,
-        "away": 1.61
-      },
-      {
-        "date": "2026-06-16",
-        "home": 6.5,
-        "draw": 4.47,
-        "away": 1.61
-      },
-      {
-        "date": "2026-06-17",
-        "home": 6.5,
-        "draw": 4.47,
-        "away": 1.61
-      },
-      {
-        "date": "2026-06-18",
-        "home": 6.5,
-        "draw": 4.47,
-        "away": 1.61
-      },
-      {
-        "date": "2026-06-19",
-        "home": 6.5,
-        "draw": 4.5,
-        "away": 1.61
-      },
-      {
-        "date": "2026-06-20",
-        "home": 6.4,
-        "draw": 4.5,
-        "away": 1.61
-      },
-      {
-        "date": "2026-06-21",
-        "home": 7.0,
-        "draw": 4.5,
-        "away": 1.58
-      },
-      {
-        "date": "2026-06-22",
-        "home": 8.0,
-        "draw": 4.51,
-        "away": 1.54
-      },
-      {
-        "date": "2026-06-23",
-        "home": 7.8,
-        "draw": 4.4,
-        "away": 1.55
-      },
-      {
-        "date": "2026-06-24",
-        "home": 8.0,
-        "draw": 4.3,
-        "away": 1.55
-      },
-      {
-        "date": "2026-06-25",
-        "home": 8.2,
-        "draw": 4.5,
-        "away": 1.55
-      },
-      {
-        "date": "2026-06-26",
-        "home": 8.2,
-        "draw": 4.5,
-        "away": 1.56
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-15",
         "home": 7.8,
         "draw": 3.9,
         "away": 1.67
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-16",
+        "home": 7.8,
+        "draw": 3.9,
+        "away": 1.67
+      },
+      {
+        "date": "2026-07-17",
+        "home": 7.8,
+        "draw": 3.9,
+        "away": 1.67
+      },
+      {
+        "date": "2026-07-20",
+        "home": 7.8,
+        "draw": 3.9,
+        "away": 1.67
+      },
+      {
+        "date": "2026-07-21",
+        "home": 7.8,
+        "draw": 3.9,
+        "away": 1.67
+      },
+      {
+        "date": "2026-07-22",
+        "home": 7.8,
+        "draw": 3.9,
+        "away": 1.67
+      },
+      {
+        "date": "2026-07-23",
+        "home": 7.8,
+        "draw": 3.9,
+        "away": 1.67
+      },
+      {
+        "date": "2026-07-24",
+        "home": 7.8,
+        "draw": 3.9,
+        "away": 1.67
+      },
+      {
+        "date": "2026-07-25",
+        "home": 7.8,
+        "draw": 3.9,
+        "away": 1.67
+      },
+      {
+        "date": "2026-07-26",
+        "home": 7.8,
+        "draw": 3.9,
+        "away": 1.67
+      },
+      {
+        "date": "2026-07-27",
+        "home": 7.8,
+        "draw": 3.9,
+        "away": 1.67
+      },
+      {
+        "date": "2026-07-28",
+        "home": 7.8,
+        "draw": 3.9,
+        "away": 1.67
+      },
+      {
+        "date": "2026-07-29",
+        "home": 7.8,
+        "draw": 3.9,
+        "away": 1.67
+      },
+      {
+        "date": "2026-07-30",
         "home": 7.8,
         "draw": 3.9,
         "away": 1.67
@@ -9660,85 +7547,85 @@
     ],
     "New Zealand vs Belgium": [
       {
-        "date": "2026-06-15",
-        "home": 13.0,
-        "draw": 6.6,
-        "away": 1.3
-      },
-      {
-        "date": "2026-06-16",
-        "home": 14.0,
-        "draw": 6.5,
-        "away": 1.3
-      },
-      {
-        "date": "2026-06-17",
-        "home": 14.0,
-        "draw": 6.5,
-        "away": 1.3
-      },
-      {
-        "date": "2026-06-18",
-        "home": 14.0,
-        "draw": 6.5,
-        "away": 1.3
-      },
-      {
-        "date": "2026-06-19",
-        "home": 14.0,
-        "draw": 6.5,
-        "away": 1.3
-      },
-      {
-        "date": "2026-06-20",
-        "home": 14.0,
-        "draw": 6.8,
-        "away": 1.3
-      },
-      {
-        "date": "2026-06-21",
-        "home": 16.0,
-        "draw": 7.4,
-        "away": 1.24
-      },
-      {
-        "date": "2026-06-22",
-        "home": 16.5,
-        "draw": 7.4,
-        "away": 1.24
-      },
-      {
-        "date": "2026-06-23",
-        "home": 18.0,
-        "draw": 8.0,
-        "away": 1.23
-      },
-      {
-        "date": "2026-06-24",
-        "home": 22.0,
-        "draw": 9.3,
-        "away": 1.21
-      },
-      {
-        "date": "2026-06-25",
-        "home": 21.0,
-        "draw": 8.75,
-        "away": 1.2
-      },
-      {
-        "date": "2026-06-26",
-        "home": 21.0,
-        "draw": 8.5,
-        "away": 1.2
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-15",
         "home": 17.5,
         "draw": 8.5,
         "away": 1.22
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-16",
+        "home": 17.5,
+        "draw": 8.5,
+        "away": 1.22
+      },
+      {
+        "date": "2026-07-17",
+        "home": 17.5,
+        "draw": 8.5,
+        "away": 1.22
+      },
+      {
+        "date": "2026-07-20",
+        "home": 17.5,
+        "draw": 8.5,
+        "away": 1.22
+      },
+      {
+        "date": "2026-07-21",
+        "home": 17.5,
+        "draw": 8.5,
+        "away": 1.22
+      },
+      {
+        "date": "2026-07-22",
+        "home": 17.5,
+        "draw": 8.5,
+        "away": 1.22
+      },
+      {
+        "date": "2026-07-23",
+        "home": 17.5,
+        "draw": 8.5,
+        "away": 1.22
+      },
+      {
+        "date": "2026-07-24",
+        "home": 17.5,
+        "draw": 8.5,
+        "away": 1.22
+      },
+      {
+        "date": "2026-07-25",
+        "home": 17.5,
+        "draw": 8.5,
+        "away": 1.22
+      },
+      {
+        "date": "2026-07-26",
+        "home": 17.5,
+        "draw": 8.5,
+        "away": 1.22
+      },
+      {
+        "date": "2026-07-27",
+        "home": 17.5,
+        "draw": 8.5,
+        "away": 1.22
+      },
+      {
+        "date": "2026-07-28",
+        "home": 17.5,
+        "draw": 8.5,
+        "away": 1.22
+      },
+      {
+        "date": "2026-07-29",
+        "home": 17.5,
+        "draw": 8.5,
+        "away": 1.22
+      },
+      {
+        "date": "2026-07-30",
         "home": 17.5,
         "draw": 8.5,
         "away": 1.22
@@ -9746,85 +7633,85 @@
     ],
     "Egypt vs Iran": [
       {
-        "date": "2026-06-15",
-        "home": 2.28,
-        "draw": 3.35,
-        "away": 3.75
-      },
-      {
-        "date": "2026-06-16",
-        "home": 2.2,
-        "draw": 3.3,
-        "away": 4.1
-      },
-      {
-        "date": "2026-06-17",
-        "home": 2.15,
-        "draw": 3.3,
-        "away": 4.0
-      },
-      {
-        "date": "2026-06-18",
-        "home": 2.15,
-        "draw": 3.25,
-        "away": 4.1
-      },
-      {
-        "date": "2026-06-19",
-        "home": 2.15,
-        "draw": 3.3,
-        "away": 4.1
-      },
-      {
-        "date": "2026-06-20",
-        "home": 2.16,
-        "draw": 3.35,
-        "away": 4.1
-      },
-      {
-        "date": "2026-06-21",
-        "home": 2.34,
-        "draw": 3.08,
-        "away": 4.22
-      },
-      {
-        "date": "2026-06-22",
-        "home": 2.52,
-        "draw": 2.88,
-        "away": 4.0
-      },
-      {
-        "date": "2026-06-23",
-        "home": 2.6,
-        "draw": 2.8,
-        "away": 4.0
-      },
-      {
-        "date": "2026-06-24",
-        "home": 2.56,
-        "draw": 2.75,
-        "away": 4.0
-      },
-      {
-        "date": "2026-06-25",
-        "home": 2.58,
-        "draw": 2.75,
-        "away": 4.1
-      },
-      {
-        "date": "2026-06-26",
-        "home": 2.6,
-        "draw": 2.75,
-        "away": 4.25
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-15",
         "home": 2.6,
         "draw": 2.75,
         "away": 4.13
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-16",
+        "home": 2.6,
+        "draw": 2.75,
+        "away": 4.13
+      },
+      {
+        "date": "2026-07-17",
+        "home": 2.6,
+        "draw": 2.75,
+        "away": 4.13
+      },
+      {
+        "date": "2026-07-20",
+        "home": 2.6,
+        "draw": 2.75,
+        "away": 4.13
+      },
+      {
+        "date": "2026-07-21",
+        "home": 2.6,
+        "draw": 2.75,
+        "away": 4.13
+      },
+      {
+        "date": "2026-07-22",
+        "home": 2.6,
+        "draw": 2.75,
+        "away": 4.13
+      },
+      {
+        "date": "2026-07-23",
+        "home": 2.6,
+        "draw": 2.75,
+        "away": 4.13
+      },
+      {
+        "date": "2026-07-24",
+        "home": 2.6,
+        "draw": 2.75,
+        "away": 4.13
+      },
+      {
+        "date": "2026-07-25",
+        "home": 2.6,
+        "draw": 2.75,
+        "away": 4.13
+      },
+      {
+        "date": "2026-07-26",
+        "home": 2.6,
+        "draw": 2.75,
+        "away": 4.13
+      },
+      {
+        "date": "2026-07-27",
+        "home": 2.6,
+        "draw": 2.75,
+        "away": 4.13
+      },
+      {
+        "date": "2026-07-28",
+        "home": 2.6,
+        "draw": 2.75,
+        "away": 4.13
+      },
+      {
+        "date": "2026-07-29",
+        "home": 2.6,
+        "draw": 2.75,
+        "away": 4.13
+      },
+      {
+        "date": "2026-07-30",
         "home": 2.6,
         "draw": 2.75,
         "away": 4.13
@@ -9832,85 +7719,85 @@
     ],
     "Croatia vs Ghana": [
       {
-        "date": "2026-06-15",
-        "home": 1.67,
-        "draw": 3.95,
-        "away": 6.0
-      },
-      {
-        "date": "2026-06-16",
-        "home": 1.67,
-        "draw": 4.0,
-        "away": 6.0
-      },
-      {
-        "date": "2026-06-17",
-        "home": 1.67,
-        "draw": 4.0,
-        "away": 6.0
-      },
-      {
-        "date": "2026-06-18",
-        "home": 1.69,
-        "draw": 4.12,
-        "away": 6.25
-      },
-      {
-        "date": "2026-06-19",
-        "home": 1.68,
-        "draw": 4.12,
-        "away": 6.25
-      },
-      {
-        "date": "2026-06-20",
-        "home": 1.68,
-        "draw": 4.1,
-        "away": 6.6
-      },
-      {
-        "date": "2026-06-21",
-        "home": 1.68,
-        "draw": 4.0,
-        "away": 6.6
-      },
-      {
-        "date": "2026-06-22",
-        "home": 1.68,
-        "draw": 4.03,
-        "away": 6.4
-      },
-      {
-        "date": "2026-06-23",
-        "home": 1.76,
-        "draw": 3.95,
-        "away": 6.6
-      },
-      {
-        "date": "2026-06-24",
-        "home": 1.85,
-        "draw": 3.4,
-        "away": 6.2
-      },
-      {
-        "date": "2026-06-25",
-        "home": 1.83,
-        "draw": 3.4,
-        "away": 6.0
-      },
-      {
-        "date": "2026-06-26",
-        "home": 1.85,
-        "draw": 3.4,
-        "away": 6.2
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-15",
         "home": 1.83,
         "draw": 3.4,
         "away": 6.2
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-16",
+        "home": 1.83,
+        "draw": 3.4,
+        "away": 6.2
+      },
+      {
+        "date": "2026-07-17",
+        "home": 1.83,
+        "draw": 3.4,
+        "away": 6.2
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.83,
+        "draw": 3.4,
+        "away": 6.2
+      },
+      {
+        "date": "2026-07-21",
+        "home": 1.83,
+        "draw": 3.4,
+        "away": 6.2
+      },
+      {
+        "date": "2026-07-22",
+        "home": 1.83,
+        "draw": 3.4,
+        "away": 6.2
+      },
+      {
+        "date": "2026-07-23",
+        "home": 1.83,
+        "draw": 3.4,
+        "away": 6.2
+      },
+      {
+        "date": "2026-07-24",
+        "home": 1.83,
+        "draw": 3.4,
+        "away": 6.2
+      },
+      {
+        "date": "2026-07-25",
+        "home": 1.83,
+        "draw": 3.4,
+        "away": 6.2
+      },
+      {
+        "date": "2026-07-26",
+        "home": 1.83,
+        "draw": 3.4,
+        "away": 6.2
+      },
+      {
+        "date": "2026-07-27",
+        "home": 1.83,
+        "draw": 3.4,
+        "away": 6.2
+      },
+      {
+        "date": "2026-07-28",
+        "home": 1.83,
+        "draw": 3.4,
+        "away": 6.2
+      },
+      {
+        "date": "2026-07-29",
+        "home": 1.83,
+        "draw": 3.4,
+        "away": 6.2
+      },
+      {
+        "date": "2026-07-30",
         "home": 1.83,
         "draw": 3.4,
         "away": 6.2
@@ -9918,85 +7805,85 @@
     ],
     "Panama vs England": [
       {
-        "date": "2026-06-15",
-        "home": 13.0,
-        "draw": 7.0,
-        "away": 1.32
-      },
-      {
-        "date": "2026-06-16",
-        "home": 12.0,
-        "draw": 7.25,
-        "away": 1.32
-      },
-      {
-        "date": "2026-06-17",
-        "home": 12.0,
-        "draw": 7.25,
-        "away": 1.32
-      },
-      {
-        "date": "2026-06-18",
-        "home": 13.0,
-        "draw": 7.25,
-        "away": 1.32
-      },
-      {
-        "date": "2026-06-19",
-        "home": 13.0,
-        "draw": 7.2,
-        "away": 1.29
-      },
-      {
-        "date": "2026-06-20",
-        "home": 13.0,
-        "draw": 7.4,
-        "away": 1.26
-      },
-      {
-        "date": "2026-06-21",
-        "home": 13.0,
-        "draw": 8.0,
-        "away": 1.26
-      },
-      {
-        "date": "2026-06-22",
-        "home": 13.1,
-        "draw": 7.8,
-        "away": 1.26
-      },
-      {
-        "date": "2026-06-23",
-        "home": 15.5,
-        "draw": 8.2,
-        "away": 1.26
-      },
-      {
-        "date": "2026-06-24",
-        "home": 20.0,
-        "draw": 8.7,
-        "away": 1.2
-      },
-      {
-        "date": "2026-06-25",
-        "home": 21.0,
-        "draw": 8.8,
-        "away": 1.2
-      },
-      {
-        "date": "2026-06-26",
-        "home": 23.0,
-        "draw": 9.0,
-        "away": 1.2
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-15",
         "home": 22.0,
         "draw": 9.2,
         "away": 1.2
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-16",
+        "home": 22.0,
+        "draw": 9.2,
+        "away": 1.2
+      },
+      {
+        "date": "2026-07-17",
+        "home": 22.0,
+        "draw": 9.2,
+        "away": 1.2
+      },
+      {
+        "date": "2026-07-20",
+        "home": 22.0,
+        "draw": 9.2,
+        "away": 1.2
+      },
+      {
+        "date": "2026-07-21",
+        "home": 22.0,
+        "draw": 9.2,
+        "away": 1.2
+      },
+      {
+        "date": "2026-07-22",
+        "home": 22.0,
+        "draw": 9.2,
+        "away": 1.2
+      },
+      {
+        "date": "2026-07-23",
+        "home": 22.0,
+        "draw": 9.2,
+        "away": 1.2
+      },
+      {
+        "date": "2026-07-24",
+        "home": 22.0,
+        "draw": 9.2,
+        "away": 1.2
+      },
+      {
+        "date": "2026-07-25",
+        "home": 22.0,
+        "draw": 9.2,
+        "away": 1.2
+      },
+      {
+        "date": "2026-07-26",
+        "home": 22.0,
+        "draw": 9.2,
+        "away": 1.2
+      },
+      {
+        "date": "2026-07-27",
+        "home": 22.0,
+        "draw": 9.2,
+        "away": 1.2
+      },
+      {
+        "date": "2026-07-28",
+        "home": 22.0,
+        "draw": 9.2,
+        "away": 1.2
+      },
+      {
+        "date": "2026-07-29",
+        "home": 22.0,
+        "draw": 9.2,
+        "away": 1.2
+      },
+      {
+        "date": "2026-07-30",
         "home": 22.0,
         "draw": 9.2,
         "away": 1.2
@@ -10004,85 +7891,85 @@
     ],
     "Colombia vs Portugal": [
       {
-        "date": "2026-06-15",
-        "home": 3.6,
-        "draw": 3.45,
-        "away": 2.2
-      },
-      {
-        "date": "2026-06-16",
-        "home": 3.6,
-        "draw": 3.5,
-        "away": 2.2
-      },
-      {
-        "date": "2026-06-17",
-        "home": 3.6,
-        "draw": 3.5,
-        "away": 2.2
-      },
-      {
-        "date": "2026-06-18",
-        "home": 3.6,
-        "draw": 3.5,
-        "away": 2.2
-      },
-      {
-        "date": "2026-06-19",
-        "home": 3.75,
-        "draw": 3.7,
-        "away": 2.2
-      },
-      {
-        "date": "2026-06-20",
-        "home": 3.8,
-        "draw": 3.61,
-        "away": 2.12
-      },
-      {
-        "date": "2026-06-21",
-        "home": 3.8,
-        "draw": 3.8,
-        "away": 2.1
-      },
-      {
-        "date": "2026-06-22",
-        "home": 3.8,
-        "draw": 3.75,
-        "away": 2.1
-      },
-      {
-        "date": "2026-06-23",
-        "home": 4.0,
-        "draw": 3.9,
-        "away": 2.1
-      },
-      {
-        "date": "2026-06-24",
-        "home": 4.33,
-        "draw": 3.9,
-        "away": 1.97
-      },
-      {
-        "date": "2026-06-25",
-        "home": 4.45,
-        "draw": 3.94,
-        "away": 1.93
-      },
-      {
-        "date": "2026-06-26",
-        "home": 4.45,
-        "draw": 3.95,
-        "away": 1.95
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-15",
         "home": 4.33,
         "draw": 3.95,
         "away": 1.92
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-16",
+        "home": 4.33,
+        "draw": 3.95,
+        "away": 1.92
+      },
+      {
+        "date": "2026-07-17",
+        "home": 4.33,
+        "draw": 3.95,
+        "away": 1.92
+      },
+      {
+        "date": "2026-07-20",
+        "home": 4.33,
+        "draw": 3.95,
+        "away": 1.92
+      },
+      {
+        "date": "2026-07-21",
+        "home": 4.33,
+        "draw": 3.95,
+        "away": 1.92
+      },
+      {
+        "date": "2026-07-22",
+        "home": 4.33,
+        "draw": 3.95,
+        "away": 1.92
+      },
+      {
+        "date": "2026-07-23",
+        "home": 4.33,
+        "draw": 3.95,
+        "away": 1.92
+      },
+      {
+        "date": "2026-07-24",
+        "home": 4.33,
+        "draw": 3.95,
+        "away": 1.92
+      },
+      {
+        "date": "2026-07-25",
+        "home": 4.33,
+        "draw": 3.95,
+        "away": 1.92
+      },
+      {
+        "date": "2026-07-26",
+        "home": 4.33,
+        "draw": 3.95,
+        "away": 1.92
+      },
+      {
+        "date": "2026-07-27",
+        "home": 4.33,
+        "draw": 3.95,
+        "away": 1.92
+      },
+      {
+        "date": "2026-07-28",
+        "home": 4.33,
+        "draw": 3.95,
+        "away": 1.92
+      },
+      {
+        "date": "2026-07-29",
+        "home": 4.33,
+        "draw": 3.95,
+        "away": 1.92
+      },
+      {
+        "date": "2026-07-30",
         "home": 4.33,
         "draw": 3.95,
         "away": 1.92
@@ -10090,85 +7977,85 @@
     ],
     "DR Congo vs Uzbekistan": [
       {
-        "date": "2026-06-15",
-        "home": 2.38,
-        "draw": 3.35,
-        "away": 3.3
-      },
-      {
-        "date": "2026-06-16",
-        "home": 2.4,
-        "draw": 3.35,
-        "away": 3.3
-      },
-      {
-        "date": "2026-06-17",
-        "home": 2.24,
-        "draw": 3.75,
-        "away": 3.8
-      },
-      {
-        "date": "2026-06-18",
-        "home": 2.24,
-        "draw": 3.8,
-        "away": 3.5
-      },
-      {
-        "date": "2026-06-19",
-        "home": 2.24,
-        "draw": 3.85,
-        "away": 3.4
-      },
-      {
-        "date": "2026-06-20",
-        "home": 2.14,
-        "draw": 3.9,
-        "away": 3.6
-      },
-      {
-        "date": "2026-06-21",
-        "home": 2.14,
-        "draw": 3.95,
-        "away": 3.6
-      },
-      {
-        "date": "2026-06-22",
-        "home": 2.14,
-        "draw": 3.85,
-        "away": 3.6
-      },
-      {
-        "date": "2026-06-23",
-        "home": 2.05,
-        "draw": 4.1,
-        "away": 3.9
-      },
-      {
-        "date": "2026-06-24",
-        "home": 1.81,
-        "draw": 4.3,
-        "away": 4.7
-      },
-      {
-        "date": "2026-06-25",
-        "home": 1.81,
-        "draw": 4.36,
-        "away": 4.75
-      },
-      {
-        "date": "2026-06-26",
-        "home": 1.81,
-        "draw": 4.4,
-        "away": 4.9
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-15",
         "home": 1.83,
         "draw": 4.25,
         "away": 4.6
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-16",
+        "home": 1.83,
+        "draw": 4.25,
+        "away": 4.6
+      },
+      {
+        "date": "2026-07-17",
+        "home": 1.83,
+        "draw": 4.25,
+        "away": 4.6
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.83,
+        "draw": 4.25,
+        "away": 4.6
+      },
+      {
+        "date": "2026-07-21",
+        "home": 1.83,
+        "draw": 4.25,
+        "away": 4.6
+      },
+      {
+        "date": "2026-07-22",
+        "home": 1.83,
+        "draw": 4.25,
+        "away": 4.6
+      },
+      {
+        "date": "2026-07-23",
+        "home": 1.83,
+        "draw": 4.25,
+        "away": 4.6
+      },
+      {
+        "date": "2026-07-24",
+        "home": 1.83,
+        "draw": 4.25,
+        "away": 4.6
+      },
+      {
+        "date": "2026-07-25",
+        "home": 1.83,
+        "draw": 4.25,
+        "away": 4.6
+      },
+      {
+        "date": "2026-07-26",
+        "home": 1.83,
+        "draw": 4.25,
+        "away": 4.6
+      },
+      {
+        "date": "2026-07-27",
+        "home": 1.83,
+        "draw": 4.25,
+        "away": 4.6
+      },
+      {
+        "date": "2026-07-28",
+        "home": 1.83,
+        "draw": 4.25,
+        "away": 4.6
+      },
+      {
+        "date": "2026-07-29",
+        "home": 1.83,
+        "draw": 4.25,
+        "away": 4.6
+      },
+      {
+        "date": "2026-07-30",
         "home": 1.83,
         "draw": 4.25,
         "away": 4.6
@@ -10176,85 +8063,85 @@
     ],
     "Algeria vs Austria": [
       {
-        "date": "2026-06-15",
-        "home": 3.85,
-        "draw": 3.35,
-        "away": 2.3
-      },
-      {
-        "date": "2026-06-16",
-        "home": 3.9,
-        "draw": 3.4,
-        "away": 2.3
-      },
-      {
-        "date": "2026-06-17",
-        "home": 3.25,
-        "draw": 3.3,
-        "away": 2.55
-      },
-      {
-        "date": "2026-06-18",
-        "home": 3.25,
-        "draw": 3.3,
-        "away": 2.55
-      },
-      {
-        "date": "2026-06-19",
-        "home": 3.25,
-        "draw": 3.3,
-        "away": 2.58
-      },
-      {
-        "date": "2026-06-20",
-        "home": 3.25,
-        "draw": 3.3,
-        "away": 2.62
-      },
-      {
-        "date": "2026-06-21",
-        "home": 3.25,
-        "draw": 3.15,
-        "away": 2.6
-      },
-      {
-        "date": "2026-06-22",
-        "home": 3.5,
-        "draw": 3.1,
-        "away": 2.8
-      },
-      {
-        "date": "2026-06-23",
-        "home": 4.05,
-        "draw": 2.46,
-        "away": 2.9
-      },
-      {
-        "date": "2026-06-24",
-        "home": 4.1,
-        "draw": 2.34,
-        "away": 2.97
-      },
-      {
-        "date": "2026-06-25",
-        "home": 4.11,
-        "draw": 2.38,
-        "away": 3.15
-      },
-      {
-        "date": "2026-06-26",
-        "home": 4.25,
-        "draw": 2.38,
-        "away": 3.0
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-15",
         "home": 4.33,
         "draw": 2.38,
         "away": 3.0
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-16",
+        "home": 4.33,
+        "draw": 2.38,
+        "away": 3.0
+      },
+      {
+        "date": "2026-07-17",
+        "home": 4.33,
+        "draw": 2.38,
+        "away": 3.0
+      },
+      {
+        "date": "2026-07-20",
+        "home": 4.33,
+        "draw": 2.38,
+        "away": 3.0
+      },
+      {
+        "date": "2026-07-21",
+        "home": 4.33,
+        "draw": 2.38,
+        "away": 3.0
+      },
+      {
+        "date": "2026-07-22",
+        "home": 4.33,
+        "draw": 2.38,
+        "away": 3.0
+      },
+      {
+        "date": "2026-07-23",
+        "home": 4.33,
+        "draw": 2.38,
+        "away": 3.0
+      },
+      {
+        "date": "2026-07-24",
+        "home": 4.33,
+        "draw": 2.38,
+        "away": 3.0
+      },
+      {
+        "date": "2026-07-25",
+        "home": 4.33,
+        "draw": 2.38,
+        "away": 3.0
+      },
+      {
+        "date": "2026-07-26",
+        "home": 4.33,
+        "draw": 2.38,
+        "away": 3.0
+      },
+      {
+        "date": "2026-07-27",
+        "home": 4.33,
+        "draw": 2.38,
+        "away": 3.0
+      },
+      {
+        "date": "2026-07-28",
+        "home": 4.33,
+        "draw": 2.38,
+        "away": 3.0
+      },
+      {
+        "date": "2026-07-29",
+        "home": 4.33,
+        "draw": 2.38,
+        "away": 3.0
+      },
+      {
+        "date": "2026-07-30",
         "home": 4.33,
         "draw": 2.38,
         "away": 3.0
@@ -10262,85 +8149,85 @@
     ],
     "Jordan vs Argentina": [
       {
-        "date": "2026-06-15",
-        "home": 17.0,
-        "draw": 7.5,
-        "away": 1.21
-      },
-      {
-        "date": "2026-06-16",
-        "home": 17.0,
-        "draw": 7.75,
-        "away": 1.21
-      },
-      {
-        "date": "2026-06-17",
-        "home": 15.0,
-        "draw": 7.5,
-        "away": 1.25
-      },
-      {
-        "date": "2026-06-18",
-        "home": 17.0,
-        "draw": 7.5,
-        "away": 1.24
-      },
-      {
-        "date": "2026-06-19",
-        "home": 17.0,
-        "draw": 7.5,
-        "away": 1.22
-      },
-      {
-        "date": "2026-06-20",
-        "home": 17.0,
-        "draw": 7.6,
-        "away": 1.22
-      },
-      {
-        "date": "2026-06-21",
-        "home": 17.0,
-        "draw": 8.4,
-        "away": 1.22
-      },
-      {
-        "date": "2026-06-22",
-        "home": 16.0,
-        "draw": 7.5,
-        "away": 1.25
-      },
-      {
-        "date": "2026-06-23",
-        "home": 18.0,
-        "draw": 7.8,
-        "away": 1.22
-      },
-      {
-        "date": "2026-06-24",
-        "home": 18.5,
-        "draw": 8.2,
-        "away": 1.22
-      },
-      {
-        "date": "2026-06-25",
-        "home": 19.01,
-        "draw": 8.6,
-        "away": 1.21
-      },
-      {
-        "date": "2026-06-26",
-        "home": 19.0,
-        "draw": 9.2,
-        "away": 1.21
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-15",
         "home": 19.5,
         "draw": 9.2,
         "away": 1.21
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-16",
+        "home": 19.5,
+        "draw": 9.2,
+        "away": 1.21
+      },
+      {
+        "date": "2026-07-17",
+        "home": 19.5,
+        "draw": 9.2,
+        "away": 1.21
+      },
+      {
+        "date": "2026-07-20",
+        "home": 19.5,
+        "draw": 9.2,
+        "away": 1.21
+      },
+      {
+        "date": "2026-07-21",
+        "home": 19.5,
+        "draw": 9.2,
+        "away": 1.21
+      },
+      {
+        "date": "2026-07-22",
+        "home": 19.5,
+        "draw": 9.2,
+        "away": 1.21
+      },
+      {
+        "date": "2026-07-23",
+        "home": 19.5,
+        "draw": 9.2,
+        "away": 1.21
+      },
+      {
+        "date": "2026-07-24",
+        "home": 19.5,
+        "draw": 9.2,
+        "away": 1.21
+      },
+      {
+        "date": "2026-07-25",
+        "home": 19.5,
+        "draw": 9.2,
+        "away": 1.21
+      },
+      {
+        "date": "2026-07-26",
+        "home": 19.5,
+        "draw": 9.2,
+        "away": 1.21
+      },
+      {
+        "date": "2026-07-27",
+        "home": 19.5,
+        "draw": 9.2,
+        "away": 1.21
+      },
+      {
+        "date": "2026-07-28",
+        "home": 19.5,
+        "draw": 9.2,
+        "away": 1.21
+      },
+      {
+        "date": "2026-07-29",
+        "home": 19.5,
+        "draw": 9.2,
+        "away": 1.21
+      },
+      {
+        "date": "2026-07-30",
         "home": 19.5,
         "draw": 9.2,
         "away": 1.21
@@ -10348,71 +8235,171 @@
     ],
     "South Africa vs Canada": [
       {
-        "date": "2026-06-25",
-        "home": 5.9,
-        "draw": 3.8,
-        "away": 1.75
-      },
-      {
-        "date": "2026-06-26",
-        "home": 6.0,
-        "draw": 3.75,
-        "away": 1.76
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-15",
         "home": 5.9,
         "draw": 3.75,
         "away": 1.77
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-16",
         "home": 5.9,
         "draw": 3.75,
         "away": 1.77
-      }
-    ],
-    "USA vs Bosnia & Herzegovina": [
-      {
-        "date": "2026-06-25",
-        "home": 1.65,
-        "draw": 3.85,
-        "away": 7.5
       },
       {
-        "date": "2026-06-26",
-        "home": 1.65,
-        "draw": 4.35,
-        "away": 7.5
+        "date": "2026-07-17",
+        "home": 5.9,
+        "draw": 3.75,
+        "away": 1.77
       },
       {
-        "date": "2026-07-06",
-        "home": 1.57,
-        "draw": 4.6,
-        "away": 7.8
+        "date": "2026-07-20",
+        "home": 5.9,
+        "draw": 3.75,
+        "away": 1.77
       },
       {
-        "date": "2026-07-07",
-        "home": 1.57,
-        "draw": 4.6,
-        "away": 7.8
+        "date": "2026-07-21",
+        "home": 5.9,
+        "draw": 3.75,
+        "away": 1.77
+      },
+      {
+        "date": "2026-07-22",
+        "home": 5.9,
+        "draw": 3.75,
+        "away": 1.77
+      },
+      {
+        "date": "2026-07-23",
+        "home": 5.9,
+        "draw": 3.75,
+        "away": 1.77
+      },
+      {
+        "date": "2026-07-24",
+        "home": 5.9,
+        "draw": 3.75,
+        "away": 1.77
+      },
+      {
+        "date": "2026-07-25",
+        "home": 5.9,
+        "draw": 3.75,
+        "away": 1.77
+      },
+      {
+        "date": "2026-07-26",
+        "home": 5.9,
+        "draw": 3.75,
+        "away": 1.77
+      },
+      {
+        "date": "2026-07-27",
+        "home": 5.9,
+        "draw": 3.75,
+        "away": 1.77
+      },
+      {
+        "date": "2026-07-28",
+        "home": 5.9,
+        "draw": 3.75,
+        "away": 1.77
+      },
+      {
+        "date": "2026-07-29",
+        "home": 5.9,
+        "draw": 3.75,
+        "away": 1.77
+      },
+      {
+        "date": "2026-07-30",
+        "home": 5.9,
+        "draw": 3.75,
+        "away": 1.77
       }
     ],
     "Brazil vs Japan": [
       {
-        "date": "2026-06-26",
-        "home": 1.8,
-        "draw": 3.85,
-        "away": 5.4
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-15",
         "home": 1.78,
         "draw": 3.85,
         "away": 5.5
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-16",
+        "home": 1.78,
+        "draw": 3.85,
+        "away": 5.5
+      },
+      {
+        "date": "2026-07-17",
+        "home": 1.78,
+        "draw": 3.85,
+        "away": 5.5
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.78,
+        "draw": 3.85,
+        "away": 5.5
+      },
+      {
+        "date": "2026-07-21",
+        "home": 1.78,
+        "draw": 3.85,
+        "away": 5.5
+      },
+      {
+        "date": "2026-07-22",
+        "home": 1.78,
+        "draw": 3.85,
+        "away": 5.5
+      },
+      {
+        "date": "2026-07-23",
+        "home": 1.78,
+        "draw": 3.85,
+        "away": 5.5
+      },
+      {
+        "date": "2026-07-24",
+        "home": 1.78,
+        "draw": 3.85,
+        "away": 5.5
+      },
+      {
+        "date": "2026-07-25",
+        "home": 1.78,
+        "draw": 3.85,
+        "away": 5.5
+      },
+      {
+        "date": "2026-07-26",
+        "home": 1.78,
+        "draw": 3.85,
+        "away": 5.5
+      },
+      {
+        "date": "2026-07-27",
+        "home": 1.78,
+        "draw": 3.85,
+        "away": 5.5
+      },
+      {
+        "date": "2026-07-28",
+        "home": 1.78,
+        "draw": 3.85,
+        "away": 5.5
+      },
+      {
+        "date": "2026-07-29",
+        "home": 1.78,
+        "draw": 3.85,
+        "away": 5.5
+      },
+      {
+        "date": "2026-07-30",
         "home": 1.78,
         "draw": 3.85,
         "away": 5.5
@@ -10420,27 +8407,257 @@
     ],
     "Netherlands vs Morocco": [
       {
-        "date": "2026-06-26",
-        "home": 2.12,
-        "draw": 3.45,
-        "away": 4.0
-      },
-      {
-        "date": "2026-07-06",
+        "date": "2026-07-15",
         "home": 2.24,
         "draw": 3.45,
         "away": 3.8
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-16",
+        "home": 2.24,
+        "draw": 3.45,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-17",
+        "home": 2.24,
+        "draw": 3.45,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-20",
+        "home": 2.24,
+        "draw": 3.45,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-21",
+        "home": 2.24,
+        "draw": 3.45,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-22",
+        "home": 2.24,
+        "draw": 3.45,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-23",
+        "home": 2.24,
+        "draw": 3.45,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-24",
+        "home": 2.24,
+        "draw": 3.45,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-25",
+        "home": 2.24,
+        "draw": 3.45,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-26",
+        "home": 2.24,
+        "draw": 3.45,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-27",
+        "home": 2.24,
+        "draw": 3.45,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-28",
+        "home": 2.24,
+        "draw": 3.45,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-29",
+        "home": 2.24,
+        "draw": 3.45,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-30",
         "home": 2.24,
         "draw": 3.45,
         "away": 3.8
       }
     ],
+    "USA vs Bosnia & Herzegovina": [
+      {
+        "date": "2026-07-15",
+        "home": 1.57,
+        "draw": 4.6,
+        "away": 7.8
+      },
+      {
+        "date": "2026-07-16",
+        "home": 1.57,
+        "draw": 4.6,
+        "away": 7.8
+      },
+      {
+        "date": "2026-07-17",
+        "home": 1.57,
+        "draw": 4.6,
+        "away": 7.8
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.57,
+        "draw": 4.6,
+        "away": 7.8
+      },
+      {
+        "date": "2026-07-21",
+        "home": 1.57,
+        "draw": 4.6,
+        "away": 7.8
+      },
+      {
+        "date": "2026-07-22",
+        "home": 1.57,
+        "draw": 4.6,
+        "away": 7.8
+      },
+      {
+        "date": "2026-07-23",
+        "home": 1.57,
+        "draw": 4.6,
+        "away": 7.8
+      },
+      {
+        "date": "2026-07-24",
+        "home": 1.57,
+        "draw": 4.6,
+        "away": 7.8
+      },
+      {
+        "date": "2026-07-25",
+        "home": 1.57,
+        "draw": 4.6,
+        "away": 7.8
+      },
+      {
+        "date": "2026-07-26",
+        "home": 1.57,
+        "draw": 4.6,
+        "away": 7.8
+      },
+      {
+        "date": "2026-07-27",
+        "home": 1.57,
+        "draw": 4.6,
+        "away": 7.8
+      },
+      {
+        "date": "2026-07-28",
+        "home": 1.57,
+        "draw": 4.6,
+        "away": 7.8
+      },
+      {
+        "date": "2026-07-29",
+        "home": 1.57,
+        "draw": 4.6,
+        "away": 7.8
+      },
+      {
+        "date": "2026-07-30",
+        "home": 1.57,
+        "draw": 4.6,
+        "away": 7.8
+      }
+    ],
     "Portugal vs Spain": [
       {
-        "date": "2026-07-06",
+        "date": "2026-07-15",
+        "home": 7.19,
+        "draw": 1.67,
+        "away": 3.25
+      },
+      {
+        "date": "2026-07-16",
+        "home": 7.19,
+        "draw": 1.67,
+        "away": 3.25
+      },
+      {
+        "date": "2026-07-17",
+        "home": 7.19,
+        "draw": 1.67,
+        "away": 3.25
+      },
+      {
+        "date": "2026-07-20",
+        "home": 7.19,
+        "draw": 1.67,
+        "away": 3.25
+      },
+      {
+        "date": "2026-07-21",
+        "home": 7.19,
+        "draw": 1.67,
+        "away": 3.25
+      },
+      {
+        "date": "2026-07-22",
+        "home": 7.19,
+        "draw": 1.67,
+        "away": 3.25
+      },
+      {
+        "date": "2026-07-23",
+        "home": 7.19,
+        "draw": 1.67,
+        "away": 3.25
+      },
+      {
+        "date": "2026-07-24",
+        "home": 7.19,
+        "draw": 1.67,
+        "away": 3.25
+      },
+      {
+        "date": "2026-07-25",
+        "home": 7.19,
+        "draw": 1.67,
+        "away": 3.25
+      },
+      {
+        "date": "2026-07-26",
+        "home": 7.19,
+        "draw": 1.67,
+        "away": 3.25
+      },
+      {
+        "date": "2026-07-27",
+        "home": 7.19,
+        "draw": 1.67,
+        "away": 3.25
+      },
+      {
+        "date": "2026-07-28",
+        "home": 7.19,
+        "draw": 1.67,
+        "away": 3.25
+      },
+      {
+        "date": "2026-07-29",
+        "home": 7.19,
+        "draw": 1.67,
+        "away": 3.25
+      },
+      {
+        "date": "2026-07-30",
         "home": 7.19,
         "draw": 1.67,
         "away": 3.25
@@ -10448,7 +8665,85 @@
     ],
     "USA vs Belgium": [
       {
-        "date": "2026-07-06",
+        "date": "2026-07-15",
+        "home": 2.62,
+        "draw": 3.55,
+        "away": 2.98
+      },
+      {
+        "date": "2026-07-16",
+        "home": 2.62,
+        "draw": 3.55,
+        "away": 2.98
+      },
+      {
+        "date": "2026-07-17",
+        "home": 2.62,
+        "draw": 3.55,
+        "away": 2.98
+      },
+      {
+        "date": "2026-07-20",
+        "home": 2.62,
+        "draw": 3.55,
+        "away": 2.98
+      },
+      {
+        "date": "2026-07-21",
+        "home": 2.62,
+        "draw": 3.55,
+        "away": 2.98
+      },
+      {
+        "date": "2026-07-22",
+        "home": 2.62,
+        "draw": 3.55,
+        "away": 2.98
+      },
+      {
+        "date": "2026-07-23",
+        "home": 2.62,
+        "draw": 3.55,
+        "away": 2.98
+      },
+      {
+        "date": "2026-07-24",
+        "home": 2.62,
+        "draw": 3.55,
+        "away": 2.98
+      },
+      {
+        "date": "2026-07-25",
+        "home": 2.62,
+        "draw": 3.55,
+        "away": 2.98
+      },
+      {
+        "date": "2026-07-26",
+        "home": 2.62,
+        "draw": 3.55,
+        "away": 2.98
+      },
+      {
+        "date": "2026-07-27",
+        "home": 2.62,
+        "draw": 3.55,
+        "away": 2.98
+      },
+      {
+        "date": "2026-07-28",
+        "home": 2.62,
+        "draw": 3.55,
+        "away": 2.98
+      },
+      {
+        "date": "2026-07-29",
+        "home": 2.62,
+        "draw": 3.55,
+        "away": 2.98
+      },
+      {
+        "date": "2026-07-30",
         "home": 2.62,
         "draw": 3.55,
         "away": 2.98
@@ -10456,27 +8751,171 @@
     ],
     "Argentina vs Egypt": [
       {
-        "date": "2026-07-06",
+        "date": "2026-07-15",
         "home": 1.41,
-        "draw": 5.1,
-        "away": 11.5
+        "draw": 5.2,
+        "away": 13.0
       },
       {
-        "date": "2026-07-07",
-        "home": 1.38,
+        "date": "2026-07-16",
+        "home": 1.41,
+        "draw": 5.2,
+        "away": 13.0
+      },
+      {
+        "date": "2026-07-17",
+        "home": 1.41,
+        "draw": 5.2,
+        "away": 13.0
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.41,
+        "draw": 5.2,
+        "away": 13.0
+      },
+      {
+        "date": "2026-07-21",
+        "home": 1.41,
+        "draw": 5.2,
+        "away": 13.0
+      },
+      {
+        "date": "2026-07-22",
+        "home": 1.41,
+        "draw": 5.2,
+        "away": 13.0
+      },
+      {
+        "date": "2026-07-23",
+        "home": 1.41,
+        "draw": 5.2,
+        "away": 13.0
+      },
+      {
+        "date": "2026-07-24",
+        "home": 1.41,
+        "draw": 5.2,
+        "away": 13.0
+      },
+      {
+        "date": "2026-07-25",
+        "home": 1.41,
+        "draw": 5.2,
+        "away": 13.0
+      },
+      {
+        "date": "2026-07-26",
+        "home": 1.41,
+        "draw": 5.2,
+        "away": 13.0
+      },
+      {
+        "date": "2026-07-27",
+        "home": 1.41,
+        "draw": 5.2,
+        "away": 13.0
+      },
+      {
+        "date": "2026-07-28",
+        "home": 1.41,
+        "draw": 5.2,
+        "away": 13.0
+      },
+      {
+        "date": "2026-07-29",
+        "home": 1.41,
+        "draw": 5.2,
+        "away": 13.0
+      },
+      {
+        "date": "2026-07-30",
+        "home": 1.41,
         "draw": 5.2,
         "away": 13.0
       }
     ],
     "Switzerland vs Colombia": [
       {
-        "date": "2026-07-06",
-        "home": 3.75,
+        "date": "2026-07-15",
+        "home": 3.8,
         "draw": 3.2,
-        "away": 2.36
+        "away": 2.35
       },
       {
-        "date": "2026-07-07",
+        "date": "2026-07-16",
+        "home": 3.8,
+        "draw": 3.2,
+        "away": 2.35
+      },
+      {
+        "date": "2026-07-17",
+        "home": 3.8,
+        "draw": 3.2,
+        "away": 2.35
+      },
+      {
+        "date": "2026-07-20",
+        "home": 3.8,
+        "draw": 3.2,
+        "away": 2.35
+      },
+      {
+        "date": "2026-07-21",
+        "home": 3.8,
+        "draw": 3.2,
+        "away": 2.35
+      },
+      {
+        "date": "2026-07-22",
+        "home": 3.8,
+        "draw": 3.2,
+        "away": 2.35
+      },
+      {
+        "date": "2026-07-23",
+        "home": 3.8,
+        "draw": 3.2,
+        "away": 2.35
+      },
+      {
+        "date": "2026-07-24",
+        "home": 3.8,
+        "draw": 3.2,
+        "away": 2.35
+      },
+      {
+        "date": "2026-07-25",
+        "home": 3.8,
+        "draw": 3.2,
+        "away": 2.35
+      },
+      {
+        "date": "2026-07-26",
+        "home": 3.8,
+        "draw": 3.2,
+        "away": 2.35
+      },
+      {
+        "date": "2026-07-27",
+        "home": 3.8,
+        "draw": 3.2,
+        "away": 2.35
+      },
+      {
+        "date": "2026-07-28",
+        "home": 3.8,
+        "draw": 3.2,
+        "away": 2.35
+      },
+      {
+        "date": "2026-07-29",
+        "home": 3.8,
+        "draw": 3.2,
+        "away": 2.35
+      },
+      {
+        "date": "2026-07-30",
         "home": 3.8,
         "draw": 3.2,
         "away": 2.35
@@ -10484,89 +8923,689 @@
     ],
     "France vs Morocco": [
       {
-        "date": "2026-07-06",
-        "home": 1.64,
-        "draw": 4.1,
-        "away": 6.8
+        "date": "2026-07-15",
+        "home": 1.01,
+        "draw": 501.0,
+        "away": 1001.0
       },
       {
-        "date": "2026-07-07",
-        "home": 1.62,
-        "draw": 4.1,
-        "away": 6.81
-      }
-    ],
-    "Norway vs England": [
-      {
-        "date": "2026-07-06",
-        "home": 4.4,
-        "draw": 3.81,
-        "away": 1.96
+        "date": "2026-07-16",
+        "home": 1.01,
+        "draw": 501.0,
+        "away": 1001.0
       },
       {
-        "date": "2026-07-07",
-        "home": 4.5,
-        "draw": 3.83,
-        "away": 1.95
+        "date": "2026-07-17",
+        "home": 1.01,
+        "draw": 501.0,
+        "away": 1001.0
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.01,
+        "draw": 501.0,
+        "away": 1001.0
+      },
+      {
+        "date": "2026-07-21",
+        "home": 1.01,
+        "draw": 501.0,
+        "away": 1001.0
+      },
+      {
+        "date": "2026-07-22",
+        "home": 1.01,
+        "draw": 501.0,
+        "away": 1001.0
+      },
+      {
+        "date": "2026-07-23",
+        "home": 1.01,
+        "draw": 501.0,
+        "away": 1001.0
+      },
+      {
+        "date": "2026-07-24",
+        "home": 1.01,
+        "draw": 501.0,
+        "away": 1001.0
+      },
+      {
+        "date": "2026-07-25",
+        "home": 1.01,
+        "draw": 501.0,
+        "away": 1001.0
+      },
+      {
+        "date": "2026-07-26",
+        "home": 1.01,
+        "draw": 501.0,
+        "away": 1001.0
+      },
+      {
+        "date": "2026-07-27",
+        "home": 1.01,
+        "draw": 501.0,
+        "away": 1001.0
+      },
+      {
+        "date": "2026-07-28",
+        "home": 1.01,
+        "draw": 501.0,
+        "away": 1001.0
+      },
+      {
+        "date": "2026-07-29",
+        "home": 1.01,
+        "draw": 501.0,
+        "away": 1001.0
+      },
+      {
+        "date": "2026-07-30",
+        "home": 1.01,
+        "draw": 501.0,
+        "away": 1001.0
       }
     ],
     "Spain vs Belgium": [
       {
-        "date": "2026-07-07",
-        "home": 1.65,
-        "draw": 4.2,
-        "away": 6.2
+        "date": "2026-07-15",
+        "home": 1.69,
+        "draw": 3.72,
+        "away": 5.42
+      },
+      {
+        "date": "2026-07-16",
+        "home": 1.69,
+        "draw": 3.72,
+        "away": 5.42
+      },
+      {
+        "date": "2026-07-17",
+        "home": 1.69,
+        "draw": 3.72,
+        "away": 5.42
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.69,
+        "draw": 3.72,
+        "away": 5.42
+      },
+      {
+        "date": "2026-07-21",
+        "home": 1.69,
+        "draw": 3.72,
+        "away": 5.42
+      },
+      {
+        "date": "2026-07-22",
+        "home": 1.69,
+        "draw": 3.72,
+        "away": 5.42
+      },
+      {
+        "date": "2026-07-23",
+        "home": 1.69,
+        "draw": 3.72,
+        "away": 5.42
+      },
+      {
+        "date": "2026-07-24",
+        "home": 1.69,
+        "draw": 3.72,
+        "away": 5.42
+      },
+      {
+        "date": "2026-07-25",
+        "home": 1.69,
+        "draw": 3.72,
+        "away": 5.42
+      },
+      {
+        "date": "2026-07-26",
+        "home": 1.69,
+        "draw": 3.72,
+        "away": 5.42
+      },
+      {
+        "date": "2026-07-27",
+        "home": 1.69,
+        "draw": 3.72,
+        "away": 5.42
+      },
+      {
+        "date": "2026-07-28",
+        "home": 1.69,
+        "draw": 3.72,
+        "away": 5.42
+      },
+      {
+        "date": "2026-07-29",
+        "home": 1.69,
+        "draw": 3.72,
+        "away": 5.42
+      },
+      {
+        "date": "2026-07-30",
+        "home": 1.69,
+        "draw": 3.72,
+        "away": 5.42
+      }
+    ],
+    "Norway vs England": [
+      {
+        "date": "2026-07-15",
+        "home": 11.43,
+        "draw": 1.27,
+        "away": 5.8
+      },
+      {
+        "date": "2026-07-16",
+        "home": 11.43,
+        "draw": 1.27,
+        "away": 5.8
+      },
+      {
+        "date": "2026-07-17",
+        "home": 11.43,
+        "draw": 1.27,
+        "away": 5.8
+      },
+      {
+        "date": "2026-07-20",
+        "home": 11.43,
+        "draw": 1.27,
+        "away": 5.8
+      },
+      {
+        "date": "2026-07-21",
+        "home": 11.43,
+        "draw": 1.27,
+        "away": 5.8
+      },
+      {
+        "date": "2026-07-22",
+        "home": 11.43,
+        "draw": 1.27,
+        "away": 5.8
+      },
+      {
+        "date": "2026-07-23",
+        "home": 11.43,
+        "draw": 1.27,
+        "away": 5.8
+      },
+      {
+        "date": "2026-07-24",
+        "home": 11.43,
+        "draw": 1.27,
+        "away": 5.8
+      },
+      {
+        "date": "2026-07-25",
+        "home": 11.43,
+        "draw": 1.27,
+        "away": 5.8
+      },
+      {
+        "date": "2026-07-26",
+        "home": 11.43,
+        "draw": 1.27,
+        "away": 5.8
+      },
+      {
+        "date": "2026-07-27",
+        "home": 11.43,
+        "draw": 1.27,
+        "away": 5.8
+      },
+      {
+        "date": "2026-07-28",
+        "home": 11.43,
+        "draw": 1.27,
+        "away": 5.8
+      },
+      {
+        "date": "2026-07-29",
+        "home": 11.43,
+        "draw": 1.27,
+        "away": 5.8
+      },
+      {
+        "date": "2026-07-30",
+        "home": 11.43,
+        "draw": 1.27,
+        "away": 5.8
+      }
+    ],
+    "Argentina vs Switzerland": [
+      {
+        "date": "2026-07-15",
+        "home": 1.27,
+        "draw": 5.8,
+        "away": 28.0
+      },
+      {
+        "date": "2026-07-16",
+        "home": 1.27,
+        "draw": 5.8,
+        "away": 28.0
+      },
+      {
+        "date": "2026-07-17",
+        "home": 1.27,
+        "draw": 5.8,
+        "away": 28.0
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.27,
+        "draw": 5.8,
+        "away": 28.0
+      },
+      {
+        "date": "2026-07-21",
+        "home": 1.27,
+        "draw": 5.8,
+        "away": 28.0
+      },
+      {
+        "date": "2026-07-22",
+        "home": 1.27,
+        "draw": 5.8,
+        "away": 28.0
+      },
+      {
+        "date": "2026-07-23",
+        "home": 1.27,
+        "draw": 5.8,
+        "away": 28.0
+      },
+      {
+        "date": "2026-07-24",
+        "home": 1.27,
+        "draw": 5.8,
+        "away": 28.0
+      },
+      {
+        "date": "2026-07-25",
+        "home": 1.27,
+        "draw": 5.8,
+        "away": 28.0
+      },
+      {
+        "date": "2026-07-26",
+        "home": 1.27,
+        "draw": 5.8,
+        "away": 28.0
+      },
+      {
+        "date": "2026-07-27",
+        "home": 1.27,
+        "draw": 5.8,
+        "away": 28.0
+      },
+      {
+        "date": "2026-07-28",
+        "home": 1.27,
+        "draw": 5.8,
+        "away": 28.0
+      },
+      {
+        "date": "2026-07-29",
+        "home": 1.27,
+        "draw": 5.8,
+        "away": 28.0
+      },
+      {
+        "date": "2026-07-30",
+        "home": 1.27,
+        "draw": 5.8,
+        "away": 28.0
+      }
+    ],
+    "France vs Spain": [
+      {
+        "date": "2026-07-15",
+        "home": 2.54,
+        "draw": 3.3,
+        "away": 3.42
+      },
+      {
+        "date": "2026-07-16",
+        "home": 2.54,
+        "draw": 3.3,
+        "away": 3.42
+      },
+      {
+        "date": "2026-07-17",
+        "home": 2.54,
+        "draw": 3.3,
+        "away": 3.42
+      },
+      {
+        "date": "2026-07-20",
+        "home": 2.54,
+        "draw": 3.3,
+        "away": 3.42
+      },
+      {
+        "date": "2026-07-21",
+        "home": 2.54,
+        "draw": 3.3,
+        "away": 3.42
+      },
+      {
+        "date": "2026-07-22",
+        "home": 2.54,
+        "draw": 3.3,
+        "away": 3.42
+      },
+      {
+        "date": "2026-07-23",
+        "home": 2.54,
+        "draw": 3.3,
+        "away": 3.42
+      },
+      {
+        "date": "2026-07-24",
+        "home": 2.54,
+        "draw": 3.3,
+        "away": 3.42
+      },
+      {
+        "date": "2026-07-25",
+        "home": 2.54,
+        "draw": 3.3,
+        "away": 3.42
+      },
+      {
+        "date": "2026-07-26",
+        "home": 2.54,
+        "draw": 3.3,
+        "away": 3.42
+      },
+      {
+        "date": "2026-07-27",
+        "home": 2.54,
+        "draw": 3.3,
+        "away": 3.42
+      },
+      {
+        "date": "2026-07-28",
+        "home": 2.54,
+        "draw": 3.3,
+        "away": 3.42
+      },
+      {
+        "date": "2026-07-29",
+        "home": 2.54,
+        "draw": 3.3,
+        "away": 3.42
+      },
+      {
+        "date": "2026-07-30",
+        "home": 2.54,
+        "draw": 3.3,
+        "away": 3.42
+      }
+    ],
+    "England vs Argentina": [
+      {
+        "date": "2026-07-15",
+        "home": 1.41,
+        "draw": 3.64,
+        "away": 13.84
+      },
+      {
+        "date": "2026-07-16",
+        "home": 1.41,
+        "draw": 3.64,
+        "away": 13.84
+      },
+      {
+        "date": "2026-07-17",
+        "home": 1.41,
+        "draw": 3.64,
+        "away": 13.84
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.41,
+        "draw": 3.64,
+        "away": 13.84
+      },
+      {
+        "date": "2026-07-21",
+        "home": 1.41,
+        "draw": 3.64,
+        "away": 13.84
+      },
+      {
+        "date": "2026-07-22",
+        "home": 1.41,
+        "draw": 3.64,
+        "away": 13.84
+      },
+      {
+        "date": "2026-07-23",
+        "home": 1.41,
+        "draw": 3.64,
+        "away": 13.84
+      },
+      {
+        "date": "2026-07-24",
+        "home": 1.41,
+        "draw": 3.64,
+        "away": 13.84
+      },
+      {
+        "date": "2026-07-25",
+        "home": 1.41,
+        "draw": 3.64,
+        "away": 13.84
+      },
+      {
+        "date": "2026-07-26",
+        "home": 1.41,
+        "draw": 3.64,
+        "away": 13.84
+      },
+      {
+        "date": "2026-07-27",
+        "home": 1.41,
+        "draw": 3.64,
+        "away": 13.84
+      },
+      {
+        "date": "2026-07-28",
+        "home": 1.41,
+        "draw": 3.64,
+        "away": 13.84
+      },
+      {
+        "date": "2026-07-29",
+        "home": 1.41,
+        "draw": 3.64,
+        "away": 13.84
+      },
+      {
+        "date": "2026-07-30",
+        "home": 1.41,
+        "draw": 3.64,
+        "away": 13.84
+      }
+    ],
+    "France vs England": [
+      {
+        "date": "2026-07-16",
+        "home": 1.99,
+        "draw": 4.1,
+        "away": 4.05
+      },
+      {
+        "date": "2026-07-17",
+        "home": 1.99,
+        "draw": 4.07,
+        "away": 4.07
+      },
+      {
+        "date": "2026-07-20",
+        "home": 1.99,
+        "draw": 4.07,
+        "away": 4.07
+      },
+      {
+        "date": "2026-07-21",
+        "home": 1.99,
+        "draw": 4.07,
+        "away": 4.07
+      },
+      {
+        "date": "2026-07-22",
+        "home": 1.99,
+        "draw": 4.07,
+        "away": 4.07
+      },
+      {
+        "date": "2026-07-23",
+        "home": 1.99,
+        "draw": 4.07,
+        "away": 4.07
+      },
+      {
+        "date": "2026-07-24",
+        "home": 1.99,
+        "draw": 4.07,
+        "away": 4.07
+      },
+      {
+        "date": "2026-07-25",
+        "home": 1.99,
+        "draw": 4.07,
+        "away": 4.07
+      },
+      {
+        "date": "2026-07-26",
+        "home": 1.99,
+        "draw": 4.07,
+        "away": 4.07
+      },
+      {
+        "date": "2026-07-27",
+        "home": 1.99,
+        "draw": 4.07,
+        "away": 4.07
+      },
+      {
+        "date": "2026-07-28",
+        "home": 1.99,
+        "draw": 4.07,
+        "away": 4.07
+      },
+      {
+        "date": "2026-07-29",
+        "home": 1.99,
+        "draw": 4.07,
+        "away": 4.07
+      },
+      {
+        "date": "2026-07-30",
+        "home": 1.99,
+        "draw": 4.07,
+        "away": 4.07
+      }
+    ],
+    "Spain vs Argentina": [
+      {
+        "date": "2026-07-16",
+        "home": 2.4,
+        "draw": 3.17,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-17",
+        "home": 2.36,
+        "draw": 3.16,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-20",
+        "home": 2.36,
+        "draw": 3.16,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-21",
+        "home": 2.36,
+        "draw": 3.16,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-22",
+        "home": 2.36,
+        "draw": 3.16,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-23",
+        "home": 2.36,
+        "draw": 3.16,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-24",
+        "home": 2.36,
+        "draw": 3.16,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-25",
+        "home": 2.36,
+        "draw": 3.16,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-26",
+        "home": 2.36,
+        "draw": 3.16,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-27",
+        "home": 2.36,
+        "draw": 3.16,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-28",
+        "home": 2.36,
+        "draw": 3.16,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-29",
+        "home": 2.36,
+        "draw": 3.16,
+        "away": 3.8
+      },
+      {
+        "date": "2026-07-30",
+        "home": 2.36,
+        "draw": 3.16,
+        "away": 3.8
       }
     ]
   },
   "wm_results": [
     {
-      "match_id": "9c7073ae2c29ee4881bb695f92168c68",
-      "home": "Canada",
-      "away": "Morocco",
-      "home_score": 0,
-      "away_score": 3,
-      "commence_time": "2026-07-04T17:00:00Z"
-    },
-    {
-      "match_id": "c798a1ffdeda28e82d930e7145a8ff10",
-      "home": "Paraguay",
-      "away": "France",
-      "home_score": 0,
-      "away_score": 1,
-      "commence_time": "2026-07-04T21:03:00Z"
-    },
-    {
-      "match_id": "a4634eae056c18d705e3feffb347163f",
-      "home": "Brazil",
-      "away": "Norway",
+      "match_id": "fb30113e43d113f1ace48b8563ba1ee9",
+      "home": "Spain",
+      "away": "Argentina",
       "home_score": 1,
-      "away_score": 2,
-      "commence_time": "2026-07-05T20:00:00Z"
-    },
-    {
-      "match_id": "e61a7b471cadc8e3849158ed59d49cab",
-      "home": "Mexico",
-      "away": "England",
-      "home_score": 2,
-      "away_score": 3,
-      "commence_time": "2026-07-06T01:00:00Z"
-    },
-    {
-      "match_id": "16ed3adcf661b3a9bea39871a2d204df",
-      "home": "Portugal",
-      "away": "Spain",
-      "home_score": 0,
-      "away_score": 1,
-      "commence_time": "2026-07-06T19:00:00Z"
-    },
-    {
-      "match_id": "810f80b3ae79f5e86b3747ca15718ed8",
-      "home": "USA",
-      "away": "Belgium",
-      "home_score": 1,
-      "away_score": 4,
-      "commence_time": "2026-07-07T00:00:00Z"
+      "away_score": 0,
+      "commence_time": "2026-07-19T19:05:00Z"
     }
   ]
 }

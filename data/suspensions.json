@@ -1,7 +1,7 @@
 {
   "_comment": "WM 2026 Verletzungen & Sperren — Stand: 10. Juni 2026. Quellen: ESPN, Goal.com, FIFA.com, Sports Mole.",
   "_format": "team_name: [player_name, ...] — availability=0 im Modell gesetzt",
-  "_injuries_last_updated": "2026-07-07",
+  "_injuries_last_updated": "2026-07-30",
   "Czech Republic": [
     "David Jurasek",
     "Václav Cerný"
@@ -24,7 +24,6 @@
   "Canada": [
     "Alfie Jones",
     "Ismaël Koné",
-    "Jonathan David",
     "Marcelo Flores",
     "Moïse Bombito",
     "Alphonso Davies"
@@ -33,16 +32,21 @@
     "Assim Madibo",
     "Homam Ahmed"
   ],
-  "Switzerland": [],
+  "Switzerland": [
+    "Johan Manzambi"
+  ],
   "Brazil": [
     "Raphinha",
     "Wesley França",
-    "Neymar"
+    "Lucas Paquetá"
   ],
-  "Haiti": [],
+  "Haiti": [
+    "Jean-Ricner Bellegarde"
+  ],
   "Morocco": [
     "Abdessamad Ezzalzouli",
-    "Nayef Aguerd"
+    "Nayef Aguerd",
+    "Ismael Saibari"
   ],
   "Scotland": [
     "Aaron Hickey",
@@ -59,7 +63,6 @@
   ],
   "Turkey": [],
   "United States": [
-    "Christian Pulisic",
     "Cristian Roldan"
   ],
   "Curacao": [],
@@ -100,7 +103,8 @@
     "Jeremy Doku",
     "Jérémy Doku",
     "Romelu Lukaku",
-    "Zeno Debast"
+    "Zeno Debast",
+    "Amadou Onana"
   ],
   "Egypt": [
     "Mohamed Salah"
@@ -117,10 +121,13 @@
     "Sarpreet Singh"
   ],
   "Cape Verde": [],
-  "Saudi Arabia": [],
+  "Saudi Arabia": [
+    "Salem Al-Dawsari"
+  ],
   "Spain": [
     "Dani Carvajal",
-    "Fermin Lopez"
+    "Fermin Lopez",
+    "Rodri"
   ],
   "Uruguay": [
     "Giorgian de Arrascaeta",
@@ -128,7 +135,8 @@
   ],
   "France": [
     "Hugo Ekitike",
-    "William Saliba"
+    "William Saliba",
+    "Maxence Lacroix"
   ],
   "Iraq": [
     "Ahmed Yahya",
@@ -148,7 +156,6 @@
     "Youcef Atal"
   ],
   "Argentina": [
-    "Cristian Romero",
     "Gonzalo Montiel",
     "Joaquín Panichelli",
     "Juan Foyth",
@@ -179,8 +186,9 @@
   "England": [
     "Marcus Rashford",
     "Tino Livramento",
-    "Jordan Henderson",
-    "Reece James"
+    "Reece James",
+    "Declan Rice",
+    "Jordan Henderson"
   ],
   "Ghana": [
     "Benjamin Asare",
