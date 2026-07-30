@@ -1,0 +1,338 @@
+{
+  "generated_at": "2026-07-30T20:26:06Z",
+  "source": "xlsx-fallback",
+  "reference_date": "2026-07-30T20:26:06.301322",
+  "n_matches": 32707,
+  "n_players_overall": 1315,
+  "n_players_hard": 1096,
+  "n_players_clay": 915,
+  "n_players_grass": 668,
+  "top20_overall": [
+    {
+      "name": "Sinner J.",
+      "elo": 1983.5521225027915
+    },
+    {
+      "name": "Alcaraz C.",
+      "elo": 1951.5967450503583
+    },
+    {
+      "name": "Sabalenka A.",
+      "elo": 1895.9866513996192
+    },
+    {
+      "name": "Swiatek I.",
+      "elo": 1847.4005482901848
+    },
+    {
+      "name": "Djokovic N.",
+      "elo": 1826.980356452083
+    },
+    {
+      "name": "Rybakina E.",
+      "elo": 1823.8481848742194
+    },
+    {
+      "name": "Gauff C.",
+      "elo": 1795.5594095259723
+    },
+    {
+      "name": "Anisimova A.",
+      "elo": 1770.5604612373215
+    },
+    {
+      "name": "Zverev A.",
+      "elo": 1764.6802789803844
+    },
+    {
+      "name": "Pegula J.",
+      "elo": 1757.9571244515346
+    },
+    {
+      "name": "De Minaur A.",
+      "elo": 1731.2157262254525
+    },
+    {
+      "name": "Auger-Aliassime F.",
+      "elo": 1729.2208125624948
+    },
+    {
+      "name": "Draper J.",
+      "elo": 1720.4668171241847
+    },
+    {
+      "name": "Fritz T.",
+      "elo": 1718.6869503643447
+    },
+    {
+      "name": "Paolini J.",
+      "elo": 1714.935337338742
+    },
+    {
+      "name": "Medvedev D.",
+      "elo": 1706.9868962035464
+    },
+    {
+      "name": "Bencic B.",
+      "elo": 1698.5158861994066
+    },
+    {
+      "name": "Zheng Q.",
+      "elo": 1693.4211628480625
+    },
+    {
+      "name": "Keys M.",
+      "elo": 1688.552552965174
+    },
+    {
+      "name": "Svitolina E.",
+      "elo": 1687.6871893047653
+    }
+  ],
+  "top20_hard": [
+    {
+      "name": "Sinner J.",
+      "elo": 1928.0194383152714
+    },
+    {
+      "name": "Sabalenka A.",
+      "elo": 1832.6216957569786
+    },
+    {
+      "name": "Alcaraz C.",
+      "elo": 1819.719194443907
+    },
+    {
+      "name": "Rybakina E.",
+      "elo": 1774.5025332240814
+    },
+    {
+      "name": "Swiatek I.",
+      "elo": 1772.9733048064072
+    },
+    {
+      "name": "Djokovic N.",
+      "elo": 1768.5542964604865
+    },
+    {
+      "name": "Pegula J.",
+      "elo": 1734.1136074174706
+    },
+    {
+      "name": "Gauff C.",
+      "elo": 1732.2981804292167
+    },
+    {
+      "name": "Zverev A.",
+      "elo": 1730.0820262589789
+    },
+    {
+      "name": "Auger-Aliassime F.",
+      "elo": 1712.5996291327153
+    },
+    {
+      "name": "Anisimova A.",
+      "elo": 1700.0181394905444
+    },
+    {
+      "name": "De Minaur A.",
+      "elo": 1696.9565571795351
+    },
+    {
+      "name": "Medvedev D.",
+      "elo": 1694.5365587733731
+    },
+    {
+      "name": "Draper J.",
+      "elo": 1679.408744468496
+    },
+    {
+      "name": "Muchova K.",
+      "elo": 1668.0265294727676
+    },
+    {
+      "name": "Bencic B.",
+      "elo": 1667.987963719502
+    },
+    {
+      "name": "Fritz T.",
+      "elo": 1663.7917844021404
+    },
+    {
+      "name": "Zheng Q.",
+      "elo": 1648.9599530139083
+    },
+    {
+      "name": "Paolini J.",
+      "elo": 1648.8822054269235
+    },
+    {
+      "name": "Keys M.",
+      "elo": 1648.6994721085555
+    }
+  ],
+  "top20_clay": [
+    {
+      "name": "Alcaraz C.",
+      "elo": 1776.451356945039
+    },
+    {
+      "name": "Swiatek I.",
+      "elo": 1730.4747447095497
+    },
+    {
+      "name": "Sabalenka A.",
+      "elo": 1714.277415118749
+    },
+    {
+      "name": "Gauff C.",
+      "elo": 1699.2861538500372
+    },
+    {
+      "name": "Ruud C.",
+      "elo": 1681.6573993912148
+    },
+    {
+      "name": "Zverev A.",
+      "elo": 1680.7531823897307
+    },
+    {
+      "name": "Sinner J.",
+      "elo": 1669.1195044044925
+    },
+    {
+      "name": "Djokovic N.",
+      "elo": 1662.9406331461196
+    },
+    {
+      "name": "Musetti L.",
+      "elo": 1661.1442461430904
+    },
+    {
+      "name": "Svitolina E.",
+      "elo": 1642.3451802407023
+    },
+    {
+      "name": "Tsitsipas S.",
+      "elo": 1641.2435746722938
+    },
+    {
+      "name": "Rybakina E.",
+      "elo": 1636.154436544972
+    },
+    {
+      "name": "Paolini J.",
+      "elo": 1629.613470168169
+    },
+    {
+      "name": "Darderi L.",
+      "elo": 1626.8461542235873
+    },
+    {
+      "name": "Andreeva M.",
+      "elo": 1622.6288717422974
+    },
+    {
+      "name": "Zheng Q.",
+      "elo": 1618.4752452356481
+    },
+    {
+      "name": "Berrettini M.",
+      "elo": 1614.6218023337217
+    },
+    {
+      "name": "Rune H.",
+      "elo": 1609.053473947444
+    },
+    {
+      "name": "Cerundolo F.",
+      "elo": 1608.7761509195527
+    },
+    {
+      "name": "Rublev A.",
+      "elo": 1608.6043806127805
+    }
+  ],
+  "top20_grass": [
+    {
+      "name": "Alcaraz C.",
+      "elo": 1665.2500207878736
+    },
+    {
+      "name": "Fritz T.",
+      "elo": 1639.0242741604081
+    },
+    {
+      "name": "Sinner J.",
+      "elo": 1628.3907511097736
+    },
+    {
+      "name": "Djokovic N.",
+      "elo": 1619.0086930375812
+    },
+    {
+      "name": "Swiatek I.",
+      "elo": 1612.122693913871
+    },
+    {
+      "name": "Alexandrova E.",
+      "elo": 1589.354864270617
+    },
+    {
+      "name": "Anisimova A.",
+      "elo": 1586.2113076330968
+    },
+    {
+      "name": "Bublik A.",
+      "elo": 1575.3270643834444
+    },
+    {
+      "name": "Sabalenka A.",
+      "elo": 1575.1901598716668
+    },
+    {
+      "name": "Medvedev D.",
+      "elo": 1574.6279329328574
+    },
+    {
+      "name": "Rybakina E.",
+      "elo": 1571.533344091144
+    },
+    {
+      "name": "Vondrousova M.",
+      "elo": 1571.1731481186962
+    },
+    {
+      "name": "De Minaur A.",
+      "elo": 1569.0484393584613
+    },
+    {
+      "name": "Samsonova L.",
+      "elo": 1569.0444521113134
+    },
+    {
+      "name": "Krejcikova B.",
+      "elo": 1562.9550242780153
+    },
+    {
+      "name": "Zverev A.",
+      "elo": 1561.8379393280534
+    },
+    {
+      "name": "Berrettini M.",
+      "elo": 1558.7988595721356
+    },
+    {
+      "name": "Keys M.",
+      "elo": 1556.3029631165748
+    },
+    {
+      "name": "Boulter K.",
+      "elo": 1555.800529937486
+    },
+    {
+      "name": "Bencic B.",
+      "elo": 1555.5019431264025
+    }
+  ]
+}
