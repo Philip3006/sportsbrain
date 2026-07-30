@@ -42,6 +42,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run tennis scan (multi-tournament)
+        id: scan
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
@@ -49,20 +50,24 @@ jobs:
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           VAPID_SUB: ${{ secrets.VAPID_SUB }}
         run: |
-          # J2-D: Dispatcher iteriert über alle aktiven Turniere.
-          # Mode pro Kategorie: src.config.TENNIS_CATEGORY_MODE
-          # (initial nur grand_slam = live, Rest = shadow bis Phase-B-Backtest)
           ALL_LIVE_FLAG=""
           if [ "${{ inputs.all_live }}" = "true" ]; then
             ALL_LIVE_FLAG="--all-live"
           fi
           python scripts/tennis_scan.py --bankroll 100 $ALL_LIVE_FLAG
+          echo "status=ok" >> $GITHUB_OUTPUT
+
+      - name: Write health snapshot
+        if: always()
+        run: |
+          STATUS="${{ steps.scan.outputs.status || 'error' }}"
+          python -m src.monitoring.health_writer --job tennis_scan --status "$STATUS" --exit-code ${{ job.status == 'success' && 0 || 1 }} || true
 
       - name: Commit results
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add results/tennis_scan_*.md docs/data/signals*.json || true
+          git add results/tennis_scan_*.md docs/data/signals*.json results/health/tennis_scan.json || true
           git diff --staged --quiet || git commit -m "auto: tennis scan $(date +%Y-%m-%d)"
           for i in 1 2 3 4 5; do
             git fetch origin main
