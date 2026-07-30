@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-30T00:06:14Z",
+  "generated_at": "2026-07-30T01:12:40Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -16,7 +16,7 @@
     {
       "job": "auto_retrain",
       "status": "ok",
-      "last_run_at": "2026-07-29T18:49:09Z",
+      "last_run_at": "2026-07-30T01:12:40Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -93,7 +93,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-07-30T00:05:40Z",
+      "last_run_at": "2026-07-30T01:12:09Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -104,7 +104,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-07-30T00:05:40Z",
+      "last_run_at": "2026-07-30T01:12:09Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
