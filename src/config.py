@@ -318,7 +318,7 @@ TOURNAMENT_K_FACTORS: dict[str, float] = {
 # present team form than historical finals. Applied multiplicatively on top of
 # TOURNAMENT_WEIGHTS for matches with date >= WC2026_START and tournament="FIFA World Cup".
 WC2026_START = "2026-06-11"
-WC2026_BOOST = 1.5
+WC2026_BOOST = 1.0  # 2026-07-30: WM beendet, Boost neutralisiert (Tennis-Fokus, Football-Cron paused)
 
 # Elo-adjusted DC: scale factor for opponent quality adjustment.
 # exp(elo_diff / DC_ELO_SCALE) is multiplied into the home team's Poisson mean.
