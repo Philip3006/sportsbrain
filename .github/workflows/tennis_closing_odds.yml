@@ -1,0 +1,61 @@
+name: Tennis Closing Odds (30-min cadence)
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  tennis-closing-odds:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch tennis closing odds
+        id: fetch
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: |
+          python scripts/update_tennis_closing_odds.py
+          echo "status=ok" >> $GITHUB_OUTPUT
+
+      - name: Write health snapshot
+        if: always()
+        run: |
+          STATUS="${{ steps.fetch.outputs.status || 'error' }}"
+          python -m src.monitoring.health_writer --job tennis_closing_odds --status "$STATUS" --exit-code ${{ job.status == 'success' && 0 || 1 }} || true
+
+      - name: Commit results
+        run: |
+          git config user.name "SportsBrain Bot"
+          git config user.email "bot@sportsbrain"
+          git add results/ledger_*.csv results/health/tennis_closing_odds.json || true
+          git diff --staged --quiet || git commit -m "auto: tennis closing odds $(date +%Y-%m-%d\ %H:%M) UTC"
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase --strategy-option=theirs origin/main \
+              || { git rebase --abort 2>/dev/null || true; }
+            git push origin main && exit 0
+            sleep $((RANDOM % 20 + 10))
+          done
+          echo "[push] giving up after 5 attempts" >&2; exit 1
