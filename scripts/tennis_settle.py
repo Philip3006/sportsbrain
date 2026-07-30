@@ -125,6 +125,22 @@ def _settle_user_ledger(user: str, scores: dict, tennis_match_ids: set[str], dry
             writer.writeheader()
             writer.writerows(rows)
         print(f"[{user}] {settled_count} Bets gesettled → Ledger aktualisiert")
+
+        # P1.4 Post-Match-Push: sende Notification fuer jeden neu-gesettelten Bet
+        import os as _os
+        if not _os.getenv("PYTEST_CURRENT_TEST"):
+            try:
+                from src.betting.ledger import ledger_summary
+                from src.notifications.web_push import send_settlement_alert
+                summary = ledger_summary(ledger)
+                for r in tennis_open:
+                    if r.get("status", "").lower() in ("won", "lost"):
+                        try:
+                            send_settlement_alert(r, summary)
+                        except Exception as e:
+                            print(f"  [push] {r.get('home')}: {e}")
+            except Exception as e:
+                print(f"[{user}] Push-Init failed: {e}")
     return settled_count
 
 
