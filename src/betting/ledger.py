@@ -205,6 +205,10 @@ def append_bets(
         today = pd.Timestamp.now().strftime("%Y-%m-%d")
         new_rows = []
         for s in signals:
+            # Safety-Gate: Display-only-Signale (no_bet_flag) NIE in den Ledger.
+            # Modell-implizite Preise haben keine Marktreferenz → kein CLV, kein Settlement.
+            if getattr(s, "no_bet_flag", False):
+                continue
             key = (s.match_id, s.market)
             if key in existing:
                 continue
