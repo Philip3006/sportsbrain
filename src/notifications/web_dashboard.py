@@ -846,7 +846,15 @@ def write_signals_json(
     tennis_data   = _drop_finished_signals(tennis_data)
 
     if schedule is not None:
-        schedule_data = schedule
+        # F7-Fix: Sport-getrennter Merge. Wenn Caller Schedule mit einem Sport-Fokus
+        # übergibt (typisch tennis_scan → nur tennis; daily_scan → nur football),
+        # bewahren wir Einträge der anderen Sportarten aus dem bestehenden Schedule.
+        # Verhindert Race-Condition: tennis_scan überschrieb sonst kompletten Football-
+        # Schedule mit [] (bis zum nächsten Football-Scan Anzeige-Blackout).
+        _incoming_sports = {(g.get("sport") or "football") for g in schedule}
+        _existing = existing.get("schedule", []) or []
+        _preserved = [g for g in _existing if (g.get("sport") or "football") not in _incoming_sports]
+        schedule_data = schedule + _preserved
     else:
         schedule_data = existing.get("schedule", [])
 
