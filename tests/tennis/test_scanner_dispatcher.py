@@ -25,12 +25,19 @@ def test_category_min_edge_unknown_uses_global_default():
     assert category_min_edge("nonexistent") == MIN_EDGE
 
 
-def test_category_mode_grand_slam_is_live():
-    assert category_mode("grand_slam") == "live"
+def test_category_mode_atp250_is_live():
+    # 2026-07-30 Full-Backtest: atp250 promoted → live (n=1824, ROI +3.7%).
+    assert category_mode("atp250") == "live"
 
 
-def test_category_mode_atp250_default_shadow():
-    assert category_mode("atp250") == "shadow"
+def test_category_mode_grand_slam_default_shadow():
+    # 2026-07-30 Full-Backtest: grand_slam demoted → shadow (n=442, ROI -4.7%).
+    assert category_mode("grand_slam") == "shadow"
+
+
+def test_category_mode_atp250_grass_shadow_override():
+    # atp250-grass war -2.6% ROI → SHADOW-Override trotz LIVE-Kategorie.
+    assert category_mode("atp250", surface="grass") == "shadow"
 
 
 def test_category_mode_all_live_override():
