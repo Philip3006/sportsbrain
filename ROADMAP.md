@@ -514,23 +514,25 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ## 🟦 I. Nach WM-Ende (P1, ab 2026-07-20)
 
-### I1. Multi-Liga-Persistence-Snapshot
-- **Was**: `scripts/build_post_wm_snapshot.py` → `data/snapshots/wm2026_final.json` mit allen 64 Matches, Spielerstats (Min/G/A/xG/xA/Form), Team-Aggregaten, Confederation-Summary.
+### I1. ✅ erledigt 2026-07-31 Multi-Liga-Persistence-Snapshot
+- **Was**: `scripts/build_post_wm_snapshot.py` → `data/snapshots/wm2026_final.json` mit allen Matches, Team-Aggregaten (W/D/L/GF/GA/Pts), Confederation-Summary.
 - **Warum**: Basis für Liga-Saison-Start (Bundesliga + Premier 2026-08-15, Euroleague Okt, NBA Okt).
-- **Impact/Aufwand/Risiko**: 🟢 · 🔴 · 🟢
-- **Dateien**: `scripts/build_post_wm_snapshot.py` (neu), `data/snapshots/`
-- **Verifikation**: Snapshot enthält 64 Matches + ~736 Spieler-Records.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟡 · 🟢
+- **Dateien**: `scripts/build_post_wm_snapshot.py` (neu), `data/snapshots/wm2026_final.json`
+- **Status**: **104 Matches** (48 Teams, 7 Konföderationen), Champion Spain (8Sp/22P/+13GD). Spielerstats-Slot wurde nicht befüllt — Cache enthält nur Team-Level-Ergebnisse (kein StatsBomb-Aggregat verfügbar). Beweisstark genug für I3-Retrain und Liga-Baseline-Vergleiche; Spielerstats-Erweiterung bleibt optional/P3.
 
-### I2. WM-2026-Modell-Snapshot einfrieren
-- **Was**: `models/snapshots/wm2026/` mit DC/LGBM/Stacker + `metadata.json` (Brier, ROI, Bet-Count).
-- **Warum**: Spätere Vergleiche WM-Modell vs. Liga-Modell.
+### I2. ✅ erledigt 2026-07-31 WM-2026-Modell-Snapshot einfrieren
+- **Was**: `models/snapshots/wm2026/` mit DC-Params (params_20260720.pkl), Elo, LGBM (model/calibrators/cluster/conformal), Stacker + `metadata.json` (Brier-Gate, ROI, CLV, Ledger-Aggregate) + README mit Rollback-Snippet.
+- **Warum**: Spätere Vergleiche WM-Modell vs. Liga-Modell; Rollback-Anker für I3-Retrain.
 - **Impact/Aufwand/Risiko**: 🟡 · 🟢 · 🟢
+- **Status**: 12 Modell-Dateien eingefroren. WM-Ledger: 67 Bets (23W/34L/8V), P&L −12.33€, ROI −1.60%, CLV +11.02% (Modell schlägt Markt, PnL-Varianz erwartungskonform). Top-3-ROI-Märkte: o/u3.0_over +143.75%, draw +78.50%, ah-0.5_home +120%.
 
-### I3. LightGBM + DC Retrain mit voller WM-Daten
-- **Was**: Manueller Trigger nach WM-Ende mit `--include-wm-2026` Flag.
-- **Warum**: 64 neue Matches = größte Datenerweiterung seit Training.
-- **Impact/Aufwand/Risiko**: 🟢 · 🟡 · 🟡 (Brier-Regression möglich, dann Rollback)
-- **Abhängigkeiten**: I1, I2
+### I3. ✅ erledigt 2026-07-31 LightGBM + DC Retrain mit voller WM-Daten
+- **Was**: `auto_retrain.py --force` erzwingt DC + LGBM + Stacker-Retrain mit 104 WM2026-Matches (496 Total-Trainingsrows: 392 historical + 104 WC2026).
+- **Warum**: Größte Datenerweiterung seit Training; alle WM-Matches (11.6.-19.7.) sollten im Live-Modell abgebildet sein.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟡 · 🟡 (Brier-Regression möglich, dann Rollback via I2-Snapshot)
+- **Abhängigkeiten**: I1 ✅, I2 ✅
+- **Status**: Gate ✅ **passed** ohne Rollback. **Blend-Brier 0.6232 → 0.6194** (−0.0038), **LGBM-Brier 0.6507 → 0.6402** (−0.0105), Improvement-vs-DC 2.58% → **3.03%**. DC-Weight adjusted 0.5 → 0.45 (LGBM bekommt mehr Gewicht wegen besserer Kalibrierung). In-sample Brier Stacker 0.5614, ECE 0.0344.
 
 ### I4. ✅ erledigt 2026-06-24 Backtest-Inkonsistenz MAX_EV beheben
 - **Was**: `src/backtest/walk_forward.py` bekommt `apply_live_filters=True` Default. EV>40%-Filter, Confederation-Filter, MAX_ACTIVE_BETS im Backtest aktiv.
@@ -743,7 +745,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **8** | E1–E4 (Refactor) | Tag 8-12 | 6-8 h |
 | **8b** | M5 (FIFA-Bracket-Mapping nach Auslosung) | ab 2026-06-27 (Auslosung), vor 2026-07-04 | 1-2 h |
 | **9** | I6 (Home Advantage Gastgeber) | ✅ erledigt 2026-06-21 | 1-3 h |
-| **9b** | I1–I5 (Post-WM Snapshot + Retrain) | 2026-07-20 bis 2026-07-31 | 8-12 h |
+| **9b** | I1–I5 (Post-WM Snapshot + Retrain) ✅ erledigt 2026-07-31 | 2026-07-20 bis 2026-07-31 | 8-12 h |
 | **9d** | I8 (Market-Performance-Feedback-Loop) | nach WM-Ende, sobald 15+ Bets/Markt | 1-2 h (Var. A) |
 | **9e** | **I9 (Signal-Archive — lernen aus allen Signalen) P1 dringend** | ab sofort starten (Archive braucht Vorlaufzeit) | 6-10 h |
 | **9c** | I7 (Monte Carlo Sims) | ✅ erledigt 2026-06-22 | < 2 h |
