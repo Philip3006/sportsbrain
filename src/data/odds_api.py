@@ -10,7 +10,7 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
-from src.config import DATA_CACHE, ODDS_API_URL
+from src.config import DATA_CACHE, LINE_SHOPPING_REGIONS, ODDS_API_URL
 from src.data.cache import disk_cache
 
 load_dotenv()
@@ -73,6 +73,54 @@ def _http_get_with_retry(url: str, params: dict, *, total_attempts: int = 3,
     raise last_exc
 
 
+def _fetch_events_and_odds_per_event(
+    sport: str, key: str, regions: str, markets: str,
+) -> list[dict]:
+    """Fallback bei Bulk-422: /events holen, dann pro Event /events/{id}/odds.
+
+    Analog zum Tennis-Path (scripts/tennis_scan.py:_fetch_event_odds).
+    Single-Event-Endpoint akzeptiert nicht alle Markets — droppt hier
+    optionale (double_chance, btts) einmalig weg wenn ein Event 422 gibt.
+    """
+    events_url = f"{ODDS_API_URL}/sports/{sport}/events"
+    try:
+        er = requests.get(events_url, params={"apiKey": key}, timeout=20)
+        er.raise_for_status()
+        events = er.json()
+    except Exception as e:
+        print(f"  ERROR: /events fallback failed: {e}")
+        return []
+
+    print(f"  [fallback] Bulk-422 → single-event pfad für {len(events)} events")
+    aggregated: list[dict] = []
+    fallback_markets = markets
+    for ev in events:
+        ev_id = ev.get("id")
+        if not ev_id:
+            continue
+        odds_url = f"{ODDS_API_URL}/sports/{sport}/events/{ev_id}/odds"
+        params = {
+            "apiKey": key, "regions": regions,
+            "markets": fallback_markets, "oddsFormat": "decimal",
+        }
+        try:
+            r = requests.get(odds_url, params=params, timeout=15)
+            if r.status_code == 422 and ("double_chance" in fallback_markets or "btts" in fallback_markets):
+                fallback_markets = ",".join(
+                    m for m in fallback_markets.split(",") if m not in ("double_chance", "btts")
+                )
+                params["markets"] = fallback_markets
+                r = requests.get(odds_url, params=params, timeout=15)
+            if r.status_code != 200:
+                continue
+            full = r.json()
+            if full.get("bookmakers"):
+                aggregated.append(full)
+        except Exception:
+            continue
+    return aggregated
+
+
 def _load_stale_upcoming_cache() -> list[dict] | None:
     """Loads the latest on-disk pickle of upcoming matches, regardless of age.
 
@@ -133,8 +181,13 @@ def fetch_upcoming_matches(
                 print(f"  WARN: market(s) unavailable — retrying without {', '.join(optional)}.")
                 params["markets"] = ",".join(m for m in markets.split(",") if m not in optional)
                 resp = _http_get_with_retry(url, params)
-                resp.raise_for_status()
-            else:
+            # Wenn immer noch 422 → Single-Event-Fallback (mirror Tennis-Pattern)
+            if resp.status_code == 422:
+                aggregated = _fetch_events_and_odds_per_event(
+                    sport, key, regions, params["markets"],
+                )
+                if aggregated:
+                    return _parse_matches(aggregated)
                 resp.raise_for_status()
     except Exception as e:
         # Hard fail after retries — try to keep the scanner alive with the
@@ -502,7 +555,7 @@ def derive_goals_range_implied(
 
 def fetch_event_player_props(
     event_id: str,
-    regions: str = "eu,uk",
+    regions: str = ",".join(LINE_SHOPPING_REGIONS),
     api_key: str | None = None,
     force: bool = False,
     max_age_hours: float = 1.0,

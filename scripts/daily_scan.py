@@ -16,44 +16,7 @@ from src.betting.ledger import append_bets, ledger_summary, LEDGER_PATH
 from src.notifications.web_dashboard import write_signals_json, write_signals_json_all_users
 from src.data.odds_api import fetch_upcoming_matches, fetch_wm_scores
 from src.data.football_discovery import discover_active_leagues
-
-
-def _confirm_bets(selected_signals: list, bankroll: float) -> list:
-    """Shows top signals and asks for confirmation before logging."""
-    if not selected_signals:
-        return []
-
-    # Detect non-interactive context early — avoid mid-loop EOFError confusion.
-    if not sys.stdin.isatty():
-        print(
-            "\n  [Kein interaktives Terminal — Bestätigung übersprungen.]"
-            "\n  Nutze '--auto-log' um alle Signals automatisch einzutragen, "
-            "oder '! python3 scripts/daily_scan.py' im Terminal für interaktive Bestätigung."
-        )
-        return []
-
-    print("\n=== Offene Slots — Bestätigung erforderlich ===")
-    confirmed = []
-    for s in selected_signals:
-        stake = s.stake_eur if s.stake_eur > 0 else s.stake_pct * bankroll
-        korr_marker = f"  ⚠ KORR-↓ [{s.stake_reason}]" if s.stake_reason else ""
-        print(
-            f"\n  {s.home} vs {s.away} | {s.market.upper()} | "
-            f"@ {s.decimal_odds:.2f} | EV +{s.ev*100:.1f}% | "
-            f"€{stake:.2f} | {s.confidence}{korr_marker}"
-        )
-        try:
-            ans = input("  Wette eingehen? (j/n): ").strip().lower()
-        except EOFError:
-            print("\n  [Stdin geschlossen — Bestätigung abgebrochen.]")
-            break
-        if ans == "j":
-            confirmed.append(s)
-            print("  ✓ Eingetragen.")
-        else:
-            print("  – Übersprungen.")
-
-    return confirmed
+from scripts._bet_confirm import confirm_bets as _confirm_bets
 
 
 ROOT = Path(__file__).parent.parent

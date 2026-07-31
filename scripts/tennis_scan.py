@@ -48,6 +48,7 @@ from src.betting.tennis_detector import (
     detect_value_tennis,
 )
 from src.betting.ledger import append_bets, ledger_summary
+from scripts._bet_confirm import confirm_bets as _confirm_bets
 from src.notifications.web_push import send_scan_alert as _web_push_scan_alert
 from src.notifications.web_dashboard import write_signals_json_all_users
 from src.tennis.discovery import discover_active_tournaments
@@ -531,7 +532,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Tennis value bet scanner (multi-tournament)")
     parser.add_argument("--mock", action="store_true", help="Use mock tournament (Wimbledon)")
     parser.add_argument("--bankroll", type=float, default=100.0)
-    parser.add_argument("--no-ledger", action="store_true")
+    parser.add_argument("--no-ledger", action="store_true",
+                        help="Skip Ledger-Write komplett (auch die Confirmation-Prompt).")
+    parser.add_argument("--auto-log", action="store_true",
+                        help="Skip Confirmation-Prompt, alle Live-Signals direkt loggen. "
+                             "Standardmäßig fragt der Scanner pro Bet j/n.")
     parser.add_argument("--no-push", "--no-telegram", action="store_true", dest="no_push",
                         help="Skip Web-Push (--no-telegram als Alias für Legacy-Cron-Calls)")
     parser.add_argument("--all-live", action="store_true",
@@ -641,10 +646,18 @@ def main() -> None:
     report_path.write_text(format_scan_report(per_tournament, scan_date))
     print(f"Report: {report_path}")
 
-    # ---- 5. Ledger (nur Live-Signals) ----
+    # ---- 5. Ledger (nur Live-Signals) — feedback_no_auto_log: NIE ohne Bestätigung ----
     if all_live_signals and not args.no_ledger:
-        n = append_bets(all_live_signals, args.bankroll)
-        print(f"Ledger: {n} Live-Bets eingetragen.")
+        if args.auto_log:
+            n = append_bets(all_live_signals, args.bankroll)
+            print(f"Ledger: {n} Live-Bets eingetragen (--auto-log).")
+        else:
+            confirmed = _confirm_bets(all_live_signals, args.bankroll)
+            if confirmed:
+                n = append_bets(confirmed, args.bankroll)
+                print(f"Ledger: {n} bestätigte Bets eingetragen.")
+            else:
+                print("Ledger: keine Bets eingetragen (keine Bestätigung).")
 
     # ---- 6. Push ----
     if not args.no_push and all_live_signals:

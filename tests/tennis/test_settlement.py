@@ -240,3 +240,19 @@ def test_malformed_ou_market_returns_none():
     r = _completed([(6, 3), (6, 4)], "a")
     assert settle_tennis_market("o/u_sets_notafloat_over", r) is None
     assert settle_tennis_market("o/u_games_2.5_sideways", r) is None
+
+
+# --------------------------------------------------------------------------- #
+# F4: tennis_settle.py --no-push flag argparse                                #
+# --------------------------------------------------------------------------- #
+
+def test_tennis_settle_has_no_push_flag():
+    """Regressions-Guard: --no-push muss in tennis_settle.py als argparse-Flag existieren."""
+    from pathlib import Path
+    src = Path(__file__).parent.parent.parent / "scripts" / "tennis_settle.py"
+    text = src.read_text()
+    assert '"--no-push"' in text, "--no-push flag fehlt"
+    assert "no_push" in text, "no_push dest fehlt"
+    # Push-Call gated
+    assert "if no_push" in text or "elif no_push" in text or "not no_push" in text, \
+        "no_push wird nicht als Gate um send_settlement_alert genutzt"
