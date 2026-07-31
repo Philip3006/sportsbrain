@@ -169,3 +169,33 @@ def test_format_scan_report_with_data():
     assert "Wimbledon" in text
     assert "🔴 LIVE" in text
     assert "Matches gescannt: 3" in text
+
+
+# ---- Auto-Log-Gate (feedback_no_auto_log) ----------------------------
+
+def test_tennis_scan_has_auto_log_and_confirm_gate():
+    """Regressions-Guard: tennis_scan.py MUSS argparse-Flag --auto-log haben
+    UND per Default den Confirm-Gate durchlaufen (kein Silent-Auto-Log).
+    """
+    from pathlib import Path
+    src = Path(__file__).parent.parent.parent / "scripts" / "tennis_scan.py"
+    text = src.read_text()
+    assert "--auto-log" in text, "--auto-log flag fehlt in tennis_scan.py"
+    assert "_confirm_bets" in text, "_confirm_bets import/call fehlt"
+    assert "if args.auto_log" in text, "auto_log-Branch nicht erkennbar"
+
+
+def test_confirm_bets_nontty_returns_empty():
+    """Non-TTY (Cron): _confirm_bets darf NICHT loggen."""
+    import sys
+    from unittest.mock import patch
+    from scripts._bet_confirm import confirm_bets
+
+    class _Sig:
+        home = "A"; away = "B"; market = "home"
+        decimal_odds = 2.0; ev = 0.10; stake_eur = 5.0
+        stake_pct = 0.05; confidence = "MEDIUM"; stake_reason = ""
+
+    with patch.object(sys.stdin, "isatty", return_value=False):
+        result = confirm_bets([_Sig(), _Sig()], bankroll=100.0)
+    assert result == []

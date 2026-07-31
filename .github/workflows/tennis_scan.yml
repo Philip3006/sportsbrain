@@ -54,7 +54,9 @@ jobs:
           if [ "${{ inputs.all_live }}" = "true" ]; then
             ALL_LIVE_FLAG="--all-live"
           fi
-          python scripts/tennis_scan.py --bankroll 100 $ALL_LIVE_FLAG
+          # --no-ledger: Cron platziert keine Bets direkt (feedback_no_auto_log).
+          # User bestätigt via PWA → consume_pending_bets.yml schreibt ins Ledger.
+          python scripts/tennis_scan.py --bankroll 100 --no-ledger $ALL_LIVE_FLAG
           echo "status=ok" >> $GITHUB_OUTPUT
 
       - name: Write health snapshot

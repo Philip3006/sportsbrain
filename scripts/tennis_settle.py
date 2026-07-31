@@ -57,7 +57,7 @@ def _looks_tennis(bet: dict, tennis_match_ids: set[str]) -> bool:
     return False
 
 
-def _settle_user_ledger(user: str, scores: dict, tennis_match_ids: set[str], dry_run: bool) -> int:
+def _settle_user_ledger(user: str, scores: dict, tennis_match_ids: set[str], dry_run: bool, no_push: bool = False) -> int:
     """Returns count of settled bets for the given user."""
     ledger = ledger_path_for(user)
     if not ledger.exists():
@@ -128,7 +128,9 @@ def _settle_user_ledger(user: str, scores: dict, tennis_match_ids: set[str], dry
 
         # P1.4 Post-Match-Push: sende Notification fuer jeden neu-gesettelten Bet
         import os as _os
-        if not _os.getenv("PYTEST_CURRENT_TEST"):
+        if no_push:
+            print(f"[{user}] --no-push aktiv, {settled_count} settlements ohne Notification")
+        elif not _os.getenv("PYTEST_CURRENT_TEST"):
             try:
                 from src.betting.ledger import ledger_summary
                 from src.notifications.web_push import send_settlement_alert
@@ -148,6 +150,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="Zeige nur was gesettled werden wuerde")
     ap.add_argument("--user", default=None, help="Nur diesen User settlen (Default: alle)")
+    ap.add_argument("--no-push", action="store_true", dest="no_push",
+                    help="Skip Post-Match-Push (nützlich für Batch-Settlement, verhindert Push-Spam)")
     args = ap.parse_args()
 
     # Aktive Turniere ermitteln
@@ -188,7 +192,7 @@ def main() -> int:
     total = 0
     for u in users:
         try:
-            total += _settle_user_ledger(u, scores, tennis_match_ids, args.dry_run)
+            total += _settle_user_ledger(u, scores, tennis_match_ids, args.dry_run, no_push=args.no_push)
         except Exception as e:
             print(f"[{u}] Settle-Fehler: {e}")
 
