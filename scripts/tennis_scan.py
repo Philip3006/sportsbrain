@@ -40,6 +40,7 @@ from src.config import (
     TENNIS_MIN_EDGE_BY_CATEGORY,
 )
 from src.models.tennis_elo import compute_tennis_elo, predict_winner, top_players
+from src.tennis.ensemble import predict_winner_ensemble
 from src.tennis.elo_source import load_match_history
 from src.betting.tennis_detector import (
     detect_set_betting,
@@ -618,7 +619,10 @@ def main() -> None:
         signals = []
         for m in upcoming:
             pa, pb = m["player_a"], m["player_b"]
-            probs = predict_winner(pa, pb, ratings, t.surface)
+            probs = predict_winner_ensemble(
+                pa, pb, ratings, t.surface,
+                best_of=t.best_of, category=t.category,
+            )
             sigs = detect_all_markets(m, probs, args.bankroll, min_edge, t)
             signals.extend(sigs)
             for s in sigs:
