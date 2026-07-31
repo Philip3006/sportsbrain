@@ -1074,14 +1074,23 @@ function renderSport(sport) {
           const oa = g.odds_away > 1 ? g.odds_away.toFixed(2) : '–';
           const tourStr = (g.tour || '').toUpperCase();
           const tName = g.tournament || '';
+          const displayOnly = g.is_display_only === true;
+          const src = g.odds_source || '';
+          const oddsBg = displayOnly ? '#2a1f0a' : '#1a2030';
+          const oddsCol = displayOnly ? '#e0b866' : '#c9d3e0';
+          const badge = displayOnly
+            ? `<span title="Modell-Preis (${esc(src || 'implied')}), keine Marktquote — kein Stake möglich" style="padding:2px 6px;border-radius:4px;background:#2a1f0a;color:#e0b866;font-size:9px;font-weight:800;letter-spacing:.5px;margin-left:6px">MODELL</span>`
+            : (src && src !== 'the_odds_api'
+                ? `<span title="Quote via ${esc(src)}" style="padding:2px 6px;border-radius:4px;background:#0d2540;color:#8ab4f0;font-size:9px;font-weight:800;letter-spacing:.5px;margin-left:6px">${esc(src.toUpperCase())}</span>`
+                : '');
           h += `<div style="padding:10px 16px;border-bottom:1px solid rgba(48,54,61,.35);display:flex;align-items:center;gap:12px">
             <div style="flex:1;min-width:0">
-              <div style="font-size:14px;font-weight:800;color:#e6ecf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(g.home)} <span style="color:var(--muted);font-weight:500">vs</span> ${esc(g.away)}</div>
+              <div style="font-size:14px;font-weight:800;color:#e6ecf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(g.home)} <span style="color:var(--muted);font-weight:500">vs</span> ${esc(g.away)}${badge}</div>
               <div style="font-size:10px;color:var(--muted);margin-top:2px">${esc(tourStr)}${tName ? ' · ' + esc(tName) : ''}${timeStr ? ' · ' + timeStr : ''}</div>
             </div>
             <div style="display:flex;gap:6px;font-size:12px;font-weight:700">
-              <span style="padding:4px 8px;border-radius:5px;background:#1a2030;color:#c9d3e0;min-width:44px;text-align:center">${oh}</span>
-              <span style="padding:4px 8px;border-radius:5px;background:#1a2030;color:#c9d3e0;min-width:44px;text-align:center">${oa}</span>
+              <span style="padding:4px 8px;border-radius:5px;background:${oddsBg};color:${oddsCol};min-width:44px;text-align:center">${oh}</span>
+              <span style="padding:4px 8px;border-radius:5px;background:${oddsBg};color:${oddsCol};min-width:44px;text-align:center">${oa}</span>
             </div>
           </div>`;
         }

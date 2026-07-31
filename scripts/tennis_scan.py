@@ -56,7 +56,10 @@ from src.tennis.discovery import discover_active_tournaments
 from src.tennis.tournaments import Tournament, get_tournament
 
 _ODDS_API_URL = "https://api.the-odds-api.com/v4"
-_MIN_BOOKMAKERS = 3
+# Schwelle auf 1 gesenkt: Multi-Bookie-Consensus wird jetzt vom Merger
+# (src/tennis/odds/) via TE/OP/Betfair übernommen. Selbst ein einzelner Bookie
+# in TheOddsAPI ist wertvoller als sofort in Fallback zu gehen.
+_MIN_BOOKMAKERS = 1
 
 
 # ---------------------------------------------------------------------------
