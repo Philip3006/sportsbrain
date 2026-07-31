@@ -897,12 +897,14 @@ function renderSport(sport) {
     return true;
   });
   const controlsHtml = _buildSportControls(sport, filter, allSigs.length, sigs.length);
-  if (!allSigs.length) {
+  // Tennis: auch ohne Value-Signals nicht leer bleiben — es kann Schedule-Matches geben.
+  const _tennisSchedFallback = sport === 'tennis' && (_schedule || []).some(g => g.sport === 'tennis');
+  if (!allSigs.length && !_tennisSchedFallback) {
     c.innerHTML = controlsHtml + `<div class="empty"><div class="icon">🔍</div><div>Keine Value Bets.<br><small>Nächster Scan: täglich 08:00 UTC</small></div></div>`;
     _bindSportControls(sport);
     return;
   }
-  if (!sigs.length) {
+  if (!sigs.length && !_tennisSchedFallback) {
     c.innerHTML = controlsHtml + `<div class="empty"><div class="icon">🎚️</div><div>Keine Signale mit aktuellem Filter.<br><small>Filter lockern oder zurücksetzen.</small></div></div>`;
     _bindSportControls(sport);
     return;
@@ -1034,6 +1036,58 @@ function renderSport(sport) {
         h += `<div class="match-group-cards">${otherS.map(s => sigCard(s, false)).join('')}${buildOuAccordion(ouS, otherS.length === 0 || ouS.some(s => s.confidence === 'HIGH'))}</div>`;
       }
     }
+
+    // ---- "Weitere Spiele" — alle geplanten Tennis-Matches nach Datum sortiert ----
+    // Signal-Matches sind schon oben gelistet; hier nur die noch-nicht-gezeigten.
+    const shownKeys = new Set();
+    for (const [match, mSigs] of sortedGroups) {
+      const [mh, ma] = match.split(' vs ').map(x => x.trim());
+      shownKeys.add(matchKey(mh, ma));
+    }
+    const tennisSchedule = (_schedule || []).filter(g => g.sport === 'tennis');
+    const now = Date.now();
+    const remaining = tennisSchedule
+      .filter(g => !shownKeys.has(matchKey(g.home, g.away)))
+      .filter(g => !g.kickoff || (new Date(g.kickoff).getTime() + 2.5 * 60 * 60 * 1000) > now)
+      .sort((a, b) => {
+        if (!a.kickoff && !b.kickoff) return 0;
+        if (!a.kickoff) return 1; if (!b.kickoff) return -1;
+        return new Date(a.kickoff) - new Date(b.kickoff);
+      });
+
+    if (remaining.length) {
+      // Nach Datum gruppieren
+      const days = new Map();
+      for (const g of remaining) {
+        const dk = g.kickoff ? g.kickoff.slice(0, 10) : '__';
+        if (!days.has(dk)) days.set(dk, []);
+        days.get(dk).push(g);
+      }
+      h += `<div style="padding:22px 16px 10px;font-size:11px;font-weight:800;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;border-top:2px solid rgba(48,54,61,.7);margin-top:14px">Weitere Spiele (${remaining.length})</div>`;
+      for (const [dk, games] of days.entries()) {
+        const dLabel = dk === '__' ? 'Ohne Zeitangabe' :
+          new Date(dk).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: 'short' });
+        h += `<div style="padding:6px 16px;font-size:12px;font-weight:700;color:#a4c6ff;background:rgba(20,24,30,.6)">${esc(dLabel)}</div>`;
+        for (const g of games) {
+          const timeStr = g.kickoff ? fmtKickoff(g.kickoff) : '';
+          const oh = g.odds_home > 1 ? g.odds_home.toFixed(2) : '–';
+          const oa = g.odds_away > 1 ? g.odds_away.toFixed(2) : '–';
+          const tourStr = (g.tour || '').toUpperCase();
+          const tName = g.tournament || '';
+          h += `<div style="padding:10px 16px;border-bottom:1px solid rgba(48,54,61,.35);display:flex;align-items:center;gap:12px">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:14px;font-weight:800;color:#e6ecf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(g.home)} <span style="color:var(--muted);font-weight:500">vs</span> ${esc(g.away)}</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px">${esc(tourStr)}${tName ? ' · ' + esc(tName) : ''}${timeStr ? ' · ' + timeStr : ''}</div>
+            </div>
+            <div style="display:flex;gap:6px;font-size:12px;font-weight:700">
+              <span style="padding:4px 8px;border-radius:5px;background:#1a2030;color:#c9d3e0;min-width:44px;text-align:center">${oh}</span>
+              <span style="padding:4px 8px;border-radius:5px;background:#1a2030;color:#c9d3e0;min-width:44px;text-align:center">${oa}</span>
+            </div>
+          </div>`;
+        }
+      }
+    }
+
     h += '</div>';
     c.innerHTML = h;
     _bindSportControls(sport);
