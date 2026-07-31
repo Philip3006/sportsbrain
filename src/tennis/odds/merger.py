@@ -29,8 +29,12 @@ def _load_sources() -> list[tuple[str, int, Callable]]:
         sources.append((_op.name, _op.tier, _op.fetch))
     except Exception:
         pass
-    # Agent 3 (Betfair) und Agent 10 (WebSearch-Ensemble) werden in Folge-Commits
-    # hier ergaenzt.
+    try:
+        from src.tennis.odds import betfair as _bf
+        sources.append((_bf.name, _bf.tier, _bf.fetch))
+    except Exception:
+        pass
+    # Agent 10 (WebSearch-Ensemble) folgt.
     return sources
 
 
