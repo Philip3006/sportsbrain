@@ -610,6 +610,7 @@ def main() -> None:
         if not upcoming:
             per_tournament[t.slug] = {
                 "tournament": t, "signals": [], "n_matches": 0, "mode": mode,
+                "matches": [],
             }
             continue
 
@@ -625,6 +626,7 @@ def main() -> None:
 
         per_tournament[t.slug] = {
             "tournament": t, "signals": signals, "n_matches": len(upcoming), "mode": mode,
+            "matches": upcoming,
         }
         if mode == "live":
             all_live_signals.extend(signals)
@@ -681,16 +683,21 @@ def main() -> None:
         for s in info["signals"]:
             match_tour_map[s.match_id] = t.tour
             match_tournament_map[s.match_id] = meta
-        # Schedule (nur Mock — Live-Fetch wäre Doppel-API-Call)
-        if args.mock and mock_map:
-            for m in mock_map.get(slug, []):
-                mid = m["match_id"]
-                kickoff_map[mid] = m.get("commence_time", "")
-                schedule.append({
-                    "sport": "tennis", "home": m["player_a"], "away": m["player_b"],
-                    "kickoff": m.get("commence_time", ""), "tour": t.tour,
-                    "tournament": t.name, "category": t.category, "surface": t.surface,
-                })
+        # Schedule: alle geparsten Matches (mit oder ohne Signal), damit PWA
+        # den vollständigen Tag zeigen kann — nicht nur Value-Bets.
+        for m in info.get("matches", []):
+            mid = m["match_id"]
+            kickoff_map[mid] = m.get("commence_time", "")
+            schedule.append({
+                "sport": "tennis",
+                "home": m["player_a"], "away": m["player_b"],
+                "kickoff": m.get("commence_time", ""),
+                "tour": t.tour,
+                "tournament": t.name, "category": t.category,
+                "surface": t.surface, "best_of": t.best_of,
+                "odds_home": m.get("odds_a", 0.0),
+                "odds_away": m.get("odds_b", 0.0),
+            })
 
     write_signals_json_all_users(
         tennis=all_live_signals,
