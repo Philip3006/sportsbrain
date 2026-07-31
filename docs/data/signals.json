@@ -1,7 +1,7 @@
 {
-  "updated": "2026-07-31T05:01:23Z",
+  "updated": "2026-07-31T00:42:38Z",
   "build_info": {
-    "sha": "8e64aea",
+    "sha": "09e4a68",
     "date": "2026-07-31"
   },
   "meta": {
@@ -9,7 +9,18 @@
     "default_user": "philip",
     "user": "philip"
   },
-  "schedule": [],
+  "schedule": [
+    {
+      "sport": "tennis",
+      "home": "Carlos Alcaraz",
+      "away": "Novak Djokovic",
+      "kickoff": "2026-07-06T13:00:00Z",
+      "tour": "atp",
+      "tournament": "Wimbledon",
+      "category": "grand_slam",
+      "surface": "grass"
+    }
+  ],
   "all_odds": {},
   "model_tips": {
     "France vs England": {
@@ -2430,7 +2441,7 @@
     }
   },
   "tennis_stats": {
-    "updated": "2026-07-31T05:01:23Z",
+    "updated": "2026-07-31T00:42:38Z",
     "active_tournaments": [
       {
         "slug": "tennis_atp_washington_open",
