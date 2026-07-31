@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-07",
+  "updated": "2026-07-30",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -151,7 +151,6 @@
       "availability_score": 1.0,
       "ampel": "🟢",
       "suspended": [
-        "Cristian Romero",
         "Gonzalo Montiel",
         "Joaquín Panichelli",
         "Juan Foyth",
@@ -217,7 +216,7 @@
         {
           "name": "Cristian Romero",
           "pos": "DEF",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Exequiel Palacios",
@@ -573,7 +572,8 @@
         "Jeremy Doku",
         "Jérémy Doku",
         "Romelu Lukaku",
-        "Zeno Debast"
+        "Zeno Debast",
+        "Amadou Onana"
       ],
       "players": [
         {
@@ -694,7 +694,7 @@
         {
           "name": "Amadou Onana",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Nathan Ngoy",
@@ -858,7 +858,7 @@
       "suspended": [
         "Raphinha",
         "Wesley França",
-        "Neymar"
+        "Lucas Paquetá"
       ],
       "players": [
         {
@@ -909,7 +909,7 @@
         {
           "name": "Neymar",
           "pos": "FWD",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Raphinha",
@@ -959,7 +959,7 @@
         {
           "name": "Lucas Paquetá",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Luiz Henrique",
@@ -1001,7 +1001,6 @@
       "suspended": [
         "Alfie Jones",
         "Ismaël Koné",
-        "Jonathan David",
         "Marcelo Flores",
         "Moïse Bombito",
         "Alphonso Davies"
@@ -1055,7 +1054,7 @@
         {
           "name": "Jonathan David",
           "pos": "FWD",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Liam Millar",
@@ -2267,8 +2266,9 @@
       "suspended": [
         "Marcus Rashford",
         "Tino Livramento",
-        "Jordan Henderson",
-        "Reece James"
+        "Reece James",
+        "Declan Rice",
+        "Jordan Henderson"
       ],
       "players": [
         {
@@ -2289,7 +2289,7 @@
         {
           "name": "Declan Rice",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "John Stones",
@@ -2410,7 +2410,8 @@
       "ampel": "🟢",
       "suspended": [
         "Hugo Ekitike",
-        "William Saliba"
+        "William Saliba",
+        "Maxence Lacroix"
       ],
       "players": [
         {
@@ -2541,7 +2542,7 @@
         {
           "name": "Maxence Lacroix",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         }
       ]
     },
@@ -2836,7 +2837,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Jean-Ricner Bellegarde"
+      ],
       "players": [
         {
           "name": "Johny Placide",
@@ -2886,7 +2889,7 @@
         {
           "name": "Jean-Ricner Bellegarde",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Louicius Deedson",
@@ -3836,7 +3839,8 @@
       "ampel": "🟢",
       "suspended": [
         "Abdessamad Ezzalzouli",
-        "Nayef Aguerd"
+        "Nayef Aguerd",
+        "Ismael Saibari"
       ],
       "players": [
         {
@@ -3892,7 +3896,7 @@
         {
           "name": "Ismael Saibari",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Munir Mohamedi",
@@ -4972,7 +4976,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Salem Al-Dawsari"
+      ],
       "players": [
         {
           "name": "Nawaf Al-Aqidi",
@@ -5022,7 +5028,7 @@
         {
           "name": "Salem Al-Dawsari",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Saleh Al-Shehri",
@@ -5681,7 +5687,8 @@
       "ampel": "🟢",
       "suspended": [
         "Dani Carvajal",
-        "Fermin Lopez"
+        "Fermin Lopez",
+        "Rodri"
       ],
       "players": [
         {
@@ -5762,7 +5769,7 @@
         {
           "name": "Rodri",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Nico Williams",
@@ -5964,7 +5971,9 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [],
+      "suspended": [
+        "Johan Manzambi"
+      ],
       "players": [
         {
           "name": "Gregor Kobel",
@@ -6009,7 +6018,7 @@
         {
           "name": "Johan Manzambi",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Granit Xhaka",
@@ -6385,7 +6394,6 @@
       "availability_score": 1.0,
       "ampel": "🟢",
       "suspended": [
-        "Christian Pulisic",
         "Cristian Roldan"
       ],
       "players": [
@@ -6437,7 +6445,7 @@
         {
           "name": "Christian Pulisic",
           "pos": "FWD",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Brenden Aaronson",

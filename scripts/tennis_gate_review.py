@@ -32,7 +32,7 @@ from src.config import DEFAULT_USER, TENNIS_CATEGORY_MODE
 
 def load_live_bets(user: str, days: int = 30) -> pd.DataFrame:
     """Lädt settled Tennis-Bets der letzten N Tage aus Ledger."""
-    path = _resolve_ledger_path(user)
+    path = _resolve_ledger_path(user=user)
     if not path.exists():
         print(f"[gate_review] Ledger {path} nicht vorhanden.")
         return pd.DataFrame()

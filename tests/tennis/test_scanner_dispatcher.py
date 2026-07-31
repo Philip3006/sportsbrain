@@ -25,12 +25,19 @@ def test_category_min_edge_unknown_uses_global_default():
     assert category_min_edge("nonexistent") == MIN_EDGE
 
 
+def test_category_mode_atp250_is_live():
+    # 2026-07-31: User-Override — alle Kategorien LIVE.
+    assert category_mode("atp250") == "live"
+
+
 def test_category_mode_grand_slam_is_live():
+    # 2026-07-31: User-Override — alle Kategorien LIVE (auch grand_slam).
     assert category_mode("grand_slam") == "live"
 
 
-def test_category_mode_atp250_default_shadow():
-    assert category_mode("atp250") == "shadow"
+def test_category_mode_wta250_is_live():
+    # 2026-07-31: User-Override — auch wta250 LIVE (Washington-Ready).
+    assert category_mode("wta250") == "live"
 
 
 def test_category_mode_all_live_override():
