@@ -132,30 +132,24 @@ TENNIS_MIN_EDGE_BY_CATEGORY: dict[str, float] = {
 # Live-Gate pro Kategorie: 'live' = Bets in Ledger, 'shadow' = nur Logging.
 # Wird via Phase-B-Backtest gesetzt; Default 'shadow' für Sicherheit.
 TENNIS_CATEGORY_MODE: dict[str, str] = {
-    # 2026-07-30 Full-Backtest (tennis_full_backtest_2026-07-30.md, Sektion 4):
-    #  atp250 PROMOTE → live (n=1824, gewichtete ROI=+3.7%)
-    #  grand_slam DEMOTE → shadow (n=442, gewichtete ROI=-4.7%; nur WTA-grass war validiert, ATP-grass BLACKLIST)
+    # 2026-07-31 User-Override: alle Kategorien LIVE. Backtest-Gates bewusst deaktiviert;
+    # BLACKLIST (Verlust-Kombis n≥30, ROI≤-5%) bleibt aktiv als harter Schutz.
     "atp250":      "live",
-    "grand_slam":  "shadow",
-    "m1000":       "shadow",
-    "wta1000":     "shadow",
-    "atp500":      "shadow",
-    "wta500":      "shadow",
-    "wta250":      "shadow",
-    "tour_final":  "shadow",
+    "grand_slam":  "live",
+    "m1000":       "live",
+    "wta1000":     "live",
+    "atp500":      "live",
+    "wta500":      "live",
+    "wta250":      "live",
+    "tour_final":  "live",
 }
 
 # J2-H: Surface-spezifisches Live-Gate — überschreibt TENNIS_CATEGORY_MODE wenn (category, surface) matcht.
 # Backtest-Basis: Full-Tour Walk-forward 2020-2025 (tennis_full_backtest_2026-07-30.md, Sektion 1).
 # Aktivierungsregel: LIVE bei ROI ≥ 3% & n ≥ 50 (oder ROI ≥ 5% & n ≥ 30). SHADOW-Override bei Verlust-Surface unter LIVE-Kategorie.
 TENNIS_CATEGORY_SURFACE_MODE: dict[tuple[str, str], str] = {
-    # LIVE-Kombinationen
-    ("atp500",  "grass"): "live",   # +18.6% ROI, n=112 — Halle, Queen's, Wimbledon-Vorbereitung
-    ("wta250",  "grass"): "live",   # +16.0% ROI, n=258 — WTA Rasen-Qualifier
-    ("wta1000", "clay"):  "live",   # +8.4%  ROI, n=382 — Madrid, Rom
-    ("wta500",  "grass"): "live",   # +8.1%  ROI, n=147 — WTA 500 Rasen-Events
-    # SHADOW-Overrides: verhindert LIVE-Bets in Verlust-Surface unter LIVE-Kategorie atp250
-    ("atp250",  "grass"): "shadow", # -2.6% ROI, n=234 — Grass unter atp250 LIVE ausklammern
+    # 2026-07-31: Surface-Overrides deaktiviert (User: alles live). BLACKLIST wirkt weiterhin
+    # als harter Cut für katastrophale Verlust-Kombinationen unten.
 }
 
 # BLACKLIST — Kombinationen mit ROI ≤ -5% bei n ≥ 30 aus Backtest-Sektion 1.
