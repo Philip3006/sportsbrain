@@ -1,0 +1,185 @@
+"""Tennisexplorer.com Sekundär-Scraper für Turniere die TheOddsAPI nicht listet.
+
+TheOddsAPI listet aktuell nur 2 aktive Tennis-Turniere (Washington ATP+WTA).
+Kitzbühel, Los Cabos, Prag WTA, Vancouver WTA, Memphis, Challenger, ITF etc.
+fehlen komplett. TE hat sie alle in `/next/`.
+
+Konzept:
+- Discovery: `/next/` liefert alle Matches der nächsten 24-48h
+- Detail: `/match-detail/?id=<n>` hat Odds pro Bookmaker (Home/Away Markt)
+- Best-Price-Aggregation über alle Bookies → analog TheOddsAPI-Output-Format
+- Cache: 30 Min (Odds bewegen sich langsam bei kleineren Events)
+
+Public API:
+    fetch_te_upcoming_matches(min_bookies=1) -> list[dict]
+        gibt list von matches im tennis_scan-format zurück:
+        {match_id, player_a, player_b, commence_time, odds_a, odds_b,
+         ah_odds_a=0, ah_odds_b=0, first_set_odds_a=0, first_set_odds_b=0,
+         totals_over={}, totals_under={}, scorelines={},
+         sport_key="te:{tournament_slug}",
+         te_tournament, te_bookies_count}
+"""
+from __future__ import annotations
+
+import pickle
+import re
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+import requests
+
+from src.config import DATA_CACHE
+
+_BASE = "https://www.tennisexplorer.com"
+_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15"
+_CACHE_PATH = DATA_CACHE / "te_upcoming.pkl"
+_CACHE_TTL_S = 30 * 60  # 30 min
+
+# Regex: match-detail links auf /next/
+_RE_MATCH_ID = re.compile(r'/match-detail/\?id=(\d+)')
+
+# Detail-Page: Home/Away-Sektion mit Player-Namen + Odds-Zeilen
+_RE_HOMEAWAY_HEAD = re.compile(
+    r'<td class="k1">([^<]+)</td>\s*<td class="k2">([^<]+)</td>',
+    re.DOTALL,
+)
+# Odds-Row-Pattern: eine Bookmaker-Zeile mit zwei Odds (k1, k2)
+_RE_ODDS_ROW = re.compile(
+    r'<tr class="(?:one|two)">.*?<td class="k1[^"]*"><div class="odds-in[^"]*">(\d+\.\d{2})</div>.*?'
+    r'<td class="k2[^"]*"><div class="odds-in[^"]*">(\d+\.\d{2})</div>',
+    re.DOTALL,
+)
+# Tournament-Link: /<slug>/2026/(atp-men|wta-women)/. Erster Treffer = eigenes Match-Turnier.
+_RE_TOURNAMENT_LINK = re.compile(
+    r'<a href="/([^/"]+)/2026/(atp-men|wta-women)[^"]*"[^>]*>([A-Z][^<]{2,40})</a>'
+)
+# Kickoff-Zeit im Detail-Header (z.B. "31.07. 22:00")
+_RE_KICKOFF = re.compile(r'(\d{2}\.\d{2}\.)\s*(\d{2}:\d{2})')
+
+
+def _http_get(url: str, timeout: int = 15) -> str | None:
+    try:
+        r = requests.get(url, headers={"User-Agent": _UA}, timeout=timeout)
+        if r.status_code == 200:
+            return r.text
+    except Exception:
+        return None
+    return None
+
+
+def _parse_commence_time(dtstr: str, timestr: str) -> str:
+    """'31.07.', '22:00' → ISO-8601 UTC (assumes current year, TE displays in local CEST)."""
+    try:
+        year = datetime.now().year
+        d, m, _ = dtstr.split(".")
+        # TE zeigt lokale Zeit (typisch CEST); wir speichern +00:00 als approximation
+        # Realistischer wäre pytz, aber der Delta ist für Scanner-Prio unwichtig.
+        return f"{year:04d}-{int(m):02d}-{int(d):02d}T{timestr}:00+00:00"
+    except Exception:
+        return ""
+
+
+def _discover_match_ids() -> list[str]:
+    """Holt alle unique match-detail-IDs aus /next/."""
+    html = _http_get(f"{_BASE}/next/")
+    if not html:
+        return []
+    return list(dict.fromkeys(_RE_MATCH_ID.findall(html)))  # preserve order, dedup
+
+
+def _fetch_match_detail(match_id: str) -> dict | None:
+    """Holt Odds + Metadata für ein Match. Best-Price-Aggregation über alle Bookies."""
+    html = _http_get(f"{_BASE}/match-detail/?id={match_id}")
+    if not html:
+        return None
+
+    # Player-Namen aus Home/Away-Head
+    head = _RE_HOMEAWAY_HEAD.search(html)
+    if not head:
+        return None
+    player_a = head.group(1).strip()
+    player_b = head.group(2).strip()
+
+    # Odds — alle Bookmaker-Zeilen sammeln, max per side
+    odds = _RE_ODDS_ROW.findall(html)
+    if not odds:
+        return None
+    best_a = max(float(a) for a, _ in odds)
+    best_b = max(float(b) for _, b in odds)
+
+    # Turnier-Slug + Tour (atp-men | wta-women) aus erstem passendem Link
+    tour_m = _RE_TOURNAMENT_LINK.search(html)
+    tournament = ""
+    tour = ""
+    slug = ""
+    if tour_m:
+        slug = tour_m.group(1).strip()
+        tour = "atp" if tour_m.group(2) == "atp-men" else "wta"
+        tournament = tour_m.group(3).strip()
+
+    # Kickoff
+    ko_m = _RE_KICKOFF.search(html)
+    commence = _parse_commence_time(ko_m.group(1), ko_m.group(2)) if ko_m else ""
+
+    return {
+        "match_id": f"te_{match_id}",
+        "player_a": player_a, "player_b": player_b,
+        "commence_time": commence,
+        "odds_a": best_a, "odds_b": best_b,
+        "ah_odds_a": 0.0, "ah_odds_b": 0.0,
+        "first_set_odds_a": 0.0, "first_set_odds_b": 0.0,
+        "totals_over": {}, "totals_under": {},
+        "scorelines": {},
+        "sport_key": f"te:{slug}_{tour}" if slug else "te:unknown",
+        "te_tournament": tournament,
+        "te_tour": tour,
+        "te_slug": slug,
+        "te_bookies_count": len(odds),
+    }
+
+
+def fetch_te_upcoming_matches(
+    min_bookies: int = 1,
+    max_matches: int = 200,
+    use_cache: bool = True,
+    max_workers: int = 4,
+) -> list[dict]:
+    """Public API. Liefert alle TE-Matches der nächsten 24-48h.
+
+    Args:
+      min_bookies: skippt Matches mit weniger Bookmaker-Odds (Rauschen-Filter).
+      max_matches: hartes Limit (Netzwerk-Guard, ~1s pro Match).
+      use_cache: 30-Min-Disk-Cache.
+      max_workers: parallel detail-fetches.
+    """
+    if use_cache and _CACHE_PATH.exists():
+        age = time.time() - _CACHE_PATH.stat().st_mtime
+        if age < _CACHE_TTL_S:
+            try:
+                return pickle.loads(_CACHE_PATH.read_bytes())
+            except Exception:
+                pass
+
+    ids = _discover_match_ids()[:max_matches]
+    if not ids:
+        return []
+
+    matches: list[dict] = []
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    with ThreadPoolExecutor(max_workers=max_workers) as ex:
+        futures = {ex.submit(_fetch_match_detail, mid): mid for mid in ids}
+        for fut in as_completed(futures):
+            try:
+                m = fut.result()
+            except Exception:
+                m = None
+            if m and m.get("te_bookies_count", 0) >= min_bookies:
+                matches.append(m)
+
+    DATA_CACHE.mkdir(parents=True, exist_ok=True)
+    try:
+        _CACHE_PATH.write_bytes(pickle.dumps(matches))
+    except Exception:
+        pass
+    return matches
