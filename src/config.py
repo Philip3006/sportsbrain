@@ -132,24 +132,41 @@ TENNIS_MIN_EDGE_BY_CATEGORY: dict[str, float] = {
 # Live-Gate pro Kategorie: 'live' = Bets in Ledger, 'shadow' = nur Logging.
 # Wird via Phase-B-Backtest gesetzt; Default 'shadow' für Sicherheit.
 TENNIS_CATEGORY_MODE: dict[str, str] = {
-    "grand_slam":  "live",   # Wimbledon WTA validiert
+    # 2026-07-30 Full-Backtest (tennis_full_backtest_2026-07-30.md, Sektion 4):
+    #  atp250 PROMOTE → live (n=1824, gewichtete ROI=+3.7%)
+    #  grand_slam DEMOTE → shadow (n=442, gewichtete ROI=-4.7%; nur WTA-grass war validiert, ATP-grass BLACKLIST)
+    "atp250":      "live",
+    "grand_slam":  "shadow",
     "m1000":       "shadow",
     "wta1000":     "shadow",
     "atp500":      "shadow",
     "wta500":      "shadow",
-    "atp250":      "shadow",
     "wta250":      "shadow",
     "tour_final":  "shadow",
 }
 
 # J2-H: Surface-spezifisches Live-Gate — überschreibt TENNIS_CATEGORY_MODE wenn (category, surface) matcht.
-# Backtest-Basis: Walk-forward 2022-2025, nur Kombinationen mit ROI > +8% und n ≥ 30 Matches.
-# Alle anderen (category, surface)-Paare fallen auf TENNIS_CATEGORY_MODE zurück.
+# Backtest-Basis: Full-Tour Walk-forward 2020-2025 (tennis_full_backtest_2026-07-30.md, Sektion 1).
+# Aktivierungsregel: LIVE bei ROI ≥ 3% & n ≥ 50 (oder ROI ≥ 5% & n ≥ 30). SHADOW-Override bei Verlust-Surface unter LIVE-Kategorie.
 TENNIS_CATEGORY_SURFACE_MODE: dict[tuple[str, str], str] = {
-    ("atp500",  "grass"): "live",   # +18.6% ROI — Halle, Queen's, Wimbledon-Vorbereitung
-    ("wta250",  "grass"): "live",   # +16.0% ROI — WTA Rasen-Qualifier
-    ("wta1000", "clay"):  "live",   # +8.4%  ROI — Madrid, Rom
-    ("wta500",  "grass"): "live",   # +8.1%  ROI — WTA 500 Rasen-Events
+    # LIVE-Kombinationen
+    ("atp500",  "grass"): "live",   # +18.6% ROI, n=112 — Halle, Queen's, Wimbledon-Vorbereitung
+    ("wta250",  "grass"): "live",   # +16.0% ROI, n=258 — WTA Rasen-Qualifier
+    ("wta1000", "clay"):  "live",   # +8.4%  ROI, n=382 — Madrid, Rom
+    ("wta500",  "grass"): "live",   # +8.1%  ROI, n=147 — WTA 500 Rasen-Events
+    # SHADOW-Overrides: verhindert LIVE-Bets in Verlust-Surface unter LIVE-Kategorie atp250
+    ("atp250",  "grass"): "shadow", # -2.6% ROI, n=234 — Grass unter atp250 LIVE ausklammern
+}
+
+# BLACKLIST — Kombinationen mit ROI ≤ -5% bei n ≥ 30 aus Backtest-Sektion 1.
+# Dokumentation: aktuell nicht gate-relevant (alle Einträge liegen unter SHADOW-Kategorien), aber wichtig für
+# Signal-Archive-Audit und künftige Live-Gate-Reviews (scripts/tennis_gate_review.py).
+TENNIS_CATEGORY_SURFACE_BLACKLIST: set[tuple[str, str, str]] = {
+    ("atp500",    "ATP", "hard"),   #  -8.8% ROI, n=398
+    ("grand_slam","ATP", "grass"),  #  -9.5% ROI, n=200 (Wimbledon Herren)
+    ("m1000",     "ATP", "clay"),   #  -9.4% ROI, n=410
+    ("tour_final","WTA", "hard"),   # -13.0% ROI, n=43
+    ("wta1000",   "WTA", "hard"),   #  -5.3% ROI, n=1058
 }
 
 # I12: Umwelt-Faktoren — Höhenlage + Kunstrasen (analog Tennis Surface-Elo).
