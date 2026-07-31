@@ -39,7 +39,7 @@ def build_report() -> dict:
 
     for g in schedule:
         t = g.get("tournament", "?") or "?"
-        src = g.get("odds_source") or "the_odds_api"
+        src = g.get("odds_source") or g.get("source") or "the_odds_api"
         d_only = bool(g.get("is_display_only", False))
         rec = per_tournament[t]
         rec["total"] += 1

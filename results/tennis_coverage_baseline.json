@@ -1,0 +1,114 @@
+{
+  "generated_at": "2026-07-31T18:54:43Z",
+  "totals": {
+    "matches": 111,
+    "with_real_odds": 111,
+    "display_only": 0,
+    "coverage_pct": 100.0
+  },
+  "sources": {
+    "tennisexplorer": 106,
+    "the_odds_api": 5
+  },
+  "per_tournament": {
+    "Washington Open": {
+      "total": 70,
+      "with_real_odds": 70,
+      "display_only": 0,
+      "coverage_pct": 100.0,
+      "sources": {
+        "tennisexplorer": 70
+      }
+    },
+    "UTR Pro Tennis Series 3": {
+      "total": 13,
+      "with_real_odds": 13,
+      "display_only": 0,
+      "coverage_pct": 100.0,
+      "sources": {
+        "tennisexplorer": 13
+      }
+    },
+    "Los Cabos Open": {
+      "total": 4,
+      "with_real_odds": 4,
+      "display_only": 0,
+      "coverage_pct": 100.0,
+      "sources": {
+        "tennisexplorer": 4
+      }
+    },
+    "San Marino challenger": {
+      "total": 4,
+      "with_real_odds": 4,
+      "display_only": 0,
+      "coverage_pct": 100.0,
+      "sources": {
+        "tennisexplorer": 4
+      }
+    },
+    "Bonn challenger": {
+      "total": 4,
+      "with_real_odds": 4,
+      "display_only": 0,
+      "coverage_pct": 100.0,
+      "sources": {
+        "tennisexplorer": 4
+      }
+    },
+    "Liberec challenger": {
+      "total": 4,
+      "with_real_odds": 4,
+      "display_only": 0,
+      "coverage_pct": 100.0,
+      "sources": {
+        "tennisexplorer": 4
+      }
+    },
+    "Samsun challenger": {
+      "total": 4,
+      "with_real_odds": 4,
+      "display_only": 0,
+      "coverage_pct": 100.0,
+      "sources": {
+        "tennisexplorer": 4
+      }
+    },
+    "Atp Washington Open": {
+      "total": 3,
+      "with_real_odds": 3,
+      "display_only": 0,
+      "coverage_pct": 100.0,
+      "sources": {
+        "the_odds_api": 3
+      }
+    },
+    "Wta Washington Open": {
+      "total": 2,
+      "with_real_odds": 2,
+      "display_only": 0,
+      "coverage_pct": 100.0,
+      "sources": {
+        "the_odds_api": 2
+      }
+    },
+    "Vancouver challenger": {
+      "total": 2,
+      "with_real_odds": 2,
+      "display_only": 0,
+      "coverage_pct": 100.0,
+      "sources": {
+        "tennisexplorer": 2
+      }
+    },
+    "UTR Pro Tennis Series 5": {
+      "total": 1,
+      "with_real_odds": 1,
+      "display_only": 0,
+      "coverage_pct": 100.0,
+      "sources": {
+        "tennisexplorer": 1
+      }
+    }
+  }
+}
