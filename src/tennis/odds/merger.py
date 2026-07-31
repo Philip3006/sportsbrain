@@ -34,7 +34,11 @@ def _load_sources() -> list[tuple[str, int, Callable]]:
         sources.append((_bf.name, _bf.tier, _bf.fetch))
     except Exception:
         pass
-    # Agent 10 (WebSearch-Ensemble) folgt.
+    try:
+        from src.tennis.odds import websearch as _ws
+        sources.append((_ws.name, _ws.tier, _ws.fetch))
+    except Exception:
+        pass
     return sources
 
 
