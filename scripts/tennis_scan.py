@@ -628,11 +628,40 @@ def main() -> None:
             )
             _pred_sources[probs.get("source", "elo")] += 1
 
-            # Agent 8 (Display-only): Match hat keine Marktquote → Implied vom
-            # Modell nur zur Anzeige, KEINE Signals (no_bet_flag im Ledger blockt).
+            # Match hat keine TheOddsAPI-Quote → Multi-Source-Merger versuchen
+            # (Agent 5 Tennis-Explorer/OddsPortal, dann Agent 3 Betfair, dann
+            # Agent 10 WebSearch, dann Agent 8 Implied als Display-only).
             if m.get("is_display_only"):
-                from src.tennis.odds.implied import implied_from_prob
-                q = implied_from_prob(probs.get("p_a", 0.5), pa, pb)
+                from src.tennis.odds.merger import fetch_best_odds
+                hint = {
+                    "player_a": pa, "player_b": pb,
+                    "commence_time": m.get("commence_time", ""),
+                    "surface": t.surface, "best_of": t.best_of,
+                    "category": t.category,
+                    "model_p_a": probs.get("p_a", 0.5),
+                    "sport_key": m.get("sport_key", ""),
+                }
+                quote = fetch_best_odds(hint, ratings=ratings, allow_implied=True)
+                if quote and not quote.no_bet_flag:
+                    m["odds_a"] = quote.h2h_a
+                    m["odds_b"] = quote.h2h_b
+                    m["odds_source"] = quote.source
+                    m["source_tier"] = quote.source_tier
+                    m["is_display_only"] = False
+                    # H2H-only Detection (AH/O/U/Set-Betting nicht verfuegbar bei diesen Quellen)
+                    sigs = detect_value_tennis(
+                        player_a=pa, player_b=pb, probs=probs,
+                        odds_a=quote.h2h_a, odds_b=quote.h2h_b,
+                        bankroll=args.bankroll, match_id=m["match_id"],
+                        min_edge=min_edge, tour=t.tour,
+                    )
+                    signals.extend(sigs)
+                    for s in sigs:
+                        print(f"  [{t.slug}:{quote.source}] {pa} vs {pb} — {s.market} EV+{s.ev*100:.1f}% @{s.decimal_odds:.2f}")
+                    continue
+
+                # Fallback: Agent 8 Implied (Display-only)
+                q = quote  # merger returned implied
                 m["odds_a"] = q.h2h_a
                 m["odds_b"] = q.h2h_b
                 m["odds_source"] = q.source

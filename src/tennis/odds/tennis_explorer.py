@@ -1,0 +1,90 @@
+"""Agent 5 (Primär) — Tennisexplorer.com als OddsSource.
+
+Wrappt den bestehenden Bulk-Scraper src.data.tennis_secondary_odds um das
+OddsSource-Interface. Bulk-Cache wird beim ersten fetch() gefüllt und dann
+30 Minuten in-memory geshared (zusätzlich zum 30-Min-Disk-Cache im Scraper).
+
+Stärken: sehr breite Coverage inkl. ITF/Challenger/Qualifier.
+Schwächen: nur H2H (keine AH/Totals/Set-Betting).
+"""
+from __future__ import annotations
+
+import time
+from typing import Optional
+
+from src.tennis.name_norm import (
+    to_elo_name_from_odds_api,
+    to_elo_name_from_te,
+)
+from src.tennis.odds.base import OddsQuote, sanity_ok
+
+name = "tennis_explorer"
+tier = 2
+
+_BULK: list[dict] = []
+_TS: float = 0.0
+_TTL_S = 30 * 60
+
+
+def _get_bulk() -> list[dict]:
+    global _BULK, _TS
+    if _BULK and (time.time() - _TS) < _TTL_S:
+        return _BULK
+    try:
+        from src.data.tennis_secondary_odds import fetch_te_upcoming_matches
+        _BULK = fetch_te_upcoming_matches(min_bookies=2, max_matches=200)
+        _TS = time.time()
+    except Exception:
+        _BULK = []
+    return _BULK
+
+
+def _match_key(name_norm: str) -> str:
+    return name_norm.lower().strip()
+
+
+def fetch(match_hint: dict) -> Optional[OddsQuote]:
+    pa_raw = match_hint.get("player_a", "")
+    pb_raw = match_hint.get("player_b", "")
+    if not pa_raw or not pb_raw:
+        return None
+
+    src_hint = match_hint.get("name_source", "odds_api")
+    if src_hint == "te":
+        pa_key = _match_key(to_elo_name_from_te(pa_raw))
+        pb_key = _match_key(to_elo_name_from_te(pb_raw))
+    else:
+        pa_key = _match_key(to_elo_name_from_odds_api(pa_raw))
+        pb_key = _match_key(to_elo_name_from_odds_api(pb_raw))
+
+    for m in _get_bulk():
+        mpa = _match_key(to_elo_name_from_te(m.get("player_a", "")))
+        mpb = _match_key(to_elo_name_from_te(m.get("player_b", "")))
+        if not mpa or not mpb:
+            continue
+
+        forward = (mpa == pa_key and mpb == pb_key)
+        reverse = (mpa == pb_key and mpb == pa_key)
+        if not (forward or reverse):
+            continue
+
+        a = m.get("odds_a", 0.0)
+        b = m.get("odds_b", 0.0)
+        if reverse:
+            a, b = b, a
+        if not sanity_ok(a, b):
+            continue
+
+        bookies = int(m.get("te_bookies_count", 1))
+        return OddsQuote(
+            player_a=pa_raw,
+            player_b=pb_raw,
+            h2h_a=a,
+            h2h_b=b,
+            source="tennis_explorer",
+            source_tier=2,
+            bookmaker="consensus",
+            confidence=min(1.0, 0.4 + 0.1 * bookies),
+            bookies_count=bookies,
+        )
+    return None
