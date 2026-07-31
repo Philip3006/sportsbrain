@@ -17,6 +17,9 @@ import pandas as pd
 from src.models.tennis_elo import TennisEloRatings, predict_winner
 from src.models import tennis_lgbm as tlgbm
 from src.tennis.features import RollingState, build_match_features
+from src.tennis.name_norm import (
+    is_probably_elo_format, to_elo_name_from_odds_api, to_elo_name_from_te,
+)
 
 _MODEL_DIR = Path(__file__).parent.parent.parent / "models" / "tennis_lgbm"
 _CACHED: dict[str, object] = {}
@@ -49,6 +52,15 @@ def _load_model():
 _LGBM_WEIGHT = 0.45
 
 
+def _normalize_for_elo(name: str, source: str = "odds_api") -> str:
+    """source ∈ {'odds_api', 'te', 'elo'}. Idempotent für elo-Format."""
+    if is_probably_elo_format(name):
+        return name
+    if source == "te":
+        return to_elo_name_from_te(name)
+    return to_elo_name_from_odds_api(name)
+
+
 def predict_winner_ensemble(
     player_a: str,
     player_b: str,
@@ -59,9 +71,17 @@ def predict_winner_ensemble(
     round_str: str = "",
     rank_a: float | None = None,
     rank_b: float | None = None,
+    name_source: str = "odds_api",
 ) -> dict[str, float]:
-    """Returns {p_a, p_b, source}. Source ∈ {'elo', 'ensemble'}."""
-    elo_probs = predict_winner(player_a, player_b, ratings, surface)
+    """Returns {p_a, p_b, source}. Source ∈ {'elo', 'ensemble'}.
+
+    name_source: Format-Hint für Elo-Name-Konvertierung. 'odds_api' für Live-
+    Scanner-Namen (Vorname Nachname); 'te' für Tennisexplorer (Nachname Vorname).
+    """
+    # Namen für Elo-Lookup normalisieren (bewahrt originale Anzeige-Namen).
+    elo_key_a = _normalize_for_elo(player_a, name_source)
+    elo_key_b = _normalize_for_elo(player_b, name_source)
+    elo_probs = predict_winner(elo_key_a, elo_key_b, ratings, surface)
 
     model, gate_passed = _load_model()
     if model is None or not gate_passed:
@@ -73,10 +93,10 @@ def predict_winner_ensemble(
     ra = rank_a if rank_a and rank_a > 0 else _MIN_RANK
     rb = rank_b if rank_b and rank_b > 0 else _MIN_RANK
 
-    elo_a_over = ratings.get_overall(player_a)
-    elo_b_over = ratings.get_overall(player_b)
-    elo_a_surf = ratings.get_blended(player_a, surface)
-    elo_b_surf = ratings.get_blended(player_b, surface)
+    elo_a_over = ratings.get_overall(elo_key_a)
+    elo_b_over = ratings.get_overall(elo_key_b)
+    elo_a_surf = ratings.get_blended(elo_key_a, surface)
+    elo_b_surf = ratings.get_blended(elo_key_b, surface)
 
     feats = build_match_features(
         player_a=player_a, player_b=player_b,

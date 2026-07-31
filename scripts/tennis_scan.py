@@ -735,6 +735,39 @@ def main() -> None:
                     best_of = reg.best_of
                     tournament_name = reg.name
                     enriched += 1
+
+                    # Signal-Detection für TE-Matches mit Registry-Match: nutze
+                    # h2h-only-detection (kein AH/O/U verfügbar via TE).
+                    _te_mode = category_mode(reg.category, surface=reg.surface, all_live=args.all_live)
+                    if _te_mode == "live":
+                        # Guardrail: TE listet oft ITF/Qualifier/Junior unter demselben
+                        # Turnier-Slug wie ATP-Main-Draw. Signal-Detection nur wenn
+                        # BEIDE Spieler eine echte Elo-Historie haben (nicht Default 1500).
+                        from src.tennis.name_norm import to_elo_name_from_te
+                        _ea = to_elo_name_from_te(m["player_a"])
+                        _eb = to_elo_name_from_te(m["player_b"])
+                        _ra = ratings.get_overall(_ea)
+                        _rb = ratings.get_overall(_eb)
+                        if _ra != 1500.0 and _rb != 1500.0:
+                            try:
+                                _probs = predict_winner_ensemble(
+                                    m["player_a"], m["player_b"], ratings, reg.surface,
+                                    best_of=reg.best_of, category=reg.category,
+                                    name_source="te",
+                                )
+                                _min_edge = category_min_edge(reg.category)
+                                _sigs = detect_value_tennis(
+                                    player_a=m["player_a"], player_b=m["player_b"],
+                                    probs=_probs, odds_a=m.get("odds_a", 0.0),
+                                    odds_b=m.get("odds_b", 0.0), bankroll=args.bankroll,
+                                    match_id=m["match_id"], min_edge=_min_edge, tour=reg.tour,
+                                )
+                                if _sigs:
+                                    all_live_signals.extend(_sigs)
+                                    for s in _sigs:
+                                        print(f"  [te:{reg.slug}] {m['player_a']} vs {m['player_b']} — {s.market} EV+{s.ev*100:.1f}% @{s.decimal_odds:.2f}")
+                            except Exception as e:
+                                print(f"  [te-signal:{reg.slug}] {e}")
                 else:
                     category = ""
                     surface = ""
