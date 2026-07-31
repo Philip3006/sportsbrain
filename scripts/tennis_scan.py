@@ -215,11 +215,11 @@ def _parse_event_markets(event: dict, sport_key: str) -> dict | None:
     ws_h2h: dict | None = None
     if len(bookmakers) < _MIN_BOOKMAKERS:
         ws_h2h = _websearch_tennis_fallback(home, away, tournament=sport_key)
-        if not ws_h2h:
-            print(f"  [skip] {home} vs {away} — nur {len(bookmakers)} Bookies + no WebSearch")
-            return None
-        print(f"  [websearch] {home} vs {away} — h2h via WebSearch "
-              f"({ws_h2h['a']:.2f}/{ws_h2h['b']:.2f})")
+        if ws_h2h:
+            print(f"  [websearch] {home} vs {away} — h2h via WebSearch "
+                  f"({ws_h2h['a']:.2f}/{ws_h2h['b']:.2f})")
+        # Kein früher Return mehr: bei fehlenden Odds übernimmt Agent 8
+        # (Modell-Implied) im main-Loop und markiert is_display_only.
 
     best = {
         "h2h_a": 0.0, "h2h_b": 0.0,
@@ -282,8 +282,9 @@ def _parse_event_markets(event: dict, sport_key: str) -> dict | None:
         best["h2h_a"] = ws_h2h["a"]
         best["h2h_b"] = ws_h2h["b"]
 
-    if not best["h2h_a"] or not best["h2h_b"]:
-        return None
+    is_display_only = not best["h2h_a"] or not best["h2h_b"]
+    if is_display_only:
+        print(f"  [display-only] {home} vs {away} — keine Marktquote, Modell-Preis nur zur Anzeige")
 
     return {
         "match_id": match_id,
@@ -292,6 +293,7 @@ def _parse_event_markets(event: dict, sport_key: str) -> dict | None:
         "player_b": away,
         "odds_a": best["h2h_a"],
         "odds_b": best["h2h_b"],
+        "is_display_only": is_display_only,
         "ah_odds_a": best["spread_a"],
         "ah_odds_b": best["spread_b"],
         "first_set_odds_a": best["fs_a"],
@@ -625,6 +627,19 @@ def main() -> None:
                 best_of=t.best_of, category=t.category,
             )
             _pred_sources[probs.get("source", "elo")] += 1
+
+            # Agent 8 (Display-only): Match hat keine Marktquote → Implied vom
+            # Modell nur zur Anzeige, KEINE Signals (no_bet_flag im Ledger blockt).
+            if m.get("is_display_only"):
+                from src.tennis.odds.implied import implied_from_prob
+                q = implied_from_prob(probs.get("p_a", 0.5), pa, pb)
+                m["odds_a"] = q.h2h_a
+                m["odds_b"] = q.h2h_b
+                m["odds_source"] = q.source
+                m["source_tier"] = q.source_tier
+                m["no_bet_flag"] = True
+                continue
+
             sigs = detect_all_markets(m, probs, args.bankroll, min_edge, t)
             signals.extend(sigs)
             for s in sigs:
@@ -705,6 +720,8 @@ def main() -> None:
                 "surface": t.surface, "best_of": t.best_of,
                 "odds_home": m.get("odds_a", 0.0),
                 "odds_away": m.get("odds_b", 0.0),
+                "odds_source": m.get("odds_source", "the_odds_api"),
+                "is_display_only": bool(m.get("is_display_only", False)),
             })
 
     # ---- 7b. Sekundär-Coverage via tennisexplorer.com (Skip im Mock/Turnier-Filter) ----
