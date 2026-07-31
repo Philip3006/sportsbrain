@@ -627,7 +627,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Abhängigkeiten**: I9 (Tennis-Integration gleichzeitig mit I9 bauen)
 - **Verifikation**: Nach Tennis-Scan: `signal_history.jsonl` enthält Zeilen mit `"sport": "tennis"`.
 
-### J2-K. + NEU Tennis ML-Modell + Feature Engineering (P2, vor US-Open-Serie 2026-08-10)
+### J2-K. ✅ erledigt 2026-07-31 Tennis ML-Modell + Feature Engineering (P1, vor US-Open-Serie 2026-08-10)
 - **Was**: LightGBM/HistGradientBoosting analog `src/models/lgbm_model.py` für Tennis. Features: H2H-Bilanz (surface-spezifisch), Form (letzte N Matches), Serve-Stats (Aces/First-Serve%, Break%), Surface-Elo-Delta, Tournament-Level, Travel-Fatigue. Walk-forward-Gate: ML-ROI ≥ Elo-Baseline auf 2024-2025-Holdout. Output: Ensemble aus Elo + ML analog Fußball DC + LGBM.
 - **Warum**: Aktuell nur Elo → kein Ensemble, kein SHAP, keine H2H/Form-Nutzung. Tennis-Backtest zeigt ROI-Varianz zwischen Surfaces (atp500 grass +18.6% vs hard −8.8%) — ML kann diese Signale kombinieren und Surface-Kontext stärker gewichten als lineares Elo.
 - **Impact/Aufwand/Risiko**: 🟢 · 🔴 · 🟡 (Overfitting-Risiko bei kleinen Stichproben; Walk-forward-Gate Pflicht)
@@ -636,7 +636,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Abhängigkeiten**: J2 ✅, J2-G ✅ (Datenbasis)
 - **Verifikation**: Walk-forward-ROI Tennis-ML ≥ Elo-Baseline auf Holdout 2024-2025; Brier-Improvement ≥ 0.005.
 
-### J2-L. + NEU Tennis Walk-forward Backtest + CLV-Tracking (P2)
+### J2-L. ✅ erledigt 2026-07-31 Tennis Walk-forward Backtest + CLV-Tracking (P1)
 - **Was**: `scripts/tennis_backtest.py` hat ROI-Auswertung aber kein Walk-forward (kein Time-Split, kein CLV-Tracking). Analog `src/backtest/walk_forward.py` + `src/backtest/clv_tracker.py` für Tennis: rollierendes Fenster (Train 3 Jahre, Val 6 Monate), Closing-Odds aus Tennis-XLSX-Spalten B365W/B365L, CLV-Delta pro Bet. CLV-Backfill für bestehende Tennis-Bets im Ledger.
 - **Warum**: Aktuell kein formaler Zeitreihen-Backtest für Tennis — ROI-Werte aus J2-G sind Gesamt-Sample, nicht zeitstabil. CLV fehlt komplett für Tennis-Bets (nur Fußball hat CLV-Tracking via F3/F4).
 - **Impact/Aufwand/Risiko**: 🟡 · 🟡 · 🟢
@@ -764,8 +764,8 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **9f** | **I11 Fußball Liga Auto-Discovery** — statische config-Liste → TheOddsAPI-Discovery analog Tennis | **vor 2026-08-15** (Bundesliga-Start) | ~2 h |
 | **9g** | **I10 Fußball Halbzeit-Simulation** — DC-H1-Lambda-Kalibrierung + halftime_sim.py analog tennis/sim.py | **nach WM, parallel zu I3** | 3-4 h |
 | **9h** | **I12 Fußball Umwelt-Faktoren** — Höhenlage + Kunstrasen, DC-Adjustment analog host_boost/Tennis Surface | **nach I10/I11** | 3-4 h |
-| **12g** | **J2-K Tennis ML-Modell** — LightGBM + H2H/Form/Serve-Features, Walk-forward-Gate vs. Elo-Baseline | **vor US-Open 2026-08-10** | 8-12 h |
-| **12h** | **J2-L Tennis Walk-forward + CLV** — zeitstabiler Backtest + CLV-Backfill im Ledger für Tennis-Bets | **parallel zu J2-K** | 3-4 h |
+| **12g** | J2-K Tennis ML-Modell ✅ erledigt 2026-07-31 (Ensemble Elo⊕LGBM 55/45, Gate ΔBrier +0.0039) | vor US-Open 2026-08-10 | 8-12 h |
+| **12h** | J2-L Tennis Walk-forward + CLV ✅ erledigt 2026-07-31 (CLV +10.61%, LGBM 4 Chunks konsistent besser als Elo) | parallel zu J2-K | 3-4 h |
 | **13b** | **J2-M Tennis Live-Stats** — Tennis Abstract / Sofascore Tennis als zweite Datenquelle (Feature-Input J2-K) | **P3, nach J2-K** | 8-12 h |
 
 ---
