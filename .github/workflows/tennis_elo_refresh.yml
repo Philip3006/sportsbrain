@@ -1,0 +1,62 @@
+name: Tennis Elo Refresh (weekly)
+
+on:
+  schedule:
+    # Montags 03:00 UTC - nach ATP/WTA-Wochenschluss Sonntag
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  tennis-elo-refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Retrain Tennis-Elo (XLSX Primary)
+        id: retrain
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: |
+          python scripts/tennis_retrain.py
+          echo "status=ok" >> $GITHUB_OUTPUT
+
+      - name: Write health snapshot
+        if: always()
+        run: |
+          STATUS="${{ steps.retrain.outputs.status || 'error' }}"
+          python -m src.monitoring.health_writer --job tennis_retrain --status "$STATUS" --exit-code ${{ job.status == 'success' && 0 || 1 }} || true
+
+      - name: Commit results
+        run: |
+          git config user.name "SportsBrain Bot"
+          git config user.email "bot@sportsbrain"
+          git add models/tennis/elo_snapshot.pkl models/tennis/elo_meta.json || true
+          git diff --staged --quiet || git commit -m "auto: tennis elo refresh $(date +%Y-%m-%d)"
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase --strategy-option=theirs origin/main \
+              || { git rebase --abort 2>/dev/null || true; }
+            git push origin main && exit 0
+            sleep $((RANDOM % 20 + 10))
+          done
+          echo "[push] giving up after 5 attempts" >&2; exit 1

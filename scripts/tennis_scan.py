@@ -178,6 +178,30 @@ def _fetch_events_only(api_key: str, sport_key: str) -> list[dict]:
         return []
 
 
+def _fetch_event_odds(api_key: str, sport_key: str, event_id: str) -> dict | None:
+    """TheOddsAPI Single-Event-Odds-Endpoint.
+
+    Nutzung: Wenn Bulk-/odds/ 422 liefert (Tennis-typisch bei kurz-anstehenden
+    Turnieren), sind pro-Event-Odds trotzdem verfügbar. Diese Route liefert
+    das vollständige Event-Objekt inkl. bookmakers[] wie /odds.
+    """
+    url = f"{_ODDS_API_URL}/sports/{sport_key}/events/{event_id}/odds"
+    # Single-Event-Endpoint akzeptiert nur h2h/spreads/totals (kein set_betting/set_winner).
+    params = {
+        "apiKey": api_key,
+        "regions": "eu,us,uk,au",
+        "markets": "h2h,spreads,totals",
+        "oddsFormat": "decimal",
+    }
+    try:
+        resp = retry_request("GET", url, params=params, timeout=15,
+                             log_prefix=f"[tennis-event-odds:{sport_key}]")
+        resp.raise_for_status()
+        return resp.json()
+    except Exception:
+        return None
+
+
 def _parse_event_markets(event: dict, sport_key: str) -> dict | None:
     """Aggregiert beste Quoten aus event.bookmakers über alle benötigten Märkte."""
     home = event.get("home_team", "")
@@ -283,7 +307,7 @@ def fetch_tournament_odds(api_key: str, sport_key: str) -> list[dict]:
     url = f"{_ODDS_API_URL}/sports/{sport_key}/odds"
     params = {
         "apiKey": api_key,
-        "regions": "eu",
+        "regions": "eu,us,uk,au",
         "markets": "h2h,spreads,set_winner,totals,set_betting",
         "oddsFormat": "decimal",
     }
@@ -309,10 +333,18 @@ def fetch_tournament_odds(api_key: str, sport_key: str) -> list[dict]:
             if not soon:
                 print(f"  [{sport_key}] Markt nicht offen (HTTP {code}) — kein Event in 48h-Fenster")
                 return []
-            print(f"  [{sport_key}] Markt nicht offen (HTTP {code}) — "
-                  f"{len(soon)} Matches <48h → WebSearch-Pfad")
+            print(f"  [{sport_key}] Bulk-/odds HTTP {code} — "
+                  f"{len(soon)} Matches <48h → Single-Event-Odds-Pfad")
             matches = []
             for ev in soon:
+                # Erst Single-Event-Odds probieren (schlägt WebSearch qualitativ um Faktor 20)
+                full_ev = _fetch_event_odds(api_key, sport_key, ev["id"])
+                if full_ev and full_ev.get("bookmakers"):
+                    parsed = _parse_event_markets(full_ev, sport_key)
+                    if parsed:
+                        matches.append(parsed)
+                        continue
+                # Als letzter Fallback: WebSearch pro Paarung
                 ev.setdefault("bookmakers", [])
                 parsed = _parse_event_markets(ev, sport_key)
                 if parsed:
