@@ -772,12 +772,20 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ## 📊 Statistik
 
-- **Insgesamt**: 73 konkrete Items (+4 ggü. 2026-06-25: F5 Worker-Cron, F6 Healer-No-Commit, F7 Schedule-Race, L5 Conflict-Wipe-Hotfix)
+- **Insgesamt**: 74 konkrete Items (+1 ggü. 2026-06-25: Tennis-Name-Normalisierung als kritischer Fix J2-K-1)
 - **P0**: 13 (sofort) — davon 13 ✅
-- **P1**: 35 — davon 34 ✅ (neu: F5 offen, alle anderen P1 erledigt; M5 blockiert bis FIFA-Draw 2026-06-27)
-- **P2**: 17 — davon 10 ✅ (E1, E2, E3, E4, H1, H2, I4, I5, I6, I7); offen: I1–I3, I8, J2-K, J2-L, J3, J4, F6, F7
+- **P1**: 38 — davon 37 ✅ (neu erledigt 2026-07-31: I1, I2, I3, J2-K, J2-L, F7; nur F5 offen)
+- **P2**: 14 — davon 10 ✅ (E1, E2, E3, E4, H1, H2, I4, I5, I6, I7); offen: I8, J3, J4, F6
 - **P3**: 5 — J2-M (Tennis Live-Stats) + 4 weitere Q4 2026
 - **Veto**: 10 (K5 aufgehoben 2026-06-26)
+
+### Sprint 2026-07-31 — Post-WM + Tennis-Vollständigkeit ✅
+
+Wichtiger Nebenbefund: `predict_winner()`-Aufruf mit TheOddsAPI-Namen ("Ben Shelton")
+schlug im Elo-Storage (Format "Shelton B.") immer fehl → alle Live-Predictions p=0.5.
+Bug war seit Live-Schaltung latent und erklärt schwache Live-ROI trotz positivem Backtest.
+Fix in `src/tennis/name_norm.py` + `src/tennis/ensemble.py` (idempotent). Verifiziert:
+Alcaraz vs Djokovic p_a 0.50 → 0.67, Fritz vs Michelsen 0.50 → 0.75.
 
 ---
 
