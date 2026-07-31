@@ -1,0 +1,137 @@
+{
+  "frozen_at": "2026-07-31T14:13:58.189680+00:00",
+  "tournament": "FIFA World Cup 2026",
+  "date_range": [
+    "2026-06-11",
+    "2026-07-19"
+  ],
+  "n_matches_source": 104,
+  "n_teams_source": 48,
+  "ledger": {
+    "n_bets_total": 67,
+    "n_bets_wm": 67,
+    "wm_won": 23,
+    "wm_lost": 34,
+    "wm_void": 8,
+    "wm_total_staked": 772.31,
+    "wm_total_pnl": -12.33,
+    "wm_roi_pct": -1.597,
+    "wm_win_rate_pct": 40.35,
+    "mean_clv": 0.1102,
+    "by_market_top5_roi": [
+      [
+        "o/u3.0_over",
+        {
+          "n": 3,
+          "pnl": 34.5,
+          "roi_pct": 143.75,
+          "won": 2,
+          "lost": 1
+        }
+      ],
+      [
+        "draw",
+        {
+          "n": 8,
+          "pnl": 63.53999999999999,
+          "roi_pct": 78.50259451445515,
+          "won": 3,
+          "lost": 4
+        }
+      ],
+      [
+        "away",
+        {
+          "n": 4,
+          "pnl": 1.5,
+          "roi_pct": 2.941176470588235,
+          "won": 1,
+          "lost": 1
+        }
+      ],
+      [
+        "home",
+        {
+          "n": 6,
+          "pnl": 1.4000000000000004,
+          "roi_pct": 2.0848845867460915,
+          "won": 2,
+          "lost": 2
+        }
+      ],
+      [
+        "o/u2.5_over",
+        {
+          "n": 9,
+          "pnl": 0.690000000000003,
+          "roi_pct": 0.6125166444740373,
+          "won": 4,
+          "lost": 5
+        }
+      ]
+    ],
+    "by_market_bottom5_roi": [
+      [
+        "o/u3.0_under",
+        {
+          "n": 5,
+          "pnl": -34.4,
+          "roi_pct": -57.718120805369125,
+          "won": 1,
+          "lost": 4
+        }
+      ],
+      [
+        "o/u2.5_under",
+        {
+          "n": 8,
+          "pnl": -38.47,
+          "roi_pct": -39.80753311258278,
+          "won": 2,
+          "lost": 5
+        }
+      ],
+      [
+        "btts_yes",
+        {
+          "n": 3,
+          "pnl": -8.600000000000001,
+          "roi_pct": -23.262104408980257,
+          "won": 1,
+          "lost": 2
+        }
+      ],
+      [
+        "o/u2.5_over",
+        {
+          "n": 9,
+          "pnl": 0.690000000000003,
+          "roi_pct": 0.6125166444740373,
+          "won": 4,
+          "lost": 5
+        }
+      ],
+      [
+        "home",
+        {
+          "n": 6,
+          "pnl": 1.4000000000000004,
+          "roi_pct": 2.0848845867460915,
+          "won": 2,
+          "lost": 2
+        }
+      ]
+    ]
+  },
+  "model_files": {
+    "dc_params": "dc_params_final.pkl (source: params_20260720.pkl)",
+    "lgbm_model": "model.pkl",
+    "stacker": "stacker.pkl",
+    "calibrators": [
+      "calibrators.pkl",
+      "cluster_calibrators.pkl",
+      "conformal.pkl"
+    ]
+  },
+  "note": "Snapshot dient als Rollback-Anker fuer I3-Retrain und als Baseline fuer Liga-vs-WM-Vergleiche."
+}

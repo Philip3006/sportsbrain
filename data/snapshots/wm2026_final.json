@@ -1,0 +1,1425 @@
+{
+  "meta": {
+    "n_matches": 104,
+    "n_teams": 48,
+    "date_first": "2026-06-11",
+    "date_last": "2026-07-19",
+    "generated_at": "2026-07-31T14:12:49.649101+00:00",
+    "source": "data/cache/international_results.pkl"
+  },
+  "matches": [
+    {
+      "date": "2026-06-11",
+      "home": "Mexico",
+      "away": "South Africa",
+      "home_score": 2,
+      "away_score": 0,
+      "neutral": false
+    },
+    {
+      "date": "2026-06-11",
+      "home": "South Korea",
+      "away": "Czechia",
+      "home_score": 2,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-12",
+      "home": "Canada",
+      "away": "Bosnia and Herzegovina",
+      "home_score": 1,
+      "away_score": 1,
+      "neutral": false
+    },
+    {
+      "date": "2026-06-12",
+      "home": "United States",
+      "away": "Paraguay",
+      "home_score": 4,
+      "away_score": 1,
+      "neutral": false
+    },
+    {
+      "date": "2026-06-13",
+      "home": "Qatar",
+      "away": "Switzerland",
+      "home_score": 1,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-13",
+      "home": "Brazil",
+      "away": "Morocco",
+      "home_score": 1,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-13",
+      "home": "Haiti",
+      "away": "Scotland",
+      "home_score": 0,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-13",
+      "home": "Australia",
+      "away": "Turkey",
+      "home_score": 2,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-14",
+      "home": "Germany",
+      "away": "Curacao",
+      "home_score": 7,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-14",
+      "home": "Cote d'Ivoire",
+      "away": "Ecuador",
+      "home_score": 1,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-14",
+      "home": "Netherlands",
+      "away": "Japan",
+      "home_score": 2,
+      "away_score": 2,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-14",
+      "home": "Sweden",
+      "away": "Tunisia",
+      "home_score": 5,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-15",
+      "home": "Belgium",
+      "away": "Egypt",
+      "home_score": 1,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-15",
+      "home": "Iran",
+      "away": "New Zealand",
+      "home_score": 2,
+      "away_score": 2,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-15",
+      "home": "Spain",
+      "away": "Cape Verde",
+      "home_score": 0,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-15",
+      "home": "Saudi Arabia",
+      "away": "Uruguay",
+      "home_score": 1,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-16",
+      "home": "France",
+      "away": "Senegal",
+      "home_score": 3,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-16",
+      "home": "Iraq",
+      "away": "Norway",
+      "home_score": 1,
+      "away_score": 4,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-16",
+      "home": "Argentina",
+      "away": "Algeria",
+      "home_score": 3,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-16",
+      "home": "Austria",
+      "away": "Jordan",
+      "home_score": 3,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-17",
+      "home": "England",
+      "away": "Croatia",
+      "home_score": 4,
+      "away_score": 2,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-17",
+      "home": "Ghana",
+      "away": "Panama",
+      "home_score": 1,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-17",
+      "home": "Portugal",
+      "away": "DR Congo",
+      "home_score": 1,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-17",
+      "home": "Uzbekistan",
+      "away": "Colombia",
+      "home_score": 1,
+      "away_score": 3,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-18",
+      "home": "Canada",
+      "away": "Qatar",
+      "home_score": 6,
+      "away_score": 0,
+      "neutral": false
+    },
+    {
+      "date": "2026-06-18",
+      "home": "Switzerland",
+      "away": "Bosnia and Herzegovina",
+      "home_score": 4,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-18",
+      "home": "Czechia",
+      "away": "South Africa",
+      "home_score": 1,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-18",
+      "home": "Mexico",
+      "away": "South Korea",
+      "home_score": 1,
+      "away_score": 0,
+      "neutral": false
+    },
+    {
+      "date": "2026-06-19",
+      "home": "Turkey",
+      "away": "Paraguay",
+      "home_score": 0,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-19",
+      "home": "Scotland",
+      "away": "Morocco",
+      "home_score": 0,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-19",
+      "home": "Brazil",
+      "away": "Haiti",
+      "home_score": 3,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-19",
+      "home": "United States",
+      "away": "Australia",
+      "home_score": 2,
+      "away_score": 0,
+      "neutral": false
+    },
+    {
+      "date": "2026-06-20",
+      "home": "Tunisia",
+      "away": "Japan",
+      "home_score": 0,
+      "away_score": 4,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-20",
+      "home": "Netherlands",
+      "away": "Sweden",
+      "home_score": 5,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-20",
+      "home": "Germany",
+      "away": "Cote d'Ivoire",
+      "home_score": 2,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-20",
+      "home": "Ecuador",
+      "away": "Curacao",
+      "home_score": 0,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-21",
+      "home": "Spain",
+      "away": "Saudi Arabia",
+      "home_score": 4,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-21",
+      "home": "Uruguay",
+      "away": "Cape Verde",
+      "home_score": 2,
+      "away_score": 2,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-21",
+      "home": "New Zealand",
+      "away": "Egypt",
+      "home_score": 1,
+      "away_score": 3,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-21",
+      "home": "Belgium",
+      "away": "Iran",
+      "home_score": 0,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-22",
+      "home": "Jordan",
+      "away": "Algeria",
+      "home_score": 1,
+      "away_score": 2,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-22",
+      "home": "France",
+      "away": "Iraq",
+      "home_score": 3,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-22",
+      "home": "Norway",
+      "away": "Senegal",
+      "home_score": 3,
+      "away_score": 2,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-22",
+      "home": "Argentina",
+      "away": "Austria",
+      "home_score": 2,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-23",
+      "home": "Portugal",
+      "away": "Uzbekistan",
+      "home_score": 5,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-23",
+      "home": "Colombia",
+      "away": "DR Congo",
+      "home_score": 1,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-23",
+      "home": "England",
+      "away": "Ghana",
+      "home_score": 0,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-23",
+      "home": "Panama",
+      "away": "Croatia",
+      "home_score": 0,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-24",
+      "home": "Morocco",
+      "away": "Haiti",
+      "home_score": 4,
+      "away_score": 2,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-24",
+      "home": "South Africa",
+      "away": "South Korea",
+      "home_score": 1,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-24",
+      "home": "Mexico",
+      "away": "Czechia",
+      "home_score": 3,
+      "away_score": 0,
+      "neutral": false
+    },
+    {
+      "date": "2026-06-24",
+      "home": "Scotland",
+      "away": "Brazil",
+      "home_score": 0,
+      "away_score": 3,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-24",
+      "home": "Canada",
+      "away": "Switzerland",
+      "home_score": 1,
+      "away_score": 2,
+      "neutral": false
+    },
+    {
+      "date": "2026-06-24",
+      "home": "Bosnia and Herzegovina",
+      "away": "Qatar",
+      "home_score": 3,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-25",
+      "home": "Tunisia",
+      "away": "Netherlands",
+      "home_score": 1,
+      "away_score": 3,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-25",
+      "home": "Ecuador",
+      "away": "Germany",
+      "home_score": 2,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-25",
+      "home": "Japan",
+      "away": "Sweden",
+      "home_score": 1,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-25",
+      "home": "Paraguay",
+      "away": "Australia",
+      "home_score": 0,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-25",
+      "home": "United States",
+      "away": "Turkey",
+      "home_score": 2,
+      "away_score": 3,
+      "neutral": false
+    },
+    {
+      "date": "2026-06-25",
+      "home": "Curacao",
+      "away": "Cote d'Ivoire",
+      "home_score": 0,
+      "away_score": 2,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-26",
+      "home": "Senegal",
+      "away": "Iraq",
+      "home_score": 5,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-26",
+      "home": "Uruguay",
+      "away": "Spain",
+      "home_score": 0,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-26",
+      "home": "Norway",
+      "away": "France",
+      "home_score": 1,
+      "away_score": 4,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-26",
+      "home": "New Zealand",
+      "away": "Belgium",
+      "home_score": 1,
+      "away_score": 5,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-26",
+      "home": "Egypt",
+      "away": "Iran",
+      "home_score": 1,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-26",
+      "home": "Cape Verde",
+      "away": "Saudi Arabia",
+      "home_score": 0,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-27",
+      "home": "Croatia",
+      "away": "Ghana",
+      "home_score": 2,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-27",
+      "home": "Panama",
+      "away": "England",
+      "home_score": 0,
+      "away_score": 2,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-27",
+      "home": "DR Congo",
+      "away": "Uzbekistan",
+      "home_score": 3,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-27",
+      "home": "Jordan",
+      "away": "Argentina",
+      "home_score": 1,
+      "away_score": 3,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-27",
+      "home": "Algeria",
+      "away": "Austria",
+      "home_score": 3,
+      "away_score": 3,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-27",
+      "home": "Colombia",
+      "away": "Portugal",
+      "home_score": 0,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-28",
+      "home": "South Africa",
+      "away": "Canada",
+      "home_score": 0,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-29",
+      "home": "Brazil",
+      "away": "Japan",
+      "home_score": 2,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-29",
+      "home": "Germany",
+      "away": "Paraguay",
+      "home_score": 1,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-29",
+      "home": "Netherlands",
+      "away": "Morocco",
+      "home_score": 1,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-30",
+      "home": "Mexico",
+      "away": "Ecuador",
+      "home_score": 2,
+      "away_score": 0,
+      "neutral": false
+    },
+    {
+      "date": "2026-06-30",
+      "home": "France",
+      "away": "Sweden",
+      "home_score": 3,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-06-30",
+      "home": "Cote d'Ivoire",
+      "away": "Norway",
+      "home_score": 1,
+      "away_score": 2,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-01",
+      "home": "United States",
+      "away": "Bosnia and Herzegovina",
+      "home_score": 2,
+      "away_score": 0,
+      "neutral": false
+    },
+    {
+      "date": "2026-07-01",
+      "home": "England",
+      "away": "DR Congo",
+      "home_score": 2,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-01",
+      "home": "Belgium",
+      "away": "Senegal",
+      "home_score": 3,
+      "away_score": 2,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-02",
+      "home": "Spain",
+      "away": "Austria",
+      "home_score": 3,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-02",
+      "home": "Portugal",
+      "away": "Croatia",
+      "home_score": 2,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-02",
+      "home": "Switzerland",
+      "away": "Algeria",
+      "home_score": 2,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-03",
+      "home": "Australia",
+      "away": "Egypt",
+      "home_score": 1,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-03",
+      "home": "Argentina",
+      "away": "Cape Verde",
+      "home_score": 3,
+      "away_score": 2,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-03",
+      "home": "Colombia",
+      "away": "Ghana",
+      "home_score": 1,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-04",
+      "home": "Canada",
+      "away": "Morocco",
+      "home_score": 0,
+      "away_score": 3,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-04",
+      "home": "Paraguay",
+      "away": "France",
+      "home_score": 0,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-05",
+      "home": "Brazil",
+      "away": "Norway",
+      "home_score": 1,
+      "away_score": 2,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-05",
+      "home": "Mexico",
+      "away": "England",
+      "home_score": 2,
+      "away_score": 3,
+      "neutral": false
+    },
+    {
+      "date": "2026-07-06",
+      "home": "Portugal",
+      "away": "Spain",
+      "home_score": 0,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-06",
+      "home": "United States",
+      "away": "Belgium",
+      "home_score": 1,
+      "away_score": 4,
+      "neutral": false
+    },
+    {
+      "date": "2026-07-07",
+      "home": "Argentina",
+      "away": "Egypt",
+      "home_score": 3,
+      "away_score": 2,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-07",
+      "home": "Switzerland",
+      "away": "Colombia",
+      "home_score": 0,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-09",
+      "home": "France",
+      "away": "Morocco",
+      "home_score": 2,
+      "away_score": 0,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-10",
+      "home": "Spain",
+      "away": "Belgium",
+      "home_score": 2,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-11",
+      "home": "Norway",
+      "away": "England",
+      "home_score": 1,
+      "away_score": 2,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-11",
+      "home": "Argentina",
+      "away": "Switzerland",
+      "home_score": 3,
+      "away_score": 1,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-14",
+      "home": "France",
+      "away": "Spain",
+      "home_score": 0,
+      "away_score": 2,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-15",
+      "home": "England",
+      "away": "Argentina",
+      "home_score": 1,
+      "away_score": 2,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-18",
+      "home": "France",
+      "away": "England",
+      "home_score": 4,
+      "away_score": 6,
+      "neutral": true
+    },
+    {
+      "date": "2026-07-19",
+      "home": "Spain",
+      "away": "Argentina",
+      "home_score": 1,
+      "away_score": 0,
+      "neutral": true
+    }
+  ],
+  "team_aggregates": {
+    "Mexico": {
+      "matches": 5,
+      "wins": 4,
+      "draws": 0,
+      "losses": 1,
+      "goals_for": 10,
+      "goals_against": 3,
+      "goal_diff": 7,
+      "points": 12,
+      "confederation": "CONCACAF"
+    },
+    "South Africa": {
+      "matches": 4,
+      "wins": 1,
+      "draws": 1,
+      "losses": 2,
+      "goals_for": 2,
+      "goals_against": 4,
+      "goal_diff": -2,
+      "points": 4,
+      "confederation": "CAF"
+    },
+    "South Korea": {
+      "matches": 3,
+      "wins": 1,
+      "draws": 0,
+      "losses": 2,
+      "goals_for": 2,
+      "goals_against": 3,
+      "goal_diff": -1,
+      "points": 3,
+      "confederation": "AFC"
+    },
+    "Czechia": {
+      "matches": 3,
+      "wins": 0,
+      "draws": 1,
+      "losses": 2,
+      "goals_for": 2,
+      "goals_against": 6,
+      "goal_diff": -4,
+      "points": 1,
+      "confederation": "UEFA"
+    },
+    "Canada": {
+      "matches": 5,
+      "wins": 2,
+      "draws": 1,
+      "losses": 2,
+      "goals_for": 9,
+      "goals_against": 6,
+      "goal_diff": 3,
+      "points": 7,
+      "confederation": "CONCACAF"
+    },
+    "Bosnia and Herzegovina": {
+      "matches": 4,
+      "wins": 1,
+      "draws": 1,
+      "losses": 2,
+      "goals_for": 5,
+      "goals_against": 8,
+      "goal_diff": -3,
+      "points": 4,
+      "confederation": "UEFA"
+    },
+    "United States": {
+      "matches": 5,
+      "wins": 3,
+      "draws": 0,
+      "losses": 2,
+      "goals_for": 11,
+      "goals_against": 8,
+      "goal_diff": 3,
+      "points": 9,
+      "confederation": "CONCACAF"
+    },
+    "Paraguay": {
+      "matches": 5,
+      "wins": 1,
+      "draws": 2,
+      "losses": 2,
+      "goals_for": 3,
+      "goals_against": 6,
+      "goal_diff": -3,
+      "points": 5,
+      "confederation": "CONMEBOL"
+    },
+    "Qatar": {
+      "matches": 3,
+      "wins": 0,
+      "draws": 1,
+      "losses": 2,
+      "goals_for": 2,
+      "goals_against": 10,
+      "goal_diff": -8,
+      "points": 1,
+      "confederation": "AFC"
+    },
+    "Switzerland": {
+      "matches": 6,
+      "wins": 3,
+      "draws": 2,
+      "losses": 1,
+      "goals_for": 10,
+      "goals_against": 6,
+      "goal_diff": 4,
+      "points": 11,
+      "confederation": "UEFA"
+    },
+    "Brazil": {
+      "matches": 5,
+      "wins": 3,
+      "draws": 1,
+      "losses": 1,
+      "goals_for": 10,
+      "goals_against": 4,
+      "goal_diff": 6,
+      "points": 10,
+      "confederation": "CONMEBOL"
+    },
+    "Morocco": {
+      "matches": 6,
+      "wins": 3,
+      "draws": 2,
+      "losses": 1,
+      "goals_for": 10,
+      "goals_against": 6,
+      "goal_diff": 4,
+      "points": 11,
+      "confederation": "CAF"
+    },
+    "Haiti": {
+      "matches": 3,
+      "wins": 0,
+      "draws": 0,
+      "losses": 3,
+      "goals_for": 2,
+      "goals_against": 8,
+      "goal_diff": -6,
+      "points": 0,
+      "confederation": "CONCACAF"
+    },
+    "Scotland": {
+      "matches": 3,
+      "wins": 1,
+      "draws": 0,
+      "losses": 2,
+      "goals_for": 1,
+      "goals_against": 4,
+      "goal_diff": -3,
+      "points": 3,
+      "confederation": "UEFA"
+    },
+    "Australia": {
+      "matches": 4,
+      "wins": 1,
+      "draws": 2,
+      "losses": 1,
+      "goals_for": 3,
+      "goals_against": 3,
+      "goal_diff": 0,
+      "points": 5,
+      "confederation": "AFC"
+    },
+    "Turkey": {
+      "matches": 3,
+      "wins": 1,
+      "draws": 0,
+      "losses": 2,
+      "goals_for": 3,
+      "goals_against": 5,
+      "goal_diff": -2,
+      "points": 3,
+      "confederation": "UEFA"
+    },
+    "Germany": {
+      "matches": 4,
+      "wins": 2,
+      "draws": 1,
+      "losses": 1,
+      "goals_for": 11,
+      "goals_against": 5,
+      "goal_diff": 6,
+      "points": 7,
+      "confederation": "UEFA"
+    },
+    "Curacao": {
+      "matches": 3,
+      "wins": 0,
+      "draws": 1,
+      "losses": 2,
+      "goals_for": 1,
+      "goals_against": 9,
+      "goal_diff": -8,
+      "points": 1,
+      "confederation": "UNKNOWN"
+    },
+    "Cote d'Ivoire": {
+      "matches": 4,
+      "wins": 2,
+      "draws": 0,
+      "losses": 2,
+      "goals_for": 5,
+      "goals_against": 4,
+      "goal_diff": 1,
+      "points": 6,
+      "confederation": "UNKNOWN"
+    },
+    "Ecuador": {
+      "matches": 4,
+      "wins": 1,
+      "draws": 1,
+      "losses": 2,
+      "goals_for": 2,
+      "goals_against": 4,
+      "goal_diff": -2,
+      "points": 4,
+      "confederation": "CONMEBOL"
+    },
+    "Netherlands": {
+      "matches": 4,
+      "wins": 2,
+      "draws": 2,
+      "losses": 0,
+      "goals_for": 11,
+      "goals_against": 5,
+      "goal_diff": 6,
+      "points": 8,
+      "confederation": "UEFA"
+    },
+    "Japan": {
+      "matches": 4,
+      "wins": 1,
+      "draws": 2,
+      "losses": 1,
+      "goals_for": 8,
+      "goals_against": 5,
+      "goal_diff": 3,
+      "points": 5,
+      "confederation": "AFC"
+    },
+    "Sweden": {
+      "matches": 4,
+      "wins": 1,
+      "draws": 1,
+      "losses": 2,
+      "goals_for": 7,
+      "goals_against": 10,
+      "goal_diff": -3,
+      "points": 4,
+      "confederation": "UNKNOWN"
+    },
+    "Tunisia": {
+      "matches": 3,
+      "wins": 0,
+      "draws": 0,
+      "losses": 3,
+      "goals_for": 2,
+      "goals_against": 12,
+      "goal_diff": -10,
+      "points": 0,
+      "confederation": "CAF"
+    },
+    "Belgium": {
+      "matches": 6,
+      "wins": 3,
+      "draws": 2,
+      "losses": 1,
+      "goals_for": 14,
+      "goals_against": 7,
+      "goal_diff": 7,
+      "points": 11,
+      "confederation": "UEFA"
+    },
+    "Egypt": {
+      "matches": 5,
+      "wins": 1,
+      "draws": 3,
+      "losses": 1,
+      "goals_for": 8,
+      "goals_against": 7,
+      "goal_diff": 1,
+      "points": 6,
+      "confederation": "CAF"
+    },
+    "Iran": {
+      "matches": 3,
+      "wins": 0,
+      "draws": 3,
+      "losses": 0,
+      "goals_for": 3,
+      "goals_against": 3,
+      "goal_diff": 0,
+      "points": 3,
+      "confederation": "AFC"
+    },
+    "New Zealand": {
+      "matches": 3,
+      "wins": 0,
+      "draws": 1,
+      "losses": 2,
+      "goals_for": 4,
+      "goals_against": 10,
+      "goal_diff": -6,
+      "points": 1,
+      "confederation": "OFC"
+    },
+    "Spain": {
+      "matches": 8,
+      "wins": 7,
+      "draws": 1,
+      "losses": 0,
+      "goals_for": 14,
+      "goals_against": 1,
+      "goal_diff": 13,
+      "points": 22,
+      "confederation": "UEFA"
+    },
+    "Cape Verde": {
+      "matches": 4,
+      "wins": 0,
+      "draws": 3,
+      "losses": 1,
+      "goals_for": 4,
+      "goals_against": 5,
+      "goal_diff": -1,
+      "points": 3,
+      "confederation": "UNKNOWN"
+    },
+    "Saudi Arabia": {
+      "matches": 3,
+      "wins": 0,
+      "draws": 2,
+      "losses": 1,
+      "goals_for": 1,
+      "goals_against": 5,
+      "goal_diff": -4,
+      "points": 2,
+      "confederation": "AFC"
+    },
+    "Uruguay": {
+      "matches": 3,
+      "wins": 0,
+      "draws": 2,
+      "losses": 1,
+      "goals_for": 3,
+      "goals_against": 4,
+      "goal_diff": -1,
+      "points": 2,
+      "confederation": "CONMEBOL"
+    },
+    "France": {
+      "matches": 8,
+      "wins": 6,
+      "draws": 0,
+      "losses": 2,
+      "goals_for": 20,
+      "goals_against": 10,
+      "goal_diff": 10,
+      "points": 18,
+      "confederation": "UEFA"
+    },
+    "Senegal": {
+      "matches": 4,
+      "wins": 1,
+      "draws": 0,
+      "losses": 3,
+      "goals_for": 10,
+      "goals_against": 9,
+      "goal_diff": 1,
+      "points": 3,
+      "confederation": "CAF"
+    },
+    "Iraq": {
+      "matches": 3,
+      "wins": 0,
+      "draws": 0,
+      "losses": 3,
+      "goals_for": 1,
+      "goals_against": 12,
+      "goal_diff": -11,
+      "points": 0,
+      "confederation": "AFC"
+    },
+    "Norway": {
+      "matches": 6,
+      "wins": 4,
+      "draws": 0,
+      "losses": 2,
+      "goals_for": 13,
+      "goals_against": 11,
+      "goal_diff": 2,
+      "points": 12,
+      "confederation": "UEFA"
+    },
+    "Argentina": {
+      "matches": 8,
+      "wins": 7,
+      "draws": 0,
+      "losses": 1,
+      "goals_for": 19,
+      "goals_against": 8,
+      "goal_diff": 11,
+      "points": 21,
+      "confederation": "CONMEBOL"
+    },
+    "Algeria": {
+      "matches": 4,
+      "wins": 1,
+      "draws": 1,
+      "losses": 2,
+      "goals_for": 5,
+      "goals_against": 9,
+      "goal_diff": -4,
+      "points": 4,
+      "confederation": "CAF"
+    },
+    "Austria": {
+      "matches": 4,
+      "wins": 1,
+      "draws": 1,
+      "losses": 2,
+      "goals_for": 6,
+      "goals_against": 9,
+      "goal_diff": -3,
+      "points": 4,
+      "confederation": "UEFA"
+    },
+    "Jordan": {
+      "matches": 3,
+      "wins": 0,
+      "draws": 0,
+      "losses": 3,
+      "goals_for": 3,
+      "goals_against": 8,
+      "goal_diff": -5,
+      "points": 0,
+      "confederation": "AFC"
+    },
+    "England": {
+      "matches": 8,
+      "wins": 6,
+      "draws": 1,
+      "losses": 1,
+      "goals_for": 20,
+      "goals_against": 12,
+      "goal_diff": 8,
+      "points": 19,
+      "confederation": "UEFA"
+    },
+    "Croatia": {
+      "matches": 4,
+      "wins": 2,
+      "draws": 0,
+      "losses": 2,
+      "goals_for": 6,
+      "goals_against": 7,
+      "goal_diff": -1,
+      "points": 6,
+      "confederation": "UEFA"
+    },
+    "Ghana": {
+      "matches": 4,
+      "wins": 1,
+      "draws": 1,
+      "losses": 2,
+      "goals_for": 2,
+      "goals_against": 3,
+      "goal_diff": -1,
+      "points": 4,
+      "confederation": "CAF"
+    },
+    "Panama": {
+      "matches": 3,
+      "wins": 0,
+      "draws": 0,
+      "losses": 3,
+      "goals_for": 0,
+      "goals_against": 4,
+      "goal_diff": -4,
+      "points": 0,
+      "confederation": "CONCACAF"
+    },
+    "Portugal": {
+      "matches": 5,
+      "wins": 2,
+      "draws": 2,
+      "losses": 1,
+      "goals_for": 8,
+      "goals_against": 3,
+      "goal_diff": 5,
+      "points": 8,
+      "confederation": "UEFA"
+    },
+    "DR Congo": {
+      "matches": 4,
+      "wins": 1,
+      "draws": 1,
+      "losses": 2,
+      "goals_for": 5,
+      "goals_against": 5,
+      "goal_diff": 0,
+      "points": 4,
+      "confederation": "UNKNOWN"
+    },
+    "Uzbekistan": {
+      "matches": 3,
+      "wins": 0,
+      "draws": 0,
+      "losses": 3,
+      "goals_for": 2,
+      "goals_against": 11,
+      "goal_diff": -9,
+      "points": 0,
+      "confederation": "AFC"
+    },
+    "Colombia": {
+      "matches": 5,
+      "wins": 3,
+      "draws": 2,
+      "losses": 0,
+      "goals_for": 5,
+      "goals_against": 1,
+      "goal_diff": 4,
+      "points": 11,
+      "confederation": "CONMEBOL"
+    }
+  },
+  "confederation_summary": {
+    "CONCACAF": {
+      "n_teams": 5,
+      "avg_goal_diff": 0.6,
+      "avg_points": 5.6,
+      "best_team": "Mexico",
+      "best_team_points": 12
+    },
+    "CAF": {
+      "n_teams": 7,
+      "avg_goal_diff": -1.57,
+      "avg_points": 4.57,
+      "best_team": "Morocco",
+      "best_team_points": 11
+    },
+    "AFC": {
+      "n_teams": 9,
+      "avg_goal_diff": -3.89,
+      "avg_points": 2.11,
+      "best_team": "Japan",
+      "best_team_points": 5
+    },
+    "UEFA": {
+      "n_teams": 15,
+      "avg_goal_diff": 3.0,
+      "avg_points": 9.13,
+      "best_team": "Spain",
+      "best_team_points": 22
+    },
+    "CONMEBOL": {
+      "n_teams": 6,
+      "avg_goal_diff": 2.5,
+      "avg_points": 8.83,
+      "best_team": "Argentina",
+      "best_team_points": 21
+    },
+    "UNKNOWN": {
+      "n_teams": 5,
+      "avg_goal_diff": -2.2,
+      "avg_points": 3.6,
+      "best_team": "Cote d'Ivoire",
+      "best_team_points": 6
+    },
+    "OFC": {
+      "n_teams": 1,
+      "avg_goal_diff": -6.0,
+      "avg_points": 1.0,
+      "best_team": "New Zealand",
+      "best_team_points": 1
+    }
+  }
+}

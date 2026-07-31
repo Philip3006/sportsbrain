@@ -1,0 +1,11 @@
+{
+  "alpha": 0.1,
+  "brier_model_only": 0.6255348082512024,
+  "brier_market_only": 0.5740694858710963,
+  "brier_blend": 0.5733074854862301,
+  "improvement_vs_model": 0.05222732276497233,
+  "use_anchor": true,
+  "threshold": 0.005,
+  "n_matches": 125,
+  "reason": "alpha=0.10<0.95 and Brier improved by 0.0522 \u2265 0.005"
+}
