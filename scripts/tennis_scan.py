@@ -617,12 +617,14 @@ def main() -> None:
 
         # Pro Match Predict + Detect
         signals = []
+        _pred_sources = {"elo": 0, "ensemble": 0}
         for m in upcoming:
             pa, pb = m["player_a"], m["player_b"]
             probs = predict_winner_ensemble(
                 pa, pb, ratings, t.surface,
                 best_of=t.best_of, category=t.category,
             )
+            _pred_sources[probs.get("source", "elo")] += 1
             sigs = detect_all_markets(m, probs, args.bankroll, min_edge, t)
             signals.extend(sigs)
             for s in sigs:
@@ -634,6 +636,8 @@ def main() -> None:
         }
         if mode == "live":
             all_live_signals.extend(signals)
+        if _pred_sources["ensemble"] > 0 or _pred_sources["elo"] > 0:
+            print(f"  [{t.slug}] Prediction-Source: ensemble={_pred_sources['ensemble']}, elo-only={_pred_sources['elo']}")
 
     print(f"\n=== Summary ===")
     print(f"Live-Signals: {len(all_live_signals)} (über {sum(1 for v in per_tournament.values() if v['mode']=='live')} Live-Kategorien)")
