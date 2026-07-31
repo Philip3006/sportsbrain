@@ -75,3 +75,27 @@ def test_write_signals_json_persists_tournament_meta(tmp_path, monkeypatch):
     assert s["category"] == "grand_slam"
     assert s["surface"] == "grass"
     assert s["best_of"] == 5
+
+
+def test_write_signals_json_never_stomps_real_repo_file(tmp_path, monkeypatch):
+    """Regressions-Guard (2026-07-31 incident):
+    Der Legacy-signals.json-Write für DEFAULT_USER muss die monkey-patched
+    ROOT respektieren, sonst schreibt jeder Testlauf die echte Repo-Datei.
+    """
+    import src.notifications.web_dashboard as wd
+    monkeypatch.setattr(wd, "ROOT", tmp_path)
+    (tmp_path / "docs" / "data").mkdir(parents=True)
+    real_signals_json = wd.Path(__file__).parent.parent.parent / "docs" / "data" / "signals.json"
+    if real_signals_json.exists():
+        mtime_before = real_signals_json.stat().st_mtime
+    else:
+        mtime_before = None
+
+    write_signals_json(tennis=[_make_signal("m1")], user="philip")
+
+    # Tmp file MUST exist
+    assert (tmp_path / "docs" / "data" / "signals.json").exists()
+    # Real repo file MUST NOT have been touched
+    if mtime_before is not None:
+        assert real_signals_json.stat().st_mtime == mtime_before, \
+            "write_signals_json hat die echte Repo-Datei überschrieben — ROOT-Patch ineffektiv"

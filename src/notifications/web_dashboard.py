@@ -970,8 +970,11 @@ def write_signals_json(
     json_path.parent.mkdir(parents=True, exist_ok=True)
     json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2))
     # Backward-compat: default user also writes the legacy `signals.json`.
+    # Use ROOT-relative path (not module-level _JSON_PATH) so tests that
+    # monkey-patch ROOT don't accidentally stomp on the real repo file.
     if user == _DEFAULT_USER:
-        _JSON_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2))
+        legacy_path = ROOT / "docs" / "data" / "signals.json"
+        legacy_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2))
     return upload_signals_to_cloud(path=json_path, user=user)
 
 
