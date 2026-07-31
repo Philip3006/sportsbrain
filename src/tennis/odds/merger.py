@@ -16,12 +16,25 @@ from src.tennis.odds.base import OddsQuote, sanity_ok
 from src.tennis.odds.implied import fetch_implied
 
 # Registry aktivierter Quellen: (name, tier, fetch_callable)
-# Weitere Sources werden hier registriert (Agent 5, 3, 10, ...).
-ENABLED_SOURCES: list[tuple[str, int, Callable]] = [
-    # Foundation ships mit implied als Fallback-Only-Quelle;
-    # externe Quellen (TE, Betfair, WebSearch) werden via tennis_scan.py
-    # separat verdrahtet, bis die einzelnen Provider-Module gelandet sind.
-]
+# Reihenfolge irrelevant (Merger sortiert nach tier).
+def _load_sources() -> list[tuple[str, int, Callable]]:
+    sources: list[tuple[str, int, Callable]] = []
+    try:
+        from src.tennis.odds import tennis_explorer as _te
+        sources.append((_te.name, _te.tier, _te.fetch))
+    except Exception:
+        pass
+    try:
+        from src.tennis.odds import oddsportal as _op
+        sources.append((_op.name, _op.tier, _op.fetch))
+    except Exception:
+        pass
+    # Agent 3 (Betfair) und Agent 10 (WebSearch-Ensemble) werden in Folge-Commits
+    # hier ergaenzt.
+    return sources
+
+
+ENABLED_SOURCES: list[tuple[str, int, Callable]] = _load_sources()
 
 
 def fetch_all_sources(match_hint: dict,
@@ -40,14 +53,24 @@ def fetch_all_sources(match_hint: dict,
             pool.submit(fn, match_hint): (name, tier)
             for (name, tier, fn) in ENABLED_SOURCES
         }
-        for fut in as_completed(futures, timeout=timeout_s + 2):
-            name, tier = futures[fut]
-            try:
-                q: Optional[OddsQuote] = fut.result(timeout=timeout_s)
-            except Exception:
-                q = None
-            if q and q.sane():
-                quotes.append(q)
+        try:
+            for fut in as_completed(futures, timeout=timeout_s + 2):
+                try:
+                    q: Optional[OddsQuote] = fut.result(timeout=timeout_s)
+                except Exception:
+                    q = None
+                if q and q.sane():
+                    quotes.append(q)
+        except TimeoutError:
+            # Hänger einzelner Quellen werden verworfen — Restliche Quotes reichen.
+            for fut in futures:
+                if fut.done():
+                    try:
+                        q = fut.result(timeout=0)
+                        if q and q.sane():
+                            quotes.append(q)
+                    except Exception:
+                        pass
     return quotes
 
 
