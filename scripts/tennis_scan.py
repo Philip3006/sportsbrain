@@ -706,28 +706,51 @@ def main() -> None:
     if not args.mock and not args.tournament:
         try:
             from src.data.tennis_secondary_odds import fetch_te_upcoming_matches
-            existing_keys = {(g["home"].lower(), g["away"].lower()) for g in schedule}
+            from src.tennis.tournaments import canonical_match_key, get_tournament_by_te
+            existing_keys = {
+                canonical_match_key(g["home"], g["away"]) for g in schedule
+            }
             te_matches = fetch_te_upcoming_matches(min_bookies=2, max_matches=150)
             added = 0
+            enriched = 0
+            dup_skipped = 0
             for m in te_matches:
-                key = (m["player_a"].lower(), m["player_b"].lower())
-                key_rev = (m["player_b"].lower(), m["player_a"].lower())
-                if key in existing_keys or key_rev in existing_keys:
+                key = canonical_match_key(m["player_a"], m["player_b"])
+                if key in existing_keys:
+                    dup_skipped += 1
                     continue
+                existing_keys.add(key)
+
+                # Registry-Enrichment: bekannte Turniere bekommen category/surface/best_of.
+                te_slug = m.get("te_slug", "")
+                te_tour = m.get("te_tour", "")
+                reg = get_tournament_by_te(te_slug, te_tour) if te_slug and te_tour else None
+                if reg is not None:
+                    category = reg.category
+                    surface = reg.surface
+                    best_of = reg.best_of
+                    tournament_name = reg.name
+                    enriched += 1
+                else:
+                    category = ""
+                    surface = ""
+                    best_of = 0
+                    tournament_name = m.get("te_tournament", "")
+
                 schedule.append({
                     "sport": "tennis",
                     "home": m["player_a"], "away": m["player_b"],
                     "kickoff": m.get("commence_time", ""),
-                    "tour": m.get("te_tour", ""),
-                    "tournament": m.get("te_tournament", ""),
-                    "category": "", "surface": "", "best_of": 0,
+                    "tour": te_tour,
+                    "tournament": tournament_name,
+                    "category": category, "surface": surface, "best_of": best_of,
                     "odds_home": m.get("odds_a", 0.0),
                     "odds_away": m.get("odds_b", 0.0),
                     "source": "tennisexplorer",
                 })
                 added += 1
             print(f"Sekundär-Coverage (TE): {added} zusätzliche Matches hinzugefügt "
-                  f"({len(te_matches)} discovered, {len(te_matches)-added} bereits von API abgedeckt)")
+                  f"(davon {enriched} Registry-enriched, {dup_skipped} Duplikate übersprungen)")
         except Exception as e:
             print(f"[te-coverage] fetch failed: {e}")
 

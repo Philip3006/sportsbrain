@@ -177,6 +177,12 @@ TENNIS_REGISTRY: tuple[Tournament, ...] = (
                ("tennis_atp_newport",), (7,)),
     Tournament("kitzbuhel_atp",      "Kitzbühel Open",   "atp", "atp250",  "clay",  3,
                ("tennis_atp_kitzbuhel",), (7,)),
+    Tournament("los_cabos_atp",      "Los Cabos Open",   "atp", "atp250",  "hard",  3,
+               ("tennis_atp_los_cabos",), (7, 8)),
+    Tournament("umag_atp",           "Croatia Open Umag","atp", "atp250",  "clay",  3,
+               ("tennis_atp_umag",), (7,)),
+    Tournament("gstaad_atp",         "Swiss Open Gstaad","atp", "atp250",  "clay",  3,
+               ("tennis_atp_gstaad",), (7,)),
     Tournament("winston_salem_atp",  "Winston-Salem Open","atp","atp250",  "hard",  3,
                ("tennis_atp_winston_salem",), (8,)),
     Tournament("metz_atp",           "Moselle Open",     "atp", "atp250",  "hard",  3,
@@ -231,6 +237,56 @@ _SPORT_KEY_INDEX: dict[str, Tournament] = {
 }
 
 _SLUG_INDEX: dict[str, Tournament] = {t.slug: t for t in TENNIS_REGISTRY}
+
+# Tennisexplorer.com URL-Slug → Registry-Slug (Sekundär-Scraper Enrichment).
+# Keys aus TE-Tournament-Links (/<slug>/2026/(atp-men|wta-women)/); Value = interner
+# Registry-Slug. Nur echte Tour-Events; Challenger/ITF/UTR-Exhibitions bleiben
+# unmapped (bekommen keine category/surface, kein Signal-Detection).
+TE_SLUG_MAP: dict[tuple[str, str], str] = {
+    ("washington", "atp"):       "washington_atp",
+    ("los-cabos", "atp"):        "los_cabos_atp",
+    ("kitzbuhel", "atp"):        "kitzbuhel_atp",
+    ("umag", "atp"):             "umag_atp",
+    ("gstaad", "atp"):           "gstaad_atp",
+    ("prague", "wta"):           "prague_wta",
+    ("prag", "wta"):             "prague_wta",
+    ("cincinnati", "atp"):       "cincinnati_atp",
+    ("cincinnati", "wta"):       "cincinnati_wta",
+    ("winston-salem", "atp"):    "winston_salem_atp",
+    ("montreal", "atp"):         "canadian_open_atp",
+    ("toronto", "atp"):          "canadian_open_atp",
+    ("montreal", "wta"):         "canadian_open_wta",
+    ("toronto", "wta"):          "canadian_open_wta",
+}
+
+
+def get_tournament_by_te(te_slug: str, tour: str) -> "Tournament | None":
+    """Lookup Registry-Eintrag über TE-URL-Slug + Tour ('atp'|'wta')."""
+    reg_slug = TE_SLUG_MAP.get((te_slug.lower(), tour.lower()))
+    if not reg_slug:
+        return None
+    return _SLUG_INDEX.get(reg_slug)
+
+
+def canonical_player_key(name: str) -> frozenset[str]:
+    """Unordered Token-Set eines Spielernamens für Match-Dedup.
+
+    'Ben Shelton' → {'ben', 'shelton'}
+    'Shelton Ben' → {'shelton', 'ben'}   (identisch — Format-invariant)
+    'De Minaur Alex' → {'de', 'minaur', 'alex'}
+    'Alex de Minaur' → {'alex', 'de', 'minaur'}
+
+    Ignoriert Klammer-Zusätze wie '(2008)' und normalisiert Case/Whitespace.
+    """
+    import re as _re
+    cleaned = _re.sub(r"\([^)]*\)", "", name).lower()
+    tokens = [t for t in _re.split(r"\s+", cleaned) if t]
+    return frozenset(tokens)
+
+
+def canonical_match_key(player_a: str, player_b: str) -> frozenset[frozenset[str]]:
+    """Reihenfolge-unabhängiger Match-Key für Dedup zwischen Quellen."""
+    return frozenset({canonical_player_key(player_a), canonical_player_key(player_b)})
 
 
 def get_tournament(slug_or_sport_key: str) -> Tournament | None:
