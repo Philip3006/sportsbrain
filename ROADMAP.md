@@ -779,6 +779,31 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **P3**: 5 — J2-M (Tennis Live-Stats) + 4 weitere Q4 2026
 - **Veto**: 10 (K5 aufgehoben 2026-06-26)
 
+### 🔴 KRITISCH OFFEN — Odds-Coverage-Baustelle (User-Feedback 2026-07-31 Abend)
+
+**Was**: PWA zeigt ~100 Tennis-Matches an, aber 90-95% haben KEINE h2h-Odds.
+Grund: TE-Scraper fügt Schedule-Einträge auch ohne robuste Bookmaker-Coverage
+hinzu (Filter min_bookies=2 zu großzügig, kein Post-Filter in scan-append).
+
+**User-Zitat**: "das war doch der Hauptgrund. so kann's nicht weitergehen."
+
+**Fix-Optionen (P0 dringend)**:
+1. **Show-Filter im Scanner**: `scripts/tennis_scan.py:706+` nur Match zum Schedule
+   hinzufügen wenn `odds_a >= 1.01` UND `odds_b >= 1.01`
+2. **min_bookies erhöhen**: `src/data/tennis_secondary_odds.py` von 2 → 3
+3. **Zweiter Sekundär-Scraper**: oddsportal.com als weitere Odds-Quelle
+   für Turniere die TE nicht robust deckt
+4. **Frontend-Filter**: `docs/js/views.js` versteckt Matches ohne Odds
+   im "Weitere Spiele"-Bereich
+
+**Priorität**: P0 — Kern-User-Experience blockiert
+**Aufwand**: 2-4h für (1)+(2)+(4); 6-8h für (3)
+
+**Verifikation**: Nach Fix live-App checken: wieviele Matches, wieviele mit Odds.
+Ziel: ≥ 80% aller angezeigten Matches haben ≥ 1 Bookie-Odd.
+
+---
+
 ### Sprint 2026-07-31 — Post-WM + Tennis-Vollständigkeit ✅
 
 Wichtiger Nebenbefund: `predict_winner()`-Aufruf mit TheOddsAPI-Namen ("Ben Shelton")
