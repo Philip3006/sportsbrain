@@ -24,6 +24,9 @@ def implied_from_prob(p_a: float,
     # Overround dazu, damit UI-Anzeige realistisch aussieht
     q_a = 1.0 / (p_a * (1.0 + margin))
     q_b = 1.0 / (p_b * (1.0 + margin))
+    # J8-B12: Quoten immer > 1.01, sonst PWA-Anzeige unsinnig
+    q_a = max(1.01, q_a)
+    q_b = max(1.01, q_b)
     return OddsQuote(
         player_a=player_a,
         player_b=player_b,

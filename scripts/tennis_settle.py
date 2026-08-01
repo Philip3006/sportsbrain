@@ -28,7 +28,11 @@ from src.betting.tennis_settlement import (
     settle_tennis_market,
 )
 from src.config import DEFAULT_USER, ledger_path_for
-from src.data.tennis_scores import fetch_tennis_scores, LAST_TENNIS_SCORES_SOURCE
+from src.data.tennis_scores import (
+    LAST_TENNIS_SCORES_SOURCE,
+    canonical_match_key,
+    fetch_tennis_scores,
+)
 from src.tennis.discovery import discover_active_tournaments
 
 
@@ -81,7 +85,10 @@ def _settle_user_ledger(user: str, scores: dict, tennis_match_ids: set[str], dry
         away = r.get("away", "")
         match_key = f"{home} vs {away}"
 
-        sc = scores.get(mid) or scores.get(match_key)
+        # J8-B3: canonical-Fallback verhindert Whitespace/Unicode/Cap-Drift zwischen
+        # Score-Fetcher-Namen und Ledger-Namen ('Bosnia-Analog' für Tennis).
+        canon_key = canonical_match_key(home, away)
+        sc = scores.get(mid) or scores.get(match_key) or scores.get(canon_key)
         if not sc:
             continue
 

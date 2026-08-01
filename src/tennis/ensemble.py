@@ -10,9 +10,12 @@ Public API (drop-in-Ersatz für tennis_elo.predict_winner):
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 
 import pandas as pd
+
+_log = logging.getLogger("sportsbrain.tennis.ensemble")
 
 from src.config import TENNIS_USE_LIVE_STATS
 from src.data.tennis_stats import fetch_aggregate
@@ -33,6 +36,9 @@ def _load_model():
     model_path = _MODEL_DIR / "model.pkl"
     meta_path = _MODEL_DIR / "metadata.json"
     if not model_path.exists() or not meta_path.exists():
+        # J8-B9: file-missing vs. load-fail distinguishable im Log-Level
+        _log.info("tennis-ensemble: model files missing (%s / %s) → Fallback Elo",
+                  model_path.name, meta_path.name)
         _CACHED["model"] = None
         _CACHED["gate_passed"] = False
         return None, False
@@ -44,7 +50,8 @@ def _load_model():
         _CACHED["gate_passed"] = gate_passed
         return model, gate_passed
     except Exception as e:
-        print(f"[tennis_ensemble] Load failed: {e}")
+        # J8-B9: WARN statt print() — Health-Monitor kann darauf hooken
+        _log.warning("tennis-ensemble: model load FAILED (%s) → Fallback Elo", e)
         _CACHED["model"] = None
         _CACHED["gate_passed"] = False
         return None, False
@@ -75,6 +82,7 @@ def predict_winner_ensemble(
     rank_b: float | None = None,
     name_source: str = "odds_api",
     use_live_stats: bool = True,
+    match_date: str | None = None,
 ) -> dict[str, float]:
     """Returns {p_a, p_b, source}. Source ∈ {'elo', 'ensemble'}.
 
@@ -106,10 +114,15 @@ def predict_winner_ensemble(
     if use_live_stats and TENNIS_USE_LIVE_STATS:
         # WTA-Kategorien routen zu TA-wplayer.cgi statt player-classic.cgi.
         tour = "wta" if category.startswith("wta") else "atp"
+        # J8-B10: before_date passt Live-Fetch an WF-Konvention an (nur Historie < match_date).
+        # match_date optional — bei None wird die volle Historie genommen (Backward-Compat).
         try:
-            stats_a = fetch_aggregate(player_a, last_n=20, surface=surface, tour=tour)
-            stats_b = fetch_aggregate(player_b, last_n=20, surface=surface, tour=tour)
-        except Exception:
+            stats_a = fetch_aggregate(player_a, last_n=20, surface=surface, tour=tour,
+                                      before_date=match_date)
+            stats_b = fetch_aggregate(player_b, last_n=20, surface=surface, tour=tour,
+                                      before_date=match_date)
+        except Exception as e:
+            _log.debug("tennis-ensemble: serve-stats fetch failed (%s) → neutral prior", e)
             stats_a = stats_b = None
 
     feats = build_match_features(

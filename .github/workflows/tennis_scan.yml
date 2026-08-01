@@ -56,7 +56,13 @@ jobs:
           fi
           # --no-ledger: Cron platziert keine Bets direkt (feedback_no_auto_log).
           # User bestätigt via PWA → consume_pending_bets.yml schreibt ins Ledger.
-          python scripts/tennis_scan.py --bankroll 100 --no-ledger $ALL_LIVE_FLAG
+          # J8-B13: Einmaliger Retry mit 60s Backoff bei Fail — deckt transiente
+          # TheOddsAPI-Ausfälle ab, ohne STALE-Symptom für den User zu erzeugen.
+          if ! python scripts/tennis_scan.py --bankroll 100 --no-ledger $ALL_LIVE_FLAG; then
+            echo "[tennis_scan] first attempt failed → retry in 60s"
+            sleep 60
+            python scripts/tennis_scan.py --bankroll 100 --no-ledger $ALL_LIVE_FLAG
+          fi
           echo "status=ok" >> $GITHUB_OUTPUT
 
       - name: Write health snapshot

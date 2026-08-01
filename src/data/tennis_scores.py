@@ -24,6 +24,7 @@ from __future__ import annotations
 import os
 import re
 import time
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -31,6 +32,20 @@ import requests
 
 
 ROOT = Path(__file__).parent.parent.parent
+
+
+def canonical_match_key(a: str, b: str) -> str:
+    """J8-B3: robuste Norm für Score-Dict-Lookups vs. Ledger-Namen.
+
+    NFD-strip + lowercase + non-alnum-collapse + sortierte Reihenfolge (a|b vs. b|a matcht).
+    """
+    def _clean(s: str) -> str:
+        s = unicodedata.normalize("NFD", s or "")
+        s = "".join(c for c in s if unicodedata.category(c) != "Mn")
+        s = re.sub(r"[^a-z0-9]+", "", s.lower())
+        return s
+    ca, cb = _clean(a), _clean(b)
+    return f"{ca}|{cb}" if ca <= cb else f"{cb}|{ca}"
 
 # Modul-Level Diagnostik: welche Quelle hat den letzten Fetch bedient
 LAST_TENNIS_SCORES_SOURCE: str = "none"
@@ -121,6 +136,7 @@ def _parse_odds_api_scores(payload: list[dict], sport_key: str) -> dict[str, dic
         }
         out[mid] = entry
         out[f"{home} vs {away}"] = entry
+        out[canonical_match_key(home, away)] = entry
     return out
 
 
@@ -225,6 +241,7 @@ def fetch_tennis_scores_espn(tour: str = "atp") -> dict[str, dict]:
             eid = ev.get("id", f"espn_{home}_vs_{away}")
             out[eid] = entry
             out[f"{home} vs {away}"] = entry
+            out[canonical_match_key(home, away)] = entry
         except Exception:
             continue
 

@@ -230,7 +230,14 @@ def build_match_features(
     feats.update({k: float(v) for k, v in _category_flags(category).items()})
     feats.update({k: float(v) for k, v in _surface_flags(surface).items()})
 
-    # J2-M Serve-/Return-Aggregates
+    # J2-M Serve-/Return-Aggregates.
+    # J8-B8: Fallback-Semantik dokumentiert.
+    #   dominance_rate=0.5 → neutrale Mitte (Baseline "unbekannt = 50/50")
+    #   ace_rate=0.0 / df_rate=0.0 → Zero-Baseline (kein Signal)
+    #   serve_stats_n_a=0 → explizites Missing-Flag; LGBM soll darauf lernen dass
+    #     die drei anderen Serve-Features bei n=0 nicht aussagekräftig sind.
+    # Konsequenz für Retrain (J2-N): `serve_stats_n_a` als Interaktions-Feature nutzen,
+    # bevor Fallback-Werte semantisch aufgewertet werden.
     if serve_stats_a is not None:
         feats["serve_dom_a"] = float(serve_stats_a.dominance_rate)
         feats["serve_ace_rate_a"] = float(serve_stats_a.ace_rate)

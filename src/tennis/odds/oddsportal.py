@@ -55,7 +55,12 @@ def _fetch_day(date_iso: str) -> list[dict]:
         r'.*?(\d\.\d{2}).*?(\d\.\d{2})',
         re.DOTALL,
     )
-    for m in list(pattern.finditer(resp.text))[:200]:
+    # J8-B5: Truncation-Limit von 200 → 500, plus Warn-Log wenn Grenze erreicht
+    all_hits = list(pattern.finditer(resp.text))
+    _OP_TRUNCATION_LIMIT = 500
+    if len(all_hits) >= _OP_TRUNCATION_LIMIT:
+        print(f"[oddsportal] WARN: {len(all_hits)} matches auf {date_iso} — Truncation-Limit {_OP_TRUNCATION_LIMIT} greift")
+    for m in all_hits[:_OP_TRUNCATION_LIMIT]:
         try:
             pa = m.group(1).strip()
             pb = m.group(2).strip()

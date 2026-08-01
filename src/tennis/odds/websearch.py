@@ -74,6 +74,9 @@ def fetch(match_hint: dict) -> Optional[OddsQuote]:
     if not sanity_ok(med_a, med_b):
         return None
 
+    # J8-B6: single-quote-Median hätte keine Cross-Validation → als Display-only markieren.
+    # Erst ab 2 unabhängigen Quotes wird die Median-Robustheit tatsächlich wirksam.
+    single_source = len(quotes) < 2
     return OddsQuote(
         player_a=pa,
         player_b=pb,
@@ -84,4 +87,5 @@ def fetch(match_hint: dict) -> Optional[OddsQuote]:
         bookmaker="consensus",
         confidence=min(1.0, 0.3 + 0.15 * len(quotes)),
         bookies_count=len(quotes),
+        no_bet_flag=single_source,
     )

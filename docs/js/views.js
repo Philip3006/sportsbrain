@@ -912,7 +912,11 @@ function renderSport(sport) {
   // Tennis: auch ohne Value-Signals nicht leer bleiben — es kann Schedule-Matches geben.
   const _tennisSchedFallback = sport === 'tennis' && (_schedule || []).some(g => g.sport === 'tennis');
   if (!allSigs.length && !_tennisSchedFallback) {
-    c.innerHTML = controlsHtml + `<div class="empty"><div class="icon">🔍</div><div>Keine Value Bets.<br><small>Nächster Scan: täglich 08:00 UTC</small></div></div>`;
+    // J8-M6: Sport-spezifischer Empty-State
+    const _emptyMsg = sport === 'tennis'
+      ? `<div class="empty"><div class="icon">🎾</div><div>Keine Tennis-Spiele in Reichweite.<br><small>Scanner läuft 4×/Tag (06/11/16/21 UTC). Bei aktivem Turnier: Odds-Provider prüfen.</small></div></div>`
+      : `<div class="empty"><div class="icon">🔍</div><div>Keine Value Bets.<br><small>Nächster Scan: täglich 08:00 UTC</small></div></div>`;
+    c.innerHTML = controlsHtml + _emptyMsg;
     _bindSportControls(sport);
     return;
   }

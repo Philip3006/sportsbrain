@@ -720,6 +720,192 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ---
 
+## 🟦 J8. + NEU Tennis-Audit 2026-08-01 — Bugs, Coverage-Gaps & Ausbau-Ideen
+
+> **Quelle**: 3-Agent-Explore-Audit über `src/tennis/*`, `src/models/tennis_*`, `src/data/tennis_*`, `src/betting/tennis_*`, `src/backtest/tennis_walk_forward.py`, `scripts/tennis_*`, `tests/tennis/*`, `docs/`, Workflows. Plan-Datei: `~/.claude/plans/vivid-knitting-pearl.md`.
+>
+> **Struktur**: J8-B* = Bugs (Hotfix-Kandidaten), J8-M* = fehlende Bausteine, J8-I* = neue Ausbau-Ideen.
+> Reihenfolge nach Impact × Aufwand; kritische Bugs oben.
+
+### 🔴 J8-B1 + NEU Elo-K-Factor-Mismatch (Grand-Slam-Miskalibrierung ~40% Historie) — P0
+- **Was**: `src/backtest/tennis_walk_forward.py:132` übergibt `category` (`"grand_slam"`, `"m1000"`, …) an `elo.update()`; `src/models/tennis_elo.py:31–44` erwartet aber Ein-Buchstaben-Codes (`g`/`m`/`a`/`f`) — Fallback K=16 statt K=40. Fix: zentraler `category_to_level()`-Lookup in `elo_source.py` oder `tournaments.py`, Assert im WF, Elo-State neu ausrollen.
+- **Warum**: Silent seit Einführung; alle Grand Slams + Masters bekommen ~60% zu wenig K-Gewicht → strukturell unterspielte Elo-Bewegung → Backtest-Kalibrierung falsch → Live-Priors gegen Multi-Source-Quoten fehlerhaft.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟢 (~1 h) · 🟡 (Elo-Werte ändern sich, LGBM ggf. re-fitten)
+- **Priorität**: **P0** — beeinflusst 40% aller Trainings-Rows; Fix vor jedem J8-I* das Elo/LGBM anfasst
+- **Dateien**: `src/models/tennis_elo.py`, `src/backtest/tennis_walk_forward.py`, `src/tennis/tournaments.py` (optionaler Lookup-Helper), `tests/tennis/test_elo_kfactor_mapping.py` (NEU)
+- **Abhängigkeiten**: keine
+- **Verifikation**: (a) Unit-Test: `elo.update(..., category="grand_slam")` liefert K=40. (b) Neuer WF-Run auf 2019–2025 zeigt höhere Elo-Volatilität in Slam-Wochen. (c) Brier-Improvement gegen alten Snapshot messbar.
+
+### 🔴 J8-B3 + NEU Settlement-Key-Mismatch (Bosnia-Analog für Tennis) — P0
+- **Was**: `scripts/tennis_settle.py:78–86` matcht Scores per `scores.get(mid) or scores.get(f"{home} vs {away}")`; Score-Fetcher `src/data/tennis_scores.py:123` schreibt beide Keys mit Original-Namen. Whitespace/Unicode/Cap-Drift zwischen Score-Fetcher und Ledger → Bet bleibt „pending" für immer. Fix: canonical_name-Normalisierung analog Football, Score-Dict doppelt indiziert (raw + canonical), Retry-Kaskade vor „pending".
+- **Warum**: Bekannter Bug-Typ (Football 2026-06 Bosnia-Vorfall), aktuell kein Guard für Tennis. Multi-Source-Chain bringt vielfältige Namensvarianten → hohe Ausfallwahrscheinlichkeit.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟢 (~2–3 h) · 🟢
+- **Priorität**: **P0** — verhindert dauerhaft offene Wetten + falsche P&L
+- **Dateien**: `scripts/tennis_settle.py`, `src/data/tennis_scores.py`, `src/tennis/name_norm.py`, `tests/tennis/test_settle_name_mismatch.py` (NEU)
+- **Abhängigkeiten**: keine
+- **Verifikation**: (a) Test: Score-Dict mit `"J. Sinner  "` matcht Ledger `"Jannik Sinner"`. (b) Backfill-Skript findet keine „stuck pending"-Tennis-Bets mehr.
+
+### 🟠 J8-B7 + NEU EV-Cap universalisieren (Nebenmärkte umgehen Kelly-Gate) — P1
+- **Was**: `src/betting/tennis_detector.py:49` filtert EV>40% (Model-Artefakt-Guard) für 1×2, aber **NICHT** für `detect_total_sets` (:161), `detect_total_games` (:199), `detect_set_betting` (:239). Fix: `MAX_EV`-Filter als gemeinsamer Helper vor Signal-Return in allen Detector-Funktionen.
+- **Warum**: Ausreißer-EVs in Nebenmärkten hebeln Kelly-Gate aus (CLAUDE.md-Regel „KELLY-GATE Pflicht" verletzt).
+- **Impact/Aufwand/Risiko**: 🟢 · 🟢 (~30 min) · 🟢
+- **Priorität**: **P1**
+- **Dateien**: `src/betting/tennis_detector.py`, `tests/tennis/test_detector_ev_cap.py` (erweitern)
+- **Verifikation**: Bestehende `_apply_ev_cap()`-Tests decken alle vier Detector-Wege ab.
+
+### 🟠 J8-B12 + NEU Odds-Package-Test-Coverage (7 Provider-Files ungetestet) — P1
+- **Was**: `src/tennis/odds/{base,betfair,tennis_explorer,oddsportal,websearch,implied,merger}.py` haben **kein einziges eigenes Test-File**. Nur indirekt via Scanner-Tests. Fix: Unit-Tests je Provider mit fixiertem HTML/JSON-Fixture, Merger-Tier-Priority-Matrix, no_bet_flag-Gate.
+- **Warum**: Aktuell produktivster Ecke des Tennis-Stacks — Regression-Wahrscheinlichkeit bei jedem Refactor hoch.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟡 (~6 h) · 🟢
+- **Priorität**: **P1**
+- **Dateien**: `tests/tennis/odds/test_betfair.py` + 6 weitere (NEU), Fixtures unter `tests/tennis/odds/fixtures/`
+- **Verifikation**: Coverage-Report zeigt `src/tennis/odds/*` ≥ 80%.
+
+### 🟡 J8-B4 + NEU Silent Cache-Staleness bei Rate-Limit — P2
+- **Was**: `src/tennis/odds/betfair.py` (_BULK_TTL_S=300s) und `tennis_explorer.py` (_TTL_S=1800s) liefern alte Quoten weiter wenn 429/403 → gecatched (`betfair.py:100` → None), aber Bulk-Cache innerhalb TTL wird ungewarnt-alt serviert. Fix: Cache-Entry-Age im Merger loggen + `stale_seconds`-Feld propagieren; Guard in `base.py` verwirft Angebote älter als 2×TTL.
+- **Impact/Aufwand/Risiko**: 🟡 · 🟡 (~2 h) · 🟢
+- **Priorität**: **P2**
+- **Dateien**: `src/tennis/odds/betfair.py`, `tennis_explorer.py`, `merger.py`, `base.py`
+- **Verifikation**: Test injiziert 429 + gealterten Cache → Merger droppt Provider.
+
+### 🟡 J8-B5 + NEU OddsPortal Silent-Truncation — P2
+- **Was**: `src/tennis/odds/oddsportal.py:54–58` limitiert `[:200]` Matches ohne Log. An Grand-Slam-Tagen mit vielen Matches werden welche stumm verworfen. Fix: Warn-Log bei Truncation, Limit auf 500 hochsetzen (nur reines Regex-Parsing, kein Netz-Cost).
+- **Impact/Aufwand/Risiko**: 🟢 · 🟢 (~20 min) · 🟢
+- **Priorität**: **P2**
+- **Dateien**: `src/tennis/odds/oddsportal.py`
+
+### 🟡 J8-B6 + NEU WebSearch Single-Quote-Median → Signal (Overfitting-Falle) — P2
+- **Was**: `src/tennis/odds/websearch.py:40–57`: bei nur 1 gefundener Quote liefert `median()` diesen Wert ohne Confidence-Penalty. Fix: `min_sources=2` als Gate, sonst `no_bet_flag=True` (Display-only), keine Ledger-Aufnahme.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟢 (~30 min) · 🟢
+- **Priorität**: **P2**
+- **Dateien**: `src/tennis/odds/websearch.py`, `tests/tennis/odds/test_websearch.py` (NEU)
+
+### 🟡 J8-B8 + NEU Empty-Aggregate mischt Semantik (Serve-Fallback 0.5 vs. sonst 0.0) — P2
+- **Was**: `src/tennis/features.py:240,250,258–261`: Serve-Features-Fallback = **0.5** (neutral), andere fehlende Features = **0.0**. LGBM lernt `serve_dom=0.5` als „unknown"-Signal, was auch für bekannte Spieler ohne Recent-Stats gilt → verzerrter Prior. Fix: separates `serve_stats_missing`-Flag statt neutralem Wert; LGBM lernt das explizit.
+- **Impact/Aufwand/Risiko**: 🟡 · 🟡 (~2 h + Retrain) · 🟡 (verändert Feature-Semantik)
+- **Priorität**: **P2** — Voraussetzung für sauberen J2-N-Retrain
+- **Dateien**: `src/tennis/features.py`, `scripts/tennis_train.py`, `feature_columns.json`
+- **Abhängigkeiten**: J2-N
+
+### 🟡 J8-B9 + NEU Ensemble-Silent-Fallback ohne Log — P2
+- **Was**: `src/tennis/ensemble.py:46–50`: Model-Load-Exception → nur `print()`, dann `model=None, gate_passed=False`. Caller fällt auf reines Elo ohne Alert. Fix: strukturiertes Warning-Log (level=WARNING), Distinction „model fehlt" vs „model korrupt" via Exception-Type, Health-Push wenn 3× in Folge.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟢 (~1 h) · 🟢
+- **Priorität**: **P2**
+- **Dateien**: `src/tennis/ensemble.py`, Integration mit `src/monitoring/health.py`
+
+### 🟡 J8-B10 + NEU Live-Scan zieht Stats mit today's date (inkonsistent zum WF) — P2
+- **Was**: `src/tennis/ensemble.py:110–111` fetched Aggregate ohne `before_date`. Kein technisches Leakage (kein Backtest), aber inkonsistent zum WF-Trainingspfad. Fix: `before_date=match_date` propagieren (Tennis-Abstract-Historie ist eh nur bis „gestern" gepflegt).
+- **Impact/Aufwand/Risiko**: ⚪ · 🟢 (~30 min) · 🟢
+- **Priorität**: **P2**
+- **Dateien**: `src/tennis/ensemble.py`
+
+### 🟡 J8-B11 + NEU Signal-Archive-Duplikate bei Re-Scans — P2
+- **Was**: `scripts/tennis_scan.py:696` archiviert alle Signale inkl. Display-Only; Dedup nur per `_tennis_selected` (Live-Signals). Re-Scans desselben Matches erzeugen Duplikate im `signal_history.jsonl`. Fix: Dedup-Key `(match_id, market, scan_date)` beim Append.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟢 (~1 h) · 🟢
+- **Priorität**: **P2**
+- **Dateien**: `scripts/tennis_scan.py`, `src/scanner/output.py`
+
+### 🟡 J8-B13 + NEU tennis_scan STALE-Symptom (Cron-Miss) — P2 (operativ)
+- **Was**: `docs/data/health.json` meldete am 2026-08-01 `tennis_scan` STALE (>25200 s, cadence 06/11/16/21 UTC). Vermutlich vergangener Workflow-Run vergriffen. Fix: Cron-Log der letzten 48h prüfen, ggf. `retry`-Job im Workflow oder Cadence auf 3h reduzieren.
+- **Impact/Aufwand/Risiko**: 🟡 · 🟢 (~30 min Diagnose) · 🟢
+- **Priorität**: **P2** — pro Vorkommen individuell prüfen
+- **Dateien**: `.github/workflows/tennis_scan.yml`, `docs/data/health.json`
+
+### 🟡 J8-M1 + NEU Model-Correctness-Assertions in Tennis-Tests — P2
+- **Was**: `tests/tennis/test_lgbm.py`, `test_ensemble.py` prüfen nur Shape/Fallback, nicht dass elo_diff→y-Korrelation nach J2-K-Integration erhalten bleibt. Fix: synthetischer 500-Row-Test der monotone Wahrscheinlichkeits-Beziehung asserted.
+- **Impact/Aufwand/Risiko**: 🟡 · 🟡 (~3 h) · 🟢
+- **Dateien**: `tests/tennis/test_lgbm.py`, `test_ensemble.py`
+
+### 🟡 J8-M2 + NEU Retrain-Metadaten fehlen — P2
+- **Was**: Kein `trained_at`-Timestamp, keine Feature-Version im Model-JSON → Drift nicht messbar. Fix: `trained_at`, `feature_version`, `n_train_rows` in `save()`; UI-Footer zeigt „Modell vom …".
+- **Impact/Aufwand/Risiko**: 🟢 · 🟢 (~1 h) · 🟢
+- **Dateien**: `src/models/tennis_lgbm.py`, `scripts/tennis_train.py`, `docs/js/views.js`
+
+### 🟡 J8-M3 + NEU BO3/BO5-Validation fehlt — P2
+- **Was**: `src/tennis/calibration.py:21,59,132` nimmt implicit `best_of ∈ {3,5}` an, prüft nie. `best_of=4` (Data-Bug) → Mid-Range-Prior statt Raise. Fix: `assert best_of in (3, 5)` an allen Public-Calls.
+- **Impact/Aufwand/Risiko**: ⚪ · 🟢 (~15 min) · 🟢
+- **Dateien**: `src/tennis/calibration.py`
+
+### 🟡 J8-M4 + NEU Retirement-Attribution im Settlement — P2
+- **Was**: `src/betting/tennis_settlement.py`: `retired_by`-Feld wird nie genutzt, kann nicht korrekt auf Set-Winner-Märkte angewendet werden. Fix: `retired_by` in `settle_tennis_market()` einbeziehen (z.B. „Player A retired" → Set-Betting-Push wenn A führte).
+- **Impact/Aufwand/Risiko**: 🟡 · 🟡 (~2 h) · 🟡 (Regelmatrix pro Markt)
+- **Dateien**: `src/betting/tennis_settlement.py`, `tests/tennis/test_settlement.py`
+
+### 🟠 J8-M5 + NEU AH/Spreads-Fallback fehlt für Non-TheOddsAPI — P1
+- **Was**: Nur TheOddsAPI liefert AH; TE/OP/Betfair/WebSearch nur H2H. Bei API-Ausfall verschwinden AH-Signale komplett. Fix: (a) Betfair-Bulk-Feed für Set-Handicap prüfen, (b) TE-Handicap-Endpunkt integrieren (falls existiert), (c) impliziter AH-Rechner aus H2H+Total-Sets als Fallback.
+- **Impact/Aufwand/Risiko**: 🟠 · 🔴 (~8 h) · 🟡
+- **Priorität**: **P1** — deckt aktuell ~30% der Value-Bets ab
+- **Dateien**: `src/tennis/odds/betfair.py`, `tennis_explorer.py`, `merger.py`
+
+### 🟡 J8-M6 + NEU Empty-State-Message im Tennis-Tab — P2
+- **Was**: `docs/js/views.js:913–919` skippt Render bei fehlendem Signal+Fallback ohne User-Hinweis. Fix: Empty-State-Karte „Keine Tennis-Spiele in Reichweite — nächster Scan …".
+- **Impact/Aufwand/Risiko**: ⚪ · 🟢 (~30 min) · 🟢
+- **Dateien**: `docs/js/views.js`
+
+### 🟡 J8-M7 + NEU Tennis-Dokumentation (Setup, Ops, Kalibrierung) — P2
+- **Was**: Kein `TENNIS_SETUP.md`, keine Weekly-Ops-Checklist, keine Kalibrierungs-Methodologie dokumentiert. Fix: `docs/tennis/README.md` mit Setup + Ops + Kalibrierungs-Notizen.
+- **Impact/Aufwand/Risiko**: ⚪ · 🟡 (~2 h) · 🟢
+- **Dateien**: `docs/tennis/README.md` (NEU)
+
+### 🟠 J8-M8 + NEU CLV-Alarm für Tennis — P1
+- **Was**: J2-L trackt Pinnacle-CLV, aber es gibt keinen Alert wenn CLV<0 über Rolling-Window (14d). Fix: `scripts/monitor_clv.py` liest Ledger, Push wenn `mean_clv_14d < 0` oder `n<10 && mean_clv < -0.02`.
+- **Impact/Aufwand/Risiko**: 🟠 · 🟡 (~3 h) · 🟢
+- **Priorität**: **P1** — Frühwarnsystem für Kalibrierungs-Rot
+- **Dateien**: `scripts/monitor_clv.py` (NEU), `.github/workflows/tennis_clv_monitor.yml` (NEU)
+
+---
+
+### 💡 Neue Ausbau-Ideen (10 Vorschläge aus Audit)
+
+### 🟠 J8-I3 + NEU EV-Cap universalisieren — siehe J8-B7 (Duplikat, referenziert)
+> Bereits als Bug-Fix erfasst (J8-B7). Hier nur als Merker für Impact-Sortierung.
+
+### 🟠 J8-I4 + NEU Model-Metadata + CLV-Alarm — kombiniert J8-M2 + J8-M8
+> Bereits als Missing-Items erfasst. Zusammen umsetzen als Sprint.
+
+### 🟠 J8-I6 + NEU Pinnacle-Scrape als 6. Provider (CLV-Ground-Truth + AH) — P1
+- **Was**: Pinnacle-Web-Feed (oder Betradar-Mirror) als 6. Source im Merger. Höchstes Tier (T1) für CLV-Referenz + löst AH-Fallback-Gap (M5). Anti-Bot: rotating UA + Backoff analog Betfair.
+- **Warum**: Aktuell OddsAPI-CLV-Referenz; Pinnacle ist Ground-Truth-Standard der Wett-Industrie. Löst gleichzeitig J8-M5.
+- **Impact/Aufwand/Risiko**: 🟠 · 🔴 (~8–10 h) · 🟡 (Anti-Bot-Cat-and-Mouse, ToS)
+- **Priorität**: **P1**
+- **Dateien**: `src/tennis/odds/pinnacle.py` (NEU), `src/tennis/odds/merger.py`, `src/tennis/odds/base.py`
+- **Abhängigkeiten**: J8-B12 (Tests-Framework)
+- **Verifikation**: 20 Sample-Matches → Pinnacle-Odds mit ≤2% Abweichung zu manueller Referenz.
+
+### 🟡 J8-I7 + NEU Serve-Stats-Backfill für Walk-Forward (Voraussetzung J2-N) — P2
+- **Was**: Historisches Snapshot-System auf `src/data/tennis_stats.py` aufbauen (asof-Datum via `before_date`) + WF darauf trainieren. Ohne Backfill divergieren Train- (Fallback-Werte) und Live-Feature-Distributionen dauerhaft.
+- **Warum**: Voraussetzung für J2-N (LGBM-Retrain mit Serve-Features). Aktuell schleicht sich Serve-Feature-Divergenz ins Live-Modell.
+- **Impact/Aufwand/Risiko**: 🟡 · 🔴 (~12 h) · 🟡
+- **Priorität**: **P2** — Q4 2026
+- **Dateien**: `src/data/tennis_stats.py`, `data/cache/tennis_stats_history.jsonl` (NEU), `src/backtest/tennis_walk_forward.py`
+- **Abhängigkeiten**: J2-M ✅, adressiert J8-B2
+
+### 🟡 J8-I8 + NEU Live-In-Play-Modul Phase 5 (Momentum + Break-Sim) — P3
+- **Was**: MoM-Modell (Momentum + Serve-Break-Wahrscheinlichkeit) für Live-Wetten während Match; hebelt bestehende Sim + Serve-Stats. Voraussetzung: Live-Odds-Provider (J8-I6 Pinnacle).
+- **Warum**: Größter neuer Erlöskanal; aktuell keine Live-Bets möglich.
+- **Impact/Aufwand/Risiko**: 🟡 · 🔴 (~15–25 h) · 🔴 (neue Domain, Bankroll-Schutz Pflicht)
+- **Priorität**: **P3** — nach J8-I6 stabil
+- **Dateien**: `src/tennis/live/inplay_model.py` (NEU), `src/tennis/live/scanner.py` (NEU), `scripts/tennis_inplay_scan.py` (NEU)
+- **Abhängigkeiten**: J8-I6
+
+### 🟡 J8-I9 + NEU Kontextfeatures: Rest-Days / Travel / Altitude — P2
+- **Was**: Feature-Erweiterung: Days-since-last-match, Zeitzonen-Delta (Reise-Fatigue), Altitude (Bogotá/Kitzbühel), Best-of-Change (Slam→Masters, BO5→BO3).
+- **Warum**: Gut dokumentierter Alpha-Faktor in Tennis-Literatur; passt in bestehende Feature-Pipeline.
+- **Impact/Aufwand/Risiko**: 🟡 · 🟡 (~6–8 h) · 🟢
+- **Priorität**: **P2**
+- **Dateien**: `src/tennis/features.py`, `src/tennis/context.py` (NEU), `data/cache/tournament_venues.json` (NEU)
+- **Abhängigkeiten**: J8-B8 (saubere Feature-Semantik), J8-I7 (Retrain-Slot)
+
+### 🟡 J8-I10 + NEU Ensemble-Auto-Recalibration (per-Surface Isotonic weekly) — P2
+- **Was**: Wöchentlicher Isotonic-Recal-Job über letzte N settled Bets → per-Surface-Calibrator, ersetzt heutigen statischen. Elo+LGBM driften unterschiedlich pro Surface (Clay ROI −6.9pp).
+- **Warum**: Adaptiver Recal fängt Drift automatisch; heute nur manueller Retrain.
+- **Impact/Aufwand/Risiko**: 🟡 · 🟡 (~6 h) · 🟡 (falsche Kalibrierung bei kleinen n)
+- **Priorität**: **P2**
+- **Dateien**: `src/tennis/calibration.py`, `scripts/tennis_recalibrate.py` (NEU), `.github/workflows/tennis_recalibrate.yml` (NEU)
+- **Abhängigkeiten**: J2-L ✅, J8-M8 (CLV-Alarm als Watchdog)
+
+---
+
 ## 🚫 K. Bewusst draußen (Veto-Liste)
 
 | # | Idee | Veto-Grund |
@@ -779,16 +965,22 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **13b** | J2-M Tennis Live-Stats ✅ erledigt 2026-08-01 (Tennis-Abstract matchmx-Parser + Rule-based Adjustment ±3pp) | erledigt | 8 h |
 | **13c** | **J2-N LGBM-Retrain mit Serve-Features** — braucht Snapshot-Vorlaufzeit | Q1-2027 | 4-6 h |
 | **13d** | Washington-Registry-Fix + Signal-Archive-Persistence + Tennis-Outcome-Backfill ✅ erledigt 2026-08-01 (Commit 5ad342b6) | erledigt | ~2 h |
+| **14a** | + NEU **J8-B1 + J8-B3 (Tennis-Hotfixes P0)** — Elo-K-Mapping + Settle-Key-Norm | **sofort, vor jeder weiteren Tennis-Arbeit** | ~4 h |
+| **14b** | + NEU **J8-B7 + J8-M8 + J8-B12 (Tennis P1-Quickwins)** — EV-Cap universal, CLV-Alarm, Odds-Package-Tests | **innerhalb 1 Woche** | ~10 h |
+| **14c** | + NEU **J8-M5 + J8-I6 (Tennis-AH-Fallback + Pinnacle)** — löst gleichzeitig AH-Gap und CLV-Ground-Truth | **Q3 2026** | ~10 h |
+| **14d** | + NEU **J8-B4/B5/B6/B8/B9/B10/B11/B13 + J8-M1-M4/M6/M7 (Tennis-Hygiene P2)** — Silent-Fails, Test-Assertions, Metadaten, Docs | **rollend Q3-Q4** | ~15 h Summe |
+| **14e** | + NEU **J8-I7 + J8-I9 + J8-I10 (Tennis-Ausbau P2)** — Serve-Backfill, Kontextfeatures, Auto-Recal | **Q4 2026, gebündelt mit J2-N** | ~25 h |
+| **14f** | + NEU **J8-I8 (Live-InPlay Phase 5)** — nur nach stabilem J8-I6 (Pinnacle) | **Q1 2027+** | 15-25 h |
 
 ---
 
 ## 📊 Statistik
 
-- **Insgesamt**: 74 konkrete Items (+1 ggü. 2026-06-25: Tennis-Name-Normalisierung als kritischer Fix J2-K-1)
-- **P0**: 13 (sofort) — davon 13 ✅
-- **P1**: 38 — davon 37 ✅ (neu erledigt 2026-07-31: I1, I2, I3, J2-K, J2-L, F7; nur F5 offen)
-- **P2**: 14 — davon 10 ✅ (E1, E2, E3, E4, H1, H2, I4, I5, I6, I7); offen: I8, J3, J4, F6
-- **P3**: 5 — J2-M (Tennis Live-Stats) + 4 weitere Q4 2026
+- **Insgesamt**: 99 konkrete Items (+25 ggü. 2026-08-01 durch **J8 Tennis-Audit**: 13 Bugs + 8 Missing + 4 neue Ideen; J8-I3/I4 sind Referenzen)
+- **P0**: 15 (sofort) — davon 13 ✅; **neu offen: J8-B1 Elo-K-Mismatch, J8-B3 Settle-Key-Norm**
+- **P1**: 43 — davon 37 ✅; **neu offen: J8-B7 (EV-Cap), J8-B12 (Odds-Tests), J8-M5 (AH-Fallback), J8-M8 (CLV-Alarm), J8-I6 (Pinnacle)**
+- **P2**: 31 — davon 10 ✅; **neu offen: 17× J8-* (Cache-Staleness, Truncation, WebSearch-Guard, Empty-Aggregate, Silent-Log, Live-Stat-Date, Signal-Dedup, tennis_scan-STALE-Diag, Test-Assertions, Retrain-Meta, BO-Validation, Retirement-Attrib, Empty-State, Docs, Serve-Backfill, Kontextfeatures, Auto-Recal)**
+- **P3**: 6 — J2-N + 4 weitere Q4 2026 + **J8-I8 Live-InPlay**
 - **Veto**: 10 (K5 aufgehoben 2026-06-26)
 
 ### 🔴 KRITISCH OFFEN — Odds-Coverage-Baustelle (User-Feedback 2026-07-31 Abend)
@@ -861,4 +1053,5 @@ Alcaraz vs Djokovic p_a 0.50 → 0.67, Fritz vs Michelsen 0.50 → 0.75.
 - **2026-06-23**: ~ J2 Phase A ✅ erledigt. Tennis-Modul von Wimbledon-Single-Tournament-Hardcode zur Tournament-Registry umgebaut. Neue Module: `src/tennis/tournaments.py` (49 Events: 8 Slams + 9 ATP Masters + 6 WTA 1000 + 13 ATP 500/250 + 10 WTA 500/250 + 2 Tour Finals; Dataclass + Lookup-Indizes), `src/tennis/discovery.py` (TheOddsAPI `/sports`-Pull mit 1h-Cache, Stale-Fallback bei API-Down, unknown_sport_key-Wrap für Drift). `src/config.py`: `TENNIS_MIN_EDGE_BY_CATEGORY` (grand_slam 5%, m1000 8%, wta1000 4%, atp500 10%, wta500 6%, atp250 12%, wta250 8%) und `TENNIS_CATEGORY_MODE` (alle außer grand_slam initial Shadow — wird durch Phase-B-Backtest entschieden). 30 neue Tests in `tests/tennis/`; 556/556 Suite grün. **Roadmap-Hochstufung J2: P2 → P1** (Saison-Gap WM-Ende → Bundesliga-Start). Nächste Phase: J2-B (Backtest-Erweiterung auf full-tour-Quoten, Per-Category-Gate-Verdicts).
 - **2026-06-25**: + **L4 NEU ✅** (Stake-System v2 — Odds-Bucket-Cap + Korrelations-Adjustment). User-Audit der letzten 4 Wetten (CZE–MEX, ZAF–KOR) deckte zwei strukturelle Bugs auf: (a) Sizing skalierte nur über EV → €20 Stake auf 5.5er Quote möglich; (b) negative Korrelation (Mexico-AH + Hložek-Scorer) und positive Korrelation (Korea-Sieg + Over 3.0) wurden nicht erkannt. Fix: ODDS_BUCKET_CAPS (≤2.0→100% bis >5→35%), neues `correlation.py`-Modul mit Neg-Korr-Discount (Underdog-Leg ×0.50, markiert), Pos-Korr-Discount (beide Legs ×0.70) und Match-Exposure-Cap (Σ stake ≤ tier_hi×1.5). Kennzeichnung via `stake_reason`/`correlation_note`/orange „↓ Korr"-Badge in PWA + CLI `⚠ KORR-↓`. 265/265 Tests grün, 23 neue Tests. Statistik: 68 → 69 Items.
 - **2026-06-26**: + **F5/F6/F7/L5 NEU** aus Vorfall-Analyse (PWA-Blackout + Stale-Daten + 14 Healer-Retry-Commits/48h). **F5** (P1): Live-Loops `live_score_push`/`consume_pending_bets`/`cloud_healer` raus aus GH Actions, rein in Cloudflare Worker Cron — GH-Cron-Unzuverlässigkeit ist Root-Cause für Stale-Banner + Commit-Flut. **F6** (P2): Cloud-Healer-Workflow soll Logs als Artifact statt als Commit speichern (70% Bot-Commits weg). **F7** (P2): `tennis_scan.py` übergibt `schedule=[]` und überschreibt damit Football-Schedule — Sport-getrennter Merge in `write_signals_json` nötig. **L5** (P1, ✅ erledigt heute): Hot-Fix für signals.json Conflict-Marker → Cloud-Wipe → PWA-Blackout. Guards in `web_dashboard.py` (`RuntimeError` statt stilles Wipe) + `_git_safe_push.sh` (Kaskade `--theirs`→`--ours`→`HEAD-reset` + Final-Guard gegen Markers-Staging). Commits `24ca28b`/`47839bf`. **K5 aus Veto-Liste entfernt** (`_git_safe_push.sh` Härtung war doch nötig). Statistik: 69 → 73 Items. P1: 33 → 35, P2: 15 → 17.
+- **2026-08-01**: + **J8 NEU — Tennis-Audit-Block (25 Items)**. 3-Agent-Explore-Audit über gesamten Tennis-Stack aufgenommen: 13 Bugs (J8-B1…B13), 8 Coverage-Gaps (J8-M1…M8), 4 neue Ausbau-Ideen (J8-I6/I7/I8/I9/I10). Kritisch: **J8-B1 Elo-K-Mismatch** (Grand-Slam-Miskalibrierung ~40% Historie, K=16 statt K=40, silent seit Einführung) und **J8-B3 Settle-Key-Norm** (Bosnia-Analog für Tennis). Beide P0. Weitere P1-Kandidaten: J8-B7 (EV-Cap für Nebenmärkte), J8-B12 (Odds-Package komplett ungetestet), J8-M5 (AH-Fallback), J8-M8 (CLV-Alarm), J8-I6 (Pinnacle-Scrape). Umsetzungs-Slots 14a-14f in Reihenfolge ergänzt. Statistik: 74 → 99 Items. P0: 13→15, P1: 38→43, P2: 14→31, P3: 5→6. Plan-Datei: `~/.claude/plans/vivid-knitting-pearl.md`.
 - **2026-06-22**: + D6 NEU ✅ (Invite-Link + Self-Onboarding). Admin generiert Invite via `POST /invite` (Master-Auth) → schickt Link `?invite=TOKEN` → Empfänger wählt eigenen Username im Onboarding → `POST /register {invite, user}` legt Worker-Slot mit gewähltem Namen an, alle nachgelagerten Dateien (`ledger_{user}.csv`, `signals_{user}.json`, KV `pending_bets_{user}`) verwenden diesen Namen. Invite-Tokens einmalig, KV `invites` mit used_by-Tracking. PWA-IIFE liest URL, räumt sie via replaceState. Worker-Deploy `f0f84701`. 503/503 Tests grün. **Damit ist „Link senden = Tool teilen" Realität.** Nächste Phase: **8** (E1–E4 Refactor) oder **9c** (I7 Monte Carlo).

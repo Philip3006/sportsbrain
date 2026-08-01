@@ -20,6 +20,10 @@ from src.tennis.sim import (
 
 def invert_p_match_to_p_set(p_match: float, best_of: int) -> float:
     """Bisection: p_match → p_set. p_match_bo3/5 sind monoton in p_set."""
+    # J8-M3: explicit best_of-Validation. Silent-Fallback (Mid-Range-Prior) bei Data-Bug
+    # ist gefährlich, weil Kalibrierung dann unbemerkt driftet.
+    if best_of not in (3, 5):
+        raise ValueError(f"invert_p_match_to_p_set: best_of={best_of!r} unsupported (nur 3 oder 5)")
     p_match = max(0.05, min(0.95, p_match))
     lo, hi = 0.05, 0.95
     for _ in range(40):
@@ -54,6 +58,8 @@ def evaluate_set_markets(
       o_u_sets_<line>_over    (line=2.5 für BO3, 3.5 für BO5)
       score_<W>-<L>           (Scoreline aus Sicht des Winners)
     """
+    if best_of not in (3, 5):
+        raise ValueError(f"evaluate_set_markets: best_of={best_of!r} unsupported (nur 3 oder 5)")
     out: dict[str, dict] = {}
     p_set = invert_p_match_to_p_set(p_match, best_of)
     line = 2.5 if best_of == 3 else 3.5
@@ -122,6 +128,8 @@ def evaluate_game_markets(
     row,
 ) -> dict[str, dict] | None:
     """Wie evaluate_set_markets, aber für O/U Games. None wenn keine Game-Scores."""
+    if best_of not in (3, 5):
+        raise ValueError(f"evaluate_game_markets: best_of={best_of!r} unsupported (nur 3 oder 5)")
     actual_total = _extract_total_games(row)
     if actual_total is None:
         return None
