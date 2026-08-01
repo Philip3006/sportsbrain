@@ -8,7 +8,7 @@
 // Wir machen hier KEIN Caching der App-Shell (PWA bleibt online-first via
 // Cloudflare KV). Der Service Worker existiert nur für Web Push.
 
-const SW_VERSION = '2026-06-16-v2-force-reload';
+const SW_VERSION = '2026-08-01-tennis-odds-render-fix';
 
 self.addEventListener('install', (event) => {
   // Sofort aktivieren — kein Wait auf Tab-Reload
