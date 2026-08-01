@@ -101,12 +101,42 @@ def _fetch_match_detail(match_id: str) -> dict | None:
     player_a = head.group(1).strip()
     player_b = head.group(2).strip()
 
-    # Odds — alle Bookmaker-Zeilen sammeln, max per side
-    odds = _RE_ODDS_ROW.findall(html)
-    if not odds:
+    # Odds — TE-Detail-Seite mischt aktuelles H2H mit HEAD-TO-HEAD-Historie
+    # (frühere Duelle derselben Spieler). Beide Blöcke haben identische
+    # <tr class="one/two"> k1/k2-Struktur → re.DOTALL greift alle.
+    # Strategie:
+    # 1) Nur Pairs mit plausiblem Overround (0.95-1.15) behalten
+    # 2) Nach Favorit clustern (A-fav vs B-fav)
+    # 3) Größeren Cluster wählen (aktuelles Match hat i.d.R. mehr Bookies)
+    # 4) MEDIAN pro Seite = Konsensus (max_per_side kombiniert falsche Bookies)
+    from statistics import median as _median
+    odds_raw = _RE_ODDS_ROW.findall(html)
+    if not odds_raw:
         return None
-    best_a = max(float(a) for a, _ in odds)
-    best_b = max(float(b) for _, b in odds)
+    h2h_pairs: list[tuple[float, float]] = []
+    for a_s, b_s in odds_raw:
+        try:
+            a = float(a_s); b = float(b_s)
+        except ValueError:
+            continue
+        if a < 1.02 or b < 1.02 or a > 50 or b > 50:
+            continue
+        overround = (1.0 / a) + (1.0 / b)
+        if 0.95 <= overround <= 1.15:
+            h2h_pairs.append((a, b))
+    if not h2h_pairs:
+        return None
+    a_fav = [(a, b) for a, b in h2h_pairs if a < b]
+    b_fav = [(a, b) for a, b in h2h_pairs if a >= b]
+    cluster = a_fav if len(a_fav) >= len(b_fav) else b_fav
+    if not cluster:
+        return None
+    best_a = round(_median([a for a, _ in cluster]), 2)
+    best_b = round(_median([b for _, b in cluster]), 2)
+    # Finaler Sanity-Check auf dem Konsens-Preis
+    if not (0.95 <= (1.0 / best_a) + (1.0 / best_b) <= 1.15):
+        return None
+    odds = cluster
 
     # Turnier-Slug + Tour (atp-men | wta-women) aus erstem passendem Link
     tour_m = _RE_TOURNAMENT_LINK.search(html)
