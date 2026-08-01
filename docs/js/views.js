@@ -533,7 +533,7 @@ function renderHome() {
     return;
   }
 
-  // Seed oddsMap from all_odds (raw book odds for all games)
+  // Seed oddsMap from all_odds (raw book odds for football)
   const sigCount = {}, oddsMap = {};
   for (const [rawKey, raw] of Object.entries(_allOdds)) {
     const [rh, ra] = rawKey.split(' vs ').map(x => x.trim());
@@ -543,6 +543,18 @@ function renderHome() {
       draw: raw.draw > 1 ? { odds: raw.draw, ev: null } : null,
       away: raw.away > 1 ? { odds: raw.away, ev: null } : null,
     };
+  }
+  // Seed oddsMap from schedule (Tennis-Quoten aus TheOddsAPI/TE/OP/Betfair etc.)
+  // Diese landen NICHT in _allOdds und würden sonst als "—" gerendert.
+  for (const g of (_schedule || [])) {
+    const nk = matchKey(g.home, g.away);
+    if (!oddsMap[nk]) oddsMap[nk] = {};
+    if (g.odds_home > 1 && !oddsMap[nk].home) {
+      oddsMap[nk].home = { odds: g.odds_home, ev: null, model_prob: 0 };
+    }
+    if (g.odds_away > 1 && !oddsMap[nk].away) {
+      oddsMap[nk].away = { odds: g.odds_away, ev: null, model_prob: 0 };
+    }
   }
   // Override with signal odds (value bets) — marked with ev so they show green
   for (const s of _signals) {
