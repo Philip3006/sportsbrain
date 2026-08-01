@@ -21,6 +21,9 @@ sys.path.insert(0, str(ROOT))
 
 from scripts.settle_bets import fetch_scores, settle_market
 from src.scanner.output import SIGNAL_HISTORY
+from src.betting.tennis_settlement import settle_tennis_market
+from src.data.tennis_scores import fetch_tennis_scores
+from src.tennis.discovery import discover_active_tournaments
 
 SIGNAL_PERF = ROOT / "data" / "cache" / "signal_performance.json"
 
@@ -45,14 +48,24 @@ def _save_signals(rows: list[dict]) -> None:
     )
 
 
-def _resolve_outcome(row: dict, scores: dict) -> str | None:
-    """Look up score for this signal's match and call settle_market()."""
+def _resolve_outcome(row: dict, scores: dict, tennis_scores: dict) -> str | None:
+    """Look up score for this signal's match and call the sport-appropriate settler."""
     home, away = row.get("home", ""), row.get("away", "")
     mid = row.get("match_id", "")
+    market = row.get("market", "")
+    sport = row.get("sport", "football")
+
+    if sport == "tennis":
+        sc = tennis_scores.get(mid) or tennis_scores.get(f"{home} vs {away}")
+        if not sc:
+            return None
+        result = settle_tennis_market(market, sc)
+        # pending → not decidable yet, treat as unresolved
+        return None if result == "pending" else result
+
     sc = scores.get(mid) or scores.get(f"{home} vs {away}")
     if not sc:
         return None
-    market = row.get("market", "")
     if market.startswith("scorer_"):
         return None  # scorer markets need ESPN goal data — skip for now
     return settle_market(market, sc["home_score"], sc["away_score"])
@@ -72,8 +85,21 @@ def backfill(dry_run: bool = False) -> dict:
         return {}
 
     print(f"[backfill] {len(pending)}/{len(rows)} Signale ohne Outcome — hole Scores...")
-    scores = fetch_scores()
-    print(f"[backfill] {len(scores) // 2} abgeschlossene Matches via API")
+    has_football = any(r.get("sport", "football") == "football" for r in pending)
+    has_tennis = any(r.get("sport") == "tennis" for r in pending)
+    scores: dict = {}
+    tennis_scores: dict = {}
+    if has_football:
+        scores = fetch_scores()
+        print(f"[backfill] Football: {len(scores) // 2} abgeschlossene Matches")
+    if has_tennis:
+        try:
+            tourneys = discover_active_tournaments()
+            sport_keys = [k for t in tourneys for k in t.sport_keys]
+        except Exception:
+            sport_keys = None
+        tennis_scores = fetch_tennis_scores(sport_keys)
+        print(f"[backfill] Tennis: {len(tennis_scores) // 2} abgeschlossene Matches")
 
     resolved = 0
     now_ts = datetime.now(timezone.utc).isoformat()
@@ -82,7 +108,7 @@ def backfill(dry_run: bool = False) -> dict:
             continue
         if r.get("scan_date", "") >= today:
             continue
-        outcome = _resolve_outcome(r, scores)
+        outcome = _resolve_outcome(r, scores, tennis_scores)
         if outcome is None:
             continue
         if not dry_run:

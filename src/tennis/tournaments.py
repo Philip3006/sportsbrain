@@ -126,7 +126,7 @@ TENNIS_REGISTRY: tuple[Tournament, ...] = (
     Tournament("hamburg_atp",        "Hamburg European Open","atp","atp500","clay", 3,
                ("tennis_atp_hamburg",), (7,)),
     Tournament("washington_atp",     "Washington Open",  "atp", "atp500",  "hard",  3,
-               ("tennis_atp_washington",), (7, 8)),
+               ("tennis_atp_washington", "tennis_atp_washington_open"), (7, 8)),
     Tournament("beijing_atp",        "China Open",       "atp", "atp500",  "hard",  3,
                ("tennis_atp_china_open", "tennis_atp_beijing"), (9, 10)),
     Tournament("tokyo_atp",          "Japan Open",       "atp", "atp500",  "hard",  3,
@@ -149,6 +149,8 @@ TENNIS_REGISTRY: tuple[Tournament, ...] = (
                ("tennis_wta_berlin",), (6,)),
     Tournament("eastbourne_wta",     "Eastbourne Intl.", "wta", "wta500",  "grass", 3,
                ("tennis_wta_eastbourne",), (6,)),
+    Tournament("washington_wta",     "Washington Open",  "wta", "wta500",  "hard",  3,
+               ("tennis_wta_washington", "tennis_wta_washington_open"), (7, 8)),
     Tournament("tokyo_wta",          "Toray Pan Pacific","wta", "wta500",  "hard",  3,
                ("tennis_wta_tokyo",), (9, 10)),
 

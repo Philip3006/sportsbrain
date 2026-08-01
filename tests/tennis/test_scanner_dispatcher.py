@@ -106,17 +106,21 @@ def test_parse_event_with_set_betting():
     assert "2-1" in parsed["scorelines"]
 
 
-def test_parse_event_skipped_below_min_bookmakers():
+def test_parse_event_below_min_bookmakers_still_parses():
+    """< _MIN_BOOKMAKERS triggert WebSearch-Fallback aber blockiert nicht mehr —
+    Multi-Source-Chain im main-Loop entscheidet über display-only."""
     event = _build_event("A", "B", n_bookies=1)
     parsed = _parse_event_markets(event, "tennis_atp_wimbledon")
-    # WebSearch stub returns None → match skipped
-    assert parsed is None
+    assert parsed is not None
+    # h2h aus dem einen Bookie ist vorhanden → nicht display-only
+    assert parsed["odds_a"] > 0.0 and parsed["odds_b"] > 0.0
 
 
-def test_parse_event_missing_h2h_returns_none():
+def test_parse_event_missing_h2h_returns_display_only():
     event = _build_event("A", "B", h2h=False)
     parsed = _parse_event_markets(event, "tennis_atp_wimbledon")
-    assert parsed is None
+    assert parsed is not None
+    assert parsed["is_display_only"] is True
 
 
 def test_parse_takes_best_price_across_bookies():

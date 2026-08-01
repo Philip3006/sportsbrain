@@ -84,8 +84,11 @@ def test_parse_event_uses_websearch_when_no_bookmakers():
     assert parsed["odds_b"] == 2.05
 
 
-def test_parse_event_skips_when_websearch_also_fails():
+def test_parse_event_returns_display_only_when_websearch_also_fails():
     event = {"id": "x", "home_team": "A", "away_team": "B",
              "commence_time": "2026-06-26T10:00:00Z", "bookmakers": []}
     with patch("scripts.tennis_scan._websearch_tennis_fallback", return_value=None):
-        assert _parse_event_markets(event, "tennis_atp_wimbledon") is None
+        parsed = _parse_event_markets(event, "tennis_atp_wimbledon")
+    # Multi-Source-Chain (Agent 3/5/8) übernimmt im main-Loop
+    assert parsed is not None
+    assert parsed["is_display_only"] is True

@@ -2,6 +2,7 @@
 !.env.example
 data/cache/
 !data/cache/signal_performance.json
+!data/cache/signal_history.jsonl
 data/raw/
 results/scans/
 results/backtests/
