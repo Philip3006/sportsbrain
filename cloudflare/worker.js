@@ -219,7 +219,26 @@ export default {
       const qUser = _sanitizeUser(url.searchParams.get('user') || '');
       if (qUser && auth.viaMaster) user = qUser;
       const body = await request.text();
-      try { JSON.parse(body); } catch { return new Response('Invalid JSON', { status: 400 }); }
+      let parsed;
+      try { parsed = JSON.parse(body); } catch { return new Response('Invalid JSON', { status: 400 }); }
+
+      // Dummy-Overwrite-Guard (2026-08-01 Incident): Reject payloads with
+      // suspiciously little data — real scans have schedule OR ≥3 total signals.
+      // Bypass via ?force=1 (Master only) for legit low-signal scans.
+      const force = url.searchParams.get('force') === '1' && auth.viaMaster;
+      if (!force) {
+        const nSched = Array.isArray(parsed.schedule) ? parsed.schedule.length : 0;
+        const nTennis = Array.isArray(parsed.tennis) ? parsed.tennis.length : 0;
+        const nFoot = Array.isArray(parsed.football) ? parsed.football.length : 0;
+        if (nSched === 0 && (nTennis + nFoot) < 3) {
+          console.log(`[signals-guard] REJECT thin payload user=${user} sched=${nSched} tennis=${nTennis} football=${nFoot} ua=${request.headers.get('user-agent') || '?'} cf-ip=${request.headers.get('cf-connecting-ip') || '?'}`);
+          return new Response('Payload too thin — use ?force=1 to bypass', { status: 400 });
+        }
+      }
+
+      // Structural POST log (visible via `wrangler tail`) — helps diagnose future incidents.
+      console.log(`[signals-write] user=${user} bytes=${body.length} tennis=${(parsed.tennis||[]).length} football=${(parsed.football||[]).length} sched=${(parsed.schedule||[]).length} ua=${request.headers.get('user-agent') || '?'} cf-ip=${request.headers.get('cf-connecting-ip') || '?'} viaMaster=${auth.viaMaster}`);
+
       await env.SIGNALS.put(_signalsKey(user), body);
       return new Response('OK', { headers: ch });
     }
