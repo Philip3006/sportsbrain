@@ -1,0 +1,36 @@
+name: Tennis Stats Snapshot (daily append)
+
+on:
+  schedule:
+    # Täglich 04:00 UTC — vor allen anderen Tennis-Jobs
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r requirements.txt
+
+      - name: Append daily Serve-Stats snapshot
+        run: python3 scripts/tennis_stats_snapshot.py --sleep-s 1.5
+
+      - name: Commit
+        run: |
+          git config user.name "SportsBrain Bot"
+          git config user.email "bot@sportsbrain"
+          git add data/cache/tennis_stats_history.jsonl || true
+          git diff --staged --quiet || git commit -m "auto: tennis stats snapshot $(date +%Y-%m-%d)"
+          git push origin main || true

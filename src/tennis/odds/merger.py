@@ -35,6 +35,12 @@ def _load_sources() -> list[tuple[str, int, Callable]]:
     except Exception:
         pass
     try:
+        # J8-I6: Pinnacle als 6. Provider — Tier 1 (Sharp-Ground-Truth für CLV)
+        from src.tennis.odds import pinnacle as _pin
+        sources.append((_pin.name, _pin.tier, _pin.fetch))
+    except Exception:
+        pass
+    try:
         from src.tennis.odds import websearch as _ws
         sources.append((_ws.name, _ws.tier, _ws.fetch))
     except Exception:
