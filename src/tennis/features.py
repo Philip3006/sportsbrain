@@ -24,6 +24,8 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
+from src.data.tennis_stats import ServeAggregate  # noqa: F401 (type hint)
+
 
 # Feature-Reihenfolge ist stabil (dient als LightGBM `feature_name`).
 FEATURE_COLUMNS: tuple[str, ...] = (
@@ -45,6 +47,11 @@ FEATURE_COLUMNS: tuple[str, ...] = (
     # Interaktionen
     "elo_diff_x_surface_diff",  # elo_diff * elo_surface_diff (Surface-Verstärker)
     "rank_diff_x_bo5",          # rank_diff auf Grand-Slams (BO5) — Top-Spieler stärker
+    # J2-M Serve-/Return-Stats (Tennis Abstract matchmx, surface-aware last-20)
+    "serve_dom_a", "serve_dom_b", "serve_dom_diff",
+    "serve_ace_rate_a", "serve_ace_rate_b", "serve_ace_diff",
+    "serve_df_rate_a", "serve_df_rate_b", "serve_df_diff",
+    "serve_stats_n_a", "serve_stats_n_b",  # sample-size feature (0 = kein Live-Stat verfügbar)
 )
 
 
@@ -160,6 +167,8 @@ def build_match_features(
     elo_surface_b: float,
     state: RollingState,
     date=None,
+    serve_stats_a: "ServeAggregate | None" = None,
+    serve_stats_b: "ServeAggregate | None" = None,
 ) -> dict[str, float]:
     """Baut Feature-Dict für ein einzelnes Match (Prediction-Zeit).
 
@@ -220,6 +229,31 @@ def build_match_features(
     }
     feats.update({k: float(v) for k, v in _category_flags(category).items()})
     feats.update({k: float(v) for k, v in _surface_flags(surface).items()})
+
+    # J2-M Serve-/Return-Aggregates
+    if serve_stats_a is not None:
+        feats["serve_dom_a"] = float(serve_stats_a.dominance_rate)
+        feats["serve_ace_rate_a"] = float(serve_stats_a.ace_rate)
+        feats["serve_df_rate_a"] = float(serve_stats_a.df_rate)
+        feats["serve_stats_n_a"] = float(serve_stats_a.n_matches)
+    else:
+        feats["serve_dom_a"] = 0.5
+        feats["serve_ace_rate_a"] = 0.0
+        feats["serve_df_rate_a"] = 0.0
+        feats["serve_stats_n_a"] = 0.0
+    if serve_stats_b is not None:
+        feats["serve_dom_b"] = float(serve_stats_b.dominance_rate)
+        feats["serve_ace_rate_b"] = float(serve_stats_b.ace_rate)
+        feats["serve_df_rate_b"] = float(serve_stats_b.df_rate)
+        feats["serve_stats_n_b"] = float(serve_stats_b.n_matches)
+    else:
+        feats["serve_dom_b"] = 0.5
+        feats["serve_ace_rate_b"] = 0.0
+        feats["serve_df_rate_b"] = 0.0
+        feats["serve_stats_n_b"] = 0.0
+    feats["serve_dom_diff"] = feats["serve_dom_a"] - feats["serve_dom_b"]
+    feats["serve_ace_diff"] = feats["serve_ace_rate_a"] - feats["serve_ace_rate_b"]
+    feats["serve_df_diff"] = feats["serve_df_rate_a"] - feats["serve_df_rate_b"]
 
     # Sicherstellen dass alle FEATURE_COLUMNS präsent sind
     for k in FEATURE_COLUMNS:

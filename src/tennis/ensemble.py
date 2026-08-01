@@ -14,6 +14,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.config import TENNIS_USE_LIVE_STATS
+from src.data.tennis_stats import fetch_aggregate
 from src.models.tennis_elo import TennisEloRatings, predict_winner
 from src.models import tennis_lgbm as tlgbm
 from src.tennis.features import RollingState, build_match_features
@@ -72,6 +74,7 @@ def predict_winner_ensemble(
     rank_a: float | None = None,
     rank_b: float | None = None,
     name_source: str = "odds_api",
+    use_live_stats: bool = True,
 ) -> dict[str, float]:
     """Returns {p_a, p_b, source}. Source ∈ {'elo', 'ensemble'}.
 
@@ -98,6 +101,17 @@ def predict_winner_ensemble(
     elo_a_surf = ratings.get_blended(elo_key_a, surface)
     elo_b_surf = ratings.get_blended(elo_key_b, surface)
 
+    # J2-M: Live-Stats-Fetch (cached 24h — max 2 HTTP-Calls pro Match).
+    stats_a = stats_b = None
+    if use_live_stats and TENNIS_USE_LIVE_STATS:
+        # WTA-Kategorien routen zu TA-wplayer.cgi statt player-classic.cgi.
+        tour = "wta" if category.startswith("wta") else "atp"
+        try:
+            stats_a = fetch_aggregate(player_a, last_n=20, surface=surface, tour=tour)
+            stats_b = fetch_aggregate(player_b, last_n=20, surface=surface, tour=tour)
+        except Exception:
+            stats_a = stats_b = None
+
     feats = build_match_features(
         player_a=player_a, player_b=player_b,
         surface=surface, best_of=best_of,
@@ -107,9 +121,21 @@ def predict_winner_ensemble(
         elo_surface_a=elo_a_surf, elo_surface_b=elo_b_surf,
         state=RollingState(),  # Leer — kein H2H/Form für unbekannte Live-Matches
         date=None,
+        serve_stats_a=stats_a,
+        serve_stats_b=stats_b,
     )
     X = pd.DataFrame([feats])
     p_lgbm_a = float(model.predict_p_a(X)[0])
 
     p_a = _LGBM_WEIGHT * p_lgbm_a + (1 - _LGBM_WEIGHT) * elo_probs["p_a"]
+
+    # J2-M Rule-based Adjustment: dominance_rate-Diff (Serve+Return-Punkte-Anteil letzte 20)
+    # ist starker Indikator und wird vom aktuellen LGBM nicht genutzt (trainiert vor J2-M).
+    # Konservative Bias: max ±3pp Verschiebung, nur wenn beide Spieler ausreichend
+    # Sample-Size haben (n≥10). Nach Retrain (Phase 4) auf 0 setzbar.
+    if stats_a and stats_b and stats_a.n_matches >= 10 and stats_b.n_matches >= 10:
+        dom_diff = stats_a.dominance_rate - stats_b.dominance_rate
+        adjustment = max(-0.03, min(0.03, dom_diff * 0.30))
+        p_a = max(0.02, min(0.98, p_a + adjustment))
+
     return {"p_a": p_a, "p_b": 1.0 - p_a, "source": "ensemble"}

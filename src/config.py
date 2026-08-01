@@ -85,6 +85,12 @@ BANKROLL_START = 100.0
 # Default-User; Frontend kann per localStorage 'sb_user' wechseln, Backend liest aktuell den Default.
 DEFAULT_USER = "philip"
 
+# ------- J2-M Tennis Live-Stats --------
+# Wenn True: predict_winner_ensemble ruft Tennis-Abstract-Aggregate per Match ab.
+# Rule-based Adjustment ±3pp bei ausreichender Sample-Size (n≥10).
+# Auf False setzen wenn TA-Verfügbarkeit sinkt oder Cache-Layer instabil wird.
+TENNIS_USE_LIVE_STATS = True
+
 
 def bankroll_snapshot_path_for(user: str = DEFAULT_USER):
     """Per-User-Bankroll-Snapshot-Pfad. Legacy `bankroll_snapshot.json` bleibt

@@ -645,13 +645,23 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Abhängigkeiten**: J2-G ✅ (Datenbasis), J2-K (Tennis-ML optionale Integration)
 - **Verifikation**: Output mit Walk-forward-ROI + CLV-Histogramm pro Kategorie. Tennis-Bets im Ledger haben `clv`-Feld gefüllt.
 
-### J2-M. + NEU Tennis Live-Statistiken als zweite Datenquelle (P3)
-- **Was**: Tennis nutzt aktuell nur historische XLSX-Daten und Elo. Keine Live-Stats (Aces, First-Serve%, Break-Punkte). Mögliche Quellen: Tennis Abstract API (Match-Stats, kostenfrei), WTA/ATP Tour APIs, Sofascore Tennis-Endpunkt. Feature-Input für J2-K ML-Modell.
-- **Warum**: Serve%-Stats sind stärkster Tennis-Predictor — Held-Service-Rate korreliert direkt mit Match-Ausgang. Surface-spezifische Serve-Stats würden J2-K-Features deutlich verbessern.
-- **Impact/Aufwand/Risiko**: 🟡 · 🔴 · 🟡 (API-Stabilität, Rate-Limits)
-- **Priorität**: P3 — erst nach J2-K (ML-Modell braucht die Features)
-- **Dateien**: `src/data/tennis_stats.py` (neu), `src/tennis/features.py`
-- **Abhängigkeiten**: J2-K
+### J2-M. ✅ erledigt 2026-08-01 Tennis Live-Statistiken (P2 hochgestuft von P3)
+- **Was**: Tennis-Abstract matchmx-Parser als 2. Datenquelle. `src/data/tennis_stats.py` mit ATP-Endpoint (`player-classic.cgi`) + WTA-Endpoint (`wplayer.cgi`), 24h-Cache pro Spieler, Retry-Backoff für 429/5xx. Feature-Interface `ServeAggregate` (dominance_rate, ace_rate, df_rate, ace_df_ratio, win_rate, n_matches) mit surface-Filter + `before_date`-Leakage-Schutz. Column-Mapping empirisch verifiziert (Alcaraz 58.5% dom, Draper 7.7% ace, Osaka 6.1% df — passt exakt zu ihrem realen Spielstil). 11 neue Features in `FEATURE_COLUMNS`. Ensemble ruft per Match automatisch ab (2 HTTP-Calls, 24h-Cache); Rule-based Adjustment ±3pp bei n≥10.
+- **Warum**: Serve%-Dominance ist einer der stärksten Tennis-Prediktoren, aktuelles LGBM ignoriert das komplett. Multi-Source-Chain (Betfair/TE/OP/WebSearch/Implied) verlangt gute Modell-Priors, sonst werden Non-Pinnacle-Quoten falsch bewertet.
+- **Impact/Aufwand/Risiko**: 🟡 · 🔴 · 🟡 (API-Stabilität via 24h-Cache + Retry, Rate-Limits treffen bei 4×/Tag × ~10 Matches × 2 Player = ~80 Fetches/Tag → cache-freundlich)
+- **Priorität**: P2 (hochgestuft, war P3) — Multi-Source-Chain verstärkte Bedarf nach besseren Modell-Priors
+- **Dateien**: `src/data/tennis_stats.py` (neu, 210 Z.), `tests/tennis/test_tennis_stats.py` (neu, 15 Tests), `src/tennis/features.py` (11 neue Serve-Features + `serve_stats_a/b`-Parameter), `src/tennis/ensemble.py` (Live-Fetch + Rule-based Adjustment), `src/config.py` (`TENNIS_USE_LIVE_STATS`-Flag), `scripts/tennis_stats_verify.py` (neu — Column-Mapping-Drift-Detection).
+- **Bekannte Grenzen**: (a) Voller LGBM-Retrain mit Serve-Features **nicht durchgeführt** — würde historische per-Player-per-Date-Snapshots brauchen die TA nicht liefert (nur cumulative today). Aktuell Serve-Features nur als Rule-Adjustment nach LGBM+Elo-Blend. Retrain-Wert liegt in `serve_stats_n_a/b`-Feature das dem Model beibringt fehlende Daten korrekt zu behandeln — für Q4 offen.  (b) TA Sackmann-Repos seit Juni 2026 nicht mehr public — matchmx-Parsing ist der einzig verbleibende TA-Zugang.
+- **Abhängigkeiten**: J2-K ✅ (LGBM-Model als Adjustment-Basis)
+- **Verifikation**: `python3 scripts/tennis_stats_verify.py` → 3 ATP Top-Spieler grün, 2 WTA-Spieler abhängig von Rate-Limit-Status.
+
+### J2-N. + NEU LGBM-Retrain mit Serve-Features (P3, Q4 2026)
+- **Was**: Erweiterung von J2-K/J2-M — historische Serve-Stat-Snapshots aufbauen (append-only per Scan-Run in `data/cache/tennis_stats_history.jsonl`), damit ein Voller-Retrain die 11 neuen Serve-Features im LGBM tatsächlich nutzen kann. Aktueller Ensemble-Weg ist Rule-Adjustment (Phase-4-Kompromiss); nach 6+ Monaten Snapshot-Sammlung ist echter Retrain möglich.
+- **Warum**: Aktueller Rule-Adjustment ist konservativ (±3pp) und ignoriert Interaktionen zwischen serve_dom_diff und surface/category. Echtes LGBM würde diese Signale erlernen.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟡 · 🟢
+- **Priorität**: P3 — braucht 6+ Monate Datenaufbau nach J2-M-Deploy (frühestens 2027-02)
+- **Dateien**: `src/data/tennis_stats.py` (Snapshot-Append), `scripts/tennis_train.py` (Feature-Column-Union), `src/models/tennis_lgbm.py`
+- **Abhängigkeiten**: J2-M ✅ (Feature-Interface), historische Snapshots
 
 ### I8. + NEU Market-Performance-Feedback-Loop (System lernt aus Losern und Winnern)
 - **Was**: Per-Markt-ROI aus dem Ledger berechnen und in die Signalgenerierung zurückführen. Konkret: nach Settle werden für jeden Markt `(bets, won, lost, stake, pnl, roi)` aggregiert; Märkte mit ROI < −20 % bei ≥ 10 settled Bets bekommen automatisch einen erhöhten `min_edge` (+5 pp Penalty). Märkte mit ROI > +15 % bei ≥ 10 Bets können optional einen niedrigeren Threshold erhalten (−2 pp Bonus). Die resultierende Per-Markt-Edge-Map wird als `data/cache/market_performance.json` persistiert und beim nächsten Scan-Run geladen. Zwei Ausbaustufen: **A (regelbasiert, 1–2 h)** feste Schwellwerte; **B (adaptiv, 4–6 h)** gleitender ROI über Rolling-Window + Bayesianischer Shrinkage gegen globalen Prior.
@@ -766,7 +776,9 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **9h** | **I12 Fußball Umwelt-Faktoren** — Höhenlage + Kunstrasen, DC-Adjustment analog host_boost/Tennis Surface | **nach I10/I11** | 3-4 h |
 | **12g** | J2-K Tennis ML-Modell ✅ erledigt 2026-07-31 (Ensemble Elo⊕LGBM 55/45, Gate ΔBrier +0.0039) | vor US-Open 2026-08-10 | 8-12 h |
 | **12h** | J2-L Tennis Walk-forward + CLV ✅ erledigt 2026-07-31 (CLV +10.61%, LGBM 4 Chunks konsistent besser als Elo) | parallel zu J2-K | 3-4 h |
-| **13b** | **J2-M Tennis Live-Stats** — Tennis Abstract / Sofascore Tennis als zweite Datenquelle (Feature-Input J2-K) | **P3, nach J2-K** | 8-12 h |
+| **13b** | J2-M Tennis Live-Stats ✅ erledigt 2026-08-01 (Tennis-Abstract matchmx-Parser + Rule-based Adjustment ±3pp) | erledigt | 8 h |
+| **13c** | **J2-N LGBM-Retrain mit Serve-Features** — braucht Snapshot-Vorlaufzeit | Q1-2027 | 4-6 h |
+| **13d** | Washington-Registry-Fix + Signal-Archive-Persistence + Tennis-Outcome-Backfill ✅ erledigt 2026-08-01 (Commit 5ad342b6) | erledigt | ~2 h |
 
 ---
 
