@@ -1,7 +1,7 @@
 {
-  "updated": "2026-08-01T08:17:10Z",
+  "updated": "2026-08-01T10:09:08Z",
   "build_info": {
-    "sha": "db63bc4",
+    "sha": "6f95544",
     "date": "2026-08-01"
   },
   "meta": {
@@ -3090,8 +3090,15 @@
     }
   },
   "tennis_stats": {
-    "updated": "2026-08-01T08:17:10Z",
+    "updated": "2026-08-01T10:09:08Z",
     "active_tournaments": [
+      {
+        "slug": "canadian_open_atp",
+        "name": "Canadian Open",
+        "category": "m1000",
+        "surface": "hard",
+        "best_of": 3
+      },
       {
         "slug": "tennis_atp_washington_open",
         "name": "Atp Washington Open",
