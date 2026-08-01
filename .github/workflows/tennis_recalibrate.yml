@@ -1,0 +1,36 @@
+name: Tennis Auto-Recalibration (weekly per surface)
+
+on:
+  schedule:
+    # Sonntag 05:00 UTC — vor dem Montags-Scan-Marathon
+    - cron: '0 5 * * 0'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  recalibrate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r requirements.txt
+
+      - name: Run isotonic recalibration per surface
+        run: python3 scripts/tennis_recalibrate.py --window-days 60 --min-n 30
+
+      - name: Commit updated calibrators
+        run: |
+          git config user.name "SportsBrain Bot"
+          git config user.email "bot@sportsbrain"
+          git add models/tennis_calibrators/ || true
+          git diff --staged --quiet || git commit -m "auto: tennis recalibrate $(date +%Y-%m-%d)"
+          git push origin main || true

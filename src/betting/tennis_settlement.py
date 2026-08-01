@@ -111,6 +111,14 @@ def settle_tennis_market(market: str, match_result: dict[str, Any]) -> str | Non
 
     # --- Match Winner: home = player_a, away = player_b ---------------------
     winner = match_result.get("winner")
+    # J8-M4: retired_by-Fallback wenn winner-Feld leer (Score-Fetcher kannte den Retiring-
+    # Spieler evtl. nicht als Loser). Beispiel: retired_by='a' → 'b' ist Sieger.
+    if winner is None and is_retired:
+        retired_by = match_result.get("retired_by")
+        if retired_by == "a":
+            winner = "b"
+        elif retired_by == "b":
+            winner = "a"
     if market == "home":
         if winner is None:
             return "push"

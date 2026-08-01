@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import pickle
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -101,7 +102,16 @@ def evaluate(model: TennisLGBM, X: pd.DataFrame, y: np.ndarray) -> dict[str, flo
     }
 
 
-def save(model: TennisLGBM, out_dir: Path) -> None:
+FEATURE_VERSION = "j2m-serve-2026-08-01"  # bump when FEATURE_COLUMNS changes
+
+
+def save(model: TennisLGBM, out_dir: Path, n_train_rows: int | None = None,
+         extra_meta: dict | None = None) -> None:
+    """Persist model + optional trained_at/feature_version metadata (J8-M2).
+
+    n_train_rows: passed through to metadata.json for Drift-Diagnose.
+    extra_meta: merged into metadata.json (e.g. gate_passed, brier).
+    """
     out_dir.mkdir(parents=True, exist_ok=True)
     with (out_dir / "model.pkl").open("wb") as f:
         pickle.dump(model.model, f)
@@ -111,6 +121,24 @@ def save(model: TennisLGBM, out_dir: Path) -> None:
     (out_dir / "feature_columns.json").write_text(
         json.dumps(list(model.feature_columns), indent=2)
     )
+
+    # J8-M2: Retrain-Metadata für Drift-Diagnose. Bestehende metadata.json (mit
+    # gate_passed etc.) wird gemergt, nicht überschrieben.
+    meta_path = out_dir / "metadata.json"
+    meta: dict = {}
+    if meta_path.exists():
+        try:
+            meta = json.loads(meta_path.read_text())
+        except Exception:
+            meta = {}
+    meta["trained_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    meta["feature_version"] = FEATURE_VERSION
+    meta["n_features"] = len(model.feature_columns)
+    if n_train_rows is not None:
+        meta["n_train_rows"] = int(n_train_rows)
+    if extra_meta:
+        meta.update(extra_meta)
+    meta_path.write_text(json.dumps(meta, indent=2))
 
 
 def load(model_dir: Path) -> TennisLGBM:

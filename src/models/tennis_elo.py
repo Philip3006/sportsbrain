@@ -39,9 +39,40 @@ _K_BY_LEVEL: dict[str, float] = {
 }
 _K_DEFAULT = 16.0
 
+# J8-B1: Category-Registry-Slugs → Level-Codes.
+# Walk-Forward + Live-Scanner übergeben Kategorie-Slugs (grand_slam / m1000 / atp500 …);
+# ohne Mapping fielen bis 2026-08-01 alle Slam-/Masters-Updates auf K=16 statt K=40/32.
+# atp250/wta250 bleiben bewusst ohne Mapping → _K_DEFAULT = 16 (Doc-Spec ATP 250).
+_CATEGORY_TO_LEVEL: dict[str, str] = {
+    "grand_slam":  "g",
+    "m1000":       "m",
+    "wta1000":     "m",
+    "atp500":      "a",
+    "wta500":      "a",
+    "tour_final":  "f",
+    "atp_finals":  "f",
+    "wta_finals":  "f",
+    "davis_cup":   "d",
+    "billie_jean_king_cup": "d",
+    "challenger":  "c",
+}
+
 
 def _k(level: str) -> float:
-    return _K_BY_LEVEL.get(level.lower(), _K_DEFAULT)
+    if not level:
+        return _K_DEFAULT
+    key = level.strip().lower()
+    if key in _K_BY_LEVEL:
+        return _K_BY_LEVEL[key]
+    mapped = _CATEGORY_TO_LEVEL.get(key)
+    if mapped:
+        return _K_BY_LEVEL.get(mapped, _K_DEFAULT)
+    return _K_DEFAULT
+
+
+def category_to_level(category: str) -> str:
+    """Public helper: category-slug → 1-letter level ('g'/'m'/'a'/'f'/'d'/'c'/''). Empty = default K."""
+    return _CATEGORY_TO_LEVEL.get((category or "").strip().lower(), "")
 
 
 def _expected(rating_a: float, rating_b: float) -> float:

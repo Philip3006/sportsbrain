@@ -28,14 +28,26 @@ _TTL_S = 30 * 60
 
 def _get_bulk() -> list[dict]:
     global _BULK, _TS
-    if _BULK and (time.time() - _TS) < _TTL_S:
+    age = time.time() - _TS
+    if _BULK and age < _TTL_S:
         return _BULK
     try:
         from src.data.tennis_secondary_odds import fetch_te_upcoming_matches
-        _BULK = fetch_te_upcoming_matches(min_bookies=2, max_matches=200)
-        _TS = time.time()
+        new_bulk = fetch_te_upcoming_matches(min_bookies=2, max_matches=200)
+        if new_bulk:
+            _BULK = new_bulk
+            _TS = time.time()
+        else:
+            # J8-B4: Refresh lieferte nichts (Rate-Limit / Netzwerkfehler).
+            # Bulk-Wert älter als 2×TTL nicht weiterreichen → return leer, damit
+            # Merger auf nächstes Tier ausweicht statt gecachte alte Quoten zu servieren.
+            if age >= 2 * _TTL_S:
+                print(f"[tennis_explorer] WARN: stale bulk ({age:.0f}s ≥ 2×TTL) und Refresh leer → drop")
+                _BULK = []
+                _TS = time.time()
     except Exception:
         _BULK = []
+        _TS = time.time()
     return _BULK
 
 
