@@ -56,6 +56,12 @@ FEATURE_COLUMNS: tuple[str, ...] = (
     "serve_ace_rate_a", "serve_ace_rate_b", "serve_ace_diff",
     "serve_df_rate_a", "serve_df_rate_b", "serve_df_diff",
     "serve_stats_n_a", "serve_stats_n_b",  # sample-size feature (0 = kein Live-Stat verfügbar)
+    # J8-C1 Serve/BP-Detail (TA matchhead-verifizierte Columns 2026-08-03)
+    "serve_first_in_a", "serve_first_in_b", "serve_first_in_diff",
+    "serve_first_win_a", "serve_first_win_b", "serve_first_win_diff",
+    "serve_second_win_a", "serve_second_win_b", "serve_second_win_diff",
+    "serve_bp_save_a", "serve_bp_save_b", "serve_bp_save_diff",
+    "return_bp_conv_a", "return_bp_conv_b", "return_bp_conv_diff",
     # === Phase 2: Form-Erweiterung ===
     "form_hot_diff",           # 5-Match-Fenster (heiße Serie), a-b
     "form_stable_diff",        # 20-Match-Fenster (stabile Form), a-b
@@ -357,29 +363,37 @@ def build_match_features(
     #     die drei anderen Serve-Features bei n=0 nicht aussagekräftig sind.
     # Konsequenz für Retrain (J2-N): `serve_stats_n_a` als Interaktions-Feature nutzen,
     # bevor Fallback-Werte semantisch aufgewertet werden.
-    if serve_stats_a is not None:
-        feats["serve_dom_a"] = float(serve_stats_a.dominance_rate)
-        feats["serve_ace_rate_a"] = float(serve_stats_a.ace_rate)
-        feats["serve_df_rate_a"] = float(serve_stats_a.df_rate)
-        feats["serve_stats_n_a"] = float(serve_stats_a.n_matches)
-    else:
-        feats["serve_dom_a"] = 0.5
-        feats["serve_ace_rate_a"] = 0.0
-        feats["serve_df_rate_a"] = 0.0
-        feats["serve_stats_n_a"] = 0.0
-    if serve_stats_b is not None:
-        feats["serve_dom_b"] = float(serve_stats_b.dominance_rate)
-        feats["serve_ace_rate_b"] = float(serve_stats_b.ace_rate)
-        feats["serve_df_rate_b"] = float(serve_stats_b.df_rate)
-        feats["serve_stats_n_b"] = float(serve_stats_b.n_matches)
-    else:
-        feats["serve_dom_b"] = 0.5
-        feats["serve_ace_rate_b"] = 0.0
-        feats["serve_df_rate_b"] = 0.0
-        feats["serve_stats_n_b"] = 0.0
+    def _fill_serve(a, prefix: str) -> None:
+        if a is not None:
+            feats[f"serve_dom_{prefix}"] = float(a.dominance_rate)
+            feats[f"serve_ace_rate_{prefix}"] = float(a.ace_rate)
+            feats[f"serve_df_rate_{prefix}"] = float(a.df_rate)
+            feats[f"serve_stats_n_{prefix}"] = float(a.n_matches)
+            feats[f"serve_first_in_{prefix}"] = float(a.first_serve_pct)
+            feats[f"serve_first_win_{prefix}"] = float(a.first_serve_win_pct)
+            feats[f"serve_second_win_{prefix}"] = float(a.second_serve_win_pct)
+            feats[f"serve_bp_save_{prefix}"] = float(a.bp_save_pct)
+            feats[f"return_bp_conv_{prefix}"] = float(a.bp_conv_pct)
+        else:
+            feats[f"serve_dom_{prefix}"] = 0.5
+            feats[f"serve_ace_rate_{prefix}"] = 0.0
+            feats[f"serve_df_rate_{prefix}"] = 0.0
+            feats[f"serve_stats_n_{prefix}"] = 0.0
+            feats[f"serve_first_in_{prefix}"] = 0.60
+            feats[f"serve_first_win_{prefix}"] = 0.65
+            feats[f"serve_second_win_{prefix}"] = 0.50
+            feats[f"serve_bp_save_{prefix}"] = 0.60
+            feats[f"return_bp_conv_{prefix}"] = 0.40
+    _fill_serve(serve_stats_a, "a")
+    _fill_serve(serve_stats_b, "b")
     feats["serve_dom_diff"] = feats["serve_dom_a"] - feats["serve_dom_b"]
     feats["serve_ace_diff"] = feats["serve_ace_rate_a"] - feats["serve_ace_rate_b"]
     feats["serve_df_diff"] = feats["serve_df_rate_a"] - feats["serve_df_rate_b"]
+    feats["serve_first_in_diff"] = feats["serve_first_in_a"] - feats["serve_first_in_b"]
+    feats["serve_first_win_diff"] = feats["serve_first_win_a"] - feats["serve_first_win_b"]
+    feats["serve_second_win_diff"] = feats["serve_second_win_a"] - feats["serve_second_win_b"]
+    feats["serve_bp_save_diff"] = feats["serve_bp_save_a"] - feats["serve_bp_save_b"]
+    feats["return_bp_conv_diff"] = feats["return_bp_conv_a"] - feats["return_bp_conv_b"]
 
     # === Phase 2 — Form-Erweiterung ===
     feats["form_hot_diff"] = float(state.wr_hot(player_a) - state.wr_hot(player_b))

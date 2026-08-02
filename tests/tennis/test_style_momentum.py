@@ -9,7 +9,10 @@ from src.tennis.momentum import InPlayState, momentum_score, momentum_prob_adjus
 
 def _agg(**overrides) -> ServeAggregate:
     defaults = dict(n_matches=20, dominance_rate=0.50, ace_rate=0.05,
-                    df_rate=0.03, win_rate=0.55, ace_df_ratio=1.5)
+                    df_rate=0.03, win_rate=0.55, ace_df_ratio=1.5,
+                    first_serve_pct=0.62, first_serve_win_pct=0.70,
+                    second_serve_win_pct=0.55, bp_save_pct=0.65,
+                    bp_conv_pct=0.40)
     defaults.update(overrides)
     return ServeAggregate(**defaults)
 

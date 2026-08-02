@@ -15,7 +15,10 @@ def test_snapshot_writes_jsonl(tmp_path, monkeypatch):
     def _fake_aggregate(name, last_n, tour="atp", **kw):
         return ServeAggregate(n_matches=15, dominance_rate=0.55,
                               ace_rate=0.06, df_rate=0.03,
-                              win_rate=0.65, ace_df_ratio=2.0)
+                              win_rate=0.65, ace_df_ratio=2.0,
+                              first_serve_pct=0.63, first_serve_win_pct=0.71,
+                              second_serve_win_pct=0.55, bp_save_pct=0.65,
+                              bp_conv_pct=0.41)
     monkeypatch.setattr("src.data.tennis_stats.fetch_aggregate", _fake_aggregate)
 
     entry = snap._snapshot_player("Alcaraz", "atp", dry_run=False)

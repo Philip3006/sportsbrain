@@ -16,8 +16,9 @@ def test_feature_columns_stable():
     Historie:
       41 = 30 base + 11 J2-M serve-stat
       64 = +12 Phase 2 form + 7 Biometrie + 1 altitude + 3 elo-uncertainty (Phase 3/Hebel)
+      79 = +15 J8-C1 Serve/BP detail (1st-in, 1st-won, 2nd-won, bp-save, bp-conv)
     """
-    assert len(FEATURE_COLUMNS) == 64
+    assert len(FEATURE_COLUMNS) == 79
     assert "elo_diff" in FEATURE_COLUMNS
     assert "form_diff" in FEATURE_COLUMNS
     assert "h2h_a_wr" in FEATURE_COLUMNS

@@ -70,6 +70,11 @@ def _snapshot_player(name: str, tour: str, dry_run: bool) -> dict | None:
         "df_rate": round(agg.df_rate, 4),
         "win_rate": round(agg.win_rate, 4),
         "ace_df_ratio": round(agg.ace_df_ratio, 4),
+        "first_serve_pct": round(agg.first_serve_pct, 4),
+        "first_serve_win_pct": round(agg.first_serve_win_pct, 4),
+        "second_serve_win_pct": round(agg.second_serve_win_pct, 4),
+        "bp_save_pct": round(agg.bp_save_pct, 4),
+        "bp_conv_pct": round(agg.bp_conv_pct, 4),
     }
     if not dry_run:
         SNAPSHOT_HISTORY.parent.mkdir(parents=True, exist_ok=True)
