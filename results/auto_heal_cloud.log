@@ -2822,3 +2822,9 @@
 [2026-08-02 19:21:05 UTC] [cloud_healer] tennis_settle: kein Workflow-Mapping — übersprungen
 [2026-08-02 19:21:05 UTC] [cloud_healer] tennis_closing_odds: kein Workflow-Mapping — übersprungen
 [2026-08-02 19:21:05 UTC] [cloud_healer] live_scores_fresh: kein Workflow-Mapping — übersprungen
+[2026-08-02 20:29:41 UTC] [cloud_healer] prematch_scan: status=stale — triggere prematch_scan.yml
+[2026-08-02 20:29:41 UTC] [cloud_healer] prematch_scan: Trigger fehlgeschlagen: could not create workflow dispatch event: HTTP 422: Workflow does not have 'workflow_dispatch' trigger (https://api.github.com/repos/Philip3006/sportsbrain/actions/workflows/289458017/dispatches)
+[2026-08-02 20:29:41 UTC] [cloud_healer] tennis_scan: kein Workflow-Mapping — übersprungen
+[2026-08-02 20:29:41 UTC] [cloud_healer] tennis_settle: kein Workflow-Mapping — übersprungen
+[2026-08-02 20:29:41 UTC] [cloud_healer] tennis_closing_odds: kein Workflow-Mapping — übersprungen
+[2026-08-02 20:29:41 UTC] [cloud_healer] live_scores_fresh: kein Workflow-Mapping — übersprungen
