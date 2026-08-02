@@ -30,7 +30,9 @@ _SESSION.headers["User-Agent"] = (
 
 _BASE = "http://www.tennis-data.co.uk"
 _TOURNAMENTS = ["wimbledon", "usopen", "ausopen", "frenchopen"]
-_YEARS = range(2019, 2026)  # 2019-2025 (2020 has no Wimbledon)
+# Roadmap Phase 1: Backfill 2010→heute (XLSX-Odds ab 2010 verfügbar auf tennis-data.co.uk).
+# 2020 Wimbledon fehlt (COVID) — Loader tolerant, skippt fehlende Endpoints.
+_YEARS = range(2010, 2027)
 
 _SURFACE_MAP = {
     "wimbledon":   "grass",

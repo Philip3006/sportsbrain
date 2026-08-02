@@ -6,7 +6,8 @@ import pytest
 
 from src.data.tennis_data import (
     fetch_atp_matches, fetch_wta_matches, fetch_matches,
-    grass_matches, wimbledon_matches, _KEEP_COLS,
+    fetch_atp_challenger_matches, fetch_wta_itf_matches, fetch_sub_tour_matches,
+    grass_matches, wimbledon_matches, _KEEP_COLS, _YEARS,
 )
 
 # Minimales CSV für Mocks
@@ -92,3 +93,37 @@ def test_surface_normalized_to_lowercase(mock_get):
     mock_get.return_value = _mock_resp(_MINI_CSV)
     df = fetch_atp_matches(force=True)
     assert all(s == s.lower() for s in df["surface"].dropna())
+
+
+def test_years_range_covers_backfill():
+    """Phase 1 Backfill: 2010→heute (min 15 Jahre Historie)."""
+    assert min(_YEARS) <= 2010
+    assert max(_YEARS) >= 2026
+
+
+@patch("src.data.tennis_data.retry_request")
+def test_fetch_atp_challenger_uses_qual_chall_url(mock_get):
+    mock_get.return_value = _mock_resp(_MINI_CSV)
+    df = fetch_atp_challenger_matches(force=True)
+    called_urls = [c[0][1] for c in mock_get.call_args_list]
+    assert any("atp_matches_qual_chall_" in u for u in called_urls)
+    assert isinstance(df, pd.DataFrame)
+
+
+@patch("src.data.tennis_data.retry_request")
+def test_fetch_wta_itf_uses_qual_itf_url(mock_get):
+    mock_get.return_value = _mock_resp(_MINI_CSV)
+    df = fetch_wta_itf_matches(force=True)
+    called_urls = [c[0][1] for c in mock_get.call_args_list]
+    assert any("wta_matches_qual_itf_" in u for u in called_urls)
+    assert isinstance(df, pd.DataFrame)
+
+
+@patch("src.data.tennis_data.retry_request")
+def test_fetch_sub_tour_routes(mock_get):
+    mock_get.return_value = _mock_resp(_MINI_CSV)
+    fetch_sub_tour_matches("atp", force=True)
+    assert any("atp_matches_qual_chall_" in c[0][1] for c in mock_get.call_args_list)
+    mock_get.reset_mock()
+    fetch_sub_tour_matches("wta", force=True)
+    assert any("wta_matches_qual_itf_" in c[0][1] for c in mock_get.call_args_list)

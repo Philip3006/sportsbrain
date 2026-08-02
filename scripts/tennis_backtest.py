@@ -95,6 +95,7 @@ def _build_walkforward_elo(
     """
     overall: dict[str, float] = {}
     by_surface: dict[str, dict[str, float]] = {}
+    surface_counts: dict[str, dict[str, int]] = {}  # Hebel 3
     snapshots: dict[tuple, dict[str, float]] = {}
     current_year: int | None = None
 
@@ -125,12 +126,19 @@ def _build_walkforward_elo(
             snap_key = (winner, loser, tourney_name.lower().strip(), match_year)
 
         if snap_key is not None:
+            surf_pool = by_surface.get(surface, {})
+            # surface_counts pro Player (für Bayesian-Uncertainty Hebel 3).
+            # Zählt Update-Ereignisse auf dieser Surface bis JETZT (walk-forward safe).
+            surf_counts = surface_counts.get(surface, {})
             snapshots[snap_key] = {
                 "r_w_overall": overall.get(winner, _DEFAULT_RATING),
                 "r_l_overall": overall.get(loser, _DEFAULT_RATING),
-                "r_w_surface": by_surface.get(surface, {}).get(winner, _DEFAULT_RATING),
-                "r_l_surface": by_surface.get(surface, {}).get(loser, _DEFAULT_RATING),
+                "r_w_surface": surf_pool.get(winner, _DEFAULT_RATING),
+                "r_l_surface": surf_pool.get(loser, _DEFAULT_RATING),
                 "surface": surface,
+                "n_w_surface": surf_counts.get(winner, 0),
+                "n_l_surface": surf_counts.get(loser, 0),
+                "tourney_name": tourney_name or "",
             }
 
         # Update ratings (ALL matches, not just Grand Slams)

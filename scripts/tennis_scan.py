@@ -628,6 +628,7 @@ def main() -> None:
             probs = predict_winner_ensemble(
                 pa, pb, ratings, t.surface,
                 best_of=t.best_of, category=t.category,
+                tournament_slug=t.slug,
             )
             _pred_sources[probs.get("source", "elo")] += 1
 

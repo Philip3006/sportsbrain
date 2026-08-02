@@ -25,6 +25,11 @@ from src.tennis.features import RollingState, build_match_features
 from src.tennis.name_norm import (
     is_probably_elo_format, to_elo_name_from_odds_api, to_elo_name_from_te,
 )
+from src.tennis.elo_hebels import bayesian_dampen, altitude_adjust
+from src.tennis.style_cluster import classify_style, style_matchup_edge
+
+# Kategorien in denen Bayesian-Dämpfung nachweislich schadet (Ablation 2026-08-02).
+_BAYESIAN_SKIP_CATEGORIES = frozenset({"wta500"})
 
 _MODEL_DIR = Path(__file__).parent.parent.parent / "models" / "tennis_lgbm"
 _CACHED: dict[str, object] = {}
@@ -83,6 +88,7 @@ def predict_winner_ensemble(
     name_source: str = "odds_api",
     use_live_stats: bool = True,
     match_date: str | None = None,
+    tournament_slug: str | None = None,
 ) -> dict[str, float]:
     """Returns {p_a, p_b, source}. Source ∈ {'elo', 'ensemble'}.
 
@@ -150,5 +156,34 @@ def predict_winner_ensemble(
         dom_diff = stats_a.dominance_rate - stats_b.dominance_rate
         adjustment = max(-0.03, min(0.03, dom_diff * 0.30))
         p_a = max(0.02, min(0.98, p_a + adjustment))
+
+    # Hebel 3 — Bayesian-Uncertainty-Dämpfung (Rollout 2026-08-02).
+    # Ablation-Backtest zeigte +5.26pp ROI overall; wta500 skip weil dort Regression.
+    if category not in _BAYESIAN_SKIP_CATEGORIES:
+        n_a = ratings.get_surface_count(elo_key_a, surface)
+        n_b = ratings.get_surface_count(elo_key_b, surface)
+        p_a = bayesian_dampen(p_a, n_a, n_b)
+
+    # Hebel 1 — Altitude-Boost auf Aufschläger.
+    # Greift nur wenn (a) Höhen-Venue UND (b) Serve-Bias-Delta bekannt.
+    # Serve-Bias aus dominance_rate der letzten 20 (TA-live-Stats).
+    if tournament_slug and stats_a and stats_b \
+            and stats_a.n_matches >= 10 and stats_b.n_matches >= 10:
+        serve_bias_a = (stats_a.dominance_rate - 0.5) * 2  # in [-1, +1]
+        serve_bias_b = (stats_b.dominance_rate - 0.5) * 2
+        p_a = altitude_adjust(
+            p_a, tournament_slug,
+            serve_bias_a=serve_bias_a, serve_bias_b=serve_bias_b,
+        )
+
+    # Hebel 2 — Style-Cluster Matchup-Bias (max ±3pp).
+    # Backtest zeigte marginal negativ (−0.22pp), aber conditional-on-good-classification
+    # potenziell besser. Verwendet echte TA-Live-Serve-Stats (nicht Proxy).
+    if stats_a and stats_b:
+        style_a = classify_style(stats_a)
+        style_b = classify_style(stats_b)
+        style_bias = style_matchup_edge(style_a, style_b)
+        if style_bias != 0.0:
+            p_a = max(0.02, min(0.98, p_a + style_bias))
 
     return {"p_a": p_a, "p_b": 1.0 - p_a, "source": "ensemble"}

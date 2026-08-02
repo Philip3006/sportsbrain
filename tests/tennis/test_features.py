@@ -11,15 +11,25 @@ from src.tennis.features import (
 
 
 def test_feature_columns_stable():
-    """Feature-Order ist Contract für Modell-Persistierung."""
-    # 30 base + 11 J2-M serve-stat features = 41
-    assert len(FEATURE_COLUMNS) == 41
+    """Feature-Order ist Contract für Modell-Persistierung.
+
+    Historie:
+      41 = 30 base + 11 J2-M serve-stat
+      64 = +12 Phase 2 form + 7 Biometrie + 1 altitude + 3 elo-uncertainty (Phase 3/Hebel)
+    """
+    assert len(FEATURE_COLUMNS) == 64
     assert "elo_diff" in FEATURE_COLUMNS
     assert "form_diff" in FEATURE_COLUMNS
     assert "h2h_a_wr" in FEATURE_COLUMNS
     assert "rest_diff" in FEATURE_COLUMNS
     assert "serve_dom_diff" in FEATURE_COLUMNS
     assert "serve_ace_diff" in FEATURE_COLUMNS
+    # neue Phase 2 / Hebel
+    assert "form_hot_diff" in FEATURE_COLUMNS
+    assert "tb_wr_diff" in FEATURE_COLUMNS
+    assert "hand_matchup" in FEATURE_COLUMNS
+    assert "altitude_factor" in FEATURE_COLUMNS
+    assert "elo_uncertainty_a" in FEATURE_COLUMNS
 
 
 def test_rolling_state_form_updates():

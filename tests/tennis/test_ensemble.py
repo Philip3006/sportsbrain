@@ -46,9 +46,13 @@ def test_falls_back_when_gate_failed(tmp_path, monkeypatch):
 def test_ensemble_uses_lgbm_when_available():
     """Integration-Test: nutzt das echt-trainierte Modell im repo (models/tennis_lgbm/)."""
     ratings = TennisEloRatings()
-    ratings.overall["Carlos Alcaraz"] = 1900
-    ratings.overall["Alex Michelsen"] = 1500
-    ratings.by_surface["hard"] = {"Carlos Alcaraz": 1920, "Alex Michelsen": 1480}
+    # Elo-Namen-Format ("Nachname V.") aus name_norm.to_elo_name_from_odds_api()
+    ratings.overall["Alcaraz C."] = 1900
+    ratings.overall["Michelsen A."] = 1500
+    ratings.by_surface["hard"] = {"Alcaraz C.": 1920, "Michelsen A.": 1480}
+    # Surface-Counts setzen damit Bayesian-Dämpfung nicht gegen 50/50 zieht
+    # (siehe Hebel 3 in ensemble.py — n_ref=20 default).
+    ratings.surface_counts["hard"] = {"Alcaraz C.": 30, "Michelsen A.": 25}
     out = ens.predict_winner_ensemble(
         "Carlos Alcaraz", "Alex Michelsen", ratings, "hard",
         best_of=3, category="atp500", round_str="Quarterfinals",
@@ -68,6 +72,7 @@ def test_ensemble_swap_flips_sides():
     ratings.overall["Strong"] = 1750
     ratings.overall["Weak"] = 1500
     ratings.by_surface["hard"] = {"Strong": 1770, "Weak": 1490}
+    ratings.surface_counts["hard"] = {"Strong": 30, "Weak": 25}
     out_ab = ens.predict_winner_ensemble("Strong", "Weak", ratings, "hard")
     out_ba = ens.predict_winner_ensemble("Weak", "Strong", ratings, "hard")
     assert out_ab["p_a"] > 0.55  # Strong is favorite

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-31T15:45:49.880136+00:00",
+  "generated_at": "2026-08-02T11:45:53.493306+00:00",
   "train_rows": 25010,
   "cal_rows": 2616,
   "holdout_rows": 5081,
@@ -7,19 +7,19 @@
   "cal_end": "2024-12-31",
   "elo": {
     "n": 5081,
-    "brier": 0.2212328576183399,
-    "log_loss": 0.6318558863217553,
-    "accuracy": 0.6378665617004526
+    "brier": 0.22024699341765694,
+    "log_loss": 0.629518071911027,
+    "accuracy": 0.6360952568392049
   },
   "lgbm": {
     "n": 5081,
-    "brier": 0.21734681334745537,
-    "log_loss": 0.6240700143057338,
-    "accuracy": 0.6433772879354458
+    "brier": 0.2188336642616632,
+    "log_loss": 0.627568175802578,
+    "accuracy": 0.6374729383979532
   },
-  "brier_improvement": 0.003886044270884542,
-  "logloss_improvement": 0.007785872016021433,
-  "gate_passed": true,
+  "brier_improvement": 0.0014133291559937367,
+  "logloss_improvement": 0.0019498961084490896,
+  "gate_passed": false,
   "brier_gate": 0.003,
   "feature_columns": [
     "rank_a",
@@ -51,6 +51,41 @@
     "is_hard",
     "round_ordinal",
     "elo_diff_x_surface_diff",
-    "rank_diff_x_bo5"
-  ]
+    "rank_diff_x_bo5",
+    "serve_dom_a",
+    "serve_dom_b",
+    "serve_dom_diff",
+    "serve_ace_rate_a",
+    "serve_ace_rate_b",
+    "serve_ace_diff",
+    "serve_df_rate_a",
+    "serve_df_rate_b",
+    "serve_df_diff",
+    "serve_stats_n_a",
+    "serve_stats_n_b",
+    "form_hot_diff",
+    "form_stable_diff",
+    "form_quality_a",
+    "form_quality_b",
+    "form_quality_diff",
+    "sets_dropped_rate_a",
+    "sets_dropped_rate_b",
+    "tb_wr_a",
+    "tb_wr_b",
+    "tb_wr_diff",
+    "sets_last7d_a",
+    "sets_last7d_b",
+    "age_a",
+    "age_b",
+    "age_diff",
+    "height_a",
+    "height_b",
+    "height_diff",
+    "hand_matchup",
+    "altitude_factor",
+    "elo_uncertainty_a",
+    "elo_uncertainty_b",
+    "elo_confidence"
+  ],
+  "forced_persist": true
 }
