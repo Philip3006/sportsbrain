@@ -10,6 +10,13 @@
       "odds_a": 1.64,
       "odds_b": 2.39,
       "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.856670+00:00",
+      "odds_a": 1.64,
+      "odds_b": 2.39,
+      "source": "pinnacle"
     }
   ]
 }
