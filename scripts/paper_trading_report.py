@@ -131,7 +131,7 @@ def main() -> None:
     parser.add_argument("--days", type=int, default=30, help="Zeitraum in Tagen (default: 30)")
     parser.add_argument("--sport", default=None, help="Nur ein Sport: tennis / football")
     parser.add_argument("--placed", action="store_true",
-                        help="Nur echte platzierte Bets (Kontrollgruppe)")
+                        help="Nur Live-Kategorie-Signale (ATP1000/WTA500)")
     args = parser.parse_args()
 
     rows = _load(args.days, args.sport, args.placed)
@@ -148,11 +148,11 @@ def main() -> None:
 
     # Split: paper (unplaced) vs. placed — nur wenn nicht bereits gefiltert
     if not args.placed:
-        paper = [r for r in rows if not r.get("placed")]
-        placed = [r for r in rows if r.get("placed")]
-        if paper and placed:
-            report(paper, f"  ↳ Nur Paper (nicht platziert){sport_label}")
-            report(placed, f"  ↳ Nur Platziert (echte Bets){sport_label}")
+        live_cat = [r for r in rows if r.get("placed")]
+        shadow = [r for r in rows if not r.get("placed")]
+        if live_cat and shadow:
+            report(live_cat, f"  ↳ Live-Kategorie (ATP1000/WTA500){sport_label}")
+            report(shadow, f"  ↳ Shadow/Niedrigere Kategorie{sport_label}")
 
 
 if __name__ == "__main__":
