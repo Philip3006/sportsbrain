@@ -39,6 +39,7 @@ jobs:
         run: |
           python scripts/tennis_settle.py
           python scripts/backfill_signal_outcomes.py
+          python scripts/update_betting_journal.py --sport tennis
           echo "status=ok" >> $GITHUB_OUTPUT
 
       - name: Write health snapshot
@@ -51,7 +52,7 @@ jobs:
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add results/ledger_*.csv results/health/tennis_settle.json data/cache/signal_history.jsonl data/cache/signal_performance.json || true
+          git add results/ledger_*.csv results/health/tennis_settle.json data/cache/signal_history.jsonl data/cache/signal_performance.json results/betting_journal.md data/cache/journal_snapshots.jsonl || true
           git diff --staged --quiet || git commit -m "auto: tennis settle $(date +%Y-%m-%d\ %H:%M) UTC"
           for i in 1 2 3 4 5; do
             git fetch origin main

@@ -329,6 +329,7 @@ def archive_signals(
     selected_ids: set[tuple[str, str]],
     scan_ts: str,
     sport: str = "football",
+    meta_by_match: dict[str, dict] | None = None,
 ) -> int:
     """Append all signals to signal_history.jsonl. Returns count of new entries written.
 
@@ -360,6 +361,7 @@ def archive_signals(
             key = (s.match_id, s.market, scan_date)
             if key in existing:
                 continue
+            meta = (meta_by_match or {}).get(s.match_id, {})
             entry = {
                 "scan_ts": scan_ts,
                 "scan_date": scan_date,
@@ -368,6 +370,10 @@ def archive_signals(
                 "home": s.home,
                 "away": s.away,
                 "market": s.market,
+                "tournament": meta.get("tournament", ""),
+                "category": meta.get("category", ""),
+                "surface": meta.get("surface", ""),
+                "tour": meta.get("tour", ""),
                 "model_prob": round(s.model_prob, 4),
                 "fair_prob": round(s.fair_prob, 4),
                 "decimal_odds": round(s.decimal_odds, 4),
