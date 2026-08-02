@@ -374,6 +374,7 @@ def archive_signals(
                 "ev_pct": round(s.ev * 100, 2),
                 "confidence": s.confidence,
                 "n_models_agree": s.n_models_agree,
+                "stake_eur": round(float(s.stake_eur), 2) if getattr(s, "stake_eur", 0) else None,
                 "placed": (s.match_id, s.market) in selected_ids,
                 "outcome": None,
                 "outcome_ts": None,
