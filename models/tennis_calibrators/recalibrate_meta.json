@@ -1,0 +1,19 @@
+{
+  "recalibrated_at": "2026-08-02T07:33:38+00:00",
+  "window_days": 60,
+  "min_n": 30,
+  "surfaces": {
+    "hard": {
+      "n": 0,
+      "status": "insufficient"
+    },
+    "clay": {
+      "n": 0,
+      "status": "insufficient"
+    },
+    "grass": {
+      "n": 0,
+      "status": "insufficient"
+    }
+  }
+}
