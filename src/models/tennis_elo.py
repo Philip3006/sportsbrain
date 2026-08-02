@@ -34,8 +34,8 @@ _K_BY_LEVEL: dict[str, float] = {
     "a": 24.0,   # ATP 500 (= 'A')
     "f": 20.0,   # ATP Finals (= 'F')
     "d": 16.0,   # Davis Cup (= 'D')
-    "c": 16.0,   # Challenger
-    "s": 12.0,   # Satellite / ITF
+    "c": 12.0,   # Challenger — reduziert (Phase 1 Backfill: Rauschen dämpfen)
+    "s": 8.0,    # Satellite / ITF — noch stärker reduziert
 }
 _K_DEFAULT = 16.0
 

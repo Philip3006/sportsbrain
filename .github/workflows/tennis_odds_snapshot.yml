@@ -1,0 +1,36 @@
+name: Tennis Odds Snapshot (Hebel 4 — Line-Movement Fundament)
+
+on:
+  schedule:
+    # Alle 3h — snapshotting current odds für alle laufenden Matches.
+    # Aus mehreren Snapshots wird später line_move_pct berechnet.
+    - cron: '15 */3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r requirements.txt
+      - name: Snapshot odds
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python scripts/tennis_odds_snapshot.py --label "auto_$(date -u +%Y%m%d_%H)"
+      - name: Commit history
+        run: |
+          git config user.name "SportsBrain Bot"
+          git config user.email "bot@sportsbrain"
+          git add data/odds_history/tennis/ || true
+          git diff --staged --quiet || git commit -m "auto: tennis odds snapshot $(date -u +%Y-%m-%d_%H)"
+          git push || true

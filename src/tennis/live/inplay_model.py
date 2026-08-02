@@ -17,6 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from src.betting.tennis_detector import _p_set_from_p_match
+from src.tennis.momentum import InPlayState, momentum_prob_adjustment
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,11 @@ class LiveMatchState:
     best_of: int = 3
     tour: str = "atp"
     recent_games_a: int = 0       # in letzten 6 Games gewonnen (0..6)
+    # Hebel 5 — Momentum-Signale (optional, defaults = neutral).
+    breaks_last5_games_a: int = 0
+    breaks_last5_games_b: int = 0
+    service_hold_streak_a: int = 0
+    service_hold_streak_b: int = 0
 
 
 def _p_hold(tour: str) -> float:
@@ -115,7 +121,21 @@ def predict_live_p_a(state: LiveMatchState) -> float:
     p_if_b_wins = _p_win_remaining_sets(need_after_b_wins_current_a,
                                          need_after_b_wins_current_b, p_set_a)
 
-    return p_current_set_a * p_if_a_wins + (1 - p_current_set_a) * p_if_b_wins
+    p_base = p_current_set_a * p_if_a_wins + (1 - p_current_set_a) * p_if_b_wins
+
+    # Hebel 5 — Momentum-Adjustment (max ±5pp, capped im Modul).
+    momentum_state = InPlayState(
+        sets_won_a=state.sets_a,
+        sets_won_b=state.sets_b,
+        games_won_a_current_set=state.current_set_games_a,
+        games_won_b_current_set=state.current_set_games_b,
+        breaks_last5_games_a=state.breaks_last5_games_a,
+        breaks_last5_games_b=state.breaks_last5_games_b,
+        service_hold_streak_a=state.service_hold_streak_a,
+        service_hold_streak_b=state.service_hold_streak_b,
+        on_serve_a=(state.server == "a"),
+    )
+    return momentum_prob_adjustment(momentum_state, base_p_a=p_base, cap=0.05)
 
 
 def value_live_signal(state: LiveMatchState, live_odds_a: float,

@@ -19,7 +19,17 @@ _SACKMANN_URL = (
     "https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master/atp_matches_{year}.csv"
 )
 _WTA_URL = "https://raw.githubusercontent.com/JeffSackmann/tennis_wta/master/wta_matches_{year}.csv"
-_YEARS = range(2019, 2027)  # 2019-2026 inclusive (adds Wimbledon 2019, 2021)
+# Sackmann Challenger + ITF-Qualifier CSVs (nur ATP-Seite verfügbar in dieser Form).
+_SACKMANN_QUAL_CHALL_URL = (
+    "https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master/atp_matches_qual_chall_{year}.csv"
+)
+_WTA_QUAL_ITF_URL = (
+    "https://raw.githubusercontent.com/JeffSackmann/tennis_wta/master/wta_matches_qual_itf_{year}.csv"
+)
+# Historie 2010→heute (Roadmap Phase 1 Backfill). Main-Tour bleibt Default;
+# Challenger/ITF wird nur bei explizitem Aufruf geladen (Rauschen-Kontrolle).
+_YEARS = range(2010, 2027)
+_MAIN_TOUR_YEARS = _YEARS  # backwards-compat alias
 
 # Only keep columns we actually use — reduces memory and cache size
 _KEEP_COLS = [
@@ -32,7 +42,7 @@ _KEEP_COLS = [
 @disk_cache("tennis_atp_matches", max_age_hours=24.0)
 def fetch_atp_matches() -> pd.DataFrame:
     """
-    Downloads Jeff Sackmann ATP match CSVs for 2022-2026.
+    Downloads Jeff Sackmann ATP main-tour match CSVs (2010→current year).
     Returns a DataFrame sorted by date with standardised columns.
     Cached for 24 hours.
     """
@@ -68,7 +78,7 @@ def fetch_atp_matches() -> pd.DataFrame:
 @disk_cache("tennis_wta_matches", max_age_hours=24.0)
 def fetch_wta_matches() -> pd.DataFrame:
     """
-    Downloads Jeff Sackmann WTA match CSVs for 2019-2026.
+    Downloads Jeff Sackmann WTA main-tour match CSVs (2010→current year).
     Returns a DataFrame sorted by date with standardised columns.
     Cached for 24 hours.
     """
@@ -106,6 +116,55 @@ def fetch_matches(tour: str = "atp", force: bool = False) -> pd.DataFrame:
     if tour.lower() == "wta":
         return fetch_wta_matches(force=force)
     return fetch_atp_matches(force=force)
+
+
+def _fetch_url_range(url_template: str, years: range) -> pd.DataFrame:
+    frames: list[pd.DataFrame] = []
+    for year in years:
+        url = url_template.format(year=year)
+        try:
+            resp = retry_request("GET", url, timeout=15)
+            if not resp.ok:
+                continue
+            df = pd.read_csv(io.StringIO(resp.text), low_memory=False)
+            available = [c for c in _KEEP_COLS if c in df.columns]
+            df = df[available].copy()
+            frames.append(df)
+        except Exception:
+            continue
+    if not frames:
+        return pd.DataFrame(columns=_KEEP_COLS)
+    combined = pd.concat(frames, ignore_index=True)
+    combined["tourney_date"] = pd.to_datetime(
+        combined["tourney_date"].astype(str), format="%Y%m%d", errors="coerce"
+    )
+    combined = combined.dropna(subset=["tourney_date"]).sort_values("tourney_date")
+    if "surface" in combined.columns:
+        combined["surface"] = combined["surface"].str.lower().fillna("unknown")
+    return combined.reset_index(drop=True)
+
+
+@disk_cache("tennis_atp_challenger", max_age_hours=168.0)
+def fetch_atp_challenger_matches() -> pd.DataFrame:
+    """Sackmann ATP Challenger + Qualifying-Matches (2010→heute).
+
+    Nur für Elo-Seeding von Aufsteigern/Qualifikanten. Nicht in Main-Feature-Pipeline.
+    Cache 7 Tage (langsamer Turnover).
+    """
+    return _fetch_url_range(_SACKMANN_QUAL_CHALL_URL, _YEARS)
+
+
+@disk_cache("tennis_wta_itf", max_age_hours=168.0)
+def fetch_wta_itf_matches() -> pd.DataFrame:
+    """Sackmann WTA ITF + Qualifying-Matches (2010→heute)."""
+    return _fetch_url_range(_WTA_QUAL_ITF_URL, _YEARS)
+
+
+def fetch_sub_tour_matches(tour: str = "atp", force: bool = False) -> pd.DataFrame:
+    """Sub-Tour (Challenger/ITF) für gegebene Tour. Opt-in, nicht im Standard-Loader."""
+    if tour.lower() == "wta":
+        return fetch_wta_itf_matches(force=force)
+    return fetch_atp_challenger_matches(force=force)
 
 
 def grass_matches(df: pd.DataFrame | None = None) -> pd.DataFrame:

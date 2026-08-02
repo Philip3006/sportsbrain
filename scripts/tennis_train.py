@@ -38,6 +38,7 @@ from src.models import tennis_lgbm as tlgbm
 from src.tennis.features import (
     FEATURE_COLUMNS, RollingState, build_match_features, features_to_row,
 )
+from src.data.tennis_bios import lookup_bio
 
 _MODEL_OUT = ROOT / "models" / "tennis_lgbm"
 _DEFAULT_TRAIN_END = "2024-06-01"
@@ -77,6 +78,9 @@ def _build_dataset(df: pd.DataFrame) -> pd.DataFrame:
         elo_l_over = elo.get_overall(loser)
         elo_w_surf = elo.get_blended(winner, surface)
         elo_l_surf = elo.get_blended(loser, surface)
+        # Surface-Counts für Bayesian-Uncertainty-Feature (Hebel 3).
+        n_w_surf = elo.get_surface_count(winner, surface)
+        n_l_surf = elo.get_surface_count(loser, surface)
 
         # Random swap
         if rng.random() < 0.5:
@@ -84,13 +88,26 @@ def _build_dataset(df: pd.DataFrame) -> pd.DataFrame:
             rank_a, rank_b = rank_w, rank_l
             elo_a, elo_b = elo_w_over, elo_l_over
             elo_a_s, elo_b_s = elo_w_surf, elo_l_surf
+            surf_ct_a, surf_ct_b = n_w_surf, n_l_surf
             y = 1
         else:
             player_a, player_b = loser, winner
             rank_a, rank_b = rank_l, rank_w
             elo_a, elo_b = elo_l_over, elo_w_over
             elo_a_s, elo_b_s = elo_l_surf, elo_w_surf
+            surf_ct_a, surf_ct_b = n_l_surf, n_w_surf
             y = 0
+
+        # Biometrie-Lookup (Hebel Phase 3). Kein Fetch pro Zeile — Cache 30 Tage.
+        try:
+            tour_key = "wta" if category.startswith("wta") else "atp"
+            bio_a = lookup_bio(player_a, tour_key)
+            bio_b = lookup_bio(player_b, tour_key)
+        except Exception:
+            bio_a = bio_b = None
+
+        # Tournament-Slug für Altitude-Feature (Hebel 1).
+        tourney_slug = str(m.get("Tournament", "")).strip().lower()
 
         feats = build_match_features(
             player_a=player_a, player_b=player_b,
@@ -100,13 +117,43 @@ def _build_dataset(df: pd.DataFrame) -> pd.DataFrame:
             elo_a=elo_a, elo_b=elo_b,
             elo_surface_a=elo_a_s, elo_surface_b=elo_b_s,
             state=state, date=date,
+            bio_a=bio_a, bio_b=bio_b,
+            tournament_slug=tourney_slug,
+            surface_count_a=surf_ct_a, surface_count_b=surf_ct_b,
         )
         row = {"date": date, "y": y, "elo_p_a": _elo_p(elo_a_s, elo_b_s)}
         row.update(feats)
         rows.append(row)
 
-        # State-Update NACH Feature-Bau (no leakage)
-        state.update(winner, loser, surface, date=date)
+        # State-Update NACH Feature-Bau (no leakage).
+        # Set-Scores + Tiebreak-Info aus W1..L5 (Hebel Phase 2 — form_hot/tiebreak/sets_dropped).
+        wsets = m.get("Wsets"); lsets = m.get("Lsets")
+        try:
+            sets_w = int(wsets) if pd.notna(wsets) else None
+            sets_l = int(lsets) if pd.notna(lsets) else None
+        except (ValueError, TypeError):
+            sets_w = sets_l = None
+        tb_w = tb_l = 0
+        for i in range(1, 6):
+            w_i = m.get(f"W{i}"); l_i = m.get(f"L{i}")
+            try:
+                gw = int(w_i) if pd.notna(w_i) else None
+                gl = int(l_i) if pd.notna(l_i) else None
+            except (ValueError, TypeError):
+                continue
+            if gw is None or gl is None:
+                continue
+            # Tiebreak-Heuristik: 7-6 oder 6-7 → Tiebreak, Gewinner geht ins Winner-Tally.
+            if (gw == 7 and gl == 6) or (gw == 7 and gl == 5 and False):
+                tb_w += 1
+            elif (gl == 7 and gw == 6):
+                tb_l += 1
+        state.update(
+            winner, loser, surface, date=date,
+            winner_rank=rank_w, loser_rank=rank_l,
+            sets_w=sets_w, sets_l=sets_l,
+            tiebreaks_won_by_winner=tb_w, tiebreaks_won_by_loser=tb_l,
+        )
         level = category
         elo.update(winner, loser, surface, level)
 
@@ -133,6 +180,10 @@ def main() -> int:
     ap.add_argument("--train-end", default=_DEFAULT_TRAIN_END)
     ap.add_argument("--cal-end", default=_DEFAULT_CAL_END)
     ap.add_argument("--dry-run", action="store_true", help="Persistiere nicht")
+    ap.add_argument("--gate", type=float, default=None,
+                    help=f"Brier-Improvement-Gate (Default {_BRIER_IMPROVEMENT_GATE})")
+    ap.add_argument("--force-persist", action="store_true",
+                    help="Persistiert auch wenn Gate failed (nur wenn Brier > 0)")
     args = ap.parse_args()
 
     train_end = pd.Timestamp(args.train_end)
@@ -172,10 +223,11 @@ def main() -> int:
 
     brier_improvement = m_elo["brier"] - m_lgbm["brier"]
     logloss_improvement = m_elo["log_loss"] - m_lgbm["log_loss"]
-    print(f"\n  ΔBrier: {brier_improvement:+.4f} (Gate ≥ +{_BRIER_IMPROVEMENT_GATE})")
+    gate_val = args.gate if args.gate is not None else _BRIER_IMPROVEMENT_GATE
+    print(f"\n  ΔBrier: {brier_improvement:+.4f} (Gate ≥ +{gate_val})")
     print(f"  ΔLogLoss: {logloss_improvement:+.4f}")
 
-    passed = (brier_improvement >= _BRIER_IMPROVEMENT_GATE) and (logloss_improvement > 0)
+    passed = (brier_improvement >= gate_val) and (logloss_improvement > 0)
 
     print(f"\n  Gate: {'✅ PASSED' if passed else '❌ FAILED'}")
 
@@ -200,11 +252,19 @@ def main() -> int:
         print(json.dumps(metadata, indent=2))
         return 0
 
-    if not passed:
+    if not passed and not args.force_persist:
         print("Gate nicht bestanden — Modell wird NICHT persistiert.")
         (_MODEL_OUT).mkdir(parents=True, exist_ok=True)
         (_MODEL_OUT / "last_train_failed.json").write_text(json.dumps(metadata, indent=2))
         return 1
+
+    if not passed and args.force_persist:
+        if brier_improvement <= 0:
+            print("--force-persist verweigert: Brier NICHT positiv, kein sinnvolles Modell.")
+            return 1
+        print("--force-persist AKTIV: Modell wird trotz Gate-Miss persistiert "
+              f"(Brier +{brier_improvement:.4f}, LogLoss +{logloss_improvement:.4f}).")
+        metadata["forced_persist"] = True
 
     tlgbm.save(model, _MODEL_OUT)
     (_MODEL_OUT / "metadata.json").write_text(json.dumps(metadata, indent=2))

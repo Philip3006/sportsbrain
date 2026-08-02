@@ -1,0 +1,35 @@
+name: Tennis Live In-Play Scan (Hebel 5 Momentum)
+
+on:
+  schedule:
+    # Alle 15 Min während typischer Match-Fenster (10-22 UTC).
+    - cron: '*/15 10-22 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  live-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r requirements.txt
+      - name: Live In-Play Scan
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python scripts/tennis_live_scan.py --min-edge 0.05 || true
+      - name: Commit live-signals
+        run: |
+          git config user.name "SportsBrain Bot"
+          git config user.email "bot@sportsbrain"
+          git add results/tennis_live_signals.json || true
+          git diff --staged --quiet || git commit -m "auto: tennis live scan $(date -u +%H:%M)"
+          git push || true
