@@ -1,0 +1,36 @@
+{
+  "match_id": "99f056f73df7df8250dc68a78321b005",
+  "player_a": "Marin Cilic",
+  "player_b": "Sho Shimabukuro",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.653514+00:00",
+      "odds_a": 1.74,
+      "odds_b": 2.2,
+      "source": "coolbet"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.351305+00:00",
+      "odds_a": 1.74,
+      "odds_b": 2.2,
+      "source": "coolbet"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.404413+00:00",
+      "odds_a": 1.72,
+      "odds_b": 2.23,
+      "source": "coolbet"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.666106+00:00",
+      "odds_a": 1.74,
+      "odds_b": 2.2,
+      "source": "coolbet"
+    }
+  ]
+}

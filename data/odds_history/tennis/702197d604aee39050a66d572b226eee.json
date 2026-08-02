@@ -1,0 +1,36 @@
+{
+  "match_id": "702197d604aee39050a66d572b226eee",
+  "player_a": "Aleksandar Kovacevic",
+  "player_b": "Nuno Borges",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.652450+00:00",
+      "odds_a": 3.0,
+      "odds_b": 1.44,
+      "source": "coolbet"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.350140+00:00",
+      "odds_a": 2.0,
+      "odds_b": 1.8,
+      "source": "coolbet"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.403589+00:00",
+      "odds_a": 3.15,
+      "odds_b": 1.35,
+      "source": "coolbet"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.665662+00:00",
+      "odds_a": 3.95,
+      "odds_b": 1.25,
+      "source": "coolbet"
+    }
+  ]
+}

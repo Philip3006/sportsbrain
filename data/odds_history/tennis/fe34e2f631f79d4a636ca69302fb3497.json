@@ -1,0 +1,36 @@
+{
+  "match_id": "fe34e2f631f79d4a636ca69302fb3497",
+  "player_a": "Pablo Carreno Busta",
+  "player_b": "Valentin Royer",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.655836+00:00",
+      "odds_a": 1.48,
+      "odds_b": 2.84,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.354055+00:00",
+      "odds_a": 1.48,
+      "odds_b": 2.84,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.406584+00:00",
+      "odds_a": 1.5,
+      "odds_b": 2.76,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.671248+00:00",
+      "odds_a": 1.5,
+      "odds_b": 2.76,
+      "source": "pinnacle"
+    }
+  ]
+}

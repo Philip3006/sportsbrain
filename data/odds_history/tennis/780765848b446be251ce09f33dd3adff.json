@@ -1,0 +1,36 @@
+{
+  "match_id": "780765848b446be251ce09f33dd3adff",
+  "player_a": "Janice Tjen",
+  "player_b": "Liudmila Samsonova",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.039337+00:00",
+      "odds_a": 2.49,
+      "odds_b": 1.53,
+      "source": "marathonbet"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.858360+00:00",
+      "odds_a": 2.49,
+      "odds_b": 1.53,
+      "source": "marathonbet"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.888636+00:00",
+      "odds_a": 2.49,
+      "odds_b": 1.53,
+      "source": "marathonbet"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.970578+00:00",
+      "odds_a": 2.49,
+      "odds_b": 1.53,
+      "source": "marathonbet"
+    }
+  ]
+}

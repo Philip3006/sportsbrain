@@ -1,0 +1,36 @@
+{
+  "match_id": "9000d5a71073fa0e6b5e8ec2ef33c4db",
+  "player_a": "Adrian Mannarino",
+  "player_b": "Jacob Fearnley",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.654050+00:00",
+      "odds_a": 2.53,
+      "odds_b": 1.57,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.352018+00:00",
+      "odds_a": 2.53,
+      "odds_b": 1.57,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.404928+00:00",
+      "odds_a": 2.51,
+      "odds_b": 1.57,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.667157+00:00",
+      "odds_a": 2.5,
+      "odds_b": 1.58,
+      "source": "pinnacle"
+    }
+  ]
+}

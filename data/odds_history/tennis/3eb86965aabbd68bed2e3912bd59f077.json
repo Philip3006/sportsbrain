@@ -1,0 +1,36 @@
+{
+  "match_id": "3eb86965aabbd68bed2e3912bd59f077",
+  "player_a": "Diane Parry",
+  "player_b": "Kayla Day",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.038571+00:00",
+      "odds_a": 2.0,
+      "odds_b": 1.8,
+      "source": "pmu_fr"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.857081+00:00",
+      "odds_a": 2.0,
+      "odds_b": 1.8,
+      "source": "pmu_fr"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.887601+00:00",
+      "odds_a": 2.0,
+      "odds_b": 1.8,
+      "source": "pmu_fr"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.969451+00:00",
+      "odds_a": 2.0,
+      "odds_b": 1.8,
+      "source": "pmu_fr"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "match_id": "7a609fe9cdfc82ed6d9c93e42f5cd6b5",
+  "player_a": "Daniel Merida Aguilar",
+  "player_b": "Liam Draxl",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.655210+00:00",
+      "odds_a": 1.76,
+      "odds_b": 2.17,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.353267+00:00",
+      "odds_a": 1.68,
+      "odds_b": 2.31,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.405437+00:00",
+      "odds_a": 1.68,
+      "odds_b": 2.3,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.668516+00:00",
+      "odds_a": 1.68,
+      "odds_b": 2.3,
+      "source": "pinnacle"
+    }
+  ]
+}

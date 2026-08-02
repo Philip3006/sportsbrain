@@ -1,0 +1,36 @@
+{
+  "match_id": "799fb3615417a42649cbe48399330c06",
+  "player_a": "Maya Joint",
+  "player_b": "Yuliia Starodubtseva",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.038677+00:00",
+      "odds_a": 2.25,
+      "odds_b": 1.71,
+      "source": "coolbet"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.857176+00:00",
+      "odds_a": 2.25,
+      "odds_b": 1.71,
+      "source": "coolbet"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.887700+00:00",
+      "odds_a": 2.25,
+      "odds_b": 1.71,
+      "source": "coolbet"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.969633+00:00",
+      "odds_a": 2.25,
+      "odds_b": 1.71,
+      "source": "coolbet"
+    }
+  ]
+}

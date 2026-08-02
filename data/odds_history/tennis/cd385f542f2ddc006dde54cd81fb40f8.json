@@ -1,0 +1,36 @@
+{
+  "match_id": "cd385f542f2ddc006dde54cd81fb40f8",
+  "player_a": "Katie Boulter",
+  "player_b": "Kayla Cross",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.039558+00:00",
+      "odds_a": 1.3,
+      "odds_b": 3.5,
+      "source": "pmu_fr"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.858560+00:00",
+      "odds_a": 1.3,
+      "odds_b": 3.5,
+      "source": "pmu_fr"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.888827+00:00",
+      "odds_a": 1.3,
+      "odds_b": 3.5,
+      "source": "pmu_fr"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.970974+00:00",
+      "odds_a": 1.3,
+      "odds_b": 3.5,
+      "source": "pmu_fr"
+    }
+  ]
+}

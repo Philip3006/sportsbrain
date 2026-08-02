@@ -1,0 +1,36 @@
+{
+  "match_id": "32fd756d34f7d41943763c9994e5fee9",
+  "player_a": "Gabriel Diallo",
+  "player_b": "Kyrian Jacquet",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.653623+00:00",
+      "odds_a": 1.79,
+      "odds_b": 2.02,
+      "source": "marathonbet"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.351535+00:00",
+      "odds_a": 1.79,
+      "odds_b": 2.02,
+      "source": "marathonbet"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.404511+00:00",
+      "odds_a": 1.78,
+      "odds_b": 2.03,
+      "source": "marathonbet"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.666327+00:00",
+      "odds_a": 1.79,
+      "odds_b": 2.02,
+      "source": "marathonbet"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "match_id": "e9ee4abeb226d92133c912d5b1d2eefe",
+  "player_a": "Luca Van Assche",
+  "player_b": "Titouan Droguet",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.653410+00:00",
+      "odds_a": 1.96,
+      "odds_b": 1.92,
+      "source": "coolbet"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.351170+00:00",
+      "odds_a": 1.92,
+      "odds_b": 1.96,
+      "source": "coolbet"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.404313+00:00",
+      "odds_a": 1.9,
+      "odds_b": 1.98,
+      "source": "coolbet"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.670299+00:00",
+      "odds_a": 1.9,
+      "odds_b": 1.98,
+      "source": "coolbet"
+    }
+  ]
+}

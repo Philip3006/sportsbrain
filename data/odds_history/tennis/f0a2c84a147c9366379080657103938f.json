@@ -1,0 +1,36 @@
+{
+  "match_id": "f0a2c84a147c9366379080657103938f",
+  "player_a": "Gael Monfils",
+  "player_b": "Kamil Majchrzak",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.655321+00:00",
+      "odds_a": 3.58,
+      "odds_b": 1.33,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.353401+00:00",
+      "odds_a": 3.58,
+      "odds_b": 1.33,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.405890+00:00",
+      "odds_a": 3.7,
+      "odds_b": 1.32,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.669299+00:00",
+      "odds_a": 3.7,
+      "odds_b": 1.32,
+      "source": "pinnacle"
+    }
+  ]
+}
