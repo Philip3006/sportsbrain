@@ -167,12 +167,69 @@ def fetch_tennis_scores_odds_api(sport_keys: list[str], days_from: int = 3) -> d
     return all_scores
 
 
-def fetch_tennis_scores_espn(tour: str = "atp") -> dict[str, dict]:
-    """ESPN Fallback: site.api.espn.com/apis/site/v2/sports/tennis/{atp|wta}/scoreboard."""
+def _parse_espn_note(text: str) -> dict | None:
+    """Parsed ESPN notes-Eintrag 'Player1 bt Player2 6-3 7-6 (7-5) 6-4' zu kanonischem Schema.
+
+    Tiebreak-Sub-Scores werden entfernt: '7-6 (7-5)' → '7-6'.
+    Setzungs-Prefixe werden entfernt: '(1) Djokovic' → 'Djokovic'.
+    Nationalitäten werden entfernt: 'Osaka (JPN)' → 'Osaka'.
+    """
+    if " bt " not in text or not text.strip():
+        return None
+    # Tiebreak-Sub-Scores entfernen: (7-5) oder (7)
+    clean = re.sub(r"\s*\(\d+-\d+\)", "", text)
+    clean = re.sub(r"\s*\(\d+\)", "", clean)
+    # 'ret' am Ende abschneiden
+    is_retired = bool(re.search(r"\bret\b", clean, re.IGNORECASE))
+    clean = re.sub(r"\s+ret\.?\s*$", "", clean, flags=re.IGNORECASE).strip()
+
+    m = re.match(r"^(.+?)\s+bt\s+(.+?)\s+((?:\d+-\d+\s*)+)$", clean)
+    if not m:
+        return None
+
+    def _clean_name(s: str) -> str:
+        s = re.sub(r"^\(\d+\)\s*", "", s.strip())          # Seeding entfernen
+        s = re.sub(r"\s*\([A-Z]{2,3}\)\s*$", "", s).strip()  # Nationalität entfernen
+        return s
+
+    winner = _clean_name(m.group(1))
+    loser = _clean_name(m.group(2))
+    sets = [(int(a), int(b)) for a, b in re.findall(r"(\d+)-(\d+)", m.group(3))]
+    if not sets:
+        return None
+
+    a_sets = sum(1 for a, b in sets if a > b)
+    b_sets = sum(1 for a, b in sets if b > a)
+    winner_side = "a"  # winner ist immer player_a im Eintrag
+
+    status = "retired" if is_retired else "completed"
+    return {
+        "player_a": winner,
+        "player_b": loser,
+        "status": status,
+        "sets": sets,
+        "winner": winner_side,
+        "retired_by": None,
+        "best_of": 5 if max(a_sets, b_sets) >= 3 else 3,
+        "source": "espn_notes",
+        "kickoff_utc": None,
+    }
+
+
+def fetch_tennis_scores_espn(tour: str = "atp", dates: str | None = None) -> dict[str, dict]:
+    """ESPN: site.api.espn.com/apis/site/v2/sports/tennis/{atp|wta}/scoreboard.
+
+    dates: YYYYMMDD — wenn angegeben, werden auch historische Matches geladen
+           (ESPN liefert dann alle Turniermatches der laufenden Woche).
+           Notes-Parsing ist primär für historische Scores; linescores für Live.
+    """
     global LAST_TENNIS_SCORES_SOURCE
     url = f"https://site.api.espn.com/apis/site/v2/sports/tennis/{tour}/scoreboard"
+    params = {}
+    if dates:
+        params["dates"] = dates
     try:
-        r = requests.get(url, timeout=10)
+        r = requests.get(url, params=params, timeout=10)
         if r.status_code != 200:
             return {}
         events = r.json().get("events", [])
@@ -181,69 +238,93 @@ def fetch_tennis_scores_espn(tour: str = "atp") -> dict[str, dict]:
         return {}
 
     out: dict[str, dict] = {}
-    for ev in events:
-        try:
-            comps = ev.get("competitions", [{}])[0]
-            competitors = comps.get("competitors", [])
-            if len(competitors) != 2:
-                continue
-            # ESPN doesn't guarantee A/B ordering -> use "homeAway"
-            a_data = next((c for c in competitors if c.get("homeAway") == "home"), competitors[0])
-            b_data = next((c for c in competitors if c.get("homeAway") == "away"), competitors[1])
-            home = a_data.get("athlete", {}).get("displayName", "")
-            away = b_data.get("athlete", {}).get("displayName", "")
-            status_type = ev.get("status", {}).get("type", {}).get("name", "")
-            completed = "FINAL" in status_type.upper() or comps.get("status", {}).get("type", {}).get("completed", False)
-            # Retirement: ESPN status detail
-            detail = comps.get("status", {}).get("type", {}).get("detail", "").lower()
-            is_retired = "retired" in detail or "retirement" in detail
-            is_walkover = "walkover" in detail or "w.o." in detail
 
-            # Sets: linescores per competitor
-            a_lines = a_data.get("linescores") or []
-            b_lines = b_data.get("linescores") or []
-            sets: list[tuple[int, int]] = []
-            for a_ls, b_ls in zip(a_lines, b_lines):
+    def _store(entry: dict) -> None:
+        pa, pb = entry["player_a"], entry["player_b"]
+        key_fwd = f"{pa} vs {pb}"
+        key_rev = f"{pb} vs {pa}"
+        ck = canonical_match_key(pa, pb)
+        # Bereits vorhandene Einträge nur überschreiben wenn wir mehr Daten haben
+        existing = out.get(ck)
+        if existing and existing.get("sets") and not entry.get("sets"):
+            return
+        out[key_fwd] = entry
+        out[key_rev] = {**entry, "player_a": pb, "player_b": pa,
+                        "winner": ("b" if entry["winner"] == "a" else "a") if entry["winner"] else None}
+        out[ck] = entry
+
+    for ev in events:
+        for grouping in ev.get("groupings", [ev]):
+            for comp in grouping.get("competitions", grouping.get("groupings", [])):
+                # Notes-basiertes Parsing (funktioniert für historische Matches)
+                for note in comp.get("notes", []):
+                    text = note.get("text", "")
+                    # Doppel-Matches überspringen
+                    if " & " in text:
+                        continue
+                    entry = _parse_espn_note(text)
+                    if entry:
+                        _store(entry)
+
+                # Linescores-Parsing (funktioniert für Live/sehr aktuelle Matches)
                 try:
-                    sets.append((int(a_ls.get("value", 0)), int(b_ls.get("value", 0))))
+                    competitors = comp.get("competitors", [])
+                    if len(competitors) != 2:
+                        continue
+                    a_data = next((c for c in competitors if c.get("homeAway") == "home"), competitors[0])
+                    b_data = next((c for c in competitors if c.get("homeAway") == "away"), competitors[1])
+                    home = a_data.get("athlete", {}).get("displayName", "")
+                    away = b_data.get("athlete", {}).get("displayName", "")
+                    if not home or not away:
+                        continue
+
+                    a_lines = a_data.get("linescores") or []
+                    b_lines = b_data.get("linescores") or []
+                    sets: list[tuple[int, int]] = []
+                    for a_ls, b_ls in zip(a_lines, b_lines):
+                        try:
+                            sets.append((int(a_ls.get("value", 0)), int(b_ls.get("value", 0))))
+                        except Exception:
+                            continue
+
+                    if not sets:
+                        continue  # Notes-Eintrag reicht
+
+                    detail = comp.get("status", {}).get("type", {}).get("detail", "").lower()
+                    is_retired = "retired" in detail or "retirement" in detail
+                    is_walkover = "walkover" in detail or "w.o." in detail
+                    completed = comp.get("status", {}).get("type", {}).get("completed", False)
+
+                    winner = None
+                    if a_data.get("winner"):
+                        winner = "a"
+                    elif b_data.get("winner"):
+                        winner = "b"
+                    elif sets:
+                        a_s = sum(1 for a, b in sets if a > b)
+                        b_s = sum(1 for a, b in sets if b > a)
+                        if a_s > b_s:
+                            winner = "a"
+                        elif b_s > a_s:
+                            winner = "b"
+
+                    status = "in_progress"
+                    if is_walkover:
+                        status = "walkover"
+                    elif is_retired:
+                        status = "retired"
+                    elif completed:
+                        status = "completed"
+
+                    best_of = 5 if max((sum(1 for a, b in sets if a > b),
+                                       sum(1 for a, b in sets if b > a)), default=0) >= 3 else 3
+                    _store({
+                        "player_a": home, "player_b": away, "status": status,
+                        "sets": sets, "winner": winner, "retired_by": None,
+                        "best_of": best_of, "source": "espn", "kickoff_utc": ev.get("date"),
+                    })
                 except Exception:
                     continue
-
-            winner = None
-            if a_data.get("winner"):
-                winner = "a"
-            elif b_data.get("winner"):
-                winner = "b"
-
-            best_of = 5 if ev.get("season", {}).get("slug", "") in ("grand-slam",) else 3
-
-            status = "in_progress"
-            if is_walkover:
-                status = "walkover"
-            elif is_retired:
-                status = "retired"
-            elif completed:
-                status = "completed"
-            elif not sets:
-                status = "scheduled"
-
-            entry = {
-                "player_a": home,
-                "player_b": away,
-                "status": status,
-                "sets": sets,
-                "winner": winner,
-                "retired_by": None,  # ESPN unklar wer aufgab
-                "best_of": best_of,
-                "source": "espn",
-                "kickoff_utc": ev.get("date"),
-            }
-            eid = ev.get("id", f"espn_{home}_vs_{away}")
-            out[eid] = entry
-            out[f"{home} vs {away}"] = entry
-            out[canonical_match_key(home, away)] = entry
-        except Exception:
-            continue
 
     if out:
         LAST_TENNIS_SCORES_SOURCE = "espn"

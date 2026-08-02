@@ -56,7 +56,10 @@ def _resolve_outcome(row: dict, scores: dict, tennis_scores: dict) -> str | None
     sport = row.get("sport", "football")
 
     if sport == "tennis":
-        sc = tennis_scores.get(mid) or tennis_scores.get(f"{home} vs {away}")
+        sc_id = tennis_scores.get(mid)
+        sc_name = tennis_scores.get(f"{home} vs {away}")
+        # Bevorzuge Eintrag mit Set-Daten (ESPN); TheOddsAPI liefert oft sets=[]
+        sc = (sc_name if sc_name and sc_name.get("sets") else sc_id) or sc_id or sc_name
         if not sc:
             return None
         result = settle_tennis_market(market, sc)
@@ -99,7 +102,18 @@ def backfill(dry_run: bool = False) -> dict:
         except Exception:
             sport_keys = None
         tennis_scores = fetch_tennis_scores(sport_keys)
-        print(f"[backfill] Tennis: {len(tennis_scores) // 2} abgeschlossene Matches")
+        # Historische Scan-Dates: ESPN mit Datum aufrufen um Set-Details zu bekommen
+        from src.data.tennis_scores import fetch_tennis_scores_espn
+        pending_tennis = [r for r in pending if r.get("sport") == "tennis"]
+        scan_dates = sorted(set(r.get("scan_date", "")[:8].replace("-", "") for r in pending_tennis if r.get("scan_date")))
+        for date_str in scan_dates:
+            for tour in ("atp", "wta"):
+                hist = fetch_tennis_scores_espn(tour=tour, dates=date_str)
+                # Nur Einträge mit echten Set-Daten übernehmen
+                for k, v in hist.items():
+                    if v.get("sets") and (k not in tennis_scores or not tennis_scores[k].get("sets")):
+                        tennis_scores[k] = v
+        print(f"[backfill] Tennis: {sum(1 for v in tennis_scores.values() if v.get('sets'))} Matches mit Set-Daten")
 
     resolved = 0
     now_ts = datetime.now(timezone.utc).isoformat()
