@@ -1,0 +1,15 @@
+{
+  "match_id": "bdb72940dfe5eeb2d504afe6034dcac3",
+  "player_a": "Renata Zarazua",
+  "player_b": "Tamara Korpatsch",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.038086+00:00",
+      "odds_a": 1.64,
+      "odds_b": 2.39,
+      "source": "pinnacle"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "1b43ef0a26cd2d053abf7677cdbda305",
+  "player_a": "Aleksandar Vukic",
+  "player_b": "Daniel Altmaier",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.652816+00:00",
+      "odds_a": 1.68,
+      "odds_b": 2.3,
+      "source": "coolbet"
+    }
+  ]
+}

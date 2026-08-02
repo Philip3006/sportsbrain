@@ -1,0 +1,15 @@
+{
+  "match_id": "ac67d3a7c8aea695d06a175c5df32e69",
+  "player_a": "Mariano Navone",
+  "player_b": "Matteo Berrettini",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.653036+00:00",
+      "odds_a": 2.59,
+      "odds_b": 1.56,
+      "source": "pinnacle"
+    }
+  ]
+}

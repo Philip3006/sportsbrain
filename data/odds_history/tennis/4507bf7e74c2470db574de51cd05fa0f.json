@@ -1,0 +1,15 @@
+{
+  "match_id": "4507bf7e74c2470db574de51cd05fa0f",
+  "player_a": "Benjamin Bonzi",
+  "player_b": "Yannick Hanfmann",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.653728+00:00",
+      "odds_a": 2.05,
+      "odds_b": 1.84,
+      "source": "coolbet"
+    }
+  ]
+}

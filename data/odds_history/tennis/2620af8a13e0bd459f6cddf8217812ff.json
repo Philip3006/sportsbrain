@@ -1,0 +1,15 @@
+{
+  "match_id": "2620af8a13e0bd459f6cddf8217812ff",
+  "player_a": "Jack Draper",
+  "player_b": "Terence Atmane",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.655530+00:00",
+      "odds_a": 1.44,
+      "odds_b": 2.97,
+      "source": "pinnacle"
+    }
+  ]
+}

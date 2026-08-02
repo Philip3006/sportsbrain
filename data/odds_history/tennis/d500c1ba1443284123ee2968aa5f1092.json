@@ -1,0 +1,15 @@
+{
+  "match_id": "d500c1ba1443284123ee2968aa5f1092",
+  "player_a": "Kimberly Birrell",
+  "player_b": "Viktorija Golubic",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.036685+00:00",
+      "odds_a": 1.86,
+      "odds_b": 1.94,
+      "source": "marathonbet"
+    }
+  ]
+}

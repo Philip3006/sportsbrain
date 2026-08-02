@@ -1,0 +1,15 @@
+{
+  "match_id": "dcf5aea83bedb135059409c0abe8f520",
+  "player_a": "Taylor Townsend",
+  "player_b": "Tereza Valentova",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.039769+00:00",
+      "odds_a": 2.74,
+      "odds_b": 1.45,
+      "source": "marathonbet"
+    }
+  ]
+}

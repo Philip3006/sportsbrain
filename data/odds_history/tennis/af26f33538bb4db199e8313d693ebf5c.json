@@ -1,0 +1,15 @@
+{
+  "match_id": "af26f33538bb4db199e8313d693ebf5c",
+  "player_a": "Kamilla Rakhimova",
+  "player_b": "Venus Williams",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.036573+00:00",
+      "odds_a": 1.28,
+      "odds_b": 4.0,
+      "source": "coolbet"
+    }
+  ]
+}

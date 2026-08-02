@@ -1,0 +1,15 @@
+{
+  "match_id": "2f58b17ec5230ff43e61bb49cd8e4fac",
+  "player_a": "Aoi Ito",
+  "player_b": "Katherine Sebov",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.037132+00:00",
+      "odds_a": 1.62,
+      "odds_b": 2.28,
+      "source": "unibet_se"
+    }
+  ]
+}

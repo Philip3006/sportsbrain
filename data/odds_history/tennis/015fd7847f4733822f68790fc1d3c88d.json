@@ -1,0 +1,15 @@
+{
+  "match_id": "015fd7847f4733822f68790fc1d3c88d",
+  "player_a": "Denis Shapovalov",
+  "player_b": "Zachary Svajda",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.654291+00:00",
+      "odds_a": 1.74,
+      "odds_b": 2.2,
+      "source": "pinnacle"
+    }
+  ]
+}

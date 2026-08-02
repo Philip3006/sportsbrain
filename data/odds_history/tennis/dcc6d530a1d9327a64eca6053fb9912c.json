@@ -1,0 +1,15 @@
+{
+  "match_id": "dcc6d530a1d9327a64eca6053fb9912c",
+  "player_a": "Cristina Bucsa",
+  "player_b": "Moyuka Uchijima",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.036457+00:00",
+      "odds_a": 1.71,
+      "odds_b": 2.14,
+      "source": "leovegas_se"
+    }
+  ]
+}

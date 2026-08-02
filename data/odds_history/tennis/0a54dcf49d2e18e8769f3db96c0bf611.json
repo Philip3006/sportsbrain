@@ -1,0 +1,15 @@
+{
+  "match_id": "0a54dcf49d2e18e8769f3db96c0bf611",
+  "player_a": "Sloane Stephens",
+  "player_b": "Solana Sierra",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.038789+00:00",
+      "odds_a": 1.78,
+      "odds_b": 2.02,
+      "source": "pmu_fr"
+    }
+  ]
+}

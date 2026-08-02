@@ -1,0 +1,15 @@
+{
+  "match_id": "cd66fe742d007761806ac2730aa19b65",
+  "player_a": "Botic van de Zandschulp",
+  "player_b": "Giovanni Mpetshi Perricard",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.654975+00:00",
+      "odds_a": 1.83,
+      "odds_b": 2.08,
+      "source": "pinnacle"
+    }
+  ]
+}
