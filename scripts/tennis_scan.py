@@ -694,8 +694,20 @@ def main() -> None:
     # ---- Signal Archive (I9) ----
     _all_tennis_signals = [s for v in per_tournament.values() for s in v["signals"]]
     _tennis_selected = {(s.match_id, s.market) for s in all_live_signals}
+    # Meta-Dict: match_id → {tournament, category, surface, tour}
+    _meta_by_match: dict[str, dict] = {}
+    for slug, info in per_tournament.items():
+        t = info["tournament"]
+        for m in info.get("matches", []):
+            _meta_by_match[m["match_id"]] = {
+                "tournament": t.name, "category": t.category,
+                "surface": t.surface, "tour": t.tour,
+            }
     from src.scanner.output import archive_signals
-    _n_archived = archive_signals(_all_tennis_signals, _tennis_selected, scan_date, sport="tennis")
+    _n_archived = archive_signals(
+        _all_tennis_signals, _tennis_selected, scan_date,
+        sport="tennis", meta_by_match=_meta_by_match,
+    )
     if _n_archived:
         print(f"Archive: {_n_archived} neue Tennis-Signals archiviert.")
 
