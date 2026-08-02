@@ -27,7 +27,10 @@ def test_missing_serve_stats_flagged_via_n_zero():
 def test_present_serve_stats_non_zero_n():
     from src.data.tennis_stats import ServeAggregate
     a = ServeAggregate(n_matches=15, dominance_rate=0.58, ace_rate=0.06,
-                       df_rate=0.03, win_rate=0.7, ace_df_ratio=2.0)
+                       df_rate=0.03, win_rate=0.7, ace_df_ratio=2.0,
+                       first_serve_pct=0.65, first_serve_win_pct=0.72,
+                       second_serve_win_pct=0.55, bp_save_pct=0.68,
+                       bp_conv_pct=0.42)
     feats = build_match_features(
         player_a="A", player_b="B", surface="hard", best_of=3,
         category="atp250", round_str="R32",
