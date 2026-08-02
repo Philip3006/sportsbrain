@@ -521,9 +521,10 @@ def format_scan_report(
         if not signals:
             lines.append("_Keine Value-Signals._")
             continue
+        tour_tag = f"[{t.tour.upper()}]"
         for s in sorted(signals, key=lambda x: x.ev, reverse=True):
             lines += [
-                f"- **{s.home} vs {s.away}** · {_market_label(s.market, s.home, s.away)}",
+                f"- {tour_tag} **{s.home} vs {s.away}** · {_market_label(s.market, s.home, s.away)}",
                 f"  Quote {s.decimal_odds:.2f} · Modell {s.model_prob*100:.1f}% · "
                 f"EV +{s.ev*100:.1f}% · Stake {s.stake_eur:.2f}€ · {s.confidence}",
             ]
