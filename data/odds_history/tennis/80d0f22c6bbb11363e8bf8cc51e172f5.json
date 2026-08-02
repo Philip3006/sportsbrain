@@ -24,6 +24,13 @@
       "odds_a": 2.15,
       "odds_b": 1.7,
       "source": "coolbet"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.665366+00:00",
+      "odds_a": 1.65,
+      "odds_b": 2.25,
+      "source": "coolbet"
     }
   ]
 }
