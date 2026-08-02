@@ -1,0 +1,15 @@
+{
+  "match_id": "ba0674d7fb52fbe8c95df0a9d4716548",
+  "player_a": "Bianca Andreescu",
+  "player_b": "Nikola Bartunkova",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.037873+00:00",
+      "odds_a": 2.33,
+      "odds_b": 1.6,
+      "source": "marathonbet"
+    }
+  ]
+}

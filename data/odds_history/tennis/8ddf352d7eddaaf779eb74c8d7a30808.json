@@ -1,0 +1,15 @@
+{
+  "match_id": "8ddf352d7eddaaf779eb74c8d7a30808",
+  "player_a": "Elena Gabriela Ruse",
+  "player_b": "Peyton Stearns",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.037769+00:00",
+      "odds_a": 2.06,
+      "odds_b": 1.76,
+      "source": "marathonbet"
+    }
+  ]
+}

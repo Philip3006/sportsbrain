@@ -1,0 +1,15 @@
+{
+  "match_id": "2ab8fa6200502986deaf8d8e3b2af049",
+  "player_a": "Caty McNally",
+  "player_b": "Tatjana Maria",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.038454+00:00",
+      "odds_a": 1.64,
+      "odds_b": 2.25,
+      "source": "marathonbet"
+    }
+  ]
+}

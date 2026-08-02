@@ -1,0 +1,15 @@
+{
+  "match_id": "65d8d144e3b1603c614875631ee21362",
+  "player_a": "Shuai Zhang",
+  "player_b": "Yulia Putintseva",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.037979+00:00",
+      "odds_a": 2.64,
+      "odds_b": 1.48,
+      "source": "marathonbet"
+    }
+  ]
+}

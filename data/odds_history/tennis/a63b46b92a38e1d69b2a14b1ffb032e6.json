@@ -1,0 +1,15 @@
+{
+  "match_id": "a63b46b92a38e1d69b2a14b1ffb032e6",
+  "player_a": "Alina Korneeva",
+  "player_b": "Polina Kudermetova",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.038238+00:00",
+      "odds_a": 1.46,
+      "odds_b": 2.86,
+      "source": "pinnacle"
+    }
+  ]
+}

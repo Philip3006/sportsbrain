@@ -1,0 +1,15 @@
+{
+  "match_id": "e8cb18f923a77e14e62003790c223614",
+  "player_a": "Elisabetta Cocciaretto",
+  "player_b": "Talia Gibson",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.037666+00:00",
+      "odds_a": 1.65,
+      "odds_b": 2.23,
+      "source": "marathonbet"
+    }
+  ]
+}

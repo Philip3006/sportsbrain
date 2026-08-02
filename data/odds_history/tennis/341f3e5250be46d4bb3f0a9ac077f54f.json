@@ -1,0 +1,15 @@
+{
+  "match_id": "341f3e5250be46d4bb3f0a9ac077f54f",
+  "player_a": "Adam Walton",
+  "player_b": "Jenson Brooksby",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.653943+00:00",
+      "odds_a": 2.15,
+      "odds_b": 1.76,
+      "source": "pinnacle"
+    }
+  ]
+}

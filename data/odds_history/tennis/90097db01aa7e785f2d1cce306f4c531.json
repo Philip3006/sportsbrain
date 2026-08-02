@@ -1,0 +1,15 @@
+{
+  "match_id": "90097db01aa7e785f2d1cce306f4c531",
+  "player_a": "Carol Zhao",
+  "player_b": "Magda Linette",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.039096+00:00",
+      "odds_a": 8.4,
+      "odds_b": 1.07,
+      "source": "marathonbet"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "f83b748a46e5e0b6a8a6598d4e0e2736",
+  "player_a": "Hubert Hurkacz",
+  "player_b": "Marcos Giron",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.654667+00:00",
+      "odds_a": 1.56,
+      "odds_b": 2.55,
+      "source": "pinnacle"
+    }
+  ]
+}

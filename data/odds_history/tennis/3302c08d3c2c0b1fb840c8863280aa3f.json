@@ -1,0 +1,15 @@
+{
+  "match_id": "3302c08d3c2c0b1fb840c8863280aa3f",
+  "player_a": "Jaume Munar",
+  "player_b": "Rinky Hijikata",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.652572+00:00",
+      "odds_a": 1.78,
+      "odds_b": 2.14,
+      "source": "pinnacle"
+    }
+  ]
+}

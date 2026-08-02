@@ -1,0 +1,15 @@
+{
+  "match_id": "80d0f22c6bbb11363e8bf8cc51e172f5",
+  "player_a": "Michael Zheng",
+  "player_b": "Miomir Kecmanovic",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.652692+00:00",
+      "odds_a": 1.68,
+      "odds_b": 2.18,
+      "source": "marathonbet"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "ad669d330176ac5796a9ec60f8ec1aa8",
+  "player_a": "Mattia Bellucci",
+  "player_b": "Sebastian Baez",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.655735+00:00",
+      "odds_a": 2.04,
+      "odds_b": 1.85,
+      "source": "pinnacle"
+    }
+  ]
+}

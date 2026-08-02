@@ -1,0 +1,15 @@
+{
+  "match_id": "9b744a7d1d2550a868acbbba9eaad46f",
+  "player_a": "Duncan Chan",
+  "player_b": "Thiago Agustin Tirante",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.654402+00:00",
+      "odds_a": 3.45,
+      "odds_b": 1.34,
+      "source": "pinnacle"
+    }
+  ]
+}

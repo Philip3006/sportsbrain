@@ -1,0 +1,15 @@
+{
+  "match_id": "b9569e7d3389a0805c9c89a6a6430c35",
+  "player_a": "Alex Michelsen",
+  "player_b": "Jan-Lennard Struff",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.654872+00:00",
+      "odds_a": 1.35,
+      "odds_b": 3.46,
+      "source": "pinnacle"
+    }
+  ]
+}

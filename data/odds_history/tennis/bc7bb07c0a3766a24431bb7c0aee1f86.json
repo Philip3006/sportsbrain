@@ -1,0 +1,15 @@
+{
+  "match_id": "bc7bb07c0a3766a24431bb7c0aee1f86",
+  "player_a": "Ariana Arseneault",
+  "player_b": "Jessica Bouzas Maneiro",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.036284+00:00",
+      "odds_a": 6.6,
+      "odds_b": 1.11,
+      "source": "marathonbet"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "bc5bcf1c91d329fa124330232ae1f6e0",
+  "player_a": "Alycia Parks",
+  "player_b": "Victoria Jimenez Kasintseva",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.038347+00:00",
+      "odds_a": 1.65,
+      "odds_b": 2.25,
+      "source": "unibet_se"
+    }
+  ]
+}

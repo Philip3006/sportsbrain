@@ -1,0 +1,15 @@
+{
+  "match_id": "fbabbf2e61890f93617995f58a982e8b",
+  "player_a": "Antonia Ruzic",
+  "player_b": "Lois Boisson",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.037004+00:00",
+      "odds_a": 1.91,
+      "odds_b": 1.88,
+      "source": "unibet_se"
+    }
+  ]
+}
