@@ -1,0 +1,36 @@
+{
+  "match_id": "f070dea0cdc8b8e534342405c62e90a8",
+  "player_a": "Cadence Brace",
+  "player_b": "McCartney Kessler",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.037561+00:00",
+      "odds_a": 5.4,
+      "odds_b": 1.15,
+      "source": "unibet_se"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.856143+00:00",
+      "odds_a": 5.4,
+      "odds_b": 1.15,
+      "source": "unibet_se"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.886978+00:00",
+      "odds_a": 5.4,
+      "odds_b": 1.15,
+      "source": "unibet_se"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.968115+00:00",
+      "odds_a": 5.4,
+      "odds_b": 1.15,
+      "source": "unibet_se"
+    }
+  ]
+}

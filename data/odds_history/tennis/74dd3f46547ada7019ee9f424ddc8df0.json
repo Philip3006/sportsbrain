@@ -1,0 +1,36 @@
+{
+  "match_id": "74dd3f46547ada7019ee9f424ddc8df0",
+  "player_a": "Alexis Galarneau",
+  "player_b": "Vit Kopriva",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.653839+00:00",
+      "odds_a": 1.88,
+      "odds_b": 2.02,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.351803+00:00",
+      "odds_a": 1.9,
+      "odds_b": 1.99,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.404726+00:00",
+      "odds_a": 1.9,
+      "odds_b": 1.99,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.666731+00:00",
+      "odds_a": 1.9,
+      "odds_b": 1.99,
+      "source": "pinnacle"
+    }
+  ]
+}

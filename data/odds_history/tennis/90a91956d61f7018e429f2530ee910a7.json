@@ -1,0 +1,36 @@
+{
+  "match_id": "90a91956d61f7018e429f2530ee910a7",
+  "player_a": "Fabian Marozsan",
+  "player_b": "Shintaro Mochizuki",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.654564+00:00",
+      "odds_a": 1.54,
+      "odds_b": 2.61,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.352548+00:00",
+      "odds_a": 1.54,
+      "odds_b": 2.61,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.405805+00:00",
+      "odds_a": 1.54,
+      "odds_b": 2.61,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.669114+00:00",
+      "odds_a": 1.54,
+      "odds_b": 2.61,
+      "source": "pinnacle"
+    }
+  ]
+}

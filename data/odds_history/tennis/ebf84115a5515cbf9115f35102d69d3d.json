@@ -1,0 +1,36 @@
+{
+  "match_id": "ebf84115a5515cbf9115f35102d69d3d",
+  "player_a": "Martin Landaluce",
+  "player_b": "Nicolas Mejia",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.653183+00:00",
+      "odds_a": 1.4,
+      "odds_b": 2.9,
+      "source": "sport888"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.350899+00:00",
+      "odds_a": 1.4,
+      "odds_b": 2.9,
+      "source": "sport888"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.404052+00:00",
+      "odds_a": 1.4,
+      "odds_b": 2.9,
+      "source": "sport888"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.670878+00:00",
+      "odds_a": 1.4,
+      "odds_b": 2.9,
+      "source": "sport888"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "match_id": "6274c443b8cceb8cc197b45d12eb15f1",
+  "player_a": "Eva Lys",
+  "player_b": "Panna Udvardy",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.039230+00:00",
+      "odds_a": 1.52,
+      "odds_b": 2.52,
+      "source": "marathonbet"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.858237+00:00",
+      "odds_a": 1.53,
+      "odds_b": 2.49,
+      "source": "marathonbet"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.888139+00:00",
+      "odds_a": 1.53,
+      "odds_b": 2.49,
+      "source": "marathonbet"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.970396+00:00",
+      "odds_a": 1.53,
+      "odds_b": 2.49,
+      "source": "marathonbet"
+    }
+  ]
+}

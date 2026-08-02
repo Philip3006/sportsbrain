@@ -1,0 +1,36 @@
+{
+  "match_id": "2c159774efb7ea879ad6200c876f9057",
+  "player_a": "Anna Blinkova",
+  "player_b": "Rebecca Sramkova",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.037352+00:00",
+      "odds_a": 1.73,
+      "odds_b": 2.1,
+      "source": "unibet_se"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.855912+00:00",
+      "odds_a": 1.73,
+      "odds_b": 2.1,
+      "source": "unibet_se"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.886666+00:00",
+      "odds_a": 1.73,
+      "odds_b": 2.1,
+      "source": "unibet_se"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.968297+00:00",
+      "odds_a": 1.73,
+      "odds_b": 2.1,
+      "source": "unibet_se"
+    }
+  ]
+}

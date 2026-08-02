@@ -1,0 +1,36 @@
+{
+  "match_id": "0ee76c6879bc5351f7bac42717ed8f4c",
+  "player_a": "Emerson Jones",
+  "player_b": "Lanlana Tararudee",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.037456+00:00",
+      "odds_a": 2.55,
+      "odds_b": 1.5,
+      "source": "unibet_se"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.856032+00:00",
+      "odds_a": 2.55,
+      "odds_b": 1.5,
+      "source": "unibet_se"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.886568+00:00",
+      "odds_a": 2.55,
+      "odds_b": 1.5,
+      "source": "unibet_se"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.967719+00:00",
+      "odds_a": 2.55,
+      "odds_b": 1.5,
+      "source": "unibet_se"
+    }
+  ]
+}

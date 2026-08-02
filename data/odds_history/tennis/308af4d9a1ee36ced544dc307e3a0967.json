@@ -1,0 +1,36 @@
+{
+  "match_id": "308af4d9a1ee36ced544dc307e3a0967",
+  "player_a": "Corentin Moutet",
+  "player_b": "Marton Fucsovics",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.653303+00:00",
+      "odds_a": 1.84,
+      "odds_b": 2.06,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.351006+00:00",
+      "odds_a": 1.87,
+      "odds_b": 2.02,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.404201+00:00",
+      "odds_a": 1.88,
+      "odds_b": 2.01,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.668330+00:00",
+      "odds_a": 1.91,
+      "odds_b": 1.98,
+      "source": "pinnacle"
+    }
+  ]
+}

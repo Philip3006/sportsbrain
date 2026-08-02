@@ -1,0 +1,36 @@
+{
+  "match_id": "b88ea9fe5429a28be47d3a3bcf38e6af",
+  "player_a": "Rebecca Marino",
+  "player_b": "Zeynep Sonmez",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.039664+00:00",
+      "odds_a": 3.3,
+      "odds_b": 1.33,
+      "source": "marathonbet"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.858668+00:00",
+      "odds_a": 3.3,
+      "odds_b": 1.33,
+      "source": "marathonbet"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.888936+00:00",
+      "odds_a": 3.3,
+      "odds_b": 1.33,
+      "source": "marathonbet"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.971160+00:00",
+      "odds_a": 3.3,
+      "odds_b": 1.33,
+      "source": "marathonbet"
+    }
+  ]
+}

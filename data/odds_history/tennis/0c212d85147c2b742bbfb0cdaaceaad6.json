@@ -1,0 +1,36 @@
+{
+  "match_id": "0c212d85147c2b742bbfb0cdaaceaad6",
+  "player_a": "Alexei Popyrin",
+  "player_b": "Roman Andres Burruchaga",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.654182+00:00",
+      "odds_a": 1.65,
+      "odds_b": 2.34,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.352147+00:00",
+      "odds_a": 1.66,
+      "odds_b": 2.32,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.405142+00:00",
+      "odds_a": 1.66,
+      "odds_b": 2.32,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.667742+00:00",
+      "odds_a": 1.66,
+      "odds_b": 2.32,
+      "source": "pinnacle"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "match_id": "89000ae58cd0b4f88f03639dcf8e3baa",
+  "player_a": "Adolfo Daniel Vallejo",
+  "player_b": "Juncheng Shang",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:22.652257+00:00",
+      "odds_a": 2.31,
+      "odds_b": 1.68,
+      "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.350258+00:00",
+      "odds_a": 3.48,
+      "odds_b": 1.35,
+      "source": "pinnacle"
+    }
+  ]
+}

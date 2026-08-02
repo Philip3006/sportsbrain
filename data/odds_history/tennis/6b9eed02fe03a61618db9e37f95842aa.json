@@ -1,0 +1,36 @@
+{
+  "match_id": "6b9eed02fe03a61618db9e37f95842aa",
+  "player_a": "Anhelina Kalinina",
+  "player_b": "Anna Bondár",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260802_13",
+      "ts_utc": "2026-08-02T13:57:23.038894+00:00",
+      "odds_a": 1.5,
+      "odds_b": 2.58,
+      "source": "marathonbet"
+    },
+    {
+      "label": "auto_20260802_16",
+      "ts_utc": "2026-08-02T16:14:21.857402+00:00",
+      "odds_a": 1.5,
+      "odds_b": 2.58,
+      "source": "marathonbet"
+    },
+    {
+      "label": "auto_20260802_19",
+      "ts_utc": "2026-08-02T19:36:49.887908+00:00",
+      "odds_a": 1.5,
+      "odds_b": 2.58,
+      "source": "marathonbet"
+    },
+    {
+      "label": "auto_20260802_22",
+      "ts_utc": "2026-08-02T22:11:20.970027+00:00",
+      "odds_a": 1.5,
+      "odds_b": 2.58,
+      "source": "marathonbet"
+    }
+  ]
+}
