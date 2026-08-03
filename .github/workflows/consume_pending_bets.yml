@@ -1,9 +1,13 @@
-name: Consume Pending Bets (5 min)
+name: Consume Pending Bets
 
 on:
+  # F5-C: Primary trigger is Worker Cron (every 5 min, only when KV has pending bets).
+  # repository_dispatch receives event_type=consume_pending_bets from the Worker.
+  repository_dispatch:
+    types: [consume_pending_bets]
+  # Fallback schedule (every 30 min) in case Worker GH_TOKEN is not set.
   schedule:
-    # Alle 5 Minuten — GitHub-Minimum (lokal läuft es alle 2 Min als Backup)
-    - cron: '*/5 * * * *'
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 concurrency:

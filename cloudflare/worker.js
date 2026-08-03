@@ -173,6 +173,91 @@ function _validSub(s) {
     && s.keys && typeof s.keys.p256dh === 'string' && typeof s.keys.auth === 'string';
 }
 
+// ── F5-C/D: Worker Cron Helpers ───────────────────────────────
+const _GH_REPO = 'Philip3006/sportsbrain';
+const _WORKFLOW_MAP = {
+  daily_scan:    'daily_scan.yml',
+  auto_retrain:  'auto_retrain.yml',
+  closing_odds:  'closing_odds.yml',
+  settle:        'settle.yml',
+  prematch_scan: 'prematch_scan.yml',
+  tennis_scan:   'tennis_scan.yml',
+  tennis_settle: 'tennis_settle.yml',
+};
+const _HEALER_SKIP = new Set(['consume_pending_bets', 'aggregate_health']);
+const _HEALER_COOLDOWN_MS = 10 * 60 * 1000;
+
+async function _ghWorkflowDispatch(token, workflow) {
+  return fetch(
+    `https://api.github.com/repos/${_GH_REPO}/actions/workflows/${workflow}/dispatches`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `token ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/vnd.github+json',
+        'User-Agent': 'sportsbrain-worker',
+      },
+      body: JSON.stringify({ ref: 'main' }),
+    },
+  );
+}
+
+async function _ghRepositoryDispatch(token, eventType) {
+  return fetch(`https://api.github.com/repos/${_GH_REPO}/dispatches`, {
+    method: 'POST',
+    headers: {
+      Authorization: `token ${token}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'sportsbrain-worker',
+    },
+    body: JSON.stringify({ event_type: eventType }),
+  });
+}
+
+// F5-C: Trigger consume_pending_bets only when KV has pending bets.
+async function _cronConsumeCheck(env) {
+  const token = env.GH_TOKEN;
+  if (!token) return;
+  const users = [DEFAULT_USER, ...Object.keys(await readUserTokens(env))];
+  let hasPending = false;
+  for (const u of new Set(users)) {
+    if ((await readPending(env, u)).length > 0) { hasPending = true; break; }
+    if ((await readCancelRequests(env, u)).length > 0) { hasPending = true; break; }
+  }
+  if (!hasPending) return;
+  await _ghRepositoryDispatch(token, 'consume_pending_bets');
+}
+
+// F5-D: Read health from signals KV, trigger failed workflows with 10-min cooldown.
+async function _cronHealerCheck(env) {
+  const token = env.GH_TOKEN;
+  if (!token) return;
+  const raw = await env.SIGNALS.get(_signalsKey(DEFAULT_USER));
+  if (!raw) return;
+  let health;
+  try { health = JSON.parse(raw).health; } catch { return; }
+  if (!health || health.overall === 'ok') return;
+
+  const now = Date.now();
+  const cdRaw = await env.SIGNALS.get('healer_cooldowns');
+  const cooldowns = cdRaw ? JSON.parse(cdRaw) : {};
+  let updated = false;
+
+  for (const job of (health.jobs || [])) {
+    if (job.status === 'ok') continue;
+    if (_HEALER_SKIP.has(job.job)) continue;
+    const wf = _WORKFLOW_MAP[job.job];
+    if (!wf) continue;
+    if (now - (cooldowns[job.job] || 0) < _HEALER_COOLDOWN_MS) continue;
+    await _ghWorkflowDispatch(token, wf);
+    cooldowns[job.job] = now;
+    updated = true;
+  }
+  if (updated) await env.SIGNALS.put('healer_cooldowns', JSON.stringify(cooldowns));
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get('Origin') || '';
@@ -496,6 +581,13 @@ export default {
     }
 
     return new Response('Not Found', { status: 404, headers: ch });
+  },
+
+  // F5-C/D: Cron triggers (configured in wrangler.toml [triggers].crons)
+  // Requires GH_TOKEN Worker secret: wrangler secret put GH_TOKEN
+  async scheduled(event, env) {
+    if (event.cron === '*/5 * * * *') await _cronConsumeCheck(env);
+    else if (event.cron === '*/30 * * * *') await _cronHealerCheck(env);
   },
 };
 
