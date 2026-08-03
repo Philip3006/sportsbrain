@@ -1,8 +1,8 @@
 {
-  "updated": "2026-08-02T22:01:58Z",
+  "updated": "2026-08-03T05:38:34Z",
   "build_info": {
-    "sha": "278de6f",
-    "date": "2026-08-02"
+    "sha": "64d0f31",
+    "date": "2026-08-03"
   },
   "meta": {
     "stale_odds": false,
@@ -1484,196 +1484,6 @@
   "tennis": [
     {
       "sport": "tennis",
-      "match": "Sho Shimabukuro vs Marin Cilic",
-      "market": "o/u_games_22.5_over",
-      "odds": 1.85,
-      "model_prob": 60.2,
-      "fair_prob": 51.9,
-      "ev_pct": 11.5,
-      "stake_eur": 12.97,
-      "stake_pct": 13.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-02T22:05:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Sho Shimabukuro vs Marin Cilic",
-      "market": "o/u_games_23.5_over",
-      "odds": 2.03,
-      "model_prob": 53.9,
-      "fair_prob": 46.7,
-      "ev_pct": 9.4,
-      "stake_eur": 9.4,
-      "stake_pct": 9.4,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-02T22:05:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Gabriel Diallo vs Kyrian Jacquet",
-      "market": "ah+1.5_b",
-      "odds": 1.8,
-      "model_prob": 66.4,
-      "fair_prob": 52.0,
-      "ev_pct": 19.5,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-02T23:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Gabriel Diallo vs Kyrian Jacquet",
-      "market": "o/u_games_22.5_over",
-      "odds": 1.85,
-      "model_prob": 61.1,
-      "fair_prob": 51.9,
-      "ev_pct": 13.0,
-      "stake_eur": 14.26,
-      "stake_pct": 14.3,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-02T23:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Gabriel Diallo vs Kyrian Jacquet",
-      "market": "o/u_games_23.0_over",
-      "odds": 2.0,
-      "model_prob": 54.9,
-      "fair_prob": 48.5,
-      "ev_pct": 9.7,
-      "stake_eur": 11.52,
-      "stake_pct": 11.5,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-02T23:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Gabriel Diallo vs Kyrian Jacquet",
-      "market": "o/u_games_23.5_over",
-      "odds": 1.98,
-      "model_prob": 54.9,
-      "fair_prob": 47.2,
-      "ev_pct": 8.6,
-      "stake_eur": 10.61,
-      "stake_pct": 10.6,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-02T23:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Benjamin Bonzi vs Yannick Hanfmann",
-      "market": "ah+1.5_b",
-      "odds": 1.93,
-      "model_prob": 70.1,
-      "fair_prob": 48.3,
-      "ev_pct": 35.4,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-02T23:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Benjamin Bonzi vs Yannick Hanfmann",
-      "market": "o/u_games_23.5_over",
-      "odds": 2.05,
-      "model_prob": 56.1,
-      "fair_prob": 47.4,
-      "ev_pct": 15.0,
-      "stake_eur": 12.36,
-      "stake_pct": 12.4,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-02T23:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Alexis Galarneau vs Vit Kopriva",
-      "market": "o/u_games_22.5_over",
-      "odds": 1.9,
-      "model_prob": 62.1,
-      "fair_prob": 50.9,
-      "ev_pct": 17.9,
-      "stake_eur": 18.27,
-      "stake_pct": 18.3,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-03T00:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Alexis Galarneau vs Vit Kopriva",
-      "market": "o/u_games_23.5_over",
-      "odds": 2.06,
-      "model_prob": 56.1,
-      "fair_prob": 45.4,
-      "ev_pct": 15.7,
-      "stake_eur": 12.71,
-      "stake_pct": 12.7,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-03T00:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
       "match": "Adam Walton vs Jenson Brooksby",
       "market": "o/u_games_22.0_over",
       "odds": 1.86,
@@ -2999,481 +2809,6 @@
       "kickoff": "2026-08-03T15:00:00Z",
       "tournament": "Canadian Open",
       "category": "m1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Lois Boisson vs Antonia Ruzic",
-      "market": "o/u_games_20.5_over",
-      "odds": 1.75,
-      "model_prob": 68.3,
-      "fair_prob": 53.3,
-      "ev_pct": 19.5,
-      "stake_eur": 19.61,
-      "stake_pct": 19.6,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T22:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Lois Boisson vs Antonia Ruzic",
-      "market": "o/u_games_21.5_over",
-      "odds": 1.97,
-      "model_prob": 63.5,
-      "fair_prob": 49.6,
-      "ev_pct": 25.2,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T22:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Lois Boisson vs Antonia Ruzic",
-      "market": "o/u_games_22.5_over",
-      "odds": 2.1,
-      "model_prob": 56.3,
-      "fair_prob": 44.0,
-      "ev_pct": 18.2,
-      "stake_eur": 14.06,
-      "stake_pct": 14.1,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T22:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Emerson Jones vs Lanlana Tararudee",
-      "market": "ah+1.5_b",
-      "odds": 1.57,
-      "model_prob": 76.5,
-      "fair_prob": 59.2,
-      "ev_pct": 20.0,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T22:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Emerson Jones vs Lanlana Tararudee",
-      "market": "o/u_games_20.5_over",
-      "odds": 1.85,
-      "model_prob": 69.0,
-      "fair_prob": 51.9,
-      "ev_pct": 27.7,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T22:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Emerson Jones vs Lanlana Tararudee",
-      "market": "o/u_games_21.0_over",
-      "odds": 1.97,
-      "model_prob": 64.3,
-      "fair_prob": 49.1,
-      "ev_pct": 26.8,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T22:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Emerson Jones vs Lanlana Tararudee",
-      "market": "o/u_games_21.5_over",
-      "odds": 2.01,
-      "model_prob": 64.3,
-      "fair_prob": 47.7,
-      "ev_pct": 29.3,
-      "stake_eur": 15.0,
-      "stake_pct": 15.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T22:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Magdalena Frech vs Leolia Jeanjean",
-      "market": "away",
-      "odds": 2.74,
-      "model_prob": 40.6,
-      "fair_prob": 36.7,
-      "ev_pct": 11.3,
-      "stake_eur": 11.45,
-      "stake_pct": 11.4,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T22:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Magdalena Frech vs Leolia Jeanjean",
-      "market": "o/u_games_21.5_over",
-      "odds": 1.91,
-      "model_prob": 65.1,
-      "fair_prob": 51.2,
-      "ev_pct": 24.3,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T22:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Magdalena Frech vs Leolia Jeanjean",
-      "market": "o/u_games_22.5_over",
-      "odds": 2.1,
-      "model_prob": 58.0,
-      "fair_prob": 44.0,
-      "ev_pct": 21.7,
-      "stake_eur": 15.0,
-      "stake_pct": 15.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T22:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Nikola Bartunkova vs Bianca Andreescu",
-      "market": "o/u_games_21.5_over",
-      "odds": 1.87,
-      "model_prob": 64.2,
-      "fair_prob": 52.5,
-      "ev_pct": 20.1,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T23:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Nikola Bartunkova vs Bianca Andreescu",
-      "market": "o/u_games_22.0_over",
-      "odds": 1.99,
-      "model_prob": 57.1,
-      "fair_prob": 48.6,
-      "ev_pct": 13.6,
-      "stake_eur": 14.75,
-      "stake_pct": 14.8,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T23:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Nikola Bartunkova vs Bianca Andreescu",
-      "market": "o/u_games_22.5_over",
-      "odds": 2.1,
-      "model_prob": 57.1,
-      "fair_prob": 46.0,
-      "ev_pct": 19.9,
-      "stake_eur": 14.95,
-      "stake_pct": 15.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T23:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Talia Gibson vs Elisabetta Cocciaretto",
-      "market": "home",
-      "odds": 2.38,
-      "model_prob": 50.3,
-      "fair_prob": 41.7,
-      "ev_pct": 19.7,
-      "stake_eur": 15.0,
-      "stake_pct": 15.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T23:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Talia Gibson vs Elisabetta Cocciaretto",
-      "market": "ah+1.5_b",
-      "odds": 1.75,
-      "model_prob": 74.8,
-      "fair_prob": 53.3,
-      "ev_pct": 30.9,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T23:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Talia Gibson vs Elisabetta Cocciaretto",
-      "market": "o/u_games_21.5_over",
-      "odds": 1.88,
-      "model_prob": 63.7,
-      "fair_prob": 51.5,
-      "ev_pct": 19.8,
-      "stake_eur": 19.88,
-      "stake_pct": 19.9,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T23:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Talia Gibson vs Elisabetta Cocciaretto",
-      "market": "o/u_games_22.5_over",
-      "odds": 2.07,
-      "model_prob": 56.5,
-      "fair_prob": 46.5,
-      "ev_pct": 16.9,
-      "stake_eur": 13.33,
-      "stake_pct": 13.3,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T23:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Rebecca Sramkova vs Anna Blinkova",
-      "market": "home",
-      "odds": 2.28,
-      "model_prob": 50.9,
-      "fair_prob": 44.3,
-      "ev_pct": 16.1,
-      "stake_eur": 14.22,
-      "stake_pct": 14.2,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T23:20:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Rebecca Sramkova vs Anna Blinkova",
-      "market": "o/u_games_21.5_over",
-      "odds": 1.95,
-      "model_prob": 63.8,
-      "fair_prob": 49.6,
-      "ev_pct": 24.5,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T23:20:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Rebecca Sramkova vs Anna Blinkova",
-      "market": "o/u_games_22.5_over",
-      "odds": 2.1,
-      "model_prob": 56.8,
-      "fair_prob": 44.0,
-      "ev_pct": 19.2,
-      "stake_eur": 14.56,
-      "stake_pct": 14.6,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-02T23:20:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Yulia Putintseva vs Shuai Zhang",
-      "market": "away",
-      "odds": 2.82,
-      "model_prob": 49.3,
-      "fair_prob": 35.0,
-      "ev_pct": 38.9,
-      "stake_eur": 15.0,
-      "stake_pct": 15.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-03T00:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Yulia Putintseva vs Shuai Zhang",
-      "market": "o/u_games_20.5_over",
-      "odds": 1.95,
-      "model_prob": 68.5,
-      "fair_prob": 50.1,
-      "ev_pct": 33.7,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-03T00:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Yulia Putintseva vs Shuai Zhang",
-      "market": "o/u_games_21.5_over",
-      "odds": 1.91,
-      "model_prob": 63.5,
-      "fair_prob": 48.1,
-      "ev_pct": 21.3,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-03T00:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Elena Gabriela Ruse vs Peyton Stearns",
-      "market": "o/u_games_21.5_over",
-      "odds": 1.93,
-      "model_prob": 65.0,
-      "fair_prob": 51.1,
-      "ev_pct": 25.4,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-03T00:30:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3
-    },
-    {
-      "sport": "tennis",
-      "match": "Elena Gabriela Ruse vs Peyton Stearns",
-      "market": "o/u_games_20.5_over",
-      "odds": 1.65,
-      "model_prob": 69.9,
-      "fair_prob": 56.0,
-      "ev_pct": 15.3,
-      "stake_eur": 16.16,
-      "stake_pct": 16.2,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-03T00:30:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
       "surface": "hard",
       "best_of": 3
     },
@@ -6630,7 +5965,7 @@
     }
   },
   "tennis_stats": {
-    "updated": "2026-08-02T22:01:58Z",
+    "updated": "2026-08-03T05:38:35Z",
     "active_tournaments": [
       {
         "slug": "canadian_open_atp",
@@ -6724,18 +6059,6 @@
   "odds_history": {
     "Bosnia & Herzegovina vs Qatar": [
       {
-        "date": "2026-07-17",
-        "home": 1.39,
-        "draw": 5.8,
-        "away": 9.25
-      },
-      {
-        "date": "2026-07-20",
-        "home": 1.39,
-        "draw": 5.8,
-        "away": 9.25
-      },
-      {
         "date": "2026-07-21",
         "home": 1.39,
         "draw": 5.8,
@@ -6791,18 +6114,6 @@
       }
     ],
     "Switzerland vs Canada": [
-      {
-        "date": "2026-07-17",
-        "home": 2.6,
-        "draw": 3.13,
-        "away": 3.45
-      },
-      {
-        "date": "2026-07-20",
-        "home": 2.6,
-        "draw": 3.13,
-        "away": 3.45
-      },
       {
         "date": "2026-07-21",
         "home": 2.6,
@@ -6860,18 +6171,6 @@
     ],
     "Scotland vs Brazil": [
       {
-        "date": "2026-07-17",
-        "home": 39.37,
-        "draw": 8.0,
-        "away": 1.12
-      },
-      {
-        "date": "2026-07-20",
-        "home": 39.37,
-        "draw": 8.0,
-        "away": 1.12
-      },
-      {
         "date": "2026-07-21",
         "home": 39.37,
         "draw": 8.0,
@@ -6927,18 +6226,6 @@
       }
     ],
     "Morocco vs Haiti": [
-      {
-        "date": "2026-07-17",
-        "home": 1.97,
-        "draw": 3.13,
-        "away": 4.26
-      },
-      {
-        "date": "2026-07-20",
-        "home": 1.97,
-        "draw": 3.13,
-        "away": 4.26
-      },
       {
         "date": "2026-07-21",
         "home": 1.97,
@@ -6996,18 +6283,6 @@
     ],
     "Czech Republic vs Mexico": [
       {
-        "date": "2026-07-17",
-        "home": 4.0,
-        "draw": 4.1,
-        "away": 2.0
-      },
-      {
-        "date": "2026-07-20",
-        "home": 4.0,
-        "draw": 4.1,
-        "away": 2.0
-      },
-      {
         "date": "2026-07-21",
         "home": 4.0,
         "draw": 4.1,
@@ -7063,18 +6338,6 @@
       }
     ],
     "South Africa vs South Korea": [
-      {
-        "date": "2026-07-17",
-        "home": 6.5,
-        "draw": 4.12,
-        "away": 1.66
-      },
-      {
-        "date": "2026-07-20",
-        "home": 6.5,
-        "draw": 4.12,
-        "away": 1.66
-      },
       {
         "date": "2026-07-21",
         "home": 6.5,
@@ -7132,18 +6395,6 @@
     ],
     "Curaçao vs Ivory Coast": [
       {
-        "date": "2026-07-17",
-        "home": 24.0,
-        "draw": 9.5,
-        "away": 1.19
-      },
-      {
-        "date": "2026-07-20",
-        "home": 24.0,
-        "draw": 9.5,
-        "away": 1.19
-      },
-      {
         "date": "2026-07-21",
         "home": 24.0,
         "draw": 9.5,
@@ -7199,18 +6450,6 @@
       }
     ],
     "Ecuador vs Germany": [
-      {
-        "date": "2026-07-17",
-        "home": 4.2,
-        "draw": 4.5,
-        "away": 1.9
-      },
-      {
-        "date": "2026-07-20",
-        "home": 4.2,
-        "draw": 4.5,
-        "away": 1.9
-      },
       {
         "date": "2026-07-21",
         "home": 4.2,
@@ -7268,18 +6507,6 @@
     ],
     "Japan vs Sweden": [
       {
-        "date": "2026-07-17",
-        "home": 1.96,
-        "draw": 3.65,
-        "away": 4.7
-      },
-      {
-        "date": "2026-07-20",
-        "home": 1.96,
-        "draw": 3.65,
-        "away": 4.7
-      },
-      {
         "date": "2026-07-21",
         "home": 1.96,
         "draw": 3.65,
@@ -7335,18 +6562,6 @@
       }
     ],
     "Tunisia vs Netherlands": [
-      {
-        "date": "2026-07-17",
-        "home": 34.0,
-        "draw": 11.8,
-        "away": 1.16
-      },
-      {
-        "date": "2026-07-20",
-        "home": 34.0,
-        "draw": 11.8,
-        "away": 1.16
-      },
       {
         "date": "2026-07-21",
         "home": 34.0,
@@ -7404,18 +6619,6 @@
     ],
     "Paraguay vs Australia": [
       {
-        "date": "2026-07-17",
-        "home": 3.03,
-        "draw": 2.38,
-        "away": 4.43
-      },
-      {
-        "date": "2026-07-20",
-        "home": 3.03,
-        "draw": 2.38,
-        "away": 4.43
-      },
-      {
         "date": "2026-07-21",
         "home": 3.03,
         "draw": 2.38,
@@ -7471,18 +6674,6 @@
       }
     ],
     "Turkey vs USA": [
-      {
-        "date": "2026-07-17",
-        "home": 3.75,
-        "draw": 4.3,
-        "away": 2.0
-      },
-      {
-        "date": "2026-07-20",
-        "home": 3.75,
-        "draw": 4.3,
-        "away": 2.0
-      },
       {
         "date": "2026-07-21",
         "home": 3.75,
@@ -7540,18 +6731,6 @@
     ],
     "Norway vs France": [
       {
-        "date": "2026-07-17",
-        "home": 4.9,
-        "draw": 4.9,
-        "away": 1.69
-      },
-      {
-        "date": "2026-07-20",
-        "home": 4.9,
-        "draw": 4.9,
-        "away": 1.69
-      },
-      {
         "date": "2026-07-21",
         "home": 4.9,
         "draw": 4.9,
@@ -7607,18 +6786,6 @@
       }
     ],
     "Senegal vs Iraq": [
-      {
-        "date": "2026-07-17",
-        "home": 1.26,
-        "draw": 7.25,
-        "away": 14.1
-      },
-      {
-        "date": "2026-07-20",
-        "home": 1.26,
-        "draw": 7.25,
-        "away": 14.1
-      },
       {
         "date": "2026-07-21",
         "home": 1.26,
@@ -7676,18 +6843,6 @@
     ],
     "Cape Verde vs Saudi Arabia": [
       {
-        "date": "2026-07-17",
-        "home": 2.78,
-        "draw": 3.45,
-        "away": 2.86
-      },
-      {
-        "date": "2026-07-20",
-        "home": 2.78,
-        "draw": 3.45,
-        "away": 2.86
-      },
-      {
         "date": "2026-07-21",
         "home": 2.78,
         "draw": 3.45,
@@ -7743,18 +6898,6 @@
       }
     ],
     "Uruguay vs Spain": [
-      {
-        "date": "2026-07-17",
-        "home": 7.8,
-        "draw": 3.9,
-        "away": 1.67
-      },
-      {
-        "date": "2026-07-20",
-        "home": 7.8,
-        "draw": 3.9,
-        "away": 1.67
-      },
       {
         "date": "2026-07-21",
         "home": 7.8,
@@ -7812,18 +6955,6 @@
     ],
     "New Zealand vs Belgium": [
       {
-        "date": "2026-07-17",
-        "home": 17.5,
-        "draw": 8.5,
-        "away": 1.22
-      },
-      {
-        "date": "2026-07-20",
-        "home": 17.5,
-        "draw": 8.5,
-        "away": 1.22
-      },
-      {
         "date": "2026-07-21",
         "home": 17.5,
         "draw": 8.5,
@@ -7879,18 +7010,6 @@
       }
     ],
     "Egypt vs Iran": [
-      {
-        "date": "2026-07-17",
-        "home": 2.6,
-        "draw": 2.75,
-        "away": 4.13
-      },
-      {
-        "date": "2026-07-20",
-        "home": 2.6,
-        "draw": 2.75,
-        "away": 4.13
-      },
       {
         "date": "2026-07-21",
         "home": 2.6,
@@ -7948,18 +7067,6 @@
     ],
     "Croatia vs Ghana": [
       {
-        "date": "2026-07-17",
-        "home": 1.83,
-        "draw": 3.4,
-        "away": 6.2
-      },
-      {
-        "date": "2026-07-20",
-        "home": 1.83,
-        "draw": 3.4,
-        "away": 6.2
-      },
-      {
         "date": "2026-07-21",
         "home": 1.83,
         "draw": 3.4,
@@ -8015,18 +7122,6 @@
       }
     ],
     "Panama vs England": [
-      {
-        "date": "2026-07-17",
-        "home": 22.0,
-        "draw": 9.2,
-        "away": 1.2
-      },
-      {
-        "date": "2026-07-20",
-        "home": 22.0,
-        "draw": 9.2,
-        "away": 1.2
-      },
       {
         "date": "2026-07-21",
         "home": 22.0,
@@ -8084,18 +7179,6 @@
     ],
     "Colombia vs Portugal": [
       {
-        "date": "2026-07-17",
-        "home": 4.33,
-        "draw": 3.95,
-        "away": 1.92
-      },
-      {
-        "date": "2026-07-20",
-        "home": 4.33,
-        "draw": 3.95,
-        "away": 1.92
-      },
-      {
         "date": "2026-07-21",
         "home": 4.33,
         "draw": 3.95,
@@ -8151,18 +7234,6 @@
       }
     ],
     "DR Congo vs Uzbekistan": [
-      {
-        "date": "2026-07-17",
-        "home": 1.83,
-        "draw": 4.25,
-        "away": 4.6
-      },
-      {
-        "date": "2026-07-20",
-        "home": 1.83,
-        "draw": 4.25,
-        "away": 4.6
-      },
       {
         "date": "2026-07-21",
         "home": 1.83,
@@ -8220,18 +7291,6 @@
     ],
     "Algeria vs Austria": [
       {
-        "date": "2026-07-17",
-        "home": 4.33,
-        "draw": 2.38,
-        "away": 3.0
-      },
-      {
-        "date": "2026-07-20",
-        "home": 4.33,
-        "draw": 2.38,
-        "away": 3.0
-      },
-      {
         "date": "2026-07-21",
         "home": 4.33,
         "draw": 2.38,
@@ -8287,18 +7346,6 @@
       }
     ],
     "Jordan vs Argentina": [
-      {
-        "date": "2026-07-17",
-        "home": 19.5,
-        "draw": 9.2,
-        "away": 1.21
-      },
-      {
-        "date": "2026-07-20",
-        "home": 19.5,
-        "draw": 9.2,
-        "away": 1.21
-      },
       {
         "date": "2026-07-21",
         "home": 19.5,
@@ -8356,18 +7403,6 @@
     ],
     "South Africa vs Canada": [
       {
-        "date": "2026-07-17",
-        "home": 5.9,
-        "draw": 3.75,
-        "away": 1.77
-      },
-      {
-        "date": "2026-07-20",
-        "home": 5.9,
-        "draw": 3.75,
-        "away": 1.77
-      },
-      {
         "date": "2026-07-21",
         "home": 5.9,
         "draw": 3.75,
@@ -8423,18 +7458,6 @@
       }
     ],
     "Brazil vs Japan": [
-      {
-        "date": "2026-07-17",
-        "home": 1.78,
-        "draw": 3.85,
-        "away": 5.5
-      },
-      {
-        "date": "2026-07-20",
-        "home": 1.78,
-        "draw": 3.85,
-        "away": 5.5
-      },
       {
         "date": "2026-07-21",
         "home": 1.78,
@@ -8492,18 +7515,6 @@
     ],
     "Netherlands vs Morocco": [
       {
-        "date": "2026-07-17",
-        "home": 2.24,
-        "draw": 3.45,
-        "away": 3.8
-      },
-      {
-        "date": "2026-07-20",
-        "home": 2.24,
-        "draw": 3.45,
-        "away": 3.8
-      },
-      {
         "date": "2026-07-21",
         "home": 2.24,
         "draw": 3.45,
@@ -8559,18 +7570,6 @@
       }
     ],
     "USA vs Bosnia & Herzegovina": [
-      {
-        "date": "2026-07-17",
-        "home": 1.57,
-        "draw": 4.6,
-        "away": 7.8
-      },
-      {
-        "date": "2026-07-20",
-        "home": 1.57,
-        "draw": 4.6,
-        "away": 7.8
-      },
       {
         "date": "2026-07-21",
         "home": 1.57,
@@ -8628,18 +7627,6 @@
     ],
     "Portugal vs Spain": [
       {
-        "date": "2026-07-17",
-        "home": 7.19,
-        "draw": 1.67,
-        "away": 3.25
-      },
-      {
-        "date": "2026-07-20",
-        "home": 7.19,
-        "draw": 1.67,
-        "away": 3.25
-      },
-      {
         "date": "2026-07-21",
         "home": 7.19,
         "draw": 1.67,
@@ -8695,18 +7682,6 @@
       }
     ],
     "USA vs Belgium": [
-      {
-        "date": "2026-07-17",
-        "home": 2.62,
-        "draw": 3.55,
-        "away": 2.98
-      },
-      {
-        "date": "2026-07-20",
-        "home": 2.62,
-        "draw": 3.55,
-        "away": 2.98
-      },
       {
         "date": "2026-07-21",
         "home": 2.62,
@@ -8764,18 +7739,6 @@
     ],
     "Argentina vs Egypt": [
       {
-        "date": "2026-07-17",
-        "home": 1.41,
-        "draw": 5.2,
-        "away": 13.0
-      },
-      {
-        "date": "2026-07-20",
-        "home": 1.41,
-        "draw": 5.2,
-        "away": 13.0
-      },
-      {
         "date": "2026-07-21",
         "home": 1.41,
         "draw": 5.2,
@@ -8831,18 +7794,6 @@
       }
     ],
     "Switzerland vs Colombia": [
-      {
-        "date": "2026-07-17",
-        "home": 3.8,
-        "draw": 3.2,
-        "away": 2.35
-      },
-      {
-        "date": "2026-07-20",
-        "home": 3.8,
-        "draw": 3.2,
-        "away": 2.35
-      },
       {
         "date": "2026-07-21",
         "home": 3.8,
@@ -8900,18 +7851,6 @@
     ],
     "France vs Morocco": [
       {
-        "date": "2026-07-17",
-        "home": 1.01,
-        "draw": 501.0,
-        "away": 1001.0
-      },
-      {
-        "date": "2026-07-20",
-        "home": 1.01,
-        "draw": 501.0,
-        "away": 1001.0
-      },
-      {
         "date": "2026-07-21",
         "home": 1.01,
         "draw": 501.0,
@@ -8967,18 +7906,6 @@
       }
     ],
     "Spain vs Belgium": [
-      {
-        "date": "2026-07-17",
-        "home": 1.69,
-        "draw": 3.72,
-        "away": 5.42
-      },
-      {
-        "date": "2026-07-20",
-        "home": 1.69,
-        "draw": 3.72,
-        "away": 5.42
-      },
       {
         "date": "2026-07-21",
         "home": 1.69,
@@ -9036,18 +7963,6 @@
     ],
     "Norway vs England": [
       {
-        "date": "2026-07-17",
-        "home": 11.43,
-        "draw": 1.27,
-        "away": 5.8
-      },
-      {
-        "date": "2026-07-20",
-        "home": 11.43,
-        "draw": 1.27,
-        "away": 5.8
-      },
-      {
         "date": "2026-07-21",
         "home": 11.43,
         "draw": 1.27,
@@ -9103,18 +8018,6 @@
       }
     ],
     "Argentina vs Switzerland": [
-      {
-        "date": "2026-07-17",
-        "home": 1.27,
-        "draw": 5.8,
-        "away": 28.0
-      },
-      {
-        "date": "2026-07-20",
-        "home": 1.27,
-        "draw": 5.8,
-        "away": 28.0
-      },
       {
         "date": "2026-07-21",
         "home": 1.27,
@@ -9172,18 +8075,6 @@
     ],
     "France vs Spain": [
       {
-        "date": "2026-07-17",
-        "home": 2.54,
-        "draw": 3.3,
-        "away": 3.42
-      },
-      {
-        "date": "2026-07-20",
-        "home": 2.54,
-        "draw": 3.3,
-        "away": 3.42
-      },
-      {
         "date": "2026-07-21",
         "home": 2.54,
         "draw": 3.3,
@@ -9239,18 +8130,6 @@
       }
     ],
     "England vs Argentina": [
-      {
-        "date": "2026-07-17",
-        "home": 1.41,
-        "draw": 3.64,
-        "away": 13.84
-      },
-      {
-        "date": "2026-07-20",
-        "home": 1.41,
-        "draw": 3.64,
-        "away": 13.84
-      },
       {
         "date": "2026-07-21",
         "home": 1.41,
@@ -9308,18 +8187,6 @@
     ],
     "France vs England": [
       {
-        "date": "2026-07-17",
-        "home": 1.99,
-        "draw": 4.07,
-        "away": 4.07
-      },
-      {
-        "date": "2026-07-20",
-        "home": 1.99,
-        "draw": 4.07,
-        "away": 4.07
-      },
-      {
         "date": "2026-07-21",
         "home": 1.99,
         "draw": 4.07,
@@ -9375,18 +8242,6 @@
       }
     ],
     "Spain vs Argentina": [
-      {
-        "date": "2026-07-17",
-        "home": 2.36,
-        "draw": 3.16,
-        "away": 3.8
-      },
-      {
-        "date": "2026-07-20",
-        "home": 2.36,
-        "draw": 3.16,
-        "away": 3.8
-      },
       {
         "date": "2026-07-21",
         "home": 2.36,
