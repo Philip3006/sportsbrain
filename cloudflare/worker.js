@@ -30,7 +30,7 @@ const ALLOWED_MARKETS = new Set([
   'h1_goals_2_4', 'h1_goals_2_4_no',
   'h2_goals_2_4', 'h2_goals_2_4_no',
 ]);
-const OU_RE = /^o\/u\d+(?:\.\d+)?_(over|under)$/;
+const OU_RE = /^o\/u(?:_(?:sets|games)_)?\d+(?:\.\d+)?_(over|under)$/;
 const AH_RE = /^ah[+-]\d+(?:\.\d+)?_(home|away|a|b)$/;
 // Player names may contain Unicode letters (João, Álvarez, Aktürkoğlu, …) and
 // occasional curly apostrophes (’) — allow \p{L}/\p{M}/\p{N} via the /u flag.
