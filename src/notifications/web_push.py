@@ -364,3 +364,74 @@ def send_settlement_alert(record: dict, summary: dict) -> bool:
 def send_quota_alert(remaining: int) -> bool:
     """No-op — Quota-Alerts wurden mit Web Push nicht migriert (siehe Plan)."""
     return False
+
+
+# ── N5: Settle-Reminder Push ─────────────────────────────────────
+def send_open_bet_reminder(open_bets: list[dict], overdue_hours: float = 3.0) -> bool:
+    """Push when bets are open >overdue_hours after kickoff. One push per day (tag-deduplicated)."""
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc)
+    overdue = []
+    for bet in open_bets:
+        ko = bet.get("kickoff") or bet.get("match_date") or ""
+        if not ko:
+            continue
+        try:
+            ko_dt = datetime.fromisoformat(ko.replace("Z", "+00:00"))
+            if (now - ko_dt).total_seconds() / 3600 >= overdue_hours:
+                overdue.append(bet)
+        except ValueError:
+            pass
+    if not overdue:
+        return False
+    today = now.strftime("%Y-%m-%d")
+    names = ", ".join(
+        f"{b.get('home','?')} vs {b.get('away','?')}" for b in overdue[:2]
+    )
+    suffix = f" +{len(overdue)-2} weitere" if len(overdue) > 2 else ""
+    sent = _send_notification(
+        title=f"⏰ {len(overdue)} Wette(n) offen — Settlement ausstehend",
+        body=f"{names}{suffix} — bitte settlen",
+        url="/sportsbrain/#bets",
+        kind="reminder",
+        tag=f"settle-reminder-{today}",
+        require=False,
+    )
+    return sent > 0
+
+
+# ── N6: Bankroll-Meilenstein Push ────────────────────────────────
+def send_bankroll_milestone_alert(current_equity: float, start_bankroll: float = 100.0) -> bool:
+    """Push when equity crosses a new milestone multiple of start_bankroll."""
+    import json
+    from src.config import BANKROLL_MILESTONES, DATA_CACHE
+
+    milestone_file = DATA_CACHE / "bankroll_milestones.json"
+    try:
+        state = json.loads(milestone_file.read_text()) if milestone_file.exists() else {}
+    except Exception:
+        state = {}
+
+    last_notified = float(state.get("last_notified", 1.0))
+    ratio = current_equity / start_bankroll if start_bankroll > 0 else 1.0
+
+    reached = [m for m in sorted(BANKROLL_MILESTONES) if ratio >= m and m > last_notified]
+    if not reached:
+        return False
+
+    new_milestone = reached[-1]
+    pct = round((new_milestone - 1.0) * 100)
+    gain = round(current_equity - start_bankroll, 2)
+    sent = _send_notification(
+        title=f"🎯 Bankroll +{pct}% — Meilenstein erreicht!",
+        body=f"Startkapital ×{new_milestone:.2f} · Aktuell €{current_equity:.0f} (+€{gain:.2f})",
+        url="/sportsbrain/#journal",
+        kind="milestone",
+        tag=f"milestone-{new_milestone}",
+        require=False,
+    )
+    if sent > 0:
+        state["last_notified"] = new_milestone
+        milestone_file.parent.mkdir(parents=True, exist_ok=True)
+        milestone_file.write_text(json.dumps(state))
+    return sent > 0
