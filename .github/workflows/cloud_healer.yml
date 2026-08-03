@@ -16,13 +16,10 @@ jobs:
   heal:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
       actions: write
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check health and retry failed jobs
         env:
@@ -117,13 +114,11 @@ jobs:
               sys.exit(0)
           EOF
 
-      - name: Commit heal log if updated
-        run: |
-          git config user.name "SportsBrain Bot"
-          git config user.email "bot@sportsbrain"
-          git add results/auto_heal_cloud.log || true
-          git diff --staged --quiet && exit 0
-          git commit -m "auto: cloud-healer retry $(date +%Y-%m-%d\ %H:%M) UTC"
-          git fetch origin main
-          git rebase --strategy-option=theirs origin/main || true
-          git push origin main || true
+      - name: Upload heal log as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloud-healer-log-${{ github.run_id }}
+          path: results/auto_heal_cloud.log
+          if-no-files-found: ignore
+          retention-days: 7
