@@ -1,6 +1,6 @@
 # Betting Journal — TENNIS
 
-_Zuletzt aktualisiert: 2026-08-03 13:22 UTC_
+_Zuletzt aktualisiert: 2026-08-03 16:42 UTC_
 
 ---
 
@@ -8,7 +8,7 @@ _Zuletzt aktualisiert: 2026-08-03 13:22 UTC_
 
 | Signale | Settled | W | L | Win% | P&L | ROI |
 |---------|---------|---|---|------|-----|-----|
-| 188 | 29 | 14 | 15 | 48.3% | -3.50€ | -1.2% |
+| 197 | 29 | 14 | 15 | 48.3% | -3.50€ | -1.2% |
 
 ## Tages-Snapshots
 
