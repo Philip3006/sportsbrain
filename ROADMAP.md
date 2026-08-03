@@ -1003,8 +1003,8 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 - **Insgesamt**: 110 konkrete Items (+11 aus Erweiterungs-Paket 2026-08-03: N1-N11)
 - **P0**: 15 (sofort) — davon **15 ✅** (J8-B1 + J8-B3 in Phase-4-Sprint erledigt)
-- **P1**: 46 — davon **43 ✅**; **offen: N1 (Top-N Filter), N2 (Bundesliga Warm-up), N9 (Stake-Rounding)**
-- **P2**: 38 — davon **29 ✅**; **offen: J8-B8/I7/I9/I10 (Q4), N3 (Odds-Freshness), N4 (Bester Bookie), N5 (Settle-Reminder), N6 (Bankroll-Meilenstein), N7 (Konflikt-Check), N8 (Model-Drift Monitor)**
+- **P1**: 46 — davon **46 ✅** — alle P1-Items erledigt (N1/N2/N9 2026-08-03)
+- **P2**: 38 — davon **35 ✅**; **offen: J8-B8/I7/I9/I10 (Q4 deferred)**
 - **P3**: 8 — J2-N + **J8-I8 Live-InPlay** + **N10 Draw-Difficulty** + **N11 Saisonbericht**
 - **Veto**: 10 (K5 aufgehoben 2026-06-26)
 
@@ -1012,15 +1012,15 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 | ID | Was | Prio | Aufwand | Status |
 |---|---|---|---|---|
-| **N1** | Top-N Signal Display Filter — PWA zeigt max 5 Signale prominent, Rest in `<details>` | P1 | 1h | offen |
-| **N2** | Bundesliga Warm-up — HOST_BOOST_ENABLED=False, bundesliga_ready_check.py | P1 | 30min | in Arbeit |
-| **N3** | Odds-Freshness Badge — ⚠ Quote gefallen wenn >7% Bewegung gegen Position | P2 | 2h | offen |
-| **N4** | Bester Bookie pro Signal — Why-Drawer zeigt Beste Quote + Provider | P2 | 45min | offen |
-| **N5** | Settle-Reminder Push — Push nach 3h offener Bet post-Kickoff | P2 | 1h | offen |
-| **N6** | Bankroll-Meilenstein Push — Push bei 1.1×/1.2×/1.5×/2× Startkapital | P2 | 30min | offen |
-| **N7** | Multi-Market Konflikt-Check — no_bet_flag für semantisch widersprüchliche Signals | P2 | 1.5h | offen |
-| **N8** | Model-Drift Brier Monitor — Wöchentlicher Brier-Score-Vergleich vs. Baseline | P2 | 2h | offen |
-| **N9** | Stake-Rounding auf €0.50 — Kelly-Output auf nächste 50ct runden | P1 | 15min | ✅ kelly.py |
+| **N1** | Top-N Signal Display Filter — PWA zeigt max 5 Signale prominent, Rest in `<details>` | P1 | 1h | ✅ cd0753bc |
+| **N2** | Bundesliga Warm-up — HOST_BOOST_ENABLED=False, bundesliga_ready_check.py | P1 | 30min | ✅ cd0753bc |
+| **N3** | Odds-Freshness Badge — ⚠ Quote gefallen wenn >7% Bewegung gegen Position | P2 | 2h | ✅ e2584abf |
+| **N4** | Bester Bookie pro Signal — Why-Drawer zeigt Beste Quote + Provider | P2 | 45min | ✅ cd0753bc |
+| **N5** | Settle-Reminder Push — Push nach 3h offener Bet post-Kickoff | P2 | 1h | ✅ 34eb46c6 |
+| **N6** | Bankroll-Meilenstein Push — Push bei 1.1×/1.2×/1.5×/2× Startkapital | P2 | 30min | ✅ 34eb46c6 |
+| **N7** | Multi-Market Konflikt-Check — no_bet_flag für semantisch widersprüchliche Signals | P2 | 1.5h | ✅ e2584abf |
+| **N8** | Model-Drift Brier Monitor — Wöchentlicher Brier-Score-Vergleich vs. Baseline | P2 | 2h | ✅ e2584abf |
+| **N9** | Stake-Rounding auf €0.50 — Kelly-Output auf nächste 50ct runden | P1 | 15min | ✅ cd0753bc |
 | **N10** | Tennis Draw-Difficulty Index — ±5pp Elo-Adjustment via Bracket-Analyse | P3 | 4h | Q4 2026 |
 | **N11** | Automatischer Saisonbericht — P&L/Brier/CLV Report am Saisonende | P3 | 2h | Q4 2026 |
 
@@ -1094,5 +1094,6 @@ Alcaraz vs Djokovic p_a 0.50 → 0.67, Fritz vs Michelsen 0.50 → 0.75.
 - **2026-06-23**: ~ J2 Phase A ✅ erledigt. Tennis-Modul von Wimbledon-Single-Tournament-Hardcode zur Tournament-Registry umgebaut. Neue Module: `src/tennis/tournaments.py` (49 Events: 8 Slams + 9 ATP Masters + 6 WTA 1000 + 13 ATP 500/250 + 10 WTA 500/250 + 2 Tour Finals; Dataclass + Lookup-Indizes), `src/tennis/discovery.py` (TheOddsAPI `/sports`-Pull mit 1h-Cache, Stale-Fallback bei API-Down, unknown_sport_key-Wrap für Drift). `src/config.py`: `TENNIS_MIN_EDGE_BY_CATEGORY` (grand_slam 5%, m1000 8%, wta1000 4%, atp500 10%, wta500 6%, atp250 12%, wta250 8%) und `TENNIS_CATEGORY_MODE` (alle außer grand_slam initial Shadow — wird durch Phase-B-Backtest entschieden). 30 neue Tests in `tests/tennis/`; 556/556 Suite grün. **Roadmap-Hochstufung J2: P2 → P1** (Saison-Gap WM-Ende → Bundesliga-Start). Nächste Phase: J2-B (Backtest-Erweiterung auf full-tour-Quoten, Per-Category-Gate-Verdicts).
 - **2026-06-25**: + **L4 NEU ✅** (Stake-System v2 — Odds-Bucket-Cap + Korrelations-Adjustment). User-Audit der letzten 4 Wetten (CZE–MEX, ZAF–KOR) deckte zwei strukturelle Bugs auf: (a) Sizing skalierte nur über EV → €20 Stake auf 5.5er Quote möglich; (b) negative Korrelation (Mexico-AH + Hložek-Scorer) und positive Korrelation (Korea-Sieg + Over 3.0) wurden nicht erkannt. Fix: ODDS_BUCKET_CAPS (≤2.0→100% bis >5→35%), neues `correlation.py`-Modul mit Neg-Korr-Discount (Underdog-Leg ×0.50, markiert), Pos-Korr-Discount (beide Legs ×0.70) und Match-Exposure-Cap (Σ stake ≤ tier_hi×1.5). Kennzeichnung via `stake_reason`/`correlation_note`/orange „↓ Korr"-Badge in PWA + CLI `⚠ KORR-↓`. 265/265 Tests grün, 23 neue Tests. Statistik: 68 → 69 Items.
 - **2026-06-26**: + **F5/F6/F7/L5 NEU** aus Vorfall-Analyse (PWA-Blackout + Stale-Daten + 14 Healer-Retry-Commits/48h). **F5** (P1): Live-Loops `live_score_push`/`consume_pending_bets`/`cloud_healer` raus aus GH Actions, rein in Cloudflare Worker Cron — GH-Cron-Unzuverlässigkeit ist Root-Cause für Stale-Banner + Commit-Flut. **F6** (P2): Cloud-Healer-Workflow soll Logs als Artifact statt als Commit speichern (70% Bot-Commits weg). **F7** (P2): `tennis_scan.py` übergibt `schedule=[]` und überschreibt damit Football-Schedule — Sport-getrennter Merge in `write_signals_json` nötig. **L5** (P1, ✅ erledigt heute): Hot-Fix für signals.json Conflict-Marker → Cloud-Wipe → PWA-Blackout. Guards in `web_dashboard.py` (`RuntimeError` statt stilles Wipe) + `_git_safe_push.sh` (Kaskade `--theirs`→`--ours`→`HEAD-reset` + Final-Guard gegen Markers-Staging). Commits `24ca28b`/`47839bf`. **K5 aus Veto-Liste entfernt** (`_git_safe_push.sh` Härtung war doch nötig). Statistik: 69 → 73 Items. P1: 33 → 35, P2: 15 → 17.
+- **2026-08-03**: ✅ **Erweiterungs-Paket N1-N9 erledigt** (9 von 11 Items, N10/N11 Q4). **N9**: kelly.py rundet auf €0.50 (kein €8.69 mehr). **N1**: `display_priority`-Tagging + kollabierbare "Weitere Signale"-Section in PWA. **N2**: HOST_BOOST_ENABLED=False + `scripts/bundesliga_ready_check.py`. **N4**: `_enrich_best_bookie()` + Why-Drawer zeigt Beste Quote + Provider. **N3**: `_enrich_odds_freshness()` + Orange-Badge wenn Quote >7% gegen Position gefallen. **N5**: `send_open_bet_reminder()` nach settle(). **N6**: `send_bankroll_milestone_alert()` mit bankroll_milestones.json. **N7**: `conflict_check.py` (CONFLICT_PAIRS home+under, away+btts_no, over+under), BetSignal um no_bet_flag/conflict_reason erweitert, daily_scan.py verdrahtet. **N8**: `monitor_model_drift.py` (Brier vs. Baseline 0.24) + GH Actions `model_drift_monitor.yml` Mo 07:00 UTC. Config: MAX_SIGNALS_DISPLAY=5, BANKROLL_MILESTONES, ODDS_MOVE_WARN_PCT. Statistik: 99 → 110 Items. P1: 43→46 ✅, P2: 29→35 ✅.
 - **2026-08-01**: + **J8 NEU — Tennis-Audit-Block (25 Items)**. 3-Agent-Explore-Audit über gesamten Tennis-Stack aufgenommen: 13 Bugs (J8-B1…B13), 8 Coverage-Gaps (J8-M1…M8), 4 neue Ausbau-Ideen (J8-I6/I7/I8/I9/I10). Kritisch: **J8-B1 Elo-K-Mismatch** (Grand-Slam-Miskalibrierung ~40% Historie, K=16 statt K=40, silent seit Einführung) und **J8-B3 Settle-Key-Norm** (Bosnia-Analog für Tennis). Beide P0. Weitere P1-Kandidaten: J8-B7 (EV-Cap für Nebenmärkte), J8-B12 (Odds-Package komplett ungetestet), J8-M5 (AH-Fallback), J8-M8 (CLV-Alarm), J8-I6 (Pinnacle-Scrape). Umsetzungs-Slots 14a-14f in Reihenfolge ergänzt. Statistik: 74 → 99 Items. P0: 13→15, P1: 38→43, P2: 14→31, P3: 5→6. Plan-Datei: `~/.claude/plans/vivid-knitting-pearl.md`.
 - **2026-06-22**: + D6 NEU ✅ (Invite-Link + Self-Onboarding). Admin generiert Invite via `POST /invite` (Master-Auth) → schickt Link `?invite=TOKEN` → Empfänger wählt eigenen Username im Onboarding → `POST /register {invite, user}` legt Worker-Slot mit gewähltem Namen an, alle nachgelagerten Dateien (`ledger_{user}.csv`, `signals_{user}.json`, KV `pending_bets_{user}`) verwenden diesen Namen. Invite-Tokens einmalig, KV `invites` mit used_by-Tracking. PWA-IIFE liest URL, räumt sie via replaceState. Worker-Deploy `f0f84701`. 503/503 Tests grün. **Damit ist „Link senden = Tool teilen" Realität.** Nächste Phase: **8** (E1–E4 Refactor) oder **9c** (I7 Monte Carlo).
