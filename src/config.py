@@ -46,6 +46,11 @@ MAX_STAKE_EUR = 15.0
 MAX_ACTIVE_BETS = 5
 MAX_EV = 0.40           # signals with EV > 40% are almost always model artifacts
 
+# I8: Market-Performance-Feedback-Loop
+MARKET_PERF_MIN_BETS = 10           # minimum settled bets before applying penalty/bonus
+MARKET_PERF_ROI_PENALTY_THRESHOLD = -0.20   # ROI below -20% → penalty
+MARKET_PERF_PENALTY_PP = 0.05       # +5pp to min_edge for bad markets
+
 # Dynamic stake tiers: each entry = (lower_bankroll_threshold, min_stake_eur, max_stake_eur).
 # Lookup picks the first row whose threshold ≤ bankroll (sorted high → low).
 # MAX-% of bankroll falls with growth (defensive Kelly clamp) while absolute MAX grows.
