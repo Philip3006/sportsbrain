@@ -34,6 +34,32 @@ _BAYESIAN_SKIP_CATEGORIES = frozenset({"wta500"})
 _MODEL_DIR = Path(__file__).parent.parent.parent / "models" / "tennis_lgbm"
 _CACHED: dict[str, object] = {}
 
+# Mindestanzahl settled Signale bevor Meta-Calibrator angewendet wird
+_META_CAL_MIN_SAMPLES = 50
+
+
+def _load_meta_calibrator():
+    """Lädt Meta-Calibrator aus settled Signalen (tennis_signal_recalibrate.py).
+    Nur aktiv wenn >= _META_CAL_MIN_SAMPLES Samples im Fit-Zeitpunkt vorhanden waren."""
+    if "meta_cal" in _CACHED:
+        return _CACHED["meta_cal"]
+    path = _MODEL_DIR / "meta_calibrator.pkl"
+    if not path.exists():
+        _CACHED["meta_cal"] = None
+        return None
+    try:
+        import pickle
+        data = pickle.loads(path.read_bytes())
+        if data.get("n_samples", 0) < _META_CAL_MIN_SAMPLES:
+            _CACHED["meta_cal"] = None
+            return None
+        _CACHED["meta_cal"] = data["calibrator"]
+        _log.info("tennis-ensemble: meta_calibrator geladen (%d samples)", data["n_samples"])
+    except Exception as e:
+        _log.warning("tennis-ensemble: meta_calibrator load failed (%s)", e)
+        _CACHED["meta_cal"] = None
+    return _CACHED["meta_cal"]
+
 
 def _load_model():
     if "model" in _CACHED:
@@ -185,5 +211,14 @@ def predict_winner_ensemble(
         style_bias = style_matchup_edge(style_a, style_b)
         if style_bias != 0.0:
             p_a = max(0.02, min(0.98, p_a + style_bias))
+
+    # Meta-Calibrator: aus settled Signalen gelernter Korrektiv-Layer (ab 50 Samples).
+    meta_cal = _load_meta_calibrator()
+    if meta_cal is not None:
+        try:
+            p_a = float(meta_cal.predict([p_a])[0])
+            p_a = max(0.02, min(0.98, p_a))
+        except Exception:
+            pass
 
     return {"p_a": p_a, "p_b": 1.0 - p_a, "source": "ensemble"}
