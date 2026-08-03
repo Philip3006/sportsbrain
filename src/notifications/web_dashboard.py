@@ -14,7 +14,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from src.betting.value_detector import BetSignal
-from src.config import DEFAULT_USER as _DEFAULT_USER
+from src.config import DEFAULT_USER as _DEFAULT_USER, ODDS_MOVE_WARN_PCT
 
 
 def _build_info() -> dict:
@@ -223,6 +223,10 @@ def _signal_to_dict(
     }
     if getattr(s, "stake_reason", ""):
         d["correlation_note"] = s.stake_reason
+    if getattr(s, "no_bet_flag", False):
+        d["no_bet_flag"] = True
+    if getattr(s, "conflict_reason", ""):
+        d["conflict_reason"] = s.conflict_reason
     if tour:
         d["tour"] = tour
     if kickoff:
@@ -758,6 +762,39 @@ def _drop_finished_signals(signals: list[dict]) -> list[dict]:
     return result
 
 
+def _enrich_odds_freshness(signals: list[dict], odds_history: list) -> list[dict]:
+    """N3: Compare current signal odds vs. most recent prior snapshot. Tags odds_move_pct."""
+    if not odds_history:
+        return signals
+    # Find the most recent snapshot entry (sorted by ts or date)
+    try:
+        prev_entry = sorted(odds_history, key=lambda e: e.get("ts", e.get("date", "")))[-1]
+    except Exception:
+        return signals
+    prev_odds_map = prev_entry.get("odds", {})
+    side_map = {"home": "home", "away": "away", "draw": "draw"}
+    for s in signals:
+        side = side_map.get(s.get("market", ""))
+        if not side:
+            continue
+        match_key = s.get("match", "")
+        prev_match = prev_odds_map.get(match_key)
+        if not prev_match:
+            mk_lower = match_key.lower()
+            prev_match = next(
+                (v for k, v in prev_odds_map.items() if k.lower() == mk_lower), None
+            )
+        if not prev_match:
+            continue
+        prev_o = float(prev_match.get(side, 0) or 0)
+        curr_o = float(s.get("odds", 0) or 0)
+        if prev_o > 1.0 and curr_o > 1.0:
+            move = (curr_o - prev_o) / prev_o
+            s["odds_move_pct"] = round(move * 100, 1)
+            s["odds_moved_against"] = move < -ODDS_MOVE_WARN_PCT
+    return signals
+
+
 def _enrich_best_bookie(signals: list[dict], all_odds: dict) -> list[dict]:
     """N4: Add best_bookie field to each signal using bookmakers_h2h data."""
     _SIDE_MAP = {"home": "home", "away": "away", "draw": "draw"}
@@ -905,6 +942,12 @@ def write_signals_json(
         model_tips_data = model_tips
     else:
         model_tips_data = existing.get("model_tips", {})
+
+    # N3: Odds-freshness comparison vs. previous snapshot
+    _oh_list = odds_history if isinstance(odds_history, list) else existing.get("odds_history", [])
+    if _oh_list:
+        football_data = _enrich_odds_freshness(football_data, _oh_list)
+        tennis_data   = _enrich_odds_freshness(tennis_data, _oh_list)
 
     # N4: Enrich football signals with best bookie from all_odds bookmakers_h2h
     if all_odds_data:

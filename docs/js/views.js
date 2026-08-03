@@ -498,6 +498,8 @@ function sigCard(s, showMatch) {
       <span class="conf-badge conf-${s.confidence}">${s.confidence}${infoTip(s.confidence === 'HIGH' ? 'HIGH = mehrere KI-Modelle sind sich einig. Höchster Vertrauenswert — Einsatz wird +10% erhöht.' : s.confidence === 'LOW' ? 'LOW = grenzwertige Vorhersage. KI ist sich weniger sicher — Einsatz bleibt klein (≤€5) zum Schutz der Bankroll.' : 'MEDIUM = solide Vorhersage, aber nicht alle Modelle stimmen voll überein. Standard-Einsatz €5–15.')}</span>
       ${dotsHtml}
       ${lineMvHtml}
+      ${s.odds_moved_against ? `<span style="padding:2px 6px;border-radius:4px;background:#7a3800;color:#ffb347;font-size:10px;font-weight:800" title="Quote ist ${Math.abs(s.odds_move_pct||0).toFixed(0)}% gefallen — Markt bewegt sich gegen Position">⚠ −${Math.abs(s.odds_move_pct||0).toFixed(0)}%</span>` : ''}
+      ${s.no_bet_flag ? `<span style="padding:2px 6px;border-radius:4px;background:#4a1500;color:#ff8c69;font-size:10px;font-weight:800" title="${esc(s.conflict_reason||'Konflikt')}">⚠ Konflikt</span>` : ''}
       <span class="stake-val">${stakeLabel}</span>
     </div>
     ${probRow}
