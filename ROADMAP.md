@@ -837,11 +837,12 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Impact/Aufwand/Risiko**: 🟡 · 🟡 (~2 h) · 🟡 (Regelmatrix pro Markt)
 - **Dateien**: `src/betting/tennis_settlement.py`, `tests/tennis/test_settlement.py`
 
-### 🟠 J8-M5 + NEU AH/Spreads-Fallback fehlt für Non-TheOddsAPI — P1
+### ✅ J8-M5 + NEU AH/Spreads-Fallback fehlt für Non-TheOddsAPI — P1
 - **Was**: Nur TheOddsAPI liefert AH; TE/OP/Betfair/WebSearch nur H2H. Bei API-Ausfall verschwinden AH-Signale komplett. Fix: (a) Betfair-Bulk-Feed für Set-Handicap prüfen, (b) TE-Handicap-Endpunkt integrieren (falls existiert), (c) impliziter AH-Rechner aus H2H+Total-Sets als Fallback.
 - **Impact/Aufwand/Risiko**: 🟠 · 🔴 (~8 h) · 🟡
 - **Priorität**: **P1** — deckt aktuell ~30% der Value-Bets ab
 - **Dateien**: `src/tennis/odds/betfair.py`, `tennis_explorer.py`, `merger.py`
+- **Status (2026-08-03)**: ✅ Gelöst via Pinnacle (J8-I6): `pinnacle.py` liefert `ah_1_5_a/b` in `q.__dict__`. `tennis_scan.py` Merger-Pfad extrahiert diese Werte jetzt und reicht sie an `detect_value_tennis(ah_odds_a, ah_odds_b)` weiter. Wenn Pinnacle AH liefert → AH-Signal auch ohne TheOddsAPI.
 
 ### 🟡 J8-M6 + NEU Empty-State-Message im Tennis-Tab — P2
 - **Was**: `docs/js/views.js:913–919` skippt Render bei fehlendem Signal+Fallback ohne User-Hinweis. Fix: Empty-State-Karte „Keine Tennis-Spiele in Reichweite — nächster Scan …".
@@ -853,11 +854,12 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Impact/Aufwand/Risiko**: ⚪ · 🟡 (~2 h) · 🟢
 - **Dateien**: `docs/tennis/README.md` (NEU)
 
-### 🟠 J8-M8 + NEU CLV-Alarm für Tennis — P1
+### ✅ J8-M8 + NEU CLV-Alarm für Tennis — P1
 - **Was**: J2-L trackt Pinnacle-CLV, aber es gibt keinen Alert wenn CLV<0 über Rolling-Window (14d). Fix: `scripts/monitor_clv.py` liest Ledger, Push wenn `mean_clv_14d < 0` oder `n<10 && mean_clv < -0.02`.
 - **Impact/Aufwand/Risiko**: 🟠 · 🟡 (~3 h) · 🟢
 - **Priorität**: **P1** — Frühwarnsystem für Kalibrierungs-Rot
 - **Dateien**: `scripts/monitor_clv.py` (NEU), `.github/workflows/tennis_clv_monitor.yml` (NEU)
+- **Status (2026-08-03)**: ✅ `scripts/monitor_clv.py` + `.github/workflows/tennis_clv_monitor.yml` existieren und sind aktiv.
 
 ---
 
@@ -869,13 +871,14 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 ### 🟠 J8-I4 + NEU Model-Metadata + CLV-Alarm — kombiniert J8-M2 + J8-M8
 > Bereits als Missing-Items erfasst. Zusammen umsetzen als Sprint.
 
-### 🟠 J8-I6 + NEU Pinnacle-Scrape als 6. Provider (CLV-Ground-Truth + AH) — P1
+### ✅ J8-I6 + NEU Pinnacle-Scrape als 6. Provider (CLV-Ground-Truth + AH) — P1
 - **Was**: Pinnacle-Web-Feed (oder Betradar-Mirror) als 6. Source im Merger. Höchstes Tier (T1) für CLV-Referenz + löst AH-Fallback-Gap (M5). Anti-Bot: rotating UA + Backoff analog Betfair.
 - **Warum**: Aktuell OddsAPI-CLV-Referenz; Pinnacle ist Ground-Truth-Standard der Wett-Industrie. Löst gleichzeitig J8-M5.
 - **Impact/Aufwand/Risiko**: 🟠 · 🔴 (~8–10 h) · 🟡 (Anti-Bot-Cat-and-Mouse, ToS)
 - **Priorität**: **P1**
 - **Dateien**: `src/tennis/odds/pinnacle.py` (NEU), `src/tennis/odds/merger.py`, `src/tennis/odds/base.py`
 - **Abhängigkeiten**: J8-B12 (Tests-Framework)
+- **Status (2026-08-03)**: ✅ `pinnacle.py` vollständig implementiert: Leagues → Matchups → Markets-Bulk, American→Decimal, H2H + Set-AH ±1.5, Reverse-Swap, Caches (Leagues 10min, Odds 5min), retry via `_http_retry`. Im Merger als Tier-1 registriert. 7 Unit-Tests grün. J8-M5 gleichzeitig gelöst (AH-Durchleitung im Scanner).
 - **Verifikation**: 20 Sample-Matches → Pinnacle-Odds mit ≤2% Abweichung zu manueller Referenz.
 
 ### 🟡 J8-I7 + NEU Serve-Stats-Backfill für Walk-Forward (Voraussetzung J2-N) — P2
@@ -984,7 +987,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 - **Insgesamt**: 99 konkrete Items (+25 ggü. 2026-08-01 durch **J8 Tennis-Audit**: 13 Bugs + 8 Missing + 4 neue Ideen; J8-I3/I4 sind Referenzen)
 - **P0**: 15 (sofort) — davon **15 ✅** (J8-B1 + J8-B3 in Phase-4-Sprint erledigt)
-- **P1**: 43 — davon **41 ✅**; **neu offen: J8-M5 (AH-Fallback), J8-I6 (Pinnacle)** — J8-B7/B12/M8 in Phase-4-Sprint erledigt
+- **P1**: 43 — davon **43 ✅** — alle P1-Items erledigt (J8-M5/I6 2026-08-03, J8-B7/B12/M8 Phase-4-Sprint)
 - **P2**: 31 — davon **14 ✅**; **neu offen: 13× J8-* (Empty-Aggregate, Silent-Log, Live-Stat-Date, Signal-Dedup, tennis_scan-STALE-Diag, Test-Assertions, Retrain-Meta, BO-Validation, Retirement-Attrib, Empty-State, Docs, Serve-Backfill, Kontextfeatures, Auto-Recal)** — J8-B4/B5/B6 erledigt
 - **P3**: 6 — J2-N + 4 weitere Q4 2026 + **J8-I8 Live-InPlay**
 - **Veto**: 10 (K5 aufgehoben 2026-06-26)

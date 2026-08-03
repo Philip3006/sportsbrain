@@ -653,12 +653,15 @@ def main() -> None:
                     m["odds_source"] = quote.source
                     m["source_tier"] = quote.source_tier
                     m["is_display_only"] = False
-                    # H2H-only Detection (AH/O/U/Set-Betting nicht verfuegbar bei diesen Quellen)
+                    # J8-M5: AH von Pinnacle durchreichen wenn verfügbar, sonst H2H-only
+                    _ah_a = float(quote.__dict__.get("ah_1_5_a") or 0.0)
+                    _ah_b = float(quote.__dict__.get("ah_1_5_b") or 0.0)
                     sigs = detect_value_tennis(
                         player_a=pa, player_b=pb, probs=probs,
                         odds_a=quote.h2h_a, odds_b=quote.h2h_b,
                         bankroll=args.bankroll, match_id=m["match_id"],
                         min_edge=min_edge, tour=t.tour,
+                        ah_odds_a=_ah_a, ah_odds_b=_ah_b,
                     )
                     signals.extend(sigs)
                     for s in sigs:
