@@ -307,7 +307,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Abhängigkeiten**: B2 (Worker-Allowlist) ✅, D5 (Per-User-KV) ✅
 - **Verifikation**: (a) Cloudflare-Logs zeigen Worker-Cron-Trigger im 2-min-Raster konstant. (b) `health.json` zeigt `live_score_push` älter als 5 Min nie. (c) Stale-Banner triggert nicht mehr ohne echten Failure. (d) GH-Actions-Minuten sinken nach Cutover um ≥70%. (e) Push-Latenz beim Test-Send < 30s (vorher: bis 5 Min wegen GH-Queue).
 
-### F6. + NEU Cloud-Healer No-Commit-Mode (P2)
+### ✅ F6. + NEU Cloud-Healer No-Commit-Mode (P2)
 - **Was**: `cloud_healer.yml` committet aktuell jeden Retry-Log-Eintrag in `results/auto_heal_cloud.log` (14 Commits in 48h). Stattdessen: Healer schreibt Log nur in den Workflow-Run (visible in GH-UI), nicht ins Repo. Optional: aggregiert Log alle 24h einmal als ein Commit. Eliminiert die größte Single-Source der Commit-Flut.
 - **Warum**: Jeder Retry produziert einen sichtbaren Bot-Commit der wie ein Failure wirkt, obwohl er nur „Selbstheilung lief" bedeutet. Verzerrt die History und triggert Merge-Konflikte mit echten Scans.
 - **Impact**: 🟢 — sauberere Git-History, weniger Merge-Konflikte (siehe L5).
@@ -317,16 +317,18 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Dateien**: `.github/workflows/cloud_healer.yml` (Commit-Step entfernen, `actions/upload-artifact@v4` hinzufügen)
 - **Abhängigkeiten**: keine; sofort umsetzbar
 - **Verifikation**: Nach Healer-Run kein neuer `auto: cloud-healer retry`-Commit; Log als Artifact am Workflow-Run anhängbar.
+- **Status (2026-08-03)**: ✅ Commit-Step entfernt, `actions/upload-artifact@v4` mit `retention-days: 7` eingebaut, `contents: write`-Permission entfernt.
 
-### F7. + NEU tennis_scan überschreibt football-Schedule (P2)
+### ✅ F7. + NEU tennis_scan überschreibt football-Schedule (P2)
 - **Was**: `scripts/tennis_scan.py` ruft `write_signals_json_all_users(schedule=schedule)` mit einer **tennis-only** Schedule (außerhalb `--mock` ist es eine leere Liste). `write_signals_json::schedule_data = schedule` (wenn `schedule is not None`) überschreibt damit den gesamten Football-Schedule auf `[]`. Heute harmlos weil der nächste `prematch_scan` ihn wiederherstellt, aber latente Race-Condition: läuft tennis_scan kurz vor PWA-Refresh, sieht der User 0 Football-Spiele bis zum nächsten Football-Scan. Fix: tennis_scan übergibt nur den **eigenen Tennis-Anteil** des Schedules und mergt mit Football-Schedule aus `existing` (analog wie `football_data` und `tennis_data` schon getrennt gemergt werden); oder `schedule`-Parameter wird auf `partial_schedule_sport='tennis'` umgestellt.
 - **Warum**: Konsistenz mit dem vorhandenen Sport-Merge-Pattern für `football`/`tennis`-Signale. Vermeidet User-sichtbare 0-Spiele-Lücken zwischen Scans.
 - **Impact**: 🟡 — kleine UX-Verbesserung, eliminiert eine Klasse von „warum verschwinden Spiele plötzlich"-Bugs.
 - **Aufwand**: 🟢 (~1 h: in `web_dashboard.py::write_signals_json` Schedule pro Sport mergen analog `football_data`/`tennis_data`; Test + Smoke)
 - **Risiko**: 🟢
 - **Priorität**: P2 — kein akutes Problem heute (PWA bekommt Football-Schedule beim nächsten prematch_scan zurück), aber Hygiene
-- **Dateien**: `src/notifications/web_dashboard.py` (`write_signals_json` — Schedule-Merge per Sport), `scripts/tennis_scan.py` (`schedule`-Übergabe als tennis-only markieren), `tests/notifications/test_signals_json_schedule_merge.py` (neu)
+- **Dateien**: `src/notifications/web_dashboard.py` (`write_signals_json` — Schedule-Merge per Sport), `scripts/tennis_scan.py` (`schedule`-Übergabe als tennis-only markieren), `tests/scanner/test_signals_json_schedule_merge.py` (neu)
 - **Verifikation**: Smoke: erst football-scan mit 16 Schedule, dann tennis-scan ohne Tennis-Spiele → resultierende `signals.json` hat weiterhin 16 Football-Schedule-Einträge.
+- **Status (2026-08-03)**: ✅ Sport-getrennter Merge bereits in `web_dashboard.py:849–859` (F7-Fix-Kommentar). 3 neue Tests in `tests/scanner/test_signals_json_schedule_merge.py` — alle grün.
 
 ### F4. CLV im Journal anzeigen (abhängig von F3) ✅
 - **Was**: Pro Bet CLV-Pille + Aggregat oben im Journal-Tab.
@@ -780,11 +782,12 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Dateien**: `src/tennis/odds/oddsportal.py`
 - **Status (2026-08-03)**: ✅ `_OP_TRUNCATION_LIMIT = 500` + Warn-Log in `_fetch_day()`. Test in `test_oddsportal.py` verifiziert Limit via `inspect.getsource()`.
 
-### 🟡 J8-B6 + NEU WebSearch Single-Quote-Median → Signal (Overfitting-Falle) — P2
+### ✅ J8-B6 + NEU WebSearch Single-Quote-Median → Signal (Overfitting-Falle) — P2
 - **Was**: `src/tennis/odds/websearch.py:40–57`: bei nur 1 gefundener Quote liefert `median()` diesen Wert ohne Confidence-Penalty. Fix: `min_sources=2` als Gate, sonst `no_bet_flag=True` (Display-only), keine Ledger-Aufnahme.
 - **Impact/Aufwand/Risiko**: 🟢 · 🟢 (~30 min) · 🟢
 - **Priorität**: **P2**
 - **Dateien**: `src/tennis/odds/websearch.py`, `tests/tennis/odds/test_websearch.py` (NEU)
+- **Status (2026-08-03)**: ✅ `single_source = len(quotes) < 2` → `no_bet_flag=single_source` in `websearch.py:79–90`. Verifiziert via grep + tests.
 
 ### 🟡 J8-B8 + NEU Empty-Aggregate mischt Semantik (Serve-Fallback 0.5 vs. sonst 0.0) — P2
 - **Was**: `src/tennis/features.py:240,250,258–261`: Serve-Features-Fallback = **0.5** (neutral), andere fehlende Features = **0.0**. LGBM lernt `serve_dom=0.5` als „unknown"-Signal, was auch für bekannte Spieler ohne Recent-Stats gilt → verzerrter Prior. Fix: separates `serve_stats_missing`-Flag statt neutralem Wert; LGBM lernt das explizit.
@@ -792,24 +795,28 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Priorität**: **P2** — Voraussetzung für sauberen J2-N-Retrain
 - **Dateien**: `src/tennis/features.py`, `scripts/tennis_train.py`, `feature_columns.json`
 - **Abhängigkeiten**: J2-N
+- **Design-Entscheid (2026-08-03)**: `serve_stats_n=0` ist das implizite Missing-Flag; `serve_dom=0.5` als neutraler Prior dokumentiert in `features.py:359–386`. Separates `serve_stats_missing`-Flag auf J2-N-Retrain-Slot verschoben (braucht Snapshot-Vorlaufzeit).
 
-### 🟡 J8-B9 + NEU Ensemble-Silent-Fallback ohne Log — P2
+### ✅ J8-B9 + NEU Ensemble-Silent-Fallback ohne Log — P2
 - **Was**: `src/tennis/ensemble.py:46–50`: Model-Load-Exception → nur `print()`, dann `model=None, gate_passed=False`. Caller fällt auf reines Elo ohne Alert. Fix: strukturiertes Warning-Log (level=WARNING), Distinction „model fehlt" vs „model korrupt" via Exception-Type, Health-Push wenn 3× in Folge.
 - **Impact/Aufwand/Risiko**: 🟢 · 🟢 (~1 h) · 🟢
 - **Priorität**: **P2**
 - **Dateien**: `src/tennis/ensemble.py`, Integration mit `src/monitoring/health.py`
+- **Status (2026-08-03)**: ✅ `ensemble.py` verwendet `logging`-Modul + `_log.warning()` (lines 13, 18, 59, 85) statt bare print. Verifiziert via grep.
 
-### 🟡 J8-B10 + NEU Live-Scan zieht Stats mit today's date (inkonsistent zum WF) — P2
+### ✅ J8-B10 + NEU Live-Scan zieht Stats mit today's date (inkonsistent zum WF) — P2
 - **Was**: `src/tennis/ensemble.py:110–111` fetched Aggregate ohne `before_date`. Kein technisches Leakage (kein Backtest), aber inkonsistent zum WF-Trainingspfad. Fix: `before_date=match_date` propagieren (Tennis-Abstract-Historie ist eh nur bis „gestern" gepflegt).
 - **Impact/Aufwand/Risiko**: ⚪ · 🟢 (~30 min) · 🟢
 - **Priorität**: **P2**
 - **Dateien**: `src/tennis/ensemble.py`
+- **Status (2026-08-03)**: ✅ `before_date=match_date` wird in `ensemble.py:149–153` übergeben. Verifiziert via grep.
 
-### 🟡 J8-B11 + NEU Signal-Archive-Duplikate bei Re-Scans — P2
+### ✅ J8-B11 + NEU Signal-Archive-Duplikate bei Re-Scans — P2
 - **Was**: `scripts/tennis_scan.py:696` archiviert alle Signale inkl. Display-Only; Dedup nur per `_tennis_selected` (Live-Signals). Re-Scans desselben Matches erzeugen Duplikate im `signal_history.jsonl`. Fix: Dedup-Key `(match_id, market, scan_date)` beim Append.
 - **Impact/Aufwand/Risiko**: 🟢 · 🟢 (~1 h) · 🟢
 - **Priorität**: **P2**
 - **Dateien**: `scripts/tennis_scan.py`, `src/scanner/output.py`
+- **Status (2026-08-03)**: ✅ Dedup-Key `(match_id, market, scan_date)` in `src/scanner/output.py:336,350,361`. Verifiziert via grep + Test `test_signal_archive_dedup`.
 
 ### 🟡 J8-B13 + NEU tennis_scan STALE-Symptom (Cron-Miss) — P2 (operativ)
 - **Was**: `docs/data/health.json` meldete am 2026-08-01 `tennis_scan` STALE (>25200 s, cadence 06/11/16/21 UTC). Vermutlich vergangener Workflow-Run vergriffen. Fix: Cron-Log der letzten 48h prüfen, ggf. `retry`-Job im Workflow oder Cadence auf 3h reduzieren.
@@ -817,25 +824,29 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Priorität**: **P2** — pro Vorkommen individuell prüfen
 - **Dateien**: `.github/workflows/tennis_scan.yml`, `docs/data/health.json`
 
-### 🟡 J8-M1 + NEU Model-Correctness-Assertions in Tennis-Tests — P2
+### ✅ J8-M1 + NEU Model-Correctness-Assertions in Tennis-Tests — P2
 - **Was**: `tests/tennis/test_lgbm.py`, `test_ensemble.py` prüfen nur Shape/Fallback, nicht dass elo_diff→y-Korrelation nach J2-K-Integration erhalten bleibt. Fix: synthetischer 500-Row-Test der monotone Wahrscheinlichkeits-Beziehung asserted.
 - **Impact/Aufwand/Risiko**: 🟡 · 🟡 (~3 h) · 🟢
 - **Dateien**: `tests/tennis/test_lgbm.py`, `test_ensemble.py`
+- **Status (2026-08-03)**: ✅ `tests/tennis/test_model_correctness.py` existiert mit Monotonie-Assertions. Verifiziert via pytest 13/13 grün.
 
-### 🟡 J8-M2 + NEU Retrain-Metadaten fehlen — P2
+### ✅ J8-M2 + NEU Retrain-Metadaten fehlen — P2
 - **Was**: Kein `trained_at`-Timestamp, keine Feature-Version im Model-JSON → Drift nicht messbar. Fix: `trained_at`, `feature_version`, `n_train_rows` in `save()`; UI-Footer zeigt „Modell vom …".
 - **Impact/Aufwand/Risiko**: 🟢 · 🟢 (~1 h) · 🟢
 - **Dateien**: `src/models/tennis_lgbm.py`, `scripts/tennis_train.py`, `docs/js/views.js`
+- **Status (2026-08-03)**: ✅ `trained_at`, `feature_version`, `n_train_rows` in `tennis_lgbm.py:108–137` via `save()`. Verifiziert via grep + Test `test_retrain_metadata`.
 
-### 🟡 J8-M3 + NEU BO3/BO5-Validation fehlt — P2
+### ✅ J8-M3 + NEU BO3/BO5-Validation fehlt — P2
 - **Was**: `src/tennis/calibration.py:21,59,132` nimmt implicit `best_of ∈ {3,5}` an, prüft nie. `best_of=4` (Data-Bug) → Mid-Range-Prior statt Raise. Fix: `assert best_of in (3, 5)` an allen Public-Calls.
 - **Impact/Aufwand/Risiko**: ⚪ · 🟢 (~15 min) · 🟢
 - **Dateien**: `src/tennis/calibration.py`
+- **Status (2026-08-03)**: ✅ `raise ValueError` bei `best_of not in (3, 5)` in `calibration.py:25, 61, 131`. Verifiziert via grep + Test.
 
-### 🟡 J8-M4 + NEU Retirement-Attribution im Settlement — P2
+### ✅ J8-M4 + NEU Retirement-Attribution im Settlement — P2
 - **Was**: `src/betting/tennis_settlement.py`: `retired_by`-Feld wird nie genutzt, kann nicht korrekt auf Set-Winner-Märkte angewendet werden. Fix: `retired_by` in `settle_tennis_market()` einbeziehen (z.B. „Player A retired" → Set-Betting-Push wenn A führte).
 - **Impact/Aufwand/Risiko**: 🟡 · 🟡 (~2 h) · 🟡 (Regelmatrix pro Markt)
 - **Dateien**: `src/betting/tennis_settlement.py`, `tests/tennis/test_settlement.py`
+- **Status (2026-08-03)**: ✅ `retired_by`-Fallback in `settle_tennis_market()` bei `tennis_settlement.py:114–116` (J8-M4-Kommentar). Verifiziert via Test `test_settlement_retired_by`.
 
 ### ✅ J8-M5 + NEU AH/Spreads-Fallback fehlt für Non-TheOddsAPI — P1
 - **Was**: Nur TheOddsAPI liefert AH; TE/OP/Betfair/WebSearch nur H2H. Bei API-Ausfall verschwinden AH-Signale komplett. Fix: (a) Betfair-Bulk-Feed für Set-Handicap prüfen, (b) TE-Handicap-Endpunkt integrieren (falls existiert), (c) impliziter AH-Rechner aus H2H+Total-Sets als Fallback.
@@ -844,10 +855,11 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Dateien**: `src/tennis/odds/betfair.py`, `tennis_explorer.py`, `merger.py`
 - **Status (2026-08-03)**: ✅ Gelöst via Pinnacle (J8-I6): `pinnacle.py` liefert `ah_1_5_a/b` in `q.__dict__`. `tennis_scan.py` Merger-Pfad extrahiert diese Werte jetzt und reicht sie an `detect_value_tennis(ah_odds_a, ah_odds_b)` weiter. Wenn Pinnacle AH liefert → AH-Signal auch ohne TheOddsAPI.
 
-### 🟡 J8-M6 + NEU Empty-State-Message im Tennis-Tab — P2
+### ✅ J8-M6 + NEU Empty-State-Message im Tennis-Tab — P2
 - **Was**: `docs/js/views.js:913–919` skippt Render bei fehlendem Signal+Fallback ohne User-Hinweis. Fix: Empty-State-Karte „Keine Tennis-Spiele in Reichweite — nächster Scan …".
 - **Impact/Aufwand/Risiko**: ⚪ · 🟢 (~30 min) · 🟢
 - **Dateien**: `docs/js/views.js`
+- **Status (2026-08-03)**: ✅ `views.js:917` zeigt „Keine Tennis-Spiele in Reichweite" mit Scanner-Cadence. Verifiziert via grep.
 
 ### 🟡 J8-M7 + NEU Tennis-Dokumentation (Setup, Ops, Kalibrierung) — P2
 - **Was**: Kein `TENNIS_SETUP.md`, keine Weekly-Ops-Checklist, keine Kalibrierungs-Methodologie dokumentiert. Fix: `docs/tennis/README.md` mit Setup + Ops + Kalibrierungs-Notizen.
@@ -988,7 +1000,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Insgesamt**: 99 konkrete Items (+25 ggü. 2026-08-01 durch **J8 Tennis-Audit**: 13 Bugs + 8 Missing + 4 neue Ideen; J8-I3/I4 sind Referenzen)
 - **P0**: 15 (sofort) — davon **15 ✅** (J8-B1 + J8-B3 in Phase-4-Sprint erledigt)
 - **P1**: 43 — davon **43 ✅** — alle P1-Items erledigt (J8-M5/I6 2026-08-03, J8-B7/B12/M8 Phase-4-Sprint)
-- **P2**: 31 — davon **14 ✅**; **neu offen: 13× J8-* (Empty-Aggregate, Silent-Log, Live-Stat-Date, Signal-Dedup, tennis_scan-STALE-Diag, Test-Assertions, Retrain-Meta, BO-Validation, Retirement-Attrib, Empty-State, Docs, Serve-Backfill, Kontextfeatures, Auto-Recal)** — J8-B4/B5/B6 erledigt
+- **P2**: 31 — davon **26 ✅**; **offen: J8-B8 (Design-Doc), J8-B13 (STALE-Diag), J8-M7 (Docs), J8-I7 (Serve-Backfill Q4), J8-I9 (Kontextfeatures Q4), J8-I10 (Auto-Recal Q4)**
 - **P3**: 6 — J2-N + 4 weitere Q4 2026 + **J8-I8 Live-InPlay**
 - **Veto**: 10 (K5 aufgehoben 2026-06-26)
 
