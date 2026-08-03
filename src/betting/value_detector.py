@@ -26,6 +26,8 @@ class BetSignal:
     n_models_agree: int = 0   # how many of [DC, Elo, LGBM] see value (0–3); 0 = not computed / non-1X2 market
     stake_reason: str = ""    # Stake-v2: warum reduziert (z.B. "neg_corr_vs_ah-0.5_away", "match_cap")
     player_team: str = ""     # Stake-v2: für Scorer-Märkte "home" oder "away" (Korrelations-Detektion)
+    no_bet_flag: bool = False  # N7: blockiert Ledger-Aufnahme wenn konfliktierend
+    conflict_reason: str = ""  # N7: beschreibt welcher Markt konfligiert
 
 
 _MARKETS = ["home", "draw", "away"]

@@ -1,0 +1,36 @@
+name: Model-Drift Brier Monitor
+
+on:
+  schedule:
+    # Wöchentlich Mo 07:00 UTC — nach dem 06:00-Scan
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  drift-monitor:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r requirements.txt
+
+      - name: Check Model-Drift Brier (28d)
+        env:
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUB: ${{ secrets.VAPID_SUB }}
+        run: |
+          python3 scripts/monitor_model_drift.py --window-days 28 --push || {
+            code=$?
+            echo "Drift monitor exit-code $code (1=WARN/CRITICAL)"
+            exit $code
+          }

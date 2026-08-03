@@ -78,6 +78,15 @@ if __name__ == "__main__":
                 f"€{old_stake:.2f} → €{s.stake_eur:.2f}  [{s.stake_reason}]"
             )
 
+    # N7: Multi-Market Konflikt-Check — blockiert widersprüchliche Signale
+    from src.betting.conflict_check import check_conflicts
+    selected_signals = check_conflicts(selected_signals)
+    _conflicts = [s for s in selected_signals if s.no_bet_flag and s.conflict_reason]
+    if _conflicts:
+        print("\n=== N7 Konflikt-Check ===")
+        for s in _conflicts:
+            print(f"  ⚠ KONFLIKT: {s.home} vs {s.away} | {s.market} | {s.conflict_reason}")
+
     from datetime import date as _date
     from src.scanner.output import archive_signals
     _scan_ts = args.date or _date.today().isoformat()
