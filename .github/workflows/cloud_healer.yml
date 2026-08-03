@@ -1,8 +1,10 @@
-name: Cloud Healer (30 min)
+name: Cloud Healer
 
 on:
+  # F5-D: Primary trigger is Worker Cron (every 30 min from Worker, with KV-based cooldown).
+  # GH Actions schedule is a 2h fallback when Worker GH_TOKEN is not set.
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '0 */2 * * *'
   workflow_dispatch:
 
 concurrency:

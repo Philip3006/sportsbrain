@@ -6,5 +6,11 @@ compatibility_date = "2024-01-01"
 binding = "SIGNALS"
 id = "b8dafde116544880aaf9c3f19c61dc23"
 
-# Secrets (set via: wrangler secret put API_TOKEN)
+[triggers]
+# F5-C: consume_pending_bets check every 5 min (triggers GH repo_dispatch only when KV non-empty)
+# F5-D: cloud_healer check every 30 min (triggers workflow_dispatch on failed jobs)
+crons = ["*/5 * * * *", "*/30 * * * *"]
+
+# Secrets (set via: wrangler secret put <NAME>)
 # API_TOKEN — shared secret between Python uploader and this Worker
+# GH_TOKEN  — GitHub PAT with actions:write + contents:read (for F5-C/D cron triggers)
