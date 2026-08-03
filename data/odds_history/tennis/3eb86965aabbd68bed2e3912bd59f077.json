@@ -38,6 +38,13 @@
       "odds_a": 2.0,
       "odds_b": 1.8,
       "source": "pmu_fr"
+    },
+    {
+      "label": "auto_20260803_10",
+      "ts_utc": "2026-08-03T10:07:25.597783+00:00",
+      "odds_a": 2.04,
+      "odds_b": 1.71,
+      "source": "pmu_fr"
     }
   ]
 }
