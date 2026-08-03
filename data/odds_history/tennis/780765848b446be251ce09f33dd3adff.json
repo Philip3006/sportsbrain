@@ -31,6 +31,13 @@
       "odds_a": 2.49,
       "odds_b": 1.53,
       "source": "marathonbet"
+    },
+    {
+      "label": "auto_20260803_03",
+      "ts_utc": "2026-08-03T03:56:10.342688+00:00",
+      "odds_a": 2.52,
+      "odds_b": 1.52,
+      "source": "marathonbet"
     }
   ]
 }

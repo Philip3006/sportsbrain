@@ -1,0 +1,15 @@
+{
+  "match_id": "1b2aecb733f29e16b5982e7da22bb3ef",
+  "player_a": "Alexander Blockx",
+  "player_b": "Jaume Munar",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260803_03",
+      "ts_utc": "2026-08-03T03:56:10.133969+00:00",
+      "odds_a": 1.33,
+      "odds_b": 1.02,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

@@ -31,6 +31,13 @@
       "odds_a": 2.5,
       "odds_b": 1.58,
       "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260803_03",
+      "ts_utc": "2026-08-03T03:56:10.130722+00:00",
+      "odds_a": 2.51,
+      "odds_b": 1.58,
+      "source": "pinnacle"
     }
   ]
 }
