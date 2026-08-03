@@ -331,14 +331,77 @@ def _settle_one_user(ledger_path: Path, scores: dict, user: str, dry_run: bool) 
     return settled
 
 
+def write_market_performance(users: list[str] | None = None) -> None:
+    """I8: Compute per-market ROI from settled bets and write to data/cache/market_performance.json.
+
+    Called after settlement so the scanner picks up fresh performance data without
+    re-reading the full ledger on every scan run.
+    """
+    import json
+    from collections import defaultdict
+    from datetime import datetime, timezone
+    from src.config import (
+        MARKET_PERF_MIN_BETS, MARKET_PERF_ROI_PENALTY_THRESHOLD, DATA_CACHE,
+    )
+    from src.notifications.web_dashboard import list_known_users
+
+    if users is None:
+        users = list_known_users()
+
+    by_market: dict[str, dict] = defaultdict(lambda: {"n_won": 0, "n_lost": 0, "stake": 0.0, "pnl": 0.0})
+    for u in users:
+        lp = ledger_path_for(u)
+        if not lp.exists():
+            continue
+        for row in csv.DictReader(lp.open()):
+            if row.get("status") not in ("won", "lost"):
+                continue
+            m = row.get("market", "")
+            if not m:
+                continue
+            d = by_market[m]
+            stake = float(row.get("stake_amount") or 0)
+            pnl = float(row.get("pnl") or 0)
+            if row["status"] == "won":
+                d["n_won"] += 1
+            else:
+                d["n_lost"] += 1
+            d["stake"] += stake
+            d["pnl"] += pnl
+
+    out: dict[str, dict] = {}
+    for m, d in by_market.items():
+        n_total = d["n_won"] + d["n_lost"]
+        roi = (d["pnl"] / d["stake"]) if d["stake"] > 0 else 0.0
+        out[m] = {
+            "n_won": d["n_won"],
+            "n_lost": d["n_lost"],
+            "n_total": n_total,
+            "total_stake": round(d["stake"], 2),
+            "total_pnl": round(d["pnl"], 2),
+            "roi": round(roi, 4),
+            "penalized": n_total >= MARKET_PERF_MIN_BETS and roi < MARKET_PERF_ROI_PENALTY_THRESHOLD,
+        }
+
+    DATA_CACHE.mkdir(parents=True, exist_ok=True)
+    out_path = DATA_CACHE / "market_performance.json"
+    out_path.write_text(json.dumps({
+        "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "markets": out,
+    }, indent=2))
+    penalized = [m for m, d in out.items() if d["penalized"]]
+    print(f"[market_perf] wrote {len(out)} markets, {len(penalized)} penalized: {penalized}")
+
+
 def settle(dry_run: bool = False) -> int:
     """Settle bets for all known users against the same fetched scores."""
     scores = fetch_scores()
     print(f"Scores API: {len(scores)//2} completed matches")
 
     from src.notifications.web_dashboard import list_known_users
+    users = list_known_users()
     total = 0
-    for u in list_known_users():
+    for u in users:
         total += _settle_one_user(ledger_path_for(u), scores, u, dry_run)
 
     if total == 0:
@@ -348,6 +411,9 @@ def settle(dry_run: bool = False) -> int:
         print(f"\n[dry-run] {total} bet(s) would be settled across all users.")
     else:
         print(f"\n✓ Total {total} bet(s) settled across all users.")
+
+    if not dry_run:
+        write_market_performance(users)
     return total
 
 

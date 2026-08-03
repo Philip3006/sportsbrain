@@ -31,7 +31,25 @@ _LEDGER_GATE_ROI_THRESH = -0.20
 
 
 def _blocked_markets() -> dict[str, float]:
-    """Return {market: roi} for markets that need HIGH-confidence gate."""
+    """Return {market: roi} for markets that need HIGH-confidence gate.
+
+    Primary source: data/cache/market_performance.json (written after settle by I8).
+    Fallback: live ledger_summary() read — slower but always available.
+    """
+    import json
+    from src.config import DATA_CACHE
+    perf_path = DATA_CACHE / "market_performance.json"
+    if perf_path.exists():
+        try:
+            data = json.loads(perf_path.read_text())
+            return {
+                m: d["roi"]
+                for m, d in data.get("markets", {}).items()
+                if d.get("penalized")
+            }
+        except Exception:
+            pass
+    # Fallback: read live from ledger
     try:
         from src.betting.ledger import ledger_summary
         by_market = ledger_summary().get("by_market", {})
