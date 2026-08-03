@@ -676,6 +676,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Dateien**: `data/cache/market_performance.json` (neu), `scripts/settle_bets.py` (Aggregat schreiben nach Settle), `src/scanner/scoring.py` (`_load_market_performance()` → `min_edge_override` pro Markt), `src/config.py` (`MARKET_PERF_MIN_BETS=10`, `MARKET_PERF_ROI_PENALTY_THRESHOLD=-0.20`, `MARKET_PERF_PENALTY_PP=0.05`)
 - **Abhängigkeiten**: I3 (Retrain optional); funktioniert sofort mit vorhandenen 56 Bets
 - **Verifikation**: (a) Nach Settle: `market_performance.json` enthält ROI pro Markt. (b) Nächster Scan: o/u2.5_under bekommt `min_edge = 0.08` statt 0.03 → deutlich weniger Under-Signale. (c) Smoke-Test: Variante A on/off — gleicher Score-Run, Anzahl Under-Signale fällt
+- **Status (2026-08-03)**: ✅ Variante A erledigt (Commit 87c1640d). `write_market_performance(users)` in `settle_bets.py` aggregiert per-Markt ROI aus allen User-Ledgern, setzt `penalized=True` bei `n>=MARKET_PERF_MIN_BETS` und `roi<-20%`, schreibt `data/cache/market_performance.json`. `_blocked_markets()` in `scoring.py` liest Datei zuerst (persistent, schnell), fällt auf Live-`ledger_summary()` zurück wenn Datei fehlt. 5 Tests, 942 gesamt grün.
 
 
 ### I9. ✅ erledigt 2026-06-24 Signal-Archive & Lernen aus allen generierten Signalen (nicht nur platzierten Wetten)
@@ -819,11 +820,12 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Dateien**: `scripts/tennis_scan.py`, `src/scanner/output.py`
 - **Status (2026-08-03)**: ✅ Dedup-Key `(match_id, market, scan_date)` in `src/scanner/output.py:336,350,361`. Verifiziert via grep + Test `test_signal_archive_dedup`.
 
-### 🟡 J8-B13 + NEU tennis_scan STALE-Symptom (Cron-Miss) — P2 (operativ)
+### ✅ J8-B13 + NEU tennis_scan STALE-Symptom (Cron-Miss) — P2 (operativ)
 - **Was**: `docs/data/health.json` meldete am 2026-08-01 `tennis_scan` STALE (>25200 s, cadence 06/11/16/21 UTC). Vermutlich vergangener Workflow-Run vergriffen. Fix: Cron-Log der letzten 48h prüfen, ggf. `retry`-Job im Workflow oder Cadence auf 3h reduzieren.
 - **Impact/Aufwand/Risiko**: 🟡 · 🟢 (~30 min Diagnose) · 🟢
 - **Priorität**: **P2** — pro Vorkommen individuell prüfen
 - **Dateien**: `.github/workflows/tennis_scan.yml`, `docs/data/health.json`
+- **Status (2026-08-03)**: ✅ Diagnose: Session-Report 2026-08-03 zeigt `tennis_scan` grün (letzte Runs erfolgreich). Stale-Eintrag in lokalem `health.json` war ein Snapshot von uncommitteten GH-Actions-Änderungen. `tennis_scan.yml` hat bereits `retry`-Job (60s-Backoff). Kein weiterer Fix nötig; tritt das Symptom wieder auf: Cron-Log via GH-UI prüfen.
 
 ### ✅ J8-M1 + NEU Model-Correctness-Assertions in Tennis-Tests — P2
 - **Was**: `tests/tennis/test_lgbm.py`, `test_ensemble.py` prüfen nur Shape/Fallback, nicht dass elo_diff→y-Korrelation nach J2-K-Integration erhalten bleibt. Fix: synthetischer 500-Row-Test der monotone Wahrscheinlichkeits-Beziehung asserted.
@@ -862,10 +864,11 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Dateien**: `docs/js/views.js`
 - **Status (2026-08-03)**: ✅ `views.js:917` zeigt „Keine Tennis-Spiele in Reichweite" mit Scanner-Cadence. Verifiziert via grep.
 
-### 🟡 J8-M7 + NEU Tennis-Dokumentation (Setup, Ops, Kalibrierung) — P2
+### ✅ J8-M7 + NEU Tennis-Dokumentation (Setup, Ops, Kalibrierung) — P2
 - **Was**: Kein `TENNIS_SETUP.md`, keine Weekly-Ops-Checklist, keine Kalibrierungs-Methodologie dokumentiert. Fix: `docs/tennis/README.md` mit Setup + Ops + Kalibrierungs-Notizen.
 - **Impact/Aufwand/Risiko**: ⚪ · 🟡 (~2 h) · 🟢
 - **Dateien**: `docs/tennis/README.md` (NEU)
+- **Status (2026-08-03)**: ✅ `docs/tennis/README.md` existiert mit Setup (Env-Vars, Credentials), Weekly-Ops-Tabelle + GH-Actions-Übersicht, Kalibrierungs-Konventionen (Elo-K, Blend-Weights, Rule-Adjustment, Gate-Kriterien, Sanity-Gates), Odds-Chain-Tiers, Namens-Formate, Bekannte Grenzen. Pinnacle-Status auf ✅ live aktualisiert.
 
 ### ✅ J8-M8 + NEU CLV-Alarm für Tennis — P1
 - **Was**: J2-L trackt Pinnacle-CLV, aber es gibt keinen Alert wenn CLV<0 über Rolling-Window (14d). Fix: `scripts/monitor_clv.py` liest Ledger, Push wenn `mean_clv_14d < 0` oder `n<10 && mean_clv < -0.02`.
@@ -1001,7 +1004,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Insgesamt**: 99 konkrete Items (+25 ggü. 2026-08-01 durch **J8 Tennis-Audit**: 13 Bugs + 8 Missing + 4 neue Ideen; J8-I3/I4 sind Referenzen)
 - **P0**: 15 (sofort) — davon **15 ✅** (J8-B1 + J8-B3 in Phase-4-Sprint erledigt)
 - **P1**: 43 — davon **43 ✅** — alle P1-Items erledigt (J8-M5/I6 2026-08-03, J8-B7/B12/M8 Phase-4-Sprint)
-- **P2**: 31 — davon **26 ✅**; **offen: J8-B8 (Design-Doc), J8-B13 (STALE-Diag), J8-M7 (Docs), J8-I7 (Serve-Backfill Q4), J8-I9 (Kontextfeatures Q4), J8-I10 (Auto-Recal Q4)**
+- **P2**: 31 — davon **29 ✅**; **offen: J8-B8 (Design-Doc/deferred J2-N), J8-I7 (Serve-Backfill Q4), J8-I9 (Kontextfeatures Q4), J8-I10 (Auto-Recal Q4)**
 - **P3**: 6 — J2-N + 4 weitere Q4 2026 + **J8-I8 Live-InPlay**
 - **Veto**: 10 (K5 aufgehoben 2026-06-26)
 

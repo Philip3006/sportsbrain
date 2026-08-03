@@ -29,7 +29,9 @@ Ohne Betfair-Credentials fällt der Merger transparent auf Tier-2 (Tennis-Explor
 Automatisierte Läufe (GitHub Actions):
 - `tennis_scan.yml` — 4×/Tag (06/11/16/21 UTC), Live-Scan + Signal-Archive
 - `tennis_settle.yml` — 2h-Cadence, Settlement offener Bets
-- `tennis_retrain.yml` — automatischer Retrain nach Threshold
+- `tennis_lgbm_retrain.yml` — täglich 05:00 UTC, Retrain wenn neue Daten
+- `tennis_clv_monitor.yml` — CLV-Alarm wenn `mean_clv_14d < 0`
+- `tennis_closing_odds.yml` — Closing-Odds-Backfill nach Match-Ende
 
 ## Kalibrierungs-Konventionen
 
@@ -72,7 +74,7 @@ Merger-Priorität nach `source_tier`:
 | Tier | Provider | Coverage | AH-Support |
 |---|---|---|---|
 | 1 | Betfair Exchange | Sharp, Traded | H2H |
-| 1 | Pinnacle (J8-I6 geplant) | Sharp | H2H + AH |
+| 1 | Pinnacle | Sharp, Ground-Truth CLV | H2H + AH ±1.5 |
 | 2 | TheOddsAPI | Retail EU/US/UK/AU | H2H + AH |
 | 2 | Tennis-Explorer | breite Coverage inkl. Challenger | H2H |
 | 2 | OddsPortal | ~30 Bookies | H2H |
@@ -92,7 +94,7 @@ Normalisierung in `src/tennis/name_norm.py`. Score-Fetcher schreibt Match-Keys z
 
 - Sackmann-Repos (öffentlich) seit Juni 2026 nicht mehr abrufbar. Elo aktuell aus `tennis-data.co.uk` XLSX (walk-forward reconstructed).
 - Serve-Stats-Snapshots (Tennis-Abstract matchmx) sind cumulative, kein Historie-Point-in-Time. Voller LGBM-Retrain mit Serve-Features (J2-N) braucht 6+ Monate Snapshot-Vorlauf.
-- AH/Spreads aktuell nur bei TheOddsAPI robust. Fallback-Provider (TE/OP/Betfair) liefern nur H2H — bei API-Ausfall verschwinden AH-Signale (J8-M5 offen).
+- AH/Spreads via Pinnacle (±1.5) und TheOddsAPI. TE/OP/Betfair liefern nur H2H — Pinnacle ist primärer AH-Fallback wenn TheOddsAPI 422 zurückgibt.
 
 ## Referenzen
 
