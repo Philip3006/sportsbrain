@@ -414,6 +414,30 @@ def settle(dry_run: bool = False) -> int:
 
     if not dry_run:
         write_market_performance(users)
+        # N5: Settle-Reminder for still-open bets after kickoff
+        try:
+            from src.notifications.web_push import send_open_bet_reminder
+            open_bets_rows: list[dict] = []
+            for _u in users:
+                _lp = ledger_path_for(_u)
+                if _lp.exists():
+                    import csv as _csv
+                    with open(_lp, newline="") as _f:
+                        for _r in _csv.DictReader(_f):
+                            if _r.get("status") == "open":
+                                open_bets_rows.append(_r)
+            send_open_bet_reminder(open_bets_rows)
+        except Exception as exc:
+            print(f"[settle-reminder] skipped: {exc}")
+        # N6: Bankroll-Meilenstein Push
+        try:
+            from src.betting.ledger import ledger_summary
+            from src.notifications.web_push import send_bankroll_milestone_alert
+            summary = ledger_summary()
+            equity = 100.0 + float(summary.get("total_pnl", 0))
+            send_bankroll_milestone_alert(equity)
+        except Exception as exc:
+            print(f"[bankroll-milestone] skipped: {exc}")
     return total
 
 
