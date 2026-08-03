@@ -1,0 +1,15 @@
+{
+  "match_id": "639b4e58894a7ad1715f05fbc2596e54",
+  "player_a": "Aryna Sabalenka",
+  "player_b": "Moyuka Uchijima",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260803_10",
+      "ts_utc": "2026-08-03T10:07:25.602283+00:00",
+      "odds_a": 1.03,
+      "odds_b": 1.12,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

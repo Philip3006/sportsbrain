@@ -1,0 +1,15 @@
+{
+  "match_id": "5ec86a8f456ab8c8237951f18ccc6c49",
+  "player_a": "Iga Swiatek",
+  "player_b": "Sara Bejlek",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260803_10",
+      "ts_utc": "2026-08-03T10:07:25.602930+00:00",
+      "odds_a": 1.1,
+      "odds_b": 7.0,
+      "source": "marathonbet"
+    }
+  ]
+}
