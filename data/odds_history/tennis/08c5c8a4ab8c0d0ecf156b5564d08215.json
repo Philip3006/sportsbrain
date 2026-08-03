@@ -1,0 +1,15 @@
+{
+  "match_id": "08c5c8a4ab8c0d0ecf156b5564d08215",
+  "player_a": "Anna Bondár",
+  "player_b": "Elise Mertens",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260803_22",
+      "ts_utc": "2026-08-03T22:19:03.194207+00:00",
+      "odds_a": 3.12,
+      "odds_b": 1.36,
+      "source": "marathonbet"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "7711710c276e7800fd5f21917b00ceb3",
+  "player_a": "Alina Korneeva",
+  "player_b": "Emma Navarro",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260803_22",
+      "ts_utc": "2026-08-03T22:19:03.193975+00:00",
+      "odds_a": 1.78,
+      "odds_b": 1.7,
+      "source": "matchbook"
+    }
+  ]
+}

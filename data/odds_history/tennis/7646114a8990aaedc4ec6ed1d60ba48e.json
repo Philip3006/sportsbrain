@@ -1,0 +1,15 @@
+{
+  "match_id": "7646114a8990aaedc4ec6ed1d60ba48e",
+  "player_a": "Ann Li",
+  "player_b": "Kayla Cross",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260803_22",
+      "ts_utc": "2026-08-03T22:19:03.194093+00:00",
+      "odds_a": 1.36,
+      "odds_b": 3.12,
+      "source": "marathonbet"
+    }
+  ]
+}
