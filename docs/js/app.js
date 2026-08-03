@@ -421,8 +421,11 @@ function marketLabel(mkt, match) {
     'h2_goals_2_4':'2-4 Tore (2. HZ)','h2_goals_2_4_no':'KEIN 2-4 Tore (2. HZ)',
   };
   if (known[mkt]) return known[mkt];
-  const ouM = mkt.match(/^o\/u([\d.]+)_(over|under)$/);
-  if (ouM) return ouM[2] === 'over' ? `Über ${ouM[1]} Tore` : `Unter ${ouM[1]} Tore`;
+  const ouM = mkt.match(/^o\/u(?:_(sets|games)_)?([\d.]+)_(over|under)$/);
+  if (ouM) {
+    const typeLabel = ouM[1] === 'games' ? 'Games' : ouM[1] === 'sets' ? 'Sätze' : 'Tore';
+    return ouM[3] === 'over' ? `Über ${ouM[2]} ${typeLabel}` : `Unter ${ouM[2]} ${typeLabel}`;
+  }
   const ahM = mkt.match(/^ah([+-][\d.]+)_(home|away)$/);
   if (ahM) return `AH ${ahM[1]} ${ahM[2] === 'home' ? a : b}`;
   const scM = mkt.match(/^scorer_(.+)$/);
