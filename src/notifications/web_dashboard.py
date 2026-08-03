@@ -758,6 +758,39 @@ def _drop_finished_signals(signals: list[dict]) -> list[dict]:
     return result
 
 
+def _enrich_best_bookie(signals: list[dict], all_odds: dict) -> list[dict]:
+    """N4: Add best_bookie field to each signal using bookmakers_h2h data."""
+    _SIDE_MAP = {"home": "home", "away": "away", "draw": "draw"}
+    for s in signals:
+        mkt = s.get("market", "")
+        side = _SIDE_MAP.get(mkt)
+        if not side:
+            continue
+        match_key = s.get("match", "")
+        bkm_list = all_odds.get(match_key, {}).get("bookmakers_h2h", [])
+        if not bkm_list:
+            # try case-insensitive lookup
+            mk_lower = match_key.lower()
+            bkm_list = next(
+                (v.get("bookmakers_h2h", []) for k, v in all_odds.items() if k.lower() == mk_lower),
+                [],
+            )
+        if bkm_list:
+            best = max(bkm_list, key=lambda b: float(b.get(side) or 0))
+            odds_val = best.get(side)
+            if odds_val and float(odds_val) > 1.0:
+                s["best_bookie"] = {"name": best.get("title", ""), "odds": round(float(odds_val), 2)}
+    return signals
+
+
+def _tag_display_priority(signals: list[dict], top_n: int) -> list[dict]:
+    """N1: Sort by ev_pct desc, tag top_n as 'top', rest as 'extra'."""
+    sorted_sigs = sorted(signals, key=lambda s: float(s.get("ev_pct", 0)), reverse=True)
+    for i, s in enumerate(sorted_sigs):
+        s["display_priority"] = "top" if i < top_n else "extra"
+    return sorted_sigs
+
+
 def write_signals_json(
     football: list[BetSignal] | None = None,
     tennis: list[BetSignal] | None = None,
@@ -845,6 +878,11 @@ def write_signals_json(
     football_data = _drop_finished_signals(football_data)
     tennis_data   = _drop_finished_signals(tennis_data)
 
+    # N1: Tag top-N signals per sport with display_priority for PWA collapsing
+    from src.config import MAX_SIGNALS_DISPLAY as _MAX_DISPLAY
+    football_data = _tag_display_priority(football_data, _MAX_DISPLAY)
+    tennis_data   = _tag_display_priority(tennis_data, _MAX_DISPLAY)
+
     if schedule is not None:
         # F7-Fix: Sport-getrennter Merge. Wenn Caller Schedule mit einem Sport-Fokus
         # übergibt (typisch tennis_scan → nur tennis; daily_scan → nur football),
@@ -867,6 +905,10 @@ def write_signals_json(
         model_tips_data = model_tips
     else:
         model_tips_data = existing.get("model_tips", {})
+
+    # N4: Enrich football signals with best bookie from all_odds bookmakers_h2h
+    if all_odds_data:
+        football_data = _enrich_best_bookie(football_data, all_odds_data)
 
     # Compute bankroll state from ledger — always read from ledger when not explicitly passed
     # (avoids stale phantom bets persisting in KV from old JSON)

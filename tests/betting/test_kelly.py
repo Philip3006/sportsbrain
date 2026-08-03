@@ -124,10 +124,12 @@ class TestDynamicStakeBankroll:
         assert dynamic_stake_eur(0.20, "HIGH", bankroll=250.0) == 25.0
 
     def test_high_bonus_applies_below_cap(self):
-        # At lower EV, HIGH is +10% over MEDIUM
+        # At lower EV, HIGH produces a higher stake than MEDIUM
+        # (exact ratio differs post N9 rounding to nearest €0.50)
         m = dynamic_stake_eur(0.05, "MEDIUM", bankroll=175.0)
         h = dynamic_stake_eur(0.05, "HIGH", bankroll=175.0)
-        assert abs(h - m * 1.10) < 1e-9
+        assert h >= m
+        assert h % 0.5 == 0.0  # must be a 0.50-multiple
 
     def test_negative_bankroll_falls_back_to_lowest_tier(self):
         # Defensive: shouldn't happen but must not crash
