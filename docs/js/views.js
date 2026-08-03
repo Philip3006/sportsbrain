@@ -482,6 +482,7 @@ function sigCard(s, showMatch) {
         <div class="why-inline-row"><span class="wir-label">KI sagt</span><span class="wir-val">${mpct}%</span></div>
         <div class="why-inline-row"><span class="wir-label">Markt (fair)</span><span class="wir-val">${fpct}%</span></div>
         <div class="why-inline-row"><span class="wir-label">Dein Vorteil</span><span class="wir-val ${valCls}">${edgeSign}${edgePp} pp</span></div>
+        ${s.best_bookie ? `<div class="why-inline-row"><span class="wir-label">Beste Quote</span><span class="wir-val">${s.best_bookie.name} (${s.best_bookie.odds})</span></div>` : ''}
         <div class="why-inline-text">${plain}</div>
         <div class="why-inline-foot"><a onclick="event.stopPropagation();_openGlossary()">Begriffe erklärt →</a></div>
       </div>
@@ -1119,18 +1120,28 @@ function renderSport(sport) {
     return;
   }
 
-  for (const [match, mSigs] of sortedGroups) {
+  // N1: Separate top-priority groups from extra-priority groups
+  const _buildMatchGroup = (match, mSigs) => {
     const s0 = mSigs[0];
     const [mh, ma] = match.split(' vs ').map(x => x.trim());
     const timeStr = s0.kickoff ? fmtKickoff(s0.kickoff) : '';
     const tourStr = sport === 'tennis' ? (s0.tour||'Tennis').toUpperCase() : 'WM 2026';
-    h += `<div style="padding:14px 16px 6px;border-bottom:1px solid rgba(48,54,61,.4)">
+    let out = `<div style="padding:14px 16px 6px;border-bottom:1px solid rgba(48,54,61,.4)">
       <div style="font-size:16px;font-weight:900;letter-spacing:-.3px;margin-bottom:3px">${teamFlag(mh)} ${esc(mh)} <span style="color:var(--muted);font-weight:500">vs</span> ${teamFlag(ma)} ${esc(ma)}</div>
       <div style="font-size:11px;color:var(--muted);font-weight:600">${esc(tourStr)}${timeStr ? ' · ' + timeStr : ''}</div>
     </div>`;
     const ouS = mSigs.filter(s => /^o\/u/.test(s.market));
     const otherS = mSigs.filter(s => !/^o\/u/.test(s.market));
-    h += `<div class="match-group-cards">${otherS.map(s => sigCard(s, false)).join('')}${buildOuAccordion(ouS, otherS.length === 0 || ouS.some(s => s.confidence === 'HIGH'))}</div>`;
+    out += `<div class="match-group-cards">${otherS.map(s => sigCard(s, false)).join('')}${buildOuAccordion(ouS, otherS.length === 0 || ouS.some(s => s.confidence === 'HIGH'))}</div>`;
+    return out;
+  };
+  const topGroups = sortedGroups.filter(([, mSigs]) => mSigs.some(s => s.display_priority !== 'extra'));
+  const extraGroups = sortedGroups.filter(([, mSigs]) => mSigs.every(s => s.display_priority === 'extra'));
+  for (const [match, mSigs] of topGroups) h += _buildMatchGroup(match, mSigs);
+  if (extraGroups.length) {
+    h += `<details class="extra-signals-section"><summary style="padding:10px 16px;cursor:pointer;font-size:12px;font-weight:700;color:var(--muted);background:rgba(0,0,0,.18);border-top:1px solid rgba(48,54,61,.5)">➕ Weitere Signale (${extraGroups.length})</summary>`;
+    for (const [match, mSigs] of extraGroups) h += _buildMatchGroup(match, mSigs);
+    h += '</details>';
   }
   h += '</div>';
   c.innerHTML = h;

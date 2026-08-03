@@ -44,12 +44,19 @@ MIN_EDGE = 0.03
 MIN_STAKE_EUR = 5.0
 MAX_STAKE_EUR = 15.0
 MAX_ACTIVE_BETS = 5
+MAX_SIGNALS_DISPLAY = 5         # top N signals shown prominently per sport in PWA
 MAX_EV = 0.40           # signals with EV > 40% are almost always model artifacts
 
 # I8: Market-Performance-Feedback-Loop
 MARKET_PERF_MIN_BETS = 10           # minimum settled bets before applying penalty/bonus
 MARKET_PERF_ROI_PENALTY_THRESHOLD = -0.20   # ROI below -20% → penalty
 MARKET_PERF_PENALTY_PP = 0.05       # +5pp to min_edge for bad markets
+
+# N6: Bankroll-Meilenstein Push — multiples of starting bankroll
+BANKROLL_MILESTONES: list[float] = [1.10, 1.20, 1.50, 2.00]
+
+# N8: Odds-Freshness Warnung — badge wenn Odds >7% gegen Position bewegt
+ODDS_MOVE_WARN_PCT: float = 0.07
 
 # Dynamic stake tiers: each entry = (lower_bankroll_threshold, min_stake_eur, max_stake_eur).
 # Lookup picks the first row whose threshold ≤ bankroll (sorted high → low).
@@ -249,7 +256,7 @@ PPDA_LIVE_ENABLED = True
 # Wert 1.05 = Literatur-Konsens (Pollard 2006, Clarke); empirische Kalibrierung
 # auf WC 2006-2022 lieferte kein robustes Signal (n=25, 95% CI [0.50, 1.19]).
 # Rückrollung: HOST_BOOST_ENABLED=False → host_boost=1.0 in daily_scan.
-HOST_BOOST_ENABLED = True
+HOST_BOOST_ENABLED = False
 HOST_LAMBDA_BOOST = 1.05
 HOST_NATIONS: set[str] = {"United States", "Canada", "Mexico"}
 

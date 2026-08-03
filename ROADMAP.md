@@ -1001,12 +1001,28 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ## 📊 Statistik
 
-- **Insgesamt**: 99 konkrete Items (+25 ggü. 2026-08-01 durch **J8 Tennis-Audit**: 13 Bugs + 8 Missing + 4 neue Ideen; J8-I3/I4 sind Referenzen)
+- **Insgesamt**: 110 konkrete Items (+11 aus Erweiterungs-Paket 2026-08-03: N1-N11)
 - **P0**: 15 (sofort) — davon **15 ✅** (J8-B1 + J8-B3 in Phase-4-Sprint erledigt)
-- **P1**: 43 — davon **43 ✅** — alle P1-Items erledigt (J8-M5/I6 2026-08-03, J8-B7/B12/M8 Phase-4-Sprint)
-- **P2**: 31 — davon **29 ✅**; **offen: J8-B8 (Design-Doc/deferred J2-N), J8-I7 (Serve-Backfill Q4), J8-I9 (Kontextfeatures Q4), J8-I10 (Auto-Recal Q4)**
-- **P3**: 6 — J2-N + 4 weitere Q4 2026 + **J8-I8 Live-InPlay**
+- **P1**: 46 — davon **43 ✅**; **offen: N1 (Top-N Filter), N2 (Bundesliga Warm-up), N9 (Stake-Rounding)**
+- **P2**: 38 — davon **29 ✅**; **offen: J8-B8/I7/I9/I10 (Q4), N3 (Odds-Freshness), N4 (Bester Bookie), N5 (Settle-Reminder), N6 (Bankroll-Meilenstein), N7 (Konflikt-Check), N8 (Model-Drift Monitor)**
+- **P3**: 8 — J2-N + **J8-I8 Live-InPlay** + **N10 Draw-Difficulty** + **N11 Saisonbericht**
 - **Veto**: 10 (K5 aufgehoben 2026-06-26)
+
+### + NEU 2026-08-03 — Erweiterungs-Paket N1-N11
+
+| ID | Was | Prio | Aufwand | Status |
+|---|---|---|---|---|
+| **N1** | Top-N Signal Display Filter — PWA zeigt max 5 Signale prominent, Rest in `<details>` | P1 | 1h | offen |
+| **N2** | Bundesliga Warm-up — HOST_BOOST_ENABLED=False, bundesliga_ready_check.py | P1 | 30min | in Arbeit |
+| **N3** | Odds-Freshness Badge — ⚠ Quote gefallen wenn >7% Bewegung gegen Position | P2 | 2h | offen |
+| **N4** | Bester Bookie pro Signal — Why-Drawer zeigt Beste Quote + Provider | P2 | 45min | offen |
+| **N5** | Settle-Reminder Push — Push nach 3h offener Bet post-Kickoff | P2 | 1h | offen |
+| **N6** | Bankroll-Meilenstein Push — Push bei 1.1×/1.2×/1.5×/2× Startkapital | P2 | 30min | offen |
+| **N7** | Multi-Market Konflikt-Check — no_bet_flag für semantisch widersprüchliche Signals | P2 | 1.5h | offen |
+| **N8** | Model-Drift Brier Monitor — Wöchentlicher Brier-Score-Vergleich vs. Baseline | P2 | 2h | offen |
+| **N9** | Stake-Rounding auf €0.50 — Kelly-Output auf nächste 50ct runden | P1 | 15min | ✅ kelly.py |
+| **N10** | Tennis Draw-Difficulty Index — ±5pp Elo-Adjustment via Bracket-Analyse | P3 | 4h | Q4 2026 |
+| **N11** | Automatischer Saisonbericht — P&L/Brier/CLV Report am Saisonende | P3 | 2h | Q4 2026 |
 
 ### 🔴 KRITISCH OFFEN — Odds-Coverage-Baustelle (User-Feedback 2026-07-31 Abend)
 

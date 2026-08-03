@@ -77,6 +77,7 @@ def dynamic_stake_eur(
     amount = max(lo, min(effective_hi, amount))
     if confidence == "HIGH":
         amount = min(amount * 1.10, effective_hi)
+    amount = round(amount * 2) / 2
     return amount
 
 
