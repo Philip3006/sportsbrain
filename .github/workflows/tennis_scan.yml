@@ -75,7 +75,8 @@ jobs:
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add results/tennis_scan_*.md docs/data/signals*.json results/health/tennis_scan.json data/cache/signal_history.jsonl || true
+          git add results/tennis_scan_*.md docs/data/signals*.json results/health/tennis_scan.json || true
+          git add -f data/cache/signal_history.jsonl || true
           git diff --staged --quiet || git commit -m "auto: tennis scan $(date +%Y-%m-%d)"
           for i in 1 2 3 4 5; do
             git fetch origin main
