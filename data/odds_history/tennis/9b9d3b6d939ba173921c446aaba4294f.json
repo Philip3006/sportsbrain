@@ -1,0 +1,15 @@
+{
+  "match_id": "9b9d3b6d939ba173921c446aaba4294f",
+  "player_a": "Diana Shnaider",
+  "player_b": "Rebecca Sramkova",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260803_22",
+      "ts_utc": "2026-08-03T22:19:03.192437+00:00",
+      "odds_a": 1.25,
+      "odds_b": 3.83,
+      "source": "betsson"
+    }
+  ]
+}

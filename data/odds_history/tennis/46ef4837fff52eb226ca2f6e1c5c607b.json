@@ -1,0 +1,15 @@
+{
+  "match_id": "46ef4837fff52eb226ca2f6e1c5c607b",
+  "player_a": "Coco Gauff",
+  "player_b": "Kayla Day",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260803_22",
+      "ts_utc": "2026-08-03T22:19:03.194325+00:00",
+      "odds_a": 1.09,
+      "odds_b": 7.3,
+      "source": "marathonbet"
+    }
+  ]
+}
