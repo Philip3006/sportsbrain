@@ -1,0 +1,15 @@
+{
+  "match_id": "328a46c77ce6663786c477fdb29ee0e4",
+  "player_a": "Kamilla Rakhimova",
+  "player_b": "Katerina Siniakova",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260803_03",
+      "ts_utc": "2026-08-03T03:56:10.344597+00:00",
+      "odds_a": 2.65,
+      "odds_b": 1.48,
+      "source": "winamax_de"
+    }
+  ]
+}

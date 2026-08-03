@@ -1,0 +1,15 @@
+{
+  "match_id": "3aa5a82fb7841b1e71bae0f012c8fc74",
+  "player_a": "Andrey Rublev",
+  "player_b": "Juncheng Shang",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260803_03",
+      "ts_utc": "2026-08-03T03:56:10.134319+00:00",
+      "odds_a": 1.14,
+      "odds_b": 1.03,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}
