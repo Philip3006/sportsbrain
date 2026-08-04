@@ -73,6 +73,13 @@
       "odds_a": 1.57,
       "odds_b": 2.55,
       "source": "pinnacle"
+    },
+    {
+      "label": "auto_20260804_11",
+      "ts_utc": "2026-08-04T11:34:55.565965+00:00",
+      "odds_a": 1.55,
+      "odds_b": 2.6,
+      "source": "coolbet"
     }
   ]
 }
