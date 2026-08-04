@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-04T18:38:17Z",
+  "generated_at": "2026-08-04T20:18:38Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -38,7 +38,7 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-04T18:38:17Z",
+      "last_run_at": "2026-08-04T20:18:38Z",
       "duration_s": 2.0,
       "exit_code": 0,
       "error": null,
@@ -49,8 +49,8 @@
     {
       "job": "live_score_push",
       "status": "ok",
-      "last_run_at": "2026-08-04T18:36:19Z",
-      "duration_s": 5.0,
+      "last_run_at": "2026-08-04T20:18:31Z",
+      "duration_s": 1.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -60,7 +60,7 @@
     {
       "job": "prematch_scan",
       "status": "ok",
-      "last_run_at": "2026-08-04T18:35:25Z",
+      "last_run_at": "2026-08-04T20:15:40Z",
       "duration_s": 0.0,
       "exit_code": 0,
       "error": null,
@@ -71,8 +71,8 @@
     {
       "job": "settle",
       "status": "ok",
-      "last_run_at": "2026-08-04T18:30:05Z",
-      "duration_s": 1.0,
+      "last_run_at": "2026-08-04T19:30:06Z",
+      "duration_s": 2.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -82,7 +82,7 @@
     {
       "job": "aggregate_health",
       "status": "ok",
-      "last_run_at": "2026-08-04T18:36:14Z",
+      "last_run_at": "2026-08-04T20:16:35Z",
       "duration_s": 2.0,
       "exit_code": 0,
       "error": null,
@@ -137,7 +137,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-04T18:36:15Z",
+      "last_run_at": "2026-08-04T20:09:20Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -151,7 +151,7 @@
       "last_run_at": "2026-07-31T10:59:26Z",
       "duration_s": null,
       "exit_code": null,
-      "error": "live_scores.json is 6218min old (limit 240min)",
+      "error": "live_scores.json is 6319min old (limit 240min)",
       "fallback_used": null,
       "next_expected_in_s": 14400,
       "cadence": "≤4h"
