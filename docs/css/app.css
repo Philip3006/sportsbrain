@@ -439,6 +439,7 @@
     .today-countdown { font-size: 10px; font-weight: 800; color: var(--muted); }
     .today-countdown.warn { color: var(--yellow); }
     .today-live-badge { font-size: 10px; font-weight: 900; background: var(--red); color: #fff; border-radius: 4px; padding: 1px 5px; animation: pulse 1.5s infinite; }
+    .today-suspended-badge { font-size: 10px; font-weight: 900; background: rgba(210,153,34,.15); border: 1px solid var(--yellow); color: var(--yellow); border-radius: 4px; padding: 1px 6px; }
     .last-call-badge { font-size: 10px; font-weight: 900; background: rgba(210,153,34,.2); border: 1px solid var(--yellow); color: var(--yellow); border-radius: 4px; padding: 1px 6px; }
     .score-box { background: rgba(255,255,255,.06); border: 1px solid var(--border); border-radius: var(--r-base); padding: 4px 14px; font-size: 20px; font-weight: 900; letter-spacing: -0.5px; flex-shrink: 0; }
     .score-box.result-home { color: var(--green); border-color: rgba(0,200,83,.3); }
