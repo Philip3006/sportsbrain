@@ -8,7 +8,7 @@
         5
       ],
       [
-        3,
+        4,
         5
       ]
     ],
@@ -18,7 +18,7 @@
     ],
     "status": "in_progress",
     "resume_time": null,
-    "updated": "2026-08-04T16:26:22Z",
+    "updated": "2026-08-04T16:28:28Z",
     "match_start_push_sent": true,
     "suspended_push_sent": false
   },
@@ -32,7 +32,7 @@
       ],
       [
         5,
-        2
+        3
       ]
     ],
     "sets_won": [
@@ -41,7 +41,7 @@
     ],
     "status": "in_progress",
     "resume_time": null,
-    "updated": "2026-08-04T16:26:22Z",
+    "updated": "2026-08-04T16:28:28Z",
     "match_start_push_sent": true,
     "suspended_push_sent": false
   },
@@ -64,12 +64,12 @@
     ],
     "status": "in_progress",
     "resume_time": null,
-    "updated": "2026-08-04T16:26:22Z",
+    "updated": "2026-08-04T16:28:28Z",
     "match_start_push_sent": true,
     "suspended_push_sent": false
   },
   "_meta": {
-    "heartbeat_at": "2026-08-04T16:26:22Z",
+    "heartbeat_at": "2026-08-04T16:28:28Z",
     "reason": "3 live matches, 0 pushes"
   }
 }
