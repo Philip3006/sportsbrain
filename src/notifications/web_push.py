@@ -324,12 +324,12 @@ def send_scan_alert(
 
 # ── Public API: Settlement Alert ─────────────────────────────────
 def send_settlement_alert(record: dict, summary: dict) -> bool:
-    """Sendet Push wenn Wette gewonnen/verloren wurde."""
+    """Sendet Push wenn Wette gewonnen/verloren/gewertet wurde."""
     status = str(record.get("status", ""))
-    if status not in ("won", "lost"):
+    if status not in ("won", "lost", "push"):
         return False
 
-    icon = {"won": "✅", "lost": "❌"}.get(status, "")
+    icon = {"won": "✅", "lost": "❌", "push": "↩️"}.get(status, "")
     home = str(record.get("home", ""))
     away = str(record.get("away", ""))
     market = str(record.get("market", ""))
@@ -337,11 +337,18 @@ def send_settlement_alert(record: dict, summary: dict) -> bool:
     stake = float(record.get("stake_amount", 0) or 0)
     pnl = float(record.get("pnl", 0) or 0)
 
-    title = f"{icon} {home} vs {away}"
-    body_lines = [
-        f"{_market_label(market, home, away)} @ {odds:.2f}",
-        f"Einsatz €{stake:.0f} · P&L {pnl:+.2f}€",
-    ]
+    outcome_label = {"won": "GEWONNEN", "lost": "VERLOREN", "push": "VOID"}.get(status, status.upper())
+    title = f"{icon} {outcome_label} — {home} vs {away}"
+    if status == "push":
+        body_lines = [
+            f"{_market_label(market, home, away)} @ {odds:.2f}",
+            f"Einsatz €{stake:.0f} zurück (kein P&L)",
+        ]
+    else:
+        body_lines = [
+            f"{_market_label(market, home, away)} @ {odds:.2f}",
+            f"Einsatz €{stake:.0f} · P&L {pnl:+.2f}€",
+        ]
     n_open = summary.get("n_open", 0)
     total_pnl = summary.get("total_pnl", 0.0)
     roi = summary.get("roi_pct", 0.0)
