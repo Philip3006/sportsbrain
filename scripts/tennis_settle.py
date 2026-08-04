@@ -181,7 +181,7 @@ def _settle_user_ledger(user: str, scores: dict, tennis_match_ids: set[str], dry
                 from src.notifications.web_push import send_settlement_alert
                 summary = ledger_summary(ledger)
                 for r in tennis_open:
-                    if r.get("status", "").lower() in ("won", "lost"):
+                    if r.get("status", "").lower() in ("won", "lost", "push"):
                         try:
                             send_settlement_alert(r, summary)
                         except Exception as e:
