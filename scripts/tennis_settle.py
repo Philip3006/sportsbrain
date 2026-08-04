@@ -44,7 +44,7 @@ def _pnl(result: str, odds: float, stake: float) -> float:
     return 0.0  # push
 
 
-def _looks_tennis(bet: dict, tennis_match_ids: set[str]) -> bool:
+def _looks_tennis(bet: dict, tennis_match_ids: set[str], scores: dict | None = None) -> bool:
     """True wenn Bet vermutlich Tennis ist."""
     market = bet.get("market", "")
     if is_tennis_market(market):
@@ -58,6 +58,12 @@ def _looks_tennis(bet: dict, tennis_match_ids: set[str]) -> bool:
     src = (bet.get("source") or "").lower()
     if "tennis" in src:
         return True
+    # Fallback: match appears in tennis scores dict (covers home/away bets on tennis matches)
+    if scores:
+        home, away = bet.get("home", ""), bet.get("away", "")
+        match_key = f"{home} vs {away}"
+        if match_key in scores:
+            return True
     return False
 
 
@@ -71,7 +77,7 @@ def _settle_user_ledger(user: str, scores: dict, tennis_match_ids: set[str], dry
         return 0
 
     open_bets = [r for r in rows if r.get("status", "").lower() == "open"]
-    tennis_open = [r for r in open_bets if _looks_tennis(r, tennis_match_ids)]
+    tennis_open = [r for r in open_bets if _looks_tennis(r, tennis_match_ids, scores)]
     if not tennis_open:
         print(f"[{user}] Keine offenen Tennis-Bets")
         return 0
