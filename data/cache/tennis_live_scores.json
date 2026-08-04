@@ -73,15 +73,11 @@
     "suspended_push_sent": false
   },
   "_meta": {
-    "heartbeat_at": "2026-08-04T22:22:26Z",
-    "reason": "0 live matches, 2 pushes"
+    "heartbeat_at": "2026-08-04T22:05:01Z",
+    "reason": "0 live matches, 1 pushes"
   },
   "alexdeminaur|jamesduckworth": {
     "timeout_push_sent": true,
-    "updated": "2026-08-04T22:22:26Z"
-  },
-  "brandonnakashima|danielaltmaier": {
-    "timeout_push_sent": true,
-    "updated": "2026-08-04T22:22:26Z"
+    "updated": "2026-08-04T22:05:01Z"
   }
 }
