@@ -1,7 +1,7 @@
 {
-  "updated": "2026-08-04T13:48:41Z",
+  "updated": "2026-08-04T15:52:28Z",
   "build_info": {
-    "sha": "1b9e749",
+    "sha": "0cc114b",
     "date": "2026-08-04"
   },
   "meta": {
@@ -5999,14 +5999,14 @@
   ],
   "portfolio": {
     "n_bets": 76,
-    "n_open": 6,
-    "n_won": 26,
+    "n_open": 5,
+    "n_won": 27,
     "n_lost": 34,
     "n_void": 8,
-    "total_staked": 773.31,
-    "total_pnl": -0.17999999999999794,
-    "roi_pct": -0.02327656437909738,
-    "win_rate": 43.333333333333336,
+    "total_staked": 778.31,
+    "total_pnl": 5.620000000000002,
+    "roi_pct": 0.7220773213758017,
+    "win_rate": 44.26229508196721,
     "mean_clv": 0.11019444444444444,
     "by_market": {
       "ah+0.5": {
@@ -6094,10 +6094,10 @@
         "lost": 4
       },
       "home": {
-        "n": 6,
-        "pnl": 1.4000000000000004,
-        "roi_pct": 2.0848845867460915,
-        "won": 2,
+        "n": 7,
+        "pnl": 7.2,
+        "roi_pct": 9.979209979209978,
+        "won": 3,
         "lost": 2
       },
       "o/u2.5_over": {
@@ -6360,7 +6360,7 @@
       "stake": 5.0,
       "match_date": "2026-08-04",
       "model_edge_pct": null,
-      "is_live": false
+      "is_live": true
     },
     {
       "match": "Hubert Hurkacz vs Marcos Giron",
@@ -6374,7 +6374,17 @@
       "stake": 5.0,
       "match_date": "2026-08-04",
       "model_edge_pct": null,
-      "is_live": false
+      "is_live": true,
+      "tennis_sets": [
+        [
+          6,
+          5
+        ]
+      ],
+      "tennis_sets_won": [
+        1,
+        0
+      ]
     },
     {
       "match": "Sebastian Baez vs Mattia Bellucci",
@@ -6388,7 +6398,17 @@
       "stake": 5.0,
       "match_date": "2026-08-04",
       "model_edge_pct": null,
-      "is_live": false
+      "is_live": true,
+      "tennis_sets": [
+        [
+          6,
+          5
+        ]
+      ],
+      "tennis_sets_won": [
+        1,
+        0
+      ]
     },
     {
       "match": "Adam Walton vs Jenson Brooksby",
@@ -6402,7 +6422,17 @@
       "stake": 5.0,
       "match_date": "2026-08-04",
       "model_edge_pct": null,
-      "is_live": false
+      "is_live": true,
+      "tennis_sets": [
+        [
+          3,
+          4
+        ]
+      ],
+      "tennis_sets_won": [
+        0,
+        0
+      ]
     },
     {
       "match": "Jacob Fearnley vs Adrian Mannarino",
@@ -8536,7 +8566,7 @@
     }
   },
   "tennis_stats": {
-    "updated": "2026-08-04T13:48:41Z",
+    "updated": "2026-08-04T15:52:28Z",
     "active_tournaments": [
       {
         "slug": "canadian_open_atp",
