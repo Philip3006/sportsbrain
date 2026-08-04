@@ -110,8 +110,15 @@ def _load_model():
         return None, False
 
 
-# Blend weight: LGBM bekommt Anteil, aber Elo bleibt Anker (Robustheit bei unbekannten Playern)
-_LGBM_WEIGHT = 0.45
+# Surface-spezifische Blend-Gewichte (Rationale: Grass → Serve-Dominanz → Elo präziser).
+# Validiert via tennis_hebel_backtest.py bevor Anpassung. Default für unbekannte Surfaces.
+_LGBM_WEIGHT: dict[str, float] = {
+    "hard":    0.45,
+    "clay":    0.40,
+    "grass":   0.35,
+    "carpet":  0.42,
+    "default": 0.45,
+}
 
 
 def _normalize_for_elo(name: str, source: str = "odds_api") -> str:
@@ -205,7 +212,8 @@ def predict_winner_ensemble(
     X = pd.DataFrame([feats])
     p_lgbm_a = float(model.predict_p_a(X)[0])
 
-    p_a = _LGBM_WEIGHT * p_lgbm_a + (1 - _LGBM_WEIGHT) * elo_probs["p_a"]
+    _w = _LGBM_WEIGHT.get(surface.lower(), _LGBM_WEIGHT["default"])
+    p_a = _w * p_lgbm_a + (1 - _w) * elo_probs["p_a"]
 
     # J2-M Rule-based Adjustment: dominance_rate-Diff (Serve+Return-Punkte-Anteil letzte 20)
     # ist starker Indikator und wird vom aktuellen LGBM nicht genutzt (trainiert vor J2-M).

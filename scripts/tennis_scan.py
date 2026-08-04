@@ -503,10 +503,25 @@ def _market_label(market: str, a: str, b: str) -> str:
     return market
 
 
+def _load_open_bet_keys(bankroll: float = 100.0) -> set[tuple[str, str]]:
+    """Lädt (match_id, market) aller offenen Bets aus dem Ledger für Duplicate-Annotation."""
+    try:
+        from src.betting.ledger import _load, _resolve_ledger_path
+        import pandas as pd
+        df = _load(_resolve_ledger_path(None))
+        open_mask = df.get("status", pd.Series([])) == "open"
+        ids = df.get("match_id", pd.Series([]))[open_mask]
+        mkts = df.get("market", pd.Series([]))[open_mask]
+        return set(zip(ids, mkts))
+    except Exception:
+        return set()
+
+
 def format_scan_report(
     per_tournament: dict[str, dict],
     scan_date: str,
 ) -> str:
+    open_keys = _load_open_bet_keys()
     lines = [f"# Tennis Scan {scan_date}\n"]
     total_sigs = sum(len(v["signals"]) for v in per_tournament.values())
     lines += [f"**Aktive Turniere:** {len(per_tournament)} · "
@@ -527,8 +542,9 @@ def format_scan_report(
             lines.append("  > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!")
         for s in sorted(signals, key=lambda x: x.ev, reverse=True):
             ah_note = " _(Satz-AH = SET handicap)_" if s.market in ("ah-1.5_a", "ah+1.5_b") else ""
+            dup_note = " ⚠️ **bereits offen**" if (s.match_id, s.market) in open_keys else ""
             lines += [
-                f"- {tour_tag} **{s.home} vs {s.away}** · {_market_label(s.market, s.home, s.away)}{ah_note}",
+                f"- {tour_tag} **{s.home} vs {s.away}** · {_market_label(s.market, s.home, s.away)}{ah_note}{dup_note}",
                 f"  Quote {s.decimal_odds:.2f} · Modell {s.model_prob*100:.1f}% · "
                 f"EV +{s.ev*100:.1f}% · Stake {s.stake_eur:.2f}€ · {s.confidence}",
             ]
@@ -657,9 +673,18 @@ def main() -> None:
                     m["odds_source"] = quote.source
                     m["source_tier"] = quote.source_tier
                     m["is_display_only"] = False
-                    # J8-M5: AH von Pinnacle durchreichen wenn verfügbar, sonst H2H-only
+                    # Phase 4b: Pinnacle AH primär; falls kein AH → ah_implied Fallback
                     _ah_a = float(quote.__dict__.get("ah_1_5_a") or 0.0)
                     _ah_b = float(quote.__dict__.get("ah_1_5_b") or 0.0)
+                    if not (_ah_a > 1.0 and _ah_b > 1.0):
+                        try:
+                            from src.tennis.odds.ah_implied import fetch_ah_fallback as _fetch_ah
+                            _ah_q = _fetch_ah(hint, ratings=ratings)
+                            if _ah_q:
+                                _ah_a = _ah_q.h2h_a
+                                _ah_b = _ah_q.h2h_b
+                        except Exception:
+                            pass
                     sigs = detect_value_tennis(
                         player_a=pa, player_b=pb, probs=probs,
                         odds_a=quote.h2h_a, odds_b=quote.h2h_b,
