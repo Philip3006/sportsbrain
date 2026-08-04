@@ -1,7 +1,7 @@
 {
-  "updated": "2026-08-04T13:40:59Z",
+  "updated": "2026-08-04T13:48:41Z",
   "build_info": {
-    "sha": "6dc0184",
+    "sha": "1b9e749",
     "date": "2026-08-04"
   },
   "meta": {
@@ -6259,8 +6259,8 @@
     {
       "date": "2026-08-03",
       "n_bets": 4,
-      "pnl": 12.15,
-      "roi_pct": 60.7
+      "pnl": 17.95,
+      "roi_pct": 89.8
     },
     {
       "date": "2026-06-25",
@@ -6349,20 +6349,6 @@
   ],
   "open_bets": [
     {
-      "match": "Rebecca Sramkova vs Anna Blinkova",
-      "home": "Rebecca Sramkova",
-      "away": "Anna Blinkova",
-      "market": "home",
-      "entry_odds": 2.16,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
-      "stake": 5.0,
-      "match_date": "2026-08-03",
-      "model_edge_pct": null,
-      "is_live": false
-    },
-    {
       "match": "Martin Damm Jr. vs Stefanos Tsitsipas",
       "home": "Martin Damm Jr.",
       "away": "Stefanos Tsitsipas",
@@ -6442,6 +6428,19 @@
       "entry_odds": 1.95,
       "stake": 5.0,
       "pnl": 4.75,
+      "match_date": "2026-08-03",
+      "status": "won",
+      "clv": null,
+      "closing_odds": null
+    },
+    {
+      "match": "Rebecca Sramkova vs Anna Blinkova",
+      "home": "Rebecca Sramkova",
+      "away": "Anna Blinkova",
+      "market": "home",
+      "entry_odds": 2.16,
+      "stake": 5.0,
+      "pnl": 5.8,
       "match_date": "2026-08-03",
       "status": "won",
       "clv": null,
@@ -7334,21 +7333,21 @@
   ],
   "bankroll_state": {
     "start": 100.0,
-    "free": 64.82,
-    "staked": 35.0,
-    "exposure_pct": 35.0,
-    "max_win": 41.3,
-    "pnl_closed": -0.18
+    "free": 75.62,
+    "staked": 30.0,
+    "exposure_pct": 30.0,
+    "max_win": 35.5,
+    "pnl_closed": 5.62
   },
   "wm_stats": {
     "stats": {
       "1x2": {
-        "n": 13,
-        "won": 6,
-        "staked": 124.94,
-        "pnl": 66.44,
-        "hit_rate": 46.2,
-        "roi": 53.2
+        "n": 14,
+        "won": 7,
+        "staked": 129.94,
+        "pnl": 72.24,
+        "hit_rate": 50.0,
+        "roi": 55.6
       },
       "ou25": {
         "n": 19,
@@ -7438,14 +7437,14 @@
       },
       {
         "date": "2026-08-03",
-        "balance": 99.82
+        "balance": 105.62
       }
     ],
     "drawdown": {
       "peak": 176.25,
-      "current": 99.82,
-      "current_dd": 76.43,
-      "current_dd_pct": 43.36,
+      "current": 105.62,
+      "current_dd": 70.63,
+      "current_dd_pct": 40.07,
       "max_dd": 100.87,
       "max_dd_pct": 57.23
     },
@@ -7479,23 +7478,23 @@
       "bins": [
         2,
         6,
-        7,
+        8,
         6,
         5,
         9
       ]
     },
     "summary": {
-      "n_settled": 61,
-      "staked": 648.16,
-      "pnl": -0.18,
-      "yield_pct": -0.03,
+      "n_settled": 62,
+      "staked": 653.16,
+      "pnl": 5.62,
+      "yield_pct": 0.86,
       "mean_clv": 4.23,
       "mean_clv_30d": null,
-      "mean_edge": 8.27,
+      "mean_edge": 8.13,
       "n_clv": 25,
       "n_clv_30d": 0,
-      "n_edge": 35
+      "n_edge": 36
     },
     "per_team_market": {
       "South Korea": {
@@ -8436,6 +8435,26 @@
           "roi": 74.0
         }
       },
+      "Rebecca Sramkova": {
+        "1X2": {
+          "n": 1,
+          "won": 1,
+          "staked": 5.0,
+          "pnl": 5.8,
+          "hit_rate": 100.0,
+          "roi": 116.0
+        }
+      },
+      "Anna Blinkova": {
+        "1X2": {
+          "n": 1,
+          "won": 1,
+          "staked": 5.0,
+          "pnl": 5.8,
+          "hit_rate": 100.0,
+          "roi": 116.0
+        }
+      },
       "Nikola Bartunkova": {
         "Over": {
           "n": 1,
@@ -8499,12 +8518,12 @@
         "roi": -100.0
       },
       "Other": {
-        "n": 4,
-        "won": 4,
-        "staked": 25.0,
-        "pnl": 27.15,
+        "n": 5,
+        "won": 5,
+        "staked": 30.0,
+        "pnl": 32.95,
         "hit_rate": 100.0,
-        "roi": 108.6
+        "roi": 109.8
       },
       "OFC": {
         "n": 1,
@@ -8517,7 +8536,7 @@
     }
   },
   "tennis_stats": {
-    "updated": "2026-08-04T13:40:59Z",
+    "updated": "2026-08-04T13:48:41Z",
     "active_tournaments": [
       {
         "slug": "canadian_open_atp",

@@ -332,7 +332,7 @@ def fetch_tennis_scores_espn(tour: str = "atp", dates: str | None = None) -> dic
 
 
 def fetch_tennis_scores(sport_keys: list[str] | None = None) -> dict[str, dict]:
-    """Kombinierter Fetcher mit Fallback-Chain.
+    """Kombinierter Fetcher: Odds-API + ESPN (immer beide, ESPN ergänzt Lücken).
 
     sport_keys: Aktive Tennis-Sport-Keys aus discover_active_tournaments().
                 Wenn None, wird ESPN direkt aufgerufen (kein Odds-API-Call).
@@ -340,8 +340,17 @@ def fetch_tennis_scores(sport_keys: list[str] | None = None) -> dict[str, dict]:
     scores: dict[str, dict] = {}
     if sport_keys:
         scores = fetch_tennis_scores_odds_api(sport_keys)
-    if not scores:
-        # ESPN Fallback fuer beide Touren
-        scores.update(fetch_tennis_scores_espn("atp"))
-        scores.update(fetch_tennis_scores_espn("wta"))
+
+    # Immer ESPN zusätzlich fetchen — überschreibt Odds-API-Einträge die
+    # "completed" aber winner=None/sets=[] haben (API liefert kein Ergebnis).
+    espn_atp = fetch_tennis_scores_espn("atp")
+    espn_wta = fetch_tennis_scores_espn("wta")
+    espn_all = {**espn_atp, **espn_wta}
+    for key, espn_entry in espn_all.items():
+        existing = scores.get(key)
+        if existing is None:
+            scores[key] = espn_entry
+        elif not existing.get("winner") and espn_entry.get("winner"):
+            # ESPN hat Sieger, odds_api hat ihn nicht → ESPN gewinnt
+            scores[key] = espn_entry
     return scores

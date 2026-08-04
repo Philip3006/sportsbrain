@@ -121,11 +121,12 @@ def settle_tennis_market(market: str, match_result: dict[str, Any]) -> str | Non
             winner = "a"
     if market == "home":
         if winner is None:
-            return "push"
+            # completed but score not yet in API → retry; retired with no data → void
+            return "pending" if status == "completed" else "push"
         return "won" if winner == "a" else "lost"
     if market == "away":
         if winner is None:
-            return "push"
+            return "pending" if status == "completed" else "push"
         return "won" if winner == "b" else "lost"
 
     # --- First Set ----------------------------------------------------------
