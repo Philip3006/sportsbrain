@@ -1,0 +1,54 @@
+{
+  "generated_at": "2026-08-04T07:45:09.973138+00:00",
+  "n_settled_total": 29,
+  "match_winner": {
+    "n": 6,
+    "brier": 0.35334,
+    "log_loss": 0.91498,
+    "ece": 0.25275,
+    "win_rate": 0.3333,
+    "reliability_curve": [
+      {
+        "bin_lo": 0.4,
+        "bin_hi": 0.6,
+        "n": 4,
+        "mean_pred": 0.519,
+        "mean_actual": 0.5
+      },
+      {
+        "bin_lo": 0.6,
+        "bin_hi": 0.8,
+        "n": 2,
+        "mean_pred": 0.7202,
+        "mean_actual": 0.0
+      }
+    ]
+  },
+  "all_markets": {
+    "n": 29,
+    "brier": 0.27045,
+    "log_loss": 0.73762,
+    "ece": 0.14129,
+    "win_rate": 0.4828,
+    "reliability_curve": [
+      {
+        "bin_lo": 0.4,
+        "bin_hi": 0.6,
+        "n": 11,
+        "mean_pred": 0.5463,
+        "mean_actual": 0.3636
+      },
+      {
+        "bin_lo": 0.6,
+        "bin_hi": 0.8,
+        "n": 18,
+        "mean_pred": 0.6716,
+        "mean_actual": 0.5556
+      }
+    ]
+  },
+  "meta_calibrator": {
+    "fitted": false,
+    "n_samples": 0
+  }
+}
