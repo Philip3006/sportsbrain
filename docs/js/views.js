@@ -734,7 +734,7 @@ function renderHome() {
     }, 60000);
   }
 
-  // ── Smart Suggest ──────────────────────────────────────────
+  // ── Smart Suggest (Fußball + Tennis) ───────────────────────
   let suggestHtml = '';
   const free = (_bankrollState && _bankrollState.free != null) ? _bankrollState.free : 0;
   const openCount = (_openBets || []).length;
@@ -742,26 +742,11 @@ function renderHome() {
   if (free > 5) {
     const slots = Math.max(0, 5 - openCount);
     const nowSug = Date.now();
-    const now24h = nowSug + 12 * 36e5;
+    const now36h = nowSug + 36 * 36e5; // 36h — deckt heutigen + morgigen Spieltag ab
     const openMkSug = new Set((_openBets || []).map(b => {
       const [bh, ba] = (b.match || '').split(' vs ').map(x => x.trim());
       return matchKey(bh, ba);
     }));
-    const seenKeys = new Set();
-    const picks = [];
-    let remaining = free;
-    const candidates = (_signals || [])
-      .filter(s => s.sport === 'football' && s.ev_pct >= 3)
-      .filter(s => {
-        if (!s.kickoff) return false;
-        const ko = new Date(s.kickoff).getTime();
-        return ko > nowSug && ko <= now24h;
-      })
-      .filter(s => {
-        const [sh, sa] = (s.match || '').split(' vs ').map(x => x.trim());
-        return !openMkSug.has(matchKey(sh, sa));
-      })
-      .sort((a, b) => b.ev_pct - a.ev_pct);
 
     const mktCat = m =>
       ['home','draw','away'].includes(m) ? '1x2'
@@ -769,16 +754,37 @@ function renderHome() {
       : m.startsWith('o/u') ? 'ou'
       : m.startsWith('btts_') ? 'btts'
       : m.startsWith('dc_') ? 'dc'
+      : m.startsWith('first_set') ? 'first_set'
       : m;
+
+    // Composite EV-Score: HIGH-Confidence bekommt 30% Bonus im Ranking
+    const _evScore = s => s.ev_pct * (s.confidence === 'HIGH' ? 1.30 : s.confidence === 'MEDIUM' ? 1.0 : 0.85);
+
+    const candidates = (_signals || [])
+      .filter(s => s.ev_pct >= 3)
+      .filter(s => {
+        if (!s.kickoff) return false;
+        const ko = new Date(s.kickoff).getTime();
+        return ko > nowSug && ko <= now36h;
+      })
+      .filter(s => {
+        const [sh, sa] = (s.match || '').split(' vs ').map(x => x.trim());
+        return !openMkSug.has(matchKey(sh, sa));
+      })
+      .sort((a, b) => _evScore(b) - _evScore(a));
+
+    const seenMatchMkt = new Set();
+    const picks = [];
+    let remaining = free;
 
     for (const s of candidates) {
       if (picks.length >= 5) break;
       const [sh, sa] = (s.match || '').split(' vs ').map(x => x.trim());
       const dedupKey = matchKey(sh, sa) + '|' + mktCat(s.market);
-      if (seenKeys.has(dedupKey)) continue;
+      if (seenMatchMkt.has(dedupKey)) continue;
       const stake = Math.min(s.stake_eur || 10, remaining);
       if (stake < 3) continue;
-      seenKeys.add(dedupKey);
+      seenMatchMkt.add(dedupKey);
       picks.push({ ...s, display_stake: Math.round(stake) });
       remaining -= stake;
     }
@@ -791,21 +797,31 @@ function renderHome() {
         const mktLabel = marketLabel(p.market, p.match);
         const evColor = p.ev_pct >= 10 ? 'var(--green)' : 'var(--yellow)';
         const timeStr = p.kickoff ? fmtKickoff(p.kickoff) : '';
+        const sportIcon = p.sport === 'tennis' ? '🎾' : p.sport === 'football' ? '⚽' : '';
+        const flagA = teamFlag(ph);
+        const flagB = teamFlag(pa);
+        const confBadge = p.confidence === 'HIGH'
+          ? `<span style="font-size:9px;font-weight:800;background:rgba(0,200,83,.18);color:var(--green);border:1px solid rgba(0,200,83,.4);border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle">HIGH</span>`
+          : '';
         return `<div class="suggest-pick" onclick='openMatch(${JSON.stringify(p.match)})'>
-          <div class="suggest-teams-row">${teamFlag(ph)} <strong>${esc(ph)}</strong><span class="vs">vs</span>${teamFlag(pa)} <strong>${esc(pa)}</strong><span style="font-size:11px;color:var(--muted);font-weight:500;margin-left:6px">${esc(timeStr)}</span></div>
+          <div class="suggest-teams-row">
+            <span style="font-size:13px;margin-right:3px">${sportIcon}</span>${flagA}${flagA?' ':''}<strong>${esc(ph)}</strong><span class="vs">vs</span>${flagB}${flagB?' ':''}<strong>${esc(pa)}</strong>${confBadge}<span style="font-size:11px;color:var(--muted);font-weight:500;margin-left:6px">${esc(timeStr)}</span>
+          </div>
           <div class="suggest-bottom-row">
             <span class="suggest-mkt-pill">${esc(mktLabel)}</span>
-            <span class="suggest-odds">${p.odds.toFixed(2)}</span>
+            <span class="suggest-odds">${(p.odds||0).toFixed(2)}</span>
             <span class="suggest-ev" style="color:${evColor}">+${p.ev_pct.toFixed(1)}%</span>
             <span class="suggest-eur">€${p.display_stake}</span>
           </div>
         </div>`;
       }).join('');
+      const sportCounts = picks.reduce((acc, p) => { acc[p.sport] = (acc[p.sport]||0)+1; return acc; }, {});
+      const sportSummary = Object.entries(sportCounts).map(([sp, n]) => `${n}×${sp==='tennis'?'🎾':'⚽'}`).join(' ');
       suggestHtml = `<div class="suggest-card">
         <div class="suggest-header">
           <div>
-            <div class="suggest-title">⚡ Empfehlung</div>
-            <div class="suggest-subtitle">${slots} freier Slot${slots !== 1 ? 's' : ''} · €${free.toFixed(0)} verfügbar</div>
+            <div class="suggest-title">⚡ Top-Picks</div>
+            <div class="suggest-subtitle">${slots} freier Slot${slots !== 1 ? 's' : ''} · €${free.toFixed(0)} verfügbar · ${sportSummary}</div>
           </div>
           <div>
             <div class="suggest-stake-big">€${usedStake}</div>
