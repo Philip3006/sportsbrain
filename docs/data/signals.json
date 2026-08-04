@@ -1,7 +1,7 @@
 {
-  "updated": "2026-08-04T17:30:15Z",
+  "updated": "2026-08-04T18:36:14Z",
   "build_info": {
-    "sha": "0ef860d",
+    "sha": "7433507",
     "date": "2026-08-04"
   },
   "meta": {
@@ -6134,9 +6134,9 @@
   "history": [
     {
       "date": "2026-08-04",
-      "n_bets": 5,
-      "pnl": 0.0,
-      "roi_pct": 0.0
+      "n_bets": 6,
+      "pnl": -20.0,
+      "roi_pct": -52.7
     },
     {
       "date": "2026-08-03",
@@ -6231,108 +6231,6 @@
   ],
   "open_bets": [
     {
-      "match": "Martin Damm Jr. vs Stefanos Tsitsipas",
-      "home": "Martin Damm Jr.",
-      "away": "Stefanos Tsitsipas",
-      "market": "home",
-      "entry_odds": 2.6,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
-      "stake": 5.0,
-      "match_date": "2026-08-04",
-      "model_edge_pct": null,
-      "is_live": false
-    },
-    {
-      "match": "Hubert Hurkacz vs Marcos Giron",
-      "home": "Hubert Hurkacz",
-      "away": "Marcos Giron",
-      "market": "ah+1.5_b",
-      "entry_odds": 2.1,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
-      "stake": 5.0,
-      "match_date": "2026-08-04",
-      "model_edge_pct": null,
-      "is_live": true,
-      "tennis_sets": [
-        [
-          7,
-          5
-        ],
-        [
-          4,
-          6
-        ],
-        [
-          4,
-          2
-        ]
-      ],
-      "tennis_sets_won": [
-        1,
-        1
-      ]
-    },
-    {
-      "match": "Sebastian Baez vs Mattia Bellucci",
-      "home": "Sebastian Baez",
-      "away": "Mattia Bellucci",
-      "market": "ah+1.5_b",
-      "entry_odds": 1.7,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
-      "stake": 5.0,
-      "match_date": "2026-08-04",
-      "model_edge_pct": null,
-      "is_live": true,
-      "tennis_sets": [
-        [
-          7,
-          5
-        ],
-        [
-          5,
-          3
-        ]
-      ],
-      "tennis_sets_won": [
-        1,
-        0
-      ]
-    },
-    {
-      "match": "Adam Walton vs Jenson Brooksby",
-      "home": "Adam Walton",
-      "away": "Jenson Brooksby",
-      "market": "o/u_games_22.5_over",
-      "entry_odds": 1.8,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
-      "stake": 5.0,
-      "match_date": "2026-08-04",
-      "model_edge_pct": null,
-      "is_live": true,
-      "tennis_sets": [
-        [
-          3,
-          6
-        ],
-        [
-          4,
-          5
-        ]
-      ],
-      "tennis_sets_won": [
-        0,
-        1
-      ]
-    },
-    {
       "match": "Jacob Fearnley vs Adrian Mannarino",
       "home": "Jacob Fearnley",
       "away": "Adrian Mannarino",
@@ -6348,6 +6246,71 @@
     }
   ],
   "settled_bets": [
+    {
+      "match": "Martin Damm Jr. vs Stefanos Tsitsipas",
+      "home": "Martin Damm Jr.",
+      "away": "Stefanos Tsitsipas",
+      "market": "home",
+      "entry_odds": 2.6,
+      "stake": 5.0,
+      "pnl": -5.0,
+      "match_date": "2026-08-04",
+      "status": "lost",
+      "clv": null,
+      "closing_odds": 2.6
+    },
+    {
+      "match": "Hubert Hurkacz vs Marcos Giron",
+      "home": "Hubert Hurkacz",
+      "away": "Marcos Giron",
+      "market": "ah+1.5_b",
+      "entry_odds": 2.1,
+      "stake": 5.0,
+      "pnl": -5.0,
+      "match_date": "2026-08-04",
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
+    },
+    {
+      "match": "Sebastian Baez vs Mattia Bellucci",
+      "home": "Sebastian Baez",
+      "away": "Mattia Bellucci",
+      "market": "ah+1.5_b",
+      "entry_odds": 1.7,
+      "stake": 5.0,
+      "pnl": -5.0,
+      "match_date": "2026-08-04",
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
+    },
+    {
+      "match": "Adam Walton vs Jenson Brooksby",
+      "home": "Adam Walton",
+      "away": "Jenson Brooksby",
+      "market": "o/u_games_22.5_over",
+      "entry_odds": 1.8,
+      "stake": 5.0,
+      "pnl": -5.0,
+      "match_date": "2026-08-04",
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
+    },
+    {
+      "match": "Shintaro Mochizuki vs Fabian Marozsan",
+      "home": "Shintaro Mochizuki",
+      "away": "Fabian Marozsan",
+      "market": "home",
+      "entry_odds": 2.54,
+      "stake": 7.98,
+      "pnl": 0.0,
+      "match_date": "2026-08-04",
+      "status": "void",
+      "clv": null,
+      "closing_odds": 2.54
+    },
     {
       "match": "Aleksandar Vukic vs Daniel Altmaier",
       "home": "Aleksandar Vukic",
@@ -7262,20 +7225,20 @@
   "bankroll_state": {
     "start": 100.0,
     "free": 75.62,
-    "staked": 30.0,
-    "exposure_pct": 30.0,
-    "max_win": 35.5,
-    "pnl_closed": 5.62
+    "staked": 10.0,
+    "exposure_pct": 10.0,
+    "max_win": 14.5,
+    "pnl_closed": -14.38
   },
   "wm_stats": {
     "stats": {
       "1x2": {
-        "n": 14,
+        "n": 15,
         "won": 7,
-        "staked": 129.94,
-        "pnl": 72.24,
-        "hit_rate": 50.0,
-        "roi": 55.6
+        "staked": 134.94,
+        "pnl": 67.24,
+        "hit_rate": 46.7,
+        "roi": 49.8
       },
       "ou25": {
         "n": 19,
@@ -7294,12 +7257,12 @@
         "roi": -23.3
       },
       "other": {
-        "n": 26,
+        "n": 29,
         "won": 11,
-        "staked": 251.96,
-        "pnl": -29.14,
-        "hit_rate": 42.3,
-        "roi": -11.6
+        "staked": 266.96,
+        "pnl": -44.14,
+        "hit_rate": 37.9,
+        "roi": -16.5
       }
     },
     "series": [
@@ -7366,13 +7329,17 @@
       {
         "date": "2026-08-03",
         "balance": 105.62
+      },
+      {
+        "date": "2026-08-04",
+        "balance": 85.62
       }
     ],
     "drawdown": {
       "peak": 176.25,
-      "current": 105.62,
-      "current_dd": 70.63,
-      "current_dd_pct": 40.07,
+      "current": 85.62,
+      "current_dd": 90.63,
+      "current_dd_pct": 51.42,
       "max_dd": 100.87,
       "max_dd_pct": 57.23
     },
@@ -7389,7 +7356,7 @@
         10,
         1,
         2,
-        6,
+        8,
         1,
         5
       ]
@@ -7406,23 +7373,23 @@
       "bins": [
         2,
         6,
-        8,
+        9,
+        7,
         6,
-        5,
-        9
+        10
       ]
     },
     "summary": {
-      "n_settled": 62,
-      "staked": 653.16,
-      "pnl": 5.62,
-      "yield_pct": 0.86,
-      "mean_clv": 4.23,
-      "mean_clv_30d": null,
-      "mean_edge": 8.13,
-      "n_clv": 25,
-      "n_clv_30d": 0,
-      "n_edge": 36
+      "n_settled": 66,
+      "staked": 673.16,
+      "pnl": -14.38,
+      "yield_pct": -2.14,
+      "mean_clv": 3.92,
+      "mean_clv_30d": 0.0,
+      "mean_edge": 8.37,
+      "n_clv": 27,
+      "n_clv_30d": 2,
+      "n_edge": 40
     },
     "per_team_market": {
       "South Korea": {
@@ -8402,6 +8369,86 @@
           "hit_rate": 100.0,
           "roi": 74.0
         }
+      },
+      "Martin Damm Jr.": {
+        "1X2": {
+          "n": 1,
+          "won": 0,
+          "staked": 5.0,
+          "pnl": -5.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "Stefanos Tsitsipas": {
+        "1X2": {
+          "n": 1,
+          "won": 0,
+          "staked": 5.0,
+          "pnl": -5.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "Hubert Hurkacz": {
+        "AH": {
+          "n": 1,
+          "won": 0,
+          "staked": 5.0,
+          "pnl": -5.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "Marcos Giron": {
+        "AH": {
+          "n": 1,
+          "won": 0,
+          "staked": 5.0,
+          "pnl": -5.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "Sebastian Baez": {
+        "AH": {
+          "n": 1,
+          "won": 0,
+          "staked": 5.0,
+          "pnl": -5.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "Mattia Bellucci": {
+        "AH": {
+          "n": 1,
+          "won": 0,
+          "staked": 5.0,
+          "pnl": -5.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "Adam Walton": {
+        "Over": {
+          "n": 1,
+          "won": 0,
+          "staked": 5.0,
+          "pnl": -5.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "Jenson Brooksby": {
+        "Over": {
+          "n": 1,
+          "won": 0,
+          "staked": 5.0,
+          "pnl": -5.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
       }
     },
     "by_confederation": {
@@ -8446,12 +8493,12 @@
         "roi": -100.0
       },
       "Other": {
-        "n": 5,
+        "n": 9,
         "won": 5,
-        "staked": 30.0,
-        "pnl": 32.95,
-        "hit_rate": 100.0,
-        "roi": 109.8
+        "staked": 50.0,
+        "pnl": 12.95,
+        "hit_rate": 55.6,
+        "roi": 25.9
       },
       "OFC": {
         "n": 1,
@@ -8464,7 +8511,7 @@
     }
   },
   "tennis_stats": {
-    "updated": "2026-08-04T17:30:15Z",
+    "updated": "2026-08-04T18:36:14Z",
     "active_tournaments": [
       {
         "slug": "canadian_open_atp",
@@ -8496,14 +8543,14 @@
     },
     "stats": {
       "n_bets_all": 10,
-      "n_bets_settled": 7,
-      "n_open": 3,
+      "n_bets_settled": 10,
+      "n_open": 0,
       "n_won": 5,
-      "n_lost": 2,
+      "n_lost": 5,
       "n_push": 0,
-      "total_staked": 65.0,
-      "total_pnl": 3.6,
-      "roi_pct": 5.538,
+      "total_staked": 80.0,
+      "total_pnl": -11.4,
+      "roi_pct": -14.25,
       "clv_mean": -0.0122,
       "by_market": {
         "ah+1.5_home": {
@@ -8525,16 +8572,16 @@
           "staked": 25.0
         },
         "ah+1.5_b": {
-          "n": 1,
+          "n": 3,
           "won": 1,
-          "pnl": 4.75,
-          "staked": 5.0
+          "pnl": -5.25,
+          "staked": 15.0
         },
         "o/u_games_22.5_over": {
-          "n": 1,
+          "n": 2,
           "won": 1,
-          "pnl": 3.7,
-          "staked": 5.0
+          "pnl": -1.3,
+          "staked": 10.0
         },
         "o/u_games_21.5_over": {
           "n": 1,
