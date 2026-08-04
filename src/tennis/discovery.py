@@ -17,6 +17,7 @@ from pathlib import Path
 
 from scripts._http_retry import retry_request
 from src.config import DATA_CACHE
+from src.utils.atomic_io import atomic_write_json
 from src.tennis.tournaments import (
     Tournament,
     all_sport_keys,
@@ -42,8 +43,7 @@ def _load_cache() -> list[dict] | None:
 
 
 def _save_cache(payload: list[dict]) -> None:
-    _CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    _CACHE_PATH.write_text(json.dumps(payload))
+    atomic_write_json(_CACHE_PATH, payload)
 
 
 def fetch_active_tennis_sports(
