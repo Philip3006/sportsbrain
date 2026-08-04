@@ -101,6 +101,14 @@ class TennisEloRatings:
         """Number of matches played on this surface (winner + loser)."""
         return self.surface_counts.get(surface, {}).get(player, 0)
 
+    def get_overall_count(self, player: str) -> int:
+        """Total match count across all surfaces."""
+        return sum(d.get(player, 0) for d in self.surface_counts.values())
+
+    def is_known(self, player: str, min_matches: int = 5) -> bool:
+        """True wenn Spieler mind. min_matches Elo-Matches hat (kein reiner Default)."""
+        return self.get_overall_count(player) >= min_matches
+
     def _dynamic_w_surface(self, player: str, surface: str) -> float:
         """Surface weight that grows with match count: new player→0.15, experienced→cap.
         Ramps linearly from 0.15 to the surface cap over the first 20 matches."""

@@ -155,6 +155,19 @@ def predict_winner_ensemble(
     elo_key_b = _normalize_for_elo(player_b, name_source)
     elo_probs = predict_winner(elo_key_a, elo_key_b, ratings, surface)
 
+    # Unknown-Player-Gate: Spieler ohne ausreichende Elo-Historie erzeugen p≈0.5
+    # (Default-Rating 1500) → keine verlässliche EV-Berechnung möglich.
+    # Mindestens 5 Elo-Matches insgesamt bevor Wett-Signal erlaubt.
+    _known_a = ratings.is_known(elo_key_a, min_matches=5)
+    _known_b = ratings.is_known(elo_key_b, min_matches=5)
+    if not _known_a or not _known_b:
+        _log.info(
+            "tennis-ensemble: unknown player(s) — %s (known=%s), %s (known=%s) → low_confidence",
+            elo_key_a, _known_a, elo_key_b, _known_b,
+        )
+        return {**elo_probs, "source": "elo", "low_confidence": True,
+                "unknown_player_a": not _known_a, "unknown_player_b": not _known_b}
+
     model, gate_passed = _load_model()
     if model is None or not gate_passed:
         return {**elo_probs, "source": "elo"}
