@@ -115,13 +115,12 @@ def test_simulate_match_deterministic_with_seed():
     assert sim1["mean_games"] == sim2["mean_games"]
 
 
-def test_simulate_match_wta_lower_hold_more_games_per_set():
-    """WTA hat niedrigere Baseline-Hold-Rate → mehr Breaks → mehr Games / Set."""
+def test_simulate_match_wta_fewer_games_than_atp():
+    """WTA hat niedrigere Hold-Rate → kürzere Sätze → real Ø ~20 Games (ATP ~22).
+    Kalibrierungsoffset WTA (-4.0) > ATP (-2.5) reflektiert diese Differenz."""
     sim_atp = simulate_match(0.5, 3, "atp", n_sim=1500, seed=1)
     sim_wta = simulate_match(0.5, 3, "wta", n_sim=1500, seed=1)
-    # WTA-Sätze haben mehr Games (mehr Breaks). Bei BO3 mit 50/50 sollten beide
-    # ungefähr ähnlich enden — aber WTA hat strukturell mehr Breaks. Toleranz: WTA >= ATP.
-    assert sim_wta["mean_games"] >= sim_atp["mean_games"] - 1.0
+    assert sim_wta["mean_games"] < sim_atp["mean_games"]
 
 
 def test_p_total_games_over_under_complementary():
@@ -142,3 +141,28 @@ def test_total_games_bo5_in_realistic_range():
     """BO5 Match Mean-Games sollte etwa 30-50 sein (3-5 Sätze × ~9-12 Games)."""
     sim = simulate_match(0.55, 5, "atp", n_sim=500, seed=1)
     assert 25 <= sim["mean_games"] <= 55
+
+
+def test_calibration_atp_near_50_50_at_market_line():
+    """Kalibrierung: bei ATP-Marktlinie 22.5 sollte p_over nahe 50% liegen (±8pp).
+    Stellt sicher, dass der Offset korrekt und Unter-Signale möglich sind."""
+    sim = simulate_match(0.55, 3, "atp", n_sim=5000, seed=42)
+    p_over = p_total_games_over(sim, 22.5)
+    assert 0.42 <= p_over <= 0.58, f"p_over(22.5)={p_over:.3f} — ATP Kalibrierung verschoben"
+
+
+def test_calibration_atp_under_at_high_line():
+    """Bei Line 23.5 muss p_under > p_over für Großteil der Szenarien (Under-Signale)."""
+    for p_match_a in [0.55, 0.60, 0.65, 0.70]:
+        from src.betting.tennis_detector import _p_set_from_p_match
+        p_set = _p_set_from_p_match(p_match_a, bo5=False)
+        sim = simulate_match(p_set, 3, "atp", n_sim=2000, seed=42)
+        p_over = p_total_games_over(sim, 23.5)
+        assert p_over < 0.50, f"p_match={p_match_a}: p_over(23.5)={p_over:.3f} — Under-Signal nicht möglich"
+
+
+def test_calibration_wta_near_50_50_at_market_line():
+    """WTA-Kalibrierung: Marktlinie 20.5 nahe 50% (±10pp)."""
+    sim = simulate_match(0.5, 3, "wta", n_sim=5000, seed=42)
+    p_over = p_total_games_over(sim, 20.5)
+    assert 0.40 <= p_over <= 0.60, f"p_over(20.5)={p_over:.3f} — WTA Kalibrierung verschoben"
