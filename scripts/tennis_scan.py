@@ -226,7 +226,8 @@ def _parse_event_markets(event: dict, sport_key: str) -> dict | None:
 
     best = {
         "h2h_a": 0.0, "h2h_b": 0.0,
-        "spread_a": 0.0, "spread_b": 0.0,
+        "spread_a": 0.0, "spread_b": 0.0,   # game-spread (nicht als Set-AH verwenden!)
+        "spread_line_a": 0.0, "spread_line_b": 0.0,
         "fs_a": 0.0, "fs_b": 0.0,
         "totals_over": {}, "totals_under": {},   # line → best odds
         "games_over": {}, "games_under": {},     # line → best odds
@@ -246,12 +247,19 @@ def _parse_event_markets(event: dict, sport_key: str) -> dict | None:
                         best["h2h_b"] = max(best["h2h_b"], o["price"])
 
             elif key == "spreads":
+                # TheOddsAPI "spreads" = Spiel-Handicap (total games), NICHT Satz-Handicap.
+                # LeoVegas bietet z.B. ±1.5 Spiele an, Bovada ±2.5, Coolbet ±4.5 —
+                # alle sind game-level, nicht set-level. Wir haben kein Spiel-Handicap-Modell,
+                # daher: Spread-Daten loggen aber NICHT als AH-Odds verwenden, um falschen
+                # Set-AH-EV zu vermeiden.
                 for o in outcomes:
-                    if abs(abs(o.get("point", 0)) - 1.5) < 0.1:
-                        if o["name"] == home:
-                            best["spread_a"] = max(best["spread_a"], o["price"])
-                        elif o["name"] == away:
-                            best["spread_b"] = max(best["spread_b"], o["price"])
+                    pt = abs(o.get("point", 0))
+                    if o["name"] == home:
+                        best["spread_a"] = max(best["spread_a"], o["price"])
+                        best["spread_line_a"] = pt
+                    elif o["name"] == away:
+                        best["spread_b"] = max(best["spread_b"], o["price"])
+                        best["spread_line_b"] = pt
 
             elif key == "set_winner":
                 for o in outcomes:
@@ -297,8 +305,10 @@ def _parse_event_markets(event: dict, sport_key: str) -> dict | None:
         "odds_a": best["h2h_a"],
         "odds_b": best["h2h_b"],
         "is_display_only": is_display_only,
-        "ah_odds_a": best["spread_a"],
-        "ah_odds_b": best["spread_b"],
+        "ah_odds_a": 0.0,   # Spiel-Handicap ≠ Satz-Handicap: nicht verwenden
+        "ah_odds_b": 0.0,   # bis wir eine echte Satz-AH-Quelle haben
+        "game_spread_a": best["spread_a"],   # raw game-spread (für zukünftiges Modell)
+        "game_spread_b": best["spread_b"],
         "first_set_odds_a": best["fs_a"],
         "first_set_odds_b": best["fs_b"],
         "totals_over": best["totals_over"],

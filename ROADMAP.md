@@ -1003,11 +1003,11 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ## 📊 Statistik
 
-- **Insgesamt**: 112 konkrete Items (+2 aus 2026-08-04: 14g+14h)
-- **P0**: 15 (sofort) — davon **15 ✅** (J8-B1 + J8-B3 in Phase-4-Sprint erledigt)
+- **Insgesamt**: 115 konkrete Items (+3 aus 2026-08-05: N12 ✅ + N13 + N14)
+- **P0**: 16 (sofort) — davon **16 ✅** (N12 ✅ 2026-08-05)
 - **P1**: 46 — davon **46 ✅** — alle P1-Items erledigt (N1/N2/N9 2026-08-03)
-- **P2**: 38 — davon **37 ✅**; **offen: J8-B8/I9 (Q4 deferred)** — J8-I7 + J8-I10 erledigt 2026-08-04
-- **P3**: 8 — J2-N + **J8-I8 Live-InPlay** + **N10 Draw-Difficulty** + **N11 Saisonbericht**
+- **P2**: 39 — davon **37 ✅**; **offen: J8-B8/I9 (Q4 deferred), N14 Challenger Coverage**
+- **P3**: 9 — J2-N + **J8-I8 Live-InPlay** + **N10 Draw-Difficulty** + **N11 Saisonbericht** + **N13 Spiel-Handicap-Modell**
 - **Veto**: 10 (K5 aufgehoben 2026-06-26)
 
 ### + NEU 2026-08-03 — Erweiterungs-Paket N1-N11
@@ -1025,6 +1025,9 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **N9** | Stake-Rounding auf €0.50 — Kelly-Output auf nächste 50ct runden | P1 | 15min | ✅ cd0753bc |
 | **N10** | Tennis Draw-Difficulty Index — ±5pp Elo-Adjustment via Bracket-Analyse | P3 | 4h | Q4 2026 |
 | **N11** | Automatischer Saisonbericht — P&L/Brier/CLV Report am Saisonende | P3 | 2h | Q4 2026 |
+| **+ NEU N12** | ✅ AH/Game-Spread-Quellentrennung — TheOddsAPI „spreads" = Spiel-Handicap (NICHT Satz-AH). ah_odds_a/b aus TheOddsAPI-Pfad auf 0.0 gesetzt; Pinnacle-AH (Satz-AH) im `is_display_only`-Pfad weiterhin korrekt. Verhindert falsche EV-Signale durch Äpfel/Birnen-Vergleich (game spread odds vs set handicap prob). | P0 | 30min | ✅ 2026-08-05 |
+| **+ NEU N13** | Spiel-Handicap-Modell (Game-Spread-EV) — TheOddsAPI liefert game-level spreads (LeoVegas ±1.5, Bovada ±2.5, Coolbet ±4.5). Eigenes Modell: P(Favorit gewinnt Match um X Spiele gesamt) aus DC-Scoreline-Matrix oder Monte-Carlo-Game-Simulation. Dann echter EV-Vergleich gegen Markt-Spiel-Handicap. Voraussetzung: Spiel-Handicap-Settlement-Logik. | P3 | 8h | Q1 2027 |
+| **+ NEU N14** | ATP Challenger / ITF 100 Coverage — TheOddsAPI deckt keine Challenger/ITF-Events (verifiziert 2026-08-05: nur 43 sports, alle ATP/WTA Main-Tour). Alternative Quelle nötig: Betfair Exchange (breit), OddsPortal-Scraper (kostenlos), oder premium TheOddsAPI-Tier. Bis dahin: Challenger-Signale strukturell nicht möglich. | P2 | 4-8h | Q4 2026 |
 
 ### 🔴 KRITISCH OFFEN — Odds-Coverage-Baustelle (User-Feedback 2026-07-31 Abend)
 
