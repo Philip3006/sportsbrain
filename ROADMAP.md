@@ -1003,8 +1003,8 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ## 📊 Statistik
 
-- **Insgesamt**: 115 konkrete Items (+3 aus 2026-08-05: N12 ✅ + N13 + N14)
-- **P0**: 16 (sofort) — davon **16 ✅** (N12 ✅ 2026-08-05)
+- **Insgesamt**: 116 konkrete Items (+4 aus 2026-08-05: N12 ✅ + N13 + N14 + N15 ✅)
+- **P0**: 17 (sofort) — davon **17 ✅** (N12 ✅ 2026-08-05, N15 ✅ 2026-08-05)
 - **P1**: 46 — davon **46 ✅** — alle P1-Items erledigt (N1/N2/N9 2026-08-03)
 - **P2**: 39 — davon **37 ✅**; **offen: J8-B8/I9 (Q4 deferred), N14 Challenger Coverage**
 - **P3**: 9 — J2-N + **J8-I8 Live-InPlay** + **N10 Draw-Difficulty** + **N11 Saisonbericht** + **N13 Spiel-Handicap-Modell**
@@ -1028,6 +1028,7 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **+ NEU N12** | ✅ AH/Game-Spread-Quellentrennung — TheOddsAPI „spreads" = Spiel-Handicap (NICHT Satz-AH). ah_odds_a/b aus TheOddsAPI-Pfad auf 0.0 gesetzt; Pinnacle-AH (Satz-AH) im `is_display_only`-Pfad weiterhin korrekt. Verhindert falsche EV-Signale durch Äpfel/Birnen-Vergleich (game spread odds vs set handicap prob). | P0 | 30min | ✅ 2026-08-05 |
 | **+ NEU N13** | Spiel-Handicap-Modell (Game-Spread-EV) — TheOddsAPI liefert game-level spreads (LeoVegas ±1.5, Bovada ±2.5, Coolbet ±4.5). Eigenes Modell: P(Favorit gewinnt Match um X Spiele gesamt) aus DC-Scoreline-Matrix oder Monte-Carlo-Game-Simulation. Dann echter EV-Vergleich gegen Markt-Spiel-Handicap. Voraussetzung: Spiel-Handicap-Settlement-Logik. | P3 | 8h | Q1 2027 |
 | **+ NEU N14** | ATP Challenger / ITF 100 Coverage — TheOddsAPI deckt keine Challenger/ITF-Events (verifiziert 2026-08-05: nur 43 sports, alle ATP/WTA Main-Tour). Alternative Quelle nötig: Betfair Exchange (breit), OddsPortal-Scraper (kostenlos), oder premium TheOddsAPI-Tier. Bis dahin: Challenger-Signale strukturell nicht möglich. | P2 | 4-8h | Q4 2026 |
+| **+ NEU N15** ✅ | O/U Under-Signal-Kalibrierung — `src/tennis/sim.py` überschätzte Spielzahl systematisch um ~2.5 (ATP) / ~4.0 (WTA) durch unabhängige-Satz-Annahme + zu viele 3-Satz-Matches bei Elo-p_match=0.55. Root Cause: Elo-p_match 0.55 → p_set 0.533 → P(3 Sätze)=50% vs reale ATP ~38%. Fix: `TOTAL_GAMES_OFFSET_ATP=-2.5`, `TOTAL_GAMES_OFFSET_WTA=-4.0` kalibriert gegen Hard-Court-Marktlinien (ATP Ø 21.8 Spiele → Linie 22.5; WTA Ø 19.5 → Linie 20.5). Ergebnis: p_over(22.5) ≈ 0.49, Under-Signale möglich. 3 Kalibrierungs-Tests hinzugefügt. | P0 | 1h | ✅ 2026-08-05 |
 
 ### 🔴 KRITISCH OFFEN — Odds-Coverage-Baustelle (User-Feedback 2026-07-31 Abend)
 
