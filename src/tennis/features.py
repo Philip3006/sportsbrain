@@ -26,7 +26,7 @@ import pandas as pd
 
 from src.data.tennis_stats import ServeAggregate  # noqa: F401 (type hint)
 from src.data.tennis_bios import PlayerBio, age_years, hand_matchup_code  # noqa: F401
-from src.tennis.context import lookup_venue, altitude_factor
+from src.tennis.context import lookup_venue, altitude_factor, player_home_tz, tz_travel_penalty
 
 
 # Feature-Reihenfolge ist stabil (dient als LightGBM `feature_name`).
@@ -78,6 +78,8 @@ FEATURE_COLUMNS: tuple[str, ...] = (
     # === Hebel 3: Bayesian Elo Uncertainty ===
     "elo_uncertainty_a", "elo_uncertainty_b",      # 1/sqrt(n+1) — hoch = wenig Info
     "elo_confidence",                              # gemittelte Confidence (1 - avg uncertainty)
+    # === Phase 3c: TZ-Reise-Penalty (home TZ vs Venue TZ) ===
+    "tz_shift_a", "tz_shift_b",                   # 0..1, >0 bei starkem Jetlag
 )
 
 
@@ -294,6 +296,8 @@ def build_match_features(
     tournament_slug: str | None = None,
     surface_count_a: int = 0,
     surface_count_b: int = 0,
+    ioc_a: str = "",
+    ioc_b: str = "",
 ) -> dict[str, float]:
     """Baut Feature-Dict für ein einzelnes Match (Prediction-Zeit).
 
@@ -428,6 +432,13 @@ def build_match_features(
     # === Hebel 1 — Kontext (Altitude aus context.VENUE_META) ===
     venue = lookup_venue(tournament_slug) if tournament_slug else None
     feats["altitude_factor"] = float(altitude_factor(venue))
+
+    # === Phase 3c — TZ-Reise-Penalty ===
+    # IOC von bio bevorzugt, Fallback auf expliziten ioc_a/b Parameter
+    _ioc_a = (bio_a.ioc if bio_a else None) or ioc_a or ""
+    _ioc_b = (bio_b.ioc if bio_b else None) or ioc_b or ""
+    feats["tz_shift_a"] = float(tz_travel_penalty(player_home_tz(_ioc_a), venue))
+    feats["tz_shift_b"] = float(tz_travel_penalty(player_home_tz(_ioc_b), venue))
 
     # === Hebel 3 — Bayesian Elo Uncertainty ===
     # 1/sqrt(n+1) → hoch bei wenig Historie, gegen 0 mit steigendem n

@@ -28,10 +28,11 @@ class PlayerBio:
     height_cm: Optional[int]
     hand: str            # 'L' | 'R' | 'U' (unknown)
     dob: Optional[str]   # YYYYMMDD
+    ioc: str = "UNK"     # IOC 3-letter country code (Sackmann CSV)
 
 
 def _empty_bio(name: str) -> PlayerBio:
-    return PlayerBio(name=name, height_cm=None, hand="U", dob=None)
+    return PlayerBio(name=name, height_cm=None, hand="U", dob=None, ioc="UNK")
 
 
 def _canon(name: str) -> str:
@@ -70,7 +71,9 @@ def _fetch_bios(url: str) -> dict[str, PlayerBio]:
                 dob = str(int(dob_val))
             except Exception:
                 dob = str(dob_val)
-        bio = PlayerBio(name=full, height_cm=height, hand=hand, dob=dob)
+        ioc_raw = row.get("ioc", "")
+        ioc = str(ioc_raw).strip().upper() if pd.notna(ioc_raw) and ioc_raw else "UNK"
+        bio = PlayerBio(name=full, height_cm=height, hand=hand, dob=dob, ioc=ioc)
         out[_canon(full)] = bio
         out[_canon(f"{last} {first}")] = bio  # WTA/TE-Format
     return out

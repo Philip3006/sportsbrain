@@ -197,6 +197,15 @@ def predict_winner_ensemble(
             _log.debug("tennis-ensemble: serve-stats fetch failed (%s) → neutral prior", e)
             stats_a = stats_b = None
 
+    # Phase 3c: Biometrie + TZ-Feature für LGBM (gecacht, low latency nach erstem Call).
+    try:
+        from src.data.tennis_bios import lookup_bio
+        _tour_bio = "wta" if category.startswith("wta") else "atp"
+        bio_a = lookup_bio(player_a, _tour_bio)
+        bio_b = lookup_bio(player_b, _tour_bio)
+    except Exception:
+        bio_a = bio_b = None
+
     feats = build_match_features(
         player_a=player_a, player_b=player_b,
         surface=surface, best_of=best_of,
@@ -208,6 +217,9 @@ def predict_winner_ensemble(
         date=None,
         serve_stats_a=stats_a,
         serve_stats_b=stats_b,
+        bio_a=bio_a,
+        bio_b=bio_b,
+        tournament_slug=tournament_slug,
     )
     X = pd.DataFrame([feats])
     p_lgbm_a = float(model.predict_p_a(X)[0])

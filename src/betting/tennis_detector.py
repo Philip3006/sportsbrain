@@ -135,6 +135,47 @@ def _first_set_probs(p_a_wins: float, bo5: bool = True) -> dict[str, float]:
     return {"first_set_a": p_set, "first_set_b": 1.0 - p_set}
 
 
+def _p_hold_from_serve_stats(stats) -> float:
+    """P(win service game) from ServeAggregate serve stats.
+
+    Uses: first_serve_pct × first_serve_win_pct + (1 - first_serve_pct) × second_serve_win_pct
+    Falls back to dominance_rate if individual stats not meaningful.
+    """
+    if stats is None:
+        return 0.0
+    try:
+        fs_in = float(stats.first_serve_pct or 0)
+        fs_win = float(stats.first_serve_win_pct or 0)
+        ss_win = float(stats.second_serve_win_pct or 0)
+        if fs_in > 0.3 and fs_win > 0.3:
+            return max(0.4, min(0.95, fs_in * fs_win + (1 - fs_in) * ss_win))
+    except Exception:
+        pass
+    # fallback: dominance_rate ≈ point win%, convert to game hold via p^4/(p^4+(1-p)^4)
+    try:
+        p = max(0.4, min(0.8, float(stats.dominance_rate or 0.5)))
+        p4 = p ** 4
+        return p4 / (p4 + (1 - p) ** 4)
+    except Exception:
+        return 0.0
+
+
+def _first_set_probs_serve_based(p_hold_a: float, p_hold_b: float) -> dict[str, float]:
+    """First-set probability from per-game hold probs.
+
+    Uses composite per-game advantage:
+      p_comp = (p_hold_a + (1 - p_hold_b)) / 2  ← A's avg win prob per game
+    Then: P(A wins set) ≈ p_comp^6 / (p_comp^6 + (1 - p_comp)^6)
+    Gives realistic range ~[0.50, 0.85] for plausible serve advantages.
+    """
+    p_comp = max(0.15, min(0.85, (p_hold_a + (1.0 - p_hold_b)) / 2.0))
+    p6 = p_comp ** 6
+    q6 = (1.0 - p_comp) ** 6
+    p_a = p6 / (p6 + q6)
+    return {"first_set_a": max(0.10, min(0.90, p_a)),
+            "first_set_b": max(0.10, min(0.90, 1.0 - p_a))}
+
+
 _HIGH_EV_ATP  = 0.15  # ATP: upgrade to HIGH only at very strong edge (backtest -5.9%)
 _HIGH_EV_WTA  = 0.08  # WTA grass has +10.3% ROI: smaller edge required for HIGH
 
@@ -280,6 +321,9 @@ def detect_value_tennis(
     first_set_odds_b: float = 0.0,
     min_edge: float = MIN_EDGE,
     tour: str = "atp",
+    first_set_source_tier: int = 5,
+    serve_stats_a=None,
+    serve_stats_b=None,
 ) -> list[BetSignal]:
     """
     Detects value in tennis match markets.
@@ -310,8 +354,17 @@ def detect_value_tennis(
         if sig:
             directional.append(sig)
 
-    if first_set_odds_a > 1.0 and first_set_odds_b > 1.0:
-        fs_probs = _first_set_probs(p_a, bo5=bo5)
+    # Phase 4c: First-Set-Markt — nur bei Tier-1/2-Quoten (kein Implied/WebSearch).
+    if first_set_odds_a > 1.0 and first_set_odds_b > 1.0 and first_set_source_tier <= 2:
+        # Use serve-stats model when both players have sufficient data (n ≥ 10)
+        p_hold_a = _p_hold_from_serve_stats(serve_stats_a)
+        p_hold_b = _p_hold_from_serve_stats(serve_stats_b)
+        if p_hold_a > 0.3 and p_hold_b > 0.3 \
+                and getattr(serve_stats_a, "n_matches", 0) >= 10 \
+                and getattr(serve_stats_b, "n_matches", 0) >= 10:
+            fs_probs = _first_set_probs_serve_based(p_hold_a, p_hold_b)
+        else:
+            fs_probs = _first_set_probs(p_a, bo5=bo5)
         fair_fs_a, fair_fs_b = _devig_2way(first_set_odds_a, first_set_odds_b)
         sig = _signal(match_id, player_a, player_b, "first_set_a",
                       fs_probs["first_set_a"], fair_fs_a, first_set_odds_a, bankroll, min_edge)
