@@ -1,25 +1,25 @@
 {
-  "generated_at": "2026-08-02T22:26:59.546836+00:00",
-  "train_rows": 25010,
+  "generated_at": "2026-08-04T07:45:09.423313+00:00",
+  "train_rows": 55606,
   "cal_rows": 2616,
-  "holdout_rows": 5081,
+  "holdout_rows": 8581,
   "train_end": "2024-06-01",
   "cal_end": "2024-12-31",
   "elo": {
-    "n": 5081,
-    "brier": 0.22024699341765694,
-    "log_loss": 0.629518071911027,
-    "accuracy": 0.6360952568392049
+    "n": 8581,
+    "brier": 0.219408696170507,
+    "log_loss": 0.627683589455831,
+    "accuracy": 0.6404847919822865
   },
   "lgbm": {
-    "n": 5081,
-    "brier": 0.2188336642616632,
-    "log_loss": 0.627568175802578,
-    "accuracy": 0.6374729383979532
+    "n": 8581,
+    "brier": 0.21496201355880784,
+    "log_loss": 0.6205472440969895,
+    "accuracy": 0.652954201142058
   },
-  "brier_improvement": 0.0014133291559937367,
-  "logloss_improvement": 0.0019498961084490896,
-  "gate_passed": false,
+  "brier_improvement": 0.004446682611699171,
+  "logloss_improvement": 0.007136345358841556,
+  "gate_passed": true,
   "brier_gate": 0.003,
   "feature_columns": [
     "rank_a",
@@ -101,6 +101,5 @@
     "elo_uncertainty_a",
     "elo_uncertainty_b",
     "elo_confidence"
-  ],
-  "forced_persist": true
+  ]
 }
