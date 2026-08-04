@@ -931,6 +931,89 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 
 ---
 
+## 🟦 N. + NEU System-Review 2026-08-05 — Backlog aus 4-Bereich-Audit
+
+Kontext: Umfassender Review über Tennis / Football / Betting-Layer / Infrastruktur mit File-Level-Findings. P0/P1-Items dieser Session teilweise umgesetzt. Diese Sektion trackt die verbleibenden Ideen + sekundären Schwächen für nachfolgende Sessions.
+
+**Bereits umgesetzt in dieser Session (2026-08-05):**
+- ✅ `src/utils/atomic_io.py` mit `atomic_write_json/text` + 6 Tests. Migration: `web_dashboard.py:1181` (signals.json), `ledger.py:660/722` (Bankroll-Snapshots), `tennis/discovery.py:46` (Odds-Cache).
+- ✅ Ledger `_save()` atomic via tempfile+os.replace (verhindert CSV-Corruption bei Crash mid-write). Full-Transaction-Lock über `_settle_from_results_locked` existierte bereits.
+- ✅ `src/phase_flags.py` als Registry für Time-Boxed Flags (WC2026_BOOST, STACKER, CONFORMAL, PPDA_LIVE_G1) mit `assert_flags_valid()` + Sunset-Check + 5 Tests.
+- ✅ `src/betting/gates.py` — Single-Source-of-Truth für EV-Gates (DEFAULT/TENNIS/GOALSCORER), `gate_for(sport, market, category)` Dispatch + 6 Tests.
+- ✅ Memory-Kataloge `strengths_tennis_system/football_system/betting_layer/infra` (bewährte Patterns für Basketball-Rollout J1).
+
+### N-Rev1. Odds-Cache-Refactor zu `CachedSource`-Protocol mit `threading.Lock` — P1
+- **Was**: Alle 5 Tennis-Odds-Sources auf gemeinsames Protocol mit `_lock: threading.Lock`. Ersetzt 9 Pinnacle-Globals + Betfair-Session-Cache + Ensemble `_CACHED`.
+- **Warum**: Aktuell Race-Risiko bei ThreadPoolExecutor-Merge (`odds/merger.py:65-79`). Heute nicht getroffen, aber latent.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟡 · 🟡
+- **Dateien**: `src/tennis/odds/base.py`, `betfair.py:37-42`, `pinnacle.py:47-57`, `ensemble.py:36`.
+
+### N-Rev2. Walk-Forward Elo-Freeze während Validation — P1
+- **Was**: `src/backtest/tennis_walk_forward.py:93-97` — Elo darf während Val nicht upgedatet werden. Deep-Copy Elo vor Val, Update erst nach Val.
+- **Warum**: Data-Leakage → Backtest-ROI verzerrt. Erklärt teilweise signal_history 64% WR vs Ledger -2.1% Divergenz.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟢 · 🟢
+
+### N-Rev3. Player-spezifische Hold-Rates aus TA-Serve-Daten — P2
+- **Was**: `sim.py:21-22` (`ATP 0.80 / WTA 0.72`) durch Per-Player-Hold aus Tennis-Abstract ersetzen. Fallback Tour-Schnitt.
+- **Warum**: Serve-Bots vs Counter-Puncher — massives Signal für O/U + AH.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟡 · 🟡
+
+### N-Rev4. Point-by-Point-Momentum-Model für InPlay — P2
+- **Was**: `inplay_model.py` von Set-Level auf Point-Level (Break-Points-saved, Streaks, Serve-Speed).
+- **Abhängigkeit**: Point-Level Live-Datenquelle (Kosten).
+- **Impact/Aufwand/Risiko**: 🟢 · 🔴 · 🟡
+
+### N-Rev5. Ledger → SQLite (WAL-Mode) Migration — P2
+- **Was**: CSV nach SQLite. Atomic Transactions built-in, ACID, löst Windows-No-Op-Loch mit.
+- **Impact/Aufwand/Risiko**: 🟢 · 🔴 · 🟡
+
+### N-Rev6. CLV-Feedback-Loop → adaptive `min_edge` — P2
+- **Was**: `clv_tracker.py` erweitern; Sharpness-Score pro Segment → automatischer `min_edge`-Adjust in `betting/gates.py`.
+- **Impact/Aufwand/Risiko**: 🟢 · 🔴 · 🟡
+
+### N-Rev7. Bayesian-Hierarchical-DC via pymc — P3
+- **Was**: Confederation-Prior durch echtes Bayesian-Hierarchical-Model. Uncertainty-Intervals → adaptive Kelly-Reduktion.
+- **Impact/Aufwand/Risiko**: 🟢 · 🔴 · 🔴
+
+### N-Rev8. Cron-Konsolidierung: Worker als Trigger-Bus — P3
+- **Was**: Alle Trigger via Worker mit Idempotency-Keys; GH-Actions als Executors; launchd nur sub-minute.
+- **Impact/Aufwand/Risiko**: 🟢 · 🔴 · 🔴
+
+### N-Rev9. Unified `health.json` für Local + Cloud — P1
+- **Was**: Launchd-`_health.sh` schreibt `results/health/{job}.json` mit gleicher Struktur wie CI.
+- **Warum**: PWA-Dashboard sieht Local-Failures nicht. Mac 2 Tage offline → keine Warnung.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟢 · 🟢
+
+### N-Rev10. Print → Logging + Silent-Except-Bereinigung — P2
+- **Was**: `print()` in `dixon_coles.py:1089-1091`, `ensemble.py:106`, `oddsportal.py:62`, `tennis_explorer.py:45`, `ledger.py:218` → `_log.warning()`. Silent-Excepts (`features.py:207-210`, `elo_source.py:48-54`, `discovery.py:40-41`, `ledger.py:136/281`) mit `logger.debug(exc)`.
+- **Impact/Aufwand/Risiko**: ⚪ · 🟡 · 🟢
+
+### N-Rev11. Magic-Number-Sanierung mit Ablation-Referenzen — P2
+- **Was**: `sim.py:21-22`, `line_movement.py:52`, `_MAX_LAMBDA=4.5`, `DRAW_BAND=200.0`, `_MARKET_DISAGREEMENT=0.10` — Docstring mit Backtest/Notebook-Link. Optional Config-Zentralisierung.
+- **Impact/Aufwand/Risiko**: ⚪ · 🟢 · 🟢
+
+### N-Rev12. DC-Retrain-Trigger an Team-Drift koppeln — P2
+- **Was**: Δ(attack/defence) > 0.5σ → Push-Alert + optionaler Sofort-Retrain.
+- **Dateien**: `dixon_coles.py:1028-1073` erweitern, `.github/workflows/auto_retrain.yml`.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟡 · 🟢
+
+### N-Rev13. `_git_safe_push.sh` Konflikt-Recovery ohne `--theirs`-Blindnahme — P1
+- **Was**: Bei Merge-Konflikt in `signals*.json` NIE `--theirs`, sondern strukturelles Merge (jq-basiert, per-Sport-Section). Fail-Loud statt Silent-Wipe. Leerer `signals.**`-Push wird zurückgewiesen.
+- **Warum**: 2026-06-26-Incident strukturell noch offen; Guards sind Symptom-Fix.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟡 · 🟢
+
+### N-Rev14. `auto_heal_ai.plist` reaktivieren (Layer 2) — P2
+- **Was**: Aktuell Dummy. Reaktivieren mit Rate-Limit (max 1 AI-Diagnose / 30 min).
+
+### N-Rev15. Session-Report vs `health.json` Kohärenz — P2
+- **Was**: SessionStart-Hook liest zeitweise ältere Log-Snapshots und meldet `stale_cache`, während aktuelle `results/health/*.json` „ok" sagen. Beide Quellen synchronisieren.
+
+### N-Rev16. Refactor Detektoren auf `betting/gates.py` — P2
+- **Was**: `_MIN_PROB=0.35`, `_MAX_ODDS=4.50` aus `tennis_detector.py:27-28` entfernen; `gate_for("tennis", category=...)` verwenden. Analog `value_detector._BIAS_EV_CAP` und `goalscorer` lokales `min_ev`.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟡 · 🟡
+
+---
+
 ## 🚫 K. Bewusst draußen (Veto-Liste)
 
 | # | Idee | Veto-Grund |

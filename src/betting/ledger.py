@@ -23,6 +23,7 @@ from src.config import (
     bankroll_snapshot_path_for, ledger_path_for,
 )
 from src.betting.value_detector import BetSignal
+from src.utils.atomic_io import atomic_write_json
 
 # Legacy single-user ledger path (used as the migration source).
 _LEGACY_LEDGER_PATH = RESULTS_DIR / "ledger.csv"
@@ -177,8 +178,22 @@ def _load(path: Path) -> pd.DataFrame:
 
 
 def _save(df: pd.DataFrame, path: Path) -> None:
+    # Atomic write: partial CSVs bei Crash während to_csv() haben in der Vergangenheit
+    # Ledger corrupted. tempfile + os.replace() vermeidet das.
+    import os as _os
+    import tempfile as _tf
     path.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(path, index=False)
+    fd, tmp_name = _tf.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent))
+    _os.close(fd)
+    try:
+        df.to_csv(tmp_name, index=False)
+        _os.replace(tmp_name, path)
+    except Exception:
+        try:
+            _os.unlink(tmp_name)
+        except OSError:
+            pass
+        raise
 
 
 def append_bets(
@@ -656,14 +671,13 @@ def get_bankroll_snapshot(
         except (json.JSONDecodeError, KeyError, ValueError):
             pass
     bankroll = _live_bankroll(ledger_path, user=user)
-    snapshot_path.parent.mkdir(parents=True, exist_ok=True)
-    snapshot_path.write_text(json.dumps({
+    atomic_write_json(snapshot_path, {
         "iso_year": year,
         "iso_week": week,
         "snapshot_date": date.today().isoformat(),
         "bankroll": bankroll,
         "user": user,
-    }, indent=2))
+    }, indent=2)
     return bankroll
 
 
@@ -719,7 +733,7 @@ def cancel_bet(
         try:
             data = json.loads(snap_path.read_text())
             data["bankroll"] = round(float(data.get("bankroll", 0)) + stake, 2)
-            snap_path.write_text(json.dumps(data, indent=2))
+            atomic_write_json(snap_path, data, indent=2)
         except Exception:
             pass
 

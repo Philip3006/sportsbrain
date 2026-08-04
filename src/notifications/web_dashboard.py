@@ -15,6 +15,7 @@ from pathlib import Path
 
 from src.betting.value_detector import BetSignal
 from src.config import DEFAULT_USER as _DEFAULT_USER, ODDS_MOVE_WARN_PCT
+from src.utils.atomic_io import atomic_write_json
 
 
 def _build_info() -> dict:
@@ -1177,14 +1178,13 @@ def write_signals_json(
         pass  # silently keep existing wm_results on any error
     payload["wm_results"] = _wm_results_base
 
-    json_path.parent.mkdir(parents=True, exist_ok=True)
-    json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2))
+    atomic_write_json(json_path, payload, indent=2)
     # Backward-compat: default user also writes the legacy `signals.json`.
     # Use ROOT-relative path (not module-level _JSON_PATH) so tests that
     # monkey-patch ROOT don't accidentally stomp on the real repo file.
     if user == _DEFAULT_USER:
         legacy_path = ROOT / "docs" / "data" / "signals.json"
-        legacy_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2))
+        atomic_write_json(legacy_path, payload, indent=2)
     return upload_signals_to_cloud(path=json_path, user=user)
 
 
