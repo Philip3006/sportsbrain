@@ -73,19 +73,34 @@
     "suspended_push_sent": false
   },
   "_meta": {
-    "heartbeat_at": "2026-08-04T23:37:41Z",
-    "reason": "1 live matches, 0 pushes"
+    "heartbeat_at": "2026-08-04T23:39:46Z",
+    "reason": "2 live matches, 1 pushes"
   },
   "alexdeminaur|jamesduckworth": {
-    "timeout_push_sent": true,
-    "updated": "2026-08-04T22:05:01Z"
+    "home": "James Duckworth",
+    "away": "Alex de Minaur",
+    "sets": [
+      [
+        0,
+        0
+      ]
+    ],
+    "sets_won": [
+      0,
+      0
+    ],
+    "status": "in_progress",
+    "resume_time": null,
+    "updated": "2026-08-04T23:39:46Z",
+    "match_start_push_sent": true,
+    "suspended_push_sent": false
   },
   "francestiafoe|marincilic": {
     "home": "Frances Tiafoe",
     "away": "Marin Cilic",
     "sets": [
       [
-        2,
+        3,
         3
       ]
     ],
@@ -95,7 +110,7 @@
     ],
     "status": "in_progress",
     "resume_time": null,
-    "updated": "2026-08-04T23:37:41Z",
+    "updated": "2026-08-04T23:39:46Z",
     "match_start_push_sent": true,
     "suspended_push_sent": false
   }
