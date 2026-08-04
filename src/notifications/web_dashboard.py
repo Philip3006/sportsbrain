@@ -670,14 +670,23 @@ def _market_to_odds_key(market: str) -> str | None:
     if m == "home":   return "home"
     if m == "away":   return "away"
     if m == "draw":   return "draw"
-    if "_over"  in m: return "over25"
-    if "_under" in m: return "under25"
     if m == "btts_yes": return "btts_yes"
     if m == "btts_no":  return "btts_no"
     if m in ("dc_1x", "dc_x2", "dc_12"): return m
-    ah = re.match(r"ah[+\-]?(\d+\.?\d*)_(home|away)", m)
+    # Tennis first-set markets
+    if m in ("first_set_a", "first_set_b"): return m
+    # Tennis AH sets (ah+1.5_a / ah+1.5_b / ah-1.5_home etc.)
+    ah = re.match(r"ah[+\-]?(\d+\.?\d*)_(home|away|a|b)$", m)
     if ah:
-        return f"ah{ah.group(1)}_{ah.group(2)}"
+        side = "a" if ah.group(2) in ("home", "a") else "b"
+        return f"ah{ah.group(1)}_{side}"
+    # Tennis / football totals: o/u_games_22.5_over → over22.5_games
+    ou_games = re.match(r"o/u_games_([\d.]+)_(over|under)$", m)
+    if ou_games:
+        return f"{ou_games.group(2)}{ou_games.group(1)}_games"
+    # Football o/u sets/totals (legacy: anything with _over/_under left)
+    if "_over"  in m: return "over25"
+    if "_under" in m: return "under25"
     return None
 
 
@@ -934,7 +943,8 @@ def write_signals_json(
         schedule_data = existing.get("schedule", [])
 
     if all_odds is not None:
-        all_odds_data = all_odds
+        # Merge: incoming keys override, existing keys not in incoming are preserved
+        all_odds_data = {**existing.get("all_odds", {}), **all_odds}
     else:
         all_odds_data = existing.get("all_odds", {})
 

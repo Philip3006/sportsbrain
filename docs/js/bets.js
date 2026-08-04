@@ -48,7 +48,7 @@ function _pwaPendingHtml() {
           <span class="pending-pill">⏳ Sync ausstehend</span>
         </div>
         <div class="bet-market-row">
-          <span class="bet-market-chip">${esc(marketLabel(p.market, h, a))}</span>
+          <span class="bet-market-chip">${esc(marketLabel(p.market, `${h} vs ${a}`))}</span>
         </div>
         <div style="font-size:11px;color:var(--muted);font-weight:600">Wird beim nächsten Consumer-Lauf ins Ledger geschrieben.</div>
       </div>
@@ -127,7 +127,7 @@ function _renderOpenBetCards(bets, isLive) {
   for (const b of bets) {
     const home = b.home || b.match?.split(' vs ')[0] || '';
     const away = b.away || b.match?.split(' vs ')[1] || '';
-    const mktLabel = marketLabel(b.market, home, away);
+    const mktLabel = marketLabel(b.market, `${home} vs ${away}`);
     const conf = b.confidence || '';
     const confCls = conf === 'HIGH' ? 'conf-high' : conf === 'MEDIUM' ? 'conf-medium' : '';
     const stake = b.stake || 0;
@@ -257,7 +257,7 @@ function _renderSettledCards(bets) {
   for (const b of bets) {
     const home = b.home || '';
     const away = b.away || '';
-    const mktLabel = marketLabel(b.market, home, away);
+    const mktLabel = marketLabel(b.market, `${home} vs ${away}`);
     const flagH = teamFlag(home) || '';
     const flagA = teamFlag(away) || '';
     const dateStr = (b.match_date || '').slice(0,10);
@@ -453,7 +453,7 @@ function _openBetModalFromBtn(btn) {
     fair_prob: parseFloat(d.fairProb || '0'),
   };
   const [h, a] = _pendingBet.match.split(' vs ').map(x => x.trim());
-  document.getElementById('bet-modal-sub').textContent = `${h} vs ${a} · ${marketLabel(_pendingBet.market, h, a)}`;
+  document.getElementById('bet-modal-sub').textContent = `${h} vs ${a} · ${marketLabel(_pendingBet.market, `${h} vs ${a}`)}`;
   const oddsInp = document.getElementById('bet-modal-odds-input');
   if (oddsInp) oddsInp.value = _pendingBet.odds.toFixed(2);
   const badge = document.getElementById('bet-modal-kind-badge');

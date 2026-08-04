@@ -861,6 +861,27 @@ def main() -> None:
         except Exception as e:
             print(f"[te-coverage] fetch failed: {e}")
 
+    # Build all_odds for open-bet enrichment (current_odds display in PWA)
+    tennis_all_odds: dict[str, dict] = {}
+    for _info in per_tournament.values():
+        for _m in _info.get("matches", []):
+            _pa, _pb = _m.get("player_a", ""), _m.get("player_b", "")
+            if not _pa or not _pb:
+                continue
+            _entry: dict = {}
+            if _m.get("odds_a"): _entry["home"] = float(_m["odds_a"])
+            if _m.get("odds_b"): _entry["away"] = float(_m["odds_b"])
+            if _m.get("ah_odds_a"): _entry["ah1.5_a"] = float(_m["ah_odds_a"])
+            if _m.get("ah_odds_b"): _entry["ah1.5_b"] = float(_m["ah_odds_b"])
+            if _m.get("first_set_odds_a"): _entry["first_set_a"] = float(_m["first_set_odds_a"])
+            if _m.get("first_set_odds_b"): _entry["first_set_b"] = float(_m["first_set_odds_b"])
+            for _line, _price in (_m.get("totals_over") or {}).items():
+                _entry[f"over{_line}_games"] = float(_price)
+            for _line, _price in (_m.get("totals_under") or {}).items():
+                _entry[f"under{_line}_games"] = float(_price)
+            if _entry:
+                tennis_all_odds[f"{_pa} vs {_pb}"] = _entry
+
     write_signals_json_all_users(
         tennis=all_live_signals,
         portfolio=dashboard_summary,
@@ -869,6 +890,7 @@ def main() -> None:
         tennis_tournament_map=match_tournament_map,
         kickoff_map=kickoff_map,
         schedule=schedule,
+        all_odds=tennis_all_odds if tennis_all_odds else None,
     )
     print("Dashboard: docs/data/signals.json aktualisiert.")
 
