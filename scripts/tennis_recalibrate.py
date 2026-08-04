@@ -48,9 +48,9 @@ def _load_signals(window_days: int) -> list[dict]:
             continue
         if row.get("sport") != "tennis":
             continue
-        if row.get("outcome") not in ("correct", "wrong"):
+        if row.get("outcome") not in ("won", "lost", "correct", "wrong"):
             continue
-        ts = row.get("scan_ts") or ""
+        ts = row.get("outcome_ts") or row.get("scan_ts") or ""
         try:
             dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
         except Exception:
@@ -72,10 +72,10 @@ def _fit_surface(signals: list[dict], surface: str, min_n: int) -> tuple[object 
             continue
         p = r.get("model_prob")
         outcome = r.get("outcome")
-        if p is None or outcome not in ("correct", "wrong"):
+        if p is None or outcome not in ("won", "lost", "correct", "wrong"):
             continue
         xs.append(float(p))
-        ys.append(1.0 if outcome == "correct" else 0.0)
+        ys.append(1.0 if outcome in ("won", "correct") else 0.0)
     if len(xs) < min_n:
         return None, len(xs)
     try:

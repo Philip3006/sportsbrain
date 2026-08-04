@@ -656,6 +656,16 @@ def main() -> None:
             )
             _pred_sources[probs.get("source", "elo")] += 1
 
+            # Unknown-Player-Gate: kein Signal wenn einer der Spieler unbekannt.
+            # Verhindert Fake-EV aus Default-Elo (p≈0.5 → EV bei jeder Quote < 2.0).
+            if probs.get("low_confidence"):
+                _who = []
+                if probs.get("unknown_player_a"): _who.append(pa)
+                if probs.get("unknown_player_b"): _who.append(pb)
+                print(f"  [SKIP] {pa} vs {pb} — Unbekannter Spieler: {', '.join(_who)} (kein Elo-Profil)")
+                m["no_bet_flag"] = True
+                continue
+
             # Match hat keine TheOddsAPI-Quote → Multi-Source-Merger versuchen
             # (Agent 5 Tennis-Explorer/OddsPortal, dann Agent 3 Betfair, dann
             # Agent 10 WebSearch, dann Agent 8 Implied als Display-only).
