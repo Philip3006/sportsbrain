@@ -84,7 +84,7 @@ def settle_tennis_market(market: str, match_result: dict[str, Any]) -> str | Non
     best_of = match_result.get("best_of", 3)
 
     # --- Not-yet-decidable states -------------------------------------------
-    if status in ("scheduled", "in_progress", ""):
+    if status in ("scheduled", "in_progress", "suspended", "postponed", ""):
         return "pending"
 
     # --- Walkover / Cancelled = alle Maerkte void ---------------------------

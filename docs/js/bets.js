@@ -127,7 +127,19 @@ function _renderOpenBetCards(bets, isLive) {
 
     // Live score lookup
     let liveScoreHtml = '';
-    if (isLive) {
+    if (b.is_suspended) {
+      // Tennis: Spiel unterbrochen — Satzstand + Status anzeigen
+      const sets = b.suspend_sets || [];
+      const setsStr = sets.map(s => `${s[0]}-${s[1]}`).join(', ');
+      const statusLabel = b.suspend_status === 'postponed' ? 'Verschoben' : 'Unterbrochen';
+      const resumeStr = b.resume_time
+        ? ` · Weiter: ${new Date(b.resume_time).toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'})}`
+        : ' · Fortsetzung unbekannt';
+      liveScoreHtml = `<div style="display:flex;align-items:center;gap:8px;padding:10px 14px 0;flex-wrap:wrap;">
+        ${setsStr ? `<span class="score-box" style="font-size:14px;padding:4px 10px;">${setsStr}</span>` : ''}
+        <span style="font-size:11px;color:var(--text-dim);">${statusLabel}${resumeStr}</span>
+      </div>`;
+    } else if (isLive) {
       const lsKey = `${_normTeam(home)}_vs_${_normTeam(away)}`;
       const ls = _liveScores[lsKey];
       if (ls && ls.home_score != null) {
@@ -156,7 +168,9 @@ function _renderOpenBetCards(bets, isLive) {
         <div class="bet-market-row">
           <span class="bet-market-chip">${esc(mktLabel)}</span>
           ${conf ? `<span class="bet-conf-chip ${confCls}">${conf}</span>` : ''}
-          ${isLive ? `<span class="today-live-badge">LIVE</span>` : ''}
+          ${b.is_suspended
+            ? `<span class="today-suspended-badge">${b.suspend_status === 'postponed' ? '📅 Verschoben' : '⏸ Unterbrochen'}</span>`
+            : isLive ? `<span class="today-live-badge">LIVE</span>` : ''}
         </div>
         ${liveScoreHtml}
         <div class="bet-odds-row" style="${isLive ? 'padding-top:8px;' : ''}">

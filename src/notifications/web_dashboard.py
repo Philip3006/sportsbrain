@@ -979,6 +979,29 @@ def write_signals_json(
             except ValueError:
                 pass
 
+    # Enrich open bets with is_suspended flag (tennis suspended/postponed)
+    try:
+        import json as _json
+        _susp_cache = ROOT / "data" / "cache" / "tennis_suspended.json"
+        if _susp_cache.exists():
+            _susp_data = _json.loads(_susp_cache.read_text())
+            _susp_updated = _susp_data.get("updated", "2000-01-01T00:00:00Z")
+            _susp_age = (_now_utc - datetime.fromisoformat(_susp_updated.replace("Z", "+00:00"))).total_seconds()
+            if _susp_age < 7200:  # max 2h alt
+                from src.data.tennis_scores import canonical_match_key as _cmk
+                _susp_by_key = {m["match_key"]: m for m in _susp_data.get("matches", [])}
+                for _bet in (_resolved_open_bets or []):
+                    _ck = _cmk(_bet.get("home", ""), _bet.get("away", ""))
+                    if _ck in _susp_by_key:
+                        _se = _susp_by_key[_ck]
+                        _bet["is_suspended"] = True
+                        _bet["is_live"] = True  # Live-Tab zeigen
+                        _bet["resume_time"] = _se.get("resume_time")
+                        _bet["suspend_status"] = _se.get("status")
+                        _bet["suspend_sets"] = _se.get("sets", [])
+    except Exception:
+        pass
+
     _staked = sum(float(b.get("stake", 0)) for b in (_resolved_open_bets or []))
     _max_win = sum(
         float(b.get("stake", 0)) * (float(b.get("current_odds") or b.get("entry_odds", 0)) - 1)

@@ -17,7 +17,9 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
@@ -34,6 +36,36 @@ from src.data.tennis_scores import (
     fetch_tennis_scores,
 )
 from src.tennis.discovery import discover_active_tournaments
+
+
+def _write_suspended_cache(scores: dict) -> None:
+    """Schreibt suspended/postponed Matches nach data/cache/tennis_suspended.json."""
+    seen: set[str] = set()
+    matches = []
+    for v in scores.values():
+        if not isinstance(v, dict) or v.get("status") not in ("suspended", "postponed"):
+            continue
+        ck = canonical_match_key(v.get("player_a", ""), v.get("player_b", ""))
+        if ck in seen:
+            continue
+        seen.add(ck)
+        matches.append({
+            "match_key": ck,
+            "home": v.get("player_a", ""),
+            "away": v.get("player_b", ""),
+            "status": v.get("status"),
+            "sets": v.get("sets", []),
+            "resume_time": v.get("resume_time"),
+        })
+    cache_path = ROOT / "data" / "cache" / "tennis_suspended.json"
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    cache_path.write_text(json.dumps({
+        "updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "matches": matches,
+    }, indent=2))
+    if matches:
+        print(f"[tennis_settle] {len(matches)} unterbrochene Matches gecacht: "
+              + ", ".join(f"{m['home']} vs {m['away']} ({m['status']})" for m in matches))
 
 
 def _pnl(result: str, odds: float, stake: float) -> float:
@@ -213,6 +245,9 @@ def main() -> int:
         print(f"\n[DRY-RUN] Insgesamt {total} Bets waeren gesettled worden")
     else:
         print(f"\nInsgesamt {total} Bets gesettled")
+
+    # Suspended/postponed Matches in Cache schreiben (fuer Dashboard-Anreicherung)
+    _write_suspended_cache(scores)
     return 0
 
 

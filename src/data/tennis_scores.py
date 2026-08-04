@@ -293,6 +293,11 @@ def fetch_tennis_scores_espn(tour: str = "atp", dates: str | None = None) -> dic
                     detail = comp.get("status", {}).get("type", {}).get("detail", "").lower()
                     is_retired = "retired" in detail or "retirement" in detail
                     is_walkover = "walkover" in detail or "w.o." in detail
+                    is_suspended = (
+                        "suspend" in detail or "rain" in detail
+                        or "delay" in detail or "bad light" in detail
+                    )
+                    is_postponed = "postpone" in detail
                     completed = comp.get("status", {}).get("type", {}).get("completed", False)
 
                     winner = None
@@ -309,7 +314,11 @@ def fetch_tennis_scores_espn(tour: str = "atp", dates: str | None = None) -> dic
                             winner = "b"
 
                     status = "in_progress"
-                    if is_walkover:
+                    if is_postponed:
+                        status = "postponed"
+                    elif is_suspended:
+                        status = "suspended"
+                    elif is_walkover:
                         status = "walkover"
                     elif is_retired:
                         status = "retired"
@@ -322,6 +331,7 @@ def fetch_tennis_scores_espn(tour: str = "atp", dates: str | None = None) -> dic
                         "player_a": home, "player_b": away, "status": status,
                         "sets": sets, "winner": winner, "retired_by": None,
                         "best_of": best_of, "source": "espn", "kickoff_utc": ev.get("date"),
+                        "resume_time": None,
                     })
                 except Exception:
                     continue
