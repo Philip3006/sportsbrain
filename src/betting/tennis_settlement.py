@@ -142,7 +142,7 @@ def settle_tennis_market(market: str, match_result: dict[str, Any]) -> str | Non
     #   ah+1.5_b  = Spieler B gewinnt ODER verliert mit <=1 Satz Differenz
     if market in ("ah-1.5_a", "ah+1.5_b"):
         if not sets:
-            return "push"
+            return "pending"  # set data not yet available — retry next run
     if market == "ah-1.5_a":
         a_sets, b_sets = _sets_won(sets)
         return "won" if (a_sets - b_sets) >= 2 else "lost"
@@ -153,7 +153,7 @@ def settle_tennis_market(market: str, match_result: dict[str, Any]) -> str | Non
     # --- Total Sets O/U -----------------------------------------------------
     if market.startswith("o/u_sets_"):
         if not sets:
-            return "push"
+            return "pending"  # set data not yet available — retry next run
         try:
             # format: o/u_sets_{line}_over  or  ..._under
             rest = market[len("o/u_sets_"):]
@@ -171,7 +171,7 @@ def settle_tennis_market(market: str, match_result: dict[str, Any]) -> str | Non
     # --- Total Games O/U ----------------------------------------------------
     if market.startswith("o/u_games_"):
         if not sets:
-            return "push"  # keine Set-Daten → kein Settlement möglich
+            return "pending"  # set data not yet available — retry next run
         try:
             rest = market[len("o/u_games_"):]
             line_str, side = rest.rsplit("_", 1)
@@ -188,7 +188,7 @@ def settle_tennis_market(market: str, match_result: dict[str, Any]) -> str | Non
     # --- Set Betting (exakter Satzstand) ------------------------------------
     if market.startswith("score_"):
         if not sets:
-            return "push"
+            return "pending"  # set data not yet available — retry next run
         target = market[len("score_"):]  # z.B. "2-1", "3-0"
         a_sets, b_sets = _sets_won(sets)
         actual = f"{a_sets}-{b_sets}"
