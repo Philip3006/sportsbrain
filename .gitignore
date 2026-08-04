@@ -3,6 +3,7 @@
 data/cache/
 !data/cache/signal_performance.json
 !data/cache/signal_history.jsonl
+!data/cache/tennis_serve_snapshots/
 data/raw/
 results/scans/
 results/backtests/

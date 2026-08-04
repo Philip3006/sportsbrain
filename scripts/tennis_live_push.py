@@ -134,10 +134,66 @@ def main() -> int:
     except Exception:
         _send_notification = None  # type: ignore[assignment]
 
+    settle_reminders: list[str] = []  # match keys für Summary-Log
+
     for ck, (home, away) in match_pairs.items():
         sc = (espn_all.get(ck)
               or espn_all.get(f"{home} vs {away}")
               or espn_all.get(f"{away} vs {home}"))
+
+        prev = cache.get(ck, {})
+
+        # ── Settle-Reminder: Match beendet via ESPN ─────────────────────────
+        if sc:
+            status = sc.get("status", "")
+            if status in ("completed", "retired", "walkover") and not prev.get("settle_push_sent"):
+                sets = sc.get("sets") or []
+                score_str = _sets_str(sets)
+                winner = sc.get("winner", "")
+                body = f"Match beendet: {home} vs {away}"
+                if winner:
+                    body += f" — Gewinner: {winner}"
+                if score_str:
+                    body += f" · {score_str}"
+                if _send_notification:
+                    try:
+                        _send_notification("✅ Settle jetzt!", body)
+                        pushes_sent += 1
+                        settle_reminders.append(ck)
+                        print(f"  ✅ Settle-Reminder pushed: {home} vs {away}")
+                    except Exception:
+                        pass
+                cache[ck] = {**prev, "settle_push_sent": True, "updated": now_iso}
+                continue  # kein weiteres Processing für abgeschlossene Matches
+
+        # ── Timeout-Guard: Bet-Kickoff + 3h überschritten, kein Score ────────
+        # Schützt vor ESPN-Ausfällen bei Matches die schon enden sollten.
+        for b in bets:
+            bck = canonical_match_key(b.get("home", ""), b.get("away", ""))
+            if bck != ck:
+                continue
+            match_date = b.get("match_date") or b.get("date") or ""
+            if not match_date or prev.get("timeout_push_sent"):
+                break
+            try:
+                from datetime import datetime as _dt, timezone as _tz
+                ko_dt = _dt.fromisoformat(match_date.replace("Z", "+00:00"))
+                if ko_dt.tzinfo is None:
+                    ko_dt = ko_dt.replace(tzinfo=timezone.utc)
+                hours_elapsed = (datetime.now(timezone.utc) - ko_dt).total_seconds() / 3600
+                if hours_elapsed > 5:  # 5h nach geplantem Kickoff
+                    if _send_notification and not sc:
+                        try:
+                            _send_notification("⏰ Prüfe Settlement", f"{home} vs {away} — kein Score-Update nach {hours_elapsed:.0f}h, Settlement prüfen!")
+                            pushes_sent += 1
+                            print(f"  ⏰ Timeout-Guard pushed: {home} vs {away}")
+                        except Exception:
+                            pass
+                    cache[ck] = {**prev, "timeout_push_sent": True, "updated": now_iso}
+            except Exception:
+                pass
+            break
+
         if not sc:
             continue
 
@@ -145,10 +201,9 @@ def main() -> int:
         sets = sc.get("sets") or []
 
         if status not in ("in_progress", "suspended", "postponed"):
-            continue  # completed/walkover → tennis_settle handelt das
+            continue
 
         live_count += 1
-        prev = cache.get(ck, {})
         curr_done = _completed_sets(sets)
         prev_done = _completed_sets(prev.get("sets", []))
 
@@ -241,7 +296,8 @@ def main() -> int:
     SUSP_PATH.parent.mkdir(parents=True, exist_ok=True)
     SUSP_PATH.write_text(json.dumps({"updated": now_iso, "matches": suspended_matches}, indent=2))
 
-    print(f"[tennis_live_push] {live_count} live, {pushes_sent} push(es) gesendet.")
+    settle_str = f", {len(settle_reminders)} settle-reminder(s)" if settle_reminders else ""
+    print(f"[tennis_live_push] {live_count} live, {pushes_sent} push(es) gesendet{settle_str}.")
     return 0
 
 

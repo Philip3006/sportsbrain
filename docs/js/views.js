@@ -405,6 +405,20 @@ function _oddsSparkline(matchStr, side, currentOdds) {
   </span>`;
 }
 
+function _signalAgeHtml(s) {
+  if (!s.generated_at) return '';
+  const ageH = (Date.now() - new Date(s.generated_at).getTime()) / 3600000;
+  if (ageH < 0.25) return '';
+  const koMs = s.kickoff ? new Date(s.kickoff).getTime() : 0;
+  const hoursToKo = koMs > 0 ? (koMs - Date.now()) / 3600000 : 99;
+  const hStr = ageH < 1 ? `${Math.round(ageH * 60)}min` : `${ageH.toFixed(1)}h`;
+  if (ageH > 4 && hoursToKo > 0 && hoursToKo < 6)
+    return `<div style="font-size:9px;color:#ffb347;padding:1px 8px;margin-top:-2px">⚠ vor ${hStr} generiert — Odds prüfen</div>`;
+  if (ageH >= 1)
+    return `<div style="font-size:9px;color:var(--muted);padding:1px 8px;margin-top:-2px">vor ${hStr} generiert</div>`;
+  return '';
+}
+
 function sigCard(s, showMatch) {
   const cls = s.confidence === 'HIGH' ? 'high' : 'medium';
   const evCls = s.ev_pct >= 10 ? 'ev-h' : 'ev-m';
@@ -491,7 +505,8 @@ function sigCard(s, showMatch) {
   const _escA = s => s.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
   return `<div class="sig-card ${cls}" style="cursor:pointer" data-match-home="${_escA(sh)}" data-match-away="${_escA(sa)}" onclick="if(!event.target.closest('.place-bet-btn,.why-inline,button,a'))_openMatchDetailFromSignal(this.dataset.matchHome,this.dataset.matchAway)">
     ${matchLine}
-    <div class="card-market">${marketLabel(s.market, s.match)}</div>
+    <div class="card-market" ${['ah-1.5_a','ah+1.5_b'].includes(s.market)||s.market.match(/^ah[+-]/) ? 'title="Satz-Handicap (SET handicap) — beim Buchmacher \'Sätze-Handicap\' wählen, NICHT \'Games-Handicap\'!"' : ''}>${marketLabel(s.market, s.match)}</div>
+    ${_signalAgeHtml(s)}
     <div class="card-footer">
       <span class="odds-btn">${s.odds.toFixed(2)}</span>
       <span class="ev-chip ${evCls}">EV +${s.ev_pct}%${infoTip(`Expected Value (erwarteter Gewinn). +${s.ev_pct}% heißt: wenn du diese Wette 100× spielen würdest, gewinnst du im Schnitt €${(s.ev_pct/100*s.stake_eur).toFixed(2)} pro Wette. SportsBrain zeigt nur Wetten ab EV ≥ 3%.`)}</span>
@@ -507,6 +522,9 @@ function sigCard(s, showMatch) {
     ${['h1_goals_2_4','h2_goals_2_4','h1_goals_2_4_no','h2_goals_2_4_no'].includes(s.market)
       ? `<div style="font-size:10px;color:var(--muted);padding:2px 8px 6px">⚠ HZ-Settlement manuell — Quote beim Buchmacher prüfen</div>`
       : `<button class="place-bet-btn" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="Wette platzieren">Wette platzieren · €${s.stake_eur.toFixed(0)}</button>`}
+    ${(['ah-1.5_a','ah+1.5_b'].includes(s.market)||s.market.match(/^ah[+-]/))
+      ? `<div style="font-size:10px;color:#ffb347;background:rgba(58,44,0,0.6);padding:3px 8px 5px;border-top:1px solid rgba(90,70,0,0.5)">⚠ Satz-AH = SET Handicap — beim Buchmacher <strong>Sätze-Handicap</strong> wählen, NICHT Spiele-Handicap</div>`
+      : ''}
   </div>`;
 }
 
@@ -1001,6 +1019,38 @@ function renderSport(sport) {
 
   // J2-E: Tennis-Tab gruppiert zusätzlich nach Tournament (Slam → 1000 → 500 → 250)
   if (sport === 'tennis') {
+    // Market-Filter-Chips
+    const MF_CHIPS = [
+      {key:'all',   label:'Alle'},
+      {key:'h2h',   label:'H2H'},
+      {key:'satz-ah', label:'Satz-AH'},
+      {key:'ou-games',label:'O/U Games'},
+      {key:'ou-sets', label:'O/U Sätze'},
+    ];
+    const _mfActive = {background:'#2563eb',color:'#fff'};
+    const _mfInactive = {background:'rgba(30,38,48,.7)',color:'#8da3b8'};
+    const mfHtml = MF_CHIPS.map(chip => {
+      const active = _tennisMarketFilter === chip.key;
+      const st = active ? _mfActive : _mfInactive;
+      return `<button onclick="event.stopPropagation();_setTennisMarketFilter('${chip.key}')" style="padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.3px;background:${st.background};color:${st.color};transition:background .15s">${chip.label}</button>`;
+    }).join('');
+    h += `<div style="padding:8px 12px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid rgba(48,54,61,.5)">${mfHtml}</div>`;
+
+    // Marktfilter auf sortedGroups anwenden
+    const _tennisMarketPredicate = mkt => {
+      const f = _tennisMarketFilter;
+      if (f === 'all') return true;
+      if (f === 'h2h') return mkt === 'home' || mkt === 'away';
+      if (f === 'satz-ah') return mkt === 'ah-1.5_a' || mkt === 'ah+1.5_b';
+      if (f === 'ou-games') return mkt.startsWith('o/u_games_');
+      if (f === 'ou-sets') return mkt.startsWith('o/u_sets_');
+      return true;
+    };
+    const filteredGroups = _tennisMarketFilter === 'all'
+      ? sortedGroups
+      : sortedGroups.map(([m, mSigs]) => [m, mSigs.filter(s => _tennisMarketPredicate(s.market))])
+                    .filter(([, mSigs]) => mSigs.length > 0);
+
     // Sortier-Reihenfolge der Kategorien
     const CAT_ORDER = ['grand_slam','m1000','wta1000','atp500','wta500','atp250','wta250','tour_final'];
     const CAT_LABEL = {
@@ -1009,9 +1059,9 @@ function renderSport(sport) {
       tour_final: 'Tour Finals',
     };
     const SURFACE_ICON = { grass: '🌱', clay: '🟧', hard: '🟦', carpet: '⬛', unknown: '❓' };
-    // Match → Tournament-Bucket
+    // Match → Tournament-Bucket (verwendet gefilterte Gruppen)
     const byTournament = new Map();
-    for (const [match, mSigs] of sortedGroups) {
+    for (const [match, mSigs] of filteredGroups) {
       const s0 = mSigs[0];
       const tName = s0.tournament || 'Tennis';
       if (!byTournament.has(tName)) {

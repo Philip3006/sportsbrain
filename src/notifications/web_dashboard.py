@@ -207,7 +207,9 @@ def _signal_to_dict(
     tour: str = "",
     kickoff: str = "",
     tournament_meta: dict | None = None,
+    generated_at: str = "",
 ) -> dict:
+    from datetime import datetime, timezone
     d = {
         "sport":           sport,
         "match":           f"{s.home} vs {s.away}",
@@ -220,6 +222,7 @@ def _signal_to_dict(
         "stake_pct":       round(s.stake_pct * 100, 1),
         "confidence":      s.confidence,
         "n_models_agree":  s.n_models_agree,
+        "generated_at":    generated_at or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
     if getattr(s, "stake_reason", ""):
         d["correlation_note"] = s.stake_reason
@@ -903,7 +906,7 @@ def write_signals_json(
     updated = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     football_data = [
-        _signal_to_dict(s, "football", kickoff=kickoff_map.get(s.match_id, ""))
+        _signal_to_dict(s, "football", kickoff=kickoff_map.get(s.match_id, ""), generated_at=updated)
         for s in football
     ] if football else existing.get("football", [])
 
@@ -914,6 +917,7 @@ def write_signals_json(
                 tour=tennis_tour_map.get(s.match_id, ""),
                 kickoff=kickoff_map.get(s.match_id, ""),
                 tournament_meta=tennis_tournament_map.get(s.match_id),
+                generated_at=updated,
             )
             for s in tennis
         ]

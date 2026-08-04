@@ -351,3 +351,38 @@ def fetch_aggregate(
     if not stats:
         return _empty_aggregate()
     return aggregate(stats, last_n=last_n, surface=surface, before_date=before_date)
+
+
+_SNAP_DIR = _ROOT / "data" / "cache" / "tennis_serve_snapshots"
+
+
+def save_serve_snapshot(
+    player_name: str,
+    surface: str,
+    match_date: str,
+    agg: "ServeAggregate",
+    tour: str = "atp",
+) -> None:
+    """Persistiert asof-Snapshot für Walk-Forward-Training (J8-I7 / J2-N).
+
+    Idempotent: überschreibt nicht wenn Datei bereits existiert.
+    Format: data/cache/tennis_serve_snapshots/{slug}_{surface}_{date}.json
+    """
+    import dataclasses
+    from datetime import datetime, timezone
+    slug = _to_ta_slug(player_name)
+    surface_key = (surface or "unknown").lower()
+    _SNAP_DIR.mkdir(parents=True, exist_ok=True)
+    snap_path = _SNAP_DIR / f"{slug}_{surface_key}_{match_date}.json"
+    if snap_path.exists():
+        return
+    data: dict = {
+        "player": player_name,
+        "slug": slug,
+        "surface": surface_key,
+        "match_date": match_date,
+        "tour": tour,
+        "snapshot_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        **dataclasses.asdict(agg),
+    }
+    snap_path.write_text(json.dumps(data))
