@@ -89,6 +89,38 @@ def altitude_factor(meta: VenueMeta | None) -> float:
     return min(1.0, (meta.altitude_m - 1000) / 1640.0)
 
 
+# IOC 3-letter code → typical home UTC offset (standard time, no DST).
+# Covers top-100 ATP/WTA nationalities. Default 0 for unlisted.
+IOC_HOME_TZ: dict[str, int] = {
+    # Europe CET (+1)
+    "SRB": 1, "ESP": 1, "GER": 1, "FRA": 1, "ITA": 1, "AUT": 1, "SUI": 1,
+    "NED": 1, "BEL": 1, "POL": 1, "CZE": 1, "SVK": 1, "HUN": 1, "HRV": 1,
+    "SLO": 1, "DEN": 1, "NOR": 1, "SWE": 1, "MON": 1, "LUX": 1, "MNE": 1,
+    # Europe EET (+2)
+    "FIN": 2, "GRE": 2, "ROU": 2, "BUL": 2, "UKR": 2, "MDA": 2, "LAT": 2,
+    "LTU": 2, "EST": 2, "CYP": 2, "RSA": 2, "EGY": 2,
+    # Europe / Middle East (+3)
+    "RUS": 3, "TUR": 3, "BLR": 3, "ISR": 2, "SAU": 3, "UAE": 4,
+    # UK / Portugal / Morocco
+    "GBR": 0, "IRL": 0, "POR": 0, "MAR": 0,
+    # Americas East (-5)
+    "USA": -5, "CAN": -5, "COL": -5, "PER": -5, "ECU": -5,
+    # Americas other
+    "MEX": -6, "CHI": -4, "VEN": -4, "PAR": -4, "URU": -3, "BRA": -3,
+    "ARG": -3, "BOL": -4,
+    # Asia / Pacific
+    "JPN": 9, "KOR": 9, "CHN": 8, "TPE": 8, "HKG": 8, "THA": 7,
+    "AUS": 10, "NZL": 12, "IND": 6, "KAZ": 6, "UZB": 5, "GEO": 4,
+    # Other
+    "TUN": 1, "ALG": 1, "NIG": 1,
+}
+
+
+def player_home_tz(ioc: str) -> int:
+    """UTC offset (hours) for a player's home country by IOC code."""
+    return IOC_HOME_TZ.get((ioc or "").upper(), 0)
+
+
 def tz_travel_penalty(home_offset_h: int, venue_meta: VenueMeta | None) -> float:
     """Absolutes TZ-Delta gegen die Heim-Region (max Jet-Lag ≈ 12h)."""
     if venue_meta is None:

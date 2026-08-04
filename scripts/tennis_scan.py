@@ -389,7 +389,7 @@ def detect_all_markets(
     """Aggregiert alle Detector-Outputs für ein Match."""
     signals = []
 
-    # 1. Match Winner + Set AH + First Set (bestehend)
+    # 1. Match Winner + Set AH + First Set (Phase 4c: source_tier gate + serve-stats)
     signals.extend(detect_value_tennis(
         player_a=m["player_a"],
         player_b=m["player_b"],
@@ -404,6 +404,9 @@ def detect_all_markets(
         first_set_odds_b=m.get("first_set_odds_b", 0.0),
         min_edge=min_edge,
         tour=tournament.tour,
+        first_set_source_tier=int(m.get("source_tier", 2)),  # TheOddsAPI = Tier 2
+        serve_stats_a=m.get("_serve_stats_a"),
+        serve_stats_b=m.get("_serve_stats_b"),
     ))
 
     # 2. O/U Sets (Phase C)
