@@ -59,6 +59,13 @@
       "odds_a": 1.85,
       "odds_b": 1.95,
       "source": "leovegas_se"
+    },
+    {
+      "label": "auto_20260804_03",
+      "ts_utc": "2026-08-04T03:39:22.604699+00:00",
+      "odds_a": 1.07,
+      "odds_b": 6.5,
+      "source": "leovegas_se"
     }
   ]
 }

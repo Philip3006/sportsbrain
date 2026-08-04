@@ -1,0 +1,15 @@
+{
+  "match_id": "647b335787eb921dee9b82fb3b3afae7",
+  "player_a": "Jessica Pegula",
+  "player_b": "Magdalena Frech",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260804_03",
+      "ts_utc": "2026-08-04T03:39:22.607731+00:00",
+      "odds_a": 1.15,
+      "odds_b": 4.7,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

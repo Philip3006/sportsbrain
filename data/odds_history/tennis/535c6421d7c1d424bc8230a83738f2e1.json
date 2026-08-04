@@ -1,0 +1,15 @@
+{
+  "match_id": "535c6421d7c1d424bc8230a83738f2e1",
+  "player_a": "Jelena Ostapenko",
+  "player_b": "Shuai Zhang",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260804_03",
+      "ts_utc": "2026-08-04T03:39:22.606364+00:00",
+      "odds_a": 1.4,
+      "odds_b": 2.58,
+      "source": "matchbook"
+    }
+  ]
+}
