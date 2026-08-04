@@ -152,23 +152,25 @@ def main() -> int:
         curr_done = _completed_sets(sets)
         prev_done = _completed_sets(prev.get("sets", []))
 
+        pa = sc.get("player_a", home)
+        pb = sc.get("player_b", away)
         cache[ck] = {
-            "home":        sc.get("player_a", home),
-            "away":        sc.get("player_b", away),
+            "home":        pa,
+            "away":        pb,
             "sets":        sets,
             "sets_won":    list(_sets_won(curr_done)),
             "status":      status,
             "resume_time": sc.get("resume_time"),
             "updated":     now_iso,
+            "match_start_push_sent": prev.get("match_start_push_sent", False),
             "suspended_push_sent": prev.get("suspended_push_sent", False),
         }
 
-        # Suspension Push (einmal pro Unterbrechung)
+        # ── Suspension Push (einmal pro Unterbrechung) ─────────────────────
         if status in ("suspended", "postponed"):
             suspended_matches.append({
                 "match_key": ck,
-                "home": sc.get("player_a", home),
-                "away": sc.get("player_b", away),
+                "home": pa, "away": pb,
                 "status": status,
                 "sets": sets,
                 "resume_time": sc.get("resume_time"),
@@ -176,7 +178,7 @@ def main() -> int:
             if not prev.get("suspended_push_sent") and _send_notification:
                 label = "📅 Verschoben" if status == "postponed" else "⏸ Unterbrochen"
                 score_str = _sets_str(sets)
-                body = f"{home} vs {away}"
+                body = f"{pa} vs {pb}"
                 if score_str:
                     body += f" · Stand: {score_str}"
                 if _send_notification(
@@ -189,26 +191,45 @@ def main() -> int:
                 ):
                     pushes_sent += 1
                     cache[ck]["suspended_push_sent"] = True
-                    print(f"  ⏸ Suspension pushed: {home} vs {away}")
+                    print(f"  ⏸ Suspension pushed: {pa} vs {pb}")
             continue
 
-        # Neu abgeschlossene Sätze → Push
+        # ── Match-Start Push (einmal wenn erstes Mal in_progress gesehen) ──
+        prev_was_not_live = prev.get("status", "") not in ("in_progress",)
+        if prev_was_not_live and not prev.get("match_start_push_sent") and _send_notification:
+            score_str = _sets_str(sets, mark_last=True) if sets else ""
+            body = f"{pa} vs {pb}"
+            if score_str:
+                body += f" · Stand: {score_str}"
+            if _send_notification(
+                title=f"🎾 Match gestartet!",
+                body=body,
+                url="/sportsbrain/#bets",
+                kind="match_start",
+                tag=f"start-{ck}",
+                require=False,
+            ):
+                pushes_sent += 1
+                cache[ck]["match_start_push_sent"] = True
+                print(f"  🎾 Start pushed: {pa} vs {pb}")
+
+        # ── Neu abgeschlossene Sätze → Push ────────────────────────────────
         new_sets = curr_done[len(prev_done):]
         for i, (sa, sb) in enumerate(new_sets):
             set_num = len(prev_done) + i + 1
             aw, bw = _sets_won(curr_done)
             sets_str = _sets_str(curr_done)
-            winner_name = sc.get("player_a", home) if sa > sb else sc.get("player_b", away)
+            winner_name = pa if sa > sb else pb
             if _send_notification and _send_notification(
                 title=f"🎾 Satz {set_num}: {sa}-{sb} — {winner_name}",
-                body=f"{home} vs {away} · {sets_str} ({aw}:{bw} Sätze)",
+                body=f"{pa} vs {pb} · {sets_str} ({aw}:{bw} Sätze)",
                 url="/sportsbrain/#bets",
                 kind="tennis_set",
                 tag=f"tset-{ck}-s{set_num}",
                 require=False,
             ):
                 pushes_sent += 1
-                print(f"  🎾 Satz {set_num} pushed: {home} {sa}-{sb} {away}")
+                print(f"  🎾 Satz {set_num} pushed: {pa} {sa}-{sb} {pb}")
 
     cache["_meta"] = {
         "heartbeat_at": now_iso,
