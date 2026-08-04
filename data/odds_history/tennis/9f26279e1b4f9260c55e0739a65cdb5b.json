@@ -10,6 +10,13 @@
       "odds_a": 1.32,
       "odds_b": 3.45,
       "source": "matchbook"
+    },
+    {
+      "label": "auto_20260804_11",
+      "ts_utc": "2026-08-04T11:34:55.752323+00:00",
+      "odds_a": 1.36,
+      "odds_b": 3.2,
+      "source": "matchbook"
     }
   ]
 }
