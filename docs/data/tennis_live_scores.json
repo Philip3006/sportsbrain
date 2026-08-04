@@ -4,25 +4,6 @@
     "away": "Marcos Giron",
     "sets": [
       [
-        6,
-        5
-      ]
-    ],
-    "sets_won": [
-      1,
-      0
-    ],
-    "status": "in_progress",
-    "resume_time": null,
-    "updated": "2026-08-04T15:52:45Z",
-    "match_start_push_sent": true,
-    "suspended_push_sent": false
-  },
-  "mattiabellucci|sebastianbaez": {
-    "home": "Sebastian Baez",
-    "away": "Mattia Bellucci",
-    "sets": [
-      [
         7,
         5
       ]
@@ -33,7 +14,30 @@
     ],
     "status": "in_progress",
     "resume_time": null,
-    "updated": "2026-08-04T15:52:45Z",
+    "updated": "2026-08-04T15:54:51Z",
+    "match_start_push_sent": true,
+    "suspended_push_sent": false
+  },
+  "mattiabellucci|sebastianbaez": {
+    "home": "Sebastian Baez",
+    "away": "Mattia Bellucci",
+    "sets": [
+      [
+        7,
+        5
+      ],
+      [
+        1,
+        0
+      ]
+    ],
+    "sets_won": [
+      1,
+      0
+    ],
+    "status": "in_progress",
+    "resume_time": null,
+    "updated": "2026-08-04T15:54:51Z",
     "match_start_push_sent": true,
     "suspended_push_sent": false
   },
@@ -43,7 +47,7 @@
     "sets": [
       [
         3,
-        4
+        5
       ]
     ],
     "sets_won": [
@@ -52,12 +56,12 @@
     ],
     "status": "in_progress",
     "resume_time": null,
-    "updated": "2026-08-04T15:52:45Z",
+    "updated": "2026-08-04T15:54:51Z",
     "match_start_push_sent": true,
     "suspended_push_sent": false
   },
   "_meta": {
-    "heartbeat_at": "2026-08-04T15:52:45Z",
+    "heartbeat_at": "2026-08-04T15:54:51Z",
     "reason": "3 live matches, 0 pushes"
   }
 }
