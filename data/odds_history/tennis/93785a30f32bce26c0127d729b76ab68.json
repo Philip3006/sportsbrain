@@ -1,0 +1,15 @@
+{
+  "match_id": "93785a30f32bce26c0127d729b76ab68",
+  "player_a": "Arthur Fils",
+  "player_b": "Zachary Svajda",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_22",
+      "ts_utc": "2026-08-04T22:30:15.718092+00:00",
+      "odds_a": 1.25,
+      "odds_b": 3.35,
+      "source": "betclic_fr"
+    }
+  ]
+}

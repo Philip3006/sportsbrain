@@ -1,0 +1,15 @@
+{
+  "match_id": "5f048e744a563365b0d035c4e461fd1f",
+  "player_a": "Taylor Fritz",
+  "player_b": "Thiago Agustin Tirante",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_22",
+      "ts_utc": "2026-08-04T22:30:15.720957+00:00",
+      "odds_a": 1.06,
+      "odds_b": 4.8,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

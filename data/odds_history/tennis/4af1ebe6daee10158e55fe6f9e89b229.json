@@ -1,0 +1,15 @@
+{
+  "match_id": "4af1ebe6daee10158e55fe6f9e89b229",
+  "player_a": "Daniel Merida Aguilar",
+  "player_b": "Ugo Humbert",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_22",
+      "ts_utc": "2026-08-04T22:30:15.718776+00:00",
+      "odds_a": 2.48,
+      "odds_b": 1.08,
+      "source": "matchbook"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "43bd849efc6e3de91c16879e55badb71",
+  "player_a": "Alejandro Tabilo",
+  "player_b": "Hubert Hurkacz",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_22",
+      "ts_utc": "2026-08-04T22:30:15.717760+00:00",
+      "odds_a": 2.16,
+      "odds_b": 1.6,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

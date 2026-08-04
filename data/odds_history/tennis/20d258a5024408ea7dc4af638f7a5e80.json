@@ -1,0 +1,15 @@
+{
+  "match_id": "20d258a5024408ea7dc4af638f7a5e80",
+  "player_a": "Joao Fonseca",
+  "player_b": "Stefanos Tsitsipas",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_22",
+      "ts_utc": "2026-08-04T22:30:15.719557+00:00",
+      "odds_a": 1.73,
+      "odds_b": 2.1,
+      "source": "sport888"
+    }
+  ]
+}

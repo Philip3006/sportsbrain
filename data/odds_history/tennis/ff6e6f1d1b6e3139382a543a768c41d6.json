@@ -1,0 +1,15 @@
+{
+  "match_id": "ff6e6f1d1b6e3139382a543a768c41d6",
+  "player_a": "Ben Shelton",
+  "player_b": "Jenson Brooksby",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_22",
+      "ts_utc": "2026-08-04T22:30:15.718257+00:00",
+      "odds_a": 1.27,
+      "odds_b": 3.05,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}
