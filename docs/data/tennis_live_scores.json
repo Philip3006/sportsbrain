@@ -14,7 +14,7 @@
     ],
     "status": "in_progress",
     "resume_time": null,
-    "updated": "2026-08-04T15:50:39Z",
+    "updated": "2026-08-04T15:52:45Z",
     "match_start_push_sent": true,
     "suspended_push_sent": false
   },
@@ -23,7 +23,7 @@
     "away": "Mattia Bellucci",
     "sets": [
       [
-        6,
+        7,
         5
       ]
     ],
@@ -33,7 +33,7 @@
     ],
     "status": "in_progress",
     "resume_time": null,
-    "updated": "2026-08-04T15:50:39Z",
+    "updated": "2026-08-04T15:52:45Z",
     "match_start_push_sent": true,
     "suspended_push_sent": false
   },
@@ -52,12 +52,12 @@
     ],
     "status": "in_progress",
     "resume_time": null,
-    "updated": "2026-08-04T15:50:39Z",
+    "updated": "2026-08-04T15:52:45Z",
     "match_start_push_sent": true,
     "suspended_push_sent": false
   },
   "_meta": {
-    "heartbeat_at": "2026-08-04T15:50:39Z",
-    "reason": "3 live matches, 1 pushes"
+    "heartbeat_at": "2026-08-04T15:52:45Z",
+    "reason": "3 live matches, 0 pushes"
   }
 }
