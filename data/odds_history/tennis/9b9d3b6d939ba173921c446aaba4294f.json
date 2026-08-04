@@ -17,6 +17,13 @@
       "odds_a": 1.2,
       "odds_b": 4.29,
       "source": "betsson"
+    },
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.512790+00:00",
+      "odds_a": 1.2,
+      "odds_b": 4.29,
+      "source": "betsson"
     }
   ]
 }

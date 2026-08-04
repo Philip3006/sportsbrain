@@ -1,0 +1,15 @@
+{
+  "match_id": "74087e165a849383d004427c2e05681e",
+  "player_a": "Gael Monfils",
+  "player_b": "Learner Tien",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.370884+00:00",
+      "odds_a": 3.0,
+      "odds_b": 1.27,
+      "source": "winamax_fr"
+    }
+  ]
+}

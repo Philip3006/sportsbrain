@@ -1,0 +1,15 @@
+{
+  "match_id": "98ce20198611a29c0b7fbe5732360d4b",
+  "player_a": "Belinda Bencic",
+  "player_b": "Sloane Stephens",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.516349+00:00",
+      "odds_a": 1.11,
+      "odds_b": 5.2,
+      "source": "betclic_fr"
+    }
+  ]
+}

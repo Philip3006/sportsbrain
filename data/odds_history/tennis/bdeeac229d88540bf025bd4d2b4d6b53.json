@@ -1,0 +1,15 @@
+{
+  "match_id": "bdeeac229d88540bf025bd4d2b4d6b53",
+  "player_a": "Brandon Nakashima",
+  "player_b": "Daniel Altmaier",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.369825+00:00",
+      "odds_a": 1.32,
+      "odds_b": 3.8,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

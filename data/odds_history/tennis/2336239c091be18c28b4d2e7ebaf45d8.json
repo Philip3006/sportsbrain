@@ -1,0 +1,15 @@
+{
+  "match_id": "2336239c091be18c28b4d2e7ebaf45d8",
+  "player_a": "Naomi Osaka",
+  "player_b": "Panna Udvardy",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.517992+00:00",
+      "odds_a": 1.06,
+      "odds_b": 7.0,
+      "source": "betclic_fr"
+    }
+  ]
+}

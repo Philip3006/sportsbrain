@@ -1,0 +1,15 @@
+{
+  "match_id": "60c7456300c92510cc015d085b9cc567",
+  "player_a": "Maya Joint",
+  "player_b": "Sorana Cirstea",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.517882+00:00",
+      "odds_a": 3.5,
+      "odds_b": 1.25,
+      "source": "betclic_fr"
+    }
+  ]
+}

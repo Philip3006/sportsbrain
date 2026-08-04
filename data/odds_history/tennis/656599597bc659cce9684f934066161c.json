@@ -1,0 +1,15 @@
+{
+  "match_id": "656599597bc659cce9684f934066161c",
+  "player_a": "Caty McNally",
+  "player_b": "Linda Noskova",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.516477+00:00",
+      "odds_a": 3.65,
+      "odds_b": 1.18,
+      "source": "unibet_fr"
+    }
+  ]
+}

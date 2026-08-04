@@ -1,0 +1,15 @@
+{
+  "match_id": "0af7cfb0eaaddb51ab120b6956e08940",
+  "player_a": "Alex Michelsen",
+  "player_b": "Francisco Cerundolo",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.370297+00:00",
+      "odds_a": 1.49,
+      "odds_b": 2.25,
+      "source": "winamax_fr"
+    }
+  ]
+}
