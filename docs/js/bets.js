@@ -79,13 +79,34 @@ async function _fetchLiveScores() {
   } catch (_) {}
 }
 
+function _tennisCanonKey(a, b) {
+  const clean = s => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '');
+  const ca = clean(a), cb = clean(b);
+  return ca <= cb ? `${ca}|${cb}` : `${cb}|${ca}`;
+}
+
+async function _fetchTennisLiveScores() {
+  try {
+    const r = await fetch('data/tennis_live_scores.json?t=' + Date.now(), { cache: 'no-store' });
+    if (r.ok) {
+      const d = await r.json();
+      const out = {};
+      for (const [k, v] of Object.entries(d)) {
+        if (k.startsWith('_')) continue;
+        out[k] = v;  // key ist bereits canonical (a|b sortiert)
+      }
+      _tennisLiveScores = out;
+    }
+  } catch (_) {}
+}
+
 function _setBetTab(tab) {
   _activeBetTab = tab;
   document.querySelectorAll('.bet-tab').forEach(el => {
     el.classList.toggle('active', el.getAttribute('onclick').includes(`'${tab}'`));
   });
   if (tab === 'live') {
-    _fetchLiveScores().then(() => renderBets());
+    Promise.all([_fetchLiveScores(), _fetchTennisLiveScores()]).then(() => renderBets());
   } else {
     renderBets();
   }
@@ -125,25 +146,42 @@ function _renderOpenBetCards(bets, isLive) {
     const flagA = teamFlag(away) || '';
     const currentOddsStr = b.current_odds ? b.current_odds.toFixed(2) : '—';
 
-    // Live score lookup
+    // Live score lookup — Tennis hat Priorität über Fußball
     let liveScoreHtml = '';
+    const tck = _tennisCanonKey(home, away);
+    const ts = _tennisLiveScores[tck] || (b.tennis_sets && b.tennis_sets.length ? b : null);
+
     if (b.is_suspended) {
       // Tennis: Spiel unterbrochen — Satzstand + Status anzeigen
-      const sets = b.suspend_sets || [];
+      const sets = b.suspend_sets || b.tennis_sets || [];
       const setsStr = sets.map(s => `${s[0]}-${s[1]}`).join(', ');
       const statusLabel = b.suspend_status === 'postponed' ? 'Verschoben' : 'Unterbrochen';
       const resumeStr = b.resume_time
         ? ` · Weiter: ${new Date(b.resume_time).toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'})}`
         : ' · Fortsetzung unbekannt';
       liveScoreHtml = `<div style="display:flex;align-items:center;gap:8px;padding:10px 14px 0;flex-wrap:wrap;">
-        ${setsStr ? `<span class="score-box" style="font-size:14px;padding:4px 10px;">${setsStr}</span>` : ''}
+        ${setsStr ? `<span class="score-box" style="font-size:13px;padding:4px 10px;">${setsStr}</span>` : ''}
         <span style="font-size:11px;color:var(--text-dim);">${statusLabel}${resumeStr}</span>
       </div>`;
+    } else if (ts && (ts.sets || b.tennis_sets)) {
+      // Tennis live: Satzstand anzeigen
+      const sets = (ts.sets || b.tennis_sets || []);
+      const setsWon = ts.sets_won || b.tennis_sets_won || null;
+      const isInProgress = (ts.status || '') === 'in_progress';
+      const setsHtml = sets.map((s, i) => {
+        const val = `${s[0]}-${s[1]}`;
+        return (isInProgress && i === sets.length - 1) ? `<b>${val}*</b>` : val;
+      }).join(' &nbsp;|&nbsp; ');
+      const wonStr = setsWon ? `<span style="font-size:11px;color:var(--text-dim);margin-left:4px;">${setsWon[0]}:${setsWon[1]} Sätze</span>` : '';
+      liveScoreHtml = `<div style="display:flex;align-items:center;gap:8px;padding:10px 14px 0;flex-wrap:wrap;">
+        <span class="score-box" style="font-size:13px;padding:4px 12px;letter-spacing:0.5px;">${setsHtml}</span>
+        ${wonStr}
+      </div>`;
     } else if (isLive) {
+      // Fußball live: Tor-Score anzeigen
       const lsKey = `${_normTeam(home)}_vs_${_normTeam(away)}`;
       const ls = _liveScores[lsKey];
       if (ls && ls.home_score != null) {
-        // Compute approximate match minute from kickoff in schedule
         const koEntry = _schedule.find(s => _normTeam(s.home) === _normTeam(home) && _normTeam(s.away) === _normTeam(away));
         let minStr = '';
         if (koEntry?.kickoff) {

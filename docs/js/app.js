@@ -17,6 +17,7 @@ let _openBets = [];
 let _settledBets = [];
 let _activeBetTab = 'open';
 let _liveScores = {};
+let _tennisLiveScores = {};
 let _bankrollState = {};
 let _meta = {};
 let _squads = {};

@@ -26,10 +26,20 @@ jobs:
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
         run: python scripts/tennis_live_scan.py --min-edge 0.05 || true
+
+      - name: Tennis Live Score Push
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUB: ${{ secrets.VAPID_SUB }}
+        run: python scripts/tennis_live_push.py || true
+
       - name: Commit live-signals
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
           git add results/tennis_live_signals.json || true
-          git diff --staged --quiet || git commit -m "auto: tennis live scan $(date -u +%H:%M)"
+          git add docs/data/tennis_live_scores.json || true
+          git add -f data/cache/tennis_live_scores.json data/cache/tennis_suspended.json || true
+          git diff --staged --quiet || git commit -m "auto: tennis live $(date -u +%H:%M)"
           git push || true
