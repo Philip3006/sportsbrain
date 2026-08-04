@@ -18,7 +18,7 @@ import pandas as pd
 _log = logging.getLogger("sportsbrain.tennis.ensemble")
 
 from src.config import TENNIS_USE_LIVE_STATS
-from src.data.tennis_stats import fetch_aggregate
+from src.data.tennis_stats import fetch_aggregate, save_serve_snapshot
 from src.models.tennis_elo import TennisEloRatings, predict_winner
 from src.models import tennis_lgbm as tlgbm
 from src.tennis.features import RollingState, build_match_features
@@ -32,10 +32,32 @@ from src.tennis.style_cluster import classify_style, style_matchup_edge
 _BAYESIAN_SKIP_CATEGORIES = frozenset({"wta500"})
 
 _MODEL_DIR = Path(__file__).parent.parent.parent / "models" / "tennis_lgbm"
+_CAL_DIR = Path(__file__).parent.parent.parent / "models" / "tennis_calibrators"
 _CACHED: dict[str, object] = {}
 
 # Mindestanzahl settled Signale bevor Meta-Calibrator angewendet wird
 _META_CAL_MIN_SAMPLES = 50
+
+
+def _load_surface_calibrator(surface: str):
+    """Lädt Surface-spezifischen Isotonic-Calibrator (J8-I10).
+    Erstellt von scripts/tennis_recalibrate.py — hard/clay/grass separat."""
+    cache_key = f"surf_cal_{surface}"
+    if cache_key in _CACHED:
+        return _CACHED[cache_key]
+    path = _CAL_DIR / f"{surface}.pkl"
+    if not path.exists():
+        _CACHED[cache_key] = None
+        return None
+    try:
+        import pickle
+        cal = pickle.loads(path.read_bytes())
+        _CACHED[cache_key] = cal
+        _log.info("tennis-ensemble: surface_calibrator[%s] geladen", surface)
+    except Exception as e:
+        _log.warning("tennis-ensemble: surface_calibrator[%s] load failed (%s)", surface, e)
+        _CACHED[cache_key] = None
+    return _CACHED[cache_key]
 
 
 def _load_meta_calibrator():
@@ -153,6 +175,17 @@ def predict_winner_ensemble(
                                       before_date=match_date)
             stats_b = fetch_aggregate(player_b, last_n=20, surface=surface, tour=tour,
                                       before_date=match_date)
+            # J8-I7: Asof-Snapshot für Walk-Forward-Training (J2-N Prerequisite).
+            if match_date and stats_a and stats_a.n_matches > 0:
+                try:
+                    save_serve_snapshot(player_a, surface, match_date, stats_a, tour=tour)
+                except Exception:
+                    pass
+            if match_date and stats_b and stats_b.n_matches > 0:
+                try:
+                    save_serve_snapshot(player_b, surface, match_date, stats_b, tour=tour)
+                except Exception:
+                    pass
         except Exception as e:
             _log.debug("tennis-ensemble: serve-stats fetch failed (%s) → neutral prior", e)
             stats_a = stats_b = None
@@ -212,13 +245,24 @@ def predict_winner_ensemble(
         if style_bias != 0.0:
             p_a = max(0.02, min(0.98, p_a + style_bias))
 
-    # Meta-Calibrator: aus settled Signalen gelernter Korrektiv-Layer (ab 50 Samples).
-    meta_cal = _load_meta_calibrator()
-    if meta_cal is not None:
+    # Surface-Calibrator (J8-I10): per-Surface Isotonic aus tennis_recalibrate.py.
+    # Hat Vorrang über globalen Meta-Calibrator (spezifischer → bevorzugt).
+    surf_cal = _load_surface_calibrator(surface.lower())
+    if surf_cal is not None:
         try:
-            p_a = float(meta_cal.predict([p_a])[0])
+            p_a = float(surf_cal.predict([p_a])[0])
             p_a = max(0.02, min(0.98, p_a))
         except Exception:
             pass
+
+    # Meta-Calibrator: globaler Korrektiv-Layer (ab 50 Samples, nur wenn kein Surface-Cal).
+    if surf_cal is None:
+        meta_cal = _load_meta_calibrator()
+        if meta_cal is not None:
+            try:
+                p_a = float(meta_cal.predict([p_a])[0])
+                p_a = max(0.02, min(0.98, p_a))
+            except Exception:
+                pass
 
     return {"p_a": p_a, "p_b": 1.0 - p_a, "source": "ensemble"}

@@ -2,11 +2,13 @@ name: Tennis Scan (year-round, multi-tournament)
 
 on:
   schedule:
-    # J2-F: 4× täglich ganzjährig — Discovery filtert via TheOddsAPI /sports
+    # 6× täglich ganzjährig — Discovery filtert via TheOddsAPI /sports
     # auf aktive Turniere. Vor Saison/Off-Season einfach kein Match → no-op.
     - cron: '0 6 * * *'
-    - cron: '0 11 * * *'
-    - cron: '0 16 * * *'
+    - cron: '0 9 * * *'
+    - cron: '0 12 * * *'
+    - cron: '0 15 * * *'
+    - cron: '0 18 * * *'
     - cron: '0 21 * * *'
   workflow_dispatch:        # manuell auslösbar
     inputs:
@@ -77,6 +79,7 @@ jobs:
           git config user.email "bot@sportsbrain"
           git add results/tennis_scan_*.md docs/data/signals*.json results/health/tennis_scan.json || true
           git add -f data/cache/signal_history.jsonl || true
+          git add data/cache/tennis_serve_snapshots/ || true
           git diff --staged --quiet || git commit -m "auto: tennis scan $(date +%Y-%m-%d)"
           for i in 1 2 3 4 5; do
             git fetch origin main

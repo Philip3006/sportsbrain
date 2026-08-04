@@ -26,6 +26,8 @@ let _wmResults = {};  // {matchKey: {home_score, away_score}}
 let _prevView = 'home';
 let _homeSearch = '';
 let _journalFilter = 'all';
+let _tennisMarketFilter = 'all';
+function _setTennisMarketFilter(f) { _tennisMarketFilter = f; renderSport('tennis'); }
 // Sport-Tab Filter/Sort State (persistiert in LocalStorage)
 const _SPORT_FILTER_KEY = 'sb_sport_filter_v1';
 function _loadSportFilters() {
@@ -415,7 +417,7 @@ function marketLabel(mkt, match) {
     'btts_yes':'Beide treffen','btts_no':'Nicht beide treffen',
     'ftts_home':`1. Tor: ${a}`,'ftts_away':`1. Tor: ${b}`,
     'first_set_a':`1. Satz: ${a}`,'first_set_b':`1. Satz: ${b}`,
-    'ah-1.5_a':`${a} 3:0 / 3:1`,'ah+1.5_b':`${b} +1.5 Sätze`,
+    'ah-1.5_a':`${a} Satz-AH −1.5`,'ah+1.5_b':`${b} Satz-AH +1.5`,
     'dc_1x':`DC: ${a} oder Remis`,'dc_x2':`DC: Remis oder ${b}`,'dc_12':`DC: ${a} oder ${b}`,
     'goals_2_4':'2-4 Tore (Spiel)','goals_2_4_no':'KEIN 2-4 Tore (Spiel)',
     'h1_goals_2_4':'2-4 Tore (1. HZ)','h1_goals_2_4_no':'KEIN 2-4 Tore (1. HZ)',

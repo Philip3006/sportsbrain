@@ -522,9 +522,13 @@ def format_scan_report(
             lines.append("_Keine Value-Signals._")
             continue
         tour_tag = f"[{t.tour.upper()}]"
+        has_ah = any(s.market in ("ah-1.5_a", "ah+1.5_b") for s in signals)
+        if has_ah:
+            lines.append("  > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!")
         for s in sorted(signals, key=lambda x: x.ev, reverse=True):
+            ah_note = " _(Satz-AH = SET handicap)_" if s.market in ("ah-1.5_a", "ah+1.5_b") else ""
             lines += [
-                f"- {tour_tag} **{s.home} vs {s.away}** · {_market_label(s.market, s.home, s.away)}",
+                f"- {tour_tag} **{s.home} vs {s.away}** · {_market_label(s.market, s.home, s.away)}{ah_note}",
                 f"  Quote {s.decimal_odds:.2f} · Modell {s.model_prob*100:.1f}% · "
                 f"EV +{s.ev*100:.1f}% · Stake {s.stake_eur:.2f}€ · {s.confidence}",
             ]
