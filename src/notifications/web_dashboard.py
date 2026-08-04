@@ -979,26 +979,45 @@ def write_signals_json(
             except ValueError:
                 pass
 
-    # Enrich open bets with is_suspended flag (tennis suspended/postponed)
+    # Enrich open bets with tennis live status (in_progress → is_live, suspended → is_suspended).
+    # Priority: tennis_live_scores.json (every 15 min) → tennis_suspended.json (every 2h fallback)
     try:
         import json as _json
-        _susp_cache = ROOT / "data" / "cache" / "tennis_suspended.json"
-        if _susp_cache.exists():
-            _susp_data = _json.loads(_susp_cache.read_text())
-            _susp_updated = _susp_data.get("updated", "2000-01-01T00:00:00Z")
-            _susp_age = (_now_utc - datetime.fromisoformat(_susp_updated.replace("Z", "+00:00"))).total_seconds()
-            if _susp_age < 7200:  # max 2h alt
-                from src.data.tennis_scores import canonical_match_key as _cmk
-                _susp_by_key = {m["match_key"]: m for m in _susp_data.get("matches", [])}
-                for _bet in (_resolved_open_bets or []):
-                    _ck = _cmk(_bet.get("home", ""), _bet.get("away", ""))
-                    if _ck in _susp_by_key:
-                        _se = _susp_by_key[_ck]
-                        _bet["is_suspended"] = True
-                        _bet["is_live"] = True  # Live-Tab zeigen
-                        _bet["resume_time"] = _se.get("resume_time")
-                        _bet["suspend_status"] = _se.get("status")
-                        _bet["suspend_sets"] = _se.get("sets", [])
+        from src.data.tennis_scores import canonical_match_key as _cmk
+        _tennis_live: dict = {}
+
+        _live_cache = ROOT / "data" / "cache" / "tennis_live_scores.json"
+        if _live_cache.exists():
+            _lcd = _json.loads(_live_cache.read_text())
+            _lcd_beat = _lcd.get("_meta", {}).get("heartbeat_at", "2000-01-01T00:00:00Z")
+            _lcd_age = (_now_utc - datetime.fromisoformat(_lcd_beat.replace("Z", "+00:00"))).total_seconds()
+            if _lcd_age < 3600:  # max 1h alt
+                _tennis_live = {k: v for k, v in _lcd.items() if not k.startswith("_")}
+
+        if not _tennis_live:  # Fallback: suspended-only cache vom Settle-Cron
+            _susp_cache = ROOT / "data" / "cache" / "tennis_suspended.json"
+            if _susp_cache.exists():
+                _scd = _json.loads(_susp_cache.read_text())
+                _scd_age = (_now_utc - datetime.fromisoformat(_scd.get("updated", "2000-01-01T00:00:00Z").replace("Z", "+00:00"))).total_seconds()
+                if _scd_age < 7200:
+                    _tennis_live = {m["match_key"]: {**m, "status": m.get("status", "suspended")}
+                                    for m in _scd.get("matches", [])}
+
+        if _tennis_live:
+            for _bet in (_resolved_open_bets or []):
+                _ck = _cmk(_bet.get("home", ""), _bet.get("away", ""))
+                _ts = _tennis_live.get(_ck)
+                if not _ts:
+                    continue
+                _ts_status = _ts.get("status", "")
+                _bet["is_live"] = True  # in_progress und suspended beide im Live-Tab
+                _bet["tennis_sets"] = _ts.get("sets", [])
+                _bet["tennis_sets_won"] = _ts.get("sets_won", [])
+                if _ts_status in ("suspended", "postponed"):
+                    _bet["is_suspended"] = True
+                    _bet["resume_time"] = _ts.get("resume_time")
+                    _bet["suspend_status"] = _ts_status
+                    _bet["suspend_sets"] = _ts.get("sets", [])
     except Exception:
         pass
 
