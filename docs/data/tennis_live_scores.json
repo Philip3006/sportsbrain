@@ -12,7 +12,7 @@
         6
       ],
       [
-        2,
+        3,
         0
       ]
     ],
@@ -22,7 +22,7 @@
     ],
     "status": "in_progress",
     "resume_time": null,
-    "updated": "2026-08-04T16:45:13Z",
+    "updated": "2026-08-04T16:47:19Z",
     "match_start_push_sent": true,
     "suspended_push_sent": false
   },
@@ -73,7 +73,7 @@
     "suspended_push_sent": false
   },
   "_meta": {
-    "heartbeat_at": "2026-08-04T16:45:13Z",
+    "heartbeat_at": "2026-08-04T16:47:19Z",
     "reason": "1 live matches, 0 pushes"
   }
 }
