@@ -1,0 +1,15 @@
+{
+  "match_id": "5705a422889bf0ba13b65b4a95d6b390",
+  "player_a": "Tommy Paul",
+  "player_b": "Valentin Royer",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_22",
+      "ts_utc": "2026-08-04T22:30:15.720399+00:00",
+      "odds_a": 1.2,
+      "odds_b": 4.5,
+      "source": "winamax_de"
+    }
+  ]
+}

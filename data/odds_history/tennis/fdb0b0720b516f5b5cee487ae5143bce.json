@@ -1,0 +1,15 @@
+{
+  "match_id": "fdb0b0720b516f5b5cee487ae5143bce",
+  "player_a": "Jacob Fearnley",
+  "player_b": "Jakub Mensik",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_22",
+      "ts_utc": "2026-08-04T22:30:15.719444+00:00",
+      "odds_a": 3.15,
+      "odds_b": 1.28,
+      "source": "betclic_fr"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "61767792f8b00ecdbb496c875941e2bd",
+  "player_a": "Alexei Popyrin",
+  "player_b": "Raphael Collignon",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_22",
+      "ts_utc": "2026-08-04T22:30:15.720862+00:00",
+      "odds_a": 2.08,
+      "odds_b": 1.41,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

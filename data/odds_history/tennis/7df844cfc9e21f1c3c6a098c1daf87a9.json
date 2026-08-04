@@ -1,0 +1,15 @@
+{
+  "match_id": "7df844cfc9e21f1c3c6a098c1daf87a9",
+  "player_a": "Sebastian Baez",
+  "player_b": "Zizou Bergs",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_22",
+      "ts_utc": "2026-08-04T22:30:15.720286+00:00",
+      "odds_a": 2.38,
+      "odds_b": 1.53,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

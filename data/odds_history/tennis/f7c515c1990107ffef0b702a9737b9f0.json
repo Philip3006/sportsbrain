@@ -31,6 +31,13 @@
       "odds_a": 1.16,
       "odds_b": 5.3,
       "source": "unibet_fr"
+    },
+    {
+      "label": "auto_20260804_22",
+      "ts_utc": "2026-08-04T22:30:15.716401+00:00",
+      "odds_a": 1.2,
+      "odds_b": 4.6,
+      "source": "coolbet"
     }
   ]
 }
