@@ -419,6 +419,15 @@ function _signalAgeHtml(s) {
   return '';
 }
 
+function _formBadgesHtml(form) {
+  if (!form || !form.length) return '';
+  return '<span style="display:inline-flex;align-items:center;gap:2px;margin-left:4px">' +
+    form.map(r => r === 'W'
+      ? '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#4caf50" title="Gewonnen"></span>'
+      : '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef5350" title="Verloren"></span>'
+    ).join('') + '</span>';
+}
+
 function sigCard(s, showMatch) {
   const cls = s.confidence === 'HIGH' ? 'high' : 'medium';
   const evCls = s.ev_pct >= 10 ? 'ev-h' : 'ev-m';
@@ -1036,6 +1045,20 @@ function renderSport(sport) {
     }).join('');
     h += `<div style="padding:8px 12px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid rgba(48,54,61,.5)">${mfHtml}</div>`;
 
+    // Surface-Performance-Widget (Phase 2d)
+    const _surfStats = (_tennisStats && _tennisStats.stats && _tennisStats.stats.by_surface) ? _tennisStats.stats.by_surface : {};
+    const _surfKeys = ['hard','clay','grass'];
+    const _surfIcons = {hard:'🟦', clay:'🟧', grass:'🌱'};
+    const _surfParts = _surfKeys.filter(s => _surfStats[s] && _surfStats[s].n > 0).map(s => {
+      const d = _surfStats[s];
+      const roi = d.roi_pct != null ? (d.roi_pct >= 0 ? `+${d.roi_pct.toFixed(1)}%` : `${d.roi_pct.toFixed(1)}%`) : '—';
+      const roiCol = d.roi_pct != null ? (d.roi_pct >= 0 ? '#4ade80' : '#f87171') : 'var(--muted)';
+      return `${_surfIcons[s]} <b style="color:#e6ecf3">${s.charAt(0).toUpperCase()+s.slice(1)}</b>: ${d.won||0}W/${(d.n-(d.won||0))}L <span style="color:${roiCol};font-weight:700">(${roi})</span>`;
+    });
+    if (_surfParts.length > 0) {
+      h += `<div style="padding:5px 14px;font-size:11px;color:var(--muted);border-bottom:1px solid rgba(48,54,61,.4);display:flex;flex-wrap:wrap;gap:12px">${_surfParts.join(' &nbsp;·&nbsp; ')}</div>`;
+    }
+
     // Marktfilter auf sortedGroups anwenden
     const _tennisMarketPredicate = mkt => {
       const f = _tennisMarketFilter;
@@ -1096,8 +1119,10 @@ function renderSport(sport) {
         const [mh, ma] = match.split(' vs ').map(x => x.trim());
         const timeStr = s0.kickoff ? fmtKickoff(s0.kickoff) : '';
         const tourStr = (s0.tour||'').toUpperCase();
+        const fbA = _formBadgesHtml(s0.form_a);
+        const fbB = _formBadgesHtml(s0.form_b);
         h += `<div style="padding:14px 16px 6px;border-bottom:1px solid rgba(48,54,61,.4)">
-          <div style="font-size:16px;font-weight:900;letter-spacing:-.3px;margin-bottom:3px">${esc(mh)} <span style="color:var(--muted);font-weight:500">vs</span> ${esc(ma)}</div>
+          <div style="font-size:16px;font-weight:900;letter-spacing:-.3px;margin-bottom:3px;display:flex;align-items:center;flex-wrap:wrap;gap:4px">${esc(mh)}${fbA}<span style="color:var(--muted);font-weight:500;margin:0 2px">vs</span>${esc(ma)}${fbB}</div>
           <div style="font-size:11px;color:var(--muted);font-weight:600">${esc(tourStr)}${timeStr ? ' · ' + timeStr : ''}</div>
         </div>`;
         const ouS = mSigs.filter(s => /^o\/u/.test(s.market));
@@ -1165,6 +1190,15 @@ function renderSport(sport) {
         }
       }
     }
+
+    // Phase 4d: Coverage-Report Footer
+    const _tSigs = tennisSignals.length;
+    const _tWithOdds = tennisSchedule.filter(g => g.odds_home > 1 || g.odds_away > 1).length + _tSigs;
+    const _tTotal = tennisSchedule.length + sortedGroups.length;
+    const _updTs = _tennisStats?.updated ? ` · ${fmtKickoff(_tennisStats.updated)}` : '';
+    h += `<div style="padding:10px 16px;font-size:10px;color:var(--muted);text-align:center;border-top:1px solid rgba(48,54,61,.4);margin-top:8px">
+      📊 Heute gecheckt: <b>${_tTotal}</b> Matches · <b>${_tWithOdds}</b> mit Odds · <b>${_tSigs}</b> Signal${_tSigs !== 1 ? 'e' : ''}${_updTs}
+    </div>`;
 
     h += '</div>';
     c.innerHTML = h;

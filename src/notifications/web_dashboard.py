@@ -201,6 +201,38 @@ def _build_history(n_days: int = 30, ledger_path: Path | None = None) -> list[di
         return []
 
 
+def _build_player_form_cache() -> dict[str, list[str]]:
+    """Last-5 W/L per tennis player from signal_history.jsonl."""
+    hist_path = Path(__file__).resolve().parent.parent.parent / "data" / "cache" / "signal_history.jsonl"
+    if not hist_path.exists():
+        return {}
+    from collections import defaultdict
+    player_results: dict[str, list[tuple[str, str]]] = defaultdict(list)
+    with hist_path.open() as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if not _line:
+                continue
+            try:
+                row = json.loads(_line)
+            except json.JSONDecodeError:
+                continue
+            if row.get("sport") != "tennis":
+                continue
+            if row.get("outcome") not in ("won", "lost"):
+                continue
+            ts = row.get("outcome_ts") or row.get("scan_ts") or ""
+            market = row.get("market", "")
+            home, away = row.get("home", ""), row.get("away", "")
+            player = home if market in ("home", "ah-1.5_a") else away
+            if player:
+                player_results[player].append((ts, row["outcome"]))
+    return {
+        p: ["W" if o == "won" else "L" for _, o in sorted(rs, key=lambda x: x[0])[-5:]]
+        for p, rs in player_results.items()
+    }
+
+
 def _signal_to_dict(
     s: BetSignal,
     sport: str = "football",
@@ -208,6 +240,8 @@ def _signal_to_dict(
     kickoff: str = "",
     tournament_meta: dict | None = None,
     generated_at: str = "",
+    form_a: list[str] | None = None,
+    form_b: list[str] | None = None,
 ) -> dict:
     from datetime import datetime, timezone
     d = {
@@ -224,6 +258,10 @@ def _signal_to_dict(
         "n_models_agree":  s.n_models_agree,
         "generated_at":    generated_at or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
+    if form_a:
+        d["form_a"] = form_a
+    if form_b:
+        d["form_b"] = form_b
     if getattr(s, "stake_reason", ""):
         d["correlation_note"] = s.stake_reason
     if getattr(s, "no_bet_flag", False):
@@ -514,6 +552,7 @@ def _build_tennis_stats(ledger_path: Path | None = None) -> dict:
         "by_market": {},
         "by_tour": {"atp": {"n": 0, "won": 0, "pnl": 0.0, "staked": 0.0},
                     "wta": {"n": 0, "won": 0, "pnl": 0.0, "staked": 0.0}},
+        "by_surface": {},
     }
 
     try:
@@ -576,6 +615,20 @@ def _build_tennis_stats(ledger_path: Path | None = None) -> dict:
                 if status == "won":
                     bt["won"] += 1
 
+            # by_surface — aus match_id heuristic (enthält oft surface-code) oder stake_reason
+            surf_hint = " ".join([row_src, row_reason, str(r.get("match_id", ""))]).lower()
+            surf = None
+            for s_key in ("hard", "clay", "grass", "carpet"):
+                if s_key in surf_hint:
+                    surf = s_key; break
+            if surf:
+                bs = stats["by_surface"].setdefault(surf, {"n": 0, "won": 0, "pnl": 0.0, "staked": 0.0})
+                bs["n"] += 1
+                bs["staked"] += stake
+                bs["pnl"] += pnl
+                if status == "won":
+                    bs["won"] += 1
+
             # CLV
             try:
                 clv = float(r.get("clv") or "nan")
@@ -598,6 +651,11 @@ def _build_tennis_stats(ledger_path: Path | None = None) -> dict:
     for bt in stats["by_tour"].values():
         bt["pnl"] = round(bt["pnl"], 2)
         bt["staked"] = round(bt["staked"], 2)
+    for bs in stats["by_surface"].values():
+        bs["pnl"] = round(bs["pnl"], 2)
+        bs["staked"] = round(bs["staked"], 2)
+        if bs["staked"] > 0:
+            bs["roi_pct"] = round(100 * bs["pnl"] / bs["staked"], 1)
 
     return {
         "updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -911,6 +969,7 @@ def write_signals_json(
     ] if football else existing.get("football", [])
 
     if tennis:
+        _player_form = _build_player_form_cache()
         tennis_data = [
             _signal_to_dict(
                 s, "tennis",
@@ -918,6 +977,8 @@ def write_signals_json(
                 kickoff=kickoff_map.get(s.match_id, ""),
                 tournament_meta=tennis_tournament_map.get(s.match_id),
                 generated_at=updated,
+                form_a=_player_form.get(s.home) or [],
+                form_b=_player_form.get(s.away) or [],
             )
             for s in tennis
         ]

@@ -211,6 +211,11 @@ def append_bets(
                 continue
             key = (s.match_id, s.market)
             if key in existing:
+                import logging as _log
+                _log.getLogger("sportsbrain.ledger").info(
+                    "Skip duplicate: %s %s (bereits im Ledger)", s.match_id, s.market
+                )
+                print(f"[ledger] Skip duplicate: {s.home} vs {s.away} | {s.market}")
                 continue
             new_rows.append({
                 "match_id":     s.match_id,

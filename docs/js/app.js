@@ -28,6 +28,7 @@ let _homeSearch = '';
 let _journalFilter = 'all';
 let _tennisMarketFilter = 'all';
 function _setTennisMarketFilter(f) { _tennisMarketFilter = f; renderSport('tennis'); }
+let _tennisStats = {};
 // Sport-Tab Filter/Sort State (persistiert in LocalStorage)
 const _SPORT_FILTER_KEY = 'sb_sport_filter_v1';
 function _loadSportFilters() {
@@ -532,6 +533,7 @@ async function _load() {
   }
 
   _signals = [...(d.football||[]), ...(d.tennis||[])];
+  _tennisStats = d.tennis_stats || {};
   _schedule = d.schedule || [];
   _allOdds = d.all_odds || {};
   _modelTips = d.model_tips || {};

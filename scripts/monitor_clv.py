@@ -71,6 +71,44 @@ def _tennis_clv_window(ledger_path: Path, window_days: int) -> tuple[list[float]
     return clvs, n_settled
 
 
+def _tennis_clv_by_market(ledger_path: Path, window_days: int, min_consecutive: int = 3) -> list[dict]:
+    """Per-Markt CLV: gibt Märkte zurück wo letzte min_consecutive Bets alle CLV < -0.05 hatten."""
+    if not ledger_path.exists():
+        return []
+    cutoff = datetime.now(timezone.utc) - timedelta(days=window_days)
+    # market → list of (placed_date, clv) chronologisch
+    by_market: dict[str, list[tuple[datetime, float]]] = {}
+    with ledger_path.open() as f:
+        for row in csv.DictReader(f):
+            market = row.get("market", "")
+            source = (row.get("source") or "").lower()
+            if not (is_tennis_market(market) or "tennis" in source):
+                continue
+            if row.get("status", "").lower() not in ("won", "lost"):
+                continue
+            pd_ = _parse_placed_date(row)
+            if pd_ is None or pd_ < cutoff:
+                continue
+            try:
+                clv = float(row.get("clv") or "")
+            except (ValueError, TypeError):
+                continue
+            by_market.setdefault(market, []).append((pd_, clv))
+
+    alerts = []
+    for market, entries in by_market.items():
+        entries.sort(key=lambda x: x[0])
+        last_n = [c for _, c in entries[-min_consecutive:]]
+        if len(last_n) >= min_consecutive and all(c < -0.05 for c in last_n):
+            alerts.append({
+                "market": market,
+                "n_consecutive": len(last_n),
+                "mean_clv": round(sum(last_n) / len(last_n), 4),
+                "last_clv": last_n[-1],
+            })
+    return alerts
+
+
 def _classify(mean_clv: float, n: int) -> tuple[str, str]:
     if n == 0:
         return "OK", "keine Tennis-Bets in der Periode"
@@ -100,7 +138,8 @@ def main() -> int:
 
     exit_code = 0
     for u in users:
-        clvs, n = _tennis_clv_window(ledger_path_for(u), args.window_days)
+        lp = ledger_path_for(u)
+        clvs, n = _tennis_clv_window(lp, args.window_days)
         mean = sum(clvs) / len(clvs) if clvs else 0.0
         level, msg = _classify(mean, n)
         print(f"[{u}] {level}: {msg}")
@@ -116,6 +155,24 @@ def main() -> int:
                     )
                 except Exception as e:
                     print(f"  [push] failed: {e}")
+
+        # Per-Markt-Trend: letzte 3 Bets auf selben Markt alle CLV < -5% → Alarm
+        market_alerts = _tennis_clv_by_market(lp, args.window_days)
+        for alert in market_alerts:
+            mkt_msg = (f"Markt '{alert['market']}': letzte {alert['n_consecutive']} Bets "
+                       f"mean_clv={alert['mean_clv']:+.3f} (< −5%)")
+            print(f"[{u}] WARN market-trend: {mkt_msg}")
+            exit_code = max(exit_code, 1)
+            if args.push:
+                try:
+                    from src.notifications.web_push import send_generic_alert
+                    send_generic_alert(
+                        title="Tennis Markt-CLV ⚠",
+                        body=f"{u}: {mkt_msg}",
+                        url="/#journal",
+                    )
+                except Exception as e:
+                    print(f"  [push] market-alert failed: {e}")
     return exit_code
 
 
