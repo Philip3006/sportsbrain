@@ -1,0 +1,15 @@
+{
+  "match_id": "a09c42ca23d870bd4c22fc5c6cc7b612",
+  "player_a": "Iva Jović",
+  "player_b": "Magda Linette",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.517016+00:00",
+      "odds_a": 1.22,
+      "odds_b": 3.95,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

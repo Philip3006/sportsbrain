@@ -1,0 +1,15 @@
+{
+  "match_id": "471e086d866d8395789165b877b96187",
+  "player_a": "Alex de Minaur",
+  "player_b": "James Duckworth",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.369705+00:00",
+      "odds_a": 1.08,
+      "odds_b": 6.4,
+      "source": "unibet_fr"
+    }
+  ]
+}

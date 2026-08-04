@@ -1,0 +1,15 @@
+{
+  "match_id": "97e233f1afee02169af8fcef9a1bf19f",
+  "player_a": "Lorenzo Musetti",
+  "player_b": "Nicolas Mejia",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.370996+00:00",
+      "odds_a": 1.11,
+      "odds_b": 6.45,
+      "source": "marathonbet"
+    }
+  ]
+}

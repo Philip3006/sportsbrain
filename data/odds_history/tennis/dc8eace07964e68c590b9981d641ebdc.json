@@ -1,0 +1,15 @@
+{
+  "match_id": "dc8eace07964e68c590b9981d641ebdc",
+  "player_a": "Antonia Ruzic",
+  "player_b": "Madison Keys",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.513836+00:00",
+      "odds_a": 4.3,
+      "odds_b": 1.26,
+      "source": "matchbook"
+    }
+  ]
+}

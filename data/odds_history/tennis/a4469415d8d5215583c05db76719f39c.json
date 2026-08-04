@@ -1,0 +1,15 @@
+{
+  "match_id": "a4469415d8d5215583c05db76719f39c",
+  "player_a": "Flavio Cobolli",
+  "player_b": "Yannick Hanfmann",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.370063+00:00",
+      "odds_a": 1.71,
+      "odds_b": 2.36,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

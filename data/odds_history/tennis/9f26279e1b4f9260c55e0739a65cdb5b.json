@@ -1,0 +1,15 @@
+{
+  "match_id": "9f26279e1b4f9260c55e0739a65cdb5b",
+  "player_a": "Amanda Anisimova",
+  "player_b": "Lanlana Tararudee",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.515360+00:00",
+      "odds_a": 1.32,
+      "odds_b": 3.45,
+      "source": "matchbook"
+    }
+  ]
+}

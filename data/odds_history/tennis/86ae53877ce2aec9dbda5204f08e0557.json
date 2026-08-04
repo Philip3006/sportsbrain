@@ -1,0 +1,15 @@
+{
+  "match_id": "86ae53877ce2aec9dbda5204f08e0557",
+  "player_a": "Gabriel Diallo",
+  "player_b": "Luciano Darderi",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.370187+00:00",
+      "odds_a": 1.87,
+      "odds_b": 2.06,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

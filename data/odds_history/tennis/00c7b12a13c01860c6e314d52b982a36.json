@@ -1,0 +1,15 @@
+{
+  "match_id": "00c7b12a13c01860c6e314d52b982a36",
+  "player_a": "Frances Tiafoe",
+  "player_b": "Marin Cilic",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.369951+00:00",
+      "odds_a": 1.53,
+      "odds_b": 2.4,
+      "source": "unibet_fr"
+    }
+  ]
+}

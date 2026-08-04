@@ -1,0 +1,15 @@
+{
+  "match_id": "9d5b8c5a110914e382207850fb49a116",
+  "player_a": "Corentin Moutet",
+  "player_b": "Rafael Jodar",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.370664+00:00",
+      "odds_a": 3.4,
+      "odds_b": 1.22,
+      "source": "winamax_fr"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "f245d94232bde97a7c9791892bbe3ab2",
+  "player_a": "Cameron Norrie",
+  "player_b": "Ignacio Buse",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.370555+00:00",
+      "odds_a": 1.42,
+      "odds_b": 2.45,
+      "source": "winamax_fr"
+    }
+  ]
+}

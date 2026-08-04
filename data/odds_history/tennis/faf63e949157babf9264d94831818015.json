@@ -1,0 +1,15 @@
+{
+  "match_id": "faf63e949157babf9264d94831818015",
+  "player_a": "Mariano Navone",
+  "player_b": "Valentin Vacherot",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.371107+00:00",
+      "odds_a": 2.33,
+      "odds_b": 1.6,
+      "source": "marathonbet"
+    }
+  ]
+}

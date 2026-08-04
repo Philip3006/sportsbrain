@@ -1,0 +1,15 @@
+{
+  "match_id": "83963b351438e21ba56380e3f234182c",
+  "player_a": "Barbora Krejcikova",
+  "player_b": "Liudmila Samsonova",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.516201+00:00",
+      "odds_a": 1.19,
+      "odds_b": 2.14,
+      "source": "matchbook"
+    }
+  ]
+}

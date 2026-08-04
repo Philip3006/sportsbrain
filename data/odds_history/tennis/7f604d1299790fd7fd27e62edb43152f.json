@@ -1,0 +1,15 @@
+{
+  "match_id": "7f604d1299790fd7fd27e62edb43152f",
+  "player_a": "Clara Tauson",
+  "player_b": "Nikola Bartunkova",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.515005+00:00",
+      "odds_a": 1.79,
+      "odds_b": 2.03,
+      "source": "gtbets"
+    }
+  ]
+}

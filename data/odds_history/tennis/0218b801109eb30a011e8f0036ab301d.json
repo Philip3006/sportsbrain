@@ -1,0 +1,15 @@
+{
+  "match_id": "0218b801109eb30a011e8f0036ab301d",
+  "player_a": "Arthur Rinderknech",
+  "player_b": "Miomir Kecmanovic",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260804_09",
+      "ts_utc": "2026-08-04T09:10:04.370446+00:00",
+      "odds_a": 1.84,
+      "odds_b": 1.96,
+      "source": "marathonbet"
+    }
+  ]
+}
