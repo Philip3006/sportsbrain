@@ -996,13 +996,14 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 | **14d** | + NEU **J8-B4/B5/B6/B8/B9/B10/B11/B13 + J8-M1-M4/M6/M7 (Tennis-Hygiene P2)** — Silent-Fails, Test-Assertions, Metadaten, Docs | **rollend Q3-Q4** | ~15 h Summe |
 | **14e** | + NEU **J8-I7 + J8-I10 (Tennis-Ausbau P2) ✅ erledigt 2026-08-04** — Serve-Snapshot-System live, Surface-Cal in Ensemble integriert | erledigt | ~4 h |
 | **14f** | + NEU **J8-I8 (Live-InPlay Phase 5)** — nur nach stabilem J8-I6 (Pinnacle) | **Q1 2027+** | 15-25 h |
-| **14g** | + NEU **Tennis UX-Paket 2026-08-04** — Satz-AH-Guard (Label + Tooltip + Scan-Warnung), Marktfilter-Chips im Tennis-Tab (Alle/H2H/Satz-AH/O/U Games/Sets), Signal-Alter-Indikator, Spieler-Form-Badges (letzte 5 W/L Dots), Surface-Performance-Widget, Coverage-Report-Footer, Pinnacle-AH-Fallback (ah_implied), CLV-Alarm per Markt, Doppelbuchung-Guard+Logging, Scanner 6×/Tag, Settle-Reminder | erledigt 2026-08-04 | ~6 h |
+| **14g** | + NEU **Tennis UX-Paket 2026-08-04** — Satz-AH-Guard, Marktfilter-Chips, Signal-Alter, Form-Badges, Surface-Widget, Coverage-Footer, Pinnacle-AH-Fallback, CLV-Alarm, Doppelbuchung-Guard, Scanner 6×/Tag, Settle-Reminder | erledigt 2026-08-04 | ~6 h |
+| **14h** | + NEU **Phase 3c + 4c (2026-08-04)** — TZ-Reise-Feature (IOC→TZ-Lookup, tz_shift_a/b in FEATURE_COLUMNS 81 Cols), bio+tournament_slug in Ensemble-Prediction, Spieler-Form-Badges; First-Set-Markt: serve-stats-basierte Probs (_first_set_probs_serve_based), Tier-1/2-Gate | erledigt 2026-08-04 | ~2 h |
 
 ---
 
 ## 📊 Statistik
 
-- **Insgesamt**: 111 konkrete Items (+1 aus UX-Paket 2026-08-04: 14g)
+- **Insgesamt**: 112 konkrete Items (+2 aus 2026-08-04: 14g+14h)
 - **P0**: 15 (sofort) — davon **15 ✅** (J8-B1 + J8-B3 in Phase-4-Sprint erledigt)
 - **P1**: 46 — davon **46 ✅** — alle P1-Items erledigt (N1/N2/N9 2026-08-03)
 - **P2**: 38 — davon **37 ✅**; **offen: J8-B8/I9 (Q4 deferred)** — J8-I7 + J8-I10 erledigt 2026-08-04
