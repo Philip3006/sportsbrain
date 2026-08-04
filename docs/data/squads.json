@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-03",
+  "updated": "2026-08-04",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -4410,9 +4410,7 @@
       "player_count": 26,
       "availability_score": 1.0,
       "ampel": "🟢",
-      "suspended": [
-        "Adalberto Carrasquilla"
-      ],
+      "suspended": [],
       "players": [
         {
           "name": "Luis Mejía",
@@ -4452,7 +4450,7 @@
         {
           "name": "Adalberto Carrasquilla",
           "pos": "MID",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Tomás Rodríguez",
