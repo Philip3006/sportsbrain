@@ -1,0 +1,15 @@
+{
+  "match_id": "2f7b8de8cfbd32fd1d815b6b615ca8d1",
+  "player_a": "Botic van de Zandschulp",
+  "player_b": "Daniil Medvedev",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260805_09",
+      "ts_utc": "2026-08-05T09:07:33.047588+00:00",
+      "odds_a": 4.2,
+      "odds_b": 1.28,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "ab4b81a8f1c127df791872478b5c1336",
+  "player_a": "Amanda Anisimova",
+  "player_b": "Nikola Bartunkova",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260805_09",
+      "ts_utc": "2026-08-05T09:07:33.157611+00:00",
+      "odds_a": 1.12,
+      "odds_b": 2.2,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}
