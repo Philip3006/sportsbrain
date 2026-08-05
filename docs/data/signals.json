@@ -9212,5 +9212,1456 @@
       "away_score": 0,
       "commence_time": "2026-07-19T19:05:00Z"
     }
-  ]
+  ],
+  "model_evals": {
+    "Learner Tien vs Gael Monfils": {
+      "p_a": 39.5,
+      "p_b": 60.5,
+      "implied_a": 28.4,
+      "implied_b": 71.6,
+      "odds_a": 3.5,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Alex Michelsen vs Francisco Cerundolo": {
+      "p_a": 55.0,
+      "p_b": 45.0,
+      "implied_a": 39.8,
+      "implied_b": 60.2,
+      "odds_a": 2.5,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Ignacio Buse vs Cameron Norrie": {
+      "p_a": 45.0,
+      "p_b": 55.0,
+      "implied_a": 33.0,
+      "implied_b": 67.0,
+      "odds_a": 3.05,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Zizou Bergs vs Sebastian Baez": {
+      "p_a": 55.0,
+      "p_b": 45.0,
+      "implied_a": 40.2,
+      "implied_b": 59.8,
+      "odds_a": 2.48,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Jenson Brooksby vs Ben Shelton": {
+      "p_a": 65.3,
+      "p_b": 34.7,
+      "implied_a": 51.4,
+      "implied_b": 48.6,
+      "odds_a": 0.0,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Hubert Hurkacz vs Alejandro Tabilo": {
+      "p_a": 58.3,
+      "p_b": 41.7,
+      "implied_a": 50.7,
+      "implied_b": 49.3,
+      "odds_a": 0.0,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Zachary Svajda vs Arthur Fils": {
+      "p_a": 65.3,
+      "p_b": 34.7,
+      "implied_a": 54.0,
+      "implied_b": 46.0,
+      "odds_a": 0.0,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Daria Kasatkina vs Elena Rybakina": {
+      "p_a": 61.5,
+      "p_b": 38.5,
+      "implied_a": 52.7,
+      "implied_b": 47.3,
+      "odds_a": 0.0,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Fabian Marozsan vs Matteo Arnaldi": {
+      "p_a": 55.0,
+      "p_b": 45.0,
+      "implied_a": 42.5,
+      "implied_b": 57.5,
+      "odds_a": 2.34,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Jacob Fearnley vs Jakub Mensik": {
+      "p_a": 65.3,
+      "p_b": 34.7,
+      "implied_a": 52.2,
+      "implied_b": 47.8,
+      "odds_a": 0.0,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Karen Khachanov vs Terence Atmane": {
+      "p_a": 55.0,
+      "p_b": 45.0,
+      "implied_a": 43.6,
+      "implied_b": 56.4,
+      "odds_a": 2.28,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Liudmila Samsonova vs Barbora Krejcikova": {
+      "p_a": 69.1,
+      "p_b": 30.9,
+      "implied_a": 56.0,
+      "implied_b": 44.0,
+      "odds_a": 0.0,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Marie Bouzkova vs Taylor Townsend": {
+      "p_a": 53.6,
+      "p_b": 46.4,
+      "implied_a": 49.7,
+      "implied_b": 50.3,
+      "odds_a": 0.0,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Valentin Royer vs Tommy Paul": {
+      "p_a": 62.6,
+      "p_b": 37.4,
+      "implied_a": 52.2,
+      "implied_b": 47.8,
+      "odds_a": 0.0,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Alycia Parks vs Alexandra Eala": {
+      "p_a": 98.0,
+      "p_b": 2.0,
+      "implied_a": 83.3,
+      "implied_b": 16.7,
+      "odds_a": 1.2,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Nicolas Mejia vs Lorenzo Musetti": {
+      "p_a": 61.1,
+      "p_b": 38.9,
+      "implied_a": 51.2,
+      "implied_b": 48.8,
+      "odds_a": 0.0,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Lehecka Jiri vs Kopriva Vit": {
+      "p_a": 39.5,
+      "p_b": 60.5,
+      "implied_a": 31.0,
+      "implied_b": 69.0,
+      "odds_a": 3.0,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Kayla Day vs Coco Gauff": {
+      "p_a": 98.0,
+      "p_b": 2.0,
+      "implied_a": 89.4,
+      "implied_b": 10.6,
+      "odds_a": 1.12,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Miomir Kecmanovic vs Arthur Rinderknech": {
+      "p_a": 57.1,
+      "p_b": 42.9,
+      "implied_a": 49.3,
+      "implied_b": 50.7,
+      "odds_a": 2.04,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Sloane Stephens vs Belinda Bencic": {
+      "p_a": 98.0,
+      "p_b": 2.0,
+      "implied_a": 87.2,
+      "implied_b": 12.8,
+      "odds_a": 1.15,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Alina Korneeva vs Emma Navarro": {
+      "p_a": 59.5,
+      "p_b": 40.5,
+      "implied_a": 54.0,
+      "implied_b": 46.0,
+      "odds_a": 0.0,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Luciano Darderi vs Juncheng Shang": {
+      "p_a": 55.0,
+      "p_b": 45.0,
+      "implied_a": 48.4,
+      "implied_b": 51.6,
+      "odds_a": 2.05,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Panna Udvardy vs Naomi Osaka": {
+      "p_a": 98.0,
+      "p_b": 2.0,
+      "implied_a": 91.3,
+      "implied_b": 8.7,
+      "odds_a": 1.09,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Rafael Jodar vs Corentin Moutet": {
+      "p_a": 54.4,
+      "p_b": 45.6,
+      "implied_a": 48.3,
+      "implied_b": 51.7,
+      "odds_a": 0.0,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Jessica Pegula vs Magdalena Frech": {
+      "p_a": 49.8,
+      "p_b": 50.2,
+      "implied_a": 44.0,
+      "implied_b": 56.0,
+      "odds_a": 0.0,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Linda Noskova vs Caty McNally": {
+      "p_a": 50.2,
+      "p_b": 49.8,
+      "implied_a": 44.0,
+      "implied_b": 56.0,
+      "odds_a": 0.0,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Sorana Cirstea vs Maya Joint": {
+      "p_a": 50.2,
+      "p_b": 49.8,
+      "implied_a": 45.3,
+      "implied_b": 54.7,
+      "odds_a": 0.0,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Maria Sakkari vs Zeynep Sonmez": {
+      "p_a": 53.6,
+      "p_b": 46.4,
+      "implied_a": 50.9,
+      "implied_b": 49.1,
+      "odds_a": 0.0,
+      "odds_b": 0.0,
+      "source": "signal"
+    },
+    "Stefanos Tsitsipas vs Joao Fonseca": {
+      "p_a": 44.2,
+      "p_b": 55.8,
+      "implied_a": 42.6,
+      "implied_b": 57.4,
+      "odds_a": 2.34,
+      "odds_b": 1.74,
+      "source": "ensemble"
+    },
+    "Valentin Vacherot vs Mariano Navone": {
+      "p_a": 60.5,
+      "p_b": 39.5,
+      "implied_a": 61.3,
+      "implied_b": 38.7,
+      "odds_a": 1.63,
+      "odds_b": 2.58,
+      "source": "ensemble"
+    },
+    "Nuno Borges vs Tomas Martin Etcheverry": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 64.2,
+      "implied_b": 35.8,
+      "odds_a": 1.55,
+      "odds_b": 2.78,
+      "source": "implied"
+    },
+    "Casper Ruud vs Juan Manuel Cerundolo": {
+      "p_a": 60.5,
+      "p_b": 39.5,
+      "implied_a": 69.9,
+      "implied_b": 30.1,
+      "odds_a": 1.42,
+      "odds_b": 3.3,
+      "source": "ensemble"
+    },
+    "Alexander Zverev vs Tallon Griekspoor": {
+      "p_a": 75.9,
+      "p_b": 24.1,
+      "implied_a": 89.6,
+      "implied_b": 10.4,
+      "odds_a": 1.12,
+      "odds_b": 9.6,
+      "source": "ensemble"
+    },
+    "Raphael Collignon vs Alexei Popyrin": {
+      "p_a": 45.0,
+      "p_b": 55.0,
+      "implied_a": 61.9,
+      "implied_b": 38.1,
+      "odds_a": 1.61,
+      "odds_b": 2.62,
+      "source": "ensemble"
+    },
+    "Thiago Agustin Tirante vs Taylor Fritz": {
+      "p_a": 42.2,
+      "p_b": 57.8,
+      "implied_a": 15.3,
+      "implied_b": 84.7,
+      "odds_a": 6.6,
+      "odds_b": 1.19,
+      "source": "ensemble"
+    },
+    "Ugo Humbert vs Daniel Merida Aguilar": {
+      "p_a": 45.0,
+      "p_b": 55.0,
+      "implied_a": 69.0,
+      "implied_b": 31.0,
+      "odds_a": 1.44,
+      "odds_b": 3.2,
+      "source": "ensemble"
+    },
+    "Daniil Medvedev vs Botic van de Zandschulp": {
+      "p_a": 75.9,
+      "p_b": 24.1,
+      "implied_a": 76.5,
+      "implied_b": 23.5,
+      "odds_a": 1.29,
+      "odds_b": 4.2,
+      "source": "ensemble"
+    },
+    "Titouan Droguet vs Felix Auger-Aliassime": {
+      "p_a": 42.9,
+      "p_b": 57.1,
+      "implied_a": 20.3,
+      "implied_b": 79.7,
+      "odds_a": 4.95,
+      "odds_b": 1.26,
+      "source": "ensemble"
+    },
+    "Jiri Lehecka vs Alexander Blockx": {
+      "p_a": 45.0,
+      "p_b": 55.0,
+      "implied_a": 63.5,
+      "implied_b": 36.5,
+      "odds_a": 1.55,
+      "odds_b": 2.7,
+      "source": "ensemble"
+    },
+    "Ann Li vs Kayla Cross": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 75.8,
+      "implied_b": 24.2,
+      "odds_a": 1.31,
+      "odds_b": 4.1,
+      "source": "implied"
+    },
+    "Iva Jović vs Magda Linette": {
+      "p_a": 45.0,
+      "p_b": 55.0,
+      "implied_a": 76.9,
+      "implied_b": 23.1,
+      "odds_a": 1.29,
+      "odds_b": 4.3,
+      "source": "ensemble"
+    },
+    "Mirra Andreeva vs Karolina Pliskova": {
+      "p_a": 73.7,
+      "p_b": 26.3,
+      "implied_a": 79.2,
+      "implied_b": 20.8,
+      "odds_a": 1.31,
+      "odds_b": 5.0,
+      "source": "ensemble"
+    },
+    "Elise Mertens vs Anna Bondár": {
+      "p_a": 75.9,
+      "p_b": 24.1,
+      "implied_a": 72.0,
+      "implied_b": 28.0,
+      "odds_a": 1.4,
+      "odds_b": 3.6,
+      "source": "ensemble"
+    },
+    "Renata Zarazua vs Leylah Fernandez": {
+      "p_a": 45.0,
+      "p_b": 55.0,
+      "implied_a": 28.4,
+      "implied_b": 71.6,
+      "odds_a": 3.5,
+      "odds_b": 1.39,
+      "source": "ensemble"
+    },
+    "Aguiard Enzo vs Kotzen Andrew": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 91.9,
+      "implied_b": 8.1,
+      "odds_a": 1.02,
+      "odds_b": 11.5,
+      "source": "implied"
+    },
+    "Danilov Savriyan vs Zhang William": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 82.2,
+      "implied_b": 17.8,
+      "odds_a": 1.11,
+      "odds_b": 5.12,
+      "source": "implied"
+    },
+    "Minasyan Michael vs Piening Claus": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 41.3,
+      "implied_b": 58.7,
+      "odds_a": 2.2,
+      "odds_b": 1.55,
+      "source": "implied"
+    },
+    "Tiafoe Frances vs Cilic Marin": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 66.0,
+      "implied_b": 34.0,
+      "odds_a": 1.4,
+      "odds_b": 2.72,
+      "source": "implied"
+    },
+    "Nakashima Brandon vs Altmaier Daniel": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 66.6,
+      "implied_b": 33.4,
+      "odds_a": 1.4,
+      "odds_b": 2.79,
+      "source": "implied"
+    },
+    "De Minaur Alex vs Duckworth James": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 68.1,
+      "implied_b": 31.9,
+      "odds_a": 1.37,
+      "odds_b": 2.92,
+      "source": "implied"
+    },
+    "Darderi Luciano vs Diallo Gabriel": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 43.7,
+      "implied_b": 56.3,
+      "odds_a": 2.13,
+      "odds_b": 1.65,
+      "source": "implied"
+    },
+    "Hanfmann Yannick vs Cobolli Flavio": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 42.8,
+      "implied_b": 57.2,
+      "odds_a": 2.18,
+      "odds_b": 1.63,
+      "source": "implied"
+    },
+    "Mrva Maxim vs Den Ouden Guy": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 39.3,
+      "implied_b": 60.7,
+      "odds_a": 2.36,
+      "odds_b": 1.53,
+      "source": "implied"
+    },
+    "Piros Zsombor vs Dedura-Palomero Diego": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 56.8,
+      "implied_b": 43.2,
+      "odds_a": 1.64,
+      "odds_b": 2.16,
+      "source": "implied"
+    },
+    "Squire Henri vs Barrena Alex": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 41.1,
+      "implied_b": 58.9,
+      "odds_a": 2.25,
+      "odds_b": 1.57,
+      "source": "implied"
+    },
+    "Tseng Chun Hsin vs Gentzsch Tom": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 44.1,
+      "implied_b": 55.9,
+      "odds_a": 2.1,
+      "odds_b": 1.66,
+      "source": "implied"
+    },
+    "Martin Andres vs Arseneault Nicolas": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 61.3,
+      "implied_b": 38.7,
+      "odds_a": 1.5,
+      "odds_b": 2.38,
+      "source": "implied"
+    },
+    "Harris Lloyd vs Lajovic Dusan": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 57.9,
+      "implied_b": 42.1,
+      "odds_a": 1.6,
+      "odds_b": 2.2,
+      "source": "implied"
+    },
+    "Hurrion Millen vs Pinnington Jones Jack": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 36.7,
+      "implied_b": 63.3,
+      "odds_a": 2.5,
+      "odds_b": 1.45,
+      "source": "implied"
+    },
+    "Shelbayh Abedallah vs Cina Federico": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 41.4,
+      "implied_b": 58.6,
+      "odds_a": 2.24,
+      "odds_b": 1.58,
+      "source": "implied"
+    },
+    "Vales Amit vs Glinka Daniil": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 39.2,
+      "implied_b": 60.8,
+      "odds_a": 2.37,
+      "odds_b": 1.53,
+      "source": "implied"
+    },
+    "Donski Alexander vs Moro Canas Alejandro": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 37.7,
+      "implied_b": 62.3,
+      "odds_a": 2.45,
+      "odds_b": 1.48,
+      "source": "implied"
+    },
+    "Durasovic Viktor vs Guerrieri Andrea": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 37.0,
+      "implied_b": 63.0,
+      "odds_a": 2.5,
+      "odds_b": 1.47,
+      "source": "implied"
+    },
+    "Ribecai Michele vs Berkieta Tomasz": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 58.3,
+      "implied_b": 41.7,
+      "odds_a": 1.58,
+      "odds_b": 2.21,
+      "source": "implied"
+    },
+    "Pereira Tiago vs Basing Max": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 43.0,
+      "implied_b": 57.0,
+      "odds_a": 2.15,
+      "odds_b": 1.62,
+      "source": "implied"
+    },
+    "Ostapenkov Daniil vs Bax Florent": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 41.6,
+      "implied_b": 58.4,
+      "odds_a": 2.25,
+      "odds_b": 1.6,
+      "source": "implied"
+    },
+    "Santillan Akira vs Ghibaudo Antoine": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 44.0,
+      "implied_b": 56.0,
+      "odds_a": 2.1,
+      "odds_b": 1.65,
+      "source": "implied"
+    },
+    "Simakin Ilia vs Sun Fajing": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 42.9,
+      "implied_b": 57.1,
+      "odds_a": 2.17,
+      "odds_b": 1.63,
+      "source": "implied"
+    },
+    "Nesterov Petr vs Sorger Sebastian": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 42.8,
+      "implied_b": 57.2,
+      "odds_a": 2.15,
+      "odds_b": 1.61,
+      "source": "implied"
+    },
+    "Galan Daniel Elahi vs Sanchez Jover Carlos": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 59.6,
+      "implied_b": 40.4,
+      "odds_a": 1.56,
+      "odds_b": 2.3,
+      "source": "implied"
+    },
+    "Lazarov George vs Milev Yanaki": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 47.1,
+      "implied_b": 52.9,
+      "odds_a": 1.99,
+      "odds_b": 1.77,
+      "source": "implied"
+    },
+    "Andreev Adrian vs Demanet Emilien": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 58.9,
+      "implied_b": 41.1,
+      "odds_a": 1.57,
+      "odds_b": 2.25,
+      "source": "implied"
+    },
+    "Bennani Reda vs Vterkovskiy Dmytro": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 91.0,
+      "implied_b": 9.0,
+      "odds_a": 1.03,
+      "odds_b": 10.37,
+      "source": "implied"
+    },
+    "Zgirovsky Alexander vs Miilosavljevic Marko": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 64.4,
+      "implied_b": 35.6,
+      "odds_a": 1.44,
+      "odds_b": 2.6,
+      "source": "implied"
+    },
+    "Ceramilac Luka vs Zivkovic Uros": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 60.6,
+      "implied_b": 39.4,
+      "odds_a": 1.52,
+      "odds_b": 2.34,
+      "source": "implied"
+    },
+    "Obradovic Dusan vs Manukyan Vardan": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 82.3,
+      "implied_b": 17.7,
+      "odds_a": 1.16,
+      "odds_b": 5.38,
+      "source": "implied"
+    },
+    "Perego Giulio vs Loffhagen George": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 15.0,
+      "implied_b": 85.0,
+      "odds_a": 6.25,
+      "odds_b": 1.1,
+      "source": "implied"
+    },
+    "De Jonge Daniel vs Almazan Valiente Izan": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 43.5,
+      "implied_b": 56.5,
+      "odds_a": 2.12,
+      "odds_b": 1.63,
+      "source": "implied"
+    },
+    "Shah Aryan vs Potenza Luca": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 45.0,
+      "implied_b": 55.0,
+      "odds_a": 2.05,
+      "odds_b": 1.68,
+      "source": "implied"
+    },
+    "Ayeni Alafia vs Pietri Benjamin": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 57.9,
+      "implied_b": 42.1,
+      "odds_a": 1.6,
+      "odds_b": 2.2,
+      "source": "implied"
+    },
+    "Klok Denys vs Warik Cahir": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 88.0,
+      "implied_b": 12.0,
+      "odds_a": 1.06,
+      "odds_b": 7.75,
+      "source": "implied"
+    },
+    "Novakovic Novak vs Tiukaev Ruslan": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 46.6,
+      "implied_b": 53.4,
+      "odds_a": 1.98,
+      "odds_b": 1.73,
+      "source": "implied"
+    },
+    "Kountourakis Ioannis vs Pisaric Aleksa": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 42.1,
+      "implied_b": 57.9,
+      "odds_a": 2.2,
+      "odds_b": 1.6,
+      "source": "implied"
+    },
+    "Piatti Rocco vs Brown Oscar": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 38.8,
+      "implied_b": 61.2,
+      "odds_a": 2.37,
+      "odds_b": 1.5,
+      "source": "implied"
+    },
+    "Catini Niccolo vs Vasa Iiro": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 39.3,
+      "implied_b": 60.7,
+      "odds_a": 2.36,
+      "odds_b": 1.53,
+      "source": "implied"
+    },
+    "Tabacco Giorgio vs Figl Maximilian": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 80.5,
+      "implied_b": 19.5,
+      "odds_a": 1.15,
+      "odds_b": 4.75,
+      "source": "implied"
+    },
+    "Overbeck Carl Emil vs Noce Gabriele Maria": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 83.0,
+      "implied_b": 17.0,
+      "odds_a": 1.12,
+      "odds_b": 5.45,
+      "source": "implied"
+    },
+    "Kukasian Artur vs Krstic Veljko": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 42.1,
+      "implied_b": 57.9,
+      "odds_a": 2.2,
+      "odds_b": 1.6,
+      "source": "implied"
+    },
+    "Chestovaliev Samuil vs Comino Lorenzo": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 42.1,
+      "implied_b": 57.9,
+      "odds_a": 2.19,
+      "odds_b": 1.59,
+      "source": "implied"
+    },
+    "Petrovic Drazen vs Yazdani Ali": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 43.7,
+      "implied_b": 56.3,
+      "odds_a": 2.1,
+      "odds_b": 1.63,
+      "source": "implied"
+    },
+    "Hudd Emile vs Canter Alexis": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 81.6,
+      "implied_b": 18.4,
+      "odds_a": 1.13,
+      "odds_b": 5.0,
+      "source": "implied"
+    },
+    "Martin Toby vs Tarvet Oliver": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 8.2,
+      "implied_b": 91.8,
+      "odds_a": 11.5,
+      "odds_b": 1.03,
+      "source": "implied"
+    },
+    "Delicata Liam vs Artnak Bor": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 28.9,
+      "implied_b": 71.1,
+      "odds_a": 3.2,
+      "odds_b": 1.3,
+      "source": "implied"
+    },
+    "Crivellaro Gabriele vs Rottoli Lorenzo": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 37.6,
+      "implied_b": 62.4,
+      "odds_a": 2.49,
+      "odds_b": 1.5,
+      "source": "implied"
+    },
+    "Mecarelli Michele vs D'Agostino Stefano": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 46.5,
+      "implied_b": 53.5,
+      "odds_a": 1.98,
+      "odds_b": 1.72,
+      "source": "implied"
+    },
+    "Buldorini Peter vs Serafini Marcello": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 44.0,
+      "implied_b": 56.0,
+      "odds_a": 2.1,
+      "odds_b": 1.65,
+      "source": "implied"
+    },
+    "Osminkin Vladimir vs Jankanj Vlado": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 18.6,
+      "implied_b": 81.4,
+      "odds_a": 5.0,
+      "odds_b": 1.14,
+      "source": "implied"
+    },
+    "Ahouda Walid vs Butulija Boris": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 69.7,
+      "implied_b": 30.3,
+      "odds_a": 1.35,
+      "odds_b": 3.1,
+      "source": "implied"
+    },
+    "Gusic Wan Benjamin vs Cacao Tiago": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 16.0,
+      "implied_b": 84.0,
+      "odds_a": 5.78,
+      "odds_b": 1.1,
+      "source": "implied"
+    },
+    "Gannon Conor vs Matusevich Anton": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 32.1,
+      "implied_b": 67.9,
+      "odds_a": 2.85,
+      "odds_b": 1.35,
+      "source": "implied"
+    },
+    "Maxted Lui vs Lawlor Rhys": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 57.0,
+      "implied_b": 43.0,
+      "odds_a": 1.62,
+      "odds_b": 2.15,
+      "source": "implied"
+    },
+    "Saraiva Dos Santos Paulo Andre vs Zanellato Nicolas": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 53.6,
+      "implied_b": 46.4,
+      "odds_a": 1.73,
+      "odds_b": 2.0,
+      "source": "implied"
+    },
+    "Oliveira Nicolas vs Zarate Carlos Maria": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 43.0,
+      "implied_b": 57.0,
+      "odds_a": 2.15,
+      "odds_b": 1.62,
+      "source": "implied"
+    },
+    "Scomparin Pietro Romeo vs Giunta Massimo": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 28.6,
+      "implied_b": 71.4,
+      "odds_a": 3.2,
+      "odds_b": 1.28,
+      "source": "implied"
+    },
+    "Albuquerque Dietrich Pedro vs Schiessl Joao Eduardo": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 21.5,
+      "implied_b": 78.5,
+      "odds_a": 4.32,
+      "odds_b": 1.18,
+      "source": "implied"
+    },
+    "Storrie Ryan James vs Dominko Sebastian": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 33.8,
+      "implied_b": 66.2,
+      "odds_a": 2.7,
+      "odds_b": 1.38,
+      "source": "implied"
+    },
+    "Bennani Karim vs Miladinovic Marko": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 83.8,
+      "implied_b": 16.2,
+      "odds_a": 1.11,
+      "odds_b": 5.74,
+      "source": "implied"
+    },
+    "Zapp Logan vs Ardila Landon": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 32.5,
+      "implied_b": 67.5,
+      "odds_a": 2.83,
+      "odds_b": 1.36,
+      "source": "implied"
+    },
+    "Woestendick Cooper vs Weber James": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 88.5,
+      "implied_b": 11.5,
+      "odds_a": 1.05,
+      "odds_b": 8.12,
+      "source": "implied"
+    },
+    "Estevez Juan vs Osorio Juan Sebastian": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 65.3,
+      "implied_b": 34.7,
+      "odds_a": 1.4,
+      "odds_b": 2.63,
+      "source": "implied"
+    },
+    "Nolan William vs Monday Johannus": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 19.2,
+      "implied_b": 80.8,
+      "odds_a": 4.8,
+      "odds_b": 1.14,
+      "source": "implied"
+    },
+    "Meligeni Rodrigues Alves Felipe vs Kohlmann de Freitas Enzo": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 71.3,
+      "implied_b": 28.7,
+      "odds_a": 1.29,
+      "odds_b": 3.2,
+      "source": "implied"
+    },
+    "De Almeida Gustavo Ribeiro vs Bini Victor": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 75.1,
+      "implied_b": 24.9,
+      "odds_a": 1.22,
+      "odds_b": 3.67,
+      "source": "implied"
+    },
+    "Arnaboldi Federico vs Primucci Leonardo": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 71.1,
+      "implied_b": 28.9,
+      "odds_a": 1.29,
+      "odds_b": 3.17,
+      "source": "implied"
+    },
+    "Nefve Axel vs Hewitt Cruz": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 21.4,
+      "implied_b": 78.6,
+      "odds_a": 4.33,
+      "odds_b": 1.18,
+      "source": "implied"
+    },
+    "Anthrop Jack vs Ferrer Guimaraes Roberto": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 83.3,
+      "implied_b": 16.7,
+      "odds_a": 1.12,
+      "odds_b": 5.57,
+      "source": "implied"
+    },
+    "Dussault Maximus vs Carpico Brandon": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 55.9,
+      "implied_b": 44.1,
+      "odds_a": 1.64,
+      "odds_b": 2.08,
+      "source": "implied"
+    },
+    "Lopez Cherubino Noah vs Tsitsipas Pavlos": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 55.1,
+      "implied_b": 44.9,
+      "odds_a": 1.67,
+      "odds_b": 2.05,
+      "source": "implied"
+    },
+    "Marques Goncalo vs Sanchez Quilez Alejo": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 19.4,
+      "implied_b": 80.6,
+      "odds_a": 4.78,
+      "odds_b": 1.15,
+      "source": "implied"
+    },
+    "Colombo Andrea vs Castellanos Yago": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 86.2,
+      "implied_b": 13.8,
+      "odds_a": 1.08,
+      "odds_b": 6.75,
+      "source": "implied"
+    },
+    "Chidekh Clement vs Nakagawa Naoki": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 81.6,
+      "implied_b": 18.4,
+      "odds_a": 1.13,
+      "odds_b": 5.0,
+      "source": "implied"
+    },
+    "Bigun Kaylan vs Landau Sam": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 76.2,
+      "implied_b": 23.8,
+      "odds_a": 1.22,
+      "odds_b": 3.9,
+      "source": "implied"
+    },
+    "Maloney Patrick (2000) vs Goldammer Tygen": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 88.9,
+      "implied_b": 11.1,
+      "odds_a": 1.06,
+      "odds_b": 8.5,
+      "source": "implied"
+    },
+    "Vithoontien Leo vs Gamble Jon": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 61.9,
+      "implied_b": 38.1,
+      "odds_a": 1.48,
+      "odds_b": 2.4,
+      "source": "implied"
+    },
+    "Callejon Hernando Sergio vs Talan Lopatic Luka": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 77.5,
+      "implied_b": 22.5,
+      "odds_a": 1.19,
+      "odds_b": 4.1,
+      "source": "implied"
+    },
+    "Costa Goncalves Vitor vs Zeitune Maximo": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 19.8,
+      "implied_b": 80.2,
+      "odds_a": 4.65,
+      "odds_b": 1.15,
+      "source": "implied"
+    },
+    "Gonzalez Fernandez Mario vs Tarrio Ponte Ander": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 90.6,
+      "implied_b": 9.4,
+      "odds_a": 1.04,
+      "odds_b": 10.0,
+      "source": "implied"
+    },
+    "Chung Yunseong vs Kinaadman Charles Josshua": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 90.8,
+      "implied_b": 9.2,
+      "odds_a": 1.03,
+      "odds_b": 10.12,
+      "source": "implied"
+    },
+    "Hwang Donghyun vs Sumizawa Daisuke": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 52.7,
+      "implied_b": 47.3,
+      "odds_a": 1.75,
+      "odds_b": 1.95,
+      "source": "implied"
+    },
+    "Becroft Isaac vs Kang Kaigaoge": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 58.6,
+      "implied_b": 41.4,
+      "odds_a": 1.57,
+      "odds_b": 2.22,
+      "source": "implied"
+    },
+    "Dellavedova Matthew vs Nakajima Kazuki": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 91.5,
+      "implied_b": 8.5,
+      "odds_a": 1.02,
+      "odds_b": 11.0,
+      "source": "implied"
+    },
+    "Gao Ruochen vs Qi Hongjin": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 35.5,
+      "implied_b": 64.5,
+      "odds_a": 2.65,
+      "odds_b": 1.46,
+      "source": "implied"
+    },
+    "Sarksian Daniil vs Haliak Mikalai": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 45.3,
+      "implied_b": 54.7,
+      "odds_a": 2.02,
+      "odds_b": 1.67,
+      "source": "implied"
+    },
+    "Ann Suk vs Trongcharoenchaikul Wishaya": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 43.5,
+      "implied_b": 56.5,
+      "odds_a": 2.1,
+      "odds_b": 1.62,
+      "source": "implied"
+    },
+    "Rojas Carles vs Sucu Matei": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 73.3,
+      "implied_b": 26.7,
+      "odds_a": 1.31,
+      "odds_b": 3.6,
+      "source": "implied"
+    },
+    "Dell'elba Vito vs Papoe Cezar Gabriel": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 25.2,
+      "implied_b": 74.8,
+      "odds_a": 3.65,
+      "odds_b": 1.23,
+      "source": "implied"
+    },
+    "Petre Stefan Ilie Bogdan vs Valle Federico": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 64.4,
+      "implied_b": 35.6,
+      "odds_a": 1.44,
+      "odds_b": 2.6,
+      "source": "implied"
+    },
+    "Makhlouf Mohamed Nazim vs Pizzigoni Massimo": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 44.8,
+      "implied_b": 55.2,
+      "odds_a": 2.06,
+      "odds_b": 1.67,
+      "source": "implied"
+    },
+    "Pieleanu Rares Teodor vs Murray Freddy": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 65.0,
+      "implied_b": 35.0,
+      "odds_a": 1.46,
+      "odds_b": 2.71,
+      "source": "implied"
+    },
+    "Aleshchev Alexey vs Zavacky Peter": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 80.1,
+      "implied_b": 19.9,
+      "odds_a": 1.15,
+      "odds_b": 4.62,
+      "source": "implied"
+    },
+    "Juszczak Pawel vs Wazny Alan": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 42.8,
+      "implied_b": 57.2,
+      "odds_a": 2.11,
+      "odds_b": 1.58,
+      "source": "implied"
+    },
+    "Hamza Reguig Samir vs Pinter Piet Luis": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 46.2,
+      "implied_b": 53.8,
+      "odds_a": 1.99,
+      "odds_b": 1.71,
+      "source": "implied"
+    },
+    "Rivera Leyton vs De Jager Jesse": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 41.1,
+      "implied_b": 58.9,
+      "odds_a": 2.24,
+      "odds_b": 1.56,
+      "source": "implied"
+    },
+    "Chazal Maxime vs Hammes Tim": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 78.1,
+      "implied_b": 21.9,
+      "odds_a": 1.24,
+      "odds_b": 4.41,
+      "source": "implied"
+    },
+    "Poulsen Oskar Brostrom vs Branchetti Geovanni": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 71.9,
+      "implied_b": 28.1,
+      "odds_a": 1.29,
+      "odds_b": 3.3,
+      "source": "implied"
+    },
+    "Dutine Dennis Andre vs Reinhard Bengt Johan": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 44.3,
+      "implied_b": 55.7,
+      "odds_a": 2.09,
+      "odds_b": 1.66,
+      "source": "implied"
+    },
+    "Savano Michael vs Smiej Yassine": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 56.3,
+      "implied_b": 43.7,
+      "odds_a": 1.63,
+      "odds_b": 2.1,
+      "source": "implied"
+    },
+    "Delage Pierre vs Sebesta Jan": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 85.8,
+      "implied_b": 14.2,
+      "odds_a": 1.08,
+      "odds_b": 6.5,
+      "source": "implied"
+    },
+    "Andreescu Stefan Adrian vs Messina Julian Messina": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 47.4,
+      "implied_b": 52.6,
+      "odds_a": 1.93,
+      "odds_b": 1.74,
+      "source": "implied"
+    },
+    "Guna Robert vs Golescu Rares Andrei": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 60.5,
+      "implied_b": 39.5,
+      "odds_a": 1.52,
+      "odds_b": 2.33,
+      "source": "implied"
+    },
+    "Orlov Vladyslav vs Kusy Jakub": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 69.0,
+      "implied_b": 31.0,
+      "odds_a": 1.33,
+      "odds_b": 2.96,
+      "source": "implied"
+    },
+    "Ujvary Matthias vs Sallay Peter": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 56.9,
+      "implied_b": 43.1,
+      "odds_a": 1.62,
+      "odds_b": 2.14,
+      "source": "implied"
+    },
+    "Makk Peter vs Michalik Radovan": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 70.7,
+      "implied_b": 29.3,
+      "odds_a": 1.3,
+      "odds_b": 3.14,
+      "source": "implied"
+    },
+    "Ciocca Giovanni vs Tenti Fermin": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 38.1,
+      "implied_b": 61.9,
+      "odds_a": 2.42,
+      "odds_b": 1.49,
+      "source": "implied"
+    },
+    "Lanik Tomas vs Filar Karol": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 37.4,
+      "implied_b": 62.6,
+      "odds_a": 2.49,
+      "odds_b": 1.49,
+      "source": "implied"
+    },
+    "Antoni Richard vs Salazar Daniel": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 27.7,
+      "implied_b": 72.3,
+      "odds_a": 3.4,
+      "odds_b": 1.3,
+      "source": "implied"
+    },
+    "Bienkiewicz Juliusz vs Marek Wojciech": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 41.4,
+      "implied_b": 58.6,
+      "odds_a": 2.24,
+      "odds_b": 1.58,
+      "source": "implied"
+    },
+    "Dugardin Remy vs Schlagenhauf Noah": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 31.3,
+      "implied_b": 68.7,
+      "odds_a": 2.96,
+      "odds_b": 1.35,
+      "source": "implied"
+    },
+    "Hausberger Gregor vs Jedrzejczak Jakub": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 45.8,
+      "implied_b": 54.2,
+      "odds_a": 2.01,
+      "odds_b": 1.7,
+      "source": "implied"
+    },
+    "Trochu Pablo vs Torcq Benoit": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 54.1,
+      "implied_b": 45.9,
+      "odds_a": 1.7,
+      "odds_b": 2.0,
+      "source": "implied"
+    },
+    "Fondriest Matteo vs Hrazdil Jan": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 52.7,
+      "implied_b": 47.3,
+      "odds_a": 1.75,
+      "odds_b": 1.95,
+      "source": "implied"
+    }
+  }
 }

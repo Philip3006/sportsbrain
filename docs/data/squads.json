@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-04",
+  "updated": "2026-08-05",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -3840,7 +3840,8 @@
       "suspended": [
         "Abdessamad Ezzalzouli",
         "Nayef Aguerd",
-        "Ismael Saibari"
+        "Ismael Saibari",
+        "Abde Ezzalzouli"
       ],
       "players": [
         {
@@ -3926,7 +3927,7 @@
         {
           "name": "Abde Ezzalzouli",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Chadi Riad",

@@ -630,6 +630,7 @@ def main() -> None:
     # ---- 3. Pro Turnier scannen ----
     per_tournament: dict[str, dict] = {}
     all_live_signals: list = []
+    all_model_evals: dict = {}  # {match_key: {p_a, p_b, implied_a, implied_b, odds_a, odds_b, source}}
 
     for t in tournaments:
         mode = category_mode(t.category, surface=t.surface, all_live=args.all_live)
@@ -733,6 +734,19 @@ def main() -> None:
             signals.extend(sigs)
             for s in sigs:
                 print(f"  [{t.slug}] {pa} vs {pb} — {s.market} EV+{s.ev*100:.1f}% @{s.decimal_odds:.2f}")
+            if not sigs:
+                _oa = float(m.get("odds_a") or 0.0)
+                _ob = float(m.get("odds_b") or 0.0)
+                _impl_sum = (1.0/_oa + 1.0/_ob) if _oa > 1 and _ob > 1 else 0.0
+                _impl_a = round((1.0/_oa/_impl_sum)*100, 1) if _impl_sum else 0.0
+                all_model_evals[f"{pa} vs {pb}"] = {
+                    "p_a": round(probs.get("p_a", 0.5)*100, 1),
+                    "p_b": round(probs.get("p_b", 0.5)*100, 1),
+                    "implied_a": _impl_a,
+                    "implied_b": round(100.0 - _impl_a, 1) if _impl_a else 0.0,
+                    "odds_a": _oa, "odds_b": _ob,
+                    "source": probs.get("source", "elo"),
+                }
 
         per_tournament[t.slug] = {
             "tournament": t, "signals": signals, "n_matches": len(upcoming), "mode": mode,
@@ -888,6 +902,19 @@ def main() -> None:
                                     all_live_signals.extend(_sigs)
                                     for s in _sigs:
                                         print(f"  [te:{reg.slug}] {m['player_a']} vs {m['player_b']} — {s.market} EV+{s.ev*100:.1f}% @{s.decimal_odds:.2f}")
+                                else:
+                                    _oa = float(m.get("odds_a") or 0.0)
+                                    _ob = float(m.get("odds_b") or 0.0)
+                                    _is = (1.0/_oa + 1.0/_ob) if _oa > 1 and _ob > 1 else 0.0
+                                    _ia = round((1.0/_oa/_is)*100, 1) if _is else 0.0
+                                    all_model_evals[f"{m['player_a']} vs {m['player_b']}"] = {
+                                        "p_a": round(_probs.get("p_a", 0.5)*100, 1),
+                                        "p_b": round(_probs.get("p_b", 0.5)*100, 1),
+                                        "implied_a": _ia,
+                                        "implied_b": round(100.0 - _ia, 1) if _ia else 0.0,
+                                        "odds_a": _oa, "odds_b": _ob,
+                                        "source": _probs.get("source", "elo"),
+                                    }
                             except Exception as e:
                                 print(f"  [te-signal:{reg.slug}] {e}")
                 else:
@@ -943,6 +970,7 @@ def main() -> None:
         kickoff_map=kickoff_map,
         schedule=schedule,
         all_odds=tennis_all_odds if tennis_all_odds else None,
+        model_evals=all_model_evals if all_model_evals else None,
     )
     print("Dashboard: docs/data/signals.json aktualisiert.")
 

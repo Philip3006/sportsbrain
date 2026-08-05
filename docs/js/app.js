@@ -13,6 +13,7 @@ let _signals = [];
 let _schedule = [];
 let _allOdds = {};
 let _modelTips = {};
+let _modelEvals = {};
 let _openBets = [];
 let _settledBets = [];
 let _activeBetTab = 'open';
@@ -181,7 +182,44 @@ function openMatch(displayKey) {
   cards += _bookieMatrixCard(oddsEntry, sport);
 
   if (!tip && !sigs.length) {
-    cards += `<div class="empty"><div class="icon">⏳</div><div>Noch keine Modellbewertung für dieses Spiel.<br><small>Wird im nächsten Scan (täglich 08:00 UTC) ergänzt.</small></div></div>`;
+    const _eval = _modelEvals[displayKey] || (() => {
+      const found = Object.entries(_modelEvals).find(([k]) => {
+        const [kh, ka] = k.split(' vs ').map(x => x.trim());
+        return matchKey(kh, ka) === nk;
+      });
+      return found ? found[1] : null;
+    })();
+    if (_eval) {
+      const _pa = (_eval.p_a||0).toFixed(1), _pb = (_eval.p_b||0).toFixed(1);
+      const _ia = (_eval.implied_a||0).toFixed(1), _ib = (_eval.implied_b||0).toFixed(1);
+      const _oa = _eval.odds_a > 1 ? _eval.odds_a.toFixed(2) : '—';
+      const _ob = _eval.odds_b > 1 ? _eval.odds_b.toFixed(2) : '—';
+      const _src = esc(_eval.source || 'elo');
+      cards += `<div class="pred-card" style="margin:12px 12px 0">
+        <div class="pred-title">📊 Modell-Bewertung</div>
+        <div style="padding:10px 16px 14px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Kein Value-Bet bei aktuellen Quoten — Edge unter Schwelle.</div>
+          <div style="display:flex;gap:8px;text-align:center">
+            <div style="flex:1;background:var(--card-bg);border-radius:8px;padding:10px 6px">
+              <div style="font-size:11px;font-weight:700;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(dh)}</div>
+              <div style="font-size:22px;font-weight:800;color:var(--accent)">${_pa}%</div>
+              <div style="font-size:10px;color:var(--muted)">Modell</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px">Markt ${_ia}% @${_oa}</div>
+            </div>
+            <div style="align-self:center;font-weight:700;color:var(--muted);font-size:12px">VS</div>
+            <div style="flex:1;background:var(--card-bg);border-radius:8px;padding:10px 6px">
+              <div style="font-size:11px;font-weight:700;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(da)}</div>
+              <div style="font-size:22px;font-weight:800;color:var(--accent)">${_pb}%</div>
+              <div style="font-size:10px;color:var(--muted)">Modell</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px">Markt ${_ib}% @${_ob}</div>
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:8px">Quelle: ${_src}</div>
+        </div>
+      </div>`;
+    } else {
+      cards += `<div class="empty"><div class="icon">⏳</div><div>Noch keine Modellbewertung für dieses Spiel.<br><small>Wird im nächsten Scan (täglich 08:00 UTC) ergänzt.</small></div></div>`;
+    }
   } else if (sigs.length) {
     cards += `<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:14px 16px 6px">💡 Vorgeschlagene Value Bets</div>`;
     cards += otherSigs.map(s => sigCard(s, false)).join('');
@@ -537,6 +575,7 @@ async function _load() {
   _schedule = d.schedule || [];
   _allOdds = d.all_odds || {};
   _modelTips = d.model_tips || {};
+  _modelEvals = d.model_evals || {};
   _openBets = d.open_bets || [];
   _settledBets = d.settled_bets || [];
   _bankrollState = d.bankroll_state || {};
