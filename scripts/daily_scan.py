@@ -183,7 +183,7 @@ if __name__ == "__main__":
         _today_snap = {
             "ts": _now_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "date": _now_utc.strftime("%Y-%m-%d"),
-            "odds": {k: {"home": v["home"], "draw": v["draw"], "away": v["away"]} for k, v in all_odds.items()},
+            "odds": {k: {"home": v.get("home"), "draw": v.get("draw"), "away": v.get("away")} for k, v in all_odds.items()},
         }
         # Load existing history, append today's snapshot (keep last 14 entries)
         _hist = []
