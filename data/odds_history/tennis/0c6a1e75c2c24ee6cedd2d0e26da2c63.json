@@ -1,0 +1,15 @@
+{
+  "match_id": "0c6a1e75c2c24ee6cedd2d0e26da2c63",
+  "player_a": "Casper Ruud",
+  "player_b": "Joao Fonseca",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260805_19",
+      "ts_utc": "2026-08-05T19:56:34.070087+00:00",
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "betsson"
+    }
+  ]
+}

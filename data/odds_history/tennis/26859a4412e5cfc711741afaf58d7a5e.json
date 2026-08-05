@@ -1,0 +1,15 @@
+{
+  "match_id": "26859a4412e5cfc711741afaf58d7a5e",
+  "player_a": "Nuno Borges",
+  "player_b": "Yannick Hanfmann",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260805_19",
+      "ts_utc": "2026-08-05T19:56:34.070584+00:00",
+      "odds_a": 1.03,
+      "odds_b": 2.16,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "b146f35226680b2fccf2116d2cea5a25",
+  "player_a": "Belinda Bencic",
+  "player_b": "Taylor Townsend",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260805_19",
+      "ts_utc": "2026-08-05T19:56:34.166273+00:00",
+      "odds_a": 1.38,
+      "odds_b": 3.13,
+      "source": "onexbet"
+    }
+  ]
+}
