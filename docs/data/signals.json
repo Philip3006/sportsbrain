@@ -1,8 +1,8 @@
 {
-  "updated": "2026-08-04T22:21:19Z",
+  "updated": "2026-08-05T05:15:38Z",
   "build_info": {
-    "sha": "6fd0571",
-    "date": "2026-08-04"
+    "sha": "847658b",
+    "date": "2026-08-05"
   },
   "meta": {
     "stale_odds": false,
@@ -3474,26 +3474,6 @@
     },
     {
       "sport": "tennis",
-      "match": "Lanlana Tararudee vs Amanda Anisimova",
-      "market": "o/u_games_20.5_over",
-      "odds": 1.98,
-      "model_prob": 68.8,
-      "fair_prob": 49.5,
-      "ev_pct": 36.3,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-05T00:30:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
       "match": "Mirra Andreeva vs Karolina Pliskova",
       "market": "o/u_games_19.5_over",
       "odds": 1.81,
@@ -3506,26 +3486,6 @@
       "n_models_agree": 0,
       "tour": "wta",
       "kickoff": "2026-08-05T19:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "Clara Tauson vs Nikola Bartunkova",
-      "market": "ah+1.5_b",
-      "odds": 1.86,
-      "model_prob": 72.8,
-      "fair_prob": 51.3,
-      "ev_pct": 35.3,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-04T22:30:00Z",
       "tournament": "Canadian Open",
       "category": "wta1000",
       "surface": "hard",
@@ -3614,46 +3574,6 @@
     },
     {
       "sport": "tennis",
-      "match": "Lanlana Tararudee vs Amanda Anisimova",
-      "market": "o/u_games_21.5_over",
-      "odds": 2.1,
-      "model_prob": 63.6,
-      "fair_prob": 45.2,
-      "ev_pct": 33.7,
-      "stake_eur": 15.0,
-      "stake_pct": 15.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-05T00:30:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "James Duckworth vs Alex de Minaur",
-      "market": "o/u_games_20.0_over",
-      "odds": 1.82,
-      "model_prob": 73.0,
-      "fair_prob": 53.0,
-      "ev_pct": 32.8,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-04T22:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
       "match": "Rafael Jodar vs Corentin Moutet",
       "market": "o/u_games_21.0_over",
       "odds": 1.92,
@@ -3688,26 +3608,6 @@
       "kickoff": "2026-08-05T19:00:00Z",
       "tournament": "Canadian Open",
       "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "Luciano Darderi vs Gabriel Diallo",
-      "market": "ah+1.5_b",
-      "odds": 1.91,
-      "model_prob": 69.0,
-      "fair_prob": 46.9,
-      "ev_pct": 31.8,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-05T00:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
       "surface": "hard",
       "best_of": 3,
       "display_priority": "extra"
@@ -3848,26 +3748,6 @@
     },
     {
       "sport": "tennis",
-      "match": "Flavio Cobolli vs Yannick Hanfmann",
-      "market": "ah+1.5_b",
-      "odds": 1.97,
-      "model_prob": 65.6,
-      "fair_prob": 49.9,
-      "ev_pct": 29.2,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-04T23:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
       "match": "Liudmila Samsonova vs Barbora Krejcikova",
       "market": "o/u_games_20.5_over",
       "odds": 1.87,
@@ -3980,86 +3860,6 @@
       "n_models_agree": 0,
       "tour": "wta",
       "kickoff": "2026-08-05T19:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "Kamilla Rakhimova vs Katerina Siniakova",
-      "market": "ah+1.5_b",
-      "odds": 1.55,
-      "model_prob": 82.0,
-      "fair_prob": 60.3,
-      "ev_pct": 27.0,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-04T21:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "Kamilla Rakhimova vs Katerina Siniakova",
-      "market": "o/u_games_20.5_over",
-      "odds": 1.83,
-      "model_prob": 69.2,
-      "fair_prob": 52.3,
-      "ev_pct": 26.5,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-04T21:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "Kamilla Rakhimova vs Katerina Siniakova",
-      "market": "o/u_games_21.5_over",
-      "odds": 1.99,
-      "model_prob": 63.3,
-      "fair_prob": 48.3,
-      "ev_pct": 26.0,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-04T21:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "Anna Kalinskaya vs McCartney Kessler",
-      "market": "o/u_games_21.5_over",
-      "odds": 1.94,
-      "model_prob": 64.8,
-      "fair_prob": 50.5,
-      "ev_pct": 25.7,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-04T21:00:00Z",
       "tournament": "Canadian Open",
       "category": "wta1000",
       "surface": "hard",
@@ -4202,66 +4002,6 @@
     },
     {
       "sport": "tennis",
-      "match": "Anna Kalinskaya vs McCartney Kessler",
-      "market": "o/u_games_22.5_over",
-      "odds": 2.1,
-      "model_prob": 58.0,
-      "fair_prob": 44.0,
-      "ev_pct": 21.7,
-      "stake_eur": 15.0,
-      "stake_pct": 15.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-04T21:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "Frances Tiafoe vs Marin Cilic",
-      "market": "ah+1.5_b",
-      "odds": 2.1,
-      "model_prob": 57.7,
-      "fair_prob": 44.4,
-      "ev_pct": 21.3,
-      "stake_eur": 15.0,
-      "stake_pct": 15.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-04T23:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "Kamilla Rakhimova vs Katerina Siniakova",
-      "market": "o/u_games_21.0_over",
-      "odds": 1.9,
-      "model_prob": 63.3,
-      "fair_prob": 50.9,
-      "ev_pct": 20.3,
-      "stake_eur": 20.0,
-      "stake_pct": 20.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-04T21:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
       "match": "Alina Korneeva vs Emma Navarro",
       "market": "o/u_games_21.5_over",
       "odds": 1.86,
@@ -4322,46 +4062,6 @@
     },
     {
       "sport": "tennis",
-      "match": "Kamilla Rakhimova vs Katerina Siniakova",
-      "market": "o/u_games_22.5_over",
-      "odds": 2.1,
-      "model_prob": 57.0,
-      "fair_prob": 44.0,
-      "ev_pct": 19.6,
-      "stake_eur": 15.0,
-      "stake_pct": 15.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-04T21:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "Lanlana Tararudee vs Amanda Anisimova",
-      "market": "home",
-      "odds": 3.33,
-      "model_prob": 35.9,
-      "fair_prob": 30.3,
-      "ev_pct": 19.6,
-      "stake_eur": 11.0,
-      "stake_pct": 11.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-05T00:30:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
       "match": "Titouan Droguet vs Felix Auger-Aliassime",
       "market": "o/u_games_22.0_over",
       "odds": 1.9,
@@ -4416,46 +4116,6 @@
       "kickoff": "2026-08-05T19:00:00Z",
       "tournament": "Canadian Open",
       "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "Brandon Nakashima vs Daniel Altmaier",
-      "market": "o/u_games_22.5_over",
-      "odds": 2.06,
-      "model_prob": 57.5,
-      "fair_prob": 46.8,
-      "ev_pct": 18.3,
-      "stake_eur": 14.0,
-      "stake_pct": 14.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-04T22:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "Brandon Nakashima vs Daniel Altmaier",
-      "market": "o/u_games_21.5_over",
-      "odds": 1.79,
-      "model_prob": 66.0,
-      "fair_prob": 53.6,
-      "ev_pct": 18.2,
-      "stake_eur": 18.5,
-      "stake_pct": 18.5,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-04T22:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
       "surface": "hard",
       "best_of": 3,
       "display_priority": "extra"
@@ -4536,26 +4196,6 @@
     },
     {
       "sport": "tennis",
-      "match": "Clara Tauson vs Nikola Bartunkova",
-      "market": "o/u_games_21.5_over",
-      "odds": 1.83,
-      "model_prob": 64.2,
-      "fair_prob": 52.7,
-      "ev_pct": 17.6,
-      "stake_eur": 18.0,
-      "stake_pct": 18.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-04T22:30:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
       "match": "Tsitsipas Stefanos vs Damm Martin (2003)",
       "market": "away",
       "odds": 2.53,
@@ -4566,26 +4206,6 @@
       "stake_pct": 14.5,
       "confidence": "HIGH",
       "n_models_agree": 0,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "Clara Tauson vs Nikola Bartunkova",
-      "market": "o/u_games_22.5_over",
-      "odds": 2.02,
-      "model_prob": 57.6,
-      "fair_prob": 48.1,
-      "ev_pct": 16.3,
-      "stake_eur": 13.0,
-      "stake_pct": 13.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-04T22:30:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
       "display_priority": "extra"
     },
     {
@@ -4698,26 +4318,6 @@
     },
     {
       "sport": "tennis",
-      "match": "Anna Kalinskaya vs McCartney Kessler",
-      "market": "away",
-      "odds": 2.55,
-      "model_prob": 44.2,
-      "fair_prob": 39.0,
-      "ev_pct": 12.8,
-      "stake_eur": 12.5,
-      "stake_pct": 12.5,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-04T21:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
       "match": "Alina Korneeva vs Emma Navarro",
       "market": "o/u_games_22.0_over",
       "odds": 1.95,
@@ -4732,26 +4332,6 @@
       "kickoff": "2026-08-05T19:00:00Z",
       "tournament": "Canadian Open",
       "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "Luciano Darderi vs Gabriel Diallo",
-      "market": "o/u_games_23.5_over",
-      "odds": 2.01,
-      "model_prob": 56.0,
-      "fair_prob": 48.1,
-      "ev_pct": 12.7,
-      "stake_eur": 11.0,
-      "stake_pct": 11.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-05T00:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
       "surface": "hard",
       "best_of": 3,
       "display_priority": "extra"
@@ -4812,46 +4392,6 @@
     },
     {
       "sport": "tennis",
-      "match": "Flavio Cobolli vs Yannick Hanfmann",
-      "market": "o/u_games_22.5_over",
-      "odds": 1.83,
-      "model_prob": 61.2,
-      "fair_prob": 52.6,
-      "ev_pct": 11.9,
-      "stake_eur": 13.5,
-      "stake_pct": 13.5,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-04T23:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "Kamilla Rakhimova vs Katerina Siniakova",
-      "market": "home",
-      "odds": 2.88,
-      "model_prob": 38.8,
-      "fair_prob": 34.5,
-      "ev_pct": 11.7,
-      "stake_eur": 11.5,
-      "stake_pct": 11.5,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-04T21:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
       "match": "Merida Aguilar Daniel vs Draxl Liam",
       "market": "away",
       "odds": 2.25,
@@ -4862,26 +4402,6 @@
       "stake_pct": 10.5,
       "confidence": "MEDIUM",
       "n_models_agree": 0,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "Brandon Nakashima vs Daniel Altmaier",
-      "market": "o/u_games_22.0_over",
-      "odds": 1.94,
-      "model_prob": 57.5,
-      "fair_prob": 49.6,
-      "ev_pct": 11.5,
-      "stake_eur": 13.0,
-      "stake_pct": 13.0,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-04T22:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
       "display_priority": "extra"
     },
     {
@@ -4960,46 +4480,6 @@
     },
     {
       "sport": "tennis",
-      "match": "Flavio Cobolli vs Yannick Hanfmann",
-      "market": "o/u_games_23.5_over",
-      "odds": 2.0,
-      "model_prob": 54.7,
-      "fair_prob": 48.1,
-      "ev_pct": 9.4,
-      "stake_eur": 11.5,
-      "stake_pct": 11.5,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-04T23:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "Luciano Darderi vs Gabriel Diallo",
-      "market": "home",
-      "odds": 2.2,
-      "model_prob": 49.7,
-      "fair_prob": 46.7,
-      "ev_pct": 9.3,
-      "stake_eur": 9.5,
-      "stake_pct": 9.5,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-05T00:10:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
       "match": "Miomir Kecmanovic vs Arthur Rinderknech",
       "market": "o/u_games_22.5_over",
       "odds": 1.75,
@@ -5012,26 +4492,6 @@
       "n_models_agree": 0,
       "tour": "atp",
       "kickoff": "2026-08-05T15:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "Frances Tiafoe vs Marin Cilic",
-      "market": "o/u_games_23.5_over",
-      "odds": 2.06,
-      "model_prob": 53.0,
-      "fair_prob": 46.9,
-      "ev_pct": 9.2,
-      "stake_eur": 9.5,
-      "stake_pct": 9.5,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-04T23:00:00Z",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
@@ -5060,46 +4520,6 @@
     },
     {
       "sport": "tennis",
-      "match": "Frances Tiafoe vs Marin Cilic",
-      "market": "o/u_games_22.5_over",
-      "odds": 1.83,
-      "model_prob": 59.4,
-      "fair_prob": 53.0,
-      "ev_pct": 8.7,
-      "stake_eur": 10.5,
-      "stake_pct": 10.5,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "atp",
-      "kickoff": "2026-08-04T23:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
-      "match": "Clara Tauson vs Nikola Bartunkova",
-      "market": "o/u_games_22.0_over",
-      "odds": 1.88,
-      "model_prob": 57.6,
-      "fair_prob": 51.0,
-      "ev_pct": 8.2,
-      "stake_eur": 10.5,
-      "stake_pct": 10.5,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "tour": "wta",
-      "kickoff": "2026-08-04T22:30:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "extra"
-    },
-    {
-      "sport": "tennis",
       "match": "Liudmila Samsonova vs Barbora Krejcikova",
       "market": "home",
       "odds": 2.77,
@@ -5121,14 +4541,14 @@
   ],
   "portfolio": {
     "n_bets": 79,
-    "n_open": 4,
+    "n_open": 2,
     "n_won": 27,
-    "n_lost": 38,
+    "n_lost": 40,
     "n_void": 8,
-    "total_staked": 798.31,
-    "total_pnl": -14.38000000000001,
-    "roi_pct": -1.801305257356166,
-    "win_rate": 41.53846153846154,
+    "total_staked": 816.29,
+    "total_pnl": -32.360000000000014,
+    "roi_pct": -3.9642774014137148,
+    "win_rate": 40.298507462686565,
     "mean_clv": 0.11019444444444444,
     "by_market": {
       "ah+0.5": {
@@ -5195,11 +4615,11 @@
         "lost": 1
       },
       "away": {
-        "n": 4,
-        "pnl": 1.5,
-        "roi_pct": 2.941176470588235,
+        "n": 5,
+        "pnl": -8.5,
+        "roi_pct": -13.934426229508196,
         "won": 1,
-        "lost": 1
+        "lost": 2
       },
       "btts_yes": {
         "n": 3,
@@ -5216,11 +4636,11 @@
         "lost": 4
       },
       "home": {
-        "n": 8,
-        "pnl": 2.1999999999999993,
-        "roi_pct": 2.8515878159429673,
+        "n": 9,
+        "pnl": -5.780000000000001,
+        "roi_pct": -6.789615881592859,
         "won": 3,
-        "lost": 3
+        "lost": 4
       },
       "o/u2.5_over": {
         "n": 9,
@@ -5381,8 +4801,8 @@
     {
       "date": "2026-08-04",
       "n_bets": 6,
-      "pnl": -20.0,
-      "roi_pct": -52.7
+      "pnl": -37.98,
+      "roi_pct": -100.0
     },
     {
       "date": "2026-08-03",
@@ -5477,34 +4897,6 @@
   ],
   "open_bets": [
     {
-      "match": "Jacob Fearnley vs Adrian Mannarino",
-      "home": "Jacob Fearnley",
-      "away": "Adrian Mannarino",
-      "market": "away",
-      "entry_odds": 2.45,
-      "current_odds": null,
-      "drift_pct": null,
-      "clv_signal": null,
-      "stake": 10.0,
-      "match_date": "2026-08-04",
-      "model_edge_pct": null,
-      "is_live": false
-    },
-    {
-      "match": "Shintaro Mochizuki vs Fabian Marozsan",
-      "home": "Shintaro Mochizuki",
-      "away": "Fabian Marozsan",
-      "market": "home",
-      "entry_odds": 2.54,
-      "current_odds": 2.64,
-      "drift_pct": 3.9,
-      "clv_signal": "good",
-      "stake": 7.98,
-      "match_date": "2026-08-04",
-      "model_edge_pct": null,
-      "is_live": false
-    },
-    {
       "match": "James Duckworth vs Alex de Minaur",
       "home": "James Duckworth",
       "away": "Alex de Minaur",
@@ -5517,8 +4909,20 @@
       "match_date": "2026-08-04",
       "model_edge_pct": null,
       "is_live": true,
-      "tennis_sets": [],
-      "tennis_sets_won": []
+      "tennis_sets": [
+        [
+          2,
+          6
+        ],
+        [
+          3,
+          3
+        ]
+      ],
+      "tennis_sets_won": [
+        0,
+        1
+      ]
     },
     {
       "match": "Frances Tiafoe vs Marin Cilic",
@@ -5533,8 +4937,20 @@
       "match_date": "2026-08-04",
       "model_edge_pct": null,
       "is_live": true,
-      "tennis_sets": [],
-      "tennis_sets_won": []
+      "tennis_sets": [
+        [
+          5,
+          7
+        ],
+        [
+          5,
+          2
+        ]
+      ],
+      "tennis_sets_won": [
+        0,
+        1
+      ]
     }
   ],
   "settled_bets": [
@@ -5585,6 +5001,32 @@
       "entry_odds": 1.8,
       "stake": 5.0,
       "pnl": -5.0,
+      "match_date": "2026-08-04",
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
+    },
+    {
+      "match": "Jacob Fearnley vs Adrian Mannarino",
+      "home": "Jacob Fearnley",
+      "away": "Adrian Mannarino",
+      "market": "away",
+      "entry_odds": 2.45,
+      "stake": 10.0,
+      "pnl": -10.0,
+      "match_date": "2026-08-04",
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
+    },
+    {
+      "match": "Shintaro Mochizuki vs Fabian Marozsan",
+      "home": "Shintaro Mochizuki",
+      "away": "Fabian Marozsan",
+      "market": "home",
+      "entry_odds": 2.54,
+      "stake": 7.98,
+      "pnl": -7.98,
       "match_date": "2026-08-04",
       "status": "lost",
       "clv": null,
@@ -6504,20 +5946,20 @@
   "bankroll_state": {
     "start": 100.0,
     "free": 53.14,
-    "staked": 32.48,
-    "exposure_pct": 32.5,
-    "max_win": 41.76,
-    "pnl_closed": -14.38
+    "staked": 14.5,
+    "exposure_pct": 14.5,
+    "max_win": 14.17,
+    "pnl_closed": -32.36
   },
   "wm_stats": {
     "stats": {
       "1x2": {
-        "n": 15,
+        "n": 17,
         "won": 7,
-        "staked": 134.94,
-        "pnl": 67.24,
-        "hit_rate": 46.7,
-        "roi": 49.8
+        "staked": 152.92,
+        "pnl": 49.26,
+        "hit_rate": 41.2,
+        "roi": 32.2
       },
       "ou25": {
         "n": 19,
@@ -6611,16 +6053,16 @@
       },
       {
         "date": "2026-08-04",
-        "balance": 85.62
+        "balance": 67.64
       }
     ],
     "drawdown": {
       "peak": 176.25,
-      "current": 85.62,
-      "current_dd": 90.63,
-      "current_dd_pct": 51.42,
-      "max_dd": 100.87,
-      "max_dd_pct": 57.23
+      "current": 67.64,
+      "current_dd": 108.61,
+      "current_dd_pct": 61.62,
+      "max_dd": 108.61,
+      "max_dd_pct": 61.62
     },
     "clv_dist": {
       "labels": [
@@ -6652,23 +6094,23 @@
       "bins": [
         2,
         6,
-        9,
+        10,
         7,
-        6,
+        7,
         10
       ]
     },
     "summary": {
-      "n_settled": 66,
-      "staked": 673.16,
-      "pnl": -14.38,
-      "yield_pct": -2.14,
+      "n_settled": 68,
+      "staked": 691.14,
+      "pnl": -32.36,
+      "yield_pct": -4.68,
       "mean_clv": 4.07,
       "mean_clv_30d": 0.0,
-      "mean_edge": 8.37,
+      "mean_edge": 8.41,
       "n_clv": 26,
       "n_clv_30d": 1,
-      "n_edge": 40
+      "n_edge": 42
     },
     "per_team_market": {
       "South Korea": {
@@ -7728,6 +7170,46 @@
           "hit_rate": 0.0,
           "roi": -100.0
         }
+      },
+      "Jacob Fearnley": {
+        "1X2": {
+          "n": 1,
+          "won": 0,
+          "staked": 10.0,
+          "pnl": -10.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "Adrian Mannarino": {
+        "1X2": {
+          "n": 1,
+          "won": 0,
+          "staked": 10.0,
+          "pnl": -10.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "Shintaro Mochizuki": {
+        "1X2": {
+          "n": 1,
+          "won": 0,
+          "staked": 7.98,
+          "pnl": -7.98,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "Fabian Marozsan": {
+        "1X2": {
+          "n": 1,
+          "won": 0,
+          "staked": 7.98,
+          "pnl": -7.98,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
       }
     },
     "by_confederation": {
@@ -7772,12 +7254,12 @@
         "roi": -100.0
       },
       "Other": {
-        "n": 9,
+        "n": 11,
         "won": 5,
-        "staked": 50.0,
-        "pnl": 12.95,
-        "hit_rate": 55.6,
-        "roi": 25.9
+        "staked": 67.98,
+        "pnl": -5.03,
+        "hit_rate": 45.5,
+        "roi": -7.4
       },
       "OFC": {
         "n": 1,
@@ -7790,7 +7272,7 @@
     }
   },
   "tennis_stats": {
-    "updated": "2026-08-04T22:21:19Z",
+    "updated": "2026-08-05T05:15:39Z",
     "active_tournaments": [
       {
         "slug": "canadian_open_atp",
