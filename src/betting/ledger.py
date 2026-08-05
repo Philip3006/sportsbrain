@@ -198,6 +198,57 @@ def _save(df: pd.DataFrame, path: Path) -> None:
         except OSError:
             pass
         raise
+    # Sync to SQLite — keeps open_bets() consistent with CSV (N-Rev5 write-path fix)
+    try:
+        from src.betting.db import open_db
+        db_path = path.with_suffix(".db")
+        conn = open_db(db_path)
+        try:
+            for _, row in df.iterrows():
+                r = dict(row)
+                conn.execute("""
+                    INSERT OR REPLACE INTO bets
+                    (match_id, match_date, home, away, market, decimal_odds, stake_pct,
+                     stake_amount, placed_date, status, pnl, closing_odds, clv,
+                     pinnacle_ref_odds, source, model_prob, stake_reason)
+                    VALUES (:match_id,:match_date,:home,:away,:market,:decimal_odds,:stake_pct,
+                            :stake_amount,:placed_date,:status,:pnl,:closing_odds,:clv,
+                            :pinnacle_ref_odds,:source,:model_prob,:stake_reason)
+                """, {
+                    "match_id": r.get("match_id",""),
+                    "match_date": r.get("match_date",""),
+                    "home": r.get("home",""), "away": r.get("away",""),
+                    "market": r.get("market",""),
+                    "decimal_odds": _to_float(r.get("decimal_odds")),
+                    "stake_pct": _to_float(r.get("stake_pct")),
+                    "stake_amount": _to_float(r.get("stake_amount")),
+                    "placed_date": r.get("placed_date",""),
+                    "status": r.get("status","open"),
+                    "pnl": _to_float(r.get("pnl")) or 0.0,
+                    "closing_odds": _to_float(r.get("closing_odds")),
+                    "clv": _to_float(r.get("clv")),
+                    "pinnacle_ref_odds": _to_float(r.get("pinnacle_ref_odds")),
+                    "source": r.get("source","value") or "value",
+                    "model_prob": _to_float(r.get("model_prob")),
+                    "stake_reason": r.get("stake_reason","") or "",
+                })
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+    except Exception as exc:
+        _log.warning("SQLite sync failed: %s", exc)
+
+
+def _to_float(v) -> float | None:
+    if v is None or v == "":
+        return None
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
 
 
 def append_bets(
