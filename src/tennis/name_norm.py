@@ -14,6 +14,7 @@ Public API:
 from __future__ import annotations
 
 import re
+import unicodedata
 
 _MULTI_WORD_LASTNAMES = {
     # Nachnamen mit Präfix (bleiben zusammen).
@@ -22,6 +23,18 @@ _MULTI_WORD_LASTNAMES = {
 }
 
 _INITIAL_RE = re.compile(r"^([A-Z])\.?$")
+
+# Explicit overrides for players whose OddsAPI names don't map cleanly to the
+# Sackmann Elo-storage format (compound surnames, ambiguous initials, etc.).
+_ODDS_API_ALIASES: dict[str, str] = {
+    # ATP — compound/middle names
+    "tomas martin etcheverry": "Etcheverry T. M.",
+    "juan manuel cerundolo":   "Cerundolo J.M.",
+    "thiago agustin tirante":  "Tirante T.A.",
+    # WTA — disambiguated sisters / accents
+    "karolina pliskova":       "Pliskova Ka.",
+    "kristyna pliskova":       "Pliskova Kr.",
+}
 
 
 def _tokens(name: str) -> list[str]:
@@ -105,9 +118,23 @@ def to_elo_name(name: str) -> str:
     return f"{_titlecase_lastname(lastname)} {firstname[0].upper()}."
 
 
+def _strip_accents(s: str) -> str:
+    """Remove diacritic marks: 'Jović' → 'Jovic', 'Bondár' → 'Bondar'."""
+    return "".join(
+        c for c in unicodedata.normalize("NFD", s)
+        if unicodedata.category(c) != "Mn"
+    )
+
+
 def _titlecase_lastname(lastname: str) -> str:
-    """'de minaur' → 'De Minaur', 'DE MINAUR' → 'De Minaur'."""
-    return " ".join(w.capitalize() for w in lastname.split())
+    """'de minaur' → 'De Minaur', 'auger-aliassime' → 'Auger-Aliassime'."""
+    parts = []
+    for word in lastname.split():
+        if "-" in word:
+            parts.append("-".join(w.capitalize() for w in word.split("-")))
+        else:
+            parts.append(word.capitalize())
+    return " ".join(parts)
 
 
 def to_elo_name_from_te(te_name: str) -> str:
@@ -136,6 +163,15 @@ def to_elo_name_from_odds_api(name: str) -> str:
     cleaned = re.sub(r"\([^)]*\)", "", name or "").strip()
     if not cleaned:
         return ""
+
+    # Explicit alias table for compound/ambiguous names (checked before heuristic).
+    alias_key = _strip_accents(cleaned).lower()
+    if alias_key in _ODDS_API_ALIASES:
+        return _ODDS_API_ALIASES[alias_key]
+
+    # Strip accents so "Jović" → "Jovic", "Bondár" → "Bondar"
+    cleaned = _strip_accents(cleaned)
+
     toks = _tokens(cleaned)
     if len(toks) == 1:
         return toks[0]
