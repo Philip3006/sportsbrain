@@ -24,6 +24,13 @@
       "odds_a": 1.19,
       "odds_b": 4.9,
       "source": "winamax_de"
+    },
+    {
+      "label": "auto_20260805_11",
+      "ts_utc": "2026-08-05T11:31:11.483912+00:00",
+      "odds_a": 1.17,
+      "odds_b": 5.2,
+      "source": "winamax_de"
     }
   ]
 }

@@ -1,0 +1,15 @@
+{
+  "match_id": "63136c9ff1cd85f1723a2b15bab34f27",
+  "player_a": "Alexander Blockx",
+  "player_b": "Jiri Lehecka",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260805_11",
+      "ts_utc": "2026-08-05T11:31:11.484362+00:00",
+      "odds_a": 2.45,
+      "odds_b": 1.49,
+      "source": "betclic_fr"
+    }
+  ]
+}
