@@ -1472,7 +1472,7 @@
     "odds": {}
   },
   {
-    "ts": "2026-08-05T15:13:58Z",
+    "ts": "2026-08-05T19:16:39Z",
     "date": "2026-08-05",
     "odds": {
       "Alexei Popyrin vs Roman Andres Burruchaga": {
@@ -1546,24 +1546,24 @@
         "away": 1.93
       },
       "Alex Michelsen vs Francisco Cerundolo": {
-        "home": 1.62,
+        "home": 1.71,
         "draw": null,
-        "away": 2.6
+        "away": 2.48
       },
       "Miomir Kecmanovic vs Arthur Rinderknech": {
-        "home": 1.94,
+        "home": 1.91,
         "draw": null,
-        "away": 2.04
+        "away": 2.12
       },
       "Ignacio Buse vs Cameron Norrie": {
-        "home": 3.05,
+        "home": 3.2,
         "draw": null,
-        "away": 1.5
+        "away": 1.44
       },
       "Rafael Jodar vs Corentin Moutet": {
         "home": 1.35,
         "draw": null,
-        "away": 4.0
+        "away": 3.75
       },
       "Titouan Droguet vs Felix Auger-Aliassime": {
         "home": 4.95,
@@ -1571,9 +1571,9 @@
         "away": 1.26
       },
       "Learner Tien vs Gael Monfils": {
-        "home": 1.39,
+        "home": 1.37,
         "draw": null,
-        "away": 3.5
+        "away": 3.6
       },
       "Nicolas Mejia vs Lorenzo Musetti": {
         "home": 7.5,
@@ -1646,14 +1646,14 @@
         "away": 1.45
       },
       "Alycia Parks vs Alexandra Eala": {
-        "home": 6.0,
+        "home": 5.8,
         "draw": null,
-        "away": 1.2
+        "away": 1.21
       },
       "Alina Korneeva vs Emma Navarro": {
         "home": 2.12,
         "draw": null,
-        "away": 1.9
+        "away": 1.88
       },
       "Ann Li vs Kayla Cross": {
         "home": 1.31,
@@ -1661,12 +1661,12 @@
         "away": 4.1
       },
       "Elise Mertens vs Anna Bondár": {
-        "home": 1.4,
+        "home": 1.38,
         "draw": null,
         "away": 3.55
       },
       "Liudmila Samsonova vs Barbora Krejcikova": {
-        "home": 2.4,
+        "home": 2.38,
         "draw": null,
         "away": 1.73
       },
@@ -1676,14 +1676,14 @@
         "away": 1.15
       },
       "Linda Noskova vs Caty McNally": {
-        "home": 1.29,
+        "home": 1.31,
         "draw": null,
-        "away": 4.4
+        "away": 4.2
       },
       "Kayla Day vs Coco Gauff": {
-        "home": 10.0,
+        "home": 10.5,
         "draw": null,
-        "away": 1.11
+        "away": 1.1
       },
       "Daria Kasatkina vs Elena Rybakina": {
         "home": 7.2,
@@ -1691,29 +1691,29 @@
         "away": 1.16
       },
       "Iva Jović vs Magda Linette": {
-        "home": 1.29,
+        "home": 1.27,
         "draw": null,
-        "away": 4.3
+        "away": 4.5
       },
       "Jessica Pegula vs Magdalena Frech": {
         "home": 1.14,
         "draw": null,
-        "away": 8.5
+        "away": 9.2
       },
       "Mirra Andreeva vs Karolina Pliskova": {
-        "home": 1.31,
+        "home": 1.25,
         "draw": null,
-        "away": 4.9
+        "away": 5.0
       },
       "Renata Zarazua vs Leylah Fernandez": {
-        "home": 3.35,
+        "home": 3.9,
         "draw": null,
-        "away": 1.41
+        "away": 1.38
       },
       "Maria Sakkari vs Zeynep Sonmez": {
         "home": 1.62,
         "draw": null,
-        "away": 2.63
+        "away": 2.6
       },
       "Marie Bouzkova vs Taylor Townsend": {
         "home": 1.8,
@@ -1721,12 +1721,12 @@
         "away": 2.25
       },
       "Sorana Cirstea vs Maya Joint": {
-        "home": 1.37,
+        "home": 1.39,
         "draw": null,
-        "away": 3.63
+        "away": 3.75
       },
       "Panna Udvardy vs Naomi Osaka": {
-        "home": 12.0,
+        "home": 11.5,
         "draw": null,
         "away": 1.09
       },
@@ -1741,9 +1741,9 @@
         "away": 2.48
       },
       "Zachary Svajda vs Arthur Fils": {
-        "home": 3.75,
+        "home": 3.7,
         "draw": null,
-        "away": 1.35
+        "away": 1.37
       },
       "Jenson Brooksby vs Ben Shelton": {
         "home": 3.75,
@@ -1751,24 +1751,24 @@
         "away": 1.36
       },
       "Casper Ruud vs Juan Manuel Cerundolo": {
-        "home": 1.4,
+        "home": 1.39,
         "draw": null,
-        "away": 3.4
+        "away": 3.55
       },
       "Alexander Zverev vs Tallon Griekspoor": {
-        "home": 1.12,
+        "home": 1.17,
         "draw": null,
-        "away": 9.4
+        "away": 6.6
       },
       "Raphael Collignon vs Alexei Popyrin": {
-        "home": 1.61,
+        "home": 1.66,
         "draw": null,
-        "away": 2.6
+        "away": 2.51
       },
       "Thiago Agustin Tirante vs Taylor Fritz": {
         "home": 6.5,
         "draw": null,
-        "away": 1.19
+        "away": 1.2
       },
       "Hubert Hurkacz vs Alejandro Tabilo": {
         "home": 1.71,
@@ -1776,44 +1776,44 @@
         "away": 2.38
       },
       "Fabian Marozsan vs Matteo Arnaldi": {
-        "home": 1.77,
+        "home": 1.75,
         "draw": null,
-        "away": 2.3
+        "away": 2.32
       },
       "Karen Khachanov vs Terence Atmane": {
         "home": 1.81,
         "draw": null,
-        "away": 2.22
+        "away": 2.25
       },
       "Ugo Humbert vs Daniel Merida Aguilar": {
-        "home": 1.45,
+        "home": 1.44,
         "draw": null,
-        "away": 3.2
+        "away": 3.25
       },
       "Jacob Fearnley vs Jakub Mensik": {
-        "home": 3.2,
+        "home": 3.25,
         "draw": null,
-        "away": 1.44
+        "away": 1.43
       },
       "Daniil Medvedev vs Botic van de Zandschulp": {
-        "home": 1.3,
+        "home": 1.32,
         "draw": null,
-        "away": 4.2
+        "away": 3.95
       },
       "Valentin Royer vs Tommy Paul": {
-        "home": 5.5,
+        "home": 5.3,
         "draw": null,
-        "away": 1.22
+        "away": 1.23
       },
       "Jiri Lehecka vs Alexander Blockx": {
-        "home": 1.55,
+        "home": 1.57,
         "draw": null,
         "away": 2.7
       },
       "Luciano Darderi vs Juncheng Shang": {
-        "home": 1.92,
+        "home": 2.1,
         "draw": null,
-        "away": 2.05
+        "away": 1.95
       }
     }
   }
