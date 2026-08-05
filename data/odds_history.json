@@ -1,211 +1,5 @@
 [
   {
-    "ts": "2026-07-22T23:36:28Z",
-    "date": "2026-07-22",
-    "odds": {
-      "Bosnia & Herzegovina vs Qatar": {
-        "home": 1.39,
-        "draw": 5.8,
-        "away": 9.25
-      },
-      "Switzerland vs Canada": {
-        "home": 2.6,
-        "draw": 3.13,
-        "away": 3.45
-      },
-      "Scotland vs Brazil": {
-        "home": 39.37,
-        "draw": 8.0,
-        "away": 1.12
-      },
-      "Morocco vs Haiti": {
-        "home": 1.97,
-        "draw": 3.13,
-        "away": 4.26
-      },
-      "Czech Republic vs Mexico": {
-        "home": 4.0,
-        "draw": 4.1,
-        "away": 2.0
-      },
-      "South Africa vs South Korea": {
-        "home": 6.5,
-        "draw": 4.12,
-        "away": 1.66
-      },
-      "Curaçao vs Ivory Coast": {
-        "home": 24.0,
-        "draw": 9.5,
-        "away": 1.19
-      },
-      "Ecuador vs Germany": {
-        "home": 4.2,
-        "draw": 4.5,
-        "away": 1.9
-      },
-      "Japan vs Sweden": {
-        "home": 1.96,
-        "draw": 3.65,
-        "away": 4.7
-      },
-      "Tunisia vs Netherlands": {
-        "home": 34.0,
-        "draw": 11.8,
-        "away": 1.16
-      },
-      "Paraguay vs Australia": {
-        "home": 3.03,
-        "draw": 2.38,
-        "away": 4.43
-      },
-      "Turkey vs USA": {
-        "home": 3.75,
-        "draw": 4.3,
-        "away": 2.0
-      },
-      "Norway vs France": {
-        "home": 4.9,
-        "draw": 4.9,
-        "away": 1.69
-      },
-      "Senegal vs Iraq": {
-        "home": 1.26,
-        "draw": 7.25,
-        "away": 14.1
-      },
-      "Cape Verde vs Saudi Arabia": {
-        "home": 2.78,
-        "draw": 3.45,
-        "away": 2.86
-      },
-      "Uruguay vs Spain": {
-        "home": 7.8,
-        "draw": 3.9,
-        "away": 1.67
-      },
-      "New Zealand vs Belgium": {
-        "home": 17.5,
-        "draw": 8.5,
-        "away": 1.22
-      },
-      "Egypt vs Iran": {
-        "home": 2.6,
-        "draw": 2.75,
-        "away": 4.13
-      },
-      "Croatia vs Ghana": {
-        "home": 1.83,
-        "draw": 3.4,
-        "away": 6.2
-      },
-      "Panama vs England": {
-        "home": 22.0,
-        "draw": 9.2,
-        "away": 1.2
-      },
-      "Colombia vs Portugal": {
-        "home": 4.33,
-        "draw": 3.95,
-        "away": 1.92
-      },
-      "DR Congo vs Uzbekistan": {
-        "home": 1.83,
-        "draw": 4.25,
-        "away": 4.6
-      },
-      "Algeria vs Austria": {
-        "home": 4.33,
-        "draw": 2.38,
-        "away": 3.0
-      },
-      "Jordan vs Argentina": {
-        "home": 19.5,
-        "draw": 9.2,
-        "away": 1.21
-      },
-      "South Africa vs Canada": {
-        "home": 5.9,
-        "draw": 3.75,
-        "away": 1.77
-      },
-      "Brazil vs Japan": {
-        "home": 1.78,
-        "draw": 3.85,
-        "away": 5.5
-      },
-      "Netherlands vs Morocco": {
-        "home": 2.24,
-        "draw": 3.45,
-        "away": 3.8
-      },
-      "USA vs Bosnia & Herzegovina": {
-        "home": 1.57,
-        "draw": 4.6,
-        "away": 7.8
-      },
-      "Portugal vs Spain": {
-        "home": 7.19,
-        "draw": 1.67,
-        "away": 3.25
-      },
-      "USA vs Belgium": {
-        "home": 2.62,
-        "draw": 3.55,
-        "away": 2.98
-      },
-      "Argentina vs Egypt": {
-        "home": 1.41,
-        "draw": 5.2,
-        "away": 13.0
-      },
-      "Switzerland vs Colombia": {
-        "home": 3.8,
-        "draw": 3.2,
-        "away": 2.35
-      },
-      "France vs Morocco": {
-        "home": 1.01,
-        "draw": 501.0,
-        "away": 1001.0
-      },
-      "Spain vs Belgium": {
-        "home": 1.69,
-        "draw": 3.72,
-        "away": 5.42
-      },
-      "Norway vs England": {
-        "home": 11.43,
-        "draw": 1.27,
-        "away": 5.8
-      },
-      "Argentina vs Switzerland": {
-        "home": 1.27,
-        "draw": 5.8,
-        "away": 28.0
-      },
-      "France vs Spain": {
-        "home": 2.54,
-        "draw": 3.3,
-        "away": 3.42
-      },
-      "England vs Argentina": {
-        "home": 1.41,
-        "draw": 3.64,
-        "away": 13.84
-      },
-      "France vs England": {
-        "home": 1.99,
-        "draw": 4.07,
-        "away": 4.07
-      },
-      "Spain vs Argentina": {
-        "home": 2.36,
-        "draw": 3.16,
-        "away": 3.8
-      }
-    }
-  },
-  {
     "ts": "2026-07-23T23:05:51Z",
     "date": "2026-07-23",
     "odds": {
@@ -1676,5 +1470,351 @@
     "ts": "2026-08-04T05:48:29Z",
     "date": "2026-08-04",
     "odds": {}
+  },
+  {
+    "ts": "2026-08-05T14:05:18Z",
+    "date": "2026-08-05",
+    "odds": {
+      "Alexei Popyrin vs Roman Andres Burruchaga": {
+        "home": 1.67,
+        "draw": null,
+        "away": 2.66
+      },
+      "Giovanni Mpetshi Perricard vs Botic van de Zandschulp": {
+        "home": 2.26,
+        "draw": null,
+        "away": 1.78
+      },
+      "Juncheng Shang vs Andrey Rublev": {
+        "home": 4.3,
+        "draw": null,
+        "away": 1.3
+      },
+      "Juan Manuel Cerundolo vs Hamad Medjedovic": {
+        "home": 2.6,
+        "draw": null,
+        "away": 1.62
+      },
+      "Terence Atmane vs Jack Draper": {
+        "home": 2.96,
+        "draw": null,
+        "away": 1.5
+      },
+      "Lorenzo Sonego vs Tallon Griekspoor": {
+        "home": 2.14,
+        "draw": null,
+        "away": 1.9
+      },
+      "Shintaro Mochizuki vs Fabian Marozsan": {
+        "home": 2.64,
+        "draw": null,
+        "away": 1.6
+      },
+      "Jaume Munar vs Alexander Blockx": {
+        "home": 2.42,
+        "draw": null,
+        "away": 1.7
+      },
+      "Jiri Lehecka vs Vit Kopriva": {
+        "home": 1.19,
+        "draw": null,
+        "away": 6.0
+      },
+      "James Duckworth vs Alex de Minaur": {
+        "home": 8.8,
+        "draw": null,
+        "away": 1.12
+      },
+      "Brandon Nakashima vs Daniel Altmaier": {
+        "home": 1.33,
+        "draw": null,
+        "away": 4.0
+      },
+      "Frances Tiafoe vs Marin Cilic": {
+        "home": 1.55,
+        "draw": null,
+        "away": 2.8
+      },
+      "Flavio Cobolli vs Yannick Hanfmann": {
+        "home": 1.78,
+        "draw": null,
+        "away": 2.25
+      },
+      "Luciano Darderi vs Gabriel Diallo": {
+        "home": 2.2,
+        "draw": null,
+        "away": 1.93
+      },
+      "Alex Michelsen vs Francisco Cerundolo": {
+        "home": 1.62,
+        "draw": null,
+        "away": 2.6
+      },
+      "Miomir Kecmanovic vs Arthur Rinderknech": {
+        "home": 1.94,
+        "draw": null,
+        "away": 2.04
+      },
+      "Ignacio Buse vs Cameron Norrie": {
+        "home": 3.05,
+        "draw": null,
+        "away": 1.5
+      },
+      "Rafael Jodar vs Corentin Moutet": {
+        "home": 1.35,
+        "draw": null,
+        "away": 4.0
+      },
+      "Titouan Droguet vs Felix Auger-Aliassime": {
+        "home": 4.95,
+        "draw": null,
+        "away": 1.26
+      },
+      "Learner Tien vs Gael Monfils": {
+        "home": 1.39,
+        "draw": null,
+        "away": 3.5
+      },
+      "Nicolas Mejia vs Lorenzo Musetti": {
+        "home": 7.5,
+        "draw": null,
+        "away": 1.15
+      },
+      "Valentin Vacherot vs Mariano Navone": {
+        "home": 1.65,
+        "draw": null,
+        "away": 2.55
+      },
+      "Nuno Borges vs Tomas Martin Etcheverry": {
+        "home": 1.57,
+        "draw": null,
+        "away": 2.72
+      },
+      "Rebecca Sramkova vs Diana Shnaider": {
+        "home": 5.0,
+        "draw": null,
+        "away": 1.24
+      },
+      "Elena Gabriela Ruse vs Anastasia Potapova": {
+        "home": 2.06,
+        "draw": null,
+        "away": 1.96
+      },
+      "Marta Kostyuk vs Katherine Sebov": {
+        "home": 1.05,
+        "draw": null,
+        "away": 16.5
+      },
+      "Maja Chwalinska vs Talia Gibson": {
+        "home": 2.24,
+        "draw": null,
+        "away": 1.79
+      },
+      "Antonia Ruzic vs Madison Keys": {
+        "home": 5.3,
+        "draw": null,
+        "away": 1.26
+      },
+      "Shuai Zhang vs Jelena Ostapenko": {
+        "home": 3.25,
+        "draw": null,
+        "away": 1.45
+      },
+      "Anna Kalinskaya vs McCartney Kessler": {
+        "home": 1.63,
+        "draw": null,
+        "away": 2.55
+      },
+      "Kamilla Rakhimova vs Katerina Siniakova": {
+        "home": 2.88,
+        "draw": null,
+        "away": 1.52
+      },
+      "Clara Tauson vs Nikola Bartunkova": {
+        "home": 1.92,
+        "draw": null,
+        "away": 2.06
+      },
+      "Aryna Sabalenka vs Moyuka Uchijima": {
+        "home": 1.07,
+        "draw": null,
+        "away": 18.0
+      },
+      "Lanlana Tararudee vs Amanda Anisimova": {
+        "home": 3.33,
+        "draw": null,
+        "away": 1.45
+      },
+      "Alycia Parks vs Alexandra Eala": {
+        "home": 6.0,
+        "draw": null,
+        "away": 1.2
+      },
+      "Alina Korneeva vs Emma Navarro": {
+        "home": 2.12,
+        "draw": null,
+        "away": 1.9
+      },
+      "Ann Li vs Kayla Cross": {
+        "home": 1.31,
+        "draw": null,
+        "away": 4.1
+      },
+      "Elise Mertens vs Anna Bondár": {
+        "home": 1.4,
+        "draw": null,
+        "away": 3.55
+      },
+      "Liudmila Samsonova vs Barbora Krejcikova": {
+        "home": 2.4,
+        "draw": null,
+        "away": 1.73
+      },
+      "Sloane Stephens vs Belinda Bencic": {
+        "home": 7.6,
+        "draw": null,
+        "away": 1.15
+      },
+      "Linda Noskova vs Caty McNally": {
+        "home": 1.29,
+        "draw": null,
+        "away": 4.4
+      },
+      "Kayla Day vs Coco Gauff": {
+        "home": 10.0,
+        "draw": null,
+        "away": 1.11
+      },
+      "Daria Kasatkina vs Elena Rybakina": {
+        "home": 7.2,
+        "draw": null,
+        "away": 1.16
+      },
+      "Iva Jović vs Magda Linette": {
+        "home": 1.29,
+        "draw": null,
+        "away": 4.3
+      },
+      "Jessica Pegula vs Magdalena Frech": {
+        "home": 1.14,
+        "draw": null,
+        "away": 8.5
+      },
+      "Mirra Andreeva vs Karolina Pliskova": {
+        "home": 1.31,
+        "draw": null,
+        "away": 4.9
+      },
+      "Renata Zarazua vs Leylah Fernandez": {
+        "home": 3.35,
+        "draw": null,
+        "away": 1.41
+      },
+      "Maria Sakkari vs Zeynep Sonmez": {
+        "home": 1.62,
+        "draw": null,
+        "away": 2.63
+      },
+      "Marie Bouzkova vs Taylor Townsend": {
+        "home": 1.8,
+        "draw": null,
+        "away": 2.25
+      },
+      "Sorana Cirstea vs Maya Joint": {
+        "home": 1.37,
+        "draw": null,
+        "away": 3.63
+      },
+      "Panna Udvardy vs Naomi Osaka": {
+        "home": 12.0,
+        "draw": null,
+        "away": 1.09
+      },
+      "Stefanos Tsitsipas vs Joao Fonseca": {
+        "home": 2.34,
+        "draw": null,
+        "away": 1.73
+      },
+      "Zizou Bergs vs Sebastian Baez": {
+        "home": 1.66,
+        "draw": null,
+        "away": 2.48
+      },
+      "Zachary Svajda vs Arthur Fils": {
+        "home": 3.75,
+        "draw": null,
+        "away": 1.35
+      },
+      "Jenson Brooksby vs Ben Shelton": {
+        "home": 3.75,
+        "draw": null,
+        "away": 1.36
+      },
+      "Casper Ruud vs Juan Manuel Cerundolo": {
+        "home": 1.4,
+        "draw": null,
+        "away": 3.4
+      },
+      "Alexander Zverev vs Tallon Griekspoor": {
+        "home": 1.12,
+        "draw": null,
+        "away": 9.4
+      },
+      "Raphael Collignon vs Alexei Popyrin": {
+        "home": 1.61,
+        "draw": null,
+        "away": 2.6
+      },
+      "Thiago Agustin Tirante vs Taylor Fritz": {
+        "home": 6.5,
+        "draw": null,
+        "away": 1.19
+      },
+      "Hubert Hurkacz vs Alejandro Tabilo": {
+        "home": 1.71,
+        "draw": null,
+        "away": 2.38
+      },
+      "Fabian Marozsan vs Matteo Arnaldi": {
+        "home": 1.77,
+        "draw": null,
+        "away": 2.3
+      },
+      "Karen Khachanov vs Terence Atmane": {
+        "home": 1.81,
+        "draw": null,
+        "away": 2.22
+      },
+      "Ugo Humbert vs Daniel Merida Aguilar": {
+        "home": 1.45,
+        "draw": null,
+        "away": 3.2
+      },
+      "Jacob Fearnley vs Jakub Mensik": {
+        "home": 3.2,
+        "draw": null,
+        "away": 1.44
+      },
+      "Daniil Medvedev vs Botic van de Zandschulp": {
+        "home": 1.3,
+        "draw": null,
+        "away": 4.2
+      },
+      "Valentin Royer vs Tommy Paul": {
+        "home": 5.5,
+        "draw": null,
+        "away": 1.22
+      },
+      "Jiri Lehecka vs Alexander Blockx": {
+        "home": 1.55,
+        "draw": null,
+        "away": 2.7
+      },
+      "Luciano Darderi vs Juncheng Shang": {
+        "home": 1.92,
+        "draw": null,
+        "away": 2.05
+      }
+    }
   }
 ]

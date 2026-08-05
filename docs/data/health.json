@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-05T10:57:16Z",
-  "overall": "down",
+  "generated_at": "2026-08-05T14:07:17Z",
+  "overall": "degraded",
   "jobs": [
     {
       "job": "daily_scan",
@@ -26,11 +26,11 @@
     },
     {
       "job": "closing_odds",
-      "status": "stale",
-      "last_run_at": "2026-08-04T16:00:09Z",
-      "duration_s": 5.0,
+      "status": "ok",
+      "last_run_at": "2026-08-05T12:00:08Z",
+      "duration_s": 4.0,
       "exit_code": 0,
-      "error": "last run was at 2026-08-04T16:00:09Z — overdue (>46800s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 43200,
       "cadence": "2×/Tag 14:00 + 18:00"
@@ -38,7 +38,7 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-05T10:57:16Z",
+      "last_run_at": "2026-08-05T14:07:17Z",
       "duration_s": 2.0,
       "exit_code": 0,
       "error": null,
@@ -48,31 +48,31 @@
     },
     {
       "job": "live_score_push",
-      "status": "error",
-      "last_run_at": "2026-08-05T10:56:23Z",
-      "duration_s": 0.0,
-      "exit_code": 127,
-      "error": " ! [rejected]          main -> main (fetch first) error: failed to push some refs to 'https://github.com/Philip3006/sportsbrain.git' hint: Updates were rejected because the remote contains work that you do ",
+      "status": "ok",
+      "last_run_at": "2026-08-05T14:05:27Z",
+      "duration_s": 3.0,
+      "exit_code": 0,
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
     },
     {
       "job": "prematch_scan",
-      "status": "ok",
-      "last_run_at": "2026-08-05T10:51:32Z",
-      "duration_s": 0.0,
+      "status": "degraded",
+      "last_run_at": "2026-08-05T14:05:27Z",
+      "duration_s": 5.0,
       "exit_code": 0,
       "error": null,
-      "fallback_used": null,
+      "fallback_used": "stale_cache",
       "next_expected_in_s": 1800,
       "cadence": "alle 30 Min (im Fenster)"
     },
     {
       "job": "settle",
       "status": "ok",
-      "last_run_at": "2026-08-05T10:39:24Z",
-      "duration_s": 2.0,
+      "last_run_at": "2026-08-05T13:30:06Z",
+      "duration_s": 1.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -82,7 +82,7 @@
     {
       "job": "aggregate_health",
       "status": "ok",
-      "last_run_at": "2026-08-05T10:55:13Z",
+      "last_run_at": "2026-08-05T14:05:14Z",
       "duration_s": 0.0,
       "exit_code": 0,
       "error": null,
@@ -126,7 +126,7 @@
     {
       "job": "tennis_retrain",
       "status": "ok",
-      "last_run_at": "2026-08-05T10:55:31Z",
+      "last_run_at": "2026-08-05T13:16:56Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -137,7 +137,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-05T10:55:55Z",
+      "last_run_at": "2026-08-05T14:05:21Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -147,11 +147,11 @@
     },
     {
       "job": "live_scores_fresh",
-      "status": "degraded",
-      "last_run_at": "2026-07-31T10:59:26Z",
+      "status": "ok",
+      "last_run_at": "2026-08-05T14:05:21Z",
       "duration_s": null,
       "exit_code": null,
-      "error": "live_scores.json is 7197min old (limit 240min)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 14400,
       "cadence": "≤4h"
