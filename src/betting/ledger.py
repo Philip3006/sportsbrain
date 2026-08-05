@@ -609,6 +609,32 @@ def ledger_summary(path: Path | None = None, *, user: str = DEFAULT_USER) -> dic
     }
 
 
+def clv_by_source(
+    path: Path | None = None,
+    *,
+    user: str = DEFAULT_USER,
+    n_min: int = 5,
+) -> dict[str, dict]:
+    """Returns per-source CLV stats for settled bets.
+
+    Only sources with >= n_min CLV readings are included.
+    Result: {"value": {"mean_clv": 0.02, "n": 34}, "tennis_inplay": {...}, ...}
+    """
+    path = _resolve_ledger_path(path, user)
+    df = _load(path)
+    settled = df[df["status"].isin(["won", "lost"])].copy()
+    if settled.empty or "clv" not in settled.columns:
+        return {}
+    settled["clv_num"] = pd.to_numeric(settled.get("clv", pd.Series([])), errors="coerce")
+    result: dict[str, dict] = {}
+    for src, grp in settled.groupby("source"):
+        vals = grp["clv_num"].dropna()
+        if len(vals) < n_min:
+            continue
+        result[str(src)] = {"mean_clv": float(vals.mean()), "n": int(len(vals))}
+    return result
+
+
 def _current_iso_week(today: date | None = None) -> tuple[int, int]:
     d = today or date.today()
     iso = d.isocalendar()

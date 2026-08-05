@@ -65,6 +65,23 @@ GOALSCORER_GATE = Gate(
 )
 
 
+def adaptive_gate(base_gate: Gate, mean_clv: float | None, n_settled: int, *, n_min: int = 20) -> Gate:
+    """Returns gate with min_edge adjusted by historical CLV sharpness.
+
+    CLV > 0 means we consistently beat the closing line → market confirms edge → can lower bar.
+    CLV < 0 means we're entering after the sharp move → raise bar.
+
+    Adjustment: ±0.1pp per 1pp CLV, clamped to [-1.5pp, +1.0pp].
+    Requires n_settled >= n_min to trust the CLV signal (returns base_gate otherwise).
+    """
+    if mean_clv is None or n_settled < n_min:
+        return base_gate
+    # Positive adj → subtract from min_edge (lower bar when sharp)
+    adj = max(-0.015, min(0.010, mean_clv * 0.10))
+    new_edge = max(0.01, base_gate.min_edge - adj)
+    return replace(base_gate, min_edge=round(new_edge, 4))
+
+
 def gate_for(sport: str, market: str = "", *, category: str = "") -> Gate:
     """Liefert das relevante Gate für (sport, market).
 

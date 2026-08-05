@@ -48,7 +48,8 @@ from src.betting.tennis_detector import (
     detect_total_sets,
     detect_value_tennis,
 )
-from src.betting.ledger import append_bets, ledger_summary
+from src.betting.ledger import append_bets, ledger_summary, clv_by_source
+from src.betting.gates import gate_for, adaptive_gate
 from scripts._bet_confirm import confirm_bets as _confirm_bets
 from src.notifications.web_push import send_scan_alert as _web_push_scan_alert
 from src.notifications.web_dashboard import write_signals_json_all_users
@@ -66,9 +67,39 @@ _MIN_BOOKMAKERS = 1
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _compute_clv_adj_edge_delta() -> float:
+    """Einmalig: liest Ledger-CLV und gibt Δmin_edge zurück.
+
+    Positives Δ → min_edge sinkt (wir schlagen die Closing-Line).
+    Negatives Δ → min_edge steigt (CLV negativ, Signal-Qualität schwach).
+    Gibt 0.0 zurück wenn < 20 Settled-Bets mit CLV-Daten vorhanden.
+    """
+    try:
+        clv_stats = clv_by_source(n_min=5)
+        value_clv = clv_stats.get("value", {})
+        mean_clv = value_clv.get("mean_clv")
+        n_settled = value_clv.get("n", 0)
+        if mean_clv is None or n_settled < 20:
+            return 0.0
+        # Δ = clamp(mean_clv * 0.10, -0.015, +0.010)
+        return max(-0.015, min(0.010, mean_clv * 0.10))
+    except Exception:
+        return 0.0
+
+
+# Computed once at scan start — shared across all tournament iterations.
+_CLV_EDGE_DELTA: float = _compute_clv_adj_edge_delta()
+
+
 def category_min_edge(category: str) -> float:
-    """Per-Category Edge-Floor mit globalem MIN_EDGE als Fallback."""
-    return TENNIS_MIN_EDGE_BY_CATEGORY.get(category, MIN_EDGE)
+    """Per-Category Edge-Floor mit CLV-Feedback-Adjustment.
+
+    Reduziert min_edge wenn unsere historische CLV positiv ist (wir schlagen
+    die Closing-Line), erhöht wenn negativ. Clamped auf [0.01, base+0.015].
+    """
+    base = TENNIS_MIN_EDGE_BY_CATEGORY.get(category, MIN_EDGE)
+    adjusted = max(0.01, base - _CLV_EDGE_DELTA)
+    return round(adjusted, 4)
 
 
 def category_mode(category: str, surface: str = "", all_live: bool = False) -> str:
