@@ -163,6 +163,7 @@ def test_first_set_signal_detected_when_odds_generous():
         bankroll=100.0,
         first_set_odds_a=1.75,
         first_set_odds_b=2.10,
+        first_set_source_tier=1,  # Tier-1/2 guard required
     )
     markets = [s.market for s in signals]
     assert "first_set_a" in markets, "Should find value on first set for heavy favourite at 1.75"
