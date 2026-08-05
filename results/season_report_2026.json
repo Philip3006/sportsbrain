@@ -1,0 +1,326 @@
+{
+  "n_total": 77,
+  "n_won": 29,
+  "n_lost": 40,
+  "n_void": 8,
+  "total_staked": 697.14,
+  "total_pnl": -24.31,
+  "roi_pct": -3.49,
+  "win_rate": 42.0,
+  "mean_clv": 0.099,
+  "pct_positive_clv": 40.0,
+  "n_clv_readings": 20,
+  "brier_score": 0.2421,
+  "n_brier_readings": 43,
+  "by_market": {
+    "draw": {
+      "n": 8,
+      "won": 3,
+      "lost": 4,
+      "staked": 65.94,
+      "pnl": 63.54,
+      "roi_pct": 96.36,
+      "win_rate": 42.86
+    },
+    "o/u3.0_over": {
+      "n": 3,
+      "won": 2,
+      "lost": 1,
+      "staked": 24.0,
+      "pnl": 34.5,
+      "roi_pct": 143.75,
+      "win_rate": 66.67
+    },
+    "scorer_Harry Kane": {
+      "n": 1,
+      "won": 1,
+      "lost": 0,
+      "staked": 10.0,
+      "pnl": 20.0,
+      "roi_pct": 200.0,
+      "win_rate": 100.0
+    },
+    "ah-0.5_home": {
+      "n": 1,
+      "won": 1,
+      "lost": 0,
+      "staked": 10.0,
+      "pnl": 12.0,
+      "roi_pct": 120.0,
+      "win_rate": 100.0
+    },
+    "o/u3.5_over": {
+      "n": 1,
+      "won": 1,
+      "lost": 0,
+      "staked": 10.0,
+      "pnl": 11.5,
+      "roi_pct": 115.0,
+      "win_rate": 100.0
+    },
+    "ah+1.5_home": {
+      "n": 1,
+      "won": 1,
+      "lost": 0,
+      "staked": 15.0,
+      "pnl": 9.75,
+      "roi_pct": 65.0,
+      "win_rate": 100.0
+    },
+    "ah-0.5_away": {
+      "n": 1,
+      "won": 1,
+      "lost": 0,
+      "staked": 8.0,
+      "pnl": 6.52,
+      "roi_pct": 81.5,
+      "win_rate": 100.0
+    },
+    "o/u_games_20.0_over": {
+      "n": 1,
+      "won": 1,
+      "lost": 0,
+      "staked": 5.0,
+      "pnl": 4.15,
+      "roi_pct": 83.0,
+      "win_rate": 100.0
+    },
+    "o/u_games_23.5_over": {
+      "n": 1,
+      "won": 1,
+      "lost": 0,
+      "staked": 5.0,
+      "pnl": 3.9,
+      "roi_pct": 78.0,
+      "win_rate": 100.0
+    },
+    "o/u_games_21.5_over": {
+      "n": 1,
+      "won": 1,
+      "lost": 0,
+      "staked": 5.0,
+      "pnl": 3.7,
+      "roi_pct": 74.0,
+      "win_rate": 100.0
+    },
+    "o/u2.5_over": {
+      "n": 9,
+      "won": 4,
+      "lost": 5,
+      "staked": 112.65,
+      "pnl": 0.69,
+      "roi_pct": 0.61,
+      "win_rate": 44.44
+    },
+    "scorer_Julián Álvarez": {
+      "n": 1,
+      "won": 0,
+      "lost": 0,
+      "staked": 0.0,
+      "pnl": 0.0,
+      "roi_pct": 0.0,
+      "win_rate": 0.0
+    },
+    "scorer_Ivan Toney": {
+      "n": 1,
+      "won": 0,
+      "lost": 0,
+      "staked": 0.0,
+      "pnl": 0.0,
+      "roi_pct": 0.0,
+      "win_rate": 0.0
+    },
+    "o/u_games_22.5_over": {
+      "n": 2,
+      "won": 1,
+      "lost": 1,
+      "staked": 10.0,
+      "pnl": -1.3,
+      "roi_pct": -13.0,
+      "win_rate": 50.0
+    },
+    "scorer_Adam Hložek": {
+      "n": 1,
+      "won": 0,
+      "lost": 1,
+      "staked": 2.0,
+      "pnl": -2.0,
+      "roi_pct": -100.0,
+      "win_rate": 0.0
+    },
+    "o/u3.5_under": {
+      "n": 2,
+      "won": 1,
+      "lost": 1,
+      "staked": 30.0,
+      "pnl": -2.6,
+      "roi_pct": -8.67,
+      "win_rate": 50.0
+    },
+    "ah+1.5_b": {
+      "n": 3,
+      "won": 1,
+      "lost": 2,
+      "staked": 15.0,
+      "pnl": -5.25,
+      "roi_pct": -35.0,
+      "win_rate": 33.33
+    },
+    "home": {
+      "n": 9,
+      "won": 3,
+      "lost": 4,
+      "staked": 55.98,
+      "pnl": -5.78,
+      "roi_pct": -10.33,
+      "win_rate": 42.86
+    },
+    "scorer_Federico Santiago Valverde Dipetta": {
+      "n": 1,
+      "won": 0,
+      "lost": 1,
+      "staked": 7.5,
+      "pnl": -7.5,
+      "roi_pct": -100.0,
+      "win_rate": 0.0
+    },
+    "ah+1.5_away": {
+      "n": 2,
+      "won": 1,
+      "lost": 1,
+      "staked": 25.0,
+      "pnl": -8.3,
+      "roi_pct": -33.2,
+      "win_rate": 50.0
+    },
+    "away": {
+      "n": 5,
+      "won": 1,
+      "lost": 2,
+      "staked": 31.0,
+      "pnl": -8.5,
+      "roi_pct": -27.42,
+      "win_rate": 33.33
+    },
+    "btts_yes": {
+      "n": 3,
+      "won": 1,
+      "lost": 2,
+      "staked": 36.97,
+      "pnl": -8.6,
+      "roi_pct": -23.26,
+      "win_rate": 33.33
+    },
+    "ah-1.5_home": {
+      "n": 1,
+      "won": 0,
+      "lost": 1,
+      "staked": 10.0,
+      "pnl": -10.0,
+      "roi_pct": -100.0,
+      "win_rate": 0.0
+    },
+    "scorer_Breel Embolo": {
+      "n": 1,
+      "won": 0,
+      "lost": 1,
+      "staked": 10.0,
+      "pnl": -10.0,
+      "roi_pct": -100.0,
+      "win_rate": 0.0
+    },
+    "scorer_Alexander_Isak": {
+      "n": 1,
+      "won": 0,
+      "lost": 1,
+      "staked": 10.0,
+      "pnl": -10.0,
+      "roi_pct": -100.0,
+      "win_rate": 0.0
+    },
+    "ah+0.5_home": {
+      "n": 1,
+      "won": 0,
+      "lost": 1,
+      "staked": 10.0,
+      "pnl": -10.0,
+      "roi_pct": -100.0,
+      "win_rate": 0.0
+    },
+    "ah-1.0_home": {
+      "n": 1,
+      "won": 0,
+      "lost": 1,
+      "staked": 11.86,
+      "pnl": -11.86,
+      "roi_pct": -100.0,
+      "win_rate": 0.0
+    },
+    "ah+0.5": {
+      "n": 1,
+      "won": 0,
+      "lost": 1,
+      "staked": 20.0,
+      "pnl": -20.0,
+      "roi_pct": -100.0,
+      "win_rate": 0.0
+    },
+    "o/u3.0_under": {
+      "n": 5,
+      "won": 1,
+      "lost": 4,
+      "staked": 59.6,
+      "pnl": -34.4,
+      "roi_pct": -57.72,
+      "win_rate": 20.0
+    },
+    "o/u2.5_under": {
+      "n": 8,
+      "won": 2,
+      "lost": 5,
+      "staked": 81.64,
+      "pnl": -38.47,
+      "roi_pct": -47.12,
+      "win_rate": 28.57
+    }
+  },
+  "by_confidence": {
+    "MEDIUM": {
+      "n": 77,
+      "won": 29,
+      "pnl": -24.310000000000002,
+      "staked": 697.14,
+      "roi_pct": -3.487104455346129
+    }
+  },
+  "weekly": {
+    "2026-W24": {
+      "n": 6,
+      "pnl": 12.5,
+      "staked": 71.25999999999999,
+      "cum_pnl": 12.5,
+      "roi_pct": 17.541397698568627
+    },
+    "2026-W25": {
+      "n": 40,
+      "pnl": -19.819999999999997,
+      "staked": 413.1,
+      "cum_pnl": -7.32,
+      "roi_pct": -4.7978697651900255
+    },
+    "2026-W26": {
+      "n": 19,
+      "pnl": -5.01,
+      "staked": 144.8,
+      "cum_pnl": -12.33,
+      "roi_pct": -3.459944751381215
+    },
+    "2026-W32": {
+      "n": 12,
+      "pnl": -11.98,
+      "staked": 67.98,
+      "cum_pnl": -24.31,
+      "roi_pct": -17.622830244189466
+    }
+  }
+}
