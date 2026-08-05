@@ -1,0 +1,15 @@
+{
+  "match_id": "59634b8e62160ce2d4d67e9990ec0e06",
+  "player_a": "Ekaterina Alexandrova",
+  "player_b": "Talia Gibson",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260805_03",
+      "ts_utc": "2026-08-05T03:34:36.965286+00:00",
+      "odds_a": 1.58,
+      "odds_b": 2.39,
+      "source": "gtbets"
+    }
+  ]
+}
