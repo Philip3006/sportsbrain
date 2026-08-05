@@ -752,13 +752,35 @@ def main() -> None:
                         print(f"  [{t.slug}:{quote.source}] {pa} vs {pb} — {s.market} EV+{s.ev*100:.1f}% @{s.decimal_odds:.2f}")
                     continue
 
-                # Fallback: Agent 8 Implied (Display-only)
-                q = quote  # merger returned implied
+                # Fallback: Agent 8 Implied (Display-only) — kein echtes Signal, aber
+                # model_eval speichern damit PWA die Modellwahrscheinlichkeit zeigen kann.
+                if quote is None:
+                    all_model_evals[f"{pa} vs {pb}"] = {
+                        "p_a": round(probs.get("p_a", 0.5) * 100, 1),
+                        "p_b": round(probs.get("p_b", 0.5) * 100, 1),
+                        "implied_a": 0.0, "implied_b": 0.0,
+                        "odds_a": 0.0, "odds_b": 0.0,
+                        "source": probs.get("source", "elo"),
+                    }
+                    continue
+                q = quote
                 m["odds_a"] = q.h2h_a
                 m["odds_b"] = q.h2h_b
                 m["odds_source"] = q.source
                 m["source_tier"] = q.source_tier
                 m["no_bet_flag"] = True
+                _oa = float(q.h2h_a or 0.0)
+                _ob = float(q.h2h_b or 0.0)
+                _impl_sum = (1.0 / _oa + 1.0 / _ob) if _oa > 1 and _ob > 1 else 0.0
+                _impl_a = round((1.0 / _oa / _impl_sum) * 100, 1) if _impl_sum else 0.0
+                all_model_evals[f"{pa} vs {pb}"] = {
+                    "p_a": round(probs.get("p_a", 0.5) * 100, 1),
+                    "p_b": round(probs.get("p_b", 0.5) * 100, 1),
+                    "implied_a": _impl_a,
+                    "implied_b": round(100.0 - _impl_a, 1) if _impl_a else 0.0,
+                    "odds_a": _oa, "odds_b": _ob,
+                    "source": probs.get("source", "elo"),
+                }
                 continue
 
             sigs = detect_all_markets(m, probs, args.bankroll, min_edge, t)
@@ -953,6 +975,31 @@ def main() -> None:
                     surface = ""
                     best_of = 0
                     tournament_name = m.get("te_tournament", "")
+                    # Kein Registry-Match — trotzdem Elo-Prediction speichern (Display-only).
+                    # Defaults: hard/BO3. Nur wenn beide Spieler echte Elo-Profile haben.
+                    from src.tennis.name_norm import to_elo_name_from_te
+                    _ea2 = to_elo_name_from_te(m["player_a"])
+                    _eb2 = to_elo_name_from_te(m["player_b"])
+                    if ratings.get_overall(_ea2) != 1500.0 and ratings.get_overall(_eb2) != 1500.0:
+                        try:
+                            _probs2 = predict_winner_ensemble(
+                                m["player_a"], m["player_b"], ratings, "hard",
+                                best_of=3, name_source="te",
+                            )
+                            _oa2 = float(m.get("odds_a") or 0.0)
+                            _ob2 = float(m.get("odds_b") or 0.0)
+                            _is2 = (1.0 / _oa2 + 1.0 / _ob2) if _oa2 > 1 and _ob2 > 1 else 0.0
+                            _ia2 = round((1.0 / _oa2 / _is2) * 100, 1) if _is2 else 0.0
+                            all_model_evals[f"{m['player_a']} vs {m['player_b']}"] = {
+                                "p_a": round(_probs2.get("p_a", 0.5) * 100, 1),
+                                "p_b": round(_probs2.get("p_b", 0.5) * 100, 1),
+                                "implied_a": _ia2,
+                                "implied_b": round(100.0 - _ia2, 1) if _ia2 else 0.0,
+                                "odds_a": _oa2, "odds_b": _ob2,
+                                "source": "elo",
+                            }
+                        except Exception:
+                            pass
 
                 schedule.append({
                     "sport": "tennis",
