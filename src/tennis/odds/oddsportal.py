@@ -10,6 +10,7 @@ Konservativ: keine per-match-Detail-Requests, sondern eine Tages-Übersicht
 """
 from __future__ import annotations
 
+import logging
 import re
 import time
 from datetime import datetime
@@ -20,6 +21,7 @@ import requests
 from src.tennis.name_norm import to_elo_name_from_odds_api
 from src.tennis.odds.base import OddsQuote, sanity_ok
 
+_log = logging.getLogger("sportsbrain.tennis.odds.oddsportal")
 name = "oddsportal"
 tier = 2
 
@@ -59,7 +61,7 @@ def _fetch_day(date_iso: str) -> list[dict]:
     all_hits = list(pattern.finditer(resp.text))
     _OP_TRUNCATION_LIMIT = 500
     if len(all_hits) >= _OP_TRUNCATION_LIMIT:
-        print(f"[oddsportal] WARN: {len(all_hits)} matches auf {date_iso} — Truncation-Limit {_OP_TRUNCATION_LIMIT} greift")
+        _log.warning("[oddsportal] %d matches auf %s — Truncation-Limit %d greift", len(all_hits), date_iso, _OP_TRUNCATION_LIMIT)
     for m in all_hits[:_OP_TRUNCATION_LIMIT]:
         try:
             pa = m.group(1).strip()

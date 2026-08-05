@@ -13,9 +13,13 @@ source_tier-Konvention:
 """
 from __future__ import annotations
 
+import threading
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional, Protocol
+from typing import Any, Generic, Optional, Protocol, TypeVar
+
+_T = TypeVar("_T")
 
 
 @dataclass
@@ -50,6 +54,71 @@ class OddsSource(Protocol):
         Return None bei Fehlschlag (Timeout, kein Match gefunden, kein Sanity).
         """
         ...
+
+
+class ThreadSafeCache(Generic[_T]):
+    """Drop-in Ersatz für Module-Level-Globals mit TTL und Lock.
+
+    Motivation: Betfair und Pinnacle hatten jeweils 3–9 Modul-Level-Globals
+    ohne Mutex. Bei ThreadPoolExecutor-Merge konnten parallele HTTP-Threads
+    denselben Token/Cache-Dict überschreiben ohne Synchronisation.
+
+    Verwendung:
+        _session: ThreadSafeCache[str] = ThreadSafeCache(ttl=4*3600)
+
+        token = _session.get()
+        if token is None:
+            token = _do_login()
+            _session.set(token)
+    """
+
+    def __init__(self, ttl: float) -> None:
+        self._ttl = ttl
+        self._value: _T | None = None
+        self._ts: float = 0.0
+        self._lock = threading.Lock()
+
+    def get(self) -> _T | None:
+        with self._lock:
+            if self._value is not None and (time.monotonic() - self._ts) < self._ttl:
+                return self._value
+            return None
+
+    def set(self, value: _T) -> None:
+        with self._lock:
+            self._value = value
+            self._ts = time.monotonic()
+
+    def invalidate(self) -> None:
+        with self._lock:
+            self._value = None
+            self._ts = 0.0
+
+
+class ThreadSafeDictCache(Generic[_T]):
+    """Thread-sicherer Key→Value-Cache mit einheitlichem TTL pro Eintrag."""
+
+    def __init__(self, ttl: float) -> None:
+        self._ttl = ttl
+        self._data: dict[Any, _T] = {}
+        self._ts: dict[Any, float] = {}
+        self._lock = threading.Lock()
+
+    def get(self, key: Any) -> _T | None:
+        with self._lock:
+            if key in self._data and (time.monotonic() - self._ts.get(key, 0.0)) < self._ttl:
+                return self._data[key]
+            return None
+
+    def set(self, key: Any, value: _T) -> None:
+        with self._lock:
+            self._data[key] = value
+            self._ts[key] = time.monotonic()
+
+    def get_all(self) -> list[_T]:
+        now = time.monotonic()
+        with self._lock:
+            return [v for k, v in self._data.items() if (now - self._ts.get(k, 0.0)) < self._ttl]
 
 
 def sanity_ok(a: float, b: float,

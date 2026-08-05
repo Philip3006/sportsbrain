@@ -17,9 +17,12 @@ Serve-Stats fehlen im XLSX — J2-M ist optional dafür.
 """
 from __future__ import annotations
 
+import logging
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from typing import Iterable
+
+_log = logging.getLogger("sportsbrain.tennis.features")
 
 import numpy as np
 import pandas as pd
@@ -206,7 +209,8 @@ class RollingState:
         for dt, sets in d:
             try:
                 delta = (now - dt).days
-            except Exception:
+            except Exception as exc:
+                _log.debug("rest_days delta parse failed: %s", exc)
                 continue
             if 0 <= delta <= 7:
                 total += sets

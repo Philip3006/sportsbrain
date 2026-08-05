@@ -25,7 +25,7 @@ from typing import Optional
 import requests
 
 from src.tennis.name_norm import to_elo_name_from_odds_api
-from src.tennis.odds.base import OddsQuote, sanity_ok
+from src.tennis.odds.base import OddsQuote, ThreadSafeCache, ThreadSafeDictCache, sanity_ok
 
 name = "betfair"
 tier = 1
@@ -34,20 +34,18 @@ _LOGIN_URL = "https://identitysso.betfair.com/api/login"
 _API_URL = "https://api.betfair.com/exchange/betting/rest/v1.0"
 _TENNIS_EVENT_TYPE_ID = "2"
 
-_SESSION_TOKEN: Optional[str] = None
-_SESSION_TS: float = 0.0
-_SESSION_TTL_S = 4 * 60 * 60   # Betfair-Session lebt ~4h
-
-_BULK: dict[str, dict] = {}    # market_id -> parsed match
-_BULK_TS: float = 0.0
+_SESSION_TTL_S = 4 * 60 * 60
 _BULK_TTL_S = 5 * 60
+
+_session: ThreadSafeCache[str] = ThreadSafeCache(ttl=_SESSION_TTL_S)
+_bulk: ThreadSafeCache[dict[str, dict]] = ThreadSafeCache(ttl=_BULK_TTL_S)
 
 
 def _login() -> Optional[str]:
     """Liefert X-Authentication-Session-Token oder None."""
-    global _SESSION_TOKEN, _SESSION_TS
-    if _SESSION_TOKEN and (time.time() - _SESSION_TS) < _SESSION_TTL_S:
-        return _SESSION_TOKEN
+    cached = _session.get()
+    if cached:
+        return cached
 
     app_key = os.getenv("BETFAIR_APP_KEY", "")
     user = os.getenv("BETFAIR_USERNAME", "")
@@ -71,9 +69,9 @@ def _login() -> Optional[str]:
         js = r.json()
         if js.get("status") != "SUCCESS":
             return None
-        _SESSION_TOKEN = js.get("token", "")
-        _SESSION_TS = time.time()
-        return _SESSION_TOKEN
+        token = js.get("token", "")
+        _session.set(token)
+        return token
     except Exception:
         return None
 
@@ -104,9 +102,9 @@ def _api_call(endpoint: str, payload: dict) -> Optional[list]:
 
 def _refresh_bulk() -> dict[str, dict]:
     """Holt aktuelle Tennis-MATCH_ODDS-Märkte + Prices (Bulk)."""
-    global _BULK, _BULK_TS
-    if _BULK and (time.time() - _BULK_TS) < _BULK_TTL_S:
-        return _BULK
+    cached = _bulk.get()
+    if cached is not None:
+        return cached
 
     catalogue = _api_call("listMarketCatalogue", {
         "filter": {
@@ -118,15 +116,13 @@ def _refresh_bulk() -> dict[str, dict]:
         "marketProjection": ["EVENT", "RUNNER_DESCRIPTION"],
     })
     if not catalogue:
-        _BULK = {}
-        _BULK_TS = time.time()
-        return _BULK
+        _bulk.set({})
+        return {}
 
     market_ids = [m["marketId"] for m in catalogue if m.get("marketId")]
     if not market_ids:
-        _BULK = {}
-        _BULK_TS = time.time()
-        return _BULK
+        _bulk.set({})
+        return {}
 
     prices = _api_call("listMarketBook", {
         "marketIds": market_ids,
@@ -163,9 +159,8 @@ def _refresh_bulk() -> dict[str, dict]:
             continue
         out[mid] = {"player_a": pa_name, "player_b": pb_name, "h2h_a": a, "h2h_b": b}
 
-    _BULK = out
-    _BULK_TS = time.time()
-    return _BULK
+    _bulk.set(out)
+    return out
 
 
 def _match_key(n: str) -> str:

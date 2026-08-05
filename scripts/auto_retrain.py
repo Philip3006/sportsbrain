@@ -137,7 +137,40 @@ def main(force: bool = False, dry_run: bool = False) -> None:
         print(f"  {n_new_since} new WM matches — stacker retrain deferred "
               f"(trigger at {_STACKER_RETRAIN_EVERY}).")
 
+    # DC drift check: compare new params with what was loaded before retrain.
+    # Flags teams where |Δattack| + |Δdefence| > threshold as unusual drift.
+    _drift_check(dc_params, threshold=0.50)
+
     print("\nRetraining complete.")
+
+
+_DC_DRIFT_THRESHOLD = 0.50  # |Δattack| or |Δdefence| in a single retrain
+
+
+def _drift_check(prev_params: "dc.DixonColesParams | None", threshold: float = _DC_DRIFT_THRESHOLD) -> None:
+    """Compare newly saved DC params to prev_params; push alert if drift > threshold."""
+    new_params = _load_latest_dc_params()
+    if new_params is None or prev_params is None:
+        return
+    drifted: list[tuple[str, float, float]] = []
+    for team in sorted(set(new_params.attack) & set(prev_params.attack)):
+        da = abs(new_params.attack[team] - prev_params.attack[team])
+        dd = abs(new_params.defence[team] - prev_params.defence[team])
+        if da > threshold or dd > threshold:
+            drifted.append((team, da, dd))
+    if not drifted:
+        return
+
+    drifted.sort(key=lambda x: max(x[1], x[2]), reverse=True)
+    top = drifted[:5]
+    summary = "; ".join(f"{t} Δatk={a:.2f} Δdef={d:.2f}" for t, a, d in top)
+    msg = f"DC drift alert: {len(drifted)} team(s) above {threshold:.2f} threshold — {summary}"
+    print(f"  ⚠️  {msg}")
+    try:
+        from src.notifications.web_push import send_push_notification
+        send_push_notification(title="DC Model Drift", body=msg[:120])
+    except Exception:
+        pass  # push is best-effort; the print above is the primary signal
 
 
 if __name__ == "__main__":

@@ -48,11 +48,9 @@ def test_bulk_match_forward(monkeypatch):
     monkeypatch.setenv("BETFAIR_APP_KEY", "key")
     monkeypatch.setenv("BETFAIR_USERNAME", "user")
     monkeypatch.setenv("BETFAIR_PASSWORD", "pass")
-    # Inject fake bulk directly
-    import time
-    bf._BULK = {"mkt1": {"player_a": "Carlos Alcaraz", "player_b": "Jannik Sinner",
-                          "h2h_a": 1.90, "h2h_b": 2.05}}
-    bf._BULK_TS = time.time()
+    # Inject fake bulk directly via thread-safe cache
+    bf._bulk.set({"mkt1": {"player_a": "Carlos Alcaraz", "player_b": "Jannik Sinner",
+                          "h2h_a": 1.90, "h2h_b": 2.05}})
 
     q = bf.fetch({"player_a": "Carlos Alcaraz", "player_b": "Jannik Sinner"})
     assert q is not None
@@ -67,10 +65,8 @@ def test_bulk_match_reverse(monkeypatch):
     monkeypatch.setenv("BETFAIR_APP_KEY", "key")
     monkeypatch.setenv("BETFAIR_USERNAME", "user")
     monkeypatch.setenv("BETFAIR_PASSWORD", "pass")
-    import time
-    bf._BULK = {"mkt1": {"player_a": "Jannik Sinner", "player_b": "Carlos Alcaraz",
-                          "h2h_a": 2.05, "h2h_b": 1.90}}
-    bf._BULK_TS = time.time()
+    bf._bulk.set({"mkt1": {"player_a": "Jannik Sinner", "player_b": "Carlos Alcaraz",
+                          "h2h_a": 2.05, "h2h_b": 1.90}})
 
     q = bf.fetch({"player_a": "Carlos Alcaraz", "player_b": "Jannik Sinner"})
     assert q is not None
@@ -82,10 +78,8 @@ def test_bulk_no_match_returns_none(monkeypatch):
     monkeypatch.setenv("BETFAIR_APP_KEY", "key")
     monkeypatch.setenv("BETFAIR_USERNAME", "user")
     monkeypatch.setenv("BETFAIR_PASSWORD", "pass")
-    import time
-    bf._BULK = {"mkt1": {"player_a": "Nadal", "player_b": "Federer",
-                          "h2h_a": 1.80, "h2h_b": 2.10}}
-    bf._BULK_TS = time.time()
+    bf._bulk.set({"mkt1": {"player_a": "Nadal", "player_b": "Federer",
+                          "h2h_a": 1.80, "h2h_b": 2.10}})
 
     q = bf.fetch({"player_a": "Alcaraz", "player_b": "Sinner"})
     assert q is None
@@ -96,10 +90,8 @@ def test_bulk_insane_odds_rejected(monkeypatch):
     monkeypatch.setenv("BETFAIR_APP_KEY", "key")
     monkeypatch.setenv("BETFAIR_USERNAME", "user")
     monkeypatch.setenv("BETFAIR_PASSWORD", "pass")
-    import time
-    bf._BULK = {"mkt1": {"player_a": "Alcaraz", "player_b": "Sinner",
-                          "h2h_a": 1.40, "h2h_b": 1.40}}   # implied sum 1.43 > 1.15
-    bf._BULK_TS = time.time()
+    bf._bulk.set({"mkt1": {"player_a": "Alcaraz", "player_b": "Sinner",
+                          "h2h_a": 1.40, "h2h_b": 1.40}})  # implied sum 1.43 > 1.15
 
     q = bf.fetch({"player_a": "Alcaraz", "player_b": "Sinner"})
     assert q is None

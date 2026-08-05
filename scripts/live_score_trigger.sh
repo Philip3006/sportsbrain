@@ -23,7 +23,7 @@ timestamp() { date -u '+%Y-%m-%d %H:%M:%S UTC'; }
     if ! "$GIT" diff --staged --quiet; then
         "$GIT" -c user.name="SportsBrain Bot" -c user.email="bot@sportsbrain" \
             commit -m "auto: tennis live $(date -u +%H:%M)" --quiet
-        "$GIT" push --quiet || echo "WARNUNG: git push fehlgeschlagen"
+        git_safe_push "$LOG"
     fi
 } >> "$LOG" 2>&1
 EXIT_CODE=$?

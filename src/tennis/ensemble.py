@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 from pathlib import Path
 
 import pandas as pd
@@ -34,6 +35,7 @@ _BAYESIAN_SKIP_CATEGORIES = frozenset({"wta500"})
 _MODEL_DIR = Path(__file__).parent.parent.parent / "models" / "tennis_lgbm"
 _CAL_DIR = Path(__file__).parent.parent.parent / "models" / "tennis_calibrators"
 _CACHED: dict[str, object] = {}
+_CACHED_LOCK = threading.Lock()
 
 # Mindestanzahl settled Signale bevor Meta-Calibrator angewendet wird
 _META_CAL_MIN_SAMPLES = 50
@@ -43,70 +45,83 @@ def _load_surface_calibrator(surface: str):
     """Lädt Surface-spezifischen Isotonic-Calibrator (J8-I10).
     Erstellt von scripts/tennis_recalibrate.py — hard/clay/grass separat."""
     cache_key = f"surf_cal_{surface}"
-    if cache_key in _CACHED:
-        return _CACHED[cache_key]
+    with _CACHED_LOCK:
+        if cache_key in _CACHED:
+            return _CACHED[cache_key]
     path = _CAL_DIR / f"{surface}.pkl"
     if not path.exists():
-        _CACHED[cache_key] = None
+        with _CACHED_LOCK:
+            _CACHED[cache_key] = None
         return None
     try:
         import pickle
         cal = pickle.loads(path.read_bytes())
-        _CACHED[cache_key] = cal
+        with _CACHED_LOCK:
+            _CACHED[cache_key] = cal
         _log.info("tennis-ensemble: surface_calibrator[%s] geladen", surface)
     except Exception as e:
         _log.warning("tennis-ensemble: surface_calibrator[%s] load failed (%s)", surface, e)
-        _CACHED[cache_key] = None
-    return _CACHED[cache_key]
+        with _CACHED_LOCK:
+            _CACHED[cache_key] = None
+    with _CACHED_LOCK:
+        return _CACHED[cache_key]
 
 
 def _load_meta_calibrator():
     """Lädt Meta-Calibrator aus settled Signalen (tennis_signal_recalibrate.py).
     Nur aktiv wenn >= _META_CAL_MIN_SAMPLES Samples im Fit-Zeitpunkt vorhanden waren."""
-    if "meta_cal" in _CACHED:
-        return _CACHED["meta_cal"]
+    with _CACHED_LOCK:
+        if "meta_cal" in _CACHED:
+            return _CACHED["meta_cal"]
     path = _MODEL_DIR / "meta_calibrator.pkl"
     if not path.exists():
-        _CACHED["meta_cal"] = None
+        with _CACHED_LOCK:
+            _CACHED["meta_cal"] = None
         return None
     try:
         import pickle
         data = pickle.loads(path.read_bytes())
         if data.get("n_samples", 0) < _META_CAL_MIN_SAMPLES:
-            _CACHED["meta_cal"] = None
+            with _CACHED_LOCK:
+                _CACHED["meta_cal"] = None
             return None
-        _CACHED["meta_cal"] = data["calibrator"]
+        with _CACHED_LOCK:
+            _CACHED["meta_cal"] = data["calibrator"]
         _log.info("tennis-ensemble: meta_calibrator geladen (%d samples)", data["n_samples"])
     except Exception as e:
         _log.warning("tennis-ensemble: meta_calibrator load failed (%s)", e)
-        _CACHED["meta_cal"] = None
-    return _CACHED["meta_cal"]
+        with _CACHED_LOCK:
+            _CACHED["meta_cal"] = None
+    with _CACHED_LOCK:
+        return _CACHED["meta_cal"]
 
 
 def _load_model():
-    if "model" in _CACHED:
-        return _CACHED["model"], _CACHED.get("gate_passed", False)
+    with _CACHED_LOCK:
+        if "model" in _CACHED:
+            return _CACHED["model"], _CACHED.get("gate_passed", False)
     model_path = _MODEL_DIR / "model.pkl"
     meta_path = _MODEL_DIR / "metadata.json"
     if not model_path.exists() or not meta_path.exists():
-        # J8-B9: file-missing vs. load-fail distinguishable im Log-Level
         _log.info("tennis-ensemble: model files missing (%s / %s) → Fallback Elo",
                   model_path.name, meta_path.name)
-        _CACHED["model"] = None
-        _CACHED["gate_passed"] = False
+        with _CACHED_LOCK:
+            _CACHED["model"] = None
+            _CACHED["gate_passed"] = False
         return None, False
     try:
         model = tlgbm.load(_MODEL_DIR)
         meta = json.loads(meta_path.read_text())
         gate_passed = bool(meta.get("gate_passed", False))
-        _CACHED["model"] = model
-        _CACHED["gate_passed"] = gate_passed
+        with _CACHED_LOCK:
+            _CACHED["model"] = model
+            _CACHED["gate_passed"] = gate_passed
         return model, gate_passed
     except Exception as e:
-        # J8-B9: WARN statt print() — Health-Monitor kann darauf hooken
         _log.warning("tennis-ensemble: model load FAILED (%s) → Fallback Elo", e)
-        _CACHED["model"] = None
-        _CACHED["gate_passed"] = False
+        with _CACHED_LOCK:
+            _CACHED["model"] = None
+            _CACHED["gate_passed"] = False
         return None, False
 
 
