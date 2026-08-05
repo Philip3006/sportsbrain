@@ -480,13 +480,19 @@ def fit(
     attack[reference_team] = 0.0
     defence = dict(zip(teams, params_vec[n : 2 * n]))
 
-    return DixonColesParams(
+    fitted = DixonColesParams(
         attack=attack,
         defence=defence,
         home_adv=float(params_vec[2 * n]),
         rho=float(params_vec[2 * n + 1]),
         fit_date=today,
     )
+    hits = _check_bounds_hit(fitted)
+    for group, items in hits.items():
+        for name, val, side in items:
+            _log.warning("DC fit: %s '%s'=%.4f hit %s bound — consider widening _FIT_BOUNDS or reviewing data",
+                         group, name, val, side)
+    return fitted
 
 
 def predict_scoreline(
@@ -584,8 +590,8 @@ def _load_rho_factors() -> dict[str, float]:
             for stage, meta in data.items():
                 if isinstance(meta, dict) and "shrunk" in meta:
                     defaults[stage] = float(meta["shrunk"])
-        except Exception:
-            pass
+        except Exception as exc:
+            _log.warning("Failed to parse rho_stages.json, using hardcoded defaults: %s", exc)
     _RHO_FACTORS_CACHE = defaults
     return defaults
 

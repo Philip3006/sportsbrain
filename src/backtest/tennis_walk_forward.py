@@ -16,6 +16,7 @@ Output-Report: results/audits/tennis_walk_forward_<date>.md
 """
 from __future__ import annotations
 
+import logging
 import random
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -24,6 +25,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from dateutil.relativedelta import relativedelta
+
+_log = logging.getLogger("sportsbrain.backtest.tennis_walk_forward")
 
 from src.models import tennis_lgbm as tlgbm
 from src.models.tennis_elo import TennisEloRatings
@@ -133,7 +136,14 @@ def _build_full_dataset(df: pd.DataFrame) -> pd.DataFrame:
         state.update(winner, loser, surface, date=date)
         elo.update(winner, loser, surface, category)
 
-    return pd.DataFrame(rows)
+    result = pd.DataFrame(rows)
+    _log.info(
+        "build_full_dataset: %d rows, dates %s → %s (Elo updated chronologically, no val leakage)",
+        len(result),
+        result["date"].min().date() if not result.empty else "?",
+        result["date"].max().date() if not result.empty else "?",
+    )
+    return result
 
 
 def run_walk_forward(

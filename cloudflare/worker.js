@@ -174,7 +174,9 @@ function _validSub(s) {
 }
 
 // ── F5-C/D: Worker Cron Helpers ───────────────────────────────
-const _GH_REPO = 'Philip3006/sportsbrain';
+// GH_REPO can be overridden via wrangler secret/var; falls back to hardcoded default.
+const _GH_REPO_DEFAULT = 'Philip3006/sportsbrain';
+// Resolved per-request in handlers that need it: env.GH_REPO || _GH_REPO_DEFAULT
 const _WORKFLOW_MAP = {
   daily_scan:    'daily_scan.yml',
   auto_retrain:  'auto_retrain.yml',
@@ -187,9 +189,9 @@ const _WORKFLOW_MAP = {
 const _HEALER_SKIP = new Set(['consume_pending_bets', 'aggregate_health']);
 const _HEALER_COOLDOWN_MS = 10 * 60 * 1000;
 
-async function _ghWorkflowDispatch(token, workflow) {
+async function _ghWorkflowDispatch(token, workflow, repo = _GH_REPO_DEFAULT) {
   return fetch(
-    `https://api.github.com/repos/${_GH_REPO}/actions/workflows/${workflow}/dispatches`,
+    `https://api.github.com/repos/${repo}/actions/workflows/${workflow}/dispatches`,
     {
       method: 'POST',
       headers: {
@@ -203,8 +205,8 @@ async function _ghWorkflowDispatch(token, workflow) {
   );
 }
 
-async function _ghRepositoryDispatch(token, eventType) {
-  return fetch(`https://api.github.com/repos/${_GH_REPO}/dispatches`, {
+async function _ghRepositoryDispatch(token, eventType, repo = _GH_REPO_DEFAULT) {
+  return fetch(`https://api.github.com/repos/${repo}/dispatches`, {
     method: 'POST',
     headers: {
       Authorization: `token ${token}`,
@@ -227,7 +229,7 @@ async function _cronConsumeCheck(env) {
     if ((await readCancelRequests(env, u)).length > 0) { hasPending = true; break; }
   }
   if (!hasPending) return;
-  await _ghRepositoryDispatch(token, 'consume_pending_bets');
+  await _ghRepositoryDispatch(token, 'consume_pending_bets', env.GH_REPO || _GH_REPO_DEFAULT);
 }
 
 // F5-D: Read health from signals KV, trigger failed workflows with 10-min cooldown.
@@ -251,7 +253,7 @@ async function _cronHealerCheck(env) {
     const wf = _WORKFLOW_MAP[job.job];
     if (!wf) continue;
     if (now - (cooldowns[job.job] || 0) < _HEALER_COOLDOWN_MS) continue;
-    await _ghWorkflowDispatch(token, wf);
+    await _ghWorkflowDispatch(token, wf, env.GH_REPO || _GH_REPO_DEFAULT);
     cooldowns[job.job] = now;
     updated = true;
   }
