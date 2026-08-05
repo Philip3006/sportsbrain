@@ -31,6 +31,13 @@
       "odds_a": 1.19,
       "odds_b": 5.9,
       "source": "betfair_ex_eu"
+    },
+    {
+      "label": "auto_20260805_16",
+      "ts_utc": "2026-08-05T16:54:10.978197+00:00",
+      "odds_a": 1.2,
+      "odds_b": 5.7,
+      "source": "betfair_ex_eu"
     }
   ]
 }
