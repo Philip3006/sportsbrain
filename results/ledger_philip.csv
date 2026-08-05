@@ -70,7 +70,7 @@ e3c04fc6b5201083a1ecd130613158e9,2026-06-25,Czechia,Mexico,scorer_Adam Hložek,5
 c6f43d1e5d6a1dee6395bfefea463089,2026-08-03,Rebecca Sramkova,Anna Blinkova,home,2.1600,0.0,5.00,2026-08-03,won,5.80,0.0,,,value,0.495000,
 97434fd577cfe0cee7dcaaeb4e45d5b1,2026-08-03,Aleksandar Vukic,Daniel Altmaier,o/u_games_22.5_over,1.7400,0.0,5.00,2026-08-03,won,3.70,0.0,,,value,0.616000,
 c9b878775a009240d9d0f8e1ef9c6cd7,2026-08-03,Nikola Bartunkova,Bianca Andreescu,o/u_games_21.5_over,1.7400,0.0,5.00,2026-08-03,won,3.70,0.0,,,value,0.643000,
-01e8e79a2f8378a96f0430e7faaa71e1,2026-08-04,Martin Damm Jr.,Stefanos Tsitsipas,home,2.6000,0.0,5.00,2026-08-04,lost,-5.00,2.60,,,value,0.500000,
+01e8e79a2f8378a96f0430e7faaa71e1,2026-08-04,Martin Damm Jr.,Stefanos Tsitsipas,home,2.6000,0.0,5.00,2026-08-04,lost,-5.00,2.60,0.0000,,value,0.500000,
 37183ba42651b360526aed3f28a84c2d,2026-08-04,Hubert Hurkacz,Marcos Giron,ah+1.5_b,2.1000,0.0,5.00,2026-08-04,lost,-5.00,0.0,,,value,0.652000,
 081b7d51f4623629f9ac3c96d7e6750d,2026-08-04,Sebastian Baez,Mattia Bellucci,ah+1.5_b,1.7000,0.0,5.00,2026-08-04,lost,-5.00,0.0,,,value,0.673000,
 370b0c56b4a4213f481fe942365f158c,2026-08-04,Adam Walton,Jenson Brooksby,o/u_games_22.5_over,1.8000,0.0,5.00,2026-08-04,lost,-5.00,0.0,,,value,0.601000,
@@ -78,3 +78,4 @@ c9b878775a009240d9d0f8e1ef9c6cd7,2026-08-03,Nikola Bartunkova,Bianca Andreescu,o
 7096a3a60bb0d766040bce752d5fcd95,2026-08-04,Shintaro Mochizuki,Fabian Marozsan,home,2.5400,0.0,7.98,2026-08-04,lost,-7.98,,,,value,0.444000,
 98a4cf15f36ab9da973dac18911e9f7e,2026-08-04,James Duckworth,Alex de Minaur,o/u_games_20.0_over,1.8300,0.0,5.00,2026-08-05,won,4.15,0.0,,,value,0.730000,
 455f668f1ae429f7bce5655cfd8ce7d3,2026-08-04,Frances Tiafoe,Marin Cilic,o/u_games_23.5_over,1.7800,0.0,5.00,2026-08-05,won,3.9,0.0,,,value,0.530000,
+f10e93b46d78f7ef3ef268e3d4f89a3d,2026-08-05,Zizou Bergs,Sebastian Baez,away,2.3000,0.0,5.00,2026-08-05,open,0.0,0.0,,,value,0.550000,
