@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-05T12:18:25.356885+00:00",
-  "n_signals_total": 891,
+  "generated_at": "2026-08-05T16:12:44.146522+00:00",
+  "n_signals_total": 899,
   "n_with_outcome": 295,
   "by_market": {
     "ah+0.5_away": {
@@ -165,11 +165,11 @@
       "ev_mean": 15.62
     },
     "home": {
-      "n": 55,
-      "n_placed": 34,
+      "n": 57,
+      "n_placed": 36,
       "n_outcome": 21,
       "accuracy": 0.4762,
-      "ev_mean": 17.24
+      "ev_mean": 16.92
     },
     "o/u1.5_over": {
       "n": 4,
@@ -298,11 +298,11 @@
       "ev_mean": 28.78
     },
     "o/u_games_18.5_under": {
-      "n": 5,
-      "n_placed": 5,
+      "n": 6,
+      "n_placed": 6,
       "n_outcome": 0,
       "accuracy": null,
-      "ev_mean": 18.74
+      "ev_mean": 18.37
     },
     "o/u_games_19.0_over": {
       "n": 1,
@@ -312,11 +312,11 @@
       "ev_mean": 35.11
     },
     "o/u_games_19.0_under": {
-      "n": 1,
-      "n_placed": 1,
+      "n": 3,
+      "n_placed": 3,
       "n_outcome": 0,
       "accuracy": null,
-      "ev_mean": 24.13
+      "ev_mean": 19.61
     },
     "o/u_games_19.5_over": {
       "n": 17,
@@ -326,11 +326,11 @@
       "ev_mean": 32.09
     },
     "o/u_games_19.5_under": {
-      "n": 4,
-      "n_placed": 4,
+      "n": 5,
+      "n_placed": 5,
       "n_outcome": 0,
       "accuracy": null,
-      "ev_mean": 10.58
+      "ev_mean": 9.5
     },
     "o/u_games_20.0_over": {
       "n": 8,
@@ -368,11 +368,11 @@
       "ev_mean": 22.97
     },
     "o/u_games_21.0_under": {
-      "n": 1,
-      "n_placed": 1,
+      "n": 2,
+      "n_placed": 2,
       "n_outcome": 0,
       "accuracy": null,
-      "ev_mean": 19.99
+      "ev_mean": 12.04
     },
     "o/u_games_21.5_over": {
       "n": 67,
@@ -438,11 +438,11 @@
       "ev_mean": 9.09
     },
     "o/u_games_24.5_under": {
-      "n": 1,
-      "n_placed": 1,
+      "n": 2,
+      "n_placed": 2,
       "n_outcome": 0,
       "accuracy": null,
-      "ev_mean": 10.19
+      "ev_mean": 9.86
     },
     "o/u_games_25.5_under": {
       "n": 1,
@@ -601,16 +601,16 @@
   },
   "by_confidence": {
     "HIGH": {
-      "n": 163,
-      "accuracy": 0.2331
+      "n": 164,
+      "accuracy": 0.2317
     },
     "LOW": {
       "n": 344,
       "accuracy": 0.0
     },
     "MEDIUM": {
-      "n": 384,
-      "accuracy": 0.2995
+      "n": 391,
+      "accuracy": 0.2941
     }
   }
 }
