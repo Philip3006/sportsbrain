@@ -1,0 +1,15 @@
+{
+  "match_id": "0ece4b91a52112f3fe24cd73b018a6cd",
+  "player_a": "Alina Korneeva",
+  "player_b": "Iva Jović",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260805_22",
+      "ts_utc": "2026-08-05T22:28:57.173184+00:00",
+      "odds_a": 2.99,
+      "odds_b": 1.37,
+      "source": "betsson"
+    }
+  ]
+}

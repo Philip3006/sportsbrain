@@ -10,6 +10,13 @@
       "odds_a": 1.38,
       "odds_b": 3.13,
       "source": "onexbet"
+    },
+    {
+      "label": "auto_20260805_22",
+      "ts_utc": "2026-08-05T22:28:57.173017+00:00",
+      "odds_a": 1.42,
+      "odds_b": 2.98,
+      "source": "onexbet"
     }
   ]
 }

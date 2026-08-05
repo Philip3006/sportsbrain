@@ -73,6 +73,13 @@
       "odds_a": 3.85,
       "odds_b": 1.25,
       "source": "unibet_fr"
+    },
+    {
+      "label": "auto_20260805_22",
+      "ts_utc": "2026-08-05T22:28:57.170355+00:00",
+      "odds_a": 3.75,
+      "odds_b": 1.24,
+      "source": "unibet_fr"
     }
   ]
 }
