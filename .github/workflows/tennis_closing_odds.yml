@@ -49,7 +49,8 @@ jobs:
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add results/ledger_*.csv results/health/tennis_closing_odds.json || true
+          git add results/ledger_*.csv || true
+          git add -f results/health/tennis_closing_odds.json || true
           git diff --staged --quiet || git commit -m "auto: tennis closing odds $(date +%Y-%m-%d\ %H:%M) UTC"
           for i in 1 2 3 4 5; do
             git fetch origin main

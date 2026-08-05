@@ -17,6 +17,7 @@ timestamp() { date -u '+%Y-%m-%d %H:%M:%S UTC'; }
 {
     echo "--- $(timestamp) ---"
     cd "$SPORTSBRAIN_DIR"
+    "$PYTHON" scripts/live_score_push.py 2>&1 | grep -v "^$" || true
     "$PYTHON" scripts/tennis_live_push.py
 
     # Live-Scores in PWA aktualisieren (kein Commit wenn keine Änderung)

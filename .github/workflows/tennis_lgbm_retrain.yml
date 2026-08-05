@@ -59,6 +59,7 @@ jobs:
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
           git add models/tennis_lgbm/ results/tennis_cal_stats.json || true
+          git add -f results/health/tennis_retrain.json || true
           git diff --staged --quiet || git commit -m "auto: tennis lgbm retrain $(date +%Y-%m-%d)"
           for i in 1 2 3 4 5; do
             git fetch origin main
