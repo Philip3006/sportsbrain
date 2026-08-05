@@ -913,13 +913,11 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Dateien**: `src/tennis/live/inplay_model.py` (NEU), `src/tennis/live/scanner.py` (NEU), `scripts/tennis_inplay_scan.py` (NEU)
 - **Abhängigkeiten**: J8-I6
 
-### 🟡 J8-I9 + NEU Kontextfeatures: Rest-Days / Travel / Altitude — P2
-- **Was**: Feature-Erweiterung: Days-since-last-match, Zeitzonen-Delta (Reise-Fatigue), Altitude (Bogotá/Kitzbühel), Best-of-Change (Slam→Masters, BO5→BO3).
-- **Warum**: Gut dokumentierter Alpha-Faktor in Tennis-Literatur; passt in bestehende Feature-Pipeline.
-- **Impact/Aufwand/Risiko**: 🟡 · 🟡 (~6–8 h) · 🟢
-- **Priorität**: **P2**
-- **Dateien**: `src/tennis/features.py`, `src/tennis/context.py` (NEU), `data/cache/tournament_venues.json` (NEU)
-- **Abhängigkeiten**: J8-B8 (saubere Feature-Semantik), J8-I7 (Retrain-Slot)
+### ✅ J8-I9 + NEU Kontextfeatures: Rest-Days / Travel / Altitude — P2 → implementiert
+- **Was**: Feature-Erweiterung: Days-since-last-match, Zeitzonen-Delta (Reise-Fatigue), Altitude (Bogotá/Kitzbühel).
+- **Status**: ✅ `src/tennis/context.py` mit VenueMeta, VENUE_META, altitude_factor(), tz_travel_penalty(), IOC_HOME_TZ. In `features.py:79-85,327-328,438-445` verdrahtet. Tests in `tests/tennis/test_context.py`. LGBM-Nutzung pending J2-N-Retrain (J8-B8).
+- **Dateien**: `src/tennis/features.py`, `src/tennis/context.py`, `tests/tennis/test_context.py`
+- **Abhängigkeiten**: J8-B8 (Retrain), J8-I7 ✅
 
 ### ✅ J8-I10 + NEU Ensemble-Auto-Recalibration (per-Surface Isotonic weekly) — P2 → erledigt 2026-08-04
 - **Was**: Wöchentlicher Isotonic-Recal-Job über letzte N settled Bets → per-Surface-Calibrator, ersetzt heutigen statischen. Elo+LGBM driften unterschiedlich pro Surface (Clay ROI −6.9pp).
@@ -1076,10 +1074,10 @@ Kontext: Umfassender Review über Tennis / Football / Betting-Layer / Infrastruk
 
 ## 📊 Statistik
 
-- **Insgesamt**: 120 konkrete Items (+4: N-Rev14/15 ✅, live_score fix ✅, N10 ✅, N11 ✅)
-- **P0**: 17 (sofort) — davon **17 ✅** (N12 ✅, N15 ✅, live_score_push-fix ✅ 2026-08-05)
+- **Insgesamt**: 121 konkrete Items (+1: LGBM-Symmetrization ✅)
+- **P0**: 17 (sofort) — davon **17 ✅** (N12 ✅, N15 ✅, live_score_push-fix ✅, LGBM-Symmetrization ✅)
 - **P1**: 46 — davon **46 ✅** — alle P1-Items erledigt
-- **P2**: 40 — davon **38 ✅**; **offen: J8-B8/I9 (Q4 deferred), N14 Challenger Coverage**
+- **P2**: 40 — davon **39 ✅**; **offen: J8-B8 (Serve-Feature-Semantik, Q4 deferred), N14 Challenger Coverage**
 - **P3**: 7 — J2-N + **J8-I8 Live-InPlay** + **N13 Spiel-Handicap-Modell** + N10 ✅ + N11 ✅
 - **Veto**: 10 (K5 aufgehoben 2026-06-26)
 
