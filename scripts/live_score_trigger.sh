@@ -9,6 +9,7 @@ SPORTSBRAIN_DIR="/Users/philiprassillier/sportsbrain"
 LOG="$SPORTSBRAIN_DIR/results/launchd_live_score_push.log"
 
 source "$SPORTSBRAIN_DIR/scripts/_health.sh"
+source "$SPORTSBRAIN_DIR/scripts/_git_safe_push.sh"
 health_start "live_score_push"
 
 timestamp() { date -u '+%Y-%m-%d %H:%M:%S UTC'; }
