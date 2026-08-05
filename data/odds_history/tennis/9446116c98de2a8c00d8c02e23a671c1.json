@@ -1,0 +1,15 @@
+{
+  "match_id": "9446116c98de2a8c00d8c02e23a671c1",
+  "player_a": "Alex de Minaur",
+  "player_b": "Cameron Norrie",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260805_19",
+      "ts_utc": "2026-08-05T19:56:34.070461+00:00",
+      "odds_a": 1.43,
+      "odds_b": 2.85,
+      "source": "betsson"
+    }
+  ]
+}

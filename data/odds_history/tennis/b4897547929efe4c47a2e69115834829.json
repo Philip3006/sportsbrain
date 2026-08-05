@@ -1,0 +1,15 @@
+{
+  "match_id": "b4897547929efe4c47a2e69115834829",
+  "player_a": "Jessica Pegula",
+  "player_b": "Kamilla Rakhimova",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260805_19",
+      "ts_utc": "2026-08-05T19:56:34.166428+00:00",
+      "odds_a": 1.11,
+      "odds_b": 7.1,
+      "source": "onexbet"
+    }
+  ]
+}

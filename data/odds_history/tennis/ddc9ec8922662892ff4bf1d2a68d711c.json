@@ -1,0 +1,15 @@
+{
+  "match_id": "ddc9ec8922662892ff4bf1d2a68d711c",
+  "player_a": "Ben Shelton",
+  "player_b": "Zizou Bergs",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260805_19",
+      "ts_utc": "2026-08-05T19:56:34.069958+00:00",
+      "odds_a": 1.35,
+      "odds_b": 3.21,
+      "source": "gtbets"
+    }
+  ]
+}
