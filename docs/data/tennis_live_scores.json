@@ -73,8 +73,8 @@
     "suspended_push_sent": false
   },
   "_meta": {
-    "heartbeat_at": "2026-08-05T21:10:20Z",
-    "reason": "1 live matches, 1 pushes"
+    "heartbeat_at": "2026-08-05T21:12:30Z",
+    "reason": "1 live matches, 0 pushes"
   },
   "alexdeminaur|jamesduckworth": {
     "home": "James Duckworth",
@@ -131,7 +131,7 @@
     "away": "Naomi Osaka",
     "sets": [
       [
-        0,
+        1,
         0
       ]
     ],
@@ -141,7 +141,7 @@
     ],
     "status": "in_progress",
     "resume_time": null,
-    "updated": "2026-08-05T21:10:20Z",
+    "updated": "2026-08-05T21:12:30Z",
     "match_start_push_sent": true,
     "suspended_push_sent": false
   }
