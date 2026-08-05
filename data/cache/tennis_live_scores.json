@@ -73,8 +73,8 @@
     "suspended_push_sent": false
   },
   "_meta": {
-    "heartbeat_at": "2026-08-05T00:42:33Z",
-    "reason": "2 live matches, 0 pushes"
+    "heartbeat_at": "2026-08-05T02:11:10Z",
+    "reason": "0 live matches, 2 pushes"
   },
   "alexdeminaur|jamesduckworth": {
     "home": "James Duckworth",
@@ -95,9 +95,10 @@
     ],
     "status": "in_progress",
     "resume_time": null,
-    "updated": "2026-08-05T00:42:33Z",
+    "updated": "2026-08-05T02:11:10Z",
     "match_start_push_sent": true,
-    "suspended_push_sent": false
+    "suspended_push_sent": false,
+    "settle_push_sent": true
   },
   "francestiafoe|marincilic": {
     "home": "Frances Tiafoe",
@@ -118,8 +119,9 @@
     ],
     "status": "in_progress",
     "resume_time": null,
-    "updated": "2026-08-05T00:42:33Z",
+    "updated": "2026-08-05T02:11:10Z",
     "match_start_push_sent": true,
-    "suspended_push_sent": false
+    "suspended_push_sent": false,
+    "settle_push_sent": true
   }
 }
