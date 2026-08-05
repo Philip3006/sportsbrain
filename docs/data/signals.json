@@ -1,7 +1,7 @@
 {
-  "updated": "2026-08-05T14:05:18Z",
+  "updated": "2026-08-05T15:13:58Z",
   "build_info": {
-    "sha": "24ede04",
+    "sha": "1d04379",
     "date": "2026-08-05"
   },
   "meta": {
@@ -6409,7 +6409,7 @@
       "stake": 5.0,
       "match_date": "2026-08-05",
       "model_edge_pct": null,
-      "is_live": false
+      "is_live": true
     },
     {
       "match": "Casper Ruud vs Juan Manuel Cerundolo",
@@ -8839,7 +8839,7 @@
     }
   },
   "tennis_stats": {
-    "updated": "2026-08-05T14:05:18Z",
+    "updated": "2026-08-05T15:13:58Z",
     "active_tournaments": [
       {
         "slug": "canadian_open_atp",
