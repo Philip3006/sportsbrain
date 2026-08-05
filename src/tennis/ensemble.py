@@ -249,8 +249,26 @@ def predict_winner_ensemble(
         bio_b=bio_b,
         tournament_slug=tournament_slug,
     )
+    # Symmetric prediction: average P(A wins | A first) and 1 − P(B wins | B first).
+    # Eliminates ~22pp positional bias from training-data ordering correlation.
+    feats_ba = build_match_features(
+        player_a=player_b, player_b=player_a,  # swapped
+        surface=surface, best_of=best_of,
+        category=category, round_str=round_str,
+        rank_a=rb, rank_b=ra,
+        elo_a=elo_b_over, elo_b=elo_a_over,
+        elo_surface_a=elo_b_surf, elo_surface_b=elo_a_surf,
+        state=RollingState(),
+        date=None,
+        serve_stats_a=stats_b, serve_stats_b=stats_a,
+        bio_a=bio_b, bio_b=bio_a,
+        tournament_slug=tournament_slug,
+    )
     X = pd.DataFrame([feats])
-    p_lgbm_a = float(model.predict_p_a(X)[0])
+    X_ba = pd.DataFrame([feats_ba])
+    p_ab = float(model.predict_p_a(X)[0])
+    p_ba = float(model.predict_p_a(X_ba)[0])  # P(B wins when listed first)
+    p_lgbm_a = (p_ab + (1.0 - p_ba)) / 2.0
 
     _w = _LGBM_WEIGHT.get(surface.lower(), _LGBM_WEIGHT["default"])
     p_a = _w * p_lgbm_a + (1 - _w) * elo_probs["p_a"]

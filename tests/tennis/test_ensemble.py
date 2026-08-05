@@ -65,9 +65,7 @@ def test_ensemble_uses_lgbm_when_available():
 
 
 def test_ensemble_swap_flips_sides():
-    """Seitentausch muss Favorit beibehalten. LGBM hat strukturelle Positions-Asymmetrie
-    (Feature-Ordering-Bias aus Trainings-Daten) — nach Retrain auf 10pp reduzieren.
-    Aktuelle gemessene Asymmetrie: ~22pp. Toleranz 30pp fängt Regressionen ab."""
+    """Seitentausch muss Favorit beibehalten. Symmetric prediction eliminates positional bias."""
     ratings = TennisEloRatings()
     ratings.overall["Strong"] = 1750
     ratings.overall["Weak"] = 1500
@@ -77,6 +75,5 @@ def test_ensemble_swap_flips_sides():
     out_ba = ens.predict_winner_ensemble("Weak", "Strong", ratings, "hard")
     assert out_ab["p_a"] > 0.55  # Strong is favorite
     assert out_ba["p_b"] > 0.55  # Strong is favorite from other side
-    # Known LGBM positional bias ~22pp — tolerance catches catastrophic regressions only.
-    # TODO: tighten to 0.10 after next LGBM retrain with symmetrized features.
-    assert abs(out_ab["p_a"] - out_ba["p_b"]) < 0.30
+    # Symmetric prediction (average of both orderings) reduces positional bias to ~1pp.
+    assert abs(out_ab["p_a"] - out_ba["p_b"]) < 0.05
