@@ -24,6 +24,13 @@
       "odds_a": 1.37,
       "odds_b": 3.15,
       "source": "nordicbet"
+    },
+    {
+      "label": "auto_20260805_11",
+      "ts_utc": "2026-08-05T11:31:11.480735+00:00",
+      "odds_a": 1.37,
+      "odds_b": 3.15,
+      "source": "nordicbet"
     }
   ]
 }

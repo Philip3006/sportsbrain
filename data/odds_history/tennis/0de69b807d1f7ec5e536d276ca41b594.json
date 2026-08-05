@@ -10,6 +10,13 @@
       "odds_a": 1.67,
       "odds_b": 2.2,
       "source": "williamhill"
+    },
+    {
+      "label": "auto_20260805_11",
+      "ts_utc": "2026-08-05T11:31:11.482825+00:00",
+      "odds_a": 1.73,
+      "odds_b": 2.1,
+      "source": "williamhill"
     }
   ]
 }
