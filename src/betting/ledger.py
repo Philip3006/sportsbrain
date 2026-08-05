@@ -592,8 +592,20 @@ def _settle_from_results_locked(
 
 
 def count_open_bets(path: Path | None = None, *, user: str = DEFAULT_USER) -> int:
-    """Returns number of bets with status='open'. 0 if ledger doesn't exist."""
+    """Returns number of bets with status='open'. Prefers SQLite (no CSV lock needed)."""
     path = _resolve_ledger_path(path, user)
+    db_path = path.with_suffix(".db")
+    if db_path.exists():
+        try:
+            from src.betting.db import open_db
+            conn = open_db(db_path)
+            try:
+                row = conn.execute("SELECT COUNT(*) FROM bets WHERE status='open'").fetchone()
+                return int(row[0]) if row else 0
+            finally:
+                conn.close()
+        except Exception as exc:
+            _log.debug("SQLite open_bets count failed, falling back to CSV: %s", exc)
     df = _load(path)
     if df.empty:
         return 0
