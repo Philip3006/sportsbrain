@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-05T16:39:16Z",
+  "generated_at": "2026-08-05T19:28:07Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -38,8 +38,8 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-05T16:39:16Z",
-      "duration_s": 1.0,
+      "last_run_at": "2026-08-05T19:28:07Z",
+      "duration_s": 402.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -49,10 +49,10 @@
     {
       "job": "live_score_push",
       "status": "stale",
-      "last_run_at": "2026-08-05T16:01:51Z",
-      "duration_s": 4.0,
+      "last_run_at": "2026-08-05T19:16:07Z",
+      "duration_s": 31.0,
       "exit_code": 0,
-      "error": "last run was at 2026-08-05T16:01:51Z — overdue (>420s)",
+      "error": "last run was at 2026-08-05T19:16:07Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
@@ -60,10 +60,10 @@
     {
       "job": "prematch_scan",
       "status": "stale",
-      "last_run_at": "2026-08-05T15:05:41Z",
-      "duration_s": 0.0,
-      "exit_code": 0,
-      "error": "last run was at 2026-08-05T15:05:41Z — overdue (>2700s)",
+      "last_run_at": "2026-08-05T18:26:19Z",
+      "duration_s": 6.0,
+      "exit_code": 1,
+      "error": "Traceback (most recent call last):     raise RuntimeError( RuntimeError: /Users/philiprassillier/sportsbrain/docs/data/signals_philip.json enthält Git-Konflikt-Marker — Schreiben abgebrochen, um stilles Daten-Wipe zu verhindern. Konflikt manuell auflösen. ",
       "fallback_used": null,
       "next_expected_in_s": 1800,
       "cadence": "alle 30 Min (im Fenster)"
@@ -71,8 +71,8 @@
     {
       "job": "settle",
       "status": "ok",
-      "last_run_at": "2026-08-05T16:39:07Z",
-      "duration_s": 3.0,
+      "last_run_at": "2026-08-05T18:41:36Z",
+      "duration_s": 2.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -82,10 +82,10 @@
     {
       "job": "aggregate_health",
       "status": "stale",
-      "last_run_at": "2026-08-05T16:00:53Z",
-      "duration_s": 0.0,
+      "last_run_at": "2026-08-05T19:09:11Z",
+      "duration_s": 1.0,
       "exit_code": 0,
-      "error": "last run was at 2026-08-05T16:00:53Z — overdue (>420s)",
+      "error": "last run was at 2026-08-05T19:09:11Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min (huckepack)"
@@ -93,7 +93,7 @@
     {
       "job": "tennis_scan",
       "status": "ok",
-      "last_run_at": "2026-08-05T14:07:24Z",
+      "last_run_at": "2026-08-05T16:43:36Z",
       "duration_s": null,
       "exit_code": 1,
       "error": null,
@@ -103,11 +103,11 @@
     },
     {
       "job": "tennis_settle",
-      "status": "stale",
-      "last_run_at": "2026-07-30T20:20:11Z",
+      "status": "ok",
+      "last_run_at": "2026-08-05T17:56:20Z",
       "duration_s": null,
-      "exit_code": 0,
-      "error": "last run was at 2026-07-30T20:20:11Z — overdue (>10800s)",
+      "exit_code": 1,
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 7200,
       "cadence": "alle 2h 06-22 UTC"
@@ -115,10 +115,10 @@
     {
       "job": "tennis_closing_odds",
       "status": "stale",
-      "last_run_at": "2026-08-05T14:56:13Z",
+      "last_run_at": "2026-08-05T18:24:03Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": "last run was at 2026-08-05T14:56:13Z — overdue (>2700s)",
+      "error": "last run was at 2026-08-05T18:24:03Z — overdue (>2700s)",
       "fallback_used": null,
       "next_expected_in_s": 1800,
       "cadence": "alle 30 Min"
@@ -137,7 +137,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-05T15:56:01Z",
+      "last_run_at": "2026-08-05T19:16:40Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -148,7 +148,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-05T16:01:45Z",
+      "last_run_at": "2026-08-05T19:16:01Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,

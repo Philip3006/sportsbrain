@@ -73,8 +73,8 @@
     "suspended_push_sent": false
   },
   "_meta": {
-    "heartbeat_at": "2026-08-05T20:36:36Z",
-    "reason": "no open tennis bets"
+    "heartbeat_at": "2026-08-05T21:01:11Z",
+    "reason": "0 live matches, 1 pushes"
   },
   "alexdeminaur|jamesduckworth": {
     "home": "James Duckworth",
@@ -125,5 +125,9 @@
     "suspended_push_sent": false,
     "settle_push_sent": true,
     "timeout_push_sent": true
+  },
+  "naomiosaka|pannaudvardy": {
+    "timeout_push_sent": true,
+    "updated": "2026-08-05T21:01:11Z"
   }
 }
