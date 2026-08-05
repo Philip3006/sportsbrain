@@ -59,6 +59,13 @@
       "odds_a": 1.08,
       "odds_b": 9.0,
       "source": "betclic_fr"
+    },
+    {
+      "label": "auto_20260805_16",
+      "ts_utc": "2026-08-05T16:54:11.055235+00:00",
+      "odds_a": 1.08,
+      "odds_b": 9.0,
+      "source": "betclic_fr"
     }
   ]
 }
