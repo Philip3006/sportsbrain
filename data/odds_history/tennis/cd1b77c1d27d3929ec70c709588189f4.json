@@ -1,0 +1,15 @@
+{
+  "match_id": "cd1b77c1d27d3929ec70c709588189f4",
+  "player_a": "Anna Kalinskaya",
+  "player_b": "Diana Shnaider",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260805_09",
+      "ts_utc": "2026-08-05T09:07:33.157889+00:00",
+      "odds_a": 2.12,
+      "odds_b": 1.11,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

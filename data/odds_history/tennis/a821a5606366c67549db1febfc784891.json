@@ -1,0 +1,15 @@
+{
+  "match_id": "a821a5606366c67549db1febfc784891",
+  "player_a": "Fabian Marozsan",
+  "player_b": "Matteo Arnaldi",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260805_09",
+      "ts_utc": "2026-08-05T09:07:33.046892+00:00",
+      "odds_a": 1.77,
+      "odds_b": 2.22,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

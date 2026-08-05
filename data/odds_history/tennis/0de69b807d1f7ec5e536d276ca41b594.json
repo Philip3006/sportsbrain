@@ -1,0 +1,15 @@
+{
+  "match_id": "0de69b807d1f7ec5e536d276ca41b594",
+  "player_a": "Karen Khachanov",
+  "player_b": "Terence Atmane",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260805_09",
+      "ts_utc": "2026-08-05T09:07:33.047039+00:00",
+      "odds_a": 1.67,
+      "odds_b": 2.2,
+      "source": "williamhill"
+    }
+  ]
+}

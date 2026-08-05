@@ -1,0 +1,15 @@
+{
+  "match_id": "b50e5e34e830727fa4c146721d6f5c0b",
+  "player_a": "Juncheng Shang",
+  "player_b": "Luciano Darderi",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260805_09",
+      "ts_utc": "2026-08-05T09:07:33.048416+00:00",
+      "odds_a": 2.0,
+      "odds_b": 1.84,
+      "source": "onexbet"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "31ae511e4945159b9da39762adb79782",
+  "player_a": "Madison Keys",
+  "player_b": "Marta Kostyuk",
+  "tournament_slug": "canadian_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260805_09",
+      "ts_utc": "2026-08-05T09:07:33.158627+00:00",
+      "odds_a": 1.12,
+      "odds_b": 1.12,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}
