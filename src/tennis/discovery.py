@@ -10,6 +10,7 @@ bleiben). Cache-File: data/cache/tennis_active_sports.json.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import time
 from datetime import date
@@ -18,6 +19,8 @@ from pathlib import Path
 from scripts._http_retry import retry_request
 from src.config import DATA_CACHE
 from src.utils.atomic_io import atomic_write_json
+
+_log = logging.getLogger("sportsbrain.tennis.discovery")
 from src.tennis.tournaments import (
     Tournament,
     all_sport_keys,
@@ -38,7 +41,8 @@ def _load_cache() -> list[dict] | None:
         return None
     try:
         return json.loads(_CACHE_PATH.read_text())
-    except Exception:
+    except Exception as exc:
+        _log.debug("cache parse failed: %s", exc)
         return None
 
 

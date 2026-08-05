@@ -1,3 +1,4 @@
+import logging
 import pickle
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -9,6 +10,8 @@ from scipy.special import gammaln
 from scipy.stats import poisson
 
 from src.config import DC_ELO_SCALE, DC_PHI, TOURNAMENT_WEIGHTS, WC2026_BOOST, WC2026_START
+
+_log = logging.getLogger("sportsbrain.dc")
 
 _TAU_EPSILON = 1e-6
 _MAX_GOALS = 10
@@ -1086,9 +1089,7 @@ def save(
             + "\n  ".join(issues)
         )
     if issues and force:
-        print("⚠️  DC sanity check failed but force=True; saving anyway:")
-        for line in issues:
-            print(f"   {line}")
+        _log.warning("DC sanity check failed (force=True); saving anyway: %s", "; ".join(issues))
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "wb") as f:

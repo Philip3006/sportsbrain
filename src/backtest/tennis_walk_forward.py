@@ -90,6 +90,8 @@ def _build_full_dataset(df: pd.DataFrame) -> pd.DataFrame:
         rank_l = float(rl) if pd.notna(rl) and rl else _MIN_RANK
         date = m["Date"]
 
+        # Elo BEFORE update — chronological order ensures no leakage: we read the
+        # rating that existed at match time, then update it afterwards.
         elo_w_over = elo.get_overall(winner); elo_l_over = elo.get_overall(loser)
         elo_w_surf = elo.get_blended(winner, surface); elo_l_surf = elo.get_blended(loser, surface)
 

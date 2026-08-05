@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+from src.betting.gates import gate_for
 from src.betting.kelly import dynamic_stake_eur, expected_value, kelly_fraction
 from src.betting.odds_utils import remove_margin_shin
 from src.config import MIN_EDGE, MAX_STAKE_EUR, GOALS_RANGE_MAX_STAKE
@@ -58,7 +59,7 @@ def _make_signal(
 # data (see docs/audit_2026-06-12.md, sections A & H — Algeria 37 %,
 # Côte d'Ivoire 38 %, USA-Mexico o/u3.5_under 37 %). Apply only to football;
 # tennis has no analogous bias.
-_BIAS_EV_CAP = 0.30
+_BIAS_EV_CAP = gate_for("football").bias_ev_cap  # 0.30 — via gates.py
 
 
 def _bias_safety_confidence(base_confidence: str, ev: float) -> str:

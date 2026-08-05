@@ -99,15 +99,16 @@ class TestSaveGate:
             save(p, out)
         assert not out.exists()  # nothing written on failure
 
-    def test_save_force_overrides(self, tmp_path, capsys):
+    def test_save_force_overrides(self, tmp_path, caplog):
+        import logging
         p = _make_clean_params()
         p.defence["A"] = -4.04
         out = tmp_path / "forced.pkl"
-        save(p, out, force=True)
+        with caplog.at_level(logging.WARNING, logger="sportsbrain.dc"):
+            save(p, out, force=True)
         assert out.exists()
-        captured = capsys.readouterr()
-        assert "force=True" in captured.out
-        assert "A.defence" in captured.out
+        assert "force=True" in caplog.text
+        assert "A.defence" in caplog.text
 
     def test_save_with_prior_drift_blocks(self, tmp_path):
         prior = _make_clean_params()

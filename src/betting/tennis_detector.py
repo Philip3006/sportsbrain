@@ -11,9 +11,12 @@ BetSignal.home = player_a, BetSignal.away = player_b (tennis has no actual home/
 """
 from __future__ import annotations
 
+from src.betting.gates import gate_for
 from src.betting.kelly import dynamic_stake_eur, expected_value, kelly_fraction
 from src.betting.value_detector import BetSignal
 from src.config import MAX_EV, MIN_EDGE
+
+_TENNIS_GATE = gate_for("tennis")
 
 
 def _devig_2way(odds_a: float, odds_b: float) -> tuple[float, float]:
@@ -24,8 +27,8 @@ def _devig_2way(odds_a: float, odds_b: float) -> tuple[float, float]:
     return p_a / total, p_b / total
 
 
-_MIN_PROB = 0.35   # Skip extreme underdogs: p<0.35 is -EV even at edge>3%
-_MAX_ODDS = 4.50   # Skip extreme prices: bookmaker margin is too wide above 4.5
+_MIN_PROB = _TENNIS_GATE.min_prob   # 0.35 — skip extreme underdogs
+_MAX_ODDS = _TENNIS_GATE.max_odds   # 4.50 — skip extreme prices
 
 
 def _signal(
@@ -240,15 +243,32 @@ def detect_total_games(
     min_edge: float = MIN_EDGE,
     tour: str = "atp",
     n_sim: int = 2000,
+    serve_stats_a=None,
+    serve_stats_b=None,
 ) -> list[BetSignal]:
-    """O/U Total Games. Monte-Carlo via src.tennis.sim.simulate_match."""
+    """O/U Total Games. Monte-Carlo via src.tennis.sim.simulate_match.
+
+    serve_stats_a / serve_stats_b: ServeAggregate (optional). When both players
+    have ≥10 matches, player-specific hold rates replace the tour-average baseline.
+    """
     from src.tennis.sim import simulate_match, p_total_games_over
 
     bo5 = best_of == 5
     if p_match_a <= 0 or p_match_a >= 1 or odds_over <= 1 or odds_under <= 1:
         return []
     p_set = _p_set_from_p_match(p_match_a, bo5=bo5)
-    sim = simulate_match(p_set, best_of, tour, n_sim=n_sim, seed=42)
+
+    hold_a: float | None = None
+    hold_b: float | None = None
+    if (serve_stats_a is not None and serve_stats_b is not None
+            and getattr(serve_stats_a, "n_matches", 0) >= 10
+            and getattr(serve_stats_b, "n_matches", 0) >= 10):
+        ha = _p_hold_from_serve_stats(serve_stats_a)
+        hb = _p_hold_from_serve_stats(serve_stats_b)
+        if ha > 0.3 and hb > 0.3:
+            hold_a, hold_b = ha, hb
+
+    sim = simulate_match(p_set, best_of, tour, n_sim=n_sim, seed=42, hold_a=hold_a, hold_b=hold_b)
     p_over = p_total_games_over(sim, line)
     p_under = 1.0 - p_over
     fair_over, fair_under = _devig_2way(odds_over, odds_under)

@@ -9,9 +9,12 @@ from __future__ import annotations
 
 import contextlib
 import csv
+import logging
 import time
 from dataclasses import dataclass, asdict
 from pathlib import Path
+
+_log = logging.getLogger("sportsbrain.betting.ledger")
 
 import pandas as pd
 
@@ -134,7 +137,8 @@ def _fetch_completed_wm_scores(api_key: str = "") -> dict[tuple[str, str], tuple
         _WM_SCORES_CACHE["ts"] = time.monotonic()
         _WM_SCORES_CACHE["data"] = scores
         return scores
-    except Exception:
+    except Exception as exc:
+        _log.debug("WM scores fetch failed: %s", exc)
         return {}
 
 _FIELDS = [
@@ -230,7 +234,6 @@ def append_bets(
                 _log.getLogger("sportsbrain.ledger").info(
                     "Skip duplicate: %s %s (bereits im Ledger)", s.match_id, s.market
                 )
-                print(f"[ledger] Skip duplicate: {s.home} vs {s.away} | {s.market}")
                 continue
             new_rows.append({
                 "match_id":     s.match_id,
@@ -293,7 +296,8 @@ def _settle_from_results_locked(
         try:
             from src.data.international import fetch_international_results
             results = fetch_international_results()
-        except Exception:
+        except Exception as exc:
+            _log.debug("fetch_international_results failed: %s", exc)
             return 0
 
     # Only settle from WM 2026 matches (never accidentally settle against
@@ -529,8 +533,8 @@ def _settle_from_results_locked(
                 summary = ledger_summary(ledger_path)
                 for idx in newly_settled_indices:
                     send_settlement_alert(df.loc[idx].to_dict(), summary)
-            except Exception:
-                pass
+            except Exception as exc:
+                _log.debug("settlement push failed: %s", exc)
             _refresh_dashboard(user)
 
     return settled

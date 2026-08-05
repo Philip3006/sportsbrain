@@ -29,7 +29,7 @@ sys.path.insert(0, str(_ROOT))
 from scripts._http_retry import retry_request
 
 from src.tennis.name_norm import to_elo_name_from_odds_api
-from src.tennis.odds.base import OddsQuote, sanity_ok
+from src.tennis.odds.base import OddsQuote, ThreadSafeCache, ThreadSafeDictCache, sanity_ok
 
 
 name = "pinnacle"
@@ -44,17 +44,13 @@ _UA = {
     "Referer": "https://www.pinnacle.com/",
 }
 
-_LEAGUES: list[dict] = []
-_LEAGUES_TS: float = 0.0
 _LEAGUES_TTL_S = 10 * 60
-
-_MATCHUPS: dict[int, list[dict]] = {}   # leagueId → matchups
-_MATCHUPS_TS: dict[int, float] = {}
 _MATCHUPS_TTL_S = 5 * 60
-
-_ODDS_CACHE: dict[int, dict] = {}       # matchupId → parsed odds
-_ODDS_TS: dict[int, float] = {}
 _ODDS_TTL_S = 5 * 60
+
+_leagues: ThreadSafeCache[list[dict]] = ThreadSafeCache(ttl=_LEAGUES_TTL_S)
+_matchups: ThreadSafeDictCache[list[dict]] = ThreadSafeDictCache(ttl=_MATCHUPS_TTL_S)
+_odds: ThreadSafeDictCache[dict] = ThreadSafeDictCache(ttl=_ODDS_TTL_S)
 
 
 def _get_json(url: str) -> Any:
@@ -73,25 +69,25 @@ def _get_json(url: str) -> Any:
 
 
 def _refresh_leagues() -> list[dict]:
-    global _LEAGUES, _LEAGUES_TS
-    if _LEAGUES and (time.time() - _LEAGUES_TS) < _LEAGUES_TTL_S:
-        return _LEAGUES
+    cached = _leagues.get()
+    if cached is not None:
+        return cached
     data = _get_json(f"{_BASE}/leagues?sportId={_SPORT_ID_TENNIS}")
     if isinstance(data, list) and data:
-        _LEAGUES = data
-        _LEAGUES_TS = time.time()
-    return _LEAGUES or []
+        _leagues.set(data)
+        return data
+    return _leagues.get() or []
 
 
 def _refresh_matchups(league_id: int) -> list[dict]:
-    age = time.time() - _MATCHUPS_TS.get(league_id, 0)
-    if _MATCHUPS.get(league_id) and age < _MATCHUPS_TTL_S:
-        return _MATCHUPS[league_id]
+    cached = _matchups.get(league_id)
+    if cached is not None:
+        return cached
     data = _get_json(f"{_BASE}/leagues/{league_id}/matchups")
     if isinstance(data, list):
-        _MATCHUPS[league_id] = data
-        _MATCHUPS_TS[league_id] = time.time()
-    return _MATCHUPS.get(league_id, [])
+        _matchups.set(league_id, data)
+        return data
+    return []
 
 
 def _fetch_odds_for_matchup(matchup_id: int) -> Optional[dict]:
@@ -104,9 +100,9 @@ def _fetch_odds_for_matchup(matchup_id: int) -> Optional[dict]:
         "ah_1_5_a": float | None, "ah_1_5_b": float | None,
       }
     """
-    age = time.time() - _ODDS_TS.get(matchup_id, 0)
-    if _ODDS_CACHE.get(matchup_id) and age < _ODDS_TTL_S:
-        return _ODDS_CACHE[matchup_id]
+    cached = _odds.get(matchup_id)
+    if cached is not None:
+        return cached
     data = _get_json(f"{_BASE}/matchups/{matchup_id}/markets/related/straight")
     if not isinstance(data, list):
         return None
@@ -144,8 +140,7 @@ def _fetch_odds_for_matchup(matchup_id: int) -> Optional[dict]:
         "h2h_a": h2h_a, "h2h_b": h2h_b,
         "ah_1_5_a": ah_a or None, "ah_1_5_b": ah_b or None,
     }
-    _ODDS_CACHE[matchup_id] = out
-    _ODDS_TS[matchup_id] = time.time()
+    _odds.set(matchup_id, out)
     return out
 
 

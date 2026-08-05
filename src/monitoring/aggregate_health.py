@@ -28,6 +28,7 @@ HEALTH_DIR = ROOT / "results" / "health"
 HEALTH_JSON_OUT = ROOT / "docs" / "data" / "health.json"
 
 from src.monitoring.health_writer import JOB_SCHEDULE  # noqa: E402
+from src.utils.atomic_io import atomic_write_json  # noqa: E402
 
 
 def _parse_iso(ts: str) -> datetime | None:
@@ -185,10 +186,7 @@ def aggregate(merge_from_committed: bool = False) -> dict[str, Any]:
         "overall":      _overall(jobs),
         "jobs":         jobs,
     }
-    HEALTH_JSON_OUT.parent.mkdir(parents=True, exist_ok=True)
-    tmp = HEALTH_JSON_OUT.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2))
-    os.replace(tmp, HEALTH_JSON_OUT)
+    atomic_write_json(HEALTH_JSON_OUT, payload, indent=2)
     return payload
 
 

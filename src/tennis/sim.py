@@ -93,14 +93,26 @@ def p_total_sets_under(p_set: float, best_of: int, line: float) -> float:
 # Game-Total (Monte Carlo)
 # ---------------------------------------------------------------------------
 
-def _hold_probs(p_set: float, tour: str) -> tuple[float, float]:
+def _hold_probs(
+    p_set: float,
+    tour: str,
+    *,
+    hold_a: float | None = None,
+    hold_b: float | None = None,
+) -> tuple[float, float]:
     """Schätzt Serve-Hold-Wkt. für Spieler A und B aus per-Set-Prob.
 
-    Heuristik: p_set encodes relative Stärke. Wenn p_set=0.5, gleiche Hold.
-    Wenn p_set=0.7 (A stark), A's Hold steigt, B's sinkt.
+    Wenn hold_a/hold_b angegeben (aus TA-Serve-Stats), werden diese direkt
+    verwendet (geclipt auf [HOLD_FLOOR, HOLD_CEIL]). Sonst: Tour-Schnitt +
+    Elo-Spread-Heuristik.
 
     Rückgabe: (p_hold_a, p_hold_b)
     """
+    if hold_a is not None and hold_b is not None:
+        return (
+            max(HOLD_FLOOR, min(HOLD_CEIL, hold_a)),
+            max(HOLD_FLOOR, min(HOLD_CEIL, hold_b)),
+        )
     baseline = HOLD_BASELINE_WTA if tour.lower() == "wta" else HOLD_BASELINE_ATP
     # p_set 0.5 → diff 0 → beide auf baseline. p_set 0.7 → +0.4 = +0.04 spread
     spread = (p_set - 0.5) * HOLD_SLOPE * 2
@@ -144,14 +156,20 @@ def simulate_match(
     tour: str,
     n_sim: int = 2000,
     seed: int | None = None,
+    *,
+    hold_a: float | None = None,
+    hold_b: float | None = None,
 ) -> dict[str, float]:
     """Monte-Carlo Match-Simulation. Return: Aggregat-Stats.
+
+    hold_a / hold_b: per-Spieler Serve-Hold-Rate aus TA-Stats (optional).
+    Wenn angegeben, überschreiben sie die Tour-Schnitt-Heuristik.
 
     Keys: mean_games, median_games, p_set_a_wins, p_match_a_wins,
           plus alle ganzzahligen total_games-Bins (für O/U-Computation).
     """
     rng = random.Random(seed)
-    p_hold_a, p_hold_b = _hold_probs(p_set, tour)
+    p_hold_a, p_hold_b = _hold_probs(p_set, tour, hold_a=hold_a, hold_b=hold_b)
 
     needed = (best_of // 2) + 1  # 2 für BO3, 3 für BO5
     totals: list[int] = []

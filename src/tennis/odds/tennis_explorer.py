@@ -9,8 +9,11 @@ Schwächen: nur H2H (keine AH/Totals/Set-Betting).
 """
 from __future__ import annotations
 
+import logging
 import time
 from typing import Optional
+
+_log = logging.getLogger("sportsbrain.tennis.odds.tennis_explorer")
 
 from src.tennis.name_norm import (
     to_elo_name_from_odds_api,
@@ -42,7 +45,7 @@ def _get_bulk() -> list[dict]:
             # Bulk-Wert älter als 2×TTL nicht weiterreichen → return leer, damit
             # Merger auf nächstes Tier ausweicht statt gecachte alte Quoten zu servieren.
             if age >= 2 * _TTL_S:
-                print(f"[tennis_explorer] WARN: stale bulk ({age:.0f}s ≥ 2×TTL) und Refresh leer → drop")
+                _log.warning("stale bulk (%.0fs ≥ 2×TTL) und Refresh leer → drop", age)
                 _BULK = []
                 _TS = time.time()
     except Exception:
