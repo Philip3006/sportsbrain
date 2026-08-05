@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-05T10:55:13Z",
+  "generated_at": "2026-08-05T10:57:16Z",
   "overall": "down",
   "jobs": [
     {
@@ -38,8 +38,8 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-05T10:55:13Z",
-      "duration_s": 0.0,
+      "last_run_at": "2026-08-05T10:57:16Z",
+      "duration_s": 2.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -49,7 +49,7 @@
     {
       "job": "live_score_push",
       "status": "error",
-      "last_run_at": "2026-08-05T10:54:23Z",
+      "last_run_at": "2026-08-05T10:56:23Z",
       "duration_s": 0.0,
       "exit_code": 127,
       "error": " ! [rejected]          main -> main (fetch first) error: failed to push some refs to 'https://github.com/Philip3006/sportsbrain.git' hint: Updates were rejected because the remote contains work that you do ",
@@ -82,7 +82,7 @@
     {
       "job": "aggregate_health",
       "status": "ok",
-      "last_run_at": "2026-08-05T10:53:11Z",
+      "last_run_at": "2026-08-05T10:55:13Z",
       "duration_s": 0.0,
       "exit_code": 0,
       "error": null,
@@ -126,7 +126,7 @@
     {
       "job": "tennis_retrain",
       "status": "ok",
-      "last_run_at": "2026-08-05T10:44:05Z",
+      "last_run_at": "2026-08-05T10:55:31Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -137,7 +137,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-05T10:47:04Z",
+      "last_run_at": "2026-08-05T10:55:55Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -151,7 +151,7 @@
       "last_run_at": "2026-07-31T10:59:26Z",
       "duration_s": null,
       "exit_code": null,
-      "error": "live_scores.json is 7195min old (limit 240min)",
+      "error": "live_scores.json is 7197min old (limit 240min)",
       "fallback_used": null,
       "next_expected_in_s": 14400,
       "cadence": "≤4h"

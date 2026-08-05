@@ -910,6 +910,7 @@ def write_signals_json(
     schedule: list[dict] | None = None,
     all_odds: dict[str, dict] | None = None,
     model_tips: dict[str, dict] | None = None,
+    model_evals: dict[str, dict] | None = None,
     open_bets: list[dict] | None = None,
     odds_history: dict | None = None,  # {match_key: [{date, home, draw, away}]}
     wm_results: list[dict] | None = None,  # [{home, away, home_score, away_score, commence_time}]
@@ -1019,6 +1020,11 @@ def write_signals_json(
     else:
         model_tips_data = existing.get("model_tips", {})
 
+    if model_evals is not None:
+        model_evals_data = {**existing.get("model_evals", {}), **model_evals}
+    else:
+        model_evals_data = existing.get("model_evals", {})
+
     # N3: Odds-freshness comparison vs. previous snapshot
     _oh_list = odds_history if isinstance(odds_history, list) else existing.get("odds_history", [])
     if _oh_list:
@@ -1127,6 +1133,7 @@ def write_signals_json(
         "schedule":       schedule_data,
         "all_odds":       all_odds_data,
         "model_tips":     model_tips_data,
+        "model_evals":    model_evals_data,
         "football":       football_data,
         "tennis":         tennis_data,
         "portfolio":      portfolio if portfolio else existing.get("portfolio", {}),
