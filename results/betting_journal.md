@@ -1,6 +1,6 @@
 # Betting Journal — TENNIS
 
-_Zuletzt aktualisiert: 2026-08-05 17:56 UTC_
+_Zuletzt aktualisiert: 2026-08-05 21:34 UTC_
 
 ---
 
@@ -8,7 +8,7 @@ _Zuletzt aktualisiert: 2026-08-05 17:56 UTC_
 
 | Signale | Settled | W | L | Win% | P&L | ROI |
 |---------|---------|---|---|------|-----|-----|
-| 505 | 312 | 165 | 104 | 52.9% | +927.99€ | +19.0% |
+| 520 | 348 | 185 | 120 | 53.2% | +885.93€ | +16.3% |
 
 ## Tages-Snapshots
 
@@ -25,38 +25,38 @@ _Zuletzt aktualisiert: 2026-08-05 17:56 UTC_
 
 | Dimension              |    N |    W |    L |   Win% |       P&L |     ROI |
 |------------------------|------|------|------|--------|-----------|---------|
-| m1000                  |  183 |  115 |   60 |  62.8% |  +747.27€ |  +27.1% |
-| wta1000                |  112 |   45 |   32 |  40.2% |  +245.52€ |  +12.6% |
+| m1000                  |  195 |  122 |   65 |  62.6% |  +729.82€ |  +24.9% |
+| wta1000                |  136 |   58 |   43 |  42.6% |  +220.91€ |   +9.4% |
 | wta500                 |   17 |    5 |   12 |  29.4% |   -64.80€ |  -38.1% |
 
 ### Nach Surface
 
 | Dimension              |    N |    W |    L |   Win% |       P&L |     ROI |
 |------------------------|------|------|------|--------|-----------|---------|
-| Hard                   |  312 |  165 |  104 |  52.9% |  +927.99€ |  +19.0% |
+| Hard                   |  348 |  185 |  120 |  53.2% |  +885.93€ |  +16.3% |
 
 ### Nach Markttyp
 
 | Dimension              |    N |    W |    L |   Win% |       P&L |     ROI |
 |------------------------|------|------|------|--------|-----------|---------|
-| O/U Games              |  224 |  118 |   72 |  52.7% |  +576.81€ |  +16.3% |
-| Match Winner           |   51 |   23 |   26 |  45.1% |   +89.09€ |  +13.5% |
-| Set AH +1.5            |   37 |   24 |    6 |  64.9% |  +262.09€ |  +38.7% |
+| O/U Games              |  247 |  128 |   85 |  51.8% |  +494.67€ |  +12.6% |
+| Match Winner           |   63 |   32 |   29 |  50.8% |  +123.18€ |  +14.9% |
+| Set AH +1.5            |   38 |   25 |    6 |  65.8% |  +268.08€ |  +39.0% |
 
 ### Nach EV-Band
 
 | Dimension              |    N |    W |    L |   Win% |       P&L |     ROI |
 |------------------------|------|------|------|--------|-----------|---------|
-| +10–20%                |  127 |   65 |   50 |  51.2% |  +207.69€ |  +11.4% |
-| +20–30%                |  104 |   50 |   34 |  48.1% |  +257.05€ |  +13.9% |
-| +30%+                  |   56 |   35 |   13 |  62.5% |  +401.00€ |  +42.1% |
-| <+10%                  |   25 |   15 |    7 |  60.0% |   +62.25€ |  +25.8% |
+| +10–20%                |  139 |   72 |   55 |  51.8% |  +197.92€ |   +9.9% |
+| +20–30%                |  111 |   54 |   37 |  48.6% |  +253.50€ |  +12.7% |
+| +30%+                  |   67 |   39 |   20 |  58.2% |  +333.20€ |  +28.9% |
+| <+10%                  |   31 |   20 |    8 |  64.5% |  +101.31€ |  +34.0% |
 
 ### Nach Turnier
 
 | Dimension              |    N |    W |    L |   Win% |       P&L |     ROI |
 |------------------------|------|------|------|--------|-----------|---------|
-| Canadian Open          |  283 |  151 |   89 |  53.4% |  +931.49€ |  +20.3% |
+| Canadian Open          |  319 |  171 |  105 |  53.6% |  +889.43€ |  +17.2% |
 | Mubadala DC Open       |   29 |   14 |   15 |  48.3% |    -3.50€ |   -1.2% |
 
 ## Match-Log
@@ -118,6 +118,10 @@ _Zuletzt aktualisiert: 2026-08-05 17:56 UTC_
 | 2026-08-04 | Canadian Open | m1000 | Hard | Cobolli vs Hanfmann | O/U Games | +12% | @2.04 | ✅ won | +10.92€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Darderi vs Diallo | Set AH +1.5 | +15% | @1.67 | ↩️ push | +0.00€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Darderi vs Diallo | O/U Games | +15% | @2.05 | ↩️ push | +0.00€ |
+| 2026-08-04 | Canadian Open | m1000 | Hard | Kecmanovic vs Rinderknech | O/U Games | +12% | @1.98 | ✅ won | +13.23€ |
+| 2026-08-04 | Canadian Open | m1000 | Hard | Kecmanovic vs Rinderknech | O/U Games | +9% | @1.93 | ✅ won | +10.23€ |
+| 2026-08-04 | Canadian Open | m1000 | Hard | Ignacio Buse vs Cameron Norrie | Match Winner | +37% | @2.75 | ❌ lost | -15.00€ |
+| 2026-08-04 | Canadian Open | m1000 | Hard | Ignacio Buse vs Cameron Norrie | O/U Games | +23% | @1.96 | ❌ lost | -20.00€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Nicolas Mejia vs Lorenzo Musetti | O/U Games | +39% | @1.88 | ✅ won | +17.60€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Vacherot vs Navone | Set AH +1.5 | +18% | @2.02 | ✅ won | +15.30€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Vacherot vs Navone | O/U Games | +10% | @1.83 | ✅ won | +9.55€ |
@@ -145,35 +149,64 @@ _Zuletzt aktualisiert: 2026-08-05 17:56 UTC_
 | 2026-08-04 | Canadian Open | wta1000 | Hard | Tauson vs Bartunkova | Set AH +1.5 | +40% | @1.92 | ✅ won | +18.40€ |
 | 2026-08-04 | Canadian Open | wta1000 | Hard | Tauson vs Bartunkova | O/U Games | +18% | @1.83 | ❌ lost | -18.00€ |
 | 2026-08-04 | Canadian Open | wta1000 | Hard | Tauson vs Bartunkova | O/U Games | +16% | @2.02 | ❌ lost | -13.00€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Alina Korneeva vs Emma Navarro | Match Winner | +8% | @2.30 | ✅ won | +11.05€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Alina Korneeva vs Emma Navarro | O/U Games | +20% | @1.86 | ❌ lost | -20.00€ |
 | 2026-08-04 | Canadian Open | wta1000 | Hard | Ann Li vs Kayla Cross | O/U Games | +27% | @1.85 | ✅ won | +17.00€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Andreeva vs Pliskova | O/U Games | +34% | @1.96 | ❌ lost | -20.00€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Bouzkova vs Townsend | O/U Games | +22% | @1.91 | ✅ won | +18.20€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Bouzkova vs Townsend | O/U Games | +26% | @1.84 | ✅ won | +16.80€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Hubert Hurkacz vs Marcos Giron | O/U Games | +10% | @2.06 | ✅ won | +10.07€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Svajda vs Shapovalov | Set AH +1.5 | +37% | @1.82 | ↩️ push | +0.00€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Duckworth vs Minaur | O/U Games | +31% | @1.80 | ✅ won | +16.00€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Darderi vs Diallo | Match Winner | +8% | @2.18 | ✅ won | +10.62€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Darderi vs Diallo | O/U Games | +11% | @1.77 | ↩️ push | +0.00€ |
+| 2026-08-04 | Canadian Open | m1000 | Hard | Kecmanovic vs Rinderknech | O/U Games | +9% | @1.75 | ✅ won | +8.25€ |
+| 2026-08-04 | Canadian Open | m1000 | Hard | Ignacio Buse vs Cameron Norrie | Set AH +1.5 | +8% | @1.57 | ✅ won | +5.99€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Nicolas Mejia vs Lorenzo Musetti | O/U Games | +37% | @1.74 | ✅ won | +14.80€ |
 | 2026-08-04 | Canadian Open | wta1000 | Hard | Svitolina vs Maneiro | O/U Games | +36% | @1.65 | ✅ won | +13.00€ |
 | 2026-08-04 | Canadian Open | wta1000 | Hard | Sara Bejlek vs Iga Swiatek | O/U Games | +40% | @1.57 | ❌ lost | -20.00€ |
 | 2026-08-04 | Canadian Open | wta1000 | Hard | Maja Chwalinska vs Talia Gibson | O/U Games | +17% | @1.83 | ❌ lost | -17.50€ |
 | 2026-08-04 | Canadian Open | wta1000 | Hard | Tauson vs Bartunkova | O/U Games | +5% | @1.83 | ❌ lost | -8.00€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Alina Korneeva vs Emma Navarro | O/U Games | +10% | @1.91 | ❌ lost | -12.00€ |
 | 2026-08-04 | Canadian Open | wta1000 | Hard | Ann Li vs Kayla Cross | O/U Games | +38% | @1.84 | ✅ won | +16.80€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Kasatkina vs Rybakina | O/U Games | +40% | @1.74 | ✅ won | +14.80€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Andreeva vs Pliskova | O/U Games | +36% | @1.81 | ❌ lost | -20.00€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Andreeva vs Pliskova | O/U Games | +28% | @1.87 | ❌ lost | -20.00€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Juncheng Shang vs Andrey Rublev | O/U Games | +16% | @2.16 | ✅ won | +15.08€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Sonego vs Griekspoor | O/U Games | +9% | @2.00 | ✅ won | +10.50€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Frances Tiafoe vs Marin Cilic | O/U Games | +9% | @2.03 | ✅ won | +9.27€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Kasatkina vs Rybakina | O/U Games | +35% | @1.87 | ✅ won | +17.40€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Popyrin vs Burruchaga | O/U Games | +17% | @1.68 | ✅ won | +11.90€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Sonego vs Griekspoor | Set AH +1.5 | +32% | @1.91 | ✅ won | +18.20€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Jiri Lehecka vs Vit Kopriva | O/U Games | +32% | @1.94 | ❌ lost | -20.00€ |
+| 2026-08-04 | Canadian Open | m1000 | Hard | Ignacio Buse vs Cameron Norrie | O/U Games | +20% | @1.72 | ❌ lost | -20.00€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Vacherot vs Navone | O/U Games | +19% | @1.75 | ✅ won | +14.25€ |
 | 2026-08-04 | Canadian Open | wta1000 | Hard | Kalinskaya vs Kessler | O/U Games | +22% | @2.10 | ✅ won | +16.50€ |
 | 2026-08-04 | Canadian Open | wta1000 | Hard | Rakhimova vs Siniakova | O/U Games | +20% | @2.10 | ↩️ push | +0.00€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Alina Korneeva vs Emma Navarro | O/U Games | +19% | @2.05 | ❌ lost | -14.50€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Bouzkova vs Townsend | Match Winner | +14% | @2.32 | ✅ won | +17.16€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Frances Tiafoe vs Marin Cilic | Match Winner | +18% | @3.00 | ❌ lost | -15.00€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Cobolli vs Hanfmann | Match Winner | +31% | @2.38 | ✅ won | +20.70€ |
+| 2026-08-04 | Canadian Open | m1000 | Hard | Hurkacz vs Tabilo | Match Winner | +35% | @2.46 | ❌ lost | -15.00€ |
+| 2026-08-04 | Canadian Open | m1000 | Hard | Hurkacz vs Tabilo | O/U Games | +12% | @2.02 | ❌ lost | -10.50€ |
+| 2026-08-04 | Canadian Open | m1000 | Hard | Zachary Svajda vs Arthur Fils | Match Winner | +32% | @1.35 | ✅ won | +7.00€ |
+| 2026-08-04 | Canadian Open | m1000 | Hard | Jenson Brooksby vs Ben Shelton | Match Winner | +27% | @1.30 | ✅ won | +6.00€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Tsitsipas vs Fonseca | O/U Games | +13% | @2.02 | ✅ won | +11.73€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Zizou Bergs vs Sebastian Baez | Match Winner | +40% | @2.54 | ❌ lost | -15.00€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Zizou Bergs vs Sebastian Baez | O/U Games | +19% | @1.93 | ✅ won | +17.67€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Zizou Bergs vs Sebastian Baez | O/U Games | +16% | @1.70 | ✅ won | +11.55€ |
+| 2026-08-04 | Canadian Open | m1000 | Hard | Kecmanovic vs Rinderknech | Match Winner | +11% | @1.95 | ✅ won | +12.35€ |
 | 2026-08-04 | Canadian Open | wta1000 | Hard | Sabalenka vs Uchijima | Match Winner | +5% | @1.07 | ✅ won | +0.53€ |
 | 2026-08-04 | Canadian Open | wta1000 | Hard | Tauson vs Bartunkova | Match Winner | +12% | @2.04 | ✅ won | +12.48€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Stephens vs Bencic | Match Winner | +14% | @1.16 | ✅ won | +2.64€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Stephens vs Bencic | O/U Games | +31% | @1.84 | ❌ lost | -20.00€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Stephens vs Bencic | O/U Games | +30% | @2.10 | ❌ lost | -15.00€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Kasatkina vs Rybakina | Match Winner | +13% | @1.15 | ✅ won | +2.32€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Kasatkina vs Rybakina | O/U Games | +26% | @2.03 | ✅ won | +15.45€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Bouzkova vs Townsend | O/U Games | +17% | @2.00 | ✅ won | +17.50€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Alina Korneeva vs Emma Navarro | Match Winner | +5% | @1.83 | ❌ lost | -7.50€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Kayla Day vs Coco Gauff | Match Winner | +12% | @1.14 | ✅ won | +2.03€ |
+| 2026-08-04 | Canadian Open | wta1000 | Hard | Kayla Day vs Coco Gauff | O/U Games | +37% | @2.20 | ✅ won | +18.00€ |
 | 2026-08-03 | Canadian Open | m1000 | Hard | Alexis Galarneau vs Vit Kopriva | Match Winner | +9% | @2.10 | ✅ won | +10.16€ |
 | 2026-08-03 | Canadian Open | m1000 | Hard | Alexis Galarneau vs Vit Kopriva | O/U Games | +21% | @1.95 | ❌ lost | -20.00€ |
 | 2026-08-03 | Canadian Open | m1000 | Hard | Duckworth vs O'Connell | O/U Games | +15% | @2.05 | ❌ lost | -12.36€ |
@@ -346,6 +379,9 @@ _Zuletzt aktualisiert: 2026-08-05 17:56 UTC_
 | 2026-08-03 | Canadian Open | wta1000 | Hard | Rakhimova vs Siniakova | O/U Games | +27% | @1.99 | ↩️ push | +0.00€ |
 | 2026-08-03 | Canadian Open | wta1000 | Hard | Rakhimova vs Siniakova | O/U Games | +20% | @1.88 | ↩️ push | +0.00€ |
 | 2026-08-03 | Canadian Open | wta1000 | Hard | Rakhimova vs Siniakova | O/U Games | +28% | @1.84 | ↩️ push | +0.00€ |
+| 2026-08-03 | Canadian Open | wta1000 | Hard | Alina Korneeva vs Emma Navarro | Match Winner | +7% | @2.38 | ✅ won | +11.04€ |
+| 2026-08-03 | Canadian Open | wta1000 | Hard | Alina Korneeva vs Emma Navarro | O/U Games | +23% | @1.90 | ❌ lost | -20.00€ |
+| 2026-08-03 | Canadian Open | wta1000 | Hard | Andreeva vs Pliskova | O/U Games | +32% | @1.95 | ❌ lost | -20.00€ |
 | 2026-07-31 | Mubadala DC Open | m1000 | Hard | Rafael Jodar vs Lorenzo Musetti | Match Winner | +31% | @2.62 | ❌ lost | -10.00€ |
 | 2026-07-31 | Mubadala DC Open | m1000 | Hard | Minaur vs Nakashima | Match Winner | +33% | @2.66 | ✅ won | +16.60€ |
 | 2026-07-31 | Mubadala DC Open | m1000 | Hard | Minaur vs Nakashima | O/U Games | +19% | @1.89 | ✅ won | +8.90€ |
