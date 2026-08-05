@@ -34,6 +34,11 @@ COOLDOWN_STATE = ROOT / "results" / "health" / "auto_heal_cooldown.json"
 # Jobs handled by Layer 1 bash (2-min auto-retry) — skip here
 _SKIP_JOBS = {"consume_pending_bets", "live_score_push", "aggregate_health"}
 
+# Global AI-call rate limit: at most 1 Claude diagnosis per 30 min across ALL jobs.
+# Prevents API spam when multiple jobs fail simultaneously.
+_GLOBAL_AI_COOLDOWN_MINS = 30
+_GLOBAL_AI_KEY = "__global_ai_diagnose__"
+
 
 def _log(msg: str) -> None:
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -345,6 +350,10 @@ def main() -> None:
 
     affected = [j for j in data["jobs"] if j["status"] not in ("ok",)]
 
+    if _recently_pushed(_GLOBAL_AI_KEY, hours=_GLOBAL_AI_COOLDOWN_MINS / 60):
+        _log("global AI cooldown active — skipping diagnosis this cycle")
+        return
+
     for job_info in affected:
         job = job_info["job"]
         if job in _SKIP_JOBS:
@@ -362,6 +371,7 @@ def main() -> None:
             _log(f"{job}: API call failed: {e}")
             continue
 
+        _mark_pushed(_GLOBAL_AI_KEY)  # stamp global cooldown after first call
         _log(f"{job}: response → {response[:120]}")
 
         if response.startswith("FIX"):
@@ -375,16 +385,18 @@ def main() -> None:
             # whenever a stale job hasn't written a log this hour.
             if "no log file" in response.lower():
                 _log(f"{job}: unclear (no log) — skipping push")
-                continue
-            # Debounce: same job not more than once per 6h.
-            if _recently_pushed(job, hours=6):
-                _log(f"{job}: unclear — within 6h cooldown, skipping push")
-                continue
-            _log(f"{job}: unclear — pushing notification")
-            _vapid_push(f"{job}: {response}")
-            _mark_pushed(job)
+            else:
+                # Debounce: same job not more than once per 6h.
+                if _recently_pushed(job, hours=6):
+                    _log(f"{job}: unclear — within 6h cooldown, skipping push")
+                else:
+                    _log(f"{job}: unclear — pushing notification")
+                    _vapid_push(f"{job}: {response}")
+                    _mark_pushed(job)
         else:
             _log(f"{job}: unexpected response format — {response[:80]}")
+
+        break  # one diagnosis per run — next job waits for next cooldown window
 
 
 if __name__ == "__main__":

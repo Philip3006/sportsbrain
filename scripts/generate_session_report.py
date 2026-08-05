@@ -58,15 +58,39 @@ def _parse_iso(s: str | None) -> datetime | None:
 
 # -------- sections --------
 
+def _cloud_health_index() -> dict[str, str]:
+    """Returns {job_name: status} from docs/data/health.json (cloud aggregate).
+
+    Used to reconcile stale local snapshots: if a job is "stale" locally but
+    "ok" in the cloud aggregate, we trust the cloud version.
+    """
+    cloud = ROOT / "docs" / "data" / "health.json"
+    data = _read_json(cloud)
+    if not isinstance(data, dict):
+        return {}
+    return {j["job"]: j.get("status", "") for j in data.get("jobs", []) if isinstance(j, dict)}
+
+
 def collect_health() -> tuple[list[dict], list[dict], list[dict]]:
-    """Returns (failures, degraded, ok) job dicts."""
+    """Returns (failures, degraded, ok) job dicts.
+
+    Reconciles local per-job snapshots with the cloud aggregate health.json:
+    if a local snapshot reports "stale" but the cloud aggregate says "ok",
+    the job is reclassified as ok to avoid false alarms.
+    """
     failures, degraded, ok = [], [], []
+    cloud_index = _cloud_health_index()
 
     def _classify(entries: list[dict]) -> None:
         for data in entries:
             if not isinstance(data, dict):
                 continue
             st = data.get("status")
+            job = data.get("job", "")
+            # Reconcile: local stale but cloud says ok → trust cloud
+            if st == "stale" and cloud_index.get(job) == "ok":
+                ok.append({**data, "status": "ok", "_reconciled": True})
+                continue
             if st == "error":
                 failures.append(data)
             elif st in ("degraded", "stale"):
@@ -75,7 +99,7 @@ def collect_health() -> tuple[list[dict], list[dict], list[dict]]:
                 ok.append(data)
 
     per_job_files = sorted(HEALTH_DIR.glob("*.json")) if HEALTH_DIR.exists() else []
-    per_job_files = [p for p in per_job_files if p.name != "push_state.json"]
+    per_job_files = [p for p in per_job_files if p.name not in ("push_state.json", "auto_heal_cooldown.json")]
 
     if per_job_files:
         _classify([_read_json(p) for p in per_job_files])
