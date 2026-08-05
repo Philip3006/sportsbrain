@@ -7,10 +7,13 @@ existierender Elo-Code (`compute_tennis_elo`) unverändert läuft.
 """
 from __future__ import annotations
 
+import logging
 import pandas as pd
 
 from src.data.tennis_data import fetch_atp_matches, fetch_wta_matches
 from src.data.tennis_odds import fetch_full_tour_odds
+
+_log = logging.getLogger("sportsbrain.tennis.elo_source")
 
 
 _SURFACE_NORM = {"hard": "Hard", "clay": "Clay", "grass": "Grass", "carpet": "Carpet"}
@@ -46,11 +49,13 @@ def load_match_history() -> tuple[pd.DataFrame, str]:
     """
     try:
         atp = fetch_atp_matches()
-    except Exception:
+    except Exception as exc:
+        _log.warning("fetch_atp_matches failed, skipping: %s", exc)
         atp = pd.DataFrame()
     try:
         wta = fetch_wta_matches()
-    except Exception:
+    except Exception as exc:
+        _log.warning("fetch_wta_matches failed, skipping: %s", exc)
         wta = pd.DataFrame()
 
     if not atp.empty or not wta.empty:
@@ -62,7 +67,8 @@ def load_match_history() -> tuple[pd.DataFrame, str]:
     # Fallback: tennis-data.co.uk XLSX (2019-2025 cached)
     try:
         xlsx = fetch_full_tour_odds(tours=["atp", "wta"])
-    except Exception:
+    except Exception as exc:
+        _log.warning("fetch_full_tour_odds failed, match history empty: %s", exc)
         xlsx = pd.DataFrame()
     if xlsx.empty:
         return pd.DataFrame(), "empty"
