@@ -1,7 +1,7 @@
 """Phase D — 2. Bundesliga Prematch-Scanner.
 
 Fetcht Fixtures via TheOddsAPI (`soccer_germany_bundesliga2`), rechnet
-DC+Elo-Ensemble, detektiert Value auf 1X2 / AH / O/U / BTTS / DC / goals_2_4,
+DC+Elo-Ensemble, detektiert Value auf 1X2 (Shadow) / AH / O/U / BTTS / DC / goals_2_4,
 schreibt Ledger-Zeilen mit league='bl2' und pusht Signals.
 
 Odds-Quellen (Multi-Source, analog Tennis):
@@ -325,6 +325,9 @@ def _scan_match(
             home, away, model_probs_arr, (h_price, d_price, a_price),
             bankroll=bankroll, min_edge=min_edge, match_id=mid, dc_probs=dc_probs,
         )
+        # 1X2 hat negatives OOS-ROI (Heim -1%, Unent. -8%, Auswärts -5.5%) → Shadow
+        for s in s1x2:
+            s.no_bet_flag = True
         signals.extend(s1x2)
 
     # O/U — alle verfügbaren Linien (1.5, 2.5, 3.5 aus Merger)
