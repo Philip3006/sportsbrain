@@ -1,0 +1,64 @@
+name: 2.BL Prematch-Scan
+
+on:
+  schedule:
+    # Daily 06:00 UTC + zusätzliche Läufe Fr/Sa/So 2h vor typischen Kickoffs.
+    - cron: '0 6 * * *'
+    - cron: '0 15 * * 5'   # Fr 17:00 CEST — vor 18:30 UTC / 20:30 CEST Freitag
+    - cron: '0 8 * * 6'    # Sa 10:00 CEST — vor 13:00 UTC / 15:00 CEST Samstag
+    - cron: '0 8 * * 0'    # So 10:00 CEST — vor 11:30 UTC / 13:30 CEST Sonntag
+  workflow_dispatch:
+
+concurrency:
+  group: bundesliga2_scan
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - run: pip install -r requirements.txt
+
+      - name: Run 2.BL scan
+        id: scan
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
+          SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUB: ${{ secrets.VAPID_SUB }}
+        run: |
+          # NIE --auto-log setzen (feedback_no_auto_log). User bestätigt via PWA.
+          if ! python scripts/bundesliga2_scan.py --bankroll 100; then
+            echo "[bl2_scan] retry in 60s"
+            sleep 60
+            python scripts/bundesliga2_scan.py --bankroll 100
+          fi
+          echo "status=ok" >> $GITHUB_OUTPUT
+
+      - name: Commit results
+        if: always()
+        run: |
+          git config user.name "SportsBrain Bot"
+          git config user.email "bot@sportsbrain"
+          git add results/scans/bl2_scan_*.md || true
+          # Kritisch: -f für gitignored Health + Cache (feedback_gitignore_cache_files)
+          git add -f results/health/bundesliga2_scan.json || true
+          git add -f data/cache/signal_history.jsonl || true
+          git diff --staged --quiet || git commit -m "auto: bl2 scan $(date -u +%Y-%m-%dT%H:%M)"
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase --autostash --strategy-option=theirs origin/main \
+              || { git rebase --abort 2>/dev/null || true; echo "[push] rebase conflict attempt $i"; }
+            git push origin main && exit 0
+            sleep $((RANDOM % 20 + 10))
+          done
+          exit 1

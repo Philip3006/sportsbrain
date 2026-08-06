@@ -1,0 +1,63 @@
+name: 2.BL Retrain (DC + Elo)
+
+on:
+  schedule:
+    - cron: '0 5 * * *'   # täglich 05:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: bundesliga2_retrain
+  cancel-in-progress: false
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - run: pip install -r requirements.txt
+
+      - name: Refresh universe (D2 CSVs)
+        run: python scripts/build_bundesliga2_universe.py
+
+      - name: Refresh current squad
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python scripts/current_bundesliga2_squad.py
+
+      - name: Retrain Elo
+        run: python scripts/train_elo_bundesliga2.py
+
+      - name: Retrain DC
+        run: python scripts/train_dc_bundesliga2.py
+
+      - name: Health snapshot
+        if: always()
+        run: |
+          STATUS="${{ job.status == 'success' && 'ok' || 'error' }}"
+          python -m src.monitoring.health_writer --job bundesliga2_retrain --status "$STATUS" --exit-code 0
+
+      - name: Commit artifacts
+        if: always()
+        run: |
+          git config user.name "SportsBrain Bot"
+          git config user.email "bot@sportsbrain"
+          git add models/dc_bundesliga2/ || true
+          git add -f data/cache/bundesliga2_universe.json data/cache/bundesliga2_current_teams.json \
+            data/cache/elo_ratings_bl2.json data/cache/elo_ratings.json || true
+          git add -f results/health/bundesliga2_retrain.json || true
+          git diff --staged --quiet || git commit -m "auto: bl2 retrain $(date -u +%Y-%m-%d)"
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase --autostash --strategy-option=theirs origin/main \
+              || { git rebase --abort 2>/dev/null || true; }
+            git push origin main && exit 0
+            sleep $((RANDOM % 20 + 10))
+          done
+          exit 1

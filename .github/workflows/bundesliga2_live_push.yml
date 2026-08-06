@@ -1,0 +1,55 @@
+name: 2.BL Live-Push (Anpfiff/Tor/HZ/Abpfiff)
+
+on:
+  schedule:
+    # Alle 2 Min in typischen Spieltag-Fenstern (CEST → UTC):
+    # Fr 20:30 CEST = 18:30 UTC bis 22:30 UTC
+    # Sa 13:00 CEST = 11:00 UTC bis 22:30 UTC (bis Late-Game 20:30 CEST)
+    # So 13:30 CEST = 11:30 UTC bis 22:00 UTC
+    - cron: '*/2 18-22 * * 5'
+    - cron: '*/2 11-22 * * 6'
+    - cron: '*/2 11-22 * * 0'
+  workflow_dispatch:
+
+concurrency:
+  group: bundesliga2_live_push
+  cancel-in-progress: true   # neuer Poll überholt alten
+
+jobs:
+  live-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - run: pip install -r requirements.txt
+
+      - name: Poll ESPN + push
+        env:
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUB: ${{ secrets.VAPID_SUB }}
+        run: |
+          python scripts/bundesliga2_live_push.py
+
+      - name: Commit cache + health
+        if: always()
+        run: |
+          git config user.name "SportsBrain Bot"
+          git config user.email "bot@sportsbrain"
+          git add docs/data/bundesliga2_live_scores.json || true
+          git add -f data/cache/bundesliga2_live_scores.json || true
+          git add -f results/health/bundesliga2_live_push.json || true
+          git diff --staged --quiet || git commit -m "auto: bl2 live $(date -u +%H:%M)"
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase --autostash --strategy-option=theirs origin/main \
+              || { git rebase --abort 2>/dev/null || true; }
+            git push origin main && exit 0
+            sleep $((RANDOM % 10 + 5))
+          done
+          exit 1

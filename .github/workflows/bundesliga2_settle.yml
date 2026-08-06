@@ -1,0 +1,57 @@
+name: 2.BL Settlement
+
+on:
+  schedule:
+    # Nach typischen 2.BL-Kickoff-Slots (Fr 20:30 / Sa 13:00 + 20:30 / So 13:30 CEST)
+    - cron: '30 21 * * 5'   # Fr 23:30 CEST
+    - cron: '30 14 * * 6'   # Sa 16:30 CEST
+    - cron: '30 21 * * 6'   # Sa 23:30 CEST
+    - cron: '45 14 * * 0'   # So 16:45 CEST
+    - cron: '0 21 * * 0'    # So 23:00 CEST
+  workflow_dispatch:
+
+concurrency:
+  group: bundesliga2_settle
+  cancel-in-progress: false
+
+jobs:
+  settle:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - run: pip install -r requirements.txt
+
+      - name: Run settle
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUB: ${{ secrets.VAPID_SUB }}
+        run: |
+          # settle_from_results routet per-league via results_router:
+          # bl2-Zeilen → football-data D2 CSV; wm2026-Zeilen → martj42.
+          python -c "from src.betting.ledger import settle_from_results; n=settle_from_results(); print(f'settled: {n}')"
+          python -m src.monitoring.health_writer --job bundesliga2_settle --status ok --exit-code 0
+
+      - name: Commit ledger changes
+        if: always()
+        run: |
+          git config user.name "SportsBrain Bot"
+          git config user.email "bot@sportsbrain"
+          git add results/ledger_*.csv || true
+          git add -f results/health/bundesliga2_settle.json || true
+          git diff --staged --quiet || git commit -m "auto: bl2 settle $(date -u +%Y-%m-%dT%H:%M)"
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase --autostash --strategy-option=theirs origin/main \
+              || { git rebase --abort 2>/dev/null || true; }
+            git push origin main && exit 0
+            sleep $((RANDOM % 20 + 10))
+          done
+          exit 1
