@@ -1021,7 +1021,26 @@ def write_signals_json(
         model_tips_data = existing.get("model_tips", {})
 
     if model_evals is not None:
+        # Neue Einträge überschreiben alte (Runden-Fortschritt: alte Paarungen raus).
+        # Bestehende Einträge bleiben nur wenn NICHT in neuen → verhindert stale Vorrundenmatches.
         model_evals_data = {**existing.get("model_evals", {}), **model_evals}
+        # Stale-Pruning: Einträge entfernen deren Spieler-Paar komplett durch neue ersetzt wurde.
+        # Erkennung: Ein Spieler taucht in einem neuen Eintrag auf, aber mit anderem Gegner.
+        new_players: set[str] = set()
+        for key in model_evals:
+            parts = key.split(" vs ", 1)
+            if len(parts) == 2:
+                new_players.add(parts[0])
+                new_players.add(parts[1])
+        pruned: dict = {}
+        for key, val in model_evals_data.items():
+            parts = key.split(" vs ", 1)
+            if len(parts) == 2 and key not in model_evals:
+                # Alter Eintrag: behalten falls KEINER der Spieler in einem neuen Eintrag vorkommt.
+                if parts[0] in new_players or parts[1] in new_players:
+                    continue  # Spieler hat neue Paarung → alten Eintrag verwerfen
+            pruned[key] = val
+        model_evals_data = pruned
     else:
         model_evals_data = existing.get("model_evals", {})
 
