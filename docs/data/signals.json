@@ -1,13 +1,7 @@
 {
-<<<<<<< Updated upstream
   "updated": "2026-08-06T14:06:18Z",
   "build_info": {
     "sha": "2e377ae",
-=======
-  "updated": "2026-08-06T12:29:28Z",
-  "build_info": {
-    "sha": "9c9de15",
->>>>>>> Stashed changes
     "date": "2026-08-06"
   },
   "meta": {
@@ -8120,11 +8114,7 @@
     }
   },
   "tennis_stats": {
-<<<<<<< Updated upstream
     "updated": "2026-08-06T14:06:18Z",
-=======
-    "updated": "2026-08-06T12:29:28Z",
->>>>>>> Stashed changes
     "active_tournaments": [
       {
         "slug": "canadian_open_atp",
