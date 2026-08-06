@@ -178,4 +178,23 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    from time import monotonic
+    _t0 = monotonic()
+    try:
+        code = main()
+        try:
+            from src.monitoring.health_writer import write_health
+            write_health("bundesliga2_live_push", "ok",
+                         duration_s=monotonic() - _t0, exit_code=code)
+        except Exception:
+            pass
+        sys.exit(code)
+    except Exception as _exc:
+        try:
+            from src.monitoring.health_writer import write_health
+            write_health("bundesliga2_live_push", "error",
+                         duration_s=monotonic() - _t0,
+                         error=str(_exc)[:200], exit_code=1)
+        except Exception:
+            pass
+        raise

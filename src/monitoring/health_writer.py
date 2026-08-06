@@ -42,6 +42,12 @@ JOB_SCHEDULE: dict[str, dict[str, int | str]] = {
     "tennis_settle":           {"interval_s": 2 * 3600,   "grace_s": 3600,      "cadence": "alle 2h 06-22 UTC"},
     "tennis_closing_odds":     {"interval_s": 1800,       "grace_s": 900,       "cadence": "alle 30 Min"},
     "tennis_retrain":          {"interval_s": 7 * 86400,  "grace_s": 86400,     "cadence": "wöchentlich Mo 03:00 UTC"},
+    # 2. Bundesliga (Phase F, 2026-08-06 — Saisonstart Wochenende)
+    "bundesliga2_scan":        {"interval_s": 12 * 3600,  "grace_s": 3600,      "cadence": "2×/Tag + prä-Spieltag"},
+    "bundesliga2_settle":      {"interval_s": 3 * 3600,   "grace_s": 3600,      "cadence": "alle 3h nach Spielen"},
+    "bundesliga2_live_push":   {"interval_s": 120,        "grace_s": 300,       "cadence": "alle 2 Min im Spieltag-Fenster"},
+    "bundesliga2_retrain":     {"interval_s": 24 * 3600,  "grace_s": 4 * 3600,  "cadence": "täglich 05:00 UTC"},
+    "bundesliga2_closing_odds": {"interval_s": 900,       "grace_s": 900,       "cadence": "15 Min vor Kickoff"},
 }
 
 

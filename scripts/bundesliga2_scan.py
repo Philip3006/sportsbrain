@@ -278,6 +278,20 @@ def _scan_match(
     return signals, meta
 
 
+def _write_health(status: str, duration_s: float, error: str = "", fallback: str = "") -> None:
+    """Wrapper: schreibt results/health/bundesliga2_scan.json — auto_heal + Dashboard sehen es."""
+    try:
+        from src.monitoring.health_writer import write_health
+        write_health(
+            "bundesliga2_scan", status,
+            duration_s=duration_s,
+            error=error or None,
+            fallback_used=fallback or None,
+        )
+    except Exception as exc:
+        print(f"  [health] write failed: {exc}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--bankroll", type=float, default=100.0)
@@ -285,6 +299,9 @@ def main() -> None:
     ap.add_argument("--auto-log", action="store_true", help="schreibt Signale direkt in Ledger")
     ap.add_argument("--min-edge", type=float, default=None, help="Override min_edge aus Registry")
     args = ap.parse_args()
+
+    from time import monotonic
+    _t0 = monotonic()
 
     cfg = league_config(SPORT_KEY) or {}
     min_edge = args.min_edge if args.min_edge is not None else cfg.get("min_edge", MIN_EDGE)
@@ -349,10 +366,39 @@ def main() -> None:
         n = append_bets(selected, args.bankroll, LEDGER_PATH)
         print(f"Ledger: {n} neue Zeilen (league=bl2)")
 
+    # Signal-Archive I9 (von Tag 1 integriert — Memory feedback_signal_archive_from_start)
+    try:
+        from src.scanner.output import archive_signals
+        selected_ids = {(s.match_id, s.market) for s in selected}
+        scan_ts = datetime.now(timezone.utc).isoformat()
+        meta_by_match = {meta["match_id"]: {"league": LEAGUE_SHORT, "tournament": "2. Bundesliga"}
+                         for meta in metas if "match_id" in meta}
+        n_arch = archive_signals(
+            all_signals, selected_ids, scan_ts,
+            sport="football", meta_by_match=meta_by_match,
+        )
+        print(f"Signal-Archive: {n_arch} neue Zeilen")
+    except Exception as exc:
+        print(f"  [signal_archive] failed: {exc}")
+
     summary = ledger_summary(LEDGER_PATH)
     print(f"\nLedger-Summary: open={summary['n_open']} settled={summary['n_won']+summary['n_lost']} "
           f"ROI={summary['roi_pct']:.1f}%")
 
+    # Health-Snapshot
+    duration = monotonic() - _t0
+    fallback = "mock" if args.mock else ""
+    _write_health("ok", duration, fallback=fallback)
+
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as _exc:
+        # Fail-safe: schreibt error-Snapshot damit health-Dashboard den Ausfall sieht
+        try:
+            from src.monitoring.health_writer import write_health
+            write_health("bundesliga2_scan", "error", error=str(_exc)[:200], exit_code=1)
+        except Exception:
+            pass
+        raise
