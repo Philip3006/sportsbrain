@@ -757,11 +757,23 @@ function renderHome() {
       : m.startsWith('first_set') ? 'first_set'
       : m;
 
-    // Composite EV-Score: HIGH-Confidence bekommt 30% Bonus im Ranking
-    const _evScore = s => s.ev_pct * (s.confidence === 'HIGH' ? 1.30 : s.confidence === 'MEDIUM' ? 1.0 : 0.85);
+    // Composite EV-Score: Markt-historisch gewichtet (ah+1.5_b +80%, away >2.5 -70%, EV 15-20% non-AH -60%)
+    const _evScore = s => {
+      const m = s.market || '';
+      const ev = s.ev_pct || 0;
+      const odds = s.decimal_odds || 2.0;
+      // Ausschlüsse: negative Score → wird nicht in Top-Picks aufgenommen
+      if ((m === 'away' || m === 'home') && (ev < 25 || odds > 2.5)) return -1;
+      if (ev >= 15 && ev < 20 && m !== 'ah+1.5_b' && m !== 'ah-1.5_a') return ev * 0.4;
+      let score = ev;
+      if (m === 'ah+1.5_b' || m === 'ah-1.5_a') score *= 1.8;
+      else if (m.startsWith('o/u_games') && odds >= 1.6 && odds <= 2.2) score *= 1.1;
+      if (s.confidence === 'HIGH') score *= 1.30;
+      return score;
+    };
 
     const candidates = (_signals || [])
-      .filter(s => s.ev_pct >= 3)
+      .filter(s => _evScore(s) > 0)
       .filter(s => {
         if (!s.kickoff) return false;
         const ko = new Date(s.kickoff).getTime();
