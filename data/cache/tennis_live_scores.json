@@ -73,7 +73,7 @@
     "suspended_push_sent": false
   },
   "_meta": {
-    "heartbeat_at": "2026-08-06T00:46:58Z",
+    "heartbeat_at": "2026-08-06T00:49:07Z",
     "reason": "1 live matches, 0 pushes"
   },
   "alexdeminaur|jamesduckworth": {
@@ -157,7 +157,7 @@
     "sets": [
       [
         1,
-        0
+        1
       ]
     ],
     "sets_won": [
@@ -166,7 +166,7 @@
     ],
     "status": "in_progress",
     "resume_time": null,
-    "updated": "2026-08-06T00:46:58Z",
+    "updated": "2026-08-06T00:49:07Z",
     "match_start_push_sent": true,
     "suspended_push_sent": false
   }
