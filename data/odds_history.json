@@ -1692,7 +1692,7 @@
     }
   },
   {
-    "ts": "2026-08-06T05:22:08Z",
+    "ts": "2026-08-06T12:29:27Z",
     "date": "2026-08-06",
     "odds": {
       "Alexei Popyrin vs Roman Andres Burruchaga": {
@@ -2026,59 +2026,59 @@
         "away": 1.21
       },
       "Jiri Lehecka vs Alexander Blockx": {
-        "home": 1.57,
+        "home": 2.12,
         "draw": null,
-        "away": 2.75
+        "away": 1.73
       },
       "Luciano Darderi vs Juncheng Shang": {
-        "home": 2.06,
+        "home": 2.11,
         "draw": null,
-        "away": 1.95
+        "away": 1.66
       },
       "Zizou Bergs vs Ben Shelton": {
-        "home": 4.0,
+        "home": 34.54,
         "draw": null,
-        "away": 1.32
+        "away": 1.01
       },
       "Mariano Navone vs Arthur Fils": {
-        "home": 3.28,
+        "home": 2.55,
         "draw": null,
-        "away": 1.4
+        "away": 1.45
       },
       "Cameron Norrie vs Alex de Minaur": {
-        "home": 2.96,
-        "draw": null,
-        "away": 1.48
-      },
-      "Yannick Hanfmann vs Nuno Borges": {
-        "home": 2.32,
-        "draw": null,
-        "away": 1.7
-      },
-      "Casper Ruud vs Joao Fonseca": {
-        "home": 2.08,
-        "draw": null,
-        "away": 1.87
-      },
-      "Talia Gibson vs Ekaterina Alexandrova": {
         "home": 2.45,
         "draw": null,
-        "away": 1.7
+        "away": 1.47
+      },
+      "Yannick Hanfmann vs Nuno Borges": {
+        "home": 2.3,
+        "draw": null,
+        "away": 1.55
+      },
+      "Casper Ruud vs Joao Fonseca": {
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
+      },
+      "Talia Gibson vs Ekaterina Alexandrova": {
+        "home": 2.22,
+        "draw": null,
+        "away": 1.67
       },
       "Anna Kalinskaya vs Diana Shnaider": {
-        "home": 2.24,
+        "home": 2.12,
         "draw": null,
-        "away": 1.81
+        "away": 1.73
       },
       "Viktorija Golubic vs Iga Swiatek": {
-        "home": 12.5,
+        "home": 3.46,
         "draw": null,
-        "away": 1.09
+        "away": 1.26
       },
       "Jessica Pegula vs Kamilla Rakhimova": {
-        "home": 1.16,
+        "home": 1.01,
         "draw": null,
-        "away": 7.2
+        "away": 47.62
       },
       "Marta Kostyuk vs Madison Keys": {
         "home": 2.14,
@@ -2091,9 +2091,9 @@
         "away": 1.01
       },
       "Aryna Sabalenka vs Shuai Zhang": {
-        "home": 1.01,
+        "home": 1.15,
         "draw": null,
-        "away": 47.62
+        "away": 4.89
       },
       "Elina Svitolina vs Anastasia Potapova": {
         "home": 1.57,
@@ -2115,10 +2115,75 @@
         "draw": null,
         "away": 1.01
       },
-      "Titouan Droguet vs Jaime Faria": {
-        "home": 2.42,
+      "Rafael Jodar vs Lorenzo Musetti": {
+        "home": 2.22,
+        "draw": null,
+        "away": 1.67
+      },
+      "Frances Tiafoe vs Arthur Rinderknech": {
+        "home": 1.57,
+        "draw": null,
+        "away": 2.41
+      },
+      "Alexei Popyrin vs Thiago Agustin Tirante": {
+        "home": 2.22,
+        "draw": null,
+        "away": 1.67
+      },
+      "Elise Mertens vs Naomi Osaka": {
+        "home": 2.5,
+        "draw": null,
+        "away": 1.45
+      },
+      "Maya Joint vs Liudmila Samsonova": {
+        "home": 2.22,
+        "draw": null,
+        "away": 1.67
+      },
+      "Brandon Nakashima vs Titouan Droguet": {
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
+      },
+      "Daniel Merida Aguilar vs Alex Michelsen": {
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
+      },
+      "Botic van de Zandschulp vs Hubert Hurkacz": {
+        "home": 2.2,
         "draw": null,
         "away": 1.68
+      },
+      "Terence Atmane vs Jakub Mensik": {
+        "home": 47.62,
+        "draw": null,
+        "away": 1.01
+      },
+      "Learner Tien vs Tommy Paul": {
+        "home": 2.18,
+        "draw": null,
+        "away": 1.69
+      },
+      "Tallon Griekspoor vs Matteo Arnaldi": {
+        "home": 2.1,
+        "draw": null,
+        "away": 1.72
+      },
+      "Caty McNally vs Alexandra Eala": {
+        "home": 47.62,
+        "draw": null,
+        "away": 1.01
+      },
+      "Maria Sakkari vs Coco Gauff": {
+        "home": 2.64,
+        "draw": null,
+        "away": 1.42
+      },
+      "Mirra Andreeva vs Leylah Fernandez": {
+        "home": 1.59,
+        "draw": null,
+        "away": 2.38
       }
     }
   }
