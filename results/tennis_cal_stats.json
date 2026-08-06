@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-05T07:45:59.365782+00:00",
-  "n_settled_total": 169,
+  "generated_at": "2026-08-06T07:45:33.778962+00:00",
+  "n_settled_total": 320,
   "match_winner": {
-    "n": 32,
-    "brier": 0.27512,
-    "log_loss": 0.7467,
-    "ece": 0.06438,
-    "win_rate": 0.4688,
+    "n": 64,
+    "brier": 0.2367,
+    "log_loss": 0.64922,
+    "ece": 0.06178,
+    "win_rate": 0.5156,
     "reliability_curve": [
       {
         "bin_lo": 0.2,
         "bin_hi": 0.4,
-        "n": 2,
-        "mean_pred": 0.3631,
+        "n": 4,
+        "mean_pred": 0.3773,
         "mean_actual": 0.5
       },
       {
         "bin_lo": 0.4,
         "bin_hi": 0.6,
-        "n": 25,
-        "mean_pred": 0.499,
-        "mean_actual": 0.48
+        "n": 48,
+        "mean_pred": 0.5002,
+        "mean_actual": 0.4583
       },
       {
         "bin_lo": 0.6,
@@ -28,48 +28,57 @@
         "n": 5,
         "mean_pred": 0.6623,
         "mean_actual": 0.4
+      },
+      {
+        "bin_lo": 0.8,
+        "bin_hi": 1.0,
+        "n": 7,
+        "mean_pred": 0.98,
+        "mean_actual": 1.0
       }
     ]
   },
   "all_markets": {
-    "n": 169,
-    "brier": 0.23418,
-    "log_loss": 0.6603,
-    "ece": 0.0162,
-    "win_rate": 0.6036,
+    "n": 320,
+    "brier": 0.23535,
+    "log_loss": 0.66036,
+    "ece": 0.03294,
+    "win_rate": 0.5906,
     "reliability_curve": [
       {
         "bin_lo": 0.2,
         "bin_hi": 0.4,
-        "n": 2,
-        "mean_pred": 0.3631,
+        "n": 4,
+        "mean_pred": 0.3773,
         "mean_actual": 0.5
       },
       {
         "bin_lo": 0.4,
         "bin_hi": 0.6,
-        "n": 67,
-        "mean_pred": 0.54,
-        "mean_actual": 0.5075
+        "n": 129,
+        "mean_pred": 0.5405,
+        "mean_actual": 0.5194
       },
       {
         "bin_lo": 0.6,
         "bin_hi": 0.8,
-        "n": 99,
-        "mean_pred": 0.6655,
-        "mean_actual": 0.6667
+        "n": 175,
+        "mean_pred": 0.6647,
+        "mean_actual": 0.6229
       },
       {
         "bin_lo": 0.8,
         "bin_hi": 1.0,
-        "n": 1,
-        "mean_pred": 0.8281,
-        "mean_actual": 1.0
+        "n": 12,
+        "mean_pred": 0.9169,
+        "mean_actual": 0.9167
       }
     ]
   },
   "meta_calibrator": {
-    "fitted": false,
-    "n_samples": 0
+    "fitted": true,
+    "n_samples": 64,
+    "brier_before": 0.2367,
+    "brier_after": 0.21912
   }
 }
