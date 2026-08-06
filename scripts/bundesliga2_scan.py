@@ -316,6 +316,32 @@ def main() -> None:
     cfg = league_config(SPORT_KEY) or {}
     min_edge = args.min_edge if args.min_edge is not None else cfg.get("min_edge", MIN_EDGE)
 
+    # Gate.json: min_edge_override + away_market_disabled_until_n_settled
+    _gate_path = MODELS_DIR / "lgbm_bundesliga2" / "gate.json"
+    _away_disabled = False
+    if _gate_path.exists():
+        try:
+            import json as _json
+            _gate = _json.loads(_gate_path.read_text())
+            if "min_edge_override" in _gate and args.min_edge is None:
+                min_edge = float(_gate["min_edge_override"])
+            _away_thresh = int(_gate.get("away_market_disabled_until_n_settled", 0))
+            if _away_thresh > 0:
+                import csv as _csv2
+                _n_settled = 0
+                try:
+                    with open(LEDGER_PATH, newline="") as _f2:
+                        for _row2 in _csv2.DictReader(_f2):
+                            if _row2.get("status") in ("won", "lost") and (_row2.get("league") or "").lower() in ("bl2", "2. bundesliga"):
+                                _n_settled += 1
+                except Exception:
+                    pass
+                _away_disabled = _n_settled < _away_thresh
+                if _away_disabled:
+                    print(f"  Away-Market gesperrt bis {_away_thresh} settled Bets (aktuell: {_n_settled})")
+        except Exception as _e:
+            print(f"  gate.json Warnung: {_e}")
+
     print(f"=== 2. Bundesliga Scan | bankroll={args.bankroll:.0f} | min_edge={min_edge:.1%} ===")
     params = _load_dc_params()
     elo = _load_elo()
@@ -337,6 +363,10 @@ def main() -> None:
         signals, meta = _scan_match(m, params, elo, universe, args.bankroll, min_edge)
         all_signals.extend(signals)
         metas.append(meta)
+
+    # Away-Market-Lock: entfernt Away-Signale solange Schwelle nicht erreicht
+    if _away_disabled:
+        all_signals = [s for s in all_signals if s.market != "away"]
 
     all_signals.sort(key=lambda s: s.ev, reverse=True)
     actionable = [s for s in all_signals if not s.no_bet_flag]
