@@ -561,15 +561,86 @@ def _load_open_bet_keys(bankroll: float = 100.0) -> set[tuple[str, str]]:
         return set()
 
 
+def _shortlist_score(s) -> float:
+    """Gewichteter Score für Top-Picks-Ranking.
+
+    Basiert auf historischer Markt-Performance (signal_history.jsonl):
+      ah+1.5_b        → 81% WR, +49% ROI  (Faktor 1.8)
+      o/u_games 1.6-2.2 → solide          (Faktor 1.1)
+      away odds>2.5   → 51% WR, +3% ROI   (Faktor 0.3)
+      EV 15-20% non-AH → -7.8% ROI        (Faktor 0.4)
+      HIGH conf        → +30% Bonus
+    """
+    ev = s.ev * 100
+    mkt = s.market
+    odds = s.decimal_odds
+
+    # Absolute Ausschlüsse
+    if mkt in ("away", "home") and (ev < 25 or odds > 2.5):
+        return -1.0
+    if 15 <= ev < 20 and mkt not in ("ah+1.5_b", "ah-1.5_a"):
+        return -1.0
+
+    score = ev
+    if mkt in ("ah+1.5_b", "ah-1.5_a"):
+        score *= 1.8
+    elif mkt.startswith("o/u_games") and 1.6 <= odds <= 2.2:
+        score *= 1.1
+
+    if s.confidence == "HIGH":
+        score *= 1.3
+    return score
+
+
+def _build_shortlist(all_signals: list, open_keys: set, max_n: int = 5) -> list:
+    """Wählt die besten max_n Signals nach _shortlist_score, je 1 Signal pro Match."""
+    scored = []
+    for s in all_signals:
+        if (s.match_id, s.market) in open_keys:
+            continue
+        sc = _shortlist_score(s)
+        if sc > 0:
+            scored.append((sc, s))
+    scored.sort(key=lambda x: -x[0])
+
+    seen_matches: set[str] = set()
+    picks = []
+    for _, s in scored:
+        if len(picks) >= max_n:
+            break
+        if s.match_id in seen_matches:
+            continue
+        seen_matches.add(s.match_id)
+        picks.append(s)
+    return picks
+
+
 def format_scan_report(
     per_tournament: dict[str, dict],
     scan_date: str,
 ) -> str:
     open_keys = _load_open_bet_keys()
+    all_signals = [s for v in per_tournament.values() for s in v["signals"]]
+
     lines = [f"# Tennis Scan {scan_date}\n"]
     total_sigs = sum(len(v["signals"]) for v in per_tournament.values())
     lines += [f"**Aktive Turniere:** {len(per_tournament)} · "
               f"**Signals total:** {total_sigs}\n"]
+
+    # TOP-PICKS Shortlist
+    shortlist = _build_shortlist(all_signals, open_keys, max_n=5)
+    if shortlist:
+        lines.append("## ⭐ TOP-PICKS — nur diese spielen\n")
+        lines.append("> Filter: EV-gewichtet · Markt-historisch · max. 1 Signal pro Match\n")
+        for s in shortlist:
+            ah_note = " _(SET handicap)_" if s.market in ("ah-1.5_a", "ah+1.5_b") else ""
+            conf_icon = "🟢" if s.confidence == "HIGH" else "🟡"
+            lines += [
+                f"- {conf_icon} **{s.home} vs {s.away}** · {_market_label(s.market, s.home, s.away)}{ah_note}",
+                f"  Quote {s.decimal_odds:.2f} · EV +{s.ev*100:.1f}% · Stake {s.stake_eur:.2f}€ · {s.confidence}",
+            ]
+        lines.append("\n---\n")
+
     for slug, info in per_tournament.items():
         t: Tournament = info["tournament"]
         signals = info["signals"]
@@ -587,8 +658,10 @@ def format_scan_report(
         for s in sorted(signals, key=lambda x: x.ev, reverse=True):
             ah_note = " _(Satz-AH = SET handicap)_" if s.market in ("ah-1.5_a", "ah+1.5_b") else ""
             dup_note = " ⚠️ **bereits offen**" if (s.match_id, s.market) in open_keys else ""
+            in_shortlist = any(s.match_id == p.match_id and s.market == p.market for p in shortlist)
+            star = " ⭐" if in_shortlist else ""
             lines += [
-                f"- {tour_tag} **{s.home} vs {s.away}** · {_market_label(s.market, s.home, s.away)}{ah_note}{dup_note}",
+                f"- {tour_tag} **{s.home} vs {s.away}** · {_market_label(s.market, s.home, s.away)}{ah_note}{dup_note}{star}",
                 f"  Quote {s.decimal_odds:.2f} · Modell {s.model_prob*100:.1f}% · "
                 f"EV +{s.ev*100:.1f}% · Stake {s.stake_eur:.2f}€ · {s.confidence}",
             ]
