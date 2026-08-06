@@ -1243,7 +1243,7 @@ function renderSport(sport) {
     }
 
     // Phase 4d: Coverage-Report Footer
-    const _tSigs = tennisSignals.length;
+    const _tSigs = allSigs.length;
     const _tWithOdds = tennisSchedule.filter(g => g.odds_home > 1 || g.odds_away > 1).length + _tSigs;
     const _tTotal = tennisSchedule.length + sortedGroups.length;
     const _updTs = _tennisStats?.updated ? ` · ${fmtKickoff(_tennisStats.updated)}` : '';
