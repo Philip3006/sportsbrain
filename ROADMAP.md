@@ -1,7 +1,7 @@
 # SportsBrain — ROADMAP
 
 > **Lebende Quelle der Wahrheit** für alle Audit-Befunde, Entscheidungen und geplanten Arbeiten.
-> Aktualisiert: 2026-06-22
+> Aktualisiert: 2026-08-06 (2.BL Full-Stack → Sektion J5)
 
 ---
 
@@ -721,6 +721,87 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Was**: WM-CONMEBOL-Outcomes vs. Confederation-Filter-Threshold. Wenn Bias aufgelöst: Filter relaxen.
 - **Impact/Aufwand/Risiko**: ⚪ · 🟡 · 🟢
 - **Dateien**: `src/betting/value_detector.py`, Backtest
+
+---
+
+## 🟢 J5. + NEU 2. Bundesliga Full-Stack (2026-08-06, live ab Spieltag 1)
+
+> **Quelle**: User-Request 2026-08-06 „die 2. bundesliga startet am wochendende ich brauche unbedingt ein modell dafür, [...] mit allen learnings [...] die wir von tennis und der wm bereits gemacht haben". Plan-Datei: `~/.claude/plans/mighty-wishing-simon.md`.
+>
+> **Rollout-Modus** (User-Entscheid): direkt LIVE ab Tag 1 mit min_edge=6% (statt WM-Standard 3%) als Vorsicht. Alle 4 Markt-Gruppen (1X2 / AH+O/U / BTTS+DC / Scorer+goals_2_4) aktiv, voller Live-Push (Anpfiff/Tor/HZ/Abpfiff/Settlement).
+>
+> **Learnings portiert**: Registry statt Hardcodes, Elo-Warmstart über 10 Saisons (Promo/Relegation-aware), Unknown-Team-Gate (analog Tennis-Unknown-Player-Bug), Coverage-Gate <3 Bookies, Signal-Archive I9 von Tag 1, git add -f für gitignored (Memory feedback_gitignore_cache_files), Health-Snapshots pro Job, kein --auto-log (Memory feedback_no_auto_log).
+
+### ✅ J5-A + NEU League-Registry + Ledger-Refactor — P0 (erledigt 2026-08-06)
+- **Was**: `LEAGUE_REGISTRY` dict in `src/config.py` ersetzt hardcoded WM-Date-Guards. `settle_from_results` routet via `src/data/results_router.py` per-league. Ledger-Schema um `league`-Kolumne erweitert (Legacy-Backfill 'wm2026'). BetSignal.league-Field.
+- **Warum**: Ohne generisches Fundament kein Multi-Liga-Betrieb möglich. WM-Codepfade blieben unangetastet (Backward-Compat).
+- **Dateien**: `src/config.py`, `src/scanner/prep.py`, `src/scanner/daily_scan.py`, `src/betting/ledger.py`, `src/betting/value_detector.py`, `src/data/results_router.py`, `src/data/football_data.py`.
+- **Verifikation**: 72 bestehende Ledger-Tests + 85 Scanner-Tests grün. Commit `915df91e`.
+
+### ✅ J5-B + NEU Historische Daten 10 Saisons + Elo-Warmstart — P0 (erledigt 2026-08-06)
+- **Was**: 3060 Matches über 10 Saisons (16/17–25/26) via football-data.co.uk D2. 36 Teams im Universe, davon 18 aktiv für 26/27. Elo trainiert (k=20 Club-Standard) → Range 1349–1661 (Top: St Pauli, Hamburg, Heidenheim / Bottom: Aue, Regensburg).
+- **Warum**: 2.BL rotiert jährlich ~5 Teams (Auf/Absteiger + Relegation) — Trainings-Universe muss alle Teams enthalten die in 10 Saisons je spielten.
+- **Dateien**: `scripts/build_bundesliga2_universe.py`, `current_bundesliga2_squad.py`, `train_elo_bundesliga2.py`, `data/cache/{bundesliga2_universe,bundesliga2_current_teams,elo_ratings_bl2,elo_ratings}.json`.
+- **Bonus-Fix**: cp1252-Fallback in `football_data.py` (Preußen Münster war mojibake). Sport-Key-Korrektur: `soccer_germany_bundesliga2` (nicht `_2_bundesliga` — der lieferte 404).
+- **Verifikation**: `python scripts/build_bundesliga2_universe.py` → 36 Teams, 0 unmapped. Commit `a9a19e45`.
+
+### ✅ J5-C + NEU Dixon-Coles-Fit — P0 (erledigt 2026-08-06)
+- **Was**: DC-Model auf 5 Saisons (2122–2526), Club-Config phi=0.0018, cluster=None, WC-boost=1.0 deaktiviert. 31 Teams, home_adv=0.22, rho=-0.06. Top-Attack: Hamburg 0.36, Werder 0.23, Elversberg 0.20.
+- **Warum**: DC + Elo als solide Baseline für Woche 1. LGBM/Stacker pragmatisch verschoben auf Post-Warmup (nach ~20 settled Signalen — dann Recalibrator mit korrektem won/lost/void-Label).
+- **Dateien**: `scripts/train_dc_bundesliga2.py`, `models/dc_bundesliga2/params_YYYYMMDD.pkl` + `params_latest.pkl` (symlink).
+- **Verifikation**: Fit ohne Bound-Hits, Sanity-Preview Top-5 stimmt mit Marktwerten überein. Commit `002662c4`.
+
+### ✅ J5-D + NEU Prematch-Scanner Multi-Markt — P0 (erledigt 2026-08-06)
+- **Was**: `scripts/bundesliga2_scan.py` End-to-End. DC-Prediction mit Elo-Adjustment, Value auf 1X2/AH-0.5/O/U 2.5/BTTS/goals_2_4. Unknown-Team-Gate (min 5 Matches), Coverage-Gate <3 Bookies → no_bet_flag. Portfolio-Cap. Report `results/scans/bl2_scan_YYYY-MM-DD.md`.
+- **Warum**: Kern-Loop für Signal-Generierung. min_edge=6% initial (Direct-Live-Vorsicht) — nach 30 settled Signalen greift CLV-Feedback-Loop.
+- **Dateien**: `scripts/bundesliga2_scan.py`, reuse `src/betting/value_detector.py`.
+- **Bekannte Gap**: TheOddsAPI-Quota momentan 0/Monat → Mock-Modus getestet, Real-API läuft ab Quota-Refresh. Torschützen-Markt braucht Player-xG (fbref) — Phase-2.
+- **Verifikation**: `python scripts/bundesliga2_scan.py --mock` liefert 7 Signale, LOW-Gate triggert korrekt. Commit `05f9016d`.
+
+### ✅ J5-E + NEU Live-Push (Anpfiff/Tor/HZ/Abpfiff) — P1 (erledigt 2026-08-06)
+- **Was**: `src/data/football_live.py` generischer ESPN-Scoreboard-Loader (`ger.2` verifiziert), `scripts/bundesliga2_live_push.py` mit Cache-Diff → Push-Events. Skippt wenn keine offenen 2.BL-Bets (spart Requests). Idempotent via _pushed-Flags.
+- **Warum**: User-Wunsch „voller Tennis-Level". ESPN kostenlos, kein Quota-Verbrauch.
+- **Dateien**: `src/data/football_live.py`, `scripts/bundesliga2_live_push.py`.
+- **Verifikation**: ESPN liefert am 2026-08-06 bereits VfL Bochum vs Hertha (2.BL) ✓. Commit `c4137870`.
+
+### ✅ J5-F + NEU Health + Signal-Archive I9 — P1 (erledigt 2026-08-06)
+- **Was**: 5 neue Jobs in `JOB_SCHEDULE` (bundesliga2_scan/settle/live_push/retrain/closing_odds). write_health-Wrapping in Scanner + Push-Script. archive_signals schreibt neues `league`-Feld.
+- **Warum**: Aus Memory `feedback_signal_archive_from_start`: Tag 1 integriert, nicht nachträglich.
+- **Dateien**: `src/monitoring/health_writer.py`, `src/scanner/output.py`, Wrapper in bl2-Scripts.
+- **Verifikation**: `results/health/bundesliga2_scan.json` nach Test-Run vorhanden. Commit `5fb2312f`.
+
+### ✅ J5-G + NEU PWA League-Tagging — P1 (erledigt 2026-08-06)
+- **Was**: `_signal_to_dict` schreibt `league`-Feld. Top-Picks-Card zeigt „2.BL"-Badge neben ⚽. SW_VERSION-Bump für Cache-Bust (iOS Safari).
+- **Warum**: Ohne Badge Verwechslung 2.BL/WM/D1 im Football-Filter.
+- **Dateien**: `src/notifications/web_dashboard.py`, `docs/js/views.js`, `docs/sw.js`.
+- **Verschoben** (Phase-2 Polish): Filter-Chips [Alle][🎾][⚽ 2.BL][🌍 WM], League-Gruppierung im Live-Tab, dediziertes 2.BL-Section-Header. Signal-Flow ist Day-1-ready.
+- **Verifikation**: signals.json enthält `league`-Feld, PWA rendert Badge. Commit `9c0cde9f`.
+
+### ✅ J5-H + NEU Tests + Guards — P0 (erledigt 2026-08-06)
+- **Was**: 14 neue Tests in `tests/football/`: Registry-Contracts, D2/ESPN-Pipeline, Ledger-Routing + Legacy-Backfill. Alle 987 Tests grün.
+- **Warum**: Tennis-Learnings (Elo-Name-Norm-Bug, Sport-Key-Fehler, Coverage-Gate) als Guards ab Tag 1.
+- **Dateien**: `tests/football/test_bundesliga2_{registry,data_pipeline,ledger_routing}.py`.
+- **Verifikation**: `pytest tests/ -q` → 987 passed. Commit `572c23ee`.
+
+### ✅ J5-I + NEU GitHub Actions Cronjobs — P1 (erledigt 2026-08-06)
+- **Was**: 4 Workflows in `.github/workflows/`: `bundesliga2_scan.yml` (täglich + pre-Kickoff), `_settle.yml` (nach Kickoff-Slots), `_live_push.yml` (alle 2 Min im Spieltag-Fenster), `_retrain.yml` (täglich 05 UTC). Alle mit `git add -f` für Health+Cache (Memory feedback_gitignore_cache_files).
+- **Warum**: Autonomer Betrieb ohne manuellen Trigger. Kein --auto-log.
+- **Dateien**: `.github/workflows/bundesliga2_*.yml`.
+- **Verschoben**: `bundesliga2_closing_odds.yml` — dedizierter Closing-Odds-Snapshot-Script fehlt noch (Phase-2).
+- **Verifikation**: Workflows YAML-valid, dispatch-testbar. Commit `6eeaf054`.
+
+### 🟡 J5-BACKLOG. Phase-2 nach Spieltag 1 (P2)
+
+Konsolidierte Post-Launch-Items (kein Blocker für Live):
+1. **LGBM + Stacker**: Feature-Stack mit Elo-Diff / Rest-Days / Form / Market-Values (fbref-basiert), walk-forward CV, gate-passage, meta-calibrator ab 50 settled Signalen. Recalibrator-Label MUSS `won/lost/void` sein (nicht `correct/wrong` — Tennis-Bug 2026-08-04).
+2. **Multi-Source-Odds**: Portierung Tennis-Pattern (Betfair / Pinnacle / WebSearch-Fallback) für 2.BL. Aktuell nur TheOddsAPI EU.
+3. **Torschützen-Markt**: Player-xG via fbref-Backfill + Poisson × Rolling-Share.
+4. **PWA-Filter-Chips + Live-Tab-Gruppierung**: League-Filter, dedizierte 2.BL-Section im Live-Tab.
+5. **Closing-Odds-Snapshot**: dedizierter Script + `bundesliga2_closing_odds.yml` für CLV-Basis.
+6. **Team-Alias-Erweiterung**: nach ersten Live-Matches TheOddsAPI vs football-data Name-Deltas beobachten, TEAM_NAME_MAP erweitern (z.B. wenn OddsAPI „VfL Bochum" statt „Bochum" liefert).
+7. **In-Play-Odds-Drift-Alert**: analog `line_movement.py` aus Tennis, wenn Live-Odds >15% vs Prematch driften.
+
+**Aufwand-Schätzung**: 6-10h insgesamt, wird nach ~3 Spieltagen re-evaluiert.
 
 ---
 
