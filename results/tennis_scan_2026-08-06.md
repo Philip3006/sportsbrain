@@ -2,6 +2,19 @@
 
 **Aktive Turniere:** 2 · **Signals total:** 7
 
+## ⭐ TOP-PICKS — nur diese spielen
+
+> Filter: EV-gewichtet · Markt-historisch · max. 1 Signal pro Match
+
+- 🟢 **Maria Sakkari vs Coco Gauff** · Match Winner: Coco Gauff
+  Quote 1.42 · EV +39.2% · Stake 20.00€ · HIGH
+- 🟡 **Aryna Sabalenka vs Shuai Zhang** · Aryna Sabalenka Set AH -1.5 _(SET handicap)_
+  Quote 1.27 · EV +6.6% · Stake 9.00€ · MEDIUM
+- 🟡 **Viktorija Golubic vs Iga Swiatek** · Iga Swiatek Set AH +1.5 _(SET handicap)_
+  Quote 1.05 · EV +4.3% · Stake 7.00€ · MEDIUM
+
+---
+
 
 ## Canadian Open (ATP) · m1000 · 🔴 LIVE
 Surface: hard · Best of: 3 · Matches gescannt: 16
@@ -10,17 +23,17 @@ _Keine Value-Signals._
 ## Canadian Open (WTA) · wta1000 · 🔴 LIVE
 Surface: hard · Best of: 3 · Matches gescannt: 16
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
-- [WTA] **Maria Sakkari vs Coco Gauff** · Match Winner: Coco Gauff
-  Quote 1.41 · Modell 98.0% · EV +38.2% · Stake 20.00€ · HIGH
-- [WTA] **Aryna Sabalenka vs Shuai Zhang** · Match Winner: Aryna Sabalenka
-  Quote 1.25 · Modell 98.0% · EV +22.5% · Stake 20.00€ · HIGH
+- [WTA] **Maria Sakkari vs Coco Gauff** · Match Winner: Coco Gauff ⭐
+  Quote 1.42 · Modell 98.0% · EV +39.2% · Stake 20.00€ · HIGH
 - [WTA] **Viktorija Golubic vs Iga Swiatek** · Match Winner: Iga Swiatek
-  Quote 1.23 · Modell 98.0% · EV +20.5% · Stake 20.00€ · HIGH
+  Quote 1.25 · Modell 98.0% · EV +22.5% · Stake 20.00€ · HIGH
+- [WTA] **Aryna Sabalenka vs Shuai Zhang** · Match Winner: Aryna Sabalenka
+  Quote 1.15 · Modell 98.0% · EV +12.7% · Stake 15.50€ · HIGH
 - [WTA] **Elise Mertens vs Naomi Osaka** · Match Winner: Elise Mertens
-  Quote 2.49 · Modell 42.9% · EV +6.7% · Stake 8.00€ · MEDIUM
-- [WTA] **Aryna Sabalenka vs Shuai Zhang** · Aryna Sabalenka Set AH -1.5 _(Satz-AH = SET handicap)_
+  Quote 2.50 · Modell 42.9% · EV +7.1% · Stake 8.00€ · MEDIUM
+- [WTA] **Aryna Sabalenka vs Shuai Zhang** · Aryna Sabalenka Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 1.27 · Modell 83.9% · EV +6.6% · Stake 9.00€ · MEDIUM
-- [WTA] **Viktorija Golubic vs Iga Swiatek** · Iga Swiatek Set AH +1.5 _(Satz-AH = SET handicap)_
+- [WTA] **Viktorija Golubic vs Iga Swiatek** · Iga Swiatek Set AH +1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 1.05 · Modell 99.3% · EV +4.3% · Stake 7.00€ · MEDIUM
 - [WTA] **Maria Sakkari vs Coco Gauff** · Coco Gauff Set AH +1.5 _(Satz-AH = SET handicap)_
   Quote 1.05 · Modell 99.3% · EV +4.3% · Stake 7.00€ · MEDIUM
