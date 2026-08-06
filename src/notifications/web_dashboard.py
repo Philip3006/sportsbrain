@@ -273,6 +273,9 @@ def _signal_to_dict(
         d["tour"] = tour
     if kickoff:
         d["kickoff"] = kickoff
+    if getattr(s, "league", ""):
+        # 2.BL/WM/... Registry-Short → PWA-Gruppierung + Filter-Chips
+        d["league"] = s.league
     if tournament_meta:
         # J2-E: Tennis-Tournament-Meta für PWA-Gruppierung
         d["tournament"] = tournament_meta.get("name", "")
