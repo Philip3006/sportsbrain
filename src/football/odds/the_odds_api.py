@@ -39,6 +39,10 @@ def _parse_bookmakers(
     a_prices: list[float] = []
     over_prices: list[float] = []
     under_prices: list[float] = []
+    ou15_over_prices: list[float] = []
+    ou15_under_prices: list[float] = []
+    ou35_over_prices: list[float] = []
+    ou35_under_prices: list[float] = []
     ah_home_prices: list[float] = []
     ah_away_prices: list[float] = []
     btts_y_prices: list[float] = []
@@ -73,11 +77,27 @@ def _parse_bookmakers(
                     pt = float(o.get("point", 2.5))
                     if p <= 1.0:
                         continue
-                    if o.get("name") == "Over":
-                        over_prices.append(p)
-                        ou_line_seen.append(pt)
-                    elif o.get("name") == "Under":
-                        under_prices.append(p)
+                    name_o = o.get("name", "")
+                    if name_o == "Over":
+                        if abs(pt - 2.5) < 0.01:
+                            over_prices.append(p)
+                            ou_line_seen.append(pt)
+                        elif abs(pt - 1.5) < 0.01:
+                            ou15_over_prices.append(p)
+                        elif abs(pt - 3.5) < 0.01:
+                            ou35_over_prices.append(p)
+                        else:
+                            # Alle anderen Linien → primäre Linie wenn noch keine da
+                            if not ou_line_seen:
+                                over_prices.append(p)
+                                ou_line_seen.append(pt)
+                    elif name_o == "Under":
+                        if abs(pt - 2.5) < 0.01:
+                            under_prices.append(p)
+                        elif abs(pt - 1.5) < 0.01:
+                            ou15_under_prices.append(p)
+                        elif abs(pt - 3.5) < 0.01:
+                            ou35_under_prices.append(p)
 
             elif key == "spreads":
                 # TheOddsAPI spreads = Asian Handicap in Toren (halbe Linien)
@@ -116,6 +136,10 @@ def _parse_bookmakers(
         ou_line=round(_median(ou_line_seen), 1) if ou_line_seen else 2.5,
         ou_over=round(_median(over_prices), 3),
         ou_under=round(_median(under_prices), 3),
+        ou15_over=round(_median(ou15_over_prices), 3),
+        ou15_under=round(_median(ou15_under_prices), 3),
+        ou35_over=round(_median(ou35_over_prices), 3),
+        ou35_under=round(_median(ou35_under_prices), 3),
         ah_line=round(_median(ah_line_seen), 2) if ah_line_seen else 0.0,
         ah_home=round(_median(ah_home_prices), 3),
         ah_away=round(_median(ah_away_prices), 3),
