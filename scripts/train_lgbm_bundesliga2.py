@@ -199,7 +199,7 @@ def main(seasons: list[str] = _SEASONS_DEFAULT, force_persist: bool = False) -> 
     # Elo-Series aus Saison-Daten
     print("Computing Elo...")
     try:
-        elo_series = compute_elo_series(df_all, tournament_col=None)
+        elo_series = compute_elo_series(df_all)
     except Exception as exc:
         print(f"  Elo-Series Fehler: {exc} — verwende Default")
         elo_series = pd.DataFrame()

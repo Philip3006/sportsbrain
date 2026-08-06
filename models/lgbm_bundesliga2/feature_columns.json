@@ -1,0 +1,21 @@
+[
+  "dc_p_home",
+  "dc_p_draw",
+  "dc_p_away",
+  "dc_attack_home",
+  "dc_defence_home",
+  "dc_attack_away",
+  "dc_defence_away",
+  "dc_lambda_home",
+  "dc_lambda_away",
+  "elo_home",
+  "elo_away",
+  "elo_diff",
+  "form_home",
+  "form_away",
+  "form_diff",
+  "h2h_home_wr",
+  "rest_home",
+  "rest_away",
+  "rest_diff"
+]

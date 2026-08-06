@@ -1,0 +1,32 @@
+{
+  "dc_brier": 0.5613273056663515,
+  "blend_brier": 0.5655179832570031,
+  "improvement_vs_dc": -0.004190677590651615,
+  "dc_weight": 0.5,
+  "min_improvement_required": 0.01,
+  "gate_passed": false,
+  "force_persist": true,
+  "n_train": 2476,
+  "seasons": [
+    "1617",
+    "1718",
+    "1819",
+    "1920",
+    "2021",
+    "2122",
+    "2223",
+    "2324",
+    "2425",
+    "2526"
+  ],
+  "trained_at": "2026-08-06T18:13:32.158289",
+  "reason": "blend Δ=-0.0042 < 0.01 — force_persist=True",
+  "min_edge_override": 0.1,
+  "away_market_disabled_until_n_settled": 30,
+  "backtest_notes": {
+    "home_roi_walforward": "+3.6% avg (4 seasons, 10% edge)",
+    "away_roi_walforward": "volatile (-62% to +23%), disabled initially",
+    "draw_roi": "negative, skip",
+    "recommendation": "home-only at 10% edge until 30 settled bets"
+  }
+}

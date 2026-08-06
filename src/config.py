@@ -78,7 +78,7 @@ LEAGUE_REGISTRY: dict[str, dict] = {
         "result_source": "football_data",
         "result_source_arg": "D2",
         "fbdata_code": "D2",
-        "min_edge": 0.06,   # Direct-Live-Modus ohne Kalibrierungs-Warmup
+        "min_edge": 0.10,   # Backtest validiert: Home@10% ROI+4% OOS; Away disabled <30 settled
         "elo_k": 20.0,
         "tournament_weight": 1.0,
         "category_mode": "live",
