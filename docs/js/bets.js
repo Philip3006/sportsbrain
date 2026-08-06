@@ -100,13 +100,24 @@ async function _fetchTennisLiveScores() {
   } catch (_) {}
 }
 
+async function _fetchBl2LiveScores() {
+  // Mergt 2.BL Live-Scores in _liveScores (gleiche Lookup-Struktur wie WM)
+  try {
+    const r = await fetch('data/bundesliga2_live_scores.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return;
+    const d = await r.json();
+    const extra = _buildLiveScoreLookup(d);
+    Object.assign(_liveScores, extra);
+  } catch (_) {}
+}
+
 function _setBetTab(tab) {
   _activeBetTab = tab;
   document.querySelectorAll('.bet-tab').forEach(el => {
     el.classList.toggle('active', el.getAttribute('onclick').includes(`'${tab}'`));
   });
   if (tab === 'live') {
-    Promise.all([_fetchLiveScores(), _fetchTennisLiveScores()]).then(() => renderBets());
+    Promise.all([_fetchLiveScores(), _fetchTennisLiveScores(), _fetchBl2LiveScores()]).then(() => renderBets());
   } else {
     renderBets();
   }

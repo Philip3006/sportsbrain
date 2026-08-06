@@ -821,6 +821,34 @@ def fetch_wm_scores(
     return results
 
 
+def fetch_scores(
+    sport: str,
+    days_from: int = 3,
+    api_key: str | None = None,
+) -> list[dict]:
+    """Generic /scores endpoint for any sport (e.g. soccer_germany_bundesliga2).
+
+    Returns raw TheOddsAPI score dicts (completed only).
+    Used as settlement fallback when football-data.co.uk CSV not yet available.
+    """
+    try:
+        key = get_api_key(api_key)
+    except EnvironmentError:
+        return []
+    url = f"{ODDS_API_URL}/sports/{sport}/scores"
+    params = {"apiKey": key, "daysFrom": days_from}
+    try:
+        from scripts._http_retry import retry_request
+        resp = retry_request(
+            "GET", url, params=params, timeout=15,
+            log_prefix=f"[odds_api/scores/{sport}]",
+        )
+        resp.raise_for_status()
+        return resp.json() or []
+    except Exception:
+        return []
+
+
 def mock_upcoming_matches() -> list[dict]:
     """Returns synthetic upcoming matches for dry-run testing (no API call)."""
     return [

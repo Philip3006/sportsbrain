@@ -76,29 +76,80 @@ def _from_martj42(tournament: str) -> ScoreDict:
 
 def _from_football_data(fbdata_code: str, season_start_iso: str | None) -> ScoreDict:
     """Club-Ligen: football-data.co.uk aktuelle Saison. season_start_iso bestimmt
-    welche Saison (2026-08-01 → 2627 = 2026/27)."""
+    welche Saison (2026-08-01 → 2627 = 2026/27).
+
+    Fallback: Wenn das CSV noch nicht verfügbar ist (neue Saison, <Spieltag 5),
+    versucht TheOddsAPI /scores als Ersatz-Quelle.
+    """
     if not fbdata_code:
         return {}
     season = _season_code(season_start_iso)
     if not season:
         return {}
+
+    df = None
     try:
         from src.data.football_data import fetch_season
         df = fetch_season(fbdata_code, season)
     except Exception as exc:
         _log.debug("football-data %s/%s fetch failed: %s", fbdata_code, season, exc)
+
+    if df is not None and not df.empty:
+        out: ScoreDict = {}
+        for _, r in df.iterrows():
+            try:
+                hg = int(r["home_score"])
+                ag = int(r["away_score"])
+            except (KeyError, ValueError, TypeError):
+                continue
+            key = (canonical_name(str(r["home_team"])), canonical_name(str(r["away_team"])))
+            out[key] = (hg, ag)
+        if out:
+            return out
+
+    # Fallback: TheOddsAPI /scores (kostenpflichtig, aber 1 Req/match) — nur wenn CSV leer
+    _log.info("football-data CSV leer für %s/%s — versuche TheOddsAPI scores fallback",
+              fbdata_code, season)
+    return _from_odds_api_scores(fbdata_code)
+
+
+def _from_odds_api_scores(fbdata_code: str) -> ScoreDict:
+    """TheOddsAPI /scores als Fallback wenn football-data CSV noch nicht verfügbar."""
+    sport_key_map = {
+        "D2": "soccer_germany_bundesliga2",
+        "D1": "soccer_germany_bundesliga",
+        "E0": "soccer_epl",
+    }
+    sport_key = sport_key_map.get(fbdata_code)
+    if not sport_key:
         return {}
-    if df is None or df.empty:
+    try:
+        from src.data.odds_api import fetch_scores
+        scores = fetch_scores(sport=sport_key, days_from=3) or []
+    except Exception as exc:
+        _log.debug("TheOddsAPI scores fallback failed: %s", exc)
         return {}
     out: ScoreDict = {}
-    for _, r in df.iterrows():
-        try:
-            hg = int(r["home_score"])
-            ag = int(r["away_score"])
-        except (KeyError, ValueError, TypeError):
+    for m in scores:
+        if not m.get("completed"):
             continue
-        key = (canonical_name(str(r["home_team"])), canonical_name(str(r["away_team"])))
-        out[key] = (hg, ag)
+        home = canonical_name(str(m.get("home_team", "")))
+        away = canonical_name(str(m.get("away_team", "")))
+        scores_raw = m.get("scores") or []
+        h_score = a_score = None
+        for sc in scores_raw:
+            if sc.get("name") == m.get("home_team"):
+                try:
+                    h_score = int(sc["score"])
+                except (KeyError, ValueError, TypeError):
+                    pass
+            elif sc.get("name") == m.get("away_team"):
+                try:
+                    a_score = int(sc["score"])
+                except (KeyError, ValueError, TypeError):
+                    pass
+        if h_score is not None and a_score is not None:
+            out[(home, away)] = (h_score, a_score)
     return out
 
 

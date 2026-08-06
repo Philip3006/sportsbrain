@@ -44,11 +44,32 @@ if __name__ == "__main__":
         subprocess.run([sys.executable, "scripts/auto_retrain.py"], check=True)
         print("--- Scan ---")
 
-    # I11: Football Liga Auto-Discovery — loggt aktive Ligen (post-WM genutzt für Multi-Liga-Scan)
+    # I11: Football Liga Auto-Discovery — loggt aktive Ligen
     import os as _os_disc
+    from src.config import active_leagues as _active_leagues_fn
     _active_leagues = discover_active_leagues(api_key=_os_disc.getenv("ODDS_API_KEY", ""))
+    _registry_active = _active_leagues_fn()
     if _active_leagues:
         print(f"Football Discovery: {len(_active_leagues)} aktive Ligen — {', '.join(_active_leagues[:5])}{'...' if len(_active_leagues) > 5 else ''}")
+
+    # 2.BL Multi-Liga-Dispatch — läuft parallel zum/statt WM-Scan wenn BL2 aktiv
+    _bl2_sport_key = "soccer_germany_bundesliga2"
+    if _bl2_sport_key in _registry_active:
+        print("\n=== 2. Bundesliga Scan ===")
+        try:
+            import importlib.util as _ilu
+            _bl2_spec = _ilu.spec_from_file_location(
+                "bundesliga2_scan",
+                Path(__file__).parent / "bundesliga2_scan.py",
+            )
+            _bl2_mod = _ilu.module_from_spec(_bl2_spec)
+            _bl2_spec.loader.exec_module(_bl2_mod)
+            _bl2_mod.main()
+        except SystemExit:
+            pass
+        except Exception as _bl2_exc:
+            print(f"[daily_scan] 2.BL scan failed: {_bl2_exc}")
+        print("=== 2. Bundesliga Scan Ende ===\n")
 
     signals_df, all_signals, selected_signals, match_date_lookup, _match_contexts = run_daily_scan(
         bankroll=args.bankroll,

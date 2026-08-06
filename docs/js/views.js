@@ -865,7 +865,10 @@ function renderHome() {
     // Group by competition within each day
     const comps = {};
     for (const g of group) {
-      const ck = g.sport === 'football' ? 'FIFA WM 2026' : (g.tour||'Tennis').toUpperCase();
+      const _leagueLabel = { bl2: '🇩🇪 2. Bundesliga', wm2026: '🌍 FIFA WM 2026' };
+      const ck = g.sport === 'football'
+        ? (_leagueLabel[(g.league||'').toLowerCase()] || '⚽ Fußball')
+        : (g.tour||'Tennis').toUpperCase();
       if (!comps[ck]) comps[ck] = { sport: g.sport, games: [] };
       comps[ck].games.push(g);
     }
@@ -936,7 +939,18 @@ function _buildSportControls(sport, filter, totalAll, totalFiltered) {
   const countTxt = (totalFiltered !== totalAll)
     ? `<span class="sc-label" style="margin-left:auto">${totalFiltered}/${totalAll}</span>`
     : `<span class="sc-label" style="margin-left:auto">${totalAll} Signal${totalAll===1?'':'e'}</span>`;
+  // Liga-Filter: nur für Football anzeigen (2.BL + WM trennbar)
+  let ligaRow = '';
+  if (sport === 'football') {
+    const ligaOptions = [['all','⚽ Alle'],['bl2','🇩🇪 2.BL'],['wm2026','🌍 WM']];
+    const ligaChips = ligaOptions.map(([v, lbl]) => {
+      const active = (filter.liga || 'all') === v ? ' active' : '';
+      return `<span class="filter-chip${active}" data-sf="${sport}" data-key="liga" data-val="${v}" role="tab" tabindex="0" aria-selected="${(filter.liga||'all')===v}">${lbl}</span>`;
+    }).join('');
+    ligaRow = `<div class="sc-group"><span class="sc-label">Liga</span>${ligaChips}</div>`;
+  }
   return `<div class="sport-controls" role="toolbar" aria-label="Filter und Sortierung">
+    ${ligaRow}
     <div class="sc-group"><span class="sc-label">EV</span>${evChips}</div>
     <div class="sc-group"><span class="sc-label">Conf</span>${confChips}</div>
     <div class="sc-group"><span class="sc-label">Sort</span>${sortChips}</div>
@@ -968,6 +982,11 @@ function renderSport(sport) {
   const sigs = allSigs.filter(s => {
     if (filter.ev > 0 && (s.ev_pct || 0) < filter.ev) return false;
     if (filter.conf !== 'all' && s.confidence !== filter.conf) return false;
+    if (sport === 'football' && filter.liga && filter.liga !== 'all') {
+      const sigLeague = (s.league || '').toLowerCase();
+      if (filter.liga === 'bl2' && !['bl2', '2. bundesliga'].includes(sigLeague)) return false;
+      if (filter.liga === 'wm2026' && !['wm2026', 'wm'].includes(sigLeague)) return false;
+    }
     return true;
   });
   const controlsHtml = _buildSportControls(sport, filter, allSigs.length, sigs.length);

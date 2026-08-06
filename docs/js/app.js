@@ -53,7 +53,7 @@ function toggleCompact() {
   renderSport('tennis');
 }
 function _getSportFilter(sport) {
-  const def = { ev: 0, conf: 'all', sort: 'kickoff' };
+  const def = { ev: 0, conf: 'all', sort: 'kickoff', liga: 'all' };
   return Object.assign({}, def, _sportFilters[sport] || {});
 }
 function _setSportFilter(sport, patch) {
