@@ -35,7 +35,7 @@ import pandas as pd
 
 from src.config import (
     DATA_CACHE, MODELS_DIR, RESULTS_DIR, canonical_name, MAX_ACTIVE_BETS,
-    league_config, MIN_EDGE,
+    league_config, MIN_EDGE, LGBM_BL2_DC_WEIGHT,
 )
 from src.models import dixon_coles
 from src.models.elo import ELO_DEFAULT
@@ -73,6 +73,124 @@ def _load_universe() -> dict[str, dict]:
     if not p.exists():
         return {}
     return json.loads(p.read_text())
+
+
+def _load_lgbm() -> tuple | None:
+    """Lädt LGBM-Modell, Isotonic-Calibrators und Feature-Spalten. None bei Fehler."""
+    p = MODELS_DIR / "lgbm_bundesliga2"
+    try:
+        import pickle as _pkl
+        model = _pkl.loads((p / "model.pkl").read_bytes())
+        calibrators = _pkl.loads((p / "calibrators.pkl").read_bytes())
+        feature_cols = json.loads((p / "feature_columns.json").read_text())
+        return model, calibrators, feature_cols
+    except Exception as exc:
+        print(f"  [LGBM] Laden fehlgeschlagen ({exc}) — DC-only Fallback")
+        return None
+
+
+def _rolling_form_cached(df: "pd.DataFrame", team: str, before_date: "pd.Timestamp", n: int = 6) -> float:
+    mask = ((df["home_team"] == team) | (df["away_team"] == team)) & (df["date"] < before_date)
+    recent = df[mask].tail(n)
+    if recent.empty:
+        return 1.0
+    pts = []
+    for _, r in recent.iterrows():
+        hs, as_ = int(r["home_score"]), int(r["away_score"])
+        if r["home_team"] == team:
+            pts.append(3.0 if hs > as_ else (1.0 if hs == as_ else 0.0))
+        else:
+            pts.append(3.0 if as_ > hs else (1.0 if as_ == hs else 0.0))
+    import numpy as _np
+    return float(_np.mean(pts))
+
+
+def _h2h_cached(df: "pd.DataFrame", home: str, away: str, before_date: "pd.Timestamp", n: int = 5) -> float:
+    mask = (
+        ((df["home_team"] == home) & (df["away_team"] == away)) |
+        ((df["home_team"] == away) & (df["away_team"] == home))
+    ) & (df["date"] < before_date)
+    recent = df[mask].tail(n)
+    if recent.empty:
+        return 0.4
+    wins = sum(
+        1 for _, r in recent.iterrows()
+        if (r["home_team"] == home and int(r["home_score"]) > int(r["away_score"])) or
+           (r["home_team"] == away and int(r["away_score"]) > int(r["home_score"]))
+    )
+    return wins / len(recent)
+
+
+def _days_rest_cached(df: "pd.DataFrame", team: str, before_date: "pd.Timestamp") -> float:
+    import pandas as _pd
+    mask = ((df["home_team"] == team) | (df["away_team"] == team)) & (df["date"] < before_date)
+    prev = df[mask]
+    if prev.empty:
+        return 14.0
+    return float((_pd.Timestamp(before_date) - _pd.Timestamp(prev["date"].max())).days)
+
+
+def _lgbm_probs(
+    home: str, away: str, dc_probs: dict, params, elo: dict,
+    lgbm_model, calibrators: dict, feature_cols: list,
+    match_history: "pd.DataFrame | None" = None,
+) -> dict | None:
+    """Berechnet LGBM-Probs und wendet Isotonic-Calibrators an. None bei Fehler."""
+    try:
+        import pandas as _pd, numpy as _np
+        elo_h = elo.get(home, ELO_DEFAULT)
+        elo_a = elo.get(away, ELO_DEFAULT)
+        now = _pd.Timestamp.now()
+
+        feat: dict = {
+            "dc_p_home": dc_probs["p_home"],
+            "dc_p_draw": dc_probs["p_draw"],
+            "dc_p_away": dc_probs["p_away"],
+            "dc_attack_home":  params.attack.get(home, 1.0),
+            "dc_defence_home": params.defence.get(home, 1.0),
+            "dc_attack_away":  params.attack.get(away, 1.0),
+            "dc_defence_away": params.defence.get(away, 1.0),
+            "dc_lambda_home": params.attack.get(home, 1.0) * params.defence.get(away, 1.0),
+            "dc_lambda_away": params.attack.get(away, 1.0) * params.defence.get(home, 1.0),
+            "elo_home": elo_h,
+            "elo_away": elo_a,
+            "elo_diff": elo_h - elo_a,
+        }
+
+        if match_history is not None and not match_history.empty:
+            df = match_history.copy()
+            df["date"] = _pd.to_datetime(df["date"])
+            df["home_score"] = _pd.to_numeric(df["home_score"], errors="coerce").fillna(0).astype(int)
+            df["away_score"] = _pd.to_numeric(df["away_score"], errors="coerce").fillna(0).astype(int)
+            form_h = _rolling_form_cached(df, home, now)
+            form_a = _rolling_form_cached(df, away, now)
+            feat["form_home"] = form_h
+            feat["form_away"] = form_a
+            feat["form_diff"] = form_h - form_a
+            feat["h2h_home_wr"] = _h2h_cached(df, home, away, now)
+            feat["rest_home"] = _days_rest_cached(df, home, now)
+            feat["rest_away"] = _days_rest_cached(df, away, now)
+            feat["rest_diff"] = feat["rest_home"] - feat["rest_away"]
+        else:
+            feat.update({"form_home": 1.0, "form_away": 1.0, "form_diff": 0.0,
+                         "h2h_home_wr": 0.4, "rest_home": 7.0, "rest_away": 7.0, "rest_diff": 0.0})
+
+        # Feature-Vektor in richtiger Reihenfolge, fehlende → 0.0
+        X = _pd.DataFrame([[feat.get(c, 0.0) for c in feature_cols]], columns=feature_cols)
+        raw_probs = lgbm_model.predict_proba(X)[0]  # [away, draw, home]
+
+        # Isotonic-Calibrators anwenden
+        p_away = float(calibrators["away"].predict([raw_probs[0]])[0])
+        p_draw = float(calibrators["draw"].predict([raw_probs[1]])[0])
+        p_home = float(calibrators["home"].predict([raw_probs[2]])[0])
+
+        # Normalisieren
+        total = p_home + p_draw + p_away
+        if total < 0.01:
+            return None
+        return {"p_home": p_home / total, "p_draw": p_draw / total, "p_away": p_away / total}
+    except Exception as exc:
+        return None
 
 
 def _team_matches_in_universe(team: str, universe: dict) -> int:
@@ -271,6 +389,9 @@ def _scan_match(
     universe: dict,
     bankroll: float,
     min_edge: float,
+    lgbm_bundle: tuple | None = None,
+    match_history: "pd.DataFrame | None" = None,
+    shadow_1x2: bool = True,
 ) -> tuple[list, dict]:
     """Rechnet Signals + Diagnostics-Info für ein Match. Returns (signals, meta)."""
     home_raw = str(match.get("home_team", ""))
@@ -301,8 +422,24 @@ def _scan_match(
     meta["dc_probs"] = dc_probs
     meta["elo"] = {"home": elo_h, "away": elo_a}
 
+    # LGBM Blend (70% DC / 30% LGBM)
+    if lgbm_bundle is not None:
+        lgbm_model, calibrators, feature_cols = lgbm_bundle
+        lgbm_p = _lgbm_probs(home, away, dc_probs, params, elo, lgbm_model, calibrators, feature_cols, match_history)
+        if lgbm_p:
+            w = LGBM_BL2_DC_WEIGHT
+            model_probs = {k: w * dc_probs[k] + (1 - w) * lgbm_p[k] for k in ("p_home", "p_draw", "p_away")}
+            meta["lgbm_used"] = True
+            meta["lgbm_probs"] = lgbm_p
+        else:
+            model_probs = dc_probs
+            meta["lgbm_used"] = False
+    else:
+        model_probs = dc_probs
+        meta["lgbm_used"] = False
+
     # Odds: Multi-Source-Merger (Tier 1 Betfair/Pinnacle → Tier 2 TheOddsAPI → Tier 3 WebSearch → Tier 5 Implied)
-    odds_q = _fetch_odds(match, dc_probs)
+    odds_q = _fetch_odds(match, model_probs)
     if odds_q is None:
         meta["skip"] = "no_odds"
         return [], meta
@@ -320,14 +457,15 @@ def _scan_match(
 
     signals = []
     if h_price > 0 and d_price > 0 and a_price > 0:
-        model_probs_arr = np.array([dc_probs["p_away"], dc_probs["p_draw"], dc_probs["p_home"]])
+        model_probs_arr = np.array([model_probs["p_away"], model_probs["p_draw"], model_probs["p_home"]])
         s1x2 = detect_value(
             home, away, model_probs_arr, (h_price, d_price, a_price),
-            bankroll=bankroll, min_edge=min_edge, match_id=mid, dc_probs=dc_probs,
+            bankroll=bankroll, min_edge=min_edge, match_id=mid, dc_probs=model_probs,
         )
-        # 1X2 hat negatives OOS-ROI (Heim -1%, Unent. -8%, Auswärts -5.5%) → Shadow
-        for s in s1x2:
-            s.no_bet_flag = True
+        # Shadow solange OOS-ROI negativ (wird via Recalibrator nach 30 settled Bets geprüft)
+        if shadow_1x2:
+            for s in s1x2:
+                s.no_bet_flag = True
         signals.extend(s1x2)
 
     # O/U — alle verfügbaren Linien (1.5, 2.5, 3.5 aus Merger)
@@ -458,15 +596,17 @@ def main() -> None:
     cfg = league_config(SPORT_KEY) or {}
     min_edge = args.min_edge if args.min_edge is not None else cfg.get("min_edge", MIN_EDGE)
 
-    # Gate.json: min_edge_override + away_market_disabled_until_n_settled
+    # Gate.json: min_edge_override + away_market_disabled_until_n_settled + shadow_1x2
     _gate_path = MODELS_DIR / "lgbm_bundesliga2" / "gate.json"
     _away_disabled = False
+    _shadow_1x2 = True  # default: 1X2 im Shadow (negatives OOS-ROI)
     if _gate_path.exists():
         try:
             import json as _json
             _gate = _json.loads(_gate_path.read_text())
             if "min_edge_override" in _gate and args.min_edge is None:
                 min_edge = float(_gate["min_edge_override"])
+            _shadow_1x2 = bool(_gate.get("shadow_1x2", True))
             _away_thresh = int(_gate.get("away_market_disabled_until_n_settled", 0))
             if _away_thresh > 0:
                 import csv as _csv2
@@ -489,6 +629,23 @@ def main() -> None:
     elo = _load_elo()
     universe = _load_universe()
 
+    # LGBM laden (optional — Fallback auf DC wenn nicht verfügbar)
+    lgbm_bundle = _load_lgbm()
+    if lgbm_bundle:
+        print(f"  LGBM: geladen (Blend: {LGBM_BL2_DC_WEIGHT:.0%} DC + {1-LGBM_BL2_DC_WEIGHT:.0%} LGBM)")
+    else:
+        print("  LGBM: nicht verfügbar → DC-only")
+
+    # Match-History für Form/H2H/Rest-Features laden
+    _hist_path = DATA_CACHE / "bundesliga2_matches.pkl"
+    match_history: pd.DataFrame | None = None
+    if _hist_path.exists():
+        try:
+            import pickle as _pkl
+            match_history = _pkl.loads(_hist_path.read_bytes())
+        except Exception:
+            pass
+
     if args.mock:
         matches = _mock_matches()
         print(f"MOCK: {len(matches)} synthetische Matches")
@@ -502,7 +659,10 @@ def main() -> None:
     all_signals: list = []
     metas: list = []
     for m in matches:
-        signals, meta = _scan_match(m, params, elo, universe, args.bankroll, min_edge)
+        signals, meta = _scan_match(
+            m, params, elo, universe, args.bankroll, min_edge,
+            lgbm_bundle=lgbm_bundle, match_history=match_history, shadow_1x2=_shadow_1x2,
+        )
         all_signals.extend(signals)
         metas.append(meta)
 

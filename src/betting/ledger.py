@@ -593,6 +593,7 @@ def _settle_from_results_locked(
         settled += 1
 
     if settled:
+        df = _backfill_clv_bl2(df)
         _save(df, ledger_path)
         import os
         if not os.getenv("PYTEST_CURRENT_TEST"):
@@ -606,6 +607,37 @@ def _settle_from_results_locked(
             _refresh_dashboard(user)
 
     return settled
+
+
+def _backfill_clv_bl2(df: pd.DataFrame) -> pd.DataFrame:
+    """Füllt closing_odds + clv für BL2-Zeilen aus dem Closing-Odds-Snapshot-Cache."""
+    from src.config import DATA_CACHE
+    cache_p = DATA_CACHE / "bundesliga2_closing_odds.json"
+    if not cache_p.exists():
+        return df
+    try:
+        closing_cache = json.loads(cache_p.read_text())
+    except Exception:
+        return df
+
+    bl2_mask = df.get("league", pd.Series(dtype=str)) == "bl2"
+    for idx, row in df[bl2_mask].iterrows():
+        if str(df.at[idx, "closing_odds"] or "").strip() not in ("", "0.0", "0"):
+            continue  # bereits gesetzt
+        entry = closing_cache.get(str(row.get("match_id", "")), {})
+        co = entry.get(str(row.get("market", "")))
+        if not co:
+            continue
+        try:
+            co_f = float(co)
+            odds_f = float(row.get("decimal_odds") or 0)
+            if co_f > 1.0 and odds_f > 1.0:
+                df.at[idx, "closing_odds"] = f"{co_f:.3f}"
+                clv = max(-0.99, min(2.00, odds_f / co_f - 1.0))
+                df.at[idx, "clv"] = f"{clv:.4f}"
+        except (ValueError, TypeError):
+            continue
+    return df
 
 
 def count_open_bets(path: Path | None = None, *, user: str = DEFAULT_USER) -> int:
