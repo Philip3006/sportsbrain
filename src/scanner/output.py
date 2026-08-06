@@ -366,6 +366,7 @@ def archive_signals(
                 "scan_ts": scan_ts,
                 "scan_date": scan_date,
                 "sport": sport,
+                "league": getattr(s, "league", "") or meta.get("league", ""),
                 "match_id": s.match_id,
                 "home": s.home,
                 "away": s.away,
