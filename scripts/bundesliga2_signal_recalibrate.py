@@ -163,6 +163,33 @@ def main(dry_run: bool = False) -> None:
             except Exception as exc:
                 print(f"[bl2_recal] Gate-Update fehlgeschlagen: {exc}")
 
+        # Shadow-1X2-Review: nach ≥ 30 settled 1X2-Bets ROI prüfen
+        if BL2_GATE_PATH.exists():
+            try:
+                settled_1x2 = [r for r in rows if r.get("market") in ("home", "draw", "away", "h2h_home", "h2h_draw", "h2h_away")]
+                if len(settled_1x2) >= 30:
+                    wins = sum(1 for r in settled_1x2 if r.get("outcome") == "won")
+                    total_stake = sum(float(r.get("stake_eur") or 5) for r in settled_1x2)
+                    total_pnl = sum(
+                        float(r.get("stake_eur") or 5) * (float(r.get("decimal_odds") or 2) - 1)
+                        if r.get("outcome") == "won"
+                        else -float(r.get("stake_eur") or 5)
+                        for r in settled_1x2
+                    )
+                    roi_1x2 = total_pnl / total_stake if total_stake > 0 else -1.0
+                    print(f"[bl2_recal] 1X2 Shadow-Review: n={len(settled_1x2)} ROI={roi_1x2:.1%}")
+                    gate = json.loads(BL2_GATE_PATH.read_text())
+                    if roi_1x2 > -0.02 and gate.get("shadow_1x2", True):
+                        gate["shadow_1x2"] = False
+                        gate["shadow_1x2_lifted_at"] = datetime.now(timezone.utc).isoformat()
+                        gate["shadow_1x2_roi"] = round(roi_1x2, 4)
+                        BL2_GATE_PATH.write_text(json.dumps(gate, indent=2))
+                        print(f"[bl2_recal] 1X2 Shadow aufgehoben — ROI={roi_1x2:.1%} > -2%")
+                    elif roi_1x2 <= -0.02:
+                        print(f"[bl2_recal] 1X2 bleibt Shadow — ROI={roi_1x2:.1%} ≤ -2%")
+            except Exception as exc:
+                print(f"[bl2_recal] Shadow-Review fehlgeschlagen: {exc}")
+
         CAL_STATS_PATH.parent.mkdir(parents=True, exist_ok=True)
         CAL_STATS_PATH.write_text(json.dumps(stats, indent=2))
     else:

@@ -37,6 +37,12 @@ jobs:
       - name: Retrain DC
         run: python scripts/train_dc_bundesliga2.py
 
+      - name: Signal Recalibrate BL2
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python scripts/bundesliga2_signal_recalibrate.py
+        continue-on-error: true
+
       - name: Health snapshot
         if: always()
         run: |

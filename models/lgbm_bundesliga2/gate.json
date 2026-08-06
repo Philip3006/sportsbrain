@@ -23,6 +23,7 @@
   "reason": "blend Δ=-0.0042 < 0.01 — force_persist=True",
   "min_edge_override": 0.06,
   "away_market_disabled_until_n_settled": 0,
+  "shadow_1x2": true,
   "backtest_notes": {
     "home_roi_walforward": "+3.6% avg (4 seasons, 10% edge)",
     "away_roi_walforward": "volatile (-62% to +23%), disabled initially",

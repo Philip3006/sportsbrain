@@ -120,6 +120,7 @@ MIN_EDGE = 0.03
 MIN_STAKE_EUR = 5.0
 MAX_STAKE_EUR = 15.0
 MAX_ACTIVE_BETS = 5
+LGBM_BL2_DC_WEIGHT = 0.70   # 70% DC / 30% LGBM blend für 2.BL-Predictions
 MAX_SIGNALS_DISPLAY = 5         # top N signals shown prominently per sport in PWA
 MAX_EV = 0.40           # signals with EV > 40% are almost always model artifacts
 
@@ -553,10 +554,15 @@ TEAM_NAME_MAP: dict[str, str] = {
     # FC Erzgebirge Aue
     "Erzgebirge Aue": "Erzgebirge Aue",
     "FC Erzgebirge Aue": "Erzgebirge Aue",
-    # 1. FC Köln (potenzieller Absteiger)
+    # 1. FC Köln (potenzieller Absteiger / 2.BL-Teilnehmer)
     "1. FC Köln": "FC Koln",
     "1. FC Koeln": "FC Koln",
     "Koln": "FC Koln",
+    "Köln": "FC Koln",
+    "FC Köln": "FC Koln",
+    # SV Sandhausen
+    "SV Sandhausen": "Sandhausen",
+    "SVS": "Sandhausen",
     # VfB Stuttgart (potenzieller Absteiger)
     "VfB Stuttgart": "Stuttgart",
     # Dynamo Dresden
