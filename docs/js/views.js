@@ -810,6 +810,10 @@ function renderHome() {
         const evColor = p.ev_pct >= 10 ? 'var(--green)' : 'var(--yellow)';
         const timeStr = p.kickoff ? fmtKickoff(p.kickoff) : '';
         const sportIcon = p.sport === 'tennis' ? '🎾' : p.sport === 'football' ? '⚽' : '';
+        const leagueLabel = { bl2: '2.BL', wm2026: 'WM', atp: 'ATP', wta: 'WTA' }[p.league] || '';
+        const leagueBadge = leagueLabel
+          ? `<span style="font-size:9px;font-weight:800;background:rgba(255,255,255,.08);color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle">${leagueLabel}</span>`
+          : '';
         const flagA = teamFlag(ph);
         const flagB = teamFlag(pa);
         const confBadge = p.confidence === 'HIGH'
@@ -817,7 +821,7 @@ function renderHome() {
           : '';
         return `<div class="suggest-pick" onclick='openMatch(${JSON.stringify(p.match)})'>
           <div class="suggest-teams-row">
-            <span style="font-size:13px;margin-right:3px">${sportIcon}</span>${flagA}${flagA?' ':''}<strong>${esc(ph)}</strong><span class="vs">vs</span>${flagB}${flagB?' ':''}<strong>${esc(pa)}</strong>${confBadge}<span style="font-size:11px;color:var(--muted);font-weight:500;margin-left:6px">${esc(timeStr)}</span>
+            <span style="font-size:13px;margin-right:3px">${sportIcon}</span>${flagA}${flagA?' ':''}<strong>${esc(ph)}</strong><span class="vs">vs</span>${flagB}${flagB?' ':''}<strong>${esc(pa)}</strong>${leagueBadge}${confBadge}<span style="font-size:11px;color:var(--muted);font-weight:500;margin-left:6px">${esc(timeStr)}</span>
           </div>
           <div class="suggest-bottom-row">
             <span class="suggest-mkt-pill">${esc(mktLabel)}</span>
