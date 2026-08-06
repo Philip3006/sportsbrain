@@ -73,8 +73,8 @@
     "suspended_push_sent": false
   },
   "_meta": {
-    "heartbeat_at": "2026-08-06T01:23:30Z",
-    "reason": "2 live matches, 0 pushes"
+    "heartbeat_at": "2026-08-06T01:25:38Z",
+    "reason": "2 live matches, 1 pushes"
   },
   "alexdeminaur|jamesduckworth": {
     "home": "James Duckworth",
@@ -157,25 +157,6 @@
     "sets": [
       [
         3,
-        4
-      ]
-    ],
-    "sets_won": [
-      0,
-      0
-    ],
-    "status": "in_progress",
-    "resume_time": null,
-    "updated": "2026-08-06T01:23:30Z",
-    "match_start_push_sent": true,
-    "suspended_push_sent": false
-  },
-  "alexandraeala|alyciaparks": {
-    "home": "Alycia Parks",
-    "away": "Alexandra Eala",
-    "sets": [
-      [
-        1,
         5
       ]
     ],
@@ -185,7 +166,26 @@
     ],
     "status": "in_progress",
     "resume_time": null,
-    "updated": "2026-08-06T01:23:30Z",
+    "updated": "2026-08-06T01:25:38Z",
+    "match_start_push_sent": true,
+    "suspended_push_sent": false
+  },
+  "alexandraeala|alyciaparks": {
+    "home": "Alycia Parks",
+    "away": "Alexandra Eala",
+    "sets": [
+      [
+        1,
+        6
+      ]
+    ],
+    "sets_won": [
+      0,
+      1
+    ],
+    "status": "in_progress",
+    "resume_time": null,
+    "updated": "2026-08-06T01:25:38Z",
     "match_start_push_sent": true,
     "suspended_push_sent": false
   }
