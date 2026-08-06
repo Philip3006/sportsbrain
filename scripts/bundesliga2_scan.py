@@ -4,6 +4,12 @@ Fetcht Fixtures via TheOddsAPI (`soccer_germany_bundesliga2`), rechnet
 DC+Elo-Ensemble, detektiert Value auf 1X2 / AH / O/U / BTTS / DC / goals_2_4,
 schreibt Ledger-Zeilen mit league='bl2' und pusht Signals.
 
+Odds-Quellen (Multi-Source, analog Tennis):
+  Tier 1: Betfair Exchange + Pinnacle (Sharp-Referenz)
+  Tier 2: TheOddsAPI EU+UK+AU Konsens (Bulk-Daten aus Fixture-Fetch wiederverwendet)
+  Tier 3: WebSearch-Ensemble (Fallback <3 Bookies)
+  Tier 5: DC-Implied (Display-only, no_bet_flag)
+
 Unknown-Team-Gate (analog Tennis): Team muss ≥ 5 Matches in Universe haben.
 Coverage-Gate: min 3 Bookies für 1X2, sonst no_bet_flag.
 
@@ -39,11 +45,13 @@ from src.betting.value_detector import (
 )
 from src.betting.ledger import append_bets, count_open_bets, LEDGER_PATH, ledger_summary
 from src.data.odds_api import fetch_upcoming_matches
+from src.football.odds.merger import fetch_best_football_odds, MIN_BOOKIES_1X2
+from src.football.odds.base import FootballOddsQuote
 
 SPORT_KEY = "soccer_germany_bundesliga2"
 LEAGUE_SHORT = "bl2"
 MIN_TEAM_MATCHES = 5
-MIN_BOOKIES = 3
+MIN_BOOKIES = MIN_BOOKIES_1X2
 
 
 def _load_dc_params():
@@ -75,21 +83,23 @@ def _team_matches_in_universe(team: str, universe: dict) -> int:
     return len(info.get("seasons_played", [])) * 34
 
 
-def _consensus_odds(bookmakers: list, market_key: str, outcome_name: str) -> tuple[float, int]:
-    """Median-Quote + Bookie-Count für ein Outcome eines Marktes."""
-    prices: list[float] = []
-    for bm in bookmakers or []:
-        for m in bm.get("markets", []):
-            if m.get("key") != market_key:
-                continue
-            for o in m.get("outcomes", []):
-                if o.get("name") == outcome_name:
-                    price = float(o.get("price", 0))
-                    if price > 1.0:
-                        prices.append(price)
-    if not prices:
-        return 0.0, 0
-    return float(np.median(prices)), len(prices)
+def _fetch_odds(match: dict, model_probs: dict) -> FootballOddsQuote | None:
+    """Holt Odds via Multi-Source-Merger (Tier 1→2→3→5).
+
+    Übergibt bookmakers aus bereits geladenen TheOddsAPI-Daten im match_hint
+    (kein Extra-Quota-Verbrauch für Tier-2). Betfair + Pinnacle werden parallel
+    dazu angefragt (Tier 1). WebSearch als Tier-3-Fallback.
+    """
+    match_hint = {
+        "home_team": match.get("home_team", ""),
+        "away_team": match.get("away_team", ""),
+        "sport_key": SPORT_KEY,
+        "commence_time": match.get("commence_time", ""),
+        "match_id": match.get("match_id", ""),
+        "bookmakers": match.get("bookmakers", []),  # TheOddsAPI-Bulk → kein Extra-Call
+        "model_probs": model_probs,                 # Tier-5-Implied-Fallback
+    }
+    return fetch_best_football_odds(match_hint, timeout_s=5.0, allow_implied=True)
 
 
 def _mock_matches() -> list[dict]:
@@ -174,70 +184,70 @@ def _scan_match(
     meta["dc_probs"] = dc_probs
     meta["elo"] = {"home": elo_h, "away": elo_a}
 
-    # Odds-Extraktion + Coverage-Gate
-    h_price, h_n = _consensus_odds(match.get("bookmakers", []), "h2h", home_raw)
-    d_price, d_n = _consensus_odds(match.get("bookmakers", []), "h2h", "Draw")
-    a_price, a_n = _consensus_odds(match.get("bookmakers", []), "h2h", away_raw)
-    n_bookies = max(h_n, d_n, a_n)
+    # Odds: Multi-Source-Merger (Tier 1 Betfair/Pinnacle → Tier 2 TheOddsAPI → Tier 3 WebSearch → Tier 5 Implied)
+    odds_q = _fetch_odds(match, dc_probs)
+    if odds_q is None:
+        meta["skip"] = "no_odds"
+        return [], meta
+
+    h_price = odds_q.h2h_home
+    d_price = odds_q.h2h_draw
+    a_price = odds_q.h2h_away
+    n_bookies = odds_q.bookies_count_1x2
+    no_bet_flag = odds_q.no_bet_flag  # bereits von Coverage-Gate gesetzt
+
     meta["n_bookies_1x2"] = n_bookies
     meta["odds_1x2"] = (h_price, d_price, a_price)
-    no_bet_flag = n_bookies < MIN_BOOKIES
+    meta["odds_source"] = odds_q.source
+    meta["odds_tier"] = odds_q.source_tier
 
     signals = []
     if h_price > 0 and d_price > 0 and a_price > 0:
-        model_probs = np.array([dc_probs["p_away"], dc_probs["p_draw"], dc_probs["p_home"]])
+        model_probs_arr = np.array([dc_probs["p_away"], dc_probs["p_draw"], dc_probs["p_home"]])
         s1x2 = detect_value(
-            home, away, model_probs, (h_price, d_price, a_price),
+            home, away, model_probs_arr, (h_price, d_price, a_price),
             bankroll=bankroll, min_edge=min_edge, match_id=mid, dc_probs=dc_probs,
         )
         signals.extend(s1x2)
 
-    # O/U 2.5 (mit DC-Sim)
+    # O/U 2.5 (Merger liefert ou_over/ou_under wenn verfügbar)
     try:
-        totals = dixon_coles.predict_totals(home, away, params, 2.5,
+        ou_line = odds_q.ou_line or 2.5
+        totals = dixon_coles.predict_totals(home, away, params, ou_line,
                                              elo_home=elo_h, elo_away=elo_a)
-        ou_over, ou_over_n = _consensus_odds(match.get("bookmakers", []), "totals", "Over")
-        ou_under, ou_under_n = _consensus_odds(match.get("bookmakers", []), "totals", "Under")
+        ou_over = odds_q.ou_over
+        ou_under = odds_q.ou_under
         if ou_over > 0 and ou_under > 0:
             s_ou = detect_value_totals(
                 home, away, totals, ou_over, ou_under,
-                bankroll=bankroll, min_edge=min_edge, match_id=mid, line=2.5,
+                bankroll=bankroll, min_edge=min_edge, match_id=mid, line=ou_line,
             )
             signals.extend(s_ou)
     except Exception as exc:
         meta["totals_err"] = str(exc)
 
-    # AH -0.5 (Standard-Line)
+    # AH (Merger liefert ah_home/ah_away/ah_line aus Betfair/Pinnacle/TheOddsAPI)
     try:
-        ah = dixon_coles.predict_asian_handicap(home, away, params, -0.5,
+        ah_line = odds_q.ah_line or -0.5
+        ah = dixon_coles.predict_asian_handicap(home, away, params, ah_line,
                                                  elo_home=elo_h, elo_away=elo_a)
-        # TheOddsAPI liefert spreads mit `point` — Konsens auf line=-0.5
-        ah_home_price, ah_away_price = 0.0, 0.0
-        for bm in match.get("bookmakers", []):
-            for m in bm.get("markets", []):
-                if m.get("key") != "spreads":
-                    continue
-                for o in m.get("outcomes", []):
-                    point = float(o.get("point", 0))
-                    if abs(point + 0.5) < 0.01 and o.get("name") == home_raw:
-                        ah_home_price = float(o.get("price", 0))
-                    elif abs(point - 0.5) < 0.01 and o.get("name") == away_raw:
-                        ah_away_price = float(o.get("price", 0))
+        ah_home_price = odds_q.ah_home
+        ah_away_price = odds_q.ah_away
         if ah_home_price > 0 and ah_away_price > 0:
             s_ah = detect_value_ah(
                 home, away, ah, ah_home_price, ah_away_price,
-                bankroll=bankroll, min_edge=min_edge, match_id=mid, line=-0.5,
+                bankroll=bankroll, min_edge=min_edge, match_id=mid, line=ah_line,
             )
             signals.extend(s_ah)
     except Exception as exc:
         meta["ah_err"] = str(exc)
 
-    # BTTS + Double Chance: TheOddsAPI liefert das je nach Provider — best effort
+    # BTTS (Merger liefert btts_yes/btts_no wenn verfügbar)
     try:
         btts = dixon_coles.predict_btts(home, away, params,
                                          elo_home=elo_h, elo_away=elo_a)
-        btts_yes, _ = _consensus_odds(match.get("bookmakers", []), "btts", "Yes")
-        btts_no, _ = _consensus_odds(match.get("bookmakers", []), "btts", "No")
+        btts_yes = odds_q.btts_yes
+        btts_no = odds_q.btts_no
         if btts_yes > 0 and btts_no > 0:
             s_btts = detect_value_btts(
                 home, away, btts, btts_yes, btts_no,
@@ -357,7 +367,9 @@ def main() -> None:
             elo_m = meta.get("elo", {})
             lines.append(f"  DC: H={dc.get('p_home',0):.1%} D={dc.get('p_draw',0):.1%} A={dc.get('p_away',0):.1%}")
             lines.append(f"  Elo: H={elo_m.get('home',0):.0f} A={elo_m.get('away',0):.0f}")
-            lines.append(f"  Bookies: {meta.get('n_bookies_1x2',0)} | Signale: {meta.get('n_signals',0)}")
+            src = meta.get("odds_source", "?")
+            tier = meta.get("odds_tier", "?")
+            lines.append(f"  Bookies: {meta.get('n_bookies_1x2',0)} | Quelle: {src} (Tier {tier}) | Signale: {meta.get('n_signals',0)}")
         lines.append("")
     report_path.write_text("\n".join(lines), encoding="utf-8")
     print(f"\nReport: {report_path}")
