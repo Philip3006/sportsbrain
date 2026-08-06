@@ -41,9 +41,10 @@ def run_daily_scan(
     horizon_hours: int | None = None,
     scan_date_filter: str | None = None,
     force: bool = False,
+    sport_keys: list[str] | None = None,
 ) -> tuple[pd.DataFrame, list, list, dict, dict]:
     """
-    Main scan orchestrator.
+    Main scan orchestrator (currently WM-2026-scoped).
     Returns (signals_df, all_signals, selected_signals, match_date_lookup, match_contexts).
     all_signals: every value bet found (pre portfolio cap) — for dashboard display.
     selected_signals: post portfolio cap — for ledger logging.
@@ -51,6 +52,9 @@ def run_daily_scan(
     Args:
         force: Skip the WM date guard (useful for testing before/after tournament).
         mock:  Use synthetic match data — also bypasses the date guard (no quota used).
+        sport_keys: Reserved für Multi-Liga-Scan (Registry-basiert). Aktuell nicht
+                    von diesem WM-Pfad genutzt; 2.BL läuft über
+                    scripts/bundesliga2_scan.py um WM-Spezialfilter zu umgehen.
     """
     # --- Date guard: skip expensive API call when WM 2026 is not active ---
     # Mock mode bypasses this (no real API quota used).

@@ -38,6 +38,82 @@ FOOTBALL_LEAGUES_WHITELIST: set[str] = {
     "soccer_usa_mls",
 }
 
+# ----------------------------------------------------------------------
+# LEAGUE_REGISTRY — zentrale Quelle für Liga-spezifische Config.
+# Ersetzt hardcoded WM-Date-Guards in daily_scan / ledger settlement.
+# Neue Ligen hier registrieren; scanner/settlement lesen den Eintrag.
+#   name              : Display-Name für PWA + Push (deutsch).
+#   short             : Kurz-Code für Ledger-Kolumne `league` (persistent, nie ändern).
+#   sport             : "football" | "tennis" | "basketball".
+#   start_date/end_date: Saison-Fenster (ISO). None = ganzjährig (Turnier-Format).
+#   result_source     : Routing-Key für results_router (martj42 | football_data | tennis_scores).
+#   result_source_arg : Zweit-Parameter für den Loader (D2, WC, ATP, ...).
+#   fbdata_code       : football-data.co.uk-Code (nur wenn result_source=football_data).
+#   min_edge          : Liga-spezifischer Edge-Floor (überschreibt globalen MIN_EDGE).
+#   elo_k             : Elo-K-Faktor beim Update (Turnier 32-40, Club 20).
+#   tournament_weight : Gewicht für DC-NLL-Training.
+#   category_mode     : "live" | "shadow" — Live schreibt Ledger, Shadow nur Signal-Archive.
+# ----------------------------------------------------------------------
+LEAGUE_REGISTRY: dict[str, dict] = {
+    "soccer_fifa_world_cup": {
+        "name": "FIFA WM 2026",
+        "short": "wm2026",
+        "sport": "football",
+        "start_date": "2026-06-11",
+        "end_date":   "2026-07-19",
+        "result_source": "martj42",
+        "result_source_arg": "FIFA World Cup",
+        "fbdata_code": None,
+        "min_edge": 0.03,
+        "elo_k": 40.0,
+        "tournament_weight": 1.0,
+        "category_mode": "live",
+    },
+    "soccer_germany_2_bundesliga": {
+        "name": "2. Bundesliga",
+        "short": "bl2",
+        "sport": "football",
+        "start_date": "2026-08-01",
+        "end_date":   "2027-05-31",
+        "result_source": "football_data",
+        "result_source_arg": "D2",
+        "fbdata_code": "D2",
+        "min_edge": 0.06,   # Direct-Live-Modus ohne Kalibrierungs-Warmup
+        "elo_k": 20.0,
+        "tournament_weight": 1.0,
+        "category_mode": "live",
+    },
+}
+
+
+def league_config(sport_key: str) -> dict | None:
+    """Registry-Lookup mit sauberem None-Return, damit Aufrufer defensiv testen können."""
+    return LEAGUE_REGISTRY.get(sport_key)
+
+
+def active_leagues(today=None) -> list[str]:
+    """Alle sport_keys deren Saisonfenster heute aktiv ist (start_date ≤ today ≤ end_date+1d).
+    None-Bounds gelten als 'immer aktiv'. Nimmt date, datetime oder None entgegen."""
+    from datetime import date as _date, datetime as _dt, timedelta as _td
+    if today is None:
+        t = _date.today()
+    elif isinstance(today, _dt):
+        t = today.date()
+    elif isinstance(today, _date):
+        t = today
+    else:
+        t = _date.today()
+    out: list[str] = []
+    for key, cfg in LEAGUE_REGISTRY.items():
+        s = cfg.get("start_date")
+        e = cfg.get("end_date")
+        if s and t < _date.fromisoformat(s):
+            continue
+        if e and t > _date.fromisoformat(e) + _td(days=1):
+            continue
+        out.append(key)
+    return out
+
 DC_PHI = 0.0065
 KELLY_FRAC = 0.25
 MIN_EDGE = 0.03

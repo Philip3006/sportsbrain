@@ -147,6 +147,7 @@ _FIELDS = [
     "placed_date", "status", "pnl", "closing_odds", "clv",
     "pinnacle_ref_odds",
     "source", "model_prob", "stake_reason",
+    "league",  # Registry short-code (wm2026 | bl2 | atp | wta | ...) — settle_from_results routet danach
 ]
 
 
@@ -178,6 +179,12 @@ def _load(path: Path) -> pd.DataFrame:
         df["model_prob"] = ""
     if "stake_reason" not in df.columns:
         df["stake_reason"] = ""
+    if "league" not in df.columns:
+        # Bestehende Zeilen sind WM-2026-Ledger — backfill mit dem WM-Registry-Short-Code.
+        # Neue 2.BL-Zeilen kommen mit league="bl2" von append_bets.
+        df["league"] = "wm2026"
+    else:
+        df["league"] = df["league"].fillna("wm2026").replace("", "wm2026")
     return df
 
 
@@ -304,6 +311,7 @@ def append_bets(
                 "source":        "value",
                 "model_prob":    f"{s.model_prob:.6f}" if getattr(s, "model_prob", 0.0) > 0 else "",
                 "stake_reason":  getattr(s, "stake_reason", "") or "",
+                "league":        getattr(s, "league", "") or "wm2026",
             })
 
         if new_rows:
@@ -343,31 +351,44 @@ def _settle_from_results_locked(
     if not open_mask.any():
         return 0
 
-    if results is None:
-        try:
-            from src.data.international import fetch_international_results
-            results = fetch_international_results()
-        except Exception as exc:
-            _log.debug("fetch_international_results failed: %s", exc)
-            return 0
-
-    # Only settle from WM 2026 matches (never accidentally settle against
-    # historical Copa América / friendly data with the same team names).
-    wm_results = results[
-        (results.get("tournament", pd.Series()) == "FIFA World Cup")
-        & (results["date"] >= pd.Timestamp("2026-06-11"))
-        & results["home_score"].notna()
-    ] if "tournament" in results.columns else results.iloc[:0]
-
+    # Score-Lookup pro Liga aufbauen. Das ersetzt den ehemaligen hardcoded
+    # WM-Filter. Bei explizit übergebenem `results` (Test-Injection) bleibt der
+    # alte WM-Pfad aktiv — nur produktive Aufrufe (results=None) routen via
+    # results_router.fetch_results_for_league().
     from src.config import canonical_name as _cn
-    res_lookup: dict[tuple, dict] = {}
-    for _, row in wm_results.iterrows():
-        # Canonicalize so "Czech Republic" in martj42 CSV matches "Czechia" in ledger.
-        key = (_cn(str(row["home_team"])), _cn(str(row["away_team"])))
-        res_lookup[key] = row
+    score_lookup: dict[tuple[str, str], tuple[int, int]] = {}
 
-    # Try TheOddsAPI scores endpoint first (same-day results, no lag)
-    live_scores = _fetch_completed_wm_scores()
+    if results is not None:
+        # Backward compat: explicit results (WM-Testpfad).
+        if "tournament" in results.columns:
+            wm_results = results[
+                (results.get("tournament", pd.Series()) == "FIFA World Cup")
+                & (results["date"] >= pd.Timestamp("2026-06-11"))
+                & results["home_score"].notna()
+            ]
+        else:
+            wm_results = results.iloc[:0]
+        for _, row in wm_results.iterrows():
+            key = (_cn(str(row["home_team"])), _cn(str(row["away_team"])))
+            try:
+                score_lookup[key] = (int(row["home_score"]), int(row["away_score"]))
+            except (ValueError, TypeError):
+                continue
+    else:
+        # Route per open-bet-league via results_router. Jede Liga liefert eigenes Dict.
+        from src.data.results_router import fetch_results_for_league
+        leagues_in_ledger = sorted(set(df.loc[open_mask, "league"].dropna().tolist()))
+        for league_short in leagues_in_ledger:
+            try:
+                score_lookup.update(fetch_results_for_league(league_short))
+            except Exception as exc:
+                _log.debug("results_router[%s] failed: %s", league_short, exc)
+
+    # TheOddsAPI-Scores für WM (schneller Same-Day-Path). 2.BL nutzt football-data
+    # + eigenen ESPN-Fallback (Phase E), hier bewusst nur WM-Scores.
+    live_scores = _fetch_completed_wm_scores() if any(
+        df.loc[open_mask, "league"] == "wm2026"
+    ) else {}
 
     settled = 0
     newly_settled_indices: list = []
@@ -378,19 +399,15 @@ def _settle_from_results_locked(
         odds = float(row["decimal_odds"])
         stake = float(row["stake_amount"])
 
-        # Look up score: live API first, then martj42 CSV
-        # score_key uses canonical names (e.g. "Czechia") so it matches res_lookup
-        # which is also canonicalized — prevents "Czech Republic" vs "Czechia" mismatch.
+        # Look up score: live API first (WM only), then league-scoped result loader
         from src.config import canonical_name
         score_key = (canonical_name(home), canonical_name(away))
         if score_key in live_scores:
             hg, ag = live_scores[score_key]
+        elif score_key in score_lookup:
+            hg, ag = score_lookup[score_key]
         else:
-            result = res_lookup.get(score_key)
-            if result is None:
-                continue
-            hg = int(result["home_score"])
-            ag = int(result["away_score"])
+            continue
         total = hg + ag
 
         # Determine outcome
