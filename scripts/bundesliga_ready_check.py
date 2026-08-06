@@ -23,7 +23,7 @@ def main() -> None:
         print("OK    HOST_BOOST_ENABLED=False")
 
     # 2. Bundesliga keys in whitelist
-    required = {"soccer_germany_bundesliga", "soccer_germany_2_bundesliga"}
+    required = {"soccer_germany_bundesliga", "soccer_germany_bundesliga2"}
     missing = required - FOOTBALL_LEAGUES_WHITELIST
     if missing:
         print(f"FAIL  Missing from whitelist: {missing}")

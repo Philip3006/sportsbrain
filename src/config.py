@@ -31,7 +31,7 @@ FOOTBALL_LEAGUES_WHITELIST: set[str] = {
     "soccer_brazil_campeonato",
     "soccer_austria_bundesliga",
     "soccer_france_ligue_2",
-    "soccer_germany_2_bundesliga",
+    "soccer_germany_bundesliga2",
     "soccer_turkey_super_league",
     "soccer_belgium_first_div",
     "soccer_scotland_premier_league",
@@ -69,7 +69,7 @@ LEAGUE_REGISTRY: dict[str, dict] = {
         "tournament_weight": 1.0,
         "category_mode": "live",
     },
-    "soccer_germany_2_bundesliga": {
+    "soccer_germany_bundesliga2": {
         "name": "2. Bundesliga",
         "short": "bl2",
         "sport": "football",

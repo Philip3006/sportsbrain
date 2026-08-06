@@ -61,7 +61,13 @@ def fetch_season(
     except Exception:
         return None
 
-    df = pd.read_csv(io.StringIO(resp.text), low_memory=False)
+    # football-data.co.uk liefert einige Dateien in latin-1/cp1252 (Umlaute).
+    # requests errät oft utf-8 → mojibake bei "Preußen Münster". Explizit dekodieren.
+    try:
+        text = resp.content.decode("utf-8")
+    except UnicodeDecodeError:
+        text = resp.content.decode("cp1252", errors="replace")
+    df = pd.read_csv(io.StringIO(text), low_memory=False)
 
     # Keep only relevant columns
     keep = {"Date", "HomeTeam", "AwayTeam", "FTHG", "FTAG",
