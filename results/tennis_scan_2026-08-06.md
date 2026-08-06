@@ -26,7 +26,7 @@ Surface: hard · Best of: 3 · Matches gescannt: 16
 - [WTA] **Maria Sakkari vs Coco Gauff** · Match Winner: Coco Gauff ⭐
   Quote 1.42 · Modell 98.0% · EV +39.2% · Stake 20.00€ · HIGH
 - [WTA] **Viktorija Golubic vs Iga Swiatek** · Match Winner: Iga Swiatek
-  Quote 1.25 · Modell 98.0% · EV +22.5% · Stake 20.00€ · HIGH
+  Quote 1.26 · Modell 98.0% · EV +23.5% · Stake 20.00€ · HIGH
 - [WTA] **Aryna Sabalenka vs Shuai Zhang** · Match Winner: Aryna Sabalenka
   Quote 1.15 · Modell 98.0% · EV +12.7% · Stake 15.50€ · HIGH
 - [WTA] **Elise Mertens vs Naomi Osaka** · Match Winner: Elise Mertens
