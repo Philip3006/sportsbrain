@@ -490,6 +490,78 @@ TEAM_NAME_MAP: dict[str, str] = {
     "Curaçao": "Curacao",
     "Bosnia & Herzegovina": "Bosnia and Herzegovina",
     "Côte d'Ivoire": "Cote d'Ivoire",
+    # ── 2. Bundesliga — ESPN / TheOddsAPI / football-data.co.uk Abweichungen ──
+    # Hamburg / HSV
+    "Hamburger SV": "Hamburg",
+    "HSV": "Hamburg",
+    "Hamburger SV (Reserves)": "Hamburg",
+    # Karlsruher SC
+    "Karlsruher SC": "Karlsruhe",
+    "KSC": "Karlsruhe",
+    # Greuther Fürth
+    "SpVgg Greuther Fürth": "Greuther Furth",
+    "SpVgg Greuther Furth": "Greuther Furth",
+    "Greuther Fürth": "Greuther Furth",
+    "Fürth": "Greuther Furth",
+    "Fuerth": "Greuther Furth",
+    # Fortuna Düsseldorf
+    "Fortuna Düsseldorf": "Fortuna Dusseldorf",
+    "Düsseldorf": "Fortuna Dusseldorf",
+    # 1. FC Nürnberg
+    "1. FC Nürnberg": "Nurnberg",
+    "Nürnberg": "Nurnberg",
+    "1 FC Nurnberg": "Nurnberg",
+    # FC St. Pauli
+    "FC St. Pauli": "St Pauli",
+    "St. Pauli": "St Pauli",
+    # SV Darmstadt 98
+    "Darmstadt 98": "Darmstadt",
+    "SV Darmstadt 98": "Darmstadt",
+    # Preußen Münster
+    "Preußen Münster": "Preußen Münster",  # keep canonical accented form
+    "Preussen Munster": "Preußen Münster",
+    "PreuÃŸen MÃ¼nster": "Preußen Münster",  # cp1252 mojibake guard
+    # SV Elversberg
+    "SV Elversberg": "Elversberg",
+    "1. FC Saarbrücken": "Saarbrucken",
+    "Saarbrücken": "Saarbrucken",
+    # Holstein Kiel
+    "Holstein Kiel": "Kiel",
+    # Eintracht Braunschweig
+    "Eintracht Braunschweig": "Braunschweig",
+    # Hannover 96
+    "Hannover 96": "Hannover",
+    # FC Magdeburg
+    "1. FC Magdeburg": "Magdeburg",
+    # SC Paderborn
+    "SC Paderborn 07": "Paderborn",
+    "Paderborn 07": "Paderborn",
+    # Arminia Bielefeld
+    "Arminia Bielefeld": "Bielefeld",
+    "DSC Arminia Bielefeld": "Bielefeld",
+    # VfL Bochum
+    "VfL Bochum": "Bochum",
+    # FC Schalke 04
+    "FC Schalke 04": "Schalke 04",
+    "Schalke": "Schalke 04",
+    # Hertha BSC
+    "Hertha BSC": "Hertha",
+    "Hertha Berlin": "Hertha",
+    # Kaiserslautern
+    "1. FC Kaiserslautern": "Kaiserslautern",
+    "FCK": "Kaiserslautern",
+    # FC Erzgebirge Aue
+    "Erzgebirge Aue": "Erzgebirge Aue",
+    "FC Erzgebirge Aue": "Erzgebirge Aue",
+    # 1. FC Köln (potenzieller Absteiger)
+    "1. FC Köln": "FC Koln",
+    "1. FC Koeln": "FC Koln",
+    "Koln": "FC Koln",
+    # VfB Stuttgart (potenzieller Absteiger)
+    "VfB Stuttgart": "Stuttgart",
+    # Dynamo Dresden
+    "Dynamo Dresden": "Dresden",
+    "SG Dynamo Dresden": "Dresden",
 }
 
 
@@ -524,5 +596,8 @@ WM2026_GROUPS: dict[str, str] = {
 }
 
 
+_TEAM_NAME_MAP_LOWER: dict[str, str] = {k.lower(): v for k, v in TEAM_NAME_MAP.items()}
+
+
 def canonical_name(name: str) -> str:
-    return TEAM_NAME_MAP.get(name, name)
+    return TEAM_NAME_MAP.get(name) or _TEAM_NAME_MAP_LOWER.get(name.lower(), name)

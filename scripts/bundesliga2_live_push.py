@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT))
 
 from src.config import DEFAULT_USER, ledger_path_for
 from src.data.football_live import fetch_scoreboard, canonical_match_key
+from src.config import canonical_name
 
 SPORT_KEY = "soccer_germany_bundesliga2"
 LEAGUE_SHORT = "bl2"
@@ -83,6 +84,60 @@ def _send(title: str, body: str, kind: str = "generic") -> bool:
         return False
 
 
+def _fetch_odds_api_scoreboard() -> dict[str, dict]:
+    """TheOddsAPI /scores als primäre Quelle (~30s Lag). Gibt gleiche Struktur wie fetch_scoreboard() zurück."""
+    try:
+        from src.data.odds_api import fetch_scores
+        raw = fetch_scores(sport=SPORT_KEY, days_from=1)
+    except Exception as exc:
+        print(f"  TheOddsAPI scores failed: {exc}")
+        return {}
+    if not raw:
+        return {}
+
+    now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    out: dict[str, dict] = {}
+    for m in raw:
+        home_name = m.get("home_team", "")
+        away_name = m.get("away_team", "")
+        if not home_name or not away_name:
+            continue
+        completed = bool(m.get("completed", False))
+        scores_raw = m.get("scores") or []
+        h_score = a_score = None
+        for sc in scores_raw:
+            name = sc.get("name", "")
+            try:
+                val = int(sc["score"])
+            except (KeyError, ValueError, TypeError):
+                continue
+            if name == home_name:
+                h_score = val
+            elif name == away_name:
+                a_score = val
+        # Infer status from data
+        if completed:
+            status = "post"
+        elif h_score is not None:
+            status = "in"
+        else:
+            status = "pre"
+        ck = canonical_match_key(home_name, away_name)
+        out[ck] = {
+            "home":          home_name,
+            "away":          away_name,
+            "home_score":    h_score,
+            "away_score":    a_score,
+            "status":        status,
+            "period":        0,
+            "clock_display": "",
+            "completed":     completed,
+            "commence_time": m.get("commence_time", ""),
+            "last_update":   now_iso,
+        }
+    return out
+
+
 def main() -> int:
     bets = _open_bl2_bets()
     if not bets:
@@ -102,11 +157,19 @@ def main() -> int:
 
     print(f"[bl2_live_push] {len(match_pairs)} 2.BL-Matches mit offenen Wetten")
 
-    scoreboard = fetch_scoreboard(SPORT_KEY)
-    if not scoreboard:
-        print("  ESPN-Scoreboard leer — heartbeat only")
-        _touch_heartbeat("empty scoreboard")
-        return 0
+    # Primary: TheOddsAPI /scores (in-play + completed, ~30s Lag)
+    scoreboard = _fetch_odds_api_scoreboard()
+    if scoreboard:
+        print(f"  Quelle: TheOddsAPI scores ({len(scoreboard)} Matches)")
+    else:
+        # Fallback: ESPN public endpoint (kostenlos, ~60s Lag)
+        scoreboard = fetch_scoreboard(SPORT_KEY)
+        if scoreboard:
+            print(f"  Quelle: ESPN fallback ({len(scoreboard)} Matches)")
+        else:
+            print("  Beide Quellen leer — heartbeat only")
+            _touch_heartbeat("empty scoreboard")
+            return 0
 
     cache = _load_cache()
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
