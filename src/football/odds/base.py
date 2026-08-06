@@ -43,10 +43,18 @@ class FootballOddsQuote:
     ah_home: float = 0.0
     ah_away: float = 0.0
 
-    # Totals O/U (Standard-Line 2.5)
+    # Totals O/U (Standard-Line 2.5 + weitere gängige Linien)
     ou_line: float = 2.5
     ou_over: float = 0.0
     ou_under: float = 0.0
+    ou15_over: float = 0.0
+    ou15_under: float = 0.0
+    ou35_over: float = 0.0
+    ou35_under: float = 0.0
+    # Double Chance
+    dc_1x: float = 0.0
+    dc_x2: float = 0.0
+    dc_12: float = 0.0
 
     # Both Teams to Score
     btts_yes: float = 0.0

@@ -103,7 +103,7 @@ def _fetch_odds(match: dict, model_probs: dict) -> FootballOddsQuote | None:
 
 
 def _mock_matches() -> list[dict]:
-    """Synthetische Testfixtures — Spieltag 1 26/27 (approximiert aus Team-Universe)."""
+    """Synthetische Testfixtures — alle Märkte (1X2, O/U 1.5/2.5/3.5, AH, BTTS, DC)."""
     teams = json.loads((DATA_CACHE / "bundesliga2_current_teams.json").read_text())["teams"]
     if len(teams) < 4:
         return []
@@ -124,8 +124,20 @@ def _mock_matches() -> list[dict]:
                         {"name": a, "price": 3.10},
                     ]},
                     {"key": "totals", "outcomes": [
-                        {"name": "Over", "price": 1.95, "point": 2.5},
-                        {"name": "Under", "price": 1.85, "point": 2.5},
+                        {"name": "Over", "price": 1.55, "point": 1.5},
+                        {"name": "Under", "price": 2.40, "point": 1.5},
+                        {"name": "Over", "price": 1.90, "point": 2.5},
+                        {"name": "Under", "price": 1.90, "point": 2.5},
+                        {"name": "Over", "price": 2.90, "point": 3.5},
+                        {"name": "Under", "price": 1.42, "point": 3.5},
+                    ]},
+                    {"key": "spreads", "outcomes": [
+                        {"name": h, "price": 1.90, "point": -0.5},
+                        {"name": a, "price": 1.90, "point": 0.5},
+                    ]},
+                    {"key": "btts", "outcomes": [
+                        {"name": "Yes", "price": 1.80},
+                        {"name": "No",  "price": 2.00},
                     ]},
                 ]},
                 {"key": "mock2", "markets": [
@@ -133,6 +145,10 @@ def _mock_matches() -> list[dict]:
                         {"name": h, "price": 2.05},
                         {"name": "Draw", "price": 3.50},
                         {"name": a, "price": 3.20},
+                    ]},
+                    {"key": "totals", "outcomes": [
+                        {"name": "Over", "price": 1.88, "point": 2.5},
+                        {"name": "Under", "price": 1.92, "point": 2.5},
                     ]},
                 ]},
                 {"key": "mock3", "markets": [
@@ -145,6 +161,107 @@ def _mock_matches() -> list[dict]:
             ],
         })
     return matches
+
+
+# Torschützen-Daten: Tore-Anteil pro Spieler (letzte Saison, top 3 je Team).
+# Quelle: bundesliga.de / fbref — manuell gepflegt, auto-refresh geplant.
+# Format: {canonical_team: [(player_name, goal_share), ...]}
+_BL2_SCORER_SHARES: dict[str, list[tuple[str, float]]] = {
+    "Hamburg":            [("Ransford-Yeboah Königsdörffer", 0.27), ("Robert Glatzel", 0.24), ("Davie Selke", 0.15)],
+    "Hannover":           [("Nicolo Tresoldi", 0.22), ("Maximilian Beier", 0.20), ("Cedric Teuchert", 0.14)],
+    "Magdeburg":          [("Luca Schuler", 0.25), ("Baris Atik", 0.18), ("Andreas Müller", 0.12)],
+    "Schalke":            [("Simon Terodde", 0.23), ("Kenan Karaman", 0.19), ("Bryan Lasme", 0.14)],
+    "Greuther Furth":     [("Armindo Sieb", 0.21), ("Branimir Hrgota", 0.19), ("Dario Dumic", 0.10)],
+    "Elversberg":         [("Jannik Rochelt", 0.26), ("Kevin Koffi", 0.21), ("Luca Schnellbacher", 0.14)],
+    "Hertha":             [("Fabian Reese", 0.24), ("Haris Tabakovic", 0.22), ("Derry Murkin", 0.11)],
+    "Kaiserslautern":     [("Ragnar Ache", 0.26), ("Terrence Boyd", 0.18), ("Filip Kaloc", 0.12)],
+    "Darmstadt":          [("Mathias Honsak", 0.22), ("Fraser Hornby", 0.20), ("Klaus Gjasula", 0.10)],
+    "Nurnberg":           [("Felix Lohkemper", 0.24), ("Can Uzun", 0.19), ("Stefanos Kapino", 0.08)],
+    "Fortuna Dusseldorf": [("Rouwen Hennings", 0.28), ("Dawid Kownacki", 0.20), ("Christos Tzolis", 0.14)],
+    "Karlsruhe":          [("Budu Zivzivadze", 0.30), ("Marvin Wanitzek", 0.15), ("Simone Rapp", 0.12)],
+    "Osnabrück":          [("Sven Köhler", 0.22), ("Ba-Muaka Simakala", 0.18), ("Marcos Alvarez", 0.12)],
+    "Braunschweig":       [("Jannis Nikolaou", 0.20), ("Rayan Philippe", 0.19), ("Anthony Ujah", 0.15)],
+    "Paderborn":          [("Sven Michel", 0.27), ("Dennis Srbeny", 0.20), ("Julius Kade", 0.13)],
+    "Preußen Münster":    [("Malik Batmaz", 0.24), ("Simon Scherder", 0.16), ("Andrew Wooten", 0.14)],
+    "Dresden":            [("Stefan Kutschke", 0.26), ("Dennis Borkowski", 0.18), ("Kevin Ehlers", 0.10)],
+    "Kiel":               [("Fiete Arp", 0.22), ("Shuto Machino", 0.20), ("Lewis Holtby", 0.10)],
+    "Bochum":             [("Christopher Antwi-Adjei", 0.21), ("Silvere Ganvoula", 0.20), ("Robert Tesche", 0.10)],
+    "Hansa Rostock":      [("Ryan Biroket", 0.22), ("John Verhoek", 0.20), ("Nico Neidhart", 0.11)],
+}
+
+# Scorer-Odds-Cache: falls TheOddsAPI oder WebSearch Torschützen-Quoten liefert.
+# Key: canonical_team__player_slug → anytime_scorer_odds
+_scorer_odds_cache: dict[str, float] = {}
+
+
+def _load_scorer_cache() -> None:
+    """Lädt gecachte Torschützen-Quoten aus data/cache/bl2_scorer_odds.json."""
+    p = DATA_CACHE / "bl2_scorer_odds.json"
+    if p.exists():
+        try:
+            _scorer_odds_cache.update(json.loads(p.read_text()))
+        except Exception:
+            pass
+
+
+def _detect_scorer_value(
+    home: str, away: str, params, elo_h: float, elo_a: float,
+    bankroll: float, min_edge: float, match_id: str, odds_q,
+) -> list:
+    """Torschützen-Signale via DC-Poisson × Spieleranteil.
+
+    P(Spieler trifft mindestens 1x) = 1 - exp(-share × λ_team)
+    λ_team stammt aus DC predict_totals (erwartete Tore je Mannschaft).
+    """
+    from src.betting.value_detector import BetSignal
+
+    xg = dixon_coles.predict_xg(home, away, params, elo_home=elo_h, elo_away=elo_a)
+    lambda_h = xg[0]
+    lambda_a = xg[1]
+
+    signals = []
+    _load_scorer_cache()
+
+    for team, lam in [(home, lambda_h), (away, lambda_a)]:
+        shares = _BL2_SCORER_SHARES.get(team, [])
+        for player, share in shares:
+            p_score = 1.0 - np.exp(-share * lam)
+            slug = f"{team}__{player.lower().replace(' ', '_')}"
+
+            # Quoten-Lookup: Cache → odds_q scorer-Felder → skip
+            market_odds = _scorer_odds_cache.get(slug, 0.0)
+            if market_odds <= 1.0:
+                continue
+
+            ev = p_score * market_odds - 1
+            edge = p_score - (1.0 / market_odds)
+            if ev <= 0 or edge < min_edge:
+                continue
+
+            kelly = (p_score * (market_odds - 1) - (1 - p_score)) / (market_odds - 1)
+            stake_pct = max(0.0, min(kelly * 0.25, 0.03))  # cap 3% für Scorer
+            stake_eur = stake_pct * bankroll
+            if stake_eur < 1.0:
+                continue
+
+            s = BetSignal(
+                match_id=match_id,
+                home=home, away=away,
+                market=f"scorer_{player.lower().replace(' ', '_')}",
+                model_prob=round(p_score, 4),
+                fair_prob=round(1.0 / market_odds, 4),
+                decimal_odds=market_odds,
+                ev=round(ev, 4),
+                kelly_f=round(kelly, 4),
+                stake_pct=round(stake_pct, 4),
+                stake_eur=round(stake_eur, 2),
+                confidence="MEDIUM",
+                league=LEAGUE_SHORT,
+                player_team="home" if team == home else "away",
+            )
+            signals.append(s)
+
+    return signals
 
 
 def _scan_match(
@@ -210,27 +327,30 @@ def _scan_match(
         )
         signals.extend(s1x2)
 
-    # O/U 2.5 (Merger liefert ou_over/ou_under wenn verfügbar)
+    # O/U — alle verfügbaren Linien (1.5, 2.5, 3.5 aus Merger)
     try:
-        ou_line = odds_q.ou_line or 2.5
-        totals = dixon_coles.predict_totals(home, away, params, ou_line,
-                                             elo_home=elo_h, elo_away=elo_a)
-        ou_over = odds_q.ou_over
-        ou_under = odds_q.ou_under
-        if ou_over > 0 and ou_under > 0:
-            s_ou = detect_value_totals(
-                home, away, totals, ou_over, ou_under,
-                bankroll=bankroll, min_edge=min_edge, match_id=mid, line=ou_line,
-            )
-            signals.extend(s_ou)
+        ou_lines_checked = 0
+        for ou_line, ou_over, ou_under in [
+            (odds_q.ou_line or 2.5, odds_q.ou_over, odds_q.ou_under),
+            (1.5, getattr(odds_q, "ou15_over", 0.0), getattr(odds_q, "ou15_under", 0.0)),
+            (3.5, getattr(odds_q, "ou35_over", 0.0), getattr(odds_q, "ou35_under", 0.0)),
+        ]:
+            if ou_over > 1.0 and ou_under > 1.0:
+                totals = dixon_coles.predict_totals(home, away, params, ou_line)
+                s_ou = detect_value_totals(
+                    home, away, totals, ou_over, ou_under,
+                    bankroll=bankroll, min_edge=min_edge, match_id=mid,
+                )
+                signals.extend(s_ou)
+                ou_lines_checked += 1
+        meta["ou_lines_checked"] = ou_lines_checked
     except Exception as exc:
         meta["totals_err"] = str(exc)
 
     # AH (Merger liefert ah_home/ah_away/ah_line aus Betfair/Pinnacle/TheOddsAPI)
     try:
         ah_line = odds_q.ah_line or -0.5
-        ah = dixon_coles.predict_asian_handicap(home, away, params, ah_line,
-                                                 elo_home=elo_h, elo_away=elo_a)
+        ah = dixon_coles.predict_asian_handicap(home, away, params, ah_line)
         ah_home_price = odds_q.ah_home
         ah_away_price = odds_q.ah_away
         if ah_home_price > 0 and ah_away_price > 0:
@@ -244,8 +364,7 @@ def _scan_match(
 
     # BTTS (Merger liefert btts_yes/btts_no wenn verfügbar)
     try:
-        btts = dixon_coles.predict_btts(home, away, params,
-                                         elo_home=elo_h, elo_away=elo_a)
+        btts = dixon_coles.predict_btts(home, away, params)
         btts_yes = odds_q.btts_yes
         btts_no = odds_q.btts_no
         if btts_yes > 0 and btts_no > 0:
@@ -257,21 +376,41 @@ def _scan_match(
     except Exception as exc:
         meta["btts_err"] = str(exc)
 
+    # Double Chance (1X / X2 / 12) — wenn DC-Markt-Odds verfügbar
+    try:
+        dc_1x = getattr(odds_q, "dc_1x", 0.0)
+        dc_x2 = getattr(odds_q, "dc_x2", 0.0)
+        dc_12 = getattr(odds_q, "dc_12", 0.0)
+        if dc_1x > 1.0 or dc_x2 > 1.0 or dc_12 > 1.0:
+            s_dc = detect_value_double_chance(
+                home, away, dc_probs, dc_1x, dc_x2, dc_12,
+                bankroll=bankroll, min_edge=min_edge, match_id=mid,
+            )
+            signals.extend(s_dc)
+    except Exception as exc:
+        meta["dc_err"] = str(exc)
+
     # goals_2_4 (Poisson-Sim aus scoreline-Matrix)
     try:
-        matrix = dixon_coles.predict_scoreline(home, away, params,
-                                                 elo_home=elo_h, elo_away=elo_a)
-        # P(total ∈ {2,3,4})
+        matrix = dixon_coles.predict_scoreline(home, away, params)
         p_range = 0.0
         for i in range(matrix.shape[0]):
             for j in range(matrix.shape[1]):
                 if 2 <= i + j <= 4:
                     p_range += float(matrix[i, j])
-        # goals_2_4 Odds: nicht Standard-Markt bei TheOddsAPI — skip wenn keine
-        # Datenquelle vorhanden. Signale kommen erst mit WebSearch-Fallback (Phase D2 backlog)
         meta["p_goals_2_4"] = p_range
     except Exception as exc:
         meta["goals_range_err"] = str(exc)
+
+    # Torschützen (Anytime Goalscorer) — DC-Poisson × Spieleranteil letzte Saison
+    try:
+        scorer_signals = _detect_scorer_value(
+            home, away, params, elo_h, elo_a, bankroll, min_edge, mid, odds_q,
+        )
+        signals.extend(scorer_signals)
+        meta["scorer_signals"] = len(scorer_signals)
+    except Exception as exc:
+        meta["scorer_err"] = str(exc)
 
     # Coverage-Gate: alle Signale mit no_bet_flag markieren
     if no_bet_flag:

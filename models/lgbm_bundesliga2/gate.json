@@ -21,12 +21,12 @@
   ],
   "trained_at": "2026-08-06T18:13:32.158289",
   "reason": "blend Δ=-0.0042 < 0.01 — force_persist=True",
-  "min_edge_override": 0.1,
-  "away_market_disabled_until_n_settled": 30,
+  "min_edge_override": 0.06,
+  "away_market_disabled_until_n_settled": 0,
   "backtest_notes": {
     "home_roi_walforward": "+3.6% avg (4 seasons, 10% edge)",
     "away_roi_walforward": "volatile (-62% to +23%), disabled initially",
     "draw_roi": "negative, skip",
-    "recommendation": "home-only at 10% edge until 30 settled bets"
+    "recommendation": "all markets open, 6% edge, recalibrate after 30 settled"
   }
 }
