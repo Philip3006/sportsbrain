@@ -1,0 +1,15 @@
+{
+  "match_id": "d032d043525b9b2cebd1f01b3b35ab6c",
+  "player_a": "Arthur Rinderknech",
+  "player_b": "Frances Tiafoe",
+  "tournament_slug": "canadian_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260806_03",
+      "ts_utc": "2026-08-06T03:40:18.024731+00:00",
+      "odds_a": 2.95,
+      "odds_b": 1.4,
+      "source": "betsson"
+    }
+  ]
+}
