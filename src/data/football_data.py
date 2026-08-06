@@ -21,6 +21,7 @@ AVAILABLE_LEAGUES = {
     "E0": "English Premier League",
     "SP1": "Spanish La Liga",
     "D1": "German Bundesliga",
+    "D2": "German Bundesliga 2",
     "I1": "Italian Serie A",
     "F1": "French Ligue 1",
 }
@@ -105,7 +106,8 @@ def fetch_odds_history(
     if leagues is None:
         leagues = list(AVAILABLE_LEAGUES.keys())
     if seasons is None:
-        seasons = ["2122", "2223", "2324", "2425"]
+        seasons = ["1617", "1718", "1819", "1920", "2021",
+                   "2122", "2223", "2324", "2425", "2526"]
 
     frames = []
     for league in leagues:

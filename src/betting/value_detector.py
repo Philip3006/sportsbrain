@@ -29,6 +29,7 @@ class BetSignal:
     player_team: str = ""     # Stake-v2: für Scorer-Märkte "home" oder "away" (Korrelations-Detektion)
     no_bet_flag: bool = False  # N7: blockiert Ledger-Aufnahme wenn konfliktierend
     conflict_reason: str = ""  # N7: beschreibt welcher Markt konfligiert
+    league: str = ""           # Registry short-code (wm2026 | bl2 | atp | wta | ...) für Ledger-Filter + PWA-Gruppierung
 
 
 _MARKETS = ["home", "draw", "away"]

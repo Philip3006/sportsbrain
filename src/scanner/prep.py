@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 
-from src.config import MODELS_DIR
+from src.config import MODELS_DIR, active_leagues, league_config
 from src.models import dixon_coles as dc
 from src.data.squad_availability import SquadReport
 from src.features.form import momentum_score, match_load, form_direction_label
@@ -17,9 +17,22 @@ _WM_2026_END = datetime(2026, 7, 19)
 
 
 def _is_wm_active(today: datetime | None = None) -> bool:
-    """Returns True if WM 2026 is currently running (matches possible)."""
+    """Returns True if WM 2026 is currently running. Preserved for backward compat —
+    prefer _is_league_active() / _active_leagues_today() for multi-league scanner code."""
     today = today or datetime.now()
     return _WM_2026_START <= today <= _WM_2026_END + timedelta(days=1)
+
+
+def _is_league_active(sport_key: str, today: datetime | None = None) -> bool:
+    """True wenn die Liga heute laut LEAGUE_REGISTRY läuft. Unbekannte Keys = False."""
+    if not league_config(sport_key):
+        return False
+    return sport_key in _active_leagues_today(today)
+
+
+def _active_leagues_today(today: datetime | None = None) -> list[str]:
+    """Alle aktiven Ligen laut Registry — wrapper um config.active_leagues()."""
+    return active_leagues(today or datetime.now())
 
 
 def _load_latest_dc_params() -> dc.DixonColesParams | None:
