@@ -1,65 +1,26 @@
 {
   "teams": [
-    "Osnabrück",
-    "Cottbus",
-    "Wolfsburg",
-    "Heidenheim",
-    "St Pauli",
-    "Hertha",
     "Bielefeld",
     "Bochum",
     "Braunschweig",
     "Darmstadt",
     "Dresden",
+    "Elversberg",
+    "Fortuna Dusseldorf",
     "Greuther Furth",
     "Hannover",
+    "Hertha",
     "Kaiserslautern",
     "Karlsruhe",
     "Kiel",
     "Magdeburg",
-    "Nurnberg"
+    "Nurnberg",
+    "Paderborn",
+    "Preußen Münster",
+    "Schalke 04"
   ],
-  "teams_raw": [
-    "VfL Osnabrück",
-    "FC Energie Cottbus",
-    "VfL Wolfsburg",
-    "1. FC Heidenheim",
-    "FC St. Pauli",
-    "Hertha BSC",
-    "Arminia Bielefeld",
-    "VfL Bochum",
-    "Eintracht Braunschweig",
-    "SV Darmstadt 98",
-    "Dynamo Dresden",
-    "SpVgg Greuther Fürth",
-    "Hannover 96",
-    "1. FC Kaiserslautern",
-    "Karlsruher SC",
-    "Holstein Kiel",
-    "1. FC Magdeburg",
-    "1. FC Nürnberg"
-  ],
-  "source": "wikipedia_2026_27",
-  "fetched_at": "2026-08-07T00:42:59.587910+00:00",
-  "season": "2627",
-  "notes": {
-    "promoted_from_3liga": [
-      "Osnabrück",
-      "Cottbus"
-    ],
-    "relegated_from_bundesliga": [
-      "Wolfsburg",
-      "Heidenheim",
-      "St Pauli"
-    ],
-    "relegated_to_3liga_from_bl2": [
-      "Schalke 04",
-      "Preußen Münster",
-      "Fortuna Dusseldorf"
-    ],
-    "promoted_to_bundesliga_from_bl2": [
-      "Elversberg",
-      "Paderborn"
-    ]
-  }
+  "n": 18,
+  "source": "last_season",
+  "captured_at": "2026-08-07T06:08:26.305273+00:00",
+  "unknown_vs_universe": []
 }
