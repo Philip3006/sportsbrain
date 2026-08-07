@@ -34,13 +34,13 @@ def _websearch_football_fallback(
     sanity_1x2 bestehen (longest-valid-triple). Single-source → no_bet_flag=True.
     """
     try:
-        from src.data.websearch import web_search  # bestehender DDG-Client
+        from ddgs import DDGS
     except ImportError:
         return None
 
     query = query_override or f"{home} vs {away} odds 1x2 bundesliga 2"
     try:
-        results = web_search(query, max_results=5)
+        results = list(DDGS().text(query, max_results=5))
     except Exception:
         return None
 
