@@ -669,6 +669,7 @@ def main() -> None:
     _gate_path = MODELS_DIR / "lgbm_bundesliga2" / "gate.json"
     _away_disabled = False
     _shadow_1x2 = True  # default: 1X2 im Shadow (negatives OOS-ROI)
+    _lgbm_gate_passed = False
     if _gate_path.exists():
         try:
             import json as _json
@@ -676,6 +677,7 @@ def main() -> None:
             if "min_edge_override" in _gate and args.min_edge is None:
                 min_edge = float(_gate["min_edge_override"])
             _shadow_1x2 = bool(_gate.get("shadow_1x2", True))
+            _lgbm_gate_passed = bool(_gate.get("gate_passed", False))
             _away_thresh = int(_gate.get("away_market_disabled_until_n_settled", 0))
             if _away_thresh > 0:
                 import csv as _csv2
@@ -698,10 +700,12 @@ def main() -> None:
     elo = _load_elo()
     universe = _load_universe()
 
-    # LGBM laden (optional — Fallback auf DC wenn nicht verfügbar)
-    lgbm_bundle = _load_lgbm()
+    # LGBM laden — nur wenn gate_passed=true (sonst DC schlechter)
+    lgbm_bundle = _load_lgbm() if _lgbm_gate_passed else None
     if lgbm_bundle:
         print(f"  LGBM: geladen (Blend: {LGBM_BL2_DC_WEIGHT:.0%} DC + {1-LGBM_BL2_DC_WEIGHT:.0%} LGBM)")
+    elif not _lgbm_gate_passed:
+        print("  LGBM: Gate nicht bestanden → DC-only (Blend verschlechtert Brier)")
     else:
         print("  LGBM: nicht verfügbar → DC-only")
 

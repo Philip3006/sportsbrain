@@ -1,19 +1,24 @@
 {
-  "dc_brier": 0.6188814964447256,
-  "blend_brier": 0.6546659704153923,
-  "improvement_vs_dc": -0.03578447397066675,
+  "dc_brier": 0.5613273056663515,
+  "blend_brier": 0.562527746805154,
+  "improvement_vs_dc": -0.001200441138802577,
   "dc_weight": 0.5,
   "min_improvement_required": 0.01,
   "gate_passed": false,
   "force_persist": true,
-  "n_train": 1394,
+  "n_train": 2476,
   "seasons": [
+    "1617",
+    "1718",
+    "1819",
+    "1920",
+    "2021",
     "2122",
     "2223",
     "2324",
     "2425",
     "2526"
   ],
-  "trained_at": "2026-08-07T15:43:04.940873",
-  "reason": "blend \u0394=-0.0358 < 0.01 \u2014 force_persist=True"
+  "trained_at": "2026-08-07T16:15:31.359036",
+  "reason": "blend \u0394=-0.0012 < 0.01 \u2014 force_persist=True"
 }
