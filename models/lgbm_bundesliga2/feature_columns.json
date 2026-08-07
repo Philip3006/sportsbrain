@@ -18,6 +18,11 @@
   "rest_home",
   "rest_away",
   "rest_diff",
+  "home_venue_form",
+  "away_venue_form",
+  "momentum_home",
+  "momentum_away",
+  "home_win_rate_home",
   "market_value_ratio",
   "market_value_log_ratio"
 ]

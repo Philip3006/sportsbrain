@@ -105,6 +105,35 @@ def _rolling_form_cached(df: "pd.DataFrame", team: str, before_date: "pd.Timesta
     return float(_np.mean(pts))
 
 
+def _venue_form_cached(df: "pd.DataFrame", team: str, before_date: "pd.Timestamp",
+                       venue: str, n: int = 5) -> float:
+    if venue == "home":
+        mask = (df["home_team"] == team) & (df["date"] < before_date)
+    else:
+        mask = (df["away_team"] == team) & (df["date"] < before_date)
+    recent = df[mask].tail(n)
+    if recent.empty:
+        return 1.0
+    pts = []
+    for _, r in recent.iterrows():
+        hs, as_ = int(r["home_score"]), int(r["away_score"])
+        if venue == "home":
+            pts.append(3.0 if hs > as_ else (1.0 if hs == as_ else 0.0))
+        else:
+            pts.append(3.0 if as_ > hs else (1.0 if as_ == hs else 0.0))
+    import numpy as _np
+    return float(_np.mean(pts)) if pts else 1.0
+
+
+def _home_win_rate_cached(df: "pd.DataFrame", team: str, before_date: "pd.Timestamp", n: int = 10) -> float:
+    mask = (df["home_team"] == team) & (df["date"] < before_date)
+    recent = df[mask].tail(n)
+    if recent.empty:
+        return 0.4
+    wins = sum(1 for _, r in recent.iterrows() if int(r["home_score"]) > int(r["away_score"]))
+    return wins / len(recent)
+
+
 def _h2h_cached(df: "pd.DataFrame", home: str, away: str, before_date: "pd.Timestamp", n: int = 5) -> float:
     mask = (
         ((df["home_team"] == home) & (df["away_team"] == away)) |
@@ -171,9 +200,17 @@ def _lgbm_probs(
             feat["rest_home"] = _days_rest_cached(df, home, now)
             feat["rest_away"] = _days_rest_cached(df, away, now)
             feat["rest_diff"] = feat["rest_home"] - feat["rest_away"]
+            feat["home_venue_form"]    = _venue_form_cached(df, home, now, "home")
+            feat["away_venue_form"]    = _venue_form_cached(df, away, now, "away")
+            feat["momentum_home"]      = _rolling_form_cached(df, home, now, 3) - _rolling_form_cached(df, home, now, 6)
+            feat["momentum_away"]      = _rolling_form_cached(df, away, now, 3) - _rolling_form_cached(df, away, now, 6)
+            feat["home_win_rate_home"] = _home_win_rate_cached(df, home, now)
         else:
             feat.update({"form_home": 1.0, "form_away": 1.0, "form_diff": 0.0,
-                         "h2h_home_wr": 0.4, "rest_home": 7.0, "rest_away": 7.0, "rest_diff": 0.0})
+                         "h2h_home_wr": 0.4, "rest_home": 7.0, "rest_away": 7.0, "rest_diff": 0.0,
+                         "home_venue_form": 1.0, "away_venue_form": 1.0,
+                         "momentum_home": 0.0, "momentum_away": 0.0,
+                         "home_win_rate_home": 0.4})
 
         # Kaderwert (wichtiger Stärkeindikator — immer einbeziehen)
         from src.data.market_values import get_market_value_ratio, get_market_value_log_ratio
