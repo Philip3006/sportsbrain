@@ -23,6 +23,11 @@
   "momentum_home",
   "momentum_away",
   "home_win_rate_home",
+  "goals_scored_5_home",
+  "goals_conceded_5_home",
+  "goals_scored_5_away",
+  "goals_conceded_5_away",
+  "home_attendance_ratio",
   "market_value_ratio",
   "market_value_log_ratio"
 ]
