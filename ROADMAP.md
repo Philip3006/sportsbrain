@@ -790,18 +790,30 @@ Diese Datei ist das einzige verbindliche Roadmap-Dokument. **Bei jeder Erwähnun
 - **Verschoben**: `bundesliga2_closing_odds.yml` — dedizierter Closing-Odds-Snapshot-Script fehlt noch (Phase-2).
 - **Verifikation**: Workflows YAML-valid, dispatch-testbar. Commit `6eeaf054`.
 
+### ✅ J5-HOTFIX. Pre-Season Blocker-Fixes — 2026-08-07 (Commit c8ed89aa)
+
+Drei kritische Blocker aus dem Pre-Season-Audit (Plan zany-munching-pascal) behoben:
+
+**BL-1 — Teams-JSON falsch**: `bundesliga2_current_teams.json` hatte `source=last_season` mit falschen 18 Teams (Elversberg/Fortuna/Schalke/Paderborn/Preußen statt Wolfsburg/Heidenheim/St.Pauli/Osnabrück/Cottbus). Manuell auf 2026/27 korrigiert. DC + LGBM retrained (DC: 1530 Matches, LGBM: 2476 Samples).
+
+**BL-3 — LGBM Gate nicht geprüft**: Scanner blendete LGBM auch bei `gate_passed=false` (Brier Δ=-0.036 → jetzt Δ=-0.001). Fix: `_lgbm_gate_passed` aus gate.json lesen; `lgbm_bundle = _load_lgbm() if _lgbm_gate_passed else None`. Scanner zeigt jetzt korrekt "DC-only (Gate nicht bestanden)".
+
+**BL-5 — CLV Backfill Key-Mismatch**: `_backfill_clv_bl2()` nutzte `match_id` als Cache-Key, aber closing_odds.json speichert `{home}_vs_{away}_{YYYYMMDD}`. Zweiter Bug: Market-Key war "home" statt "closing_home". Beide gefixt. Tests auf korrekte Schlüssel aktualisiert. 30/30 grün.
+
 ### 🟡 J5-BACKLOG. Phase-2 nach Spieltag 1 (P2)
 
 Konsolidierte Post-Launch-Items (kein Blocker für Live):
-1. **LGBM + Stacker**: Feature-Stack mit Elo-Diff / Rest-Days / Form / Market-Values (fbref-basiert), walk-forward CV, gate-passage, meta-calibrator ab 50 settled Signalen. Recalibrator-Label MUSS `won/lost/void` sein (nicht `correct/wrong` — Tennis-Bug 2026-08-04).
-2. **Multi-Source-Odds**: Portierung Tennis-Pattern (Betfair / Pinnacle / WebSearch-Fallback) für 2.BL. Aktuell nur TheOddsAPI EU.
-3. **Torschützen-Markt**: Player-xG via fbref-Backfill + Poisson × Rolling-Share.
-4. **PWA-Filter-Chips + Live-Tab-Gruppierung**: League-Filter, dedizierte 2.BL-Section im Live-Tab.
-5. **Closing-Odds-Snapshot**: dedizierter Script + `bundesliga2_closing_odds.yml` für CLV-Basis.
-6. **Team-Alias-Erweiterung**: nach ersten Live-Matches TheOddsAPI vs football-data Name-Deltas beobachten, TEAM_NAME_MAP erweitern (z.B. wenn OddsAPI „VfL Bochum" statt „Bochum" liefert).
-7. **In-Play-Odds-Drift-Alert**: analog `line_movement.py` aus Tennis, wenn Live-Odds >15% vs Prematch driften.
+1. **LGBM + Stacker**: Gate-Passage erfordert echte 2026/27-Matchdaten. Meta-Calibrator ab 50 settled Signalen. Recalibrator-Label MUSS `won/lost/void` sein (nicht `correct/wrong`).
+2. **Multi-Source-Odds (BL-2 OFFEN)**: TheOddsAPI Quota erschöpft → Mock-Mode. Portierung Tennis-Pattern (Betfair / Pinnacle / WebSearch-Fallback) für 2.BL oder Paid-Tier Upgrade.
+3. **PWA-Filter-Chips + Live-Tab (BL-8 OFFEN)**: Liga-Filter-Chip "2. Bundesliga", `_bl2LiveScores` analog `_tennisLiveScores`, Live-Score-Karte für offene BL2-Wetten.
+4. **Settlement-Tests erweitern (BL-7 OFFEN)**: AH Quarter-Ball, BTTS, Double Chance nicht unit-getestet für BL2.
+5. **ESPN Error-Alert (BL-9 OFFEN)**: `bundesliga2_live_push.py` → Push-Alert bei `n_scores=0` wenn offene Bets.
+6. **Torschützen-Markt**: Player-xG via fbref-Backfill + Poisson × Rolling-Share.
+7. **Closing-Odds-Snapshot**: Closing_odds.json Cleanup (unbegrenztes Wachstum).
+8. **Team-Alias-Erweiterung**: nach ersten Live-Matches TheOddsAPI vs football-data Name-Deltas beobachten.
+9. **In-Play-Odds-Drift-Alert**: analog `line_movement.py` aus Tennis.
 
-**Aufwand-Schätzung**: 6-10h insgesamt, wird nach ~3 Spieltagen re-evaluiert.
+**Aufwand-Schätzung**: BL-2+8 je ~3h, BL-7+9 je ~1h, Rest nach ~3 Spieltagen.
 
 ---
 
