@@ -80,6 +80,37 @@ def _rolling_form(df: pd.DataFrame, team: str, before_date: pd.Timestamp, n: int
     return float(np.mean(pts))
 
 
+def _venue_form(df: pd.DataFrame, team: str, before_date: pd.Timestamp,
+                venue: str, n: int = 5) -> float:
+    """Form nur in Heim- (venue='home') oder Auswärtsspielen (venue='away')."""
+    if venue == "home":
+        mask = (df["home_team"] == team) & (df["date"] < before_date)
+    else:
+        mask = (df["away_team"] == team) & (df["date"] < before_date)
+    recent = df[mask].tail(n)
+    if recent.empty:
+        return 1.0
+    pts = []
+    for _, r in recent.iterrows():
+        if venue == "home":
+            pts.append(3.0 if r["home_score"] > r["away_score"]
+                       else (1.0 if r["home_score"] == r["away_score"] else 0.0))
+        else:
+            pts.append(3.0 if r["away_score"] > r["home_score"]
+                       else (1.0 if r["away_score"] == r["home_score"] else 0.0))
+    return float(np.mean(pts))
+
+
+def _home_win_rate(df: pd.DataFrame, team: str, before_date: pd.Timestamp, n: int = 10) -> float:
+    """Heimsiegrate (Anteil Siege) in letzten n Heimspielen."""
+    mask = (df["home_team"] == team) & (df["date"] < before_date)
+    recent = df[mask].tail(n)
+    if recent.empty:
+        return 0.4
+    wins = (recent["home_score"] > recent["away_score"]).sum()
+    return float(wins / len(recent))
+
+
 def _h2h(df: pd.DataFrame, home: str, away: str, before_date: pd.Timestamp, n: int = 5) -> float:
     """Home-Winrate in letzten n H2H-Matches."""
     mask = (
@@ -166,6 +197,13 @@ def _build_features(
     feat["rest_home"] = _days_rest(df_history, home, date)
     feat["rest_away"] = _days_rest(df_history, away, date)
     feat["rest_diff"] = feat["rest_home"] - feat["rest_away"]
+
+    # Venue-Form & Momentum
+    feat["home_venue_form"]    = _venue_form(df_history, home, date, "home", 5)
+    feat["away_venue_form"]    = _venue_form(df_history, away, date, "away", 5)
+    feat["momentum_home"]      = _rolling_form(df_history, home, date, 3) - _rolling_form(df_history, home, date, 6)
+    feat["momentum_away"]      = _rolling_form(df_history, away, date, 3) - _rolling_form(df_history, away, date, 6)
+    feat["home_win_rate_home"] = _home_win_rate(df_history, home, date, 10)
 
     # Kaderwert (Transfermarkt squad market values — wichtiger Stärkeindikator)
     from src.data.market_values import get_market_value_ratio, get_market_value_log_ratio

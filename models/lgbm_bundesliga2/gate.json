@@ -1,7 +1,7 @@
 {
   "dc_brier": 0.6188716650732184,
-  "blend_brier": 0.6907154359955077,
-  "improvement_vs_dc": -0.07184377092228922,
+  "blend_brier": 0.6548179179036663,
+  "improvement_vs_dc": -0.035946252830447833,
   "dc_weight": 0.5,
   "min_improvement_required": 0.01,
   "gate_passed": false,
@@ -14,6 +14,6 @@
     "2425",
     "2526"
   ],
-  "trained_at": "2026-08-07T01:06:53.125129",
-  "reason": "blend \u0394=-0.0718 < 0.01 \u2014 force_persist=True"
+  "trained_at": "2026-08-07T01:12:53.302566",
+  "reason": "blend \u0394=-0.0359 < 0.01 \u2014 force_persist=True"
 }
