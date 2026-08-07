@@ -1,6 +1,6 @@
 # Betting Journal — TENNIS
 
-_Zuletzt aktualisiert: 2026-08-07 17:09 UTC_
+_Zuletzt aktualisiert: 2026-08-07 19:17 UTC_
 
 ---
 
@@ -8,7 +8,7 @@ _Zuletzt aktualisiert: 2026-08-07 17:09 UTC_
 
 | Signale | Settled | W | L | Win% | P&L | ROI |
 |---------|---------|---|---|------|-----|-----|
-| 552 | 470 | 247 | 180 | 52.6% | +667.12€ | +9.2% |
+| 552 | 473 | 249 | 181 | 52.6% | +669.25€ | +9.1% |
 
 ## Tages-Snapshots
 
@@ -28,29 +28,29 @@ _Zuletzt aktualisiert: 2026-08-07 17:09 UTC_
 | Dimension              |    N |    W |    L |   Win% |       P&L |     ROI |
 |------------------------|------|------|------|--------|-----------|---------|
 | m1000                  |  250 |  148 |   94 |  59.2% |  +643.10€ |  +16.8% |
-| wta1000                |  203 |   94 |   74 |  46.3% |   +88.82€ |   +2.7% |
+| wta1000                |  206 |   96 |   75 |  46.6% |   +90.95€ |   +2.7% |
 | wta500                 |   17 |    5 |   12 |  29.4% |   -64.80€ |  -38.1% |
 
 ### Nach Surface
 
 | Dimension              |    N |    W |    L |   Win% |       P&L |     ROI |
 |------------------------|------|------|------|--------|-----------|---------|
-| Hard                   |  470 |  247 |  180 |  52.6% |  +667.12€ |   +9.2% |
+| Hard                   |  473 |  249 |  181 |  52.6% |  +669.25€ |   +9.1% |
 
 ### Nach Markttyp
 
 | Dimension              |    N |    W |    L |   Win% |       P&L |     ROI |
 |------------------------|------|------|------|--------|-----------|---------|
-| O/U Games              |  330 |  166 |  130 |  50.3% |  +270.57€ |   +5.2% |
-| Match Winner           |  101 |   55 |   44 |  54.5% |  +128.12€ |   +9.3% |
+| O/U Games              |  332 |  167 |  131 |  50.3% |  +268.10€ |   +5.1% |
+| Match Winner           |  102 |   56 |   44 |  54.9% |  +132.72€ |   +9.5% |
 | Set AH +1.5            |   39 |   26 |    6 |  66.7% |  +268.43€ |  +38.6% |
 
 ### Nach EV-Band
 
 | Dimension              |    N |    W |    L |   Win% |       P&L |     ROI |
 |------------------------|------|------|------|--------|-----------|---------|
-| +10–20%                |  183 |   99 |   72 |  54.1% |  +217.39€ |   +8.1% |
-| +20–30%                |  142 |   64 |   58 |  45.1% |   +60.60€ |   +2.4% |
+| +10–20%                |  185 |  100 |   73 |  54.1% |  +214.92€ |   +7.9% |
+| +20–30%                |  143 |   65 |   58 |  45.5% |   +65.20€ |   +2.6% |
 | +30%+                  |   90 |   50 |   32 |  55.6% |  +293.75€ |  +18.9% |
 | <+10%                  |   55 |   34 |   18 |  61.8% |   +95.38€ |  +18.9% |
 
@@ -58,7 +58,7 @@ _Zuletzt aktualisiert: 2026-08-07 17:09 UTC_
 
 | Dimension              |    N |    W |    L |   Win% |       P&L |     ROI |
 |------------------------|------|------|------|--------|-----------|---------|
-| Canadian Open          |  441 |  233 |  165 |  52.8% |  +670.62€ |   +9.6% |
+| Canadian Open          |  444 |  235 |  166 |  52.9% |  +672.75€ |   +9.5% |
 | Mubadala DC Open       |   29 |   14 |   15 |  48.3% |    -3.50€ |   -1.2% |
 
 ## Match-Log
@@ -156,6 +156,9 @@ _Zuletzt aktualisiert: 2026-08-07 17:09 UTC_
 | 2026-08-05 | Canadian Open | wta1000 | Hard | Pegula vs Rakhimova | Match Winner | +14% | @1.16 | ✅ won | +2.64€ |
 | 2026-08-05 | Canadian Open | wta1000 | Hard | Pegula vs Rakhimova | O/U Games | +10% | @1.73 | ✅ won | +8.76€ |
 | 2026-08-05 | Canadian Open | wta1000 | Hard | Pegula vs Rakhimova | O/U Games | +20% | @2.03 | ✅ won | +15.45€ |
+| 2026-08-05 | Canadian Open | wta1000 | Hard | Ann Li vs Elena Rybakina | Match Winner | +21% | @1.23 | ✅ won | +4.60€ |
+| 2026-08-05 | Canadian Open | wta1000 | Hard | Ann Li vs Elena Rybakina | O/U Games | +19% | @1.93 | ❌ lost | -19.00€ |
+| 2026-08-05 | Canadian Open | wta1000 | Hard | Ann Li vs Elena Rybakina | O/U Games | +19% | @1.87 | ✅ won | +16.53€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Adam Walton vs Jenson Brooksby | O/U Games | +12% | @1.87 | ❌ lost | -13.50€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Adam Walton vs Jenson Brooksby | O/U Games | +21% | @2.02 | ❌ lost | -15.00€ |
 | 2026-08-04 | Canadian Open | m1000 | Hard | Adam Walton vs Jenson Brooksby | O/U Games | +10% | @2.06 | ❌ lost | -10.00€ |
