@@ -804,7 +804,7 @@ Drei kritische Blocker aus dem Pre-Season-Audit (Plan zany-munching-pascal) beho
 
 Konsolidierte Post-Launch-Items (kein Blocker für Live):
 1. **LGBM + Stacker**: Gate-Passage erfordert echte 2026/27-Matchdaten. Meta-Calibrator ab 50 settled Signalen. Recalibrator-Label MUSS `won/lost/void` sein (nicht `correct/wrong`).
-2. **Multi-Source-Odds (BL-2 OFFEN)**: TheOddsAPI Quota erschöpft → Mock-Mode. Portierung Tennis-Pattern (Betfair / Pinnacle / WebSearch-Fallback) für 2.BL oder Paid-Tier Upgrade.
+2. **✅ Multi-Source-Odds (BL-2 erledigt 2026-08-07)**: ESPN Fixture-Fallback + WebSearch-Fix. Fixture-Kaskade: TheOddsAPI → ESPN (?dates=7d) → no_fixtures. WebSearch-Bug gefixt (false import → DDGS direkt). Scanner läuft ohne --mock: 11 ESPN-Fixtures, WebSearch liefert echte Quoten. Coverage-Gate (2<3 Bookies) → display-only bis Paid-API. Paid TheOddsAPI für bettable Signale: optionales Upgrade P3.
 3. **PWA-Filter-Chips + Live-Tab (BL-8 OFFEN)**: Liga-Filter-Chip "2. Bundesliga", `_bl2LiveScores` analog `_tennisLiveScores`, Live-Score-Karte für offene BL2-Wetten.
 4. **Settlement-Tests erweitern (BL-7 OFFEN)**: AH Quarter-Ball, BTTS, Double Chance nicht unit-getestet für BL2.
 5. **ESPN Error-Alert (BL-9 OFFEN)**: `bundesliga2_live_push.py` → Push-Alert bei `n_scores=0` wenn offene Bets.
