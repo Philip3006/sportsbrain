@@ -105,6 +105,23 @@ def _rolling_form_cached(df: "pd.DataFrame", team: str, before_date: "pd.Timesta
     return float(_np.mean(pts))
 
 
+def _goals_avg_cached(df: "pd.DataFrame", team: str, before_date: "pd.Timestamp",
+                      side: str, n: int = 5) -> float:
+    mask = ((df["home_team"] == team) | (df["away_team"] == team)) & (df["date"] < before_date)
+    recent = df[mask].tail(n)
+    if recent.empty:
+        return 1.3
+    goals = []
+    for _, r in recent.iterrows():
+        is_home = r["home_team"] == team
+        if side == "for":
+            goals.append(float(r["home_score"] if is_home else r["away_score"]))
+        else:
+            goals.append(float(r["away_score"] if is_home else r["home_score"]))
+    import numpy as _np
+    return float(_np.mean(goals))
+
+
 def _venue_form_cached(df: "pd.DataFrame", team: str, before_date: "pd.Timestamp",
                        venue: str, n: int = 5) -> float:
     if venue == "home":
@@ -204,13 +221,23 @@ def _lgbm_probs(
             feat["away_venue_form"]    = _venue_form_cached(df, away, now, "away")
             feat["momentum_home"]      = _rolling_form_cached(df, home, now, 3) - _rolling_form_cached(df, home, now, 6)
             feat["momentum_away"]      = _rolling_form_cached(df, away, now, 3) - _rolling_form_cached(df, away, now, 6)
-            feat["home_win_rate_home"] = _home_win_rate_cached(df, home, now)
+            feat["home_win_rate_home"]   = _home_win_rate_cached(df, home, now)
+            feat["goals_scored_5_home"]  = _goals_avg_cached(df, home, now, "for",     5)
+            feat["goals_conceded_5_home"]= _goals_avg_cached(df, home, now, "against", 5)
+            feat["goals_scored_5_away"]  = _goals_avg_cached(df, away, now, "for",     5)
+            feat["goals_conceded_5_away"]= _goals_avg_cached(df, away, now, "against", 5)
         else:
             feat.update({"form_home": 1.0, "form_away": 1.0, "form_diff": 0.0,
                          "h2h_home_wr": 0.4, "rest_home": 7.0, "rest_away": 7.0, "rest_diff": 0.0,
                          "home_venue_form": 1.0, "away_venue_form": 1.0,
                          "momentum_home": 0.0, "momentum_away": 0.0,
-                         "home_win_rate_home": 0.4})
+                         "home_win_rate_home": 0.4,
+                         "goals_scored_5_home": 1.3, "goals_conceded_5_home": 1.3,
+                         "goals_scored_5_away": 1.3, "goals_conceded_5_away": 1.3})
+
+        # Heimzuschauer-Heimvorteil
+        from src.data.attendance import get_attendance_ratio
+        feat["home_attendance_ratio"] = get_attendance_ratio(home)
 
         # Kaderwert (wichtiger Stärkeindikator — immer einbeziehen)
         from src.data.market_values import get_market_value_ratio, get_market_value_log_ratio
