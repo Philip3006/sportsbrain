@@ -215,6 +215,12 @@ def fetch_upcoming_matches(
             send_quota_alert(remaining)
         except Exception:
             pass
+        if remaining == 0:
+            stale = _load_stale_upcoming_cache()
+            if stale is not None:
+                USED_STALE_CACHE = True
+                print(f"  ⚠️  Quota exhausted — STALE CACHE ({len(stale)} matches)")
+                return stale
 
     data = resp.json()
     return _parse_matches(data)
@@ -349,8 +355,14 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
     - `spreads`: {home_line: {"home": odds, "away": odds}} for all AH lines
     - `totals_lines`: {line: {"over": odds, "under": odds}} for all O/U lines
     """
+    if not isinstance(raw, list):
+        # API returned error body (dict with "message" or plain string) instead of event list
+        print(f"  [odds_api] _parse_matches: unexpected response type {type(raw).__name__} — returning empty. Content: {str(raw)[:120]}")
+        return []
     matches = []
     for event in raw:
+        if not isinstance(event, dict):
+            continue  # skip malformed entries (e.g. API error strings in mixed list)
         home = event.get("home_team", "")
         away = event.get("away_team", "")
         commence = event.get("commence_time", "")
