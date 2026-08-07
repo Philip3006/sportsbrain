@@ -1982,7 +1982,7 @@
     }
   },
   {
-    "ts": "2026-08-07T05:40:51Z",
+    "ts": "2026-08-07T15:55:04Z",
     "date": "2026-08-07",
     "odds": {
       "Alexei Popyrin vs Roman Andres Burruchaga": {
@@ -2326,9 +2326,9 @@
         "away": 1.66
       },
       "Zizou Bergs vs Ben Shelton": {
-        "home": 2.8,
+        "home": 2.56,
         "draw": null,
-        "away": 1.43
+        "away": 1.45
       },
       "Mariano Navone vs Arthur Fils": {
         "home": 2.55,
@@ -2421,9 +2421,9 @@
         "away": 1.67
       },
       "Elise Mertens vs Naomi Osaka": {
-        "home": 2.67,
+        "home": 2.5,
         "draw": null,
-        "away": 1.44
+        "away": 1.48
       },
       "Maya Joint vs Liudmila Samsonova": {
         "home": 2.22,
@@ -2441,9 +2441,9 @@
         "away": 1.73
       },
       "Botic van de Zandschulp vs Hubert Hurkacz": {
-        "home": 2.5,
+        "home": 2.45,
         "draw": null,
-        "away": 1.45
+        "away": 1.49
       },
       "Terence Atmane vs Jakub Mensik": {
         "home": 47.62,
@@ -2456,9 +2456,9 @@
         "away": 1.71
       },
       "Tallon Griekspoor vs Matteo Arnaldi": {
-        "home": 2.37,
+        "home": 1.5,
         "draw": null,
-        "away": 1.52
+        "away": 2.51
       },
       "Caty McNally vs Alexandra Eala": {
         "home": 47.62,
@@ -2466,14 +2466,39 @@
         "away": 1.01
       },
       "Maria Sakkari vs Coco Gauff": {
-        "home": 2.66,
+        "home": 2.5,
         "draw": null,
-        "away": 1.42
+        "away": 1.5
       },
       "Mirra Andreeva vs Leylah Fernandez": {
         "home": 1.59,
         "draw": null,
         "away": 2.38
+      },
+      "Arthur Fils vs Cameron Norrie": {
+        "home": 1.57,
+        "draw": null,
+        "away": 2.41
+      },
+      "Arthur Rinderknech vs Brandon Nakashima": {
+        "home": 2.22,
+        "draw": null,
+        "away": 1.67
+      },
+      "Jiri Lehecka vs Rafael Jodar": {
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
+      },
+      "Nuno Borges vs Luciano Darderi": {
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
+      },
+      "Elina Svitolina vs Amanda Anisimova": {
+        "home": 1.7,
+        "draw": null,
+        "away": 2.1
       }
     }
   }
