@@ -21,13 +21,16 @@ def _make_ledger(rows: list[dict]) -> pd.DataFrame:
 
 def test_clv_backfill_fills_bl2_rows(tmp_path: Path) -> None:
     """CLV wird für BL2-Zeilen gefüllt wenn Closing-Odds-Cache vorhanden."""
-    closing = {"bl2_mock_0": {"h2h_home": "2.00"}}
+    closing = {"Kaiserslautern_vs_Karlsruhe_20260809": {"closing_home": "2.00", "closing_draw": "3.50", "closing_away": "4.00"}}
     cache_file = tmp_path / "bundesliga2_closing_odds.json"
     cache_file.write_text(json.dumps(closing))
 
     df = _make_ledger([{
         "match_id": "bl2_mock_0",
-        "market": "h2h_home",
+        "home": "Kaiserslautern",
+        "away": "Karlsruhe",
+        "match_date": "2026-08-09",
+        "market": "home",
         "decimal_odds": "2.20",
         "closing_odds": "",
         "clv": "",
@@ -51,13 +54,16 @@ def test_clv_backfill_fills_bl2_rows(tmp_path: Path) -> None:
 
 def test_clv_backfill_skips_non_bl2(tmp_path: Path) -> None:
     """CLV-Backfill ignoriert Nicht-BL2-Zeilen."""
-    closing = {"wm_match_0": {"h2h_home": "1.80"}}
+    closing = {"Germany_vs_Spain_20260720": {"closing_home": "1.80"}}
     cache_file = tmp_path / "bundesliga2_closing_odds.json"
     cache_file.write_text(json.dumps(closing))
 
     df = _make_ledger([{
         "match_id": "wm_match_0",
-        "market": "h2h_home",
+        "home": "Germany",
+        "away": "Spain",
+        "match_date": "2026-07-20",
+        "market": "home",
         "decimal_odds": "2.00",
         "closing_odds": "",
         "clv": "",
@@ -80,7 +86,8 @@ def test_clv_backfill_skips_non_bl2(tmp_path: Path) -> None:
 def test_clv_backfill_no_crash_without_cache(tmp_path: Path) -> None:
     """Kein Crash wenn Closing-Odds-Cache fehlt."""
     df = _make_ledger([{
-        "match_id": "bl2_x", "market": "h2h_home",
+        "match_id": "bl2_x", "home": "Bochum", "away": "Hertha",
+        "match_date": "2026-08-09", "market": "home",
         "decimal_odds": "2.00", "closing_odds": "", "clv": "",
         "league": "bl2", "status": "won", "pnl": "1.00",
     }])
@@ -97,11 +104,12 @@ def test_clv_backfill_no_crash_without_cache(tmp_path: Path) -> None:
 
 def test_clv_already_set_not_overwritten(tmp_path: Path) -> None:
     """Bereits gesetzte CLV-Werte werden nicht überschrieben."""
-    closing = {"bl2_mock_0": {"h2h_home": "1.50"}}
+    closing = {"Hannover_vs_Wolfsburg_20260809": {"closing_home": "1.50"}}
     (tmp_path / "bundesliga2_closing_odds.json").write_text(json.dumps(closing))
 
     df = _make_ledger([{
-        "match_id": "bl2_mock_0", "market": "h2h_home",
+        "match_id": "bl2_mock_0", "home": "Hannover", "away": "Wolfsburg",
+        "match_date": "2026-08-09", "market": "home",
         "decimal_odds": "2.00", "closing_odds": "1.90", "clv": "0.0526",
         "league": "bl2", "status": "won", "pnl": "1.00",
     }])

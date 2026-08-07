@@ -620,12 +620,16 @@ def _backfill_clv_bl2(df: pd.DataFrame) -> pd.DataFrame:
     except Exception:
         return df
 
+    _market_key_map = {"home": "closing_home", "draw": "closing_draw", "away": "closing_away"}
     bl2_mask = df.get("league", pd.Series(dtype=str)) == "bl2"
     for idx, row in df[bl2_mask].iterrows():
         if str(df.at[idx, "closing_odds"] or "").strip() not in ("", "0.0", "0"):
             continue  # bereits gesetzt
-        entry = closing_cache.get(str(row.get("match_id", "")), {})
-        co = entry.get(str(row.get("market", "")))
+        date_str = str(row.get("match_date", ""))[:10].replace("-", "")
+        match_key = f"{row.get('home', '')}_vs_{row.get('away', '')}_{date_str}"
+        entry = closing_cache.get(match_key, {})
+        market = str(row.get("market", ""))
+        co = entry.get(_market_key_map.get(market, market))
         if not co:
             continue
         try:
