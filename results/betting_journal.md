@@ -1,6 +1,6 @@
 # Betting Journal — TENNIS
 
-_Zuletzt aktualisiert: 2026-08-07 19:17 UTC_
+_Zuletzt aktualisiert: 2026-08-07 21:00 UTC_
 
 ---
 
@@ -8,7 +8,7 @@ _Zuletzt aktualisiert: 2026-08-07 19:17 UTC_
 
 | Signale | Settled | W | L | Win% | P&L | ROI |
 |---------|---------|---|---|------|-----|-----|
-| 552 | 473 | 249 | 181 | 52.6% | +669.25€ | +9.1% |
+| 552 | 476 | 252 | 181 | 52.9% | +700.35€ | +9.5% |
 
 ## Tages-Snapshots
 
@@ -27,7 +27,7 @@ _Zuletzt aktualisiert: 2026-08-07 19:17 UTC_
 
 | Dimension              |    N |    W |    L |   Win% |       P&L |     ROI |
 |------------------------|------|------|------|--------|-----------|---------|
-| m1000                  |  250 |  148 |   94 |  59.2% |  +643.10€ |  +16.8% |
+| m1000                  |  253 |  151 |   94 |  59.7% |  +674.20€ |  +17.4% |
 | wta1000                |  206 |   96 |   75 |  46.6% |   +90.95€ |   +2.7% |
 | wta500                 |   17 |    5 |   12 |  29.4% |   -64.80€ |  -38.1% |
 
@@ -35,21 +35,21 @@ _Zuletzt aktualisiert: 2026-08-07 19:17 UTC_
 
 | Dimension              |    N |    W |    L |   Win% |       P&L |     ROI |
 |------------------------|------|------|------|--------|-----------|---------|
-| Hard                   |  473 |  249 |  181 |  52.6% |  +669.25€ |   +9.1% |
+| Hard                   |  476 |  252 |  181 |  52.9% |  +700.35€ |   +9.5% |
 
 ### Nach Markttyp
 
 | Dimension              |    N |    W |    L |   Win% |       P&L |     ROI |
 |------------------------|------|------|------|--------|-----------|---------|
-| O/U Games              |  332 |  167 |  131 |  50.3% |  +268.10€ |   +5.1% |
-| Match Winner           |  102 |   56 |   44 |  54.9% |  +132.72€ |   +9.5% |
+| O/U Games              |  334 |  169 |  131 |  50.6% |  +292.80€ |   +5.6% |
+| Match Winner           |  103 |   57 |   44 |  55.3% |  +139.12€ |   +9.8% |
 | Set AH +1.5            |   39 |   26 |    6 |  66.7% |  +268.43€ |  +38.6% |
 
 ### Nach EV-Band
 
 | Dimension              |    N |    W |    L |   Win% |       P&L |     ROI |
 |------------------------|------|------|------|--------|-----------|---------|
-| +10–20%                |  185 |  100 |   73 |  54.1% |  +214.92€ |   +7.9% |
+| +10–20%                |  188 |  103 |   73 |  54.8% |  +246.02€ |   +8.8% |
 | +20–30%                |  143 |   65 |   58 |  45.5% |   +65.20€ |   +2.6% |
 | +30%+                  |   90 |   50 |   32 |  55.6% |  +293.75€ |  +18.9% |
 | <+10%                  |   55 |   34 |   18 |  61.8% |   +95.38€ |  +18.9% |
@@ -58,7 +58,7 @@ _Zuletzt aktualisiert: 2026-08-07 19:17 UTC_
 
 | Dimension              |    N |    W |    L |   Win% |       P&L |     ROI |
 |------------------------|------|------|------|--------|-----------|---------|
-| Canadian Open          |  444 |  235 |  166 |  52.9% |  +672.75€ |   +9.5% |
+| Canadian Open          |  447 |  238 |  166 |  53.2% |  +703.85€ |   +9.9% |
 | Mubadala DC Open       |   29 |   14 |   15 |  48.3% |    -3.50€ |   -1.2% |
 
 ## Match-Log
@@ -148,6 +148,9 @@ _Zuletzt aktualisiert: 2026-08-07 19:17 UTC_
 | 2026-08-05 | Canadian Open | wta1000 | Hard | Marta Kostyuk vs Madison Keys | Match Winner | +22% | @2.20 | ❌ lost | -15.00€ |
 | 2026-08-05 | Canadian Open | wta1000 | Hard | Marta Kostyuk vs Madison Keys | O/U Games | +7% | @2.01 | ✅ won | +8.08€ |
 | 2026-08-05 | Canadian Open | wta1000 | Hard | Marta Kostyuk vs Madison Keys | O/U Games | +14% | @1.94 | ✅ won | +13.63€ |
+| 2026-08-05 | Canadian Open | m1000 | Hard | Zizou Bergs vs Ben Shelton | Match Winner | +19% | @1.32 | ✅ won | +6.40€ |
+| 2026-08-05 | Canadian Open | m1000 | Hard | Zizou Bergs vs Ben Shelton | O/U Games | +12% | @1.84 | ✅ won | +10.92€ |
+| 2026-08-05 | Canadian Open | m1000 | Hard | Zizou Bergs vs Ben Shelton | O/U Games | +17% | @2.06 | ✅ won | +13.78€ |
 | 2026-08-05 | Canadian Open | m1000 | Hard | Mariano Navone vs Arthur Fils | Match Winner | +37% | @1.40 | ✅ won | +8.00€ |
 | 2026-08-05 | Canadian Open | m1000 | Hard | Mariano Navone vs Arthur Fils | O/U Games | +30% | @2.08 | ✅ won | +16.20€ |
 | 2026-08-05 | Canadian Open | m1000 | Hard | Mariano Navone vs Arthur Fils | O/U Games | +20% | @1.83 | ✅ won | +16.19€ |
