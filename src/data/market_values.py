@@ -95,6 +95,25 @@ SQUAD_VALUES_M: dict[str, float] = {
     "Curacao":            8.0,
     "Curaçao":            8.0,
     "Scotland":         160.0,
+    # 2. Bundesliga 2026/27 (Quelle: fussballdaten.de/Transfermarkt, August 2026)
+    "Wolfsburg":        228.8,
+    "Heidenheim":       110.8,
+    "St Pauli":          71.3,
+    "Kiel":              62.6,
+    "Kaiserslautern":    59.8,
+    "Hannover":          48.8,
+    "Hertha":            48.3,
+    "Nurnberg":          43.4,
+    "Dresden":           43.4,
+    "Darmstadt":         42.6,
+    "Bochum":            41.4,
+    "Bielefeld":         38.4,
+    "Karlsruhe":         37.4,
+    "Greuther Furth":    37.2,
+    "Braunschweig":      35.5,
+    "Magdeburg":         32.7,
+    "Cottbus":           21.0,
+    "Osnabrück":         18.5,
 }
 
 _GLOBAL_MEDIAN = 100.0  # fallback for unknown teams
