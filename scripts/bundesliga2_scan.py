@@ -175,6 +175,11 @@ def _lgbm_probs(
             feat.update({"form_home": 1.0, "form_away": 1.0, "form_diff": 0.0,
                          "h2h_home_wr": 0.4, "rest_home": 7.0, "rest_away": 7.0, "rest_diff": 0.0})
 
+        # Kaderwert (wichtiger Stärkeindikator — immer einbeziehen)
+        from src.data.market_values import get_market_value_ratio, get_market_value_log_ratio
+        feat["market_value_ratio"]     = get_market_value_ratio(home, away)
+        feat["market_value_log_ratio"] = get_market_value_log_ratio(home, away)
+
         # Feature-Vektor in richtiger Reihenfolge, fehlende → 0.0
         X = _pd.DataFrame([[feat.get(c, 0.0) for c in feature_cols]], columns=feature_cols)
         raw_probs = lgbm_model.predict_proba(X)[0]  # [away, draw, home]
