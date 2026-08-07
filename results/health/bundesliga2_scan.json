@@ -1,11 +1,11 @@
 {
   "job": "bundesliga2_scan",
-  "status": "ok",
-  "last_run_at": "2026-08-06T19:08:36Z",
-  "started_at": "2026-08-06T19:08:36Z",
-  "duration_s": 1.27,
-  "exit_code": 0,
-  "error": null,
-  "fallback_used": "mock",
+  "status": "error",
+  "last_run_at": "2026-08-07T07:20:51Z",
+  "started_at": "2026-08-07T07:20:51Z",
+  "duration_s": null,
+  "exit_code": 1,
+  "error": "'str' object has no attribute 'get'",
+  "fallback_used": null,
   "run_id": null
 }
