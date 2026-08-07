@@ -17,5 +17,7 @@
   "h2h_home_wr",
   "rest_home",
   "rest_away",
-  "rest_diff"
+  "rest_diff",
+  "market_value_ratio",
+  "market_value_log_ratio"
 ]

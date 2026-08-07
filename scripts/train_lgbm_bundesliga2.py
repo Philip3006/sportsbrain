@@ -167,6 +167,11 @@ def _build_features(
     feat["rest_away"] = _days_rest(df_history, away, date)
     feat["rest_diff"] = feat["rest_home"] - feat["rest_away"]
 
+    # Kaderwert (Transfermarkt squad market values — wichtiger Stärkeindikator)
+    from src.data.market_values import get_market_value_ratio, get_market_value_log_ratio
+    feat["market_value_ratio"]     = get_market_value_ratio(home, away)
+    feat["market_value_log_ratio"] = get_market_value_log_ratio(home, away)
+
     return feat
 
 
