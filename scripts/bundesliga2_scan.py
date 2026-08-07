@@ -1,8 +1,8 @@
 """Phase D — 2. Bundesliga Prematch-Scanner.
 
-Fetcht Fixtures via TheOddsAPI (`soccer_germany_bundesliga2`), rechnet
-DC+Elo-Ensemble, detektiert Value auf 1X2 (Shadow) / AH / O/U / BTTS / DC / goals_2_4,
-schreibt Ledger-Zeilen mit league='bl2' und pusht Signals.
+Fixture-Quellen (Kaskade):
+  1. TheOddsAPI (`soccer_germany_bundesliga2`) — mit Odds-Bulk
+  2. ESPN public scoreboard (?dates=7d) — kein Quota, bookmakers=[] → Odds via WebSearch
 
 Odds-Quellen (Multi-Source, analog Tennis):
   Tier 1: Betfair Exchange + Pinnacle (Sharp-Referenz)
@@ -346,6 +346,51 @@ def _mock_matches() -> list[dict]:
                     ]},
                 ]},
             ],
+        })
+    return matches
+
+
+def _fetch_espn_fixtures() -> list[dict]:
+    """Holt kommende 2.BL-Matches via ESPN (kein API-Quota-Verbrauch).
+
+    Fragt nächste 7 Tage via ?dates-Parameter ab. Rückgabe im Scanner-Format
+    (bookmakers=[] — Odds kommen danach via WebSearch Tier 3).
+    """
+    from datetime import date as _date, timedelta as _td
+    today = _date.today()
+    date_from = today.strftime("%Y%m%d")
+    date_to = (today + _td(days=7)).strftime("%Y%m%d")
+    url = (
+        "https://site.api.espn.com/apis/site/v2/sports/soccer/ger.2/scoreboard"
+        f"?dates={date_from}-{date_to}"
+    )
+    try:
+        from scripts._http_retry import retry_request
+        resp = retry_request("GET", url, timeout=10, log_prefix="[espn_bl2]")
+        resp.raise_for_status()
+    except Exception as exc:
+        print(f"  ESPN Fixtures: Fehler — {exc}")
+        return []
+
+    matches = []
+    for event in resp.json().get("events", []):
+        comp = event.get("competitions", [{}])[0]
+        competitors = comp.get("competitors", [])
+        home_c = next((c for c in competitors if c.get("homeAway") == "home"), None)
+        away_c = next((c for c in competitors if c.get("homeAway") == "away"), None)
+        if not home_c or not away_c:
+            continue
+        state = comp.get("status", {}).get("type", {}).get("state", "pre")
+        if state != "pre":
+            continue
+        home_name = home_c.get("team", {}).get("displayName", "")
+        away_name = away_c.get("team", {}).get("displayName", "")
+        matches.append({
+            "match_id": f"bl2_espn_{event.get('id', '')}",
+            "home_team": home_name,
+            "away_team": away_name,
+            "commence_time": event.get("date", ""),
+            "bookmakers": [],  # Odds via merger (WebSearch Tier 3)
         })
     return matches
 
@@ -719,15 +764,28 @@ def main() -> None:
         except Exception:
             pass
 
+    _espn_fallback_used = False
     if args.mock:
         matches = _mock_matches()
         print(f"MOCK: {len(matches)} synthetische Matches")
     else:
-        matches = fetch_upcoming_matches(sport=SPORT_KEY, markets="h2h,totals,spreads,btts") or []
-        print(f"API: {len(matches)} Fixtures")
-        if not matches:
-            print("  Keine Fixtures — 2.BL offseason oder API-Quota erschöpft. Nutze --mock zum Testen.")
-            return
+        try:
+            matches = fetch_upcoming_matches(sport=SPORT_KEY, markets="h2h,totals,spreads,btts") or []
+        except Exception as _api_exc:
+            print(f"  TheOddsAPI: {_api_exc}")
+            matches = []
+        if matches:
+            print(f"API: {len(matches)} Fixtures")
+        else:
+            # Fallback: ESPN public endpoint (kein Quota, nächste 7 Tage)
+            matches = _fetch_espn_fixtures()
+            if matches:
+                _espn_fallback_used = True
+                print(f"ESPN: {len(matches)} Fixtures (Odds via WebSearch)")
+            else:
+                print("  Keine Fixtures — 2.BL offseason oder alle Quellen fehlgeschlagen.")
+                _write_health("ok", monotonic() - _t0, fallback="no_fixtures")
+                return
 
     all_signals: list = []
     metas: list = []
@@ -804,7 +862,7 @@ def main() -> None:
 
     # Health-Snapshot
     duration = monotonic() - _t0
-    fallback = "mock" if args.mock else ""
+    fallback = "mock" if args.mock else ("espn" if _espn_fallback_used else "")
     _write_health("ok", duration, fallback=fallback)
 
 
