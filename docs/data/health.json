@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-08-07T00:33:32Z",
+  "generated_at": "2026-08-07T06:24:32Z",
   "overall": "degraded",
   "jobs": [
     {
       "job": "daily_scan",
       "status": "degraded",
-      "last_run_at": "2026-08-06T05:22:13Z",
-      "duration_s": 1019.0,
+      "last_run_at": "2026-08-07T05:40:55Z",
+      "duration_s": 2451.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": "espn",
@@ -16,7 +16,7 @@
     {
       "job": "auto_retrain",
       "status": "ok",
-      "last_run_at": "2026-08-06T16:02:24Z",
+      "last_run_at": "2026-08-07T04:13:19Z",
       "duration_s": 3.0,
       "exit_code": 0,
       "error": null,
@@ -26,11 +26,11 @@
     },
     {
       "job": "closing_odds",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-08-06T16:02:24Z",
       "duration_s": 4.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-08-06T16:02:24Z — overdue (>46800s)",
       "fallback_used": null,
       "next_expected_in_s": 43200,
       "cadence": "2×/Tag 14:00 + 18:00"
@@ -38,8 +38,8 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-07T00:33:32Z",
-      "duration_s": 2.0,
+      "last_run_at": "2026-08-07T06:24:32Z",
+      "duration_s": 1.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -48,11 +48,11 @@
     },
     {
       "job": "live_score_push",
-      "status": "stale",
-      "last_run_at": "2026-08-06T23:24:51Z",
-      "duration_s": 3.0,
+      "status": "ok",
+      "last_run_at": "2026-08-07T06:24:31Z",
+      "duration_s": 8.0,
       "exit_code": 0,
-      "error": "last run was at 2026-08-06T23:24:51Z — overdue (>420s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
@@ -60,10 +60,10 @@
     {
       "job": "prematch_scan",
       "status": "stale",
-      "last_run_at": "2026-08-06T21:07:13Z",
-      "duration_s": 3.0,
-      "exit_code": 1,
-      "error": "daily_scan.py: error: unrecognized arguments: --force Traceback (most recent call last): AttributeError: 'str' object has no attribute 'get' ",
+      "last_run_at": "2026-08-07T01:59:39Z",
+      "duration_s": 0.0,
+      "exit_code": 0,
+      "error": "last run was at 2026-08-07T01:59:39Z — overdue (>2700s)",
       "fallback_used": null,
       "next_expected_in_s": 1800,
       "cadence": "alle 30 Min (im Fenster)"
@@ -71,8 +71,8 @@
     {
       "job": "settle",
       "status": "degraded",
-      "last_run_at": "2026-08-07T00:33:29Z",
-      "duration_s": 5.0,
+      "last_run_at": "2026-08-07T05:40:42Z",
+      "duration_s": 2.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": "espn",
@@ -82,21 +82,21 @@
     {
       "job": "aggregate_health",
       "status": "stale",
-      "last_run_at": "2026-08-06T23:24:47Z",
+      "last_run_at": "2026-08-07T06:07:26Z",
       "duration_s": 1.0,
       "exit_code": 0,
-      "error": "last run was at 2026-08-06T23:24:47Z — overdue (>420s)",
+      "error": "last run was at 2026-08-07T06:07:26Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min (huckepack)"
     },
     {
       "job": "tennis_scan",
-      "status": "stale",
-      "last_run_at": "2026-08-06T14:06:19Z",
+      "status": "ok",
+      "last_run_at": "2026-08-07T04:19:06Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": "last run was at 2026-08-06T14:06:19Z — overdue (>25200s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 21600,
       "cadence": "4×/Tag 06/11/16/21 UTC"
@@ -104,10 +104,10 @@
     {
       "job": "tennis_settle",
       "status": "stale",
-      "last_run_at": "2026-08-06T12:20:44Z",
+      "last_run_at": "2026-08-07T00:17:27Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": "last run was at 2026-08-06T12:20:44Z — overdue (>10800s)",
+      "error": "last run was at 2026-08-07T00:17:27Z — overdue (>10800s)",
       "fallback_used": null,
       "next_expected_in_s": 7200,
       "cadence": "alle 2h 06-22 UTC"
@@ -115,10 +115,10 @@
     {
       "job": "tennis_closing_odds",
       "status": "stale",
-      "last_run_at": "2026-08-06T14:56:28Z",
+      "last_run_at": "2026-08-07T05:18:53Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": "last run was at 2026-08-06T14:56:28Z — overdue (>2700s)",
+      "error": "last run was at 2026-08-07T05:18:53Z — overdue (>2700s)",
       "fallback_used": null,
       "next_expected_in_s": 1800,
       "cadence": "alle 30 Min"
@@ -126,11 +126,11 @@
     {
       "job": "tennis_retrain",
       "status": "ok",
-      "last_run_at": "2026-08-06T19:08:27Z",
+      "last_run_at": "2026-08-07T06:12:57Z",
       "duration_s": null,
-      "exit_code": 0,
+      "exit_code": 1,
       "error": null,
-      "fallback_used": "test-source",
+      "fallback_used": null,
       "next_expected_in_s": 604800,
       "cadence": "wöchentlich Mo 03:00 UTC"
     },
@@ -169,11 +169,11 @@
     },
     {
       "job": "bundesliga2_retrain",
-      "status": "stale",
-      "last_run_at": null,
+      "status": "ok",
+      "last_run_at": "2026-08-07T06:08:29Z",
       "duration_s": null,
-      "exit_code": null,
-      "error": "no health snapshot yet — job has never reported",
+      "exit_code": 0,
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 86400,
       "cadence": "täglich 05:00 UTC"
@@ -191,11 +191,11 @@
     },
     {
       "job": "signals_data_fresh",
-      "status": "degraded",
-      "last_run_at": "2026-08-06T18:11:21Z",
+      "status": "ok",
+      "last_run_at": "2026-08-07T05:40:53Z",
       "duration_s": null,
       "exit_code": null,
-      "error": "signals.json is 382min old (limit 90min)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 5400,
       "cadence": "≤90min"
@@ -203,7 +203,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-06T23:24:45Z",
+      "last_run_at": "2026-08-07T06:24:19Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
