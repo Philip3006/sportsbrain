@@ -1,6 +1,6 @@
 # Tennis Scan 2026-08-07
 
-**Aktive Turniere:** 2 · **Signals total:** 7
+**Aktive Turniere:** 2 · **Signals total:** 6
 
 ## ⭐ TOP-PICKS — nur diese spielen
 
@@ -15,15 +15,13 @@
 
 
 ## Canadian Open (ATP) · m1000 · 🔴 LIVE
-Surface: hard · Best of: 3 · Matches gescannt: 9
+Surface: hard · Best of: 3 · Matches gescannt: 8
 - [ATP] **Zizou Bergs vs Ben Shelton** · Match Winner: Ben Shelton ⭐
   Quote 1.44 · Modell 89.9% · EV +29.5% · Stake 20.00€ · HIGH
 - [ATP] **Tallon Griekspoor vs Matteo Arnaldi** · Match Winner: Matteo Arnaldi
   Quote 2.25 · Modell 55.0% · EV +23.8% · Stake 15.00€ · HIGH
-- [ATP] **Daniel Merida Aguilar vs Alex Michelsen** · Match Winner: Daniel Merida Aguilar
-  Quote 2.56 · Modell 45.0% · EV +15.2% · Stake 13.50€ · HIGH
 - [ATP] **Botic van de Zandschulp vs Hubert Hurkacz** · Match Winner: Botic van de Zandschulp
-  Quote 2.60 · Modell 43.4% · EV +12.7% · Stake 11.00€ · MEDIUM
+  Quote 2.54 · Modell 43.4% · EV +10.1% · Stake 10.00€ · MEDIUM
 
 ## Canadian Open (WTA) · wta1000 · 🔴 LIVE
 Surface: hard · Best of: 3 · Matches gescannt: 9
