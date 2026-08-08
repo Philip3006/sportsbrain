@@ -29,8 +29,7 @@ import json
 import os
 import subprocess
 import sys
-from typing import Iterable
-
+from collections.abc import Iterable
 
 WORKFLOW = os.environ.get("CI_GATES_WORKFLOW", "ci_gates.yml")
 
@@ -88,8 +87,7 @@ def _resolve_repo() -> str:
         if remote.startswith(pfx):
             remote = remote[len(pfx):]
             break
-    if remote.endswith(".git"):
-        remote = remote[:-4]
+    remote = remote.removesuffix(".git")
     return remote
 
 
@@ -104,10 +102,12 @@ def _resolve_sha() -> str:
 
 def _fetch_runs(repo: str, sha: str) -> list[dict]:
     """Liest ci_gates-Runs für head_sha via gh CLI. Fail-closed bei Fehler."""
+    url = (
+        f"/repos/{repo}/actions/workflows/{WORKFLOW}/runs"
+        f"?head_sha={sha}&per_page=20"
+    )
     result = subprocess.run(
-        ["gh", "api",
-         f"/repos/{repo}/actions/workflows/{WORKFLOW}/runs"
-         f"?head_sha={sha}&per_page=20"],
+        ["gh", "api", url],
         capture_output=True, text=True, check=False,
     )
     if result.returncode != 0:
@@ -120,7 +120,7 @@ def main() -> int:
     try:
         repo = _resolve_repo()
         sha = _resolve_sha()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — fail-closed guard: any error must abort
         print(f"[require-green-ci] FAIL-CLOSED: Kontext nicht bestimmbar: {e}",
               file=sys.stderr)
         return 1
@@ -129,7 +129,7 @@ def main() -> int:
 
     try:
         runs = _fetch_runs(repo, sha)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — fail-closed guard: any error must abort
         print(f"[require-green-ci] FAIL-CLOSED: API-Fehler: {e}", file=sys.stderr)
         return 1
 
