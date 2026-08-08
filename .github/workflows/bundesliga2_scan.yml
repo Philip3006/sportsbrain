@@ -20,6 +20,11 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Require green ci_gates for HEAD SHA (Phase-0 Gate)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/require_green_ci.py
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
