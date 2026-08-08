@@ -104,10 +104,40 @@ Fractional-Kelly-Ratio ändern · 5%-Cap erhöhen · Auto-Betting aktivieren · 
 | # | Handoff sagt | Realität | Konsequenz |
 |---|--------------|----------|------------|
 | W1 | odds_api.py:221 SyntaxError | Datei kompiliert; `global` an 161 korrekt | O0-1 als „resolved-phantom" markiert |
-| W2 | Football-Scanner laufen | 7 Workflows `.disabled` | O0-6 blockiert Phase-0-Exit |
+| W2 | Football-Scanner laufen (in GH) | 7 GH-Workflows `.disabled` — laufen lokal via launchd | O0-6 GELÖST: bewusst migriert |
 | W3 | BL2 Blend 3.58% schlechter | Aktuell nur -0.12% | Rule-7-Verstoß bleibt, Größenordnung anders |
 
----
+### O.8 — Audit disabled Football-Workflows (Block B, 2026-08-08)
+
+Alle 7 GH-Workflows wurden in Commit `9de97c00` (2026-07-30, „P0 tennis-migration") einheitlich auf `.disabled` umbenannt. Begründung im Commit: WM endete 2026-07-19, Vereins-Saisons starten >15.08. Freigemacht: API-Quota + CI-Minuten für Tennis. **Ersatz für alle 7 sind laufende macOS launchd-Jobs** (verifiziert via `launchctl list | grep sportsbrain` — 10 Jobs geladen, alle exit 0).
+
+| Workflow | Cron (GH) | launchd-Ersatz | Saisonrelevanz 2026-08 | Empfehlung |
+|----------|-----------|----------------|-----------------------|------------|
+| daily_scan.yml.disabled | 08:00 UTC daily | `com.sportsbrain.daily-scan` (07:00) | Off-Season bis 15.08. (BL1-Start) | **KEEP DISABLED** — launchd aktiv |
+| prematch_scan.yml.disabled | */30 min | `com.sportsbrain.prematch-scan` | Off-Season | **KEEP DISABLED** — launchd aktiv |
+| closing_odds.yml.disabled | 12-22 UTC | `com.sportsbrain.closing-odds` + evening | Off-Season | **KEEP DISABLED** — launchd aktiv |
+| settle.yml.disabled | 13-23 UTC | `com.sportsbrain.settle` | Off-Season | **KEEP DISABLED** — launchd aktiv |
+| live_score_push.yml.disabled | */2 min Sa/So | `com.sportsbrain.live-score-push` | Off-Season | **KEEP DISABLED** — launchd aktiv |
+| auto_retrain.yml.disabled | 0,6,12,18 UTC | `com.sportsbrain.auto-retrain` | Off-Season (`WC2026_BOOST=1.0`) | **KEEP DISABLED** — launchd aktiv |
+| scrape_suspensions.yml.disabled | 06:00 UTC | keiner (WM-Sperren) | Post-WM obsolet | **KEEP DISABLED — REPLACE** vor BL1-Start |
+
+**Restrisiko**:
+- `cloud_healer.yml:49` referenziert noch `prematch_scan.yml` (dead ref). P2-Cleanup.
+- launchd-Jobs sind Single-Host. Off-Season akzeptabel; **vor BL1-Start 2026-08-15 klären**: Football-Cron bleibt lokal oder migriert zurück in GH Actions.
+
+### O.9 — Produktiver Core (verbindliche Phase-0-Exit-Definition)
+
+Für Phase 0 gilt „zentrale Scanner grün" **nur** für diesen Satz:
+
+**GitHub Actions (Tennis + BL2 + Infra)** — 18 Workflows:
+- Tennis (9): `tennis_scan`, `tennis_settle`, `tennis_closing_odds`, `tennis_clv_monitor`, `tennis_recalibrate`, `tennis_elo_refresh`, `tennis_lgbm_retrain`, `tennis_stats_snapshot`, `tennis_odds_snapshot`
+- BL2 (5): `bundesliga2_scan`, `bundesliga2_settle`, `bundesliga2_closing_odds`, `bundesliga2_retrain`, `bundesliga2_live_push`
+- Infra (4): `consume_pending_bets`, `cloud_healer`, `result_push`, `model_drift_monitor`, `weekly_recap`, **`ci_gates` (NEU O0-3)**
+
+**Local launchd (Off-Season Football)** — 10 Jobs:
+- `daily-scan`, `prematch-scan`, `closing-odds`, `closing-odds-evening`, `settle`, `live-score-push`, `auto-retrain`, `consume-pending-bets`, `auto-heal`, `auto-heal-ai`
+
+**Alles andere** (7 `.disabled`, `scrape_suspensions`) zählt NICHT für Exit-Gate.
 
 ---
 
