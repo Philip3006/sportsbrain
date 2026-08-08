@@ -100,13 +100,37 @@ Ab jetzt strikt in dieser Reihenfolge:
 
 Fractional-Kelly-Ratio ändern · 5%-Cap erhöhen · Auto-Betting aktivieren · Backtest-Gates entfernen · failed Modell erzwingen · Basketball vorschnell live · Multi-User unnötig · Prod-Daten löschen · Ledger-Historie ohne Audit ändern · große Architektur-Rewrites · Secrets committen.
 
-### O.7 — Handoff-vs-Repo-Widersprüche (dokumentiert 2026-08-08)
+### O.7 — Superseded Facts vs `CEO_PROJECT_HANDOFF.md` (Fact-Correction Log)
 
-| # | Handoff sagt | Realität | Konsequenz |
-|---|--------------|----------|------------|
-| W1 | odds_api.py:221 SyntaxError | Datei kompiliert; `global` an 161 korrekt | O0-1 als „resolved-phantom" markiert |
-| W2 | Football-Scanner laufen (in GH) | 7 GH-Workflows `.disabled` — laufen lokal via launchd | O0-6 GELÖST: bewusst migriert |
-| W3 | BL2 Blend 3.58% schlechter | Aktuell nur -0.12% | Rule-7-Verstoß bleibt, Größenordnung anders |
+`CEO_PROJECT_HANDOFF.md` (2026-08-08) bleibt als historisches Snapshot **unverändert**. Für laufende Entscheidungen zählt ausschließlich die verifizierte Realität in dieser Tabelle. Wer künftig einen Handoff-Bug adressiert, prüft **zuerst** hier gegen.
+
+| # | Historical Handoff Claim | Current Verified Fact (2026-08-08) | Evidence |
+|---|--------------------------|-------------------------------------|----------|
+| W1 | BUG-1: `src/data/odds_api.py:221` SyntaxError (`global USED_STALE_CACHE` nach Assignment) | **Nicht mehr vorhanden / war stale**. Datei kompiliert clean, `global USED_STALE_CACHE` steht an Zeile 161 (Function-Entry) korrekt vor Assignments in 199 und 221. | `python3 -m py_compile src/data/odds_api.py` exit 0; `grep -n "USED_STALE_CACHE\|global" src/data/odds_api.py` |
+| W2 | Handoff-Kontext: WM-2026-Scanner laufen in GH Actions | Alle 7 Football-Workflows wurden **bewusst am 2026-07-30** (Commit `9de97c00` „P0 tennis-migration") auf `.disabled` umbenannt, Ersatz durch 10 macOS launchd-Jobs. Vor BL1-Start 2026-08-15 Re-Aktivierungs-Entscheidung offen. | s. O.8; `launchctl list \| grep sportsbrain` (10 Jobs) |
+| W3 | BUG-4: BL2 LGBM Blend Brier ~3.58% schlechter als DC | Größenordnung falsch. Aktuelles `gate.json`: `dc_brier=0.5613`, `blend_brier=0.5625` → Delta nur **-0.12%**. Gate-Verletzung bleibt formal bestehen (`gate_passed=false + force_persist=true`), aber wirkt nicht mehr in Production dank Guard `scripts/bundesliga2_scan.py:749`. | `models/lgbm_bundesliga2/gate.json`; 8 Regressionstests in `tests/scanner/test_rule7_gate_enforcement.py` |
+| W4 | BUG-5: BL2 Closing-Odds-Script fehlt (nur Workflow existiert) | **Nicht konsistent mit Realität**. Sowohl `scripts/bundesliga2_closing_odds.py` (99 Zeilen) als auch `.github/workflows/bundesliga2_closing_odds.yml` existieren und laufen (Health-Snapshot <1h alt). CLV-Backfill in `src/betting/ledger.py:612` `_backfill_clv_bl2` liest den Cache. | `ls scripts/bundesliga2_closing_odds.py`; `results/health/bundesliga2_closing_odds.json` |
+| W5 | BUG-3: „5 Tennis-Bets mit `league=wm2026`" | Verifizierter aktueller Count: **8 Bets**, nicht 5. Root Cause identifiziert: `src/betting/ledger.py:314` — `"league": getattr(s, "league", "") or "wm2026"` (Tennis-Signals setzen `league`-Feld nicht). Korrektur post Phase-0-Exit geplant mit Audit-Trail (s. O.11). | `csv.DictReader(results/ledger_philip.csv)` — Filter market ∈ `o/u_games_*` → 8 Zeilen (Aleksandar Vukic … Alycia Parks 2026-08-03..06) |
+| W6 | Handoff-Kontext: „Football Odds Redundancy fehlt" (O1-2) | Merger + 4 Provider (Betfair Tier 1, Pinnacle Tier 1, TheOddsAPI Tier 2, WebSearch Tier 3, Implied Tier 5) + Coverage-Gate (`MIN_BOOKIES_1X2=3`, `no_bet_flag`) **existieren fertig** in `src/football/odds/merger.py`. BL2 nutzt ihn; `daily_scan.py:134` nutzt ihn noch nicht (WM-Legacy). O1-2 ist deshalb „Verdrahtung" nicht „Bau". | `grep fetch_best_football_odds scripts/*.py` |
+
+**Regel für zukünftige Agenten**: Bei jedem Handoff-Item **erst hier prüfen**, ob der Claim noch gilt. Handoff-Bug erwähnen ohne diese Tabelle zu konsultieren = Vertragsbruch.
+
+### O.10 — CEO-Freigaben 2026-08-08 (Phase-1-Vorbereitung)
+
+**Phase-1-Reihenfolge (approved)**: `O1-1 → O1-4 → O1-2`. Ausdrücklich **KEIN Rebuild** von bereits vorhandenen Komponenten. BL2 Closing-Odds/CLV (ehemals O1-3) wird nach Audit-Befund reklassifiziert von „bauen" zu „nach erstem BL2-Bet verifizieren" (P2, kein Phase-1-Blocker).
+
+### O.11 — Tennis-Ledger-Backfill (post Phase-0-Exit, approved 2026-08-08)
+
+**Genehmigt in Prinzip, Ausführung NACH Phase-0-Exit ≥ 2026-08-11 12:12 UTC.** Historische Korrekturen sind **nie silent**. Ablauf:
+
+1. Re-Verify der 8 Zeilen (Duplicate-Check gegen aktuelle Ledger-Version zum Ausführungszeitpunkt)
+2. Rekonstruktion `atp`/`wta` aus vorhandener Evidenz (Player-Namen → Tour-Tag via `signal_history.jsonl` cross-lookup + Tournament-Registry)
+3. Audit-Record pro Zeile: `bet_id`, `previous_value=wm2026`, `corrected_value`, `reason="league-default-bug ledger.py:314"`, `evidence=<signal_history match_id / manual verification>` — als eigene Datei `results/ledger_corrections/2026-08-XX_tennis_league_backfill.jsonl` (append-only)
+4. Backfill via One-Shot-Skript mit `--dry-run` Default + `--commit` Flag
+5. Root-Cause-Fix `ledger.py:314`: `league` MUSS von Signal-Pipeline gesetzt sein; Fallback `""` statt `"wm2026"`
+6. Regressionstest: `sport=tennis + league=wm2026` → Validation-Error in `append_bets`; `sport=football + league=atp` → Error; keine BetSignal ohne `league` mehr
+
+**Verboten**: stille Korrektur ohne Audit-Trail; Backfill während Phase-0-Fenster.
 
 ### O.8 — Audit disabled Football-Workflows (Block B, 2026-08-08)
 
