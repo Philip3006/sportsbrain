@@ -1,7 +1,113 @@
 # SportsBrain — ROADMAP
 
 > **Lebende Quelle der Wahrheit** für alle Audit-Befunde, Entscheidungen und geplanten Arbeiten.
-> Aktualisiert: 2026-08-06 (2.BL Full-Stack → Sektion J5)
+> Aktualisiert: 2026-08-08 (+ NEU Sektion O: CEO-Governance-Overlay)
+
+---
+
+## 🎯 O. CEO-GOVERNANCE-OVERLAY (2026-08-08, verbindlich)
+
+Quelle: `SPORTSBRAIN_CLAUDE_CEO_ROADMAP_PROMPT.md` (CEO/Product Lead).
+Dieser Overlay **überlagert** die bestehenden Sektionen A–N: Prioritäten und Reihenfolge werden ab jetzt nach der CEO-Phasenlogik gebildet; Detail-Items in A–N bleiben gültig, werden aber der jeweiligen CEO-Phase zugeordnet.
+
+### O.0 — 14 Unveränderliche Regeln
+
+| # | Regel | Kernaussage |
+|---|-------|-------------|
+| R1 | Positive Edge Pflicht | Keine Wette ohne statistischen Edge |
+| R2 | Fractional Kelly | Ziel = 25% Kelly |
+| R3 | Exposure Limit | max. 3 aktive Wetten |
+| R4 | Bankroll Cap | max. 5% pro Bet, technisch unvermeidbar |
+| R5 | Backtest First | Kein neues Modell/Feature ohne OOS-Validierung |
+| R6 | No Auto Betting | `--auto-log` verboten, Nutzerbestätigung Pflicht |
+| R7 | Quality Gate Authority | Failed Gate → **niemals** Production; nur Shadow/Eval |
+| R8 | Champion / Challenger | Challenger ersetzt Champion nur bei nachweisbarer Verbesserung |
+| R9 | Reliability Before Expansion | Kein neuer Sport bei offenen P0-Problemen |
+| R10 | Data Quality Before Model Complexity | Datenprobleme vor neuen Features lösen |
+| R11 | One Source of Truth | Ledger/Signals/Bankroll/Health je genau eine kanonische Quelle |
+| R12 | Every Bet Must Be Auditable | Vollständiger Audit-Trail (siehe CEO-Prompt §3.12) |
+| R13 | Model Degradation Must Be Measurable | Feature-Ausfälle quantifizierbar |
+| R14 | No Deployment Without Rollback | Rollback-Pfad pro Release verpflichtend |
+
+### O.1 — Strategische Phasen-Reihenfolge
+
+Ab jetzt strikt in dieser Reihenfolge:
+
+1. **CEO-Phase 0 — Production Reliability** (P0)
+2. **CEO-Phase 1 — Data Integrity & Measurement** (P0)
+3. **CEO-Phase 2 — Betting Governance / EV Audit** (P1)
+4. **CEO-Phase 3 — Model Governance** (P1)
+5. **CEO-Phase 4 — Model & Data Improvement** (P1)
+6. **CEO-Phase 5 — Infrastructure Simplification** (P2)
+7. **CEO-Phase 6 — Security** (P2)
+8. **CEO-Phase 7 — Persistence Cleanup** (P2)
+9. **CEO-Phase 8 — Basketball Readiness** (P3, Gate-gekoppelt)
+10. **CEO-Phase 9 — Tennis Coverage Expansion** (P3)
+11. **CEO-Phase 10 — Product Expansion** (P4)
+
+### O.2 — CEO-Phase 0 Tasks (P0, JETZT)
+
+| ID | Was | Ziel | Bezug bestehend |
+|----|-----|------|-----------------|
+| **O0-1** | odds_api.py:221 Prüfung | **Ergebnis 2026-08-08: SyntaxError NICHT reproduzierbar** — `py_compile` grün, `global`-Deklaration an Zeile 161 korrekt vor Assignments (199/221). Handoff-Bug ist Phantom. | Handoff BUG-1 |
+| **O0-2** | E2E Smoke Test | Pfad: odds→feature→prediction→edge→gate→stake→signal→serialize. Optional bis KV/Frontend. | neu |
+| **O0-3** | Harte CI-Gates | `compileall src scripts` + `ruff check` + `pytest` als Merge-Blocker. Fehlt aktuell. | neu |
+| **O0-4** | Failure Classification | Self-Healer unterscheidet transient / provider / deterministic / unknown. Kein Restart-Loop bei Code-Bugs. | ergänzt F5-F7 |
+| **O0-5** | Rollback Capability | Last-known-good Version + Rollback-Pfad dokumentiert. | neu |
+| **O0-6** | Disabled Football-Workflows klären | 7 Workflows `.disabled` — Absicht (Off-Season) oder Ausfall? Blocker für Exit-Gate. | Widerspruch zu Handoff |
+| **O0-7** | Aggregate-Health JSON-Parse-Bug | `results/health/aggregate_health.json` nicht parsebar. | neu |
+
+**Phase-0 Exit Gate**: keine Syntax/Import-Fehler + zentrale Scanner grün + signals fresh + Health nicht down + E2E Smoke grün + Rollback definiert + 72h stabiler Betrieb.
+
+### O.3 — CEO-Phase 1 Tasks (P0, danach)
+
+| ID | Was | Bezug bestehend |
+|----|-----|-----------------|
+| **O1-1** | TheOddsAPI 401 Root Cause | Handoff BUG-2 |
+| **O1-2** | Football Odds Redundancy (Primary→Secondary→Cache→FailClosed) | neu |
+| **O1-3** | BL2 Closing Odds Script | Handoff BUG-5 |
+| **O1-4** | Tennis Ledger Integrity (5 Bets mit `league=wm2026`) | Handoff BUG-3 |
+| **O1-5** | North-Star Metrics (CLV primär, Brier/LogLoss/Cal + Betting KPIs) | ergänzt N8 |
+| **O1-6** | Model Performance Dashboard/Report | ergänzt N8 |
+
+### O.4 — CEO-Phase 2/3/4 Tasks (P1)
+
+- **O2-1** EV Semantik-Audit (`ev = p·odds − 1` vs `p/impl_p − 1`)
+- **O2-2** Stake-Cap-Audit: Invariante `final_stake ≤ bankroll·0.05` mit Tests
+- **O2-3** Correlation/Portfolio Exposure (Team/Match/Market/Cluster) — erweitert L4
+- **O2-4** Event/Daily Risk Budget
+- **O3-1** BL2 LGBM Champion=DC / Challenger=LGBM (Rule 7): **AKUT** — heute noch `force_persist=true` bei `gate_passed=false` (Verstoß gegen R7)
+- **O3-2** `force_persist`-Semantik: darf niemals „failed→production" mehr bedeuten
+- **O3-3** Champion/Challenger Framework für alle Modellklassen
+- **O3-4** Prediction Uncertainty (Ensemble-Disagreement, OOD-Detection, Confidence-Level)
+- **O3-5** Feature Degradation Ablation (xG/PPDA/squad/injuries/market_values)
+- **O4-1** BL2 LGBM v2 (nach O3-1)
+- **O4-2** Tennis Meta-Calibrator (nur wenn Samples ≥50 + Qualität nachweisbar)
+- **O4-3** xG/PPDA Alternative (nach O3-5 Ablation)
+- **O4-4** Provider Quality Score
+
+### O.5 — CEO-Phase 5–10 (P2–P4, später)
+
+- **O5** Infra-Vereinfachung: GH Actions Consolidation, Runtime-Data aus Git, Signals Source of Truth (KV primary), PWA Telemetry
+- **O6** Security: Token Lifecycle + Revocation + Rate Limit + Secret Audit (CI-Scan)
+- **O7** Persistence: SQLite canonical, CSV = Export; Multi-User-Ausbau gated
+- **O8** Basketball: erst nach Gate-Erfüllung, Data→Baseline→Backtest→Shadow→Prod
+- **O9** Tennis Challenger/ITF (blockiert durch N14)
+- **O10** Produkt-Expansion (aktuell nicht Fokus)
+
+### O.6 — Verbotene Aktionen ohne CEO-Freigabe
+
+Fractional-Kelly-Ratio ändern · 5%-Cap erhöhen · Auto-Betting aktivieren · Backtest-Gates entfernen · failed Modell erzwingen · Basketball vorschnell live · Multi-User unnötig · Prod-Daten löschen · Ledger-Historie ohne Audit ändern · große Architektur-Rewrites · Secrets committen.
+
+### O.7 — Handoff-vs-Repo-Widersprüche (dokumentiert 2026-08-08)
+
+| # | Handoff sagt | Realität | Konsequenz |
+|---|--------------|----------|------------|
+| W1 | odds_api.py:221 SyntaxError | Datei kompiliert; `global` an 161 korrekt | O0-1 als „resolved-phantom" markiert |
+| W2 | Football-Scanner laufen | 7 Workflows `.disabled` | O0-6 blockiert Phase-0-Exit |
+| W3 | BL2 Blend 3.58% schlechter | Aktuell nur -0.12% | Rule-7-Verstoß bleibt, Größenordnung anders |
+
+---
 
 ---
 

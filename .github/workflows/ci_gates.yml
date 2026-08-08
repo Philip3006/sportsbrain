@@ -1,0 +1,61 @@
+name: CI Gates (compile + smoke tests + lint)
+
+# CEO-Roadmap O0-3 (Phase 0 — Production Reliability)
+# Rule: CI red = kein Production Deployment.
+# Hard gates:  compileall + core smoke tests
+# Soft gate:   ruff (report only, bis Baseline gehärtet ist)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'requirements.txt'
+      - '.github/workflows/ci_gates.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-gates-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # ── HARD GATE 1: Syntax / Imports ──────────────────────────────────
+      - name: Compile all source
+        run: python -m compileall -q src scripts
+
+      # ── HARD GATE 2: Core smoke tests (stabile, netzunabhängige Suite) ──
+      # Bewusst schmal gehalten — bei Instabilität der Vollsuite wachsen wir
+      # diese Liste kontrolliert. Never skip syntax/imports/core-smoke.
+      - name: Core smoke tests
+        run: |
+          python -m pytest -q \
+            tests/utils \
+            tests/test_phase_flags.py \
+            tests/test_no_auto_log_regressions.py \
+            tests/test_odds_api.py \
+            tests/test_empirical_prior.py \
+            tests/test_monte_carlo.py
+
+      # ── SOFT GATE: Lint (report only, wird nach Baseline-Hardening Pflicht) ──
+      - name: Ruff lint (report only)
+        continue-on-error: true
+        run: python -m ruff check src scripts
