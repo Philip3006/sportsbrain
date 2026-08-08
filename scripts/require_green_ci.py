@@ -178,14 +178,18 @@ def main() -> int:
             return 1
 
         if not green_sha:
-            print(f"[require-green-ci] FAIL-CLOSED [no-green-run]: "
-                  f"kein erfolgreicher ci_gates-Run auf main gefunden",
-                  file=sys.stderr)
+            print(
+                "[require-green-ci] FAIL-CLOSED [no-green-run]: "
+                "kein erfolgreicher ci_gates-Run auf main gefunden",
+                file=sys.stderr,
+            )
             return 1
 
         if _is_ancestor(green_sha, sha):
-            print(f"[require-green-ci] ✓ ci_gates GREEN (inherited) — "
-                  f"HEAD {sha[:8]} ist Descendant von grünem Run {green_sha[:8]}")
+            print(
+                "[require-green-ci] ✓ ci_gates GREEN (inherited) — "
+                f"HEAD {sha[:8]} ist Descendant von grünem Run {green_sha[:8]}"
+            )
             return 0
 
         print(f"[require-green-ci] FAIL-CLOSED [not-descendant]: "
