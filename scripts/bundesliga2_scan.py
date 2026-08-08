@@ -53,6 +53,10 @@ LEAGUE_SHORT = "bl2"
 MIN_TEAM_MATCHES = 5
 MIN_BOOKIES = MIN_BOOKIES_1X2
 
+# Teams mit expliziten Fallback-DC-Parametern überspringen den Universe-Gate.
+# Nur für Neuzugänge ohne BL2-Historik (BL1-Absteiger, 3.Liga-Aufsteiger).
+_FALLBACK_TEAMS: frozenset[str] = frozenset({"Wolfsburg", "Cottbus"})
+
 
 def _load_dc_params():
     p = MODELS_DIR / "dc_bundesliga2" / "params_latest.pkl"
@@ -515,10 +519,12 @@ def _scan_match(
     mid = match.get("match_id", f"{home}_vs_{away}")
     meta: dict = {"home": home, "away": away, "match_id": mid}
 
-    # Unknown-Team-Gate
+    # Unknown-Team-Gate — Fallback-Teams überspringen (explizite DC-Params gesetzt)
     h_matches = _team_matches_in_universe(home, universe)
     a_matches = _team_matches_in_universe(away, universe)
-    if h_matches < MIN_TEAM_MATCHES or a_matches < MIN_TEAM_MATCHES:
+    h_bypass = home in _FALLBACK_TEAMS
+    a_bypass = away in _FALLBACK_TEAMS
+    if (h_matches < MIN_TEAM_MATCHES and not h_bypass) or (a_matches < MIN_TEAM_MATCHES and not a_bypass):
         meta["skip"] = "unknown_team_gate"
         meta["h_matches"] = h_matches
         meta["a_matches"] = a_matches
@@ -742,6 +748,23 @@ def main() -> None:
 
     print(f"=== 2. Bundesliga Scan | bankroll={args.bankroll:.0f} | min_edge={min_edge:.1%} ===")
     params = _load_dc_params()
+    # Fallback-Parameter für 2026/27-Neuzugänge ohne BL2-Historik.
+    # Basiert auf analoger BL1-Abstieg / 3.Liga-Aufstieg Qualität aus DC-Referenzwerten.
+    _BL2_FALLBACK_PARAMS: dict[str, tuple[float, float]] = {
+        # (attack, defence) — defence höher = schwächer
+        "Wolfsburg": (+0.200, +0.080),   # BL1-Absteiger, starker Kader 228.8M
+        "Cottbus":   (-0.380, +0.450),   # 3.Liga-Aufsteiger, schwaches Niveau
+    }
+    for _t, (_atk, _def) in _BL2_FALLBACK_PARAMS.items():
+        if _t not in params.attack:
+            params.attack[_t] = _atk
+            params.defence[_t] = _def
+            print(f"  Fallback-DC: {_t} (atk={_atk:+.3f}, def={_def:+.3f})")
+    # Osnabrück-Umlaut-Bridge: canonical_name→'Osnabruck', DC hat 'Osnabruck'
+    if "Osnabruck" in params.attack and "Osnabrück" not in params.attack:
+        params.attack["Osnabrück"] = params.attack["Osnabruck"]
+        params.defence["Osnabrück"] = params.defence["Osnabruck"]
+
     elo = _load_elo()
     universe = _load_universe()
 

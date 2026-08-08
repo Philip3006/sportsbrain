@@ -569,9 +569,10 @@ TEAM_NAME_MAP: dict[str, str] = {
     "Dynamo Dresden": "Dresden",
     "SG Dynamo Dresden": "Dresden",
     # 2. Bundesliga 2026/27 — Neueinsteiger
-    "VfL Osnabrück": "Osnabrück",
-    "VfL Osnabruck": "Osnabrück",
-    "Osnabrück": "Osnabrück",
+    "VfL Osnabrück": "Osnabruck",
+    "VfL Osnabruck": "Osnabruck",
+    "Osnabrück": "Osnabruck",
+    "Osnabruck": "Osnabruck",
     "FC Energie Cottbus": "Cottbus",
     "Energie Cottbus": "Cottbus",
     "VfL Wolfsburg": "Wolfsburg",
@@ -579,6 +580,8 @@ TEAM_NAME_MAP: dict[str, str] = {
     "1. FC Heidenheim": "Heidenheim",
     "FC Heidenheim": "Heidenheim",
     "Heidenheim 1846": "Heidenheim",
+    "1. FC Heidenheim 1846": "Heidenheim",
+    "TSV Eintracht Braunschweig": "Braunschweig",
 }
 
 
