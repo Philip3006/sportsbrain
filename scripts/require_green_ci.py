@@ -135,13 +135,24 @@ def _last_green_run_sha(repo: str) -> str | None:
     return None
 
 
-def _is_ancestor(ancestor_sha: str, descendant_sha: str) -> bool:
-    """Gibt True zurück wenn ancestor_sha ein Ancestor von descendant_sha ist."""
+def _is_ancestor(repo: str, ancestor_sha: str, descendant_sha: str) -> bool:
+    """True wenn ancestor_sha ein Ancestor von descendant_sha ist (via GitHub API).
+
+    Nutzt die Compare-API statt lokalem git, weil GH-Actions-Checkouts
+    per Default shallow sind und git merge-base dann falsch-negative liefert.
+    """
+    if ancestor_sha == descendant_sha:
+        return True
     result = subprocess.run(
-        ["git", "merge-base", "--is-ancestor", ancestor_sha, descendant_sha],
-        capture_output=True, check=False,
+        ["gh", "api", f"/repos/{repo}/compare/{ancestor_sha}...{descendant_sha}"],
+        capture_output=True, text=True, check=False,
     )
-    return result.returncode == 0
+    if result.returncode != 0:
+        return False
+    payload = json.loads(result.stdout or "{}")
+    # "ahead" = descendant ist vor ancestor (ancestor ist Ancestor von descendant)
+    # "identical" = selbe SHA
+    return payload.get("status") in ("ahead", "identical")
 
 
 def main() -> int:
@@ -185,7 +196,7 @@ def main() -> int:
             )
             return 1
 
-        if _is_ancestor(green_sha, sha):
+        if _is_ancestor(repo, green_sha, sha):
             print(
                 "[require-green-ci] ✓ ci_gates GREEN (inherited) — "
                 f"HEAD {sha[:8]} ist Descendant von grünem Run {green_sha[:8]}"
