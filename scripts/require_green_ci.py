@@ -116,6 +116,34 @@ def _fetch_runs(repo: str, sha: str) -> list[dict]:
     return list(payload.get("workflow_runs", []))
 
 
+def _last_green_run_sha(repo: str) -> str | None:
+    """Gibt die head_sha des letzten erfolgreichen ci_gates-Runs auf main zurück."""
+    url = (
+        f"/repos/{repo}/actions/workflows/{WORKFLOW}/runs"
+        f"?branch=main&status=success&per_page=5"
+    )
+    result = subprocess.run(
+        ["gh", "api", url],
+        capture_output=True, text=True, check=False,
+    )
+    if result.returncode != 0:
+        return None
+    payload = json.loads(result.stdout or "{}")
+    runs = payload.get("workflow_runs", [])
+    if runs:
+        return runs[0].get("head_sha")
+    return None
+
+
+def _is_ancestor(ancestor_sha: str, descendant_sha: str) -> bool:
+    """Gibt True zurück wenn ancestor_sha ein Ancestor von descendant_sha ist."""
+    result = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", ancestor_sha, descendant_sha],
+        capture_output=True, check=False,
+    )
+    return result.returncode == 0
+
+
 def main() -> int:
     try:
         repo = _resolve_repo()
@@ -137,6 +165,33 @@ def main() -> int:
     if verdict == "success":
         print(f"[require-green-ci] ✓ ci_gates GREEN for {sha[:8]} — {reason}")
         return 0
+
+    # Kein ci_gates-Run für HEAD SHA (z.B. data-only auto-commit, paths-excluded).
+    # Prüfe ob HEAD ein Descendant des letzten grünen ci_gates-Runs ist.
+    if verdict == "missing":
+        print(f"[require-green-ci] sha={sha[:8]} hat keinen ci_gates-Run "
+              f"(paths-excluded?) — suche letzten grünen Run auf main …")
+        try:
+            green_sha = _last_green_run_sha(repo)
+        except Exception as e:  # noqa: BLE001
+            print(f"[require-green-ci] FAIL-CLOSED: API-Fehler: {e}", file=sys.stderr)
+            return 1
+
+        if not green_sha:
+            print(f"[require-green-ci] FAIL-CLOSED [no-green-run]: "
+                  f"kein erfolgreicher ci_gates-Run auf main gefunden",
+                  file=sys.stderr)
+            return 1
+
+        if _is_ancestor(green_sha, sha):
+            print(f"[require-green-ci] ✓ ci_gates GREEN (inherited) — "
+                  f"HEAD {sha[:8]} ist Descendant von grünem Run {green_sha[:8]}")
+            return 0
+
+        print(f"[require-green-ci] FAIL-CLOSED [not-descendant]: "
+              f"HEAD {sha[:8]} ist KEIN Descendant von grünem Run {green_sha[:8]}",
+              file=sys.stderr)
+        return 1
 
     print(f"[require-green-ci] FAIL-CLOSED [{verdict}] for {sha[:8]}: {reason}",
           file=sys.stderr)
