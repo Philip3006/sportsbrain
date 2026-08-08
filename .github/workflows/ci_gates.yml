@@ -55,7 +55,8 @@ jobs:
             tests/test_empirical_prior.py \
             tests/test_monte_carlo.py
 
-      # ── SOFT GATE: Lint (report only, wird nach Baseline-Hardening Pflicht) ──
-      - name: Ruff lint (report only)
-        continue-on-error: true
-        run: python -m ruff check src scripts
+      # ── HARD GATE 3: Ruff Regression — blockt NEUE Violations,
+      # existierender 1057-Altbestand steht in .ruff_baseline.json und
+      # darf abgebaut werden, ohne CI zu brechen.
+      - name: Ruff regression check (baseline-diff)
+        run: python scripts/ruff_regression_check.py
