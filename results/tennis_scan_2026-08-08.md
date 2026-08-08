@@ -21,6 +21,8 @@ _Keine Value-Signals._
 ## Canadian Open (WTA) · wta1000 · 🔴 LIVE
 Surface: hard · Best of: 3 · Matches gescannt: 6
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
+- [WTA] **Leylah Fernandez vs Naomi Osaka** · Match Winner: Leylah Fernandez
+  Quote 3.00 · Modell 42.9% · EV +28.6% · Stake 15.00€ · HIGH
 - [WTA] **Aryna Sabalenka vs Ekaterina Alexandrova** · Match Winner: Aryna Sabalenka ⭐
   Quote 1.28 · Modell 98.0% · EV +25.4% · Stake 20.00€ · HIGH
 - [WTA] **Elina Svitolina vs Amanda Anisimova** · Match Winner: Amanda Anisimova

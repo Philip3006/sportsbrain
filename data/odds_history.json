@@ -2297,7 +2297,7 @@
     }
   },
   {
-    "ts": "2026-08-08T07:39:38Z",
+    "ts": "2026-08-08T18:21:45Z",
     "date": "2026-08-08",
     "odds": {
       "Alexei Popyrin vs Roman Andres Burruchaga": {
@@ -2796,9 +2796,9 @@
         "away": 2.41
       },
       "Arthur Rinderknech vs Brandon Nakashima": {
-        "home": 2.22,
+        "home": 2.3,
         "draw": null,
-        "away": 1.67
+        "away": 1.55
       },
       "Jiri Lehecka vs Rafael Jodar": {
         "home": 2.12,
@@ -2813,7 +2813,62 @@
       "Elina Svitolina vs Amanda Anisimova": {
         "home": 1.7,
         "draw": null,
-        "away": 2.1
+        "away": 2.06
+      },
+      "Joao Fonseca vs Ben Shelton": {
+        "home": 2.22,
+        "draw": null,
+        "away": 1.67
+      },
+      "Botic van de Zandschulp vs Jakub Mensik": {
+        "home": 47.62,
+        "draw": null,
+        "away": 1.01
+      },
+      "Tallon Griekspoor vs Daniel Merida Aguilar": {
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
+      },
+      "Learner Tien vs Thiago Agustin Tirante": {
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
+      },
+      "Marta Kostyuk vs Iga Swiatek": {
+        "home": 2.22,
+        "draw": null,
+        "away": 1.67
+      },
+      "Jessica Pegula vs Diana Shnaider": {
+        "home": 1.38,
+        "draw": null,
+        "away": 2.85
+      },
+      "Aryna Sabalenka vs Ekaterina Alexandrova": {
+        "home": 1.29,
+        "draw": null,
+        "away": 3.35
+      },
+      "Alexandra Eala vs Belinda Bencic": {
+        "home": 2.22,
+        "draw": null,
+        "away": 1.67
+      },
+      "Alina Korneeva vs Coco Gauff": {
+        "home": 47.62,
+        "draw": null,
+        "away": 1.01
+      },
+      "Liudmila Samsonova vs Elena Rybakina": {
+        "home": 2.26,
+        "draw": null,
+        "away": 1.57
+      },
+      "Leylah Fernandez vs Naomi Osaka": {
+        "home": 3.0,
+        "draw": null,
+        "away": 1.4
       }
     }
   }
