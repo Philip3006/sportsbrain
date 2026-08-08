@@ -1,11 +1,11 @@
 {
-  "updated": "2026-08-08T01:13:56Z",
+  "updated": "2026-08-08T07:39:39Z",
   "build_info": {
-    "sha": "feabdd4",
+    "sha": "a3be2dc",
     "date": "2026-08-08"
   },
   "meta": {
-    "stale_odds": false,
+    "stale_odds": true,
     "default_user": "philip",
     "user": "philip"
   },
@@ -7287,7 +7287,7 @@
     }
   },
   "tennis_stats": {
-    "updated": "2026-08-08T01:13:56Z",
+    "updated": "2026-08-08T07:39:39Z",
     "active_tournaments": [
       {
         "slug": "canadian_open_atp",
