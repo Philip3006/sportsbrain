@@ -54,7 +54,8 @@ jobs:
             tests/test_odds_api.py \
             tests/test_empirical_prior.py \
             tests/test_monte_carlo.py \
-            tests/scanner/test_rule7_gate_enforcement.py
+            tests/scanner/test_rule7_gate_enforcement.py \
+            tests/e2e/test_signal_pipeline_smoke.py
 
       # ── HARD GATE 3: Ruff Regression — blockt NEUE Violations,
       # existierender 1057-Altbestand steht in .ruff_baseline.json und
