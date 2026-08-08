@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-08-07T22:56:43.393452+00:00",
-  "n_signals_total": 1033,
-  "n_with_outcome": 479,
+  "generated_at": "2026-08-08T07:17:15.138688+00:00",
+  "n_signals_total": 1039,
+  "n_with_outcome": 491,
   "by_market": {
     "ah+0.5_away": {
       "n": 26,
@@ -46,11 +46,11 @@
       "ev_mean": 31.88
     },
     "ah+1.5_b": {
-      "n": 51,
-      "n_placed": 50,
-      "n_outcome": 39,
-      "accuracy": 0.6667,
-      "ev_mean": 25.83
+      "n": 52,
+      "n_placed": 51,
+      "n_outcome": 41,
+      "accuracy": 0.6829,
+      "ev_mean": 25.42
     },
     "ah+1.5_home": {
       "n": 6,
@@ -123,8 +123,8 @@
       "ev_mean": 26.66
     },
     "ah-1.5_a": {
-      "n": 2,
-      "n_placed": 2,
+      "n": 3,
+      "n_placed": 3,
       "n_outcome": 0,
       "accuracy": null,
       "ev_mean": 6.55
@@ -158,11 +158,11 @@
       "ev_mean": 38.43
     },
     "away": {
-      "n": 142,
-      "n_placed": 90,
-      "n_outcome": 73,
-      "accuracy": 0.5753,
-      "ev_mean": 26.76
+      "n": 145,
+      "n_placed": 93,
+      "n_outcome": 78,
+      "accuracy": 0.5897,
+      "ev_mean": 26.78
     },
     "btts_yes": {
       "n": 9,
@@ -186,11 +186,11 @@
       "ev_mean": 37.63
     },
     "home": {
-      "n": 76,
-      "n_placed": 45,
-      "n_outcome": 32,
-      "accuracy": 0.5312,
-      "ev_mean": 17.73
+      "n": 77,
+      "n_placed": 46,
+      "n_outcome": 35,
+      "accuracy": 0.5143,
+      "ev_mean": 17.56
     },
     "o/u1.5_over": {
       "n": 21,
@@ -384,8 +384,8 @@
     "o/u_games_20.5_under": {
       "n": 6,
       "n_placed": 6,
-      "n_outcome": 5,
-      "accuracy": 0.4,
+      "n_outcome": 6,
+      "accuracy": 0.3333,
       "ev_mean": 20.2
     },
     "o/u_games_21.0_over": {
@@ -412,8 +412,8 @@
     "o/u_games_21.5_under": {
       "n": 16,
       "n_placed": 16,
-      "n_outcome": 15,
-      "accuracy": 0.5333,
+      "n_outcome": 16,
+      "accuracy": 0.5,
       "ev_mean": 16.99
     },
     "o/u_games_22.0_over": {
@@ -636,16 +636,16 @@
   },
   "by_confidence": {
     "HIGH": {
-      "n": 185,
-      "accuracy": 0.3676
+      "n": 188,
+      "accuracy": 0.3883
     },
     "LOW": {
       "n": 402,
       "accuracy": 0.005
     },
     "MEDIUM": {
-      "n": 446,
-      "accuracy": 0.4126
+      "n": 449,
+      "accuracy": 0.4143
     }
   }
 }
