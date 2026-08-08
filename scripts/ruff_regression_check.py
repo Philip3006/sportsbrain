@@ -24,15 +24,28 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 BASELINE_PATH = REPO_ROOT / ".ruff_baseline.json"
 
 
+def _normalize_path(raw: str) -> str:
+    """Absoluten Pfad in Repo-relative Form bringen — CI-portabel.
+
+    Baseline wurde ggf. auf einer anderen Maschine (macOS) erzeugt, CI läuft
+    auf Linux mit anderem REPO_ROOT. Wir schneiden auf den ersten „src/" oder
+    „scripts/" Segment im Pfad zurecht.
+    """
+    for anchor in ("src/", "scripts/"):
+        idx = raw.rfind("/" + anchor)
+        if idx >= 0:
+            return raw[idx + 1:]
+        if raw.startswith(anchor):
+            return raw
+    return raw
+
+
 def _load_violations(source: list[dict]) -> Counter:
     """Zählt Violations pro (relativer Pfad, Regel-Code)."""
     counts: Counter = Counter()
     for v in source:
         raw = v.get("filename", "")
-        try:
-            rel = str(Path(raw).resolve().relative_to(REPO_ROOT))
-        except ValueError:
-            rel = raw
+        rel = _normalize_path(raw)
         code = v.get("code") or "UNKNOWN"
         counts[(rel, code)] += 1
     return counts
