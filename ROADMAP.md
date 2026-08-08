@@ -47,15 +47,16 @@ Ab jetzt strikt in dieser Reihenfolge:
 
 ### O.2 — CEO-Phase 0 Tasks (P0, JETZT)
 
-| ID | Was | Ziel | Bezug bestehend |
-|----|-----|------|-----------------|
-| **O0-1** | odds_api.py:221 Prüfung | **Ergebnis 2026-08-08: SyntaxError NICHT reproduzierbar** — `py_compile` grün, `global`-Deklaration an Zeile 161 korrekt vor Assignments (199/221). Handoff-Bug ist Phantom. | Handoff BUG-1 |
-| **O0-2** | E2E Smoke Test | Pfad: odds→feature→prediction→edge→gate→stake→signal→serialize. Optional bis KV/Frontend. | neu |
-| **O0-3** | Harte CI-Gates | `compileall src scripts` + `ruff check` + `pytest` als Merge-Blocker. Fehlt aktuell. | neu |
-| **O0-4** | Failure Classification | Self-Healer unterscheidet transient / provider / deterministic / unknown. Kein Restart-Loop bei Code-Bugs. | ergänzt F5-F7 |
-| **O0-5** | Rollback Capability | Last-known-good Version + Rollback-Pfad dokumentiert. | neu |
-| **O0-6** | Disabled Football-Workflows klären | 7 Workflows `.disabled` — Absicht (Off-Season) oder Ausfall? Blocker für Exit-Gate. | Widerspruch zu Handoff |
-| **O0-7** | Aggregate-Health JSON-Parse-Bug | `results/health/aggregate_health.json` nicht parsebar. | neu |
+| ID | Was | Status 2026-08-08 |
+|----|-----|-------------------|
+| **O0-1** | odds_api.py:221 SyntaxError | ✅ Phantom — Datei kompiliert, `global` an 161 korrekt |
+| **O0-2** | E2E Smoke Test | ✅ `tests/e2e/test_signal_pipeline_smoke.py` (4 Tests) — in CI |
+| **O0-3** | Harte CI-Gates | ✅ `ci_gates.yml` — compileall + smoke suite (47) + ruff-regression (baseline 1057) |
+| **O0-4** | Failure Classification | offen (Phase-1) |
+| **O0-5** | Rollback Capability | ✅ `scripts/rollback_last_good.sh` (last-known-good via gh api) |
+| **O0-6** | Disabled Football-Workflows | ✅ bewusst 2026-07-30 disabled, Ersatz launchd — s. O.8 |
+| **O0-7** | Aggregate-Health JSON-Parse | ✅ Fehlalarm — Datei ist single-job health, kein Aggregat |
+| **O0-b** | Scanner Pre-Check Guard (SHA-gebunden, fail-closed) | ✅ `scripts/require_green_ci.py` + 19 Workflows gepatcht. Live verifiziert Run `31256857377` 2026-08-08 12:16Z. |
 
 **Phase-0 Exit Gate**: keine Syntax/Import-Fehler + zentrale Scanner grün + signals fresh + Health nicht down + E2E Smoke grün + Rollback definiert + 72h stabiler Betrieb.
 
