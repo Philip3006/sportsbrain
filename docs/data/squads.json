@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-08",
+  "updated": "2026-08-09",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -3412,7 +3412,8 @@
         "Kaoru Mitoma",
         "Takefusa Kubo",
         "Takumi Minamino",
-        "Wataru Endo"
+        "Wataru Endo",
+        "Takehiro Tomiyasu"
       ],
       "players": [
         {
@@ -3523,7 +3524,7 @@
         {
           "name": "Takehiro Tomiyasu",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Tomoki Hayakawa",
