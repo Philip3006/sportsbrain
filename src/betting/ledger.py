@@ -23,7 +23,7 @@ from datetime import date
 
 from src.config import (
     RESULTS_DIR, BANKROLL_SNAPSHOT_PATH, BANKROLL_START, DEFAULT_USER,
-    bankroll_snapshot_path_for, ledger_path_for,
+    bankroll_snapshot_path_for, ledger_path_for, VALID_LEDGER_LEAGUES,
 )
 from src.betting.value_detector import BetSignal
 from src.utils.atomic_io import atomic_write_json
@@ -288,9 +288,14 @@ def append_bets(
                 continue
             key = (s.match_id, s.market)
             if key in existing:
-                import logging as _log
-                _log.getLogger("sportsbrain.ledger").info(
-                    "Skip duplicate: %s %s (bereits im Ledger)", s.match_id, s.market
+                _log.info("Skip duplicate: %s %s (bereits im Ledger)", s.match_id, s.market)
+                continue
+            raw_league = getattr(s, "league", "")
+            if not raw_league or raw_league not in VALID_LEDGER_LEAGUES:
+                _log.error(
+                    "append_bets: skipping %s %s — invalid league=%r. "
+                    "Set BetSignal.league to one of %s before calling append_bets.",
+                    s.match_id, s.market, raw_league, sorted(VALID_LEDGER_LEAGUES),
                 )
                 continue
             new_rows.append({
@@ -311,7 +316,7 @@ def append_bets(
                 "source":        "value",
                 "model_prob":    f"{s.model_prob:.6f}" if getattr(s, "model_prob", 0.0) > 0 else "",
                 "stake_reason":  getattr(s, "stake_reason", "") or "",
-                "league":        getattr(s, "league", "") or "wm2026",
+                "league":        raw_league,
             })
 
         if new_rows:

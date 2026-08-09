@@ -43,6 +43,7 @@ def _signal(
     min_edge: float = MIN_EDGE,
     min_prob: float = _MIN_PROB,
     max_odds: float = _MAX_ODDS,
+    league: str = "",
 ) -> BetSignal | None:
     if model_p < min_prob:
         return None
@@ -66,6 +67,7 @@ def _signal(
         stake_pct=stake_eur / bankroll if bankroll > 0 else 0.0,
         confidence="MEDIUM",
         stake_eur=stake_eur,
+        league=league,
     )
 
 
@@ -219,12 +221,12 @@ def detect_total_sets(
     out: list[BetSignal] = []
     sig = _signal(match_id, player_a, player_b, f"o/u_sets_{line}_over",
                   p_over, fair_over, odds_over, bankroll, min_edge,
-                  min_prob=0.10, max_odds=10.0)
+                  min_prob=0.10, max_odds=10.0, league=tour)
     if sig:
         out.append(sig)
     sig = _signal(match_id, player_a, player_b, f"o/u_sets_{line}_under",
                   p_under, fair_under, odds_under, bankroll, min_edge,
-                  min_prob=0.10, max_odds=10.0)
+                  min_prob=0.10, max_odds=10.0, league=tour)
     if sig:
         out.append(sig)
     return out
@@ -276,12 +278,12 @@ def detect_total_games(
     out: list[BetSignal] = []
     sig = _signal(match_id, player_a, player_b, f"o/u_games_{line}_over",
                   p_over, fair_over, odds_over, bankroll, min_edge,
-                  min_prob=0.10, max_odds=10.0)
+                  min_prob=0.10, max_odds=10.0, league=tour)
     if sig:
         out.append(sig)
     sig = _signal(match_id, player_a, player_b, f"o/u_games_{line}_under",
                   p_under, fair_under, odds_under, bankroll, min_edge,
-                  min_prob=0.10, max_odds=10.0)
+                  min_prob=0.10, max_odds=10.0, league=tour)
     if sig:
         out.append(sig)
     return out
@@ -321,7 +323,7 @@ def detect_set_betting(
         fair_p = (1.0 / odds) / inv_total if inv_total > 0 else 1.0 / odds
         sig = _signal(match_id, player_a, player_b, f"score_{score}",
                       probs[score], fair_p, odds, bankroll, min_edge,
-                      min_prob=0.02, max_odds=30.0)
+                      min_prob=0.02, max_odds=30.0, league=tour)
         if sig:
             out.append(sig)
     return out
@@ -367,10 +369,12 @@ def detect_value_tennis(
     # Bucket A — directional (match winner + first set: correlated with outcome)
     if odds_a > 1.0 and odds_b > 1.0:
         fair_a, fair_b = _devig_2way(odds_a, odds_b)
-        sig = _signal(match_id, player_a, player_b, "home", p_a, fair_a, odds_a, bankroll, min_edge)
+        sig = _signal(match_id, player_a, player_b, "home", p_a, fair_a, odds_a, bankroll,
+                      min_edge, league=tour)
         if sig:
             directional.append(sig)
-        sig = _signal(match_id, player_a, player_b, "away", p_b, fair_b, odds_b, bankroll, min_edge)
+        sig = _signal(match_id, player_a, player_b, "away", p_b, fair_b, odds_b, bankroll,
+                      min_edge, league=tour)
         if sig:
             directional.append(sig)
 
@@ -387,11 +391,13 @@ def detect_value_tennis(
             fs_probs = _first_set_probs(p_a, bo5=bo5)
         fair_fs_a, fair_fs_b = _devig_2way(first_set_odds_a, first_set_odds_b)
         sig = _signal(match_id, player_a, player_b, "first_set_a",
-                      fs_probs["first_set_a"], fair_fs_a, first_set_odds_a, bankroll, min_edge)
+                      fs_probs["first_set_a"], fair_fs_a, first_set_odds_a, bankroll,
+                      min_edge, league=tour)
         if sig:
             directional.append(sig)
         sig = _signal(match_id, player_a, player_b, "first_set_b",
-                      fs_probs["first_set_b"], fair_fs_b, first_set_odds_b, bankroll, min_edge)
+                      fs_probs["first_set_b"], fair_fs_b, first_set_odds_b, bankroll,
+                      min_edge, league=tour)
         if sig:
             directional.append(sig)
 
@@ -400,11 +406,13 @@ def detect_value_tennis(
         ah_probs = _set_handicap_probs(p_a, bo5=bo5)
         fair_ah_a, fair_ah_b = _devig_2way(ah_odds_a, ah_odds_b)
         sig = _signal(match_id, player_a, player_b, "ah-1.5_a",
-                      ah_probs["ah-1.5_a"], fair_ah_a, ah_odds_a, bankroll, min_edge)
+                      ah_probs["ah-1.5_a"], fair_ah_a, ah_odds_a, bankroll,
+                      min_edge, league=tour)
         if sig:
             structural.append(sig)
         sig = _signal(match_id, player_a, player_b, "ah+1.5_b",
-                      ah_probs["ah+1.5_b"], fair_ah_b, ah_odds_b, bankroll, min_edge)
+                      ah_probs["ah+1.5_b"], fair_ah_b, ah_odds_b, bankroll,
+                      min_edge, league=tour)
         if sig:
             structural.append(sig)
 

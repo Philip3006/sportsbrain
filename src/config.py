@@ -91,6 +91,14 @@ def league_config(sport_key: str) -> dict | None:
     return LEAGUE_REGISTRY.get(sport_key)
 
 
+# Valid short-codes for the `league` column in the ledger.
+# Football codes come from LEAGUE_REGISTRY; tennis uses tour codes directly.
+# Extend this set when new sports/leagues are added — never leave it empty at runtime.
+VALID_LEDGER_LEAGUES: frozenset[str] = frozenset(
+    {cfg["short"] for cfg in LEAGUE_REGISTRY.values()} | {"atp", "wta"}
+)
+
+
 def active_leagues(today=None) -> list[str]:
     """Alle sport_keys deren Saisonfenster heute aktiv ist (start_date ≤ today ≤ end_date+1d).
     None-Bounds gelten als 'immer aktiv'. Nimmt date, datetime oder None entgegen."""
