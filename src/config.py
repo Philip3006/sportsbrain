@@ -424,7 +424,14 @@ TOURNAMENT_K_FACTORS: dict[str, float] = {
 # present team form than historical finals. Applied multiplicatively on top of
 # TOURNAMENT_WEIGHTS for matches with date >= WC2026_START and tournament="FIFA World Cup".
 WC2026_START = "2026-06-11"
+WC2026_END = "2026-07-19"        # Turnier-Ende (Finale)
 WC2026_BOOST = 1.0  # Neutralized post-WM. Phase-Metadata + Sunset in src/phase_flags.py.
+
+# TheOddsAPI Sport-Key für WM 2026. Der historische Key `soccer_fifa_world_cup`
+# (2022er Ausgabe) wurde nach Turnier-Ende deaktiviert und liefert 401 (O1-1).
+# Neuer 2026er Key ist ausdrücklich mit Suffix. Endpunkt kann nach WC2026_END
+# ebenfalls 401 liefern — Aufrufer müssen fail-safe zurückkehren (leere Liste).
+WM_SPORT_KEY = "soccer_fifa_world_cup_2026"
 
 # Elo-adjusted DC: scale factor for opponent quality adjustment.
 # exp(elo_diff / DC_ELO_SCALE) is multiplied into the home team's Poisson mean.

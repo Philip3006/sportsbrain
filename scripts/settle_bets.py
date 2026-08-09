@@ -21,9 +21,10 @@ import requests
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
-from src.config import ledger_path_for, DEFAULT_USER
+from src.config import ledger_path_for, DEFAULT_USER, WM_SPORT_KEY
 LEDGER = ledger_path_for(DEFAULT_USER)
-API_URL = "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/scores/"
+# O1-1: alter Key `soccer_fifa_world_cup` (2022er WM) liefert 401 post-Turnier.
+API_URL = f"https://api.the-odds-api.com/v4/sports/{WM_SPORT_KEY}/scores/"
 
 
 def _api_key() -> str:
