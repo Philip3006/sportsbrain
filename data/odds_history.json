@@ -2667,7 +2667,7 @@
     }
   },
   {
-    "ts": "2026-08-09T12:45:32Z",
+    "ts": "2026-08-09T20:32:58Z",
     "date": "2026-08-09",
     "odds": {
       "Alexei Popyrin vs Roman Andres Burruchaga": {
@@ -3244,6 +3244,11 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      "Luciano Darderi vs Brandon Nakashima": {
+        "home": 3.62,
+        "draw": null,
+        "away": 1.29
       }
     }
   }
