@@ -7,7 +7,7 @@ name: CI Gates (compile + smoke tests + lint)
 
 on:
   push:
-    branches: [main]
+    branches: [main, "phase-1/**"]
     paths:
       - 'src/**'
       - 'scripts/**'
