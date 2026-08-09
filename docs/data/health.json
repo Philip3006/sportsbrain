@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-09T06:46:31Z",
+  "generated_at": "2026-08-09T09:49:24Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -38,8 +38,8 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-09T06:46:31Z",
-      "duration_s": 2.0,
+      "last_run_at": "2026-08-09T09:49:24Z",
+      "duration_s": 16.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -48,11 +48,11 @@
     },
     {
       "job": "live_score_push",
-      "status": "stale",
-      "last_run_at": "2026-08-09T06:30:34Z",
-      "duration_s": 3.0,
+      "status": "ok",
+      "last_run_at": "2026-08-09T09:47:04Z",
+      "duration_s": 507.0,
       "exit_code": 0,
-      "error": "last run was at 2026-08-09T06:30:34Z — overdue (>420s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
@@ -60,10 +60,10 @@
     {
       "job": "prematch_scan",
       "status": "stale",
-      "last_run_at": "2026-08-09T00:45:27Z",
-      "duration_s": 0.0,
-      "exit_code": 0,
-      "error": "last run was at 2026-08-09T00:45:27Z — overdue (>2700s)",
+      "last_run_at": "2026-08-09T07:50:28Z",
+      "duration_s": 5.0,
+      "exit_code": 1,
+      "error": "Traceback (most recent call last):     raise RuntimeError( RuntimeError: /Users/philiprassillier/sportsbrain/docs/data/signals_philip.json enthält Git-Konflikt-Marker — Schreiben abgebrochen, um stilles Daten-Wipe zu verhindern. Konflikt manuell auflösen. ",
       "fallback_used": null,
       "next_expected_in_s": 1800,
       "cadence": "alle 30 Min (im Fenster)"
@@ -71,7 +71,7 @@
     {
       "job": "settle",
       "status": "degraded",
-      "last_run_at": "2026-08-09T06:30:06Z",
+      "last_run_at": "2026-08-09T09:33:08Z",
       "duration_s": 2.0,
       "exit_code": 0,
       "error": null,
@@ -82,10 +82,10 @@
     {
       "job": "aggregate_health",
       "status": "stale",
-      "last_run_at": "2026-08-09T06:30:10Z",
-      "duration_s": 1.0,
+      "last_run_at": "2026-08-09T08:59:55Z",
+      "duration_s": 0.0,
       "exit_code": 0,
-      "error": "last run was at 2026-08-09T06:30:10Z — overdue (>420s)",
+      "error": "last run was at 2026-08-09T08:59:55Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min (huckepack)"
@@ -93,7 +93,7 @@
     {
       "job": "tennis_scan",
       "status": "ok",
-      "last_run_at": "2026-08-09T03:24:32Z",
+      "last_run_at": "2026-08-09T06:45:15Z",
       "duration_s": null,
       "exit_code": 1,
       "error": null,
@@ -103,22 +103,22 @@
     },
     {
       "job": "tennis_settle",
-      "status": "stale",
-      "last_run_at": "2026-08-08T22:49:11Z",
+      "status": "ok",
+      "last_run_at": "2026-08-09T09:04:29Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": "last run was at 2026-08-08T22:49:11Z — overdue (>10800s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 7200,
       "cadence": "alle 2h 06-22 UTC"
     },
     {
       "job": "tennis_closing_odds",
-      "status": "ok",
-      "last_run_at": "2026-08-09T06:09:26Z",
+      "status": "stale",
+      "last_run_at": "2026-08-09T08:46:25Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": null,
+      "error": "last run was at 2026-08-09T08:46:25Z — overdue (>2700s)",
       "fallback_used": null,
       "next_expected_in_s": 1800,
       "cadence": "alle 30 Min"
@@ -136,11 +136,11 @@
     },
     {
       "job": "bundesliga2_scan",
-      "status": "stale",
-      "last_run_at": "2026-08-08T12:06:35Z",
-      "duration_s": 50.48,
+      "status": "ok",
+      "last_run_at": "2026-08-09T08:39:40Z",
+      "duration_s": 2.78,
       "exit_code": 0,
-      "error": "last run was at 2026-08-08T12:06:35Z — overdue (>46800s)",
+      "error": null,
       "fallback_used": "espn",
       "next_expected_in_s": 43200,
       "cadence": "2×/Tag + prä-Spieltag"
@@ -192,7 +192,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-09T05:39:43Z",
+      "last_run_at": "2026-08-09T09:18:53Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -203,7 +203,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-09T06:30:22Z",
+      "last_run_at": "2026-08-09T09:18:53Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,

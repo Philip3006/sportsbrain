@@ -2667,7 +2667,7 @@
     }
   },
   {
-    "ts": "2026-08-09T05:39:33Z",
+    "ts": "2026-08-09T08:17:11Z",
     "date": "2026-08-09",
     "odds": {
       "Alexei Popyrin vs Roman Andres Burruchaga": {
@@ -3186,24 +3186,24 @@
         "away": 2.06
       },
       "Joao Fonseca vs Ben Shelton": {
-        "home": 2.22,
+        "home": 2.38,
         "draw": null,
-        "away": 1.67
+        "away": 1.59
       },
       "Botic van de Zandschulp vs Jakub Mensik": {
-        "home": 47.62,
+        "home": 3.62,
         "draw": null,
-        "away": 1.01
+        "away": 1.29
       },
       "Tallon Griekspoor vs Daniel Merida Aguilar": {
-        "home": 2.12,
+        "home": 1.93,
         "draw": null,
-        "away": 1.73
+        "away": 1.88
       },
       "Learner Tien vs Thiago Agustin Tirante": {
-        "home": 2.12,
+        "home": 1.93,
         "draw": null,
-        "away": 1.73
+        "away": 1.88
       },
       "Marta Kostyuk vs Iga Swiatek": {
         "home": 2.22,
@@ -3221,24 +3221,29 @@
         "away": 3.35
       },
       "Alexandra Eala vs Belinda Bencic": {
-        "home": 2.22,
+        "home": 1.93,
         "draw": null,
-        "away": 1.67
+        "away": 1.88
       },
       "Alina Korneeva vs Coco Gauff": {
-        "home": 47.62,
+        "home": 3.62,
         "draw": null,
-        "away": 1.01
+        "away": 1.29
       },
       "Liudmila Samsonova vs Elena Rybakina": {
-        "home": 2.26,
+        "home": 3.62,
         "draw": null,
-        "away": 1.57
+        "away": 1.29
       },
       "Leylah Fernandez vs Naomi Osaka": {
-        "home": 3.0,
+        "home": 3.62,
         "draw": null,
-        "away": 1.4
+        "away": 1.29
+      },
+      "Rafael Jodar vs Arthur Fils": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
       }
     }
   }
