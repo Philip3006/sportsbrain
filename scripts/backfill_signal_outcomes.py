@@ -99,18 +99,11 @@ def backfill(dry_run: bool = False) -> dict:
         except Exception:
             sport_keys = None
         tennis_scores = fetch_tennis_scores(sport_keys)
-        # Historische Scan-Dates: ESPN mit Datum aufrufen um Set-Details zu bekommen
-        from src.data.tennis_scores import fetch_tennis_scores_espn
+        # Scan-Dates + 7-Tage-Window: Matches werden oft erst nach dem Scan gespielt
         pending_tennis = [r for r in pending if r.get("sport") == "tennis"]
-        scan_dates = sorted(set(r.get("scan_date", "")[:8].replace("-", "") for r in pending_tennis if r.get("scan_date")))
-        for date_str in scan_dates:
-            for tour in ("atp", "wta"):
-                hist = fetch_tennis_scores_espn(tour=tour, dates=date_str)
-                # Nur Einträge mit echten Set-Daten übernehmen
-                for k, v in hist.items():
-                    if v.get("sets") and (k not in tennis_scores or not tennis_scores[k].get("sets")):
-                        tennis_scores[k] = v
-        print(f"[backfill] Tennis: {sum(1 for v in tennis_scores.values() if v.get('sets'))} Matches mit Set-Daten")
+        scan_dates_raw = sorted(set(r.get("scan_date", "")[:10] for r in pending_tennis if r.get("scan_date")))
+        tennis_scores, n_dates = fetch_espn_window(scan_dates_raw, tennis_scores)
+        print(f"[backfill] Tennis: {sum(1 for v in tennis_scores.values() if v.get('sets'))} Matches mit Set-Daten ({n_dates} ESPN-Tage)")
 
     resolved = 0
     ghosted = 0
