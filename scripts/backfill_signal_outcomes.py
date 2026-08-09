@@ -23,8 +23,13 @@ from scripts.settle_bets import fetch_scores, settle_market
 from src.scanner.output import SIGNAL_HISTORY
 from src.betting.tennis_settlement import settle_tennis_market
 from src.data.tennis_scores import fetch_tennis_scores
-from src.tennis.backfill_helpers import GHOST_AGE_DAYS, fetch_espn_window, lookup_tennis_score
+from src.tennis.backfill_helpers import GHOST_AGE_DAYS as TENNIS_GHOST_AGE_DAYS, fetch_espn_window, lookup_tennis_score
 from src.tennis.discovery import discover_active_tournaments
+from src.football.backfill_helpers import (
+    GHOST_AGE_DAYS as FOOTBALL_GHOST_AGE_DAYS,
+    fetch_bl2_window,
+    is_ghost_bl2,
+)
 
 SIGNAL_PERF = ROOT / "data" / "cache" / "signal_performance.json"
 
@@ -71,6 +76,15 @@ def _resolve_outcome(row: dict, scores: dict, tennis_scores: dict) -> str | None
     return settle_market(market, sc["home_score"], sc["away_score"])
 
 
+def _is_ghost_football(row: dict) -> bool:
+    """True if a football signal involves a team not in the current league."""
+    league = row.get("league", "")
+    home, away = row.get("home", ""), row.get("away", "")
+    if league == "bl2":
+        return is_ghost_bl2(home, away)
+    return False
+
+
 def backfill(dry_run: bool = False) -> dict:
     rows = _load_signals()
     if not rows:
@@ -86,12 +100,19 @@ def backfill(dry_run: bool = False) -> dict:
 
     print(f"[backfill] {len(pending)}/{len(rows)} Signale ohne Outcome — hole Scores...")
     has_football = any(r.get("sport", "football") == "football" for r in pending)
+    has_bl2 = any(r.get("league") == "bl2" for r in pending)
     has_tennis = any(r.get("sport") == "tennis" for r in pending)
     scores: dict = {}
     tennis_scores: dict = {}
     if has_football:
         scores = fetch_scores()
-        print(f"[backfill] Football: {len(scores) // 2} abgeschlossene Matches")
+        print(f"[backfill] Football: {len(scores) // 2} abgeschlossene Matches (TheOddsAPI/ESPN-WC)")
+    if has_bl2:
+        pending_bl2 = [r for r in pending if r.get("league") == "bl2"]
+        scan_dates_bl2 = sorted(set(r.get("scan_date", "")[:10] for r in pending_bl2 if r.get("scan_date")))
+        scores, n_bl2_dates = fetch_bl2_window(scan_dates_bl2, scores)
+        bl2_espn_count = sum(1 for v in scores.values() if isinstance(v, dict) and v.get("source") == "espn_bl2")
+        print(f"[backfill] BL2 ESPN: {bl2_espn_count // 2} Matches geladen ({n_bl2_dates} Tage)")
     if has_tennis:
         try:
             tourneys = discover_active_tournaments()
@@ -120,7 +141,16 @@ def backfill(dry_run: bool = False) -> dict:
                 age = (date.today() - date.fromisoformat(scan_date_str)).days
             except ValueError:
                 age = 0
-            if r.get("sport") == "tennis" and age >= GHOST_AGE_DAYS:
+            sport = r.get("sport", "football")
+            is_ghost = False
+            if sport == "tennis" and age >= TENNIS_GHOST_AGE_DAYS:
+                is_ghost = True
+            elif sport == "football" and _is_ghost_football(r):
+                # Team not in current league → ghost immediately
+                is_ghost = True
+            elif sport == "football" and age >= FOOTBALL_GHOST_AGE_DAYS:
+                is_ghost = True
+            if is_ghost:
                 if not dry_run:
                     r["outcome"] = "ghost"
                     r["outcome_ts"] = now_ts
