@@ -13,7 +13,7 @@ import argparse
 import json
 import sys
 from collections import defaultdict
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -23,6 +23,7 @@ from scripts.settle_bets import fetch_scores, settle_market
 from src.scanner.output import SIGNAL_HISTORY
 from src.betting.tennis_settlement import settle_tennis_market
 from src.data.tennis_scores import fetch_tennis_scores
+from src.tennis.backfill_helpers import GHOST_AGE_DAYS, fetch_espn_window, lookup_tennis_score
 from src.tennis.discovery import discover_active_tournaments
 
 SIGNAL_PERF = ROOT / "data" / "cache" / "signal_performance.json"
@@ -56,14 +57,10 @@ def _resolve_outcome(row: dict, scores: dict, tennis_scores: dict) -> str | None
     sport = row.get("sport", "football")
 
     if sport == "tennis":
-        sc_id = tennis_scores.get(mid)
-        sc_name = tennis_scores.get(f"{home} vs {away}")
-        # Bevorzuge Eintrag mit Set-Daten (ESPN); TheOddsAPI liefert oft sets=[]
-        sc = (sc_name if sc_name and sc_name.get("sets") else sc_id) or sc_id or sc_name
+        sc = lookup_tennis_score(home, away, mid, tennis_scores)
         if not sc:
             return None
         result = settle_tennis_market(market, sc)
-        # pending → not decidable yet, treat as unresolved
         return None if result == "pending" else result
 
     sc = scores.get(mid) or scores.get(f"{home} vs {away}")
@@ -116,14 +113,27 @@ def backfill(dry_run: bool = False) -> dict:
         print(f"[backfill] Tennis: {sum(1 for v in tennis_scores.values() if v.get('sets'))} Matches mit Set-Daten")
 
     resolved = 0
+    ghosted = 0
     now_ts = datetime.now(timezone.utc).isoformat()
     for r in rows:
         if r.get("outcome") is not None:
             continue
-        if r.get("scan_date", "") >= today:
+        scan_date_str = r.get("scan_date", "")
+        if scan_date_str >= today:
             continue
         outcome = _resolve_outcome(r, scores, tennis_scores)
         if outcome is None:
+            try:
+                age = (date.today() - date.fromisoformat(scan_date_str)).days
+            except ValueError:
+                age = 0
+            if r.get("sport") == "tennis" and age >= GHOST_AGE_DAYS:
+                if not dry_run:
+                    r["outcome"] = "ghost"
+                    r["outcome_ts"] = now_ts
+                else:
+                    print(f"  [ghost] {r.get('home')} vs {r.get('away')} [{r.get('market')}]")
+                ghosted += 1
             continue
         if not dry_run:
             r["outcome"] = outcome
@@ -131,8 +141,10 @@ def backfill(dry_run: bool = False) -> dict:
         else:
             print(f"  [dry] {r.get('home')} vs {r.get('away')} [{r.get('market')}] → {outcome}")
         resolved += 1
-
-    print(f"[backfill] {resolved} Outcomes aufgelöst" + (" (dry-run)" if dry_run else ""))
+    msg = f"[backfill] {resolved} Outcomes aufgelöst"
+    if ghosted:
+        msg += f", {ghosted} Ghost-Signale markiert"
+    print(msg + (" (dry-run)" if dry_run else ""))
 
     if not dry_run:
         _save_signals(rows)
