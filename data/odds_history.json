@@ -2667,7 +2667,7 @@
     }
   },
   {
-    "ts": "2026-08-09T21:13:13Z",
+    "ts": "2026-08-09T23:13:43Z",
     "date": "2026-08-09",
     "odds": {
       "Alexei Popyrin vs Roman Andres Burruchaga": {
@@ -3191,9 +3191,9 @@
         "away": 1.59
       },
       "Botic van de Zandschulp vs Jakub Mensik": {
-        "home": 3.62,
+        "home": 2.75,
         "draw": null,
-        "away": 1.29
+        "away": 1.4
       },
       "Tallon Griekspoor vs Daniel Merida Aguilar": {
         "home": 1.93,
@@ -3241,14 +3241,29 @@
         "away": 1.29
       },
       "Rafael Jodar vs Arthur Fils": {
-        "home": 1.93,
+        "home": 2.1,
         "draw": null,
-        "away": 1.88
+        "away": 1.66
       },
       "Luciano Darderi vs Brandon Nakashima": {
         "home": 3.62,
         "draw": null,
         "away": 1.29
+      },
+      "Daniel Merida Aguilar vs Learner Tien": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      "Diana Shnaider vs Iga Swiatek": {
+        "home": 3.62,
+        "draw": null,
+        "away": 1.29
+      },
+      "Ekaterina Alexandrova vs Elina Svitolina": {
+        "home": 2.5,
+        "draw": null,
+        "away": 1.48
       }
     }
   }
