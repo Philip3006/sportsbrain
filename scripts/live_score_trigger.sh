@@ -10,7 +10,14 @@ LOG="$SPORTSBRAIN_DIR/results/launchd_live_score_push.log"
 
 source "$SPORTSBRAIN_DIR/scripts/_health.sh"
 source "$SPORTSBRAIN_DIR/scripts/_git_safe_push.sh"
+source "$SPORTSBRAIN_DIR/scripts/_require_main_branch.sh"
 health_start "live_score_push"
+
+# Fail-closed branch guard (incident 2026-08-09 — bot commits diverted to phase-1/dev).
+if ! require_main_branch "live_score_push" "$LOG"; then
+    health_finish "live_score_push" 42 "" "$LOG"
+    exit 42
+fi
 
 timestamp() { date -u '+%Y-%m-%d %H:%M:%S UTC'; }
 

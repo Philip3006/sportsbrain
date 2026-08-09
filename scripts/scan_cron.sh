@@ -9,7 +9,15 @@ cd "$SPORTSBRAIN_DIR" || { echo "ERROR: could not cd to $SPORTSBRAIN_DIR"; exit 
 
 # shellcheck source=./_health.sh
 source "$SPORTSBRAIN_DIR/scripts/_health.sh"
+# shellcheck source=./_require_main_branch.sh
+source "$SPORTSBRAIN_DIR/scripts/_require_main_branch.sh"
 health_start "daily_scan"
+
+# Fail-closed branch guard (incident 2026-08-09).
+if ! require_main_branch "daily_scan" "$LOG"; then
+    health_finish "daily_scan" 42 "" "$LOG"
+    exit 42
+fi
 
 echo "" >> "$LOG"
 echo "========================================" >> "$LOG"
