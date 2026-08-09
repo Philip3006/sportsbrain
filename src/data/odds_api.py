@@ -143,7 +143,7 @@ def _load_stale_upcoming_cache() -> list[dict] | None:
 
 @disk_cache("odds_api_upcoming_wide", max_age_hours=1.0)
 def fetch_upcoming_matches(
-    sport: str = "soccer_fifa_world_cup",
+    sport: str | None = None,
     regions: str | None = None,
     markets: str = "h2h,totals,spreads",
     api_key: str | None = None,
@@ -161,7 +161,10 @@ def fetch_upcoming_matches(
     global USED_STALE_CACHE
     USED_STALE_CACHE = False  # reset on each fresh call
 
-    from src.config import LINE_SHOPPING_REGIONS
+    from src.config import LINE_SHOPPING_REGIONS, WM_SPORT_KEY
+    if sport is None:
+        # Legacy-Default: WM 2026. Post-Turnier ist der Endpunkt deaktiviert (O1-1).
+        sport = WM_SPORT_KEY
     if regions is None:
         regions = ",".join(LINE_SHOPPING_REGIONS)
     key = get_api_key(api_key)
@@ -587,7 +590,8 @@ def fetch_event_player_props(
                 return pickle.load(f)
 
     key = get_api_key(api_key)
-    url = f"{ODDS_API_URL}/sports/soccer_fifa_world_cup/events/{event_id}/odds"
+    from src.config import WM_SPORT_KEY
+    url = f"{ODDS_API_URL}/sports/{WM_SPORT_KEY}/events/{event_id}/odds"
     params = {
         "apiKey": key,
         "regions": regions,
@@ -756,16 +760,36 @@ def fetch_wm_live_scores(
     except Exception as e:
         print(f"  [scores] ESPN fehlgeschlagen ({e}), Fallback TheOddsAPI…")
 
-    # Fallback: TheOddsAPI
-    key = get_api_key(api_key)
-    url = f"{ODDS_API_URL}/sports/soccer_fifa_world_cup/scores"
+    # Fallback: TheOddsAPI. Fail-safe post-Turnier (O1-1).
+    from datetime import datetime, timezone
+
+    from src.config import WC2026_END, WM_SPORT_KEY
+    try:
+        today = datetime.now(tz=timezone.utc).date().isoformat()
+        if today > WC2026_END:
+            return []
+    except Exception as _e:  # noqa: BLE001 — reine Guard
+        del _e
+    try:
+        key = get_api_key(api_key)
+    except OSError:
+        return []
+    url = f"{ODDS_API_URL}/sports/{WM_SPORT_KEY}/scores"
     params = {"apiKey": key, "daysFrom": days_from}
     from scripts._http_retry import retry_request
-    resp = retry_request(
-        "GET", url, params=params, timeout=15,
-        log_prefix="[odds_api/scores]",
-    )
-    resp.raise_for_status()
+    try:
+        resp = retry_request(
+            "GET", url, params=params, timeout=15,
+            log_prefix="[odds_api/scores]",
+        )
+        if resp.status_code == 401:
+            print(f"  [scores] 401 vom Sport-Key {WM_SPORT_KEY} — "
+                  "Endpunkt post-Turnier deaktiviert, return []")
+            return []
+        resp.raise_for_status()
+    except Exception as e:  # noqa: BLE001 — fail-safe
+        print(f"  [scores] TheOddsAPI Fallback fehlgeschlagen: {e} — return []")
+        return []
     results = []
     for m in resp.json():
         scores_raw = m.get("scores") or []
@@ -798,16 +822,43 @@ def fetch_wm_scores(
     Fetches completed WM 2026 match scores from TheOddsAPI.
     Cached for 30 minutes to avoid quota burn.
     Returns list of {match_id, home, away, home_score, away_score, commence_time}.
+
+    Fail-safe post-Turnier: nach WC2026_END liefert TheOddsAPI 401 für
+    diesen Sport-Key. Wir returnen dann [] statt Exception zu werfen —
+    Off-Season darf keinen Scanner crashen (O1-1).
     """
-    key = get_api_key(api_key)
-    url = f"{ODDS_API_URL}/sports/soccer_fifa_world_cup/scores"
+    from datetime import datetime, timezone
+
+    from src.config import WC2026_END, WM_SPORT_KEY
+    # Post-Turnier: gar nicht mehr fragen (Quota + Noise sparen)
+    try:
+        today = datetime.now(tz=timezone.utc).date().isoformat()
+        if today > WC2026_END:
+            print(f"  [wm_scores] WM 2026 endete {WC2026_END} — skip API-Call")
+            return []
+    except Exception as _e:  # noqa: BLE001 — reine Guard
+        del _e
+
+    try:
+        key = get_api_key(api_key)
+    except OSError:
+        return []
+    url = f"{ODDS_API_URL}/sports/{WM_SPORT_KEY}/scores"
     params = {"apiKey": key, "daysFrom": days_from}
     from scripts._http_retry import retry_request
-    resp = retry_request(
-        "GET", url, params=params, timeout=15,
-        log_prefix="[odds_api/wm_scores]",
-    )
-    resp.raise_for_status()
+    try:
+        resp = retry_request(
+            "GET", url, params=params, timeout=15,
+            log_prefix="[odds_api/wm_scores]",
+        )
+        if resp.status_code == 401:
+            print(f"  [wm_scores] 401 vom Sport-Key {WM_SPORT_KEY} — "
+                  "Endpunkt post-Turnier deaktiviert, return []")
+            return []
+        resp.raise_for_status()
+    except Exception as e:  # noqa: BLE001 — fail-safe
+        print(f"  [wm_scores] API-Fehler: {e} — return []")
+        return []
     data = resp.json()
     results = []
     for m in data:
@@ -845,7 +896,7 @@ def fetch_scores(
     """
     try:
         key = get_api_key(api_key)
-    except EnvironmentError:
+    except OSError:
         return []
     url = f"{ODDS_API_URL}/sports/{sport}/scores"
     params = {"apiKey": key, "daysFrom": days_from}
