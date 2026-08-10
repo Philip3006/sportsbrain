@@ -761,13 +761,25 @@ function renderHome() {
     const _evScore = s => {
       const m = s.market || '';
       const ev = s.ev_pct || 0;
-      const odds = s.decimal_odds || 2.0;
-      // Ausschlüsse: negative Score → wird nicht in Top-Picks aufgenommen
-      if ((m === 'away' || m === 'home') && (ev < 25 || odds > 2.5)) return -1;
+      // Canonical market-odds field is "odds" (written by Python scanner for all signal types).
+      // "decimal_odds" is never written to signals.json — never use it as source or fallback.
+      // All signals must have valid market odds to pass inclusion and be safely renderable.
+      const oddsRaw = s.odds;
+      const oddsValid = typeof oddsRaw === 'number' && isFinite(oddsRaw) && oddsRaw > 1.0;
+      if (!oddsValid) return -1; // fail closed: missing/null/zero/non-positive odds
+
+      const isTennis = (s.sport === 'tennis');
+
+      // Football match-winner: exclude low-EV and high-odds signals.
+      if ((m === 'away' || m === 'home') && !isTennis && (ev < 25 || oddsRaw > 2.5)) return -1;
+      // Tennis match-winner: lower EV floor (5%) — typical WTA/ATP edge range is 5–15%.
+      if ((m === 'away' || m === 'home') && isTennis && ev < 5) return -1;
+
       if (ev >= 15 && ev < 20 && m !== 'ah+1.5_b' && m !== 'ah-1.5_a') return ev * 0.4;
       let score = ev;
       if (m === 'ah+1.5_b' || m === 'ah-1.5_a') score *= 1.8;
-      else if (m.startsWith('o/u_games') && odds >= 1.6 && odds <= 2.2) score *= 1.1;
+      // o/u_games ranking boost: oddsRaw is guaranteed valid and > 1 at this point.
+      else if (m.startsWith('o/u_games') && oddsRaw >= 1.6 && oddsRaw <= 2.2) score *= 1.1;
       if (s.confidence === 'HIGH') score *= 1.30;
       return score;
     };
