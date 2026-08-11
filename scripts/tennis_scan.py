@@ -774,11 +774,16 @@ def main() -> None:
             # Unknown-Player-Gate: kein Signal wenn einer der Spieler unbekannt.
             # Verhindert Fake-EV aus Default-Elo (p≈0.5 → EV bei jeder Quote < 2.0).
             if probs.get("low_confidence"):
-                _who = []
-                if probs.get("unknown_player_a"): _who.append(pa)
-                if probs.get("unknown_player_b"): _who.append(pb)
+                _who = [p for p, f in [(pa, "unknown_player_a"), (pb, "unknown_player_b")] if probs.get(f)]
                 print(f"  [SKIP] {pa} vs {pb} — Unbekannter Spieler: {', '.join(_who)} (kein Elo-Profil)")
                 m["no_bet_flag"] = True
+                # O1-8A: Status persist — kein p_a/p_b (keine Fake-Wahrscheinlichkeiten).
+                all_model_evals[f"{pa} vs {pb}"] = {
+                    "status": "UNKNOWN_PLAYER",
+                    "reason": f"Kein Elo-Profil: {', '.join(_who)}",
+                    "odds_a": float(m.get("odds_a") or 0.0),
+                    "odds_b": float(m.get("odds_b") or 0.0),
+                }
                 continue
 
             # Match hat keine TheOddsAPI-Quote → Multi-Source-Merger versuchen
@@ -828,7 +833,10 @@ def main() -> None:
                 # Fallback: Agent 8 Implied (Display-only) — kein echtes Signal, aber
                 # model_eval speichern damit PWA die Modellwahrscheinlichkeit zeigen kann.
                 if quote is None:
+                    # O1-8A: NO_ODDS — Modell konnte evaluieren, aber keine Marktquote.
+                    # Model-Wahrscheinlichkeiten korrekt; Markt-Odds fehlen.
                     all_model_evals[f"{pa} vs {pb}"] = {
+                        "status": "NO_ODDS",
                         "p_a": round(probs.get("p_a", 0.5) * 100, 1),
                         "p_b": round(probs.get("p_b", 0.5) * 100, 1),
                         "implied_a": 0.0, "implied_b": 0.0,
@@ -847,6 +855,7 @@ def main() -> None:
                 _impl_sum = (1.0 / _oa + 1.0 / _ob) if _oa > 1 and _ob > 1 else 0.0
                 _impl_a = round((1.0 / _oa / _impl_sum) * 100, 1) if _impl_sum else 0.0
                 all_model_evals[f"{pa} vs {pb}"] = {
+                    "status": "EVALUATED_NO_BET",
                     "p_a": round(probs.get("p_a", 0.5) * 100, 1),
                     "p_b": round(probs.get("p_b", 0.5) * 100, 1),
                     "implied_a": _impl_a,
@@ -867,6 +876,7 @@ def main() -> None:
             _impl_sum = (1.0/_oa + 1.0/_ob) if _oa > 1 and _ob > 1 else 0.0
             _impl_a = round((1.0/_oa/_impl_sum)*100, 1) if _impl_sum else 0.0
             all_model_evals[f"{pa} vs {pb}"] = {
+                "status": "EVALUATED_NO_BET" if not sigs else "ACTIONABLE",
                 "p_a": round(probs.get("p_a", 0.5)*100, 1),
                 "p_b": round(probs.get("p_b", 0.5)*100, 1),
                 "implied_a": _impl_a,
@@ -1034,6 +1044,7 @@ def main() -> None:
                                 _is = (1.0/_oa + 1.0/_ob) if _oa > 1 and _ob > 1 else 0.0
                                 _ia = round((1.0/_oa/_is)*100, 1) if _is else 0.0
                                 all_model_evals[f"{m['player_a']} vs {m['player_b']}"] = {
+                                    "status": "EVALUATED_NO_BET" if not _sigs else "ACTIONABLE",
                                     "p_a": round(_probs.get("p_a", 0.5)*100, 1),
                                     "p_b": round(_probs.get("p_b", 0.5)*100, 1),
                                     "implied_a": _ia,
@@ -1043,6 +1054,16 @@ def main() -> None:
                                 }
                             except Exception as e:
                                 print(f"  [te-signal:{reg.slug}] {e}")
+                        else:
+                            # O1-8A: UNKNOWN_PLAYER — Qualifier/Wildcard ohne Elo-Profil im Turnier-Draw.
+                            _who_te = [m["player_a"] if _ra == 1500.0 else None,
+                                       m["player_b"] if _rb == 1500.0 else None]
+                            all_model_evals[f"{m['player_a']} vs {m['player_b']}"] = {
+                                "status": "UNKNOWN_PLAYER",
+                                "reason": f"Kein Elo-Profil (z.B. Qualifier): {', '.join(w for w in _who_te if w)}",
+                                "odds_a": float(m.get("odds_a") or 0.0),
+                                "odds_b": float(m.get("odds_b") or 0.0),
+                            }
                 else:
                     category = ""
                     surface = ""
@@ -1053,7 +1074,9 @@ def main() -> None:
                     from src.tennis.name_norm import to_elo_name_from_te
                     _ea2 = to_elo_name_from_te(m["player_a"])
                     _eb2 = to_elo_name_from_te(m["player_b"])
-                    if ratings.get_overall(_ea2) != 1500.0 and ratings.get_overall(_eb2) != 1500.0:
+                    _ra2 = ratings.get_overall(_ea2)
+                    _rb2 = ratings.get_overall(_eb2)
+                    if _ra2 != 1500.0 and _rb2 != 1500.0:
                         try:
                             _probs2 = predict_winner_ensemble(
                                 m["player_a"], m["player_b"], ratings, "hard",
@@ -1064,6 +1087,7 @@ def main() -> None:
                             _is2 = (1.0 / _oa2 + 1.0 / _ob2) if _oa2 > 1 and _ob2 > 1 else 0.0
                             _ia2 = round((1.0 / _oa2 / _is2) * 100, 1) if _is2 else 0.0
                             all_model_evals[f"{m['player_a']} vs {m['player_b']}"] = {
+                                "status": "EVALUATED_NO_BET",
                                 "p_a": round(_probs2.get("p_a", 0.5) * 100, 1),
                                 "p_b": round(_probs2.get("p_b", 0.5) * 100, 1),
                                 "implied_a": _ia2,
@@ -1073,6 +1097,14 @@ def main() -> None:
                             }
                         except Exception:
                             pass
+                    else:
+                        # O1-8A: UNSUPPORTED_TOURNAMENT — kein Registry + Elo unbekannt.
+                        all_model_evals[f"{m['player_a']} vs {m['player_b']}"] = {
+                            "status": "UNSUPPORTED_TOURNAMENT",
+                            "reason": f"Turnier nicht im Portfolio: {tournament_name or 'unbekannt'}",
+                            "odds_a": float(m.get("odds_a") or 0.0),
+                            "odds_b": float(m.get("odds_b") or 0.0),
+                        }
 
                 schedule.append({
                     "sport": "tennis",

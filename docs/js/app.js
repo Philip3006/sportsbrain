@@ -193,16 +193,21 @@ function openMatch(displayKey) {
       });
       return found ? found[1] : null;
     })();
-    if (_eval) {
+    // Status-aware rendering: only show probabilities when eval actually contains them.
+    // UNKNOWN_PLAYER / UNSUPPORTED_TOURNAMENT have status but no p_a/p_b.
+    const _evalStatus = _eval ? (_eval.status || '') : null;
+    const _hasProbs = _eval && typeof _eval.p_a === 'number';
+    if (_hasProbs) {
       const _pa = (_eval.p_a||0).toFixed(1), _pb = (_eval.p_b||0).toFixed(1);
       const _ia = (_eval.implied_a||0).toFixed(1), _ib = (_eval.implied_b||0).toFixed(1);
       const _oa = _eval.odds_a > 1 ? _eval.odds_a.toFixed(2) : '—';
       const _ob = _eval.odds_b > 1 ? _eval.odds_b.toFixed(2) : '—';
       const _src = esc(_eval.source || 'elo');
+      const _noOddsNote = _evalStatus === 'NO_ODDS' ? ' Keine Marktquoten verfügbar.' : '';
       cards += `<div class="pred-card" style="margin:12px 12px 0">
         <div class="pred-title">📊 Modell-Bewertung</div>
         <div style="padding:10px 16px 14px">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Kein Value-Bet bei aktuellen Quoten — Edge unter Schwelle.</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Kein Value-Bet bei aktuellen Quoten — Edge unter Schwelle.${_noOddsNote}</div>
           <div style="display:flex;gap:8px;text-align:center">
             <div style="flex:1;background:var(--card-bg);border-radius:8px;padding:10px 6px">
               <div style="font-size:11px;font-weight:700;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(dh)}</div>
@@ -222,18 +227,15 @@ function openMatch(displayKey) {
         </div>
       </div>`;
     } else {
-      const _koMs = kickoff ? new Date(kickoff).getTime() : 0;
-      const _nextScanMs = (() => {
-        const d = new Date(); d.setUTCHours(8,0,0,0);
-        if (d.getTime() <= Date.now()) d.setDate(d.getDate()+1);
-        return d.getTime();
-      })();
-      const _noEvalMsg = !_koMs || _koMs < Date.now()
-        ? 'Turnier oder Spieler nicht im Bewertungsportfolio.'
-        : _koMs < _nextScanMs
-        ? 'Spieler oder Turnier nicht im Modell-Portfolio — keine automatische Bewertung geplant.'
-        : `Evaluation ausstehend — nächster Scan ${new Date(_nextScanMs).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Berlin'})} Uhr.`;
-      cards += `<div class="empty"><div class="icon">⏳</div><div>Keine Modellbewertung für dieses Spiel.<br><small>${_noEvalMsg}</small></div></div>`;
+      const _noEvalDetail = _evalStatus === 'UNKNOWN_PLAYER'
+        ? 'Spieler nicht im Rating-Datensatz.'
+        : _evalStatus === 'UNSUPPORTED_TOURNAMENT'
+        ? 'Turnier nicht im Modell-Portfolio.'
+        : _evalStatus === 'NO_ODDS'
+        ? 'Keine qualifizierten Marktquoten verfügbar.'
+        : '';
+      const _noEvalIcon = _evalStatus && _evalStatus !== 'NO_ODDS' ? '🚫' : '⏳';
+      cards += `<div class="empty"><div class="icon">${_noEvalIcon}</div><div>Keine Modellbewertung für dieses Spiel verfügbar.${_noEvalDetail ? `<br><small>${_noEvalDetail}</small>` : ''}</div></div>`;
     }
   } else if (sigs.length) {
     cards += `<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:14px 16px 6px">💡 Vorgeschlagene Value Bets</div>`;
