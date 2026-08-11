@@ -197,6 +197,7 @@ function openMatch(displayKey) {
     // UNKNOWN_PLAYER / UNSUPPORTED_TOURNAMENT have status but no p_a/p_b.
     const _evalStatus = _eval ? (_eval.status || '') : null;
     const _hasProbs = _eval && typeof _eval.p_a === 'number';
+    const _isShadow = _evalStatus === 'SHADOW_EVALUATED' || (_eval && _eval.tier === 'shadow');
     if (_hasProbs) {
       const _pa = (_eval.p_a||0).toFixed(1), _pb = (_eval.p_b||0).toFixed(1);
       const _ia = (_eval.implied_a||0).toFixed(1), _ib = (_eval.implied_b||0).toFixed(1);
@@ -204,10 +205,17 @@ function openMatch(displayKey) {
       const _ob = _eval.odds_b > 1 ? _eval.odds_b.toFixed(2) : '—';
       const _src = esc(_eval.source || 'elo');
       const _noOddsNote = _evalStatus === 'NO_ODDS' ? ' Keine Marktquoten verfügbar.' : '';
+      const _cardTitle = _isShadow ? '🔬 Experimentelle Bewertung' : '📊 Modell-Bewertung';
+      const _subNote = _isShadow
+        ? 'Shadow-Evaluation — kein SportsBrain-Signal. Nur zur Modell-Kalibrierung.'
+        : `Kein Value-Bet bei aktuellen Quoten — Edge unter Schwelle.${_noOddsNote}`;
+      const _shadowBar = _isShadow
+        ? `<div style="font-size:10px;color:#c8a000;background:rgba(200,160,0,0.12);border-radius:4px;padding:4px 8px;margin-top:8px;text-align:center">Challenger Shadow-Programm · nicht wettbar</div>`
+        : '';
       cards += `<div class="pred-card" style="margin:12px 12px 0">
-        <div class="pred-title">📊 Modell-Bewertung</div>
+        <div class="pred-title">${_cardTitle}</div>
         <div style="padding:10px 16px 14px">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Kein Value-Bet bei aktuellen Quoten — Edge unter Schwelle.${_noOddsNote}</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">${_subNote}</div>
           <div style="display:flex;gap:8px;text-align:center">
             <div style="flex:1;background:var(--card-bg);border-radius:8px;padding:10px 6px">
               <div style="font-size:11px;font-weight:700;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(dh)}</div>
@@ -224,6 +232,7 @@ function openMatch(displayKey) {
             </div>
           </div>
           <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:8px">Quelle: ${_src}</div>
+          ${_shadowBar}
         </div>
       </div>`;
     } else {

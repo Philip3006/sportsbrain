@@ -39,6 +39,10 @@ _CACHE_TTL_S = 30 * 60  # 30 min
 # Regex: match-detail links auf /next/
 _RE_MATCH_ID = re.compile(r'/match-detail/\?id=(\d+)')
 
+# Blocklist: UTR Pro Tennis Series ist kein ATP/WTA-Event — kein Model-Support.
+# Wenn das HTML eines Match-Details einen dieser Strings enthält → None zurückgeben.
+_TE_UTR_BLOCKLIST_RE = re.compile(r'UTR\s*Pro\s*Tennis|utr-pro-tennis|utr-tennis-series', re.IGNORECASE)
+
 # Detail-Page: Home/Away-Sektion mit Player-Namen + Odds-Zeilen
 _RE_HOMEAWAY_HEAD = re.compile(
     r'<td class="k1">([^<]+)</td>\s*<td class="k2">([^<]+)</td>',
@@ -92,6 +96,10 @@ def _fetch_match_detail(match_id: str) -> dict | None:
     """Holt Odds + Metadata für ein Match. Best-Price-Aggregation über alle Bookies."""
     html = _http_get(f"{_BASE}/match-detail/?id={match_id}")
     if not html:
+        return None
+
+    # UTR Pro Tennis Series — kein ATP/WTA, kein Model-Support.
+    if _TE_UTR_BLOCKLIST_RE.search(html):
         return None
 
     # Player-Namen aus Home/Away-Head

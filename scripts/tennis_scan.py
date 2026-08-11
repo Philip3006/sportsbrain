@@ -1012,7 +1012,11 @@ def main() -> None:
                     # Signal-Detection für TE-Matches mit Registry-Match: nutze
                     # h2h-only-detection (kein AH/O/U verfügbar via TE).
                     _te_mode = category_mode(reg.category, surface=reg.surface, all_live=args.all_live)
-                    if _te_mode == "live":
+                    # Governance tier: shadow tournaments are evaluated but never produce signals.
+                    # This check is INDEPENDENT of _te_mode so that even if "challenger_atp" is
+                    # accidentally added to TENNIS_CATEGORY_MODE, signals are still blocked.
+                    _is_shadow_reg = reg.is_shadow
+                    if _te_mode == "live" or _is_shadow_reg:
                         # Guardrail: TE listet oft ITF/Qualifier/Junior unter demselben
                         # Turnier-Slug wie ATP-Main-Draw. Signal-Detection nur wenn
                         # BEIDE Spieler eine echte Elo-Historie haben (nicht Default 1500).
@@ -1028,42 +1032,61 @@ def main() -> None:
                                     best_of=reg.best_of, category=reg.category,
                                     name_source="te",
                                 )
-                                _min_edge = category_min_edge(reg.category)
-                                _sigs = detect_value_tennis(
-                                    player_a=m["player_a"], player_b=m["player_b"],
-                                    probs=_probs, odds_a=m.get("odds_a", 0.0),
-                                    odds_b=m.get("odds_b", 0.0), bankroll=args.bankroll,
-                                    match_id=m["match_id"], min_edge=_min_edge, tour=reg.tour,
-                                )
-                                if _sigs:
-                                    all_live_signals.extend(_sigs)
-                                    for s in _sigs:
-                                        print(f"  [te:{reg.slug}] {m['player_a']} vs {m['player_b']} — {s.market} EV+{s.ev*100:.1f}% @{s.decimal_odds:.2f}")
                                 _oa = float(m.get("odds_a") or 0.0)
                                 _ob = float(m.get("odds_b") or 0.0)
                                 _is = (1.0/_oa + 1.0/_ob) if _oa > 1 and _ob > 1 else 0.0
                                 _ia = round((1.0/_oa/_is)*100, 1) if _is else 0.0
-                                all_model_evals[f"{m['player_a']} vs {m['player_b']}"] = {
-                                    "status": "EVALUATED_NO_BET" if not _sigs else "ACTIONABLE",
-                                    "p_a": round(_probs.get("p_a", 0.5)*100, 1),
-                                    "p_b": round(_probs.get("p_b", 0.5)*100, 1),
-                                    "implied_a": _ia,
-                                    "implied_b": round(100.0 - _ia, 1) if _ia else 0.0,
-                                    "odds_a": _oa, "odds_b": _ob,
-                                    "source": _probs.get("source", "elo"),
-                                }
+                                if _is_shadow_reg:
+                                    # Shadow evaluation: store probs for measurement, NO signals.
+                                    print(f"  [shadow:{reg.slug}] {m['player_a']} vs {m['player_b']} — shadow eval only")
+                                    all_model_evals[f"{m['player_a']} vs {m['player_b']}"] = {
+                                        "status": "SHADOW_EVALUATED",
+                                        "tier": "shadow",
+                                        "tournament": reg.name,
+                                        "p_a": round(_probs.get("p_a", 0.5)*100, 1),
+                                        "p_b": round(_probs.get("p_b", 0.5)*100, 1),
+                                        "implied_a": _ia,
+                                        "implied_b": round(100.0 - _ia, 1) if _ia else 0.0,
+                                        "odds_a": _oa, "odds_b": _ob,
+                                        "source": _probs.get("source", "elo"),
+                                    }
+                                else:
+                                    # Production evaluation: detect signals normally.
+                                    _min_edge = category_min_edge(reg.category)
+                                    _sigs = detect_value_tennis(
+                                        player_a=m["player_a"], player_b=m["player_b"],
+                                        probs=_probs, odds_a=m.get("odds_a", 0.0),
+                                        odds_b=m.get("odds_b", 0.0), bankroll=args.bankroll,
+                                        match_id=m["match_id"], min_edge=_min_edge, tour=reg.tour,
+                                    )
+                                    if _sigs:
+                                        all_live_signals.extend(_sigs)
+                                        for s in _sigs:
+                                            print(f"  [te:{reg.slug}] {m['player_a']} vs {m['player_b']} — {s.market} EV+{s.ev*100:.1f}% @{s.decimal_odds:.2f}")
+                                    all_model_evals[f"{m['player_a']} vs {m['player_b']}"] = {
+                                        "status": "EVALUATED_NO_BET" if not _sigs else "ACTIONABLE",
+                                        "p_a": round(_probs.get("p_a", 0.5)*100, 1),
+                                        "p_b": round(_probs.get("p_b", 0.5)*100, 1),
+                                        "implied_a": _ia,
+                                        "implied_b": round(100.0 - _ia, 1) if _ia else 0.0,
+                                        "odds_a": _oa, "odds_b": _ob,
+                                        "source": _probs.get("source", "elo"),
+                                    }
                             except Exception as e:
                                 print(f"  [te-signal:{reg.slug}] {e}")
                         else:
                             # O1-8A: UNKNOWN_PLAYER — Qualifier/Wildcard ohne Elo-Profil im Turnier-Draw.
                             _who_te = [m["player_a"] if _ra == 1500.0 else None,
                                        m["player_b"] if _rb == 1500.0 else None]
-                            all_model_evals[f"{m['player_a']} vs {m['player_b']}"] = {
+                            _up_entry: dict = {
                                 "status": "UNKNOWN_PLAYER",
                                 "reason": f"Kein Elo-Profil (z.B. Qualifier): {', '.join(w for w in _who_te if w)}",
                                 "odds_a": float(m.get("odds_a") or 0.0),
                                 "odds_b": float(m.get("odds_b") or 0.0),
                             }
+                            if _is_shadow_reg:
+                                _up_entry["tier"] = "shadow"
+                            all_model_evals[f"{m['player_a']} vs {m['player_b']}"] = _up_entry
                 else:
                     category = ""
                     surface = ""
@@ -1143,6 +1166,43 @@ def main() -> None:
                 _entry[f"under{_line}_games"] = float(_price)
             if _entry:
                 tennis_all_odds[f"{_pa} vs {_pb}"] = _entry
+
+    # O1-8 Monitoring: Alert for PRODUCTION_SUPPORTED fixtures starting within 90 min
+    # that have no authoritative eval. These represent scanner misses, not intentionally
+    # unsupported events (which would have UNSUPPORTED_TOURNAMENT status).
+    try:
+        from datetime import datetime as _dt, timezone as _tz
+        from src.tennis.tournaments import PRODUCTION_SUPPORTED_CATEGORIES as _PROD_CATS
+        _now_ts = _dt.now(_tz.utc).timestamp()
+        _t90_ts = _now_ts + 90 * 60
+        _t90_alerts: list[str] = []
+        for _se in schedule:
+            _cat = _se.get("category", "")
+            if _cat not in _PROD_CATS:
+                continue
+            _kick = _se.get("kickoff", "")
+            if not _kick:
+                continue
+            try:
+                _kick_ts = _dt.fromisoformat(_kick.replace("Z", "+00:00")).timestamp()
+            except Exception:
+                continue
+            if _kick_ts > _t90_ts:
+                continue  # not yet within 90 min
+            _home, _away = _se.get("home", ""), _se.get("away", "")
+            _eval_entry = all_model_evals.get(f"{_home} vs {_away}")
+            _missing = (
+                _eval_entry is None
+                or _eval_entry.get("status") in ("DISCOVERED", "EVALUATION_PENDING")
+            )
+            if _missing:
+                _t90_alerts.append(f"  ⚠️ [{_cat}] {_home} vs {_away} @ {_kick}")
+        if _t90_alerts:
+            print(f"\n[O1-8-MONITOR] {len(_t90_alerts)} PRODUCTION_SUPPORTED match(es) within T-90 with no eval:")
+            for _a in _t90_alerts:
+                print(_a)
+    except Exception as _mon_err:
+        print(f"[O1-8-MONITOR] monitoring check failed: {_mon_err}")
 
     write_signals_json_all_users(
         tennis=all_live_signals,

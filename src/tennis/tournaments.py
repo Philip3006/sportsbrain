@@ -33,16 +33,24 @@ class Tournament:
     slug: str                  # interne stabile ID, z.B. "wimbledon"
     name: str                  # Anzeigename, z.B. "Wimbledon"
     tour: str                  # "atp" | "wta"
-    category: str              # "grand_slam" | "m1000" | "wta1000" | "atp500" | "wta500" | "atp250" | "wta250" | "tour_final"
+    category: str              # "grand_slam" | "m1000" | "wta1000" | "atp500" | "wta500" | "atp250" | "wta250" | "tour_final" | "challenger_atp"
     surface: str               # "grass" | "clay" | "hard" | "carpet"
     best_of: int               # 5 für ATP-Slams, 3 sonst
     sport_keys: tuple[str, ...] = field(default_factory=tuple)
     # Erwartetes Monatsfenster für UI/Discovery-Hinweise (1-12). None = ganzjährig möglich.
     typical_months: tuple[int, ...] = field(default_factory=tuple)
+    # Governance tier: "production" (actionable signals) | "shadow" (eval only, no bets).
+    # Shadow tournaments are evaluated for measurement but NEVER create actionable SportsBrain signals.
+    # Do NOT promote to "production" without an adequate calibration sample + Brier/CLV evidence.
+    tier: str = "production"
 
     @property
     def is_grand_slam(self) -> bool:
         return self.category == "grand_slam"
+
+    @property
+    def is_shadow(self) -> bool:
+        return self.tier == "shadow"
 
 
 # ---------------------------------------------------------------------------
@@ -227,6 +235,19 @@ TENNIS_REGISTRY: tuple[Tournament, ...] = (
                ("tennis_atp_finals",), (11,)),
     Tournament("wta_finals",         "WTA Finals",       "wta", "tour_final","hard", 3,
                ("tennis_wta_finals",), (11,)),
+
+    # ----- ATP Challenger — SHADOW tier (eval only, no actionable bets) -----
+    # These tournaments are evaluated for measurement and CLV collection.
+    # Signals are NEVER promoted to production without calibration evidence (Brier + CLV).
+    # TE slug mappings below marked with TODO until actual TE URL slugs are verified in prod data.
+    Tournament("todi_challenger",         "Todi Challenger",         "atp", "challenger_atp", "clay", 3,
+               (), (7, 8), tier="shadow"),
+    Tournament("brownsburg_challenger",   "Brownsburg Challenger",   "atp", "challenger_atp", "hard", 3,
+               (), (8,), tier="shadow"),
+    Tournament("astana_challenger",       "Astana Challenger",       "atp", "challenger_atp", "hard", 3,
+               (), (9, 10), tier="shadow"),
+    Tournament("hamburg_challenger",      "Hamburg Challenger",      "atp", "challenger_atp", "clay", 3,
+               (), (7, 8), tier="shadow"),
 )
 
 
@@ -239,6 +260,25 @@ _SPORT_KEY_INDEX: dict[str, Tournament] = {
 }
 
 _SLUG_INDEX: dict[str, Tournament] = {t.slug: t for t in TENNIS_REGISTRY}
+
+# ---------------------------------------------------------------------------
+# Support tier governance — explicit classification per CEO decision O1-8B
+# ---------------------------------------------------------------------------
+
+# Categories whose signals may reach bankroll/Kelly/signals.json top-picks.
+PRODUCTION_SUPPORTED_CATEGORIES: frozenset[str] = frozenset({
+    "grand_slam", "m1000", "wta1000", "atp500", "wta500", "atp250", "wta250", "tour_final",
+})
+
+# Categories evaluated for measurement only. Signals are shadow-flagged and never actionable.
+SHADOW_SUPPORTED_CATEGORIES: frozenset[str] = frozenset({
+    "challenger_atp",
+})
+
+# No trusted model evaluation — exclude from eval pipeline.
+UNSUPPORTED_CATEGORIES: frozenset[str] = frozenset({
+    "itf", "utr", "qualifying",
+})
 
 # Tennisexplorer.com URL-Slug → Registry-Slug (Sekundär-Scraper Enrichment).
 # Keys aus TE-Tournament-Links (/<slug>/2026/(atp-men|wta-women)/); Value = interner
@@ -259,6 +299,15 @@ TE_SLUG_MAP: dict[tuple[str, str], str] = {
     ("toronto", "atp"):          "canadian_open_atp",
     ("montreal", "wta"):         "canadian_open_wta",
     ("toronto", "wta"):          "canadian_open_wta",
+    # Challenger shadow entries — TODO: verify exact TE URL slugs against live TE data.
+    # TE pages may use city-only slug ("todi") or suffixed slug ("todi-challenger").
+    ("todi", "atp"):             "todi_challenger",
+    ("brownsburg", "atp"):       "brownsburg_challenger",
+    # Astana Challenger shares city with ATP250; TE may use "astana-2" or "astana-challenger".
+    # Mapped conservatively; will only match if TE uses this exact slug.
+    ("astana-challenger", "atp"):    "astana_challenger",
+    # Hamburg Challenger: ATP500 uses "hamburg" → "hamburg_atp". Challenger expected on "hamburg-2".
+    ("hamburg-2", "atp"):        "hamburg_challenger",
 }
 
 
