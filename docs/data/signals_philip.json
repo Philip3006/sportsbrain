@@ -1,11 +1,11 @@
 {
-  "updated": "2026-08-11T03:27:12Z",
+  "updated": "2026-08-11T01:10:17Z",
   "build_info": {
-    "sha": "84d5db7",
+    "sha": "d599eaf",
     "date": "2026-08-11"
   },
   "meta": {
-    "stale_odds": false,
+    "stale_odds": true,
     "default_user": "philip",
     "user": "philip"
   },
@@ -14,7 +14,7 @@
       "sport": "tennis",
       "home": "Luciano Darderi",
       "away": "Brandon Nakashima",
-      "kickoff": "2026-08-11T16:30:00Z",
+      "kickoff": "2026-08-11T01:15:00Z",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
@@ -27,48 +27,48 @@
     },
     {
       "sport": "tennis",
-      "home": "Rafael Jodar",
-      "away": "Arthur Fils",
-      "kickoff": "2026-08-11T18:00:00Z",
+      "home": "Jakub Mensik",
+      "away": "Ben Shelton",
+      "kickoff": "2026-08-11T14:00:00Z",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.6,
-      "odds_away": 2.22,
+      "odds_home": 2.09,
+      "odds_away": 1.67,
       "odds_source": "tennis_explorer",
       "is_display_only": false
     },
     {
       "sport": "tennis",
-      "home": "Jakub Mensik",
-      "away": "Ben Shelton",
-      "kickoff": "2026-08-11T22:00:00Z",
+      "home": "Daniel Merida Aguilar",
+      "away": "Learner Tien",
+      "kickoff": "2026-08-11T20:00:00Z",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.93,
-      "odds_away": 1.88,
-      "odds_source": "implied_elo",
-      "is_display_only": true
+      "odds_home": 2.46,
+      "odds_away": 1.46,
+      "odds_source": "tennis_explorer",
+      "is_display_only": false
     },
     {
       "sport": "tennis",
-      "home": "Daniel Merida Aguilar",
-      "away": "Learner Tien",
-      "kickoff": "2026-08-11T23:10:00Z",
-      "tour": "atp",
+      "home": "Ekaterina Alexandrova",
+      "away": "Elina Svitolina",
+      "kickoff": "2026-08-11T00:30:00Z",
+      "tour": "wta",
       "tournament": "Canadian Open",
-      "category": "m1000",
+      "category": "wta1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.93,
-      "odds_away": 1.88,
-      "odds_source": "implied_elo",
-      "is_display_only": true
+      "odds_home": 2.53,
+      "odds_away": 1.47,
+      "odds_source": "tennis_explorer",
+      "is_display_only": false
     },
     {
       "sport": "tennis",
@@ -102,66 +102,79 @@
     },
     {
       "sport": "tennis",
-      "home": "Elina Svitolina",
-      "away": "Iga Swiatek",
-      "kickoff": "2026-08-12T19:00:00Z",
-      "tour": "wta",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.45,
-      "odds_away": 1.5,
-      "odds_source": "tennis_explorer",
-      "is_display_only": false
-    },
-    {
-      "sport": "tennis",
-      "home": "Pinnington Jones Jack",
-      "away": "Jorda Sanchis David",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "home": "Rai Ajeet",
+      "away": "Vandecasteele Quinn",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Brownsburg challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 1.52,
-      "odds_away": 2.3,
+      "odds_home": 2.5,
+      "odds_away": 1.45,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Jodar Rafael",
+      "away": "Fils Arthur",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Canadian Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.65,
+      "odds_away": 2.15,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Jorda Sanchis David",
+      "away": "Pinnington Jones Jack",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Brownsburg challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.2,
+      "odds_away": 1.59,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Blanchet Ugo",
+      "away": "Sakamoto Rei",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Brownsburg challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.35,
+      "odds_away": 1.55,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Ilagan Andre",
       "away": "Martin Andres",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Brownsburg challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 2.07,
-      "odds_away": 1.68,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Wendelken Harry",
-      "away": "Gojo Borna",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Brownsburg challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.3,
-      "odds_away": 1.57,
+      "odds_home": 2.04,
+      "odds_away": 1.67,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Balshaw Felix",
       "away": "Milavsky Daniel",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Brownsburg challenger",
       "category": "",
@@ -173,79 +186,107 @@
     },
     {
       "sport": "tennis",
-      "home": "Mmoh Michael",
-      "away": "Butvilas Edas",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Brownsburg challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.04,
-      "odds_away": 1.71,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
       "home": "Schoolkate Tristan",
       "away": "Cina Federico",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Brownsburg challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 2.19,
-      "odds_away": 1.64,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Onclin Gauthier",
-      "away": "Zink Tyler",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Brownsburg challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.58,
-      "odds_away": 2.2,
+      "odds_home": 2.15,
+      "odds_away": 1.65,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Smith Colton",
       "away": "Gill Felix",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Brownsburg challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 1.64,
-      "odds_away": 2.16,
+      "odds_home": 1.6,
+      "odds_away": 2.19,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
-      "home": "Blanchet Ugo",
-      "away": "Sakamoto Rei",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "home": "Wendelken Harry",
+      "away": "Gojo Borna",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Brownsburg challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 2.3,
-      "odds_away": 1.56,
+      "odds_home": 2.27,
+      "odds_away": 1.58,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Mmoh Michael",
+      "away": "Butvilas Edas",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Brownsburg challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.07,
+      "odds_away": 1.7,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Onclin Gauthier",
+      "away": "Zink Tyler",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Brownsburg challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.59,
+      "odds_away": 2.19,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Pucinelli De Almeida Matheus",
+      "away": "Broska Florian",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Hamburg challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.51,
+      "odds_away": 2.38,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Piros Zsombor",
+      "away": "Schoenhaus Max",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Hamburg challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.17,
+      "odds_away": 1.62,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Krutykh Oleksii",
       "away": "Dietrich Dylan",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Hamburg challenger",
       "category": "",
@@ -257,93 +298,51 @@
     },
     {
       "sport": "tennis",
-      "home": "Pucinelli De Almeida Matheus",
-      "away": "Broska Florian",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "home": "Lechno-Wasiutynski Fryderyk",
+      "away": "Purtseladze Saba",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Hamburg challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
       "odds_home": 1.58,
-      "odds_away": 2.2,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Piros Zsombor",
-      "away": "Schoenhaus Max",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Hamburg challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.19,
-      "odds_away": 1.6,
+      "odds_away": 2.21,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Molleker Rudolf",
       "away": "Moller Elmer",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Hamburg challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 2.18,
-      "odds_away": 1.65,
+      "odds_home": 2.19,
+      "odds_away": 1.64,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Yevseyev Denis",
       "away": "Dodig Matej",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Hamburg challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
       "odds_home": 2.33,
-      "odds_away": 1.54,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Lechno-Wasiutynski Fryderyk",
-      "away": "Purtseladze Saba",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Hamburg challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.59,
-      "odds_away": 2.24,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Dedura-Palomero Diego",
-      "away": "Rehberg Max Hans",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Hamburg challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.13,
-      "odds_away": 1.67,
+      "odds_away": 1.56,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Kirkin Ergi",
       "away": "Nedic Andrej",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Hamburg challenger",
       "category": "",
@@ -355,15 +354,29 @@
     },
     {
       "sport": "tennis",
-      "home": "Wallin Olle",
-      "away": "Taberner Carlos",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "home": "Dedura-Palomero Diego",
+      "away": "Rehberg Max Hans",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Hamburg challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 2.15,
+      "odds_home": 2.13,
+      "odds_away": 1.67,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Wallin Olle",
+      "away": "Taberner Carlos",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Hamburg challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.14,
       "odds_away": 1.64,
       "source": "tennisexplorer"
     },
@@ -371,7 +384,7 @@
       "sport": "tennis",
       "home": "Houkes Max",
       "away": "Nagal Sumit",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Hamburg challenger",
       "category": "",
@@ -383,9 +396,51 @@
     },
     {
       "sport": "tennis",
+      "home": "Ambrogi Luciano Emanuel",
+      "away": "Ajdukovic Duje",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Todi challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.07,
+      "odds_away": 1.7,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Forti Francesco",
+      "away": "Mecarelli Michele",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Todi challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.31,
+      "odds_away": 3.27,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Martin Manzano Juan Cruz",
+      "away": "Gomez Federico Agustin",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Todi challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.5,
+      "odds_away": 1.47,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
       "home": "Dalla Valle Enrico",
       "away": "Torres Juan Bautista",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Todi challenger",
       "category": "",
@@ -397,79 +452,51 @@
     },
     {
       "sport": "tennis",
-      "home": "Ambrogi Luciano Emanuel",
-      "away": "Ajdukovic Duje",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Todi challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.1,
-      "odds_away": 1.68,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Martin Manzano Juan Cruz",
-      "away": "Gomez Federico Agustin",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Todi challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.35,
-      "odds_away": 1.52,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Forti Francesco",
-      "away": "Mecarelli Michele",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Todi challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.56,
-      "odds_away": 2.29,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
       "home": "Barrena Alex",
       "away": "Kravchenko Georgii",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Todi challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 1.67,
+      "odds_home": 1.65,
       "odds_away": 2.1,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Weis Alexander",
+      "away": "Neumayer Lukas",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Todi challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.55,
+      "odds_away": 2.28,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Mena Facundo",
       "away": "Faurel Thomas",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Todi challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
       "odds_home": 2.38,
-      "odds_away": 1.52,
+      "odds_away": 1.53,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Roca Batalla Oriol",
       "away": "Mashtakov Mykyta",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Todi challenger",
       "category": "",
@@ -481,65 +508,37 @@
     },
     {
       "sport": "tennis",
-      "home": "Weis Alexander",
-      "away": "Neumayer Lukas",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "home": "Michalski Daniel",
+      "away": "Carboni Lorenzo",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Todi challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 2.2,
-      "odds_away": 1.64,
+      "odds_home": 1.64,
+      "odds_away": 2.12,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Sanchez Izquierdo Nikolas",
       "away": "Piraino Gabriele",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Todi challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
       "odds_home": 2.34,
-      "odds_away": 1.52,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Michalski Daniel",
-      "away": "Carboni Lorenzo",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Todi challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.6,
-      "odds_away": 2.19,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Ouakaa Aziz",
-      "away": "Cui Jie",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Astana 4 challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.62,
-      "odds_away": 1.43,
+      "odds_away": 1.54,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Travaglia Stefano",
       "away": "Kicker Nicolas",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Todi challenger",
       "category": "",
@@ -553,21 +552,49 @@
       "sport": "tennis",
       "home": "Caniato Carlo Alberto",
       "away": "Passaro Francesco",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Todi challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 2.12,
-      "odds_away": 1.62,
+      "odds_home": 2.1,
+      "odds_away": 1.64,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Ouakaa Aziz",
+      "away": "Cui Jie",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Astana 4 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.58,
+      "odds_away": 1.44,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Bar Biryukov Petr",
+      "away": "Ichikawa Taisei",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Astana 4 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.13,
+      "odds_away": 1.65,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Ursu Vadym",
       "away": "Dhamne Manas",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Astana 4 challenger",
       "category": "",
@@ -579,9 +606,23 @@
     },
     {
       "sport": "tennis",
+      "home": "Omarkhanov Amir",
+      "away": "Zhukayev Beibit",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Astana 4 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.02,
+      "odds_away": 1.7,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
       "home": "Kumasaka Takuya",
       "away": "Sinclair Colin",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Astana 4 challenger",
       "category": "",
@@ -593,51 +634,23 @@
     },
     {
       "sport": "tennis",
-      "home": "Bar Biryukov Petr",
-      "away": "Ichikawa Taisei",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Astana 4 challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.55,
-      "odds_away": 2.33,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Omarkhanov Amir",
-      "away": "Zhukayev Beibit",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Astana 4 challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.06,
-      "odds_away": 1.69,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
       "home": "Rawat Sidharth",
       "away": "Alkaya Mert",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Astana 4 challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 2.5,
-      "odds_away": 1.45,
+      "odds_home": 2.33,
+      "odds_away": 1.55,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Imamura Masamichi",
       "away": "Ghibaudo Antoine",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Astana 4 challenger",
       "category": "",
@@ -649,23 +662,9 @@
     },
     {
       "sport": "tennis",
-      "home": "Shin Sanhui",
-      "away": "Arutiunian Erik",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Astana 4 challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.13,
-      "odds_away": 1.63,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
       "home": "Sun Fajing",
       "away": "Nurlanuly Zangar",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Astana 4 challenger",
       "category": "",
@@ -677,9 +676,23 @@
     },
     {
       "sport": "tennis",
+      "home": "Shin Sanhui",
+      "away": "Arutiunian Erik",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Astana 4 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.11,
+      "odds_away": 1.64,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
       "home": "Fomin Sergey",
       "away": "Zhukov Maxim",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Astana 4 challenger",
       "category": "",
@@ -693,91 +706,119 @@
       "sport": "tennis",
       "home": "Dougaz Aziz",
       "away": "Deckers Alec",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Astana 4 challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 1.46,
-      "odds_away": 2.56,
+      "odds_home": 1.5,
+      "odds_away": 2.48,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Samrej Kasidit",
       "away": "Isomura Kokoro",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Astana 4 challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 1.57,
+      "odds_home": 1.58,
       "odds_away": 2.23,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Dugardin Remy",
+      "away": "Loge Jack",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Canadian Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 7.77,
+      "odds_away": 1.06,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Basile Alessio",
       "away": "Robert Nicolas",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.58,
-      "odds_away": 2.2,
+      "odds_home": 1.56,
+      "odds_away": 2.21,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Van Der Meerschen Martin",
+      "away": "Geerts Michael",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Canadian Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.0,
+      "odds_away": 1.7,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Added Dan",
       "away": "Silva Joao Dinis",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.11,
-      "odds_away": 5.5,
+      "odds_home": 1.1,
+      "odds_away": 5.62,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Shah Aryan",
       "away": "Vujic Stefan",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.47,
-      "odds_away": 2.49,
+      "odds_home": 1.22,
+      "odds_away": 3.75,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Marques Goncalo",
       "away": "Callejon Hernando Sergio",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 3.3,
-      "odds_away": 1.28,
+      "odds_home": 3.38,
+      "odds_away": 1.27,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Kivattsev Kirill",
       "away": "Ovcharenko Oleksandr",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
@@ -789,169 +830,127 @@
     },
     {
       "sport": "tennis",
-      "home": "Scaglia Mathieu",
-      "away": "Tarrio Ponte Ander",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.52,
-      "odds_away": 2.33,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
       "home": "Lavrnja Aleksandar",
       "away": "Juhas Kristijan",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 5.75,
-      "odds_away": 1.11,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Savic Mihailo",
-      "away": "Vasilev Alexander",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 3.03,
-      "odds_away": 1.39,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Eichenseher David",
-      "away": "Chepelev Andrey",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 3.0,
-      "odds_away": 1.32,
+      "odds_home": 9.0,
+      "odds_away": 1.03,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Tiukaev Ruslan",
       "away": "Milic Ognjen",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 7.17,
+      "odds_home": 7.38,
       "odds_away": 1.06,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Eichenseher David",
+      "away": "Chepelev Andrey",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Canadian Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 5.45,
+      "odds_away": 1.12,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Covato Matteo",
       "away": "Berrut Adrien",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.2,
-      "odds_away": 1.58,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Dugardin Remy",
-      "away": "Loge Jack",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 7.51,
-      "odds_away": 1.06,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Mueller Calvin",
-      "away": "Schlageter Justin",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.97,
-      "odds_away": 1.75,
+      "odds_home": 4.9,
+      "odds_away": 1.13,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Wehnelt Kai",
       "away": "Gunzinger Thomas",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
       "odds_home": 1.06,
-      "odds_away": 7.77,
+      "odds_away": 8.0,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Mueller Calvin",
+      "away": "Schlageter Justin",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Canadian Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.95,
+      "odds_away": 1.75,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "De Krom Michiel",
       "away": "Sanogo Elijah",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.25,
-      "odds_away": 3.6,
+      "odds_home": 1.2,
+      "odds_away": 4.1,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Bellegy Arthur",
       "away": "Borrelli Leonardo",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.97,
-      "odds_away": 1.75,
+      "odds_home": 1.65,
+      "odds_away": 2.08,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Donald Matthew William",
       "away": "Bocchi Lorenzo",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.37,
+      "odds_home": 1.36,
       "odds_away": 2.9,
       "source": "tennisexplorer"
     },
@@ -959,153 +958,83 @@
       "sport": "tennis",
       "home": "Thomas Flynn",
       "away": "Casanova Hernan",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 3.3,
-      "odds_away": 1.27,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Van Der Meerschen Martin",
-      "away": "Geerts Michael",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.01,
-      "odds_away": 1.7,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Maloney Patrick (2000)",
-      "away": "Nakashima Bryce Nakashima",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.73,
-      "odds_away": 2.0,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "George Benjamin Thomas",
-      "away": "Pow Luca",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 4.15,
-      "odds_away": 1.19,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Sheldon Mitchell",
-      "away": "Baris Ozan",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 5.67,
-      "odds_away": 1.1,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Fancutt Thomas John",
-      "away": "Battle Lincoln",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.07,
-      "odds_away": 7.5,
+      "odds_home": 3.5,
+      "odds_away": 1.25,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Kong Weiyi",
       "away": "Yamanaka Taiyo",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 4.08,
-      "odds_away": 1.19,
+      "odds_home": 3.45,
+      "odds_away": 1.25,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Haliak Mikalai",
       "away": "Liu Liangxuan",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.09,
-      "odds_away": 8.57,
+      "odds_home": 1.02,
+      "odds_away": 15.0,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Ogura Kosuke",
       "away": "Kikuchi Yuta",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
       "odds_home": 1.73,
-      "odds_away": 1.95,
+      "odds_away": 1.96,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Vales Amit",
       "away": "Stephens Zach",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.08,
-      "odds_away": 6.38,
+      "odds_home": 1.09,
+      "odds_away": 6.5,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Kumar Melvin",
       "away": "Molder Markus",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 6.93,
+      "odds_home": 7.0,
       "odds_away": 1.08,
       "source": "tennisexplorer"
     },
@@ -1113,69 +1042,69 @@
       "sport": "tennis",
       "home": "Szymkowiak Kacper",
       "away": "Efstathiou Menelaos",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.75,
+      "odds_home": 1.74,
       "odds_away": 1.95,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Klaassen Stian",
-      "away": "Nordquist Arvid",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.48,
-      "odds_away": 2.48,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Azkara Arda",
-      "away": "Tsitsipas Pavlos",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.32,
-      "odds_away": 3.05,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Hudd Emile",
       "away": "Vasa Iiro",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.49,
-      "odds_away": 2.46,
+      "odds_home": 1.37,
+      "odds_away": 2.88,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Klaassen Stian",
+      "away": "Nordquist Arvid",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Canadian Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.39,
+      "odds_away": 2.7,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Azkara Arda",
+      "away": "Tsitsipas Pavlos",
+      "kickoff": "2026-08-11T01:29:00+00:00",
+      "tour": "atp",
+      "tournament": "Canadian Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.33,
+      "odds_away": 3.1,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Bosio Gabriele",
       "away": "Ferrari Francesco",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.63,
+      "odds_home": 1.61,
       "odds_away": 2.15,
       "source": "tennisexplorer"
     },
@@ -1183,35 +1112,21 @@
       "sport": "tennis",
       "home": "Toffanin Nicolo",
       "away": "Geladaris Odysseas",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.67,
-      "odds_away": 1.98,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Larue Louis",
-      "away": "Lassila Jeri",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.22,
-      "odds_away": 3.73,
+      "odds_home": 1.61,
+      "odds_away": 2.15,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Oki Yuto",
       "away": "Turriziani Alvarez Alejandro",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:29:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
@@ -1223,303 +1138,149 @@
     },
     {
       "sport": "tennis",
-      "home": "Tamm Kristjan",
-      "away": "Vasser Oren",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "home": "Larue Louis",
+      "away": "Lassila Jeri",
+      "kickoff": "2026-08-11T01:30:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.7,
-      "odds_away": 2.0,
+      "odds_home": 1.22,
+      "odds_away": 3.75,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Vasiliauskas Matas",
       "away": "Arcila Alejandro",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:30:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.1,
-      "odds_away": 1.65,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Tonejc Vito",
-      "away": "Ojakaar Oliver",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.9,
-      "odds_away": 1.35,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Hoeyeraal Herman",
-      "away": "Liljekvist Didrik",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.5,
-      "odds_away": 2.35,
+      "odds_home": 3.17,
+      "odds_away": 1.3,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Loureiro Joao Victor Couto",
       "away": "Tortora Davide",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:30:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.03,
-      "odds_away": 1.67,
+      "odds_home": 4.31,
+      "odds_away": 1.17,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Avcibasi Toprak",
       "away": "Figl Maximilian",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:30:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.05,
-      "odds_away": 1.65,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Alopaeus Felix",
-      "away": "Bacaloni Andrea",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.58,
-      "odds_away": 1.42,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Andres Romain",
-      "away": "Karlsson Wistrand Jack",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.09,
-      "odds_away": 1.64,
+      "odds_home": 3.2,
+      "odds_away": 1.33,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Fajta Peter",
       "away": "Chlodnicki Jan",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:30:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.48,
-      "odds_away": 2.43,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Torrealba Benjamin",
-      "away": "Tosetto Rafael",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.4,
-      "odds_away": 2.7,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Monferrer Ezequiel",
-      "away": "Vazquez Felipe",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.28,
-      "odds_away": 3.27,
+      "odds_home": 1.2,
+      "odds_away": 4.2,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Walters Marcus",
       "away": "Weightman Oscar",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:30:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 3.0,
+      "odds_home": 3.15,
       "odds_away": 1.33,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Nobel Eliot",
-      "away": "Azoides Demetris",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 3.06,
-      "odds_away": 1.33,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Vergara Del Puerto Martin Antonio",
-      "away": "Leite Wilson",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 3.75,
-      "odds_away": 1.22,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Gloeckler Michael",
       "away": "Reisach Vincent",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:30:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.6,
-      "odds_away": 1.47,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Yilmaz Kerem",
-      "away": "Ahti Vesa",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.35,
-      "odds_away": 2.9,
+      "odds_home": 3.6,
+      "odds_away": 1.25,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Raynel Amaury",
       "away": "Agwi Michael",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:30:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
       "odds_home": 2.0,
-      "odds_away": 1.68,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "De La Fuente Santiago",
-      "away": "Frutos Alonso Alvaro Ariel",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.13,
-      "odds_away": 5.12,
+      "odds_away": 1.72,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Schell Niklas",
       "away": "Ernst Lucas",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:30:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.38,
-      "odds_away": 2.8,
+      "odds_home": 1.08,
+      "odds_away": 7.0,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Oetzbach Adrian",
       "away": "Malaszszak Markus",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:30:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.14,
-      "odds_away": 4.9,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Hashimoto Koya",
-      "away": "Hahn Jonas",
-      "kickoff": "2026-08-11T05:26:00+00:00",
-      "tour": "atp",
-      "tournament": "UTR Pro Tennis Series 9",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.04,
-      "odds_away": 1.64,
+      "odds_home": 1.12,
+      "odds_away": 5.5,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Yamamoto Shotaro",
       "away": "Higashi Riku",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:30:00+00:00",
       "tour": "atp",
       "tournament": "UTR Pro Tennis Series 9",
       "category": "",
@@ -1531,23 +1292,37 @@
     },
     {
       "sport": "tennis",
-      "home": "Rottgering Mees",
-      "away": "Johns Garrett",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "home": "Hashimoto Koya",
+      "away": "Hahn Jonas",
+      "kickoff": "2026-08-11T01:30:00+00:00",
+      "tour": "atp",
+      "tournament": "UTR Pro Tennis Series 9",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.04,
+      "odds_away": 1.64,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Johns Garrett",
+      "away": "Rottgering Mees",
+      "kickoff": "2026-08-11T01:30:00+00:00",
       "tour": "atp",
       "tournament": "Brownsburg challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 1.5,
-      "odds_away": 2.3,
+      "odds_home": 2.3,
+      "odds_away": 1.5,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Suresh Dhakshineswar",
       "away": "Kim Aidan",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:30:00+00:00",
       "tour": "atp",
       "tournament": "Brownsburg challenger",
       "category": "",
@@ -1561,7 +1336,7 @@
       "sport": "tennis",
       "home": "Shearer Matthew",
       "away": "Liang Liang",
-      "kickoff": "2026-08-11T05:26:00+00:00",
+      "kickoff": "2026-08-11T01:30:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
@@ -1573,9 +1348,23 @@
     },
     {
       "sport": "tennis",
+      "home": "Jin Yuquan",
+      "away": "Arcon Adrian",
+      "kickoff": "2026-08-11T01:30:00+00:00",
+      "tour": "atp",
+      "tournament": "Canadian Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.29,
+      "odds_away": 3.17,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
       "home": "Han Xirui",
       "away": "Ann Suk",
-      "kickoff": "2026-08-11T05:27:00+00:00",
+      "kickoff": "2026-08-11T01:30:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
@@ -1587,107 +1376,9 @@
     },
     {
       "sport": "tennis",
-      "home": "Zikic Aleksandar",
-      "away": "Perlov Facundo",
-      "kickoff": "2026-08-11T05:27:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 3.27,
-      "odds_away": 1.29,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Bodnarchuk Pavlo",
-      "away": "Vazquez Franco Ariel",
-      "kickoff": "2026-08-11T05:27:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 3.0,
-      "odds_away": 1.33,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Delicata Liam",
-      "away": "Alvarado Berrospi Alberto Odiseo",
-      "kickoff": "2026-08-11T05:27:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.19,
-      "odds_away": 4.0,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Warik Cahir",
-      "away": "Kostic Stefan (2006)",
-      "kickoff": "2026-08-11T05:27:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.3,
-      "odds_away": 3.1,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Radjenovic Vuk",
-      "away": "Motta Andrea",
-      "kickoff": "2026-08-11T05:27:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.43,
-      "odds_away": 2.55,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Brown Oscar",
-      "away": "Zivkovic Sergej",
-      "kickoff": "2026-08-11T05:27:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.08,
-      "odds_away": 6.25,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Vterkovskiy Dmytro",
-      "away": "Tolev Aleksandar",
-      "kickoff": "2026-08-11T05:27:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.54,
-      "odds_away": 2.3,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
       "home": "Babinciuc Ilie",
       "away": "Pecorini Filippo",
-      "kickoff": "2026-08-11T05:27:00+00:00",
+      "kickoff": "2026-08-11T01:30:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
@@ -1699,44 +1390,16 @@
     },
     {
       "sport": "tennis",
-      "home": "Van Sambeek Fons",
-      "away": "De Lange Pieter",
-      "kickoff": "2026-08-11T05:27:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.04,
-      "odds_away": 1.69,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
       "home": "Maloney Eliz",
       "away": "Gillan Alice",
-      "kickoff": "2026-08-11T05:27:00+00:00",
+      "kickoff": "2026-08-11T01:30:00+00:00",
       "tour": "wta",
       "tournament": "Aldershot 2 ITF",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 1.69,
-      "odds_away": 1.99,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Dencheva Rositsa",
-      "away": "Senic Natalija",
-      "kickoff": "2026-08-11T05:27:00+00:00",
-      "tour": "wta",
-      "tournament": "Kursumlijska Banja 14 ITF",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.54,
-      "odds_away": 2.38,
+      "odds_home": 1.57,
+      "odds_away": 2.2,
       "source": "tennisexplorer"
     }
   ],
@@ -2582,16 +2245,16 @@
       "away": 1.29
     },
     "Rafael Jodar vs Arthur Fils": {
-      "home": 1.6,
-      "away": 2.22
+      "home": 1.93,
+      "away": 1.88
     },
     "Luciano Darderi vs Brandon Nakashima": {
       "home": 3.62,
       "away": 1.29
     },
     "Daniel Merida Aguilar vs Learner Tien": {
-      "home": 1.93,
-      "away": 1.88
+      "home": 2.46,
+      "away": 1.46
     },
     "Diana Shnaider vs Iga Swiatek": {
       "home": 3.62,
@@ -2602,8 +2265,8 @@
       "away": 1.47
     },
     "Jakub Mensik vs Ben Shelton": {
-      "home": 1.93,
-      "away": 1.88
+      "home": 2.09,
+      "away": 1.67
     },
     "Naomi Osaka vs Elena Rybakina": {
       "home": 3.62,
@@ -2612,10 +2275,6 @@
     "Belinda Bencic vs Coco Gauff": {
       "home": 2.29,
       "away": 1.58
-    },
-    "Elina Svitolina vs Iga Swiatek": {
-      "home": 2.45,
-      "away": 1.5
     }
   },
   "model_tips": {
@@ -3879,10 +3538,10 @@
     "Schoolkate Tristan vs Cina Federico": {
       "p_a": 49.2,
       "p_b": 50.8,
-      "implied_a": 42.8,
-      "implied_b": 57.2,
-      "odds_a": 2.19,
-      "odds_b": 1.64,
+      "implied_a": 43.4,
+      "implied_b": 56.6,
+      "odds_a": 2.15,
+      "odds_b": 1.65,
       "source": "elo"
     },
     "Onclin Gauthier vs Zhou Yi": {
@@ -3897,37 +3556,46 @@
     "Smith Colton vs Gill Felix": {
       "p_a": 48.2,
       "p_b": 51.8,
-      "implied_a": 56.8,
-      "implied_b": 43.2,
-      "odds_a": 1.64,
-      "odds_b": 2.16,
+      "implied_a": 57.8,
+      "implied_b": 42.2,
+      "odds_a": 1.6,
+      "odds_b": 2.19,
+      "source": "elo"
+    },
+    "Jorda Sanchis David vs Pinnington Jones Jack": {
+      "p_a": 52.3,
+      "p_b": 47.7,
+      "implied_a": 42.0,
+      "implied_b": 58.0,
+      "odds_a": 2.2,
+      "odds_b": 1.59,
       "source": "elo"
     },
     "Mmoh Michael vs Butvilas Edas": {
       "p_a": 52.6,
       "p_b": 47.4,
-      "implied_a": 45.6,
-      "implied_b": 54.4,
-      "odds_a": 2.04,
-      "odds_b": 1.71,
+      "implied_a": 45.1,
+      "implied_b": 54.9,
+      "odds_a": 2.07,
+      "odds_b": 1.7,
       "source": "elo"
     },
     "Wendelken Harry vs Gojo Borna": {
       "p_a": 50.1,
       "p_b": 49.9,
-      "implied_a": 40.6,
-      "implied_b": 59.4,
-      "odds_a": 2.3,
-      "odds_b": 1.57,
+      "implied_a": 41.0,
+      "implied_b": 59.0,
+      "odds_a": 2.27,
+      "odds_b": 1.58,
       "source": "elo"
     },
     "Blanchet Ugo vs Sakamoto Rei": {
       "p_a": 49.2,
       "p_b": 50.8,
-      "implied_a": 40.4,
-      "implied_b": 59.6,
-      "odds_a": 2.3,
-      "odds_b": 1.56,
+      "implied_a": 39.7,
+      "implied_b": 60.3,
+      "odds_a": 2.35,
+      "odds_b": 1.55,
       "source": "elo"
     },
     "Cecchinato Marco vs Hardt Nick": {
@@ -4023,10 +3691,10 @@
     "Piros Zsombor vs Schoenhaus Max": {
       "p_a": 49.9,
       "p_b": 50.1,
-      "implied_a": 42.2,
-      "implied_b": 57.8,
-      "odds_a": 2.19,
-      "odds_b": 1.6,
+      "implied_a": 42.7,
+      "implied_b": 57.3,
+      "odds_a": 2.17,
+      "odds_b": 1.62,
       "source": "elo"
     },
     "Krutykh Oleksii vs Dietrich Dylan": {
@@ -4041,28 +3709,28 @@
     "Molleker Rudolf vs Moller Elmer": {
       "p_a": 49.2,
       "p_b": 50.8,
-      "implied_a": 43.1,
-      "implied_b": 56.9,
-      "odds_a": 2.18,
-      "odds_b": 1.65,
+      "implied_a": 42.8,
+      "implied_b": 57.2,
+      "odds_a": 2.19,
+      "odds_b": 1.64,
       "source": "elo"
     },
     "Yevseyev Denis vs Dodig Matej": {
       "p_a": 50.8,
       "p_b": 49.2,
-      "implied_a": 39.8,
-      "implied_b": 60.2,
+      "implied_a": 40.1,
+      "implied_b": 59.9,
       "odds_a": 2.33,
-      "odds_b": 1.54,
+      "odds_b": 1.56,
       "source": "elo"
     },
     "Mena Facundo vs Faurel Thomas": {
       "p_a": 50.4,
       "p_b": 49.6,
-      "implied_a": 39.0,
-      "implied_b": 61.0,
+      "implied_a": 39.1,
+      "implied_b": 60.9,
       "odds_a": 2.38,
-      "odds_b": 1.52,
+      "odds_b": 1.53,
       "source": "elo"
     },
     "Travaglia Stefano vs Kicker Nicolas": {
@@ -4077,19 +3745,10 @@
     "Omarkhanov Amir vs Zhukayev Beibit": {
       "p_a": 51.8,
       "p_b": 48.2,
-      "implied_a": 45.1,
-      "implied_b": 54.9,
-      "odds_a": 2.06,
-      "odds_b": 1.69,
-      "source": "elo"
-    },
-    "Pinnington Jones Jack vs Jorda Sanchis David": {
-      "p_a": 47.7,
-      "p_b": 52.3,
-      "implied_a": 60.2,
-      "implied_b": 39.8,
-      "odds_a": 1.52,
-      "odds_b": 2.3,
+      "implied_a": 45.7,
+      "implied_b": 54.3,
+      "odds_a": 2.02,
+      "odds_b": 1.7,
       "source": "elo"
     }
   },
@@ -4097,62 +3756,71 @@
   "tennis": [
     {
       "sport": "tennis",
-      "match": "Elina Svitolina vs Iga Swiatek",
+      "match": "Daniel Merida Aguilar vs Learner Tien",
       "market": "home",
-      "odds": 2.45,
+      "odds": 2.46,
       "model_prob": 49.2,
-      "fair_prob": 38.0,
-      "ev_pct": 20.6,
+      "fair_prob": 37.2,
+      "ev_pct": 21.1,
       "stake_eur": 15.0,
       "stake_pct": 15.0,
       "confidence": "HIGH",
       "n_models_agree": 0,
-      "generated_at": "2026-08-11T03:27:12Z",
-      "form_a": [
-        "L",
-        "L",
-        "L",
-        "L",
-        "L"
-      ],
-      "form_b": [
-        "L",
-        "W",
-        "W",
-        "W"
-      ],
-      "tour": "wta",
-      "kickoff": "2026-08-12T19:00:00Z",
+      "generated_at": "2026-08-10T23:30:22Z",
+      "tour": "atp",
+      "kickoff": "2026-08-11T20:00:00Z",
       "tournament": "Canadian Open",
-      "category": "wta1000",
+      "category": "m1000",
       "surface": "hard",
       "best_of": 3,
       "display_priority": "top"
     },
     {
       "sport": "tennis",
-      "match": "Rafael Jodar vs Arthur Fils",
+      "match": "Jodar Rafael vs Fils Arthur",
       "market": "away",
-      "odds": 2.22,
+      "odds": 2.15,
       "model_prob": 50.8,
-      "fair_prob": 41.9,
-      "ev_pct": 12.7,
-      "stake_eur": 11.0,
-      "stake_pct": 11.0,
+      "fair_prob": 43.4,
+      "ev_pct": 9.2,
+      "stake_eur": 9.5,
+      "stake_pct": 9.5,
       "confidence": "MEDIUM",
       "n_models_agree": 0,
-      "generated_at": "2026-08-11T03:27:12Z",
-      "form_b": [
+      "generated_at": "2026-08-10T23:30:22Z",
+      "display_priority": "top"
+    },
+    {
+      "sport": "tennis",
+      "match": "Ekaterina Alexandrova vs Elina Svitolina",
+      "market": "away",
+      "odds": 1.47,
+      "model_prob": 73.7,
+      "fair_prob": 63.2,
+      "ev_pct": 8.3,
+      "stake_eur": 11.5,
+      "stake_pct": 11.5,
+      "confidence": "HIGH",
+      "n_models_agree": 0,
+      "generated_at": "2026-08-10T23:30:22Z",
+      "form_a": [
+        "W",
         "L",
         "W",
-        "W",
-        "W",
+        "L",
         "W"
       ],
-      "tour": "atp",
-      "kickoff": "2026-08-11T18:00:00Z",
+      "form_b": [
+        "L",
+        "L",
+        "L",
+        "L",
+        "L"
+      ],
+      "tour": "wta",
+      "kickoff": "2026-08-11T00:30:00Z",
       "tournament": "Canadian Open",
-      "category": "m1000",
+      "category": "wta1000",
       "surface": "hard",
       "best_of": 3,
       "display_priority": "top"
@@ -4426,7 +4094,7 @@
     },
     {
       "name": "Zverev A.",
-      "rating": 1614
+      "rating": 1615
     },
     {
       "name": "Keys M.",
@@ -7209,7 +6877,7 @@
     }
   },
   "tennis_stats": {
-    "updated": "2026-08-11T03:27:12Z",
+    "updated": "2026-08-11T01:10:18Z",
     "active_tournaments": [
       {
         "slug": "canadian_open_atp",
@@ -7338,12 +7006,6 @@
   "odds_history": {
     "Bosnia & Herzegovina vs Qatar": [
       {
-        "date": "2026-07-28",
-        "home": 1.39,
-        "draw": 5.8,
-        "away": 9.25
-      },
-      {
         "date": "2026-07-29",
         "home": 1.39,
         "draw": 5.8,
@@ -7351,12 +7013,6 @@
       }
     ],
     "Switzerland vs Canada": [
-      {
-        "date": "2026-07-28",
-        "home": 2.6,
-        "draw": 3.13,
-        "away": 3.45
-      },
       {
         "date": "2026-07-29",
         "home": 2.6,
@@ -7366,12 +7022,6 @@
     ],
     "Scotland vs Brazil": [
       {
-        "date": "2026-07-28",
-        "home": 39.37,
-        "draw": 8.0,
-        "away": 1.12
-      },
-      {
         "date": "2026-07-29",
         "home": 39.37,
         "draw": 8.0,
@@ -7379,12 +7029,6 @@
       }
     ],
     "Morocco vs Haiti": [
-      {
-        "date": "2026-07-28",
-        "home": 1.97,
-        "draw": 3.13,
-        "away": 4.26
-      },
       {
         "date": "2026-07-29",
         "home": 1.97,
@@ -7394,12 +7038,6 @@
     ],
     "Czech Republic vs Mexico": [
       {
-        "date": "2026-07-28",
-        "home": 4.0,
-        "draw": 4.1,
-        "away": 2.0
-      },
-      {
         "date": "2026-07-29",
         "home": 4.0,
         "draw": 4.1,
@@ -7407,12 +7045,6 @@
       }
     ],
     "South Africa vs South Korea": [
-      {
-        "date": "2026-07-28",
-        "home": 6.5,
-        "draw": 4.12,
-        "away": 1.66
-      },
       {
         "date": "2026-07-29",
         "home": 6.5,
@@ -7422,12 +7054,6 @@
     ],
     "Curaçao vs Ivory Coast": [
       {
-        "date": "2026-07-28",
-        "home": 24.0,
-        "draw": 9.5,
-        "away": 1.19
-      },
-      {
         "date": "2026-07-29",
         "home": 24.0,
         "draw": 9.5,
@@ -7435,12 +7061,6 @@
       }
     ],
     "Ecuador vs Germany": [
-      {
-        "date": "2026-07-28",
-        "home": 4.2,
-        "draw": 4.5,
-        "away": 1.9
-      },
       {
         "date": "2026-07-29",
         "home": 4.2,
@@ -7450,12 +7070,6 @@
     ],
     "Japan vs Sweden": [
       {
-        "date": "2026-07-28",
-        "home": 1.96,
-        "draw": 3.65,
-        "away": 4.7
-      },
-      {
         "date": "2026-07-29",
         "home": 1.96,
         "draw": 3.65,
@@ -7463,12 +7077,6 @@
       }
     ],
     "Tunisia vs Netherlands": [
-      {
-        "date": "2026-07-28",
-        "home": 34.0,
-        "draw": 11.8,
-        "away": 1.16
-      },
       {
         "date": "2026-07-29",
         "home": 34.0,
@@ -7478,12 +7086,6 @@
     ],
     "Paraguay vs Australia": [
       {
-        "date": "2026-07-28",
-        "home": 3.03,
-        "draw": 2.38,
-        "away": 4.43
-      },
-      {
         "date": "2026-07-29",
         "home": 3.03,
         "draw": 2.38,
@@ -7491,12 +7093,6 @@
       }
     ],
     "Turkey vs USA": [
-      {
-        "date": "2026-07-28",
-        "home": 3.75,
-        "draw": 4.3,
-        "away": 2.0
-      },
       {
         "date": "2026-07-29",
         "home": 3.75,
@@ -7506,12 +7102,6 @@
     ],
     "Norway vs France": [
       {
-        "date": "2026-07-28",
-        "home": 4.9,
-        "draw": 4.9,
-        "away": 1.69
-      },
-      {
         "date": "2026-07-29",
         "home": 4.9,
         "draw": 4.9,
@@ -7519,12 +7109,6 @@
       }
     ],
     "Senegal vs Iraq": [
-      {
-        "date": "2026-07-28",
-        "home": 1.26,
-        "draw": 7.25,
-        "away": 14.1
-      },
       {
         "date": "2026-07-29",
         "home": 1.26,
@@ -7534,12 +7118,6 @@
     ],
     "Cape Verde vs Saudi Arabia": [
       {
-        "date": "2026-07-28",
-        "home": 2.78,
-        "draw": 3.45,
-        "away": 2.86
-      },
-      {
         "date": "2026-07-29",
         "home": 2.78,
         "draw": 3.45,
@@ -7547,12 +7125,6 @@
       }
     ],
     "Uruguay vs Spain": [
-      {
-        "date": "2026-07-28",
-        "home": 7.8,
-        "draw": 3.9,
-        "away": 1.67
-      },
       {
         "date": "2026-07-29",
         "home": 7.8,
@@ -7562,12 +7134,6 @@
     ],
     "New Zealand vs Belgium": [
       {
-        "date": "2026-07-28",
-        "home": 17.5,
-        "draw": 8.5,
-        "away": 1.22
-      },
-      {
         "date": "2026-07-29",
         "home": 17.5,
         "draw": 8.5,
@@ -7575,12 +7141,6 @@
       }
     ],
     "Egypt vs Iran": [
-      {
-        "date": "2026-07-28",
-        "home": 2.6,
-        "draw": 2.75,
-        "away": 4.13
-      },
       {
         "date": "2026-07-29",
         "home": 2.6,
@@ -7590,12 +7150,6 @@
     ],
     "Croatia vs Ghana": [
       {
-        "date": "2026-07-28",
-        "home": 1.83,
-        "draw": 3.4,
-        "away": 6.2
-      },
-      {
         "date": "2026-07-29",
         "home": 1.83,
         "draw": 3.4,
@@ -7603,12 +7157,6 @@
       }
     ],
     "Panama vs England": [
-      {
-        "date": "2026-07-28",
-        "home": 22.0,
-        "draw": 9.2,
-        "away": 1.2
-      },
       {
         "date": "2026-07-29",
         "home": 22.0,
@@ -7618,12 +7166,6 @@
     ],
     "Colombia vs Portugal": [
       {
-        "date": "2026-07-28",
-        "home": 4.33,
-        "draw": 3.95,
-        "away": 1.92
-      },
-      {
         "date": "2026-07-29",
         "home": 4.33,
         "draw": 3.95,
@@ -7631,12 +7173,6 @@
       }
     ],
     "DR Congo vs Uzbekistan": [
-      {
-        "date": "2026-07-28",
-        "home": 1.83,
-        "draw": 4.25,
-        "away": 4.6
-      },
       {
         "date": "2026-07-29",
         "home": 1.83,
@@ -7646,12 +7182,6 @@
     ],
     "Algeria vs Austria": [
       {
-        "date": "2026-07-28",
-        "home": 4.33,
-        "draw": 2.38,
-        "away": 3.0
-      },
-      {
         "date": "2026-07-29",
         "home": 4.33,
         "draw": 2.38,
@@ -7659,12 +7189,6 @@
       }
     ],
     "Jordan vs Argentina": [
-      {
-        "date": "2026-07-28",
-        "home": 19.5,
-        "draw": 9.2,
-        "away": 1.21
-      },
       {
         "date": "2026-07-29",
         "home": 19.5,
@@ -7674,12 +7198,6 @@
     ],
     "South Africa vs Canada": [
       {
-        "date": "2026-07-28",
-        "home": 5.9,
-        "draw": 3.75,
-        "away": 1.77
-      },
-      {
         "date": "2026-07-29",
         "home": 5.9,
         "draw": 3.75,
@@ -7687,12 +7205,6 @@
       }
     ],
     "Brazil vs Japan": [
-      {
-        "date": "2026-07-28",
-        "home": 1.78,
-        "draw": 3.85,
-        "away": 5.5
-      },
       {
         "date": "2026-07-29",
         "home": 1.78,
@@ -7702,12 +7214,6 @@
     ],
     "Netherlands vs Morocco": [
       {
-        "date": "2026-07-28",
-        "home": 2.24,
-        "draw": 3.45,
-        "away": 3.8
-      },
-      {
         "date": "2026-07-29",
         "home": 2.24,
         "draw": 3.45,
@@ -7715,12 +7221,6 @@
       }
     ],
     "USA vs Bosnia & Herzegovina": [
-      {
-        "date": "2026-07-28",
-        "home": 1.57,
-        "draw": 4.6,
-        "away": 7.8
-      },
       {
         "date": "2026-07-29",
         "home": 1.57,
@@ -7730,12 +7230,6 @@
     ],
     "Portugal vs Spain": [
       {
-        "date": "2026-07-28",
-        "home": 7.19,
-        "draw": 1.67,
-        "away": 3.25
-      },
-      {
         "date": "2026-07-29",
         "home": 7.19,
         "draw": 1.67,
@@ -7743,12 +7237,6 @@
       }
     ],
     "USA vs Belgium": [
-      {
-        "date": "2026-07-28",
-        "home": 2.62,
-        "draw": 3.55,
-        "away": 2.98
-      },
       {
         "date": "2026-07-29",
         "home": 2.62,
@@ -7758,12 +7246,6 @@
     ],
     "Argentina vs Egypt": [
       {
-        "date": "2026-07-28",
-        "home": 1.41,
-        "draw": 5.2,
-        "away": 13.0
-      },
-      {
         "date": "2026-07-29",
         "home": 1.41,
         "draw": 5.2,
@@ -7771,12 +7253,6 @@
       }
     ],
     "Switzerland vs Colombia": [
-      {
-        "date": "2026-07-28",
-        "home": 3.8,
-        "draw": 3.2,
-        "away": 2.35
-      },
       {
         "date": "2026-07-29",
         "home": 3.8,
@@ -7786,12 +7262,6 @@
     ],
     "France vs Morocco": [
       {
-        "date": "2026-07-28",
-        "home": 1.01,
-        "draw": 501.0,
-        "away": 1001.0
-      },
-      {
         "date": "2026-07-29",
         "home": 1.01,
         "draw": 501.0,
@@ -7799,12 +7269,6 @@
       }
     ],
     "Spain vs Belgium": [
-      {
-        "date": "2026-07-28",
-        "home": 1.69,
-        "draw": 3.72,
-        "away": 5.42
-      },
       {
         "date": "2026-07-29",
         "home": 1.69,
@@ -7814,12 +7278,6 @@
     ],
     "Norway vs England": [
       {
-        "date": "2026-07-28",
-        "home": 11.43,
-        "draw": 1.27,
-        "away": 5.8
-      },
-      {
         "date": "2026-07-29",
         "home": 11.43,
         "draw": 1.27,
@@ -7827,12 +7285,6 @@
       }
     ],
     "Argentina vs Switzerland": [
-      {
-        "date": "2026-07-28",
-        "home": 1.27,
-        "draw": 5.8,
-        "away": 28.0
-      },
       {
         "date": "2026-07-29",
         "home": 1.27,
@@ -7842,12 +7294,6 @@
     ],
     "France vs Spain": [
       {
-        "date": "2026-07-28",
-        "home": 2.54,
-        "draw": 3.3,
-        "away": 3.42
-      },
-      {
         "date": "2026-07-29",
         "home": 2.54,
         "draw": 3.3,
@@ -7855,12 +7301,6 @@
       }
     ],
     "England vs Argentina": [
-      {
-        "date": "2026-07-28",
-        "home": 1.41,
-        "draw": 3.64,
-        "away": 13.84
-      },
       {
         "date": "2026-07-29",
         "home": 1.41,
@@ -7870,12 +7310,6 @@
     ],
     "France vs England": [
       {
-        "date": "2026-07-28",
-        "home": 1.99,
-        "draw": 4.07,
-        "away": 4.07
-      },
-      {
         "date": "2026-07-29",
         "home": 1.99,
         "draw": 4.07,
@@ -7883,12 +7317,6 @@
       }
     ],
     "Spain vs Argentina": [
-      {
-        "date": "2026-07-28",
-        "home": 2.36,
-        "draw": 3.16,
-        "away": 3.8
-      },
       {
         "date": "2026-07-29",
         "home": 2.36,
@@ -7932,6 +7360,12 @@
         "home": 1.67,
         "draw": null,
         "away": 2.66
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.67,
+        "draw": null,
+        "away": 2.66
       }
     ],
     "Giovanni Mpetshi Perricard vs Botic van de Zandschulp": [
@@ -7967,6 +7401,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.26,
+        "draw": null,
+        "away": 1.78
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.26,
         "draw": null,
         "away": 1.78
@@ -8008,6 +7448,12 @@
         "home": 4.3,
         "draw": null,
         "away": 1.3
+      },
+      {
+        "date": "2026-08-11",
+        "home": 4.3,
+        "draw": null,
+        "away": 1.3
       }
     ],
     "Juan Manuel Cerundolo vs Hamad Medjedovic": [
@@ -8043,6 +7489,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.6,
+        "draw": null,
+        "away": 1.62
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.6,
         "draw": null,
         "away": 1.62
@@ -8084,6 +7536,12 @@
         "home": 2.96,
         "draw": null,
         "away": 1.5
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.96,
+        "draw": null,
+        "away": 1.5
       }
     ],
     "Lorenzo Sonego vs Tallon Griekspoor": [
@@ -8119,6 +7577,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.14,
+        "draw": null,
+        "away": 1.9
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.14,
         "draw": null,
         "away": 1.9
@@ -8160,6 +7624,12 @@
         "home": 2.64,
         "draw": null,
         "away": 1.6
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.64,
+        "draw": null,
+        "away": 1.6
       }
     ],
     "Jaume Munar vs Alexander Blockx": [
@@ -8195,6 +7665,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.42,
+        "draw": null,
+        "away": 1.7
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.42,
         "draw": null,
         "away": 1.7
@@ -8236,6 +7712,12 @@
         "home": 1.19,
         "draw": null,
         "away": 6.0
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.19,
+        "draw": null,
+        "away": 6.0
       }
     ],
     "James Duckworth vs Alex de Minaur": [
@@ -8271,6 +7753,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 8.8,
+        "draw": null,
+        "away": 1.12
+      },
+      {
+        "date": "2026-08-11",
         "home": 8.8,
         "draw": null,
         "away": 1.12
@@ -8312,6 +7800,12 @@
         "home": 1.33,
         "draw": null,
         "away": 4.0
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.33,
+        "draw": null,
+        "away": 4.0
       }
     ],
     "Frances Tiafoe vs Marin Cilic": [
@@ -8347,6 +7841,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.55,
+        "draw": null,
+        "away": 2.8
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.55,
         "draw": null,
         "away": 2.8
@@ -8388,6 +7888,12 @@
         "home": 1.78,
         "draw": null,
         "away": 2.25
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.78,
+        "draw": null,
+        "away": 2.25
       }
     ],
     "Luciano Darderi vs Gabriel Diallo": [
@@ -8423,6 +7929,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.2,
+        "draw": null,
+        "away": 1.93
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.2,
         "draw": null,
         "away": 1.93
@@ -8464,6 +7976,12 @@
         "home": 1.71,
         "draw": null,
         "away": 2.48
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.71,
+        "draw": null,
+        "away": 2.48
       }
     ],
     "Miomir Kecmanovic vs Arthur Rinderknech": [
@@ -8499,6 +8017,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.91,
+        "draw": null,
+        "away": 2.12
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.91,
         "draw": null,
         "away": 2.12
@@ -8540,6 +8064,12 @@
         "home": 3.2,
         "draw": null,
         "away": 1.44
+      },
+      {
+        "date": "2026-08-11",
+        "home": 3.2,
+        "draw": null,
+        "away": 1.44
       }
     ],
     "Rafael Jodar vs Corentin Moutet": [
@@ -8575,6 +8105,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.35,
+        "draw": null,
+        "away": 3.75
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.35,
         "draw": null,
         "away": 3.75
@@ -8616,6 +8152,12 @@
         "home": 4.35,
         "draw": null,
         "away": 1.26
+      },
+      {
+        "date": "2026-08-11",
+        "home": 4.35,
+        "draw": null,
+        "away": 1.26
       }
     ],
     "Learner Tien vs Gael Monfils": [
@@ -8651,6 +8193,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.38,
+        "draw": null,
+        "away": 3.6
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.38,
         "draw": null,
         "away": 3.6
@@ -8692,6 +8240,12 @@
         "home": 7.5,
         "draw": null,
         "away": 1.15
+      },
+      {
+        "date": "2026-08-11",
+        "home": 7.5,
+        "draw": null,
+        "away": 1.15
       }
     ],
     "Valentin Vacherot vs Mariano Navone": [
@@ -8727,6 +8281,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.65,
+        "draw": null,
+        "away": 2.55
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.65,
         "draw": null,
         "away": 2.55
@@ -8768,6 +8328,12 @@
         "home": 1.57,
         "draw": null,
         "away": 2.72
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.57,
+        "draw": null,
+        "away": 2.72
       }
     ],
     "Rebecca Sramkova vs Diana Shnaider": [
@@ -8803,6 +8369,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 5.0,
+        "draw": null,
+        "away": 1.24
+      },
+      {
+        "date": "2026-08-11",
         "home": 5.0,
         "draw": null,
         "away": 1.24
@@ -8844,6 +8416,12 @@
         "home": 2.06,
         "draw": null,
         "away": 1.96
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.06,
+        "draw": null,
+        "away": 1.96
       }
     ],
     "Marta Kostyuk vs Katherine Sebov": [
@@ -8879,6 +8457,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.05,
+        "draw": null,
+        "away": 16.5
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.05,
         "draw": null,
         "away": 16.5
@@ -8920,6 +8504,12 @@
         "home": 2.24,
         "draw": null,
         "away": 1.79
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.24,
+        "draw": null,
+        "away": 1.79
       }
     ],
     "Antonia Ruzic vs Madison Keys": [
@@ -8955,6 +8545,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 5.3,
+        "draw": null,
+        "away": 1.26
+      },
+      {
+        "date": "2026-08-11",
         "home": 5.3,
         "draw": null,
         "away": 1.26
@@ -8996,6 +8592,12 @@
         "home": 3.25,
         "draw": null,
         "away": 1.45
+      },
+      {
+        "date": "2026-08-11",
+        "home": 3.25,
+        "draw": null,
+        "away": 1.45
       }
     ],
     "Anna Kalinskaya vs McCartney Kessler": [
@@ -9031,6 +8633,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.63,
+        "draw": null,
+        "away": 2.55
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.63,
         "draw": null,
         "away": 2.55
@@ -9072,6 +8680,12 @@
         "home": 2.88,
         "draw": null,
         "away": 1.52
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.88,
+        "draw": null,
+        "away": 1.52
       }
     ],
     "Clara Tauson vs Nikola Bartunkova": [
@@ -9107,6 +8721,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.92,
+        "draw": null,
+        "away": 2.06
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.92,
         "draw": null,
         "away": 2.06
@@ -9148,6 +8768,12 @@
         "home": 1.07,
         "draw": null,
         "away": 18.0
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.07,
+        "draw": null,
+        "away": 18.0
       }
     ],
     "Lanlana Tararudee vs Amanda Anisimova": [
@@ -9183,6 +8809,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 3.33,
+        "draw": null,
+        "away": 1.45
+      },
+      {
+        "date": "2026-08-11",
         "home": 3.33,
         "draw": null,
         "away": 1.45
@@ -9224,6 +8856,12 @@
         "home": 5.8,
         "draw": null,
         "away": 1.23
+      },
+      {
+        "date": "2026-08-11",
+        "home": 5.8,
+        "draw": null,
+        "away": 1.23
       }
     ],
     "Alina Korneeva vs Emma Navarro": [
@@ -9259,6 +8897,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.12,
+        "draw": null,
+        "away": 1.88
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.12,
         "draw": null,
         "away": 1.88
@@ -9300,6 +8944,12 @@
         "home": 1.31,
         "draw": null,
         "away": 4.1
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.31,
+        "draw": null,
+        "away": 4.1
       }
     ],
     "Elise Mertens vs Anna Bondár": [
@@ -9335,6 +8985,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.38,
+        "draw": null,
+        "away": 3.55
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.38,
         "draw": null,
         "away": 3.55
@@ -9376,6 +9032,12 @@
         "home": 2.38,
         "draw": null,
         "away": 1.73
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.38,
+        "draw": null,
+        "away": 1.73
       }
     ],
     "Sloane Stephens vs Belinda Bencic": [
@@ -9411,6 +9073,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 7.6,
+        "draw": null,
+        "away": 1.15
+      },
+      {
+        "date": "2026-08-11",
         "home": 7.6,
         "draw": null,
         "away": 1.15
@@ -9452,6 +9120,12 @@
         "home": 1.31,
         "draw": null,
         "away": 4.2
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.31,
+        "draw": null,
+        "away": 4.2
       }
     ],
     "Kayla Day vs Coco Gauff": [
@@ -9487,6 +9161,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 10.5,
+        "draw": null,
+        "away": 1.1
+      },
+      {
+        "date": "2026-08-11",
         "home": 10.5,
         "draw": null,
         "away": 1.1
@@ -9528,6 +9208,12 @@
         "home": 7.2,
         "draw": null,
         "away": 1.16
+      },
+      {
+        "date": "2026-08-11",
+        "home": 7.2,
+        "draw": null,
+        "away": 1.16
       }
     ],
     "Iva Jović vs Magda Linette": [
@@ -9563,6 +9249,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.27,
+        "draw": null,
+        "away": 4.5
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.27,
         "draw": null,
         "away": 4.5
@@ -9604,6 +9296,12 @@
         "home": 1.14,
         "draw": null,
         "away": 9.2
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.14,
+        "draw": null,
+        "away": 9.2
       }
     ],
     "Mirra Andreeva vs Karolina Pliskova": [
@@ -9639,6 +9337,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.25,
+        "draw": null,
+        "away": 5.0
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.25,
         "draw": null,
         "away": 5.0
@@ -9680,6 +9384,12 @@
         "home": 3.7,
         "draw": null,
         "away": 1.38
+      },
+      {
+        "date": "2026-08-11",
+        "home": 3.7,
+        "draw": null,
+        "away": 1.38
       }
     ],
     "Maria Sakkari vs Zeynep Sonmez": [
@@ -9715,6 +9425,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.62,
+        "draw": null,
+        "away": 2.6
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.62,
         "draw": null,
         "away": 2.6
@@ -9756,6 +9472,12 @@
         "home": 1.8,
         "draw": null,
         "away": 2.25
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.8,
+        "draw": null,
+        "away": 2.25
       }
     ],
     "Sorana Cirstea vs Maya Joint": [
@@ -9791,6 +9513,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.38,
+        "draw": null,
+        "away": 3.75
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.38,
         "draw": null,
         "away": 3.75
@@ -9832,6 +9560,12 @@
         "home": 11.5,
         "draw": null,
         "away": 1.09
+      },
+      {
+        "date": "2026-08-11",
+        "home": 11.5,
+        "draw": null,
+        "away": 1.09
       }
     ],
     "Stefanos Tsitsipas vs Joao Fonseca": [
@@ -9867,6 +9601,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.34,
+        "draw": null,
+        "away": 1.73
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.34,
         "draw": null,
         "away": 1.73
@@ -9908,6 +9648,12 @@
         "home": 1.66,
         "draw": null,
         "away": 2.48
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.66,
+        "draw": null,
+        "away": 2.48
       }
     ],
     "Zachary Svajda vs Arthur Fils": [
@@ -9943,6 +9689,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 3.7,
+        "draw": null,
+        "away": 1.37
+      },
+      {
+        "date": "2026-08-11",
         "home": 3.7,
         "draw": null,
         "away": 1.37
@@ -9984,6 +9736,12 @@
         "home": 3.75,
         "draw": null,
         "away": 1.36
+      },
+      {
+        "date": "2026-08-11",
+        "home": 3.75,
+        "draw": null,
+        "away": 1.36
       }
     ],
     "Casper Ruud vs Juan Manuel Cerundolo": [
@@ -10019,6 +9777,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.39,
+        "draw": null,
+        "away": 3.55
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.39,
         "draw": null,
         "away": 3.55
@@ -10060,6 +9824,12 @@
         "home": 1.17,
         "draw": null,
         "away": 6.6
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.17,
+        "draw": null,
+        "away": 6.6
       }
     ],
     "Raphael Collignon vs Alexei Popyrin": [
@@ -10095,6 +9865,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.66,
+        "draw": null,
+        "away": 2.51
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.66,
         "draw": null,
         "away": 2.51
@@ -10136,6 +9912,12 @@
         "home": 6.5,
         "draw": null,
         "away": 1.2
+      },
+      {
+        "date": "2026-08-11",
+        "home": 6.5,
+        "draw": null,
+        "away": 1.2
       }
     ],
     "Hubert Hurkacz vs Alejandro Tabilo": [
@@ -10171,6 +9953,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.71,
+        "draw": null,
+        "away": 2.38
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.71,
         "draw": null,
         "away": 2.38
@@ -10212,6 +10000,12 @@
         "home": 1.75,
         "draw": null,
         "away": 2.32
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.75,
+        "draw": null,
+        "away": 2.32
       }
     ],
     "Karen Khachanov vs Terence Atmane": [
@@ -10247,6 +10041,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.81,
+        "draw": null,
+        "away": 2.25
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.81,
         "draw": null,
         "away": 2.25
@@ -10288,6 +10088,12 @@
         "home": 1.44,
         "draw": null,
         "away": 3.25
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.44,
+        "draw": null,
+        "away": 3.25
       }
     ],
     "Jacob Fearnley vs Jakub Mensik": [
@@ -10323,6 +10129,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 3.25,
+        "draw": null,
+        "away": 1.43
+      },
+      {
+        "date": "2026-08-11",
         "home": 3.25,
         "draw": null,
         "away": 1.43
@@ -10364,6 +10176,12 @@
         "home": 1.32,
         "draw": null,
         "away": 4.1
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.32,
+        "draw": null,
+        "away": 4.1
       }
     ],
     "Valentin Royer vs Tommy Paul": [
@@ -10399,6 +10217,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 5.7,
+        "draw": null,
+        "away": 1.21
+      },
+      {
+        "date": "2026-08-11",
         "home": 5.7,
         "draw": null,
         "away": 1.21
@@ -10440,6 +10264,12 @@
         "home": 2.12,
         "draw": null,
         "away": 1.73
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
       }
     ],
     "Luciano Darderi vs Juncheng Shang": [
@@ -10475,6 +10305,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.11,
+        "draw": null,
+        "away": 1.66
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.11,
         "draw": null,
         "away": 1.66
@@ -10516,6 +10352,12 @@
         "home": 2.56,
         "draw": null,
         "away": 1.45
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.56,
+        "draw": null,
+        "away": 1.45
       }
     ],
     "Mariano Navone vs Arthur Fils": [
@@ -10551,6 +10393,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.55,
+        "draw": null,
+        "away": 1.45
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.55,
         "draw": null,
         "away": 1.45
@@ -10592,6 +10440,12 @@
         "home": 2.45,
         "draw": null,
         "away": 1.47
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.45,
+        "draw": null,
+        "away": 1.47
       }
     ],
     "Yannick Hanfmann vs Nuno Borges": [
@@ -10627,6 +10481,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.3,
+        "draw": null,
+        "away": 1.55
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.3,
         "draw": null,
         "away": 1.55
@@ -10668,6 +10528,12 @@
         "home": 2.12,
         "draw": null,
         "away": 1.73
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
       }
     ],
     "Talia Gibson vs Ekaterina Alexandrova": [
@@ -10703,6 +10569,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.22,
+        "draw": null,
+        "away": 1.67
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.22,
         "draw": null,
         "away": 1.67
@@ -10744,6 +10616,12 @@
         "home": 2.12,
         "draw": null,
         "away": 1.73
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
       }
     ],
     "Viktorija Golubic vs Iga Swiatek": [
@@ -10779,6 +10657,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 3.46,
+        "draw": null,
+        "away": 1.26
+      },
+      {
+        "date": "2026-08-11",
         "home": 3.46,
         "draw": null,
         "away": 1.26
@@ -10820,6 +10704,12 @@
         "home": 1.01,
         "draw": null,
         "away": 47.62
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.01,
+        "draw": null,
+        "away": 47.62
       }
     ],
     "Marta Kostyuk vs Madison Keys": [
@@ -10855,6 +10745,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.14,
+        "draw": null,
+        "away": 1.72
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.14,
         "draw": null,
         "away": 1.72
@@ -10896,6 +10792,12 @@
         "home": 47.62,
         "draw": null,
         "away": 1.01
+      },
+      {
+        "date": "2026-08-11",
+        "home": 47.62,
+        "draw": null,
+        "away": 1.01
       }
     ],
     "Aryna Sabalenka vs Shuai Zhang": [
@@ -10931,6 +10833,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.15,
+        "draw": null,
+        "away": 4.89
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.15,
         "draw": null,
         "away": 4.89
@@ -10972,6 +10880,12 @@
         "home": 1.57,
         "draw": null,
         "away": 2.41
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.57,
+        "draw": null,
+        "away": 2.41
       }
     ],
     "Taylor Townsend vs Belinda Bencic": [
@@ -11007,6 +10921,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 47.62,
+        "draw": null,
+        "away": 1.01
+      },
+      {
+        "date": "2026-08-11",
         "home": 47.62,
         "draw": null,
         "away": 1.01
@@ -11048,6 +10968,12 @@
         "home": 1.57,
         "draw": null,
         "away": 2.41
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.57,
+        "draw": null,
+        "away": 2.41
       }
     ],
     "Ann Li vs Elena Rybakina": [
@@ -11086,6 +11012,12 @@
         "home": 47.62,
         "draw": null,
         "away": 1.01
+      },
+      {
+        "date": "2026-08-11",
+        "home": 47.62,
+        "draw": null,
+        "away": 1.01
       }
     ],
     "Rafael Jodar vs Lorenzo Musetti": [
@@ -11115,6 +11047,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.22,
+        "draw": null,
+        "away": 1.67
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.22,
         "draw": null,
         "away": 1.67
@@ -11150,6 +11088,12 @@
         "home": 1.57,
         "draw": null,
         "away": 2.41
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.57,
+        "draw": null,
+        "away": 2.41
       }
     ],
     "Alexei Popyrin vs Thiago Agustin Tirante": [
@@ -11179,6 +11123,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.22,
+        "draw": null,
+        "away": 1.67
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.22,
         "draw": null,
         "away": 1.67
@@ -11214,6 +11164,12 @@
         "home": 2.5,
         "draw": null,
         "away": 1.48
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.5,
+        "draw": null,
+        "away": 1.48
       }
     ],
     "Maya Joint vs Liudmila Samsonova": [
@@ -11243,6 +11199,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.22,
+        "draw": null,
+        "away": 1.67
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.22,
         "draw": null,
         "away": 1.67
@@ -11278,6 +11240,12 @@
         "home": 2.12,
         "draw": null,
         "away": 1.73
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
       }
     ],
     "Daniel Merida Aguilar vs Alex Michelsen": [
@@ -11307,6 +11275,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.12,
         "draw": null,
         "away": 1.73
@@ -11342,6 +11316,12 @@
         "home": 2.45,
         "draw": null,
         "away": 1.49
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.45,
+        "draw": null,
+        "away": 1.49
       }
     ],
     "Terence Atmane vs Jakub Mensik": [
@@ -11371,6 +11351,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 47.62,
+        "draw": null,
+        "away": 1.01
+      },
+      {
+        "date": "2026-08-11",
         "home": 47.62,
         "draw": null,
         "away": 1.01
@@ -11406,6 +11392,12 @@
         "home": 2.14,
         "draw": null,
         "away": 1.71
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.14,
+        "draw": null,
+        "away": 1.71
       }
     ],
     "Tallon Griekspoor vs Matteo Arnaldi": [
@@ -11435,6 +11427,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.5,
+        "draw": null,
+        "away": 2.51
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.5,
         "draw": null,
         "away": 2.51
@@ -11470,6 +11468,12 @@
         "home": 47.62,
         "draw": null,
         "away": 1.01
+      },
+      {
+        "date": "2026-08-11",
+        "home": 47.62,
+        "draw": null,
+        "away": 1.01
       }
     ],
     "Maria Sakkari vs Coco Gauff": [
@@ -11499,6 +11503,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.5,
+        "draw": null,
+        "away": 1.5
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.5,
         "draw": null,
         "away": 1.5
@@ -11534,6 +11544,12 @@
         "home": 1.59,
         "draw": null,
         "away": 2.38
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.59,
+        "draw": null,
+        "away": 2.38
       }
     ],
     "Arthur Fils vs Cameron Norrie": [
@@ -11557,6 +11573,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.57,
+        "draw": null,
+        "away": 2.41
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.57,
         "draw": null,
         "away": 2.41
@@ -11586,6 +11608,12 @@
         "home": 2.3,
         "draw": null,
         "away": 1.55
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.3,
+        "draw": null,
+        "away": 1.55
       }
     ],
     "Jiri Lehecka vs Rafael Jodar": [
@@ -11609,6 +11637,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.12,
         "draw": null,
         "away": 1.73
@@ -11638,6 +11672,12 @@
         "home": 2.12,
         "draw": null,
         "away": 1.73
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
       }
     ],
     "Elina Svitolina vs Amanda Anisimova": [
@@ -11664,6 +11704,12 @@
         "home": 1.7,
         "draw": null,
         "away": 2.06
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.7,
+        "draw": null,
+        "away": 2.06
       }
     ],
     "Joao Fonseca vs Ben Shelton": [
@@ -11681,6 +11727,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.38,
+        "draw": null,
+        "away": 1.59
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.38,
         "draw": null,
         "away": 1.59
@@ -11704,6 +11756,12 @@
         "home": 2.75,
         "draw": null,
         "away": 1.4
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.75,
+        "draw": null,
+        "away": 1.4
       }
     ],
     "Tallon Griekspoor vs Daniel Merida Aguilar": [
@@ -11721,6 +11779,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.93,
         "draw": null,
         "away": 1.88
@@ -11744,6 +11808,12 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
       }
     ],
     "Marta Kostyuk vs Iga Swiatek": [
@@ -11761,6 +11831,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 2.22,
+        "draw": null,
+        "away": 1.67
+      },
+      {
+        "date": "2026-08-11",
         "home": 2.22,
         "draw": null,
         "away": 1.67
@@ -11784,6 +11860,12 @@
         "home": 1.38,
         "draw": null,
         "away": 2.85
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.38,
+        "draw": null,
+        "away": 2.85
       }
     ],
     "Aryna Sabalenka vs Ekaterina Alexandrova": [
@@ -11801,6 +11883,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.29,
+        "draw": null,
+        "away": 3.35
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.29,
         "draw": null,
         "away": 3.35
@@ -11824,6 +11912,12 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-11",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
       }
     ],
     "Alina Korneeva vs Coco Gauff": [
@@ -11841,6 +11935,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 3.62,
+        "draw": null,
+        "away": 1.29
+      },
+      {
+        "date": "2026-08-11",
         "home": 3.62,
         "draw": null,
         "away": 1.29
@@ -11864,6 +11964,12 @@
         "home": 3.62,
         "draw": null,
         "away": 1.29
+      },
+      {
+        "date": "2026-08-11",
+        "home": 3.62,
+        "draw": null,
+        "away": 1.29
       }
     ],
     "Leylah Fernandez vs Naomi Osaka": [
@@ -11884,6 +11990,12 @@
         "home": 3.62,
         "draw": null,
         "away": 1.29
+      },
+      {
+        "date": "2026-08-11",
+        "home": 3.62,
+        "draw": null,
+        "away": 1.29
       }
     ],
     "Rafael Jodar vs Arthur Fils": [
@@ -11895,6 +12007,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      {
+        "date": "2026-08-11",
         "home": 1.93,
         "draw": null,
         "away": 1.88
@@ -11912,6 +12030,12 @@
         "home": 3.62,
         "draw": null,
         "away": 1.29
+      },
+      {
+        "date": "2026-08-11",
+        "home": 3.62,
+        "draw": null,
+        "away": 1.29
       }
     ],
     "Daniel Merida Aguilar vs Learner Tien": [
@@ -11926,6 +12050,12 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.46,
+        "draw": null,
+        "away": 1.46
       }
     ],
     "Diana Shnaider vs Iga Swiatek": [
@@ -11937,6 +12067,12 @@
       },
       {
         "date": "2026-08-10",
+        "home": 3.62,
+        "draw": null,
+        "away": 1.29
+      },
+      {
+        "date": "2026-08-11",
         "home": 3.62,
         "draw": null,
         "away": 1.29
@@ -11954,6 +12090,12 @@
         "home": 3.62,
         "draw": null,
         "away": 1.29
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.53,
+        "draw": null,
+        "away": 1.47
       }
     ],
     "Jakub Mensik vs Ben Shelton": [
@@ -11962,11 +12104,23 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.09,
+        "draw": null,
+        "away": 1.67
       }
     ],
     "Naomi Osaka vs Elena Rybakina": [
       {
         "date": "2026-08-10",
+        "home": 3.62,
+        "draw": null,
+        "away": 1.29
+      },
+      {
+        "date": "2026-08-11",
         "home": 3.62,
         "draw": null,
         "away": 1.29
@@ -11978,6 +12132,12 @@
         "home": 2.38,
         "draw": null,
         "away": 1.59
+      },
+      {
+        "date": "2026-08-11",
+        "home": 2.29,
+        "draw": null,
+        "away": 1.58
       }
     ]
   },
