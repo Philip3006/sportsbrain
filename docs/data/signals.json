@@ -1,7 +1,7 @@
 {
-  "updated": "2026-08-11T16:02:34Z",
+  "updated": "2026-08-11T15:12:53Z",
   "build_info": {
-    "sha": "35667e1",
+    "sha": "d3d8f63",
     "date": "2026-08-11"
   },
   "meta": {
@@ -8914,7 +8914,7 @@
     }
   },
   "tennis_stats": {
-    "updated": "2026-08-11T16:02:34Z",
+    "updated": "2026-08-11T15:12:53Z",
     "active_tournaments": [
       {
         "slug": "canadian_open_atp",
@@ -14064,9 +14064,9 @@
       },
       {
         "date": "2026-08-11",
-        "home": 1.93,
+        "home": 1.6,
         "draw": null,
-        "away": 1.88
+        "away": 2.19
       }
     ],
     "Luciano Darderi vs Brandon Nakashima": [
@@ -14104,9 +14104,9 @@
       },
       {
         "date": "2026-08-11",
-        "home": 2.46,
+        "home": 1.93,
         "draw": null,
-        "away": 1.46
+        "away": 1.88
       }
     ],
     "Diana Shnaider vs Iga Swiatek": [
@@ -14158,9 +14158,9 @@
       },
       {
         "date": "2026-08-11",
-        "home": 2.09,
+        "home": 1.93,
         "draw": null,
-        "away": 1.67
+        "away": 1.88
       }
     ],
     "Naomi Osaka vs Elena Rybakina": [
@@ -14186,9 +14186,121 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.38,
+        "draw": null,
+        "away": 1.59
+      }
+    ],
+    "Elina Svitolina vs Iga Swiatek": [
+      {
+        "date": "2026-08-11",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      }
+    ],
+    "Alexander Shevchenko vs Pablo Llamas Ruiz": [
+      {
+        "date": "2026-08-11",
+        "home": 1.65,
+        "draw": null,
+        "away": 2.1
+      }
+    ],
+    "Dusan Lajovic vs Benjamin Bonzi": [
+      {
+        "date": "2026-08-11",
         "home": 2.29,
         "draw": null,
-        "away": 1.58
+        "away": 1.56
+      }
+    ],
+    "Luca Van Assche vs Gustavo Heide": [
+      {
+        "date": "2026-08-11",
+        "home": 1.5,
+        "draw": null,
+        "away": 2.38
+      }
+    ],
+    "Kei Nishikori vs Francisco Comesana": [
+      {
+        "date": "2026-08-11",
+        "home": 2.09,
+        "draw": null,
+        "away": 1.63
+      }
+    ],
+    "Jaime Faria vs Nikoloz Basilashvili": [
+      {
+        "date": "2026-08-11",
+        "home": 1.46,
+        "draw": null,
+        "away": 2.49
+      }
+    ],
+    "Marco Trungelliti vs Sebastian Ofner": [
+      {
+        "date": "2026-08-11",
+        "home": 2.16,
+        "draw": null,
+        "away": 1.62
+      }
+    ],
+    "Alexei Popyrin vs Titouan Droguet": [
+      {
+        "date": "2026-08-11",
+        "home": 1.56,
+        "draw": null,
+        "away": 2.25
+      }
+    ],
+    "Billy Harris vs Kyrian Jacquet": [
+      {
+        "date": "2026-08-11",
+        "home": 2.35,
+        "draw": null,
+        "away": 1.51
+      }
+    ],
+    "Sho Shimabukuro vs Hugo Dellien": [
+      {
+        "date": "2026-08-11",
+        "home": 1.35,
+        "draw": null,
+        "away": 2.88
+      }
+    ],
+    "Hugo Gaston vs Nicolai Budkov Kjaer": [
+      {
+        "date": "2026-08-11",
+        "home": 2.12,
+        "draw": null,
+        "away": 1.62
+      }
+    ],
+    "Mark Lajal vs Dalibor Svrcina": [
+      {
+        "date": "2026-08-11",
+        "home": 2.1,
+        "draw": null,
+        "away": 1.65
+      }
+    ],
+    "Marcos Giron vs Henrique Rocha": [
+      {
+        "date": "2026-08-11",
+        "home": 1.5,
+        "draw": null,
+        "away": 2.4
+      }
+    ],
+    "Nicolas Mejia vs Jacob Fearnley": [
+      {
+        "date": "2026-08-11",
+        "home": 2.38,
+        "draw": null,
+        "away": 1.5
       }
     ]
   },
