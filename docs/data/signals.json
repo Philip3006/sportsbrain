@@ -1,7 +1,7 @@
 {
-  "updated": "2026-08-11T01:10:17Z",
+  "updated": "2026-08-11T05:55:35Z",
   "build_info": {
-    "sha": "d599eaf",
+    "sha": "d73f9e7",
     "date": "2026-08-11"
   },
   "meta": {
@@ -3789,41 +3789,6 @@
       "n_models_agree": 0,
       "generated_at": "2026-08-10T23:30:22Z",
       "display_priority": "top"
-    },
-    {
-      "sport": "tennis",
-      "match": "Ekaterina Alexandrova vs Elina Svitolina",
-      "market": "away",
-      "odds": 1.47,
-      "model_prob": 73.7,
-      "fair_prob": 63.2,
-      "ev_pct": 8.3,
-      "stake_eur": 11.5,
-      "stake_pct": 11.5,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "generated_at": "2026-08-10T23:30:22Z",
-      "form_a": [
-        "W",
-        "L",
-        "W",
-        "L",
-        "W"
-      ],
-      "form_b": [
-        "L",
-        "L",
-        "L",
-        "L",
-        "L"
-      ],
-      "tour": "wta",
-      "kickoff": "2026-08-11T00:30:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "top"
     }
   ],
   "portfolio": {
@@ -6877,7 +6842,7 @@
     }
   },
   "tennis_stats": {
-    "updated": "2026-08-11T01:10:18Z",
+    "updated": "2026-08-11T05:55:36Z",
     "active_tournaments": [
       {
         "slug": "canadian_open_atp",
