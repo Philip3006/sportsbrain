@@ -35,10 +35,10 @@ def get_api_key(api_key: str | None = None) -> str:
 
 
 # Module-level flag: callers (daily_scan, prematch_scan) read this after
-# fetch_upcoming_matches() to know whether they got fresh odds or fell back
-# to a stale on-disk cache. Surfaces in signals.json["meta"]["stale_odds"]
-# and the health snapshot so the dashboard can show a banner.
-USED_STALE_CACHE: bool = False
+# Tracks which source served the last fetch_upcoming_matches() call.
+# Values: "primary" (live TheOddsAPI), "cache" (stale disk), "none" (fail-closed).
+# Surfaces in signals.json["meta"]["stale_odds"] and the health snapshot.
+FETCH_ODDS_SOURCE: str = "none"
 
 
 def _http_get_with_retry(url: str, params: dict, *, total_attempts: int = 3,
@@ -153,13 +153,17 @@ def fetch_upcoming_matches(
     Fetches upcoming matches with odds from TheOddsAPI.
     Returns list of parsed match dicts with bookmaker odds.
 
-    Resilience:
-      - 30s timeout per attempt, up to 3 attempts with backoff (5s, 15s)
-      - On total failure: loads last on-disk cache (regardless of age) and
-        sets module-level USED_STALE_CACHE=True so callers can flag it.
+    Fallback chain (O1-2):
+      Tier 1 — Primary:   TheOddsAPI bulk /odds endpoint (live, costs quota)
+      Tier 2 — Cache:     Last on-disk pickle (any age); never wastes quota
+      Tier 3 — Fail closed: return [] + sets FETCH_ODDS_SOURCE="none"
+
+    Sets module-level FETCH_ODDS_SOURCE so callers and the dashboard can
+    report which tier was used. Source "primary" = live; "cache" = stale;
+    "none" = fail-closed (no data available).
     """
-    global USED_STALE_CACHE
-    USED_STALE_CACHE = False  # reset on each fresh call
+    global FETCH_ODDS_SOURCE
+    FETCH_ODDS_SOURCE = "none"
 
     from src.config import LINE_SHOPPING_REGIONS, WM_SPORT_KEY
     if sport is None:
@@ -177,6 +181,11 @@ def fetch_upcoming_matches(
     }
     try:
         resp = _http_get_with_retry(url, params)
+        # 401/403 = auth failure (quota exhausted or wrong key) — treat as Tier 1 failure
+        # so Tier 2 stale cache can be served. _http_get_with_retry returns these without
+        # raising, so we must raise here to enter the Tier 2 handler.
+        if resp.status_code in (401, 403):
+            resp.raise_for_status()
         # 422 = market combination unsupported — drop optional markets and retry once
         if resp.status_code == 422:
             optional = [m for m in ("double_chance", "btts") if m in markets]
@@ -190,23 +199,24 @@ def fetch_upcoming_matches(
                     sport, key, regions, params["markets"],
                 )
                 if aggregated:
+                    FETCH_ODDS_SOURCE = "primary"
                     return _parse_matches(aggregated)
                 resp.raise_for_status()
     except Exception as e:
-        # Hard fail after retries — try to keep the scanner alive with the
-        # last known on-disk cache instead of returning empty (which would
-        # cause cascading failures downstream).
+        # Tier 1 (Primary) failed. Try Tier 2: stale on-disk cache.
         print(f"  ERROR: TheOddsAPI fetch failed after retries: {e}")
         stale = _load_stale_upcoming_cache()
         if stale is not None:
-            USED_STALE_CACHE = True
-            print(f"  ⚠️  USED STALE CACHE — {len(stale)} matches loaded "
-                  "(odds may be outdated). Flag propagated to signals.meta.")
+            FETCH_ODDS_SOURCE = "cache"
+            print(f"  ⚠️  Tier 2 — STALE CACHE: {len(stale)} matches loaded "
+                  "(odds may be outdated). FETCH_ODDS_SOURCE=cache.")
             return stale
-        # No cache → propagate the original exception so caller can handle it.
-        raise
+        # Tier 3: Fail closed — no cache available. Return [] instead of raising
+        # so callers degrade gracefully rather than crashing the scanner.
+        print("  ✗ Tier 3 — FAIL CLOSED: no stale cache. FETCH_ODDS_SOURCE=none.")
+        return []
 
-    # Log usage from response headers
+    # Primary call succeeded. Log quota headers.
     used = int(resp.headers.get("x-requests-used", 0))
     remaining = int(resp.headers.get("x-requests-remaining", 0))
     _log_usage(used, remaining)
@@ -218,13 +228,11 @@ def fetch_upcoming_matches(
             send_quota_alert(remaining)
         except Exception:
             pass
-        if remaining == 0:
-            stale = _load_stale_upcoming_cache()
-            if stale is not None:
-                USED_STALE_CACHE = True
-                print(f"  ⚠️  Quota exhausted — STALE CACHE ({len(stale)} matches)")
-                return stale
+        # Note (O1-2): the call succeeded — always use the fresh response,
+        # even at remaining=0. The old code returned stale cache on remaining=0
+        # which discarded valid fresh data. Stale cache is only for Tier 2 (API fail).
 
+    FETCH_ODDS_SOURCE = "primary"
     data = resp.json()
     return _parse_matches(data)
 

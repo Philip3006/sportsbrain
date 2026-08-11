@@ -493,6 +493,7 @@ class TestAppendBets:
             kelly_f=0.05, stake_pct=stake_pct,
             confidence="MEDIUM",
             stake_eur=stake_eur,
+            league="wm2026",
         )
 
     def test_appends_new_bet(self, tmp_path):
@@ -549,7 +550,7 @@ class TestAppendBets:
                 match_id=f"M{i}", home="A", away="B", market=m,
                 model_prob=0.55, fair_prob=0.48, decimal_odds=1.95,
                 ev=0.07, kelly_f=0.05, stake_pct=0.05,
-                confidence="MEDIUM", stake_eur=5.0,
+                confidence="MEDIUM", stake_eur=5.0, league="wm2026",
             )
             for i, m in enumerate(markets)
         ]

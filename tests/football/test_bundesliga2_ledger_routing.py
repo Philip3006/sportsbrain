@@ -50,7 +50,9 @@ def test_legacy_ledger_backfills_league_wm2026():
 
 
 def test_signal_default_league_empty_string():
-    """BetSignal.league default = '' → append_bets ersetzt durch 'wm2026' (legacy compat)."""
+    """BetSignal.league default = '' → append_bets skips the signal (O1-4).
+    Legacy CSV rows (loaded by _load) are still backfilled to 'wm2026' on read,
+    but new writes require an explicit valid league — see test_ledger_league_validation.py."""
     s = BetSignal(
         match_id="x", home="A", away="B", market="home",
         model_prob=0.5, fair_prob=0.5, decimal_odds=2.0,
@@ -59,6 +61,5 @@ def test_signal_default_league_empty_string():
     assert s.league == ""
     with tempfile.TemporaryDirectory() as d:
         p = Path(d) / "l.csv"
-        append_bets([s], bankroll=100.0, path=p)
-        df = _load(p)
-        assert df.iloc[0]["league"] == "wm2026"  # backfill default
+        n = append_bets([s], bankroll=100.0, path=p)
+        assert n == 0, "O1-4: signals with empty league must be skipped, not backfilled"

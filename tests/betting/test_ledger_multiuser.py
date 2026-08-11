@@ -53,7 +53,7 @@ def test_per_user_ledgers_are_isolated(tmp_path, monkeypatch):
     sig = BetSignal(
         match_id="m1", home="A", away="B", market="home",
         model_prob=0.6, fair_prob=0.5, decimal_odds=2.0,
-        ev=0.2, kelly_f=0.1, stake_pct=0.1, confidence="MED",
+        ev=0.2, kelly_f=0.1, stake_pct=0.1, confidence="MED", league="wm2026",
     )
     append_bets([sig], 100.0, match_date="2026-06-22", user="philip")
     append_bets([sig], 100.0, match_date="2026-06-22", user="alice")
@@ -65,7 +65,7 @@ def test_per_user_ledgers_are_isolated(tmp_path, monkeypatch):
     sig2 = BetSignal(
         match_id="m2", home="C", away="D", market="away",
         model_prob=0.4, fair_prob=0.33, decimal_odds=3.0,
-        ev=0.2, kelly_f=0.05, stake_pct=0.05, confidence="MED",
+        ev=0.2, kelly_f=0.05, stake_pct=0.05, confidence="MED", league="wm2026",
     )
     append_bets([sig2], 100.0, match_date="2026-06-22", user="alice")
     assert count_open_bets(user="philip") == 1
@@ -81,7 +81,7 @@ def test_explicit_path_bypasses_user_resolution(tmp_path, monkeypatch):
     sig = BetSignal(
         match_id="m1", home="A", away="B", market="home",
         model_prob=0.6, fair_prob=0.5, decimal_odds=2.0,
-        ev=0.2, kelly_f=0.1, stake_pct=0.1, confidence="MED",
+        ev=0.2, kelly_f=0.1, stake_pct=0.1, confidence="MED", league="wm2026",
     )
     append_bets([sig], 100.0, path=custom, match_date="2026-06-22")
     assert custom.exists()
@@ -110,7 +110,7 @@ def test_ledger_summary_routes_per_user(tmp_path, monkeypatch):
     sig = BetSignal(
         match_id="m1", home="A", away="B", market="home",
         model_prob=0.6, fair_prob=0.5, decimal_odds=2.0,
-        ev=0.2, kelly_f=0.1, stake_pct=0.1, confidence="MED",
+        ev=0.2, kelly_f=0.1, stake_pct=0.1, confidence="MED", league="wm2026",
     )
     append_bets([sig], 100.0, match_date="2026-06-22", user="alice")
     s = ledger_summary(user="alice")

@@ -1137,18 +1137,18 @@ def write_signals_json(
     _exposure_pct = round(_staked / _bankroll_start * 100, 1)
 
     # Surface operational flags so the dashboard can show stale-data banners.
-    # USED_STALE_CACHE is a module flag set by fetch_upcoming_matches() when
-    # the live API failed and we fell back to the on-disk pickle.
+    # FETCH_ODDS_SOURCE is "primary" when live API succeeded, "cache" on Tier-2
+    # fallback, "none" on fail-closed. stale_odds = True whenever not "primary".
     try:
-        from src.data.odds_api import USED_STALE_CACHE as _stale_odds_flag
+        from src.data.odds_api import FETCH_ODDS_SOURCE as _odds_source
     except Exception:
-        _stale_odds_flag = False
+        _odds_source = "none"
 
     payload = {
         "updated":        updated,
         "build_info":     _build_info(),
         "meta": {
-            "stale_odds": bool(_stale_odds_flag),
+            "stale_odds": _odds_source != "primary",
             "default_user": _DEFAULT_USER,
             "user": user,
         },
