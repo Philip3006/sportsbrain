@@ -183,9 +183,13 @@ function openMatch(displayKey) {
 
   if (!tip && !sigs.length) {
     const _eval = _modelEvals[displayKey] || (() => {
+      // Token-order-agnostic lookup: handles TE "Lastname Firstname" vs OddsAPI "Firstname Lastname"
+      const _normTokens = n => normTeam(n).split(' ').sort().join(' ');
+      const _nhS = _normTokens(dh), _naS = _normTokens(da);
       const found = Object.entries(_modelEvals).find(([k]) => {
         const [kh, ka] = k.split(' vs ').map(x => x.trim());
-        return matchKey(kh, ka) === nk;
+        const _kh = _normTokens(kh), _ka = _normTokens(ka);
+        return (_kh === _nhS && _ka === _naS) || (_kh === _naS && _ka === _nhS);
       });
       return found ? found[1] : null;
     })();
@@ -218,7 +222,18 @@ function openMatch(displayKey) {
         </div>
       </div>`;
     } else {
-      cards += `<div class="empty"><div class="icon">⏳</div><div>Noch keine Modellbewertung für dieses Spiel.<br><small>Wird im nächsten Scan (täglich 08:00 UTC) ergänzt.</small></div></div>`;
+      const _koMs = kickoff ? new Date(kickoff).getTime() : 0;
+      const _nextScanMs = (() => {
+        const d = new Date(); d.setUTCHours(8,0,0,0);
+        if (d.getTime() <= Date.now()) d.setDate(d.getDate()+1);
+        return d.getTime();
+      })();
+      const _noEvalMsg = !_koMs || _koMs < Date.now()
+        ? 'Turnier oder Spieler nicht im Bewertungsportfolio.'
+        : _koMs < _nextScanMs
+        ? 'Spieler oder Turnier nicht im Modell-Portfolio — keine automatische Bewertung geplant.'
+        : `Evaluation ausstehend — nächster Scan ${new Date(_nextScanMs).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Berlin'})} Uhr.`;
+      cards += `<div class="empty"><div class="icon">⏳</div><div>Keine Modellbewertung für dieses Spiel.<br><small>${_noEvalMsg}</small></div></div>`;
     }
   } else if (sigs.length) {
     cards += `<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:14px 16px 6px">💡 Vorgeschlagene Value Bets</div>`;
