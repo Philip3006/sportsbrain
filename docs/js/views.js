@@ -572,7 +572,10 @@ function _buildTopRecs24h(signals, nowMs) {
   for (const s of candidates) {
     if (picks.length >= 5) break;
     const [sh, sa] = (s.match || '').split(' vs ').map(x => x.trim());
-    const dedupKey = matchKey(sh, sa) + '|' + (s.market || '');
+    // Dedup by event + market + selection. s.market already encodes selection
+    // in the current data model; s.selection is included explicitly so that any
+    // future field remains distinguishable without changing this key.
+    const dedupKey = matchKey(sh, sa) + '|' + (s.market || '') + '|' + (s.selection || '');
     if (seen.has(dedupKey)) continue;
     seen.add(dedupKey);
     picks.push(s);
@@ -600,9 +603,6 @@ function _topRecs24hHtml(signals, nowMs) {
         const leagueBadge = leagueLabel
           ? `<span class="toprec-badge">${leagueLabel}</span>`
           : '';
-        const confBadge = p.confidence === 'HIGH'
-          ? `<span class="toprec-badge toprec-badge-high">HIGH</span>`
-          : '';
         const probStr = (typeof p.model_prob === 'number' && p.model_prob > 0)
           ? `<span class="toprec-prob">${p.model_prob.toFixed(1)}%</span>`
           : '';
@@ -614,7 +614,7 @@ function _topRecs24hHtml(signals, nowMs) {
           <div class="toprec-rank">#${i + 1}</div>
           <div class="toprec-content">
             <div class="toprec-teams-row">
-              <span class="toprec-sport-icon">${sportIcon}</span>${flagA}${flagA ? ' ' : ''}<strong>${esc(ph)}</strong><span class="vs">vs</span>${flagB}${flagB ? ' ' : ''}<strong>${esc(pa)}</strong>${leagueBadge}${confBadge}
+              <span class="toprec-sport-icon">${sportIcon}</span>${flagA}${flagA ? ' ' : ''}<strong>${esc(ph)}</strong><span class="vs">vs</span>${flagB}${flagB ? ' ' : ''}<strong>${esc(pa)}</strong>${leagueBadge}
             </div>
             <div class="toprec-market-row">
               <span class="toprec-mkt-pill">${esc(mktLabel)}</span>

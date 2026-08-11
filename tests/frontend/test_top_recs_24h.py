@@ -245,7 +245,7 @@ def test_shadow_prediction_low_ev_excluded(page: Page, server_url: str):
 # ── 11. Duplicate event+market+selection → deduplicated ──────────────────────
 
 def test_duplicate_event_market_selection_deduplicated(page: Page, server_url: str):
-    """Two signals for same match+market → only one card in top-recs."""
+    """Same event + same market + same selection → exactly one card shown (canonical best)."""
     sig1 = _tennis(match="Djokovic vs Alcaraz", ev_pct=12.0, market="away")
     sig2 = _tennis(match="Djokovic vs Alcaraz", ev_pct=10.0, market="away")
     payload = {**_BASE, "tennis": [sig1, sig2]}
@@ -254,12 +254,47 @@ def test_duplicate_event_market_selection_deduplicated(page: Page, server_url: s
 
 
 def test_same_match_different_market_not_deduplicated(page: Page, server_url: str):
-    """Two signals for same match but different markets → both allowed."""
-    sig1 = _tennis(match="Djokovic vs Alcaraz", ev_pct=12.0, market="away")
-    sig2 = _tennis(match="Djokovic vs Alcaraz", ev_pct=10.0, market="first_set_b")
+    """Same event + same market type + different selections → treated as distinct signals.
+
+    o/u_games_22.5_over and o/u_games_22.5_under share the same market category
+    (games total 22.5) but represent different selections (over vs under).
+    Dedup key is event+market+selection; these differ → both must appear.
+    """
+    sig1 = _tennis(match="Djokovic vs Alcaraz", ev_pct=12.0, market="o/u_games_22.5_over")
+    sig2 = _tennis(match="Djokovic vs Alcaraz", ev_pct=10.0, market="o/u_games_22.5_under")
     payload = {**_BASE, "tennis": [sig1, sig2]}
     _home(page, server_url, payload)
     expect(page.locator(".toprec-pick")).to_have_count(2, timeout=5_000)
+
+
+def test_explicit_selection_field_differentiates_dedup(page: Page, server_url: str):
+    """Same event + same market key but explicit selection field differs → distinct.
+
+    Tests the s.selection field path in the dedup key. Signals that differ only
+    in their explicit selection field must not be collapsed.
+    """
+    sig1 = _tennis(match="Djokovic vs Alcaraz", ev_pct=12.0, market="away")
+    sig1["selection"] = "Alcaraz"
+    sig2 = _tennis(match="Djokovic vs Alcaraz", ev_pct=10.0, market="away")
+    sig2["selection"] = "Djokovic"
+    payload = {**_BASE, "tennis": [sig1, sig2]}
+    _home(page, server_url, payload)
+    # Different selection field → two distinct picks allowed (up to 5 limit)
+    expect(page.locator(".toprec-pick")).to_have_count(2, timeout=5_000)
+
+
+def test_duplicate_source_records_canonical_best_shown_once(page: Page, server_url: str):
+    """Identical signal from multiple source records → only canonical (highest-ranked) shown once.
+
+    Two records: same event + same market + same selection. The higher-EV record
+    is the canonical one. Result: exactly 1 pick, and it is ranked #1.
+    """
+    sig_high = _tennis(match="Medvedev vs Zverev", ev_pct=14.0, market="home")
+    sig_low  = _tennis(match="Medvedev vs Zverev", ev_pct=8.0,  market="home")
+    payload = {**_BASE, "tennis": [sig_high, sig_low]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(1, timeout=5_000)
+    expect(page.locator(".toprec-rank").first).to_have_text("#1", timeout=3_000)
 
 
 # ── 12. Ranking order follows _evScore ────────────────────────────────────────
