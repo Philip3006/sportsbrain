@@ -3472,7 +3472,7 @@
     }
   },
   {
-    "ts": "2026-08-11T06:36:04Z",
+    "ts": "2026-08-11T15:12:53Z",
     "date": "2026-08-11",
     "odds": {
       "Alexei Popyrin vs Roman Andres Burruchaga": {
@@ -4046,9 +4046,9 @@
         "away": 1.29
       },
       "Rafael Jodar vs Arthur Fils": {
-        "home": 1.93,
+        "home": 1.6,
         "draw": null,
-        "away": 1.88
+        "away": 2.19
       },
       "Luciano Darderi vs Brandon Nakashima": {
         "home": 3.62,
@@ -4056,9 +4056,9 @@
         "away": 1.29
       },
       "Daniel Merida Aguilar vs Learner Tien": {
-        "home": 2.46,
+        "home": 1.93,
         "draw": null,
-        "away": 1.46
+        "away": 1.88
       },
       "Diana Shnaider vs Iga Swiatek": {
         "home": 3.62,
@@ -4071,9 +4071,9 @@
         "away": 1.47
       },
       "Jakub Mensik vs Ben Shelton": {
-        "home": 2.09,
+        "home": 1.93,
         "draw": null,
-        "away": 1.67
+        "away": 1.88
       },
       "Naomi Osaka vs Elena Rybakina": {
         "home": 3.62,
@@ -4081,9 +4081,79 @@
         "away": 1.29
       },
       "Belinda Bencic vs Coco Gauff": {
+        "home": 2.38,
+        "draw": null,
+        "away": 1.59
+      },
+      "Elina Svitolina vs Iga Swiatek": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      "Alexander Shevchenko vs Pablo Llamas Ruiz": {
+        "home": 1.65,
+        "draw": null,
+        "away": 2.1
+      },
+      "Dusan Lajovic vs Benjamin Bonzi": {
         "home": 2.29,
         "draw": null,
-        "away": 1.58
+        "away": 1.56
+      },
+      "Luca Van Assche vs Gustavo Heide": {
+        "home": 1.5,
+        "draw": null,
+        "away": 2.38
+      },
+      "Kei Nishikori vs Francisco Comesana": {
+        "home": 2.09,
+        "draw": null,
+        "away": 1.63
+      },
+      "Jaime Faria vs Nikoloz Basilashvili": {
+        "home": 1.46,
+        "draw": null,
+        "away": 2.49
+      },
+      "Marco Trungelliti vs Sebastian Ofner": {
+        "home": 2.16,
+        "draw": null,
+        "away": 1.62
+      },
+      "Alexei Popyrin vs Titouan Droguet": {
+        "home": 1.56,
+        "draw": null,
+        "away": 2.25
+      },
+      "Billy Harris vs Kyrian Jacquet": {
+        "home": 2.35,
+        "draw": null,
+        "away": 1.51
+      },
+      "Sho Shimabukuro vs Hugo Dellien": {
+        "home": 1.35,
+        "draw": null,
+        "away": 2.88
+      },
+      "Hugo Gaston vs Nicolai Budkov Kjaer": {
+        "home": 2.12,
+        "draw": null,
+        "away": 1.62
+      },
+      "Mark Lajal vs Dalibor Svrcina": {
+        "home": 2.1,
+        "draw": null,
+        "away": 1.65
+      },
+      "Marcos Giron vs Henrique Rocha": {
+        "home": 1.5,
+        "draw": null,
+        "away": 2.4
+      },
+      "Nicolas Mejia vs Jacob Fearnley": {
+        "home": 2.38,
+        "draw": null,
+        "away": 1.5
       }
     }
   }
