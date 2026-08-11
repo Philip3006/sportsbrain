@@ -124,6 +124,15 @@ def fetch_scores() -> dict[str, dict]:
     """
     global LAST_SCORES_SOURCE
     LAST_SCORES_SOURCE = "none"
+
+    import datetime
+
+    from src.config import WC2026_END
+    if datetime.datetime.now(tz=datetime.timezone.utc).date().isoformat() > WC2026_END:
+        # WM is over — no matches exist to score. Skip the API call entirely
+        # to avoid burning quota on an endpoint that will always return [].
+        return {}
+
     fallback_reason: str | None = None
 
     try:

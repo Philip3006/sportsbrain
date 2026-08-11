@@ -100,3 +100,23 @@ class TestNoLegacySportKeyReferences:
         assert bare_occurrences == 0, (
             "O1-1 Regression: settle_bets.py hat noch bare Legacy-Sport-Key."
         )
+
+
+class TestSettleBetsPostTournament:
+    """settle_bets.fetch_scores() darf nach WC2026_END keine API-Calls machen."""
+
+    def test_returns_empty_without_api_call_post_wm(self, monkeypatch):
+        """Nach WC2026_END: kein API-Call, direktes {} ohne ESPN-Fallback."""
+        import scripts.settle_bets as sb
+        import src.config
+        monkeypatch.setattr(src.config, "WC2026_END", "1970-01-01")
+        # Patch requests.Session.request — must NOT be called
+        import requests
+        monkeypatch.setattr(
+            requests.Session, "request",
+            lambda *a, **kw: (_ for _ in ()).throw(
+                AssertionError("API called — post-tournament guard did not fire")),
+        )
+        result = sb.fetch_scores()
+        assert result == {}, f"expected empty dict, got {result}"
+        assert sb.LAST_SCORES_SOURCE == "none"
