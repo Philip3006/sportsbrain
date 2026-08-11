@@ -405,6 +405,52 @@ function _oddsSparkline(matchStr, side, currentOdds) {
   </span>`;
 }
 
+// ── O1-7: Per-Signal Odds History Sparkline ────────────────
+// Reads from signal.odds_history[] (sidecar, real observations only).
+// Returns HTML string: sparkline if ≥2 points, "insufficient history" notice if 1, '' if 0.
+function _signalOddsHistoryHtml(s) {
+  const hist = s.odds_history;
+  if (!Array.isArray(hist) || hist.length === 0) return '';
+  if (hist.length === 1) {
+    return `<div style="font-size:9px;color:var(--muted);padding:2px 0;margin-top:1px" title="Nur 1 Beobachtung — noch keine Kursbewegungshistorie">⟳ Noch keine Kursbewegung</div>`;
+  }
+  const pts = hist
+    .map(p => ({ ts: p.ts, v: parseFloat(p.odds) }))
+    .filter(p => p.v > 1.0 && isFinite(p.v));
+  if (pts.length < 2) return '';
+  const vals = pts.map(p => p.v);
+  const minV = Math.min(...vals), maxV = Math.max(...vals);
+  const range = maxV - minV || 0.01;
+  const W = 56, H = 16, pad = 2;
+  const coords = vals.map((v, i) => {
+    const x = pad + (i / (vals.length - 1)) * (W - 2 * pad);
+    const y = H - pad - ((maxV - v) / range) * (H - 2 * pad);
+    return [x, y];
+  });
+  const polyPts = coords.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+  const [lx, ly] = coords[coords.length - 1];
+  const first = vals[0], last = vals[vals.length - 1];
+  const dropPct = ((first - last) / first) * 100;
+  let dirCls, dirSym, dirTxt;
+  if (dropPct >= 3) {
+    dirCls = 'good'; dirSym = '↘'; dirTxt = `${first.toFixed(2)}→${last.toFixed(2)} · Kurs fällt (gut)`;
+  } else if (dropPct <= -3) {
+    dirCls = 'bad'; dirSym = '↗'; dirTxt = `${first.toFixed(2)}→${last.toFixed(2)} · Kurs steigt (gegen uns)`;
+  } else {
+    dirCls = 'flat'; dirSym = '→'; dirTxt = `${first.toFixed(2)}→${last.toFixed(2)} · stabil`;
+  }
+  const stroke = dirCls === 'good' ? 'var(--green)' : dirCls === 'bad' ? 'var(--red)' : 'rgba(139,148,158,.7)';
+  const src = hist[hist.length - 1].source || '';
+  const srcLabel = src ? ` · ${src}` : '';
+  return `<span class="line-mv ${dirCls}" title="${dirTxt}${srcLabel}" aria-label="${dirTxt}">
+    <svg class="line-mv-svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
+      <polyline points="${polyPts}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="1.8" fill="${stroke}"/>
+    </svg>
+    <span class="line-mv-arrow">${dirSym}</span>
+  </span>`;
+}
+
 function _signalAgeHtml(s) {
   if (!s.generated_at) return '';
   const ageH = (Date.now() - new Date(s.generated_at).getTime()) / 3600000;
@@ -479,10 +525,10 @@ function sigCard(s, showMatch) {
   const dotsHtml = s.n_models_agree > 0
     ? `<span class="models-dots" title="${s.n_models_agree}/3 Modelle einig">${_modelDots(s.n_models_agree)}</span>`
     : '';
-  // Line-Movement Sparkline nur für 1X2-Märkte (für andere fehlt Historie)
-  const lineMvHtml = ['home','draw','away'].includes(s.market)
-    ? _oddsSparkline(s.match, s.market, s.odds)
-    : '';
+  // O1-7: per-signal odds history (real observations) takes priority over snapshot sparkline
+  const lineMvHtml = s.odds_history && s.odds_history.length > 0
+    ? _signalOddsHistoryHtml(s)
+    : (['home','draw','away'].includes(s.market) ? _oddsSparkline(s.match, s.market, s.odds) : '');
   // M1+M2: Inline-Drawer „Warum diese Wette?" mit Plain-Language-Erklärung
   let whyInline = '';
   if (_edge !== null) {
@@ -517,8 +563,8 @@ function sigCard(s, showMatch) {
     <div class="card-market" ${['ah-1.5_a','ah+1.5_b'].includes(s.market)||s.market.match(/^ah[+-]/) ? 'title="Satz-Handicap (SET handicap) — beim Buchmacher \'Sätze-Handicap\' wählen, NICHT \'Games-Handicap\'!"' : ''}>${marketLabel(s.market, s.match)}</div>
     ${_signalAgeHtml(s)}
     <div class="card-footer">
-      <span class="odds-btn">${s.odds.toFixed(2)}</span>
-      <span class="ev-chip ${evCls}">EV +${s.ev_pct}%${infoTip(`Expected Value (erwarteter Gewinn). +${s.ev_pct}% heißt: wenn du diese Wette 100× spielen würdest, gewinnst du im Schnitt €${(s.ev_pct/100*s.stake_eur).toFixed(2)} pro Wette. SportsBrain zeigt nur Wetten ab EV ≥ 3%.`)}</span>
+      <span class="odds-btn" title="${s.current_odds != null ? `Scan: ${(s.odds||0).toFixed(2)} · Aktuell: ${s.current_odds.toFixed(2)}` : ''}">${(s.current_odds != null && s.current_odds > 1 ? s.current_odds : (s.odds||0)).toFixed(2)}</span>
+      <span class="ev-chip ${evCls}">EV +${(s.current_ev_pct != null ? s.current_ev_pct : s.ev_pct)}%${infoTip(`Expected Value (erwarteter Gewinn). Aktueller EV zeigt refreshte Quoten. SportsBrain zeigt nur Wetten ab EV ≥ 3%.`)}</span>
       <span class="conf-badge conf-${s.confidence}">${s.confidence}${infoTip(s.confidence === 'HIGH' ? 'HIGH = mehrere KI-Modelle sind sich einig. Höchster Vertrauenswert — Einsatz wird +10% erhöht.' : s.confidence === 'LOW' ? 'LOW = grenzwertige Vorhersage. KI ist sich weniger sicher — Einsatz bleibt klein (≤€5) zum Schutz der Bankroll.' : 'MEDIUM = solide Vorhersage, aber nicht alle Modelle stimmen voll überein. Standard-Einsatz €5–15.')}</span>
       ${dotsHtml}
       ${lineMvHtml}
@@ -867,6 +913,12 @@ function renderHome() {
     const candidates = (_signals || [])
       .filter(s => _evScore(s) > 0)
       .filter(s => {
+        // O1-7: Only ACTIVE signals qualify for Top Recommendations.
+        // Signals without signal_status (not yet refreshed) pass through for backward compat.
+        const st = s.signal_status;
+        return !st || st === 'ACTIVE';
+      })
+      .filter(s => {
         if (!s.kickoff) return false;
         const ko = new Date(s.kickoff).getTime();
         return ko > nowSug && ko <= now36h;
@@ -899,7 +951,10 @@ function renderHome() {
       const picksHtml = picks.map(p => {
         const [ph, pa] = (p.match || '').split(' vs ').map(x => x.trim());
         const mktLabel = marketLabel(p.market, p.match);
-        const evColor = p.ev_pct >= 10 ? 'var(--green)' : 'var(--yellow)';
+        // O1-7: prefer refreshed current_odds/current_ev_pct over scan-time values
+        const displayOdds = (p.current_odds != null && p.current_odds > 1) ? p.current_odds : (p.odds || 0);
+        const displayEv = (p.current_ev_pct != null) ? p.current_ev_pct : (p.ev_pct || 0);
+        const evColor = displayEv >= 10 ? 'var(--green)' : 'var(--yellow)';
         const timeStr = p.kickoff ? fmtKickoff(p.kickoff) : '';
         const sportIcon = p.sport === 'tennis' ? '🎾' : p.sport === 'football' ? '⚽' : '';
         const leagueLabel = { bl2: '2.BL', wm2026: 'WM', atp: 'ATP', wta: 'WTA' }[p.league] || '';
@@ -911,14 +966,21 @@ function renderHome() {
         const confBadge = p.confidence === 'HIGH'
           ? `<span style="font-size:9px;font-weight:800;background:rgba(0,200,83,.18);color:var(--green);border:1px solid rgba(0,200,83,.4);border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle">HIGH</span>`
           : '';
+        // O1-7: freshness indicator for refreshed odds
+        let freshBadge = '';
+        if (p.odds_ts) {
+          const ageMin = Math.round((Date.now() - new Date(p.odds_ts).getTime()) / 60000);
+          const freshnessColor = ageMin <= 15 ? 'rgba(0,200,83,.7)' : ageMin <= 30 ? 'rgba(255,165,0,.7)' : 'rgba(255,80,80,.7)';
+          freshBadge = `<span style="font-size:9px;color:${freshnessColor};margin-left:4px" title="Quoten zuletzt vor ${ageMin} Min aktualisiert (${p.odds_source||'?'})">⟳${ageMin}min</span>`;
+        }
         return `<div class="suggest-pick" onclick='openMatch(${JSON.stringify(p.match)})'>
           <div class="suggest-teams-row">
-            <span style="font-size:13px;margin-right:3px">${sportIcon}</span>${flagA}${flagA?' ':''}<strong>${esc(ph)}</strong><span class="vs">vs</span>${flagB}${flagB?' ':''}<strong>${esc(pa)}</strong>${leagueBadge}${confBadge}<span style="font-size:11px;color:var(--muted);font-weight:500;margin-left:6px">${esc(timeStr)}</span>
+            <span style="font-size:13px;margin-right:3px">${sportIcon}</span>${flagA}${flagA?' ':''}<strong>${esc(ph)}</strong><span class="vs">vs</span>${flagB}${flagB?' ':''}<strong>${esc(pa)}</strong>${leagueBadge}${confBadge}${freshBadge}<span style="font-size:11px;color:var(--muted);font-weight:500;margin-left:6px">${esc(timeStr)}</span>
           </div>
           <div class="suggest-bottom-row">
             <span class="suggest-mkt-pill">${esc(mktLabel)}</span>
-            <span class="suggest-odds">${(p.odds||0).toFixed(2)}</span>
-            <span class="suggest-ev" style="color:${evColor}">+${p.ev_pct.toFixed(1)}%</span>
+            <span class="suggest-odds">${displayOdds.toFixed(2)}</span>
+            <span class="suggest-ev" style="color:${evColor}">+${displayEv.toFixed(1)}%</span>
             <span class="suggest-eur">€${p.display_stake}</span>
           </div>
         </div>`;

@@ -16,6 +16,12 @@ from pathlib import Path
 from src.betting.value_detector import BetSignal
 from src.config import DEFAULT_USER as _DEFAULT_USER, ODDS_MOVE_WARN_PCT
 from src.utils.atomic_io import atomic_write_json
+from src.signals.signal_status import (
+    load_odds_state,
+    make_signal_id,
+    merge_odds_state_into_signal,
+    seed_initial_odds,
+)
 
 
 def _build_info() -> dict:
@@ -245,9 +251,11 @@ def _signal_to_dict(
     form_b: list[str] | None = None,
 ) -> dict:
     from datetime import datetime, timezone
+    _match_str = f"{s.home} vs {s.away}"
     d = {
+        "signal_id":       make_signal_id(sport, _match_str, s.market, kickoff),
         "sport":           sport,
-        "match":           f"{s.home} vs {s.away}",
+        "match":           _match_str,
         "market":          s.market,
         "odds":            round(s.decimal_odds, 2),
         "model_prob":      round(s.model_prob * 100, 1),
@@ -998,6 +1006,15 @@ def write_signals_json(
     from src.config import MAX_SIGNALS_DISPLAY as _MAX_DISPLAY
     football_data = _tag_display_priority(football_data, _MAX_DISPLAY)
     tennis_data   = _tag_display_priority(tennis_data, _MAX_DISPLAY)
+
+    # O1-7: Seed initial odds for new signals, then merge refreshed odds state
+    for _sig in football_data + tennis_data:
+        _sid = _sig.get("signal_id")
+        if _sid:
+            seed_initial_odds(_sid, _sig)
+    _odds_state = load_odds_state()
+    football_data = [merge_odds_state_into_signal(sig, _odds_state) for sig in football_data]
+    tennis_data   = [merge_odds_state_into_signal(sig, _odds_state) for sig in tennis_data]
 
     if schedule is not None:
         # F7-Fix: Sport-getrennter Merge. Wenn Caller Schedule mit einem Sport-Fokus
