@@ -1,0 +1,1966 @@
+{
+  "generated_at": "2026-08-11T13:57:38.655631+00:00",
+  "data_through": "2026-08-08",
+  "sources": {
+    "ledger": {
+      "path": "/Users/philiprassillier/sportsbrain-phase1/results/ledger_philip.csv",
+      "n": 87,
+      "note": "real-money bets; authoritative for P&L metrics"
+    },
+    "signal_history": {
+      "path": "/Users/philiprassillier/sportsbrain-phase1/data/cache/signal_history.jsonl",
+      "n": 489,
+      "unit_stake_eur": 10.0,
+      "note": "placed signals with tracked outcomes (paper-trade stakes); used for prediction quality only"
+    }
+  },
+  "odds_provenance": {
+    "n_total": 87,
+    "n_settled": 78,
+    "closing_odds_coverage": 0.2564,
+    "clv_coverage": 0.2308,
+    "model_prob_coverage": 0.8077,
+    "gaps": {
+      "odds_fetch_tier": "metric unavailable: FETCH_ODDS_SOURCE (added O1-2) is not yet persisted to ledger rows. Adding odds_fetch_tier column to append_bets() would close this gap.",
+      "odds_timestamp": "metric unavailable: entry odds timestamp not stored. TheOddsAPI response timestamp could be added to ledger.",
+      "odds_provider": "metric unavailable: specific bookmaker used for entry odds not stored. 'source' column in ledger is 'value'/'manual', not bookie-level."
+    }
+  },
+  "overall": {
+    "prediction_quality": {
+      "n": 576,
+      "n_settled": 567,
+      "n_binary": 523,
+      "total_pnl": 606.58,
+      "total_staked": 7597.91,
+      "brier_score": {
+        "value": 0.233519,
+        "n": 497,
+        "note": null
+      },
+      "log_loss": {
+        "value": 0.658032,
+        "n": 497,
+        "note": null
+      },
+      "roi_pct": {
+        "value": 7.9835,
+        "n": 523,
+        "note": null
+      },
+      "yield_pct": {
+        "value": 7.9835,
+        "n": 523,
+        "note": null
+      },
+      "avg_odds": {
+        "value": 2.0252,
+        "n": 565,
+        "note": null
+      },
+      "max_drawdown": {
+        "value": 279.79,
+        "n": 567,
+        "note": null
+      },
+      "clv_avg": {
+        "value": 0.099025,
+        "n": 20,
+        "note": null
+      },
+      "clv_hit_rate": {
+        "value": 0.4,
+        "n": 20,
+        "note": null
+      },
+      "clv_coverage": {
+        "value": 0.035273,
+        "n": 567,
+        "note": null
+      },
+      "calibration": [
+        {
+          "p_low": 0.2,
+          "p_high": 0.4,
+          "n": 22,
+          "predicted_mean": 0.3536,
+          "observed_freq": 0.1818,
+          "calibration_error": 0.1718
+        },
+        {
+          "p_low": 0.4,
+          "p_high": 0.6,
+          "n": 198,
+          "predicted_mean": 0.5389,
+          "observed_freq": 0.5101,
+          "calibration_error": 0.0288
+        },
+        {
+          "p_low": 0.6,
+          "p_high": 0.8,
+          "n": 234,
+          "predicted_mean": 0.6638,
+          "observed_freq": 0.5812,
+          "calibration_error": 0.0826
+        },
+        {
+          "p_low": 0.8,
+          "p_high": 1.0,
+          "n": 43,
+          "predicted_mean": 0.9495,
+          "observed_freq": 0.8605,
+          "calibration_error": 0.0891
+        }
+      ]
+    },
+    "betting_performance": {
+      "n": 87,
+      "n_settled": 78,
+      "n_binary": 77,
+      "total_pnl": -47.87,
+      "total_staked": 739.92,
+      "brier_score": {
+        "value": 0.240794,
+        "n": 51,
+        "note": null
+      },
+      "log_loss": {
+        "value": 0.675598,
+        "n": 51,
+        "note": null
+      },
+      "roi_pct": {
+        "value": -6.4696,
+        "n": 77,
+        "note": null
+      },
+      "yield_pct": {
+        "value": -6.4696,
+        "n": 77,
+        "note": null
+      },
+      "avg_odds": {
+        "value": 2.4277,
+        "n": 76,
+        "note": null
+      },
+      "max_drawdown": {
+        "value": 149.13,
+        "n": 78,
+        "note": null
+      },
+      "clv_avg": {
+        "value": 0.099025,
+        "n": 20,
+        "note": null
+      },
+      "clv_hit_rate": {
+        "value": 0.4,
+        "n": 20,
+        "note": null
+      },
+      "clv_coverage": {
+        "value": 0.25641,
+        "n": 78,
+        "note": null
+      },
+      "calibration": [
+        {
+          "p_low": 0.2,
+          "p_high": 0.4,
+          "n": 12,
+          "predicted_mean": 0.3291,
+          "observed_freq": 0.0833,
+          "calibration_error": 0.2458
+        },
+        {
+          "p_low": 0.4,
+          "p_high": 0.6,
+          "n": 20,
+          "predicted_mean": 0.5205,
+          "observed_freq": 0.4,
+          "calibration_error": 0.1205
+        },
+        {
+          "p_low": 0.6,
+          "p_high": 0.8,
+          "n": 17,
+          "predicted_mean": 0.6844,
+          "observed_freq": 0.5294,
+          "calibration_error": 0.155
+        },
+        {
+          "p_low": 0.8,
+          "p_high": 1.0,
+          "n": 2,
+          "predicted_mean": 0.9055,
+          "observed_freq": 0.5,
+          "calibration_error": 0.4055
+        }
+      ]
+    }
+  },
+  "sports": {
+    "football": {
+      "prediction_quality": {
+        "n": 88,
+        "n_settled": 79,
+        "n_binary": 78,
+        "total_pnl": -57.87,
+        "total_staked": 749.92,
+        "brier_score": {
+          "value": 0.240423,
+          "n": 52,
+          "note": null
+        },
+        "log_loss": {
+          "value": 0.674836,
+          "n": 52,
+          "note": null
+        },
+        "roi_pct": {
+          "value": -7.7168,
+          "n": 78,
+          "note": null
+        },
+        "yield_pct": {
+          "value": -7.7168,
+          "n": 78,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 2.4279,
+          "n": 77,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 159.13,
+          "n": 79,
+          "note": null
+        },
+        "clv_avg": {
+          "value": 0.099025,
+          "n": 20,
+          "note": null
+        },
+        "clv_hit_rate": {
+          "value": 0.4,
+          "n": 20,
+          "note": null
+        },
+        "clv_coverage": {
+          "value": 0.253165,
+          "n": 79,
+          "note": null
+        },
+        "calibration": [
+          {
+            "p_low": 0.2,
+            "p_high": 0.4,
+            "n": 12,
+            "predicted_mean": 0.3291,
+            "observed_freq": 0.0833,
+            "calibration_error": 0.2458
+          },
+          {
+            "p_low": 0.4,
+            "p_high": 0.6,
+            "n": 21,
+            "predicted_mean": 0.5181,
+            "observed_freq": 0.381,
+            "calibration_error": 0.1371
+          },
+          {
+            "p_low": 0.6,
+            "p_high": 0.8,
+            "n": 17,
+            "predicted_mean": 0.6844,
+            "observed_freq": 0.5294,
+            "calibration_error": 0.155
+          },
+          {
+            "p_low": 0.8,
+            "p_high": 1.0,
+            "n": 2,
+            "predicted_mean": 0.9055,
+            "observed_freq": 0.5,
+            "calibration_error": 0.4055
+          }
+        ]
+      },
+      "betting_performance": {
+        "n": 87,
+        "n_settled": 78,
+        "n_binary": 77,
+        "total_pnl": -47.87,
+        "total_staked": 739.92,
+        "brier_score": {
+          "value": 0.240794,
+          "n": 51,
+          "note": null
+        },
+        "log_loss": {
+          "value": 0.675598,
+          "n": 51,
+          "note": null
+        },
+        "roi_pct": {
+          "value": -6.4696,
+          "n": 77,
+          "note": null
+        },
+        "yield_pct": {
+          "value": -6.4696,
+          "n": 77,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 2.4277,
+          "n": 76,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 149.13,
+          "n": 78,
+          "note": null
+        },
+        "clv_avg": {
+          "value": 0.099025,
+          "n": 20,
+          "note": null
+        },
+        "clv_hit_rate": {
+          "value": 0.4,
+          "n": 20,
+          "note": null
+        },
+        "clv_coverage": {
+          "value": 0.25641,
+          "n": 78,
+          "note": null
+        },
+        "calibration": [
+          {
+            "p_low": 0.2,
+            "p_high": 0.4,
+            "n": 12,
+            "predicted_mean": 0.3291,
+            "observed_freq": 0.0833,
+            "calibration_error": 0.2458
+          },
+          {
+            "p_low": 0.4,
+            "p_high": 0.6,
+            "n": 20,
+            "predicted_mean": 0.5205,
+            "observed_freq": 0.4,
+            "calibration_error": 0.1205
+          },
+          {
+            "p_low": 0.6,
+            "p_high": 0.8,
+            "n": 17,
+            "predicted_mean": 0.6844,
+            "observed_freq": 0.5294,
+            "calibration_error": 0.155
+          },
+          {
+            "p_low": 0.8,
+            "p_high": 1.0,
+            "n": 2,
+            "predicted_mean": 0.9055,
+            "observed_freq": 0.5,
+            "calibration_error": 0.4055
+          }
+        ]
+      }
+    },
+    "tennis": {
+      "prediction_quality": {
+        "n": 488,
+        "n_settled": 488,
+        "n_binary": 445,
+        "total_pnl": 664.45,
+        "total_staked": 6847.99,
+        "brier_score": {
+          "value": 0.232712,
+          "n": 445,
+          "note": null
+        },
+        "log_loss": {
+          "value": 0.656069,
+          "n": 445,
+          "note": null
+        },
+        "roi_pct": {
+          "value": 9.7028,
+          "n": 445,
+          "note": null
+        },
+        "yield_pct": {
+          "value": 9.7028,
+          "n": 445,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 1.9617,
+          "n": 488,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 265.1,
+          "n": 488,
+          "note": null
+        },
+        "clv_avg": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_hit_rate": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_coverage": {
+          "value": 0.0,
+          "n": 488,
+          "note": null
+        },
+        "calibration": [
+          {
+            "p_low": 0.2,
+            "p_high": 0.4,
+            "n": 10,
+            "predicted_mean": 0.3831,
+            "observed_freq": 0.3,
+            "calibration_error": 0.0831
+          },
+          {
+            "p_low": 0.4,
+            "p_high": 0.6,
+            "n": 177,
+            "predicted_mean": 0.5414,
+            "observed_freq": 0.5254,
+            "calibration_error": 0.016
+          },
+          {
+            "p_low": 0.6,
+            "p_high": 0.8,
+            "n": 217,
+            "predicted_mean": 0.6622,
+            "observed_freq": 0.5853,
+            "calibration_error": 0.077
+          },
+          {
+            "p_low": 0.8,
+            "p_high": 1.0,
+            "n": 41,
+            "predicted_mean": 0.9517,
+            "observed_freq": 0.878,
+            "calibration_error": 0.0736
+          }
+        ]
+      },
+      "betting_performance": {
+        "n": 0,
+        "n_settled": 0,
+        "n_binary": 0,
+        "total_pnl": null,
+        "total_staked": 0,
+        "brier_score": {
+          "value": null,
+          "n": 0,
+          "note": "no records with binary outcome and valid model_prob"
+        },
+        "log_loss": {
+          "value": null,
+          "n": 0,
+          "note": "no records with binary outcome and valid model_prob"
+        },
+        "roi_pct": {
+          "value": null,
+          "n": 0,
+          "note": "no settled binary records"
+        },
+        "yield_pct": {
+          "value": null,
+          "n": 0,
+          "note": "no settled binary records"
+        },
+        "avg_odds": {
+          "value": null,
+          "n": 0,
+          "note": "no settled records with valid decimal_odds"
+        },
+        "max_drawdown": {
+          "value": null,
+          "n": 0,
+          "note": "no settled records with pnl"
+        },
+        "clv_avg": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_hit_rate": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_coverage": {
+          "value": null,
+          "n": 0,
+          "note": "no settled records"
+        },
+        "calibration": []
+      }
+    }
+  },
+  "leagues": {
+    "wm2026": {
+      "prediction_quality": {
+        "n": 88,
+        "n_settled": 79,
+        "n_binary": 78,
+        "total_pnl": -57.87,
+        "total_staked": 749.92,
+        "brier_score": {
+          "value": 0.240423,
+          "n": 52,
+          "note": null
+        },
+        "log_loss": {
+          "value": 0.674836,
+          "n": 52,
+          "note": null
+        },
+        "roi_pct": {
+          "value": -7.7168,
+          "n": 78,
+          "note": null
+        },
+        "yield_pct": {
+          "value": -7.7168,
+          "n": 78,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 2.4279,
+          "n": 77,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 159.13,
+          "n": 79,
+          "note": null
+        },
+        "clv_avg": {
+          "value": 0.099025,
+          "n": 20,
+          "note": null
+        },
+        "clv_hit_rate": {
+          "value": 0.4,
+          "n": 20,
+          "note": null
+        },
+        "clv_coverage": {
+          "value": 0.253165,
+          "n": 79,
+          "note": null
+        },
+        "calibration": [
+          {
+            "p_low": 0.2,
+            "p_high": 0.4,
+            "n": 12,
+            "predicted_mean": 0.3291,
+            "observed_freq": 0.0833,
+            "calibration_error": 0.2458
+          },
+          {
+            "p_low": 0.4,
+            "p_high": 0.6,
+            "n": 21,
+            "predicted_mean": 0.5181,
+            "observed_freq": 0.381,
+            "calibration_error": 0.1371
+          },
+          {
+            "p_low": 0.6,
+            "p_high": 0.8,
+            "n": 17,
+            "predicted_mean": 0.6844,
+            "observed_freq": 0.5294,
+            "calibration_error": 0.155
+          },
+          {
+            "p_low": 0.8,
+            "p_high": 1.0,
+            "n": 2,
+            "predicted_mean": 0.9055,
+            "observed_freq": 0.5,
+            "calibration_error": 0.4055
+          }
+        ]
+      },
+      "betting_performance": {
+        "n": 87,
+        "n_settled": 78,
+        "n_binary": 77,
+        "total_pnl": -47.87,
+        "total_staked": 739.92,
+        "brier_score": {
+          "value": 0.240794,
+          "n": 51,
+          "note": null
+        },
+        "log_loss": {
+          "value": 0.675598,
+          "n": 51,
+          "note": null
+        },
+        "roi_pct": {
+          "value": -6.4696,
+          "n": 77,
+          "note": null
+        },
+        "yield_pct": {
+          "value": -6.4696,
+          "n": 77,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 2.4277,
+          "n": 76,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 149.13,
+          "n": 78,
+          "note": null
+        },
+        "clv_avg": {
+          "value": 0.099025,
+          "n": 20,
+          "note": null
+        },
+        "clv_hit_rate": {
+          "value": 0.4,
+          "n": 20,
+          "note": null
+        },
+        "clv_coverage": {
+          "value": 0.25641,
+          "n": 78,
+          "note": null
+        },
+        "calibration": [
+          {
+            "p_low": 0.2,
+            "p_high": 0.4,
+            "n": 12,
+            "predicted_mean": 0.3291,
+            "observed_freq": 0.0833,
+            "calibration_error": 0.2458
+          },
+          {
+            "p_low": 0.4,
+            "p_high": 0.6,
+            "n": 20,
+            "predicted_mean": 0.5205,
+            "observed_freq": 0.4,
+            "calibration_error": 0.1205
+          },
+          {
+            "p_low": 0.6,
+            "p_high": 0.8,
+            "n": 17,
+            "predicted_mean": 0.6844,
+            "observed_freq": 0.5294,
+            "calibration_error": 0.155
+          },
+          {
+            "p_low": 0.8,
+            "p_high": 1.0,
+            "n": 2,
+            "predicted_mean": 0.9055,
+            "observed_freq": 0.5,
+            "calibration_error": 0.4055
+          }
+        ]
+      }
+    },
+    "atp": {
+      "prediction_quality": {
+        "n": 258,
+        "n_settled": 258,
+        "n_binary": 250,
+        "total_pnl": 707.0,
+        "total_staked": 3822.42,
+        "brier_score": {
+          "value": 0.221906,
+          "n": 250,
+          "note": null
+        },
+        "log_loss": {
+          "value": 0.629422,
+          "n": 250,
+          "note": null
+        },
+        "roi_pct": {
+          "value": 18.4961,
+          "n": 250,
+          "note": null
+        },
+        "yield_pct": {
+          "value": 18.4961,
+          "n": 250,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 2.0181,
+          "n": 258,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 186.9,
+          "n": 258,
+          "note": null
+        },
+        "clv_avg": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_hit_rate": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_coverage": {
+          "value": 0.0,
+          "n": 258,
+          "note": null
+        },
+        "calibration": [
+          {
+            "p_low": 0.2,
+            "p_high": 0.4,
+            "n": 7,
+            "predicted_mean": 0.3814,
+            "observed_freq": 0.1429,
+            "calibration_error": 0.2386
+          },
+          {
+            "p_low": 0.4,
+            "p_high": 0.6,
+            "n": 108,
+            "predicted_mean": 0.543,
+            "observed_freq": 0.5833,
+            "calibration_error": 0.0403
+          },
+          {
+            "p_low": 0.6,
+            "p_high": 0.8,
+            "n": 123,
+            "predicted_mean": 0.6533,
+            "observed_freq": 0.6341,
+            "calibration_error": 0.0192
+          },
+          {
+            "p_low": 0.8,
+            "p_high": 1.0,
+            "n": 12,
+            "predicted_mean": 0.939,
+            "observed_freq": 1.0,
+            "calibration_error": 0.061
+          }
+        ]
+      },
+      "betting_performance": {
+        "n": 0,
+        "n_settled": 0,
+        "n_binary": 0,
+        "total_pnl": null,
+        "total_staked": 0,
+        "brier_score": {
+          "value": null,
+          "n": 0,
+          "note": "no records with binary outcome and valid model_prob"
+        },
+        "log_loss": {
+          "value": null,
+          "n": 0,
+          "note": "no records with binary outcome and valid model_prob"
+        },
+        "roi_pct": {
+          "value": null,
+          "n": 0,
+          "note": "no settled binary records"
+        },
+        "yield_pct": {
+          "value": null,
+          "n": 0,
+          "note": "no settled binary records"
+        },
+        "avg_odds": {
+          "value": null,
+          "n": 0,
+          "note": "no settled records with valid decimal_odds"
+        },
+        "max_drawdown": {
+          "value": null,
+          "n": 0,
+          "note": "no settled records with pnl"
+        },
+        "clv_avg": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_hit_rate": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_coverage": {
+          "value": null,
+          "n": 0,
+          "note": "no settled records"
+        },
+        "calibration": []
+      }
+    },
+    "wta": {
+      "prediction_quality": {
+        "n": 230,
+        "n_settled": 230,
+        "n_binary": 195,
+        "total_pnl": -42.55,
+        "total_staked": 3025.57,
+        "brier_score": {
+          "value": 0.246566,
+          "n": 195,
+          "note": null
+        },
+        "log_loss": {
+          "value": 0.690231,
+          "n": 195,
+          "note": null
+        },
+        "roi_pct": {
+          "value": -1.4063,
+          "n": 195,
+          "note": null
+        },
+        "yield_pct": {
+          "value": -1.4063,
+          "n": 195,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 1.8985,
+          "n": 230,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 258.5,
+          "n": 230,
+          "note": null
+        },
+        "clv_avg": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_hit_rate": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_coverage": {
+          "value": 0.0,
+          "n": 230,
+          "note": null
+        },
+        "calibration": [
+          {
+            "p_low": 0.2,
+            "p_high": 0.4,
+            "n": 3,
+            "predicted_mean": 0.387,
+            "observed_freq": 0.6667,
+            "calibration_error": 0.2796
+          },
+          {
+            "p_low": 0.4,
+            "p_high": 0.6,
+            "n": 69,
+            "predicted_mean": 0.5388,
+            "observed_freq": 0.4348,
+            "calibration_error": 0.1041
+          },
+          {
+            "p_low": 0.6,
+            "p_high": 0.8,
+            "n": 94,
+            "predicted_mean": 0.6738,
+            "observed_freq": 0.5213,
+            "calibration_error": 0.1525
+          },
+          {
+            "p_low": 0.8,
+            "p_high": 1.0,
+            "n": 29,
+            "predicted_mean": 0.9569,
+            "observed_freq": 0.8276,
+            "calibration_error": 0.1294
+          }
+        ]
+      },
+      "betting_performance": {
+        "n": 0,
+        "n_settled": 0,
+        "n_binary": 0,
+        "total_pnl": null,
+        "total_staked": 0,
+        "brier_score": {
+          "value": null,
+          "n": 0,
+          "note": "no records with binary outcome and valid model_prob"
+        },
+        "log_loss": {
+          "value": null,
+          "n": 0,
+          "note": "no records with binary outcome and valid model_prob"
+        },
+        "roi_pct": {
+          "value": null,
+          "n": 0,
+          "note": "no settled binary records"
+        },
+        "yield_pct": {
+          "value": null,
+          "n": 0,
+          "note": "no settled binary records"
+        },
+        "avg_odds": {
+          "value": null,
+          "n": 0,
+          "note": "no settled records with valid decimal_odds"
+        },
+        "max_drawdown": {
+          "value": null,
+          "n": 0,
+          "note": "no settled records with pnl"
+        },
+        "clv_avg": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_hit_rate": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_coverage": {
+          "value": null,
+          "n": 0,
+          "note": "no settled records"
+        },
+        "calibration": []
+      }
+    }
+  },
+  "markets": {
+    "ou_goals": {
+      "prediction_quality": {
+        "n": 29,
+        "n_settled": 28,
+        "n_binary": 28,
+        "total_pnl": -38.78,
+        "total_staked": 327.89,
+        "brier_score": {
+          "value": 0.291445,
+          "n": 15,
+          "note": null
+        },
+        "log_loss": {
+          "value": 0.79325,
+          "n": 15,
+          "note": null
+        },
+        "roi_pct": {
+          "value": -11.8271,
+          "n": 28,
+          "note": null
+        },
+        "yield_pct": {
+          "value": -11.8271,
+          "n": 28,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 2.1578,
+          "n": 27,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 108.49,
+          "n": 28,
+          "note": null
+        },
+        "clv_avg": {
+          "value": -0.002936,
+          "n": 11,
+          "note": null
+        },
+        "clv_hit_rate": {
+          "value": 0.363636,
+          "n": 11,
+          "note": null
+        },
+        "clv_coverage": {
+          "value": 0.392857,
+          "n": 28,
+          "note": null
+        },
+        "calibration": [
+          {
+            "p_low": 0.2,
+            "p_high": 0.4,
+            "n": 2,
+            "predicted_mean": 0.3535,
+            "observed_freq": 0.0,
+            "calibration_error": 0.3535
+          },
+          {
+            "p_low": 0.4,
+            "p_high": 0.6,
+            "n": 8,
+            "predicted_mean": 0.5246,
+            "observed_freq": 0.375,
+            "calibration_error": 0.1496
+          },
+          {
+            "p_low": 0.6,
+            "p_high": 0.8,
+            "n": 4,
+            "predicted_mean": 0.7123,
+            "observed_freq": 0.5,
+            "calibration_error": 0.2123
+          },
+          {
+            "p_low": 0.8,
+            "p_high": 1.0,
+            "n": 1,
+            "predicted_mean": 0.831,
+            "observed_freq": 0.0,
+            "calibration_error": 0.831
+          }
+        ]
+      },
+      "betting_performance": {
+        "n": 28,
+        "n_settled": 27,
+        "n_binary": 27,
+        "total_pnl": -28.78,
+        "total_staked": 317.89,
+        "brier_score": {
+          "value": 0.296444,
+          "n": 14,
+          "note": null
+        },
+        "log_loss": {
+          "value": 0.804482,
+          "n": 14,
+          "note": null
+        },
+        "roi_pct": {
+          "value": -9.0534,
+          "n": 27,
+          "note": null
+        },
+        "yield_pct": {
+          "value": -9.0534,
+          "n": 27,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 2.1469,
+          "n": 26,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 108.49,
+          "n": 27,
+          "note": null
+        },
+        "clv_avg": {
+          "value": -0.002936,
+          "n": 11,
+          "note": null
+        },
+        "clv_hit_rate": {
+          "value": 0.363636,
+          "n": 11,
+          "note": null
+        },
+        "clv_coverage": {
+          "value": 0.407407,
+          "n": 27,
+          "note": null
+        },
+        "calibration": [
+          {
+            "p_low": 0.2,
+            "p_high": 0.4,
+            "n": 2,
+            "predicted_mean": 0.3535,
+            "observed_freq": 0.0,
+            "calibration_error": 0.3535
+          },
+          {
+            "p_low": 0.4,
+            "p_high": 0.6,
+            "n": 7,
+            "predicted_mean": 0.5323,
+            "observed_freq": 0.4286,
+            "calibration_error": 0.1037
+          },
+          {
+            "p_low": 0.6,
+            "p_high": 0.8,
+            "n": 4,
+            "predicted_mean": 0.7123,
+            "observed_freq": 0.5,
+            "calibration_error": 0.2123
+          },
+          {
+            "p_low": 0.8,
+            "p_high": 1.0,
+            "n": 1,
+            "predicted_mean": 0.831,
+            "observed_freq": 0.0,
+            "calibration_error": 0.831
+          }
+        ]
+      }
+    },
+    "match_winner": {
+      "prediction_quality": {
+        "n": 144,
+        "n_settled": 139,
+        "n_binary": 137,
+        "total_pnl": 87.51,
+        "total_staked": 1803.41,
+        "brier_score": {
+          "value": 0.208787,
+          "n": 132,
+          "note": null
+        },
+        "log_loss": {
+          "value": 0.601483,
+          "n": 132,
+          "note": null
+        },
+        "roi_pct": {
+          "value": 4.8525,
+          "n": 137,
+          "note": null
+        },
+        "yield_pct": {
+          "value": 4.8525,
+          "n": 137,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 2.2483,
+          "n": 139,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 110.0,
+          "n": 139,
+          "note": null
+        },
+        "clv_avg": {
+          "value": 0.253125,
+          "n": 8,
+          "note": null
+        },
+        "clv_hit_rate": {
+          "value": 0.5,
+          "n": 8,
+          "note": null
+        },
+        "clv_coverage": {
+          "value": 0.057554,
+          "n": 139,
+          "note": null
+        },
+        "calibration": [
+          {
+            "p_low": 0.2,
+            "p_high": 0.4,
+            "n": 18,
+            "predicted_mean": 0.3599,
+            "observed_freq": 0.2222,
+            "calibration_error": 0.1377
+          },
+          {
+            "p_low": 0.4,
+            "p_high": 0.6,
+            "n": 72,
+            "predicted_mean": 0.5087,
+            "observed_freq": 0.3889,
+            "calibration_error": 0.1198
+          },
+          {
+            "p_low": 0.6,
+            "p_high": 0.8,
+            "n": 10,
+            "predicted_mean": 0.7027,
+            "observed_freq": 0.4,
+            "calibration_error": 0.3027
+          },
+          {
+            "p_low": 0.8,
+            "p_high": 1.0,
+            "n": 32,
+            "predicted_mean": 0.975,
+            "observed_freq": 0.9375,
+            "calibration_error": 0.0375
+          }
+        ]
+      },
+      "betting_performance": {
+        "n": 27,
+        "n_settled": 22,
+        "n_binary": 22,
+        "total_pnl": 31.69,
+        "total_staked": 181.01,
+        "brier_score": {
+          "value": 0.216492,
+          "n": 17,
+          "note": null
+        },
+        "log_loss": {
+          "value": 0.619485,
+          "n": 17,
+          "note": null
+        },
+        "roi_pct": {
+          "value": 17.5073,
+          "n": 22,
+          "note": null
+        },
+        "yield_pct": {
+          "value": 17.5073,
+          "n": 22,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 2.8982,
+          "n": 22,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 50.75,
+          "n": 22,
+          "note": null
+        },
+        "clv_avg": {
+          "value": 0.253125,
+          "n": 8,
+          "note": null
+        },
+        "clv_hit_rate": {
+          "value": 0.5,
+          "n": 8,
+          "note": null
+        },
+        "clv_coverage": {
+          "value": 0.363636,
+          "n": 22,
+          "note": null
+        },
+        "calibration": [
+          {
+            "p_low": 0.2,
+            "p_high": 0.4,
+            "n": 8,
+            "predicted_mean": 0.3309,
+            "observed_freq": 0.125,
+            "calibration_error": 0.2059
+          },
+          {
+            "p_low": 0.4,
+            "p_high": 0.6,
+            "n": 6,
+            "predicted_mean": 0.5138,
+            "observed_freq": 0.1667,
+            "calibration_error": 0.3472
+          },
+          {
+            "p_low": 0.6,
+            "p_high": 0.8,
+            "n": 2,
+            "predicted_mean": 0.7415,
+            "observed_freq": 0.5,
+            "calibration_error": 0.2415
+          },
+          {
+            "p_low": 0.8,
+            "p_high": 1.0,
+            "n": 1,
+            "predicted_mean": 0.98,
+            "observed_freq": 1.0,
+            "calibration_error": 0.02
+          }
+        ]
+      }
+    },
+    "asian_handicap": {
+      "prediction_quality": {
+        "n": 57,
+        "n_settled": 56,
+        "n_binary": 48,
+        "total_pnl": 252.79,
+        "total_staked": 719.45,
+        "brier_score": {
+          "value": 0.189252,
+          "n": 43,
+          "note": null
+        },
+        "log_loss": {
+          "value": 0.560738,
+          "n": 43,
+          "note": null
+        },
+        "roi_pct": {
+          "value": 35.1366,
+          "n": 48,
+          "note": null
+        },
+        "yield_pct": {
+          "value": 35.1366,
+          "n": 48,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 1.8201,
+          "n": 55,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 57.11,
+          "n": 56,
+          "note": null
+        },
+        "clv_avg": {
+          "value": -0.0122,
+          "n": 1,
+          "note": null
+        },
+        "clv_hit_rate": {
+          "value": 0.0,
+          "n": 1,
+          "note": null
+        },
+        "clv_coverage": {
+          "value": 0.017857,
+          "n": 56,
+          "note": null
+        },
+        "calibration": [
+          {
+            "p_low": 0.4,
+            "p_high": 0.6,
+            "n": 6,
+            "predicted_mean": 0.5325,
+            "observed_freq": 0.8333,
+            "calibration_error": 0.3008
+          },
+          {
+            "p_low": 0.6,
+            "p_high": 0.8,
+            "n": 30,
+            "predicted_mean": 0.6981,
+            "observed_freq": 0.7667,
+            "calibration_error": 0.0686
+          },
+          {
+            "p_low": 0.8,
+            "p_high": 1.0,
+            "n": 7,
+            "predicted_mean": 0.8979,
+            "observed_freq": 0.7143,
+            "calibration_error": 0.1836
+          }
+        ]
+      },
+      "betting_performance": {
+        "n": 14,
+        "n_settled": 13,
+        "n_binary": 12,
+        "total_pnl": -37.14,
+        "total_staked": 124.86,
+        "brier_score": {
+          "value": 0.219767,
+          "n": 7,
+          "note": null
+        },
+        "log_loss": {
+          "value": 0.627546,
+          "n": 7,
+          "note": null
+        },
+        "roi_pct": {
+          "value": -29.7453,
+          "n": 12,
+          "note": null
+        },
+        "yield_pct": {
+          "value": -29.7453,
+          "n": 12,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 2.0546,
+          "n": 12,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 57.11,
+          "n": 13,
+          "note": null
+        },
+        "clv_avg": {
+          "value": -0.0122,
+          "n": 1,
+          "note": null
+        },
+        "clv_hit_rate": {
+          "value": 0.0,
+          "n": 1,
+          "note": null
+        },
+        "clv_coverage": {
+          "value": 0.076923,
+          "n": 13,
+          "note": null
+        },
+        "calibration": [
+          {
+            "p_low": 0.4,
+            "p_high": 0.6,
+            "n": 2,
+            "predicted_mean": 0.539,
+            "observed_freq": 0.5,
+            "calibration_error": 0.039
+          },
+          {
+            "p_low": 0.6,
+            "p_high": 0.8,
+            "n": 5,
+            "predicted_mean": 0.6944,
+            "observed_freq": 0.6,
+            "calibration_error": 0.0944
+          }
+        ]
+      }
+    },
+    "btts": {
+      "prediction_quality": {
+        "n": 3,
+        "n_settled": 3,
+        "n_binary": 3,
+        "total_pnl": -8.6,
+        "total_staked": 36.97,
+        "brier_score": {
+          "value": null,
+          "n": 0,
+          "note": "no records with binary outcome and valid model_prob"
+        },
+        "log_loss": {
+          "value": null,
+          "n": 0,
+          "note": "no records with binary outcome and valid model_prob"
+        },
+        "roi_pct": {
+          "value": -23.2621,
+          "n": 3,
+          "note": null
+        },
+        "yield_pct": {
+          "value": -23.2621,
+          "n": 3,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 2.1967,
+          "n": 3,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 25.0,
+          "n": 3,
+          "note": null
+        },
+        "clv_avg": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_hit_rate": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_coverage": {
+          "value": 0.0,
+          "n": 3,
+          "note": null
+        },
+        "calibration": []
+      },
+      "betting_performance": {
+        "n": 3,
+        "n_settled": 3,
+        "n_binary": 3,
+        "total_pnl": -8.6,
+        "total_staked": 36.97,
+        "brier_score": {
+          "value": null,
+          "n": 0,
+          "note": "no records with binary outcome and valid model_prob"
+        },
+        "log_loss": {
+          "value": null,
+          "n": 0,
+          "note": "no records with binary outcome and valid model_prob"
+        },
+        "roi_pct": {
+          "value": -23.2621,
+          "n": 3,
+          "note": null
+        },
+        "yield_pct": {
+          "value": -23.2621,
+          "n": 3,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 2.1967,
+          "n": 3,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 25.0,
+          "n": 3,
+          "note": null
+        },
+        "clv_avg": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_hit_rate": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_coverage": {
+          "value": 0.0,
+          "n": 3,
+          "note": null
+        },
+        "calibration": []
+      }
+    },
+    "goalscorer": {
+      "prediction_quality": {
+        "n": 7,
+        "n_settled": 5,
+        "n_binary": 5,
+        "total_pnl": -9.5,
+        "total_staked": 39.5,
+        "brier_score": {
+          "value": 0.205673,
+          "n": 5,
+          "note": null
+        },
+        "log_loss": {
+          "value": 0.595508,
+          "n": 5,
+          "note": null
+        },
+        "roi_pct": {
+          "value": -24.0506,
+          "n": 5,
+          "note": null
+        },
+        "yield_pct": {
+          "value": -24.0506,
+          "n": 5,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 3.89,
+          "n": 5,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 29.5,
+          "n": 5,
+          "note": null
+        },
+        "clv_avg": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_hit_rate": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_coverage": {
+          "value": 0.0,
+          "n": 5,
+          "note": null
+        },
+        "calibration": [
+          {
+            "p_low": 0.2,
+            "p_high": 0.4,
+            "n": 2,
+            "predicted_mean": 0.2975,
+            "observed_freq": 0.0,
+            "calibration_error": 0.2975
+          },
+          {
+            "p_low": 0.4,
+            "p_high": 0.6,
+            "n": 3,
+            "predicted_mean": 0.4733,
+            "observed_freq": 0.3333,
+            "calibration_error": 0.14
+          }
+        ]
+      },
+      "betting_performance": {
+        "n": 7,
+        "n_settled": 5,
+        "n_binary": 5,
+        "total_pnl": -9.5,
+        "total_staked": 39.5,
+        "brier_score": {
+          "value": 0.205673,
+          "n": 5,
+          "note": null
+        },
+        "log_loss": {
+          "value": 0.595508,
+          "n": 5,
+          "note": null
+        },
+        "roi_pct": {
+          "value": -24.0506,
+          "n": 5,
+          "note": null
+        },
+        "yield_pct": {
+          "value": -24.0506,
+          "n": 5,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 3.89,
+          "n": 5,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 29.5,
+          "n": 5,
+          "note": null
+        },
+        "clv_avg": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_hit_rate": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_coverage": {
+          "value": 0.0,
+          "n": 5,
+          "note": null
+        },
+        "calibration": [
+          {
+            "p_low": 0.2,
+            "p_high": 0.4,
+            "n": 2,
+            "predicted_mean": 0.2975,
+            "observed_freq": 0.0,
+            "calibration_error": 0.2975
+          },
+          {
+            "p_low": 0.4,
+            "p_high": 0.6,
+            "n": 3,
+            "predicted_mean": 0.4733,
+            "observed_freq": 0.3333,
+            "calibration_error": 0.14
+          }
+        ]
+      }
+    },
+    "ou_games": {
+      "prediction_quality": {
+        "n": 336,
+        "n_settled": 336,
+        "n_binary": 302,
+        "total_pnl": 323.16,
+        "total_staked": 4670.69,
+        "brier_score": {
+          "value": 0.248215,
+          "n": 302,
+          "note": null
+        },
+        "log_loss": {
+          "value": 0.690921,
+          "n": 302,
+          "note": null
+        },
+        "roi_pct": {
+          "value": 6.9189,
+          "n": 302,
+          "note": null
+        },
+        "yield_pct": {
+          "value": 6.9189,
+          "n": 302,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 1.9266,
+          "n": 336,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 249.97,
+          "n": 336,
+          "note": null
+        },
+        "clv_avg": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_hit_rate": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_coverage": {
+          "value": 0.0,
+          "n": 336,
+          "note": null
+        },
+        "calibration": [
+          {
+            "p_low": 0.4,
+            "p_high": 0.6,
+            "n": 109,
+            "predicted_mean": 0.5621,
+            "observed_freq": 0.5872,
+            "calibration_error": 0.0251
+          },
+          {
+            "p_low": 0.6,
+            "p_high": 0.8,
+            "n": 190,
+            "predicted_mean": 0.6554,
+            "observed_freq": 0.5632,
+            "calibration_error": 0.0922
+          },
+          {
+            "p_low": 0.8,
+            "p_high": 1.0,
+            "n": 3,
+            "predicted_mean": 0.8382,
+            "observed_freq": 0.6667,
+            "calibration_error": 0.1715
+          }
+        ]
+      },
+      "betting_performance": {
+        "n": 8,
+        "n_settled": 8,
+        "n_binary": 8,
+        "total_pnl": 4.46,
+        "total_staked": 39.69,
+        "brier_score": {
+          "value": 0.235399,
+          "n": 8,
+          "note": null
+        },
+        "log_loss": {
+          "value": 0.661391,
+          "n": 8,
+          "note": null
+        },
+        "roi_pct": {
+          "value": 11.2371,
+          "n": 8,
+          "note": null
+        },
+        "yield_pct": {
+          "value": 11.2371,
+          "n": 8,
+          "note": null
+        },
+        "avg_odds": {
+          "value": 1.7788,
+          "n": 8,
+          "note": null
+        },
+        "max_drawdown": {
+          "value": 9.69,
+          "n": 8,
+          "note": null
+        },
+        "clv_avg": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_hit_rate": {
+          "value": null,
+          "n": 0,
+          "note": "metric unavailable: closing_odds not persisted for these records"
+        },
+        "clv_coverage": {
+          "value": 0.0,
+          "n": 8,
+          "note": null
+        },
+        "calibration": [
+          {
+            "p_low": 0.4,
+            "p_high": 0.6,
+            "n": 2,
+            "predicted_mean": 0.551,
+            "observed_freq": 1.0,
+            "calibration_error": 0.449
+          },
+          {
+            "p_low": 0.6,
+            "p_high": 0.8,
+            "n": 6,
+            "predicted_mean": 0.6385,
+            "observed_freq": 0.5,
+            "calibration_error": 0.1385
+          }
+        ]
+      }
+    }
+  },
+  "tennis_surfaces": {
+    "hard": {
+      "n": 488,
+      "n_settled": 488,
+      "n_binary": 445,
+      "total_pnl": 664.45,
+      "total_staked": 6847.99,
+      "brier_score": {
+        "value": 0.232712,
+        "n": 445,
+        "note": null
+      },
+      "log_loss": {
+        "value": 0.656069,
+        "n": 445,
+        "note": null
+      },
+      "roi_pct": {
+        "value": 9.7028,
+        "n": 445,
+        "note": null
+      },
+      "yield_pct": {
+        "value": 9.7028,
+        "n": 445,
+        "note": null
+      },
+      "avg_odds": {
+        "value": 1.9617,
+        "n": 488,
+        "note": null
+      },
+      "max_drawdown": {
+        "value": 265.1,
+        "n": 488,
+        "note": null
+      },
+      "clv_avg": {
+        "value": null,
+        "n": 0,
+        "note": "metric unavailable: closing_odds not persisted for these records"
+      },
+      "clv_hit_rate": {
+        "value": null,
+        "n": 0,
+        "note": "metric unavailable: closing_odds not persisted for these records"
+      },
+      "clv_coverage": {
+        "value": 0.0,
+        "n": 488,
+        "note": null
+      },
+      "calibration": [
+        {
+          "p_low": 0.2,
+          "p_high": 0.4,
+          "n": 10,
+          "predicted_mean": 0.3831,
+          "observed_freq": 0.3,
+          "calibration_error": 0.0831
+        },
+        {
+          "p_low": 0.4,
+          "p_high": 0.6,
+          "n": 177,
+          "predicted_mean": 0.5414,
+          "observed_freq": 0.5254,
+          "calibration_error": 0.016
+        },
+        {
+          "p_low": 0.6,
+          "p_high": 0.8,
+          "n": 217,
+          "predicted_mean": 0.6622,
+          "observed_freq": 0.5853,
+          "calibration_error": 0.077
+        },
+        {
+          "p_low": 0.8,
+          "p_high": 1.0,
+          "n": 41,
+          "predicted_mean": 0.9517,
+          "observed_freq": 0.878,
+          "calibration_error": 0.0736
+        }
+      ]
+    }
+  }
+}
