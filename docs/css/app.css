@@ -489,6 +489,33 @@
     .form-D { background: rgba(210,153,34,.3); color: var(--yellow); }
     .form-L { background: rgba(248,81,73,.3); color: var(--red); }
 
+    /* ── Top Recommendations — Next 24h ── */
+    .toprec-card { margin: 12px 12px 4px; background: var(--card); border: 1px solid rgba(0,200,83,.4); border-radius: 14px; overflow: hidden; }
+    .toprec-header { padding: 12px 16px 10px; background: rgba(0,200,83,.09); border-bottom: 1px solid rgba(48,54,61,.7); }
+    .toprec-title { font-size: 11px; font-weight: 900; color: var(--green); letter-spacing: 1.2px; text-transform: uppercase; }
+    .toprec-subtitle { font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 2px; }
+    .toprec-pick { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px 11px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .toprec-pick:active { background: rgba(255,255,255,.03); }
+    .toprec-pick + .toprec-pick { border-top: 1px solid rgba(48,54,61,.6); }
+    .toprec-rank { font-size: 13px; font-weight: 900; color: var(--green); min-width: 26px; padding-top: 1px; flex-shrink: 0; }
+    .toprec-content { flex: 1; min-width: 0; }
+    .toprec-teams-row { font-size: 13px; font-weight: 800; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .toprec-teams-row .vs { color: var(--muted); font-size: 10px; font-weight: 500; margin: 0 3px; }
+    .toprec-sport-icon { margin-right: 3px; }
+    .toprec-badge { font-size: 9px; font-weight: 800; background: rgba(255,255,255,.08); color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; margin-left: 4px; vertical-align: middle; }
+    .toprec-badge-high { background: rgba(0,200,83,.18); color: var(--green); border-color: rgba(0,200,83,.4); }
+    .toprec-market-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+    .toprec-mkt-pill { font-size: 10px; font-weight: 700; background: rgba(0,200,83,.1); color: var(--green); border: 1px solid rgba(0,200,83,.2); border-radius: 20px; padding: 1px 7px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 1; }
+    .toprec-time { font-size: 10px; color: var(--muted); font-weight: 500; white-space: nowrap; flex-shrink: 0; }
+    .toprec-stats-row { display: flex; align-items: center; gap: 8px; }
+    .toprec-odds { font-size: 17px; font-weight: 900; color: var(--text); flex-shrink: 0; }
+    .toprec-prob { font-size: 10px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+    .toprec-ev { font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .toprec-empty { padding: 24px 16px; text-align: center; }
+    .toprec-empty-icon { font-size: 22px; margin-bottom: 8px; color: var(--muted); }
+    .toprec-empty-msg { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .toprec-empty-sub { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
     /* ── Smart Suggest ── */
     .suggest-card { margin: 10px 12px 4px; background: var(--card); border: 1px solid rgba(0,200,83,.25); border-radius: 14px; overflow: hidden; }
     .suggest-header { padding: 12px 16px 10px; display: flex; align-items: flex-start; justify-content: space-between; background: rgba(0,200,83,.06); border-bottom: 1px solid rgba(48,54,61,.6); }
