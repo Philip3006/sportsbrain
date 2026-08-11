@@ -3472,7 +3472,7 @@
     }
   },
   {
-    "ts": "2026-08-11T15:12:53Z",
+    "ts": "2026-08-11T19:06:03Z",
     "date": "2026-08-11",
     "odds": {
       "Alexei Popyrin vs Roman Andres Burruchaga": {
@@ -4046,9 +4046,9 @@
         "away": 1.29
       },
       "Rafael Jodar vs Arthur Fils": {
-        "home": 1.6,
+        "home": 1.62,
         "draw": null,
-        "away": 2.19
+        "away": 2.18
       },
       "Luciano Darderi vs Brandon Nakashima": {
         "home": 3.62,
@@ -4091,7 +4091,7 @@
         "away": 1.88
       },
       "Alexander Shevchenko vs Pablo Llamas Ruiz": {
-        "home": 1.65,
+        "home": 1.64,
         "draw": null,
         "away": 2.1
       },
@@ -4108,32 +4108,32 @@
       "Kei Nishikori vs Francisco Comesana": {
         "home": 2.09,
         "draw": null,
-        "away": 1.63
+        "away": 1.64
       },
       "Jaime Faria vs Nikoloz Basilashvili": {
-        "home": 1.46,
+        "home": 1.54,
         "draw": null,
-        "away": 2.49
+        "away": 2.27
       },
       "Marco Trungelliti vs Sebastian Ofner": {
-        "home": 2.16,
+        "home": 2.1,
         "draw": null,
-        "away": 1.62
+        "away": 1.6
       },
       "Alexei Popyrin vs Titouan Droguet": {
-        "home": 1.56,
+        "home": 1.62,
         "draw": null,
-        "away": 2.25
+        "away": 2.16
       },
       "Billy Harris vs Kyrian Jacquet": {
-        "home": 2.35,
+        "home": 2.27,
         "draw": null,
-        "away": 1.51
+        "away": 1.55
       },
       "Sho Shimabukuro vs Hugo Dellien": {
-        "home": 1.35,
+        "home": 1.34,
         "draw": null,
-        "away": 2.88
+        "away": 2.93
       },
       "Hugo Gaston vs Nicolai Budkov Kjaer": {
         "home": 2.12,
@@ -4141,19 +4141,104 @@
         "away": 1.62
       },
       "Mark Lajal vs Dalibor Svrcina": {
-        "home": 2.1,
+        "home": 1.93,
         "draw": null,
-        "away": 1.65
+        "away": 1.88
       },
       "Marcos Giron vs Henrique Rocha": {
-        "home": 1.5,
+        "home": 1.93,
         "draw": null,
-        "away": 2.4
+        "away": 1.88
       },
       "Nicolas Mejia vs Jacob Fearnley": {
-        "home": 2.38,
+        "home": 1.93,
         "draw": null,
-        "away": 1.5
+        "away": 1.88
+      },
+      "Kayla Day vs Taylah Preston": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      "Robin Montgomery vs Julia Grabher": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      "Victoria Jimenez Kasintseva vs Mananchaya Sawangkaew": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      "Renata Zarazua vs Yue Yuan": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      "Anastasia Zakharova vs Lucrezia Stefanini": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      "Oksana Selekhmeteva vs Elizabeth Mandlik": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      "Himeno Sakatsume vs Leolia Jeanjean": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      "Rebecca Marino vs Alina Charaeva": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      "Alina Korneeva vs Varvara Lepchenko": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      "Rebecca Sramkova vs Elsa Jacquemot": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      "Dominika Šalková vs Anna Blinkova": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      "Solana Sierra vs Aoi Ito": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      "Eva Lys vs Katarzyna Kawa": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      "Harriet Dart vs Moyuka Uchijima": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      "Emiliana Arango vs Aliaksandra Sasnovich": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      "Xiyu Wang vs Bianca Andreescu": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      "Nadia Podoroska vs Ella Seidel": {
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
       }
     }
   }
