@@ -189,9 +189,11 @@ def update_odds_state(
         initial_odds = existing.get("initial_odds", current_odds)
         initial_ev_pct = existing.get("initial_ev_pct")
 
-        # Build history entry
-        new_point = {"ts": odds_ts, "odds": current_odds, "source": odds_source}
-        history = _dedup_history(existing.get("odds_history", []), new_point)
+        # Build history entry — only append real observations (not None status-only writes)
+        history = existing.get("odds_history", [])
+        if current_odds is not None and odds_ts is not None:
+            new_point = {"ts": odds_ts, "odds": current_odds, "source": odds_source}
+            history = _dedup_history(history, new_point)
 
         state[signal_id] = {
             "initial_odds":    initial_odds,

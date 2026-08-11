@@ -326,4 +326,16 @@ def run_refresh(dry_run: bool = False) -> dict:
     elapsed = round(time.monotonic() - t0, 2)
     summary = {"refreshed": refreshed, "skipped": skipped, "failed": failed, "elapsed_s": elapsed}
     _log.info("[refresher] done: %s", summary)
+
+    # Re-publish signals.json so current_odds/signal_status are visible immediately.
+    # Passes no new scanner signals — write_signals_json preserves existing signals
+    # and just re-merges the updated sidecar. Skip in dry_run to avoid side effects.
+    if not dry_run and (refreshed > 0 or failed > 0):
+        try:
+            from src.notifications.web_dashboard import write_signals_json_all_users
+            write_signals_json_all_users(football=[], tennis=[])
+            _log.info("[refresher] signals.json republished")
+        except Exception as exc:
+            _log.warning("[refresher] republish failed: %s", exc)
+
     return summary
