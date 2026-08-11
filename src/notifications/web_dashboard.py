@@ -1007,11 +1007,19 @@ def write_signals_json(
     football_data = _tag_display_priority(football_data, _MAX_DISPLAY)
     tennis_data   = _tag_display_priority(tennis_data, _MAX_DISPLAY)
 
-    # O1-7: Seed initial odds for new signals, then merge refreshed odds state
+    # O1-7: Seed initial odds for new signals, then merge refreshed odds state.
+    # Backfill signal_id for pre-O1-7 signals that went through the else-branch.
     for _sig in football_data + tennis_data:
         _sid = _sig.get("signal_id")
-        if _sid:
-            seed_initial_odds(_sid, _sig)
+        if not _sid:
+            _sid = make_signal_id(
+                _sig.get("sport", "football"),
+                _sig.get("match", ""),
+                _sig.get("market", ""),
+                _sig.get("kickoff", ""),
+            )
+            _sig["signal_id"] = _sid
+        seed_initial_odds(_sid, _sig)
     _odds_state = load_odds_state()
     football_data = [merge_odds_state_into_signal(sig, _odds_state) for sig in football_data]
     tennis_data   = [merge_odds_state_into_signal(sig, _odds_state) for sig in tennis_data]

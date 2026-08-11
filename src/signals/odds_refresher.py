@@ -288,9 +288,18 @@ def run_refresh(dry_run: bool = False) -> dict:
             cached = state_entry.get("current_odds") if state_entry else None
             cached_ts = state_entry.get("odds_ts") if state_entry else None
             status = evaluate_signal_status(sig, cached, cached_ts)
-            if cached and cached_ts and state_entry:
-                # Don't overwrite sidecar if we're just re-evaluating stale cache
-                _log.debug("[refresher] no fresh odds for %s → status=%s", match, status)
+            _log.debug("[refresher] no fresh odds for %s → status=%s", match, status)
+            if not dry_run:
+                # Always persist lifecycle status so JS filter can exclude non-ACTIVE signals
+                update_odds_state(
+                    sid,
+                    current_odds=cached,
+                    odds_ts=cached_ts,
+                    odds_source=state_entry.get("odds_source") if state_entry else None,
+                    odds_fetch_tier=state_entry.get("odds_fetch_tier") if state_entry else 0,
+                    signal_status=status,
+                    current_ev_pct=state_entry.get("current_ev_pct") if state_entry else None,
+                )
             failed += 1
             continue
 

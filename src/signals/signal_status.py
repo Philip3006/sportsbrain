@@ -13,11 +13,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
 
+import threading
+
 from src.betting.gates import Gate, gate_for
 from src.utils.atomic_io import atomic_write_json
 
 ROOT = Path(__file__).resolve().parents[2]
 _SIDECAR_PATH = ROOT / "data" / "cache" / "odds_state.json"
+_SIDECAR_LOCK = threading.Lock()
 
 SignalStatus = Literal["ACTIVE", "EDGE_LOST", "STALE_ODDS", "STARTED", "EXPIRED", "UNREFRESHABLE"]
 
@@ -176,32 +179,33 @@ def update_odds_state(
     """Atomically update one signal's entry in the sidecar.
 
     Preserves initial_odds from first observation. Appends to odds_history
-    with deduplication. The refresher is the sole writer — no lock needed.
+    with deduplication. Thread-safe via module-level lock.
     """
-    state = load_odds_state()
-    existing = state.get(signal_id, {})
+    with _SIDECAR_LOCK:
+        state = load_odds_state()
+        existing = state.get(signal_id, {})
 
-    # Seed initial_odds from first observation
-    initial_odds = existing.get("initial_odds", current_odds)
-    initial_ev_pct = existing.get("initial_ev_pct")
+        # Seed initial_odds from first observation
+        initial_odds = existing.get("initial_odds", current_odds)
+        initial_ev_pct = existing.get("initial_ev_pct")
 
-    # Build history entry
-    new_point = {"ts": odds_ts, "odds": current_odds, "source": odds_source}
-    history = _dedup_history(existing.get("odds_history", []), new_point)
+        # Build history entry
+        new_point = {"ts": odds_ts, "odds": current_odds, "source": odds_source}
+        history = _dedup_history(existing.get("odds_history", []), new_point)
 
-    state[signal_id] = {
-        "initial_odds":    initial_odds,
-        "initial_ev_pct":  initial_ev_pct,
-        "current_odds":    current_odds,
-        "current_ev_pct":  round(current_ev_pct * 100, 1),
-        "odds_ts":         odds_ts,
-        "odds_source":     odds_source,
-        "odds_fetch_tier": odds_fetch_tier,
-        "signal_status":   signal_status,
-        "odds_history":    history,
-    }
+        state[signal_id] = {
+            "initial_odds":    initial_odds,
+            "initial_ev_pct":  initial_ev_pct,
+            "current_odds":    current_odds,
+            "current_ev_pct":  round(current_ev_pct * 100, 1) if current_ev_pct is not None else None,
+            "odds_ts":         odds_ts,
+            "odds_source":     odds_source,
+            "odds_fetch_tier": odds_fetch_tier,
+            "signal_status":   signal_status,
+            "odds_history":    history,
+        }
 
-    atomic_write_json(_SIDECAR_PATH, state)
+        atomic_write_json(_SIDECAR_PATH, state)
 
 
 def seed_initial_odds(signal_id: str, signal: dict) -> None:
@@ -210,35 +214,36 @@ def seed_initial_odds(signal_id: str, signal: dict) -> None:
     Called during migration: existing signals without history get their
     scan-time odds recorded as the first history point.
     """
-    state = load_odds_state()
-    if signal_id in state and state[signal_id].get("initial_odds") is not None:
-        return  # already seeded
+    with _SIDECAR_LOCK:
+        state = load_odds_state()
+        if signal_id in state and state[signal_id].get("initial_odds") is not None:
+            return  # already seeded
 
-    odds = signal.get("odds")
-    if not odds:
-        return
+        odds = signal.get("odds")
+        if not odds:
+            return
 
-    generated_at = signal.get("generated_at", datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
-    ev_pct = signal.get("ev_pct")
+        generated_at = signal.get("generated_at", datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
+        ev_pct = signal.get("ev_pct")
 
-    existing = state.get(signal_id, {})
-    history = existing.get("odds_history", [])
-    if not history:
-        history = [{"ts": generated_at, "odds": odds, "source": "scan"}]
+        existing = state.get(signal_id, {})
+        history = existing.get("odds_history", [])
+        if not history:
+            history = [{"ts": generated_at, "odds": odds, "source": "scan"}]
 
-    state[signal_id] = {
-        **existing,
-        "initial_odds":    odds,
-        "initial_ev_pct":  ev_pct,
-        "current_odds":    existing.get("current_odds"),
-        "current_ev_pct":  existing.get("current_ev_pct"),
-        "odds_ts":         existing.get("odds_ts"),
-        "odds_source":     existing.get("odds_source"),
-        "odds_fetch_tier": existing.get("odds_fetch_tier"),
-        "signal_status":   existing.get("signal_status"),
-        "odds_history":    history,
-    }
-    atomic_write_json(_SIDECAR_PATH, state)
+        state[signal_id] = {
+            **existing,
+            "initial_odds":    odds,
+            "initial_ev_pct":  ev_pct,
+            "current_odds":    existing.get("current_odds"),
+            "current_ev_pct":  existing.get("current_ev_pct"),
+            "odds_ts":         existing.get("odds_ts"),
+            "odds_source":     existing.get("odds_source"),
+            "odds_fetch_tier": existing.get("odds_fetch_tier"),
+            "signal_status":   existing.get("signal_status"),
+            "odds_history":    history,
+        }
+        atomic_write_json(_SIDECAR_PATH, state)
 
 
 def merge_odds_state_into_signal(signal: dict, odds_state: dict[str, dict]) -> dict:
