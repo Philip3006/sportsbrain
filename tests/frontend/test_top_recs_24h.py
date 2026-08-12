@@ -31,6 +31,9 @@ _NOW = datetime.now(timezone.utc)
 def _ko(hours=5):
     return (_NOW + timedelta(hours=hours)).isoformat()
 
+def _recent_ts(minutes_ago=5):
+    return (_NOW - timedelta(minutes=minutes_ago)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
 _BASE: dict = {
     "updated": _NOW.isoformat(),
     "football": [],
@@ -53,21 +56,33 @@ _BASE: dict = {
 }
 
 
-def _tennis(match="A vs B", odds=1.55, ev_pct=10.0, kickoff_h=5, market="away", confidence="HIGH"):
+def _tennis(match="A vs B", odds=1.55, ev_pct=10.0, kickoff_h=5, market="away", confidence="HIGH",
+            signal_status="ACTIVE", current_ev_pct=None, odds_ts_min_ago=5):
+    """P1.5-H: includes signal_status, current_odds, current_ev_pct, odds_ts by default."""
     return {
         "sport": "tennis", "match": match, "market": market,
         "odds": odds, "ev_pct": ev_pct, "model_prob": 65.0,
         "stake_eur": 12.0, "confidence": confidence,
         "kickoff": _ko(kickoff_h), "tour": "wta", "league": "wta",
+        "signal_status": signal_status,
+        "current_odds": odds,
+        "current_ev_pct": ev_pct if current_ev_pct is None else current_ev_pct,
+        "odds_ts": _recent_ts(odds_ts_min_ago),
     }
 
 
-def _football(match="Home vs Away", odds=2.2, ev_pct=30.0, kickoff_h=5, market="away"):
+def _football(match="Home vs Away", odds=2.2, ev_pct=30.0, kickoff_h=5, market="away",
+              signal_status="ACTIVE", odds_ts_min_ago=5):
+    """P1.5-H: includes signal_status, current_odds, current_ev_pct, odds_ts by default."""
     return {
         "sport": "football", "match": match, "market": market,
         "odds": odds, "ev_pct": ev_pct, "model_prob": 45.0,
         "stake_eur": 10.0, "confidence": "HIGH",
         "kickoff": _ko(kickoff_h), "league": "bl2",
+        "signal_status": signal_status,
+        "current_odds": odds,
+        "current_ev_pct": ev_pct,
+        "odds_ts": _recent_ts(odds_ts_min_ago),
     }
 
 
@@ -325,3 +340,99 @@ def test_component_always_visible_even_without_free_bankroll(page: Page, server_
     _home(page, server_url, payload)
     expect(page.locator(".toprec-card")).to_be_visible(timeout=5_000)
     expect(page.locator(".toprec-pick")).to_have_count(1, timeout=3_000)
+
+
+# ── P1.5-H: Fail-closed gate — missing required fields must never produce recommendations ──
+
+def test_p15h_missing_signal_status_excluded(page: Page, server_url: str):
+    """P1.5-H: signal without signal_status must NOT appear in Top Recs (fail closed)."""
+    sig = _tennis()
+    del sig["signal_status"]
+    payload = {**_BASE, "tennis": [sig]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
+    expect(page.locator(".toprec-empty")).to_be_visible(timeout=3_000)
+
+
+def test_p15h_signal_status_edge_lost_excluded(page: Page, server_url: str):
+    """P1.5-H: EDGE_LOST signal must not appear in Top Recs."""
+    sig = _tennis(signal_status="EDGE_LOST")
+    payload = {**_BASE, "tennis": [sig]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
+
+
+def test_p15h_signal_status_stale_odds_excluded(page: Page, server_url: str):
+    """P1.5-H: STALE_ODDS signal must not appear in Top Recs."""
+    sig = _tennis(signal_status="STALE_ODDS")
+    payload = {**_BASE, "tennis": [sig]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
+
+
+def test_p15h_signal_status_unrefreshable_excluded(page: Page, server_url: str):
+    """P1.5-H: UNREFRESHABLE signal must not appear in Top Recs."""
+    sig = _tennis(signal_status="UNREFRESHABLE")
+    payload = {**_BASE, "tennis": [sig]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
+
+
+def test_p15h_missing_current_odds_excluded(page: Page, server_url: str):
+    """P1.5-H: ACTIVE signal without current_odds must not appear in Top Recs."""
+    sig = _tennis()
+    del sig["current_odds"]
+    payload = {**_BASE, "tennis": [sig]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
+
+
+def test_p15h_invalid_current_odds_excluded(page: Page, server_url: str):
+    """P1.5-H: current_odds <= 1.0 is invalid and must block the signal."""
+    sig = _tennis()
+    sig["current_odds"] = 0.9
+    payload = {**_BASE, "tennis": [sig]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
+
+
+def test_p15h_missing_current_ev_pct_excluded(page: Page, server_url: str):
+    """P1.5-H: ACTIVE signal without current_ev_pct must not appear in Top Recs."""
+    sig = _tennis()
+    del sig["current_ev_pct"]
+    payload = {**_BASE, "tennis": [sig]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
+
+
+def test_p15h_missing_odds_ts_excluded(page: Page, server_url: str):
+    """P1.5-H: ACTIVE signal without odds_ts must not appear in Top Recs."""
+    sig = _tennis()
+    del sig["odds_ts"]
+    payload = {**_BASE, "tennis": [sig]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
+
+
+def test_p15h_stale_odds_ts_excluded(page: Page, server_url: str):
+    """P1.5-H: odds_ts > 30 min old must block the signal from Top Recs."""
+    sig = _tennis(odds_ts_min_ago=35)
+    payload = {**_BASE, "tennis": [sig]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
+
+
+def test_p15h_fresh_odds_ts_included(page: Page, server_url: str):
+    """P1.5-H: ACTIVE signal with odds_ts exactly 29 min ago must still qualify."""
+    sig = _tennis(odds_ts_min_ago=29)
+    payload = {**_BASE, "tennis": [sig]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(1, timeout=5_000)
+
+
+def test_p15h_active_signal_with_all_fields_included(page: Page, server_url: str):
+    """P1.5-H regression: signal with all required fields and ACTIVE status must appear."""
+    sig = _tennis()
+    payload = {**_BASE, "tennis": [sig]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(1, timeout=5_000)
