@@ -563,8 +563,22 @@ function sigCard(s, showMatch) {
     <div class="card-market" ${['ah-1.5_a','ah+1.5_b'].includes(s.market)||s.market.match(/^ah[+-]/) ? 'title="Satz-Handicap (SET handicap) — beim Buchmacher \'Sätze-Handicap\' wählen, NICHT \'Games-Handicap\'!"' : ''}>${marketLabel(s.market, s.match)}</div>
     ${_signalAgeHtml(s)}
     <div class="card-footer">
-      <span class="odds-btn" title="${s.current_odds != null ? `Scan: ${(s.odds||0).toFixed(2)} · Aktuell: ${s.current_odds.toFixed(2)}` : ''}">${(s.current_odds != null && s.current_odds > 1 ? s.current_odds : (s.odds||0)).toFixed(2)}</span>
-      <span class="ev-chip ${evCls}">EV +${(s.current_ev_pct != null ? s.current_ev_pct : s.ev_pct)}%${infoTip(`Expected Value (erwarteter Gewinn). Aktueller EV zeigt refreshte Quoten. SportsBrain zeigt nur Wetten ab EV ≥ 3%.`)}</span>
+      ${(() => {
+        // W2: label scan-time odds as stale when no current authoritative quote
+        const _hasLive = s.current_odds != null && s.current_odds > 1;
+        const _dOdds = (_hasLive ? s.current_odds : (s.odds||0)).toFixed(2);
+        const _ttip = _hasLive
+          ? `Scan: ${(s.odds||0).toFixed(2)} · Aktuell: ${s.current_odds.toFixed(2)}`
+          : `Scan-Quote — noch nicht refresht`;
+        const _staleSuffix = _hasLive ? '' : `<span style="font-size:8px;color:var(--muted);margin-left:1px">Scan</span>`;
+        return `<span class="odds-btn" title="${_ttip}">${_dOdds}${_staleSuffix}</span>`;
+      })()}
+      ${(() => {
+        // W2: reject |EV| > 500 in display path (same bound as _evScore)
+        const _cev2 = s.current_ev_pct;
+        const _dev = (_cev2 != null && isFinite(_cev2) && Math.abs(_cev2) <= 500) ? _cev2 : s.ev_pct;
+        return `<span class="ev-chip ${evCls}">EV +${_dev}%${infoTip(`Expected Value (erwarteter Gewinn). Aktueller EV zeigt refreshte Quoten. SportsBrain zeigt nur Wetten ab EV ≥ 3%.`)}</span>`;
+      })()}
       <span class="conf-badge conf-${s.confidence}">${s.confidence}${infoTip(s.confidence === 'HIGH' ? 'HIGH = mehrere KI-Modelle sind sich einig. Höchster Vertrauenswert — Einsatz wird +10% erhöht.' : s.confidence === 'LOW' ? 'LOW = grenzwertige Vorhersage. KI ist sich weniger sicher — Einsatz bleibt klein (≤€5) zum Schutz der Bankroll.' : 'MEDIUM = solide Vorhersage, aber nicht alle Modelle stimmen voll überein. Standard-Einsatz €5–15.')}</span>
       ${dotsHtml}
       ${lineMvHtml}
@@ -589,7 +603,9 @@ function sigCard(s, showMatch) {
 // P1.5-H: prefers refreshed current_odds/current_ev_pct over scan-time values.
 function _evScore(s) {
   const m = s.market || '';
-  const ev = (s.current_ev_pct != null && isFinite(s.current_ev_pct)) ? s.current_ev_pct : (s.ev_pct || 0);
+  // W2: reject |EV| > 500 as corrupted (isFinite alone passes 2.1e+59 values)
+  const _cev = s.current_ev_pct;
+  const ev = (_cev != null && isFinite(_cev) && Math.abs(_cev) <= 500) ? _cev : (s.ev_pct || 0);
   const oddsRaw = (s.current_odds != null && isFinite(s.current_odds) && s.current_odds > 1) ? s.current_odds : s.odds;
   const oddsValid = typeof oddsRaw === 'number' && isFinite(oddsRaw) && oddsRaw > 1.0;
   if (!oddsValid) return -1;
@@ -691,8 +707,12 @@ function _topRecs24hHtml(signals, nowMs) {
         let freshBadge = '';
         if (p.odds_ts) {
           const ageMin = Math.round((nowMs - new Date(p.odds_ts).getTime()) / 60000);
+          // W2: explicit freshness classification label
           const freshnessColor = ageMin <= 15 ? 'rgba(0,200,83,.7)' : ageMin <= 30 ? 'rgba(255,165,0,.7)' : 'rgba(255,80,80,.7)';
-          freshBadge = `<span class="toprec-fresh" style="color:${freshnessColor}" title="Quoten zuletzt vor ${ageMin} Min aktualisiert (${p.odds_source||'?'})">⟳${ageMin}min</span>`;
+          const freshnessLabel = ageMin <= 15 ? 'FRESH' : ageMin <= 30 ? 'AGING' : 'STALE';
+          freshBadge = `<span class="toprec-fresh" style="color:${freshnessColor}" title="Quoten zuletzt vor ${ageMin} Min aktualisiert (${p.odds_source||'?'}) · ${freshnessLabel}">⟳${ageMin}min · ${freshnessLabel}</span>`;
+        } else {
+          freshBadge = `<span class="toprec-fresh" style="color:var(--muted)" title="Kein Odds-Zeitstempel — Quelle unbekannt">UNAVAILABLE</span>`;
         }
         const stakeStr = (p.stake_eur && p.stake_eur > 0) ? `<span class="toprec-stake">€${Math.round(p.stake_eur)}</span>` : '';
         const timeStr = p.kickoff ? fmtKickoffCompact(p.kickoff) : '';
@@ -873,13 +893,18 @@ function renderHome() {
       const n = sigCount[nk] || 0;
       const kickoffTs = new Date(g.kickoff).getTime();
       const minsLeft = Math.round((kickoffTs - now) / 60000);
-      const isLive = minsLeft < 0 && minsLeft > -110;
+      // W2: tennis LIVE must not be inferred from elapsed time alone — requires authoritative live evidence
+      const _isTennis = g.sport === 'tennis';
+      const isLive = !_isTennis && minsLeft < 0 && minsLeft > -110;
+      const _tennisPossiblyRunning = _isTennis && minsLeft < 0 && minsLeft > -180;
       const timeStr = g.kickoff ? fmtTime(g.kickoff) : '—';
 
       // Countdown string
       let countdown = '';
       if (isLive) {
         countdown = `<span class="today-live-badge">LIVE</span>`;
+      } else if (_tennisPossiblyRunning) {
+        countdown = `<span class="today-countdown" style="color:var(--muted)">Status unbekannt</span>`;
       } else if (minsLeft < 60) {
         countdown = `<span class="today-countdown warn">in ${minsLeft} min</span>`;
       } else {

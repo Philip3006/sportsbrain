@@ -146,7 +146,7 @@ function openMatch(displayKey) {
   const tour = s0?.tour || sched?.tour || '';
   const sportIcon = sport === 'football' ? '⚽' : '🎾';
   const metaStr = kickoff ? fmtKickoffCompact(kickoff) : '';
-  const cdHtml = kickoff ? `<span class="match-countdown" data-kickoff="${esc(kickoff)}" style="margin-top:0;font-size:10px;padding:2px 7px">⏱ …</span>` : '';
+  const cdHtml = kickoff ? `<span class="match-countdown" data-kickoff="${esc(kickoff)}" data-sport="${esc(sport)}" style="margin-top:0;font-size:10px;padding:2px 7px">⏱ …</span>` : '';
   document.getElementById('detail-header').innerHTML = `
     <div class="match-header">
       <span class="match-sport-icon">${sportIcon}</span>
@@ -542,9 +542,18 @@ function _tickCountdowns() {
     const t = new Date(k).getTime();
     if (isNaN(t)) return;
     const diff = t - now;
+    // W2: sport-aware — tennis LIVE/done must not be inferred from elapsed time
+    const _cdSport = el.getAttribute('data-sport') || '';
+    const _cdTennis = _cdSport === 'tennis';
     let cls = 'match-countdown', txt;
-    if (diff <= -7200000) { cls += ' done'; txt = '✓ Abgeschlossen'; }
-    else if (diff <= 0)   { cls += ' live'; txt = '🔴 LIVE jetzt'; }
+    if (diff <= -7200000) {
+      cls += ' done';
+      txt = _cdTennis ? '⏱ Status unbekannt' : '✓ Abgeschlossen';
+    }
+    else if (diff <= 0) {
+      if (_cdTennis) { txt = '⏱ Status unbekannt'; }
+      else { cls += ' live'; txt = '🔴 LIVE jetzt'; }
+    }
     else if (diff <= 300000) { cls += ' live'; txt = `⏱ ${Math.ceil(diff/1000)}s — gleich Anpfiff`; }
     else if (diff <= 3600000) { cls += ' warn'; const m = Math.floor(diff/60000); txt = `⏱ ${m}m bis Anpfiff`; }
     else {

@@ -134,8 +134,42 @@ def evaluate_signal_status(
 # Sidecar read / write
 # ---------------------------------------------------------------------------
 
+_EV_MAX_ABS = 500.0  # W2: EV values outside ±500% are corrupt; matches JS guard
+
+
+def _sanitize_sidecar_ev(state: dict) -> bool:
+    """In-place: null out corrupted current_ev_pct values on load.
+
+    Returns True if any entries were modified (triggers a sidecar rewrite).
+    Corrupted = NaN, ±Infinity, or |ev_pct| > 500. Non-ACTIVE signals that
+    carry corrupted EV are downgraded to STALE_ODDS so they stay non-actionable.
+    """
+    import math
+    modified = False
+    for entry in state.values():
+        if not isinstance(entry, dict):
+            continue
+        ev = entry.get("current_ev_pct")
+        if ev is None:
+            continue
+        try:
+            fev = float(ev)
+            if math.isfinite(fev) and abs(fev) <= _EV_MAX_ABS:
+                continue  # value is clean
+        except (TypeError, ValueError):
+            pass
+        entry["current_ev_pct"] = None
+        if entry.get("signal_status") == "ACTIVE":
+            entry["signal_status"] = "STALE_ODDS"
+        modified = True
+    return modified
+
+
 def load_odds_state() -> dict[str, dict]:
-    """Load the odds-state sidecar. Returns empty dict if missing or corrupt."""
+    """Load the odds-state sidecar. Sanitizes corrupted EV values on read.
+
+    Returns empty dict if missing or corrupt JSON.
+    """
     if not _SIDECAR_PATH.exists():
         return {}
     try:
@@ -143,6 +177,9 @@ def load_odds_state() -> dict[str, dict]:
         raw = _SIDECAR_PATH.read_text()
         data = json.loads(raw)
         if isinstance(data, dict):
+            if _sanitize_sidecar_ev(data):
+                # Persist the clean state so bad values don't re-appear next load
+                atomic_write_json(_SIDECAR_PATH, data)
             return data
     except Exception:
         pass
@@ -282,4 +319,18 @@ def merge_odds_state_into_signal(signal: dict, odds_state: dict[str, dict]) -> d
         val = entry.get(field)
         if val is not None:
             merged[field] = val
+
+    # W2: reject corrupted EV at publish time so it never reaches signals.json
+    import math
+    cev = merged.get("current_ev_pct")
+    if cev is not None:
+        try:
+            fcev = float(cev)
+            if not math.isfinite(fcev) or abs(fcev) > _EV_MAX_ABS:
+                merged["current_ev_pct"] = None
+                if merged.get("signal_status") == "ACTIVE":
+                    merged["signal_status"] = "STALE_ODDS"
+        except (TypeError, ValueError):
+            merged["current_ev_pct"] = None
+
     return merged
