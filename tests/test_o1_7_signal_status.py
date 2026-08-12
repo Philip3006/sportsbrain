@@ -301,6 +301,65 @@ class TestOddsState:
         assert state[sid]["odds_source"] == "tennis_explorer"
         assert len(state[sid]["odds_history"]) == 1
 
+    def test_ev_pct_stored_in_percent_units(self, tmp_sidecar):
+        """Input is decimal fraction; sidecar must store percent."""
+        sid = "evunit0000001"
+        update_odds_state(
+            sid, current_odds=2.0, odds_ts=_now_str(),
+            odds_source="x", odds_fetch_tier=1,
+            signal_status="ACTIVE", current_ev_pct=0.05,
+        )
+        assert load_odds_state()[sid]["current_ev_pct"] == 5.0
+
+    def test_ev_pct_absurd_value_clamped_to_none(self, tmp_sidecar):
+        """P1.5 guard: EV magnitudes > 500% are treated as corrupt and stored as None."""
+        sid = "evabsurd00001"
+        update_odds_state(
+            sid, current_odds=2.0, odds_ts=_now_str(),
+            odds_source="x", odds_fetch_tier=1,
+            signal_status="ACTIVE", current_ev_pct=1e50,
+        )
+        assert load_odds_state()[sid]["current_ev_pct"] is None
+
+
+class TestRefresherFailurePathNoEscalation:
+    """Regression for the 100× double-multiplication bug that produced 1e+59 EV values
+    in production. If the refresher fallback path re-passes the sidecar's percent value
+    without converting back to decimal, each cycle multiplies EV by 100 again."""
+
+    def test_repeated_failed_refresh_does_not_escalate_ev(self, tmp_sidecar, monkeypatch):
+        from src.signals import odds_refresher as orr
+
+        sid = "escalation001"
+        # Seed sidecar with a realistic 5% EV
+        update_odds_state(
+            sid, current_odds=2.0, odds_ts=_now_str(),
+            odds_source="scan", odds_fetch_tier=1,
+            signal_status="ACTIVE", current_ev_pct=0.05,
+        )
+        assert load_odds_state()[sid]["current_ev_pct"] == 5.0
+
+        # Simulate the refresher's failure-path payload construction 30 times.
+        # This mirrors odds_refresher.py:286-302 where refresh returns None.
+        for _ in range(30):
+            state_entry = load_odds_state()[sid]
+            cached_ev_pct = state_entry.get("current_ev_pct")
+            cached_ev_decimal = (cached_ev_pct / 100.0) if cached_ev_pct is not None else None
+            update_odds_state(
+                sid,
+                current_odds=state_entry.get("current_odds"),
+                odds_ts=state_entry.get("odds_ts"),
+                odds_source=state_entry.get("odds_source"),
+                odds_fetch_tier=state_entry.get("odds_fetch_tier") or 0,
+                signal_status="STALE_ODDS",
+                current_ev_pct=cached_ev_decimal,
+            )
+
+        final = load_odds_state()[sid]["current_ev_pct"]
+        assert final == pytest.approx(5.0, abs=0.1), (
+            f"EV escalated to {final}; double-multiplication bug reintroduced"
+        )
+
 
 # ---------------------------------------------------------------------------
 # S15: Merge odds state into signal

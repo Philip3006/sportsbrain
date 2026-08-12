@@ -31,6 +31,40 @@ DOCS_PATH  = ROOT / "docs" / "data" / "tennis_live_scores.json"
 SUSP_PATH  = ROOT / "data" / "cache" / "tennis_suspended.json"
 
 
+_STALE_LIVE_HOURS = 8  # tennis BO5 rarely exceeds ~5h; 8h is safely past any real match
+
+
+def _prune_stale(cache: dict) -> dict:
+    """Drop live-score entries whose `updated` is older than _STALE_LIVE_HOURS.
+
+    Prevents false LIVE rendering in the PWA when a match entry remains
+    `status=in_progress` after the actual match ended (bet closed, ESPN stopped
+    reporting, or update loop skipped it because it is no longer in open bets).
+    Preserves the `_meta` heartbeat key.
+    """
+    now = datetime.now(timezone.utc)
+    pruned: dict = {}
+    for key, entry in cache.items():
+        if key == "_meta" or not isinstance(entry, dict):
+            pruned[key] = entry
+            continue
+        ts_raw = entry.get("updated")
+        if not ts_raw:
+            pruned[key] = entry
+            continue
+        try:
+            ts = datetime.fromisoformat(str(ts_raw).replace("Z", "+00:00"))
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+            age_hours = (now - ts).total_seconds() / 3600
+            if age_hours <= _STALE_LIVE_HOURS:
+                pruned[key] = entry
+        except (ValueError, TypeError):
+            # unparseable timestamp — keep entry rather than dropping silently
+            pruned[key] = entry
+    return pruned
+
+
 def _load_cache() -> dict:
     if not CACHE_PATH.exists():
         return {}
@@ -41,6 +75,7 @@ def _load_cache() -> dict:
 
 
 def _save_cache(cache: dict) -> None:
+    cache = _prune_stale(cache)
     CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
     payload = json.dumps(cache, indent=2, ensure_ascii=False)
     CACHE_PATH.write_text(payload)

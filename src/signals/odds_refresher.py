@@ -290,6 +290,11 @@ def run_refresh(dry_run: bool = False) -> dict:
             status = evaluate_signal_status(sig, cached, cached_ts)
             _log.debug("[refresher] no fresh odds for %s → status=%s", match, status)
             if not dry_run:
+                # Sidecar stores current_ev_pct in PERCENT; update_odds_state multiplies
+                # its input by 100. Convert back to decimal to avoid 100× per-cycle
+                # escalation on repeated refresh failures (produced 1e+59 values in prod).
+                cached_ev_pct = state_entry.get("current_ev_pct") if state_entry else None
+                cached_ev_decimal = (cached_ev_pct / 100.0) if cached_ev_pct is not None else None
                 # Always persist lifecycle status so JS filter can exclude non-ACTIVE signals
                 update_odds_state(
                     sid,
@@ -298,7 +303,7 @@ def run_refresh(dry_run: bool = False) -> dict:
                     odds_source=state_entry.get("odds_source") if state_entry else None,
                     odds_fetch_tier=state_entry.get("odds_fetch_tier") if state_entry else 0,
                     signal_status=status,
-                    current_ev_pct=state_entry.get("current_ev_pct") if state_entry else None,
+                    current_ev_pct=cached_ev_decimal,
                 )
             failed += 1
             continue
