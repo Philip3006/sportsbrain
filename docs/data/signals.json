@@ -1,7 +1,7 @@
 {
-  "updated": "2026-08-12T15:59:28Z",
+  "updated": "2026-08-12T16:00:52Z",
   "build_info": {
-    "sha": "8b8438b",
+    "sha": "72ba6c5",
     "date": "2026-08-12"
   },
   "meta": {
@@ -39,111 +39,6 @@
       "odds_away": 1.88,
       "odds_source": "implied_elo",
       "is_display_only": true
-    },
-    {
-      "sport": "tennis",
-      "home": "Aleksandar Vukic",
-      "away": "Darwin Blanch",
-      "kickoff": "2026-08-12T14:00:00Z",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 0.0,
-      "odds_away": 0.0,
-      "odds_source": "the_odds_api",
-      "is_display_only": true
-    },
-    {
-      "sport": "tennis",
-      "home": "Mark Lajal",
-      "away": "Dalibor Svrcina",
-      "kickoff": "2026-08-12T14:00:00Z",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.1,
-      "odds_away": 1.62,
-      "odds_source": "tennis_explorer",
-      "is_display_only": false
-    },
-    {
-      "sport": "tennis",
-      "home": "Marcos Giron",
-      "away": "Henrique Rocha",
-      "kickoff": "2026-08-12T14:00:00Z",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.52,
-      "odds_away": 2.36,
-      "odds_source": "tennis_explorer",
-      "is_display_only": false
-    },
-    {
-      "sport": "tennis",
-      "home": "Nicolas Mejia",
-      "away": "Jacob Fearnley",
-      "kickoff": "2026-08-12T14:00:00Z",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.46,
-      "odds_away": 1.47,
-      "odds_source": "tennis_explorer",
-      "is_display_only": false
-    },
-    {
-      "sport": "tennis",
-      "home": "Alexander Shevchenko",
-      "away": "Christopher O'Connell",
-      "kickoff": "2026-08-12T15:30:00Z",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 0.0,
-      "odds_away": 0.0,
-      "odds_source": "the_odds_api",
-      "is_display_only": true
-    },
-    {
-      "sport": "tennis",
-      "home": "Chak Lam Coleman Wong",
-      "away": "Otto Virtanen",
-      "kickoff": "2026-08-12T15:30:00Z",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 0.0,
-      "odds_away": 0.0,
-      "odds_source": "the_odds_api",
-      "is_display_only": true
-    },
-    {
-      "sport": "tennis",
-      "home": "Luca Van Assche",
-      "away": "Dusan Lajovic",
-      "kickoff": "2026-08-12T15:30:00Z",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.43,
-      "odds_away": 2.58,
-      "odds_source": "tennis_explorer",
-      "is_display_only": false
     },
     {
       "sport": "tennis",
@@ -185,7 +80,7 @@
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.16,
+      "odds_home": 2.11,
       "odds_away": 1.61,
       "odds_source": "tennis_explorer",
       "is_display_only": false
@@ -215,8 +110,8 @@
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.2,
-      "odds_away": 1.6,
+      "odds_home": 2.24,
+      "odds_away": 1.58,
       "odds_source": "tennis_explorer",
       "is_display_only": false
     },
@@ -233,6 +128,171 @@
       "odds_home": 0.0,
       "odds_away": 0.0,
       "odds_source": "the_odds_api",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Denis Shapovalov",
+      "away": "Adrian Mannarino",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.55,
+      "odds_away": 2.47,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Aleksandar Kovacevic",
+      "away": "Karen Khachanov",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.71,
+      "odds_away": 1.47,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Alex Michelsen",
+      "away": "Jesper De Jong",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.47,
+      "odds_away": 2.71,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Botic van de Zandschulp",
+      "away": "Tallon Griekspoor",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Camilo Ugo Carabelli",
+      "away": "Miomir Kecmanovic",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Corentin Moutet",
+      "away": "Hubert Hurkacz",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Daniel Merida Aguilar",
+      "away": "Marin Cilic",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Martin Landaluce",
+      "away": "Jack Draper",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.71,
+      "odds_away": 1.47,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Juncheng Shang",
+      "away": "Lorenzo Sonego",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Mariano Navone",
+      "away": "Raphael Collignon",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.47,
+      "odds_away": 1.55,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Nuno Borges",
+      "away": "Thanasi Kokkinakis",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
       "is_display_only": true
     },
     {
@@ -267,84 +327,9 @@
     },
     {
       "sport": "tennis",
-      "home": "Emiliana Arango",
-      "away": "Aliaksandra Sasnovich",
-      "kickoff": "2026-08-12T14:00:00Z",
-      "tour": "wta",
-      "tournament": "Cincinnati Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.93,
-      "odds_away": 1.88,
-      "odds_source": "implied_elo",
-      "is_display_only": true
-    },
-    {
-      "sport": "tennis",
-      "home": "Xiyu Wang",
-      "away": "Bianca Andreescu",
-      "kickoff": "2026-08-12T14:00:00Z",
-      "tour": "wta",
-      "tournament": "Cincinnati Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.93,
-      "odds_away": 1.88,
-      "odds_source": "implied_elo",
-      "is_display_only": true
-    },
-    {
-      "sport": "tennis",
-      "home": "Carol Young Suh Lee",
-      "away": "Polina Kudermetova",
-      "kickoff": "2026-08-12T14:00:00Z",
-      "tour": "wta",
-      "tournament": "Cincinnati Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 0.0,
-      "odds_away": 0.0,
-      "odds_source": "the_odds_api",
-      "is_display_only": true
-    },
-    {
-      "sport": "tennis",
-      "home": "Nadia Podoroska",
-      "away": "Ella Seidel",
-      "kickoff": "2026-08-12T14:00:00Z",
-      "tour": "wta",
-      "tournament": "Cincinnati Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.93,
-      "odds_away": 1.88,
-      "odds_source": "implied_elo",
-      "is_display_only": true
-    },
-    {
-      "sport": "tennis",
-      "home": "Yue Yuan",
-      "away": "Kayla Day",
-      "kickoff": "2026-08-12T14:00:00Z",
-      "tour": "wta",
-      "tournament": "Cincinnati Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.93,
-      "odds_away": 1.88,
-      "odds_source": "implied_elo",
-      "is_display_only": true
-    },
-    {
-      "sport": "tennis",
       "home": "Sinja Kraus",
       "away": "Claire Liu",
-      "kickoff": "2026-08-12T15:30:00Z",
+      "kickoff": "2026-08-12T16:30:00Z",
       "tour": "wta",
       "tournament": "Cincinnati Open",
       "category": "wta1000",
@@ -359,7 +344,7 @@
       "sport": "tennis",
       "home": "Lanlana Tararudee",
       "away": "Mananchaya Sawangkaew",
-      "kickoff": "2026-08-12T15:30:00Z",
+      "kickoff": "2026-08-12T16:30:00Z",
       "tour": "wta",
       "tournament": "Cincinnati Open",
       "category": "wta1000",
@@ -374,7 +359,7 @@
       "sport": "tennis",
       "home": "Lucrezia Stefanini",
       "away": "Leolia Jeanjean",
-      "kickoff": "2026-08-12T15:30:00Z",
+      "kickoff": "2026-08-12T16:30:00Z",
       "tour": "wta",
       "tournament": "Cincinnati Open",
       "category": "wta1000",
@@ -389,7 +374,7 @@
       "sport": "tennis",
       "home": "Lilli Tagger",
       "away": "Robin Montgomery",
-      "kickoff": "2026-08-12T15:30:00Z",
+      "kickoff": "2026-08-12T16:30:00Z",
       "tour": "wta",
       "tournament": "Cincinnati Open",
       "category": "wta1000",
@@ -404,7 +389,7 @@
       "sport": "tennis",
       "home": "Oksana Selekhmeteva",
       "away": "Mary Stoiana",
-      "kickoff": "2026-08-12T15:30:00Z",
+      "kickoff": "2026-08-12T16:30:00Z",
       "tour": "wta",
       "tournament": "Cincinnati Open",
       "category": "wta1000",
@@ -462,51 +447,338 @@
     },
     {
       "sport": "tennis",
-      "home": "Searle Henry",
-      "away": "Rottgering Mees",
-      "kickoff": "2026-08-12T12:15:00+00:00",
-      "tour": "atp",
-      "tournament": "Brownsburg Challenger",
-      "category": "challenger_atp",
+      "home": "Alycia Parks",
+      "away": "Viktorija Golubic",
+      "kickoff": "2026-08-13T12:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.6,
-      "odds_away": 2.21,
-      "source": "tennisexplorer"
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Jessica Bouzas Maneiro",
+      "away": "Anna Bondár",
+      "kickoff": "2026-08-13T12:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Cristina Bucsa",
+      "away": "Panna Udvardy",
+      "kickoff": "2026-08-13T12:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Daria Snigur",
+      "away": "Yuliia Starodubtseva",
+      "kickoff": "2026-08-13T12:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.47,
+      "odds_away": 2.71,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Sara Bejlek",
+      "away": "Karolina Pliskova",
+      "kickoff": "2026-08-13T12:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Maria Timofeeva",
+      "away": "Katerina Siniakova",
+      "kickoff": "2026-08-13T12:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.1,
+      "odds_away": 1.74,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Yulia Putintseva",
+      "away": "Liudmila Samsonova",
+      "kickoff": "2026-08-13T12:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Maya Joint",
+      "away": "Tamara Korpatsch",
+      "kickoff": "2026-08-13T12:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Darja Vidmanova",
+      "away": "Anhelina Kalinina",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Antonia Ruzic",
+      "away": "Magdalena Frech",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Ashlyn Krueger",
+      "away": "Lois Boisson",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Diane Parry",
+      "away": "Caroline Dolehide",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Caty McNally",
+      "away": "McCartney Kessler",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.1,
+      "odds_away": 1.74,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Daria Kasatkina",
+      "away": "Zeynep Sonmez",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Tatjana Maria",
+      "away": "Dayana Yastremska",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.47,
+      "odds_away": 1.55,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Elena Gabriela Ruse",
+      "away": "Magda Linette",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Elvina Kalieva",
+      "away": "Oleksandra Oliynykova",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Kamilla Rakhimova",
+      "away": "Kimberly Birrell",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.71,
+      "odds_away": 1.47,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Katie Boulter",
+      "away": "Katie Volynets",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.48,
+      "odds_away": 2.67,
+      "odds_source": "implied_elo",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Taylor Townsend",
+      "away": "Maria Camila Osorio Serrano",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true
+    },
+    {
+      "sport": "tennis",
+      "home": "Simona Waltert",
+      "away": "Petra Marcinko",
+      "kickoff": "2026-08-13T14:00:00Z",
+      "tour": "wta",
+      "tournament": "Cincinnati Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.9,
+      "odds_away": 1.9,
+      "odds_source": "implied_elo",
+      "is_display_only": true
     },
     {
       "sport": "tennis",
       "home": "Kozlov Stefan",
       "away": "Mayo Aidan",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Brownsburg Challenger",
       "category": "challenger_atp",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.28,
+      "odds_home": 2.25,
       "odds_away": 1.58,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Tien Learner",
-      "away": "Merida Aguilar Daniel",
-      "kickoff": "2026-08-12T12:15:00+00:00",
-      "tour": "atp",
-      "tournament": "Canadian Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.44,
-      "odds_away": 2.62,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Shelton Ben",
       "away": "Mensik Jakub",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Canadian Open",
       "category": "m1000",
@@ -518,37 +790,65 @@
     },
     {
       "sport": "tennis",
+      "home": "Tien Learner",
+      "away": "Merida Aguilar Daniel",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Canadian Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.44,
+      "odds_away": 2.62,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Rottgering Mees",
+      "away": "Searle Henry",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Brownsburg Challenger",
+      "category": "challenger_atp",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.25,
+      "odds_away": 1.55,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Blanchet Ugo",
+      "away": "Sakamoto Rei",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Brownsburg Challenger",
+      "category": "challenger_atp",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.3,
+      "odds_away": 1.56,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
       "home": "Harris Lloyd",
       "away": "Fenty Andrew",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Brownsburg Challenger",
       "category": "challenger_atp",
       "surface": "hard",
       "best_of": 3,
       "odds_home": 1.4,
-      "odds_away": 2.7,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Onclin Gauthier",
-      "away": "Zink Tyler",
-      "kickoff": "2026-08-12T12:15:00+00:00",
-      "tour": "atp",
-      "tournament": "Brownsburg Challenger",
-      "category": "challenger_atp",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.58,
-      "odds_away": 2.2,
+      "odds_away": 2.67,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Smith Colton",
       "away": "Gill Felix",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Brownsburg Challenger",
       "category": "challenger_atp",
@@ -560,23 +860,23 @@
     },
     {
       "sport": "tennis",
-      "home": "Blanchet Ugo",
-      "away": "Sakamoto Rei",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "home": "Onclin Gauthier",
+      "away": "Zink Tyler",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Brownsburg Challenger",
       "category": "challenger_atp",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.3,
-      "odds_away": 1.56,
+      "odds_home": 1.58,
+      "odds_away": 2.2,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Broady Liam",
       "away": "Suresh Dhakshineswar",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Brownsburg Challenger",
       "category": "challenger_atp",
@@ -588,51 +888,51 @@
     },
     {
       "sport": "tennis",
-      "home": "Vandecasteele Quinn",
-      "away": "Shelbayh Abedallah",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "home": "Tomic Bernard",
+      "away": "Winter Edward",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Brownsburg Challenger",
       "category": "challenger_atp",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.24,
-      "odds_away": 1.57,
+      "odds_home": 2.31,
+      "odds_away": 1.56,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
-      "home": "Tomic Bernard",
-      "away": "Winter Edward",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "home": "Vandecasteele Quinn",
+      "away": "Shelbayh Abedallah",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Brownsburg Challenger",
       "category": "challenger_atp",
       "surface": "hard",
       "best_of": 3,
       "odds_home": 2.3,
-      "odds_away": 1.56,
+      "odds_away": 1.55,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Schoolkate Tristan",
       "away": "Cina Federico",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Brownsburg Challenger",
       "category": "challenger_atp",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.2,
-      "odds_away": 1.6,
+      "odds_home": 2.13,
+      "odds_away": 1.64,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Dietrich Dylan",
       "away": "Sachko Vitaliy",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Hamburg Challenger",
       "category": "challenger_atp",
@@ -646,7 +946,7 @@
       "sport": "tennis",
       "home": "McDonald Niels",
       "away": "Ribeiro Eduardo",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Hamburg Challenger",
       "category": "challenger_atp",
@@ -660,7 +960,7 @@
       "sport": "tennis",
       "home": "Brancaccio Raul",
       "away": "Moeller Marvin",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Hamburg Challenger",
       "category": "challenger_atp",
@@ -674,63 +974,63 @@
       "sport": "tennis",
       "home": "Schoenhaus Max",
       "away": "Pucinelli De Almeida Matheus",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Hamburg Challenger",
       "category": "challenger_atp",
       "surface": "clay",
       "best_of": 3,
-      "odds_home": 2.06,
-      "odds_away": 1.7,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Cecchinato Marco",
-      "away": "Forti Francesco",
-      "kickoff": "2026-08-12T12:15:00+00:00",
-      "tour": "atp",
-      "tournament": "Todi Challenger",
-      "category": "challenger_atp",
-      "surface": "clay",
-      "best_of": 3,
-      "odds_home": 1.48,
-      "odds_away": 2.43,
+      "odds_home": 2.04,
+      "odds_away": 1.71,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Romano Filippo",
       "away": "Torres Juan Bautista",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Todi Challenger",
       "category": "challenger_atp",
       "surface": "clay",
       "best_of": 3,
       "odds_home": 2.1,
-      "odds_away": 1.67,
+      "odds_away": 1.65,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Sanchez Izquierdo Nikolas",
       "away": "Mrva Maxim",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Todi Challenger",
       "category": "challenger_atp",
       "surface": "clay",
       "best_of": 3,
-      "odds_home": 1.66,
+      "odds_home": 1.64,
       "odds_away": 2.1,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Cecchinato Marco",
+      "away": "Forti Francesco",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Todi Challenger",
+      "category": "challenger_atp",
+      "surface": "clay",
+      "best_of": 3,
+      "odds_home": 1.55,
+      "odds_away": 2.3,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Galan Daniel Elahi",
       "away": "Gomez Federico Agustin",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Todi Challenger",
       "category": "challenger_atp",
@@ -744,7 +1044,7 @@
       "sport": "tennis",
       "home": "Matsuoka Hayato",
       "away": "Kumasaka Takuya",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Astana Challenger",
       "category": "challenger_atp",
@@ -758,7 +1058,7 @@
       "sport": "tennis",
       "home": "Sultanov Khumoun",
       "away": "Ratti Lucio",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Astana Challenger",
       "category": "challenger_atp",
@@ -772,7 +1072,7 @@
       "sport": "tennis",
       "home": "Sun Fajing",
       "away": "Pankin Semen",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Astana Challenger",
       "category": "challenger_atp",
@@ -784,23 +1084,23 @@
     },
     {
       "sport": "tennis",
-      "home": "Zhukayev Beibit",
-      "away": "Alkaya Mert",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "home": "Alkaya Mert",
+      "away": "Zhukayev Beibit",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Astana Challenger",
       "category": "challenger_atp",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.12,
-      "odds_away": 1.66,
+      "odds_home": 1.6,
+      "odds_away": 2.16,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Cuenin Sean",
       "away": "Derepasko Timofei",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -814,7 +1114,7 @@
       "sport": "tennis",
       "home": "Arzhankin Anton",
       "away": "Delicata Liam",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -828,7 +1128,7 @@
       "sport": "tennis",
       "home": "Lazarov George",
       "away": "Pennaforti Gabriele",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -840,9 +1140,37 @@
     },
     {
       "sport": "tennis",
+      "home": "Barroso Campos Alberto",
+      "away": "Monteiro Salvador",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.46,
+      "odds_away": 2.53,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Perot Raphael",
+      "away": "Forger Abel",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.53,
+      "odds_away": 2.38,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
       "home": "Lagutin Pavel",
       "away": "Fernandes Rodrigo",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -884,7 +1212,7 @@
       "sport": "tennis",
       "home": "Colombo Andrea",
       "away": "Faria Francisco",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -896,9 +1224,23 @@
     },
     {
       "sport": "tennis",
+      "home": "Estevez Juan",
+      "away": "Bergomi Alex",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.06,
+      "odds_away": 7.5,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
       "home": "Perlov Facundo",
       "away": "Klok Denys",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -912,7 +1254,7 @@
       "sport": "tennis",
       "home": "Parizzia Nicolas",
       "away": "Bieldiugin Tymur",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -924,51 +1266,37 @@
     },
     {
       "sport": "tennis",
-      "home": "Estevez Juan",
-      "away": "Bergomi Alex",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "home": "Haita Stefan Horia",
+      "away": "Djuric Branko",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.06,
-      "odds_away": 7.5,
+      "odds_home": 2.18,
+      "odds_away": 1.6,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
-      "home": "Munk Mesa Bernardo",
-      "away": "Henning Philip",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "home": "Henning Philip",
+      "away": "Munk Mesa Bernardo",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 5.9,
-      "odds_away": 1.1,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Djuric Branko",
-      "away": "Haita Stefan Horia",
-      "kickoff": "2026-08-12T12:15:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.6,
-      "odds_away": 2.18,
+      "odds_home": 1.1,
+      "odds_away": 6.0,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Bertrand Robin",
       "away": "Silva Tiago (2004)",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -982,7 +1310,7 @@
       "sport": "tennis",
       "home": "Kaouk Mickael",
       "away": "Lokoli Laurent",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -994,9 +1322,23 @@
     },
     {
       "sport": "tennis",
+      "home": "Sakellaridis Dimitris",
+      "away": "Nesterov Petr",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.4,
+      "odds_away": 1.5,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
       "home": "Almazan Valiente Izan",
       "away": "Mckennon Maxwell",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1008,65 +1350,23 @@
     },
     {
       "sport": "tennis",
-      "home": "Sakellaridis Dimitris",
-      "away": "Nesterov Petr",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "home": "Von Der Schulenburg Jeffrey",
+      "away": "Nagel Arthur",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.2,
-      "odds_away": 1.58,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Nagel Arthur",
-      "away": "Von Der Schulenburg Jeffrey",
-      "kickoff": "2026-08-12T12:15:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.02,
-      "odds_away": 1.69,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Petrovic Drazen",
-      "away": "Ochi Makoto",
-      "kickoff": "2026-08-12T12:15:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.25,
-      "odds_away": 1.57,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Jankanj Vlado",
-      "away": "Obradovic Dusan",
-      "kickoff": "2026-08-12T12:15:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.7,
-      "odds_away": 1.4,
+      "odds_home": 2.08,
+      "odds_away": 1.66,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Tolev Aleksandar",
       "away": "Kostic Stefan (2006)",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1078,9 +1378,37 @@
     },
     {
       "sport": "tennis",
-      "home": "Chestovaliev Samuil",
-      "away": "Radjenovic Vuk",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "home": "Radjenovic Vuk",
+      "away": "Chestovaliev Samuil",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.22,
+      "odds_away": 5.0,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Cacao Tiago",
+      "away": "Rocha Francisco",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.67,
+      "odds_away": 2.1,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Obradovic Dusan",
+      "away": "Jankanj Vlado",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1162,79 +1490,79 @@
     },
     {
       "sport": "tennis",
-      "home": "Rocha Francisco",
-      "away": "Cacao Tiago",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "home": "McCormick Tristan",
+      "away": "Pietri Benjamin",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.1,
-      "odds_away": 1.67,
+      "odds_home": 1.9,
+      "odds_away": 1.79,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
-      "home": "Verwerft Lars Goran",
-      "away": "Marterer Maximilian",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "home": "Pereira Tiago",
+      "away": "Leal Rodrigo",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.3,
-      "odds_away": 1.53,
+      "odds_home": 1.22,
+      "odds_away": 3.72,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
-      "home": "Perez Navarro Pablo",
-      "away": "Andaloro Fabrizio",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "home": "Loge Jack",
+      "away": "Torcq Benoit",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 3.47,
-      "odds_away": 1.25,
+      "odds_home": 1.44,
+      "odds_away": 2.53,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
-      "home": "Piatti Rocco",
-      "away": "Morais Diogo",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "home": "Ochi Makoto",
+      "away": "Petrovic Drazen",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.97,
-      "odds_away": 1.74,
+      "odds_home": 1.57,
+      "odds_away": 2.25,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
-      "home": "Reyniak Matias",
-      "away": "Izquierdo Luque Rafael",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "home": "Casanova Andrin",
+      "away": "Zahraj Patrick",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 3.77,
-      "odds_away": 1.23,
+      "odds_home": 2.73,
+      "odds_away": 1.39,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
-      "home": "Hipfl Nico",
-      "away": "Hunziker Alessandro",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "home": "Magadan Alan",
+      "away": "Sheldon Max",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1246,23 +1574,37 @@
     },
     {
       "sport": "tennis",
-      "home": "Magadan Alan",
-      "away": "Sheldon Max",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "home": "Perez Navarro Pablo",
+      "away": "Andaloro Fabrizio",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.36,
-      "odds_away": 2.83,
+      "odds_home": 3.47,
+      "odds_away": 1.25,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Roberts Justin",
+      "away": "Sarr Jelani",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.45,
+      "odds_away": 1.49,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Woestendick Cooper",
       "away": "Nakagawa Naoki",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1274,135 +1616,23 @@
     },
     {
       "sport": "tennis",
-      "home": "Roberts Justin",
-      "away": "Sarr Jelani",
-      "kickoff": "2026-08-12T12:15:00+00:00",
+      "home": "Piatti Rocco",
+      "away": "Morais Diogo",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.73,
-      "odds_away": 2.0,
+      "odds_home": 1.98,
+      "odds_away": 1.73,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Honda Naoya",
       "away": "Filin Nikita",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.92,
-      "odds_away": 1.77,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Senn Nicola",
-      "away": "Staeheli Luca",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.35,
-      "odds_away": 1.5,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Flores Jesse",
-      "away": "Poling Karl",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 3.28,
-      "odds_away": 1.29,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Bowers Tyler",
-      "away": "Vithoontien Leo",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 3.25,
-      "odds_away": 1.29,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Okonkwo Alexander",
-      "away": "Kirchheimer Strong",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.2,
-      "odds_away": 1.55,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Bynoe Evan",
-      "away": "Peck Joshua",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.4,
-      "odds_away": 2.7,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "McCabe James",
-      "away": "Zamora Noah",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.29,
-      "odds_away": 3.2,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Alvarez Valdes Luis Carlos",
-      "away": "Caldwell Simon",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.1,
-      "odds_away": 5.88,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Mesarovic Marko",
-      "away": "Okonkwo Oliver",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1414,37 +1644,191 @@
     },
     {
       "sport": "tennis",
-      "home": "Nefve Axel",
-      "away": "Gorzny Sebastian",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Wessels Louis",
+      "away": "Waldner Niklas",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 4.2,
-      "odds_away": 1.19,
+      "odds_home": 1.1,
+      "odds_away": 6.0,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
-      "home": "Hazawa Shinji",
-      "away": "Tsirikidze Venedikt",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Verwerft Lars Goran",
+      "away": "Marterer Maximilian",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.11,
-      "odds_away": 5.62,
+      "odds_home": 2.52,
+      "odds_away": 1.45,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Reyniak Matias",
+      "away": "Izquierdo Luque Rafael",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 3.15,
+      "odds_away": 1.28,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Flores Jesse",
+      "away": "Poling Karl",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.9,
+      "odds_away": 1.35,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Senn Nicola",
+      "away": "Staeheli Luca",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.63,
+      "odds_away": 1.4,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Okonkwo Alexander",
+      "away": "Kirchheimer Strong",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.2,
+      "odds_away": 1.6,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Bynoe Evan",
+      "away": "Peck Joshua",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.42,
+      "odds_away": 2.75,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Bowers Tyler",
+      "away": "Vithoontien Leo",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 3.75,
+      "odds_away": 1.23,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Hipfl Nico",
+      "away": "Hunziker Alessandro",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.53,
+      "odds_away": 2.3,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Alvarez Valdes Luis Carlos",
+      "away": "Caldwell Simon",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.1,
+      "odds_away": 6.0,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "McCabe James",
+      "away": "Zamora Noah",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.27,
+      "odds_away": 3.4,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Mesarovic Marko",
+      "away": "Okonkwo Oliver",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.93,
+      "odds_away": 1.79,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Nefve Axel",
+      "away": "Gorzny Sebastian",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 3.88,
+      "odds_away": 1.23,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Dellavedova Matthew",
       "away": "Sarksian Daniil",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1456,37 +1840,23 @@
     },
     {
       "sport": "tennis",
-      "home": "Alexandrescou Yannick Theodor",
-      "away": "Turcanu Radu David",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Hazawa Shinji",
+      "away": "Tsirikidze Venedikt",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.62,
-      "odds_away": 2.16,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Breazu Vlad Cristian",
-      "away": "Dumitrescu Andrei",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.06,
-      "odds_away": 7.65,
+      "odds_home": 1.11,
+      "odds_away": 5.62,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Ghetu Gabriel",
       "away": "Golescu Rares Andrei",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1498,23 +1868,23 @@
     },
     {
       "sport": "tennis",
-      "home": "Chung Yunseong",
-      "away": "Han Xirui",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Breazu Vlad Cristian",
+      "away": "Dumitrescu Andrei",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.39,
-      "odds_away": 2.73,
+      "odds_home": 1.06,
+      "odds_away": 7.65,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Pieleanu Rares Teodor",
       "away": "Breazu Matei Florin",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1526,51 +1896,79 @@
     },
     {
       "sport": "tennis",
-      "home": "Hudd Emile",
-      "away": "Molder Markus",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Alexandrescou Yannick Theodor",
+      "away": "Turcanu Radu David",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.59,
-      "odds_away": 2.25,
+      "odds_home": 1.62,
+      "odds_away": 2.16,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
-      "home": "Azkara Arda",
-      "away": "Tamm Kristjan",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Molder Markus",
+      "away": "Hudd Emile",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.25,
-      "odds_away": 3.61,
+      "odds_home": 2.46,
+      "odds_away": 1.5,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Sun Qian",
       "away": "Kawahashi Yuta",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.0,
-      "odds_away": 1.73,
+      "odds_home": 1.06,
+      "odds_away": 7.65,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Chung Yunseong",
+      "away": "Han Xirui",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.39,
+      "odds_away": 2.73,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Tamm Kristjan",
+      "away": "Azkara Arda",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 3.61,
+      "odds_away": 1.25,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Nordquist Arvid",
       "away": "Andres Romain",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1584,7 +1982,7 @@
       "sport": "tennis",
       "home": "Meng Fanming",
       "away": "Mochizuki Yuki",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1596,9 +1994,23 @@
     },
     {
       "sport": "tennis",
+      "home": "Elamin Ammar",
+      "away": "Amarandei Daniel Aleksandar",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.74,
+      "odds_away": 1.97,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
       "home": "Shearer Matthew",
       "away": "Thompson Kai",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1610,9 +2022,23 @@
     },
     {
       "sport": "tennis",
+      "home": "Zakaryia Faris",
+      "away": "McLennaghan William",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.05,
+      "odds_away": 7.5,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
       "home": "Smiej Yassine",
       "away": "Brown Preston",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1624,9 +2050,9 @@
     },
     {
       "sport": "tennis",
-      "home": "Amarandei Daniel Aleksandar",
-      "away": "Elamin Ammar",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Gavrielides Liam",
+      "away": "Einig Felix",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1666,9 +2092,23 @@
     },
     {
       "sport": "tennis",
+      "home": "Bilardo Jacopo",
+      "away": "Garbero Filippo Francesco",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.62,
+      "odds_away": 2.13,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
       "home": "Paolini Andrea",
       "away": "Gadoiu Andrei Corneliu",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1710,7 +2150,7 @@
       "sport": "tennis",
       "home": "Angeloni Leonardo",
       "away": "Petre Stefan Ilie Bogdan",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1724,7 +2164,7 @@
       "sport": "tennis",
       "home": "Fernandez Bruno",
       "away": "Castagnola Luca",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1736,37 +2176,9 @@
     },
     {
       "sport": "tennis",
-      "home": "Borg Leo",
-      "away": "Edengren Kevin",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.37,
-      "odds_away": 2.77,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Simonsson Jan",
-      "away": "Stroemberg Isac",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 3.62,
-      "odds_away": 1.25,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
       "home": "Bacaloni Andrea",
       "away": "Lassila Jeri",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1778,23 +2190,37 @@
     },
     {
       "sport": "tennis",
-      "home": "Lieberman Henry",
-      "away": "Ryden Victor",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Ryden Victor",
+      "away": "Lieberman Henry",
+      "kickoff": "2026-08-12T17:59:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.65,
-      "odds_away": 2.1,
+      "odds_home": 2.1,
+      "odds_away": 1.65,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Majdandzic Oliver",
+      "away": "Lopez Morillo Imanol",
+      "kickoff": "2026-08-12T17:59:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 3.05,
+      "odds_away": 1.3,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Hallquist Lithen John",
       "away": "Makhlouf Mohamed Nazim",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1806,37 +2232,23 @@
     },
     {
       "sport": "tennis",
-      "home": "Yilmaz Kerem",
-      "away": "Ahti Vesa",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Edengren Kevin",
+      "away": "Borg Leo",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.12,
-      "odds_away": 5.5,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Huang Tsung-Hao",
-      "away": "Lee Duck Hee",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.55,
-      "odds_away": 2.3,
+      "odds_home": 2.77,
+      "odds_away": 1.39,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Arcon Adrian",
       "away": "Imai Shintaro",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1848,23 +2260,65 @@
     },
     {
       "sport": "tennis",
-      "home": "Cho Seung Woo",
-      "away": "Jasika Omar",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Simonsson Jan",
+      "away": "Stroemberg Isac",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 4.78,
+      "odds_home": 3.62,
+      "odds_away": 1.25,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Ahti Vesa",
+      "away": "Yilmaz Kerem",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 4.62,
       "odds_away": 1.16,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
-      "home": "Brancatelli Gabriele Thomas",
-      "away": "Azoides Demetris",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Jasika Omar",
+      "away": "Cho Seung Woo",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.09,
+      "odds_away": 6.0,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Azoides Demetris",
+      "away": "Brancatelli Gabriele Thomas",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.29,
+      "odds_away": 3.37,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Lee Duck Hee",
+      "away": "Huang Tsung-Hao",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1904,23 +2358,107 @@
     },
     {
       "sport": "tennis",
-      "home": "Lalami Laaroussi Younes",
-      "away": "Spadola Alessandro",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Strombachs Robert",
+      "away": "Berge Nourescu Alejandro Mateo",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.95,
+      "odds_home": 1.08,
+      "odds_away": 7.0,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Juszczak Pawel",
+      "away": "Lakshmanan Aryan",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.5,
+      "odds_away": 2.58,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Sesko Ziga",
+      "away": "Salazar Daniel",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.47,
+      "odds_away": 2.58,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Spadola Alessandro",
+      "away": "Lalami Laaroussi Younes",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.99,
       "odds_away": 1.73,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Miletich Iannis",
+      "away": "Babinciuc Ilie",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.05,
+      "odds_away": 8.0,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Reinhard Bengt Johan",
+      "away": "Giraldi Carlos",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.68,
+      "odds_away": 2.03,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Monzon Ignacio",
+      "away": "Ciocca Giovanni",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.47,
+      "odds_away": 2.52,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Chazal Maxime",
       "away": "Mathes Kaspar",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1934,7 +2472,7 @@
       "sport": "tennis",
       "home": "Sperle John",
       "away": "Lagerbohm Linus",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1946,37 +2484,9 @@
     },
     {
       "sport": "tennis",
-      "home": "Sesko Ziga",
-      "away": "Salazar Daniel",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.47,
-      "odds_away": 2.58,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Rojas Carles",
-      "away": "Misasi Giannicola",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 3.52,
-      "odds_away": 1.25,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
       "home": "Tenti Fermin",
       "away": "Hebhang Balan Alexandru Toubi",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1988,65 +2498,9 @@
     },
     {
       "sport": "tennis",
-      "home": "Babinciuc Ilie",
-      "away": "Miletich Iannis",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 4.5,
-      "odds_away": 1.15,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Ciocca Giovanni",
-      "away": "Monzon Ignacio",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.85,
-      "odds_away": 1.35,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Giraldi Carlos",
-      "away": "Reinhard Bengt Johan",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.95,
-      "odds_away": 1.75,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Friberg Karl",
-      "away": "Lapalu Valentin",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.23,
-      "odds_away": 3.67,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
       "home": "Jansson Oskar",
       "away": "Ekstrand Jonathan",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2058,23 +2512,9 @@
     },
     {
       "sport": "tennis",
-      "home": "Bozemoj Brian",
-      "away": "Bladelius Henrik",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.5,
-      "odds_away": 2.35,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
       "home": "Bertimon Maxence",
       "away": "Bataljin Lawrence",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2086,23 +2526,51 @@
     },
     {
       "sport": "tennis",
-      "home": "Zhang Tianhui",
-      "away": "Charlton Joshua",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Bozemoj Brian",
+      "away": "Bladelius Henrik",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.25,
-      "odds_away": 1.58,
+      "odds_home": 1.5,
+      "odds_away": 2.35,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Friberg Karl",
+      "away": "Lapalu Valentin",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.23,
+      "odds_away": 3.67,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "De Jonge Daniel",
+      "away": "Fitzpatrick Barney",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.69,
+      "odds_away": 2.02,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Jones Miles",
       "away": "Trongcharoenchaikul Wishaya",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2116,49 +2584,7 @@
       "sport": "tennis",
       "home": "Choe Jaesung",
       "away": "Jiang Fumin",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.69,
-      "odds_away": 2.02,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Mizerski Eli",
-      "away": "Solarski Jakub",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.8,
-      "odds_away": 1.36,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "De Jonge Daniel",
-      "away": "Fitzpatrick Barney",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.1,
-      "odds_away": 6.29,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Ojakaar Oliver",
-      "away": "Weightman Oscar",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2170,9 +2596,37 @@
     },
     {
       "sport": "tennis",
+      "home": "Zhang Tianhui",
+      "away": "Charlton Joshua",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.25,
+      "odds_away": 1.58,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Weightman Oscar",
+      "away": "Ojakaar Oliver",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.0,
+      "odds_away": 1.71,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
       "home": "Paldanius Oskari",
       "away": "Efstathiou Menelaos",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2184,37 +2638,37 @@
     },
     {
       "sport": "tennis",
-      "home": "Mridha Jonathan",
-      "away": "Ehrenschneider Nino",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Solarski Jakub",
+      "away": "Mizerski Eli",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.85,
-      "odds_away": 1.83,
+      "odds_home": 1.36,
+      "odds_away": 2.8,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
-      "home": "Soderqvist Filip",
-      "away": "Rejchtman Vinciguerra William",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Fellows Jake",
+      "away": "Sciahbasi Matteo",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.1,
-      "odds_away": 1.65,
+      "odds_home": 2.17,
+      "odds_away": 1.6,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Van Sambeek Fons",
       "away": "De Lange Pieter",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2226,44 +2680,72 @@
     },
     {
       "sport": "tennis",
-      "home": "Haupt Henri",
-      "away": "Slavic Nikola",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Misasi Giannicola",
+      "away": "Rojas Carles",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.24,
-      "odds_away": 1.56,
+      "odds_home": 1.2,
+      "odds_away": 4.0,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
-      "home": "Tremblay Dorian",
-      "away": "Jorgensen Sebastian Grundtvig",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Ehrenschneider Nino",
+      "away": "Mridha Jonathan",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.7,
-      "odds_away": 1.38,
+      "odds_home": 1.85,
+      "odds_away": 1.83,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
-      "home": "Berto Lorenzo",
-      "away": "Rossi Leonardo",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Jorgensen Sebastian Grundtvig",
+      "away": "Tremblay Dorian",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 4.4,
-      "odds_away": 1.17,
+      "odds_home": 1.37,
+      "odds_away": 2.85,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Slavic Nikola",
+      "away": "Haupt Henri",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.63,
+      "odds_away": 2.12,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Rejchtman Vinciguerra William",
+      "away": "Soderqvist Filip",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.33,
+      "odds_away": 3.0,
       "source": "tennisexplorer"
     },
     {
@@ -2284,21 +2766,21 @@
       "sport": "tennis",
       "home": "Gschwendtner Jeremy",
       "away": "Drayton Thomas",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.61,
-      "odds_away": 2.18,
+      "odds_home": 1.58,
+      "odds_away": 2.21,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Zanellato Nicolas",
       "away": "Otegui Juan Bautista",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2310,23 +2792,9 @@
     },
     {
       "sport": "tennis",
-      "home": "Pesino Santiago",
-      "away": "Aguilar Cardozo Joaquin",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 3.85,
-      "odds_away": 1.2,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
       "home": "De La Fuente Santiago",
       "away": "Gagliardo Lorenzo",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2354,21 +2822,63 @@
       "sport": "tennis",
       "home": "Karpinski Szymon",
       "away": "Majchrzak Adam",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
       "odds_home": 3.15,
-      "odds_away": 1.31,
+      "odds_away": 1.3,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Aguilar Cardozo Joaquin",
+      "away": "Pesino Santiago",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.11,
+      "odds_away": 5.8,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Boosarawongse Thanaphat",
+      "away": "Hendrikx Jim",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.29,
+      "odds_away": 3.88,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Hohmann Ronald",
+      "away": "Cigarran Thiago",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.06,
+      "odds_away": 1.67,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Tosetto Rafael",
       "away": "Monferrer Ezequiel",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2380,23 +2890,9 @@
     },
     {
       "sport": "tennis",
-      "home": "Hohmann Ronald",
-      "away": "Cigarran Thiago",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.09,
-      "odds_away": 1.67,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
       "home": "Del Pino Mateo",
       "away": "Aguilar Cardozo Federico",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2408,23 +2904,51 @@
     },
     {
       "sport": "tennis",
-      "home": "Exsted Maxwell",
-      "away": "Villalon Nicolas",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Berto Lorenzo",
+      "away": "Rossi Leonardo",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.44,
-      "odds_away": 2.62,
+      "odds_home": 4.4,
+      "odds_away": 1.17,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Exsted Maxwell",
+      "away": "Villalon Nicolas",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.7,
+      "odds_away": 2.0,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Bobo Dakotah",
+      "away": "Vergara Del Puerto Martin Antonio",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.0,
+      "odds_away": 1.73,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Vankan Marlon",
       "away": "Nittmann Yannic",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2452,21 +2976,21 @@
       "sport": "tennis",
       "home": "Held Jaron",
       "away": "Wiedenmann Luca",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 4.9,
-      "odds_away": 1.15,
+      "odds_home": 5.0,
+      "odds_away": 1.14,
       "source": "tennisexplorer"
     },
     {
       "sport": "tennis",
       "home": "Villanueva Gonzalo",
       "away": "Bruna Nicolas",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2480,7 +3004,7 @@
       "sport": "tennis",
       "home": "Nishikori Kei",
       "away": "Comesana Francisco",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2494,7 +3018,7 @@
       "sport": "tennis",
       "home": "Faria Jaime",
       "away": "Basilashvili Nikoloz",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2506,23 +3030,9 @@
     },
     {
       "sport": "tennis",
-      "home": "Wu Yibing",
-      "away": "McDonald Mackenzie",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.57,
-      "odds_away": 2.25,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
       "home": "Yunchaokete Bu",
       "away": "Maestrelli Francesco",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2534,9 +3044,23 @@
     },
     {
       "sport": "tennis",
+      "home": "Wu Yibing",
+      "away": "McDonald Mackenzie",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.57,
+      "odds_away": 2.25,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
       "home": "Trungelliti Marco",
       "away": "Ofner Sebastian",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2550,7 +3074,7 @@
       "sport": "tennis",
       "home": "Zheng Michael",
       "away": "Echargui Moez",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2562,23 +3086,9 @@
     },
     {
       "sport": "tennis",
-      "home": "Droguet Titouan",
-      "away": "Popyrin Alexei",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.06,
-      "odds_away": 1.67,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
       "home": "Budkov Kjaer Nicolai",
       "away": "Gaston Hugo",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2590,65 +3100,9 @@
     },
     {
       "sport": "tennis",
-      "home": "Jacquet Kyrian",
-      "away": "Harris Billy",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.44,
-      "odds_away": 2.56,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Wolf Jeffrey John",
-      "away": "Mochizuki Shintaro",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.55,
-      "odds_away": 2.28,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Sakellaridis Stefanos",
-      "away": "Damm Martin (2003)",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.41,
-      "odds_away": 1.5,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Shimabukuro Sho",
-      "away": "Dellien Hugo",
-      "kickoff": "2026-08-12T12:16:00+00:00",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.31,
-      "odds_away": 2.98,
-      "source": "tennisexplorer"
-    },
-    {
-      "sport": "tennis",
-      "home": "Wong Coleman",
-      "away": "Virtanen Otto",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Droguet Titouan",
+      "away": "Popyrin Alexei",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2660,16 +3114,170 @@
     },
     {
       "sport": "tennis",
-      "home": "Shimabukuro Sho",
-      "away": "Wolf Jeffrey John",
-      "kickoff": "2026-08-12T12:16:00+00:00",
+      "home": "Jacquet Kyrian",
+      "away": "Harris Billy",
+      "kickoff": "2026-08-12T18:00:00+00:00",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.1,
-      "odds_away": 1.65,
+      "odds_home": 1.44,
+      "odds_away": 2.56,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Sakellaridis Stefanos",
+      "away": "Damm Martin (2003)",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.41,
+      "odds_away": 1.5,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Wolf Jeffrey John",
+      "away": "Mochizuki Shintaro",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.55,
+      "odds_away": 2.28,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Shimabukuro Sho",
+      "away": "Dellien Hugo",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.31,
+      "odds_away": 2.98,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Giron Marcos",
+      "away": "Rocha Henrique",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.52,
+      "odds_away": 2.35,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Mejia Nicolas",
+      "away": "Fearnley Jacob",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.44,
+      "odds_away": 1.47,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Vukic Aleksandar",
+      "away": "Blanch Darwin",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.55,
+      "odds_away": 2.29,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Shevchenko Alexander",
+      "away": "O'Connell Christopher",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.66,
+      "odds_away": 2.1,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Lajal Mark",
+      "away": "Svrcina Dalibor",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.12,
+      "odds_away": 1.62,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Wong Coleman",
+      "away": "Virtanen Otto",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.04,
+      "odds_away": 1.69,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Van Assche Luca",
+      "away": "Lajovic Dusan",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.44,
+      "odds_away": 2.5,
+      "source": "tennisexplorer"
+    },
+    {
+      "sport": "tennis",
+      "home": "Sakellaridis Stefanos",
+      "away": "Droguet Titouan",
+      "kickoff": "2026-08-12T18:00:00+00:00",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.34,
+      "odds_away": 1.53,
       "source": "tennisexplorer"
     },
     {
@@ -3701,12 +4309,12 @@
       "away": 2.58
     },
     "Marco Trungelliti vs Kei Nishikori": {
-      "home": 2.16,
+      "home": 2.11,
       "away": 1.61
     },
     "Nicolai Budkov Kjaer vs Kyrian Jacquet": {
-      "home": 2.2,
-      "away": 1.6
+      "home": 2.24,
+      "away": 1.58
     },
     "Yue Yuan vs Kayla Day": {
       "home": 1.93,
@@ -3737,8 +4345,128 @@
       "away": 1.88
     },
     "Eva Lys vs Anna Blinkova": {
-      "home": 1.93,
-      "away": 1.88
+      "home": 1.55,
+      "away": 2.47
+    },
+    "Denis Shapovalov vs Adrian Mannarino": {
+      "home": 1.55,
+      "away": 2.47
+    },
+    "Aleksandar Kovacevic vs Karen Khachanov": {
+      "home": 2.71,
+      "away": 1.47
+    },
+    "Alex Michelsen vs Jesper De Jong": {
+      "home": 1.47,
+      "away": 2.71
+    },
+    "Botic van de Zandschulp vs Tallon Griekspoor": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Camilo Ugo Carabelli vs Miomir Kecmanovic": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Corentin Moutet vs Hubert Hurkacz": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Daniel Merida Aguilar vs Marin Cilic": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Martin Landaluce vs Jack Draper": {
+      "home": 2.71,
+      "away": 1.47
+    },
+    "Juncheng Shang vs Lorenzo Sonego": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Mariano Navone vs Raphael Collignon": {
+      "home": 2.47,
+      "away": 1.55
+    },
+    "Nuno Borges vs Thanasi Kokkinakis": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Alycia Parks vs Viktorija Golubic": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Jessica Bouzas Maneiro vs Anna Bondár": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Cristina Bucsa vs Panna Udvardy": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Daria Snigur vs Yuliia Starodubtseva": {
+      "home": 1.47,
+      "away": 2.71
+    },
+    "Sara Bejlek vs Karolina Pliskova": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Maria Timofeeva vs Katerina Siniakova": {
+      "home": 2.1,
+      "away": 1.74
+    },
+    "Yulia Putintseva vs Liudmila Samsonova": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Maya Joint vs Tamara Korpatsch": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Darja Vidmanova vs Anhelina Kalinina": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Antonia Ruzic vs Magdalena Frech": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Ashlyn Krueger vs Lois Boisson": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Diane Parry vs Caroline Dolehide": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Caty McNally vs McCartney Kessler": {
+      "home": 2.1,
+      "away": 1.74
+    },
+    "Daria Kasatkina vs Zeynep Sonmez": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Tatjana Maria vs Dayana Yastremska": {
+      "home": 2.47,
+      "away": 1.55
+    },
+    "Elvina Kalieva vs Oleksandra Oliynykova": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Kamilla Rakhimova vs Kimberly Birrell": {
+      "home": 2.71,
+      "away": 1.47
+    },
+    "Katie Boulter vs Katie Volynets": {
+      "home": 1.48,
+      "away": 2.67
+    },
+    "Simona Waltert vs Petra Marcinko": {
+      "home": 1.9,
+      "away": 1.9
     }
   },
   "model_tips": {
@@ -3856,24 +4584,6 @@
     }
   },
   "model_evals": {
-    "Maria Sakkari vs Zeynep Sonmez": {
-      "p_a": 53.6,
-      "p_b": 46.4,
-      "implied_a": 50.9,
-      "implied_b": 49.1,
-      "odds_a": 0.0,
-      "odds_b": 0.0,
-      "source": "signal"
-    },
-    "Elise Mertens vs Anna Bondár": {
-      "p_a": 75.9,
-      "p_b": 24.1,
-      "implied_a": 72.0,
-      "implied_b": 28.0,
-      "odds_a": 1.4,
-      "odds_b": 3.6,
-      "source": "ensemble"
-    },
     "Aguiard Enzo vs Kotzen Andrew": {
       "p_a": 50.0,
       "p_b": 50.0,
@@ -4477,15 +5187,6 @@
       "odds_b": 1.56,
       "source": "ensemble"
     },
-    "Jessica Pegula vs Kamilla Rakhimova": {
-      "p_a": 98.0,
-      "p_b": 2.0,
-      "implied_a": 97.9,
-      "implied_b": 2.1,
-      "odds_a": 1.01,
-      "odds_b": 47.62,
-      "source": "ensemble"
-    },
     "Nikola Bartunkova vs Amanda Anisimova": {
       "p_a": 2.0,
       "p_b": 98.0,
@@ -4493,15 +5194,6 @@
       "implied_b": 97.9,
       "odds_a": 47.62,
       "odds_b": 1.01,
-      "source": "ensemble"
-    },
-    "Maya Joint vs Liudmila Samsonova": {
-      "p_a": 42.9,
-      "p_b": 57.1,
-      "implied_a": 42.9,
-      "implied_b": 57.1,
-      "odds_a": 2.22,
-      "odds_b": 1.67,
       "source": "ensemble"
     },
     "Brantmeier Reese vs Mandlik Elizabeth": {
@@ -4607,12 +5299,12 @@
       "status": "SHADOW_EVALUATED",
       "tier": "shadow",
       "tournament": "Brownsburg Challenger",
-      "p_a": 49.2,
-      "p_b": 50.8,
-      "implied_a": 42.1,
-      "implied_b": 57.9,
-      "odds_a": 2.2,
-      "odds_b": 1.6,
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 43.5,
+      "implied_b": 56.5,
+      "odds_a": 2.13,
+      "odds_b": 1.64,
       "source": "ensemble"
     },
     "Smith Colton vs Gill Felix": {
@@ -4711,9 +5403,9 @@
       "tournament": "Brownsburg Challenger",
       "p_a": 50.3,
       "p_b": 49.7,
-      "implied_a": 40.9,
-      "implied_b": 59.1,
-      "odds_a": 2.28,
+      "implied_a": 41.3,
+      "implied_b": 58.7,
+      "odds_a": 2.25,
       "odds_b": 1.58,
       "source": "elo"
     },
@@ -4723,22 +5415,10 @@
       "tournament": "Brownsburg Challenger",
       "p_a": 50.6,
       "p_b": 49.4,
-      "implied_a": 40.4,
-      "implied_b": 59.6,
-      "odds_a": 2.3,
+      "implied_a": 40.3,
+      "implied_b": 59.7,
+      "odds_a": 2.31,
       "odds_b": 1.56,
-      "source": "elo"
-    },
-    "Searle Henry vs Rottgering Mees": {
-      "status": "SHADOW_EVALUATED",
-      "tier": "shadow",
-      "tournament": "Brownsburg Challenger",
-      "p_a": 51.4,
-      "p_b": 48.6,
-      "implied_a": 58.0,
-      "implied_b": 42.0,
-      "odds_a": 1.6,
-      "odds_b": 2.21,
       "source": "elo"
     },
     "Faria Jaime vs Basilashvili Nikoloz": {
@@ -4782,39 +5462,43 @@
       "source": "ensemble"
     },
     "Mejia Nicolas vs Fearnley Jacob": {
-      "p_a": 49.2,
-      "p_b": 50.8,
-      "implied_a": 35.8,
-      "implied_b": 64.2,
-      "odds_a": 2.6,
-      "odds_b": 1.45,
+      "status": "ACTIONABLE",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 37.6,
+      "implied_b": 62.4,
+      "odds_a": 2.44,
+      "odds_b": 1.47,
       "source": "ensemble"
     },
     "Giron Marcos vs Rocha Henrique": {
-      "p_a": 49.2,
-      "p_b": 50.8,
-      "implied_a": 59.9,
-      "implied_b": 40.1,
-      "odds_a": 1.54,
-      "odds_b": 2.3,
+      "status": "ACTIONABLE",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 60.7,
+      "implied_b": 39.3,
+      "odds_a": 1.52,
+      "odds_b": 2.35,
       "source": "ensemble"
     },
     "Vukic Aleksandar vs Blanch Darwin": {
+      "status": "ACTIONABLE",
       "p_a": 45.7,
       "p_b": 54.3,
-      "implied_a": 56.3,
-      "implied_b": 43.7,
-      "odds_a": 1.64,
-      "odds_b": 2.11,
+      "implied_a": 59.6,
+      "implied_b": 40.4,
+      "odds_a": 1.55,
+      "odds_b": 2.29,
       "source": "elo"
     },
     "Lajal Mark vs Svrcina Dalibor": {
-      "p_a": 49.2,
-      "p_b": 50.8,
-      "implied_a": 44.2,
-      "implied_b": 55.8,
-      "odds_a": 2.07,
-      "odds_b": 1.64,
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 43.3,
+      "implied_b": 56.7,
+      "odds_a": 2.12,
+      "odds_b": 1.62,
       "source": "ensemble"
     },
     "Dodig Matej vs Yevseyev Denis": {
@@ -5007,14 +5691,14 @@
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Fenty Andrew",
       "odds_a": 1.4,
-      "odds_b": 2.7,
+      "odds_b": 2.67,
       "tier": "shadow"
     },
     "Vandecasteele Quinn vs Shelbayh Abedallah": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Vandecasteele Quinn",
-      "odds_a": 2.24,
-      "odds_b": 1.57,
+      "odds_a": 2.3,
+      "odds_b": 1.55,
       "tier": "shadow"
     },
     "McDonald Niels vs Ribeiro Eduardo": {
@@ -5051,28 +5735,28 @@
     "Schoenhaus Max vs Pucinelli De Almeida Matheus": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Pucinelli De Almeida Matheus",
-      "odds_a": 2.06,
-      "odds_b": 1.7,
+      "odds_a": 2.04,
+      "odds_b": 1.71,
       "tier": "shadow"
     },
     "Romano Filippo vs Torres Juan Bautista": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Romano Filippo, Torres Juan Bautista",
       "odds_a": 2.1,
-      "odds_b": 1.67,
+      "odds_b": 1.65,
       "tier": "shadow"
     },
     "Cecchinato Marco vs Forti Francesco": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Forti Francesco",
-      "odds_a": 1.48,
-      "odds_b": 2.43,
+      "odds_a": 1.55,
+      "odds_b": 2.3,
       "tier": "shadow"
     },
     "Sanchez Izquierdo Nikolas vs Mrva Maxim": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Mrva Maxim",
-      "odds_a": 1.66,
+      "odds_a": 1.64,
       "odds_b": 2.1,
       "tier": "shadow"
     },
@@ -5094,13 +5778,6 @@
       "reason": "Kein Elo-Profil (z.B. Qualifier): Pankin Semen",
       "odds_a": 1.61,
       "odds_b": 2.15,
-      "tier": "shadow"
-    },
-    "Zhukayev Beibit vs Alkaya Mert": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Alkaya Mert",
-      "odds_a": 2.12,
-      "odds_b": 1.66,
       "tier": "shadow"
     },
     "Lazarov George vs Pennaforti Gabriele": {
@@ -5181,18 +5858,6 @@
       "odds_a": 1.4,
       "odds_b": 2.7
     },
-    "Nagel Arthur vs Von Der Schulenburg Jeffrey": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Nagel Arthur, Von Der Schulenburg Jeffrey",
-      "odds_a": 2.02,
-      "odds_b": 1.69
-    },
-    "Munk Mesa Bernardo vs Henning Philip": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Munk Mesa Bernardo, Henning Philip",
-      "odds_a": 5.9,
-      "odds_b": 1.1
-    },
     "Sakellaridis Dimitris vs Nesterov Petr": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Sakellaridis Dimitris, Nesterov Petr",
@@ -5217,36 +5882,6 @@
       "odds_a": 5.7,
       "odds_b": 1.1
     },
-    "Petrovic Drazen vs Ochi Makoto": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Ochi Makoto",
-      "odds_a": 2.25,
-      "odds_b": 1.57
-    },
-    "Torcq Benoit vs Loge Jack": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Torcq Benoit, Loge Jack",
-      "odds_a": 3.2,
-      "odds_b": 1.29
-    },
-    "Pietri Benjamin vs McCormick Tristan": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Pietri Benjamin, McCormick Tristan",
-      "odds_a": 1.89,
-      "odds_b": 1.8
-    },
-    "Leal Rodrigo vs Pereira Tiago": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Leal Rodrigo",
-      "odds_a": 8.5,
-      "odds_b": 1.05
-    },
-    "Rocha Francisco vs Cacao Tiago": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Rocha Francisco, Cacao Tiago",
-      "odds_a": 2.1,
-      "odds_b": 1.67
-    },
     "Perez Navarro Pablo vs Andaloro Fabrizio": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Perez Navarro Pablo, Andaloro Fabrizio",
@@ -5262,14 +5897,14 @@
     "Wessels Louis vs Waldner Niklas": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Waldner Niklas",
-      "odds_a": 1.24,
-      "odds_b": 4.11
+      "odds_a": 1.1,
+      "odds_b": 6.0
     },
     "Casanova Andrin vs Zahraj Patrick": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Casanova Andrin",
-      "odds_a": 2.7,
-      "odds_b": 1.38
+      "odds_a": 2.73,
+      "odds_b": 1.39
     },
     "Piatti Rocco vs Morais Diogo": {
       "status": "UNKNOWN_PLAYER",
@@ -5280,20 +5915,20 @@
     "Hipfl Nico vs Hunziker Alessandro": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Hipfl Nico, Hunziker Alessandro",
-      "odds_a": 1.36,
-      "odds_b": 2.76
+      "odds_a": 1.53,
+      "odds_b": 2.3
     },
     "Roberts Justin vs Sarr Jelani": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Roberts Justin, Sarr Jelani",
-      "odds_a": 1.73,
-      "odds_b": 2.0
+      "odds_a": 2.45,
+      "odds_b": 1.49
     },
     "Reyniak Matias vs Izquierdo Luque Rafael": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Reyniak Matias, Izquierdo Luque Rafael",
-      "odds_a": 3.77,
-      "odds_b": 1.23
+      "odds_a": 3.15,
+      "odds_b": 1.28
     },
     "Magadan Alan vs Sheldon Max": {
       "status": "UNKNOWN_PLAYER",
@@ -5310,8 +5945,8 @@
     "Flores Jesse vs Poling Karl": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Flores Jesse, Poling Karl",
-      "odds_a": 3.28,
-      "odds_b": 1.29
+      "odds_a": 2.9,
+      "odds_b": 1.35
     },
     "Senn Nicola vs Staeheli Luca": {
       "status": "UNKNOWN_PLAYER",
@@ -5322,50 +5957,50 @@
     "Honda Naoya vs Filin Nikita": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Honda Naoya, Filin Nikita",
-      "odds_a": 1.92,
-      "odds_b": 1.77
+      "odds_a": 1.95,
+      "odds_b": 1.75
     },
     "Bowers Tyler vs Vithoontien Leo": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Bowers Tyler, Vithoontien Leo",
-      "odds_a": 3.25,
-      "odds_b": 1.29
+      "odds_a": 3.75,
+      "odds_b": 1.23
     },
     "Okonkwo Alexander vs Kirchheimer Strong": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Okonkwo Alexander",
       "odds_a": 2.2,
-      "odds_b": 1.55
+      "odds_b": 1.6
     },
     "Bynoe Evan vs Peck Joshua": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Bynoe Evan, Peck Joshua",
-      "odds_a": 1.4,
-      "odds_b": 2.7
+      "odds_a": 1.42,
+      "odds_b": 2.75
     },
     "McCabe James vs Zamora Noah": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Zamora Noah",
-      "odds_a": 1.29,
-      "odds_b": 3.2
+      "odds_a": 1.27,
+      "odds_b": 3.4
     },
     "Alvarez Valdes Luis Carlos vs Caldwell Simon": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Alvarez Valdes Luis Carlos, Caldwell Simon",
       "odds_a": 1.1,
-      "odds_b": 5.88
+      "odds_b": 6.0
     },
     "Mesarovic Marko vs Okonkwo Oliver": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Mesarovic Marko, Okonkwo Oliver",
-      "odds_a": 1.94,
-      "odds_b": 1.75
+      "odds_a": 1.93,
+      "odds_b": 1.79
     },
     "Nefve Axel vs Gorzny Sebastian": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Nefve Axel, Gorzny Sebastian",
-      "odds_a": 4.2,
-      "odds_b": 1.19
+      "odds_a": 3.88,
+      "odds_b": 1.23
     },
     "Dellavedova Matthew vs Sarksian Daniil": {
       "status": "UNKNOWN_PLAYER",
@@ -5424,24 +6059,6 @@
       "odds_a": 1.39,
       "odds_b": 2.73,
       "source": "elo"
-    },
-    "Hudd Emile vs Molder Markus": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Hudd Emile, Molder Markus",
-      "odds_a": 1.59,
-      "odds_b": 2.25
-    },
-    "Cho Seung Woo vs Jasika Omar": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Cho Seung Woo",
-      "odds_a": 4.78,
-      "odds_b": 1.16
-    },
-    "Azkara Arda vs Tamm Kristjan": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Azkara Arda, Tamm Kristjan",
-      "odds_a": 1.25,
-      "odds_b": 3.61
     },
     "Shearer Matthew vs Thompson Kai": {
       "status": "UNKNOWN_PLAYER",
@@ -5533,23 +6150,11 @@
       "odds_a": 3.62,
       "odds_b": 1.25
     },
-    "Brancatelli Gabriele Thomas vs Azoides Demetris": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Brancatelli Gabriele Thomas, Azoides Demetris",
-      "odds_a": 3.08,
-      "odds_b": 1.32
-    },
     "Strombachs Robert vs Berge Nourescu Alejandro Mateo": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Strombachs Robert, Berge Nourescu Alejandro Mateo",
       "odds_a": 1.08,
       "odds_b": 6.5
-    },
-    "Lalami Laaroussi Younes vs Spadola Alessandro": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Spadola Alessandro",
-      "odds_a": 1.95,
-      "odds_b": 1.73
     },
     "Chazal Maxime vs Mathes Kaspar": {
       "status": "UNKNOWN_PLAYER",
@@ -5562,12 +6167,6 @@
       "reason": "Kein Elo-Profil (z.B. Qualifier): Salazar Daniel",
       "odds_a": 1.47,
       "odds_b": 2.58
-    },
-    "Rojas Carles vs Misasi Giannicola": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Rojas Carles, Misasi Giannicola",
-      "odds_a": 3.52,
-      "odds_b": 1.25
     },
     "Sperle John vs Lagerbohm Linus": {
       "status": "UNKNOWN_PLAYER",
@@ -5586,18 +6185,6 @@
       "reason": "Kein Elo-Profil (z.B. Qualifier): Tenti Fermin, Hebhang Balan Alexandru Toubi",
       "odds_a": 1.39,
       "odds_b": 3.32
-    },
-    "Ciocca Giovanni vs Monzon Ignacio": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Ciocca Giovanni, Monzon Ignacio",
-      "odds_a": 2.85,
-      "odds_b": 1.35
-    },
-    "Giraldi Carlos vs Reinhard Bengt Johan": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Giraldi Carlos, Reinhard Bengt Johan",
-      "odds_a": 1.95,
-      "odds_b": 1.75
     },
     "Friberg Karl vs Lapalu Valentin": {
       "status": "UNKNOWN_PLAYER",
@@ -5641,29 +6228,11 @@
       "odds_a": 1.57,
       "odds_b": 2.25
     },
-    "Mridha Jonathan vs Ehrenschneider Nino": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Mridha Jonathan, Ehrenschneider Nino",
-      "odds_a": 1.85,
-      "odds_b": 1.83
-    },
-    "Soderqvist Filip vs Rejchtman Vinciguerra William": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Soderqvist Filip",
-      "odds_a": 2.1,
-      "odds_b": 1.65
-    },
     "Van Sambeek Fons vs De Lange Pieter": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Van Sambeek Fons, De Lange Pieter",
       "odds_a": 2.55,
       "odds_b": 1.43
-    },
-    "Haupt Henri vs Slavic Nikola": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Haupt Henri, Slavic Nikola",
-      "odds_a": 2.24,
-      "odds_b": 1.56
     },
     "Berto Lorenzo vs Rossi Leonardo": {
       "status": "UNKNOWN_PLAYER",
@@ -5677,17 +6246,11 @@
       "odds_a": 2.17,
       "odds_b": 1.6
     },
-    "Tremblay Dorian vs Jorgensen Sebastian Grundtvig": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Tremblay Dorian, Jorgensen Sebastian Grundtvig",
-      "odds_a": 2.7,
-      "odds_b": 1.38
-    },
     "Gschwendtner Jeremy vs Drayton Thomas": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Gschwendtner Jeremy, Drayton Thomas",
-      "odds_a": 1.61,
-      "odds_b": 2.18
+      "odds_a": 1.58,
+      "odds_b": 2.21
     },
     "Zanellato Nicolas vs Otegui Juan Bautista": {
       "status": "UNKNOWN_PLAYER",
@@ -5695,34 +6258,22 @@
       "odds_a": 1.25,
       "odds_b": 3.68
     },
-    "Pesino Santiago vs Aguilar Cardozo Joaquin": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Pesino Santiago, Aguilar Cardozo Joaquin",
-      "odds_a": 3.85,
-      "odds_b": 1.2
-    },
     "De La Fuente Santiago vs Gagliardo Lorenzo": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): De La Fuente Santiago, Gagliardo Lorenzo",
       "odds_a": 2.0,
       "odds_b": 1.72
     },
-    "Hendrikx Jim vs Boosarawongse Thanaphat": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Hendrikx Jim, Boosarawongse Thanaphat",
-      "odds_a": 3.35,
-      "odds_b": 1.25
-    },
     "Karpinski Szymon vs Majchrzak Adam": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Karpinski Szymon, Majchrzak Adam",
       "odds_a": 3.15,
-      "odds_b": 1.31
+      "odds_b": 1.3
     },
     "Hohmann Ronald vs Cigarran Thiago": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Hohmann Ronald, Cigarran Thiago",
-      "odds_a": 2.09,
+      "odds_a": 2.06,
       "odds_b": 1.67
     },
     "Tosetto Rafael vs Monferrer Ezequiel": {
@@ -5740,8 +6291,8 @@
     "Exsted Maxwell vs Villalon Nicolas": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Exsted Maxwell, Villalon Nicolas",
-      "odds_a": 1.44,
-      "odds_b": 2.62
+      "odds_a": 1.7,
+      "odds_b": 2.0
     },
     "Vankan Marlon vs Nittmann Yannic": {
       "status": "UNKNOWN_PLAYER",
@@ -5758,8 +6309,8 @@
     "Held Jaron vs Wiedenmann Luca": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Held Jaron, Wiedenmann Luca",
-      "odds_a": 4.9,
-      "odds_b": 1.15
+      "odds_a": 5.0,
+      "odds_b": 1.14
     },
     "Villanueva Gonzalo vs Bruna Nicolas": {
       "status": "UNKNOWN_PLAYER",
@@ -5841,45 +6392,39 @@
     },
     "Wong Coleman vs Virtanen Otto": {
       "status": "EVALUATED_NO_BET",
-      "p_a": 49.2,
-      "p_b": 50.8,
-      "implied_a": 44.8,
-      "implied_b": 55.2,
-      "odds_a": 2.06,
-      "odds_b": 1.67,
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 45.3,
+      "implied_b": 54.7,
+      "odds_a": 2.04,
+      "odds_b": 1.69,
       "source": "ensemble"
     },
     "Shevchenko Alexander vs O'Connell Christopher": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): O'Connell Christopher",
-      "odds_a": 2.08,
-      "odds_b": 1.65
+      "odds_a": 1.66,
+      "odds_b": 2.1
     },
     "Van Assche Luca vs Lajovic Dusan": {
       "status": "ACTIONABLE",
-      "p_a": 49.2,
-      "p_b": 50.8,
-      "implied_a": 60.6,
-      "implied_b": 39.4,
-      "odds_a": 1.5,
-      "odds_b": 2.31,
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 63.5,
+      "implied_b": 36.5,
+      "odds_a": 1.44,
+      "odds_b": 2.5,
       "source": "ensemble"
     },
     "Sakellaridis Stefanos vs Droguet Titouan": {
       "status": "EVALUATED_NO_BET",
       "p_a": 47.3,
       "p_b": 52.7,
-      "implied_a": 42.1,
-      "implied_b": 57.9,
-      "odds_a": 2.2,
-      "odds_b": 1.6,
+      "implied_a": 39.5,
+      "implied_b": 60.5,
+      "odds_a": 2.34,
+      "odds_b": 1.53,
       "source": "elo"
-    },
-    "Shimabukuro Sho vs Wolf Jeffrey John": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Wolf Jeffrey John",
-      "odds_a": 2.1,
-      "odds_b": 1.65
     },
     "Alexander Shevchenko vs Christopher O'Connell": {
       "status": "UNKNOWN_PLAYER",
@@ -6053,17 +6598,546 @@
       "odds_a": 1.29,
       "odds_b": 3.55
     },
-    "Lakshmanan Aryan vs Juszczak Pawel": {
+    "Haita Stefan Horia vs Djuric Branko": {
       "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Lakshmanan Aryan, Juszczak Pawel",
-      "odds_a": 2.48,
-      "odds_b": 1.51
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Haita Stefan Horia",
+      "odds_a": 2.18,
+      "odds_b": 1.6
     },
-    "Mizerski Eli vs Solarski Jakub": {
+    "Henning Philip vs Munk Mesa Bernardo": {
       "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Mizerski Eli, Solarski Jakub",
-      "odds_a": 2.8,
-      "odds_b": 1.36
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Henning Philip, Munk Mesa Bernardo",
+      "odds_a": 1.1,
+      "odds_b": 6.0
+    },
+    "Radjenovic Vuk vs Chestovaliev Samuil": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Radjenovic Vuk, Chestovaliev Samuil",
+      "odds_a": 1.22,
+      "odds_b": 5.0
+    },
+    "Obradovic Dusan vs Jankanj Vlado": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Obradovic Dusan, Jankanj Vlado",
+      "odds_a": 1.4,
+      "odds_b": 2.7
+    },
+    "Tamm Kristjan vs Azkara Arda": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Tamm Kristjan, Azkara Arda",
+      "odds_a": 3.61,
+      "odds_b": 1.25
+    },
+    "Elamin Ammar vs Amarandei Daniel Aleksandar": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Elamin Ammar, Amarandei Daniel Aleksandar",
+      "odds_a": 1.74,
+      "odds_b": 1.97
+    },
+    "Bilardo Jacopo vs Garbero Filippo Francesco": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Bilardo Jacopo, Garbero Filippo Francesco",
+      "odds_a": 1.62,
+      "odds_b": 2.13
+    },
+    "Majdandzic Oliver vs Lopez Morillo Imanol": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Majdandzic Oliver, Lopez Morillo Imanol",
+      "odds_a": 3.05,
+      "odds_b": 1.3
+    },
+    "Ryden Victor vs Lieberman Henry": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Ryden Victor, Lieberman Henry",
+      "odds_a": 2.1,
+      "odds_b": 1.65
+    },
+    "Edengren Kevin vs Borg Leo": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Edengren Kevin",
+      "odds_a": 2.77,
+      "odds_b": 1.39
+    },
+    "Jasika Omar vs Cho Seung Woo": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Cho Seung Woo",
+      "odds_a": 1.09,
+      "odds_b": 6.0
+    },
+    "Ahti Vesa vs Yilmaz Kerem": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Ahti Vesa, Yilmaz Kerem",
+      "odds_a": 4.62,
+      "odds_b": 1.16
+    },
+    "Lee Duck Hee vs Huang Tsung-Hao": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Lee Duck Hee, Huang Tsung-Hao",
+      "odds_a": 2.85,
+      "odds_b": 1.38
+    },
+    "Juszczak Pawel vs Lakshmanan Aryan": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Juszczak Pawel, Lakshmanan Aryan",
+      "odds_a": 1.5,
+      "odds_b": 2.58
+    },
+    "Miletich Iannis vs Babinciuc Ilie": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Miletich Iannis, Babinciuc Ilie",
+      "odds_a": 1.05,
+      "odds_b": 8.0
+    },
+    "Reinhard Bengt Johan vs Giraldi Carlos": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Reinhard Bengt Johan, Giraldi Carlos",
+      "odds_a": 1.68,
+      "odds_b": 2.03
+    },
+    "Weightman Oscar vs Ojakaar Oliver": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Weightman Oscar, Ojakaar Oliver",
+      "odds_a": 2.0,
+      "odds_b": 1.71
+    },
+    "Denis Shapovalov vs Adrian Mannarino": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 61.5,
+      "p_b": 38.5,
+      "implied_a": 61.4,
+      "implied_b": 38.6,
+      "odds_a": 1.55,
+      "odds_b": 2.47,
+      "source": "ensemble"
+    },
+    "Aleksandar Kovacevic vs Karen Khachanov": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 35.1,
+      "p_b": 64.9,
+      "implied_a": 35.2,
+      "implied_b": 64.8,
+      "odds_a": 2.71,
+      "odds_b": 1.47,
+      "source": "ensemble"
+    },
+    "Alex Michelsen vs Jesper De Jong": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 64.9,
+      "p_b": 35.1,
+      "implied_a": 64.8,
+      "implied_b": 35.2,
+      "odds_a": 1.47,
+      "odds_b": 2.71,
+      "source": "ensemble"
+    },
+    "Botic van de Zandschulp vs Tallon Griekspoor": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Camilo Ugo Carabelli vs Miomir Kecmanovic": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Corentin Moutet vs Hubert Hurkacz": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Daniel Merida Aguilar vs Marin Cilic": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Martin Landaluce vs Jack Draper": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 35.1,
+      "p_b": 64.9,
+      "implied_a": 35.2,
+      "implied_b": 64.8,
+      "odds_a": 2.71,
+      "odds_b": 1.47,
+      "source": "ensemble"
+    },
+    "Juncheng Shang vs Lorenzo Sonego": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Mariano Navone vs Raphael Collignon": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 38.5,
+      "p_b": 61.5,
+      "implied_a": 38.6,
+      "implied_b": 61.4,
+      "odds_a": 2.47,
+      "odds_b": 1.55,
+      "source": "ensemble"
+    },
+    "Nuno Borges vs Thanasi Kokkinakis": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Alycia Parks vs Viktorija Golubic": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Jessica Bouzas Maneiro vs Anna Bondár": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Cristina Bucsa vs Panna Udvardy": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Daria Snigur vs Yuliia Starodubtseva": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 64.9,
+      "p_b": 35.1,
+      "implied_a": 64.8,
+      "implied_b": 35.2,
+      "odds_a": 1.47,
+      "odds_b": 2.71,
+      "source": "ensemble"
+    },
+    "Sara Bejlek vs Karolina Pliskova": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Maria Timofeeva vs Katerina Siniakova": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 45.4,
+      "p_b": 54.6,
+      "implied_a": 45.3,
+      "implied_b": 54.7,
+      "odds_a": 2.1,
+      "odds_b": 1.74,
+      "source": "ensemble"
+    },
+    "Yulia Putintseva vs Liudmila Samsonova": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Maya Joint vs Tamara Korpatsch": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Darja Vidmanova vs Anhelina Kalinina": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Antonia Ruzic vs Magdalena Frech": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Ashlyn Krueger vs Lois Boisson": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Diane Parry vs Caroline Dolehide": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Caty McNally vs McCartney Kessler": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 45.4,
+      "p_b": 54.6,
+      "implied_a": 45.3,
+      "implied_b": 54.7,
+      "odds_a": 2.1,
+      "odds_b": 1.74,
+      "source": "ensemble"
+    },
+    "Daria Kasatkina vs Zeynep Sonmez": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Tatjana Maria vs Dayana Yastremska": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 38.5,
+      "p_b": 61.5,
+      "implied_a": 38.6,
+      "implied_b": 61.4,
+      "odds_a": 2.47,
+      "odds_b": 1.55,
+      "source": "ensemble"
+    },
+    "Elena Gabriela Ruse vs Magda Linette": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Elena Gabriela Ruse",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Elvina Kalieva vs Oleksandra Oliynykova": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Kamilla Rakhimova vs Kimberly Birrell": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 35.1,
+      "p_b": 64.9,
+      "implied_a": 35.2,
+      "implied_b": 64.8,
+      "odds_a": 2.71,
+      "odds_b": 1.47,
+      "source": "ensemble"
+    },
+    "Katie Boulter vs Katie Volynets": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 64.3,
+      "p_b": 35.7,
+      "implied_a": 64.3,
+      "implied_b": 35.7,
+      "odds_a": 1.48,
+      "odds_b": 2.67,
+      "source": "ensemble"
+    },
+    "Taylor Townsend vs Maria Camila Osorio Serrano": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Maria Camila Osorio Serrano",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Simona Waltert vs Petra Marcinko": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 50.0,
+      "implied_b": 50.0,
+      "odds_a": 1.9,
+      "odds_b": 1.9,
+      "source": "ensemble"
+    },
+    "Rottgering Mees vs Searle Henry": {
+      "status": "SHADOW_EVALUATED",
+      "tier": "shadow",
+      "tournament": "Brownsburg Challenger",
+      "p_a": 48.6,
+      "p_b": 51.4,
+      "implied_a": 40.8,
+      "implied_b": 59.2,
+      "odds_a": 2.25,
+      "odds_b": 1.55,
+      "source": "elo"
+    },
+    "Alkaya Mert vs Zhukayev Beibit": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Alkaya Mert",
+      "odds_a": 1.6,
+      "odds_b": 2.16,
+      "tier": "shadow"
+    },
+    "Von Der Schulenburg Jeffrey vs Nagel Arthur": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Von Der Schulenburg Jeffrey, Nagel Arthur",
+      "odds_a": 2.08,
+      "odds_b": 1.66
+    },
+    "Cacao Tiago vs Rocha Francisco": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Cacao Tiago, Rocha Francisco",
+      "odds_a": 1.67,
+      "odds_b": 2.1
+    },
+    "McCormick Tristan vs Pietri Benjamin": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): McCormick Tristan, Pietri Benjamin",
+      "odds_a": 1.9,
+      "odds_b": 1.79
+    },
+    "Pereira Tiago vs Leal Rodrigo": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Leal Rodrigo",
+      "odds_a": 1.22,
+      "odds_b": 3.72
+    },
+    "Loge Jack vs Torcq Benoit": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Loge Jack, Torcq Benoit",
+      "odds_a": 1.44,
+      "odds_b": 2.53
+    },
+    "Ochi Makoto vs Petrovic Drazen": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Ochi Makoto",
+      "odds_a": 1.57,
+      "odds_b": 2.25
+    },
+    "Molder Markus vs Hudd Emile": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Molder Markus, Hudd Emile",
+      "odds_a": 2.46,
+      "odds_b": 1.5
+    },
+    "Azoides Demetris vs Brancatelli Gabriele Thomas": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Azoides Demetris, Brancatelli Gabriele Thomas",
+      "odds_a": 1.29,
+      "odds_b": 3.37
+    },
+    "Spadola Alessandro vs Lalami Laaroussi Younes": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Spadola Alessandro",
+      "odds_a": 1.99,
+      "odds_b": 1.73
+    },
+    "Monzon Ignacio vs Ciocca Giovanni": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Monzon Ignacio, Ciocca Giovanni",
+      "odds_a": 1.47,
+      "odds_b": 2.52
+    },
+    "Solarski Jakub vs Mizerski Eli": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Solarski Jakub, Mizerski Eli",
+      "odds_a": 1.36,
+      "odds_b": 2.8
+    },
+    "Misasi Giannicola vs Rojas Carles": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Misasi Giannicola, Rojas Carles",
+      "odds_a": 1.2,
+      "odds_b": 4.0
+    },
+    "Ehrenschneider Nino vs Mridha Jonathan": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Ehrenschneider Nino, Mridha Jonathan",
+      "odds_a": 1.85,
+      "odds_b": 1.83
+    },
+    "Jorgensen Sebastian Grundtvig vs Tremblay Dorian": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Jorgensen Sebastian Grundtvig, Tremblay Dorian",
+      "odds_a": 1.37,
+      "odds_b": 2.85
+    },
+    "Slavic Nikola vs Haupt Henri": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Slavic Nikola, Haupt Henri",
+      "odds_a": 1.63,
+      "odds_b": 2.12
+    },
+    "Rejchtman Vinciguerra William vs Soderqvist Filip": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Soderqvist Filip",
+      "odds_a": 1.33,
+      "odds_b": 3.0
+    },
+    "Aguilar Cardozo Joaquin vs Pesino Santiago": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Aguilar Cardozo Joaquin, Pesino Santiago",
+      "odds_a": 1.11,
+      "odds_b": 5.8
+    },
+    "Boosarawongse Thanaphat vs Hendrikx Jim": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Boosarawongse Thanaphat, Hendrikx Jim",
+      "odds_a": 1.29,
+      "odds_b": 3.88
     }
   },
   "football": [],
@@ -6081,13 +7155,14 @@
       "stake_pct": 15.0,
       "confidence": "HIGH",
       "n_models_agree": 0,
-      "generated_at": "2026-08-12T10:16:44Z",
+      "generated_at": "2026-08-12T16:00:52Z",
+      "league": "atp",
       "display_priority": "top",
       "initial_odds": 2.73,
       "initial_ev_pct": 37.2,
       "odds_history": [
         {
-          "ts": "2026-08-12T07:16:40Z",
+          "ts": "2026-08-12T16:00:52Z",
           "odds": 2.73,
           "source": "scan"
         }
@@ -6107,13 +7182,14 @@
       "stake_pct": 15.0,
       "confidence": "HIGH",
       "n_models_agree": 0,
-      "generated_at": "2026-08-12T10:16:44Z",
+      "generated_at": "2026-08-12T16:00:52Z",
+      "league": "atp",
       "display_priority": "top",
       "initial_odds": 2.88,
       "initial_ev_pct": 37.2,
       "odds_history": [
         {
-          "ts": "2026-08-12T07:16:40Z",
+          "ts": "2026-08-12T16:00:52Z",
           "odds": 2.88,
           "source": "scan"
         }
@@ -6133,13 +7209,14 @@
       "stake_pct": 15.0,
       "confidence": "HIGH",
       "n_models_agree": 0,
-      "generated_at": "2026-08-12T10:16:44Z",
+      "generated_at": "2026-08-12T16:00:52Z",
+      "league": "atp",
       "display_priority": "top",
       "initial_odds": 2.63,
       "initial_ev_pct": 33.5,
       "odds_history": [
         {
-          "ts": "2026-08-12T07:16:40Z",
+          "ts": "2026-08-12T16:00:52Z",
           "odds": 2.63,
           "source": "scan"
         }
@@ -6159,165 +7236,19 @@
       "stake_pct": 15.0,
       "confidence": "HIGH",
       "n_models_agree": 0,
-      "generated_at": "2026-08-12T10:16:44Z",
+      "generated_at": "2026-08-12T16:00:52Z",
+      "league": "atp",
       "display_priority": "top",
       "initial_odds": 2.62,
       "initial_ev_pct": 33.0,
       "odds_history": [
         {
-          "ts": "2026-08-12T07:16:40Z",
+          "ts": "2026-08-12T16:00:52Z",
           "odds": 2.62,
           "source": "scan"
         }
       ],
       "signal_status": "UNREFRESHABLE"
-    },
-    {
-      "signal_id": "e1bb3a16f1fb",
-      "sport": "tennis",
-      "match": "Luca Van Assche vs Dusan Lajovic",
-      "market": "away",
-      "odds": 2.58,
-      "model_prob": 50.8,
-      "fair_prob": 35.7,
-      "ev_pct": 31.0,
-      "stake_eur": 15.0,
-      "stake_pct": 15.0,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "generated_at": "2026-08-12T10:16:44Z",
-      "tour": "atp",
-      "kickoff": "2026-08-12T15:30:00Z",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "display_priority": "top",
-      "initial_odds": 2.58,
-      "initial_ev_pct": 31.0,
-      "odds_history": [
-        {
-          "ts": "2026-08-12T10:16:44Z",
-          "odds": 2.58,
-          "source": "scan"
-        },
-        {
-          "ts": "2026-08-12T11:23:07Z",
-          "odds": 2.56,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T11:46:55Z",
-          "odds": 2.56,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T12:07:48Z",
-          "odds": 2.56,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T12:22:18Z",
-          "odds": 2.56,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T12:36:18Z",
-          "odds": 2.57,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T12:49:57Z",
-          "odds": 2.57,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T13:03:40Z",
-          "odds": 2.57,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T13:16:03Z",
-          "odds": 2.57,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T13:30:24Z",
-          "odds": 2.57,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T13:44:58Z",
-          "odds": 2.58,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T13:59:08Z",
-          "odds": 2.58,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T14:13:10Z",
-          "odds": 2.49,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T14:26:52Z",
-          "odds": 2.49,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T14:34:02Z",
-          "odds": 2.49,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T14:41:00Z",
-          "odds": 2.49,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T14:47:52Z",
-          "odds": 2.52,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T14:55:07Z",
-          "odds": 2.52,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T15:01:56Z",
-          "odds": 2.52,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T15:08:50Z",
-          "odds": 2.52,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T15:16:01Z",
-          "odds": 2.52,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T15:22:51Z",
-          "odds": 2.5,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T15:30:04Z",
-          "odds": 2.5,
-          "source": "tennis_explorer"
-        }
-      ],
-      "current_odds": 2.5,
-      "current_ev_pct": 27.0,
-      "odds_ts": "2026-08-12T15:30:04Z",
-      "odds_source": "tennis_explorer",
-      "odds_fetch_tier": 2,
-      "signal_status": "STARTED"
     },
     {
       "signal_id": "d09136f4192f",
@@ -6332,13 +7263,14 @@
       "stake_pct": 15.0,
       "confidence": "HIGH",
       "n_models_agree": 0,
-      "generated_at": "2026-08-12T10:16:44Z",
-      "display_priority": "extra",
+      "generated_at": "2026-08-12T16:00:52Z",
+      "league": "atp",
+      "display_priority": "top",
       "initial_odds": 2.56,
       "initial_ev_pct": 30.0,
       "odds_history": [
         {
-          "ts": "2026-08-12T07:16:40Z",
+          "ts": "2026-08-12T16:00:52Z",
           "odds": 2.56,
           "source": "scan"
         }
@@ -6346,45 +7278,79 @@
       "signal_status": "UNREFRESHABLE"
     },
     {
-      "signal_id": "562583852b46",
+      "signal_id": "37d58bcec038",
       "sport": "tennis",
-      "match": "Elina Svitolina vs Iga Swiatek",
-      "market": "home",
-      "odds": 2.46,
-      "model_prob": 49.2,
-      "fair_prob": 37.7,
-      "ev_pct": 21.1,
+      "match": "Van Assche Luca vs Lajovic Dusan",
+      "market": "away",
+      "odds": 2.5,
+      "model_prob": 50.0,
+      "fair_prob": 36.5,
+      "ev_pct": 25.0,
       "stake_eur": 15.0,
       "stake_pct": 15.0,
       "confidence": "HIGH",
       "n_models_agree": 0,
-      "generated_at": "2026-08-12T10:16:44Z",
-      "form_a": [
-        "L",
-        "L",
-        "L",
-        "L",
-        "W"
-      ],
-      "form_b": [
-        "L",
-        "W",
-        "W",
-        "W"
-      ],
-      "tour": "wta",
-      "kickoff": "2026-08-12T23:00:00Z",
-      "tournament": "Canadian Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
+      "generated_at": "2026-08-12T16:00:52Z",
+      "league": "atp",
       "display_priority": "extra",
-      "initial_odds": 2.47,
-      "initial_ev_pct": 21.6,
+      "initial_odds": 2.5,
+      "initial_ev_pct": 25.0,
       "odds_history": [
         {
-          "ts": "2026-08-12T07:16:40Z",
-          "odds": 2.47,
+          "ts": "2026-08-12T16:00:52Z",
+          "odds": 2.5,
+          "source": "scan"
+        }
+      ]
+    },
+    {
+      "signal_id": "ae51bd7d95c4",
+      "sport": "tennis",
+      "match": "Vukic Aleksandar vs Blanch Darwin",
+      "market": "away",
+      "odds": 2.29,
+      "model_prob": 54.3,
+      "fair_prob": 40.4,
+      "ev_pct": 24.3,
+      "stake_eur": 15.0,
+      "stake_pct": 15.0,
+      "confidence": "HIGH",
+      "n_models_agree": 0,
+      "generated_at": "2026-08-12T16:00:52Z",
+      "league": "atp",
+      "display_priority": "extra",
+      "initial_odds": 2.29,
+      "initial_ev_pct": 24.3,
+      "odds_history": [
+        {
+          "ts": "2026-08-12T16:00:52Z",
+          "odds": 2.29,
+          "source": "scan"
+        }
+      ]
+    },
+    {
+      "signal_id": "0d4242ec1fb7",
+      "sport": "tennis",
+      "match": "Mejia Nicolas vs Fearnley Jacob",
+      "market": "home",
+      "odds": 2.44,
+      "model_prob": 50.0,
+      "fair_prob": 37.6,
+      "ev_pct": 22.0,
+      "stake_eur": 15.0,
+      "stake_pct": 15.0,
+      "confidence": "HIGH",
+      "n_models_agree": 0,
+      "generated_at": "2026-08-12T16:00:52Z",
+      "league": "atp",
+      "display_priority": "extra",
+      "initial_odds": 2.44,
+      "initial_ev_pct": 22.0,
+      "odds_history": [
+        {
+          "ts": "2026-08-12T16:00:52Z",
+          "odds": 2.44,
           "source": "scan"
         },
         {
@@ -6433,18 +7399,44 @@
       "stake_pct": 15.0,
       "confidence": "HIGH",
       "n_models_agree": 0,
-      "generated_at": "2026-08-12T10:16:44Z",
+      "generated_at": "2026-08-12T16:00:52Z",
+      "league": "atp",
       "display_priority": "extra",
       "initial_odds": 2.41,
       "initial_ev_pct": 19.3,
       "odds_history": [
         {
-          "ts": "2026-08-12T07:16:40Z",
+          "ts": "2026-08-12T16:00:52Z",
           "odds": 2.41,
           "source": "scan"
         }
-      ],
-      "signal_status": "UNREFRESHABLE"
+      ]
+    },
+    {
+      "signal_id": "fac841aba3bb",
+      "sport": "tennis",
+      "match": "Giron Marcos vs Rocha Henrique",
+      "market": "away",
+      "odds": 2.35,
+      "model_prob": 50.0,
+      "fair_prob": 39.3,
+      "ev_pct": 17.5,
+      "stake_eur": 15.0,
+      "stake_pct": 15.0,
+      "confidence": "HIGH",
+      "n_models_agree": 0,
+      "generated_at": "2026-08-12T16:00:52Z",
+      "league": "atp",
+      "display_priority": "extra",
+      "initial_odds": 2.35,
+      "initial_ev_pct": 17.5,
+      "odds_history": [
+        {
+          "ts": "2026-08-12T16:00:52Z",
+          "odds": 2.35,
+          "source": "scan"
+        }
+      ]
     },
     {
       "signal_id": "57e180604957",
@@ -6459,13 +7451,14 @@
       "stake_pct": 14.5,
       "confidence": "HIGH",
       "n_models_agree": 0,
-      "generated_at": "2026-08-12T10:16:44Z",
+      "generated_at": "2026-08-12T16:00:52Z",
+      "league": "atp",
       "display_priority": "extra",
       "initial_odds": 2.3,
       "initial_ev_pct": 16.8,
       "odds_history": [
         {
-          "ts": "2026-08-12T07:16:40Z",
+          "ts": "2026-08-12T16:00:52Z",
           "odds": 2.3,
           "source": "scan"
         }
@@ -6485,33 +7478,60 @@
       "stake_pct": 12.0,
       "confidence": "MEDIUM",
       "n_models_agree": 0,
-      "generated_at": "2026-08-12T10:16:44Z",
+      "generated_at": "2026-08-12T16:00:52Z",
+      "league": "atp",
       "display_priority": "extra",
       "initial_odds": 2.25,
       "initial_ev_pct": 14.2,
       "odds_history": [
         {
-          "ts": "2026-08-12T07:16:40Z",
-          "odds": 2.25,
+          "ts": "2026-08-12T16:00:52Z",
+          "odds": 2.1,
           "source": "scan"
         }
       ],
       "signal_status": "UNREFRESHABLE"
     },
     {
+      "signal_id": "54f0a5460c73",
+      "sport": "tennis",
+      "match": "Wu Yibing vs McDonald Mackenzie",
+      "market": "away",
+      "odds": 2.25,
+      "model_prob": 50.0,
+      "fair_prob": 41.1,
+      "ev_pct": 12.5,
+      "stake_eur": 11.0,
+      "stake_pct": 11.0,
+      "confidence": "MEDIUM",
+      "n_models_agree": 0,
+      "generated_at": "2026-08-12T16:00:52Z",
+      "league": "atp",
+      "display_priority": "extra",
+      "initial_odds": 2.25,
+      "initial_ev_pct": 12.5,
+      "odds_history": [
+        {
+          "ts": "2026-08-12T16:00:52Z",
+          "odds": 2.25,
+          "source": "scan"
+        }
+      ]
+    },
+    {
       "signal_id": "8c12b9cb1ead",
       "sport": "tennis",
       "match": "Nicolai Budkov Kjaer vs Kyrian Jacquet",
       "market": "home",
-      "odds": 2.2,
-      "model_prob": 49.2,
-      "fair_prob": 42.1,
-      "ev_pct": 8.3,
-      "stake_eur": 9.0,
-      "stake_pct": 9.0,
+      "odds": 2.24,
+      "model_prob": 50.0,
+      "fair_prob": 41.4,
+      "ev_pct": 12.0,
+      "stake_eur": 11.0,
+      "stake_pct": 11.0,
       "confidence": "MEDIUM",
       "n_models_agree": 0,
-      "generated_at": "2026-08-12T10:16:44Z",
+      "generated_at": "2026-08-12T16:00:52Z",
       "form_a": [
         "W"
       ],
@@ -6522,121 +7542,73 @@
       ],
       "tour": "atp",
       "kickoff": "2026-08-12T17:30:00Z",
+      "league": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
       "display_priority": "extra",
-      "initial_odds": 2.2,
-      "initial_ev_pct": 8.3,
+      "initial_odds": 2.24,
+      "initial_ev_pct": 12.0,
       "odds_history": [
         {
-          "ts": "2026-08-12T10:16:44Z",
-          "odds": 2.2,
+          "ts": "2026-08-12T16:00:52Z",
+          "odds": 2.24,
           "source": "scan"
-        },
-        {
-          "ts": "2026-08-12T11:23:07Z",
-          "odds": 2.2,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T11:46:55Z",
-          "odds": 2.2,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T12:00:54Z",
-          "odds": 2.22,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T12:14:29Z",
-          "odds": 2.22,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T12:29:15Z",
-          "odds": 2.22,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T12:43:01Z",
-          "odds": 2.22,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T12:56:31Z",
-          "odds": 2.22,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T13:16:03Z",
-          "odds": 2.25,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T13:30:24Z",
-          "odds": 2.25,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T13:44:58Z",
-          "odds": 2.26,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T13:59:08Z",
-          "odds": 2.26,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T14:13:10Z",
-          "odds": 2.27,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T14:26:52Z",
-          "odds": 2.27,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T14:41:00Z",
-          "odds": 2.27,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T14:55:07Z",
-          "odds": 2.27,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T15:08:50Z",
-          "odds": 2.27,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T15:22:51Z",
-          "odds": 2.24,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T15:36:50Z",
-          "odds": 2.24,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-08-12T15:50:29Z",
-          "odds": 2.24,
-          "source": "tennis_explorer"
         }
-      ],
-      "current_odds": 2.24,
-      "current_ev_pct": 10.2,
-      "odds_ts": "2026-08-12T15:50:29Z",
-      "odds_source": "tennis_explorer",
-      "odds_fetch_tier": 2,
-      "signal_status": "ACTIVE"
+      ]
+    },
+    {
+      "signal_id": "4acc8a77b6bb",
+      "sport": "tennis",
+      "match": "Sakellaridis Stefanos vs Droguet Titouan",
+      "market": "home",
+      "odds": 2.34,
+      "model_prob": 47.3,
+      "fair_prob": 39.5,
+      "ev_pct": 10.8,
+      "stake_eur": 10.0,
+      "stake_pct": 10.0,
+      "confidence": "MEDIUM",
+      "n_models_agree": 0,
+      "generated_at": "2026-08-12T16:00:52Z",
+      "league": "atp",
+      "display_priority": "extra",
+      "initial_odds": 2.34,
+      "initial_ev_pct": 10.8,
+      "odds_history": [
+        {
+          "ts": "2026-08-12T16:00:52Z",
+          "odds": 2.34,
+          "source": "scan"
+        }
+      ]
+    },
+    {
+      "signal_id": "faed5e56ad60",
+      "sport": "tennis",
+      "match": "Trungelliti Marco vs Ofner Sebastian",
+      "market": "home",
+      "odds": 2.19,
+      "model_prob": 50.0,
+      "fair_prob": 42.2,
+      "ev_pct": 9.5,
+      "stake_eur": 9.5,
+      "stake_pct": 9.5,
+      "confidence": "MEDIUM",
+      "n_models_agree": 0,
+      "generated_at": "2026-08-12T16:00:52Z",
+      "league": "atp",
+      "display_priority": "extra",
+      "initial_odds": 2.19,
+      "initial_ev_pct": 9.5,
+      "odds_history": [
+        {
+          "ts": "2026-08-12T16:00:52Z",
+          "odds": 2.19,
+          "source": "scan"
+        }
+      ]
     }
   ],
   "portfolio": {
@@ -7049,13 +8021,13 @@
       "away": "Dusan Lajovic",
       "market": "away",
       "entry_odds": 3.1,
-      "current_odds": 2.58,
-      "drift_pct": -16.8,
+      "current_odds": 2.57,
+      "drift_pct": -17.1,
       "clv_signal": "bad",
       "stake": 5.0,
       "match_date": "2026-08-12",
       "model_edge_pct": null,
-      "is_live": true
+      "is_live": false
     }
   ],
   "settled_bets": [
@@ -8183,7 +9155,7 @@
     "free": 47.13,
     "staked": 5.0,
     "exposure_pct": 5.0,
-    "max_win": 7.9,
+    "max_win": 7.85,
     "pnl_closed": -47.87
   },
   "wm_stats": {
@@ -9711,7 +10683,7 @@
     }
   },
   "tennis_stats": {
-    "updated": "2026-08-12T15:59:28Z",
+    "updated": "2026-08-12T16:00:52Z",
     "active_tournaments": [
       {
         "slug": "canadian_open_atp",
