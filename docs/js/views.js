@@ -650,8 +650,14 @@ function _buildTopRecs24h(signals, nowMs) {
       return ageMin <= 30;
     })
     .filter(s => {
-      if (!s.kickoff) return false;
-      const ko = new Date(s.kickoff).getTime();
+      // Wave 3C: AWAITING_START signals may remain eligible even after old kickoff passed.
+      // Use scheduled_start_current for timing; allow AWAITING_START within window.
+      const effectiveKo = s.scheduled_start_current || s.kickoff;
+      if (!effectiveKo) return false;
+      const ko = new Date(effectiveKo).getTime();
+      if (s.event_status === 'AWAITING_START' || s.event_status === 'DELAYED') {
+        return ko <= in24h; // already past but not started — keep if within 24h window
+      }
       return ko > nowMs && ko <= in24h;
     })
     .filter(s => {
@@ -715,7 +721,8 @@ function _topRecs24hHtml(signals, nowMs) {
           freshBadge = `<span class="toprec-fresh" style="color:var(--muted)" title="Kein Odds-Zeitstempel — Quelle unbekannt">UNAVAILABLE</span>`;
         }
         const stakeStr = (p.stake_eur && p.stake_eur > 0) ? `<span class="toprec-stake">€${Math.round(p.stake_eur)}</span>` : '';
-        const timeStr = p.kickoff ? fmtKickoffCompact(p.kickoff) : '';
+        const _pKo = p.scheduled_start_current || p.kickoff;
+        const timeStr = _pKo ? fmtKickoffCompact(_pKo) : '';
         const flagA = teamFlag(ph), flagB = teamFlag(pa);
         return `<div class="toprec-pick" role="button" tabindex="0"
             onclick='openMatch(${JSON.stringify(p.match)})'
@@ -874,8 +881,13 @@ function renderHome() {
   // ── Heute-Sektion (nächste 24h) ──────────────────────────────
   const in24h = now + 24 * 36e5;
   const todayGames = sorted.filter(g => {
-    if (!g.kickoff) return false;
-    const t = new Date(g.kickoff).getTime();
+    // Wave 3C: use canonical current start; include AWAITING_START games still within window
+    const _ko = g.scheduled_start_current || g.kickoff;
+    if (!_ko) return false;
+    const t = new Date(_ko).getTime();
+    if (g.event_status === 'AWAITING_START' || g.event_status === 'DELAYED') {
+      return t <= in24h; // keep awaiting games regardless of negative minsLeft
+    }
     return t >= now - 36e5 && t <= in24h; // -1h für laufende Spiele
   });
 
@@ -891,17 +903,24 @@ function renderHome() {
       const mk = `${g.home} vs ${g.away}`;
       const nk = matchKey(g.home, g.away);
       const n = sigCount[nk] || 0;
-      const kickoffTs = new Date(g.kickoff).getTime();
+      // Wave 3C: use canonical current start for display and timing
+      const _gKo = g.scheduled_start_current || g.kickoff;
+      const kickoffTs = new Date(_gKo || g.kickoff).getTime();
       const minsLeft = Math.round((kickoffTs - now) / 60000);
+      const _evStatus = g.event_status || '';
       // W2: tennis LIVE must not be inferred from elapsed time alone — requires authoritative live evidence
       const _isTennis = g.sport === 'tennis';
       const isLive = !_isTennis && minsLeft < 0 && minsLeft > -110;
-      const _tennisPossiblyRunning = _isTennis && minsLeft < 0 && minsLeft > -180;
-      const timeStr = g.kickoff ? fmtTime(g.kickoff) : '—';
+      // Wave 3C: AWAITING_START = kickoff passed, no authoritative LIVE evidence
+      const _isAwaiting = _evStatus === 'AWAITING_START' || _evStatus === 'DELAYED';
+      const _tennisPossiblyRunning = _isTennis && minsLeft < 0 && minsLeft > -180 && !_isAwaiting;
+      const timeStr = _gKo ? fmtTime(_gKo) : '—';
 
       // Countdown string
       let countdown = '';
-      if (isLive) {
+      if (_isAwaiting) {
+        countdown = `<span class="today-countdown" style="color:var(--yellow)">Wartet auf Start</span>`;
+      } else if (isLive) {
         countdown = `<span class="today-live-badge">LIVE</span>`;
       } else if (_tennisPossiblyRunning) {
         countdown = `<span class="today-countdown" style="color:var(--muted)">Status unbekannt</span>`;
@@ -994,7 +1013,8 @@ function renderHome() {
         const mk = `${g.home} vs ${g.away}`;
         const nk = matchKey(g.home, g.away);
         const n = sigCount[nk] || 0;
-        const timeStr = g.kickoff ? fmtTime(g.kickoff) : '—';
+        const _gKo2 = g.scheduled_start_current || g.kickoff;
+        const timeStr = _gKo2 ? fmtTime(_gKo2) : '—';
         const isFootball = sport === 'football';
         const result = _wmResults[nk];
         const isCompleted = result && result.home_score != null && result.away_score != null;
@@ -1274,7 +1294,8 @@ function renderSport(sport) {
       for (const [match, mSigs] of bk.matches) {
         const s0 = mSigs[0];
         const [mh, ma] = match.split(' vs ').map(x => x.trim());
-        const timeStr = s0.kickoff ? fmtKickoff(s0.kickoff) : '';
+        const _s0Ko = s0.scheduled_start_current || s0.kickoff;
+        const timeStr = _s0Ko ? fmtKickoff(_s0Ko) : '';
         const tourStr = (s0.tour||'').toUpperCase();
         const fbA = _formBadgesHtml(s0.form_a);
         const fbB = _formBadgesHtml(s0.form_b);
@@ -1299,18 +1320,27 @@ function renderSport(sport) {
     const now = Date.now();
     const remaining = tennisSchedule
       .filter(g => !shownKeys.has(matchKey(g.home, g.away)))
-      .filter(g => !g.kickoff || (new Date(g.kickoff).getTime() + 2.5 * 60 * 60 * 1000) > now)
+      .filter(g => {
+        const _rKo = g.scheduled_start_current || g.kickoff;
+        if (!_rKo) return true;
+        // Keep AWAITING_START regardless; otherwise drop if > 2.5h past
+        if (g.event_status === 'AWAITING_START' || g.event_status === 'DELAYED') return true;
+        return (new Date(_rKo).getTime() + 2.5 * 60 * 60 * 1000) > now;
+      })
       .sort((a, b) => {
-        if (!a.kickoff && !b.kickoff) return 0;
-        if (!a.kickoff) return 1; if (!b.kickoff) return -1;
-        return new Date(a.kickoff) - new Date(b.kickoff);
+        const _ako = a.scheduled_start_current || a.kickoff;
+        const _bko = b.scheduled_start_current || b.kickoff;
+        if (!_ako && !_bko) return 0;
+        if (!_ako) return 1; if (!_bko) return -1;
+        return new Date(_ako) - new Date(_bko);
       });
 
     if (remaining.length) {
       // Nach Datum gruppieren
       const days = new Map();
       for (const g of remaining) {
-        const dk = g.kickoff ? g.kickoff.slice(0, 10) : '__';
+        const _rKo = g.scheduled_start_current || g.kickoff;
+        const dk = _rKo ? _rKo.slice(0, 10) : '__';
         if (!days.has(dk)) days.set(dk, []);
         days.get(dk).push(g);
       }
@@ -1320,7 +1350,11 @@ function renderSport(sport) {
           new Date(dk).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: 'short' });
         h += `<div style="padding:6px 16px;font-size:12px;font-weight:700;color:#a4c6ff;background:rgba(20,24,30,.6)">${esc(dLabel)}</div>`;
         for (const g of games) {
-          const timeStr = g.kickoff ? fmtKickoff(g.kickoff) : '';
+          const _gKoR = g.scheduled_start_current || g.kickoff;
+          const _isAwaitR = g.event_status === 'AWAITING_START' || g.event_status === 'DELAYED';
+          const timeStr = _isAwaitR
+            ? `${_gKoR ? fmtKickoff(_gKoR) : ''} · Wartet auf Start`
+            : (_gKoR ? fmtKickoff(_gKoR) : '');
           const oh = g.odds_home > 1 ? g.odds_home.toFixed(2) : '–';
           const oa = g.odds_away > 1 ? g.odds_away.toFixed(2) : '–';
           const tourStr = (g.tour || '').toUpperCase();

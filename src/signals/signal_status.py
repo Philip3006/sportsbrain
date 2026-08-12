@@ -85,19 +85,34 @@ def evaluate_signal_status(
     odds_ts:     ISO-8601 timestamp of the odds fetch, or None
 
     Returns one of ACTIVE | EDGE_LOST | STALE_ODDS | STARTED | EXPIRED | UNREFRESHABLE
+
+    Wave 3C: uses canonical event_status when present so that delayed matches
+    are not incorrectly marked STARTED due to old scan-time kickoff.
     """
     kickoff = signal.get("kickoff", "")
+    event_status = signal.get("event_status", "")  # Wave 3C canonical state
     now = datetime.now(timezone.utc)
 
-    # EXPIRED: kickoff + 100 min passed (already handled by _drop_finished_signals,
-    # but also guard here so refresher doesn't keep refreshing dead signals)
-    if kickoff:
+    # Authoritative LIVE evidence → STARTED immediately (Wave 3A invariant honoured)
+    if event_status == "LIVE":
+        return "STARTED"
+
+    # Authoritative terminal state → EXPIRED
+    if event_status in ("COMPLETED", "CANCELLED"):
+        return "EXPIRED"
+
+    # AWAITING_START / DELAYED: kickoff may have passed but match has not begun.
+    # Do NOT apply the elapsed-time STARTED shortcut — fall through to odds gate.
+    _awaiting = event_status in ("AWAITING_START", "DELAYED")
+
+    # EXPIRED: kickoff + 100 min passed (also guard here so refresher stops dead signals)
+    if kickoff and not _awaiting:
         try:
             ko_dt = datetime.fromisoformat(kickoff.replace("Z", "+00:00"))
             elapsed_min = (now - ko_dt).total_seconds() / 60
             if elapsed_min > 100:
                 return "EXPIRED"
-            if elapsed_min > -5:  # kickoff started (within pre-match window)
+            if elapsed_min > -5:  # kickoff window: treat as started
                 return "STARTED"
         except ValueError:
             pass
