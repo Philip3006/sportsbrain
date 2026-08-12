@@ -62,9 +62,18 @@ def _refresh_interval_minutes(minutes_to_kickoff: float) -> int:
 
 
 def _is_refresh_due(signal: dict, odds_state_entry: dict | None) -> bool:
-    """Return True if this signal should be refreshed now."""
+    """Return True if this signal should be refreshed now.
+
+    Wave 3C: respects canonical event_status so delayed/awaiting matches keep
+    receiving odds updates. Hard stops on authoritative LIVE/terminal states only.
+    """
     kickoff = signal.get("kickoff", "")
+    event_status = signal.get("event_status", "")
     now = datetime.now(timezone.utc)
+
+    # Authoritative match-in-progress or terminal → no more pre-match refresh
+    if event_status in ("LIVE", "COMPLETED", "CANCELLED"):
+        return False
 
     minutes_to_kickoff = float("inf")
     if kickoff:
@@ -74,8 +83,12 @@ def _is_refresh_due(signal: dict, odds_state_entry: dict | None) -> bool:
         except ValueError:
             pass
 
-    # Past kickoff by more than 5 min → skip (EXPIRED/STARTED handled in evaluate)
-    if minutes_to_kickoff < -5:
+    # AWAITING_START / DELAYED: match hasn't started despite time elapsed.
+    # Treat as effectively 0 min to kickoff so normal cadence applies.
+    if event_status in ("AWAITING_START", "DELAYED"):
+        minutes_to_kickoff = max(minutes_to_kickoff, 0.0)
+    elif minutes_to_kickoff < -5:
+        # Past kickoff by more than 5 min, no canonical state → skip
         return False
 
     interval = _refresh_interval_minutes(minutes_to_kickoff)
