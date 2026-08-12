@@ -169,3 +169,64 @@ class TestTheOddsAPIProvider:
         q = _parse_bookmakers([], "Hamburg", "Kaiserslautern")
         assert q.h2h_home == 0.0
         assert q.bookies_count_1x2 == 0
+
+
+# ── O1-1/O1-2: circuit breaker propagates through merger ──────────────────
+from unittest.mock import patch
+
+
+class TestCircuitBreakerIntegration:
+    """O1-2: fetch_best_football_odds must respect the TheOddsAPI circuit breaker.
+
+    When TheOddsAPI (Tier 2) is circuit-broken and no Tier 1 providers are
+    configured, the merger must:
+      - not attempt a live API call through the_odds_api provider (Pfad 2)
+      - still serve a result from bookmakers passed in match_hint (Pfad 1)
+      - correctly fail closed when no source is available
+    """
+
+    def test_pfad1_bookmakers_bypass_circuit(self):
+        """O1-2: Pfad 1 (bookmakers in hint) works regardless of circuit state."""
+        from src.football.odds.the_odds_api import fetch
+        hint = _hint_with_bookmakers(n_bookies=4)
+        # No API call is made in Pfad 1, so circuit state is irrelevant.
+        with patch("src.signals.provider_budget.is_provider_available", return_value=False):
+            q = fetch(hint)
+        assert q is not None
+        assert q.bookies_count_1x2 == 4
+
+    def test_pfad2_circuit_open_returns_none(self):
+        """O1-2: Pfad 2 (no bookmakers in hint) → circuit open → None returned."""
+        from src.football.odds.the_odds_api import fetch
+        hint = {
+            "home_team": "Hamburg",
+            "away_team": "Kaiserslautern",
+            "sport_key": "soccer_germany_bundesliga2",
+            # no "bookmakers" key → triggers Pfad 2 (live API call)
+        }
+        # Circuit open → fetch_upcoming_matches raises/returns stale [] → fetch() returns None
+        with patch("src.signals.provider_budget.is_provider_available", return_value=False):
+            with patch("src.data.odds_api._load_stale_upcoming_cache", return_value=None):
+                q = fetch(hint)
+        assert q is None, "Pfad 2 with circuit open and no stale cache must return None"
+
+    def test_merger_returns_none_when_all_sources_circuit_broken(self):
+        """O1-2: if all sources fail, merge_by_tier → None (fail closed)."""
+        # All sources return None → no quotes
+        with patch("src.football.odds.merger.ENABLED_SOURCES",
+                   [("fake_src", 2, lambda hint: None)]):
+            result = fetch_best_football_odds(
+                {"home_team": "A", "away_team": "B", "bookmakers": []},
+                timeout_s=1.0,
+                allow_implied=False,
+            )
+        assert result is None
+
+    def test_provenance_source_tier_observable(self):
+        """O1-2: returned quote has source/tier/bookmaker set (provenance observable)."""
+        hint = _hint_with_bookmakers(n_bookies=4)
+        q = fetch_best_football_odds(hint, timeout_s=3.0)
+        assert q is not None
+        assert q.source is not None and q.source != ""
+        assert q.source_tier > 0
+        assert q.bookmaker is not None

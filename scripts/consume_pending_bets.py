@@ -183,8 +183,10 @@ def _process_cancel_requests(base: str, headers: dict, user: str) -> int:
     from src.betting.ledger import cancel_bet
     suffix = "" if user == DEFAULT_USER else f"?user={user}"
     try:
+        # O1-1: cancel_requests is non-critical — single attempt, short timeout.
+        # Previously 3 retries×15s burned ~65s per user on Worker timeouts.
         r = retry_request("GET", f"{base}/cancel_requests{suffix}", headers=headers,
-                          timeout=15, log_prefix=f"[cancel:{user}]")
+                          timeout=8, retries=1, log_prefix=f"[cancel:{user}]")
     except requests.RequestException as e:
         print(f"[cancel:{user}] fetch failed: {e}", file=sys.stderr)
         return 0
@@ -205,7 +207,7 @@ def _process_cancel_requests(base: str, headers: dict, user: str) -> int:
     if cancelled:
         try:
             retry_request("DELETE", f"{base}/cancel_requests{suffix}", headers=headers,
-                          timeout=15, log_prefix=f"[cancel:{user}]")
+                          timeout=8, retries=1, log_prefix=f"[cancel:{user}]")
         except Exception:
             pass
     return cancelled

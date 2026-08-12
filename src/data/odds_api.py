@@ -157,9 +157,25 @@ def fetch_upcoming_matches(
       - 30s timeout per attempt, up to 3 attempts with backoff (5s, 15s)
       - On total failure: loads last on-disk cache (regardless of age) and
         sets module-level USED_STALE_CACHE=True so callers can flag it.
+      - O1-1: circuit breaker pre-check via provider_budget — skips API call
+        when provider is known QUOTA_EXHAUSTED / AUTH_FAILURE / CIRCUIT_OPEN.
     """
     global USED_STALE_CACHE
     USED_STALE_CACHE = False  # reset on each fresh call
+
+    # O1-1: circuit breaker pre-check — avoid any API call when provider is down
+    try:
+        from src.signals.provider_budget import is_provider_available, record_error as _pb_record
+        if not is_provider_available("the_odds_api"):
+            stale = _load_stale_upcoming_cache()
+            if stale is not None:
+                USED_STALE_CACHE = True
+                print(f"  ⚠️  USED STALE CACHE (circuit open) — {len(stale)} matches "
+                      "(TheOddsAPI circuit-broken). Flag propagated to signals.meta.")
+                return stale
+            raise RuntimeError("TheOddsAPI circuit open — no stale cache available")
+    except ImportError:
+        _pb_record = None  # provider_budget not available — degrade gracefully
 
     from src.config import LINE_SHOPPING_REGIONS
     if regions is None:
@@ -174,6 +190,17 @@ def fetch_upcoming_matches(
     }
     try:
         resp = _http_get_with_retry(url, params)
+        # O1-1: 401/403 = quota exhausted or auth failure; 429 = rate limited.
+        # These are not transient — circuit-break and fall back to stale cache.
+        if resp.status_code in (401, 403, 429):
+            _reason = {401: "quota_or_auth", 403: "auth_failure", 429: "rate_limited"}[resp.status_code]
+            print(f"  ERROR: TheOddsAPI {resp.status_code} ({_reason}) — circuit opening.")
+            try:
+                from src.signals.provider_budget import record_error as _pb_rec2
+                _pb_rec2("the_odds_api", resp.status_code, open_circuit=True)
+            except ImportError:
+                pass
+            resp.raise_for_status()  # raises HTTPError → caught by except block below
         # 422 = market combination unsupported — drop optional markets and retry once
         if resp.status_code == 422:
             optional = [m for m in ("double_chance", "btts") if m in markets]
