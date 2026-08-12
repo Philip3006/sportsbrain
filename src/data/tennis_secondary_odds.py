@@ -98,10 +98,6 @@ def _fetch_match_detail(match_id: str) -> dict | None:
     if not html:
         return None
 
-    # UTR Pro Tennis Series — kein ATP/WTA, kein Model-Support.
-    if _TE_UTR_BLOCKLIST_RE.search(html):
-        return None
-
     # Player-Namen aus Home/Away-Head
     head = _RE_HOMEAWAY_HEAD.search(html)
     if not head:
@@ -155,6 +151,12 @@ def _fetch_match_detail(match_id: str) -> dict | None:
         slug = tour_m.group(1).strip()
         tour = "atp" if tour_m.group(2) == "atp-men" else "wta"
         tournament = tour_m.group(3).strip()
+
+    # UTR Pro Tennis Series blocklist: check the MATCH'S OWN tournament slug only.
+    # TE sidebar links to UTR appear on every page — checking full HTML would
+    # false-positive on legitimate Challenger/ATP pages. Slug is deterministic.
+    if _TE_UTR_BLOCKLIST_RE.search(slug):
+        return None
 
     # Kickoff
     ko_m = _RE_KICKOFF.search(html)

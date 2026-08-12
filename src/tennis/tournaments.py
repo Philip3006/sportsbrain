@@ -299,15 +299,13 @@ TE_SLUG_MAP: dict[tuple[str, str], str] = {
     ("toronto", "atp"):          "canadian_open_atp",
     ("montreal", "wta"):         "canadian_open_wta",
     ("toronto", "wta"):          "canadian_open_wta",
-    # Challenger shadow entries — TODO: verify exact TE URL slugs against live TE data.
-    # TE pages may use city-only slug ("todi") or suffixed slug ("todi-challenger").
-    ("todi", "atp"):             "todi_challenger",
-    ("brownsburg", "atp"):       "brownsburg_challenger",
-    # Astana Challenger shares city with ATP250; TE may use "astana-2" or "astana-challenger".
-    # Mapped conservatively; will only match if TE uses this exact slug.
-    ("astana-challenger", "atp"):    "astana_challenger",
-    # Hamburg Challenger: ATP500 uses "hamburg" → "hamburg_atp". Challenger expected on "hamburg-2".
-    ("hamburg-2", "atp"):        "hamburg_challenger",
+    # Challenger shadow entries — verified 2026-08-12 against live TE /next/ data.
+    ("todi-challenger", "atp"):      "todi_challenger",
+    ("brownsburg-challenger", "atp"):"brownsburg_challenger",
+    # Astana Challenger: TE uses "astana-4-challenger" (distinct from ATP250 "astana").
+    ("astana-4-challenger", "atp"):  "astana_challenger",
+    # Hamburg Challenger: TE uses "hamburg-challenger" (distinct from ATP500 "hamburg").
+    ("hamburg-challenger", "atp"):   "hamburg_challenger",
 }
 
 

@@ -233,24 +233,33 @@ import re as _re
 _TE_UTR_BLOCKLIST_RE = _re.compile(r'UTR\s*Pro\s*Tennis|utr-pro-tennis|utr-tennis-series', _re.IGNORECASE)
 
 
-def test_utr_pro_name_matches_blocklist():
-    """'UTR Pro Tennis Series' must match the scraper blocklist regex."""
-    assert _TE_UTR_BLOCKLIST_RE.search("UTR Pro Tennis Series — Atlanta")
-    assert _TE_UTR_BLOCKLIST_RE.search("utr-pro-tennis/2026/")
-    assert _TE_UTR_BLOCKLIST_RE.search("utr-tennis-series slug")
+def test_utr_slug_matches_blocklist():
+    """UTR tournament slugs must match the blocklist regex (checked against slug, not full HTML)."""
+    # Actual TE slugs observed 2026-08-12:
+    assert _TE_UTR_BLOCKLIST_RE.search("utr-pro-tennis-series")
+    assert _TE_UTR_BLOCKLIST_RE.search("utr-pro-tennis-series-3")
+    assert _TE_UTR_BLOCKLIST_RE.search("utr-pro-tennis-series-5")
+    assert _TE_UTR_BLOCKLIST_RE.search("utr-pro-tennis-series-9")
+    assert _TE_UTR_BLOCKLIST_RE.search("utr-tennis-series")
 
 
-def test_atp_name_does_not_match_blocklist():
-    """Legit ATP tournaments must NOT match the UTR blocklist."""
-    assert not _TE_UTR_BLOCKLIST_RE.search("Cincinnati Open")
-    assert not _TE_UTR_BLOCKLIST_RE.search("Washington ATP")
-    assert not _TE_UTR_BLOCKLIST_RE.search("Todi Challenger")
+def test_challenger_slug_does_not_match_blocklist():
+    """Challenger tournament slugs must NOT match the UTR blocklist."""
+    # Critical: blocklist is checked against the match's own slug only.
+    # TE sidebar links to UTR appear on Challenger pages — full-HTML checks would false-positive.
+    assert not _TE_UTR_BLOCKLIST_RE.search("todi-challenger")
+    assert not _TE_UTR_BLOCKLIST_RE.search("brownsburg-challenger")
+    assert not _TE_UTR_BLOCKLIST_RE.search("hamburg-challenger")
+    assert not _TE_UTR_BLOCKLIST_RE.search("astana-4-challenger")
+    assert not _TE_UTR_BLOCKLIST_RE.search("cincinnati")
+    assert not _TE_UTR_BLOCKLIST_RE.search("washington")
 
 
-def test_utr_html_fragment_triggers_exclusion():
-    """Simulate a TE detail HTML page for a UTR match — must be blocked."""
-    fake_html = '<a href="/utr-pro-tennis-series/2026/atp-men/">UTR Pro Tennis Series</a>'
-    assert _TE_UTR_BLOCKLIST_RE.search(fake_html), "UTR match should trigger blocklist"
+def test_utr_slug_triggers_exclusion():
+    """Simulate the slug-based blocklist check that _fetch_match_detail() applies."""
+    utr_slugs = ["utr-pro-tennis-series", "utr-pro-tennis-series-3", "utr-pro-tennis-series-9"]
+    for slug in utr_slugs:
+        assert _TE_UTR_BLOCKLIST_RE.search(slug), f"Expected blocklist to catch {slug}"
 
 
 # ---------------------------------------------------------------------------
