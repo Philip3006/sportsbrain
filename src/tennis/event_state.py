@@ -1,4 +1,4 @@
-"""Canonical Tennis event state model (Wave 3B).
+"""Canonical Tennis event state model (Wave 3B / 3B.1).
 
 Separates two truth dimensions:
   Schedule truth  — initial/current start, when SportsBrain accepted it, source
@@ -8,6 +8,8 @@ Consumers must not invent lifecycle truth from timestamps; derive status only
 from authoritative observations supplied by this module.
 
 Wave 3A invariant preserved: elapsed time alone NEVER creates LIVE.
+Wave 3B.1: sidecar keyed by stable fixture identity (sport_key + players),
+           not by kickoff date. Cross-midnight reschedules preserve state.
 """
 from __future__ import annotations
 
@@ -329,10 +331,20 @@ def apply_status_observation(
 
 # ── Sidecar persistence ───────────────────────────────────────────────────────
 
-def _sidecar_key(fixture_key: str, kickoff: str) -> str:
-    """Stable sidecar key: fixture identity + date (aligns with signal_id semantics)."""
+def _sidecar_key(fixture_key: str) -> str:
+    """Stable sidecar key: pure fixture identity, no date.
+
+    Wave 3B.1: removed date component so cross-midnight reschedules do not
+    create a new event-state entry and lose scheduled_start_initial.
+    The fixture_key already encodes tournament + player pair (no date).
+    """
+    return fixture_key
+
+
+def _legacy_sidecar_key(player_pair: str, kickoff: str) -> str:
+    """Wave 3B (pre-3B.1) format: {player_pair}:{date}. Used only for migration."""
     date = (kickoff or "")[:10]
-    return f"{fixture_key}:{date}"
+    return f"{player_pair}:{date}"
 
 
 def load_event_states() -> dict[str, TennisEventState]:
@@ -396,28 +408,33 @@ def enrich_schedule_with_canonical_state(
         home = entry.get("home", "")
         away = entry.get("away", "")
         kickoff = entry.get("kickoff", "")
+        sport_key = entry.get("sport_key", "")
 
-        # Derive fixture key using same logic as canonical_match_key in tennis_scores.py
-        try:
-            from src.data.tennis_scores import canonical_match_key
-            fk = canonical_match_key(home, away)
-        except ImportError:
-            import re as _re
-            import unicodedata
+        # Build stable fixture key: includes tournament context (no date)
+        from src.tennis.fixture_registry import (
+            canonical_player_pair as _pair,
+        )
+        from src.tennis.fixture_registry import (
+            make_fixture_key as _make_fk,
+        )
+        fk = _make_fk(sport_key, home, away)
+        sk = _sidecar_key(fk)
 
-            def _clean(s: str) -> str:
-                s = unicodedata.normalize("NFD", s or "")
-                s = "".join(c for c in s if unicodedata.category(c) != "Mn")
-                s = _re.sub(r"[^a-z0-9]+", "", s.lower())
-                return s
-
-            ca, cb = _clean(home), _clean(away)
-            fk = f"{ca}|{cb}" if ca <= cb else f"{cb}|{ca}"
-
-        sk = _sidecar_key(fk, kickoff)
-
-        # Load or create canonical state
-        state = states.get(sk, TennisEventState(fixture_key=fk, accepted_at=observed_at))
+        # Load or create canonical state, with migration from Wave 3B legacy key
+        state = states.get(sk)
+        if state is None:
+            # Migration: Wave 3B keyed by {player_pair}:{date} — try to recover
+            # scheduled_start_initial before it's lost.
+            legacy_player_pair = _pair(home, away)
+            legacy_sk = _legacy_sidecar_key(legacy_player_pair, kickoff)
+            legacy_state = states.get(legacy_sk)
+            if legacy_state is not None:
+                # Migrate: adopt legacy record under new key, update fixture_key
+                state = legacy_state
+                state.fixture_key = fk
+                states.pop(legacy_sk, None)  # remove stale legacy entry
+            else:
+                state = TennisEventState(fixture_key=fk, accepted_at=observed_at)
 
         # Merge schedule observation
         entry_source = entry.get("odds_source", source)
