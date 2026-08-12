@@ -197,8 +197,10 @@ def test_already_started_event_excluded(page: Page, server_url: str):
 # ── 8. Invalid/missing odds → excluded ───────────────────────────────────────
 
 def test_missing_odds_excluded(page: Page, server_url: str):
+    # P1.5-H: current_odds is authoritative; clear both scan-time and refreshed odds
     sig = _tennis()
     del sig["odds"]
+    del sig["current_odds"]
     payload = {**_BASE, "tennis": [sig]}
     _home(page, server_url, payload)
     expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
@@ -206,16 +208,20 @@ def test_missing_odds_excluded(page: Page, server_url: str):
 
 
 def test_null_odds_excluded(page: Page, server_url: str):
+    # P1.5-H: current_odds=None is the authoritative field that must be missing
     sig = _tennis()
     sig["odds"] = None
+    sig["current_odds"] = None
     payload = {**_BASE, "tennis": [sig]}
     _home(page, server_url, payload)
     expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
 
 
 def test_zero_odds_excluded(page: Page, server_url: str):
+    # P1.5-H: current_odds <= 1.0 must be rejected (0 is invalid)
     sig = _tennis()
     sig["odds"] = 0
+    sig["current_odds"] = 0
     payload = {**_BASE, "tennis": [sig]}
     _home(page, server_url, payload)
     expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
