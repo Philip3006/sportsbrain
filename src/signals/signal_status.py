@@ -195,11 +195,20 @@ def update_odds_state(
             new_point = {"ts": odds_ts, "odds": current_odds, "source": odds_source}
             history = _dedup_history(history, new_point)
 
+        # Guard against absurd EV values (historic double-multiplication bug produced
+        # 1e+59). Anything with magnitude > 500% is treated as corrupt input and
+        # written as None so downstream fail-closed logic excludes it.
+        ev_pct_stored: float | None = None
+        if current_ev_pct is not None:
+            candidate = round(current_ev_pct * 100, 1)
+            if abs(candidate) <= 500:
+                ev_pct_stored = candidate
+
         state[signal_id] = {
             "initial_odds":    initial_odds,
             "initial_ev_pct":  initial_ev_pct,
             "current_odds":    current_odds,
-            "current_ev_pct":  round(current_ev_pct * 100, 1) if current_ev_pct is not None else None,
+            "current_ev_pct":  ev_pct_stored,
             "odds_ts":         odds_ts,
             "odds_source":     odds_source,
             "odds_fetch_tier": odds_fetch_tier,
