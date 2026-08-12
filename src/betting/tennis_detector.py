@@ -227,6 +227,8 @@ def detect_total_sets(
                   min_prob=0.10, max_odds=10.0)
     if sig:
         out.append(sig)
+    for s in out:
+        s.league = tour
     return out
 
 
@@ -284,6 +286,8 @@ def detect_total_games(
                   min_prob=0.10, max_odds=10.0)
     if sig:
         out.append(sig)
+    for s in out:
+        s.league = tour
     return out
 
 
@@ -324,6 +328,8 @@ def detect_set_betting(
                       min_prob=0.02, max_odds=30.0)
         if sig:
             out.append(sig)
+    for s in out:
+        s.league = tour
     return out
 
 
@@ -422,5 +428,6 @@ def detect_value_tennis(
             s.stake_eur = dynamic_stake_eur(s.ev, "HIGH", bankroll, decimal_odds=s.decimal_odds)
             if bankroll > 0:
                 s.stake_pct = s.stake_eur / bankroll
+        s.league = tour  # O1-4: tennis signals always carry tour ("atp"/"wta") as league
 
     return selected

@@ -215,28 +215,30 @@ LINE_SHOPPING_REGIONS = ["eu", "us", "uk", "au"]  # best-price across all region
 # Empirie aus Wimbledon-Backtest (WTA Grass: +8.5% ROI ab Edge 3%, ATP: -6.4% bei
 # Edge 3% → 10% Floor nötig). Für Live-Schaltung pro Kategorie siehe Phase B-Gate.
 TENNIS_MIN_EDGE_BY_CATEGORY: dict[str, float] = {
-    "grand_slam":  0.05,   # ATP Slam: 5% floor (BO5 reduziert Varianz); WTA Slam: profitabler
-    "m1000":       0.08,   # ATP Masters: enge Märkte, aber kürzeres Format
-    "wta1000":     0.04,   # WTA-Märkte historisch +ROI bei niedrigerer Edge
-    "atp500":      0.10,   # weniger Bookmaker-Coverage, höhere Vig
-    "wta500":      0.06,
-    "atp250":      0.12,   # tour-tiefe Events: konservativ, viele Lineup-Surprises
-    "wta250":      0.08,
-    "tour_final":  0.06,   # Top-8-only → starke Spieler, kalibrierte Märkte
+    "grand_slam":      0.05,   # ATP Slam: 5% floor (BO5 reduziert Varianz); WTA Slam: profitabler
+    "m1000":           0.08,   # ATP Masters: enge Märkte, aber kürzeres Format
+    "wta1000":         0.04,   # WTA-Märkte historisch +ROI bei niedrigerer Edge
+    "atp500":          0.10,   # weniger Bookmaker-Coverage, höhere Vig
+    "wta500":          0.06,
+    "atp250":          0.12,   # tour-tiefe Events: konservativ, viele Lineup-Surprises
+    "wta250":          0.08,
+    "tour_final":      0.06,   # Top-8-only → starke Spieler, kalibrierte Märkte
+    "challenger_atp":  0.12,   # Challenger: kein Elo-Coverage (shadow-only), konservativ wie ATP250
 }
 # Live-Gate pro Kategorie: 'live' = Bets in Ledger, 'shadow' = nur Logging.
 # Wird via Phase-B-Backtest gesetzt; Default 'shadow' für Sicherheit.
 TENNIS_CATEGORY_MODE: dict[str, str] = {
     # 2026-07-31 User-Override: alle Kategorien LIVE. Backtest-Gates bewusst deaktiviert;
     # BLACKLIST (Verlust-Kombis n≥30, ROI≤-5%) bleibt aktiv als harter Schutz.
-    "atp250":      "live",
-    "grand_slam":  "live",
-    "m1000":       "live",
-    "wta1000":     "live",
-    "atp500":      "live",
-    "wta500":      "live",
-    "wta250":      "live",
-    "tour_final":  "live",
+    "atp250":          "live",
+    "grand_slam":      "live",
+    "m1000":           "live",
+    "wta1000":         "live",
+    "atp500":          "live",
+    "wta500":          "live",
+    "wta250":          "live",
+    "tour_final":      "live",
+    "challenger_atp":  "shadow",  # O1-8: Challenger = shadow tier — kein Elo-Coverage (Sackmann ATP main-tour only)
 }
 
 # J2-H: Surface-spezifisches Live-Gate — überschreibt TENNIS_CATEGORY_MODE wenn (category, surface) matcht.

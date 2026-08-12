@@ -280,12 +280,27 @@ def append_bets(
         existing = set(zip(df.get("match_id", pd.Series([])), df.get("market", pd.Series([]))))
 
         today = pd.Timestamp.now().strftime("%Y-%m-%d")
+        # O1-4: Tennis market prefixes that must NEVER land under a football league.
+        # Root-cause: tennis_detector._signal() didn't set BetSignal.league → "wm2026" fallback.
+        _TENNIS_ONLY_PREFIXES = ("o/u_games_", "o/u_sets_", "score_", "first_set_")
+
         new_rows = []
         for s in signals:
             # Safety-Gate: Display-only-Signale (no_bet_flag) NIE in den Ledger.
             # Modell-implizite Preise haben keine Marktreferenz → kein CLV, kein Settlement.
             if getattr(s, "no_bet_flag", False):
                 continue
+            # O1-4 integrity gate: tennis-specific markets must carry atp/wta league.
+            s_league = getattr(s, "league", "")
+            if any(s.market.startswith(p) for p in _TENNIS_ONLY_PREFIXES) and s_league == "wm2026":
+                raise ValueError(
+                    f"O1-4 integrity violation: tennis market '{s.market}' has league='wm2026'. "
+                    "BetSignal.league must be 'atp' or 'wta' for tennis signals."
+                )
+            if s_league in ("atp", "wta", "challenger_atp") and s.market == "draw":
+                raise ValueError(
+                    f"O1-4 integrity violation: tennis league '{s_league}' on football market 'draw'."
+                )
             key = (s.match_id, s.market)
             if key in existing:
                 import logging as _log
@@ -311,7 +326,7 @@ def append_bets(
                 "source":        "value",
                 "model_prob":    f"{s.model_prob:.6f}" if getattr(s, "model_prob", 0.0) > 0 else "",
                 "stake_reason":  getattr(s, "stake_reason", "") or "",
-                "league":        getattr(s, "league", "") or "wm2026",
+                "league":        getattr(s, "league", "") or "",
             })
 
         if new_rows:
