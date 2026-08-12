@@ -1,7 +1,7 @@
 {
-  "updated": "2026-08-12T10:16:44Z",
+  "updated": "2026-08-12T11:55:53Z",
   "build_info": {
-    "sha": "3962f30",
+    "sha": "69f8b99",
     "date": "2026-08-12"
   },
   "meta": {
@@ -6087,11 +6087,12 @@
       "initial_ev_pct": 37.2,
       "odds_history": [
         {
-          "ts": "2026-08-12T10:16:44Z",
+          "ts": "2026-08-12T07:16:40Z",
           "odds": 2.73,
           "source": "scan"
         }
-      ]
+      ],
+      "signal_status": "UNREFRESHABLE"
     },
     {
       "signal_id": "59f4bb48bf44",
@@ -6112,11 +6113,12 @@
       "initial_ev_pct": 37.2,
       "odds_history": [
         {
-          "ts": "2026-08-12T10:16:44Z",
+          "ts": "2026-08-12T07:16:40Z",
           "odds": 2.88,
           "source": "scan"
         }
-      ]
+      ],
+      "signal_status": "UNREFRESHABLE"
     },
     {
       "signal_id": "e3122f3c128d",
@@ -6137,11 +6139,12 @@
       "initial_ev_pct": 33.5,
       "odds_history": [
         {
-          "ts": "2026-08-12T10:16:44Z",
+          "ts": "2026-08-12T07:16:40Z",
           "odds": 2.63,
           "source": "scan"
         }
-      ]
+      ],
+      "signal_status": "UNREFRESHABLE"
     },
     {
       "signal_id": "a5de764d146a",
@@ -6162,11 +6165,12 @@
       "initial_ev_pct": 33.0,
       "odds_history": [
         {
-          "ts": "2026-08-12T10:16:44Z",
+          "ts": "2026-08-12T07:16:40Z",
           "odds": 2.62,
           "source": "scan"
         }
-      ]
+      ],
+      "signal_status": "UNREFRESHABLE"
     },
     {
       "signal_id": "e1bb3a16f1fb",
@@ -6196,8 +6200,24 @@
           "ts": "2026-08-12T10:16:44Z",
           "odds": 2.58,
           "source": "scan"
+        },
+        {
+          "ts": "2026-08-12T11:23:07Z",
+          "odds": 2.56,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-08-12T11:46:55Z",
+          "odds": 2.56,
+          "source": "tennis_explorer"
         }
-      ]
+      ],
+      "current_odds": 2.56,
+      "current_ev_pct": 30.0,
+      "odds_ts": "2026-08-12T11:46:55Z",
+      "odds_source": "tennis_explorer",
+      "odds_fetch_tier": 2,
+      "signal_status": "ACTIVE"
     },
     {
       "signal_id": "d09136f4192f",
@@ -6218,11 +6238,12 @@
       "initial_ev_pct": 30.0,
       "odds_history": [
         {
-          "ts": "2026-08-12T10:16:44Z",
+          "ts": "2026-08-12T07:16:40Z",
           "odds": 2.56,
           "source": "scan"
         }
-      ]
+      ],
+      "signal_status": "UNREFRESHABLE"
     },
     {
       "signal_id": "696a441853a0",
@@ -6245,15 +6266,36 @@
       "surface": "hard",
       "best_of": 3,
       "display_priority": "extra",
-      "initial_odds": 2.46,
-      "initial_ev_pct": 21.1,
+      "initial_odds": 2.44,
+      "initial_ev_pct": 20.1,
       "odds_history": [
         {
-          "ts": "2026-08-12T10:16:44Z",
-          "odds": 2.46,
+          "ts": "2026-08-12T07:16:40Z",
+          "odds": 2.44,
           "source": "scan"
+        },
+        {
+          "ts": "2026-08-12T09:37:35Z",
+          "odds": 2.45,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-08-12T11:23:07Z",
+          "odds": 2.45,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-08-12T11:46:55Z",
+          "odds": 2.45,
+          "source": "tennis_explorer"
         }
-      ]
+      ],
+      "current_odds": 2.45,
+      "current_ev_pct": 20.5,
+      "odds_ts": "2026-08-12T11:46:55Z",
+      "odds_source": "tennis_explorer",
+      "odds_fetch_tier": 2,
+      "signal_status": "ACTIVE"
     },
     {
       "signal_id": "562583852b46",
@@ -6289,15 +6331,36 @@
       "surface": "hard",
       "best_of": 3,
       "display_priority": "extra",
-      "initial_odds": 2.46,
-      "initial_ev_pct": 21.1,
+      "initial_odds": 2.47,
+      "initial_ev_pct": 21.6,
       "odds_history": [
         {
-          "ts": "2026-08-12T10:16:44Z",
-          "odds": 2.46,
+          "ts": "2026-08-12T07:16:40Z",
+          "odds": 2.47,
           "source": "scan"
+        },
+        {
+          "ts": "2026-08-12T09:37:35Z",
+          "odds": 2.46,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-08-12T11:23:07Z",
+          "odds": 2.46,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-08-12T11:46:55Z",
+          "odds": 2.46,
+          "source": "tennis_explorer"
         }
-      ]
+      ],
+      "current_odds": 2.46,
+      "current_ev_pct": 21.0,
+      "odds_ts": "2026-08-12T11:46:55Z",
+      "odds_source": "tennis_explorer",
+      "odds_fetch_tier": 2,
+      "signal_status": "ACTIVE"
     },
     {
       "signal_id": "821c5d1240cc",
@@ -6327,15 +6390,36 @@
       "surface": "hard",
       "best_of": 3,
       "display_priority": "extra",
-      "initial_odds": 2.36,
-      "initial_ev_pct": 19.8,
+      "initial_odds": 2.4,
+      "initial_ev_pct": 21.8,
       "odds_history": [
         {
-          "ts": "2026-08-12T10:16:44Z",
-          "odds": 2.36,
+          "ts": "2026-08-12T07:16:40Z",
+          "odds": 2.4,
           "source": "scan"
+        },
+        {
+          "ts": "2026-08-12T09:37:35Z",
+          "odds": 2.36,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-08-12T11:23:07Z",
+          "odds": 2.36,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-08-12T11:46:55Z",
+          "odds": 2.36,
+          "source": "tennis_explorer"
         }
-      ]
+      ],
+      "current_odds": 2.36,
+      "current_ev_pct": 19.9,
+      "odds_ts": "2026-08-12T11:46:55Z",
+      "odds_source": "tennis_explorer",
+      "odds_fetch_tier": 2,
+      "signal_status": "ACTIVE"
     },
     {
       "signal_id": "f128ac626594",
@@ -6356,11 +6440,12 @@
       "initial_ev_pct": 19.3,
       "odds_history": [
         {
-          "ts": "2026-08-12T10:16:44Z",
+          "ts": "2026-08-12T07:16:40Z",
           "odds": 2.41,
           "source": "scan"
         }
-      ]
+      ],
+      "signal_status": "UNREFRESHABLE"
     },
     {
       "signal_id": "57e180604957",
@@ -6381,11 +6466,12 @@
       "initial_ev_pct": 16.8,
       "odds_history": [
         {
-          "ts": "2026-08-12T10:16:44Z",
+          "ts": "2026-08-12T07:16:40Z",
           "odds": 2.3,
           "source": "scan"
         }
-      ]
+      ],
+      "signal_status": "UNREFRESHABLE"
     },
     {
       "signal_id": "54f0a5460c73",
@@ -6406,11 +6492,12 @@
       "initial_ev_pct": 14.2,
       "odds_history": [
         {
-          "ts": "2026-08-12T10:16:44Z",
+          "ts": "2026-08-12T07:16:40Z",
           "odds": 2.25,
           "source": "scan"
         }
-      ]
+      ],
+      "signal_status": "UNREFRESHABLE"
     },
     {
       "signal_id": "8c12b9cb1ead",
@@ -6448,8 +6535,24 @@
           "ts": "2026-08-12T10:16:44Z",
           "odds": 2.2,
           "source": "scan"
+        },
+        {
+          "ts": "2026-08-12T11:23:07Z",
+          "odds": 2.2,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-08-12T11:46:55Z",
+          "odds": 2.2,
+          "source": "tennis_explorer"
         }
-      ]
+      ],
+      "current_odds": 2.2,
+      "current_ev_pct": 8.2,
+      "odds_ts": "2026-08-12T11:46:55Z",
+      "odds_source": "tennis_explorer",
+      "odds_fetch_tier": 2,
+      "signal_status": "ACTIVE"
     }
   ],
   "portfolio": {
@@ -9503,7 +9606,7 @@
     }
   },
   "tennis_stats": {
-    "updated": "2026-08-12T10:16:44Z",
+    "updated": "2026-08-12T11:55:53Z",
     "active_tournaments": [
       {
         "slug": "canadian_open_atp",
