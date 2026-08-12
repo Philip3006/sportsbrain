@@ -263,6 +263,8 @@ def _signal_to_dict(
         "ev_pct":          round(s.ev * 100, 1),
         "stake_eur":       round(s.stake_eur, 2),
         "stake_pct":       round(s.stake_pct * 100, 1),
+        "theoretical_stake_eur": round(getattr(s, "theoretical_stake_eur", s.stake_eur), 2),
+        "cap_applied":     bool(getattr(s, "cap_applied", False)),
         "confidence":      s.confidence,
         "n_models_agree":  s.n_models_agree,
         "generated_at":    generated_at or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),

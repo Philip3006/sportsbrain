@@ -120,6 +120,9 @@ MIN_EDGE = 0.03
 MIN_STAKE_EUR = 5.0
 MAX_STAKE_EUR = 15.0
 MAX_ACTIVE_BETS = 5
+# Hard risk ceiling: final recommended stake must not exceed this fraction of bankroll.
+# Stake tier / Kelly = theoretical generator; this cap = final authoritative limit.
+BANKROLL_RISK_CAP_PCT = 0.05
 LGBM_BL2_DC_WEIGHT = 0.70   # 70% DC / 30% LGBM blend für 2.BL-Predictions
 MAX_SIGNALS_DISPLAY = 5         # top N signals shown prominently per sport in PWA
 MAX_EV = 0.40           # signals with EV > 40% are almost always model artifacts

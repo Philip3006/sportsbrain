@@ -1,4 +1,5 @@
 from src.config import (
+    BANKROLL_RISK_CAP_PCT,
     KELLY_FRAC,
     MIN_STAKE_EUR,
     MAX_STAKE_EUR,
@@ -120,3 +121,34 @@ def stake(
 def expected_value(model_prob: float, decimal_odds: float) -> float:
     """EV = model_prob * decimal_odds - 1. Positive = value bet."""
     return model_prob * decimal_odds - 1.0
+
+
+def apply_risk_cap(
+    theoretical_eur: float,
+    bankroll: float,
+) -> tuple[float, bool, bool]:
+    """Apply the hard 5% bankroll risk ceiling to a theoretical stake.
+
+    Returns (final_stake_eur, cap_applied, placeable).
+
+    cap_applied  True when the cap reduced the theoretical stake.
+    placeable    False when the minimum recommended stake exceeds the cap
+                 (bankroll too small to satisfy MIN_STAKE_EUR within 5% limit).
+                 In that case final_stake_eur=0.0 and the signal must be
+                 marked no_bet_flag=True with stake_reason="risk_cap_not_placeable".
+
+    Never raises the stake above the theoretical recommendation to meet a minimum.
+    """
+    if bankroll <= 0:
+        return 0.0, True, False
+    if theoretical_eur <= 0:
+        return 0.0, False, False
+    import math
+    risk_cap = bankroll * BANKROLL_RISK_CAP_PCT
+    if risk_cap < MIN_STAKE_EUR:
+        return 0.0, True, False
+    final = min(theoretical_eur, risk_cap)
+    final = math.floor(final * 2) / 2  # floor to nearest 0.50 — never exceed cap
+    final = max(final, MIN_STAKE_EUR)
+    cap_applied = final < theoretical_eur - 0.001
+    return final, cap_applied, True

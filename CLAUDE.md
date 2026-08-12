@@ -53,6 +53,22 @@ sportsbrain/
 - **BACKTEST ZUERST:** Jedes neue Modell/Feature gegen historische Daten validieren bevor Live-Einsatz
 - **MAX 3 AKTIVE WETTEN:** Bankroll-Schutz
 
+## Stake-Architektur (kanonisch, W2)
+
+```
+theoretical_stake  = Kelly / Tier-System-Empfehlung (vor Risk-Controls)
+final_stake        = min(theoretical_stake, bankroll × 0.05)
+```
+
+**Hartes Risiko-Ceiling:** `final_stake_eur ≤ bankroll × 0.05` — **immer**.
+Die Tier-Grenzen (€6–€40 je nach Bankroll) sind **Empfehlungsgeneratoren**, nicht das Ceiling.
+
+- Implementiert in `src/betting/kelly.apply_risk_cap()` (W2)
+- Konstante: `BANKROLL_RISK_CAP_PCT = 0.05` in `src/config.py`
+- Bei `bankroll × 0.05 < MIN_STAKE_EUR (€5)` → NOT_PLACEABLE (`no_bet_flag=True`)
+- Einsatz wird niemals über das Ceiling erhöht um ein Minimum-Stake zu erfüllen
+- Historische Empfehlungen mit stake_pct > 5% bleiben historische Evidenz (nicht überschreiben)
+
 ## Skill Auto-Aktivierung
 
 | Aufgabe | Skill |

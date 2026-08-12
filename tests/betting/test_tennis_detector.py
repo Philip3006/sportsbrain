@@ -88,7 +88,7 @@ def test_detect_value_ah_odds_when_provided():
 
 
 def test_signal_stake_within_bounds():
-    # bankroll=50 → Tier 0 bounds (€5–€15) for backward-compat behaviour
+    # bankroll=50 → 5% cap = €2.50 < MIN_STAKE_EUR (€5) → not placeable (W2 risk cap)
     signals = detect_value_tennis(
         player_a="A", player_b="B",
         probs={"p_a": 0.70, "p_b": 0.30},
@@ -96,19 +96,21 @@ def test_signal_stake_within_bounds():
         bankroll=50.0,
     )
     for s in signals:
-        assert 5.0 <= s.stake_eur <= 15.0
+        assert s.no_bet_flag, "bankroll €50 below min-placeable threshold → risk_cap_not_placeable"
+        assert s.stake_eur == 0.0
 
 
 def test_signal_stake_scales_with_bankroll_tier():
-    # bankroll=175 → Tier 1 bounds (€6–€20); HIGH-confidence allowed up to €20
+    # bankroll=175 → 5% cap = €8.75; stake must be ≤ cap, ≥ MIN_STAKE_EUR
     signals = detect_value_tennis(
         player_a="A", player_b="B",
         probs={"p_a": 0.70, "p_b": 0.30},
         odds_a=1.80, odds_b=3.50,
         bankroll=175.0,
     )
+    cap = 175.0 * 0.05  # 8.75; after floor-rounding to 0.5: max final = 8.5
     for s in signals:
-        assert 6.0 <= s.stake_eur <= 20.0
+        assert 5.0 <= s.stake_eur <= cap + 0.5  # allow for rounding to nearest 0.50
 
 
 def test_min_prob_filter_blocks_extreme_underdog():

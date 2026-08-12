@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from src.betting.gates import gate_for
-from src.betting.kelly import dynamic_stake_eur, expected_value, kelly_fraction
+from src.betting.kelly import apply_risk_cap, dynamic_stake_eur, expected_value, kelly_fraction
 from src.betting.odds_utils import remove_margin_shin
 from src.config import MIN_EDGE, MAX_STAKE_EUR, GOALS_RANGE_MAX_STAKE
 
@@ -30,6 +30,8 @@ class BetSignal:
     no_bet_flag: bool = False  # N7: blockiert Ledger-Aufnahme wenn konfliktierend
     conflict_reason: str = ""  # N7: beschreibt welcher Markt konfligiert
     league: str = ""           # Registry short-code (wm2026 | bl2 | atp | wta | ...) für Ledger-Filter + PWA-Gruppierung
+    theoretical_stake_eur: float = 0.0  # W2: Kelly/tier recommendation before 5% cap
+    cap_applied: bool = False           # W2: True when risk cap reduced theoretical stake
 
 
 _MARKETS = ["home", "draw", "away"]
@@ -44,16 +46,23 @@ def _make_signal(
     model_p: float, fair_p: float, odds: float, ev: float,
     kf: float, confidence: str, bankroll: float,
 ) -> BetSignal:
-    stake_eur = dynamic_stake_eur(ev, confidence, bankroll, decimal_odds=odds)
-    return BetSignal(
+    theoretical_eur = dynamic_stake_eur(ev, confidence, bankroll, decimal_odds=odds)
+    final_eur, cap_applied, placeable = apply_risk_cap(theoretical_eur, bankroll)
+    sig = BetSignal(
         match_id=match_id or f"{home}_vs_{away}",
         home=home, away=away, market=market,
         model_prob=model_p, fair_prob=fair_p,
         decimal_odds=odds, ev=ev, kelly_f=kf,
-        stake_pct=stake_eur / bankroll if bankroll > 0 else 0.0,
+        stake_pct=final_eur / bankroll if bankroll > 0 else 0.0,
         confidence=confidence,
-        stake_eur=stake_eur,
+        stake_eur=final_eur,
+        theoretical_stake_eur=theoretical_eur,
+        cap_applied=cap_applied,
     )
+    if not placeable:
+        sig.no_bet_flag = True
+        sig.stake_reason = "risk_cap_not_placeable"
+    return sig
 
 
 # EVs ≥ this are virtually always Qualifier-bias artefacts in the current
@@ -677,9 +686,15 @@ def set_confidence(signal: BetSignal, dc_probs: dict, lgbm_probs: np.ndarray) ->
         if signal.confidence != "LOW" and signal.model_prob * signal.decimal_odds > 1.10:
             signal.confidence = "HIGH"
             bankroll = signal.stake_eur / signal.stake_pct if signal.stake_pct > 0 else 1000.0
-            new_eur = dynamic_stake_eur(signal.ev, "HIGH", bankroll, decimal_odds=signal.decimal_odds)
-            signal.stake_eur = new_eur
-            signal.stake_pct = new_eur / bankroll
+            theoretical_eur = dynamic_stake_eur(signal.ev, "HIGH", bankroll, decimal_odds=signal.decimal_odds)
+            final_eur, cap_applied, placeable = apply_risk_cap(theoretical_eur, bankroll)
+            signal.stake_eur = final_eur
+            signal.stake_pct = final_eur / bankroll if bankroll > 0 else 0.0
+            signal.theoretical_stake_eur = theoretical_eur
+            signal.cap_applied = cap_applied
+            if not placeable:
+                signal.no_bet_flag = True
+                signal.stake_reason = "risk_cap_not_placeable"
         return signal
 
     # 1X2 market — require both DC and LightGBM to agree.
@@ -688,7 +703,13 @@ def set_confidence(signal: BetSignal, dc_probs: dict, lgbm_probs: np.ndarray) ->
     if signal.confidence != "LOW" and (dc_p * signal.decimal_odds > 1.0) and (lgbm_p * signal.decimal_odds > 1.0):
         signal.confidence = "HIGH"
         bankroll = signal.stake_eur / signal.stake_pct if signal.stake_pct > 0 else 1000.0
-        new_eur = dynamic_stake_eur(signal.ev, "HIGH", bankroll, decimal_odds=signal.decimal_odds)
-        signal.stake_eur = new_eur
-        signal.stake_pct = new_eur / bankroll
+        theoretical_eur = dynamic_stake_eur(signal.ev, "HIGH", bankroll, decimal_odds=signal.decimal_odds)
+        final_eur, cap_applied, placeable = apply_risk_cap(theoretical_eur, bankroll)
+        signal.stake_eur = final_eur
+        signal.stake_pct = final_eur / bankroll if bankroll > 0 else 0.0
+        signal.theoretical_stake_eur = theoretical_eur
+        signal.cap_applied = cap_applied
+        if not placeable:
+            signal.no_bet_flag = True
+            signal.stake_reason = "risk_cap_not_placeable"
     return signal

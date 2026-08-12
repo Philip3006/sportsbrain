@@ -93,6 +93,7 @@ def _patch_data_cache(monkeypatch, tmp_path):
     import src.data.cache as _dc
     monkeypatch.setattr(_oa, "DATA_CACHE", tmp_path)
     monkeypatch.setattr(_dc, "DATA_CACHE", tmp_path)
+    monkeypatch.setattr(_oa, "get_api_key", lambda *a, **kw: "test-key")
 
 
 def test_401_loads_stale_cache_not_empty_list(tmp_path, monkeypatch):

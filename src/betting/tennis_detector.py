@@ -12,7 +12,12 @@ BetSignal.home = player_a, BetSignal.away = player_b (tennis has no actual home/
 from __future__ import annotations
 
 from src.betting.gates import gate_for
-from src.betting.kelly import dynamic_stake_eur, expected_value, kelly_fraction
+from src.betting.kelly import (
+    apply_risk_cap,
+    dynamic_stake_eur,
+    expected_value,
+    kelly_fraction,
+)
 from src.betting.value_detector import BetSignal
 from src.config import MAX_EV, MIN_EDGE
 
@@ -52,8 +57,9 @@ def _signal(
     if ev < min_edge or ev > MAX_EV:
         return None
     kf = kelly_fraction(model_p, odds)
-    stake_eur = dynamic_stake_eur(ev, "MEDIUM", bankroll, decimal_odds=odds)
-    return BetSignal(
+    theoretical_eur = dynamic_stake_eur(ev, "MEDIUM", bankroll, decimal_odds=odds)
+    final_eur, cap_applied, placeable = apply_risk_cap(theoretical_eur, bankroll)
+    sig = BetSignal(
         match_id=match_id or f"{player_a}_vs_{player_b}",
         home=player_a,
         away=player_b,
@@ -63,10 +69,16 @@ def _signal(
         decimal_odds=odds,
         ev=ev,
         kelly_f=kf,
-        stake_pct=stake_eur / bankroll if bankroll > 0 else 0.0,
+        stake_pct=final_eur / bankroll if bankroll > 0 else 0.0,
         confidence="MEDIUM",
-        stake_eur=stake_eur,
+        stake_eur=final_eur,
+        theoretical_stake_eur=theoretical_eur,
+        cap_applied=cap_applied,
     )
+    if not placeable:
+        sig.no_bet_flag = True
+        sig.stake_reason = "risk_cap_not_placeable"
+    return sig
 
 
 def _p_match_from_p_set_bo5(p_s: float) -> float:
@@ -425,9 +437,15 @@ def detect_value_tennis(
     for s in selected:
         s.confidence = _confidence_for(s.ev, tour)
         if s.confidence == "HIGH":
-            s.stake_eur = dynamic_stake_eur(s.ev, "HIGH", bankroll, decimal_odds=s.decimal_odds)
-            if bankroll > 0:
-                s.stake_pct = s.stake_eur / bankroll
+            theoretical_eur = dynamic_stake_eur(s.ev, "HIGH", bankroll, decimal_odds=s.decimal_odds)
+            final_eur, cap_applied, placeable = apply_risk_cap(theoretical_eur, bankroll)
+            s.stake_eur = final_eur
+            s.stake_pct = final_eur / bankroll if bankroll > 0 else 0.0
+            s.theoretical_stake_eur = theoretical_eur
+            s.cap_applied = cap_applied
+            if not placeable:
+                s.no_bet_flag = True
+                s.stake_reason = "risk_cap_not_placeable"
         s.league = tour  # O1-4: tennis signals always carry tour ("atp"/"wta") as league
 
     return selected

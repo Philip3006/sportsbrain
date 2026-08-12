@@ -866,6 +866,41 @@
   },
   {
     "cell": null,
+    "code": "FURB122",
+    "end_location": {
+      "column": 47,
+      "row": 150
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/scripts/backfill_tennis_league.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "f.writelines(json.dumps(record) + \"\\n\" for record in audit_records)",
+          "end_location": {
+            "column": 47,
+            "row": 150
+          },
+          "location": {
+            "column": 9,
+            "row": 149
+          }
+        }
+      ],
+      "message": "Replace with `f.writelines`"
+    },
+    "location": {
+      "column": 9,
+      "row": 149
+    },
+    "message": "Use of `f.write` in a for loop",
+    "name": "for-loop-writes",
+    "noqa_row": 149,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/for-loop-writes"
+  },
+  {
+    "cell": null,
     "code": "EXE001",
     "end_location": {
       "column": 23,
@@ -4605,17 +4640,17 @@
     "code": "S110",
     "end_location": {
       "column": 17,
-      "row": 210
+      "row": 212
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/consume_pending_bets.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 209
+      "row": 211
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 209,
+    "noqa_row": 211,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -4624,17 +4659,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 25,
-      "row": 209
+      "row": 211
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/consume_pending_bets.py",
     "fix": null,
     "location": {
       "column": 16,
-      "row": 209
+      "row": 211
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 209,
+    "noqa_row": 211,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -4643,17 +4678,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 25,
-      "row": 236
+      "row": 238
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/consume_pending_bets.py",
     "fix": null,
     "location": {
       "column": 16,
-      "row": 236
+      "row": 238
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 236,
+    "noqa_row": 238,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -4662,7 +4697,7 @@
     "code": "PLW1510",
     "end_location": {
       "column": 38,
-      "row": 245
+      "row": 247
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/consume_pending_bets.py",
     "fix": {
@@ -4672,11 +4707,11 @@
           "content": "check=False, ",
           "end_location": {
             "column": 55,
-            "row": 245
+            "row": 247
           },
           "location": {
             "column": 55,
-            "row": 245
+            "row": 247
           }
         }
       ],
@@ -4684,11 +4719,11 @@
     },
     "location": {
       "column": 24,
-      "row": 245
+      "row": 247
     },
     "message": "`subprocess.run` without explicit `check` argument",
     "name": "subprocess-run-without-check",
-    "noqa_row": 245,
+    "noqa_row": 247,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/subprocess-run-without-check"
   },
@@ -4697,7 +4732,7 @@
     "code": "I001",
     "end_location": {
       "column": 52,
-      "row": 263
+      "row": 265
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/consume_pending_bets.py",
     "fix": {
@@ -4707,11 +4742,11 @@
           "content": "                    import random as _r\n                    import time as _t\n",
           "end_location": {
             "column": 1,
-            "row": 264
+            "row": 266
           },
           "location": {
             "column": 1,
-            "row": 263
+            "row": 265
           }
         }
       ],
@@ -4719,11 +4754,11 @@
     },
     "location": {
       "column": 21,
-      "row": 263
+      "row": 265
     },
     "message": "Import block is un-sorted or un-formatted",
     "name": "unsorted-imports",
-    "noqa_row": 263,
+    "noqa_row": 265,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
   },
@@ -4732,17 +4767,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 25,
-      "row": 268
+      "row": 270
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/consume_pending_bets.py",
     "fix": null,
     "location": {
       "column": 16,
-      "row": 268
+      "row": 270
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 268,
+    "noqa_row": 270,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -6034,21 +6069,21 @@
     "code": "I001",
     "end_location": {
       "column": 23,
-      "row": 25
+      "row": 32
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/generate_season_report.py",
     "fix": {
       "applicability": "safe",
       "edits": [
         {
-          "content": "from __future__ import annotations\n\nimport argparse\nimport csv\nimport json\nimport sys\nfrom collections import defaultdict\nfrom datetime import date, datetime, timezone\nfrom pathlib import Path\nfrom typing import Any\n\n",
+          "content": "from __future__ import annotations\n\nimport argparse\nimport csv\nimport json\nimport math\nimport sys\nfrom collections import defaultdict\nfrom datetime import date, datetime, timezone\nfrom pathlib import Path\nfrom typing import Any\n\n",
           "end_location": {
             "column": 1,
-            "row": 27
+            "row": 34
           },
           "location": {
             "column": 1,
-            "row": 16
+            "row": 22
           }
         }
       ],
@@ -6056,11 +6091,11 @@
     },
     "location": {
       "column": 1,
-      "row": 16
+      "row": 22
     },
     "message": "Import block is un-sorted or un-formatted",
     "name": "unsorted-imports",
-    "noqa_row": 16,
+    "noqa_row": 22,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
   },
@@ -6069,7 +6104,7 @@
     "code": "I001",
     "end_location": {
       "column": 53,
-      "row": 31
+      "row": 38
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/generate_season_report.py",
     "fix": {
@@ -6079,11 +6114,11 @@
           "content": "from src.config import DEFAULT_USER, ledger_path_for\n\n",
           "end_location": {
             "column": 1,
-            "row": 34
+            "row": 40
           },
           "location": {
             "column": 1,
-            "row": 31
+            "row": 38
           }
         }
       ],
@@ -6091,119 +6126,30 @@
     },
     "location": {
       "column": 1,
-      "row": 31
+      "row": 38
     },
     "message": "Import block is un-sorted or un-formatted",
     "name": "unsorted-imports",
-    "noqa_row": 31,
+    "noqa_row": 38,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
-  },
-  {
-    "cell": null,
-    "code": "PERF402",
-    "end_location": {
-      "column": 27,
-      "row": 45
-    },
-    "filename": "/Users/philiprassillier/sportsbrain/scripts/generate_season_report.py",
-    "fix": null,
-    "location": {
-      "column": 13,
-      "row": 45
-    },
-    "message": "Use `list` or `list.copy` to create a copy of a list",
-    "name": "manual-list-copy",
-    "noqa_row": 45,
-    "severity": "error",
-    "url": "https://docs.astral.sh/ruff/rules/manual-list-copy"
-  },
-  {
-    "cell": null,
-    "code": "F541",
-    "end_location": {
-      "column": 40,
-      "row": 215
-    },
-    "filename": "/Users/philiprassillier/sportsbrain/scripts/generate_season_report.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "\"| Kennzahl | Wert |\"",
-          "end_location": {
-            "column": 40,
-            "row": 215
-          },
-          "location": {
-            "column": 18,
-            "row": 215
-          }
-        }
-      ],
-      "message": "Remove extraneous `f` prefix"
-    },
-    "location": {
-      "column": 18,
-      "row": 215
-    },
-    "message": "f-string without any placeholders",
-    "name": "f-string-missing-placeholders",
-    "noqa_row": 215,
-    "severity": "error",
-    "url": "https://docs.astral.sh/ruff/rules/f-string-missing-placeholders"
-  },
-  {
-    "cell": null,
-    "code": "F541",
-    "end_location": {
-      "column": 40,
-      "row": 216
-    },
-    "filename": "/Users/philiprassillier/sportsbrain/scripts/generate_season_report.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "\"|----------|------|\"",
-          "end_location": {
-            "column": 40,
-            "row": 216
-          },
-          "location": {
-            "column": 18,
-            "row": 216
-          }
-        }
-      ],
-      "message": "Remove extraneous `f` prefix"
-    },
-    "location": {
-      "column": 18,
-      "row": 216
-    },
-    "message": "f-string without any placeholders",
-    "name": "f-string-missing-placeholders",
-    "noqa_row": 216,
-    "severity": "error",
-    "url": "https://docs.astral.sh/ruff/rules/f-string-missing-placeholders"
   },
   {
     "cell": null,
     "code": "DTZ005",
     "end_location": {
       "column": 63,
-      "row": 287
+      "row": 510
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/generate_season_report.py",
     "fix": null,
     "location": {
       "column": 49,
-      "row": 287
+      "row": 510
     },
     "message": "`datetime.datetime.now()` called without a `tz` argument",
     "name": "call-datetime-now-without-tzinfo",
-    "noqa_row": 287,
+    "noqa_row": 510,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/call-datetime-now-without-tzinfo"
   },
@@ -7560,6 +7506,25 @@
     "noqa_row": 249,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/call-date-today"
+  },
+  {
+    "cell": null,
+    "code": "EXE001",
+    "end_location": {
+      "column": 23,
+      "row": 1
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/scripts/refresh_odds.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 1
+    },
+    "message": "Shebang is present but file is not executable",
+    "name": "shebang-not-executable",
+    "noqa_row": 9,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/shebang-not-executable"
   },
   {
     "cell": null,
@@ -9593,17 +9558,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 39
+      "row": 73
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_live_push.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 39
+      "row": 73
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 39,
+    "noqa_row": 73,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -9612,17 +9577,17 @@
     "code": "S112",
     "end_location": {
       "column": 21,
-      "row": 97
+      "row": 132
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_live_push.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 96
+      "row": 131
     },
     "message": "`try`-`except`-`continue` detected, consider logging the exception",
     "name": "try-except-continue",
-    "noqa_row": 96,
+    "noqa_row": 131,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-continue"
   },
@@ -9631,17 +9596,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 25,
-      "row": 96
+      "row": 131
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_live_push.py",
     "fix": null,
     "location": {
       "column": 16,
-      "row": 96
+      "row": 131
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 96,
+    "noqa_row": 131,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -9650,17 +9615,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 134
+      "row": 169
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_live_push.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 134
+      "row": 169
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 134,
+    "noqa_row": 169,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -9669,17 +9634,17 @@
     "code": "S110",
     "end_location": {
       "column": 29,
-      "row": 165
+      "row": 200
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_live_push.py",
     "fix": null,
     "location": {
       "column": 21,
-      "row": 164
+      "row": 199
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 164,
+    "noqa_row": 199,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -9688,17 +9653,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 37,
-      "row": 164
+      "row": 199
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_live_push.py",
     "fix": null,
     "location": {
       "column": 28,
-      "row": 164
+      "row": 199
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 164,
+    "noqa_row": 199,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -9707,7 +9672,7 @@
     "code": "I001",
     "end_location": {
       "column": 70,
-      "row": 179
+      "row": 214
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_live_push.py",
     "fix": {
@@ -9717,11 +9682,11 @@
           "content": "                from datetime import datetime as _dt\n                from datetime import timezone as _tz\n",
           "end_location": {
             "column": 1,
-            "row": 180
+            "row": 215
           },
           "location": {
             "column": 1,
-            "row": 179
+            "row": 214
           }
         }
       ],
@@ -9729,11 +9694,11 @@
     },
     "location": {
       "column": 17,
-      "row": 179
+      "row": 214
     },
     "message": "Import block is un-sorted or un-formatted",
     "name": "unsorted-imports",
-    "noqa_row": 179,
+    "noqa_row": 214,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
   },
@@ -9742,7 +9707,7 @@
     "code": "F401",
     "end_location": {
       "column": 70,
-      "row": 179
+      "row": 214
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_live_push.py",
     "fix": {
@@ -9752,11 +9717,11 @@
           "content": "from datetime import datetime as _dt",
           "end_location": {
             "column": 70,
-            "row": 179
+            "row": 214
           },
           "location": {
             "column": 17,
-            "row": 179
+            "row": 214
           }
         }
       ],
@@ -9764,11 +9729,11 @@
     },
     "location": {
       "column": 67,
-      "row": 179
+      "row": 214
     },
     "message": "`datetime.timezone` imported but unused",
     "name": "unused-import",
-    "noqa_row": 179,
+    "noqa_row": 214,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/unused-import"
   },
@@ -9777,17 +9742,17 @@
     "code": "S110",
     "end_location": {
       "column": 33,
-      "row": 191
+      "row": 226
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_live_push.py",
     "fix": null,
     "location": {
       "column": 25,
-      "row": 190
+      "row": 225
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 190,
+    "noqa_row": 225,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -9796,17 +9761,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 41,
-      "row": 190
+      "row": 225
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_live_push.py",
     "fix": null,
     "location": {
       "column": 32,
-      "row": 190
+      "row": 225
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 190,
+    "noqa_row": 225,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -9815,17 +9780,17 @@
     "code": "S110",
     "end_location": {
       "column": 21,
-      "row": 194
+      "row": 229
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_live_push.py",
     "fix": null,
     "location": {
       "column": 13,
-      "row": 193
+      "row": 228
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 193,
+    "noqa_row": 228,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -9834,17 +9799,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 29,
-      "row": 193
+      "row": 228
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_live_push.py",
     "fix": null,
     "location": {
       "column": 20,
-      "row": 193
+      "row": 228
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 193,
+    "noqa_row": 228,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -9853,7 +9818,7 @@
     "code": "F541",
     "end_location": {
       "column": 44,
-      "row": 260
+      "row": 295
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_live_push.py",
     "fix": {
@@ -9863,11 +9828,11 @@
           "content": "\"🎾 Match gestartet!\"",
           "end_location": {
             "column": 44,
-            "row": 260
+            "row": 295
           },
           "location": {
             "column": 23,
-            "row": 260
+            "row": 295
           }
         }
       ],
@@ -9875,11 +9840,11 @@
     },
     "location": {
       "column": 23,
-      "row": 260
+      "row": 295
     },
     "message": "f-string without any placeholders",
     "name": "f-string-missing-placeholders",
-    "noqa_row": 260,
+    "noqa_row": 295,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/f-string-missing-placeholders"
   },
@@ -11035,7 +11000,7 @@
     "code": "I001",
     "end_location": {
       "column": 98,
-      "row": 809
+      "row": 814
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_scan.py",
     "fix": {
@@ -11045,11 +11010,11 @@
           "content": "                            from src.tennis.odds.ah_implied import (\n                                fetch_ah_fallback as _fetch_ah,\n                            )\n",
           "end_location": {
             "column": 1,
-            "row": 810
+            "row": 815
           },
           "location": {
             "column": 1,
-            "row": 809
+            "row": 814
           }
         }
       ],
@@ -11057,11 +11022,11 @@
     },
     "location": {
       "column": 29,
-      "row": 809
+      "row": 814
     },
     "message": "Import block is un-sorted or un-formatted",
     "name": "unsorted-imports",
-    "noqa_row": 809,
+    "noqa_row": 814,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
   },
@@ -11070,17 +11035,17 @@
     "code": "S110",
     "end_location": {
       "column": 33,
-      "row": 815
+      "row": 820
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_scan.py",
     "fix": null,
     "location": {
       "column": 25,
-      "row": 814
+      "row": 819
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 814,
+    "noqa_row": 819,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -11089,17 +11054,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 41,
-      "row": 814
+      "row": 819
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_scan.py",
     "fix": null,
     "location": {
       "column": 32,
-      "row": 814
+      "row": 819
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 814,
+    "noqa_row": 819,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -11108,7 +11073,7 @@
     "code": "F541",
     "end_location": {
       "column": 31,
-      "row": 887
+      "row": 897
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_scan.py",
     "fix": {
@@ -11118,11 +11083,11 @@
           "content": "\"\\n=== Summary ===\"",
           "end_location": {
             "column": 31,
-            "row": 887
+            "row": 897
           },
           "location": {
             "column": 11,
-            "row": 887
+            "row": 897
           }
         }
       ],
@@ -11130,11 +11095,11 @@
     },
     "location": {
       "column": 11,
-      "row": 887
+      "row": 897
     },
     "message": "f-string without any placeholders",
     "name": "f-string-missing-placeholders",
-    "noqa_row": 887,
+    "noqa_row": 897,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/f-string-missing-placeholders"
   },
@@ -11143,7 +11108,7 @@
     "code": "PERF102",
     "end_location": {
       "column": 43,
-      "row": 895
+      "row": 905
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_scan.py",
     "fix": {
@@ -11153,22 +11118,22 @@
           "content": "info",
           "end_location": {
             "column": 19,
-            "row": 895
+            "row": 905
           },
           "location": {
             "column": 9,
-            "row": 895
+            "row": 905
           }
         },
         {
           "content": "values",
           "end_location": {
             "column": 43,
-            "row": 895
+            "row": 905
           },
           "location": {
             "column": 38,
-            "row": 895
+            "row": 905
           }
         }
       ],
@@ -11176,11 +11141,11 @@
     },
     "location": {
       "column": 23,
-      "row": 895
+      "row": 905
     },
     "message": "When using only the values of a dict use the `values()` method",
     "name": "incorrect-dict-iterator",
-    "noqa_row": 895,
+    "noqa_row": 905,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/incorrect-dict-iterator"
   },
@@ -11189,7 +11154,7 @@
     "code": "PERF102",
     "end_location": {
       "column": 43,
-      "row": 942
+      "row": 952
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_scan.py",
     "fix": {
@@ -11199,22 +11164,22 @@
           "content": "info",
           "end_location": {
             "column": 19,
-            "row": 942
+            "row": 952
           },
           "location": {
             "column": 9,
-            "row": 942
+            "row": 952
           }
         },
         {
           "content": "values",
           "end_location": {
             "column": 43,
-            "row": 942
+            "row": 952
           },
           "location": {
             "column": 38,
-            "row": 942
+            "row": 952
           }
         }
       ],
@@ -11222,11 +11187,11 @@
     },
     "location": {
       "column": 23,
-      "row": 942
+      "row": 952
     },
     "message": "When using only the values of a dict use the `values()` method",
     "name": "incorrect-dict-iterator",
-    "noqa_row": 942,
+    "noqa_row": 952,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/incorrect-dict-iterator"
   },
@@ -11235,17 +11200,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 45,
-      "row": 1044
+      "row": 1075
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_scan.py",
     "fix": null,
     "location": {
       "column": 36,
-      "row": 1044
+      "row": 1075
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 1044,
+    "noqa_row": 1075,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -11254,17 +11219,17 @@
     "code": "S110",
     "end_location": {
       "column": 33,
-      "row": 1075
+      "row": 1122
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_scan.py",
     "fix": null,
     "location": {
       "column": 25,
-      "row": 1074
+      "row": 1121
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 1074,
+    "noqa_row": 1121,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -11273,17 +11238,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 41,
-      "row": 1074
+      "row": 1121
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_scan.py",
     "fix": null,
     "location": {
       "column": 32,
-      "row": 1074
+      "row": 1121
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 1074,
+    "noqa_row": 1121,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -11292,17 +11257,109 @@
     "code": "BLE001",
     "end_location": {
       "column": 25,
-      "row": 1091
+      "row": 1146
     },
     "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_scan.py",
     "fix": null,
     "location": {
       "column": 16,
-      "row": 1091
+      "row": 1146
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 1091,
+    "noqa_row": 1146,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 89,
+      "row": 1175
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_scan.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "        from datetime import datetime as _dt\n        from datetime import timezone as _tz\n\n        from src.tennis.tournaments import PRODUCTION_SUPPORTED_CATEGORIES as _PROD_CATS\n",
+          "end_location": {
+            "column": 1,
+            "row": 1176
+          },
+          "location": {
+            "column": 1,
+            "row": 1174
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 9,
+      "row": 1174
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 1174,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "S112",
+    "end_location": {
+      "column": 25,
+      "row": 1189
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_scan.py",
+    "fix": null,
+    "location": {
+      "column": 13,
+      "row": 1188
+    },
+    "message": "`try`-`except`-`continue` detected, consider logging the exception",
+    "name": "try-except-continue",
+    "noqa_row": 1188,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/try-except-continue"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 1188
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_scan.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 1188
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 1188,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 21,
+      "row": 1204
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/scripts/tennis_scan.py",
+    "fix": null,
+    "location": {
+      "column": 12,
+      "row": 1204
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 1204,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -14075,17 +14132,17 @@
     "code": "I001",
     "end_location": {
       "column": 2,
-      "row": 8
+      "row": 9
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/kelly.py",
     "fix": {
       "applicability": "safe",
       "edits": [
         {
-          "content": "from src.config import (\n    GOALS_RANGE_TIER_PCT,\n    KELLY_FRAC,\n    MAX_STAKE_EUR,\n    MIN_STAKE_EUR,\n    ODDS_BUCKET_CAPS,\n    STAKE_TIERS,\n)\n\n\n",
+          "content": "from src.config import (\n    BANKROLL_RISK_CAP_PCT,\n    GOALS_RANGE_TIER_PCT,\n    KELLY_FRAC,\n    MAX_STAKE_EUR,\n    MIN_STAKE_EUR,\n    ODDS_BUCKET_CAPS,\n    STAKE_TIERS,\n)\n\n\n",
           "end_location": {
             "column": 1,
-            "row": 11
+            "row": 12
           },
           "location": {
             "column": 1,
@@ -14447,17 +14504,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 29,
-      "row": 384
+      "row": 399
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/ledger.py",
     "fix": null,
     "location": {
       "column": 20,
-      "row": 384
+      "row": 399
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 384,
+    "noqa_row": 399,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -14466,7 +14523,7 @@
     "code": "RUF046",
     "end_location": {
       "column": 50,
-      "row": 425
+      "row": 440
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/ledger.py",
     "fix": {
@@ -14476,11 +14533,11 @@
           "content": "round(line * 4)",
           "end_location": {
             "column": 50,
-            "row": 425
+            "row": 440
           },
           "location": {
             "column": 30,
-            "row": 425
+            "row": 440
           }
         }
       ],
@@ -14488,11 +14545,11 @@
     },
     "location": {
       "column": 30,
-      "row": 425
+      "row": 440
     },
     "message": "Value being cast to `int` is already an integer",
     "name": "unnecessary-cast-to-int",
-    "noqa_row": 425,
+    "noqa_row": 440,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/unnecessary-cast-to-int"
   },
@@ -14501,17 +14558,17 @@
     "code": "RUF034",
     "end_location": {
       "column": 75,
-      "row": 446
+      "row": 461
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/ledger.py",
     "fix": null,
     "location": {
       "column": 29,
-      "row": 446
+      "row": 461
     },
     "message": "Useless `if`-`else` condition",
     "name": "useless-if-else",
-    "noqa_row": 446,
+    "noqa_row": 461,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/useless-if-else"
   },
@@ -14520,7 +14577,7 @@
     "code": "RUF046",
     "end_location": {
       "column": 50,
-      "row": 498
+      "row": 513
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/ledger.py",
     "fix": {
@@ -14530,11 +14587,11 @@
           "content": "round(need * 4)",
           "end_location": {
             "column": 50,
-            "row": 498
+            "row": 513
           },
           "location": {
             "column": 30,
-            "row": 498
+            "row": 513
           }
         }
       ],
@@ -14542,11 +14599,11 @@
     },
     "location": {
       "column": 30,
-      "row": 498
+      "row": 513
     },
     "message": "Value being cast to `int` is already an integer",
     "name": "unnecessary-cast-to-int",
-    "noqa_row": 498,
+    "noqa_row": 513,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/unnecessary-cast-to-int"
   },
@@ -14555,7 +14612,7 @@
     "code": "RUF046",
     "end_location": {
       "column": 50,
-      "row": 525
+      "row": 540
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/ledger.py",
     "fix": {
@@ -14565,11 +14622,11 @@
           "content": "round(need * 4)",
           "end_location": {
             "column": 50,
-            "row": 525
+            "row": 540
           },
           "location": {
             "column": 30,
-            "row": 525
+            "row": 540
           }
         }
       ],
@@ -14577,11 +14634,11 @@
     },
     "location": {
       "column": 30,
-      "row": 525
+      "row": 540
     },
     "message": "Value being cast to `int` is already an integer",
     "name": "unnecessary-cast-to-int",
-    "noqa_row": 525,
+    "noqa_row": 540,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/unnecessary-cast-to-int"
   },
@@ -14590,50 +14647,12 @@
     "code": "BLE001",
     "end_location": {
       "column": 29,
-      "row": 605
-    },
-    "filename": "/Users/philiprassillier/sportsbrain/src/betting/ledger.py",
-    "fix": null,
-    "location": {
-      "column": 20,
-      "row": 605
-    },
-    "message": "Do not catch blind exception: `Exception`",
-    "name": "blind-except",
-    "noqa_row": 605,
-    "severity": "error",
-    "url": "https://docs.astral.sh/ruff/rules/blind-except"
-  },
-  {
-    "cell": null,
-    "code": "F821",
-    "end_location": {
-      "column": 36,
-      "row": 607
-    },
-    "filename": "/Users/philiprassillier/sportsbrain/src/betting/ledger.py",
-    "fix": null,
-    "location": {
-      "column": 32,
-      "row": 607
-    },
-    "message": "Undefined name `user`",
-    "name": "undefined-name",
-    "noqa_row": 607,
-    "severity": "error",
-    "url": "https://docs.astral.sh/ruff/rules/undefined-name"
-  },
-  {
-    "cell": null,
-    "code": "BLE001",
-    "end_location": {
-      "column": 21,
       "row": 620
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/ledger.py",
     "fix": null,
     "location": {
-      "column": 12,
+      "column": 20,
       "row": 620
     },
     "message": "Do not catch blind exception: `Exception`",
@@ -14644,20 +14663,58 @@
   },
   {
     "cell": null,
+    "code": "F821",
+    "end_location": {
+      "column": 36,
+      "row": 622
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/betting/ledger.py",
+    "fix": null,
+    "location": {
+      "column": 32,
+      "row": 622
+    },
+    "message": "Undefined name `user`",
+    "name": "undefined-name",
+    "noqa_row": 622,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/undefined-name"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 21,
+      "row": 635
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/betting/ledger.py",
+    "fix": null,
+    "location": {
+      "column": 12,
+      "row": 635
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 635,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
     "code": "BLE001",
     "end_location": {
       "column": 25,
-      "row": 660
+      "row": 675
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/ledger.py",
     "fix": null,
     "location": {
       "column": 16,
-      "row": 660
+      "row": 675
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 660,
+    "noqa_row": 675,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -14666,7 +14723,7 @@
     "code": "RUF046",
     "end_location": {
       "column": 80,
-      "row": 750
+      "row": 765
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/ledger.py",
     "fix": {
@@ -14676,11 +14733,11 @@
           "content": "len(vals)",
           "end_location": {
             "column": 80,
-            "row": 750
+            "row": 765
           },
           "location": {
             "column": 66,
-            "row": 750
+            "row": 765
           }
         }
       ],
@@ -14688,11 +14745,11 @@
     },
     "location": {
       "column": 66,
-      "row": 750
+      "row": 765
     },
     "message": "Value being cast to `int` is already an integer",
     "name": "unnecessary-cast-to-int",
-    "noqa_row": 750,
+    "noqa_row": 765,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/unnecessary-cast-to-int"
   },
@@ -14701,17 +14758,17 @@
     "code": "DTZ011",
     "end_location": {
       "column": 30,
-      "row": 755
+      "row": 770
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/ledger.py",
     "fix": null,
     "location": {
       "column": 18,
-      "row": 755
+      "row": 770
     },
     "message": "`datetime.date.today()` used",
     "name": "call-date-today",
-    "noqa_row": 755,
+    "noqa_row": 770,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/call-date-today"
   },
@@ -14720,17 +14777,17 @@
     "code": "DTZ011",
     "end_location": {
       "column": 38,
-      "row": 823
+      "row": 838
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/ledger.py",
     "fix": null,
     "location": {
       "column": 26,
-      "row": 823
+      "row": 838
     },
     "message": "`datetime.date.today()` used",
     "name": "call-date-today",
-    "noqa_row": 823,
+    "noqa_row": 838,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/call-date-today"
   },
@@ -14739,17 +14796,17 @@
     "code": "S110",
     "end_location": {
       "column": 13,
-      "row": 835
+      "row": 850
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/ledger.py",
     "fix": null,
     "location": {
       "column": 5,
-      "row": 834
+      "row": 849
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 834,
+    "noqa_row": 849,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -14758,17 +14815,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 834
+      "row": 849
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/ledger.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 834
+      "row": 849
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 834,
+    "noqa_row": 849,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -14777,17 +14834,17 @@
     "code": "S110",
     "end_location": {
       "column": 17,
-      "row": 884
+      "row": 899
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/ledger.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 883
+      "row": 898
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 883,
+    "noqa_row": 898,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -14796,17 +14853,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 25,
-      "row": 883
+      "row": 898
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/ledger.py",
     "fix": null,
     "location": {
       "column": 16,
-      "row": 883
+      "row": 898
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 883,
+    "noqa_row": 898,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -14815,17 +14872,17 @@
     "code": "S110",
     "end_location": {
       "column": 13,
-      "row": 156
+      "row": 168
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/tennis_detector.py",
     "fix": null,
     "location": {
       "column": 5,
-      "row": 155
+      "row": 167
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 155,
+    "noqa_row": 167,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -14834,17 +14891,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 155
+      "row": 167
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/tennis_detector.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 155
+      "row": 167
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 155,
+    "noqa_row": 167,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -14853,17 +14910,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 162
+      "row": 174
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/tennis_detector.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 162
+      "row": 174
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 162,
+    "noqa_row": 174,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -14872,7 +14929,7 @@
     "code": "I001",
     "end_location": {
       "column": 66,
-      "row": 254
+      "row": 268
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/betting/tennis_detector.py",
     "fix": {
@@ -14882,11 +14939,11 @@
           "content": "    from src.tennis.sim import p_total_games_over, simulate_match\n",
           "end_location": {
             "column": 1,
-            "row": 255
+            "row": 269
           },
           "location": {
             "column": 1,
-            "row": 254
+            "row": 268
           }
         }
       ],
@@ -14894,11 +14951,11 @@
     },
     "location": {
       "column": 5,
-      "row": 254
+      "row": 268
     },
     "message": "Import block is un-sorted or un-formatted",
     "name": "unsorted-imports",
-    "noqa_row": 254,
+    "noqa_row": 268,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
   },
@@ -15019,7 +15076,7 @@
       "applicability": "safe",
       "edits": [
         {
-          "content": "from dataclasses import dataclass, field\n\nimport numpy as np\n\nfrom src.betting.gates import gate_for\nfrom src.betting.kelly import dynamic_stake_eur, expected_value, kelly_fraction\nfrom src.betting.odds_utils import remove_margin_shin\nfrom src.config import GOALS_RANGE_MAX_STAKE, MAX_STAKE_EUR, MIN_EDGE\n\n\n",
+          "content": "from dataclasses import dataclass, field\n\nimport numpy as np\n\nfrom src.betting.gates import gate_for\nfrom src.betting.kelly import (\n    apply_risk_cap,\n    dynamic_stake_eur,\n    expected_value,\n    kelly_fraction,\n)\nfrom src.betting.odds_utils import remove_margin_shin\nfrom src.config import GOALS_RANGE_MAX_STAKE, MAX_STAKE_EUR, MIN_EDGE\n\n\n",
           "end_location": {
             "column": 1,
             "row": 11
@@ -15155,7 +15212,7 @@
     "code": "F601",
     "end_location": {
       "column": 40,
-      "row": 374
+      "row": 379
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/config.py",
     "fix": {
@@ -15165,11 +15222,11 @@
           "content": "",
           "end_location": {
             "column": 47,
-            "row": 374
+            "row": 379
           },
           "location": {
             "column": 24,
-            "row": 374
+            "row": 379
           }
         }
       ],
@@ -15177,11 +15234,11 @@
     },
     "location": {
       "column": 26,
-      "row": 374
+      "row": 379
     },
     "message": "Dictionary key literal `\"South Africa\"` repeated",
     "name": "multi-value-repeated-key-literal",
-    "noqa_row": 374,
+    "noqa_row": 379,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/multi-value-repeated-key-literal"
   },
@@ -15190,7 +15247,7 @@
     "code": "F601",
     "end_location": {
       "column": 27,
-      "row": 492
+      "row": 497
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/config.py",
     "fix": {
@@ -15200,11 +15257,11 @@
           "content": "",
           "end_location": {
             "column": 53,
-            "row": 492
+            "row": 497
           },
           "location": {
             "column": 25,
-            "row": 491
+            "row": 496
           }
         }
       ],
@@ -15212,11 +15269,11 @@
     },
     "location": {
       "column": 5,
-      "row": 492
+      "row": 497
     },
     "message": "Dictionary key literal `\"Bosnia & Herzegovina\"` repeated",
     "name": "multi-value-repeated-key-literal",
-    "noqa_row": 492,
+    "noqa_row": 497,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/multi-value-repeated-key-literal"
   },
@@ -16159,20 +16216,55 @@
   },
   {
     "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 98,
+      "row": 168
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "        from src.signals.provider_budget import is_provider_available\n        from src.signals.provider_budget import record_error as _pb_record\n",
+          "end_location": {
+            "column": 1,
+            "row": 169
+          },
+          "location": {
+            "column": 1,
+            "row": 168
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 9,
+      "row": 168
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 168,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
     "code": "S110",
     "end_location": {
       "column": 17,
-      "row": 217
+      "row": 244
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 216
+      "row": 243
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 216,
+    "noqa_row": 243,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -16181,17 +16273,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 25,
-      "row": 216
+      "row": 243
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": null,
     "location": {
       "column": 16,
-      "row": 216
+      "row": 243
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 216,
+    "noqa_row": 243,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -16200,7 +16292,7 @@
     "code": "I001",
     "end_location": {
       "column": 18,
-      "row": 298
+      "row": 325
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": {
@@ -16210,11 +16302,11 @@
           "content": "        import re\n\n        from ddgs import DDGS\n",
           "end_location": {
             "column": 1,
-            "row": 299
+            "row": 326
           },
           "location": {
             "column": 1,
-            "row": 297
+            "row": 324
           }
         }
       ],
@@ -16222,11 +16314,11 @@
     },
     "location": {
       "column": 9,
-      "row": 297
+      "row": 324
     },
     "message": "Import block is un-sorted or un-formatted",
     "name": "unsorted-imports",
-    "noqa_row": 297,
+    "noqa_row": 324,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
   },
@@ -16235,17 +16327,17 @@
     "code": "S112",
     "end_location": {
       "column": 33,
-      "row": 331
+      "row": 358
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": null,
     "location": {
       "column": 21,
-      "row": 330
+      "row": 357
     },
     "message": "`try`-`except`-`continue` detected, consider logging the exception",
     "name": "try-except-continue",
-    "noqa_row": 330,
+    "noqa_row": 357,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-continue"
   },
@@ -16254,17 +16346,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 37,
-      "row": 330
+      "row": 357
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": null,
     "location": {
       "column": 28,
-      "row": 330
+      "row": 357
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 330,
+    "noqa_row": 357,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -16273,17 +16365,17 @@
     "code": "S112",
     "end_location": {
       "column": 25,
-      "row": 344
+      "row": 371
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": null,
     "location": {
       "column": 13,
-      "row": 343
+      "row": 370
     },
     "message": "`try`-`except`-`continue` detected, consider logging the exception",
     "name": "try-except-continue",
-    "noqa_row": 343,
+    "noqa_row": 370,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-continue"
   },
@@ -16292,17 +16384,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 29,
-      "row": 343
+      "row": 370
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": null,
     "location": {
       "column": 20,
-      "row": 343
+      "row": 370
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 343,
+    "noqa_row": 370,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -16311,17 +16403,17 @@
     "code": "S110",
     "end_location": {
       "column": 13,
-      "row": 346
+      "row": 373
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": null,
     "location": {
       "column": 5,
-      "row": 345
+      "row": 372
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 345,
+    "noqa_row": 372,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -16330,17 +16422,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 345
+      "row": 372
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 345
+      "row": 372
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 345,
+    "noqa_row": 372,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -16349,17 +16441,17 @@
     "code": "PLC0206",
     "end_location": {
       "column": 26,
-      "row": 410
+      "row": 437
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": null,
     "location": {
       "column": 17,
-      "row": 410
+      "row": 437
     },
     "message": "Extracting value from dictionary without calling `.items()`",
     "name": "dict-index-missing-items",
-    "noqa_row": 410,
+    "noqa_row": 437,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/dict-index-missing-items"
   },
@@ -16368,17 +16460,17 @@
     "code": "SIM102",
     "end_location": {
       "column": 79,
-      "row": 585
+      "row": 612
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": null,
     "location": {
       "column": 5,
-      "row": 584
+      "row": 611
     },
     "message": "Use a single `if` statement instead of nested `if` statements",
     "name": "collapsible-if",
-    "noqa_row": 584,
+    "noqa_row": 611,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/collapsible-if"
   },
@@ -16387,17 +16479,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 604
+      "row": 631
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 604
+      "row": 631
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 604,
+    "noqa_row": 631,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -16406,7 +16498,7 @@
     "code": "F841",
     "end_location": {
       "column": 11,
-      "row": 679
+      "row": 706
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": {
@@ -16416,11 +16508,11 @@
           "content": "_home_l",
           "end_location": {
             "column": 11,
-            "row": 679
+            "row": 706
           },
           "location": {
             "column": 5,
-            "row": 679
+            "row": 706
           }
         }
       ],
@@ -16428,11 +16520,11 @@
     },
     "location": {
       "column": 5,
-      "row": 679
+      "row": 706
     },
     "message": "Local variable `home_l` is assigned to but never used",
     "name": "unused-variable",
-    "noqa_row": 679,
+    "noqa_row": 706,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/unused-variable"
   },
@@ -16441,7 +16533,7 @@
     "code": "F841",
     "end_location": {
       "column": 19,
-      "row": 679
+      "row": 706
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": {
@@ -16451,11 +16543,11 @@
           "content": "_away_l",
           "end_location": {
             "column": 19,
-            "row": 679
+            "row": 706
           },
           "location": {
             "column": 13,
-            "row": 679
+            "row": 706
           }
         }
       ],
@@ -16463,11 +16555,11 @@
     },
     "location": {
       "column": 13,
-      "row": 679
+      "row": 706
     },
     "message": "Local variable `away_l` is assigned to but never used",
     "name": "unused-variable",
-    "noqa_row": 679,
+    "noqa_row": 706,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/unused-variable"
   },
@@ -16476,17 +16568,17 @@
     "code": "DTZ007",
     "end_location": {
       "column": 54,
-      "row": 691
+      "row": 718
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": null,
     "location": {
       "column": 13,
-      "row": 691
+      "row": 718
     },
     "message": "Naive datetime constructed using `datetime.datetime.strptime()` without %z",
     "name": "call-datetime-strptime-without-zone",
-    "noqa_row": 691,
+    "noqa_row": 718,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/call-datetime-strptime-without-zone"
   },
@@ -16495,17 +16587,17 @@
     "code": "S112",
     "end_location": {
       "column": 21,
-      "row": 705
+      "row": 732
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 704
+      "row": 731
     },
     "message": "`try`-`except`-`continue` detected, consider logging the exception",
     "name": "try-except-continue",
-    "noqa_row": 704,
+    "noqa_row": 731,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-continue"
   },
@@ -16514,17 +16606,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 25,
-      "row": 704
+      "row": 731
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": null,
     "location": {
       "column": 16,
-      "row": 704
+      "row": 731
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 704,
+    "noqa_row": 731,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -16533,7 +16625,7 @@
     "code": "I001",
     "end_location": {
       "column": 50,
-      "row": 723
+      "row": 750
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": {
@@ -16543,11 +16635,11 @@
           "content": "    import re\n\n    from scripts._http_retry import retry_request\n",
           "end_location": {
             "column": 1,
-            "row": 724
+            "row": 751
           },
           "location": {
             "column": 1,
-            "row": 722
+            "row": 749
           }
         }
       ],
@@ -16555,11 +16647,11 @@
     },
     "location": {
       "column": 5,
-      "row": 722
+      "row": 749
     },
     "message": "Import block is un-sorted or un-formatted",
     "name": "unsorted-imports",
-    "noqa_row": 722,
+    "noqa_row": 749,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
   },
@@ -16568,7 +16660,7 @@
     "code": "F541",
     "end_location": {
       "column": 85,
-      "row": 724
+      "row": 751
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": {
@@ -16578,11 +16670,11 @@
           "content": "\"https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary\"",
           "end_location": {
             "column": 85,
-            "row": 724
+            "row": 751
           },
           "location": {
             "column": 11,
-            "row": 724
+            "row": 751
           }
         }
       ],
@@ -16590,11 +16682,11 @@
     },
     "location": {
       "column": 11,
-      "row": 724
+      "row": 751
     },
     "message": "f-string without any placeholders",
     "name": "f-string-missing-placeholders",
-    "noqa_row": 724,
+    "noqa_row": 751,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/f-string-missing-placeholders"
   },
@@ -16603,17 +16695,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 728
+      "row": 755
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 728
+      "row": 755
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 728,
+    "noqa_row": 755,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -16622,17 +16714,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 756
+      "row": 783
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 756
+      "row": 783
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 756,
+    "noqa_row": 783,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -16641,7 +16733,7 @@
     "code": "UP024",
     "end_location": {
       "column": 28,
-      "row": 848
+      "row": 875
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": {
@@ -16651,11 +16743,11 @@
           "content": "OSError",
           "end_location": {
             "column": 28,
-            "row": 848
+            "row": 875
           },
           "location": {
             "column": 12,
-            "row": 848
+            "row": 875
           }
         }
       ],
@@ -16663,11 +16755,11 @@
     },
     "location": {
       "column": 12,
-      "row": 848
+      "row": 875
     },
     "message": "Replace aliased errors with `OSError`",
     "name": "os-error-alias",
-    "noqa_row": 848,
+    "noqa_row": 875,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/os-error-alias"
   },
@@ -16676,17 +16768,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 860
+      "row": 887
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/odds_api.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 860
+      "row": 887
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 860,
+    "noqa_row": 887,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -19310,17 +19402,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 66
+      "row": 70
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/tennis_secondary_odds.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 66
+      "row": 70
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 66,
+    "noqa_row": 70,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -19329,17 +19421,17 @@
     "code": "DTZ005",
     "end_location": {
       "column": 30,
-      "row": 74
+      "row": 78
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/tennis_secondary_odds.py",
     "fix": null,
     "location": {
       "column": 16,
-      "row": 74
+      "row": 78
     },
     "message": "`datetime.datetime.now()` called without a `tz` argument",
     "name": "call-datetime-now-without-tzinfo",
-    "noqa_row": 74,
+    "noqa_row": 78,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/call-datetime-now-without-tzinfo"
   },
@@ -19348,17 +19440,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 79
+      "row": 83
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/tennis_secondary_odds.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 79
+      "row": 83
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 79,
+    "noqa_row": 83,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -19367,17 +19459,17 @@
     "code": "S110",
     "end_location": {
       "column": 21,
-      "row": 192
+      "row": 202
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/tennis_secondary_odds.py",
     "fix": null,
     "location": {
       "column": 13,
-      "row": 191
+      "row": 201
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 191,
+    "noqa_row": 201,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -19386,17 +19478,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 29,
-      "row": 191
+      "row": 201
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/tennis_secondary_odds.py",
     "fix": null,
     "location": {
       "column": 20,
-      "row": 191
+      "row": 201
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 191,
+    "noqa_row": 201,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -19405,17 +19497,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 29,
-      "row": 205
+      "row": 215
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/tennis_secondary_odds.py",
     "fix": null,
     "location": {
       "column": 20,
-      "row": 205
+      "row": 215
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 205,
+    "noqa_row": 215,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -19424,17 +19516,17 @@
     "code": "S110",
     "end_location": {
       "column": 13,
-      "row": 214
+      "row": 224
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/tennis_secondary_odds.py",
     "fix": null,
     "location": {
       "column": 5,
-      "row": 213
+      "row": 223
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 213,
+    "noqa_row": 223,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -19443,17 +19535,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 213
+      "row": 223
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/data/tennis_secondary_odds.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 213
+      "row": 223
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 213,
+    "noqa_row": 223,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -21774,6 +21866,98 @@
   },
   {
     "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 21,
+      "row": 47
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/football/odds/oddsportal.py",
+    "fix": null,
+    "location": {
+      "column": 12,
+      "row": 47
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 47,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "S112",
+    "end_location": {
+      "column": 21,
+      "row": 77
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/football/odds/oddsportal.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 76
+    },
+    "message": "`try`-`except`-`continue` detected, consider logging the exception",
+    "name": "try-except-continue",
+    "noqa_row": 76,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/try-except-continue"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 25,
+      "row": 76
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/football/odds/oddsportal.py",
+    "fix": null,
+    "location": {
+      "column": 16,
+      "row": 76
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 76,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "UP045",
+    "end_location": {
+      "column": 59,
+      "row": 84
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/football/odds/oddsportal.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "FootballOddsQuote | None",
+          "end_location": {
+            "column": 59,
+            "row": 84
+          },
+          "location": {
+            "column": 32,
+            "row": 84
+          }
+        }
+      ],
+      "message": "Convert to `X | None`"
+    },
+    "location": {
+      "column": 32,
+      "row": 84
+    },
+    "message": "Use `X | None` for type annotations",
+    "name": "non-pep604-annotation-optional",
+    "noqa_row": 84,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
+  },
+  {
+    "cell": null,
     "code": "I001",
     "end_location": {
       "column": 11,
@@ -22859,18 +23043,18 @@
     "cell": null,
     "code": "I001",
     "end_location": {
-      "column": 50,
-      "row": 18
+      "column": 2,
+      "row": 24
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": {
       "applicability": "safe",
       "edits": [
         {
-          "content": "from __future__ import annotations\n\nimport csv\nimport json\nimport os\nimport re\nimport subprocess\nfrom collections import defaultdict\nfrom datetime import datetime, timedelta, timezone\nfrom pathlib import Path\n\nfrom src.betting.value_detector import BetSignal\nfrom src.config import DEFAULT_USER as _DEFAULT_USER\nfrom src.config import ODDS_MOVE_WARN_PCT\nfrom src.utils.atomic_io import atomic_write_json\n\n\n",
+          "content": "from __future__ import annotations\n\nimport csv\nimport json\nimport os\nimport re\nimport subprocess\nfrom collections import defaultdict\nfrom datetime import datetime, timedelta, timezone\nfrom pathlib import Path\n\nfrom src.betting.value_detector import BetSignal\nfrom src.config import DEFAULT_USER as _DEFAULT_USER\nfrom src.config import ODDS_MOVE_WARN_PCT\nfrom src.signals.signal_status import (\n    load_odds_state,\n    make_signal_id,\n    merge_odds_state_into_signal,\n    seed_initial_odds,\n)\nfrom src.utils.atomic_io import atomic_write_json\n\n\n",
           "end_location": {
             "column": 1,
-            "row": 21
+            "row": 27
           },
           "location": {
             "column": 1,
@@ -22895,17 +23079,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 25,
-      "row": 32
+      "row": 38
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 16,
-      "row": 32
+      "row": 38
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 32,
+    "noqa_row": 38,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -22914,7 +23098,7 @@
     "code": "I001",
     "end_location": {
       "column": 94,
-      "row": 43
+      "row": 49
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": {
@@ -22924,11 +23108,11 @@
           "content": "from src.config import DEFAULT_USER as _DEFAULT_USER_CFG\nfrom src.config import ledger_path_for as _ledger_path_for\n\n",
           "end_location": {
             "column": 1,
-            "row": 44
+            "row": 50
           },
           "location": {
             "column": 1,
-            "row": 43
+            "row": 49
           }
         }
       ],
@@ -22936,11 +23120,11 @@
     },
     "location": {
       "column": 1,
-      "row": 43
+      "row": 49
     },
     "message": "Import block is un-sorted or un-formatted",
     "name": "unsorted-imports",
-    "noqa_row": 43,
+    "noqa_row": 49,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
   },
@@ -22949,17 +23133,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 201
+      "row": 207
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 201
+      "row": 207
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 201,
+    "noqa_row": 207,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -22968,17 +23152,17 @@
     "code": "PLC0206",
     "end_location": {
       "column": 25,
-      "row": 425
+      "row": 435
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 13,
-      "row": 425
+      "row": 435
     },
     "message": "Extracting value from dictionary without calling `.items()`",
     "name": "dict-index-missing-items",
-    "noqa_row": 425,
+    "noqa_row": 435,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/dict-index-missing-items"
   },
@@ -22987,7 +23171,7 @@
     "code": "PLR1730",
     "end_location": {
       "column": 25,
-      "row": 438
+      "row": 448
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": {
@@ -22997,11 +23181,11 @@
           "content": "peak = max(peak, b)",
           "end_location": {
             "column": 25,
-            "row": 438
+            "row": 448
           },
           "location": {
             "column": 13,
-            "row": 437
+            "row": 447
           }
         }
       ],
@@ -23009,11 +23193,11 @@
     },
     "location": {
       "column": 13,
-      "row": 437
+      "row": 447
     },
     "message": "Replace `if` statement with `peak = max(peak, b)`",
     "name": "if-stmt-min-max",
-    "noqa_row": 437,
+    "noqa_row": 447,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/if-stmt-min-max"
   },
@@ -23022,17 +23206,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 506
+      "row": 516
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 506
+      "row": 516
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 506,
+    "noqa_row": 516,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -23041,17 +23225,17 @@
     "code": "S110",
     "end_location": {
       "column": 13,
-      "row": 535
+      "row": 545
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 5,
-      "row": 534
+      "row": 544
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 534,
+    "noqa_row": 544,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -23060,17 +23244,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 534
+      "row": 544
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 534
+      "row": 544
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 534,
+    "noqa_row": 544,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -23079,17 +23263,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 547
+      "row": 557
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 547
+      "row": 557
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 547,
+    "noqa_row": 557,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -23098,17 +23282,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 565
+      "row": 575
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 565
+      "row": 575
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 565,
+    "noqa_row": 575,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -23117,17 +23301,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 679
+      "row": 689
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 679
+      "row": 689
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 679,
+    "noqa_row": 689,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -23136,17 +23320,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 728
+      "row": 738
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 728
+      "row": 738
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 728,
+    "noqa_row": 738,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -23155,17 +23339,17 @@
     "code": "S110",
     "end_location": {
       "column": 29,
-      "row": 800
+      "row": 810
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 21,
-      "row": 799
+      "row": 809
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 799,
+    "noqa_row": 809,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -23174,17 +23358,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 37,
-      "row": 799
+      "row": 809
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 28,
-      "row": 799
+      "row": 809
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 799,
+    "noqa_row": 809,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -23193,17 +23377,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 816
+      "row": 826
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 816
+      "row": 826
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 816,
+    "noqa_row": 826,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -23212,7 +23396,7 @@
     "code": "FURB192",
     "end_location": {
       "column": 92,
-      "row": 845
+      "row": 855
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": {
@@ -23222,11 +23406,11 @@
           "content": "max(odds_history, key=lambda e: e.get(\"ts\", e.get(\"date\", \"\")))",
           "end_location": {
             "column": 92,
-            "row": 845
+            "row": 855
           },
           "location": {
             "column": 22,
-            "row": 845
+            "row": 855
           }
         }
       ],
@@ -23234,11 +23418,11 @@
     },
     "location": {
       "column": 22,
-      "row": 845
+      "row": 855
     },
     "message": "Prefer `max` over `sorted()` to compute the maximum value in a sequence",
     "name": "sorted-min-max",
-    "noqa_row": 845,
+    "noqa_row": 855,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/sorted-min-max"
   },
@@ -23247,17 +23431,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 846
+      "row": 856
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 846
+      "row": 856
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 846,
+    "noqa_row": 856,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -23266,17 +23450,17 @@
     "code": "SIM102",
     "end_location": {
       "column": 71,
-      "row": 1043
+      "row": 1070
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 13,
-      "row": 1041
+      "row": 1068
     },
     "message": "Use a single `if` statement instead of nested `if` statements",
     "name": "collapsible-if",
-    "noqa_row": 1041,
+    "noqa_row": 1068,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/collapsible-if"
   },
@@ -23285,7 +23469,7 @@
     "code": "I001",
     "end_location": {
       "column": 71,
-      "row": 1090
+      "row": 1117
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": {
@@ -23295,11 +23479,11 @@
           "content": "        import json as _json\n\n        from src.data.tennis_scores import canonical_match_key as _cmk\n",
           "end_location": {
             "column": 1,
-            "row": 1091
+            "row": 1118
           },
           "location": {
             "column": 1,
-            "row": 1089
+            "row": 1116
           }
         }
       ],
@@ -23307,11 +23491,11 @@
     },
     "location": {
       "column": 9,
-      "row": 1089
+      "row": 1116
     },
     "message": "Import block is un-sorted or un-formatted",
     "name": "unsorted-imports",
-    "noqa_row": 1089,
+    "noqa_row": 1116,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
   },
@@ -23320,17 +23504,17 @@
     "code": "S110",
     "end_location": {
       "column": 13,
-      "row": 1126
+      "row": 1153
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 5,
-      "row": 1125
+      "row": 1152
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 1125,
+    "noqa_row": 1152,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -23339,17 +23523,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 1125
+      "row": 1152
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 1125
+      "row": 1152
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 1125,
+    "noqa_row": 1152,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -23358,17 +23542,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 1144
+      "row": 1171
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 1144
+      "row": 1171
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 1144,
+    "noqa_row": 1171,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -23377,17 +23561,17 @@
     "code": "S110",
     "end_location": {
       "column": 13,
-      "row": 1207
+      "row": 1234
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 5,
-      "row": 1206
+      "row": 1233
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 1206,
+    "noqa_row": 1233,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -23396,17 +23580,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 1206
+      "row": 1233
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 1206
+      "row": 1233
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 1206,
+    "noqa_row": 1233,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -23415,17 +23599,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 21,
-      "row": 1272
+      "row": 1299
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/notifications/web_dashboard.py",
     "fix": null,
     "location": {
       "column": 12,
-      "row": 1272
+      "row": 1299
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 1272,
+    "noqa_row": 1299,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -25203,6 +25387,406 @@
   },
   {
     "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 2,
+      "row": 40
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/signals/odds_refresher.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from __future__ import annotations\n\nimport json\nimport logging\nimport time\nfrom datetime import datetime, timezone\nfrom pathlib import Path\nfrom typing import Optional\n\nfrom src.signals.provider_budget import (\n    is_provider_available,\n    record_error,\n    record_success,\n)\nfrom src.signals.signal_status import (\n    SignalStatus,\n    compute_current_ev,\n    evaluate_signal_status,\n    load_odds_state,\n    make_signal_id,\n    merge_odds_state_into_signal,\n    update_odds_state,\n)\n\n",
+          "end_location": {
+            "column": 1,
+            "row": 42
+          },
+          "location": {
+            "column": 1,
+            "row": 18
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 1,
+      "row": 18
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 18,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 33,
+      "row": 33
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/signals/odds_refresher.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from src.signals.signal_status import (\n    SignalStatus,\n    compute_current_ev,\n    evaluate_signal_status,\n    load_odds_state,\n    make_signal_id,\n    update_odds_state,\n)",
+          "end_location": {
+            "column": 2,
+            "row": 35
+          },
+          "location": {
+            "column": 1,
+            "row": 27
+          }
+        }
+      ],
+      "message": "Remove unused import: `src.signals.signal_status.merge_odds_state_into_signal`"
+    },
+    "location": {
+      "column": 5,
+      "row": 33
+    },
+    "message": "`src.signals.signal_status.merge_odds_state_into_signal` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 33,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "UP045",
+    "end_location": {
+      "column": 65,
+      "row": 102
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/signals/odds_refresher.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "float | None",
+          "end_location": {
+            "column": 65,
+            "row": 102
+          },
+          "location": {
+            "column": 50,
+            "row": 102
+          }
+        }
+      ],
+      "message": "Convert to `X | None`"
+    },
+    "location": {
+      "column": 50,
+      "row": 102
+    },
+    "message": "Use `X | None` for type annotations",
+    "name": "non-pep604-annotation-optional",
+    "noqa_row": 102,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
+  },
+  {
+    "cell": null,
+    "code": "UP045",
+    "end_location": {
+      "column": 61,
+      "row": 139
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/signals/odds_refresher.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "float | None",
+          "end_location": {
+            "column": 61,
+            "row": 139
+          },
+          "location": {
+            "column": 46,
+            "row": 139
+          }
+        }
+      ],
+      "message": "Convert to `X | None`"
+    },
+    "location": {
+      "column": 46,
+      "row": 139
+    },
+    "message": "Use `X | None` for type annotations",
+    "name": "non-pep604-annotation-optional",
+    "noqa_row": 139,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 25,
+      "row": 160
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/signals/odds_refresher.py",
+    "fix": null,
+    "location": {
+      "column": 16,
+      "row": 160
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 160,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 25,
+      "row": 174
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/signals/odds_refresher.py",
+    "fix": null,
+    "location": {
+      "column": 16,
+      "row": 174
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 174,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 25,
+      "row": 188
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/signals/odds_refresher.py",
+    "fix": null,
+    "location": {
+      "column": 16,
+      "row": 188
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 188,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "UP045",
+    "end_location": {
+      "column": 59,
+      "row": 200
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/signals/odds_refresher.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "float | None",
+          "end_location": {
+            "column": 59,
+            "row": 200
+          },
+          "location": {
+            "column": 44,
+            "row": 200
+          }
+        }
+      ],
+      "message": "Convert to `X | None`"
+    },
+    "location": {
+      "column": 44,
+      "row": 200
+    },
+    "message": "Use `X | None` for type annotations",
+    "name": "non-pep604-annotation-optional",
+    "noqa_row": 200,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 21,
+      "row": 224
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/signals/odds_refresher.py",
+    "fix": null,
+    "location": {
+      "column": 12,
+      "row": 224
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 224,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 21,
+      "row": 240
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/signals/odds_refresher.py",
+    "fix": null,
+    "location": {
+      "column": 12,
+      "row": 240
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 240,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 25,
+      "row": 343
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/signals/odds_refresher.py",
+    "fix": null,
+    "location": {
+      "column": 16,
+      "row": 343
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 343,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 21,
+      "row": 36
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/signals/provider_budget.py",
+    "fix": null,
+    "location": {
+      "column": 12,
+      "row": 36
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 36,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 21,
+      "row": 52
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/signals/provider_budget.py",
+    "fix": null,
+    "location": {
+      "column": 12,
+      "row": 52
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 52,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 50,
+      "row": 19
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/signals/signal_status.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from __future__ import annotations\n\nimport hashlib\nimport threading\nfrom datetime import datetime, timezone\nfrom pathlib import Path\nfrom typing import Literal\n\nfrom src.betting.gates import Gate, gate_for\nfrom src.utils.atomic_io import atomic_write_json\n\n",
+          "end_location": {
+            "column": 1,
+            "row": 21
+          },
+          "location": {
+            "column": 1,
+            "row": 9
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 1,
+      "row": 9
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 9,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "S110",
+    "end_location": {
+      "column": 13,
+      "row": 185
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/signals/signal_status.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 184
+    },
+    "message": "`try`-`except`-`pass` detected, consider logging the exception",
+    "name": "try-except-pass",
+    "noqa_row": 184,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 21,
+      "row": 184
+    },
+    "filename": "/Users/philiprassillier/sportsbrain/src/signals/signal_status.py",
+    "fix": null,
+    "location": {
+      "column": 12,
+      "row": 184
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 184,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
     "code": "DTZ011",
     "end_location": {
       "column": 25,
@@ -26060,17 +26644,17 @@
     "code": "S110",
     "end_location": {
       "column": 17,
-      "row": 322
+      "row": 328
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/tennis/ensemble.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 321
+      "row": 327
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 321,
+    "noqa_row": 327,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -26079,17 +26663,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 25,
-      "row": 321
+      "row": 327
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/tennis/ensemble.py",
     "fix": null,
     "location": {
       "column": 16,
-      "row": 321
+      "row": 327
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 321,
+    "noqa_row": 327,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -26098,17 +26682,17 @@
     "code": "S110",
     "end_location": {
       "column": 21,
-      "row": 332
+      "row": 338
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/tennis/ensemble.py",
     "fix": null,
     "location": {
       "column": 13,
-      "row": 331
+      "row": 337
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
     "name": "try-except-pass",
-    "noqa_row": 331,
+    "noqa_row": 337,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
@@ -26117,17 +26701,17 @@
     "code": "BLE001",
     "end_location": {
       "column": 29,
-      "row": 331
+      "row": 337
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/tennis/ensemble.py",
     "fix": null,
     "location": {
       "column": 20,
-      "row": 331
+      "row": 337
     },
     "message": "Do not catch blind exception: `Exception`",
     "name": "blind-except",
-    "noqa_row": 331,
+    "noqa_row": 337,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/blind-except"
   },
@@ -28316,7 +28900,7 @@
     "code": "UP037",
     "end_location": {
       "column": 73,
-      "row": 265
+      "row": 312
     },
     "filename": "/Users/philiprassillier/sportsbrain/src/tennis/tournaments.py",
     "fix": {
@@ -28326,11 +28910,11 @@
           "content": "Tournament | None",
           "end_location": {
             "column": 73,
-            "row": 265
+            "row": 312
           },
           "location": {
             "column": 54,
-            "row": 265
+            "row": 312
           }
         }
       ],
@@ -28338,11 +28922,11 @@
     },
     "location": {
       "column": 54,
-      "row": 265
+      "row": 312
     },
     "message": "Remove quotes from type annotation",
     "name": "quoted-annotation",
-    "noqa_row": 265,
+    "noqa_row": 312,
     "severity": "error",
     "url": "https://docs.astral.sh/ruff/rules/quoted-annotation"
   }
