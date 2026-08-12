@@ -1,11 +1,11 @@
 {
-  "updated": "2026-08-12T07:16:40Z",
+  "updated": "2026-08-12T09:03:52Z",
   "build_info": {
-    "sha": "76d67a5",
+    "sha": "1b50095",
     "date": "2026-08-12"
   },
   "meta": {
-    "stale_odds": false,
+    "stale_odds": true,
     "default_user": "philip",
     "user": "philip"
   },
@@ -9256,7 +9256,7 @@
     }
   },
   "tennis_stats": {
-    "updated": "2026-08-12T07:16:40Z",
+    "updated": "2026-08-12T09:03:53Z",
     "active_tournaments": [
       {
         "slug": "canadian_open_atp",
@@ -9397,326 +9397,6 @@
     }
   },
   "odds_history": {
-    "Bosnia & Herzegovina vs Qatar": [
-      {
-        "date": "2026-07-29",
-        "home": 1.39,
-        "draw": 5.8,
-        "away": 9.25
-      }
-    ],
-    "Switzerland vs Canada": [
-      {
-        "date": "2026-07-29",
-        "home": 2.6,
-        "draw": 3.13,
-        "away": 3.45
-      }
-    ],
-    "Scotland vs Brazil": [
-      {
-        "date": "2026-07-29",
-        "home": 39.37,
-        "draw": 8.0,
-        "away": 1.12
-      }
-    ],
-    "Morocco vs Haiti": [
-      {
-        "date": "2026-07-29",
-        "home": 1.97,
-        "draw": 3.13,
-        "away": 4.26
-      }
-    ],
-    "Czech Republic vs Mexico": [
-      {
-        "date": "2026-07-29",
-        "home": 4.0,
-        "draw": 4.1,
-        "away": 2.0
-      }
-    ],
-    "South Africa vs South Korea": [
-      {
-        "date": "2026-07-29",
-        "home": 6.5,
-        "draw": 4.12,
-        "away": 1.66
-      }
-    ],
-    "Curaçao vs Ivory Coast": [
-      {
-        "date": "2026-07-29",
-        "home": 24.0,
-        "draw": 9.5,
-        "away": 1.19
-      }
-    ],
-    "Ecuador vs Germany": [
-      {
-        "date": "2026-07-29",
-        "home": 4.2,
-        "draw": 4.5,
-        "away": 1.9
-      }
-    ],
-    "Japan vs Sweden": [
-      {
-        "date": "2026-07-29",
-        "home": 1.96,
-        "draw": 3.65,
-        "away": 4.7
-      }
-    ],
-    "Tunisia vs Netherlands": [
-      {
-        "date": "2026-07-29",
-        "home": 34.0,
-        "draw": 11.8,
-        "away": 1.16
-      }
-    ],
-    "Paraguay vs Australia": [
-      {
-        "date": "2026-07-29",
-        "home": 3.03,
-        "draw": 2.38,
-        "away": 4.43
-      }
-    ],
-    "Turkey vs USA": [
-      {
-        "date": "2026-07-29",
-        "home": 3.75,
-        "draw": 4.3,
-        "away": 2.0
-      }
-    ],
-    "Norway vs France": [
-      {
-        "date": "2026-07-29",
-        "home": 4.9,
-        "draw": 4.9,
-        "away": 1.69
-      }
-    ],
-    "Senegal vs Iraq": [
-      {
-        "date": "2026-07-29",
-        "home": 1.26,
-        "draw": 7.25,
-        "away": 14.1
-      }
-    ],
-    "Cape Verde vs Saudi Arabia": [
-      {
-        "date": "2026-07-29",
-        "home": 2.78,
-        "draw": 3.45,
-        "away": 2.86
-      }
-    ],
-    "Uruguay vs Spain": [
-      {
-        "date": "2026-07-29",
-        "home": 7.8,
-        "draw": 3.9,
-        "away": 1.67
-      }
-    ],
-    "New Zealand vs Belgium": [
-      {
-        "date": "2026-07-29",
-        "home": 17.5,
-        "draw": 8.5,
-        "away": 1.22
-      }
-    ],
-    "Egypt vs Iran": [
-      {
-        "date": "2026-07-29",
-        "home": 2.6,
-        "draw": 2.75,
-        "away": 4.13
-      }
-    ],
-    "Croatia vs Ghana": [
-      {
-        "date": "2026-07-29",
-        "home": 1.83,
-        "draw": 3.4,
-        "away": 6.2
-      }
-    ],
-    "Panama vs England": [
-      {
-        "date": "2026-07-29",
-        "home": 22.0,
-        "draw": 9.2,
-        "away": 1.2
-      }
-    ],
-    "Colombia vs Portugal": [
-      {
-        "date": "2026-07-29",
-        "home": 4.33,
-        "draw": 3.95,
-        "away": 1.92
-      }
-    ],
-    "DR Congo vs Uzbekistan": [
-      {
-        "date": "2026-07-29",
-        "home": 1.83,
-        "draw": 4.25,
-        "away": 4.6
-      }
-    ],
-    "Algeria vs Austria": [
-      {
-        "date": "2026-07-29",
-        "home": 4.33,
-        "draw": 2.38,
-        "away": 3.0
-      }
-    ],
-    "Jordan vs Argentina": [
-      {
-        "date": "2026-07-29",
-        "home": 19.5,
-        "draw": 9.2,
-        "away": 1.21
-      }
-    ],
-    "South Africa vs Canada": [
-      {
-        "date": "2026-07-29",
-        "home": 5.9,
-        "draw": 3.75,
-        "away": 1.77
-      }
-    ],
-    "Brazil vs Japan": [
-      {
-        "date": "2026-07-29",
-        "home": 1.78,
-        "draw": 3.85,
-        "away": 5.5
-      }
-    ],
-    "Netherlands vs Morocco": [
-      {
-        "date": "2026-07-29",
-        "home": 2.24,
-        "draw": 3.45,
-        "away": 3.8
-      }
-    ],
-    "USA vs Bosnia & Herzegovina": [
-      {
-        "date": "2026-07-29",
-        "home": 1.57,
-        "draw": 4.6,
-        "away": 7.8
-      }
-    ],
-    "Portugal vs Spain": [
-      {
-        "date": "2026-07-29",
-        "home": 7.19,
-        "draw": 1.67,
-        "away": 3.25
-      }
-    ],
-    "USA vs Belgium": [
-      {
-        "date": "2026-07-29",
-        "home": 2.62,
-        "draw": 3.55,
-        "away": 2.98
-      }
-    ],
-    "Argentina vs Egypt": [
-      {
-        "date": "2026-07-29",
-        "home": 1.41,
-        "draw": 5.2,
-        "away": 13.0
-      }
-    ],
-    "Switzerland vs Colombia": [
-      {
-        "date": "2026-07-29",
-        "home": 3.8,
-        "draw": 3.2,
-        "away": 2.35
-      }
-    ],
-    "France vs Morocco": [
-      {
-        "date": "2026-07-29",
-        "home": 1.01,
-        "draw": 501.0,
-        "away": 1001.0
-      }
-    ],
-    "Spain vs Belgium": [
-      {
-        "date": "2026-07-29",
-        "home": 1.69,
-        "draw": 3.72,
-        "away": 5.42
-      }
-    ],
-    "Norway vs England": [
-      {
-        "date": "2026-07-29",
-        "home": 11.43,
-        "draw": 1.27,
-        "away": 5.8
-      }
-    ],
-    "Argentina vs Switzerland": [
-      {
-        "date": "2026-07-29",
-        "home": 1.27,
-        "draw": 5.8,
-        "away": 28.0
-      }
-    ],
-    "France vs Spain": [
-      {
-        "date": "2026-07-29",
-        "home": 2.54,
-        "draw": 3.3,
-        "away": 3.42
-      }
-    ],
-    "England vs Argentina": [
-      {
-        "date": "2026-07-29",
-        "home": 1.41,
-        "draw": 3.64,
-        "away": 13.84
-      }
-    ],
-    "France vs England": [
-      {
-        "date": "2026-07-29",
-        "home": 1.99,
-        "draw": 4.07,
-        "away": 4.07
-      }
-    ],
-    "Spain vs Argentina": [
-      {
-        "date": "2026-07-29",
-        "home": 2.36,
-        "draw": 3.16,
-        "away": 3.8
-      }
-    ],
     "Alexei Popyrin vs Roman Andres Burruchaga": [
       {
         "date": "2026-08-05",
@@ -9756,6 +9436,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.67,
+        "draw": null,
+        "away": 2.66
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.67,
         "draw": null,
         "away": 2.66
@@ -9803,6 +9489,12 @@
         "home": 2.26,
         "draw": null,
         "away": 1.78
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.26,
+        "draw": null,
+        "away": 1.78
       }
     ],
     "Juncheng Shang vs Andrey Rublev": [
@@ -9844,6 +9536,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 4.3,
+        "draw": null,
+        "away": 1.3
+      },
+      {
+        "date": "2026-08-12",
         "home": 4.3,
         "draw": null,
         "away": 1.3
@@ -9891,6 +9589,12 @@
         "home": 2.6,
         "draw": null,
         "away": 1.62
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.6,
+        "draw": null,
+        "away": 1.62
       }
     ],
     "Terence Atmane vs Jack Draper": [
@@ -9932,6 +9636,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.96,
+        "draw": null,
+        "away": 1.5
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.96,
         "draw": null,
         "away": 1.5
@@ -9979,6 +9689,12 @@
         "home": 2.14,
         "draw": null,
         "away": 1.9
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.14,
+        "draw": null,
+        "away": 1.9
       }
     ],
     "Shintaro Mochizuki vs Fabian Marozsan": [
@@ -10020,6 +9736,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.64,
+        "draw": null,
+        "away": 1.6
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.64,
         "draw": null,
         "away": 1.6
@@ -10067,6 +9789,12 @@
         "home": 2.42,
         "draw": null,
         "away": 1.7
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.42,
+        "draw": null,
+        "away": 1.7
       }
     ],
     "Jiri Lehecka vs Vit Kopriva": [
@@ -10108,6 +9836,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.19,
+        "draw": null,
+        "away": 6.0
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.19,
         "draw": null,
         "away": 6.0
@@ -10155,6 +9889,12 @@
         "home": 8.8,
         "draw": null,
         "away": 1.12
+      },
+      {
+        "date": "2026-08-12",
+        "home": 8.8,
+        "draw": null,
+        "away": 1.12
       }
     ],
     "Brandon Nakashima vs Daniel Altmaier": [
@@ -10196,6 +9936,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.33,
+        "draw": null,
+        "away": 4.0
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.33,
         "draw": null,
         "away": 4.0
@@ -10243,6 +9989,12 @@
         "home": 1.55,
         "draw": null,
         "away": 2.8
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.55,
+        "draw": null,
+        "away": 2.8
       }
     ],
     "Flavio Cobolli vs Yannick Hanfmann": [
@@ -10284,6 +10036,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.78,
+        "draw": null,
+        "away": 2.25
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.78,
         "draw": null,
         "away": 2.25
@@ -10331,6 +10089,12 @@
         "home": 2.2,
         "draw": null,
         "away": 1.93
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.2,
+        "draw": null,
+        "away": 1.93
       }
     ],
     "Alex Michelsen vs Francisco Cerundolo": [
@@ -10372,6 +10136,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.71,
+        "draw": null,
+        "away": 2.48
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.71,
         "draw": null,
         "away": 2.48
@@ -10419,6 +10189,12 @@
         "home": 1.91,
         "draw": null,
         "away": 2.12
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.91,
+        "draw": null,
+        "away": 2.12
       }
     ],
     "Ignacio Buse vs Cameron Norrie": [
@@ -10460,6 +10236,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 3.2,
+        "draw": null,
+        "away": 1.44
+      },
+      {
+        "date": "2026-08-12",
         "home": 3.2,
         "draw": null,
         "away": 1.44
@@ -10507,6 +10289,12 @@
         "home": 1.35,
         "draw": null,
         "away": 3.75
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.35,
+        "draw": null,
+        "away": 3.75
       }
     ],
     "Titouan Droguet vs Felix Auger-Aliassime": [
@@ -10548,6 +10336,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 4.35,
+        "draw": null,
+        "away": 1.26
+      },
+      {
+        "date": "2026-08-12",
         "home": 4.35,
         "draw": null,
         "away": 1.26
@@ -10595,6 +10389,12 @@
         "home": 1.38,
         "draw": null,
         "away": 3.6
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.38,
+        "draw": null,
+        "away": 3.6
       }
     ],
     "Nicolas Mejia vs Lorenzo Musetti": [
@@ -10636,6 +10436,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 7.5,
+        "draw": null,
+        "away": 1.15
+      },
+      {
+        "date": "2026-08-12",
         "home": 7.5,
         "draw": null,
         "away": 1.15
@@ -10683,6 +10489,12 @@
         "home": 1.65,
         "draw": null,
         "away": 2.55
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.65,
+        "draw": null,
+        "away": 2.55
       }
     ],
     "Nuno Borges vs Tomas Martin Etcheverry": [
@@ -10724,6 +10536,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.57,
+        "draw": null,
+        "away": 2.72
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.57,
         "draw": null,
         "away": 2.72
@@ -10771,6 +10589,12 @@
         "home": 5.0,
         "draw": null,
         "away": 1.24
+      },
+      {
+        "date": "2026-08-12",
+        "home": 5.0,
+        "draw": null,
+        "away": 1.24
       }
     ],
     "Elena Gabriela Ruse vs Anastasia Potapova": [
@@ -10812,6 +10636,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.06,
+        "draw": null,
+        "away": 1.96
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.06,
         "draw": null,
         "away": 1.96
@@ -10859,6 +10689,12 @@
         "home": 1.05,
         "draw": null,
         "away": 16.5
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.05,
+        "draw": null,
+        "away": 16.5
       }
     ],
     "Maja Chwalinska vs Talia Gibson": [
@@ -10900,6 +10736,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.24,
+        "draw": null,
+        "away": 1.79
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.24,
         "draw": null,
         "away": 1.79
@@ -10947,6 +10789,12 @@
         "home": 5.3,
         "draw": null,
         "away": 1.26
+      },
+      {
+        "date": "2026-08-12",
+        "home": 5.3,
+        "draw": null,
+        "away": 1.26
       }
     ],
     "Shuai Zhang vs Jelena Ostapenko": [
@@ -10988,6 +10836,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 3.25,
+        "draw": null,
+        "away": 1.45
+      },
+      {
+        "date": "2026-08-12",
         "home": 3.25,
         "draw": null,
         "away": 1.45
@@ -11035,6 +10889,12 @@
         "home": 1.63,
         "draw": null,
         "away": 2.55
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.63,
+        "draw": null,
+        "away": 2.55
       }
     ],
     "Kamilla Rakhimova vs Katerina Siniakova": [
@@ -11076,6 +10936,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.88,
+        "draw": null,
+        "away": 1.52
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.88,
         "draw": null,
         "away": 1.52
@@ -11123,6 +10989,12 @@
         "home": 1.92,
         "draw": null,
         "away": 2.06
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.92,
+        "draw": null,
+        "away": 2.06
       }
     ],
     "Aryna Sabalenka vs Moyuka Uchijima": [
@@ -11164,6 +11036,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.07,
+        "draw": null,
+        "away": 18.0
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.07,
         "draw": null,
         "away": 18.0
@@ -11211,6 +11089,12 @@
         "home": 3.33,
         "draw": null,
         "away": 1.45
+      },
+      {
+        "date": "2026-08-12",
+        "home": 3.33,
+        "draw": null,
+        "away": 1.45
       }
     ],
     "Alycia Parks vs Alexandra Eala": [
@@ -11252,6 +11136,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 5.8,
+        "draw": null,
+        "away": 1.23
+      },
+      {
+        "date": "2026-08-12",
         "home": 5.8,
         "draw": null,
         "away": 1.23
@@ -11299,6 +11189,12 @@
         "home": 2.12,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.12,
+        "draw": null,
+        "away": 1.88
       }
     ],
     "Ann Li vs Kayla Cross": [
@@ -11340,6 +11236,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.31,
+        "draw": null,
+        "away": 4.1
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.31,
         "draw": null,
         "away": 4.1
@@ -11387,6 +11289,12 @@
         "home": 1.38,
         "draw": null,
         "away": 3.55
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.38,
+        "draw": null,
+        "away": 3.55
       }
     ],
     "Liudmila Samsonova vs Barbora Krejcikova": [
@@ -11428,6 +11336,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.38,
+        "draw": null,
+        "away": 1.73
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.38,
         "draw": null,
         "away": 1.73
@@ -11475,6 +11389,12 @@
         "home": 7.6,
         "draw": null,
         "away": 1.15
+      },
+      {
+        "date": "2026-08-12",
+        "home": 7.6,
+        "draw": null,
+        "away": 1.15
       }
     ],
     "Linda Noskova vs Caty McNally": [
@@ -11516,6 +11436,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.31,
+        "draw": null,
+        "away": 4.2
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.31,
         "draw": null,
         "away": 4.2
@@ -11563,6 +11489,12 @@
         "home": 10.5,
         "draw": null,
         "away": 1.1
+      },
+      {
+        "date": "2026-08-12",
+        "home": 10.5,
+        "draw": null,
+        "away": 1.1
       }
     ],
     "Daria Kasatkina vs Elena Rybakina": [
@@ -11604,6 +11536,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 7.2,
+        "draw": null,
+        "away": 1.16
+      },
+      {
+        "date": "2026-08-12",
         "home": 7.2,
         "draw": null,
         "away": 1.16
@@ -11651,6 +11589,12 @@
         "home": 1.27,
         "draw": null,
         "away": 4.5
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.27,
+        "draw": null,
+        "away": 4.5
       }
     ],
     "Jessica Pegula vs Magdalena Frech": [
@@ -11692,6 +11636,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.14,
+        "draw": null,
+        "away": 9.2
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.14,
         "draw": null,
         "away": 9.2
@@ -11739,6 +11689,12 @@
         "home": 1.25,
         "draw": null,
         "away": 5.0
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.25,
+        "draw": null,
+        "away": 5.0
       }
     ],
     "Renata Zarazua vs Leylah Fernandez": [
@@ -11780,6 +11736,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 3.7,
+        "draw": null,
+        "away": 1.38
+      },
+      {
+        "date": "2026-08-12",
         "home": 3.7,
         "draw": null,
         "away": 1.38
@@ -11827,6 +11789,12 @@
         "home": 1.62,
         "draw": null,
         "away": 2.6
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.62,
+        "draw": null,
+        "away": 2.6
       }
     ],
     "Marie Bouzkova vs Taylor Townsend": [
@@ -11868,6 +11836,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.8,
+        "draw": null,
+        "away": 2.25
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.8,
         "draw": null,
         "away": 2.25
@@ -11915,6 +11889,12 @@
         "home": 1.38,
         "draw": null,
         "away": 3.75
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.38,
+        "draw": null,
+        "away": 3.75
       }
     ],
     "Panna Udvardy vs Naomi Osaka": [
@@ -11956,6 +11936,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 11.5,
+        "draw": null,
+        "away": 1.09
+      },
+      {
+        "date": "2026-08-12",
         "home": 11.5,
         "draw": null,
         "away": 1.09
@@ -12003,6 +11989,12 @@
         "home": 2.34,
         "draw": null,
         "away": 1.73
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.34,
+        "draw": null,
+        "away": 1.73
       }
     ],
     "Zizou Bergs vs Sebastian Baez": [
@@ -12044,6 +12036,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.66,
+        "draw": null,
+        "away": 2.48
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.66,
         "draw": null,
         "away": 2.48
@@ -12091,6 +12089,12 @@
         "home": 3.7,
         "draw": null,
         "away": 1.37
+      },
+      {
+        "date": "2026-08-12",
+        "home": 3.7,
+        "draw": null,
+        "away": 1.37
       }
     ],
     "Jenson Brooksby vs Ben Shelton": [
@@ -12132,6 +12136,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 3.75,
+        "draw": null,
+        "away": 1.36
+      },
+      {
+        "date": "2026-08-12",
         "home": 3.75,
         "draw": null,
         "away": 1.36
@@ -12179,6 +12189,12 @@
         "home": 1.39,
         "draw": null,
         "away": 3.55
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.39,
+        "draw": null,
+        "away": 3.55
       }
     ],
     "Alexander Zverev vs Tallon Griekspoor": [
@@ -12220,6 +12236,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.17,
+        "draw": null,
+        "away": 6.6
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.17,
         "draw": null,
         "away": 6.6
@@ -12267,6 +12289,12 @@
         "home": 1.66,
         "draw": null,
         "away": 2.51
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.66,
+        "draw": null,
+        "away": 2.51
       }
     ],
     "Thiago Agustin Tirante vs Taylor Fritz": [
@@ -12308,6 +12336,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 6.5,
+        "draw": null,
+        "away": 1.2
+      },
+      {
+        "date": "2026-08-12",
         "home": 6.5,
         "draw": null,
         "away": 1.2
@@ -12355,6 +12389,12 @@
         "home": 1.71,
         "draw": null,
         "away": 2.38
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.71,
+        "draw": null,
+        "away": 2.38
       }
     ],
     "Fabian Marozsan vs Matteo Arnaldi": [
@@ -12396,6 +12436,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.75,
+        "draw": null,
+        "away": 2.32
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.75,
         "draw": null,
         "away": 2.32
@@ -12443,6 +12489,12 @@
         "home": 1.81,
         "draw": null,
         "away": 2.25
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.81,
+        "draw": null,
+        "away": 2.25
       }
     ],
     "Ugo Humbert vs Daniel Merida Aguilar": [
@@ -12484,6 +12536,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.44,
+        "draw": null,
+        "away": 3.25
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.44,
         "draw": null,
         "away": 3.25
@@ -12531,6 +12589,12 @@
         "home": 3.25,
         "draw": null,
         "away": 1.43
+      },
+      {
+        "date": "2026-08-12",
+        "home": 3.25,
+        "draw": null,
+        "away": 1.43
       }
     ],
     "Daniil Medvedev vs Botic van de Zandschulp": [
@@ -12572,6 +12636,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.32,
+        "draw": null,
+        "away": 4.1
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.32,
         "draw": null,
         "away": 4.1
@@ -12619,6 +12689,12 @@
         "home": 5.7,
         "draw": null,
         "away": 1.21
+      },
+      {
+        "date": "2026-08-12",
+        "home": 5.7,
+        "draw": null,
+        "away": 1.21
       }
     ],
     "Jiri Lehecka vs Alexander Blockx": [
@@ -12660,6 +12736,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.12,
         "draw": null,
         "away": 1.73
@@ -12707,6 +12789,12 @@
         "home": 2.11,
         "draw": null,
         "away": 1.66
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.11,
+        "draw": null,
+        "away": 1.66
       }
     ],
     "Zizou Bergs vs Ben Shelton": [
@@ -12748,6 +12836,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.56,
+        "draw": null,
+        "away": 1.45
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.56,
         "draw": null,
         "away": 1.45
@@ -12795,6 +12889,12 @@
         "home": 2.55,
         "draw": null,
         "away": 1.45
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.55,
+        "draw": null,
+        "away": 1.45
       }
     ],
     "Cameron Norrie vs Alex de Minaur": [
@@ -12836,6 +12936,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.45,
+        "draw": null,
+        "away": 1.47
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.45,
         "draw": null,
         "away": 1.47
@@ -12883,6 +12989,12 @@
         "home": 2.3,
         "draw": null,
         "away": 1.55
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.3,
+        "draw": null,
+        "away": 1.55
       }
     ],
     "Casper Ruud vs Joao Fonseca": [
@@ -12924,6 +13036,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.12,
         "draw": null,
         "away": 1.73
@@ -12971,6 +13089,12 @@
         "home": 2.22,
         "draw": null,
         "away": 1.67
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.22,
+        "draw": null,
+        "away": 1.67
       }
     ],
     "Anna Kalinskaya vs Diana Shnaider": [
@@ -13012,6 +13136,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.12,
         "draw": null,
         "away": 1.73
@@ -13059,6 +13189,12 @@
         "home": 3.46,
         "draw": null,
         "away": 1.26
+      },
+      {
+        "date": "2026-08-12",
+        "home": 3.46,
+        "draw": null,
+        "away": 1.26
       }
     ],
     "Jessica Pegula vs Kamilla Rakhimova": [
@@ -13100,6 +13236,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.01,
+        "draw": null,
+        "away": 47.62
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.01,
         "draw": null,
         "away": 47.62
@@ -13147,6 +13289,12 @@
         "home": 2.14,
         "draw": null,
         "away": 1.72
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.14,
+        "draw": null,
+        "away": 1.72
       }
     ],
     "Nikola Bartunkova vs Amanda Anisimova": [
@@ -13188,6 +13336,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 47.62,
+        "draw": null,
+        "away": 1.01
+      },
+      {
+        "date": "2026-08-12",
         "home": 47.62,
         "draw": null,
         "away": 1.01
@@ -13235,6 +13389,12 @@
         "home": 1.15,
         "draw": null,
         "away": 4.89
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.15,
+        "draw": null,
+        "away": 4.89
       }
     ],
     "Elina Svitolina vs Anastasia Potapova": [
@@ -13276,6 +13436,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.57,
+        "draw": null,
+        "away": 2.41
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.57,
         "draw": null,
         "away": 2.41
@@ -13323,6 +13489,12 @@
         "home": 47.62,
         "draw": null,
         "away": 1.01
+      },
+      {
+        "date": "2026-08-12",
+        "home": 47.62,
+        "draw": null,
+        "away": 1.01
       }
     ],
     "Iva Jović vs Alina Korneeva": [
@@ -13364,6 +13536,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.57,
+        "draw": null,
+        "away": 2.41
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.57,
         "draw": null,
         "away": 2.41
@@ -13411,6 +13589,12 @@
         "home": 47.62,
         "draw": null,
         "away": 1.01
+      },
+      {
+        "date": "2026-08-12",
+        "home": 47.62,
+        "draw": null,
+        "away": 1.01
       }
     ],
     "Rafael Jodar vs Lorenzo Musetti": [
@@ -13446,6 +13630,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.22,
+        "draw": null,
+        "away": 1.67
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.22,
         "draw": null,
         "away": 1.67
@@ -13487,6 +13677,12 @@
         "home": 1.57,
         "draw": null,
         "away": 2.41
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.57,
+        "draw": null,
+        "away": 2.41
       }
     ],
     "Alexei Popyrin vs Thiago Agustin Tirante": [
@@ -13522,6 +13718,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.22,
+        "draw": null,
+        "away": 1.67
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.22,
         "draw": null,
         "away": 1.67
@@ -13563,6 +13765,12 @@
         "home": 2.5,
         "draw": null,
         "away": 1.48
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.5,
+        "draw": null,
+        "away": 1.48
       }
     ],
     "Maya Joint vs Liudmila Samsonova": [
@@ -13598,6 +13806,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.22,
+        "draw": null,
+        "away": 1.67
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.22,
         "draw": null,
         "away": 1.67
@@ -13639,6 +13853,12 @@
         "home": 2.12,
         "draw": null,
         "away": 1.73
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
       }
     ],
     "Daniel Merida Aguilar vs Alex Michelsen": [
@@ -13674,6 +13894,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.12,
         "draw": null,
         "away": 1.73
@@ -13715,6 +13941,12 @@
         "home": 2.45,
         "draw": null,
         "away": 1.49
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.45,
+        "draw": null,
+        "away": 1.49
       }
     ],
     "Terence Atmane vs Jakub Mensik": [
@@ -13750,6 +13982,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 47.62,
+        "draw": null,
+        "away": 1.01
+      },
+      {
+        "date": "2026-08-12",
         "home": 47.62,
         "draw": null,
         "away": 1.01
@@ -13791,6 +14029,12 @@
         "home": 2.14,
         "draw": null,
         "away": 1.71
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.14,
+        "draw": null,
+        "away": 1.71
       }
     ],
     "Tallon Griekspoor vs Matteo Arnaldi": [
@@ -13826,6 +14070,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.5,
+        "draw": null,
+        "away": 2.51
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.5,
         "draw": null,
         "away": 2.51
@@ -13867,6 +14117,12 @@
         "home": 47.62,
         "draw": null,
         "away": 1.01
+      },
+      {
+        "date": "2026-08-12",
+        "home": 47.62,
+        "draw": null,
+        "away": 1.01
       }
     ],
     "Maria Sakkari vs Coco Gauff": [
@@ -13902,6 +14158,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.5,
+        "draw": null,
+        "away": 1.5
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.5,
         "draw": null,
         "away": 1.5
@@ -13943,6 +14205,12 @@
         "home": 1.59,
         "draw": null,
         "away": 2.38
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.59,
+        "draw": null,
+        "away": 2.38
       }
     ],
     "Arthur Fils vs Cameron Norrie": [
@@ -13972,6 +14240,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.57,
+        "draw": null,
+        "away": 2.41
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.57,
         "draw": null,
         "away": 2.41
@@ -14007,6 +14281,12 @@
         "home": 2.3,
         "draw": null,
         "away": 1.55
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.3,
+        "draw": null,
+        "away": 1.55
       }
     ],
     "Jiri Lehecka vs Rafael Jodar": [
@@ -14036,6 +14316,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.12,
         "draw": null,
         "away": 1.73
@@ -14071,6 +14357,12 @@
         "home": 2.12,
         "draw": null,
         "away": 1.73
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.12,
+        "draw": null,
+        "away": 1.73
       }
     ],
     "Elina Svitolina vs Amanda Anisimova": [
@@ -14103,6 +14395,12 @@
         "home": 1.7,
         "draw": null,
         "away": 2.06
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.7,
+        "draw": null,
+        "away": 2.06
       }
     ],
     "Joao Fonseca vs Ben Shelton": [
@@ -14126,6 +14424,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.38,
+        "draw": null,
+        "away": 1.59
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.38,
         "draw": null,
         "away": 1.59
@@ -14155,6 +14459,12 @@
         "home": 2.75,
         "draw": null,
         "away": 1.4
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.75,
+        "draw": null,
+        "away": 1.4
       }
     ],
     "Tallon Griekspoor vs Daniel Merida Aguilar": [
@@ -14178,6 +14488,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.93,
         "draw": null,
         "away": 1.88
@@ -14207,6 +14523,12 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
       }
     ],
     "Marta Kostyuk vs Iga Swiatek": [
@@ -14230,6 +14552,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 2.22,
+        "draw": null,
+        "away": 1.67
+      },
+      {
+        "date": "2026-08-12",
         "home": 2.22,
         "draw": null,
         "away": 1.67
@@ -14259,6 +14587,12 @@
         "home": 1.38,
         "draw": null,
         "away": 2.85
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.38,
+        "draw": null,
+        "away": 2.85
       }
     ],
     "Aryna Sabalenka vs Ekaterina Alexandrova": [
@@ -14282,6 +14616,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.29,
+        "draw": null,
+        "away": 3.35
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.29,
         "draw": null,
         "away": 3.35
@@ -14311,6 +14651,12 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
       }
     ],
     "Alina Korneeva vs Coco Gauff": [
@@ -14334,6 +14680,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 3.62,
+        "draw": null,
+        "away": 1.29
+      },
+      {
+        "date": "2026-08-12",
         "home": 3.62,
         "draw": null,
         "away": 1.29
@@ -14363,6 +14715,12 @@
         "home": 3.62,
         "draw": null,
         "away": 1.29
+      },
+      {
+        "date": "2026-08-12",
+        "home": 3.62,
+        "draw": null,
+        "away": 1.29
       }
     ],
     "Leylah Fernandez vs Naomi Osaka": [
@@ -14389,6 +14747,12 @@
         "home": 3.62,
         "draw": null,
         "away": 1.29
+      },
+      {
+        "date": "2026-08-12",
+        "home": 3.62,
+        "draw": null,
+        "away": 1.29
       }
     ],
     "Rafael Jodar vs Arthur Fils": [
@@ -14406,6 +14770,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.62,
+        "draw": null,
+        "away": 2.18
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.62,
         "draw": null,
         "away": 2.18
@@ -14429,6 +14799,12 @@
         "home": 3.62,
         "draw": null,
         "away": 1.29
+      },
+      {
+        "date": "2026-08-12",
+        "home": 3.62,
+        "draw": null,
+        "away": 1.29
       }
     ],
     "Daniel Merida Aguilar vs Learner Tien": [
@@ -14446,6 +14822,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.93,
         "draw": null,
         "away": 1.88
@@ -14469,6 +14851,12 @@
         "home": 3.62,
         "draw": null,
         "away": 1.29
+      },
+      {
+        "date": "2026-08-12",
+        "home": 3.62,
+        "draw": null,
+        "away": 1.29
       }
     ],
     "Ekaterina Alexandrova vs Elina Svitolina": [
@@ -14489,6 +14877,12 @@
         "home": 2.53,
         "draw": null,
         "away": 1.47
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.53,
+        "draw": null,
+        "away": 1.47
       }
     ],
     "Jakub Mensik vs Ben Shelton": [
@@ -14500,6 +14894,12 @@
       },
       {
         "date": "2026-08-11",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.93,
         "draw": null,
         "away": 1.88
@@ -14517,6 +14917,12 @@
         "home": 3.62,
         "draw": null,
         "away": 1.29
+      },
+      {
+        "date": "2026-08-12",
+        "home": 3.62,
+        "draw": null,
+        "away": 1.29
       }
     ],
     "Belinda Bencic vs Coco Gauff": [
@@ -14531,6 +14937,12 @@
         "home": 2.38,
         "draw": null,
         "away": 1.59
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.38,
+        "draw": null,
+        "away": 1.59
       }
     ],
     "Elina Svitolina vs Iga Swiatek": [
@@ -14539,11 +14951,23 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.47,
+        "draw": null,
+        "away": 1.48
       }
     ],
     "Alexander Shevchenko vs Pablo Llamas Ruiz": [
       {
         "date": "2026-08-11",
+        "home": 1.64,
+        "draw": null,
+        "away": 2.1
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.64,
         "draw": null,
         "away": 2.1
@@ -14555,11 +14979,23 @@
         "home": 2.29,
         "draw": null,
         "away": 1.56
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.29,
+        "draw": null,
+        "away": 1.56
       }
     ],
     "Luca Van Assche vs Gustavo Heide": [
       {
         "date": "2026-08-11",
+        "home": 1.5,
+        "draw": null,
+        "away": 2.38
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.5,
         "draw": null,
         "away": 2.38
@@ -14571,11 +15007,23 @@
         "home": 2.09,
         "draw": null,
         "away": 1.64
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.09,
+        "draw": null,
+        "away": 1.64
       }
     ],
     "Jaime Faria vs Nikoloz Basilashvili": [
       {
         "date": "2026-08-11",
+        "home": 1.44,
+        "draw": null,
+        "away": 2.55
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.44,
         "draw": null,
         "away": 2.55
@@ -14587,11 +15035,23 @@
         "home": 2.21,
         "draw": null,
         "away": 1.59
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.21,
+        "draw": null,
+        "away": 1.59
       }
     ],
     "Alexei Popyrin vs Titouan Droguet": [
       {
         "date": "2026-08-11",
+        "home": 1.6,
+        "draw": null,
+        "away": 2.2
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.6,
         "draw": null,
         "away": 2.2
@@ -14603,11 +15063,23 @@
         "home": 2.33,
         "draw": null,
         "away": 1.52
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.33,
+        "draw": null,
+        "away": 1.52
       }
     ],
     "Sho Shimabukuro vs Hugo Dellien": [
       {
         "date": "2026-08-11",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.93,
         "draw": null,
         "away": 1.88
@@ -14619,6 +15091,12 @@
         "home": 2.2,
         "draw": null,
         "away": 1.6
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.2,
+        "draw": null,
+        "away": 1.6
       }
     ],
     "Mark Lajal vs Dalibor Svrcina": [
@@ -14627,6 +15105,12 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.1,
+        "draw": null,
+        "away": 1.62
       }
     ],
     "Marcos Giron vs Henrique Rocha": [
@@ -14635,6 +15119,12 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.5,
+        "draw": null,
+        "away": 2.4
       }
     ],
     "Nicolas Mejia vs Jacob Fearnley": [
@@ -14643,11 +15133,23 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
+        "home": 2.44,
+        "draw": null,
+        "away": 1.47
       }
     ],
     "Kayla Day vs Taylah Preston": [
       {
         "date": "2026-08-11",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.93,
         "draw": null,
         "away": 1.88
@@ -14659,11 +15161,23 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
       }
     ],
     "Victoria Jimenez Kasintseva vs Mananchaya Sawangkaew": [
       {
         "date": "2026-08-11",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.93,
         "draw": null,
         "away": 1.88
@@ -14675,11 +15189,23 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
       }
     ],
     "Anastasia Zakharova vs Lucrezia Stefanini": [
       {
         "date": "2026-08-11",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.93,
         "draw": null,
         "away": 1.88
@@ -14691,11 +15217,23 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
       }
     ],
     "Himeno Sakatsume vs Leolia Jeanjean": [
       {
         "date": "2026-08-11",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.93,
         "draw": null,
         "away": 1.88
@@ -14707,11 +15245,23 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
       }
     ],
     "Alina Korneeva vs Varvara Lepchenko": [
       {
         "date": "2026-08-11",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.93,
         "draw": null,
         "away": 1.88
@@ -14723,11 +15273,23 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
       }
     ],
     "Dominika Šalková vs Anna Blinkova": [
       {
         "date": "2026-08-11",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.93,
         "draw": null,
         "away": 1.88
@@ -14739,11 +15301,23 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
       }
     ],
     "Eva Lys vs Katarzyna Kawa": [
       {
         "date": "2026-08-11",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.93,
         "draw": null,
         "away": 1.88
@@ -14755,11 +15329,23 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
       }
     ],
     "Emiliana Arango vs Aliaksandra Sasnovich": [
       {
         "date": "2026-08-11",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
         "home": 1.93,
         "draw": null,
         "away": 1.88
@@ -14771,6 +15357,12 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
       }
     ],
     "Nadia Podoroska vs Ella Seidel": [
@@ -14779,6 +15371,36 @@
         "home": 1.93,
         "draw": null,
         "away": 1.88
+      },
+      {
+        "date": "2026-08-12",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      }
+    ],
+    "Rafael Jodar vs Brandon Nakashima": [
+      {
+        "date": "2026-08-12",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      }
+    ],
+    "Learner Tien vs Ben Shelton": [
+      {
+        "date": "2026-08-12",
+        "home": 1.93,
+        "draw": null,
+        "away": 1.88
+      }
+    ],
+    "Coco Gauff vs Elena Rybakina": [
+      {
+        "date": "2026-08-12",
+        "home": 3.62,
+        "draw": null,
+        "away": 1.29
       }
     ]
   },
