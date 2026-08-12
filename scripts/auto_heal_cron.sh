@@ -127,8 +127,11 @@ fi
 # ── Git push repair ─────────────────────────────────────────────────────────
 LOCAL_AHEAD=$(git -C "$SPORTSBRAIN_DIR" rev-list --count origin/main..main 2>/dev/null || echo "0")
 if [ "$LOCAL_AHEAD" -gt 0 ]; then
-  _log "$LOCAL_AHEAD commit(s) not pushed — running _git_safe_push.sh"
-  bash "$SPORTSBRAIN_DIR/scripts/_git_safe_push.sh" >> "$LOG" 2>&1
+  _log "$LOCAL_AHEAD commit(s) not pushed — invoking git_safe_push"
+  # Must `source` to load functions, then call git_safe_push — `bash` only defines
+  # the functions and exits without calling anything (was a no-op before this fix).
+  # shellcheck source=./_git_safe_push.sh
+  source "$SPORTSBRAIN_DIR/scripts/_git_safe_push.sh" && git_safe_push "$LOG"
 fi
 
 exit 0

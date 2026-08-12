@@ -47,8 +47,14 @@ timestamp() { date -u '+%Y-%m-%d %H:%M:%S UTC'; }
     fi
 
     if [ "$AHEAD" -gt 0 ]; then
-        echo "[$(timestamp)] live_score_push: local main is $AHEAD commit(s) ahead — resetting to origin/main before generating fresh data"
-        "$GIT" reset --hard origin/main >> "$LOG" 2>&1
+        # Only reset if working tree is clean — never discard uncommitted human work.
+        DIRTY=$("$GIT" status --porcelain | grep -v '^??' | wc -l | tr -d ' ')
+        if [ "$DIRTY" -gt 0 ]; then
+            echo "[$(timestamp)] live_score_push: SKIP reset — working tree has $DIRTY uncommitted change(s); proceeding without reset"
+        else
+            echo "[$(timestamp)] live_score_push: local main is $AHEAD commit(s) ahead — resetting to origin/main before generating fresh data"
+            "$GIT" reset --hard origin/main >> "$LOG" 2>&1
+        fi
     fi
 
     # ── Generate fresh data ───────────────────────────────────────────────────

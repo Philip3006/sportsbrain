@@ -19,6 +19,15 @@ if ! require_main_branch "daily_scan" "$LOG"; then
     exit 42
 fi
 
+# Divergence guard: refuse to add more commits when push channel is broken.
+# Prevents unbounded local commit accumulation (>5 unpushed = broken channel).
+_AHEAD=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)
+if [ "$_AHEAD" -gt 5 ]; then
+    echo "[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] scan_cron: FAIL CLOSED — $_AHEAD commits ahead of origin/main (push channel broken)" >> "$LOG"
+    health_finish "daily_scan" 42 "" "$LOG"
+    exit 42
+fi
+
 echo "" >> "$LOG"
 echo "========================================" >> "$LOG"
 echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] scan_cron started ---" >> "$LOG"
