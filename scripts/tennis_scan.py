@@ -951,9 +951,11 @@ def main() -> None:
     # Pro Signal: Match-Tour + Tournament-Meta hinterlegen (J2-E)
     for slug, info in per_tournament.items():
         t = info["tournament"]
+        _sport_key = t.sport_keys[0] if getattr(t, "sport_keys", None) else t.slug
         meta = {
             "name": t.name, "category": t.category,
             "surface": t.surface, "best_of": t.best_of,
+            "sport_key": _sport_key,  # Wave 3B.1: stable fixture identity
         }
         for s in info["signals"]:
             match_tour_map[s.match_id] = t.tour
@@ -974,6 +976,7 @@ def main() -> None:
                 "odds_away": m.get("odds_b", 0.0),
                 "odds_source": m.get("odds_source", "the_odds_api"),
                 "is_display_only": bool(m.get("is_display_only", False)),
+                "sport_key": m.get("sport_key", _sport_key),  # Wave 3B.1
             })
 
     # ---- 7b. Sekundär-Coverage via tennisexplorer.com (Skip im Mock/Turnier-Filter) ----
@@ -1139,6 +1142,7 @@ def main() -> None:
                     "odds_home": m.get("odds_a", 0.0),
                     "odds_away": m.get("odds_b", 0.0),
                     "source": "tennisexplorer",
+                    "sport_key": m.get("sport_key", f"te:{m.get('te_slug', 'unknown')}"),  # Wave 3B.1
                 })
                 added += 1
             print(f"Sekundär-Coverage (TE): {added} zusätzliche Matches hinzugefügt "

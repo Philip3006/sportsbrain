@@ -252,8 +252,19 @@ def _signal_to_dict(
 ) -> dict:
     from datetime import datetime, timezone
     _match_str = f"{s.home} vs {s.away}"
+    # Wave 3B.1: tennis signals use the stable fixture registry for signal_id
+    # so that cross-midnight reschedules preserve identity.
+    _sport_key = tournament_meta.get("sport_key", "") if tournament_meta else ""
+    if sport == "tennis" and _sport_key:
+        try:
+            from src.tennis.fixture_registry import get_or_register as _get_stable_id
+            _signal_id = _get_stable_id(_sport_key, s.home, s.away, s.market, kickoff)
+        except (ImportError, OSError, ValueError):
+            _signal_id = make_signal_id(sport, _match_str, s.market, kickoff)
+    else:
+        _signal_id = make_signal_id(sport, _match_str, s.market, kickoff)
     d = {
-        "signal_id":       make_signal_id(sport, _match_str, s.market, kickoff),
+        "signal_id":       _signal_id,
         "sport":           sport,
         "match":           _match_str,
         "market":          s.market,
