@@ -313,10 +313,16 @@ def predict_winner_ensemble(
 
     # Surface-Calibrator (J8-I10): per-Surface Isotonic aus tennis_recalibrate.py.
     # Hat Vorrang über globalen Meta-Calibrator (spezifischer → bevorzugt).
+    # Symmetric post-calibration: f_sym(x) = (f(x) + (1 - f(1-x))) / 2 guarantees
+    # P(A>B) + P(B>A) = 1 regardless of which player was listed first in the API call.
+    # An asymmetric isotonic calibrator (trained with ordering bias) violates this
+    # property and can shift the actionable side by up to 13.8pp — Option A fix.
     surf_cal = _load_surface_calibrator(surface.lower())
     if surf_cal is not None:
         try:
-            p_a = float(surf_cal.predict([p_a])[0])
+            p_fwd = float(surf_cal.predict([p_a])[0])
+            p_rev = float(surf_cal.predict([1.0 - p_a])[0])
+            p_a = (p_fwd + (1.0 - p_rev)) / 2.0
             p_a = max(0.02, min(0.98, p_a))
         except Exception:
             pass
