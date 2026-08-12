@@ -827,6 +827,37 @@ def _get_open_bets_from_ledger(all_odds: dict | None = None, ledger_path: Path |
         return []
 
 
+# Wave 3A: per-record freshness threshold for Tennis LIVE gate.
+# Pipeline: GH Actions every 15 min → 30 min = 2× cadence, tolerates 1 missed push.
+TENNIS_LIVE_RECORD_STALE_SEC = 30 * 60
+
+
+def _tennis_bet_is_live(record: dict | None, now_utc: datetime) -> bool:
+    """True only when the tennis live cache has fresh authoritative in_progress evidence.
+
+    Fail-closed on every ambiguity:
+    - no record → False
+    - in_progress with no per-record timestamp → False
+    - in_progress with stale per-record timestamp (>30 min) → False
+    - in_progress with unparseable timestamp → False
+    Suspended/postponed records are exempted from per-record freshness because
+    they represent persistent states rather than transient match activity.
+    """
+    if not record:
+        return False
+    status = record.get("status", "")
+    if status == "in_progress":
+        rec_ts = record.get("updated", "")
+        if not rec_ts:
+            return False
+        try:
+            age = (now_utc - datetime.fromisoformat(str(rec_ts).replace("Z", "+00:00"))).total_seconds()
+            return age <= TENNIS_LIVE_RECORD_STALE_SEC
+        except (ValueError, TypeError):
+            return False
+    return status in ("suspended", "postponed")
+
+
 def _drop_finished_signals(signals: list[dict]) -> list[dict]:
     """Remove signals whose match kicked off more than 100 minutes ago."""
     now = datetime.now(timezone.utc)
@@ -1091,13 +1122,17 @@ def write_signals_json(
         ledger_path=ledger_path,
     )
 
-    # Enrich open bets with is_live flag (same [-5, 115] min window as live_score_push.py)
+    # Enrich football open bets with is_live flag ([-5, 115] min window, same as live_score_push.py).
+    # Tennis schedule entries are intentionally excluded: elapsed time is never authoritative
+    # evidence of LIVE for Tennis. Tennis LIVE status comes only from the authoritative live
+    # cache below (Wave 3A invariant).
     _now_utc = datetime.now(timezone.utc)
     def _name_key(s: str) -> str:
         return (s or "").lower().strip().replace(" & ", " and ")
     _ko_lookup = {
         (_name_key(g.get("home", "")), _name_key(g.get("away", ""))): g.get("kickoff", "")
         for g in (schedule_data or [])
+        if g.get("sport", "football") != "tennis"
     }
     for _bet in (_resolved_open_bets or []):
         _ko = _ko_lookup.get((_name_key(_bet["home"]), _name_key(_bet["away"])), "")
@@ -1112,6 +1147,9 @@ def write_signals_json(
 
     # Enrich open bets with tennis live status (in_progress → is_live, suspended → is_suspended).
     # Priority: tennis_live_scores.json (every 15 min) → tennis_suspended.json (every 2h fallback)
+    #
+    # Enrich with Tennis authoritative live status. Wave 3A: per-record freshness via
+    # _tennis_bet_is_live() — stale in_progress cannot mark a bet as LIVE.
     try:
         import json as _json
         from src.data.tennis_scores import canonical_match_key as _cmk
@@ -1138,17 +1176,17 @@ def write_signals_json(
             for _bet in (_resolved_open_bets or []):
                 _ck = _cmk(_bet.get("home", ""), _bet.get("away", ""))
                 _ts = _tennis_live.get(_ck)
-                if not _ts:
+                if not _tennis_bet_is_live(_ts, _now_utc):
                     continue
-                _ts_status = _ts.get("status", "")
+                _ts_status = (_ts or {}).get("status", "")
                 _bet["is_live"] = True  # in_progress und suspended beide im Live-Tab
-                _bet["tennis_sets"] = _ts.get("sets", [])
-                _bet["tennis_sets_won"] = _ts.get("sets_won", [])
+                _bet["tennis_sets"] = (_ts or {}).get("sets", [])
+                _bet["tennis_sets_won"] = (_ts or {}).get("sets_won", [])
                 if _ts_status in ("suspended", "postponed"):
                     _bet["is_suspended"] = True
-                    _bet["resume_time"] = _ts.get("resume_time")
+                    _bet["resume_time"] = (_ts or {}).get("resume_time")
                     _bet["suspend_status"] = _ts_status
-                    _bet["suspend_sets"] = _ts.get("sets", [])
+                    _bet["suspend_sets"] = (_ts or {}).get("sets", [])
     except Exception:
         pass
 

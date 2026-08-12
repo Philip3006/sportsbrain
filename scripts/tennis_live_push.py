@@ -31,7 +31,8 @@ DOCS_PATH  = ROOT / "docs" / "data" / "tennis_live_scores.json"
 SUSP_PATH  = ROOT / "data" / "cache" / "tennis_suspended.json"
 
 
-_STALE_LIVE_HOURS = 8  # tennis BO5 rarely exceeds ~5h; 8h is safely past any real match
+_STALE_LIVE_HOURS = 2  # cache cleanup: push refreshes every 15 min, so 2h covers any missed-update gap
+# Note: the per-record freshness gate in web_dashboard.py (30 min) is the primary false-LIVE guard.
 
 
 def _prune_stale(cache: dict) -> dict:
