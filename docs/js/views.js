@@ -586,10 +586,11 @@ function sigCard(s, showMatch) {
 // ── Top Recommendations — Next 24h ───────────────────────────
 // _evScore: module-scope so both Top-Recs-24h and Smart Suggest use the same
 // canonical scoring. Fail-closed on missing/invalid odds.
+// P1.5-H: prefers refreshed current_odds/current_ev_pct over scan-time values.
 function _evScore(s) {
   const m = s.market || '';
-  const ev = s.ev_pct || 0;
-  const oddsRaw = s.odds;
+  const ev = (s.current_ev_pct != null && isFinite(s.current_ev_pct)) ? s.current_ev_pct : (s.ev_pct || 0);
+  const oddsRaw = (s.current_odds != null && isFinite(s.current_odds) && s.current_odds > 1) ? s.current_odds : s.odds;
   const oddsValid = typeof oddsRaw === 'number' && isFinite(oddsRaw) && oddsRaw > 1.0;
   if (!oddsValid) return -1;
   const isTennis = (s.sport === 'tennis');
@@ -612,9 +613,25 @@ function _buildTopRecs24h(signals, nowMs) {
   const candidates = (signals || [])
     .filter(s => _evScore(s) > 0)
     .filter(s => {
-      // Only ACTIVE signals qualify. Signals without signal_status pass through for backward compat.
-      const st = s.signal_status;
-      return !st || st === 'ACTIVE';
+      // P1.5-H: explicit ACTIVE required — old-schema signals without status are
+      // informational only and must not appear as actionable recommendations.
+      return s.signal_status === 'ACTIVE';
+    })
+    .filter(s => {
+      // P1.5-H: valid refreshed odds required — scan-time odds alone are not sufficient.
+      const co = s.current_odds;
+      return typeof co === 'number' && isFinite(co) && co > 1.0;
+    })
+    .filter(s => {
+      // P1.5-H: current EV must be present and finite.
+      const ev = s.current_ev_pct;
+      return ev != null && isFinite(ev);
+    })
+    .filter(s => {
+      // P1.5-H: odds freshness ≤ 30 min required — stale refreshed odds are not actionable.
+      if (!s.odds_ts) return false;
+      const ageMin = (nowMs - new Date(s.odds_ts).getTime()) / 60000;
+      return ageMin <= 30;
     })
     .filter(s => {
       if (!s.kickoff) return false;
