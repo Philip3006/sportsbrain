@@ -14,11 +14,10 @@ from __future__ import annotations
 import json
 import threading
 from copy import copy
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import ClassVar
 
 ROOT = Path(__file__).resolve().parents[2]
 _SIDECAR_PATH = ROOT / "data" / "cache" / "tennis_event_states.json"
@@ -185,7 +184,7 @@ class TennisEventState:
         return d
 
     @classmethod
-    def from_dict(cls, d: dict) -> "TennisEventState":
+    def from_dict(cls, d: dict) -> TennisEventState:
         raw_status = d.get("event_status", TennisEventStatus.UNKNOWN.value)
         try:
             status = TennisEventStatus(raw_status)
@@ -344,7 +343,7 @@ def load_event_states() -> dict[str, TennisEventState]:
         try:
             raw = json.loads(_SIDECAR_PATH.read_text())
             return {k: TennisEventState.from_dict(v) for k, v in raw.items()}
-        except Exception:
+        except (json.JSONDecodeError, OSError, ValueError, KeyError):
             return {}
 
 
@@ -356,8 +355,8 @@ def save_event_states(states: dict[str, TennisEventState]) -> None:
             _SIDECAR_PATH.write_text(
                 json.dumps({k: v.to_dict() for k, v in states.items()}, indent=2)
             )
-        except Exception:
-            pass
+        except (OSError, TypeError, ValueError):
+            return
 
 
 # ── Schedule enrichment (called from tennis_scan.py) ─────────────────────────
@@ -402,13 +401,16 @@ def enrich_schedule_with_canonical_state(
         try:
             from src.data.tennis_scores import canonical_match_key
             fk = canonical_match_key(home, away)
-        except Exception:
-            import unicodedata, re as _re
+        except ImportError:
+            import re as _re
+            import unicodedata
+
             def _clean(s: str) -> str:
                 s = unicodedata.normalize("NFD", s or "")
                 s = "".join(c for c in s if unicodedata.category(c) != "Mn")
                 s = _re.sub(r"[^a-z0-9]+", "", s.lower())
                 return s
+
             ca, cb = _clean(home), _clean(away)
             fk = f"{ca}|{cb}" if ca <= cb else f"{cb}|{ca}"
 

@@ -1209,7 +1209,7 @@ def main() -> None:
     try:
         from src.tennis.event_state import enrich_schedule_with_canonical_state
         schedule = enrich_schedule_with_canonical_state(schedule)
-    except Exception as _es_err:
+    except (ImportError, OSError, RuntimeError, ValueError) as _es_err:
         print(f"[tennis_scan] canonical event state enrichment skipped: {_es_err}")
 
     write_signals_json_all_users(
