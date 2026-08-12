@@ -25,6 +25,9 @@ import pickle
 import re
 import time
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+
+_EUROPE_BERLIN = ZoneInfo("Europe/Berlin")
 from pathlib import Path
 
 import requests
@@ -73,13 +76,21 @@ def _http_get(url: str, timeout: int = 15) -> str | None:
 
 
 def _parse_commence_time(dtstr: str, timestr: str) -> str:
-    """'31.07.', '22:00' → ISO-8601 UTC (assumes current year, TE displays in local CEST)."""
+    """'31.07.', '22:00' → ISO-8601 UTC using Europe/Berlin timezone.
+
+    TE displays match times in local Central European time (CET/CEST).
+    zoneinfo handles the CET↔CEST DST boundary automatically so we do not
+    hardcode +1/+2 offsets.  Signal IDs are date-only so the UTC conversion
+    does not change fixture identity for matches within normal playing hours.
+    """
     try:
-        year = datetime.now().year
+        year = datetime.now(timezone.utc).year
         d, m, _ = dtstr.split(".")
-        # TE zeigt lokale Zeit (typisch CEST); wir speichern +00:00 als approximation
-        # Realistischer wäre pytz, aber der Delta ist für Scanner-Prio unwichtig.
-        return f"{year:04d}-{int(m):02d}-{int(d):02d}T{timestr}:00+00:00"
+        h, mi = int(timestr[:2]), int(timestr[3:5])
+        local_dt = datetime(year, int(m), int(d), h, mi,
+                            tzinfo=_EUROPE_BERLIN)
+        utc_dt = local_dt.astimezone(timezone.utc)
+        return utc_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
     except Exception:
         return ""
 

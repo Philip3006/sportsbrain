@@ -1204,6 +1204,14 @@ def main() -> None:
     except Exception as _mon_err:
         print(f"[O1-8-MONITOR] monitoring check failed: {_mon_err}")
 
+    # Wave 3B: enrich schedule with canonical event state (initial/current start,
+    # status, source authority). Sidecar persists scheduled_start_initial across scans.
+    try:
+        from src.tennis.event_state import enrich_schedule_with_canonical_state
+        schedule = enrich_schedule_with_canonical_state(schedule)
+    except Exception as _es_err:
+        print(f"[tennis_scan] canonical event state enrichment skipped: {_es_err}")
+
     write_signals_json_all_users(
         tennis=all_live_signals,
         portfolio=dashboard_summary,
