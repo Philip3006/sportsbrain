@@ -1,10 +1,13 @@
-"""Regression tests: _evScore() Top-Picks inclusion/exclusion logic.
+"""Regression tests: _evScore() Top Empfehlungen inclusion/exclusion logic.
 
-Tests the corrected fix that:
+Tests the canonical Top Empfehlungen – nächste 24h section:
 1. Uses canonical "odds" field (not "decimal_odds") for all signal types.
 2. Fails closed for missing/null/zero/non-positive odds in odds-dependent evaluations.
 3. Allows tennis match-winner signals with EV >= 5% regardless of odds magnitude.
 4. Football home/away signals require valid odds; odds > 2.5 are excluded.
+5. Exactly one recommendation section renders on the homepage (no Smart Suggest duplicate).
+6. EDGE_LOST/UNREFRESHABLE/shadow signals (signal_status != ACTIVE) are excluded.
+7. current_odds/current_ev_pct are used when available.
 """
 import base64
 import functools
@@ -49,7 +52,8 @@ _BASE: dict = {
 }
 
 
-def _sig_tennis(odds=None, ev_pct=9.1, decimal_odds_field=None, confidence="HIGH"):
+def _sig_tennis(odds=None, ev_pct=9.1, decimal_odds_field=None, confidence="HIGH",
+                signal_status=None, current_odds=None, current_ev_pct=None):
     """Build a tennis away signal. odds=None → field absent (missing)."""
     s = {
         "sport": "tennis",
@@ -74,14 +78,20 @@ def _sig_tennis(odds=None, ev_pct=9.1, decimal_odds_field=None, confidence="HIGH
         s["odds"] = odds
     if decimal_odds_field is not None:
         s["decimal_odds"] = decimal_odds_field
+    if signal_status is not None:
+        s["signal_status"] = signal_status
+    if current_odds is not None:
+        s["current_odds"] = current_odds
+    if current_ev_pct is not None:
+        s["current_ev_pct"] = current_ev_pct
     return s
 
 
-def _sig_football_away(odds=None, ev_pct=30.0, decimal_odds_field=None):
+def _sig_football_away(odds=None, ev_pct=30.0, decimal_odds_field=None, match="TeamA vs TeamB"):
     """Build a football away signal."""
     s = {
         "sport": "football",
-        "match": "TeamA vs TeamB",
+        "match": match,
         "market": "away",
         "model_prob": 46.0,
         "fair_prob": 42.0,
@@ -133,72 +143,155 @@ def _home(page: Page, server_url: str, payload: dict) -> None:
     page.wait_for_timeout(600)
 
 
-# ── Tennis: valid canonical odds ──────────────────────────────────────────────
+# ── Structural: exactly one recommendation section ───────────────────────────
 
-def test_tennis_valid_odds_shows_top_picks(page: Page, server_url: str):
-    """Tennis signal with canonical odds=1.48 and EV+9.1% → Top-Picks visible."""
+def test_exactly_one_recommendation_section(page: Page, server_url: str):
+    """Homepage must render exactly one canonical recommendation section (.toprec-card)."""
     payload = {**_BASE, "tennis": [_sig_tennis(odds=1.48, ev_pct=9.1)]}
     _home(page, server_url, payload)
-    expect(page.locator(".suggest-card")).to_be_visible(timeout=5_000)
-    expect(page.locator(".suggest-title")).to_have_text("⚡ Top-Picks")
+    expect(page.locator(".toprec-card")).to_have_count(1, timeout=5_000)
+
+
+def test_smart_suggest_section_not_rendered(page: Page, server_url: str):
+    """Old Smart Suggest / Top-Picks duplicate section (.suggest-card) must not render."""
+    payload = {**_BASE, "tennis": [_sig_tennis(odds=1.48, ev_pct=9.1)]}
+    _home(page, server_url, payload)
+    expect(page.locator(".suggest-card")).to_have_count(0, timeout=5_000)
+
+
+def test_canonical_title_label(page: Page, server_url: str):
+    """Canonical section must display German product label 'TOP EMPFEHLUNGEN'."""
+    payload = {**_BASE, "tennis": [_sig_tennis(odds=1.48, ev_pct=9.1)]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-title")).to_have_text("TOP EMPFEHLUNGEN", timeout=5_000)
+
+
+# ── Signal count cases ────────────────────────────────────────────────────────
+
+def test_five_signals_render_five_picks(page: Page, server_url: str):
+    """Five qualifying signals → five .toprec-pick elements visible."""
+    tennis_sigs = []
+    for i in range(5):
+        s = _sig_tennis(odds=1.48 + i * 0.05, ev_pct=9.1 + i)
+        s["match"] = f"Player{i}A vs Player{i}B"
+        tennis_sigs.append(s)
+    payload = {**_BASE, "tennis": tennis_sigs}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(5, timeout=5_000)
+
+
+def test_one_signal_renders_one_pick(page: Page, server_url: str):
+    """One qualifying signal → exactly one .toprec-pick."""
+    payload = {**_BASE, "tennis": [_sig_tennis(odds=1.48, ev_pct=9.1)]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(1, timeout=5_000)
+
+
+def test_zero_signals_empty_state(page: Page, server_url: str):
+    """Zero qualifying signals → .toprec-empty renders, no .toprec-pick."""
+    payload = {**_BASE, "tennis": [], "football": []}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-empty")).to_be_visible(timeout=5_000)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
+
+
+# ── Tennis: valid canonical odds ──────────────────────────────────────────────
+
+def test_tennis_valid_odds_shows_top_empfehlungen(page: Page, server_url: str):
+    """Tennis signal with canonical odds=1.48 and EV+9.1% → Top Empfehlungen pick visible."""
+    payload = {**_BASE, "tennis": [_sig_tennis(odds=1.48, ev_pct=9.1)]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-card")).to_be_visible(timeout=5_000)
+    expect(page.locator(".toprec-pick")).to_have_count(1, timeout=5_000)
 
 
 # ── Tennis: missing odds (field absent) → fail closed ────────────────────────
 
 def test_tennis_missing_odds_excluded(page: Page, server_url: str):
-    """Tennis signal with missing odds field → fail closed, excluded from Top-Picks.
-
-    All signals require valid market odds (> 1.0, finite, numeric) to be safely
-    renderable and to pass the inclusion gate.
-    """
+    """Tennis signal with missing odds field → fail closed, excluded from Top Empfehlungen."""
     payload = {**_BASE, "tennis": [_sig_tennis(odds=None, ev_pct=9.1)]}
     _home(page, server_url, payload)
-    expect(page.locator(".suggest-card")).not_to_be_visible(timeout=5_000)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
+    expect(page.locator(".toprec-empty")).to_be_visible(timeout=5_000)
 
 
 # ── Tennis: EV below threshold ────────────────────────────────────────────────
 
 def test_tennis_ev_below_5_excluded(page: Page, server_url: str):
-    """Tennis signal with EV+3% (below 5% floor) → NOT in Top-Picks."""
+    """Tennis signal with EV+3% (below 5% floor) → NOT in Top Empfehlungen."""
     payload = {**_BASE, "tennis": [_sig_tennis(odds=1.48, ev_pct=3.0)]}
     _home(page, server_url, payload)
-    expect(page.locator(".suggest-card")).not_to_be_visible(timeout=5_000)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
 
 
 # ── Tennis: decimal_odds field must NOT be used as fallback ──────────────────
 
 def test_tennis_decimal_odds_legacy_field_not_used_as_fallback(page: Page, server_url: str):
-    """Signal has decimal_odds=2.0 (old field, never written by scanner) but no odds key.
-
-    The old code did `s.decimal_odds || 2.0` which would fabricate odds=2.0 and
-    potentially include the signal. The corrected code must exclude it because
-    the canonical odds field is absent → fail closed.
-    """
+    """Signal has decimal_odds=2.0 (old field) but no odds key → excluded (fail closed)."""
     payload = {**_BASE, "tennis": [_sig_tennis(odds=None, ev_pct=9.1, decimal_odds_field=2.0)]}
     _home(page, server_url, payload)
-    # Must be excluded: decimal_odds=2.0 must never substitute for missing canonical odds
-    expect(page.locator(".suggest-card")).not_to_be_visible(timeout=5_000)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
 
 
-# ── Football: valid odds ≤ 2.5 ───────────────────────────────────────────────
+# ── signal_status gate: EDGE_LOST/UNREFRESHABLE/shadow excluded ───────────────
 
-def test_football_away_valid_odds_shows_top_picks(page: Page, server_url: str):
+def test_edge_lost_signal_excluded(page: Page, server_url: str):
+    """EDGE_LOST signal must be excluded even if EV score is positive."""
+    payload = {**_BASE, "tennis": [_sig_tennis(odds=1.48, ev_pct=9.1, signal_status="EDGE_LOST")]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
+
+
+def test_unrefreshable_signal_excluded(page: Page, server_url: str):
+    """UNREFRESHABLE signal must be excluded from Top Empfehlungen."""
+    payload = {**_BASE, "tennis": [_sig_tennis(odds=1.48, ev_pct=9.1, signal_status="UNREFRESHABLE")]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
+
+
+def test_active_signal_status_passes(page: Page, server_url: str):
+    """ACTIVE signal_status passes through the gate correctly."""
+    payload = {**_BASE, "tennis": [_sig_tennis(odds=1.48, ev_pct=9.1, signal_status="ACTIVE")]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(1, timeout=5_000)
+
+
+def test_no_signal_status_passes_for_backward_compat(page: Page, server_url: str):
+    """Signals without signal_status field pass through (backward compatibility)."""
+    s = _sig_tennis(odds=1.48, ev_pct=9.1)
+    assert "signal_status" not in s
+    payload = {**_BASE, "tennis": [s]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(1, timeout=5_000)
+
+
+# ── current_odds / current_ev_pct (O1-7 refreshed odds) ──────────────────────
+
+def test_current_odds_used_when_available(page: Page, server_url: str):
+    """When current_odds is set, Top Empfehlungen must display it (not scan-time odds)."""
+    payload = {**_BASE, "tennis": [_sig_tennis(odds=1.48, ev_pct=9.1,
+                                                current_odds=1.62, current_ev_pct=14.5)]}
+    _home(page, server_url, payload)
+    expect(page.locator(".toprec-pick")).to_have_count(1, timeout=5_000)
+    # current_odds=1.62 must be displayed, not scan-time 1.48
+    expect(page.locator(".toprec-odds")).to_have_text("1.62", timeout=5_000)
+
+
+# ── Football signals ──────────────────────────────────────────────────────────
+
+def test_football_away_valid_odds_shows_top_empfehlungen(page: Page, server_url: str):
     """Football away with odds=2.2 and EV+30% → included (odds ≤ 2.5, EV ≥ 25%)."""
     payload = {**_BASE, "football": [_sig_football_away(odds=2.2, ev_pct=30.0)]}
     _home(page, server_url, payload)
-    expect(page.locator(".suggest-card")).to_be_visible(timeout=5_000)
+    expect(page.locator(".toprec-pick")).to_have_count(1, timeout=5_000)
 
-
-# ── Football: missing odds → fail closed ─────────────────────────────────────
 
 def test_football_away_missing_odds_excluded(page: Page, server_url: str):
-    """Football away signal with no odds field → fail closed, excluded from Top-Picks."""
+    """Football away signal with no odds field → fail closed, excluded."""
     payload = {**_BASE, "football": [_sig_football_away(odds=None, ev_pct=30.0)]}
     _home(page, server_url, payload)
-    expect(page.locator(".suggest-card")).not_to_be_visible(timeout=5_000)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
 
-
-# ── Football: null odds → fail closed ────────────────────────────────────────
 
 def test_football_away_null_odds_excluded(page: Page, server_url: str):
     """Football away signal with odds=null → fail closed, excluded."""
@@ -206,38 +299,27 @@ def test_football_away_null_odds_excluded(page: Page, server_url: str):
     sig["odds"] = None
     payload = {**_BASE, "football": [sig]}
     _home(page, server_url, payload)
-    expect(page.locator(".suggest-card")).not_to_be_visible(timeout=5_000)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
 
-
-# ── Football: zero odds → fail closed ────────────────────────────────────────
 
 def test_football_away_zero_odds_excluded(page: Page, server_url: str):
     """Football away signal with odds=0 → fail closed (not positive), excluded."""
     payload = {**_BASE, "football": [_sig_football_away(odds=0, ev_pct=30.0)]}
     _home(page, server_url, payload)
-    expect(page.locator(".suggest-card")).not_to_be_visible(timeout=5_000)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
 
-
-# ── Football: odds > 2.5 → excluded ──────────────────────────────────────────
 
 def test_football_away_high_odds_excluded(page: Page, server_url: str):
     """Football away with odds=2.8 (> 2.5) → excluded by market filter."""
     payload = {**_BASE, "football": [_sig_football_away(odds=2.8, ev_pct=30.0)]}
     _home(page, server_url, payload)
-    expect(page.locator(".suggest-card")).not_to_be_visible(timeout=5_000)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)
 
-
-# ── Football: decimal_odds field present but no odds → fail closed ────────────
 
 def test_football_decimal_odds_legacy_field_not_used(page: Page, server_url: str):
-    """Football signal has decimal_odds=2.0 (old field) but no odds key → fail closed.
-
-    Previously decimal_odds||2.0 would fabricate 2.0 and INCLUDE the signal.
-    The corrected code must exclude it because odds is missing.
-    """
+    """Football signal has decimal_odds=2.0 (old field) but no odds key → fail closed."""
     sig = _sig_football_away(ev_pct=30.0)
-    # No odds key, but has old decimal_odds field
     sig["decimal_odds"] = 2.0
     payload = {**_BASE, "football": [sig]}
     _home(page, server_url, payload)
-    expect(page.locator(".suggest-card")).not_to_be_visible(timeout=5_000)
+    expect(page.locator(".toprec-pick")).to_have_count(0, timeout=5_000)

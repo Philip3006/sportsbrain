@@ -515,6 +515,9 @@
     .toprec-empty-icon { font-size: 22px; margin-bottom: 8px; color: var(--muted); }
     .toprec-empty-msg { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
     .toprec-empty-sub { font-size: 11px; color: var(--muted); line-height: 1.4; }
+    .toprec-conf-badge { font-size: 9px; font-weight: 800; background: rgba(0,200,83,.18); color: var(--green); border: 1px solid rgba(0,200,83,.4); border-radius: 4px; padding: 1px 5px; margin-left: 4px; vertical-align: middle; }
+    .toprec-fresh { font-size: 9px; margin-left: 4px; vertical-align: middle; }
+    .toprec-stake { font-size: 12px; font-weight: 800; color: var(--muted); margin-left: auto; flex-shrink: 0; }
 
     /* ── Smart Suggest ── */
     .suggest-card { margin: 10px 12px 4px; background: var(--card); border: 1px solid rgba(0,200,83,.25); border-radius: 14px; overflow: hidden; }

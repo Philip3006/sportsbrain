@@ -605,12 +605,25 @@ function _evScore(s) {
 
 function _buildTopRecs24h(signals, nowMs) {
   const in24h = nowMs + 24 * 60 * 60 * 1000;
+  const openMkSet = new Set((_openBets || []).map(b => {
+    const [bh, ba] = (b.match || '').split(' vs ').map(x => x.trim());
+    return matchKey(bh, ba);
+  }));
   const candidates = (signals || [])
     .filter(s => _evScore(s) > 0)
+    .filter(s => {
+      // Only ACTIVE signals qualify. Signals without signal_status pass through for backward compat.
+      const st = s.signal_status;
+      return !st || st === 'ACTIVE';
+    })
     .filter(s => {
       if (!s.kickoff) return false;
       const ko = new Date(s.kickoff).getTime();
       return ko > nowMs && ko <= in24h;
+    })
+    .filter(s => {
+      const [sh, sa] = (s.match || '').split(' vs ').map(x => x.trim());
+      return !openMkSet.has(matchKey(sh, sa));
     })
     .sort((a, b) => _evScore(b) - _evScore(a));
   const seen = new Set();
@@ -636,13 +649,16 @@ function _topRecs24hHtml(signals, nowMs) {
   const picksHtml = picks.length === 0
     ? `<div class="toprec-empty">
         <div class="toprec-empty-icon">—</div>
-        <div class="toprec-empty-msg">No top recommendations right now</div>
-        <div class="toprec-empty-sub">No upcoming signal currently meets SportsBrain's quality criteria.</div>
+        <div class="toprec-empty-msg">Keine qualifizierenden Signale</div>
+        <div class="toprec-empty-sub">Aktuell erfüllt kein Signal die Qualitätskriterien von SportsBrain.</div>
       </div>`
     : picks.map((p, i) => {
         const [ph, pa] = (p.match || '').split(' vs ').map(x => x.trim());
         const mktLabel = marketLabel(p.market, p.match);
-        const evColor = p.ev_pct >= 10 ? 'var(--green)' : 'var(--yellow)';
+        // O1-7: prefer refreshed current_odds/current_ev_pct over scan-time values
+        const displayOdds = (p.current_odds != null && p.current_odds > 1) ? p.current_odds : (p.odds || 0);
+        const displayEv = (p.current_ev_pct != null) ? p.current_ev_pct : (p.ev_pct || 0);
+        const evColor = displayEv >= 10 ? 'var(--green)' : 'var(--yellow)';
         const sportIcon = p.sport === 'tennis' ? '🎾' : p.sport === 'football' ? '⚽' : '';
         const leagueKey = (p.league || p.tour || '').toLowerCase();
         const leagueLabel = leagueMap[leagueKey] || '';
@@ -652,6 +668,16 @@ function _topRecs24hHtml(signals, nowMs) {
         const probStr = (typeof p.model_prob === 'number' && p.model_prob > 0)
           ? `<span class="toprec-prob">${p.model_prob.toFixed(1)}%</span>`
           : '';
+        const confBadge = p.confidence === 'HIGH'
+          ? `<span class="toprec-conf-badge">HIGH</span>`
+          : '';
+        let freshBadge = '';
+        if (p.odds_ts) {
+          const ageMin = Math.round((nowMs - new Date(p.odds_ts).getTime()) / 60000);
+          const freshnessColor = ageMin <= 15 ? 'rgba(0,200,83,.7)' : ageMin <= 30 ? 'rgba(255,165,0,.7)' : 'rgba(255,80,80,.7)';
+          freshBadge = `<span class="toprec-fresh" style="color:${freshnessColor}" title="Quoten zuletzt vor ${ageMin} Min aktualisiert (${p.odds_source||'?'})">⟳${ageMin}min</span>`;
+        }
+        const stakeStr = (p.stake_eur && p.stake_eur > 0) ? `<span class="toprec-stake">€${Math.round(p.stake_eur)}</span>` : '';
         const timeStr = p.kickoff ? fmtKickoffCompact(p.kickoff) : '';
         const flagA = teamFlag(ph), flagB = teamFlag(pa);
         return `<div class="toprec-pick" role="button" tabindex="0"
@@ -660,16 +686,17 @@ function _topRecs24hHtml(signals, nowMs) {
           <div class="toprec-rank">#${i + 1}</div>
           <div class="toprec-content">
             <div class="toprec-teams-row">
-              <span class="toprec-sport-icon">${sportIcon}</span>${flagA}${flagA ? ' ' : ''}<strong>${esc(ph)}</strong><span class="vs">vs</span>${flagB}${flagB ? ' ' : ''}<strong>${esc(pa)}</strong>${leagueBadge}
+              <span class="toprec-sport-icon">${sportIcon}</span>${flagA}${flagA ? ' ' : ''}<strong>${esc(ph)}</strong><span class="vs">vs</span>${flagB}${flagB ? ' ' : ''}<strong>${esc(pa)}</strong>${leagueBadge}${confBadge}${freshBadge}
             </div>
             <div class="toprec-market-row">
               <span class="toprec-mkt-pill">${esc(mktLabel)}</span>
               <span class="toprec-time">${esc(timeStr)}</span>
             </div>
             <div class="toprec-stats-row">
-              <span class="toprec-odds">${(p.odds).toFixed(2)}</span>
+              <span class="toprec-odds">${displayOdds.toFixed(2)}</span>
               ${probStr}
-              <span class="toprec-ev" style="color:${evColor}">+${p.ev_pct.toFixed(1)}% EV</span>
+              <span class="toprec-ev" style="color:${evColor}">+${displayEv.toFixed(1)}% EV</span>
+              ${stakeStr}
             </div>
           </div>
         </div>`;
@@ -679,7 +706,7 @@ function _topRecs24hHtml(signals, nowMs) {
     : picks.length === 1 ? '1 Signal' : `${picks.length} Signale`;
   return `<div class="toprec-card">
     <div class="toprec-header">
-      <div class="toprec-title">TOP RECOMMENDATIONS</div>
+      <div class="toprec-title">TOP EMPFEHLUNGEN</div>
       <div class="toprec-subtitle">Nächste 24h · ${countLabel}</div>
     </div>
     ${picksHtml}
@@ -885,126 +912,8 @@ function renderHome() {
     }, 60000);
   }
 
-  // ── Smart Suggest (Fußball + Tennis) ───────────────────────
-  let suggestHtml = '';
-  const free = (_bankrollState && _bankrollState.free != null) ? _bankrollState.free : 0;
-  const openCount = (_openBets || []).length;
-
-  if (free > 5) {
-    const slots = Math.max(0, 5 - openCount);
-    const nowSug = Date.now();
-    const now36h = nowSug + 36 * 36e5; // 36h — deckt heutigen + morgigen Spieltag ab
-    const openMkSug = new Set((_openBets || []).map(b => {
-      const [bh, ba] = (b.match || '').split(' vs ').map(x => x.trim());
-      return matchKey(bh, ba);
-    }));
-
-    const mktCat = m =>
-      ['home','draw','away'].includes(m) ? '1x2'
-      : m.startsWith('ah') ? 'ah'
-      : m.startsWith('o/u') ? 'ou'
-      : m.startsWith('btts_') ? 'btts'
-      : m.startsWith('dc_') ? 'dc'
-      : m.startsWith('first_set') ? 'first_set'
-      : m;
-
-    // _evScore is defined at module scope (shared with _buildTopRecs24h).
-
-    const candidates = (_signals || [])
-      .filter(s => _evScore(s) > 0)
-      .filter(s => {
-        // O1-7: Only ACTIVE signals qualify for Top Recommendations.
-        // Signals without signal_status (not yet refreshed) pass through for backward compat.
-        const st = s.signal_status;
-        return !st || st === 'ACTIVE';
-      })
-      .filter(s => {
-        if (!s.kickoff) return false;
-        const ko = new Date(s.kickoff).getTime();
-        return ko > nowSug && ko <= now36h;
-      })
-      .filter(s => {
-        const [sh, sa] = (s.match || '').split(' vs ').map(x => x.trim());
-        return !openMkSug.has(matchKey(sh, sa));
-      })
-      .sort((a, b) => _evScore(b) - _evScore(a));
-
-    const seenMatchMkt = new Set();
-    const picks = [];
-    let remaining = free;
-
-    for (const s of candidates) {
-      if (picks.length >= 5) break;
-      const [sh, sa] = (s.match || '').split(' vs ').map(x => x.trim());
-      const dedupKey = matchKey(sh, sa) + '|' + mktCat(s.market);
-      if (seenMatchMkt.has(dedupKey)) continue;
-      const stake = Math.min(s.stake_eur || 10, remaining);
-      if (stake < 3) continue;
-      seenMatchMkt.add(dedupKey);
-      picks.push({ ...s, display_stake: Math.round(stake) });
-      remaining -= stake;
-    }
-
-    picks.sort((a, b) => (a.kickoff || '') < (b.kickoff || '') ? -1 : 1);
-    if (picks.length > 0) {
-      const usedStake = picks.reduce((s, p) => s + p.display_stake, 0);
-      const picksHtml = picks.map(p => {
-        const [ph, pa] = (p.match || '').split(' vs ').map(x => x.trim());
-        const mktLabel = marketLabel(p.market, p.match);
-        // O1-7: prefer refreshed current_odds/current_ev_pct over scan-time values
-        const displayOdds = (p.current_odds != null && p.current_odds > 1) ? p.current_odds : (p.odds || 0);
-        const displayEv = (p.current_ev_pct != null) ? p.current_ev_pct : (p.ev_pct || 0);
-        const evColor = displayEv >= 10 ? 'var(--green)' : 'var(--yellow)';
-        const timeStr = p.kickoff ? fmtKickoff(p.kickoff) : '';
-        const sportIcon = p.sport === 'tennis' ? '🎾' : p.sport === 'football' ? '⚽' : '';
-        const leagueLabel = { bl2: '2.BL', wm2026: 'WM', atp: 'ATP', wta: 'WTA' }[p.league] || '';
-        const leagueBadge = leagueLabel
-          ? `<span style="font-size:9px;font-weight:800;background:rgba(255,255,255,.08);color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle">${leagueLabel}</span>`
-          : '';
-        const flagA = teamFlag(ph);
-        const flagB = teamFlag(pa);
-        const confBadge = p.confidence === 'HIGH'
-          ? `<span style="font-size:9px;font-weight:800;background:rgba(0,200,83,.18);color:var(--green);border:1px solid rgba(0,200,83,.4);border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle">HIGH</span>`
-          : '';
-        // O1-7: freshness indicator for refreshed odds
-        let freshBadge = '';
-        if (p.odds_ts) {
-          const ageMin = Math.round((Date.now() - new Date(p.odds_ts).getTime()) / 60000);
-          const freshnessColor = ageMin <= 15 ? 'rgba(0,200,83,.7)' : ageMin <= 30 ? 'rgba(255,165,0,.7)' : 'rgba(255,80,80,.7)';
-          freshBadge = `<span style="font-size:9px;color:${freshnessColor};margin-left:4px" title="Quoten zuletzt vor ${ageMin} Min aktualisiert (${p.odds_source||'?'})">⟳${ageMin}min</span>`;
-        }
-        return `<div class="suggest-pick" onclick='openMatch(${JSON.stringify(p.match)})'>
-          <div class="suggest-teams-row">
-            <span style="font-size:13px;margin-right:3px">${sportIcon}</span>${flagA}${flagA?' ':''}<strong>${esc(ph)}</strong><span class="vs">vs</span>${flagB}${flagB?' ':''}<strong>${esc(pa)}</strong>${leagueBadge}${confBadge}${freshBadge}<span style="font-size:11px;color:var(--muted);font-weight:500;margin-left:6px">${esc(timeStr)}</span>
-          </div>
-          <div class="suggest-bottom-row">
-            <span class="suggest-mkt-pill">${esc(mktLabel)}</span>
-            <span class="suggest-odds">${displayOdds.toFixed(2)}</span>
-            <span class="suggest-ev" style="color:${evColor}">+${displayEv.toFixed(1)}%</span>
-            <span class="suggest-eur">€${p.display_stake}</span>
-          </div>
-        </div>`;
-      }).join('');
-      const sportCounts = picks.reduce((acc, p) => { acc[p.sport] = (acc[p.sport]||0)+1; return acc; }, {});
-      const sportSummary = Object.entries(sportCounts).map(([sp, n]) => `${n}×${sp==='tennis'?'🎾':'⚽'}`).join(' ');
-      suggestHtml = `<div class="suggest-card">
-        <div class="suggest-header">
-          <div>
-            <div class="suggest-title">⚡ Top-Picks</div>
-            <div class="suggest-subtitle">${slots} freier Slot${slots !== 1 ? 's' : ''} · €${free.toFixed(0)} verfügbar · ${sportSummary}</div>
-          </div>
-          <div>
-            <div class="suggest-stake-big">€${usedStake}</div>
-            <div class="suggest-stake-label">Einsatz</div>
-          </div>
-        </div>
-        ${picksHtml}
-      </div>`;
-    }
-  }
-
   const topRecs24h = _topRecs24hHtml(_signals, Date.now());
-  let h = topRecs24h + suggestHtml + todayHtml;
+  let h = topRecs24h + todayHtml;
   for (const [dk, group] of Object.entries(days)) {
     // Day header
     if (dk === '__') {

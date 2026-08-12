@@ -141,7 +141,7 @@ def test_zero_signals_shows_empty_state(page: Page, server_url: str):
     _home(page, server_url, payload)
     expect(page.locator(".toprec-card")).to_be_visible(timeout=5_000)
     expect(page.locator(".toprec-empty")).to_be_visible(timeout=3_000)
-    expect(page.locator(".toprec-empty-msg")).to_contain_text("No top recommendations", timeout=3_000)
+    expect(page.locator(".toprec-empty-msg")).to_contain_text("Keine qualifizierenden Signale", timeout=3_000)
     expect(page.locator(".toprec-pick")).to_have_count(0, timeout=2_000)
 
 
