@@ -1,5 +1,5 @@
 # Saisonbericht 2026 — ALL
-_generiert: 2026-08-12T13:25:54Z_
+_generiert: 2026-08-12T22:53:34Z_
 
 ## 🟢 Production Bets
 | Kennzahl | Wert |
