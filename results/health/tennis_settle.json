@@ -1,8 +1,8 @@
 {
   "job": "tennis_settle",
   "status": "ok",
-  "last_run_at": "2026-08-13T15:16:58Z",
-  "started_at": "2026-08-13T15:16:58Z",
+  "last_run_at": "2026-08-13T17:14:55Z",
+  "started_at": "2026-08-13T17:14:55Z",
   "duration_s": null,
   "exit_code": 1,
   "error": null,
