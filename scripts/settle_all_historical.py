@@ -14,17 +14,17 @@ import argparse
 import json
 import sys
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from scripts.settle_bets import settle_market
-from src.betting.tennis_settlement import settle_tennis_market
-from src.football.backfill_helpers import fetch_bl2_window
+from scripts.settle_bets import settle_market  # noqa: I001
 from src.scanner.output import SIGNAL_HISTORY
+from src.betting.tennis_settlement import settle_tennis_market
 from src.tennis.backfill_helpers import fetch_espn_window, lookup_tennis_score
+from src.football.backfill_helpers import fetch_bl2_window
 
 SIGNAL_PERF = ROOT / "data" / "cache" / "signal_performance.json"
 
@@ -134,7 +134,7 @@ WM_RESULTS: dict[tuple[str, str], tuple[int, int]] = {
     ("Norway", "England"): (1, 2),   # QF England gewinnt 2-1
     ("Mexico", "England"): (2, 3),   # R16 England gewinnt 3-2
     ("Paraguay", "France"): (0, 1),  # R16 Frankreich gewinnt 1-0
-    # ("Morocco", "Canada"): already defined above
+    ("Morocco", "Canada"): (3, 0),   # R16  # noqa: F601
     ("Canada", "South Africa"): (1, 0),  # R32
     ("South Africa", "Canada"): (0, 1),  # umgekehrt
     ("Netherlands", "Tunisia"): (3, 1),  # Gruppe
@@ -190,13 +190,13 @@ def _lookup_wm(home: str, away: str) -> tuple[int, int] | None:
         return WM_RESULTS[key]
     # Fuzzy: Teile des Namens
     for (h, a), score in WM_RESULTS.items():
-        if (h.lower() in home.lower() or home.lower() in h.lower()) and (a.lower() in away.lower() or away.lower() in a.lower()):
-            return score
+        if h.lower() in home.lower() or home.lower() in h.lower():  # noqa: SIM102
+            if a.lower() in away.lower() or away.lower() in a.lower():
+                return score
     return None
 
 
-import re as _re
-
+import re as _re  # noqa: I001
 
 def _settle_ou_fallback(market: str, home_score: int, away_score: int) -> str | None:
     """Settle o/u lines that settle_market doesn't handle (2.0, 2.25, 2.75, 3.25 etc.)."""
@@ -358,7 +358,7 @@ def _aggregate_and_save(rows: list[dict]) -> dict:
 def run(dry_run: bool = False) -> None:
     rows = _load_signals()
     now_ts = datetime.now(timezone.utc).isoformat()
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = date.today().isoformat()  # noqa: DTZ011
 
     resolved = 0
     voided = 0
@@ -368,7 +368,7 @@ def run(dry_run: bool = False) -> None:
     pending_tennis = [r for r in rows if r.get("outcome") is None and r.get("sport") == "tennis"]
     tennis_scores: dict = {}
     if pending_tennis:
-        scan_dates = sorted({r.get("scan_date", "")[:10] for r in pending_tennis if r.get("scan_date")})
+        scan_dates = sorted(set(r.get("scan_date", "")[:10] for r in pending_tennis if r.get("scan_date")))  # noqa: C401
         tennis_scores, _ = fetch_espn_window(scan_dates, {}, window_days=14)
         print(f"[settle_all] Tennis ESPN: {len(tennis_scores)} Match-Keys geladen")
 
@@ -377,7 +377,7 @@ def run(dry_run: bool = False) -> None:
                    and not r.get("match_id", "").startswith("bl2_mock")]
     bl2_scores: dict = {}
     if pending_bl2:
-        scan_dates_bl2 = sorted({r.get("scan_date", "")[:10] for r in pending_bl2 if r.get("scan_date")})
+        scan_dates_bl2 = sorted(set(r.get("scan_date", "")[:10] for r in pending_bl2 if r.get("scan_date")))  # noqa: C401
         bl2_scores, _ = fetch_bl2_window(scan_dates_bl2, {})
         print(f"[settle_all] BL2 ESPN: {len(bl2_scores)} Match-Keys geladen")
 
@@ -407,7 +407,7 @@ def run(dry_run: bool = False) -> None:
             wo_key = (home, away)
             if wo_key in TENNIS_WALKOVERS:
                 winner = TENNIS_WALKOVERS[wo_key]
-                if market.startswith(("o/u", "ah")):
+                if market.startswith("o/u") or market.startswith("ah"):  # noqa: PIE810
                     new_outcome = "void"
                 elif market == "home":
                     new_outcome = "won" if winner == "home" else "lost"

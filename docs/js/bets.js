@@ -1,9 +1,16 @@
 // ── P0-A: Canonical actionability contract (mirrors Python signal_contract.py) ──
+// Blocker-2: must stay in parity with contract.js and signal_contract.py.
 
 const _TERMINAL_STATUSES = new Set(['FINISHED', 'CANCELLED', 'POSTPONED', 'ABANDONED', 'TERMINATED', 'COMPLETED']);
 const _LIVE_STATUSES = new Set(['LIVE', 'IN_PROGRESS']);
+// Blocker-1 parity: real production pre-match states (mirrors ALLOWED_PREMATCH_STATUSES)
+const _ALLOWED_PREMATCH_STATUSES = new Set([
+  'UPCOMING', 'AWAITING_START', 'DELAYED', 'PREMATCH', 'SCHEDULED',
+]);
 // P1.5-H canonical freshness: 30 minutes (mirrors _MAX_ODDS_AGE_SECONDS in signal_contract.py)
 const _MAX_ODDS_AGE_MS = 1800 * 1000;
+// P0-A item D parity: maximum allowed future clock skew (mirrors MAX_CLOCK_SKEW_MS)
+const _MAX_CLOCK_SKEW_MS = 60 * 1000;
 // Canonical EV ceiling: MAX_EV = 0.40 → 40 percentage points
 const _MAX_EV_PCT = 40.0;
 const _MAX_ACTIVE_BETS = 3;
@@ -55,13 +62,19 @@ function isActionableValueSignal(signal, bankroll, activeCount) {
   if (ev <= -100) return { ok: false, reason: `current_ev_pct implausibly low: ${ev}` };
   if (ev <= 0) return { ok: false, reason: `current_ev_pct must be > 0 for a value bet, got ${ev}` };
 
-  // 12+13. odds_ts present and within 4h
+  // 12+13. odds_ts present, not materially future, and within freshness window
   const oddsTs = signal.odds_ts;
   if (!oddsTs) return { ok: false, reason: 'odds_ts missing' };
   try {
     const tsMs = new Date(oddsTs).getTime();
     if (!Number.isFinite(tsMs)) return { ok: false, reason: 'odds_ts invalid date' };
-    const ageMs = Date.now() - tsMs;
+    const nowMs = Date.now();
+    // Blocker-2 parity (item D): reject materially future odds_ts
+    const skewMs = tsMs - nowMs;
+    if (skewMs > _MAX_CLOCK_SKEW_MS) {
+      return { ok: false, reason: `odds_ts is ${Math.round(skewMs/1000)}s in the future — fail closed` };
+    }
+    const ageMs = nowMs - tsMs;
     if (ageMs > _MAX_ODDS_AGE_MS) {
       return { ok: false, reason: `odds_ts stale: ${Math.round(ageMs/1000)}s old (max ${_MAX_ODDS_AGE_MS/1000}s)` };
     }
@@ -78,6 +91,13 @@ function isActionableValueSignal(signal, bankroll, activeCount) {
   // 15. event_status not terminal
   if (_TERMINAL_STATUSES.has(evStatus)) {
     return { ok: false, reason: `event_status is terminal: ${evStatus}` };
+  }
+
+  // 15b. Blocker-1 parity: explicit allowlist check.
+  // null/undefined/'' = sport does not emit event_status → accepted.
+  // Explicitly set non-allowlisted value (e.g. UNKNOWN) → fail closed.
+  if (evStatus != null && evStatus !== '' && !_ALLOWED_PREMATCH_STATUSES.has(evStatus)) {
+    return { ok: false, reason: `event_status '${evStatus}' not in allowed pre-match set — fail closed` };
   }
 
   // 16. bankroll > 0
@@ -761,24 +781,35 @@ async function _submitBet() {
   if (!_pendingBet) return;
   const bk = _currentBankroll();
 
-  // P0-A: re-validate actionability immediately before submit (state may have changed since modal open).
-  // Key time-sensitive checks: odds_ts freshness, active bet count, signal_status.
+  // Blocker-2: re-validate actionability immediately before submit using the LIVE canonical
+  // signal from _signals — NOT fabricated defaults. No field may be coerced to a safe value.
   if (_pendingBet.source === 'value') {
     const activeCount = (_openBets || []).length;
+    // Re-resolve the signal from the live _signals array (same data as when modal opened).
+    // If signal is no longer present, it was removed/expired — fail closed.
+    const liveSig = Array.isArray(_signals)
+      ? _signals.find(s => s.signal_id === _pendingBet.signal_id)
+      : null;
+    if (!liveSig) {
+      showToast('Signal nicht mehr verfügbar — Seite neu laden', 'error');
+      _closeBetModal();
+      return;
+    }
+    // Use all real fields from the live signal — NO fabricated defaults, NO hardcoded flags.
     const submitSig = {
-      signal_id:     _pendingBet.signal_id,
-      signal_status: _pendingBet.signal_status || 'ACTIVE',
-      shadow:        false,
-      is_shadow:     false,
-      unsupported:   false,
-      edge_lost:     false,
-      stale:         false,
-      no_bet_flag:   false,
-      current_odds:  _pendingBet.canonical_odds,
-      current_ev_pct: _pendingBet.ev_pct,
-      odds_ts:       _pendingBet.odds_ts,
-      event_status:  _pendingBet.event_status || 'PREMATCH',
-      sport:         _pendingBet.sport,
+      signal_id:      liveSig.signal_id,
+      signal_status:  liveSig.signal_status,
+      shadow:         liveSig.shadow,
+      is_shadow:      liveSig.is_shadow,
+      unsupported:    liveSig.unsupported,
+      edge_lost:      liveSig.edge_lost,
+      stale:          liveSig.stale,
+      no_bet_flag:    liveSig.no_bet_flag,
+      current_odds:   liveSig.current_odds,
+      current_ev_pct: liveSig.current_ev_pct,
+      odds_ts:        liveSig.odds_ts,
+      event_status:   liveSig.event_status,
+      sport:          liveSig.sport,
     };
     const { ok, reason } = isActionableValueSignal(submitSig, bk, activeCount);
     if (!ok) {

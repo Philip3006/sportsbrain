@@ -308,16 +308,20 @@ def main() -> int:
 
     if added == 0:
         print("[consume] no pending bets (across all users)")
-        return 0
 
-    # Refresh KV immediately so app shows updated open_bets + bankroll_state
-    if added > 0:
-        try:
-            from src.notifications.web_dashboard import write_signals_json_all_users
-            write_signals_json_all_users()
-            print("[consume] KV state refreshed")
-        except Exception as e:  # noqa: BLE001
-            print(f"[consume] KV refresh failed (non-fatal): {e}", file=sys.stderr)
+    # Blocker-4: ALWAYS refresh KV state, even when no bets were added.
+    # This updates bankroll_state.published_at so the Worker's AUTH_STATE_MAX_AGE_MS
+    # (90 min) check never fails solely due to a scan gap. The Worker triggers this
+    # via the */30 * * * * cron unconditionally, creating a ≤30 min refresh cadence.
+    try:
+        from src.notifications.web_dashboard import write_signals_json_all_users
+        write_signals_json_all_users()
+        print(f"[consume] KV state refreshed (added={added})")
+    except Exception as e:  # noqa: BLE001
+        print(f"[consume] KV refresh failed (non-fatal): {e}", file=sys.stderr)
+
+    if added == 0:
+        return 0
 
         # Push ledger to GitHub so the CI watchdog sees the new bets and
         # doesn't overwrite the KV with a stale repo state.

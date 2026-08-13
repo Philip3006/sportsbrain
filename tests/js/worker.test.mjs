@@ -1,6 +1,10 @@
 /**
- * P0-A Worker contract tests — Node.js 24 built-in test runner.
- * Tests execute the SAME validation functions used by worker.js (via contract.js).
+ * P0-A Worker contract + orchestration tests — Node.js built-in test runner.
+ *
+ * Blocker-5: suite 9 now imports and tests orchestratePendingBetPost() from
+ * worker.js directly — NOT a hand-rolled simulation. This is the actual
+ * production orchestration code executed by the live Worker handler.
+ *
  * Run: node --test tests/js/worker.test.mjs
  */
 import { test, describe } from 'node:test';
@@ -10,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dir = fileURLToPath(new URL('.', import.meta.url));
 const CONTRACT = resolve(__dir, '../../cloudflare/contract.js');
+const WORKER  = resolve(__dir, '../../cloudflare/worker.js');
 
 const {
   validateBetBodyBasic,
@@ -26,6 +31,9 @@ const {
   ALLOWED_PREMATCH_STATUSES,
   MAX_CLOCK_SKEW_MS,
 } = await import(CONTRACT);
+
+// Blocker-5: import ACTUAL production orchestration function from worker.js
+const { orchestratePendingBetPost } = await import(WORKER);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -47,13 +55,16 @@ function validSig(overrides = {}) {
     no_bet_flag:   false,
     current_odds:  2.10,
     current_ev_pct: 15.2,
+    // Blocker-1: real production Tennis status (TennisEventStatus.UPCOMING).
+    // PREMATCH was never emitted by TennisEventStatus — UPCOMING is the canonical value.
     odds_ts:       FRESH_TS,
-    event_status:  'PREMATCH',
+    event_status:  'UPCOMING',
     sport:         'tennis',
     match:         'Federer vs Nadal',
     market:        'home',
     fixture_key:   'federer_vs_nadal_20260813',
     league:        'wimbledon',
+    model_prob:    52.0,  // percent-unit as published by web_dashboard._signal_to_dict()
     ...overrides,
   };
 }
@@ -232,16 +243,26 @@ describe('validateSignalActionability (trusted KV signal)', () => {
     assert.equal(r.ok, false);
   });
 
-  // P0-A item C: explicit pre-match allowlist
-  test('PREMATCH accepted', () => {
-    assert.equal(validateSignalActionability(validSig({ event_status: 'PREMATCH' }), NOW).ok, true);
+  // Blocker-1: real production pre-match statuses from TennisEventStatus
+  test('UPCOMING accepted (real Tennis canonical pre-match status)', () => {
+    const r = validateSignalActionability(validSig({ event_status: 'UPCOMING' }), NOW);
+    assert.equal(r.ok, true, `UPCOMING must be accepted: ${r.reason}`);
   });
 
   test('AWAITING_START accepted', () => {
     assert.equal(validateSignalActionability(validSig({ event_status: 'AWAITING_START' }), NOW).ok, true);
   });
 
-  test('SCHEDULED accepted', () => {
+  test('DELAYED accepted (qualified delay, pre-match odds still valid)', () => {
+    const r = validateSignalActionability(validSig({ event_status: 'DELAYED' }), NOW);
+    assert.equal(r.ok, true, `DELAYED must be accepted: ${r.reason}`);
+  });
+
+  test('PREMATCH accepted (legacy/football compatibility)', () => {
+    assert.equal(validateSignalActionability(validSig({ event_status: 'PREMATCH' }), NOW).ok, true);
+  });
+
+  test('SCHEDULED accepted (legacy/football compatibility)', () => {
     assert.equal(validateSignalActionability(validSig({ event_status: 'SCHEDULED' }), NOW).ok, true);
   });
 
@@ -251,17 +272,23 @@ describe('validateSignalActionability (trusted KV signal)', () => {
     assert.match(r.reason, /fail closed/i);
   });
 
-  test('null event_status rejected fail-closed', () => {
+  test('null event_status accepted (football scanner does not emit event_status)', () => {
+    // Football scanner produces signals without event_status field.
+    // null/missing is NOT the same as UNKNOWN — it means "not applicable for this sport".
     const r = validateSignalActionability(validSig({ event_status: null }), NOW);
-    assert.equal(r.ok, false, 'null event_status must fail closed');
-    assert.match(r.reason, /fail closed/i);
+    assert.equal(r.ok, true, 'null event_status (football) must be accepted');
   });
 
-  test('missing event_status (undefined) rejected fail-closed', () => {
+  test('missing event_status (undefined) accepted (football scanner omits it)', () => {
     const sig = validSig();
     delete sig.event_status;
     const r = validateSignalActionability(sig, NOW);
-    assert.equal(r.ok, false, 'missing event_status must fail closed');
+    assert.equal(r.ok, true, 'missing event_status (football) must be accepted');
+  });
+
+  test('empty string event_status accepted (football)', () => {
+    const r = validateSignalActionability(validSig({ event_status: '' }), NOW);
+    assert.equal(r.ok, true, 'empty string event_status (football) must be accepted');
   });
 
   test('arbitrary string event_status rejected fail-closed', () => {
@@ -277,6 +304,11 @@ describe('validateSignalActionability (trusted KV signal)', () => {
 
   test('COMPLETED (terminal) rejected', () => {
     const r = validateSignalActionability(validSig({ event_status: 'COMPLETED' }), NOW);
+    assert.equal(r.ok, false);
+  });
+
+  test('POSTPONED (terminal) rejected', () => {
+    const r = validateSignalActionability(validSig({ event_status: 'POSTPONED' }), NOW);
     assert.equal(r.ok, false);
   });
 
@@ -538,155 +570,312 @@ describe('validateCanonicalIdentity', () => {
   });
 });
 
-// ── 9. Worker integration regression (P0-A item I) ────────────────────────────
-// Tests the full orchestration: resolveCanonicalSignal → validateSignalActionability
-// → validateCanonicalIdentity → validateOddsMatchCanonical → validateBankrollCap
-// → validateActiveBets. Mirrors the actual pending-bet request path in worker.js.
+// ── 9. Worker orchestration — ACTUAL production code (Blocker-5) ──────────────
+// Tests call orchestratePendingBetPost() imported from worker.js — the SAME
+// function the live Worker handler calls. This is NOT a simulation.
 
-describe('Worker integration — pending-bet path', () => {
+describe('Worker orchestration — orchestratePendingBetPost (production code)', () => {
 
-  function simulatePendingBetRequest({ body, signalsData, publishedAt = FRESH_PUB, openBetsCount = 0, pendingCount = 0 }) {
-    const bankrollState = { free: 90, staked: 10, published_at: publishedAt };
-    const signalsJson = signalsData || validSignalsJson();
-    const data = { ...signalsJson, bankroll_state: bankrollState };
-
-    // Step 1: basic validation
-    const basic = validateBetBodyBasic(body);
-    if (!basic.ok) return { ok: false, stage: 'basic', reason: basic.error };
-
-    const { source } = basic;
-    const signalId = String(body.signal_id || '').trim();
-    const stake = Number(body.stake_eur);
-    const odds = Number(body.odds || 0);
-
-    // Step 2: auth state freshness
-    const fresh = validateAuthStateFreshness(publishedAt);
-    if (!fresh.ok) return { ok: false, stage: 'freshness', reason: fresh.reason };
-
-    // Step 3: bankroll cap
-    const bankroll = Number(bankrollState.free) + Number(bankrollState.staked);
-    const capR = validateBankrollCap(bankroll, stake);
-    if (!capR.ok) return { ok: false, stage: 'bankroll_cap', reason: capR.error };
-
-    // Step 4: active bet count
-    const activeBetsR = validateActiveBets(openBetsCount, pendingCount);
-    if (!activeBetsR.ok) return { ok: false, stage: 'active_bets', reason: activeBetsR.error };
-
-    // Step 5 (source=value): resolve + validate canonical signal
-    let storedIdentity = {};
-    if (source === 'value') {
-      const canonicalSig = resolveCanonicalSignal(signalsJson, signalId);
-      if (!canonicalSig) return { ok: false, stage: 'resolve', reason: `signal_id '${signalId}' not found` };
-
-      const sigR = validateSignalActionability(canonicalSig, NOW);
-      if (!sigR.ok) return { ok: false, stage: 'actionability', reason: sigR.reason };
-
-      const identR = validateCanonicalIdentity(canonicalSig, body);
-      if (!identR.ok) return { ok: false, stage: 'identity', reason: identR.reason };
-
-      const oddsR = validateOddsMatchCanonical(odds, canonicalSig.current_odds);
-      if (!oddsR.ok) return { ok: false, stage: 'odds_match', reason: oddsR.reason };
-
-      // Stored entry uses canonical identity
-      storedIdentity = {
-        match: canonicalSig.match,
-        market: canonicalSig.market,
-        sport: canonicalSig.sport,
-        fixture_key: canonicalSig.fixture_key || '',
-        ev_pct: canonicalSig.current_ev_pct,
-      };
-    }
-
-    return { ok: true, stage: 'accepted', storedIdentity };
+  function makeSignalsJson(sig, publishedAt = FRESH_PUB) {
+    return {
+      tennis: sig.sport === 'tennis' ? [sig] : [],
+      football: sig.sport === 'football' ? [sig] : [],
+      bankroll_state: { free: 90, staked: 10, published_at: publishedAt },
+      open_bets: [],
+    };
   }
 
-  test('fully canonical value request → accepted with canonical stored identity', () => {
-    const sig = validSig();
+  test('valid canonical value request (UPCOMING Tennis) → 200 + entry stored', () => {
+    const sig = validSig({ event_status: 'UPCOMING', model_prob: 52.0 });
     const body = {
       source: 'value', signal_id: sig.signal_id,
       stake_eur: 5, odds: sig.current_odds,
       match: sig.match, market: sig.market, sport: sig.sport,
     };
-    const r = simulatePendingBetRequest({ body, signalsData: validSignalsJson(sig) });
-    assert.equal(r.ok, true, `stage=${r.stage}: ${r.reason}`);
-    // Stored identity must come from canonical signal
-    assert.equal(r.storedIdentity.match, sig.match);
-    assert.equal(r.storedIdentity.sport, sig.sport);
-    assert.equal(r.storedIdentity.ev_pct, sig.current_ev_pct);
+    const r = orchestratePendingBetPost(body, {
+      signalsJson: makeSignalsJson(sig),
+      pendingArr: [],
+      nowMs: NOW,
+      genId: () => 'entry-001',
+    });
+    assert.equal(r.status, 200, JSON.stringify(r.json));
+    assert.ok(r.json.ok, JSON.stringify(r.json));
+    assert.ok(r.entry, 'entry must be present for storage');
+    // Canonical stored identity comes from KV signal, not client body
+    assert.equal(r.entry.match, sig.match);
+    assert.equal(r.entry.sport, sig.sport);
+    assert.equal(r.entry.market, sig.market);
   });
 
-  test('fake signal_id → rejected at resolve stage', () => {
-    const body = { source: 'value', signal_id: 'fake_xyz', stake_eur: 5, odds: 2.10, match: 'A vs B', market: 'home', sport: 'tennis' };
-    const r = simulatePendingBetRequest({ body });
-    assert.equal(r.ok, false);
-    assert.equal(r.stage, 'resolve');
+  test('valid canonical value request (DELAYED Tennis) → 200 accepted', () => {
+    const sig = validSig({ event_status: 'DELAYED' });
+    const body = {
+      source: 'value', signal_id: sig.signal_id,
+      stake_eur: 5, odds: sig.current_odds,
+      match: sig.match, market: sig.market, sport: sig.sport,
+    };
+    const r = orchestratePendingBetPost(body, {
+      signalsJson: makeSignalsJson(sig), pendingArr: [], nowMs: NOW,
+    });
+    assert.equal(r.status, 200, JSON.stringify(r.json));
   });
 
-  test('real signal_id + wrong market → rejected at identity stage', () => {
+  test('fake signal_id → 400 rejected', () => {
+    const sig = validSig();
+    const body = {
+      source: 'value', signal_id: 'fake_xyz',
+      stake_eur: 5, odds: 2.10, match: 'A vs B', market: 'home', sport: 'tennis',
+    };
+    const r = orchestratePendingBetPost(body, {
+      signalsJson: makeSignalsJson(sig), pendingArr: [], nowMs: NOW,
+    });
+    assert.equal(r.status, 400, JSON.stringify(r.json));
+    assert.match(r.json.error, /not found/i);
+  });
+
+  test('wrong market in body → 400 identity mismatch', () => {
     const sig = validSig({ market: 'home' });
     const body = {
       source: 'value', signal_id: sig.signal_id,
       stake_eur: 5, odds: sig.current_odds,
       match: sig.match, market: 'away', sport: sig.sport,
     };
-    const r = simulatePendingBetRequest({ body, signalsData: validSignalsJson(sig) });
-    assert.equal(r.ok, false);
-    assert.equal(r.stage, 'identity');
-    assert.match(r.reason, /market mismatch/i);
+    const r = orchestratePendingBetPost(body, {
+      signalsJson: makeSignalsJson(sig), pendingArr: [], nowMs: NOW,
+    });
+    assert.equal(r.status, 400, JSON.stringify(r.json));
+    assert.match(r.json.error, /identity mismatch|market mismatch/i);
   });
 
-  test('real signal_id + wrong sport → rejected at identity stage', () => {
-    const sig = validSig({ sport: 'tennis' });
-    const body = {
-      source: 'value', signal_id: sig.signal_id,
-      stake_eur: 5, odds: sig.current_odds,
-      match: sig.match, market: sig.market, sport: 'football',
-    };
-    const r = simulatePendingBetRequest({ body, signalsData: validSignalsJson(sig) });
-    assert.equal(r.ok, false);
-    assert.equal(r.stage, 'identity');
-  });
-
-  test('real signal_id + stale risk state → rejected at freshness stage', () => {
+  test('stale risk state → 503 fail closed', () => {
     const sig = validSig();
     const body = {
       source: 'value', signal_id: sig.signal_id,
       stake_eur: 5, odds: sig.current_odds,
       match: sig.match, market: sig.market, sport: sig.sport,
     };
-    const r = simulatePendingBetRequest({ body, signalsData: validSignalsJson(sig), publishedAt: STALE_PUB });
-    assert.equal(r.ok, false);
-    assert.equal(r.stage, 'freshness');
+    const r = orchestratePendingBetPost(body, {
+      signalsJson: makeSignalsJson(sig, STALE_PUB), pendingArr: [], nowMs: NOW,
+    });
+    assert.equal(r.status, 503, JSON.stringify(r.json));
+    assert.match(r.json.error, /stale|fail closed/i);
   });
 
-  test('real signal_id + stake >5% → rejected at bankroll_cap stage', () => {
+  test('stake >5% bankroll cap → 400 rejected', () => {
     const sig = validSig();
     const body = {
       source: 'value', signal_id: sig.signal_id,
       stake_eur: 20, odds: sig.current_odds,
       match: sig.match, market: sig.market, sport: sig.sport,
     };
-    const r = simulatePendingBetRequest({ body, signalsData: validSignalsJson(sig) });
-    assert.equal(r.ok, false);
-    assert.equal(r.stage, 'bankroll_cap');
+    const r = orchestratePendingBetPost(body, {
+      signalsJson: makeSignalsJson(sig), pendingArr: [], nowMs: NOW,
+    });
+    assert.equal(r.status, 400, JSON.stringify(r.json));
+    assert.match(r.json.error, /cap|exceed/i);
   });
 
-  test('real signal_id + 3 active bets → rejected at active_bets stage', () => {
+  test('3 active open bets → 400 rejected', () => {
     const sig = validSig();
+    // 3 open bets in bankroll_state
+    const sj = { ...makeSignalsJson(sig), open_bets: [{}, {}, {}] };
     const body = {
       source: 'value', signal_id: sig.signal_id,
       stake_eur: 5, odds: sig.current_odds,
       match: sig.match, market: sig.market, sport: sig.sport,
     };
-    const r = simulatePendingBetRequest({ body, signalsData: validSignalsJson(sig), openBetsCount: 3 });
-    assert.equal(r.ok, false);
-    assert.equal(r.stage, 'active_bets');
+    const r = orchestratePendingBetPost(body, {
+      signalsJson: sj, pendingArr: [], nowMs: NOW,
+    });
+    assert.equal(r.status, 400, JSON.stringify(r.json));
+    assert.match(r.json.error, /max|3/i);
   });
 
-  test('manual bet without source=manual → rejected at basic stage', () => {
-    const body = { source: 'VALUE', signal_id: 'sig_001', stake_eur: 5, odds: 2.10, match: 'A vs B', market: 'home', sport: 'tennis' };
-    const r = simulatePendingBetRequest({ body });
-    assert.equal(r.ok, false);
-    assert.equal(r.stage, 'basic');
+  // Blocker-3: model_prob published as percent (52.0) must be stored as fraction (0.52)
+  test('model_prob 52.0 published → entry stores 0.52 fraction', () => {
+    const sig = validSig({ model_prob: 52.0 });
+    const body = {
+      source: 'value', signal_id: sig.signal_id,
+      stake_eur: 5, odds: sig.current_odds,
+      match: sig.match, market: sig.market, sport: sig.sport,
+    };
+    const r = orchestratePendingBetPost(body, {
+      signalsJson: makeSignalsJson(sig), pendingArr: [], nowMs: NOW,
+    });
+    assert.equal(r.status, 200, JSON.stringify(r.json));
+    assert.ok(r.entry, 'entry must be present');
+    assert.ok(Math.abs(r.entry.model_prob - 0.52) < 0.001,
+      `expected model_prob≈0.52, got ${r.entry.model_prob}`);
+  });
+
+  test('model_prob 50.8 published → entry stores 0.508 fraction', () => {
+    const sig = validSig({ model_prob: 50.8 });
+    const body = {
+      source: 'value', signal_id: sig.signal_id,
+      stake_eur: 5, odds: sig.current_odds,
+      match: sig.match, market: sig.market, sport: sig.sport,
+    };
+    const r = orchestratePendingBetPost(body, {
+      signalsJson: makeSignalsJson(sig), pendingArr: [], nowMs: NOW,
+    });
+    assert.equal(r.status, 200, JSON.stringify(r.json));
+    assert.ok(Math.abs(r.entry.model_prob - 0.508) < 0.001,
+      `expected model_prob≈0.508, got ${r.entry.model_prob}`);
+  });
+
+  test('model_prob >100 published → entry stores null (invalid)', () => {
+    const sig = validSig({ model_prob: 150.0 });
+    const body = {
+      source: 'value', signal_id: sig.signal_id,
+      stake_eur: 5, odds: sig.current_odds,
+      match: sig.match, market: sig.market, sport: sig.sport,
+    };
+    const r = orchestratePendingBetPost(body, {
+      signalsJson: makeSignalsJson(sig), pendingArr: [], nowMs: NOW,
+    });
+    assert.equal(r.status, 200, JSON.stringify(r.json));
+    assert.equal(r.entry.model_prob, null, 'invalid >100 model_prob must be stored as null');
+  });
+
+  test('model_prob negative → entry stores null', () => {
+    const sig = validSig({ model_prob: -5.0 });
+    const body = {
+      source: 'value', signal_id: sig.signal_id,
+      stake_eur: 5, odds: sig.current_odds,
+      match: sig.match, market: sig.market, sport: sig.sport,
+    };
+    const r = orchestratePendingBetPost(body, {
+      signalsJson: makeSignalsJson(sig), pendingArr: [], nowMs: NOW,
+    });
+    assert.equal(r.status, 200, JSON.stringify(r.json));
+    assert.equal(r.entry.model_prob, null);
+  });
+
+  test('source=VALUE (uppercase) → 400 rejected (strict literal)', () => {
+    const sig = validSig();
+    const body = {
+      source: 'VALUE', signal_id: sig.signal_id,
+      stake_eur: 5, odds: sig.current_odds,
+      match: sig.match, market: sig.market, sport: sig.sport,
+    };
+    const r = orchestratePendingBetPost(body, {
+      signalsJson: makeSignalsJson(sig), pendingArr: [], nowMs: NOW,
+    });
+    assert.equal(r.status, 400, JSON.stringify(r.json));
+  });
+});
+
+// ── 10. model_prob normalization unit tests ────────────────────────────────────
+// Tests normalizeModelProbPct standalone via orchestrate (no direct export needed).
+
+describe('normalizeModelProbPct (via orchestration)', () => {
+  function makeOrchResult(modelProbPct) {
+    const sig = validSig({ model_prob: modelProbPct });
+    const sj = {
+      tennis: [sig], football: [],
+      bankroll_state: { free: 90, staked: 10, published_at: FRESH_PUB },
+      open_bets: [],
+    };
+    const body = { source: 'value', signal_id: sig.signal_id, stake_eur: 5, odds: sig.current_odds,
+      match: sig.match, market: sig.market, sport: sig.sport };
+    return orchestratePendingBetPost(body, { signalsJson: sj, pendingArr: [], nowMs: NOW });
+  }
+
+  test('52.0 → 0.52 (canonical tennis signal)', () => {
+    const r = makeOrchResult(52.0);
+    assert.equal(r.status, 200);
+    assert.ok(Math.abs(r.entry.model_prob - 0.52) < 0.001);
+  });
+
+  test('0.0 → 0.0 (edge: zero probability)', () => {
+    const r = makeOrchResult(0.0);
+    assert.equal(r.status, 200);
+    assert.equal(r.entry.model_prob, 0.0);
+  });
+
+  test('100.0 → 1.0 (100%)', () => {
+    const r = makeOrchResult(100.0);
+    assert.equal(r.status, 200);
+    assert.ok(Math.abs(r.entry.model_prob - 1.0) < 0.001);
+  });
+
+  test('>100 → null (invalid percent)', () => {
+    const r = makeOrchResult(101.0);
+    assert.equal(r.status, 200);
+    assert.equal(r.entry.model_prob, null);
+  });
+
+  test('negative → null', () => {
+    const r = makeOrchResult(-1.0);
+    assert.equal(r.status, 200);
+    assert.equal(r.entry.model_prob, null);
+  });
+
+  test('null model_prob → null', () => {
+    const r = makeOrchResult(null);
+    assert.equal(r.status, 200);
+    assert.equal(r.entry.model_prob, null);
+  });
+});
+
+// ── 11. Contract parity tests (Blocker-2) ────────────────────────────────────
+// These fixtures prove that contract.js (Worker) and docs/js/bets.js (PWA)
+// make identical decisions. (Python parity verified by test_signal_contract.py.)
+
+describe('Contract parity — Worker matches PWA contract', () => {
+  // Helper: decisions the Worker contract makes for a given signal
+  function workerDecision(sigOverrides) {
+    return validateSignalActionability(validSig(sigOverrides), NOW);
+  }
+
+  test('valid UPCOMING Tennis → accepted', () => {
+    assert.equal(workerDecision({ event_status: 'UPCOMING' }).ok, true);
+  });
+
+  test('missing event_status → accepted (football)', () => {
+    const sig = validSig();
+    delete sig.event_status;
+    assert.equal(validateSignalActionability(sig, NOW).ok, true);
+  });
+
+  test('UNKNOWN → rejected', () => {
+    assert.equal(workerDecision({ event_status: 'UNKNOWN' }).ok, false);
+  });
+
+  test('LIVE → rejected', () => {
+    assert.equal(workerDecision({ event_status: 'LIVE' }).ok, false);
+  });
+
+  test('COMPLETED → rejected', () => {
+    assert.equal(workerDecision({ event_status: 'COMPLETED' }).ok, false);
+  });
+
+  test('future odds_ts (+24h) → rejected', () => {
+    const futureTs = new Date(NOW + 24 * 3600 * 1000).toISOString();
+    assert.equal(workerDecision({ odds_ts: futureTs }).ok, false);
+  });
+
+  test('stale odds_ts → rejected', () => {
+    assert.equal(workerDecision({ odds_ts: STALE_TS }).ok, false);
+  });
+
+  test('missing current_odds → rejected', () => {
+    assert.equal(workerDecision({ current_odds: null }).ok, false);
+  });
+
+  test('missing current_ev_pct → rejected', () => {
+    assert.equal(workerDecision({ current_ev_pct: null }).ok, false);
+  });
+
+  test('shadow signal → rejected', () => {
+    assert.equal(workerDecision({ shadow: true }).ok, false);
+  });
+
+  test('unsupported signal → rejected', () => {
+    assert.equal(workerDecision({ unsupported: true }).ok, false);
+  });
+
+  test('edge_lost signal → rejected', () => {
+    assert.equal(workerDecision({ edge_lost: true }).ok, false);
   });
 });

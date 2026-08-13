@@ -7,14 +7,28 @@ export const TERMINAL_STATUSES = new Set([
 ]);
 export const LIVE_STATUSES = new Set(['LIVE', 'IN_PROGRESS']);
 
-// P0-A (item C): Explicit allowlist of pre-match states that the production backend emits.
-// Any state not in this set — including null, undefined, 'UNKNOWN', or arbitrary strings —
-// is rejected fail-closed when the signal carries signal_status=ACTIVE.
-// Sources: TennisEventState (wave3c) and football pre-match state models.
+// P0-A (item C / Blocker-1): Explicit allowlist of pre-match states derived from
+// ACTUAL production event-state models.
+//
+// Tennis (TennisEventStatus in src/tennis/event_state.py):
+//   UPCOMING       → accepted  (normal upcoming fixture — most common tennis pre-match state)
+//   AWAITING_START → accepted  (start time passed, no authoritative LIVE evidence yet)
+//   DELAYED        → accepted  (qualified delay evidence; pre-match odds may still be valid)
+//   LIVE           → rejected  (in LIVE_STATUSES)
+//   COMPLETED      → rejected  (in TERMINAL_STATUSES)
+//   POSTPONED      → rejected  (in TERMINAL_STATUSES)
+//   CANCELLED      → rejected  (in TERMINAL_STATUSES)
+//   UNKNOWN        → rejected  (explicitly set to UNKNOWN — fail closed)
+//
+// Football scanner does NOT emit event_status. Missing/null is accepted for football
+// compatibility — only an explicitly-set non-allowlisted value is rejected.
+// PREMATCH/SCHEDULED retained for future football integration or legacy test fixtures.
 export const ALLOWED_PREMATCH_STATUSES = new Set([
-  'PREMATCH',       // canonical pre-match for both sports
-  'AWAITING_START', // between announced and first point / kickoff
-  'SCHEDULED',      // announced but well before start (football, some tennis feeds)
+  'UPCOMING',       // canonical Tennis pre-match (TennisEventStatus.UPCOMING)
+  'AWAITING_START', // Tennis/football: start passed, no authoritative LIVE evidence
+  'DELAYED',        // Tennis: qualified delay; pre-match odds still valid
+  'PREMATCH',       // retained for football / legacy compatibility
+  'SCHEDULED',      // retained for football / legacy compatibility
 ]);
 
 // P1.5-H canonical freshness: 30 minutes
@@ -27,13 +41,19 @@ export const WORKER_ABSOLUTE_MAX = 25.0;
 // Hard bankroll cap: 5%
 export const MAX_STAKE_PCT = 0.05;
 
-// P0-A (item E): Authoritative state must be published within 90 minutes.
-// Producer: tennis_scan (9×/day at 0,2,4,6,9,12,15,18,21 UTC), consume_pending_bets
-// (5-min Worker cron when bets pending), post_match_update, daily_scan.
-// With the 04:00 UTC scan filling the night gap, the maximum publication gap is
-// approximately 2 hours. A threshold of 90 minutes is intentionally tighter so
-// that a genuine backend outage is detected before the threshold expires mid-gap.
-// Failure behavior: Worker returns 503 — bet cannot be placed until state is refreshed.
+// P0-A (item E / Blocker-4): Authoritative state must be published within 90 minutes.
+//
+// Risk-state architecture:
+//   Producer:       consume_pending_bets.py (always refreshes KV on every run)
+//   Source of truth: bankroll_state.published_at in signals_json KV
+//   Refresh cadence: Worker cron */30 * * * * triggers consume unconditionally → ≤30 min gap
+//   What changes it: any successful write by consume_pending_bets or tennis_scan
+//   Timestamp semantics: ISO-8601 UTC, set by write_signals_json_all_users()
+//   Failure mode: Worker returns 503 — bet cannot be placed until state is refreshed.
+//
+// Note: tennis_scan runs at 0,2,4,6,9,12,15,18,21,23 UTC with gaps up to 3 hours
+// between consecutive runs. The scan alone cannot guarantee a ≤90 min gap. The
+// dedicated consume_pending_bets heartbeat (every 30 min via Worker cron) closes this gap.
 export const AUTH_STATE_MAX_AGE_MS = 5400 * 1000; // 90 minutes
 
 // P0-A (item D): Maximum allowed clock skew in either direction.
@@ -102,7 +122,11 @@ export function validateSignalActionability(sig, nowMs = Date.now()) {
     };
   }
 
-  // P0-A (item C): Explicit pre-match allowlist — fail closed on UNKNOWN/missing/arbitrary states.
+  // P0-A (item C / Blocker-1): event_status policy derived from actual production models.
+  // - Football scanner does not emit event_status → null/missing is accepted.
+  // - Tennis TennisEventStatus: UPCOMING/AWAITING_START/DELAYED accepted; all others rejected.
+  // - Any EXPLICITLY set value not in ALLOWED_PREMATCH_STATUSES is rejected fail-closed.
+  // - UNKNOWN (explicitly set) is rejected because it signals ambiguous lifecycle state.
   const evStatus = sig.event_status;
   if (LIVE_STATUSES.has(evStatus)) {
     return { ok: false, reason: `event_status is live: ${evStatus}` };
@@ -110,7 +134,9 @@ export function validateSignalActionability(sig, nowMs = Date.now()) {
   if (TERMINAL_STATUSES.has(evStatus)) {
     return { ok: false, reason: `event_status is terminal: ${evStatus}` };
   }
-  if (!ALLOWED_PREMATCH_STATUSES.has(evStatus)) {
+  // Only reject if explicitly set to a non-allowlisted value.
+  // null/undefined/'' = not emitted by this sport's scanner → accepted.
+  if (evStatus != null && evStatus !== '' && !ALLOWED_PREMATCH_STATUSES.has(evStatus)) {
     return {
       ok: false,
       reason: `event_status '${evStatus}' not in allowed pre-match set — fail closed`,

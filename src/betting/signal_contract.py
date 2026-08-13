@@ -17,12 +17,28 @@ from src.config import MAX_ACTIVE_BETS, MAX_EV
 TERMINAL_STATUSES = {"FINISHED", "CANCELLED", "POSTPONED", "ABANDONED", "TERMINATED", "COMPLETED"}
 LIVE_STATUSES = {"LIVE", "IN_PROGRESS"}
 
+# P0-A (Blocker-1 / parity with contract.js ALLOWED_PREMATCH_STATUSES):
+# Explicit allowlist of pre-match event states derived from actual production models.
+# Tennis (TennisEventStatus): UPCOMING, AWAITING_START, DELAYED accepted.
+# Football scanner does NOT emit event_status → None/missing accepted (not rejected).
+# Any explicitly-set value outside this set is rejected fail-closed.
+ALLOWED_PREMATCH_STATUSES = {
+    "UPCOMING",       # canonical Tennis pre-match (TennisEventStatus.UPCOMING)
+    "AWAITING_START", # start passed, no authoritative LIVE evidence
+    "DELAYED",        # qualified delay; pre-match odds still valid
+    "PREMATCH",       # retained for football / legacy compatibility
+    "SCHEDULED",      # retained for football / legacy compatibility
+}
+
 # Hard 5% bankroll cap — mirrors BANKROLL_RISK_CAP_PCT in config.py
 MAX_STAKE_PCT = 0.05
 
 # Maximum odds_ts age before a signal is treated as stale (seconds).
 # P1.5-H canonical freshness threshold: 30 minutes.
 _MAX_ODDS_AGE_SECONDS = 1800  # 30 minutes
+
+# P0-A (item D / parity with contract.js MAX_CLOCK_SKEW_MS): maximum allowed future skew.
+_MAX_CLOCK_SKEW_SECONDS = 60  # 60 seconds
 
 # EV upper bound in percentage points (MAX_EV from config is a fraction: 0.40 → 40 pp)
 _MAX_EV_PCT = MAX_EV * 100  # 40.0
@@ -110,7 +126,7 @@ def is_actionable_value_signal(
     if not odds_ts_raw:
         return False, "odds_ts missing"
 
-    # 13. odds_ts must be within canonical freshness window (30 minutes)
+    # 13. odds_ts must be within canonical freshness window and not materially future
     try:
         if isinstance(odds_ts_raw, str):
             ts_str = odds_ts_raw.replace("Z", "+00:00")
@@ -120,7 +136,14 @@ def is_actionable_value_signal(
         else:
             odds_ts = datetime.fromtimestamp(float(odds_ts_raw), tz=timezone.utc)
         now = datetime.now(timezone.utc)
-        age_seconds = (now - odds_ts).total_seconds()
+        skew_seconds = (odds_ts - now).total_seconds()
+        # P0-A (item D / parity): reject materially future odds_ts
+        if skew_seconds > _MAX_CLOCK_SKEW_SECONDS:
+            return False, (
+                f"odds_ts is {skew_seconds:.0f}s in the future — fail closed "
+                f"(max skew {_MAX_CLOCK_SKEW_SECONDS}s)"
+            )
+        age_seconds = -skew_seconds  # positive = in the past
         if age_seconds > _MAX_ODDS_AGE_SECONDS:
             return False, f"odds_ts stale: {age_seconds:.0f}s old (max {_MAX_ODDS_AGE_SECONDS}s)"
     except Exception as exc:  # noqa: BLE001
@@ -131,9 +154,15 @@ def is_actionable_value_signal(
     if event_status in LIVE_STATUSES:
         return False, f"event_status is live: {event_status!r}"
 
-    # 15. event_status must not be terminal (includes COMPLETED)
+    # 15. event_status must not be terminal (includes COMPLETED, POSTPONED)
     if event_status in TERMINAL_STATUSES:
         return False, f"event_status is terminal: {event_status!r}"
+
+    # 15b. Parity with contract.js (Blocker-1): explicit allowlist check.
+    # None/missing = sport does not emit event_status (e.g. football) → accepted.
+    # Explicitly set to a non-allowlisted value (e.g. UNKNOWN) → rejected fail-closed.
+    if event_status is not None and event_status != "" and event_status not in ALLOWED_PREMATCH_STATUSES:
+        return False, f"event_status {event_status!r} not in allowed pre-match set — fail closed"
 
     # 16. bankroll must be a finite float > 0
     try:

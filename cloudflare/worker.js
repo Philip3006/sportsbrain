@@ -34,6 +34,27 @@ import {
 // P0-A (item K): supported sports for new bets
 const SUPPORTED_SPORTS = new Set(['football', 'tennis', 'basketball']);
 
+/**
+ * Blocker-3: Normalize model_prob from published PWA/API percent units to
+ * ledger probability-fraction units.
+ *
+ * Published schema (web_dashboard._signal_to_dict): model_prob = round(s.model_prob * 100, 1)
+ *   e.g. 0.52 → 52.0 (percent)
+ * Ledger schema (consume_pending_bets, calibration, Brier/ECE/LogLoss): 0 < model_prob < 1
+ *   e.g. 0.52 (fraction)
+ *
+ * Conversion: fraction = pct / 100. Performed ONCE here at the Worker boundary.
+ * Returns null for invalid values — never stores garbage in the ledger.
+ */
+function normalizeModelProbPct(pct) {
+  if (pct == null) return null;
+  const v = Number(pct);
+  if (!Number.isFinite(v)) return null;
+  if (v < 0) return null;    // negative probability is invalid
+  if (v > 100) return null;  // >100% is invalid (not just >1 — we know input is percent)
+  return v / 100;
+}
+
 const ALLOWED_MARKETS = new Set([
   'home', 'draw', 'away',
   'btts_yes', 'btts_no',
@@ -187,6 +208,144 @@ function extractAuthState(data) {
 // Retained for backward-compat with cron helpers that only need auth state.
 async function readAuthoritativeState(env, user = DEFAULT_USER) {
   return extractAuthState(await readSignalsJson(env, user));
+}
+
+/**
+ * Blocker-5: Core pending-bet POST orchestration, extracted for testability.
+ *
+ * Accepts already-parsed input (no KV reads here) so Node.js tests can call
+ * this with deterministic mock state and verify ACTUAL production logic.
+ * The fetch handler calls this after reading from KV.
+ *
+ * @param {object} body          - Parsed request JSON body
+ * @param {object} opts
+ * @param {object|null} opts.signalsJson  - Parsed signals_json KV value (or null)
+ * @param {Array}  opts.pendingArr        - Current pending_bets array from KV
+ * @param {number} [opts.nowMs]           - Override for Date.now() (tests only)
+ * @param {Function} [opts.genId]         - UUID generator override (tests only)
+ * @returns {{ status: number, json: object, entry?: object }}
+ */
+export function orchestratePendingBetPost(body, { signalsJson, pendingArr, nowMs, genId } = {}) {
+  const _now = nowMs != null ? nowMs : Date.now();
+  const _id = genId != null ? genId : () => 'test-id-' + Math.random().toString(36).slice(2);
+
+  const match  = (body.match  || '').toString().trim();
+  const market = (body.market || '').toString().trim();
+  const odds   = Number(body.odds);
+
+  if (!match || !match.includes(' vs '))
+    return { status: 400, json: { error: 'match must be "Home vs Away"' } };
+  if (!isValidMarket(market))
+    return { status: 400, json: { error: 'unknown market: ' + market } };
+  if (!Number.isFinite(odds) || odds < 1.01 || odds > 100)
+    return { status: 400, json: { error: 'odds out of range (1.01–100)' } };
+
+  const bodyValidation = validateBetBodyBasic(body);
+  if (!bodyValidation.ok)
+    return { status: bodyValidation.status, json: { error: bodyValidation.error } };
+
+  const { source } = bodyValidation;
+  const signalId = String(body.signal_id || '').trim();
+  const stake    = Number(body.stake_eur);
+
+  const { bankroll: authBankroll, openBetsCount: authOpenBets, publishedAt } =
+    extractAuthState(signalsJson || null);
+
+  const freshnessResult = validateAuthStateFreshness(publishedAt, _now);
+  if (!freshnessResult.ok)
+    return { status: 503, json: { error: freshnessResult.reason } };
+
+  const capResult = validateBankrollCap(authBankroll, stake);
+  if (!capResult.ok)
+    return { status: authBankroll === null ? 503 : 400, json: { error: capResult.error } };
+
+  const pending = Array.isArray(pendingArr) ? pendingArr : [];
+  const activeBetsResult = validateActiveBets(authOpenBets, pending.length);
+  if (!activeBetsResult.ok)
+    return { status: authOpenBets === null ? 503 : 400, json: { error: activeBetsResult.error } };
+
+  let canonicalSigForEntry = null;
+  if (source === 'value') {
+    const canonicalSig = resolveCanonicalSignal(signalsJson, signalId);
+    if (!canonicalSig)
+      return { status: 400, json: { error: `signal_id '${signalId}' not found in published canonical signals — REJECT` } };
+
+    const sigResult = validateSignalActionability(canonicalSig, _now);
+    if (!sigResult.ok)
+      return { status: 400, json: { error: `canonical signal not actionable: ${sigResult.reason}` } };
+
+    const identityResult = validateCanonicalIdentity(canonicalSig, body);
+    if (!identityResult.ok)
+      return { status: 400, json: { error: `identity mismatch — REJECT: ${identityResult.reason}` } };
+
+    const oddsResult = validateOddsMatchCanonical(odds, canonicalSig.current_odds);
+    if (!oddsResult.ok)
+      return { status: 400, json: { error: oddsResult.reason } };
+
+    canonicalSigForEntry = canonicalSig;
+  }
+
+  if (source === 'manual') {
+    const manualSport = String(body.sport || '').trim();
+    if (!manualSport || !SUPPORTED_SPORTS.has(manualSport))
+      return { status: 400, json: { error: `manual bets require sport in [${[...SUPPORTED_SPORTS].join(', ')}], got '${manualSport}'` } };
+  }
+
+  const id = _id();
+  let entry;
+  if (source === 'value' && canonicalSigForEntry) {
+    const cs = canonicalSigForEntry;
+    entry = {
+      id,
+      match:        String(cs.match        || match).trim(),
+      market:       String(cs.market       || market).trim(),
+      odds,
+      stake_eur: stake,
+      ev_pct:     Number.isFinite(Number(cs.current_ev_pct)) ? Number(cs.current_ev_pct) : null,
+      model_prob: normalizeModelProbPct(cs.model_prob),
+      confidence: typeof cs.confidence === 'string' ? cs.confidence : (typeof body.confidence === 'string' ? body.confidence : ''),
+      kickoff:    typeof cs.kickoff === 'string' ? cs.kickoff : (typeof cs.scheduled_start_current === 'string' ? cs.scheduled_start_current : ''),
+      sport:      String(cs.sport        || '').trim(),
+      source,
+      signal_id:   signalId,
+      fixture_key: String(cs.fixture_key  || '').trim(),
+      league:      String(cs.league       || '').trim(),
+      odds_ts:     String(cs.odds_ts      || ''),
+      selection:   String(cs.selection    || '').trim(),
+      event_status: String(cs.event_status || '').trim(),
+      bankroll_hint: Number.isFinite(Number(body.bankroll_hint)) ? Number(body.bankroll_hint) : null,
+      origin: 'pwa',
+      placed_at: new Date(_now).toISOString(),
+    };
+  } else {
+    entry = {
+      id,
+      match, market, odds, stake_eur: stake,
+      ev_pct:     Number.isFinite(Number(body.ev_pct))     ? Number(body.ev_pct)     : null,
+      model_prob: Number.isFinite(Number(body.model_prob)) ? Number(body.model_prob) : null,
+      confidence: typeof body.confidence  === 'string' ? body.confidence  : '',
+      kickoff:    typeof body.kickoff     === 'string' ? body.kickoff     : '',
+      sport:      typeof body.sport       === 'string' ? body.sport.trim() : '',
+      source, signal_id: signalId,
+      fixture_key: typeof body.fixture_key === 'string' ? body.fixture_key.trim() : '',
+      league:      typeof body.league      === 'string' ? body.league.trim() : '',
+      odds_ts:     typeof body.odds_ts     === 'string' ? body.odds_ts : '',
+      selection:   typeof body.selection   === 'string' ? body.selection.trim() : '',
+      bankroll_hint: Number.isFinite(Number(body.bankroll_hint)) ? Number(body.bankroll_hint) : null,
+      origin: 'pwa',
+      placed_at: new Date(_now).toISOString(),
+    };
+  }
+
+  // Soft duplicate guard
+  const recent = pending.find(b =>
+    b.match === entry.match && b.market === entry.market &&
+    Math.abs(b.odds - entry.odds) < 0.001 &&
+    (_now - new Date(b.placed_at).getTime()) < 60_000
+  );
+  if (recent) return { status: 200, json: { ok: true, id: recent.id, duplicate: true } };
+
+  return { status: 200, json: { ok: true, id: entry.id }, entry };
 }
 
 function _cancelKey(user) {
@@ -399,147 +558,21 @@ export default {
         let body;
         try { body = await request.json(); } catch { return jr({ error: 'invalid json' }, 400); }
 
-        const match = (body.match || '').toString().trim();
-        const market = (body.market || '').toString().trim();
-        const odds = Number(body.odds);
-
-        if (!match || !match.includes(' vs ')) return jr({ error: 'match must be "Home vs Away"' }, 400);
-        if (!isValidMarket(market)) return jr({ error: 'unknown market: ' + market }, 400);
-        if (!Number.isFinite(odds) || odds < 1.01 || odds > 100) return jr({ error: 'odds out of range (1.01–100)' }, 400);
-
-        // P0-A: validate source (exact), stake, signal_id — REJECT invalid source (no coercion)
-        const bodyValidation = validateBetBodyBasic(body);
-        if (!bodyValidation.ok) return jr({ error: bodyValidation.error }, bodyValidation.status);
-        const { source } = bodyValidation;
-        const signalId = String(body.signal_id || '').trim();
-        const stake = Number(body.stake_eur);
-
         // P0-A: read signals JSON ONCE — used for auth state AND canonical signal lookup
         const signalsData = await readSignalsJson(env, pUser);
-        const { bankroll: authBankroll, openBetsCount: authOpenBets, publishedAt } = extractAuthState(signalsData);
-
-        // P0-A: authoritative state freshness — FAIL CLOSED if stale (threshold: 2 hours)
-        const freshnessResult = validateAuthStateFreshness(publishedAt);
-        if (!freshnessResult.ok) {
-          return jr({ error: freshnessResult.reason }, 503);
-        }
-
-        // P0-A: 5% bankroll cap enforced for ALL bets (value AND manual)
-        const capResult = validateBankrollCap(authBankroll, stake);
-        if (!capResult.ok) {
-          return jr({ error: capResult.error }, authBankroll === null ? 503 : 400);
-        }
-
-        // P0-A: authoritative open-bet count (ledger from KV + pending in KV)
         const arr = await readPending(env, pUser);
-        const pendingCount = arr.length;
-        const activeBetsResult = validateActiveBets(authOpenBets, pendingCount);
-        if (!activeBetsResult.ok) {
-          return jr({ error: activeBetsResult.error }, authOpenBets === null ? 503 : 400);
+
+        // Blocker-5: orchestratePendingBetPost contains ALL validation + entry construction.
+        // This is the SAME function tested in worker.test.mjs — no separate simulation.
+        const result = orchestratePendingBetPost(body, { signalsJson: signalsData, pendingArr: arr });
+        if (result.status !== 200 || !result.entry) {
+          return jr(result.json, result.status);
         }
+        if (result.json.duplicate) return jr(result.json);
 
-        // P0-A (item A): for source=value, resolve and validate the canonical signal server-side.
-        // The client identifies the desired signal via signal_id; the Worker resolves
-        // truth from the trusted published signals_json — client-supplied field values
-        // are validated against canonical truth, then canonical values are stored.
-        // A valid signal_id cannot authorize a different match/market/sport.
-        let canonicalSigForEntry = null;
-        if (source === 'value') {
-          const canonicalSig = resolveCanonicalSignal(signalsData, signalId);
-          if (!canonicalSig) {
-            return jr({ error: `signal_id '${signalId}' not found in published canonical signals — REJECT` }, 400);
-          }
-          const sigResult = validateSignalActionability(canonicalSig);
-          if (!sigResult.ok) {
-            return jr({ error: `canonical signal not actionable: ${sigResult.reason}` }, 400);
-          }
-          // P0-A (item A): validate client identity fields against canonical — reject on any mismatch
-          const identityResult = validateCanonicalIdentity(canonicalSig, body);
-          if (!identityResult.ok) {
-            return jr({ error: `identity mismatch — REJECT: ${identityResult.reason}` }, 400);
-          }
-          // P0-A: submitted odds must match canonical current_odds from KV
-          const oddsResult = validateOddsMatchCanonical(odds, canonicalSig.current_odds);
-          if (!oddsResult.ok) {
-            return jr({ error: oddsResult.reason }, 400);
-          }
-          canonicalSigForEntry = canonicalSig;
-        }
-
-        // P0-A (item K): manual bets must have explicit valid sport — no ambiguous new records
-        if (source === 'manual') {
-          const manualSport = String(body.sport || '').trim();
-          if (!manualSport || !SUPPORTED_SPORTS.has(manualSport)) {
-            return jr({
-              error: `manual bets require sport in [${[...SUPPORTED_SPORTS].join(', ')}], got '${manualSport}'`,
-            }, 400);
-          }
-        }
-
-        const id = crypto.randomUUID();
-        let entry;
-        if (source === 'value' && canonicalSigForEntry) {
-          // P0-A (item A): stored identity comes from canonical KV signal, not from client body.
-          // The browser may request a signal; it must not define what that signal means.
-          const cs = canonicalSigForEntry;
-          entry = {
-            id,
-            match:        String(cs.match        || match).trim(),
-            market:       String(cs.market       || market).trim(),
-            odds,  // validated == canonical current_odds via validateOddsMatchCanonical
-            stake_eur: stake,
-            ev_pct:     Number.isFinite(Number(cs.current_ev_pct)) ? Number(cs.current_ev_pct) : null,
-            model_prob: Number.isFinite(Number(cs.model_prob))     ? Number(cs.model_prob)     : null,
-            confidence: typeof cs.confidence === 'string' ? cs.confidence : (typeof body.confidence === 'string' ? body.confidence : ''),
-            kickoff:    typeof cs.kickoff === 'string' ? cs.kickoff : (typeof cs.scheduled_start_current === 'string' ? cs.scheduled_start_current : ''),
-            sport:      String(cs.sport        || '').trim(),
-            source,
-            signal_id:   signalId,
-            fixture_key: String(cs.fixture_key  || '').trim(),
-            league:      String(cs.league       || '').trim(),
-            odds_ts:     String(cs.odds_ts      || ''),
-            selection:   String(cs.selection    || '').trim(),
-            event_status: String(cs.event_status || '').trim(),
-            bankroll_hint: Number.isFinite(Number(body.bankroll_hint)) ? Number(body.bankroll_hint) : null,
-            origin: 'pwa',
-            placed_at: new Date().toISOString(),
-          };
-        } else {
-          // source=manual: identity comes from client body (user entered it)
-          entry = {
-            id,
-            match,
-            market,
-            odds,
-            stake_eur: stake,
-            ev_pct: Number.isFinite(Number(body.ev_pct)) ? Number(body.ev_pct) : null,
-            model_prob: Number.isFinite(Number(body.model_prob)) ? Number(body.model_prob) : null,
-            confidence: typeof body.confidence === 'string' ? body.confidence : '',
-            kickoff: typeof body.kickoff === 'string' ? body.kickoff : '',
-            sport: typeof body.sport === 'string' ? body.sport.trim() : '',
-            source,
-            signal_id: signalId,
-            fixture_key: typeof body.fixture_key === 'string' ? body.fixture_key.trim() : '',
-            league: typeof body.league === 'string' ? body.league.trim() : '',
-            odds_ts: typeof body.odds_ts === 'string' ? body.odds_ts : '',
-            selection: typeof body.selection === 'string' ? body.selection.trim() : '',
-            bankroll_hint: Number.isFinite(Number(body.bankroll_hint)) ? Number(body.bankroll_hint) : null,
-            origin: 'pwa',
-            placed_at: new Date().toISOString(),
-          };
-        }
-
-        // Soft duplicate guard: same match+market+odds within 60s
-        const recent = arr.find(b =>
-          b.match === entry.match && b.market === entry.market &&
-          Math.abs(b.odds - entry.odds) < 0.001 &&
-          (Date.now() - new Date(b.placed_at).getTime()) < 60_000
-        );
-        if (recent) return jr({ ok: true, id: recent.id, duplicate: true });
-
-        arr.push(entry);
+        arr.push(result.entry);
         await writePending(env, arr, pUser);
-        return jr({ ok: true, id });
+        return jr(result.json);
       }
 
       if (request.method === 'DELETE' && path.startsWith('/pending_bets/')) {
@@ -737,7 +770,17 @@ export default {
   // Requires GH_TOKEN Worker secret: wrangler secret put GH_TOKEN
   async scheduled(event, env) {
     if (event.cron === '*/5 * * * *') await _cronConsumeCheck(env);
-    else if (event.cron === '*/30 * * * *') await _cronHealerCheck(env);
+    else if (event.cron === '*/30 * * * *') {
+      await _cronHealerCheck(env);
+      // Blocker-4: unconditional risk-state heartbeat every 30 min.
+      // consume_pending_bets.py always refreshes bankroll_state.published_at even
+      // when added == 0, ensuring AUTH_STATE_MAX_AGE_MS (90 min) is never exceeded
+      // regardless of tennis_scan cadence (which has gaps up to 3 hours).
+      const token = env.GH_TOKEN;
+      if (token) {
+        await _ghRepositoryDispatch(token, 'consume_pending_bets', env.GH_REPO || _GH_REPO_DEFAULT);
+      }
+    }
   },
 };
 
