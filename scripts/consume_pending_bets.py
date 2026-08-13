@@ -20,6 +20,7 @@ Cron via launchd: add a plist entry, every 5 minutes.
 from __future__ import annotations
 
 import hashlib
+import math
 import os
 import sys
 from pathlib import Path
@@ -128,13 +129,27 @@ def _row_from_bet(
     stake_pct_val = round(stake_raw / bankroll * 100, 4)
 
     model_prob_raw = bet.get("model_prob")
-    if model_prob_raw is None or model_prob_raw == "":
-        model_prob_str = ""
-    else:
+    if source == "value":
+        # P0-A Blocker-3: source=value requires valid canonical model_prob (Worker stores
+        # as ledger fraction 0–1 after normalizing from published percent units).
+        # null/missing/out-of-range fails closed — bet must have probability evidence.
+        if model_prob_raw is None or model_prob_raw == "":
+            return None, "source=value requires canonical model_prob — null/missing fails closed"
         try:
-            model_prob_str = f"{float(model_prob_raw):.6f}"
+            mp = float(model_prob_raw)
         except (TypeError, ValueError):
+            return None, f"source=value model_prob {model_prob_raw!r} not numeric — reject"
+        if not math.isfinite(mp) or not (0.0 <= mp <= 1.0):
+            return None, f"source=value model_prob {mp} out of calibration range [0, 1] — reject"
+        model_prob_str = f"{mp:.6f}"
+    else:
+        if model_prob_raw is None or model_prob_raw == "":
             model_prob_str = ""
+        else:
+            try:
+                model_prob_str = f"{float(model_prob_raw):.6f}"
+            except (TypeError, ValueError):
+                model_prob_str = ""
 
     row = {
         "match_id":         _match_id(home, away, kickoff),
@@ -323,38 +338,42 @@ def main() -> int:
     if added == 0:
         return 0
 
-        # Push ledger to GitHub so the CI watchdog sees the new bets and
-        # doesn't overwrite the KV with a stale repo state.
-        import subprocess
-        try:
-            ROOT = Path(__file__).resolve().parent.parent
-            def _g(*args):
-                return subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
-                                      text=True, timeout=30, check=False)
-            # Only the ledger files — no other files (avoid pushing local-only state).
-            # Add all per-user ledger files that may have changed.
-            _g("add", "results/ledger_*.csv")
-            staged = _g("diff", "--cached", "--quiet", "--", "results")
-            if staged.returncode != 0:  # there are staged changes
-                commit_msg = f"auto: ledger sync {added} bet(s)"
-                _g("commit", "-m", commit_msg,
-                   "--author=SportsBrain Bot <bot@sportsbrain>")
-                for attempt in range(1, 6):
-                    _g("pull", "--rebase", "origin", "main")
-                    push = _g("push", "origin", "main")
-                    if push.returncode == 0:
-                        print(f"[consume] ledger pushed to GitHub ({commit_msg})")
-                        break
-                    print(f"[consume] push attempt {attempt} failed: "
-                          f"{push.stderr.strip()[:120]}", file=sys.stderr)
-                    import random as _r
-                    import time as _t
-                    _t.sleep(_r.randint(2, 6))
-                else:
-                    print("[consume] ledger push gave up after 5 attempts",
-                          file=sys.stderr)
-        except Exception as e:  # noqa: BLE001
-            print(f"[consume] ledger push failed (non-fatal): {e}", file=sys.stderr)
+    # Blocker-1: Push per-user ledger files to GitHub when bets were added.
+    # In GHA the workflow "Commit" step also persists these files — both paths are
+    # intentional: the subprocess covers manual local runs; the workflow covers CI.
+    # A successfully consumed pending bet must never be deleted from KV before its
+    # ledger row is durably persisted. Ordering here: append→delete_from_KV→push.
+    import subprocess
+    try:
+        ROOT = Path(__file__).resolve().parent.parent
+        def _g(*args):
+            return subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
+                                  text=True, timeout=30, check=False)
+        # Stage all per-user ledger files (results/ledger_*.csv covers ledger_philip.csv etc.)
+        _g("add", "results/ledger_*.csv")
+        staged = _g("diff", "--cached", "--quiet", "--", "results")
+        if staged.returncode != 0:  # there are staged changes
+            commit_msg = f"auto: ledger sync {added} bet(s)"
+            _g("commit", "-m", commit_msg,
+               "--author=SportsBrain Bot <bot@sportsbrain>")
+            for attempt in range(1, 6):
+                _g("pull", "--rebase", "origin", "main")
+                push = _g("push", "origin", "main")
+                if push.returncode == 0:
+                    print(f"[consume] ledger pushed to GitHub ({commit_msg})")
+                    break
+                print(f"[consume] push attempt {attempt} failed: "
+                      f"{push.stderr.strip()[:120]}", file=sys.stderr)
+                import random as _r
+                import time as _t
+                _t.sleep(_r.randint(2, 6))
+            else:
+                print("[consume] ledger push gave up after 5 attempts",
+                      file=sys.stderr)
+        else:
+            print(f"[consume] {added} bet(s) appended — ledger unchanged after dedup (GHA workflow will persist)", file=sys.stderr)
+    except Exception as e:  # noqa: BLE001
+        print(f"[consume] ledger push failed (non-fatal): {e}", file=sys.stderr)
 
     return 0
 

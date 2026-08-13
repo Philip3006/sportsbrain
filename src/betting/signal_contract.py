@@ -158,10 +158,16 @@ def is_actionable_value_signal(
     if event_status in TERMINAL_STATUSES:
         return False, f"event_status is terminal: {event_status!r}"
 
-    # 15b. Parity with contract.js (Blocker-1): explicit allowlist check.
-    # None/missing = sport does not emit event_status (e.g. football) → accepted.
-    # Explicitly set to a non-allowlisted value (e.g. UNKNOWN) → rejected fail-closed.
-    if event_status is not None and event_status != "" and event_status not in ALLOWED_PREMATCH_STATUSES:
+    # 15b. Sport-aware event_status check (P0-A Blocker-1 / V5).
+    # Tennis: canonical TennisEventStatus is always known — null/missing is a data gap → REJECT.
+    # Football: scanner does not emit event_status → None/missing accepted.
+    # Any explicitly-set non-allowlisted value (e.g. UNKNOWN) is rejected fail-closed for all sports.
+    if event_status is None or event_status == "":
+        sport = str(signal.get("sport") or "").strip().lower()
+        if sport == "tennis":
+            return False, "tennis signals must have explicit event_status — null/missing fails closed"
+        # Football: accepted (scanner does not emit event_status)
+    elif event_status not in ALLOWED_PREMATCH_STATUSES:
         return False, f"event_status {event_status!r} not in allowed pre-match set — fail closed"
 
     # 16. bankroll must be a finite float > 0

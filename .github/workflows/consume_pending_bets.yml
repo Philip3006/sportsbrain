@@ -66,7 +66,7 @@ jobs:
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add results/ledger.csv docs/data/health.json || true
+          git add results/ledger_*.csv docs/data/health.json || true
           git diff --staged --quiet && exit 0
           git commit -m "auto: consume pending bets $(date +%Y-%m-%d\ %H:%M) UTC"
           for i in 1 2 3 4 5; do

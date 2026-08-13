@@ -265,6 +265,7 @@ export function orchestratePendingBetPost(body, { signalsJson, pendingArr, nowMs
     return { status: authOpenBets === null ? 503 : 400, json: { error: activeBetsResult.error } };
 
   let canonicalSigForEntry = null;
+  let canonicalNormalizedProb = null;
   if (source === 'value') {
     const canonicalSig = resolveCanonicalSignal(signalsJson, signalId);
     if (!canonicalSig)
@@ -282,6 +283,16 @@ export function orchestratePendingBetPost(body, { signalsJson, pendingArr, nowMs
     if (!oddsResult.ok)
       return { status: 400, json: { error: oddsResult.reason } };
 
+    // Blocker-3 (V5): source=value must have valid canonical model_prob for calibration.
+    // normalizeModelProbPct returns null for null/negative/>100 values.
+    const normProb = normalizeModelProbPct(canonicalSig.model_prob);
+    if (normProb === null) {
+      return {
+        status: 400,
+        json: { error: `canonical model_prob missing or out of range (got ${canonicalSig.model_prob}) — source=value requires valid probability evidence (0–100 percent)` },
+      };
+    }
+    canonicalNormalizedProb = normProb;
     canonicalSigForEntry = canonicalSig;
   }
 
@@ -302,7 +313,7 @@ export function orchestratePendingBetPost(body, { signalsJson, pendingArr, nowMs
       odds,
       stake_eur: stake,
       ev_pct:     Number.isFinite(Number(cs.current_ev_pct)) ? Number(cs.current_ev_pct) : null,
-      model_prob: normalizeModelProbPct(cs.model_prob),
+      model_prob: canonicalNormalizedProb,  // validated above — never null for source=value
       confidence: typeof cs.confidence === 'string' ? cs.confidence : (typeof body.confidence === 'string' ? body.confidence : ''),
       kickoff:    typeof cs.kickoff === 'string' ? cs.kickoff : (typeof cs.scheduled_start_current === 'string' ? cs.scheduled_start_current : ''),
       sport:      String(cs.sport        || '').trim(),

@@ -272,23 +272,46 @@ describe('validateSignalActionability (trusted KV signal)', () => {
     assert.match(r.reason, /fail closed/i);
   });
 
-  test('null event_status accepted (football scanner does not emit event_status)', () => {
-    // Football scanner produces signals without event_status field.
-    // null/missing is NOT the same as UNKNOWN — it means "not applicable for this sport".
+  // ── Sport-aware event_status (P0-A V5 Blocker-2) ──────────────────────────
+  // Tennis: canonical TennisEventStatus is always known — null/missing must REJECT.
+  // Football: scanner does not emit event_status — null/missing must ACCEPT.
+
+  test('tennis + null event_status REJECTED (sport-aware, fail closed)', () => {
+    // validSig() has sport='tennis' — null event_status must be rejected
     const r = validateSignalActionability(validSig({ event_status: null }), NOW);
-    assert.equal(r.ok, true, 'null event_status (football) must be accepted');
+    assert.equal(r.ok, false, 'tennis signal with null event_status must be rejected');
+    assert.match(r.reason, /tennis.*explicit|null.*fail/i);
   });
 
-  test('missing event_status (undefined) accepted (football scanner omits it)', () => {
+  test('tennis + missing event_status REJECTED (sport-aware, fail closed)', () => {
     const sig = validSig();
     delete sig.event_status;
     const r = validateSignalActionability(sig, NOW);
-    assert.equal(r.ok, true, 'missing event_status (football) must be accepted');
+    assert.equal(r.ok, false, 'tennis signal with missing event_status must be rejected');
+    assert.match(r.reason, /tennis.*explicit|null.*fail/i);
   });
 
-  test('empty string event_status accepted (football)', () => {
+  test('tennis + empty string event_status REJECTED (sport-aware, fail closed)', () => {
     const r = validateSignalActionability(validSig({ event_status: '' }), NOW);
-    assert.equal(r.ok, true, 'empty string event_status (football) must be accepted');
+    assert.equal(r.ok, false, 'tennis signal with empty event_status must be rejected');
+  });
+
+  test('football + null event_status ACCEPTED (scanner does not emit event_status)', () => {
+    // Football scanner produces signals without event_status — this is valid.
+    const r = validateSignalActionability(validSig({ event_status: null, sport: 'football' }), NOW);
+    assert.equal(r.ok, true, 'null event_status for football must be accepted');
+  });
+
+  test('football + missing event_status ACCEPTED (scanner omits it)', () => {
+    const sig = validSig({ sport: 'football' });
+    delete sig.event_status;
+    const r = validateSignalActionability(sig, NOW);
+    assert.equal(r.ok, true, 'missing event_status for football must be accepted');
+  });
+
+  test('football + empty string event_status ACCEPTED (football)', () => {
+    const r = validateSignalActionability(validSig({ event_status: '', sport: 'football' }), NOW);
+    assert.equal(r.ok, true, 'empty string event_status for football must be accepted');
   });
 
   test('arbitrary string event_status rejected fail-closed', () => {
@@ -723,7 +746,8 @@ describe('Worker orchestration — orchestratePendingBetPost (production code)',
       `expected model_prob≈0.508, got ${r.entry.model_prob}`);
   });
 
-  test('model_prob >100 published → entry stores null (invalid)', () => {
+  // Blocker-3 (V5): source=value with invalid model_prob must REJECT (not store null + 200)
+  test('model_prob >100 → 400 REJECTED for source=value (fail closed)', () => {
     const sig = validSig({ model_prob: 150.0 });
     const body = {
       source: 'value', signal_id: sig.signal_id,
@@ -733,11 +757,11 @@ describe('Worker orchestration — orchestratePendingBetPost (production code)',
     const r = orchestratePendingBetPost(body, {
       signalsJson: makeSignalsJson(sig), pendingArr: [], nowMs: NOW,
     });
-    assert.equal(r.status, 200, JSON.stringify(r.json));
-    assert.equal(r.entry.model_prob, null, 'invalid >100 model_prob must be stored as null');
+    assert.equal(r.status, 400, `expected 400 for out-of-range model_prob, got ${r.status}: ${JSON.stringify(r.json)}`);
+    assert.match(r.json.error, /model_prob|probability/i);
   });
 
-  test('model_prob negative → entry stores null', () => {
+  test('model_prob negative → 400 REJECTED for source=value (fail closed)', () => {
     const sig = validSig({ model_prob: -5.0 });
     const body = {
       source: 'value', signal_id: sig.signal_id,
@@ -747,8 +771,39 @@ describe('Worker orchestration — orchestratePendingBetPost (production code)',
     const r = orchestratePendingBetPost(body, {
       signalsJson: makeSignalsJson(sig), pendingArr: [], nowMs: NOW,
     });
+    assert.equal(r.status, 400, `expected 400 for negative model_prob, got ${r.status}: ${JSON.stringify(r.json)}`);
+    assert.match(r.json.error, /model_prob|probability/i);
+  });
+
+  test('model_prob null → 400 REJECTED for source=value (calibration regression)', () => {
+    const sig = validSig({ model_prob: null });
+    const body = {
+      source: 'value', signal_id: sig.signal_id,
+      stake_eur: 5, odds: sig.current_odds,
+      match: sig.match, market: sig.market, sport: sig.sport,
+    };
+    const r = orchestratePendingBetPost(body, {
+      signalsJson: makeSignalsJson(sig), pendingArr: [], nowMs: NOW,
+    });
+    assert.equal(r.status, 400, `expected 400 for null model_prob on value bet, got ${r.status}: ${JSON.stringify(r.json)}`);
+    assert.match(r.json.error, /model_prob|probability/i);
+  });
+
+  // Calibration regression: accepted value bets must have 0 < model_prob < 1 in entry
+  test('accepted source=value entry has 0 < model_prob < 1 (calibration eligible)', () => {
+    const sig = validSig({ model_prob: 52.0 });
+    const body = {
+      source: 'value', signal_id: sig.signal_id,
+      stake_eur: 5, odds: sig.current_odds,
+      match: sig.match, market: sig.market, sport: sig.sport,
+    };
+    const r = orchestratePendingBetPost(body, {
+      signalsJson: makeSignalsJson(sig), pendingArr: [], nowMs: NOW,
+    });
     assert.equal(r.status, 200, JSON.stringify(r.json));
-    assert.equal(r.entry.model_prob, null);
+    assert.ok(r.entry, 'entry must be present');
+    assert.ok(r.entry.model_prob > 0 && r.entry.model_prob < 1,
+      `model_prob must be in (0,1) for calibration; got ${r.entry.model_prob}`);
   });
 
   test('source=VALUE (uppercase) → 400 rejected (strict literal)', () => {
@@ -799,22 +854,23 @@ describe('normalizeModelProbPct (via orchestration)', () => {
     assert.ok(Math.abs(r.entry.model_prob - 1.0) < 0.001);
   });
 
-  test('>100 → null (invalid percent)', () => {
+  // Blocker-3 (V5): source=value with invalid model_prob must REJECT — not store null + 200
+  test('>100 → 400 REJECTED (source=value fail closed)', () => {
     const r = makeOrchResult(101.0);
-    assert.equal(r.status, 200);
-    assert.equal(r.entry.model_prob, null);
+    assert.equal(r.status, 400, `expected 400 for >100 model_prob, got ${r.status}`);
+    assert.match(r.json.error, /model_prob|probability/i);
   });
 
-  test('negative → null', () => {
+  test('negative → 400 REJECTED (source=value fail closed)', () => {
     const r = makeOrchResult(-1.0);
-    assert.equal(r.status, 200);
-    assert.equal(r.entry.model_prob, null);
+    assert.equal(r.status, 400, `expected 400 for negative model_prob, got ${r.status}`);
+    assert.match(r.json.error, /model_prob|probability/i);
   });
 
-  test('null model_prob → null', () => {
+  test('null model_prob → 400 REJECTED for source=value', () => {
     const r = makeOrchResult(null);
-    assert.equal(r.status, 200);
-    assert.equal(r.entry.model_prob, null);
+    assert.equal(r.status, 400, `expected 400 for null model_prob on value bet, got ${r.status}`);
+    assert.match(r.json.error, /model_prob|probability/i);
   });
 });
 
@@ -832,10 +888,28 @@ describe('Contract parity — Worker matches PWA contract', () => {
     assert.equal(workerDecision({ event_status: 'UPCOMING' }).ok, true);
   });
 
-  test('missing event_status → accepted (football)', () => {
-    const sig = validSig();
+  test('football + missing event_status → accepted (scanner does not emit it)', () => {
+    const sig = validSig({ sport: 'football' });
     delete sig.event_status;
     assert.equal(validateSignalActionability(sig, NOW).ok, true);
+  });
+
+  test('tennis + missing event_status → REJECTED (sport-aware, fail closed)', () => {
+    const sig = validSig({ sport: 'tennis' });
+    delete sig.event_status;
+    const r = validateSignalActionability(sig, NOW);
+    assert.equal(r.ok, false, 'tennis with missing event_status must be rejected');
+    assert.match(r.reason, /tennis.*explicit|null.*fail/i);
+  });
+
+  test('tennis + null event_status → REJECTED', () => {
+    const r = validateSignalActionability(validSig({ event_status: null, sport: 'tennis' }), NOW);
+    assert.equal(r.ok, false, 'tennis with null event_status must be rejected');
+  });
+
+  test('tennis + UPCOMING → accepted', () => {
+    const r = validateSignalActionability(validSig({ event_status: 'UPCOMING', sport: 'tennis' }), NOW);
+    assert.equal(r.ok, true, `tennis UPCOMING must be accepted: ${r.reason}`);
   });
 
   test('UNKNOWN → rejected', () => {

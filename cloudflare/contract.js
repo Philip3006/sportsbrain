@@ -122,11 +122,11 @@ export function validateSignalActionability(sig, nowMs = Date.now()) {
     };
   }
 
-  // P0-A (item C / Blocker-1): event_status policy derived from actual production models.
+  // P0-A (item C / Blocker-1 / V5 sport-aware): event_status policy.
+  // - Tennis: canonical TennisEventStatus — explicit value REQUIRED; null/missing → REJECT.
+  //   UPCOMING/AWAITING_START/DELAYED accepted; LIVE/COMPLETED/POSTPONED/CANCELLED/UNKNOWN rejected.
   // - Football scanner does not emit event_status → null/missing is accepted.
-  // - Tennis TennisEventStatus: UPCOMING/AWAITING_START/DELAYED accepted; all others rejected.
-  // - Any EXPLICITLY set value not in ALLOWED_PREMATCH_STATUSES is rejected fail-closed.
-  // - UNKNOWN (explicitly set) is rejected because it signals ambiguous lifecycle state.
+  //   Any explicitly-set non-allowlisted value (e.g. UNKNOWN) is rejected fail-closed.
   const evStatus = sig.event_status;
   if (LIVE_STATUSES.has(evStatus)) {
     return { ok: false, reason: `event_status is live: ${evStatus}` };
@@ -134,9 +134,17 @@ export function validateSignalActionability(sig, nowMs = Date.now()) {
   if (TERMINAL_STATUSES.has(evStatus)) {
     return { ok: false, reason: `event_status is terminal: ${evStatus}` };
   }
-  // Only reject if explicitly set to a non-allowlisted value.
-  // null/undefined/'' = not emitted by this sport's scanner → accepted.
-  if (evStatus != null && evStatus !== '' && !ALLOWED_PREMATCH_STATUSES.has(evStatus)) {
+  if (evStatus == null || evStatus === '') {
+    // Sport-aware: Tennis must have an explicit event_status.
+    const sport = (sig.sport || '').toString().trim().toLowerCase();
+    if (sport === 'tennis') {
+      return {
+        ok: false,
+        reason: 'tennis signals must have explicit event_status — null/missing fails closed',
+      };
+    }
+    // Football: scanner does not emit event_status → accepted.
+  } else if (!ALLOWED_PREMATCH_STATUSES.has(evStatus)) {
     return {
       ok: false,
       reason: `event_status '${evStatus}' not in allowed pre-match set — fail closed`,

@@ -93,10 +93,16 @@ function isActionableValueSignal(signal, bankroll, activeCount) {
     return { ok: false, reason: `event_status is terminal: ${evStatus}` };
   }
 
-  // 15b. Blocker-1 parity: explicit allowlist check.
-  // null/undefined/'' = sport does not emit event_status → accepted.
-  // Explicitly set non-allowlisted value (e.g. UNKNOWN) → fail closed.
-  if (evStatus != null && evStatus !== '' && !_ALLOWED_PREMATCH_STATUSES.has(evStatus)) {
+  // 15b. Sport-aware event_status check (P0-A Blocker-1 / V5 parity with contract.js).
+  // Tennis: must have explicit event_status — null/missing fails closed.
+  // Football: scanner does not emit event_status → null/missing accepted.
+  if (evStatus == null || evStatus === '') {
+    const sport = (signal.sport || '').toString().trim().toLowerCase();
+    if (sport === 'tennis') {
+      return { ok: false, reason: 'tennis signals must have explicit event_status — null/missing fails closed' };
+    }
+    // Football: accepted.
+  } else if (!_ALLOWED_PREMATCH_STATUSES.has(evStatus)) {
     return { ok: false, reason: `event_status '${evStatus}' not in allowed pre-match set — fail closed` };
   }
 
