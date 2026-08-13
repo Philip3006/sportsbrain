@@ -35,8 +35,9 @@ _ROOT = _THIS_DIR.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from src.betting.ledger import _FIELDS, _load, _save, _file_lock, _resolve_ledger_path
-from src.config import DEFAULT_USER
+from src.betting.ledger import _FIELDS, _load, _save, _file_lock, _resolve_ledger_path, count_open_bets, ledger_summary
+from src.betting.signal_contract import compute_safe_stake
+from src.config import DEFAULT_USER, MAX_ACTIVE_BETS, BANKROLL_START
 
 
 def _worker_base() -> str:
@@ -61,21 +62,54 @@ def _match_id(home: str, away: str, kickoff: str) -> str:
     return hashlib.md5(key.encode("utf-8")).hexdigest()
 
 
-def _row_from_bet(bet: dict, today: str) -> dict | None:
+def _get_live_bankroll(user: str = DEFAULT_USER) -> float | None:
+    """Compute live bankroll from ledger P&L. Returns None on failure."""
+    try:
+        summary = ledger_summary(user=user)
+        return round(BANKROLL_START + summary["total_pnl"], 2)
+    except Exception as exc:
+        print(f"[consume] bankroll lookup failed: {exc}", file=sys.stderr)
+        return None
+
+
+def _row_from_bet(bet: dict, today: str, bankroll: float | None = None) -> dict | tuple[None, str]:
+    """Build a ledger row from a pending bet payload.
+
+    Returns the row dict, or (None, reason) if the bet cannot be written.
+    When bankroll is provided the 5% cap is enforced and stake_pct is truthful.
+    """
     match = (bet.get("match") or "").strip()
     if " vs " not in match:
-        return None
+        return None, "invalid match format"
     home, away = [s.strip() for s in match.split(" vs ", 1)]
     market = (bet.get("market") or "").strip()
     odds = float(bet.get("odds") or 0)
-    stake = float(bet.get("stake_eur") or 0)
-    if odds < 1.01 or stake <= 0:
-        return None
+    stake_raw = float(bet.get("stake_eur") or 0)
+    if odds < 1.01 or stake_raw <= 0:
+        return None, f"invalid odds ({odds}) or stake ({stake_raw})"
     kickoff = bet.get("kickoff") or ""
     match_date = kickoff[:10] if kickoff else ""
+
+    # Source validation: reclassify to manual if signal_id missing for value bets
     source = (bet.get("source") or "value").strip().lower()
     if source not in ("value", "manual"):
         source = "value"
+    signal_id = (bet.get("signal_id") or "").strip()
+    if source == "value" and not signal_id:
+        source = "manual"  # reclassify — no canonical signal identity
+
+    # 5% bankroll cap revalidation
+    cap_applied = False
+    if bankroll is not None and bankroll > 0:
+        stake, cap_applied = compute_safe_stake(bankroll, stake_raw)
+        stake_pct_val = round(stake / bankroll * 100, 4)
+    elif source == "value" and bankroll is None:
+        # Fail closed for value bets when bankroll is unknown
+        return None, "bankroll unknown — cannot revalidate 5% cap for value bet"
+    else:
+        stake = stake_raw
+        stake_pct_val = 0.0  # manual bets without bankroll context
+
     model_prob_raw = bet.get("model_prob")
     if model_prob_raw is None or model_prob_raw == "":
         model_prob_str = ""
@@ -84,24 +118,36 @@ def _row_from_bet(bet: dict, today: str) -> dict | None:
             model_prob_str = f"{float(model_prob_raw):.6f}"
         except (TypeError, ValueError):
             model_prob_str = ""
-    return {
-        "match_id":     _match_id(home, away, kickoff),
-        "match_date":   match_date,
-        "home":         home,
-        "away":         away,
-        "market":       market,
-        "decimal_odds": f"{odds:.4f}",
-        "stake_pct":    "0.0",  # PWA bets bypass Kelly; ledger keeps it for compat
-        "stake_amount": f"{stake:.2f}",
-        "placed_date":  today,
-        "status":       "open",
-        "pnl":          "0.0",
-        "closing_odds": "0.0",
-        "clv":          "",
+
+    row = {
+        "match_id":         _match_id(home, away, kickoff),
+        "match_date":       match_date,
+        "home":             home,
+        "away":             away,
+        "market":           market,
+        "decimal_odds":     f"{odds:.4f}",
+        "stake_pct":        f"{stake_pct_val:.4f}",
+        "stake_amount":     f"{stake:.2f}",
+        "placed_date":      today,
+        "status":           "open",
+        "pnl":              "0.0",
+        "closing_odds":     "0.0",
+        "clv":              "",
         "pinnacle_ref_odds": "",
-        "source":       source,
-        "model_prob":   model_prob_str,
+        "source":           source,
+        "model_prob":       model_prob_str,
+        # Extra identity fields (stored as stake_reason for backward-compat CSV schema)
+        # Actual new fields are written via extra_fields dict passed to _append_rows
     }
+    extra = {
+        "signal_id":          signal_id,
+        "fixture_key":        (bet.get("fixture_key") or "").strip(),
+        "sport":              (bet.get("sport") or "").strip(),
+        "league":             (bet.get("league") or "").strip(),
+        "bankroll_at_placement": f"{bankroll:.2f}" if bankroll is not None else "",
+        "cap_applied":        str(cap_applied).lower(),
+    }
+    return row, extra
 
 
 def _append_rows(rows: list[dict], user: str = DEFAULT_USER) -> int:
@@ -116,7 +162,22 @@ def _append_rows(rows: list[dict], user: str = DEFAULT_USER) -> int:
         ))
         new_rows = [r for r in rows if (r["match_id"], r["market"]) not in existing]
         if new_rows:
-            new_df = pd.DataFrame(new_rows, columns=_FIELDS)
+            # Only include canonical _FIELDS columns — extra identity fields are
+            # piggy-backed onto stake_reason where schema allows, otherwise dropped
+            # gracefully to keep backward-compat with existing CSV schema.
+            safe_rows = []
+            for r in new_rows:
+                # stake_reason: encode signal_id + fixture_key for traceability
+                sig_id = r.pop("signal_id", "")
+                fix_key = r.pop("fixture_key", "")
+                r.pop("bankroll_at_placement", None)
+                r.pop("cap_applied", None)
+                r.pop("sport", None)
+                # league is a canonical _FIELDS column — keep it
+                if sig_id or fix_key:
+                    r["stake_reason"] = f"sig={sig_id} fix={fix_key}".strip()
+                safe_rows.append(r)
+            new_df = pd.DataFrame(safe_rows, columns=_FIELDS)
             df = pd.concat([df, new_df], ignore_index=True)
             _save(df, ledger_path)
     return len(new_rows)
@@ -147,13 +208,42 @@ def _consume_user(base: str, headers: dict, user: str) -> int:
         return 0
 
     today = pd.Timestamp.now().strftime("%Y-%m-%d")
+
+    # Fetch bankroll once for this user (used for 5% cap revalidation)
+    bankroll = _get_live_bankroll(user)
+
     rows = []
     ids_for_row: list[tuple[str, str]] = []
     for b in bets:
-        row = _row_from_bet(b, today)
+        # Enforce MAX_ACTIVE_BETS before adding each new bet
+        current_open = count_open_bets(user=user) + len(rows)
+        source = (b.get("source") or "value").strip().lower()
+        if source not in ("value", "manual"):
+            source = "value"
+        signal_id = (b.get("signal_id") or "").strip()
+        if source == "value" and not signal_id:
+            source = "manual"
+        if current_open >= MAX_ACTIVE_BETS:
+            print(
+                f"[consume:{user}] REJECT bet — max active bets ({MAX_ACTIVE_BETS}) reached",
+                file=sys.stderr,
+            )
+            ids_for_row.append((b.get("id", ""), "max_bets"))
+            continue
+
+        result = _row_from_bet(b, today, bankroll)
+        if isinstance(result, tuple):
+            row, extra = result
+        else:
+            row, extra = result, {}
         if row is None:
+            reason = extra if isinstance(extra, str) else "invalid"
+            print(f"[consume:{user}] SKIP bet: {reason}", file=sys.stderr)
             ids_for_row.append((b.get("id", ""), "invalid"))
             continue
+        # Merge extra identity fields into the row
+        if isinstance(extra, dict):
+            row.update({k: v for k, v in extra.items() if k not in row})
         rows.append(row)
         ids_for_row.append((b.get("id", ""), "ok"))
 

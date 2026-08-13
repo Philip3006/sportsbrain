@@ -1,3 +1,113 @@
+// ── P0-A: Canonical actionability contract (mirrors Python signal_contract.py) ──
+
+const _TERMINAL_STATUSES = new Set(['FINISHED', 'CANCELLED', 'POSTPONED', 'ABANDONED', 'TERMINATED']);
+const _LIVE_STATUSES = new Set(['LIVE', 'IN_PROGRESS']);
+const _MAX_ODDS_AGE_MS = 14400 * 1000; // 4 hours
+const _MAX_ACTIVE_BETS = 3;
+const _MAX_STAKE_PCT = 0.05;
+
+/**
+ * Returns {ok: boolean, reason: string}.
+ * Fail closed: any missing/invalid field returns ok=false.
+ */
+function isActionableValueSignal(signal, bankroll, activeCount) {
+  if (!signal) return { ok: false, reason: 'signal is null' };
+
+  // 1. signal_id present and non-empty
+  const sid = (signal.signal_id || '').toString().trim();
+  if (!sid) return { ok: false, reason: 'signal_id missing or empty' };
+
+  // 2. signal_status must be exactly 'ACTIVE'
+  if (signal.signal_status !== 'ACTIVE') {
+    return { ok: false, reason: `signal_status must be 'ACTIVE', got '${signal.signal_status}'` };
+  }
+
+  // 3. Not shadow
+  if (signal.shadow === true || signal.is_shadow === true) {
+    return { ok: false, reason: 'shadow signal — not actionable' };
+  }
+
+  // 4. Not unsupported
+  if (signal.unsupported === true) return { ok: false, reason: 'unsupported signal' };
+
+  // 5. Edge not lost
+  if (signal.edge_lost === true) return { ok: false, reason: 'edge_lost' };
+
+  // 6. Not stale
+  if (signal.stale === true) return { ok: false, reason: 'stale signal' };
+
+  // 7. no_bet_flag
+  if (signal.no_bet_flag === true) return { ok: false, reason: 'no_bet_flag set' };
+
+  // 8. current_odds finite > 1.0
+  const odds = Number(signal.current_odds);
+  if (!Number.isFinite(odds) || odds <= 1.0) {
+    return { ok: false, reason: `current_odds must be > 1.0, got ${signal.current_odds}` };
+  }
+
+  // 9+10+11. current_ev_pct finite, in range, > 0
+  const ev = Number(signal.current_ev_pct);
+  if (!Number.isFinite(ev)) return { ok: false, reason: 'current_ev_pct not finite' };
+  if (ev >= 500 || ev <= -100) return { ok: false, reason: `current_ev_pct out of range: ${ev}` };
+  if (ev <= 0) return { ok: false, reason: `current_ev_pct must be > 0 for a value bet, got ${ev}` };
+
+  // 12+13. odds_ts present and within 4h
+  const oddsTs = signal.odds_ts;
+  if (!oddsTs) return { ok: false, reason: 'odds_ts missing' };
+  try {
+    const tsMs = new Date(oddsTs).getTime();
+    if (!Number.isFinite(tsMs)) return { ok: false, reason: 'odds_ts invalid date' };
+    const ageMs = Date.now() - tsMs;
+    if (ageMs > _MAX_ODDS_AGE_MS) {
+      return { ok: false, reason: `odds_ts stale: ${Math.round(ageMs/1000)}s old (max ${_MAX_ODDS_AGE_MS/1000}s)` };
+    }
+  } catch (e) {
+    return { ok: false, reason: 'odds_ts parse error: ' + e.message };
+  }
+
+  // 14. event_status not LIVE/IN_PROGRESS
+  const evStatus = signal.event_status;
+  if (_LIVE_STATUSES.has(evStatus)) {
+    return { ok: false, reason: `event_status is live: ${evStatus}` };
+  }
+
+  // 15. event_status not terminal
+  if (_TERMINAL_STATUSES.has(evStatus)) {
+    return { ok: false, reason: `event_status is terminal: ${evStatus}` };
+  }
+
+  // 16. bankroll > 0
+  const br = Number(bankroll);
+  if (!Number.isFinite(br) || br <= 0) {
+    return { ok: false, reason: `bankroll must be > 0, got ${bankroll}` };
+  }
+
+  // 17. active_bet_count < MAX_ACTIVE_BETS
+  const count = Number(activeCount);
+  if (!Number.isFinite(count) || count >= _MAX_ACTIVE_BETS) {
+    return { ok: false, reason: `max active bets (${_MAX_ACTIVE_BETS}) reached — ${count} already open` };
+  }
+
+  // 18. sport present
+  const sport = (signal.sport || '').toString().trim();
+  if (!sport) return { ok: false, reason: 'sport field missing or empty' };
+
+  return { ok: true, reason: 'ok' };
+}
+
+/**
+ * Returns {stake: number, capApplied: boolean}.
+ * Hard cap: bankroll * 0.05. Cap can only decrease the stake.
+ */
+function computeSafeStake(bankroll, requestedEur) {
+  const br = Number(bankroll);
+  const req = Number(requestedEur);
+  if (!Number.isFinite(br) || !Number.isFinite(req)) return { stake: 0, capApplied: true };
+  const ceiling = br * _MAX_STAKE_PCT;
+  if (req > ceiling) return { stake: ceiling, capApplied: true };
+  return { stake: req, capApplied: false };
+}
+
 // ── Deep-link: öffnet Bet-Modal direkt aus ?bet=MATCH:MARKET ──
 function _openBetModalForBetId(betId) {
   const colonIdx = betId.lastIndexOf(':');
@@ -407,32 +517,42 @@ function _calcKellyStake() {
   if (fFull <= 0) return null;
   const bk = (_bankrollState && _bankrollState.start) ? _bankrollState.start : BANKROLL_START;
   const stake = bk * fFull * _KELLY_FRAC;
-  // 0.50€-Granularität, min 0.50€, max 25€ (UI-Limit)
-  const rounded = Math.max(0.5, Math.min(25, Math.round(stake * 2) / 2));
+  // P0-A: cap at 5% of bankroll, then round to 0.50€ granularity
+  const { stake: capped } = computeSafeStake(bk, stake);
+  const rounded = Math.max(0.5, Math.min(25, Math.round(capped * 2) / 2));
   return rounded;
 }
 function _setStake(v) {
   const inp = document.getElementById('bet-modal-stake');
   if (!inp) return;
-  inp.value = v.toFixed(2);
+  // P0-A: always apply 5% cap before setting
+  const bk = (_bankrollState && _bankrollState.start) ? _bankrollState.start : BANKROLL_START;
+  const { stake, capApplied } = computeSafeStake(bk, v);
+  inp.value = stake.toFixed(2);
+  if (capApplied) {
+    showToast(`Einsatz auf 5%-Limit (€${stake.toFixed(2)}) begrenzt`, 'info');
+  }
   _updateBetModalCalcs();
 }
 function _renderQuickStakes() {
   const wrap = document.getElementById('bet-modal-quick-stakes');
   if (!wrap) return;
+  const bk = (_bankrollState && _bankrollState.start) ? _bankrollState.start : BANKROLL_START;
+  const maxStake = bk * _MAX_STAKE_PCT;
   const kelly = _calcKellyStake();
   const half  = kelly != null ? Math.max(0.5, Math.round(kelly / 2 * 2) / 2) : null;
-  const bk = (_bankrollState && _bankrollState.start) ? _bankrollState.start : BANKROLL_START;
   const onepct = Math.max(0.5, Math.round(bk * 0.01 * 2) / 2);
+  // P0-A: cap all quick-select amounts at 5%
+  const _cap = v => v != null ? Math.min(v, maxStake) : null;
   const buttons = [
-    { lbl: 'Kelly', val: kelly, cls: 'kelly' },
-    { lbl: 'Half-K', val: half, cls: 'kelly' },
-    { lbl: '€5', val: 5, cls: '' },
-    { lbl: '€10', val: 10, cls: '' },
-    { lbl: '1% BK', val: onepct, cls: '' },
+    { lbl: 'Kelly', val: _cap(kelly), cls: 'kelly' },
+    { lbl: 'Half-K', val: _cap(half), cls: 'kelly' },
+    { lbl: '€5', val: _cap(5), cls: '' },
+    { lbl: '€10', val: _cap(10), cls: '' },
+    { lbl: '1% BK', val: _cap(onepct), cls: '' },
   ];
   wrap.innerHTML = buttons.map(b => {
-    if (b.val == null) {
+    if (b.val == null || b.val < 1) {
       return `<button type="button" class="quick-stake-btn ${b.cls}" disabled aria-label="${b.lbl} (nicht verfügbar)">
         <span class="qs-lbl">${b.lbl}</span><span>—</span>
       </button>`;
@@ -462,6 +582,12 @@ function _openBetModalFromBtn(btn) {
     source,
     model_prob: modelProb,
     fair_prob: parseFloat(d.fairProb || '0'),
+    // P0-A: identity fields from dataset
+    signal_id: d.signalId || d.signal_id || '',
+    fixture_key: d.fixtureKey || d.fixture_key || '',
+    league: d.league || '',
+    odds_ts: d.oddsTs || d.odds_ts || '',
+    signal_status: d.signalStatus || d.signal_status || '',
   };
   const [h, a] = _pendingBet.match.split(' vs ').map(x => x.trim());
   document.getElementById('bet-modal-sub').textContent = `${h} vs ${a} · ${marketLabel(_pendingBet.market, `${h} vs ${a}`)}`;
@@ -563,16 +689,31 @@ function _updateBetModalCalcs() {
       drawer.style.display = 'none';
     }
   }
+  // P0-A: warn if stake exceeds 5% cap
+  const capCeiling = start * _MAX_STAKE_PCT;
   const warn = document.getElementById('bet-modal-warn');
-  warn.classList.toggle('show', stake > start * 0.05 + 0.001);
+  warn.classList.toggle('show', stake > capCeiling + 0.001);
   const btn = document.getElementById('bet-modal-confirm');
   const oddsOk = odds >= 1.01 && odds <= 100;
-  btn.disabled = !(stake >= 0.5 && stake <= 25 && oddsOk);
+  // Disable confirm if stake > 5% cap (must use _setStake or reduce manually)
+  btn.disabled = !(stake >= 0.5 && stake <= 25 && stake <= capCeiling + 0.001 && oddsOk);
 }
 
 async function _submitBet() {
   if (!_pendingBet) return;
-  const stake = parseFloat(document.getElementById('bet-modal-stake').value) || 0;
+  const bk = (_bankrollState && _bankrollState.start) ? _bankrollState.start : BANKROLL_START;
+
+  // P0-A: apply 5% cap to stake before submission
+  const rawStake = parseFloat(document.getElementById('bet-modal-stake').value) || 0;
+  const { stake, capApplied } = computeSafeStake(bk, rawStake);
+  if (capApplied) {
+    // Update the UI to reflect the capped value
+    const inp = document.getElementById('bet-modal-stake');
+    if (inp) inp.value = stake.toFixed(2);
+    showToast(`Einsatz auf 5%-Limit (€${stake.toFixed(2)}) begrenzt`, 'info');
+    _updateBetModalCalcs();
+  }
+
   if (stake < 0.5 || stake > 25) { showToast('Einsatz muss zwischen €0.50 und €25 liegen', 'error'); return; }
   const oddsInp = document.getElementById('bet-modal-odds-input');
   const odds = oddsInp ? (parseFloat(oddsInp.value) || 0) : _pendingBet.odds;
@@ -580,15 +721,39 @@ async function _submitBet() {
   const token = localStorage.getItem('sb_token');
   if (!token) { _openTokenModal(); return; }
 
+  const hasModelProb = _pendingBet.model_prob && _pendingBet.model_prob > 0;
+  const source = hasModelProb ? (_pendingBet.source || 'value') : 'manual';
+
+  // P0-A: manual bet confirmation dialog
+  if (source === 'manual') {
+    const confirmed = confirm(
+      'Dies ist eine manuelle Wette — sie wird nicht in die Modell-Performance eingerechnet.\n\n' +
+      'Fortfahren?'
+    );
+    if (!confirmed) return;
+  }
+
   const btn = document.getElementById('bet-modal-confirm');
   btn.disabled = true; btn.textContent = 'Eintragen…';
-  const hasModelProb = _pendingBet.model_prob && _pendingBet.model_prob > 0;
+
+  // P0-A: open bets count for Worker validation
+  const openBetsCount = (_openBets || []).length;
+
   const payload = {
     ..._pendingBet,
     odds,
     stake_eur: stake,
-    // Ohne model_prob kann der Worker keine EV-Prüfung machen → 'manual'
-    source: hasModelProb ? (_pendingBet.source || 'value') : 'manual',
+    source,
+    // P0-A: bankroll_hint for Worker 5% cap validation
+    bankroll_hint: bk,
+    // P0-A: open_bets_count for Worker active-bet check
+    open_bets_count: openBetsCount,
+    // P0-A: identity fields
+    signal_id: _pendingBet.signal_id || '',
+    fixture_key: _pendingBet.fixture_key || '',
+    sport: _pendingBet.sport || '',
+    league: _pendingBet.league || '',
+    odds_ts: _pendingBet.odds_ts || '',
   };
   if (hasModelProb) {
     payload.model_prob = _pendingBet.model_prob;

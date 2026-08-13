@@ -358,10 +358,49 @@ export default {
         if (!match || !match.includes(' vs ')) return jr({ error: 'match must be "Home vs Away"' }, 400);
         if (!isValidMarket(market)) return jr({ error: 'unknown market: ' + market }, 400);
         if (!Number.isFinite(odds) || odds < 1.01 || odds > 100) return jr({ error: 'odds out of range (1.01–100)' }, 400);
-        if (!Number.isFinite(stake) || stake < 0.5 || stake > 25) return jr({ error: 'stake_eur out of range (0.5–25)' }, 400);
+
+        // P0-A: Absolute €25 ceiling regardless of bankroll
+        const SAFE_MAX_STAKE = 25.0;
+        if (!Number.isFinite(stake) || stake < 0.5 || stake > SAFE_MAX_STAKE) {
+          return jr({ error: `stake_eur out of range (0.5–${SAFE_MAX_STAKE})` }, 400);
+        }
 
         const rawSource = (body.source || 'value').toString().toLowerCase();
-        const source = (rawSource === 'manual') ? 'manual' : 'value';
+        let source = (rawSource === 'manual') ? 'manual' : 'value';
+
+        // P0-A: source validation
+        if (!['value', 'manual'].includes(source)) {
+          return jr({ error: 'source must be "value" or "manual"' }, 400);
+        }
+
+        // P0-A: signal_id required for value bets; reclassify to manual if absent
+        const signalId = (body.signal_id || '').toString().trim();
+        if (source === 'value' && !signalId) {
+          source = 'manual';  // reclassify — no canonical signal identity
+        }
+
+        // P0-A: bankroll_hint validation for value bets (fail closed)
+        if (source === 'value') {
+          const bankrollHint = Number(body.bankroll_hint);
+          if (!Number.isFinite(bankrollHint) || bankrollHint <= 0) {
+            return jr({ error: 'bankroll_hint required for value bets (finite, > 0)' }, 400);
+          }
+          // 5% cap: stake must not exceed bankroll_hint * 0.05
+          const cap = bankrollHint * 0.05;
+          if (stake > cap + 0.001) {
+            return jr({
+              error: `stake_eur ${stake.toFixed(2)} exceeds 5% cap (${cap.toFixed(2)}) of bankroll_hint ${bankrollHint.toFixed(2)}`,
+            }, 400);
+          }
+        }
+
+        // P0-A: active-bet count check
+        const openBetsCount = Number(body.open_bets_count);
+        const arr = await readPending(env, pUser);
+        const pendingValueCount = arr.filter(b => b.source === 'value' || b.source === 'manual').length;
+        if (Number.isFinite(openBetsCount) && openBetsCount + pendingValueCount >= 3) {
+          return jr({ error: 'max active bets (3) reached' }, 400);
+        }
 
         const id = crypto.randomUUID();
         const entry = {
@@ -376,11 +415,17 @@ export default {
           kickoff: typeof body.kickoff === 'string' ? body.kickoff : '',
           sport: typeof body.sport === 'string' ? body.sport : '',
           source,
+          // P0-A: preserve identity fields
+          signal_id: signalId,
+          fixture_key: typeof body.fixture_key === 'string' ? body.fixture_key.trim() : '',
+          league: typeof body.league === 'string' ? body.league.trim() : '',
+          odds_ts: typeof body.odds_ts === 'string' ? body.odds_ts : '',
+          selection: typeof body.selection === 'string' ? body.selection.trim() : '',
+          bankroll_hint: Number.isFinite(Number(body.bankroll_hint)) ? Number(body.bankroll_hint) : null,
           origin: 'pwa',
           placed_at: new Date().toISOString(),
         };
 
-        const arr = await readPending(env, pUser);
         // Soft duplicate guard: same match+market+odds within 60s
         const recent = arr.find(b =>
           b.match === entry.match && b.market === entry.market &&

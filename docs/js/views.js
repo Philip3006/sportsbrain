@@ -30,11 +30,13 @@ function predCard(home, away, tip, odds, nk, kickoff, sport) {
 
 
   // Direct bet buttons next to 1/X/2 probability bars (same data as Marktübersicht)
+  // P0-A: model-tip buttons are always 'manual' — they lack a canonical signal_id/signal_status
   const barBetBtn = (mktKey, modelP, q) => {
     if (!q || q <= 1) return '';
     const ev = calcEV(modelP, q);
     const isValue = ev >= 3;
-    const src = isValue ? 'value' : 'manual';
+    // Model-tip predictions don't have a backing ACTIVE signal → always manual
+    const src = 'manual';
     const stake = isValue ? 10 : 5;
     const style = isValue
       ? 'background:rgba(0,200,83,.18);color:var(--green);border:1px solid rgba(0,200,83,.55)'
@@ -66,7 +68,8 @@ function predCard(home, away, tip, odds, nk, kickoff, sport) {
   const extraBtn = (m) => {
     const ev = (m.p * m.q - 1) * 100;
     const isValue = ev >= 3;
-    const src = isValue ? 'value' : 'manual';
+    // P0-A: model-tip predictions always manual (no canonical signal_id)
+    const src = 'manual';
     const stake = isValue ? 10 : 5;
     const cardStyle = isValue
       ? 'background:rgba(0,200,83,.10);border:1px solid rgba(0,200,83,.45)'
@@ -481,6 +484,9 @@ function sigCard(s, showMatch) {
   const matchLine = showMatch
     ? `<div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px"><span>⚽</span><span>${esc(sh)}</span><span style="color:var(--muted)">vs</span><span>${esc(sa)}</span></div>`
     : '';
+  // P0-A: determine if this signal has a canonical identity for value-bet placement
+  const _hasCanonicalId = !!(s.signal_id && s.signal_status === 'ACTIVE');
+  const _isLegacySignal = !_hasCanonicalId;
   const btnAttrs = [
     `data-match="${esc(s.match)}"`,
     `data-market="${esc(s.market)}"`,
@@ -492,6 +498,14 @@ function sigCard(s, showMatch) {
     `data-confidence="${esc(s.confidence||'')}"`,
     `data-kickoff="${esc(s.kickoff||'')}"`,
     `data-sport="${esc(s.sport||'')}"`,
+    // P0-A: canonical identity fields
+    `data-signal-id="${esc(s.signal_id||'')}"`,
+    `data-signal-status="${esc(s.signal_status||'')}"`,
+    `data-fixture-key="${esc(s.fixture_key||'')}"`,
+    `data-league="${esc(s.league||'')}"`,
+    `data-odds-ts="${esc(s.odds_ts||'')}"`,
+    // P0-A: for legacy signals, force source=manual
+    `data-source="${_isLegacySignal ? 'manual' : 'value'}"`,
   ].join(' ');
   // Prob-Bars: visueller Vergleich Markt vs Modell (nur wenn fair_prob vorhanden)
   const _edge = s.fair_prob > 0 && s.model_prob > 0 ? s.model_prob - s.fair_prob : null;
@@ -590,7 +604,9 @@ function sigCard(s, showMatch) {
     ${whyInline}
     ${['h1_goals_2_4','h2_goals_2_4','h1_goals_2_4_no','h2_goals_2_4_no'].includes(s.market)
       ? `<div style="font-size:10px;color:var(--muted);padding:2px 8px 6px">⚠ HZ-Settlement manuell — Quote beim Buchmacher prüfen</div>`
-      : `<button class="place-bet-btn" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="Wette platzieren">Wette platzieren · €${s.stake_eur.toFixed(0)}</button>`}
+      : _isLegacySignal
+        ? `<button class="place-bet-btn place-bet-btn-manual" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} data-disabled-reason="legacy-signal" aria-label="Manuelle Wette (kein kanonisches Signal)" style="background:rgba(210,153,34,.12);color:var(--yellow);border-color:rgba(210,153,34,.35)">Manuell wetten · €${s.stake_eur.toFixed(0)}</button>`
+        : `<button class="place-bet-btn" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="Wette platzieren">Wette platzieren · €${s.stake_eur.toFixed(0)}</button>`}
     ${(['ah-1.5_a','ah+1.5_b'].includes(s.market)||s.market.match(/^ah[+-]/))
       ? `<div style="font-size:10px;color:#ffb347;background:rgba(58,44,0,0.6);padding:3px 8px 5px;border-top:1px solid rgba(90,70,0,0.5)">⚠ Satz-AH = SET Handicap — beim Buchmacher <strong>Sätze-Handicap</strong> wählen, NICHT Spiele-Handicap</div>`
       : ''}
