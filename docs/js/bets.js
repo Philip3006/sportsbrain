@@ -1,8 +1,11 @@
 // ── P0-A: Canonical actionability contract (mirrors Python signal_contract.py) ──
 
-const _TERMINAL_STATUSES = new Set(['FINISHED', 'CANCELLED', 'POSTPONED', 'ABANDONED', 'TERMINATED']);
+const _TERMINAL_STATUSES = new Set(['FINISHED', 'CANCELLED', 'POSTPONED', 'ABANDONED', 'TERMINATED', 'COMPLETED']);
 const _LIVE_STATUSES = new Set(['LIVE', 'IN_PROGRESS']);
-const _MAX_ODDS_AGE_MS = 14400 * 1000; // 4 hours
+// P1.5-H canonical freshness: 30 minutes (mirrors _MAX_ODDS_AGE_SECONDS in signal_contract.py)
+const _MAX_ODDS_AGE_MS = 1800 * 1000;
+// Canonical EV ceiling: MAX_EV = 0.40 → 40 percentage points
+const _MAX_EV_PCT = 40.0;
 const _MAX_ACTIVE_BETS = 3;
 const _MAX_STAKE_PCT = 0.05;
 
@@ -45,10 +48,11 @@ function isActionableValueSignal(signal, bankroll, activeCount) {
     return { ok: false, reason: `current_odds must be > 1.0, got ${signal.current_odds}` };
   }
 
-  // 9+10+11. current_ev_pct finite, in range, > 0
+  // 9+10+11. current_ev_pct finite, within canonical bounds (MAX_EV = 40%), > 0
   const ev = Number(signal.current_ev_pct);
   if (!Number.isFinite(ev)) return { ok: false, reason: 'current_ev_pct not finite' };
-  if (ev >= 500 || ev <= -100) return { ok: false, reason: `current_ev_pct out of range: ${ev}` };
+  if (ev > _MAX_EV_PCT) return { ok: false, reason: `current_ev_pct exceeds canonical MAX_EV (${_MAX_EV_PCT}%): ${ev}` };
+  if (ev <= -100) return { ok: false, reason: `current_ev_pct implausibly low: ${ev}` };
   if (ev <= 0) return { ok: false, reason: `current_ev_pct must be > 0 for a value bet, got ${ev}` };
 
   // 12+13. odds_ts present and within 4h
@@ -484,7 +488,19 @@ function renderBankrollStrip() {
 
 // ── Bet-Modal & Worker-Submit ─────────────────────────────────
 const WORKER_BASE = CLOUD_URL.replace(/\/signals\.json$/, '');
-const BANKROLL_START = 100; // 5%-Regel-Referenz; ggf. später aus _bankrollState.start ableiten
+const BANKROLL_START = 100;
+
+// Returns authoritative current bankroll = free cash + staked amount.
+// Falls back to BANKROLL_START when state is not yet loaded.
+// Worker + consumer are the final security boundary; this is for UI pre-validation.
+function _currentBankroll() {
+  if (!_bankrollState) return BANKROLL_START;
+  const free = Number(_bankrollState.free);
+  const staked = Number(_bankrollState.staked);
+  if (Number.isFinite(free) && Number.isFinite(staked)) return Math.max(0, free + staked);
+  const start = Number(_bankrollState.start);
+  return Number.isFinite(start) && start > 0 ? start : BANKROLL_START;
+}
 function _applyUserBankroll(amount) {
   if (!amount || amount < 10) return;
   // D4/D5: localStorage-Wert hat Vorrang, wenn Backend nur den €100-Default
@@ -515,9 +531,9 @@ function _calcKellyStake() {
   // f* = (p*o - 1) / (o - 1)
   const fFull = (p * o - 1) / (o - 1);
   if (fFull <= 0) return null;
-  const bk = (_bankrollState && _bankrollState.start) ? _bankrollState.start : BANKROLL_START;
+  const bk = _currentBankroll();
   const stake = bk * fFull * _KELLY_FRAC;
-  // P0-A: cap at 5% of bankroll, then round to 0.50€ granularity
+  // Proactive UI cap (pre-confirmation): cap at 5% of current bankroll
   const { stake: capped } = computeSafeStake(bk, stake);
   const rounded = Math.max(0.5, Math.min(25, Math.round(capped * 2) / 2));
   return rounded;
@@ -525,8 +541,8 @@ function _calcKellyStake() {
 function _setStake(v) {
   const inp = document.getElementById('bet-modal-stake');
   if (!inp) return;
-  // P0-A: always apply 5% cap before setting
-  const bk = (_bankrollState && _bankrollState.start) ? _bankrollState.start : BANKROLL_START;
+  // Proactive UI cap (pre-confirmation): cap at 5% of current bankroll
+  const bk = _currentBankroll();
   const { stake, capApplied } = computeSafeStake(bk, v);
   inp.value = stake.toFixed(2);
   if (capApplied) {
@@ -537,7 +553,7 @@ function _setStake(v) {
 function _renderQuickStakes() {
   const wrap = document.getElementById('bet-modal-quick-stakes');
   if (!wrap) return;
-  const bk = (_bankrollState && _bankrollState.start) ? _bankrollState.start : BANKROLL_START;
+  const bk = _currentBankroll();
   const maxStake = bk * _MAX_STAKE_PCT;
   const kelly = _calcKellyStake();
   const half  = kelly != null ? Math.max(0.5, Math.round(kelly / 2 * 2) / 2) : null;
@@ -566,6 +582,33 @@ function _renderQuickStakes() {
 function _openBetModalFromBtn(btn) {
   const d = btn.dataset;
   const source = (d.source === 'manual') ? 'manual' : 'value';
+
+  // P0-A: evaluate the full canonical actionability contract before opening VALUE-bet modal
+  if (source === 'value') {
+    const bk = _currentBankroll();
+    const activeCount = (_openBets || []).length;
+    const sig = {
+      signal_id:      d.signalId || d.signal_id || '',
+      signal_status:  d.signalStatus || d.signal_status || '',
+      shadow:         d.shadow === 'true',
+      is_shadow:      d.isShadow === 'true',
+      unsupported:    d.unsupported === 'true',
+      edge_lost:      d.edgeLost === 'true',
+      stale:          d.stale === 'true',
+      no_bet_flag:    d.noBetFlag === 'true',
+      current_odds:   parseFloat(d.currentOdds || d.odds || '0'),
+      current_ev_pct: parseFloat(d.currentEv || d.ev || '0'),
+      odds_ts:        d.oddsTs || d.odds_ts || '',
+      event_status:   d.eventStatus || d.event_status || '',
+      sport:          d.sport || '',
+    };
+    const { ok, reason } = isActionableValueSignal(sig, bk, activeCount);
+    if (!ok) {
+      showToast(`Wette nicht möglich: ${reason}`, 'error');
+      return;
+    }
+  }
+
   const modelProbRaw = parseFloat(d.modelProb || '0');
   const modelProb = (modelProbRaw > 0 && modelProbRaw <= 1) ? modelProbRaw
                   : (modelProbRaw > 1 && modelProbRaw <= 100) ? modelProbRaw / 100
@@ -689,29 +732,28 @@ function _updateBetModalCalcs() {
       drawer.style.display = 'none';
     }
   }
-  // P0-A: warn if stake exceeds 5% cap
-  const capCeiling = start * _MAX_STAKE_PCT;
+  // P0-A: warn if stake exceeds 5% cap; disable confirm if over cap
+  const bkCurrent = _currentBankroll();
+  const capCeiling = bkCurrent * _MAX_STAKE_PCT;
   const warn = document.getElementById('bet-modal-warn');
   warn.classList.toggle('show', stake > capCeiling + 0.001);
   const btn = document.getElementById('bet-modal-confirm');
   const oddsOk = odds >= 1.01 && odds <= 100;
-  // Disable confirm if stake > 5% cap (must use _setStake or reduce manually)
   btn.disabled = !(stake >= 0.5 && stake <= 25 && stake <= capCeiling + 0.001 && oddsOk);
 }
 
 async function _submitBet() {
   if (!_pendingBet) return;
-  const bk = (_bankrollState && _bankrollState.start) ? _bankrollState.start : BANKROLL_START;
+  const bk = _currentBankroll();
 
-  // P0-A: apply 5% cap to stake before submission
+  // P0-A: REJECT at submission if stake exceeds 5% cap (do not silently alter confirmed amount)
+  // The UI already caps proactively via computeSafeStake; reaching here over-cap is an error.
   const rawStake = parseFloat(document.getElementById('bet-modal-stake').value) || 0;
-  const { stake, capApplied } = computeSafeStake(bk, rawStake);
-  if (capApplied) {
-    // Update the UI to reflect the capped value
-    const inp = document.getElementById('bet-modal-stake');
-    if (inp) inp.value = stake.toFixed(2);
-    showToast(`Einsatz auf 5%-Limit (€${stake.toFixed(2)}) begrenzt`, 'info');
-    _updateBetModalCalcs();
+  const stake = rawStake;
+  const capCeiling = bk * _MAX_STAKE_PCT;
+  if (stake > capCeiling + 0.001) {
+    showToast(`Einsatz €${stake.toFixed(2)} überschreitet 5%-Limit (€${capCeiling.toFixed(2)}) — bitte korrigieren`, 'error');
+    return;
   }
 
   if (stake < 0.5 || stake > 25) { showToast('Einsatz muss zwischen €0.50 und €25 liegen', 'error'); return; }
@@ -721,8 +763,9 @@ async function _submitBet() {
   const token = localStorage.getItem('sb_token');
   if (!token) { _openTokenModal(); return; }
 
-  const hasModelProb = _pendingBet.model_prob && _pendingBet.model_prob > 0;
-  const source = hasModelProb ? (_pendingBet.source || 'value') : 'manual';
+  // P0-A: source is determined at modal-open time (from dataset); not derived from model_prob.
+  // Manual betting is always explicit — never silently derived.
+  const source = _pendingBet.source || 'manual';
 
   // P0-A: manual bet confirmation dialog
   if (source === 'manual') {
@@ -744,9 +787,8 @@ async function _submitBet() {
     odds,
     stake_eur: stake,
     source,
-    // P0-A: bankroll_hint for Worker 5% cap validation
+    // Informational only — Worker uses authoritative KV state, not this value
     bankroll_hint: bk,
-    // P0-A: open_bets_count for Worker active-bet check
     open_bets_count: openBetsCount,
     // P0-A: identity fields
     signal_id: _pendingBet.signal_id || '',

@@ -487,12 +487,20 @@ function sigCard(s, showMatch) {
   // P0-A: determine if this signal has a canonical identity for value-bet placement
   const _hasCanonicalId = !!(s.signal_id && s.signal_status === 'ACTIVE');
   const _isLegacySignal = !_hasCanonicalId;
+  // P0-A: current_odds is authoritative for modal/submission; scan odds are informational only
+  const _actionableOdds = (s.current_odds != null && Number.isFinite(s.current_odds) && s.current_odds > 1)
+    ? s.current_odds : s.odds;
+  const _actionableEv = (s.current_ev_pct != null && Number.isFinite(s.current_ev_pct))
+    ? s.current_ev_pct : s.ev_pct;
   const btnAttrs = [
     `data-match="${esc(s.match)}"`,
     `data-market="${esc(s.market)}"`,
-    `data-odds="${s.odds}"`,
+    // data-odds carries authoritative current_odds (not scan-time odds)
+    `data-odds="${_actionableOdds}"`,
+    `data-current-odds="${_actionableOdds}"`,
     `data-stake="${s.stake_eur}"`,
-    `data-ev="${s.ev_pct}"`,
+    `data-ev="${_actionableEv}"`,
+    `data-current-ev="${_actionableEv}"`,
     `data-model-prob="${s.model_prob || 0}"`,
     `data-fair-prob="${s.fair_prob || 0}"`,
     `data-confidence="${esc(s.confidence||'')}"`,
@@ -504,6 +512,7 @@ function sigCard(s, showMatch) {
     `data-fixture-key="${esc(s.fixture_key||'')}"`,
     `data-league="${esc(s.league||'')}"`,
     `data-odds-ts="${esc(s.odds_ts||'')}"`,
+    `data-event-status="${esc(s.event_status||'')}"`,
     // P0-A: for legacy signals, force source=manual
     `data-source="${_isLegacySignal ? 'manual' : 'value'}"`,
   ].join(' ');
@@ -1182,17 +1191,29 @@ function renderSport(sport) {
       const trCls = s.ev_pct >= 10 ? 'ev-h' : '';
       const lbl = marketLabel(s.market, s.match);
       const isManual = ['h1_goals_2_4','h2_goals_2_4','h1_goals_2_4_no','h2_goals_2_4_no'].includes(s.market);
+      const _cOdds = (s.current_odds != null && Number.isFinite(s.current_odds) && s.current_odds > 1) ? s.current_odds : s.odds;
+      const _cEv = (s.current_ev_pct != null && Number.isFinite(s.current_ev_pct)) ? s.current_ev_pct : s.ev_pct;
+      const _hasCanonical = !!(s.signal_id && s.signal_status === 'ACTIVE');
       const btnAttrs = isManual ? '' : [
         `type="button"`,
         `data-match="${esc(s.match)}"`,
         `data-market="${esc(s.market)}"`,
-        `data-odds="${s.odds}"`,
+        `data-odds="${_cOdds}"`,
+        `data-current-odds="${_cOdds}"`,
         `data-stake="${s.stake_eur}"`,
-        `data-ev="${s.ev_pct}"`,
+        `data-ev="${_cEv}"`,
+        `data-current-ev="${_cEv}"`,
         `data-model-prob="${s.model_prob || 0}"`,
         `data-confidence="${esc(s.confidence||'')}"`,
         `data-kickoff="${esc(s.kickoff||'')}"`,
         `data-sport="${esc(s.sport||'')}"`,
+        `data-signal-id="${esc(s.signal_id||'')}"`,
+        `data-signal-status="${esc(s.signal_status||'')}"`,
+        `data-fixture-key="${esc(s.fixture_key||'')}"`,
+        `data-league="${esc(s.league||'')}"`,
+        `data-odds-ts="${esc(s.odds_ts||'')}"`,
+        `data-event-status="${esc(s.event_status||'')}"`,
+        `data-source="${_hasCanonical ? 'value' : 'manual'}"`,
         `onclick="event.stopPropagation();_openBetModalFromBtn(this)"`,
       ].join(' ');
       const btn = isManual

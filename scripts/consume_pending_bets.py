@@ -35,17 +35,24 @@ _ROOT = _THIS_DIR.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from src.betting.ledger import _FIELDS, _load, _save, _file_lock, _resolve_ledger_path, count_open_bets, ledger_summary
-from src.betting.signal_contract import compute_safe_stake
-from src.config import DEFAULT_USER, MAX_ACTIVE_BETS, BANKROLL_START
+from src.betting.ledger import (
+    _FIELDS,
+    _file_lock,
+    _load,
+    _resolve_ledger_path,
+    _save,
+    count_open_bets,
+    ledger_summary,
+)
+from src.betting.signal_contract import validate_stake_cap
+from src.config import BANKROLL_START, DEFAULT_USER, MAX_ACTIVE_BETS
 
 
 def _worker_base() -> str:
     url = os.getenv("SIGNALS_CLOUD_URL", "").strip()
     if not url:
         raise SystemExit("SIGNALS_CLOUD_URL not set")
-    if url.endswith("/signals.json"):
-        url = url[: -len("/signals.json")]
+    url = url.removesuffix("/signals.json")
     return url.rstrip("/")
 
 
@@ -67,16 +74,24 @@ def _get_live_bankroll(user: str = DEFAULT_USER) -> float | None:
     try:
         summary = ledger_summary(user=user)
         return round(BANKROLL_START + summary["total_pnl"], 2)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         print(f"[consume] bankroll lookup failed: {exc}", file=sys.stderr)
         return None
 
 
-def _row_from_bet(bet: dict, today: str, bankroll: float | None = None) -> dict | tuple[None, str]:
+def _row_from_bet(
+    bet: dict,
+    today: str,
+    bankroll: float | None = None,
+) -> tuple[dict, dict] | tuple[None, str]:
     """Build a ledger row from a pending bet payload.
 
-    Returns the row dict, or (None, reason) if the bet cannot be written.
-    When bankroll is provided the 5% cap is enforced and stake_pct is truthful.
+    Returns (row_dict, extra_fields) or (None, reason_str).
+
+    P0-A security rules (applied at this boundary):
+    - ALL bets (value and manual) require an authoritative bankroll.
+    - stake > 5% of bankroll → REJECT (not silently cap).
+    - source=value without a valid signal_id → REJECT (not reclassify).
     """
     match = (bet.get("match") or "").strip()
     if " vs " not in match:
@@ -90,25 +105,27 @@ def _row_from_bet(bet: dict, today: str, bankroll: float | None = None) -> dict 
     kickoff = bet.get("kickoff") or ""
     match_date = kickoff[:10] if kickoff else ""
 
-    # Source validation: reclassify to manual if signal_id missing for value bets
     source = (bet.get("source") or "value").strip().lower()
     if source not in ("value", "manual"):
-        source = "value"
-    signal_id = (bet.get("signal_id") or "").strip()
-    if source == "value" and not signal_id:
-        source = "manual"  # reclassify — no canonical signal identity
+        return None, f"invalid source {source!r}"
 
-    # 5% bankroll cap revalidation
-    cap_applied = False
-    if bankroll is not None and bankroll > 0:
-        stake, cap_applied = compute_safe_stake(bankroll, stake_raw)
-        stake_pct_val = round(stake / bankroll * 100, 4)
-    elif source == "value" and bankroll is None:
-        # Fail closed for value bets when bankroll is unknown
-        return None, "bankroll unknown — cannot revalidate 5% cap for value bet"
-    else:
-        stake = stake_raw
-        stake_pct_val = 0.0  # manual bets without bankroll context
+    signal_id = (bet.get("signal_id") or "").strip()
+
+    # P0-A: source=value requires a valid canonical signal_id — REJECT, do NOT reclassify
+    if source == "value" and not signal_id:
+        return None, "source=value requires signal_id — REJECT (use explicit source=manual for manual bets)"
+
+    # P0-A: ALL bets require an authoritative bankroll
+    if bankroll is None or bankroll <= 0:
+        return None, "authoritative bankroll unavailable — cannot enforce 5% cap, bet rejected"
+
+    # P0-A: REJECT if stake exceeds 5% cap (do not silently alter confirmed payload)
+    cap_ok, cap_reason = validate_stake_cap(bankroll, stake_raw)
+    if not cap_ok:
+        return None, f"5% cap violation: {cap_reason}"
+    cap_applied = False  # stake passed validation without capping
+
+    stake_pct_val = round(stake_raw / bankroll * 100, 4)
 
     model_prob_raw = bet.get("model_prob")
     if model_prob_raw is None or model_prob_raw == "":
@@ -127,7 +144,7 @@ def _row_from_bet(bet: dict, today: str, bankroll: float | None = None) -> dict 
         "market":           market,
         "decimal_odds":     f"{odds:.4f}",
         "stake_pct":        f"{stake_pct_val:.4f}",
-        "stake_amount":     f"{stake:.2f}",
+        "stake_amount":     f"{stake_raw:.2f}",
         "placed_date":      today,
         "status":           "open",
         "pnl":              "0.0",
@@ -136,18 +153,16 @@ def _row_from_bet(bet: dict, today: str, bankroll: float | None = None) -> dict 
         "pinnacle_ref_odds": "",
         "source":           source,
         "model_prob":       model_prob_str,
-        # Extra identity fields (stored as stake_reason for backward-compat CSV schema)
-        # Actual new fields are written via extra_fields dict passed to _append_rows
-    }
-    extra = {
+        "stake_reason":     "",
+        "league":           (bet.get("league") or "").strip(),
+        # P0-A: canonical identity + risk provenance as explicit ledger fields
         "signal_id":          signal_id,
         "fixture_key":        (bet.get("fixture_key") or "").strip(),
         "sport":              (bet.get("sport") or "").strip(),
-        "league":             (bet.get("league") or "").strip(),
-        "bankroll_at_placement": f"{bankroll:.2f}" if bankroll is not None else "",
+        "bankroll_at_placement": f"{bankroll:.2f}",
         "cap_applied":        str(cap_applied).lower(),
     }
-    return row, extra
+    return row, {}
 
 
 def _append_rows(rows: list[dict], user: str = DEFAULT_USER) -> int:
@@ -162,22 +177,7 @@ def _append_rows(rows: list[dict], user: str = DEFAULT_USER) -> int:
         ))
         new_rows = [r for r in rows if (r["match_id"], r["market"]) not in existing]
         if new_rows:
-            # Only include canonical _FIELDS columns — extra identity fields are
-            # piggy-backed onto stake_reason where schema allows, otherwise dropped
-            # gracefully to keep backward-compat with existing CSV schema.
-            safe_rows = []
-            for r in new_rows:
-                # stake_reason: encode signal_id + fixture_key for traceability
-                sig_id = r.pop("signal_id", "")
-                fix_key = r.pop("fixture_key", "")
-                r.pop("bankroll_at_placement", None)
-                r.pop("cap_applied", None)
-                r.pop("sport", None)
-                # league is a canonical _FIELDS column — keep it
-                if sig_id or fix_key:
-                    r["stake_reason"] = f"sig={sig_id} fix={fix_key}".strip()
-                safe_rows.append(r)
-            new_df = pd.DataFrame(safe_rows, columns=_FIELDS)
+            new_df = pd.DataFrame(new_rows, columns=_FIELDS)
             df = pd.concat([df, new_df], ignore_index=True)
             _save(df, ledger_path)
     return len(new_rows)
@@ -209,7 +209,7 @@ def _consume_user(base: str, headers: dict, user: str) -> int:
 
     today = pd.Timestamp.now().strftime("%Y-%m-%d")
 
-    # Fetch bankroll once for this user (used for 5% cap revalidation)
+    # Fetch authoritative bankroll once for this user (required for ALL bets)
     bankroll = _get_live_bankroll(user)
 
     rows = []
@@ -217,12 +217,6 @@ def _consume_user(base: str, headers: dict, user: str) -> int:
     for b in bets:
         # Enforce MAX_ACTIVE_BETS before adding each new bet
         current_open = count_open_bets(user=user) + len(rows)
-        source = (b.get("source") or "value").strip().lower()
-        if source not in ("value", "manual"):
-            source = "value"
-        signal_id = (b.get("signal_id") or "").strip()
-        if source == "value" and not signal_id:
-            source = "manual"
         if current_open >= MAX_ACTIVE_BETS:
             print(
                 f"[consume:{user}] REJECT bet — max active bets ({MAX_ACTIVE_BETS}) reached",
@@ -232,18 +226,15 @@ def _consume_user(base: str, headers: dict, user: str) -> int:
             continue
 
         result = _row_from_bet(b, today, bankroll)
-        if isinstance(result, tuple):
-            row, extra = result
+        if isinstance(result, tuple) and len(result) == 2:
+            row, _extra = result
         else:
-            row, extra = result, {}
+            row, _extra = None, "unexpected result"
         if row is None:
-            reason = extra if isinstance(extra, str) else "invalid"
+            reason = _extra if isinstance(_extra, str) else "invalid"
             print(f"[consume:{user}] SKIP bet: {reason}", file=sys.stderr)
             ids_for_row.append((b.get("id", ""), "invalid"))
             continue
-        # Merge extra identity fields into the row
-        if isinstance(extra, dict):
-            row.update({k: v for k, v in extra.items() if k not in row})
         rows.append(row)
         ids_for_row.append((b.get("id", ""), "ok"))
 
@@ -298,7 +289,7 @@ def _process_cancel_requests(base: str, headers: dict, user: str) -> int:
         try:
             retry_request("DELETE", f"{base}/cancel_requests{suffix}", headers=headers,
                           timeout=8, retries=1, log_prefix=f"[cancel:{user}]")
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass
     return cancelled
 
@@ -325,7 +316,7 @@ def main() -> int:
             from src.notifications.web_dashboard import write_signals_json_all_users
             write_signals_json_all_users()
             print("[consume] KV state refreshed")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"[consume] KV refresh failed (non-fatal): {e}", file=sys.stderr)
 
         # Push ledger to GitHub so the CI watchdog sees the new bets and
@@ -335,7 +326,7 @@ def main() -> int:
             ROOT = Path(__file__).resolve().parent.parent
             def _g(*args):
                 return subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
-                                      text=True, timeout=30)
+                                      text=True, timeout=30, check=False)
             # Only the ledger files — no other files (avoid pushing local-only state).
             # Add all per-user ledger files that may have changed.
             _g("add", "results/ledger_*.csv")
@@ -352,12 +343,13 @@ def main() -> int:
                         break
                     print(f"[consume] push attempt {attempt} failed: "
                           f"{push.stderr.strip()[:120]}", file=sys.stderr)
-                    import time as _t, random as _r
+                    import random as _r
+                    import time as _t
                     _t.sleep(_r.randint(2, 6))
                 else:
                     print("[consume] ledger push gave up after 5 attempts",
                           file=sys.stderr)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"[consume] ledger push failed (non-fatal): {e}", file=sys.stderr)
 
     return 0

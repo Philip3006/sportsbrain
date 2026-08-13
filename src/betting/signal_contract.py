@@ -8,20 +8,24 @@ Fail closed: any missing/invalid field returns False + reason.
 from __future__ import annotations
 
 import math
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
-from src.config import MAX_ACTIVE_BETS
+from src.config import MAX_ACTIVE_BETS, MAX_EV
 
 # ── Public constants ─────────────────────────────────────────────────────────
 
-TERMINAL_STATUSES = {"FINISHED", "CANCELLED", "POSTPONED", "ABANDONED", "TERMINATED"}
+TERMINAL_STATUSES = {"FINISHED", "CANCELLED", "POSTPONED", "ABANDONED", "TERMINATED", "COMPLETED"}
 LIVE_STATUSES = {"LIVE", "IN_PROGRESS"}
 
 # Hard 5% bankroll cap — mirrors BANKROLL_RISK_CAP_PCT in config.py
 MAX_STAKE_PCT = 0.05
 
-# Maximum odds_ts age before a signal is treated as stale (seconds)
-_MAX_ODDS_AGE_SECONDS = 14400  # 4 hours
+# Maximum odds_ts age before a signal is treated as stale (seconds).
+# P1.5-H canonical freshness threshold: 30 minutes.
+_MAX_ODDS_AGE_SECONDS = 1800  # 30 minutes
+
+# EV upper bound in percentage points (MAX_EV from config is a fraction: 0.40 → 40 pp)
+_MAX_EV_PCT = MAX_EV * 100  # 40.0
 
 
 def is_actionable_value_signal(
@@ -91,9 +95,11 @@ def is_actionable_value_signal(
     if not math.isfinite(current_ev_pct):
         return False, f"current_ev_pct must be finite, got {current_ev_pct}"
 
-    # 10. Reject absurd EV values
-    if not (-100 < current_ev_pct < 500):
-        return False, f"current_ev_pct out of plausible range (-100, 500): {current_ev_pct}"
+    # 10. Reject artifact EV values (SportsBrain canonical MAX_EV = 40%)
+    if current_ev_pct > _MAX_EV_PCT:
+        return False, f"current_ev_pct exceeds canonical MAX_EV ({_MAX_EV_PCT}%): {current_ev_pct}"
+    if current_ev_pct <= -100:
+        return False, f"current_ev_pct implausibly low: {current_ev_pct}"
 
     # 11. EV must be positive for a value bet
     if current_ev_pct <= 0:
@@ -104,10 +110,9 @@ def is_actionable_value_signal(
     if not odds_ts_raw:
         return False, "odds_ts missing"
 
-    # 13. odds_ts must be within 4 hours of now
+    # 13. odds_ts must be within canonical freshness window (30 minutes)
     try:
         if isinstance(odds_ts_raw, str):
-            # Handle ISO strings with or without Z suffix
             ts_str = odds_ts_raw.replace("Z", "+00:00")
             odds_ts = datetime.fromisoformat(ts_str)
             if odds_ts.tzinfo is None:
@@ -118,7 +123,7 @@ def is_actionable_value_signal(
         age_seconds = (now - odds_ts).total_seconds()
         if age_seconds > _MAX_ODDS_AGE_SECONDS:
             return False, f"odds_ts stale: {age_seconds:.0f}s old (max {_MAX_ODDS_AGE_SECONDS}s)"
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         return False, f"odds_ts parse error: {exc}"
 
     # 14. event_status must not be LIVE or IN_PROGRESS
@@ -126,7 +131,7 @@ def is_actionable_value_signal(
     if event_status in LIVE_STATUSES:
         return False, f"event_status is live: {event_status!r}"
 
-    # 15. event_status must not be terminal
+    # 15. event_status must not be terminal (includes COMPLETED)
     if event_status in TERMINAL_STATUSES:
         return False, f"event_status is terminal: {event_status!r}"
 
@@ -154,11 +159,36 @@ def is_actionable_value_signal(
     return True, "ok"
 
 
+def validate_stake_cap(bankroll: float, stake_eur: float) -> tuple[bool, str]:
+    """Return (ok, reason) — REJECTS if stake exceeds the 5% bankroll cap.
+
+    Use at security boundaries (Worker / consumer): an incoming confirmed stake
+    that exceeds the cap is rejected, not silently altered.
+    The UI uses compute_safe_stake() for proactive pre-confirmation capping.
+    """
+    try:
+        br = float(bankroll)
+        stake = float(stake_eur)
+    except (TypeError, ValueError):
+        return False, f"invalid bankroll ({bankroll!r}) or stake ({stake_eur!r})"
+    if not math.isfinite(br) or br <= 0:
+        return False, f"bankroll must be > 0, got {br}"
+    if not math.isfinite(stake) or stake <= 0:
+        return False, f"stake must be > 0, got {stake}"
+    ceiling = br * MAX_STAKE_PCT
+    if stake > ceiling + 0.001:  # 0.001 EUR tolerance for floating-point rounding
+        return False, (
+            f"stake €{stake:.2f} exceeds 5% cap (€{ceiling:.2f}) of bankroll €{br:.2f}"
+        )
+    return True, "ok"
+
+
 def compute_safe_stake(bankroll: float, requested_eur: float) -> tuple[float, bool]:
-    """Return (capped_stake, cap_was_applied).
+    """Return (capped_stake, cap_was_applied) — for UI/proactive pre-confirmation capping.
 
     Hard cap: bankroll * MAX_STAKE_PCT (5%).
-    The cap can only reduce the requested stake, never increase it.
+    Cap can only reduce the stake, never increase it.
+    Use at security boundaries (Worker / consumer) use validate_stake_cap() instead.
     """
     try:
         br = float(bankroll)

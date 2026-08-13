@@ -148,6 +148,9 @@ _FIELDS = [
     "pinnacle_ref_odds",
     "source", "model_prob", "stake_reason",
     "league",  # Registry short-code (wm2026 | bl2 | atp | wta | ...) — settle_from_results routet danach
+    # P0-A: canonical bet identity + risk provenance (new rows only; legacy rows get "")
+    "signal_id", "fixture_key", "sport",
+    "bankroll_at_placement", "cap_applied",
 ]
 
 
@@ -185,6 +188,12 @@ def _load(path: Path) -> pd.DataFrame:
         df["league"] = "wm2026"
     else:
         df["league"] = df["league"].fillna("wm2026").replace("", "wm2026")
+    # P0-A: canonical identity fields — empty string for legacy rows
+    for _col in ("signal_id", "fixture_key", "sport", "bankroll_at_placement", "cap_applied"):
+        if _col not in df.columns:
+            df[_col] = ""
+        else:
+            df[_col] = df[_col].fillna("")
     return df
 
 

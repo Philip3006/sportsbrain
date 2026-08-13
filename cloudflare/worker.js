@@ -140,6 +140,30 @@ async function writePending(env, arr, user = DEFAULT_USER) {
   await env.SIGNALS.put(_pendingKey(user), JSON.stringify(arr));
 }
 
+// P0-A: Read authoritative state published by Python backend (bankroll + open_bets).
+// Returns { bankroll: number|null, openBetsCount: number|null } from KV signals_json.
+// null means the data is unavailable or unparseable — callers must FAIL CLOSED.
+async function readAuthoritativeState(env, user = DEFAULT_USER) {
+  try {
+    const raw = await env.SIGNALS.get(_signalsKey(user));
+    if (!raw) return { bankroll: null, openBetsCount: null };
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== 'object') return { bankroll: null, openBetsCount: null };
+    // bankroll = free + staked (= current bankroll at last backend publish)
+    const bs = data.bankroll_state;
+    let bankroll = null;
+    if (bs && Number.isFinite(Number(bs.free)) && Number.isFinite(Number(bs.staked))) {
+      bankroll = Number(bs.free) + Number(bs.staked);
+    }
+    // open_bets is the ledger array published by the backend
+    const openBetsArr = data.open_bets;
+    const openBetsCount = Array.isArray(openBetsArr) ? openBetsArr.length : null;
+    return { bankroll, openBetsCount };
+  } catch {
+    return { bankroll: null, openBetsCount: null };
+  }
+}
+
 function _cancelKey(user) {
   return (user && user !== DEFAULT_USER) ? `cancel_requests_${user}` : 'cancel_requests';
 }
@@ -359,47 +383,51 @@ export default {
         if (!isValidMarket(market)) return jr({ error: 'unknown market: ' + market }, 400);
         if (!Number.isFinite(odds) || odds < 1.01 || odds > 100) return jr({ error: 'odds out of range (1.01–100)' }, 400);
 
-        // P0-A: Absolute €25 ceiling regardless of bankroll
+        // Absolute €25 ceiling regardless of bankroll
         const SAFE_MAX_STAKE = 25.0;
         if (!Number.isFinite(stake) || stake < 0.5 || stake > SAFE_MAX_STAKE) {
           return jr({ error: `stake_eur out of range (0.5–${SAFE_MAX_STAKE})` }, 400);
         }
 
         const rawSource = (body.source || 'value').toString().toLowerCase();
-        let source = (rawSource === 'manual') ? 'manual' : 'value';
-
-        // P0-A: source validation
+        const source = (rawSource === 'manual') ? 'manual' : 'value';
         if (!['value', 'manual'].includes(source)) {
           return jr({ error: 'source must be "value" or "manual"' }, 400);
         }
 
-        // P0-A: signal_id required for value bets; reclassify to manual if absent
+        // P0-A: source=value requires signal_id — REJECT, do NOT silently reclassify
         const signalId = (body.signal_id || '').toString().trim();
         if (source === 'value' && !signalId) {
-          source = 'manual';  // reclassify — no canonical signal identity
+          return jr({ error: 'source=value requires signal_id — use explicit source=manual for manual bets' }, 400);
         }
 
-        // P0-A: bankroll_hint validation for value bets (fail closed)
-        if (source === 'value') {
-          const bankrollHint = Number(body.bankroll_hint);
-          if (!Number.isFinite(bankrollHint) || bankrollHint <= 0) {
-            return jr({ error: 'bankroll_hint required for value bets (finite, > 0)' }, 400);
-          }
-          // 5% cap: stake must not exceed bankroll_hint * 0.05
-          const cap = bankrollHint * 0.05;
-          if (stake > cap + 0.001) {
-            return jr({
-              error: `stake_eur ${stake.toFixed(2)} exceeds 5% cap (${cap.toFixed(2)}) of bankroll_hint ${bankrollHint.toFixed(2)}`,
-            }, 400);
-          }
+        // P0-A: read authoritative backend state from KV (bankroll + open bets)
+        // Client-supplied bankroll_hint and open_bets_count are INFORMATIONAL ONLY.
+        const { bankroll: authBankroll, openBetsCount: authOpenBets } = await readAuthoritativeState(env, pUser);
+
+        // P0-A: authoritative bankroll required for ALL bet types — FAIL CLOSED if unavailable
+        if (authBankroll === null || authBankroll <= 0) {
+          return jr({ error: 'authoritative bankroll unavailable — fail closed; retry after next signal publish' }, 503);
         }
 
-        // P0-A: active-bet count check
-        const openBetsCount = Number(body.open_bets_count);
+        // P0-A: 5% bankroll cap enforced for ALL bets (value AND manual)
+        const cap = authBankroll * 0.05;
+        if (stake > cap + 0.001) {
+          return jr({
+            error: `stake_eur ${stake.toFixed(2)} exceeds 5% cap (${cap.toFixed(2)}) of authoritative bankroll ${authBankroll.toFixed(2)}`,
+          }, 400);
+        }
+
+        // P0-A: authoritative open-bet count (ledger from KV + pending in KV)
         const arr = await readPending(env, pUser);
-        const pendingValueCount = arr.filter(b => b.source === 'value' || b.source === 'manual').length;
-        if (Number.isFinite(openBetsCount) && openBetsCount + pendingValueCount >= 3) {
-          return jr({ error: 'max active bets (3) reached' }, 400);
+        const pendingCount = arr.length;
+        // If authOpenBets is null (signals_json missing open_bets) — FAIL CLOSED
+        if (authOpenBets === null) {
+          return jr({ error: 'authoritative open-bet count unavailable — fail closed' }, 503);
+        }
+        const totalBets = authOpenBets + pendingCount;
+        if (totalBets >= 3) {
+          return jr({ error: `max active bets (3) reached — ${authOpenBets} in ledger + ${pendingCount} pending` }, 400);
         }
 
         const id = crypto.randomUUID();
