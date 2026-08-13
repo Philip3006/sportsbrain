@@ -20,6 +20,16 @@
 //     rotiert; alter Token bleibt 24h gültig (Grace-Period), damit ein
 //     PWA-Bug nicht sofort den Zugang killt.
 
+import {
+  validateBetBodyBasic,
+  validateSignalActionability,
+  validateBankrollCap,
+  validateActiveBets,
+  validateAuthStateFreshness,
+  validateOddsMatchCanonical,
+  resolveCanonicalSignal,
+} from './contract.js';
+
 const ALLOWED_MARKETS = new Set([
   'home', 'draw', 'away',
   'btts_yes', 'btts_no',
@@ -140,28 +150,39 @@ async function writePending(env, arr, user = DEFAULT_USER) {
   await env.SIGNALS.put(_pendingKey(user), JSON.stringify(arr));
 }
 
-// P0-A: Read authoritative state published by Python backend (bankroll + open_bets).
-// Returns { bankroll: number|null, openBetsCount: number|null } from KV signals_json.
-// null means the data is unavailable or unparseable — callers must FAIL CLOSED.
-async function readAuthoritativeState(env, user = DEFAULT_USER) {
+// P0-A: Read and parse the full signals_json KV snapshot.
+// Returns the parsed object or null if unavailable/unparseable.
+async function readSignalsJson(env, user = DEFAULT_USER) {
   try {
     const raw = await env.SIGNALS.get(_signalsKey(user));
-    if (!raw) return { bankroll: null, openBetsCount: null };
+    if (!raw) return null;
     const data = JSON.parse(raw);
-    if (!data || typeof data !== 'object') return { bankroll: null, openBetsCount: null };
-    // bankroll = free + staked (= current bankroll at last backend publish)
-    const bs = data.bankroll_state;
-    let bankroll = null;
-    if (bs && Number.isFinite(Number(bs.free)) && Number.isFinite(Number(bs.staked))) {
-      bankroll = Number(bs.free) + Number(bs.staked);
-    }
-    // open_bets is the ledger array published by the backend
-    const openBetsArr = data.open_bets;
-    const openBetsCount = Array.isArray(openBetsArr) ? openBetsArr.length : null;
-    return { bankroll, openBetsCount };
+    return (data && typeof data === 'object') ? data : null;
   } catch {
-    return { bankroll: null, openBetsCount: null };
+    return null;
   }
+}
+
+// P0-A: Extract authoritative risk state from parsed signals JSON.
+// Returns { bankroll, openBetsCount, publishedAt } — null fields mean fail closed.
+// publishedAt comes from bankroll_state.published_at (set by Python backend).
+function extractAuthState(data) {
+  if (!data) return { bankroll: null, openBetsCount: null, publishedAt: null };
+  const bs = data.bankroll_state;
+  let bankroll = null;
+  if (bs && Number.isFinite(Number(bs.free)) && Number.isFinite(Number(bs.staked))) {
+    bankroll = Number(bs.free) + Number(bs.staked);
+  }
+  const openBetsArr = data.open_bets;
+  const openBetsCount = Array.isArray(openBetsArr) ? openBetsArr.length : null;
+  const publishedAt = (bs && typeof bs.published_at === 'string') ? bs.published_at : null;
+  return { bankroll, openBetsCount, publishedAt };
+}
+
+// P0-A: Convenience wrapper — reads KV and extracts auth state in one call.
+// Retained for backward-compat with cron helpers that only need auth state.
+async function readAuthoritativeState(env, user = DEFAULT_USER) {
+  return extractAuthState(await readSignalsJson(env, user));
 }
 
 function _cancelKey(user) {
@@ -377,57 +398,60 @@ export default {
         const match = (body.match || '').toString().trim();
         const market = (body.market || '').toString().trim();
         const odds = Number(body.odds);
-        const stake = Number(body.stake_eur);
 
         if (!match || !match.includes(' vs ')) return jr({ error: 'match must be "Home vs Away"' }, 400);
         if (!isValidMarket(market)) return jr({ error: 'unknown market: ' + market }, 400);
         if (!Number.isFinite(odds) || odds < 1.01 || odds > 100) return jr({ error: 'odds out of range (1.01–100)' }, 400);
 
-        // Absolute €25 ceiling regardless of bankroll
-        const SAFE_MAX_STAKE = 25.0;
-        if (!Number.isFinite(stake) || stake < 0.5 || stake > SAFE_MAX_STAKE) {
-          return jr({ error: `stake_eur out of range (0.5–${SAFE_MAX_STAKE})` }, 400);
-        }
+        // P0-A: validate source (exact), stake, signal_id — REJECT invalid source (no coercion)
+        const bodyValidation = validateBetBodyBasic(body);
+        if (!bodyValidation.ok) return jr({ error: bodyValidation.error }, bodyValidation.status);
+        const { source } = bodyValidation;
+        const signalId = String(body.signal_id || '').trim();
+        const stake = Number(body.stake_eur);
 
-        const rawSource = (body.source || 'value').toString().toLowerCase();
-        const source = (rawSource === 'manual') ? 'manual' : 'value';
-        if (!['value', 'manual'].includes(source)) {
-          return jr({ error: 'source must be "value" or "manual"' }, 400);
-        }
+        // P0-A: read signals JSON ONCE — used for auth state AND canonical signal lookup
+        const signalsData = await readSignalsJson(env, pUser);
+        const { bankroll: authBankroll, openBetsCount: authOpenBets, publishedAt } = extractAuthState(signalsData);
 
-        // P0-A: source=value requires signal_id — REJECT, do NOT silently reclassify
-        const signalId = (body.signal_id || '').toString().trim();
-        if (source === 'value' && !signalId) {
-          return jr({ error: 'source=value requires signal_id — use explicit source=manual for manual bets' }, 400);
-        }
-
-        // P0-A: read authoritative backend state from KV (bankroll + open bets)
-        // Client-supplied bankroll_hint and open_bets_count are INFORMATIONAL ONLY.
-        const { bankroll: authBankroll, openBetsCount: authOpenBets } = await readAuthoritativeState(env, pUser);
-
-        // P0-A: authoritative bankroll required for ALL bet types — FAIL CLOSED if unavailable
-        if (authBankroll === null || authBankroll <= 0) {
-          return jr({ error: 'authoritative bankroll unavailable — fail closed; retry after next signal publish' }, 503);
+        // P0-A: authoritative state freshness — FAIL CLOSED if stale (threshold: 2 hours)
+        const freshnessResult = validateAuthStateFreshness(publishedAt);
+        if (!freshnessResult.ok) {
+          return jr({ error: freshnessResult.reason }, 503);
         }
 
         // P0-A: 5% bankroll cap enforced for ALL bets (value AND manual)
-        const cap = authBankroll * 0.05;
-        if (stake > cap + 0.001) {
-          return jr({
-            error: `stake_eur ${stake.toFixed(2)} exceeds 5% cap (${cap.toFixed(2)}) of authoritative bankroll ${authBankroll.toFixed(2)}`,
-          }, 400);
+        const capResult = validateBankrollCap(authBankroll, stake);
+        if (!capResult.ok) {
+          return jr({ error: capResult.error }, authBankroll === null ? 503 : 400);
         }
 
         // P0-A: authoritative open-bet count (ledger from KV + pending in KV)
         const arr = await readPending(env, pUser);
         const pendingCount = arr.length;
-        // If authOpenBets is null (signals_json missing open_bets) — FAIL CLOSED
-        if (authOpenBets === null) {
-          return jr({ error: 'authoritative open-bet count unavailable — fail closed' }, 503);
+        const activeBetsResult = validateActiveBets(authOpenBets, pendingCount);
+        if (!activeBetsResult.ok) {
+          return jr({ error: activeBetsResult.error }, authOpenBets === null ? 503 : 400);
         }
-        const totalBets = authOpenBets + pendingCount;
-        if (totalBets >= 3) {
-          return jr({ error: `max active bets (3) reached — ${authOpenBets} in ledger + ${pendingCount} pending` }, 400);
+
+        // P0-A: for source=value, resolve and validate the canonical signal server-side.
+        // The client identifies the desired signal via signal_id; the Worker resolves
+        // truth from the trusted published signals_json — client-supplied field values
+        // (odds, ev_pct, event_status, etc.) are NEVER used for enforcement.
+        if (source === 'value') {
+          const canonicalSig = resolveCanonicalSignal(signalsData, signalId);
+          if (!canonicalSig) {
+            return jr({ error: `signal_id '${signalId}' not found in published canonical signals — REJECT` }, 400);
+          }
+          const sigResult = validateSignalActionability(canonicalSig);
+          if (!sigResult.ok) {
+            return jr({ error: `canonical signal not actionable: ${sigResult.reason}` }, 400);
+          }
+          // P0-A: submitted odds must match canonical current_odds from KV
+          const oddsResult = validateOddsMatchCanonical(odds, canonicalSig.current_odds);
+          if (!oddsResult.ok) {
+            return jr({ error: oddsResult.reason }, 400);
+          }
         }
 
         const id = crypto.randomUUID();

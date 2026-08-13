@@ -613,12 +613,15 @@ function _openBetModalFromBtn(btn) {
   const modelProb = (modelProbRaw > 0 && modelProbRaw <= 1) ? modelProbRaw
                   : (modelProbRaw > 1 && modelProbRaw <= 100) ? modelProbRaw / 100
                   : 0;
+  // P0-A: canonical_odds = authoritative current_odds from KV (locked for value bets)
+  const canonicalOdds = parseFloat(d.currentOdds || d.odds || '0');
   _pendingBet = {
     match: d.match,
     market: d.market,
-    odds: parseFloat(d.odds),
-    stake_eur: parseFloat(d.stake) || (source === 'manual' ? 5 : 5),
-    ev_pct: parseFloat(d.ev || '0'),
+    odds: canonicalOdds,
+    canonical_odds: canonicalOdds,  // P0-A: locked for value bets — submit verifies against this
+    stake_eur: parseFloat(d.stake) || 5,
+    ev_pct: parseFloat(d.currentEv || d.ev || '0'),
     confidence: d.confidence || '',
     kickoff: d.kickoff || '',
     sport: d.sport || '',
@@ -626,16 +629,25 @@ function _openBetModalFromBtn(btn) {
     model_prob: modelProb,
     fair_prob: parseFloat(d.fairProb || '0'),
     // P0-A: identity fields from dataset
-    signal_id: d.signalId || d.signal_id || '',
-    fixture_key: d.fixtureKey || d.fixture_key || '',
-    league: d.league || '',
-    odds_ts: d.oddsTs || d.odds_ts || '',
+    signal_id:    d.signalId    || d.signal_id    || '',
+    fixture_key:  d.fixtureKey  || d.fixture_key  || '',
+    league:       d.league      || '',
+    odds_ts:      d.oddsTs      || d.odds_ts      || '',
     signal_status: d.signalStatus || d.signal_status || '',
+    event_status: d.eventStatus  || d.event_status  || '',
   };
   const [h, a] = _pendingBet.match.split(' vs ').map(x => x.trim());
   document.getElementById('bet-modal-sub').textContent = `${h} vs ${a} · ${marketLabel(_pendingBet.market, `${h} vs ${a}`)}`;
   const oddsInp = document.getElementById('bet-modal-odds-input');
-  if (oddsInp) oddsInp.value = _pendingBet.odds.toFixed(2);
+  if (oddsInp) {
+    oddsInp.value = _pendingBet.canonical_odds.toFixed(2);
+    // P0-A: lock odds field for value bets — canonical price is authoritative.
+    // Manual bets allow custom odds entry.
+    oddsInp.readOnly = (source === 'value');
+    oddsInp.title = (source === 'value')
+      ? 'Canonical current_odds (locked — use Manual for custom odds)'
+      : '';
+  }
   const badge = document.getElementById('bet-modal-kind-badge');
   if (badge) {
     if (source === 'manual') {
@@ -746,8 +758,34 @@ async function _submitBet() {
   if (!_pendingBet) return;
   const bk = _currentBankroll();
 
+  // P0-A: re-validate actionability immediately before submit (state may have changed since modal open).
+  // Key time-sensitive checks: odds_ts freshness, active bet count, signal_status.
+  if (_pendingBet.source === 'value') {
+    const activeCount = (_openBets || []).length;
+    const submitSig = {
+      signal_id:     _pendingBet.signal_id,
+      signal_status: _pendingBet.signal_status || 'ACTIVE',
+      shadow:        false,
+      is_shadow:     false,
+      unsupported:   false,
+      edge_lost:     false,
+      stale:         false,
+      no_bet_flag:   false,
+      current_odds:  _pendingBet.canonical_odds,
+      current_ev_pct: _pendingBet.ev_pct,
+      odds_ts:       _pendingBet.odds_ts,
+      event_status:  _pendingBet.event_status || 'PREMATCH',
+      sport:         _pendingBet.sport,
+    };
+    const { ok, reason } = isActionableValueSignal(submitSig, bk, activeCount);
+    if (!ok) {
+      showToast(`Signal nicht mehr aktionierbar: ${reason}`, 'error');
+      _closeBetModal();
+      return;
+    }
+  }
+
   // P0-A: REJECT at submission if stake exceeds 5% cap (do not silently alter confirmed amount)
-  // The UI already caps proactively via computeSafeStake; reaching here over-cap is an error.
   const rawStake = parseFloat(document.getElementById('bet-modal-stake').value) || 0;
   const stake = rawStake;
   const capCeiling = bk * _MAX_STAKE_PCT;
@@ -758,8 +796,18 @@ async function _submitBet() {
 
   if (stake < 0.5 || stake > 25) { showToast('Einsatz muss zwischen €0.50 und €25 liegen', 'error'); return; }
   const oddsInp = document.getElementById('bet-modal-odds-input');
-  const odds = oddsInp ? (parseFloat(oddsInp.value) || 0) : _pendingBet.odds;
+  const odds = oddsInp ? (parseFloat(oddsInp.value) || 0) : _pendingBet.canonical_odds;
   if (!(odds >= 1.01 && odds <= 100)) { showToast('Quote muss zwischen 1.01 und 100 liegen', 'error'); return; }
+
+  // P0-A: for value bets, verify odds were not changed from canonical price
+  if (_pendingBet.source === 'value') {
+    const canonOdds = _pendingBet.canonical_odds;
+    if (Number.isFinite(canonOdds) && Math.abs(odds - canonOdds) > 0.01) {
+      showToast(`Quote geändert (${odds.toFixed(2)} ≠ kanonisch ${canonOdds.toFixed(2)}) — bitte Manuelle Wette verwenden`, 'error');
+      return;
+    }
+  }
+
   const token = localStorage.getItem('sb_token');
   if (!token) { _openTokenModal(); return; }
 
@@ -797,7 +845,9 @@ async function _submitBet() {
     league: _pendingBet.league || '',
     odds_ts: _pendingBet.odds_ts || '',
   };
-  if (hasModelProb) {
+  // P0-A: model_prob comes from the canonical value signal (source=value)
+  // or is absent for manual bets. Never derive source from model_prob presence.
+  if (_pendingBet.model_prob && _pendingBet.model_prob > 0) {
     payload.model_prob = _pendingBet.model_prob;
     payload.ev_pct = calcEV(_pendingBet.model_prob, odds);
   }

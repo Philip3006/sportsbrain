@@ -22,7 +22,6 @@ def worker_validate_bet(
     None means authoritative state could not be read from KV → FAIL CLOSED.
     """
     stake = body.get("stake_eur")
-    source = body.get("source", "value")
     signal_id = body.get("signal_id", "")
 
     try:
@@ -33,8 +32,11 @@ def worker_validate_bet(
     if not (0.5 <= stake <= WORKER_ABSOLUTE_MAX):
         return False, f"stake_eur out of range (0.5–{WORKER_ABSOLUTE_MAX})"
 
-    if source not in ("value", "manual"):
-        return False, "invalid source"
+    # P0-A Blocker 6: source must be exactly "value" or "manual" — never coerce invalid input
+    raw_source = str(body.get("source") or "").lower().strip()
+    if raw_source not in ("value", "manual"):
+        return False, f"source must be \"value\" or \"manual\", got \"{body.get('source', '')}\""
+    source = raw_source
 
     # P0-A: source=value requires signal_id — REJECT, do NOT silently reclassify
     if source == "value" and not signal_id:
@@ -212,6 +214,24 @@ def test_invalid_source_rejected():
     ok, reason = worker_validate_bet({"stake_eur": 5.0, "source": "robot"}, _auth(100.0, 0))
     assert not ok
     assert "source" in reason.lower() or "invalid" in reason.lower()
+
+
+# P0-A Blocker 6 regression: invalid source must NOT be silently coerced to 'value'
+def test_source_coercion_robot_rejected_not_coerced_to_value():
+    """source=robot must be rejected outright, not treated as a value bet."""
+    ok, reason = worker_validate_bet({"stake_eur": 5.0, "source": "robot", "signal_id": "sig001"}, _auth(100.0, 0))
+    assert not ok, "source=robot must be rejected, not coerced to value"
+    assert "source" in reason.lower() or "invalid" in reason.lower()
+
+
+def test_source_auto_rejected():
+    ok, _ = worker_validate_bet({"stake_eur": 5.0, "source": "auto"}, _auth(100.0, 0))
+    assert not ok
+
+
+def test_source_empty_rejected():
+    ok, _ = worker_validate_bet({"stake_eur": 5.0, "source": ""}, _auth(100.0, 0))
+    assert not ok
 
 
 def test_stake_below_minimum_rejected():

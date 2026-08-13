@@ -8,31 +8,34 @@ primary source for WM 2026 matches.
 from __future__ import annotations
 
 import contextlib
-import csv
 import logging
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from pathlib import Path
 
 _log = logging.getLogger("sportsbrain.betting.ledger")
 
-import pandas as pd
-
 import json
 from datetime import date
 
-from src.config import (
-    RESULTS_DIR, BANKROLL_SNAPSHOT_PATH, BANKROLL_START, DEFAULT_USER,
-    bankroll_snapshot_path_for, ledger_path_for,
-)
+import pandas as pd
+
 from src.betting.value_detector import BetSignal
+from src.config import (
+    BANKROLL_SNAPSHOT_PATH,
+    BANKROLL_START,
+    DEFAULT_USER,
+    RESULTS_DIR,
+    bankroll_snapshot_path_for,
+    ledger_path_for,
+)
 from src.utils.atomic_io import atomic_write_json
 
 # Legacy single-user ledger path (used as the migration source).
 _LEGACY_LEDGER_PATH = RESULTS_DIR / "ledger.csv"
 
 
-def _resolve_ledger_path(ledger_path: "Path | None" = None, user: str = DEFAULT_USER) -> "Path":
+def _resolve_ledger_path(ledger_path: Path | None = None, user: str = DEFAULT_USER) -> Path:
     """Resolves the per-user ledger path. Migrates the legacy `ledger.csv`
     into the default user's slot on first call (one-shot rename).
 
@@ -105,6 +108,7 @@ def _fetch_completed_wm_scores(api_key: str = "") -> dict[tuple[str, str], tuple
 
     if not api_key:
         import os
+
         from dotenv import load_dotenv
         load_dotenv(Path(__file__).parent.parent.parent / ".env")
         api_key = os.getenv("ODDS_API_KEY", "")
@@ -112,6 +116,7 @@ def _fetch_completed_wm_scores(api_key: str = "") -> dict[tuple[str, str], tuple
         return {}
     try:
         import requests
+
         from src.config import canonical_name
         url = "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup_2026/scores/"
         resp = requests.get(url, params={"apiKey": api_key, "daysFrom": 7}, timeout=10)
@@ -183,11 +188,18 @@ def _load(path: Path) -> pd.DataFrame:
     if "stake_reason" not in df.columns:
         df["stake_reason"] = ""
     if "league" not in df.columns:
-        # Bestehende Zeilen sind WM-2026-Ledger — backfill mit dem WM-Registry-Short-Code.
-        # Neue 2.BL-Zeilen kommen mit league="bl2" von append_bets.
+        # Truly legacy rows (pre-league column): historically all WM 2026 football.
         df["league"] = "wm2026"
     else:
-        df["league"] = df["league"].fillna("wm2026").replace("", "wm2026")
+        df["league"] = df["league"].fillna("")
+        # P0-A: Tennis rows must NEVER default to wm2026.
+        # For blank league, apply wm2026 only if sport is not tennis.
+        sport_col = df["sport"] if "sport" in df.columns else pd.Series("", index=df.index)
+        is_tennis = sport_col.str.strip().str.lower() == "tennis"
+        blank_league = df["league"].eq("")
+        # Football/unknown blank rows → wm2026 (backward-compat)
+        df.loc[blank_league & ~is_tennis, "league"] = "wm2026"
+        # Tennis blank-league rows stay blank — UNKNOWN, never wm2026
     # P0-A: canonical identity fields — empty string for legacy rows
     for _col in ("signal_id", "fixture_key", "sport", "bankroll_at_placement", "cap_applied"):
         if _col not in df.columns:
@@ -226,10 +238,12 @@ def _save(df: pd.DataFrame, path: Path) -> None:
                     INSERT OR REPLACE INTO bets
                     (match_id, match_date, home, away, market, decimal_odds, stake_pct,
                      stake_amount, placed_date, status, pnl, closing_odds, clv,
-                     pinnacle_ref_odds, source, model_prob, stake_reason)
+                     pinnacle_ref_odds, source, model_prob, stake_reason,
+                     league, signal_id, fixture_key, sport, bankroll_at_placement, cap_applied)
                     VALUES (:match_id,:match_date,:home,:away,:market,:decimal_odds,:stake_pct,
                             :stake_amount,:placed_date,:status,:pnl,:closing_odds,:clv,
-                            :pinnacle_ref_odds,:source,:model_prob,:stake_reason)
+                            :pinnacle_ref_odds,:source,:model_prob,:stake_reason,
+                            :league,:signal_id,:fixture_key,:sport,:bankroll_at_placement,:cap_applied)
                 """, {
                     "match_id": r.get("match_id",""),
                     "match_date": r.get("match_date",""),
@@ -247,6 +261,13 @@ def _save(df: pd.DataFrame, path: Path) -> None:
                     "source": r.get("source","value") or "value",
                     "model_prob": _to_float(r.get("model_prob")),
                     "stake_reason": r.get("stake_reason","") or "",
+                    # P0-A: canonical identity + risk provenance
+                    "league":                r.get("league","") or "",
+                    "signal_id":             r.get("signal_id","") or "",
+                    "fixture_key":           r.get("fixture_key","") or "",
+                    "sport":                 r.get("sport","") or "",
+                    "bankroll_at_placement": r.get("bankroll_at_placement","") or "",
+                    "cap_applied":           r.get("cap_applied","") or "",
                 })
             conn.commit()
         except Exception:
@@ -771,7 +792,7 @@ def clv_by_source(
         vals = grp["clv_num"].dropna()
         if len(vals) < n_min:
             continue
-        result[str(src)] = {"mean_clv": float(vals.mean()), "n": int(len(vals))}
+        result[str(src)] = {"mean_clv": float(vals.mean()), "n": len(vals)}
     return result
 
 
