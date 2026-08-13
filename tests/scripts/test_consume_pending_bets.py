@@ -523,8 +523,21 @@ _PATCH_SUBPROCESS = "scripts.consume_pending_bets.subprocess.run"
 _PATCH_TIME_SLEEP = "scripts.consume_pending_bets._time.sleep"
 
 
-def _git_mock(staging_has_changes: bool, is_ancestor: bool, push_succeeds: bool):
-    """Build a subprocess.run mock for git commands in _durable_push."""
+def _git_mock(
+    staging_has_changes: bool = False,
+    is_ancestor: bool = True,
+    push_succeeds: bool = True,
+    *,
+    add_rc: int = 0,
+    fetch_rc: int = 0,
+    merge_base_rc: int = -1,  # -1 = auto (0 if is_ancestor else 1)
+    pull_rc: int = 0,
+):
+    """Build a subprocess.run mock for git commands in _durable_push.
+
+    merge_base_rc=-1 means auto: 0 if is_ancestor else 1.
+    Other values override directly (e.g. 2 = git command error).
+    """
     git_calls: list[str] = []
 
     def run_side(args, **kwargs):
@@ -537,15 +550,17 @@ def _git_mock(staging_has_changes: bool, is_ancestor: bool, push_succeeds: bool)
         cmd = list(args[1:])  # skip "git"
         git_calls.append(cmd[0])
         if cmd[0] == "add":
-            r.returncode = 0
+            r.returncode = add_rc
         elif cmd[0] == "diff":
             r.returncode = 1 if staging_has_changes else 0
         elif cmd[0] == "fetch":
-            r.returncode = 0
+            r.returncode = fetch_rc
         elif cmd[0] == "merge-base":
-            r.returncode = 0 if is_ancestor else 1
-        elif cmd[0] in ("commit", "pull"):
+            r.returncode = (0 if is_ancestor else 1) if merge_base_rc == -1 else merge_base_rc
+        elif cmd[0] == "commit":
             r.returncode = 0
+        elif cmd[0] == "pull":
+            r.returncode = pull_rc
         elif cmd[0] == "push":
             r.returncode = 0 if push_succeeds else 1
         return r
@@ -636,8 +651,10 @@ def test_fnd002_bankroll_none_is_retry_not_reject():
     )
 
 
-def test_fnd002_bankroll_zero_is_retry_not_reject():
-    """FND-002: bankroll=0 (zero/invalid) is also a RETRY — infrastructure unavailable."""
+def test_fnd002_bankroll_zero_is_reject():
+    """FND-002: bankroll=0 (finite, zero) is a permanent risk REJECT — infrastructure available
+    but state is invalid. This must NOT be RETRY (which is reserved for lookup failures).
+    """
     import pandas as pd
 
     from scripts.consume_pending_bets import _RETRY_PREFIX, _row_from_bet
@@ -646,8 +663,9 @@ def test_fnd002_bankroll_zero_is_retry_not_reject():
     row, reason = _row_from_bet(_valid_bet(), today, bankroll=0)
 
     assert row is None
-    assert isinstance(reason, str) and reason.startswith(_RETRY_PREFIX), (
-        f"bankroll=0 must return RETRY reason, got: {reason!r}"
+    assert isinstance(reason, str), f"reason must be a string, got: {reason!r}"
+    assert not reason.startswith(_RETRY_PREFIX), (
+        f"bankroll=0 must be permanent REJECT (not RETRY), got: {reason!r}"
     )
 
 
@@ -842,4 +860,247 @@ def test_fnd003_cancel_push_fail_no_ack(
     assert result == 0  # push failure for cancellations does not crash main()
     assert not delete_calls, (
         f"cancel_requests must NOT be ACKed when durable push fails: {delete_calls}"
+    )
+
+
+# ── FND-20260814-001: additional fail-closed git-command tests ─────────────────
+
+
+@patch(_PATCH_TIME_SLEEP)
+@patch(_PATCH_SUBPROCESS)
+def test_fnd001_git_add_failure_returns_false(mock_subrun, mock_sleep):
+    """FND-001: git add nonzero → _durable_push returns False immediately."""
+    from scripts.consume_pending_bets import _durable_push
+
+    run_side, git_calls = _git_mock(add_rc=1)
+    mock_subrun.side_effect = run_side
+
+    result = _durable_push(1)
+
+    assert result is False, "git add failure must return False"
+    assert "add" in git_calls, "git add must be attempted"
+    assert "commit" not in git_calls, "commit must NOT be called after add failure"
+    assert "push" not in git_calls, "push must NOT be called after add failure"
+
+
+@patch(_PATCH_TIME_SLEEP)
+@patch(_PATCH_SUBPROCESS)
+def test_fnd001_fetch_failure_returns_false(mock_subrun, mock_sleep):
+    """FND-001: git fetch failure (nothing staged) → return False before containment claim."""
+    from scripts.consume_pending_bets import _durable_push
+
+    run_side, git_calls = _git_mock(staging_has_changes=False, fetch_rc=1)
+    mock_subrun.side_effect = run_side
+
+    result = _durable_push(0)
+
+    assert result is False, "fetch failure must return False"
+    assert "fetch" in git_calls, "fetch must be attempted"
+    assert "merge-base" not in git_calls, "merge-base must NOT be called after fetch failure"
+    assert "push" not in git_calls, "push must NOT be called after fetch failure"
+
+
+@patch(_PATCH_TIME_SLEEP)
+@patch(_PATCH_SUBPROCESS)
+def test_fnd001_merge_base_error_returns_false(mock_subrun, mock_sleep):
+    """FND-001: merge-base rc>1 is a git command error (not a containment result) → False."""
+    from scripts.consume_pending_bets import _durable_push
+
+    run_side, git_calls = _git_mock(staging_has_changes=False, merge_base_rc=2)
+    mock_subrun.side_effect = run_side
+
+    result = _durable_push(0)
+
+    assert result is False, "merge-base rc>1 (command error) must return False"
+    assert "merge-base" in git_calls, "merge-base must be attempted"
+    assert "push" not in git_calls, "push must NOT be called after merge-base error"
+
+
+@patch(_PATCH_TIME_SLEEP)
+@patch(_PATCH_SUBPROCESS)
+def test_fnd001_pull_rebase_failure_skips_push_attempt(mock_subrun, mock_sleep):
+    """FND-001: failed pull/rebase must not be ignored — push is skipped on that attempt."""
+    from scripts.consume_pending_bets import _durable_push
+
+    run_side, git_calls = _git_mock(staging_has_changes=False, is_ancestor=False, pull_rc=1)
+    mock_subrun.side_effect = run_side
+
+    result = _durable_push(0)
+
+    assert result is False, "all pull failures → no push possible → return False"
+    assert "pull" in git_calls, "pull must be attempted"
+    assert "push" not in git_calls, "push must NOT be called when pull --rebase fails"
+
+
+# ── FND-20260814-002: additional REJECT/RETRY boundary tests ──────────────────
+
+
+def test_fnd002_bankroll_negative_is_reject():
+    """FND-002: bankroll<0 (finite, negative) is a permanent risk REJECT — not RETRY."""
+    import pandas as pd
+
+    from scripts.consume_pending_bets import _RETRY_PREFIX, _row_from_bet
+
+    today = pd.Timestamp.now().strftime("%Y-%m-%d")
+    row, reason = _row_from_bet(_valid_bet(), today, bankroll=-10.0)
+
+    assert row is None
+    assert isinstance(reason, str), f"reason must be a string, got: {reason!r}"
+    assert not reason.startswith(_RETRY_PREFIX), (
+        f"bankroll<0 must be permanent REJECT (not RETRY), got: {reason!r}"
+    )
+
+
+def test_fnd002_bankroll_positive_accepted():
+    """FND-002: positive authoritative bankroll with a valid bet must produce a row."""
+    import pandas as pd
+
+    from scripts.consume_pending_bets import _row_from_bet
+
+    today = pd.Timestamp.now().strftime("%Y-%m-%d")
+    row, _ = _row_from_bet(_valid_bet(), today, bankroll=100.0)
+
+    assert row is not None, "valid bet with positive bankroll must be accepted"
+    assert row["bankroll_at_placement"] == "100.00"
+
+
+# ── FND-20260814-003: mixed placement + cancellation orchestration ────────────
+
+
+@_ENV_PATCH
+@patch(f"{_PATCH_BASE}.count_open_bets", return_value=0)
+@patch(f"{_WD_BASE}.write_signals_json_all_users")
+@patch(f"{_WD_BASE}.list_known_users")
+@patch(f"{_PATCH_BASE}._durable_push")
+@patch(f"{_PATCH_BASE}._append_rows")
+@patch("src.betting.ledger.cancel_bet")
+@patch(f"{_PATCH_BASE}.retry_request")
+@patch(f"{_PATCH_BASE}._get_live_bankroll")
+def test_fnd003_mixed_placement_and_cancel_both_persisted(
+    mock_bankroll, mock_http, mock_cancel_bet, mock_append, mock_push, mock_users, mock_write, _mock_count
+):
+    """FND-003: one run with both accepted placement AND cancellation.
+
+    Order: cancel runs first (with its own durable push), placement runs after.
+    Both mutation types require push BEFORE ACK; ACK failure is idempotent.
+    """
+    from scripts.consume_pending_bets import main
+
+    mock_users.return_value = ["philip"]
+    mock_bankroll.return_value = 100.0
+    mock_write.return_value = None
+    mock_cancel_bet.return_value = "ok"
+
+    push_calls: list[str] = []
+
+    def push_side(added_count, *a, **kw):
+        push_calls.append(f"push:{added_count}")
+        return True
+
+    mock_push.side_effect = push_side
+    mock_append.return_value = 1
+
+    call_order: list[str] = []
+
+    def http_side_effect(method, url, **kwargs):
+        if method == "GET":
+            if "cancel_requests" in url:
+                r = MagicMock()
+                r.status_code = 200
+                r.json.return_value = {"requests": [{"home": "X", "away": "Y", "market": "home"}]}
+                return r
+            # One valid pending bet
+            return _make_pending_response([_valid_bet({"id": "mixed_bet_01"})])
+        if method == "DELETE":
+            call_order.append(f"DELETE:{url.split('/')[-1].split('?')[0]}")
+            return _make_delete_response()
+        return MagicMock(status_code=200)
+
+    mock_http.side_effect = http_side_effect
+
+    result = main()
+
+    assert result == 0, f"mixed run must succeed, got {result}"
+    # Both push paths executed: cancel push (added=0) and placement push (added=1)
+    assert len(push_calls) >= 2, f"both cancel and placement must trigger durable push: {push_calls}"
+    # Both ACKs executed
+    acks = [x for x in call_order if x.startswith("DELETE:")]
+    assert len(acks) >= 2, f"both cancel ACK and placement ACK must fire: {acks}"
+
+
+# ── FND-20260814-030: exact consumer source ────────────────────────────────────
+
+
+def test_fnd030_missing_source_permanent_reject():
+    """FND-030: missing source (key absent) is a permanent REJECT — no default to 'value'."""
+    bet = _valid_bet()
+    del bet["source"]
+    from scripts.consume_pending_bets import _RETRY_PREFIX
+
+    row, reason = _run_row_from_bet(bet)
+
+    assert row is None, "missing source must be rejected"
+    assert isinstance(reason, str) and not reason.startswith(_RETRY_PREFIX), (
+        f"missing source must be permanent REJECT (not RETRY), got: {reason!r}"
+    )
+    assert "source" in reason.lower() or "missing" in reason.lower(), reason
+
+
+def test_fnd030_empty_source_permanent_reject():
+    """FND-030: empty string source is a permanent REJECT."""
+    from scripts.consume_pending_bets import _RETRY_PREFIX
+
+    row, reason = _run_row_from_bet(_valid_bet({"source": ""}))
+
+    assert row is None, "empty source must be rejected"
+    assert not reason.startswith(_RETRY_PREFIX), (
+        f"empty source must be permanent REJECT, got: {reason!r}"
+    )
+
+
+def test_fnd030_unknown_source_permanent_reject():
+    """FND-030: source='auto' (unknown) is a permanent REJECT."""
+    from scripts.consume_pending_bets import _RETRY_PREFIX
+
+    row, reason = _run_row_from_bet(_valid_bet({"source": "auto"}))
+
+    assert row is None, "unknown source must be rejected"
+    assert not reason.startswith(_RETRY_PREFIX), (
+        f"unknown source must be permanent REJECT, got: {reason!r}"
+    )
+
+
+def test_fnd030_value_uppercase_rejected():
+    """FND-030: source='Value' (wrong case) is REJECT — no case normalization."""
+    from scripts.consume_pending_bets import _RETRY_PREFIX
+
+    row, reason = _run_row_from_bet(_valid_bet({"source": "Value"}))
+
+    assert row is None, "source='Value' must be rejected (exact match required)"
+    assert not reason.startswith(_RETRY_PREFIX), (
+        f"wrong-case source must be permanent REJECT, got: {reason!r}"
+    )
+
+
+def test_fnd030_manual_uppercase_rejected():
+    """FND-030: source='MANUAL' (wrong case) is REJECT — no case normalization."""
+    from scripts.consume_pending_bets import _RETRY_PREFIX
+
+    row, reason = _run_row_from_bet(_valid_bet({"source": "MANUAL", "signal_id": ""}))
+
+    assert row is None, "source='MANUAL' must be rejected (exact match required)"
+    assert not reason.startswith(_RETRY_PREFIX), (
+        f"wrong-case source must be permanent REJECT, got: {reason!r}"
+    )
+
+
+def test_fnd030_whitespace_source_rejected():
+    """FND-030: source=' value ' (with spaces) is REJECT — no trim normalization."""
+    from scripts.consume_pending_bets import _RETRY_PREFIX
+
+    row, reason = _run_row_from_bet(_valid_bet({"source": " value "}))
+
+    assert row is None, "source with whitespace must be rejected (no trim)"
+    assert not reason.startswith(_RETRY_PREFIX), (
+        f"whitespace-padded source must be permanent REJECT, got: {reason!r}"
     )

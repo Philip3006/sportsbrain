@@ -436,6 +436,7 @@ def test_fnd004_mandatory_submit_delivers_canonical_payload(page: Page, server_u
     import json as _json
 
     captured_bodies: list[dict] = []
+    captured_methods: list[str] = []
     js_errors: list[str] = []
     page.on("pageerror", lambda exc: js_errors.append(str(exc)))
 
@@ -445,6 +446,7 @@ def test_fnd004_mandatory_submit_delivers_canonical_payload(page: Page, server_u
         except Exception:  # noqa: BLE001
             body = {}
         captured_bodies.append(body)
+        captured_methods.append(route.request.method)
         route.fulfill(status=200, body='{"ok":true,"id":"fnd004-test-id"}')
 
     _navigate_to_football(page, server_url, _FRESH_WITH_BANKROLL)
@@ -481,10 +483,15 @@ def test_fnd004_mandatory_submit_delivers_canonical_payload(page: Page, server_u
     page.wait_for_timeout(1200)
 
     # FND-004 hard assertion: exactly one /pending_bets request must have been captured.
-    assert len(captured_bodies) >= 1, (
-        f"FND-20260814-004: confirm click must trigger a /pending_bets POST. "
+    assert len(captured_bodies) == 1, (
+        f"FND-20260814-004: confirm click must trigger exactly one /pending_bets POST. "
         f"Got {len(captured_bodies)} captured requests. "
         "Submit did not fire — modal flow, token check, or network route is broken."
+    )
+
+    # FND-004: request must be POST (not GET or other method).
+    assert captured_methods[0] == "POST", (
+        f"FND-20260814-004: /pending_bets must use POST method, got {captured_methods[0]!r}."
     )
 
     submitted = captured_bodies[0]

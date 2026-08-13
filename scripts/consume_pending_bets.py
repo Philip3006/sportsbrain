@@ -140,9 +140,15 @@ def _row_from_bet(
     kickoff = bet.get("kickoff") or ""
     match_date = kickoff[:10] if kickoff else ""
 
-    source = (bet.get("source") or "value").strip().lower()
+    # FND-20260814-030: exact source only — no default, trim, or case normalization.
+    source_raw = bet.get("source")
+    if source_raw is None or source_raw == "":
+        return None, "source missing or empty — permanent reject (must be exactly 'value' or 'manual')"
+    if not isinstance(source_raw, str):
+        return None, "source must be a string — permanent reject"
+    source = source_raw  # exact match: no strip(), no lower()
     if source not in ("value", "manual"):
-        return None, f"invalid source {source!r}"
+        return None, f"source {source!r} not in ('value', 'manual') — permanent reject"
 
     signal_id = (bet.get("signal_id") or "").strip()
 
@@ -151,9 +157,12 @@ def _row_from_bet(
         return None, "source=value requires signal_id — REJECT (use explicit source=manual for manual bets)"
 
     # P0-A: ALL bets require an authoritative bankroll.
-    # FND-20260814-002: bankroll outage is RETRY (transient infrastructure), NOT REJECT.
-    if bankroll is None or bankroll <= 0:
+    # FND-20260814-002: None = lookup failure (transient infrastructure) → RETRY, NOT REJECT.
+    # Finite bankroll <= 0 = permanently invalid state → permanent risk REJECT.
+    if bankroll is None:
         return None, f"{_RETRY_PREFIX}authoritative bankroll unavailable — cannot enforce 5% cap"
+    if bankroll <= 0:
+        return None, "bankroll is zero or negative — permanent risk reject"
 
     # P0-A: REJECT if stake exceeds 5% cap (do not silently alter confirmed payload)
     cap_ok, cap_reason = validate_stake_cap(bankroll, stake_raw)
@@ -279,19 +288,33 @@ def _durable_push(added: int) -> bool:
             ["git", *args], cwd=_ROOT, capture_output=True, text=True, timeout=30, check=False
         )
 
-    _g("add", "results/ledger_*.csv")
+    # FND-001: git add failure is fatal — file system or index error.
+    add_result = _g("add", "results/ledger_*.csv")
+    if add_result.returncode != 0:
+        print(f"[consume] git add failed: {add_result.stderr.strip()[:200]}", file=sys.stderr)
+        return False
+
     staged = _g("diff", "--cached", "--quiet")
 
     if staged.returncode == 0:
         # Nothing staged — verify HEAD is already contained in origin/main.
         # A crash between commit and push in a previous run leaves staging clean but
         # the commit is not yet durable on the remote.
-        _g("fetch", "origin", "main", "--quiet")
-        if _g("merge-base", "--is-ancestor", "HEAD", "origin/main").returncode == 0:
+        fetch = _g("fetch", "origin", "main", "--quiet")
+        if fetch.returncode != 0:
+            print(f"[consume] git fetch failed: {fetch.stderr.strip()[:200]}", file=sys.stderr)
+            return False
+        mb = _g("merge-base", "--is-ancestor", "HEAD", "origin/main")
+        if mb.returncode == 0:
             print("[consume] ledger in sync with remote HEAD — no new commit needed")
             return True
-        # HEAD is local-ahead: push the existing commit without creating a new one.
-        print("[consume] local commit not yet in origin/main — pushing before ACK")
+        if mb.returncode == 1:
+            # HEAD is local-ahead: push the existing commit without creating a new one.
+            print("[consume] local commit not yet in origin/main — pushing before ACK")
+        else:
+            # rc > 1: git merge-base command error — not a containment result; fail closed.
+            print(f"[consume] merge-base verification failed (rc={mb.returncode}): {mb.stderr.strip()[:200]}", file=sys.stderr)
+            return False
     else:
         commit_msg = f"auto: ledger sync {added} bet(s)"
         commit = _g("commit", "-m", commit_msg, "--author=SportsBrain Bot <bot@sportsbrain>")
@@ -300,7 +323,12 @@ def _durable_push(added: int) -> bool:
             return False
 
     for attempt in range(1, 6):
-        _g("pull", "--rebase", "origin", "main")
+        # FND-001: failed pull/rebase must not be ignored — skip push for this attempt.
+        pull = _g("pull", "--rebase", "origin", "main")
+        if pull.returncode != 0:
+            print(f"[consume] pull --rebase failed on attempt {attempt}: {pull.stderr.strip()[:120]}", file=sys.stderr)
+            _time.sleep(_random.randint(2, 6))
+            continue
         push = _g("push", "origin", "main")
         if push.returncode == 0:
             print(f"[consume] ledger pushed (added={added})")

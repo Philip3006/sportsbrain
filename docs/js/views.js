@@ -619,9 +619,11 @@ function sigCard(s, showMatch) {
     ${whyInline}
     ${['h1_goals_2_4','h2_goals_2_4','h1_goals_2_4_no','h2_goals_2_4_no'].includes(s.market)
       ? `<div style="font-size:10px;color:var(--muted);padding:2px 8px 6px">⚠ HZ-Settlement manuell — Quote beim Buchmacher prüfen</div>`
-      : (!_isValueActionable)
-        ? `<button class="place-bet-btn place-bet-btn-manual" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="${_isLegacySignal ? 'Manuelle Wette (kein kanonisches Signal)' : 'Manuelle Wette (keine aktuellen Quoten)'}" style="background:rgba(210,153,34,.12);color:var(--yellow);border-color:rgba(210,153,34,.35)">${_isLegacySignal ? 'Manuell' : 'Manuell wetten'} · €${s.stake_eur.toFixed(0)}</button>`
-        : `<button class="place-bet-btn" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="Wette platzieren">Wette platzieren · €${s.stake_eur.toFixed(0)}</button>`}
+      : _isLegacySignal
+        ? ''
+        : (!_isValueActionable)
+          ? `<button class="place-bet-btn place-bet-btn-manual" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="Manuelle Wette (keine aktuellen Quoten)" style="background:rgba(210,153,34,.12);color:var(--yellow);border-color:rgba(210,153,34,.35)">Manuell wetten · €${s.stake_eur.toFixed(0)}</button>`
+          : `<button class="place-bet-btn" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="Wette platzieren">Wette platzieren · €${s.stake_eur.toFixed(0)}</button>`}
     ${(['ah-1.5_a','ah+1.5_b'].includes(s.market)||s.market.match(/^ah[+-]/))
       ? `<div style="font-size:10px;color:#ffb347;background:rgba(58,44,0,0.6);padding:3px 8px 5px;border-top:1px solid rgba(90,70,0,0.5)">⚠ Satz-AH = SET Handicap — beim Buchmacher <strong>Sätze-Handicap</strong> wählen, NICHT Spiele-Handicap</div>`
       : ''}
