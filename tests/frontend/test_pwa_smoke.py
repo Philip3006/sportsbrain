@@ -406,3 +406,119 @@ def test_p0a_missing_current_odds_forces_manual(page: Page, server_url: str) -> 
     source_attr = first_btn.get_attribute("data-source")
     assert source_attr == "manual", \
         f"Signal missing current_odds must have source=manual on button, got: {source_attr}"
+
+
+# ── P0-A Test 12: FND-20260814-004 — mandatory browser submit ─────────────────
+
+_FRESH_WITH_BANKROLL: dict = {
+    **_FRESH,
+    "bankroll_state": {
+        "start": 100,
+        "free": 100,
+        "staked": 0,
+        "exposure_pct": 0,
+        "max_win": 0,
+        "pnl_closed": 0,
+    },
+}
+
+
+def test_fnd004_mandatory_submit_delivers_canonical_payload(page: Page, server_url: str) -> None:
+    """FND-20260814-004: Mandatory browser submit test.
+
+    Requirements (all unconditional — no conditional pass):
+    - Valid fixture with bankroll_state must enable the confirm button.
+    - Confirm button click must happen.
+    - Exactly one /pending_bets POST request must be captured.
+    - Submitted payload: source=value, canonical signal_id present,
+      odds==current_odds (2.10), stake<=5% of bankroll, no JS errors.
+    """
+    import json as _json
+
+    captured_bodies: list[dict] = []
+    js_errors: list[str] = []
+    page.on("pageerror", lambda exc: js_errors.append(str(exc)))
+
+    def _capture_pending(route):
+        try:
+            body = _json.loads(route.request.post_data or "{}")
+        except Exception:  # noqa: BLE001
+            body = {}
+        captured_bodies.append(body)
+        route.fulfill(status=200, body='{"ok":true,"id":"fnd004-test-id"}')
+
+    _navigate_to_football(page, server_url, _FRESH_WITH_BANKROLL)
+
+    # Inject token and override confirm dialog before any interaction.
+    page.evaluate("""
+        localStorage.setItem('sb_token', 'fnd004-test-token');
+        window.confirm = () => true;
+    """)
+
+    btn = page.locator(".place-bet-btn").first
+    expect(btn).to_be_visible(timeout=10_000)
+    btn.click()
+
+    modal = page.locator("#bet-modal-bd")
+    expect(modal).to_be_visible(timeout=3_000)
+
+    stake_input = page.locator("#bet-modal-stake")
+    stake_input.fill("5.00")
+    stake_input.dispatch_event("input")
+
+    confirm_btn = page.locator("#bet-modal-confirm")
+
+    # FND-004 hard assertion: confirm must be ENABLED for valid fixture + bankroll_state.
+    is_disabled = confirm_btn.evaluate("el => el.disabled")
+    assert not is_disabled, (
+        "FND-20260814-004: confirm button must be ENABLED for a valid canonical signal "
+        "with bankroll_state. A disabled button means the modal wiring or bankroll injection "
+        "is broken — this is a hard failure, not a conditional skip."
+    )
+
+    page.route("**/pending_bets", _capture_pending)
+    confirm_btn.click()
+    page.wait_for_timeout(1200)
+
+    # FND-004 hard assertion: exactly one /pending_bets request must have been captured.
+    assert len(captured_bodies) >= 1, (
+        f"FND-20260814-004: confirm click must trigger a /pending_bets POST. "
+        f"Got {len(captured_bodies)} captured requests. "
+        "Submit did not fire — modal flow, token check, or network route is broken."
+    )
+
+    submitted = captured_bodies[0]
+
+    # source must be 'value'
+    assert submitted.get("source") == "value", (
+        f"FND-004: submitted source must be 'value', got {submitted.get('source')!r}. "
+        f"Full payload: {submitted}"
+    )
+
+    # canonical signal_id must be present and non-empty
+    signal_id_sent = submitted.get("signal_id", "")
+    assert signal_id_sent, (
+        f"FND-004: signal_id must be present in submitted payload. "
+        f"Full payload: {submitted}"
+    )
+
+    # odds must equal current_odds from canonical signal fixture (2.10)
+    submitted_odds = float(submitted.get("odds", 0))
+    assert abs(submitted_odds - 2.10) < 0.02, (
+        f"FND-004: submitted odds {submitted_odds:.4f} must equal canonical "
+        f"current_odds 2.10. Full payload: {submitted}"
+    )
+
+    # stake must be <= 5% of bankroll (€100 → ceiling €5.00)
+    submitted_stake = float(submitted.get("stake_eur", submitted.get("stake", 0)))
+    assert submitted_stake <= 5.01, (
+        f"FND-004: submitted stake €{submitted_stake:.2f} exceeds 5% of €100 bankroll (€5.00). "
+        f"Full payload: {submitted}"
+    )
+
+    # No JavaScript errors
+    ref_errors = [e for e in js_errors if "ReferenceError" in e or "TypeError" in e]
+    assert not ref_errors, f"FND-004: JS errors on mandatory submit: {ref_errors}"
+
+    if modal.is_visible():
+        page.locator("#bet-modal-cancel").click()

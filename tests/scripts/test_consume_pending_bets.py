@@ -6,6 +6,10 @@ Covers:
   Blocker-3  source=value model_prob fails closed — strict (0, 1) exclusive
   Blocker-4  model_prob endpoint calibration (0.0 and 1.0 rejected)
 
+  FND-20260814-001  Remote durability — clean staging area is not proof of origin/main durability
+  FND-20260814-002  ACCEPT/REJECT/RETRY semantics — bankroll outage is RETRY, never REJECT
+  FND-20260814-003  Cancellation durability — durable push before cancel_requests ACK
+
 Lifecycle tests (CEO cases A–E) verify call ordering using mocks.
 """
 from __future__ import annotations
@@ -510,3 +514,332 @@ def test_lifecycle_e_rejected_bet_immediate_ack(
     mock_push.assert_not_called(), "push must NOT be called when only rejected bets exist"
     mock_append.assert_not_called(), "append must NOT be called for rejected bets"
     assert delete_calls, "rejected bet must be ACK'd (DELETE) immediately"
+
+
+# ── FND-20260814-001: Remote durability ──────────────────────────────────────
+# Tests for _durable_push verifying remote containment, not just clean staging area.
+
+_PATCH_SUBPROCESS = "scripts.consume_pending_bets.subprocess.run"
+_PATCH_TIME_SLEEP = "scripts.consume_pending_bets._time.sleep"
+
+
+def _git_mock(staging_has_changes: bool, is_ancestor: bool, push_succeeds: bool):
+    """Build a subprocess.run mock for git commands in _durable_push."""
+    git_calls: list[str] = []
+
+    def run_side(args, **kwargs):
+        r = MagicMock()
+        r.returncode = 0
+        r.stderr = ""
+        r.stdout = ""
+        if len(args) < 2:
+            return r
+        cmd = list(args[1:])  # skip "git"
+        git_calls.append(cmd[0])
+        if cmd[0] == "add":
+            r.returncode = 0
+        elif cmd[0] == "diff":
+            r.returncode = 1 if staging_has_changes else 0
+        elif cmd[0] == "fetch":
+            r.returncode = 0
+        elif cmd[0] == "merge-base":
+            r.returncode = 0 if is_ancestor else 1
+        elif cmd[0] in ("commit", "pull"):
+            r.returncode = 0
+        elif cmd[0] == "push":
+            r.returncode = 0 if push_succeeds else 1
+        return r
+
+    return run_side, git_calls
+
+
+@patch(_PATCH_TIME_SLEEP)
+@patch(_PATCH_SUBPROCESS)
+def test_fnd001_remote_contained_noop(mock_subrun, mock_sleep):
+    """FND-001: Nothing staged + HEAD already in origin/main → no push, return True."""
+    from scripts.consume_pending_bets import _durable_push
+
+    run_side, git_calls = _git_mock(staging_has_changes=False, is_ancestor=True, push_succeeds=True)
+    mock_subrun.side_effect = run_side
+
+    result = _durable_push(0)
+
+    assert result is True, "should return True when HEAD is already in origin/main"
+    assert "push" not in git_calls, "push must NOT be called when HEAD is already in origin/main"
+    assert "commit" not in git_calls, "commit must NOT be called when nothing is staged"
+    assert "merge-base" in git_calls, "remote containment check (merge-base) must be performed"
+
+
+@patch(_PATCH_TIME_SLEEP)
+@patch(_PATCH_SUBPROCESS)
+def test_fnd001_local_ahead_clean_tree_pushes_before_ack(mock_subrun, mock_sleep):
+    """FND-001: Local commit exists, nothing staged, HEAD not in origin/main → push runs."""
+    from scripts.consume_pending_bets import _durable_push
+
+    run_side, git_calls = _git_mock(staging_has_changes=False, is_ancestor=False, push_succeeds=True)
+    mock_subrun.side_effect = run_side
+
+    result = _durable_push(0)
+
+    assert result is True, "push of existing local commit must succeed"
+    assert "push" in git_calls, "push must be called when local commit not yet in origin/main"
+    assert "commit" not in git_calls, "no new commit when staging is clean"
+
+
+@patch(_PATCH_TIME_SLEEP)
+@patch(_PATCH_SUBPROCESS)
+def test_fnd001_local_ahead_push_fails_returns_false(mock_subrun, mock_sleep):
+    """FND-001: Local commit exists, push fails → return False (accepted bets stay in KV)."""
+    from scripts.consume_pending_bets import _durable_push
+
+    run_side, git_calls = _git_mock(staging_has_changes=False, is_ancestor=False, push_succeeds=False)
+    mock_subrun.side_effect = run_side
+
+    result = _durable_push(0)
+
+    assert result is False, "must return False when push of local-ahead commit fails"
+    assert "push" in git_calls, "push must be attempted"
+
+
+@patch(_PATCH_TIME_SLEEP)
+@patch(_PATCH_SUBPROCESS)
+def test_fnd001_staged_changes_commit_then_push(mock_subrun, mock_sleep):
+    """FND-001: Staging has changes → commit → push → return True (normal happy path)."""
+    from scripts.consume_pending_bets import _durable_push
+
+    run_side, git_calls = _git_mock(staging_has_changes=True, is_ancestor=True, push_succeeds=True)
+    mock_subrun.side_effect = run_side
+
+    result = _durable_push(1)
+
+    assert result is True
+    assert "commit" in git_calls
+    assert "push" in git_calls
+    assert "merge-base" not in git_calls, "remote containment check skipped when staging has changes"
+
+
+# ── FND-20260814-002: ACCEPT / REJECT / RETRY semantics ──────────────────────
+
+def test_fnd002_bankroll_none_is_retry_not_reject():
+    """FND-002: bankroll=None must produce RETRY, not REJECT (transient infrastructure failure)."""
+    import pandas as pd
+
+    from scripts.consume_pending_bets import _RETRY_PREFIX, _row_from_bet
+
+    today = pd.Timestamp.now().strftime("%Y-%m-%d")
+    bet = _valid_bet()
+    row, reason = _row_from_bet(bet, today, bankroll=None)
+
+    assert row is None, "bankroll=None must not produce a valid row"
+    assert isinstance(reason, str) and reason.startswith(_RETRY_PREFIX), (
+        f"bankroll=None must return RETRY reason, got: {reason!r}"
+    )
+
+
+def test_fnd002_bankroll_zero_is_retry_not_reject():
+    """FND-002: bankroll=0 (zero/invalid) is also a RETRY — infrastructure unavailable."""
+    import pandas as pd
+
+    from scripts.consume_pending_bets import _RETRY_PREFIX, _row_from_bet
+
+    today = pd.Timestamp.now().strftime("%Y-%m-%d")
+    row, reason = _row_from_bet(_valid_bet(), today, bankroll=0)
+
+    assert row is None
+    assert isinstance(reason, str) and reason.startswith(_RETRY_PREFIX), (
+        f"bankroll=0 must return RETRY reason, got: {reason!r}"
+    )
+
+
+@_ENV_PATCH
+@patch(f"{_PATCH_BASE}.count_open_bets", return_value=0)
+@patch(f"{_WD_BASE}.write_signals_json_all_users")
+@patch(f"{_WD_BASE}.list_known_users")
+@patch(f"{_PATCH_BASE}._durable_push")
+@patch(f"{_PATCH_BASE}._append_rows")
+@patch(f"{_PATCH_BASE}._process_cancel_requests")
+@patch(f"{_PATCH_BASE}.retry_request")
+@patch(f"{_PATCH_BASE}._get_live_bankroll")
+def test_fnd002_retry_bets_not_acked(
+    mock_bankroll, mock_http, mock_cancel, mock_append, mock_push, mock_users, mock_write, _mock_count
+):
+    """FND-002: RETRY bets (bankroll unavailable) must NOT be ACKed — stay in KV for next run."""
+    from scripts.consume_pending_bets import main
+
+    mock_users.return_value = ["philip"]
+    mock_bankroll.return_value = None  # bankroll unavailable → RETRY
+    mock_cancel.return_value = 0
+    mock_write.return_value = None
+
+    delete_calls: list[str] = []
+
+    def http_side_effect(method, url, **kwargs):
+        if method == "GET":
+            return _make_pending_response([_valid_bet({"id": "retry_bet"})])
+        if method == "DELETE":
+            delete_calls.append(url)
+            return _make_delete_response()
+        return MagicMock(status_code=200)
+
+    mock_http.side_effect = http_side_effect
+
+    result = main()
+
+    assert result == 0, "RETRY does not cause main() to fail"
+    mock_push.assert_not_called(), "push must NOT be called for RETRY bets"
+    mock_append.assert_not_called(), "append must NOT be called for RETRY bets"
+    assert not delete_calls, (
+        f"RETRY bets must NOT be ACKed (DELETE) — got: {delete_calls}"
+    )
+
+
+@_ENV_PATCH
+@patch(f"{_PATCH_BASE}.count_open_bets", side_effect=Exception("db unavailable"))
+@patch(f"{_WD_BASE}.write_signals_json_all_users")
+@patch(f"{_WD_BASE}.list_known_users")
+@patch(f"{_PATCH_BASE}._durable_push")
+@patch(f"{_PATCH_BASE}._append_rows")
+@patch(f"{_PATCH_BASE}._process_cancel_requests")
+@patch(f"{_PATCH_BASE}.retry_request")
+@patch(f"{_PATCH_BASE}._get_live_bankroll")
+def test_fnd002_open_bet_count_unavailable_is_retry(
+    mock_bankroll, mock_http, mock_cancel, mock_append, mock_push, mock_users, mock_write, _mock_count
+):
+    """FND-002: count_open_bets() failure is RETRY — bet must not be ACKed."""
+    from scripts.consume_pending_bets import main
+
+    mock_users.return_value = ["philip"]
+    mock_bankroll.return_value = 100.0
+    mock_cancel.return_value = 0
+    mock_write.return_value = None
+
+    delete_calls: list[str] = []
+
+    def http_side_effect(method, url, **kwargs):
+        if method == "GET":
+            return _make_pending_response([_valid_bet({"id": "count_retry_bet"})])
+        if method == "DELETE":
+            delete_calls.append(url)
+            return _make_delete_response()
+        return MagicMock(status_code=200)
+
+    mock_http.side_effect = http_side_effect
+
+    result = main()
+
+    assert result == 0
+    mock_push.assert_not_called()
+    mock_append.assert_not_called()
+    assert not delete_calls, (
+        f"bet with unavailable open-bet count must NOT be ACKed: {delete_calls}"
+    )
+
+
+# ── FND-20260814-003: Cancellation durability ─────────────────────────────────
+
+@_ENV_PATCH
+@patch(f"{_PATCH_BASE}.count_open_bets", return_value=0)
+@patch(f"{_WD_BASE}.write_signals_json_all_users")
+@patch(f"{_WD_BASE}.list_known_users")
+@patch(f"{_PATCH_BASE}._durable_push")
+@patch(f"{_PATCH_BASE}._append_rows")
+@patch("src.betting.ledger.cancel_bet")
+@patch(f"{_PATCH_BASE}.retry_request")
+@patch(f"{_PATCH_BASE}._get_live_bankroll")
+def test_fnd003_cancel_durable_push_before_ack(
+    mock_bankroll, mock_http, mock_cancel_bet, mock_append, mock_push, mock_users, mock_write, _mock_count
+):
+    """FND-003: cancel_bet() persists locally; durable push must happen BEFORE cancel ACK (DELETE)."""
+    from scripts.consume_pending_bets import main
+
+    mock_users.return_value = ["philip"]
+    mock_bankroll.return_value = 100.0
+    mock_write.return_value = None
+    mock_cancel_bet.return_value = "ok"
+    mock_push.return_value = True  # push succeeds
+
+    call_order: list[str] = []
+
+    def push_side(*a, **kw):
+        call_order.append("PUSH")
+        return True
+
+    mock_push.side_effect = push_side
+
+    def http_side_effect(method, url, **kwargs):
+        if method == "GET":
+            if "cancel_requests" in url:
+                r = MagicMock()
+                r.status_code = 200
+                r.json.return_value = {"requests": [{"home": "A", "away": "B", "market": "home"}]}
+                return r
+            # No pending bets
+            r = MagicMock()
+            r.status_code = 200
+            r.json.return_value = {"bets": []}
+            return r
+        if method == "DELETE":
+            call_order.append(f"DELETE:{url.split('/')[-1]}")
+            return _make_delete_response()
+        return MagicMock(status_code=200)
+
+    mock_http.side_effect = http_side_effect
+
+    result = main()
+
+    assert result == 0
+    deletes = [x for x in call_order if x.startswith("DELETE:")]
+    assert deletes, "cancel_requests DELETE (ACK) must be called after successful push"
+    assert "PUSH" in call_order, "durable push must be called for cancellations"
+    push_idx = call_order.index("PUSH")
+    for d in deletes:
+        assert call_order.index(d) > push_idx, "cancel ACK must come AFTER durable push"
+
+
+@_ENV_PATCH
+@patch(f"{_PATCH_BASE}.count_open_bets", return_value=0)
+@patch(f"{_WD_BASE}.write_signals_json_all_users")
+@patch(f"{_WD_BASE}.list_known_users")
+@patch(f"{_PATCH_BASE}._durable_push")
+@patch(f"{_PATCH_BASE}._append_rows")
+@patch("src.betting.ledger.cancel_bet")
+@patch(f"{_PATCH_BASE}.retry_request")
+@patch(f"{_PATCH_BASE}._get_live_bankroll")
+def test_fnd003_cancel_push_fail_no_ack(
+    mock_bankroll, mock_http, mock_cancel_bet, mock_append, mock_push, mock_users, mock_write, _mock_count
+):
+    """FND-003: If durable push fails for cancellation, cancel_requests must NOT be ACKed."""
+    from scripts.consume_pending_bets import main
+
+    mock_users.return_value = ["philip"]
+    mock_bankroll.return_value = 100.0
+    mock_write.return_value = None
+    mock_cancel_bet.return_value = "ok"
+    mock_push.return_value = False  # push FAILS
+
+    delete_calls: list[str] = []
+
+    def http_side_effect(method, url, **kwargs):
+        if method == "GET":
+            if "cancel_requests" in url:
+                r = MagicMock()
+                r.status_code = 200
+                r.json.return_value = {"requests": [{"home": "A", "away": "B", "market": "home"}]}
+                return r
+            r = MagicMock()
+            r.status_code = 200
+            r.json.return_value = {"bets": []}
+            return r
+        if method == "DELETE":
+            delete_calls.append(url)
+            return _make_delete_response()
+        return MagicMock(status_code=200)
+
+    mock_http.side_effect = http_side_effect
+
+    result = main()
+
+    assert result == 0  # push failure for cancellations does not crash main()
+    assert not delete_calls, (
+        f"cancel_requests must NOT be ACKed when durable push fails: {delete_calls}"
+    )

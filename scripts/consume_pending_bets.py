@@ -20,11 +20,17 @@ P0-A Durable ACK Invariant (CEO Final Gate):
         - git push failure     → return 1 → accepted KV entries remain for retry
         - KV ACK failure       → log + continue → next run retries (idempotent)
 
+    Decision semantics (FND-20260814-002):
+        - ACCEPT:  valid bet — append to ledger, push, then ACK.
+        - REJECT:  permanently invalid (bad data, >5% cap, invalid source, …) — ACK immediately.
+        - RETRY:   transient infrastructure failure (bankroll unavailable, open-bet count
+                   unavailable) — NOT ACKed; retried on next run.
+
     Idempotency / duplicate protection:
         - _append_rows() skips rows already in ledger (match_id + market key)
         - If all rows were dups (push was already done, only KV delete failed):
-            git add finds nothing staged → no new commit → push is a no-op
-            → return True → ACK proceeds safely
+            git add finds nothing staged → remote containment is verified →
+            return True → ACK proceeds safely
 
     Persistence owner:
         The consumer Python script owns durable ledger persistence.
@@ -58,6 +64,9 @@ _THIS_DIR = Path(__file__).resolve().parent
 _ROOT = _THIS_DIR.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
+
+# FND-20260814-002: RETRY sentinel — transient infrastructure failure; NOT ACKed.
+_RETRY_PREFIX = "RETRY:"
 
 from src.betting.ledger import (
     _FIELDS,
@@ -141,9 +150,10 @@ def _row_from_bet(
     if source == "value" and not signal_id:
         return None, "source=value requires signal_id — REJECT (use explicit source=manual for manual bets)"
 
-    # P0-A: ALL bets require an authoritative bankroll
+    # P0-A: ALL bets require an authoritative bankroll.
+    # FND-20260814-002: bankroll outage is RETRY (transient infrastructure), NOT REJECT.
     if bankroll is None or bankroll <= 0:
-        return None, "authoritative bankroll unavailable — cannot enforce 5% cap, bet rejected"
+        return None, f"{_RETRY_PREFIX}authoritative bankroll unavailable — cannot enforce 5% cap"
 
     # P0-A: REJECT if stake exceeds 5% cap (do not silently alter confirmed payload)
     cap_ok, cap_reason = validate_stake_cap(bankroll, stake_raw)
@@ -255,9 +265,14 @@ def _durable_push(added: int) -> bool:
 
     Idempotent:
     - If all accepted bets were dups already in the ledger (pushed in a previous run):
-        git add finds nothing staged → no commit → push is a no-op → return True.
+        git add finds nothing staged → remote containment is verified → return True.
     - If local ledger has uncommitted changes (crash between append and commit in prev run):
         git add stages the file → commit → push → ACK on next run.
+
+    FND-20260814-001 — remote containment:
+    - A clean staging area alone is NOT proof of origin/main durability.
+    - When nothing is staged, fetch origin/main and check HEAD is an ancestor of origin/main.
+    - If HEAD is local-ahead (not yet in origin/main), push the existing commit before ACKing.
     """
     def _g(*args: str) -> subprocess.CompletedProcess:
         return subprocess.run(
@@ -266,23 +281,29 @@ def _durable_push(added: int) -> bool:
 
     _g("add", "results/ledger_*.csv")
     staged = _g("diff", "--cached", "--quiet")
-    if staged.returncode == 0:
-        # Nothing staged: ledger matches HEAD (and therefore remote from previous push).
-        # This covers the dup-only retry path — safe to ACK.
-        print("[consume] ledger in sync with HEAD — no new commit needed")
-        return True
 
-    commit_msg = f"auto: ledger sync {added} bet(s)"
-    commit = _g("commit", "-m", commit_msg, "--author=SportsBrain Bot <bot@sportsbrain>")
-    if commit.returncode != 0:
-        print(f"[consume] ledger commit failed: {commit.stderr.strip()[:200]}", file=sys.stderr)
-        return False
+    if staged.returncode == 0:
+        # Nothing staged — verify HEAD is already contained in origin/main.
+        # A crash between commit and push in a previous run leaves staging clean but
+        # the commit is not yet durable on the remote.
+        _g("fetch", "origin", "main", "--quiet")
+        if _g("merge-base", "--is-ancestor", "HEAD", "origin/main").returncode == 0:
+            print("[consume] ledger in sync with remote HEAD — no new commit needed")
+            return True
+        # HEAD is local-ahead: push the existing commit without creating a new one.
+        print("[consume] local commit not yet in origin/main — pushing before ACK")
+    else:
+        commit_msg = f"auto: ledger sync {added} bet(s)"
+        commit = _g("commit", "-m", commit_msg, "--author=SportsBrain Bot <bot@sportsbrain>")
+        if commit.returncode != 0:
+            print(f"[consume] ledger commit failed: {commit.stderr.strip()[:200]}", file=sys.stderr)
+            return False
 
     for attempt in range(1, 6):
         _g("pull", "--rebase", "origin", "main")
         push = _g("push", "origin", "main")
         if push.returncode == 0:
-            print(f"[consume] ledger pushed ({commit_msg})")
+            print(f"[consume] ledger pushed (added={added})")
             return True
         print(
             f"[consume] push attempt {attempt} failed: {push.stderr.strip()[:120]}",
@@ -298,14 +319,16 @@ def _fetch_validate_user(
     base: str,
     headers: dict,
     user: str,
-) -> tuple[list[dict], list[str], list[str]]:
+) -> tuple[list[dict], list[str], list[str], list[str]]:
     """Fetch and validate pending bets for `user` from Worker KV.
 
     Returns:
         rows:         validated ledger row dicts (passed to _append_rows)
         accepted_ids: IDs of valid bets — ACK ONLY after durable push succeeds
-        rejected_ids: IDs of invalid/rejected bets — safe to ACK immediately
+        rejected_ids: IDs of permanently invalid bets — safe to ACK immediately
+        retry_ids:    IDs of bets with transient infrastructure failure — NOT ACKed
 
+    FND-20260814-002: bankroll/open-bet-count outages are RETRY, not REJECT.
     Does NOT write to ledger. Does NOT delete from KV.
     """
     suffix = "" if user == DEFAULT_USER else f"?user={user}"
@@ -319,14 +342,14 @@ def _fetch_validate_user(
         )
     except requests.RequestException as e:
         print(f"[consume:{user}] fetch failed: {e}", file=sys.stderr)
-        return [], [], []
+        return [], [], [], []
     if r.status_code != 200:
         print(f"[consume:{user}] HTTP {r.status_code}: {r.text[:200]}", file=sys.stderr)
-        return [], [], []
+        return [], [], [], []
 
     bets = (r.json() or {}).get("bets") or []
     if not bets:
-        return [], [], []
+        return [], [], [], []
 
     today = pd.Timestamp.now().strftime("%Y-%m-%d")
     bankroll = _get_live_bankroll(user)
@@ -334,16 +357,28 @@ def _fetch_validate_user(
     rows: list[dict] = []
     accepted_ids: list[str] = []
     rejected_ids: list[str] = []
+    retry_ids: list[str] = []  # FND-20260814-002: transient failures — NOT ACKed
 
     for b in bets:
+        bid = b.get("id", "")
         # Enforce MAX_ACTIVE_BETS using current ledger + already-accepted rows this run.
-        current_open = count_open_bets(user=user) + len(rows)
+        # count_open_bets failure is a transient infrastructure error → RETRY (FND-002).
+        try:
+            current_open = count_open_bets(user=user) + len(rows)
+        except Exception as exc:  # noqa: BLE001
+            print(
+                f"[consume:{user}] RETRY: open-bet count unavailable: {exc}",
+                file=sys.stderr,
+            )
+            if bid:
+                retry_ids.append(bid)
+            continue
+
         if current_open >= MAX_ACTIVE_BETS:
             print(
                 f"[consume:{user}] REJECT bet — max active bets ({MAX_ACTIVE_BETS}) reached",
                 file=sys.stderr,
             )
-            bid = b.get("id", "")
             if bid:
                 rejected_ids.append(bid)
             continue
@@ -354,12 +389,17 @@ def _fetch_validate_user(
         else:
             row, _extra = None, "unexpected result"
 
-        bid = b.get("id", "")
         if row is None:
             reason = _extra if isinstance(_extra, str) else "invalid"
-            print(f"[consume:{user}] SKIP bet: {reason}", file=sys.stderr)
-            if bid:
-                rejected_ids.append(bid)
+            if reason.startswith(_RETRY_PREFIX):
+                # Transient infrastructure failure — do NOT ACK; let next run retry.
+                print(f"[consume:{user}] RETRY bet {bid!r}: {reason}", file=sys.stderr)
+                if bid:
+                    retry_ids.append(bid)
+            else:
+                print(f"[consume:{user}] REJECT bet: {reason}", file=sys.stderr)
+                if bid:
+                    rejected_ids.append(bid)
         else:
             rows.append(row)
             if bid:
@@ -367,9 +407,9 @@ def _fetch_validate_user(
 
     print(
         f"[consume:{user}] received={len(bets)} accepted={len(accepted_ids)} "
-        f"rejected={len(rejected_ids)}"
+        f"rejected={len(rejected_ids)} retry={len(retry_ids)}"
     )
-    return rows, accepted_ids, rejected_ids
+    return rows, accepted_ids, rejected_ids, retry_ids
 
 
 def _process_cancel_requests(base: str, headers: dict, user: str) -> int:
@@ -400,6 +440,16 @@ def _process_cancel_requests(base: str, headers: dict, user: str) -> int:
         if result in ("ok", "already_cancelled"):
             cancelled += 1
     if cancelled:
+        # FND-20260814-003: durable push BEFORE ACKing cancel queue — same boundary as placement.
+        # Push failure leaves cancel_requests in KV for retry on next run.
+        push_ok = _durable_push(0)
+        if not push_ok:
+            print(
+                f"[cancel:{user}] FATAL: durable push failed — "
+                "cancel_requests remain for retry on next run",
+                file=sys.stderr,
+            )
+            return 0
         try:
             retry_request(
                 "DELETE", f"{base}/cancel_requests{suffix}", headers=headers,
@@ -422,19 +472,29 @@ def main() -> int:
     # (bet_id, user) pairs — user needed for per-user KV suffix
     all_accepted: list[tuple[str, str]] = []   # ACK only after durable push
     all_rejected: list[tuple[str, str]] = []   # ACK immediately (not persisted)
+    all_retry: list[tuple[str, str]] = []      # FND-20260814-002: NOT ACKed — retry next run
 
     for u in list_known_users():
-        rows, accepted_ids, rejected_ids = _fetch_validate_user(base, headers, u)
+        rows, accepted_ids, rejected_ids, retry_ids = _fetch_validate_user(base, headers, u)
         if rows:
             rows_by_user[u] = rows
         all_accepted.extend((bid, u) for bid in accepted_ids)
         all_rejected.extend((bid, u) for bid in rejected_ids)
+        all_retry.extend((bid, u) for bid in retry_ids)
         _process_cancel_requests(base, headers, u)
 
     # ── Phase 2: Immediately ACK rejected bets ───────────────────────────────
     # Rejected bets are not being persisted — safe to remove from KV now.
     for bid, user in all_rejected:
         _kv_delete_one(base, headers, bid, user)
+
+    # FND-20260814-002: RETRY bets are left in KV — NOT ACKed.
+    if all_retry:
+        print(
+            f"[consume] {len(all_retry)} bet(s) left for retry "
+            "(transient infrastructure failure — will re-evaluate on next run)",
+            file=sys.stderr,
+        )
 
     # ── Phase 3: Durable persistence lifecycle for accepted bets ────────────
     total_added = 0
