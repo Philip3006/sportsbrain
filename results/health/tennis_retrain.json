@@ -1,11 +1,11 @@
 {
   "job": "tennis_retrain",
   "status": "ok",
-  "last_run_at": "2026-08-13T06:21:43Z",
-  "started_at": "2026-08-13T06:21:43Z",
+  "last_run_at": "2026-08-12T22:54:14Z",
+  "started_at": "2026-08-12T22:54:14Z",
   "duration_s": null,
-  "exit_code": 1,
+  "exit_code": 0,
   "error": null,
-  "fallback_used": null,
+  "fallback_used": "test-source",
   "run_id": null
 }

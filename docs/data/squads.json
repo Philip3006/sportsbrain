@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-11",
+  "updated": "2026-08-13",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -2697,7 +2697,8 @@
         "Benjamin Asare",
         "Lawrence Ati-Zigi",
         "Mohammed Kudus",
-        "Mohammed Salisu"
+        "Mohammed Salisu",
+        "Kamaldeen Sulemana"
       ],
       "players": [
         {
@@ -2808,7 +2809,7 @@
         {
           "name": "Kamaldeen Sulemana",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Derrick Luckassen",
@@ -5404,7 +5405,9 @@
       "ampel": "🟢",
       "suspended": [
         "Teboho Mokoena",
-        "Themba Zwane"
+        "Themba Zwane",
+        "Thalente Mbatha",
+        "Evidence Makgopa"
       ],
       "players": [
         {
@@ -5430,7 +5433,7 @@
         {
           "name": "Thalente Mbatha",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Aubrey Modiba",
@@ -5490,7 +5493,7 @@
         {
           "name": "Evidence Makgopa",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Samukele Kabini",
