@@ -315,12 +315,22 @@ def _durable_push(added: int) -> bool:
             # rc > 1: git merge-base command error — not a containment result; fail closed.
             print(f"[consume] merge-base verification failed (rc={mb.returncode}): {mb.stderr.strip()[:200]}", file=sys.stderr)
             return False
-    else:
+    elif staged.returncode == 1:
+        # rc == 1: staged changes present — commit them.
         commit_msg = f"auto: ledger sync {added} bet(s)"
         commit = _g("commit", "-m", commit_msg, "--author=SportsBrain Bot <bot@sportsbrain>")
         if commit.returncode != 0:
             print(f"[consume] ledger commit failed: {commit.stderr.strip()[:200]}", file=sys.stderr)
             return False
+    else:
+        # FND-20260814-001: rc > 1 from git diff --cached is a git command error,
+        # not a staging result — fail closed, do not proceed to commit or push.
+        print(
+            f"[consume] git diff --cached failed (rc={staged.returncode}): "
+            f"{staged.stderr.strip()[:200]}",
+            file=sys.stderr,
+        )
+        return False
 
     for attempt in range(1, 6):
         # FND-001: failed pull/rebase must not be ignored — skip push for this attempt.
@@ -440,12 +450,49 @@ def _fetch_validate_user(
     return rows, accepted_ids, rejected_ids, retry_ids
 
 
+def _kv_delete_cancel(base: str, headers: dict, cancel_id: str, user: str) -> None:
+    """Delete a single cancel request by ID from Worker KV. Non-fatal.
+
+    FND-20260814-003: per-item ACK — only deletes the specific ID whose durable
+    outcome has been proven. New cancels arriving after the consumer's GET are
+    unaffected because they have different IDs.
+    ACK failure is non-fatal: next run will see the same cancel, call cancel_bet()
+    which returns 'already_cancelled', and retry the ACK safely (idempotent).
+    """
+    if not cancel_id:
+        return
+    suffix = "" if user == DEFAULT_USER else f"?user={user}"
+    try:
+        d = retry_request(
+            "DELETE",
+            f"{base}/cancel_requests/{cancel_id}{suffix}",
+            headers=headers,
+            timeout=15,
+            log_prefix=f"[cancel:{user}]",
+        )
+        if d.status_code != 200:
+            print(
+                f"[cancel:{user}] DELETE cancel/{cancel_id} → HTTP {d.status_code}",
+                file=sys.stderr,
+            )
+    except requests.RequestException as e:
+        print(f"[cancel:{user}] DELETE cancel/{cancel_id} failed: {e}", file=sys.stderr)
+
+
 def _process_cancel_requests(base: str, headers: dict, user: str) -> int:
-    """Read cancel_requests from Worker KV, apply to ledger, clear processed."""
+    """Read cancel_requests from Worker KV, apply to ledger, per-item ACK each resolved intent.
+
+    FND-20260814-003: per-item ACK semantics.
+    - Each cancel request must carry a stable `id` field (assigned by Worker).
+    - Only intents whose durable outcome is proven are ACK'd (per-item DELETE by id).
+    - Push failure → no ACK for any resolved cancel → they remain for retry.
+    - Unresolved / not-found cancels are left in KV for next run.
+    - New cancels arriving after this consumer's GET are unaffected (different IDs).
+    - ACK failure retry is idempotent: cancel_bet() returns 'already_cancelled'.
+    """
     from src.betting.ledger import cancel_bet
     suffix = "" if user == DEFAULT_USER else f"?user={user}"
     try:
-        # Non-critical — single attempt, short timeout.
         r = retry_request(
             "GET", f"{base}/cancel_requests{suffix}", headers=headers,
             timeout=8, retries=1, log_prefix=f"[cancel:{user}]",
@@ -459,17 +506,24 @@ def _process_cancel_requests(base: str, headers: dict, user: str) -> int:
     if not reqs:
         return 0
     cancelled = 0
+    resolved_ids: list[str] = []  # IDs whose ledger outcome is durable and proven
     for req in reqs:
-        home, away, market = req.get("home", ""), req.get("away", ""), req.get("market", "")
+        home = req.get("home", "")
+        away = req.get("away", "")
+        market = req.get("market", "")
+        cancel_id = str(req.get("id") or "").strip()
         if not (home and away and market):
             continue
         result = cancel_bet(home, away, market, user=user)
         print(f"[cancel:{user}] {home} vs {away} {market} → {result}")
         if result in ("ok", "already_cancelled"):
             cancelled += 1
-    if cancelled:
-        # FND-20260814-003: durable push BEFORE ACKing cancel queue — same boundary as placement.
-        # Push failure leaves cancel_requests in KV for retry on next run.
+            if cancel_id:
+                resolved_ids.append(cancel_id)
+        # else: not_found or error → leave in KV for retry
+    if resolved_ids:
+        # FND-20260814-003: durable push BEFORE per-item ACK.
+        # Push failure → no ACK for any resolved intent → all remain for retry.
         push_ok = _durable_push(0)
         if not push_ok:
             print(
@@ -478,13 +532,8 @@ def _process_cancel_requests(base: str, headers: dict, user: str) -> int:
                 file=sys.stderr,
             )
             return 0
-        try:
-            retry_request(
-                "DELETE", f"{base}/cancel_requests{suffix}", headers=headers,
-                timeout=8, retries=1, log_prefix=f"[cancel:{user}]",
-            )
-        except Exception:  # noqa: BLE001, S110
-            pass
+        for cancel_id in resolved_ids:
+            _kv_delete_cancel(base, headers, cancel_id, user)
     return cancelled
 
 

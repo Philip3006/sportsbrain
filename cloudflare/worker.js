@@ -553,7 +553,8 @@ export default {
 
     // ── /pending_bets + /cancel_bet + /cancel_requests (per-user via auth) ──
     if (path === '/pending_bets' || path.startsWith('/pending_bets/') ||
-        path === '/cancel_bet' || path === '/cancel_requests') {
+        path === '/cancel_bet' || path === '/cancel_requests' ||
+        path.startsWith('/cancel_requests/')) {
       const auth = await authResolve(request, env);
       if (!auth.ok) {
         return new Response('Unauthorized', { status: 401, headers: ch });
@@ -617,13 +618,16 @@ export default {
         const cancelReqs = await readCancelRequests(env, pUser);
         const alreadyQueued = cancelReqs.some(r => r.home === home && r.away === away && r.market === market);
         if (!alreadyQueued) {
-          cancelReqs.push({ home, away, market, requested_at: new Date().toISOString() });
+          // FND-20260814-003: stable id enables per-item ACK by Python consumer.
+          cancelReqs.push({ id: _randomToken().slice(0, 16), home, away, market, requested_at: new Date().toISOString() });
           await writeCancelRequests(env, cancelReqs, pUser);
         }
         return jr({ ok: true });
       }
 
-      // H3: Cancel-Request-Queue read + clear (for Python consume_pending_bets)
+      // H3: Cancel-Request-Queue read + per-item delete (for Python consume_pending_bets)
+      // FND-20260814-003: per-item DELETE is the safe ACK path; clear-all DELETE is retained
+      // only for emergency use — the Python consumer uses per-item DELETE exclusively.
       if (path === '/cancel_requests') {
         if (request.method === 'GET') {
           return jr({ requests: await readCancelRequests(env, pUser) });
@@ -632,6 +636,18 @@ export default {
           await writeCancelRequests(env, [], pUser);
           return jr({ ok: true });
         }
+      }
+
+      // FND-20260814-003: per-item cancel ACK — DELETE /cancel_requests/{id}
+      // Removes only the cancel intent with the exact matching id.
+      // New cancels arriving after the consumer's GET are unaffected.
+      if (request.method === 'DELETE' && path.startsWith('/cancel_requests/')) {
+        const cancelId = path.slice('/cancel_requests/'.length);
+        if (!cancelId) return jr({ error: 'cancel request id required' }, 400);
+        const arr = await readCancelRequests(env, pUser);
+        const next = arr.filter(r => r.id !== cancelId);
+        await writeCancelRequests(env, next, pUser);
+        return jr({ ok: true, removed: arr.length - next.length });
       }
     }
 

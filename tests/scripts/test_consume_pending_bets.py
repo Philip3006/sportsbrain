@@ -529,13 +529,15 @@ def _git_mock(
     push_succeeds: bool = True,
     *,
     add_rc: int = 0,
+    diff_rc: int = -1,   # -1 = auto (1 if staging_has_changes else 0); other = override
     fetch_rc: int = 0,
     merge_base_rc: int = -1,  # -1 = auto (0 if is_ancestor else 1)
     pull_rc: int = 0,
 ):
     """Build a subprocess.run mock for git commands in _durable_push.
 
-    merge_base_rc=-1 means auto: 0 if is_ancestor else 1.
+    diff_rc=-1      → auto: 1 when staging_has_changes else 0.
+    merge_base_rc=-1 → auto: 0 if is_ancestor else 1.
     Other values override directly (e.g. 2 = git command error).
     """
     git_calls: list[str] = []
@@ -552,7 +554,7 @@ def _git_mock(
         if cmd[0] == "add":
             r.returncode = add_rc
         elif cmd[0] == "diff":
-            r.returncode = 1 if staging_has_changes else 0
+            r.returncode = (1 if staging_has_changes else 0) if diff_rc == -1 else diff_rc
         elif cmd[0] == "fetch":
             r.returncode = fetch_rc
         elif cmd[0] == "merge-base":
@@ -789,7 +791,7 @@ def test_fnd003_cancel_durable_push_before_ack(
             if "cancel_requests" in url:
                 r = MagicMock()
                 r.status_code = 200
-                r.json.return_value = {"requests": [{"home": "A", "away": "B", "market": "home"}]}
+                r.json.return_value = {"requests": [{"id": "crid_001", "home": "A", "away": "B", "market": "home"}]}
                 return r
             # No pending bets
             r = MagicMock()
@@ -797,7 +799,7 @@ def test_fnd003_cancel_durable_push_before_ack(
             r.json.return_value = {"bets": []}
             return r
         if method == "DELETE":
-            call_order.append(f"DELETE:{url.split('/')[-1]}")
+            call_order.append(f"DELETE:{url.split('/')[-1].split('?')[0]}")
             return _make_delete_response()
         return MagicMock(status_code=200)
 
@@ -807,11 +809,15 @@ def test_fnd003_cancel_durable_push_before_ack(
 
     assert result == 0
     deletes = [x for x in call_order if x.startswith("DELETE:")]
-    assert deletes, "cancel_requests DELETE (ACK) must be called after successful push"
+    assert deletes, "cancel_requests per-item DELETE (ACK) must be called after successful push"
     assert "PUSH" in call_order, "durable push must be called for cancellations"
     push_idx = call_order.index("PUSH")
     for d in deletes:
         assert call_order.index(d) > push_idx, "cancel ACK must come AFTER durable push"
+    # Per-item ACK: the deleted path segment must be the cancel request id (not 'cancel_requests')
+    assert any(d == "DELETE:crid_001" for d in deletes), (
+        f"per-item ACK must delete /cancel_requests/{{id}}, got: {deletes}"
+    )
 
 
 @_ENV_PATCH
@@ -842,7 +848,7 @@ def test_fnd003_cancel_push_fail_no_ack(
             if "cancel_requests" in url:
                 r = MagicMock()
                 r.status_code = 200
-                r.json.return_value = {"requests": [{"home": "A", "away": "B", "market": "home"}]}
+                r.json.return_value = {"requests": [{"id": "crid_fail", "home": "A", "away": "B", "market": "home"}]}
                 return r
             r = MagicMock()
             r.status_code = 200
@@ -932,6 +938,23 @@ def test_fnd001_pull_rebase_failure_skips_push_attempt(mock_subrun, mock_sleep):
     assert "push" not in git_calls, "push must NOT be called when pull --rebase fails"
 
 
+@patch(_PATCH_TIME_SLEEP)
+@patch(_PATCH_SUBPROCESS)
+def test_fnd001_diff_error_returns_false(mock_subrun, mock_sleep):
+    """FND-001: git diff --cached rc>1 (git command error) → return False, no commit/push."""
+    from scripts.consume_pending_bets import _durable_push
+
+    run_side, git_calls = _git_mock(diff_rc=2)
+    mock_subrun.side_effect = run_side
+
+    result = _durable_push(1)
+
+    assert result is False, "git diff --cached rc>1 must return False (fail closed)"
+    assert "diff" in git_calls, "diff must be attempted"
+    assert "commit" not in git_calls, "commit must NOT be called after diff error"
+    assert "push" not in git_calls, "push must NOT be called after diff error"
+
+
 # ── FND-20260814-002: additional REJECT/RETRY boundary tests ──────────────────
 
 
@@ -1007,7 +1030,7 @@ def test_fnd003_mixed_placement_and_cancel_both_persisted(
             if "cancel_requests" in url:
                 r = MagicMock()
                 r.status_code = 200
-                r.json.return_value = {"requests": [{"home": "X", "away": "Y", "market": "home"}]}
+                r.json.return_value = {"requests": [{"id": "crid_mixed", "home": "X", "away": "Y", "market": "home"}]}
                 return r
             # One valid pending bet
             return _make_pending_response([_valid_bet({"id": "mixed_bet_01"})])
@@ -1104,3 +1127,240 @@ def test_fnd030_whitespace_source_rejected():
     assert not reason.startswith(_RETRY_PREFIX), (
         f"whitespace-padded source must be permanent REJECT, got: {reason!r}"
     )
+
+
+# ── FND-20260814-003: per-item cancel ACK semantics ───────────────────────────
+# Additional tests for the new per-item DELETE /cancel_requests/{id} ACK path.
+
+
+@_ENV_PATCH
+@patch(f"{_PATCH_BASE}.count_open_bets", return_value=0)
+@patch(f"{_WD_BASE}.write_signals_json_all_users")
+@patch(f"{_WD_BASE}.list_known_users")
+@patch(f"{_PATCH_BASE}._durable_push")
+@patch(f"{_PATCH_BASE}._append_rows")
+@patch("src.betting.ledger.cancel_bet")
+@patch(f"{_PATCH_BASE}.retry_request")
+@patch(f"{_PATCH_BASE}._get_live_bankroll")
+def test_fnd003_partial_cancel_only_resolved_ids_acked(
+    mock_bankroll, mock_http, mock_cancel_bet, mock_append, mock_push, mock_users, mock_write, _mock_count
+):
+    """FND-003: two cancel requests; only the resolved one is ACK'd per-item; unresolved stays."""
+    from scripts.consume_pending_bets import main
+
+    mock_users.return_value = ["philip"]
+    mock_bankroll.return_value = 100.0
+    mock_write.return_value = None
+    mock_push.return_value = True
+
+    cancel_results = {"home_A": "ok", "home_B": "not_found"}
+
+    def cancel_side(home, away, market, **kwargs):
+        return cancel_results.get(f"home_{home}", "not_found")
+
+    mock_cancel_bet.side_effect = cancel_side
+
+    deleted_ids: list[str] = []
+
+    def http_side_effect(method, url, **kwargs):
+        if method == "GET":
+            if "cancel_requests" in url and "/" not in url.split("cancel_requests")[1].split("?")[0]:
+                r = MagicMock()
+                r.status_code = 200
+                r.json.return_value = {"requests": [
+                    {"id": "cr_ok", "home": "A", "away": "Z", "market": "home"},
+                    {"id": "cr_nf", "home": "B", "away": "Z", "market": "home"},
+                ]}
+                return r
+            r = MagicMock()
+            r.status_code = 200
+            r.json.return_value = {"bets": []}
+            return r
+        if method == "DELETE":
+            deleted_ids.append(url.split("/")[-1].split("?")[0])
+            return _make_delete_response()
+        return MagicMock(status_code=200)
+
+    mock_http.side_effect = http_side_effect
+
+    result = main()
+
+    assert result == 0
+    assert "cr_ok" in deleted_ids, "resolved cancel must be ACK'd per-item"
+    assert "cr_nf" not in deleted_ids, "unresolved cancel must NOT be ACK'd — must stay for retry"
+
+
+@_ENV_PATCH
+@patch(f"{_PATCH_BASE}.count_open_bets", return_value=0)
+@patch(f"{_WD_BASE}.write_signals_json_all_users")
+@patch(f"{_WD_BASE}.list_known_users")
+@patch(f"{_PATCH_BASE}._durable_push")
+@patch(f"{_PATCH_BASE}._append_rows")
+@patch("src.betting.ledger.cancel_bet")
+@patch(f"{_PATCH_BASE}.retry_request")
+@patch(f"{_PATCH_BASE}._get_live_bankroll")
+def test_fnd003_per_item_ack_leaves_new_cancel_untouched(
+    mock_bankroll, mock_http, mock_cancel_bet, mock_append, mock_push, mock_users, mock_write, _mock_count
+):
+    """FND-003: per-item ACK deletes only the fetched ID; a new cancel (different ID) is unaffected.
+
+    This proves the Worker contract: DELETE /cancel_requests/{id} cannot erase
+    a concurrently-queued cancel that has a different id.
+    """
+    from scripts.consume_pending_bets import main
+
+    mock_users.return_value = ["philip"]
+    mock_bankroll.return_value = 100.0
+    mock_write.return_value = None
+    mock_push.return_value = True
+    mock_cancel_bet.return_value = "ok"
+
+    deleted_urls: list[str] = []
+
+    def http_side_effect(method, url, **kwargs):
+        if method == "GET":
+            if "cancel_requests" in url and "/" not in url.split("cancel_requests")[1].split("?")[0]:
+                r = MagicMock()
+                r.status_code = 200
+                # Consumer fetches one cancel request with id=old_cr
+                r.json.return_value = {"requests": [
+                    {"id": "old_cr", "home": "P", "away": "Q", "market": "home"},
+                ]}
+                return r
+            r = MagicMock()
+            r.status_code = 200
+            r.json.return_value = {"bets": []}
+            return r
+        if method == "DELETE":
+            deleted_urls.append(url)
+            return _make_delete_response()
+        return MagicMock(status_code=200)
+
+    mock_http.side_effect = http_side_effect
+
+    result = main()
+
+    assert result == 0
+    # Consumer must DELETE /cancel_requests/old_cr (the specific fetched id)
+    assert any("old_cr" in u for u in deleted_urls), (
+        f"must ACK /cancel_requests/old_cr specifically, got: {deleted_urls}"
+    )
+    # Consumer must NOT call clear-all DELETE /cancel_requests (no trailing slash, no id)
+    clear_all = [u for u in deleted_urls if u.rstrip("/").endswith("cancel_requests")]
+    assert not clear_all, (
+        f"clear-all DELETE /cancel_requests must NOT be called; got: {clear_all}"
+    )
+
+
+@_ENV_PATCH
+@patch(f"{_PATCH_BASE}.count_open_bets", return_value=0)
+@patch(f"{_WD_BASE}.write_signals_json_all_users")
+@patch(f"{_WD_BASE}.list_known_users")
+@patch(f"{_PATCH_BASE}._durable_push")
+@patch(f"{_PATCH_BASE}._append_rows")
+@patch("src.betting.ledger.cancel_bet")
+@patch(f"{_PATCH_BASE}.retry_request")
+@patch(f"{_PATCH_BASE}._get_live_bankroll")
+def test_fnd003_ack_failure_retry_is_idempotent(
+    mock_bankroll, mock_http, mock_cancel_bet, mock_append, mock_push, mock_users, mock_write, _mock_count
+):
+    """FND-003: ACK failure → next run sees same cancel → cancel_bet returns 'already_cancelled'
+    → resolved again → per-item DELETE retried safely (idempotent).
+    """
+    from scripts.consume_pending_bets import main
+
+    mock_users.return_value = ["philip"]
+    mock_bankroll.return_value = 100.0
+    mock_write.return_value = None
+    mock_push.return_value = True
+    # Simulate: cancellation was already applied → 'already_cancelled' is idempotent
+    mock_cancel_bet.return_value = "already_cancelled"
+
+    deleted_ids: list[str] = []
+
+    def http_side_effect(method, url, **kwargs):
+        if method == "GET":
+            if "cancel_requests" in url and "/" not in url.split("cancel_requests")[1].split("?")[0]:
+                r = MagicMock()
+                r.status_code = 200
+                r.json.return_value = {"requests": [
+                    {"id": "retry_cr", "home": "R", "away": "S", "market": "draw"},
+                ]}
+                return r
+            r = MagicMock()
+            r.status_code = 200
+            r.json.return_value = {"bets": []}
+            return r
+        if method == "DELETE":
+            deleted_ids.append(url.split("/")[-1].split("?")[0])
+            return _make_delete_response()
+        return MagicMock(status_code=200)
+
+    mock_http.side_effect = http_side_effect
+
+    result = main()
+
+    assert result == 0
+    assert "retry_cr" in deleted_ids, (
+        "'already_cancelled' must still produce ACK — idempotent retry is safe"
+    )
+
+
+@_ENV_PATCH
+@patch(f"{_PATCH_BASE}.count_open_bets", return_value=0)
+@patch(f"{_WD_BASE}.write_signals_json_all_users")
+@patch(f"{_WD_BASE}.list_known_users")
+@patch(f"{_PATCH_BASE}._durable_push")
+@patch(f"{_PATCH_BASE}._append_rows")
+@patch("src.betting.ledger.cancel_bet")
+@patch(f"{_PATCH_BASE}.retry_request")
+@patch(f"{_PATCH_BASE}._get_live_bankroll")
+def test_fnd003_same_bet_pending_and_cancel_same_run(
+    mock_bankroll, mock_http, mock_cancel_bet, mock_append, mock_push, mock_users, mock_write, _mock_count
+):
+    """FND-003: one run processes both a pending bet placement AND a cancel request.
+    Both have their own durable push; cancel ACK uses per-item DELETE with correct id.
+    """
+    from scripts.consume_pending_bets import main
+
+    mock_users.return_value = ["philip"]
+    mock_bankroll.return_value = 100.0
+    mock_write.return_value = None
+    mock_cancel_bet.return_value = "ok"
+
+    push_calls: list[int] = []
+
+    def push_side(added_count, *a, **kw):
+        push_calls.append(added_count)
+        return True
+
+    mock_push.side_effect = push_side
+    mock_append.return_value = 1
+
+    deleted: list[str] = []
+
+    def http_side_effect(method, url, **kwargs):
+        if method == "GET":
+            if "cancel_requests" in url and "/" not in url.split("cancel_requests")[1].split("?")[0]:
+                r = MagicMock()
+                r.status_code = 200
+                r.json.return_value = {"requests": [
+                    {"id": "same_run_cr", "home": "T", "away": "U", "market": "home"},
+                ]}
+                return r
+            return _make_pending_response([_valid_bet({"id": "same_run_bet"})])
+        if method == "DELETE":
+            deleted.append(url.split("/")[-1].split("?")[0])
+            return _make_delete_response()
+        return MagicMock(status_code=200)
+
+    mock_http.side_effect = http_side_effect
+
+    result = main()
+
+    assert result == 0, f"same-run placement+cancel must succeed: {result}"
+    assert len(push_calls) >= 2, f"both cancel and placement must trigger push: {push_calls}"
+    # Cancel ACK must be per-item (id=same_run_cr), not clear-all
+    assert "same_run_cr" in deleted, f"cancel must be ACK'd by id: {deleted}"
+    # Placement ACK must also fire
+    assert "same_run_bet" in deleted, f"placement must be ACK'd by id: {deleted}"

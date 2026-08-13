@@ -388,24 +388,23 @@ def test_p0a_submit_sends_canonical_odds(page: Page, server_url: str) -> None:
         page.locator("#bet-modal-cancel").click()
 
 
-# P0-A Test 11: signal without current_odds cannot reach VALUE submission
-def test_p0a_missing_current_odds_forces_manual(page: Page, server_url: str) -> None:
-    """P0-A item B: signal with current_odds=None must not expose VALUE actionability."""
+# P0-A Test 11: FND-20260814-031 — ACTIVE signal without current_odds renders no bet button
+def test_p0a_missing_current_odds_no_bet_button(page: Page, server_url: str) -> None:
+    """FND-031: ACTIVE signal with current_odds=None must render NO bet button at all.
+
+    The signal card must be informational only; no manual fallback bet button may appear.
+    This is a hard assertion, not a conditional skip.
+    """
     sig_no_current = _canonical_signal(current_odds=None, current_ev_pct=None)
     payload = {**_BASE, "football": [sig_no_current]}
 
     _navigate_to_football(page, server_url, payload)
 
     btns = page.locator(".place-bet-btn")
-    if btns.count() == 0:
-        return  # no button rendered = correct fail-closed behaviour
-
-    # Any button rendered must carry source=manual, not source=value
-    first_btn = btns.first
-    expect(first_btn).to_be_visible(timeout=5_000)
-    source_attr = first_btn.get_attribute("data-source")
-    assert source_attr == "manual", \
-        f"Signal missing current_odds must have source=manual on button, got: {source_attr}"
+    assert btns.count() == 0, (
+        f"FND-031: ACTIVE signal without current_odds must render NO bet button "
+        f"(not even a manual fallback). Got {btns.count()} button(s)."
+    )
 
 
 # ── P0-A Test 12: FND-20260814-004 — mandatory browser submit ─────────────────
@@ -529,3 +528,43 @@ def test_fnd004_mandatory_submit_delivers_canonical_payload(page: Page, server_u
 
     if modal.is_visible():
         page.locator("#bet-modal-cancel").click()
+
+
+# P0-A Test 13: FND-20260814-031 — predCard model-tip renders no bet button
+def test_fnd031_predcard_no_bet_button(page: Page, server_url: str) -> None:
+    """FND-031: predCard model-tip surfaces must not render any .place-bet-btn button.
+
+    Model-tip predictions have no backing canonical signal → no bet action allowed.
+    Odds are shown as informational display only (span, not button).
+    """
+    js_errors: list[str] = []
+    page.on("pageerror", lambda exc: js_errors.append(str(exc)))
+
+    model_tip = {
+        "p_home": 0.55, "p_draw": 0.25, "p_away": 0.20,
+        "xg_home": 1.6, "xg_away": 0.9,
+        "p_btts_yes": 0.45, "p_btts_no": 0.55,
+        "top_scorers_home": [], "top_scorers_away": [],
+    }
+    payload = {
+        **_FRESH,
+        "model_tips": {"Alpha vs Beta": model_tip},
+        "all_odds": {
+            "Alpha vs Beta": {"home": 1.85, "draw": 3.40, "away": 4.20, "btts_yes": 1.90}
+        },
+    }
+    _navigate_to_football(page, server_url, payload)
+
+    pred_cards = page.locator(".pred-card")
+    if pred_cards.count() == 0:
+        return  # predCard not rendered for this fixture — test passes trivially
+
+    pred_card = pred_cards.first
+    bet_btns = pred_card.locator(".place-bet-btn")
+    assert bet_btns.count() == 0, (
+        f"FND-031: predCard must not contain any .place-bet-btn bet buttons. "
+        f"Got {bet_btns.count()} button(s) — model-tip has no canonical signal backing."
+    )
+
+    ref_errors = [e for e in js_errors if "ReferenceError" in e or "TypeError" in e]
+    assert not ref_errors, f"FND-031: JS errors in predCard render: {ref_errors}"

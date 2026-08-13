@@ -29,34 +29,16 @@ function predCard(home, away, tip, odds, nk, kickoff, sport) {
   if (tip.p_btts_no && odds.btts_no > 1) mkts.push({key: 'btts_no', name: 'Kein BTTS', p: tip.p_btts_no, q: odds.btts_no});
 
 
-  // Direct bet buttons next to 1/X/2 probability bars (same data as Marktübersicht)
-  // P0-A: model-tip buttons are always 'manual' — they lack a canonical signal_id/signal_status
+  // Informational odds display next to 1/X/2 probability bars.
+  // FND-20260814-031: model-tip predictions have no backing canonical signal →
+  // no bet button rendered; odds shown as informational text only.
   const barBetBtn = (mktKey, modelP, q) => {
     if (!q || q <= 1) return '';
     const ev = calcEV(modelP, q);
     const isValue = ev >= 3;
-    // Model-tip predictions don't have a backing ACTIVE signal → always manual
-    const src = 'manual';
-    const stake = isValue ? 10 : 5;
-    const style = isValue
-      ? 'background:rgba(0,200,83,.18);color:var(--green);border:1px solid rgba(0,200,83,.55)'
-      : 'background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--border)';
-    const attrs = [
-      `type="button"`,
-      `data-match="${esc(matchStr)}"`,
-      `data-market="${mktKey}"`,
-      `data-odds="${q}"`,
-      `data-stake="${stake}"`,
-      `data-ev="${ev.toFixed(2)}"`,
-      `data-confidence=""`,
-      `data-kickoff="${esc(koStr)}"`,
-      `data-sport="${esc(spStr)}"`,
-      `data-model-prob="${modelP}"`,
-      `data-source="${src}"`,
-      `onclick="event.stopPropagation();_openBetModalFromBtn(this)"`,
-    ].join(' ');
-    return `<button ${attrs} aria-label="Wette ${mktKey} @ ${q.toFixed(2)}"
-      style="${style};font-size:13px;font-weight:800;padding:6px 12px;border-radius:8px;cursor:pointer;white-space:nowrap;min-width:62px;height:38px;-webkit-appearance:none;appearance:none">${q.toFixed(2)}</button>`;
+    const color = isValue ? 'var(--green)' : 'var(--muted)';
+    return `<span aria-label="${mktKey} @ ${q.toFixed(2)}"
+      style="font-size:13px;font-weight:800;color:${color};padding:6px 12px;border-radius:8px;border:1px solid var(--border);white-space:nowrap;min-width:62px;height:38px;display:inline-flex;align-items:center;justify-content:center">${q.toFixed(2)}</span>`;
   };
   const homeBtn = barBetBtn('home', tip.p_home, odds.home);
   const drawBtn = barBetBtn('draw', tip.p_draw, odds.draw);
@@ -65,37 +47,21 @@ function predCard(home, away, tip, odds, nk, kickoff, sport) {
   // Compact "Weitere Märkte" buttons: DC, BTTS — direkt über xG.
   // Ersetzt die separate Marktübersicht-Tabelle.
   const extraMkts = mkts.filter(m => !['home','draw','away'].includes(m.key));
+  // FND-20260814-031: model-tip extra-market display — informational only, no bet action.
   const extraBtn = (m) => {
     const ev = (m.p * m.q - 1) * 100;
     const isValue = ev >= 3;
-    // P0-A: model-tip predictions always manual (no canonical signal_id)
-    const src = 'manual';
-    const stake = isValue ? 10 : 5;
     const cardStyle = isValue
       ? 'background:rgba(0,200,83,.10);border:1px solid rgba(0,200,83,.45)'
       : 'background:rgba(255,255,255,.04);border:1px solid var(--border)';
     const oddsColor = isValue ? 'var(--green)' : 'var(--text)';
     const evColor = ev >= 0 ? 'var(--green)' : 'var(--red)';
-    const attrs = [
-      `type="button"`,
-      `data-match="${esc(matchStr)}"`,
-      `data-market="${m.key}"`,
-      `data-odds="${m.q}"`,
-      `data-stake="${stake}"`,
-      `data-ev="${ev.toFixed(2)}"`,
-      `data-confidence=""`,
-      `data-kickoff="${esc(koStr)}"`,
-      `data-sport="${esc(spStr)}"`,
-      `data-model-prob="${m.p}"`,
-      `data-source="${src}"`,
-      `onclick="event.stopPropagation();_openBetModalFromBtn(this)"`,
-    ].join(' ');
-    return `<button ${attrs} aria-label="Wette ${m.name} @ ${m.q.toFixed(2)}"
-      style="${cardStyle};border-radius:10px;padding:9px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-family:inherit;color:var(--text);-webkit-appearance:none;appearance:none;min-width:0">
+    return `<div aria-label="${m.name} @ ${m.q.toFixed(2)}"
+      style="${cardStyle};border-radius:10px;padding:9px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:inherit;color:var(--text);min-width:0">
       <span style="font-size:10px;font-weight:700;color:var(--muted);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${m.name}</span>
       <span style="font-size:16px;font-weight:900;color:${oddsColor}">${m.q.toFixed(2)}</span>
       <span style="font-size:10px;font-weight:800;color:${evColor}">${Math.round(m.p*100)}% · ${ev>=0?'+':''}${ev.toFixed(1)}%</span>
-    </button>`;
+    </div>`;
   };
   const extraGrid = extraMkts.length ? `
     <div style="margin-top:10px;margin-bottom:10px">
@@ -622,7 +588,7 @@ function sigCard(s, showMatch) {
       : _isLegacySignal
         ? ''
         : (!_isValueActionable)
-          ? `<button class="place-bet-btn place-bet-btn-manual" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="Manuelle Wette (keine aktuellen Quoten)" style="background:rgba(210,153,34,.12);color:var(--yellow);border-color:rgba(210,153,34,.35)">Manuell wetten · €${s.stake_eur.toFixed(0)}</button>`
+          ? ''
           : `<button class="place-bet-btn" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="Wette platzieren">Wette platzieren · €${s.stake_eur.toFixed(0)}</button>`}
     ${(['ah-1.5_a','ah+1.5_b'].includes(s.market)||s.market.match(/^ah[+-]/))
       ? `<div style="font-size:10px;color:#ffb347;background:rgba(58,44,0,0.6);padding:3px 8px 5px;border-top:1px solid rgba(90,70,0,0.5)">⚠ Satz-AH = SET Handicap — beim Buchmacher <strong>Sätze-Handicap</strong> wählen, NICHT Spiele-Handicap</div>`
