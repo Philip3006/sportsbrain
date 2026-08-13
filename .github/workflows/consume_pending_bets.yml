@@ -62,13 +62,16 @@ jobs:
           SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
         run: python3 -m src.monitoring.aggregate_health --merge-from-committed
 
-      - name: Commit if new bets were added
+      - name: Commit health artifacts
+        # Ledger persistence (results/ledger_*.csv) is handled by the consumer script
+        # in Step "Consume pending bets" above — it commits and pushes before ACK'ing
+        # KV entries (P0-A durable ACK invariant). This step handles health artifacts only.
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add results/ledger_*.csv docs/data/health.json || true
+          git add docs/data/health.json || true
           git diff --staged --quiet && exit 0
-          git commit -m "auto: consume pending bets $(date +%Y-%m-%d\ %H:%M) UTC"
+          git commit -m "auto: consume health $(date +%Y-%m-%d\ %H:%M) UTC"
           for i in 1 2 3 4 5; do
             git fetch origin main
             git rebase --autostash --strategy-option=theirs origin/main \

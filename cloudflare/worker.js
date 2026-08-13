@@ -50,8 +50,10 @@ function normalizeModelProbPct(pct) {
   if (pct == null) return null;
   const v = Number(pct);
   if (!Number.isFinite(v)) return null;
-  if (v < 0) return null;    // negative probability is invalid
-  if (v > 100) return null;  // >100% is invalid (not just >1 — we know input is percent)
+  // Strict (0, 100) — endpoints are not calibration-eligible:
+  // model_prob=0.0 or model_prob=1.0 in the ledger breaks Brier/ECE/LogLoss.
+  if (v <= 0) return null;    // 0 and negative are invalid
+  if (v >= 100) return null;  // 100 and above are invalid
   return v / 100;
 }
 

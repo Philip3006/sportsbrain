@@ -1,13 +1,17 @@
-"""P0-A regression tests for consume_pending_bets.py (V5 micro-pass).
+"""P0-A regression tests for consume_pending_bets.py.
 
-Covers three merge blockers:
-  Blocker-1  Ledger persistence path is reachable when added > 0
+Covers:
+  Blocker-1  Durable ACK lifecycle (push BEFORE KV delete, push failure is fatal)
   Blocker-2  sport-aware event_status (via signal_contract.py)
-  Blocker-3  source=value model_prob fails closed when null/out-of-range
+  Blocker-3  source=value model_prob fails closed — strict (0, 1) exclusive
+  Blocker-4  model_prob endpoint calibration (0.0 and 1.0 rejected)
+
+Lifecycle tests (CEO cases A–E) verify call ordering using mocks.
 """
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
@@ -217,3 +221,292 @@ def test_blocker3_manual_null_model_prob_accepted():
     row, _ = _run_row_from_bet(bet)
     assert row is not None, "manual bet with null model_prob must be accepted"
     assert row["model_prob"] == ""
+
+
+# ── Blocker-4: model_prob endpoint calibration (0.0 and 1.0 must REJECT) ─────
+# Worker normalizes published percent→fraction: 0.0%→0.0 and 100%→1.0.
+# These endpoints are NOT calibration-eligible (Brier/ECE/LogLoss require 0 < p < 1).
+
+
+def test_blocker4_value_zero_fraction_model_prob_rejected():
+    """source=value with model_prob=0.0 (endpoint) must be rejected — not calibration-eligible."""
+    row, reason = _run_row_from_bet(_valid_bet({"model_prob": 0.0}))
+    assert row is None, "source=value with model_prob=0.0 must be rejected"
+    assert "calibration" in reason.lower() or "model_prob" in reason.lower(), reason
+
+
+def test_blocker4_value_one_fraction_model_prob_rejected():
+    """source=value with model_prob=1.0 (endpoint) must be rejected — not calibration-eligible."""
+    row, reason = _run_row_from_bet(_valid_bet({"model_prob": 1.0}))
+    assert row is None, "source=value with model_prob=1.0 must be rejected"
+    assert "calibration" in reason.lower() or "model_prob" in reason.lower(), reason
+
+
+def test_blocker4_calibration_eligible_boundary_low():
+    """model_prob=0.001 (just above 0) is accepted — calibration-eligible."""
+    row, _ = _run_row_from_bet(_valid_bet({"model_prob": 0.001}))
+    assert row is not None, "model_prob=0.001 must be accepted"
+    assert float(row["model_prob"]) > 0
+
+
+def test_blocker4_calibration_eligible_boundary_high():
+    """model_prob=0.999 (just below 1) is accepted — calibration-eligible."""
+    row, _ = _run_row_from_bet(_valid_bet({"model_prob": 0.999}))
+    assert row is not None, "model_prob=0.999 must be accepted"
+    assert float(row["model_prob"]) < 1
+
+
+# ── Lifecycle Tests (CEO Cases A–E) ──────────────────────────────────────────
+# These test the orchestration of main() — verifying call ordering, not just
+# row construction.  All external calls are mocked; the invariant is:
+#   accepted bet → append → push → ACK (KV DELETE only AFTER push succeeds)
+
+
+def _make_pending_response(bets):
+    """Build a mock HTTP response for GET /pending_bets."""
+    r = MagicMock()
+    r.status_code = 200
+    r.json.return_value = {"bets": bets}
+    return r
+
+
+def _make_delete_response():
+    r = MagicMock()
+    r.status_code = 200
+    return r
+
+
+_PATCH_BASE = "scripts.consume_pending_bets"
+# list_known_users / write_signals_json_all_users are late-imported inside main()
+_WD_BASE = "src.notifications.web_dashboard"
+
+# Shared environment patch for all lifecycle tests
+_ENV_PATCH = patch.dict(
+    "os.environ",
+    {"SIGNALS_CLOUD_URL": "https://test.workers.dev/signals.json", "SIGNALS_API_TOKEN": "test-token"},
+)
+
+
+@_ENV_PATCH
+@patch(f"{_PATCH_BASE}.count_open_bets", return_value=0)
+@patch(f"{_WD_BASE}.write_signals_json_all_users")
+@patch(f"{_WD_BASE}.list_known_users")
+@patch(f"{_PATCH_BASE}._durable_push")
+@patch(f"{_PATCH_BASE}._append_rows")
+@patch(f"{_PATCH_BASE}._process_cancel_requests")
+@patch(f"{_PATCH_BASE}.retry_request")
+@patch(f"{_PATCH_BASE}._get_live_bankroll")
+def test_lifecycle_a_push_success_ack_after_push(
+    mock_bankroll, mock_http, mock_cancel, mock_append, mock_push, mock_users, mock_write, _mock_count
+):
+    """A: valid pending bet → append → push succeeds → KV DELETE called AFTER push."""
+    from scripts.consume_pending_bets import main
+
+    mock_users.return_value = ["philip"]
+    mock_bankroll.return_value = 100.0
+    mock_cancel.return_value = 0
+    mock_write.return_value = None
+
+    call_order: list[str] = []
+
+    def append_side_effect(*args, **kwargs):
+        call_order.append("APPEND")
+        return 1
+
+    def push_side_effect(*args, **kwargs):
+        call_order.append("PUSH")
+        return True  # success
+
+    mock_append.side_effect = append_side_effect
+    mock_push.side_effect = push_side_effect
+
+    # GET returns one valid pending bet; DELETE succeeds
+    get_resp = _make_pending_response([_valid_bet({"id": "bet_001"})])
+    del_resp = _make_delete_response()
+
+    def http_side_effect(method, url, **kwargs):
+        if method == "GET":
+            return get_resp
+        if method == "DELETE":
+            call_order.append(f"DELETE:{url.split('/')[-1].split('?')[0]}")
+            return del_resp
+        return MagicMock(status_code=200)
+
+    mock_http.side_effect = http_side_effect
+
+    result = main()
+
+    assert result == 0, "main() must return 0 on success"
+    assert "APPEND" in call_order, "append must be called"
+    assert "PUSH" in call_order, "push must be called"
+    deletes = [x for x in call_order if x.startswith("DELETE:")]
+    assert deletes, "KV DELETE must be called after push"
+    push_idx = call_order.index("PUSH")
+    for d in deletes:
+        assert call_order.index(d) > push_idx, "DELETE must come AFTER PUSH"
+    assert call_order.index("PUSH") > call_order.index("APPEND"), "PUSH must come AFTER APPEND"
+
+
+@_ENV_PATCH
+@patch(f"{_PATCH_BASE}.count_open_bets", return_value=0)
+@patch(f"{_WD_BASE}.write_signals_json_all_users")
+@patch(f"{_WD_BASE}.list_known_users")
+@patch(f"{_PATCH_BASE}._durable_push")
+@patch(f"{_PATCH_BASE}._append_rows")
+@patch(f"{_PATCH_BASE}._process_cancel_requests")
+@patch(f"{_PATCH_BASE}.retry_request")
+@patch(f"{_PATCH_BASE}._get_live_bankroll")
+def test_lifecycle_b_push_failure_keeps_pending(
+    mock_bankroll, mock_http, mock_cancel, mock_append, mock_push, mock_users, mock_write, _mock_count
+):
+    """B: push fails → KV DELETE NOT called for accepted bets → main returns 1."""
+    from scripts.consume_pending_bets import main
+
+    mock_users.return_value = ["philip"]
+    mock_bankroll.return_value = 100.0
+    mock_cancel.return_value = 0
+    mock_write.return_value = None
+    mock_append.return_value = 1
+    mock_push.return_value = False  # push FAILS
+
+    delete_calls: list[str] = []
+
+    def http_side_effect(method, url, **kwargs):
+        if method == "GET":
+            return _make_pending_response([_valid_bet({"id": "bet_001"})])
+        if method == "DELETE":
+            delete_calls.append(url)
+        return MagicMock(status_code=200)
+
+    mock_http.side_effect = http_side_effect
+
+    result = main()
+
+    assert result == 1, "main() must return 1 when push fails"
+    assert not delete_calls, (
+        "KV DELETE must NOT be called for accepted bets when push fails; "
+        f"got calls: {delete_calls}"
+    )
+
+
+@_ENV_PATCH
+@patch(f"{_PATCH_BASE}.count_open_bets", return_value=0)
+@patch(f"{_WD_BASE}.write_signals_json_all_users")
+@patch(f"{_WD_BASE}.list_known_users")
+@patch(f"{_PATCH_BASE}._durable_push")
+@patch(f"{_PATCH_BASE}._append_rows")
+@patch(f"{_PATCH_BASE}._process_cancel_requests")
+@patch(f"{_PATCH_BASE}.retry_request")
+@patch(f"{_PATCH_BASE}._get_live_bankroll")
+def test_lifecycle_c_ack_failure_retry(
+    mock_bankroll, mock_http, mock_cancel, mock_append, mock_push, mock_users, mock_write, _mock_count
+):
+    """C: push succeeds → KV DELETE fails → next run sees row as dup → push (no-op) → ACK retry."""
+    from scripts.consume_pending_bets import main
+
+    mock_users.return_value = ["philip"]
+    mock_bankroll.return_value = 100.0
+    mock_cancel.return_value = 0
+    mock_write.return_value = None
+
+    # Second run: all rows are dups already in ledger from previous push.
+    # _append_rows returns 0 (dup skipped). _durable_push returns True (no-op — nothing staged).
+    mock_append.return_value = 0   # all dups
+    mock_push.return_value = True  # no-op push succeeds
+
+    delete_calls: list[str] = []
+
+    def http_side_effect(method, url, **kwargs):
+        if method == "GET":
+            return _make_pending_response([_valid_bet({"id": "bet_001"})])
+        if method == "DELETE":
+            delete_calls.append(url)
+            return _make_delete_response()
+        return MagicMock(status_code=200)
+
+    mock_http.side_effect = http_side_effect
+
+    result = main()
+
+    assert result == 0, "main() must succeed on dup-retry path"
+    mock_push.assert_called_once(), "push must still be called even for dup rows"
+    assert delete_calls, "KV ACK (DELETE) must be called on retry even for dup rows"
+
+
+@_ENV_PATCH
+@patch(f"{_PATCH_BASE}.count_open_bets", return_value=0)
+@patch(f"{_WD_BASE}.write_signals_json_all_users")
+@patch(f"{_WD_BASE}.list_known_users")
+@patch(f"{_PATCH_BASE}._durable_push")
+@patch(f"{_PATCH_BASE}._append_rows")
+@patch(f"{_PATCH_BASE}._process_cancel_requests")
+@patch(f"{_PATCH_BASE}.retry_request")
+@patch(f"{_PATCH_BASE}._get_live_bankroll")
+def test_lifecycle_d_zero_pending_no_push(
+    mock_bankroll, mock_http, mock_cancel, mock_append, mock_push, mock_users, mock_write, _mock_count
+):
+    """D: zero pending bets → no ledger commit/push → main returns 0."""
+    from scripts.consume_pending_bets import main
+
+    mock_users.return_value = ["philip"]
+    mock_bankroll.return_value = 100.0
+    mock_cancel.return_value = 0
+    mock_write.return_value = None
+
+    def http_side_effect(method, url, **kwargs):
+        if method == "GET":
+            # Empty pending bets
+            r = MagicMock()
+            r.status_code = 200
+            r.json.return_value = {"bets": []}
+            return r
+        return MagicMock(status_code=200)
+
+    mock_http.side_effect = http_side_effect
+
+    result = main()
+
+    assert result == 0
+    mock_push.assert_not_called(), "push must NOT be called when there are no pending bets"
+    mock_append.assert_not_called(), "append must NOT be called when there are no pending bets"
+
+
+@_ENV_PATCH
+@patch(f"{_PATCH_BASE}.count_open_bets", return_value=0)
+@patch(f"{_WD_BASE}.write_signals_json_all_users")
+@patch(f"{_WD_BASE}.list_known_users")
+@patch(f"{_PATCH_BASE}._durable_push")
+@patch(f"{_PATCH_BASE}._append_rows")
+@patch(f"{_PATCH_BASE}._process_cancel_requests")
+@patch(f"{_PATCH_BASE}.retry_request")
+@patch(f"{_PATCH_BASE}._get_live_bankroll")
+def test_lifecycle_e_rejected_bet_immediate_ack(
+    mock_bankroll, mock_http, mock_cancel, mock_append, mock_push, mock_users, mock_write, _mock_count
+):
+    """E: invalid/rejected pending bet is ACK'd immediately; no push for rejected bets."""
+    from scripts.consume_pending_bets import main
+
+    mock_users.return_value = ["philip"]
+    mock_bankroll.return_value = 100.0
+    mock_cancel.return_value = 0
+    mock_write.return_value = None
+
+    delete_calls: list[str] = []
+
+    def http_side_effect(method, url, **kwargs):
+        if method == "GET":
+            # One invalid bet (odds too low — will be rejected)
+            return _make_pending_response([_valid_bet({"id": "bad_bet", "odds": 0.5})])
+        if method == "DELETE":
+            delete_calls.append(url)
+            return _make_delete_response()
+        return MagicMock(status_code=200)
+
+    mock_http.side_effect = http_side_effect
+
+    result = main()
+
+    assert result == 0, "rejected bet should not cause main() to fail"
+    mock_push.assert_not_called(), "push must NOT be called when only rejected bets exist"
+    mock_append.assert_not_called(), "append must NOT be called for rejected bets"
+    assert delete_calls, "rejected bet must be ACK'd (DELETE) immediately"

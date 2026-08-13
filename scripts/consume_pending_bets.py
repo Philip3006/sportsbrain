@@ -1,28 +1,51 @@
 """
 Consume pending bets from the Cloudflare Worker KV and append them to
-results/ledger.csv as 'open' bets.
+per-user ledger files as 'open' bets.
 
-Flow:
-    1. GET  {WORKER_BASE}/pending_bets       → list of bets placed via PWA
-    2. For each bet: append row to ledger.csv (locked write, skip duplicates)
-    3. DELETE {WORKER_BASE}/pending_bets/{id} after successful append
+P0-A Durable ACK Invariant (CEO Final Gate):
+    An accepted pending bet must NEVER be deleted from Worker KV before its
+    ledger row is durably persisted in the canonical remote repository.
 
-Env vars (re-using existing conventions from src/notifications/web_dashboard.py):
+    Canonical lifecycle for accepted bets:
+        1. GET  pending_bets from Worker KV
+        2. Validate each bet (bankroll cap, signal_id, model_prob, …)
+        3. Immediately ACK/delete REJECTED bets (they are not being persisted)
+        4. Append ACCEPTED rows to per-user ledger (local write, dup-safe)
+        5. Stage + commit + push to origin/main — FATAL if this fails
+        6. ACK/delete ACCEPTED pending entries ONLY after push succeeds
+        7. Refresh KV/public state (heartbeat, always runs)
+
+    Failure semantics:
+        - git commit failure   → return 1 → accepted KV entries remain for retry
+        - git push failure     → return 1 → accepted KV entries remain for retry
+        - KV ACK failure       → log + continue → next run retries (idempotent)
+
+    Idempotency / duplicate protection:
+        - _append_rows() skips rows already in ledger (match_id + market key)
+        - If all rows were dups (push was already done, only KV delete failed):
+            git add finds nothing staged → no new commit → push is a no-op
+            → return True → ACK proceeds safely
+
+    Persistence owner:
+        The consumer Python script owns durable ledger persistence.
+        The GHA workflow commit step covers health artifacts only (NOT ledger_*.csv).
+
+Env vars:
     SIGNALS_CLOUD_URL   — e.g. https://sportsbrain-signals.<sub>.workers.dev/signals.json
-                          (the /signals.json suffix is stripped)
-    SIGNALS_API_TOKEN   — Bearer token, must match Worker's API_TOKEN secret
+    SIGNALS_API_TOKEN   — Bearer token matching Worker's API_TOKEN secret
 
 Run manually:
     python -m scripts.consume_pending_bets
-
-Cron via launchd: add a plist entry, every 5 minutes.
 """
 from __future__ import annotations
 
 import hashlib
 import math
 import os
+import random as _random
+import subprocess
 import sys
+import time as _time
 from pathlib import Path
 
 import pandas as pd
@@ -65,7 +88,7 @@ def _token() -> str:
 
 
 def _match_id(home: str, away: str, kickoff: str) -> str:
-    """Deterministic id so re-running the consumer hits the duplicate guard."""
+    """Deterministic id — used for idempotency in _append_rows duplicate guard."""
     key = f"pwa|{home.strip().lower()}|{away.strip().lower()}|{(kickoff or '')[:10]}"
     return hashlib.md5(key.encode("utf-8")).hexdigest()
 
@@ -89,10 +112,12 @@ def _row_from_bet(
 
     Returns (row_dict, extra_fields) or (None, reason_str).
 
-    P0-A security rules (applied at this boundary):
+    P0-A security rules applied at this boundary:
     - ALL bets (value and manual) require an authoritative bankroll.
     - stake > 5% of bankroll → REJECT (not silently cap).
-    - source=value without a valid signal_id → REJECT (not reclassify).
+    - source=value without a valid signal_id → REJECT.
+    - source=value model_prob must satisfy 0 < mp < 1 (strict; calibration-eligible).
+      model_prob=0.0 and model_prob=1.0 are REJECTED — Brier/ECE/LogLoss require (0,1).
     """
     match = (bet.get("match") or "").strip()
     if " vs " not in match:
@@ -130,17 +155,17 @@ def _row_from_bet(
 
     model_prob_raw = bet.get("model_prob")
     if source == "value":
-        # P0-A Blocker-3: source=value requires valid canonical model_prob (Worker stores
-        # as ledger fraction 0–1 after normalizing from published percent units).
-        # null/missing/out-of-range fails closed — bet must have probability evidence.
+        # P0-A: source=value requires valid canonical model_prob in strict open interval (0, 1).
+        # Worker normalizes published percent (e.g. 52.0) → fraction (0.52) before storing.
+        # null/missing/0.0/1.0/out-of-range fails closed — Brier/ECE/LogLoss require 0 < p < 1.
         if model_prob_raw is None or model_prob_raw == "":
             return None, "source=value requires canonical model_prob — null/missing fails closed"
         try:
             mp = float(model_prob_raw)
         except (TypeError, ValueError):
             return None, f"source=value model_prob {model_prob_raw!r} not numeric — reject"
-        if not math.isfinite(mp) or not (0.0 <= mp <= 1.0):
-            return None, f"source=value model_prob {mp} out of calibration range [0, 1] — reject"
+        if not math.isfinite(mp) or not (0.0 < mp < 1.0):
+            return None, f"source=value model_prob {mp} out of calibration range (0, 1) exclusive — reject"
         model_prob_str = f"{mp:.6f}"
     else:
         if model_prob_raw is None or model_prob_raw == "":
@@ -152,35 +177,36 @@ def _row_from_bet(
                 model_prob_str = ""
 
     row = {
-        "match_id":         _match_id(home, away, kickoff),
-        "match_date":       match_date,
-        "home":             home,
-        "away":             away,
-        "market":           market,
-        "decimal_odds":     f"{odds:.4f}",
-        "stake_pct":        f"{stake_pct_val:.4f}",
-        "stake_amount":     f"{stake_raw:.2f}",
-        "placed_date":      today,
-        "status":           "open",
-        "pnl":              "0.0",
-        "closing_odds":     "0.0",
-        "clv":              "",
-        "pinnacle_ref_odds": "",
-        "source":           source,
-        "model_prob":       model_prob_str,
-        "stake_reason":     "",
-        "league":           (bet.get("league") or "").strip(),
+        "match_id":              _match_id(home, away, kickoff),
+        "match_date":            match_date,
+        "home":                  home,
+        "away":                  away,
+        "market":                market,
+        "decimal_odds":          f"{odds:.4f}",
+        "stake_pct":             f"{stake_pct_val:.4f}",
+        "stake_amount":          f"{stake_raw:.2f}",
+        "placed_date":           today,
+        "status":                "open",
+        "pnl":                   "0.0",
+        "closing_odds":          "0.0",
+        "clv":                   "",
+        "pinnacle_ref_odds":     "",
+        "source":                source,
+        "model_prob":            model_prob_str,
+        "stake_reason":          "",
+        "league":                (bet.get("league") or "").strip(),
         # P0-A: canonical identity + risk provenance as explicit ledger fields
-        "signal_id":          signal_id,
-        "fixture_key":        (bet.get("fixture_key") or "").strip(),
-        "sport":              (bet.get("sport") or "").strip(),
+        "signal_id":             signal_id,
+        "fixture_key":           (bet.get("fixture_key") or "").strip(),
+        "sport":                 (bet.get("sport") or "").strip(),
         "bankroll_at_placement": f"{bankroll:.2f}",
-        "cap_applied":        str(cap_applied).lower(),
+        "cap_applied":           str(cap_applied).lower(),
     }
     return row, {}
 
 
 def _append_rows(rows: list[dict], user: str = DEFAULT_USER) -> int:
+    """Append rows to per-user ledger. Skips duplicates by (match_id, market)."""
     if not rows:
         return 0
     ledger_path = _resolve_ledger_path(None, user)
@@ -198,10 +224,90 @@ def _append_rows(rows: list[dict], user: str = DEFAULT_USER) -> int:
     return len(new_rows)
 
 
-def _consume_user(base: str, headers: dict, user: str) -> int:
-    """Consume pending_bets for `user` and append to per-user ledger.
-    Master-token uses ?user= query param to target a specific slot.
-    Returns rows added."""
+def _kv_delete_one(base: str, headers: dict, bid: str, user: str) -> None:
+    """Delete a single pending bet from Worker KV. Logs errors but does not raise.
+
+    KV ACK failure is non-fatal: the next run will see the bet already in the ledger
+    (duplicate), skip it, and retry the ACK safely.
+    """
+    if not bid:
+        return
+    suffix = "" if user == DEFAULT_USER else f"?user={user}"
+    try:
+        d = retry_request(
+            "DELETE",
+            f"{base}/pending_bets/{bid}{suffix}",
+            headers=headers,
+            timeout=15,
+            log_prefix=f"[consume:{user}]",
+        )
+        if d.status_code != 200:
+            print(f"[consume:{user}] DELETE {bid} → HTTP {d.status_code}", file=sys.stderr)
+    except requests.RequestException as e:
+        print(f"[consume:{user}] DELETE {bid} failed: {e}", file=sys.stderr)
+
+
+def _durable_push(added: int) -> bool:
+    """Stage, commit (if anything staged), and push all per-user ledger files to origin.
+
+    Returns True on success (including no-op when ledger already matches remote).
+    Returns False on failure — caller must treat this as FATAL and NOT ACK pending KV entries.
+
+    Idempotent:
+    - If all accepted bets were dups already in the ledger (pushed in a previous run):
+        git add finds nothing staged → no commit → push is a no-op → return True.
+    - If local ledger has uncommitted changes (crash between append and commit in prev run):
+        git add stages the file → commit → push → ACK on next run.
+    """
+    def _g(*args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            ["git", *args], cwd=_ROOT, capture_output=True, text=True, timeout=30, check=False
+        )
+
+    _g("add", "results/ledger_*.csv")
+    staged = _g("diff", "--cached", "--quiet")
+    if staged.returncode == 0:
+        # Nothing staged: ledger matches HEAD (and therefore remote from previous push).
+        # This covers the dup-only retry path — safe to ACK.
+        print("[consume] ledger in sync with HEAD — no new commit needed")
+        return True
+
+    commit_msg = f"auto: ledger sync {added} bet(s)"
+    commit = _g("commit", "-m", commit_msg, "--author=SportsBrain Bot <bot@sportsbrain>")
+    if commit.returncode != 0:
+        print(f"[consume] ledger commit failed: {commit.stderr.strip()[:200]}", file=sys.stderr)
+        return False
+
+    for attempt in range(1, 6):
+        _g("pull", "--rebase", "origin", "main")
+        push = _g("push", "origin", "main")
+        if push.returncode == 0:
+            print(f"[consume] ledger pushed ({commit_msg})")
+            return True
+        print(
+            f"[consume] push attempt {attempt} failed: {push.stderr.strip()[:120]}",
+            file=sys.stderr,
+        )
+        _time.sleep(_random.randint(2, 6))
+
+    print("[consume] ledger push gave up after 5 attempts", file=sys.stderr)
+    return False
+
+
+def _fetch_validate_user(
+    base: str,
+    headers: dict,
+    user: str,
+) -> tuple[list[dict], list[str], list[str]]:
+    """Fetch and validate pending bets for `user` from Worker KV.
+
+    Returns:
+        rows:         validated ledger row dicts (passed to _append_rows)
+        accepted_ids: IDs of valid bets — ACK ONLY after durable push succeeds
+        rejected_ids: IDs of invalid/rejected bets — safe to ACK immediately
+
+    Does NOT write to ledger. Does NOT delete from KV.
+    """
     suffix = "" if user == DEFAULT_USER else f"?user={user}"
     try:
         r = retry_request(
@@ -213,31 +319,33 @@ def _consume_user(base: str, headers: dict, user: str) -> int:
         )
     except requests.RequestException as e:
         print(f"[consume:{user}] fetch failed: {e}", file=sys.stderr)
-        return 0
+        return [], [], []
     if r.status_code != 200:
         print(f"[consume:{user}] HTTP {r.status_code}: {r.text[:200]}", file=sys.stderr)
-        return 0
+        return [], [], []
 
     bets = (r.json() or {}).get("bets") or []
     if not bets:
-        return 0
+        return [], [], []
 
     today = pd.Timestamp.now().strftime("%Y-%m-%d")
-
-    # Fetch authoritative bankroll once for this user (required for ALL bets)
     bankroll = _get_live_bankroll(user)
 
-    rows = []
-    ids_for_row: list[tuple[str, str]] = []
+    rows: list[dict] = []
+    accepted_ids: list[str] = []
+    rejected_ids: list[str] = []
+
     for b in bets:
-        # Enforce MAX_ACTIVE_BETS before adding each new bet
+        # Enforce MAX_ACTIVE_BETS using current ledger + already-accepted rows this run.
         current_open = count_open_bets(user=user) + len(rows)
         if current_open >= MAX_ACTIVE_BETS:
             print(
                 f"[consume:{user}] REJECT bet — max active bets ({MAX_ACTIVE_BETS}) reached",
                 file=sys.stderr,
             )
-            ids_for_row.append((b.get("id", ""), "max_bets"))
+            bid = b.get("id", "")
+            if bid:
+                rejected_ids.append(bid)
             continue
 
         result = _row_from_bet(b, today, bankroll)
@@ -245,33 +353,23 @@ def _consume_user(base: str, headers: dict, user: str) -> int:
             row, _extra = result
         else:
             row, _extra = None, "unexpected result"
+
+        bid = b.get("id", "")
         if row is None:
             reason = _extra if isinstance(_extra, str) else "invalid"
             print(f"[consume:{user}] SKIP bet: {reason}", file=sys.stderr)
-            ids_for_row.append((b.get("id", ""), "invalid"))
-            continue
-        rows.append(row)
-        ids_for_row.append((b.get("id", ""), "ok"))
+            if bid:
+                rejected_ids.append(bid)
+        else:
+            rows.append(row)
+            if bid:
+                accepted_ids.append(bid)
 
-    added = _append_rows(rows, user=user)
-    print(f"[consume:{user}] received={len(bets)} appended={added} (dup-skip={len(rows) - added})")
-
-    for bid, _status in ids_for_row:
-        if not bid:
-            continue
-        try:
-            d = retry_request(
-                "DELETE",
-                f"{base}/pending_bets/{bid}{suffix}",
-                headers=headers,
-                timeout=15,
-                log_prefix=f"[consume:{user}]",
-            )
-            if d.status_code != 200:
-                print(f"[consume:{user}] DELETE {bid} → HTTP {d.status_code}", file=sys.stderr)
-        except requests.RequestException as e:
-            print(f"[consume:{user}] DELETE {bid} failed: {e}", file=sys.stderr)
-    return added
+    print(
+        f"[consume:{user}] received={len(bets)} accepted={len(accepted_ids)} "
+        f"rejected={len(rejected_ids)}"
+    )
+    return rows, accepted_ids, rejected_ids
 
 
 def _process_cancel_requests(base: str, headers: dict, user: str) -> int:
@@ -279,10 +377,11 @@ def _process_cancel_requests(base: str, headers: dict, user: str) -> int:
     from src.betting.ledger import cancel_bet
     suffix = "" if user == DEFAULT_USER else f"?user={user}"
     try:
-        # O1-1: cancel_requests is non-critical — single attempt, short timeout.
-        # Previously 3 retries×15s burned ~65s per user on Worker timeouts.
-        r = retry_request("GET", f"{base}/cancel_requests{suffix}", headers=headers,
-                          timeout=8, retries=1, log_prefix=f"[cancel:{user}]")
+        # Non-critical — single attempt, short timeout.
+        r = retry_request(
+            "GET", f"{base}/cancel_requests{suffix}", headers=headers,
+            timeout=8, retries=1, log_prefix=f"[cancel:{user}]",
+        )
     except requests.RequestException as e:
         print(f"[cancel:{user}] fetch failed: {e}", file=sys.stderr)
         return 0
@@ -293,7 +392,7 @@ def _process_cancel_requests(base: str, headers: dict, user: str) -> int:
         return 0
     cancelled = 0
     for req in reqs:
-        home, away, market = req.get("home",""), req.get("away",""), req.get("market","")
+        home, away, market = req.get("home", ""), req.get("away", ""), req.get("market", "")
         if not (home and away and market):
             continue
         result = cancel_bet(home, away, market, user=user)
@@ -302,8 +401,10 @@ def _process_cancel_requests(base: str, headers: dict, user: str) -> int:
             cancelled += 1
     if cancelled:
         try:
-            retry_request("DELETE", f"{base}/cancel_requests{suffix}", headers=headers,
-                          timeout=8, retries=1, log_prefix=f"[cancel:{user}]")
+            retry_request(
+                "DELETE", f"{base}/cancel_requests{suffix}", headers=headers,
+                timeout=8, retries=1, log_prefix=f"[cancel:{user}]",
+            )
         except Exception:  # noqa: BLE001, S110
             pass
     return cancelled
@@ -314,66 +415,65 @@ def main() -> int:
     token = _token()
     headers = {"Authorization": f"Bearer {token}"}
 
-    # D4: consume per known user. Master-token routes via ?user= query.
     from src.notifications.web_dashboard import list_known_users
-    added = 0
+
+    # ── Phase 1: Fetch and validate all users ────────────────────────────────
+    rows_by_user: dict[str, list[dict]] = {}
+    # (bet_id, user) pairs — user needed for per-user KV suffix
+    all_accepted: list[tuple[str, str]] = []   # ACK only after durable push
+    all_rejected: list[tuple[str, str]] = []   # ACK immediately (not persisted)
+
     for u in list_known_users():
-        added += _consume_user(base, headers, u)
+        rows, accepted_ids, rejected_ids = _fetch_validate_user(base, headers, u)
+        if rows:
+            rows_by_user[u] = rows
+        all_accepted.extend((bid, u) for bid in accepted_ids)
+        all_rejected.extend((bid, u) for bid in rejected_ids)
         _process_cancel_requests(base, headers, u)
 
-    if added == 0:
+    # ── Phase 2: Immediately ACK rejected bets ───────────────────────────────
+    # Rejected bets are not being persisted — safe to remove from KV now.
+    for bid, user in all_rejected:
+        _kv_delete_one(base, headers, bid, user)
+
+    # ── Phase 3: Durable persistence lifecycle for accepted bets ────────────
+    total_added = 0
+    if all_accepted:
+        # 3a. Append accepted rows to per-user ledger (local write, dup-safe).
+        for u, rows in rows_by_user.items():
+            total_added += _append_rows(rows, user=u)
+
+        # 3b. Durable push: stage → commit (if staged) → push to origin.
+        #     FATAL: if push fails, accepted KV entries remain for retry — return 1.
+        push_ok = _durable_push(total_added)
+        if not push_ok:
+            print(
+                "[consume] FATAL: durable push failed — "
+                "accepted bets remain in KV for retry on next run",
+                file=sys.stderr,
+            )
+            return 1
+
+        # 3c. Push succeeded → ACK accepted bets from KV.
+        for bid, user in all_accepted:
+            _kv_delete_one(base, headers, bid, user)
+
+        print(
+            f"[consume] {total_added} new row(s) persisted, "
+            f"{len(all_accepted)} bet(s) ACK'd from KV"
+        )
+    else:
         print("[consume] no pending bets (across all users)")
 
-    # Blocker-4: ALWAYS refresh KV state, even when no bets were added.
-    # This updates bankroll_state.published_at so the Worker's AUTH_STATE_MAX_AGE_MS
-    # (90 min) check never fails solely due to a scan gap. The Worker triggers this
-    # via the */30 * * * * cron unconditionally, creating a ≤30 min refresh cadence.
+    # ── Phase 4: Refresh KV state (heartbeat — always runs) ─────────────────
+    # Updates bankroll_state.published_at so Worker AUTH_STATE_MAX_AGE_MS check
+    # never fails solely due to a scan gap (≤30 min refresh cadence via cron).
     try:
         from src.notifications.web_dashboard import write_signals_json_all_users
         write_signals_json_all_users()
-        print(f"[consume] KV state refreshed (added={added})")
+        print(f"[consume] KV state refreshed (added={total_added})")
     except Exception as e:  # noqa: BLE001
         print(f"[consume] KV refresh failed (non-fatal): {e}", file=sys.stderr)
-
-    if added == 0:
-        return 0
-
-    # Blocker-1: Push per-user ledger files to GitHub when bets were added.
-    # In GHA the workflow "Commit" step also persists these files — both paths are
-    # intentional: the subprocess covers manual local runs; the workflow covers CI.
-    # A successfully consumed pending bet must never be deleted from KV before its
-    # ledger row is durably persisted. Ordering here: append→delete_from_KV→push.
-    import subprocess
-    try:
-        ROOT = Path(__file__).resolve().parent.parent
-        def _g(*args):
-            return subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
-                                  text=True, timeout=30, check=False)
-        # Stage all per-user ledger files (results/ledger_*.csv covers ledger_philip.csv etc.)
-        _g("add", "results/ledger_*.csv")
-        staged = _g("diff", "--cached", "--quiet", "--", "results")
-        if staged.returncode != 0:  # there are staged changes
-            commit_msg = f"auto: ledger sync {added} bet(s)"
-            _g("commit", "-m", commit_msg,
-               "--author=SportsBrain Bot <bot@sportsbrain>")
-            for attempt in range(1, 6):
-                _g("pull", "--rebase", "origin", "main")
-                push = _g("push", "origin", "main")
-                if push.returncode == 0:
-                    print(f"[consume] ledger pushed to GitHub ({commit_msg})")
-                    break
-                print(f"[consume] push attempt {attempt} failed: "
-                      f"{push.stderr.strip()[:120]}", file=sys.stderr)
-                import random as _r
-                import time as _t
-                _t.sleep(_r.randint(2, 6))
-            else:
-                print("[consume] ledger push gave up after 5 attempts",
-                      file=sys.stderr)
-        else:
-            print(f"[consume] {added} bet(s) appended — ledger unchanged after dedup (GHA workflow will persist)", file=sys.stderr)
-    except Exception as e:  # noqa: BLE001
-        print(f"[consume] ledger push failed (non-fatal): {e}", file=sys.stderr)
 
     return 0
 

@@ -842,16 +842,16 @@ describe('normalizeModelProbPct (via orchestration)', () => {
     assert.ok(Math.abs(r.entry.model_prob - 0.52) < 0.001);
   });
 
-  test('0.0 → 0.0 (edge: zero probability)', () => {
+  test('0.0 → 400 REJECTED (not calibration-eligible; Brier/ECE/LogLoss require 0 < p < 1)', () => {
     const r = makeOrchResult(0.0);
-    assert.equal(r.status, 200);
-    assert.equal(r.entry.model_prob, 0.0);
+    assert.equal(r.status, 400, `expected 400 for model_prob=0, got ${r.status}: ${JSON.stringify(r.json)}`);
+    assert.match(r.json.error, /model_prob|probability/i);
   });
 
-  test('100.0 → 1.0 (100%)', () => {
+  test('100.0 → 400 REJECTED (not calibration-eligible; 100% certainty is invalid)', () => {
     const r = makeOrchResult(100.0);
-    assert.equal(r.status, 200);
-    assert.ok(Math.abs(r.entry.model_prob - 1.0) < 0.001);
+    assert.equal(r.status, 400, `expected 400 for model_prob=100, got ${r.status}: ${JSON.stringify(r.json)}`);
+    assert.match(r.json.error, /model_prob|probability/i);
   });
 
   // Blocker-3 (V5): source=value with invalid model_prob must REJECT — not store null + 200
