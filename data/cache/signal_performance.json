@@ -1,651 +1,1047 @@
 {
-  "generated_at": "2026-08-13T09:35:02.158376+00:00",
+  "generated_at": "2026-08-13T09:54:33.332919+00:00",
   "n_signals_total": 1087,
-  "n_with_outcome": 1013,
+  "n_with_outcome": 1021,
+  "n_won": 438,
+  "n_lost": 370,
+  "n_void": 73,
+  "n_ghost": 140,
+  "n_pending": 66,
+  "by_sport": {
+    "football": {
+      "n": 480,
+      "n_won": 136,
+      "n_lost": 144,
+      "n_void": 0,
+      "n_ghost": 140,
+      "n_pending": 40,
+      "stake_sum": 1420.0,
+      "return_sum": 1295.8000000000002,
+      "pnl": -124.2,
+      "roi_pct": -8.7,
+      "win_rate": 48.6
+    },
+    "tennis": {
+      "n": 607,
+      "n_won": 302,
+      "n_lost": 226,
+      "n_void": 0,
+      "n_ghost": 0,
+      "n_pending": 26,
+      "stake_sum": 7826.08,
+      "return_sum": 8576.105199999995,
+      "pnl": 750.03,
+      "roi_pct": 9.6,
+      "win_rate": 57.2
+    }
+  },
   "by_market": {
     "ah+0.5_away": {
       "n": 26,
       "n_placed": 9,
-      "n_outcome": 21,
-      "accuracy": 0.0,
-      "ev_mean": 26.07
+      "n_outcome": 13,
+      "n_won": 4,
+      "n_void": 0,
+      "accuracy": 0.3077,
+      "ev_mean": 26.07,
+      "pnl": -32.15,
+      "roi_pct": -49.5
     },
     "ah+0.5_home": {
       "n": 15,
       "n_placed": 0,
       "n_outcome": 15,
-      "accuracy": 0.0,
-      "ev_mean": 24.75
+      "n_won": 12,
+      "n_void": 0,
+      "accuracy": 0.8,
+      "ev_mean": 24.75,
+      "pnl": 28.15,
+      "roi_pct": 37.5
     },
     "ah+0.75_away": {
       "n": 3,
       "n_placed": 0,
       "n_outcome": 3,
-      "accuracy": 0.0,
-      "ev_mean": 34.66
+      "n_won": 3,
+      "n_void": 0,
+      "accuracy": 1.0,
+      "ev_mean": 34.66,
+      "pnl": 14.0,
+      "roi_pct": 93.3
     },
     "ah+1.0_away": {
       "n": 5,
       "n_placed": 0,
       "n_outcome": 5,
+      "n_won": 0,
+      "n_void": 0,
       "accuracy": 0.0,
-      "ev_mean": 37.44
+      "ev_mean": 37.44,
+      "pnl": -25.0,
+      "roi_pct": -100.0
     },
     "ah+1.0_home": {
       "n": 1,
       "n_placed": 1,
       "n_outcome": 1,
+      "n_won": 0,
+      "n_void": 0,
       "accuracy": 0.0,
-      "ev_mean": 27.17
+      "ev_mean": 27.17,
+      "pnl": -5.0,
+      "roi_pct": -100.0
     },
     "ah+1.5_away": {
       "n": 12,
       "n_placed": 1,
       "n_outcome": 12,
-      "accuracy": 0.0,
-      "ev_mean": 31.88
+      "n_won": 5,
+      "n_void": 0,
+      "accuracy": 0.4167,
+      "ev_mean": 31.88,
+      "pnl": -23.25,
+      "roi_pct": -38.8
     },
     "ah+1.5_b": {
       "n": 52,
       "n_placed": 51,
-      "n_outcome": 50,
-      "accuracy": 0.74,
-      "ev_mean": 25.42
+      "n_outcome": 43,
+      "n_won": 37,
+      "n_void": 9,
+      "accuracy": 0.8605,
+      "ev_mean": 25.42,
+      "pnl": 396.96,
+      "roi_pct": 55.0
     },
     "ah+1.5_home": {
       "n": 6,
       "n_placed": 0,
       "n_outcome": 6,
-      "accuracy": 0.0,
-      "ev_mean": 22.6
+      "n_won": 3,
+      "n_void": 0,
+      "accuracy": 0.5,
+      "ev_mean": 22.6,
+      "pnl": -12.65,
+      "roi_pct": -42.2
     },
     "ah+2.0_away": {
       "n": 2,
       "n_placed": 0,
-      "n_outcome": 2,
+      "n_outcome": 1,
+      "n_won": 0,
+      "n_void": 1,
       "accuracy": 0.0,
-      "ev_mean": 26.27
+      "ev_mean": 26.27,
+      "pnl": -5.0,
+      "roi_pct": -100.0
     },
     "ah+2.0_home": {
       "n": 1,
       "n_placed": 0,
       "n_outcome": 1,
+      "n_won": 0,
+      "n_void": 0,
       "accuracy": 0.0,
-      "ev_mean": 32.95
+      "ev_mean": 32.95,
+      "pnl": -5.0,
+      "roi_pct": -100.0
     },
     "ah+2.25_away": {
       "n": 2,
       "n_placed": 0,
       "n_outcome": 2,
-      "accuracy": 0.0,
-      "ev_mean": 27.83
+      "n_won": 2,
+      "n_void": 0,
+      "accuracy": 1.0,
+      "ev_mean": 27.83,
+      "pnl": 8.9,
+      "roi_pct": 89.0
     },
     "ah+2.25_home": {
       "n": 3,
       "n_placed": 0,
       "n_outcome": 3,
-      "accuracy": 0.0,
-      "ev_mean": 23.15
+      "n_won": 2,
+      "n_void": 0,
+      "accuracy": 0.6667,
+      "ev_mean": 23.15,
+      "pnl": 3.85,
+      "roi_pct": 25.7
     },
     "ah+2.5_away": {
       "n": 1,
       "n_placed": 0,
       "n_outcome": 1,
-      "accuracy": 0.0,
-      "ev_mean": 37.06
+      "n_won": 1,
+      "n_void": 0,
+      "accuracy": 1.0,
+      "ev_mean": 37.06,
+      "pnl": 2.9,
+      "roi_pct": 58.0
     },
     "ah-0.5_away": {
       "n": 8,
       "n_placed": 2,
       "n_outcome": 8,
-      "accuracy": 0.0,
-      "ev_mean": 26.84
+      "n_won": 5,
+      "n_void": 0,
+      "accuracy": 0.625,
+      "ev_mean": 26.84,
+      "pnl": 5.8,
+      "roi_pct": 14.5
     },
     "ah-0.5_home": {
       "n": 3,
       "n_placed": 1,
       "n_outcome": 3,
-      "accuracy": 0.0,
-      "ev_mean": 30.71
+      "n_won": 1,
+      "n_void": 0,
+      "accuracy": 0.3333,
+      "ev_mean": 30.71,
+      "pnl": -5.2,
+      "roi_pct": -34.7
     },
     "ah-0.75_away": {
       "n": 6,
       "n_placed": 4,
       "n_outcome": 5,
+      "n_won": 0,
+      "n_void": 0,
       "accuracy": 0.0,
-      "ev_mean": 25.05
+      "ev_mean": 25.05,
+      "pnl": -25.0,
+      "roi_pct": -100.0
     },
     "ah-1.25_away": {
       "n": 1,
       "n_placed": 1,
       "n_outcome": 1,
+      "n_won": 0,
+      "n_void": 0,
       "accuracy": 0.0,
-      "ev_mean": 26.66
+      "ev_mean": 26.66,
+      "pnl": -5.0,
+      "roi_pct": -100.0
     },
     "ah-1.5_a": {
       "n": 7,
       "n_placed": 7,
       "n_outcome": 4,
+      "n_won": 2,
+      "n_void": 0,
       "accuracy": 0.5,
-      "ev_mean": 12.63
+      "ev_mean": 12.63,
+      "pnl": 13.23,
+      "roi_pct": 31.5
     },
     "ah-1.5_away": {
       "n": 12,
       "n_placed": 0,
       "n_outcome": 12,
+      "n_won": 0,
+      "n_void": 0,
       "accuracy": 0.0,
-      "ev_mean": 25.66
+      "ev_mean": 25.66,
+      "pnl": -60.0,
+      "roi_pct": -100.0
     },
     "ah-1.5_home": {
       "n": 9,
       "n_placed": 3,
       "n_outcome": 9,
-      "accuracy": 0.0,
-      "ev_mean": 19.66
+      "n_won": 4,
+      "n_void": 0,
+      "accuracy": 0.4444,
+      "ev_mean": 19.66,
+      "pnl": 13.75,
+      "roi_pct": 30.6
     },
     "ah-2.0_away": {
       "n": 2,
       "n_placed": 0,
-      "n_outcome": 2,
-      "accuracy": 0.0,
-      "ev_mean": 25.7
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 2,
+      "accuracy": null,
+      "ev_mean": 25.7,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "ah-2.5_away": {
       "n": 3,
       "n_placed": 0,
       "n_outcome": 3,
+      "n_won": 0,
+      "n_void": 0,
       "accuracy": 0.0,
-      "ev_mean": 38.43
+      "ev_mean": 38.43,
+      "pnl": -15.0,
+      "roi_pct": -100.0
     },
     "away": {
       "n": 169,
       "n_placed": 116,
-      "n_outcome": 153,
-      "accuracy": 0.3791,
-      "ev_mean": 25.87
+      "n_outcome": 136,
+      "n_won": 85,
+      "n_void": 1,
+      "accuracy": 0.625,
+      "ev_mean": 25.87,
+      "pnl": 197.54,
+      "roi_pct": 12.5
     },
     "btts_yes": {
       "n": 9,
       "n_placed": 0,
-      "n_outcome": 6,
-      "accuracy": 0.0,
-      "ev_mean": 14.0
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 14.0,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "draw": {
       "n": 27,
       "n_placed": 0,
-      "n_outcome": 27,
+      "n_outcome": 20,
+      "n_won": 0,
+      "n_void": 2,
       "accuracy": 0.0,
-      "ev_mean": 17.04
+      "ev_mean": 17.04,
+      "pnl": -100.0,
+      "roi_pct": -100.0
     },
     "ftts_away": {
       "n": 1,
       "n_placed": 1,
       "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
       "accuracy": null,
-      "ev_mean": 37.63
+      "ev_mean": 37.63,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "home": {
       "n": 97,
       "n_placed": 65,
-      "n_outcome": 80,
-      "accuracy": 0.325,
-      "ev_mean": 17.2
+      "n_outcome": 76,
+      "n_won": 32,
+      "n_void": 3,
+      "accuracy": 0.4211,
+      "ev_mean": 17.2,
+      "pnl": -100.96,
+      "roi_pct": -12.3
     },
     "o/u1.5_over": {
       "n": 21,
       "n_placed": 0,
-      "n_outcome": 12,
-      "accuracy": 0.0,
-      "ev_mean": 25.37
+      "n_outcome": 4,
+      "n_won": 4,
+      "n_void": 0,
+      "accuracy": 1.0,
+      "ev_mean": 25.37,
+      "pnl": 8.0,
+      "roi_pct": 40.0
     },
     "o/u1.5_under": {
       "n": 5,
       "n_placed": 3,
       "n_outcome": 5,
-      "accuracy": 0.0,
-      "ev_mean": 23.69
+      "n_won": 1,
+      "n_void": 0,
+      "accuracy": 0.2,
+      "ev_mean": 23.69,
+      "pnl": -13.9,
+      "roi_pct": -55.6
     },
     "o/u2.0_over": {
       "n": 16,
       "n_placed": 1,
-      "n_outcome": 16,
-      "accuracy": 0.0,
-      "ev_mean": 29.86
+      "n_outcome": 12,
+      "n_won": 12,
+      "n_void": 4,
+      "accuracy": 1.0,
+      "ev_mean": 29.86,
+      "pnl": 26.4,
+      "roi_pct": 44.0
     },
     "o/u2.0_under": {
       "n": 9,
       "n_placed": 4,
-      "n_outcome": 9,
+      "n_outcome": 5,
+      "n_won": 0,
+      "n_void": 0,
       "accuracy": 0.0,
-      "ev_mean": 27.91
+      "ev_mean": 27.91,
+      "pnl": -25.0,
+      "roi_pct": -100.0
     },
     "o/u2.25_over": {
       "n": 6,
       "n_placed": 0,
-      "n_outcome": 4,
-      "accuracy": 0.0,
-      "ev_mean": 18.24
+      "n_outcome": 3,
+      "n_won": 2,
+      "n_void": 0,
+      "accuracy": 0.6667,
+      "ev_mean": 18.24,
+      "pnl": 5.65,
+      "roi_pct": 37.7
     },
     "o/u2.25_under": {
       "n": 4,
       "n_placed": 0,
       "n_outcome": 4,
-      "accuracy": 0.0,
-      "ev_mean": 31.14
+      "n_won": 1,
+      "n_void": 0,
+      "accuracy": 0.25,
+      "ev_mean": 31.14,
+      "pnl": -9.65,
+      "roi_pct": -48.3
     },
     "o/u2.5_over": {
       "n": 33,
       "n_placed": 11,
-      "n_outcome": 30,
-      "accuracy": 0.0,
-      "ev_mean": 23.3
+      "n_outcome": 20,
+      "n_won": 14,
+      "n_void": 0,
+      "accuracy": 0.7,
+      "ev_mean": 23.3,
+      "pnl": 30.15,
+      "roi_pct": 30.2
     },
     "o/u2.5_under": {
       "n": 7,
       "n_placed": 2,
-      "n_outcome": 7,
-      "accuracy": 0.0,
-      "ev_mean": 21.79
+      "n_outcome": 6,
+      "n_won": 4,
+      "n_void": 1,
+      "accuracy": 0.6667,
+      "ev_mean": 21.79,
+      "pnl": 3.2,
+      "roi_pct": 10.7
     },
     "o/u2.75_over": {
       "n": 6,
       "n_placed": 2,
-      "n_outcome": 6,
-      "accuracy": 0.0,
-      "ev_mean": 22.65
+      "n_outcome": 3,
+      "n_won": 2,
+      "n_void": 0,
+      "accuracy": 0.6667,
+      "ev_mean": 22.65,
+      "pnl": 4.5,
+      "roi_pct": 30.0
     },
     "o/u2.75_under": {
       "n": 1,
       "n_placed": 0,
       "n_outcome": 1,
-      "accuracy": 0.0,
-      "ev_mean": 27.56
+      "n_won": 1,
+      "n_void": 0,
+      "accuracy": 1.0,
+      "ev_mean": 27.56,
+      "pnl": 4.2,
+      "roi_pct": 84.0
     },
     "o/u3.0_over": {
       "n": 16,
       "n_placed": 2,
-      "n_outcome": 16,
-      "accuracy": 0.0,
-      "ev_mean": 25.67
+      "n_outcome": 13,
+      "n_won": 6,
+      "n_void": 0,
+      "accuracy": 0.4615,
+      "ev_mean": 25.67,
+      "pnl": 21.15,
+      "roi_pct": 32.5
     },
     "o/u3.0_under": {
       "n": 8,
       "n_placed": 0,
       "n_outcome": 8,
-      "accuracy": 0.0,
-      "ev_mean": 28.79
+      "n_won": 2,
+      "n_void": 0,
+      "accuracy": 0.25,
+      "ev_mean": 28.79,
+      "pnl": -25.8,
+      "roi_pct": -64.5
     },
     "o/u3.25_over": {
       "n": 2,
       "n_placed": 0,
       "n_outcome": 2,
-      "accuracy": 0.0,
-      "ev_mean": 19.84
+      "n_won": 1,
+      "n_void": 0,
+      "accuracy": 0.5,
+      "ev_mean": 19.84,
+      "pnl": 0.25,
+      "roi_pct": 2.5
     },
     "o/u3.25_under": {
       "n": 5,
       "n_placed": 0,
-      "n_outcome": 5,
-      "accuracy": 0.0,
-      "ev_mean": 32.52
+      "n_outcome": 3,
+      "n_won": 3,
+      "n_void": 2,
+      "accuracy": 1.0,
+      "ev_mean": 32.52,
+      "pnl": 14.4,
+      "roi_pct": 96.0
     },
     "o/u3.5_over": {
       "n": 9,
       "n_placed": 2,
-      "n_outcome": 6,
-      "accuracy": 0.0,
-      "ev_mean": 25.23
+      "n_outcome": 2,
+      "n_won": 1,
+      "n_void": 0,
+      "accuracy": 0.5,
+      "ev_mean": 25.23,
+      "pnl": 1.25,
+      "roi_pct": 12.5
     },
     "o/u3.5_under": {
       "n": 10,
       "n_placed": 0,
-      "n_outcome": 10,
-      "accuracy": 0.0,
-      "ev_mean": 35.41
+      "n_outcome": 8,
+      "n_won": 4,
+      "n_void": 2,
+      "accuracy": 0.5,
+      "ev_mean": 35.41,
+      "pnl": -10.0,
+      "roi_pct": -25.0
     },
     "o/u_games_17.5_over": {
       "n": 1,
       "n_placed": 1,
       "n_outcome": 1,
+      "n_won": 0,
+      "n_void": 0,
       "accuracy": 0.0,
-      "ev_mean": 39.65
+      "ev_mean": 39.65,
+      "pnl": -20.0,
+      "roi_pct": -100.0
     },
     "o/u_games_18.0_under": {
       "n": 1,
       "n_placed": 1,
       "n_outcome": 1,
+      "n_won": 0,
+      "n_void": 0,
       "accuracy": 0.0,
-      "ev_mean": 18.3
+      "ev_mean": 18.3,
+      "pnl": -18.5,
+      "roi_pct": -100.0
     },
     "o/u_games_18.5_over": {
       "n": 6,
       "n_placed": 6,
       "n_outcome": 6,
+      "n_won": 4,
+      "n_void": 0,
       "accuracy": 0.6667,
-      "ev_mean": 28.78
+      "ev_mean": 28.78,
+      "pnl": 10.22,
+      "roi_pct": 9.4
     },
     "o/u_games_18.5_under": {
       "n": 8,
       "n_placed": 8,
       "n_outcome": 8,
+      "n_won": 3,
+      "n_void": 0,
       "accuracy": 0.375,
-      "ev_mean": 17.32
+      "ev_mean": 17.32,
+      "pnl": -29.84,
+      "roi_pct": -26.6
     },
     "o/u_games_19.0_over": {
       "n": 1,
       "n_placed": 1,
       "n_outcome": 1,
+      "n_won": 1,
+      "n_void": 0,
       "accuracy": 1.0,
-      "ev_mean": 35.11
+      "ev_mean": 35.11,
+      "pnl": 17.4,
+      "roi_pct": 87.0
     },
     "o/u_games_19.0_under": {
       "n": 3,
       "n_placed": 3,
       "n_outcome": 3,
+      "n_won": 1,
+      "n_void": 0,
       "accuracy": 0.3333,
-      "ev_mean": 19.61
+      "ev_mean": 19.61,
+      "pnl": -17.75,
+      "roi_pct": -34.8
     },
     "o/u_games_19.5_over": {
       "n": 17,
       "n_placed": 17,
       "n_outcome": 17,
+      "n_won": 12,
+      "n_void": 0,
       "accuracy": 0.7059,
-      "ev_mean": 32.09
+      "ev_mean": 32.09,
+      "pnl": 79.15,
+      "roi_pct": 27.6
     },
     "o/u_games_19.5_under": {
       "n": 7,
       "n_placed": 7,
       "n_outcome": 7,
+      "n_won": 1,
+      "n_void": 0,
       "accuracy": 0.1429,
-      "ev_mean": 10.92
+      "ev_mean": 10.92,
+      "pnl": -66.74,
+      "roi_pct": -76.3
     },
     "o/u_games_20.0_over": {
       "n": 8,
       "n_placed": 8,
-      "n_outcome": 8,
-      "accuracy": 0.75,
-      "ev_mean": 30.02
+      "n_outcome": 7,
+      "n_won": 6,
+      "n_void": 1,
+      "accuracy": 0.8571,
+      "ev_mean": 30.02,
+      "pnl": 69.94,
+      "roi_pct": 57.6
     },
     "o/u_games_20.0_under": {
       "n": 1,
       "n_placed": 1,
       "n_outcome": 1,
+      "n_won": 0,
+      "n_void": 0,
       "accuracy": 0.0,
-      "ev_mean": 4.38
+      "ev_mean": 4.38,
+      "pnl": -7.0,
+      "roi_pct": -100.0
     },
     "o/u_games_20.5_over": {
       "n": 44,
       "n_placed": 42,
-      "n_outcome": 43,
-      "accuracy": 0.4884,
-      "ev_mean": 28.4
+      "n_outcome": 33,
+      "n_won": 21,
+      "n_void": 10,
+      "accuracy": 0.6364,
+      "ev_mean": 28.4,
+      "pnl": 101.36,
+      "roi_pct": 17.4
     },
     "o/u_games_20.5_under": {
       "n": 6,
       "n_placed": 6,
       "n_outcome": 6,
+      "n_won": 2,
+      "n_void": 0,
       "accuracy": 0.3333,
-      "ev_mean": 20.2
+      "ev_mean": 20.2,
+      "pnl": -25.97,
+      "roi_pct": -25.6
     },
     "o/u_games_21.0_over": {
       "n": 12,
       "n_placed": 11,
-      "n_outcome": 12,
-      "accuracy": 0.25,
-      "ev_mean": 22.97
+      "n_outcome": 7,
+      "n_won": 3,
+      "n_void": 5,
+      "accuracy": 0.4286,
+      "ev_mean": 22.97,
+      "pnl": -11.17,
+      "roi_pct": -9.3
     },
     "o/u_games_21.0_under": {
       "n": 3,
       "n_placed": 3,
       "n_outcome": 3,
+      "n_won": 1,
+      "n_void": 0,
       "accuracy": 0.3333,
-      "ev_mean": 16.52
+      "ev_mean": 16.52,
+      "pnl": -33.42,
+      "roi_pct": -71.1
     },
     "o/u_games_21.5_over": {
       "n": 67,
       "n_placed": 64,
-      "n_outcome": 65,
-      "accuracy": 0.4769,
-      "ev_mean": 23.43
+      "n_outcome": 54,
+      "n_won": 31,
+      "n_void": 11,
+      "accuracy": 0.5741,
+      "ev_mean": 23.43,
+      "pnl": 93.07,
+      "roi_pct": 9.8
     },
     "o/u_games_21.5_under": {
       "n": 16,
       "n_placed": 16,
       "n_outcome": 16,
+      "n_won": 8,
+      "n_void": 0,
       "accuracy": 0.5,
-      "ev_mean": 16.99
+      "ev_mean": 16.99,
+      "pnl": -21.51,
+      "roi_pct": -10.0
     },
     "o/u_games_22.0_over": {
       "n": 28,
       "n_placed": 27,
-      "n_outcome": 27,
-      "accuracy": 0.4815,
-      "ev_mean": 14.42
+      "n_outcome": 26,
+      "n_won": 13,
+      "n_void": 1,
+      "accuracy": 0.5,
+      "ev_mean": 14.42,
+      "pnl": 27.43,
+      "roi_pct": 7.7
     },
     "o/u_games_22.0_under": {
       "n": 5,
       "n_placed": 5,
       "n_outcome": 5,
+      "n_won": 3,
+      "n_void": 0,
       "accuracy": 0.6,
-      "ev_mean": 16.23
+      "ev_mean": 16.23,
+      "pnl": -1.17,
+      "roi_pct": -1.5
     },
     "o/u_games_22.5_over": {
       "n": 77,
       "n_placed": 76,
-      "n_outcome": 74,
-      "accuracy": 0.4865,
-      "ev_mean": 18.42
+      "n_outcome": 66,
+      "n_won": 36,
+      "n_void": 10,
+      "accuracy": 0.5455,
+      "ev_mean": 18.42,
+      "pnl": 47.02,
+      "roi_pct": 4.7
     },
     "o/u_games_22.5_under": {
       "n": 9,
       "n_placed": 9,
       "n_outcome": 9,
+      "n_won": 5,
+      "n_void": 0,
       "accuracy": 0.5556,
-      "ev_mean": 15.65
+      "ev_mean": 15.65,
+      "pnl": -2.03,
+      "roi_pct": -1.4
     },
     "o/u_games_23.0_over": {
       "n": 3,
       "n_placed": 3,
       "n_outcome": 3,
+      "n_won": 2,
+      "n_void": 0,
       "accuracy": 0.6667,
-      "ev_mean": 9.0
+      "ev_mean": 9.0,
+      "pnl": 9.14,
+      "roi_pct": 28.0
     },
     "o/u_games_23.5_over": {
       "n": 43,
       "n_placed": 43,
-      "n_outcome": 41,
-      "accuracy": 0.5854,
-      "ev_mean": 12.68
+      "n_outcome": 39,
+      "n_won": 24,
+      "n_void": 4,
+      "accuracy": 0.6154,
+      "ev_mean": 12.68,
+      "pnl": 102.43,
+      "roi_pct": 24.1
     },
     "o/u_games_23.5_under": {
       "n": 2,
       "n_placed": 2,
       "n_outcome": 2,
+      "n_won": 1,
+      "n_void": 0,
       "accuracy": 0.5,
-      "ev_mean": 16.42
+      "ev_mean": 16.42,
+      "pnl": -7.44,
+      "roi_pct": -21.9
     },
     "o/u_games_24.5_over": {
       "n": 2,
       "n_placed": 2,
       "n_outcome": 2,
+      "n_won": 2,
+      "n_void": 0,
       "accuracy": 1.0,
-      "ev_mean": 9.09
+      "ev_mean": 9.09,
+      "pnl": 20.57,
+      "roi_pct": 102.8
     },
     "o/u_games_24.5_under": {
       "n": 2,
       "n_placed": 2,
       "n_outcome": 2,
+      "n_won": 1,
+      "n_void": 0,
       "accuracy": 0.5,
-      "ev_mean": 9.86
+      "ev_mean": 9.86,
+      "pnl": -0.82,
+      "roi_pct": -3.5
     },
     "o/u_games_25.5_under": {
       "n": 1,
       "n_placed": 1,
       "n_outcome": 1,
+      "n_won": 1,
+      "n_void": 0,
       "accuracy": 1.0,
-      "ev_mean": 12.05
+      "ev_mean": 12.05,
+      "pnl": 10.8,
+      "roi_pct": 80.0
     },
     "scorer_Adam Hložek": {
       "n": 2,
       "n_placed": 0,
-      "n_outcome": 2,
-      "accuracy": 0.0,
-      "ev_mean": 29.73
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 29.73,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_Almoez Ali Zainalabiddin Abdulla": {
       "n": 1,
       "n_placed": 0,
-      "n_outcome": 1,
-      "accuracy": 0.0,
-      "ev_mean": 37.87
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 37.87,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_Amadou Onana": {
       "n": 1,
       "n_placed": 0,
-      "n_outcome": 1,
-      "accuracy": 0.0,
-      "ev_mean": 21.83
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 21.83,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_Bukayo Saka": {
       "n": 2,
       "n_placed": 0,
-      "n_outcome": 2,
-      "accuracy": 0.0,
-      "ev_mean": 37.95
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 37.95,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_Daniel Olmo Carvajal": {
       "n": 4,
       "n_placed": 0,
-      "n_outcome": 4,
-      "accuracy": 0.0,
-      "ev_mean": 27.84
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 27.84,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_Fabián Ruiz Peña": {
       "n": 4,
       "n_placed": 0,
-      "n_outcome": 4,
-      "accuracy": 0.0,
-      "ev_mean": 33.3
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 33.3,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_Harry Kane": {
       "n": 5,
       "n_placed": 0,
-      "n_outcome": 5,
-      "accuracy": 0.0,
-      "ev_mean": 19.9
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 2,
+      "accuracy": null,
+      "ev_mean": 19.9,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_Ismaïla Sarr": {
       "n": 2,
       "n_placed": 0,
-      "n_outcome": 2,
-      "accuracy": 0.0,
-      "ev_mean": 17.21
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 17.21,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_Ivan Toney": {
       "n": 11,
       "n_placed": 0,
-      "n_outcome": 11,
-      "accuracy": 0.0,
-      "ev_mean": 26.77
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 1,
+      "accuracy": null,
+      "ev_mean": 26.77,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_James David Rodríguez Rubio": {
       "n": 2,
       "n_placed": 0,
-      "n_outcome": 2,
-      "accuracy": 0.0,
-      "ev_mean": 26.52
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 26.52,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_Jonathan David": {
       "n": 3,
       "n_placed": 0,
-      "n_outcome": 3,
-      "accuracy": 0.0,
-      "ev_mean": 30.57
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 30.57,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_José Fajardo Nelson": {
       "n": 2,
       "n_placed": 0,
-      "n_outcome": 2,
-      "accuracy": 0.0,
-      "ev_mean": 29.88
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 29.88,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_Jude Bellingham": {
       "n": 3,
       "n_placed": 0,
-      "n_outcome": 3,
-      "accuracy": 0.0,
-      "ev_mean": 32.1
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 1,
+      "accuracy": null,
+      "ev_mean": 32.1,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_Lamine Yamal Nasraoui Ebana": {
       "n": 2,
       "n_placed": 0,
-      "n_outcome": 2,
-      "accuracy": 0.0,
-      "ev_mean": 13.37
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 13.37,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_Lautaro Javier Martínez": {
       "n": 3,
       "n_placed": 0,
-      "n_outcome": 3,
-      "accuracy": 0.0,
-      "ev_mean": 27.84
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 27.84,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_Lionel Andrés Messi Cuccittini": {
       "n": 6,
       "n_placed": 0,
-      "n_outcome": 6,
-      "accuracy": 0.0,
-      "ev_mean": 22.28
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 22.28,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_Memphis Depay": {
       "n": 3,
       "n_placed": 0,
-      "n_outcome": 3,
-      "accuracy": 0.0,
-      "ev_mean": 23.62
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 23.62,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_Nicholas Williams Arthuer": {
       "n": 3,
       "n_placed": 0,
-      "n_outcome": 3,
-      "accuracy": 0.0,
-      "ev_mean": 17.29
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 17.29,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_Nicolás Iván González": {
       "n": 2,
       "n_placed": 0,
-      "n_outcome": 2,
-      "accuracy": 0.0,
-      "ev_mean": 37.23
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 37.23,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_Ousmane Dembélé": {
       "n": 8,
       "n_placed": 0,
-      "n_outcome": 8,
-      "accuracy": 0.0,
-      "ev_mean": 29.23
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 29.23,
+      "pnl": 0.0,
+      "roi_pct": null
     },
     "scorer_Romelu Lukaku Menama": {
       "n": 4,
       "n_placed": 0,
-      "n_outcome": 4,
-      "accuracy": 0.0,
-      "ev_mean": 33.02
+      "n_outcome": 0,
+      "n_won": 0,
+      "n_void": 0,
+      "accuracy": null,
+      "ev_mean": 33.02,
+      "pnl": 0.0,
+      "roi_pct": null
     }
   },
   "by_confidence": {
     "HIGH": {
-      "n": 219,
-      "accuracy": 0.4292
+      "n": 193,
+      "n_outcome": 190,
+      "accuracy": 0.5421
     },
     "LOW": {
-      "n": 403,
-      "accuracy": 0.0074
+      "n": 244,
+      "n_outcome": 228,
+      "accuracy": 0.5351
     },
     "MEDIUM": {
-      "n": 465,
-      "accuracy": 0.4473
+      "n": 394,
+      "n_outcome": 390,
+      "accuracy": 0.5462
     }
   }
 }
