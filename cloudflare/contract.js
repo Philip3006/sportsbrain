@@ -7,6 +7,16 @@ export const TERMINAL_STATUSES = new Set([
 ]);
 export const LIVE_STATUSES = new Set(['LIVE', 'IN_PROGRESS']);
 
+// P0-A (item C): Explicit allowlist of pre-match states that the production backend emits.
+// Any state not in this set — including null, undefined, 'UNKNOWN', or arbitrary strings —
+// is rejected fail-closed when the signal carries signal_status=ACTIVE.
+// Sources: TennisEventState (wave3c) and football pre-match state models.
+export const ALLOWED_PREMATCH_STATUSES = new Set([
+  'PREMATCH',       // canonical pre-match for both sports
+  'AWAITING_START', // between announced and first point / kickoff
+  'SCHEDULED',      // announced but well before start (football, some tennis feeds)
+]);
+
 // P1.5-H canonical freshness: 30 minutes
 export const MAX_ODDS_AGE_MS = 1800 * 1000;
 // MAX_EV = 0.40 -> 40pp
@@ -16,8 +26,20 @@ export const MAX_ACTIVE_BETS = 3;
 export const WORKER_ABSOLUTE_MAX = 25.0;
 // Hard bankroll cap: 5%
 export const MAX_STAKE_PCT = 0.05;
-// Authoritative state must be published within 2 hours
-export const AUTH_STATE_MAX_AGE_MS = 7200 * 1000;
+
+// P0-A (item E): Authoritative state must be published within 90 minutes.
+// Producer: tennis_scan (9×/day at 0,2,4,6,9,12,15,18,21 UTC), consume_pending_bets
+// (5-min Worker cron when bets pending), post_match_update, daily_scan.
+// With the 04:00 UTC scan filling the night gap, the maximum publication gap is
+// approximately 2 hours. A threshold of 90 minutes is intentionally tighter so
+// that a genuine backend outage is detected before the threshold expires mid-gap.
+// Failure behavior: Worker returns 503 — bet cannot be placed until state is refreshed.
+export const AUTH_STATE_MAX_AGE_MS = 5400 * 1000; // 90 minutes
+
+// P0-A (item D): Maximum allowed clock skew in either direction.
+// Timestamps more than MAX_CLOCK_SKEW_MS into the future are rejected fail-closed.
+// A small operational tolerance covers NTP drift between backend and Worker.
+export const MAX_CLOCK_SKEW_MS = 60 * 1000; // 60 seconds
 
 /**
  * Validate a trusted KV signal for actionability.
@@ -62,6 +84,16 @@ export function validateSignalActionability(sig, nowMs = Date.now()) {
   if (!oddsTs) return { ok: false, reason: 'odds_ts missing' };
   const tsMs = new Date(oddsTs).getTime();
   if (!Number.isFinite(tsMs)) return { ok: false, reason: 'odds_ts invalid date' };
+
+  // P0-A (item D): reject materially future odds_ts
+  const skewMs = tsMs - nowMs;
+  if (skewMs > MAX_CLOCK_SKEW_MS) {
+    return {
+      ok: false,
+      reason: `odds_ts is ${Math.round(skewMs / 1000)}s in the future — fail closed (max skew ${MAX_CLOCK_SKEW_MS / 1000}s)`,
+    };
+  }
+
   const ageMs = nowMs - tsMs;
   if (ageMs > MAX_ODDS_AGE_MS) {
     return {
@@ -70,12 +102,19 @@ export function validateSignalActionability(sig, nowMs = Date.now()) {
     };
   }
 
+  // P0-A (item C): Explicit pre-match allowlist — fail closed on UNKNOWN/missing/arbitrary states.
   const evStatus = sig.event_status;
   if (LIVE_STATUSES.has(evStatus)) {
     return { ok: false, reason: `event_status is live: ${evStatus}` };
   }
   if (TERMINAL_STATUSES.has(evStatus)) {
     return { ok: false, reason: `event_status is terminal: ${evStatus}` };
+  }
+  if (!ALLOWED_PREMATCH_STATUSES.has(evStatus)) {
+    return {
+      ok: false,
+      reason: `event_status '${evStatus}' not in allowed pre-match set — fail closed`,
+    };
   }
 
   return { ok: true, reason: 'ok' };
@@ -98,14 +137,62 @@ export function resolveCanonicalSignal(signalsJson, signalId) {
 }
 
 /**
+ * P0-A (item A): Validate that client-supplied identity fields exactly match the
+ * canonical signal resolved from KV. Prevents a valid signal_id from authorizing
+ * a bet on a different match/market/sport.
+ *
+ * Returns {ok: boolean, reason: string}.
+ * Called only for source=value after resolveCanonicalSignal succeeds.
+ */
+export function validateCanonicalIdentity(canonicalSig, body) {
+  // match: must exactly match canonical (canonical is authoritative)
+  const canonMatch = String(canonicalSig.match || '').trim();
+  const clientMatch = String(body.match || '').trim();
+  if (canonMatch && clientMatch !== canonMatch) {
+    return { ok: false, reason: `match mismatch: client '${clientMatch}' ≠ canonical '${canonMatch}'` };
+  }
+
+  // market: must exactly match canonical
+  const canonMarket = String(canonicalSig.market || '').trim();
+  const clientMarket = String(body.market || '').trim();
+  if (canonMarket && clientMarket !== canonMarket) {
+    return { ok: false, reason: `market mismatch: client '${clientMarket}' ≠ canonical '${canonMarket}'` };
+  }
+
+  // sport: must exactly match canonical
+  const canonSport = String(canonicalSig.sport || '').trim();
+  const clientSport = String(body.sport || '').trim();
+  if (canonSport && clientSport && clientSport !== canonSport) {
+    return { ok: false, reason: `sport mismatch: client '${clientSport}' ≠ canonical '${canonSport}'` };
+  }
+
+  // fixture_key: if canonical has it, client must match (or omit)
+  const canonFk = String(canonicalSig.fixture_key || '').trim();
+  const clientFk = String(body.fixture_key || '').trim();
+  if (canonFk && clientFk && clientFk !== canonFk) {
+    return { ok: false, reason: `fixture_key mismatch: client '${clientFk}' ≠ canonical '${canonFk}'` };
+  }
+
+  // selection: if canonical has it, client must match (or omit)
+  const canonSel = String(canonicalSig.selection || '').trim();
+  const clientSel = String(body.selection || '').trim();
+  if (canonSel && clientSel && clientSel !== canonSel) {
+    return { ok: false, reason: `selection mismatch: client '${clientSel}' ≠ canonical '${canonSel}'` };
+  }
+
+  return { ok: true, reason: 'ok' };
+}
+
+/**
  * Check that the authoritative state is fresh enough for risk enforcement.
  * publishedAt: ISO string from bankroll_state.published_at in the KV snapshot.
  * Returns {ok: boolean, reason: string}.
  *
- * Threshold: 2 hours (AUTH_STATE_MAX_AGE_MS).
- * Rationale: consume_pending_bets runs every 5 min; signal publication runs after
- * each scan; 2h is permissive enough for weekend gaps but strict enough to catch
- * a backend outage before a bet is accepted on stale risk data.
+ * Threshold: 90 minutes (AUTH_STATE_MAX_AGE_MS).
+ * Rationale: tennis_scan publishes 9×/day (max 2h gap with 04:00 UTC entry).
+ * consume_pending_bets refreshes within 5 min after any ledger change.
+ * 90-min threshold is tighter than the 2h max gap, catching genuine backend
+ * outages before they can exceed the threshold in all but the rarest overnight window.
  */
 export function validateAuthStateFreshness(publishedAt, nowMs = Date.now()) {
   if (!publishedAt) {
@@ -115,6 +202,16 @@ export function validateAuthStateFreshness(publishedAt, nowMs = Date.now()) {
   if (!Number.isFinite(pubMs)) {
     return { ok: false, reason: 'authoritative state published_at is invalid — fail closed' };
   }
+
+  // P0-A (item D): reject materially future published_at
+  const skewMs = pubMs - nowMs;
+  if (skewMs > MAX_CLOCK_SKEW_MS) {
+    return {
+      ok: false,
+      reason: `authoritative state published_at is ${Math.round(skewMs / 1000)}s in the future — fail closed`,
+    };
+  }
+
   const ageMs = nowMs - pubMs;
   if (ageMs > AUTH_STATE_MAX_AGE_MS) {
     return {
@@ -126,8 +223,11 @@ export function validateAuthStateFreshness(publishedAt, nowMs = Date.now()) {
 }
 
 /**
- * Validate basic request body fields: source (exact match), stake, signal_id.
+ * Validate basic request body fields: source (exact literal only), stake, signal_id.
  * Returns {ok, error, status, source} where source is the validated string.
+ *
+ * P0-A (item J): source must be the literal string "value" or "manual".
+ * No case normalization, no trimming — any deviation is rejected at the security boundary.
  */
 export function validateBetBodyBasic(body) {
   const stake = Number(body.stake_eur);
@@ -138,12 +238,13 @@ export function validateBetBodyBasic(body) {
     return { ok: false, error: `stake_eur out of range (0.5–${WORKER_ABSOLUTE_MAX})`, status: 400 };
   }
 
-  // P0-A: source must be exactly "value" or "manual" — never coerce invalid input to "value"
-  const rawSource = String(body.source || '').toLowerCase().trim();
+  // P0-A (item J): strict literal match only — no toLowerCase, no trim.
+  // "VALUE", " value", "Value" are all rejected. API contract is exact.
+  const rawSource = body.source;
   if (rawSource !== 'value' && rawSource !== 'manual') {
     return {
       ok: false,
-      error: `source must be "value" or "manual", got "${String(body.source || '')}"`,
+      error: `source must be exactly "value" or "manual", got "${String(rawSource ?? '')}"`,
       status: 400,
     };
   }

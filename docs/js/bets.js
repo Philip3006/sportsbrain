@@ -596,8 +596,11 @@ function _openBetModalFromBtn(btn) {
       edge_lost:      d.edgeLost === 'true',
       stale:          d.stale === 'true',
       no_bet_flag:    d.noBetFlag === 'true',
-      current_odds:   parseFloat(d.currentOdds || d.odds || '0'),
-      current_ev_pct: parseFloat(d.currentEv || d.ev || '0'),
+      // P0-A (item B): current_odds and current_ev_pct must be actual current values.
+      // data-current-odds is empty string when unavailable — do NOT fall back to scan odds here.
+      // The actionability check below will reject if these are missing/invalid.
+      current_odds:   d.currentOdds ? parseFloat(d.currentOdds) : NaN,
+      current_ev_pct: d.currentEv   ? parseFloat(d.currentEv)   : NaN,
       odds_ts:        d.oddsTs || d.odds_ts || '',
       event_status:   d.eventStatus || d.event_status || '',
       sport:          d.sport || '',
@@ -613,8 +616,8 @@ function _openBetModalFromBtn(btn) {
   const modelProb = (modelProbRaw > 0 && modelProbRaw <= 1) ? modelProbRaw
                   : (modelProbRaw > 1 && modelProbRaw <= 100) ? modelProbRaw / 100
                   : 0;
-  // P0-A: canonical_odds = authoritative current_odds from KV (locked for value bets)
-  const canonicalOdds = parseFloat(d.currentOdds || d.odds || '0');
+  // P0-A (item B): canonical_odds = actual current_odds from KV only (no scan fallback)
+  const canonicalOdds = d.currentOdds ? parseFloat(d.currentOdds) : 0;
   _pendingBet = {
     match: d.match,
     market: d.market,

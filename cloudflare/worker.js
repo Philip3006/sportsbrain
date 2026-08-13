@@ -28,7 +28,11 @@ import {
   validateAuthStateFreshness,
   validateOddsMatchCanonical,
   resolveCanonicalSignal,
+  validateCanonicalIdentity,
 } from './contract.js';
+
+// P0-A (item K): supported sports for new bets
+const SUPPORTED_SPORTS = new Set(['football', 'tennis', 'basketball']);
 
 const ALLOWED_MARKETS = new Set([
   'home', 'draw', 'away',
@@ -434,10 +438,12 @@ export default {
           return jr({ error: activeBetsResult.error }, authOpenBets === null ? 503 : 400);
         }
 
-        // P0-A: for source=value, resolve and validate the canonical signal server-side.
+        // P0-A (item A): for source=value, resolve and validate the canonical signal server-side.
         // The client identifies the desired signal via signal_id; the Worker resolves
         // truth from the trusted published signals_json — client-supplied field values
-        // (odds, ev_pct, event_status, etc.) are NEVER used for enforcement.
+        // are validated against canonical truth, then canonical values are stored.
+        // A valid signal_id cannot authorize a different match/market/sport.
+        let canonicalSigForEntry = null;
         if (source === 'value') {
           const canonicalSig = resolveCanonicalSignal(signalsData, signalId);
           if (!canonicalSig) {
@@ -447,36 +453,81 @@ export default {
           if (!sigResult.ok) {
             return jr({ error: `canonical signal not actionable: ${sigResult.reason}` }, 400);
           }
+          // P0-A (item A): validate client identity fields against canonical — reject on any mismatch
+          const identityResult = validateCanonicalIdentity(canonicalSig, body);
+          if (!identityResult.ok) {
+            return jr({ error: `identity mismatch — REJECT: ${identityResult.reason}` }, 400);
+          }
           // P0-A: submitted odds must match canonical current_odds from KV
           const oddsResult = validateOddsMatchCanonical(odds, canonicalSig.current_odds);
           if (!oddsResult.ok) {
             return jr({ error: oddsResult.reason }, 400);
           }
+          canonicalSigForEntry = canonicalSig;
+        }
+
+        // P0-A (item K): manual bets must have explicit valid sport — no ambiguous new records
+        if (source === 'manual') {
+          const manualSport = String(body.sport || '').trim();
+          if (!manualSport || !SUPPORTED_SPORTS.has(manualSport)) {
+            return jr({
+              error: `manual bets require sport in [${[...SUPPORTED_SPORTS].join(', ')}], got '${manualSport}'`,
+            }, 400);
+          }
         }
 
         const id = crypto.randomUUID();
-        const entry = {
-          id,
-          match,
-          market,
-          odds,
-          stake_eur: stake,
-          ev_pct: Number.isFinite(Number(body.ev_pct)) ? Number(body.ev_pct) : null,
-          model_prob: Number.isFinite(Number(body.model_prob)) ? Number(body.model_prob) : null,
-          confidence: typeof body.confidence === 'string' ? body.confidence : '',
-          kickoff: typeof body.kickoff === 'string' ? body.kickoff : '',
-          sport: typeof body.sport === 'string' ? body.sport : '',
-          source,
-          // P0-A: preserve identity fields
-          signal_id: signalId,
-          fixture_key: typeof body.fixture_key === 'string' ? body.fixture_key.trim() : '',
-          league: typeof body.league === 'string' ? body.league.trim() : '',
-          odds_ts: typeof body.odds_ts === 'string' ? body.odds_ts : '',
-          selection: typeof body.selection === 'string' ? body.selection.trim() : '',
-          bankroll_hint: Number.isFinite(Number(body.bankroll_hint)) ? Number(body.bankroll_hint) : null,
-          origin: 'pwa',
-          placed_at: new Date().toISOString(),
-        };
+        let entry;
+        if (source === 'value' && canonicalSigForEntry) {
+          // P0-A (item A): stored identity comes from canonical KV signal, not from client body.
+          // The browser may request a signal; it must not define what that signal means.
+          const cs = canonicalSigForEntry;
+          entry = {
+            id,
+            match:        String(cs.match        || match).trim(),
+            market:       String(cs.market       || market).trim(),
+            odds,  // validated == canonical current_odds via validateOddsMatchCanonical
+            stake_eur: stake,
+            ev_pct:     Number.isFinite(Number(cs.current_ev_pct)) ? Number(cs.current_ev_pct) : null,
+            model_prob: Number.isFinite(Number(cs.model_prob))     ? Number(cs.model_prob)     : null,
+            confidence: typeof cs.confidence === 'string' ? cs.confidence : (typeof body.confidence === 'string' ? body.confidence : ''),
+            kickoff:    typeof cs.kickoff === 'string' ? cs.kickoff : (typeof cs.scheduled_start_current === 'string' ? cs.scheduled_start_current : ''),
+            sport:      String(cs.sport        || '').trim(),
+            source,
+            signal_id:   signalId,
+            fixture_key: String(cs.fixture_key  || '').trim(),
+            league:      String(cs.league       || '').trim(),
+            odds_ts:     String(cs.odds_ts      || ''),
+            selection:   String(cs.selection    || '').trim(),
+            event_status: String(cs.event_status || '').trim(),
+            bankroll_hint: Number.isFinite(Number(body.bankroll_hint)) ? Number(body.bankroll_hint) : null,
+            origin: 'pwa',
+            placed_at: new Date().toISOString(),
+          };
+        } else {
+          // source=manual: identity comes from client body (user entered it)
+          entry = {
+            id,
+            match,
+            market,
+            odds,
+            stake_eur: stake,
+            ev_pct: Number.isFinite(Number(body.ev_pct)) ? Number(body.ev_pct) : null,
+            model_prob: Number.isFinite(Number(body.model_prob)) ? Number(body.model_prob) : null,
+            confidence: typeof body.confidence === 'string' ? body.confidence : '',
+            kickoff: typeof body.kickoff === 'string' ? body.kickoff : '',
+            sport: typeof body.sport === 'string' ? body.sport.trim() : '',
+            source,
+            signal_id: signalId,
+            fixture_key: typeof body.fixture_key === 'string' ? body.fixture_key.trim() : '',
+            league: typeof body.league === 'string' ? body.league.trim() : '',
+            odds_ts: typeof body.odds_ts === 'string' ? body.odds_ts : '',
+            selection: typeof body.selection === 'string' ? body.selection.trim() : '',
+            bankroll_hint: Number.isFinite(Number(body.bankroll_hint)) ? Number(body.bankroll_hint) : null,
+            origin: 'pwa',
+            placed_at: new Date().toISOString(),
+          };
+        }
 
         // Soft duplicate guard: same match+market+odds within 60s
         const recent = arr.find(b =>
