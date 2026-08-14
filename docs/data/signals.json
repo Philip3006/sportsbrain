@@ -1,7 +1,7 @@
 {
-  "updated": "2026-08-13T19:04:44Z",
+  "updated": "2026-08-13T23:36:50Z",
   "build_info": {
-    "sha": "95fe200",
+    "sha": "e459462",
     "date": "2026-08-13"
   },
   "meta": {
@@ -7697,8 +7697,8 @@
     {
       "date": "2026-08-12",
       "n_bets": 1,
-      "pnl": 0.0,
-      "roi_pct": 0.0
+      "pnl": -5.0,
+      "roi_pct": -100.0
     },
     {
       "date": "2026-08-06",
@@ -7809,23 +7809,21 @@
       "roi_pct": 0.0
     }
   ],
-  "open_bets": [
+  "open_bets": [],
+  "settled_bets": [
     {
       "match": "Luca Van Assche vs Dusan Lajovic",
       "home": "Luca Van Assche",
       "away": "Dusan Lajovic",
       "market": "away",
       "entry_odds": 3.1,
-      "current_odds": 3.02,
-      "drift_pct": -2.6,
-      "clv_signal": "bad",
       "stake": 5.0,
+      "pnl": -5.0,
       "match_date": "2026-08-12",
-      "model_edge_pct": null,
-      "is_live": false
-    }
-  ],
-  "settled_bets": [
+      "status": "lost",
+      "clv": null,
+      "closing_odds": null
+    },
     {
       "match": "Learner Tien vs Gael Monfils",
       "home": "Learner Tien",
@@ -8948,20 +8946,20 @@
   "bankroll_state": {
     "start": 100.0,
     "free": 47.13,
-    "staked": 5.0,
-    "exposure_pct": 5.0,
-    "max_win": 10.1,
-    "pnl_closed": -47.87
+    "staked": 0,
+    "exposure_pct": 0.0,
+    "max_win": 0,
+    "pnl_closed": -52.87
   },
   "wm_stats": {
     "stats": {
       "1x2": {
-        "n": 22,
+        "n": 23,
         "won": 8,
-        "staked": 181.01,
-        "pnl": 31.69,
-        "hit_rate": 36.4,
-        "roi": 17.5
+        "staked": 186.01,
+        "pnl": 26.69,
+        "hit_rate": 34.8,
+        "roi": 14.3
       },
       "ou25": {
         "n": 19,
@@ -9064,15 +9062,19 @@
       {
         "date": "2026-08-06",
         "balance": 52.13
+      },
+      {
+        "date": "2026-08-12",
+        "balance": 47.13
       }
     ],
     "drawdown": {
       "peak": 176.25,
-      "current": 52.13,
-      "current_dd": 124.12,
-      "current_dd_pct": 70.42,
-      "max_dd": 124.12,
-      "max_dd_pct": 70.42
+      "current": 47.13,
+      "current_dd": 129.12,
+      "current_dd_pct": 73.26,
+      "max_dd": 129.12,
+      "max_dd_pct": 73.26
     },
     "clv_dist": {
       "labels": [
@@ -9107,20 +9109,20 @@
         11,
         10,
         9,
-        12
+        13
       ]
     },
     "summary": {
-      "n_settled": 78,
-      "staked": 743.92,
-      "pnl": -47.87,
-      "yield_pct": -6.43,
+      "n_settled": 79,
+      "staked": 748.92,
+      "pnl": -52.87,
+      "yield_pct": -7.06,
       "mean_clv": 4.07,
       "mean_clv_30d": 0.0,
-      "mean_edge": 8.5,
+      "mean_edge": 8.69,
       "n_clv": 26,
       "n_clv_30d": 1,
-      "n_edge": 52
+      "n_edge": 53
     },
     "per_team_market": {
       "South Korea": {
@@ -10416,6 +10418,26 @@
           "hit_rate": 0.0,
           "roi": -100.0
         }
+      },
+      "Luca Van Assche": {
+        "1X2": {
+          "n": 1,
+          "won": 0,
+          "staked": 5.0,
+          "pnl": -5.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
+      },
+      "Dusan Lajovic": {
+        "1X2": {
+          "n": 1,
+          "won": 0,
+          "staked": 5.0,
+          "pnl": -5.0,
+          "hit_rate": 0.0,
+          "roi": -100.0
+        }
       }
     },
     "by_confederation": {
@@ -10460,12 +10482,12 @@
         "roi": -100.0
       },
       "Other": {
-        "n": 21,
+        "n": 22,
         "won": 9,
-        "staked": 120.76,
-        "pnl": -20.54,
-        "hit_rate": 42.9,
-        "roi": -17.0
+        "staked": 125.76,
+        "pnl": -25.54,
+        "hit_rate": 40.9,
+        "roi": -20.3
       },
       "OFC": {
         "n": 1,
@@ -10478,7 +10500,7 @@
     }
   },
   "tennis_stats": {
-    "updated": "2026-08-13T19:04:44Z",
+    "updated": "2026-08-13T23:36:50Z",
     "active_tournaments": [
       {
         "slug": "canadian_open_atp",
