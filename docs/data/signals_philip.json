@@ -1,8 +1,8 @@
 {
-  "updated": "2026-08-13T23:36:50Z",
+  "updated": "2026-08-14T01:05:20Z",
   "build_info": {
-    "sha": "e459462",
-    "date": "2026-08-13"
+    "sha": "c7b8390",
+    "date": "2026-08-14"
   },
   "meta": {
     "stale_odds": false,
@@ -8949,7 +8949,8 @@
     "staked": 0,
     "exposure_pct": 0.0,
     "max_win": 0,
-    "pnl_closed": -52.87
+    "pnl_closed": -52.87,
+    "published_at": "2026-08-14T01:05:20Z"
   },
   "wm_stats": {
     "stats": {
@@ -10500,7 +10501,7 @@
     }
   },
   "tennis_stats": {
-    "updated": "2026-08-13T23:36:50Z",
+    "updated": "2026-08-14T01:05:20Z",
     "active_tournaments": [
       {
         "slug": "canadian_open_atp",
@@ -10513,13 +10514,6 @@
         "slug": "cincinnati_atp",
         "name": "Cincinnati Open",
         "category": "m1000",
-        "surface": "hard",
-        "best_of": 3
-      },
-      {
-        "slug": "canadian_open_wta",
-        "name": "Canadian Open",
-        "category": "wta1000",
         "surface": "hard",
         "best_of": 3
       },
