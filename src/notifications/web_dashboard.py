@@ -1289,6 +1289,9 @@ def write_signals_json(
             "exposure_pct": _exposure_pct,
             "max_win":      round(_max_win, 2),
             "pnl_closed":   round(_pnl_closed, 2),
+            # P0-A: backend-authored timestamp — Worker uses this for freshness enforcement.
+            # Threshold: 2 hours (AUTH_STATE_MAX_AGE_MS in contract.js).
+            "published_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         },
         "wm_stats": _build_wm_stats(ledger_path=ledger_path),
         "tennis_stats": _build_tennis_stats(ledger_path=ledger_path),

@@ -2,8 +2,12 @@ name: Tennis Scan (year-round, multi-tournament)
 
 on:
   schedule:
-    # 8× täglich ganzjährig — schließt den 21-06 UTC Gap für Nordamerika-Turniere.
-    # 23 UTC: Abend-Matches Kanada (Start 22-01 UTC), 02 UTC: Late-Night-Runden.
+    # 9× täglich ganzjährig — schließt den 21-06 UTC Gap für Nordamerika-Turniere.
+    # 04 UTC: P0-A risk-state heartbeat — fills the 02→06 UTC dead zone so that
+    # bankroll_state.published_at is never older than 2 h, supporting the 90-min
+    # freshness threshold in contract.js (AUTH_STATE_MAX_AGE_MS).
+    - cron: '0 2 * * *'
+    - cron: '0 4 * * *'
     - cron: '0 6 * * *'
     - cron: '0 9 * * *'
     - cron: '0 12 * * *'
@@ -11,7 +15,6 @@ on:
     - cron: '0 18 * * *'
     - cron: '0 21 * * *'
     - cron: '0 23 * * *'
-    - cron: '0 2 * * *'
   workflow_dispatch:        # manuell auslösbar
     inputs:
       all_live:

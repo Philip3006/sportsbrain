@@ -57,8 +57,19 @@ jobs:
             tests/scanner/test_rule7_gate_enforcement.py \
             tests/e2e/test_signal_pipeline_smoke.py
 
-      # ── HARD GATE 3: Ruff Regression — blockt NEUE Violations,
-      # existierender 1057-Altbestand steht in .ruff_baseline.json und
+      # ── HARD GATE 3: Node.js Worker contract tests ─────────────────────────
+      # The 52+ deterministic tests in tests/js/worker.test.mjs are a production
+      # betting-safety contract. They must pass on every PR — no exceptions.
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Node Worker contract tests
+        run: node --test tests/js/worker.test.mjs
+
+      # ── HARD GATE 4: Ruff Regression — blockt NEUE Violations,
+      # existierender Altbestand steht in .ruff_baseline.json und
       # darf abgebaut werden, ohne CI zu brechen.
       - name: Ruff regression check (baseline-diff)
         run: python scripts/ruff_regression_check.py
