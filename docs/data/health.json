@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-14T18:59:24Z",
+  "generated_at": "2026-08-14T19:25:49Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -38,8 +38,8 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-14T18:59:24Z",
-      "duration_s": 2.0,
+      "last_run_at": "2026-08-14T19:25:49Z",
+      "duration_s": null,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -48,11 +48,11 @@
     },
     {
       "job": "live_score_push",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-08-14T18:59:17Z",
       "duration_s": 4.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-08-14T18:59:17Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
@@ -81,11 +81,11 @@
     },
     {
       "job": "aggregate_health",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-08-14T18:57:20Z",
       "duration_s": 1.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-08-14T18:57:20Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min (huckepack)"
@@ -93,7 +93,7 @@
     {
       "job": "tennis_scan",
       "status": "ok",
-      "last_run_at": "2026-08-14T15:52:46Z",
+      "last_run_at": "2026-08-14T18:58:35Z",
       "duration_s": null,
       "exit_code": 1,
       "error": null,
@@ -104,7 +104,7 @@
     {
       "job": "tennis_settle",
       "status": "ok",
-      "last_run_at": "2026-08-14T17:14:06Z",
+      "last_run_at": "2026-08-14T19:15:54Z",
       "duration_s": null,
       "exit_code": 1,
       "error": null,
@@ -114,11 +114,11 @@
     },
     {
       "job": "tennis_closing_odds",
-      "status": "stale",
-      "last_run_at": "2026-08-14T17:56:24Z",
+      "status": "ok",
+      "last_run_at": "2026-08-14T19:00:59Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": "last run was at 2026-08-14T17:56:24Z — overdue (>2700s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 1800,
       "cadence": "alle 30 Min"
@@ -158,11 +158,11 @@
     },
     {
       "job": "bundesliga2_live_push",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-08-14T18:55:41Z",
       "duration_s": 0.01,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-08-14T18:55:41Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min im Spieltag-Fenster"
@@ -192,7 +192,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-14T18:59:22Z",
+      "last_run_at": "2026-08-14T19:25:48Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -203,7 +203,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-14T18:58:20Z",
+      "last_run_at": "2026-08-14T19:25:14Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
