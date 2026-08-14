@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-13",
+  "updated": "2026-08-14",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -1003,7 +1003,8 @@
         "Ismaël Koné",
         "Marcelo Flores",
         "Moïse Bombito",
-        "Alphonso Davies"
+        "Alphonso Davies",
+        "Alistair Johnston"
       ],
       "players": [
         {
@@ -1014,7 +1015,7 @@
         {
           "name": "Alistair Johnston",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Alfie Jones",
@@ -5691,7 +5692,8 @@
       "suspended": [
         "Dani Carvajal",
         "Fermin Lopez",
-        "Rodri"
+        "Rodri",
+        "Lamine Yamal"
       ],
       "players": [
         {
@@ -5787,7 +5789,7 @@
         {
           "name": "Lamine Yamal",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Pedri",
