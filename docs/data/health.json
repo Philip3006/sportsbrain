@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-14T12:56:13Z",
+  "generated_at": "2026-08-14T15:13:20Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -38,8 +38,8 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-14T12:56:13Z",
-      "duration_s": 2.0,
+      "last_run_at": "2026-08-14T15:13:20Z",
+      "duration_s": null,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -48,7 +48,7 @@
     },
     {
       "job": "live_score_push",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-08-14T12:55:34Z",
       "duration_s": 4.0,
       "exit_code": 0,
@@ -59,7 +59,7 @@
     },
     {
       "job": "prematch_scan",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-08-14T12:52:00Z",
       "duration_s": 1.0,
       "exit_code": 0,
@@ -81,7 +81,7 @@
     },
     {
       "job": "aggregate_health",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-08-14T12:54:09Z",
       "duration_s": 1.0,
       "exit_code": 0,
@@ -104,7 +104,7 @@
     {
       "job": "tennis_settle",
       "status": "ok",
-      "last_run_at": "2026-08-14T13:45:50Z",
+      "last_run_at": "2026-08-14T15:08:46Z",
       "duration_s": null,
       "exit_code": 1,
       "error": null,
@@ -114,11 +114,11 @@
     },
     {
       "job": "tennis_closing_odds",
-      "status": "stale",
-      "last_run_at": "2026-08-14T13:12:34Z",
+      "status": "ok",
+      "last_run_at": "2026-08-14T14:31:54Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": "last run was at 2026-08-14T13:12:34Z — overdue (>2700s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 1800,
       "cadence": "alle 30 Min"
@@ -192,7 +192,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-14T12:56:11Z",
+      "last_run_at": "2026-08-14T15:13:19Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -203,7 +203,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-14T12:54:44Z",
+      "last_run_at": "2026-08-14T15:12:43Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
