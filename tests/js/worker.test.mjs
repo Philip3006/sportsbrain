@@ -1016,4 +1016,20 @@ describe('Cancel intent KV — per-intent storage (FND-003)', () => {
     const resp = await fw(env, 'DELETE', '/cancel_requests');
     assert.equal(resp.status, 410);
   });
+
+  test('default-user list cannot see another user cancel intent (namespace isolation)', async () => {
+    const kv = makeMockKV();
+    const env = makeEnv(kv);
+    // Inject a foreign user's intent directly into KV — bypasses auth, simulates concurrent write.
+    await kv.put('cancel_intent:alice:foreign-id', JSON.stringify({
+      id: 'foreign-id', home: 'X', away: 'Y', market: 'home', requested_at: new Date().toISOString(),
+    }));
+    // Default-user posts their own intent via the Worker.
+    await fw(env, 'POST', '/cancel_bet', { home: 'Alpha', away: 'Beta', market: 'home' });
+    const resp = await fw(env, 'GET', '/cancel_requests');
+    const { requests } = await resp.json();
+    assert.equal(requests.length, 1,
+      `FND-003 namespace: default-user list must not see alice's intent; got ${JSON.stringify(requests)}`);
+    assert.equal(requests[0].home, 'Alpha');
+  });
 });

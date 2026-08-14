@@ -362,10 +362,11 @@ export function orchestratePendingBetPost(body, { signalsJson, pendingArr, nowMs
 }
 
 // FND-20260814-003 (P0A-012): one KV key per cancel intent — truly atomic per-item delete.
-// Prefix scheme: "cancel_intent:" (default user) or "cancel_intent:{user}:" (per-user).
+// Prefix scheme: "cancel_intent:{user}:" for every user — explicit namespace prevents default-user
+// prefix "cancel_intent:" from matching other users' "cancel_intent:{other}:..." keys.
 // DELETE /cancel_requests/{id} deletes one key without reading or rewriting any other key.
 function _cancelIntentPrefix(user) {
-  return (user && user !== DEFAULT_USER) ? `cancel_intent:${user}:` : 'cancel_intent:';
+  return `cancel_intent:${user || DEFAULT_USER}:`;
 }
 function _cancelIntentKey(user, id) {
   return `${_cancelIntentPrefix(user)}${id}`;
