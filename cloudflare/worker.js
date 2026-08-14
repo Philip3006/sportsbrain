@@ -361,16 +361,24 @@ export function orchestratePendingBetPost(body, { signalsJson, pendingArr, nowMs
   return { status: 200, json: { ok: true, id: entry.id }, entry };
 }
 
-function _cancelKey(user) {
-  return (user && user !== DEFAULT_USER) ? `cancel_requests_${user}` : 'cancel_requests';
+// FND-20260814-003 (P0A-012): one KV key per cancel intent — truly atomic per-item delete.
+// Prefix scheme: "cancel_intent:" (default user) or "cancel_intent:{user}:" (per-user).
+// DELETE /cancel_requests/{id} deletes one key without reading or rewriting any other key.
+function _cancelIntentPrefix(user) {
+  return (user && user !== DEFAULT_USER) ? `cancel_intent:${user}:` : 'cancel_intent:';
+}
+function _cancelIntentKey(user, id) {
+  return `${_cancelIntentPrefix(user)}${id}`;
 }
 async function readCancelRequests(env, user = DEFAULT_USER) {
-  const raw = await env.SIGNALS.get(_cancelKey(user));
-  if (!raw) return [];
-  try { const a = JSON.parse(raw); return Array.isArray(a) ? a : []; } catch { return []; }
-}
-async function writeCancelRequests(env, arr, user = DEFAULT_USER) {
-  await env.SIGNALS.put(_cancelKey(user), JSON.stringify(arr));
+  const prefix = _cancelIntentPrefix(user);
+  const listed = await env.SIGNALS.list({ prefix });
+  if (!listed.keys.length) return [];
+  const vals = await Promise.all(listed.keys.map(k => env.SIGNALS.get(k.name)));
+  return vals.flatMap(v => {
+    if (!v) return [];
+    try { const p = JSON.parse(v); return (p && typeof p === 'object') ? [p] : []; } catch { return []; }
+  });
 }
 
 // ── Push Subscriptions (Web Push) ─────────────────────────────
@@ -618,36 +626,33 @@ export default {
         const cancelReqs = await readCancelRequests(env, pUser);
         const alreadyQueued = cancelReqs.some(r => r.home === home && r.away === away && r.market === market);
         if (!alreadyQueued) {
-          // FND-20260814-003: stable id enables per-item ACK by Python consumer.
-          cancelReqs.push({ id: _randomToken().slice(0, 16), home, away, market, requested_at: new Date().toISOString() });
-          await writeCancelRequests(env, cancelReqs, pUser);
+          // FND-20260814-003 (P0A-012): write one KV key per intent — no array RMW, no concurrent loss.
+          const cid = _randomToken().slice(0, 16);
+          const intent = { id: cid, home, away, market, requested_at: new Date().toISOString() };
+          await env.SIGNALS.put(_cancelIntentKey(pUser, cid), JSON.stringify(intent));
         }
         return jr({ ok: true });
       }
 
       // H3: Cancel-Request-Queue read + per-item delete (for Python consume_pending_bets)
-      // FND-20260814-003: per-item DELETE is the safe ACK path; clear-all DELETE is retained
-      // only for emergency use — the Python consumer uses per-item DELETE exclusively.
       if (path === '/cancel_requests') {
         if (request.method === 'GET') {
           return jr({ requests: await readCancelRequests(env, pUser) });
         }
         if (request.method === 'DELETE') {
-          await writeCancelRequests(env, [], pUser);
-          return jr({ ok: true });
+          // FND-20260814-003 (P0A-012): clear-all disabled — prevents accidental erasure of
+          // concurrent intents. Use DELETE /cancel_requests/{id} for per-item ACK.
+          return jr({ error: 'clear-all cancel is disabled; use DELETE /cancel_requests/{id}' }, 410);
         }
       }
 
-      // FND-20260814-003: per-item cancel ACK — DELETE /cancel_requests/{id}
-      // Removes only the cancel intent with the exact matching id.
-      // New cancels arriving after the consumer's GET are unaffected.
+      // FND-20260814-003 (P0A-012): atomic per-item ACK — deletes exactly one KV key.
+      // No read-modify-write; concurrent cancel intents are unaffected.
       if (request.method === 'DELETE' && path.startsWith('/cancel_requests/')) {
         const cancelId = path.slice('/cancel_requests/'.length);
         if (!cancelId) return jr({ error: 'cancel request id required' }, 400);
-        const arr = await readCancelRequests(env, pUser);
-        const next = arr.filter(r => r.id !== cancelId);
-        await writeCancelRequests(env, next, pUser);
-        return jr({ ok: true, removed: arr.length - next.length });
+        await env.SIGNALS.delete(_cancelIntentKey(pUser, cancelId));
+        return jr({ ok: true });
       }
     }
 

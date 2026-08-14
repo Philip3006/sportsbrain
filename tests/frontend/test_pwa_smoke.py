@@ -568,3 +568,54 @@ def test_fnd031_predcard_no_bet_button(page: Page, server_url: str) -> None:
 
     ref_errors = [e for e in js_errors if "ReferenceError" in e or "TypeError" in e]
     assert not ref_errors, f"FND-031: JS errors in predCard render: {ref_errors}"
+
+
+# P0-A Test 14: FND-20260814-031 — compact mode non-actionable signal renders no bet button
+def test_fnd031_compact_non_actionable_no_bet_button(page: Page, server_url: str) -> None:
+    """FND-031: In compact mode, a signal without current_odds must NOT render a bet button.
+
+    Compact mode bypassed the actionability check in TASK-P0A-011; this verifies the fix.
+    """
+    js_errors: list[str] = []
+    page.on("pageerror", lambda exc: js_errors.append(str(exc)))
+
+    # Activate compact mode before page scripts run
+    page.add_init_script("localStorage.setItem('sb_compact_mode', '1');")
+
+    sig_no_current = _canonical_signal(current_odds=None, current_ev_pct=None)
+    payload = {**_BASE, "football": [sig_no_current]}
+    _navigate_to_football(page, server_url, payload)
+
+    compact_btns = page.locator(".compact-place-btn")
+    assert compact_btns.count() == 0, (
+        f"FND-031: compact mode non-actionable signal must render NO .compact-place-btn. "
+        f"Got {compact_btns.count()} button(s)."
+    )
+    ref_errors = [e for e in js_errors if "ReferenceError" in e or "TypeError" in e]
+    assert not ref_errors, f"FND-031: JS errors in compact render: {ref_errors}"
+
+
+# P0-A Test 15: FND-20260814-031 — compact mode actionable signal does render bet button
+def test_fnd031_compact_actionable_has_bet_button(page: Page, server_url: str) -> None:
+    """FND-031: In compact mode, a fully canonical/actionable signal DOES render a bet button."""
+    js_errors: list[str] = []
+    page.on("pageerror", lambda exc: js_errors.append(str(exc)))
+
+    page.add_init_script("localStorage.setItem('sb_compact_mode', '1');")
+
+    sig = _canonical_signal()
+    payload = {**_BASE, "football": [sig]}
+    _navigate_to_football(page, server_url, payload)
+
+    compact_btns = page.locator(".compact-place-btn")
+    assert compact_btns.count() > 0, (
+        "FND-031: compact mode actionable signal must render a .compact-place-btn button."
+    )
+    # Must be data-source=value, never manual
+    btn = compact_btns.first
+    assert btn.get_attribute("data-source") == "value", (
+        f"FND-031: compact actionable button must have data-source=value, "
+        f"got '{btn.get_attribute('data-source')}'"
+    )
+    ref_errors = [e for e in js_errors if "ReferenceError" in e or "TypeError" in e]
+    assert not ref_errors, f"FND-031: JS errors in compact actionable render: {ref_errors}"

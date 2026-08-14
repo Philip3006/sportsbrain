@@ -1189,12 +1189,16 @@ function renderSport(sport) {
         `data-league="${esc(s.league||'')}"`,
         `data-odds-ts="${esc(s.odds_ts||'')}"`,
         `data-event-status="${esc(s.event_status||'')}"`,
-        `data-source="${_cIsValueActionable ? 'value' : 'manual'}"`,
+        `data-source="value"`,
         `onclick="event.stopPropagation();_openBetModalFromBtn(this)"`,
       ].join(' ');
+      // FND-20260814-031 (P0A-012): compact bet action only when fully canonical/actionable Value.
+      // Non-actionable signals are informational — no modal opener, no Manual fallback.
       const btn = isManual
         ? `<span style="font-size:9px;color:var(--yellow)" title="HZ manuell">⚠ HZ</span>`
-        : `<button class="compact-place-btn" ${btnAttrs} aria-label="Wette platzieren">€${s.stake_eur.toFixed(0)}</button>`;
+        : !_cIsValueActionable
+          ? `<span style="font-size:11px;color:var(--muted)">—</span>`
+          : `<button class="compact-place-btn" ${btnAttrs} aria-label="Wette platzieren">€${s.stake_eur.toFixed(0)}</button>`;
       return `<tr class="${trCls}" onclick='openMatch(${JSON.stringify(s.match)})' role="button" tabindex="0" onkeydown='if(event.key==="Enter"||event.key===" "){event.preventDefault();openMatch(${JSON.stringify(s.match)});}'>
         <td>${tKo}</td>
         <td>${esc(mh)} – ${esc(ma)}</td>

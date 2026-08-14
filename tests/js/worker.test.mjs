@@ -33,7 +33,9 @@ const {
 } = await import(CONTRACT);
 
 // Blocker-5: import ACTUAL production orchestration function from worker.js
-const { orchestratePendingBetPost } = await import(WORKER);
+const workerModule = await import(WORKER);
+const { orchestratePendingBetPost } = workerModule;
+const workerDefault = workerModule.default; // used by Suite 12 cancel KV tests
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -951,5 +953,67 @@ describe('Contract parity — Worker matches PWA contract', () => {
 
   test('edge_lost signal → rejected', () => {
     assert.equal(workerDecision({ edge_lost: true }).ok, false);
+  });
+});
+
+// ── Suite 12: Cancel intent KV — per-intent storage (FND-003 P0A-012) ────────
+describe('Cancel intent KV — per-intent storage (FND-003)', () => {
+  // Mock KV: in-memory Map with Cloudflare KV interface.
+  function makeMockKV() {
+    const store = new Map();
+    return {
+      async get(key) { return store.has(key) ? store.get(key) : null; },
+      async put(key, value) { store.set(key, value); },
+      async delete(key) { store.delete(key); },
+      async list({ prefix = '' } = {}) {
+        const keys = [...store.keys()].filter(k => k.startsWith(prefix)).map(name => ({ name }));
+        return { keys, list_complete: true, cursor: '' };
+      },
+    };
+  }
+
+  const TOKEN = 'test-token-p0a-012';
+  function makeEnv(kv) { return { SIGNALS: kv, API_TOKEN: TOKEN }; }
+
+  const BASE = 'https://worker.test';
+
+  async function fw(env, method, path, body) {
+    const headers = { 'Authorization': `Bearer ${TOKEN}` };
+    const init = { method, headers };
+    if (body !== undefined) {
+      headers['Content-Type'] = 'application/json';
+      init.body = JSON.stringify(body);
+    }
+    return workerDefault.fetch(new Request(`${BASE}${path}`, init), env, {});
+  }
+
+  test('concurrent cancel survival — delete of one id does not drop unrelated intent', async () => {
+    const env = makeEnv(makeMockKV());
+    await fw(env, 'POST', '/cancel_bet', { home: 'Alpha', away: 'Beta', market: 'home' });
+    await fw(env, 'POST', '/cancel_bet', { home: 'Gamma', away: 'Delta', market: 'away' });
+    const r1 = await fw(env, 'GET', '/cancel_requests');
+    const { requests } = await r1.json();
+    assert.equal(requests.length, 2, `expected 2 intents; got ${JSON.stringify(requests)}`);
+    const idA = requests.find(r => r.home === 'Alpha')?.id;
+    assert.ok(idA, 'Alpha intent must have stable id');
+    const delResp = await fw(env, 'DELETE', `/cancel_requests/${idA}`);
+    assert.ok((await delResp.json()).ok, 'DELETE must return ok');
+    const r2 = await fw(env, 'GET', '/cancel_requests');
+    const { requests: remaining } = await r2.json();
+    assert.equal(remaining.length, 1, `FND-003: 1 intent must remain after deleting the other; got ${JSON.stringify(remaining)}`);
+    assert.equal(remaining[0].home, 'Gamma');
+  });
+
+  test('DELETE /cancel_requests/{id} unknown id is idempotent (ok=true)', async () => {
+    const env = makeEnv(makeMockKV());
+    const resp = await fw(env, 'DELETE', '/cancel_requests/nonexistent-id');
+    const body = await resp.json();
+    assert.ok(body.ok);
+  });
+
+  test('DELETE /cancel_requests (clear-all) → 410 Gone (disabled)', async () => {
+    const env = makeEnv(makeMockKV());
+    const resp = await fw(env, 'DELETE', '/cancel_requests');
+    assert.equal(resp.status, 410);
   });
 });
