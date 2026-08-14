@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-14T09:33:22Z",
+  "generated_at": "2026-08-14T10:49:56Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -38,7 +38,7 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-14T09:33:22Z",
+      "last_run_at": "2026-08-14T10:49:56Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -93,7 +93,7 @@
     {
       "job": "tennis_scan",
       "status": "ok",
-      "last_run_at": "2026-08-14T07:17:45Z",
+      "last_run_at": "2026-08-14T10:13:36Z",
       "duration_s": null,
       "exit_code": 1,
       "error": null,
@@ -115,7 +115,7 @@
     {
       "job": "tennis_closing_odds",
       "status": "ok",
-      "last_run_at": "2026-08-14T09:09:59Z",
+      "last_run_at": "2026-08-14T10:33:39Z",
       "duration_s": null,
       "exit_code": 1,
       "error": null,
@@ -192,7 +192,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-14T09:33:21Z",
+      "last_run_at": "2026-08-14T10:49:55Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -203,7 +203,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-14T09:32:48Z",
+      "last_run_at": "2026-08-14T10:49:12Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
