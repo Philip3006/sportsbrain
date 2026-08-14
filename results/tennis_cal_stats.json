@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-08-13T06:21:42.178952+00:00",
-  "n_settled_total": 515,
+  "generated_at": "2026-08-14T06:20:22.176483+00:00",
+  "n_settled_total": 533,
   "match_winner": {
-    "n": 142,
-    "brier": 0.20678,
-    "log_loss": 0.59479,
-    "ece": 0.09281,
-    "win_rate": 0.5282,
+    "n": 159,
+    "brier": 0.21256,
+    "log_loss": 0.6077,
+    "ece": 0.09334,
+    "win_rate": 0.5157,
     "reliability_curve": [
       {
         "bin_lo": 0.2,
@@ -18,16 +18,16 @@
       {
         "bin_lo": 0.4,
         "bin_hi": 0.6,
-        "n": 86,
-        "mean_pred": 0.5046,
-        "mean_actual": 0.3953
+        "n": 102,
+        "mean_pred": 0.504,
+        "mean_actual": 0.402
       },
       {
         "bin_lo": 0.6,
         "bin_hi": 0.8,
-        "n": 10,
-        "mean_pred": 0.7039,
-        "mean_actual": 0.5
+        "n": 11,
+        "mean_pred": 0.6989,
+        "mean_actual": 0.4545
       },
       {
         "bin_lo": 0.8,
@@ -39,11 +39,11 @@
     ]
   },
   "all_markets": {
-    "n": 515,
-    "brier": 0.23032,
-    "log_loss": 0.64972,
-    "ece": 0.05711,
-    "win_rate": 0.5748,
+    "n": 533,
+    "brier": 0.23151,
+    "log_loss": 0.65227,
+    "ece": 0.0572,
+    "win_rate": 0.5704,
     "reliability_curve": [
       {
         "bin_lo": 0.2,
@@ -55,16 +55,16 @@
       {
         "bin_lo": 0.4,
         "bin_hi": 0.6,
-        "n": 211,
-        "mean_pred": 0.5377,
-        "mean_actual": 0.4929
+        "n": 228,
+        "mean_pred": 0.5345,
+        "mean_actual": 0.4912
       },
       {
         "bin_lo": 0.6,
         "bin_hi": 0.8,
-        "n": 246,
-        "mean_pred": 0.665,
-        "mean_actual": 0.5976
+        "n": 247,
+        "mean_pred": 0.6649,
+        "mean_actual": 0.5951
       },
       {
         "bin_lo": 0.8,
@@ -77,8 +77,8 @@
   },
   "meta_calibrator": {
     "fitted": true,
-    "n_samples": 142,
-    "brier_before": 0.20678,
-    "brier_after": 0.19096
+    "n_samples": 159,
+    "brier_before": 0.21256,
+    "brier_after": 0.19679
   }
 }
