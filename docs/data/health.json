@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-15T04:35:08Z",
+  "generated_at": "2026-08-15T04:35:25Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -38,8 +38,8 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-15T04:35:08Z",
-      "duration_s": null,
+      "last_run_at": "2026-08-15T04:35:25Z",
+      "duration_s": 3.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -48,11 +48,11 @@
     },
     {
       "job": "live_score_push",
-      "status": "stale",
-      "last_run_at": "2026-08-15T04:21:17Z",
+      "status": "ok",
+      "last_run_at": "2026-08-15T04:33:28Z",
       "duration_s": 4.0,
       "exit_code": 0,
-      "error": "last run was at 2026-08-15T04:21:17Z — overdue (>420s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
@@ -60,7 +60,7 @@
     {
       "job": "prematch_scan",
       "status": "ok",
-      "last_run_at": "2026-08-15T04:03:17Z",
+      "last_run_at": "2026-08-15T04:23:17Z",
       "duration_s": 0.0,
       "exit_code": 0,
       "error": null,
@@ -71,8 +71,8 @@
     {
       "job": "settle",
       "status": "degraded",
-      "last_run_at": "2026-08-15T03:30:06Z",
-      "duration_s": 2.0,
+      "last_run_at": "2026-08-15T04:30:04Z",
+      "duration_s": 1.0,
       "exit_code": 0,
       "error": null,
       "fallback_used": "espn",
@@ -81,11 +81,11 @@
     },
     {
       "job": "aggregate_health",
-      "status": "stale",
-      "last_run_at": "2026-08-15T04:20:49Z",
-      "duration_s": 0.0,
+      "status": "ok",
+      "last_run_at": "2026-08-15T04:33:21Z",
+      "duration_s": 2.0,
       "exit_code": 0,
-      "error": "last run was at 2026-08-15T04:20:49Z — overdue (>420s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min (huckepack)"
@@ -192,7 +192,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-15T04:35:08Z",
+      "last_run_at": "2026-08-15T04:35:22Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -203,7 +203,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-15T04:34:33Z",
+      "last_run_at": "2026-08-15T04:32:28Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
