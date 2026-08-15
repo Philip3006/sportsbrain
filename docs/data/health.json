@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-15T07:49:47Z",
+  "generated_at": "2026-08-15T08:16:11Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -38,7 +38,7 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-15T07:49:47Z",
+      "last_run_at": "2026-08-15T08:16:11Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -192,7 +192,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-15T07:49:47Z",
+      "last_run_at": "2026-08-15T08:16:11Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -203,7 +203,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-15T07:49:13Z",
+      "last_run_at": "2026-08-15T08:15:39Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
