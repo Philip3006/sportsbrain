@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-15T16:47:43Z",
+  "generated_at": "2026-08-15T17:12:26Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -15,11 +15,11 @@
     },
     {
       "job": "auto_retrain",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-08-15T04:00:04Z",
       "duration_s": 2.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-08-15T04:00:04Z — overdue (>46800s)",
       "fallback_used": null,
       "next_expected_in_s": 43200,
       "cadence": "2×/Tag 06:00 + 18:00"
@@ -38,7 +38,7 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-15T16:47:43Z",
+      "last_run_at": "2026-08-15T17:12:26Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -115,7 +115,7 @@
     {
       "job": "tennis_closing_odds",
       "status": "ok",
-      "last_run_at": "2026-08-15T16:27:55Z",
+      "last_run_at": "2026-08-15T16:53:34Z",
       "duration_s": null,
       "exit_code": 1,
       "error": null,
@@ -159,10 +159,10 @@
     {
       "job": "bundesliga2_live_push",
       "status": "stale",
-      "last_run_at": "2026-08-15T16:30:16Z",
+      "last_run_at": "2026-08-15T16:53:37Z",
       "duration_s": 0.01,
       "exit_code": 0,
-      "error": "last run was at 2026-08-15T16:30:16Z — overdue (>420s)",
+      "error": "last run was at 2026-08-15T16:53:37Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min im Spieltag-Fenster"
@@ -192,7 +192,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-15T16:47:42Z",
+      "last_run_at": "2026-08-15T17:12:25Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -203,7 +203,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-15T16:47:05Z",
+      "last_run_at": "2026-08-15T17:11:50Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
