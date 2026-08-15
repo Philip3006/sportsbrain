@@ -1,7 +1,7 @@
 {
-  "updated": "2026-08-15T12:35:55Z",
+  "updated": "2026-08-15T15:21:28Z",
   "build_info": {
-    "sha": "10c5ed8",
+    "sha": "c618bc9",
     "date": "2026-08-15"
   },
   "meta": {
@@ -12,72 +12,6 @@
   "schedule": [
     {
       "sport": "tennis",
-      "home": "Alexander Blockx",
-      "away": "Mariano Navone",
-      "kickoff": "2026-08-15T15:00:00Z",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.9,
-      "odds_away": 1.9,
-      "odds_source": "implied_elo",
-      "is_display_only": true,
-      "sport_key": "tennis_atp_cincinnati_open",
-      "scheduled_start_initial": "2026-08-15T15:00:00Z",
-      "scheduled_start_current": "2026-08-15T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Miomir Kecmanovic",
-      "away": "Flavio Cobolli",
-      "kickoff": "2026-08-15T15:00:00Z",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.16,
-      "odds_away": 1.63,
-      "odds_source": "tennis_explorer",
-      "is_display_only": false,
-      "sport_key": "tennis_atp_cincinnati_open",
-      "scheduled_start_initial": "2026-08-15T15:00:00Z",
-      "scheduled_start_current": "2026-08-15T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Martin Landaluce",
-      "away": "Matteo Arnaldi",
-      "kickoff": "2026-08-15T15:00:00Z",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.57,
-      "odds_away": 2.31,
-      "odds_source": "tennis_explorer",
-      "is_display_only": false,
-      "sport_key": "tennis_atp_cincinnati_open",
-      "scheduled_start_initial": "2026-08-15T15:00:00Z",
-      "scheduled_start_current": "2026-08-15T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
-    },
-    {
-      "sport": "tennis",
       "home": "Mattia Bellucci",
       "away": "Jakub Mensik",
       "kickoff": "2026-08-15T16:10:00Z",
@@ -86,17 +20,17 @@
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.55,
-      "odds_away": 1.46,
-      "odds_source": "tennis_explorer",
-      "is_display_only": false,
+      "odds_home": 3.32,
+      "odds_away": 1.34,
+      "odds_source": "implied_elo",
+      "is_display_only": true,
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T16:10:00Z",
       "scheduled_start_current": "2026-08-15T16:10:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -115,10 +49,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T16:10:00Z",
       "scheduled_start_current": "2026-08-15T16:10:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -137,10 +71,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T17:00:00Z",
       "scheduled_start_current": "2026-08-15T17:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -152,17 +86,17 @@
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.44,
-      "odds_away": 1.51,
+      "odds_home": 1.34,
+      "odds_away": 2.89,
       "odds_source": "tennis_explorer",
       "is_display_only": false,
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T17:20:00Z",
       "scheduled_start_current": "2026-08-15T17:20:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -174,17 +108,17 @@
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.25,
-      "odds_away": 1.58,
+      "odds_home": 2.21,
+      "odds_away": 1.6,
       "odds_source": "tennis_explorer",
       "is_display_only": false,
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T17:20:00Z",
       "scheduled_start_current": "2026-08-15T17:20:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -196,17 +130,17 @@
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.38,
-      "odds_away": 1.52,
+      "odds_home": 2.43,
+      "odds_away": 1.51,
       "odds_source": "tennis_explorer",
       "is_display_only": false,
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T17:20:00Z",
       "scheduled_start_current": "2026-08-15T17:20:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -218,17 +152,17 @@
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.55,
-      "odds_away": 2.35,
+      "odds_home": 1.52,
+      "odds_away": 2.41,
       "odds_source": "tennis_explorer",
       "is_display_only": false,
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T17:20:00Z",
       "scheduled_start_current": "2026-08-15T17:20:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -247,10 +181,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T18:10:00Z",
       "scheduled_start_current": "2026-08-15T18:10:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -262,17 +196,17 @@
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.5,
-      "odds_away": 1.48,
+      "odds_home": 2.46,
+      "odds_away": 1.46,
       "odds_source": "tennis_explorer",
       "is_display_only": false,
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T18:30:00Z",
       "scheduled_start_current": "2026-08-15T18:30:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -291,10 +225,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T18:30:00Z",
       "scheduled_start_current": "2026-08-15T18:30:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -313,10 +247,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T19:20:00Z",
       "scheduled_start_current": "2026-08-15T19:20:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -335,10 +269,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T23:00:00Z",
       "scheduled_start_current": "2026-08-15T23:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -350,17 +284,17 @@
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.34,
+      "odds_home": 1.35,
       "odds_away": 2.9,
       "odds_source": "tennis_explorer",
       "is_display_only": false,
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T00:10:00Z",
       "scheduled_start_current": "2026-08-16T00:10:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -379,10 +313,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -401,10 +335,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -423,10 +357,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -445,10 +379,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -467,10 +401,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -489,10 +423,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -511,10 +445,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -533,10 +467,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -555,10 +489,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -577,10 +511,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -599,10 +533,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -621,10 +555,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -643,10 +577,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -665,10 +599,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -687,10 +621,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -709,98 +643,10 @@
       "sport_key": "tennis_atp_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Alexandra Eala",
-      "away": "Elena Gabriela Ruse",
-      "kickoff": "2026-08-15T15:00:00Z",
-      "tour": "wta",
-      "tournament": "Cincinnati Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 0.0,
-      "odds_away": 0.0,
-      "odds_source": "the_odds_api",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_cincinnati_open",
-      "scheduled_start_initial": "2026-08-15T15:00:00Z",
-      "scheduled_start_current": "2026-08-15T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Zeynep Sonmez",
-      "away": "Amanda Anisimova",
-      "kickoff": "2026-08-15T15:00:00Z",
-      "tour": "wta",
-      "tournament": "Cincinnati Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 3.32,
-      "odds_away": 1.34,
-      "odds_source": "implied_elo",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_cincinnati_open",
-      "scheduled_start_initial": "2026-08-15T15:00:00Z",
-      "scheduled_start_current": "2026-08-15T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Cristina Bucsa",
-      "away": "Maja Chwalinska",
-      "kickoff": "2026-08-15T15:00:00Z",
-      "tour": "wta",
-      "tournament": "Cincinnati Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.9,
-      "odds_away": 1.9,
-      "odds_source": "implied_elo",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_cincinnati_open",
-      "scheduled_start_initial": "2026-08-15T15:00:00Z",
-      "scheduled_start_current": "2026-08-15T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Shuai Zhang",
-      "away": "Kayla Day",
-      "kickoff": "2026-08-15T15:00:00Z",
-      "tour": "wta",
-      "tournament": "Cincinnati Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.55,
-      "odds_away": 2.47,
-      "odds_source": "implied_elo",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_cincinnati_open",
-      "scheduled_start_initial": "2026-08-15T15:00:00Z",
-      "scheduled_start_current": "2026-08-15T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -819,10 +665,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T16:10:00Z",
       "scheduled_start_current": "2026-08-15T16:10:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -841,10 +687,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T16:10:00Z",
       "scheduled_start_current": "2026-08-15T16:10:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -863,10 +709,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T16:10:00Z",
       "scheduled_start_current": "2026-08-15T16:10:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -885,10 +731,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T16:10:00Z",
       "scheduled_start_current": "2026-08-15T16:10:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -907,10 +753,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T17:00:00Z",
       "scheduled_start_current": "2026-08-15T17:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -929,10 +775,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T17:20:00Z",
       "scheduled_start_current": "2026-08-15T17:20:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -951,10 +797,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T18:10:00Z",
       "scheduled_start_current": "2026-08-15T18:10:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -973,10 +819,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T18:30:00Z",
       "scheduled_start_current": "2026-08-15T18:30:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -988,17 +834,17 @@
       "category": "wta1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.39,
-      "odds_away": 1.53,
+      "odds_home": 2.4,
+      "odds_away": 1.52,
       "odds_source": "tennis_explorer",
       "is_display_only": false,
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T18:30:00Z",
       "scheduled_start_current": "2026-08-15T18:30:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1017,10 +863,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-15T23:00:00Z",
       "scheduled_start_current": "2026-08-15T23:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1039,10 +885,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T00:30:00Z",
       "scheduled_start_current": "2026-08-16T00:30:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1061,10 +907,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T12:00:00Z",
       "scheduled_start_current": "2026-08-16T12:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1083,10 +929,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1105,10 +951,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1127,10 +973,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1149,10 +995,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1164,17 +1010,17 @@
       "category": "wta1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.38,
-      "odds_away": 2.88,
+      "odds_home": 1.33,
+      "odds_away": 3.02,
       "odds_source": "tennis_explorer",
       "is_display_only": false,
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1193,10 +1039,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1215,10 +1061,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1237,10 +1083,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1259,10 +1105,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1281,10 +1127,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1303,10 +1149,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1325,10 +1171,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1347,10 +1193,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1369,10 +1215,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1391,10 +1237,10 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
@@ -1413,16 +1259,16 @@
       "sport_key": "tennis_wta_cincinnati_open",
       "scheduled_start_initial": "2026-08-16T15:00:00Z",
       "scheduled_start_current": "2026-08-16T15:00:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Merida Aguilar Daniel",
       "away": "Cilic Marin",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1432,39 +1278,18 @@
       "odds_away": 2.22,
       "source": "tennisexplorer",
       "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Faria Jaime",
-      "away": "Brooksby Jenson",
-      "kickoff": "2026-08-15T12:35:00Z",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.16,
-      "odds_away": 1.63,
-      "source": "tennisexplorer",
-      "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Kovacevic Aleksandar",
       "away": "Khachanov Karen",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1474,18 +1299,102 @@
       "odds_away": 1.48,
       "source": "tennisexplorer",
       "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Faria Jaime",
+      "away": "Brooksby Jenson",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.16,
+      "odds_away": 1.63,
+      "source": "tennisexplorer",
+      "sport_key": "te:cincinnati_atp",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-15T15:21:28Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Kecmanovic Miomir",
+      "away": "Cobolli Flavio",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.17,
+      "odds_away": 1.64,
+      "source": "tennisexplorer",
+      "sport_key": "te:cincinnati_atp",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-15T15:21:28Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Landaluce Martin",
+      "away": "Arnaldi Matteo",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.58,
+      "odds_away": 2.31,
+      "source": "tennisexplorer",
+      "sport_key": "te:cincinnati_atp",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-15T15:21:28Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Blockx Alexander",
+      "away": "Navone Mariano",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.28,
+      "odds_away": 1.58,
+      "source": "tennisexplorer",
+      "sport_key": "te:cincinnati_atp",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Ilagan Andre",
       "away": "Schoolkate Tristan",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Brownsburg Challenger",
       "category": "challenger_atp",
@@ -1495,18 +1404,18 @@
       "odds_away": 2.21,
       "source": "tennisexplorer",
       "sport_key": "te:brownsburg-challenger_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Pinnington Jones Jack",
       "away": "Andrade Andres",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Brownsburg Challenger",
       "category": "challenger_atp",
@@ -1516,123 +1425,81 @@
       "odds_away": 2.25,
       "source": "tennisexplorer",
       "sport_key": "te:brownsburg-challenger_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Milavsky Daniel",
       "away": "Harris Lloyd",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Brownsburg Challenger",
       "category": "challenger_atp",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.28,
-      "odds_away": 1.54,
+      "odds_home": 2.26,
+      "odds_away": 1.55,
       "source": "tennisexplorer",
       "sport_key": "te:brownsburg-challenger_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Ilagan Andre",
       "away": "Pinnington Jones Jack",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Brownsburg Challenger",
       "category": "challenger_atp",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.17,
+      "odds_home": 2.16,
       "odds_away": 1.61,
       "source": "tennisexplorer",
       "sport_key": "te:brownsburg-challenger_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
-      "home": "Pucinelli De Almeida Matheus",
-      "away": "Kumstat Jan",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "home": "Kumstat Jan",
+      "away": "Pucinelli De Almeida Matheus",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Hamburg Challenger",
       "category": "challenger_atp",
       "surface": "clay",
       "best_of": 3,
-      "odds_home": 2.24,
-      "odds_away": 1.55,
+      "odds_home": 1.55,
+      "odds_away": 2.26,
       "source": "tennisexplorer",
       "sport_key": "te:hamburg-challenger_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Mrva Maxim",
-      "away": "Barrena Alex",
-      "kickoff": "2026-08-15T12:35:00Z",
-      "tour": "atp",
-      "tournament": "Todi Challenger",
-      "category": "challenger_atp",
-      "surface": "clay",
-      "best_of": 3,
-      "odds_home": 1.67,
-      "odds_away": 2.1,
-      "source": "tennisexplorer",
-      "sport_key": "te:todi-challenger_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Kicker Nicolas",
-      "away": "Cecchinato Marco",
-      "kickoff": "2026-08-15T12:35:00Z",
-      "tour": "atp",
-      "tournament": "Todi Challenger",
-      "category": "challenger_atp",
-      "surface": "clay",
-      "best_of": 3,
-      "odds_home": 2.4,
-      "odds_away": 1.49,
-      "source": "tennisexplorer",
-      "sport_key": "te:todi-challenger_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Dodig Matej",
       "away": "Moeller Marvin",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Hamburg Challenger",
       "category": "challenger_atp",
@@ -1642,18 +1509,60 @@
       "odds_away": 2.25,
       "source": "tennisexplorer",
       "sport_key": "te:hamburg-challenger_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Kicker Nicolas",
+      "away": "Cecchinato Marco",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "tour": "atp",
+      "tournament": "Todi Challenger",
+      "category": "challenger_atp",
+      "surface": "clay",
+      "best_of": 3,
+      "odds_home": 2.42,
+      "odds_away": 1.5,
+      "source": "tennisexplorer",
+      "sport_key": "te:todi-challenger_atp",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-15T15:21:28Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Mrva Maxim",
+      "away": "Barrena Alex",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "tour": "atp",
+      "tournament": "Todi Challenger",
+      "category": "challenger_atp",
+      "surface": "clay",
+      "best_of": 3,
+      "odds_home": 1.66,
+      "odds_away": 2.1,
+      "source": "tennisexplorer",
+      "sport_key": "te:todi-challenger_atp",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Matsuoka Hayato",
       "away": "Sultanov Khumoun",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Astana Challenger",
       "category": "challenger_atp",
@@ -1663,39 +1572,18 @@
       "odds_away": 2.11,
       "source": "tennisexplorer",
       "sport_key": "te:astana-4-challenger_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Dougaz Aziz",
-      "away": "Fomin Sergey",
-      "kickoff": "2026-08-15T12:35:00Z",
-      "tour": "atp",
-      "tournament": "Astana Challenger",
-      "category": "challenger_atp",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.33,
-      "odds_away": 1.53,
-      "source": "tennisexplorer",
-      "sport_key": "te:astana-4-challenger_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Haita Stefan Horia",
       "away": "Chepelev Andrey",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1705,18 +1593,18 @@
       "odds_away": 2.03,
       "source": "tennisexplorer",
       "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Henning Philip",
       "away": "McCormick Tristan",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1726,18 +1614,39 @@
       "odds_away": 2.45,
       "source": "tennisexplorer",
       "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Dougaz Aziz",
+      "away": "Fomin Sergey",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "tour": "atp",
+      "tournament": "Astana Challenger",
+      "category": "challenger_atp",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.33,
+      "odds_away": 1.53,
+      "source": "tennisexplorer",
+      "sport_key": "te:astana-4-challenger_atp",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Added Dan",
       "away": "Marques Goncalo",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1747,18 +1656,18 @@
       "odds_away": 2.22,
       "source": "tennisexplorer",
       "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Cuenin Sean",
       "away": "Sharipov Marat (2002)",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1768,228 +1677,102 @@
       "odds_away": 2.19,
       "source": "tennisexplorer",
       "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
-      "home": "Bailly Gilles Arnaud",
-      "away": "Perot Raphael",
-      "kickoff": "2026-08-15T12:35:00Z",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.6,
-      "odds_away": 2.15,
-      "source": "tennisexplorer",
-      "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Donald Matthew William",
-      "away": "Wessels Louis",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "home": "Wessels Louis",
+      "away": "Donald Matthew William",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
       "odds_home": 2.13,
-      "odds_away": 1.61,
+      "odds_away": 1.62,
       "source": "tennisexplorer",
       "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
-      "home": "Verwerft Lars Goran",
-      "away": "Geerts Michael",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "home": "Perot Raphael",
+      "away": "Bailly Gilles Arnaud",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.5,
-      "odds_away": 1.44,
+      "odds_home": 2.14,
+      "odds_away": 1.62,
       "source": "tennisexplorer",
       "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Staeheli Luca",
       "away": "Von Der Schulenburg Jeffrey",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Swiss Nationalliga A",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 1.64,
-      "odds_away": 2.05,
+      "odds_home": 2.05,
+      "odds_away": 1.66,
       "source": "tennisexplorer",
       "sport_key": "te:swiss-nationalliga-a_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
-      "home": "Filin Nikita",
-      "away": "Poling Karl",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "home": "Verwerft Lars Goran",
+      "away": "Geerts Michael",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.77,
-      "odds_away": 1.92,
+      "odds_home": 2.45,
+      "odds_away": 1.48,
       "source": "tennisexplorer",
       "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Alvarez Valdes Luis Carlos",
       "away": "Sheldon Max",
-      "kickoff": "2026-08-15T12:35:00Z",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.6,
-      "odds_away": 2.15,
-      "source": "tennisexplorer",
-      "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Jasika Omar",
-      "away": "Chung Yunseong",
-      "kickoff": "2026-08-15T12:35:00Z",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.53,
-      "odds_away": 2.3,
-      "source": "tennisexplorer",
-      "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Ogura Kosuke",
-      "away": "Dellavedova Matthew",
-      "kickoff": "2026-08-15T12:35:00Z",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 3.45,
-      "odds_away": 1.25,
-      "source": "tennisexplorer",
-      "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Breazu Vlad Cristian",
-      "away": "Ghetu Gabriel",
-      "kickoff": "2026-08-15T12:35:00Z",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.68,
-      "odds_away": 1.4,
-      "source": "tennisexplorer",
-      "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Pieleanu Rares Teodor",
-      "away": "Madaras Dragos Nicolae",
-      "kickoff": "2026-08-15T12:35:00Z",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.35,
-      "odds_away": 1.51,
-      "source": "tennisexplorer",
-      "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Friberg Karl",
-      "away": "Slavic Nikola",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -1999,18 +1782,144 @@
       "odds_away": 2.15,
       "source": "tennisexplorer",
       "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Filin Nikita",
+      "away": "Poling Karl",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.0,
+      "odds_away": 1.7,
+      "source": "tennisexplorer",
+      "sport_key": "te:cincinnati_atp",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-15T15:21:28Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Ogura Kosuke",
+      "away": "Dellavedova Matthew",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 3.45,
+      "odds_away": 1.25,
+      "source": "tennisexplorer",
+      "sport_key": "te:cincinnati_atp",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-15T15:21:28Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Jasika Omar",
+      "away": "Chung Yunseong",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.53,
+      "odds_away": 2.3,
+      "source": "tennisexplorer",
+      "sport_key": "te:cincinnati_atp",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-15T15:21:28Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Pieleanu Rares Teodor",
+      "away": "Madaras Dragos Nicolae",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.35,
+      "odds_away": 1.51,
+      "source": "tennisexplorer",
+      "sport_key": "te:cincinnati_atp",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-15T15:21:28Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Breazu Vlad Cristian",
+      "away": "Ghetu Gabriel",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.68,
+      "odds_away": 1.4,
+      "source": "tennisexplorer",
+      "sport_key": "te:cincinnati_atp",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-15T15:21:28Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Friberg Karl",
+      "away": "Slavic Nikola",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.61,
+      "odds_away": 2.15,
+      "source": "tennisexplorer",
+      "sport_key": "te:cincinnati_atp",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Hallquist Lithen John",
       "away": "Ehrenschneider Nino",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2020,39 +1929,39 @@
       "odds_away": 2.06,
       "source": "tennisexplorer",
       "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
-      "home": "Vales Amit",
-      "away": "Paldanius Oskari",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "home": "Paldanius Oskari",
+      "away": "Vales Amit",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.04,
-      "odds_away": 1.67,
+      "odds_home": 1.7,
+      "odds_away": 2.01,
       "source": "tennisexplorer",
       "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Strombachs Robert",
       "away": "De Jonge Daniel",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2062,18 +1971,39 @@
       "odds_away": 1.6,
       "source": "tennisexplorer",
       "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Sesko Ziga",
+      "away": "Zielinski Marcel",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "tour": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.47,
+      "odds_away": 2.46,
+      "source": "tennisexplorer",
+      "sport_key": "te:cincinnati_atp",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Agwi Michael",
       "away": "Gavrielides Liam",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
@@ -2083,96 +2013,75 @@
       "odds_away": 1.61,
       "source": "tennisexplorer",
       "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Zielinski Marcel",
-      "away": "Sesko Ziga",
-      "kickoff": "2026-08-15T12:35:00Z",
-      "tour": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.48,
-      "odds_away": 1.46,
-      "source": "tennisexplorer",
-      "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Villanueva Gonzalo",
       "away": "Aguilar Cardozo Joaquin",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Asuncion 2 challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 2.07,
-      "odds_away": 1.65,
+      "odds_home": 2.04,
+      "odds_away": 1.68,
       "source": "tennisexplorer",
       "sport_key": "te:asuncion-2-challenger_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Rublev Andrey",
       "away": "Carreno-Busta Pablo",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 1.48,
-      "odds_away": 2.6,
+      "odds_home": 1.47,
+      "odds_away": 2.67,
       "source": "tennisexplorer",
       "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     },
     {
       "sport": "tennis",
       "home": "Tsitsipas Stefanos",
       "away": "Auger Aliassime Felix",
-      "kickoff": "2026-08-15T12:35:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
       "tour": "atp",
       "tournament": "Cincinnati Open",
       "category": "m1000",
       "surface": "hard",
       "best_of": 3,
-      "odds_home": 2.12,
-      "odds_away": 1.67,
+      "odds_home": 2.13,
+      "odds_away": 1.65,
       "source": "tennisexplorer",
       "sport_key": "te:cincinnati_atp",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-15T12:35:55Z"
+      "status_updated_at": "2026-08-15T15:21:28Z"
     }
   ],
   "all_odds": {
@@ -3401,32 +3310,32 @@
       "away": 2.31
     },
     "Mattia Bellucci vs Jakub Mensik": {
-      "home": 2.55,
-      "away": 1.46
+      "home": 3.32,
+      "away": 1.34
     },
     "Novak Djokovic vs Thiago Agustin Tirante": {
       "home": 1.47,
       "away": 2.71
     },
     "Quentin Halys vs Alex de Minaur": {
-      "home": 2.44,
-      "away": 1.51
+      "home": 1.34,
+      "away": 2.89
     },
     "Arthur Fery vs James Duckworth": {
-      "home": 2.25,
-      "away": 1.58
+      "home": 2.21,
+      "away": 1.6
     },
     "Tommy Paul vs Hubert Hurkacz": {
-      "home": 2.38,
-      "away": 1.52
+      "home": 2.43,
+      "away": 1.51
     },
     "Luciano Darderi vs Rinky Hijikata": {
-      "home": 1.55,
-      "away": 2.35
+      "home": 1.52,
+      "away": 2.41
     },
     "Yannick Hanfmann vs Arthur Fils": {
-      "home": 2.5,
-      "away": 1.48
+      "home": 2.46,
+      "away": 1.46
     },
     "Jiri Lehecka vs Matteo Berrettini": {
       "home": 1.5,
@@ -3437,7 +3346,7 @@
       "away": 2.71
     },
     "Alexander Zverev vs Cameron Norrie": {
-      "home": 1.34,
+      "home": 1.35,
       "away": 2.9
     },
     "Zeynep Sonmez vs Amanda Anisimova": {
@@ -3485,8 +3394,8 @@
       "away": 2.71
     },
     "Kamilla Rakhimova vs Maria Sakkari": {
-      "home": 2.39,
-      "away": 1.53
+      "home": 2.4,
+      "away": 1.52
     },
     "Peyton Stearns vs Clara Tauson": {
       "home": 1.9,
@@ -3577,8 +3486,8 @@
       "away": 2.71
     },
     "Coco Gauff vs Liudmila Samsonova": {
-      "home": 1.38,
-      "away": 2.88
+      "home": 1.33,
+      "away": 3.02
     },
     "Daria Snigur vs Madison Keys": {
       "home": 2.71,
@@ -3774,15 +3683,6 @@
       "implied_b": 31.9,
       "odds_a": 1.37,
       "odds_b": 2.92,
-      "source": "ensemble"
-    },
-    "Hanfmann Yannick vs Cobolli Flavio": {
-      "p_a": 42.9,
-      "p_b": 57.1,
-      "implied_a": 42.8,
-      "implied_b": 57.2,
-      "odds_a": 2.18,
-      "odds_b": 1.63,
       "source": "ensemble"
     },
     "Donski Alexander vs Moro Canas Alejandro": {
@@ -4306,15 +4206,6 @@
       "odds_a": 1.75,
       "odds_b": 1.95,
       "source": "implied"
-    },
-    "Marozsan Fabian vs Arnaldi Matteo": {
-      "p_a": 45.0,
-      "p_b": 55.0,
-      "implied_a": 42.1,
-      "implied_b": 57.9,
-      "odds_a": 2.2,
-      "odds_b": 1.6,
-      "source": "ensemble"
     },
     "Michelsen Alex vs Cerundolo Francisco": {
       "p_a": 45.0,
@@ -5468,16 +5359,6 @@
       "odds_b": 1.9,
       "source": "ensemble"
     },
-    "Zachary Svajda vs Mattia Bellucci": {
-      "status": "EVALUATED_NO_BET",
-      "p_a": 50.0,
-      "p_b": 50.0,
-      "implied_a": 50.0,
-      "implied_b": 50.0,
-      "odds_a": 1.9,
-      "odds_b": 1.9,
-      "source": "ensemble"
-    },
     "Torres Juan Bautista vs Romano Filippo": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Torres Juan Bautista, Romano Filippo",
@@ -5785,15 +5666,15 @@
     "Ilagan Andre vs Pinnington Jones Jack": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Ilagan Andre",
-      "odds_a": 2.17,
+      "odds_a": 2.16,
       "odds_b": 1.61,
       "tier": "shadow"
     },
     "Milavsky Daniel vs Harris Lloyd": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Milavsky Daniel",
-      "odds_a": 2.28,
-      "odds_b": 1.54,
+      "odds_a": 2.26,
+      "odds_b": 1.55,
       "tier": "shadow"
     },
     "Pinnington Jones Jack vs Andrade Andres": {
@@ -5803,17 +5684,10 @@
       "odds_b": 2.25,
       "tier": "shadow"
     },
-    "Pucinelli De Almeida Matheus vs Kumstat Jan": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Pucinelli De Almeida Matheus, Kumstat Jan",
-      "odds_a": 2.24,
-      "odds_b": 1.55,
-      "tier": "shadow"
-    },
     "Mrva Maxim vs Barrena Alex": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Mrva Maxim",
-      "odds_a": 1.67,
+      "odds_a": 1.66,
       "odds_b": 2.1,
       "tier": "shadow"
     },
@@ -5825,8 +5699,8 @@
       "p_b": 56.7,
       "implied_a": 38.3,
       "implied_b": 61.7,
-      "odds_a": 2.4,
-      "odds_b": 1.49,
+      "odds_a": 2.42,
+      "odds_b": 1.5,
       "source": "ensemble"
     },
     "Dodig Matej vs Moeller Marvin": {
@@ -5867,40 +5741,28 @@
       "odds_a": 1.57,
       "odds_b": 2.22
     },
-    "Donald Matthew William vs Wessels Louis": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Donald Matthew William",
-      "odds_a": 2.13,
-      "odds_b": 1.61
-    },
     "Staeheli Luca vs Von Der Schulenburg Jeffrey": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Swiss Nationalliga A",
-      "odds_a": 1.64,
-      "odds_b": 2.05
-    },
-    "Bailly Gilles Arnaud vs Perot Raphael": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Bailly Gilles Arnaud, Perot Raphael",
-      "odds_a": 1.6,
-      "odds_b": 2.15
+      "odds_a": 2.05,
+      "odds_b": 1.66
     },
     "Verwerft Lars Goran vs Geerts Michael": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Verwerft Lars Goran",
-      "odds_a": 2.5,
-      "odds_b": 1.44
+      "odds_a": 2.45,
+      "odds_b": 1.48
     },
     "Filin Nikita vs Poling Karl": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Filin Nikita, Poling Karl",
-      "odds_a": 1.77,
-      "odds_b": 1.92
+      "odds_a": 2.0,
+      "odds_b": 1.7
     },
     "Alvarez Valdes Luis Carlos vs Sheldon Max": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Alvarez Valdes Luis Carlos, Sheldon Max",
-      "odds_a": 1.6,
+      "odds_a": 1.61,
       "odds_b": 2.15
     },
     "Jasika Omar vs Chung Yunseong": {
@@ -5931,12 +5793,6 @@
       "odds_a": 1.61,
       "odds_b": 2.15
     },
-    "Vales Amit vs Paldanius Oskari": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Vales Amit, Paldanius Oskari",
-      "odds_a": 2.04,
-      "odds_b": 1.67
-    },
     "Strombachs Robert vs De Jonge Daniel": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Strombachs Robert, De Jonge Daniel",
@@ -5949,17 +5805,11 @@
       "odds_a": 2.15,
       "odds_b": 1.61
     },
-    "Zielinski Marcel vs Sesko Ziga": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Zielinski Marcel",
-      "odds_a": 2.48,
-      "odds_b": 1.46
-    },
     "Villanueva Gonzalo vs Aguilar Cardozo Joaquin": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Asuncion 2 challenger",
-      "odds_a": 2.07,
-      "odds_b": 1.65
+      "odds_a": 2.04,
+      "odds_b": 1.68
     },
     "Gauff Coco vs Samsonova Liudmila": {
       "status": "EVALUATED_NO_BET",
@@ -5975,17 +5825,17 @@
       "status": "EVALUATED_NO_BET",
       "p_a": 64.9,
       "p_b": 35.1,
-      "implied_a": 63.7,
-      "implied_b": 36.3,
-      "odds_a": 1.48,
-      "odds_b": 2.6,
+      "implied_a": 64.5,
+      "implied_b": 35.5,
+      "odds_a": 1.47,
+      "odds_b": 2.67,
       "source": "ensemble"
     },
     "Tsitsipas Stefanos vs Auger Aliassime Felix": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Auger Aliassime Felix",
-      "odds_a": 2.12,
-      "odds_b": 1.67
+      "odds_a": 2.13,
+      "odds_b": 1.65
     },
     "Popa Maria Sara vs Simionescu Diana-Ioana": {
       "status": "UNSUPPORTED_TOURNAMENT",
@@ -6328,6 +6178,77 @@
       "reason": "Kein Elo-Profil (z.B. Qualifier): Henning Philip, McCormick Tristan",
       "odds_a": 1.46,
       "odds_b": 2.45
+    },
+    "Mattia Bellucci vs Jakub Mensik": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 28.7,
+      "p_b": 71.3,
+      "implied_a": 28.8,
+      "implied_b": 71.2,
+      "odds_a": 3.32,
+      "odds_b": 1.34,
+      "source": "ensemble"
+    },
+    "Kecmanovic Miomir vs Cobolli Flavio": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 35.1,
+      "p_b": 64.9,
+      "implied_a": 43.0,
+      "implied_b": 57.0,
+      "odds_a": 2.17,
+      "odds_b": 1.64,
+      "source": "ensemble"
+    },
+    "Landaluce Martin vs Arnaldi Matteo": {
+      "status": "ACTIONABLE",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 59.4,
+      "implied_b": 40.6,
+      "odds_a": 1.58,
+      "odds_b": 2.31,
+      "source": "ensemble"
+    },
+    "Blockx Alexander vs Navone Mariano": {
+      "status": "ACTIONABLE",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 40.9,
+      "implied_b": 59.1,
+      "odds_a": 2.28,
+      "odds_b": 1.58,
+      "source": "ensemble"
+    },
+    "Kumstat Jan vs Pucinelli De Almeida Matheus": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Kumstat Jan, Pucinelli De Almeida Matheus",
+      "odds_a": 1.55,
+      "odds_b": 2.26,
+      "tier": "shadow"
+    },
+    "Wessels Louis vs Donald Matthew William": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Donald Matthew William",
+      "odds_a": 2.13,
+      "odds_b": 1.62
+    },
+    "Perot Raphael vs Bailly Gilles Arnaud": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Perot Raphael, Bailly Gilles Arnaud",
+      "odds_a": 2.14,
+      "odds_b": 1.62
+    },
+    "Paldanius Oskari vs Vales Amit": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Paldanius Oskari, Vales Amit",
+      "odds_a": 1.7,
+      "odds_b": 2.01
+    },
+    "Sesko Ziga vs Zielinski Marcel": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Zielinski Marcel",
+      "odds_a": 1.47,
+      "odds_b": 2.46
     }
   },
   "football": [],
@@ -6337,17 +6258,17 @@
       "sport": "tennis",
       "match": "Luciano Darderi vs Rinky Hijikata",
       "market": "away",
-      "odds": 2.35,
+      "odds": 2.41,
       "model_prob": 50.0,
-      "fair_prob": 39.7,
-      "ev_pct": 17.5,
+      "fair_prob": 38.7,
+      "ev_pct": 20.5,
       "stake_eur": 5.0,
       "stake_pct": 5.0,
       "theoretical_stake_eur": 15.0,
       "cap_applied": true,
       "confidence": "HIGH",
       "n_models_agree": 0,
-      "generated_at": "2026-08-15T12:35:55Z",
+      "generated_at": "2026-08-15T15:21:28Z",
       "form_a": [
         "W",
         "W"
@@ -6362,14 +6283,14 @@
       "scheduled_start_current": "2026-08-15T17:20:00Z",
       "scheduled_start_initial": "2026-08-15T17:20:00Z",
       "event_status": "UPCOMING",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "display_priority": "top",
-      "initial_odds": 2.35,
-      "initial_ev_pct": 17.5,
+      "initial_odds": 2.41,
+      "initial_ev_pct": 20.5,
       "odds_history": [
         {
-          "ts": "2026-08-15T12:35:55Z",
-          "odds": 2.35,
+          "ts": "2026-08-15T15:21:28Z",
+          "odds": 2.41,
           "source": "scan"
         }
       ]
@@ -6389,7 +6310,7 @@
       "cap_applied": true,
       "confidence": "HIGH",
       "n_models_agree": 0,
-      "generated_at": "2026-08-15T12:35:55Z",
+      "generated_at": "2026-08-15T15:21:28Z",
       "form_a": [
         "W",
         "W",
@@ -6407,13 +6328,13 @@
       "scheduled_start_current": "2026-08-15T17:20:00Z",
       "scheduled_start_initial": "2026-08-15T17:20:00Z",
       "event_status": "UPCOMING",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "display_priority": "top",
       "initial_odds": 2.64,
       "initial_ev_pct": 16.7,
       "odds_history": [
         {
-          "ts": "2026-08-15T12:35:55Z",
+          "ts": "2026-08-15T15:21:28Z",
           "odds": 2.64,
           "source": "scan"
         }
@@ -6434,7 +6355,7 @@
       "cap_applied": true,
       "confidence": "HIGH",
       "n_models_agree": 0,
-      "generated_at": "2026-08-15T12:35:55Z",
+      "generated_at": "2026-08-15T15:21:28Z",
       "form_b": [
         "W"
       ],
@@ -6448,13 +6369,13 @@
       "scheduled_start_current": "2026-08-15T18:30:00Z",
       "scheduled_start_initial": "2026-08-15T18:30:00Z",
       "event_status": "UPCOMING",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "display_priority": "top",
       "initial_odds": 2.64,
       "initial_ev_pct": 16.7,
       "odds_history": [
         {
-          "ts": "2026-08-15T12:35:55Z",
+          "ts": "2026-08-15T15:21:28Z",
           "odds": 2.64,
           "source": "scan"
         }
@@ -6475,7 +6396,7 @@
       "cap_applied": true,
       "confidence": "HIGH",
       "n_models_agree": 0,
-      "generated_at": "2026-08-15T12:35:55Z",
+      "generated_at": "2026-08-15T15:21:28Z",
       "form_b": [
         "W",
         "L",
@@ -6493,13 +6414,13 @@
       "scheduled_start_current": "2026-08-16T00:10:00Z",
       "scheduled_start_initial": "2026-08-16T00:10:00Z",
       "event_status": "UPCOMING",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "display_priority": "top",
       "initial_odds": 2.64,
       "initial_ev_pct": 16.7,
       "odds_history": [
         {
-          "ts": "2026-08-15T12:35:55Z",
+          "ts": "2026-08-15T15:21:28Z",
           "odds": 2.64,
           "source": "scan"
         }
@@ -6520,32 +6441,32 @@
       "cap_applied": true,
       "confidence": "HIGH",
       "n_models_agree": 0,
-      "generated_at": "2026-08-15T12:35:55Z",
+      "generated_at": "2026-08-15T15:21:28Z",
       "league": "atp",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "kickoff": "2026-08-15T12:35:00Z",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
       "event_status": "AWAITING_START",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "display_priority": "top",
       "initial_odds": 2.3,
       "initial_ev_pct": 16.4,
       "odds_history": [
         {
-          "ts": "2026-08-15T12:35:55Z",
+          "ts": "2026-08-15T15:21:28Z",
           "odds": 2.3,
           "source": "scan"
         }
       ]
     },
     {
-      "signal_id": "d05fd4beaace",
+      "signal_id": "73b214cd08b0",
       "sport": "tennis",
-      "match": "Martin Landaluce vs Matteo Arnaldi",
+      "match": "Landaluce Martin vs Arnaldi Matteo",
       "market": "away",
       "odds": 2.31,
       "model_prob": 50.0,
-      "fair_prob": 40.5,
+      "fair_prob": 40.6,
       "ev_pct": 15.5,
       "stake_eur": 5.0,
       "stake_pct": 5.0,
@@ -6553,72 +6474,53 @@
       "cap_applied": true,
       "confidence": "HIGH",
       "n_models_agree": 0,
-      "generated_at": "2026-08-15T12:35:55Z",
-      "form_a": [
-        "W",
-        "W",
-        "W"
-      ],
-      "form_b": [
-        "W",
-        "L"
-      ],
-      "tour": "atp",
-      "kickoff": "2026-08-15T15:00:00Z",
+      "generated_at": "2026-08-15T15:21:28Z",
       "league": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "scheduled_start_current": "2026-08-15T15:00:00Z",
-      "scheduled_start_initial": "2026-08-15T15:00:00Z",
-      "event_status": "UPCOMING",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "event_status": "AWAITING_START",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "display_priority": "extra",
       "initial_odds": 2.31,
       "initial_ev_pct": 15.5,
       "odds_history": [
         {
-          "ts": "2026-08-15T12:35:55Z",
+          "ts": "2026-08-15T15:21:28Z",
           "odds": 2.31,
           "source": "scan"
         }
       ]
     },
     {
-      "signal_id": "3c0c15f4292f",
+      "signal_id": "614435ba5aa1",
       "sport": "tennis",
-      "match": "Arthur Fery vs James Duckworth",
+      "match": "Blockx Alexander vs Navone Mariano",
       "market": "home",
-      "odds": 2.25,
+      "odds": 2.28,
       "model_prob": 50.0,
-      "fair_prob": 41.3,
-      "ev_pct": 12.5,
+      "fair_prob": 40.9,
+      "ev_pct": 14.0,
       "stake_eur": 5.0,
       "stake_pct": 5.0,
-      "theoretical_stake_eur": 11.0,
+      "theoretical_stake_eur": 12.0,
       "cap_applied": true,
       "confidence": "MEDIUM",
       "n_models_agree": 0,
-      "generated_at": "2026-08-15T12:35:55Z",
-      "tour": "atp",
-      "kickoff": "2026-08-15T17:20:00Z",
+      "generated_at": "2026-08-15T15:21:28Z",
       "league": "atp",
-      "tournament": "Cincinnati Open",
-      "category": "m1000",
-      "surface": "hard",
-      "best_of": 3,
-      "scheduled_start_current": "2026-08-15T17:20:00Z",
-      "scheduled_start_initial": "2026-08-15T17:20:00Z",
-      "event_status": "UPCOMING",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
+      "event_status": "AWAITING_START",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "display_priority": "extra",
-      "initial_odds": 2.25,
-      "initial_ev_pct": 12.5,
+      "initial_odds": 2.28,
+      "initial_ev_pct": 14.0,
       "odds_history": [
         {
-          "ts": "2026-08-15T12:35:55Z",
-          "odds": 2.25,
+          "ts": "2026-08-15T15:21:28Z",
+          "odds": 2.28,
           "source": "scan"
         }
       ]
@@ -6638,20 +6540,58 @@
       "cap_applied": true,
       "confidence": "MEDIUM",
       "n_models_agree": 0,
-      "generated_at": "2026-08-15T12:35:55Z",
+      "generated_at": "2026-08-15T15:21:28Z",
       "league": "atp",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "kickoff": "2026-08-15T12:35:00Z",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
       "event_status": "AWAITING_START",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "display_priority": "extra",
       "initial_odds": 2.22,
       "initial_ev_pct": 11.0,
       "odds_history": [
         {
-          "ts": "2026-08-15T12:35:55Z",
+          "ts": "2026-08-15T15:21:28Z",
           "odds": 2.22,
+          "source": "scan"
+        }
+      ]
+    },
+    {
+      "signal_id": "3c0c15f4292f",
+      "sport": "tennis",
+      "match": "Arthur Fery vs James Duckworth",
+      "market": "home",
+      "odds": 2.21,
+      "model_prob": 50.0,
+      "fair_prob": 42.0,
+      "ev_pct": 10.5,
+      "stake_eur": 5.0,
+      "stake_pct": 5.0,
+      "theoretical_stake_eur": 10.0,
+      "cap_applied": true,
+      "confidence": "MEDIUM",
+      "n_models_agree": 0,
+      "generated_at": "2026-08-15T15:21:28Z",
+      "tour": "atp",
+      "kickoff": "2026-08-15T17:20:00Z",
+      "league": "atp",
+      "tournament": "Cincinnati Open",
+      "category": "m1000",
+      "surface": "hard",
+      "best_of": 3,
+      "scheduled_start_current": "2026-08-15T17:20:00Z",
+      "scheduled_start_initial": "2026-08-15T17:20:00Z",
+      "event_status": "UPCOMING",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
+      "display_priority": "extra",
+      "initial_odds": 2.21,
+      "initial_ev_pct": 10.5,
+      "odds_history": [
+        {
+          "ts": "2026-08-15T15:21:28Z",
+          "odds": 2.21,
           "source": "scan"
         }
       ]
@@ -6671,19 +6611,19 @@
       "cap_applied": true,
       "confidence": "MEDIUM",
       "n_models_agree": 0,
-      "generated_at": "2026-08-15T12:35:55Z",
+      "generated_at": "2026-08-15T15:21:28Z",
       "league": "atp",
-      "scheduled_start_current": "2026-08-15T12:35:00Z",
-      "kickoff": "2026-08-15T12:35:00Z",
-      "scheduled_start_initial": "2026-08-15T12:35:00Z",
+      "scheduled_start_current": "2026-08-15T15:20:00Z",
+      "kickoff": "2026-08-15T15:20:00Z",
+      "scheduled_start_initial": "2026-08-15T15:20:00Z",
       "event_status": "AWAITING_START",
-      "schedule_updated_at": "2026-08-15T12:35:55Z",
+      "schedule_updated_at": "2026-08-15T15:21:28Z",
       "display_priority": "extra",
       "initial_odds": 2.16,
       "initial_ev_pct": 8.0,
       "odds_history": [
         {
-          "ts": "2026-08-15T12:35:55Z",
+          "ts": "2026-08-15T15:21:28Z",
           "odds": 2.16,
           "source": "scan"
         }
@@ -8234,7 +8174,7 @@
     "exposure_pct": 0.0,
     "max_win": 0,
     "pnl_closed": -52.87,
-    "published_at": "2026-08-15T12:35:55Z"
+    "published_at": "2026-08-15T15:21:28Z"
   },
   "wm_stats": {
     "stats": {
@@ -9785,7 +9725,7 @@
     }
   },
   "tennis_stats": {
-    "updated": "2026-08-15T12:35:55Z",
+    "updated": "2026-08-15T15:21:28Z",
     "active_tournaments": [
       {
         "slug": "cincinnati_atp",
