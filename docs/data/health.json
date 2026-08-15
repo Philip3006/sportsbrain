@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-15T13:49:30Z",
+  "generated_at": "2026-08-15T14:13:43Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -38,7 +38,7 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-15T13:49:30Z",
+      "last_run_at": "2026-08-15T14:13:43Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -158,11 +158,11 @@
     },
     {
       "job": "bundesliga2_live_push",
-      "status": "ok",
-      "last_run_at": "2026-08-15T13:47:54Z",
+      "status": "stale",
+      "last_run_at": "2026-08-15T14:03:53Z",
       "duration_s": 0.01,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-08-15T14:03:53Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min im Spieltag-Fenster"
@@ -192,7 +192,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-15T13:49:29Z",
+      "last_run_at": "2026-08-15T14:13:42Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -203,7 +203,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-15T13:48:53Z",
+      "last_run_at": "2026-08-15T14:13:05Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
