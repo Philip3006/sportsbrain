@@ -1,8 +1,8 @@
 {
   "job": "tennis_closing_odds",
   "status": "ok",
-  "last_run_at": "2026-08-15T09:29:09Z",
-  "started_at": "2026-08-15T09:29:09Z",
+  "last_run_at": "2026-08-15T09:52:50Z",
+  "started_at": "2026-08-15T09:52:50Z",
   "duration_s": null,
   "exit_code": 1,
   "error": null,
