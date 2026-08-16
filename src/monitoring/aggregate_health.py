@@ -97,7 +97,8 @@ def _job_entry(job: str, raw: dict[str, Any] | None) -> dict[str, Any]:
     raw_exit = raw.get("exit_code")
     coerced_exit = _coerce_exit_code(raw_exit)  # None if unknown/invalid
 
-    # MON-001 defensive: ok/degraded + non-zero or unknown exit cannot stay ok/degraded.
+    # MON-001 defensive: ok/degraded cannot coexist with non-zero or unknown exit.
+    # stale: execution failure must remain visible even though freshness owns the status.
     # Catches legacy snapshots written before health_writer enforced this itself.
     err = raw.get("error")
     if status_written in ("ok", "degraded"):
@@ -116,6 +117,18 @@ def _job_entry(job: str, raw: dict[str, Any] | None) -> dict[str, Any]:
                 f"exit_code={coerced_exit}. "
                 + (f"Original error: {err}" if err else "No error field in snapshot.")
             )
+    elif status_written == "stale":
+        if coerced_exit is None:
+            note = (
+                f"[MON-001] aggregate: stale with missing/invalid exit evidence "
+                f"(raw exit_code={raw_exit!r})."
+            )
+            err = (note + f" Original error: {err}") if err else note
+        elif coerced_exit != 0:
+            note = (
+                f"[MON-001] aggregate: stale with execution failure: exit_code={coerced_exit}."
+            )
+            err = (note + f" Original error: {err}") if err else note
 
     last = raw.get("last_run_at")
     stale = _is_stale(last, interval_s, grace_s)
@@ -130,7 +143,7 @@ def _job_entry(job: str, raw: dict[str, Any] | None) -> dict[str, Any]:
         "status":            final_status,
         "last_run_at":       last,
         "duration_s":        raw.get("duration_s"),
-        "exit_code":         raw.get("exit_code"),
+        "exit_code":         coerced_exit,
         "error":             err,
         "fallback_used":     raw.get("fallback_used"),
         "next_expected_in_s": interval_s,

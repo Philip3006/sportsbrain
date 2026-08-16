@@ -91,22 +91,29 @@ def write_health(
 
     safe_exit_code = _coerce_exit_code(exit_code)
 
-    # MON-001 enforcement: only int exit_code=0 can coexist with ok/degraded.
+    # MON-001 enforcement: ok/degraded cannot coexist with non-zero or unknown exit.
+    # stale: freshness owns the final status, but execution failure must remain visible.
     if safe_exit_code is None:
-        # Invalid/unknown exit evidence cannot produce success-like status.
         if status in ("ok", "degraded"):
             error = (
                 f"[MON-001] invalid/unknown exit evidence: {exit_code!r}. "
                 + (f"Original error: {error}" if error else "No error message from caller.")
             )
             status = "error"
-    elif safe_exit_code != 0 and status in ("ok", "degraded"):
-        prev = status
-        error = (
-            f"[MON-001] coerced {prev}→error: exit_code={safe_exit_code}. "
-            + (f"Original error: {error}" if error else "No error message from caller.")
-        )
-        status = "error"
+        elif status == "stale":
+            note = f"[MON-001] stale with missing/invalid exit evidence: {exit_code!r}."
+            error = (note + f" Original error: {error}") if error else note
+    elif safe_exit_code != 0:
+        if status in ("ok", "degraded"):
+            prev = status
+            error = (
+                f"[MON-001] coerced {prev}→error: exit_code={safe_exit_code}. "
+                + (f"Original error: {error}" if error else "No error message from caller.")
+            )
+            status = "error"
+        elif status == "stale":
+            note = f"[MON-001] stale with execution failure: exit_code={safe_exit_code}."
+            error = (note + f" Original error: {error}") if error else note
 
     HEALTH_DIR.mkdir(parents=True, exist_ok=True)
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

@@ -242,6 +242,51 @@ class TestWriterMON001:
         assert data["status"] == "error"
         assert "jq parse error" in (data["error"] or "")
 
+    # --- CEO Correction 2: stale evidence annotation ---
+
+    def test_stale_with_zero_exit_preserved_clean(self, health_dir):
+        """stale + exit_code=0 → stale, no execution-failure annotation."""
+        path = write_health("tennis_scan", "stale", exit_code=0)
+        data = json.loads(path.read_text())
+        assert data["status"] == "stale"
+        assert data["exit_code"] == 0
+        # No [MON-001] execution-failure note for a clean zero exit
+        assert "MON-001" not in (data["error"] or "")
+
+    def test_stale_with_nonzero_exit_annotates_error(self, health_dir):
+        """stale + exit_code=1 → stale preserved, error field records failure."""
+        path = write_health("tennis_scan", "stale", exit_code=1)
+        data = json.loads(path.read_text())
+        assert data["status"] == "stale"
+        assert data["exit_code"] == 1
+        assert "MON-001" in (data["error"] or "")
+
+    def test_stale_with_none_exit_annotates_unknown_evidence(self, health_dir):
+        """stale + exit_code=None → stale preserved, error field records missing evidence."""
+        path = write_health("tennis_scan", "stale", exit_code=None)  # type: ignore[arg-type]
+        data = json.loads(path.read_text())
+        assert data["status"] == "stale"
+        assert data["exit_code"] is None
+        assert "MON-001" in (data["error"] or "")
+
+    def test_stale_with_malformed_exit_annotates_unknown_evidence(self, health_dir):
+        """stale + exit_code='abc' → stale preserved, error field records invalid evidence."""
+        path = write_health("tennis_scan", "stale", exit_code="abc")  # type: ignore[arg-type]
+        data = json.loads(path.read_text())
+        assert data["status"] == "stale"
+        assert data["exit_code"] is None
+        assert "MON-001" in (data["error"] or "")
+
+    def test_stale_execution_failure_preserves_existing_error(self, health_dir):
+        """stale + nonzero exit + existing error text → both pieces retained."""
+        path = write_health(
+            "tennis_scan", "stale", exit_code=1, error="upstream timeout"
+        )
+        data = json.loads(path.read_text())
+        assert data["status"] == "stale"
+        assert "MON-001" in (data["error"] or "")
+        assert "upstream timeout" in (data["error"] or "")
+
 
 # ---------------------------------------------------------------------------
 # D. Aggregate cannot publish impossible ok/degraded + nonzero/unknown from snapshot
@@ -379,6 +424,110 @@ class TestAggregateMON001:
         payload = ag.aggregate()
         entry = next(j for j in payload["jobs"] if j["job"] == "tennis_scan")
         assert entry["status"] == "error"
+
+    # --- CEO Correction 2: stale evidence annotation (aggregate) ---
+
+    def test_aggregate_stale_with_nonzero_exit_annotates_error(self, agg_dirs):
+        """legacy stale + exit_code=1 → stale preserved, error field records failure."""
+        from src.monitoring import aggregate_health as ag
+
+        self._write_raw_snapshot(agg_dirs["health_dir"], "tennis_scan", {
+            "job": "tennis_scan", "status": "stale", "exit_code": 1,
+            "last_run_at": self._now_str(), "error": None, "fallback_used": None,
+        })
+        payload = ag.aggregate()
+        entry = next(j for j in payload["jobs"] if j["job"] == "tennis_scan")
+        assert entry["status"] == "stale"
+        assert "MON-001" in (entry["error"] or "")
+
+    def test_aggregate_stale_with_missing_exit_annotates_unknown(self, agg_dirs):
+        """legacy stale + exit_code absent → stale preserved, error records missing evidence."""
+        from src.monitoring import aggregate_health as ag
+
+        self._write_raw_snapshot(agg_dirs["health_dir"], "tennis_scan", {
+            "job": "tennis_scan", "status": "stale",
+            "last_run_at": self._now_str(), "error": None, "fallback_used": None,
+            # exit_code key deliberately omitted
+        })
+        payload = ag.aggregate()
+        entry = next(j for j in payload["jobs"] if j["job"] == "tennis_scan")
+        assert entry["status"] == "stale"
+        assert "MON-001" in (entry["error"] or "")
+
+    # --- CEO Correction 2: normalized exit_code in published payload ---
+
+    def test_aggregate_publishes_normalized_exit_string_zero_as_null(self, agg_dirs):
+        """Legacy exit_code='0' (string) must publish as null, never as '0'."""
+        from src.monitoring import aggregate_health as ag
+
+        self._write_raw_snapshot(agg_dirs["health_dir"], "tennis_scan", {
+            "job": "tennis_scan", "status": "ok", "exit_code": "0",
+            "last_run_at": self._now_str(), "error": None, "fallback_used": None,
+        })
+        payload = ag.aggregate()
+        entry = next(j for j in payload["jobs"] if j["job"] == "tennis_scan")
+        assert entry["exit_code"] is None
+
+    def test_aggregate_publishes_normalized_exit_false_as_null(self, agg_dirs):
+        """Legacy exit_code=False (JSON bool) must publish as null."""
+        from src.monitoring import aggregate_health as ag
+
+        self._write_raw_snapshot(agg_dirs["health_dir"], "tennis_scan", {
+            "job": "tennis_scan", "status": "ok", "exit_code": False,
+            "last_run_at": self._now_str(), "error": None, "fallback_used": None,
+        })
+        payload = ag.aggregate()
+        entry = next(j for j in payload["jobs"] if j["job"] == "tennis_scan")
+        assert entry["exit_code"] is None
+
+    def test_aggregate_publishes_normalized_exit_float_as_null(self, agg_dirs):
+        """Legacy exit_code=0.5 (float) must publish as null."""
+        from src.monitoring import aggregate_health as ag
+
+        self._write_raw_snapshot(agg_dirs["health_dir"], "tennis_scan", {
+            "job": "tennis_scan", "status": "error", "exit_code": 0.5,
+            "last_run_at": self._now_str(), "error": "job crashed", "fallback_used": None,
+        })
+        payload = ag.aggregate()
+        entry = next(j for j in payload["jobs"] if j["job"] == "tennis_scan")
+        assert entry["exit_code"] is None
+
+    def test_aggregate_publishes_valid_zero_as_integer_zero(self, agg_dirs):
+        """Valid exit_code=0 (int) must remain integer 0, not null."""
+        from src.monitoring import aggregate_health as ag
+
+        self._write_raw_snapshot(agg_dirs["health_dir"], "tennis_scan", {
+            "job": "tennis_scan", "status": "ok", "exit_code": 0,
+            "last_run_at": self._now_str(), "error": None, "fallback_used": None,
+        })
+        payload = ag.aggregate()
+        entry = next(j for j in payload["jobs"] if j["job"] == "tennis_scan")
+        assert entry["exit_code"] == 0
+        assert entry["exit_code"] is not None
+
+    def test_aggregate_publishes_valid_nonzero_as_real_integer(self, agg_dirs):
+        """Valid exit_code=1 (int) must remain integer 1 in published payload."""
+        from src.monitoring import aggregate_health as ag
+
+        self._write_raw_snapshot(agg_dirs["health_dir"], "tennis_scan", {
+            "job": "tennis_scan", "status": "error", "exit_code": 1,
+            "last_run_at": self._now_str(), "error": "failure", "fallback_used": None,
+        })
+        payload = ag.aggregate()
+        entry = next(j for j in payload["jobs"] if j["job"] == "tennis_scan")
+        assert entry["exit_code"] == 1
+
+    def test_aggregate_freshness_pseudo_jobs_exit_code_is_null(self, agg_dirs):
+        """Freshness pseudo-jobs (signals_data_fresh, live_scores_fresh) must publish exit_code=null."""
+        from src.monitoring import aggregate_health as ag
+
+        payload = ag.aggregate()
+        pseudo_jobs = [j for j in payload["jobs"] if j["job"].endswith("_fresh")]
+        assert len(pseudo_jobs) >= 1, "expected at least one freshness pseudo-job"
+        for pj in pseudo_jobs:
+            assert pj["exit_code"] is None, (
+                f"{pj['job']} freshness pseudo-job must have null exit_code, got {pj['exit_code']!r}"
+            )
 
 
 # ---------------------------------------------------------------------------
