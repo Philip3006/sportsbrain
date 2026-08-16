@@ -1,7 +1,9 @@
 """TASK-P0B-001 — MON-001 / MON-011 / OPS-006 deterministic tests.
 
 Proves that execution health derives from execution evidence:
-  - exit_code != 0 can never serialize status="ok" (MON-001)
+  - exit_code != 0 can never serialize status="ok" or "degraded" (MON-001)
+  - invalid/unknown exit evidence cannot produce success-like status (MON-001)
+  - bool is rejected even though bool is a Python int subclass (strict typing)
   - malformed/unknown execution evidence fails closed (MON-001)
   - health check failure becomes visible, not silently empty-good (MON-011)
   - execution-plane provenance (launchd vs GH Actions) is not collapsed (OPS-006)
@@ -53,12 +55,67 @@ def agg_dirs(tmp_path, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# A. Writer fail-closed: exit_code=1 with status="ok" must be coerced to error
+# _coerce_exit_code strict-typing unit tests (CEO truth table)
+# ---------------------------------------------------------------------------
+
+class TestCoerceExitCode:
+    """Direct unit tests for _coerce_exit_code helper."""
+
+    def test_int_zero_valid(self):
+        assert _coerce_exit_code(0) == 0
+
+    def test_int_one_valid(self):
+        assert _coerce_exit_code(1) == 1
+
+    def test_int_negative_valid(self):
+        assert _coerce_exit_code(-1) == -1
+
+    def test_int_large_valid(self):
+        assert _coerce_exit_code(127) == 127
+
+    def test_string_zero_unknown(self):
+        assert _coerce_exit_code("0") is None
+
+    def test_string_one_unknown(self):
+        assert _coerce_exit_code("1") is None
+
+    def test_string_text_unknown(self):
+        assert _coerce_exit_code("abc") is None
+
+    def test_string_empty_unknown(self):
+        assert _coerce_exit_code("") is None
+
+    def test_float_zero_unknown(self):
+        assert _coerce_exit_code(0.0) is None
+
+    def test_float_partial_unknown(self):
+        assert _coerce_exit_code(0.5) is None
+
+    def test_bool_false_unknown(self):
+        """bool is rejected even though bool is a Python int subclass."""
+        assert _coerce_exit_code(False) is None
+
+    def test_bool_true_unknown(self):
+        """bool is rejected even though bool is a Python int subclass."""
+        assert _coerce_exit_code(True) is None
+
+    def test_none_unknown(self):
+        assert _coerce_exit_code(None) is None
+
+    def test_list_unknown(self):
+        assert _coerce_exit_code([]) is None  # type: ignore[arg-type]
+
+    def test_dict_unknown(self):
+        assert _coerce_exit_code({}) is None  # type: ignore[arg-type]
+
+
+# ---------------------------------------------------------------------------
+# A/B/C/F. Writer fail-closed: strict truth table via write_health
 # ---------------------------------------------------------------------------
 
 class TestWriterMON001:
     def test_ok_with_nonzero_exit_coerced_to_error(self, health_dir):
-        """MON-001: status=ok + exit_code=1 → serialized as error."""
+        """A: status=ok + exit_code=1 → serialized as error."""
         path = write_health("tennis_scan", "ok", exit_code=1)
         data = json.loads(path.read_text())
         assert data["status"] == "error", f"Expected error, got {data['status']}"
@@ -66,51 +123,107 @@ class TestWriterMON001:
         assert "MON-001" in (data["error"] or "")
 
     def test_ok_with_nonzero_exit_large_code(self, health_dir):
-        """Any non-zero exit code (e.g. 127, 255) is coerced."""
+        """Any non-zero int exit code is coerced."""
         path = write_health("daily_scan", "ok", exit_code=127)
         data = json.loads(path.read_text())
         assert data["status"] == "error"
         assert data["exit_code"] == 127
 
-    # B. Normal success remains ok
+    def test_ok_with_negative_exit_coerced_to_error(self, health_dir):
+        """Negative int is valid non-zero exit — coerced from ok to error."""
+        path = write_health("tennis_scan", "ok", exit_code=-1)
+        data = json.loads(path.read_text())
+        assert data["status"] == "error"
+        assert data["exit_code"] == -1
+        assert "MON-001" in (data["error"] or "")
+
     def test_normal_success_preserved(self, health_dir):
-        """exit_code=0 + status=ok → serialized unchanged as ok."""
+        """B: exit_code=0 + status=ok → serialized unchanged as ok."""
         path = write_health("tennis_scan", "ok", exit_code=0)
         data = json.loads(path.read_text())
         assert data["status"] == "ok"
         assert data["exit_code"] == 0
         assert data["error"] is None
 
-    # C. Malformed exit evidence cannot produce success
     def test_malformed_exit_string_fails_closed(self, health_dir):
-        """Non-integer exit_code string is coerced to 1 → cannot be ok."""
+        """C: Non-integer exit_code string → unknown evidence → cannot be ok."""
         path = write_health("tennis_scan", "ok", exit_code="abc")  # type: ignore[arg-type]
         data = json.loads(path.read_text())
         assert data["status"] == "error"
-        assert data["exit_code"] == 1
+        assert data["exit_code"] is None  # unknown stored as null, not fabricated
 
-    def test_malformed_exit_none_with_ok_status_preserved(self, health_dir):
-        """exit_code=None → _coerce_exit_code returns 1; but write_health
-        defaults exit_code=0, so None is never passed in the normal API path.
-        Verify the internal helper is fail-closed."""
-        assert _coerce_exit_code(None) == 1
-        assert _coerce_exit_code("") == 1
-        assert _coerce_exit_code("xyz") == 1
-        assert _coerce_exit_code([]) == 1  # type: ignore[arg-type]
+    def test_string_zero_exit_cannot_produce_success(self, health_dir):
+        """C: '0' is not canonical int evidence → unknown → cannot be ok."""
+        path = write_health("tennis_scan", "ok", exit_code="0")  # type: ignore[arg-type]
+        data = json.loads(path.read_text())
+        assert data["status"] == "error"
+        assert data["exit_code"] is None
 
-    def test_malformed_exit_zero_string_parsed_correctly(self, health_dir):
-        """String '0' parses as 0 — not a failure."""
-        assert _coerce_exit_code("0") == 0
-        assert _coerce_exit_code(0) == 0
+    def test_string_one_exit_cannot_produce_success(self, health_dir):
+        """C: '1' is not canonical int evidence → unknown → cannot be ok."""
+        path = write_health("tennis_scan", "ok", exit_code="1")  # type: ignore[arg-type]
+        data = json.loads(path.read_text())
+        assert data["status"] == "error"
+        assert data["exit_code"] is None
 
-    # F. Valid degraded behaviour remains deterministic
+    def test_float_zero_exit_cannot_produce_success(self, health_dir):
+        """C: 0.0 float is not canonical int evidence → unknown → cannot be ok."""
+        path = write_health("tennis_scan", "ok", exit_code=0.0)  # type: ignore[arg-type]
+        data = json.loads(path.read_text())
+        assert data["status"] == "error"
+        assert data["exit_code"] is None
+
+    def test_bool_false_exit_cannot_produce_success(self, health_dir):
+        """C: False is bool (rejected even as int subclass) → unknown → cannot be ok."""
+        path = write_health("tennis_scan", "ok", exit_code=False)  # type: ignore[arg-type]
+        data = json.loads(path.read_text())
+        assert data["status"] == "error"
+        assert data["exit_code"] is None
+
+    def test_bool_true_exit_cannot_produce_success(self, health_dir):
+        """C: True is bool (rejected even as int subclass) → unknown → cannot be ok."""
+        path = write_health("tennis_scan", "ok", exit_code=True)  # type: ignore[arg-type]
+        data = json.loads(path.read_text())
+        assert data["status"] == "error"
+        assert data["exit_code"] is None
+
+    def test_none_exit_cannot_produce_success(self, health_dir):
+        """C: None exit_code is unknown evidence → cannot be ok."""
+        path = write_health("tennis_scan", "ok", exit_code=None)  # type: ignore[arg-type]
+        data = json.loads(path.read_text())
+        assert data["status"] == "error"
+        assert data["exit_code"] is None
+        assert "MON-001" in (data["error"] or "")
+
+    def test_unknown_exit_stored_as_null_not_fabricated(self, health_dir):
+        """Unknown evidence is stored as null — not fabricated as 0 or 1."""
+        path = write_health("tennis_scan", "ok", exit_code=[])  # type: ignore[arg-type]
+        data = json.loads(path.read_text())
+        assert data["exit_code"] is None
+
     def test_degraded_with_zero_exit_preserved(self, health_dir):
-        """degraded + exit_code=0 must not be altered (legitimate fallback)."""
+        """F: degraded + exit_code=0 must not be altered (legitimate fallback)."""
         path = write_health("settle", "degraded", exit_code=0, fallback_used="espn")
         data = json.loads(path.read_text())
         assert data["status"] == "degraded"
         assert data["exit_code"] == 0
         assert data["fallback_used"] == "espn"
+
+    def test_degraded_with_nonzero_exit_coerced_to_error(self, health_dir):
+        """degraded + exit_code=1 → error (execution failed, cannot claim degraded)."""
+        path = write_health("settle", "degraded", exit_code=1)
+        data = json.loads(path.read_text())
+        assert data["status"] == "error"
+        assert data["exit_code"] == 1
+        assert "MON-001" in (data["error"] or "")
+
+    def test_degraded_with_unknown_exit_coerced_to_error(self, health_dir):
+        """degraded + unknown exit evidence → error (cannot claim legitimate degradation)."""
+        path = write_health("settle", "degraded", exit_code=None)  # type: ignore[arg-type]
+        data = json.loads(path.read_text())
+        assert data["status"] == "error"
+        assert data["exit_code"] is None
+        assert "MON-001" in (data["error"] or "")
 
     def test_error_with_nonzero_exit_preserved(self, health_dir):
         """error + exit_code=1 stays error — no double-coerce confusion."""
@@ -129,32 +242,28 @@ class TestWriterMON001:
         assert data["status"] == "error"
         assert "jq parse error" in (data["error"] or "")
 
-    # G. No live network calls — confirmed by monkeypatching and no requests import.
-
 
 # ---------------------------------------------------------------------------
-# D. Aggregate cannot publish impossible ok + nonzero exit from legacy snapshot
+# D. Aggregate cannot publish impossible ok/degraded + nonzero/unknown from snapshot
 # ---------------------------------------------------------------------------
 
 class TestAggregateMON001:
     def _write_raw_snapshot(self, health_dir: Path, job: str, payload: dict) -> None:
         (health_dir / f"{job}.json").write_text(json.dumps(payload))
 
+    def _now_str(self) -> str:
+        return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
     def test_aggregate_coerces_legacy_ok_nonzero(self, agg_dirs):
         """D: a pre-existing snapshot with ok+exit_code=1 must not publish ok."""
         from src.monitoring import aggregate_health as ag
 
         self._write_raw_snapshot(agg_dirs["health_dir"], "tennis_scan", {
-            "job": "tennis_scan",
-            "status": "ok",
-            "exit_code": 1,
-            "last_run_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "error": None,
-            "fallback_used": None,
+            "job": "tennis_scan", "status": "ok", "exit_code": 1,
+            "last_run_at": self._now_str(), "error": None, "fallback_used": None,
         })
         payload = ag.aggregate()
         entry = next(j for j in payload["jobs"] if j["job"] == "tennis_scan")
-        assert entry["status"] != "ok", f"Impossible ok published: {entry}"
         assert entry["status"] == "error"
         assert "MON-001" in (entry["error"] or "")
 
@@ -163,12 +272,8 @@ class TestAggregateMON001:
         from src.monitoring import aggregate_health as ag
 
         self._write_raw_snapshot(agg_dirs["health_dir"], "tennis_scan", {
-            "job": "tennis_scan",
-            "status": "ok",
-            "exit_code": 1,
-            "last_run_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "error": None,
-            "fallback_used": None,
+            "job": "tennis_scan", "status": "ok", "exit_code": 1,
+            "last_run_at": self._now_str(), "error": None, "fallback_used": None,
         })
         payload = ag.aggregate()
         assert payload["overall"] in ("down", "degraded")
@@ -177,38 +282,103 @@ class TestAggregateMON001:
         """D-inverse: a valid ok+exit_code=0 snapshot must remain ok."""
         from src.monitoring import aggregate_health as ag
 
-        now_str = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        now_str = self._now_str()
         for job in ["tennis_scan", "tennis_retrain"]:
             self._write_raw_snapshot(agg_dirs["health_dir"], job, {
-                "job": job,
-                "status": "ok",
-                "exit_code": 0,
-                "last_run_at": now_str,
-                "error": None,
-                "fallback_used": None,
+                "job": job, "status": "ok", "exit_code": 0,
+                "last_run_at": now_str, "error": None, "fallback_used": None,
             })
         payload = ag.aggregate()
         entry = next(j for j in payload["jobs"] if j["job"] == "tennis_scan")
         assert entry["status"] == "ok"
 
-    def test_aggregate_legacy_exit_code_none_treated_as_zero(self, agg_dirs):
-        """Legacy snapshots without exit_code field (None) + ok → remains ok.
-        None means 'no execution evidence' which is distinct from nonzero."""
+    def test_aggregate_ok_with_null_exit_coerced_to_error(self, agg_dirs):
+        """ok + exit_code=null (JSON null) → error (unknown evidence cannot claim ok)."""
         from src.monitoring import aggregate_health as ag
 
-        now_str = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         self._write_raw_snapshot(agg_dirs["health_dir"], "tennis_scan", {
-            "job": "tennis_scan",
-            "status": "ok",
-            "exit_code": None,
-            "last_run_at": now_str,
-            "error": None,
-            "fallback_used": None,
+            "job": "tennis_scan", "status": "ok", "exit_code": None,
+            "last_run_at": self._now_str(), "error": None, "fallback_used": None,
         })
         payload = ag.aggregate()
         entry = next(j for j in payload["jobs"] if j["job"] == "tennis_scan")
-        # None exit_code treated as 0 (absent evidence, not contradiction)
-        assert entry["status"] == "ok"
+        assert entry["status"] == "error"
+        assert "MON-001" in (entry["error"] or "")
+
+    def test_aggregate_ok_with_missing_exit_key_coerced_to_error(self, agg_dirs):
+        """ok + exit_code key absent → error (missing evidence cannot claim ok)."""
+        from src.monitoring import aggregate_health as ag
+
+        self._write_raw_snapshot(agg_dirs["health_dir"], "tennis_scan", {
+            "job": "tennis_scan", "status": "ok",
+            "last_run_at": self._now_str(), "error": None, "fallback_used": None,
+            # exit_code key deliberately omitted
+        })
+        payload = ag.aggregate()
+        entry = next(j for j in payload["jobs"] if j["job"] == "tennis_scan")
+        assert entry["status"] == "error"
+        assert "MON-001" in (entry["error"] or "")
+
+    def test_aggregate_ok_with_string_exit_coerced_to_error(self, agg_dirs):
+        """ok + exit_code='0' (string) → error ('0' is not canonical int evidence)."""
+        from src.monitoring import aggregate_health as ag
+
+        self._write_raw_snapshot(agg_dirs["health_dir"], "tennis_scan", {
+            "job": "tennis_scan", "status": "ok", "exit_code": "0",
+            "last_run_at": self._now_str(), "error": None, "fallback_used": None,
+        })
+        payload = ag.aggregate()
+        entry = next(j for j in payload["jobs"] if j["job"] == "tennis_scan")
+        assert entry["status"] == "error"
+
+    def test_aggregate_ok_with_bool_exit_coerced_to_error(self, agg_dirs):
+        """ok + exit_code=False (JSON bool) → error (bool is not int evidence)."""
+        from src.monitoring import aggregate_health as ag
+
+        self._write_raw_snapshot(agg_dirs["health_dir"], "tennis_scan", {
+            "job": "tennis_scan", "status": "ok", "exit_code": False,
+            "last_run_at": self._now_str(), "error": None, "fallback_used": None,
+        })
+        payload = ag.aggregate()
+        entry = next(j for j in payload["jobs"] if j["job"] == "tennis_scan")
+        assert entry["status"] == "error"
+
+    def test_aggregate_degraded_with_zero_exit_preserved(self, agg_dirs):
+        """degraded + exit_code=0 → degraded preserved (legitimate documented fallback)."""
+        from src.monitoring import aggregate_health as ag
+
+        self._write_raw_snapshot(agg_dirs["health_dir"], "tennis_scan", {
+            "job": "tennis_scan", "status": "degraded", "exit_code": 0,
+            "last_run_at": self._now_str(), "error": None, "fallback_used": "cache",
+        })
+        payload = ag.aggregate()
+        entry = next(j for j in payload["jobs"] if j["job"] == "tennis_scan")
+        assert entry["status"] == "degraded"
+
+    def test_aggregate_degraded_with_nonzero_exit_coerced_to_error(self, agg_dirs):
+        """degraded + exit_code=1 → error (execution failed)."""
+        from src.monitoring import aggregate_health as ag
+
+        self._write_raw_snapshot(agg_dirs["health_dir"], "tennis_scan", {
+            "job": "tennis_scan", "status": "degraded", "exit_code": 1,
+            "last_run_at": self._now_str(), "error": None, "fallback_used": None,
+        })
+        payload = ag.aggregate()
+        entry = next(j for j in payload["jobs"] if j["job"] == "tennis_scan")
+        assert entry["status"] == "error"
+        assert "MON-001" in (entry["error"] or "")
+
+    def test_aggregate_degraded_with_malformed_exit_coerced_to_error(self, agg_dirs):
+        """degraded + malformed exit evidence → error."""
+        from src.monitoring import aggregate_health as ag
+
+        self._write_raw_snapshot(agg_dirs["health_dir"], "tennis_scan", {
+            "job": "tennis_scan", "status": "degraded", "exit_code": "abc",
+            "last_run_at": self._now_str(), "error": None, "fallback_used": None,
+        })
+        payload = ag.aggregate()
+        entry = next(j for j in payload["jobs"] if j["job"] == "tennis_scan")
+        assert entry["status"] == "error"
 
 
 # ---------------------------------------------------------------------------
@@ -223,7 +393,6 @@ class TestMON011Visibility:
         (agg_dirs["health_dir"] / "tennis_scan.json").write_text("{{not valid json")
         payload = ag.aggregate()
         entry = next(j for j in payload["jobs"] if j["job"] == "tennis_scan")
-        # Unreadable → _load_one returns None → _job_entry returns stale
         assert entry["status"] != "ok"
         assert entry["status"] == "stale"
 
@@ -242,12 +411,8 @@ class TestMON011Visibility:
 
         now_str = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         raw = {
-            "job": "tennis_scan",
-            "status": "ok",
-            "exit_code": "abc",
-            "last_run_at": now_str,
-            "error": None,
-            "fallback_used": None,
+            "job": "tennis_scan", "status": "ok", "exit_code": "abc",
+            "last_run_at": now_str, "error": None, "fallback_used": None,
         }
         (agg_dirs["health_dir"] / "tennis_scan.json").write_text(json.dumps(raw))
         payload = ag.aggregate()

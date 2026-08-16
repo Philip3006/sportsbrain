@@ -95,18 +95,27 @@ def _job_entry(job: str, raw: dict[str, Any] | None) -> dict[str, Any]:
 
     status_written = raw.get("status", "stale")
     raw_exit = raw.get("exit_code")
-    coerced_exit = _coerce_exit_code(raw_exit) if raw_exit is not None else 0
+    coerced_exit = _coerce_exit_code(raw_exit)  # None if unknown/invalid
 
-    # MON-001 defensive: a legacy/malformed snapshot cannot publish ok + non-zero exit.
-    # Also catches snapshots written before health_writer enforced this itself.
+    # MON-001 defensive: ok/degraded + non-zero or unknown exit cannot stay ok/degraded.
+    # Catches legacy snapshots written before health_writer enforced this itself.
     err = raw.get("error")
-    if status_written == "ok" and coerced_exit != 0:
-        status_written = "error"
-        err = (
-            f"[MON-001] aggregate coerced ok→error from legacy snapshot: "
-            f"exit_code={coerced_exit}. "
-            + (f"Original error: {err}" if err else "No error field in snapshot.")
-        )
+    if status_written in ("ok", "degraded"):
+        orig_status = status_written
+        if coerced_exit is None:
+            status_written = "error"
+            err = (
+                f"[MON-001] aggregate: {orig_status} with missing/invalid exit evidence "
+                f"(raw exit_code={raw_exit!r}). "
+                + (f"Original error: {err}" if err else "No error field in snapshot.")
+            )
+        elif coerced_exit != 0:
+            status_written = "error"
+            err = (
+                f"[MON-001] aggregate coerced {orig_status}→error from legacy snapshot: "
+                f"exit_code={coerced_exit}. "
+                + (f"Original error: {err}" if err else "No error field in snapshot.")
+            )
 
     last = raw.get("last_run_at")
     stale = _is_stale(last, interval_s, grace_s)

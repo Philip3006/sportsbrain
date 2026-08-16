@@ -54,12 +54,18 @@ JOB_SCHEDULE: dict[str, dict[str, int | str]] = {
 VALID_STATUS = {"ok", "degraded", "error", "stale"}
 
 
-def _coerce_exit_code(raw: Any) -> int:
-    """Convert raw exit_code to int; returns 1 (fail-closed) if malformed."""
-    try:
-        return int(raw)
-    except (TypeError, ValueError):
-        return 1
+def _coerce_exit_code(raw: Any) -> int | None:
+    """Return raw as int if it is strict integer evidence; None for invalid/unknown.
+
+    Only actual int values are canonical exit evidence. bool is explicitly rejected
+    even though bool is a Python int subclass. Strings, floats, None, containers,
+    and any other non-int type return None (unknown evidence — not zero).
+    """
+    if isinstance(raw, bool):  # must precede int check — bool is int subclass
+        return None
+    if isinstance(raw, int):
+        return raw
+    return None
 
 
 def write_health(
@@ -85,10 +91,19 @@ def write_health(
 
     safe_exit_code = _coerce_exit_code(exit_code)
 
-    # MON-001 enforcement: non-zero exit cannot coexist with ok status.
-    if safe_exit_code != 0 and status == "ok":
+    # MON-001 enforcement: only int exit_code=0 can coexist with ok/degraded.
+    if safe_exit_code is None:
+        # Invalid/unknown exit evidence cannot produce success-like status.
+        if status in ("ok", "degraded"):
+            error = (
+                f"[MON-001] invalid/unknown exit evidence: {exit_code!r}. "
+                + (f"Original error: {error}" if error else "No error message from caller.")
+            )
+            status = "error"
+    elif safe_exit_code != 0 and status in ("ok", "degraded"):
+        prev = status
         error = (
-            f"[MON-001] coerced ok→error: exit_code={safe_exit_code}. "
+            f"[MON-001] coerced {prev}→error: exit_code={safe_exit_code}. "
             + (f"Original error: {error}" if error else "No error message from caller.")
         )
         status = "error"
@@ -102,7 +117,7 @@ def write_health(
         "last_run_at":   now,
         "started_at":    started_at or now,
         "duration_s":    round(duration_s, 2) if duration_s is not None else None,
-        "exit_code":     safe_exit_code,
+        "exit_code":     safe_exit_code,   # None for unknown evidence (not fabricated)
         "error":         error,
         "fallback_used": fallback_used,
         "run_id":        run_id,
