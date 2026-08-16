@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T02:15:58Z",
+  "generated_at": "2026-08-16T03:25:42Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -38,7 +38,7 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-16T02:15:58Z",
+      "last_run_at": "2026-08-16T03:25:42Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -93,7 +93,7 @@
     {
       "job": "tennis_scan",
       "status": "ok",
-      "last_run_at": "2026-08-15T23:16:07Z",
+      "last_run_at": "2026-08-16T02:52:56Z",
       "duration_s": null,
       "exit_code": 1,
       "error": null,
@@ -114,11 +114,11 @@
     },
     {
       "job": "tennis_closing_odds",
-      "status": "stale",
-      "last_run_at": "2026-08-16T01:27:57Z",
+      "status": "ok",
+      "last_run_at": "2026-08-16T02:45:42Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": "last run was at 2026-08-16T01:27:57Z — overdue (>2700s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 1800,
       "cadence": "alle 30 Min"
@@ -192,7 +192,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-16T02:15:57Z",
+      "last_run_at": "2026-08-16T03:25:41Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -203,7 +203,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-16T02:15:20Z",
+      "last_run_at": "2026-08-16T03:25:09Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
