@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T00:41:22Z",
+  "generated_at": "2026-08-16T02:15:58Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -38,7 +38,7 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-16T00:41:22Z",
+      "last_run_at": "2026-08-16T02:15:58Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -103,11 +103,11 @@
     },
     {
       "job": "tennis_settle",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-08-15T22:39:24Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": null,
+      "error": "last run was at 2026-08-15T22:39:24Z — overdue (>10800s)",
       "fallback_used": null,
       "next_expected_in_s": 7200,
       "cadence": "alle 2h 06-22 UTC"
@@ -115,10 +115,10 @@
     {
       "job": "tennis_closing_odds",
       "status": "stale",
-      "last_run_at": "2026-08-15T23:46:59Z",
+      "last_run_at": "2026-08-16T01:27:57Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": "last run was at 2026-08-15T23:46:59Z — overdue (>2700s)",
+      "error": "last run was at 2026-08-16T01:27:57Z — overdue (>2700s)",
       "fallback_used": null,
       "next_expected_in_s": 1800,
       "cadence": "alle 30 Min"
@@ -147,11 +147,11 @@
     },
     {
       "job": "bundesliga2_settle",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-08-15T21:42:13Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": null,
+      "error": "last run was at 2026-08-15T21:42:13Z — overdue (>14400s)",
       "fallback_used": null,
       "next_expected_in_s": 10800,
       "cadence": "alle 3h nach Spielen"
@@ -192,7 +192,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-16T00:41:21Z",
+      "last_run_at": "2026-08-16T02:15:57Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -203,7 +203,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-16T00:40:44Z",
+      "last_run_at": "2026-08-16T02:15:20Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
