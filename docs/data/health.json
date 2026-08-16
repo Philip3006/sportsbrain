@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T20:39:08Z",
+  "generated_at": "2026-08-16T20:45:03Z",
   "overall": "down",
   "jobs": [
     {
@@ -38,8 +38,8 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-16T20:39:08Z",
-      "duration_s": 5.0,
+      "last_run_at": "2026-08-16T20:45:03Z",
+      "duration_s": null,
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
@@ -48,11 +48,11 @@
     },
     {
       "job": "live_score_push",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-08-16T20:37:19Z",
       "duration_s": 3.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-08-16T20:37:19Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min"
@@ -81,11 +81,11 @@
     },
     {
       "job": "aggregate_health",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-08-16T20:37:01Z",
       "duration_s": 2.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-08-16T20:37:01Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min (huckepack)"
@@ -104,10 +104,10 @@
     {
       "job": "tennis_settle",
       "status": "error",
-      "last_run_at": "2026-08-16T18:48:49Z",
+      "last_run_at": "2026-08-16T20:40:45Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": "[MON-001] aggregate coerced ok→error from legacy snapshot: exit_code=1. No error field in snapshot.",
+      "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
       "fallback_used": null,
       "next_expected_in_s": 7200,
       "cadence": "alle 2h 06-22 UTC"
@@ -192,7 +192,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-16T20:39:04Z",
+      "last_run_at": "2026-08-16T20:45:02Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -203,7 +203,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-16T20:35:56Z",
+      "last_run_at": "2026-08-16T20:44:31Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
