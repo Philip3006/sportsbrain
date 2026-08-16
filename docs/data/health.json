@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T06:22:45Z",
+  "generated_at": "2026-08-16T07:07:38Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -38,7 +38,7 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-16T06:22:45Z",
+      "last_run_at": "2026-08-16T07:07:38Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -93,7 +93,7 @@
     {
       "job": "tennis_scan",
       "status": "ok",
-      "last_run_at": "2026-08-16T04:27:49Z",
+      "last_run_at": "2026-08-16T06:30:16Z",
       "duration_s": null,
       "exit_code": 1,
       "error": null,
@@ -103,22 +103,22 @@
     },
     {
       "job": "tennis_settle",
-      "status": "stale",
-      "last_run_at": "2026-08-15T22:39:24Z",
+      "status": "ok",
+      "last_run_at": "2026-08-16T07:00:36Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": "last run was at 2026-08-15T22:39:24Z — overdue (>10800s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 7200,
       "cadence": "alle 2h 06-22 UTC"
     },
     {
       "job": "tennis_closing_odds",
-      "status": "stale",
-      "last_run_at": "2026-08-16T05:31:09Z",
+      "status": "ok",
+      "last_run_at": "2026-08-16T06:43:53Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": "last run was at 2026-08-16T05:31:09Z — overdue (>2700s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 1800,
       "cadence": "alle 30 Min"
@@ -136,11 +136,11 @@
     },
     {
       "job": "bundesliga2_scan",
-      "status": "stale",
-      "last_run_at": "2026-08-15T08:28:49Z",
-      "duration_s": 1.83,
+      "status": "ok",
+      "last_run_at": "2026-08-16T06:42:32Z",
+      "duration_s": 1.42,
       "exit_code": 0,
-      "error": "last run was at 2026-08-15T08:28:49Z — overdue (>46800s)",
+      "error": null,
       "fallback_used": "espn",
       "next_expected_in_s": 43200,
       "cadence": "2×/Tag + prä-Spieltag"
@@ -192,7 +192,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-16T06:22:45Z",
+      "last_run_at": "2026-08-16T07:07:38Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -203,7 +203,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-16T06:22:07Z",
+      "last_run_at": "2026-08-16T07:07:00Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
