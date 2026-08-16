@@ -54,6 +54,20 @@ JOB_SCHEDULE: dict[str, dict[str, int | str]] = {
 VALID_STATUS = {"ok", "degraded", "error", "stale"}
 
 
+def _coerce_exit_code(raw: Any) -> int | None:
+    """Return raw as int if it is strict integer evidence; None for invalid/unknown.
+
+    Only actual int values are canonical exit evidence. bool is explicitly rejected
+    even though bool is a Python int subclass. Strings, floats, None, containers,
+    and any other non-int type return None (unknown evidence — not zero).
+    """
+    if isinstance(raw, bool):  # must precede int check — bool is int subclass
+        return None
+    if isinstance(raw, int):
+        return raw
+    return None
+
+
 def write_health(
     job: str,
     status: str,
@@ -67,11 +81,39 @@ def write_health(
 ) -> Path:
     """Writes results/health/{job}.json atomically.
 
-    Returns the path. Existing file is overwritten. Caller is responsible
-    for picking the status value — this function only persists it.
+    MON-001: exit_code != 0 can never serialize status="ok". If the caller
+    supplies an impossible combination, this function coerces status to "error"
+    and records the contradiction in the error field so it remains visible
+    (MON-011) rather than silently disappearing.
     """
     if status not in VALID_STATUS:
         raise ValueError(f"status must be one of {VALID_STATUS}, got {status!r}")
+
+    safe_exit_code = _coerce_exit_code(exit_code)
+
+    # MON-001 enforcement: ok/degraded cannot coexist with non-zero or unknown exit.
+    # stale: freshness owns the final status, but execution failure must remain visible.
+    if safe_exit_code is None:
+        if status in ("ok", "degraded"):
+            error = (
+                f"[MON-001] invalid/unknown exit evidence: {exit_code!r}. "
+                + (f"Original error: {error}" if error else "No error message from caller.")
+            )
+            status = "error"
+        elif status == "stale":
+            note = f"[MON-001] stale with missing/invalid exit evidence: {exit_code!r}."
+            error = (note + f" Original error: {error}") if error else note
+    elif safe_exit_code != 0:
+        if status in ("ok", "degraded"):
+            prev = status
+            error = (
+                f"[MON-001] coerced {prev}→error: exit_code={safe_exit_code}. "
+                + (f"Original error: {error}" if error else "No error message from caller.")
+            )
+            status = "error"
+        elif status == "stale":
+            note = f"[MON-001] stale with execution failure: exit_code={safe_exit_code}."
+            error = (note + f" Original error: {error}") if error else note
 
     HEALTH_DIR.mkdir(parents=True, exist_ok=True)
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -82,7 +124,7 @@ def write_health(
         "last_run_at":   now,
         "started_at":    started_at or now,
         "duration_s":    round(duration_s, 2) if duration_s is not None else None,
-        "exit_code":     int(exit_code),
+        "exit_code":     safe_exit_code,   # None for unknown evidence (not fabricated)
         "error":         error,
         "fallback_used": fallback_used,
         "run_id":        run_id,

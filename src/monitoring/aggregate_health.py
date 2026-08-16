@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 HEALTH_DIR = ROOT / "results" / "health"
 HEALTH_JSON_OUT = ROOT / "docs" / "data" / "health.json"
 
-from src.monitoring.health_writer import JOB_SCHEDULE  # noqa: E402
+from src.monitoring.health_writer import JOB_SCHEDULE, _coerce_exit_code  # noqa: E402
 from src.utils.atomic_io import atomic_write_json  # noqa: E402
 
 
@@ -94,12 +94,47 @@ def _job_entry(job: str, raw: dict[str, Any] | None) -> dict[str, Any]:
         }
 
     status_written = raw.get("status", "stale")
+    raw_exit = raw.get("exit_code")
+    coerced_exit = _coerce_exit_code(raw_exit)  # None if unknown/invalid
+
+    # MON-001 defensive: ok/degraded cannot coexist with non-zero or unknown exit.
+    # stale: execution failure must remain visible even though freshness owns the status.
+    # Catches legacy snapshots written before health_writer enforced this itself.
+    err = raw.get("error")
+    if status_written in ("ok", "degraded"):
+        orig_status = status_written
+        if coerced_exit is None:
+            status_written = "error"
+            err = (
+                f"[MON-001] aggregate: {orig_status} with missing/invalid exit evidence "
+                f"(raw exit_code={raw_exit!r}). "
+                + (f"Original error: {err}" if err else "No error field in snapshot.")
+            )
+        elif coerced_exit != 0:
+            status_written = "error"
+            err = (
+                f"[MON-001] aggregate coerced {orig_status}→error from legacy snapshot: "
+                f"exit_code={coerced_exit}. "
+                + (f"Original error: {err}" if err else "No error field in snapshot.")
+            )
+    elif status_written == "stale":
+        if coerced_exit is None:
+            note = (
+                f"[MON-001] aggregate: stale with missing/invalid exit evidence "
+                f"(raw exit_code={raw_exit!r})."
+            )
+            err = (note + f" Original error: {err}") if err else note
+        elif coerced_exit != 0:
+            note = (
+                f"[MON-001] aggregate: stale with execution failure: exit_code={coerced_exit}."
+            )
+            err = (note + f" Original error: {err}") if err else note
+
     last = raw.get("last_run_at")
     stale = _is_stale(last, interval_s, grace_s)
     final_status = "stale" if stale else status_written
 
     # If the job wrote "ok" but it's overdue, surface that explicitly in the error.
-    err = raw.get("error")
     if stale and not err:
         err = f"last run was at {last} — overdue (>{interval_s + grace_s}s)"
 
@@ -108,7 +143,7 @@ def _job_entry(job: str, raw: dict[str, Any] | None) -> dict[str, Any]:
         "status":            final_status,
         "last_run_at":       last,
         "duration_s":        raw.get("duration_s"),
-        "exit_code":         raw.get("exit_code"),
+        "exit_code":         coerced_exit,
         "error":             err,
         "fallback_used":     raw.get("fallback_used"),
         "next_expected_in_s": interval_s,
