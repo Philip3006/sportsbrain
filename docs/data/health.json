@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T11:11:41Z",
+  "generated_at": "2026-08-16T11:42:32Z",
   "overall": "degraded",
   "jobs": [
     {
@@ -38,7 +38,7 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-16T11:11:41Z",
+      "last_run_at": "2026-08-16T11:42:32Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -115,7 +115,7 @@
     {
       "job": "tennis_closing_odds",
       "status": "ok",
-      "last_run_at": "2026-08-16T10:50:39Z",
+      "last_run_at": "2026-08-16T11:23:04Z",
       "duration_s": null,
       "exit_code": 1,
       "error": null,
@@ -159,10 +159,10 @@
     {
       "job": "bundesliga2_live_push",
       "status": "stale",
-      "last_run_at": "2026-08-15T23:02:03Z",
+      "last_run_at": "2026-08-16T11:33:22Z",
       "duration_s": 0.01,
       "exit_code": 0,
-      "error": "last run was at 2026-08-15T23:02:03Z — overdue (>420s)",
+      "error": "last run was at 2026-08-16T11:33:22Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min im Spieltag-Fenster"
@@ -180,11 +180,11 @@
     },
     {
       "job": "bundesliga2_closing_odds",
-      "status": "stale",
-      "last_run_at": "2026-08-15T18:51:22Z",
+      "status": "ok",
+      "last_run_at": "2026-08-16T11:40:19Z",
       "duration_s": null,
       "exit_code": 0,
-      "error": "last run was at 2026-08-15T18:51:22Z — overdue (>1800s)",
+      "error": null,
       "fallback_used": null,
       "next_expected_in_s": 900,
       "cadence": "15 Min vor Kickoff"
@@ -192,7 +192,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-16T11:11:40Z",
+      "last_run_at": "2026-08-16T11:42:31Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -203,7 +203,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-16T11:11:10Z",
+      "last_run_at": "2026-08-16T11:42:00Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
