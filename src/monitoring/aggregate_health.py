@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 HEALTH_DIR = ROOT / "results" / "health"
 HEALTH_JSON_OUT = ROOT / "docs" / "data" / "health.json"
 
-from src.monitoring.health_writer import JOB_SCHEDULE  # noqa: E402
+from src.monitoring.health_writer import JOB_SCHEDULE, _coerce_exit_code  # noqa: E402
 from src.utils.atomic_io import atomic_write_json  # noqa: E402
 
 
@@ -94,12 +94,25 @@ def _job_entry(job: str, raw: dict[str, Any] | None) -> dict[str, Any]:
         }
 
     status_written = raw.get("status", "stale")
+    raw_exit = raw.get("exit_code")
+    coerced_exit = _coerce_exit_code(raw_exit) if raw_exit is not None else 0
+
+    # MON-001 defensive: a legacy/malformed snapshot cannot publish ok + non-zero exit.
+    # Also catches snapshots written before health_writer enforced this itself.
+    err = raw.get("error")
+    if status_written == "ok" and coerced_exit != 0:
+        status_written = "error"
+        err = (
+            f"[MON-001] aggregate coerced ok→error from legacy snapshot: "
+            f"exit_code={coerced_exit}. "
+            + (f"Original error: {err}" if err else "No error field in snapshot.")
+        )
+
     last = raw.get("last_run_at")
     stale = _is_stale(last, interval_s, grace_s)
     final_status = "stale" if stale else status_written
 
     # If the job wrote "ok" but it's overdue, surface that explicitly in the error.
-    err = raw.get("error")
     if stale and not err:
         err = f"last run was at {last} — overdue (>{interval_s + grace_s}s)"
 

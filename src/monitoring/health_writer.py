@@ -54,6 +54,14 @@ JOB_SCHEDULE: dict[str, dict[str, int | str]] = {
 VALID_STATUS = {"ok", "degraded", "error", "stale"}
 
 
+def _coerce_exit_code(raw: Any) -> int:
+    """Convert raw exit_code to int; returns 1 (fail-closed) if malformed."""
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return 1
+
+
 def write_health(
     job: str,
     status: str,
@@ -67,11 +75,23 @@ def write_health(
 ) -> Path:
     """Writes results/health/{job}.json atomically.
 
-    Returns the path. Existing file is overwritten. Caller is responsible
-    for picking the status value — this function only persists it.
+    MON-001: exit_code != 0 can never serialize status="ok". If the caller
+    supplies an impossible combination, this function coerces status to "error"
+    and records the contradiction in the error field so it remains visible
+    (MON-011) rather than silently disappearing.
     """
     if status not in VALID_STATUS:
         raise ValueError(f"status must be one of {VALID_STATUS}, got {status!r}")
+
+    safe_exit_code = _coerce_exit_code(exit_code)
+
+    # MON-001 enforcement: non-zero exit cannot coexist with ok status.
+    if safe_exit_code != 0 and status == "ok":
+        error = (
+            f"[MON-001] coerced ok→error: exit_code={safe_exit_code}. "
+            + (f"Original error: {error}" if error else "No error message from caller.")
+        )
+        status = "error"
 
     HEALTH_DIR.mkdir(parents=True, exist_ok=True)
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -82,7 +102,7 @@ def write_health(
         "last_run_at":   now,
         "started_at":    started_at or now,
         "duration_s":    round(duration_s, 2) if duration_s is not None else None,
-        "exit_code":     int(exit_code),
+        "exit_code":     safe_exit_code,
         "error":         error,
         "fallback_used": fallback_used,
         "run_id":        run_id,
