@@ -1,14 +1,26 @@
-"""TASK-P0B-001 — MON-001 / MON-011 / OPS-006 deterministic tests.
+"""TASK-P0B-001 / TASK-P0B-002 — MON-001 / MON-002 / MON-011 / MON-012 / OPS-006 tests.
 
-Proves that execution health derives from execution evidence:
-  - exit_code != 0 can never serialize status="ok" or "degraded" (MON-001)
-  - invalid/unknown exit evidence cannot produce success-like status (MON-001)
-  - bool is rejected even though bool is a Python int subclass (strict typing)
-  - malformed/unknown execution evidence fails closed (MON-001)
-  - health check failure becomes visible, not silently empty-good (MON-011)
-  - execution-plane provenance (launchd vs GH Actions) is not collapsed (OPS-006)
+P0B-001 (MON-001 / MON-011 / OPS-006):
+  - exit_code != 0 can never serialize status="ok" or "degraded"
+  - invalid/unknown exit evidence cannot produce success-like status
+  - bool is rejected even though bool is a Python int subclass
+  - malformed/unknown execution evidence fails closed
+  - health check failure becomes visible, not silently empty-good
+  - execution-plane provenance (launchd vs GH Actions) is not collapsed
   - valid ok/degraded cases remain deterministic
-  - no live network calls
+
+P0B-002 (MON-002 / MON-012):
+  - off-window or already-ran-in-cycle jobs are never falsely stale
+  - tennis_scan cron set: 8 exact UTC points, no false stale between points
+  - tennis_retrain daily 05:00 UTC: not_expected after run, overdue if missed
+  - bundesliga2_live_push: off-window → not_expected; in-window → evaluated
+  - bundesliga2_closing_odds: weekly points; long gap does not false-stale
+  - consume_pending_bets: 30-min fallback (not 2-min)
+  - odds_refresh: 300s interval
+  - unsupported expectation kind fails closed
+  - all P0B-001 tests remain green (regression gate)
+
+No live network calls.
 """
 from __future__ import annotations
 
@@ -590,3 +602,583 @@ class TestOPS006Preservation:
         data = json.loads(path.read_text())
         assert "launchd" in data["run_id"]
         assert data["status"] == "ok"
+
+
+# ===========================================================================
+# TASK-P0B-002 — MON-002 / MON-012 deterministic tests
+# ===========================================================================
+# All tests inject an explicit `now` via the evaluate_expectation API or the
+# _job_entry `now` parameter so there are no wall-clock dependencies.
+
+from datetime import timedelta
+
+from src.monitoring.job_schedule import (
+    JOB_EXPECTATIONS,
+    CronSetExpectation,
+    EventWithFallbackExpectation,
+    IntervalExpectation,
+    WindowedExpectation,
+    evaluate_expectation,
+    nominal_interval_s,
+)
+
+
+def _utc(year: int, month: int, day: int, hour: int = 0, minute: int = 0) -> datetime:
+    return datetime(year, month, day, hour, minute, 0, tzinfo=timezone.utc)
+
+
+# ---------------------------------------------------------------------------
+# Unit tests — evaluate_expectation (deterministic, no I/O)
+# ---------------------------------------------------------------------------
+
+class TestIntervalExpectation:
+    """odds_refresh 300s — INTERVAL tests."""
+
+    EXP = IntervalExpectation(interval_s=300, grace_s=300, cadence="alle 5 Min (launchd)")
+
+    def test_no_snapshot_is_overdue(self):
+        """No last_run_at → always overdue for interval jobs."""
+        now = _utc(2026, 8, 16, 12, 0)
+        r = evaluate_expectation(self.EXP, None, now)
+        assert r.in_window is True
+        assert r.is_overdue is True
+
+    def test_before_due(self):
+        """100s since last run — well within 300s interval, not overdue."""
+        now = _utc(2026, 8, 16, 12, 0)
+        last = now - timedelta(seconds=100)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is True
+        assert r.is_overdue is False
+
+    def test_exactly_at_interval(self):
+        """300s since last run — at interval boundary, within grace (300+300=600), not overdue."""
+        now = _utc(2026, 8, 16, 12, 0)
+        last = now - timedelta(seconds=300)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.is_overdue is False
+
+    def test_at_interval_plus_grace_boundary(self):
+        """600s since last run — exactly at boundary (strict >600), NOT overdue."""
+        now = _utc(2026, 8, 16, 12, 0)
+        last = now - timedelta(seconds=600)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.is_overdue is False
+
+    def test_beyond_interval_plus_grace(self):
+        """601s since last run — just past grace, overdue."""
+        now = _utc(2026, 8, 16, 12, 0)
+        last = now - timedelta(seconds=601)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is True
+        assert r.is_overdue is True
+
+    def test_cadence_preserved(self):
+        now = _utc(2026, 8, 16, 12, 0)
+        last = now - timedelta(seconds=100)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.cadence == "alle 5 Min (launchd)"
+
+    def test_odds_refresh_in_registry(self):
+        """odds_refresh must be in JOB_EXPECTATIONS as IntervalExpectation 300s."""
+        exp = JOB_EXPECTATIONS.get("odds_refresh")
+        assert exp is not None
+        assert isinstance(exp, IntervalExpectation)
+        assert exp.interval_s == 300
+        assert exp.grace_s == 300
+
+    def test_nominal_interval_s_for_interval(self):
+        assert nominal_interval_s(self.EXP) == 300
+
+
+class TestCronSetTennisScan:
+    """tennis_scan — CRON SET tests (8 daily UTC points)."""
+
+    # Actual workflow: 02/06/09/12/15/18/21/23 UTC daily
+    EXP = JOB_EXPECTATIONS["tennis_scan"]
+
+    def _assert_cron_set(self):
+        assert isinstance(self.EXP, CronSetExpectation)
+        hours = {h for (_, h, _) in self.EXP.points}
+        assert hours == {2, 6, 9, 12, 15, 18, 21, 23}, (
+            f"tennis_scan must have exactly 8 cron hours: got {sorted(hours)}"
+        )
+
+    def test_schedule_has_exactly_8_daily_points(self):
+        """MON-012: tennis_scan expectation matches active workflow (8 daily cron points)."""
+        self._assert_cron_set()
+        assert len(self.EXP.points) == 8
+
+    def test_no_04_utc_point(self):
+        """Workflow has no 04:00 UTC point — source wins over CEO audit."""
+        hours = {h for (_, h, _) in self.EXP.points}
+        assert 4 not in hours
+
+    def test_just_after_cron_point_not_yet_overdue(self):
+        """At 06:05 UTC, if job ran at 06:01, not overdue (within grace)."""
+        now = _utc(2026, 8, 16, 6, 5)  # Saturday 06:05 UTC
+        last = _utc(2026, 8, 16, 6, 1)  # ran 4 min after cron point
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.is_overdue is False
+
+    def test_ran_in_cycle_makes_job_not_expected(self):
+        """After job runs post-cron, it is not_expected until the next cron point (MON-002)."""
+        # 09:00 is a cron point. Job ran at 09:02. Now it's 11:30 (before next 12:00 cron).
+        now = _utc(2026, 8, 16, 11, 30)
+        last = _utc(2026, 8, 16, 9, 2)   # ran after 09:00 cron
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is False, "job ran for current cycle; must not be marked expected"
+        assert r.is_overdue is False
+
+    def test_no_false_stale_between_cron_points(self):
+        """MON-002: 3h gap between 06:00 and 09:00 must not stale a job that ran at 06:05."""
+        now = _utc(2026, 8, 16, 8, 59)   # just before next 09:00 cron
+        last = _utc(2026, 8, 16, 6, 5)   # ran after 06:00
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is False
+        assert r.is_overdue is False
+
+    def test_4h_gap_02_to_06_no_false_stale(self):
+        """Largest gap (02:00→06:00 = 4h) must not stale a job that ran at 02:03."""
+        now = _utc(2026, 8, 16, 5, 59)   # just before 06:00
+        last = _utc(2026, 8, 16, 2, 3)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is False
+        assert r.is_overdue is False
+
+    def test_missed_cron_becomes_overdue_after_grace(self):
+        """Job that missed 06:00 is overdue at 07:01 (grace=3600s → deadline=07:00)."""
+        now = _utc(2026, 8, 16, 7, 1)    # 1 min past 06:00 + 60min grace
+        last = _utc(2026, 8, 15, 23, 5)  # ran yesterday at 23:05 (after 23:00 cron)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is True
+        assert r.is_overdue is True
+
+    def test_day_rollover_at_midnight(self):
+        """Cron point 23:00 belongs to the previous calendar day; 00:30 sees it correctly."""
+        # now is 2026-08-17 00:30 UTC. Most recent past cron = 2026-08-16 23:00.
+        now = _utc(2026, 8, 17, 0, 30)
+        last = _utc(2026, 8, 16, 23, 3)  # ran after yesterday's 23:00
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is False   # ran in time, next cron is 02:00 today
+        assert r.is_overdue is False
+
+    def test_02_utc_cron_point_present(self):
+        """02:00 UTC is a valid cron point — missing it would create a false stale window."""
+        now = _utc(2026, 8, 16, 2, 5)   # 5 min after 02:00
+        last = _utc(2026, 8, 16, 2, 2)  # ran after 02:00
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is False
+        assert r.is_overdue is False
+
+
+class TestCronSetTennisRetrain:
+    """tennis_retrain — DAILY CRON (05:00 UTC) tests."""
+
+    EXP = JOB_EXPECTATIONS["tennis_retrain"]
+
+    def test_is_daily_cron_set(self):
+        assert isinstance(self.EXP, CronSetExpectation)
+        assert all(h == 5 and m == 0 for (_, h, m) in self.EXP.points)
+
+    def test_before_daily_run_not_yet_overdue(self):
+        """At 04:59 UTC with last run yesterday at 05:02: within next cycle, not overdue."""
+        now = _utc(2026, 8, 16, 4, 59)
+        last = _utc(2026, 8, 15, 5, 2)   # ran yesterday after 05:00
+        r = evaluate_expectation(self.EXP, last, now)
+        # most_recent_cron = yesterday 05:00; last >= that → not_expected
+        assert r.in_window is False
+        assert r.is_overdue is False
+
+    def test_ran_today_not_expected_midday(self):
+        """After running at 05:02 today, job is not_expected at 13:00 (no new cron until tomorrow)."""
+        now = _utc(2026, 8, 16, 13, 0)
+        last = _utc(2026, 8, 16, 5, 2)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is False
+        assert r.is_overdue is False
+
+    def test_missed_daily_run_becomes_overdue(self):
+        """If 05:00 cron passed and job has not run, it becomes overdue after grace (1h)."""
+        now = _utc(2026, 8, 16, 6, 1)   # 1h 1min past 05:00, grace=3600s → overdue
+        last = _utc(2026, 8, 15, 5, 2)  # ran yesterday
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is True
+        assert r.is_overdue is True
+
+    def test_within_grace_not_yet_overdue(self):
+        """At 05:30 (30min after 05:00), job hasn't run — within 1h grace, not overdue."""
+        now = _utc(2026, 8, 16, 5, 30)
+        last = _utc(2026, 8, 15, 5, 2)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is True
+        assert r.is_overdue is False
+
+
+class TestWindowedBL2LivePush:
+    """bundesliga2_live_push — WINDOWED tests (Fri/Sat/Sun UTC windows)."""
+
+    EXP = JOB_EXPECTATIONS["bundesliga2_live_push"]
+
+    # Python weekdays: Mon=0, Tue=1, Wed=2, Thu=3, Fri=4, Sat=5, Sun=6
+    # 2026-08-14 = Friday, 2026-08-15 = Saturday, 2026-08-16 = Sunday
+    # 2026-08-17 = Monday, 2026-08-18 = Tuesday
+
+    def test_monday_off_window(self):
+        """Monday is not in any active window → not_expected (MON-002)."""
+        now = _utc(2026, 8, 17, 20, 0)   # Monday 20:00 UTC
+        r = evaluate_expectation(self.EXP, None, now)
+        assert r.in_window is False
+        assert r.is_overdue is False
+
+    def test_tuesday_off_window(self):
+        now = _utc(2026, 8, 18, 12, 0)   # Tuesday 12:00 UTC
+        r = evaluate_expectation(self.EXP, None, now)
+        assert r.in_window is False
+
+    def test_friday_before_window_off(self):
+        """Friday 17:59 UTC — window starts 18:00, so not yet active."""
+        now = _utc(2026, 8, 14, 17, 59)  # Friday 17:59
+        r = evaluate_expectation(self.EXP, None, now)
+        assert r.in_window is False
+
+    def test_friday_at_window_start(self):
+        """Friday 18:00 UTC — window starts, job expected (no last run = overdue)."""
+        now = _utc(2026, 8, 14, 18, 0)
+        r = evaluate_expectation(self.EXP, None, now)
+        assert r.in_window is True
+        assert r.is_overdue is True
+
+    def test_friday_inside_window_ran_recently(self):
+        """Friday 20:15 UTC, last run 3 min ago: inside window, not overdue."""
+        now = _utc(2026, 8, 14, 20, 15)
+        last = now - timedelta(seconds=180)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is True
+        assert r.is_overdue is False
+
+    def test_friday_inside_window_overdue(self):
+        """Friday 20:15 UTC, last run 600s ago (interval=120, grace=300 → deadline=420s): overdue."""
+        now = _utc(2026, 8, 14, 20, 15)
+        last = now - timedelta(seconds=600)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is True
+        assert r.is_overdue is True
+
+    def test_saturday_window_starts_at_11(self):
+        """Saturday 10:59 UTC — before Saturday window (starts 11:00), not_expected."""
+        now = _utc(2026, 8, 15, 10, 59)  # Saturday 10:59
+        r = evaluate_expectation(self.EXP, None, now)
+        assert r.in_window is False
+
+    def test_saturday_at_window_start(self):
+        now = _utc(2026, 8, 15, 11, 0)   # Saturday 11:00
+        r = evaluate_expectation(self.EXP, None, now)
+        assert r.in_window is True
+
+    def test_saturday_inside_window(self):
+        now = _utc(2026, 8, 15, 15, 30)  # Saturday 15:30
+        last = now - timedelta(seconds=100)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is True
+        assert r.is_overdue is False
+
+    def test_saturday_at_end_of_window(self):
+        """Saturday 22:59 UTC — still within window (end_hour=22)."""
+        now = _utc(2026, 8, 15, 22, 59)
+        last = now - timedelta(seconds=100)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is True
+
+    def test_saturday_after_window(self):
+        """Saturday 23:00 UTC — past window end (end_hour=22), not_expected."""
+        now = _utc(2026, 8, 15, 23, 0)
+        r = evaluate_expectation(self.EXP, None, now)
+        assert r.in_window is False
+
+    def test_sunday_window(self):
+        now = _utc(2026, 8, 16, 12, 0)   # Sunday 12:00
+        last = now - timedelta(seconds=100)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is True
+        assert r.is_overdue is False
+
+    def test_is_windowed_expectation(self):
+        assert isinstance(self.EXP, WindowedExpectation)
+        assert self.EXP.interval_s == 120
+
+    def test_off_window_job_never_stale_with_old_last_run(self):
+        """MON-002: old last_run_at on a weekday must not make the job stale."""
+        # Monday: off-window. Last run was Saturday (2 days ago). Must not be stale.
+        now = _utc(2026, 8, 17, 20, 0)   # Monday
+        last = _utc(2026, 8, 15, 21, 0)  # Saturday (last window run)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is False
+        assert r.is_overdue is False
+
+
+class TestCronSetBL2ClosingOdds:
+    """bundesliga2_closing_odds — WEEKLY CRON SET tests."""
+
+    EXP = JOB_EXPECTATIONS["bundesliga2_closing_odds"]
+
+    # 2026-08-14 = Friday, 2026-08-15 = Saturday, 2026-08-16 = Sunday
+    # Cron points: Fri 18:25, Sat 10:55, Sat 18:25, Sun 11:25 UTC
+
+    def test_is_cron_set_weekly(self):
+        assert isinstance(self.EXP, CronSetExpectation)
+        weekdays = {wd for (wd, _, _) in self.EXP.points if wd is not None}
+        # Python weekday: Fri=4, Sat=5, Sun=6
+        assert weekdays == {4, 5, 6}
+
+    def test_exact_four_weekly_points(self):
+        points_set = {(wd, h, m) for (wd, h, m) in self.EXP.points}
+        assert (4, 18, 25) in points_set  # Friday 18:25
+        assert (5, 10, 55) in points_set  # Saturday 10:55
+        assert (5, 18, 25) in points_set  # Saturday 18:25
+        assert (6, 11, 25) in points_set  # Sunday 11:25
+        assert len(self.EXP.points) == 4
+
+    def test_tuesday_long_gap_no_false_stale(self):
+        """MON-002: Tuesday (no cron point) — job ran Sunday → not_expected, NOT stale."""
+        now = _utc(2026, 8, 18, 12, 0)   # Tuesday 12:00
+        last = _utc(2026, 8, 16, 11, 30) # ran Sunday after 11:25 cron
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is False
+        assert r.is_overdue is False
+
+    def test_wednesday_no_false_stale(self):
+        """Wednesday: job ran Sunday → not_expected for days (MON-002)."""
+        now = _utc(2026, 8, 19, 9, 0)
+        last = _utc(2026, 8, 16, 11, 30)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is False
+        assert r.is_overdue is False
+
+    def test_friday_before_cron_point_not_expected(self):
+        """Friday 17:00 — before 18:25 cron. Job ran last Sunday → still not_expected."""
+        now = _utc(2026, 8, 14, 17, 0)
+        last = _utc(2026, 8, 9, 11, 30)   # ran last Sunday
+        r = evaluate_expectation(self.EXP, last, now)
+        # last_expected = last Sunday 11:25 (2026-08-09); last ran after it → not_expected
+        assert r.in_window is False
+        assert r.is_overdue is False
+
+    def test_friday_cron_point_at_1825_expected(self):
+        """At Friday 18:25, job hasn't run today: in_window=True, within grace."""
+        now = _utc(2026, 8, 14, 18, 25)  # exactly at cron point
+        last = _utc(2026, 8, 9, 11, 30)  # ran last Sunday (before today's Fri 18:25)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is True
+        # 0s elapsed since last_expected (18:25 == now), grace_s=1800 → not overdue
+        assert r.is_overdue is False
+
+    def test_friday_cron_point_overdue_after_grace(self):
+        """At Friday 18:55 (30min + 1s past 18:25), job still hasn't run → overdue."""
+        now = _utc(2026, 8, 14, 18, 56)  # 31 min past 18:25 → > grace_s=1800
+        last = _utc(2026, 8, 9, 11, 30)  # last Sunday
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is True
+        assert r.is_overdue is True
+
+    def test_saturday_first_cron_1055(self):
+        """Saturday 10:55 — cron fires; job hasn't run today → expected, not yet overdue."""
+        now = _utc(2026, 8, 15, 10, 55)
+        last = _utc(2026, 8, 14, 18, 30) # ran Friday after 18:25
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is True
+        assert r.is_overdue is False
+
+    def test_saturday_between_cron_points_no_stale(self):
+        """Between Sat 10:55 and Sat 18:25, if job ran at 10:58 → not_expected."""
+        now = _utc(2026, 8, 15, 14, 0)
+        last = _utc(2026, 8, 15, 10, 58)  # ran after 10:55
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is False
+        assert r.is_overdue is False
+
+    def test_sunday_cron_1125(self):
+        """Sunday 11:25 — expected, job hasn't run today."""
+        now = _utc(2026, 8, 16, 11, 25)
+        last = _utc(2026, 8, 15, 18, 30)  # ran Saturday after 18:25
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is True
+        assert r.is_overdue is False
+
+    def test_ran_sunday_not_stale_on_monday(self):
+        """Ran Sunday at 11:30 → not_expected Monday (MON-002 key test)."""
+        now = _utc(2026, 8, 17, 10, 0)   # Monday
+        last = _utc(2026, 8, 16, 11, 30)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is False
+        assert r.is_overdue is False
+
+
+class TestEventWithFallbackConsumePendingBets:
+    """consume_pending_bets — EVENT + 30-MIN FALLBACK tests."""
+
+    EXP = JOB_EXPECTATIONS["consume_pending_bets"]
+
+    def test_is_event_with_fallback(self):
+        assert isinstance(self.EXP, EventWithFallbackExpectation)
+        assert self.EXP.fallback_interval_s == 1800
+
+    def test_not_120s_interval(self):
+        """Legacy JOB_SCHEDULE had 120s. New model must use 30-min fallback."""
+        assert self.EXP.fallback_interval_s != 120
+
+    def test_no_snapshot_is_overdue(self):
+        now = _utc(2026, 8, 16, 12, 0)
+        r = evaluate_expectation(self.EXP, None, now)
+        assert r.in_window is True
+        assert r.is_overdue is True
+
+    def test_ran_recently_not_overdue(self):
+        """Ran 10 min ago → well within 30+10=40 min deadline, not overdue."""
+        now = _utc(2026, 8, 16, 12, 0)
+        last = now - timedelta(minutes=10)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.is_overdue is False
+
+    def test_overdue_after_fallback_plus_grace(self):
+        """Ran 41 min ago — past 30min fallback + 10min grace (2400s), overdue."""
+        now = _utc(2026, 8, 16, 12, 0)
+        last = now - timedelta(seconds=2401)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.is_overdue is True
+
+    def test_exactly_at_deadline_not_overdue(self):
+        """Exactly at deadline (1800+600=2400s): strict >, NOT overdue."""
+        now = _utc(2026, 8, 16, 12, 0)
+        last = now - timedelta(seconds=2400)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.is_overdue is False
+
+
+class TestInvalidExpectation:
+    """Malformed / unsupported expectation kind must fail closed."""
+
+    def test_unsupported_kind_raises(self):
+        """evaluate_expectation raises ValueError for unknown expectation kinds."""
+        class BogusExpectation:
+            cadence = ""
+            kind = "bogus"
+        now = _utc(2026, 8, 16, 12, 0)
+        with pytest.raises((ValueError, AttributeError)):
+            evaluate_expectation(BogusExpectation(), None, now)  # type: ignore[arg-type]
+
+
+# ---------------------------------------------------------------------------
+# Aggregate integration: MON-002 end-to-end via _job_entry
+# ---------------------------------------------------------------------------
+
+class TestAggregateMON002:
+    """MON-002 integration: aggregate respects expectation model."""
+
+    def _write_raw(self, health_dir: Path, job: str, payload: dict) -> None:
+        (health_dir / f"{job}.json").write_text(json.dumps(payload))
+
+    def _now_str(self, dt: datetime) -> str:
+        return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    def test_bl2_closing_odds_tuesday_ran_sunday_not_stale(self, agg_dirs):
+        """BL2 closing odds: ran Sunday 11:30, Tuesday 12:00 → not stale (not_expected, MON-002)."""
+        from src.monitoring import aggregate_health as ag
+
+        tuesday = _utc(2026, 8, 18, 12, 0)
+        # Job ran on Sunday after the 11:25 cron point.
+        raw = {
+            "job": "bundesliga2_closing_odds", "status": "ok", "exit_code": 0,
+            "last_run_at": self._now_str(_utc(2026, 8, 16, 11, 30)),
+            "error": None, "fallback_used": None,
+        }
+        entry = ag._job_entry("bundesliga2_closing_odds", raw, now=tuesday)
+        assert entry["status"] != "stale", (
+            f"Off-window job that ran in last cycle must not be stale; got {entry['status']!r}"
+        )
+        assert entry["expectation_state"] == "not_expected"
+
+    def test_bl2_live_push_monday_no_snapshot_not_stale(self, agg_dirs):
+        """BL2 live push, no snapshot, Monday → not stale (not_expected)."""
+        from src.monitoring import aggregate_health as ag
+
+        monday = _utc(2026, 8, 17, 20, 0)
+        entry = ag._job_entry("bundesliga2_live_push", None, now=monday)
+        assert entry["status"] != "stale"
+        assert entry["expectation_state"] == "not_expected"
+
+    def test_tennis_scan_not_stale_between_cron_points(self, agg_dirs):
+        """tennis_scan: ran at 09:02, now is 11:30 → not stale (not_expected)."""
+        from src.monitoring import aggregate_health as ag
+
+        now = _utc(2026, 8, 16, 11, 30)
+        raw = {
+            "job": "tennis_scan", "status": "ok", "exit_code": 0,
+            "last_run_at": self._now_str(_utc(2026, 8, 16, 9, 2)),
+            "error": None, "fallback_used": None,
+        }
+        entry = ag._job_entry("tennis_scan", raw, now=now)
+        assert entry["status"] != "stale"
+        assert entry["expectation_state"] == "not_expected"
+
+    def test_tennis_retrain_not_stale_midday_after_morning_run(self, agg_dirs):
+        """tennis_retrain: ran 05:02, now 13:00 → not stale."""
+        from src.monitoring import aggregate_health as ag
+
+        now = _utc(2026, 8, 16, 13, 0)
+        raw = {
+            "job": "tennis_retrain", "status": "ok", "exit_code": 0,
+            "last_run_at": self._now_str(_utc(2026, 8, 16, 5, 2)),
+            "error": None, "fallback_used": None,
+        }
+        entry = ag._job_entry("tennis_retrain", raw, now=now)
+        assert entry["status"] != "stale"
+        assert entry["expectation_state"] == "not_expected"
+
+    def test_bl2_live_push_inside_window_stale_if_old_run(self, agg_dirs):
+        """BL2 live push inside Saturday window: overdue if last run is 10 min ago."""
+        from src.monitoring import aggregate_health as ag
+
+        now = _utc(2026, 8, 15, 14, 30)  # Saturday 14:30 — in window
+        last_run = now - timedelta(seconds=601)   # 601s ago > 120+300=420s deadline
+        raw = {
+            "job": "bundesliga2_live_push", "status": "ok", "exit_code": 0,
+            "last_run_at": self._now_str(last_run),
+            "error": None, "fallback_used": None,
+        }
+        entry = ag._job_entry("bundesliga2_live_push", raw, now=now)
+        assert entry["status"] == "stale"
+        assert entry["expectation_state"] == "overdue"
+
+    def test_expectation_state_field_present_for_all_known_jobs(self, agg_dirs):
+        """Every known job entry must include expectation_state field."""
+        from src.monitoring import aggregate_health as ag
+
+        now = _utc(2026, 8, 18, 12, 0)  # Monday — some jobs off-window
+        for job in JOB_EXPECTATIONS:
+            entry = ag._job_entry(job, None, now=now)
+            assert "expectation_state" in entry, (
+                f"Job {job!r} is missing expectation_state in output"
+            )
+
+    def test_p0b001_regression_ok_nonzero_still_coerced(self, agg_dirs):
+        """P0B-001 regression: ok + exit_code=1 must still coerce to error even with new model."""
+        from src.monitoring import aggregate_health as ag
+
+        now = _utc(2026, 8, 16, 9, 2)   # inside tennis_scan expected window
+        raw = {
+            "job": "tennis_scan", "status": "ok", "exit_code": 1,
+            "last_run_at": self._now_str(now - timedelta(seconds=60)),
+            "error": None, "fallback_used": None,
+        }
+        entry = ag._job_entry("tennis_scan", raw, now=now)
+        assert entry["status"] == "error"
+        assert "MON-001" in (entry["error"] or "")
+
+    def test_freshness_pseudo_jobs_still_separate(self, agg_dirs):
+        """MON-012: freshness pseudo-jobs must still appear separately (regression)."""
+        from src.monitoring import aggregate_health as ag
+
+        payload = ag.aggregate()
+        pseudo = [j for j in payload["jobs"] if j["job"].endswith("_fresh")]
+        assert len(pseudo) >= 1, "freshness pseudo-jobs must be present in aggregate output"

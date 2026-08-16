@@ -27,8 +27,14 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 HEALTH_DIR = ROOT / "results" / "health"
 HEALTH_JSON_OUT = ROOT / "docs" / "data" / "health.json"
 
-from src.monitoring.health_writer import JOB_SCHEDULE, _coerce_exit_code  # noqa: E402
-from src.utils.atomic_io import atomic_write_json  # noqa: E402
+from src.monitoring.health_writer import _coerce_exit_code
+from src.monitoring.job_schedule import (
+    JOB_EXPECTATIONS,
+    IntervalExpectation,
+    evaluate_expectation,
+    nominal_interval_s,
+)
+from src.utils.atomic_io import atomic_write_json
 
 
 def _parse_iso(ts: str) -> datetime | None:
@@ -38,17 +44,6 @@ def _parse_iso(ts: str) -> datetime | None:
         return datetime.fromisoformat(ts.replace("Z", "+00:00"))
     except Exception:
         return None
-
-
-def _is_stale(last_run_at: str | None, interval_s: int, grace_s: int) -> bool:
-    """Returns True if last_run_at is older than (interval + grace) ago."""
-    if not last_run_at:
-        return True
-    dt = _parse_iso(last_run_at)
-    if dt is None:
-        return True
-    age = (datetime.now(timezone.utc) - dt).total_seconds()
-    return age > (interval_s + grace_s)
 
 
 def _load_one(path: Path) -> dict[str, Any] | None:
@@ -73,33 +68,67 @@ def _load_baseline() -> dict[str, dict]:
         return {}
 
 
-def _job_entry(job: str, raw: dict[str, Any] | None) -> dict[str, Any]:
-    """Builds the public dashboard entry for one job, including freshness."""
-    sched = JOB_SCHEDULE.get(job, {})
-    interval_s = int(sched.get("interval_s", 3600))
-    grace_s = int(sched.get("grace_s", 600))
-    cadence = sched.get("cadence", "")
+def _job_entry(
+    job: str,
+    raw: dict[str, Any] | None,
+    *,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Builds the public dashboard entry for one job, including freshness.
 
+    MON-002: A job not expected to run right now must not become stale merely
+    because its last successful run is old.  Expectation evaluation gates the
+    staleness check so off-window / already-ran-in-cycle jobs stay non-stale.
+
+    `now` is injectable for deterministic tests.
+    """
+    if now is None:
+        now = datetime.now(timezone.utc)
+
+    exp = JOB_EXPECTATIONS.get(job)
+    if exp is None:
+        # Unknown job — conservative default: simple 1h interval.
+        exp = IntervalExpectation(interval_s=3600, grace_s=600, cadence="")
+
+    cadence = exp.cadence
+    next_exp_s = nominal_interval_s(exp)
+
+    # --- No snapshot yet ---
     if raw is None:
+        last_dt: datetime | None = None
+        result = evaluate_expectation(exp, last_dt, now)
+        if not result.in_window:
+            # Off-window job has correctly never written a snapshot yet.
+            return {
+                "job":                job,
+                "status":             "ok",
+                "last_run_at":        None,
+                "duration_s":         None,
+                "exit_code":          None,
+                "error":              None,
+                "fallback_used":      None,
+                "next_expected_in_s": next_exp_s,
+                "cadence":            cadence,
+                "expectation_state":  "not_expected",
+            }
         return {
-            "job":               job,
-            "status":            "stale",
-            "last_run_at":       None,
-            "duration_s":        None,
-            "exit_code":         None,
-            "error":             "no health snapshot yet — job has never reported",
-            "fallback_used":     None,
-            "next_expected_in_s": interval_s,
-            "cadence":           cadence,
+            "job":                job,
+            "status":             "stale",
+            "last_run_at":        None,
+            "duration_s":         None,
+            "exit_code":          None,
+            "error":              "no health snapshot yet — job has never reported",
+            "fallback_used":      None,
+            "next_expected_in_s": next_exp_s,
+            "cadence":            cadence,
+            "expectation_state":  "overdue",
         }
 
+    # --- Snapshot exists: MON-001 defensive coercion ---
     status_written = raw.get("status", "stale")
     raw_exit = raw.get("exit_code")
     coerced_exit = _coerce_exit_code(raw_exit)  # None if unknown/invalid
 
-    # MON-001 defensive: ok/degraded cannot coexist with non-zero or unknown exit.
-    # stale: execution failure must remain visible even though freshness owns the status.
-    # Catches legacy snapshots written before health_writer enforced this itself.
     err = raw.get("error")
     if status_written in ("ok", "degraded"):
         orig_status = status_written
@@ -130,24 +159,35 @@ def _job_entry(job: str, raw: dict[str, Any] | None) -> dict[str, Any]:
             )
             err = (note + f" Original error: {err}") if err else note
 
+    # --- Expectation evaluation (MON-002) ---
     last = raw.get("last_run_at")
-    stale = _is_stale(last, interval_s, grace_s)
-    final_status = "stale" if stale else status_written
+    last_dt = _parse_iso(last)
+    result = evaluate_expectation(exp, last_dt, now)
 
-    # If the job wrote "ok" but it's overdue, surface that explicitly in the error.
-    if stale and not err:
-        err = f"last run was at {last} — overdue (>{interval_s + grace_s}s)"
+    if not result.in_window:
+        # Job correctly not expected — skip staleness promotion.
+        expectation_state = "not_expected"
+        final_status = status_written
+    elif result.is_overdue:
+        expectation_state = "overdue"
+        final_status = "stale"
+        if not err:
+            err = f"last run was at {last} — overdue per expectation model"
+    else:
+        expectation_state = "expected"
+        final_status = status_written
 
     return {
-        "job":               job,
-        "status":            final_status,
-        "last_run_at":       last,
-        "duration_s":        raw.get("duration_s"),
-        "exit_code":         coerced_exit,
-        "error":             err,
-        "fallback_used":     raw.get("fallback_used"),
-        "next_expected_in_s": interval_s,
-        "cadence":           cadence,
+        "job":                job,
+        "status":             final_status,
+        "last_run_at":        last,
+        "duration_s":         raw.get("duration_s"),
+        "exit_code":          coerced_exit,
+        "error":              err,
+        "fallback_used":      raw.get("fallback_used"),
+        "next_expected_in_s": next_exp_s,
+        "cadence":            cadence,
+        "expectation_state":  expectation_state,
     }
 
 
@@ -203,8 +243,9 @@ def _freshness_entries() -> list[dict[str, Any]]:
 def aggregate(merge_from_committed: bool = False) -> dict[str, Any]:
     HEALTH_DIR.mkdir(parents=True, exist_ok=True)
     baseline = _load_baseline() if merge_from_committed else {}
+    now = datetime.now(timezone.utc)
     jobs: list[dict[str, Any]] = []
-    for job in JOB_SCHEDULE:
+    for job in JOB_EXPECTATIONS:
         path = HEALTH_DIR / f"{job}.json"
         if path.exists():
             raw = _load_one(path)
@@ -212,7 +253,7 @@ def aggregate(merge_from_committed: bool = False) -> dict[str, Any]:
             raw = baseline[job]
         else:
             raw = None
-        jobs.append(_job_entry(job, raw))
+        jobs.append(_job_entry(job, raw, now=now))
 
     jobs.extend(_freshness_entries())
 
