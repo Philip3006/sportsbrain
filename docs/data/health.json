@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T23:41:27Z",
+  "generated_at": "2026-08-17T00:39:30Z",
   "overall": "down",
   "jobs": [
     {
@@ -38,7 +38,7 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-16T23:41:27Z",
+      "last_run_at": "2026-08-17T00:39:30Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -114,8 +114,8 @@
     },
     {
       "job": "tennis_closing_odds",
-      "status": "error",
-      "last_run_at": "2026-08-16T23:22:10Z",
+      "status": "stale",
+      "last_run_at": "2026-08-16T23:46:32Z",
       "duration_s": null,
       "exit_code": 1,
       "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
@@ -192,7 +192,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-16T23:41:26Z",
+      "last_run_at": "2026-08-17T00:39:29Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -203,7 +203,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-16T23:40:51Z",
+      "last_run_at": "2026-08-17T00:38:46Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
