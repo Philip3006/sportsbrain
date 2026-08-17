@@ -254,24 +254,25 @@ _ACTION_MAP = {
 }
 
 
-def _run_outcome_action(action: str, sym_id: str) -> tuple[bool, str]:
+def _run_outcome_action(action: str, sym_id: str) -> tuple[bool, str, int | None]:
     """Führt eine deterministische Heil-Action aus.
 
-    Returns (success, stdout_tail).
+    Returns (success, stdout_tail, exit_code).
+    exit_code is None when the action could not be executed (no command, exception).
     """
     cmd = _ACTION_MAP.get(action)
     if cmd is None:
-        return False, f"action {action!r} hat keine ausführbare Map (eskaliert)"
+        return False, f"action {action!r} hat keine ausführbare Map (eskaliert)", None
     try:
         proc = subprocess.run(
             cmd, cwd=ROOT, capture_output=True, text=True, timeout=600,
         )
     except subprocess.TimeoutExpired:
-        return False, "timeout (>600s)"
+        return False, "timeout (>600s)", None
     except Exception as e:
-        return False, f"exception: {e}"
+        return False, f"exception: {e}", None
     tail = (proc.stdout or "")[-200:].strip()
-    return proc.returncode == 0, tail
+    return proc.returncode == 0, tail, proc.returncode
 
 
 def _handle_outcome_symptoms() -> None:
@@ -279,12 +280,28 @@ def _handle_outcome_symptoms() -> None:
 
     Läuft immer (auch bei overall=ok), weil Outcome-Probleme jobspezifische
     Health-Status nicht spiegeln müssen.
+
+    P0-B3: every dispatchable action is tracked through the canonical recovery
+    chain (REQUESTED→DISPATCHED→OBSERVED→VERIFIED→RECOVERED). Process exit=0
+    alone is never sufficient — health snapshot and symptom re-check must confirm.
     """
     try:
-        from src.monitoring.outcome_checks import run_all_checks, Symptom
+        from src.monitoring.outcome_checks import run_all_checks
     except Exception as e:
         _log(f"outcome_checks import failed: {type(e).__name__}: {e} (sys.path[0]={sys.path[0]!r})")
         return
+
+    try:
+        from src.monitoring.recovery_truth import (
+            request_recovery, mark_dispatched, observe_execution, verify_resolution,
+            collect_health_snapshot_evidence, ExecutionEvidence, VerificationEvidence,
+            RECOVERY_REGISTRY, RecoveryStore, RecoveryState,
+        )
+        store = RecoveryStore()
+        recovery_available = True
+    except Exception as e:
+        _log(f"recovery_truth import failed — tracking disabled: {e}")
+        recovery_available = False
 
     symptoms: list = run_all_checks()
     if not symptoms:
@@ -295,7 +312,6 @@ def _handle_outcome_symptoms() -> None:
         action = sym.suggested_action
 
         if action in (None, "none"):
-            # Direkt eskalieren
             if not _recently_pushed(sym.id, hours=24):
                 _log(f"{sym.id}: no action available — pushing")
                 _vapid_push(f"{sym.id}: {sym.summary}")
@@ -303,24 +319,86 @@ def _handle_outcome_symptoms() -> None:
             continue
 
         if action == "prompt-resubscribe":
-            # Browser-Resubscribe braucht User-Eingriff — eskalieren mit 24h cooldown
             if not _recently_pushed(sym.id, hours=24):
                 _log(f"{sym.id}: needs human (resubscribe) — pushing")
                 _vapid_push(f"{sym.id}: {sym.summary}")
                 _mark_pushed(sym.id)
             continue
 
-        ok, tail = _run_outcome_action(action, sym.id)
+        # ── P0-B3 recovery chain tracking ────────────────────────────────────
+        attempt = None
+        if recovery_available:
+            try:
+                attempt = request_recovery(sym.id, action, symptom_id=sym.id)
+                store.save(attempt)
+                if attempt.state == RecoveryState.RECOVERY_UNAVAILABLE:
+                    _log(f"{sym.id}: RECOVERY_UNAVAILABLE for {action!r} — {attempt.terminal_reason}")
+                    # Still dispatch for operational continuity; just can't claim RECOVERED.
+                else:
+                    attempt = mark_dispatched(attempt)
+                    store.save(attempt)
+            except Exception as e:
+                _log(f"{sym.id}: recovery tracking error at request/dispatch: {e}")
+                attempt = None
+
+        ok, tail, exit_code = _run_outcome_action(action, sym.id)
+        completed_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
         if ok:
             _log(f"auto-action: {sym.id} → ok ({action})")
         else:
             _log(f"auto-action: {sym.id} → failed ({action}): {tail[:120]}")
+
+        # ── Observe execution (P0-B3: health snapshot beats process exit) ────
+        if recovery_available and attempt is not None and attempt.state == RecoveryState.DISPATCHED:
+            try:
+                binding = RECOVERY_REGISTRY.get(action)
+                if binding and binding.health_job:
+                    exe_ev = collect_health_snapshot_evidence(binding.health_job, attempt.requested_at)
+                    if exe_ev is None:
+                        exe_ev = ExecutionEvidence(
+                            run_id=None,
+                            observed_at=completed_at,
+                            exit_code=None,
+                            source="health_snapshot_absent",
+                        )
+                else:
+                    exe_ev = ExecutionEvidence(
+                        run_id=None,
+                        observed_at=completed_at,
+                        exit_code=exit_code,
+                        source="process_exit",
+                    )
+                attempt = observe_execution(attempt, exe_ev)
+                store.save(attempt)
+            except Exception as e:
+                _log(f"{sym.id}: recovery tracking error at observe: {e}")
+                attempt = None
 
         # Re-check: ist Symptom weg?
         try:
             still = [s for s in run_all_checks() if s.id == sym.id]
         except Exception:
             still = []
+
+        # ── Verify resolution (P0-B3) ─────────────────────────────────────────
+        if recovery_available and attempt is not None and attempt.state == RecoveryState.OBSERVED:
+            try:
+                ver_ev = VerificationEvidence(
+                    verified_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    symptom_absent=len(still) == 0,
+                    detail=f"re-ran outcome checks after {action!r}; "
+                           f"symptom {'absent' if not still else 'still present'}",
+                )
+                attempt = verify_resolution(attempt, ver_ev)
+                store.save(attempt)
+                if attempt.state == RecoveryState.RECOVERED:
+                    _log(f"{sym.id}: RECOVERED ✅ (attempt={attempt.attempt_id})")
+                else:
+                    _log(f"{sym.id}: recovery NOT confirmed: {attempt.state.value} — {attempt.terminal_reason}")
+            except Exception as e:
+                _log(f"{sym.id}: recovery tracking error at verify: {e}")
+
         if not still:
             _log(f"{sym.id}: resolved nach Auto-Action ✅")
             continue
