@@ -245,8 +245,12 @@ def _vapid_push(msg: str) -> None:
 
 
 _ACTION_MAP = {
-    "re-run-settle": ["python3", "scripts/settle_bets.py"],
-    "re-consume": ["python3", "scripts/consume_pending_bets.py"],
+    # settle_cron.sh sources _health.sh → health_finish("settle", ...) — produces snapshot.
+    "re-run-settle": ["bash", "scripts/settle_cron.sh"],
+    # consume_pending_bets_cron.sh sources _health.sh → health_finish("consume_pending_bets", ...).
+    "re-consume": ["bash", "scripts/consume_pending_bets_cron.sh"],
+    # daily_scan.py --force has no health-writing wrapper that also accepts --force.
+    # scan_cron.sh omits --force (different semantics); binding is health_job=None → process_exit.
     "force-refresh-signals": ["python3", "scripts/daily_scan.py", "--force"],
     "re-test-vapid": ["python3", "-m", "src.notifications.health_push", "auto_heal_ai", "vapid-test"],
     "prompt-resubscribe": None,  # nicht autom. heilbar — direkt eskalieren
@@ -308,7 +312,7 @@ def _handle_outcome_symptoms() -> None:
         )
         store = RecoveryStore()
         recovery_available = True
-    except Exception as e:
+    except (ImportError, AttributeError, OSError) as e:
         _log(f"recovery_truth import failed — tracking disabled: {e}")
         recovery_available = False
 
@@ -337,6 +341,7 @@ def _handle_outcome_symptoms() -> None:
         # ── P0-B3 recovery chain: request + pre-dispatch snapshot baseline ───
         attempt = None
         pre_dispatch_last_run_at: str | None = None
+        pre_dispatch_run_id: str | None = None
         if recovery_available:
             try:
                 attempt = request_recovery(sym.id, action, symptom_id=sym.id)
@@ -353,9 +358,10 @@ def _handle_outcome_symptoms() -> None:
                         )
                         if _baseline:
                             pre_dispatch_last_run_at = _baseline.observed_at
+                            pre_dispatch_run_id = _baseline.run_id
                     attempt = mark_dispatched(attempt)
                     store.save(attempt)
-            except Exception as e:
+            except (AttributeError, KeyError, OSError, TypeError, ValueError) as e:
                 _log(f"{sym.id}: recovery tracking error at request/dispatch: {e}")
                 attempt = None
 
@@ -375,6 +381,7 @@ def _handle_outcome_symptoms() -> None:
                     exe_ev = collect_health_snapshot_evidence(
                         binding.health_job, attempt.requested_at,
                         pre_dispatch_last_run_at=pre_dispatch_last_run_at,
+                        pre_dispatch_run_id=pre_dispatch_run_id,
                     )
                     if exe_ev is None:
                         # Snapshot absent after action — source=health_snapshot_absent will
@@ -387,7 +394,7 @@ def _handle_outcome_symptoms() -> None:
                             job=binding.health_job,
                         )
                 else:
-                    # process_exit binding (e.g., re-test-vapid) — process exit is explicit
+                    # process_exit binding (e.g., re-test-vapid, force-refresh-signals) — explicit
                     exe_ev = ExecutionEvidence(
                         run_id=None,
                         observed_at=completed_at,
@@ -399,14 +406,23 @@ def _handle_outcome_symptoms() -> None:
                 store.save(attempt)
                 if attempt.state != RecoveryState.OBSERVED:
                     _log(f"{sym.id}: observe_execution failed: {attempt.terminal_reason}")
-            except Exception as e:
+            except (AttributeError, KeyError, OSError, TypeError, ValueError) as e:
                 _log(f"{sym.id}: recovery tracking error at observe: {e}")
                 attempt = None
 
-        # Re-check: ist Symptom weg? Checker exceptions are NOT symptom_absent (fail closed).
+        # Re-check: ist Symptom weg? Checker exceptions/errors are NOT symptom_absent (fail closed).
         checker_failed = False
+        still: list = []
         try:
-            still = [s for s in run_all_checks() if s.id == sym.id]
+            all_post_checks = run_all_checks()
+            still = [s for s in all_post_checks if s.id == sym.id]
+            # checker_error_* symptoms mean a check may have failed to evaluate the
+            # original symptom — cannot confirm absence (P0-B3 checker-error rule).
+            checker_errors = [s for s in all_post_checks if s.id.startswith("checker_error_")]
+            if checker_errors:
+                checker_failed = True
+                _log(f"{sym.id}: checker_error during re-check (verification unavailable): "
+                     f"{[e.id for e in checker_errors]}")
         except Exception as exc:
             _log(f"{sym.id}: checker exception during verification — treated as unresolved: {exc}")
             still = [sym]  # cannot confirm symptom gone — fail closed
@@ -421,14 +437,14 @@ def _handle_outcome_symptoms() -> None:
                     symptom_absent=sym_absent,
                     detail=(
                         f"re-ran outcome checks after {action!r}; "
-                        f"{'checker exception' if checker_failed else 'symptom absent' if sym_absent else 'symptom still present'}"
+                        f"{'checker exception/error' if checker_failed else 'symptom absent' if sym_absent else 'symptom still present'}"
                     ),
                 )
                 attempt = verify_resolution(attempt, ver_ev)
                 store.save(attempt)
                 if attempt.state != RecoveryState.RECOVERED:
                     _log(f"{sym.id}: recovery not confirmed: {attempt.state.value} — {attempt.terminal_reason}")
-            except Exception as e:
+            except (AttributeError, KeyError, OSError, TypeError, ValueError) as e:
                 _log(f"{sym.id}: recovery tracking error at verify: {e}")
 
         # Only RECOVERED state may emit a recovery-success claim (P0-B3).

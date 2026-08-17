@@ -25,9 +25,21 @@ Correlation rules for observe_execution:
 - Snapshot-backed bindings (health_job is not None): only source='health_snapshot'
   is accepted. process_exit and health_snapshot_absent fail closed.
 - Wrong-job evidence (evidence.job != binding.health_job) fails closed.
+  job=None is NOT lenient — it fails closed for snapshot-backed bindings.
 - observed_at must be strictly after dispatched_at (not just requested_at).
 - If pre_dispatch_observed_at is set, the new snapshot must be strictly newer.
+  Malformed pre_dispatch_observed_at fails closed (not silently skipped).
+  If pre_dispatch_run_id is set and matches evidence.run_id, snapshot is unchanged.
 - verified_at must be strictly after execution observed_at.
+  Malformed observed_at or verified_at fails closed.
+
+Actor-to-evidence constraints:
+- A binding is snapshot-backed only if the recovery actor (the _ACTION_MAP command)
+  can deterministically produce a new canonical health snapshot for health_job.
+- For re-run-settle: settle_cron.sh wraps settle_bets.py + health_finish("settle").
+- For re-consume: consume_pending_bets_cron.sh wraps script + health_finish.
+- For force-refresh-signals: daily_scan.py --force has no health-writing wrapper
+  that also accepts --force → health_job=None, process_exit evidence only.
 """
 from __future__ import annotations
 
@@ -90,6 +102,7 @@ class ExecutionEvidence:
     source: str               # "health_snapshot" | "process_exit" | "health_snapshot_absent"
     job: str | None = None    # which job snapshot was read; validated against binding.health_job
     pre_dispatch_observed_at: str | None = None  # snapshot last_run_at before dispatch (for freshness)
+    pre_dispatch_run_id: str | None = None        # run_id of pre-dispatch snapshot (for freshness)
 
 
 @dataclass
@@ -158,23 +171,28 @@ class RecoveryBinding:
 # Actions not listed → RECOVERY_UNAVAILABLE (fail-closed).
 RECOVERY_REGISTRY: dict[str, RecoveryBinding] = {
     # ── Layer-2 outcome actions (auto_heal_ai._handle_outcome_symptoms) ──────
-    # Settle re-run: settle_bets.py writes its own health snapshot.
+    # Settle re-run: settle_cron.sh (the _ACTION_MAP actor) sources _health.sh and
+    # calls health_finish("settle", ...) — it produces a canonical health snapshot.
     "re-run-settle": RecoveryBinding(
         action="re-run-settle",
         actor_layer="layer2_outcome",
         health_job="settle",
     ),
-    # Consume pending bets: consume_pending_bets.py writes its health snapshot.
+    # Consume pending bets: consume_pending_bets_cron.sh sources _health.sh and
+    # calls health_finish("consume_pending_bets", ...) — produces canonical snapshot.
     "re-consume": RecoveryBinding(
         action="re-consume",
         actor_layer="layer2_outcome",
         health_job="consume_pending_bets",
     ),
-    # Force-refresh signals: daily_scan.py writes health snapshot.
+    # Force-refresh signals: daily_scan.py --force has no health-writing wrapper
+    # that also accepts --force.  scan_cron.sh writes daily_scan health but omits
+    # --force, which changes semantics (skips if already ran today).  Cannot claim
+    # snapshot-backed evidence without the canonical actor → health_job=None.
     "force-refresh-signals": RecoveryBinding(
         action="force-refresh-signals",
         actor_layer="layer2_outcome",
-        health_job="daily_scan",
+        health_job=None,
     ),
     # VAPID test: no health snapshot — execution evidence is process exit only.
     # Weaker than snapshot-backed evidence; noted as remaining risk.
@@ -234,7 +252,7 @@ def _parse_iso(s: str | None) -> datetime | None:
         return None
     try:
         return datetime.fromisoformat(s.replace("Z", "+00:00"))
-    except Exception:
+    except (ValueError, TypeError):
         return None
 
 
@@ -384,13 +402,14 @@ def observe_execution(
                 f"(health_job={binding.health_job!r}), got {evidence.source!r}. "
                 "process_exit and health_snapshot_absent fail closed for snapshot-backed bindings.",
             )
-        # Job validation: if evidence carries a job label, it must match
-        if evidence.job is not None and evidence.job != binding.health_job:
+        # Job validation: evidence.job must match binding.health_job.
+        # job=None is NOT lenient for snapshot-backed bindings — fails closed.
+        if evidence.job != binding.health_job:
             return _fail(
                 attempt,
                 f"Evidence job {evidence.job!r} does not match binding.health_job "
                 f"{binding.health_job!r} for action {attempt.binding_action!r}. "
-                "Wrong-job evidence fails closed.",
+                "Wrong-job or unknown-job evidence fails closed.",
             )
 
     # Temporal: observed_at must be strictly after dispatched_at
@@ -416,14 +435,30 @@ def observe_execution(
             "cannot satisfy a new recovery attempt.",
         )
 
-    # Snapshot freshness: new snapshot must be strictly newer than pre-dispatch baseline
+    # Snapshot freshness: new snapshot must be strictly newer than pre-dispatch baseline.
+    # Malformed pre_dispatch_observed_at fails closed — silently skipping would fabricate evidence.
     if evidence.pre_dispatch_observed_at is not None:
         pre_dt = _parse_iso(evidence.pre_dispatch_observed_at)
-        if pre_dt is not None and observed_dt <= pre_dt:
+        if pre_dt is None:
             return _fail(
                 attempt,
-                f"Snapshot unchanged: observed_at={evidence.observed_at!r} not strictly "
-                f"after pre_dispatch_observed_at={evidence.pre_dispatch_observed_at!r}. "
+                f"Malformed pre_dispatch_observed_at={evidence.pre_dispatch_observed_at!r} "
+                "— cannot verify snapshot freshness. Fail closed.",
+            )
+        # If both run_ids are present and identical, the snapshot was not refreshed.
+        if (evidence.pre_dispatch_run_id is not None
+                and evidence.run_id is not None
+                and evidence.run_id == evidence.pre_dispatch_run_id):
+            return _fail(
+                attempt,
+                f"Snapshot run_id unchanged ({evidence.run_id!r}) — same execution as "
+                "pre-dispatch baseline. A new execution must produce a different run_id.",
+            )
+        if observed_dt <= pre_dt:
+            return _fail(
+                attempt,
+                f"Snapshot timestamp unchanged: observed_at={evidence.observed_at!r} not "
+                f"strictly after pre_dispatch_observed_at={evidence.pre_dispatch_observed_at!r}. "
                 "An unchanged snapshot is not a new execution.",
             )
 
@@ -484,9 +519,24 @@ def verify_resolution(
         )
 
     # Temporal: verified_at must be strictly after execution observed_at.
+    # Malformed timestamps fail closed — RECOVERED requires both valid and ordered.
     observed_dt = _parse_iso(attempt.execution_evidence.observed_at)
+    if observed_dt is None:
+        return _fail(
+            attempt,
+            f"Cannot parse execution observed_at={attempt.execution_evidence.observed_at!r} "
+            "for temporal verification. RECOVERED requires valid timestamps.",
+            verification_evidence=evidence,
+        )
     verified_dt = _parse_iso(evidence.verified_at)
-    if observed_dt is not None and verified_dt is not None and verified_dt <= observed_dt:
+    if verified_dt is None:
+        return _fail(
+            attempt,
+            f"Cannot parse verified_at={evidence.verified_at!r}. "
+            "RECOVERED requires valid timestamps.",
+            verification_evidence=evidence,
+        )
+    if verified_dt <= observed_dt:
         return _fail(
             attempt,
             f"Verification is pre-execution: verified_at={evidence.verified_at!r} "
@@ -529,6 +579,7 @@ def collect_health_snapshot_evidence(
     *,
     health_dir: Path | None = None,
     pre_dispatch_last_run_at: str | None = None,
+    pre_dispatch_run_id: str | None = None,
 ) -> ExecutionEvidence | None:
     """Read a job's health snapshot and build ExecutionEvidence.
 
@@ -538,8 +589,8 @@ def collect_health_snapshot_evidence(
     evidence is stored as None, never fabricated.
 
     Sets evidence.job=job so observe_execution can validate cross-job correctness.
-    Sets evidence.pre_dispatch_observed_at=pre_dispatch_last_run_at for freshness
-    checking in observe_execution.
+    Sets evidence.pre_dispatch_observed_at and evidence.pre_dispatch_run_id for
+    freshness checking in observe_execution.
 
     The caller must still pass this evidence through observe_execution() which
     enforces all correlation invariants.
@@ -552,7 +603,7 @@ def collect_health_snapshot_evidence(
         return None
     try:
         snap = json.loads(path.read_text())
-    except Exception:
+    except (OSError, ValueError):
         return None
 
     last_run = snap.get("last_run_at")
@@ -567,6 +618,7 @@ def collect_health_snapshot_evidence(
         source="health_snapshot",
         job=job,
         pre_dispatch_observed_at=pre_dispatch_last_run_at,
+        pre_dispatch_run_id=pre_dispatch_run_id,
     )
 
 
@@ -592,7 +644,7 @@ class RecoveryStore:
             return {}
         try:
             return json.loads(self._path.read_text())
-        except Exception:
+        except (OSError, ValueError):
             return {}
 
     def _write(self, data: dict[str, Any]) -> None:
@@ -607,7 +659,7 @@ class RecoveryStore:
             return None
         try:
             return RecoveryAttempt.from_dict(raw)
-        except Exception:
+        except (KeyError, ValueError, TypeError):
             return None
 
     def save(self, attempt: RecoveryAttempt) -> None:
@@ -615,8 +667,13 @@ class RecoveryStore:
         data = self._load()
         existing_raw = data.get(attempt.attempt_id)
         if existing_raw is not None:
+            # Attempt to load existing; if corrupt, treat as absent (overwrite safely).
             try:
-                existing = RecoveryAttempt.from_dict(existing_raw)
+                existing: RecoveryAttempt | None = RecoveryAttempt.from_dict(existing_raw)
+            except (KeyError, ValueError, TypeError):
+                existing = None  # corrupt entry — overwrite safely
+
+            if existing is not None:
                 # Terminal immutability — re-saving is a no-op.
                 if existing.state in _TERMINAL_STATES:
                     return
@@ -630,8 +687,6 @@ class RecoveryStore:
                 new_order = _STATE_ORDER.get(attempt.state, 0)
                 if new_order < existing_order:
                     return  # older state cannot overwrite newer
-            except Exception:
-                pass  # corrupt entry — overwrite safely
         data[attempt.attempt_id] = attempt.to_dict()
         self._write(data)
 
@@ -642,7 +697,7 @@ class RecoveryStore:
         for raw in data.values():
             try:
                 attempts.append(RecoveryAttempt.from_dict(raw))
-            except Exception:
-                pass
+            except (KeyError, ValueError, TypeError):
+                continue  # skip corrupt entries
         attempts.sort(key=lambda a: a.requested_at, reverse=True)
         return attempts[:limit]

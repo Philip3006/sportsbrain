@@ -78,16 +78,19 @@ def _exe(
     exit_code: int | None = 0,
     source: str = "health_snapshot",
     *,
+    run_id: str | None = None,
     job: str | None = None,
     pre_dispatch_observed_at: str | None = None,
+    pre_dispatch_run_id: str | None = None,
 ) -> ExecutionEvidence:
     return ExecutionEvidence(
-        run_id=None,
+        run_id=run_id,
         observed_at=observed_at,
         exit_code=exit_code,
         source=source,
         job=job,
         pre_dispatch_observed_at=pre_dispatch_observed_at,
+        pre_dispatch_run_id=pre_dispatch_run_id,
     )
 
 
@@ -228,7 +231,7 @@ class TestInvariant4ExitFailure:
     def test_exit1_not_recovered(self):
         """[INV-4] Correlated execution with exit_code=1 → FAILED, not RECOVERED."""
         dispatched = _dispatched_attempt(attempt_id="inv4-001")
-        result = observe_execution(dispatched, _exe(_OBS_AT, exit_code=1))
+        result = observe_execution(dispatched, _exe(_OBS_AT, exit_code=1, job="settle"))
         assert result.state == RecoveryState.FAILED
         reason = result.terminal_reason or ""
         assert "non-zero" in reason.lower() or "exit_code=1" in reason
@@ -236,13 +239,13 @@ class TestInvariant4ExitFailure:
     def test_exit127_not_recovered(self):
         """[INV-4] Non-zero exit (127) → FAILED."""
         dispatched = _dispatched_attempt(attempt_id="inv4-002")
-        result = observe_execution(dispatched, _exe(_OBS_AT, exit_code=127))
+        result = observe_execution(dispatched, _exe(_OBS_AT, exit_code=127, job="settle"))
         assert result.state == RecoveryState.FAILED
 
     def test_unknown_exit_not_recovered(self):
         """[INV-4] Unknown exit_code (None) → FAILED (P0-B1 cannot claim success)."""
         dispatched = _dispatched_attempt(attempt_id="inv4-003")
-        result = observe_execution(dispatched, _exe(_OBS_AT, exit_code=None))
+        result = observe_execution(dispatched, _exe(_OBS_AT, exit_code=None, job="settle"))
         assert result.state == RecoveryState.FAILED
         reason = result.terminal_reason or ""
         assert "None" in reason or "unknown" in reason.lower()
@@ -322,7 +325,8 @@ class TestInvariant7PreDispatchExecution:
         """[INV-7] observed_at strictly after dispatched_at → temporal check passes."""
         dispatched = _dispatched_attempt(attempt_id="inv7-003")
         one_second_after_dispatch = _iso(_utc(2026, 8, 17, 12, 5, 1))  # 12:05:01
-        result = observe_execution(dispatched, _exe(one_second_after_dispatch, exit_code=0))
+        result = observe_execution(dispatched, _exe(one_second_after_dispatch, exit_code=0,
+                                                    job="settle"))
         assert result.state == RecoveryState.OBSERVED
 
 
@@ -872,13 +876,15 @@ class TestCorrectionWrongJobEvidence:
         result = observe_execution(dispatched, exe)
         assert result.state == RecoveryState.OBSERVED
 
-    def test_unknown_job_evidence_not_rejected(self):
-        """Evidence with job=None (unknown source) is lenient — job check skipped."""
+    def test_job_none_fails_closed_for_snapshot_backed(self):
+        """Evidence with job=None for snapshot-backed binding → FAILED (not lenient)."""
         dispatched = _dispatched_attempt(action="re-run-settle", attempt_id="c1-003")
         exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot", job=None)
         result = observe_execution(dispatched, exe)
-        # job=None is lenient — not wrong, just unknown
-        assert result.state == RecoveryState.OBSERVED
+        # job=None != "settle" (binding.health_job) → fails closed
+        assert result.state == RecoveryState.FAILED
+        reason = result.terminal_reason or ""
+        assert "job" in reason.lower() or "None" in reason
 
 
 class TestCorrectionWrongEvidenceSource:
@@ -917,9 +923,9 @@ class TestCorrectionPreDispatchExecution:
     def test_execution_between_request_and_dispatch_rejected(self):
         """observed_at > requested_at but <= dispatched_at → FAILED (pre-dispatch)."""
         dispatched = _dispatched_attempt(attempt_id="c3-001")
-        # Between request (12:00) and dispatch (12:05)
+        # Between request (12:00) and dispatch (12:05) — supply job= so temporal check fires
         between_at = _iso(_utc(2026, 8, 17, 12, 2))
-        exe = _exe(between_at, exit_code=0, source="health_snapshot")
+        exe = _exe(between_at, exit_code=0, source="health_snapshot", job="settle")
         result = observe_execution(dispatched, exe)
         assert result.state == RecoveryState.FAILED
         reason = result.terminal_reason or ""
@@ -928,7 +934,7 @@ class TestCorrectionPreDispatchExecution:
     def test_execution_exactly_at_dispatch_rejected(self):
         """observed_at == dispatched_at → not strictly after → FAILED."""
         dispatched = _dispatched_attempt(attempt_id="c3-002")
-        exe = _exe(_AFTER_AT, exit_code=0, source="health_snapshot")
+        exe = _exe(_AFTER_AT, exit_code=0, source="health_snapshot", job="settle")
         result = observe_execution(dispatched, exe)
         assert result.state == RecoveryState.FAILED
 
@@ -1043,6 +1049,219 @@ class TestCorrectionCheckerException:
         observed = _observed_attempt(attempt_id="c7-ctrl")
         ver = _ver(symptom_absent=True)
         result = verify_resolution(observed, ver)
+        assert result.state == RecoveryState.RECOVERED
+
+
+class TestCorrectionMalformedPreDispatch:
+    """C4b: malformed pre_dispatch_observed_at must fail closed (not silently skipped)."""
+
+    def test_malformed_pre_dispatch_fails_closed(self):
+        """pre_dispatch_observed_at set but unparseable → FAILED (cannot verify freshness)."""
+        dispatched = _dispatched_attempt(attempt_id="c4b-001")
+        exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot",
+                   job="settle", pre_dispatch_observed_at="not-a-timestamp")
+        result = observe_execution(dispatched, exe)
+        assert result.state == RecoveryState.FAILED
+        reason = result.terminal_reason or ""
+        assert "malformed" in reason.lower() or "pre_dispatch" in reason.lower() or \
+               "cannot verify" in reason.lower()
+
+    def test_empty_pre_dispatch_fails_closed(self):
+        """pre_dispatch_observed_at=empty string → unparseable → FAILED."""
+        dispatched = _dispatched_attempt(attempt_id="c4b-002")
+        exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot",
+                   job="settle", pre_dispatch_observed_at="")
+        result = observe_execution(dispatched, exe)
+        assert result.state == RecoveryState.FAILED
+
+    def test_none_pre_dispatch_skips_check(self):
+        """pre_dispatch_observed_at=None → freshness check skipped (known-good path)."""
+        dispatched = _dispatched_attempt(attempt_id="c4b-003")
+        exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot",
+                   job="settle", pre_dispatch_observed_at=None)
+        result = observe_execution(dispatched, exe)
+        assert result.state == RecoveryState.OBSERVED
+
+
+class TestCorrectionRunId:
+    """C4c: run_id freshness check — same run_id means unchanged snapshot."""
+
+    def test_same_run_id_fails_closed(self):
+        """pre_dispatch_run_id == evidence.run_id → same execution → FAILED."""
+        dispatched = _dispatched_attempt(attempt_id="c4c-001")
+        exe = _exe(
+            _OBS_AT, exit_code=0, source="health_snapshot", job="settle",
+            run_id="run-abc123",
+            pre_dispatch_observed_at=_AFTER_AT,  # valid, older than _OBS_AT
+            pre_dispatch_run_id="run-abc123",    # same → unchanged snapshot
+        )
+        result = observe_execution(dispatched, exe)
+        assert result.state == RecoveryState.FAILED
+        reason = result.terminal_reason or ""
+        assert "run_id" in reason.lower() or "unchanged" in reason.lower()
+
+    def test_different_run_id_newer_timestamp_accepted(self):
+        """Different run_id + newer timestamp → new execution → OBSERVED."""
+        dispatched = _dispatched_attempt(attempt_id="c4c-002")
+        exe = _exe(
+            _OBS_AT, exit_code=0, source="health_snapshot", job="settle",
+            run_id="run-new999",
+            pre_dispatch_observed_at=_AFTER_AT,  # older than _OBS_AT
+            pre_dispatch_run_id="run-old123",    # different → new execution
+        )
+        result = observe_execution(dispatched, exe)
+        assert result.state == RecoveryState.OBSERVED
+
+    def test_same_run_id_but_no_pre_dispatch_run_id_skips_id_check(self):
+        """If pre_dispatch_run_id=None, run_id check is skipped (timestamp-only)."""
+        dispatched = _dispatched_attempt(attempt_id="c4c-003")
+        exe = _exe(
+            _OBS_AT, exit_code=0, source="health_snapshot", job="settle",
+            run_id="run-xyz",
+            pre_dispatch_observed_at=_AFTER_AT,
+            pre_dispatch_run_id=None,  # no baseline run_id → skip ID check
+        )
+        result = observe_execution(dispatched, exe)
+        assert result.state == RecoveryState.OBSERVED
+
+    def test_same_run_id_but_no_evidence_run_id_skips_id_check(self):
+        """If evidence.run_id=None, run_id check is skipped (snapshot has no run_id)."""
+        dispatched = _dispatched_attempt(attempt_id="c4c-004")
+        exe = _exe(
+            _OBS_AT, exit_code=0, source="health_snapshot", job="settle",
+            run_id=None,
+            pre_dispatch_observed_at=_AFTER_AT,
+            pre_dispatch_run_id="run-old",  # baseline has run_id but evidence doesn't
+        )
+        result = observe_execution(dispatched, exe)
+        assert result.state == RecoveryState.OBSERVED
+
+
+class TestCorrectionMalformedVerifyTimestamps:
+    """C5b: malformed timestamps in verify_resolution must fail closed."""
+
+    def test_malformed_observed_at_fails_closed(self):
+        """execution_evidence.observed_at unparseable → FAILED."""
+        attempt = RecoveryAttempt(
+            attempt_id="c5b-001",
+            target="stuck_open_bets",
+            symptom_id="stuck_open_bets",
+            binding_action="re-run-settle",
+            state=RecoveryState.OBSERVED,
+            requested_at=_REQUESTED_AT,
+            dispatched_at=_AFTER_AT,
+            execution_evidence=ExecutionEvidence(
+                run_id=None,
+                observed_at="not-a-timestamp",  # malformed
+                exit_code=0,
+                source="health_snapshot",
+                job="settle",
+            ),
+        )
+        ver = _ver(symptom_absent=True)
+        result = verify_resolution(attempt, ver)
+        assert result.state == RecoveryState.FAILED
+        reason = result.terminal_reason or ""
+        assert "observed_at" in reason.lower() or "parse" in reason.lower() or \
+               "cannot" in reason.lower()
+
+    def test_malformed_verified_at_fails_closed(self):
+        """VerificationEvidence.verified_at unparseable → FAILED."""
+        observed = _observed_attempt(attempt_id="c5b-002", observed_at=_OBS_AT)
+        ver = VerificationEvidence(
+            verified_at="not-a-timestamp",
+            symptom_absent=True,
+            detail="malformed timestamp",
+        )
+        result = verify_resolution(observed, ver)
+        assert result.state == RecoveryState.FAILED
+        reason = result.terminal_reason or ""
+        assert "verified_at" in reason.lower() or "parse" in reason.lower() or \
+               "cannot" in reason.lower()
+
+    def test_both_valid_timestamps_ordered_correctly_recovers(self):
+        """Control: both valid, verified_at > observed_at, symptom_absent=True → RECOVERED."""
+        observed = _observed_attempt(attempt_id="c5b-ctrl", observed_at=_OBS_AT)
+        ver = _ver(symptom_absent=True)  # verified_at=_VER_AT > _OBS_AT
+        result = verify_resolution(observed, ver)
+        assert result.state == RecoveryState.RECOVERED
+
+
+class TestHandleOutcomeSymptomsIntegration:
+    """Integration-style test: checker_error_* in re-check prevents recovery claim."""
+
+    def test_checker_error_symptom_prevents_recovery_claim(self):
+        """[C7-integration] checker_error_* present → sym_absent=False → FAILED.
+
+        Simulates the logic inside _handle_outcome_symptoms post-action re-check:
+        run_all_checks() returns a checker_error_* symptom instead of (or alongside)
+        the original. The recovery chain must treat this as unresolved.
+        """
+        from src.monitoring.outcome_checks import Symptom
+
+        original_id = "test_stuck_open_bets_integration"
+        original_sym = Symptom(
+            id=original_id,
+            severity="error",
+            summary="bets stuck open",
+            payload={},
+            suggested_action="re-run-settle",
+        )
+        checker_error_sym = Symptom(
+            id="checker_error_check_stuck_open_bets",
+            severity="error",
+            summary="checker threw AttributeError",
+            payload={},
+            suggested_action="none",
+        )
+
+        # Simulate what _handle_outcome_symptoms does in the re-check step:
+        # all_post_checks = [checker_error_sym] — original absent but checker_error present
+        all_post_checks = [checker_error_sym]
+        still = [s for s in all_post_checks if s.id == original_sym.id]  # []
+        checker_errors = [s for s in all_post_checks if s.id.startswith("checker_error_")]
+        checker_failed = bool(checker_errors)
+
+        assert checker_failed is True, "checker_error_* must set checker_failed=True"
+
+        sym_absent = len(still) == 0 and not checker_failed  # False (checker_failed blocks it)
+        assert sym_absent is False, (
+            "checker_error_* must prevent sym_absent=True even when original symptom absent"
+        )
+
+        # The verify path receives symptom_absent=False → FAILED
+        observed = _observed_attempt(attempt_id="c7-int-001")
+        ver_ev = VerificationEvidence(
+            verified_at=_VER_AT,
+            symptom_absent=sym_absent,
+            detail=f"checker_error during re-check: {checker_error_sym.id}",
+        )
+        result = verify_resolution(observed, ver_ev)
+        assert result.state == RecoveryState.FAILED
+        assert result.state != RecoveryState.RECOVERED
+
+    def test_no_checker_error_symptom_absent_recovers(self):
+        """Control: no checker_error + symptom gone → RECOVERED."""
+        from src.monitoring.outcome_checks import Symptom
+
+        original_id = "test_integration_ctrl"
+        all_post_checks: list[Symptom] = []  # original gone, no checker_error
+        still = [s for s in all_post_checks if s.id == original_id]
+        checker_errors = [s for s in all_post_checks if s.id.startswith("checker_error_")]
+        checker_failed = bool(checker_errors)
+
+        sym_absent = len(still) == 0 and not checker_failed  # True
+
+        assert checker_failed is False
+        assert sym_absent is True
+
+        observed = _observed_attempt(attempt_id="c7-int-ctrl")
+        ver_ev = VerificationEvidence(
+            verified_at=_VER_AT,
+            symptom_absent=sym_absent,
+            detail="all clear after re-run-settle",
+        )
+        result = verify_resolution(observed, ver_ev)
         assert result.state == RecoveryState.RECOVERED
 
 
