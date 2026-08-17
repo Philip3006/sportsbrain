@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-17T05:05:30Z",
+  "generated_at": "2026-08-17T05:57:58Z",
   "overall": "down",
   "jobs": [
     {
@@ -26,11 +26,11 @@
     },
     {
       "job": "closing_odds",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-08-16T16:07:24Z",
       "duration_s": 2.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-08-16T16:07:24Z — overdue (>46800s)",
       "fallback_used": null,
       "next_expected_in_s": 43200,
       "cadence": "2×/Tag 14:00 + 18:00"
@@ -38,7 +38,7 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-17T05:05:30Z",
+      "last_run_at": "2026-08-17T05:57:58Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -115,7 +115,7 @@
     {
       "job": "tennis_closing_odds",
       "status": "error",
-      "last_run_at": "2026-08-17T04:45:09Z",
+      "last_run_at": "2026-08-17T05:37:17Z",
       "duration_s": null,
       "exit_code": 1,
       "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
@@ -126,10 +126,10 @@
     {
       "job": "tennis_retrain",
       "status": "error",
-      "last_run_at": "2026-08-16T05:34:47Z",
+      "last_run_at": "2026-08-17T05:40:38Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": "[MON-001] aggregate coerced ok→error from legacy snapshot: exit_code=1. No error field in snapshot.",
+      "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
       "fallback_used": null,
       "next_expected_in_s": 604800,
       "cadence": "wöchentlich Mo 03:00 UTC"
@@ -170,7 +170,7 @@
     {
       "job": "bundesliga2_retrain",
       "status": "ok",
-      "last_run_at": "2026-08-16T05:25:37Z",
+      "last_run_at": "2026-08-17T05:33:26Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -192,7 +192,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-17T05:05:30Z",
+      "last_run_at": "2026-08-17T05:57:57Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -203,7 +203,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-17T05:04:55Z",
+      "last_run_at": "2026-08-17T05:57:22Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
