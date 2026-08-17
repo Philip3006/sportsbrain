@@ -32,7 +32,7 @@ from src.monitoring.job_schedule import (
     JOB_EXPECTATIONS,
     IntervalExpectation,
     evaluate_expectation,
-    nominal_interval_s,
+    next_trigger_s,
 )
 from src.utils.atomic_io import atomic_write_json
 
@@ -91,21 +91,22 @@ def _job_entry(
         exp = IntervalExpectation(interval_s=3600, grace_s=600, cadence="")
 
     cadence = exp.cadence
-    next_exp_s = nominal_interval_s(exp)
+    next_exp_s = next_trigger_s(exp, now)
 
     # --- No snapshot yet ---
     if raw is None:
         last_dt: datetime | None = None
         result = evaluate_expectation(exp, last_dt, now)
         if not result.in_window:
-            # Off-window job has correctly never written a snapshot yet.
+            # Off-window and never reported — no execution occurred; use degraded
+            # (not "ok": no evidence of success; not "stale": not currently expected).
             return {
                 "job":                job,
-                "status":             "ok",
+                "status":             "degraded",
                 "last_run_at":        None,
                 "duration_s":         None,
                 "exit_code":          None,
-                "error":              None,
+                "error":              "no health snapshot yet — job has never reported",
                 "fallback_used":      None,
                 "next_expected_in_s": next_exp_s,
                 "cadence":            cadence,

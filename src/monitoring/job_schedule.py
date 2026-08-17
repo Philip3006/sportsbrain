@@ -134,6 +134,31 @@ def _find_most_recent_cron_point(
     return best
 
 
+def _find_next_cron_point(
+    points: tuple[tuple[int | None, int, int], ...],
+    now: datetime,
+) -> datetime | None:
+    """Return earliest future cron fire time strictly after `now`.
+
+    Looks forward up to 8 calendar days so weekly cron points are always found.
+    `now` must be timezone-aware UTC.
+    """
+    best: datetime | None = None
+    for day_offset in range(9):
+        candidate_day = now + timedelta(days=day_offset)
+        for (weekday, hour, minute) in points:
+            if weekday is not None and candidate_day.weekday() != weekday:
+                continue
+            candidate = candidate_day.replace(
+                hour=hour, minute=minute, second=0, microsecond=0,
+            )
+            if candidate <= now:
+                continue
+            if best is None or candidate < best:
+                best = candidate
+    return best
+
+
 # ---------------------------------------------------------------------------
 # Evaluation
 # ---------------------------------------------------------------------------
@@ -207,20 +232,26 @@ def _eval_windowed(
 ) -> ExpectationResult:
     dow = now.weekday()  # 0=Monday … 6=Sunday
     hour = now.hour
-    in_any_window = any(
-        dow == weekday and start_hour <= hour <= end_hour
-        for (weekday, start_hour, end_hour) in exp.windows
+    current_window = next(
+        (w for w in exp.windows if dow == w[0] and w[1] <= hour <= w[2]),
+        None,
     )
-    if not in_any_window:
+    if current_window is None:
         return ExpectationResult(in_window=False, is_overdue=False, cadence=exp.cadence)
-    if last_run_at is None:
-        return ExpectationResult(in_window=True, is_overdue=True, cadence=exp.cadence)
-    age_s = (now - last_run_at).total_seconds()
-    return ExpectationResult(
-        in_window=True,
-        is_overdue=age_s > exp.interval_s + exp.grace_s,
-        cadence=exp.cadence,
-    )
+
+    _, start_hour, _ = current_window
+    window_start = now.replace(hour=start_hour, minute=0, second=0, microsecond=0)
+
+    if last_run_at is not None and last_run_at >= window_start:
+        # Ran within current window — normal interval + grace semantics.
+        age_s = (now - last_run_at).total_seconds()
+        is_overdue = age_s > exp.interval_s + exp.grace_s
+    else:
+        # No run yet in current window — allow grace_s from window start before overdue.
+        window_age_s = (now - window_start).total_seconds()
+        is_overdue = window_age_s > exp.grace_s
+
+    return ExpectationResult(in_window=True, is_overdue=is_overdue, cadence=exp.cadence)
 
 
 def _eval_event_fallback(
@@ -311,9 +342,11 @@ JOB_EXPECTATIONS: dict[str, JobExpectation] = {
         grace_s=3600,
         cadence="8×/Tag 02/06/09/12/15/18/21/23 UTC",
     ),
-    "tennis_settle": IntervalExpectation(
-        interval_s=2 * 3600, grace_s=3600,
-        cadence="alle 2h 06-22 UTC",
+    # tennis_settle.yml: '15 6-22/2 * * *' → 06:15/08:15/.../22:15 UTC (9 daily points)
+    "tennis_settle": CronSetExpectation(
+        points=tuple((None, h, 15) for h in range(6, 23, 2)),
+        grace_s=3600,
+        cadence="9×/Tag 06:15–22:15/2h UTC",
     ),
     "tennis_closing_odds": IntervalExpectation(
         interval_s=1800, grace_s=900,
@@ -327,13 +360,32 @@ JOB_EXPECTATIONS: dict[str, JobExpectation] = {
     ),
 
     # --- 2. Bundesliga ---
-    "bundesliga2_scan": IntervalExpectation(
-        interval_s=12 * 3600, grace_s=3600,
-        cadence="2×/Tag + prä-Spieltag",
+    # bundesliga2_scan.yml: daily 06:00 UTC + Fr 15:00 / Sa 08:00 / So 08:00 UTC
+    # Python weekday: Fri=4, Sat=5, Sun=6
+    "bundesliga2_scan": CronSetExpectation(
+        points=(
+            (None, 6, 0),   # täglich 06:00 UTC
+            (4, 15, 0),     # Fr 15:00 UTC
+            (5, 8, 0),      # Sa 08:00 UTC
+            (6, 8, 0),      # So 08:00 UTC
+        ),
+        grace_s=3600,
+        cadence="täglich 06:00 UTC + Fr 15:00 / Sa 08:00 / So 08:00 UTC",
     ),
-    "bundesliga2_settle": IntervalExpectation(
-        interval_s=3 * 3600, grace_s=3600,
-        cadence="alle 3h nach Spielen",
+    # bundesliga2_settle.yml: Mo/Di 20:30 / Fr 21:30 / Sa 14:30+21:30 / So 14:45+21:00 UTC
+    # Python weekday: Mon=0, Tue=1, Fri=4, Sat=5, Sun=6
+    "bundesliga2_settle": CronSetExpectation(
+        points=(
+            (0, 20, 30),   # Mo 20:30 UTC
+            (1, 20, 30),   # Di 20:30 UTC
+            (4, 21, 30),   # Fr 21:30 UTC
+            (5, 14, 30),   # Sa 14:30 UTC
+            (5, 21, 30),   # Sa 21:30 UTC
+            (6, 14, 45),   # So 14:45 UTC
+            (6, 21, 0),    # So 21:00 UTC
+        ),
+        grace_s=3600,
+        cadence="Mo/Di 20:30 / Fr 21:30 / Sa 14:30+21:30 / So 14:45+21:00 UTC",
     ),
     # bundesliga2_retrain.yml: daily 05:00 UTC
     "bundesliga2_retrain": CronSetExpectation(
@@ -386,3 +438,39 @@ def nominal_interval_s(exp: JobExpectation) -> int:
     if isinstance(exp, EventWithFallbackExpectation):
         return exp.fallback_interval_s
     return 3600
+
+
+def next_trigger_s(exp: JobExpectation, now: datetime) -> int | None:
+    """Seconds until the next expected scheduler trigger from `now`.
+
+    Returns None when the value cannot be truthfully computed.
+    CronSet and Windowed kinds compute the actual time to next point/window.
+    """
+    if isinstance(exp, IntervalExpectation):
+        return exp.interval_s
+    if isinstance(exp, CronSetExpectation):
+        nxt = _find_next_cron_point(exp.points, now)
+        return max(0, int((nxt - now).total_seconds())) if nxt is not None else None
+    if isinstance(exp, WindowedExpectation):
+        dow = now.weekday()
+        hour = now.hour
+        in_window = any(dow == w[0] and w[1] <= hour <= w[2] for w in exp.windows)
+        if in_window:
+            return exp.interval_s
+        best: datetime | None = None
+        for day_offset in range(8):
+            candidate_day = now + timedelta(days=day_offset)
+            for (weekday, start_hour, _end) in exp.windows:
+                if candidate_day.weekday() != weekday:
+                    continue
+                candidate = candidate_day.replace(
+                    hour=start_hour, minute=0, second=0, microsecond=0,
+                )
+                if candidate <= now:
+                    continue
+                if best is None or candidate < best:
+                    best = candidate
+        return int((best - now).total_seconds()) if best is not None else None
+    if isinstance(exp, EventWithFallbackExpectation):
+        return exp.fallback_interval_s
+    return None
