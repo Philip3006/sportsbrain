@@ -160,19 +160,23 @@ def test_c1_head_sha_absent_does_not_fail(prov_dir, monkeypatch):
 
 
 def test_c1_seed_uses_correct_run_id():
-    """Regression: provenance_meta.json seed must pair 71d952d85 with run 32058588474.
+    """Regression: provenance_meta.json seed must pair post-merge SHA with its CI run.
 
-    CI run 32058083032 ran on e48cf436d (TASK-P0B-003 PR head), NOT on the
-    post-merge SHA 71d952d852ff11077dea2ac05ac82c49a6115d49. The correct
-    post-merge CI run is 32058588474.
+    Updated for P0B-004 (PR #15, squash-merge 2026-08-17T22:20:43Z):
+    - source_release_sha: 7cd6c6793419ab1f89c4b3c8e446f7764e84387a
+    - CI run: 32075583343 (ci_gates success on post-merge HEAD)
+
+    C1 invariant: source_ci.head_sha must equal source_release_sha in the seed,
+    ensuring provenance was recorded by the CI run that ran ON the merged SHA, not
+    the PR head SHA.
     """
     from src.monitoring import release_provenance as rp
     # Read the actual seed file from the repo
     meta_text = rp.PROVENANCE_META_PATH.read_text(encoding="utf-8")
     meta = json.loads(meta_text)
-    assert meta["source_release_sha"] == "71d952d852ff11077dea2ac05ac82c49a6115d49"
-    assert meta["source_ci"]["run_id"] == "32058588474", (
-        "C1: seed must use run_id=32058588474 (post-merge CI), not 32058083032 (PR head CI)"
+    assert meta["source_release_sha"] == "7cd6c6793419ab1f89c4b3c8e446f7764e84387a"
+    assert meta["source_ci"]["run_id"] == "32075583343", (
+        "C1: seed must use run_id=32075583343 (post-merge P0B-004 CI)"
     )
     assert meta["source_ci"]["head_sha"] == meta["source_release_sha"], (
         "C1: source_ci.head_sha must equal source_release_sha in the seed"

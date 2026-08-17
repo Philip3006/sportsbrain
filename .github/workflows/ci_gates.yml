@@ -83,6 +83,14 @@ jobs:
       - name: Provenance truth tests
         run: python -m pytest -q tests/monitoring/test_release_provenance.py
 
+      # ── HARD GATE 6: P0C-001 Privacy / Public Serialization Boundary ──
+      # Verifies that public static artifacts and public serializer contain no
+      # private financial/identity state. P0 security contract — must pass on
+      # every PR and push. Includes recursive private-key rejection and static
+      # artifact scan (T1–T11, T13–T14 of the P0C-001 test specification).
+      - name: Privacy serialization tests
+        run: python -m pytest -q tests/privacy/test_public_serializer.py
+
       # ── PROVENANCE: record source release after all gates pass (main push only) ──
       # docs/data/provenance_meta.json is NOT in ci_gates paths-filter → no re-trigger.
       # C3: uses safe concurrent push with retry/rebase (mirrors consume_pending_bets.yml).

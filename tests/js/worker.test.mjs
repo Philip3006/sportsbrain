@@ -34,7 +34,7 @@ const {
 
 // Blocker-5: import ACTUAL production orchestration function from worker.js
 const workerModule = await import(WORKER);
-const { orchestratePendingBetPost } = workerModule;
+const { orchestratePendingBetPost, serializePublicProduct } = workerModule;
 const workerDefault = workerModule.default; // used by Suite 12 cancel KV tests
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -1031,5 +1031,201 @@ describe('Cancel intent KV — per-intent storage (FND-003)', () => {
     assert.equal(requests.length, 1,
       `FND-003 namespace: default-user list must not see alice's intent; got ${JSON.stringify(requests)}`);
     assert.equal(requests[0].home, 'Alpha');
+  });
+});
+
+// ── P0C-001 helpers (shared by Suites 13 + 14) ───────────────────────────
+const P0C_TOKEN = 'test-token-p0c-001';
+const MASTER_TOKEN = P0C_TOKEN;
+function makeP0cKV() {
+  const store = new Map();
+  return {
+    async get(key) { return store.has(key) ? store.get(key) : null; },
+    async put(key, value) { store.set(key, value); },
+    async delete(key) { store.delete(key); },
+    async list({ prefix = '' } = {}) {
+      const keys = [...store.keys()].filter(k => k.startsWith(prefix)).map(name => ({ name }));
+      return { keys, list_complete: true, cursor: '' };
+    },
+  };
+}
+function makeP0cEnv(kv) { return { SIGNALS: kv, API_TOKEN: P0C_TOKEN }; }
+const P0C_BASE = 'https://worker-p0c.test';
+async function fwP0c(env, method, path, body, token) {
+  const tok = token || P0C_TOKEN;
+  const headers = { 'Authorization': `Bearer ${tok}` };
+  const init = { method, headers };
+  if (body !== undefined) {
+    headers['Content-Type'] = 'application/json';
+    init.body = JSON.stringify(body);
+  }
+  return workerDefault.fetch(new Request(`${P0C_BASE}${path}`, init), env, {});
+}
+
+// Aliases for Suite 14 (makeMockKV/makeEnv/fw point to P0C variants)
+const makeMockKV = makeP0cKV;
+const makeEnv = makeP0cEnv;
+const fw = fwP0c;
+
+// ── Suite 13: P0C-001 — serializePublicProduct() ─────────────────────────
+// T6: Public Worker route returns only public-safe schema.
+// Private financial/identity fields must be structurally excluded.
+describe('Suite 13 — P0C-001 serializePublicProduct()', () => {
+  const PRIVATE_SNAPSHOT = {
+    updated: '2026-08-18T00:00:00Z',
+    build_info: { sha: 'abc123' },
+    meta: { stale_odds: false, default_user: 'philip', user: 'philip' },
+    schedule: [{ match: 'Federer vs Nadal' }],
+    all_odds: { 'federer_vs_nadal': { home: 1.95 } },
+    model_tips: { 'federer_vs_nadal': { prob: 52.0 } },
+    model_evals: {},
+    football: [],
+    tennis: [{ signal_id: 'sig_001', ev_pct: 12.5 }],
+    top_elo: [{ name: 'Federer', rating: 2400 }],
+    wm_results: [],
+    odds_history: {},
+    // PRIVATE fields below — must not appear in public output
+    bankroll_state: { start: 100, free: 12345.67, staked: 0, pnl_closed: -52.87, published_at: '2026-08-18T00:00:00Z' },
+    open_bets: [{ id: 'PRIVATE_TEST_MARKER' }],
+    settled_bets: [{ id: 'settled_001' }],
+    history: [{ date: '2026-08-12', pnl: -5.0 }],
+    portfolio: { by_market: { h2h_home: { pnl: -20.0 } } },
+    wm_stats: { summary: { total_staked: 500.0, total_pnl: -32.0 } },
+    tennis_stats: {
+      updated: '2026-08-18T00:00:00Z',
+      active_tournaments: ['cincinnati_atp'],
+      live_gate_status: { atp250: 'live' },
+      stats: { total_staked: 200.0, total_pnl: -52.0, roi_pct: -26.0 },
+    },
+  };
+
+  test('public fields are present', () => {
+    const pub = serializePublicProduct(PRIVATE_SNAPSHOT);
+    assert.ok(pub.updated, 'updated missing');
+    assert.ok(pub.build_info, 'build_info missing');
+    assert.ok(pub.schedule, 'schedule missing');
+    assert.ok(pub.all_odds, 'all_odds missing');
+    assert.ok(pub.tennis, 'tennis signals missing');
+  });
+
+  test('bankroll_state absent from public payload', () => {
+    const pub = serializePublicProduct(PRIVATE_SNAPSHOT);
+    assert.ok(!('bankroll_state' in pub), 'bankroll_state leaked to public payload');
+    const str = JSON.stringify(pub);
+    assert.ok(!str.includes('12345.67'), 'bankroll marker value leaked');
+  });
+
+  test('open_bets absent from public payload', () => {
+    const pub = serializePublicProduct(PRIVATE_SNAPSHOT);
+    assert.ok(!('open_bets' in pub), 'open_bets leaked');
+    assert.ok(!JSON.stringify(pub).includes('PRIVATE_TEST_MARKER'), 'open_bets marker leaked');
+  });
+
+  test('settled_bets, history, portfolio, wm_stats absent', () => {
+    const pub = serializePublicProduct(PRIVATE_SNAPSHOT);
+    assert.ok(!('settled_bets' in pub), 'settled_bets leaked');
+    assert.ok(!('history' in pub), 'history (P&L) leaked');
+    assert.ok(!('portfolio' in pub), 'portfolio leaked');
+    assert.ok(!('wm_stats' in pub), 'wm_stats leaked');
+  });
+
+  test('meta contains no user identity', () => {
+    const pub = serializePublicProduct(PRIVATE_SNAPSHOT);
+    const meta = pub.meta || {};
+    assert.ok(!('user' in meta), 'meta.user leaked');
+    assert.ok(!('default_user' in meta), 'meta.default_user leaked');
+    assert.ok('stale_odds' in meta, 'meta.stale_odds missing');
+  });
+
+  test('tennis_stats.stats (private betting stats) excluded', () => {
+    const pub = serializePublicProduct(PRIVATE_SNAPSHOT);
+    const ts = pub.tennis_stats || {};
+    assert.ok(!('stats' in ts), 'tennis_stats.stats (private) leaked');
+    assert.ok('active_tournaments' in ts, 'tennis_stats.active_tournaments missing');
+    assert.ok('live_gate_status' in ts, 'tennis_stats.live_gate_status missing');
+  });
+
+  test('empty/null snapshot returns empty object', () => {
+    assert.deepStrictEqual(serializePublicProduct({}), {});
+    assert.deepStrictEqual(serializePublicProduct(null), {});
+  });
+
+  test('idempotent — double serialization yields same result', () => {
+    const pub1 = serializePublicProduct(PRIVATE_SNAPSHOT);
+    const pub2 = serializePublicProduct(pub1);
+    assert.deepStrictEqual(pub1, pub2);
+  });
+});
+
+// ── Suite 14: P0C-001 — GET /signals.json returns public data; merge_health POST ──
+describe('Suite 14 — P0C-001 Worker GET public boundary + merge_health', () => {
+  const PRIVATE_KV_SNAPSHOT = {
+    updated: '2026-08-18T00:00:00Z',
+    schedule: [{ match: 'Federer vs Nadal' }],
+    football: [],
+    tennis: [{ signal_id: 'sig_001', ev_pct: 12.5 }],
+    bankroll_state: { free: 12345.67, staked: 0, published_at: '2026-08-18T00:00:00Z' },
+    open_bets: [{ id: 'PRIVATE_TEST_MARKER' }],
+    settled_bets: [{ id: 'hist_001' }],
+    meta: { stale_odds: false, default_user: 'philip', user: 'philip' },
+  };
+
+  test('GET /signals.json returns public-only payload (no private fields)', async () => {
+    const kv = makeMockKV();
+    const env = makeEnv(kv);
+    await kv.put('signals_json', JSON.stringify(PRIVATE_KV_SNAPSHOT));
+    const resp = await fw(env, 'GET', '/signals.json');
+    assert.equal(resp.status, 200);
+    const pub = await resp.json();
+    assert.ok(!('bankroll_state' in pub), 'bankroll_state in public GET response');
+    assert.ok(!('open_bets' in pub), 'open_bets in public GET response');
+    assert.ok(!('settled_bets' in pub), 'settled_bets in public GET response');
+    assert.ok(!JSON.stringify(pub).includes('PRIVATE_TEST_MARKER'), 'private marker in GET response');
+    assert.ok(!JSON.stringify(pub).includes('12345.67'), 'bankroll value in GET response');
+  });
+
+  test('GET /signals.json has no user identity in meta', async () => {
+    const kv = makeMockKV();
+    const env = makeEnv(kv);
+    await kv.put('signals_json', JSON.stringify(PRIVATE_KV_SNAPSHOT));
+    const resp = await fw(env, 'GET', '/signals.json');
+    const pub = await resp.json();
+    const meta = pub.meta || {};
+    assert.ok(!('user' in meta), 'meta.user in public GET response');
+    assert.ok(!('default_user' in meta), 'meta.default_user in public GET response');
+  });
+
+  test('GET /signals.json public fields are present', async () => {
+    const kv = makeMockKV();
+    const env = makeEnv(kv);
+    await kv.put('signals_json', JSON.stringify(PRIVATE_KV_SNAPSHOT));
+    const resp = await fw(env, 'GET', '/signals.json');
+    const pub = await resp.json();
+    assert.ok('schedule' in pub, 'schedule missing from public GET');
+    assert.ok('tennis' in pub, 'tennis missing from public GET');
+  });
+
+  test('POST /signals ?merge_health=1 merges health without wiping private fields', async () => {
+    const kv = makeMockKV();
+    const env = makeEnv(kv);
+    await kv.put('signals_json', JSON.stringify(PRIVATE_KV_SNAPSHOT));
+    const healthPayload = { overall: 'ok', jobs: [], generated_at: '2026-08-18T00:00:00Z' };
+    const resp = await fw(env, 'POST', '/signals?merge_health=1', { health: healthPayload }, MASTER_TOKEN);
+    assert.equal(resp.status, 200, 'merge_health POST failed');
+    const updated = JSON.parse(await kv.get('signals_json'));
+    // Health was injected
+    assert.deepStrictEqual(updated.health, healthPayload, 'health not merged into KV');
+    // Private fields preserved
+    assert.ok('bankroll_state' in updated, 'bankroll_state wiped from KV after merge_health');
+    assert.ok('open_bets' in updated, 'open_bets wiped from KV after merge_health');
+    assert.ok(updated.bankroll_state.free === 12345.67, 'bankroll free value corrupted');
+  });
+
+  test('POST /signals ?merge_health=1 without health key returns 400', async () => {
+    const kv = makeMockKV();
+    const env = makeEnv(kv);
+    await kv.put('signals_json', JSON.stringify(PRIVATE_KV_SNAPSHOT));
+    const resp = await fw(env, 'POST', '/signals?merge_health=1', { not_health: {} }, MASTER_TOKEN);
+    assert.equal(resp.status, 400, 'bad merge_health request should return 400');
   });
 });

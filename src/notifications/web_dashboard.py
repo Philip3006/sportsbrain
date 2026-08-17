@@ -1329,24 +1329,41 @@ def write_signals_json(
         pass  # silently keep existing wm_results on any error
     payload["wm_results"] = _wm_results_base
 
-    atomic_write_json(json_path, payload, indent=2)
+    # P0C-001: static Pages artifacts must contain only public product data.
+    # The full private payload is still uploaded to Cloudflare KV (below) so
+    # the Worker POST /pending-bet validation retains bankroll_state and open_bets.
+    from src.notifications.public_serializer import serialize_public_product as _spp
+    public_payload = _spp(payload)
+    atomic_write_json(json_path, public_payload, indent=2)
     # Backward-compat: default user also writes the legacy `signals.json`.
     # Use ROOT-relative path (not module-level _JSON_PATH) so tests that
     # monkey-patch ROOT don't accidentally stomp on the real repo file.
     if user == _DEFAULT_USER:
         legacy_path = ROOT / "docs" / "data" / "signals.json"
-        atomic_write_json(legacy_path, payload, indent=2)
-    return upload_signals_to_cloud(path=json_path, user=user)
+        atomic_write_json(legacy_path, public_payload, indent=2)
+    return upload_signals_to_cloud(path=None, payload=payload, user=user)
 
 
-def upload_signals_to_cloud(path: Path | None = None, user: str = _DEFAULT_USER) -> bool:
-    """Upload signals.json to Cloudflare Worker KV.
+def upload_signals_to_cloud(
+    path: Path | None = None,
+    payload: dict | None = None,
+    user: str = _DEFAULT_USER,
+) -> bool:
+    """Upload signals snapshot to Cloudflare Worker KV.
+
+    P0C-001: accepts an explicit `payload` dict (the FULL private snapshot) so
+    callers no longer need to read back from the sanitized on-disk file.
+    The full private payload preserves bankroll_state / open_bets for the
+    Worker POST /pending-bet validation. Only the static Pages files are
+    sanitized (via public_serializer.serialize_public_product).
 
     Returns True on success OR when cloud env vars are unset (no-op is not
     treated as failure). Returns False only when a real POST attempt failed —
     that's the signal for callers to fail loud (see incident 2026-07-06).
     All failure paths log the reason (previously all silent).
     """
+    import json as _json
+
     try:
         import requests as _req
     except ImportError:
@@ -1366,13 +1383,16 @@ def upload_signals_to_cloud(path: Path | None = None, user: str = _DEFAULT_USER)
         sep = "&" if "?" in post_url else "?"
         post_url = f"{post_url}{sep}user={user}"
 
-    target = path or _JSON_PATH
-    if not target.exists():
-        print(f"[cloud-upload] target {target} missing — skipping", flush=True)
-        return False
+    if payload is not None:
+        data = _json.dumps(payload, ensure_ascii=False).encode()
+    else:
+        target = path or _JSON_PATH
+        if not target.exists():
+            print(f"[cloud-upload] target {target} missing — skipping", flush=True)
+            return False
+        data = target.read_bytes()
 
     try:
-        data = target.read_bytes()
         r = _req.post(
             post_url,
             data=data,

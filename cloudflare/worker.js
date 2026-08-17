@@ -162,6 +162,38 @@ function _signalsKey(user) {
   return (user && user !== DEFAULT_USER) ? `signals_json_${user}` : 'signals_json';
 }
 
+// P0C-001 — Public product serialization boundary.
+// Allowlist-based: only approved top-level keys are included in the public
+// response. Private financial/identity state (bankroll_state, open_bets,
+// settled_bets, history, portfolio, wm_stats, meta.user/default_user, …)
+// is structurally excluded. Applied to every GET /signals.json response.
+const _PUBLIC_TOP_LEVEL_KEYS = new Set([
+  'updated', 'build_info', 'schedule', 'all_odds', 'model_tips', 'model_evals',
+  'football', 'tennis', 'top_elo', 'wm_results', 'odds_history', 'health',
+]);
+function _publicMeta(meta) {
+  if (!meta || typeof meta !== 'object') return {};
+  return { stale_odds: Boolean(meta.stale_odds) };
+}
+function _publicTennisStats(ts) {
+  if (!ts || typeof ts !== 'object') return {};
+  const out = {};
+  for (const k of ['updated', 'active_tournaments', 'live_gate_status']) {
+    if (k in ts) out[k] = ts[k];
+  }
+  return out;
+}
+export function serializePublicProduct(snapshot) {
+  if (!snapshot || typeof snapshot !== 'object') return {};
+  const pub = {};
+  for (const key of _PUBLIC_TOP_LEVEL_KEYS) {
+    if (key in snapshot) pub[key] = snapshot[key];
+  }
+  if ('meta' in snapshot) pub.meta = _publicMeta(snapshot.meta);
+  if ('tennis_stats' in snapshot) pub.tennis_stats = _publicTennisStats(snapshot.tennis_stats);
+  return pub;
+}
+
 async function readPending(env, user = DEFAULT_USER) {
   const raw = await env.SIGNALS.get(_pendingKey(user));
   if (!raw) return [];
@@ -503,22 +535,20 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // ── /signals.json (public read; user-aware via auth or ?user=) ──
-    // D4: if a valid user-token is presented OR ?user= is given (master-only),
-    // serve signals_json_{user}; otherwise the legacy default-user snapshot.
+    // ── /signals.json (public read — always returns public-product data only) ──
+    // P0C-001: The public GET endpoint always serves the public-serialized
+    // product payload. Private financial/identity state is excluded via
+    // serializePublicProduct(). No DEFAULT_USER fallback for unauthenticated
+    // public access — unauthenticated does not mean "serve Philip's private state".
+    // The full private KV snapshot is preserved for Worker POST /pending-bet
+    // validation (bankroll_state, open_bets), which reads directly from KV.
     if (request.method === 'GET' && (path === '/signals.json' || path === '/')) {
-      let user = DEFAULT_USER;
-      const auth = await authResolve(request, env);
-      if (auth.ok && auth.user) user = auth.user;
-      const qUser = _sanitizeUser(url.searchParams.get('user') || '');
-      if (qUser && (auth.viaMaster || qUser === auth.user)) user = qUser;
-      let data = await env.SIGNALS.get(_signalsKey(user));
-      // Fallback: if per-user snapshot doesn't exist yet, serve default.
-      if (!data && user !== DEFAULT_USER) {
-        data = await env.SIGNALS.get(_signalsKey(DEFAULT_USER));
-      }
-      if (!data) return jr({ error: 'no data yet' }, 404);
-      return new Response(data, {
+      const raw = await env.SIGNALS.get(_signalsKey(DEFAULT_USER));
+      if (!raw) return jr({ error: 'no data yet' }, 404);
+      let parsed;
+      try { parsed = JSON.parse(raw); } catch { return jr({ error: 'malformed signals data' }, 500); }
+      const publicPayload = serializePublicProduct(parsed);
+      return new Response(JSON.stringify(publicPayload), {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           'Cache-Control': 'no-cache, max-age=0',
@@ -535,6 +565,27 @@ export default {
       let user = auth.user || DEFAULT_USER;
       const qUser = _sanitizeUser(url.searchParams.get('user') || '');
       if (qUser && auth.viaMaster) user = qUser;
+
+      // P0C-001: ?merge_health=1 — merge only the health key into the existing
+      // KV object. Used by aggregate_health to inject health monitoring data
+      // without fetching (and thus discarding private fields from) the full KV
+      // snapshot via the public GET endpoint. Preserves bankroll_state and
+      // open_bets that Worker POST /pending-bet validation depends on.
+      if (url.searchParams.get('merge_health') === '1') {
+        const body = await request.text();
+        let incoming;
+        try { incoming = JSON.parse(body); } catch { return new Response('Invalid JSON', { status: 400 }); }
+        if (!incoming || typeof incoming !== 'object' || !incoming.health) {
+          return new Response('merge_health=1 requires {"health": {...}}', { status: 400 });
+        }
+        const existing = await env.SIGNALS.get(_signalsKey(user));
+        let current = {};
+        try { current = JSON.parse(existing || '{}'); } catch { current = {}; }
+        current.health = incoming.health;
+        await env.SIGNALS.put(_signalsKey(user), JSON.stringify(current));
+        return new Response('OK', { headers: ch });
+      }
+
       const body = await request.text();
       let parsed;
       try { parsed = JSON.parse(body); } catch { return new Response('Invalid JSON', { status: 400 }); }
