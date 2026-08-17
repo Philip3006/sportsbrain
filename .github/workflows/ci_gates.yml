@@ -26,6 +26,8 @@ jobs:
   gates:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -73,3 +75,23 @@ jobs:
       # darf abgebaut werden, ohne CI zu brechen.
       - name: Ruff regression check (baseline-diff)
         run: python scripts/ruff_regression_check.py
+
+      # ── PROVENANCE: record source release after all gates pass (main push only) ──
+      # docs/data/provenance_meta.json is NOT in ci_gates paths-filter → no re-trigger.
+      - name: Record source release provenance
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_WORKFLOW: ci_gates.yml
+        run: python3 scripts/record_source_release.py
+
+      - name: Commit provenance_meta.json
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "SportsBrain Bot"
+          git config user.email "bot@sportsbrain"
+          git add docs/data/provenance_meta.json
+          git diff --staged --quiet && exit 0
+          git commit -m "auto: record source release ${{ github.sha }}"
+          git push origin main || true
