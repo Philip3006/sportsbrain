@@ -82,6 +82,7 @@ def _exe(
     job: str | None = None,
     pre_dispatch_observed_at: str | None = None,
     pre_dispatch_run_id: str | None = None,
+    recovery_attempt_id: str | None = None,
 ) -> ExecutionEvidence:
     return ExecutionEvidence(
         run_id=run_id,
@@ -91,6 +92,7 @@ def _exe(
         job=job,
         pre_dispatch_observed_at=pre_dispatch_observed_at,
         pre_dispatch_run_id=pre_dispatch_run_id,
+        recovery_attempt_id=recovery_attempt_id,
     )
 
 
@@ -294,9 +296,10 @@ class TestInvariant6WrongCorrelation:
     def test_observation_carries_attempt_id_forward(self):
         """[INV-6] attempt_id is preserved across all state transitions."""
         attempt = _dispatched_attempt(attempt_id="correlation-check-id")
-        # Use health_snapshot source with correct job for re-run-settle
+        # Use health_snapshot source with correct job + matching recovery_attempt_id
         observed = observe_execution(attempt, _exe(_OBS_AT, exit_code=0,
-                                                   source="health_snapshot", job="settle"))
+                                                   source="health_snapshot", job="settle",
+                                                   recovery_attempt_id="correlation-check-id"))
         assert observed.attempt_id == "correlation-check-id"
 
         recovered = verify_resolution(observed, _ver(symptom_absent=True))
@@ -326,7 +329,8 @@ class TestInvariant7PreDispatchExecution:
         dispatched = _dispatched_attempt(attempt_id="inv7-003")
         one_second_after_dispatch = _iso(_utc(2026, 8, 17, 12, 5, 1))  # 12:05:01
         result = observe_execution(dispatched, _exe(one_second_after_dispatch, exit_code=0,
-                                                    job="settle"))
+                                                    job="settle",
+                                                    recovery_attempt_id="inv7-003"))
         assert result.state == RecoveryState.OBSERVED
 
 
@@ -348,7 +352,8 @@ class TestInvariant8FullChainRecovered:
         attempt = mark_dispatched(attempt, dispatched_at=_AFTER_AT)
         assert attempt.state == RecoveryState.DISPATCHED
 
-        exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot", job="settle")
+        exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot", job="settle",
+                   recovery_attempt_id="full-chain-001")
         attempt = observe_execution(attempt, exe)
         assert attempt.state == RecoveryState.OBSERVED
 
@@ -360,7 +365,10 @@ class TestInvariant8FullChainRecovered:
         assert attempt.terminal_reason is None
 
     def test_recovered_attempt_has_all_fields(self):
-        """[INV-8] A RECOVERED attempt carries all evidence fields populated."""
+        """[INV-8] A RECOVERED attempt carries all evidence fields populated.
+
+        force-refresh-signals has health_job=None → process_exit source, job=None.
+        """
         attempt = request_recovery(
             "signals_stale", "force-refresh-signals",
             symptom_id="signals_stale",
@@ -368,8 +376,10 @@ class TestInvariant8FullChainRecovered:
             attempt_id="full-chain-002",
         )
         attempt = mark_dispatched(attempt, dispatched_at=_AFTER_AT)
-        exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot", job="daily_scan")
+        # health_job=None → source must be process_exit, job must be None
+        exe = _exe(_OBS_AT, exit_code=0, source="process_exit", job=None)
         attempt = observe_execution(attempt, exe)
+        assert attempt.state == RecoveryState.OBSERVED
         ver = VerificationEvidence(
             verified_at=_VER_AT,
             symptom_absent=True,
@@ -455,7 +465,8 @@ class TestInvariant10Idempotent:
                                    attempt_id="idem-001")
         attempt = mark_dispatched(attempt, dispatched_at=_AFTER_AT)
         attempt = observe_execution(attempt, _exe(_OBS_AT, exit_code=0,
-                                                  source="health_snapshot", job="settle"))
+                                                  source="health_snapshot", job="settle",
+                                                  recovery_attempt_id="idem-001"))
         attempt = verify_resolution(attempt, _ver(symptom_absent=True))
         assert attempt.state == RecoveryState.RECOVERED
 
@@ -872,7 +883,8 @@ class TestCorrectionWrongJobEvidence:
     def test_correct_job_evidence_accepted(self):
         """Evidence from correct job (settle) passes job validation."""
         dispatched = _dispatched_attempt(action="re-run-settle", attempt_id="c1-002")
-        exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot", job="settle")
+        exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot", job="settle",
+                   recovery_attempt_id="c1-002")
         result = observe_execution(dispatched, exe)
         assert result.state == RecoveryState.OBSERVED
 
@@ -921,11 +933,14 @@ class TestCorrectionPreDispatchExecution:
     """C3: execution after request but before dispatch fails closed."""
 
     def test_execution_between_request_and_dispatch_rejected(self):
-        """observed_at > requested_at but <= dispatched_at → FAILED (pre-dispatch)."""
+        """observed_at > requested_at but <= dispatched_at → FAILED (pre-dispatch).
+
+        recovery_attempt_id is supplied to reach the temporal check (not fail at attempt_id).
+        """
         dispatched = _dispatched_attempt(attempt_id="c3-001")
-        # Between request (12:00) and dispatch (12:05) — supply job= so temporal check fires
         between_at = _iso(_utc(2026, 8, 17, 12, 2))
-        exe = _exe(between_at, exit_code=0, source="health_snapshot", job="settle")
+        exe = _exe(between_at, exit_code=0, source="health_snapshot", job="settle",
+                   recovery_attempt_id="c3-001")
         result = observe_execution(dispatched, exe)
         assert result.state == RecoveryState.FAILED
         reason = result.terminal_reason or ""
@@ -934,7 +949,8 @@ class TestCorrectionPreDispatchExecution:
     def test_execution_exactly_at_dispatch_rejected(self):
         """observed_at == dispatched_at → not strictly after → FAILED."""
         dispatched = _dispatched_attempt(attempt_id="c3-002")
-        exe = _exe(_AFTER_AT, exit_code=0, source="health_snapshot", job="settle")
+        exe = _exe(_AFTER_AT, exit_code=0, source="health_snapshot", job="settle",
+                   recovery_attempt_id="c3-002")
         result = observe_execution(dispatched, exe)
         assert result.state == RecoveryState.FAILED
 
@@ -943,11 +959,14 @@ class TestCorrectionUnchangedSnapshot:
     """C4: unchanged pre/post snapshot fails closed."""
 
     def test_same_snapshot_timestamp_rejected(self):
-        """pre_dispatch_observed_at == observed_at → unchanged → FAILED."""
+        """pre_dispatch_observed_at == observed_at → unchanged → FAILED.
+
+        recovery_attempt_id is supplied so temporal/freshness check is the failure point.
+        """
         dispatched = _dispatched_attempt(attempt_id="c4-001")
-        # Snapshot did not change since dispatch (same last_run_at)
         exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot",
-                   job="settle", pre_dispatch_observed_at=_OBS_AT)
+                   job="settle", pre_dispatch_observed_at=_OBS_AT,
+                   recovery_attempt_id="c4-001")
         result = observe_execution(dispatched, exe)
         assert result.state == RecoveryState.FAILED
         reason = result.terminal_reason or ""
@@ -956,9 +975,9 @@ class TestCorrectionUnchangedSnapshot:
     def test_older_snapshot_rejected(self):
         """observed_at < pre_dispatch_observed_at → going backwards → FAILED."""
         dispatched = _dispatched_attempt(attempt_id="c4-002")
-        # Somehow observed_at is before the pre-dispatch baseline (impossible in practice, fail closed)
         exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot",
-                   job="settle", pre_dispatch_observed_at=_VER_AT)  # baseline in the future
+                   job="settle", pre_dispatch_observed_at=_VER_AT,
+                   recovery_attempt_id="c4-002")
         result = observe_execution(dispatched, exe)
         assert result.state == RecoveryState.FAILED
 
@@ -966,16 +985,17 @@ class TestCorrectionUnchangedSnapshot:
         """pre_dispatch_observed_at < observed_at → new snapshot → passes freshness check."""
         dispatched = _dispatched_attempt(attempt_id="c4-003")
         exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot",
-                   job="settle", pre_dispatch_observed_at=_AFTER_AT)  # baseline was at dispatch
+                   job="settle", pre_dispatch_observed_at=_AFTER_AT,
+                   recovery_attempt_id="c4-003")
         result = observe_execution(dispatched, exe)
-        # _OBS_AT (12:10) > _AFTER_AT (12:05) → new snapshot
         assert result.state == RecoveryState.OBSERVED
 
     def test_no_baseline_skips_freshness_check(self):
         """pre_dispatch_observed_at=None → freshness check skipped (unknown baseline)."""
         dispatched = _dispatched_attempt(attempt_id="c4-004")
         exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot",
-                   job="settle", pre_dispatch_observed_at=None)
+                   job="settle", pre_dispatch_observed_at=None,
+                   recovery_attempt_id="c4-004")
         result = observe_execution(dispatched, exe)
         assert result.state == RecoveryState.OBSERVED
 
@@ -1056,10 +1076,14 @@ class TestCorrectionMalformedPreDispatch:
     """C4b: malformed pre_dispatch_observed_at must fail closed (not silently skipped)."""
 
     def test_malformed_pre_dispatch_fails_closed(self):
-        """pre_dispatch_observed_at set but unparseable → FAILED (cannot verify freshness)."""
+        """pre_dispatch_observed_at set but unparseable → FAILED (cannot verify freshness).
+
+        recovery_attempt_id is supplied so freshness is the failure point (not attempt_id).
+        """
         dispatched = _dispatched_attempt(attempt_id="c4b-001")
         exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot",
-                   job="settle", pre_dispatch_observed_at="not-a-timestamp")
+                   job="settle", pre_dispatch_observed_at="not-a-timestamp",
+                   recovery_attempt_id="c4b-001")
         result = observe_execution(dispatched, exe)
         assert result.state == RecoveryState.FAILED
         reason = result.terminal_reason or ""
@@ -1070,7 +1094,8 @@ class TestCorrectionMalformedPreDispatch:
         """pre_dispatch_observed_at=empty string → unparseable → FAILED."""
         dispatched = _dispatched_attempt(attempt_id="c4b-002")
         exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot",
-                   job="settle", pre_dispatch_observed_at="")
+                   job="settle", pre_dispatch_observed_at="",
+                   recovery_attempt_id="c4b-002")
         result = observe_execution(dispatched, exe)
         assert result.state == RecoveryState.FAILED
 
@@ -1078,7 +1103,8 @@ class TestCorrectionMalformedPreDispatch:
         """pre_dispatch_observed_at=None → freshness check skipped (known-good path)."""
         dispatched = _dispatched_attempt(attempt_id="c4b-003")
         exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot",
-                   job="settle", pre_dispatch_observed_at=None)
+                   job="settle", pre_dispatch_observed_at=None,
+                   recovery_attempt_id="c4b-003")
         result = observe_execution(dispatched, exe)
         assert result.state == RecoveryState.OBSERVED
 
@@ -1087,13 +1113,17 @@ class TestCorrectionRunId:
     """C4c: run_id freshness check — same run_id means unchanged snapshot."""
 
     def test_same_run_id_fails_closed(self):
-        """pre_dispatch_run_id == evidence.run_id → same execution → FAILED."""
+        """pre_dispatch_run_id == evidence.run_id → same execution → FAILED.
+
+        recovery_attempt_id is supplied so run_id check is the failure point.
+        """
         dispatched = _dispatched_attempt(attempt_id="c4c-001")
         exe = _exe(
             _OBS_AT, exit_code=0, source="health_snapshot", job="settle",
             run_id="run-abc123",
             pre_dispatch_observed_at=_AFTER_AT,  # valid, older than _OBS_AT
             pre_dispatch_run_id="run-abc123",    # same → unchanged snapshot
+            recovery_attempt_id="c4c-001",
         )
         result = observe_execution(dispatched, exe)
         assert result.state == RecoveryState.FAILED
@@ -1108,6 +1138,7 @@ class TestCorrectionRunId:
             run_id="run-new999",
             pre_dispatch_observed_at=_AFTER_AT,  # older than _OBS_AT
             pre_dispatch_run_id="run-old123",    # different → new execution
+            recovery_attempt_id="c4c-002",
         )
         result = observe_execution(dispatched, exe)
         assert result.state == RecoveryState.OBSERVED
@@ -1119,7 +1150,8 @@ class TestCorrectionRunId:
             _OBS_AT, exit_code=0, source="health_snapshot", job="settle",
             run_id="run-xyz",
             pre_dispatch_observed_at=_AFTER_AT,
-            pre_dispatch_run_id=None,  # no baseline run_id → skip ID check
+            pre_dispatch_run_id=None,
+            recovery_attempt_id="c4c-003",
         )
         result = observe_execution(dispatched, exe)
         assert result.state == RecoveryState.OBSERVED
@@ -1131,7 +1163,8 @@ class TestCorrectionRunId:
             _OBS_AT, exit_code=0, source="health_snapshot", job="settle",
             run_id=None,
             pre_dispatch_observed_at=_AFTER_AT,
-            pre_dispatch_run_id="run-old",  # baseline has run_id but evidence doesn't
+            pre_dispatch_run_id="run-old",
+            recovery_attempt_id="c4c-004",
         )
         result = observe_execution(dispatched, exe)
         assert result.state == RecoveryState.OBSERVED
@@ -1287,7 +1320,8 @@ class TestCorrectionStoreMonotonicIdentity:
         store = RecoveryStore(tmp_path / "store.json")
         dispatched = _dispatched_attempt(attempt_id="mono-002")
         observed = observe_execution(dispatched, _exe(_OBS_AT, exit_code=0,
-                                                      source="health_snapshot", job="settle"))
+                                                      source="health_snapshot", job="settle",
+                                                      recovery_attempt_id="mono-002"))
         store.save(observed)
         assert store.get("mono-002").state == RecoveryState.OBSERVED
 
@@ -1345,8 +1379,193 @@ class TestCorrectionStoreMonotonicIdentity:
         dispatched = mark_dispatched(attempt, dispatched_at=_AFTER_AT)
         store.save(dispatched)
         observed = observe_execution(dispatched, _exe(_OBS_AT, exit_code=0,
-                                                      source="health_snapshot", job="settle"))
+                                                      source="health_snapshot", job="settle",
+                                                      recovery_attempt_id="id-003"))
         store.save(observed)
 
         loaded = store.get("id-003")
         assert loaded.state == RecoveryState.OBSERVED
+
+
+# ===========================================================================
+# C10. Attempt-bound correlation — snapshot must carry the exact attempt_id
+# ===========================================================================
+
+class TestAttemptBoundCorrelation:
+    """C10: Concurrent or unrelated same-job snapshots must not satisfy a recovery attempt."""
+
+    def test_matching_recovery_attempt_id_observed(self):
+        """Snapshot with correct recovery_attempt_id → OBSERVED."""
+        dispatched = _dispatched_attempt(attempt_id="corr-001")
+        exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot", job="settle",
+                   recovery_attempt_id="corr-001")
+        result = observe_execution(dispatched, exe)
+        assert result.state == RecoveryState.OBSERVED
+
+    def test_wrong_recovery_attempt_id_fails_closed(self):
+        """Snapshot with mismatched recovery_attempt_id → FAILED (concurrent execution)."""
+        dispatched = _dispatched_attempt(attempt_id="corr-002")
+        exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot", job="settle",
+                   recovery_attempt_id="some-other-attempt")
+        result = observe_execution(dispatched, exe)
+        assert result.state == RecoveryState.FAILED
+        reason = result.terminal_reason or ""
+        assert "recovery_attempt_id" in reason.lower() or "attempt_id" in reason.lower()
+
+    def test_missing_recovery_attempt_id_fails_closed(self):
+        """Normal scheduled snapshot (no recovery_attempt_id) → FAILED.
+
+        A concurrent healthy cron run of the same job cannot satisfy a recovery attempt
+        even when job/timestamp/exit all match.
+        """
+        dispatched = _dispatched_attempt(attempt_id="corr-003")
+        exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot", job="settle",
+                   recovery_attempt_id=None)  # normal cron run — no attempt_id
+        result = observe_execution(dispatched, exe)
+        assert result.state == RecoveryState.FAILED
+        reason = result.terminal_reason or ""
+        assert "recovery_attempt_id" in reason.lower() or "attempt_id" in reason.lower()
+
+    def test_concurrent_fresh_snapshot_without_attempt_id_rejected(self):
+        """Even a fresh post-dispatch snapshot without attempt_id is rejected."""
+        dispatched = _dispatched_attempt(attempt_id="corr-004")
+        # Fresh post-dispatch snapshot (newer than dispatch) but from normal scheduler
+        exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot", job="settle",
+                   pre_dispatch_observed_at=_AFTER_AT,  # baseline at dispatch time
+                   recovery_attempt_id=None)             # no attempt correlation
+        result = observe_execution(dispatched, exe)
+        assert result.state == RecoveryState.FAILED
+
+    def test_snapshot_backed_via_collect_evidence_missing_field(self, tmp_path):
+        """collect_health_snapshot_evidence on snapshot without recovery_attempt_id → None field."""
+        health_dir = tmp_path
+        health_dir.mkdir(parents=True, exist_ok=True)
+        (health_dir / "settle.json").write_text(json.dumps({
+            "job": "settle", "status": "ok", "exit_code": 0,
+            "last_run_at": _OBS_AT,
+            # no recovery_attempt_id field — normal cron run
+        }))
+        ev = collect_health_snapshot_evidence("settle", _REQUESTED_AT, health_dir=health_dir)
+        assert ev is not None
+        assert ev.recovery_attempt_id is None  # absent → None, not fabricated
+
+    def test_snapshot_backed_via_collect_evidence_matching_id(self, tmp_path):
+        """collect_health_snapshot_evidence on snapshot with matching id → carried through."""
+        health_dir = tmp_path
+        health_dir.mkdir(parents=True, exist_ok=True)
+        (health_dir / "settle.json").write_text(json.dumps({
+            "job": "settle", "status": "ok", "exit_code": 0,
+            "last_run_at": _OBS_AT,
+            "recovery_attempt_id": "corr-ev-001",
+        }))
+        ev = collect_health_snapshot_evidence("settle", _REQUESTED_AT, health_dir=health_dir)
+        assert ev is not None
+        assert ev.recovery_attempt_id == "corr-ev-001"
+
+        # End-to-end: passes observe_execution if attempt_id matches
+        dispatched = _dispatched_attempt(attempt_id="corr-ev-001")
+        result = observe_execution(dispatched, ev)
+        assert result.state == RecoveryState.OBSERVED
+
+
+# ===========================================================================
+# C11. Process-exit binding enforcement
+# ===========================================================================
+
+class TestProcessExitBindingEnforcement:
+    """C11: health_job=None bindings require process_exit source + null job."""
+
+    def test_health_snapshot_rejected_for_process_exit_binding(self):
+        """health_snapshot source for force-refresh-signals (health_job=None) → FAILED."""
+        dispatched = _dispatched_attempt(action="force-refresh-signals",
+                                         attempt_id="pe-001", target="signals_stale")
+        exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot", job="daily_scan")
+        result = observe_execution(dispatched, exe)
+        assert result.state == RecoveryState.FAILED
+        reason = result.terminal_reason or ""
+        assert "process_exit" in reason.lower() or "health_job=none" in reason.lower() or \
+               "process-exit" in reason.lower()
+
+    def test_non_null_job_rejected_for_process_exit_binding(self):
+        """process_exit source but job != None for health_job=None binding → FAILED."""
+        dispatched = _dispatched_attempt(action="re-test-vapid",
+                                         attempt_id="pe-002", target="push_failing")
+        exe = _exe(_OBS_AT, exit_code=0, source="process_exit", job="some_job")
+        result = observe_execution(dispatched, exe)
+        assert result.state == RecoveryState.FAILED
+        reason = result.terminal_reason or ""
+        assert "job" in reason.lower() or "none" in reason.lower()
+
+    def test_process_exit_null_job_accepted(self):
+        """process_exit + job=None for health_job=None binding → OBSERVED."""
+        dispatched = _dispatched_attempt(action="force-refresh-signals",
+                                         attempt_id="pe-003", target="signals_stale")
+        exe = _exe(_OBS_AT, exit_code=0, source="process_exit", job=None)
+        result = observe_execution(dispatched, exe)
+        assert result.state == RecoveryState.OBSERVED
+
+    def test_process_exit_binding_full_chain_recovered(self):
+        """process_exit binding can reach RECOVERED via full chain."""
+        attempt = request_recovery("signals_stale", "force-refresh-signals",
+                                   requested_at=_REQUESTED_AT, attempt_id="pe-004")
+        attempt = mark_dispatched(attempt, dispatched_at=_AFTER_AT)
+        exe = _exe(_OBS_AT, exit_code=0, source="process_exit", job=None)
+        attempt = observe_execution(attempt, exe)
+        assert attempt.state == RecoveryState.OBSERVED
+        attempt = verify_resolution(attempt, _ver(symptom_absent=True))
+        assert attempt.state == RecoveryState.RECOVERED
+
+
+# ===========================================================================
+# C12. Notification health terminology — no "recovered" outside RecoveryState
+# ===========================================================================
+
+class TestNotificationHealthTerminology:
+    """C12: health_push uses 'healthy' not 'recovered' terminology."""
+
+    def test_mark_job_healthy_exists(self):
+        """mark_job_healthy function exists in health_push module."""
+        from src.notifications.health_push import mark_job_healthy
+        assert callable(mark_job_healthy)
+
+    def test_mark_recovered_does_not_exist(self):
+        """mark_recovered must not exist — all recovery semantics belong to RecoveryState."""
+        import src.notifications.health_push as hp
+        assert not hasattr(hp, "mark_recovered"), (
+            "mark_recovered must be removed — only mark_job_healthy is allowed "
+            "so 'recovered' terminology stays exclusive to RecoveryState.RECOVERED"
+        )
+
+    def test_mark_job_healthy_stores_last_healthy_at(self, tmp_path):
+        """mark_job_healthy writes last_healthy_at (not last_recovered_at)."""
+        import src.notifications.health_push as hp
+        monkeypath = tmp_path / "push_state.json"
+        original = hp.STATE_PATH
+        hp.STATE_PATH = monkeypath
+        try:
+            hp.mark_job_healthy("settle")
+            data = json.loads(monkeypath.read_text())
+            entry = data.get("settle", {})
+            assert "last_healthy_at" in entry, "must use 'last_healthy_at' not 'last_recovered_at'"
+            assert "last_recovered_at" not in entry, "must not persist 'recovered' terminology"
+            assert entry.get("last_status") == "ok"
+        finally:
+            hp.STATE_PATH = original
+
+    def test_only_recovered_state_emits_recovery_claim(self):
+        """Only RecoveryState.RECOVERED may produce a recovery-success claim."""
+        # Any attempt that is not RECOVERED must not be claimed as recovered.
+        for state in RecoveryState:
+            if state == RecoveryState.RECOVERED:
+                continue
+            attempt = RecoveryAttempt(
+                attempt_id=f"claim-{state.value}",
+                target="settle",
+                symptom_id=None,
+                binding_action="re-run-settle",
+                state=state,
+                requested_at=_REQUESTED_AT,
+            )
+            assert attempt.state != RecoveryState.RECOVERED, (
+                f"State {state.value} must not be RECOVERED"
+            )

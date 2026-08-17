@@ -258,18 +258,22 @@ _ACTION_MAP = {
 }
 
 
-def _run_outcome_action(action: str, sym_id: str) -> tuple[bool, str, int | None]:
+def _run_outcome_action(
+    action: str, sym_id: str, *, extra_env: dict[str, str] | None = None,
+) -> tuple[bool, str, int | None]:
     """Führt eine deterministische Heil-Action aus.
 
     Returns (success, stdout_tail, exit_code).
     exit_code is None when the action could not be executed (no command, exception).
+    extra_env is merged into os.environ for the subprocess (e.g. RECOVERY_ATTEMPT_ID).
     """
     cmd = _ACTION_MAP.get(action)
     if cmd is None:
         return False, f"action {action!r} hat keine ausführbare Map (eskaliert)", None
+    run_env = {**os.environ, **extra_env} if extra_env else None
     try:
         proc = subprocess.run(
-            cmd, cwd=ROOT, capture_output=True, text=True, timeout=600,
+            cmd, cwd=ROOT, capture_output=True, text=True, timeout=600, env=run_env,
         )
     except subprocess.TimeoutExpired:
         return False, "timeout (>600s)", None
@@ -365,7 +369,16 @@ def _handle_outcome_symptoms() -> None:
                 _log(f"{sym.id}: recovery tracking error at request/dispatch: {e}")
                 attempt = None
 
-        ok, tail, exit_code = _run_outcome_action(action, sym.id)
+        # Pass RECOVERY_ATTEMPT_ID to snapshot-backed actors so the health snapshot
+        # can be correlated to exactly this attempt (attempt-bound evidence, P0-B3).
+        action_extra_env: dict[str, str] | None = None
+        if (attempt is not None
+                and attempt.state == RecoveryState.DISPATCHED):
+            _ab = RECOVERY_REGISTRY.get(action)
+            if _ab and _ab.health_job:
+                action_extra_env = {"RECOVERY_ATTEMPT_ID": attempt.attempt_id}
+
+        ok, tail, exit_code = _run_outcome_action(action, sym.id, extra_env=action_extra_env)
         completed_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
         if ok:

@@ -30,6 +30,12 @@ Correlation rules for observe_execution:
 - If pre_dispatch_observed_at is set, the new snapshot must be strictly newer.
   Malformed pre_dispatch_observed_at fails closed (not silently skipped).
   If pre_dispatch_run_id is set and matches evidence.run_id, snapshot is unchanged.
+- Attempt-bound correlation (snapshot-backed only): evidence.recovery_attempt_id
+  must equal attempt.attempt_id. The recovery actor passes RECOVERY_ATTEMPT_ID to
+  the subprocess env; _health.sh propagates it into the snapshot. Concurrent normal
+  cron executions of the same job cannot satisfy a recovery attempt even if fresh + exit=0.
+- Process-exit bindings (health_job=None): source must be 'process_exit' and job
+  must be None. health_snapshot evidence fails closed for these bindings.
 - verified_at must be strictly after execution observed_at.
   Malformed observed_at or verified_at fails closed.
 
@@ -101,8 +107,9 @@ class ExecutionEvidence:
     exit_code: int | None     # P0-B1 canonical int (None = unknown, not fabricated)
     source: str               # "health_snapshot" | "process_exit" | "health_snapshot_absent"
     job: str | None = None    # which job snapshot was read; validated against binding.health_job
-    pre_dispatch_observed_at: str | None = None  # snapshot last_run_at before dispatch (for freshness)
-    pre_dispatch_run_id: str | None = None        # run_id of pre-dispatch snapshot (for freshness)
+    pre_dispatch_observed_at: str | None = None   # snapshot last_run_at before dispatch (for freshness)
+    pre_dispatch_run_id: str | None = None         # run_id of pre-dispatch snapshot (for freshness)
+    recovery_attempt_id: str | None = None         # attempt_id that dispatched this execution (P0-B3)
 
 
 @dataclass
@@ -411,6 +418,21 @@ def observe_execution(
                 f"{binding.health_job!r} for action {attempt.binding_action!r}. "
                 "Wrong-job or unknown-job evidence fails closed.",
             )
+    else:
+        # Process-exit binding (health_job=None): only process_exit + null job accepted.
+        # health_snapshot evidence from concurrent normal cron executions fails closed.
+        if evidence.source != "process_exit":
+            return _fail(
+                attempt,
+                f"Binding {attempt.binding_action!r} has health_job=None (process-exit only). "
+                f"Got source={evidence.source!r}. Only 'process_exit' is accepted.",
+            )
+        if evidence.job is not None:
+            return _fail(
+                attempt,
+                f"Binding {attempt.binding_action!r} has health_job=None (process-exit only). "
+                f"Evidence.job must be None, got {evidence.job!r}.",
+            )
 
     # Temporal: observed_at must be strictly after dispatched_at
     dispatched_dt = _parse_iso(attempt.dispatched_at)
@@ -475,6 +497,19 @@ def observe_execution(
             attempt,
             f"Correlated execution has exit_code={evidence.exit_code} (non-zero). "
             "Execution failure does not constitute recovery.",
+        )
+
+    # Attempt-bound correlation (snapshot-backed only): the snapshot must carry the exact
+    # recovery_attempt_id that the dispatch injected via RECOVERY_ATTEMPT_ID env.
+    # Concurrent normal cron executions with exit=0 are rejected even if job/timestamp match.
+    if (binding is not None and binding.health_job is not None
+            and evidence.recovery_attempt_id != attempt.attempt_id):
+        return _fail(
+            attempt,
+            f"Snapshot recovery_attempt_id={evidence.recovery_attempt_id!r} does not "
+            f"match attempt.attempt_id={attempt.attempt_id!r}. "
+            "The recovery actor must pass RECOVERY_ATTEMPT_ID so the snapshot can be "
+            "correlated to this exact attempt. Concurrent cron executions are rejected.",
         )
 
     return RecoveryAttempt(
@@ -619,6 +654,7 @@ def collect_health_snapshot_evidence(
         job=job,
         pre_dispatch_observed_at=pre_dispatch_last_run_at,
         pre_dispatch_run_id=pre_dispatch_run_id,
+        recovery_attempt_id=snap.get("recovery_attempt_id"),
     )
 
 
