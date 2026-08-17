@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T21:11:40Z",
+  "generated_at": "2026-08-17T10:22:28Z",
   "overall": "down",
   "jobs": [
     {
@@ -15,22 +15,22 @@
     },
     {
       "job": "auto_retrain",
-      "status": "error",
+      "status": "stale",
       "last_run_at": "2026-08-16T18:04:21Z",
       "duration_s": 22.0,
       "exit_code": 1,
-      "error": "    response = retry_request(\"GET\", INTL_CSV_URL, timeout=30, log_prefix=\"[intl]\")     raise ConnectionError(e, request=request) requests.exceptions.ConnectionError: HTTPSConnectionPool(host='raw.githubusercontent.com', port=443): Max retries exceeded with url: /martj42/international_results/master/results.csv (Caused by NameResolutionError(\"HTTPSConnection(host='raw.githubusercontent.com', port=443): Failed to resolve 'raw.githubusercontent.com' ([Errno 8] nodename nor servname provided, or not",
+      "error": "[MON-001] aggregate: stale with execution failure: exit_code=1. Original error: [MON-001] aggregate: stale with execution failure: exit_code=1. Original error: [MON-001] aggregate: stale with execution failure: exit_code=1. Original error:     response = retry_request(\"GET\", INTL_CSV_URL, timeout=30, log_prefix=\"[intl]\")     raise ConnectionError(e, request=request) requests.exceptions.ConnectionError: HTTPSConnectionPool(host='raw.githubusercontent.com', port=443): Max retries exceeded with url: /martj42/international_results/master/results.csv (Caused by NameResolutionError(\"HTTPSConnection(host='raw.githubusercontent.com', port=443): Failed to resolve 'raw.githubusercontent.com' ([Errno 8] nodename nor servname provided, or not",
       "fallback_used": null,
       "next_expected_in_s": 43200,
       "cadence": "2×/Tag 06:00 + 18:00"
     },
     {
       "job": "closing_odds",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-08-16T16:07:24Z",
       "duration_s": 2.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-08-16T16:07:24Z — overdue (>46800s)",
       "fallback_used": null,
       "next_expected_in_s": 43200,
       "cadence": "2×/Tag 14:00 + 18:00"
@@ -38,7 +38,7 @@
     {
       "job": "consume_pending_bets",
       "status": "ok",
-      "last_run_at": "2026-08-16T21:11:40Z",
+      "last_run_at": "2026-08-17T10:22:28Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -59,22 +59,22 @@
     },
     {
       "job": "prematch_scan",
-      "status": "ok",
+      "status": "stale",
       "last_run_at": "2026-08-16T20:33:30Z",
       "duration_s": 0.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-08-16T20:33:30Z — overdue (>2700s)",
       "fallback_used": null,
       "next_expected_in_s": 1800,
       "cadence": "alle 30 Min (im Fenster)"
     },
     {
       "job": "settle",
-      "status": "degraded",
+      "status": "stale",
       "last_run_at": "2026-08-16T20:30:07Z",
       "duration_s": 2.0,
       "exit_code": 0,
-      "error": null,
+      "error": "last run was at 2026-08-16T20:30:07Z — overdue (>4200s)",
       "fallback_used": "espn",
       "next_expected_in_s": 3600,
       "cadence": "stündlich 00:30–04:30"
@@ -93,10 +93,10 @@
     {
       "job": "tennis_scan",
       "status": "error",
-      "last_run_at": "2026-08-16T18:33:25Z",
+      "last_run_at": "2026-08-17T09:52:47Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": "[MON-001] aggregate coerced ok→error from legacy snapshot: exit_code=1. No error field in snapshot.",
+      "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
       "fallback_used": null,
       "next_expected_in_s": 21600,
       "cadence": "4×/Tag 06/11/16/21 UTC"
@@ -104,7 +104,7 @@
     {
       "job": "tennis_settle",
       "status": "error",
-      "last_run_at": "2026-08-16T20:40:45Z",
+      "last_run_at": "2026-08-17T09:02:27Z",
       "duration_s": null,
       "exit_code": 1,
       "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
@@ -115,7 +115,7 @@
     {
       "job": "tennis_closing_odds",
       "status": "error",
-      "last_run_at": "2026-08-16T20:49:34Z",
+      "last_run_at": "2026-08-17T09:44:44Z",
       "duration_s": null,
       "exit_code": 1,
       "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
@@ -126,10 +126,10 @@
     {
       "job": "tennis_retrain",
       "status": "error",
-      "last_run_at": "2026-08-16T05:34:47Z",
+      "last_run_at": "2026-08-17T05:40:38Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": "[MON-001] aggregate coerced ok→error from legacy snapshot: exit_code=1. No error field in snapshot.",
+      "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
       "fallback_used": null,
       "next_expected_in_s": 604800,
       "cadence": "wöchentlich Mo 03:00 UTC"
@@ -137,21 +137,21 @@
     {
       "job": "bundesliga2_scan",
       "status": "ok",
-      "last_run_at": "2026-08-16T08:26:32Z",
-      "duration_s": 1.43,
+      "last_run_at": "2026-08-17T07:00:00Z",
+      "duration_s": 0.56,
       "exit_code": 0,
       "error": null,
-      "fallback_used": "espn",
+      "fallback_used": "no_fixtures",
       "next_expected_in_s": 43200,
       "cadence": "2×/Tag + prä-Spieltag"
     },
     {
       "job": "bundesliga2_settle",
       "status": "stale",
-      "last_run_at": "2026-08-16T14:58:56Z",
+      "last_run_at": "2026-08-16T21:18:58Z",
       "duration_s": null,
       "exit_code": 1,
-      "error": "[MON-001] aggregate coerced ok→error from legacy snapshot: exit_code=1. No error field in snapshot.",
+      "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
       "fallback_used": null,
       "next_expected_in_s": 10800,
       "cadence": "alle 3h nach Spielen"
@@ -159,10 +159,10 @@
     {
       "job": "bundesliga2_live_push",
       "status": "stale",
-      "last_run_at": "2026-08-16T21:02:15Z",
+      "last_run_at": "2026-08-16T23:07:42Z",
       "duration_s": 0.01,
       "exit_code": 0,
-      "error": "last run was at 2026-08-16T21:02:15Z — overdue (>420s)",
+      "error": "last run was at 2026-08-16T23:07:42Z — overdue (>420s)",
       "fallback_used": null,
       "next_expected_in_s": 120,
       "cadence": "alle 2 Min im Spieltag-Fenster"
@@ -170,7 +170,7 @@
     {
       "job": "bundesliga2_retrain",
       "status": "ok",
-      "last_run_at": "2026-08-16T05:25:37Z",
+      "last_run_at": "2026-08-17T05:33:26Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -192,7 +192,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-16T21:11:40Z",
+      "last_run_at": "2026-08-17T10:22:28Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -203,7 +203,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-16T21:11:05Z",
+      "last_run_at": "2026-08-17T10:21:52Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,

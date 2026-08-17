@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-11",
+  "updated": "2026-08-14",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -1003,7 +1003,8 @@
         "Ismaël Koné",
         "Marcelo Flores",
         "Moïse Bombito",
-        "Alphonso Davies"
+        "Alphonso Davies",
+        "Alistair Johnston"
       ],
       "players": [
         {
@@ -1014,7 +1015,7 @@
         {
           "name": "Alistair Johnston",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Alfie Jones",
@@ -2697,7 +2698,8 @@
         "Benjamin Asare",
         "Lawrence Ati-Zigi",
         "Mohammed Kudus",
-        "Mohammed Salisu"
+        "Mohammed Salisu",
+        "Kamaldeen Sulemana"
       ],
       "players": [
         {
@@ -2808,7 +2810,7 @@
         {
           "name": "Kamaldeen Sulemana",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Derrick Luckassen",
@@ -5404,7 +5406,9 @@
       "ampel": "🟢",
       "suspended": [
         "Teboho Mokoena",
-        "Themba Zwane"
+        "Themba Zwane",
+        "Thalente Mbatha",
+        "Evidence Makgopa"
       ],
       "players": [
         {
@@ -5430,7 +5434,7 @@
         {
           "name": "Thalente Mbatha",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Aubrey Modiba",
@@ -5490,7 +5494,7 @@
         {
           "name": "Evidence Makgopa",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Samukele Kabini",
@@ -5688,7 +5692,8 @@
       "suspended": [
         "Dani Carvajal",
         "Fermin Lopez",
-        "Rodri"
+        "Rodri",
+        "Lamine Yamal"
       ],
       "players": [
         {
@@ -5784,7 +5789,7 @@
         {
           "name": "Lamine Yamal",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Pedri",

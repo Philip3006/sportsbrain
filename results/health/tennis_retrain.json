@@ -1,11 +1,11 @@
 {
   "job": "tennis_retrain",
-  "status": "ok",
-  "last_run_at": "2026-08-12T06:20:52Z",
-  "started_at": "2026-08-12T06:20:52Z",
+  "status": "error",
+  "last_run_at": "2026-08-17T05:40:38Z",
+  "started_at": "2026-08-17T05:40:38Z",
   "duration_s": null,
   "exit_code": 1,
-  "error": null,
+  "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
   "fallback_used": null,
   "run_id": null
 }

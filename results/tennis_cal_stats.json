@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-08-12T06:20:51.296942+00:00",
-  "n_settled_total": 505,
+  "generated_at": "2026-08-17T05:40:37.361999+00:00",
+  "n_settled_total": 585,
   "match_winner": {
-    "n": 132,
-    "brier": 0.2035,
-    "log_loss": 0.58733,
-    "ece": 0.08458,
-    "win_rate": 0.5455,
+    "n": 198,
+    "brier": 0.22143,
+    "log_loss": 0.62759,
+    "ece": 0.08934,
+    "win_rate": 0.5,
     "reliability_curve": [
       {
         "bin_lo": 0.2,
@@ -18,16 +18,16 @@
       {
         "bin_lo": 0.4,
         "bin_hi": 0.6,
-        "n": 76,
-        "mean_pred": 0.505,
-        "mean_actual": 0.4079
+        "n": 139,
+        "mean_pred": 0.5035,
+        "mean_actual": 0.4173
       },
       {
         "bin_lo": 0.6,
         "bin_hi": 0.8,
-        "n": 10,
-        "mean_pred": 0.7039,
-        "mean_actual": 0.5
+        "n": 13,
+        "mean_pred": 0.6886,
+        "mean_actual": 0.3846
       },
       {
         "bin_lo": 0.8,
@@ -39,32 +39,32 @@
     ]
   },
   "all_markets": {
-    "n": 505,
-    "brier": 0.22992,
-    "log_loss": 0.64886,
-    "ece": 0.05425,
-    "win_rate": 0.5802,
+    "n": 585,
+    "brier": 0.23448,
+    "log_loss": 0.65861,
+    "ece": 0.05156,
+    "win_rate": 0.5641,
     "reliability_curve": [
       {
         "bin_lo": 0.2,
         "bin_hi": 0.4,
-        "n": 12,
-        "mean_pred": 0.3825,
-        "mean_actual": 0.3333
+        "n": 13,
+        "mean_pred": 0.38,
+        "mean_actual": 0.3846
       },
       {
         "bin_lo": 0.4,
         "bin_hi": 0.6,
-        "n": 201,
-        "mean_pred": 0.5395,
-        "mean_actual": 0.5025
+        "n": 277,
+        "mean_pred": 0.5264,
+        "mean_actual": 0.4946
       },
       {
         "bin_lo": 0.6,
         "bin_hi": 0.8,
-        "n": 246,
-        "mean_pred": 0.665,
-        "mean_actual": 0.5976
+        "n": 249,
+        "mean_pred": 0.6646,
+        "mean_actual": 0.5904
       },
       {
         "bin_lo": 0.8,
@@ -77,8 +77,8 @@
   },
   "meta_calibrator": {
     "fitted": true,
-    "n_samples": 132,
-    "brier_before": 0.2035,
-    "brier_after": 0.18828
+    "n_samples": 198,
+    "brier_before": 0.22143,
+    "brier_after": 0.20656
   }
 }

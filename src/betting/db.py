@@ -18,9 +18,10 @@ from __future__ import annotations
 
 import logging
 import sqlite3
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any
 
 _log = logging.getLogger("sportsbrain.betting.db")
 
@@ -49,15 +50,38 @@ CREATE INDEX IF NOT EXISTS idx_bets_status   ON bets (status);
 CREATE INDEX IF NOT EXISTS idx_bets_placed   ON bets (placed_date);
 """
 
+# P0-A: new identity columns added after initial schema — safe ALTER TABLE migration.
+# Each runs only when the column is missing (PRAGMA table_info check via executescript).
+_DDL_MIGRATE_P0A = [
+    "ALTER TABLE bets ADD COLUMN league             TEXT DEFAULT ''",
+    "ALTER TABLE bets ADD COLUMN signal_id          TEXT DEFAULT ''",
+    "ALTER TABLE bets ADD COLUMN fixture_key        TEXT DEFAULT ''",
+    "ALTER TABLE bets ADD COLUMN sport              TEXT DEFAULT ''",
+    "ALTER TABLE bets ADD COLUMN bankroll_at_placement TEXT DEFAULT ''",
+    "ALTER TABLE bets ADD COLUMN cap_applied        TEXT DEFAULT ''",
+]
+
 
 def open_db(path: Path) -> sqlite3.Connection:
-    """Open (or create) a WAL-mode SQLite ledger at *path*."""
+    """Open (or create) a WAL-mode SQLite ledger at *path*.
+
+    Applies the base DDL and safe P0-A identity column migrations
+    (ALTER TABLE … ADD COLUMN, ignored if column already exists).
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(path), check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
     conn.executescript(_DDL)
+    # P0-A: safe schema migration — add new identity columns only when missing.
+    existing_cols = {
+        row[1] for row in conn.execute("PRAGMA table_info(bets)").fetchall()
+    }
+    for stmt in _DDL_MIGRATE_P0A:
+        col = stmt.split("ADD COLUMN")[1].strip().split()[0]
+        if col not in existing_cols:
+            conn.execute(stmt)
     conn.commit()
     return conn
 
@@ -126,11 +150,13 @@ _INSERT_SQL = """
 INSERT OR IGNORE INTO bets (
     match_id, match_date, home, away, market,
     decimal_odds, stake_pct, stake_amount, placed_date, status, pnl,
-    closing_odds, clv, pinnacle_ref_odds, source, model_prob, stake_reason
+    closing_odds, clv, pinnacle_ref_odds, source, model_prob, stake_reason,
+    league, signal_id, fixture_key, sport, bankroll_at_placement, cap_applied
 ) VALUES (
     :match_id, :match_date, :home, :away, :market,
     :decimal_odds, :stake_pct, :stake_amount, :placed_date, :status, :pnl,
-    :closing_odds, :clv, :pinnacle_ref_odds, :source, :model_prob, :stake_reason
+    :closing_odds, :clv, :pinnacle_ref_odds, :source, :model_prob, :stake_reason,
+    :league, :signal_id, :fixture_key, :sport, :bankroll_at_placement, :cap_applied
 )
 """
 
@@ -158,6 +184,13 @@ def upsert_bet(conn: sqlite3.Connection, row: dict[str, Any]) -> None:
         "source":          row.get("source", "value") or "value",
         "model_prob":      _float_or_none(row.get("model_prob")),
         "stake_reason":    row.get("stake_reason", "") or "",
+        # P0-A: canonical identity + risk provenance
+        "league":                  row.get("league", "") or "",
+        "signal_id":               row.get("signal_id", "") or "",
+        "fixture_key":             row.get("fixture_key", "") or "",
+        "sport":                   row.get("sport", "") or "",
+        "bankroll_at_placement":   row.get("bankroll_at_placement", "") or "",
+        "cap_applied":             row.get("cap_applied", "") or "",
     })
 
 
@@ -167,7 +200,7 @@ def settle_bet(conn: sqlite3.Connection, match_id: str, market: str, status: str
 
 
 def _float_or_none(v: Any) -> float | None:
-    if v is None or v == "" or (isinstance(v, float) and v != v):
+    if v is None or v == "" or (isinstance(v, float) and v != v):  # noqa: PLR0124
         return None
     try:
         return float(v)

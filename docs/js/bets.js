@@ -1,3 +1,143 @@
+// ── P0-A: Canonical actionability contract (mirrors Python signal_contract.py) ──
+// Blocker-2: must stay in parity with contract.js and signal_contract.py.
+
+const _TERMINAL_STATUSES = new Set(['FINISHED', 'CANCELLED', 'POSTPONED', 'ABANDONED', 'TERMINATED', 'COMPLETED']);
+const _LIVE_STATUSES = new Set(['LIVE', 'IN_PROGRESS']);
+// Blocker-1 parity: real production pre-match states (mirrors ALLOWED_PREMATCH_STATUSES)
+const _ALLOWED_PREMATCH_STATUSES = new Set([
+  'UPCOMING', 'AWAITING_START', 'DELAYED', 'PREMATCH', 'SCHEDULED',
+]);
+// P1.5-H canonical freshness: 30 minutes (mirrors _MAX_ODDS_AGE_SECONDS in signal_contract.py)
+const _MAX_ODDS_AGE_MS = 1800 * 1000;
+// P0-A item D parity: maximum allowed future clock skew (mirrors MAX_CLOCK_SKEW_MS)
+const _MAX_CLOCK_SKEW_MS = 60 * 1000;
+// Canonical EV ceiling: MAX_EV = 0.40 → 40 percentage points
+const _MAX_EV_PCT = 40.0;
+const _MAX_ACTIVE_BETS = 3;
+const _MAX_STAKE_PCT = 0.05;
+
+/**
+ * Returns {ok: boolean, reason: string}.
+ * Fail closed: any missing/invalid field returns ok=false.
+ */
+function isActionableValueSignal(signal, bankroll, activeCount) {
+  if (!signal) return { ok: false, reason: 'signal is null' };
+
+  // 1. signal_id present and non-empty
+  const sid = (signal.signal_id || '').toString().trim();
+  if (!sid) return { ok: false, reason: 'signal_id missing or empty' };
+
+  // 2. signal_status must be exactly 'ACTIVE'
+  if (signal.signal_status !== 'ACTIVE') {
+    return { ok: false, reason: `signal_status must be 'ACTIVE', got '${signal.signal_status}'` };
+  }
+
+  // 3. Not shadow
+  if (signal.shadow === true || signal.is_shadow === true) {
+    return { ok: false, reason: 'shadow signal — not actionable' };
+  }
+
+  // 4. Not unsupported
+  if (signal.unsupported === true) return { ok: false, reason: 'unsupported signal' };
+
+  // 5. Edge not lost
+  if (signal.edge_lost === true) return { ok: false, reason: 'edge_lost' };
+
+  // 6. Not stale
+  if (signal.stale === true) return { ok: false, reason: 'stale signal' };
+
+  // 7. no_bet_flag
+  if (signal.no_bet_flag === true) return { ok: false, reason: 'no_bet_flag set' };
+
+  // 8. current_odds finite > 1.0
+  const odds = Number(signal.current_odds);
+  if (!Number.isFinite(odds) || odds <= 1.0) {
+    return { ok: false, reason: `current_odds must be > 1.0, got ${signal.current_odds}` };
+  }
+
+  // 9+10+11. current_ev_pct finite, within canonical bounds (MAX_EV = 40%), > 0
+  const ev = Number(signal.current_ev_pct);
+  if (!Number.isFinite(ev)) return { ok: false, reason: 'current_ev_pct not finite' };
+  if (ev > _MAX_EV_PCT) return { ok: false, reason: `current_ev_pct exceeds canonical MAX_EV (${_MAX_EV_PCT}%): ${ev}` };
+  if (ev <= -100) return { ok: false, reason: `current_ev_pct implausibly low: ${ev}` };
+  if (ev <= 0) return { ok: false, reason: `current_ev_pct must be > 0 for a value bet, got ${ev}` };
+
+  // 12+13. odds_ts present, not materially future, and within freshness window
+  const oddsTs = signal.odds_ts;
+  if (!oddsTs) return { ok: false, reason: 'odds_ts missing' };
+  try {
+    const tsMs = new Date(oddsTs).getTime();
+    if (!Number.isFinite(tsMs)) return { ok: false, reason: 'odds_ts invalid date' };
+    const nowMs = Date.now();
+    // Blocker-2 parity (item D): reject materially future odds_ts
+    const skewMs = tsMs - nowMs;
+    if (skewMs > _MAX_CLOCK_SKEW_MS) {
+      return { ok: false, reason: `odds_ts is ${Math.round(skewMs/1000)}s in the future — fail closed` };
+    }
+    const ageMs = nowMs - tsMs;
+    if (ageMs > _MAX_ODDS_AGE_MS) {
+      return { ok: false, reason: `odds_ts stale: ${Math.round(ageMs/1000)}s old (max ${_MAX_ODDS_AGE_MS/1000}s)` };
+    }
+  } catch (e) {
+    return { ok: false, reason: 'odds_ts parse error: ' + e.message };
+  }
+
+  // 14. event_status not LIVE/IN_PROGRESS
+  const evStatus = signal.event_status;
+  if (_LIVE_STATUSES.has(evStatus)) {
+    return { ok: false, reason: `event_status is live: ${evStatus}` };
+  }
+
+  // 15. event_status not terminal
+  if (_TERMINAL_STATUSES.has(evStatus)) {
+    return { ok: false, reason: `event_status is terminal: ${evStatus}` };
+  }
+
+  // 15b. Sport-aware event_status check (P0-A Blocker-1 / V5 parity with contract.js).
+  // Tennis: must have explicit event_status — null/missing fails closed.
+  // Football: scanner does not emit event_status → null/missing accepted.
+  if (evStatus == null || evStatus === '') {
+    const sport = (signal.sport || '').toString().trim().toLowerCase();
+    if (sport === 'tennis') {
+      return { ok: false, reason: 'tennis signals must have explicit event_status — null/missing fails closed' };
+    }
+    // Football: accepted.
+  } else if (!_ALLOWED_PREMATCH_STATUSES.has(evStatus)) {
+    return { ok: false, reason: `event_status '${evStatus}' not in allowed pre-match set — fail closed` };
+  }
+
+  // 16. bankroll > 0
+  const br = Number(bankroll);
+  if (!Number.isFinite(br) || br <= 0) {
+    return { ok: false, reason: `bankroll must be > 0, got ${bankroll}` };
+  }
+
+  // 17. active_bet_count < MAX_ACTIVE_BETS
+  const count = Number(activeCount);
+  if (!Number.isFinite(count) || count >= _MAX_ACTIVE_BETS) {
+    return { ok: false, reason: `max active bets (${_MAX_ACTIVE_BETS}) reached — ${count} already open` };
+  }
+
+  // 18. sport present
+  const sport = (signal.sport || '').toString().trim();
+  if (!sport) return { ok: false, reason: 'sport field missing or empty' };
+
+  return { ok: true, reason: 'ok' };
+}
+
+/**
+ * Returns {stake: number, capApplied: boolean}.
+ * Hard cap: bankroll * 0.05. Cap can only decrease the stake.
+ */
+function computeSafeStake(bankroll, requestedEur) {
+  const br = Number(bankroll);
+  const req = Number(requestedEur);
+  if (!Number.isFinite(br) || !Number.isFinite(req)) return { stake: 0, capApplied: true };
+  const ceiling = br * _MAX_STAKE_PCT;
+  if (req > ceiling) return { stake: ceiling, capApplied: true };
+  return { stake: req, capApplied: false };
+}
+
 // ── Deep-link: öffnet Bet-Modal direkt aus ?bet=MATCH:MARKET ──
 function _openBetModalForBetId(betId) {
   const colonIdx = betId.lastIndexOf(':');
@@ -374,7 +514,19 @@ function renderBankrollStrip() {
 
 // ── Bet-Modal & Worker-Submit ─────────────────────────────────
 const WORKER_BASE = CLOUD_URL.replace(/\/signals\.json$/, '');
-const BANKROLL_START = 100; // 5%-Regel-Referenz; ggf. später aus _bankrollState.start ableiten
+const BANKROLL_START = 100;
+
+// Returns authoritative current bankroll = free cash + staked amount.
+// Falls back to BANKROLL_START when state is not yet loaded.
+// Worker + consumer are the final security boundary; this is for UI pre-validation.
+function _currentBankroll() {
+  if (!_bankrollState) return BANKROLL_START;
+  const free = Number(_bankrollState.free);
+  const staked = Number(_bankrollState.staked);
+  if (Number.isFinite(free) && Number.isFinite(staked)) return Math.max(0, free + staked);
+  const start = Number(_bankrollState.start);
+  return Number.isFinite(start) && start > 0 ? start : BANKROLL_START;
+}
 function _applyUserBankroll(amount) {
   if (!amount || amount < 10) return;
   // D4/D5: localStorage-Wert hat Vorrang, wenn Backend nur den €100-Default
@@ -405,34 +557,44 @@ function _calcKellyStake() {
   // f* = (p*o - 1) / (o - 1)
   const fFull = (p * o - 1) / (o - 1);
   if (fFull <= 0) return null;
-  const bk = (_bankrollState && _bankrollState.start) ? _bankrollState.start : BANKROLL_START;
+  const bk = _currentBankroll();
   const stake = bk * fFull * _KELLY_FRAC;
-  // 0.50€-Granularität, min 0.50€, max 25€ (UI-Limit)
-  const rounded = Math.max(0.5, Math.min(25, Math.round(stake * 2) / 2));
+  // Proactive UI cap (pre-confirmation): cap at 5% of current bankroll
+  const { stake: capped } = computeSafeStake(bk, stake);
+  const rounded = Math.max(0.5, Math.min(25, Math.round(capped * 2) / 2));
   return rounded;
 }
 function _setStake(v) {
   const inp = document.getElementById('bet-modal-stake');
   if (!inp) return;
-  inp.value = v.toFixed(2);
+  // Proactive UI cap (pre-confirmation): cap at 5% of current bankroll
+  const bk = _currentBankroll();
+  const { stake, capApplied } = computeSafeStake(bk, v);
+  inp.value = stake.toFixed(2);
+  if (capApplied) {
+    showToast(`Einsatz auf 5%-Limit (€${stake.toFixed(2)}) begrenzt`, 'info');
+  }
   _updateBetModalCalcs();
 }
 function _renderQuickStakes() {
   const wrap = document.getElementById('bet-modal-quick-stakes');
   if (!wrap) return;
+  const bk = _currentBankroll();
+  const maxStake = bk * _MAX_STAKE_PCT;
   const kelly = _calcKellyStake();
   const half  = kelly != null ? Math.max(0.5, Math.round(kelly / 2 * 2) / 2) : null;
-  const bk = (_bankrollState && _bankrollState.start) ? _bankrollState.start : BANKROLL_START;
   const onepct = Math.max(0.5, Math.round(bk * 0.01 * 2) / 2);
+  // P0-A: cap all quick-select amounts at 5%
+  const _cap = v => v != null ? Math.min(v, maxStake) : null;
   const buttons = [
-    { lbl: 'Kelly', val: kelly, cls: 'kelly' },
-    { lbl: 'Half-K', val: half, cls: 'kelly' },
-    { lbl: '€5', val: 5, cls: '' },
-    { lbl: '€10', val: 10, cls: '' },
-    { lbl: '1% BK', val: onepct, cls: '' },
+    { lbl: 'Kelly', val: _cap(kelly), cls: 'kelly' },
+    { lbl: 'Half-K', val: _cap(half), cls: 'kelly' },
+    { lbl: '€5', val: _cap(5), cls: '' },
+    { lbl: '€10', val: _cap(10), cls: '' },
+    { lbl: '1% BK', val: _cap(onepct), cls: '' },
   ];
   wrap.innerHTML = buttons.map(b => {
-    if (b.val == null) {
+    if (b.val == null || b.val < 1) {
       return `<button type="button" class="quick-stake-btn ${b.cls}" disabled aria-label="${b.lbl} (nicht verfügbar)">
         <span class="qs-lbl">${b.lbl}</span><span>—</span>
       </button>`;
@@ -446,27 +608,75 @@ function _renderQuickStakes() {
 function _openBetModalFromBtn(btn) {
   const d = btn.dataset;
   const source = (d.source === 'manual') ? 'manual' : 'value';
+
+  // P0-A: evaluate the full canonical actionability contract before opening VALUE-bet modal
+  if (source === 'value') {
+    const bk = _currentBankroll();
+    const activeCount = (_openBets || []).length;
+    const sig = {
+      signal_id:      d.signalId || d.signal_id || '',
+      signal_status:  d.signalStatus || d.signal_status || '',
+      shadow:         d.shadow === 'true',
+      is_shadow:      d.isShadow === 'true',
+      unsupported:    d.unsupported === 'true',
+      edge_lost:      d.edgeLost === 'true',
+      stale:          d.stale === 'true',
+      no_bet_flag:    d.noBetFlag === 'true',
+      // P0-A (item B): current_odds and current_ev_pct must be actual current values.
+      // data-current-odds is empty string when unavailable — do NOT fall back to scan odds here.
+      // The actionability check below will reject if these are missing/invalid.
+      current_odds:   d.currentOdds ? parseFloat(d.currentOdds) : NaN,
+      current_ev_pct: d.currentEv   ? parseFloat(d.currentEv)   : NaN,
+      odds_ts:        d.oddsTs || d.odds_ts || '',
+      event_status:   d.eventStatus || d.event_status || '',
+      sport:          d.sport || '',
+    };
+    const { ok, reason } = isActionableValueSignal(sig, bk, activeCount);
+    if (!ok) {
+      showToast(`Wette nicht möglich: ${reason}`, 'error');
+      return;
+    }
+  }
+
   const modelProbRaw = parseFloat(d.modelProb || '0');
   const modelProb = (modelProbRaw > 0 && modelProbRaw <= 1) ? modelProbRaw
                   : (modelProbRaw > 1 && modelProbRaw <= 100) ? modelProbRaw / 100
                   : 0;
+  // P0-A (item B): canonical_odds = actual current_odds from KV only (no scan fallback)
+  const canonicalOdds = d.currentOdds ? parseFloat(d.currentOdds) : 0;
   _pendingBet = {
     match: d.match,
     market: d.market,
-    odds: parseFloat(d.odds),
-    stake_eur: parseFloat(d.stake) || (source === 'manual' ? 5 : 5),
-    ev_pct: parseFloat(d.ev || '0'),
+    odds: canonicalOdds,
+    canonical_odds: canonicalOdds,  // P0-A: locked for value bets — submit verifies against this
+    stake_eur: parseFloat(d.stake) || 5,
+    ev_pct: parseFloat(d.currentEv || d.ev || '0'),
     confidence: d.confidence || '',
     kickoff: d.kickoff || '',
     sport: d.sport || '',
     source,
     model_prob: modelProb,
     fair_prob: parseFloat(d.fairProb || '0'),
+    // P0-A: identity fields from dataset
+    signal_id:    d.signalId    || d.signal_id    || '',
+    fixture_key:  d.fixtureKey  || d.fixture_key  || '',
+    league:       d.league      || '',
+    odds_ts:      d.oddsTs      || d.odds_ts      || '',
+    signal_status: d.signalStatus || d.signal_status || '',
+    event_status: d.eventStatus  || d.event_status  || '',
   };
   const [h, a] = _pendingBet.match.split(' vs ').map(x => x.trim());
   document.getElementById('bet-modal-sub').textContent = `${h} vs ${a} · ${marketLabel(_pendingBet.market, `${h} vs ${a}`)}`;
   const oddsInp = document.getElementById('bet-modal-odds-input');
-  if (oddsInp) oddsInp.value = _pendingBet.odds.toFixed(2);
+  if (oddsInp) {
+    oddsInp.value = _pendingBet.canonical_odds.toFixed(2);
+    // P0-A: lock odds field for value bets — canonical price is authoritative.
+    // Manual bets allow custom odds entry.
+    oddsInp.readOnly = (source === 'value');
+    oddsInp.title = (source === 'value')
+      ? 'Canonical current_odds (locked — use Manual for custom odds)'
+      : '';
+  }
   const badge = document.getElementById('bet-modal-kind-badge');
   if (badge) {
     if (source === 'manual') {
@@ -563,34 +773,121 @@ function _updateBetModalCalcs() {
       drawer.style.display = 'none';
     }
   }
+  // P0-A: warn if stake exceeds 5% cap; disable confirm if over cap
+  const bkCurrent = _currentBankroll();
+  const capCeiling = bkCurrent * _MAX_STAKE_PCT;
   const warn = document.getElementById('bet-modal-warn');
-  warn.classList.toggle('show', stake > start * 0.05 + 0.001);
+  warn.classList.toggle('show', stake > capCeiling + 0.001);
   const btn = document.getElementById('bet-modal-confirm');
   const oddsOk = odds >= 1.01 && odds <= 100;
-  btn.disabled = !(stake >= 0.5 && stake <= 25 && oddsOk);
+  btn.disabled = !(stake >= 0.5 && stake <= 25 && stake <= capCeiling + 0.001 && oddsOk);
 }
 
 async function _submitBet() {
   if (!_pendingBet) return;
-  const stake = parseFloat(document.getElementById('bet-modal-stake').value) || 0;
+  const bk = _currentBankroll();
+
+  // Blocker-2: re-validate actionability immediately before submit using the LIVE canonical
+  // signal from _signals — NOT fabricated defaults. No field may be coerced to a safe value.
+  if (_pendingBet.source === 'value') {
+    const activeCount = (_openBets || []).length;
+    // Re-resolve the signal from the live _signals array (same data as when modal opened).
+    // If signal is no longer present, it was removed/expired — fail closed.
+    const liveSig = Array.isArray(_signals)
+      ? _signals.find(s => s.signal_id === _pendingBet.signal_id)
+      : null;
+    if (!liveSig) {
+      showToast('Signal nicht mehr verfügbar — Seite neu laden', 'error');
+      _closeBetModal();
+      return;
+    }
+    // Use all real fields from the live signal — NO fabricated defaults, NO hardcoded flags.
+    const submitSig = {
+      signal_id:      liveSig.signal_id,
+      signal_status:  liveSig.signal_status,
+      shadow:         liveSig.shadow,
+      is_shadow:      liveSig.is_shadow,
+      unsupported:    liveSig.unsupported,
+      edge_lost:      liveSig.edge_lost,
+      stale:          liveSig.stale,
+      no_bet_flag:    liveSig.no_bet_flag,
+      current_odds:   liveSig.current_odds,
+      current_ev_pct: liveSig.current_ev_pct,
+      odds_ts:        liveSig.odds_ts,
+      event_status:   liveSig.event_status,
+      sport:          liveSig.sport,
+    };
+    const { ok, reason } = isActionableValueSignal(submitSig, bk, activeCount);
+    if (!ok) {
+      showToast(`Signal nicht mehr aktionierbar: ${reason}`, 'error');
+      _closeBetModal();
+      return;
+    }
+  }
+
+  // P0-A: REJECT at submission if stake exceeds 5% cap (do not silently alter confirmed amount)
+  const rawStake = parseFloat(document.getElementById('bet-modal-stake').value) || 0;
+  const stake = rawStake;
+  const capCeiling = bk * _MAX_STAKE_PCT;
+  if (stake > capCeiling + 0.001) {
+    showToast(`Einsatz €${stake.toFixed(2)} überschreitet 5%-Limit (€${capCeiling.toFixed(2)}) — bitte korrigieren`, 'error');
+    return;
+  }
+
   if (stake < 0.5 || stake > 25) { showToast('Einsatz muss zwischen €0.50 und €25 liegen', 'error'); return; }
   const oddsInp = document.getElementById('bet-modal-odds-input');
-  const odds = oddsInp ? (parseFloat(oddsInp.value) || 0) : _pendingBet.odds;
+  const odds = oddsInp ? (parseFloat(oddsInp.value) || 0) : _pendingBet.canonical_odds;
   if (!(odds >= 1.01 && odds <= 100)) { showToast('Quote muss zwischen 1.01 und 100 liegen', 'error'); return; }
+
+  // P0-A: for value bets, verify odds were not changed from canonical price
+  if (_pendingBet.source === 'value') {
+    const canonOdds = _pendingBet.canonical_odds;
+    if (Number.isFinite(canonOdds) && Math.abs(odds - canonOdds) > 0.01) {
+      showToast(`Quote geändert (${odds.toFixed(2)} ≠ kanonisch ${canonOdds.toFixed(2)}) — bitte Manuelle Wette verwenden`, 'error');
+      return;
+    }
+  }
+
   const token = localStorage.getItem('sb_token');
   if (!token) { _openTokenModal(); return; }
 
+  // P0-A: source is determined at modal-open time (from dataset); not derived from model_prob.
+  // Manual betting is always explicit — never silently derived.
+  const source = _pendingBet.source || 'manual';
+
+  // P0-A: manual bet confirmation dialog
+  if (source === 'manual') {
+    const confirmed = confirm(
+      'Dies ist eine manuelle Wette — sie wird nicht in die Modell-Performance eingerechnet.\n\n' +
+      'Fortfahren?'
+    );
+    if (!confirmed) return;
+  }
+
   const btn = document.getElementById('bet-modal-confirm');
   btn.disabled = true; btn.textContent = 'Eintragen…';
-  const hasModelProb = _pendingBet.model_prob && _pendingBet.model_prob > 0;
+
+  // P0-A: open bets count for Worker validation
+  const openBetsCount = (_openBets || []).length;
+
   const payload = {
     ..._pendingBet,
     odds,
     stake_eur: stake,
-    // Ohne model_prob kann der Worker keine EV-Prüfung machen → 'manual'
-    source: hasModelProb ? (_pendingBet.source || 'value') : 'manual',
+    source,
+    // Informational only — Worker uses authoritative KV state, not this value
+    bankroll_hint: bk,
+    open_bets_count: openBetsCount,
+    // P0-A: identity fields
+    signal_id: _pendingBet.signal_id || '',
+    fixture_key: _pendingBet.fixture_key || '',
+    sport: _pendingBet.sport || '',
+    league: _pendingBet.league || '',
+    odds_ts: _pendingBet.odds_ts || '',
   };
-  if (hasModelProb) {
+  // P0-A: model_prob comes from the canonical value signal (source=value)
+  // or is absent for manual bets. Never derive source from model_prob presence.
+  if (_pendingBet.model_prob && _pendingBet.model_prob > 0) {
     payload.model_prob = _pendingBet.model_prob;
     payload.ev_pct = calcEV(_pendingBet.model_prob, odds);
   }

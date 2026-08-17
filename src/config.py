@@ -119,7 +119,7 @@ KELLY_FRAC = 0.25
 MIN_EDGE = 0.03
 MIN_STAKE_EUR = 5.0
 MAX_STAKE_EUR = 15.0
-MAX_ACTIVE_BETS = 5
+MAX_ACTIVE_BETS = 3
 # Hard risk ceiling: final recommended stake must not exceed this fraction of bankroll.
 # Stake tier / Kelly = theoretical generator; this cap = final authoritative limit.
 BANKROLL_RISK_CAP_PCT = 0.05

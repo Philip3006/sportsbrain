@@ -870,11 +870,23 @@ def _tennis_bet_is_live(record: dict | None, now_utc: datetime) -> bool:
 
 
 def _drop_finished_signals(signals: list[dict]) -> list[dict]:
-    """Remove signals whose match kicked off more than 100 minutes ago."""
+    """Remove signals whose match kicked off more than 100 minutes ago.
+
+    Wave 3C: AWAITING_START / DELAYED matches are never dropped on kickoff alone —
+    they haven't started even though the scheduled time has passed.
+    """
     now = datetime.now(timezone.utc)
     cutoff = now - timedelta(minutes=100)
     result = []
     for s in signals:
+        ev_status = s.get("event_status", "")
+        # Authoritative terminal → drop
+        if ev_status in ("COMPLETED", "CANCELLED"):
+            continue
+        # Waiting for start or explicitly delayed → keep regardless of kickoff
+        if ev_status in ("AWAITING_START", "DELAYED"):
+            result.append(s)
+            continue
         ko = s.get("kickoff", "")
         if not ko:
             result.append(s)
@@ -1041,6 +1053,37 @@ def write_signals_json(
         ]
     else:
         tennis_data = existing.get("tennis", [])
+
+    # Wave 3C: enrich tennis signals with canonical event state from schedule.
+    # Publishes event_status, scheduled_start_current, scheduled_start_initial.
+    # Also updates kickoff to scheduled_start_current (safe for tennis — signal_id
+    # is stable via fixture_registry regardless of kickoff changes).
+    if tennis_data:
+        _sched_lookup: dict[tuple[str, str], dict] = {}
+        for _g in (schedule or []):
+            if _g.get("sport") == "tennis" and _g.get("scheduled_start_current"):
+                _sched_lookup[(_g.get("home", ""), _g.get("away", ""))] = _g
+        if _sched_lookup:
+            for _tsig in tennis_data:
+                _parts = _tsig.get("match", "").split(" vs ", 1)
+                if len(_parts) != 2:
+                    continue
+                _ent = _sched_lookup.get((_parts[0].strip(), _parts[1].strip()))
+                if not _ent:
+                    continue
+                _cur = _ent.get("scheduled_start_current")
+                if _cur:
+                    _tsig["scheduled_start_current"] = _cur
+                    _tsig["kickoff"] = _cur  # keep kickoff in sync for legacy consumers
+                _ini = _ent.get("scheduled_start_initial")
+                if _ini:
+                    _tsig["scheduled_start_initial"] = _ini
+                _evs = _ent.get("event_status")
+                if _evs:
+                    _tsig["event_status"] = _evs
+                _upd = _ent.get("schedule_updated_at")
+                if _upd:
+                    _tsig["schedule_updated_at"] = _upd
 
     # Remove signals for matches that ended > 100 minutes ago
     football_data = _drop_finished_signals(football_data)
@@ -1246,6 +1289,9 @@ def write_signals_json(
             "exposure_pct": _exposure_pct,
             "max_win":      round(_max_win, 2),
             "pnl_closed":   round(_pnl_closed, 2),
+            # P0-A: backend-authored timestamp — Worker uses this for freshness enforcement.
+            # Threshold: 2 hours (AUTH_STATE_MAX_AGE_MS in contract.js).
+            "published_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         },
         "wm_stats": _build_wm_stats(ledger_path=ledger_path),
         "tennis_stats": _build_tennis_stats(ledger_path=ledger_path),
