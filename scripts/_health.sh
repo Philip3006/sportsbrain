@@ -112,6 +112,12 @@ health_finish() {
   if [ -n "$err_msg" ]; then
     args+=(--error "$err_msg")
   fi
+  # P0-B3: propagate RECOVERY_ATTEMPT_ID when set by a recovery actor.
+  # Normal scheduled cron jobs leave RECOVERY_ATTEMPT_ID unset → omitted → null in snapshot.
+  local recovery_attempt_id="${RECOVERY_ATTEMPT_ID:-}"
+  if [ -n "$recovery_attempt_id" ]; then
+    args+=(--recovery-attempt-id "$recovery_attempt_id")
+  fi
 
   python3 -m src.monitoring.health_writer "${args[@]}" >/dev/null 2>&1 || true
 
@@ -128,7 +134,7 @@ health_finish() {
     python3 -m src.notifications.health_push "$job" "$err_msg" \
       >/dev/null 2>&1 || true
   elif [ "$status" = "ok" ]; then
-    python3 -m src.notifications.health_push "$job" --recover \
+    python3 -m src.notifications.health_push "$job" --healthy \
       >/dev/null 2>&1 || true
   fi
 }

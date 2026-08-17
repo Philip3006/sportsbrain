@@ -110,15 +110,19 @@ def notify_failure(job: str, error: str | None = None,
     return True
 
 
-def mark_recovered(job: str) -> None:
+def mark_job_healthy(job: str) -> None:
     """Records that a job succeeded — clears the throttle so the next failure
-    will trigger a push immediately. Called from _health.sh on status=ok."""
+    will trigger a push immediately. Called from _health.sh on status=ok.
+
+    This is a notification-throttle reset ONLY. It is NOT P0-B3 Recovery Truth.
+    Only RecoveryState.RECOVERED may produce a recovery-success claim.
+    """
     state = _load_state()
     entry = state.get(job, {})
     if entry.get("last_status") != "ok":
         state[job] = {
             "last_status": "ok",
-            "last_recovered_at": _now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "last_healthy_at": _now().strftime("%Y-%m-%dT%H:%M:%SZ"),
         }
         _save_state(state)
 
@@ -130,10 +134,11 @@ def _cli() -> int:
     job = sys.argv[1]
     error = " ".join(sys.argv[2:]) if len(sys.argv) > 2 else None
 
-    # Special op: --recover marks a job as ok-state, used by _health.sh.
-    if error == "--recover":
-        mark_recovered(job)
-        print(f"[health_push] {job} marked recovered")
+    # --healthy: marks job as ok-state, clears push throttle (notification throttle only).
+    # --recover: deprecated alias, kept for backward compat.
+    if error in ("--healthy", "--recover"):
+        mark_job_healthy(job)
+        print(f"[health_push] {job} marked healthy")
         return 0
 
     sent = notify_failure(job, error)

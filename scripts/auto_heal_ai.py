@@ -245,8 +245,12 @@ def _vapid_push(msg: str) -> None:
 
 
 _ACTION_MAP = {
-    "re-run-settle": ["python3", "scripts/settle_bets.py"],
-    "re-consume": ["python3", "scripts/consume_pending_bets.py"],
+    # settle_cron.sh sources _health.sh → health_finish("settle", ...) — produces snapshot.
+    "re-run-settle": ["bash", "scripts/settle_cron.sh"],
+    # consume_pending_bets_cron.sh sources _health.sh → health_finish("consume_pending_bets", ...).
+    "re-consume": ["bash", "scripts/consume_pending_bets_cron.sh"],
+    # daily_scan.py --force has no health-writing wrapper that also accepts --force.
+    # scan_cron.sh omits --force (different semantics); binding is health_job=None → process_exit.
     "force-refresh-signals": ["python3", "scripts/daily_scan.py", "--force"],
     "re-test-vapid": ["python3", "-m", "src.notifications.health_push", "auto_heal_ai", "vapid-test"],
     "prompt-resubscribe": None,  # nicht autom. heilbar — direkt eskalieren
@@ -254,24 +258,29 @@ _ACTION_MAP = {
 }
 
 
-def _run_outcome_action(action: str, sym_id: str) -> tuple[bool, str]:
+def _run_outcome_action(
+    action: str, sym_id: str, *, extra_env: dict[str, str] | None = None,
+) -> tuple[bool, str, int | None]:
     """Führt eine deterministische Heil-Action aus.
 
-    Returns (success, stdout_tail).
+    Returns (success, stdout_tail, exit_code).
+    exit_code is None when the action could not be executed (no command, exception).
+    extra_env is merged into os.environ for the subprocess (e.g. RECOVERY_ATTEMPT_ID).
     """
     cmd = _ACTION_MAP.get(action)
     if cmd is None:
-        return False, f"action {action!r} hat keine ausführbare Map (eskaliert)"
+        return False, f"action {action!r} hat keine ausführbare Map (eskaliert)", None
+    run_env = {**os.environ, **extra_env} if extra_env else None
     try:
         proc = subprocess.run(
-            cmd, cwd=ROOT, capture_output=True, text=True, timeout=600,
+            cmd, cwd=ROOT, capture_output=True, text=True, timeout=600, env=run_env,
         )
     except subprocess.TimeoutExpired:
-        return False, "timeout (>600s)"
+        return False, "timeout (>600s)", None
     except Exception as e:
-        return False, f"exception: {e}"
+        return False, f"exception: {e}", None
     tail = (proc.stdout or "")[-200:].strip()
-    return proc.returncode == 0, tail
+    return proc.returncode == 0, tail, proc.returncode
 
 
 def _handle_outcome_symptoms() -> None:
@@ -279,12 +288,37 @@ def _handle_outcome_symptoms() -> None:
 
     Läuft immer (auch bei overall=ok), weil Outcome-Probleme jobspezifische
     Health-Status nicht spiegeln müssen.
+
+    P0-B3: every dispatchable action is tracked through the canonical recovery
+    chain (REQUESTED→DISPATCHED→OBSERVED→VERIFIED→RECOVERED). Process exit=0
+    alone is never sufficient — health snapshot and symptom re-check must confirm.
+    Only RecoveryState.RECOVERED may emit a recovery-success claim.
+    If tracking fails, operational action may continue but recovery remains unverified.
     """
     try:
-        from src.monitoring.outcome_checks import run_all_checks, Symptom
+        from src.monitoring.outcome_checks import run_all_checks
     except Exception as e:
         _log(f"outcome_checks import failed: {type(e).__name__}: {e} (sys.path[0]={sys.path[0]!r})")
         return
+
+    try:
+        from src.monitoring.recovery_truth import (
+            RECOVERY_REGISTRY,
+            ExecutionEvidence,
+            RecoveryState,
+            RecoveryStore,
+            VerificationEvidence,
+            collect_health_snapshot_evidence,
+            mark_dispatched,
+            observe_execution,
+            request_recovery,
+            verify_resolution,
+        )
+        store = RecoveryStore()
+        recovery_available = True
+    except (ImportError, AttributeError, OSError) as e:
+        _log(f"recovery_truth import failed — tracking disabled: {e}")
+        recovery_available = False
 
     symptoms: list = run_all_checks()
     if not symptoms:
@@ -295,7 +329,6 @@ def _handle_outcome_symptoms() -> None:
         action = sym.suggested_action
 
         if action in (None, "none"):
-            # Direkt eskalieren
             if not _recently_pushed(sym.id, hours=24):
                 _log(f"{sym.id}: no action available — pushing")
                 _vapid_push(f"{sym.id}: {sym.summary}")
@@ -303,26 +336,137 @@ def _handle_outcome_symptoms() -> None:
             continue
 
         if action == "prompt-resubscribe":
-            # Browser-Resubscribe braucht User-Eingriff — eskalieren mit 24h cooldown
             if not _recently_pushed(sym.id, hours=24):
                 _log(f"{sym.id}: needs human (resubscribe) — pushing")
                 _vapid_push(f"{sym.id}: {sym.summary}")
                 _mark_pushed(sym.id)
             continue
 
-        ok, tail = _run_outcome_action(action, sym.id)
+        # ── P0-B3 recovery chain: request + pre-dispatch snapshot baseline ───
+        attempt = None
+        pre_dispatch_last_run_at: str | None = None
+        pre_dispatch_run_id: str | None = None
+        if recovery_available:
+            try:
+                attempt = request_recovery(sym.id, action, symptom_id=sym.id)
+                store.save(attempt)
+                if attempt.state == RecoveryState.RECOVERY_UNAVAILABLE:
+                    _log(f"{sym.id}: RECOVERY_UNAVAILABLE for {action!r} — {attempt.terminal_reason}")
+                    # Dispatch for operational continuity; recovery cannot be claimed.
+                else:
+                    # Capture pre-dispatch snapshot baseline for freshness check
+                    binding = RECOVERY_REGISTRY.get(action)
+                    if binding and binding.health_job:
+                        _baseline = collect_health_snapshot_evidence(
+                            binding.health_job, attempt.requested_at
+                        )
+                        if _baseline:
+                            pre_dispatch_last_run_at = _baseline.observed_at
+                            pre_dispatch_run_id = _baseline.run_id
+                    attempt = mark_dispatched(attempt)
+                    store.save(attempt)
+            except (AttributeError, KeyError, OSError, TypeError, ValueError) as e:
+                _log(f"{sym.id}: recovery tracking error at request/dispatch: {e}")
+                attempt = None
+
+        # Pass RECOVERY_ATTEMPT_ID to snapshot-backed actors so the health snapshot
+        # can be correlated to exactly this attempt (attempt-bound evidence, P0-B3).
+        action_extra_env: dict[str, str] | None = None
+        if (attempt is not None
+                and attempt.state == RecoveryState.DISPATCHED):
+            _ab = RECOVERY_REGISTRY.get(action)
+            if _ab and _ab.health_job:
+                action_extra_env = {"RECOVERY_ATTEMPT_ID": attempt.attempt_id}
+
+        ok, tail, exit_code = _run_outcome_action(action, sym.id, extra_env=action_extra_env)
+        completed_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
         if ok:
             _log(f"auto-action: {sym.id} → ok ({action})")
         else:
             _log(f"auto-action: {sym.id} → failed ({action}): {tail[:120]}")
 
-        # Re-check: ist Symptom weg?
+        # ── Observe execution (P0-B3: health snapshot required for snapshot-backed) ──
+        if recovery_available and attempt is not None and attempt.state == RecoveryState.DISPATCHED:
+            try:
+                binding = RECOVERY_REGISTRY.get(action)
+                if binding and binding.health_job:
+                    exe_ev = collect_health_snapshot_evidence(
+                        binding.health_job, attempt.requested_at,
+                        pre_dispatch_last_run_at=pre_dispatch_last_run_at,
+                        pre_dispatch_run_id=pre_dispatch_run_id,
+                    )
+                    if exe_ev is None:
+                        # Snapshot absent after action — source=health_snapshot_absent will
+                        # fail source validation in observe_execution (fail closed).
+                        exe_ev = ExecutionEvidence(
+                            run_id=None,
+                            observed_at=completed_at,
+                            exit_code=None,
+                            source="health_snapshot_absent",
+                            job=binding.health_job,
+                        )
+                else:
+                    # process_exit binding (e.g., re-test-vapid, force-refresh-signals) — explicit
+                    exe_ev = ExecutionEvidence(
+                        run_id=None,
+                        observed_at=completed_at,
+                        exit_code=exit_code,
+                        source="process_exit",
+                        job=None,
+                    )
+                attempt = observe_execution(attempt, exe_ev)
+                store.save(attempt)
+                if attempt.state != RecoveryState.OBSERVED:
+                    _log(f"{sym.id}: observe_execution failed: {attempt.terminal_reason}")
+            except (AttributeError, KeyError, OSError, TypeError, ValueError) as e:
+                _log(f"{sym.id}: recovery tracking error at observe: {e}")
+                attempt = None
+
+        # Re-check: ist Symptom weg? Checker exceptions/errors are NOT symptom_absent (fail closed).
+        checker_failed = False
+        still: list = []
         try:
-            still = [s for s in run_all_checks() if s.id == sym.id]
-        except Exception:
-            still = []
+            all_post_checks = run_all_checks()
+            still = [s for s in all_post_checks if s.id == sym.id]
+            # checker_error_* symptoms mean a check may have failed to evaluate the
+            # original symptom — cannot confirm absence (P0-B3 checker-error rule).
+            checker_errors = [s for s in all_post_checks if s.id.startswith("checker_error_")]
+            if checker_errors:
+                checker_failed = True
+                _log(f"{sym.id}: checker_error during re-check (verification unavailable): "
+                     f"{[e.id for e in checker_errors]}")
+        except Exception as exc:
+            _log(f"{sym.id}: checker exception during verification — treated as unresolved: {exc}")
+            still = [sym]  # cannot confirm symptom gone — fail closed
+            checker_failed = True
+
+        # ── Verify resolution (P0-B3) ──────────────────────────────────────────
+        if recovery_available and attempt is not None and attempt.state == RecoveryState.OBSERVED:
+            try:
+                sym_absent = len(still) == 0 and not checker_failed
+                ver_ev = VerificationEvidence(
+                    verified_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    symptom_absent=sym_absent,
+                    detail=(
+                        f"re-ran outcome checks after {action!r}; "
+                        f"{'checker exception/error' if checker_failed else 'symptom absent' if sym_absent else 'symptom still present'}"
+                    ),
+                )
+                attempt = verify_resolution(attempt, ver_ev)
+                store.save(attempt)
+                if attempt.state != RecoveryState.RECOVERED:
+                    _log(f"{sym.id}: recovery not confirmed: {attempt.state.value} — {attempt.terminal_reason}")
+            except (AttributeError, KeyError, OSError, TypeError, ValueError) as e:
+                _log(f"{sym.id}: recovery tracking error at verify: {e}")
+
+        # Only RECOVERED state may emit a recovery-success claim (P0-B3).
         if not still:
-            _log(f"{sym.id}: resolved nach Auto-Action ✅")
+            if (recovery_available and attempt is not None
+                    and attempt.state == RecoveryState.RECOVERED):
+                _log(f"{sym.id}: RECOVERED ✅ (attempt={attempt.attempt_id})")
+            else:
+                _log(f"{sym.id}: symptom absent after action — recovery unverified")
             continue
 
         # Symptom hartnäckig → einmal eskalieren mit 24h Cooldown

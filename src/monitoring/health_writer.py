@@ -62,6 +62,7 @@ def write_health(
     fallback_used: str | None = None,
     run_id: str | None = None,
     started_at: str | None = None,
+    recovery_attempt_id: str | None = None,
 ) -> Path:
     """Writes results/health/{job}.json atomically.
 
@@ -103,15 +104,16 @@ def write_health(
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     payload: dict[str, Any] = {
-        "job":           job,
-        "status":        status,
-        "last_run_at":   now,
-        "started_at":    started_at or now,
-        "duration_s":    round(duration_s, 2) if duration_s is not None else None,
-        "exit_code":     safe_exit_code,   # None for unknown evidence (not fabricated)
-        "error":         error,
-        "fallback_used": fallback_used,
-        "run_id":        run_id,
+        "job":                  job,
+        "status":               status,
+        "last_run_at":          now,
+        "started_at":           started_at or now,
+        "duration_s":           round(duration_s, 2) if duration_s is not None else None,
+        "exit_code":            safe_exit_code,   # None for unknown evidence (not fabricated)
+        "error":                error,
+        "fallback_used":        fallback_used,
+        "run_id":               run_id,
+        "recovery_attempt_id":  recovery_attempt_id,  # P0-B3: set only by recovery actors
     }
 
     target = HEALTH_DIR / f"{job}.json"
@@ -135,6 +137,8 @@ def _cli() -> int:
                    help="error message (tail of log) — only when status=error")
     p.add_argument("--fallback", default=None, dest="fallback_used",
                    help="fallback data source used — only when status=degraded")
+    p.add_argument("--recovery-attempt-id", default=None, dest="recovery_attempt_id",
+                   help="P0-B3 recovery attempt ID — set only by recovery actors via RECOVERY_ATTEMPT_ID env")
     args = p.parse_args()
 
     path = write_health(
@@ -146,6 +150,7 @@ def _cli() -> int:
         fallback_used=args.fallback_used,
         run_id=args.run_id,
         started_at=args.started_at,
+        recovery_attempt_id=args.recovery_attempt_id,
     )
     print(f"[health] {args.job} → {args.status} ({path.name})")
     return 0
