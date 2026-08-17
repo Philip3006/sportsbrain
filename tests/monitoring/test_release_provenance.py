@@ -19,6 +19,8 @@ Proves all 8 required invariants plus correction-pass additions:
 
   C3-static. ci_gates.yml provenance push does NOT contain a silent-success path
              (grep for '|| true' in the push step — must be absent).
+  C5-static. Every active workflow invoking aggregate_health uses fetch-depth: 0
+             so _check_source_runtime_consistency() can classify SOURCE..RUNTIME.
 
 No live network calls. All state transitions are deterministic.
 """
@@ -658,3 +660,67 @@ def test_record_source_release_fails_without_run_id(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_RUN_ID", raising=False)
     rc = rsr.main()
     assert rc == 1
+
+
+# ---------------------------------------------------------------------------
+# C5 — Static regression: every active workflow that publishes/aggregates
+#       provenance must use a full-history checkout (fetch-depth: 0).
+# ---------------------------------------------------------------------------
+
+def _active_workflows_invoking_aggregate_health() -> list[Path]:
+    """Return paths of active (non-.disabled) workflow files that invoke the
+    canonical aggregate_health Python module or build_provenance path.
+
+    Matches only direct Python-module invocations so that workflows which only
+    reference 'aggregate_health' as a string constant (e.g., cloud_healer.yml
+    SKIP set) are not incorrectly flagged.
+    """
+    workflows_dir = Path(__file__).resolve().parent.parent.parent / ".github" / "workflows"
+    # Patterns that unambiguously invoke the aggregate_health module in Python
+    _INVOKE_PATTERNS = (
+        "src.monitoring.aggregate_health",
+        "from src.monitoring.aggregate_health",
+        "import aggregate_health",
+    )
+    matched: list[Path] = []
+    for wf in sorted(workflows_dir.glob("*.yml")):
+        if wf.suffix == ".disabled":
+            continue
+        text = wf.read_text(encoding="utf-8")
+        if any(pat in text for pat in _INVOKE_PATTERNS):
+            matched.append(wf)
+    return matched
+
+
+def test_c5_static_aggregate_health_workflows_use_full_history_checkout():
+    """Every active workflow that invokes src.monitoring.aggregate_health must
+    have fetch-depth: 0 on its checkout step.
+
+    aggregate_health calls build_provenance() → _check_source_runtime_consistency()
+    which runs `git log SOURCE..RUNTIME`. A shallow clone without full history
+    causes git log to return a non-zero exit code, making source_runtime_consistent
+    = None (fail-closed), which would routinely degrade public provenance in health.json.
+
+    This test prevents future regressions where a new aggregate_health-invoking
+    workflow is added without the required full-history checkout.
+    """
+    workflows = _active_workflows_invoking_aggregate_health()
+    assert workflows, (
+        "No active workflows found that invoke src.monitoring.aggregate_health — "
+        "update _INVOKE_PATTERNS if the invocation pattern changed"
+    )
+
+    violations: list[str] = []
+    for wf in workflows:
+        text = wf.read_text(encoding="utf-8")
+        if "fetch-depth: 0" not in text:
+            violations.append(
+                f"{wf.name}: invokes aggregate_health but lacks 'fetch-depth: 0' "
+                f"on checkout — _check_source_runtime_consistency() will fail-closed "
+                f"on shallow clones, degrading provenance in public health.json"
+            )
+
+    assert not violations, (
+        "C5 VIOLATION — workflow(s) invoking aggregate_health lack full-history checkout:\n"
+        + "\n".join(f"  - {v}" for v in violations)
+    )
