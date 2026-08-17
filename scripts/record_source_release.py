@@ -44,6 +44,7 @@ def main() -> int:
             "run_id": run_id,
             "workflow": workflow,
             "status": "success",
+            "head_sha": sha,  # C1 guard: must equal source_release_sha
         },
         "recorded_at": now,
     }
