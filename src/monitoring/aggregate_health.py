@@ -127,11 +127,23 @@ def _job_entry(
         }
 
     # --- Snapshot exists: MON-001 defensive coercion ---
-    status_written = raw.get("status", "stale")
+    _VALID = {"ok", "degraded", "error", "stale"}
+    raw_status = raw.get("status", "stale")
     raw_exit = raw.get("exit_code")
     coerced_exit = _coerce_exit_code(raw_exit)  # None if unknown/invalid
-
     err = raw.get("error")
+
+    if not isinstance(raw_status, str) or raw_status not in _VALID:
+        # Unknown/non-string/malformed status — fail closed (MON-001).
+        note = (
+            f"[MON-001] aggregate: unknown/malformed status {raw_status!r} "
+            f"(exit_code={raw_exit!r}). Treated as error."
+        )
+        err = (note + f" Original error: {err}") if err else note
+        status_written = "error"
+    else:
+        status_written = raw_status
+
     if status_written in ("ok", "degraded"):
         orig_status = status_written
         if coerced_exit is None:

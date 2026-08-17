@@ -1688,6 +1688,109 @@ class TestSettleCronSet:
         assert r.is_overdue is False
 
 
+# ---------------------------------------------------------------------------
+# P0-B1 regression: malformed/unknown snapshot status fails closed (MON-001)
+# ---------------------------------------------------------------------------
+
+class TestMalformedSnapshotStatus:
+    """Aggregate boundary rejects any status not in {ok, degraded, error, stale}."""
+
+    def _make_fresh_raw(self, status, exit_code=0, error=None):
+        return {
+            "job": "tennis_scan",
+            "status": status,
+            "exit_code": exit_code,
+            "last_run_at": "2026-08-17T12:00:00Z",
+            "error": error,
+            "fallback_used": None,
+        }
+
+    def test_banana_status_with_zero_exit_becomes_error(self):
+        """'banana' + exit_code=0 + fresh ts → error with MON-001 annotation."""
+        from src.monitoring import aggregate_health as ag
+        now = _utc(2026, 8, 17, 12, 5)
+        raw = self._make_fresh_raw("banana", exit_code=0)
+        entry = ag._job_entry("tennis_scan", raw, now=now)
+        assert entry["status"] == "error"
+        assert "MON-001" in (entry["error"] or "")
+        assert "banana" in (entry["error"] or "")
+
+    def test_non_string_status_becomes_error(self):
+        """Non-string status (e.g. integer 1) → error with MON-001 annotation."""
+        from src.monitoring import aggregate_health as ag
+        now = _utc(2026, 8, 17, 12, 5)
+        raw = self._make_fresh_raw(1, exit_code=0)  # type: ignore[arg-type]
+        entry = ag._job_entry("tennis_scan", raw, now=now)
+        assert entry["status"] == "error"
+        assert "MON-001" in (entry["error"] or "")
+
+    def test_none_status_becomes_error(self):
+        """None status → error with MON-001 annotation."""
+        from src.monitoring import aggregate_health as ag
+        now = _utc(2026, 8, 17, 12, 5)
+        raw = self._make_fresh_raw(None, exit_code=0)  # type: ignore[arg-type]
+        entry = ag._job_entry("tennis_scan", raw, now=now)
+        assert entry["status"] == "error"
+        assert "MON-001" in (entry["error"] or "")
+
+    def test_overall_cannot_be_ok_from_malformed_status(self):
+        """Malformed status must propagate to overall='down', not 'ok'."""
+        from src.monitoring import aggregate_health as ag
+        now = _utc(2026, 8, 17, 12, 5)
+        raw = self._make_fresh_raw("banana", exit_code=0)
+        entry = ag._job_entry("tennis_scan", raw, now=now)
+        # A single error job must make overall='down'
+        assert entry["status"] == "error"
+        overall = ag._overall([entry])
+        assert overall == "down"
+
+    def test_exit_code_preserved_on_malformed_status(self):
+        """exit_code is coerced and preserved even when status is malformed."""
+        from src.monitoring import aggregate_health as ag
+        now = _utc(2026, 8, 17, 12, 5)
+        raw = self._make_fresh_raw("banana", exit_code=1)
+        entry = ag._job_entry("tennis_scan", raw, now=now)
+        assert entry["status"] == "error"
+        assert entry["exit_code"] == 1  # coerced int preserved
+
+    def test_valid_ok_unchanged(self):
+        """Valid ok + exit_code=0 is not disturbed by the new boundary check."""
+        from src.monitoring import aggregate_health as ag
+        now = _utc(2026, 8, 17, 12, 5)
+        raw = self._make_fresh_raw("ok", exit_code=0)
+        entry = ag._job_entry("tennis_scan", raw, now=now)
+        assert entry["status"] == "ok"
+
+    def test_valid_degraded_zero_exit_unchanged(self):
+        """Valid degraded + exit_code=0 passes through without extra annotation."""
+        from src.monitoring import aggregate_health as ag
+        now = _utc(2026, 8, 17, 12, 5)
+        raw = self._make_fresh_raw("degraded", exit_code=0)
+        entry = ag._job_entry("tennis_scan", raw, now=now)
+        assert entry["status"] == "degraded"
+
+    def test_valid_error_unchanged(self):
+        """Valid error status is not re-annotated."""
+        from src.monitoring import aggregate_health as ag
+        now = _utc(2026, 8, 17, 12, 5)
+        raw = self._make_fresh_raw("error", exit_code=1, error="original failure")
+        entry = ag._job_entry("tennis_scan", raw, now=now)
+        assert entry["status"] == "error"
+
+    def test_missing_status_key_defaults_conservatively(self):
+        """No 'status' key in snapshot → defaults to 'stale' (conservative legacy)."""
+        from src.monitoring import aggregate_health as ag
+        now = _utc(2026, 8, 17, 12, 5)
+        raw = {
+            "job": "tennis_scan", "exit_code": 0,
+            "last_run_at": "2026-08-17T12:00:00Z",
+            "error": None, "fallback_used": None,
+        }
+        entry = ag._job_entry("tennis_scan", raw, now=now)
+        # Missing key → raw.get("status", "stale") → "stale" → conservative
+        assert entry["status"] in ("stale", "error")  # either is safe
+
+
 class TestNeverRanOffWindowIsError:
     """CEO C2 corrected: raw=None + off-window must publish error, not degraded or ok."""
 
