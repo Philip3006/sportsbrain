@@ -73,12 +73,21 @@ def _job_entry(
     raw: dict[str, Any] | None,
     *,
     now: datetime | None = None,
+    from_baseline: bool = False,
 ) -> dict[str, Any]:
     """Builds the public dashboard entry for one job, including freshness.
 
     MON-002: A job not expected to run right now must not become stale merely
     because its last successful run is old.  Expectation evaluation gates the
     staleness check so off-window / already-ran-in-cycle jobs stay non-stale.
+
+    `from_baseline=True` signals the raw dict came from a previously aggregated
+    docs/data/health.json (--merge-from-committed path) rather than a direct
+    job health snapshot.  This enables two behaviours:
+    - B2-generated entries (contain `reported_status`): pre-schedule execution
+      truth is restored from that field for a lossless round-trip.
+    - Legacy pre-B2 entries (no `reported_status`): stale+exit0 is migrated to
+      "degraded" so old aggregator-promoted stale does not feed back forever.
 
     `now` is injectable for deterministic tests.
     """
@@ -144,6 +153,20 @@ def _job_entry(
     else:
         status_written = raw_status
 
+    # --- Baseline source migration (merge-from-committed path, MON-002) ---
+    # Distinguish aggregate-overlay status from execution truth so old
+    # false-stale promotions do not feed back permanently.
+    if from_baseline:
+        reported = raw.get("reported_status")
+        if isinstance(reported, str) and reported in _VALID:
+            # B2-generated baseline: restore pre-schedule execution truth directly.
+            status_written = reported
+        elif status_written == "stale" and coerced_exit == 0:
+            # Legacy pre-B2 baseline: aggregator may have promoted job to stale
+            # solely because last_run was old.  Conservative migration: treat as
+            # degraded (confirms execution happened without asserting full ok).
+            status_written = "degraded"
+
     if status_written in ("ok", "degraded"):
         orig_status = status_written
         if coerced_exit is None:
@@ -173,6 +196,10 @@ def _job_entry(
             )
             err = (note + f" Original error: {err}") if err else note
 
+    # Pre-schedule execution truth — captured after MON-001 coercions so that
+    # baseline round-trips can restore this value and skip re-promotion.
+    reported_status_out = status_written
+
     # --- Expectation evaluation (MON-002) ---
     last = raw.get("last_run_at")
     last_dt = _parse_iso(last)
@@ -194,6 +221,7 @@ def _job_entry(
     return {
         "job":                job,
         "status":             final_status,
+        "reported_status":    reported_status_out,
         "last_run_at":        last,
         "duration_s":         raw.get("duration_s"),
         "exit_code":          coerced_exit,
@@ -263,11 +291,11 @@ def aggregate(merge_from_committed: bool = False) -> dict[str, Any]:
         path = HEALTH_DIR / f"{job}.json"
         if path.exists():
             raw = _load_one(path)
+            jobs.append(_job_entry(job, raw, now=now))
         elif merge_from_committed and job in baseline:
-            raw = baseline[job]
+            jobs.append(_job_entry(job, baseline[job], now=now, from_baseline=True))
         else:
-            raw = None
-        jobs.append(_job_entry(job, raw, now=now))
+            jobs.append(_job_entry(job, None, now=now))
 
     jobs.extend(_freshness_entries())
 

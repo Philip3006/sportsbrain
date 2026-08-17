@@ -1791,6 +1791,142 @@ class TestMalformedSnapshotStatus:
         assert entry["status"] in ("stale", "error")  # either is safe
 
 
+# ---------------------------------------------------------------------------
+# P0-B1/MON-002: merge-from-committed baseline migration
+# ---------------------------------------------------------------------------
+
+class TestMergeFromCommittedBaseline:
+    """Aggregate baseline (--merge-from-committed) must not feed back false-stale."""
+
+    # Common off-window moment: Monday 20:00 UTC — bl2_live_push is off-window.
+    _MONDAY_20 = _utc(2026, 8, 17, 20, 0)
+    # Old Sunday last-run timestamp (was in-window when last recorded).
+    _SUNDAY_RUN = "2026-08-16T21:00:00Z"
+
+    def _bl2_baseline(self, status, exit_code, reported_status=None, error=None):
+        raw = {
+            "job": "bundesliga2_live_push",
+            "status": status,
+            "exit_code": exit_code,
+            "last_run_at": self._SUNDAY_RUN,
+            "error": error,
+            "fallback_used": None,
+        }
+        if reported_status is not None:
+            raw["reported_status"] = reported_status
+        return raw
+
+    # --- Test 1: legacy committed baseline stale+exit0 must not stay stale ---
+    def test_legacy_stale_exit0_not_stale_on_monday(self):
+        """Legacy baseline stale+exit_code=0, off-window Monday → migrated to non-stale."""
+        from src.monitoring import aggregate_health as ag
+        raw = self._bl2_baseline("stale", 0)
+        entry = ag._job_entry("bundesliga2_live_push", raw,
+                              now=self._MONDAY_20, from_baseline=True)
+        assert entry["status"] not in ("stale", "error"), (
+            f"Legacy stale+exit0 off-window must migrate; got {entry['status']!r}"
+        )
+        assert entry["status"] in ("ok", "degraded")
+
+    # --- Test 2: B2 baseline with reported_status preserves ok through round-trip ---
+    def test_b2_baseline_reported_ok_preserved(self):
+        """B2 baseline reported_status='ok' → lossless round-trip, status='ok'."""
+        from src.monitoring import aggregate_health as ag
+        raw = self._bl2_baseline("ok", 0, reported_status="ok")
+        entry = ag._job_entry("bundesliga2_live_push", raw,
+                              now=self._MONDAY_20, from_baseline=True)
+        assert entry["status"] == "ok"
+        assert entry["reported_status"] == "ok"
+
+    # --- Test 3: failed legacy stale baseline remains fail-closed ---
+    def test_legacy_stale_nonzero_exit_remains_fail_closed(self):
+        """Legacy baseline stale+exit_code=1 → no migration, MON-001 annotated."""
+        from src.monitoring import aggregate_health as ag
+        raw = self._bl2_baseline("stale", 1)
+        entry = ag._job_entry("bundesliga2_live_push", raw,
+                              now=self._MONDAY_20, from_baseline=True)
+        assert entry["status"] not in ("ok", "degraded"), (
+            f"Stale+exit=1 must stay fail-closed; got {entry['status']!r}"
+        )
+        assert "MON-001" in (entry["error"] or "")
+
+    def test_legacy_stale_unknown_exit_remains_fail_closed(self):
+        """Legacy baseline stale+exit_code=None → no migration, MON-001 annotated."""
+        from src.monitoring import aggregate_health as ag
+        raw = self._bl2_baseline("stale", None)
+        entry = ag._job_entry("bundesliga2_live_push", raw,
+                              now=self._MONDAY_20, from_baseline=True)
+        assert entry["status"] not in ("ok", "degraded")
+        assert "MON-001" in (entry["error"] or "")
+
+    # --- Test 4: direct source snapshot explicitly stale is not migrated ---
+    def test_direct_snapshot_stale_not_migrated(self):
+        """Direct snapshot stale+exit0 (from_baseline=False) is never migrated."""
+        from src.monitoring import aggregate_health as ag
+        # tennis_scan ran at 12:02 (after 12:00 UTC trigger), job itself wrote stale.
+        raw = {
+            "job": "tennis_scan", "status": "stale", "exit_code": 0,
+            "last_run_at": "2026-08-17T12:02:00Z",
+            "error": None, "fallback_used": None,
+        }
+        now = _utc(2026, 8, 17, 12, 10)
+        entry = ag._job_entry("tennis_scan", raw, now=now)  # from_baseline=False
+        # ran after trigger → not_expected; status_written=stale preserved, no migration.
+        assert entry["status"] == "stale", (
+            f"Direct stale snapshot must not be migrated; got {entry['status']!r}"
+        )
+
+    # --- Test 5: idempotent baseline round-trip ---
+    def test_b2_baseline_round_trip_idempotent(self):
+        """Second-generation aggregate of a B2 baseline entry does not change truth."""
+        from src.monitoring import aggregate_health as ag
+        # First generation: tennis_scan ok, not_expected (ran after 12:00 UTC trigger).
+        raw_snap = {
+            "job": "tennis_scan", "status": "ok", "exit_code": 0,
+            "last_run_at": "2026-08-17T12:02:00Z", "error": None, "fallback_used": None,
+        }
+        now = _utc(2026, 8, 17, 14, 0)
+        entry1 = ag._job_entry("tennis_scan", raw_snap, now=now)
+        assert entry1["status"] == "ok"
+        assert entry1["reported_status"] == "ok"
+
+        # Second generation: use entry1 as baseline.
+        entry2 = ag._job_entry("tennis_scan", entry1, now=now, from_baseline=True)
+        assert entry2["status"] == entry1["status"]
+        assert entry2["reported_status"] == entry1["reported_status"]
+
+    # --- Regression: direct ok/degraded/error not affected by baseline migration ---
+    def test_direct_ok_snapshot_has_reported_status(self):
+        """Direct ok snapshot produces reported_status='ok' in output."""
+        from src.monitoring import aggregate_health as ag
+        raw = {
+            "job": "tennis_scan", "status": "ok", "exit_code": 0,
+            "last_run_at": "2026-08-17T12:02:00Z", "error": None, "fallback_used": None,
+        }
+        now = _utc(2026, 8, 17, 14, 0)
+        entry = ag._job_entry("tennis_scan", raw, now=now)
+        assert entry["reported_status"] == "ok"
+
+    def test_b2_overdue_then_reread_as_baseline_idempotent(self):
+        """B2 entry: ok snap promoted to stale (overdue); re-read as baseline stays stale."""
+        from src.monitoring import aggregate_health as ag
+        # tennis_retrain: fired at 05:00 UTC, last ran yesterday, now 10:00 UTC — overdue.
+        raw_snap = {
+            "job": "tennis_retrain", "status": "ok", "exit_code": 0,
+            "last_run_at": "2026-08-16T05:02:00Z",  # yesterday
+            "error": None, "fallback_used": None,
+        }
+        now = _utc(2026, 8, 17, 10, 0)
+        entry1 = ag._job_entry("tennis_retrain", raw_snap, now=now)
+        assert entry1["status"] == "stale"       # overdue → stale
+        assert entry1["reported_status"] == "ok"  # execution truth preserved
+
+        # Re-aggregate from baseline: still overdue → still stale.
+        entry2 = ag._job_entry("tennis_retrain", entry1, now=now, from_baseline=True)
+        assert entry2["status"] == "stale"
+        assert entry2["reported_status"] == "ok"
+
+
 class TestNeverRanOffWindowIsError:
     """CEO C2 corrected: raw=None + off-window must publish error, not degraded or ok."""
 
