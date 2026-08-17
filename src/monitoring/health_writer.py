@@ -23,31 +23,15 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent.parent.parent
 HEALTH_DIR = ROOT / "results" / "health"
 
+from src.monitoring.job_schedule import JOB_EXPECTATIONS
 
-# Expected schedule per job in seconds. Used by aggregate_health.py to mark
-# a job "stale" when its last_run_at is older than next_expected_in_s + grace.
-# Kept here (not in launchd plists) so a single Python source of truth drives
-# the dashboard, even if the user manually triggers a job from CLI.
+# JOB_SCHEDULE is a backward-compatibility view derived from JOB_EXPECTATIONS.
+# Do NOT add new jobs here — add them to src/monitoring/job_schedule.py instead.
+# cadence/interval values here are intentionally minimal; consumers should read
+# cadence from job_schedule.JOB_EXPECTATIONS[job].cadence.
 JOB_SCHEDULE: dict[str, dict[str, int | str]] = {
-    "daily_scan":              {"interval_s": 24 * 3600, "grace_s": 2 * 3600,  "cadence": "1×/Tag 07:00"},
-    "auto_retrain":            {"interval_s": 12 * 3600, "grace_s": 1 * 3600,  "cadence": "2×/Tag 06:00 + 18:00"},
-    "closing_odds":            {"interval_s": 12 * 3600, "grace_s": 1 * 3600,  "cadence": "2×/Tag 14:00 + 18:00"},
-    "consume_pending_bets":    {"interval_s": 120,        "grace_s": 300,       "cadence": "alle 2 Min"},
-    "live_score_push":         {"interval_s": 120,        "grace_s": 300,       "cadence": "alle 2 Min"},
-    "prematch_scan":           {"interval_s": 1800,       "grace_s": 900,       "cadence": "alle 30 Min (im Fenster)"},
-    "settle":                  {"interval_s": 3600,       "grace_s": 600,       "cadence": "stündlich 00:30–04:30"},
-    "aggregate_health":        {"interval_s": 120,        "grace_s": 300,       "cadence": "alle 2 Min (huckepack)"},
-    # Tennis-Jobs (Roadmap TENNIS P1.3)
-    "tennis_scan":             {"interval_s": 6 * 3600,   "grace_s": 3600,      "cadence": "4×/Tag 06/11/16/21 UTC"},
-    "tennis_settle":           {"interval_s": 2 * 3600,   "grace_s": 3600,      "cadence": "alle 2h 06-22 UTC"},
-    "tennis_closing_odds":     {"interval_s": 1800,       "grace_s": 900,       "cadence": "alle 30 Min"},
-    "tennis_retrain":          {"interval_s": 7 * 86400,  "grace_s": 86400,     "cadence": "wöchentlich Mo 03:00 UTC"},
-    # 2. Bundesliga (Phase F, 2026-08-06 — Saisonstart Wochenende)
-    "bundesliga2_scan":        {"interval_s": 12 * 3600,  "grace_s": 3600,      "cadence": "2×/Tag + prä-Spieltag"},
-    "bundesliga2_settle":      {"interval_s": 3 * 3600,   "grace_s": 3600,      "cadence": "alle 3h nach Spielen"},
-    "bundesliga2_live_push":   {"interval_s": 120,        "grace_s": 300,       "cadence": "alle 2 Min im Spieltag-Fenster"},
-    "bundesliga2_retrain":     {"interval_s": 24 * 3600,  "grace_s": 4 * 3600,  "cadence": "täglich 05:00 UTC"},
-    "bundesliga2_closing_odds": {"interval_s": 900,       "grace_s": 900,       "cadence": "15 Min vor Kickoff"},
+    job: {"cadence": exp.cadence}
+    for job, exp in JOB_EXPECTATIONS.items()
 }
 
 
