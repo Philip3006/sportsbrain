@@ -1495,7 +1495,11 @@ class TestBL2ScanCronSet:
 # ---------------------------------------------------------------------------
 
 class TestDailyScanLaunchd:
-    """daily_scan: launchd StartCalendarInterval 07:00 UTC daily."""
+    """daily_scan: launchd StartCalendarInterval 07:00 Europe/Berlin daily.
+
+    Summer (CEST, UTC+2): 07:00 CEST = 05:00 UTC.
+    Winter (CET, UTC+1):  07:00 CET  = 06:00 UTC.
+    """
 
     EXP = JOB_EXPECTATIONS["daily_scan"]
 
@@ -1503,35 +1507,40 @@ class TestDailyScanLaunchd:
         assert isinstance(self.EXP, CronSetExpectation)
 
     def test_single_daily_point_at_0700(self):
+        """Point is 07:00 in Europe/Berlin local time (not UTC)."""
         assert (None, 7, 0) in self.EXP.points
         assert len(self.EXP.points) == 1
 
     def test_not_expected_after_morning_run(self):
-        """Ran 07:02, now 14:00 → not_expected (no second daily trigger)."""
+        """Summer: ran 07:05 CEST (05:05 UTC), now 14:00 UTC → not_expected."""
         now = _utc(2026, 8, 17, 14, 0)
-        last = _utc(2026, 8, 17, 7, 2)
+        last = _utc(2026, 8, 17, 5, 5)   # 07:05 CEST = 05:05 UTC
         r = evaluate_expectation(self.EXP, last, now)
         assert r.in_window is False
         assert r.is_overdue is False
 
     def test_overdue_if_missed_0700(self):
-        """10:01 (3h1m after 07:00), no run today → overdue (> grace_s=7200s)."""
+        """Summer: 10:01 UTC (12:01 CEST, 5h after 05:00 UTC trigger) → overdue > grace 2h."""
         now = _utc(2026, 8, 17, 10, 1)
-        last = _utc(2026, 8, 16, 7, 2)   # yesterday's run — before today's 07:00 point
+        last = _utc(2026, 8, 16, 5, 5)   # yesterday's run — before today's 05:00 UTC point
         r = evaluate_expectation(self.EXP, last, now)
         assert r.in_window is True
         assert r.is_overdue is True
 
     def test_within_grace_not_overdue(self):
-        """08:59 (1h59m after 07:00), no run yet → within grace_s=7200, not overdue."""
-        now = _utc(2026, 8, 17, 8, 59)
-        last = _utc(2026, 8, 16, 7, 3)
+        """Summer: 06:30 UTC (1.5h after 05:00 UTC = 07:00 CEST) → within grace_s=7200."""
+        now = _utc(2026, 8, 17, 6, 30)
+        last = _utc(2026, 8, 16, 5, 3)   # yesterday's run — before today's 05:00 UTC point
         r = evaluate_expectation(self.EXP, last, now)
         assert r.is_overdue is False
 
 
 class TestAutoRetrainCronSet:
-    """auto_retrain: launchd StartCalendarInterval 06:00 + 18:00 UTC daily."""
+    """auto_retrain: launchd StartCalendarInterval 06:00 + 18:00 Europe/Berlin daily.
+
+    Summer (CEST, UTC+2): 06:00 CEST = 04:00 UTC, 18:00 CEST = 16:00 UTC.
+    Winter (CET, UTC+1):  06:00 CET  = 05:00 UTC, 18:00 CET  = 17:00 UTC.
+    """
 
     EXP = JOB_EXPECTATIONS["auto_retrain"]
 
@@ -1539,43 +1548,48 @@ class TestAutoRetrainCronSet:
         assert isinstance(self.EXP, CronSetExpectation)
 
     def test_two_daily_points(self):
+        """Points are 06:00 + 18:00 Europe/Berlin local time."""
         assert (None, 6, 0) in self.EXP.points
         assert (None, 18, 0) in self.EXP.points
         assert len(self.EXP.points) == 2
 
     def test_not_expected_after_morning_run(self):
-        """Ran 06:02, now 12:00 → not_expected (next trigger 18:00)."""
+        """Summer: ran 04:05 UTC (06:05 CEST), now 12:00 UTC → not_expected."""
         now = _utc(2026, 8, 17, 12, 0)
-        last = _utc(2026, 8, 17, 6, 2)
+        last = _utc(2026, 8, 17, 4, 5)   # 06:05 CEST = 04:05 UTC
         r = evaluate_expectation(self.EXP, last, now)
         assert r.in_window is False
         assert r.is_overdue is False
 
     def test_expected_at_1800_if_only_morning_ran(self):
-        """19:00, ran at 06:02, not yet after 18:00 cron → in_window."""
+        """Summer: 19:00 UTC (21:00 CEST), only ran 04:05 UTC → missed 16:00 UTC trigger."""
         now = _utc(2026, 8, 17, 19, 0)
-        last = _utc(2026, 8, 17, 6, 2)
+        last = _utc(2026, 8, 17, 4, 5)   # 06:05 CEST = 04:05 UTC
         r = evaluate_expectation(self.EXP, last, now)
         assert r.in_window is True
 
     def test_not_expected_after_evening_run(self):
-        """Ran 18:03, now 21:00 → not_expected."""
+        """Summer: ran 16:05 UTC (18:05 CEST), now 21:00 UTC → not_expected."""
         now = _utc(2026, 8, 17, 21, 0)
-        last = _utc(2026, 8, 17, 18, 3)
+        last = _utc(2026, 8, 17, 16, 5)  # 18:05 CEST = 16:05 UTC
         r = evaluate_expectation(self.EXP, last, now)
         assert r.in_window is False
         assert r.is_overdue is False
 
     def test_next_trigger_between_runs(self):
-        """12:00: next trigger is 18:00 → ~21600s."""
+        """Summer: 12:00 UTC → next is 18:00 CEST = 16:00 UTC → ~14400s."""
         now = _utc(2026, 8, 17, 12, 0)
         s = next_trigger_s(self.EXP, now)
         assert s is not None
-        assert 21000 < s < 22200  # ~6h ± 10min
+        assert 13800 < s < 14600  # ~4h ± 10min
 
 
 class TestClosingOddsCronSet:
-    """closing_odds: launchd 14:00 UTC + closing-odds-evening 18:00 UTC."""
+    """closing_odds: launchd 14:00 + 18:00 Europe/Berlin.
+
+    Summer (CEST, UTC+2): 14:00 CEST = 12:00 UTC, 18:00 CEST = 16:00 UTC.
+    Winter (CET, UTC+1):  14:00 CET  = 13:00 UTC, 18:00 CET  = 17:00 UTC.
+    """
 
     EXP = JOB_EXPECTATIONS["closing_odds"]
 
@@ -1583,21 +1597,22 @@ class TestClosingOddsCronSet:
         assert isinstance(self.EXP, CronSetExpectation)
 
     def test_two_daily_points(self):
+        """Points are 14:00 + 18:00 Europe/Berlin local time."""
         assert (None, 14, 0) in self.EXP.points
         assert (None, 18, 0) in self.EXP.points
         assert len(self.EXP.points) == 2
 
     def test_not_expected_after_afternoon_run(self):
-        """Ran 14:02, now 16:00 → not_expected."""
-        now = _utc(2026, 8, 17, 16, 0)
-        last = _utc(2026, 8, 17, 14, 2)
+        """Summer: ran 12:02 UTC (14:02 CEST), now 14:00 UTC (16:00 CEST) → not_expected."""
+        now = _utc(2026, 8, 17, 14, 0)   # 16:00 CEST — between 14:00 and 18:00 CEST triggers
+        last = _utc(2026, 8, 17, 12, 2)  # 14:02 CEST = 12:02 UTC
         r = evaluate_expectation(self.EXP, last, now)
         assert r.in_window is False
 
     def test_expected_at_1800_if_only_afternoon_ran(self):
-        """19:00, only ran 14:02 → in_window (missed 18:00)."""
+        """Summer: 19:00 UTC (21:00 CEST), only ran 12:02 UTC → missed 16:00 UTC (18:00 CEST)."""
         now = _utc(2026, 8, 17, 19, 0)
-        last = _utc(2026, 8, 17, 14, 2)
+        last = _utc(2026, 8, 17, 12, 2)  # 14:02 CEST = 12:02 UTC
         r = evaluate_expectation(self.EXP, last, now)
         assert r.in_window is True
 
@@ -1628,7 +1643,10 @@ class TestPrematchScanInterval:
 
 
 class TestSettleCronSet:
-    """settle: launchd StartCalendarInterval HH:30 for all 24 hours."""
+    """settle: launchd StartCalendarInterval HH:30 for all 24 hours Europe/Berlin.
+
+    Summer (CEST, UTC+2): HH:30 CEST = (HH-2):30 UTC. Test values use summer dates.
+    """
 
     EXP = JOB_EXPECTATIONS["settle"]
 
@@ -1700,3 +1718,83 @@ class TestNeverRanOffWindowIsError:
         monday = _utc(2026, 8, 17, 20, 0)
         entry = ag._job_entry("bundesliga2_live_push", None, now=monday)
         assert entry["status"] == "error", "must be error to trigger overall=down"
+
+
+# ---------------------------------------------------------------------------
+# Timezone: launchd fires in host local time (Europe/Berlin), not UTC
+# ---------------------------------------------------------------------------
+
+class TestLaunchdTimezone:
+    """CronSetExpectation tz='Europe/Berlin' handles DST correctly via zoneinfo."""
+
+    def test_daily_scan_summer_cest(self):
+        """Summer: 07:00 CEST = 05:00 UTC. Ran at 05:05 UTC → not_expected."""
+        exp = JOB_EXPECTATIONS["daily_scan"]
+        assert exp.tz == "Europe/Berlin"
+        # 2026-08-17: CEST (UTC+2). 07:00 CEST = 05:00 UTC.
+        now = _utc(2026, 8, 17, 10, 0)   # 12:00 CEST
+        last = _utc(2026, 8, 17, 5, 5)   # 07:05 CEST = 05:05 UTC
+        r = evaluate_expectation(exp, last, now)
+        assert r.in_window is False
+        assert r.is_overdue is False
+
+    def test_daily_scan_winter_cet(self):
+        """Winter: 07:00 CET = 06:00 UTC. Ran at 06:05 UTC → not_expected."""
+        exp = JOB_EXPECTATIONS["daily_scan"]
+        # 2026-12-15: CET (UTC+1). 07:00 CET = 06:00 UTC.
+        now = _utc(2026, 12, 15, 10, 0)   # 11:00 CET
+        last = _utc(2026, 12, 15, 6, 5)   # 07:05 CET = 06:05 UTC
+        r = evaluate_expectation(exp, last, now)
+        assert r.in_window is False
+        assert r.is_overdue is False
+
+    def test_daily_scan_winter_overdue_if_missed(self):
+        """Winter: missed 06:00 UTC (=07:00 CET) trigger, now 10:00 UTC → overdue."""
+        exp = JOB_EXPECTATIONS["daily_scan"]
+        now = _utc(2026, 12, 15, 10, 0)   # 11:00 CET — 4h after 07:00 CET trigger
+        last = _utc(2026, 12, 14, 6, 5)   # yesterday at 07:05 CET = 06:05 UTC
+        r = evaluate_expectation(exp, last, now)
+        assert r.in_window is True
+        assert r.is_overdue is True   # (10:00 - 06:00) = 4h > grace_s=7200s
+
+    def test_next_trigger_s_tz_conversion_summer(self):
+        """Summer 08:00 UTC (10:00 CEST, after today's 07:00 CEST): next is 05:00 UTC tomorrow."""
+        exp = JOB_EXPECTATIONS["daily_scan"]
+        now = _utc(2026, 8, 17, 8, 0)    # 10:00 CEST — past today's 07:00 CEST
+        s = next_trigger_s(exp, now)
+        # 07:00 CEST tomorrow = 05:00 UTC 2026-08-18 → 21h from 08:00 UTC
+        assert s is not None
+        assert abs(s - 21 * 3600) < 60   # within 1 minute of exactly 21h
+
+    def test_next_trigger_s_tz_conversion_winter(self):
+        """Winter 08:00 UTC (09:00 CET, after today's 07:00 CET): next is 06:00 UTC tomorrow."""
+        exp = JOB_EXPECTATIONS["daily_scan"]
+        now = _utc(2026, 12, 15, 8, 0)   # 09:00 CET — past today's 07:00 CET
+        s = next_trigger_s(exp, now)
+        # 07:00 CET tomorrow = 06:00 UTC 2026-12-16 → 22h from 08:00 UTC
+        assert s is not None
+        assert abs(s - 22 * 3600) < 60   # within 1 minute of exactly 22h
+
+    def test_github_actions_cron_uses_utc(self):
+        """tennis_scan (GitHub Actions) uses tz='UTC' — no local offset applied."""
+        exp = JOB_EXPECTATIONS["tennis_scan"]
+        assert isinstance(exp, CronSetExpectation)
+        assert exp.tz == "UTC"
+        # 12:00 UTC trigger; ran 12:02 UTC; now 14:00 UTC → not_expected
+        now = _utc(2026, 8, 17, 14, 0)
+        last = _utc(2026, 8, 17, 12, 2)
+        r = evaluate_expectation(exp, last, now)
+        assert r.in_window is False
+
+    def test_launchd_cron_jobs_have_europe_berlin_tz(self):
+        """All launchd StartCalendarInterval jobs have tz='Europe/Berlin'."""
+        for job in ("daily_scan", "auto_retrain", "closing_odds", "settle"):
+            exp = JOB_EXPECTATIONS[job]
+            assert isinstance(exp, CronSetExpectation), f"{job} must be CronSetExpectation"
+            assert exp.tz == "Europe/Berlin", f"{job}: got tz={exp.tz!r}"
+
+    def test_prematch_scan_is_interval_no_tz(self):
+        """prematch_scan uses StartInterval (elapsed seconds) — no timezone applies."""
+        exp = JOB_EXPECTATIONS["prematch_scan"]
+        assert isinstance(exp, IntervalExpectation)
+        assert exp.interval_s == 1200

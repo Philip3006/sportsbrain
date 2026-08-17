@@ -12,7 +12,8 @@ Provides:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 # ---------------------------------------------------------------------------
 # Expectation kinds
@@ -30,21 +31,26 @@ class IntervalExpectation:
 
 @dataclass(frozen=True)
 class CronSetExpectation:
-    """Job driven by a set of fixed UTC cron trigger points (daily or weekly).
+    """Job driven by a set of fixed cron trigger points (daily or weekly).
 
-    Each entry in `points` is (weekday_or_none, hour, minute) UTC.
+    Each entry in `points` is (weekday_or_none, hour, minute) in the scheduler timezone.
     weekday uses Python datetime.weekday() convention: 0=Monday … 6=Sunday.
     Use None for "every day" cron entries.
 
+    `tz` is an IANA timezone name (default "UTC"). GitHub Actions cron is UTC.
+    launchd StartCalendarInterval fires in the host's local timezone.
+    DST transitions are handled by zoneinfo — never use hardcoded offsets.
+
     Evaluation:
-    - Find the most recent past cron point (last_expected).
+    - Find the most recent past cron point (last_expected), converted to UTC.
     - If last_run_at >= last_expected: job ran in time → not_expected until next point.
     - Else: expected; overdue if (now − last_expected) > grace_s.
     """
 
-    points: tuple[tuple[int | None, int, int], ...]  # (weekday|None, hour, minute)
+    points: tuple[tuple[int | None, int, int], ...]  # (weekday|None, hour, minute) in tz
     grace_s: int
     cadence: str = ""
+    tz: str = "UTC"
     kind: str = field(default="cron_set", init=False)
 
 
@@ -112,50 +118,66 @@ class ExpectationResult:
 def _find_most_recent_cron_point(
     points: tuple[tuple[int | None, int, int], ...],
     now: datetime,
+    *,
+    tz: str = "UTC",
 ) -> datetime | None:
-    """Return the most recent past cron fire time strictly before or equal to `now`.
+    """Return the most recent past cron fire time as UTC-aware datetime.
 
+    `points` (weekday|None, hour, minute) are in `tz` (IANA name, default UTC).
     Looks back up to 8 calendar days so weekly cron points are always found.
-    `now` must be timezone-aware UTC.
+    `now` must be timezone-aware UTC; returned datetime is UTC-aware.
+    DST is handled by zoneinfo — each candidate is constructed in its scheduler
+    timezone and then converted to UTC for comparison.
     """
+    zone = ZoneInfo(tz)
+    now_local = now.astimezone(zone)
     best: datetime | None = None
     for day_offset in range(8):
-        candidate_day = now - timedelta(days=day_offset)
+        candidate_day = now_local - timedelta(days=day_offset)
         for (weekday, hour, minute) in points:
             if weekday is not None and candidate_day.weekday() != weekday:
                 continue
-            candidate = candidate_day.replace(
-                hour=hour, minute=minute, second=0, microsecond=0,
-            )
-            if candidate > now:
+            candidate_utc = datetime(
+                candidate_day.year, candidate_day.month, candidate_day.day,
+                hour, minute, 0,
+                tzinfo=zone,
+            ).astimezone(timezone.utc)
+            if candidate_utc > now:
                 continue
-            if best is None or candidate > best:
-                best = candidate
+            if best is None or candidate_utc > best:
+                best = candidate_utc
     return best
 
 
 def _find_next_cron_point(
     points: tuple[tuple[int | None, int, int], ...],
     now: datetime,
+    *,
+    tz: str = "UTC",
 ) -> datetime | None:
-    """Return earliest future cron fire time strictly after `now`.
+    """Return earliest future cron fire time as UTC-aware datetime.
 
-    Looks forward up to 8 calendar days so weekly cron points are always found.
-    `now` must be timezone-aware UTC.
+    `points` (weekday|None, hour, minute) are in `tz` (IANA name, default UTC).
+    Looks forward up to 9 calendar days so weekly cron points are always found.
+    `now` must be timezone-aware UTC; returned datetime is UTC-aware.
     """
+    zone = ZoneInfo(tz)
+    now_local = now.astimezone(zone)
     best: datetime | None = None
     for day_offset in range(9):
-        candidate_day = now + timedelta(days=day_offset)
+        candidate_day = now_local + timedelta(days=day_offset)
         for (weekday, hour, minute) in points:
             if weekday is not None and candidate_day.weekday() != weekday:
                 continue
-            candidate = candidate_day.replace(
-                hour=hour, minute=minute, second=0, microsecond=0,
-            )
-            if candidate <= now:
+            candidate_utc = datetime(
+                candidate_day.year, candidate_day.month, candidate_day.day,
+                hour, minute, 0,
+                tzinfo=zone,
+            ).astimezone(timezone.utc)
+            if candidate_utc <= now:
                 continue
-            if best is None or candidate < best:
-                best = candidate
+            if best is None or candidate_utc < best:
+                best = candidate_utc
     return best
 
 
@@ -206,7 +228,7 @@ def _eval_cron_set(
     last_run_at: datetime | None,
     now: datetime,
 ) -> ExpectationResult:
-    last_expected = _find_most_recent_cron_point(exp.points, now)
+    last_expected = _find_most_recent_cron_point(exp.points, now, tz=exp.tz)
     if last_expected is None:
         # No past cron point found within 8 days — treat as overdue.
         return ExpectationResult(in_window=True, is_overdue=True, cadence=exp.cadence)
@@ -278,24 +300,25 @@ def _eval_event_fallback(
 # Scheduler reconciliation notes:
 #
 # daily_scan: ~/Library/LaunchAgents/com.sportsbrain.daily-scan.plist
-#   StartCalendarInterval: Hour=7, Minute=0 → 07:00 UTC daily.
+#   StartCalendarInterval: Hour=7, Minute=0 → 07:00 Europe/Berlin local time.
+#   (launchd fires in host wall-clock time — Europe/Berlin = UTC+2 CEST / UTC+1 CET)
 #   (GitHub Actions workflow is .disabled — launchd is authoritative.)
 #
 # auto_retrain: ~/Library/LaunchAgents/com.sportsbrain.auto-retrain.plist
-#   StartCalendarInterval: 06:00 + 18:00 UTC daily.
+#   StartCalendarInterval: Hour=6 + Hour=18 → 06:00 + 18:00 Europe/Berlin.
 #   (GitHub Actions workflow is .disabled — launchd is authoritative.)
 #
 # closing_odds: TWO launchd plists:
-#   com.sportsbrain.closing-odds.plist → Hour=14 (14:00 UTC)
-#   com.sportsbrain.closing-odds-evening.plist → Hour=18 (18:00 UTC)
+#   com.sportsbrain.closing-odds.plist → Hour=14 (14:00 Europe/Berlin)
+#   com.sportsbrain.closing-odds-evening.plist → Hour=18 (18:00 Europe/Berlin)
 #   (GitHub Actions workflow is .disabled — launchd is authoritative.)
 #
 # prematch_scan: ~/Library/LaunchAgents/com.sportsbrain.prematch-scan.plist
-#   StartInterval=1200 (every 20 minutes).
+#   StartInterval=1200 (every 20 minutes — elapsed seconds, no timezone).
 #   (GitHub Actions workflow is .disabled — launchd is authoritative.)
 #
 # settle: ~/Library/LaunchAgents/com.sportsbrain.settle.plist
-#   StartCalendarInterval: HH:30 for all 24 hours (24 daily points at :30).
+#   StartCalendarInterval: HH:30 for all 24 hours → HH:30 Europe/Berlin (24 daily points).
 #   (GitHub Actions workflow is .disabled — launchd is authoritative.)
 #
 # tennis_scan: .github/workflows/tennis_scan.yml
@@ -324,23 +347,26 @@ def _eval_event_fallback(
 
 JOB_EXPECTATIONS: dict[str, JobExpectation] = {
     # --- Standard interval jobs ---
-    # launchd StartCalendarInterval: 07:00 daily
+    # launchd StartCalendarInterval: 07:00 Europe/Berlin daily
     "daily_scan": CronSetExpectation(
         points=((None, 7, 0),),
         grace_s=2 * 3600,
-        cadence="1×/Tag 07:00 UTC (launchd)",
+        cadence="1×/Tag 07:00 Europe/Berlin (launchd)",
+        tz="Europe/Berlin",
     ),
-    # launchd StartCalendarInterval: 06:00 + 18:00 daily
+    # launchd StartCalendarInterval: 06:00 + 18:00 Europe/Berlin daily
     "auto_retrain": CronSetExpectation(
         points=((None, 6, 0), (None, 18, 0)),
         grace_s=3600,
-        cadence="2×/Tag 06:00 + 18:00 UTC (launchd)",
+        cadence="2×/Tag 06:00 + 18:00 Europe/Berlin (launchd)",
+        tz="Europe/Berlin",
     ),
-    # launchd: closing-odds 14:00 UTC + closing-odds-evening 18:00 UTC
+    # launchd: closing-odds 14:00 + closing-odds-evening 18:00 Europe/Berlin
     "closing_odds": CronSetExpectation(
         points=((None, 14, 0), (None, 18, 0)),
         grace_s=3600,
-        cadence="2×/Tag 14:00 + 18:00 UTC (launchd)",
+        cadence="2×/Tag 14:00 + 18:00 Europe/Berlin (launchd)",
+        tz="Europe/Berlin",
     ),
     "live_score_push": IntervalExpectation(
         interval_s=120, grace_s=300,
@@ -351,11 +377,12 @@ JOB_EXPECTATIONS: dict[str, JobExpectation] = {
         interval_s=1200, grace_s=600,
         cadence="alle 20 Min (launchd)",
     ),
-    # launchd StartCalendarInterval: HH:30 for all 24 hours (every hour at :30)
+    # launchd StartCalendarInterval: HH:30 for all 24 hours (every hour at :30 Europe/Berlin)
     "settle": CronSetExpectation(
         points=tuple((None, h, 30) for h in range(24)),
         grace_s=600,
-        cadence="stündlich :30 (launchd, 24h)",
+        cadence="stündlich :30 Europe/Berlin (launchd, 24h)",
+        tz="Europe/Berlin",
     ),
     "aggregate_health": IntervalExpectation(
         interval_s=120, grace_s=300,
@@ -479,7 +506,7 @@ def next_trigger_s(exp: JobExpectation, now: datetime) -> int | None:
     if isinstance(exp, IntervalExpectation):
         return exp.interval_s
     if isinstance(exp, CronSetExpectation):
-        nxt = _find_next_cron_point(exp.points, now)
+        nxt = _find_next_cron_point(exp.points, now, tz=exp.tz)
         return max(0, int((nxt - now).total_seconds())) if nxt is not None else None
     if isinstance(exp, WindowedExpectation):
         dow = now.weekday()
