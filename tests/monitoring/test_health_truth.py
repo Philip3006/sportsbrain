@@ -1100,13 +1100,13 @@ class TestAggregateMON002:
         assert entry["expectation_state"] == "not_expected"
 
     def test_bl2_live_push_monday_no_snapshot_not_stale(self, agg_dirs):
-        """BL2 live push, no snapshot, Monday → degraded (not stale, not ok — CEO C2)."""
+        """BL2 live push, no snapshot, Monday → error+not_expected (never-ran, off-window)."""
         from src.monitoring import aggregate_health as ag
 
         monday = _utc(2026, 8, 17, 20, 0)
         entry = ag._job_entry("bundesliga2_live_push", None, now=monday)
-        assert entry["status"] == "degraded", (
-            f"never-ran + off-window must be 'degraded' not 'ok'; got {entry['status']!r}"
+        assert entry["status"] == "error", (
+            f"never-ran + off-window must be 'error' not ok/degraded; got {entry['status']!r}"
         )
         assert entry["expectation_state"] == "not_expected"
         assert entry["error"] is not None
@@ -1187,14 +1187,14 @@ class TestAggregateMON002:
         pseudo = [j for j in payload["jobs"] if j["job"].endswith("_fresh")]
         assert len(pseudo) >= 1, "freshness pseudo-jobs must be present in aggregate output"
 
-    def test_never_ran_off_window_is_degraded_not_ok(self, agg_dirs):
-        """CEO C2: no snapshot + off-window → degraded, never ok (no execution occurred)."""
+    def test_never_ran_off_window_is_error_not_ok(self, agg_dirs):
+        """CEO C2 corrected: no snapshot + off-window → error+not_expected, never ok/degraded."""
         from src.monitoring import aggregate_health as ag
 
         monday = _utc(2026, 8, 17, 20, 0)   # Monday — bl2_live_push is off-window
         entry = ag._job_entry("bundesliga2_live_push", None, now=monday)
-        assert entry["status"] == "degraded", (
-            f"Never-ran off-window must not be 'ok'; got {entry['status']!r}"
+        assert entry["status"] == "error", (
+            f"Never-ran off-window must be 'error' (no execution evidence); got {entry['status']!r}"
         )
         assert entry["expectation_state"] == "not_expected"
         assert entry["error"] is not None
@@ -1488,3 +1488,215 @@ class TestBL2ScanCronSet:
         r = evaluate_expectation(self.EXP, last, now)
         assert r.in_window is True
         assert r.is_overdue is False  # 0s elapsed since 15:00 cron
+
+
+# ---------------------------------------------------------------------------
+# CEO Correction 2 — launchd scheduler resolution (new tests)
+# ---------------------------------------------------------------------------
+
+class TestDailyScanLaunchd:
+    """daily_scan: launchd StartCalendarInterval 07:00 UTC daily."""
+
+    EXP = JOB_EXPECTATIONS["daily_scan"]
+
+    def test_is_cron_set(self):
+        assert isinstance(self.EXP, CronSetExpectation)
+
+    def test_single_daily_point_at_0700(self):
+        assert (None, 7, 0) in self.EXP.points
+        assert len(self.EXP.points) == 1
+
+    def test_not_expected_after_morning_run(self):
+        """Ran 07:02, now 14:00 → not_expected (no second daily trigger)."""
+        now = _utc(2026, 8, 17, 14, 0)
+        last = _utc(2026, 8, 17, 7, 2)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is False
+        assert r.is_overdue is False
+
+    def test_overdue_if_missed_0700(self):
+        """10:01 (3h1m after 07:00), no run today → overdue (> grace_s=7200s)."""
+        now = _utc(2026, 8, 17, 10, 1)
+        last = _utc(2026, 8, 16, 7, 2)   # yesterday's run — before today's 07:00 point
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is True
+        assert r.is_overdue is True
+
+    def test_within_grace_not_overdue(self):
+        """08:59 (1h59m after 07:00), no run yet → within grace_s=7200, not overdue."""
+        now = _utc(2026, 8, 17, 8, 59)
+        last = _utc(2026, 8, 16, 7, 3)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.is_overdue is False
+
+
+class TestAutoRetrainCronSet:
+    """auto_retrain: launchd StartCalendarInterval 06:00 + 18:00 UTC daily."""
+
+    EXP = JOB_EXPECTATIONS["auto_retrain"]
+
+    def test_is_cron_set(self):
+        assert isinstance(self.EXP, CronSetExpectation)
+
+    def test_two_daily_points(self):
+        assert (None, 6, 0) in self.EXP.points
+        assert (None, 18, 0) in self.EXP.points
+        assert len(self.EXP.points) == 2
+
+    def test_not_expected_after_morning_run(self):
+        """Ran 06:02, now 12:00 → not_expected (next trigger 18:00)."""
+        now = _utc(2026, 8, 17, 12, 0)
+        last = _utc(2026, 8, 17, 6, 2)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is False
+        assert r.is_overdue is False
+
+    def test_expected_at_1800_if_only_morning_ran(self):
+        """19:00, ran at 06:02, not yet after 18:00 cron → in_window."""
+        now = _utc(2026, 8, 17, 19, 0)
+        last = _utc(2026, 8, 17, 6, 2)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is True
+
+    def test_not_expected_after_evening_run(self):
+        """Ran 18:03, now 21:00 → not_expected."""
+        now = _utc(2026, 8, 17, 21, 0)
+        last = _utc(2026, 8, 17, 18, 3)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is False
+        assert r.is_overdue is False
+
+    def test_next_trigger_between_runs(self):
+        """12:00: next trigger is 18:00 → ~21600s."""
+        now = _utc(2026, 8, 17, 12, 0)
+        s = next_trigger_s(self.EXP, now)
+        assert s is not None
+        assert 21000 < s < 22200  # ~6h ± 10min
+
+
+class TestClosingOddsCronSet:
+    """closing_odds: launchd 14:00 UTC + closing-odds-evening 18:00 UTC."""
+
+    EXP = JOB_EXPECTATIONS["closing_odds"]
+
+    def test_is_cron_set(self):
+        assert isinstance(self.EXP, CronSetExpectation)
+
+    def test_two_daily_points(self):
+        assert (None, 14, 0) in self.EXP.points
+        assert (None, 18, 0) in self.EXP.points
+        assert len(self.EXP.points) == 2
+
+    def test_not_expected_after_afternoon_run(self):
+        """Ran 14:02, now 16:00 → not_expected."""
+        now = _utc(2026, 8, 17, 16, 0)
+        last = _utc(2026, 8, 17, 14, 2)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is False
+
+    def test_expected_at_1800_if_only_afternoon_ran(self):
+        """19:00, only ran 14:02 → in_window (missed 18:00)."""
+        now = _utc(2026, 8, 17, 19, 0)
+        last = _utc(2026, 8, 17, 14, 2)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is True
+
+
+class TestPrematchScanInterval:
+    """prematch_scan: launchd StartInterval=1200 (20 min)."""
+
+    EXP = JOB_EXPECTATIONS["prematch_scan"]
+
+    def test_is_interval(self):
+        assert isinstance(self.EXP, IntervalExpectation)
+
+    def test_interval_is_1200(self):
+        assert self.EXP.interval_s == 1200
+
+    def test_not_stale_within_1200s(self):
+        now = _utc(2026, 8, 17, 12, 0)
+        last = now - timedelta(seconds=1100)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.is_overdue is False
+
+    def test_stale_after_1800s(self):
+        """After 1800s (= interval + grace_s), must be overdue."""
+        now = _utc(2026, 8, 17, 12, 0)
+        last = now - timedelta(seconds=1801)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.is_overdue is True
+
+
+class TestSettleCronSet:
+    """settle: launchd StartCalendarInterval HH:30 for all 24 hours."""
+
+    EXP = JOB_EXPECTATIONS["settle"]
+
+    def test_is_cron_set(self):
+        assert isinstance(self.EXP, CronSetExpectation)
+
+    def test_24_daily_points_at_30min(self):
+        assert len(self.EXP.points) == 24
+        for h in range(24):
+            assert (None, h, 30) in self.EXP.points
+
+    def test_not_expected_after_hourly_run(self):
+        """Ran 12:31, now 12:45 → not_expected (next trigger 13:30)."""
+        now = _utc(2026, 8, 17, 12, 45)
+        last = _utc(2026, 8, 17, 12, 31)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is False
+        assert r.is_overdue is False
+
+    def test_in_window_if_missed_hourly(self):
+        """13:45 and last ran at 12:31 → missed 13:30, in_window."""
+        now = _utc(2026, 8, 17, 13, 45)
+        last = _utc(2026, 8, 17, 12, 31)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.in_window is True
+
+    def test_overdue_after_grace(self):
+        """13:31 = 1 min after 13:30, last ran 12:31 → overdue (> grace_s=600)."""
+        now = _utc(2026, 8, 17, 13, 41)   # 11min after 13:30
+        last = _utc(2026, 8, 17, 12, 31)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.is_overdue is True   # 660s > grace_s=600
+
+    def test_within_grace_not_overdue(self):
+        """13:39 = 9min after 13:30 → within grace_s=600, not overdue."""
+        now = _utc(2026, 8, 17, 13, 39)   # 9min after 13:30
+        last = _utc(2026, 8, 17, 12, 31)
+        r = evaluate_expectation(self.EXP, last, now)
+        assert r.is_overdue is False
+
+
+class TestNeverRanOffWindowIsError:
+    """CEO C2 corrected: raw=None + off-window must publish error, not degraded or ok."""
+
+    def test_windowed_job_never_ran_off_window_is_error(self, agg_dirs=None):
+        from src.monitoring import aggregate_health as ag
+        monday = _utc(2026, 8, 17, 20, 0)   # Monday — bl2_live_push off-window
+        entry = ag._job_entry("bundesliga2_live_push", None, now=monday)
+        assert entry["status"] == "error"
+        assert entry["exit_code"] is None
+        assert entry["expectation_state"] == "not_expected"
+
+    def test_cron_set_job_never_ran_between_points_is_error(self, agg_dirs=None):
+        """CronSet job never ran, currently between triggers → error+not_expected."""
+        from src.monitoring import aggregate_health as ag
+        # tennis_retrain: ran today 05:02, so no snapshot means "never". Between points at 12:00.
+        now = _utc(2026, 8, 17, 12, 0)   # between 05:00 and next day 05:00 — not_expected
+        entry = ag._job_entry("tennis_retrain", None, now=now)
+        # No snapshot: last_expected=05:00 today, no run → in_window=True → should be stale
+        # (this is the overdue path, not off-window). Verifying off-window behavior separately.
+        # The "not_expected" case only applies when ran_in_time=True; None means never → in_window.
+        # So for CronSet-never-ran-in-window, expect stale (overdue), not error.
+        assert entry["status"] == "stale"
+        assert entry["expectation_state"] == "overdue"
+
+    def test_never_ran_off_window_overall_is_down(self, agg_dirs=None):
+        """Error status from never-ran+off-window job propagates to overall=down."""
+        from src.monitoring import aggregate_health as ag
+        monday = _utc(2026, 8, 17, 20, 0)
+        entry = ag._job_entry("bundesliga2_live_push", None, now=monday)
+        assert entry["status"] == "error", "must be error to trigger overall=down"

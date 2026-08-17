@@ -98,11 +98,12 @@ def _job_entry(
         last_dt: datetime | None = None
         result = evaluate_expectation(exp, last_dt, now)
         if not result.in_window:
-            # Off-window and never reported — no execution occurred; use degraded
-            # (not "ok": no evidence of success; not "stale": not currently expected).
+            # Off-window and never reported — no execution occurred.
+            # Cannot be "degraded" (requires confirmed execution) or "ok" (no evidence).
+            # "error" + not_expected is the smallest truthful non-success representation (MON-001).
             return {
                 "job":                job,
-                "status":             "degraded",
+                "status":             "error",
                 "last_run_at":        None,
                 "duration_s":         None,
                 "exit_code":          None,

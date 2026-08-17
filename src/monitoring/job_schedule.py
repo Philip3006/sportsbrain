@@ -277,6 +277,27 @@ def _eval_event_fallback(
 #
 # Scheduler reconciliation notes:
 #
+# daily_scan: ~/Library/LaunchAgents/com.sportsbrain.daily-scan.plist
+#   StartCalendarInterval: Hour=7, Minute=0 → 07:00 UTC daily.
+#   (GitHub Actions workflow is .disabled — launchd is authoritative.)
+#
+# auto_retrain: ~/Library/LaunchAgents/com.sportsbrain.auto-retrain.plist
+#   StartCalendarInterval: 06:00 + 18:00 UTC daily.
+#   (GitHub Actions workflow is .disabled — launchd is authoritative.)
+#
+# closing_odds: TWO launchd plists:
+#   com.sportsbrain.closing-odds.plist → Hour=14 (14:00 UTC)
+#   com.sportsbrain.closing-odds-evening.plist → Hour=18 (18:00 UTC)
+#   (GitHub Actions workflow is .disabled — launchd is authoritative.)
+#
+# prematch_scan: ~/Library/LaunchAgents/com.sportsbrain.prematch-scan.plist
+#   StartInterval=1200 (every 20 minutes).
+#   (GitHub Actions workflow is .disabled — launchd is authoritative.)
+#
+# settle: ~/Library/LaunchAgents/com.sportsbrain.settle.plist
+#   StartCalendarInterval: HH:30 for all 24 hours (24 daily points at :30).
+#   (GitHub Actions workflow is .disabled — launchd is authoritative.)
+#
 # tennis_scan: .github/workflows/tennis_scan.yml
 #   8 daily UTC cron points: 02/06/09/12/15/18/21/23 UTC.
 #   (CEO audit listed 9 incl. 04:00; actual workflow has 8. Source wins.)
@@ -303,29 +324,38 @@ def _eval_event_fallback(
 
 JOB_EXPECTATIONS: dict[str, JobExpectation] = {
     # --- Standard interval jobs ---
-    "daily_scan": IntervalExpectation(
-        interval_s=24 * 3600, grace_s=2 * 3600,
-        cadence="1×/Tag 07:00",
+    # launchd StartCalendarInterval: 07:00 daily
+    "daily_scan": CronSetExpectation(
+        points=((None, 7, 0),),
+        grace_s=2 * 3600,
+        cadence="1×/Tag 07:00 UTC (launchd)",
     ),
-    "auto_retrain": IntervalExpectation(
-        interval_s=12 * 3600, grace_s=1 * 3600,
-        cadence="2×/Tag 06:00 + 18:00",
+    # launchd StartCalendarInterval: 06:00 + 18:00 daily
+    "auto_retrain": CronSetExpectation(
+        points=((None, 6, 0), (None, 18, 0)),
+        grace_s=3600,
+        cadence="2×/Tag 06:00 + 18:00 UTC (launchd)",
     ),
-    "closing_odds": IntervalExpectation(
-        interval_s=12 * 3600, grace_s=1 * 3600,
-        cadence="2×/Tag 14:00 + 18:00",
+    # launchd: closing-odds 14:00 UTC + closing-odds-evening 18:00 UTC
+    "closing_odds": CronSetExpectation(
+        points=((None, 14, 0), (None, 18, 0)),
+        grace_s=3600,
+        cadence="2×/Tag 14:00 + 18:00 UTC (launchd)",
     ),
     "live_score_push": IntervalExpectation(
         interval_s=120, grace_s=300,
         cadence="alle 2 Min",
     ),
+    # launchd StartInterval=1200 (20 Min)
     "prematch_scan": IntervalExpectation(
-        interval_s=1800, grace_s=900,
-        cadence="alle 30 Min (im Fenster)",
+        interval_s=1200, grace_s=600,
+        cadence="alle 20 Min (launchd)",
     ),
-    "settle": IntervalExpectation(
-        interval_s=3600, grace_s=600,
-        cadence="stündlich 00:30–04:30",
+    # launchd StartCalendarInterval: HH:30 for all 24 hours (every hour at :30)
+    "settle": CronSetExpectation(
+        points=tuple((None, h, 30) for h in range(24)),
+        grace_s=600,
+        cadence="stündlich :30 (launchd, 24h)",
     ),
     "aggregate_health": IntervalExpectation(
         interval_s=120, grace_s=300,
