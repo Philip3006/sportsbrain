@@ -34,6 +34,7 @@ from src.monitoring.job_schedule import (
     evaluate_expectation,
     next_trigger_s,
 )
+from src.monitoring.release_provenance import build_provenance
 from src.utils.atomic_io import atomic_write_json
 
 
@@ -299,10 +300,12 @@ def aggregate(merge_from_committed: bool = False) -> dict[str, Any]:
 
     jobs.extend(_freshness_entries())
 
+    built_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     payload = {
-        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated_at": built_at,
         "overall":      _overall(jobs),
         "jobs":         jobs,
+        "provenance":   build_provenance(built_at=built_at),
     }
     atomic_write_json(HEALTH_JSON_OUT, payload, indent=2)
     return payload

@@ -2,7 +2,7 @@ name: CI Gates (compile + smoke tests + lint)
 
 # CEO-Roadmap O0-3 (Phase 0 — Production Reliability)
 # Rule: CI red = kein Production Deployment.
-# Hard gates:  compileall + core smoke tests
+# Hard gates:  compileall + core smoke tests + provenance tests
 # Soft gate:   ruff (report only, bis Baseline gehärtet ist)
 
 on:
@@ -26,9 +26,13 @@ jobs:
   gates:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -73,3 +77,37 @@ jobs:
       # darf abgebaut werden, ohne CI zu brechen.
       - name: Ruff regression check (baseline-diff)
         run: python scripts/ruff_regression_check.py
+
+      # ── HARD GATE 5: Release & Publication Provenance (TASK-P0B-004) ──
+      # Production-critical release-truth contract. Must pass on every PR and push.
+      - name: Provenance truth tests
+        run: python -m pytest -q tests/monitoring/test_release_provenance.py
+
+      # ── PROVENANCE: record source release after all gates pass (main push only) ──
+      # docs/data/provenance_meta.json is NOT in ci_gates paths-filter → no re-trigger.
+      # C3: uses safe concurrent push with retry/rebase (mirrors consume_pending_bets.yml).
+      - name: Record source release provenance
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_WORKFLOW: ci_gates.yml
+        run: python3 scripts/record_source_release.py
+
+      - name: Commit and push provenance_meta.json
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "SportsBrain Bot"
+          git config user.email "bot@sportsbrain"
+          git add docs/data/provenance_meta.json
+          git diff --staged --quiet && exit 0
+          git commit -m "auto: record source release ${{ github.sha }}"
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase --autostash --strategy-option=theirs origin/main \
+              || { git rebase --abort 2>/dev/null || true; echo "[push] rebase conflict attempt $i"; continue; }
+            git push origin HEAD:main && exit 0
+            sleep $((RANDOM % 15 + 5))
+          done
+          echo "[push] provenance push failed after 5 attempts — aborting" >&2
+          exit 1

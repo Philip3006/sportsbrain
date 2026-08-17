@@ -1,0 +1,11 @@
+{
+  "schema_version": "1",
+  "source_release_sha": "71d952d852ff11077dea2ac05ac82c49a6115d49",
+  "source_ci": {
+    "run_id": "32058588474",
+    "workflow": "ci_gates.yml",
+    "status": "success",
+    "head_sha": "71d952d852ff11077dea2ac05ac82c49a6115d49"
+  },
+  "recorded_at": "2026-08-17T19:07:18Z"
+}
