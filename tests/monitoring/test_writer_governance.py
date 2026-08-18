@@ -468,6 +468,38 @@ def test_i6_class_a_writers_use_governed_primitive():
 
 # ── Allowlist shell-existence sentinel ────────────────────────────────────────
 
+def test_i6_class_a_writers_do_not_mask_primitive_failure():
+    """I6: No Class A (standard runtime) workflow may suppress a non-zero exit
+    from _bot_commit_push.sh.
+
+    Patterns like `bash scripts/_bot_commit_push.sh ... || true` make
+    bot_assert_staged_safe() fail-closed behavior ineffective: the workflow
+    step reports success even when a source file was staged or all push
+    retries exhausted — a governance bypass.
+
+    Every Class A caller must invoke _bot_commit_push.sh without `|| true`
+    or any equivalent failure suppression on the same line.
+    """
+    # Matches the governed primitive call followed by failure suppression on the same line.
+    _MASKED_PRIMITIVE_RE = re.compile(
+        r"_bot_commit_push\.sh\b.*\|\|\s*true",
+        re.MULTILINE,
+    )
+    violations: list[str] = []
+    for wf_name in _CLASS_A_STANDARD_RUNTIME:
+        wf = WORKFLOWS_DIR / wf_name
+        if not wf.exists():
+            violations.append(f"{wf_name}: file not found")
+            continue
+        if _MASKED_PRIMITIVE_RE.search(wf.read_text()):
+            violations.append(wf_name)
+
+    assert not violations, (
+        "Class A writers that suppress _bot_commit_push.sh failure (governance bypass):\n"
+        + "\n".join(f"  {v}" for v in violations)
+    )
+
+
 def test_shell_allowlist_file_exists_and_contains_permitted_function():
     """Sentinel: scripts/_git_safe_push.sh exists and defines _bot_permitted().
     Fails if the shell allowlist file is accidentally removed or emptied.
