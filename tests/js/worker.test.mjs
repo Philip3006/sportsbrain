@@ -36,6 +36,7 @@ const {
 const workerModule = await import(WORKER);
 const { orchestratePendingBetPost, serializePublicProduct } = workerModule;
 const workerDefault = workerModule.default; // used by Suite 12 cancel KV tests
+const { serializePrivateState } = workerModule; // P0C-002
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -1297,5 +1298,201 @@ describe('Suite 15 — P0C-001 fail-closed nested private markers', () => {
     const pub = await resp.json();
     assert.ok('tennis' in pub, 'tennis must be present in clean public GET response');
     assert.ok('schedule' in pub, 'schedule must be present in clean public GET response');
+  });
+});
+
+// ── Suite 16: P0C-002 — Authenticated private state + owner routing ──────
+// T1–T12 of the required deterministic test matrix.
+// Verifies: /me auth, exact-owner routing, no DEFAULT_USER fallback, master
+// token 403, cross-user rotate_token/token_status rejection, private allowlist,
+// and P0C-001 regression (unauthenticated /signals.json remains public-only).
+describe('Suite 16 — P0C-002 Authenticated Private State (/me + cross-user auth)', () => {
+  const MASTER = 'p0c002-master-token';
+  const ALICE_TOK  = 'alice-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  const BOB_TOK    = 'bob-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+  const PHILIP_TOK = 'philip-token-pppppppppppppppppppppppppppppp';
+
+  function makeKV() {
+    const store = new Map();
+    return {
+      async get(k) { return store.has(k) ? store.get(k) : null; },
+      async put(k, v) { store.set(k, v); },
+      async delete(k) { store.delete(k); },
+      async list({ prefix = '' } = {}) {
+        const keys = [...store.keys()].filter(k => k.startsWith(prefix)).map(name => ({ name }));
+        return { keys, list_complete: true, cursor: '' };
+      },
+      _store: store,
+    };
+  }
+  async function setup() {
+    const kv = makeKV();
+    const env = { SIGNALS: kv, API_TOKEN: MASTER };
+    await kv.put('user_tokens', JSON.stringify({
+      alice:  { active: ALICE_TOK,  previous: null, rotated_at: '2026-08-18T00:00:00Z' },
+      bob:    { active: BOB_TOK,    previous: null, rotated_at: '2026-08-18T00:00:00Z' },
+      philip: { active: PHILIP_TOK, previous: null, rotated_at: '2026-08-18T00:00:00Z' },
+    }));
+    return { kv, env };
+  }
+  async function req(env, method, path, { token, body } = {}) {
+    const headers = {};
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    const init = { method, headers };
+    if (body !== undefined) { headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(body); }
+    return workerDefault.fetch(new Request('https://w-p0c002.test' + path, init), env, {});
+  }
+  const PHILIP_SNAP = {
+    updated: '2026-08-18T00:00:00Z',
+    schedule: [{ match: 'A vs B' }],
+    tennis: [{ signal_id: 'sig_p', ev_pct: 10 }],
+    bankroll_state: { free: 100, staked: 0, published_at: '2026-08-18T00:00:00Z' },
+    open_bets: [{ id: 'PHILIP_ONLY_MARKER' }],
+    settled_bets: [],
+    meta: { stale_odds: false, default_user: 'philip', user: 'philip' },
+  };
+  const ALICE_SNAP = {
+    updated: '2026-08-18T00:00:00Z',
+    bankroll_state: { free: 50, staked: 0, published_at: '2026-08-18T00:00:00Z' },
+    open_bets: [{ id: 'ALICE_ONLY_MARKER' }],
+    settled_bets: [],
+    schedule: [{ match: 'X vs Y' }],
+    meta: { user: 'alice' },
+  };
+
+  // T1
+  test('T1: GET /me without token → 401', async () => {
+    const { env } = await setup();
+    const r = await req(env, 'GET', '/me');
+    assert.equal(r.status, 401);
+  });
+  // T2
+  test('T2: GET /me with invalid token → 401', async () => {
+    const { env } = await setup();
+    const r = await req(env, 'GET', '/me', { token: 'not-a-real-token' });
+    assert.equal(r.status, 401);
+  });
+  // T3
+  test('T3: GET /me with valid alice token → owner=alice + alice data', async () => {
+    const { env, kv } = await setup();
+    await kv.put('signals_json_alice', JSON.stringify(ALICE_SNAP));
+    await kv.put('signals_json', JSON.stringify(PHILIP_SNAP));
+    const r = await req(env, 'GET', '/me', { token: ALICE_TOK });
+    assert.equal(r.status, 200);
+    const body = await r.json();
+    assert.equal(body.owner, 'alice');
+    assert.ok(JSON.stringify(body).includes('ALICE_ONLY_MARKER'));
+    assert.ok(!JSON.stringify(body).includes('PHILIP_ONLY_MARKER'), 'must not leak philip state');
+  });
+  // T4 — A cannot read B by manipulating ?user= etc.
+  test('T4: alice token cannot read bob data via ?user= or path', async () => {
+    const { env, kv } = await setup();
+    await kv.put('signals_json_alice', JSON.stringify(ALICE_SNAP));
+    await kv.put('signals_json_bob', JSON.stringify({ open_bets: [{ id: 'BOB_ONLY_MARKER' }] }));
+    const r = await req(env, 'GET', '/me?user=bob', { token: ALICE_TOK });
+    assert.equal(r.status, 200, 'alice should still get her own /me');
+    const body = await r.json();
+    assert.equal(body.owner, 'alice');
+    assert.ok(!JSON.stringify(body).includes('BOB_ONLY_MARKER'), 'BOB data must never appear in alice /me');
+  });
+  // T5 — alice token + no alice snapshot → 404, no Philip fallback
+  test('T5: alice token + missing snapshot → 404, zero Philip data', async () => {
+    const { env, kv } = await setup();
+    // Only Philip snapshot exists; alice has NO snapshot.
+    await kv.put('signals_json', JSON.stringify(PHILIP_SNAP));
+    const r = await req(env, 'GET', '/me', { token: ALICE_TOK });
+    assert.equal(r.status, 404, 'must be 404, never fall back to Philip');
+    const body = await r.json();
+    assert.ok(!JSON.stringify(body).includes('PHILIP_ONLY_MARKER'), 'must never leak philip data on 404');
+    assert.equal(body.owner, 'alice');
+  });
+  // T6 — philip token reads signals_json (legacy key), owner=philip
+  test('T6: philip token reads signals_json as exact owner (owner=philip)', async () => {
+    const { env, kv } = await setup();
+    await kv.put('signals_json', JSON.stringify(PHILIP_SNAP));
+    const r = await req(env, 'GET', '/me', { token: PHILIP_TOK });
+    assert.equal(r.status, 200);
+    const body = await r.json();
+    assert.equal(body.owner, 'philip');
+    assert.ok(JSON.stringify(body).includes('PHILIP_ONLY_MARKER'));
+  });
+  // T7 — master token without per-user identity → 403
+  test('T7: master token on /me → 403 (no implicit identity)', async () => {
+    const { env, kv } = await setup();
+    await kv.put('signals_json', JSON.stringify(PHILIP_SNAP));
+    const r = await req(env, 'GET', '/me', { token: MASTER });
+    assert.equal(r.status, 403);
+    const txt = await r.text();
+    assert.ok(!txt.includes('PHILIP_ONLY_MARKER'), 'must not leak state on 403');
+  });
+  // T8 — POST /rotate_token: alice cannot rotate bob
+  test('T8: POST /rotate_token alice trying user=bob → 403', async () => {
+    const { env } = await setup();
+    const r = await req(env, 'POST', '/rotate_token', { token: ALICE_TOK, body: { user: 'bob' } });
+    assert.equal(r.status, 403);
+  });
+  // T9 — GET /token_status: alice cannot inspect bob
+  test('T9: GET /token_status?user=bob with alice token → 403', async () => {
+    const { env } = await setup();
+    const r = await req(env, 'GET', '/token_status?user=bob', { token: ALICE_TOK });
+    assert.equal(r.status, 403);
+  });
+  // T10 — P0C-001 regression: /signals.json unauth returns 200, zero private fields
+  test('T10: GET /signals.json unauthenticated returns 200 + zero private fields', async () => {
+    const { env, kv } = await setup();
+    await kv.put('signals_json', JSON.stringify(PHILIP_SNAP));
+    const r = await req(env, 'GET', '/signals.json');
+    assert.equal(r.status, 200);
+    const body = await r.json();
+    assert.ok(!('bankroll_state' in body));
+    assert.ok(!('open_bets' in body));
+    assert.ok(!JSON.stringify(body).includes('PHILIP_ONLY_MARKER'));
+  });
+  // T11 — /me response contains only private allowlist fields
+  test('T11: /me contains only private-allowlist fields (no schedule/model_tips/etc)', async () => {
+    const { env, kv } = await setup();
+    await kv.put('signals_json', JSON.stringify(PHILIP_SNAP));
+    const r = await req(env, 'GET', '/me', { token: PHILIP_TOK });
+    const body = await r.json();
+    const publicKeys = ['schedule', 'model_tips', 'tennis', 'football', 'all_odds',
+                        'top_elo', 'wm_results', 'odds_history', 'health', 'build_info', 'tennis_stats'];
+    for (const k of publicKeys) {
+      assert.ok(!(k in body), `public key '${k}' must not appear in /me payload`);
+    }
+    assert.ok('owner' in body);
+    assert.ok('schema_version' in body);
+  });
+  // T12 — stored owner mismatch → 403
+  test('T12: stored owner != auth.user → 403 (owner_mismatch guard)', async () => {
+    const { env, kv } = await setup();
+    // alice snapshot but stored meta.user = 'bob' → mismatch, must fail closed.
+    await kv.put('signals_json_alice', JSON.stringify({
+      ...ALICE_SNAP,
+      meta: { user: 'bob' },
+    }));
+    const r = await req(env, 'GET', '/me', { token: ALICE_TOK });
+    assert.equal(r.status, 403);
+    const body = await r.json();
+    assert.equal(body.error, 'owner_mismatch');
+  });
+
+  // Bonus: serializePrivateState() unit checks
+  test('serializePrivateState empty snapshot → owner + schema_version only', () => {
+    const out = serializePrivateState(null, 'alice');
+    assert.equal(out.owner, 'alice');
+    assert.equal(out.schema_version, '1');
+    assert.ok(!('bankroll_state' in out));
+  });
+  test('serializePrivateState strips public product keys', () => {
+    const out = serializePrivateState({
+      schedule: [1, 2, 3],
+      tennis: [{}],
+      bankroll_state: { free: 10 },
+      model_tips: {},
+    }, 'alice');
+    assert.ok(!('schedule' in out));
+    assert.ok(!('tennis' in out));
+    assert.ok(!('model_tips' in out));
+    assert.ok('bankroll_state' in out);
   });
 });

@@ -851,6 +851,15 @@ async function _submitBet() {
   const token = localStorage.getItem('sb_token');
   if (!token) { _openTokenModal(); return; }
 
+  // P0C-002 fail-closed gate: betting is disabled unless the private channel
+  // has authoritative state (bankroll, open bets). The Worker will still
+  // enforce all safety checks — this is defense-in-depth against submitting
+  // when the browser cannot see current authoritative state.
+  if (typeof isPrivateAvailable === 'function' && !isPrivateAvailable()) {
+    showToast('Privates Konto derzeit nicht verfügbar — Wetten deaktiviert.', 'error');
+    return;
+  }
+
   // P0-A: source is determined at modal-open time (from dataset); not derived from model_prob.
   // Manual betting is always explicit — never silently derived.
   const source = _pendingBet.source || 'manual';
@@ -1086,54 +1095,32 @@ async function _renderSettingsState() {
       ts.textContent = t ? 'Gesetzt · ••••' + t.slice(-4) : 'Nicht gesetzt';
     } catch { ts.textContent = '—'; }
   }
-  // D3 — User-Slot
+  // P0C-002/C2: authenticated owner display comes ONLY from /me payload.
+  // sb_user / URL params / prompts / defaults are NEVER an authority source.
   const us = document.getElementById('settings-user-status');
   if (us) {
-    const u = _getUserSlot();
-    const def = (_meta && _meta.default_user) || 'philip';
-    us.textContent = (u === def) ? `${u} (Default)` : u;
+    const owner = (typeof _authenticatedOwner !== 'undefined' && _authenticatedOwner) ? _authenticatedOwner : null;
+    us.textContent = owner ? owner : 'Nicht angemeldet';
   }
 }
 
-// D3 — Multi-User-Schema
-function _getUserSlot() {
-  try { return (localStorage.getItem('sb_user') || 'philip').trim() || 'philip'; }
-  catch { return 'philip'; }
-}
-function _setUserSlot(name) {
-  const clean = String(name || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
-  if (!clean) return false;
-  try { localStorage.setItem('sb_user', clean); } catch { return false; }
-  return true;
-}
-function _promptUserSlot() {
-  const current = _getUserSlot();
-  const v = prompt(
-    'User-Slot ändern\n\n' +
-    'Aktuell: ' + current + '\n\n' +
-    'Nur Buchstaben/Ziffern/-/_. Backend nutzt aktuell nur den Default-User; ' +
-    'andere Slots sind vorbereitet, bekommen aber noch keine eigenen Daten.',
-    current
-  );
-  if (v === null) return;
-  if (_setUserSlot(v)) {
-    showToast('User-Slot: ' + _getUserSlot(), 'ok');
-    _renderSettingsState();
-  } else {
-    showToast('Ungültiger Slot-Name', 'error');
-  }
-}
+// P0C-002/C2: _getUserSlot / _setUserSlot / _promptUserSlot REMOVED.
+// The browser is no longer an authority for user identity — the /me response
+// payload.owner (set by the Worker after Bearer-token verification) is the
+// single source of truth. Any UI display of the account name reads
+// _authenticatedOwner (see app.js) which is set exclusively from /me.
 
 // D2 — Token rotieren
+// P0C-002/C2: request body no longer carries browser-selected user; the Worker
+// resolves the target account from the Bearer token itself.
 async function _rotateToken() {
   const token = (() => { try { return localStorage.getItem('sb_token') || ''; } catch { return ''; } })();
   if (!token) {
-    showToast('Kein Worker-Token gesetzt — erst eintragen, dann rotieren.', 'error');
+    showToast('Kein SportsBrain-Token gesetzt — erst eintragen, dann rotieren.', 'error');
     return;
   }
-  const user = _getUserSlot();
   if (!confirm(
-    'Token rotieren für User „' + user + '"?\n\n' +
+    'Token für deinen Account rotieren?\n\n' +
     'Es wird ein neuer Token erzeugt und automatisch in dieser PWA gespeichert.\n' +
     'Der alte Token bleibt 24h gültig (Grace-Period), damit andere Geräte umgestellt werden können.'
   )) return;
@@ -1141,7 +1128,7 @@ async function _rotateToken() {
     const r = await fetch(WORKER_BASE + '/rotate_token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ user }),
+      body: JSON.stringify({}),  // C2: no browser-supplied user; Worker uses Bearer identity
     });
     if (r.status === 401) {
       showToast('Aktueller Token ungültig — bitte manuell setzen.', 'error');
@@ -1157,6 +1144,9 @@ async function _rotateToken() {
       return;
     }
     try { localStorage.setItem('sb_token', data.token); } catch {}
+    // P0C-002/C3: bump generation so stale /me responses from the old token
+    // cannot overwrite state acquired with the rotated token.
+    if (typeof _onTokenChanged === 'function') _onTokenChanged();
     const exp = data.previous_expires_at ? new Date(data.previous_expires_at).toLocaleString() : '—';
     showToast('Token rotiert (alter gültig bis ' + exp + ')', 'success');
     _renderSettingsState();
@@ -1165,40 +1155,11 @@ async function _rotateToken() {
   }
 }
 
-// D6: Master-Token erzeugt einen Invite-Link. Empfänger wählt Username + Bankroll
-// im Onboarding-Flow selbst (Username-Step erscheint nur mit sb_invite_pending).
-async function _createInvite() {
-  const token = (() => { try { return localStorage.getItem('sb_token') || ''; } catch { return ''; } })();
-  if (!token) {
-    showToast('Kein Worker-Token gesetzt — Master-Token nötig.', 'error');
-    return;
-  }
-  try {
-    const r = await fetch(WORKER_BASE + '/invite', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({}),
-    });
-    if (r.status === 401) {
-      showToast('Nur Master-Token kann Invites erstellen.', 'error');
-      return;
-    }
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok || !j.ok || !j.invite_token) {
-      showToast('Invite fehlgeschlagen (HTTP ' + r.status + ')', 'error');
-      return;
-    }
-    const link = window.location.origin + window.location.pathname + '?invite=' + j.invite_token;
-    try {
-      await navigator.clipboard.writeText(link);
-      showToast('Invite-Link in Zwischenablage kopiert.', 'success');
-    } catch {}
-    // Show in a modal-like prompt as fallback
-    window.prompt('Invite-Link (einmal nutzbar, läuft nach erster Registrierung ab):', link);
-  } catch (e) {
-    showToast('Netzwerk-Fehler: ' + (e && e.message || e), 'error');
-  }
-}
+// P0C-002/C1: Browser master-token invite creation removed (SEC-005).
+// Invites are administratively provisioned via scripts/create_invite.py, which
+// reads the master token from a server-side environment variable and never
+// exposes the master token to any browser context. Public users register with a
+// one-time invite token via POST /register (see cloudflare/worker.js).
 
 function _toggleCompactFromSettings() {
   toggleCompact();
@@ -1237,6 +1198,9 @@ function _closeTokenModal() {
     const v = document.getElementById('token-modal-input').value.trim();
     if (!v) { showToast('Token darf nicht leer sein', 'error'); return; }
     localStorage.setItem('sb_token', v);
+    // P0C-002/C3: bump generation + clear private state so any in-flight
+    // /me from a previous session is discarded.
+    if (typeof _onTokenChanged === 'function') _onTokenChanged();
     _closeTokenModal();
     if (_pendingBet) _submitBet();
   });
@@ -1322,17 +1286,21 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('view-detail')?.classList.contains('active'))  { closeDetail(); }
 });
 
-// URL-Token-Setter: ?token=XXX → speichert in localStorage.
-// Param wird NICHT aus URL entfernt, damit "Zum Home-Bildschirm" die Magic-URL
-// behält und die PWA beim ersten Launch den Token auch in ihrer eigenen
-// localStorage-Sandbox speichern kann (iOS-PWA hat separates Storage).
+// P0C-002 SECURITY:
+// Long-lived auth token ingestion from ?token= URL parameters has been REMOVED.
+// Reasons: query strings leak via browser history, referer headers, server logs,
+// analytics, and screen recordings. Long-lived tokens must be entered via the
+// Settings → Token modal (localStorage-only) or provisioned by the /register
+// flow, which returns the token in a POST response body.
+//
+// One-time invite tokens (?invite=…) remain permitted — they are short-lived,
+// single-use, and become invalid immediately after /register consumes them.
 (function () {
   try {
     const params = new URLSearchParams(window.location.search);
-    const t = params.get('token');
-    if (t && t.length >= 32) {
-      localStorage.setItem('sb_token', t);
-      setTimeout(() => showToast && showToast('🔑 Worker-Token gespeichert', 'success'), 200);
+    if (params.get('token')) {
+      // Explicitly refuse to persist; log a console warning for developers.
+      console.warn('[P0C-002] ?token= URL parameter is no longer supported. Use Settings → Token to configure authentication.');
     }
   } catch {}
 })();

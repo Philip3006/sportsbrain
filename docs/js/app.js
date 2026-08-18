@@ -1,6 +1,19 @@
 // Cloud URL — set after Cloudflare Worker setup (see cloudflare/SETUP.md)
 // Leave empty ('') to fall back to GitHub Pages only.
+//
+// P0C-002 dual-channel architecture:
+//   • PUBLIC:  CLOUD_URL  → GET /signals.json (no Authorization header,
+//              anonymous, contains only public product fields).
+//   • PRIVATE: WORKER_ORIGIN + '/me' → GET (Authorization: Bearer <user-token>).
+//              Fetched only when a per-user token is present in localStorage.
+// Public channel populates: schedule, tennis, football, all_odds, model_tips, …
+// Private channel populates: bankroll_state, open_bets, settled_bets, history,
+//                            wm_stats, portfolio. Fail-closed: no fallback to
+//                            static file, no fallback to another user.
 const CLOUD_URL  = 'https://sportsbrain-signals.sportsbrain-philip.workers.dev/signals.json';
+// P0C-002: private-channel Worker origin, derived from CLOUD_URL.
+const WORKER_ORIGIN = CLOUD_URL.replace(/\/signals\.json$/, '');
+const PRIVATE_URL = WORKER_ORIGIN + '/me';
 // VAPID Public Key (kann öffentlich sein) — wird via scripts/gen_vapid_keys.py
 // erzeugt und hier eingetragen. Bei Platzhalter ist Push-Toggle deaktiviert.
 const VAPID_PUBLIC_KEY = 'BCWFSMWF_b1ef9i76yoGltxiEEel_pJtXqjl-0q7ZYS3Ya2V9dBW5gN5N_rzdShckjkLq7UaI-5GPaV0PKc7ZBI';
@@ -568,10 +581,137 @@ function _tickCountdowns() {
 setInterval(_tickCountdowns, 1000);
 
 let _cloudHealthy = true;
+// P0C-002: private-channel state. Distinct from public product state so a
+// private failure never contaminates the public UI (or vice versa).
+let _privateAvailable = false;
+let _privateStatus = 'unavailable';  // 'ok' | 'unauthenticated' | 'not_found' | 'error' | 'unavailable'
+// P0C-002/C2: authenticated owner is populated ONLY from a successful /me
+// response payload.owner. It is NEVER sourced from sb_user, URL params, public
+// meta, prompts, or a "philip" default. Reset to null on any token change or
+// private-fetch failure.
+let _authenticatedOwner = null;
+// P0C-002/C3: monotonic private-fetch generation counter. Any /me response
+// that returns after (a) the generation has advanced, or (b) the token in use
+// when the fetch started no longer matches the current token, is DISCARDED to
+// prevent stale Alice data from overwriting a fresh Bob session.
+let _privateFetchGen = 0;
+let _lastPrivateToken = null;
+function _bumpPrivateFetchGen() { _privateFetchGen += 1; return _privateFetchGen; }
+
+// P0C-002/C3: helper — must be called immediately when the auth token changes,
+// so any in-flight /me response is invalidated and private state is cleared.
+function _onTokenChanged() {
+  _authenticatedOwner = null;
+  _openBets = [];
+  _settledBets = [];
+  _bankrollState = {};
+  _wmStats = {};
+  _privateHistory = [];
+  _privateAvailable = false;
+  _privateStatus = 'unauthenticated';
+  _bumpPrivateFetchGen();
+  try { _lastPrivateToken = localStorage.getItem('sb_token') || null; } catch { _lastPrivateToken = null; }
+}
+
+// P0C-002: fetch authenticated private state via GET /me.
+// Never sends ?user= (Worker resolves owner from token). Never uses static fallback.
+// C3: captures generation + token at request start; caller must validate.
+// Returns { ok, status, payload | null, reason, gen, token }.
+async function _fetchPrivateState() {
+  let token = '';
+  try { token = localStorage.getItem('sb_token') || ''; } catch {}
+  const gen = _privateFetchGen;
+  if (!token) return { ok: false, status: 'unauthenticated', payload: null, reason: 'no_token', gen, token: '' };
+  let resp;
+  try {
+    resp = await fetch(PRIVATE_URL + '?t=' + Date.now(), {
+      method: 'GET',
+      cache: 'no-store',
+      headers: { 'Authorization': 'Bearer ' + token },
+    });
+  } catch (e) {
+    return { ok: false, status: 'error', payload: null, reason: 'network:' + (e && e.message || 'unknown'), gen, token };
+  }
+  if (resp.status === 401) {
+    // Token is invalid — clear it so we stop retrying with bad credentials.
+    try { localStorage.removeItem('sb_token'); } catch {}
+    _bumpPrivateFetchGen();  // C3: invalidate any newer in-flight fetches too
+    return { ok: false, status: 'unauthenticated', payload: null, reason: '401', gen, token };
+  }
+  if (resp.status === 403) {
+    return { ok: false, status: 'forbidden', payload: null, reason: '403', gen, token };
+  }
+  if (resp.status === 404) {
+    return { ok: false, status: 'not_found', payload: null, reason: '404', gen, token };
+  }
+  if (!resp.ok) {
+    return { ok: false, status: 'error', payload: null, reason: 'HTTP ' + resp.status, gen, token };
+  }
+  let payload;
+  try { payload = await resp.json(); }
+  catch (e) { return { ok: false, status: 'error', payload: null, reason: 'json_parse', gen, token }; }
+  return { ok: true, status: 'ok', payload, reason: '', gen, token };
+}
+
+// P0C-002: apply private state to app globals, or clear them on failure
+// (fail-closed). Private failure NEVER falls back to public/static data.
+// C3: stale-response guard — discards responses whose (gen, token) no longer
+// matches the current session.
+function _applyPrivateState(result) {
+  // Session-race guard: discard stale responses.
+  let currentToken = '';
+  try { currentToken = localStorage.getItem('sb_token') || ''; } catch {}
+  if (result && (result.gen !== undefined) && result.gen !== _privateFetchGen) {
+    return { discarded: true, reason: 'generation_mismatch' };
+  }
+  if (result && (result.token !== undefined) && result.token && result.token !== currentToken) {
+    return { discarded: true, reason: 'token_mismatch' };
+  }
+
+  if (result.ok && result.payload) {
+    const d = result.payload;
+    // C2: authenticated owner is ONLY sourced from the /me response payload.
+    const owner = (typeof d.owner === 'string' && d.owner) ? d.owner : null;
+    _authenticatedOwner = owner;
+    _openBets = Array.isArray(d.open_bets) ? d.open_bets : [];
+    _settledBets = Array.isArray(d.settled_bets) ? d.settled_bets : [];
+    _bankrollState = (d.bankroll_state && typeof d.bankroll_state === 'object') ? d.bankroll_state : {};
+    _wmStats = (d.wm_stats && typeof d.wm_stats === 'object') ? d.wm_stats : {};
+    _privateHistory = Array.isArray(d.history) ? d.history : [];
+    _privateAvailable = true;
+    _privateStatus = 'ok';
+  } else {
+    // Fail-closed: private betting/history UI must not show stale or public
+    // data as if it were private. Clear all private state on failure.
+    _authenticatedOwner = null;
+    _openBets = [];
+    _settledBets = [];
+    _bankrollState = {};
+    _wmStats = {};
+    _privateHistory = [];
+    _privateAvailable = false;
+    _privateStatus = result.status || 'unavailable';
+  }
+  _lastPrivateToken = currentToken || null;
+  return { discarded: false };
+}
+
+// P0C-002: gate for actionable private UI (place-bet, cancel-bet, journal).
+// Betting is disabled unless the private channel is authenticated and healthy.
+// The Worker remains the final authority on all betting-safety checks — this
+// UI gate is a defense-in-depth layer that prevents accidental submissions
+// when the browser cannot see authoritative private state.
+function isPrivateAvailable() { return _privateAvailable === true; }
+let _privateHistory = [];
+
 async function _load() {
   // Während aktiver Walkthrough-Demo keine Live-Daten ziehen/überschreiben
   if (_walkDemoActive) return;
   const ts = '?t=' + Date.now();
+
+  // ── PUBLIC CHANNEL ────────────────────────────────────────────
+  // No Authorization header. Always attempted. On failure, falls back to
+  // the static docs/data/signals.json artifact (which is also public-serialized).
   let r, cloudFailed = false;
   if (CLOUD_URL) {
     try { r = await fetch(CLOUD_URL + ts, { cache: 'no-store' }); } catch (_) { cloudFailed = true; }
@@ -611,21 +751,12 @@ async function _load() {
   _allOdds = d.all_odds || {};
   _modelTips = d.model_tips || {};
   _modelEvals = d.model_evals || {};
-  _openBets = d.open_bets || [];
-  _settledBets = d.settled_bets || [];
-  _bankrollState = d.bankroll_state || {};
-  // D4/D5: localStorage-Bankroll übernimmt, wenn Backend nur den €100-Default
-  // liefert UND der User noch keine Aktivität hat (neuer User-Slot).
-  try {
-    const saved = parseFloat(localStorage.getItem('sb_bankroll_start'));
-    const bs = _bankrollState;
-    const hasActivity = (bs && bs.pnl_closed && bs.pnl_closed !== 0) ||
-                        (bs && bs.staked && bs.staked > 0);
-    const isDefault = !bs || !bs.start || bs.start === 100;
-    if (saved >= 10 && isDefault && !hasActivity) {
-      _bankrollState = { start: saved, free: saved, pnl_closed: 0, staked: 0, exposure_pct: 0, max_win: 0 };
-    }
-  } catch {}
+  // P0C-002: private financial/identity state (open_bets, settled_bets,
+  // bankroll_state, history, wm_stats) is NOT read from the public channel.
+  // It is loaded exclusively from GET /me below via _fetchPrivateState().
+  // The public serializer (P0C-001) already strips these fields — this comment
+  // documents that the browser never reads them here even if a legacy static
+  // artifact happened to contain them.
   _meta = d.meta || {};
   _oddsHistory = d.odds_history || {};
   // Index wm_results by matchKey for fast lookup in Home tab
@@ -634,6 +765,31 @@ async function _load() {
     const mk = matchKey(r.home, r.away);
     _wmResults[mk] = r;
   }
+
+  // ── PRIVATE CHANNEL (P0C-002) ─────────────────────────────────
+  // Fetched independently of public channel. Failure of the private
+  // channel MUST NOT affect the public UI (fail-open on public,
+  // fail-closed on private/betting).
+  const priv = await _fetchPrivateState();
+  _applyPrivateState(priv);
+  // Optional: surface a subtle notice on private failure without breaking public UI.
+  if (!priv.ok && priv.status !== 'unauthenticated') {
+    // Do not spam toasts — the settings/UI already renders a "private unavailable" state.
+    try {
+      const key = 'private.lastFailStatus';
+      if (localStorage.getItem(key) !== priv.status) {
+        localStorage.setItem(key, priv.status);
+        if (priv.status === 'not_found') {
+          showToast('Privater Kontostand nicht verfügbar — öffentlicher Bereich weiter nutzbar.', 'info');
+        } else if (priv.status === 'error' || priv.status === 'forbidden') {
+          showToast('Private Funktionen momentan nicht verfügbar.', 'error');
+        }
+      } else if (priv.ok) {
+        localStorage.removeItem(key);
+      }
+    } catch {}
+  }
+
   renderBankrollStrip();
 
   const setB = (id, n) => { const el=document.getElementById(id); el.textContent=n; el.classList.toggle('show',n>0); };
@@ -658,12 +814,13 @@ async function _load() {
     renderHealthDetail(d.health);
   }
 
-  _wmStats = d.wm_stats || {};
+  // P0C-002: _wmStats and history come from the private channel, not `d`.
+  // If the private channel failed, both are empty arrays/objects (fail-closed).
   renderHome();
   renderSport('football');
   renderSport('tennis');
   renderJournalStats(_wmStats);
-  renderJournal(d.history || []);
+  renderJournal(_privateHistory);
   renderStandings();
   renderBets();
   _updateClock();

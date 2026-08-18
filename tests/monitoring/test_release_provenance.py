@@ -159,28 +159,79 @@ def test_c1_head_sha_absent_does_not_fail(prov_dir, monkeypatch):
     assert prov["source_release_sha"] == SOURCE_SHA_A
 
 
+# C6 (test-only): historical P0B-004 seed frozen as fixture, so the semantic
+# invariants below can be regression-tested even after main advances past that
+# release. Production code (release_provenance / record_source_release) is
+# untouched.
+_P0B004_HISTORICAL_SEED = {
+    "schema_version": "1",
+    "source_release_sha": "7cd6c6793419ab1f89c4b3c8e446f7764e84387a",
+    "source_ci": {
+        "run_id": "32075583343",
+        "workflow": "ci_gates.yml",
+        "status": "success",
+        "head_sha": "7cd6c6793419ab1f89c4b3c8e446f7764e84387a",
+    },
+    "recorded_at": "2026-08-17T22:20:43Z",
+}
+
+
+def _assert_provenance_seed_semantics(meta: dict) -> None:
+    """Semantic invariants for any well-formed provenance_meta.json seed.
+
+    Enforces the same C1 contract as record_source_release without hard-coding
+    the current SHA/run_id (which changes with every source release merge).
+    """
+    import re
+    sha = meta.get("source_release_sha")
+    assert isinstance(sha, str) and re.fullmatch(r"[0-9a-f]{40}", sha), (
+        f"source_release_sha must be a 40-char hex string, got {sha!r}"
+    )
+    ci = meta.get("source_ci")
+    assert isinstance(ci, dict), "source_ci must be an object"
+    run_id = ci.get("run_id")
+    assert isinstance(run_id, (str, int)) and str(run_id).isdigit() and str(run_id), (
+        f"source_ci.run_id must be a numeric identifier, got {run_id!r}"
+    )
+    assert ci.get("status") == "success", (
+        f"source_ci.status must be 'success', got {ci.get('status')!r}"
+    )
+    head_sha = ci.get("head_sha")
+    assert head_sha == sha, (
+        f"C1 self-consistency: source_ci.head_sha ({head_sha!r}) "
+        f"must equal source_release_sha ({sha!r})"
+    )
+    recorded_at = meta.get("recorded_at")
+    assert isinstance(recorded_at, str) and recorded_at, "recorded_at must be a non-empty string"
+    # Accept trailing Z (Zulu) as +00:00
+    datetime.fromisoformat(recorded_at.replace("Z", "+00:00"))
+
+
 def test_c1_seed_uses_correct_run_id():
-    """Regression: provenance_meta.json seed must pair post-merge SHA with its CI run.
+    """Regression: provenance_meta.json seed satisfies the C1 semantic contract.
 
-    Updated for P0B-004 (PR #15, squash-merge 2026-08-17T22:20:43Z):
-    - source_release_sha: 7cd6c6793419ab1f89c4b3c8e446f7764e84387a
-    - CI run: 32075583343 (ci_gates success on post-merge HEAD)
-
-    C1 invariant: source_ci.head_sha must equal source_release_sha in the seed,
-    ensuring provenance was recorded by the CI run that ran ON the merged SHA, not
-    the PR head SHA.
+    C6 correction: uses SEMANTIC INVARIANTS (SHA format, run_id numeric,
+    status=success, head_sha == source_release_sha, valid ISO recorded_at)
+    rather than hard-coded values that break after every source release merge.
     """
     from src.monitoring import release_provenance as rp
-    # Read the actual seed file from the repo
-    meta_text = rp.PROVENANCE_META_PATH.read_text(encoding="utf-8")
-    meta = json.loads(meta_text)
-    assert meta["source_release_sha"] == "7cd6c6793419ab1f89c4b3c8e446f7764e84387a"
-    assert meta["source_ci"]["run_id"] == "32075583343", (
-        "C1: seed must use run_id=32075583343 (post-merge P0B-004 CI)"
+    meta = json.loads(rp.PROVENANCE_META_PATH.read_text(encoding="utf-8"))
+    _assert_provenance_seed_semantics(meta)
+
+
+def test_c1_historical_p0b004_seed_regression_fixture():
+    """C6: the historical P0B-004 seed still satisfies the semantic contract.
+
+    Guards against a future refactor that would silently accept a seed the
+    original P0B-004 seed would have failed. Runs against a static fixture, NOT
+    the live provenance_meta.json (which has already advanced).
+    """
+    _assert_provenance_seed_semantics(_P0B004_HISTORICAL_SEED)
+    # Explicit historical values remain verifiable via fixture:
+    assert _P0B004_HISTORICAL_SEED["source_release_sha"] == (
+        "7cd6c6793419ab1f89c4b3c8e446f7764e84387a"
     )
-    assert meta["source_ci"]["head_sha"] == meta["source_release_sha"], (
-        "C1: source_ci.head_sha must equal source_release_sha in the seed"
-    )
+    assert _P0B004_HISTORICAL_SEED["source_ci"]["run_id"] == "32075583343"
 
 
 # ---------------------------------------------------------------------------

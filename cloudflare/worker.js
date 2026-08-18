@@ -154,10 +154,24 @@ async function requireAuth(request, env) {
 }
 
 // D4 — Default user mirrors the legacy single-user KV-key for backward-compat.
+//
+// P0C-002 owner-routing note:
+//   The DEFAULT_USER constant is used ONLY for:
+//     (a) legacy physical KV-key mapping for the philip owner (signals_json,
+//         pending_bets, cancel_intent:philip:*),
+//     (b) internal cron helpers that need a fixed baseline key.
+//   It is EXPLICITLY NOT a fallback for authorization. The private /me endpoint
+//   (P0C-002) never falls back to DEFAULT_USER when the authenticated user has
+//   no owner: it either returns exact-owner state for the authenticated user,
+//   or fails 404. See serveMe() below.
 const DEFAULT_USER = 'philip';
 function _pendingKey(user) {
   return (user && user !== DEFAULT_USER) ? `pending_bets_${user}` : 'pending_bets';
 }
+// P0C-002: exact-owner physical-key routing. Not a fallback. The philip owner
+// still lives under the legacy `signals_json` key for backward compatibility;
+// every other owner uses `signals_json_<owner>`. Owner is determined by the
+// authenticated user identity, never by a missing-user default.
 function _signalsKey(user) {
   return (user && user !== DEFAULT_USER) ? `signals_json_${user}` : 'signals_json';
 }
@@ -212,6 +226,37 @@ function _publicTennisStats(ts) {
   }
   return out;
 }
+// P0C-002 — Private state allowlist for GET /me.
+// Only these top-level keys are returned in the authenticated /me payload.
+// Public product fields (schedule, all_odds, model_tips, football, tennis, …)
+// are intentionally EXCLUDED — the PWA fetches those from public GET /signals.json
+// via the dual-channel architecture.
+const _PRIVATE_STATE_KEYS = new Set([
+  'bankroll_state',
+  'open_bets',
+  'settled_bets',
+  'history',
+  'portfolio',
+  'wm_stats',
+]);
+
+/**
+ * P0C-002: Return authenticated private payload for owner.
+ * Mirrors src/notifications/private_serializer.py.
+ *
+ * @param {object|null} snapshot - Parsed KV snapshot for the owner (or null).
+ * @param {string} owner - Authenticated owner identity (never falls back).
+ * @returns {object} allowlisted private payload with schema_version + owner.
+ */
+export function serializePrivateState(snapshot, owner) {
+  const result = { schema_version: '1', owner };
+  if (!snapshot || typeof snapshot !== 'object') return result;
+  for (const key of _PRIVATE_STATE_KEYS) {
+    if (key in snapshot) result[key] = snapshot[key];
+  }
+  return result;
+}
+
 export function serializePublicProduct(snapshot) {
   if (!snapshot || typeof snapshot !== 'object') return {};
   const pub = {};
@@ -648,6 +693,77 @@ export default {
       return new Response('OK', { headers: ch });
     }
 
+    // ── P0C-002 — GET /me (authenticated private state, per-user) ──
+    // Auth model:
+    //   • Requires a Bearer per-user token (from KV `user_tokens`).
+    //   • Master token WITHOUT a uniquely authenticated per-user identity → 403.
+    //     Rationale: master token can act as any user server-side, but /me
+    //     must resolve to exactly ONE owner. Master with no explicit user
+    //     mapping is ambiguous — fail closed.
+    //   • Owner routing: exact match on auth.user. Philip token → `signals_json`
+    //     (legacy physical key). Alice token → `signals_json_alice`. This is
+    //     exact-owner routing, NOT a DEFAULT_USER fallback.
+    //   • Missing snapshot → 404 (never fall back to Philip state for another user).
+    //   • Owner-in-snapshot mismatch → 403 (fail closed on identity divergence).
+    // Response is allowlist-serialized private state (no public product fields).
+    // Cache-Control: no-store to prevent CDN/browser caching of private data.
+    if (request.method === 'GET' && path === '/me') {
+      const auth = await authResolve(request, env);
+      if (!auth.ok) {
+        return new Response('Unauthorized', { status: 401, headers: ch });
+      }
+      // Master token without a resolved per-user identity → ambiguous → 403.
+      // (Master cannot request /me on behalf of some implicit user.)
+      if (auth.viaMaster || !auth.user) {
+        return new Response('Forbidden — /me requires per-user identity', { status: 403, headers: ch });
+      }
+      const owner = auth.user;
+      const raw = await env.SIGNALS.get(_signalsKey(owner));
+      if (!raw) {
+        // No snapshot for this owner → explicit unavailable. Never fall back.
+        return new Response(
+          JSON.stringify({ error: 'private_state_unavailable', owner }),
+          {
+            status: 404,
+            headers: {
+              'Content-Type': 'application/json; charset=utf-8',
+              'Cache-Control': 'no-store',
+              'Pragma': 'no-cache',
+              ...ch,
+            },
+          },
+        );
+      }
+      let parsed;
+      try { parsed = JSON.parse(raw); } catch {
+        return new Response(
+          JSON.stringify({ error: 'malformed_private_state' }),
+          { status: 500, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Pragma': 'no-cache', ...ch } },
+        );
+      }
+      // Owner assertion: if the stored snapshot has an owner-identifying field,
+      // it must match the authenticated user. Guards against cross-user KV bugs.
+      const storedOwner = parsed && parsed.meta
+        ? (parsed.meta.user || parsed.meta.default_user || null)
+        : null;
+      if (storedOwner && String(storedOwner).toLowerCase() !== String(owner).toLowerCase()) {
+        return new Response(
+          JSON.stringify({ error: 'owner_mismatch' }),
+          { status: 403, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Pragma': 'no-cache', ...ch } },
+        );
+      }
+      const payload = serializePrivateState(parsed, owner);
+      return new Response(JSON.stringify(payload), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Cache-Control': 'no-store',
+          'Pragma': 'no-cache',
+          ...ch,
+        },
+      });
+    }
+
     // ── /pending_bets + /cancel_bet + /cancel_requests (per-user via auth) ──
     if (path === '/pending_bets' || path.startsWith('/pending_bets/') ||
         path === '/cancel_bet' || path === '/cancel_requests' ||
@@ -840,13 +956,32 @@ export default {
     }
 
     // ── D2 — POST /rotate_token (AUTH, Master oder gültiger User-Token) ──
+    // P0C-002 auth model:
+    //   • Non-master token may rotate ONLY its own slot. Any body.user that
+    //     differs from auth.user → 403. No implicit 'philip' fallback.
+    //   • Master token MAY explicitly target another user via body.user.
+    //   • Missing body.user for non-master → target = auth.user (self-rotate).
     if (request.method === 'POST' && path === '/rotate_token') {
       const auth = await authResolve(request, env);
       if (!auth.ok) return new Response('Unauthorized', { status: 401, headers: ch });
       let body = {};
       try { body = await request.json(); } catch {}
-      let user = _sanitizeUser(body.user || auth.user || 'philip');
-      if (!user) user = 'philip';
+      const requested = _sanitizeUser(body.user || '');
+      let user;
+      if (auth.viaMaster) {
+        // Master must specify a target user explicitly. No implicit default.
+        if (!requested) {
+          return jr({ error: 'master token must specify body.user explicitly' }, 400);
+        }
+        user = requested;
+      } else {
+        // Per-user token: may only rotate own slot.
+        if (requested && requested !== auth.user) {
+          return jr({ error: 'cannot rotate token for another user' }, 403);
+        }
+        user = auth.user;
+      }
+      if (!user) return jr({ error: 'user identity required' }, 400);
       const ut = await readUserTokens(env);
       const slot = ut[user] || { active: null, previous: null };
       const newToken = _randomToken();
@@ -870,10 +1005,28 @@ export default {
     }
 
     // ── D2 — GET /token_status?user=philip (AUTH) ──
+    // P0C-002 auth model:
+    //   • Non-master token may inspect ONLY its own slot. ?user= differing
+    //     from auth.user → 403.
+    //   • Master token may inspect any explicit user.
+    //   • No implicit 'philip' fallback.
     if (request.method === 'GET' && path === '/token_status') {
       const auth = await authResolve(request, env);
       if (!auth.ok) return new Response('Unauthorized', { status: 401, headers: ch });
-      const user = _sanitizeUser(url.searchParams.get('user') || auth.user || 'philip') || 'philip';
+      const requested = _sanitizeUser(url.searchParams.get('user') || '');
+      let user;
+      if (auth.viaMaster) {
+        if (!requested) {
+          return jr({ error: 'master token must specify ?user= explicitly' }, 400);
+        }
+        user = requested;
+      } else {
+        if (requested && requested !== auth.user) {
+          return jr({ error: 'cannot inspect token status for another user' }, 403);
+        }
+        user = auth.user;
+      }
+      if (!user) return jr({ error: 'user identity required' }, 400);
       const ut = await readUserTokens(env);
       const slot = ut[user] || null;
       const graceExp = slot && slot.previous ? Date.parse(slot.previous.expires_at || '') : NaN;
