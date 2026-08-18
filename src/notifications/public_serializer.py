@@ -96,6 +96,10 @@ def serialize_public_product(snapshot: dict | None) -> dict:
     Nested objects with mixed public/private fields (meta, tennis_stats) are
     reconstructed using their own allowlists.
 
+    Fail-closed: assert_no_private_fields() is called on the result before
+    returning. If any forbidden key survived (e.g. nested inside an approved
+    container), an AssertionError is raised rather than leaking private data.
+
     Private state excluded:
       - bankroll_state (free, staked, exposure_pct, max_win, pnl_closed,
         published_at)
@@ -118,6 +122,9 @@ def serialize_public_product(snapshot: dict | None) -> dict:
         pub["meta"] = _public_meta(snapshot["meta"])
     if "tennis_stats" in snapshot:
         pub["tennis_stats"] = _public_tennis_stats(snapshot["tennis_stats"])
+    # Fail-closed gate: any forbidden key nested inside an approved container
+    # raises AssertionError here rather than reaching the caller.
+    assert_no_private_fields(pub)
     return pub
 
 

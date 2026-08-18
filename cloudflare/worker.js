@@ -171,6 +171,35 @@ const _PUBLIC_TOP_LEVEL_KEYS = new Set([
   'updated', 'build_info', 'schedule', 'all_odds', 'model_tips', 'model_evals',
   'football', 'tennis', 'top_elo', 'wm_results', 'odds_history', 'health',
 ]);
+
+// Forbidden private keys — must never appear anywhere in the public payload.
+// Mirrors FORBIDDEN_PRIVATE_KEYS in src/notifications/public_serializer.py.
+const _FORBIDDEN_PRIVATE_KEYS = new Set([
+  'bankroll', 'bankroll_state', 'open_bets', 'pending_bets', 'settled_bets',
+  'bet_history', 'ledger', 'ledger_rows', 'stake_history', 'pnl_history',
+  'user', 'user_id', 'default_user', 'owner',
+  'auth_token', 'token', 'master_token', 'api_token',
+  'total_staked', 'total_pnl',
+]);
+
+// Recursive private-key assertion — fail-closed guard.
+function _assertNoPrivateKeys(obj, path = 'root') {
+  if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+    for (const k of Object.keys(obj)) {
+      if (_FORBIDDEN_PRIVATE_KEYS.has(k)) {
+        throw new Error(
+          `P0C-001 PRIVACY VIOLATION — forbidden key '${k}' found at ${path}.${k}`
+        );
+      }
+      _assertNoPrivateKeys(obj[k], `${path}.${k}`);
+    }
+  } else if (Array.isArray(obj)) {
+    for (let i = 0; i < obj.length; i++) {
+      _assertNoPrivateKeys(obj[i], `${path}[${i}]`);
+    }
+  }
+}
+
 function _publicMeta(meta) {
   if (!meta || typeof meta !== 'object') return {};
   return { stale_odds: Boolean(meta.stale_odds) };
@@ -191,6 +220,8 @@ export function serializePublicProduct(snapshot) {
   }
   if ('meta' in snapshot) pub.meta = _publicMeta(snapshot.meta);
   if ('tennis_stats' in snapshot) pub.tennis_stats = _publicTennisStats(snapshot.tennis_stats);
+  // Fail-closed: throws if any forbidden key survived inside an approved container.
+  _assertNoPrivateKeys(pub);
   return pub;
 }
 
@@ -547,7 +578,13 @@ export default {
       if (!raw) return jr({ error: 'no data yet' }, 404);
       let parsed;
       try { parsed = JSON.parse(raw); } catch { return jr({ error: 'malformed signals data' }, 500); }
-      const publicPayload = serializePublicProduct(parsed);
+      let publicPayload;
+      try {
+        publicPayload = serializePublicProduct(parsed);
+      } catch {
+        // Fail-closed: nested private key found in an approved container.
+        return jr({ error: 'privacy_boundary_violation' }, 500);
+      }
       return new Response(JSON.stringify(publicPayload), {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',

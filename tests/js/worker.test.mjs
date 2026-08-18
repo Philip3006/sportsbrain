@@ -1229,3 +1229,73 @@ describe('Suite 14 — P0C-001 Worker GET public boundary + merge_health', () =>
     assert.equal(resp.status, 400, 'bad merge_health request should return 400');
   });
 });
+
+// ── Suite 15: P0C-001 — Fail-closed nested private markers ───────────────
+// C3: serializePublicProduct() must throw for nested private keys inside
+// approved containers (not just top-level exclusion). Worker GET must return
+// 500 (fail-closed) when the serializer detects a nested private field.
+describe('Suite 15 — P0C-001 fail-closed nested private markers', () => {
+
+  test('serializePublicProduct throws for nested owner in tennis list', () => {
+    const snap = { tennis: [{ signal_id: 'sig_001', ev_pct: 12.5, owner: 'PRIVATE_TEST_MARKER' }] };
+    assert.throws(
+      () => serializePublicProduct(snap),
+      /owner/,
+      'nested owner inside tennis must throw privacy violation'
+    );
+  });
+
+  test('serializePublicProduct throws for nested bankroll in model_tips', () => {
+    const snap = { model_tips: { match_x: { prob: 0.55, bankroll: 12345.67 } } };
+    assert.throws(
+      () => serializePublicProduct(snap),
+      /bankroll/,
+      'nested bankroll inside model_tips must throw privacy violation'
+    );
+  });
+
+  test('serializePublicProduct throws for nested user in health', () => {
+    const snap = { health: { status: 'ok', user: 'philip' } };
+    assert.throws(
+      () => serializePublicProduct(snap),
+      /user/,
+      'nested user inside health must throw privacy violation'
+    );
+  });
+
+  test('Worker GET /signals.json returns 500 for nested private in approved container', async () => {
+    const kv = makeP0cKV();
+    const env = makeP0cEnv(kv);
+    const snapWithNestedPrivate = {
+      updated: '2026-08-18T00:00:00Z',
+      tennis: [{ signal_id: 'sig_001', ev_pct: 12.5, owner: 'PRIVATE_LEAK_MARKER' }],
+      schedule: [{ match: 'A vs B' }],
+    };
+    await kv.put('signals_json', JSON.stringify(snapWithNestedPrivate));
+    const resp = await fwP0c(env, 'GET', '/signals.json');
+    // Fail-closed: Worker must return 500, not 200 with private data.
+    assert.equal(resp.status, 500, 'GET must fail-closed (500) for nested private in approved container');
+    const body = await resp.json();
+    assert.ok(
+      !JSON.stringify(body).includes('PRIVATE_LEAK_MARKER'),
+      'private marker must not appear in 500 response body'
+    );
+  });
+
+  test('Worker GET /signals.json clean nested data returns 200', async () => {
+    const kv = makeP0cKV();
+    const env = makeP0cEnv(kv);
+    const cleanSnap = {
+      updated: '2026-08-18T00:00:00Z',
+      tennis: [{ signal_id: 'sig_001', ev_pct: 12.5, match: 'A vs B' }],
+      schedule: [{ match: 'A vs B', kickoff: '2026-08-18T14:00:00Z' }],
+      health: { status: 'ok', jobs: [] },
+    };
+    await kv.put('signals_json', JSON.stringify(cleanSnap));
+    const resp = await fwP0c(env, 'GET', '/signals.json');
+    assert.equal(resp.status, 200, 'clean nested data must return 200');
+    const pub = await resp.json();
+    assert.ok('tennis' in pub, 'tennis must be present in clean public GET response');
+    assert.ok('schedule' in pub, 'schedule must be present in clean public GET response');
+  });
+});

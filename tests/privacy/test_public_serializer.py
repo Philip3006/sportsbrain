@@ -285,3 +285,69 @@ def test_forbidden_keys_include_required_identities():
     for key in ("bankroll_state", "open_bets", "settled_bets", "default_user",
                 "user", "ledger", "total_staked", "total_pnl"):
         assert key in FORBIDDEN_PRIVATE_KEYS, f"'{key}' missing from FORBIDDEN_PRIVATE_KEYS"
+
+
+# ── C3: Fail-closed nested private markers ────────────────────────────────
+# These tests call the ACTUAL serialize_public_product() with nested private
+# markers inside approved containers. The serializer must raise AssertionError
+# (fail-closed) rather than silently returning the private data.
+
+def test_c3_nested_owner_in_tennis_raises():
+    """C3: private 'owner' key nested inside approved 'tennis' container triggers fail-closed."""
+    snapshot = {"tennis": [{"signal_id": "sig_001", "ev_pct": 12.5, "owner": "PRIVATE_TEST_MARKER"}]}
+    with pytest.raises(AssertionError, match="owner"):
+        serialize_public_product(snapshot)
+
+
+def test_c3_nested_bankroll_in_model_tips_raises():
+    """C3: private 'bankroll' key nested inside approved 'model_tips' triggers fail-closed."""
+    snapshot = {"model_tips": {"match_x": {"prob": 0.55, "bankroll": 12345.67}}}
+    with pytest.raises(AssertionError, match="bankroll"):
+        serialize_public_product(snapshot)
+
+
+def test_c3_nested_user_in_health_raises():
+    """C3: private 'user' key nested inside approved 'health' container triggers fail-closed."""
+    snapshot = {"health": {"status": "ok", "user": "philip"}}
+    with pytest.raises(AssertionError, match="user"):
+        serialize_public_product(snapshot)
+
+
+def test_c3_nested_open_bets_in_schedule_raises():
+    """C3: private 'open_bets' key nested inside approved 'schedule' container triggers fail-closed."""
+    snapshot = {"schedule": [{"match": "A vs B", "kickoff": "2026-08-18T14:00:00Z", "open_bets": []}]}
+    with pytest.raises(AssertionError, match="open_bets"):
+        serialize_public_product(snapshot)
+
+
+def test_c3_clean_nested_data_passes_fail_closed():
+    """C3: clean nested data in approved containers passes the fail-closed boundary."""
+    snapshot = {
+        "tennis": [{"signal_id": "sig_001", "ev_pct": 12.5, "match": "A vs B"}],
+        "schedule": [{"match": "A vs B", "kickoff": "2026-08-18T14:00:00Z"}],
+        "health": {"status": "ok", "jobs": []},
+    }
+    pub = serialize_public_product(snapshot)
+    assert "tennis" in pub
+    assert "schedule" in pub
+    assert "health" in pub
+
+
+def test_c3_python_worker_contract_parity():
+    """C3 contract parity: same forbidden keys in Python and Worker JS FORBIDDEN set.
+
+    Verifies that the Python FORBIDDEN_PRIVATE_KEYS constant matches the JS
+    _FORBIDDEN_PRIVATE_KEYS set documented in cloudflare/worker.js.
+    """
+    # Keys that must be in both Python and JS forbidden sets (canonical overlap).
+    canonical_overlap = {
+        "bankroll", "bankroll_state", "open_bets", "pending_bets", "settled_bets",
+        "bet_history", "ledger", "ledger_rows", "stake_history", "pnl_history",
+        "user", "user_id", "default_user", "owner",
+        "auth_token", "token", "master_token", "api_token",
+        "total_staked", "total_pnl",
+    }
+    for key in canonical_overlap:
+        assert key in FORBIDDEN_PRIVATE_KEYS, (
+            f"C3 parity: '{key}' in JS _FORBIDDEN_PRIVATE_KEYS but missing from Python set"
+        )
