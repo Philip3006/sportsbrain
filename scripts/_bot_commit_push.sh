@@ -42,13 +42,17 @@ if ! bot_assert_staged_safe "$LOG"; then
   exit 1
 fi
 
-# Step 3: Commit.
+# Step 3: Enforce canonical bot identity (belt-and-suspenders: callers may omit this).
+git config user.name "SportsBrain Bot"
+git config user.email "bot@sportsbrain"
+
+# Step 4: Commit.
 git commit -m "$MSG" >> "$LOG" 2>&1 || {
   echo "[$(TS)] _bot_commit_push: git commit failed" >> "$LOG"
   exit 1
 }
 
-# Step 4: Push with retry (mirrors the pattern used by all standard runtime workflows).
+# Step 5: Push with retry (mirrors the pattern used by all standard runtime workflows).
 for i in 1 2 3 4 5; do
   git fetch origin main >> "$LOG" 2>&1
   if ! git rebase --autostash --strategy-option=theirs origin/main >> "$LOG" 2>&1; then

@@ -44,17 +44,7 @@ jobs:
       - name: Commit cache + health
         if: always()
         run: |
-          git config user.name "SportsBrain Bot"
-          git config user.email "bot@sportsbrain"
           git add docs/data/bundesliga2_live_scores.json || true
           git add -f data/cache/bundesliga2_live_scores.json || true
           git add -f results/health/bundesliga2_live_push.json || true
-          git diff --staged --quiet || git commit -m "auto: bl2 live $(date -u +%H:%M)"
-          for i in 1 2 3 4 5; do
-            git fetch origin main
-            git rebase --autostash --strategy-option=theirs origin/main \
-              || { git rebase --abort 2>/dev/null || true; }
-            git push origin main && exit 0
-            sleep $((RANDOM % 10 + 5))
-          done
-          exit 1
+          bash scripts/_bot_commit_push.sh "auto: bl2 live $(date -u +%H:%M)"
