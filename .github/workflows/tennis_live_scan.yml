@@ -41,5 +41,4 @@ jobs:
           git add results/tennis_live_signals.json || true
           git add docs/data/tennis_live_scores.json || true
           git add -f data/cache/tennis_live_scores.json data/cache/tennis_suspended.json || true
-          git diff --staged --quiet || git commit -m "auto: tennis live $(date -u +%H:%M)"
-          git push || true
+          bash scripts/_bot_commit_push.sh "auto: tennis live $(date -u +%H:%M)"

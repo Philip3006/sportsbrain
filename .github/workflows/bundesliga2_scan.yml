@@ -52,18 +52,8 @@ jobs:
       - name: Commit results
         if: always()
         run: |
-          git config user.name "SportsBrain Bot"
-          git config user.email "bot@sportsbrain"
           git add results/scans/bl2_scan_*.md || true
           # Kritisch: -f für gitignored Health + Cache (feedback_gitignore_cache_files)
           git add -f results/health/bundesliga2_scan.json || true
           git add -f data/cache/signal_history.jsonl || true
-          git diff --staged --quiet || git commit -m "auto: bl2 scan $(date -u +%Y-%m-%dT%H:%M)"
-          for i in 1 2 3 4 5; do
-            git fetch origin main
-            git rebase --autostash --strategy-option=theirs origin/main \
-              || { git rebase --abort 2>/dev/null || true; echo "[push] rebase conflict attempt $i"; }
-            git push origin main && exit 0
-            sleep $((RANDOM % 20 + 10))
-          done
-          exit 1
+          bash scripts/_bot_commit_push.sh "auto: bl2 scan $(date -u +%Y-%m-%dT%H:%M)"

@@ -25,8 +25,11 @@ _bot_permitted() {
   case "$f" in
     docs/data/*|data/cache/*|data/live_scores.json|data/odds_history/*|\
     results/health/*|results/ledger*|results/scans/*|\
-    results/tennis_live_signals.json|results/tennis_scan_shadow_*|\
-    models/dc_bundesliga2/*|models/tennis_lgbm*)
+    results/tennis_live_signals.json|results/tennis_scan_*|\
+    results/betting_journal.md|\
+    results/tennis_cal_stats.json|\
+    models/dc_bundesliga2/*|models/tennis_lgbm*|\
+    models/tennis/*|models/tennis_calibrators/*)
       return 0 ;;
     *)
       return 1 ;;

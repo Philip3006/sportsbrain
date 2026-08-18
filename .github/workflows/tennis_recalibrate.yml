@@ -37,5 +37,4 @@ jobs:
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
           git add models/tennis_calibrators/ || true
-          git diff --staged --quiet || git commit -m "auto: tennis recalibrate $(date +%Y-%m-%d)"
-          git push origin main || true
+          bash scripts/_bot_commit_push.sh "auto: tennis recalibrate $(date +%Y-%m-%d)"
