@@ -312,8 +312,15 @@ def aggregate(merge_from_committed: bool = False) -> dict[str, Any]:
 
 
 def _push_to_cloud(payload: dict[str, Any]) -> bool:
-    """Adds health to the cloud signals.json so the dashboard polls one
-    URL only. Worker accepts JSON via POST /signals."""
+    """Merge health into the cloud signals KV via Worker ?merge_health=1 POST.
+
+    P0C-001: Uses a targeted merge-only POST instead of the former GET→inject→POST
+    cycle. The Worker merges {"health": ...} into the existing KV object server-side,
+    preserving all other KV fields (including private bankroll_state / open_bets that
+    the Worker POST /pending-bet validation requires). This avoids the privacy cascade
+    where fetching the now-public GET endpoint and re-posting would wipe private fields
+    from KV.
+    """
     try:
         import requests
     except ImportError:
@@ -324,45 +331,27 @@ def _push_to_cloud(payload: dict[str, Any]) -> bool:
         return False
 
     post_url = url[: -len("/signals.json")] + "/signals" if url.endswith("/signals.json") else url
-
-    # Fetch current cloud signals and inject the health key, then re-post.
-    # CRITICAL: If GET fails or returns a payload without core keys, do NOT
-    # re-post — a bare {"health": ...} would wipe schedule/odds/model_tips
-    # from the cloud KV (vorheriger Vorfall: PWA zeigte "Invalid Date" und 0
-    # Spiele). Fallback auf lokale signals.json wenn vorhanden.
-    current: dict[str, Any] | None = None
-    try:
-        get_resp = requests.get(url, timeout=10)
-        if get_resp.status_code == 200:
-            j = get_resp.json()
-            if isinstance(j, dict) and ("schedule" in j or "updated" in j or "football" in j):
-                current = j
-    except Exception:
-        current = None
-
-    if current is None:
-        # Fallback: lokale signals.json verwenden, statt Cloud zu nuken
-        local_path = Path(__file__).resolve().parents[2] / "docs" / "data" / "signals.json"
-        try:
-            current = json.loads(local_path.read_text())
-        except Exception:
-            print("[health] cloud GET failed and no local signals.json — skip upload")
-            return False
-
-    current["health"] = payload
+    sep = "&" if "?" in post_url else "?"
+    merge_url = f"{post_url}{sep}merge_health=1"
 
     try:
         post_resp = requests.post(
-            post_url,
-            data=json.dumps(current).encode(),
+            merge_url,
+            data=json.dumps({"health": payload}).encode(),
             headers={
                 "Authorization": f"Bearer {token}",
                 "Content-Type":  "application/json",
             },
             timeout=15,
         )
-        return post_resp.status_code in (200, 201, 204)
-    except Exception:
+        ok = post_resp.status_code in (200, 201, 204)
+        if ok:
+            print("[health] cloud upload: ok", flush=True)
+        else:
+            print(f"[health] cloud upload failed: {post_resp.status_code}", flush=True)
+        return ok
+    except Exception as e:
+        print(f"[health] cloud upload exception: {e}", flush=True)
         return False
 
 

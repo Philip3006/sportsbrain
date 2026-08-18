@@ -619,3 +619,104 @@ def test_fnd031_compact_actionable_has_bet_button(page: Page, server_url: str) -
     )
     ref_errors = [e for e in js_errors if "ReferenceError" in e or "TypeError" in e]
     assert not ref_errors, f"FND-031: JS errors in compact actionable render: {ref_errors}"
+
+
+# ── T12: P0C-001 — Logged-out public PWA smoke ───────────────────────────────
+# SEC-001/SEC-003 browser enforcement.
+# Public payload: zero private fields (no bankroll_state, open_bets, settled_bets,
+# portfolio, wm_stats, default_user). Verifies the PWA loads, signals remain
+# usable, and private-field absence does not crash the browser.
+
+_PUBLIC_ONLY: dict = {
+    "updated": _NOW.isoformat(),
+    "build_info": {},
+    "meta": {"stale_odds": False},
+    "football": [_canonical_signal()],
+    "tennis": [],
+    "schedule": [],
+    "all_odds": {},
+    "model_tips": {},
+    "model_evals": {},
+    "top_elo": [],
+    "wm_results": [],
+    "odds_history": {},
+    # Intentionally absent (public serialization boundary):
+    # bankroll_state, open_bets, settled_bets, history, portfolio, wm_stats, default_user
+}
+
+
+def test_t12_public_payload_has_no_private_fields() -> None:
+    """T12a: The public-only payload used by T12 browser tests contains zero private fields.
+
+    Verifies the test fixture itself satisfies the P0C-001 serialization boundary.
+    SEC-001 invariant: no bankroll_state, open_bets, settled_bets, default_user.
+    """
+    import json as _json
+    from src.notifications.public_serializer import assert_no_private_fields
+
+    payload_str = _json.dumps(_PUBLIC_ONLY)
+    assert "bankroll_state" not in payload_str, "T12: bankroll_state in public payload fixture"
+    assert "open_bets" not in payload_str, "T12: open_bets in public payload fixture"
+    assert "settled_bets" not in payload_str, "T12: settled_bets in public payload fixture"
+    assert "default_user" not in payload_str, "T12: default_user in public payload fixture"
+    assert_no_private_fields(_PUBLIC_ONLY)  # recursive canonical check — must not raise
+
+
+def test_t12_pwa_loads_on_public_only_payload(page: Page, server_url: str) -> None:
+    """T12b: Logged-out PWA loads successfully on a public-only payload.
+
+    Removing bankroll_state/open_bets/settled_bets must not crash the PWA.
+    SEC-003: private-field absence degrades gracefully (no TypeError/ReferenceError).
+    """
+    js_errors: list[str] = []
+    page.on("pageerror", lambda exc: js_errors.append(str(exc)))
+
+    _inject_signals(page, _PUBLIC_ONLY)
+    page.goto(server_url, wait_until="domcontentloaded")
+
+    nav = page.locator("nav.bottom-nav")
+    expect(nav).to_be_visible(timeout=10_000)
+
+    crash_errors = [e for e in js_errors if "TypeError" in e or "ReferenceError" in e]
+    assert not crash_errors, f"T12: JS crash errors on public-only payload: {crash_errors}"
+
+
+def test_t12_public_football_signals_usable(page: Page, server_url: str) -> None:
+    """T12c: Football signals tab remains usable with public-only payload (no private fields)."""
+    js_errors: list[str] = []
+    page.on("pageerror", lambda exc: js_errors.append(str(exc)))
+
+    _inject_signals(page, _PUBLIC_ONLY)
+    page.goto(server_url, wait_until="domcontentloaded")
+    page.locator("[data-view='football']").click()
+
+    nav = page.locator("nav.bottom-nav")
+    expect(nav).to_be_visible(timeout=10_000)
+
+    crash_errors = [e for e in js_errors if "TypeError" in e or "ReferenceError" in e]
+    assert not crash_errors, f"T12: JS crash in football tab on public-only payload: {crash_errors}"
+
+
+def test_t12_bankroll_ui_degrades_gracefully(page: Page, server_url: str) -> None:
+    """T12d: Bankroll/account UI handles absent private fields without crash or leaked state."""
+    js_errors: list[str] = []
+    page.on("pageerror", lambda exc: js_errors.append(str(exc)))
+
+    _inject_signals(page, _PUBLIC_ONLY)
+    page.goto(server_url, wait_until="domcontentloaded")
+
+    # Navigate to account/bets tab if present — must not crash without private state.
+    account_tab = page.locator(
+        "[data-view='account'], [data-view='bets'], [data-view='bankroll']"
+    )
+    if account_tab.count() > 0:
+        account_tab.first.click()
+        page.wait_for_timeout(500)
+
+    nav = page.locator("nav.bottom-nav")
+    expect(nav).to_be_visible(timeout=10_000)
+
+    crash_errors = [e for e in js_errors if "TypeError" in e or "ReferenceError" in e]
+    assert not crash_errors, (
+        f"T12: JS crash when navigating account UI without private fields: {crash_errors}"
+    )
