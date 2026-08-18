@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-18T04:04:39Z",
+  "generated_at": "2026-08-18T05:00:20Z",
   "overall": "down",
   "jobs": [
     {
@@ -11,22 +11,22 @@
       "exit_code": 0,
       "error": null,
       "fallback_used": "stale_cache",
-      "next_expected_in_s": 3320,
+      "next_expected_in_s": 86379,
       "cadence": "1×/Tag 07:00 Europe/Berlin (launchd)",
-      "expectation_state": "not_expected"
+      "expectation_state": "expected"
     },
     {
       "job": "auto_retrain",
-      "status": "ok",
+      "status": "stale",
       "reported_status": "ok",
       "last_run_at": "2026-08-17T09:37:59Z",
       "duration_s": 16.0,
       "exit_code": 0,
       "error": "last run was at 2026-08-17T09:37:59Z — overdue per expectation model",
       "fallback_used": null,
-      "next_expected_in_s": 42920,
+      "next_expected_in_s": 39579,
       "cadence": "2×/Tag 06:00 + 18:00 Europe/Berlin (launchd)",
-      "expectation_state": "expected"
+      "expectation_state": "overdue"
     },
     {
       "job": "closing_odds",
@@ -37,7 +37,7 @@
       "exit_code": 0,
       "error": "last run was at 2026-08-17T12:00:09Z — overdue per expectation model",
       "fallback_used": null,
-      "next_expected_in_s": 28520,
+      "next_expected_in_s": 25179,
       "cadence": "2×/Tag 14:00 + 18:00 Europe/Berlin (launchd)",
       "expectation_state": "overdue"
     },
@@ -76,7 +76,7 @@
       "exit_code": 0,
       "error": "last run was at 2026-08-17T14:30:06Z — overdue per expectation model",
       "fallback_used": "espn",
-      "next_expected_in_s": 1520,
+      "next_expected_in_s": 1779,
       "cadence": "stündlich :30 Europe/Berlin (launchd, 24h)",
       "expectation_state": "overdue"
     },
@@ -97,12 +97,12 @@
       "job": "tennis_scan",
       "status": "error",
       "reported_status": "error",
-      "last_run_at": "2026-08-18T02:48:11Z",
+      "last_run_at": "2026-08-18T04:27:38Z",
       "duration_s": null,
       "exit_code": 1,
       "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
       "fallback_used": null,
-      "next_expected_in_s": 6920,
+      "next_expected_in_s": 3579,
       "cadence": "8×/Tag 02/06/09/12/15/18/21/23 UTC",
       "expectation_state": "not_expected"
     },
@@ -115,7 +115,7 @@
       "exit_code": 1,
       "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
       "fallback_used": null,
-      "next_expected_in_s": 7820,
+      "next_expected_in_s": 4479,
       "cadence": "9×/Tag 06:15–22:15/2h UTC",
       "expectation_state": "not_expected"
     },
@@ -123,7 +123,7 @@
       "job": "tennis_closing_odds",
       "status": "error",
       "reported_status": "error",
-      "last_run_at": "2026-08-18T03:47:27Z",
+      "last_run_at": "2026-08-18T04:38:39Z",
       "duration_s": null,
       "exit_code": 1,
       "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
@@ -141,9 +141,9 @@
       "exit_code": 1,
       "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
       "fallback_used": null,
-      "next_expected_in_s": 3320,
+      "next_expected_in_s": 86379,
       "cadence": "1×/Tag 05:00 UTC (LGBM primary; Elo wöchentlich Mo 03:00 UTC)",
-      "expectation_state": "not_expected"
+      "expectation_state": "expected"
     },
     {
       "job": "bundesliga2_scan",
@@ -154,7 +154,7 @@
       "exit_code": 0,
       "error": null,
       "fallback_used": "no_fixtures",
-      "next_expected_in_s": 6920,
+      "next_expected_in_s": 3579,
       "cadence": "täglich 06:00 UTC + Fr 15:00 / Sa 08:00 / So 08:00 UTC",
       "expectation_state": "not_expected"
     },
@@ -167,7 +167,7 @@
       "exit_code": 1,
       "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
       "fallback_used": null,
-      "next_expected_in_s": 59120,
+      "next_expected_in_s": 55779,
       "cadence": "Mo/Di 20:30 / Fr 21:30 / Sa 14:30+21:30 / So 14:45+21:00 UTC",
       "expectation_state": "not_expected"
     },
@@ -180,9 +180,9 @@
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
-      "next_expected_in_s": 3320,
+      "next_expected_in_s": 86379,
       "cadence": "täglich 05:00 UTC",
-      "expectation_state": "not_expected"
+      "expectation_state": "expected"
     },
     {
       "job": "bundesliga2_live_push",
@@ -193,7 +193,7 @@
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
-      "next_expected_in_s": 309320,
+      "next_expected_in_s": 305979,
       "cadence": "alle 2 Min Fr 18-23 / Sa 11-23 / So 11-23 UTC",
       "expectation_state": "not_expected"
     },
@@ -206,7 +206,7 @@
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
-      "next_expected_in_s": 310820,
+      "next_expected_in_s": 307479,
       "cadence": "Fr 18:25 / Sa 10:55+18:25 / So 11:25 UTC",
       "expectation_state": "not_expected"
     },
@@ -214,7 +214,7 @@
       "job": "consume_pending_bets",
       "status": "ok",
       "reported_status": "ok",
-      "last_run_at": "2026-08-18T04:04:39Z",
+      "last_run_at": "2026-08-18T05:00:20Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -230,7 +230,7 @@
       "last_run_at": null,
       "duration_s": null,
       "exit_code": null,
-      "error": "[MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: no health snapshot yet — job has never reported",
+      "error": "[MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: no health snapshot yet — job has never reported",
       "fallback_used": null,
       "next_expected_in_s": 300,
       "cadence": "alle 5 Min (launchd)",
@@ -239,7 +239,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-18T04:04:38Z",
+      "last_run_at": "2026-08-18T05:00:19Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -250,7 +250,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-18T04:03:59Z",
+      "last_run_at": "2026-08-18T04:59:38Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -268,8 +268,8 @@
       "status": "success",
       "head_sha": "7cd6c6793419ab1f89c4b3c8e446f7764e84387a"
     },
-    "runtime_data_sha": "0290e0877d49fc286c932f80b1d7592407370e1e",
+    "runtime_data_sha": "83fae7be566b70538f64a48bc576b2481c55ff87",
     "source_runtime_consistent": true,
-    "built_at": "2026-08-18T04:04:39Z"
+    "built_at": "2026-08-18T05:00:20Z"
   }
 }
