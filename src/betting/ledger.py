@@ -55,9 +55,14 @@ def _resolve_ledger_path(ledger_path: Path | None = None, user: str = DEFAULT_US
 
 
 # Public alias — resolved at import to the default user's per-user file.
-# Scripts importing `LEDGER_PATH` automatically use `results/ledger_philip.csv`
-# (with one-shot migration of the legacy file).
-LEDGER_PATH = _resolve_ledger_path(None, DEFAULT_USER)
+# P0D-002: wrapped in try/except so importing this module does NOT fail when
+# SPORTSBRAIN_LEDGER_DIR is not set (e.g. during CI module-import smoke tests).
+# Functions that use LEDGER_PATH must call ledger_path_for() themselves; the
+# None sentinel will raise EnvironmentError at call-time, not import-time.
+try:
+    LEDGER_PATH = _resolve_ledger_path(None, DEFAULT_USER)
+except EnvironmentError:
+    LEDGER_PATH = None  # Will fail properly when actually used via ledger_path_for()
 
 
 @contextlib.contextmanager

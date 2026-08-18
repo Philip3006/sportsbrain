@@ -112,49 +112,66 @@ def test_corrupt_snapshot_recovers_gracefully(tmp_paths):
 
 def test_legacy_snapshot_migrates_into_default_user_slot(tmp_path, monkeypatch):
     """When no per-user snapshot exists yet but the legacy file does, it
-    is renamed into the default user's slot on first call."""
+    is renamed into the default user's slot on first call.
+
+    P0D-002: bankroll_snapshot_path_for() now routes through SPORTSBRAIN_LEDGER_DIR.
+    We patch both BANKROLL_SNAPSHOT_PATH (legacy sentinel) and the env var.
+    """
+    import importlib
     import src.config as cfg
 
-    data_cache = tmp_path / "cache"
-    data_cache.mkdir()
-    legacy = data_cache / "bankroll_snapshot.json"
+    ledger_dir = tmp_path / "ledger"
+    ledger_dir.mkdir()
+    monkeypatch.setenv("SPORTSBRAIN_LEDGER_DIR", str(ledger_dir))
+    importlib.reload(cfg)
+    import src.betting.ledger as lm
+    importlib.reload(lm)
+
+    legacy = ledger_dir / "bankroll_snapshot.json"
     legacy.write_text(json.dumps({
         "iso_year": 1970, "iso_week": 1,
         "snapshot_date": "1970-01-01", "bankroll": 42.0,
     }))
     monkeypatch.setattr(cfg, "BANKROLL_SNAPSHOT_PATH", legacy)
-    monkeypatch.setattr(cfg, "DATA_CACHE", data_cache)
-    monkeypatch.setattr(ledger_mod, "BANKROLL_SNAPSHOT_PATH", legacy)
+    monkeypatch.setattr(lm, "BANKROLL_SNAPSHOT_PATH", legacy)
 
     ledger = tmp_path / "ledger.csv"
     _write_ledger(ledger, total_pnl=10.0)
 
     # First call without explicit snapshot_path → triggers migration
-    get_bankroll_snapshot(ledger_path=ledger, user="philip")
+    lm.get_bankroll_snapshot(ledger_path=ledger, user="philip")
 
-    user_path = data_cache / "bankroll_snapshot_philip.json"
+    user_path = ledger_dir / "bankroll_snapshot_philip.json"
     assert user_path.exists(), "user slot file should exist after migration"
     assert not legacy.exists(), "legacy file should be renamed away"
 
 
 def test_per_user_snapshots_are_isolated(tmp_path, monkeypatch):
-    """Two different users get independent snapshot files."""
+    """Two different users get independent snapshot files.
+
+    P0D-002: bankroll_snapshot_path_for() routes through SPORTSBRAIN_LEDGER_DIR.
+    """
+    import importlib
     import src.config as cfg
 
-    data_cache = tmp_path / "cache"
-    data_cache.mkdir()
-    legacy = data_cache / "bankroll_snapshot.json"
+    ledger_dir = tmp_path / "ledger"
+    ledger_dir.mkdir()
+    monkeypatch.setenv("SPORTSBRAIN_LEDGER_DIR", str(ledger_dir))
+    importlib.reload(cfg)
+    import src.betting.ledger as lm
+    importlib.reload(lm)
+
+    legacy = ledger_dir / "bankroll_snapshot.json"
     monkeypatch.setattr(cfg, "BANKROLL_SNAPSHOT_PATH", legacy)
-    monkeypatch.setattr(cfg, "DATA_CACHE", data_cache)
-    monkeypatch.setattr(ledger_mod, "BANKROLL_SNAPSHOT_PATH", legacy)
+    monkeypatch.setattr(lm, "BANKROLL_SNAPSHOT_PATH", legacy)
 
     ledger = tmp_path / "ledger.csv"
     _write_ledger(ledger, total_pnl=23.0)
 
-    a = get_bankroll_snapshot(ledger_path=ledger, user="philip")
-    b = get_bankroll_snapshot(ledger_path=ledger, user="alice")
+    a = lm.get_bankroll_snapshot(ledger_path=ledger, user="philip")
+    b = lm.get_bankroll_snapshot(ledger_path=ledger, user="alice")
     assert a == b == 123.0
-    assert (data_cache / "bankroll_snapshot_philip.json").exists()
-    assert (data_cache / "bankroll_snapshot_alice.json").exists()
+    assert (ledger_dir / "bankroll_snapshot_philip.json").exists()
+    assert (ledger_dir / "bankroll_snapshot_alice.json").exists()
     # And the philip-slot has a `user` field for traceability
-    assert json.loads((data_cache / "bankroll_snapshot_philip.json").read_text())["user"] == "philip"
+    assert json.loads((ledger_dir / "bankroll_snapshot_philip.json").read_text())["user"] == "philip"

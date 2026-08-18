@@ -132,6 +132,26 @@ jobs:
       - name: Runtime writer governance tests
         run: python -m pytest -q tests/monitoring/test_writer_governance.py
 
+      # ── HARD GATE 9: P0D-002 Financial Writer Governance + Private Ledger ─────
+      # Verifies:
+      #   SEC-001. Ledger paths resolve into SPORTSBRAIN_LEDGER_DIR (private repo).
+      #   SEC-001. Missing SPORTSBRAIN_LEDGER_DIR fails closed (EnvironmentError).
+      #   FWG-1. _durable_push git-add uses ledger_*.csv (no results/ prefix in private repo).
+      #   FWG-2. Settle workflows do not use || true on ledger git-add (fatal if missing).
+      #   P0-A.  All durable mutation / ACK lifecycle invariants remain green.
+      #   K.     All four financial workflows classified; none use _bot_commit_push.sh.
+      # Must pass on every PR and push.
+      - name: Financial writer governance tests (HARD GATE 9)
+        env:
+          SPORTSBRAIN_LEDGER_DIR: /tmp/sportsbrain_ci_ledger
+        run: |
+          mkdir -p /tmp/sportsbrain_ci_ledger
+          python -m pytest -q \
+            tests/monitoring/test_financial_writer_governance.py \
+            tests/scripts/test_consume_pending_bets.py \
+            tests/betting/test_p0a_ledger.py \
+            tests/betting/test_ledger_multiuser.py
+
       # ── PROVENANCE: record source release after all gates pass (main push only) ──
       # docs/data/provenance_meta.json is NOT in ci_gates paths-filter → no re-trigger.
       # C3: uses safe concurrent push with retry/rebase (mirrors consume_pending_bets.yml).

@@ -47,7 +47,11 @@ _JSON_PATH = ROOT / "docs" / "data" / "signals.json"
 # Multi-User-Schema (D4): default user's ledger is the legacy single-user
 # input. `build()` accepts an explicit `user` to write `signals_{user}.json`.
 from src.config import ledger_path_for as _ledger_path_for, DEFAULT_USER as _DEFAULT_USER_CFG
-_LEDGER_PATH = _ledger_path_for(_DEFAULT_USER_CFG)
+# P0D-002: wrapped so import does not fail when SPORTSBRAIN_LEDGER_DIR is unset.
+try:
+    _LEDGER_PATH = _ledger_path_for(_DEFAULT_USER_CFG)
+except EnvironmentError:
+    _LEDGER_PATH = None
 
 
 def list_known_users() -> list[str]:

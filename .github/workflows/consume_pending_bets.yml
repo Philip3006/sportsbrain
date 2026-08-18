@@ -42,11 +42,25 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Checkout private ledger
+        uses: actions/checkout@v4
+        with:
+          repository: Philip3006/sportsbrain-ledger
+          token: ${{ secrets.LEDGER_PRIVATE_PAT }}
+          path: private-ledger
+          fetch-depth: 0
+
+      - name: Configure ledger identity
+        run: |
+          git -C private-ledger config user.name "SportsBrain Bot"
+          git -C private-ledger config user.email "bot@sportsbrain"
+
       - name: Consume pending bets from Cloudflare KV
         id: consume
         env:
           SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
           SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
+          SPORTSBRAIN_LEDGER_DIR: ${{ github.workspace }}/private-ledger
         run: python3 -m scripts.consume_pending_bets
 
       - name: Write health snapshot

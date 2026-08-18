@@ -36,10 +36,24 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Checkout private ledger
+        uses: actions/checkout@v4
+        with:
+          repository: Philip3006/sportsbrain-ledger
+          token: ${{ secrets.LEDGER_PRIVATE_PAT }}
+          path: private-ledger
+          fetch-depth: 0
+
+      - name: Configure ledger identity
+        run: |
+          git -C private-ledger config user.name "SportsBrain Bot"
+          git -C private-ledger config user.email "bot@sportsbrain"
+
       - name: Fetch tennis closing odds
         id: fetch
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          SPORTSBRAIN_LEDGER_DIR: ${{ github.workspace }}/private-ledger
         run: |
           python scripts/update_tennis_closing_odds.py
           echo "status=ok" >> $GITHUB_OUTPUT
@@ -50,13 +64,28 @@ jobs:
           STATUS="${{ steps.fetch.outputs.status || 'error' }}"
           python -m src.monitoring.health_writer --job tennis_closing_odds --status "$STATUS" --exit-code ${{ job.status == 'success' && 0 || 1 }} || true
 
-      - name: Commit results
+      - name: Commit private ledger (fatal if ledger staging fails)
+        env:
+          SPORTSBRAIN_LEDGER_DIR: ${{ github.workspace }}/private-ledger
+        run: |
+          git -C private-ledger add ledger_*.csv
+          git -C private-ledger diff --cached --quiet && echo "[ledger] nothing to commit" && exit 0
+          git -C private-ledger commit -m "auto: tennis closing odds $(date +%Y-%m-%d\ %H:%M) UTC"
+          for i in 1 2 3 4 5; do
+            git -C private-ledger fetch origin main
+            git -C private-ledger rebase --autostash --strategy-option=theirs origin/main \
+              || { git -C private-ledger rebase --abort 2>/dev/null || true; }
+            git -C private-ledger push origin main && break
+            sleep $((RANDOM % 20 + 10))
+          done
+
+      - name: Commit public artifacts (health — non-fatal)
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add results/ledger_*.csv || true
           git add -f results/health/tennis_closing_odds.json || true
-          git diff --staged --quiet || git commit -m "auto: tennis closing odds $(date +%Y-%m-%d\ %H:%M) UTC"
+          git diff --staged --quiet && exit 0
+          git commit -m "auto: tennis closing odds $(date +%Y-%m-%d\ %H:%M) UTC"
           for i in 1 2 3 4 5; do
             git fetch origin main
             git rebase --autostash --strategy-option=theirs origin/main \
