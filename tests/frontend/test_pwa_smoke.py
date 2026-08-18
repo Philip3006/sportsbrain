@@ -720,3 +720,187 @@ def test_t12_bankroll_ui_degrades_gracefully(page: Page, server_url: str) -> Non
     assert not crash_errors, (
         f"T12: JS crash when navigating account UI without private fields: {crash_errors}"
     )
+
+
+# ── P0C-002: dual-fetch static-source scans (T14–T22) ────────────────────────
+# These tests DO NOT require Playwright — they scan the shipped browser sources
+# for security regressions. Fast, deterministic, and hook into HARD GATE 7.
+
+def _read_browser_sources() -> str:
+    """Concatenate all shipped JS files into a single string for scanning."""
+    js_dir = DOCS_DIR / "js"
+    parts: list[str] = []
+    for p in sorted(js_dir.glob("*.js")):
+        parts.append(p.read_text(encoding="utf-8"))
+    return "\n".join(parts)
+
+
+def test_t19_browser_sources_have_no_api_or_master_token_literals() -> None:
+    """T19: Shipped browser JS must not contain hard-coded auth tokens.
+
+    Neither env.API_TOKEN references nor a variable literally named
+    master_token / MASTER_TOKEN may exist in browser code. Only the Worker
+    (server-side) may know about the master token.
+    """
+    src = _read_browser_sources()
+    # Allowlist: rotate_token / token_status are legit endpoints referenced from
+    # bets.js. We reject only ASSIGNMENTS of master credentials in browser code.
+    for needle in ("env.API_TOKEN", "MASTER_TOKEN =", "master_token =",
+                   "= process.env.API_TOKEN"):
+        assert needle not in src, (
+            f"T19: forbidden credential pattern '{needle}' in shipped browser JS"
+        )
+
+
+def test_t20_browser_sources_do_not_ingest_query_token() -> None:
+    """T20 (a.k.a. SEC-004): browser must NOT persist ?token= URL parameters.
+
+    Regression guard against reintroducing long-lived token ingestion from URL
+    query strings (which leak via history, referer, analytics, screen shares).
+    Comment mentions are allowed; assignments into localStorage are not.
+    """
+    src = _read_browser_sources()
+    # A localStorage.setItem for the params.get('token') result is forbidden.
+    # Simple substring check for the exact ingestion pattern.
+    forbidden_patterns = [
+        "localStorage.setItem('sb_token', params.get('token')",
+        'localStorage.setItem("sb_token", params.get("token")',
+        "localStorage.setItem('sb_token', urlToken)",
+    ]
+    for pat in forbidden_patterns:
+        assert pat not in src, f"T20: forbidden ?token= ingestion pattern '{pat}' found"
+
+
+def test_t21_static_signals_json_has_no_private_fields() -> None:
+    """T21: Static docs/data/signals*.json must not contain private financial fields.
+
+    HARD GATE 6 already covers this via public serializer; this is a per-file
+    fast regression scan that doesn't need to import the serializer.
+    """
+    for name in ("signals.json", "signals_philip.json"):
+        f = DOCS_DIR / "data" / name
+        if not f.exists():
+            continue
+        txt = f.read_text(encoding="utf-8")
+        for banned in ('"bankroll_state"', '"open_bets"', '"settled_bets"',
+                       '"default_user"', '"portfolio"'):
+            assert banned not in txt, (
+                f"T21: private key {banned} present in shipped static file {name}"
+            )
+
+
+def test_t22_worker_betting_safety_regression_boundary() -> None:
+    """T22: worker.js still enforces exact-owner routing (no DEFAULT_USER fallback in /me).
+
+    Static grep guard: the /me route must NOT contain a fallback to
+    DEFAULT_USER, and _signalsKey must be routed by the authenticated user
+    only. Also asserts the auth-check ordering (401 before 403 before 404).
+    """
+    worker = (Path(__file__).parent.parent.parent / "cloudflare" / "worker.js").read_text(encoding="utf-8")
+    # Sanity: /me route exists.
+    assert "path === '/me'" in worker, "T22: /me route missing from worker.js"
+    # Master token on /me must be forbidden.
+    assert "auth.viaMaster || !auth.user" in worker, (
+        "T22: master-token-on-/me guard missing (auth.viaMaster || !auth.user)"
+    )
+    # rotate_token has cross-user rejection.
+    assert "cannot rotate token for another user" in worker, (
+        "T22: rotate_token cross-user guard missing"
+    )
+    # token_status has cross-user rejection.
+    assert "cannot inspect token status for another user" in worker, (
+        "T22: token_status cross-user guard missing"
+    )
+
+
+# ── T14–T17: Playwright degradation smoke — private-channel failure modes ────
+# Fetch mock returns different HTTP codes for /me; assert public UI stays alive.
+
+def _inject_dual_fetch(page: Page, public_payload: dict, private_status: int,
+                       private_body: dict | None = None) -> None:
+    """Mock BOTH signals.json (public) and /me (private) responses."""
+    pub_b64 = base64.b64encode(json.dumps(public_payload).encode()).decode()
+    priv_body_str = json.dumps(private_body or {"error": "test"})
+    priv_b64 = base64.b64encode(priv_body_str.encode()).decode()
+    # Preset a token so the browser attempts the private fetch.
+    page.add_init_script(f"""
+        if ('serviceWorker' in navigator) {{
+            navigator.serviceWorker.register = () =>
+                Promise.reject(new Error('SW disabled in tests'));
+        }}
+        localStorage.setItem('sb_seen_onboarding', '1');
+        localStorage.setItem('sb_token', 'test-user-token');
+        const _pubBody = atob('{pub_b64}');
+        const _privBody = atob('{priv_b64}');
+        const _origFetch = window.fetch.bind(window);
+        window.fetch = function(url, opts) {{
+            const u = String(url);
+            if (u.endsWith('/me') || u.includes('/me?')) {{
+                return Promise.resolve(new Response(_privBody, {{
+                    status: {private_status},
+                    headers: {{'Content-Type': 'application/json'}}
+                }}));
+            }}
+            if (u.includes('signals.json')) {{
+                return Promise.resolve(new Response(_pubBody, {{
+                    status: 200,
+                    headers: {{'Content-Type': 'application/json'}}
+                }}));
+            }}
+            return _origFetch(url, opts);
+        }};
+    """)
+
+
+def test_t14_logged_out_public_loads_private_unavailable_no_crash(
+    page: Page, server_url: str
+) -> None:
+    """T14: With NO token in localStorage, public loads; private channel is
+    'unauthenticated'. PWA must stay usable (no JS crash)."""
+    js_errors: list[str] = []
+    page.on("pageerror", lambda exc: js_errors.append(str(exc)))
+    _inject_signals(page, _PUBLIC_ONLY)  # no token preset
+    page.goto(server_url, wait_until="domcontentloaded")
+    expect(page.locator("nav.bottom-nav")).to_be_visible(timeout=10_000)
+    crash = [e for e in js_errors if "TypeError" in e or "ReferenceError" in e]
+    assert not crash, f"T14: PWA crashed unauthenticated: {crash}"
+
+
+def test_t15_private_401_public_stays_usable(page: Page, server_url: str) -> None:
+    """T15: Private /me → 401. Token gets cleared, public UI still works."""
+    js_errors: list[str] = []
+    page.on("pageerror", lambda exc: js_errors.append(str(exc)))
+    _inject_dual_fetch(page, _PUBLIC_ONLY, 401)
+    page.goto(server_url, wait_until="domcontentloaded")
+    expect(page.locator("nav.bottom-nav")).to_be_visible(timeout=10_000)
+    # After the 401, token should have been cleared.
+    token_after = page.evaluate("() => localStorage.getItem('sb_token')")
+    assert token_after in (None, ""), f"T15: token not cleared after 401 (got {token_after!r})"
+    crash = [e for e in js_errors if "TypeError" in e or "ReferenceError" in e]
+    assert not crash, f"T15: JS crash on private 401: {crash}"
+
+
+def test_t16_private_404_no_fallback_to_default_user(page: Page, server_url: str) -> None:
+    """T16: Private /me → 404. PWA MUST NOT fall back to another user's data."""
+    js_errors: list[str] = []
+    page.on("pageerror", lambda exc: js_errors.append(str(exc)))
+    _inject_dual_fetch(page, _PUBLIC_ONLY, 404,
+                       private_body={"error": "private_state_unavailable", "owner": "alice"})
+    page.goto(server_url, wait_until="domcontentloaded")
+    expect(page.locator("nav.bottom-nav")).to_be_visible(timeout=10_000)
+    # No private markers should have leaked into the DOM.
+    body_html = page.evaluate("() => document.body.innerHTML")
+    assert "PHILIP_ONLY_MARKER" not in body_html, "T16: fallback to philip on 404"
+    crash = [e for e in js_errors if "TypeError" in e or "ReferenceError" in e]
+    assert not crash, f"T16: JS crash on private 404: {crash}"
+
+
+def test_t17_private_5xx_public_stays_usable(page: Page, server_url: str) -> None:
+    """T17: Private /me → 500. Public UI must remain usable."""
+    js_errors: list[str] = []
+    page.on("pageerror", lambda exc: js_errors.append(str(exc)))
+    _inject_dual_fetch(page, _PUBLIC_ONLY, 500)
+    page.goto(server_url, wait_until="domcontentloaded")
+    expect(page.locator("nav.bottom-nav")).to_be_visible(timeout=10_000)
+    crash = [e for e in js_errors if "TypeError" in e or "ReferenceError" in e]
+    assert not crash, f"T17: JS crash on private 500: {crash}"

@@ -851,6 +851,15 @@ async function _submitBet() {
   const token = localStorage.getItem('sb_token');
   if (!token) { _openTokenModal(); return; }
 
+  // P0C-002 fail-closed gate: betting is disabled unless the private channel
+  // has authoritative state (bankroll, open bets). The Worker will still
+  // enforce all safety checks — this is defense-in-depth against submitting
+  // when the browser cannot see current authoritative state.
+  if (typeof isPrivateAvailable === 'function' && !isPrivateAvailable()) {
+    showToast('Privates Konto derzeit nicht verfügbar — Wetten deaktiviert.', 'error');
+    return;
+  }
+
   // P0-A: source is determined at modal-open time (from dataset); not derived from model_prob.
   // Manual betting is always explicit — never silently derived.
   const source = _pendingBet.source || 'manual';
@@ -1322,17 +1331,21 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('view-detail')?.classList.contains('active'))  { closeDetail(); }
 });
 
-// URL-Token-Setter: ?token=XXX → speichert in localStorage.
-// Param wird NICHT aus URL entfernt, damit "Zum Home-Bildschirm" die Magic-URL
-// behält und die PWA beim ersten Launch den Token auch in ihrer eigenen
-// localStorage-Sandbox speichern kann (iOS-PWA hat separates Storage).
+// P0C-002 SECURITY:
+// Long-lived auth token ingestion from ?token= URL parameters has been REMOVED.
+// Reasons: query strings leak via browser history, referer headers, server logs,
+// analytics, and screen recordings. Long-lived tokens must be entered via the
+// Settings → Token modal (localStorage-only) or provisioned by the /register
+// flow, which returns the token in a POST response body.
+//
+// One-time invite tokens (?invite=…) remain permitted — they are short-lived,
+// single-use, and become invalid immediately after /register consumes them.
 (function () {
   try {
     const params = new URLSearchParams(window.location.search);
-    const t = params.get('token');
-    if (t && t.length >= 32) {
-      localStorage.setItem('sb_token', t);
-      setTimeout(() => showToast && showToast('🔑 Worker-Token gespeichert', 'success'), 200);
+    if (params.get('token')) {
+      // Explicitly refuse to persist; log a console warning for developers.
+      console.warn('[P0C-002] ?token= URL parameter is no longer supported. Use Settings → Token to configure authentication.');
     }
   } catch {}
 })();

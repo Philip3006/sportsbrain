@@ -91,6 +91,32 @@ jobs:
       - name: Privacy serialization tests
         run: python -m pytest -q tests/privacy/test_public_serializer.py
 
+      # ── HARD GATE 7: P0C-002 Authenticated Private State + Dual Fetch ──
+      # Verifies:
+      #   • Private serializer allowlist (Python): src/notifications/private_serializer.py
+      #   • Worker GET /me contract (Node): tests/js/worker.test.mjs Suite 16
+      #     — 401/403/404 semantics, exact-owner routing, master-token forbidden,
+      #     cross-user rotate_token/token_status rejection, allowlist enforcement.
+      #   • Browser dual-fetch static scans (T19–T22): no ?token= ingestion,
+      #     no master token literals in shipped JS, no private fields in
+      #     docs/data/signals*.json, worker.js exact-owner guards present.
+      #   • P0C-001 regression: unauthenticated /signals.json still returns
+      #     public-only payload (T10).
+      # P0 security contract — must pass on every PR and push.
+      - name: P0C-002 private serializer tests (Python)
+        run: python -m pytest -q tests/privacy/test_private_serializer.py
+
+      - name: P0C-002 Worker /me contract tests (Node)
+        run: node --test tests/js/worker.test.mjs
+
+      - name: P0C-002 dual-fetch + browser credential static scans (Python)
+        run: |
+          python -m pytest -q \
+            tests/frontend/test_pwa_smoke.py::test_t19_browser_sources_have_no_api_or_master_token_literals \
+            tests/frontend/test_pwa_smoke.py::test_t20_browser_sources_do_not_ingest_query_token \
+            tests/frontend/test_pwa_smoke.py::test_t21_static_signals_json_has_no_private_fields \
+            tests/frontend/test_pwa_smoke.py::test_t22_worker_betting_safety_regression_boundary
+
       # ── PROVENANCE: record source release after all gates pass (main push only) ──
       # docs/data/provenance_meta.json is NOT in ci_gates paths-filter → no re-trigger.
       # C3: uses safe concurrent push with retry/rebase (mirrors consume_pending_bets.yml).
