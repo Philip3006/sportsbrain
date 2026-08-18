@@ -91,13 +91,4 @@ jobs:
           git add -f results/health/tennis_scan.json || true
           git add -f data/cache/signal_history.jsonl || true
           git add data/cache/tennis_serve_snapshots/ || true
-          git diff --staged --quiet || git commit -m "auto: tennis scan $(date +%Y-%m-%d)"
-          for i in 1 2 3 4 5; do
-            git fetch origin main
-            git rebase --autostash --strategy-option=theirs origin/main \
-              || { git rebase --abort 2>/dev/null || true; echo "[push] rebase conflict on attempt $i, retrying"; }
-            git push origin main && exit 0
-            echo "[push] attempt $i failed, backoff..."
-            sleep $((RANDOM % 20 + 10))
-          done
-          echo "[push] giving up after 5 attempts" >&2; exit 1
+          bash scripts/_bot_commit_push.sh "auto: tennis scan $(date +%Y-%m-%d)"

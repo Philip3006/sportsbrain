@@ -121,6 +121,17 @@ jobs:
             tests/frontend/test_pwa_smoke.py::test_t21_static_signals_json_has_no_private_fields \
             tests/frontend/test_pwa_smoke.py::test_t22_worker_betting_safety_regression_boundary
 
+      # ── HARD GATE 8: P0D-001 Runtime Writer Governance ────────────────────────
+      # Verifies:
+      #   I1. All paths staged by bot workflows are within the bot path allowlist.
+      #   I2. Source paths are rejected by the allowlist (fail-closed).
+      #   I3. No active workflow uses bare `git push || true` without retry.
+      #   I4. provenance_meta.json is written only by ci_gates (source/runtime separation).
+      #   I5. All committing workflows set observable writer identity.
+      # Must pass on every PR and push.
+      - name: Runtime writer governance tests
+        run: python -m pytest -q tests/monitoring/test_writer_governance.py
+
       # ── PROVENANCE: record source release after all gates pass (main push only) ──
       # docs/data/provenance_meta.json is NOT in ci_gates paths-filter → no re-trigger.
       # C3: uses safe concurrent push with retry/rebase (mirrors consume_pending_bets.yml).
