@@ -752,6 +752,103 @@ def test_t19_browser_sources_have_no_api_or_master_token_literals() -> None:
         )
 
 
+def _read_browser_html() -> str:
+    """Read all shipped HTML in docs/ for scanning user-visible strings."""
+    parts: list[str] = []
+    for p in sorted(DOCS_DIR.glob("*.html")):
+        parts.append(p.read_text(encoding="utf-8"))
+    return "\n".join(parts)
+
+
+def _strip_js_comments(src: str) -> str:
+    """Strip // line-comments and /* … */ block-comments to isolate active code."""
+    import re
+    # Block comments (non-greedy)
+    src = re.sub(r"/\*[\s\S]*?\*/", "", src)
+    # Line comments — up to newline
+    src = re.sub(r"(?m)//[^\n]*", "", src)
+    return src
+
+
+def test_t19b_no_active_createInvite_function() -> None:
+    """C5 (T19b): shipped browser JS must not DEFINE or CALL _createInvite in
+    active code. Comment mentions describing the removed feature are allowed
+    (comments are stripped before scan)."""
+    import re
+    src_code = _strip_js_comments(_read_browser_sources())
+    # Function definitions or assignments
+    assert not re.search(r"\bfunction\s+_createInvite\s*\(", src_code), (
+        "C5: `function _createInvite(...)` definition present in shipped JS"
+    )
+    assert not re.search(r"\b_createInvite\s*=\s*(?:async\s+)?function", src_code), (
+        "C5: `_createInvite = function(...)` assignment present in shipped JS"
+    )
+    assert not re.search(r"\b_createInvite\s*=\s*(?:async\s+)?\(", src_code), (
+        "C5: `_createInvite = async (...) => …` assignment present in shipped JS"
+    )
+    # Active calls (invocations, not string mentions)
+    assert not re.search(r"\b_createInvite\s*\(", src_code), (
+        "C5: `_createInvite(...)` call present in shipped JS"
+    )
+
+
+def test_t19c_no_browser_post_to_invite() -> None:
+    """C5 (T19c): shipped browser JS must not POST to the /invite endpoint."""
+    import re
+    src_code = _strip_js_comments(_read_browser_sources())
+    # fetch(... '/invite' ...) call — any string form
+    if re.search(r"fetch\s*\([^)]*/invite\b", src_code):
+        raise AssertionError(
+            "C5: browser JS contains a fetch() call targeting '/invite' — "
+            "master-token invite creation must never run in a browser."
+        )
+    # WORKER_BASE + '/invite' concatenation
+    if re.search(r"['\"`]\s*/invite\s*['\"`]", src_code):
+        raise AssertionError(
+            "C5: shipped browser JS references '/invite' as an active URL path"
+        )
+
+
+def test_t19d_no_master_token_user_visible_copy() -> None:
+    """C5 (T19d): user-visible copy must not instruct pasting a master token or
+    SIGNALS_API_TOKEN / API_TOKEN. Applies to HTML AND JS string literals in
+    active code (not comments)."""
+    html = _read_browser_html().lower()
+    for phrase in ("master-token", "master token", "signals_api_token", "api_token"):
+        assert phrase not in html, (
+            f"C5: forbidden user-visible copy '{phrase}' in shipped HTML"
+        )
+    js_active = _strip_js_comments(_read_browser_sources())
+    # In JS, only string-literal occurrences are user-visible. Grep the
+    # de-commented source for the phrases.
+    js_low = js_active.lower()
+    for phrase in ("master-token nötig", "master-token", "master token",
+                   "signals_api_token", "'api_token'", '"api_token"'):
+        assert phrase not in js_low, (
+            f"C5: forbidden user-visible phrase '{phrase}' in shipped JS active code"
+        )
+
+
+def test_t19e_no_editable_user_slot_authorization() -> None:
+    """C5 (T19e): browser code must not contain _setUserSlot / _promptUserSlot
+    or any active _getUserSlot invocation used to target private endpoints.
+    sb_user must not be an authorization authority."""
+    import re
+    src_code = _strip_js_comments(_read_browser_sources())
+    for banned in (r"\bfunction\s+_setUserSlot\s*\(",
+                   r"\b_setUserSlot\s*\(",
+                   r"\bfunction\s+_promptUserSlot\s*\(",
+                   r"\b_promptUserSlot\s*\(",
+                   r"\bfunction\s+_getUserSlot\s*\("):
+        assert not re.search(banned, src_code), (
+            f"C5: forbidden editable-user-slot pattern /{banned}/ present in active code"
+        )
+    # And the Settings HTML must not wire the buttons.
+    html = _read_browser_html()
+    assert "_promptUserSlot()" not in html, "C5: HTML still wires _promptUserSlot()"
+    assert "_createInvite()" not in html, "C5: HTML still wires _createInvite()"
+
+
 def test_t20_browser_sources_do_not_ingest_query_token() -> None:
     """T20 (a.k.a. SEC-004): browser must NOT persist ?token= URL parameters.
 
@@ -904,3 +1001,231 @@ def test_t17_private_5xx_public_stays_usable(page: Page, server_url: str) -> Non
     expect(page.locator("nav.bottom-nav")).to_be_visible(timeout=10_000)
     crash = [e for e in js_errors if "TypeError" in e or "ReferenceError" in e]
     assert not crash, f"T17: JS crash on private 500: {crash}"
+
+
+# ── C4/C3 — P0C-002 real-browser network contract & session isolation ────────
+# Uses page.route() interception + synthetic tokens/values only.
+
+
+def _inject_p0c002_env(page: Page, token: str | None = None) -> None:
+    """Preset localStorage + disable SW; leaves fetch intact for page.route()."""
+    parts = [
+        "if ('serviceWorker' in navigator) {"
+        "  navigator.serviceWorker.register = () => Promise.reject(new Error('sw off'));"
+        "}",
+        "localStorage.setItem('sb_seen_onboarding','1');",
+    ]
+    if token:
+        parts.append(f"localStorage.setItem('sb_token', {json.dumps(token)});")
+    else:
+        parts.append("localStorage.removeItem('sb_token');")
+    page.add_init_script("\n".join(parts))
+
+
+def _route_public_signals(page: Page, payload: dict) -> None:
+    body = json.dumps(payload)
+
+    def _handler(route):
+        req = route.request
+        # Public route must not carry Authorization
+        auth = req.headers.get("authorization")
+        route.fulfill(status=200, body=body,
+                      headers={"Content-Type": "application/json",
+                               "X-Public-Auth-Header": "1" if auth else "0"})
+
+    page.route("**/signals.json*", _handler)
+
+
+def _route_me(page: Page, status: int, body: dict | None = None,
+              delay_ms: int = 0, capture: list | None = None) -> None:
+    body_str = json.dumps(body if body is not None else {"error": "test"})
+
+    def _handler(route):
+        req = route.request
+        if capture is not None:
+            capture.append({
+                "method": req.method,
+                "url": req.url,
+                "authorization": req.headers.get("authorization"),
+                "query": req.url.split("?", 1)[1] if "?" in req.url else "",
+            })
+        if delay_ms:
+            page.wait_for_timeout(delay_ms)
+        route.fulfill(status=status, body=body_str,
+                      headers={"Content-Type": "application/json"})
+
+    page.route("**/me*", _handler)
+
+
+_P0C002_PUBLIC = {
+    "updated": _NOW.isoformat(),
+    "build_info": {},
+    "meta": {"stale_odds": False},
+    "football": [], "tennis": [],
+    "schedule": [], "all_odds": {}, "model_tips": {}, "model_evals": {},
+    "top_elo": [], "wm_results": [], "odds_history": {},
+}
+
+
+def test_p0c002_public_signals_has_no_auth_header(page: Page, server_url: str) -> None:
+    """C4/A: public GET /signals.json must NOT carry an Authorization header."""
+    _inject_p0c002_env(page, token=None)
+    captured: list[str | None] = []
+
+    def _handler(route):
+        captured.append(route.request.headers.get("authorization"))
+        route.fulfill(status=200, body=json.dumps(_P0C002_PUBLIC),
+                      headers={"Content-Type": "application/json"})
+
+    page.route("**/signals.json*", _handler)
+    page.goto(server_url, wait_until="domcontentloaded")
+    page.wait_for_timeout(600)
+    assert captured, "no signals.json fetch observed"
+    assert all(a in (None, "") for a in captured), (
+        f"C4/A: public GET carried Authorization header: {captured}"
+    )
+
+
+def test_p0c002_private_me_has_bearer_and_no_user_query(page: Page, server_url: str) -> None:
+    """C4/B + C4/G: GET /me carries Bearer <token> and no ?user= parameter."""
+    SYNTH = "SYNTHETIC-TEST-TOKEN-alice-xxxxxxxxxxxxxxxxxxxx"
+    _inject_p0c002_env(page, token=SYNTH)
+    _route_public_signals(page, _P0C002_PUBLIC)
+    cap: list = []
+    _route_me(page, 200,
+              body={"owner": "alice", "schema_version": "1",
+                    "bankroll_state": {"free": 777.77}, "open_bets": [], "settled_bets": []},
+              capture=cap)
+    page.goto(server_url, wait_until="domcontentloaded")
+    page.wait_for_timeout(800)
+    assert cap, "no /me fetch observed"
+    for r in cap:
+        assert r["authorization"] == f"Bearer {SYNTH}", f"missing/incorrect Bearer: {r}"
+        q = r["query"]
+        # Cache-bust ?t=... is allowed; but no user= parameter.
+        assert "user=" not in q, f"C4/G: /me carried ?user=… ({q!r})"
+
+
+def test_p0c002_private_no_static_fallback(page: Page, server_url: str) -> None:
+    """C4/F: on private failure, browser must NOT fetch a static private file."""
+    SYNTH = "SYNTHETIC-TOKEN-static-fallback-test"
+    _inject_p0c002_env(page, token=SYNTH)
+    _route_public_signals(page, _P0C002_PUBLIC)
+    _route_me(page, 404, body={"error": "private_state_unavailable", "owner": "alice"})
+    forbidden_hits: list[str] = []
+    for name in ("private.json", "me.json", "bankroll.json",
+                 "bets_philip.json", "signals_philip.json"):
+        page.route(f"**/{name}*",
+                   lambda route, name=name: (forbidden_hits.append(name),
+                                             route.fulfill(status=404, body="{}"))[1])
+    page.goto(server_url, wait_until="domcontentloaded")
+    page.wait_for_timeout(800)
+    # signals_philip.json legacy hit is disallowed as a PRIVATE fallback here;
+    # we simply assert nothing private was fetched.
+    assert not forbidden_hits, f"C4/F: browser fetched static private fallback: {forbidden_hits}"
+
+
+def test_p0c002_positive_alice_owner(page: Page, server_url: str) -> None:
+    """C4/C: /me returning owner=alice populates _authenticatedOwner=alice; no philip marker."""
+    SYNTH = "SYNTHETIC-TOKEN-alice-owner-test"
+    _inject_p0c002_env(page, token=SYNTH)
+    _route_public_signals(page, _P0C002_PUBLIC)
+    _route_me(page, 200, body={
+        "owner": "alice", "schema_version": "1",
+        "bankroll_state": {"free": 777.77}, "open_bets": [], "settled_bets": [],
+    })
+    page.goto(server_url, wait_until="domcontentloaded")
+    page.wait_for_timeout(800)
+    owner = page.evaluate("() => (typeof _authenticatedOwner !== 'undefined' ? _authenticatedOwner : null)")
+    assert owner == "alice", f"C4/C: _authenticatedOwner must be 'alice', got {owner!r}"
+    # UI must reflect alice; must NOT contain 'philip' as private identity marker
+    page.evaluate("_openSettings()")
+    page.wait_for_timeout(300)
+    settings_html = page.evaluate("() => document.getElementById('settings-modal-bd').innerHTML")
+    assert "alice" in settings_html.lower(), "C4/C: alice must appear in Settings owner display"
+    # Must not contain 'philip (Default)' or leak philip identity
+    assert "philip" not in settings_html.lower(), (
+        f"C4/C: Settings leaks 'philip' when authenticated as alice: {settings_html[:400]}"
+    )
+
+
+@pytest.mark.parametrize("status", [401, 404, 500])
+def test_p0c002_private_failure_public_stays_usable(page: Page, server_url: str, status: int) -> None:
+    """C4/D: /me 401/404/500 — public UI stays alive, no JS crash, no phantom POST."""
+    js_errors: list[str] = []
+    page.on("pageerror", lambda exc: js_errors.append(str(exc)))
+    SYNTH = "SYNTHETIC-TOKEN-failure-mode"
+    _inject_p0c002_env(page, token=SYNTH)
+    _route_public_signals(page, _P0C002_PUBLIC)
+    _route_me(page, status, body={"error": "synthetic"})
+    pending_hits: list[str] = []
+    page.route("**/pending_bets*",
+               lambda route: (pending_hits.append(route.request.method),
+                              route.fulfill(status=200, body='{"bets":[]}'))[1])
+    page.goto(server_url, wait_until="domcontentloaded")
+    expect(page.locator("nav.bottom-nav")).to_be_visible(timeout=10_000)
+    page.wait_for_timeout(600)
+    crash = [e for e in js_errors if "TypeError" in e or "ReferenceError" in e]
+    assert not crash, f"C4/D status={status}: JS crash: {crash}"
+    posts = [m for m in pending_hits if m == "POST"]
+    assert not posts, f"C4/D status={status}: unexpected POST /pending_bets in private-unavailable state"
+
+
+def test_p0c002_no_token_url_ingestion(page: Page, server_url: str) -> None:
+    """C4/E: ?token= URL parameter must NOT be persisted to localStorage."""
+    _inject_p0c002_env(page, token=None)
+    _route_public_signals(page, _P0C002_PUBLIC)
+    SYNTH = "SYNTHETIC_LONG_LIVED_TOKEN_TEST"
+    page.goto(f"{server_url}/?token={SYNTH}", wait_until="domcontentloaded")
+    page.wait_for_timeout(400)
+    stored = page.evaluate("() => localStorage.getItem('sb_token')")
+    assert stored != SYNTH, f"C4/E: ?token= was ingested into localStorage ({stored!r})"
+
+
+def test_p0c002_session_race_alice_bob(page: Page, server_url: str) -> None:
+    """C3/C4/H: delayed alice /me must be DISCARDED after token switches to bob."""
+    ALICE = "SYNTHETIC-TOKEN-ALICE-race"
+    BOB = "SYNTHETIC-TOKEN-BOB-race"
+    _inject_p0c002_env(page, token=ALICE)
+    _route_public_signals(page, _P0C002_PUBLIC)
+
+    def _me_handler(route):
+        req = route.request
+        auth = req.headers.get("authorization") or ""
+        if ALICE in auth:
+            # Delay heavily so we can switch tokens before the response applies
+            page.wait_for_timeout(1500)
+            route.fulfill(status=200, body=json.dumps({
+                "owner": "alice", "schema_version": "1",
+                "bankroll_state": {"free": 111.11},
+                "open_bets": [{"id": "ALICE_STALE_MARKER"}],
+                "settled_bets": [],
+            }), headers={"Content-Type": "application/json"})
+        elif BOB in auth:
+            route.fulfill(status=200, body=json.dumps({
+                "owner": "bob", "schema_version": "1",
+                "bankroll_state": {"free": 999.99},
+                "open_bets": [{"id": "BOB_FRESH_MARKER"}],
+                "settled_bets": [],
+            }), headers={"Content-Type": "application/json"})
+        else:
+            route.fulfill(status=401, body="{}")
+
+    page.route("**/me*", _me_handler)
+    page.goto(server_url, wait_until="domcontentloaded")
+    # Immediately switch to bob (before alice /me returns)
+    page.wait_for_timeout(200)
+    page.evaluate(f"""
+        localStorage.setItem('sb_token', {json.dumps(BOB)});
+        if (typeof _onTokenChanged === 'function') _onTokenChanged();
+        if (typeof load === 'function') load();
+    """)
+    # Wait past the alice-delay so both responses have arrived
+    page.wait_for_timeout(2500)
+    owner = page.evaluate("() => (typeof _authenticatedOwner !== 'undefined' ? _authenticatedOwner : null)")
+    open_bets = page.evaluate("() => JSON.stringify(_openBets || [])")
+    assert owner == "bob", f"C3: final owner must be 'bob', got {owner!r}"
+    assert "BOB_FRESH_MARKER" in open_bets, f"C3: bob's data missing: {open_bets}"
+    assert "ALICE_STALE_MARKER" not in open_bets, (
+        f"C3: stale alice /me response overwrote bob session: {open_bets}"
+    )

@@ -113,6 +113,10 @@ jobs:
         run: |
           python -m pytest -q \
             tests/frontend/test_pwa_smoke.py::test_t19_browser_sources_have_no_api_or_master_token_literals \
+            tests/frontend/test_pwa_smoke.py::test_t19b_no_active_createInvite_function \
+            tests/frontend/test_pwa_smoke.py::test_t19c_no_browser_post_to_invite \
+            tests/frontend/test_pwa_smoke.py::test_t19d_no_master_token_user_visible_copy \
+            tests/frontend/test_pwa_smoke.py::test_t19e_no_editable_user_slot_authorization \
             tests/frontend/test_pwa_smoke.py::test_t20_browser_sources_do_not_ingest_query_token \
             tests/frontend/test_pwa_smoke.py::test_t21_static_signals_json_has_no_private_fields \
             tests/frontend/test_pwa_smoke.py::test_t22_worker_betting_safety_regression_boundary

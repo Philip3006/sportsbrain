@@ -129,8 +129,8 @@
 
 <div class="modal-backdrop" id="token-modal-bd" role="dialog" aria-modal="true" aria-labelledby="token-modal-title">
   <div class="modal">
-    <h3 id="token-modal-title">Worker-Token einmalig eintragen</h3>
-    <div class="modal-sub">Der Token ist nötig, damit deine Wetten an den Cloudflare-Worker geschickt werden können. Steht in deiner <code>.env</code> als <code>SIGNALS_API_TOKEN</code>. Wird nur lokal im Browser gespeichert.</div>
+    <h3 id="token-modal-title">Dein SportsBrain-Token</h3>
+    <div class="modal-sub">Trage hier deinen persönlichen SportsBrain-Zugangstoken ein — den du bei der Registrierung erhalten oder per Rotation neu erzeugt hast. Er identifiziert nur deinen Account. Wird ausschließlich lokal im Browser gespeichert. <b>Nicht</b> mit Server-Secrets teilen.</div>
     <input type="password" class="modal-token-input" id="token-modal-input" placeholder="Bearer-Token einfügen…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
     <div class="modal-buttons">
       <button class="modal-btn cancel" id="token-modal-cancel" type="button">Abbrechen</button>
@@ -169,26 +169,17 @@
 
     <div class="settings-row">
       <div class="settings-row-text">
-        <div class="settings-row-title">👤 Aktiver User</div>
+        <div class="settings-row-title">👤 Angemeldeter Account</div>
         <div class="settings-row-sub" id="settings-user-status">—</div>
       </div>
-      <button class="settings-toggle" type="button" onclick="_promptUserSlot()">Ändern</button>
     </div>
 
     <div class="settings-row">
       <div class="settings-row-text">
         <div class="settings-row-title">🔄 Token rotieren</div>
-        <div class="settings-row-sub" id="settings-rotate-status">Erzeugt neuen Worker-Token. Alter bleibt 24h gültig (Grace-Period).</div>
+        <div class="settings-row-sub" id="settings-rotate-status">Erzeugt neuen SportsBrain-Token für deinen Account. Alter bleibt 24h gültig (Grace-Period).</div>
       </div>
       <button class="settings-toggle" type="button" onclick="_rotateToken()">Rotieren</button>
-    </div>
-
-    <div class="settings-row">
-      <div class="settings-row-text">
-        <div class="settings-row-title">🎟️ Freund einladen</div>
-        <div class="settings-row-sub">Erzeugt einen Invite-Link. Empfänger wählt Username + Bankroll selbst.</div>
-      </div>
-      <button class="settings-toggle" type="button" onclick="_createInvite()">Link erstellen</button>
     </div>
 
     <div class="settings-row">
