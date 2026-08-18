@@ -228,6 +228,14 @@ def betting_journal_path() -> Path:
     """
     return _resolve_ledger_dir() / "betting_journal.md"
 
+
+def betting_journal_snapshot_path() -> Path:
+    """Path to the journal snapshots JSONL file in the private ledger directory.
+
+    Requires SPORTSBRAIN_LEDGER_DIR to be set; raises EnvironmentError otherwise.
+    """
+    return _resolve_ledger_dir() / "journal_snapshots.jsonl"
+
 # Phase 2 feature flags — keep new components off-by-default until the
 # Backtest Gate (Brier vs current blend) has validated each on its own.
 STACKER_ENABLED = True             # src/ensemble/stacking.py

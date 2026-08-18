@@ -752,7 +752,6 @@ def test_journal_3_main_writes_to_private_ledger_not_public_results(tmp_path, mo
     # Prepare minimal signal_history.jsonl in a temp cache dir
     cache_dir = tmp_path / "data_cache"
     cache_dir.mkdir()
-    snapshot_store = cache_dir / "journal_snapshots.jsonl"
 
     import importlib
     import src.config as cfg
@@ -762,7 +761,6 @@ def test_journal_3_main_writes_to_private_ledger_not_public_results(tmp_path, mo
 
     # Point the script at our temp signal history (no signals = valid empty case)
     monkeypatch.setattr(ubj, "SIGNAL_HISTORY", cache_dir / "signal_history.jsonl")
-    monkeypatch.setattr(ubj, "SNAPSHOT_STORE", snapshot_store)
 
     # Provide one minimal settled signal so the journal is non-empty
     signal = {
@@ -1022,14 +1020,13 @@ def test_snapshot_2_reader_workflows_do_not_need_write_permission_for_snapshot()
     )
 
 
-def test_snapshot_3_financial_writer_workflows_stage_snapshot():
-    """Authoritative financial writer workflows must stage bankroll_snapshot_*.json.
+def test_snapshot_3_settle_workflows_do_not_speculatively_stage_snapshot():
+    """Authoritative settle workflows must NOT stage bankroll_snapshot_*.json.
 
-    consume_pending_bets: snapshot persistence is owned by _durable_push() in the Python
-    script (which calls git add bankroll_snapshot_*.json). Verified by test_snapshot_1.
-
-    Settle workflows (tennis_settle, tennis_closing_odds, bundesliga2_settle): snapshot
-    may be modified if cancel_bet() is ever called; the workflow commit step must include it.
+    P0D-002: Persistence ownership follows mutation ownership. cancel_bet() is ONLY
+    called from consume_pending_bets.py (via _durable_push). Settle workflows
+    (tennis_settle, tennis_closing_odds, bundesliga2_settle) never call cancel_bet()
+    and must not speculatively stage snapshots they did not mutate.
     """
     violations: list[str] = []
     for wf_name in _AUTHORITATIVE_FINANCIAL:
@@ -1038,9 +1035,233 @@ def test_snapshot_3_financial_writer_workflows_stage_snapshot():
             violations.append(f"{wf_name}: file not found")
             continue
         text = wf.read_text()
-        if "bankroll_snapshot_*.json" not in text:
-            violations.append(f"{wf_name}: does not stage bankroll_snapshot_*.json")
+        if "bankroll_snapshot_*.json" in text:
+            violations.append(
+                f"{wf_name}: stages bankroll_snapshot_*.json speculatively "
+                "(must not — cancel_bet() is owned by consume_pending_bets only)"
+            )
     assert not violations, (
-        "Authoritative settle workflows must git-add bankroll_snapshot_*.json:\n"
+        "Settle workflows must NOT git-add bankroll_snapshot_*.json (mutation ownership violation):\n"
         + "\n".join(f"  {v}" for v in violations)
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Snapshot fail-closed regressions (CEO Final Correction Item 1)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_snapshot_4_durable_push_snapshot_exists_git_add_fails_returns_false(tmp_path, monkeypatch):
+    """_durable_push() must return False (no ACK) when snapshot exists but git add fails.
+
+    Mutation ownership: snapshot files present in the ledger dir must be staged
+    fail-closed. A git-add failure on an existing snapshot must block the ACK.
+    """
+    import subprocess
+    import scripts.consume_pending_bets as cpb
+
+    monkeypatch.setattr(cpb, "_LEDGER_ROOT", tmp_path)
+
+    # Create a snapshot file so the conditional staging branch is taken
+    (tmp_path / "bankroll_snapshot_philip.json").write_text('{"bankroll": 100}')
+
+    _fail = subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="simulated add failure")
+
+    def _mock_run(args, **kwargs):
+        cmd = args[1] if len(args) > 1 else ""
+        subcmd = args[2] if len(args) > 2 else ""
+        if cmd == "add" and "bankroll_snapshot" in subcmd:
+            return _fail
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", _mock_run)
+    result = cpb._durable_push(added=1)
+    assert result is False, (
+        "_durable_push() must return False when snapshot exists and git add fails — "
+        "no ACK may be emitted until private ledger is durable"
+    )
+
+
+def test_snapshot_5_durable_push_no_snapshot_is_safe_noop(tmp_path, monkeypatch):
+    """_durable_push() must not fail when no bankroll_snapshot_*.json files exist.
+
+    Fresh ledger (first run): no snapshot file present → skip staging, proceed normally.
+    This ensures first-run and empty-ledger scenarios do not fail-close unnecessarily.
+    """
+    import subprocess
+    import scripts.consume_pending_bets as cpb
+
+    monkeypatch.setattr(cpb, "_LEDGER_ROOT", tmp_path)
+    # No snapshot files in ledger dir
+
+    snapshot_add_attempted = []
+
+    def _mock_run(args, **kwargs):
+        subcmd = args[2] if len(args) > 2 else ""
+        if "bankroll_snapshot" in subcmd:
+            snapshot_add_attempted.append(subcmd)
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", _mock_run)
+    cpb._durable_push(added=1)
+    assert not snapshot_add_attempted, (
+        "_durable_push() must not attempt git add bankroll_snapshot_*.json "
+        f"when no snapshot files exist; attempted: {snapshot_add_attempted}"
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Journal staging governance (CEO Final Correction Item 2)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_journal_4_tennis_settle_stages_betting_journal_fail_closed():
+    """tennis_settle.yml must stage betting_journal.md fail-closed (no || true).
+
+    update_betting_journal.py mutates betting_journal.md on every settle run.
+    A || true on the git-add would silently mask staging failures and leave
+    a stale journal in the private ledger.
+    """
+    wf = WORKFLOWS_DIR / "tennis_settle.yml"
+    assert wf.exists(), "tennis_settle.yml not found"
+    text = wf.read_text()
+    # Find the line that stages betting_journal.md
+    for lineno, line in enumerate(text.splitlines(), 1):
+        stripped = line.strip()
+        if "betting_journal.md" in stripped and re.search(r"git.*add", stripped):
+            assert "|| true" not in stripped and "2>/dev/null" not in stripped, (
+                f"tennis_settle.yml:{lineno}: betting_journal.md staging must be fail-closed "
+                f"(no || true / 2>/dev/null); found: {stripped!r}"
+            )
+            return
+    pytest.fail("tennis_settle.yml does not stage betting_journal.md at all")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Journal snapshot private boundary (CEO Final Correction Item 3)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_journal_snapshot_1_path_resolves_to_private_ledger_dir(tmp_path, monkeypatch):
+    """betting_journal_snapshot_path() must resolve inside SPORTSBRAIN_LEDGER_DIR."""
+    monkeypatch.setenv("SPORTSBRAIN_LEDGER_DIR", str(tmp_path))
+    import importlib
+    import src.config as cfg
+    importlib.reload(cfg)
+
+    snap_path = cfg.betting_journal_snapshot_path()
+    assert snap_path.is_relative_to(tmp_path), (
+        f"betting_journal_snapshot_path() must be inside SPORTSBRAIN_LEDGER_DIR ({tmp_path}); "
+        f"got {snap_path}"
+    )
+    assert snap_path.name == "journal_snapshots.jsonl", (
+        f"betting_journal_snapshot_path() must be named journal_snapshots.jsonl; got {snap_path.name}"
+    )
+    assert "/data/cache/" not in str(snap_path), (
+        f"betting_journal_snapshot_path() must not resolve to public data/cache/; got {snap_path}"
+    )
+
+
+def test_journal_snapshot_2_main_writes_snapshots_to_private_ledger(tmp_path, monkeypatch):
+    """update_betting_journal.main() must write journal_snapshots.jsonl to SPORTSBRAIN_LEDGER_DIR.
+
+    The journal snapshot is private financial performance state (staked/pnl/roi).
+    It must never land in the public data/cache/ directory.
+    """
+    import json
+    import pathlib
+    monkeypatch.setenv("SPORTSBRAIN_LEDGER_DIR", str(tmp_path))
+    cache_dir = tmp_path / "data_cache"
+    cache_dir.mkdir()
+
+    import importlib
+    import src.config as cfg
+    importlib.reload(cfg)
+    import scripts.update_betting_journal as ubj
+    importlib.reload(ubj)
+
+    monkeypatch.setattr(ubj, "SIGNAL_HISTORY", cache_dir / "signal_history.jsonl")
+
+    signal = {
+        "signal_id": "snap-test-001",
+        "sport": "tennis",
+        "home": "Player A",
+        "away": "Player B",
+        "market": "h2h",
+        "odds": 2.1,
+        "model_prob": 0.55,
+        "ev": 0.155,
+        "stake_eur": 10.0,
+        "outcome": "won",
+        "pnl": 11.0,
+        "signal_date": "2026-08-19",
+        "settle_date": "2026-08-19",
+    }
+    (cache_dir / "signal_history.jsonl").write_text(json.dumps(signal) + "\n")
+
+    # Capture append-write paths to detect what files main() actually wrote during this run
+    appended_paths: list[str] = []
+    original_open = pathlib.Path.open
+
+    def _capture_open(self, mode="r", *args, **kwargs):
+        if "a" in mode:
+            appended_paths.append(str(self))
+        return original_open(self, mode, *args, **kwargs)
+
+    monkeypatch.setattr(pathlib.Path, "open", _capture_open)
+
+    import sys
+    monkeypatch.setattr(sys, "argv", ["update_betting_journal.py"])
+    ubj.main()
+
+    private_snapshot = str(tmp_path / "journal_snapshots.jsonl")
+    public_data_cache = str(ROOT / "data" / "cache")
+
+    assert any(p == private_snapshot for p in appended_paths), (
+        f"update_betting_journal.main() must append to journal_snapshots.jsonl in "
+        f"SPORTSBRAIN_LEDGER_DIR ({tmp_path}); appended to: {appended_paths}"
+    )
+    public_writes = [p for p in appended_paths if public_data_cache in p and "journal_snapshots" in p]
+    assert not public_writes, (
+        f"update_betting_journal.main() must NOT write journal_snapshots.jsonl to "
+        f"public data/cache/; appended to: {public_writes}"
+    )
+
+
+def test_journal_snapshot_3_public_commit_does_not_stage_journal_snapshots():
+    """tennis_settle.yml public commit step must NOT stage data/cache/journal_snapshots.jsonl.
+
+    journal_snapshots.jsonl is private financial state. After P0D-002, it is owned
+    by the private ledger repo. Staging it in the public artifact commit would expose
+    financial performance data in the public sportsbrain repo.
+    """
+    wf = WORKFLOWS_DIR / "tennis_settle.yml"
+    assert wf.exists(), "tennis_settle.yml not found"
+    text = wf.read_text()
+    for lineno, line in enumerate(text.splitlines(), 1):
+        stripped = line.strip()
+        if "journal_snapshots.jsonl" in stripped and "data/cache/" in stripped:
+            pytest.fail(
+                f"tennis_settle.yml:{lineno}: public commit step must NOT stage "
+                f"data/cache/journal_snapshots.jsonl (private financial state); "
+                f"found: {stripped!r}"
+            )
+
+
+def test_journal_snapshot_4_gitignore_protects_public_journal_snapshots():
+    """data/cache/journal_snapshots.jsonl must be gitignored or untracked.
+
+    After P0D-002, journal_snapshots.jsonl belongs in the private ledger repo.
+    A gitignore protection rule must prevent it from accidentally being committed
+    to the public sportsbrain repo.
+    """
+    import subprocess
+    # Check that git treats the path as ignored
+    result = subprocess.run(
+        ["git", "check-ignore", "-q", "data/cache/journal_snapshots.jsonl"],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+    )
+    # git check-ignore returns 0 if the path is ignored
+    assert result.returncode == 0, (
+        "data/cache/journal_snapshots.jsonl must be gitignored (private financial state); "
+        "ensure .gitignore contains data/cache/journal_snapshots.jsonl"
     )

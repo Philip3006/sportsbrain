@@ -303,13 +303,19 @@ def _durable_push(added: int) -> bool:
         )
 
     # FND-001: git add failure is fatal — file system or index error.
-    # P0D-002: stage ledger CSVs + bankroll snapshots (both are private financial state).
-    # bankroll_snapshot_*.json is mutated by cancel_bet(); must be durable with each push.
+    # P0D-002: stage ledger CSVs (always) + bankroll snapshots (only if present).
+    # bankroll_snapshot_*.json is mutated by cancel_bet(); must be durable when it exists.
+    # If no snapshot files exist (fresh ledger), skip staging — not fatal.
     add_result = _g("add", "ledger_*.csv")
     if add_result.returncode != 0:
         print(f"[consume] git add ledger failed: {add_result.stderr.strip()[:200]}", file=sys.stderr)
         return False
-    _g("add", "bankroll_snapshot_*.json")  # best-effort; no snapshot is not fatal
+    snapshot_files = list(Path(_LEDGER_ROOT).glob("bankroll_snapshot_*.json"))
+    if snapshot_files:
+        snap_result = _g("add", "bankroll_snapshot_*.json")
+        if snap_result.returncode != 0:
+            print(f"[consume] git add snapshot failed: {snap_result.stderr.strip()[:200]}", file=sys.stderr)
+            return False
 
     staged = _g("diff", "--cached", "--quiet")
 

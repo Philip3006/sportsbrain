@@ -72,8 +72,8 @@ jobs:
           SPORTSBRAIN_LEDGER_DIR: ${{ github.workspace }}/private-ledger
         run: |
           git -C private-ledger add ledger_*.csv
-          git -C private-ledger add bankroll_snapshot_*.json 2>/dev/null || true
-          git -C private-ledger add betting_journal.md 2>/dev/null || true
+          git -C private-ledger add betting_journal.md
+          if [ -f private-ledger/journal_snapshots.jsonl ]; then git -C private-ledger add journal_snapshots.jsonl; fi
           git -C private-ledger diff --cached --quiet && echo "[ledger] nothing to commit" && exit 0
           git -C private-ledger commit -m "auto: tennis settle $(date +%Y-%m-%d\ %H:%M) UTC"
           for i in 1 2 3 4 5; do
@@ -91,7 +91,7 @@ jobs:
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
           git add -f results/health/tennis_settle.json || true
-          git add -f data/cache/signal_history.jsonl data/cache/signal_performance.json data/cache/journal_snapshots.jsonl || true
+          git add -f data/cache/signal_history.jsonl data/cache/signal_performance.json || true
           git add docs/data/signals_philip.json docs/data/signals.json || true
           git diff --staged --quiet && exit 0
           git commit -m "auto: tennis settle $(date +%Y-%m-%d\ %H:%M) UTC"

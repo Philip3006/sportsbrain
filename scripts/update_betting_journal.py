@@ -20,9 +20,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SIGNAL_HISTORY = ROOT / "data" / "cache" / "signal_history.jsonl"
-SNAPSHOT_STORE = ROOT / "data" / "cache" / "journal_snapshots.jsonl"
-# P0D-002: betting journal lives in the private ledger repo, not public results/.
-from src.config import betting_journal_path as _betting_journal_path
+# P0D-002: betting journal and journal snapshots live in the private ledger repo.
+from src.config import (
+    betting_journal_path as _betting_journal_path,
+    betting_journal_snapshot_path as _betting_journal_snapshot_path,
+)
 
 UNIT_STAKE = 10.0
 
@@ -133,10 +135,11 @@ def _breakdown_table(rows: list[dict], key_fn, header: str) -> list[str]:
 # ---------------------------------------------------------------------------
 
 def _load_snapshots() -> list[dict]:
-    if not SNAPSHOT_STORE.exists():
+    snapshot_store = _betting_journal_snapshot_path()
+    if not snapshot_store.exists():
         return []
     rows = []
-    for line in SNAPSHOT_STORE.read_text(encoding="utf-8").splitlines():
+    for line in snapshot_store.read_text(encoding="utf-8").splitlines():
         try:
             rows.append(json.loads(line))
         except Exception:
@@ -159,8 +162,9 @@ def _update_snapshot(rows: list[dict], sport: str | None) -> None:
         "generated_at": datetime.now(timezone.utc).isoformat(),
         **s,
     }
-    SNAPSHOT_STORE.parent.mkdir(parents=True, exist_ok=True)
-    with SNAPSHOT_STORE.open("a", encoding="utf-8") as f:
+    snapshot_store = _betting_journal_snapshot_path()
+    snapshot_store.parent.mkdir(parents=True, exist_ok=True)
+    with snapshot_store.open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
