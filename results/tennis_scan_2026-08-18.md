@@ -4,12 +4,12 @@
 
 
 ## Cincinnati Open (ATP) · m1000 · 🔴 LIVE
-Surface: hard · Best of: 3 · Matches gescannt: 8
+Surface: hard · Best of: 3 · Matches gescannt: 11
 - [ATP] **Michael Zheng vs Lorenzo Musetti** · Match Winner: Michael Zheng
   Quote 2.40 · Modell 49.3% · EV +18.4% · Stake 5.00€ · HIGH
 - [ATP] **Jaime Faria vs Adam Walton** · Match Winner: Adam Walton
-  Quote 2.28 · Modell 49.3% · EV +12.5% · Stake 5.00€ · MEDIUM
+  Quote 2.29 · Modell 49.3% · EV +13.0% · Stake 5.00€ · MEDIUM
 
 ## Cincinnati Open (WTA) · wta1000 · 🔴 LIVE
-Surface: hard · Best of: 3 · Matches gescannt: 11
+Surface: hard · Best of: 3 · Matches gescannt: 12
 _Keine Value-Signals._
