@@ -21,7 +21,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SIGNAL_HISTORY = ROOT / "data" / "cache" / "signal_history.jsonl"
 SNAPSHOT_STORE = ROOT / "data" / "cache" / "journal_snapshots.jsonl"
-JOURNAL_PATH = ROOT / "results" / "betting_journal.md"
+# P0D-002: betting journal lives in the private ledger repo, not public results/.
+from src.config import betting_journal_path as _betting_journal_path
 
 UNIT_STAKE = 10.0
 
@@ -292,11 +293,12 @@ def main() -> None:
     _update_snapshot(rows, sport)
     journal = build_journal(rows, sport)
 
-    JOURNAL_PATH.parent.mkdir(parents=True, exist_ok=True)
-    JOURNAL_PATH.write_text(journal, encoding="utf-8")
+    journal_path = _betting_journal_path()
+    journal_path.parent.mkdir(parents=True, exist_ok=True)
+    journal_path.write_text(journal, encoding="utf-8")
     s = _stats(rows)
     print(
-        f"[journal] {JOURNAL_PATH.name} geschrieben — "
+        f"[journal] {journal_path.name} geschrieben — "
         f"{s['n_settled']} settled, {s['w']}W/{s['l']}L, "
         f"ROI {s['roi']:+.1f}%"
     )

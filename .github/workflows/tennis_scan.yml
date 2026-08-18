@@ -53,6 +53,17 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Checkout private ledger (read-only)
+        uses: actions/checkout@v4
+        with:
+          repository: Philip3006/sportsbrain-ledger
+          token: ${{ secrets.LEDGER_PRIVATE_READ_PAT }}
+          path: private-ledger
+          fetch-depth: 1
+
+      - name: Set ledger directory
+        run: echo "SPORTSBRAIN_LEDGER_DIR=${{ github.workspace }}/private-ledger" >> $GITHUB_ENV
+
       - name: Run tennis scan (multi-tournament)
         id: scan
         env:

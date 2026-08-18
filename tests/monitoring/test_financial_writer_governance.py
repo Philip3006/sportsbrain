@@ -596,3 +596,273 @@ def test_j2_financial_governance_sentinel():
     """Sentinel: this test file exists and was loaded by the financial governance gate."""
     assert Path(__file__).exists()
     assert Path(__file__).stem == "test_financial_writer_governance"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BLOCKER 1 — Private ledger reader migration tests
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_b1_list_known_users_discovers_from_private_ledger_dir(tmp_path, monkeypatch):
+    """list_known_users() must discover user slugs from SPORTSBRAIN_LEDGER_DIR,
+    never from public results/.
+
+    After P0D-002: ledger files live in the private repo checkout (private-ledger/).
+    The public repo's results/ will no longer contain ledger_*.csv.
+    """
+    monkeypatch.setenv("SPORTSBRAIN_LEDGER_DIR", str(tmp_path))
+    # Create ledger file in the private ledger dir
+    (tmp_path / "ledger_philip.csv").write_text("status\nopen\n")
+    # Ensure public results/ has no ledger (it would be stale/wrong source)
+    (ROOT / "results").mkdir(parents=True, exist_ok=True)
+
+    import importlib
+    import src.config as cfg
+    importlib.reload(cfg)
+    import src.notifications.web_dashboard as wdb
+    importlib.reload(wdb)
+
+    users = wdb.list_known_users()
+    assert "philip" in users, (
+        f"list_known_users() must discover 'philip' from SPORTSBRAIN_LEDGER_DIR ({tmp_path}); got {users}"
+    )
+
+
+def test_b2_list_known_users_source_code_does_not_glob_public_results():
+    """web_dashboard.list_known_users() must NOT glob from ROOT/results/.
+
+    Static analysis: after P0D-002 the discovery source must be _resolve_ledger_dir_cfg(),
+    never (ROOT / 'results').glob(...).
+    """
+    source = (ROOT / "src" / "notifications" / "web_dashboard.py").read_text()
+    # Extract only the list_known_users function body via line-based search
+    in_func = False
+    func_lines: list[str] = []
+    for line in source.splitlines():
+        if line.startswith("def list_known_users("):
+            in_func = True
+        elif in_func and line.startswith("def "):
+            break
+        if in_func:
+            func_lines.append(line)
+    func_body = "\n".join(func_lines)
+
+    # Must not contain the old public-results glob pattern
+    assert '"results"' not in func_body or "glob" not in func_body, (
+        'list_known_users() must NOT glob from (ROOT / "results") — '
+        "after P0D-002 use _resolve_ledger_dir_cfg() for private ledger discovery.\n"
+        f"Found in function body: {func_body[:500]!r}"
+    )
+
+
+def test_b3_outcome_checks_ledger_path_not_hardcoded_to_public_results():
+    """src/monitoring/outcome_checks.py must NOT hardcode ledger path to results/.
+
+    After P0D-002: LEDGER_PATH in outcome_checks.py must resolve from
+    ledger_path_for() (which uses SPORTSBRAIN_LEDGER_DIR), never be a literal
+    ROOT / 'results' / 'ledger_philip.csv' path.
+    """
+    source = (ROOT / "src" / "monitoring" / "outcome_checks.py").read_text()
+    # The old hardcoded path that must be gone
+    forbidden = 'ROOT / "results" / "ledger_philip.csv"'
+    assert forbidden not in source, (
+        f"outcome_checks.py must not hardcode {forbidden!r}. "
+        "Use ledger_path_for() so SPORTSBRAIN_LEDGER_DIR is respected."
+    )
+
+
+def test_b4_scanner_workflows_have_private_ledger_checkout():
+    """Runtime scanner workflows that read ledger data must checkout private ledger.
+
+    These workflows call ledger_summary() / write_signals_json_all_users() /
+    tennis_live_push.py and therefore require SPORTSBRAIN_LEDGER_DIR to be set.
+    """
+    _READER_WORKFLOWS = {
+        "tennis_scan.yml",
+        "bundesliga2_scan.yml",
+        "tennis_live_scan.yml",
+        "bundesliga2_live_push.yml",
+        "tennis_clv_monitor.yml",
+        "weekly_recap.yml",
+    }
+    violations: list[str] = []
+    for wf_name in sorted(_READER_WORKFLOWS):
+        wf = WORKFLOWS_DIR / wf_name
+        if not wf.exists():
+            violations.append(f"{wf_name}: file not found")
+            continue
+        text = wf.read_text()
+        if "sportsbrain-ledger" not in text:
+            violations.append(f"{wf_name}: missing private ledger checkout (sportsbrain-ledger)")
+        if "SPORTSBRAIN_LEDGER_DIR" not in text:
+            violations.append(f"{wf_name}: missing SPORTSBRAIN_LEDGER_DIR env export")
+        if "LEDGER_PRIVATE_READ_PAT" not in text:
+            violations.append(f"{wf_name}: must use LEDGER_PRIVATE_READ_PAT (read-only) not write PAT")
+    assert not violations, (
+        "Scanner workflows must checkout private ledger (read-only) and export "
+        "SPORTSBRAIN_LEDGER_DIR:\n" + "\n".join(f"  {v}" for v in violations)
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BLOCKER 2 — Betting journal migration tests
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_bj1_update_betting_journal_writes_to_private_ledger_dir(tmp_path, monkeypatch):
+    """update_betting_journal.py must write betting_journal.md to SPORTSBRAIN_LEDGER_DIR,
+    never to public results/.
+
+    Runtime test: execute the journal path resolution with a temporary ledger dir and
+    verify the output path is inside the private ledger dir.
+    """
+    monkeypatch.setenv("SPORTSBRAIN_LEDGER_DIR", str(tmp_path))
+    import importlib
+    import src.config as cfg
+    importlib.reload(cfg)
+
+    journal_path = cfg.betting_journal_path()
+    assert str(tmp_path) in str(journal_path), (
+        f"betting_journal_path() must resolve inside SPORTSBRAIN_LEDGER_DIR ({tmp_path}); got {journal_path}"
+    )
+    assert "results" not in str(journal_path), (
+        f"betting_journal_path() must not contain 'results' (public repo path); got {journal_path}"
+    )
+
+
+def test_bj2_update_betting_journal_script_does_not_hardcode_public_results():
+    """update_betting_journal.py must NOT hardcode JOURNAL_PATH to results/.
+
+    Static analysis: after P0D-002, the journal must write through _betting_journal_path()
+    (which calls betting_journal_path() from config), never via a literal path.
+    """
+    source = (ROOT / "scripts" / "update_betting_journal.py").read_text()
+    forbidden = 'ROOT / "results" / "betting_journal.md"'
+    assert forbidden not in source, (
+        f"update_betting_journal.py must not hardcode {forbidden!r}. "
+        "Use _betting_journal_path() from src.config."
+    )
+
+
+def test_bj3_public_results_betting_journal_not_written_when_private_ledger_set(tmp_path, monkeypatch):
+    """When SPORTSBRAIN_LEDGER_DIR is set, public results/betting_journal.md must not be created.
+
+    Verifies separation: journal stays in private ledger; public results/ is untouched.
+    """
+    monkeypatch.setenv("SPORTSBRAIN_LEDGER_DIR", str(tmp_path))
+    import importlib
+    import src.config as cfg
+    importlib.reload(cfg)
+
+    journal_path = cfg.betting_journal_path()
+    # Write something to the private path
+    journal_path.parent.mkdir(parents=True, exist_ok=True)
+    journal_path.write_text("test journal content")
+
+    # Verify journal resolves inside our private tmp dir, not the public path.
+    public_path = ROOT / "results" / "betting_journal.md"
+    assert journal_path != public_path, (
+        f"betting_journal_path() resolved to the public results/ path: {journal_path}"
+    )
+    assert journal_path.is_relative_to(tmp_path), (
+        f"betting_journal_path() must resolve inside SPORTSBRAIN_LEDGER_DIR ({tmp_path}); got {journal_path}"
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BLOCKER 4 — Rollback governance: no silent fallback to public results/
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_r1_resolve_ledger_dir_has_no_fallback_to_public_results():
+    """_resolve_ledger_dir() must raise EnvironmentError when env var is unset.
+
+    There must be NO code path that falls back to ROOT/results/ or any
+    public directory. Fail-closed is the only safe rollback posture.
+    """
+    import importlib
+    import src.config as cfg
+    import os
+    saved = os.environ.pop("SPORTSBRAIN_LEDGER_DIR", None)
+    try:
+        importlib.reload(cfg)
+        with pytest.raises(EnvironmentError, match="SPORTSBRAIN_LEDGER_DIR"):
+            cfg._resolve_ledger_dir()
+    finally:
+        if saved is not None:
+            os.environ["SPORTSBRAIN_LEDGER_DIR"] = saved
+
+
+def test_r2_no_runtime_fallback_to_public_results_in_config():
+    """src/config.py must not contain a fallback path pointing to public results/.
+
+    Static analysis: the fail-closed design requires that _resolve_ledger_dir()
+    has no alternative path that points to the public repo.
+    """
+    source = (ROOT / "src" / "config.py").read_text()
+    # Search for any path construction that uses "results" near ledger resolution
+    lines = source.splitlines()
+    fallback_violations = []
+    for i, line in enumerate(lines, 1):
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            continue
+        if "results" in stripped and ("ledger" in stripped or "LEDGER" in stripped):
+            # Allowed only if inside a comment block — already excluded above
+            fallback_violations.append(f"config.py:{i}: {stripped!r}")
+    assert not fallback_violations, (
+        "config.py must not reference 'results' near ledger paths — "
+        "no fallback to public results/ is permitted:\n"
+        + "\n".join(f"  {v}" for v in fallback_violations)
+    )
+
+
+def test_r3_no_runtime_fallback_to_public_results_in_web_dashboard():
+    """web_dashboard.py list_known_users() must not fall back to public results/ on EnvironmentError.
+
+    Safe rollback: when SPORTSBRAIN_LEDGER_DIR is missing, return the default user only.
+    This is a visible degradation (single-user mode), NOT a silent public-data fallback.
+    """
+    import importlib
+    import src.config as cfg
+    import src.notifications.web_dashboard as wdb
+    import os
+
+    saved = os.environ.pop("SPORTSBRAIN_LEDGER_DIR", None)
+    try:
+        importlib.reload(cfg)
+        importlib.reload(wdb)
+        users = wdb.list_known_users()
+        # Must return only the default user, not discover from public results/
+        from src.config import DEFAULT_USER
+        assert users == [DEFAULT_USER], (
+            f"When SPORTSBRAIN_LEDGER_DIR is unset, list_known_users() must return "
+            f"only [{DEFAULT_USER!r}] (safe degradation); got {users}"
+        )
+    finally:
+        if saved is not None:
+            os.environ["SPORTSBRAIN_LEDGER_DIR"] = saved
+
+
+def test_r4_rollback_posture_no_financial_writer_with_public_path():
+    """No authoritative financial workflow has a fallback ledger path in the public repo.
+
+    Static analysis across all 4 financial workflows: no step should write
+    ledger data to `results/` directory of the public repo.
+    """
+    violations: list[str] = []
+    for wf_name in _ALL_FINANCIAL:
+        wf = WORKFLOWS_DIR / wf_name
+        if not wf.exists():
+            violations.append(f"{wf_name}: file not found")
+            continue
+        text = wf.read_text()
+        for lineno, line in enumerate(text.splitlines(), 1):
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                continue
+            # Flag any line that references both results/ and ledger in a git-add context
+            if "results/" in stripped and "ledger" in stripped and re.search(r"git\s+add", stripped):
+                violations.append(f"{wf_name}:{lineno}: {stripped!r}")
+    assert not violations, (
+        "Financial workflows must NOT git-add ledger files from public results/ — "
+        "all ledger staging targets the private repo:\n"
+        + "\n".join(f"  {v}" for v in violations)
+    )
