@@ -120,11 +120,17 @@ def test_3_durable_push_git_add_is_ledger_scoped():
     _Visitor().visit(tree)
 
     assert git_add_args, "_durable_push() must contain at least one `git add` call"
+    # Must have the authoritative ledger CSV add (no results/ prefix)
+    add_targets = [args[-1] for args in git_add_args if len(args) >= 2]
+    assert "ledger_*.csv" in add_targets, (
+        f"_durable_push() must git-add 'ledger_*.csv' (no results/ prefix); found: {add_targets!r}"
+    )
     for args in git_add_args:
-        # Must not have results/ prefix — that belongs to the old public-repo path.
-        assert args == ["add", "ledger_*.csv"], (
-            f"_durable_push() git add must use 'ledger_*.csv' (no results/ prefix in private repo); got {args!r}"
-        )
+        # No git add must use the old results/ prefix
+        for arg in args:
+            assert "results/" not in arg, (
+                f"_durable_push() git add must not use results/ prefix (private repo is flat); got {args!r}"
+            )
 
 
 def test_4_settle_workflows_no_true_on_ledger_add():
@@ -599,20 +605,40 @@ def test_j2_financial_governance_sentinel():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# BLOCKER 1 — Private ledger reader migration tests
+# Meta: unique test names (BLOCKER 1 correction)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def test_b1_list_known_users_discovers_from_private_ledger_dir(tmp_path, monkeypatch):
+def test_meta_no_duplicate_test_names_in_governance_suite():
+    """All def test_* names in this module must be globally unique.
+
+    Python silently overwrites earlier definitions when two functions share a name,
+    causing pytest to collect only one of them and falsely report the count.
+    """
+    source = Path(__file__).read_text()
+    names: list[str] = re.findall(r"^def (test_\w+)\(", source, re.MULTILINE)
+    seen: dict[str, int] = {}
+    duplicates: list[str] = []
+    for n in names:
+        seen[n] = seen.get(n, 0) + 1
+        if seen[n] == 2:
+            duplicates.append(n)
+    assert not duplicates, (
+        "Duplicate test function names found in governance suite — "
+        "each test must have a unique name or pytest will silently discard one:\n"
+        + "\n".join(f"  {n}" for n in duplicates)
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Reader migration regression (CEO Review Blocker 1)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_reader_1_list_known_users_discovers_from_private_ledger_dir(tmp_path, monkeypatch):
     """list_known_users() must discover user slugs from SPORTSBRAIN_LEDGER_DIR,
     never from public results/.
-
-    After P0D-002: ledger files live in the private repo checkout (private-ledger/).
-    The public repo's results/ will no longer contain ledger_*.csv.
     """
     monkeypatch.setenv("SPORTSBRAIN_LEDGER_DIR", str(tmp_path))
-    # Create ledger file in the private ledger dir
     (tmp_path / "ledger_philip.csv").write_text("status\nopen\n")
-    # Ensure public results/ has no ledger (it would be stale/wrong source)
     (ROOT / "results").mkdir(parents=True, exist_ok=True)
 
     import importlib
@@ -627,14 +653,9 @@ def test_b1_list_known_users_discovers_from_private_ledger_dir(tmp_path, monkeyp
     )
 
 
-def test_b2_list_known_users_source_code_does_not_glob_public_results():
-    """web_dashboard.list_known_users() must NOT glob from ROOT/results/.
-
-    Static analysis: after P0D-002 the discovery source must be _resolve_ledger_dir_cfg(),
-    never (ROOT / 'results').glob(...).
-    """
+def test_reader_2_list_known_users_source_does_not_glob_public_results():
+    """web_dashboard.list_known_users() must NOT glob from ROOT/results/ after P0D-002."""
     source = (ROOT / "src" / "notifications" / "web_dashboard.py").read_text()
-    # Extract only the list_known_users function body via line-based search
     in_func = False
     func_lines: list[str] = []
     for line in source.splitlines():
@@ -645,37 +666,23 @@ def test_b2_list_known_users_source_code_does_not_glob_public_results():
         if in_func:
             func_lines.append(line)
     func_body = "\n".join(func_lines)
-
-    # Must not contain the old public-results glob pattern
     assert '"results"' not in func_body or "glob" not in func_body, (
         'list_known_users() must NOT glob from (ROOT / "results") — '
-        "after P0D-002 use _resolve_ledger_dir_cfg() for private ledger discovery.\n"
-        f"Found in function body: {func_body[:500]!r}"
+        "use _resolve_ledger_dir_cfg() for private ledger discovery"
     )
 
 
-def test_b3_outcome_checks_ledger_path_not_hardcoded_to_public_results():
-    """src/monitoring/outcome_checks.py must NOT hardcode ledger path to results/.
-
-    After P0D-002: LEDGER_PATH in outcome_checks.py must resolve from
-    ledger_path_for() (which uses SPORTSBRAIN_LEDGER_DIR), never be a literal
-    ROOT / 'results' / 'ledger_philip.csv' path.
-    """
+def test_reader_3_outcome_checks_ledger_path_not_hardcoded():
+    """src/monitoring/outcome_checks.py must NOT hardcode path to public results/."""
     source = (ROOT / "src" / "monitoring" / "outcome_checks.py").read_text()
-    # The old hardcoded path that must be gone
     forbidden = 'ROOT / "results" / "ledger_philip.csv"'
     assert forbidden not in source, (
-        f"outcome_checks.py must not hardcode {forbidden!r}. "
-        "Use ledger_path_for() so SPORTSBRAIN_LEDGER_DIR is respected."
+        f"outcome_checks.py must not hardcode {forbidden!r} — use ledger_path_for()"
     )
 
 
-def test_b4_scanner_workflows_have_private_ledger_checkout():
-    """Runtime scanner workflows that read ledger data must checkout private ledger.
-
-    These workflows call ledger_summary() / write_signals_json_all_users() /
-    tennis_live_push.py and therefore require SPORTSBRAIN_LEDGER_DIR to be set.
-    """
+def test_reader_4_scanner_workflows_have_private_ledger_checkout():
+    """Runtime scanner workflows that read ledger data must checkout private ledger."""
     _READER_WORKFLOWS = {
         "tennis_scan.yml",
         "bundesliga2_scan.yml",
@@ -696,7 +703,7 @@ def test_b4_scanner_workflows_have_private_ledger_checkout():
         if "SPORTSBRAIN_LEDGER_DIR" not in text:
             violations.append(f"{wf_name}: missing SPORTSBRAIN_LEDGER_DIR env export")
         if "LEDGER_PRIVATE_READ_PAT" not in text:
-            violations.append(f"{wf_name}: must use LEDGER_PRIVATE_READ_PAT (read-only) not write PAT")
+            violations.append(f"{wf_name}: must use LEDGER_PRIVATE_READ_PAT (read-only)")
     assert not violations, (
         "Scanner workflows must checkout private ledger (read-only) and export "
         "SPORTSBRAIN_LEDGER_DIR:\n" + "\n".join(f"  {v}" for v in violations)
@@ -704,79 +711,118 @@ def test_b4_scanner_workflows_have_private_ledger_checkout():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# BLOCKER 2 — Betting journal migration tests
+# Betting journal runtime regression (CEO Review Blocker 4)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def test_bj1_update_betting_journal_writes_to_private_ledger_dir(tmp_path, monkeypatch):
-    """update_betting_journal.py must write betting_journal.md to SPORTSBRAIN_LEDGER_DIR,
-    never to public results/.
-
-    Runtime test: execute the journal path resolution with a temporary ledger dir and
-    verify the output path is inside the private ledger dir.
-    """
+def test_journal_1_path_resolves_inside_private_ledger_dir(tmp_path, monkeypatch):
+    """betting_journal_path() must resolve inside SPORTSBRAIN_LEDGER_DIR."""
     monkeypatch.setenv("SPORTSBRAIN_LEDGER_DIR", str(tmp_path))
     import importlib
     import src.config as cfg
     importlib.reload(cfg)
 
     journal_path = cfg.betting_journal_path()
-    assert str(tmp_path) in str(journal_path), (
-        f"betting_journal_path() must resolve inside SPORTSBRAIN_LEDGER_DIR ({tmp_path}); got {journal_path}"
+    assert journal_path.is_relative_to(tmp_path), (
+        f"betting_journal_path() must be inside SPORTSBRAIN_LEDGER_DIR ({tmp_path}); got {journal_path}"
     )
-    assert "results" not in str(journal_path), (
-        f"betting_journal_path() must not contain 'results' (public repo path); got {journal_path}"
-    )
-
-
-def test_bj2_update_betting_journal_script_does_not_hardcode_public_results():
-    """update_betting_journal.py must NOT hardcode JOURNAL_PATH to results/.
-
-    Static analysis: after P0D-002, the journal must write through _betting_journal_path()
-    (which calls betting_journal_path() from config), never via a literal path.
-    """
-    source = (ROOT / "scripts" / "update_betting_journal.py").read_text()
-    forbidden = 'ROOT / "results" / "betting_journal.md"'
-    assert forbidden not in source, (
-        f"update_betting_journal.py must not hardcode {forbidden!r}. "
-        "Use _betting_journal_path() from src.config."
-    )
-
-
-def test_bj3_public_results_betting_journal_not_written_when_private_ledger_set(tmp_path, monkeypatch):
-    """When SPORTSBRAIN_LEDGER_DIR is set, public results/betting_journal.md must not be created.
-
-    Verifies separation: journal stays in private ledger; public results/ is untouched.
-    """
-    monkeypatch.setenv("SPORTSBRAIN_LEDGER_DIR", str(tmp_path))
-    import importlib
-    import src.config as cfg
-    importlib.reload(cfg)
-
-    journal_path = cfg.betting_journal_path()
-    # Write something to the private path
-    journal_path.parent.mkdir(parents=True, exist_ok=True)
-    journal_path.write_text("test journal content")
-
-    # Verify journal resolves inside our private tmp dir, not the public path.
     public_path = ROOT / "results" / "betting_journal.md"
     assert journal_path != public_path, (
-        f"betting_journal_path() resolved to the public results/ path: {journal_path}"
-    )
-    assert journal_path.is_relative_to(tmp_path), (
-        f"betting_journal_path() must resolve inside SPORTSBRAIN_LEDGER_DIR ({tmp_path}); got {journal_path}"
+        f"betting_journal_path() must not resolve to public results/ path: {journal_path}"
     )
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# BLOCKER 4 — Rollback governance: no silent fallback to public results/
-# ─────────────────────────────────────────────────────────────────────────────
+def test_journal_2_script_does_not_hardcode_public_results():
+    """update_betting_journal.py must NOT hardcode JOURNAL_PATH to results/."""
+    source = (ROOT / "scripts" / "update_betting_journal.py").read_text()
+    assert 'ROOT / "results" / "betting_journal.md"' not in source, (
+        "update_betting_journal.py must not hardcode public results/ journal path — "
+        "use _betting_journal_path() from src.config"
+    )
 
-def test_r1_resolve_ledger_dir_has_no_fallback_to_public_results():
-    """_resolve_ledger_dir() must raise EnvironmentError when env var is unset.
 
-    There must be NO code path that falls back to ROOT/results/ or any
-    public directory. Fail-closed is the only safe rollback posture.
+def test_journal_3_main_writes_to_private_ledger_not_public_results(tmp_path, monkeypatch):
+    """update_betting_journal.main() must write betting_journal.md to SPORTSBRAIN_LEDGER_DIR.
+
+    CEO Blocker 4: test must invoke the actual script output path, not manually write
+    the file in place of the script. This proves the production code path is correct.
     """
+    import json
+    monkeypatch.setenv("SPORTSBRAIN_LEDGER_DIR", str(tmp_path))
+
+    # Prepare minimal signal_history.jsonl in a temp cache dir
+    cache_dir = tmp_path / "data_cache"
+    cache_dir.mkdir()
+    snapshot_store = cache_dir / "journal_snapshots.jsonl"
+
+    import importlib
+    import src.config as cfg
+    importlib.reload(cfg)
+    import scripts.update_betting_journal as ubj
+    importlib.reload(ubj)
+
+    # Point the script at our temp signal history (no signals = valid empty case)
+    monkeypatch.setattr(ubj, "SIGNAL_HISTORY", cache_dir / "signal_history.jsonl")
+    monkeypatch.setattr(ubj, "SNAPSHOT_STORE", snapshot_store)
+
+    # Provide one minimal settled signal so the journal is non-empty
+    signal = {
+        "signal_id": "test-sig-001",
+        "sport": "tennis",
+        "home": "Player A",
+        "away": "Player B",
+        "market": "h2h",
+        "odds": 2.1,
+        "model_prob": 0.55,
+        "ev": 0.155,
+        "stake_eur": 10.0,
+        "outcome": "won",
+        "pnl": 11.0,
+        "signal_date": "2026-08-19",
+        "settle_date": "2026-08-19",
+    }
+    (cache_dir / "signal_history.jsonl").write_text(json.dumps(signal) + "\n")
+
+    # Capture what path the script would write to
+    written_paths: list[str] = []
+    original_write_text = None
+
+    import pathlib
+    original_write = pathlib.Path.write_text
+
+    def _capture_write(self, data, *args, **kwargs):
+        written_paths.append(str(self))
+        return original_write(self, data, *args, **kwargs)
+
+    monkeypatch.setattr(pathlib.Path, "write_text", _capture_write)
+
+    # Execute the script's main() with sport=all
+    import sys
+    monkeypatch.setattr(sys, "argv", ["update_betting_journal.py"])
+    ubj.main()
+
+    # The private ledger journal must have been written
+    expected_journal = tmp_path / "betting_journal.md"
+    assert expected_journal.exists(), (
+        f"update_betting_journal.main() must write betting_journal.md to "
+        f"SPORTSBRAIN_LEDGER_DIR ({tmp_path}); written_paths={written_paths}"
+    )
+    content = expected_journal.read_text()
+    assert len(content) > 0, "betting_journal.md must not be empty after main()"
+
+    # Public results/betting_journal.md must NOT have been written
+    public_journal = ROOT / "results" / "betting_journal.md"
+    assert str(public_journal) not in written_paths, (
+        f"update_betting_journal.main() must NOT write to public results/: "
+        f"found {public_journal} in written_paths={written_paths}"
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Rollback governance (CEO Review Blocker 4 — no fallback to public results/)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_rollback_1_resolve_ledger_dir_has_no_fallback():
+    """_resolve_ledger_dir() must raise EnvironmentError when env var is unset."""
     import importlib
     import src.config as cfg
     import os
@@ -790,36 +836,25 @@ def test_r1_resolve_ledger_dir_has_no_fallback_to_public_results():
             os.environ["SPORTSBRAIN_LEDGER_DIR"] = saved
 
 
-def test_r2_no_runtime_fallback_to_public_results_in_config():
-    """src/config.py must not contain a fallback path pointing to public results/.
-
-    Static analysis: the fail-closed design requires that _resolve_ledger_dir()
-    has no alternative path that points to the public repo.
-    """
+def test_rollback_2_config_has_no_results_ledger_fallback():
+    """src/config.py must not contain a fallback path pointing to public results/."""
     source = (ROOT / "src" / "config.py").read_text()
-    # Search for any path construction that uses "results" near ledger resolution
     lines = source.splitlines()
-    fallback_violations = []
+    violations = []
     for i, line in enumerate(lines, 1):
         stripped = line.strip()
         if stripped.startswith("#"):
             continue
         if "results" in stripped and ("ledger" in stripped or "LEDGER" in stripped):
-            # Allowed only if inside a comment block — already excluded above
-            fallback_violations.append(f"config.py:{i}: {stripped!r}")
-    assert not fallback_violations, (
-        "config.py must not reference 'results' near ledger paths — "
-        "no fallback to public results/ is permitted:\n"
-        + "\n".join(f"  {v}" for v in fallback_violations)
+            violations.append(f"config.py:{i}: {stripped!r}")
+    assert not violations, (
+        "config.py must not reference 'results' near ledger paths:\n"
+        + "\n".join(f"  {v}" for v in violations)
     )
 
 
-def test_r3_no_runtime_fallback_to_public_results_in_web_dashboard():
-    """web_dashboard.py list_known_users() must not fall back to public results/ on EnvironmentError.
-
-    Safe rollback: when SPORTSBRAIN_LEDGER_DIR is missing, return the default user only.
-    This is a visible degradation (single-user mode), NOT a silent public-data fallback.
-    """
+def test_rollback_3_list_known_users_degrades_safely_not_silently():
+    """list_known_users() when env var unset returns [DEFAULT_USER], never public results/."""
     import importlib
     import src.config as cfg
     import src.notifications.web_dashboard as wdb
@@ -830,23 +865,17 @@ def test_r3_no_runtime_fallback_to_public_results_in_web_dashboard():
         importlib.reload(cfg)
         importlib.reload(wdb)
         users = wdb.list_known_users()
-        # Must return only the default user, not discover from public results/
         from src.config import DEFAULT_USER
         assert users == [DEFAULT_USER], (
-            f"When SPORTSBRAIN_LEDGER_DIR is unset, list_known_users() must return "
-            f"only [{DEFAULT_USER!r}] (safe degradation); got {users}"
+            f"list_known_users() when env var unset must return [{DEFAULT_USER!r}]; got {users}"
         )
     finally:
         if saved is not None:
             os.environ["SPORTSBRAIN_LEDGER_DIR"] = saved
 
 
-def test_r4_rollback_posture_no_financial_writer_with_public_path():
-    """No authoritative financial workflow has a fallback ledger path in the public repo.
-
-    Static analysis across all 4 financial workflows: no step should write
-    ledger data to `results/` directory of the public repo.
-    """
+def test_rollback_4_financial_workflows_never_git_add_public_results_ledger():
+    """No authoritative financial workflow git-adds ledger files from public results/."""
     violations: list[str] = []
     for wf_name in _ALL_FINANCIAL:
         wf = WORKFLOWS_DIR / wf_name
@@ -858,11 +887,160 @@ def test_r4_rollback_posture_no_financial_writer_with_public_path():
             stripped = line.strip()
             if stripped.startswith("#"):
                 continue
-            # Flag any line that references both results/ and ledger in a git-add context
             if "results/" in stripped and "ledger" in stripped and re.search(r"git\s+add", stripped):
                 violations.append(f"{wf_name}:{lineno}: {stripped!r}")
     assert not violations, (
-        "Financial workflows must NOT git-add ledger files from public results/ — "
-        "all ledger staging targets the private repo:\n"
+        "Financial workflows must NOT git-add ledger files from public results/:\n"
+        + "\n".join(f"  {v}" for v in violations)
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SQLite stale-mirror regression (CEO Review Blocker 3)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_sqlite_1_count_open_bets_uses_csv_not_stale_sqlite(tmp_path, monkeypatch):
+    """count_open_bets() must return CSV-authoritative count even when stale SQLite exists.
+
+    Scenario: CSV has 3 open bets, SQLite mirror has 0 (stale after fresh checkout).
+    count_open_bets() must return 3 (CSV truth), never 0 (stale DB).
+
+    P0D-002: SQLite may be stale after a fresh private repo checkout. MAX_ACTIVE_BETS
+    enforcement is a risk-critical gate and must never be weakened by stale DB data.
+    """
+    import sqlite3
+    import pandas as pd
+    from src.betting.ledger import _FIELDS, count_open_bets
+
+    monkeypatch.setenv("SPORTSBRAIN_LEDGER_DIR", str(tmp_path))
+    import importlib
+    import src.config as cfg
+    importlib.reload(cfg)
+    import src.betting.ledger as lm
+    importlib.reload(lm)
+    from src.betting.ledger import count_open_bets as cob
+
+    ledger_file = tmp_path / "ledger_philip.csv"
+
+    # Write 3 open bets to CSV (authoritative)
+    rows = []
+    for i in range(3):
+        r = {f: "" for f in _FIELDS}
+        r.update({"match_id": f"match-{i}", "market": "h2h", "home": f"TeamA{i}",
+                  "away": f"TeamB{i}", "status": "open", "pnl": "0.0"})
+        rows.append(r)
+    pd.DataFrame(rows, columns=_FIELDS).to_csv(ledger_file, index=False)
+
+    # Create stale SQLite with 0 bets (simulates fresh checkout after CSV was updated)
+    db_file = tmp_path / "ledger_philip.db"
+    conn = sqlite3.connect(str(db_file))
+    conn.execute("CREATE TABLE bets (status TEXT)")
+    conn.commit()
+    conn.close()
+
+    result = cob(ledger_file)
+    assert result == 3, (
+        f"count_open_bets() must return CSV-authoritative count (3), "
+        f"not stale SQLite count (0); got {result}"
+    )
+
+
+def test_sqlite_2_count_open_bets_source_does_not_prefer_sqlite():
+    """count_open_bets() source must not contain SQLite fast-path before CSV read.
+
+    Static analysis: the CSV-authoritative correction must eliminate the SQLite
+    preference so future refactors cannot accidentally re-introduce it.
+    """
+    source = (ROOT / "src" / "betting" / "ledger.py").read_text()
+    in_func = False
+    func_lines: list[str] = []
+    for line in source.splitlines():
+        if "def count_open_bets(" in line:
+            in_func = True
+        elif in_func and line.startswith("def "):
+            break
+        if in_func:
+            func_lines.append(line)
+    func_body = "\n".join(func_lines)
+
+    # Must not prefer SQLite over CSV
+    assert "db_path.exists()" not in func_body, (
+        "count_open_bets() must not check db_path.exists() — "
+        "SQLite mirror may be stale after a fresh private repo checkout"
+    )
+    assert "open_db" not in func_body, (
+        "count_open_bets() must not call open_db() (SQLite) — use CSV authoritative path"
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Bankroll snapshot durability (CEO Review Blocker 2)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_snapshot_1_durable_push_stages_bankroll_snapshot():
+    """_durable_push() must git-add bankroll_snapshot_*.json alongside ledger_*.csv.
+
+    cancel_bet() mutates bankroll_snapshot_*.json; that mutation must survive
+    a fresh private-repo checkout — therefore it must be committed to the private repo.
+    """
+    source = CONSUME_SCRIPT.read_text()
+    assert "bankroll_snapshot_*.json" in source, (
+        "_durable_push() must git-add 'bankroll_snapshot_*.json' to persist "
+        "cancel_bet() snapshot mutations through private repo checkouts"
+    )
+
+
+def test_snapshot_2_reader_workflows_do_not_need_write_permission_for_snapshot():
+    """Reader workflows (LEDGER_PRIVATE_READ_PAT) must not mutate bankroll_snapshot_*.json.
+
+    cancel_bet() is only called from consume_pending_bets.py which holds write
+    credentials. Reader workflows (tennis_scan, etc.) must never call cancel_bet()
+    or get_bankroll_snapshot() — those require write access.
+    """
+    _READER_SCRIPTS = {
+        "scripts/tennis_scan.py",
+        "scripts/bundesliga2_scan.py",
+        "scripts/tennis_live_push.py",
+        "scripts/bundesliga2_live_push.py",
+        "scripts/monitor_clv.py",
+        "scripts/weekly_recap.py",
+    }
+    violations: list[str] = []
+    for script_path in sorted(_READER_SCRIPTS):
+        path = ROOT / script_path
+        if not path.exists():
+            continue
+        source = path.read_text()
+        if "cancel_bet" in source:
+            violations.append(f"{script_path}: calls cancel_bet() — requires write access")
+        if "get_bankroll_snapshot" in source:
+            violations.append(f"{script_path}: calls get_bankroll_snapshot() — writes snapshot on week boundary")
+    assert not violations, (
+        "Reader workflows must not mutate bankroll_snapshot_*.json "
+        "(they use read-only credentials):\n"
+        + "\n".join(f"  {v}" for v in violations)
+    )
+
+
+def test_snapshot_3_financial_writer_workflows_stage_snapshot():
+    """Authoritative financial writer workflows must stage bankroll_snapshot_*.json.
+
+    consume_pending_bets: snapshot persistence is owned by _durable_push() in the Python
+    script (which calls git add bankroll_snapshot_*.json). Verified by test_snapshot_1.
+
+    Settle workflows (tennis_settle, tennis_closing_odds, bundesliga2_settle): snapshot
+    may be modified if cancel_bet() is ever called; the workflow commit step must include it.
+    """
+    violations: list[str] = []
+    for wf_name in _AUTHORITATIVE_FINANCIAL:
+        wf = WORKFLOWS_DIR / wf_name
+        if not wf.exists():
+            violations.append(f"{wf_name}: file not found")
+            continue
+        text = wf.read_text()
+        if "bankroll_snapshot_*.json" not in text:
+            violations.append(f"{wf_name}: does not stage bankroll_snapshot_*.json")
+    assert not violations, (
+        "Authoritative settle workflows must git-add bankroll_snapshot_*.json:\n"
         + "\n".join(f"  {v}" for v in violations)
     )

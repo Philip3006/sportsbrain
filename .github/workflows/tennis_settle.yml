@@ -72,6 +72,7 @@ jobs:
           SPORTSBRAIN_LEDGER_DIR: ${{ github.workspace }}/private-ledger
         run: |
           git -C private-ledger add ledger_*.csv
+          git -C private-ledger add bankroll_snapshot_*.json 2>/dev/null || true
           git -C private-ledger add betting_journal.md 2>/dev/null || true
           git -C private-ledger diff --cached --quiet && echo "[ledger] nothing to commit" && exit 0
           git -C private-ledger commit -m "auto: tennis settle $(date +%Y-%m-%d\ %H:%M) UTC"
