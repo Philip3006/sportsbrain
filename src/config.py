@@ -95,7 +95,9 @@ def league_config(sport_key: str) -> dict | None:
 def active_leagues(today=None) -> list[str]:
     """Alle sport_keys deren Saisonfenster heute aktiv ist (start_date ≤ today ≤ end_date+1d).
     None-Bounds gelten als 'immer aktiv'. Nimmt date, datetime oder None entgegen."""
-    from datetime import date as _date, datetime as _dt, timedelta as _td
+    from datetime import date as _date
+    from datetime import datetime as _dt
+    from datetime import timedelta as _td
     if today is None:
         t = _date.today()
     elif isinstance(today, _dt):
@@ -191,7 +193,7 @@ def _resolve_ledger_dir() -> Path:
     """
     val = os.environ.get(LEDGER_DIR_ENV, "").strip()
     if not val:
-        raise EnvironmentError(
+        raise OSError(
             "SPORTSBRAIN_LEDGER_DIR is not set. Financial ledger operations require an explicit "
             "private ledger directory. Set to the path of the sportsbrain-ledger private "
             "repository checkout. In tests, use tmp_path or set the env var."

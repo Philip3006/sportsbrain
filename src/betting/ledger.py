@@ -61,7 +61,7 @@ def _resolve_ledger_path(ledger_path: Path | None = None, user: str = DEFAULT_US
 # None sentinel will raise EnvironmentError at call-time, not import-time.
 try:
     LEDGER_PATH = _resolve_ledger_path(None, DEFAULT_USER)
-except EnvironmentError:
+except OSError:
     LEDGER_PATH = None  # Will fail properly when actually used via ledger_path_for()
 
 

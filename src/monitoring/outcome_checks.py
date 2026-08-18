@@ -13,17 +13,18 @@ from __future__ import annotations
 
 import csv
 import json
-from dataclasses import dataclass, asdict
-from datetime import datetime, timezone, timedelta
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 
 # P0D-002: ledger lives in private repo; no fallback to public results/.
 try:
-    from src.config import ledger_path_for as _ledger_path_for, DEFAULT_USER as _DEFAULT_USER_OC
+    from src.config import DEFAULT_USER as _DEFAULT_USER_OC
+    from src.config import ledger_path_for as _ledger_path_for
     LEDGER_PATH = _ledger_path_for(_DEFAULT_USER_OC)
-except EnvironmentError:
+except OSError:
     LEDGER_PATH = None  # type: ignore[assignment]
 SIGNALS_PATH = ROOT / "docs" / "data" / "signals.json"
 PUSH_DELIVERY_PATH = ROOT / "results" / "health" / "push_delivery.json"
