@@ -75,9 +75,10 @@ jobs:
             git -C private-ledger fetch origin main
             git -C private-ledger rebase --autostash --strategy-option=theirs origin/main \
               || { git -C private-ledger rebase --abort 2>/dev/null || true; }
-            git -C private-ledger push origin main && break
+            git -C private-ledger push origin main && exit 0
             sleep $((RANDOM % 20 + 10))
           done
+          echo "[ledger push] giving up after 5 attempts — ledger NOT persisted" >&2; exit 1
 
       - name: Commit public artifacts (health — non-fatal)
         run: |
