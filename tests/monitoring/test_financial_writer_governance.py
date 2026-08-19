@@ -1314,3 +1314,51 @@ def test_bankroll_snapshot_2_gitignore_protects_public_data_path():
         "accidental reintroduction of private financial state into the public repo. "
         "Add 'data/bankroll_snapshot.json' and 'data/bankroll_snapshot_*.json'."
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Private-commit success-gate (P0D-002 Phase 5B.3)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_private_commit_1_not_always_in_settlement_workflows():
+    """Authoritative private-ledger commit/push steps must NOT use `if: always()`.
+
+    If a settlement execution step partially mutates the private working tree and
+    then fails, `if: always()` would commit and push that partial state as
+    authoritative financial truth.  The private persistence step must execute only
+    after the settlement execution step succeeds (GitHub Actions default semantics).
+
+    Covers: bundesliga2_settle.yml, tennis_settle.yml, tennis_closing_odds.yml
+    """
+    settlement_workflows = [
+        ROOT / ".github" / "workflows" / "bundesliga2_settle.yml",
+        ROOT / ".github" / "workflows" / "tennis_settle.yml",
+        ROOT / ".github" / "workflows" / "tennis_closing_odds.yml",
+    ]
+    violations = []
+    for wf_path in settlement_workflows:
+        assert wf_path.exists(), f"Workflow file missing: {wf_path.name}"
+        text = wf_path.read_text()
+        lines = text.splitlines()
+        private_commit_idx = None
+        for i, line in enumerate(lines):
+            if "Commit private ledger" in line:
+                private_commit_idx = i
+                break
+        if private_commit_idx is None:
+            violations.append(f"{wf_path.name}: missing 'Commit private ledger' step")
+            continue
+        # Check the 5 lines immediately after the step name for `if: always()`
+        window = lines[private_commit_idx + 1 : private_commit_idx + 6]
+        for line in window:
+            stripped = line.strip()
+            if stripped == "if: always()":
+                violations.append(
+                    f"{wf_path.name}: 'Commit private ledger' step uses `if: always()` — "
+                    "authoritative private persistence must not run after failed execution"
+                )
+                break
+    assert not violations, (
+        "Private-ledger commit/push must be success-gated in all settlement workflows.\n"
+        + "\n".join(violations)
+    )
