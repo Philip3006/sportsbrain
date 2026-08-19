@@ -447,6 +447,51 @@ def test_k3_all_four_financial_workflows_exist_and_are_classified():
     assert not missing, "Financial workflows not found:\n" + "\n".join(f"  {m}" for m in missing)
 
 
+# ── P0-D: ledger_corrections namespace must never appear in public repo ────────
+
+def test_p0d_ledger_corrections_namespace_gitignored():
+    """results/ledger_corrections/ must be covered by .gitignore.
+
+    P0-D active-tree cleanup: ledger correction audit artifacts are private
+    financial state and must never be committed to Philip3006/sportsbrain.
+    """
+    gitignore = ROOT / ".gitignore"
+    assert gitignore.exists(), ".gitignore must exist"
+    text = gitignore.read_text()
+    lines = [l.strip() for l in text.splitlines() if l.strip() and not l.strip().startswith("#")]
+    covered = any(
+        "ledger_corrections" in l or "ledger_corrections/" in l
+        for l in lines
+    )
+    assert covered, (
+        ".gitignore must contain a pattern covering 'results/ledger_corrections/' to prevent "
+        "accidental commit of financial correction artifacts to the public repo. "
+        f"Current patterns: {lines}"
+    )
+
+
+def test_p0d_ledger_corrections_not_bot_permitted():
+    """_bot_permitted() in _git_safe_push.sh must NOT allow results/ledger_corrections/ paths.
+
+    The function uses an explicit allowlist — ledger correction artifacts must
+    not appear in any case-branch that returns 0 (permitted).
+    """
+    git_safe_push = ROOT / "scripts" / "_git_safe_push.sh"
+    assert git_safe_push.exists(), "_git_safe_push.sh must exist"
+    text = git_safe_push.read_text()
+
+    # Find the _bot_permitted function body
+    match = re.search(r"_bot_permitted\s*\(\s*\)(.*?)^}", text, re.DOTALL | re.MULTILINE)
+    assert match, "_bot_permitted() function not found in _git_safe_push.sh"
+    func_body = match.group(1)
+
+    assert "ledger_corrections" not in func_body, (
+        "_bot_permitted() must NOT permit 'ledger_corrections' paths — "
+        "these are private financial correction artifacts, not public runtime data. "
+        "Remove any 'results/ledger_corrections' entry from the allowlist case statement."
+    )
+
+
 def test_k4_authoritative_financial_workflows_have_own_retry_loops():
     """AUTHORITATIVE_FINANCIAL_TRANSACTION workflows must each have their own push retry loop."""
     _RETRY_PATTERN = re.compile(r"for i in 1 2 3 4 5", re.MULTILINE)
