@@ -1,11 +1,11 @@
 {
   "job": "bundesliga2_settle",
   "status": "error",
-  "last_run_at": "2026-08-19T14:03:55Z",
-  "started_at": "2026-08-19T14:03:55Z",
+  "last_run_at": "2026-08-19T14:05:18Z",
+  "started_at": "2026-08-19T14:05:18Z",
   "duration_s": null,
   "exit_code": 1,
-  "error": null,
+  "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
   "fallback_used": null,
   "run_id": null,
   "recovery_attempt_id": null
