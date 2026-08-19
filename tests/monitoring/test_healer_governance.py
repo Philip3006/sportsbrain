@@ -511,3 +511,93 @@ def test_27_worker_consume_dispatcher_unchanged():
     assert "consume_pending_bets" in region, (
         "_cronConsumeCheck must still dispatch consume_pending_bets"
     )
+
+
+# ---------------------------------------------------------------------------
+# 28–34: Behavioral secret-redaction tests (P0D-003 external-AI data boundary)
+# ---------------------------------------------------------------------------
+
+def _redact(text: str) -> str:
+    """Import and invoke _redact_secrets from auto_heal_ai."""
+    sys.path.insert(0, str(ROOT))
+    import importlib
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("auto_heal_ai", _AUTO_HEAL_AI)
+    mod = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    return mod._redact_secrets(text)
+
+
+def test_28_redact_sk_ant_api_key():
+    """sk-ant-api key: secret value must be absent after redaction."""
+    secret = "sk-ant-api03-super-secret-value-ABCDEF123"
+    result = _redact(secret)
+    assert "super-secret-value-ABCDEF123" not in result, (
+        f"Secret value still present after redaction: {result!r}"
+    )
+    assert "[REDACTED]" in result, f"[REDACTED] marker missing: {result!r}"
+    # Safe prefix must be preserved
+    assert "sk-ant-api" in result, f"Safe prefix stripped unexpectedly: {result!r}"
+
+
+def test_29_redact_bearer_token():
+    """Bearer token: secret value must be absent after redaction."""
+    secret = "Bearer abcdef123456SECRETVALUE"
+    result = _redact(secret)
+    assert "abcdef123456SECRETVALUE" not in result, (
+        f"Bearer secret still present after redaction: {result!r}"
+    )
+    assert "[REDACTED]" in result
+    assert "Bearer" in result, "Bearer label must be preserved"
+
+
+def test_30_redact_anthropic_api_key():
+    """ANTHROPIC_API_KEY: secret value must be absent after redaction."""
+    secret = "ANTHROPIC_API_KEY=abcdef123456SECRETVALUE"
+    result = _redact(secret)
+    assert "abcdef123456SECRETVALUE" not in result, (
+        f"ANTHROPIC_API_KEY secret still present: {result!r}"
+    )
+    assert "[REDACTED]" in result
+    assert "ANTHROPIC_API_KEY" in result, "Key name label must be preserved"
+
+
+def test_31_redact_odds_api_key():
+    """ODDS_API_KEY: secret value must be absent after redaction."""
+    secret = "ODDS_API_KEY=abcdef123456SECRETVALUE"
+    result = _redact(secret)
+    assert "abcdef123456SECRETVALUE" not in result, (
+        f"ODDS_API_KEY secret still present: {result!r}"
+    )
+    assert "[REDACTED]" in result
+    assert "ODDS_API_KEY" in result
+
+
+def test_32_redact_vapid_private_key():
+    """VAPID_PRIVATE_KEY: secret value must be absent after redaction."""
+    secret = "VAPID_PRIVATE_KEY=abcdef123456SECRETVALUE"
+    result = _redact(secret)
+    assert "abcdef123456SECRETVALUE" not in result, (
+        f"VAPID secret still present: {result!r}"
+    )
+    assert "[REDACTED]" in result
+    assert "VAPID_PRIVATE_KEY" in result
+
+
+def test_33_redact_token_assignment():
+    """token=<secret>: secret value must be absent after redaction."""
+    secret = "token=abcdef123456SECRETVALUE"
+    result = _redact(secret)
+    assert "abcdef123456SECRETVALUE" not in result, (
+        f"token secret still present: {result!r}"
+    )
+    assert "[REDACTED]" in result
+
+
+def test_34_redact_leaves_normal_log_text_unchanged():
+    """Normal log text without secrets must pass through unmodified."""
+    normal = "[2026-08-19 12:00:00 UTC] [auto_heal_ai] tennis_scan: DEGRADED_OK fallback active"
+    result = _redact(normal)
+    assert result == normal, (
+        f"Redaction modified non-secret log text.\nInput:  {normal!r}\nOutput: {result!r}"
+    )

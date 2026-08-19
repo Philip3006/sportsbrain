@@ -62,15 +62,18 @@ _FINANCIAL_JOBS = frozenset({
 _GLOBAL_AI_COOLDOWN_MINS = 30
 _GLOBAL_AI_KEY = "__global_ai_diagnose__"
 
-# Basic secret patterns to redact from log tails before any external API call.
-_SECRET_PATTERNS = [
-    re.compile(r'(sk-ant-api\S+)', re.IGNORECASE),
-    re.compile(r'(Bearer\s+)\S+', re.IGNORECASE),
-    re.compile(r'(token[=:\s]+)\S+', re.IGNORECASE),
-    re.compile(r'(key[=:\s]+)[A-Za-z0-9_\-]{16,}', re.IGNORECASE),
-    re.compile(r'(ODDS_API_KEY[=:\s]+)\S+', re.IGNORECASE),
-    re.compile(r'(ANTHROPIC_API_KEY[=:\s]+)\S+', re.IGNORECASE),
-    re.compile(r'(VAPID[_A-Z]*[=:\s]+)\S+', re.IGNORECASE),
+# Secret redaction rules: (pattern, replacement).
+# Group 1 MUST be only the safe prefix/label — never the secret value itself.
+# replacement uses \1 to preserve the label and appends [REDACTED] for the secret.
+_SECRET_PATTERNS: list[tuple[re.Pattern[str], str]] = [
+    # sk-ant-api key: prefix only in group 1, secret suffix matched but not captured.
+    (re.compile(r'(sk-ant-api)[A-Za-z0-9_\-]+', re.IGNORECASE), r'\1[REDACTED]'),
+    (re.compile(r'(Bearer\s+)\S+', re.IGNORECASE), r'\1[REDACTED]'),
+    (re.compile(r'(ANTHROPIC_API_KEY[=:\s]+)\S+', re.IGNORECASE), r'\1[REDACTED]'),
+    (re.compile(r'(ODDS_API_KEY[=:\s]+)\S+', re.IGNORECASE), r'\1[REDACTED]'),
+    (re.compile(r'(VAPID[_A-Z]*[=:\s]+)\S+', re.IGNORECASE), r'\1[REDACTED]'),
+    (re.compile(r'(token[=:\s]+)\S+', re.IGNORECASE), r'\1[REDACTED]'),
+    (re.compile(r'(key[=:\s]+)[A-Za-z0-9_\-]{16,}', re.IGNORECASE), r'\1[REDACTED]'),
 ]
 
 
@@ -104,9 +107,14 @@ def _log_tail(job: str, n: int = 80) -> str:
 
 
 def _redact_secrets(text: str) -> str:
-    """Apply basic redaction of secret patterns before external API calls."""
-    for pattern in _SECRET_PATTERNS:
-        text = pattern.sub(lambda m: m.group(0)[:m.start(1) - m.start(0) + len(m.group(1))] + '[REDACTED]', text)
+    """Redact secret patterns before any external API call.
+
+    Each entry in _SECRET_PATTERNS is a (compiled_regex, replacement) pair.
+    Group 1 in every pattern is the safe label/prefix only — never the secret
+    value — so \\1[REDACTED] always preserves the label and erases the secret.
+    """
+    for pattern, replacement in _SECRET_PATTERNS:
+        text = pattern.sub(replacement, text)
     return text
 
 
