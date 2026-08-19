@@ -13,13 +13,19 @@ from __future__ import annotations
 
 import csv
 import json
-from dataclasses import dataclass, asdict
-from datetime import datetime, timezone, timedelta
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 
-LEDGER_PATH = ROOT / "results" / "ledger_philip.csv"
+# P0D-002: ledger lives in private repo; no fallback to public results/.
+try:
+    from src.config import DEFAULT_USER as _DEFAULT_USER_OC
+    from src.config import ledger_path_for as _ledger_path_for
+    LEDGER_PATH = _ledger_path_for(_DEFAULT_USER_OC)
+except OSError:
+    LEDGER_PATH = None  # type: ignore[assignment]
 SIGNALS_PATH = ROOT / "docs" / "data" / "signals.json"
 PUSH_DELIVERY_PATH = ROOT / "results" / "health" / "push_delivery.json"
 SETTLE_LOG = ROOT / "results" / "settle.log"
@@ -67,7 +73,7 @@ def _parse_iso(s: str | None) -> datetime | None:
 
 def _stuck_open_bets(now: datetime, max_age_h: int = 24) -> list[dict]:
     """Bets mit status=open deren match_date > max_age_h zurückliegt."""
-    if not LEDGER_PATH.exists():
+    if LEDGER_PATH is None or not LEDGER_PATH.exists():
         return []
     cutoff = (now - timedelta(hours=max_age_h)).date()
     stuck = []
@@ -147,7 +153,7 @@ def check_signals_freshness(
 
 
 def _has_live_window_open_bet(now: datetime) -> bool:
-    if not LEDGER_PATH.exists():
+    if LEDGER_PATH is None or not LEDGER_PATH.exists():
         return False
     today = now.date()
     yest = (now - timedelta(days=1)).date()
@@ -206,7 +212,7 @@ def check_push_delivery_health() -> Symptom | None:
 
 
 def _count_settled_last_h(hours: int) -> int:
-    if not LEDGER_PATH.exists():
+    if LEDGER_PATH is None or not LEDGER_PATH.exists():
         return 0
     cutoff = _now() - timedelta(hours=hours)
     n = 0

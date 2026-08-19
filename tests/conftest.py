@@ -1,3 +1,14 @@
+import os
+import tempfile
+
+# P0D-002: Set SPORTSBRAIN_LEDGER_DIR for tests — prevents import-time failures and
+# ensures tests use an isolated temp directory rather than the real private ledger.
+# Tests that need specific ledger content should use monkeypatch.setenv() or pass
+# explicit path= arguments to ledger functions.
+if "SPORTSBRAIN_LEDGER_DIR" not in os.environ:
+    _TEST_LEDGER_TMPDIR = tempfile.mkdtemp(prefix="sportsbrain_ledger_test_")
+    os.environ["SPORTSBRAIN_LEDGER_DIR"] = _TEST_LEDGER_TMPDIR
+
 import numpy as np
 import pandas as pd
 import pytest

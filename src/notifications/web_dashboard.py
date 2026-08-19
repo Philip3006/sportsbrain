@@ -14,14 +14,15 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from src.betting.value_detector import BetSignal
-from src.config import DEFAULT_USER as _DEFAULT_USER, ODDS_MOVE_WARN_PCT
-from src.utils.atomic_io import atomic_write_json
+from src.config import DEFAULT_USER as _DEFAULT_USER
+from src.config import ODDS_MOVE_WARN_PCT
 from src.signals.signal_status import (
     load_odds_state,
     make_signal_id,
     merge_odds_state_into_signal,
     seed_initial_odds,
 )
+from src.utils.atomic_io import atomic_write_json
 
 
 def _build_info() -> dict:
@@ -46,16 +47,36 @@ ROOT = Path(__file__).parent.parent.parent
 _JSON_PATH = ROOT / "docs" / "data" / "signals.json"
 # Multi-User-Schema (D4): default user's ledger is the legacy single-user
 # input. `build()` accepts an explicit `user` to write `signals_{user}.json`.
-from src.config import ledger_path_for as _ledger_path_for, DEFAULT_USER as _DEFAULT_USER_CFG
-_LEDGER_PATH = _ledger_path_for(_DEFAULT_USER_CFG)
+from src.config import (
+    DEFAULT_USER as _DEFAULT_USER_CFG,
+)
+from src.config import (
+    _resolve_ledger_dir as _resolve_ledger_dir_cfg,
+)
+from src.config import (
+    ledger_path_for as _ledger_path_for,
+)
+
+# P0D-002: wrapped so import does not fail when SPORTSBRAIN_LEDGER_DIR is unset.
+try:
+    _LEDGER_PATH = _ledger_path_for(_DEFAULT_USER_CFG)
+except OSError:
+    _LEDGER_PATH = None
 
 
 def list_known_users() -> list[str]:
-    """Returns sorted user-slugs discovered from `results/ledger_{user}.csv` files.
-    The default user is always included even if no ledger has been created yet.
-    Backup/intermediate files (e.g. `ledger_pre_clv_backfill_*.csv`) are excluded."""
+    """Returns sorted user-slugs discovered from the private ledger directory.
+
+    P0D-002: discovers users from SPORTSBRAIN_LEDGER_DIR (private repo), never
+    from public results/. The default user is always included. Backup/intermediate
+    files (e.g. `ledger_pre_clv_backfill_*.csv`) are excluded."""
+    try:
+        ledger_dir = _resolve_ledger_dir_cfg()
+    except OSError:
+        # Fail-visible: no silent fallback to public results/.
+        return [_DEFAULT_USER_CFG]
     users: set[str] = {_DEFAULT_USER_CFG}
-    for p in (ROOT / "results").glob("ledger_*.csv"):
+    for p in ledger_dir.glob("ledger_*.csv"):
         slug = p.stem[len("ledger_"):]
         if not slug or len(slug) > 32:
             continue
@@ -1206,6 +1227,7 @@ def write_signals_json(
     # _tennis_bet_is_live() — stale in_progress cannot mark a bet as LIVE.
     try:
         import json as _json
+
         from src.data.tennis_scores import canonical_match_key as _cmk
         _tennis_live: dict = {}
 

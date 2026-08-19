@@ -1,54 +1,69 @@
-"""Tests for D4 Multi-User-Ledger-Schema."""
+"""Tests for D4 Multi-User-Ledger-Schema.
+
+P0D-002: All ledger paths now route through SPORTSBRAIN_LEDGER_DIR (private repo).
+Tests patch the env var + reload affected modules for isolation.
+"""
 from __future__ import annotations
+
+import importlib
+import os
 
 import pandas as pd
 import pytest
 
-from src.betting import ledger as ledger_mod
-from src.betting.ledger import (
-    _resolve_ledger_path,
-    append_bets,
-    count_open_bets,
-    ledger_summary,
-)
 from src.betting.value_detector import BetSignal
 
 
-def _patch_paths(tmp_path, monkeypatch):
-    """Route legacy + per-user ledger paths to a tmp results dir."""
-    import src.config as cfg
+def _patch_ledger_dir(tmp_path, monkeypatch):
+    """Route all ledger I/O to an isolated tmp directory via SPORTSBRAIN_LEDGER_DIR.
 
-    results_dir = tmp_path / "results"
-    results_dir.mkdir()
-    monkeypatch.setattr(cfg, "RESULTS_DIR", results_dir)
-    monkeypatch.setattr(ledger_mod, "_LEGACY_LEDGER_PATH",
-                        results_dir / "ledger.csv")
-    # `LEDGER_PATH` was resolved at module import → re-point at the tmp dir
-    monkeypatch.setattr(ledger_mod, "LEDGER_PATH",
-                        results_dir / f"ledger_{cfg.DEFAULT_USER}.csv")
-    return results_dir
+    P0D-002: ledger_path_for() reads _resolve_ledger_dir() which reads the env var.
+    We also patch _LEGACY_LEDGER_PATH + LEDGER_PATH module attrs so the migration
+    sentinel set stays consistent with the patched dir.
+    """
+    ledger_dir = tmp_path / "ledger"
+    ledger_dir.mkdir()
+    monkeypatch.setenv("SPORTSBRAIN_LEDGER_DIR", str(ledger_dir))
+
+    # Reload config so _resolve_ledger_dir() picks up the new env var.
+    import src.config as cfg
+    importlib.reload(cfg)
+
+    # Reload ledger module so LEDGER_PATH + sentinel set re-resolve.
+    import src.betting.ledger as lm
+    importlib.reload(lm)
+    # Point legacy path into the same ledger_dir for migration tests.
+    monkeypatch.setattr(lm, "_LEGACY_LEDGER_PATH", ledger_dir / "ledger.csv")
+
+    return ledger_dir
 
 
 def test_legacy_ledger_migrates_into_default_user_slot(tmp_path, monkeypatch):
     """Legacy `ledger.csv` is renamed to `ledger_philip.csv` on first
-    `_resolve_ledger_path()` call without an explicit path."""
-    results = _patch_paths(tmp_path, monkeypatch)
-    legacy = results / "ledger.csv"
+    `_resolve_ledger_path()` call without an explicit path.
+
+    P0D-002: both legacy and new paths are inside SPORTSBRAIN_LEDGER_DIR.
+    """
+    ledger_dir = _patch_ledger_dir(tmp_path, monkeypatch)
+    import src.betting.ledger as lm
+
+    legacy = ledger_dir / "ledger.csv"
     legacy.write_text(
         "match_id,match_date,home,away,market,decimal_odds,stake_pct,stake_amount,"
         "placed_date,status,pnl,closing_odds,clv,pinnacle_ref_odds,source,model_prob\n"
         "x,2026-06-15,A,B,home,2.0,0.1,10,2026-06-15,won,10,,,,value,\n"
     )
 
-    resolved = _resolve_ledger_path(None, user="philip")
-    assert resolved == results / "ledger_philip.csv"
+    resolved = lm._resolve_ledger_path(None, user="philip")
+    assert resolved == ledger_dir / "ledger_philip.csv"
     assert resolved.exists()
     assert not legacy.exists()
 
 
 def test_per_user_ledgers_are_isolated(tmp_path, monkeypatch):
-    """philip and alice get independent ledger files."""
-    _patch_paths(tmp_path, monkeypatch)
+    """philip and alice get independent ledger files inside SPORTSBRAIN_LEDGER_DIR."""
+    _patch_ledger_dir(tmp_path, monkeypatch)
+    from src.betting.ledger import append_bets, count_open_bets
 
     sig = BetSignal(
         match_id="m1", home="A", away="B", market="home",
@@ -75,7 +90,9 @@ def test_per_user_ledgers_are_isolated(tmp_path, monkeypatch):
 def test_explicit_path_bypasses_user_resolution(tmp_path, monkeypatch):
     """A test path different from the sentinels is used as-is and is NOT
     swallowed by the per-user migration."""
-    _patch_paths(tmp_path, monkeypatch)
+    _patch_ledger_dir(tmp_path, monkeypatch)
+    from src.betting.ledger import append_bets, count_open_bets
+
     custom = tmp_path / "explicit_ledger.csv"
 
     sig = BetSignal(
@@ -91,21 +108,24 @@ def test_explicit_path_bypasses_user_resolution(tmp_path, monkeypatch):
 def test_alice_does_not_migrate_legacy(tmp_path, monkeypatch):
     """Migration is gated on user == DEFAULT_USER. A new user's first
     access must NOT consume the legacy file."""
-    results = _patch_paths(tmp_path, monkeypatch)
-    legacy = results / "ledger.csv"
+    ledger_dir = _patch_ledger_dir(tmp_path, monkeypatch)
+    import src.betting.ledger as lm
+
+    legacy = ledger_dir / "ledger.csv"
     legacy.write_text(
         "match_id,match_date,home,away,market,decimal_odds,stake_pct,stake_amount,"
         "placed_date,status,pnl,closing_odds,clv,pinnacle_ref_odds,source,model_prob\n"
     )
 
-    resolved = _resolve_ledger_path(None, user="alice")
-    assert resolved == results / "ledger_alice.csv"
+    resolved = lm._resolve_ledger_path(None, user="alice")
+    assert resolved == ledger_dir / "ledger_alice.csv"
     assert legacy.exists(), "legacy file must remain untouched for non-default user"
 
 
 def test_ledger_summary_routes_per_user(tmp_path, monkeypatch):
     """`ledger_summary(user='alice')` reads only alice's ledger."""
-    _patch_paths(tmp_path, monkeypatch)
+    _patch_ledger_dir(tmp_path, monkeypatch)
+    from src.betting.ledger import append_bets, ledger_summary
 
     sig = BetSignal(
         match_id="m1", home="A", away="B", market="home",

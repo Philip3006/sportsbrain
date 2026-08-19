@@ -20,8 +20,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SIGNAL_HISTORY = ROOT / "data" / "cache" / "signal_history.jsonl"
-SNAPSHOT_STORE = ROOT / "data" / "cache" / "journal_snapshots.jsonl"
-JOURNAL_PATH = ROOT / "results" / "betting_journal.md"
+# P0D-002: betting journal and journal snapshots live in the private ledger repo.
+from src.config import (
+    betting_journal_path as _betting_journal_path,
+)
+from src.config import (
+    betting_journal_snapshot_path as _betting_journal_snapshot_path,
+)
 
 UNIT_STAKE = 10.0
 
@@ -132,10 +137,11 @@ def _breakdown_table(rows: list[dict], key_fn, header: str) -> list[str]:
 # ---------------------------------------------------------------------------
 
 def _load_snapshots() -> list[dict]:
-    if not SNAPSHOT_STORE.exists():
+    snapshot_store = _betting_journal_snapshot_path()
+    if not snapshot_store.exists():
         return []
     rows = []
-    for line in SNAPSHOT_STORE.read_text(encoding="utf-8").splitlines():
+    for line in snapshot_store.read_text(encoding="utf-8").splitlines():
         try:
             rows.append(json.loads(line))
         except Exception:
@@ -158,8 +164,9 @@ def _update_snapshot(rows: list[dict], sport: str | None) -> None:
         "generated_at": datetime.now(timezone.utc).isoformat(),
         **s,
     }
-    SNAPSHOT_STORE.parent.mkdir(parents=True, exist_ok=True)
-    with SNAPSHOT_STORE.open("a", encoding="utf-8") as f:
+    snapshot_store = _betting_journal_snapshot_path()
+    snapshot_store.parent.mkdir(parents=True, exist_ok=True)
+    with snapshot_store.open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
@@ -292,11 +299,12 @@ def main() -> None:
     _update_snapshot(rows, sport)
     journal = build_journal(rows, sport)
 
-    JOURNAL_PATH.parent.mkdir(parents=True, exist_ok=True)
-    JOURNAL_PATH.write_text(journal, encoding="utf-8")
+    journal_path = _betting_journal_path()
+    journal_path.parent.mkdir(parents=True, exist_ok=True)
+    journal_path.write_text(journal, encoding="utf-8")
     s = _stats(rows)
     print(
-        f"[journal] {JOURNAL_PATH.name} geschrieben — "
+        f"[journal] {journal_path.name} geschrieben — "
         f"{s['n_settled']} settled, {s['w']}W/{s['l']}L, "
         f"ROI {s['roi']:+.1f}%"
     )

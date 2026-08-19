@@ -80,6 +80,11 @@ from src.betting.ledger import (
 from src.betting.signal_contract import validate_stake_cap
 from src.config import BANKROLL_START, DEFAULT_USER, MAX_ACTIVE_BETS
 
+# P0D-002: Private ledger directory — resolved at module init.
+# None = SPORTSBRAIN_LEDGER_DIR not set; only fatal when main() is called.
+_LEDGER_DIR = os.environ.get("SPORTSBRAIN_LEDGER_DIR", "").strip()
+_LEDGER_ROOT = Path(_LEDGER_DIR) if _LEDGER_DIR else None
+
 
 def _worker_base() -> str:
     url = os.getenv("SIGNALS_CLOUD_URL", "").strip()
@@ -267,7 +272,8 @@ def _kv_delete_one(base: str, headers: dict, bid: str, user: str) -> None:
 
 
 def _durable_push(added: int) -> bool:
-    """Stage, commit (if anything staged), and push all per-user ledger files to origin.
+    """Stage, commit (if anything staged), and push all per-user ledger files to the
+    PRIVATE ledger repo (Philip3006/sportsbrain-ledger via SPORTSBRAIN_LEDGER_DIR).
 
     Returns True on success (including no-op when ledger already matches remote).
     Returns False on failure — caller must treat this as FATAL and NOT ACK pending KV entries.
@@ -283,16 +289,33 @@ def _durable_push(added: int) -> bool:
     - When nothing is staged, fetch origin/main and check HEAD is an ancestor of origin/main.
     - If HEAD is local-ahead (not yet in origin/main), push the existing commit before ACKing.
     """
+    # P0D-002: fail-closed — private ledger repo must be configured.
+    if _LEDGER_ROOT is None:
+        print(
+            "[consume] FATAL: SPORTSBRAIN_LEDGER_DIR not set — cannot push private ledger",
+            file=sys.stderr,
+        )
+        return False
+
     def _g(*args: str) -> subprocess.CompletedProcess:
         return subprocess.run(
-            ["git", *args], cwd=_ROOT, capture_output=True, text=True, timeout=30, check=False
+            ["git", *args], cwd=_LEDGER_ROOT, capture_output=True, text=True, timeout=30, check=False
         )
 
     # FND-001: git add failure is fatal — file system or index error.
-    add_result = _g("add", "results/ledger_*.csv")
+    # P0D-002: stage ledger CSVs (always) + bankroll snapshots (only if present).
+    # bankroll_snapshot_*.json is mutated by cancel_bet(); must be durable when it exists.
+    # If no snapshot files exist (fresh ledger), skip staging — not fatal.
+    add_result = _g("add", "ledger_*.csv")
     if add_result.returncode != 0:
-        print(f"[consume] git add failed: {add_result.stderr.strip()[:200]}", file=sys.stderr)
+        print(f"[consume] git add ledger failed: {add_result.stderr.strip()[:200]}", file=sys.stderr)
         return False
+    snapshot_files = list(Path(_LEDGER_ROOT).glob("bankroll_snapshot_*.json"))
+    if snapshot_files:
+        snap_result = _g("add", "bankroll_snapshot_*.json")
+        if snap_result.returncode != 0:
+            print(f"[consume] git add snapshot failed: {snap_result.stderr.strip()[:200]}", file=sys.stderr)
+            return False
 
     staged = _g("diff", "--cached", "--quiet")
 

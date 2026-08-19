@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
@@ -94,7 +95,9 @@ def league_config(sport_key: str) -> dict | None:
 def active_leagues(today=None) -> list[str]:
     """Alle sport_keys deren Saisonfenster heute aktiv ist (start_date ≤ today ≤ end_date+1d).
     None-Bounds gelten als 'immer aktiv'. Nimmt date, datetime oder None entgegen."""
-    from datetime import date as _date, datetime as _dt, timedelta as _td
+    from datetime import date as _date
+    from datetime import datetime as _dt
+    from datetime import timedelta as _td
     if today is None:
         t = _date.today()
     elif isinstance(today, _dt):
@@ -177,6 +180,26 @@ BANKROLL_START = 100.0
 # Default-User; Frontend kann per localStorage 'sb_user' wechseln, Backend liest aktuell den Default.
 DEFAULT_USER = "philip"
 
+# P0D-002: Private ledger datastore — env var key and resolver.
+LEDGER_DIR_ENV = "SPORTSBRAIN_LEDGER_DIR"
+
+
+def _resolve_ledger_dir() -> Path:
+    """Return the private ledger directory from SPORTSBRAIN_LEDGER_DIR env var.
+
+    Fail-closed: if the env var is not set, raises EnvironmentError immediately.
+    No mkdir, no validation — the caller must ensure the directory exists.
+    In tests, set SPORTSBRAIN_LEDGER_DIR to tmp_path or use monkeypatch.setenv().
+    """
+    val = os.environ.get(LEDGER_DIR_ENV, "").strip()
+    if not val:
+        raise OSError(
+            "SPORTSBRAIN_LEDGER_DIR is not set. Financial ledger operations require an explicit "
+            "private ledger directory. Set to the path of the sportsbrain-ledger private "
+            "repository checkout. In tests, use tmp_path or set the env var."
+        )
+    return Path(val)
+
 # ------- J2-M Tennis Live-Stats --------
 # Wenn True: predict_winner_ensemble ruft Tennis-Abstract-Aggregate per Match ab.
 # Rule-based Adjustment ±3pp bei ausreichender Sample-Size (n≥10).
@@ -184,17 +207,36 @@ DEFAULT_USER = "philip"
 TENNIS_USE_LIVE_STATS = True
 
 
-def bankroll_snapshot_path_for(user: str = DEFAULT_USER):
-    """Per-User-Bankroll-Snapshot-Pfad. Legacy `bankroll_snapshot.json` bleibt
-    für Backward-Compat erhalten und wird beim ersten Aufruf in den
-    Default-User-Slot migriert."""
-    return DATA_CACHE / f"bankroll_snapshot_{user}.json"
+def bankroll_snapshot_path_for(user: str = DEFAULT_USER) -> Path:
+    """Per-User-Bankroll-Snapshot-Pfad — stored in the private ledger directory.
+
+    Requires SPORTSBRAIN_LEDGER_DIR to be set; raises EnvironmentError otherwise.
+    """
+    return _resolve_ledger_dir() / f"bankroll_snapshot_{user}.json"
 
 
-def ledger_path_for(user: str = DEFAULT_USER):
-    """Per-User-Ledger-Pfad. Legacy `results/ledger.csv` wird beim ersten
-    Aufruf in den Default-User-Slot (`ledger_philip.csv`) migriert."""
-    return RESULTS_DIR / f"ledger_{user}.csv"
+def ledger_path_for(user: str = DEFAULT_USER) -> Path:
+    """Per-User-Ledger-Pfad — stored in the private ledger directory (Philip3006/sportsbrain-ledger).
+
+    Requires SPORTSBRAIN_LEDGER_DIR to be set; raises EnvironmentError otherwise.
+    """
+    return _resolve_ledger_dir() / f"ledger_{user}.csv"
+
+
+def betting_journal_path() -> Path:
+    """Path to the betting journal Markdown file in the private ledger directory.
+
+    Requires SPORTSBRAIN_LEDGER_DIR to be set; raises EnvironmentError otherwise.
+    """
+    return _resolve_ledger_dir() / "betting_journal.md"
+
+
+def betting_journal_snapshot_path() -> Path:
+    """Path to the journal snapshots JSONL file in the private ledger directory.
+
+    Requires SPORTSBRAIN_LEDGER_DIR to be set; raises EnvironmentError otherwise.
+    """
+    return _resolve_ledger_dir() / "journal_snapshots.jsonl"
 
 # Phase 2 feature flags — keep new components off-by-default until the
 # Backtest Gate (Brier vs current blend) has validated each on its own.

@@ -4,6 +4,8 @@ data/cache/
 !data/cache/signal_performance.json
 !data/cache/signal_history.jsonl
 !data/cache/tennis_serve_snapshots/
+# P0D-002: journal_snapshots.jsonl moved to private ledger — must never be public
+data/cache/journal_snapshots.jsonl
 data/raw/
 results/scans/
 results/backtests/
@@ -27,3 +29,10 @@ __pycache__/
 .swarm/
 ruvector.db
 cloudflare/.wrangler/
+
+# Private financial ledger — stored in Philip3006/sportsbrain-ledger (private)
+results/ledger_*.csv
+results/ledger_*.db
+results/betting_journal.md
+results/ledger_pre_clv_backfill_*.csv
+private-ledger/

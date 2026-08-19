@@ -37,10 +37,24 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Checkout private ledger
+        uses: actions/checkout@v4
+        with:
+          repository: Philip3006/sportsbrain-ledger
+          token: ${{ secrets.LEDGER_PRIVATE_PAT }}
+          path: private-ledger
+          fetch-depth: 0
+
+      - name: Configure ledger identity
+        run: |
+          git -C private-ledger config user.name "SportsBrain Bot"
+          git -C private-ledger config user.email "bot@sportsbrain"
+
       - name: Run tennis settlement
         id: settle
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          SPORTSBRAIN_LEDGER_DIR: ${{ github.workspace }}/private-ledger
         run: |
           python scripts/tennis_settle.py
           python scripts/backfill_signal_outcomes.py
@@ -53,15 +67,34 @@ jobs:
           STATUS="${{ steps.settle.outputs.status || 'error' }}"
           python -m src.monitoring.health_writer --job tennis_settle --status "$STATUS" --exit-code ${{ job.status == 'success' && 0 || 1 }} || true
 
-      - name: Commit results
+      - name: Commit private ledger (fatal if ledger staging fails)
+        env:
+          SPORTSBRAIN_LEDGER_DIR: ${{ github.workspace }}/private-ledger
+        run: |
+          git -C private-ledger add ledger_*.csv
+          git -C private-ledger add betting_journal.md
+          if [ -f private-ledger/journal_snapshots.jsonl ]; then git -C private-ledger add journal_snapshots.jsonl; fi
+          git -C private-ledger diff --cached --quiet && echo "[ledger] nothing to commit" && exit 0
+          git -C private-ledger commit -m "auto: tennis settle $(date +%Y-%m-%d\ %H:%M) UTC"
+          for i in 1 2 3 4 5; do
+            git -C private-ledger fetch origin main
+            git -C private-ledger rebase --autostash --strategy-option=theirs origin/main \
+              || { git -C private-ledger rebase --abort 2>/dev/null || true; echo "[ledger push] rebase conflict attempt $i"; continue; }
+            git -C private-ledger push origin main && exit 0
+            echo "[ledger push] attempt $i failed, backoff..."
+            sleep $((RANDOM % 20 + 10))
+          done
+          echo "[ledger push] giving up after 5 attempts — ledger NOT persisted" >&2; exit 1
+
+      - name: Commit public artifacts (health, signals, cache — non-fatal)
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
-          git add results/ledger_*.csv results/betting_journal.md || true
           git add -f results/health/tennis_settle.json || true
-          git add -f data/cache/signal_history.jsonl data/cache/signal_performance.json data/cache/journal_snapshots.jsonl || true
+          git add -f data/cache/signal_history.jsonl data/cache/signal_performance.json || true
           git add docs/data/signals_philip.json docs/data/signals.json || true
-          git diff --staged --quiet || git commit -m "auto: tennis settle $(date +%Y-%m-%d\ %H:%M) UTC"
+          git diff --staged --quiet && exit 0
+          git commit -m "auto: tennis settle $(date +%Y-%m-%d\ %H:%M) UTC"
           for i in 1 2 3 4 5; do
             git fetch origin main
             git rebase --autostash --strategy-option=theirs origin/main \
