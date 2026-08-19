@@ -43,16 +43,18 @@ jobs:
           HEAL_LOG = Path("results/auto_heal_cloud.log")
           HEAL_LOG.parent.mkdir(exist_ok=True)
 
-          # Jobs that run too frequently or are handled by their own retry cadence
+          # Jobs skipped entirely — too frequent or handled by their own retry cadence
           SKIP = {"consume_pending_bets", "aggregate_health"}
 
+          # P0D-003: Only active, non-financial, non-model, idempotent workflows.
+          # Financial workflows (settle, tennis_settle, bundesliga2_settle, closing_odds,
+          # consume_pending_bets) and model workflows (auto_retrain, tennis_lgbm_retrain,
+          # bundesliga2_retrain) are EXCLUDED — Tier 3, require human authorization.
+          # Stale mappings to disabled workflows (daily_scan.yml.disabled,
+          # auto_retrain.yml.disabled, settle.yml.disabled etc.) are removed.
           WORKFLOW_MAP = {
-              "daily_scan":     "daily_scan.yml",
-              "auto_retrain":   "auto_retrain.yml",
-              "closing_odds":   "closing_odds.yml",
-              "settle":         "settle.yml",
-              "prematch_scan":  "prematch_scan.yml",
-              "live_score_push": "live_score_push.yml",
+              "tennis_scan":       "tennis_scan.yml",
+              "bundesliga2_scan":  "bundesliga2_scan.yml",
           }
 
           def log(msg):

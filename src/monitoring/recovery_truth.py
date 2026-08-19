@@ -42,10 +42,12 @@ Correlation rules for observe_execution:
 Actor-to-evidence constraints:
 - A binding is snapshot-backed only if the recovery actor (the _ACTION_MAP command)
   can deterministically produce a new canonical health snapshot for health_job.
-- For re-run-settle: settle_cron.sh wraps settle_bets.py + health_finish("settle").
-- For re-consume: consume_pending_bets_cron.sh wraps script + health_finish.
+- re-run-settle: INACTIVE (P0D-003) — financial Tier-3; requires human + GH Actions.
+- re-consume: INACTIVE (P0D-003) — financial Tier-3; requires human + GH Actions.
 - For force-refresh-signals: daily_scan.py --force has no health-writing wrapper
   that also accepts --force → health_job=None, process_exit evidence only.
+- settle_retry / auto_retrain_retry / closing_odds_retry: INACTIVE (P0D-003) —
+  financial/model Tier-3; removed from Layer-1 autonomous retry scope.
 """
 from __future__ import annotations
 
@@ -178,19 +180,26 @@ class RecoveryBinding:
 # Actions not listed → RECOVERY_UNAVAILABLE (fail-closed).
 RECOVERY_REGISTRY: dict[str, RecoveryBinding] = {
     # ── Layer-2 outcome actions (auto_heal_ai._handle_outcome_symptoms) ──────
-    # Settle re-run: settle_cron.sh (the _ACTION_MAP actor) sources _health.sh and
-    # calls health_finish("settle", ...) — it produces a canonical health snapshot.
+    #
+    # P0D-003: re-run-settle is INACTIVE — financial Tier-3 action.
+    # Settlement must flow through GH Actions financial writers (tennis_settle.yml,
+    # bundesliga2_settle.yml) with proper LEDGER_PRIVATE_PAT credentials, not via
+    # local subprocess. Preserved for historical recovery record compatibility.
     "re-run-settle": RecoveryBinding(
         action="re-run-settle",
-        actor_layer="layer2_outcome",
+        actor_layer="unavailable",
         health_job="settle",
+        active=False,
     ),
-    # Consume pending bets: consume_pending_bets_cron.sh sources _health.sh and
-    # calls health_finish("consume_pending_bets", ...) — produces canonical snapshot.
+    # P0D-003: re-consume is INACTIVE — financial Tier-3 action (P0-A ACK invariant).
+    # Consume must flow through GH Actions consumer (consume_pending_bets.yml) triggered
+    # by the Cloudflare Worker _cronConsumeCheck(), not via local subprocess.
+    # Preserved for historical recovery record compatibility.
     "re-consume": RecoveryBinding(
         action="re-consume",
-        actor_layer="layer2_outcome",
+        actor_layer="unavailable",
         health_job="consume_pending_bets",
+        active=False,
     ),
     # Force-refresh signals: daily_scan.py --force has no health-writing wrapper
     # that also accepts --force.  scan_cron.sh writes daily_scan health but omits
@@ -223,25 +232,32 @@ RECOVERY_REGISTRY: dict[str, RecoveryBinding] = {
     ),
     # ── Layer-1 job retries (auto_heal_cron.sh _retry_job) ──────────────────
     # Process exit alone is NOT sufficient — health snapshot must update.
-    "settle_retry": RecoveryBinding(
-        action="settle_retry",
-        actor_layer="layer1",
-        health_job="settle",
-    ),
     "daily_scan_retry": RecoveryBinding(
         action="daily_scan_retry",
         actor_layer="layer1",
         health_job="daily_scan",
     ),
+    # P0D-003: settle_retry is INACTIVE — financial Tier-3; removed from Layer-1 scope.
+    "settle_retry": RecoveryBinding(
+        action="settle_retry",
+        actor_layer="unavailable",
+        health_job="settle",
+        active=False,
+    ),
+    # P0D-003: auto_retrain_retry is INACTIVE — model Tier-3; removed from Layer-1 scope.
     "auto_retrain_retry": RecoveryBinding(
         action="auto_retrain_retry",
-        actor_layer="layer1",
+        actor_layer="unavailable",
         health_job="auto_retrain",
+        active=False,
     ),
+    # P0D-003: closing_odds_retry is INACTIVE — financial Tier-3 (loads/saves LEDGER_PATH);
+    # removed from Layer-1 autonomous retry scope.
     "closing_odds_retry": RecoveryBinding(
         action="closing_odds_retry",
-        actor_layer="layer1",
+        actor_layer="unavailable",
         health_job="closing_odds",
+        active=False,
     ),
 }
 
