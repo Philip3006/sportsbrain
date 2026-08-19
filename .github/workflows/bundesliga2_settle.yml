@@ -71,7 +71,6 @@ jobs:
           python -m src.monitoring.health_writer --job bundesliga2_settle --status "$STATUS" --exit-code ${{ job.status == 'success' && 0 || 1 }} || true
 
       - name: Commit private ledger (fatal if ledger staging fails)
-        if: always()
         env:
           SPORTSBRAIN_LEDGER_DIR: ${{ github.workspace }}/private-ledger
         run: |
