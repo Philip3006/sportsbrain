@@ -36,3 +36,7 @@ results/ledger_*.db
 results/betting_journal.md
 results/ledger_pre_clv_backfill_*.csv
 private-ledger/
+
+# P0D-002: bankroll snapshots are authoritative private financial state
+data/bankroll_snapshot.json
+data/bankroll_snapshot_*.json

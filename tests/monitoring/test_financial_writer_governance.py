@@ -1265,3 +1265,52 @@ def test_journal_snapshot_4_gitignore_protects_public_journal_snapshots():
         "data/cache/journal_snapshots.jsonl must be gitignored (private financial state); "
         "ensure .gitignore contains data/cache/journal_snapshots.jsonl"
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Bankroll snapshot public-tree protection (P0D-002 Phase 5A.5)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def test_bankroll_snapshot_1_not_tracked_in_public_repo():
+    """data/bankroll_snapshot*.json must not be tracked in the public sportsbrain repo.
+
+    After P0D-002, bankroll snapshots are authoritative private financial state
+    stored exclusively in Philip3006/sportsbrain-ledger.  Any file matching
+    data/bankroll_snapshot*.json in the public active tree is a privacy defect.
+    """
+    import subprocess
+    result = subprocess.run(
+        ["git", "ls-files", "data/bankroll_snapshot.json", "data/bankroll_snapshot_philip.json"],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+    )
+    tracked = [line for line in result.stdout.splitlines() if line.strip()]
+    assert not tracked, (
+        "Public sportsbrain repo must not track bankroll snapshot files under data/. "
+        f"Found: {tracked}. These are private financial state; "
+        "authoritative copy lives in Philip3006/sportsbrain-ledger."
+    )
+
+
+def test_bankroll_snapshot_2_gitignore_protects_public_data_path():
+    """.gitignore must contain patterns blocking data/bankroll_snapshot*.json.
+
+    Prevents reintroduction of bankroll snapshot files into the public active tree.
+    """
+    gitignore = ROOT / ".gitignore"
+    assert gitignore.exists(), ".gitignore must exist"
+    text = gitignore.read_text()
+    patterns = [line.strip() for line in text.splitlines() if line.strip() and not line.startswith("#")]
+
+    def covers(pattern: str, paths: list[str]) -> bool:
+        import fnmatch
+        return any(fnmatch.fnmatch(p, pattern) for p in paths)
+
+    targets = ["data/bankroll_snapshot.json", "data/bankroll_snapshot_philip.json"]
+    assert any(covers(p, targets) for p in patterns), (
+        ".gitignore must contain a pattern covering data/bankroll_snapshot*.json to prevent "
+        "accidental reintroduction of private financial state into the public repo. "
+        "Add 'data/bankroll_snapshot.json' and 'data/bankroll_snapshot_*.json'."
+    )
