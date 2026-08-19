@@ -14,11 +14,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from collections import defaultdict
 from datetime import date, datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
 SIGNAL_HISTORY = ROOT / "data" / "cache" / "signal_history.jsonl"
 # P0D-002: betting journal and journal snapshots live in the private ledger repo.
 from src.config import (
