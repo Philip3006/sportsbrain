@@ -151,7 +151,7 @@ def _observed_attempt(
 class TestInvariant1RequestOnly:
     def test_requested_state_is_not_recovered(self):
         """[INV-1] Creating a recovery attempt (REQUESTED) does not constitute recovery."""
-        attempt = request_recovery("stuck_open_bets", "re-run-settle",
+        attempt = request_recovery("stuck_open_bets", "daily_scan_retry",
                                    requested_at=_REQUESTED_AT,
                                    attempt_id="inv1-001")
         assert attempt.state == RecoveryState.REQUESTED
@@ -159,7 +159,7 @@ class TestInvariant1RequestOnly:
 
     def test_requested_state_has_no_execution_evidence(self):
         """[INV-1] REQUESTED attempt carries no execution or verification evidence."""
-        attempt = request_recovery("stuck_open_bets", "re-run-settle",
+        attempt = request_recovery("stuck_open_bets", "daily_scan_retry",
                                    requested_at=_REQUESTED_AT,
                                    attempt_id="inv1-002")
         assert attempt.execution_evidence is None
@@ -174,7 +174,7 @@ class TestInvariant1RequestOnly:
 class TestInvariant2DispatchOnly:
     def test_dispatched_state_is_not_recovered(self):
         """[INV-2] Marking an attempt as dispatched does not constitute recovery."""
-        attempt = request_recovery("stuck_open_bets", "re-run-settle",
+        attempt = request_recovery("stuck_open_bets", "daily_scan_retry",
                                    requested_at=_REQUESTED_AT,
                                    attempt_id="inv2-001")
         attempt = mark_dispatched(attempt, dispatched_at=_AFTER_AT)
@@ -183,7 +183,7 @@ class TestInvariant2DispatchOnly:
 
     def test_dispatched_state_has_no_execution_evidence(self):
         """[INV-2] DISPATCHED carries no execution evidence — only dispatch timestamp."""
-        attempt = request_recovery("stuck_open_bets", "re-run-settle",
+        attempt = request_recovery("stuck_open_bets", "daily_scan_retry",
                                    requested_at=_REQUESTED_AT,
                                    attempt_id="inv2-002")
         attempt = mark_dispatched(attempt, dispatched_at=_AFTER_AT)
@@ -342,7 +342,7 @@ class TestInvariant8FullChainRecovered:
     def test_complete_chain_yields_recovered(self):
         """[INV-8] REQUESTED→DISPATCHED→OBSERVED→VERIFIED→RECOVERED when all evidence passes."""
         attempt = request_recovery(
-            "stuck_open_bets", "re-run-settle",
+            "stuck_open_bets", "daily_scan_retry",
             symptom_id="stuck_open_bets",
             requested_at=_REQUESTED_AT,
             attempt_id="full-chain-001",
@@ -352,7 +352,7 @@ class TestInvariant8FullChainRecovered:
         attempt = mark_dispatched(attempt, dispatched_at=_AFTER_AT)
         assert attempt.state == RecoveryState.DISPATCHED
 
-        exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot", job="settle",
+        exe = _exe(_OBS_AT, exit_code=0, source="health_snapshot", job="daily_scan",
                    recovery_attempt_id="full-chain-001")
         attempt = observe_execution(attempt, exe)
         assert attempt.state == RecoveryState.OBSERVED
@@ -460,12 +460,12 @@ class TestInvariant10Idempotent:
         """[INV-10] Saving RECOVERED attempt twice leaves state unchanged."""
         store = RecoveryStore(tmp_path / "store.json")
 
-        attempt = request_recovery("settle", "re-run-settle",
+        attempt = request_recovery("settle", "daily_scan_retry",
                                    requested_at=_REQUESTED_AT,
                                    attempt_id="idem-001")
         attempt = mark_dispatched(attempt, dispatched_at=_AFTER_AT)
         attempt = observe_execution(attempt, _exe(_OBS_AT, exit_code=0,
-                                                  source="health_snapshot", job="settle",
+                                                  source="health_snapshot", job="daily_scan",
                                                   recovery_attempt_id="idem-001"))
         attempt = verify_resolution(attempt, _ver(symptom_absent=True))
         assert attempt.state == RecoveryState.RECOVERED
@@ -628,14 +628,14 @@ class TestHealthSnapshotEvidence:
 class TestStateMachineOrdering:
     def test_cannot_observe_from_requested(self):
         """observe_execution from REQUESTED (skipping DISPATCHED) → FAILED."""
-        attempt = request_recovery("settle", "re-run-settle",
+        attempt = request_recovery("settle", "daily_scan_retry",
                                    requested_at=_REQUESTED_AT, attempt_id="order-001")
         result = observe_execution(attempt, _exe(_OBS_AT, exit_code=0))
         assert result.state == RecoveryState.FAILED
 
     def test_cannot_verify_from_dispatched(self):
         """verify_resolution from DISPATCHED (skipping OBSERVED) → FAILED."""
-        attempt = request_recovery("settle", "re-run-settle",
+        attempt = request_recovery("settle", "daily_scan_retry",
                                    requested_at=_REQUESTED_AT, attempt_id="order-002")
         attempt = mark_dispatched(attempt, dispatched_at=_AFTER_AT)
         result = verify_resolution(attempt, _ver(symptom_absent=True))
@@ -643,7 +643,7 @@ class TestStateMachineOrdering:
 
     def test_cannot_verify_from_requested(self):
         """verify_resolution from REQUESTED → FAILED."""
-        attempt = request_recovery("settle", "re-run-settle",
+        attempt = request_recovery("settle", "daily_scan_retry",
                                    requested_at=_REQUESTED_AT, attempt_id="order-003")
         result = verify_resolution(attempt, _ver(symptom_absent=True))
         assert result.state == RecoveryState.FAILED
@@ -663,7 +663,7 @@ class TestRecoveryStore:
     def test_store_round_trip(self, tmp_path):
         """RecoveryAttempt is serializable and deserializable without data loss."""
         store = RecoveryStore(tmp_path / "store.json")
-        attempt = request_recovery("settle", "re-run-settle",
+        attempt = request_recovery("settle", "daily_scan_retry",
                                    symptom_id="stuck_open_bets",
                                    requested_at=_REQUESTED_AT,
                                    attempt_id="rt-001")
@@ -701,7 +701,7 @@ class TestRecoveryStore:
     def test_store_non_terminal_can_be_overwritten(self, tmp_path):
         """Non-terminal states (REQUESTED → DISPATCHED) can be updated in the store."""
         store = RecoveryStore(tmp_path / "store.json")
-        attempt = request_recovery("settle", "re-run-settle",
+        attempt = request_recovery("settle", "daily_scan_retry",
                                    requested_at=_REQUESTED_AT,
                                    attempt_id="nt-001")
         store.save(attempt)
@@ -1304,7 +1304,7 @@ class TestCorrectionStoreMonotonicIdentity:
     def test_store_monotonic_cannot_go_backwards(self, tmp_path):
         """[C8] DISPATCHED cannot be overwritten by REQUESTED (going backwards)."""
         store = RecoveryStore(tmp_path / "store.json")
-        attempt = request_recovery("settle", "re-run-settle",
+        attempt = request_recovery("settle", "daily_scan_retry",
                                    requested_at=_REQUESTED_AT, attempt_id="mono-001")
         dispatched = mark_dispatched(attempt, dispatched_at=_AFTER_AT)
         store.save(dispatched)
@@ -1372,14 +1372,14 @@ class TestCorrectionStoreMonotonicIdentity:
     def test_store_same_identity_forward_progression_allowed(self, tmp_path):
         """[C8+C9] Correct forward progression with same identity is allowed."""
         store = RecoveryStore(tmp_path / "store.json")
-        attempt = request_recovery("settle", "re-run-settle",
+        attempt = request_recovery("settle", "daily_scan_retry",
                                    symptom_id="stuck_open_bets",
                                    requested_at=_REQUESTED_AT, attempt_id="id-003")
         store.save(attempt)
         dispatched = mark_dispatched(attempt, dispatched_at=_AFTER_AT)
         store.save(dispatched)
         observed = observe_execution(dispatched, _exe(_OBS_AT, exit_code=0,
-                                                      source="health_snapshot", job="settle",
+                                                      source="health_snapshot", job="daily_scan",
                                                       recovery_attempt_id="id-003"))
         store.save(observed)
 

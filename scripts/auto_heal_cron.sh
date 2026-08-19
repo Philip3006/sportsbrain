@@ -1,13 +1,22 @@
 #!/bin/bash
-# Layer 1 auto-healer: detects job errors and retries infrequent jobs once per
-# error event. Runs every 10 min via com.sportsbrain.auto-heal.plist (24/7).
+# Layer 1 auto-healer: detects job errors and retries infrequent non-financial
+# jobs once per error event. Runs every 10 min via com.sportsbrain.auto-heal.plist.
+#
+# P0D-003 BOUNDARY:
+#   Autonomous retry scope is restricted to non-financial, non-model, idempotent jobs.
+#   Financial jobs (settle, closing_odds) and model jobs (auto_retrain) are REMOVED
+#   from autonomous retry — failures log + escalate only.
+#   Push repair is restricted to a healer-specific runtime-data allowlist; any commit
+#   containing source, financial, model, workflow, or auth files is NOT pushed.
 #
 # Handled automatically:
-#   - Job retry on error (with per-job cooldown to prevent retry storms)
-#   - Git push repair (if local commits are not pushed to origin)
+#   - daily_scan retry on error (non-financial, idempotent)
+#   - Git push repair for runtime-data-only ahead commits
 #
-# NOT handled here (requires Layer 2 / Claude CronCreate):
-#   - Code bugs, API key issues, novel errors that need diagnosis+code-edit
+# NOT handled here (requires human authorization):
+#   - Code bugs, novel errors
+#   - Financial job failures (settle, closing_odds, consume_pending_bets)
+#   - Model retraining failures (auto_retrain)
 
 SPORTSBRAIN_DIR="/Users/philiprassillier/sportsbrain"
 LOG="$SPORTSBRAIN_DIR/results/auto_heal.log"
@@ -102,36 +111,65 @@ _retry_job() {
 
 # ── Job retry checks ────────────────────────────────────────────────────────
 
-# settle: hourly job — retry after 30 min cooldown
-if _should_retry "settle" 1800; then
-  _retry_job "settle" "scripts/settle_cron.sh"
-fi
-
-# daily_scan: daily job — retry after 2h cooldown
+# daily_scan: daily job — retry after 2h cooldown (non-financial, idempotent)
 if _should_retry "daily_scan" 7200; then
   _retry_job "daily_scan" "scripts/scan_cron.sh"
 fi
 
-# auto_retrain: 12h job — retry after 3h cooldown
-if _should_retry "auto_retrain" 10800; then
-  _retry_job "auto_retrain" "scripts/auto_retrain_cron.sh"
-fi
-
-# closing_odds: 12h job — retry after 2h cooldown
-if _should_retry "closing_odds" 7200; then
-  _retry_job "closing_odds" "scripts/closing_odds_cron.sh"
-fi
-
+# P0D-003: settle, auto_retrain, closing_odds retries REMOVED.
+# These jobs touch financial state or model artifacts and require human authorization.
+# Failures for these jobs are handled by GH Actions and VAPID escalation only.
+#
 # consume_pending_bets / live_score_push: skip — they retry every 2 min already
 
-# ── Git push repair ─────────────────────────────────────────────────────────
+# ── Healer push repair (runtime-data only) ──────────────────────────────────
+# P0D-003: Before pushing, verify that ALL files in ahead commits are safe
+# runtime-data paths. Any commit touching source, financial, model, workflow,
+# auth, or security files MUST NOT be pushed by the healer. Log + skip.
+
+# Returns 0 (safe to push) if all ahead files are healer-permitted runtime data.
+# Healer push allowlist is STRICTER than the general _bot_permitted in _git_safe_push.sh:
+#   - NO results/ledger* (now private-repo-owned, P0D-002)
+#   - NO results/betting_journal.md (now private-repo-owned, P0D-002)
+#   - NO models/* (model promotion is Tier 3)
+#   - NO scripts/*, src/*, tests/*, .github/*, *.py, *.sh, *.yml (source)
+_healer_push_safe() {
+  local AHEAD_FILES
+  AHEAD_FILES=$(git -C "$SPORTSBRAIN_DIR" diff --name-only origin/main..main 2>/dev/null)
+  if [ -z "$AHEAD_FILES" ]; then
+    return 0  # nothing ahead
+  fi
+
+  local unsafe=0
+  while IFS= read -r f; do
+    [ -z "$f" ] && continue
+    case "$f" in
+      # Allowed healer push paths: runtime-generated, non-financial, non-model
+      docs/data/*|data/cache/*|data/live_scores.json|data/odds_history/*|\
+      results/health/*|results/scans/*|\
+      results/tennis_live_signals.json|results/tennis_scan_*|\
+      results/tennis_cal_stats.json|\
+      results/auto_heal*.log|results/auto_heal_state.json)
+        ;;  # permitted runtime data
+      *)
+        _log "healer push BLOCKED — commit contains non-runtime file: $f"
+        unsafe=1
+        ;;
+    esac
+  done <<< "$AHEAD_FILES"
+
+  [ "$unsafe" -eq 0 ]
+}
+
 LOCAL_AHEAD=$(git -C "$SPORTSBRAIN_DIR" rev-list --count origin/main..main 2>/dev/null || echo "0")
 if [ "$LOCAL_AHEAD" -gt 0 ]; then
-  _log "$LOCAL_AHEAD commit(s) not pushed — invoking git_safe_push"
-  # Must `source` to load functions, then call git_safe_push — `bash` only defines
-  # the functions and exits without calling anything (was a no-op before this fix).
-  # shellcheck source=./_git_safe_push.sh
-  source "$SPORTSBRAIN_DIR/scripts/_git_safe_push.sh" && git_safe_push "$LOG"
+  if _healer_push_safe; then
+    _log "$LOCAL_AHEAD commit(s) not pushed — healer push-repair (runtime-data verified)"
+    # shellcheck source=./_git_safe_push.sh
+    source "$SPORTSBRAIN_DIR/scripts/_git_safe_push.sh" && git_safe_push "$LOG"
+  else
+    _log "$LOCAL_AHEAD ahead commit(s) contain non-runtime files — healer push SKIPPED, human action required"
+  fi
 fi
 
 exit 0

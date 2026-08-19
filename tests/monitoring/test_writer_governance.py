@@ -110,13 +110,10 @@ def test_i1_shell_permitted_runtime_paths():
         "results/health/bundesliga2_scan.json",
         "results/health/bundesliga2_closing_odds.json",
         "results/health/bundesliga2_live_push.json",
-        "results/ledger_2026.csv",
-        "results/ledger_tennis_2026.csv",
         "results/scans/bl2_scan_2026.md",
         "results/tennis_live_signals.json",
         "results/tennis_scan_shadow_challenger.json",
         "results/tennis_scan_2026-08-18.md",
-        "results/betting_journal.md",
         "results/tennis_cal_stats.json",
         "models/dc_bundesliga2/model.pkl",
         "models/tennis_lgbm/model.pkl",
@@ -146,6 +143,10 @@ def test_i2_shell_rejects_source_paths():
         "requirements.txt",
         "ROADMAP.md",
         "CLAUDE.md",
+        # P0D-003: private-repo-owned financial paths must be bot-blocked
+        "results/ledger_2026.csv",
+        "results/ledger_tennis_2026.csv",
+        "results/betting_journal.md",
     ]
     for p in rejected:
         assert not _shell_is_permitted(p), (

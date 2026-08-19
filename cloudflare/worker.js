@@ -515,14 +515,14 @@ function _validSub(s) {
 // GH_REPO can be overridden via wrangler secret/var; falls back to hardcoded default.
 const _GH_REPO_DEFAULT = 'Philip3006/sportsbrain';
 // Resolved per-request in handlers that need it: env.GH_REPO || _GH_REPO_DEFAULT
+// P0D-003: _cronHealerCheck WORKFLOW_MAP — non-financial, non-model, active workflows only.
+// Financial workflows (settle, tennis_settle, bundesliga2_settle, closing_odds) and model
+// workflows (auto_retrain) are EXCLUDED — these require human authorization (Tier 3).
+// Stale mappings to .disabled workflow files are removed.
+// _cronConsumeCheck() is NOT a healer action and is NOT modified here — it is the
+// designed P0-A pending-bet dispatcher and must remain fully operational.
 const _WORKFLOW_MAP = {
-  daily_scan:    'daily_scan.yml',
-  auto_retrain:  'auto_retrain.yml',
-  closing_odds:  'closing_odds.yml',
-  settle:        'settle.yml',
-  prematch_scan: 'prematch_scan.yml',
-  tennis_scan:   'tennis_scan.yml',
-  tennis_settle: 'tennis_settle.yml',
+  tennis_scan: 'tennis_scan.yml',
 };
 const _HEALER_SKIP = new Set(['consume_pending_bets', 'aggregate_health']);
 const _HEALER_COOLDOWN_MS = 10 * 60 * 1000;
