@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-19T12:53:58Z",
+  "generated_at": "2026-08-19T13:37:04Z",
   "overall": "down",
   "jobs": [
     {
@@ -11,7 +11,7 @@
       "exit_code": 0,
       "error": "last run was at 2026-08-17T09:39:21Z — overdue per expectation model",
       "fallback_used": "stale_cache",
-      "next_expected_in_s": 57961,
+      "next_expected_in_s": 55375,
       "cadence": "1×/Tag 07:00 Europe/Berlin (launchd)",
       "expectation_state": "overdue"
     },
@@ -24,22 +24,22 @@
       "exit_code": 0,
       "error": "last run was at 2026-08-17T09:37:59Z — overdue per expectation model",
       "fallback_used": null,
-      "next_expected_in_s": 11161,
+      "next_expected_in_s": 8575,
       "cadence": "2×/Tag 06:00 + 18:00 Europe/Berlin (launchd)",
       "expectation_state": "overdue"
     },
     {
       "job": "closing_odds",
-      "status": "ok",
+      "status": "stale",
       "reported_status": "ok",
       "last_run_at": "2026-08-17T12:00:09Z",
       "duration_s": 4.0,
       "exit_code": 0,
       "error": "last run was at 2026-08-17T12:00:09Z — overdue per expectation model",
       "fallback_used": null,
-      "next_expected_in_s": 11161,
+      "next_expected_in_s": 8575,
       "cadence": "2×/Tag 14:00 + 18:00 Europe/Berlin (launchd)",
-      "expectation_state": "expected"
+      "expectation_state": "overdue"
     },
     {
       "job": "live_score_push",
@@ -69,16 +69,16 @@
     },
     {
       "job": "settle",
-      "status": "stale",
+      "status": "degraded",
       "reported_status": "degraded",
       "last_run_at": "2026-08-17T14:30:06Z",
       "duration_s": 1.0,
       "exit_code": 0,
       "error": "last run was at 2026-08-17T14:30:06Z — overdue per expectation model",
       "fallback_used": "espn",
-      "next_expected_in_s": 2161,
+      "next_expected_in_s": 3175,
       "cadence": "stündlich :30 Europe/Berlin (launchd, 24h)",
-      "expectation_state": "overdue"
+      "expectation_state": "expected"
     },
     {
       "job": "aggregate_health",
@@ -102,7 +102,7 @@
       "exit_code": 1,
       "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
       "fallback_used": null,
-      "next_expected_in_s": 7561,
+      "next_expected_in_s": 4975,
       "cadence": "8×/Tag 02/06/09/12/15/18/21/23 UTC",
       "expectation_state": "not_expected"
     },
@@ -110,27 +110,27 @@
       "job": "tennis_settle",
       "status": "error",
       "reported_status": "error",
-      "last_run_at": "2026-08-19T10:48:07Z",
+      "last_run_at": "2026-08-19T13:35:38Z",
       "duration_s": null,
       "exit_code": 1,
       "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
       "fallback_used": null,
-      "next_expected_in_s": 4861,
+      "next_expected_in_s": 2275,
       "cadence": "9×/Tag 06:15–22:15/2h UTC",
-      "expectation_state": "expected"
+      "expectation_state": "not_expected"
     },
     {
       "job": "tennis_closing_odds",
-      "status": "stale",
+      "status": "error",
       "reported_status": "error",
-      "last_run_at": "2026-08-19T11:53:49Z",
+      "last_run_at": "2026-08-19T13:15:00Z",
       "duration_s": null,
       "exit_code": 1,
       "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
       "fallback_used": null,
       "next_expected_in_s": 1800,
       "cadence": "alle 30 Min",
-      "expectation_state": "overdue"
+      "expectation_state": "expected"
     },
     {
       "job": "tennis_retrain",
@@ -141,7 +141,7 @@
       "exit_code": 1,
       "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
       "fallback_used": null,
-      "next_expected_in_s": 57961,
+      "next_expected_in_s": 55375,
       "cadence": "1×/Tag 05:00 UTC (LGBM primary; Elo wöchentlich Mo 03:00 UTC)",
       "expectation_state": "not_expected"
     },
@@ -154,7 +154,7 @@
       "exit_code": 0,
       "error": null,
       "fallback_used": "no_fixtures",
-      "next_expected_in_s": 61561,
+      "next_expected_in_s": 58975,
       "cadence": "täglich 06:00 UTC + Fr 15:00 / Sa 08:00 / So 08:00 UTC",
       "expectation_state": "not_expected"
     },
@@ -167,7 +167,7 @@
       "exit_code": 1,
       "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
       "fallback_used": null,
-      "next_expected_in_s": 203761,
+      "next_expected_in_s": 201175,
       "cadence": "Mo/Di 20:30 / Fr 21:30 / Sa 14:30+21:30 / So 14:45+21:00 UTC",
       "expectation_state": "not_expected"
     },
@@ -180,7 +180,7 @@
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
-      "next_expected_in_s": 57961,
+      "next_expected_in_s": 55375,
       "cadence": "täglich 05:00 UTC",
       "expectation_state": "not_expected"
     },
@@ -193,7 +193,7 @@
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
-      "next_expected_in_s": 191161,
+      "next_expected_in_s": 188575,
       "cadence": "alle 2 Min Fr 18-23 / Sa 11-23 / So 11-23 UTC",
       "expectation_state": "not_expected"
     },
@@ -206,7 +206,7 @@
       "exit_code": 0,
       "error": null,
       "fallback_used": null,
-      "next_expected_in_s": 192661,
+      "next_expected_in_s": 190075,
       "cadence": "Fr 18:25 / Sa 10:55+18:25 / So 11:25 UTC",
       "expectation_state": "not_expected"
     },
@@ -214,7 +214,7 @@
       "job": "consume_pending_bets",
       "status": "ok",
       "reported_status": "ok",
-      "last_run_at": "2026-08-19T12:53:58Z",
+      "last_run_at": "2026-08-19T13:37:04Z",
       "duration_s": null,
       "exit_code": 0,
       "error": null,
@@ -230,7 +230,7 @@
       "last_run_at": null,
       "duration_s": null,
       "exit_code": null,
-      "error": "[MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: no health snapshot yet — job has never reported",
+      "error": "[MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: [MON-001] aggregate: stale with missing/invalid exit evidence (raw exit_code=None). Original error: no health snapshot yet — job has never reported",
       "fallback_used": null,
       "next_expected_in_s": 300,
       "cadence": "alle 5 Min (launchd)",
@@ -239,7 +239,7 @@
     {
       "job": "signals_data_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-19T12:53:58Z",
+      "last_run_at": "2026-08-19T13:37:03Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -250,7 +250,7 @@
     {
       "job": "live_scores_fresh",
       "status": "ok",
-      "last_run_at": "2026-08-19T12:53:19Z",
+      "last_run_at": "2026-08-19T13:36:24Z",
       "duration_s": null,
       "exit_code": null,
       "error": null,
@@ -261,15 +261,15 @@
   ],
   "provenance": {
     "schema_version": "1",
-    "source_release_sha": "585e74cdca923d5d9ee5d90d67dd130b4c96bb9e",
+    "source_release_sha": "ea63ff025d7242dd0b397a3eb456c6042935f404",
     "source_ci": {
-      "run_id": "32254052819",
+      "run_id": "32258792300",
       "workflow": "CI Gates (compile + smoke tests + lint)",
       "status": "success",
-      "head_sha": "585e74cdca923d5d9ee5d90d67dd130b4c96bb9e"
+      "head_sha": "ea63ff025d7242dd0b397a3eb456c6042935f404"
     },
-    "runtime_data_sha": "fddb187e67194804cadf94dd8f63be2677d40d4b",
+    "runtime_data_sha": "805c2b2dc19b9431cac61f007ae791b5f794bebf",
     "source_runtime_consistent": true,
-    "built_at": "2026-08-19T12:53:58Z"
+    "built_at": "2026-08-19T13:37:04Z"
   }
 }
