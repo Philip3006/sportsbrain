@@ -15,14 +15,14 @@
 ## Cincinnati Open (ATP) · m1000 · 🔴 LIVE
 Surface: hard · Best of: 3 · Matches gescannt: 8
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
-- [ATP] **Jaime Faria vs Lorenzo Musetti** · Match Winner: Jaime Faria
-  Quote 2.42 · Modell 49.3% · EV +19.4% · Stake 5.00€ · HIGH
 - [ATP] **Alexander Zverev vs Tommy Paul** · Alexander Zverev Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 3.05 · Modell 38.6% · EV +17.8% · Stake 5.00€ · HIGH
 - [ATP] **Alexander Zverev vs Tommy Paul** · Match Winner: Tommy Paul
-  Quote 2.80 · Modell 41.2% · EV +15.5% · Stake 5.00€ · HIGH
+  Quote 2.83 · Modell 41.2% · EV +16.7% · Stake 5.00€ · HIGH
+- [ATP] **Jaime Faria vs Lorenzo Musetti** · Match Winner: Jaime Faria
+  Quote 2.36 · Modell 49.3% · EV +16.5% · Stake 5.00€ · HIGH
 - [ATP] **Arthur Fils vs Alex de Minaur** · Match Winner: Arthur Fils
-  Quote 2.28 · Modell 50.0% · EV +14.0% · Stake 5.00€ · MEDIUM
+  Quote 2.30 · Modell 50.0% · EV +15.0% · Stake 5.00€ · MEDIUM
 
 ## Cincinnati Open (WTA) · wta1000 · 🔴 LIVE
 Surface: hard · Best of: 3 · Matches gescannt: 8
