@@ -718,7 +718,7 @@ def main() -> None:
     tournament_names = ", ".join(t.slug for t in tournaments)
     print(f"  Aktive Turniere ({len(tournaments)}): {tournament_names}")
 
-    # ---- 2. Match-Daten + Elo ----
+    # ---- 2. Match-Daten + Elo + RollingState (FND-MODEL1-001) ----
     print("Loading ATP+WTA match data...")
     all_matches = _fetch_both_tours()
     if all_matches is None or all_matches.empty:
@@ -726,10 +726,20 @@ def main() -> None:
         from src.models.tennis_elo import TennisEloRatings
         ratings = TennisEloRatings()
         top_grass = []
+        live_state = None  # No history → LGBM bypassed (fail-safe)
     else:
         print(f"  {len(all_matches)} matches loaded; computing Elo...")
         ratings = compute_tennis_elo(all_matches, reference_date=datetime.now())
         top_grass = top_players(ratings, surface="grass", n=10)
+        # Build rolling state from the same historical corpus (once per scan).
+        from src.tennis.elo_source import build_live_rolling_state
+        try:
+            live_state = build_live_rolling_state(all_matches)
+            _n_state_players = sum(1 for v in live_state.form.values() if len(v) > 0)
+            print(f"  Rolling state: {_n_state_players} players with form history.")
+        except Exception as _exc:  # noqa: BLE001 — intentional broad catch for fail-safe path
+            print(f"  WARNING: Rolling state build failed ({_exc}) — LGBM bypassed.")
+            live_state = None  # Fail-safe: ensemble.py returns Elo-only
 
     # ---- 3. Pro Turnier scannen ----
     per_tournament: dict[str, dict] = {}
@@ -768,6 +778,8 @@ def main() -> None:
                 pa, pb, ratings, t.surface,
                 best_of=t.best_of, category=t.category,
                 tournament_slug=t.slug,
+                match_date=m.get("commence_time", ""),
+                state=live_state,
             )
             _pred_sources[probs.get("source", "elo")] += 1
 
