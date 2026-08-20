@@ -737,7 +737,7 @@ def main() -> None:
             live_state = build_live_rolling_state(all_matches)
             _n_state_players = sum(1 for v in live_state.form.values() if len(v) > 0)
             print(f"  Rolling state: {_n_state_players} players with form history.")
-        except Exception as _exc:
+        except Exception as _exc:  # noqa: BLE001 — intentional broad catch for fail-safe path
             print(f"  WARNING: Rolling state build failed ({_exc}) — LGBM bypassed.")
             live_state = None  # Fail-safe: ensemble.py returns Elo-only
 
