@@ -22,4 +22,4 @@ Surface: hard · Best of: 3 · Matches gescannt: 3
 - [WTA] **Coco Gauff vs Marta Kostyuk** · Match Winner: Coco Gauff ⭐
   Quote 2.25 · Modell 58.8% · EV +32.2% · Stake 5.00€ · HIGH
 - [WTA] **Iga Swiatek vs Elena Rybakina** · Match Winner: Iga Swiatek
-  Quote 2.31 · Modell 49.3% · EV +14.0% · Stake 5.00€ · HIGH
+  Quote 2.40 · Modell 49.3% · EV +18.4% · Stake 5.00€ · HIGH
