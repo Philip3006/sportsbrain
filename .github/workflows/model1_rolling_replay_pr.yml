@@ -20,4 +20,4 @@ jobs:
           cache: 'pip'
       - run: pip install -r requirements.txt
       - name: Run deterministic MODEL1-001 replay
-        run: python scripts/model1_rolling_replay_audit.py
+        run: PYTHONPATH=. python scripts/model1_rolling_replay_audit.py
