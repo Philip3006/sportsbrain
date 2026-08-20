@@ -159,11 +159,19 @@ def predict_winner_ensemble(
     use_live_stats: bool = True,
     match_date: str | None = None,
     tournament_slug: str | None = None,
+    state: RollingState | None = None,
 ) -> dict[str, float]:
     """Returns {p_a, p_b, source}. Source ∈ {'elo', 'ensemble'}.
 
     name_source: Format-Hint für Elo-Name-Konvertierung. 'odds_api' für Live-
     Scanner-Namen (Vorname Nachname); 'te' für Tennisexplorer (Nachname Vorname).
+
+    state: Pre-built RollingState populated from the full historical match corpus
+    (FND-MODEL1-001 fix). The scanner builds this once via build_live_rolling_state()
+    and passes it here. State must be None (not an empty RollingState) when the
+    scanner cannot build a valid historical state — in that case LGBM is bypassed
+    and Elo-only is returned with rolling_state_unavailable=True. Callers outside
+    the production scanner may omit state (None) to stay on the Elo-only path.
     """
     # Namen für Elo-Lookup normalisieren (bewahrt originale Anzeige-Namen).
     elo_key_a = _normalize_for_elo(player_a, name_source)
@@ -187,7 +195,26 @@ def predict_winner_ensemble(
     if model is None or not gate_passed:
         return {**elo_probs, "source": "elo"}
 
-    # LGBM-Prediction: erfordert Feature-Bau ex-ante (leerer State — kein H2H bekannt).
+    # FND-MODEL1-001: Fail-safe — production scanner must provide a populated
+    # RollingState. A None state means it could not be built; bypass LGBM entirely
+    # rather than silently predict with neutral-prior form/H2H features.
+    if state is None:
+        _log.warning(
+            "tennis-ensemble: no RollingState for %s vs %s → LGBM bypassed "
+            "(rolling_state_unavailable)", player_a, player_b,
+        )
+        return {**elo_probs, "source": "elo", "rolling_state_unavailable": True}
+
+    # Convert match_date string to timezone-naive Timestamp for rest/fatigue features.
+    _pred_date: pd.Timestamp | None = None
+    if match_date:
+        try:
+            ts = pd.Timestamp(match_date)
+            _pred_date = ts.tz_localize(None) if ts.tzinfo is None else ts.tz_convert(None)
+        except (ValueError, TypeError, AttributeError):
+            _pred_date = None
+
+    # LGBM-Prediction: Features ex-ante mit historischem RollingState.
     # Elo-Werte kommen aus ratings; Rank fällt auf Prior wenn nicht geliefert.
     _MIN_RANK = 1500.0
     ra = rank_a if rank_a and rank_a > 0 else _MIN_RANK
@@ -234,15 +261,19 @@ def predict_winner_ensemble(
     except Exception:
         bio_a = bio_b = None
 
+    # FND-MODEL1-001: state lookups use the canonical Elo-format key (elo_key_a/b),
+    # which matches the winner_name/loser_name format in the historical corpus used
+    # to build the state. Both AB and BA symmetry calls share the same pre-match state
+    # and the same prediction timestamp — no state mutation occurs here.
     feats = build_match_features(
-        player_a=player_a, player_b=player_b,
+        player_a=elo_key_a, player_b=elo_key_b,
         surface=surface, best_of=best_of,
         category=category, round_str=round_str,
         rank_a=ra, rank_b=rb,
         elo_a=elo_a_over, elo_b=elo_b_over,
         elo_surface_a=elo_a_surf, elo_surface_b=elo_b_surf,
-        state=RollingState(),  # Leer — kein H2H/Form für unbekannte Live-Matches
-        date=None,
+        state=state,
+        date=_pred_date,
         serve_stats_a=stats_a,
         serve_stats_b=stats_b,
         bio_a=bio_a,
@@ -252,14 +283,14 @@ def predict_winner_ensemble(
     # Symmetric prediction: average P(A wins | A first) and 1 − P(B wins | B first).
     # Eliminates ~22pp positional bias from training-data ordering correlation.
     feats_ba = build_match_features(
-        player_a=player_b, player_b=player_a,  # swapped
+        player_a=elo_key_b, player_b=elo_key_a,  # swapped elo keys
         surface=surface, best_of=best_of,
         category=category, round_str=round_str,
         rank_a=rb, rank_b=ra,
         elo_a=elo_b_over, elo_b=elo_a_over,
         elo_surface_a=elo_b_surf, elo_surface_b=elo_a_surf,
-        state=RollingState(),
-        date=None,
+        state=state,
+        date=_pred_date,
         serve_stats_a=stats_b, serve_stats_b=stats_a,
         bio_a=bio_b, bio_b=bio_a,
         tournament_slug=tournament_slug,
