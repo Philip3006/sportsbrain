@@ -1,0 +1,48 @@
+name: MODEL-1 Tennis Train-Live Parity
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/tennis_scan.py'
+      - 'src/tennis/elo_source.py'
+      - 'src/tennis/ensemble.py'
+      - 'src/tennis/features.py'
+      - 'tests/tennis/test_ensemble.py'
+      - 'tests/tennis/test_rolling_state_parity.py'
+      - '.github/workflows/model1_tennis_parity.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/tennis_scan.py'
+      - 'src/tennis/elo_source.py'
+      - 'src/tennis/ensemble.py'
+      - 'src/tennis/features.py'
+      - 'tests/tennis/test_ensemble.py'
+      - 'tests/tennis/test_rolling_state_parity.py'
+      - '.github/workflows/model1_tennis_parity.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: model1-tennis-parity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Compile Tennis model path
+        run: python -m compileall -q src/tennis src/models/tennis_elo.py src/models/tennis_lgbm.py scripts/tennis_scan.py
+      - name: FND-MODEL1-001 focused parity tests
+        run: |
+          python -m pytest -q \
+            tests/tennis/test_ensemble.py \
+            tests/tennis/test_rolling_state_parity.py
