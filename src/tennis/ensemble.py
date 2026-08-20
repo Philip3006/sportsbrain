@@ -168,10 +168,9 @@ def predict_winner_ensemble(
 
     state: Pre-built RollingState populated from the full historical match corpus
     (FND-MODEL1-001 fix). The scanner builds this once via build_live_rolling_state()
-    and passes it here. State must be None (not an empty RollingState) when the
-    scanner cannot build a valid historical state — in that case LGBM is bypassed
-    and Elo-only is returned with rolling_state_unavailable=True. Callers outside
-    the production scanner may omit state (None) to stay on the Elo-only path.
+    and passes it here. Missing or target-player-empty state fails closed to Elo-only.
+    A valid match timestamp is also required because rest/fatigue features are
+    prediction-time dependent.
     """
     # Namen für Elo-Lookup normalisieren (bewahrt originale Anzeige-Namen).
     elo_key_a = _normalize_for_elo(player_a, name_source)
@@ -195,24 +194,41 @@ def predict_winner_ensemble(
     if model is None or not gate_passed:
         return {**elo_probs, "source": "elo"}
 
-    # FND-MODEL1-001: Fail-safe — production scanner must provide a populated
-    # RollingState. A None state means it could not be built; bypass LGBM entirely
-    # rather than silently predict with neutral-prior form/H2H features.
+    # FND-MODEL1-001: production LGBM requires a real, target-player-populated
+    # RollingState. This catches both construction failure and empty/partial corpora.
     if state is None:
         _log.warning(
             "tennis-ensemble: no RollingState for %s vs %s → LGBM bypassed "
             "(rolling_state_unavailable)", player_a, player_b,
         )
         return {**elo_probs, "source": "elo", "rolling_state_unavailable": True}
+    hist_a = state.form.get(elo_key_a)
+    hist_b = state.form.get(elo_key_b)
+    if not hist_a or not hist_b:
+        _log.warning(
+            "tennis-ensemble: invalid RollingState for %s vs %s → LGBM bypassed "
+            "(rolling_state_invalid)", player_a, player_b,
+        )
+        return {**elo_probs, "source": "elo", "rolling_state_invalid": True}
 
-    # Convert match_date string to timezone-naive Timestamp for rest/fatigue features.
-    _pred_date: pd.Timestamp | None = None
-    if match_date:
-        try:
-            ts = pd.Timestamp(match_date)
-            _pred_date = ts.tz_localize(None) if ts.tzinfo is None else ts.tz_convert(None)
-        except (ValueError, TypeError, AttributeError):
-            _pred_date = None
+    # Prediction timestamp is mandatory: rest/fatigue features are invalid without it.
+    if not match_date:
+        _log.warning(
+            "tennis-ensemble: missing prediction timestamp for %s vs %s → LGBM bypassed",
+            player_a, player_b,
+        )
+        return {**elo_probs, "source": "elo", "prediction_time_unavailable": True}
+    try:
+        ts = pd.Timestamp(match_date)
+        if pd.isna(ts):
+            raise ValueError("NaT timestamp")
+        _pred_date = ts.tz_localize(None) if ts.tzinfo is None else ts.tz_convert(None)
+    except (ValueError, TypeError, AttributeError, OverflowError):
+        _log.warning(
+            "tennis-ensemble: invalid prediction timestamp %r for %s vs %s → LGBM bypassed",
+            match_date, player_a, player_b,
+        )
+        return {**elo_probs, "source": "elo", "prediction_time_unavailable": True}
 
     # LGBM-Prediction: Features ex-ante mit historischem RollingState.
     # Elo-Werte kommen aus ratings; Rank fällt auf Prior wenn nicht geliefert.
@@ -231,19 +247,18 @@ def predict_winner_ensemble(
         # WTA-Kategorien routen zu TA-wplayer.cgi statt player-classic.cgi.
         tour = "wta" if category.startswith("wta") else "atp"
         # J8-B10: before_date passt Live-Fetch an WF-Konvention an (nur Historie < match_date).
-        # match_date optional — bei None wird die volle Historie genommen (Backward-Compat).
         try:
             stats_a = fetch_aggregate(player_a, last_n=20, surface=surface, tour=tour,
                                       before_date=match_date)
             stats_b = fetch_aggregate(player_b, last_n=20, surface=surface, tour=tour,
                                       before_date=match_date)
             # J8-I7: Asof-Snapshot für Walk-Forward-Training (J2-N Prerequisite).
-            if match_date and stats_a and stats_a.n_matches > 0:
+            if stats_a and stats_a.n_matches > 0:
                 try:
                     save_serve_snapshot(player_a, surface, match_date, stats_a, tour=tour)
                 except Exception:
                     pass
-            if match_date and stats_b and stats_b.n_matches > 0:
+            if stats_b and stats_b.n_matches > 0:
                 try:
                     save_serve_snapshot(player_b, surface, match_date, stats_b, tour=tour)
                 except Exception:
