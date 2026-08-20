@@ -1,0 +1,23 @@
+name: MODEL1 Tennis Feature Usage Audit
+
+on:
+  pull_request:
+    branches: ['fix/fnd-model1-001-rolling-state-v2']
+    paths:
+      - 'scripts/model1_feature_usage_audit.py'
+      - '.github/workflows/model1_feature_usage_pr.yml'
+  workflow_dispatch:
+
+jobs:
+  feature-usage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r requirements.txt
+      - name: Inspect persisted Tennis model split usage
+        run: PYTHONPATH=. python scripts/model1_feature_usage_audit.py
