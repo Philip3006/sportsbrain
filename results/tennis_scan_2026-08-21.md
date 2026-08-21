@@ -21,4 +21,4 @@ Surface: hard · Best of: 3 · Matches gescannt: 3
 - [WTA] **Coco Gauff vs Marta Kostyuk** · Match Winner: Coco Gauff ⭐
   Quote 2.25 · Modell 58.8% · EV +32.2% · Stake 5.00€ · HIGH
 - [WTA] **Jessica Pegula vs Iga Swiatek** · Match Winner: Jessica Pegula
-  Quote 2.33 · Modell 49.3% · EV +15.0% · Stake 5.00€ · HIGH
+  Quote 2.35 · Modell 49.3% · EV +16.0% · Stake 5.00€ · HIGH
