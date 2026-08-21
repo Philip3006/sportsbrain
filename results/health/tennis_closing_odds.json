@@ -1,8 +1,8 @@
 {
   "job": "tennis_closing_odds",
   "status": "error",
-  "last_run_at": "2026-08-21T20:49:36Z",
-  "started_at": "2026-08-21T20:49:36Z",
+  "last_run_at": "2026-08-21T21:21:08Z",
+  "started_at": "2026-08-21T21:21:08Z",
   "duration_s": null,
   "exit_code": 1,
   "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
