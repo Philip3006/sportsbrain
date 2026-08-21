@@ -13,7 +13,7 @@
 
 
 ## Cincinnati Open (ATP) · m1000 · 🔴 LIVE
-Surface: hard · Best of: 3 · Matches gescannt: 3
+Surface: hard · Best of: 3 · Matches gescannt: 2
 _Keine Value-Signals._
 
 ## Cincinnati Open (WTA) · wta1000 · 🔴 LIVE
