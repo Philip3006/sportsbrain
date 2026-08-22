@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-08-21T05:27:37.939845+00:00",
-  "n_settled_total": 627,
+  "generated_at": "2026-08-22T05:21:53.655474+00:00",
+  "n_settled_total": 628,
   "match_winner": {
-    "n": 231,
-    "brier": 0.2249,
-    "log_loss": 0.6357,
-    "ece": 0.08898,
-    "win_rate": 0.4848,
+    "n": 232,
+    "brier": 0.22508,
+    "log_loss": 0.6361,
+    "ece": 0.09082,
+    "win_rate": 0.4828,
     "reliability_curve": [
       {
         "bin_lo": 0.2,
@@ -18,9 +18,9 @@
       {
         "bin_lo": 0.4,
         "bin_hi": 0.6,
-        "n": 170,
-        "mean_pred": 0.5006,
-        "mean_actual": 0.4176
+        "n": 171,
+        "mean_pred": 0.5007,
+        "mean_actual": 0.4152
       },
       {
         "bin_lo": 0.6,
@@ -39,11 +39,11 @@
     ]
   },
   "all_markets": {
-    "n": 627,
-    "brier": 0.23549,
-    "log_loss": 0.66085,
-    "ece": 0.04883,
-    "win_rate": 0.5566,
+    "n": 628,
+    "brier": 0.23554,
+    "log_loss": 0.66096,
+    "ece": 0.04958,
+    "win_rate": 0.5557,
     "reliability_curve": [
       {
         "bin_lo": 0.2,
@@ -55,9 +55,9 @@
       {
         "bin_lo": 0.4,
         "bin_hi": 0.6,
-        "n": 312,
+        "n": 313,
         "mean_pred": 0.5216,
-        "mean_actual": 0.4936
+        "mean_actual": 0.492
       },
       {
         "bin_lo": 0.6,
@@ -77,8 +77,8 @@
   },
   "meta_calibrator": {
     "fitted": true,
-    "n_samples": 231,
-    "brier_before": 0.2249,
-    "brier_after": 0.21056
+    "n_samples": 232,
+    "brier_before": 0.22508,
+    "brier_after": 0.21046
   }
 }
