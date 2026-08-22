@@ -1,8 +1,8 @@
 {
   "job": "tennis_settle",
   "status": "error",
-  "last_run_at": "2026-08-22T13:03:36Z",
-  "started_at": "2026-08-22T13:03:36Z",
+  "last_run_at": "2026-08-22T14:41:16Z",
+  "started_at": "2026-08-22T14:41:16Z",
   "duration_s": null,
   "exit_code": 1,
   "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
