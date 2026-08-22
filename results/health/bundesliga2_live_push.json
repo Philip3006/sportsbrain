@@ -1,9 +1,9 @@
 {
   "job": "bundesliga2_live_push",
   "status": "ok",
-  "last_run_at": "2026-08-22T19:51:55Z",
-  "started_at": "2026-08-22T19:51:55Z",
-  "duration_s": 0.06,
+  "last_run_at": "2026-08-22T20:13:33Z",
+  "started_at": "2026-08-22T20:13:33Z",
+  "duration_s": 0.03,
   "exit_code": 0,
   "error": null,
   "fallback_used": null,
