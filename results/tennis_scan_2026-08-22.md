@@ -11,4 +11,4 @@ Surface: hard · Best of: 3 · Matches gescannt: 2
 ## Cincinnati Open (WTA) · wta1000 · 🔴 LIVE
 Surface: hard · Best of: 3 · Matches gescannt: 2
 - [WTA] **Jessica Pegula vs Iga Swiatek** · Match Winner: Jessica Pegula
-  Quote 2.44 · Modell 49.3% · EV +20.4% · Stake 5.00€ · HIGH
+  Quote 2.41 · Modell 49.3% · EV +18.9% · Stake 5.00€ · HIGH
