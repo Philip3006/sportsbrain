@@ -1,8 +1,8 @@
 {
   "job": "tennis_scan",
   "status": "error",
-  "last_run_at": "2026-08-23T18:37:14Z",
-  "started_at": "2026-08-23T18:37:14Z",
+  "last_run_at": "2026-08-23T20:29:48Z",
+  "started_at": "2026-08-23T20:29:48Z",
   "duration_s": null,
   "exit_code": 1,
   "error": "[MON-001] coerced ok→error: exit_code=1. No error message from caller.",
