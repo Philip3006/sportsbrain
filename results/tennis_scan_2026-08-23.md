@@ -1,0 +1,8 @@
+# Tennis Scan 2026-08-23
+
+**Aktive Turniere:** 1 · **Signals total:** 0
+
+
+## Cincinnati Open (WTA) · wta1000 · 🔴 LIVE
+Surface: hard · Best of: 3 · Matches gescannt: 0
+_Keine Value-Signals._
