@@ -4,7 +4,7 @@
 
 
 ## Cincinnati Open (ATP) · m1000 · 🔴 LIVE
-Surface: hard · Best of: 3 · Matches gescannt: 1
+Surface: hard · Best of: 3 · Matches gescannt: 0
 _Keine Value-Signals._
 
 ## Cincinnati Open (WTA) · wta1000 · 🔴 LIVE
@@ -12,5 +12,5 @@ Surface: hard · Best of: 3 · Matches gescannt: 1
 _Keine Value-Signals._
 
 ## Wta Monterrey Open (WTA) · wta250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 12
+Surface: unknown · Best of: 3 · Matches gescannt: 10
 _Keine Value-Signals._
