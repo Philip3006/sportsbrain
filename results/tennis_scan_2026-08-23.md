@@ -12,5 +12,5 @@ Surface: hard · Best of: 3 · Matches gescannt: 1
 _Keine Value-Signals._
 
 ## Wta Monterrey Open (WTA) · wta250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 10
+Surface: unknown · Best of: 3 · Matches gescannt: 9
 _Keine Value-Signals._
