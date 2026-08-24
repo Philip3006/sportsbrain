@@ -1,4 +1,46 @@
 {
+  "top_elo": [
+    {
+      "name": "Sinner J.",
+      "rating": 1678
+    },
+    {
+      "name": "Fritz T.",
+      "rating": 1666
+    },
+    {
+      "name": "Alcaraz C.",
+      "rating": 1647
+    },
+    {
+      "name": "Noskova L.",
+      "rating": 1643
+    },
+    {
+      "name": "Djokovic N.",
+      "rating": 1643
+    },
+    {
+      "name": "Zverev A.",
+      "rating": 1626
+    },
+    {
+      "name": "Keys M.",
+      "rating": 1624
+    },
+    {
+      "name": "De Minaur A.",
+      "rating": 1597
+    },
+    {
+      "name": "Pegula J.",
+      "rating": 1596
+    },
+    {
+      "name": "Sabalenka A.",
+      "rating": 1594
+    }
+  ],
   "wm_results": [
     {
       "match_id": "fb30113e43d113f1ace48b8563ba1ee9",
@@ -9,6 +51,3035 @@
       "commence_time": "2026-07-19T19:05:00Z"
     }
   ],
+  "updated": "2026-08-24T16:44:33Z",
+  "schedule": [
+    {
+      "sport": "tennis",
+      "home": "Maria Camila Osorio Serrano",
+      "away": "Ann Li",
+      "kickoff": "2026-08-24T21:00:00Z",
+      "tour": "wta",
+      "tournament": "Wta Monterrey Open",
+      "category": "wta250",
+      "surface": "unknown",
+      "best_of": 3,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_monterrey_open",
+      "scheduled_start_initial": "2026-08-24T21:00:00Z",
+      "scheduled_start_current": "2026-08-24T21:00:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Alycia Parks",
+      "away": "Petra Marcinko",
+      "kickoff": "2026-08-24T22:30:00Z",
+      "tour": "wta",
+      "tournament": "Wta Monterrey Open",
+      "category": "wta250",
+      "surface": "unknown",
+      "best_of": 3,
+      "odds_home": 2.1,
+      "odds_away": 1.74,
+      "odds_source": "implied_elo",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_monterrey_open",
+      "scheduled_start_initial": "2026-08-24T22:30:00Z",
+      "scheduled_start_current": "2026-08-24T22:30:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Janice Tjen",
+      "away": "Dayana Yastremska",
+      "kickoff": "2026-08-24T22:30:00Z",
+      "tour": "wta",
+      "tournament": "Wta Monterrey Open",
+      "category": "wta250",
+      "surface": "unknown",
+      "best_of": 3,
+      "odds_home": 1.94,
+      "odds_away": 1.87,
+      "odds_source": "implied_elo",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_monterrey_open",
+      "scheduled_start_initial": "2026-08-24T22:30:00Z",
+      "scheduled_start_current": "2026-08-24T22:30:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Clara Tauson",
+      "away": "Renata Zarazua",
+      "kickoff": "2026-08-25T01:30:00Z",
+      "tour": "wta",
+      "tournament": "Wta Monterrey Open",
+      "category": "wta250",
+      "surface": "unknown",
+      "best_of": 3,
+      "odds_home": 1.7,
+      "odds_away": 2.16,
+      "odds_source": "implied_elo",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_monterrey_open",
+      "scheduled_start_initial": "2026-08-25T01:30:00Z",
+      "scheduled_start_current": "2026-08-25T01:30:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Diane Parry",
+      "away": "Donna Vekic",
+      "kickoff": "2026-08-25T03:00:00Z",
+      "tour": "wta",
+      "tournament": "Wta Monterrey Open",
+      "category": "wta250",
+      "surface": "unknown",
+      "best_of": 3,
+      "odds_home": 1.86,
+      "odds_away": 1.95,
+      "odds_source": "implied_elo",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_monterrey_open",
+      "scheduled_start_initial": "2026-08-25T03:00:00Z",
+      "scheduled_start_current": "2026-08-25T03:00:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Anhelina Kalinina",
+      "away": "Maya Joint",
+      "kickoff": "2026-08-25T19:00:00Z",
+      "tour": "wta",
+      "tournament": "Wta Monterrey Open",
+      "category": "wta250",
+      "surface": "unknown",
+      "best_of": 3,
+      "odds_home": 1.95,
+      "odds_away": 1.86,
+      "odds_source": "implied_elo",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_monterrey_open",
+      "scheduled_start_initial": "2026-08-25T19:00:00Z",
+      "scheduled_start_current": "2026-08-25T19:00:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Cristina Bucsa",
+      "away": "Anna Bondár",
+      "kickoff": "2026-08-25T19:00:00Z",
+      "tour": "wta",
+      "tournament": "Wta Monterrey Open",
+      "category": "wta250",
+      "surface": "unknown",
+      "best_of": 3,
+      "odds_home": 2.15,
+      "odds_away": 1.71,
+      "odds_source": "implied_elo",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_monterrey_open",
+      "scheduled_start_initial": "2026-08-25T19:00:00Z",
+      "scheduled_start_current": "2026-08-25T19:00:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Darja Vidmanova",
+      "away": "Kimberly Birrell",
+      "kickoff": "2026-08-25T19:00:00Z",
+      "tour": "wta",
+      "tournament": "Wta Monterrey Open",
+      "category": "wta250",
+      "surface": "unknown",
+      "best_of": 3,
+      "odds_home": 1.93,
+      "odds_away": 1.88,
+      "odds_source": "implied_elo",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_monterrey_open",
+      "scheduled_start_initial": "2026-08-25T19:00:00Z",
+      "scheduled_start_current": "2026-08-25T19:00:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Shuai Zhang",
+      "away": "Maria Timofeeva",
+      "kickoff": "2026-08-25T19:00:00Z",
+      "tour": "wta",
+      "tournament": "Wta Monterrey Open",
+      "category": "wta250",
+      "surface": "unknown",
+      "best_of": 3,
+      "odds_home": 1.67,
+      "odds_away": 2.22,
+      "odds_source": "implied_elo",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_monterrey_open",
+      "scheduled_start_initial": "2026-08-25T19:00:00Z",
+      "scheduled_start_current": "2026-08-25T19:00:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Vallejo Adolfo Daniel",
+      "away": "Carreno-Busta Pablo",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Winston-Salem Open",
+      "category": "atp250",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.1,
+      "odds_away": 1.67,
+      "source": "tennisexplorer",
+      "sport_key": "te:winston-salem_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Sonego Lorenzo",
+      "away": "Kopriva Vit",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Winston-Salem Open",
+      "category": "atp250",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.2,
+      "odds_away": 1.61,
+      "source": "tennisexplorer",
+      "sport_key": "te:winston-salem_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Hijikata Rinky",
+      "away": "Blanch Darwin",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Winston-Salem Open",
+      "category": "atp250",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.42,
+      "odds_away": 2.59,
+      "source": "tennisexplorer",
+      "sport_key": "te:winston-salem_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Majchrzak Kamil",
+      "away": "Bonzi Benjamin",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Winston-Salem Open",
+      "category": "atp250",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.5,
+      "odds_away": 2.35,
+      "source": "tennisexplorer",
+      "sport_key": "te:winston-salem_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Vandecasteele Quinn",
+      "away": "Duckworth James",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Winston-Salem Open",
+      "category": "atp250",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.4,
+      "odds_away": 1.5,
+      "source": "tennisexplorer",
+      "sport_key": "te:winston-salem_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Suresh Dhakshineswar",
+      "away": "Giron Marcos",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Winston-Salem Open",
+      "category": "atp250",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.42,
+      "odds_away": 1.5,
+      "source": "tennisexplorer",
+      "sport_key": "te:winston-salem_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Walton Adam",
+      "away": "De Jong Jesper",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Winston-Salem Open",
+      "category": "atp250",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.46,
+      "odds_away": 2.53,
+      "source": "tennisexplorer",
+      "sport_key": "te:winston-salem_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Damm Martin (2003)",
+      "away": "Shelbayh Abedallah",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Winston-Salem Open",
+      "category": "atp250",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.35,
+      "odds_away": 3.0,
+      "source": "tennisexplorer",
+      "sport_key": "te:winston-salem_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Gorzny Sebastian",
+      "away": "Hewitt Cruz",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Winston-Salem Open",
+      "category": "atp250",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.61,
+      "odds_away": 2.17,
+      "source": "tennisexplorer",
+      "sport_key": "te:winston-salem_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Choinski Jan",
+      "away": "Rottgering Mees",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Winston-Salem Open",
+      "category": "atp250",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.18,
+      "odds_away": 1.6,
+      "source": "tennisexplorer",
+      "sport_key": "te:winston-salem_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Balshaw Felix",
+      "away": "Kovacevic Aleksandar",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Winston-Salem Open",
+      "category": "atp250",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 2.27,
+      "odds_away": 1.56,
+      "source": "tennisexplorer",
+      "sport_key": "te:winston-salem_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Safiullin Roman",
+      "away": "Grenier Hugo",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Winston-Salem Open",
+      "category": "atp250",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 1.41,
+      "odds_away": 2.77,
+      "source": "tennisexplorer",
+      "sport_key": "te:winston-salem_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Hurkacz Hubert",
+      "away": "Baez Sebastian",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Cancun challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.5,
+      "odds_away": 2.4,
+      "source": "tennisexplorer",
+      "sport_key": "te:cancun-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Marcondes Igor",
+      "away": "Purcell Max",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Kingston 2 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.25,
+      "odds_away": 1.55,
+      "source": "tennisexplorer",
+      "sport_key": "te:kingston-2-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Winter Edward",
+      "away": "Andrade Andres",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Kingston 2 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.19,
+      "odds_away": 1.58,
+      "source": "tennisexplorer",
+      "sport_key": "te:kingston-2-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Estevez Juan",
+      "away": "Nedic Andrej",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Augsburg challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.27,
+      "odds_away": 1.56,
+      "source": "tennisexplorer",
+      "sport_key": "te:augsburg-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Kopp Sandro",
+      "away": "Ribeiro Eduardo",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Augsburg challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.52,
+      "odds_away": 2.32,
+      "source": "tennisexplorer",
+      "sport_key": "te:augsburg-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Damas Miguel",
+      "away": "Topo Marko",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Augsburg challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.25,
+      "odds_away": 1.56,
+      "source": "tennisexplorer",
+      "sport_key": "te:augsburg-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Poljicak Mili",
+      "away": "Schoenhaus Max",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Augsburg challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.15,
+      "odds_away": 1.64,
+      "source": "tennisexplorer",
+      "sport_key": "te:augsburg-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Barton Hynek",
+      "away": "Hemery Calvin",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Augsburg challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.54,
+      "odds_away": 2.26,
+      "source": "tennisexplorer",
+      "sport_key": "te:augsburg-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Basing Max",
+      "away": "Langmo Christian",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Roehampton 2 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.56,
+      "odds_away": 2.25,
+      "source": "tennisexplorer",
+      "sport_key": "te:roehampton-2-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Monday Johannus",
+      "away": "Radulov Iliyan",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Roehampton 2 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.54,
+      "odds_away": 2.3,
+      "source": "tennisexplorer",
+      "sport_key": "te:roehampton-2-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Ribecai Michele",
+      "away": "Ceban Mark",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Roehampton 2 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.65,
+      "odds_away": 2.12,
+      "source": "tennisexplorer",
+      "sport_key": "te:roehampton-2-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Maxted Lui",
+      "away": "Shepp Anton",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Roehampton 2 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.55,
+      "odds_away": 2.3,
+      "source": "tennisexplorer",
+      "sport_key": "te:roehampton-2-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Blaydes Billy",
+      "away": "Martineau Matteo",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Roehampton 2 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.19,
+      "odds_away": 1.6,
+      "source": "tennisexplorer",
+      "sport_key": "te:roehampton-2-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Ivanov Ivan (2008)",
+      "away": "Peniston Ryan",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "tour": "atp",
+      "tournament": "Roehampton 2 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.65,
+      "odds_away": 2.09,
+      "source": "tennisexplorer",
+      "sport_key": "te:roehampton-2-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Munk Mesa Bernardo",
+      "away": "De Krom Michiel",
+      "kickoff": "2026-08-24T16:44:00Z",
+      "tour": "atp",
+      "tournament": "US Open",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.2,
+      "odds_away": 1.58,
+      "source": "tennisexplorer",
+      "sport_key": "te:us-open_atp",
+      "scheduled_start_initial": "2026-08-24T16:44:00Z",
+      "scheduled_start_current": "2026-08-24T16:44:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Nijboer Ryan",
+      "away": "Curras Abasolo Tomas",
+      "kickoff": "2026-08-24T16:44:00Z",
+      "tour": "atp",
+      "tournament": "US Open",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.44,
+      "odds_away": 2.6,
+      "source": "tennisexplorer",
+      "sport_key": "te:us-open_atp",
+      "scheduled_start_initial": "2026-08-24T16:44:00Z",
+      "scheduled_start_current": "2026-08-24T16:44:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Milev Yanaki",
+      "away": "Lopez Montagud Carlos",
+      "kickoff": "2026-08-24T16:44:00Z",
+      "tour": "atp",
+      "tournament": "US Open",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.38,
+      "odds_away": 1.5,
+      "source": "tennisexplorer",
+      "sport_key": "te:us-open_atp",
+      "scheduled_start_initial": "2026-08-24T16:44:00Z",
+      "scheduled_start_current": "2026-08-24T16:44:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Wehnelt Kai",
+      "away": "Strombachs Robert",
+      "kickoff": "2026-08-24T16:44:00Z",
+      "tour": "atp",
+      "tournament": "Augsburg challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.1,
+      "odds_away": 1.65,
+      "source": "tennisexplorer",
+      "sport_key": "te:augsburg-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:44:00Z",
+      "scheduled_start_current": "2026-08-24T16:44:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Gulin Svyatoslav",
+      "away": "Yevseyev Denis",
+      "kickoff": "2026-08-24T16:44:00Z",
+      "tour": "atp",
+      "tournament": "Augsburg challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.48,
+      "odds_away": 2.41,
+      "source": "tennisexplorer",
+      "sport_key": "te:augsburg-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:44:00Z",
+      "scheduled_start_current": "2026-08-24T16:44:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Sanchez Martinez Benito",
+      "away": "Recek Dominik",
+      "kickoff": "2026-08-24T16:44:00Z",
+      "tour": "atp",
+      "tournament": "Augsburg challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.49,
+      "odds_away": 2.41,
+      "source": "tennisexplorer",
+      "sport_key": "te:augsburg-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:44:00Z",
+      "scheduled_start_current": "2026-08-24T16:44:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Hassan Benjamin",
+      "away": "Donald Matthew William",
+      "kickoff": "2026-08-24T16:44:00Z",
+      "tour": "atp",
+      "tournament": "Augsburg challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.65,
+      "odds_away": 2.07,
+      "source": "tennisexplorer",
+      "sport_key": "te:augsburg-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:44:00Z",
+      "scheduled_start_current": "2026-08-24T16:44:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Brunold Mika",
+      "away": "Gavrielides Liam",
+      "kickoff": "2026-08-24T16:44:00Z",
+      "tour": "atp",
+      "tournament": "Augsburg challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.52,
+      "odds_away": 2.3,
+      "source": "tennisexplorer",
+      "sport_key": "te:augsburg-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:44:00Z",
+      "scheduled_start_current": "2026-08-24T16:44:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Krutykh Oleksii",
+      "away": "Iannaccone Federico",
+      "kickoff": "2026-08-24T16:44:00Z",
+      "tour": "atp",
+      "tournament": "Augsburg challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.56,
+      "odds_away": 2.27,
+      "source": "tennisexplorer",
+      "sport_key": "te:augsburg-challenger_atp",
+      "scheduled_start_initial": "2026-08-24T16:44:00Z",
+      "scheduled_start_current": "2026-08-24T16:44:00Z",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-08-24T16:44:33Z"
+    }
+  ],
+  "tennis": [
+    {
+      "signal_id": "106d17abb209",
+      "sport": "tennis",
+      "match": "Damm Martin (2003) vs Shelbayh Abedallah",
+      "market": "away",
+      "odds": 3.0,
+      "model_prob": 46.5,
+      "fair_prob": 31.0,
+      "ev_pct": 39.5,
+      "stake_eur": 5.0,
+      "stake_pct": 5.0,
+      "theoretical_stake_eur": 15.0,
+      "cap_applied": true,
+      "confidence": "HIGH",
+      "n_models_agree": 0,
+      "generated_at": "2026-08-24T16:44:33Z",
+      "league": "atp",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "event_status": "AWAITING_START",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "display_priority": "top",
+      "initial_odds": 3.0,
+      "initial_ev_pct": 39.5,
+      "odds_history": [
+        {
+          "ts": "2026-08-24T16:44:33Z",
+          "odds": 3.0,
+          "source": "scan"
+        }
+      ]
+    },
+    {
+      "signal_id": "fbf3cf1f4956",
+      "sport": "tennis",
+      "match": "Walton Adam vs De Jong Jesper",
+      "market": "away",
+      "odds": 2.53,
+      "model_prob": 53.4,
+      "fair_prob": 36.6,
+      "ev_pct": 35.1,
+      "stake_eur": 5.0,
+      "stake_pct": 5.0,
+      "theoretical_stake_eur": 15.0,
+      "cap_applied": true,
+      "confidence": "HIGH",
+      "n_models_agree": 0,
+      "generated_at": "2026-08-24T16:44:33Z",
+      "league": "atp",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "event_status": "AWAITING_START",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "display_priority": "top",
+      "initial_odds": 2.53,
+      "initial_ev_pct": 35.1,
+      "odds_history": [
+        {
+          "ts": "2026-08-24T16:44:33Z",
+          "odds": 2.53,
+          "source": "scan"
+        }
+      ]
+    },
+    {
+      "signal_id": "244852fe380e",
+      "sport": "tennis",
+      "match": "Hijikata Rinky vs Blanch Darwin",
+      "market": "away",
+      "odds": 2.59,
+      "model_prob": 49.3,
+      "fair_prob": 35.4,
+      "ev_pct": 27.6,
+      "stake_eur": 5.0,
+      "stake_pct": 5.0,
+      "theoretical_stake_eur": 15.0,
+      "cap_applied": true,
+      "confidence": "HIGH",
+      "n_models_agree": 0,
+      "generated_at": "2026-08-24T16:44:33Z",
+      "league": "atp",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "event_status": "AWAITING_START",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "display_priority": "top",
+      "initial_odds": 2.59,
+      "initial_ev_pct": 27.6,
+      "odds_history": [
+        {
+          "ts": "2026-08-24T16:44:33Z",
+          "odds": 2.59,
+          "source": "scan"
+        }
+      ]
+    },
+    {
+      "signal_id": "ee50950aa018",
+      "sport": "tennis",
+      "match": "Safiullin Roman vs Grenier Hugo",
+      "market": "away",
+      "odds": 2.77,
+      "model_prob": 44.7,
+      "fair_prob": 33.7,
+      "ev_pct": 23.9,
+      "stake_eur": 5.0,
+      "stake_pct": 5.0,
+      "theoretical_stake_eur": 15.0,
+      "cap_applied": true,
+      "confidence": "HIGH",
+      "n_models_agree": 0,
+      "generated_at": "2026-08-24T16:44:33Z",
+      "league": "atp",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "event_status": "AWAITING_START",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "display_priority": "top",
+      "initial_odds": 2.77,
+      "initial_ev_pct": 23.9,
+      "odds_history": [
+        {
+          "ts": "2026-08-24T16:44:33Z",
+          "odds": 2.77,
+          "source": "scan"
+        }
+      ]
+    },
+    {
+      "signal_id": "7dea3789684a",
+      "sport": "tennis",
+      "match": "Suresh Dhakshineswar vs Giron Marcos",
+      "market": "home",
+      "odds": 2.42,
+      "model_prob": 51.2,
+      "fair_prob": 38.3,
+      "ev_pct": 23.8,
+      "stake_eur": 5.0,
+      "stake_pct": 5.0,
+      "theoretical_stake_eur": 15.0,
+      "cap_applied": true,
+      "confidence": "HIGH",
+      "n_models_agree": 0,
+      "generated_at": "2026-08-24T16:44:33Z",
+      "league": "atp",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "event_status": "AWAITING_START",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "display_priority": "top",
+      "initial_odds": 2.42,
+      "initial_ev_pct": 23.8,
+      "odds_history": [
+        {
+          "ts": "2026-08-24T16:44:33Z",
+          "odds": 2.42,
+          "source": "scan"
+        }
+      ]
+    },
+    {
+      "signal_id": "fb118dd47af1",
+      "sport": "tennis",
+      "match": "Sonego Lorenzo vs Kopriva Vit",
+      "market": "home",
+      "odds": 2.2,
+      "model_prob": 54.9,
+      "fair_prob": 42.3,
+      "ev_pct": 20.7,
+      "stake_eur": 5.0,
+      "stake_pct": 5.0,
+      "theoretical_stake_eur": 15.0,
+      "cap_applied": true,
+      "confidence": "HIGH",
+      "n_models_agree": 0,
+      "generated_at": "2026-08-24T16:44:33Z",
+      "league": "atp",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "event_status": "AWAITING_START",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "display_priority": "extra",
+      "initial_odds": 2.2,
+      "initial_ev_pct": 20.7,
+      "odds_history": [
+        {
+          "ts": "2026-08-24T16:44:33Z",
+          "odds": 2.2,
+          "source": "scan"
+        }
+      ]
+    },
+    {
+      "signal_id": "4d89a341714e",
+      "sport": "tennis",
+      "match": "Majchrzak Kamil vs Bonzi Benjamin",
+      "market": "away",
+      "odds": 2.35,
+      "model_prob": 47.7,
+      "fair_prob": 39.0,
+      "ev_pct": 12.1,
+      "stake_eur": 5.0,
+      "stake_pct": 5.0,
+      "theoretical_stake_eur": 11.0,
+      "cap_applied": true,
+      "confidence": "MEDIUM",
+      "n_models_agree": 0,
+      "generated_at": "2026-08-24T16:44:33Z",
+      "league": "atp",
+      "scheduled_start_current": "2026-08-24T16:43:00Z",
+      "kickoff": "2026-08-24T16:43:00Z",
+      "scheduled_start_initial": "2026-08-24T16:43:00Z",
+      "event_status": "AWAITING_START",
+      "schedule_updated_at": "2026-08-24T16:44:33Z",
+      "display_priority": "extra",
+      "initial_odds": 2.35,
+      "initial_ev_pct": 12.1,
+      "odds_history": [
+        {
+          "ts": "2026-08-24T16:44:33Z",
+          "odds": 2.35,
+          "source": "scan"
+        }
+      ]
+    }
+  ],
+  "model_tips": {
+    "France vs England": {
+      "p_home": 0.522,
+      "p_draw": 0.326,
+      "p_away": 0.152,
+      "xg_home": 1.78,
+      "xg_away": 0.95,
+      "p_btts_yes": 0.557,
+      "p_btts_no": 0.443,
+      "p_over25": 0.514,
+      "p_under25": 0.486,
+      "top_scorers_home": [
+        {
+          "name": "Jules Koundé",
+          "p": 0.741
+        },
+        {
+          "name": "Bradley Barcola",
+          "p": 0.574
+        },
+        {
+          "name": "Ousmane Dembélé",
+          "p": 0.528
+        }
+      ],
+      "top_scorers_away": [
+        {
+          "name": "Ivan Toney",
+          "p": 0.451
+        },
+        {
+          "name": "Harry Kane",
+          "p": 0.447
+        },
+        {
+          "name": "Jude Bellingham",
+          "p": 0.371
+        }
+      ],
+      "top_scores": [
+        {
+          "h": 1,
+          "a": 1,
+          "p": 15.7
+        },
+        {
+          "h": 0,
+          "a": 0,
+          "p": 11.2
+        },
+        {
+          "h": 2,
+          "a": 0,
+          "p": 10.3
+        }
+      ]
+    },
+    "Spain vs Argentina": {
+      "p_home": 0.629,
+      "p_draw": 0.305,
+      "p_away": 0.066,
+      "xg_home": 1.74,
+      "xg_away": 0.53,
+      "p_btts_yes": 0.378,
+      "p_btts_no": 0.622,
+      "p_over25": 0.394,
+      "p_under25": 0.606,
+      "top_scorers_home": [
+        {
+          "name": "Lamine Yamal",
+          "p": 0.29
+        },
+        {
+          "name": "Fabián Ruiz",
+          "p": 0.251
+        },
+        {
+          "name": "Mikel Oyarzabal",
+          "p": 0.233
+        }
+      ],
+      "top_scorers_away": [
+        {
+          "name": "Nicolás Otamendi",
+          "p": 0.642
+        },
+        {
+          "name": "Nicolás González",
+          "p": 0.502
+        },
+        {
+          "name": "Lautaro Martínez",
+          "p": 0.481
+        }
+      ],
+      "top_scores": [
+        {
+          "h": 2,
+          "a": 0,
+          "p": 15.7
+        },
+        {
+          "h": 0,
+          "a": 0,
+          "p": 14.5
+        },
+        {
+          "h": 1,
+          "a": 0,
+          "p": 14.0
+        }
+      ]
+    }
+  },
+  "all_odds": {
+    "Alexei Popyrin vs Roman Andres Burruchaga": {
+      "home": 1.67,
+      "away": 2.66,
+      "ah1.5_a": 1.77,
+      "ah1.5_b": 2.3,
+      "over22.5_games": 1.98,
+      "over21.5_games": 1.68,
+      "over23.5_games": 2.15,
+      "under22.5_games": 1.94,
+      "under21.5_games": 2.08,
+      "under23.5_games": 1.83
+    },
+    "Giovanni Mpetshi Perricard vs Botic van de Zandschulp": {
+      "home": 2.26,
+      "away": 1.78,
+      "ah1.5_a": 1.85,
+      "ah1.5_b": 2.01,
+      "over24.5_games": 1.91,
+      "over25.5_games": 1.97,
+      "under24.5_games": 2.0,
+      "under25.5_games": 1.9
+    },
+    "Juncheng Shang vs Andrey Rublev": {
+      "home": 4.3,
+      "away": 1.3,
+      "over22.5_games": 2.03,
+      "over21.5_games": 1.72,
+      "over22.0_games": 1.88,
+      "under22.5_games": 1.86,
+      "under21.5_games": 2.04,
+      "under22.0_games": 2.01
+    },
+    "Juan Manuel Cerundolo vs Hamad Medjedovic": {
+      "home": 2.6,
+      "away": 1.62,
+      "ah1.5_a": 2.1,
+      "ah1.5_b": 1.68,
+      "over22.5_games": 2.0,
+      "over23.5_games": 2.08,
+      "under22.5_games": 1.9,
+      "under23.5_games": 1.69
+    },
+    "Terence Atmane vs Jack Draper": {
+      "home": 2.96,
+      "away": 1.5,
+      "ah1.5_a": 2.23,
+      "ah1.5_b": 1.61,
+      "over22.5_games": 1.92,
+      "over23.5_games": 2.08,
+      "under22.5_games": 1.99,
+      "under23.5_games": 1.68
+    },
+    "Lorenzo Sonego vs Tallon Griekspoor": {
+      "home": 2.14,
+      "away": 1.9,
+      "ah1.5_a": 1.67,
+      "ah1.5_b": 1.91,
+      "over23.0_games": 1.9,
+      "over23.5_games": 2.05,
+      "over24.5_games": 2.0,
+      "over22.5_games": 1.73,
+      "under23.0_games": 1.97,
+      "under23.5_games": 1.84,
+      "under24.5_games": 1.76,
+      "under22.5_games": 2.05
+    },
+    "Shintaro Mochizuki vs Fabian Marozsan": {
+      "home": 2.64,
+      "away": 1.6,
+      "ah1.5_a": 2.3,
+      "ah1.5_b": 1.57,
+      "over22.0_games": 1.99,
+      "over21.5_games": 1.83,
+      "over22.5_games": 2.05,
+      "under22.0_games": 1.88,
+      "under21.5_games": 2.03,
+      "under22.5_games": 1.8
+    },
+    "Jaume Munar vs Alexander Blockx": {
+      "home": 2.42,
+      "away": 1.7,
+      "ah1.5_a": 2.02,
+      "ah1.5_b": 1.84,
+      "over22.5_games": 1.95,
+      "over23.5_games": 2.0,
+      "under22.5_games": 1.98,
+      "under23.5_games": 1.76
+    },
+    "Jiri Lehecka vs Vit Kopriva": {
+      "home": 1.19,
+      "away": 6.0,
+      "over20.5_games": 1.95,
+      "over21.5_games": 1.94,
+      "under20.5_games": 1.97,
+      "under21.5_games": 1.79
+    },
+    "James Duckworth vs Alex de Minaur": {
+      "home": 8.8,
+      "away": 1.12,
+      "over20.5_games": 2.05,
+      "over20.0_games": 1.82,
+      "over21.5_games": 2.14,
+      "under20.5_games": 1.9,
+      "under20.0_games": 2.05,
+      "under21.5_games": 1.64
+    },
+    "Brandon Nakashima vs Daniel Altmaier": {
+      "home": 1.33,
+      "away": 4.0,
+      "over21.5_games": 1.79,
+      "over22.5_games": 2.06,
+      "over22.0_games": 1.94,
+      "under21.5_games": 2.07,
+      "under22.5_games": 1.81,
+      "under22.0_games": 1.91
+    },
+    "Frances Tiafoe vs Marin Cilic": {
+      "home": 1.55,
+      "away": 2.8,
+      "ah1.5_a": 1.68,
+      "ah1.5_b": 2.1,
+      "over23.5_games": 2.06,
+      "over22.5_games": 1.83,
+      "over23.0_games": 1.92,
+      "under23.5_games": 1.82,
+      "under22.5_games": 2.06,
+      "under23.0_games": 1.93
+    },
+    "Flavio Cobolli vs Yannick Hanfmann": {
+      "home": 1.78,
+      "away": 2.25,
+      "ah1.5_a": 1.96,
+      "ah1.5_b": 1.97,
+      "over22.5_games": 1.83,
+      "over23.5_games": 2.0,
+      "over23.0_games": 1.97,
+      "under22.5_games": 2.03,
+      "under23.5_games": 1.85,
+      "under23.0_games": 1.88
+    },
+    "Luciano Darderi vs Gabriel Diallo": {
+      "home": 2.2,
+      "away": 1.93,
+      "ah1.5_a": 1.69,
+      "ah1.5_b": 1.91,
+      "over23.5_games": 2.01,
+      "over23.0_games": 1.86,
+      "over24.5_games": 1.91,
+      "under23.5_games": 1.86,
+      "under23.0_games": 2.0,
+      "under24.5_games": 1.83
+    },
+    "Alex Michelsen vs Francisco Cerundolo": {
+      "home": 1.71,
+      "away": 2.48,
+      "over23.5_games": 2.06,
+      "over22.5_games": 2.02,
+      "over22.0_games": 1.87,
+      "under23.5_games": 1.71,
+      "under22.5_games": 1.91,
+      "under22.0_games": 2.01
+    },
+    "Miomir Kecmanovic vs Arthur Rinderknech": {
+      "home": 1.91,
+      "away": 2.12,
+      "over23.5_games": 2.02,
+      "over24.5_games": 1.93,
+      "over23.0_games": 1.89,
+      "over22.5_games": 1.73,
+      "under23.5_games": 1.85,
+      "under24.5_games": 1.79,
+      "under23.0_games": 1.98,
+      "under22.5_games": 2.05
+    },
+    "Ignacio Buse vs Cameron Norrie": {
+      "home": 3.2,
+      "away": 1.44,
+      "over22.5_games": 2.02,
+      "over22.0_games": 1.94,
+      "under22.5_games": 1.86,
+      "under22.0_games": 1.93
+    },
+    "Rafael Jodar vs Corentin Moutet": {
+      "home": 1.35,
+      "away": 3.75,
+      "over21.5_games": 2.02,
+      "over21.0_games": 1.88,
+      "over20.5_games": 1.75,
+      "under21.5_games": 1.88,
+      "under21.0_games": 1.98,
+      "under20.5_games": 2.0
+    },
+    "Titouan Droguet vs Felix Auger-Aliassime": {
+      "home": 4.35,
+      "away": 1.26,
+      "over22.5_games": 2.02,
+      "under22.5_games": 1.85
+    },
+    "Learner Tien vs Gael Monfils": {
+      "home": 1.38,
+      "away": 3.6,
+      "over21.5_games": 1.75,
+      "over22.5_games": 2.03,
+      "under21.5_games": 2.1,
+      "under22.5_games": 1.91
+    },
+    "Nicolas Mejia vs Lorenzo Musetti": {
+      "home": 7.5,
+      "away": 1.15,
+      "over20.5_games": 2.15,
+      "over21.5_games": 2.1,
+      "over19.5_games": 1.74,
+      "over20.0_games": 1.89,
+      "under20.5_games": 1.85,
+      "under21.5_games": 1.68,
+      "under19.5_games": 2.05,
+      "under20.0_games": 1.98
+    },
+    "Valentin Vacherot vs Mariano Navone": {
+      "home": 1.65,
+      "away": 2.55,
+      "over22.5_games": 1.93,
+      "over21.5_games": 1.69,
+      "under22.5_games": 2.0,
+      "under21.5_games": 2.08
+    },
+    "Nuno Borges vs Tomas Martin Etcheverry": {
+      "home": 1.57,
+      "away": 2.72,
+      "over22.5_games": 1.85,
+      "over23.5_games": 2.0,
+      "over23.0_games": 1.98,
+      "under22.5_games": 2.02,
+      "under23.5_games": 1.76,
+      "under23.0_games": 1.89
+    },
+    "Rebecca Sramkova vs Diana Shnaider": {
+      "home": 5.0,
+      "away": 1.24,
+      "over19.5_games": 1.88,
+      "over20.5_games": 2.1,
+      "under19.5_games": 2.0,
+      "under20.5_games": 1.75
+    },
+    "Elena Gabriela Ruse vs Anastasia Potapova": {
+      "home": 2.06,
+      "away": 1.96,
+      "ah1.5_a": 1.85,
+      "ah1.5_b": 2.1,
+      "over21.5_games": 1.87,
+      "over22.5_games": 2.03,
+      "over22.0_games": 1.92,
+      "under21.5_games": 2.04,
+      "under22.5_games": 1.82,
+      "under22.0_games": 1.95
+    },
+    "Marta Kostyuk vs Katherine Sebov": {
+      "home": 1.05,
+      "away": 16.5,
+      "over17.5_games": 1.95,
+      "over18.5_games": 2.25,
+      "under17.5_games": 1.93,
+      "under18.5_games": 1.57
+    },
+    "Maja Chwalinska vs Talia Gibson": {
+      "home": 2.24,
+      "away": 1.79,
+      "ah1.5_a": 1.96,
+      "ah1.5_b": 1.93,
+      "over21.5_games": 1.96,
+      "over22.5_games": 2.0,
+      "under21.5_games": 1.95,
+      "under22.5_games": 1.86
+    },
+    "Antonia Ruzic vs Madison Keys": {
+      "home": 5.3,
+      "away": 1.26,
+      "over19.5_games": 1.96,
+      "over20.5_games": 2.14,
+      "under19.5_games": 1.98,
+      "under20.5_games": 1.66
+    },
+    "Shuai Zhang vs Jelena Ostapenko": {
+      "home": 3.25,
+      "away": 1.45,
+      "over21.0_games": 1.98,
+      "over20.5_games": 1.96,
+      "over21.5_games": 2.0,
+      "under21.0_games": 1.89,
+      "under20.5_games": 1.97,
+      "under21.5_games": 1.73
+    },
+    "Anna Kalinskaya vs McCartney Kessler": {
+      "home": 1.63,
+      "away": 2.55,
+      "ah1.5_a": 1.67,
+      "ah1.5_b": 2.12,
+      "over21.5_games": 1.94,
+      "over22.5_games": 2.1,
+      "under21.5_games": 1.98,
+      "under22.5_games": 1.65
+    },
+    "Kamilla Rakhimova vs Katerina Siniakova": {
+      "home": 2.88,
+      "away": 1.52,
+      "ah1.5_a": 2.35,
+      "ah1.5_b": 1.55,
+      "over21.5_games": 1.99,
+      "over21.0_games": 1.9,
+      "over22.5_games": 2.1,
+      "over20.5_games": 1.83,
+      "under21.5_games": 1.86,
+      "under21.0_games": 1.97,
+      "under22.5_games": 1.65,
+      "under20.5_games": 2.01
+    },
+    "Clara Tauson vs Nikola Bartunkova": {
+      "home": 1.92,
+      "away": 2.06,
+      "ah1.5_a": 1.96,
+      "ah1.5_b": 1.86,
+      "over21.5_games": 1.83,
+      "over22.5_games": 2.02,
+      "over22.0_games": 1.88,
+      "under21.5_games": 2.04,
+      "under22.5_games": 1.87,
+      "under22.0_games": 1.96
+    },
+    "Aryna Sabalenka vs Moyuka Uchijima": {
+      "home": 1.07,
+      "away": 18.0,
+      "over17.5_games": 1.97,
+      "over18.5_games": 2.2,
+      "under17.5_games": 1.92,
+      "under18.5_games": 1.6
+    },
+    "Lanlana Tararudee vs Amanda Anisimova": {
+      "home": 3.33,
+      "away": 1.45,
+      "over20.5_games": 1.98,
+      "over21.5_games": 2.1,
+      "under20.5_games": 1.94,
+      "under21.5_games": 1.73
+    },
+    "Alycia Parks vs Alexandra Eala": {
+      "home": 5.8,
+      "away": 1.23,
+      "over19.5_games": 1.93,
+      "over20.5_games": 2.0,
+      "under19.5_games": 1.95,
+      "under20.5_games": 1.73
+    },
+    "Alina Korneeva vs Emma Navarro": {
+      "home": 2.12,
+      "away": 1.88,
+      "over22.0_games": 1.96,
+      "over21.5_games": 1.86,
+      "over22.5_games": 2.06,
+      "under22.0_games": 1.91,
+      "under21.5_games": 2.03,
+      "under22.5_games": 1.79
+    },
+    "Ann Li vs Kayla Cross": {
+      "home": 1.31,
+      "away": 4.1,
+      "over20.5_games": 2.04,
+      "over19.5_games": 1.85,
+      "over20.0_games": 1.91,
+      "under20.5_games": 1.85,
+      "under19.5_games": 2.0,
+      "under20.0_games": 1.94
+    },
+    "Elise Mertens vs Anna Bondár": {
+      "home": 1.38,
+      "away": 3.55,
+      "over20.5_games": 1.95,
+      "over21.5_games": 1.95,
+      "over20.0_games": 1.87,
+      "under20.5_games": 1.96,
+      "under21.5_games": 1.75,
+      "under20.0_games": 2.0
+    },
+    "Liudmila Samsonova vs Barbora Krejcikova": {
+      "home": 2.38,
+      "away": 1.73,
+      "over21.5_games": 1.96,
+      "over22.5_games": 2.1,
+      "over20.5_games": 1.75,
+      "under21.5_games": 1.93,
+      "under22.5_games": 1.65,
+      "under20.5_games": 2.0
+    },
+    "Sloane Stephens vs Belinda Bencic": {
+      "home": 7.6,
+      "away": 1.15,
+      "over18.5_games": 1.86,
+      "over19.5_games": 2.1,
+      "over19.0_games": 1.98,
+      "under18.5_games": 2.01,
+      "under19.5_games": 1.65,
+      "under19.0_games": 1.85
+    },
+    "Linda Noskova vs Caty McNally": {
+      "home": 1.31,
+      "away": 4.2,
+      "over20.5_games": 1.98,
+      "over21.5_games": 2.1,
+      "under20.5_games": 1.91,
+      "under21.5_games": 1.65
+    },
+    "Kayla Day vs Coco Gauff": {
+      "home": 10.5,
+      "away": 1.1,
+      "over18.5_games": 2.01,
+      "over17.5_games": 1.6,
+      "under18.5_games": 1.89,
+      "under17.5_games": 2.2
+    },
+    "Daria Kasatkina vs Elena Rybakina": {
+      "home": 7.2,
+      "away": 1.16,
+      "over19.5_games": 2.1,
+      "over18.5_games": 1.74,
+      "over19.0_games": 1.9,
+      "under19.5_games": 1.8,
+      "under18.5_games": 2.25,
+      "under19.0_games": 1.97
+    },
+    "Iva Jović vs Magda Linette": {
+      "home": 1.27,
+      "away": 4.5,
+      "over20.5_games": 2.02,
+      "over19.5_games": 1.83,
+      "over20.0_games": 1.95,
+      "under20.5_games": 1.88,
+      "under19.5_games": 2.05,
+      "under20.0_games": 1.93
+    },
+    "Jessica Pegula vs Magdalena Frech": {
+      "home": 1.14,
+      "away": 9.2,
+      "over18.5_games": 1.91,
+      "over19.5_games": 2.1,
+      "over19.0_games": 1.98,
+      "under18.5_games": 2.05,
+      "under19.5_games": 1.65,
+      "under19.0_games": 1.88
+    },
+    "Mirra Andreeva vs Karolina Pliskova": {
+      "home": 1.25,
+      "away": 5.0,
+      "over19.5_games": 1.85,
+      "over20.5_games": 2.1,
+      "over20.0_games": 2.0,
+      "under19.5_games": 2.02,
+      "under20.5_games": 1.73,
+      "under20.0_games": 1.87
+    },
+    "Renata Zarazua vs Leylah Fernandez": {
+      "home": 3.7,
+      "away": 1.38,
+      "over20.5_games": 1.98,
+      "over21.5_games": 2.0,
+      "under20.5_games": 1.93,
+      "under21.5_games": 1.73
+    },
+    "Maria Sakkari vs Zeynep Sonmez": {
+      "home": 1.62,
+      "away": 2.6,
+      "over21.5_games": 2.0,
+      "over20.5_games": 1.77,
+      "over21.0_games": 1.92,
+      "under21.5_games": 1.88,
+      "under20.5_games": 2.0,
+      "under21.0_games": 1.95
+    },
+    "Marie Bouzkova vs Taylor Townsend": {
+      "home": 1.8,
+      "away": 2.25,
+      "over21.5_games": 1.93,
+      "over22.5_games": 2.0,
+      "over20.5_games": 1.77,
+      "under21.5_games": 1.95,
+      "under22.5_games": 1.73,
+      "under20.5_games": 1.97
+    },
+    "Sorana Cirstea vs Maya Joint": {
+      "home": 1.38,
+      "away": 3.75,
+      "over20.5_games": 2.02,
+      "over21.5_games": 2.0,
+      "over19.5_games": 1.77,
+      "over22.5_games": 2.45,
+      "under20.5_games": 1.91,
+      "under21.5_games": 1.73,
+      "under19.5_games": 2.08,
+      "under22.5_games": 1.57
+    },
+    "Panna Udvardy vs Naomi Osaka": {
+      "home": 11.5,
+      "away": 1.09,
+      "over18.5_games": 1.92,
+      "over19.5_games": 2.25,
+      "under18.5_games": 1.96,
+      "under19.5_games": 1.57
+    },
+    "Stefanos Tsitsipas vs Joao Fonseca": {
+      "home": 2.34,
+      "away": 1.73,
+      "over23.5_games": 2.05,
+      "over23.0_games": 1.9,
+      "over22.5_games": 1.76,
+      "over25.5_games": 1.87,
+      "under23.5_games": 1.9,
+      "under23.0_games": 2.0,
+      "under22.5_games": 2.05,
+      "under25.5_games": 1.8
+    },
+    "Zizou Bergs vs Sebastian Baez": {
+      "home": 1.66,
+      "away": 2.48,
+      "over22.5_games": 2.01,
+      "over21.5_games": 1.7,
+      "over22.0_games": 1.92,
+      "under22.5_games": 1.94,
+      "under21.5_games": 2.06,
+      "under22.0_games": 1.93
+    },
+    "Zachary Svajda vs Arthur Fils": {
+      "home": 3.7,
+      "away": 1.37,
+      "over21.5_games": 1.82,
+      "over22.5_games": 2.06,
+      "over22.0_games": 1.98,
+      "under21.5_games": 2.05,
+      "under22.5_games": 1.79,
+      "under22.0_games": 1.9
+    },
+    "Jenson Brooksby vs Ben Shelton": {
+      "home": 3.75,
+      "away": 1.36,
+      "over22.5_games": 1.94,
+      "over23.5_games": 2.14,
+      "under22.5_games": 1.97,
+      "under23.5_games": 1.66
+    },
+    "Casper Ruud vs Juan Manuel Cerundolo": {
+      "home": 1.39,
+      "away": 3.55,
+      "over21.5_games": 1.85,
+      "over22.5_games": 2.01,
+      "under21.5_games": 2.06,
+      "under22.5_games": 1.91
+    },
+    "Alexander Zverev vs Tallon Griekspoor": {
+      "home": 1.17,
+      "away": 6.6,
+      "over21.5_games": 1.77,
+      "over22.5_games": 2.11,
+      "over22.0_games": 1.93,
+      "under21.5_games": 2.2,
+      "under22.5_games": 1.76,
+      "under22.0_games": 1.94
+    },
+    "Raphael Collignon vs Alexei Popyrin": {
+      "home": 1.66,
+      "away": 2.51,
+      "over23.5_games": 2.04,
+      "over22.5_games": 1.84,
+      "over23.0_games": 1.95,
+      "under23.5_games": 1.79,
+      "under22.5_games": 2.05,
+      "under23.0_games": 1.92
+    },
+    "Thiago Agustin Tirante vs Taylor Fritz": {
+      "home": 6.5,
+      "away": 1.2,
+      "over21.5_games": 1.9,
+      "over20.5_games": 1.66,
+      "over22.0_games": 1.94,
+      "under21.5_games": 2.02,
+      "under20.5_games": 2.14,
+      "under22.0_games": 1.93
+    },
+    "Hubert Hurkacz vs Alejandro Tabilo": {
+      "home": 1.71,
+      "away": 2.38,
+      "over23.5_games": 1.94,
+      "over24.5_games": 1.93,
+      "over22.5_games": 1.61,
+      "under23.5_games": 1.93,
+      "under24.5_games": 1.92,
+      "under22.5_games": 2.2
+    },
+    "Fabian Marozsan vs Matteo Arnaldi": {
+      "home": 1.75,
+      "away": 2.32,
+      "over22.5_games": 1.94,
+      "over23.5_games": 2.0,
+      "under22.5_games": 1.98,
+      "under23.5_games": 1.75
+    },
+    "Karen Khachanov vs Terence Atmane": {
+      "home": 1.81,
+      "away": 2.25,
+      "over23.5_games": 2.01,
+      "over24.5_games": 1.93,
+      "over22.5_games": 1.65,
+      "under23.5_games": 1.88,
+      "under24.5_games": 1.81,
+      "under22.5_games": 2.15
+    },
+    "Ugo Humbert vs Daniel Merida Aguilar": {
+      "home": 1.44,
+      "away": 3.25,
+      "over21.5_games": 1.88,
+      "over22.5_games": 2.1,
+      "under21.5_games": 2.04,
+      "under22.5_games": 1.81
+    },
+    "Jacob Fearnley vs Jakub Mensik": {
+      "home": 3.25,
+      "away": 1.43,
+      "over22.0_games": 1.86,
+      "over22.5_games": 2.02,
+      "over21.5_games": 1.76,
+      "under22.0_games": 1.99,
+      "under22.5_games": 1.86,
+      "under21.5_games": 2.08
+    },
+    "Daniil Medvedev vs Botic van de Zandschulp": {
+      "home": 1.32,
+      "away": 4.1,
+      "over21.5_games": 1.95,
+      "over22.5_games": 2.06,
+      "under21.5_games": 1.99,
+      "under22.5_games": 1.71
+    },
+    "Valentin Royer vs Tommy Paul": {
+      "home": 5.7,
+      "away": 1.21,
+      "over20.5_games": 1.85,
+      "over21.5_games": 2.01,
+      "over21.0_games": 1.93,
+      "under20.5_games": 2.0,
+      "under21.5_games": 1.85,
+      "under21.0_games": 1.94
+    },
+    "Jiri Lehecka vs Alexander Blockx": {
+      "home": 2.12,
+      "away": 1.73
+    },
+    "Luciano Darderi vs Juncheng Shang": {
+      "home": 2.11,
+      "away": 1.66
+    },
+    "Zizou Bergs vs Ben Shelton": {
+      "home": 2.56,
+      "away": 1.45
+    },
+    "Mariano Navone vs Arthur Fils": {
+      "home": 2.55,
+      "away": 1.45
+    },
+    "Cameron Norrie vs Alex de Minaur": {
+      "home": 2.45,
+      "away": 1.47
+    },
+    "Yannick Hanfmann vs Nuno Borges": {
+      "home": 2.3,
+      "away": 1.55
+    },
+    "Casper Ruud vs Joao Fonseca": {
+      "home": 2.12,
+      "away": 1.73
+    },
+    "Talia Gibson vs Ekaterina Alexandrova": {
+      "home": 2.22,
+      "away": 1.67
+    },
+    "Anna Kalinskaya vs Diana Shnaider": {
+      "home": 2.12,
+      "away": 1.73
+    },
+    "Viktorija Golubic vs Iga Swiatek": {
+      "home": 3.46,
+      "away": 1.26
+    },
+    "Jessica Pegula vs Kamilla Rakhimova": {
+      "home": 1.01,
+      "away": 47.62
+    },
+    "Marta Kostyuk vs Madison Keys": {
+      "home": 2.14,
+      "away": 1.72
+    },
+    "Nikola Bartunkova vs Amanda Anisimova": {
+      "home": 47.62,
+      "away": 1.01
+    },
+    "Aryna Sabalenka vs Shuai Zhang": {
+      "home": 1.15,
+      "away": 4.89
+    },
+    "Elina Svitolina vs Anastasia Potapova": {
+      "home": 1.57,
+      "away": 2.41
+    },
+    "Taylor Townsend vs Belinda Bencic": {
+      "home": 47.62,
+      "away": 1.01
+    },
+    "Iva Jović vs Alina Korneeva": {
+      "home": 1.57,
+      "away": 2.41
+    },
+    "Ann Li vs Elena Rybakina": {
+      "home": 47.62,
+      "away": 1.01
+    },
+    "Rafael Jodar vs Lorenzo Musetti": {
+      "home": 2.22,
+      "away": 1.67
+    },
+    "Frances Tiafoe vs Arthur Rinderknech": {
+      "home": 1.57,
+      "away": 2.41
+    },
+    "Alexei Popyrin vs Thiago Agustin Tirante": {
+      "home": 2.22,
+      "away": 1.67
+    },
+    "Elise Mertens vs Naomi Osaka": {
+      "home": 2.5,
+      "away": 1.48
+    },
+    "Maya Joint vs Liudmila Samsonova": {
+      "home": 2.22,
+      "away": 1.67
+    },
+    "Brandon Nakashima vs Titouan Droguet": {
+      "home": 2.12,
+      "away": 1.73
+    },
+    "Daniel Merida Aguilar vs Alex Michelsen": {
+      "home": 2.12,
+      "away": 1.73
+    },
+    "Botic van de Zandschulp vs Hubert Hurkacz": {
+      "home": 2.45,
+      "away": 1.49
+    },
+    "Terence Atmane vs Jakub Mensik": {
+      "home": 47.62,
+      "away": 1.01
+    },
+    "Learner Tien vs Tommy Paul": {
+      "home": 2.14,
+      "away": 1.71
+    },
+    "Tallon Griekspoor vs Matteo Arnaldi": {
+      "home": 1.5,
+      "away": 2.51
+    },
+    "Caty McNally vs Alexandra Eala": {
+      "home": 47.62,
+      "away": 1.01
+    },
+    "Maria Sakkari vs Coco Gauff": {
+      "home": 2.5,
+      "away": 1.5
+    },
+    "Mirra Andreeva vs Leylah Fernandez": {
+      "home": 1.59,
+      "away": 2.38
+    },
+    "Arthur Fils vs Cameron Norrie": {
+      "home": 1.57,
+      "away": 2.41
+    },
+    "Arthur Rinderknech vs Brandon Nakashima": {
+      "home": 2.3,
+      "away": 1.55
+    },
+    "Jiri Lehecka vs Rafael Jodar": {
+      "home": 2.12,
+      "away": 1.73
+    },
+    "Nuno Borges vs Luciano Darderi": {
+      "home": 2.12,
+      "away": 1.73
+    },
+    "Elina Svitolina vs Amanda Anisimova": {
+      "home": 1.7,
+      "away": 2.06
+    },
+    "Joao Fonseca vs Ben Shelton": {
+      "home": 2.38,
+      "away": 1.59
+    },
+    "Botic van de Zandschulp vs Jakub Mensik": {
+      "home": 2.75,
+      "away": 1.4
+    },
+    "Tallon Griekspoor vs Daniel Merida Aguilar": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Learner Tien vs Thiago Agustin Tirante": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Marta Kostyuk vs Iga Swiatek": {
+      "home": 2.22,
+      "away": 1.67
+    },
+    "Jessica Pegula vs Diana Shnaider": {
+      "home": 1.38,
+      "away": 2.85
+    },
+    "Aryna Sabalenka vs Ekaterina Alexandrova": {
+      "home": 1.29,
+      "away": 3.35
+    },
+    "Alexandra Eala vs Belinda Bencic": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Alina Korneeva vs Coco Gauff": {
+      "home": 3.62,
+      "away": 1.29
+    },
+    "Liudmila Samsonova vs Elena Rybakina": {
+      "home": 3.62,
+      "away": 1.29
+    },
+    "Leylah Fernandez vs Naomi Osaka": {
+      "home": 3.62,
+      "away": 1.29
+    },
+    "Rafael Jodar vs Arthur Fils": {
+      "home": 1.62,
+      "away": 2.18
+    },
+    "Luciano Darderi vs Brandon Nakashima": {
+      "home": 3.62,
+      "away": 1.29
+    },
+    "Daniel Merida Aguilar vs Learner Tien": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Diana Shnaider vs Iga Swiatek": {
+      "home": 3.62,
+      "away": 1.29
+    },
+    "Ekaterina Alexandrova vs Elina Svitolina": {
+      "home": 2.53,
+      "away": 1.47
+    },
+    "Jakub Mensik vs Ben Shelton": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Naomi Osaka vs Elena Rybakina": {
+      "home": 3.62,
+      "away": 1.29
+    },
+    "Belinda Bencic vs Coco Gauff": {
+      "home": 2.38,
+      "away": 1.59
+    },
+    "Elina Svitolina vs Iga Swiatek": {
+      "home": 1.45,
+      "away": 2.55
+    },
+    "Alexander Shevchenko vs Pablo Llamas Ruiz": {
+      "home": 1.64,
+      "away": 2.1
+    },
+    "Dusan Lajovic vs Benjamin Bonzi": {
+      "home": 2.29,
+      "away": 1.56
+    },
+    "Luca Van Assche vs Gustavo Heide": {
+      "home": 1.5,
+      "away": 2.38
+    },
+    "Kei Nishikori vs Francisco Comesana": {
+      "home": 2.09,
+      "away": 1.64
+    },
+    "Jaime Faria vs Nikoloz Basilashvili": {
+      "home": 1.44,
+      "away": 2.55
+    },
+    "Marco Trungelliti vs Sebastian Ofner": {
+      "home": 2.21,
+      "away": 1.59
+    },
+    "Alexei Popyrin vs Titouan Droguet": {
+      "home": 1.6,
+      "away": 2.2
+    },
+    "Billy Harris vs Kyrian Jacquet": {
+      "home": 2.33,
+      "away": 1.52
+    },
+    "Sho Shimabukuro vs Hugo Dellien": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Hugo Gaston vs Nicolai Budkov Kjaer": {
+      "home": 2.2,
+      "away": 1.6
+    },
+    "Mark Lajal vs Dalibor Svrcina": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Marcos Giron vs Henrique Rocha": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Nicolas Mejia vs Jacob Fearnley": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Kayla Day vs Taylah Preston": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Robin Montgomery vs Julia Grabher": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Victoria Jimenez Kasintseva vs Mananchaya Sawangkaew": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Renata Zarazua vs Yue Yuan": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Anastasia Zakharova vs Lucrezia Stefanini": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Oksana Selekhmeteva vs Elizabeth Mandlik": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Himeno Sakatsume vs Leolia Jeanjean": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Rebecca Marino vs Alina Charaeva": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Alina Korneeva vs Varvara Lepchenko": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Rebecca Sramkova vs Elsa Jacquemot": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Dominika Šalková vs Anna Blinkova": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Solana Sierra vs Aoi Ito": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Eva Lys vs Katarzyna Kawa": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Harriet Dart vs Moyuka Uchijima": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Emiliana Arango vs Aliaksandra Sasnovich": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Xiyu Wang vs Bianca Andreescu": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Nadia Podoroska vs Ella Seidel": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Rafael Jodar vs Brandon Nakashima": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Learner Tien vs Ben Shelton": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Coco Gauff vs Elena Rybakina": {
+      "home": 2.47,
+      "away": 1.55
+    },
+    "Luca Van Assche vs Dusan Lajovic": {
+      "home": 1.35,
+      "away": 3.02
+    },
+    "Marco Trungelliti vs Kei Nishikori": {
+      "home": 2.09,
+      "away": 1.65
+    },
+    "Nicolai Budkov Kjaer vs Kyrian Jacquet": {
+      "home": 2.28,
+      "away": 1.54
+    },
+    "Yue Yuan vs Kayla Day": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Sinja Kraus vs Claire Liu": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Lanlana Tararudee vs Mananchaya Sawangkaew": {
+      "home": 1.58,
+      "away": 2.25
+    },
+    "Lucrezia Stefanini vs Leolia Jeanjean": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Lilli Tagger vs Robin Montgomery": {
+      "home": 1.74,
+      "away": 2.1
+    },
+    "Alina Korneeva vs Alina Charaeva": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Aoi Ito vs Harriet Dart": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Eva Lys vs Anna Blinkova": {
+      "home": 1.55,
+      "away": 2.47
+    },
+    "Denis Shapovalov vs Adrian Mannarino": {
+      "home": 1.53,
+      "away": 2.5
+    },
+    "Aleksandar Kovacevic vs Karen Khachanov": {
+      "home": 2.71,
+      "away": 1.47
+    },
+    "Alex Michelsen vs Jesper De Jong": {
+      "home": 1.47,
+      "away": 2.71
+    },
+    "Botic van de Zandschulp vs Tallon Griekspoor": {
+      "home": 1.55,
+      "away": 2.3
+    },
+    "Camilo Ugo Carabelli vs Miomir Kecmanovic": {
+      "home": 2.35,
+      "away": 1.53
+    },
+    "Corentin Moutet vs Hubert Hurkacz": {
+      "home": 2.23,
+      "away": 1.58
+    },
+    "Daniel Merida Aguilar vs Marin Cilic": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Martin Landaluce vs Jack Draper": {
+      "home": 2.64,
+      "away": 1.43
+    },
+    "Juncheng Shang vs Lorenzo Sonego": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Mariano Navone vs Raphael Collignon": {
+      "home": 1.59,
+      "away": 2.22
+    },
+    "Nuno Borges vs Thanasi Kokkinakis": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Alycia Parks vs Viktorija Golubic": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Jessica Bouzas Maneiro vs Anna Bondár": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Cristina Bucsa vs Panna Udvardy": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Daria Snigur vs Yuliia Starodubtseva": {
+      "home": 1.47,
+      "away": 2.71
+    },
+    "Sara Bejlek vs Karolina Pliskova": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Maria Timofeeva vs Katerina Siniakova": {
+      "home": 2.1,
+      "away": 1.74
+    },
+    "Yulia Putintseva vs Liudmila Samsonova": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Maya Joint vs Tamara Korpatsch": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Darja Vidmanova vs Anhelina Kalinina": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Antonia Ruzic vs Magdalena Frech": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Ashlyn Krueger vs Lois Boisson": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Diane Parry vs Caroline Dolehide": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Caty McNally vs McCartney Kessler": {
+      "home": 2.1,
+      "away": 1.74
+    },
+    "Daria Kasatkina vs Zeynep Sonmez": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Tatjana Maria vs Dayana Yastremska": {
+      "home": 2.47,
+      "away": 1.55
+    },
+    "Elvina Kalieva vs Oleksandra Oliynykova": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Kamilla Rakhimova vs Kimberly Birrell": {
+      "home": 2.71,
+      "away": 1.47
+    },
+    "Katie Boulter vs Katie Volynets": {
+      "home": 1.48,
+      "away": 2.66
+    },
+    "Simona Waltert vs Petra Marcinko": {
+      "home": 2.15,
+      "away": 1.62
+    },
+    "Cameron Norrie vs Dino Prizmic": {
+      "home": 1.52,
+      "away": 2.36
+    },
+    "Rinky Hijikata vs Gael Monfils": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Sebastian Baez vs Grigor Dimitrov": {
+      "home": 2.71,
+      "away": 1.47
+    },
+    "Thiago Agustin Tirante vs Jan Choinski": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Marton Fucsovics vs Terence Atmane": {
+      "home": 2.24,
+      "away": 1.57
+    },
+    "Tomas Machac vs Pablo Carreno Busta": {
+      "home": 1.55,
+      "away": 2.47
+    },
+    "Valentin Royer vs Stefanos Tsitsipas": {
+      "home": 2.71,
+      "away": 1.47
+    },
+    "Zachary Svajda vs Mattia Bellucci": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Ben Shelton vs Brandon Nakashima": {
+      "home": 1.55,
+      "away": 2.47
+    },
+    "Iga Swiatek vs Elena Rybakina": {
+      "home": 2.4,
+      "away": 1.5
+    },
+    "Alexander Blockx vs Mariano Navone": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Miomir Kecmanovic vs Flavio Cobolli": {
+      "home": 2.16,
+      "away": 1.63
+    },
+    "Martin Landaluce vs Matteo Arnaldi": {
+      "home": 1.57,
+      "away": 2.31
+    },
+    "Mattia Bellucci vs Jakub Mensik": {
+      "home": 3.32,
+      "away": 1.34
+    },
+    "Novak Djokovic vs Thiago Agustin Tirante": {
+      "home": 1.47,
+      "away": 2.71
+    },
+    "Quentin Halys vs Alex de Minaur": {
+      "home": 2.71,
+      "away": 1.47
+    },
+    "Arthur Fery vs James Duckworth": {
+      "home": 2.2,
+      "away": 1.6
+    },
+    "Tommy Paul vs Hubert Hurkacz": {
+      "home": 2.34,
+      "away": 1.52
+    },
+    "Luciano Darderi vs Rinky Hijikata": {
+      "home": 1.56,
+      "away": 2.38
+    },
+    "Yannick Hanfmann vs Arthur Fils": {
+      "home": 2.71,
+      "away": 1.47
+    },
+    "Jiri Lehecka vs Matteo Berrettini": {
+      "home": 1.47,
+      "away": 2.71
+    },
+    "Rafael Jodar vs Denis Shapovalov": {
+      "home": 1.47,
+      "away": 2.71
+    },
+    "Alexander Zverev vs Cameron Norrie": {
+      "home": 1.47,
+      "away": 2.71
+    },
+    "Zeynep Sonmez vs Amanda Anisimova": {
+      "home": 3.32,
+      "away": 1.34
+    },
+    "Cristina Bucsa vs Maja Chwalinska": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Shuai Zhang vs Kayla Day": {
+      "home": 1.55,
+      "away": 2.47
+    },
+    "Caty McNally vs Anna Kalinskaya": {
+      "home": 2.71,
+      "away": 1.47
+    },
+    "Diana Shnaider vs Tatjana Maria": {
+      "home": 1.33,
+      "away": 3.35
+    },
+    "Jelena Ostapenko vs Magdalena Frech": {
+      "home": 1.74,
+      "away": 2.1
+    },
+    "Sorana Cirstea vs Nikola Bartunkova": {
+      "home": 1.47,
+      "away": 2.71
+    },
+    "Linda Noskova vs Katie Boulter": {
+      "home": 1.47,
+      "away": 2.71
+    },
+    "Emma Navarro vs Anhelina Kalinina": {
+      "home": 1.47,
+      "away": 2.71
+    },
+    "Simona Waltert vs Jessica Pegula": {
+      "home": 2.71,
+      "away": 1.47
+    },
+    "Elise Mertens vs Diane Parry": {
+      "home": 1.47,
+      "away": 2.71
+    },
+    "Kamilla Rakhimova vs Maria Sakkari": {
+      "home": 2.4,
+      "away": 1.52
+    },
+    "Peyton Stearns vs Clara Tauson": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Lois Boisson vs Belinda Bencic": {
+      "home": 2.47,
+      "away": 1.55
+    },
+    "Taylor Townsend vs Elena Rybakina": {
+      "home": 2.98,
+      "away": 1.4
+    },
+    "Adam Walton vs Ignacio Buse": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Brandon Nakashima vs Aleksandar Kovacevic": {
+      "home": 1.42,
+      "away": 2.91
+    },
+    "Taylor Fritz vs Alex Michelsen": {
+      "home": 1.53,
+      "away": 2.38
+    },
+    "Andrey Rublev vs Pablo Carreno Busta": {
+      "home": 1.62,
+      "away": 2.31
+    },
+    "Arthur Rinderknech vs Juan Manuel Cerundolo": {
+      "home": 1.88,
+      "away": 1.93
+    },
+    "Ben Shelton vs Jaime Faria": {
+      "home": 1.88,
+      "away": 1.93
+    },
+    "Joao Fonseca vs Botic van de Zandschulp": {
+      "home": 1.41,
+      "away": 2.75
+    },
+    "Daniel Altmaier vs Lorenzo Musetti": {
+      "home": 2.81,
+      "away": 1.42
+    },
+    "Daniel Merida Aguilar vs Zizou Bergs": {
+      "home": 2.23,
+      "away": 1.54
+    },
+    "Marco Trungelliti vs Daniil Medvedev": {
+      "home": 2.31,
+      "away": 1.62
+    },
+    "Stefanos Tsitsipas vs Felix Auger-Aliassime": {
+      "home": 2.31,
+      "away": 1.62
+    },
+    "Lorenzo Sonego vs Frances Tiafoe": {
+      "home": 2.31,
+      "away": 1.62
+    },
+    "Nuno Borges vs Francisco Cerundolo": {
+      "home": 2.26,
+      "away": 1.58
+    },
+    "Learner Tien vs Sebastian Baez": {
+      "home": 1.4,
+      "away": 2.77
+    },
+    "Ugo Humbert vs Michael Zheng": {
+      "home": 2.21,
+      "away": 1.6
+    },
+    "Sloane Stephens vs Anastasia Potapova": {
+      "home": 2.31,
+      "away": 1.62
+    },
+    "Anna Blinkova vs Ekaterina Alexandrova": {
+      "home": 2.31,
+      "away": 1.62
+    },
+    "Aryna Sabalenka vs Talia Gibson": {
+      "home": 1.4,
+      "away": 2.98
+    },
+    "Barbora Krejcikova vs Sara Bejlek": {
+      "home": 1.62,
+      "away": 2.31
+    },
+    "Coco Gauff vs Liudmila Samsonova": {
+      "home": 1.4,
+      "away": 2.98
+    },
+    "Daria Snigur vs Madison Keys": {
+      "home": 2.31,
+      "away": 1.62
+    },
+    "Xinyu Wang vs Donna Vekic": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Tereza Valentova vs Elina Svitolina": {
+      "home": 2.86,
+      "away": 1.43
+    },
+    "Tamara Korpatsch vs Iva Jović": {
+      "home": 2.31,
+      "away": 1.62
+    },
+    "Janice Tjen vs Viktorija Golubic": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Katerina Siniakova vs Jessica Bouzas Maneiro": {
+      "home": 1.82,
+      "away": 1.99
+    },
+    "Leylah Fernandez vs Xiyu Wang": {
+      "home": 1.88,
+      "away": 1.93
+    },
+    "Marie Bouzkova vs Lucrezia Stefanini": {
+      "home": 1.62,
+      "away": 2.31
+    },
+    "Marta Kostyuk vs Sofia Kenin": {
+      "home": 1.4,
+      "away": 2.98
+    },
+    "Oleksandra Oliynykova vs Mirra Andreeva": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Iga Swiatek vs Emiliana Arango": {
+      "home": 1.4,
+      "away": 2.98
+    },
+    "Shuai Zhang vs Ann Li": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Alexandra Eala vs Amanda Anisimova": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Diana Shnaider vs Maja Chwalinska": {
+      "home": 1.88,
+      "away": 1.93
+    },
+    "Alexander Blockx vs Flavio Cobolli": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Rinky Hijikata vs Jakub Mensik": {
+      "home": 2.58,
+      "away": 1.46
+    },
+    "Thiago Agustin Tirante vs Martin Landaluce": {
+      "home": 1.88,
+      "away": 1.93
+    },
+    "Sorana Cirstea vs Anna Kalinskaya": {
+      "home": 1.88,
+      "away": 1.93
+    },
+    "Emma Navarro vs Jessica Pegula": {
+      "home": 2.98,
+      "away": 1.4
+    },
+    "Rafael Jodar vs Alejandro Tabilo": {
+      "home": 1.62,
+      "away": 2.31
+    },
+    "Arthur Fery vs Alex de Minaur": {
+      "home": 2.82,
+      "away": 1.37
+    },
+    "Jiri Lehecka vs Arthur Fils": {
+      "home": 1.48,
+      "away": 2.5
+    },
+    "Linda Noskova vs Clara Tauson": {
+      "home": 1.62,
+      "away": 2.31
+    },
+    "Diane Parry vs Lois Boisson": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Alexander Zverev vs Terence Atmane": {
+      "home": 1.4,
+      "away": 2.98
+    },
+    "Magdalena Frech vs Elena Rybakina": {
+      "home": 2.98,
+      "away": 1.4
+    },
+    "Iga Swiatek vs Maria Sakkari": {
+      "home": 1.4,
+      "away": 2.98
+    },
+    "Janice Tjen vs Mirra Andreeva": {
+      "home": 2.86,
+      "away": 1.43
+    },
+    "Aryna Sabalenka vs Xinyu Wang": {
+      "home": 1.62,
+      "away": 2.31
+    },
+    "Andrey Rublev vs Nuno Borges": {
+      "home": 1.88,
+      "away": 1.93
+    },
+    "Brandon Nakashima vs Daniil Medvedev": {
+      "home": 2.31,
+      "away": 1.62
+    },
+    "Taylor Fritz vs Daniel Merida Aguilar": {
+      "home": 1.31,
+      "away": 3.14
+    },
+    "Juan Manuel Cerundolo vs Felix Auger-Aliassime": {
+      "home": 2.86,
+      "away": 1.43
+    },
+    "Michael Zheng vs Lorenzo Musetti": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Sara Bejlek vs Ekaterina Alexandrova": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Marie Bouzkova vs Iva Jović": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Katerina Siniakova vs Madison Keys": {
+      "home": 2.31,
+      "away": 1.62
+    },
+    "Coco Gauff vs Ann Li": {
+      "home": 1.4,
+      "away": 2.98
+    },
+    "Marta Kostyuk vs Sloane Stephens": {
+      "home": 1.4,
+      "away": 2.98
+    },
+    "Jaime Faria vs Adam Walton": {
+      "home": 1.88,
+      "away": 1.93
+    },
+    "Learner Tien vs Frances Tiafoe": {
+      "home": 1.88,
+      "away": 1.93
+    },
+    "Xiyu Wang vs Elina Svitolina": {
+      "home": 2.31,
+      "away": 1.62
+    },
+    "Iga Swiatek vs Diane Parry": {
+      "home": 1.4,
+      "away": 2.98
+    },
+    "Diana Shnaider vs Elena Rybakina": {
+      "home": 2.98,
+      "away": 1.4
+    },
+    "Sorana Cirstea vs Jessica Pegula": {
+      "home": 2.31,
+      "away": 1.62
+    },
+    "Arthur Fils vs Alex de Minaur": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Alexander Zverev vs Tommy Paul": {
+      "home": 1.4,
+      "away": 2.79
+    },
+    "Rafael Jodar vs Flavio Cobolli": {
+      "home": 1.74,
+      "away": 2.1
+    },
+    "Thiago Agustin Tirante vs Jakub Mensik": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Linda Noskova vs Amanda Anisimova": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Madison Keys vs Xiyu Wang": {
+      "home": 1.88,
+      "away": 1.93
+    },
+    "Nuno Borges vs Brandon Nakashima": {
+      "home": 2.2,
+      "away": 1.6
+    },
+    "Marta Kostyuk vs Mirra Andreeva": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Jaime Faria vs Lorenzo Musetti": {
+      "home": 2.35,
+      "away": 1.53
+    },
+    "Aryna Sabalenka vs Sara Bejlek": {
+      "home": 1.4,
+      "away": 2.98
+    },
+    "Frances Tiafoe vs Felix Auger-Aliassime": {
+      "home": 2.31,
+      "away": 1.62
+    },
+    "Coco Gauff vs Marie Bouzkova": {
+      "home": 1.4,
+      "away": 2.98
+    },
+    "Tommy Paul vs Flavio Cobolli": {
+      "home": 1.62,
+      "away": 2.31
+    },
+    "Thiago Agustin Tirante vs Arthur Fils": {
+      "home": 2.31,
+      "away": 1.62
+    },
+    "Taylor Fritz vs Brandon Nakashima": {
+      "home": 1.84,
+      "away": 1.97
+    },
+    "Lorenzo Musetti vs Frances Tiafoe": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Amanda Anisimova vs Jessica Pegula": {
+      "home": 1.46,
+      "away": 2.49
+    },
+    "Coco Gauff vs Marta Kostyuk": {
+      "home": 2.25,
+      "away": 1.57
+    },
+    "Sara Bejlek vs Madison Keys": {
+      "home": 2.31,
+      "away": 1.62
+    },
+    "Jessica Pegula vs Iga Swiatek": {
+      "home": 2.41,
+      "away": 1.51
+    },
+    "Flavio Cobolli vs Arthur Fils": {
+      "home": 2.31,
+      "away": 1.62
+    },
+    "Brandon Nakashima vs Frances Tiafoe": {
+      "home": 1.9,
+      "away": 1.9
+    },
+    "Sara Bejlek vs Coco Gauff": {
+      "home": 2.98,
+      "away": 1.4
+    },
+    "Arthur Fils vs Frances Tiafoe": {
+      "home": 1.9,
+      "away": 1.91
+    },
+    "Coco Gauff vs Jessica Pegula": {
+      "home": 1.91,
+      "away": 1.9
+    },
+    "Panna Udvardy vs Darja Vidmanova": {
+      "home": 2.18,
+      "away": 1.69
+    },
+    "Maria Timofeeva vs Kamilla Rakhimova": {
+      "home": 2.18,
+      "away": 1.69
+    },
+    "Maya Joint vs Yulia Putintseva": {
+      "home": 2.18,
+      "away": 1.69
+    },
+    "Antonia Ruzic vs Nikola Bartunkova": {
+      "home": 2.18,
+      "away": 1.69
+    },
+    "Lilli Tagger vs Yuliia Starodubtseva": {
+      "home": 2.18,
+      "away": 1.69
+    },
+    "Mayar Sherif vs Oleksandra Oliynykova": {
+      "home": 2.18,
+      "away": 1.69
+    },
+    "Alycia Parks vs Petra Marcinko": {
+      "home": 2.1,
+      "away": 1.74
+    },
+    "Clara Tauson vs Renata Zarazua": {
+      "home": 1.7,
+      "away": 2.16
+    },
+    "Janice Tjen vs Dayana Yastremska": {
+      "home": 1.94,
+      "away": 1.87
+    },
+    "Diane Parry vs Donna Vekic": {
+      "home": 1.86,
+      "away": 1.95
+    },
+    "Anhelina Kalinina vs Maya Joint": {
+      "home": 1.95,
+      "away": 1.86
+    },
+    "Cristina Bucsa vs Anna Bondár": {
+      "home": 2.15,
+      "away": 1.71
+    },
+    "Darja Vidmanova vs Kimberly Birrell": {
+      "home": 1.93,
+      "away": 1.88
+    },
+    "Shuai Zhang vs Maria Timofeeva": {
+      "home": 1.67,
+      "away": 2.22
+    },
+    "Nikola Bartunkova vs Anastasia Potapova": {
+      "home": 2.12,
+      "away": 1.73
+    }
+  },
   "odds_history": {
     "Alexei Popyrin vs Roman Andres Burruchaga": [
       {
@@ -8897,3115 +11968,6 @@
       }
     ]
   },
-  "tennis": [
-    {
-      "signal_id": "106d17abb209",
-      "sport": "tennis",
-      "match": "Damm Martin (2003) vs Shelbayh Abedallah",
-      "market": "away",
-      "odds": 3.0,
-      "model_prob": 46.5,
-      "fair_prob": 31.0,
-      "ev_pct": 39.5,
-      "stake_eur": 5.0,
-      "stake_pct": 5.0,
-      "theoretical_stake_eur": 15.0,
-      "cap_applied": true,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "generated_at": "2026-08-24T15:33:14Z",
-      "league": "atp",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "event_status": "AWAITING_START",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "display_priority": "top",
-      "initial_odds": 3.0,
-      "initial_ev_pct": 39.5,
-      "odds_history": [
-        {
-          "ts": "2026-08-24T15:33:14Z",
-          "odds": 3.0,
-          "source": "scan"
-        }
-      ]
-    },
-    {
-      "signal_id": "ee50950aa018",
-      "sport": "tennis",
-      "match": "Safiullin Roman vs Grenier Hugo",
-      "market": "away",
-      "odds": 2.98,
-      "model_prob": 44.7,
-      "fair_prob": 30.7,
-      "ev_pct": 33.3,
-      "stake_eur": 5.0,
-      "stake_pct": 5.0,
-      "theoretical_stake_eur": 15.0,
-      "cap_applied": true,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "generated_at": "2026-08-24T15:33:14Z",
-      "league": "atp",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "event_status": "AWAITING_START",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "display_priority": "top",
-      "initial_odds": 2.98,
-      "initial_ev_pct": 33.3,
-      "odds_history": [
-        {
-          "ts": "2026-08-24T15:33:14Z",
-          "odds": 2.98,
-          "source": "scan"
-        }
-      ]
-    },
-    {
-      "signal_id": "fbf3cf1f4956",
-      "sport": "tennis",
-      "match": "Walton Adam vs De Jong Jesper",
-      "market": "away",
-      "odds": 2.46,
-      "model_prob": 53.4,
-      "fair_prob": 37.9,
-      "ev_pct": 31.4,
-      "stake_eur": 5.0,
-      "stake_pct": 5.0,
-      "theoretical_stake_eur": 15.0,
-      "cap_applied": true,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "generated_at": "2026-08-24T15:33:14Z",
-      "league": "atp",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "event_status": "AWAITING_START",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "display_priority": "top",
-      "initial_odds": 2.46,
-      "initial_ev_pct": 31.4,
-      "odds_history": [
-        {
-          "ts": "2026-08-24T15:33:14Z",
-          "odds": 2.46,
-          "source": "scan"
-        }
-      ]
-    },
-    {
-      "signal_id": "244852fe380e",
-      "sport": "tennis",
-      "match": "Hijikata Rinky vs Blanch Darwin",
-      "market": "away",
-      "odds": 2.59,
-      "model_prob": 49.3,
-      "fair_prob": 35.4,
-      "ev_pct": 27.6,
-      "stake_eur": 5.0,
-      "stake_pct": 5.0,
-      "theoretical_stake_eur": 15.0,
-      "cap_applied": true,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "generated_at": "2026-08-24T15:33:14Z",
-      "league": "atp",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "event_status": "AWAITING_START",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "display_priority": "top",
-      "initial_odds": 2.59,
-      "initial_ev_pct": 27.6,
-      "odds_history": [
-        {
-          "ts": "2026-08-24T15:33:14Z",
-          "odds": 2.59,
-          "source": "scan"
-        }
-      ]
-    },
-    {
-      "signal_id": "7dea3789684a",
-      "sport": "tennis",
-      "match": "Suresh Dhakshineswar vs Giron Marcos",
-      "market": "home",
-      "odds": 2.42,
-      "model_prob": 51.2,
-      "fair_prob": 38.3,
-      "ev_pct": 23.8,
-      "stake_eur": 5.0,
-      "stake_pct": 5.0,
-      "theoretical_stake_eur": 15.0,
-      "cap_applied": true,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "generated_at": "2026-08-24T15:33:14Z",
-      "league": "atp",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "event_status": "AWAITING_START",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "display_priority": "top",
-      "initial_odds": 2.42,
-      "initial_ev_pct": 23.8,
-      "odds_history": [
-        {
-          "ts": "2026-08-24T15:33:14Z",
-          "odds": 2.42,
-          "source": "scan"
-        }
-      ]
-    },
-    {
-      "signal_id": "fb118dd47af1",
-      "sport": "tennis",
-      "match": "Sonego Lorenzo vs Kopriva Vit",
-      "market": "home",
-      "odds": 2.2,
-      "model_prob": 54.8,
-      "fair_prob": 42.3,
-      "ev_pct": 20.6,
-      "stake_eur": 5.0,
-      "stake_pct": 5.0,
-      "theoretical_stake_eur": 15.0,
-      "cap_applied": true,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "generated_at": "2026-08-24T15:33:14Z",
-      "league": "atp",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "event_status": "AWAITING_START",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "display_priority": "extra",
-      "initial_odds": 2.2,
-      "initial_ev_pct": 20.6,
-      "odds_history": [
-        {
-          "ts": "2026-08-24T15:33:14Z",
-          "odds": 2.2,
-          "source": "scan"
-        }
-      ]
-    },
-    {
-      "signal_id": "128f4f711e1b",
-      "sport": "tennis",
-      "match": "Choinski Jan vs Rottgering Mees",
-      "market": "away",
-      "odds": 2.22,
-      "model_prob": 52.5,
-      "fair_prob": 41.7,
-      "ev_pct": 16.6,
-      "stake_eur": 5.0,
-      "stake_pct": 5.0,
-      "theoretical_stake_eur": 14.5,
-      "cap_applied": true,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "generated_at": "2026-08-24T15:33:14Z",
-      "league": "atp",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "event_status": "AWAITING_START",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "display_priority": "extra",
-      "initial_odds": 2.22,
-      "initial_ev_pct": 16.6,
-      "odds_history": [
-        {
-          "ts": "2026-08-24T15:33:14Z",
-          "odds": 2.22,
-          "source": "scan"
-        }
-      ]
-    },
-    {
-      "signal_id": "4d89a341714e",
-      "sport": "tennis",
-      "match": "Majchrzak Kamil vs Bonzi Benjamin",
-      "market": "away",
-      "odds": 2.35,
-      "model_prob": 47.7,
-      "fair_prob": 39.0,
-      "ev_pct": 12.1,
-      "stake_eur": 5.0,
-      "stake_pct": 5.0,
-      "theoretical_stake_eur": 11.0,
-      "cap_applied": true,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "generated_at": "2026-08-24T15:33:14Z",
-      "league": "atp",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "event_status": "AWAITING_START",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "display_priority": "extra",
-      "initial_odds": 2.35,
-      "initial_ev_pct": 12.1,
-      "odds_history": [
-        {
-          "ts": "2026-08-24T15:33:14Z",
-          "odds": 2.35,
-          "source": "scan"
-        }
-      ]
-    }
-  ],
-  "all_odds": {
-    "Alexei Popyrin vs Roman Andres Burruchaga": {
-      "home": 1.67,
-      "away": 2.66,
-      "ah1.5_a": 1.77,
-      "ah1.5_b": 2.3,
-      "over22.5_games": 1.98,
-      "over21.5_games": 1.68,
-      "over23.5_games": 2.15,
-      "under22.5_games": 1.94,
-      "under21.5_games": 2.08,
-      "under23.5_games": 1.83
-    },
-    "Giovanni Mpetshi Perricard vs Botic van de Zandschulp": {
-      "home": 2.26,
-      "away": 1.78,
-      "ah1.5_a": 1.85,
-      "ah1.5_b": 2.01,
-      "over24.5_games": 1.91,
-      "over25.5_games": 1.97,
-      "under24.5_games": 2.0,
-      "under25.5_games": 1.9
-    },
-    "Juncheng Shang vs Andrey Rublev": {
-      "home": 4.3,
-      "away": 1.3,
-      "over22.5_games": 2.03,
-      "over21.5_games": 1.72,
-      "over22.0_games": 1.88,
-      "under22.5_games": 1.86,
-      "under21.5_games": 2.04,
-      "under22.0_games": 2.01
-    },
-    "Juan Manuel Cerundolo vs Hamad Medjedovic": {
-      "home": 2.6,
-      "away": 1.62,
-      "ah1.5_a": 2.1,
-      "ah1.5_b": 1.68,
-      "over22.5_games": 2.0,
-      "over23.5_games": 2.08,
-      "under22.5_games": 1.9,
-      "under23.5_games": 1.69
-    },
-    "Terence Atmane vs Jack Draper": {
-      "home": 2.96,
-      "away": 1.5,
-      "ah1.5_a": 2.23,
-      "ah1.5_b": 1.61,
-      "over22.5_games": 1.92,
-      "over23.5_games": 2.08,
-      "under22.5_games": 1.99,
-      "under23.5_games": 1.68
-    },
-    "Lorenzo Sonego vs Tallon Griekspoor": {
-      "home": 2.14,
-      "away": 1.9,
-      "ah1.5_a": 1.67,
-      "ah1.5_b": 1.91,
-      "over23.0_games": 1.9,
-      "over23.5_games": 2.05,
-      "over24.5_games": 2.0,
-      "over22.5_games": 1.73,
-      "under23.0_games": 1.97,
-      "under23.5_games": 1.84,
-      "under24.5_games": 1.76,
-      "under22.5_games": 2.05
-    },
-    "Shintaro Mochizuki vs Fabian Marozsan": {
-      "home": 2.64,
-      "away": 1.6,
-      "ah1.5_a": 2.3,
-      "ah1.5_b": 1.57,
-      "over22.0_games": 1.99,
-      "over21.5_games": 1.83,
-      "over22.5_games": 2.05,
-      "under22.0_games": 1.88,
-      "under21.5_games": 2.03,
-      "under22.5_games": 1.8
-    },
-    "Jaume Munar vs Alexander Blockx": {
-      "home": 2.42,
-      "away": 1.7,
-      "ah1.5_a": 2.02,
-      "ah1.5_b": 1.84,
-      "over22.5_games": 1.95,
-      "over23.5_games": 2.0,
-      "under22.5_games": 1.98,
-      "under23.5_games": 1.76
-    },
-    "Jiri Lehecka vs Vit Kopriva": {
-      "home": 1.19,
-      "away": 6.0,
-      "over20.5_games": 1.95,
-      "over21.5_games": 1.94,
-      "under20.5_games": 1.97,
-      "under21.5_games": 1.79
-    },
-    "James Duckworth vs Alex de Minaur": {
-      "home": 8.8,
-      "away": 1.12,
-      "over20.5_games": 2.05,
-      "over20.0_games": 1.82,
-      "over21.5_games": 2.14,
-      "under20.5_games": 1.9,
-      "under20.0_games": 2.05,
-      "under21.5_games": 1.64
-    },
-    "Brandon Nakashima vs Daniel Altmaier": {
-      "home": 1.33,
-      "away": 4.0,
-      "over21.5_games": 1.79,
-      "over22.5_games": 2.06,
-      "over22.0_games": 1.94,
-      "under21.5_games": 2.07,
-      "under22.5_games": 1.81,
-      "under22.0_games": 1.91
-    },
-    "Frances Tiafoe vs Marin Cilic": {
-      "home": 1.55,
-      "away": 2.8,
-      "ah1.5_a": 1.68,
-      "ah1.5_b": 2.1,
-      "over23.5_games": 2.06,
-      "over22.5_games": 1.83,
-      "over23.0_games": 1.92,
-      "under23.5_games": 1.82,
-      "under22.5_games": 2.06,
-      "under23.0_games": 1.93
-    },
-    "Flavio Cobolli vs Yannick Hanfmann": {
-      "home": 1.78,
-      "away": 2.25,
-      "ah1.5_a": 1.96,
-      "ah1.5_b": 1.97,
-      "over22.5_games": 1.83,
-      "over23.5_games": 2.0,
-      "over23.0_games": 1.97,
-      "under22.5_games": 2.03,
-      "under23.5_games": 1.85,
-      "under23.0_games": 1.88
-    },
-    "Luciano Darderi vs Gabriel Diallo": {
-      "home": 2.2,
-      "away": 1.93,
-      "ah1.5_a": 1.69,
-      "ah1.5_b": 1.91,
-      "over23.5_games": 2.01,
-      "over23.0_games": 1.86,
-      "over24.5_games": 1.91,
-      "under23.5_games": 1.86,
-      "under23.0_games": 2.0,
-      "under24.5_games": 1.83
-    },
-    "Alex Michelsen vs Francisco Cerundolo": {
-      "home": 1.71,
-      "away": 2.48,
-      "over23.5_games": 2.06,
-      "over22.5_games": 2.02,
-      "over22.0_games": 1.87,
-      "under23.5_games": 1.71,
-      "under22.5_games": 1.91,
-      "under22.0_games": 2.01
-    },
-    "Miomir Kecmanovic vs Arthur Rinderknech": {
-      "home": 1.91,
-      "away": 2.12,
-      "over23.5_games": 2.02,
-      "over24.5_games": 1.93,
-      "over23.0_games": 1.89,
-      "over22.5_games": 1.73,
-      "under23.5_games": 1.85,
-      "under24.5_games": 1.79,
-      "under23.0_games": 1.98,
-      "under22.5_games": 2.05
-    },
-    "Ignacio Buse vs Cameron Norrie": {
-      "home": 3.2,
-      "away": 1.44,
-      "over22.5_games": 2.02,
-      "over22.0_games": 1.94,
-      "under22.5_games": 1.86,
-      "under22.0_games": 1.93
-    },
-    "Rafael Jodar vs Corentin Moutet": {
-      "home": 1.35,
-      "away": 3.75,
-      "over21.5_games": 2.02,
-      "over21.0_games": 1.88,
-      "over20.5_games": 1.75,
-      "under21.5_games": 1.88,
-      "under21.0_games": 1.98,
-      "under20.5_games": 2.0
-    },
-    "Titouan Droguet vs Felix Auger-Aliassime": {
-      "home": 4.35,
-      "away": 1.26,
-      "over22.5_games": 2.02,
-      "under22.5_games": 1.85
-    },
-    "Learner Tien vs Gael Monfils": {
-      "home": 1.38,
-      "away": 3.6,
-      "over21.5_games": 1.75,
-      "over22.5_games": 2.03,
-      "under21.5_games": 2.1,
-      "under22.5_games": 1.91
-    },
-    "Nicolas Mejia vs Lorenzo Musetti": {
-      "home": 7.5,
-      "away": 1.15,
-      "over20.5_games": 2.15,
-      "over21.5_games": 2.1,
-      "over19.5_games": 1.74,
-      "over20.0_games": 1.89,
-      "under20.5_games": 1.85,
-      "under21.5_games": 1.68,
-      "under19.5_games": 2.05,
-      "under20.0_games": 1.98
-    },
-    "Valentin Vacherot vs Mariano Navone": {
-      "home": 1.65,
-      "away": 2.55,
-      "over22.5_games": 1.93,
-      "over21.5_games": 1.69,
-      "under22.5_games": 2.0,
-      "under21.5_games": 2.08
-    },
-    "Nuno Borges vs Tomas Martin Etcheverry": {
-      "home": 1.57,
-      "away": 2.72,
-      "over22.5_games": 1.85,
-      "over23.5_games": 2.0,
-      "over23.0_games": 1.98,
-      "under22.5_games": 2.02,
-      "under23.5_games": 1.76,
-      "under23.0_games": 1.89
-    },
-    "Rebecca Sramkova vs Diana Shnaider": {
-      "home": 5.0,
-      "away": 1.24,
-      "over19.5_games": 1.88,
-      "over20.5_games": 2.1,
-      "under19.5_games": 2.0,
-      "under20.5_games": 1.75
-    },
-    "Elena Gabriela Ruse vs Anastasia Potapova": {
-      "home": 2.06,
-      "away": 1.96,
-      "ah1.5_a": 1.85,
-      "ah1.5_b": 2.1,
-      "over21.5_games": 1.87,
-      "over22.5_games": 2.03,
-      "over22.0_games": 1.92,
-      "under21.5_games": 2.04,
-      "under22.5_games": 1.82,
-      "under22.0_games": 1.95
-    },
-    "Marta Kostyuk vs Katherine Sebov": {
-      "home": 1.05,
-      "away": 16.5,
-      "over17.5_games": 1.95,
-      "over18.5_games": 2.25,
-      "under17.5_games": 1.93,
-      "under18.5_games": 1.57
-    },
-    "Maja Chwalinska vs Talia Gibson": {
-      "home": 2.24,
-      "away": 1.79,
-      "ah1.5_a": 1.96,
-      "ah1.5_b": 1.93,
-      "over21.5_games": 1.96,
-      "over22.5_games": 2.0,
-      "under21.5_games": 1.95,
-      "under22.5_games": 1.86
-    },
-    "Antonia Ruzic vs Madison Keys": {
-      "home": 5.3,
-      "away": 1.26,
-      "over19.5_games": 1.96,
-      "over20.5_games": 2.14,
-      "under19.5_games": 1.98,
-      "under20.5_games": 1.66
-    },
-    "Shuai Zhang vs Jelena Ostapenko": {
-      "home": 3.25,
-      "away": 1.45,
-      "over21.0_games": 1.98,
-      "over20.5_games": 1.96,
-      "over21.5_games": 2.0,
-      "under21.0_games": 1.89,
-      "under20.5_games": 1.97,
-      "under21.5_games": 1.73
-    },
-    "Anna Kalinskaya vs McCartney Kessler": {
-      "home": 1.63,
-      "away": 2.55,
-      "ah1.5_a": 1.67,
-      "ah1.5_b": 2.12,
-      "over21.5_games": 1.94,
-      "over22.5_games": 2.1,
-      "under21.5_games": 1.98,
-      "under22.5_games": 1.65
-    },
-    "Kamilla Rakhimova vs Katerina Siniakova": {
-      "home": 2.88,
-      "away": 1.52,
-      "ah1.5_a": 2.35,
-      "ah1.5_b": 1.55,
-      "over21.5_games": 1.99,
-      "over21.0_games": 1.9,
-      "over22.5_games": 2.1,
-      "over20.5_games": 1.83,
-      "under21.5_games": 1.86,
-      "under21.0_games": 1.97,
-      "under22.5_games": 1.65,
-      "under20.5_games": 2.01
-    },
-    "Clara Tauson vs Nikola Bartunkova": {
-      "home": 1.92,
-      "away": 2.06,
-      "ah1.5_a": 1.96,
-      "ah1.5_b": 1.86,
-      "over21.5_games": 1.83,
-      "over22.5_games": 2.02,
-      "over22.0_games": 1.88,
-      "under21.5_games": 2.04,
-      "under22.5_games": 1.87,
-      "under22.0_games": 1.96
-    },
-    "Aryna Sabalenka vs Moyuka Uchijima": {
-      "home": 1.07,
-      "away": 18.0,
-      "over17.5_games": 1.97,
-      "over18.5_games": 2.2,
-      "under17.5_games": 1.92,
-      "under18.5_games": 1.6
-    },
-    "Lanlana Tararudee vs Amanda Anisimova": {
-      "home": 3.33,
-      "away": 1.45,
-      "over20.5_games": 1.98,
-      "over21.5_games": 2.1,
-      "under20.5_games": 1.94,
-      "under21.5_games": 1.73
-    },
-    "Alycia Parks vs Alexandra Eala": {
-      "home": 5.8,
-      "away": 1.23,
-      "over19.5_games": 1.93,
-      "over20.5_games": 2.0,
-      "under19.5_games": 1.95,
-      "under20.5_games": 1.73
-    },
-    "Alina Korneeva vs Emma Navarro": {
-      "home": 2.12,
-      "away": 1.88,
-      "over22.0_games": 1.96,
-      "over21.5_games": 1.86,
-      "over22.5_games": 2.06,
-      "under22.0_games": 1.91,
-      "under21.5_games": 2.03,
-      "under22.5_games": 1.79
-    },
-    "Ann Li vs Kayla Cross": {
-      "home": 1.31,
-      "away": 4.1,
-      "over20.5_games": 2.04,
-      "over19.5_games": 1.85,
-      "over20.0_games": 1.91,
-      "under20.5_games": 1.85,
-      "under19.5_games": 2.0,
-      "under20.0_games": 1.94
-    },
-    "Elise Mertens vs Anna Bondár": {
-      "home": 1.38,
-      "away": 3.55,
-      "over20.5_games": 1.95,
-      "over21.5_games": 1.95,
-      "over20.0_games": 1.87,
-      "under20.5_games": 1.96,
-      "under21.5_games": 1.75,
-      "under20.0_games": 2.0
-    },
-    "Liudmila Samsonova vs Barbora Krejcikova": {
-      "home": 2.38,
-      "away": 1.73,
-      "over21.5_games": 1.96,
-      "over22.5_games": 2.1,
-      "over20.5_games": 1.75,
-      "under21.5_games": 1.93,
-      "under22.5_games": 1.65,
-      "under20.5_games": 2.0
-    },
-    "Sloane Stephens vs Belinda Bencic": {
-      "home": 7.6,
-      "away": 1.15,
-      "over18.5_games": 1.86,
-      "over19.5_games": 2.1,
-      "over19.0_games": 1.98,
-      "under18.5_games": 2.01,
-      "under19.5_games": 1.65,
-      "under19.0_games": 1.85
-    },
-    "Linda Noskova vs Caty McNally": {
-      "home": 1.31,
-      "away": 4.2,
-      "over20.5_games": 1.98,
-      "over21.5_games": 2.1,
-      "under20.5_games": 1.91,
-      "under21.5_games": 1.65
-    },
-    "Kayla Day vs Coco Gauff": {
-      "home": 10.5,
-      "away": 1.1,
-      "over18.5_games": 2.01,
-      "over17.5_games": 1.6,
-      "under18.5_games": 1.89,
-      "under17.5_games": 2.2
-    },
-    "Daria Kasatkina vs Elena Rybakina": {
-      "home": 7.2,
-      "away": 1.16,
-      "over19.5_games": 2.1,
-      "over18.5_games": 1.74,
-      "over19.0_games": 1.9,
-      "under19.5_games": 1.8,
-      "under18.5_games": 2.25,
-      "under19.0_games": 1.97
-    },
-    "Iva Jović vs Magda Linette": {
-      "home": 1.27,
-      "away": 4.5,
-      "over20.5_games": 2.02,
-      "over19.5_games": 1.83,
-      "over20.0_games": 1.95,
-      "under20.5_games": 1.88,
-      "under19.5_games": 2.05,
-      "under20.0_games": 1.93
-    },
-    "Jessica Pegula vs Magdalena Frech": {
-      "home": 1.14,
-      "away": 9.2,
-      "over18.5_games": 1.91,
-      "over19.5_games": 2.1,
-      "over19.0_games": 1.98,
-      "under18.5_games": 2.05,
-      "under19.5_games": 1.65,
-      "under19.0_games": 1.88
-    },
-    "Mirra Andreeva vs Karolina Pliskova": {
-      "home": 1.25,
-      "away": 5.0,
-      "over19.5_games": 1.85,
-      "over20.5_games": 2.1,
-      "over20.0_games": 2.0,
-      "under19.5_games": 2.02,
-      "under20.5_games": 1.73,
-      "under20.0_games": 1.87
-    },
-    "Renata Zarazua vs Leylah Fernandez": {
-      "home": 3.7,
-      "away": 1.38,
-      "over20.5_games": 1.98,
-      "over21.5_games": 2.0,
-      "under20.5_games": 1.93,
-      "under21.5_games": 1.73
-    },
-    "Maria Sakkari vs Zeynep Sonmez": {
-      "home": 1.62,
-      "away": 2.6,
-      "over21.5_games": 2.0,
-      "over20.5_games": 1.77,
-      "over21.0_games": 1.92,
-      "under21.5_games": 1.88,
-      "under20.5_games": 2.0,
-      "under21.0_games": 1.95
-    },
-    "Marie Bouzkova vs Taylor Townsend": {
-      "home": 1.8,
-      "away": 2.25,
-      "over21.5_games": 1.93,
-      "over22.5_games": 2.0,
-      "over20.5_games": 1.77,
-      "under21.5_games": 1.95,
-      "under22.5_games": 1.73,
-      "under20.5_games": 1.97
-    },
-    "Sorana Cirstea vs Maya Joint": {
-      "home": 1.38,
-      "away": 3.75,
-      "over20.5_games": 2.02,
-      "over21.5_games": 2.0,
-      "over19.5_games": 1.77,
-      "over22.5_games": 2.45,
-      "under20.5_games": 1.91,
-      "under21.5_games": 1.73,
-      "under19.5_games": 2.08,
-      "under22.5_games": 1.57
-    },
-    "Panna Udvardy vs Naomi Osaka": {
-      "home": 11.5,
-      "away": 1.09,
-      "over18.5_games": 1.92,
-      "over19.5_games": 2.25,
-      "under18.5_games": 1.96,
-      "under19.5_games": 1.57
-    },
-    "Stefanos Tsitsipas vs Joao Fonseca": {
-      "home": 2.34,
-      "away": 1.73,
-      "over23.5_games": 2.05,
-      "over23.0_games": 1.9,
-      "over22.5_games": 1.76,
-      "over25.5_games": 1.87,
-      "under23.5_games": 1.9,
-      "under23.0_games": 2.0,
-      "under22.5_games": 2.05,
-      "under25.5_games": 1.8
-    },
-    "Zizou Bergs vs Sebastian Baez": {
-      "home": 1.66,
-      "away": 2.48,
-      "over22.5_games": 2.01,
-      "over21.5_games": 1.7,
-      "over22.0_games": 1.92,
-      "under22.5_games": 1.94,
-      "under21.5_games": 2.06,
-      "under22.0_games": 1.93
-    },
-    "Zachary Svajda vs Arthur Fils": {
-      "home": 3.7,
-      "away": 1.37,
-      "over21.5_games": 1.82,
-      "over22.5_games": 2.06,
-      "over22.0_games": 1.98,
-      "under21.5_games": 2.05,
-      "under22.5_games": 1.79,
-      "under22.0_games": 1.9
-    },
-    "Jenson Brooksby vs Ben Shelton": {
-      "home": 3.75,
-      "away": 1.36,
-      "over22.5_games": 1.94,
-      "over23.5_games": 2.14,
-      "under22.5_games": 1.97,
-      "under23.5_games": 1.66
-    },
-    "Casper Ruud vs Juan Manuel Cerundolo": {
-      "home": 1.39,
-      "away": 3.55,
-      "over21.5_games": 1.85,
-      "over22.5_games": 2.01,
-      "under21.5_games": 2.06,
-      "under22.5_games": 1.91
-    },
-    "Alexander Zverev vs Tallon Griekspoor": {
-      "home": 1.17,
-      "away": 6.6,
-      "over21.5_games": 1.77,
-      "over22.5_games": 2.11,
-      "over22.0_games": 1.93,
-      "under21.5_games": 2.2,
-      "under22.5_games": 1.76,
-      "under22.0_games": 1.94
-    },
-    "Raphael Collignon vs Alexei Popyrin": {
-      "home": 1.66,
-      "away": 2.51,
-      "over23.5_games": 2.04,
-      "over22.5_games": 1.84,
-      "over23.0_games": 1.95,
-      "under23.5_games": 1.79,
-      "under22.5_games": 2.05,
-      "under23.0_games": 1.92
-    },
-    "Thiago Agustin Tirante vs Taylor Fritz": {
-      "home": 6.5,
-      "away": 1.2,
-      "over21.5_games": 1.9,
-      "over20.5_games": 1.66,
-      "over22.0_games": 1.94,
-      "under21.5_games": 2.02,
-      "under20.5_games": 2.14,
-      "under22.0_games": 1.93
-    },
-    "Hubert Hurkacz vs Alejandro Tabilo": {
-      "home": 1.71,
-      "away": 2.38,
-      "over23.5_games": 1.94,
-      "over24.5_games": 1.93,
-      "over22.5_games": 1.61,
-      "under23.5_games": 1.93,
-      "under24.5_games": 1.92,
-      "under22.5_games": 2.2
-    },
-    "Fabian Marozsan vs Matteo Arnaldi": {
-      "home": 1.75,
-      "away": 2.32,
-      "over22.5_games": 1.94,
-      "over23.5_games": 2.0,
-      "under22.5_games": 1.98,
-      "under23.5_games": 1.75
-    },
-    "Karen Khachanov vs Terence Atmane": {
-      "home": 1.81,
-      "away": 2.25,
-      "over23.5_games": 2.01,
-      "over24.5_games": 1.93,
-      "over22.5_games": 1.65,
-      "under23.5_games": 1.88,
-      "under24.5_games": 1.81,
-      "under22.5_games": 2.15
-    },
-    "Ugo Humbert vs Daniel Merida Aguilar": {
-      "home": 1.44,
-      "away": 3.25,
-      "over21.5_games": 1.88,
-      "over22.5_games": 2.1,
-      "under21.5_games": 2.04,
-      "under22.5_games": 1.81
-    },
-    "Jacob Fearnley vs Jakub Mensik": {
-      "home": 3.25,
-      "away": 1.43,
-      "over22.0_games": 1.86,
-      "over22.5_games": 2.02,
-      "over21.5_games": 1.76,
-      "under22.0_games": 1.99,
-      "under22.5_games": 1.86,
-      "under21.5_games": 2.08
-    },
-    "Daniil Medvedev vs Botic van de Zandschulp": {
-      "home": 1.32,
-      "away": 4.1,
-      "over21.5_games": 1.95,
-      "over22.5_games": 2.06,
-      "under21.5_games": 1.99,
-      "under22.5_games": 1.71
-    },
-    "Valentin Royer vs Tommy Paul": {
-      "home": 5.7,
-      "away": 1.21,
-      "over20.5_games": 1.85,
-      "over21.5_games": 2.01,
-      "over21.0_games": 1.93,
-      "under20.5_games": 2.0,
-      "under21.5_games": 1.85,
-      "under21.0_games": 1.94
-    },
-    "Jiri Lehecka vs Alexander Blockx": {
-      "home": 2.12,
-      "away": 1.73
-    },
-    "Luciano Darderi vs Juncheng Shang": {
-      "home": 2.11,
-      "away": 1.66
-    },
-    "Zizou Bergs vs Ben Shelton": {
-      "home": 2.56,
-      "away": 1.45
-    },
-    "Mariano Navone vs Arthur Fils": {
-      "home": 2.55,
-      "away": 1.45
-    },
-    "Cameron Norrie vs Alex de Minaur": {
-      "home": 2.45,
-      "away": 1.47
-    },
-    "Yannick Hanfmann vs Nuno Borges": {
-      "home": 2.3,
-      "away": 1.55
-    },
-    "Casper Ruud vs Joao Fonseca": {
-      "home": 2.12,
-      "away": 1.73
-    },
-    "Talia Gibson vs Ekaterina Alexandrova": {
-      "home": 2.22,
-      "away": 1.67
-    },
-    "Anna Kalinskaya vs Diana Shnaider": {
-      "home": 2.12,
-      "away": 1.73
-    },
-    "Viktorija Golubic vs Iga Swiatek": {
-      "home": 3.46,
-      "away": 1.26
-    },
-    "Jessica Pegula vs Kamilla Rakhimova": {
-      "home": 1.01,
-      "away": 47.62
-    },
-    "Marta Kostyuk vs Madison Keys": {
-      "home": 2.14,
-      "away": 1.72
-    },
-    "Nikola Bartunkova vs Amanda Anisimova": {
-      "home": 47.62,
-      "away": 1.01
-    },
-    "Aryna Sabalenka vs Shuai Zhang": {
-      "home": 1.15,
-      "away": 4.89
-    },
-    "Elina Svitolina vs Anastasia Potapova": {
-      "home": 1.57,
-      "away": 2.41
-    },
-    "Taylor Townsend vs Belinda Bencic": {
-      "home": 47.62,
-      "away": 1.01
-    },
-    "Iva Jović vs Alina Korneeva": {
-      "home": 1.57,
-      "away": 2.41
-    },
-    "Ann Li vs Elena Rybakina": {
-      "home": 47.62,
-      "away": 1.01
-    },
-    "Rafael Jodar vs Lorenzo Musetti": {
-      "home": 2.22,
-      "away": 1.67
-    },
-    "Frances Tiafoe vs Arthur Rinderknech": {
-      "home": 1.57,
-      "away": 2.41
-    },
-    "Alexei Popyrin vs Thiago Agustin Tirante": {
-      "home": 2.22,
-      "away": 1.67
-    },
-    "Elise Mertens vs Naomi Osaka": {
-      "home": 2.5,
-      "away": 1.48
-    },
-    "Maya Joint vs Liudmila Samsonova": {
-      "home": 2.22,
-      "away": 1.67
-    },
-    "Brandon Nakashima vs Titouan Droguet": {
-      "home": 2.12,
-      "away": 1.73
-    },
-    "Daniel Merida Aguilar vs Alex Michelsen": {
-      "home": 2.12,
-      "away": 1.73
-    },
-    "Botic van de Zandschulp vs Hubert Hurkacz": {
-      "home": 2.45,
-      "away": 1.49
-    },
-    "Terence Atmane vs Jakub Mensik": {
-      "home": 47.62,
-      "away": 1.01
-    },
-    "Learner Tien vs Tommy Paul": {
-      "home": 2.14,
-      "away": 1.71
-    },
-    "Tallon Griekspoor vs Matteo Arnaldi": {
-      "home": 1.5,
-      "away": 2.51
-    },
-    "Caty McNally vs Alexandra Eala": {
-      "home": 47.62,
-      "away": 1.01
-    },
-    "Maria Sakkari vs Coco Gauff": {
-      "home": 2.5,
-      "away": 1.5
-    },
-    "Mirra Andreeva vs Leylah Fernandez": {
-      "home": 1.59,
-      "away": 2.38
-    },
-    "Arthur Fils vs Cameron Norrie": {
-      "home": 1.57,
-      "away": 2.41
-    },
-    "Arthur Rinderknech vs Brandon Nakashima": {
-      "home": 2.3,
-      "away": 1.55
-    },
-    "Jiri Lehecka vs Rafael Jodar": {
-      "home": 2.12,
-      "away": 1.73
-    },
-    "Nuno Borges vs Luciano Darderi": {
-      "home": 2.12,
-      "away": 1.73
-    },
-    "Elina Svitolina vs Amanda Anisimova": {
-      "home": 1.7,
-      "away": 2.06
-    },
-    "Joao Fonseca vs Ben Shelton": {
-      "home": 2.38,
-      "away": 1.59
-    },
-    "Botic van de Zandschulp vs Jakub Mensik": {
-      "home": 2.75,
-      "away": 1.4
-    },
-    "Tallon Griekspoor vs Daniel Merida Aguilar": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Learner Tien vs Thiago Agustin Tirante": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Marta Kostyuk vs Iga Swiatek": {
-      "home": 2.22,
-      "away": 1.67
-    },
-    "Jessica Pegula vs Diana Shnaider": {
-      "home": 1.38,
-      "away": 2.85
-    },
-    "Aryna Sabalenka vs Ekaterina Alexandrova": {
-      "home": 1.29,
-      "away": 3.35
-    },
-    "Alexandra Eala vs Belinda Bencic": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Alina Korneeva vs Coco Gauff": {
-      "home": 3.62,
-      "away": 1.29
-    },
-    "Liudmila Samsonova vs Elena Rybakina": {
-      "home": 3.62,
-      "away": 1.29
-    },
-    "Leylah Fernandez vs Naomi Osaka": {
-      "home": 3.62,
-      "away": 1.29
-    },
-    "Rafael Jodar vs Arthur Fils": {
-      "home": 1.62,
-      "away": 2.18
-    },
-    "Luciano Darderi vs Brandon Nakashima": {
-      "home": 3.62,
-      "away": 1.29
-    },
-    "Daniel Merida Aguilar vs Learner Tien": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Diana Shnaider vs Iga Swiatek": {
-      "home": 3.62,
-      "away": 1.29
-    },
-    "Ekaterina Alexandrova vs Elina Svitolina": {
-      "home": 2.53,
-      "away": 1.47
-    },
-    "Jakub Mensik vs Ben Shelton": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Naomi Osaka vs Elena Rybakina": {
-      "home": 3.62,
-      "away": 1.29
-    },
-    "Belinda Bencic vs Coco Gauff": {
-      "home": 2.38,
-      "away": 1.59
-    },
-    "Elina Svitolina vs Iga Swiatek": {
-      "home": 1.45,
-      "away": 2.55
-    },
-    "Alexander Shevchenko vs Pablo Llamas Ruiz": {
-      "home": 1.64,
-      "away": 2.1
-    },
-    "Dusan Lajovic vs Benjamin Bonzi": {
-      "home": 2.29,
-      "away": 1.56
-    },
-    "Luca Van Assche vs Gustavo Heide": {
-      "home": 1.5,
-      "away": 2.38
-    },
-    "Kei Nishikori vs Francisco Comesana": {
-      "home": 2.09,
-      "away": 1.64
-    },
-    "Jaime Faria vs Nikoloz Basilashvili": {
-      "home": 1.44,
-      "away": 2.55
-    },
-    "Marco Trungelliti vs Sebastian Ofner": {
-      "home": 2.21,
-      "away": 1.59
-    },
-    "Alexei Popyrin vs Titouan Droguet": {
-      "home": 1.6,
-      "away": 2.2
-    },
-    "Billy Harris vs Kyrian Jacquet": {
-      "home": 2.33,
-      "away": 1.52
-    },
-    "Sho Shimabukuro vs Hugo Dellien": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Hugo Gaston vs Nicolai Budkov Kjaer": {
-      "home": 2.2,
-      "away": 1.6
-    },
-    "Mark Lajal vs Dalibor Svrcina": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Marcos Giron vs Henrique Rocha": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Nicolas Mejia vs Jacob Fearnley": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Kayla Day vs Taylah Preston": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Robin Montgomery vs Julia Grabher": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Victoria Jimenez Kasintseva vs Mananchaya Sawangkaew": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Renata Zarazua vs Yue Yuan": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Anastasia Zakharova vs Lucrezia Stefanini": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Oksana Selekhmeteva vs Elizabeth Mandlik": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Himeno Sakatsume vs Leolia Jeanjean": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Rebecca Marino vs Alina Charaeva": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Alina Korneeva vs Varvara Lepchenko": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Rebecca Sramkova vs Elsa Jacquemot": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Dominika Šalková vs Anna Blinkova": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Solana Sierra vs Aoi Ito": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Eva Lys vs Katarzyna Kawa": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Harriet Dart vs Moyuka Uchijima": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Emiliana Arango vs Aliaksandra Sasnovich": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Xiyu Wang vs Bianca Andreescu": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Nadia Podoroska vs Ella Seidel": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Rafael Jodar vs Brandon Nakashima": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Learner Tien vs Ben Shelton": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Coco Gauff vs Elena Rybakina": {
-      "home": 2.47,
-      "away": 1.55
-    },
-    "Luca Van Assche vs Dusan Lajovic": {
-      "home": 1.35,
-      "away": 3.02
-    },
-    "Marco Trungelliti vs Kei Nishikori": {
-      "home": 2.09,
-      "away": 1.65
-    },
-    "Nicolai Budkov Kjaer vs Kyrian Jacquet": {
-      "home": 2.28,
-      "away": 1.54
-    },
-    "Yue Yuan vs Kayla Day": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Sinja Kraus vs Claire Liu": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Lanlana Tararudee vs Mananchaya Sawangkaew": {
-      "home": 1.58,
-      "away": 2.25
-    },
-    "Lucrezia Stefanini vs Leolia Jeanjean": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Lilli Tagger vs Robin Montgomery": {
-      "home": 1.74,
-      "away": 2.1
-    },
-    "Alina Korneeva vs Alina Charaeva": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Aoi Ito vs Harriet Dart": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Eva Lys vs Anna Blinkova": {
-      "home": 1.55,
-      "away": 2.47
-    },
-    "Denis Shapovalov vs Adrian Mannarino": {
-      "home": 1.53,
-      "away": 2.5
-    },
-    "Aleksandar Kovacevic vs Karen Khachanov": {
-      "home": 2.71,
-      "away": 1.47
-    },
-    "Alex Michelsen vs Jesper De Jong": {
-      "home": 1.47,
-      "away": 2.71
-    },
-    "Botic van de Zandschulp vs Tallon Griekspoor": {
-      "home": 1.55,
-      "away": 2.3
-    },
-    "Camilo Ugo Carabelli vs Miomir Kecmanovic": {
-      "home": 2.35,
-      "away": 1.53
-    },
-    "Corentin Moutet vs Hubert Hurkacz": {
-      "home": 2.23,
-      "away": 1.58
-    },
-    "Daniel Merida Aguilar vs Marin Cilic": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Martin Landaluce vs Jack Draper": {
-      "home": 2.64,
-      "away": 1.43
-    },
-    "Juncheng Shang vs Lorenzo Sonego": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Mariano Navone vs Raphael Collignon": {
-      "home": 1.59,
-      "away": 2.22
-    },
-    "Nuno Borges vs Thanasi Kokkinakis": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Alycia Parks vs Viktorija Golubic": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Jessica Bouzas Maneiro vs Anna Bondár": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Cristina Bucsa vs Panna Udvardy": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Daria Snigur vs Yuliia Starodubtseva": {
-      "home": 1.47,
-      "away": 2.71
-    },
-    "Sara Bejlek vs Karolina Pliskova": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Maria Timofeeva vs Katerina Siniakova": {
-      "home": 2.1,
-      "away": 1.74
-    },
-    "Yulia Putintseva vs Liudmila Samsonova": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Maya Joint vs Tamara Korpatsch": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Darja Vidmanova vs Anhelina Kalinina": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Antonia Ruzic vs Magdalena Frech": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Ashlyn Krueger vs Lois Boisson": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Diane Parry vs Caroline Dolehide": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Caty McNally vs McCartney Kessler": {
-      "home": 2.1,
-      "away": 1.74
-    },
-    "Daria Kasatkina vs Zeynep Sonmez": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Tatjana Maria vs Dayana Yastremska": {
-      "home": 2.47,
-      "away": 1.55
-    },
-    "Elvina Kalieva vs Oleksandra Oliynykova": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Kamilla Rakhimova vs Kimberly Birrell": {
-      "home": 2.71,
-      "away": 1.47
-    },
-    "Katie Boulter vs Katie Volynets": {
-      "home": 1.48,
-      "away": 2.66
-    },
-    "Simona Waltert vs Petra Marcinko": {
-      "home": 2.15,
-      "away": 1.62
-    },
-    "Cameron Norrie vs Dino Prizmic": {
-      "home": 1.52,
-      "away": 2.36
-    },
-    "Rinky Hijikata vs Gael Monfils": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Sebastian Baez vs Grigor Dimitrov": {
-      "home": 2.71,
-      "away": 1.47
-    },
-    "Thiago Agustin Tirante vs Jan Choinski": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Marton Fucsovics vs Terence Atmane": {
-      "home": 2.24,
-      "away": 1.57
-    },
-    "Tomas Machac vs Pablo Carreno Busta": {
-      "home": 1.55,
-      "away": 2.47
-    },
-    "Valentin Royer vs Stefanos Tsitsipas": {
-      "home": 2.71,
-      "away": 1.47
-    },
-    "Zachary Svajda vs Mattia Bellucci": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Ben Shelton vs Brandon Nakashima": {
-      "home": 1.55,
-      "away": 2.47
-    },
-    "Iga Swiatek vs Elena Rybakina": {
-      "home": 2.4,
-      "away": 1.5
-    },
-    "Alexander Blockx vs Mariano Navone": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Miomir Kecmanovic vs Flavio Cobolli": {
-      "home": 2.16,
-      "away": 1.63
-    },
-    "Martin Landaluce vs Matteo Arnaldi": {
-      "home": 1.57,
-      "away": 2.31
-    },
-    "Mattia Bellucci vs Jakub Mensik": {
-      "home": 3.32,
-      "away": 1.34
-    },
-    "Novak Djokovic vs Thiago Agustin Tirante": {
-      "home": 1.47,
-      "away": 2.71
-    },
-    "Quentin Halys vs Alex de Minaur": {
-      "home": 2.71,
-      "away": 1.47
-    },
-    "Arthur Fery vs James Duckworth": {
-      "home": 2.2,
-      "away": 1.6
-    },
-    "Tommy Paul vs Hubert Hurkacz": {
-      "home": 2.34,
-      "away": 1.52
-    },
-    "Luciano Darderi vs Rinky Hijikata": {
-      "home": 1.56,
-      "away": 2.38
-    },
-    "Yannick Hanfmann vs Arthur Fils": {
-      "home": 2.71,
-      "away": 1.47
-    },
-    "Jiri Lehecka vs Matteo Berrettini": {
-      "home": 1.47,
-      "away": 2.71
-    },
-    "Rafael Jodar vs Denis Shapovalov": {
-      "home": 1.47,
-      "away": 2.71
-    },
-    "Alexander Zverev vs Cameron Norrie": {
-      "home": 1.47,
-      "away": 2.71
-    },
-    "Zeynep Sonmez vs Amanda Anisimova": {
-      "home": 3.32,
-      "away": 1.34
-    },
-    "Cristina Bucsa vs Maja Chwalinska": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Shuai Zhang vs Kayla Day": {
-      "home": 1.55,
-      "away": 2.47
-    },
-    "Caty McNally vs Anna Kalinskaya": {
-      "home": 2.71,
-      "away": 1.47
-    },
-    "Diana Shnaider vs Tatjana Maria": {
-      "home": 1.33,
-      "away": 3.35
-    },
-    "Jelena Ostapenko vs Magdalena Frech": {
-      "home": 1.74,
-      "away": 2.1
-    },
-    "Sorana Cirstea vs Nikola Bartunkova": {
-      "home": 1.47,
-      "away": 2.71
-    },
-    "Linda Noskova vs Katie Boulter": {
-      "home": 1.47,
-      "away": 2.71
-    },
-    "Emma Navarro vs Anhelina Kalinina": {
-      "home": 1.47,
-      "away": 2.71
-    },
-    "Simona Waltert vs Jessica Pegula": {
-      "home": 2.71,
-      "away": 1.47
-    },
-    "Elise Mertens vs Diane Parry": {
-      "home": 1.47,
-      "away": 2.71
-    },
-    "Kamilla Rakhimova vs Maria Sakkari": {
-      "home": 2.4,
-      "away": 1.52
-    },
-    "Peyton Stearns vs Clara Tauson": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Lois Boisson vs Belinda Bencic": {
-      "home": 2.47,
-      "away": 1.55
-    },
-    "Taylor Townsend vs Elena Rybakina": {
-      "home": 2.98,
-      "away": 1.4
-    },
-    "Adam Walton vs Ignacio Buse": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Brandon Nakashima vs Aleksandar Kovacevic": {
-      "home": 1.42,
-      "away": 2.91
-    },
-    "Taylor Fritz vs Alex Michelsen": {
-      "home": 1.53,
-      "away": 2.38
-    },
-    "Andrey Rublev vs Pablo Carreno Busta": {
-      "home": 1.62,
-      "away": 2.31
-    },
-    "Arthur Rinderknech vs Juan Manuel Cerundolo": {
-      "home": 1.88,
-      "away": 1.93
-    },
-    "Ben Shelton vs Jaime Faria": {
-      "home": 1.88,
-      "away": 1.93
-    },
-    "Joao Fonseca vs Botic van de Zandschulp": {
-      "home": 1.41,
-      "away": 2.75
-    },
-    "Daniel Altmaier vs Lorenzo Musetti": {
-      "home": 2.81,
-      "away": 1.42
-    },
-    "Daniel Merida Aguilar vs Zizou Bergs": {
-      "home": 2.23,
-      "away": 1.54
-    },
-    "Marco Trungelliti vs Daniil Medvedev": {
-      "home": 2.31,
-      "away": 1.62
-    },
-    "Stefanos Tsitsipas vs Felix Auger-Aliassime": {
-      "home": 2.31,
-      "away": 1.62
-    },
-    "Lorenzo Sonego vs Frances Tiafoe": {
-      "home": 2.31,
-      "away": 1.62
-    },
-    "Nuno Borges vs Francisco Cerundolo": {
-      "home": 2.26,
-      "away": 1.58
-    },
-    "Learner Tien vs Sebastian Baez": {
-      "home": 1.4,
-      "away": 2.77
-    },
-    "Ugo Humbert vs Michael Zheng": {
-      "home": 2.21,
-      "away": 1.6
-    },
-    "Sloane Stephens vs Anastasia Potapova": {
-      "home": 2.31,
-      "away": 1.62
-    },
-    "Anna Blinkova vs Ekaterina Alexandrova": {
-      "home": 2.31,
-      "away": 1.62
-    },
-    "Aryna Sabalenka vs Talia Gibson": {
-      "home": 1.4,
-      "away": 2.98
-    },
-    "Barbora Krejcikova vs Sara Bejlek": {
-      "home": 1.62,
-      "away": 2.31
-    },
-    "Coco Gauff vs Liudmila Samsonova": {
-      "home": 1.4,
-      "away": 2.98
-    },
-    "Daria Snigur vs Madison Keys": {
-      "home": 2.31,
-      "away": 1.62
-    },
-    "Xinyu Wang vs Donna Vekic": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Tereza Valentova vs Elina Svitolina": {
-      "home": 2.86,
-      "away": 1.43
-    },
-    "Tamara Korpatsch vs Iva Jović": {
-      "home": 2.31,
-      "away": 1.62
-    },
-    "Janice Tjen vs Viktorija Golubic": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Katerina Siniakova vs Jessica Bouzas Maneiro": {
-      "home": 1.82,
-      "away": 1.99
-    },
-    "Leylah Fernandez vs Xiyu Wang": {
-      "home": 1.88,
-      "away": 1.93
-    },
-    "Marie Bouzkova vs Lucrezia Stefanini": {
-      "home": 1.62,
-      "away": 2.31
-    },
-    "Marta Kostyuk vs Sofia Kenin": {
-      "home": 1.4,
-      "away": 2.98
-    },
-    "Oleksandra Oliynykova vs Mirra Andreeva": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Iga Swiatek vs Emiliana Arango": {
-      "home": 1.4,
-      "away": 2.98
-    },
-    "Shuai Zhang vs Ann Li": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Alexandra Eala vs Amanda Anisimova": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Diana Shnaider vs Maja Chwalinska": {
-      "home": 1.88,
-      "away": 1.93
-    },
-    "Alexander Blockx vs Flavio Cobolli": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Rinky Hijikata vs Jakub Mensik": {
-      "home": 2.58,
-      "away": 1.46
-    },
-    "Thiago Agustin Tirante vs Martin Landaluce": {
-      "home": 1.88,
-      "away": 1.93
-    },
-    "Sorana Cirstea vs Anna Kalinskaya": {
-      "home": 1.88,
-      "away": 1.93
-    },
-    "Emma Navarro vs Jessica Pegula": {
-      "home": 2.98,
-      "away": 1.4
-    },
-    "Rafael Jodar vs Alejandro Tabilo": {
-      "home": 1.62,
-      "away": 2.31
-    },
-    "Arthur Fery vs Alex de Minaur": {
-      "home": 2.82,
-      "away": 1.37
-    },
-    "Jiri Lehecka vs Arthur Fils": {
-      "home": 1.48,
-      "away": 2.5
-    },
-    "Linda Noskova vs Clara Tauson": {
-      "home": 1.62,
-      "away": 2.31
-    },
-    "Diane Parry vs Lois Boisson": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Alexander Zverev vs Terence Atmane": {
-      "home": 1.4,
-      "away": 2.98
-    },
-    "Magdalena Frech vs Elena Rybakina": {
-      "home": 2.98,
-      "away": 1.4
-    },
-    "Iga Swiatek vs Maria Sakkari": {
-      "home": 1.4,
-      "away": 2.98
-    },
-    "Janice Tjen vs Mirra Andreeva": {
-      "home": 2.86,
-      "away": 1.43
-    },
-    "Aryna Sabalenka vs Xinyu Wang": {
-      "home": 1.62,
-      "away": 2.31
-    },
-    "Andrey Rublev vs Nuno Borges": {
-      "home": 1.88,
-      "away": 1.93
-    },
-    "Brandon Nakashima vs Daniil Medvedev": {
-      "home": 2.31,
-      "away": 1.62
-    },
-    "Taylor Fritz vs Daniel Merida Aguilar": {
-      "home": 1.31,
-      "away": 3.14
-    },
-    "Juan Manuel Cerundolo vs Felix Auger-Aliassime": {
-      "home": 2.86,
-      "away": 1.43
-    },
-    "Michael Zheng vs Lorenzo Musetti": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Sara Bejlek vs Ekaterina Alexandrova": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Marie Bouzkova vs Iva Jović": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Katerina Siniakova vs Madison Keys": {
-      "home": 2.31,
-      "away": 1.62
-    },
-    "Coco Gauff vs Ann Li": {
-      "home": 1.4,
-      "away": 2.98
-    },
-    "Marta Kostyuk vs Sloane Stephens": {
-      "home": 1.4,
-      "away": 2.98
-    },
-    "Jaime Faria vs Adam Walton": {
-      "home": 1.88,
-      "away": 1.93
-    },
-    "Learner Tien vs Frances Tiafoe": {
-      "home": 1.88,
-      "away": 1.93
-    },
-    "Xiyu Wang vs Elina Svitolina": {
-      "home": 2.31,
-      "away": 1.62
-    },
-    "Iga Swiatek vs Diane Parry": {
-      "home": 1.4,
-      "away": 2.98
-    },
-    "Diana Shnaider vs Elena Rybakina": {
-      "home": 2.98,
-      "away": 1.4
-    },
-    "Sorana Cirstea vs Jessica Pegula": {
-      "home": 2.31,
-      "away": 1.62
-    },
-    "Arthur Fils vs Alex de Minaur": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Alexander Zverev vs Tommy Paul": {
-      "home": 1.4,
-      "away": 2.79
-    },
-    "Rafael Jodar vs Flavio Cobolli": {
-      "home": 1.74,
-      "away": 2.1
-    },
-    "Thiago Agustin Tirante vs Jakub Mensik": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Linda Noskova vs Amanda Anisimova": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Madison Keys vs Xiyu Wang": {
-      "home": 1.88,
-      "away": 1.93
-    },
-    "Nuno Borges vs Brandon Nakashima": {
-      "home": 2.2,
-      "away": 1.6
-    },
-    "Marta Kostyuk vs Mirra Andreeva": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Jaime Faria vs Lorenzo Musetti": {
-      "home": 2.35,
-      "away": 1.53
-    },
-    "Aryna Sabalenka vs Sara Bejlek": {
-      "home": 1.4,
-      "away": 2.98
-    },
-    "Frances Tiafoe vs Felix Auger-Aliassime": {
-      "home": 2.31,
-      "away": 1.62
-    },
-    "Coco Gauff vs Marie Bouzkova": {
-      "home": 1.4,
-      "away": 2.98
-    },
-    "Tommy Paul vs Flavio Cobolli": {
-      "home": 1.62,
-      "away": 2.31
-    },
-    "Thiago Agustin Tirante vs Arthur Fils": {
-      "home": 2.31,
-      "away": 1.62
-    },
-    "Taylor Fritz vs Brandon Nakashima": {
-      "home": 1.84,
-      "away": 1.97
-    },
-    "Lorenzo Musetti vs Frances Tiafoe": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Amanda Anisimova vs Jessica Pegula": {
-      "home": 1.46,
-      "away": 2.49
-    },
-    "Coco Gauff vs Marta Kostyuk": {
-      "home": 2.25,
-      "away": 1.57
-    },
-    "Sara Bejlek vs Madison Keys": {
-      "home": 2.31,
-      "away": 1.62
-    },
-    "Jessica Pegula vs Iga Swiatek": {
-      "home": 2.41,
-      "away": 1.51
-    },
-    "Flavio Cobolli vs Arthur Fils": {
-      "home": 2.31,
-      "away": 1.62
-    },
-    "Brandon Nakashima vs Frances Tiafoe": {
-      "home": 1.9,
-      "away": 1.9
-    },
-    "Sara Bejlek vs Coco Gauff": {
-      "home": 2.98,
-      "away": 1.4
-    },
-    "Arthur Fils vs Frances Tiafoe": {
-      "home": 1.9,
-      "away": 1.91
-    },
-    "Coco Gauff vs Jessica Pegula": {
-      "home": 1.91,
-      "away": 1.9
-    },
-    "Panna Udvardy vs Darja Vidmanova": {
-      "home": 2.18,
-      "away": 1.69
-    },
-    "Maria Timofeeva vs Kamilla Rakhimova": {
-      "home": 2.18,
-      "away": 1.69
-    },
-    "Maya Joint vs Yulia Putintseva": {
-      "home": 2.18,
-      "away": 1.69
-    },
-    "Antonia Ruzic vs Nikola Bartunkova": {
-      "home": 2.18,
-      "away": 1.69
-    },
-    "Lilli Tagger vs Yuliia Starodubtseva": {
-      "home": 2.18,
-      "away": 1.69
-    },
-    "Mayar Sherif vs Oleksandra Oliynykova": {
-      "home": 2.18,
-      "away": 1.69
-    },
-    "Alycia Parks vs Petra Marcinko": {
-      "home": 2.1,
-      "away": 1.74
-    },
-    "Clara Tauson vs Renata Zarazua": {
-      "home": 1.7,
-      "away": 2.16
-    },
-    "Janice Tjen vs Dayana Yastremska": {
-      "home": 1.94,
-      "away": 1.87
-    },
-    "Diane Parry vs Donna Vekic": {
-      "home": 1.86,
-      "away": 1.95
-    },
-    "Anhelina Kalinina vs Maya Joint": {
-      "home": 1.96,
-      "away": 1.86
-    },
-    "Cristina Bucsa vs Anna Bondár": {
-      "home": 2.15,
-      "away": 1.71
-    },
-    "Darja Vidmanova vs Kimberly Birrell": {
-      "home": 1.93,
-      "away": 1.88
-    },
-    "Shuai Zhang vs Maria Timofeeva": {
-      "home": 1.67,
-      "away": 2.22
-    },
-    "Nikola Bartunkova vs Anastasia Potapova": {
-      "home": 2.12,
-      "away": 1.73
-    }
-  },
-  "football": [],
-  "schedule": [
-    {
-      "sport": "tennis",
-      "home": "Maria Camila Osorio Serrano",
-      "away": "Ann Li",
-      "kickoff": "2026-08-24T21:00:00Z",
-      "tour": "wta",
-      "tournament": "Wta Monterrey Open",
-      "category": "wta250",
-      "surface": "unknown",
-      "best_of": 3,
-      "odds_home": 0.0,
-      "odds_away": 0.0,
-      "odds_source": "the_odds_api",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_monterrey_open",
-      "scheduled_start_initial": "2026-08-24T21:00:00Z",
-      "scheduled_start_current": "2026-08-24T21:00:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Alycia Parks",
-      "away": "Petra Marcinko",
-      "kickoff": "2026-08-24T22:30:00Z",
-      "tour": "wta",
-      "tournament": "Wta Monterrey Open",
-      "category": "wta250",
-      "surface": "unknown",
-      "best_of": 3,
-      "odds_home": 2.1,
-      "odds_away": 1.74,
-      "odds_source": "implied_elo",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_monterrey_open",
-      "scheduled_start_initial": "2026-08-24T22:30:00Z",
-      "scheduled_start_current": "2026-08-24T22:30:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Janice Tjen",
-      "away": "Dayana Yastremska",
-      "kickoff": "2026-08-24T22:30:00Z",
-      "tour": "wta",
-      "tournament": "Wta Monterrey Open",
-      "category": "wta250",
-      "surface": "unknown",
-      "best_of": 3,
-      "odds_home": 1.94,
-      "odds_away": 1.87,
-      "odds_source": "implied_elo",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_monterrey_open",
-      "scheduled_start_initial": "2026-08-24T22:30:00Z",
-      "scheduled_start_current": "2026-08-24T22:30:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Clara Tauson",
-      "away": "Renata Zarazua",
-      "kickoff": "2026-08-25T01:30:00Z",
-      "tour": "wta",
-      "tournament": "Wta Monterrey Open",
-      "category": "wta250",
-      "surface": "unknown",
-      "best_of": 3,
-      "odds_home": 1.7,
-      "odds_away": 2.16,
-      "odds_source": "implied_elo",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_monterrey_open",
-      "scheduled_start_initial": "2026-08-25T01:30:00Z",
-      "scheduled_start_current": "2026-08-25T01:30:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Diane Parry",
-      "away": "Donna Vekic",
-      "kickoff": "2026-08-25T03:00:00Z",
-      "tour": "wta",
-      "tournament": "Wta Monterrey Open",
-      "category": "wta250",
-      "surface": "unknown",
-      "best_of": 3,
-      "odds_home": 1.86,
-      "odds_away": 1.95,
-      "odds_source": "implied_elo",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_monterrey_open",
-      "scheduled_start_initial": "2026-08-25T03:00:00Z",
-      "scheduled_start_current": "2026-08-25T03:00:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Anhelina Kalinina",
-      "away": "Maya Joint",
-      "kickoff": "2026-08-25T19:00:00Z",
-      "tour": "wta",
-      "tournament": "Wta Monterrey Open",
-      "category": "wta250",
-      "surface": "unknown",
-      "best_of": 3,
-      "odds_home": 1.96,
-      "odds_away": 1.86,
-      "odds_source": "implied_elo",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_monterrey_open",
-      "scheduled_start_initial": "2026-08-25T19:00:00Z",
-      "scheduled_start_current": "2026-08-25T19:00:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Cristina Bucsa",
-      "away": "Anna Bondár",
-      "kickoff": "2026-08-25T19:00:00Z",
-      "tour": "wta",
-      "tournament": "Wta Monterrey Open",
-      "category": "wta250",
-      "surface": "unknown",
-      "best_of": 3,
-      "odds_home": 2.15,
-      "odds_away": 1.71,
-      "odds_source": "implied_elo",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_monterrey_open",
-      "scheduled_start_initial": "2026-08-25T19:00:00Z",
-      "scheduled_start_current": "2026-08-25T19:00:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Darja Vidmanova",
-      "away": "Kimberly Birrell",
-      "kickoff": "2026-08-25T19:00:00Z",
-      "tour": "wta",
-      "tournament": "Wta Monterrey Open",
-      "category": "wta250",
-      "surface": "unknown",
-      "best_of": 3,
-      "odds_home": 1.93,
-      "odds_away": 1.88,
-      "odds_source": "implied_elo",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_monterrey_open",
-      "scheduled_start_initial": "2026-08-25T19:00:00Z",
-      "scheduled_start_current": "2026-08-25T19:00:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Shuai Zhang",
-      "away": "Maria Timofeeva",
-      "kickoff": "2026-08-25T19:00:00Z",
-      "tour": "wta",
-      "tournament": "Wta Monterrey Open",
-      "category": "wta250",
-      "surface": "unknown",
-      "best_of": 3,
-      "odds_home": 1.67,
-      "odds_away": 2.22,
-      "odds_source": "implied_elo",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_monterrey_open",
-      "scheduled_start_initial": "2026-08-25T19:00:00Z",
-      "scheduled_start_current": "2026-08-25T19:00:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Hijikata Rinky",
-      "away": "Blanch Darwin",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Winston-Salem Open",
-      "category": "atp250",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.42,
-      "odds_away": 2.59,
-      "source": "tennisexplorer",
-      "sport_key": "te:winston-salem_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Sonego Lorenzo",
-      "away": "Kopriva Vit",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Winston-Salem Open",
-      "category": "atp250",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.2,
-      "odds_away": 1.61,
-      "source": "tennisexplorer",
-      "sport_key": "te:winston-salem_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Vallejo Adolfo Daniel",
-      "away": "Carreno-Busta Pablo",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Winston-Salem Open",
-      "category": "atp250",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.1,
-      "odds_away": 1.67,
-      "source": "tennisexplorer",
-      "sport_key": "te:winston-salem_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Majchrzak Kamil",
-      "away": "Bonzi Benjamin",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Winston-Salem Open",
-      "category": "atp250",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.5,
-      "odds_away": 2.35,
-      "source": "tennisexplorer",
-      "sport_key": "te:winston-salem_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Suresh Dhakshineswar",
-      "away": "Giron Marcos",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Winston-Salem Open",
-      "category": "atp250",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.42,
-      "odds_away": 1.5,
-      "source": "tennisexplorer",
-      "sport_key": "te:winston-salem_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Vandecasteele Quinn",
-      "away": "Duckworth James",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Winston-Salem Open",
-      "category": "atp250",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.4,
-      "odds_away": 1.5,
-      "source": "tennisexplorer",
-      "sport_key": "te:winston-salem_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Damm Martin (2003)",
-      "away": "Shelbayh Abedallah",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Winston-Salem Open",
-      "category": "atp250",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.35,
-      "odds_away": 3.0,
-      "source": "tennisexplorer",
-      "sport_key": "te:winston-salem_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Walton Adam",
-      "away": "De Jong Jesper",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Winston-Salem Open",
-      "category": "atp250",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.5,
-      "odds_away": 2.46,
-      "source": "tennisexplorer",
-      "sport_key": "te:winston-salem_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Gorzny Sebastian",
-      "away": "Hewitt Cruz",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Winston-Salem Open",
-      "category": "atp250",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.64,
-      "odds_away": 2.15,
-      "source": "tennisexplorer",
-      "sport_key": "te:winston-salem_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Choinski Jan",
-      "away": "Rottgering Mees",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Winston-Salem Open",
-      "category": "atp250",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.59,
-      "odds_away": 2.22,
-      "source": "tennisexplorer",
-      "sport_key": "te:winston-salem_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Balshaw Felix",
-      "away": "Kovacevic Aleksandar",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Winston-Salem Open",
-      "category": "atp250",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 2.25,
-      "odds_away": 1.57,
-      "source": "tennisexplorer",
-      "sport_key": "te:winston-salem_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Hurkacz Hubert",
-      "away": "Baez Sebastian",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Cancun challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.5,
-      "odds_away": 2.4,
-      "source": "tennisexplorer",
-      "sport_key": "te:cancun-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Safiullin Roman",
-      "away": "Grenier Hugo",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Winston-Salem Open",
-      "category": "atp250",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 1.32,
-      "odds_away": 2.98,
-      "source": "tennisexplorer",
-      "sport_key": "te:winston-salem_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Marcondes Igor",
-      "away": "Purcell Max",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Kingston 2 challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.25,
-      "odds_away": 1.55,
-      "source": "tennisexplorer",
-      "sport_key": "te:kingston-2-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Winter Edward",
-      "away": "Andrade Andres",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Kingston 2 challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.2,
-      "odds_away": 1.59,
-      "source": "tennisexplorer",
-      "sport_key": "te:kingston-2-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Estevez Juan",
-      "away": "Nedic Andrej",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Augsburg challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.27,
-      "odds_away": 1.56,
-      "source": "tennisexplorer",
-      "sport_key": "te:augsburg-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Kopp Sandro",
-      "away": "Ribeiro Eduardo",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Augsburg challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.52,
-      "odds_away": 2.32,
-      "source": "tennisexplorer",
-      "sport_key": "te:augsburg-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Damas Miguel",
-      "away": "Topo Marko",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Augsburg challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.25,
-      "odds_away": 1.56,
-      "source": "tennisexplorer",
-      "sport_key": "te:augsburg-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Hemery Calvin",
-      "away": "Barton Hynek",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Augsburg challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.25,
-      "odds_away": 1.55,
-      "source": "tennisexplorer",
-      "sport_key": "te:augsburg-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Poljicak Mili",
-      "away": "Schoenhaus Max",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Augsburg challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.15,
-      "odds_away": 1.64,
-      "source": "tennisexplorer",
-      "sport_key": "te:augsburg-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Basing Max",
-      "away": "Langmo Christian",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Roehampton 2 challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.56,
-      "odds_away": 2.25,
-      "source": "tennisexplorer",
-      "sport_key": "te:roehampton-2-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Monday Johannus",
-      "away": "Radulov Iliyan",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Roehampton 2 challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.54,
-      "odds_away": 2.3,
-      "source": "tennisexplorer",
-      "sport_key": "te:roehampton-2-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Ceban Mark",
-      "away": "Ribecai Michele",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Roehampton 2 challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.2,
-      "odds_away": 1.6,
-      "source": "tennisexplorer",
-      "sport_key": "te:roehampton-2-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Maxted Lui",
-      "away": "Shepp Anton",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Roehampton 2 challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.57,
-      "odds_away": 2.22,
-      "source": "tennisexplorer",
-      "sport_key": "te:roehampton-2-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Ivanov Ivan (2008)",
-      "away": "Peniston Ryan",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Roehampton 2 challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.68,
-      "odds_away": 2.05,
-      "source": "tennisexplorer",
-      "sport_key": "te:roehampton-2-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Blaydes Billy",
-      "away": "Martineau Matteo",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Roehampton 2 challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.17,
-      "odds_away": 1.6,
-      "source": "tennisexplorer",
-      "sport_key": "te:roehampton-2-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Munk Mesa Bernardo",
-      "away": "De Krom Michiel",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "US Open",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.2,
-      "odds_away": 1.58,
-      "source": "tennisexplorer",
-      "sport_key": "te:us-open_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Nijboer Ryan",
-      "away": "Curras Abasolo Tomas",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "US Open",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.44,
-      "odds_away": 2.6,
-      "source": "tennisexplorer",
-      "sport_key": "te:us-open_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Milev Yanaki",
-      "away": "Lopez Montagud Carlos",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "US Open",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.38,
-      "odds_away": 1.5,
-      "source": "tennisexplorer",
-      "sport_key": "te:us-open_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Wehnelt Kai",
-      "away": "Strombachs Robert",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Augsburg challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.1,
-      "odds_away": 1.65,
-      "source": "tennisexplorer",
-      "sport_key": "te:augsburg-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Gulin Svyatoslav",
-      "away": "Yevseyev Denis",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Augsburg challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.48,
-      "odds_away": 2.41,
-      "source": "tennisexplorer",
-      "sport_key": "te:augsburg-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Sanchez Martinez Benito",
-      "away": "Recek Dominik",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Augsburg challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.49,
-      "odds_away": 2.41,
-      "source": "tennisexplorer",
-      "sport_key": "te:augsburg-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Hassan Benjamin",
-      "away": "Donald Matthew William",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Augsburg challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.65,
-      "odds_away": 2.07,
-      "source": "tennisexplorer",
-      "sport_key": "te:augsburg-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Krutykh Oleksii",
-      "away": "Iannaccone Federico",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Augsburg challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.56,
-      "odds_away": 2.27,
-      "source": "tennisexplorer",
-      "sport_key": "te:augsburg-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Brunold Mika",
-      "away": "Gavrielides Liam",
-      "kickoff": "2026-08-24T15:32:00Z",
-      "tour": "atp",
-      "tournament": "Augsburg challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.52,
-      "odds_away": 2.3,
-      "source": "tennisexplorer",
-      "sport_key": "te:augsburg-challenger_atp",
-      "scheduled_start_initial": "2026-08-24T15:32:00Z",
-      "scheduled_start_current": "2026-08-24T15:32:00Z",
-      "schedule_updated_at": "2026-08-24T15:33:14Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-08-24T15:33:14Z"
-    }
-  ],
-  "model_tips": {
-    "France vs England": {
-      "p_home": 0.522,
-      "p_draw": 0.326,
-      "p_away": 0.152,
-      "xg_home": 1.78,
-      "xg_away": 0.95,
-      "p_btts_yes": 0.557,
-      "p_btts_no": 0.443,
-      "p_over25": 0.514,
-      "p_under25": 0.486,
-      "top_scorers_home": [
-        {
-          "name": "Jules Koundé",
-          "p": 0.741
-        },
-        {
-          "name": "Bradley Barcola",
-          "p": 0.574
-        },
-        {
-          "name": "Ousmane Dembélé",
-          "p": 0.528
-        }
-      ],
-      "top_scorers_away": [
-        {
-          "name": "Ivan Toney",
-          "p": 0.451
-        },
-        {
-          "name": "Harry Kane",
-          "p": 0.447
-        },
-        {
-          "name": "Jude Bellingham",
-          "p": 0.371
-        }
-      ],
-      "top_scores": [
-        {
-          "h": 1,
-          "a": 1,
-          "p": 15.7
-        },
-        {
-          "h": 0,
-          "a": 0,
-          "p": 11.2
-        },
-        {
-          "h": 2,
-          "a": 0,
-          "p": 10.3
-        }
-      ]
-    },
-    "Spain vs Argentina": {
-      "p_home": 0.629,
-      "p_draw": 0.305,
-      "p_away": 0.066,
-      "xg_home": 1.74,
-      "xg_away": 0.53,
-      "p_btts_yes": 0.378,
-      "p_btts_no": 0.622,
-      "p_over25": 0.394,
-      "p_under25": 0.606,
-      "top_scorers_home": [
-        {
-          "name": "Lamine Yamal",
-          "p": 0.29
-        },
-        {
-          "name": "Fabián Ruiz",
-          "p": 0.251
-        },
-        {
-          "name": "Mikel Oyarzabal",
-          "p": 0.233
-        }
-      ],
-      "top_scorers_away": [
-        {
-          "name": "Nicolás Otamendi",
-          "p": 0.642
-        },
-        {
-          "name": "Nicolás González",
-          "p": 0.502
-        },
-        {
-          "name": "Lautaro Martínez",
-          "p": 0.481
-        }
-      ],
-      "top_scores": [
-        {
-          "h": 2,
-          "a": 0,
-          "p": 15.7
-        },
-        {
-          "h": 0,
-          "a": 0,
-          "p": 14.5
-        },
-        {
-          "h": 1,
-          "a": 0,
-          "p": 14.0
-        }
-      ]
-    }
-  },
-  "updated": "2026-08-24T15:33:14Z",
-  "top_elo": [
-    {
-      "name": "Sinner J.",
-      "rating": 1678
-    },
-    {
-      "name": "Fritz T.",
-      "rating": 1666
-    },
-    {
-      "name": "Alcaraz C.",
-      "rating": 1647
-    },
-    {
-      "name": "Noskova L.",
-      "rating": 1643
-    },
-    {
-      "name": "Djokovic N.",
-      "rating": 1643
-    },
-    {
-      "name": "Zverev A.",
-      "rating": 1626
-    },
-    {
-      "name": "Keys M.",
-      "rating": 1624
-    },
-    {
-      "name": "De Minaur A.",
-      "rating": 1597
-    },
-    {
-      "name": "Pegula J.",
-      "rating": 1596
-    },
-    {
-      "name": "Sabalenka A.",
-      "rating": 1595
-    }
-  ],
-  "build_info": {
-    "sha": "4adec15",
-    "date": "2026-08-24"
-  },
   "model_evals": {
     "Aguiard Enzo vs Kotzen Andrew": {
       "p_a": 50.0,
@@ -13325,8 +13287,8 @@
     },
     "Sonego Lorenzo vs Kopriva Vit": {
       "status": "ACTIONABLE",
-      "p_a": 54.8,
-      "p_b": 45.2,
+      "p_a": 54.9,
+      "p_b": 45.1,
       "implied_a": 42.3,
       "implied_b": 57.7,
       "odds_a": 2.2,
@@ -13357,10 +13319,10 @@
       "status": "ACTIONABLE",
       "p_a": 46.6,
       "p_b": 53.4,
-      "implied_a": 62.1,
-      "implied_b": 37.9,
-      "odds_a": 1.5,
-      "odds_b": 2.46,
+      "implied_a": 63.4,
+      "implied_b": 36.6,
+      "odds_a": 1.46,
+      "odds_b": 2.53,
       "source": "elo"
     },
     "Hernandez Serrano Juan Alejandro vs Saraiva Dos Santos Paulo Andre": {
@@ -13436,8 +13398,8 @@
     "Winter Edward vs Andrade Andres": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Kingston 2 challenger",
-      "odds_a": 2.2,
-      "odds_b": 1.59
+      "odds_a": 2.19,
+      "odds_b": 1.58
     },
     "Kopp Sandro vs Ribeiro Eduardo": {
       "status": "UNSUPPORTED_TOURNAMENT",
@@ -13455,12 +13417,6 @@
       "odds_b": 1.64,
       "source": "elo"
     },
-    "Hemery Calvin vs Barton Hynek": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Augsburg challenger",
-      "odds_a": 2.25,
-      "odds_b": 1.55
-    },
     "Monday Johannus vs Radulov Iliyan": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Roehampton 2 challenger",
@@ -13476,30 +13432,24 @@
     "Blaydes Billy vs Martineau Matteo": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Roehampton 2 challenger",
-      "odds_a": 2.17,
+      "odds_a": 2.19,
       "odds_b": 1.6
     },
     "Maxted Lui vs Shepp Anton": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Roehampton 2 challenger",
-      "odds_a": 1.57,
-      "odds_b": 2.22
+      "odds_a": 1.55,
+      "odds_b": 2.3
     },
     "Ivanov Ivan (2008) vs Peniston Ryan": {
       "status": "EVALUATED_NO_BET",
       "p_a": 49.2,
       "p_b": 50.8,
-      "implied_a": 55.0,
-      "implied_b": 45.0,
-      "odds_a": 1.68,
-      "odds_b": 2.05,
+      "implied_a": 55.9,
+      "implied_b": 44.1,
+      "odds_a": 1.65,
+      "odds_b": 2.09,
       "source": "elo"
-    },
-    "Ceban Mark vs Ribecai Michele": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Roehampton 2 challenger",
-      "odds_a": 2.2,
-      "odds_b": 1.6
     },
     "Milev Yanaki vs Lopez Montagud Carlos": {
       "status": "UNSUPPORTED_TOURNAMENT",
@@ -13560,33 +13510,33 @@
     "Gorzny Sebastian vs Hewitt Cruz": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Gorzny Sebastian",
-      "odds_a": 1.64,
-      "odds_b": 2.15
+      "odds_a": 1.61,
+      "odds_b": 2.17
     },
     "Choinski Jan vs Rottgering Mees": {
-      "status": "ACTIONABLE",
+      "status": "EVALUATED_NO_BET",
       "p_a": 47.5,
       "p_b": 52.5,
-      "implied_a": 58.3,
-      "implied_b": 41.7,
-      "odds_a": 1.59,
-      "odds_b": 2.22,
+      "implied_a": 42.3,
+      "implied_b": 57.7,
+      "odds_a": 2.18,
+      "odds_b": 1.6,
       "source": "elo"
     },
     "Balshaw Felix vs Kovacevic Aleksandar": {
       "status": "UNKNOWN_PLAYER",
       "reason": "Kein Elo-Profil (z.B. Qualifier): Balshaw Felix",
-      "odds_a": 2.25,
-      "odds_b": 1.57
+      "odds_a": 2.27,
+      "odds_b": 1.56
     },
     "Safiullin Roman vs Grenier Hugo": {
       "status": "ACTIONABLE",
       "p_a": 55.3,
       "p_b": 44.7,
-      "implied_a": 69.3,
-      "implied_b": 30.7,
-      "odds_a": 1.32,
-      "odds_b": 2.98,
+      "implied_a": 66.3,
+      "implied_b": 33.7,
+      "odds_a": 1.41,
+      "odds_b": 2.77,
       "source": "elo"
     },
     "Hurkacz Hubert vs Baez Sebastian": {
@@ -13603,9 +13553,9 @@
       "status": "EVALUATED_NO_BET",
       "p_a": 48.7,
       "p_b": 51.3,
-      "implied_a": 48.7,
-      "implied_b": 51.3,
-      "odds_a": 1.96,
+      "implied_a": 48.8,
+      "implied_b": 51.2,
+      "odds_a": 1.95,
       "odds_b": 1.86,
       "source": "elo"
     },
@@ -13700,13 +13650,30 @@
       "odds_a": 2.25,
       "odds_b": 1.56,
       "source": "elo"
+    },
+    "Barton Hynek vs Hemery Calvin": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Augsburg challenger",
+      "odds_a": 1.54,
+      "odds_b": 2.26
+    },
+    "Ribecai Michele vs Ceban Mark": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Roehampton 2 challenger",
+      "odds_a": 1.65,
+      "odds_b": 2.12
     }
   },
+  "build_info": {
+    "sha": "6317022",
+    "date": "2026-08-24"
+  },
+  "football": [],
   "meta": {
     "stale_odds": false
   },
   "tennis_stats": {
-    "updated": "2026-08-24T15:33:14Z",
+    "updated": "2026-08-24T16:44:33Z",
     "active_tournaments": [
       {
         "slug": "tennis_wta_monterrey_open",
