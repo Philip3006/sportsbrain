@@ -1,25 +1,25 @@
 {
-  "generated_at": "2026-08-23T05:24:10.500509+00:00",
+  "generated_at": "2026-08-24T05:34:09.547706+00:00",
   "train_rows": 55606,
   "cal_rows": 2616,
-  "holdout_rows": 8771,
+  "holdout_rows": 8959,
   "train_end": "2024-06-01",
   "cal_end": "2024-12-31",
   "elo": {
-    "n": 8771,
-    "brier": 0.21938563726152832,
-    "log_loss": 0.627667617000908,
-    "accuracy": 0.6412039676205677
+    "n": 8959,
+    "brier": 0.2193455078745292,
+    "log_loss": 0.6276668003650424,
+    "accuracy": 0.6406965063065074
   },
   "lgbm": {
-    "n": 8771,
-    "brier": 0.21460600635495725,
-    "log_loss": 0.619870016214182,
-    "accuracy": 0.6572796716451944
+    "n": 8959,
+    "brier": 0.216422648887839,
+    "log_loss": 0.6231790583673577,
+    "accuracy": 0.6509655095434759
   },
-  "brier_improvement": 0.004779630906571075,
-  "logloss_improvement": 0.007797600786725978,
-  "gate_passed": true,
+  "brier_improvement": 0.002922858986690202,
+  "logloss_improvement": 0.004487741997684758,
+  "gate_passed": false,
   "brier_gate": 0.003,
   "feature_columns": [
     "rank_a",
@@ -103,5 +103,6 @@
     "elo_confidence",
     "tz_shift_a",
     "tz_shift_b"
-  ]
+  ],
+  "forced_persist": true
 }
