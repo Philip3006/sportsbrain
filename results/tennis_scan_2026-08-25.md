@@ -4,5 +4,5 @@
 
 
 ## Wta Monterrey Open (WTA) · wta250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 7
+Surface: unknown · Best of: 3 · Matches gescannt: 8
 _Keine Value-Signals._
