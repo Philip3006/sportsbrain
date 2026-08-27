@@ -57,7 +57,11 @@ jobs:
         if: always()
         run: |
           STATUS="${{ steps.retrain.outputs.status || 'error' }}"
-          python -m src.monitoring.health_writer --job tennis_retrain --status "$STATUS" --exit-code ${{ job.status == 'success' && 0 || 1 }} || true
+          EXIT_CODE=1
+          if [ "${{ job.status }}" = "success" ]; then
+            EXIT_CODE=0
+          fi
+          python -m src.monitoring.health_writer --job tennis_retrain --status "$STATUS" --exit-code "$EXIT_CODE" || true
 
       - name: Commit results
         run: |
