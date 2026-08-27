@@ -1046,6 +1046,8 @@ def main() -> None:
                                     m["player_a"], m["player_b"], ratings, reg.surface,
                                     best_of=reg.best_of, category=reg.category,
                                     name_source="te",
+                                    match_date=m.get("commence_time", ""),
+                                    state=live_state,
                                 )
                                 _oa = float(m.get("odds_a") or 0.0)
                                 _ob = float(m.get("odds_b") or 0.0)
