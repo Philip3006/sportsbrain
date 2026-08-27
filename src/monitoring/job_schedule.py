@@ -322,8 +322,7 @@ def _eval_event_fallback(
 #   (GitHub Actions workflow is .disabled — launchd is authoritative.)
 #
 # tennis_scan: .github/workflows/tennis_scan.yml
-#   8 daily UTC cron points: 02/06/09/12/15/18/21/23 UTC.
-#   (CEO audit listed 9 incl. 04:00; actual workflow has 8. Source wins.)
+#   9 daily UTC cron points: 02/04/06/09/12/15/18/21/23 UTC.
 #
 # tennis_retrain: health key written by TWO workflows:
 #   - tennis_lgbm_retrain.yml (primary, daily 05:00 UTC)
@@ -390,14 +389,14 @@ JOB_EXPECTATIONS: dict[str, JobExpectation] = {
     ),
 
     # --- Tennis ---
-    # tennis_scan.yml: 8 daily UTC cron points
+    # tennis_scan.yml: 9 daily UTC cron points
     "tennis_scan": CronSetExpectation(
         points=(
-            (None, 2, 0), (None, 6, 0), (None, 9, 0), (None, 12, 0),
+            (None, 2, 0), (None, 4, 0), (None, 6, 0), (None, 9, 0), (None, 12, 0),
             (None, 15, 0), (None, 18, 0), (None, 21, 0), (None, 23, 0),
         ),
         grace_s=3600,
-        cadence="8×/Tag 02/06/09/12/15/18/21/23 UTC",
+        cadence="9×/Tag 02/04/06/09/12/15/18/21/23 UTC",
     ),
     # tennis_settle.yml: '15 6-22/2 * * *' → 06:15/08:15/.../22:15 UTC (9 daily points)
     "tennis_settle": CronSetExpectation(

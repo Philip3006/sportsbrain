@@ -829,10 +829,11 @@ class TestMON002Regression:
         assert exp is not None
         assert isinstance(exp, CronSetExpectation)
 
-    def test_tennis_scan_has_8_cron_points(self):
+    def test_tennis_scan_has_9_cron_points_including_04_utc(self):
         from src.monitoring.job_schedule import JOB_EXPECTATIONS
         exp = JOB_EXPECTATIONS["tennis_scan"]
-        assert len(exp.points) == 8
+        assert len(exp.points) == 9
+        assert (None, 4, 0) in exp.points
 
     def test_evaluate_expectation_cron_not_overdue_after_run(self):
         """Ran at 09:02, now 11:30 → not_expected (no false stale)."""

@@ -11,7 +11,7 @@ P0B-001 (MON-001 / MON-011 / OPS-006):
 
 P0B-002 (MON-002 / MON-012):
   - off-window or already-ran-in-cycle jobs are never falsely stale
-  - tennis_scan cron set: 8 exact UTC points, no false stale between points
+  - tennis_scan cron set: 9 exact UTC points, no false stale between points
   - tennis_retrain daily 05:00 UTC: not_expected after run, overdue if missed
   - bundesliga2_live_push: off-window → not_expected; in-window → evaluated
   - bundesliga2_closing_odds: weekly points; long gap does not false-stale
@@ -693,27 +693,27 @@ class TestIntervalExpectation:
 
 
 class TestCronSetTennisScan:
-    """tennis_scan — CRON SET tests (8 daily UTC points)."""
+    """tennis_scan — CRON SET tests (9 daily UTC points)."""
 
-    # Actual workflow: 02/06/09/12/15/18/21/23 UTC daily
+    # Active workflow: 02/04/06/09/12/15/18/21/23 UTC daily
     EXP = JOB_EXPECTATIONS["tennis_scan"]
 
     def _assert_cron_set(self):
         assert isinstance(self.EXP, CronSetExpectation)
         hours = {h for (_, h, _) in self.EXP.points}
-        assert hours == {2, 6, 9, 12, 15, 18, 21, 23}, (
-            f"tennis_scan must have exactly 8 cron hours: got {sorted(hours)}"
+        assert hours == {2, 4, 6, 9, 12, 15, 18, 21, 23}, (
+            f"tennis_scan must have exactly 9 cron hours: got {sorted(hours)}"
         )
 
-    def test_schedule_has_exactly_8_daily_points(self):
-        """MON-012: tennis_scan expectation matches active workflow (8 daily cron points)."""
+    def test_schedule_has_exactly_9_daily_points(self):
+        """MON-012: tennis_scan expectation matches active workflow (9 daily cron points)."""
         self._assert_cron_set()
-        assert len(self.EXP.points) == 8
+        assert len(self.EXP.points) == 9
 
-    def test_no_04_utc_point(self):
-        """Workflow has no 04:00 UTC point — source wins over CEO audit."""
+    def test_04_utc_point_present(self):
+        """04:00 UTC is an active tennis_scan schedule point."""
         hours = {h for (_, h, _) in self.EXP.points}
-        assert 4 not in hours
+        assert 4 in hours
 
     def test_just_after_cron_point_not_yet_overdue(self):
         """At 06:05 UTC, if job ran at 06:01, not overdue (within grace)."""
@@ -739,10 +739,10 @@ class TestCronSetTennisScan:
         assert r.in_window is False
         assert r.is_overdue is False
 
-    def test_4h_gap_02_to_06_no_false_stale(self):
-        """Largest gap (02:00→06:00 = 4h) must not stale a job that ran at 02:03."""
+    def test_2h_gap_04_to_06_no_false_stale(self):
+        """04:00→06:00 gap must not stale a job that ran at 04:03."""
         now = _utc(2026, 8, 16, 5, 59)   # just before 06:00
-        last = _utc(2026, 8, 16, 2, 3)
+        last = _utc(2026, 8, 16, 4, 3)
         r = evaluate_expectation(self.EXP, last, now)
         assert r.in_window is False
         assert r.is_overdue is False

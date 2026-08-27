@@ -62,7 +62,11 @@ jobs:
         if: always()
         run: |
           STATUS="${{ steps.fetch.outputs.status || 'error' }}"
-          python -m src.monitoring.health_writer --job tennis_closing_odds --status "$STATUS" --exit-code ${{ job.status == 'success' && 0 || 1 }} || true
+          EXIT_CODE=1
+          if [ "${{ job.status }}" = "success" ]; then
+            EXIT_CODE=0
+          fi
+          python -m src.monitoring.health_writer --job tennis_closing_odds --status "$STATUS" --exit-code "$EXIT_CODE" || true
 
       - name: Commit private ledger (fatal if ledger staging fails)
         env:
