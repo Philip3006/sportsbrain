@@ -159,11 +159,18 @@ def predict_winner_ensemble(
     use_live_stats: bool = True,
     match_date: str | None = None,
     tournament_slug: str | None = None,
+    state: RollingState | None = None,
 ) -> dict[str, float]:
     """Returns {p_a, p_b, source}. Source ∈ {'elo', 'ensemble'}.
 
     name_source: Format-Hint für Elo-Name-Konvertierung. 'odds_api' für Live-
     Scanner-Namen (Vorname Nachname); 'te' für Tennisexplorer (Nachname Vorname).
+
+    state: Pre-built RollingState populated from the full historical match corpus
+    (FND-MODEL1-001 fix). The scanner builds this once via build_live_rolling_state()
+    and passes it here. Missing or target-player-empty state fails closed to Elo-only.
+    A valid match timestamp is also required because rest/fatigue features are
+    prediction-time dependent.
     """
     # Namen für Elo-Lookup normalisieren (bewahrt originale Anzeige-Namen).
     elo_key_a = _normalize_for_elo(player_a, name_source)
@@ -187,7 +194,43 @@ def predict_winner_ensemble(
     if model is None or not gate_passed:
         return {**elo_probs, "source": "elo"}
 
-    # LGBM-Prediction: erfordert Feature-Bau ex-ante (leerer State — kein H2H bekannt).
+    # FND-MODEL1-001: production LGBM requires a real, target-player-populated
+    # RollingState. This catches both construction failure and empty/partial corpora.
+    if state is None:
+        _log.warning(
+            "tennis-ensemble: no RollingState for %s vs %s → LGBM bypassed "
+            "(rolling_state_unavailable)", player_a, player_b,
+        )
+        return {**elo_probs, "source": "elo", "rolling_state_unavailable": True}
+    hist_a = state.form.get(elo_key_a)
+    hist_b = state.form.get(elo_key_b)
+    if not hist_a or not hist_b:
+        _log.warning(
+            "tennis-ensemble: invalid RollingState for %s vs %s → LGBM bypassed "
+            "(rolling_state_invalid)", player_a, player_b,
+        )
+        return {**elo_probs, "source": "elo", "rolling_state_invalid": True}
+
+    # Prediction timestamp is mandatory: rest/fatigue features are invalid without it.
+    if not match_date:
+        _log.warning(
+            "tennis-ensemble: missing prediction timestamp for %s vs %s → LGBM bypassed",
+            player_a, player_b,
+        )
+        return {**elo_probs, "source": "elo", "prediction_time_unavailable": True}
+    try:
+        ts = pd.Timestamp(match_date)
+        if pd.isna(ts):
+            raise ValueError("NaT timestamp")
+        _pred_date = ts.tz_localize(None) if ts.tzinfo is None else ts.tz_convert(None)
+    except (ValueError, TypeError, AttributeError, OverflowError):
+        _log.warning(
+            "tennis-ensemble: invalid prediction timestamp %r for %s vs %s → LGBM bypassed",
+            match_date, player_a, player_b,
+        )
+        return {**elo_probs, "source": "elo", "prediction_time_unavailable": True}
+
+    # LGBM-Prediction: Features ex-ante mit historischem RollingState.
     # Elo-Werte kommen aus ratings; Rank fällt auf Prior wenn nicht geliefert.
     _MIN_RANK = 1500.0
     ra = rank_a if rank_a and rank_a > 0 else _MIN_RANK
@@ -204,19 +247,18 @@ def predict_winner_ensemble(
         # WTA-Kategorien routen zu TA-wplayer.cgi statt player-classic.cgi.
         tour = "wta" if category.startswith("wta") else "atp"
         # J8-B10: before_date passt Live-Fetch an WF-Konvention an (nur Historie < match_date).
-        # match_date optional — bei None wird die volle Historie genommen (Backward-Compat).
         try:
             stats_a = fetch_aggregate(player_a, last_n=20, surface=surface, tour=tour,
                                       before_date=match_date)
             stats_b = fetch_aggregate(player_b, last_n=20, surface=surface, tour=tour,
                                       before_date=match_date)
             # J8-I7: Asof-Snapshot für Walk-Forward-Training (J2-N Prerequisite).
-            if match_date and stats_a and stats_a.n_matches > 0:
+            if stats_a and stats_a.n_matches > 0:
                 try:
                     save_serve_snapshot(player_a, surface, match_date, stats_a, tour=tour)
                 except Exception:
                     pass
-            if match_date and stats_b and stats_b.n_matches > 0:
+            if stats_b and stats_b.n_matches > 0:
                 try:
                     save_serve_snapshot(player_b, surface, match_date, stats_b, tour=tour)
                 except Exception:
@@ -234,15 +276,19 @@ def predict_winner_ensemble(
     except Exception:
         bio_a = bio_b = None
 
+    # FND-MODEL1-001: state lookups use the canonical Elo-format key (elo_key_a/b),
+    # which matches the winner_name/loser_name format in the historical corpus used
+    # to build the state. Both AB and BA symmetry calls share the same pre-match state
+    # and the same prediction timestamp — no state mutation occurs here.
     feats = build_match_features(
-        player_a=player_a, player_b=player_b,
+        player_a=elo_key_a, player_b=elo_key_b,
         surface=surface, best_of=best_of,
         category=category, round_str=round_str,
         rank_a=ra, rank_b=rb,
         elo_a=elo_a_over, elo_b=elo_b_over,
         elo_surface_a=elo_a_surf, elo_surface_b=elo_b_surf,
-        state=RollingState(),  # Leer — kein H2H/Form für unbekannte Live-Matches
-        date=None,
+        state=state,
+        date=_pred_date,
         serve_stats_a=stats_a,
         serve_stats_b=stats_b,
         bio_a=bio_a,
@@ -252,14 +298,14 @@ def predict_winner_ensemble(
     # Symmetric prediction: average P(A wins | A first) and 1 − P(B wins | B first).
     # Eliminates ~22pp positional bias from training-data ordering correlation.
     feats_ba = build_match_features(
-        player_a=player_b, player_b=player_a,  # swapped
+        player_a=elo_key_b, player_b=elo_key_a,  # swapped elo keys
         surface=surface, best_of=best_of,
         category=category, round_str=round_str,
         rank_a=rb, rank_b=ra,
         elo_a=elo_b_over, elo_b=elo_a_over,
         elo_surface_a=elo_b_surf, elo_surface_b=elo_a_surf,
-        state=RollingState(),
-        date=None,
+        state=state,
+        date=_pred_date,
         serve_stats_a=stats_b, serve_stats_b=stats_a,
         bio_a=bio_b, bio_b=bio_a,
         tournament_slug=tournament_slug,
