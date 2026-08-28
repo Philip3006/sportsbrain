@@ -1,6 +1,6 @@
 # Tennis Scan 2026-08-28
 
-**Aktive Turniere:** 3 · **Signals total:** 1
+**Aktive Turniere:** 3 · **Signals total:** 2
 
 
 ## US Open (ATP) · grand_slam · 🔴 LIVE
@@ -14,4 +14,5 @@ _Keine Value-Signals._
 
 ## US Open (WTA) · grand_slam · 🔴 LIVE
 Surface: hard · Best of: 3 · Matches gescannt: 47
-_Keine Value-Signals._
+- [WTA] **Daria Kasatkina vs Paula Badosa** · Match Winner: Daria Kasatkina
+  Quote 2.14 · Modell 49.9% · EV +6.8% · Stake 5.00€ · MEDIUM
