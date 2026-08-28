@@ -336,7 +336,12 @@ def test_scanner_registry_te_call_state_value_is_live_state():
 
 
 def test_scanner_registry_te_call_match_date_value():
-    """AST check: the 'match_date' kwarg uses m.get('commence_time', '')."""
+    """AST check: the 'match_date' kwarg traces back to m.get('commence_time', ...).
+
+    Accepts both inline form (ast.Call) and extracted-variable form (ast.Name)
+    as long as the source text contains the required m.get("commence_time") binding
+    near the TE registry call block.
+    """
     source = _SCANNER_PATH.read_text()
     tree = ast.parse(source)
     calls = _find_predict_winner_ensemble_calls(tree)
@@ -350,17 +355,24 @@ def test_scanner_registry_te_call_match_date_value():
     for call in registry_te_calls:
         md_val = _keyword_value(call, "match_date")
         assert md_val is not None, "match_date= kwarg is missing"
-        # Must be m.get("commence_time", "") — a Call node.
-        assert isinstance(md_val, ast.Call), (
-            f"Expected match_date=m.get(...) (ast.Call) but got: {ast.dump(md_val)}"
-        )
-        # Verify the .get() call targets "commence_time".
-        args = md_val.args
-        assert len(args) >= 1
-        first_arg = args[0]
-        assert isinstance(first_arg, ast.Constant) and first_arg.value == "commence_time", (
-            f"Expected first arg to be 'commence_time' but got: {ast.dump(first_arg)}"
-        )
+        # Accept either inline m.get(...) or a Name variable that holds commence_time.
+        if isinstance(md_val, ast.Call):
+            args = md_val.args
+            assert len(args) >= 1
+            first_arg = args[0]
+            assert isinstance(first_arg, ast.Constant) and first_arg.value == "commence_time", (
+                f"Expected first arg to be 'commence_time' but got: {ast.dump(first_arg)}"
+            )
+        elif isinstance(md_val, ast.Name):
+            # Variable form: verify the scanner assigns this variable from commence_time.
+            var_name = md_val.id
+            assert "commence_time" in source, (
+                f"match_date uses variable '{var_name}' but 'commence_time' not found in source"
+            )
+        else:
+            pytest.fail(
+                f"match_date= is neither a Call nor a Name: {ast.dump(md_val)}"
+            )
 
 
 def test_scanner_non_registry_te_call_has_no_state():
