@@ -4,23 +4,28 @@ Verifies that the registry-enriched TennisExplorer prediction path
 threads RollingState and match_date into predict_winner_ensemble(),
 restoring MODEL1-001 train/live parity for TE secondary matches.
 
-Root cause: line 1045 in scripts/tennis_scan.py omitted state= and
-match_date= — predict_winner_ensemble received state=None (default) →
-logged rolling_state_unavailable → LGBM bypassed unconditionally.
+Root cause: scripts/tennis_scan.py registry-enriched TE call omitted
+state= and match_date= — predict_winner_ensemble received state=None
+(default) → logged rolling_state_unavailable → LGBM bypassed
+unconditionally for all 14 TE matches in production canary run 33126308883.
 
 These tests assert the fix at two levels:
-  1. Unit (ensemble): TE name normalization resolves to state keys;
-     state present → no rolling_state_unavailable flag.
-  2. Scanner (integration): scanner passes state and match_date into
-     the TE registry-enriched call.
+  1. Unit (ensemble): fail-safe contracts for invalid state/timestamp;
+     positive proof that populated state + valid timestamp reach ensemble.
+  2. AST (scanner call-site): parses the real scripts/tennis_scan.py and
+     asserts the registry-enriched TE call contains state=live_state and
+     match_date=m.get("commence_time","") — protects against regression.
 
 Shadow tournaments and non-registry TE paths are explicitly verified
 to remain unaffected by this fix.
 """
 from __future__ import annotations
 
+import ast
+from pathlib import Path
 from unittest.mock import MagicMock
 
+import numpy as np
 import pytest
 
 import src.tennis.ensemble as ens
@@ -28,12 +33,14 @@ from src.models.tennis_elo import TennisEloRatings
 from src.tennis.features import RollingState
 from src.tennis.name_norm import to_elo_name_from_te
 
+_SCANNER_PATH = Path(__file__).parent.parent.parent / "scripts" / "tennis_scan.py"
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 def _ratings_with_players(*elo_names: str, rating: float = 1700.0) -> TennisEloRatings:
-    """TennisEloRatings seeded with known elo-format player names."""
     r = TennisEloRatings()
     for n in elo_names:
         r.overall[n] = rating
@@ -43,9 +50,7 @@ def _ratings_with_players(*elo_names: str, rating: float = 1700.0) -> TennisEloR
 
 
 def _state_with_players(*elo_names: str) -> RollingState:
-    """RollingState with non-empty form deques for each player."""
     state = RollingState()
-    # Pair consecutive players; seed at least 2 entries each.
     paired = list(elo_names)
     if len(paired) == 1:
         paired = [paired[0], paired[0]]
@@ -55,6 +60,13 @@ def _state_with_players(*elo_names: str) -> RollingState:
         state.update(a, b, "hard")
         state.update(b, a, "hard")
     return state
+
+
+def _mock_lgbm_model(p_ab: float = 0.65) -> MagicMock:
+    """Returns a model mock whose predict_p_a() always returns p_ab."""
+    model = MagicMock()
+    model.predict_p_a.return_value = np.array([p_ab])
+    return model
 
 
 # Representative TE player names from the production canary (run 33126308883).
@@ -84,14 +96,14 @@ def test_te_normalization_produces_key_found_in_state():
     elo_key_b = to_elo_name_from_te("Tsitsipas Stefanos")
     state = _state_with_players(elo_key_a, elo_key_b)
 
-    assert state.form.get(elo_key_a) is not None, "Elo key for Zverev not in state"
-    assert state.form.get(elo_key_b) is not None, "Elo key for Tsitsipas not in state"
+    assert state.form.get(elo_key_a) is not None
+    assert state.form.get(elo_key_b) is not None
     assert len(state.form[elo_key_a]) > 0
     assert len(state.form[elo_key_b]) > 0
 
 
 # ---------------------------------------------------------------------------
-# Phase 1 (ensemble level) — state passthrough
+# Fail-safe contracts — state
 # ---------------------------------------------------------------------------
 
 def test_te_state_none_produces_rolling_state_unavailable():
@@ -105,39 +117,23 @@ def test_te_state_none_produces_rolling_state_unavailable():
         name_source="te",
         state=None,
         match_date="2026-08-28T12:00:00Z",
+        use_live_stats=False,
     )
+    assert out["source"] == "elo"
     assert out.get("rolling_state_unavailable") is True
-    assert out.get("source") == "elo"
-
-
-def test_te_populated_state_removes_unavailable_flag():
-    """Populated state → no rolling_state_unavailable; LGBM gate is reached."""
-    elo_a = to_elo_name_from_te("Zverev Alexander")
-    elo_b = to_elo_name_from_te("Tsitsipas Stefanos")
-    ratings = _ratings_with_players(elo_a, elo_b)
-    state = _state_with_players(elo_a, elo_b)
-
-    out = ens.predict_winner_ensemble(
-        "Zverev Alexander", "Tsitsipas Stefanos",
-        ratings, "hard",
-        name_source="te",
-        state=state,
-        match_date="2026-08-28T12:00:00Z",
-    )
-    assert not out.get("rolling_state_unavailable"), (
-        "rolling_state_unavailable must be absent when state is populated"
-    )
-    assert not out.get("rolling_state_invalid"), (
-        "rolling_state_invalid must be absent when both players have form history"
-    )
 
 
 def test_te_partially_missing_state_produces_rolling_state_invalid():
-    """State present but one player missing → rolling_state_invalid (fail-closed)."""
+    """State supplied but one target player absent → rolling_state_invalid exactly.
+
+    When a state object is passed, the ensemble must not return rolling_state_unavailable
+    (that flag means state=None). The precise contract when hist_a or hist_b is empty
+    is rolling_state_invalid.
+    """
     elo_a = to_elo_name_from_te("Zverev Alexander")
     elo_b = to_elo_name_from_te("Tsitsipas Stefanos")
     ratings = _ratings_with_players(elo_a, elo_b)
-    # Only seed player A.
+    # Only player A seeded; player B absent from state.form.
     state = _state_with_players(elo_a)
 
     out = ens.predict_winner_ensemble(
@@ -146,19 +142,35 @@ def test_te_partially_missing_state_produces_rolling_state_invalid():
         name_source="te",
         state=state,
         match_date="2026-08-28T12:00:00Z",
-    )
-    assert out.get("rolling_state_invalid") is True or out.get("rolling_state_unavailable") is True, (
-        "One missing player must trigger a fail-closed flag"
+        use_live_stats=False,
     )
     assert out["source"] == "elo"
+    assert out.get("rolling_state_invalid") is True, (
+        "State was supplied — must be rolling_state_invalid, not rolling_state_unavailable"
+    )
+    assert not out.get("rolling_state_unavailable"), (
+        "rolling_state_unavailable must be absent when a state object was passed"
+    )
 
 
-def test_te_invalid_timestamp_fails_closed():
-    """Invalid match_date → LGBM bypassed, Elo returned (fail-closed)."""
+# ---------------------------------------------------------------------------
+# Fail-safe contracts — timestamp
+# ---------------------------------------------------------------------------
+
+def test_te_invalid_timestamp_fails_closed(monkeypatch):
+    """Invalid match_date → source=='elo' and prediction_time_unavailable==True exactly.
+
+    The model gate at line 193 of ensemble.py fires before state/timestamp checks,
+    so prediction_time_unavailable is only reachable when model is present and
+    gate_passed=True. A mock model is injected to reach the timestamp check.
+    """
     elo_a = to_elo_name_from_te("Zverev Alexander")
     elo_b = to_elo_name_from_te("Tsitsipas Stefanos")
     ratings = _ratings_with_players(elo_a, elo_b)
     state = _state_with_players(elo_a, elo_b)
+    # Inject gate-passing mock so the timestamp check is reached (not short-circuited).
+    monkeypatch.setitem(ens._CACHED, "model", _mock_lgbm_model())
+    monkeypatch.setitem(ens._CACHED, "gate_passed", True)
 
     out = ens.predict_winner_ensemble(
         "Zverev Alexander", "Tsitsipas Stefanos",
@@ -166,19 +178,20 @@ def test_te_invalid_timestamp_fails_closed():
         name_source="te",
         state=state,
         match_date="not-a-real-date",
+        use_live_stats=False,
     )
-    # Must not crash; must return something based on Elo (no LGBM for bad date).
-    assert "p_a" in out
-    assert "p_b" in out
-    assert out["source"] in ("elo", "ensemble")
+    assert out["source"] == "elo"
+    assert out.get("prediction_time_unavailable") is True
 
 
-def test_te_missing_match_date_fails_closed():
-    """Empty match_date → LGBM bypassed, Elo returned (fail-closed)."""
+def test_te_missing_match_date_fails_closed(monkeypatch):
+    """Empty match_date → source=='elo' and prediction_time_unavailable==True exactly."""
     elo_a = to_elo_name_from_te("Kecmanovic Miomir")
     elo_b = to_elo_name_from_te("Nishikori Kei")
     ratings = _ratings_with_players(elo_a, elo_b)
     state = _state_with_players(elo_a, elo_b)
+    monkeypatch.setitem(ens._CACHED, "model", _mock_lgbm_model())
+    monkeypatch.setitem(ens._CACHED, "gate_passed", True)
 
     out = ens.predict_winner_ensemble(
         "Kecmanovic Miomir", "Nishikori Kei",
@@ -186,184 +199,251 @@ def test_te_missing_match_date_fails_closed():
         name_source="te",
         state=state,
         match_date="",
+        use_live_stats=False,
     )
-    assert "p_a" in out
-    assert out["source"] in ("elo", "ensemble")
+    assert out["source"] == "elo"
+    assert out.get("prediction_time_unavailable") is True
 
 
 # ---------------------------------------------------------------------------
-# Phase 2 (scanner level) — call-site passthrough
+# Positive path — TE name + populated state + valid timestamp reaches ensemble
 # ---------------------------------------------------------------------------
 
-def _make_te_match(player_a: str, player_b: str,
-                    commence: str = "2026-08-28T12:00:00Z") -> dict:
-    return {
-        "player_a": player_a, "player_b": player_b,
-        "odds_a": 1.90, "odds_b": 1.90,
-        "commence_time": commence,
-        "te_slug": "winston_salem_atp",
-        "te_tour": "atp",
-        "te_tournament": "Winston-Salem Open",
-        "match_id": f"{player_a}-{player_b}-{commence}",
-    }
+def test_te_populated_state_valid_timestamp_reaches_ensemble(monkeypatch):
+    """Populated state + valid timestamp + known TE players → source=='ensemble'.
 
-
-def _make_mock_registry(slug: str = "winston_salem_atp", shadow: bool = False):
-    """Minimal tournament registry mock."""
-    reg = MagicMock()
-    reg.slug = slug
-    reg.category = "atp250"
-    reg.surface = "hard"
-    reg.best_of = 3
-    reg.name = "Winston-Salem Open"
-    reg.tour = "atp"
-    reg.is_shadow = shadow
-    return reg
-
-
-def _make_known_ratings(elo_a: str, elo_b: str) -> TennisEloRatings:
-    r = TennisEloRatings()
-    r.overall[elo_a] = 1800.0
-    r.overall[elo_b] = 1750.0
-    r.by_surface.setdefault("hard", {})[elo_a] = 1810.0
-    r.by_surface.setdefault("hard", {})[elo_b] = 1760.0
-    r.surface_counts.setdefault("hard", {})[elo_a] = 40
-    r.surface_counts.setdefault("hard", {})[elo_b] = 35
-    return r
-
-
-def test_scanner_te_registry_passes_state_and_match_date():
-    """Registry-enriched TE call passes state=live_state and match_date into ensemble.
-
-    This is the direct regression test for FND-MODEL1-014.
-    We simulate the scanner's TE registry-enriched evaluation block,
-    capturing what predict_winner_ensemble receives, and verify the
-    kwargs include state= and match_date= (the two args that were missing
-    before the fix).
+    Injects a mock LGBM model (gate_passed=True) to make the LGBM path
+    deterministic regardless of whether model artifacts are present on disk.
     """
-    te_a, te_b = "Zverev Alexander", "Sonego Lorenzo"
-    elo_a = to_elo_name_from_te(te_a)
-    elo_b = to_elo_name_from_te(te_b)
-    commence = "2026-08-28T15:00:00Z"
+    elo_a = to_elo_name_from_te("Zverev Alexander")
+    elo_b = to_elo_name_from_te("Sonego Lorenzo")
+    ratings = _ratings_with_players(elo_a, elo_b)
+    state = _state_with_players(elo_a, elo_b)
 
-    te_match = _make_te_match(te_a, te_b, commence)
-    reg = _make_mock_registry(shadow=False)
-    live_state = _state_with_players(elo_a, elo_b)
-    ratings = _make_known_ratings(elo_a, elo_b)
+    mock_model = _mock_lgbm_model(p_ab=0.65)
 
-    captured: list[dict] = []
-    original_predict = ens.predict_winner_ensemble
+    # Inject mock model into the ensemble cache so _load_model() returns it.
+    monkeypatch.setitem(ens._CACHED, "model", mock_model)
+    monkeypatch.setitem(ens._CACHED, "gate_passed", True)
 
-    def capturing_predict(pa, pb, rat, surf, **kwargs):
-        captured.append({"pa": pa, "pb": pb, "kwargs": dict(kwargs)})
-        return original_predict(pa, pb, rat, surf, **kwargs)
+    out = ens.predict_winner_ensemble(
+        "Zverev Alexander", "Sonego Lorenzo",
+        ratings, "hard",
+        name_source="te",
+        state=state,
+        match_date="2026-08-28T15:00:00Z",
+        use_live_stats=False,
+    )
 
-    # Reproduce the fixed scanner block (scripts/tennis_scan.py lines ~1034-1050).
-    _te_mode = "live"
-    _is_shadow_reg = reg.is_shadow
-
-    if _te_mode == "live" or _is_shadow_reg:
-        _ea = to_elo_name_from_te(te_match["player_a"])
-        _eb = to_elo_name_from_te(te_match["player_b"])
-        _ra = ratings.get_overall(_ea)
-        _rb = ratings.get_overall(_eb)
-        if _ra != 1500.0 and _rb != 1500.0:
-            # Fixed call: includes state= and match_date= (FND-MODEL1-014).
-            _probs = capturing_predict(
-                te_match["player_a"], te_match["player_b"], ratings, reg.surface,
-                best_of=reg.best_of, category=reg.category,
-                name_source="te",
-                match_date=te_match.get("commence_time", ""),
-                state=live_state,
-            )
-
-    assert len(captured) == 1, "predict_winner_ensemble should have been called once"
-    kw = captured[0]["kwargs"]
-    assert kw.get("name_source") == "te"
-    assert kw.get("state") is live_state, "state= must be live_state, not None"
-    assert kw.get("match_date") == commence, "match_date= must match commence_time"
+    assert out["source"] == "ensemble", (
+        f"Expected source='ensemble' but got '{out['source']}'. "
+        "Populated state + valid timestamp + mock model must reach the LGBM path."
+    )
+    assert not out.get("rolling_state_unavailable")
+    assert not out.get("rolling_state_invalid")
+    assert not out.get("prediction_time_unavailable")
+    assert 0.0 < out["p_a"] < 1.0
+    assert out["p_a"] + out["p_b"] == pytest.approx(1.0, abs=1e-6)
+    # Confirm predict_p_a was called (LGBM path was exercised).
+    assert mock_model.predict_p_a.called
 
 
-def test_scanner_te_registry_shadow_no_signal(monkeypatch):
-    """Shadow tournament: probs computed with state, but no signals generated."""
-    te_a, te_b = "Tsitsipas Stefanos", "Kecmanovic Miomir"
-    elo_a = to_elo_name_from_te(te_a)
-    elo_b = to_elo_name_from_te(te_b)
+# ---------------------------------------------------------------------------
+# AST regression — actual scanner call-site inspection
+# ---------------------------------------------------------------------------
 
-    te_match = _make_te_match(te_a, te_b)
-    shadow_reg = _make_mock_registry(shadow=True)
-    live_state = _state_with_players(elo_a, elo_b)
-    ratings = _make_known_ratings(elo_a, elo_b)
+def _find_predict_winner_ensemble_calls(tree: ast.AST) -> list[ast.Call]:
+    """Return all ast.Call nodes whose function is predict_winner_ensemble."""
+    calls = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            func = node.func
+            if isinstance(func, ast.Name) and func.id == "predict_winner_ensemble" or isinstance(func, ast.Attribute) and func.attr == "predict_winner_ensemble":
+                calls.append(node)
+    return calls
 
-    captured: list[dict] = []
-    original_predict = ens.predict_winner_ensemble
 
-    def capturing_predict(pa, pb, rat, surf, **kwargs):
-        captured.append({"kwargs": dict(kwargs)})
-        return original_predict(pa, pb, rat, surf, **kwargs)
+def _keyword_names(call: ast.Call) -> set[str]:
+    return {kw.arg for kw in call.keywords if kw.arg is not None}
 
-    # Shadow path: receives state (for measurement), emits no signals.
-    _is_shadow_reg = shadow_reg.is_shadow
-    assert _is_shadow_reg is True
 
-    _ea = to_elo_name_from_te(te_match["player_a"])
-    _eb = to_elo_name_from_te(te_match["player_b"])
-    _ra = ratings.get_overall(_ea)
-    _rb = ratings.get_overall(_eb)
+def _keyword_value(call: ast.Call, kwarg: str) -> ast.expr | None:
+    for kw in call.keywords:
+        if kw.arg == kwarg:
+            return kw.value
+    return None
+
+
+def _has_te_name_source(call: ast.Call) -> bool:
+    """True if the call has name_source="te" as a literal keyword argument."""
+    val = _keyword_value(call, "name_source")
+    return isinstance(val, ast.Constant) and val.value == "te"
+
+
+def test_scanner_registry_te_call_has_state_kwarg():
+    """AST check: the registry-enriched TE predict_winner_ensemble() call in
+    scripts/tennis_scan.py contains a 'state' keyword argument.
+
+    This directly tests the production code, not a reproduction of it,
+    protecting against regression to the pre-fix state (state=None default).
+    """
+    source = _SCANNER_PATH.read_text()
+    tree = ast.parse(source)
+    calls = _find_predict_winner_ensemble_calls(tree)
+
+    te_calls = [c for c in calls if _has_te_name_source(c)]
+    assert te_calls, "Expected at least one predict_winner_ensemble() call with name_source='te'"
+
+    # The registry-enriched call is the one that ALSO has category= (from reg.category),
+    # distinguishing it from the non-registry display-only call which uses hard-coded "hard".
+    registry_te_calls = [
+        c for c in te_calls if "category" in _keyword_names(c)
+    ]
+    assert registry_te_calls, (
+        "Expected a registry-enriched TE call with both name_source='te' and category= kwarg"
+    )
+
+    for call in registry_te_calls:
+        kw_names = _keyword_names(call)
+        assert "state" in kw_names, (
+            f"Registry-enriched TE call is missing 'state=' kwarg "
+            f"(found keywords: {sorted(kw_names)})"
+        )
+        assert "match_date" in kw_names, (
+            f"Registry-enriched TE call is missing 'match_date=' kwarg "
+            f"(found keywords: {sorted(kw_names)})"
+        )
+
+
+def test_scanner_registry_te_call_state_value_is_live_state():
+    """AST check: the 'state' kwarg in the registry-enriched TE call is 'live_state'."""
+    source = _SCANNER_PATH.read_text()
+    tree = ast.parse(source)
+    calls = _find_predict_winner_ensemble_calls(tree)
+
+    registry_te_calls = [
+        c for c in calls
+        if _has_te_name_source(c) and "category" in _keyword_names(c)
+    ]
+    assert registry_te_calls
+
+    for call in registry_te_calls:
+        state_val = _keyword_value(call, "state")
+        assert state_val is not None, "state= kwarg is missing"
+        assert isinstance(state_val, ast.Name) and state_val.id == "live_state", (
+            f"Expected state=live_state but got: {ast.dump(state_val)}"
+        )
+
+
+def test_scanner_registry_te_call_match_date_value():
+    """AST check: the 'match_date' kwarg uses m.get('commence_time', '')."""
+    source = _SCANNER_PATH.read_text()
+    tree = ast.parse(source)
+    calls = _find_predict_winner_ensemble_calls(tree)
+
+    registry_te_calls = [
+        c for c in calls
+        if _has_te_name_source(c) and "category" in _keyword_names(c)
+    ]
+    assert registry_te_calls
+
+    for call in registry_te_calls:
+        md_val = _keyword_value(call, "match_date")
+        assert md_val is not None, "match_date= kwarg is missing"
+        # Must be m.get("commence_time", "") — a Call node.
+        assert isinstance(md_val, ast.Call), (
+            f"Expected match_date=m.get(...) (ast.Call) but got: {ast.dump(md_val)}"
+        )
+        # Verify the .get() call targets "commence_time".
+        args = md_val.args
+        assert len(args) >= 1
+        first_arg = args[0]
+        assert isinstance(first_arg, ast.Constant) and first_arg.value == "commence_time", (
+            f"Expected first arg to be 'commence_time' but got: {ast.dump(first_arg)}"
+        )
+
+
+def test_scanner_non_registry_te_call_has_no_state():
+    """AST check: the non-registry display-only TE call intentionally omits state=.
+
+    This verifies the non-registry path is unchanged by the FND-MODEL1-014 fix.
+    """
+    source = _SCANNER_PATH.read_text()
+    tree = ast.parse(source)
+    calls = _find_predict_winner_ensemble_calls(tree)
+
+    # Non-registry call: name_source="te" but NO category= kwarg (uses hard-coded "hard").
+    non_registry_te_calls = [
+        c for c in calls
+        if _has_te_name_source(c) and "category" not in _keyword_names(c)
+    ]
+    assert non_registry_te_calls, (
+        "Expected a non-registry display-only TE call without category= kwarg"
+    )
+
+    for call in non_registry_te_calls:
+        kw_names = _keyword_names(call)
+        assert "state" not in kw_names, (
+            "Non-registry TE display-only call must NOT have state= "
+            "(intentional Elo-only, no reliable tournament metadata)"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Shadow governance and MODEL1-001 primary path
+# ---------------------------------------------------------------------------
+
+def test_scanner_te_registry_shadow_no_signal():
+    """Shadow tournament: ensemble can be called with state for measurement;
+    the signal-suppression is governed by the scanner's _is_shadow_reg gate,
+    which is independent of predict_winner_ensemble itself."""
+    elo_a = to_elo_name_from_te("Tsitsipas Stefanos")
+    elo_b = to_elo_name_from_te("Kecmanovic Miomir")
+    ratings = _ratings_with_players(elo_a, elo_b)
+    state = _state_with_players(elo_a, elo_b)
 
     all_live_signals: list = []
+    _is_shadow_reg = True  # shadow tournament
 
-    if _ra != 1500.0 and _rb != 1500.0:
-        _probs = capturing_predict(
-            te_match["player_a"], te_match["player_b"], ratings, shadow_reg.surface,
-            best_of=shadow_reg.best_of, category=shadow_reg.category,
-            name_source="te",
-            match_date=te_match.get("commence_time", ""),
-            state=live_state,
-        )
-        if _is_shadow_reg:
-            pass  # Shadow: no signal emission — this is the governed behavior.
-        else:
-            all_live_signals.append("WOULD_BE_SIGNAL")  # should not reach here
+    # Simulate: ensemble called, but signal list stays empty for shadow.
+    _probs = ens.predict_winner_ensemble(
+        "Tsitsipas Stefanos", "Kecmanovic Miomir",
+        ratings, "hard",
+        name_source="te",
+        state=state,
+        match_date="2026-08-28T16:00:00Z",
+        use_live_stats=False,
+    )
+    if not _is_shadow_reg:
+        all_live_signals.append("WOULD_BE_SIGNAL")
 
     assert len(all_live_signals) == 0, "Shadow tournament must produce no signals"
-    assert len(captured) == 1, "Ensemble should still be called for measurement"
-    assert captured[0]["kwargs"].get("state") is live_state
+    # Ensemble can return either elo or ensemble (model may not be on disk in CI).
+    assert "p_a" in _probs
+    # Must not have rolled back to the pre-fix unavailable state.
+    assert not _probs.get("rolling_state_unavailable")
 
 
-def test_non_registry_te_path_unchanged():
-    """Non-registry TE matches: predict_winner_ensemble called without state (intentional)."""
-    # The non-registry path at line 1119 intentionally has no state or match_date.
-    # It uses hard/BO3 defaults and is display-only — no signals generated.
-    # This test confirms the call signature of that path remains Elo-only.
-    elo_a, elo_b = "Marozsan F.", "Duckworth J."
-    ratings = _ratings_with_players(elo_a, elo_b)
-    # No state passed — reproduces intentional non-registry behavior.
-    out = ens.predict_winner_ensemble(
-        "Marozsan Fabian", "Duckworth James",
-        ratings, "hard",
-        best_of=3,
-        name_source="te",
-        # No state=, no match_date= — intentional for non-registry path.
-    )
-    assert out.get("rolling_state_unavailable") is True
-    assert out["source"] == "elo"
-
-
-def test_primary_odds_api_path_unchanged():
-    """MODEL1-001 primary path: state and match_date accepted, no regression."""
+def test_primary_odds_api_path_unchanged(monkeypatch):
+    """MODEL1-001 primary path (odds_api name_source): no regression from this fix."""
     elo_a, elo_b = "Alcaraz C.", "Sinner J."
     ratings = _ratings_with_players(elo_a, elo_b)
     state = _state_with_players(elo_a, elo_b)
 
-    # Primary path uses odds_api name_source (default).
+    mock_model = _mock_lgbm_model(p_ab=0.70)
+    monkeypatch.setitem(ens._CACHED, "model", mock_model)
+    monkeypatch.setitem(ens._CACHED, "gate_passed", True)
+
     out = ens.predict_winner_ensemble(
         "Carlos Alcaraz", "Jannik Sinner",
         ratings, "hard",
         state=state,
         match_date="2026-08-28T18:00:00Z",
+        use_live_stats=False,
     )
-    assert not out.get("rolling_state_unavailable"), (
-        "Primary MODEL1-001 path must not be broken by MODEL1-014 fix"
+    assert out["source"] == "ensemble", (
+        "MODEL1-001 primary path must not be broken by MODEL1-014 fix"
     )
-    assert "p_a" in out and "p_b" in out
+    assert not out.get("rolling_state_unavailable")
+    assert not out.get("rolling_state_invalid")
+    assert not out.get("prediction_time_unavailable")
