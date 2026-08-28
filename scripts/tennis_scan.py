@@ -41,7 +41,7 @@ from src.config import (
 )
 from src.models.tennis_elo import compute_tennis_elo, predict_winner, top_players
 from src.tennis.ensemble import predict_winner_ensemble
-from src.tennis.elo_source import load_match_history
+from src.tennis.elo_source import extract_player_ranks, load_match_history
 from src.betting.tennis_detector import (
     detect_set_betting,
     detect_total_games,
@@ -669,6 +669,23 @@ def format_scan_report(
 
 
 # ---------------------------------------------------------------------------
+# Rank lookup (FND-MODEL1-013)
+# ---------------------------------------------------------------------------
+
+def _rank_for(player: str, name_source: str, player_ranks: dict) -> float | None:
+    """Return latest ATP/WTA ranking for *player*, or None for safe fallback.
+
+    Normalises the player name to the Elo-key format used in the historical
+    corpus, then looks up the pre-built player_ranks dict built from the same
+    corpus.  Returns None (→ ensemble.py falls back to _MIN_RANK=1500) when
+    the player is not found or has no valid historical rank.
+    """
+    from src.tennis.name_norm import to_elo_name_from_odds_api, to_elo_name_from_te
+    elo_key = to_elo_name_from_te(player) if name_source == "te" else to_elo_name_from_odds_api(player)
+    return player_ranks.get(elo_key)
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -721,6 +738,7 @@ def main() -> None:
     # ---- 2. Match-Daten + Elo + RollingState (FND-MODEL1-001) ----
     print("Loading ATP+WTA match data...")
     all_matches = _fetch_both_tours()
+    player_ranks: dict[str, float] = {}  # FND-MODEL1-013: latest rank per player
     if all_matches is None or all_matches.empty:
         print("WARNING: Keine Match-Daten — Default-Elo verwendet.")
         from src.models.tennis_elo import TennisEloRatings
@@ -740,6 +758,12 @@ def main() -> None:
         except Exception as _exc:  # noqa: BLE001 — intentional broad catch for fail-safe path
             print(f"  WARNING: Rolling state build failed ({_exc}) — LGBM bypassed.")
             live_state = None  # Fail-safe: ensemble.py returns Elo-only
+        # FND-MODEL1-013: extract latest rank per player from the same corpus.
+        try:
+            player_ranks = extract_player_ranks(all_matches)
+            print(f"  Player ranks: {len(player_ranks)} entries.")
+        except Exception as _exc:  # noqa: BLE001 — fail-safe; rank=None → 1500 fallback
+            print(f"  WARNING: Rank extraction failed ({_exc}) — using 1500 fallback.")
 
     # ---- 3. Pro Turnier scannen ----
     per_tournament: dict[str, dict] = {}
@@ -780,6 +804,8 @@ def main() -> None:
                 tournament_slug=t.slug,
                 match_date=m.get("commence_time", ""),
                 state=live_state,
+                rank_a=_rank_for(pa, "odds_api", player_ranks),
+                rank_b=_rank_for(pb, "odds_api", player_ranks),
             )
             _pred_sources[probs.get("source", "elo")] += 1
 
@@ -1048,6 +1074,8 @@ def main() -> None:
                                     name_source="te",
                                     match_date=m.get("commence_time", ""),
                                     state=live_state,
+                                    rank_a=_rank_for(m["player_a"], "te", player_ranks),
+                                    rank_b=_rank_for(m["player_b"], "te", player_ranks),
                                 )
                                 _oa = float(m.get("odds_a") or 0.0)
                                 _ob = float(m.get("odds_b") or 0.0)
