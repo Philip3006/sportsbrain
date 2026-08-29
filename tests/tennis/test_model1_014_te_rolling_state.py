@@ -335,12 +335,40 @@ def test_scanner_registry_te_call_state_value_is_live_state():
         )
 
 
+def _find_assign_rhs(tree: ast.Module, var_name: str) -> list[ast.expr]:
+    """Return all RHS expressions assigned to var_name in the full AST."""
+    rhss = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == var_name:
+                    rhss.append(node.value)
+        elif isinstance(node, ast.AnnAssign):
+            if isinstance(node.target, ast.Name) and node.target.id == var_name and node.value:
+                rhss.append(node.value)
+    return rhss
+
+
+def _rhs_is_m_get_commence_time(rhs: ast.expr) -> bool:
+    """Return True if rhs is m.get("commence_time", ...) or similar m[...] access."""
+    if not isinstance(rhs, ast.Call):
+        return False
+    func = rhs.func
+    # m.get("commence_time", ...) → func is an Attribute with attr="get"
+    if isinstance(func, ast.Attribute) and func.attr == "get":
+        if rhs.args and isinstance(rhs.args[0], ast.Constant):
+            return rhs.args[0].value == "commence_time"
+    return False
+
+
 def test_scanner_registry_te_call_match_date_value():
     """AST check: the 'match_date' kwarg traces back to m.get('commence_time', ...).
 
-    Accepts both inline form (ast.Call) and extracted-variable form (ast.Name)
-    as long as the source text contains the required m.get("commence_time") binding
-    near the TE registry call block.
+    Accepts both inline form (ast.Call) and extracted-variable form (ast.Name).
+    For the variable form, the test walks the full AST to find the EXACT assignment
+    to that variable and verifies its RHS is m.get('commence_time', ...).
+    A simple text search for 'commence_time' anywhere in the file is NOT sufficient
+    and would pass even if the variable is reassigned to something else.
     """
     source = _SCANNER_PATH.read_text()
     tree = ast.parse(source)
@@ -355,19 +383,30 @@ def test_scanner_registry_te_call_match_date_value():
     for call in registry_te_calls:
         md_val = _keyword_value(call, "match_date")
         assert md_val is not None, "match_date= kwarg is missing"
-        # Accept either inline m.get(...) or a Name variable that holds commence_time.
+
         if isinstance(md_val, ast.Call):
-            args = md_val.args
-            assert len(args) >= 1
-            first_arg = args[0]
-            assert isinstance(first_arg, ast.Constant) and first_arg.value == "commence_time", (
-                f"Expected first arg to be 'commence_time' but got: {ast.dump(first_arg)}"
+            # Inline form: m.get("commence_time", ...)
+            assert _rhs_is_m_get_commence_time(md_val), (
+                f"Inline match_date= is a Call but not m.get('commence_time', ...): "
+                f"{ast.dump(md_val)}"
             )
         elif isinstance(md_val, ast.Name):
-            # Variable form: verify the scanner assigns this variable from commence_time.
+            # Variable form: find ALL assignments to this variable in the AST,
+            # verify AT LEAST ONE is m.get("commence_time", ...).
             var_name = md_val.id
-            assert "commence_time" in source, (
-                f"match_date uses variable '{var_name}' but 'commence_time' not found in source"
+            all_rhss = _find_assign_rhs(tree, var_name)
+            assert all_rhss, (
+                f"match_date uses variable '{var_name}' but no assignment to it found in AST"
+            )
+            has_commence_time_assign = any(
+                _rhs_is_m_get_commence_time(rhs) for rhs in all_rhss
+            )
+            assert has_commence_time_assign, (
+                f"Variable '{var_name}' used for match_date= has assignments: "
+                f"{[ast.dump(r) for r in all_rhss]} — "
+                f"none is m.get('commence_time', ...). "
+                f"This regression fires if '{var_name}' is reassigned to something_else "
+                f"while 'commence_time' still appears elsewhere in the file."
             )
         else:
             pytest.fail(
