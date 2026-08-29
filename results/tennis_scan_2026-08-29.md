@@ -13,7 +13,7 @@
 
 
 ## US Open (ATP) · grand_slam · 🔴 LIVE
-Surface: hard · Best of: 5 · Matches gescannt: 60
+Surface: hard · Best of: 5 · Matches gescannt: 61
 - [ATP] **Stefanos Tsitsipas vs Arthur Fils** · Match Winner: Arthur Fils ⭐
   Quote 1.61 · Modell 86.8% · EV +39.8% · Stake 5.00€ · HIGH
 - [ATP] **Marin Cilic vs Andrey Rublev** · Match Winner: Marin Cilic
