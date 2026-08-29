@@ -343,10 +343,37 @@ def _find_assign_rhs(tree: ast.Module, var_name: str) -> list[ast.expr]:
             for target in node.targets:
                 if isinstance(target, ast.Name) and target.id == var_name:
                     rhss.append(node.value)
-        elif isinstance(node, ast.AnnAssign):
-            if isinstance(node.target, ast.Name) and node.target.id == var_name and node.value:
-                rhss.append(node.value)
+        elif (isinstance(node, ast.AnnAssign)
+              and isinstance(node.target, ast.Name) and node.target.id == var_name and node.value):
+            rhss.append(node.value)
     return rhss
+
+
+def _find_last_assign_before_line(
+    tree: ast.Module, var_name: str, call_line: int
+) -> tuple[int, ast.expr] | None:
+    """Return (line_no, rhs) for the last assignment to var_name STRICTLY before call_line.
+
+    'Last' means highest line number that is still < call_line.  This is the
+    nearest effective assignment visible at the call site (assuming no branches
+    overwrite it between that line and call_line — proven by the fact that it IS
+    the last assignment before the call).
+    """
+    candidates: list[tuple[int, ast.expr]] = []
+    for node in ast.walk(tree):
+        line = getattr(node, "lineno", None)
+        if line is None or line >= call_line:
+            continue
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == var_name:
+                    candidates.append((line, node.value))
+        elif (isinstance(node, ast.AnnAssign)
+              and isinstance(node.target, ast.Name) and node.target.id == var_name and node.value):
+            candidates.append((line, node.value))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda t: t[0])
 
 
 def _rhs_is_m_get_commence_time(rhs: ast.expr) -> bool:
@@ -355,20 +382,25 @@ def _rhs_is_m_get_commence_time(rhs: ast.expr) -> bool:
         return False
     func = rhs.func
     # m.get("commence_time", ...) → func is an Attribute with attr="get"
-    if isinstance(func, ast.Attribute) and func.attr == "get":
-        if rhs.args and isinstance(rhs.args[0], ast.Constant):
-            return rhs.args[0].value == "commence_time"
+    if (isinstance(func, ast.Attribute) and func.attr == "get"
+            and rhs.args and isinstance(rhs.args[0], ast.Constant)):
+        return rhs.args[0].value == "commence_time"
     return False
 
 
 def test_scanner_registry_te_call_match_date_value():
-    """AST check: the 'match_date' kwarg traces back to m.get('commence_time', ...).
+    """AST check: the nearest effective assignment to the match_date variable before the
+    predict_winner_ensemble() call is m.get('commence_time', ...).
 
-    Accepts both inline form (ast.Call) and extracted-variable form (ast.Name).
-    For the variable form, the test walks the full AST to find the EXACT assignment
-    to that variable and verifies its RHS is m.get('commence_time', ...).
-    A simple text search for 'commence_time' anywhere in the file is NOT sufficient
-    and would pass even if the variable is reassigned to something else.
+    Stronger than checking ANY assignment: if the variable is reassigned to something
+    wrong between the m.get(...) line and the call, the last assignment before the call
+    is the wrong one and the test fails.
+
+    Example regression this catches:
+        _te_commence = m.get("commence_time", "")   # valid
+        _te_commence = something_wrong              # overwrites it
+        predict_winner_ensemble(..., match_date=_te_commence)
+    → test would FAIL because 'something_wrong' is the nearest assignment.
     """
     source = _SCANNER_PATH.read_text()
     tree = ast.parse(source)
@@ -381,32 +413,32 @@ def test_scanner_registry_te_call_match_date_value():
     assert registry_te_calls
 
     for call in registry_te_calls:
+        call_line = call.lineno
         md_val = _keyword_value(call, "match_date")
         assert md_val is not None, "match_date= kwarg is missing"
 
         if isinstance(md_val, ast.Call):
-            # Inline form: m.get("commence_time", ...)
+            # Inline form: match_date=m.get("commence_time", ...) — direct check.
             assert _rhs_is_m_get_commence_time(md_val), (
                 f"Inline match_date= is a Call but not m.get('commence_time', ...): "
                 f"{ast.dump(md_val)}"
             )
         elif isinstance(md_val, ast.Name):
-            # Variable form: find ALL assignments to this variable in the AST,
-            # verify AT LEAST ONE is m.get("commence_time", ...).
+            # Variable form: find the NEAREST (last) assignment before this call.
+            # This is the value the variable holds at the call site.
             var_name = md_val.id
-            all_rhss = _find_assign_rhs(tree, var_name)
-            assert all_rhss, (
-                f"match_date uses variable '{var_name}' but no assignment to it found in AST"
+            nearest = _find_last_assign_before_line(tree, var_name, call_line)
+            assert nearest is not None, (
+                f"match_date uses variable '{var_name}' but no assignment before "
+                f"call at line {call_line} was found in AST"
             )
-            has_commence_time_assign = any(
-                _rhs_is_m_get_commence_time(rhs) for rhs in all_rhss
-            )
-            assert has_commence_time_assign, (
-                f"Variable '{var_name}' used for match_date= has assignments: "
-                f"{[ast.dump(r) for r in all_rhss]} — "
-                f"none is m.get('commence_time', ...). "
-                f"This regression fires if '{var_name}' is reassigned to something_else "
-                f"while 'commence_time' still appears elsewhere in the file."
+            nearest_line, nearest_rhs = nearest
+            assert _rhs_is_m_get_commence_time(nearest_rhs), (
+                f"Variable '{var_name}' at call (line {call_line}): "
+                f"nearest assignment is at line {nearest_line} but is NOT "
+                f"m.get('commence_time', ...) — got: {ast.dump(nearest_rhs)}. "
+                f"This fires if '{var_name}' is reassigned between the m.get(...) "
+                f"line and the predict_winner_ensemble() call."
             )
         else:
             pytest.fail(
