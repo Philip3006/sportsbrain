@@ -4,7 +4,7 @@
 
 
 ## US Open (ATP) · grand_slam · 🔴 LIVE
-Surface: hard · Best of: 5 · Matches gescannt: 22
+Surface: hard · Best of: 5 · Matches gescannt: 21
 _Keine Value-Signals._
 
 ## Wta Monterrey Open (WTA) · wta250 · 🔴 LIVE
@@ -12,5 +12,5 @@ Surface: unknown · Best of: 3 · Matches gescannt: 0
 _Keine Value-Signals._
 
 ## US Open (WTA) · grand_slam · 🔴 LIVE
-Surface: hard · Best of: 3 · Matches gescannt: 13
+Surface: hard · Best of: 3 · Matches gescannt: 16
 _Keine Value-Signals._
