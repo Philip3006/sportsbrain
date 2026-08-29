@@ -13,7 +13,6 @@ import argparse
 import csv
 import os
 import sys
-import time
 from pathlib import Path
 
 import requests
@@ -21,8 +20,12 @@ import requests
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
-from src.config import ledger_path_for, DEFAULT_USER
-LEDGER = ledger_path_for(DEFAULT_USER)
+from src.betting.private_ledger_durability import (
+    PrivateLedgerDurabilityError,
+    SettlementLedgerPublisher,
+)
+from src.config import DEFAULT_USER, ledger_path_for
+
 API_URL = "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/scores/"
 
 
@@ -53,12 +56,12 @@ def _fetch_scores_espn_fallback() -> dict[str, dict]:
     """
     try:
         from src.data.odds_api import _fetch_espn_wm_scores
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - ESPN fallback must not break settlement
         print(f"[settle] ESPN-Fallback Import-Fehler: {e}")
         return {}
     try:
         raw = _fetch_espn_wm_scores()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - ESPN fallback must not break settlement
         print(f"[settle] ESPN-Fallback fetch failed: {e}")
         return {}
     # ESPN uses full country names; ledger may use short forms or aliases.
@@ -194,7 +197,7 @@ def _settle_scorer(player_market: str, home: str, away: str, match_date: str) ->
     player_market: 'scorer_Firstname Lastname' (full name from ledger)
     Returns 'won', 'lost', or None if unresolvable.
     """
-    from src.data.odds_api import find_espn_event_id, fetch_espn_goal_scorers
+    from src.data.odds_api import fetch_espn_goal_scorers, find_espn_event_id
     player_name = player_market[len("scorer_"):].strip()
     if not player_name:
         return None
@@ -340,8 +343,11 @@ def write_market_performance(users: list[str] | None = None) -> None:
     import json
     from collections import defaultdict
     from datetime import datetime, timezone
+
     from src.config import (
-        MARKET_PERF_MIN_BETS, MARKET_PERF_ROI_PENALTY_THRESHOLD, DATA_CACHE,
+        DATA_CACHE,
+        MARKET_PERF_MIN_BETS,
+        MARKET_PERF_ROI_PENALTY_THRESHOLD,
     )
     from src.notifications.web_dashboard import list_known_users
 
@@ -395,6 +401,11 @@ def write_market_performance(users: list[str] | None = None) -> None:
 
 def settle(dry_run: bool = False) -> int:
     """Settle bets for all known users against the same fetched scores."""
+    publisher = None
+    if not dry_run:
+        publisher = SettlementLedgerPublisher(ledger_path_for(DEFAULT_USER).parent)
+        publisher.prepare_for_settlement()
+
     scores = fetch_scores()
     print(f"Scores API: {len(scores)//2} completed matches")
 
@@ -406,13 +417,15 @@ def settle(dry_run: bool = False) -> int:
 
     if total == 0:
         print("\nNo bets to settle yet (any user)." if not dry_run else
-              f"\n[dry-run] 0 bet(s) across all users.")
+              "\n[dry-run] 0 bet(s) across all users.")
     elif dry_run:
         print(f"\n[dry-run] {total} bet(s) would be settled across all users.")
-    else:
-        print(f"\n✓ Total {total} bet(s) settled across all users.")
 
     if not dry_run:
+        if total:
+            assert publisher is not None
+            publisher.publish_settlement_changes(total)
+            print(f"\n✓ Total {total} bet(s) settled across all users.")
         write_market_performance(users)
         # N5: Settle-Reminder for still-open bets after kickoff
         try:
@@ -427,7 +440,7 @@ def settle(dry_run: bool = False) -> int:
                             if _r.get("status") == "open":
                                 open_bets_rows.append(_r)
             send_open_bet_reminder(open_bets_rows)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - notifications are non-financial
             print(f"[settle-reminder] skipped: {exc}")
         # N6: Bankroll-Meilenstein Push
         try:
@@ -436,13 +449,23 @@ def settle(dry_run: bool = False) -> int:
             summary = ledger_summary()
             equity = 100.0 + float(summary.get("total_pnl", 0))
             send_bankroll_milestone_alert(equity)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - notifications are non-financial
             print(f"[bankroll-milestone] skipped: {exc}")
     return total
 
 
-if __name__ == "__main__":
+def main(argv: list[str] | None = None) -> int:
+    """Return an OS status only after settlement durability is established."""
     parser = argparse.ArgumentParser(description="Auto-settle open WM bets")
     parser.add_argument("--dry-run", action="store_true")
-    args = parser.parse_args()
-    settle(dry_run=args.dry_run)
+    args = parser.parse_args(argv)
+    try:
+        settle(dry_run=args.dry_run)
+    except (OSError, PrivateLedgerDurabilityError) as exc:
+        print(f"[settle] failed closed: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
