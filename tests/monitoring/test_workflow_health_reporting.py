@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOWS = ROOT / ".github" / "workflows"
 UNSAFE_EXIT_EXPRESSION = "job.status == 'success' && 0 || 1"
@@ -14,6 +13,7 @@ FIXED_WORKFLOWS = (
     "tennis_lgbm_retrain.yml",
     "tennis_elo_refresh.yml",
     "bundesliga2_settle.yml",
+    "bundesliga2_live_push.yml",
 )
 
 

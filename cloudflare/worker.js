@@ -561,8 +561,22 @@ async function _ghRepositoryDispatch(token, eventType, repo = _GH_REPO_DEFAULT) 
 // client_payload.scheduler: identifies the scheduler source for observability.
 // client_payload.idempotency_key: <event_type>/<scheduled_at_minute> — prevents duplicate
 //   financial writes when Cloudflare delivers the same cron slot twice (at-least-once).
+//
+// Fail-closed dispatch semantics:
+//   - 2xx (including 204 No Content): success — no throw.
+//   - Permanent errors (401, 403, 404): fail immediately, no retry.
+//   - Transient errors (429, 5xx): retry up to 2 times with bounded backoff.
+//   - Token and request body are never logged.
+const _DISPATCH_PERMANENT_ERRORS = new Set([401, 403, 404]);
+const _DISPATCH_RETRY_DELAYS_MS = [500, 1500];
+
+function _sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function _ghRepositoryDispatchWithPayload(token, eventType, payload, repo = _GH_REPO_DEFAULT) {
-  return fetch(`https://api.github.com/repos/${repo}/dispatches`, {
+  const url = `https://api.github.com/repos/${repo}/dispatches`;
+  const opts = {
     method: 'POST',
     headers: {
       Authorization: `token ${token}`,
@@ -571,7 +585,21 @@ async function _ghRepositoryDispatchWithPayload(token, eventType, payload, repo 
       'User-Agent': 'sportsbrain-worker',
     },
     body: JSON.stringify({ event_type: eventType, client_payload: payload }),
-  });
+  };
+
+  let lastStatus = 0;
+  for (let attempt = 0; attempt <= _DISPATCH_RETRY_DELAYS_MS.length; attempt++) {
+    const resp = await fetch(url, opts);
+    if (resp.ok) return;
+    lastStatus = resp.status;
+    if (_DISPATCH_PERMANENT_ERRORS.has(lastStatus)) break;
+    if (attempt < _DISPATCH_RETRY_DELAYS_MS.length) {
+      await _sleep(_DISPATCH_RETRY_DELAYS_MS[attempt]);
+    }
+  }
+  // Log status only — never token or body
+  console.error(`[cron] dispatch failed: event=${eventType} status=${lastStatus}`);
+  throw new Error(`GH dispatch ${eventType} failed: HTTP ${lastStatus}`);
 }
 
 // STAB-SCHED-AUTH-001: BL2 live-push scheduler authority.
@@ -1110,8 +1138,8 @@ export default {
   // Cron routing:
   //   */5          → consume check (F5-C)
   //   */30         → healer + consume heartbeat (F5-D) + tennis_closing_odds dispatch
-  //   */2 11-22 Sat/Sun → BL2 live-push dispatch (STAB-SCHED-AUTH-001)
-  //   */2 18-22 Fri     → BL2 live-push dispatch (STAB-SCHED-AUTH-001)
+  //   */2 11-22 SAT,SUN → BL2 live-push dispatch (STAB-SCHED-AUTH-001)
+  //   */2 18-22 FRI     → BL2 live-push dispatch (STAB-SCHED-AUTH-001)
   //   15 6-22/2 daily   → tennis_settle dispatch  (STAB-SCHED-AUTH-001)
   async scheduled(event, env) {
     const cron = event.cron;
@@ -1127,10 +1155,10 @@ export default {
       }
       // STAB-SCHED-AUTH-001: tennis closing-odds scheduler authority.
       await _cronTennisClosingOdds(env, scheduledTime);
-    } else if (cron === '*/2 11-22 * * 6,0') {
+    } else if (cron === '*/2 11-22 * * SAT,SUN') {
       // BL2 live-push: Saturday and Sunday match windows.
       await _cronBl2LivePush(env, scheduledTime);
-    } else if (cron === '*/2 18-22 * * 5') {
+    } else if (cron === '*/2 18-22 * * FRI') {
       // BL2 live-push: Friday match window.
       await _cronBl2LivePush(env, scheduledTime);
     } else if (cron === '15 6-22/2 * * *') {

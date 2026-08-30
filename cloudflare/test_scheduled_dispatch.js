@@ -1,10 +1,14 @@
 /**
- * STAB-SCHED-AUTH-001: Unit tests for the Cloudflare scheduled() handler.
+ * STAB-SCHED-AUTH-001: Unit tests for the Cloudflare scheduled() handler helpers.
  *
- * Tests the new cron routing and repository_dispatch payload construction.
+ * Tests cron dispatch helper logic: event_type routing, payload construction,
+ * idempotency key structure, fail-closed dispatch semantics (HTTP error handling).
  * Run with: node cloudflare/test_scheduled_dispatch.js
  *
- * Uses a minimal fetch-stub — no real network calls, no Cloudflare Worker runtime.
+ * Worker integration tests (actual scheduled() routing) are in:
+ *   cloudflare/test_worker_integration.mjs
+ *
+ * Uses a configurable fetch-stub — no real network calls, no Cloudflare Worker runtime.
  */
 
 'use strict';
@@ -60,20 +64,30 @@ async function testAsync(name, fn) {
   }
 }
 
-// ── Stub infrastructure ───────────────────────────────────────────────────────
+// ── Configurable fetch stub ───────────────────────────────────────────────────
 
-// Collect all fetch calls made during a test run.
 const _fetchCalls = [];
-global.fetch = async (url, opts) => {
-  _fetchCalls.push({ url, opts });
-  return { ok: true, status: 200 };
-};
+let _fetchResponses = [{ ok: true, status: 204 }]; // default: success
+
+// Override the global fetch for a single test via setFetchResponses().
+// Each element in the array is returned for successive fetch calls (cycling on last).
+function setFetchResponses(responses) {
+  _fetchResponses = Array.isArray(responses) ? responses : [responses];
+}
 
 function resetFetch() {
   _fetchCalls.length = 0;
+  _fetchResponses = [{ ok: true, status: 204 }];
 }
 
-// Minimal env stub
+global.fetch = async (url, opts) => {
+  _fetchCalls.push({ url, opts });
+  const idx = Math.min(_fetchCalls.length - 1, _fetchResponses.length - 1);
+  return _fetchResponses[idx];
+};
+
+// ── Minimal env stub ──────────────────────────────────────────────────────────
+
 function makeEnv(token = 'test_gh_token', repo = 'Philip3006/sportsbrain') {
   return {
     GH_TOKEN: token,
@@ -85,15 +99,23 @@ function makeEnv(token = 'test_gh_token', repo = 'Philip3006/sportsbrain') {
   };
 }
 
-// ── Extract testable dispatch logic from worker.js ────────────────────────────
-// We can't import ES modules in plain Node without a bundler, so we define the
-// same helpers here and verify them independently. worker.js integration is
-// verified by checking the exported scheduled() handler shape structurally.
+// ── Helpers mirroring production worker.js (kept in sync) ────────────────────
+// These mirror the production helpers so unit tests can exercise payload logic.
+// If worker.js changes, these must be updated to match.
+// Routing tests (which cron string → which job) live in test_worker_integration.mjs
+// and use the ACTUAL worker.js — so routing regressions are caught there.
 
 const _GH_REPO_DEFAULT = 'Philip3006/sportsbrain';
+const _DISPATCH_PERMANENT_ERRORS = new Set([401, 403, 404]);
+const _DISPATCH_RETRY_DELAYS_MS = [500, 1500];
+
+function _sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 async function _ghRepositoryDispatchWithPayload(token, eventType, payload, repo = _GH_REPO_DEFAULT) {
-  return fetch(`https://api.github.com/repos/${repo}/dispatches`, {
+  const url = `https://api.github.com/repos/${repo}/dispatches`;
+  const opts = {
     method: 'POST',
     headers: {
       Authorization: `token ${token}`,
@@ -102,7 +124,21 @@ async function _ghRepositoryDispatchWithPayload(token, eventType, payload, repo 
       'User-Agent': 'sportsbrain-worker',
     },
     body: JSON.stringify({ event_type: eventType, client_payload: payload }),
-  });
+  };
+
+  let lastStatus = 0;
+  for (let attempt = 0; attempt <= _DISPATCH_RETRY_DELAYS_MS.length; attempt++) {
+    const resp = await fetch(url, opts);
+    if (resp.ok) return;
+    lastStatus = resp.status;
+    if (_DISPATCH_PERMANENT_ERRORS.has(lastStatus)) break;
+    if (attempt < _DISPATCH_RETRY_DELAYS_MS.length) {
+      await _sleep(_DISPATCH_RETRY_DELAYS_MS[attempt]);
+    }
+  }
+  // Log status only — never token or body
+  console.error(`[cron] dispatch failed: event=${eventType} status=${lastStatus}`);
+  throw new Error(`GH dispatch ${eventType} failed: HTTP ${lastStatus}`);
 }
 
 async function _cronBl2LivePush(env, scheduledTime) {
@@ -336,6 +372,117 @@ await testAsync('Payload: scheduled_at is valid ISO-8601', async () => {
   assert(!isNaN(parsed.getTime()), 'scheduled_at parses as valid Date');
   // Should round-trip within 1ms
   assert(Math.abs(parsed.getTime() - testMs) <= 1, 'scheduled_at preserves millisecond precision');
+});
+
+// ── Fail-closed dispatch semantics (Blocker 4) ────────────────────────────────
+
+await testAsync('Dispatch: 204 No Content succeeds without throw', async () => {
+  resetFetch();
+  setFetchResponses([{ ok: true, status: 204 }]);
+  const env = makeEnv();
+  // Should not throw
+  let threw = false;
+  try { await _cronBl2LivePush(env, Date.now()); } catch { threw = true; }
+  assert(!threw, '204 response does not throw');
+  assertEq(_fetchCalls.length, 1, 'exactly one fetch for 204');
+});
+
+await testAsync('Dispatch: 200 OK succeeds without throw', async () => {
+  resetFetch();
+  setFetchResponses([{ ok: true, status: 200 }]);
+  const env = makeEnv();
+  let threw = false;
+  try { await _cronBl2LivePush(env, Date.now()); } catch { threw = true; }
+  assert(!threw, '200 response does not throw');
+});
+
+await testAsync('Dispatch: 401 fails immediately (permanent error, no retry)', async () => {
+  resetFetch();
+  setFetchResponses([{ ok: false, status: 401 }]);
+  const env = makeEnv();
+  let threw = false;
+  let thrownMsg = '';
+  try { await _cronBl2LivePush(env, Date.now()); } catch (e) { threw = true; thrownMsg = e.message; }
+  assert(threw, '401 throws');
+  assertEq(_fetchCalls.length, 1, '401: no retry (exactly 1 fetch)');
+  assert(thrownMsg.includes('401'), '401 error message contains status code');
+});
+
+await testAsync('Dispatch: 403 fails immediately (permanent error, no retry)', async () => {
+  resetFetch();
+  setFetchResponses([{ ok: false, status: 403 }]);
+  const env = makeEnv();
+  let threw = false;
+  try { await _cronBl2LivePush(env, Date.now()); } catch { threw = true; }
+  assert(threw, '403 throws');
+  assertEq(_fetchCalls.length, 1, '403: no retry (exactly 1 fetch)');
+});
+
+await testAsync('Dispatch: 404 fails immediately (permanent error, no retry)', async () => {
+  resetFetch();
+  setFetchResponses([{ ok: false, status: 404 }]);
+  const env = makeEnv();
+  let threw = false;
+  try { await _cronBl2LivePush(env, Date.now()); } catch { threw = true; }
+  assert(threw, '404 throws');
+  assertEq(_fetchCalls.length, 1, '404: no retry (exactly 1 fetch)');
+});
+
+await testAsync('Dispatch: 429 retries then fails truthfully', async () => {
+  resetFetch();
+  // All responses are 429 — should retry _DISPATCH_RETRY_DELAYS_MS.length times then fail.
+  setFetchResponses([{ ok: false, status: 429 }, { ok: false, status: 429 }, { ok: false, status: 429 }]);
+  const env = makeEnv();
+  let threw = false;
+  let thrownMsg = '';
+  try { await _cronBl2LivePush(env, Date.now()); } catch (e) { threw = true; thrownMsg = e.message; }
+  assert(threw, '429 eventually throws after retries');
+  // 3 attempts: initial + 2 retries (matches _DISPATCH_RETRY_DELAYS_MS.length)
+  assertEq(_fetchCalls.length, 3, '429: 3 total attempts (1 initial + 2 retries)');
+  assert(thrownMsg.includes('429'), '429 error message contains status code');
+});
+
+await testAsync('Dispatch: 429 succeeds if retry returns 204', async () => {
+  resetFetch();
+  setFetchResponses([{ ok: false, status: 429 }, { ok: true, status: 204 }]);
+  const env = makeEnv();
+  let threw = false;
+  try { await _cronBl2LivePush(env, Date.now()); } catch { threw = true; }
+  assert(!threw, '429 then 204 → no throw');
+  assertEq(_fetchCalls.length, 2, '429→204: 2 fetch calls');
+});
+
+await testAsync('Dispatch: 500 retries then fails truthfully', async () => {
+  resetFetch();
+  setFetchResponses([{ ok: false, status: 500 }, { ok: false, status: 500 }, { ok: false, status: 500 }]);
+  const env = makeEnv();
+  let threw = false;
+  let thrownMsg = '';
+  try { await _cronBl2LivePush(env, Date.now()); } catch (e) { threw = true; thrownMsg = e.message; }
+  assert(threw, '500 eventually throws');
+  assertEq(_fetchCalls.length, 3, '500: 3 total attempts');
+  assert(thrownMsg.includes('500'), '500 error message contains status code');
+});
+
+await testAsync('Dispatch: token is never logged in error output', async () => {
+  resetFetch();
+  setFetchResponses([{ ok: false, status: 401 }]);
+  const token = 'super_secret_token_abc123';
+  const env = makeEnv(token);
+
+  // Capture console.error
+  const logged = [];
+  const orig = console.error;
+  console.error = (...args) => logged.push(args.join(' '));
+
+  let threw = false;
+  try { await _cronBl2LivePush(env, Date.now()); } catch { threw = true; }
+
+  console.error = orig;
+
+  assert(threw, 'dispatch failed as expected');
+  const loggedText = logged.join('\n');
+  assert(!loggedText.includes(token), `token not present in logged output: ${loggedText.slice(0, 200)}`);
 });
 
 // ── Summary ───────────────────────────────────────────────────────────────────

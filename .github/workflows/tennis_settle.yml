@@ -13,9 +13,13 @@ on:
   repository_dispatch:
     types: [sportsbrain_tennis_settle]
   schedule:
-    # Slow fallback: every 4h. CF-dispatched runs dominate in normal operation.
+    # SLOW FALLBACK — NOT PRIMARY AUTHORITY. Offset by 30 min from CF primary
+    # slots (which fire at :15 past even hours: 06:15, 08:15, ..., 22:15).
+    # GH fallback fires at :45 past odd hours: 07:45, 09:45, 11:45, 13:45,
+    # 15:45, 17:45, 19:45, 21:45, 23:45. No collision with CF primary times.
+    # Worst-case settlement delay if CF fails at any primary slot: ≤90 min.
     # Remove if CF path is verified stable for 7+ days.
-    - cron: '15 6,10,14,18,22 * * *'
+    - cron: '45 7,9,11,13,15,17,19,21,23 * * *'
   workflow_dispatch:
     inputs:
       scheduled_at:
@@ -108,12 +112,15 @@ jobs:
           LAG_S="${{ steps.lag.outputs.lag_s || '0' }}"
           SCHEDULER="${{ steps.lag.outputs.scheduler || 'unknown' }}"
           EXIT_CODE=1
-          if [ "${{ job.status }}" = "success" ]; then EXIT_CODE=0; fi
+          if [ "${{ job.status }}" = "success" ]; then
+            EXIT_CODE=0
+          fi
           python -m src.monitoring.health_writer \
             --job tennis_settle \
             --status "$STATUS" \
             --exit-code "$EXIT_CODE" \
-            --extra "{\"scheduler_lag_s\": $LAG_S, \"scheduler\": \"$SCHEDULER\"}" || true
+            --scheduler "$SCHEDULER" \
+            --scheduler-lag-s "$LAG_S" || true
 
       - name: Commit private ledger (fatal if ledger staging fails)
         env:

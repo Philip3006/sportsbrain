@@ -1,19 +1,23 @@
 name: 2.BL Live-Push (Anpfiff/Tor/HZ/Abpfiff)
 
-# STAB-SCHED-AUTH-001: Scheduler authority migrated to Cloudflare Worker cron.
+# STAB-SCHED-AUTH-001: Cloudflare Worker cron is PRIMARY scheduler authority.
 # Cloudflare dispatches repository_dispatch every 2 min during match windows.
-# GitHub schedule entries REMOVED — GH Actions 5-min minimum and throttle under
-# high concurrent load made 2-min delivery impossible (0.6% delivery rate observed).
+# GH schedule entries are SLOW FALLBACK (*/5 minimum interval) — they run if
+# CF dispatch fails. Remove GH schedules only after CF path is verified stable
+# for 7+ match days.
 #
-# Rollback: re-add schedule: entries below to restore GH-cron authority.
-# schedule:
-#   - cron: '*/2 18-22 * * 5'   # Fri 20:30-24:30 CEST
-#   - cron: '*/2 11-22 * * 6'   # Sat 13:00-24:00 CEST
-#   - cron: '*/2 11-22 * * 0'   # Sun 13:30-24:00 CEST
+# Rollback: disable CF cron in wrangler.toml — GH fallback immediately takes over.
+# GH fallback order (UTC): Fri 18-22 / Sat 11-22 / Sun 11-22
 
 on:
   repository_dispatch:
     types: [sportsbrain_bl2_live_push]
+  schedule:
+    # SLOW FALLBACK — NOT PRIMARY AUTHORITY. CF is primary; these run only if
+    # CF dispatch fails. GH Actions minimum supported interval is */5.
+    - cron: '*/5 18-22 * * 5'   # Fri CEST match window
+    - cron: '*/5 11-22 * * 6'   # Sat CEST match window
+    - cron: '*/5 11-22 * * 0'   # Sun CEST match window
   workflow_dispatch:
     inputs:
       scheduled_at:
@@ -43,7 +47,7 @@ jobs:
         run: |
           SCHEDULED_AT="${{ github.event.client_payload.scheduled_at || inputs.scheduled_at }}"
           IDEMPOTENCY_KEY="${{ github.event.client_payload.idempotency_key || '' }}"
-          SCHEDULER="${{ github.event.client_payload.scheduler || 'workflow_dispatch' }}"
+          SCHEDULER="${{ github.event.client_payload.scheduler || (github.event_name == 'schedule' && 'gh_cron_fallback' || 'workflow_dispatch') }}"
           if [ -n "$SCHEDULED_AT" ]; then
             NOW_EPOCH=$(date +%s)
             SCHED_EPOCH=$(date -d "$SCHEDULED_AT" +%s 2>/dev/null || python3 -c "import datetime; print(int(datetime.datetime.fromisoformat('$SCHEDULED_AT'.replace('Z','+00:00')).timestamp()))")
@@ -60,11 +64,10 @@ jobs:
           echo "idempotency_key=$IDEMPOTENCY_KEY" >> $GITHUB_OUTPUT
           echo "scheduler=$SCHEDULER" >> $GITHUB_OUTPUT
 
-      # ci_gates gate REMOVED for live-push:
-      # - bundesliga2_live_push writes no financial state (read-only ledger access)
-      # - ci_gates ran on every src/** change that produced this HEAD
-      # - gate added 10-20s latency competing with 2-min SLA target
-      # Recovery: add back if script starts writing financial state.
+      - name: Require green ci_gates for HEAD SHA (Phase-0 Gate)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/require_green_ci.py
 
       - uses: actions/setup-python@v5
         with:
@@ -99,11 +102,16 @@ jobs:
           STATUS="${{ steps.poll.outputs.status || 'error' }}"
           LAG_S="${{ steps.lag.outputs.lag_s || '0' }}"
           SCHEDULER="${{ steps.lag.outputs.scheduler || 'unknown' }}"
+          EXIT_CODE=1
+          if [ "${{ job.status }}" = "success" ]; then
+            EXIT_CODE=0
+          fi
           python -m src.monitoring.health_writer \
             --job bundesliga2_live_push \
             --status "$STATUS" \
-            --exit-code ${{ job.status == 'success' && 0 || 1 }} \
-            --extra "{\"scheduler_lag_s\": $LAG_S, \"scheduler\": \"$SCHEDULER\"}" || true
+            --exit-code "$EXIT_CODE" \
+            --scheduler "$SCHEDULER" \
+            --scheduler-lag-s "$LAG_S" || true
 
       - name: Commit cache + health
         if: always()

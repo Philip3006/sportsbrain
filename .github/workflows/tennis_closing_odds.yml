@@ -102,12 +102,15 @@ jobs:
           LAG_S="${{ steps.lag.outputs.lag_s || '0' }}"
           SCHEDULER="${{ steps.lag.outputs.scheduler || 'unknown' }}"
           EXIT_CODE=1
-          if [ "${{ job.status }}" = "success" ]; then EXIT_CODE=0; fi
+          if [ "${{ job.status }}" = "success" ]; then
+            EXIT_CODE=0
+          fi
           python -m src.monitoring.health_writer \
             --job tennis_closing_odds \
             --status "$STATUS" \
             --exit-code "$EXIT_CODE" \
-            --extra "{\"scheduler_lag_s\": $LAG_S, \"scheduler\": \"$SCHEDULER\"}" || true
+            --scheduler "$SCHEDULER" \
+            --scheduler-lag-s "$LAG_S" || true
 
       - name: Commit private ledger (fatal if ledger staging fails)
         env:
