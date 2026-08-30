@@ -158,7 +158,7 @@ def test_8_recovery_registry_marks_financial_actions_inactive():
     """re-consume, re-run-settle, settle_retry, auto_retrain_retry, closing_odds_retry
     must all have active=False in RECOVERY_REGISTRY."""
     sys.path.insert(0, str(ROOT))
-    from src.monitoring.recovery_truth import RECOVERY_REGISTRY  # noqa: PLC0415
+    from src.monitoring.recovery_truth import RECOVERY_REGISTRY
 
     inactive_required = {
         "re-consume", "re-run-settle",
@@ -182,7 +182,7 @@ def test_8_recovery_registry_marks_financial_actions_inactive():
 def test_8b_recovery_registry_financial_actions_resolve_unavailable():
     """request_recovery for inactive financial actions must return RECOVERY_UNAVAILABLE."""
     sys.path.insert(0, str(ROOT))
-    from src.monitoring.recovery_truth import RecoveryState, request_recovery  # noqa: PLC0415
+    from src.monitoring.recovery_truth import RecoveryState, request_recovery
 
     financial_actions = [
         "re-consume", "re-run-settle",
@@ -282,46 +282,36 @@ def test_12_layer1_does_not_retry_auto_retrain():
 
 
 # ---------------------------------------------------------------------------
-# 13–15: Healer push repair boundary
+# 13–15: Healer runtime-writer boundary
 # ---------------------------------------------------------------------------
 
-def test_13_healer_push_repair_rejects_source_commits():
-    """Layer-1 push repair must have a healer-specific allowlist that rejects source files."""
+def test_13_layer1_healer_cannot_mutate_git_state():
+    """Layer-1 healer delegates retries but never stages, commits, or pushes."""
     text = _read(_AUTO_HEAL_CRON)
-    assert "_healer_push_safe" in text, (
-        "Healer-specific push boundary function _healer_push_safe must exist in auto_heal_cron.sh"
-    )
-    # Must check ahead commits before calling git_safe_push
-    healer_push_pos = text.find("_healer_push_safe")
-    git_safe_push_pos = text.find("git_safe_push", healer_push_pos)
-    assert git_safe_push_pos > healer_push_pos, (
-        "_healer_push_safe check must precede git_safe_push call"
-    )
+    for forbidden in (
+        "git add",
+        "git commit",
+        "git push",
+        "git rebase",
+        "git reset",
+        "git_safe_push",
+        "_healer_push_safe",
+    ):
+        assert forbidden not in text, f"Layer-1 healer contains forbidden Git mutation: {forbidden}"
 
 
-def test_14_healer_push_rejects_financial_paths():
-    """Healer push allowlist must not include financial/ledger paths."""
+def test_14_layer1_healer_keeps_nonfinancial_scan_retry():
+    """Daily-scan recovery remains available through its governed wrapper."""
     text = _read(_AUTO_HEAL_CRON)
-    healer_fn_start = text.find("_healer_push_safe()")
-    healer_fn_end = text.find("\n}", healer_fn_start)
-    healer_body = text[healer_fn_start:healer_fn_end] if healer_fn_start != -1 else text
-    assert "results/ledger" not in healer_body, (
-        "Healer push allowlist must not permit results/ledger* (private-repo-owned, P0D-002)"
-    )
-    assert "betting_journal" not in healer_body, (
-        "Healer push allowlist must not permit betting_journal (private-repo-owned, P0D-002)"
-    )
+    assert '_should_retry "daily_scan"' in text
+    assert '_retry_job "daily_scan" "scripts/scan_cron.sh"' in text
 
 
-def test_15_healer_push_rejects_model_paths():
-    """Healer push allowlist must not include model artifact paths."""
-    text = _read(_AUTO_HEAL_CRON)
-    healer_fn_start = text.find("_healer_push_safe()")
-    healer_fn_end = text.find("\n}", healer_fn_start)
-    healer_body = text[healer_fn_start:healer_fn_end] if healer_fn_start != -1 else text
-    assert "models/" not in healer_body, (
-        "Healer push allowlist must not permit models/ paths (model promotion is Tier 3)"
-    )
+def test_15_ai_healer_cannot_use_git_mutation_helper():
+    """The diagnosis-only AI healer cannot regain the local writer helper."""
+    text = _read(_AUTO_HEAL_AI)
+    assert "runtime_publish_artifacts" not in text
+    assert "_git_safe_push" not in text
 
 
 # ---------------------------------------------------------------------------
@@ -442,7 +432,7 @@ def test_22_healer_cannot_force_push():
 def test_23_non_financial_health_observation_works():
     """Outcome checks module still importable and returns structured symptoms."""
     sys.path.insert(0, str(ROOT))
-    from src.monitoring.outcome_checks import run_all_checks  # noqa: PLC0415
+    from src.monitoring.outcome_checks import run_all_checks
     results = run_all_checks()
     assert isinstance(results, list)
 
