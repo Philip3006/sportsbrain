@@ -1,24 +1,24 @@
 {
-  "generated_at": "2026-08-28T17:07:23.960625+00:00",
+  "generated_at": "2026-08-30T10:14:38.287584+00:00",
   "train_rows": 55606,
   "cal_rows": 2616,
-  "holdout_rows": 8961,
+  "holdout_rows": 9034,
   "train_end": "2024-06-01",
   "cal_end": "2024-12-31",
   "elo": {
-    "n": 8961,
-    "brier": 0.21934756967415783,
-    "log_loss": 0.6276744795025778,
-    "accuracy": 0.6406651043410334
+    "n": 9034,
+    "brier": 0.21954334413902274,
+    "log_loss": 0.6281128746003841,
+    "accuracy": 0.6402479521806509
   },
   "lgbm": {
-    "n": 8961,
-    "brier": 0.2151586422781653,
-    "log_loss": 0.6197829395445688,
-    "accuracy": 0.6470260015623256
+    "n": 9034,
+    "brier": 0.21572815031018702,
+    "log_loss": 0.6211679335512791,
+    "accuracy": 0.6478857648882002
   },
-  "brier_improvement": 0.0041889273959925255,
-  "logloss_improvement": 0.007891539958009064,
+  "brier_improvement": 0.0038151938288357168,
+  "logloss_improvement": 0.006944941049105036,
   "gate_passed": true,
   "brier_gate": 0.003,
   "feature_columns": [
