@@ -374,13 +374,19 @@ def predict_winner_ensemble(
             pass
 
     # Meta-Calibrator: globaler Korrektiv-Layer (ab 50 Samples, nur wenn kein Surface-Cal).
+    # FND-MODEL1-016: complement-symmetric semantics — same pattern as surface calibrator.
+    # Raw F(p) breaks P(A>B) + P(B>A) = 1 for clay/grass (no surface calibrator exists).
+    # p_sym = (F(p) + 1 - F(1-p)) / 2 guarantees complement symmetry.
     if surf_cal is None:
         meta_cal = _load_meta_calibrator()
         if meta_cal is not None:
             try:
-                p_a = float(meta_cal.predict([p_a])[0])
+                raw_p = p_a
+                cal_ab = float(meta_cal.predict([raw_p])[0])
+                cal_ba = float(meta_cal.predict([1.0 - raw_p])[0])
+                p_a = (cal_ab + 1.0 - cal_ba) / 2.0
                 p_a = max(0.02, min(0.98, p_a))
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
 
     return {"p_a": p_a, "p_b": 1.0 - p_a, "source": "ensemble"}
