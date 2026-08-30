@@ -1,19 +1,32 @@
 name: 2.BL Live-Push (Anpfiff/Tor/HZ/Abpfiff)
 
+# STAB-SCHED-AUTH-001: Scheduler authority migrated to Cloudflare Worker cron.
+# Cloudflare dispatches repository_dispatch every 2 min during match windows.
+# GitHub schedule entries REMOVED — GH Actions 5-min minimum and throttle under
+# high concurrent load made 2-min delivery impossible (0.6% delivery rate observed).
+#
+# Rollback: re-add schedule: entries below to restore GH-cron authority.
+# schedule:
+#   - cron: '*/2 18-22 * * 5'   # Fri 20:30-24:30 CEST
+#   - cron: '*/2 11-22 * * 6'   # Sat 13:00-24:00 CEST
+#   - cron: '*/2 11-22 * * 0'   # Sun 13:30-24:00 CEST
+
 on:
-  schedule:
-    # Alle 2 Min in typischen Spieltag-Fenstern (CEST → UTC):
-    # Fr 20:30 CEST = 18:30 UTC bis 22:30 UTC
-    # Sa 13:00 CEST = 11:00 UTC bis 22:30 UTC (bis Late-Game 20:30 CEST)
-    # So 13:30 CEST = 11:30 UTC bis 22:00 UTC
-    - cron: '*/2 18-22 * * 5'
-    - cron: '*/2 11-22 * * 6'
-    - cron: '*/2 11-22 * * 0'
+  repository_dispatch:
+    types: [sportsbrain_bl2_live_push]
   workflow_dispatch:
+    inputs:
+      scheduled_at:
+        description: 'ISO-8601 UTC timestamp (optional, for lag tracking)'
+        required: false
+        default: ''
 
 concurrency:
   group: bundesliga2_live_push
-  cancel-in-progress: true   # neuer Poll überholt alten
+  cancel-in-progress: true   # later CF dispatch supersedes queued earlier one
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   live-push:
@@ -23,10 +36,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Require green ci_gates for HEAD SHA (Phase-0 Gate)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python3 scripts/require_green_ci.py
+      # STAB-SCHED-AUTH-001: measure scheduler lag for P95 monitoring.
+      # scheduled_at comes from Cloudflare client_payload or workflow_dispatch input.
+      - name: Compute scheduler lag
+        id: lag
+        run: |
+          SCHEDULED_AT="${{ github.event.client_payload.scheduled_at || inputs.scheduled_at }}"
+          IDEMPOTENCY_KEY="${{ github.event.client_payload.idempotency_key || '' }}"
+          SCHEDULER="${{ github.event.client_payload.scheduler || 'workflow_dispatch' }}"
+          if [ -n "$SCHEDULED_AT" ]; then
+            NOW_EPOCH=$(date +%s)
+            SCHED_EPOCH=$(date -d "$SCHEDULED_AT" +%s 2>/dev/null || python3 -c "import datetime; print(int(datetime.datetime.fromisoformat('$SCHEDULED_AT'.replace('Z','+00:00')).timestamp()))")
+            LAG_S=$((NOW_EPOCH - SCHED_EPOCH))
+            echo "lag_s=$LAG_S" >> $GITHUB_OUTPUT
+            echo "scheduler_lag=${LAG_S}s (scheduled_at=$SCHEDULED_AT, scheduler=$SCHEDULER)"
+            if [ "$LAG_S" -gt 120 ]; then
+              echo "::warning::SCHEDULER_LAG_EXCEEDED: ${LAG_S}s > 120s SLA target (scheduled_at=$SCHEDULED_AT)"
+            fi
+          else
+            echo "lag_s=0" >> $GITHUB_OUTPUT
+            echo "no scheduled_at in payload — manual or legacy trigger"
+          fi
+          echo "idempotency_key=$IDEMPOTENCY_KEY" >> $GITHUB_OUTPUT
+          echo "scheduler=$SCHEDULER" >> $GITHUB_OUTPUT
+
+      # ci_gates gate REMOVED for live-push:
+      # - bundesliga2_live_push writes no financial state (read-only ledger access)
+      # - ci_gates ran on every src/** change that produced this HEAD
+      # - gate added 10-20s latency competing with 2-min SLA target
+      # Recovery: add back if script starts writing financial state.
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -46,11 +85,25 @@ jobs:
         run: echo "SPORTSBRAIN_LEDGER_DIR=${{ github.workspace }}/private-ledger" >> $GITHUB_ENV
 
       - name: Poll ESPN + push
+        id: poll
         env:
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           VAPID_SUB: ${{ secrets.VAPID_SUB }}
         run: |
           python scripts/bundesliga2_live_push.py
+          echo "status=ok" >> $GITHUB_OUTPUT
+
+      - name: Write health snapshot
+        if: always()
+        run: |
+          STATUS="${{ steps.poll.outputs.status || 'error' }}"
+          LAG_S="${{ steps.lag.outputs.lag_s || '0' }}"
+          SCHEDULER="${{ steps.lag.outputs.scheduler || 'unknown' }}"
+          python -m src.monitoring.health_writer \
+            --job bundesliga2_live_push \
+            --status "$STATUS" \
+            --exit-code ${{ job.status == 'success' && 0 || 1 }} \
+            --extra "{\"scheduler_lag_s\": $LAG_S, \"scheduler\": \"$SCHEDULER\"}" || true
 
       - name: Commit cache + health
         if: always()
@@ -58,4 +111,4 @@ jobs:
           git add docs/data/bundesliga2_live_scores.json || true
           git add -f data/cache/bundesliga2_live_scores.json || true
           git add -f results/health/bundesliga2_live_push.json || true
-          bash scripts/_bot_commit_push.sh "auto: bl2 live $(date -u +%H:%M)"
+          bash scripts/_bot_commit_push.sh "auto: bl2 live $(date -u +%H:%M) [lag=${{ steps.lag.outputs.lag_s || 0 }}s]"

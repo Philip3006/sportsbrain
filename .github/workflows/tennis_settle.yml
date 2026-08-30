@@ -1,10 +1,27 @@
 name: Tennis Settle (auto)
 
+# STAB-SCHED-AUTH-001: Primary scheduler authority migrated to Cloudflare Worker.
+# CF cron: 15 6-22/2 * * * → repository_dispatch sportsbrain_tennis_settle → this job.
+# GH schedule retained as SLOW FALLBACK (every 4h) — remove once CF path verified stable.
+#
+# Rollback: change fallback schedule below back to '15 6-22/2 * * *' and disable CF cron.
+#
+# Settlement idempotency: tennis_settle.py checks settled flag in ledger before writing.
+# Duplicate dispatch for the same slot is safe — second run settles nothing new.
+
 on:
+  repository_dispatch:
+    types: [sportsbrain_tennis_settle]
   schedule:
-    # Alle 2 Stunden zwischen 06 und 22 UTC — Tennis-Matches enden ueber den Tag verteilt
-    - cron: '15 6-22/2 * * *'
+    # Slow fallback: every 4h. CF-dispatched runs dominate in normal operation.
+    # Remove if CF path is verified stable for 7+ days.
+    - cron: '15 6,10,14,18,22 * * *'
   workflow_dispatch:
+    inputs:
+      scheduled_at:
+        description: 'ISO-8601 UTC timestamp (optional, for lag tracking)'
+        required: false
+        default: ''
 
 concurrency:
   group: ${{ github.workflow }}
@@ -24,11 +41,31 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      # STAB-SCHED-AUTH-001: scheduler lag measurement.
+      - name: Compute scheduler lag
+        id: lag
+        run: |
+          SCHEDULED_AT="${{ github.event.client_payload.scheduled_at || inputs.scheduled_at }}"
+          SCHEDULER="${{ github.event.client_payload.scheduler || (github.event_name == 'schedule' && 'gh_cron_fallback' || 'workflow_dispatch') }}"
+          IDEMPOTENCY_KEY="${{ github.event.client_payload.idempotency_key || '' }}"
+          if [ -n "$SCHEDULED_AT" ]; then
+            NOW_EPOCH=$(date +%s)
+            SCHED_EPOCH=$(python3 -c "import datetime; print(int(datetime.datetime.fromisoformat('$SCHEDULED_AT'.replace('Z','+00:00')).timestamp()))")
+            LAG_S=$((NOW_EPOCH - SCHED_EPOCH))
+            echo "lag_s=$LAG_S" >> $GITHUB_OUTPUT
+            echo "scheduler=$SCHEDULER" >> $GITHUB_OUTPUT
+            echo "Scheduler lag: ${LAG_S}s (source=$SCHEDULER)"
+          else
+            echo "lag_s=0" >> $GITHUB_OUTPUT
+            echo "scheduler=$SCHEDULER" >> $GITHUB_OUTPUT
+          fi
+          echo "idempotency_key=$IDEMPOTENCY_KEY" >> $GITHUB_OUTPUT
 
       - name: Require green ci_gates for HEAD SHA (Phase-0 Gate)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 scripts/require_green_ci.py
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -55,6 +92,9 @@ jobs:
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           SPORTSBRAIN_LEDGER_DIR: ${{ github.workspace }}/private-ledger
+          # Idempotency metadata passed for observability — settlement logic checks
+          # settled flag in ledger independently; this key is for logging only.
+          SETTLE_IDEMPOTENCY_KEY: ${{ steps.lag.outputs.idempotency_key }}
         run: |
           python scripts/tennis_settle.py
           python scripts/backfill_signal_outcomes.py
@@ -65,11 +105,15 @@ jobs:
         if: always()
         run: |
           STATUS="${{ steps.settle.outputs.status || 'error' }}"
+          LAG_S="${{ steps.lag.outputs.lag_s || '0' }}"
+          SCHEDULER="${{ steps.lag.outputs.scheduler || 'unknown' }}"
           EXIT_CODE=1
-          if [ "${{ job.status }}" = "success" ]; then
-            EXIT_CODE=0
-          fi
-          python -m src.monitoring.health_writer --job tennis_settle --status "$STATUS" --exit-code "$EXIT_CODE" || true
+          if [ "${{ job.status }}" = "success" ]; then EXIT_CODE=0; fi
+          python -m src.monitoring.health_writer \
+            --job tennis_settle \
+            --status "$STATUS" \
+            --exit-code "$EXIT_CODE" \
+            --extra "{\"scheduler_lag_s\": $LAG_S, \"scheduler\": \"$SCHEDULER\"}" || true
 
       - name: Commit private ledger (fatal if ledger staging fails)
         env:
@@ -98,7 +142,7 @@ jobs:
           git add -f data/cache/signal_history.jsonl data/cache/signal_performance.json || true
           git add docs/data/signals_philip.json docs/data/signals.json || true
           git diff --staged --quiet && exit 0
-          git commit -m "auto: tennis settle $(date +%Y-%m-%d\ %H:%M) UTC"
+          git commit -m "auto: tennis settle $(date +%Y-%m-%d\ %H:%M) UTC [lag=${{ steps.lag.outputs.lag_s || 0 }}s]"
           for i in 1 2 3 4 5; do
             git fetch origin main
             git rebase --autostash --strategy-option=theirs origin/main \

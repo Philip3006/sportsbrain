@@ -1,9 +1,24 @@
 name: Tennis Closing Odds (30-min cadence)
 
+# STAB-SCHED-AUTH-001: Primary scheduler authority migrated to Cloudflare Worker (*/30).
+# GH schedule retained as SLOW FALLBACK ONLY (every 2h) to catch any CF dispatch gap.
+# Primary path: CF cron */30 → repository_dispatch sportsbrain_tennis_closing_odds → this job.
+#
+# Rollback: change primary schedule below back to '*/30 * * * *' and disable CF cron.
+
 on:
+  repository_dispatch:
+    types: [sportsbrain_tennis_closing_odds]
   schedule:
-    - cron: '*/30 * * * *'
+    # Slow fallback: every 2h. CF-dispatched runs will dominate in normal operation.
+    # Remove if CF path is verified stable for 7+ days.
+    - cron: '5 */2 * * *'
   workflow_dispatch:
+    inputs:
+      scheduled_at:
+        description: 'ISO-8601 UTC timestamp (optional, for lag tracking)'
+        required: false
+        default: ''
 
 concurrency:
   group: ${{ github.workflow }}
@@ -23,11 +38,31 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      # STAB-SCHED-AUTH-001: scheduler lag measurement.
+      - name: Compute scheduler lag
+        id: lag
+        run: |
+          SCHEDULED_AT="${{ github.event.client_payload.scheduled_at || inputs.scheduled_at }}"
+          SCHEDULER="${{ github.event.client_payload.scheduler || (github.event_name == 'schedule' && 'gh_cron_fallback' || 'workflow_dispatch') }}"
+          IDEMPOTENCY_KEY="${{ github.event.client_payload.idempotency_key || '' }}"
+          if [ -n "$SCHEDULED_AT" ]; then
+            NOW_EPOCH=$(date +%s)
+            SCHED_EPOCH=$(python3 -c "import datetime; print(int(datetime.datetime.fromisoformat('$SCHEDULED_AT'.replace('Z','+00:00')).timestamp()))")
+            LAG_S=$((NOW_EPOCH - SCHED_EPOCH))
+            echo "lag_s=$LAG_S" >> $GITHUB_OUTPUT
+            echo "scheduler=$SCHEDULER" >> $GITHUB_OUTPUT
+            echo "Scheduler lag: ${LAG_S}s (source=$SCHEDULER)"
+          else
+            echo "lag_s=0" >> $GITHUB_OUTPUT
+            echo "scheduler=$SCHEDULER" >> $GITHUB_OUTPUT
+          fi
+          echo "idempotency_key=$IDEMPOTENCY_KEY" >> $GITHUB_OUTPUT
 
       - name: Require green ci_gates for HEAD SHA (Phase-0 Gate)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 scripts/require_green_ci.py
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -54,6 +89,8 @@ jobs:
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           SPORTSBRAIN_LEDGER_DIR: ${{ github.workspace }}/private-ledger
+          # Idempotency: pass key so script can skip if already processed this slot.
+          CLOSING_ODDS_IDEMPOTENCY_KEY: ${{ steps.lag.outputs.idempotency_key }}
         run: |
           python scripts/update_tennis_closing_odds.py
           echo "status=ok" >> $GITHUB_OUTPUT
@@ -62,11 +99,15 @@ jobs:
         if: always()
         run: |
           STATUS="${{ steps.fetch.outputs.status || 'error' }}"
+          LAG_S="${{ steps.lag.outputs.lag_s || '0' }}"
+          SCHEDULER="${{ steps.lag.outputs.scheduler || 'unknown' }}"
           EXIT_CODE=1
-          if [ "${{ job.status }}" = "success" ]; then
-            EXIT_CODE=0
-          fi
-          python -m src.monitoring.health_writer --job tennis_closing_odds --status "$STATUS" --exit-code "$EXIT_CODE" || true
+          if [ "${{ job.status }}" = "success" ]; then EXIT_CODE=0; fi
+          python -m src.monitoring.health_writer \
+            --job tennis_closing_odds \
+            --status "$STATUS" \
+            --exit-code "$EXIT_CODE" \
+            --extra "{\"scheduler_lag_s\": $LAG_S, \"scheduler\": \"$SCHEDULER\"}" || true
 
       - name: Commit private ledger (fatal if ledger staging fails)
         env:
@@ -90,7 +131,7 @@ jobs:
           git config user.email "bot@sportsbrain"
           git add -f results/health/tennis_closing_odds.json || true
           git diff --staged --quiet && exit 0
-          git commit -m "auto: tennis closing odds $(date +%Y-%m-%d\ %H:%M) UTC"
+          git commit -m "auto: tennis closing odds $(date +%Y-%m-%d\ %H:%M) UTC [lag=${{ steps.lag.outputs.lag_s || 0 }}s]"
           for i in 1 2 3 4 5; do
             git fetch origin main
             git rebase --autostash --strategy-option=theirs origin/main \
