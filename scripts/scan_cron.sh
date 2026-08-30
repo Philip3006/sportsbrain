@@ -19,15 +19,6 @@ if ! require_main_branch "daily_scan" "$LOG"; then
     exit 42
 fi
 
-# Divergence guard: refuse to add more commits when push channel is broken.
-# Prevents unbounded local commit accumulation (>5 unpushed = broken channel).
-_AHEAD=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)
-if [ "$_AHEAD" -gt 5 ]; then
-    echo "[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] scan_cron: FAIL CLOSED — $_AHEAD commits ahead of origin/main (push channel broken)" >> "$LOG"
-    health_finish "daily_scan" 42 "" "$LOG"
-    exit 42
-fi
-
 echo "" >> "$LOG"
 echo "========================================" >> "$LOG"
 echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] scan_cron started ---" >> "$LOG"
@@ -50,17 +41,19 @@ echo "--- Bankroll (snapshot): €$BANKROLL ---" >> "$LOG"
 echo "--- Daily scan ---" >> "$LOG"
 python3 scripts/daily_scan.py --bankroll "$BANKROLL" --retrain >> "$LOG" 2>&1
 
-EXIT_CODE=$?
+JOB_EXIT=$?
+PUBLISH_EXIT=0
 
-# 4. Push signals.json to GitHub Pages (safe push: rebase first)
-echo "--- Git push ---" >> "$LOG"
-git add docs/data/signals.json >> "$LOG" 2>&1
-git commit -m "auto: scan $(date '+%Y-%m-%d')" >> "$LOG" 2>&1
-# shellcheck source=./_git_safe_push.sh
-source "$SPORTSBRAIN_DIR/scripts/_git_safe_push.sh"
-git_safe_push "$LOG"
-PUSH_EXIT=$?
-echo "--- Git push done (exit $PUSH_EXIT) ---" >> "$LOG"
+# 4. Publish generated output through the isolated publisher checkout.
+source "$SPORTSBRAIN_DIR/scripts/publish_runtime_artifacts.sh"
+runtime_publish_artifacts "$SPORTSBRAIN_DIR" "$LOG" \
+    "auto: scan $(date '+%Y-%m-%d')" docs/data/signals.json
+PUBLISH_EXIT=$?
+EXIT_CODE=$JOB_EXIT
+if [ "$EXIT_CODE" -eq 0 ] && [ "$PUBLISH_EXIT" -ne 0 ]; then
+    EXIT_CODE=42
+fi
+echo "--- Publish done (job=$JOB_EXIT publish=$PUBLISH_EXIT final=$EXIT_CODE) ---" >> "$LOG"
 
 echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] scan_cron finished (exit $EXIT_CODE) ---" >> "$LOG"
 

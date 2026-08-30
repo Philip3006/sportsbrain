@@ -1,5 +1,6 @@
 .env*
 !.env.example
+.runtime-publish.env
 data/cache/
 !data/cache/signal_performance.json
 !data/cache/signal_history.jsonl

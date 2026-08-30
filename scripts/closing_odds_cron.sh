@@ -17,23 +17,20 @@ if ! require_main_branch "closing_odds" "$LOG"; then
     exit 42
 fi
 
-# Divergence guard: refuse to add more commits when push channel is broken.
-_AHEAD=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)
-if [ "$_AHEAD" -gt 5 ]; then
-    echo "[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] closing_odds_cron: FAIL CLOSED — $_AHEAD commits ahead of origin/main (push channel broken)" >> "$LOG"
-    health_finish "closing_odds" 42 "" "$LOG"
-    exit 42
-fi
-
 echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] closing_odds_cron started ---" >> "$LOG" 2>&1
 python3 scripts/update_closing_odds.py >> "$LOG" 2>&1
-EXIT_CODE=$?
+JOB_EXIT=$?
+PUBLISH_EXIT=0
 
-# Push signals.json to GitHub Pages (safe push: rebase first)
-git add docs/data/signals.json >> "$LOG" 2>&1
-git commit -m "auto: closing odds $(date '+%Y-%m-%d %H:%M')" >> "$LOG" 2>&1 || true
-# shellcheck source=./_git_safe_push.sh
-source "$SPORTSBRAIN_DIR/scripts/_git_safe_push.sh"
-git_safe_push "$LOG"
+# Publish generated output through the isolated publisher checkout.
+source "$SPORTSBRAIN_DIR/scripts/publish_runtime_artifacts.sh"
+runtime_publish_artifacts "$SPORTSBRAIN_DIR" "$LOG" \
+    "auto: closing odds $(date '+%Y-%m-%d %H:%M')" docs/data/signals.json
+PUBLISH_EXIT=$?
+EXIT_CODE=$JOB_EXIT
+if [ "$EXIT_CODE" -eq 0 ] && [ "$PUBLISH_EXIT" -ne 0 ]; then
+    EXIT_CODE=42
+fi
+echo "--- Publish done (job=$JOB_EXIT publish=$PUBLISH_EXIT final=$EXIT_CODE) ---" >> "$LOG"
 
 health_finish "closing_odds" "$EXIT_CODE" "" "$LOG"
