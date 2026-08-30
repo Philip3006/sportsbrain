@@ -9,7 +9,18 @@ id = "b8dafde116544880aaf9c3f19c61dc23"
 [triggers]
 # F5-C: consume_pending_bets check every 5 min (triggers GH repo_dispatch only when KV non-empty)
 # F5-D: cloud_healer check every 30 min (triggers workflow_dispatch on failed jobs)
-crons = ["*/5 * * * *", "*/30 * * * *"]
+#       + STAB-SCHED-AUTH-001: tennis_closing_odds dispatch authority (30-min)
+# STAB-SCHED-AUTH-001: BL2 live-push scheduler authority — 2-min cadence during match windows.
+#   Sat/Sun 11-22 UTC  (CEST 13-24h — covers 13:30 kick-off + late games)
+#   Fri     18-22 UTC  (CEST 20-24h — covers 20:30 kick-off)
+# STAB-SCHED-AUTH-001: tennis_settle scheduler authority — 9 slots/day at :15 past even hours.
+crons = [
+  "*/5 * * * *",
+  "*/30 * * * *",
+  "*/2 11-22 * * SAT,SUN",
+  "*/2 18-22 * * FRI",
+  "15 6-22/2 * * *",
+]
 
 # Secrets (set via: wrangler secret put <NAME>)
 # API_TOKEN — shared secret between Python uploader and this Worker

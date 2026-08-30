@@ -5,7 +5,8 @@ CLI for use from shell wrappers:
     python3 -m src.monitoring.health_writer \\
         --job daily_scan --status ok --exit-code 0 \\
         --duration 12.3 --run-id daily-scan-20260619T070000Z-123 \\
-        [--fallback espn|websearch|cache] [--error "msg"]
+        [--fallback espn|websearch|cache] [--error "msg"] \\
+        [--scheduler cloudflare_cron] [--scheduler-lag-s 45]
 
 Writes results/health/{job}.json atomically (tmp + rename, no lock needed
 because each job is the single writer for its own file).
@@ -52,6 +53,21 @@ def _coerce_exit_code(raw: Any) -> int | None:
     return None
 
 
+def _coerce_scheduler_lag(raw: Any) -> int | None:
+    """Return raw as non-negative int or None. Accepts int or numeric string."""
+    if raw is None or raw == "":
+        return None
+    if isinstance(raw, bool):
+        return None
+    if isinstance(raw, int):
+        return max(0, raw)
+    try:
+        v = int(str(raw).strip())
+        return max(0, v)
+    except (ValueError, TypeError):
+        return None
+
+
 def write_health(
     job: str,
     status: str,
@@ -63,6 +79,10 @@ def write_health(
     run_id: str | None = None,
     started_at: str | None = None,
     recovery_attempt_id: str | None = None,
+    scheduler: str | None = None,
+    scheduled_at: str | None = None,
+    scheduler_lag_s: int | None = None,
+    idempotency_key: str | None = None,
 ) -> Path:
     """Writes results/health/{job}.json atomically.
 
@@ -70,6 +90,12 @@ def write_health(
     supplies an impossible combination, this function coerces status to "error"
     and records the contradiction in the error field so it remains visible
     (MON-011) rather than silently disappearing.
+
+    STAB-SCHED-AUTH-001 scheduler fields (all optional, backward-compatible):
+    - scheduler: source identifier (e.g. "cloudflare_cron", "gh_cron_fallback")
+    - scheduled_at: ISO-8601 UTC timestamp of the scheduled trigger
+    - scheduler_lag_s: measured dispatch-to-execution latency in seconds
+    - idempotency_key: CF idempotency key for this dispatch slot
     """
     if status not in VALID_STATUS:
         raise ValueError(f"status must be one of {VALID_STATUS}, got {status!r}")
@@ -103,6 +129,8 @@ def write_health(
     HEALTH_DIR.mkdir(parents=True, exist_ok=True)
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
+    safe_lag = _coerce_scheduler_lag(scheduler_lag_s)
+
     payload: dict[str, Any] = {
         "job":                  job,
         "status":               status,
@@ -114,6 +142,10 @@ def write_health(
         "fallback_used":        fallback_used,
         "run_id":               run_id,
         "recovery_attempt_id":  recovery_attempt_id,  # P0-B3: set only by recovery actors
+        "scheduler":            scheduler or None,
+        "scheduled_at":         scheduled_at or None,
+        "scheduler_lag_s":      safe_lag,
+        "idempotency_key":      idempotency_key or None,
     }
 
     target = HEALTH_DIR / f"{job}.json"
@@ -139,6 +171,15 @@ def _cli() -> int:
                    help="fallback data source used — only when status=degraded")
     p.add_argument("--recovery-attempt-id", default=None, dest="recovery_attempt_id",
                    help="P0-B3 recovery attempt ID — set only by recovery actors via RECOVERY_ATTEMPT_ID env")
+    # STAB-SCHED-AUTH-001: scheduler observability fields (all optional)
+    p.add_argument("--scheduler", default=None,
+                   help="scheduler source: cloudflare_cron | gh_cron_fallback | workflow_dispatch")
+    p.add_argument("--scheduled-at", default=None, dest="scheduled_at",
+                   help="ISO-8601 UTC timestamp of the scheduled trigger")
+    p.add_argument("--scheduler-lag-s", default=None, dest="scheduler_lag_s",
+                   help="dispatch-to-execution lag in seconds (non-negative int)")
+    p.add_argument("--idempotency-key", default=None, dest="idempotency_key",
+                   help="CF idempotency key for this dispatch slot")
     args = p.parse_args()
 
     path = write_health(
@@ -151,6 +192,10 @@ def _cli() -> int:
         run_id=args.run_id,
         started_at=args.started_at,
         recovery_attempt_id=args.recovery_attempt_id,
+        scheduler=args.scheduler,
+        scheduled_at=args.scheduled_at,
+        scheduler_lag_s=args.scheduler_lag_s,
+        idempotency_key=args.idempotency_key,
     )
     print(f"[health] {args.job} → {args.status} ({path.name})")
     return 0

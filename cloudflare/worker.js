@@ -556,6 +556,108 @@ async function _ghRepositoryDispatch(token, eventType, repo = _GH_REPO_DEFAULT) 
   });
 }
 
+// STAB-SCHED-AUTH-001: repository_dispatch with idempotency payload.
+// client_payload.scheduled_at: ISO-8601 UTC timestamp of the Cloudflare cron trigger.
+// client_payload.scheduler: identifies the scheduler source for observability.
+// client_payload.idempotency_key: <event_type>/<scheduled_at_minute> — prevents duplicate
+//   financial writes when Cloudflare delivers the same cron slot twice (at-least-once).
+//
+// Fail-closed dispatch semantics:
+//   - 2xx (including 204 No Content): success — no throw.
+//   - Permanent errors (401, 403, 404): fail immediately, no retry.
+//   - Transient errors (429, 5xx): retry up to 2 times with bounded backoff.
+//   - Token and request body are never logged.
+const _DISPATCH_PERMANENT_ERRORS = new Set([401, 403, 404]);
+const _DISPATCH_RETRY_DELAYS_MS = [500, 1500];
+
+function _sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function _ghRepositoryDispatchWithPayload(token, eventType, payload, repo = _GH_REPO_DEFAULT) {
+  const url = `https://api.github.com/repos/${repo}/dispatches`;
+  const opts = {
+    method: 'POST',
+    headers: {
+      Authorization: `token ${token}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'sportsbrain-worker',
+    },
+    body: JSON.stringify({ event_type: eventType, client_payload: payload }),
+  };
+
+  let lastStatus = 0;
+  for (let attempt = 0; attempt <= _DISPATCH_RETRY_DELAYS_MS.length; attempt++) {
+    const resp = await fetch(url, opts);
+    if (resp.ok) return;
+    lastStatus = resp.status;
+    if (_DISPATCH_PERMANENT_ERRORS.has(lastStatus)) break;
+    if (attempt < _DISPATCH_RETRY_DELAYS_MS.length) {
+      await _sleep(_DISPATCH_RETRY_DELAYS_MS[attempt]);
+    }
+  }
+  // Log status only — never token or body
+  console.error(`[cron] dispatch failed: event=${eventType} status=${lastStatus}`);
+  throw new Error(`GH dispatch ${eventType} failed: HTTP ${lastStatus}`);
+}
+
+// STAB-SCHED-AUTH-001: BL2 live-push scheduler authority.
+// Fires every 2 min during BL2 match windows (Fri/Sat/Sun).
+// Dispatches repository_dispatch so the GitHub runner executes the Python push script.
+// Idempotency: cancel-in-progress:true in the workflow discards queued duplicates.
+// GH_TOKEN missing is a hard configuration failure — the cron was scheduled but cannot dispatch.
+async function _cronBl2LivePush(env, scheduledTime) {
+  const token = env.GH_TOKEN;
+  if (!token) {
+    console.error('[cron] GH_TOKEN missing — cannot dispatch sportsbrain_bl2_live_push');
+    throw new Error('GH_TOKEN not configured: sportsbrain_bl2_live_push dispatch impossible');
+  }
+  const scheduledAt = new Date(scheduledTime).toISOString();
+  // Minute-granularity key prevents double-write if CF delivers same slot twice.
+  const minuteKey = scheduledAt.slice(0, 16); // e.g. "2026-08-30T18:36"
+  await _ghRepositoryDispatchWithPayload(token, 'sportsbrain_bl2_live_push', {
+    scheduled_at: scheduledAt,
+    scheduler: 'cloudflare_cron',
+    idempotency_key: `bl2_live_push/${minuteKey}`,
+  }, env.GH_REPO || _GH_REPO_DEFAULT);
+}
+
+// STAB-SCHED-AUTH-001: Tennis closing-odds scheduler authority (30-min).
+// Dispatches alongside the existing healer/consume heartbeat at */30.
+// GH_TOKEN missing is a hard configuration failure.
+async function _cronTennisClosingOdds(env, scheduledTime) {
+  const token = env.GH_TOKEN;
+  if (!token) {
+    console.error('[cron] GH_TOKEN missing — cannot dispatch sportsbrain_tennis_closing_odds');
+    throw new Error('GH_TOKEN not configured: sportsbrain_tennis_closing_odds dispatch impossible');
+  }
+  const scheduledAt = new Date(scheduledTime).toISOString();
+  const minuteKey = scheduledAt.slice(0, 16);
+  await _ghRepositoryDispatchWithPayload(token, 'sportsbrain_tennis_closing_odds', {
+    scheduled_at: scheduledAt,
+    scheduler: 'cloudflare_cron',
+    idempotency_key: `tennis_closing_odds/${minuteKey}`,
+  }, env.GH_REPO || _GH_REPO_DEFAULT);
+}
+
+// STAB-SCHED-AUTH-001: Tennis settle scheduler authority (9 slots/day at :15 past even hours).
+// GH_TOKEN missing is a hard configuration failure.
+async function _cronTennisSettle(env, scheduledTime) {
+  const token = env.GH_TOKEN;
+  if (!token) {
+    console.error('[cron] GH_TOKEN missing — cannot dispatch sportsbrain_tennis_settle');
+    throw new Error('GH_TOKEN not configured: sportsbrain_tennis_settle dispatch impossible');
+  }
+  const scheduledAt = new Date(scheduledTime).toISOString();
+  const minuteKey = scheduledAt.slice(0, 16);
+  await _ghRepositoryDispatchWithPayload(token, 'sportsbrain_tennis_settle', {
+    scheduled_at: scheduledAt,
+    scheduler: 'cloudflare_cron',
+    idempotency_key: `tennis_settle/${minuteKey}`,
+  }, env.GH_REPO || _GH_REPO_DEFAULT);
+}
+
 // F5-C: Trigger consume_pending_bets only when KV has pending bets.
 async function _cronConsumeCheck(env) {
   const token = env.GH_TOKEN;
@@ -1042,20 +1144,38 @@ export default {
     return new Response('Not Found', { status: 404, headers: ch });
   },
 
-  // F5-C/D: Cron triggers (configured in wrangler.toml [triggers].crons)
+  // F5-C/D + STAB-SCHED-AUTH-001: Cron triggers (wrangler.toml [triggers].crons)
   // Requires GH_TOKEN Worker secret: wrangler secret put GH_TOKEN
+  //
+  // Cron routing:
+  //   */5          → consume check (F5-C)
+  //   */30         → healer + consume heartbeat (F5-D) + tennis_closing_odds dispatch
+  //   */2 11-22 SAT,SUN → BL2 live-push dispatch (STAB-SCHED-AUTH-001)
+  //   */2 18-22 FRI     → BL2 live-push dispatch (STAB-SCHED-AUTH-001)
+  //   15 6-22/2 daily   → tennis_settle dispatch  (STAB-SCHED-AUTH-001)
   async scheduled(event, env) {
-    if (event.cron === '*/5 * * * *') await _cronConsumeCheck(env);
-    else if (event.cron === '*/30 * * * *') {
+    const cron = event.cron;
+    const scheduledTime = event.scheduledTime; // ms epoch from Cloudflare
+    if (cron === '*/5 * * * *') {
+      await _cronConsumeCheck(env);
+    } else if (cron === '*/30 * * * *') {
       await _cronHealerCheck(env);
       // Blocker-4: unconditional risk-state heartbeat every 30 min.
-      // consume_pending_bets.py always refreshes bankroll_state.published_at even
-      // when added == 0, ensuring AUTH_STATE_MAX_AGE_MS (90 min) is never exceeded
-      // regardless of tennis_scan cadence (which has gaps up to 3 hours).
       const token = env.GH_TOKEN;
       if (token) {
         await _ghRepositoryDispatch(token, 'consume_pending_bets', env.GH_REPO || _GH_REPO_DEFAULT);
       }
+      // STAB-SCHED-AUTH-001: tennis closing-odds scheduler authority.
+      await _cronTennisClosingOdds(env, scheduledTime);
+    } else if (cron === '*/2 11-22 * * SAT,SUN') {
+      // BL2 live-push: Saturday and Sunday match windows.
+      await _cronBl2LivePush(env, scheduledTime);
+    } else if (cron === '*/2 18-22 * * FRI') {
+      // BL2 live-push: Friday match window.
+      await _cronBl2LivePush(env, scheduledTime);
+    } else if (cron === '15 6-22/2 * * *') {
+      // Tennis settlement: 9 slots/day.
+      await _cronTennisSettle(env, scheduledTime);
     }
   },
 };
