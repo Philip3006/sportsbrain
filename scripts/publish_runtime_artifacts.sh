@@ -57,7 +57,7 @@ _publish_release_owned_lock() {
 _publish_resolve_dir() {
   local source_dir="$1"
   local log="$2"
-  local config value count
+  local config value count lines mode
   if [ -n "${SPORTSBRAIN_PUBLISH_DIR:-}" ]; then
     return 0
   fi
@@ -67,8 +67,11 @@ _publish_resolve_dir() {
     return 1
   fi
   count="$(grep -c '^SPORTSBRAIN_PUBLISH_DIR=' "$config" 2>/dev/null)"
+  lines="$(wc -l < "$config" | tr -d '[:space:]')"
   value="$(sed -n 's/^SPORTSBRAIN_PUBLISH_DIR=//p' "$config")"
-  if [ "$count" != "1" ] || [ -z "$value" ] || [ "${value#/}" = "$value" ] || \
+  mode="$(stat -f '%Lp' "$config" 2>/dev/null || stat -c '%a' "$config" 2>/dev/null)"
+  if [ "$count" != "1" ] || [ "$lines" != "1" ] || [ "$mode" != "600" ] || \
+     [ -z "$value" ] || [ "${value#/}" = "$value" ] || \
      printf '%s' "$value" | grep -q '[[:space:]]'; then
     echo "[runtime-publish] invalid runtime publish config" >> "$log"
     return 1
@@ -193,7 +196,7 @@ runtime_publish_artifacts() {
     for path in "$@"; do
       mkdir -p "$publish_dir/$(dirname "$path")"
       cp "$source_dir/$path" "$publish_dir/$path"
-      git -C "$publish_dir" add -- "$path"
+      git -C "$publish_dir" add -f -- "$path"
     done
     if git -C "$publish_dir" diff --cached --quiet; then
       exit 0

@@ -30,7 +30,8 @@ def _seed(tmp_path: Path) -> tuple[Path, Path, Path]:
     signals = seed / "docs" / "data" / "signals.json"
     signals.parent.mkdir(parents=True)
     signals.write_text('{"tennis": []}\n')
-    _git(["add", "docs/data/signals.json"], seed)
+    (seed / ".gitignore").write_text((ROOT / ".gitignore").read_text())
+    _git(["add", "docs/data/signals.json", ".gitignore"], seed)
     _git(["commit", "-m", "seed"], seed)
     _git(["push", "origin", "HEAD:main"], seed)
     _git(["symbolic-ref", "HEAD", "refs/heads/main"], origin)
@@ -52,6 +53,30 @@ def _command(source: Path, log: Path, *paths: str) -> list[str]:
         "auto: runtime artifact",
         *paths,
     ]
+
+
+def _configure(source: Path, publisher: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [
+            "bash",
+            "-c",
+            (
+                f'source {shlex.quote(str(PUBLISHER))} && {{ '
+                '_canonical_origin_transport() { printf "%s\\n" "$SPORTSBRAIN_TEST_PUBLISH_REMOTE"; }; '
+                'runtime_publish_configure "$1" "$2"; }'
+            ),
+            "publisher-configure",
+            str(source),
+            str(publisher),
+        ],
+        text=True,
+        capture_output=True,
+        env={
+            "PATH": os.environ["PATH"],
+            "SPORTSBRAIN_TEST_PUBLISH_REMOTE": _git(["remote", "get-url", "origin"], source).stdout.strip(),
+        },
+        check=False,
+    )
 
 
 def _environment(
@@ -163,9 +188,8 @@ def test_setup_is_idempotent_and_rejects_active_checkout(tmp_path: Path):
 
 def test_launchd_style_environment_reads_protected_publish_config(tmp_path: Path):
     origin, active, publisher = _seed(tmp_path)
-    config = active / ".runtime-publish.env"
-    config.write_text(f"SPORTSBRAIN_PUBLISH_DIR={publisher}\n")
-    config.chmod(0o600)
+    configured = _configure(active, publisher)
+    assert configured.returncode == 0, configured.stderr
     signal_file = active / "docs" / "data" / "signals.json"
     signal_file.write_text('{"tennis": [{"signal_id": "launchd"}]}\n')
 
@@ -179,6 +203,37 @@ def test_launchd_style_environment_reads_protected_publish_config(tmp_path: Path
 
     assert result.returncode == 0, result.stderr
     assert _git(["show", "main:docs/data/signals.json"], origin).stdout == signal_file.read_text()
+
+
+def test_runtime_publish_config_is_private_ignored_and_non_secret(tmp_path: Path):
+    _, active, publisher = _seed(tmp_path)
+
+    configured = _configure(active, publisher)
+
+    config = active / ".runtime-publish.env"
+    assert configured.returncode == 0, configured.stderr
+    assert config.read_text() == f"SPORTSBRAIN_PUBLISH_DIR={publisher}\n"
+    assert config.stat().st_mode & 0o777 == 0o600
+    assert _git(["check-ignore", ".runtime-publish.env"], active, check=False).returncode == 0
+    assert _git(["status", "--porcelain"], active).stdout == ""
+    assert "SECRET" not in config.read_text()
+
+
+def test_runtime_publish_config_rejects_extra_or_secret_like_entries(tmp_path: Path):
+    _, active, publisher = _seed(tmp_path)
+    config = active / ".runtime-publish.env"
+    config.write_text(f"SPORTSBRAIN_PUBLISH_DIR={publisher}\nOTHER_SECRET=value\n")
+    config.chmod(0o600)
+
+    result = _run(
+        active,
+        publisher,
+        tmp_path / "publish.log",
+        "docs/data/signals.json",
+        launchd_minimal=True,
+    )
+
+    assert result.returncode != 0
 
 
 def test_allowlist_rejects_non_artifact_paths(tmp_path: Path):
