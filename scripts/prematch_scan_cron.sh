@@ -105,6 +105,12 @@ echo "--- Bankroll: €$BANKROLL ---" >> "$LOG"
 # Settle first
 echo "--- Settle ---" >> "$LOG"
 python3 scripts/settle_bets.py >> "$LOG" 2>&1
+SETTLE_EXIT=$?
+if [ "$SETTLE_EXIT" -ne 0 ]; then
+    echo "--- Settle failed (exit $SETTLE_EXIT); prematch scan aborted ---" >> "$LOG"
+    health_finish "prematch_scan" "$SETTLE_EXIT" "" "$LOG"
+    exit "$SETTLE_EXIT"
+fi
 
 # Run scan
 echo "--- Scan (--force, kein --auto-log) ---" >> "$LOG"

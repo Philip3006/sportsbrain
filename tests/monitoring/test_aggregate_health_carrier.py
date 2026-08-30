@@ -12,13 +12,20 @@ PLIST = ROOT / "launchd" / "com.sportsbrain.aggregate-health.plist"
 def test_aggregate_health_carrier_is_non_financial_and_truthful() -> None:
     source = SCRIPT.read_text()
 
-    assert "python3 -m src.monitoring.aggregate_health --quiet" in source
+    assert "python3 -m src.monitoring.aggregate_health --quiet --no-write --no-upload" in source
     assert 'health_start "aggregate_health"' in source
     assert 'health_finish "aggregate_health" "$EXIT_CODE"' in source
     assert 'exit "$EXIT_CODE"' in source
 
     forbidden = ("consume_pending_bets", "ledger", "pending-bet", "_kv_delete")
     assert not any(token in source for token in forbidden)
+
+
+def test_local_carrier_never_publishes_from_the_active_checkout() -> None:
+    source = SCRIPT.read_text()
+
+    assert "--no-write" in source
+    assert "--no-upload" in source
 
 
 def test_aggregate_health_plist_matches_canonical_local_cadence() -> None:

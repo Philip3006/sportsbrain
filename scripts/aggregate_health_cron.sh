@@ -18,7 +18,10 @@ fi
 source "$SPORTSBRAIN_DIR/scripts/_health.sh"
 health_start "aggregate_health"
 
-python3 -m src.monitoring.aggregate_health --quiet >> "$LOG" 2>&1
+# The active checkout is never a runtime artifact publisher.  Until the
+# Cloudflare per-authority merge contract is deployed, fail closed rather than
+# allowing an old local aggregate to replace newer cloud health.
+python3 -m src.monitoring.aggregate_health --quiet --no-write --no-upload >> "$LOG" 2>&1
 EXIT_CODE=$?
 
 health_finish "aggregate_health" "$EXIT_CODE" "" "$LOG"
