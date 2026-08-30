@@ -606,9 +606,13 @@ async function _ghRepositoryDispatchWithPayload(token, eventType, payload, repo 
 // Fires every 2 min during BL2 match windows (Fri/Sat/Sun).
 // Dispatches repository_dispatch so the GitHub runner executes the Python push script.
 // Idempotency: cancel-in-progress:true in the workflow discards queued duplicates.
+// GH_TOKEN missing is a hard configuration failure — the cron was scheduled but cannot dispatch.
 async function _cronBl2LivePush(env, scheduledTime) {
   const token = env.GH_TOKEN;
-  if (!token) return;
+  if (!token) {
+    console.error('[cron] GH_TOKEN missing — cannot dispatch sportsbrain_bl2_live_push');
+    throw new Error('GH_TOKEN not configured: sportsbrain_bl2_live_push dispatch impossible');
+  }
   const scheduledAt = new Date(scheduledTime).toISOString();
   // Minute-granularity key prevents double-write if CF delivers same slot twice.
   const minuteKey = scheduledAt.slice(0, 16); // e.g. "2026-08-30T18:36"
@@ -621,9 +625,13 @@ async function _cronBl2LivePush(env, scheduledTime) {
 
 // STAB-SCHED-AUTH-001: Tennis closing-odds scheduler authority (30-min).
 // Dispatches alongside the existing healer/consume heartbeat at */30.
+// GH_TOKEN missing is a hard configuration failure.
 async function _cronTennisClosingOdds(env, scheduledTime) {
   const token = env.GH_TOKEN;
-  if (!token) return;
+  if (!token) {
+    console.error('[cron] GH_TOKEN missing — cannot dispatch sportsbrain_tennis_closing_odds');
+    throw new Error('GH_TOKEN not configured: sportsbrain_tennis_closing_odds dispatch impossible');
+  }
   const scheduledAt = new Date(scheduledTime).toISOString();
   const minuteKey = scheduledAt.slice(0, 16);
   await _ghRepositoryDispatchWithPayload(token, 'sportsbrain_tennis_closing_odds', {
@@ -634,9 +642,13 @@ async function _cronTennisClosingOdds(env, scheduledTime) {
 }
 
 // STAB-SCHED-AUTH-001: Tennis settle scheduler authority (9 slots/day at :15 past even hours).
+// GH_TOKEN missing is a hard configuration failure.
 async function _cronTennisSettle(env, scheduledTime) {
   const token = env.GH_TOKEN;
-  if (!token) return;
+  if (!token) {
+    console.error('[cron] GH_TOKEN missing — cannot dispatch sportsbrain_tennis_settle');
+    throw new Error('GH_TOKEN not configured: sportsbrain_tennis_settle dispatch impossible');
+  }
   const scheduledAt = new Date(scheduledTime).toISOString();
   const minuteKey = scheduledAt.slice(0, 16);
   await _ghRepositoryDispatchWithPayload(token, 'sportsbrain_tennis_settle', {

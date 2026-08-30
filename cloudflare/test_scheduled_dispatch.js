@@ -141,9 +141,13 @@ async function _ghRepositoryDispatchWithPayload(token, eventType, payload, repo 
   throw new Error(`GH dispatch ${eventType} failed: HTTP ${lastStatus}`);
 }
 
+// GH_TOKEN missing is a hard configuration failure — throw, never silently skip.
 async function _cronBl2LivePush(env, scheduledTime) {
   const token = env.GH_TOKEN;
-  if (!token) return;
+  if (!token) {
+    console.error('[cron] GH_TOKEN missing — cannot dispatch sportsbrain_bl2_live_push');
+    throw new Error('GH_TOKEN not configured: sportsbrain_bl2_live_push dispatch impossible');
+  }
   const scheduledAt = new Date(scheduledTime).toISOString();
   const minuteKey = scheduledAt.slice(0, 16);
   await _ghRepositoryDispatchWithPayload(token, 'sportsbrain_bl2_live_push', {
@@ -155,7 +159,10 @@ async function _cronBl2LivePush(env, scheduledTime) {
 
 async function _cronTennisClosingOdds(env, scheduledTime) {
   const token = env.GH_TOKEN;
-  if (!token) return;
+  if (!token) {
+    console.error('[cron] GH_TOKEN missing — cannot dispatch sportsbrain_tennis_closing_odds');
+    throw new Error('GH_TOKEN not configured: sportsbrain_tennis_closing_odds dispatch impossible');
+  }
   const scheduledAt = new Date(scheduledTime).toISOString();
   const minuteKey = scheduledAt.slice(0, 16);
   await _ghRepositoryDispatchWithPayload(token, 'sportsbrain_tennis_closing_odds', {
@@ -167,7 +174,10 @@ async function _cronTennisClosingOdds(env, scheduledTime) {
 
 async function _cronTennisSettle(env, scheduledTime) {
   const token = env.GH_TOKEN;
-  if (!token) return;
+  if (!token) {
+    console.error('[cron] GH_TOKEN missing — cannot dispatch sportsbrain_tennis_settle');
+    throw new Error('GH_TOKEN not configured: sportsbrain_tennis_settle dispatch impossible');
+  }
   const scheduledAt = new Date(scheduledTime).toISOString();
   const minuteKey = scheduledAt.slice(0, 16);
   await _ghRepositoryDispatchWithPayload(token, 'sportsbrain_tennis_settle', {
@@ -239,11 +249,15 @@ await testAsync('BL2: different minutes produce different idempotency_keys', asy
   assert(key1 !== key2, 'different minutes → different idempotency_keys');
 });
 
-await testAsync('BL2: no dispatch when GH_TOKEN missing', async () => {
+await testAsync('BL2: missing GH_TOKEN fails closed (throws, not silent skip)', async () => {
   resetFetch();
   const env = makeEnv('');  // empty token
-  await _cronBl2LivePush(env, Date.now());
-  assertEq(_fetchCalls.length, 0, 'no fetch when GH_TOKEN missing');
+  let threw = false;
+  let errMsg = '';
+  try { await _cronBl2LivePush(env, Date.now()); } catch (e) { threw = true; errMsg = e.message; }
+  assert(threw, 'missing GH_TOKEN throws');
+  assertEq(_fetchCalls.length, 0, 'no fetch attempted when token missing');
+  assert(errMsg.length > 0, 'error message is not empty');
 });
 
 await testAsync('BL2: uses custom GH_REPO if set', async () => {
@@ -280,10 +294,12 @@ await testAsync('ClosingOdds: idempotency_key prefixed with tennis_closing_odds/
   assert(key.startsWith('tennis_closing_odds/'), 'key has correct prefix');
 });
 
-await testAsync('ClosingOdds: no dispatch when GH_TOKEN missing', async () => {
+await testAsync('ClosingOdds: missing GH_TOKEN fails closed (throws)', async () => {
   resetFetch();
-  await _cronTennisClosingOdds(makeEnv(''), Date.now());
-  assertEq(_fetchCalls.length, 0, 'no fetch without token');
+  let threw = false;
+  try { await _cronTennisClosingOdds(makeEnv(''), Date.now()); } catch { threw = true; }
+  assert(threw, 'missing GH_TOKEN throws for tennis_closing_odds');
+  assertEq(_fetchCalls.length, 0, 'no fetch attempted when token missing');
 });
 
 // ── Tennis settle ─────────────────────────────────────────────────────────────
@@ -305,10 +321,12 @@ await testAsync('TennisSettle: idempotency_key prefixed with tennis_settle/', as
   assert(key.startsWith('tennis_settle/'), 'key has correct prefix');
 });
 
-await testAsync('TennisSettle: no dispatch when GH_TOKEN missing', async () => {
+await testAsync('TennisSettle: missing GH_TOKEN fails closed (throws)', async () => {
   resetFetch();
-  await _cronTennisSettle(makeEnv(''), Date.now());
-  assertEq(_fetchCalls.length, 0, 'no fetch without token');
+  let threw = false;
+  try { await _cronTennisSettle(makeEnv(''), Date.now()); } catch { threw = true; }
+  assert(threw, 'missing GH_TOKEN throws for tennis_settle');
+  assertEq(_fetchCalls.length, 0, 'no fetch attempted when token missing');
 });
 
 // ── Idempotency: duplicate dispatch within same minute ────────────────────────

@@ -42,6 +42,7 @@ jobs:
 
       # STAB-SCHED-AUTH-001: measure scheduler lag for P95 monitoring.
       # scheduled_at comes from Cloudflare client_payload or workflow_dispatch input.
+      # GH fallback runs (schedule:) have no provable scheduled_at → lag_s is empty (null).
       - name: Compute scheduler lag
         id: lag
         run: |
@@ -58,8 +59,10 @@ jobs:
               echo "::warning::SCHEDULER_LAG_EXCEEDED: ${LAG_S}s > 120s SLA target (scheduled_at=$SCHEDULED_AT)"
             fi
           else
-            echo "lag_s=0" >> $GITHUB_OUTPUT
-            echo "no scheduled_at in payload — manual or legacy trigger"
+            # No provable scheduled_at: GH fallback or manual dispatch.
+            # Do NOT fabricate lag_s=0. Output empty so health_writer receives null.
+            echo "lag_s=" >> $GITHUB_OUTPUT
+            echo "no scheduled_at — GH fallback or manual trigger, lag unknown"
           fi
           echo "idempotency_key=$IDEMPOTENCY_KEY" >> $GITHUB_OUTPUT
           echo "scheduler=$SCHEDULER" >> $GITHUB_OUTPUT
@@ -100,18 +103,24 @@ jobs:
         if: always()
         run: |
           STATUS="${{ steps.poll.outputs.status || 'error' }}"
-          LAG_S="${{ steps.lag.outputs.lag_s || '0' }}"
           SCHEDULER="${{ steps.lag.outputs.scheduler || 'unknown' }}"
+          SCHEDULED_AT="${{ steps.lag.outputs.scheduled_at || github.event.client_payload.scheduled_at || '' }}"
+          LAG_S="${{ steps.lag.outputs.lag_s }}"
+          IDEMPOTENCY_KEY="${{ steps.lag.outputs.idempotency_key || '' }}"
           EXIT_CODE=1
           if [ "${{ job.status }}" = "success" ]; then
             EXIT_CODE=0
           fi
-          python -m src.monitoring.health_writer \
-            --job bundesliga2_live_push \
-            --status "$STATUS" \
-            --exit-code "$EXIT_CODE" \
-            --scheduler "$SCHEDULER" \
-            --scheduler-lag-s "$LAG_S" || true
+          HEALTH_ARGS=(
+            --job bundesliga2_live_push
+            --status "$STATUS"
+            --exit-code "$EXIT_CODE"
+            --scheduler "$SCHEDULER"
+          )
+          [ -n "$SCHEDULED_AT" ]    && HEALTH_ARGS+=(--scheduled-at "$SCHEDULED_AT")
+          [ -n "$LAG_S" ]           && HEALTH_ARGS+=(--scheduler-lag-s "$LAG_S")
+          [ -n "$IDEMPOTENCY_KEY" ] && HEALTH_ARGS+=(--idempotency-key "$IDEMPOTENCY_KEY")
+          python -m src.monitoring.health_writer "${HEALTH_ARGS[@]}" || true
 
       - name: Commit cache + health
         if: always()
@@ -119,4 +128,4 @@ jobs:
           git add docs/data/bundesliga2_live_scores.json || true
           git add -f data/cache/bundesliga2_live_scores.json || true
           git add -f results/health/bundesliga2_live_push.json || true
-          bash scripts/_bot_commit_push.sh "auto: bl2 live $(date -u +%H:%M) [lag=${{ steps.lag.outputs.lag_s || 0 }}s]"
+          bash scripts/_bot_commit_push.sh "auto: bl2 live $(date -u +%H:%M) [lag=${{ steps.lag.outputs.lag_s || 'unknown' }}s]"

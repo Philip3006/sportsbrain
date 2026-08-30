@@ -60,7 +60,9 @@ jobs:
             echo "scheduler=$SCHEDULER" >> $GITHUB_OUTPUT
             echo "Scheduler lag: ${LAG_S}s (source=$SCHEDULER)"
           else
-            echo "lag_s=0" >> $GITHUB_OUTPUT
+            # No provable scheduled_at: GH fallback or manual dispatch.
+            # Do NOT fabricate lag_s=0. Output empty so health_writer receives null.
+            echo "lag_s=" >> $GITHUB_OUTPUT
             echo "scheduler=$SCHEDULER" >> $GITHUB_OUTPUT
           fi
           echo "idempotency_key=$IDEMPOTENCY_KEY" >> $GITHUB_OUTPUT
@@ -109,18 +111,24 @@ jobs:
         if: always()
         run: |
           STATUS="${{ steps.settle.outputs.status || 'error' }}"
-          LAG_S="${{ steps.lag.outputs.lag_s || '0' }}"
           SCHEDULER="${{ steps.lag.outputs.scheduler || 'unknown' }}"
+          SCHEDULED_AT="${{ github.event.client_payload.scheduled_at || '' }}"
+          LAG_S="${{ steps.lag.outputs.lag_s }}"
+          IDEMPOTENCY_KEY="${{ steps.lag.outputs.idempotency_key || '' }}"
           EXIT_CODE=1
           if [ "${{ job.status }}" = "success" ]; then
             EXIT_CODE=0
           fi
-          python -m src.monitoring.health_writer \
-            --job tennis_settle \
-            --status "$STATUS" \
-            --exit-code "$EXIT_CODE" \
-            --scheduler "$SCHEDULER" \
-            --scheduler-lag-s "$LAG_S" || true
+          HEALTH_ARGS=(
+            --job tennis_settle
+            --status "$STATUS"
+            --exit-code "$EXIT_CODE"
+            --scheduler "$SCHEDULER"
+          )
+          [ -n "$SCHEDULED_AT" ]    && HEALTH_ARGS+=(--scheduled-at "$SCHEDULED_AT")
+          [ -n "$LAG_S" ]           && HEALTH_ARGS+=(--scheduler-lag-s "$LAG_S")
+          [ -n "$IDEMPOTENCY_KEY" ] && HEALTH_ARGS+=(--idempotency-key "$IDEMPOTENCY_KEY")
+          python -m src.monitoring.health_writer "${HEALTH_ARGS[@]}" || true
 
       - name: Commit private ledger (fatal if ledger staging fails)
         env:

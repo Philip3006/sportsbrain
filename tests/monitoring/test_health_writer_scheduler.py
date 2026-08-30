@@ -149,6 +149,79 @@ def test_scheduler_fields_do_not_affect_mon001(health_dir):
     assert payload["status"] == "error"  # MON-001 coercion still applies
 
 
+# ── FIX 1 regressions: null lag for unverifiable scheduled_at ────────────────
+# When no provable scheduled_at exists (GH fallback, manual dispatch), the workflow
+# outputs lag_s="" (empty). health_writer must serialize scheduler_lag_s=null,
+# not a fabricated zero. These tests document that contract.
+
+def test_cf_dispatch_scheduled_at_persisted(health_dir):
+    write_health(
+        "bundesliga2_live_push",
+        "ok",
+        exit_code=0,
+        scheduler="cloudflare_cron",
+        scheduled_at="2026-09-05T20:14:00Z",
+        scheduler_lag_s=45,
+        idempotency_key="bl2_live_push/2026-09-05T20:14",
+    )
+    payload = _read_health(health_dir, "bundesliga2_live_push")
+    assert payload["scheduled_at"] == "2026-09-05T20:14:00Z", "CF scheduled_at persisted"
+
+
+def test_cf_dispatch_idempotency_key_persisted(health_dir):
+    write_health(
+        "bundesliga2_live_push",
+        "ok",
+        exit_code=0,
+        scheduler="cloudflare_cron",
+        idempotency_key="bl2_live_push/2026-09-05T20:14",
+    )
+    payload = _read_health(health_dir, "bundesliga2_live_push")
+    assert payload["idempotency_key"] == "bl2_live_push/2026-09-05T20:14", "idempotency_key persisted"
+
+
+def test_cf_dispatch_measured_lag_persisted(health_dir):
+    write_health(
+        "bundesliga2_live_push",
+        "ok",
+        exit_code=0,
+        scheduler="cloudflare_cron",
+        scheduler_lag_s=45,
+    )
+    payload = _read_health(health_dir, "bundesliga2_live_push")
+    assert payload["scheduler_lag_s"] == 45, "measured scheduler_lag_s persisted"
+
+
+def test_gh_fallback_without_scheduled_at_lag_is_null(health_dir):
+    # GH schedule fallback: no provable scheduled_at → workflow passes lag_s=""
+    # health_writer must produce scheduler_lag_s=null, not fabricated zero.
+    write_health(
+        "bundesliga2_live_push",
+        "ok",
+        exit_code=0,
+        scheduler="gh_cron_fallback",
+        # scheduled_at not passed (workflow outputs empty string → not passed as CLI arg)
+        scheduler_lag_s="",  # empty string from workflow conditional
+    )
+    payload = _read_health(health_dir, "bundesliga2_live_push")
+    assert payload["scheduler_lag_s"] is None, "GH fallback: unknown lag must be null, not zero"
+    assert payload["scheduler"] == "gh_cron_fallback"
+
+
+def test_manual_dispatch_without_scheduled_at_lag_is_null(health_dir):
+    # workflow_dispatch without scheduled_at input: lag unknown → null.
+    write_health(
+        "tennis_settle",
+        "ok",
+        exit_code=0,
+        scheduler="workflow_dispatch",
+        # lag_s not passed at all (workflow conditional skips the flag)
+    )
+    payload = _read_health(health_dir, "tennis_settle")
+    assert payload["scheduler_lag_s"] is None, "manual dispatch: unknown lag must be null, not zero"
+    assert payload["scheduled_at"] is None
+
+
 # ── Old callers remain unchanged ──────────────────────────────────────────────
 
 def test_old_caller_without_scheduler_fields(health_dir):

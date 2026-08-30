@@ -292,6 +292,36 @@ await testAsync('Worker: 500 retries then fails (tennis settle)', async () => {
   assertEq(settleFetches.length, 3, '500: 3 total settle dispatch attempts');
 });
 
+// ── Missing GH_TOKEN fails closed (actual Worker) ────────────────────────────
+
+await testAsync('Worker: missing GH_TOKEN causes BL2 scheduled() to throw', async () => {
+  resetFetch();
+  const env = makeEnv('');  // no token
+  let threw = false;
+  try { await worker.scheduled(makeEvent('*/2 18-22 * * FRI'), env); } catch { threw = true; }
+  assert(threw, 'BL2 scheduled() throws when GH_TOKEN missing (fail-closed)');
+  assertEq(_fetchCalls.length, 0, 'no fetch attempted when token missing');
+});
+
+await testAsync('Worker: missing GH_TOKEN causes tennis_closing_odds scheduled() to throw', async () => {
+  resetFetch();
+  const env = makeEnv('');
+  let threw = false;
+  try { await worker.scheduled(makeEvent('*/30 * * * *'), env); } catch { threw = true; }
+  // Note: */30 also calls _cronHealerCheck/_cronConsumeCheck which silently return on missing token.
+  // _cronTennisClosingOdds throws — so scheduled() propagates.
+  assert(threw, 'tennis_closing_odds scheduled() throws when GH_TOKEN missing');
+});
+
+await testAsync('Worker: missing GH_TOKEN causes tennis_settle scheduled() to throw', async () => {
+  resetFetch();
+  const env = makeEnv('');
+  let threw = false;
+  try { await worker.scheduled(makeEvent('15 6-22/2 * * *'), env); } catch { threw = true; }
+  assert(threw, 'tennis_settle scheduled() throws when GH_TOKEN missing');
+  assertEq(_fetchCalls.length, 0, 'no fetch attempted when token missing');
+});
+
 // ── Summary ───────────────────────────────────────────────────────────────────
 
 console.log(`\n${'─'.repeat(60)}`);
