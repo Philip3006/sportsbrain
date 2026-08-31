@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """O1-7 — Odds Refresh CLI.
 
 Called by launchd every 5 minutes. Determines per-signal cadence internally
