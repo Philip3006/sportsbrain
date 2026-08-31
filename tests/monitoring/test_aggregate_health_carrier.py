@@ -18,8 +18,13 @@ def test_aggregate_health_carrier_is_non_financial_and_truthful() -> None:
 
     assert "python3 -m src.monitoring.aggregate_health --quiet --no-write --authority local" in source
     assert 'health_start "aggregate_health"' in source
+    assert 'aggregate_health started' in source
     assert 'health_finish "aggregate_health" "$EXIT_CODE"' in source
     assert 'exit "$EXIT_CODE"' in source
+
+    assert source.index('aggregate_health started') < source.index(
+        'python3 -m src.monitoring.aggregate_health'
+    )
 
     forbidden = ("consume_pending_bets", "ledger", "pending-bet", "_kv_delete")
     assert not any(token in source for token in forbidden)
