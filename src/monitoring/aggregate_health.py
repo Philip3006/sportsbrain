@@ -284,7 +284,7 @@ def _freshness_entries() -> list[dict[str, Any]]:
     return out
 
 
-def aggregate(merge_from_committed: bool = False) -> dict[str, Any]:
+def aggregate(merge_from_committed: bool = False, *, write_output: bool = True) -> dict[str, Any]:
     HEALTH_DIR.mkdir(parents=True, exist_ok=True)
     baseline = _load_baseline() if merge_from_committed else {}
     now = datetime.now(timezone.utc)
@@ -308,7 +308,8 @@ def aggregate(merge_from_committed: bool = False) -> dict[str, Any]:
         "jobs":         jobs,
         "provenance":   build_provenance(built_at=built_at),
     }
-    atomic_write_json(HEALTH_JSON_OUT, payload, indent=2)
+    if write_output:
+        atomic_write_json(HEALTH_JSON_OUT, payload, indent=2)
     return payload
 
 
@@ -363,10 +364,15 @@ def _cli() -> int:
                         "(for GitHub Actions, where results/health/ is gitignored)")
     p.add_argument("--authority", choices=("cloud", "local"), default="cloud",
                    help="execution plane authorized to publish this health update")
+    p.add_argument("--no-write", action="store_true",
+                   help="do not write docs/data/health.json in the active checkout")
     p.add_argument("--quiet", action="store_true")
     args = p.parse_args()
 
-    payload = aggregate(merge_from_committed=args.merge_from_committed)
+    payload = aggregate(
+        merge_from_committed=args.merge_from_committed,
+        write_output=not args.no_write,
+    )
 
     if not args.quiet:
         n_ok = sum(1 for j in payload["jobs"] if j["status"] == "ok")
@@ -377,6 +383,8 @@ def _cli() -> int:
         ok = _push_to_cloud(payload, authority=args.authority)
         if not args.quiet:
             print(f"[health] cloud upload: {'ok' if ok else 'skipped/failed'}")
+        if not ok:
+            return 1
 
     return 0
 

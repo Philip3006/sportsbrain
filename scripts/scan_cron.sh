@@ -27,6 +27,12 @@ echo "========================================" >> "$LOG"
 # 1. Auto-settle completed matches
 echo "--- Settle bets ---" >> "$LOG"
 python3 scripts/settle_bets.py >> "$LOG" 2>&1
+SETTLE_EXIT=$?
+if [ "$SETTLE_EXIT" -ne 0 ]; then
+    echo "--- Settle failed (exit $SETTLE_EXIT); daily scan aborted ---" >> "$LOG"
+    health_finish "daily_scan" "$SETTLE_EXIT" "" "$LOG"
+    exit "$SETTLE_EXIT"
+fi
 
 # 2. Refresh injury news (DDG search, all 48 teams)
 echo "--- Injury refresh ---" >> "$LOG"
