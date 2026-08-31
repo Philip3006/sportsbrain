@@ -127,7 +127,10 @@ function _randomToken() {
 async function authResolve(request, env) {
   const token = _extractBearer(request);
   if (!token) return { ok: false, user: null, viaMaster: false };
-  if (env.API_TOKEN && token === env.API_TOKEN) {
+  const isMasterToken =
+    (env.API_TOKEN && token === env.API_TOKEN) ||
+    (env.API_TOKEN_NEXT && token === env.API_TOKEN_NEXT);
+  if (isMasterToken) {
     return { ok: true, user: null, viaMaster: true };
   }
   const ut = await readUserTokens(env);

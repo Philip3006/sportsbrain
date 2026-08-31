@@ -152,11 +152,99 @@ async function postHealth(env, authority, health) {
   ), env);
 }
 
+function makeAuthEnv() {
+  const values = new Map([
+    ['user_tokens', JSON.stringify({
+      philip: {
+        active: 'philip_active_token',
+        previous: {
+          token: 'philip_previous_token',
+          expires_at: '2030-01-01T00:00:00Z',
+        },
+        rotated_at: '2026-08-31T00:00:00Z',
+      },
+    })],
+  ]);
+  return {
+    API_TOKEN: 'old_master_token',
+    API_TOKEN_NEXT: 'next_master_token',
+    GH_TOKEN: 'integration_test_token',
+    GH_REPO: 'Philip3006/sportsbrain',
+    SIGNALS: {
+      get: async (key) => values.get(key) || null,
+      put: async (key, value) => { values.set(key, value); },
+      list: async () => ({ keys: [] }),
+      delete: async (key) => { values.delete(key); },
+    },
+  };
+}
+
+function authenticatedRequest(path, token) {
+  return new Request(`https://worker.test${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
 const KNOWN_REPO_URL = 'Philip3006/sportsbrain/dispatches';
 
 // ── Cron routing tests ────────────────────────────────────────────────────────
 
 console.log('\n=== STAB-SCHED-AUTH-001: Worker Integration Tests (actual worker.js) ===');
+
+// ── Master-token transition authentication ──────────────────────────────────
+
+await testAsync('Auth: old and next master tokens retain master-only semantics', async () => {
+  const env = makeAuthEnv();
+  const oldStatus = await worker.fetch(
+    authenticatedRequest('/token_status?user=philip', 'old_master_token'), env,
+  );
+  const nextStatus = await worker.fetch(
+    authenticatedRequest('/token_status?user=philip', 'next_master_token'), env,
+  );
+  const invalid = await worker.fetch(
+    authenticatedRequest('/token_status?user=philip', 'invalid_token'), env,
+  );
+  assertEq(oldStatus.status, 200, 'old API_TOKEN is accepted');
+  assertEq(nextStatus.status, 200, 'API_TOKEN_NEXT is accepted');
+  assertEq(invalid.status, 401, 'invalid token is rejected');
+
+  const oldMe = await worker.fetch(authenticatedRequest('/me', 'old_master_token'), env);
+  const nextMe = await worker.fetch(authenticatedRequest('/me', 'next_master_token'), env);
+  assertEq(oldMe.status, 403, 'old master remains ambiguous for /me');
+  assertEq(nextMe.status, 403, 'next master remains ambiguous for /me');
+});
+
+await testAsync('Auth: active and grace per-user tokens retain their owner behavior', async () => {
+  const env = makeAuthEnv();
+  const active = await worker.fetch(
+    authenticatedRequest('/token_status?user=philip', 'philip_active_token'), env,
+  );
+  const previous = await worker.fetch(
+    authenticatedRequest('/token_status?user=philip', 'philip_previous_token'), env,
+  );
+  assertEq(active.status, 200, 'active per-user token remains accepted');
+  assertEq(previous.status, 200, 'unexpired per-user grace token remains accepted');
+  assertEq((await active.json()).user, 'philip', 'active token retains its owner');
+  assertEq((await previous.json()).user, 'philip', 'grace token retains its owner');
+});
+
+await testAsync('Auth: next master retains health merge authorization', async () => {
+  const initial = healthPayload([healthJob('daily_scan', 'ok', '2026-08-31T10:00:00Z')]);
+  const env = makeHealthEnv(initial);
+  env.API_TOKEN_NEXT = 'next_master_token';
+  const response = await worker.fetch(new Request(
+    'https://worker.test/signals?merge_health=1&health_authority=local',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer next_master_token',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ health: initial }),
+    },
+  ), env);
+  assertEq(response.status, 200, 'next master retains existing health merge authorization');
+});
 
 // ── Named weekday BL2 crons ───────────────────────────────────────────────────
 
