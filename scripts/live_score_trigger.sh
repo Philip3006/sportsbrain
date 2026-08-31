@@ -25,9 +25,16 @@ timestamp() { date -u '+%Y-%m-%d %H:%M:%S UTC'; }
 
     JOB_EXIT=0
     # ── Generate fresh data ───────────────────────────────────────────────────
-    "$PYTHON" scripts/live_score_push.py 2>&1 | grep -v "^$" || true
+    "$PYTHON" scripts/live_score_push.py 2>&1 | grep -v "^$"
+    LIVE_EXIT=${PIPESTATUS[0]}
     "$PYTHON" scripts/tennis_live_push.py
-    JOB_EXIT=$?
+    TENNIS_EXIT=$?
+    JOB_EXIT=0
+    if [ "$LIVE_EXIT" -ne 0 ]; then
+        JOB_EXIT=$LIVE_EXIT
+    elif [ "$TENNIS_EXIT" -ne 0 ]; then
+        JOB_EXIT=$TENNIS_EXIT
+    fi
     PUBLISH_EXIT=0
     source "$SPORTSBRAIN_DIR/scripts/publish_runtime_artifacts.sh"
     runtime_publish_artifacts "$SPORTSBRAIN_DIR" "$LOG" \

@@ -311,6 +311,13 @@ class TestAggregateMON001:
     def _now_str(self) -> str:
         return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
+    def test_no_write_mode_does_not_mutate_active_health_artifact(self, agg_dirs):
+        """Local aggregation is observational until authority-aware cloud merge exists."""
+        from src.monitoring import aggregate_health as ag
+
+        ag.aggregate(write_output=False)
+        assert not agg_dirs["out"].exists()
+
     def test_aggregate_coerces_legacy_ok_nonzero(self, agg_dirs):
         """D: a pre-existing snapshot with ok+exit_code=1 must not publish ok."""
         from src.monitoring import aggregate_health as ag
