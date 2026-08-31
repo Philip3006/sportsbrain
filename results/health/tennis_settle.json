@@ -1,8 +1,8 @@
 {
   "job": "tennis_settle",
   "status": "ok",
-  "last_run_at": "2026-08-31T08:16:15Z",
-  "started_at": "2026-08-31T08:16:15Z",
+  "last_run_at": "2026-08-31T10:16:10Z",
+  "started_at": "2026-08-31T10:16:10Z",
   "duration_s": null,
   "exit_code": 0,
   "error": null,
@@ -10,7 +10,7 @@
   "run_id": null,
   "recovery_attempt_id": null,
   "scheduler": "cloudflare_cron",
-  "scheduled_at": "2026-08-31T08:15:23.000Z",
+  "scheduled_at": "2026-08-31T10:15:23.000Z",
   "scheduler_lag_s": 10,
-  "idempotency_key": "tennis_settle/2026-08-31T08:15"
+  "idempotency_key": "tennis_settle/2026-08-31T10:15"
 }
