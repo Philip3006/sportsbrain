@@ -1,6 +1,6 @@
 # Tennis Scan 2026-08-31
 
-**Aktive Turniere:** 2 · **Signals total:** 11
+**Aktive Turniere:** 2 · **Signals total:** 10
 
 ## ⭐ TOP-PICKS — nur diese spielen
 
@@ -8,8 +8,6 @@
 
 - 🟢 **Stefanos Tsitsipas vs Arthur Fils** · Match Winner: Arthur Fils
   Quote 1.55 · EV +34.6% · Stake 5.00€ · HIGH
-- 🟢 **Matteo Berrettini vs Stan Wawrinka** · Match Winner: Matteo Berrettini
-  Quote 2.21 · EV +26.9% · Stake 5.00€ · HIGH
 
 ---
 
@@ -18,8 +16,6 @@
 Surface: hard · Best of: 5 · Matches gescannt: 42
 - [ATP] **Stefanos Tsitsipas vs Arthur Fils** · Match Winner: Arthur Fils ⭐
   Quote 1.55 · Modell 86.8% · EV +34.6% · Stake 5.00€ · HIGH
-- [ATP] **Matteo Berrettini vs Stan Wawrinka** · Match Winner: Matteo Berrettini ⭐
-  Quote 2.21 · Modell 57.4% · EV +26.9% · Stake 5.00€ · HIGH
 - [ATP] **Jakub Mensik vs Shintaro Mochizuki** · Match Winner: Jakub Mensik
   Quote 1.40 · Modell 86.8% · EV +21.6% · Stake 5.00€ · HIGH
 - [ATP] **Damir Dzumhur vs Hubert Hurkacz** · Match Winner: Hubert Hurkacz
@@ -33,7 +29,7 @@ Surface: hard · Best of: 5 · Matches gescannt: 42
 - [ATP] **Yannick Hanfmann vs Alejandro Tabilo** · Match Winner: Alejandro Tabilo
   Quote 2.17 · Modell 50.0% · EV +8.5% · Stake 5.00€ · MEDIUM
 - [ATP] **Otto Virtanen vs Andrey Rublev** · Match Winner: Otto Virtanen
-  Quote 2.52 · Modell 42.1% · EV +6.1% · Stake 5.00€ · MEDIUM
+  Quote 2.53 · Modell 42.1% · EV +6.5% · Stake 5.00€ · MEDIUM
 - [ATP] **Nuno Borges vs Learner Tien** · Match Winner: Nuno Borges
   Quote 2.32 · Modell 45.4% · EV +5.3% · Stake 5.00€ · MEDIUM
 - [ATP] **Matteo Arnaldi vs James Duckworth** · Match Winner: James Duckworth
