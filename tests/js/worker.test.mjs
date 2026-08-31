@@ -1206,17 +1206,26 @@ describe('Suite 14 — P0C-001 Worker GET public boundary + merge_health', () =>
     assert.ok('tennis' in pub, 'tennis missing from public GET');
   });
 
-  test('POST /signals ?merge_health=1 merges health without wiping private fields', async () => {
+  test('POST /signals ?merge_health=1 writes dedicated health without wiping private fields', async () => {
     const kv = makeMockKV();
     const env = makeEnv(kv);
     await kv.put('signals_json', JSON.stringify(PRIVATE_KV_SNAPSHOT));
+    await kv.put('health_v1', JSON.stringify({
+      overall: 'ok', jobs: [], generated_at: '2026-08-17T00:00:00Z',
+    }));
     const healthPayload = { overall: 'ok', jobs: [], generated_at: '2026-08-18T00:00:00Z' };
-    const resp = await fw(env, 'POST', '/signals?merge_health=1', { health: healthPayload }, MASTER_TOKEN);
+    const resp = await fw(
+      env,
+      'POST',
+      '/signals?merge_health=1&health_authority=local',
+      { health: healthPayload },
+      MASTER_TOKEN,
+    );
     assert.equal(resp.status, 200, 'merge_health POST failed');
     const updated = JSON.parse(await kv.get('signals_json'));
-    // Health was injected
-    assert.deepStrictEqual(updated.health, healthPayload, 'health not merged into KV');
-    // Private fields preserved
+    const health = JSON.parse(await kv.get('health_v1'));
+    assert.deepStrictEqual(health, healthPayload, 'health not written to dedicated KV');
+    // Private fields stay in the financial snapshot, untouched by health writes.
     assert.ok('bankroll_state' in updated, 'bankroll_state wiped from KV after merge_health');
     assert.ok('open_bets' in updated, 'open_bets wiped from KV after merge_health');
     assert.ok(updated.bankroll_state.free === 12345.67, 'bankroll free value corrupted');

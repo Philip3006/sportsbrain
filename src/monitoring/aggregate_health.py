@@ -27,6 +27,7 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 HEALTH_DIR = ROOT / "results" / "health"
 HEALTH_JSON_OUT = ROOT / "docs" / "data" / "health.json"
 
+from src.monitoring.health_authority import jobs_for_authority
 from src.monitoring.health_writer import _coerce_exit_code
 from src.monitoring.job_schedule import (
     JOB_EXPECTATIONS,
@@ -312,15 +313,12 @@ def aggregate(merge_from_committed: bool = False, *, write_output: bool = True) 
     return payload
 
 
-def _push_to_cloud(payload: dict[str, Any]) -> bool:
-    """Merge health into the cloud signals KV via Worker ?merge_health=1 POST.
+def _push_to_cloud(payload: dict[str, Any], *, authority: str = "cloud") -> bool:
+    """Merge only this execution plane's health into the canonical Worker record.
 
     P0C-001: Uses a targeted merge-only POST instead of the former GET→inject→POST
-    cycle. The Worker merges {"health": ...} into the existing KV object server-side,
-    preserving all other KV fields (including private bankroll_state / open_bets that
-    the Worker POST /pending-bet validation requires). This avoids the privacy cascade
-    where fetching the now-public GET endpoint and re-posting would wipe private fields
-    from KV.
+    The Worker stores health separately from the financial signals record and rejects
+    any job outside the declared authority. A caller cannot replace the whole object.
     """
     try:
         import requests
@@ -333,12 +331,13 @@ def _push_to_cloud(payload: dict[str, Any]) -> bool:
 
     post_url = url[: -len("/signals.json")] + "/signals" if url.endswith("/signals.json") else url
     sep = "&" if "?" in post_url else "?"
-    merge_url = f"{post_url}{sep}merge_health=1"
+    merge_url = f"{post_url}{sep}merge_health=1&health_authority={authority}"
+    upload_payload = {**payload, "jobs": jobs_for_authority(payload["jobs"], authority)}
 
     try:
         post_resp = requests.post(
             merge_url,
-            data=json.dumps({"health": payload}).encode(),
+            data=json.dumps({"health": upload_payload}).encode(),
             headers={
                 "Authorization": f"Bearer {token}",
                 "Content-Type":  "application/json",
@@ -363,6 +362,8 @@ def _cli() -> int:
     p.add_argument("--merge-from-committed", action="store_true",
                    help="use docs/data/health.json as baseline for jobs without fresh snapshots "
                         "(for GitHub Actions, where results/health/ is gitignored)")
+    p.add_argument("--authority", choices=("cloud", "local"), default="cloud",
+                   help="execution plane authorized to publish this health update")
     p.add_argument("--no-write", action="store_true",
                    help="do not write docs/data/health.json in the active checkout")
     p.add_argument("--quiet", action="store_true")
@@ -379,7 +380,7 @@ def _cli() -> int:
         print(f"[health] overall={payload['overall']} — {n_ok}/{n_total} ok")
 
     if not args.no_upload:
-        ok = _push_to_cloud(payload)
+        ok = _push_to_cloud(payload, authority=args.authority)
         if not args.quiet:
             print(f"[health] cloud upload: {'ok' if ok else 'skipped/failed'}")
         if not ok:

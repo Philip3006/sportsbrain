@@ -165,6 +165,148 @@ async function requireAuth(request, env) {
 //   no owner: it either returns exact-owner state for the authenticated user,
 //   or fails 404. See serveMe() below.
 const DEFAULT_USER = 'philip';
+
+// OPS-LOCALHEALTH-PUBLISH-001: health has two explicit execution authorities.
+// This Worker-side policy is the enforcement point; clients cannot grant
+// themselves authority by placing a job name in an otherwise valid payload.
+const _LOCAL_HEALTH_JOBS = new Set([
+  'aggregate_health', 'auto_retrain', 'closing_odds', 'daily_scan',
+  'live_score_push', 'odds_refresh', 'prematch_scan', 'settle',
+]);
+const _CLOUD_HEALTH_JOBS = new Set([
+  'bundesliga2_closing_odds', 'bundesliga2_live_push', 'bundesliga2_retrain',
+  'bundesliga2_scan', 'bundesliga2_settle', 'consume_pending_bets',
+  'tennis_closing_odds', 'tennis_retrain', 'tennis_scan', 'tennis_settle',
+  'signals_data_fresh', 'live_scores_fresh',
+]);
+const _HEALTH_MERGE_ATTEMPTS = 3;
+
+function _healthKey(user) {
+  return (user && user !== DEFAULT_USER) ? `health_v1_${user}` : 'health_v1';
+}
+
+function _healthAuthorityAllows(job, authority) {
+  return authority === 'local'
+    ? _LOCAL_HEALTH_JOBS.has(job)
+    : authority === 'cloud' && _CLOUD_HEALTH_JOBS.has(job);
+}
+
+function _healthTimestamp(value) {
+  if (typeof value !== 'string' || value.length === 0) return null;
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function _healthOverall(jobs) {
+  const statuses = new Set(jobs.map((job) => job.status));
+  if (statuses.has('error')) return 'down';
+  if (statuses.has('stale') || statuses.has('degraded')) return 'degraded';
+  return 'ok';
+}
+
+function _parseHealth(raw) {
+  if (!raw) return null;
+  try {
+    const health = JSON.parse(raw);
+    return health && typeof health === 'object' && Array.isArray(health.jobs) ? health : null;
+  } catch {
+    return null;
+  }
+}
+
+async function _readCanonicalHealth(env, user) {
+  const dedicated = _parseHealth(await env.SIGNALS.get(_healthKey(user)));
+  if (dedicated) return dedicated;
+
+  // One-way legacy fallback: first authority-aware update seeds a separate
+  // health record from the existing signals payload without rewriting it.
+  const rawSignals = await env.SIGNALS.get(_signalsKey(user));
+  try {
+    const signals = JSON.parse(rawSignals || '{}');
+    return signals && typeof signals === 'object' && Array.isArray(signals.health?.jobs)
+      ? signals.health
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function _mergeHealthPartial(existing, incoming, authority) {
+  if (!existing || !Array.isArray(existing.jobs) || !incoming || !Array.isArray(incoming.jobs)) {
+    return { error: 'canonical_health_baseline_missing' };
+  }
+  if (_healthTimestamp(incoming.generated_at) === null) {
+    return { error: 'invalid_generated_at' };
+  }
+
+  const next = new Map();
+  for (const job of existing.jobs) {
+    if (job && typeof job.job === 'string') next.set(job.job, job);
+  }
+  for (const job of incoming.jobs) {
+    if (!job || typeof job.job !== 'string' || !_healthAuthorityAllows(job.job, authority)) {
+      return { error: 'unclassified_or_foreign_health_job' };
+    }
+    const previous = next.get(job.job);
+    const previousAt = previous ? _healthTimestamp(previous.last_run_at) : null;
+    if (job.last_run_at === null) {
+      // "No snapshot yet" is unknown evidence, not a fresh timestamp. It may
+      // establish a missing job as error, but never replace observed evidence.
+      if (!previous) next.set(job.job, job);
+      continue;
+    }
+    const incomingAt = _healthTimestamp(job.last_run_at);
+    if (incomingAt === null) return { error: 'invalid_job_timestamp' };
+    if (previousAt !== null && incomingAt < previousAt) {
+      return { error: 'stale_health_update' };
+    }
+    // Equal timestamps are a no-op. They must not change canonical status.
+    if (previousAt === null || incomingAt > previousAt) next.set(job.job, job);
+  }
+
+  const existingGeneratedAt = _healthTimestamp(existing.generated_at);
+  const incomingGeneratedAt = _healthTimestamp(incoming.generated_at);
+  const jobs = [...next.values()].sort((a, b) => a.job.localeCompare(b.job));
+  return {
+    health: {
+      ...existing,
+      jobs,
+      overall: _healthOverall(jobs),
+      generated_at: existingGeneratedAt !== null && existingGeneratedAt > incomingGeneratedAt
+        ? existing.generated_at
+        : incoming.generated_at,
+    },
+  };
+}
+
+function _healthUpdatePersisted(current, incoming) {
+  if (!current || !Array.isArray(current.jobs)) return false;
+  const persisted = new Map(current.jobs.map((job) => [job.job, job]));
+  return incoming.jobs.every((job) => {
+    const currentJob = persisted.get(job.job);
+    const incomingAt = _healthTimestamp(job.last_run_at);
+    const currentAt = currentJob ? _healthTimestamp(currentJob.last_run_at) : null;
+    if (job.last_run_at === null) return currentJob !== undefined;
+    return incomingAt !== null && currentAt !== null && currentAt >= incomingAt;
+  });
+}
+
+async function _mergeHealthWithRetry(env, user, incoming, authority) {
+  // KV has no compare-and-swap. Health is isolated from financial state, and
+  // this read-after-write loop detects most concurrent lost updates. A Durable
+  // Object is required if contention needs a strict serializable guarantee.
+  for (let attempt = 0; attempt < _HEALTH_MERGE_ATTEMPTS; attempt++) {
+    const existing = await _readCanonicalHealth(env, user);
+    const merged = _mergeHealthPartial(existing, incoming, authority);
+    if (merged.error) return merged;
+    await env.SIGNALS.put(_healthKey(user), JSON.stringify(merged.health));
+    if (_healthUpdatePersisted(await _readCanonicalHealth(env, user), incoming)) {
+      return merged;
+    }
+  }
+  return { error: 'health_merge_race_retry_exhausted' };
+}
+
 function _pendingKey(user) {
   return (user && user !== DEFAULT_USER) ? `pending_bets_${user}` : 'pending_bets';
 }
@@ -676,10 +818,7 @@ async function _cronConsumeCheck(env) {
 async function _cronHealerCheck(env) {
   const token = env.GH_TOKEN;
   if (!token) return;
-  const raw = await env.SIGNALS.get(_signalsKey(DEFAULT_USER));
-  if (!raw) return;
-  let health;
-  try { health = JSON.parse(raw).health; } catch { return; }
+  const health = await _readCanonicalHealth(env, DEFAULT_USER);
   if (!health || health.overall === 'ok') return;
 
   const now = Date.now();
@@ -725,6 +864,8 @@ export default {
       if (!raw) return jr({ error: 'no data yet' }, 404);
       let parsed;
       try { parsed = JSON.parse(raw); } catch { return jr({ error: 'malformed signals data' }, 500); }
+      const canonicalHealth = await _readCanonicalHealth(env, DEFAULT_USER);
+      if (canonicalHealth) parsed.health = canonicalHealth;
       let publicPayload;
       try {
         publicPayload = serializePublicProduct(parsed);
@@ -762,11 +903,12 @@ export default {
         if (!incoming || typeof incoming !== 'object' || !incoming.health) {
           return new Response('merge_health=1 requires {"health": {...}}', { status: 400 });
         }
-        const existing = await env.SIGNALS.get(_signalsKey(user));
-        let current = {};
-        try { current = JSON.parse(existing || '{}'); } catch { current = {}; }
-        current.health = incoming.health;
-        await env.SIGNALS.put(_signalsKey(user), JSON.stringify(current));
+        const authority = url.searchParams.get('health_authority');
+        if (authority !== 'local' && authority !== 'cloud') {
+          return new Response('merge_health=1 requires health_authority=local|cloud', { status: 400 });
+        }
+        const result = await _mergeHealthWithRetry(env, user, incoming.health, authority);
+        if (result.error) return new Response(result.error, { status: 409 });
         return new Response('OK', { headers: ch });
       }
 

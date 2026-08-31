@@ -108,6 +108,50 @@ function makeEvent(cron, scheduledTime = new Date('2026-09-05T20:00:00Z').getTim
   return { cron, scheduledTime };
 }
 
+function healthJob(job, status, lastRunAt) {
+  return { job, status, last_run_at: lastRunAt, exit_code: status === 'error' ? 1 : 0 };
+}
+
+function healthPayload(jobs, generatedAt = '2026-08-31T10:00:00Z', overall = 'ok') {
+  return { generated_at: generatedAt, overall, jobs };
+}
+
+function makeHealthEnv(initialHealth) {
+  const values = new Map([
+    ['signals_json', JSON.stringify({
+      football: [],
+      bankroll_state: { published_at: '2026-08-31T09:00:00Z' },
+      health: initialHealth,
+    })],
+  ]);
+  return {
+    API_TOKEN: 'health_test_token',
+    GH_TOKEN: 'integration_test_token',
+    GH_REPO: 'Philip3006/sportsbrain',
+    SIGNALS: {
+      get: async (key) => values.get(key) || null,
+      put: async (key, value) => { values.set(key, value); },
+      list: async () => ({ keys: [] }),
+      delete: async (key) => { values.delete(key); },
+    },
+    _values: values,
+  };
+}
+
+async function postHealth(env, authority, health) {
+  return worker.fetch(new Request(
+    `https://worker.test/signals?merge_health=1&health_authority=${authority}`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer health_test_token',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ health }),
+    },
+  ), env);
+}
+
 const KNOWN_REPO_URL = 'Philip3006/sportsbrain/dispatches';
 
 // ── Cron routing tests ────────────────────────────────────────────────────────
@@ -320,6 +364,113 @@ await testAsync('Worker: missing GH_TOKEN causes tennis_settle scheduled() to th
   try { await worker.scheduled(makeEvent('15 6-22/2 * * *'), env); } catch { threw = true; }
   assert(threw, 'tennis_settle scheduled() throws when GH_TOKEN missing');
   assertEq(_fetchCalls.length, 0, 'no fetch attempted when token missing');
+});
+
+// ── OPS-LOCALHEALTH-PUBLISH-001: actual Worker health merge boundary ───────
+
+await testAsync('Health: fresh local-authoritative job updates without touching financial signals', async () => {
+  const initial = healthPayload([
+    healthJob('daily_scan', 'ok', '2026-08-31T09:00:00Z'),
+    healthJob('tennis_scan', 'ok', '2026-08-31T09:30:00Z'),
+  ]);
+  const env = makeHealthEnv(initial);
+  const beforeSignals = env._values.get('signals_json');
+  const response = await postHealth(env, 'local', healthPayload([
+    healthJob('daily_scan', 'degraded', '2026-08-31T10:00:00Z'),
+  ], '2026-08-31T10:00:00Z', 'ok'));
+  assertEq(response.status, 200, 'fresh local update accepted');
+  const stored = JSON.parse(env._values.get('health_v1'));
+  assertEq(stored.jobs.find(j => j.job === 'daily_scan').status, 'degraded', 'local job updated');
+  assertEq(stored.jobs.find(j => j.job === 'tennis_scan').status, 'ok', 'cloud job preserved');
+  assertEq(env._values.get('signals_json'), beforeSignals, 'financial signals record unchanged');
+});
+
+await testAsync('Health: stale local-authoritative update is rejected', async () => {
+  const initial = healthPayload([healthJob('daily_scan', 'ok', '2026-08-31T10:00:00Z')]);
+  const env = makeHealthEnv(initial);
+  const response = await postHealth(env, 'local', healthPayload([
+    healthJob('daily_scan', 'error', '2026-08-31T09:59:00Z'),
+  ], '2026-08-31T10:01:00Z'));
+  assertEq(response.status, 409, 'stale local update rejected');
+  assertEq(await response.text(), 'stale_health_update', 'stale reason is explicit');
+});
+
+await testAsync('Health: local payload cannot clobber cloud-authoritative job', async () => {
+  const initial = healthPayload([healthJob('tennis_scan', 'ok', '2026-08-31T10:00:00Z')]);
+  const env = makeHealthEnv(initial);
+  const response = await postHealth(env, 'local', healthPayload([
+    healthJob('tennis_scan', 'error', '2026-08-31T11:00:00Z'),
+  ], '2026-08-31T11:00:00Z'));
+  assertEq(response.status, 409, 'foreign cloud job rejected from local authority');
+  assertEq(JSON.parse(env._values.get('signals_json')).health.jobs[0].status, 'ok', 'cloud truth unchanged');
+});
+
+await testAsync('Health: unknown local job and malformed timestamps fail closed', async () => {
+  const initial = healthPayload([healthJob('daily_scan', 'ok', '2026-08-31T10:00:00Z')]);
+  const env = makeHealthEnv(initial);
+  const unknown = await postHealth(env, 'local', healthPayload([
+    healthJob('unknown_job', 'ok', '2026-08-31T11:00:00Z'),
+  ], '2026-08-31T11:00:00Z'));
+  assertEq(unknown.status, 409, 'unknown local job rejected');
+  const malformed = await postHealth(env, 'local', healthPayload([
+    healthJob('daily_scan', 'ok', 'not-a-timestamp'),
+  ], '2026-08-31T11:00:00Z'));
+  assertEq(malformed.status, 409, 'malformed timestamp rejected');
+});
+
+await testAsync('Health: no-snapshot evidence remains non-fresh without blocking cloud truth', async () => {
+  const initial = healthPayload([healthJob('daily_scan', 'ok', '2026-08-31T10:00:00Z')]);
+  const env = makeHealthEnv(initial);
+  const response = await postHealth(env, 'cloud', healthPayload([
+    { job: 'tennis_scan', status: 'error', last_run_at: null, exit_code: null },
+  ], '2026-08-31T11:00:00Z'));
+  assertEq(response.status, 200, 'truthful no-snapshot cloud evidence accepted');
+  const stored = JSON.parse(env._values.get('health_v1'));
+  assertEq(stored.jobs.find(j => j.job === 'tennis_scan').last_run_at, null, 'unknown timestamp preserved');
+  assertEq(stored.overall, 'down', 'unknown execution evidence is not treated as healthy');
+});
+
+await testAsync('Health: partial update preserves unrelated jobs and recomputes overall', async () => {
+  const initial = healthPayload([
+    healthJob('daily_scan', 'ok', '2026-08-31T09:00:00Z'),
+    healthJob('tennis_scan', 'ok', '2026-08-31T09:00:00Z'),
+  ]);
+  const env = makeHealthEnv(initial);
+  const response = await postHealth(env, 'local', healthPayload([
+    healthJob('daily_scan', 'error', '2026-08-31T10:00:00Z'),
+  ], '2026-08-31T10:00:00Z', 'ok'));
+  assertEq(response.status, 200, 'partial local update accepted');
+  const stored = JSON.parse(env._values.get('health_v1'));
+  assertEq(stored.jobs.length, 2, 'unrelated job retained');
+  assertEq(stored.overall, 'down', 'overall recomputed instead of trusting caller');
+});
+
+await testAsync('Health: detected KV write race retries and preserves both authority updates', async () => {
+  const initial = healthPayload([
+    healthJob('daily_scan', 'ok', '2026-08-31T09:00:00Z'),
+    healthJob('tennis_scan', 'ok', '2026-08-31T09:00:00Z'),
+  ]);
+  const env = makeHealthEnv(initial);
+  let intercepted = false;
+  const originalPut = env.SIGNALS.put;
+  env.SIGNALS.put = async (key, value) => {
+    if (key === 'health_v1' && !intercepted) {
+      intercepted = true;
+      await originalPut(key, JSON.stringify(healthPayload([
+        healthJob('daily_scan', 'ok', '2026-08-31T09:00:00Z'),
+        healthJob('tennis_scan', 'degraded', '2026-08-31T10:30:00Z'),
+      ], '2026-08-31T10:30:00Z')));
+      return;
+    }
+    await originalPut(key, value);
+  };
+  const response = await postHealth(env, 'local', healthPayload([
+    healthJob('daily_scan', 'degraded', '2026-08-31T10:00:00Z'),
+  ], '2026-08-31T10:00:00Z'));
+  assertEq(response.status, 200, 'detected race retried successfully');
+  const stored = JSON.parse(env._values.get('health_v1'));
+  assertEq(stored.jobs.find(j => j.job === 'daily_scan').status, 'degraded', 'local update retained');
+  assertEq(stored.jobs.find(j => j.job === 'tennis_scan').status, 'degraded', 'concurrent cloud update retained');
 });
 
 // ── Summary ───────────────────────────────────────────────────────────────────
