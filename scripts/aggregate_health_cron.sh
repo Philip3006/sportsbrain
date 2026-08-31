@@ -18,6 +18,10 @@ fi
 source "$SPORTSBRAIN_DIR/scripts/_health.sh"
 health_start "aggregate_health"
 
+# Delimit this run before redirecting output so health_finish never attributes
+# an earlier run's log tail to the current snapshot.
+printf -- '--- [%s] aggregate_health started ---\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$LOG"
+
 # The active checkout is never a runtime artifact publisher. The Worker merges
 # this local authority's health separately, preserving cloud-owned evidence.
 python3 -m src.monitoring.aggregate_health --quiet --no-write --authority local >> "$LOG" 2>&1
