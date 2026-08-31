@@ -7,7 +7,7 @@
 > Filter: EV-gewichtet · Markt-historisch · max. 1 Signal pro Match
 
 - 🟢 **Stefanos Tsitsipas vs Arthur Fils** · Match Winner: Arthur Fils
-  Quote 1.51 · EV +31.1% · Stake 5.00€ · HIGH
+  Quote 1.50 · EV +30.3% · Stake 5.00€ · HIGH
 
 ---
 
@@ -15,15 +15,15 @@
 ## US Open (ATP) · grand_slam · 🔴 LIVE
 Surface: hard · Best of: 5 · Matches gescannt: 42
 - [ATP] **Stefanos Tsitsipas vs Arthur Fils** · Match Winner: Arthur Fils ⭐
-  Quote 1.51 · Modell 86.8% · EV +31.1% · Stake 5.00€ · HIGH
+  Quote 1.50 · Modell 86.8% · EV +30.3% · Stake 5.00€ · HIGH
 - [ATP] **Jakub Mensik vs Shintaro Mochizuki** · Match Winner: Jakub Mensik
   Quote 1.40 · Modell 86.8% · EV +21.6% · Stake 5.00€ · HIGH
 - [ATP] **Damir Dzumhur vs Hubert Hurkacz** · Match Winner: Hubert Hurkacz
-  Quote 1.53 · Modell 77.9% · EV +19.2% · Stake 5.00€ · HIGH
+  Quote 1.55 · Modell 77.9% · EV +20.8% · Stake 5.00€ · HIGH
 - [ATP] **Quentin Halys vs Facundo Diaz Acosta** · Match Winner: Facundo Diaz Acosta
   Quote 2.37 · Modell 50.0% · EV +18.5% · Stake 5.00€ · HIGH
 - [ATP] **Dalibor Svrcina vs Valentin Royer** · Match Winner: Dalibor Svrcina
-  Quote 2.15 · Modell 53.8% · EV +15.6% · Stake 5.00€ · HIGH
+  Quote 2.11 · Modell 53.8% · EV +13.5% · Stake 5.00€ · MEDIUM
 - [ATP] **Yannick Hanfmann vs Alejandro Tabilo** · Match Winner: Alejandro Tabilo
   Quote 2.17 · Modell 50.0% · EV +8.5% · Stake 5.00€ · MEDIUM
 - [ATP] **Juncheng Shang vs Marco Trungelliti** · Match Winner: Marco Trungelliti
