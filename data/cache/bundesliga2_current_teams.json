@@ -3,24 +3,27 @@
     "Bielefeld",
     "Bochum",
     "Braunschweig",
+    "Cottbus",
     "Darmstadt",
     "Dresden",
-    "Elversberg",
-    "Fortuna Dusseldorf",
     "Greuther Furth",
     "Hannover",
+    "Heidenheim",
     "Hertha",
     "Kaiserslautern",
     "Karlsruhe",
     "Kiel",
     "Magdeburg",
     "Nurnberg",
-    "Paderborn",
-    "Preußen Münster",
-    "Schalke 04"
+    "Osnabruck",
+    "St Pauli",
+    "Wolfsburg"
   ],
   "n": 18,
-  "source": "last_season",
-  "captured_at": "2026-08-31T11:15:12.967253+00:00",
-  "unknown_vs_universe": []
+  "source": "odds_api",
+  "captured_at": "2026-09-01T09:40:36.045905+00:00",
+  "unknown_vs_universe": [
+    "Cottbus",
+    "Wolfsburg"
+  ]
 }
