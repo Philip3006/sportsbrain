@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-08-31T11:18:38.663013+00:00",
-  "n_settled_total": 647,
+  "generated_at": "2026-09-01T09:43:19.632270+00:00",
+  "n_settled_total": 678,
   "match_winner": {
-    "n": 251,
-    "brier": 0.22526,
-    "log_loss": 0.63671,
-    "ece": 0.07466,
-    "win_rate": 0.498,
+    "n": 282,
+    "brier": 0.22789,
+    "log_loss": 0.645,
+    "ece": 0.07062,
+    "win_rate": 0.5035,
     "reliability_curve": [
       {
         "bin_lo": 0.2,
@@ -18,32 +18,32 @@
       {
         "bin_lo": 0.4,
         "bin_hi": 0.6,
-        "n": 187,
-        "mean_pred": 0.5014,
-        "mean_actual": 0.4385
+        "n": 210,
+        "mean_pred": 0.5009,
+        "mean_actual": 0.4476
       },
       {
         "bin_lo": 0.6,
         "bin_hi": 0.8,
-        "n": 14,
-        "mean_pred": 0.695,
-        "mean_actual": 0.3571
+        "n": 16,
+        "mean_pred": 0.7055,
+        "mean_actual": 0.4375
       },
       {
         "bin_lo": 0.8,
         "bin_hi": 1.0,
-        "n": 36,
-        "mean_pred": 0.9693,
-        "mean_actual": 0.9444
+        "n": 42,
+        "mean_pred": 0.9546,
+        "mean_actual": 0.881
       }
     ]
   },
   "all_markets": {
-    "n": 647,
-    "brier": 0.23531,
-    "log_loss": 0.66047,
-    "ece": 0.04452,
-    "win_rate": 0.5595,
+    "n": 678,
+    "brier": 0.23594,
+    "log_loss": 0.66283,
+    "ece": 0.04422,
+    "win_rate": 0.559,
     "reliability_curve": [
       {
         "bin_lo": 0.2,
@@ -55,30 +55,30 @@
       {
         "bin_lo": 0.4,
         "bin_hi": 0.6,
-        "n": 329,
-        "mean_pred": 0.521,
-        "mean_actual": 0.5015
+        "n": 352,
+        "mean_pred": 0.5194,
+        "mean_actual": 0.5028
       },
       {
         "bin_lo": 0.6,
         "bin_hi": 0.8,
-        "n": 250,
-        "mean_pred": 0.6651,
-        "mean_actual": 0.588
+        "n": 252,
+        "mean_pred": 0.666,
+        "mean_actual": 0.5913
       },
       {
         "bin_lo": 0.8,
         "bin_hi": 1.0,
-        "n": 48,
-        "mean_pred": 0.9485,
-        "mean_actual": 0.8958
+        "n": 54,
+        "mean_pred": 0.9393,
+        "mean_actual": 0.8519
       }
     ]
   },
   "meta_calibrator": {
     "fitted": true,
-    "n_samples": 251,
-    "brier_before": 0.22526,
-    "brier_after": 0.2129
+    "n_samples": 282,
+    "brier_before": 0.22789,
+    "brier_after": 0.21556
   }
 }
