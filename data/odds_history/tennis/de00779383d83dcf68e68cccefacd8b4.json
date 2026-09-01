@@ -1,0 +1,15 @@
+{
+  "match_id": "de00779383d83dcf68e68cccefacd8b4",
+  "player_a": "Katerina Siniakova",
+  "player_b": "Naomi Osaka",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260901_08",
+      "ts_utc": "2026-09-01T08:40:00.363599+00:00",
+      "odds_a": 4.0,
+      "odds_b": 1.25,
+      "source": "sport888"
+    }
+  ]
+}

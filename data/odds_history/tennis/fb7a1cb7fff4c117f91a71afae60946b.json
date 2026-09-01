@@ -10,6 +10,13 @@
       "odds_a": 3.16,
       "odds_b": 1.34,
       "source": "mybookieag"
+    },
+    {
+      "label": "auto_20260901_08",
+      "ts_utc": "2026-09-01T08:40:00.361862+00:00",
+      "odds_a": 3.08,
+      "odds_b": 1.36,
+      "source": "mybookieag"
     }
   ]
 }

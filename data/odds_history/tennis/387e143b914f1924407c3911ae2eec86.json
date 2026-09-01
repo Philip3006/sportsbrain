@@ -1,0 +1,15 @@
+{
+  "match_id": "387e143b914f1924407c3911ae2eec86",
+  "player_a": "Dalibor Svrcina",
+  "player_b": "Luciano Darderi",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260901_08",
+      "ts_utc": "2026-09-01T08:40:00.231436+00:00",
+      "odds_a": 2.41,
+      "odds_b": 1.57,
+      "source": "gtbets"
+    }
+  ]
+}

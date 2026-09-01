@@ -1,0 +1,15 @@
+{
+  "match_id": "8d7429f908e1378299c5938aa4a06fa5",
+  "player_a": "Felix Auger-Aliassime",
+  "player_b": "Karen Khachanov",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260901_08",
+      "ts_utc": "2026-09-01T08:40:00.232171+00:00",
+      "odds_a": 1.3,
+      "odds_b": 2.6,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}
