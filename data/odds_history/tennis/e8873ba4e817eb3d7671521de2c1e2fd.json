@@ -1,0 +1,15 @@
+{
+  "match_id": "e8873ba4e817eb3d7671521de2c1e2fd",
+  "player_a": "Anna Bondár",
+  "player_b": "Madison Keys",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260901_23",
+      "ts_utc": "2026-09-01T23:18:52.212146+00:00",
+      "odds_a": 5.0,
+      "odds_b": 1.1,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}
