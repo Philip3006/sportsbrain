@@ -1,16 +1,16 @@
 {
   "job": "tennis_settle",
   "status": "ok",
-  "last_run_at": "2026-09-01T17:27:21Z",
-  "started_at": "2026-09-01T17:27:21Z",
+  "last_run_at": "2026-09-01T18:16:21Z",
+  "started_at": "2026-09-01T18:16:21Z",
   "duration_s": null,
   "exit_code": 0,
   "error": null,
   "fallback_used": null,
   "run_id": null,
   "recovery_attempt_id": null,
-  "scheduler": "gh_cron_fallback",
-  "scheduled_at": null,
-  "scheduler_lag_s": null,
-  "idempotency_key": null
+  "scheduler": "cloudflare_cron",
+  "scheduled_at": "2026-09-01T18:15:34.000Z",
+  "scheduler_lag_s": 11,
+  "idempotency_key": "tennis_settle/2026-09-01T18:15"
 }
