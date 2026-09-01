@@ -1,0 +1,15 @@
+{
+  "match_id": "5f0f1edcc78791a180a4150137af2b07",
+  "player_a": "Bu Yunchaokete",
+  "player_b": "Rafael Jodar",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260901_18",
+      "ts_utc": "2026-09-01T18:31:31.371973+00:00",
+      "odds_a": 6.0,
+      "odds_b": 1.13,
+      "source": "unibet_nl"
+    }
+  ]
+}

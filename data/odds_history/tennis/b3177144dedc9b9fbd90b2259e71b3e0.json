@@ -24,6 +24,13 @@
       "odds_a": 3.05,
       "odds_b": 1.36,
       "source": "pmu_fr"
+    },
+    {
+      "label": "auto_20260901_18",
+      "ts_utc": "2026-09-01T18:31:31.724937+00:00",
+      "odds_a": 3.2,
+      "odds_b": 1.33,
+      "source": "pmu_fr"
     }
   ]
 }
