@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-01T00:47:41.729990+00:00",
-  "n_signals_total": 1346,
-  "n_with_outcome": 1216,
+  "generated_at": "2026-09-01T06:16:47.002565+00:00",
+  "n_signals_total": 1350,
+  "n_with_outcome": 1224,
   "by_market": {
     "ah+0.5_away": {
       "n": 26,
@@ -158,11 +158,11 @@
       "ev_mean": 38.43
     },
     "away": {
-      "n": 237,
-      "n_placed": 184,
-      "n_outcome": 218,
-      "accuracy": 0.5046,
-      "ev_mean": 23.16
+      "n": 238,
+      "n_placed": 185,
+      "n_outcome": 222,
+      "accuracy": 0.5045,
+      "ev_mean": 23.09
     },
     "btts_yes": {
       "n": 9,
@@ -186,11 +186,11 @@
       "ev_mean": 37.63
     },
     "home": {
-      "n": 188,
-      "n_placed": 156,
-      "n_outcome": 157,
-      "accuracy": 0.4013,
-      "ev_mean": 16.3
+      "n": 189,
+      "n_placed": 157,
+      "n_outcome": 161,
+      "accuracy": 0.4161,
+      "ev_mean": 16.24
     },
     "o/u1.5_over": {
       "n": 21,
@@ -438,11 +438,11 @@
       "ev_mean": 18.42
     },
     "o/u_games_22.5_under": {
-      "n": 13,
-      "n_placed": 13,
+      "n": 14,
+      "n_placed": 14,
       "n_outcome": 9,
       "accuracy": 0.5556,
-      "ev_mean": 14.38
+      "ev_mean": 14.33
     },
     "o/u_games_23.0_over": {
       "n": 3,
@@ -571,11 +571,11 @@
       "ev_mean": 16.81
     },
     "o/u_games_40.5_over": {
-      "n": 3,
-      "n_placed": 3,
+      "n": 4,
+      "n_placed": 4,
       "n_outcome": 0,
       "accuracy": null,
-      "ev_mean": 10.26
+      "ev_mean": 11.15
     },
     "scorer_Adam Hložek": {
       "n": 2,
@@ -728,15 +728,15 @@
   "by_confidence": {
     "HIGH": {
       "n": 311,
-      "accuracy": 0.463
+      "accuracy": 0.4727
     },
     "LOW": {
       "n": 403,
       "accuracy": 0.3052
     },
     "MEDIUM": {
-      "n": 632,
-      "accuracy": 0.3845
+      "n": 636,
+      "accuracy": 0.3868
     }
   }
 }
