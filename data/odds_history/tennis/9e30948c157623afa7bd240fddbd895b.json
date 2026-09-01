@@ -1,0 +1,15 @@
+{
+  "match_id": "9e30948c157623afa7bd240fddbd895b",
+  "player_a": "Caty McNally",
+  "player_b": "Emma Navarro",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.791610+00:00",
+      "odds_a": 2.18,
+      "odds_b": 1.67,
+      "source": "mybookieag"
+    }
+  ]
+}

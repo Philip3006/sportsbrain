@@ -1,0 +1,15 @@
+{
+  "match_id": "3e181ee7743dbff33254383299b50587",
+  "player_a": "Frances Tiafoe",
+  "player_b": "Martin Damm Jr.",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.652519+00:00",
+      "odds_a": 1.24,
+      "odds_b": 4.1,
+      "source": "unibet_fr"
+    }
+  ]
+}

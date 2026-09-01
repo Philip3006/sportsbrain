@@ -1,0 +1,15 @@
+{
+  "match_id": "4c050fb719e296c6657aa66040dfabac",
+  "player_a": "Jelena Ostapenko",
+  "player_b": "Tatjana Maria",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.790022+00:00",
+      "odds_a": 1.59,
+      "odds_b": 2.4,
+      "source": "unibet_fr"
+    }
+  ]
+}

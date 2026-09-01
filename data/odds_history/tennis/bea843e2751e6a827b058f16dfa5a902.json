@@ -1,0 +1,15 @@
+{
+  "match_id": "bea843e2751e6a827b058f16dfa5a902",
+  "player_a": "James Duckworth",
+  "player_b": "Wu Yibing",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.656253+00:00",
+      "odds_a": 2.08,
+      "odds_b": 1.54,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "b82786bf6372f738c1ebf5e138b4c826",
+  "player_a": "Maria Sakkari",
+  "player_b": "Robin Montgomery",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.789117+00:00",
+      "odds_a": 1.67,
+      "odds_b": 2.2,
+      "source": "sport888"
+    }
+  ]
+}

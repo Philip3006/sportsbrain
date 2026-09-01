@@ -1,0 +1,15 @@
+{
+  "match_id": "1b92d447c008fe63c572b44cbd065521",
+  "player_a": "Diana Shnaider",
+  "player_b": "Karolina Pliskova",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.791826+00:00",
+      "odds_a": 1.4,
+      "odds_b": 3.15,
+      "source": "coolbet"
+    }
+  ]
+}

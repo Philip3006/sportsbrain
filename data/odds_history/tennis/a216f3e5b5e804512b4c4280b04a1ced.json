@@ -1,0 +1,15 @@
+{
+  "match_id": "a216f3e5b5e804512b4c4280b04a1ced",
+  "player_a": "Alex Molcan",
+  "player_b": "Benjamin Bonzi",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.654217+00:00",
+      "odds_a": 2.84,
+      "odds_b": 1.42,
+      "source": "marathonbet"
+    }
+  ]
+}

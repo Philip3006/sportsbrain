@@ -1,0 +1,15 @@
+{
+  "match_id": "e0dae8156dc2f996fa9f90b435f0bbc5",
+  "player_a": "Felix Auger-Aliassime",
+  "player_b": "Rinky Hijikata",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.651986+00:00",
+      "odds_a": 1.14,
+      "odds_b": 6.0,
+      "source": "mybookieag"
+    }
+  ]
+}

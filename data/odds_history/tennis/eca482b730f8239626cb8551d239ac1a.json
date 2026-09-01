@@ -1,0 +1,15 @@
+{
+  "match_id": "eca482b730f8239626cb8551d239ac1a",
+  "player_a": "Kamil Majchrzak",
+  "player_b": "Valentin Vacherot",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.656472+00:00",
+      "odds_a": 1.83,
+      "odds_b": 1.62,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

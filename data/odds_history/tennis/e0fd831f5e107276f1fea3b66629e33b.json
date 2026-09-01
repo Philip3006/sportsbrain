@@ -1,0 +1,15 @@
+{
+  "match_id": "e0fd831f5e107276f1fea3b66629e33b",
+  "player_a": "Adolfo Daniel Vallejo",
+  "player_b": "Gael Monfils",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.654982+00:00",
+      "odds_a": 1.71,
+      "odds_b": 2.12,
+      "source": "marathonbet"
+    }
+  ]
+}

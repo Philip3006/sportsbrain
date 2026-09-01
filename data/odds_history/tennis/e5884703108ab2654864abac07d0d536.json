@@ -1,0 +1,15 @@
+{
+  "match_id": "e5884703108ab2654864abac07d0d536",
+  "player_a": "Iva Jović",
+  "player_b": "Magdalena Frech",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.790358+00:00",
+      "odds_a": 1.29,
+      "odds_b": 3.65,
+      "source": "unibet_fr"
+    }
+  ]
+}

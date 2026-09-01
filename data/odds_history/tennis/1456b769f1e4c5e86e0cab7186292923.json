@@ -1,0 +1,15 @@
+{
+  "match_id": "1456b769f1e4c5e86e0cab7186292923",
+  "player_a": "Alina Korneeva",
+  "player_b": "Madison Keys",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.789286+00:00",
+      "odds_a": 3.2,
+      "odds_b": 1.36,
+      "source": "unibet_fr"
+    }
+  ]
+}

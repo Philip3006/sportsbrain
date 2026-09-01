@@ -1,0 +1,15 @@
+{
+  "match_id": "bbd54b650ff8a577bdb5021c50b74326",
+  "player_a": "Aryna Sabalenka",
+  "player_b": "Polina Iatcenko",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.791501+00:00",
+      "odds_a": 1.02,
+      "odds_b": 15.0,
+      "source": "sport888"
+    }
+  ]
+}

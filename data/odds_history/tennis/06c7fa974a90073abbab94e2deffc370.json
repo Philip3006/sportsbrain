@@ -1,0 +1,15 @@
+{
+  "match_id": "06c7fa974a90073abbab94e2deffc370",
+  "player_a": "Anastasia Potapova",
+  "player_b": "Tereza Valentova",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.789657+00:00",
+      "odds_a": 2.8,
+      "odds_b": 1.45,
+      "source": "unibet_fr"
+    }
+  ]
+}

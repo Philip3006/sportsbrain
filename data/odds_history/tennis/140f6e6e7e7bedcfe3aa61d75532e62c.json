@@ -1,0 +1,15 @@
+{
+  "match_id": "140f6e6e7e7bedcfe3aa61d75532e62c",
+  "player_a": "Daniil Medvedev",
+  "player_b": "Sebastian Gorzny",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.655897+00:00",
+      "odds_a": 1.01,
+      "odds_b": 9.2,
+      "source": "betclic_fr"
+    }
+  ]
+}

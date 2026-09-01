@@ -1,0 +1,15 @@
+{
+  "match_id": "b8c5874840b5d9ace01274520fc2fbdc",
+  "player_a": "Dino Prizmic",
+  "player_b": "Tommy Paul",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.656145+00:00",
+      "odds_a": 5.29,
+      "odds_b": 1.21,
+      "source": "onexbet"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "e95bb21658ceb1cf3738c9dfceae5bb4",
+  "player_a": "Leylah Fernandez",
+  "player_b": "Mananchaya Sawangkaew",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.792835+00:00",
+      "odds_a": 1.33,
+      "odds_b": 3.3,
+      "source": "sport888"
+    }
+  ]
+}

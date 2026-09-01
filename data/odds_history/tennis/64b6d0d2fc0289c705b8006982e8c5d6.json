@@ -1,0 +1,15 @@
+{
+  "match_id": "64b6d0d2fc0289c705b8006982e8c5d6",
+  "player_a": "Arthur Rinderknech",
+  "player_b": "Jaume Munar",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.655627+00:00",
+      "odds_a": 1.57,
+      "odds_b": 2.41,
+      "source": "gtbets"
+    }
+  ]
+}

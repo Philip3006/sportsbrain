@@ -1,0 +1,15 @@
+{
+  "match_id": "b65efc024874b5f0d2b7b6aa74043b05",
+  "player_a": "Mattia Bellucci",
+  "player_b": "Zsombor Piros",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.653073+00:00",
+      "odds_a": 1.51,
+      "odds_b": 2.92,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

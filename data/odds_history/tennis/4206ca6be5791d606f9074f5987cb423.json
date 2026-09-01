@@ -1,0 +1,15 @@
+{
+  "match_id": "4206ca6be5791d606f9074f5987cb423",
+  "player_a": "Alexander Zverev",
+  "player_b": "Lorenzo Sonego",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.655099+00:00",
+      "odds_a": 1.05,
+      "odds_b": 9.7,
+      "source": "marathonbet"
+    }
+  ]
+}

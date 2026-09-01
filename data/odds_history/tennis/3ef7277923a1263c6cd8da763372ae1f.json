@@ -1,0 +1,15 @@
+{
+  "match_id": "3ef7277923a1263c6cd8da763372ae1f",
+  "player_a": "Ekaterina Alexandrova",
+  "player_b": "Kimberly Birrell",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.792069+00:00",
+      "odds_a": 1.11,
+      "odds_b": 3.25,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

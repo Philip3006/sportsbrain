@@ -1,0 +1,15 @@
+{
+  "match_id": "90caed52b8ad8cc5848784ef7136aa3d",
+  "player_a": "Elena Rybakina",
+  "player_b": "Thea Frodin",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.788736+00:00",
+      "odds_a": 1.06,
+      "odds_b": 11.58,
+      "source": "pinnacle"
+    }
+  ]
+}

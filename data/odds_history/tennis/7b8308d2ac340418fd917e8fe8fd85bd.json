@@ -1,0 +1,15 @@
+{
+  "match_id": "7b8308d2ac340418fd917e8fe8fd85bd",
+  "player_a": "Elina Svitolina",
+  "player_b": "Maya Joint",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.792178+00:00",
+      "odds_a": 1.15,
+      "odds_b": 5.45,
+      "source": "marathonbet"
+    }
+  ]
+}

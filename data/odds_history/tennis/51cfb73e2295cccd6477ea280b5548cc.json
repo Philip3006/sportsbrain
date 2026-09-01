@@ -1,0 +1,15 @@
+{
+  "match_id": "51cfb73e2295cccd6477ea280b5548cc",
+  "player_a": "Mayar Sherif",
+  "player_b": "Nikola Bartunkova",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260901_00",
+      "ts_utc": "2026-09-01T00:37:49.790587+00:00",
+      "odds_a": 4.56,
+      "odds_b": 1.23,
+      "source": "pinnacle"
+    }
+  ]
+}
