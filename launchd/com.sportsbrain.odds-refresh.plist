@@ -8,8 +8,8 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/Library/Frameworks/Python.framework/Versions/3.13/bin/python3</string>
-        <string>/Users/philiprassillier/sportsbrain/scripts/refresh_odds.py</string>
+        <string>/bin/bash</string>
+        <string>/Users/philiprassillier/sportsbrain/scripts/refresh_odds_cron.sh</string>
     </array>
 
     <key>WorkingDirectory</key>
