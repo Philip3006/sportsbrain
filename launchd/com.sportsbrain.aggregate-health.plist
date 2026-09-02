@@ -21,8 +21,8 @@
     <key>RunAtLoad</key>
     <false/>
     <key>StandardOutPath</key>
-    <string>/Users/philiprassillier/sportsbrain/results/health_aggregate.log</string>
+    <string>/Users/philiprassillier/Library/Logs/sportsbrain_aggregate_health.log</string>
     <key>StandardErrorPath</key>
-    <string>/Users/philiprassillier/sportsbrain/results/health_aggregate.log</string>
+    <string>/Users/philiprassillier/Library/Logs/sportsbrain_aggregate_health.log</string>
 </dict>
 </plist>
