@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-02T18:16:02.763492+00:00",
-  "n_signals_total": 1604,
-  "n_with_outcome": 1284,
+  "generated_at": "2026-09-02T20:06:42.997311+00:00",
+  "n_signals_total": 1611,
+  "n_with_outcome": 1299,
   "by_market": {
     "ah+0.5_away": {
       "n": 26,
@@ -186,11 +186,11 @@
       "ev_mean": 37.63
     },
     "home": {
-      "n": 212,
-      "n_placed": 180,
-      "n_outcome": 173,
-      "accuracy": 0.4104,
-      "ev_mean": 16.59
+      "n": 214,
+      "n_placed": 182,
+      "n_outcome": 176,
+      "accuracy": 0.4091,
+      "ev_mean": 16.62
     },
     "o/u1.5_over": {
       "n": 21,
@@ -377,8 +377,8 @@
     "o/u_games_19.5_under": {
       "n": 15,
       "n_placed": 15,
-      "n_outcome": 8,
-      "accuracy": 0.125,
+      "n_outcome": 10,
+      "accuracy": 0.3,
       "ev_mean": 9.73
     },
     "o/u_games_20.0_over": {
@@ -391,8 +391,8 @@
     "o/u_games_20.0_under": {
       "n": 6,
       "n_placed": 6,
-      "n_outcome": 2,
-      "accuracy": 0.0,
+      "n_outcome": 3,
+      "accuracy": 0.3333,
       "ev_mean": 6.59
     },
     "o/u_games_20.5_over": {
@@ -403,11 +403,11 @@
       "ev_mean": 28.4
     },
     "o/u_games_20.5_under": {
-      "n": 14,
-      "n_placed": 14,
+      "n": 15,
+      "n_placed": 15,
       "n_outcome": 8,
       "accuracy": 0.375,
-      "ev_mean": 13.35
+      "ev_mean": 12.86
     },
     "o/u_games_21.0_over": {
       "n": 12,
@@ -431,11 +431,11 @@
       "ev_mean": 23.43
     },
     "o/u_games_21.5_under": {
-      "n": 42,
-      "n_placed": 42,
+      "n": 43,
+      "n_placed": 43,
       "n_outcome": 21,
       "accuracy": 0.5714,
-      "ev_mean": 12.37
+      "ev_mean": 12.21
     },
     "o/u_games_22.0_over": {
       "n": 28,
@@ -459,11 +459,11 @@
       "ev_mean": 18.42
     },
     "o/u_games_22.5_under": {
-      "n": 19,
-      "n_placed": 19,
+      "n": 21,
+      "n_placed": 21,
       "n_outcome": 10,
       "accuracy": 0.5,
-      "ev_mean": 13.03
+      "ev_mean": 12.94
     },
     "o/u_games_23.0_over": {
       "n": 3,
@@ -580,22 +580,22 @@
     "o/u_games_36.5_over": {
       "n": 22,
       "n_placed": 22,
-      "n_outcome": 5,
-      "accuracy": 0.4,
+      "n_outcome": 6,
+      "accuracy": 0.3333,
       "ev_mean": 25.37
     },
     "o/u_games_37.0_over": {
       "n": 9,
       "n_placed": 9,
-      "n_outcome": 2,
-      "accuracy": 0.5,
+      "n_outcome": 3,
+      "accuracy": 0.3333,
       "ev_mean": 23.93
     },
     "o/u_games_37.5_over": {
       "n": 20,
       "n_placed": 20,
-      "n_outcome": 2,
-      "accuracy": 0.5,
+      "n_outcome": 3,
+      "accuracy": 0.3333,
       "ev_mean": 24.08
     },
     "o/u_games_38.0_over": {
@@ -608,8 +608,8 @@
     "o/u_games_38.5_over": {
       "n": 33,
       "n_placed": 33,
-      "n_outcome": 3,
-      "accuracy": 0.6667,
+      "n_outcome": 5,
+      "accuracy": 0.4,
       "ev_mean": 20.74
     },
     "o/u_games_38.5_under": {
@@ -622,28 +622,28 @@
     "o/u_games_39.0_over": {
       "n": 11,
       "n_placed": 11,
-      "n_outcome": 1,
-      "accuracy": 1.0,
+      "n_outcome": 2,
+      "accuracy": 0.5,
       "ev_mean": 15.05
     },
     "o/u_games_39.5_over": {
       "n": 27,
       "n_placed": 27,
-      "n_outcome": 2,
-      "accuracy": 0.5,
+      "n_outcome": 3,
+      "accuracy": 0.3333,
       "ev_mean": 16.57
     },
     "o/u_games_40.0_over": {
-      "n": 8,
-      "n_placed": 8,
-      "n_outcome": 1,
+      "n": 9,
+      "n_placed": 9,
+      "n_outcome": 2,
       "accuracy": 0.0,
       "ev_mean": 7.16
     },
     "o/u_games_40.5_over": {
       "n": 12,
       "n_placed": 12,
-      "n_outcome": 1,
+      "n_outcome": 2,
       "accuracy": 0.0,
       "ev_mean": 10.91
     },
@@ -825,16 +825,16 @@
   },
   "by_confidence": {
     "HIGH": {
-      "n": 329,
-      "accuracy": 0.459
+      "n": 331,
+      "accuracy": 0.4562
     },
     "LOW": {
       "n": 403,
       "accuracy": 0.3052
     },
     "MEDIUM": {
-      "n": 872,
-      "accuracy": 0.3108
+      "n": 877,
+      "accuracy": 0.3136
     }
   }
 }
