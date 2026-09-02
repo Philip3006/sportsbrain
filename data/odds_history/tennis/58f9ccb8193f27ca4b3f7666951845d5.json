@@ -1,0 +1,15 @@
+{
+  "match_id": "58f9ccb8193f27ca4b3f7666951845d5",
+  "player_a": "Arthur Gea",
+  "player_b": "Zachary Svajda",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260902_23",
+      "ts_utc": "2026-09-02T23:19:56.247279+00:00",
+      "odds_a": 2.15,
+      "odds_b": 1.77,
+      "source": "coolbet"
+    }
+  ]
+}

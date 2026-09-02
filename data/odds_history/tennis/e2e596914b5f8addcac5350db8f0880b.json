@@ -1,0 +1,15 @@
+{
+  "match_id": "e2e596914b5f8addcac5350db8f0880b",
+  "player_a": "Bu Yunchaokete",
+  "player_b": "Michael Zheng",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260902_23",
+      "ts_utc": "2026-09-02T23:19:56.247417+00:00",
+      "odds_a": 2.45,
+      "odds_b": 1.44,
+      "source": "unibet_fr"
+    }
+  ]
+}
