@@ -1,0 +1,15 @@
+{
+  "match_id": "cd79358c4254d25e0c6f97a73a6bcc14",
+  "player_a": "Alex Michelsen",
+  "player_b": "Daniel Merida Aguilar",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260902_21",
+      "ts_utc": "2026-09-02T21:04:20.701736+00:00",
+      "odds_a": 1.59,
+      "odds_b": 2.46,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

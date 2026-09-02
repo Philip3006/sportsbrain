@@ -1,0 +1,15 @@
+{
+  "match_id": "7db1a8aa8a9f13abda0764ab4e89c6b1",
+  "player_a": "Jasmine Paolini",
+  "player_b": "Sorana Cirstea",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260902_21",
+      "ts_utc": "2026-09-02T21:04:21.034460+00:00",
+      "odds_a": 1.12,
+      "odds_b": 1.12,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

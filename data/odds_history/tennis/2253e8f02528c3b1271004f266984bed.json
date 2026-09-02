@@ -1,0 +1,15 @@
+{
+  "match_id": "2253e8f02528c3b1271004f266984bed",
+  "player_a": "Diana Shnaider",
+  "player_b": "Taylor Townsend",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260902_21",
+      "ts_utc": "2026-09-02T21:04:21.034262+00:00",
+      "odds_a": 1.53,
+      "odds_b": 2.65,
+      "source": "coolbet"
+    }
+  ]
+}

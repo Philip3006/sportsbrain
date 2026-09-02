@@ -52,6 +52,13 @@
       "odds_a": 2.29,
       "odds_b": 1.57,
       "source": "gtbets"
+    },
+    {
+      "label": "auto_20260902_21",
+      "ts_utc": "2026-09-02T21:04:20.698798+00:00",
+      "odds_a": 2.29,
+      "odds_b": 1.57,
+      "source": "gtbets"
     }
   ]
 }

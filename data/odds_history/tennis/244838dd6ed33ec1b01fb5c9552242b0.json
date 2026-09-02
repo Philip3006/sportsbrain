@@ -1,0 +1,15 @@
+{
+  "match_id": "244838dd6ed33ec1b01fb5c9552242b0",
+  "player_a": "Arthur Rinderknech",
+  "player_b": "Daniil Medvedev",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260902_21",
+      "ts_utc": "2026-09-02T21:04:20.701885+00:00",
+      "odds_a": 3.34,
+      "odds_b": 1.3,
+      "source": "gtbets"
+    }
+  ]
+}
