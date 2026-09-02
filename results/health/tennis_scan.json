@@ -1,8 +1,8 @@
 {
   "job": "tennis_scan",
   "status": "ok",
-  "last_run_at": "2026-09-02T22:30:17Z",
-  "started_at": "2026-09-02T22:30:17Z",
+  "last_run_at": "2026-09-02T22:59:47Z",
+  "started_at": "2026-09-02T22:59:47Z",
   "duration_s": null,
   "exit_code": 0,
   "error": null,
