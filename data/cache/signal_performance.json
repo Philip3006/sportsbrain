@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-02T22:16:03.576121+00:00",
-  "n_signals_total": 1617,
-  "n_with_outcome": 1325,
+  "generated_at": "2026-09-02T23:33:12.239131+00:00",
+  "n_signals_total": 1620,
+  "n_with_outcome": 1363,
   "by_market": {
     "ah+0.5_away": {
       "n": 26,
@@ -158,11 +158,11 @@
       "ev_mean": 38.43
     },
     "away": {
-      "n": 249,
-      "n_placed": 196,
-      "n_outcome": 231,
-      "accuracy": 0.5065,
-      "ev_mean": 22.65
+      "n": 250,
+      "n_placed": 197,
+      "n_outcome": 234,
+      "accuracy": 0.5,
+      "ev_mean": 22.7
     },
     "btts_yes": {
       "n": 9,
@@ -188,8 +188,8 @@
     "home": {
       "n": 215,
       "n_placed": 183,
-      "n_outcome": 180,
-      "accuracy": 0.4056,
+      "n_outcome": 188,
+      "accuracy": 0.4096,
       "ev_mean": 16.57
     },
     "o/u1.5_over": {
@@ -321,8 +321,8 @@
     "o/u_games_17.5_over": {
       "n": 6,
       "n_placed": 6,
-      "n_outcome": 1,
-      "accuracy": 0.0,
+      "n_outcome": 2,
+      "accuracy": 0.5,
       "ev_mean": 30.94
     },
     "o/u_games_18.0_over": {
@@ -389,11 +389,11 @@
       "ev_mean": 30.02
     },
     "o/u_games_20.0_under": {
-      "n": 6,
-      "n_placed": 6,
+      "n": 7,
+      "n_placed": 7,
       "n_outcome": 4,
       "accuracy": 0.5,
-      "ev_mean": 6.59
+      "ev_mean": 6.63
     },
     "o/u_games_20.5_over": {
       "n": 44,
@@ -433,8 +433,8 @@
     "o/u_games_21.5_under": {
       "n": 44,
       "n_placed": 44,
-      "n_outcome": 23,
-      "accuracy": 0.5652,
+      "n_outcome": 25,
+      "accuracy": 0.56,
       "ev_mean": 12.09
     },
     "o/u_games_22.0_over": {
@@ -447,7 +447,7 @@
     "o/u_games_22.0_under": {
       "n": 17,
       "n_placed": 17,
-      "n_outcome": 8,
+      "n_outcome": 10,
       "accuracy": 0.5,
       "ev_mean": 13.95
     },
@@ -461,8 +461,8 @@
     "o/u_games_22.5_under": {
       "n": 21,
       "n_placed": 21,
-      "n_outcome": 12,
-      "accuracy": 0.5,
+      "n_outcome": 13,
+      "accuracy": 0.5385,
       "ev_mean": 12.94
     },
     "o/u_games_23.0_over": {
@@ -580,36 +580,36 @@
     "o/u_games_36.5_over": {
       "n": 22,
       "n_placed": 22,
-      "n_outcome": 6,
-      "accuracy": 0.3333,
+      "n_outcome": 8,
+      "accuracy": 0.375,
       "ev_mean": 25.37
     },
     "o/u_games_37.0_over": {
       "n": 9,
       "n_placed": 9,
-      "n_outcome": 3,
-      "accuracy": 0.3333,
+      "n_outcome": 4,
+      "accuracy": 0.25,
       "ev_mean": 23.93
     },
     "o/u_games_37.5_over": {
       "n": 20,
       "n_placed": 20,
-      "n_outcome": 3,
+      "n_outcome": 6,
       "accuracy": 0.3333,
       "ev_mean": 24.08
     },
     "o/u_games_38.0_over": {
       "n": 12,
       "n_placed": 12,
-      "n_outcome": 0,
-      "accuracy": null,
+      "n_outcome": 2,
+      "accuracy": 0.5,
       "ev_mean": 19.93
     },
     "o/u_games_38.5_over": {
       "n": 35,
       "n_placed": 35,
-      "n_outcome": 7,
-      "accuracy": 0.2857,
+      "n_outcome": 12,
+      "accuracy": 0.4167,
       "ev_mean": 20.24
     },
     "o/u_games_38.5_under": {
@@ -620,17 +620,17 @@
       "ev_mean": 5.08
     },
     "o/u_games_39.0_over": {
-      "n": 11,
-      "n_placed": 11,
-      "n_outcome": 4,
-      "accuracy": 0.25,
-      "ev_mean": 15.05
+      "n": 12,
+      "n_placed": 12,
+      "n_outcome": 7,
+      "accuracy": 0.5714,
+      "ev_mean": 15.68
     },
     "o/u_games_39.5_over": {
       "n": 28,
       "n_placed": 28,
-      "n_outcome": 5,
-      "accuracy": 0.2,
+      "n_outcome": 9,
+      "accuracy": 0.4444,
       "ev_mean": 16.57
     },
     "o/u_games_40.0_over": {
@@ -643,8 +643,8 @@
     "o/u_games_40.5_over": {
       "n": 12,
       "n_placed": 12,
-      "n_outcome": 2,
-      "accuracy": 0.0,
+      "n_outcome": 3,
+      "accuracy": 0.3333,
       "ev_mean": 10.91
     },
     "o/u_games_40.5_under": {
@@ -825,16 +825,16 @@
   },
   "by_confidence": {
     "HIGH": {
-      "n": 332,
-      "accuracy": 0.4578
+      "n": 333,
+      "accuracy": 0.4595
     },
     "LOW": {
       "n": 403,
       "accuracy": 0.3052
     },
     "MEDIUM": {
-      "n": 882,
-      "accuracy": 0.3197
+      "n": 884,
+      "accuracy": 0.3416
     }
   }
 }
