@@ -45,6 +45,13 @@
       "odds_a": 1.7,
       "odds_b": 2.25,
       "source": "winamax_de"
+    },
+    {
+      "label": "auto_20260902_16",
+      "ts_utc": "2026-09-02T16:35:26.672868+00:00",
+      "odds_a": 1.7,
+      "odds_b": 2.25,
+      "source": "winamax_de"
     }
   ]
 }

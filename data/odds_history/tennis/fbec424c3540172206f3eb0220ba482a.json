@@ -52,6 +52,13 @@
       "odds_a": 1.43,
       "odds_b": 2.75,
       "source": "unibet_fr"
+    },
+    {
+      "label": "auto_20260902_16",
+      "ts_utc": "2026-09-02T16:35:26.770679+00:00",
+      "odds_a": 1.46,
+      "odds_b": 2.75,
+      "source": "unibet_fr"
     }
   ]
 }
