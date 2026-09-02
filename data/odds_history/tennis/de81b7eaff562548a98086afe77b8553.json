@@ -1,0 +1,15 @@
+{
+  "match_id": "de81b7eaff562548a98086afe77b8553",
+  "player_a": "Mattia Bellucci",
+  "player_b": "Taylor Fritz",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260902_04",
+      "ts_utc": "2026-09-02T04:34:53.415097+00:00",
+      "odds_a": 5.64,
+      "odds_b": 1.15,
+      "source": "gtbets"
+    }
+  ]
+}

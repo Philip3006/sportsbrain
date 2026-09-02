@@ -38,6 +38,13 @@
       "odds_a": 1.28,
       "odds_b": 3.75,
       "source": "unibet_fr"
+    },
+    {
+      "label": "auto_20260902_04",
+      "ts_utc": "2026-09-02T04:34:53.584542+00:00",
+      "odds_a": 1.25,
+      "odds_b": 3.1,
+      "source": "pmu_fr"
     }
   ]
 }

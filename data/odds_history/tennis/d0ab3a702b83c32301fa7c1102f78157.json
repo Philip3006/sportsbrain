@@ -1,0 +1,15 @@
+{
+  "match_id": "d0ab3a702b83c32301fa7c1102f78157",
+  "player_a": "Qinwen Zheng",
+  "player_b": "Yulia Putintseva",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260902_04",
+      "ts_utc": "2026-09-02T04:34:53.590648+00:00",
+      "odds_a": 1.32,
+      "odds_b": 3.4,
+      "source": "gtbets"
+    }
+  ]
+}

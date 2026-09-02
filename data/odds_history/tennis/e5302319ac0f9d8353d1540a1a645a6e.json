@@ -38,6 +38,13 @@
       "odds_a": 1.25,
       "odds_b": 3.9,
       "source": "mybookieag"
+    },
+    {
+      "label": "auto_20260902_04",
+      "ts_utc": "2026-09-02T04:34:53.406993+00:00",
+      "odds_a": 1.24,
+      "odds_b": 4.0,
+      "source": "marathonbet"
     }
   ]
 }

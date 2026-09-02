@@ -1,0 +1,15 @@
+{
+  "match_id": "ab50c78d4de6f55b4e5cbd14cd9f55dd",
+  "player_a": "Elise Mertens",
+  "player_b": "Maria Timofeeva",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260902_04",
+      "ts_utc": "2026-09-02T04:34:53.589710+00:00",
+      "odds_a": 1.16,
+      "odds_b": 2.94,
+      "source": "matchbook"
+    }
+  ]
+}

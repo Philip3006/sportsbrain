@@ -1,0 +1,15 @@
+{
+  "match_id": "fb353fc871a2ec743a1bb2ec42f4408c",
+  "player_a": "Dane Sweeny",
+  "player_b": "Lorenzo Musetti",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260902_04",
+      "ts_utc": "2026-09-02T04:34:53.413935+00:00",
+      "odds_a": 12.6,
+      "odds_b": 1.03,
+      "source": "gtbets"
+    }
+  ]
+}

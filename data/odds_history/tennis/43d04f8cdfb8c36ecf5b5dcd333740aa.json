@@ -1,0 +1,15 @@
+{
+  "match_id": "43d04f8cdfb8c36ecf5b5dcd333740aa",
+  "player_a": "Maria Sakkari",
+  "player_b": "Yuliia Starodubtseva",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260902_04",
+      "ts_utc": "2026-09-02T04:34:53.590510+00:00",
+      "odds_a": 1.36,
+      "odds_b": 2.1,
+      "source": "matchbook"
+    }
+  ]
+}

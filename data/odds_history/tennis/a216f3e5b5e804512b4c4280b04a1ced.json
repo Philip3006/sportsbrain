@@ -38,6 +38,13 @@
       "odds_a": 2.62,
       "odds_b": 1.44,
       "source": "sport888"
+    },
+    {
+      "label": "auto_20260902_04",
+      "ts_utc": "2026-09-02T04:34:53.404641+00:00",
+      "odds_a": 2.84,
+      "odds_b": 1.42,
+      "source": "marathonbet"
     }
   ]
 }

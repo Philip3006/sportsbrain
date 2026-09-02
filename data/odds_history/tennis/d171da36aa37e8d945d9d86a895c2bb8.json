@@ -1,0 +1,15 @@
+{
+  "match_id": "d171da36aa37e8d945d9d86a895c2bb8",
+  "player_a": "Eva Lys",
+  "player_b": "Mirra Andreeva",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260902_04",
+      "ts_utc": "2026-09-02T04:34:53.585521+00:00",
+      "odds_a": 8.0,
+      "odds_b": 1.08,
+      "source": "matchbook"
+    }
+  ]
+}

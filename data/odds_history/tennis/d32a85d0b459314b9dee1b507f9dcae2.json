@@ -1,0 +1,15 @@
+{
+  "match_id": "d32a85d0b459314b9dee1b507f9dcae2",
+  "player_a": "Francisco Cerundolo",
+  "player_b": "Jan-Lennard Struff",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260902_04",
+      "ts_utc": "2026-09-02T04:34:53.414624+00:00",
+      "odds_a": 1.53,
+      "odds_b": 2.54,
+      "source": "gtbets"
+    }
+  ]
+}

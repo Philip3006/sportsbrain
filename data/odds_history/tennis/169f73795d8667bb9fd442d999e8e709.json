@@ -1,0 +1,15 @@
+{
+  "match_id": "169f73795d8667bb9fd442d999e8e709",
+  "player_a": "Flavio Cobolli",
+  "player_b": "Tristan Schoolkate",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260902_04",
+      "ts_utc": "2026-09-02T04:34:53.414450+00:00",
+      "odds_a": 1.16,
+      "odds_b": 5.3,
+      "source": "gtbets"
+    }
+  ]
+}
