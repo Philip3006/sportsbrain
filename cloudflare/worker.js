@@ -217,26 +217,74 @@ function _parseHealth(raw) {
   }
 }
 
-async function _readCanonicalHealth(env, user) {
-  const dedicated = _parseHealth(await env.SIGNALS.get(_healthKey(user)));
-  if (dedicated) return dedicated;
+async function _readCanonicalHealthState(env, user) {
+  const dedicatedRaw = await env.SIGNALS.get(_healthKey(user));
+  const dedicated = _parseHealth(dedicatedRaw);
+  if (dedicated) return { health: dedicated, bootstrapAllowed: false };
 
   // One-way legacy fallback: first authority-aware update seeds a separate
   // health record from the existing signals payload without rewriting it.
   const rawSignals = await env.SIGNALS.get(_signalsKey(user));
   try {
     const signals = JSON.parse(rawSignals || '{}');
-    return signals && typeof signals === 'object' && Array.isArray(signals.health?.jobs)
+    const legacy = signals && typeof signals === 'object' && Array.isArray(signals.health?.jobs)
       ? signals.health
       : null;
+    return { health: legacy, bootstrapAllowed: !dedicatedRaw && !legacy };
   } catch {
-    return null;
+    return { health: null, bootstrapAllowed: !dedicatedRaw };
   }
 }
 
-function _mergeHealthPartial(existing, incoming, authority) {
+async function _readCanonicalHealth(env, user) {
+  return (await _readCanonicalHealthState(env, user)).health;
+}
+
+function _bootstrapCloudHealth(incoming, authority) {
+  if (authority !== 'cloud') return { error: 'canonical_health_baseline_missing' };
+  if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
+    return { error: 'invalid_health_bootstrap' };
+  }
+  if (_healthTimestamp(incoming.generated_at) === null) {
+    return { error: 'invalid_generated_at' };
+  }
+  if (!Array.isArray(incoming.jobs) || incoming.jobs.length === 0) {
+    return { error: 'invalid_health_bootstrap' };
+  }
+
+  const jobs = new Map();
+  for (const job of incoming.jobs) {
+    if (!job || typeof job.job !== 'string' || !_CLOUD_HEALTH_JOBS.has(job.job)) {
+      return { error: 'unclassified_or_foreign_health_job' };
+    }
+    if (jobs.has(job.job)) return { error: 'duplicate_health_job' };
+    if (!['ok', 'error', 'stale', 'degraded'].includes(job.status)) {
+      return { error: 'invalid_health_bootstrap' };
+    }
+    if (job.last_run_at !== null && _healthTimestamp(job.last_run_at) === null) {
+      return { error: 'invalid_job_timestamp' };
+    }
+    jobs.set(job.job, job);
+  }
+  if (jobs.size !== _CLOUD_HEALTH_JOBS.size || [..._CLOUD_HEALTH_JOBS].some((job) => !jobs.has(job))) {
+    return { error: 'incomplete_cloud_health_bootstrap' };
+  }
+
+  const canonicalJobs = [...jobs.values()].sort((a, b) => a.job.localeCompare(b.job));
+  return {
+    health: {
+      ...incoming,
+      jobs: canonicalJobs,
+      overall: _healthOverall(canonicalJobs),
+    },
+  };
+}
+
+function _mergeHealthPartial(existing, incoming, authority, bootstrapAllowed = false) {
   if (!existing || !Array.isArray(existing.jobs) || !incoming || !Array.isArray(incoming.jobs)) {
-    return { error: 'canonical_health_baseline_missing' };
+    return bootstrapAllowed
+      ? _bootstrapCloudHealth(incoming, authority)
+      : { error: 'canonical_health_baseline_missing' };
   }
   if (_healthTimestamp(incoming.generated_at) === null) {
     return { error: 'invalid_generated_at' };
@@ -299,8 +347,8 @@ async function _mergeHealthWithRetry(env, user, incoming, authority) {
   // this read-after-write loop detects most concurrent lost updates. A Durable
   // Object is required if contention needs a strict serializable guarantee.
   for (let attempt = 0; attempt < _HEALTH_MERGE_ATTEMPTS; attempt++) {
-    const existing = await _readCanonicalHealth(env, user);
-    const merged = _mergeHealthPartial(existing, incoming, authority);
+    const state = await _readCanonicalHealthState(env, user);
+    const merged = _mergeHealthPartial(state.health, incoming, authority, state.bootstrapAllowed);
     if (merged.error) return merged;
     await env.SIGNALS.put(_healthKey(user), JSON.stringify(merged.health));
     if (_healthUpdatePersisted(await _readCanonicalHealth(env, user), incoming)) {

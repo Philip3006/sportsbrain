@@ -117,12 +117,13 @@ function healthPayload(jobs, generatedAt = '2026-08-31T10:00:00Z', overall = 'ok
 }
 
 function makeHealthEnv(initialHealth) {
+  const signals = {
+    football: [],
+    bankroll_state: { published_at: '2026-08-31T09:00:00Z' },
+  };
+  if (initialHealth) signals.health = initialHealth;
   const values = new Map([
-    ['signals_json', JSON.stringify({
-      football: [],
-      bankroll_state: { published_at: '2026-08-31T09:00:00Z' },
-      health: initialHealth,
-    })],
+    ['signals_json', JSON.stringify(signals)],
   ]);
   return {
     API_TOKEN: 'health_test_token',
@@ -138,6 +139,12 @@ function makeHealthEnv(initialHealth) {
   };
 }
 
+function makeCanonicalHealthEnv(initialHealth) {
+  const env = makeHealthEnv(initialHealth);
+  env._values.set('health_v1', JSON.stringify(initialHealth));
+  return env;
+}
+
 async function postHealth(env, authority, health) {
   return worker.fetch(new Request(
     `https://worker.test/signals?merge_health=1&health_authority=${authority}`,
@@ -150,6 +157,26 @@ async function postHealth(env, authority, health) {
       body: JSON.stringify({ health }),
     },
   ), env);
+}
+
+const CLOUD_BOOTSTRAP_JOBS = [
+  'bundesliga2_closing_odds', 'bundesliga2_live_push', 'bundesliga2_retrain',
+  'bundesliga2_scan', 'bundesliga2_settle', 'consume_pending_bets',
+  'tennis_closing_odds', 'tennis_retrain', 'tennis_scan', 'tennis_settle',
+  'signals_data_fresh', 'live_scores_fresh',
+];
+
+function cloudBootstrapPayload({
+  generatedAt = '2026-09-02T10:00:00Z',
+  overall = 'ok',
+  jobStatus = 'ok',
+  jobTimestamp = '2026-09-02T09:59:00Z',
+} = {}) {
+  return healthPayload(
+    CLOUD_BOOTSTRAP_JOBS.map((job) => healthJob(job, jobStatus, jobTimestamp)),
+    generatedAt,
+    overall,
+  );
 }
 
 function makeAuthEnv() {
@@ -456,12 +483,68 @@ await testAsync('Worker: missing GH_TOKEN causes tennis_settle scheduled() to th
 
 // ── OPS-LOCALHEALTH-PUBLISH-001: actual Worker health merge boundary ───────
 
+await testAsync('Health bootstrap: complete Cloud evidence initializes dedicated health without financial writes', async () => {
+  const env = makeHealthEnv();
+  const beforeSignals = env._values.get('signals_json');
+  const response = await postHealth(env, 'cloud', cloudBootstrapPayload({
+    overall: 'ok',
+    jobStatus: 'error',
+  }));
+  assertEq(response.status, 200, 'complete Cloud bootstrap accepted');
+  const stored = JSON.parse(env._values.get('health_v1'));
+  assertEq(stored.jobs.length, CLOUD_BOOTSTRAP_JOBS.length, 'dedicated health_v1 contains complete Cloud evidence');
+  assertEq(stored.overall, 'down', 'bootstrap recomputes overall instead of trusting caller');
+  assertEq(env._values.get('signals_json'), beforeSignals, 'bootstrap leaves financial signals record untouched');
+});
+
+await testAsync('Health bootstrap: Local and invalid Cloud payloads fail closed', async () => {
+  const local = await postHealth(makeHealthEnv(), 'local', healthPayload([
+    healthJob('daily_scan', 'ok', '2026-09-02T09:59:00Z'),
+  ]));
+  assertEq(local.status, 409, 'Local authority cannot bootstrap missing canonical health');
+  assertEq(await local.text(), 'canonical_health_baseline_missing', 'Local bootstrap failure is explicit');
+
+  const unknownPayload = cloudBootstrapPayload();
+  unknownPayload.jobs.push(healthJob('unknown_job', 'ok', '2026-09-02T09:59:00Z'));
+  const unknown = await postHealth(makeHealthEnv(), 'cloud', unknownPayload);
+  assertEq(unknown.status, 409, 'unknown Cloud bootstrap job rejected');
+
+  const localPayload = cloudBootstrapPayload();
+  localPayload.jobs.push(healthJob('daily_scan', 'ok', '2026-09-02T09:59:00Z'));
+  const foreignLocal = await postHealth(makeHealthEnv(), 'cloud', localPayload);
+  assertEq(foreignLocal.status, 409, 'Local-owned job rejected from Cloud bootstrap');
+
+  const invalidGenerated = await postHealth(makeHealthEnv(), 'cloud', cloudBootstrapPayload({
+    generatedAt: 'not-a-timestamp',
+  }));
+  assertEq(invalidGenerated.status, 409, 'invalid bootstrap generated_at rejected');
+
+  const invalidTimestamp = await postHealth(makeHealthEnv(), 'cloud', cloudBootstrapPayload({
+    jobTimestamp: 'not-a-timestamp',
+  }));
+  assertEq(invalidTimestamp.status, 409, 'invalid bootstrap job timestamp rejected');
+});
+
+await testAsync('Health bootstrap: duplicate and incomplete Cloud coverage fail closed', async () => {
+  const duplicatePayload = cloudBootstrapPayload();
+  duplicatePayload.jobs.push({ ...duplicatePayload.jobs[0] });
+  const duplicate = await postHealth(makeHealthEnv(), 'cloud', duplicatePayload);
+  assertEq(duplicate.status, 409, 'duplicate Cloud bootstrap job rejected');
+  assertEq(await duplicate.text(), 'duplicate_health_job', 'duplicate failure is explicit');
+
+  const incompletePayload = cloudBootstrapPayload();
+  incompletePayload.jobs.pop();
+  const incomplete = await postHealth(makeHealthEnv(), 'cloud', incompletePayload);
+  assertEq(incomplete.status, 409, 'incomplete Cloud bootstrap coverage rejected');
+  assertEq(await incomplete.text(), 'incomplete_cloud_health_bootstrap', 'incomplete failure is explicit');
+});
+
 await testAsync('Health: fresh local-authoritative job updates without touching financial signals', async () => {
   const initial = healthPayload([
     healthJob('daily_scan', 'ok', '2026-08-31T09:00:00Z'),
     healthJob('tennis_scan', 'ok', '2026-08-31T09:30:00Z'),
   ]);
-  const env = makeHealthEnv(initial);
+  const env = makeCanonicalHealthEnv(initial);
   const beforeSignals = env._values.get('signals_json');
   const response = await postHealth(env, 'local', healthPayload([
     healthJob('daily_scan', 'degraded', '2026-08-31T10:00:00Z'),
@@ -475,7 +558,7 @@ await testAsync('Health: fresh local-authoritative job updates without touching 
 
 await testAsync('Health: stale local-authoritative update is rejected', async () => {
   const initial = healthPayload([healthJob('daily_scan', 'ok', '2026-08-31T10:00:00Z')]);
-  const env = makeHealthEnv(initial);
+  const env = makeCanonicalHealthEnv(initial);
   const response = await postHealth(env, 'local', healthPayload([
     healthJob('daily_scan', 'error', '2026-08-31T09:59:00Z'),
   ], '2026-08-31T10:01:00Z'));
@@ -483,14 +566,37 @@ await testAsync('Health: stale local-authoritative update is rejected', async ()
   assertEq(await response.text(), 'stale_health_update', 'stale reason is explicit');
 });
 
+await testAsync('Health: equal timestamps remain no-op after canonical initialization', async () => {
+  const initial = healthPayload([healthJob('daily_scan', 'ok', '2026-08-31T10:00:00Z')]);
+  const env = makeCanonicalHealthEnv(initial);
+  const response = await postHealth(env, 'local', healthPayload([
+    healthJob('daily_scan', 'error', '2026-08-31T10:00:00Z'),
+  ], '2026-08-31T11:00:00Z'));
+  assertEq(response.status, 200, 'equal timestamp accepted as no-op');
+  const stored = JSON.parse(env._values.get('health_v1'));
+  assertEq(stored.jobs.find(j => j.job === 'daily_scan').status, 'ok', 'equal timestamp cannot overwrite canonical status');
+});
+
 await testAsync('Health: local payload cannot clobber cloud-authoritative job', async () => {
   const initial = healthPayload([healthJob('tennis_scan', 'ok', '2026-08-31T10:00:00Z')]);
-  const env = makeHealthEnv(initial);
+  const env = makeCanonicalHealthEnv(initial);
   const response = await postHealth(env, 'local', healthPayload([
     healthJob('tennis_scan', 'error', '2026-08-31T11:00:00Z'),
   ], '2026-08-31T11:00:00Z'));
   assertEq(response.status, 409, 'foreign cloud job rejected from local authority');
   assertEq(JSON.parse(env._values.get('signals_json')).health.jobs[0].status, 'ok', 'cloud truth unchanged');
+});
+
+await testAsync('Health: Cloud update preserves local-authoritative evidence after initialization', async () => {
+  const initial = healthPayload([healthJob('daily_scan', 'ok', '2026-08-31T10:00:00Z')]);
+  const env = makeCanonicalHealthEnv(initial);
+  const response = await postHealth(env, 'cloud', cloudBootstrapPayload({
+    generatedAt: '2026-08-31T11:00:00Z',
+    jobTimestamp: '2026-08-31T10:30:00Z',
+  }));
+  assertEq(response.status, 200, 'valid Cloud update accepted after initialization');
+  const stored = JSON.parse(env._values.get('health_v1'));
+  assertEq(stored.jobs.find(j => j.job === 'daily_scan').status, 'ok', 'Cloud update retains local evidence');
 });
 
 await testAsync('Health: unknown local job and malformed timestamps fail closed', async () => {
