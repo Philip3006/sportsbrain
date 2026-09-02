@@ -3,7 +3,7 @@
 set -uo pipefail
 
 SPORTSBRAIN_DIR="/Users/philiprassillier/sportsbrain"
-LOG="$SPORTSBRAIN_DIR/results/health_aggregate.log"
+LOG="/Users/philiprassillier/Library/Logs/sportsbrain_aggregate_health.log"
 
 cd "$SPORTSBRAIN_DIR" || exit 1
 

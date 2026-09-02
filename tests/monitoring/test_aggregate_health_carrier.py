@@ -83,3 +83,7 @@ def test_aggregate_health_plist_matches_canonical_local_cadence() -> None:
     assert plist["StartInterval"] == 120
     assert plist["RunAtLoad"] is False
     assert set(plist["EnvironmentVariables"]) == {"PATH"}
+    log_path = "/Users/philiprassillier/Library/Logs/sportsbrain_aggregate_health.log"
+    assert f'LOG="{log_path}"' in SCRIPT.read_text()
+    assert plist["StandardOutPath"] == log_path
+    assert plist["StandardErrorPath"] == log_path
