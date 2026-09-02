@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-02T20:15:54.834686+00:00",
-  "n_signals_total": 1611,
-  "n_with_outcome": 1299,
+  "generated_at": "2026-09-02T22:16:03.576121+00:00",
+  "n_signals_total": 1617,
+  "n_with_outcome": 1325,
   "by_market": {
     "ah+0.5_away": {
       "n": 26,
@@ -158,11 +158,11 @@
       "ev_mean": 38.43
     },
     "away": {
-      "n": 248,
-      "n_placed": 195,
-      "n_outcome": 228,
-      "accuracy": 0.5088,
-      "ev_mean": 22.64
+      "n": 249,
+      "n_placed": 196,
+      "n_outcome": 231,
+      "accuracy": 0.5065,
+      "ev_mean": 22.65
     },
     "btts_yes": {
       "n": 9,
@@ -186,11 +186,11 @@
       "ev_mean": 37.63
     },
     "home": {
-      "n": 214,
-      "n_placed": 182,
-      "n_outcome": 176,
-      "accuracy": 0.4091,
-      "ev_mean": 16.62
+      "n": 215,
+      "n_placed": 183,
+      "n_outcome": 180,
+      "accuracy": 0.4056,
+      "ev_mean": 16.57
     },
     "o/u1.5_over": {
       "n": 21,
@@ -377,8 +377,8 @@
     "o/u_games_19.5_under": {
       "n": 15,
       "n_placed": 15,
-      "n_outcome": 10,
-      "accuracy": 0.3,
+      "n_outcome": 11,
+      "accuracy": 0.3636,
       "ev_mean": 9.73
     },
     "o/u_games_20.0_over": {
@@ -391,8 +391,8 @@
     "o/u_games_20.0_under": {
       "n": 6,
       "n_placed": 6,
-      "n_outcome": 3,
-      "accuracy": 0.3333,
+      "n_outcome": 4,
+      "accuracy": 0.5,
       "ev_mean": 6.59
     },
     "o/u_games_20.5_over": {
@@ -405,8 +405,8 @@
     "o/u_games_20.5_under": {
       "n": 15,
       "n_placed": 15,
-      "n_outcome": 8,
-      "accuracy": 0.375,
+      "n_outcome": 9,
+      "accuracy": 0.4444,
       "ev_mean": 12.86
     },
     "o/u_games_21.0_over": {
@@ -431,11 +431,11 @@
       "ev_mean": 23.43
     },
     "o/u_games_21.5_under": {
-      "n": 43,
-      "n_placed": 43,
-      "n_outcome": 21,
-      "accuracy": 0.5714,
-      "ev_mean": 12.21
+      "n": 44,
+      "n_placed": 44,
+      "n_outcome": 23,
+      "accuracy": 0.5652,
+      "ev_mean": 12.09
     },
     "o/u_games_22.0_over": {
       "n": 28,
@@ -447,7 +447,7 @@
     "o/u_games_22.0_under": {
       "n": 17,
       "n_placed": 17,
-      "n_outcome": 6,
+      "n_outcome": 8,
       "accuracy": 0.5,
       "ev_mean": 13.95
     },
@@ -461,7 +461,7 @@
     "o/u_games_22.5_under": {
       "n": 21,
       "n_placed": 21,
-      "n_outcome": 10,
+      "n_outcome": 12,
       "accuracy": 0.5,
       "ev_mean": 12.94
     },
@@ -606,11 +606,11 @@
       "ev_mean": 19.93
     },
     "o/u_games_38.5_over": {
-      "n": 33,
-      "n_placed": 33,
-      "n_outcome": 5,
-      "accuracy": 0.4,
-      "ev_mean": 20.74
+      "n": 35,
+      "n_placed": 35,
+      "n_outcome": 7,
+      "accuracy": 0.2857,
+      "ev_mean": 20.24
     },
     "o/u_games_38.5_under": {
       "n": 1,
@@ -622,15 +622,15 @@
     "o/u_games_39.0_over": {
       "n": 11,
       "n_placed": 11,
-      "n_outcome": 2,
-      "accuracy": 0.5,
+      "n_outcome": 4,
+      "accuracy": 0.25,
       "ev_mean": 15.05
     },
     "o/u_games_39.5_over": {
-      "n": 27,
-      "n_placed": 27,
-      "n_outcome": 3,
-      "accuracy": 0.3333,
+      "n": 28,
+      "n_placed": 28,
+      "n_outcome": 5,
+      "accuracy": 0.2,
       "ev_mean": 16.57
     },
     "o/u_games_40.0_over": {
@@ -650,29 +650,29 @@
     "o/u_games_40.5_under": {
       "n": 2,
       "n_placed": 2,
-      "n_outcome": 0,
-      "accuracy": null,
+      "n_outcome": 1,
+      "accuracy": 0.0,
       "ev_mean": 5.53
     },
     "o/u_games_41.0_under": {
       "n": 2,
       "n_placed": 2,
-      "n_outcome": 0,
-      "accuracy": null,
+      "n_outcome": 1,
+      "accuracy": 0.0,
       "ev_mean": 11.93
     },
     "o/u_games_41.5_under": {
       "n": 2,
       "n_placed": 2,
-      "n_outcome": 0,
-      "accuracy": null,
+      "n_outcome": 1,
+      "accuracy": 0.0,
       "ev_mean": 8.21
     },
     "o/u_games_42.0_under": {
       "n": 2,
       "n_placed": 2,
-      "n_outcome": 0,
-      "accuracy": null,
+      "n_outcome": 1,
+      "accuracy": 0.0,
       "ev_mean": 14.16
     },
     "scorer_Adam Hložek": {
@@ -825,16 +825,16 @@
   },
   "by_confidence": {
     "HIGH": {
-      "n": 331,
-      "accuracy": 0.4562
+      "n": 332,
+      "accuracy": 0.4578
     },
     "LOW": {
       "n": 403,
       "accuracy": 0.3052
     },
     "MEDIUM": {
-      "n": 877,
-      "accuracy": 0.3136
+      "n": 882,
+      "accuracy": 0.3197
     }
   }
 }
