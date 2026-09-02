@@ -45,6 +45,13 @@
       "odds_a": 11.0,
       "odds_b": 1.04,
       "source": "unibet_nl"
+    },
+    {
+      "label": "auto_20260902_11",
+      "ts_utc": "2026-09-02T11:19:21.502595+00:00",
+      "odds_a": 13.0,
+      "odds_b": 1.02,
+      "source": "marathonbet"
     }
   ]
 }

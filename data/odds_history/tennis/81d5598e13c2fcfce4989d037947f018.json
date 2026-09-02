@@ -1,0 +1,15 @@
+{
+  "match_id": "81d5598e13c2fcfce4989d037947f018",
+  "player_a": "Alexander Zverev",
+  "player_b": "Quentin Halys",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260902_11",
+      "ts_utc": "2026-09-02T11:19:21.386449+00:00",
+      "odds_a": 1.17,
+      "odds_b": 6.2,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

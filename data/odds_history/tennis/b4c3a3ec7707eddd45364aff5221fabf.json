@@ -1,0 +1,15 @@
+{
+  "match_id": "b4c3a3ec7707eddd45364aff5221fabf",
+  "player_a": "Anastasia Potapova",
+  "player_b": "Leolia Jeanjean",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260902_11",
+      "ts_utc": "2026-09-02T11:19:21.506082+00:00",
+      "odds_a": 1.29,
+      "odds_b": 3.9,
+      "source": "coolbet"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "93f7500d41836f113c7cb2101d9408cd",
+  "player_a": "Gael Monfils",
+  "player_b": "Learner Tien",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260902_11",
+      "ts_utc": "2026-09-02T11:19:21.387608+00:00",
+      "odds_a": 5.1,
+      "odds_b": 1.23,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "6c47604abe636acbfe699e110e95bd8f",
+  "player_a": "Elena Rybakina",
+  "player_b": "Jessica Bouzas Maneiro",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260902_11",
+      "ts_utc": "2026-09-02T11:19:21.506511+00:00",
+      "odds_a": 1.15,
+      "odds_b": 6.25,
+      "source": "coolbet"
+    }
+  ]
+}
