@@ -41,7 +41,7 @@ from src.config import (
 )
 from src.models.tennis_elo import compute_tennis_elo, predict_winner, top_players
 from src.tennis.ensemble import predict_winner_ensemble
-from src.tennis.elo_source import load_match_history
+from src.tennis.elo_source import extract_player_ranks, load_match_history
 from src.betting.tennis_detector import (
     detect_set_betting,
     detect_total_games,
@@ -669,6 +669,78 @@ def format_scan_report(
 
 
 # ---------------------------------------------------------------------------
+# Rank lookup (FND-MODEL1-013)
+# ---------------------------------------------------------------------------
+
+# Maximum age in days for a rank observation to be considered current.
+# Evidence: freshness analysis on 132k observations shows median |error|=5 at
+# 29-42d (still acceptable) vs 9 at 43-56d. Top-50 coverage at 42d is 87.5%.
+# Justified by historical as-of analysis — see CEO handoff Section 5.
+_MAX_RANK_AGE_DAYS = 42
+
+
+def _rank_for(
+    player: str,
+    name_source: str,
+    player_observations: dict,
+    prediction_time: datetime,
+    max_age_days: int = _MAX_RANK_AGE_DAYS,
+) -> float | None:
+    """Return the most recent ATP/WTA ranking for *player* strictly before
+    *prediction_time* and within *max_age_days*, or None for safe fallback.
+
+    As-of semantics: only rank observations strictly BEFORE prediction_time
+    are eligible — no future rank can leak into a prediction.  Additionally
+    rejects any observation older than max_age_days relative to
+    prediction_time (staleness guard).
+
+    Returns None → ensemble.py falls back to _MIN_RANK=1500.
+    """
+    from src.tennis.name_norm import to_elo_name_from_odds_api, to_elo_name_from_te
+    elo_key = to_elo_name_from_te(player) if name_source == "te" else to_elo_name_from_odds_api(player)
+    observations = player_observations.get(elo_key)
+    if not observations:
+        return None
+
+    import pandas as pd
+    cutoff_hi = pd.Timestamp(prediction_time)
+    if cutoff_hi.tzinfo is not None:
+        cutoff_hi = cutoff_hi.tz_convert("UTC").tz_localize(None)
+    cutoff_lo = cutoff_hi - pd.Timedelta(days=max_age_days)
+
+    best_rank: float | None = None
+    best_date: pd.Timestamp | None = None
+    for obs_date, obs_rank in observations:
+        ts = obs_date.tz_localize(None) if obs_date.tzinfo is not None else obs_date
+        if ts < cutoff_hi and ts >= cutoff_lo and (best_date is None or ts > best_date):
+            best_date = ts
+            best_rank = obs_rank
+    return best_rank
+
+
+def _rank_pair(
+    player_a: str,
+    player_b: str,
+    name_source: str,
+    player_observations: dict,
+    prediction_time: datetime,
+    max_age_days: int = _MAX_RANK_AGE_DAYS,
+) -> tuple[float | None, float | None]:
+    """Return (rank_a, rank_b) with pair-level neutralization contract.
+
+    If EITHER player's rank is missing, stale, or invalid then BOTH are
+    set to None so ensemble.py applies a symmetric 1500/1500 fallback.
+    Prevents artificial rank gaps (e.g. rank_a=5 / rank_b=1500) that the
+    model was not trained on.
+    """
+    ra = _rank_for(player_a, name_source, player_observations, prediction_time, max_age_days)
+    rb = _rank_for(player_b, name_source, player_observations, prediction_time, max_age_days)
+    if ra is None or rb is None:
+        return None, None
+    return ra, rb
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -721,6 +793,7 @@ def main() -> None:
     # ---- 2. Match-Daten + Elo + RollingState (FND-MODEL1-001) ----
     print("Loading ATP+WTA match data...")
     all_matches = _fetch_both_tours()
+    player_observations: dict = {}  # FND-MODEL1-013: all (date, rank) obs per player
     if all_matches is None or all_matches.empty:
         print("WARNING: Keine Match-Daten — Default-Elo verwendet.")
         from src.models.tennis_elo import TennisEloRatings
@@ -740,6 +813,12 @@ def main() -> None:
         except Exception as _exc:  # noqa: BLE001 — intentional broad catch for fail-safe path
             print(f"  WARNING: Rolling state build failed ({_exc}) — LGBM bypassed.")
             live_state = None  # Fail-safe: ensemble.py returns Elo-only
+        # FND-MODEL1-013: extract rank observations per player from the same corpus.
+        try:
+            player_observations = extract_player_ranks(all_matches)
+            print(f"  Player ranks: {len(player_observations)} players with observations.")
+        except Exception as _exc:  # noqa: BLE001 — fail-safe; rank=None → 1500 fallback
+            print(f"  WARNING: Rank extraction failed ({_exc}) — using 1500 fallback.")
 
     # ---- 3. Pro Turnier scannen ----
     per_tournament: dict[str, dict] = {}
@@ -774,12 +853,20 @@ def main() -> None:
         _pred_sources = {"elo": 0, "ensemble": 0}
         for m in upcoming:
             pa, pb = m["player_a"], m["player_b"]
+            _commence = m.get("commence_time", "")
+            try:
+                _pred_time = datetime.fromisoformat(str(_commence).replace("Z", "+00:00"))
+            except (ValueError, TypeError):
+                _pred_time = datetime.now()  # noqa: DTZ005
+            _ra, _rb = _rank_pair(pa, pb, "odds_api", player_observations, _pred_time)
             probs = predict_winner_ensemble(
                 pa, pb, ratings, t.surface,
                 best_of=t.best_of, category=t.category,
                 tournament_slug=t.slug,
-                match_date=m.get("commence_time", ""),
+                match_date=_commence,
                 state=live_state,
+                rank_a=_ra,
+                rank_b=_rb,
             )
             _pred_sources[probs.get("source", "elo")] += 1
 
@@ -1042,12 +1129,23 @@ def main() -> None:
                         _rb = ratings.get_overall(_eb)
                         if _ra != 1500.0 and _rb != 1500.0:
                             try:
+                                _te_commence = m.get("commence_time", "")
+                                try:
+                                    _te_pred_time = datetime.fromisoformat(str(_te_commence).replace("Z", "+00:00"))
+                                except (ValueError, TypeError):
+                                    _te_pred_time = datetime.now()  # noqa: DTZ005
+                                _te_ra, _te_rb = _rank_pair(
+                                    m["player_a"], m["player_b"], "te",
+                                    player_observations, _te_pred_time,
+                                )
                                 _probs = predict_winner_ensemble(
                                     m["player_a"], m["player_b"], ratings, reg.surface,
                                     best_of=reg.best_of, category=reg.category,
                                     name_source="te",
-                                    match_date=m.get("commence_time", ""),
+                                    match_date=_te_commence,
                                     state=live_state,
+                                    rank_a=_te_ra,
+                                    rank_b=_te_rb,
                                 )
                                 _oa = float(m.get("odds_a") or 0.0)
                                 _ob = float(m.get("odds_b") or 0.0)
