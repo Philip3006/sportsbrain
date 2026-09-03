@@ -1,8 +1,8 @@
 {
   "job": "bundesliga2_retrain",
   "status": "ok",
-  "last_run_at": "2026-09-02T09:12:06Z",
-  "started_at": "2026-09-02T09:12:06Z",
+  "last_run_at": "2026-09-03T09:19:03Z",
+  "started_at": "2026-09-03T09:19:03Z",
   "duration_s": null,
   "exit_code": 0,
   "error": null,
