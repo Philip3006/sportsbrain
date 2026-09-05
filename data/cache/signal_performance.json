@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-05T14:16:53.335840+00:00",
-  "n_signals_total": 1663,
+  "generated_at": "2026-09-05T16:16:46.204773+00:00",
+  "n_signals_total": 1665,
   "n_with_outcome": 1640,
   "by_market": {
     "ah+0.5_away": {
@@ -158,11 +158,11 @@
       "ev_mean": 38.43
     },
     "away": {
-      "n": 272,
-      "n_placed": 219,
+      "n": 273,
+      "n_placed": 220,
       "n_outcome": 263,
       "accuracy": 0.5057,
-      "ev_mean": 22.25
+      "ev_mean": 22.21
     },
     "btts_yes": {
       "n": 9,
@@ -186,8 +186,8 @@
       "ev_mean": 37.63
     },
     "home": {
-      "n": 236,
-      "n_placed": 204,
+      "n": 237,
+      "n_placed": 205,
       "n_outcome": 224,
       "accuracy": 0.4464,
       "ev_mean": 16.28
@@ -825,16 +825,16 @@
   },
   "by_confidence": {
     "HIGH": {
-      "n": 354,
-      "accuracy": 0.4831
+      "n": 355,
+      "accuracy": 0.4817
     },
     "LOW": {
       "n": 403,
       "accuracy": 0.3052
     },
     "MEDIUM": {
-      "n": 906,
-      "accuracy": 0.4448
+      "n": 907,
+      "accuracy": 0.4443
     }
   }
 }
