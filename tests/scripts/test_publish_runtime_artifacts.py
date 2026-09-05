@@ -55,6 +55,24 @@ def _command(source: Path, log: Path, *paths: str) -> list[str]:
     ]
 
 
+def _staged_command(source: Path, stage: Path, log: Path, *paths: str) -> list[str]:
+    return [
+        "bash",
+        "-c",
+        (
+            f'source {shlex.quote(str(PUBLISHER))} && {{ '
+            '_canonical_origin_transport() { printf "%s\\n" "$SPORTSBRAIN_TEST_PUBLISH_REMOTE"; }; '
+            'runtime_publish_staged_artifacts "$1" "$2" "$3" "$4" "${@:5}"; }'
+        ),
+        "publisher-staged",
+        str(source),
+        str(stage),
+        str(log),
+        "auto: staged runtime artifact",
+        *paths,
+    ]
+
+
 def _configure(source: Path, publisher: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [
@@ -106,6 +124,16 @@ def _run(
         text=True,
         capture_output=True,
         env=_environment(source, publisher, lock_timeout, launchd_minimal=launchd_minimal),
+        check=False,
+    )
+
+
+def _run_staged(source: Path, publisher: Path, stage: Path, log: Path, *paths: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        _staged_command(source, stage, log, *paths),
+        text=True,
+        capture_output=True,
+        env=_environment(source, publisher, "0"),
         check=False,
     )
 
@@ -173,6 +201,46 @@ def test_active_head_and_index_remain_unchanged_after_publication(tmp_path: Path
     assert _git(["show", "main:docs/data/signals.json"], origin).stdout == signal.read_text()
     assert _git(["branch", "--show-current"], publisher).stdout.strip() == "runtime-publish"
     assert not Path(f"{publisher}.sportsbrain-runtime-publish.lock.d").exists()
+
+
+def test_staged_publication_leaves_active_checkout_completely_clean(tmp_path: Path):
+    origin, active, publisher = _seed(tmp_path)
+    stage = tmp_path / "stage"
+    staged_signal = stage / "docs" / "data" / "signals.json"
+    staged_signal.parent.mkdir(parents=True)
+    staged_signal.write_text('{"tennis": [{"signal_id": "staged"}]}\n')
+    head_before = _git(["rev-parse", "HEAD"], active).stdout.strip()
+
+    result = _run_staged(active, publisher, stage, tmp_path / "publish.log", "docs/data/signals.json")
+
+    assert result.returncode == 0, result.stderr
+    assert _git(["rev-parse", "HEAD"], active).stdout.strip() == head_before
+    assert _git(["status", "--porcelain"], active).stdout == ""
+    assert _git(["show", "main:docs/data/signals.json"], origin).stdout == staged_signal.read_text()
+
+
+def test_staged_publication_rejects_non_allowlisted_artifacts(tmp_path: Path):
+    _, active, publisher = _seed(tmp_path)
+    stage = tmp_path / "stage"
+    forbidden = stage / "results" / "ledger.csv"
+    forbidden.parent.mkdir(parents=True)
+    forbidden.write_text("financial data")
+
+    result = _run_staged(active, publisher, stage, tmp_path / "publish.log", "results/ledger.csv")
+
+    assert result.returncode != 0
+
+
+def test_staged_publication_rejects_a_stage_inside_the_active_checkout(tmp_path: Path):
+    _, active, publisher = _seed(tmp_path)
+    stage = active / "staging"
+    staged_signal = stage / "docs" / "data" / "signals.json"
+    staged_signal.parent.mkdir(parents=True)
+    staged_signal.write_text("{}")
+
+    result = _run_staged(active, publisher, stage, tmp_path / "publish.log", "docs/data/signals.json")
+
+    assert result.returncode != 0
 
 
 def test_setup_is_idempotent_and_rejects_active_checkout(tmp_path: Path):
@@ -378,7 +446,7 @@ def test_foreign_lock_fails_closed_and_is_never_removed(tmp_path: Path):
 def test_local_wrappers_and_healers_cannot_mutate_active_git_state():
     for name in ("scan_cron.sh", "closing_odds_cron.sh", "live_score_trigger.sh"):
         text = (ROOT / "scripts" / name).read_text()
-        assert "runtime_publish_artifacts" in text
+        assert "runtime_publish_staged_artifacts" in text
         assert "git commit" not in text
         assert "git add" not in text
         assert "git push" not in text

@@ -20,9 +20,9 @@
     <integer>120</integer>
 
     <key>StandardOutPath</key>
-    <string>/Users/philiprassillier/sportsbrain/results/launchd_live_score_push.log</string>
+    <string>/Users/philiprassillier/Library/Logs/sportsbrain_live_score_push.log</string>
     <key>StandardErrorPath</key>
-    <string>/Users/philiprassillier/sportsbrain/results/launchd_live_score_push.log</string>
+    <string>/Users/philiprassillier/Library/Logs/sportsbrain_live_score_push.log</string>
 
     <key>RunAtLoad</key>
     <false/>

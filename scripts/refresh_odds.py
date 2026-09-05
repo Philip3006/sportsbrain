@@ -43,7 +43,11 @@ def main() -> int:
         print(f"[refresh_odds] {summary}")
         failed = int(summary.get("failed", 0))
         refreshed = int(summary.get("refreshed", 0))
-        if failed and not refreshed:
+        if summary.get("publication_failed"):
+            exit_code = 1
+            status = "error"
+            error = "odds refresh publication failed; staged artifacts were not committed"
+        elif failed and not refreshed:
             exit_code = 1
             status = "error"
             error = f"all due odds refreshes failed ({failed})"

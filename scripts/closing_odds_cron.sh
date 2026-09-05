@@ -2,7 +2,10 @@
 # Wrapper for launchd: updates closing odds for open bets.
 # Runs silently if no open bets or outside tournament period.
 SPORTSBRAIN_DIR="/Users/philiprassillier/sportsbrain"
-LOG="$SPORTSBRAIN_DIR/results/closing_odds_cron.log"
+LOG="/Users/philiprassillier/Library/Logs/sportsbrain_closing_odds.log"
+mkdir -p "/Users/philiprassillier/Library/Caches/SportsBrain" || exit 1
+RUNTIME_STAGE_DIR="$(mktemp -d /Users/philiprassillier/Library/Caches/SportsBrain/closing-odds.XXXXXX)" || exit 1
+export SPORTSBRAIN_RUNTIME_ARTIFACT_STAGE_DIR="$RUNTIME_STAGE_DIR"
 cd "$SPORTSBRAIN_DIR" || exit 1
 
 # shellcheck source=./_health.sh
@@ -22,10 +25,16 @@ python3 scripts/update_closing_odds.py >> "$LOG" 2>&1
 JOB_EXIT=$?
 PUBLISH_EXIT=0
 
-# Publish generated output through the isolated publisher checkout.
+# Rebuild public signals from the private ledger into staging, then publish
+# only the staged artifacts through the isolated checkout.
+if [ "$JOB_EXIT" -eq 0 ]; then
+    python3 -c 'from src.notifications.web_dashboard import write_signals_json_all_users; failed = write_signals_json_all_users(football=[], tennis=[]); raise SystemExit(1 if failed else 0)' >> "$LOG" 2>&1
+    JOB_EXIT=$?
+fi
 source "$SPORTSBRAIN_DIR/scripts/publish_runtime_artifacts.sh"
-runtime_publish_artifacts "$SPORTSBRAIN_DIR" "$LOG" \
-    "auto: closing odds $(date '+%Y-%m-%d %H:%M')" docs/data/signals.json
+runtime_publish_staged_artifacts "$SPORTSBRAIN_DIR" "$RUNTIME_STAGE_DIR" "$LOG" \
+    "auto: closing odds $(date '+%Y-%m-%d %H:%M')" \
+    docs/data/signals.json docs/data/signals_philip.json
 PUBLISH_EXIT=$?
 EXIT_CODE=$JOB_EXIT
 if [ "$EXIT_CODE" -eq 0 ] && [ "$PUBLISH_EXIT" -ne 0 ]; then

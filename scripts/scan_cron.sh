@@ -3,7 +3,12 @@
 # Triggered at 07:00 UTC (09:00 CET) by com.sportsbrain.daily-scan.plist
 
 SPORTSBRAIN_DIR="/Users/philiprassillier/sportsbrain"
-LOG="$SPORTSBRAIN_DIR/results/scan_cron.log"
+LOG="/Users/philiprassillier/Library/Logs/sportsbrain_daily_scan.log"
+RUNTIME_STATE_DIR="/Users/philiprassillier/Library/Application Support/SportsBrain/runtime-state"
+mkdir -p "/Users/philiprassillier/Library/Caches/SportsBrain" "$RUNTIME_STATE_DIR" || exit 1
+RUNTIME_STAGE_DIR="$(mktemp -d /Users/philiprassillier/Library/Caches/SportsBrain/daily-scan.XXXXXX)" || exit 1
+export SPORTSBRAIN_RUNTIME_STATE_DIR="$RUNTIME_STATE_DIR"
+export SPORTSBRAIN_RUNTIME_ARTIFACT_STAGE_DIR="$RUNTIME_STAGE_DIR"
 
 cd "$SPORTSBRAIN_DIR" || { echo "ERROR: could not cd to $SPORTSBRAIN_DIR"; exit 1; }
 
@@ -52,8 +57,9 @@ PUBLISH_EXIT=0
 
 # 4. Publish generated output through the isolated publisher checkout.
 source "$SPORTSBRAIN_DIR/scripts/publish_runtime_artifacts.sh"
-runtime_publish_artifacts "$SPORTSBRAIN_DIR" "$LOG" \
-    "auto: scan $(date '+%Y-%m-%d')" docs/data/signals.json
+runtime_publish_staged_artifacts "$SPORTSBRAIN_DIR" "$RUNTIME_STAGE_DIR" "$LOG" \
+    "auto: scan $(date '+%Y-%m-%d')" \
+    docs/data/signals.json docs/data/signals_philip.json
 PUBLISH_EXIT=$?
 EXIT_CODE=$JOB_EXIT
 if [ "$EXIT_CODE" -eq 0 ] && [ "$PUBLISH_EXIT" -ne 0 ]; then

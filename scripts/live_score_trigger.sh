@@ -5,7 +5,12 @@ set -uo pipefail  # no -e: we want to record the exit code in health, not die
 
 PYTHON=/Library/Frameworks/Python.framework/Versions/3.13/bin/python3
 SPORTSBRAIN_DIR="/Users/philiprassillier/sportsbrain"
-LOG="$SPORTSBRAIN_DIR/results/launchd_live_score_push.log"
+LOG="/Users/philiprassillier/Library/Logs/sportsbrain_live_score_push.log"
+RUNTIME_STATE_DIR="/Users/philiprassillier/Library/Application Support/SportsBrain/runtime-state"
+mkdir -p "/Users/philiprassillier/Library/Caches/SportsBrain" "$RUNTIME_STATE_DIR" || exit 1
+RUNTIME_STAGE_DIR="$(mktemp -d /Users/philiprassillier/Library/Caches/SportsBrain/live-score-push.XXXXXX)" || exit 1
+export SPORTSBRAIN_RUNTIME_STATE_DIR="$RUNTIME_STATE_DIR"
+export SPORTSBRAIN_RUNTIME_ARTIFACT_STAGE_DIR="$RUNTIME_STAGE_DIR"
 
 source "$SPORTSBRAIN_DIR/scripts/_health.sh"
 source "$SPORTSBRAIN_DIR/scripts/_require_main_branch.sh"
@@ -37,8 +42,9 @@ timestamp() { date -u '+%Y-%m-%d %H:%M:%S UTC'; }
     fi
     PUBLISH_EXIT=0
     source "$SPORTSBRAIN_DIR/scripts/publish_runtime_artifacts.sh"
-    runtime_publish_artifacts "$SPORTSBRAIN_DIR" "$LOG" \
-        "auto: tennis live $(date -u +%H:%M)" \
+    runtime_publish_staged_artifacts "$SPORTSBRAIN_DIR" "$RUNTIME_STAGE_DIR" "$LOG" \
+        "auto: live scores $(date -u +%H:%M)" \
+        docs/data/live_scores.json \
         docs/data/tennis_live_scores.json \
         data/cache/tennis_live_scores.json \
         data/cache/tennis_suspended.json

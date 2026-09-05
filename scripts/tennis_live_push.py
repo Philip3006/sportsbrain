@@ -25,10 +25,13 @@ sys.path.insert(0, str(ROOT))
 from src.betting.tennis_settlement import is_tennis_market
 from src.config import DEFAULT_USER, ledger_path_for
 from src.data.tennis_scores import canonical_match_key, fetch_tennis_scores_espn
+from src.runtime.paths import runtime_artifact_path, runtime_state_path
 
-CACHE_PATH = ROOT / "data" / "cache" / "tennis_live_scores.json"
-DOCS_PATH  = ROOT / "docs" / "data" / "tennis_live_scores.json"
-SUSP_PATH  = ROOT / "data" / "cache" / "tennis_suspended.json"
+CACHE_PATH = runtime_state_path("data/cache/tennis_live_scores.json")
+DOCS_PATH = runtime_artifact_path("docs/data/tennis_live_scores.json")
+STAGED_CACHE_PATH = runtime_artifact_path("data/cache/tennis_live_scores.json")
+SUSP_PATH = runtime_state_path("data/cache/tennis_suspended.json")
+STAGED_SUSP_PATH = runtime_artifact_path("data/cache/tennis_suspended.json")
 
 
 _STALE_LIVE_HOURS = 2  # cache cleanup: push refreshes every 15 min, so 2h covers any missed-update gap
@@ -82,6 +85,8 @@ def _save_cache(cache: dict) -> None:
     CACHE_PATH.write_text(payload)
     DOCS_PATH.parent.mkdir(parents=True, exist_ok=True)
     DOCS_PATH.write_text(payload)
+    STAGED_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    STAGED_CACHE_PATH.write_text(payload)
 
 
 def _touch_heartbeat(reason: str) -> None:
@@ -330,7 +335,10 @@ def main() -> int:
 
     # tennis_suspended.json als Nebeneffekt aktualisieren
     SUSP_PATH.parent.mkdir(parents=True, exist_ok=True)
-    SUSP_PATH.write_text(json.dumps({"updated": now_iso, "matches": suspended_matches}, indent=2))
+    suspended_payload = json.dumps({"updated": now_iso, "matches": suspended_matches}, indent=2)
+    SUSP_PATH.write_text(suspended_payload)
+    STAGED_SUSP_PATH.parent.mkdir(parents=True, exist_ok=True)
+    STAGED_SUSP_PATH.write_text(suspended_payload)
 
     settle_str = f", {len(settle_reminders)} settle-reminder(s)" if settle_reminders else ""
     print(f"[tennis_live_push] {live_count} live, {pushes_sent} push(es) gesendet{settle_str}.")

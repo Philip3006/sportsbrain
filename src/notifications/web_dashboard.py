@@ -1019,8 +1019,12 @@ def write_signals_json(
     tennis_tour_map: optional {match_id: "atp"|"wta"} — adds tour field to tennis signals
     kickoff_map: optional {match_id: "ISO-8601"} — adds kickoff time to all signals
     """
-    # Per-user routing (D4)
-    json_path = ROOT / "docs" / "data" / f"signals_{user}.json"
+    # Read the current snapshot from the checkout, but let launchd write the
+    # regenerated public artifact into its external per-run staging directory.
+    # Cloud upload still receives the complete in-memory payload below.
+    source_json_path = ROOT / "docs" / "data" / f"signals_{user}.json"
+    from src.runtime.paths import runtime_artifact_path
+    json_path = runtime_artifact_path(f"docs/data/signals_{user}.json", active_root=ROOT)
     ledger_path = _ledger_path_for(user)
     football = football or []
     tennis = tennis or []
@@ -1036,18 +1040,18 @@ def write_signals_json(
     # geschrieben und an die Cloud gepusht hat (PWA zeigte 0 Spiele). Lieber
     # crashen als Daten still überschreiben.
     existing: dict = {}
-    if json_path.exists():
-        raw = json_path.read_text()
+    if source_json_path.exists():
+        raw = source_json_path.read_text()
         if "<<<<<<< " in raw or "\n=======\n" in raw or ">>>>>>> " in raw:
             raise RuntimeError(
-                f"{json_path} enthält Git-Konflikt-Marker — Schreiben abgebrochen, "
+                f"{source_json_path} enthält Git-Konflikt-Marker — Schreiben abgebrochen, "
                 "um stilles Daten-Wipe zu verhindern. Konflikt manuell auflösen."
             )
         try:
             existing = json.loads(raw)
         except json.JSONDecodeError as e:
             raise RuntimeError(
-                f"{json_path} ist kein gültiges JSON ({e}). Schreiben abgebrochen, "
+                f"{source_json_path} ist kein gültiges JSON ({e}). Schreiben abgebrochen, "
                 "um stilles Daten-Wipe zu verhindern."
             ) from e
 
@@ -1356,12 +1360,14 @@ def write_signals_json(
     # the Worker POST /pending-bet validation retains bankroll_state and open_bets.
     from src.notifications.public_serializer import serialize_public_product as _spp
     public_payload = _spp(payload)
+    json_path.parent.mkdir(parents=True, exist_ok=True)
     atomic_write_json(json_path, public_payload, indent=2)
     # Backward-compat: default user also writes the legacy `signals.json`.
     # Use ROOT-relative path (not module-level _JSON_PATH) so tests that
     # monkey-patch ROOT don't accidentally stomp on the real repo file.
     if user == _DEFAULT_USER:
-        legacy_path = ROOT / "docs" / "data" / "signals.json"
+        legacy_path = runtime_artifact_path("docs/data/signals.json", active_root=ROOT)
+        legacy_path.parent.mkdir(parents=True, exist_ok=True)
         atomic_write_json(legacy_path, public_payload, indent=2)
     return upload_signals_to_cloud(path=None, payload=payload, user=user)
 
