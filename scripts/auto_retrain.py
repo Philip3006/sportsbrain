@@ -8,6 +8,7 @@ Usage:
   python scripts/auto_retrain.py           # retrain only if new WM matches found
   python scripts/auto_retrain.py --force   # always retrain
   python scripts/auto_retrain.py --dry-run # show what would happen without retraining
+  python scripts/auto_retrain.py --observe-only  # launchd check; never train or save
 """
 import argparse
 import sys
@@ -32,6 +33,7 @@ def _load_latest_dc_params() -> dc.DixonColesParams | None:
 
 _WM2026_START = pd.Timestamp("2026-06-11")
 _STACKER_RETRAIN_EVERY = 3  # retrain stacker every N new WM matches
+OBSERVE_ONLY_RETRAIN_REQUIRED_EXIT = 3
 
 
 def check_new_wm_matches(fit_date: pd.Timestamp, results: pd.DataFrame) -> int:
@@ -66,30 +68,12 @@ def stacker_wm2026_at_last_train() -> int:
         return 0
 
 
-def main(force: bool = False, dry_run: bool = False) -> None:
-    print("Checking for new WM 2026 matches...")
-
-    dc_params = _load_latest_dc_params()
-    fit_date = dc_params.fit_date if dc_params else pd.Timestamp("2000-01-01")
-    print(f"  Current DC model fit date: {fit_date.date()}")
-
-    results = fetch_international_results(force=True)
-    n_new = check_new_wm_matches(fit_date, results)
-
-    if dry_run:
-        if n_new == 0 and not force:
-            print(f"  [DRY-RUN] No new WM matches since {fit_date.date()} — retraining would be skipped.")
-        elif force:
-            print(f"  [DRY-RUN] Would retrain: --force flag set (regardless of new matches).")
-        else:
-            print(f"  [DRY-RUN] Would retrain: {n_new} new WM match(es) since {fit_date.date()}.")
-        print("  [DRY-RUN] No changes made.")
-        return
-
-    if n_new == 0 and not force:
-        print(f"  No new WM matches since {fit_date.date()} — retraining skipped.")
-        return
-
+def _run_retraining(
+    dc_params: dc.DixonColesParams | None,
+    results: pd.DataFrame,
+    n_new: int,
+    force: bool,
+) -> None:
     if force:
         print("  --force flag set — retraining regardless.")
     else:
@@ -140,8 +124,43 @@ def main(force: bool = False, dry_run: bool = False) -> None:
     # DC drift check: compare new params with what was loaded before retrain.
     # Flags teams where |Δattack| + |Δdefence| > threshold as unusual drift.
     _drift_check(dc_params, threshold=0.50)
-
     print("\nRetraining complete.")
+
+
+def main(force: bool = False, dry_run: bool = False, observe_only: bool = False) -> int:
+    print("Checking for new WM 2026 matches...")
+
+    dc_params = _load_latest_dc_params()
+    fit_date = dc_params.fit_date if dc_params else pd.Timestamp("2000-01-01")
+    print(f"  Current DC model fit date: {fit_date.date()}")
+
+    results = fetch_international_results(force=True)
+    n_new = check_new_wm_matches(fit_date, results)
+
+    if dry_run:
+        if n_new == 0 and not force:
+            print(f"  [DRY-RUN] No new WM matches since {fit_date.date()} — retraining would be skipped.")
+        elif force:
+            print("  [DRY-RUN] Would retrain: --force flag set (regardless of new matches).")
+        else:
+            print(f"  [DRY-RUN] Would retrain: {n_new} new WM match(es) since {fit_date.date()}.")
+        print("  [DRY-RUN] No changes made.")
+        return 0
+
+    if n_new == 0 and not force:
+        print(f"  No new WM matches since {fit_date.date()} — retraining skipped.")
+        return 0
+
+    if observe_only:
+        reason = "--force flag set" if force else f"{n_new} new WM match(es) since {fit_date.date()}"
+        print(
+            f"  OBSERVE-ONLY: retraining required ({reason}) but blocked by runtime governance; "
+            "no model artifacts were written."
+        )
+        return OBSERVE_ONLY_RETRAIN_REQUIRED_EXIT
+
+    _run_retraining(dc_params, results, n_new, force)
+    return 0
 
 
 _DC_DRIFT_THRESHOLD = 0.50  # |Δattack| or |Δdefence| in a single retrain
@@ -179,5 +198,7 @@ if __name__ == "__main__":
                         help="Retrain even if no new WM matches")
     parser.add_argument("--dry-run", action="store_true",
                         help="Print what would happen without actually retraining")
+    parser.add_argument("--observe-only", action="store_true",
+                        help="Check whether retraining is required without training or saving")
     args = parser.parse_args()
-    main(force=args.force, dry_run=args.dry_run)
+    sys.exit(main(force=args.force, dry_run=args.dry_run, observe_only=args.observe_only))
