@@ -4,8 +4,13 @@
 # Skips if no game in window, or if cache is fresh (<25 min old).
 
 SPORTSBRAIN_DIR="/Users/philiprassillier/sportsbrain"
-LOG="$SPORTSBRAIN_DIR/results/prematch_scan_cron.log"
+LOG="/Users/philiprassillier/Library/Logs/sportsbrain_prematch_scan.log"
 LOCKFILE="$SPORTSBRAIN_DIR/results/prematch_scan.lock"
+RUNTIME_STATE_DIR="/Users/philiprassillier/Library/Application Support/SportsBrain/runtime-state"
+mkdir -p "/Users/philiprassillier/Library/Caches/SportsBrain" "$RUNTIME_STATE_DIR" || exit 1
+RUNTIME_STAGE_DIR="$(mktemp -d /Users/philiprassillier/Library/Caches/SportsBrain/prematch-scan.XXXXXX)" || exit 1
+export SPORTSBRAIN_RUNTIME_STATE_DIR="$RUNTIME_STATE_DIR"
+export SPORTSBRAIN_RUNTIME_ARTIFACT_STAGE_DIR="$RUNTIME_STAGE_DIR"
 
 cd "$SPORTSBRAIN_DIR" || exit 1
 
@@ -117,6 +122,17 @@ echo "--- Scan (--force, kein --auto-log) ---" >> "$LOG"
 python3 scripts/daily_scan.py --bankroll "$BANKROLL" --force >> "$LOG" 2>&1
 
 EXIT_CODE=$?
+PUBLISH_EXIT=0
+if [ "$EXIT_CODE" -eq 0 ]; then
+    source "$SPORTSBRAIN_DIR/scripts/publish_runtime_artifacts.sh"
+    runtime_publish_staged_artifacts "$SPORTSBRAIN_DIR" "$RUNTIME_STAGE_DIR" "$LOG" \
+        "auto: prematch scan $(date -u +%H:%M)" \
+        docs/data/signals.json docs/data/signals_philip.json
+    PUBLISH_EXIT=$?
+    if [ "$PUBLISH_EXIT" -ne 0 ]; then
+        EXIT_CODE=42
+    fi
+fi
 echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] prematch_scan fertig (exit $EXIT_CODE) ---" >> "$LOG"
 
 health_finish "prematch_scan" "$EXIT_CODE" "" "$LOG"

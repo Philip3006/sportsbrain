@@ -21,9 +21,13 @@ _canonical_origin_transport() {
 }
 
 _publish_permitted() {
+  if [[ "$1" =~ ^docs/data/signals_[a-z0-9_-]+\.json$ ]]; then
+    return 0
+  fi
   case "$1" in
-    docs/data/signals.json|docs/data/signals_philip.json|docs/data/tennis_live_scores.json|\
-    data/cache/tennis_live_scores.json|data/cache/tennis_suspended.json)
+    docs/data/signals.json|docs/data/live_scores.json|\
+    docs/data/tennis_live_scores.json|data/cache/tennis_live_scores.json|\
+    data/cache/tennis_suspended.json)
       return 0 ;;
     *)
       return 1 ;;
@@ -130,11 +134,12 @@ runtime_publish_setup() {
   return 0
 }
 
-runtime_publish_artifacts() {
+_runtime_publish_from_dir() {
   local source_dir="$1"
-  local log="$2"
-  local message="$3"
-  shift 3
+  local artifact_dir="$2"
+  local log="$3"
+  local message="$4"
+  shift 4
 
   local publish_dir
   _publish_resolve_dir "$source_dir" "$log" || return 1
@@ -177,7 +182,7 @@ runtime_publish_artifacts() {
 
     local path
     for path in "$@"; do
-      if ! _publish_permitted "$path" || [ ! -f "$source_dir/$path" ]; then
+      if ! _publish_permitted "$path" || [ ! -f "$artifact_dir/$path" ]; then
         echo "[runtime-publish] forbidden or missing artifact: $path" >> "$log"
         exit 1
       fi
@@ -195,7 +200,7 @@ runtime_publish_artifacts() {
 
     for path in "$@"; do
       mkdir -p "$publish_dir/$(dirname "$path")"
-      cp "$source_dir/$path" "$publish_dir/$path"
+      cp "$artifact_dir/$path" "$publish_dir/$path"
       git -C "$publish_dir" add -f -- "$path"
     done
     if git -C "$publish_dir" diff --cached --quiet; then
@@ -232,13 +237,41 @@ runtime_publish_artifacts() {
   )
 }
 
+runtime_publish_artifacts() {
+  local source_dir="$1"
+  local log="$2"
+  local message="$3"
+  shift 3
+  _runtime_publish_from_dir "$source_dir" "$source_dir" "$log" "$message" "$@"
+}
+
+runtime_publish_staged_artifacts() {
+  local source_dir="$1"
+  local staged_dir="$2"
+  local log="$3"
+  local message="$4"
+  local source_real staged_real
+  shift 4
+  source_real="$(cd "$source_dir" && pwd -P)" || return 1
+  staged_real="$(cd "$staged_dir" && pwd -P)" || return 1
+  if [ -z "$staged_dir" ] || [ "${staged_dir#/}" = "$staged_dir" ] || \
+     [ "$staged_real" = "$source_real" ] || [[ "$staged_real" == "$source_real/"* ]]; then
+    echo "[runtime-publish] unsafe staged artifact directory" >> "$log"
+    return 1
+  fi
+  _runtime_publish_from_dir "$source_dir" "$staged_dir" "$log" "$message" "$@"
+}
+
 if [ "${BASH_SOURCE[0]}" = "$0" ]; then
   if [ "${1:-}" = "configure" ] && [ -n "${2:-}" ] && [ -n "${3:-}" ]; then
     runtime_publish_configure "$2" "$3"
   elif [ "${1:-}" = "setup" ] && [ -n "${2:-}" ]; then
     runtime_publish_setup "$2" "${3:-/dev/stderr}"
+  elif [ "${1:-}" = "publish-staged" ] && [ -n "${2:-}" ] && [ -n "${3:-}" ] && \
+       [ -n "${4:-}" ] && [ -n "${5:-}" ] && [ -n "${6:-}" ]; then
+    runtime_publish_staged_artifacts "$2" "$3" "$4" "$5" "${@:6}"
   else
-    echo "usage: $0 configure <active-checkout> <publish-dir> | setup <active-checkout> [log-path]" >&2
+    echo "usage: $0 configure <active-checkout> <publish-dir> | setup <active-checkout> [log-path] | publish-staged <active-checkout> <stage-dir> <log-path> <message> <path...>" >&2
     exit 2
   fi
 fi

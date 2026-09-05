@@ -199,7 +199,8 @@ if __name__ == "__main__":
     try:
         import json as _json2
         from datetime import datetime as _dt2, timezone as _tz2
-        _hist_path = ROOT / "data" / "odds_history.json"
+        from src.runtime.paths import runtime_state_path
+        _hist_path = runtime_state_path("data/odds_history.json")
         _now_utc = _dt2.now(_tz2.utc)
         _today_snap = {
             "ts": _now_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -225,7 +226,8 @@ if __name__ == "__main__":
     # Build odds_history dict for dashboard: {match_key: [{date, home, draw, away}, ...]}
     _odds_hist_for_dashboard = {}
     try:
-        _hist_data = _json2.loads((ROOT / "data" / "odds_history.json").read_text()) if (ROOT / "data" / "odds_history.json").exists() else []
+        _hist_path = runtime_state_path("data/odds_history.json")
+        _hist_data = _json2.loads(_hist_path.read_text()) if _hist_path.exists() else []
         for _snap in _hist_data:
             for _mk, _od in _snap.get("odds", {}).items():
                 if _mk not in _odds_hist_for_dashboard:

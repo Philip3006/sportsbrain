@@ -53,7 +53,8 @@ ENABLED_SOURCES: list[tuple[str, int, Callable]] = _load_sources()
 
 def fetch_all_sources(match_hint: dict,
                       timeout_s: float = 3.0,
-                      ratings=None) -> list[OddsQuote]:
+                      ratings=None,
+                      include_websearch: bool = True) -> list[OddsQuote]:
     """Fragt alle registrierten Quellen parallel ab.
 
     Return: Liste aller Quotes, die Sanity bestehen. Kann leer sein.
@@ -62,10 +63,13 @@ def fetch_all_sources(match_hint: dict,
     if not ENABLED_SOURCES:
         return quotes
 
-    with ThreadPoolExecutor(max_workers=max(1, len(ENABLED_SOURCES))) as pool:
+    sources = [source for source in ENABLED_SOURCES if include_websearch or source[0] != "websearch"]
+    if not sources:
+        return quotes
+    with ThreadPoolExecutor(max_workers=max(1, len(sources))) as pool:
         futures = {
             pool.submit(fn, match_hint): (name, tier)
-            for (name, tier, fn) in ENABLED_SOURCES
+            for (name, tier, fn) in sources
         }
         try:
             for fut in as_completed(futures, timeout=timeout_s + 2):
@@ -102,7 +106,8 @@ def merge_by_tier(quotes: list[OddsQuote]) -> Optional[OddsQuote]:
 def fetch_best_odds(match_hint: dict,
                     timeout_s: float = 3.0,
                     ratings=None,
-                    allow_implied: bool = True) -> Optional[OddsQuote]:
+                    allow_implied: bool = True,
+                    include_websearch: bool = True) -> Optional[OddsQuote]:
     """Convenience: fetch_all_sources → merge_by_tier → implied-Fallback.
 
     Return:
@@ -110,7 +115,12 @@ def fetch_best_odds(match_hint: dict,
       - OddsQuote mit no_bet_flag=True  → Display-only (implied)
       - None → nichts brauchbar (keine Quelle, kein implied möglich)
     """
-    quotes = fetch_all_sources(match_hint, timeout_s=timeout_s, ratings=ratings)
+    quotes = fetch_all_sources(
+        match_hint,
+        timeout_s=timeout_s,
+        ratings=ratings,
+        include_websearch=include_websearch,
+    )
     best = merge_by_tier(quotes)
     if best is not None:
         return best

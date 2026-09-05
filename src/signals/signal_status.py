@@ -227,6 +227,8 @@ def update_odds_state(
     odds_fetch_tier: int,
     signal_status: SignalStatus,
     current_ev_pct: float,
+    retry_after_ts: str | None = None,
+    refresh_failure_count: int = 0,
 ) -> None:
     """Atomically update one signal's entry in the sidecar.
 
@@ -266,6 +268,8 @@ def update_odds_state(
             "odds_fetch_tier": odds_fetch_tier,
             "signal_status":   signal_status,
             "odds_history":    history,
+            "retry_after_ts":  retry_after_ts,
+            "refresh_failure_count": refresh_failure_count,
         }
 
         atomic_write_json(_SIDECAR_PATH, state)

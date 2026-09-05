@@ -24,9 +24,10 @@ ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
 from src.config import ledger_path_for, DEFAULT_USER
+from src.runtime.paths import runtime_artifact_path, runtime_state_path
 LEDGER = ledger_path_for(DEFAULT_USER)
 SIGNALS = ROOT / "docs" / "data" / "signals.json"
-CACHE_PATH = ROOT / "data" / "live_scores.json"
+CACHE_PATH = runtime_state_path("data/live_scores.json")
 
 
 _ALIASES: dict[str, str] = {
@@ -57,7 +58,7 @@ def _save_cache(cache: dict) -> None:
     payload = json.dumps(cache, indent=2, ensure_ascii=False)
     CACHE_PATH.write_text(payload)
     # Mirror to docs/ so GitHub Pages serves it for the Live tab in the dashboard
-    docs_path = ROOT / "docs" / "data" / "live_scores.json"
+    docs_path = runtime_artifact_path("docs/data/live_scores.json")
     docs_path.parent.mkdir(parents=True, exist_ok=True)
     docs_path.write_text(payload)
 

@@ -20,9 +20,9 @@
     <integer>300</integer>
 
     <key>StandardOutPath</key>
-    <string>/Users/philiprassillier/sportsbrain/results/launchd_odds_refresh.log</string>
+    <string>/Users/philiprassillier/Library/Logs/sportsbrain_odds_refresh.log</string>
     <key>StandardErrorPath</key>
-    <string>/Users/philiprassillier/sportsbrain/results/launchd_odds_refresh.log</string>
+    <string>/Users/philiprassillier/Library/Logs/sportsbrain_odds_refresh.log</string>
 
     <key>RunAtLoad</key>
     <false/>

@@ -64,6 +64,24 @@ def test_partial_failure_is_visible_without_falsifying_process_exit(monkeypatch)
     assert recorded["kwargs"]["exit_code"] == 0
 
 
+def test_publication_failure_is_nonzero_and_health_error(monkeypatch) -> None:
+    from src.monitoring import health_writer
+    from src.signals import odds_refresher
+
+    recorded = {}
+    monkeypatch.setattr(sys, "argv", [str(SCRIPT)])
+    monkeypatch.setattr(
+        odds_refresher,
+        "run_refresh",
+        lambda **_: {"failed": 0, "refreshed": 1, "publication_failed": True},
+    )
+    monkeypatch.setattr(health_writer, "write_health", lambda *args, **kwargs: recorded.update(kwargs=kwargs))
+
+    assert _load_refresh_script().main() == 1
+    assert recorded["kwargs"]["status"] == "error"
+    assert recorded["kwargs"]["exit_code"] == 1
+
+
 def test_health_write_failure_fails_closed(monkeypatch) -> None:
     from src.monitoring import health_writer
     from src.signals import odds_refresher

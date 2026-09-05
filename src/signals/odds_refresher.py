@@ -19,8 +19,11 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import subprocess
+import tempfile
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -95,6 +98,16 @@ def _is_refresh_due(signal: dict, odds_state_entry: dict | None) -> bool:
 
     if not odds_state_entry:
         return True  # Never refreshed
+
+    retry_after_str = odds_state_entry.get("retry_after_ts")
+    if retry_after_str:
+        try:
+            retry_after = datetime.fromisoformat(retry_after_str.replace("Z", "+00:00"))
+            if now < retry_after:
+                return False
+        except ValueError:
+            # An invalid retry timestamp must not suppress a necessary refresh.
+            pass
 
     last_ts_str = odds_state_entry.get("odds_ts")
     if not last_ts_str:
@@ -210,7 +223,10 @@ def _refresh_football(signal: dict) -> tuple[Optional[float], str, int]:
 # Tennis refresh chain
 # ---------------------------------------------------------------------------
 
-def _refresh_tennis(signal: dict) -> tuple[Optional[float], str, int]:
+def _refresh_tennis(
+    signal: dict,
+    quote_cache: dict[tuple[str, str, str], tuple[Optional[float], Optional[float], str, int]] | None = None,
+) -> tuple[Optional[float], str, int]:
     """Fetch fresh tennis odds via existing 5-provider merger."""
     match_str = signal.get("match", " vs ")
     parts = match_str.split(" vs ", 1)
@@ -226,16 +242,33 @@ def _refresh_tennis(signal: dict) -> tuple[Optional[float], str, int]:
         "commence_time": kickoff,
     }
 
-    try:
-        from src.tennis.odds.merger import fetch_best_odds
-        quote = fetch_best_odds(match_hint, timeout_s=5.0, allow_implied=False)
-        if quote and not quote.no_bet_flag:
-            # market "home" → h2h_a (player_a wins), "away" → h2h_b
-            odds = quote.h2h_a if market in ("home", "ah-1.5_a") else quote.h2h_b
-            if odds > 1.0:
-                return odds, quote.source, quote.source_tier
-    except Exception as e:
-        _log.debug("[refresher] tennis merger error: %s", e)
+    cache_key = (match_str, kickoff, match_hint["tournament"])
+    cached = quote_cache.get(cache_key) if quote_cache is not None else None
+    if cached is None:
+        try:
+            from src.tennis.odds.merger import fetch_best_odds
+            # Tier-4 web search runs three broad internet queries per signal and
+            # dominated the natural 25-minute cycle. Refresh stays authoritative
+            # by using direct providers only; failure remains health-visible.
+            quote = fetch_best_odds(
+                match_hint,
+                timeout_s=5.0,
+                allow_implied=False,
+                include_websearch=False,
+            )
+            if quote and not quote.no_bet_flag:
+                cached = (quote.h2h_a, quote.h2h_b, quote.source, quote.source_tier)
+            else:
+                cached = (None, None, "", 0)
+        except Exception as e:
+            _log.debug("[refresher] tennis merger error: %s", e)
+            cached = (None, None, "", 0)
+        if quote_cache is not None:
+            quote_cache[cache_key] = cached
+
+    odds = cached[0] if market in ("home", "ah-1.5_a") else cached[1]
+    if odds and odds > 1.0:
+        return odds, cached[2], cached[3]
 
     return None, "", 0
 
@@ -260,6 +293,56 @@ def _load_signals() -> list[dict]:
     return signals
 
 
+def _retry_after(signal: dict, state_entry: dict | None, now: datetime) -> tuple[str, int]:
+    """Persist bounded, visible backoff after an unsuccessful provider cycle."""
+    kickoff = signal.get("kickoff", "")
+    minutes_to_kickoff = float("inf")
+    if kickoff:
+        try:
+            minutes_to_kickoff = (datetime.fromisoformat(kickoff.replace("Z", "+00:00")) - now).total_seconds() / 60
+        except ValueError:
+            pass
+    if signal.get("event_status") in ("AWAITING_START", "DELAYED"):
+        minutes_to_kickoff = max(minutes_to_kickoff, 0.0)
+    failures = int((state_entry or {}).get("refresh_failure_count", 0) or 0) + 1
+    base_minutes = max(_refresh_interval_minutes(minutes_to_kickoff), 15)
+    retry_minutes = min(60, base_minutes * (2 ** min(failures - 1, 2)))
+    return (now + timedelta(minutes=retry_minutes)).strftime("%Y-%m-%dT%H:%M:%SZ"), failures
+
+
+def _publish_staged_signals(stage_dir: Path) -> None:
+    paths = sorted(str(path.relative_to(stage_dir)) for path in (stage_dir / "docs" / "data").glob("signals*.json"))
+    if not paths:
+        raise RuntimeError("no staged signal artifacts to publish")
+    log_path = Path.home() / "Library" / "Logs" / "sportsbrain_odds_refresh.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    result = subprocess.run(
+        [
+            str(ROOT / "scripts" / "publish_runtime_artifacts.sh"),
+            "publish-staged",
+            str(ROOT),
+            str(stage_dir),
+            str(log_path),
+            "auto: odds refresh",
+            *paths,
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode:
+        raise RuntimeError(f"staged signal publication failed (exit {result.returncode})")
+
+
+def _retry_is_active(state_entry: dict | None) -> bool:
+    if not state_entry or not state_entry.get("retry_after_ts"):
+        return False
+    try:
+        return datetime.now(timezone.utc) < datetime.fromisoformat(state_entry["retry_after_ts"].replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return False
+
+
 def run_refresh(dry_run: bool = False) -> dict:
     """Refresh odds for all signals that are due.
 
@@ -275,6 +358,11 @@ def run_refresh(dry_run: bool = False) -> dict:
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     refreshed = skipped = failed = 0
+    due_by_sport = {"football": 0, "tennis": 0}
+    refreshed_by_sport = {"football": 0, "tennis": 0}
+    failed_by_sport = {"football": 0, "tennis": 0}
+    retry_deferred = 0
+    tennis_quote_cache: dict[tuple[str, str, str], tuple[Optional[float], Optional[float], str, int]] = {}
 
     for sig in signals:
         sport = sig.get("sport", "football")
@@ -287,12 +375,16 @@ def run_refresh(dry_run: bool = False) -> dict:
 
         if not _is_refresh_due(sig, state_entry):
             skipped += 1
+            retry_deferred += int(_retry_is_active(state_entry))
             continue
+
+        due_by_sport.setdefault(sport, 0)
+        due_by_sport[sport] += 1
 
         _log.debug("[refresher] refreshing %s | %s | %s", sport, match, market)
 
         if sport == "tennis":
-            current_odds, source, tier = _refresh_tennis(sig)
+            current_odds, source, tier = _refresh_tennis(sig, tennis_quote_cache)
         else:
             current_odds, source, tier = _refresh_football(sig)
 
@@ -309,6 +401,7 @@ def run_refresh(dry_run: bool = False) -> dict:
                 cached_ev_pct = state_entry.get("current_ev_pct") if state_entry else None
                 cached_ev_decimal = (cached_ev_pct / 100.0) if cached_ev_pct is not None else None
                 # Always persist lifecycle status so JS filter can exclude non-ACTIVE signals
+                retry_after_ts, failure_count = _retry_after(sig, state_entry, datetime.now(timezone.utc))
                 update_odds_state(
                     sid,
                     current_odds=cached,
@@ -317,8 +410,12 @@ def run_refresh(dry_run: bool = False) -> dict:
                     odds_fetch_tier=state_entry.get("odds_fetch_tier") if state_entry else 0,
                     signal_status=status,
                     current_ev_pct=cached_ev_decimal,
+                    retry_after_ts=retry_after_ts,
+                    refresh_failure_count=failure_count,
                 )
             failed += 1
+            failed_by_sport.setdefault(sport, 0)
+            failed_by_sport[sport] += 1
             continue
 
         ev = compute_current_ev(float(sig.get("model_prob", 0)), current_odds)
@@ -333,6 +430,8 @@ def run_refresh(dry_run: bool = False) -> dict:
                 odds_fetch_tier=tier,
                 signal_status=status,
                 current_ev_pct=ev,
+                retry_after_ts=None,
+                refresh_failure_count=0,
             )
             _log.info(
                 "[refresher] %s | %s | %s → odds=%.2f ev=%.1f%% status=%s src=%s",
@@ -340,9 +439,20 @@ def run_refresh(dry_run: bool = False) -> dict:
             )
 
         refreshed += 1
+        refreshed_by_sport.setdefault(sport, 0)
+        refreshed_by_sport[sport] += 1
 
     elapsed = round(time.monotonic() - t0, 2)
-    summary = {"refreshed": refreshed, "skipped": skipped, "failed": failed, "elapsed_s": elapsed}
+    summary = {
+        "refreshed": refreshed,
+        "skipped": skipped,
+        "failed": failed,
+        "elapsed_s": elapsed,
+        "due_by_sport": due_by_sport,
+        "refreshed_by_sport": refreshed_by_sport,
+        "failed_by_sport": failed_by_sport,
+        "retry_deferred": retry_deferred,
+    }
     _log.info("[refresher] done: %s", summary)
 
     # Re-publish signals.json so current_odds/signal_status are visible immediately.
@@ -350,10 +460,34 @@ def run_refresh(dry_run: bool = False) -> dict:
     # and just re-merges the updated sidecar. Skip in dry_run to avoid side effects.
     if not dry_run and (refreshed > 0 or failed > 0):
         try:
-            from src.notifications.web_dashboard import write_signals_json_all_users
-            write_signals_json_all_users(football=[], tennis=[])
-            _log.info("[refresher] signals.json republished")
+            stage_parent = Path(
+                os.getenv(
+                    "SPORTSBRAIN_RUNTIME_STAGE_BASE",
+                    str(Path.home() / "Library" / "Caches" / "SportsBrain"),
+                )
+            )
+            resolved_stage_parent = stage_parent.resolve()
+            resolved_root = ROOT.resolve()
+            if not stage_parent.is_absolute() or resolved_stage_parent == resolved_root or resolved_root in resolved_stage_parent.parents:
+                raise RuntimeError("odds refresh staging directory must be external to the active checkout")
+            stage_parent.mkdir(parents=True, exist_ok=True)
+            stage_root = Path(tempfile.mkdtemp(prefix="odds-refresh-", dir=stage_parent))
+            previous_stage = os.environ.get("SPORTSBRAIN_RUNTIME_ARTIFACT_STAGE_DIR")
+            os.environ["SPORTSBRAIN_RUNTIME_ARTIFACT_STAGE_DIR"] = str(stage_root)
+            try:
+                from src.notifications.web_dashboard import write_signals_json_all_users
+                failed_users = write_signals_json_all_users(football=[], tennis=[])
+                if failed_users:
+                    raise RuntimeError(f"cloud upload failed for users={failed_users}")
+                _publish_staged_signals(stage_root)
+            finally:
+                if previous_stage is None:
+                    os.environ.pop("SPORTSBRAIN_RUNTIME_ARTIFACT_STAGE_DIR", None)
+                else:
+                    os.environ["SPORTSBRAIN_RUNTIME_ARTIFACT_STAGE_DIR"] = previous_stage
+            _log.info("[refresher] signals staged and republished")
         except Exception as exc:
             _log.warning("[refresher] republish failed: %s", exc)
+            summary["publication_failed"] = True
 
     return summary

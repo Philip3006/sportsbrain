@@ -6,7 +6,7 @@
 # Hourly schedule is preserved by the plist's StartCalendarInterval.
 
 SPORTSBRAIN_DIR="/Users/philiprassillier/sportsbrain"
-LOG="$SPORTSBRAIN_DIR/results/settle.log"
+LOG="/Users/philiprassillier/Library/Logs/sportsbrain_settle.log"
 
 cd "$SPORTSBRAIN_DIR" || exit 1
 

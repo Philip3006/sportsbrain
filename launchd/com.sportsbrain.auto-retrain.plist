@@ -33,9 +33,9 @@
     </array>
 
     <key>StandardOutPath</key>
-    <string>/Users/philiprassillier/sportsbrain/results/launchd_auto_retrain.log</string>
+    <string>/Users/philiprassillier/Library/Logs/sportsbrain_auto_retrain.log</string>
     <key>StandardErrorPath</key>
-    <string>/Users/philiprassillier/sportsbrain/results/launchd_auto_retrain.log</string>
+    <string>/Users/philiprassillier/Library/Logs/sportsbrain_auto_retrain.log</string>
 
     <key>RunAtLoad</key>
     <false/>

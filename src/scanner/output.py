@@ -9,7 +9,9 @@ from pathlib import Path
 import pandas as pd
 
 _ROOT = Path(__file__).resolve().parent.parent.parent
-SIGNAL_HISTORY = _ROOT / "data" / "cache" / "signal_history.jsonl"
+from src.runtime.paths import runtime_state_path
+
+SIGNAL_HISTORY = runtime_state_path("data/cache/signal_history.jsonl")
 
 from src.betting.ledger import ledger_summary, LEDGER_PATH
 from src.betting.value_detector import BetSignal

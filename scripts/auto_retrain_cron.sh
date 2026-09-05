@@ -6,7 +6,7 @@ set -uo pipefail   # no -e: we want to record the exit code in health
 
 SPORTSBRAIN_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$SPORTSBRAIN_DIR" || exit 1
-LOG="$SPORTSBRAIN_DIR/results/launchd_auto_retrain.log"
+LOG="/Users/philiprassillier/Library/Logs/sportsbrain_auto_retrain.log"
 
 # shellcheck source=./_health.sh
 source "$SPORTSBRAIN_DIR/scripts/_health.sh"
