@@ -1,0 +1,2 @@
+# Exclude local download log; keep raw CSVs and processed datasets
+data/download.log
