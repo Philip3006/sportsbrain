@@ -4,9 +4,9 @@
 
 
 ## US Open (ATP) · grand_slam · 🔴 LIVE
-Surface: hard · Best of: 5 · Matches gescannt: 11
+Surface: hard · Best of: 5 · Matches gescannt: 8
 _Keine Value-Signals._
 
 ## US Open (WTA) · grand_slam · 🔴 LIVE
-Surface: hard · Best of: 3 · Matches gescannt: 9
+Surface: hard · Best of: 3 · Matches gescannt: 7
 _Keine Value-Signals._
