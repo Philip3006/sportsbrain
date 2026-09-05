@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-09-04T09:17:32.305862+00:00",
-  "n_settled_total": 1065,
+  "generated_at": "2026-09-05T08:45:31.799534+00:00",
+  "n_settled_total": 1090,
   "match_winner": {
-    "n": 368,
-    "brier": 0.22606,
-    "log_loss": 0.64221,
-    "ece": 0.08772,
-    "win_rate": 0.4946,
+    "n": 386,
+    "brier": 0.22507,
+    "log_loss": 0.63956,
+    "ece": 0.07424,
+    "win_rate": 0.5078,
     "reliability_curve": [
       {
         "bin_lo": 0.2,
@@ -18,9 +18,9 @@
       {
         "bin_lo": 0.4,
         "bin_hi": 0.6,
-        "n": 265,
-        "mean_pred": 0.499,
-        "mean_actual": 0.4151
+        "n": 278,
+        "mean_pred": 0.4981,
+        "mean_actual": 0.4281
       },
       {
         "bin_lo": 0.6,
@@ -32,18 +32,18 @@
       {
         "bin_lo": 0.8,
         "bin_hi": 1.0,
-        "n": 64,
-        "mean_pred": 0.9194,
-        "mean_actual": 0.8594
+        "n": 69,
+        "mean_pred": 0.9127,
+        "mean_actual": 0.8696
       }
     ]
   },
   "all_markets": {
-    "n": 1058,
-    "brier": 0.25022,
-    "log_loss": 0.69336,
-    "ece": 0.09797,
-    "win_rate": 0.5095,
+    "n": 1083,
+    "brier": 0.24981,
+    "log_loss": 0.69226,
+    "ece": 0.09427,
+    "win_rate": 0.5125,
     "reliability_curve": [
       {
         "bin_lo": 0.2,
@@ -55,30 +55,30 @@
       {
         "bin_lo": 0.4,
         "bin_hi": 0.6,
-        "n": 552,
-        "mean_pred": 0.5291,
-        "mean_actual": 0.4583
+        "n": 571,
+        "mean_pred": 0.5285,
+        "mean_actual": 0.4623
       },
       {
         "bin_lo": 0.6,
         "bin_hi": 0.8,
-        "n": 408,
+        "n": 409,
         "mean_pred": 0.6662,
-        "mean_actual": 0.5221
+        "mean_actual": 0.5208
       },
       {
         "bin_lo": 0.8,
         "bin_hi": 1.0,
-        "n": 78,
-        "mean_pred": 0.9122,
-        "mean_actual": 0.8462
+        "n": 83,
+        "mean_pred": 0.9072,
+        "mean_actual": 0.8554
       }
     ]
   },
   "meta_calibrator": {
     "fitted": true,
-    "n_samples": 368,
-    "brier_before": 0.22606,
-    "brier_after": 0.21408
+    "n_samples": 386,
+    "brier_before": 0.22507,
+    "brier_after": 0.21544
   }
 }
