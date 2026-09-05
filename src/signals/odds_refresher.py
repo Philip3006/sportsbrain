@@ -25,21 +25,19 @@ import tempfile
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Optional
 
+from src.signals.provider_budget import (
+    is_provider_available,
+    record_error,
+    record_success,
+)
 from src.signals.signal_status import (
     SignalStatus,
     compute_current_ev,
     evaluate_signal_status,
     load_odds_state,
     make_signal_id,
-    merge_odds_state_into_signal,
     update_odds_state,
-)
-from src.signals.provider_budget import (
-    is_provider_available,
-    record_error,
-    record_success,
 )
 
 _log = logging.getLogger("sportsbrain.signals.odds_refresher")
@@ -125,7 +123,7 @@ def _is_refresh_due(signal: dict, odds_state_entry: dict | None) -> bool:
 # Market → odds field mapping for FootballOddsQuote
 # ---------------------------------------------------------------------------
 
-def _football_market_odds(quote, market: str) -> Optional[float]:
+def _football_market_odds(quote, market: str) -> float | None:
     """Extract the single-sided decimal odds for a football market from a quote."""
     if market == "home":
         return quote.h2h_home or None
@@ -162,7 +160,7 @@ def _football_market_odds(quote, market: str) -> Optional[float]:
 # Football refresh chain (Strategy B — no WebSearch as authoritative)
 # ---------------------------------------------------------------------------
 
-def _refresh_football(signal: dict) -> tuple[Optional[float], str, int]:
+def _refresh_football(signal: dict) -> tuple[float | None, str, int]:
     """Fetch fresh football odds. Returns (odds, source_name, tier) or (None, "", 0)."""
     home, away = signal.get("match", " vs ").split(" vs ", 1)
     kickoff = signal.get("kickoff", "")
@@ -225,8 +223,8 @@ def _refresh_football(signal: dict) -> tuple[Optional[float], str, int]:
 
 def _refresh_tennis(
     signal: dict,
-    quote_cache: dict[tuple[str, str, str], tuple[Optional[float], Optional[float], str, int]] | None = None,
-) -> tuple[Optional[float], str, int]:
+    quote_cache: dict[tuple[str, str, str], tuple[float | None, float | None, str, int]] | None = None,
+) -> tuple[float | None, str, int]:
     """Fetch fresh tennis odds via existing 5-provider merger."""
     match_str = signal.get("match", " vs ")
     parts = match_str.split(" vs ", 1)
@@ -362,7 +360,7 @@ def run_refresh(dry_run: bool = False) -> dict:
     refreshed_by_sport = {"football": 0, "tennis": 0}
     failed_by_sport = {"football": 0, "tennis": 0}
     retry_deferred = 0
-    tennis_quote_cache: dict[tuple[str, str, str], tuple[Optional[float], Optional[float], str, int]] = {}
+    tennis_quote_cache: dict[tuple[str, str, str], tuple[float | None, float | None, str, int]] = {}
 
     for sig in signals:
         sport = sig.get("sport", "football")
