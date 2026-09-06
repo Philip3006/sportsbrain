@@ -143,6 +143,20 @@ def _run_staged(source: Path, publisher: Path, stage: Path, log: Path, *paths: s
     )
 
 
+def _run_staged_with_nounset(
+    source: Path, publisher: Path, stage: Path, log: Path, *paths: str
+) -> subprocess.CompletedProcess[str]:
+    command = _staged_command(source, stage, log, *paths)
+    command[0:1] = ["/bin/bash", "-u"]
+    return subprocess.run(
+        command,
+        text=True,
+        capture_output=True,
+        env=_environment(source, publisher, "0"),
+        check=False,
+    )
+
+
 def _start(
     source: Path,
     publisher: Path,
@@ -221,6 +235,22 @@ def test_staged_publication_leaves_active_checkout_completely_clean(tmp_path: Pa
     assert result.returncode == 0, result.stderr
     assert _git(["rev-parse", "HEAD"], active).stdout.strip() == head_before
     assert _git(["status", "--porcelain"], active).stdout == ""
+    assert _git(["show", "main:docs/data/signals.json"], origin).stdout == staged_signal.read_text()
+
+
+def test_publisher_is_nounset_safe_with_macos_bash_without_bashpid(tmp_path: Path):
+    origin, active, publisher = _seed(tmp_path)
+    stage = tmp_path / "stage"
+    staged_signal = stage / "docs" / "data" / "signals.json"
+    staged_signal.parent.mkdir(parents=True)
+    staged_signal.write_text('{"tennis": [{"signal_id": "nounset"}]}\n')
+
+    result = _run_staged_with_nounset(
+        active, publisher, stage, tmp_path / "publish.log", "docs/data/signals.json"
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "BASHPID: unbound variable" not in result.stderr
     assert _git(["show", "main:docs/data/signals.json"], origin).stdout == staged_signal.read_text()
 
 

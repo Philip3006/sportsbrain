@@ -153,7 +153,8 @@ _runtime_publish_from_dir() {
     # The sibling lock also serializes first-run publisher provisioning.
     local lock_dir="${publish_dir}.sportsbrain-runtime-publish.lock.d"
     local owner_file="$lock_dir/owner.pid"
-    local owner_pid="$BASHPID"
+    # macOS ships Bash 3.2, which has no BASHPID. $$ remains unique per wrapper.
+    local owner_pid="${BASHPID:-$$}"
     local waited=0
     local lock_timeout="${SPORTSBRAIN_PUBLISH_LOCK_TIMEOUT_SECONDS:-30}"
     while ! mkdir "$lock_dir" 2>/dev/null; do
