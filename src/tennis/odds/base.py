@@ -41,6 +41,29 @@ class OddsQuote:
         return sanity_ok(self.h2h_a, self.h2h_b)
 
 
+@dataclass(frozen=True)
+class ProviderOutcome:
+    """Sanitized direct-provider evidence for the diagnostics-only merge path."""
+    provider: str
+    attempted: bool
+    eligible: bool
+    status_class: str
+    result: str = "no_quote"
+    http_status: int | None = None
+    error_class: str | None = None
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "provider": self.provider,
+            "attempted": self.attempted,
+            "eligible": self.eligible,
+            "status_class": self.status_class,
+            "http_status": self.http_status,
+            "result": self.result,
+            "error_class": self.error_class,
+        }
+
+
 class OddsSource(Protocol):
     """Interface für alle Odds-Quellen."""
     name: str

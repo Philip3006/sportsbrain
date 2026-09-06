@@ -25,7 +25,7 @@ from typing import Optional
 import requests
 
 from src.tennis.name_norm import to_elo_name_from_odds_api
-from src.tennis.odds.base import OddsQuote, ThreadSafeCache, ThreadSafeDictCache, sanity_ok
+from src.tennis.odds.base import OddsQuote, ProviderOutcome, ThreadSafeCache, ThreadSafeDictCache, sanity_ok
 
 name = "betfair"
 tier = 1
@@ -208,3 +208,17 @@ def fetch(match_hint: dict) -> Optional[OddsQuote]:
             bookies_count=1,
         )
     return None
+
+
+def fetch_with_diagnostics(match_hint: dict) -> tuple[OddsQuote | None, ProviderOutcome]:
+    if not (os.getenv("BETFAIR_APP_KEY") and os.getenv("BETFAIR_USERNAME") and os.getenv("BETFAIR_PASSWORD")):
+        return None, ProviderOutcome(name, False, False, "ineligible")
+    try:
+        quote = fetch(match_hint)
+    except requests.Timeout:
+        return None, ProviderOutcome(name, True, True, "timeout", error_class="Timeout")
+    except requests.RequestException as exc:
+        return None, ProviderOutcome(name, True, True, "exception", error_class=type(exc).__name__)
+    if quote and quote.sane():
+        return quote, ProviderOutcome(name, True, True, "success", result="usable_quote")
+    return quote, ProviderOutcome(name, True, True, "invalid_quote" if quote else "no_match")
