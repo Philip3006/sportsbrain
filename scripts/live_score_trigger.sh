@@ -47,12 +47,17 @@ timestamp() { date -u '+%Y-%m-%d %H:%M:%S UTC'; }
     fi
     PUBLISH_EXIT=0
     source "$SPORTSBRAIN_DIR/scripts/publish_runtime_artifacts.sh"
+    PUBLISH_PATHS=(
+        docs/data/live_scores.json
+        docs/data/tennis_live_scores.json
+        data/cache/tennis_live_scores.json
+    )
+    if [ -f "$RUNTIME_STAGE_DIR/data/cache/tennis_suspended.json" ]; then
+        PUBLISH_PATHS+=(data/cache/tennis_suspended.json)
+    fi
     runtime_publish_staged_artifacts "$SPORTSBRAIN_DIR" "$RUNTIME_STAGE_DIR" "$LOG" \
         "auto: live scores $(date -u +%H:%M)" \
-        docs/data/live_scores.json \
-        docs/data/tennis_live_scores.json \
-        data/cache/tennis_live_scores.json \
-        data/cache/tennis_suspended.json
+        "${PUBLISH_PATHS[@]}"
     PUBLISH_EXIT=$?
     if [ "$JOB_EXIT" -eq 0 ] && [ "$PUBLISH_EXIT" -ne 0 ]; then
         JOB_EXIT=42
