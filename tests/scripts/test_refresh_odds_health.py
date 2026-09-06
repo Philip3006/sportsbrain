@@ -2,11 +2,16 @@
 from __future__ import annotations
 
 import importlib.util
+import plistlib
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "refresh_odds.py"
+WRAPPER = ROOT / "scripts" / "odds_refresh_cron.sh"
+PLIST = ROOT / "launchd" / "com.sportsbrain.odds-refresh.plist"
 
 
 def _load_refresh_script():
@@ -95,3 +100,47 @@ def test_health_write_failure_fails_closed(monkeypatch) -> None:
     monkeypatch.setattr(health_writer, "write_health", fail_health_write)
 
     assert _load_refresh_script().main() == 2
+
+
+def test_launchd_wrapper_loads_protected_environment_and_execs_refresh() -> None:
+    source = WRAPPER.read_text()
+
+    assert 'SPORTSBRAIN_DIR="/Users/philiprassillier/sportsbrain"' in source
+    assert 'cd "$SPORTSBRAIN_DIR"' in source
+    assert "set -a" in source
+    assert '. "$SPORTSBRAIN_DIR/.env"' in source
+    assert "set +a" in source
+    assert (
+        "exec /Library/Frameworks/Python.framework/Versions/3.13/bin/python3 "
+        "scripts/refresh_odds.py"
+    ) in source
+
+
+def test_launchd_wrapper_has_no_duplicate_health_or_artifact_writer() -> None:
+    source = WRAPPER.read_text()
+
+    for forbidden in ("health_start", "health_finish", "write_health", "publish_runtime_artifacts"):
+        assert forbidden not in source
+
+
+def test_launchd_plist_uses_wrapper_and_preserves_cadence() -> None:
+    with PLIST.open("rb") as file:
+        plist = plistlib.load(file)
+
+    assert plist["ProgramArguments"] == [
+        "/bin/bash",
+        "/Users/philiprassillier/sportsbrain/scripts/odds_refresh_cron.sh",
+    ]
+    assert plist["WorkingDirectory"] == "/Users/philiprassillier/sportsbrain"
+    assert plist["StartInterval"] == 300
+    assert plist["RunAtLoad"] is False
+    assert set(plist["EnvironmentVariables"]) == {"PATH"}
+
+
+def test_missing_ledger_environment_remains_fail_closed(monkeypatch) -> None:
+    from src.config import _resolve_ledger_dir
+
+    monkeypatch.delenv("SPORTSBRAIN_LEDGER_DIR", raising=False)
+
+    with pytest.raises(OSError, match="SPORTSBRAIN_LEDGER_DIR is not set"):
+        _resolve_ledger_dir()
