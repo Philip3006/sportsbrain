@@ -29,6 +29,14 @@ def test_live_score_health_uses_the_final_combined_exit_code() -> None:
     assert 'exit "$EXIT_CODE"' in source
 
 
+def test_live_score_publishes_suspended_cache_only_when_staged() -> None:
+    source = LIVE_TRIGGER.read_text()
+
+    assert 'if [ -f "$RUNTIME_STAGE_DIR/data/cache/tennis_suspended.json" ]; then' in source
+    assert "PUBLISH_PATHS+=(data/cache/tennis_suspended.json)" in source
+    assert '"${PUBLISH_PATHS[@]}"' in source
+
+
 def test_live_score_launchd_path_loads_the_protected_runtime_environment() -> None:
     with LIVE_PLIST.open("rb") as file:
         plist = plistlib.load(file)
