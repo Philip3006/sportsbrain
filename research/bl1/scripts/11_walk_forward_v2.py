@@ -152,7 +152,10 @@ def main() -> None:
     dev.to_csv(RES / "oof_dev_v2.csv", index=False)
     print(f"Wrote {len(dev)} rows to oof_dev_v2.csv (folds {OUTER_FOLDS})", flush=True)
 
-    # 2425 predictions (reserved for calibrator fit only)
+    # 2425 predictions — PREDICTION-ONLY per CEO Correction Section 3.
+    # Outcome labels (y, home_score, away_score) are NOT emitted. Reserved
+    # for post-lock calibrator fit; development scripts must never read
+    # 2425 outcomes.
     calib_df = df_elo[df_elo["season"] == CALIB_SEASON].reset_index(drop=True)
     rows_c = []
     for _, r in calib_df.iterrows():
@@ -162,16 +165,13 @@ def main() -> None:
         rows_c.append({
             "season": CALIB_SEASON, "date": r["date"],
             "home_team": r["home_team"], "away_team": r["away_team"],
-            "y": int(r["y"]),
             "dc_p_away": p_dc[0], "dc_p_draw": p_dc[1], "dc_p_home": p_dc[2],
             "elo_p_away": pa_elo, "elo_p_draw": pd_elo, "elo_p_home": ph_elo,
             "ps_open_home": r.get("ps_open_home"), "ps_open_draw": r.get("ps_open_draw"),
             "ps_open_away": r.get("ps_open_away"),
-            "ps_close_home": r.get("ps_close_home"), "ps_close_draw": r.get("ps_close_draw"),
-            "ps_close_away": r.get("ps_close_away"),
         })
-    pd.DataFrame(rows_c).to_csv(RES / "oof_2425_v2.csv", index=False)
-    print(f"Wrote {len(rows_c)} rows to oof_2425_v2.csv (reserved for calibrator fit)", flush=True)
+    pd.DataFrame(rows_c).to_csv(RES / "predictions_2425_v3.csv", index=False)
+    print(f"Wrote {len(rows_c)} rows to predictions_2425_v3.csv (prediction-only, no y/scores)", flush=True)
 
     # Aggregate summary (uncalibrated)
     for name, cols in (("DC", ["dc_p_away", "dc_p_draw", "dc_p_home"]),

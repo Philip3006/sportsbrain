@@ -218,6 +218,11 @@ def main() -> None:
                           "brier": _brier(yk, pk), "logloss": _logloss(yk, pk)})
 
     result = pd.DataFrame(rows)
+    # Deterministic CSV output: round floats to a fixed precision to avoid
+    # Python repr instability across runs (contamination-test invariance).
+    for col in ("brier", "logloss"):
+        if col in result.columns:
+            result[col] = result[col].round(10)
     result.to_csv(RES / "promoted_policies_v2_metrics.csv", index=False)
     print("\nPromoted policy comparison (v2, strict as-of priors):", flush=True)
     print(result.to_string(index=False, float_format=lambda x: f"{x:.4f}"), flush=True)

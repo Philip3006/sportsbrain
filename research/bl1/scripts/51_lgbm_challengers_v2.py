@@ -338,7 +338,8 @@ def _run(model_name: str, include_midweek: bool, raw: pd.DataFrame,
             "best_iter": m.best_iteration_ or m.n_estimators_,
         })
 
-    # Also emit 2425 predictions (reserved)
+    # 2425 predictions — PREDICTION-ONLY per CEO Correction Section 3.
+    # Emitted for post-lock calibrator fit only; labels stripped.
     val_2425 = raw[raw["season"] == CALIB_SEASON].copy()
     train_all = raw[raw["date"] < val_2425["date"].min()].copy()
     inner_seasons = sorted(train_all["season"].unique())
@@ -354,16 +355,15 @@ def _run(model_name: str, include_midweek: bool, raw: pd.DataFrame,
     m = _train_lgbm(X_tr, y_tr, X_iv, y_iv)
     probs = m.predict_proba(X_v)
     kv = val_2425.sort_values(["date", "home_team"], kind="stable").reset_index(drop=True)
+    # PREDICTION-ONLY 2425 output — no y, no scores, no closing odds.
     fold_2425 = pd.DataFrame({
         "season": CALIB_SEASON, "date": kv["date"].values,
         "home_team": kv["home_team"].values, "away_team": kv["away_team"].values,
-        "y": y_v,
         f"{model_name}_p_away": probs[:, 0],
         f"{model_name}_p_draw": probs[:, 1],
         f"{model_name}_p_home": probs[:, 2],
     })
-    for c in ("ps_open_home", "ps_open_draw", "ps_open_away",
-              "ps_close_home", "ps_close_draw", "ps_close_away"):
+    for c in ("ps_open_home", "ps_open_draw", "ps_open_away"):
         if c in kv.columns:
             fold_2425[c] = kv[c].values
 
@@ -389,12 +389,12 @@ def main() -> None:
     print("=== Building M4 (DC + LGBM, NO domestic_midweek_density) ===", flush=True)
     m4_dev, m4_2425, m4_it = _run("m4", False, raw_dev, snap, elo_series, promoted)
     m4_dev.to_csv(RES / "oof_m4_dev_v2.csv", index=False)
-    m4_2425.to_csv(RES / "oof_m4_2425_v2.csv", index=False)
+    m4_2425.to_csv(RES / "predictions_m4_2425_v3.csv", index=False)
 
     print("\n=== Building M3 (DC + LGBM + domestic_midweek_density) ===", flush=True)
     m3_dev, m3_2425, m3_it = _run("m3", True, raw_dev, snap, elo_series, promoted)
     m3_dev.to_csv(RES / "oof_m3_dev_v2.csv", index=False)
-    m3_2425.to_csv(RES / "oof_m3_2425_v2.csv", index=False)
+    m3_2425.to_csv(RES / "predictions_m3_2425_v3.csv", index=False)
 
     all_it = pd.concat([m3_it, m4_it], ignore_index=True)
     all_it.to_csv(RES / "lgbm_fold_iters_v2.csv", index=False)
