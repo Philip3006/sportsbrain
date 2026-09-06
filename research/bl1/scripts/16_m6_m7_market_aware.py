@@ -1,13 +1,14 @@
-"""FLAGSHIP-BL1 — M6 market+Elo blend, M7 market residual model.
+"""FLAGSHIP-BL1 — M6 market+Elo blend, M7 market residual model (v5).
 
-CEO Correction Section 7.
+v5 changes: terminology corrected — "pre-closing" not "opening"; access
+routed through canonical partition loader for logging/audit.
 
-M6: p = alpha × p_open_market + (1 - alpha) × p_Elo
-     alpha selected on nested chronological DEV OOF only (no 2425, no 2526).
+M6: p = alpha × p_preclose_market + (1 - alpha) × p_Elo
+     alpha selected on nested chronological DEV OOF only (2425 and 2526 outcomes never touched).
      Grid: 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
 
 M7: LGBM residual model with signal-time features:
-     - opening no-vig market probabilities (M5)
+     - pre-closing no-vig market probabilities (Pinnacle PSH/PSD/PSA)
      - Elo pre-match
      - DC probabilities (per-season snapshot)
      - DC strengths
@@ -22,7 +23,7 @@ Closing prices NEVER enter features.
 Uses precomputed:
   - Elo state: research/bl1/results/elo_series_dev.pkl
   - DC snapshots: research/bl1/results/dc_snapshots/*.pkl
-  - M5 OOF: research/bl1/results/oof_m5_dev_v3.csv (Pinnacle_open)
+  - M5 OOF: research/bl1/results/oof_m5_preclose_dev.csv (Pinnacle_open)
 
 Outputs:
   research/bl1/results/oof_m6_dev_v3.csv
@@ -349,7 +350,7 @@ def main() -> None:
     print(f"\nM7 pooled dev OOF Brier = {_brier(m7_oof['y'].values, m7_oof[['m7_p_away','m7_p_draw','m7_p_home']].values):.4f}", flush=True)
 
     # ---- Summary ----
-    m5 = pd.read_csv(RES / "oof_m5_dev_v3.csv", dtype={"season": str})
+    m5 = pd.read_csv(RES / "oof_m5_preclose_dev.csv", dtype={"season": str})
     y5 = m5["y"].to_numpy(); p5 = m5[["m5_p_away", "m5_p_draw", "m5_p_home"]].to_numpy()
     rows = [
         {"model": "M5_market_open", "n": len(y5), "brier": _brier(y5, p5), "logloss": _logloss(y5, p5)},

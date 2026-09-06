@@ -1,0 +1,9 @@
+source,columns_present,coverage,n_covered,n_total
+Bookmaker_avg_preclose,True,1.0,306,306
+Bookmaker_avg_closing,True,1.0,306,306
+Bookmaker_max_preclose,True,1.0,306,306
+Bookmaker_max_closing,True,1.0,306,306
+Bet365_preclose,True,1.0,306,306
+Bet365_closing,True,1.0,306,306
+Pinnacle_preclose,True,0.49019607843137253,150,306
+Pinnacle_closing,True,0.4869281045751634,149,306

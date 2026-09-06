@@ -89,7 +89,7 @@ def _load_pooled(model: str) -> tuple[np.ndarray, np.ndarray, list]:
         match_ids = [f"{d}|{h}|{a}" for d, h, a in zip(df["date"], df["home_team"], df["away_team"])]
         return y, probs, match_ids
     elif model == "M5_market_open":
-        df = pd.read_csv(RES / "oof_m5_dev_v3.csv", dtype={"season": str})
+        df = pd.read_csv(RES / "oof_m5_preclose_dev.csv", dtype={"season": str})
         df = df[df["season"].isin(OUTER_FOLDS)].sort_values(["date", "home_team"], kind="stable").reset_index(drop=True)
         y = df["y"].to_numpy()
         p = df[["m5_p_away", "m5_p_draw", "m5_p_home"]].to_numpy()

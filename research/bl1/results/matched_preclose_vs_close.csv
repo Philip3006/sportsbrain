@@ -1,0 +1,2 @@
+n_matched,brier_M5_preclose_per_fold,brier_bookmaker_avg_closing_basic,delta_brier_point_preclose_minus_close,delta_ci_lo_95,delta_ci_hi_95,ci_covers_zero,preclose_win_fraction,verdict
+1224,0.5823035882629094,0.5797615693192255,0.002542018943683888,4.458826252060074e-05,0.005158182523478982,False,0.025,closing wins

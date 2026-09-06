@@ -65,7 +65,7 @@ def _load_model_probs():
         out[name] = (df, cal[key]["probs"][method])
     # M5, M6, M7 from their own OOF CSVs
     for name, path, cols in [
-        ("M5_market_open", "oof_m5_dev_v3.csv", ("m5_p_away", "m5_p_draw", "m5_p_home")),
+        ("M5_market_open", "oof_m5_preclose_dev.csv", ("m5_p_away", "m5_p_draw", "m5_p_home")),
         ("M6_market_elo_blend", "oof_m6_dev_v3.csv", ("m6_p_away", "m6_p_draw", "m6_p_home")),
         ("M7_market_residual", "oof_m7_dev_v3.csv", ("m7_p_away", "m7_p_draw", "m7_p_home")),
     ]:

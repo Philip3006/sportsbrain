@@ -57,6 +57,18 @@ DEV_OUTPUTS_TO_HASH = [
     RES / "calibration_all_models_v2.csv",
     RES / "market_hierarchy_devig_v2.csv",
     RES / "promoted_policies_v2_metrics.csv",
+    # v5 expansion — cover full development-decision pipeline:
+    RES / "oof_m5_preclose_dev.csv",
+    RES / "m5_preclose_baseline_summary.csv",
+    RES / "m5_source_selection_by_fold.csv",
+    RES / "oof_m6_dev_v3.csv",
+    RES / "oof_m7_dev_v3.csv",
+    RES / "m6_m7_summary.csv",
+    RES / "m6_alpha_sweep.csv",
+    RES / "matched_preclose_vs_close.csv",
+    RES / "paired_bootstrap_v3.csv",
+    RES / "edge_sweep_v3_one_per_match.csv",
+    RES / "class_asymmetry_decomposition.csv",
 ]
 
 RAW_PKL = DATASET_DIR / "bl1_raw.pkl"
@@ -81,6 +93,13 @@ def _run_pipeline(label: str) -> dict[str, str]:
         "22_calibration_chronological.py",
         "61_market_hierarchy_dev.py",
         "42_promoted_asof_v2.py",
+        # v5 expansion:
+        "15_m5_market_baseline.py",
+        "16_m6_m7_market_aware.py",
+        "17_matched_preclose_vs_close.py",
+        "33_paired_bootstrap.py",
+        "34_edge_sweep_v3.py",
+        "43_class_asymmetry.py",
     ]:
         print(f"  Running {script} ...", flush=True)
         r = subprocess.run(["python3", str(SCRIPTS / script)],
