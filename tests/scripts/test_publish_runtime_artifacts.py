@@ -12,6 +12,11 @@ ROOT = Path(__file__).resolve().parents[2]
 PUBLISHER = ROOT / "scripts" / "publish_runtime_artifacts.sh"
 
 
+def test_publisher_entrypoint_is_executable() -> None:
+    assert PUBLISHER.stat().st_mode & 0o111
+    assert os.access(PUBLISHER, os.X_OK)
+
+
 def _git(args: list[str], cwd: Path, *, check: bool = True) -> subprocess.CompletedProcess[str]:
     return subprocess.run(["git", *args], cwd=cwd, text=True, capture_output=True, check=check)
 
