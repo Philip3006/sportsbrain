@@ -53,12 +53,24 @@ _leagues: ThreadSafeCache[list[dict]] = ThreadSafeCache(ttl=_LEAGUES_TTL_S)
 _matchups: ThreadSafeDictCache[list[dict]] = ThreadSafeDictCache(ttl=_MATCHUPS_TTL_S)
 _odds: ThreadSafeDictCache[dict] = ThreadSafeDictCache(ttl=_ODDS_TTL_S)
 _diagnostic_outcomes: ContextVar[list[ProviderOutcome] | None] = ContextVar("pinnacle_diagnostic_outcomes", default=None)
+_diagnostic_match_found: ContextVar[bool] = ContextVar("pinnacle_diagnostic_match_found", default=False)
+_diagnostic_successful_response: ContextVar[bool] = ContextVar("pinnacle_diagnostic_successful_response", default=False)
 
 
 def _record_outcome(outcome: ProviderOutcome) -> None:
     outcomes = _diagnostic_outcomes.get()
     if outcomes is not None:
         outcomes.append(outcome)
+
+
+def _record_successful_response() -> None:
+    if _diagnostic_outcomes.get() is not None:
+        _diagnostic_successful_response.set(True)
+
+
+def _record_match_found() -> None:
+    if _diagnostic_outcomes.get() is not None:
+        _diagnostic_match_found.set(True)
 
 
 def _get_json(url: str) -> Any:
@@ -72,7 +84,9 @@ def _get_json(url: str) -> Any:
         if r is None or r.status_code != 200:
             _record_outcome(ProviderOutcome(name, True, True, "http_error", http_status=getattr(r, "status_code", None)))
             return None
-        return r.json()
+        data = r.json()
+        _record_successful_response()
+        return data
     except TimeoutError:
         _record_outcome(ProviderOutcome(name, True, True, "timeout", error_class="Timeout"))
         return None
@@ -192,6 +206,7 @@ def _find_matchup(pa: str, pb: str) -> Optional[tuple[dict, dict]]:
             reverse = (mpa == pb_key and mpb == pa_key)
             if not (forward or reverse):
                 continue
+            _record_match_found()
             mid = mu.get("id")
             if not mid:
                 continue
@@ -237,14 +252,25 @@ def fetch(match_hint: dict) -> Optional[OddsQuote]:
 
 
 def fetch_with_diagnostics(match_hint: dict) -> tuple[OddsQuote | None, ProviderOutcome]:
-    token = _diagnostic_outcomes.set([])
+    outcomes_token = _diagnostic_outcomes.set([])
+    match_token = _diagnostic_match_found.set(False)
+    success_token = _diagnostic_successful_response.set(False)
     try:
         quote = fetch(match_hint)
         outcomes = _diagnostic_outcomes.get() or []
+        match_found = _diagnostic_match_found.get()
+        successful_response = _diagnostic_successful_response.get()
     finally:
-        _diagnostic_outcomes.reset(token)
+        _diagnostic_successful_response.reset(success_token)
+        _diagnostic_match_found.reset(match_token)
+        _diagnostic_outcomes.reset(outcomes_token)
     if quote and quote.sane():
         return quote, ProviderOutcome(name, True, True, "success", result="usable_quote")
+    if match_found and outcomes:
+        priority = {"http_error": 0, "timeout": 1, "exception": 2}
+        return quote, min(outcomes, key=lambda outcome: priority.get(outcome.status_class, 3))
+    if not match_found and successful_response:
+        return quote, ProviderOutcome(name, True, True, "no_match")
     if outcomes:
         priority = {"http_error": 0, "timeout": 1, "exception": 2}
         return quote, min(outcomes, key=lambda outcome: priority.get(outcome.status_class, 3))

@@ -104,11 +104,40 @@ def test_tennis_explorer_empty_success_is_no_match(monkeypatch) -> None:
 
 
 def test_pinnacle_diagnostics_do_not_leak_between_calls(monkeypatch) -> None:
+    def failed_fetch(_):
+        pinnacle._record_outcome(pinnacle.ProviderOutcome("pinnacle", True, True, "http_error", http_status=403))
+        return None
+
+    monkeypatch.setattr(pinnacle, "fetch", failed_fetch)
+    _, failed = pinnacle.fetch_with_diagnostics({"player_a": "Alpha", "player_b": "Beta"})
+    assert failed.status_class == "http_error"
+
     monkeypatch.setattr(pinnacle, "fetch", lambda _: None)
-    token = pinnacle._diagnostic_outcomes.set([pinnacle.ProviderOutcome("pinnacle", True, True, "http_error", http_status=403)])
-    pinnacle._diagnostic_outcomes.reset(token)
+    _, next_call = pinnacle.fetch_with_diagnostics({"player_a": "Alpha", "player_b": "Beta"})
+    assert next_call.status_class == "no_match"
+
+
+def test_pinnacle_irrelevant_failure_does_not_override_no_match(monkeypatch) -> None:
+    def fetch_with_irrelevant_failure(_):
+        pinnacle._record_outcome(pinnacle.ProviderOutcome("pinnacle", True, True, "http_error", http_status=503))
+        pinnacle._record_successful_response()
+        return None
+
+    monkeypatch.setattr(pinnacle, "fetch", fetch_with_irrelevant_failure)
     _, outcome = pinnacle.fetch_with_diagnostics({"player_a": "Alpha", "player_b": "Beta"})
     assert outcome.status_class == "no_match"
+
+
+def test_pinnacle_matched_fixture_error_remains_causal(monkeypatch) -> None:
+    def fetch_with_matched_fixture_error(_):
+        pinnacle._record_successful_response()
+        pinnacle._record_match_found()
+        pinnacle._record_outcome(pinnacle.ProviderOutcome("pinnacle", True, True, "timeout", error_class="Timeout"))
+        return None
+
+    monkeypatch.setattr(pinnacle, "fetch", fetch_with_matched_fixture_error)
+    _, outcome = pinnacle.fetch_with_diagnostics({"player_a": "Alpha", "player_b": "Beta"})
+    assert outcome.status_class == "timeout"
 
 
 def test_oddsportal_timeout_and_request_exception(monkeypatch) -> None:
