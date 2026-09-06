@@ -9,6 +9,11 @@ LOG="/Users/philiprassillier/Library/Logs/sportsbrain_live_score_push.log"
 RUNTIME_STATE_DIR="/Users/philiprassillier/Library/Application Support/SportsBrain/runtime-state"
 mkdir -p "/Users/philiprassillier/Library/Caches/SportsBrain" "$RUNTIME_STATE_DIR" || exit 1
 RUNTIME_STAGE_DIR="$(mktemp -d /Users/philiprassillier/Library/Caches/SportsBrain/live-score-push.XXXXXX)" || exit 1
+if [ -f "$SPORTSBRAIN_DIR/.env" ]; then
+    set -a
+    . "$SPORTSBRAIN_DIR/.env"
+    set +a
+fi
 export SPORTSBRAIN_RUNTIME_STATE_DIR="$RUNTIME_STATE_DIR"
 export SPORTSBRAIN_RUNTIME_ARTIFACT_STAGE_DIR="$RUNTIME_STAGE_DIR"
 
