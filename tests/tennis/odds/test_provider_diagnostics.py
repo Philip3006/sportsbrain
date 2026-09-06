@@ -4,6 +4,8 @@ from __future__ import annotations
 from src.tennis.odds.base import OddsQuote
 from src.tennis.odds import merger
 from src.tennis.odds import oddsportal
+from src.tennis.odds import pinnacle
+from src.tennis.odds import tennis_explorer
 
 
 def _quote(provider: str = "pinnacle", tier: int = 1) -> OddsQuote:
@@ -55,6 +57,58 @@ def test_oddsportal_http_statuses_are_sanitized(monkeypatch) -> None:
         assert outcome.status_class == "http_error"
         assert outcome.http_status == status
         assert "secret" not in repr(outcome)
+
+
+def test_oddsportal_cached_http_failure_is_preserved(monkeypatch) -> None:
+    class Response:
+        text = ""
+
+        def __init__(self, status_code: int):
+            self.status_code = status_code
+
+    oddsportal._BULK.clear()
+    oddsportal._TS.clear()
+    oddsportal._OUTCOME_CACHE.clear()
+    calls = []
+    hint = {"player_a": "Alpha", "player_b": "Beta", "commence_time": "2026-09-06T19:00:00Z"}
+    for status in (403, 429):
+        oddsportal._BULK.clear()
+        oddsportal._TS.clear()
+        oddsportal._OUTCOME_CACHE.clear()
+        calls.clear()
+        monkeypatch.setattr(oddsportal.requests, "get", lambda *_, status=status, **__: calls.append(1) or Response(status))
+        _, first = oddsportal.fetch_with_diagnostics(hint)
+        _, second = oddsportal.fetch_with_diagnostics(hint)
+        assert (first.status_class, first.http_status) == ("http_error", status)
+        assert (second.status_class, second.http_status) == ("http_error", status)
+        assert len(calls) == 1
+
+
+def test_tennis_explorer_internal_failures_are_not_no_match(monkeypatch) -> None:
+    tennis_explorer._BULK = []
+    tennis_explorer._TS = 0.0
+    monkeypatch.setattr("src.data.tennis_secondary_odds.fetch_te_upcoming_matches", lambda **_: (_ for _ in ()).throw(TimeoutError()))
+    _, timeout = tennis_explorer.fetch_with_diagnostics({"player_a": "Alpha", "player_b": "Beta"})
+    assert timeout.status_class == "timeout"
+    monkeypatch.setattr("src.data.tennis_secondary_odds.fetch_te_upcoming_matches", lambda **_: (_ for _ in ()).throw(ConnectionError()))
+    _, failure = tennis_explorer.fetch_with_diagnostics({"player_a": "Alpha", "player_b": "Beta"})
+    assert failure.status_class == "exception"
+
+
+def test_tennis_explorer_empty_success_is_no_match(monkeypatch) -> None:
+    tennis_explorer._BULK = []
+    tennis_explorer._TS = 0.0
+    monkeypatch.setattr("src.data.tennis_secondary_odds.fetch_te_upcoming_matches", lambda **_: [])
+    _, outcome = tennis_explorer.fetch_with_diagnostics({"player_a": "Alpha", "player_b": "Beta"})
+    assert outcome.status_class == "no_match"
+
+
+def test_pinnacle_diagnostics_do_not_leak_between_calls(monkeypatch) -> None:
+    monkeypatch.setattr(pinnacle, "fetch", lambda _: None)
+    token = pinnacle._diagnostic_outcomes.set([pinnacle.ProviderOutcome("pinnacle", True, True, "http_error", http_status=403)])
+    pinnacle._diagnostic_outcomes.reset(token)
+    _, outcome = pinnacle.fetch_with_diagnostics({"player_a": "Alpha", "player_b": "Beta"})
+    assert outcome.status_class == "no_match"
 
 
 def test_oddsportal_timeout_and_request_exception(monkeypatch) -> None:

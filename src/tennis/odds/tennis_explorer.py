@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Optional
 
 _log = logging.getLogger("sportsbrain.tennis.odds.tennis_explorer")
 
@@ -30,10 +29,14 @@ _TTL_S = 30 * 60
 
 
 def _get_bulk() -> list[dict]:
+    return _get_bulk_with_diagnostics()[0]
+
+
+def _get_bulk_with_diagnostics() -> tuple[list[dict], ProviderOutcome]:
     global _BULK, _TS
     age = time.time() - _TS
     if _BULK and age < _TTL_S:
-        return _BULK
+        return _BULK, ProviderOutcome(name, True, True, "success")
     try:
         from src.data.tennis_secondary_odds import fetch_te_upcoming_matches
         new_bulk = fetch_te_upcoming_matches(min_bookies=2, max_matches=200)
@@ -48,17 +51,22 @@ def _get_bulk() -> list[dict]:
                 _log.warning("stale bulk (%.0fs ≥ 2×TTL) und Refresh leer → drop", age)
                 _BULK = []
                 _TS = time.time()
-    except Exception:
+    except TimeoutError:
         _BULK = []
         _TS = time.time()
-    return _BULK
+        return _BULK, ProviderOutcome(name, True, True, "timeout", error_class="Timeout")
+    except Exception as exc:  # noqa: BLE001 - preserve the existing fail-closed bulk behavior
+        _BULK = []
+        _TS = time.time()
+        return _BULK, ProviderOutcome(name, True, True, "exception", error_class=type(exc).__name__)
+    return _BULK, ProviderOutcome(name, True, True, "success")
 
 
 def _match_key(name_norm: str) -> str:
     return name_norm.lower().strip()
 
 
-def fetch(match_hint: dict) -> Optional[OddsQuote]:
+def _quote_from_bulk(match_hint: dict, bulk: list[dict]) -> OddsQuote | None:
     pa_raw = match_hint.get("player_a", "")
     pb_raw = match_hint.get("player_b", "")
     if not pa_raw or not pb_raw:
@@ -72,7 +80,7 @@ def fetch(match_hint: dict) -> Optional[OddsQuote]:
         pa_key = _match_key(to_elo_name_from_odds_api(pa_raw))
         pb_key = _match_key(to_elo_name_from_odds_api(pb_raw))
 
-    for m in _get_bulk():
+    for m in bulk:
         mpa = _match_key(to_elo_name_from_te(m.get("player_a", "")))
         mpb = _match_key(to_elo_name_from_te(m.get("player_b", "")))
         if not mpa or not mpb:
@@ -105,13 +113,15 @@ def fetch(match_hint: dict) -> Optional[OddsQuote]:
     return None
 
 
+def fetch(match_hint: dict) -> OddsQuote | None:
+    return _quote_from_bulk(match_hint, _get_bulk())
+
+
 def fetch_with_diagnostics(match_hint: dict) -> tuple[OddsQuote | None, ProviderOutcome]:
-    try:
-        quote = fetch(match_hint)
-    except TimeoutError:
-        return None, ProviderOutcome(name, True, True, "timeout", error_class="Timeout")
-    except Exception as exc:  # noqa: BLE001 - provider boundary must sanitize every failure
-        return None, ProviderOutcome(name, True, True, "exception", error_class=type(exc).__name__)
+    bulk, outcome = _get_bulk_with_diagnostics()
+    if outcome.status_class != "success":
+        return None, outcome
+    quote = _quote_from_bulk(match_hint, bulk)
     if quote and quote.sane():
         return quote, ProviderOutcome(name, True, True, "success", result="usable_quote")
     return quote, ProviderOutcome(name, True, True, "invalid_quote" if quote else "no_match")

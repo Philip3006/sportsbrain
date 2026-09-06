@@ -28,6 +28,7 @@ tier = 2
 _UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
 _BULK: dict[str, list[dict]] = {}   # date_iso -> parsed matches
 _TS: dict[str, float] = {}
+_OUTCOME_CACHE: dict[str, ProviderOutcome] = {}
 _TTL_S = 15 * 60
 
 # OddsPortal embedded JSON pattern: window.opgd = {...}
@@ -41,7 +42,7 @@ def _fetch_day(date_iso: str) -> list[dict]:
 
 def _fetch_day_with_diagnostics(date_iso: str) -> tuple[list[dict], ProviderOutcome]:
     if date_iso in _BULK and time.time() - _TS.get(date_iso, 0) < _TTL_S:
-        return _BULK[date_iso], ProviderOutcome(name, True, True, "success")
+        return _BULK[date_iso], _OUTCOME_CACHE.get(date_iso, ProviderOutcome(name, True, True, "success"))
 
     url = f"https://www.oddsportal.com/matches/tennis/{date_iso}/"
     try:
@@ -49,7 +50,9 @@ def _fetch_day_with_diagnostics(date_iso: str) -> tuple[list[dict], ProviderOutc
         if resp.status_code != 200:
             _BULK[date_iso] = []
             _TS[date_iso] = time.time()
-            return [], ProviderOutcome(name, True, True, "http_error", http_status=resp.status_code)
+            outcome = ProviderOutcome(name, True, True, "http_error", http_status=resp.status_code)
+            _OUTCOME_CACHE[date_iso] = outcome
+            return [], outcome
     except requests.Timeout:
         return [], ProviderOutcome(name, True, True, "timeout", error_class="Timeout")
     except requests.RequestException as exc:
@@ -82,7 +85,9 @@ def _fetch_day_with_diagnostics(date_iso: str) -> tuple[list[dict], ProviderOutc
 
     _BULK[date_iso] = matches
     _TS[date_iso] = time.time()
-    return matches, ProviderOutcome(name, True, True, "success")
+    outcome = ProviderOutcome(name, True, True, "success")
+    _OUTCOME_CACHE[date_iso] = outcome
+    return matches, outcome
 
 
 def _match_key(n: str) -> str:

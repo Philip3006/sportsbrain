@@ -19,6 +19,7 @@ Rate-Limit: Pinnacle blockiert idR bei > 30 req/min pro IP. Bulk-Fetch mit
 """
 from __future__ import annotations
 
+from contextvars import ContextVar
 import time
 from pathlib import Path
 from typing import Any, Optional
@@ -51,11 +52,16 @@ _ODDS_TTL_S = 5 * 60
 _leagues: ThreadSafeCache[list[dict]] = ThreadSafeCache(ttl=_LEAGUES_TTL_S)
 _matchups: ThreadSafeDictCache[list[dict]] = ThreadSafeDictCache(ttl=_MATCHUPS_TTL_S)
 _odds: ThreadSafeDictCache[dict] = ThreadSafeDictCache(ttl=_ODDS_TTL_S)
-_last_outcome: ProviderOutcome | None = None
+_diagnostic_outcomes: ContextVar[list[ProviderOutcome] | None] = ContextVar("pinnacle_diagnostic_outcomes", default=None)
+
+
+def _record_outcome(outcome: ProviderOutcome) -> None:
+    outcomes = _diagnostic_outcomes.get()
+    if outcomes is not None:
+        outcomes.append(outcome)
 
 
 def _get_json(url: str) -> Any:
-    global _last_outcome
     try:
         r = retry_request(
             "GET", url, headers=_UA, timeout=8,
@@ -64,14 +70,14 @@ def _get_json(url: str) -> Any:
             log_prefix="[pinnacle]",
         )
         if r is None or r.status_code != 200:
-            _last_outcome = ProviderOutcome(name, True, True, "http_error", http_status=getattr(r, "status_code", None))
+            _record_outcome(ProviderOutcome(name, True, True, "http_error", http_status=getattr(r, "status_code", None)))
             return None
         return r.json()
     except TimeoutError:
-        _last_outcome = ProviderOutcome(name, True, True, "timeout", error_class="Timeout")
+        _record_outcome(ProviderOutcome(name, True, True, "timeout", error_class="Timeout"))
         return None
     except Exception as exc:
-        _last_outcome = ProviderOutcome(name, True, True, "exception", error_class=type(exc).__name__)
+        _record_outcome(ProviderOutcome(name, True, True, "exception", error_class=type(exc).__name__))
         return None
 
 
@@ -231,9 +237,15 @@ def fetch(match_hint: dict) -> Optional[OddsQuote]:
 
 
 def fetch_with_diagnostics(match_hint: dict) -> tuple[OddsQuote | None, ProviderOutcome]:
-    global _last_outcome
-    _last_outcome = None
-    quote = fetch(match_hint)
+    token = _diagnostic_outcomes.set([])
+    try:
+        quote = fetch(match_hint)
+        outcomes = _diagnostic_outcomes.get() or []
+    finally:
+        _diagnostic_outcomes.reset(token)
     if quote and quote.sane():
         return quote, ProviderOutcome(name, True, True, "success", result="usable_quote")
-    return quote, _last_outcome or ProviderOutcome(name, True, True, "invalid_quote" if quote else "no_match")
+    if outcomes:
+        priority = {"http_error": 0, "timeout": 1, "exception": 2}
+        return quote, min(outcomes, key=lambda outcome: priority.get(outcome.status_class, 3))
+    return quote, ProviderOutcome(name, True, True, "invalid_quote" if quote else "no_match")
