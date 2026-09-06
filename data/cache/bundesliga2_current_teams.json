@@ -1,26 +1,7 @@
 {
-  "teams": [
-    "Bielefeld",
-    "Bochum",
-    "Braunschweig",
-    "Darmstadt",
-    "Dresden",
-    "Elversberg",
-    "Fortuna Dusseldorf",
-    "Greuther Furth",
-    "Hannover",
-    "Hertha",
-    "Kaiserslautern",
-    "Karlsruhe",
-    "Kiel",
-    "Magdeburg",
-    "Nurnberg",
-    "Paderborn",
-    "Preußen Münster",
-    "Schalke 04"
-  ],
-  "n": 18,
+  "teams": [],
+  "n": 0,
   "source": "last_season",
-  "captured_at": "2026-09-05T08:43:19.070249+00:00",
+  "captured_at": "2026-09-06T09:03:39.143040+00:00",
   "unknown_vs_universe": []
 }
