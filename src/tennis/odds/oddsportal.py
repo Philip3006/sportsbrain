@@ -13,13 +13,13 @@ from __future__ import annotations
 import logging
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 import requests
 
 from src.tennis.name_norm import to_elo_name_from_odds_api
-from src.tennis.odds.base import OddsQuote, sanity_ok
+from src.tennis.odds.base import OddsQuote, ProviderOutcome, sanity_ok
 
 _log = logging.getLogger("sportsbrain.tennis.odds.oddsportal")
 name = "oddsportal"
@@ -35,8 +35,13 @@ _RE_INLINE_JSON = re.compile(r'window\.opgd\s*=\s*(\{.*?\});', re.DOTALL)
 
 
 def _fetch_day(date_iso: str) -> list[dict]:
+    # Keep the established 500-match truncation contract in this public helper.
+    return _fetch_day_with_diagnostics(date_iso)[0]
+
+
+def _fetch_day_with_diagnostics(date_iso: str) -> tuple[list[dict], ProviderOutcome]:
     if date_iso in _BULK and time.time() - _TS.get(date_iso, 0) < _TTL_S:
-        return _BULK[date_iso]
+        return _BULK[date_iso], ProviderOutcome(name, True, True, "success")
 
     url = f"https://www.oddsportal.com/matches/tennis/{date_iso}/"
     try:
@@ -44,9 +49,11 @@ def _fetch_day(date_iso: str) -> list[dict]:
         if resp.status_code != 200:
             _BULK[date_iso] = []
             _TS[date_iso] = time.time()
-            return []
-    except Exception:
-        return []
+            return [], ProviderOutcome(name, True, True, "http_error", http_status=resp.status_code)
+    except requests.Timeout:
+        return [], ProviderOutcome(name, True, True, "timeout", error_class="Timeout")
+    except requests.RequestException as exc:
+        return [], ProviderOutcome(name, True, True, "exception", error_class=type(exc).__name__)
 
     # Fallback-Parser (Regex auf HTML): Zeilen mit Player-Vs-Player und 2 Odds.
     # OddsPortal versteckt Detail-Odds hinter JS, daher extrahieren wir nur
@@ -75,7 +82,7 @@ def _fetch_day(date_iso: str) -> list[dict]:
 
     _BULK[date_iso] = matches
     _TS[date_iso] = time.time()
-    return matches
+    return matches, ProviderOutcome(name, True, True, "success")
 
 
 def _match_key(n: str) -> str:
@@ -123,3 +130,34 @@ def fetch(match_hint: dict) -> Optional[OddsQuote]:
             bookies_count=5,
         )
     return None
+
+
+def fetch_with_diagnostics(match_hint: dict) -> tuple[OddsQuote | None, ProviderOutcome]:
+    pa = match_hint.get("player_a", "")
+    pb = match_hint.get("player_b", "")
+    if not pa or not pb:
+        return None, ProviderOutcome(name, False, False, "ineligible")
+    date_iso = ""
+    ct = match_hint.get("commence_time", "")
+    if ct:
+        try:
+            date_iso = datetime.fromisoformat(ct.replace("Z", "+00:00")).strftime("%Y-%m-%d")
+        except ValueError:
+            pass
+    date_iso = date_iso or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    matches, outcome = _fetch_day_with_diagnostics(date_iso)
+    if outcome.status_class != "success":
+        return None, outcome
+    pa_key, pb_key = _match_key(to_elo_name_from_odds_api(pa)), _match_key(to_elo_name_from_odds_api(pb))
+    for match in matches:
+        forward = (_match_key(to_elo_name_from_odds_api(match["player_a"])) == pa_key and _match_key(to_elo_name_from_odds_api(match["player_b"])) == pb_key)
+        reverse = (_match_key(to_elo_name_from_odds_api(match["player_a"])) == pb_key and _match_key(to_elo_name_from_odds_api(match["player_b"])) == pa_key)
+        if forward or reverse:
+            a, b = match["h2h_a"], match["h2h_b"]
+            if reverse:
+                a, b = b, a
+            quote = OddsQuote(pa, pb, a, b, name, tier, bookmaker="consensus", confidence=0.7, bookies_count=5)
+            if not quote.sane():
+                return quote, ProviderOutcome(name, True, True, "invalid_quote")
+            return quote, ProviderOutcome(name, True, True, "success", result="usable_quote")
+    return None, ProviderOutcome(name, True, True, "no_match")

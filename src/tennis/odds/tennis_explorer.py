@@ -19,7 +19,7 @@ from src.tennis.name_norm import (
     to_elo_name_from_odds_api,
     to_elo_name_from_te,
 )
-from src.tennis.odds.base import OddsQuote, sanity_ok
+from src.tennis.odds.base import OddsQuote, ProviderOutcome, sanity_ok
 
 name = "tennis_explorer"
 tier = 2
@@ -103,3 +103,15 @@ def fetch(match_hint: dict) -> Optional[OddsQuote]:
             bookies_count=bookies,
         )
     return None
+
+
+def fetch_with_diagnostics(match_hint: dict) -> tuple[OddsQuote | None, ProviderOutcome]:
+    try:
+        quote = fetch(match_hint)
+    except TimeoutError:
+        return None, ProviderOutcome(name, True, True, "timeout", error_class="Timeout")
+    except Exception as exc:  # noqa: BLE001 - provider boundary must sanitize every failure
+        return None, ProviderOutcome(name, True, True, "exception", error_class=type(exc).__name__)
+    if quote and quote.sane():
+        return quote, ProviderOutcome(name, True, True, "success", result="usable_quote")
+    return quote, ProviderOutcome(name, True, True, "invalid_quote" if quote else "no_match")

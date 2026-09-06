@@ -39,9 +39,9 @@ def test_tennis_refresh_caches_one_provider_call_and_excludes_websearch(monkeypa
 
     def fetch(match_hint, **kwargs):
         calls.append(kwargs)
-        return Quote()
+        return Quote(), [{"provider": "tennis_explorer", "attempted": True, "eligible": True, "status_class": "success", "http_status": None, "result": "usable_quote", "error_class": None}]
 
-    monkeypatch.setattr(merger, "fetch_best_odds", fetch)
+    monkeypatch.setattr(merger, "fetch_best_odds_with_diagnostics", fetch)
     cache: dict = {}
     signal = _signal(sport="tennis")
 
@@ -49,6 +49,7 @@ def test_tennis_refresh_caches_one_provider_call_and_excludes_websearch(monkeypa
     assert _refresh_tennis(signal, cache) == (1.8, "tennis_explorer", 1)
     assert len(calls) == 1
     assert calls[0]["include_websearch"] is False
+    assert calls[0]["allow_implied"] is False
 
 
 def test_refresh_stages_public_artifacts_without_mutating_active_snapshot(monkeypatch, tmp_path):

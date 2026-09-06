@@ -224,6 +224,7 @@ def _refresh_football(signal: dict) -> tuple[float | None, str, int]:
 def _refresh_tennis(
     signal: dict,
     quote_cache: dict[tuple[str, str, str], tuple[float | None, float | None, str, int]] | None = None,
+    diagnostics: list[dict] | None = None,
 ) -> tuple[float | None, str, int]:
     """Fetch fresh tennis odds via existing 5-provider merger."""
     match_str = signal.get("match", " vs ")
@@ -244,16 +245,18 @@ def _refresh_tennis(
     cached = quote_cache.get(cache_key) if quote_cache is not None else None
     if cached is None:
         try:
-            from src.tennis.odds.merger import fetch_best_odds
+            from src.tennis.odds.merger import fetch_best_odds_with_diagnostics
             # Tier-4 web search runs three broad internet queries per signal and
             # dominated the natural 25-minute cycle. Refresh stays authoritative
             # by using direct providers only; failure remains health-visible.
-            quote = fetch_best_odds(
+            quote, provider_outcomes = fetch_best_odds_with_diagnostics(
                 match_hint,
                 timeout_s=5.0,
                 allow_implied=False,
                 include_websearch=False,
             )
+            if diagnostics is not None:
+                diagnostics.extend(provider_outcomes)
             if quote and not quote.no_bet_flag:
                 cached = (quote.h2h_a, quote.h2h_b, quote.source, quote.source_tier)
             else:
@@ -361,6 +364,8 @@ def run_refresh(dry_run: bool = False) -> dict:
     failed_by_sport = {"football": 0, "tennis": 0}
     retry_deferred = 0
     tennis_quote_cache: dict[tuple[str, str, str], tuple[float | None, float | None, str, int]] = {}
+    tennis_provider_diagnostics: list[dict] = []
+    failed_provider_examples: list[dict] = []
 
     for sig in signals:
         sport = sig.get("sport", "football")
@@ -382,7 +387,9 @@ def run_refresh(dry_run: bool = False) -> dict:
         _log.debug("[refresher] refreshing %s | %s | %s", sport, match, market)
 
         if sport == "tennis":
-            current_odds, source, tier = _refresh_tennis(sig, tennis_quote_cache)
+            signal_diagnostics: list[dict] = []
+            current_odds, source, tier = _refresh_tennis(sig, tennis_quote_cache, signal_diagnostics)
+            tennis_provider_diagnostics.extend(signal_diagnostics)
         else:
             current_odds, source, tier = _refresh_football(sig)
 
@@ -414,6 +421,12 @@ def run_refresh(dry_run: bool = False) -> dict:
             failed += 1
             failed_by_sport.setdefault(sport, 0)
             failed_by_sport[sport] += 1
+            if sport == "tennis" and len(failed_provider_examples) < 5:
+                failed_provider_examples.append({
+                    "match": match,
+                    "tournament": sig.get("tournament", ""),
+                    "providers": signal_diagnostics,
+                })
             continue
 
         ev = compute_current_ev(float(sig.get("model_prob", 0)), current_odds)
@@ -441,6 +454,13 @@ def run_refresh(dry_run: bool = False) -> dict:
         refreshed_by_sport[sport] += 1
 
     elapsed = round(time.monotonic() - t0, 2)
+    provider_outcome_counts: dict[str, dict[str, int]] = {}
+    for outcome in tennis_provider_diagnostics:
+        provider = str(outcome.get("provider", "unknown"))
+        status_class = str(outcome.get("status_class", "unknown"))
+        provider_outcome_counts.setdefault(provider, {})[status_class] = (
+            provider_outcome_counts.setdefault(provider, {}).get(status_class, 0) + 1
+        )
     summary = {
         "refreshed": refreshed,
         "skipped": skipped,
@@ -450,6 +470,8 @@ def run_refresh(dry_run: bool = False) -> dict:
         "refreshed_by_sport": refreshed_by_sport,
         "failed_by_sport": failed_by_sport,
         "retry_deferred": retry_deferred,
+        "tennis_provider_outcome_counts": provider_outcome_counts,
+        "failed_provider_examples": failed_provider_examples,
     }
     _log.info("[refresher] done: %s", summary)
 

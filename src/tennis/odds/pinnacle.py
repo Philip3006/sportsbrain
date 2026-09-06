@@ -29,7 +29,7 @@ sys.path.insert(0, str(_ROOT))
 from scripts._http_retry import retry_request
 
 from src.tennis.name_norm import to_elo_name_from_odds_api
-from src.tennis.odds.base import OddsQuote, ThreadSafeCache, ThreadSafeDictCache, sanity_ok
+from src.tennis.odds.base import OddsQuote, ProviderOutcome, ThreadSafeCache, ThreadSafeDictCache, sanity_ok
 
 
 name = "pinnacle"
@@ -51,9 +51,11 @@ _ODDS_TTL_S = 5 * 60
 _leagues: ThreadSafeCache[list[dict]] = ThreadSafeCache(ttl=_LEAGUES_TTL_S)
 _matchups: ThreadSafeDictCache[list[dict]] = ThreadSafeDictCache(ttl=_MATCHUPS_TTL_S)
 _odds: ThreadSafeDictCache[dict] = ThreadSafeDictCache(ttl=_ODDS_TTL_S)
+_last_outcome: ProviderOutcome | None = None
 
 
 def _get_json(url: str) -> Any:
+    global _last_outcome
     try:
         r = retry_request(
             "GET", url, headers=_UA, timeout=8,
@@ -62,9 +64,14 @@ def _get_json(url: str) -> Any:
             log_prefix="[pinnacle]",
         )
         if r is None or r.status_code != 200:
+            _last_outcome = ProviderOutcome(name, True, True, "http_error", http_status=getattr(r, "status_code", None))
             return None
         return r.json()
-    except Exception:
+    except TimeoutError:
+        _last_outcome = ProviderOutcome(name, True, True, "timeout", error_class="Timeout")
+        return None
+    except Exception as exc:
+        _last_outcome = ProviderOutcome(name, True, True, "exception", error_class=type(exc).__name__)
         return None
 
 
@@ -221,3 +228,12 @@ def fetch(match_hint: dict) -> Optional[OddsQuote]:
     q.__dict__["ah_1_5_a"] = odds.get("ah_1_5_a")
     q.__dict__["ah_1_5_b"] = odds.get("ah_1_5_b")
     return q
+
+
+def fetch_with_diagnostics(match_hint: dict) -> tuple[OddsQuote | None, ProviderOutcome]:
+    global _last_outcome
+    _last_outcome = None
+    quote = fetch(match_hint)
+    if quote and quote.sane():
+        return quote, ProviderOutcome(name, True, True, "success", result="usable_quote")
+    return quote, _last_outcome or ProviderOutcome(name, True, True, "invalid_quote" if quote else "no_match")
