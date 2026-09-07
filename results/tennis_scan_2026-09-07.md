@@ -8,5 +8,5 @@ Surface: hard · Best of: 5 · Matches gescannt: 6
 _Keine Value-Signals._
 
 ## US Open (WTA) · grand_slam · 🔴 LIVE
-Surface: hard · Best of: 3 · Matches gescannt: 6
+Surface: hard · Best of: 3 · Matches gescannt: 4
 _Keine Value-Signals._

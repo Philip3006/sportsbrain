@@ -1,2120 +1,4 @@
 {
-  "tennis": [],
-  "football": [],
-  "build_info": {
-    "sha": "3b70a41",
-    "date": "2026-09-07"
-  },
-  "model_evals": {
-    "Danilov Savriyan vs Zhang William": {
-      "p_a": 50.0,
-      "p_b": 50.0,
-      "implied_a": 82.2,
-      "implied_b": 17.8,
-      "odds_a": 1.11,
-      "odds_b": 5.12,
-      "source": "implied"
-    },
-    "Minasyan Michael vs Piening Claus": {
-      "p_a": 50.0,
-      "p_b": 50.0,
-      "implied_a": 41.3,
-      "implied_b": 58.7,
-      "odds_a": 2.2,
-      "odds_b": 1.55,
-      "source": "implied"
-    },
-    "Bennani Reda vs Vterkovskiy Dmytro": {
-      "p_a": 50.0,
-      "p_b": 50.0,
-      "implied_a": 91.0,
-      "implied_b": 9.0,
-      "odds_a": 1.03,
-      "odds_b": 10.37,
-      "source": "implied"
-    },
-    "Ceramilac Luka vs Zivkovic Uros": {
-      "p_a": 50.0,
-      "p_b": 50.0,
-      "implied_a": 60.6,
-      "implied_b": 39.4,
-      "odds_a": 1.52,
-      "odds_b": 2.34,
-      "source": "implied"
-    },
-    "Kountourakis Ioannis vs Pisaric Aleksa": {
-      "p_a": 50.0,
-      "p_b": 50.0,
-      "implied_a": 42.1,
-      "implied_b": 57.9,
-      "odds_a": 2.2,
-      "odds_b": 1.6,
-      "source": "implied"
-    },
-    "Zapp Logan vs Ardila Landon": {
-      "p_a": 50.0,
-      "p_b": 50.0,
-      "implied_a": 32.5,
-      "implied_b": 67.5,
-      "odds_a": 2.83,
-      "odds_b": 1.36,
-      "source": "implied"
-    },
-    "De Almeida Gustavo Ribeiro vs Bini Victor": {
-      "p_a": 50.0,
-      "p_b": 50.0,
-      "implied_a": 75.1,
-      "implied_b": 24.9,
-      "odds_a": 1.22,
-      "odds_b": 3.67,
-      "source": "implied"
-    },
-    "Dussault Maximus vs Carpico Brandon": {
-      "p_a": 50.0,
-      "p_b": 50.0,
-      "implied_a": 55.9,
-      "implied_b": 44.1,
-      "odds_a": 1.64,
-      "odds_b": 2.08,
-      "source": "implied"
-    },
-    "Maloney Patrick (2000) vs Goldammer Tygen": {
-      "p_a": 50.0,
-      "p_b": 50.0,
-      "implied_a": 88.9,
-      "implied_b": 11.1,
-      "odds_a": 1.06,
-      "odds_b": 8.5,
-      "source": "implied"
-    },
-    "Dell'elba Vito vs Papoe Cezar Gabriel": {
-      "p_a": 50.0,
-      "p_b": 50.0,
-      "implied_a": 25.2,
-      "implied_b": 74.8,
-      "odds_a": 3.65,
-      "odds_b": 1.23,
-      "source": "implied"
-    },
-    "Aleshchev Alexey vs Zavacky Peter": {
-      "p_a": 50.0,
-      "p_b": 50.0,
-      "implied_a": 80.1,
-      "implied_b": 19.9,
-      "odds_a": 1.15,
-      "odds_b": 4.62,
-      "source": "implied"
-    },
-    "Brantmeier Reese vs Mandlik Elizabeth": {
-      "p_a": 56.3,
-      "p_b": 43.7,
-      "implied_a": 52.7,
-      "implied_b": 47.3,
-      "odds_a": 1.75,
-      "odds_b": 1.95,
-      "source": "elo"
-    },
-    "Sabalenka Aryna vs Alexandrova Ekaterina": {
-      "p_a": 98.0,
-      "p_b": 2.0,
-      "implied_a": 66.7,
-      "implied_b": 33.3,
-      "odds_a": 1.38,
-      "odds_b": 2.77,
-      "source": "elo"
-    },
-    "Tolev Aleksandar vs Kostic Stefan (2006)": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Tolev Aleksandar, Kostic Stefan (2006)",
-      "odds_a": 1.44,
-      "odds_b": 2.6
-    },
-    "Roberts Justin vs Sarr Jelani": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Roberts Justin, Sarr Jelani",
-      "odds_a": 2.45,
-      "odds_b": 1.49
-    },
-    "Okonkwo Alexander vs Kirchheimer Strong": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Okonkwo Alexander",
-      "odds_a": 2.55,
-      "odds_b": 1.48
-    },
-    "Alkaya Mert vs Zhukayev Beibit": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Alkaya Mert",
-      "odds_a": 1.6,
-      "odds_b": 2.16,
-      "tier": "shadow"
-    },
-    "Solarski Jakub vs Mizerski Eli": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Solarski Jakub, Mizerski Eli",
-      "odds_a": 1.36,
-      "odds_b": 2.8
-    },
-    "Popa Maria Sara vs Simionescu Diana-Ioana": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Bucharest 6 ITF",
-      "odds_a": 1.61,
-      "odds_b": 2.12
-    },
-    "Rakhimova Kamilla vs Sakkari Maria": {
-      "status": "EVALUATED_NO_BET",
-      "p_a": 35.1,
-      "p_b": 64.9,
-      "implied_a": 39.3,
-      "implied_b": 60.7,
-      "odds_a": 2.36,
-      "odds_b": 1.53,
-      "source": "elo"
-    },
-    "Ambrogi Luciano Emanuel vs Mares Vojtech": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Prague 2 challenger",
-      "odds_a": 2.16,
-      "odds_b": 1.61
-    },
-    "Walters Marcus vs Ponchet Matt": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Roehampton challenger",
-      "odds_a": 1.7,
-      "odds_b": 2.03
-    },
-    "Norlin Christopher vs Koistila larsson Kenzo": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Norlin Christopher, Koistila larsson Kenzo",
-      "odds_a": 1.31,
-      "odds_b": 3.2
-    },
-    "Bataljin Lawrence vs Walltin Kelvin": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Bataljin Lawrence, Walltin Kelvin",
-      "odds_a": 1.61,
-      "odds_b": 2.15
-    },
-    "Margoulis Daniel vs Lange Alvar": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Margoulis Daniel, Lange Alvar",
-      "odds_a": 3.42,
-      "odds_b": 1.27
-    },
-    "Christoffersson Filip vs Andersson Lukas": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Christoffersson Filip, Andersson Lukas",
-      "odds_a": 1.85,
-      "odds_b": 1.85
-    },
-    "Rovai Samuel vs Andersson Linus (2008)": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Rovai Samuel, Andersson Linus (2008)",
-      "odds_a": 1.1,
-      "odds_b": 5.88
-    },
-    "Gahnstrom Erik vs Rocens Martins": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Gahnstrom Erik, Rocens Martins",
-      "odds_a": 3.45,
-      "odds_b": 1.27
-    },
-    "De Armas Ignacio vs Perez Benjamin": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): De Armas Ignacio, Perez Benjamin",
-      "odds_a": 3.6,
-      "odds_b": 1.25
-    },
-    "Cox Nathan vs De la Pena Bautista": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Cox Nathan, De la Pena Bautista",
-      "odds_a": 1.11,
-      "odds_b": 5.27
-    },
-    "Virgili Berini Felipe vs Van Nunen Max": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Virgili Berini Felipe, Van Nunen Max",
-      "odds_a": 1.55,
-      "odds_b": 2.3
-    },
-    "Larwig Noel vs Moraing Oscar": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil (z.B. Qualifier): Larwig Noel, Moraing Oscar",
-      "odds_a": 2.1,
-      "odds_b": 1.65
-    },
-    "Pegula Jessica vs Swiatek Iga": {
-      "status": "EVALUATED_NO_BET",
-      "p_a": 49.3,
-      "p_b": 50.7,
-      "implied_a": 37.6,
-      "implied_b": 62.4,
-      "odds_a": 2.46,
-      "odds_b": 1.48,
-      "source": "elo"
-    },
-    "Gauff Coco vs Kostyuk Marta": {
-      "status": "EVALUATED_NO_BET",
-      "p_a": 58.8,
-      "p_b": 41.2,
-      "implied_a": 41.4,
-      "implied_b": 58.6,
-      "odds_a": 2.24,
-      "odds_b": 1.58,
-      "source": "elo"
-    },
-    "Bondar Anna vs Jacquemot Elsa": {
-      "status": "EVALUATED_NO_BET",
-      "p_a": 50.0,
-      "p_b": 50.0,
-      "implied_a": 41.5,
-      "implied_b": 58.5,
-      "odds_a": 2.23,
-      "odds_b": 1.58,
-      "source": "elo"
-    },
-    "Udvardy Panna vs Arango Emiliana": {
-      "status": "EVALUATED_NO_BET",
-      "p_a": 50.7,
-      "p_b": 49.3,
-      "implied_a": 59.9,
-      "implied_b": 40.1,
-      "odds_a": 1.54,
-      "odds_b": 2.3,
-      "source": "elo"
-    },
-    "Banthia Siddhant vs Kuhar Matt": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Kingston 2 challenger",
-      "odds_a": 2.67,
-      "odds_b": 1.42
-    },
-    "Neumayer Lukas vs McCabe James": {
-      "status": "EVALUATED_NO_BET",
-      "p_a": 48.7,
-      "p_b": 51.3,
-      "implied_a": 44.3,
-      "implied_b": 55.7,
-      "odds_a": 2.1,
-      "odds_b": 1.67,
-      "source": "elo"
-    },
-    "Vanta Valentin vs Giordano Luca (2002)": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.06,
-      "odds_b": 6.83
-    },
-    "Jeran Aljaz vs Premzl Maj": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.15,
-      "odds_b": 4.8
-    },
-    "Over vs Under": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.41,
-      "odds_b": 2.52
-    },
-    "Shi Han vs Lu Jia-Jing": {
-      "status": "EVALUATED_NO_BET",
-      "p_a": 50.0,
-      "p_b": 50.0,
-      "implied_a": 59.9,
-      "implied_b": 40.1,
-      "odds_a": 1.51,
-      "odds_b": 2.26,
-      "source": "elo"
-    },
-    "Kasatkina Darya vs Badosa Paula": {
-      "status": "EVALUATED_NO_BET",
-      "p_a": 42.2,
-      "p_b": 57.8,
-      "implied_a": 44.4,
-      "implied_b": 55.6,
-      "odds_a": 2.1,
-      "odds_b": 1.68,
-      "source": "elo"
-    },
-    "Ritschard Alexander vs Perez Contri Sergi": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.41,
-      "odds_b": 2.51
-    },
-    "Putintseva Yulia vs Bencic Belinda": {
-      "status": "EVALUATED_NO_BET",
-      "p_a": 25.3,
-      "p_b": 74.7,
-      "implied_a": 34.2,
-      "implied_b": 65.8,
-      "odds_a": 2.69,
-      "odds_b": 1.4,
-      "source": "elo"
-    },
-    "Mayo Aidan vs Andrade Andres": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Kingston 2 challenger",
-      "odds_a": 2.15,
-      "odds_b": 1.6
-    },
-    "Michalski Daniel vs Savano Michael": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.09,
-      "odds_b": 6.82
-    },
-    "Turcanu Radu David vs Ghetu Gabriel": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.55,
-      "odds_b": 2.19
-    },
-    "Dominko Sebastian vs Pieri Samuele": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.93,
-      "odds_b": 1.74
-    },
-    "Nakashima Bryce Nakashima vs Vrba Jakub": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.37,
-      "odds_b": 2.66
-    },
-    "Boitan Gabi Adrian vs Maxted Lui": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Mallorca challenger",
-      "odds_a": 2.28,
-      "odds_b": 1.56
-    },
-    "Broom Charles vs Qi Hongjin": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Mallorca challenger",
-      "odds_a": 2.24,
-      "odds_b": 1.57
-    },
-    "Callejon Hernando Sergio vs Durasovic Viktor": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Mallorca challenger",
-      "odds_a": 1.71,
-      "odds_b": 1.98
-    },
-    "Kahatapitiya Romesh vs Schaefer Joshua": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.11,
-      "odds_b": 5.3
-    },
-    "Lagarrigue Leo vs Mortasifu Mircea": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.18,
-      "odds_b": 3.73
-    },
-    "Petre Stefan Ilie Bogdan vs Schinteie Gheorghe Claudiu": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.58,
-      "odds_b": 2.18
-    },
-    "Coman Mihai Alexandru vs Brown Preston": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.64,
-      "odds_b": 2.02
-    },
-    "Kesarwani Maan vs Bertran Peter": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 2.45,
-      "odds_b": 1.48
-    },
-    "Partal Matei Marius vs Hebhang Balan Alexandru Toubi": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 2.52,
-      "odds_b": 1.44
-    },
-    "Radu Andrei vs Gadoiu Andrei Corneliu": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.19,
-      "odds_b": 3.71
-    },
-    "Branchetti Geovanni vs Mouilleron Salvo Manuel": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.6,
-      "odds_b": 2.21
-    },
-    "Denolly Corentin vs Sterniczuk Oliwier": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.1,
-      "odds_b": 6.0
-    },
-    "Tanuma Ryota vs Shiraishi Hikaru": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 2.04,
-      "odds_b": 1.67
-    },
-    "Butulija Boris vs Juhas Kristijan": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 4.0,
-      "odds_b": 1.18
-    },
-    "Faucon Romain vs Tahirovic Amar": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.4,
-      "odds_b": 2.56
-    },
-    "Paolini Jasmine vs Cirstea Sorana-Mihaela": {
-      "status": "EVALUATED_NO_BET",
-      "p_a": 42.4,
-      "p_b": 57.6,
-      "implied_a": 40.2,
-      "implied_b": 59.8,
-      "odds_a": 2.31,
-      "odds_b": 1.55,
-      "source": "elo"
-    },
-    "Loureiro Joao Victor Couto vs Khoeblal Elgin": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 2.3,
-      "odds_b": 1.53
-    },
-    "Bosio Victoria vs Romero Camila": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Lujan ITF",
-      "odds_a": 1.31,
-      "odds_b": 2.96
-    },
-    "Tosetto Rafael vs Crevelaro Enzo": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.29,
-      "odds_b": 3.05
-    },
-    "Urrutia Maria Florencia vs Ayala Lourdes": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Lujan ITF",
-      "odds_a": 1.22,
-      "odds_b": 3.5
-    },
-    "Radovanovic Nina vs Zaytseva Ksenia": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Kursumlijska Banja 17 ITF",
-      "odds_a": 2.06,
-      "odds_b": 1.63
-    },
-    "Madaras Dragos Nicolae vs Rispoli Nicola": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.33,
-      "odds_b": 2.83
-    },
-    "Zarate Carlos Maria vs Gagliardo Lorenzo": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.6,
-      "odds_b": 2.1
-    },
-    "Garland Joanna vs Astakhova Darya": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Tianjin 5 ITF",
-      "odds_a": 2.34,
-      "odds_b": 1.48
-    },
-    "De Lange Pieter vs Van Sambeek Fons": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.47,
-      "odds_b": 2.35
-    },
-    "Schiessl Joao Eduardo vs Silva Luiz Felipe": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 2.29,
-      "odds_b": 1.55
-    },
-    "Luo Xi vs Wang Jiaqi": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Guiyang ITF",
-      "odds_a": 2.6,
-      "odds_b": 1.4
-    },
-    "Blockx Alexander vs Cobolli Flavio": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 2.36,
-      "odds_b": 1.53
-    },
-    "Cerundolo Francisco vs Fritz Taylor": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 2.38,
-      "odds_b": 1.5
-    },
-    "Khachanov Karen vs Bonzi Benjamin": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.54,
-      "odds_b": 2.3
-    },
-    "Darderi Luciano vs Sweeny Dane": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.56,
-      "odds_b": 2.25
-    },
-    "Mena Facundo vs Dellien Hugo": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Porto 2 challenger",
-      "odds_a": 2.5,
-      "odds_b": 1.44
-    },
-    "Francisco Cerundolo vs Alexander Blockx": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil: Francisco Cerundolo, Alexander Blockx",
-      "odds_a": 0.0,
-      "odds_b": 0.0
-    },
-    "Mirra Andreeva vs Anastasia Potapova": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil: Mirra Andreeva, Anastasia Potapova",
-      "odds_a": 0.0,
-      "odds_b": 0.0
-    },
-    "Iga Swiatek vs Qinwen Zheng": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil: Iga Swiatek, Qinwen Zheng",
-      "odds_a": 0.0,
-      "odds_b": 0.0
-    },
-    "Zheng Michael vs Gea Arthur": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 2.17,
-      "odds_b": 1.62
-    },
-    "Bergs Zizou vs Van De Zandschulp Botic": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 2.11,
-      "odds_b": 1.65
-    },
-    "Dodig Matej vs Varillas Juan Pablo": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Como challenger",
-      "odds_a": 1.52,
-      "odds_b": 2.37
-    },
-    "Kravchenko Georgii vs Milev Yanaki": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Plovdiv 3 challenger",
-      "odds_a": 1.56,
-      "odds_b": 2.21
-    },
-    "Singh Karan vs Becroft Isaac": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.95,
-      "odds_b": 1.74
-    },
-    "Nijboer Ryan vs Van Der Meerschen Martin": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.46,
-      "odds_b": 2.36
-    },
-    "Djuric Branko vs Popko Dmitry": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.61,
-      "odds_b": 2.09
-    },
-    "Javia Dev vs Duhan Chirag": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.33,
-      "odds_b": 2.83
-    },
-    "Oetzbach Adrian vs Vasa Eero": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.61,
-      "odds_b": 2.1
-    },
-    "Iva Jović vs Coco Gauff": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil: Iva Jović, Coco Gauff",
-      "odds_a": 0.0,
-      "odds_b": 0.0
-    },
-    "Naomi Osaka vs Elena Rybakina": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil: Naomi Osaka, Elena Rybakina",
-      "odds_a": 0.0,
-      "odds_b": 0.0
-    },
-    "Zverev Alexander vs Tabilo Alejandro": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 2.32,
-      "odds_b": 1.53
-    },
-    "Houkes Max vs Bennani Karim": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.5,
-      "odds_b": 2.28
-    },
-    "Alexander Zverev vs Luciano Darderi": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil: Alexander Zverev, Luciano Darderi",
-      "odds_a": 0.0,
-      "odds_b": 0.0
-    },
-    "Arthur Gea vs Botic van de Zandschulp": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil: Arthur Gea, Botic van de Zandschulp",
-      "odds_a": 0.0,
-      "odds_b": 0.0
-    },
-    "Karen Khachanov vs Learner Tien": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil: Karen Khachanov, Learner Tien",
-      "odds_a": 0.0,
-      "odds_b": 0.0
-    },
-    "Tien Learner vs Mensik Jakub": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 2.13,
-      "odds_b": 1.64
-    },
-    "Simakin Ilia vs Samrej Kasidit": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Zhangjiagang challenger",
-      "odds_a": 1.55,
-      "odds_b": 2.3
-    },
-    "Nakagawa Naoki vs Matsuda Ryuki": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 2.1,
-      "odds_b": 1.59
-    },
-    "Weber Arthur vs Bouzige Moerani": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.63,
-      "odds_b": 2.05
-    },
-    "Tomida Yuta vs Sun Qian": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 2.0,
-      "odds_b": 1.65
-    },
-    "Mazza Manuel vs Bosio Gabriele": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.44,
-      "odds_b": 2.4
-    },
-    "Dougaz Aziz vs Bouchelaghem Cesar": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.7,
-      "odds_b": 2.0
-    },
-    "Hallquist Lithen John vs Lagerbohm Linus": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 2.12,
-      "odds_b": 1.58
-    },
-    "Alves Mateus (2001) vs Remondy Pagotto Victor Hugo": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.04,
-      "odds_b": 9.75
-    },
-    "Jong Sander vs Wassermann Deney": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.54,
-      "odds_b": 2.27
-    },
-    "Perot Raphael vs Bertrand Robin": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Royan challenger",
-      "odds_a": 1.43,
-      "odds_b": 2.46
-    },
-    "Michelsen Alex vs Etcheverry Tomas Martin": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.48,
-      "odds_b": 2.42
-    },
-    "Paul Tommy vs Alcaraz Carlos": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.57,
-      "odds_b": 2.24
-    },
-    "Medvedev Daniil vs Tiafoe Frances": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.57,
-      "odds_b": 2.24
-    },
-    "Balshaw Felix vs Montes-De La Torre Inaki": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Mallorca challenger",
-      "odds_a": 2.21,
-      "odds_b": 1.56
-    },
-    "Aryna Sabalenka vs Linda Noskova": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil: Aryna Sabalenka, Linda Noskova",
-      "odds_a": 0.0,
-      "odds_b": 0.0
-    },
-    "Cecchinato Marco vs Djere Laslo": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Genoa challenger",
-      "odds_a": 2.1,
-      "odds_b": 1.67
-    },
-    "Piraino Gabriele vs Feldbausch Kilian": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Genoa challenger",
-      "odds_a": 2.75,
-      "odds_b": 1.39
-    },
-    "Poljicak Mili vs Sakellaridis Stefanos": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Genoa challenger",
-      "odds_a": 2.2,
-      "odds_b": 1.6
-    },
-    "Ajdukovic Duje vs Romano Filippo": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Genoa challenger",
-      "odds_a": 2.05,
-      "odds_b": 1.7
-    },
-    "Cadenasso Gianluca vs Martin Manzano Juan Cruz": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Genoa challenger",
-      "odds_a": 2.15,
-      "odds_b": 1.64
-    },
-    "Brunclik Petr vs Moro Canas Alejandro": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Sevilla challenger",
-      "odds_a": 2.13,
-      "odds_b": 1.64
-    },
-    "Olivieri Genaro Alberto vs Blanch Dali": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Sevilla challenger",
-      "odds_a": 2.0,
-      "odds_b": 1.71
-    },
-    "Bailly Gilles Arnaud vs Hemery Calvin": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Sevilla challenger",
-      "odds_a": 1.73,
-      "odds_b": 2.0
-    },
-    "Diaz Acosta Facundo vs Martin Tiffon Pol": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Sevilla challenger",
-      "odds_a": 1.56,
-      "odds_b": 2.25
-    },
-    "Noguchi Rio vs Te Rigele": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Shanghai challenger",
-      "odds_a": 1.47,
-      "odds_b": 2.55
-    },
-    "Xiao Linang vs Uchida Kaichi": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Shanghai challenger",
-      "odds_a": 2.2,
-      "odds_b": 1.58
-    },
-    "Soto Matias vs Kopp Sandro": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Tulln challenger",
-      "odds_a": 2.42,
-      "odds_b": 1.5
-    },
-    "Krumich Martin vs Sorger Sebastian": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Tulln challenger",
-      "odds_a": 1.67,
-      "odds_b": 2.04
-    },
-    "Ayeni Alafia vs Overbeck Carl Emil": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Istanbul challenger",
-      "odds_a": 2.4,
-      "odds_b": 1.5
-    },
-    "Topo Marko vs Galan Daniel Elahi": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Tulln challenger",
-      "odds_a": 2.1,
-      "odds_b": 1.64
-    },
-    "Holmgren August vs Ursu Vadym": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Istanbul challenger",
-      "odds_a": 1.48,
-      "odds_b": 2.45
-    },
-    "Peniston Ryan vs Glinka Daniil": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Cassis challenger",
-      "odds_a": 2.4,
-      "odds_b": 1.5
-    },
-    "Brouwer Gijs vs Martineau Matteo": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Cassis challenger",
-      "odds_a": 2.2,
-      "odds_b": 1.55
-    },
-    "Echargui Moez vs Poullain Lucas": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Cassis challenger",
-      "odds_a": 1.67,
-      "odds_b": 2.08
-    },
-    "Moriya Hiroki vs Palan Dominik": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Phan Thiet 3 challenger",
-      "odds_a": 1.58,
-      "odds_b": 2.2
-    },
-    "Droguet Titouan vs Chazal Maxime": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Cassis challenger",
-      "odds_a": 1.32,
-      "odds_b": 3.03
-    },
-    "Grenier Hugo vs Harris Billy": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Cassis challenger",
-      "odds_a": 2.17,
-      "odds_b": 1.64
-    },
-    "Hewitt Cruz vs Bittoun Kouzmine Constantin": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Phan Thiet 3 challenger",
-      "odds_a": 2.02,
-      "odds_b": 1.71
-    },
-    "Ghazouani Durand Yanis vs Raquillet Leo": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Cassis challenger",
-      "odds_a": 2.05,
-      "odds_b": 1.67
-    },
-    "Janvier Maxime vs Paldanius Oskari": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Cassis challenger",
-      "odds_a": 2.1,
-      "odds_b": 1.62
-    },
-    "Dhamne Manas vs Escoffier Antoine": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Cassis challenger",
-      "odds_a": 1.65,
-      "odds_b": 2.07
-    },
-    "Pietri Benjamin vs Car Hugo": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Cassis challenger",
-      "odds_a": 2.1,
-      "odds_b": 1.65
-    },
-    "Frances Tiafoe vs Alex Michelsen": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil: Frances Tiafoe, Alex Michelsen",
-      "odds_a": 0.0,
-      "odds_b": 0.0
-    },
-    "Shelton Ben vs Tsitsipas Stefanos": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: US Open",
-      "odds_a": 1.54,
-      "odds_b": 2.3
-    },
-    "Ben Shelton vs Carlos Alcaraz": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil: Ben Shelton, Carlos Alcaraz",
-      "odds_a": 0.0,
-      "odds_b": 0.0
-    },
-    "Jessica Pegula vs Emma Navarro": {
-      "status": "UNKNOWN_PLAYER",
-      "reason": "Kein Elo-Profil: Jessica Pegula, Emma Navarro",
-      "odds_a": 0.0,
-      "odds_b": 0.0
-    },
-    "Mayot Harold vs Cretu Cezar (2001)": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Istanbul challenger",
-      "odds_a": 1.44,
-      "odds_b": 2.71
-    },
-    "Delaney Jake vs Matsuoka Hayato": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Shanghai challenger",
-      "odds_a": 2.3,
-      "odds_b": 1.56
-    },
-    "Daniel Taro vs Dellavedova Matthew": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Shanghai challenger",
-      "odds_a": 1.43,
-      "odds_b": 2.58
-    },
-    "Sharipov Marat (2002) vs Watanuki Yosuke": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Shanghai challenger",
-      "odds_a": 2.08,
-      "odds_b": 1.7
-    },
-    "Barrena Alex vs Milic Ognjen": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Tulln challenger",
-      "odds_a": 1.6,
-      "odds_b": 2.18
-    },
-    "Galarneau Alexis vs Pankin Semen": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Shanghai challenger",
-      "odds_a": 1.56,
-      "odds_b": 2.25
-    },
-    "Moeller Marvin vs Mrva Maxim": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Tulln challenger",
-      "odds_a": 2.18,
-      "odds_b": 1.64
-    },
-    "Langmo Christian vs Gengel Marek": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Istanbul challenger",
-      "odds_a": 2.05,
-      "odds_b": 1.7
-    },
-    "Kasnikowski Maks vs Marrero Curbelo Ivan": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Istanbul challenger",
-      "odds_a": 2.2,
-      "odds_b": 1.61
-    },
-    "Scaglia Mathieu vs Tailleu Pierre Antoine": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Cassis challenger",
-      "odds_a": 1.6,
-      "odds_b": 2.2
-    },
-    "Bobichon Matisse vs Boulais Justin": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Cassis challenger",
-      "odds_a": 2.35,
-      "odds_b": 1.5
-    }
-  },
-  "wm_results": [
-    {
-      "match_id": "fb30113e43d113f1ace48b8563ba1ee9",
-      "home": "Spain",
-      "away": "Argentina",
-      "home_score": 1,
-      "away_score": 0,
-      "commence_time": "2026-07-19T19:05:00Z"
-    }
-  ],
-  "schedule": [
-    {
-      "sport": "tennis",
-      "home": "Francisco Cerundolo",
-      "away": "Alexander Blockx",
-      "kickoff": "2026-09-07T17:00:00Z",
-      "tour": "atp",
-      "tournament": "US Open",
-      "category": "grand_slam",
-      "surface": "hard",
-      "best_of": 5,
-      "odds_home": 0.0,
-      "odds_away": 0.0,
-      "odds_source": "the_odds_api",
-      "is_display_only": true,
-      "sport_key": "tennis_atp_us_open",
-      "scheduled_start_initial": "2026-09-07T17:00:00Z",
-      "scheduled_start_current": "2026-09-07T17:00:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Karen Khachanov",
-      "away": "Learner Tien",
-      "kickoff": "2026-09-07T20:00:00Z",
-      "tour": "atp",
-      "tournament": "US Open",
-      "category": "grand_slam",
-      "surface": "hard",
-      "best_of": 5,
-      "odds_home": 0.0,
-      "odds_away": 0.0,
-      "odds_source": "the_odds_api",
-      "is_display_only": true,
-      "sport_key": "tennis_atp_us_open",
-      "scheduled_start_initial": "2026-09-07T20:00:00Z",
-      "scheduled_start_current": "2026-09-07T20:00:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Arthur Gea",
-      "away": "Botic van de Zandschulp",
-      "kickoff": "2026-09-07T21:00:00Z",
-      "tour": "atp",
-      "tournament": "US Open",
-      "category": "grand_slam",
-      "surface": "hard",
-      "best_of": 5,
-      "odds_home": 0.0,
-      "odds_away": 0.0,
-      "odds_source": "the_odds_api",
-      "is_display_only": true,
-      "sport_key": "tennis_atp_us_open",
-      "scheduled_start_initial": "2026-09-07T21:00:00Z",
-      "scheduled_start_current": "2026-09-07T21:00:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Alexander Zverev",
-      "away": "Luciano Darderi",
-      "kickoff": "2026-09-08T00:10:00Z",
-      "tour": "atp",
-      "tournament": "US Open",
-      "category": "grand_slam",
-      "surface": "hard",
-      "best_of": 5,
-      "odds_home": 0.0,
-      "odds_away": 0.0,
-      "odds_source": "the_odds_api",
-      "is_display_only": true,
-      "sport_key": "tennis_atp_us_open",
-      "scheduled_start_initial": "2026-09-08T00:10:00Z",
-      "scheduled_start_current": "2026-09-08T00:10:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Frances Tiafoe",
-      "away": "Alex Michelsen",
-      "kickoff": "2026-09-08T15:30:00Z",
-      "tour": "atp",
-      "tournament": "US Open",
-      "category": "grand_slam",
-      "surface": "hard",
-      "best_of": 5,
-      "odds_home": 0.0,
-      "odds_away": 0.0,
-      "odds_source": "the_odds_api",
-      "is_display_only": true,
-      "sport_key": "tennis_atp_us_open",
-      "scheduled_start_initial": "2026-09-08T15:30:00Z",
-      "scheduled_start_current": "2026-09-08T15:30:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Ben Shelton",
-      "away": "Carlos Alcaraz",
-      "kickoff": "2026-09-08T15:30:00Z",
-      "tour": "atp",
-      "tournament": "US Open",
-      "category": "grand_slam",
-      "surface": "hard",
-      "best_of": 5,
-      "odds_home": 0.0,
-      "odds_away": 0.0,
-      "odds_source": "the_odds_api",
-      "is_display_only": true,
-      "sport_key": "tennis_atp_us_open",
-      "scheduled_start_initial": "2026-09-08T15:30:00Z",
-      "scheduled_start_current": "2026-09-08T15:30:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Mirra Andreeva",
-      "away": "Anastasia Potapova",
-      "kickoff": "2026-09-07T15:00:00Z",
-      "tour": "wta",
-      "tournament": "US Open",
-      "category": "grand_slam",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 0.0,
-      "odds_away": 0.0,
-      "odds_source": "the_odds_api",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_us_open",
-      "scheduled_start_initial": "2026-09-07T15:00:00Z",
-      "scheduled_start_current": "2026-09-07T15:00:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Iga Swiatek",
-      "away": "Qinwen Zheng",
-      "kickoff": "2026-09-07T15:30:00Z",
-      "tour": "wta",
-      "tournament": "US Open",
-      "category": "grand_slam",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 0.0,
-      "odds_away": 0.0,
-      "odds_source": "the_odds_api",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_us_open",
-      "scheduled_start_initial": "2026-09-07T15:30:00Z",
-      "scheduled_start_current": "2026-09-07T15:30:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Naomi Osaka",
-      "away": "Elena Rybakina",
-      "kickoff": "2026-09-07T19:00:00Z",
-      "tour": "wta",
-      "tournament": "US Open",
-      "category": "grand_slam",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 0.0,
-      "odds_away": 0.0,
-      "odds_source": "the_odds_api",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_us_open",
-      "scheduled_start_initial": "2026-09-07T19:00:00Z",
-      "scheduled_start_current": "2026-09-07T19:00:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Iva Jović",
-      "away": "Coco Gauff",
-      "kickoff": "2026-09-07T23:00:00Z",
-      "tour": "wta",
-      "tournament": "US Open",
-      "category": "grand_slam",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 0.0,
-      "odds_away": 0.0,
-      "odds_source": "the_odds_api",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_us_open",
-      "scheduled_start_initial": "2026-09-07T23:00:00Z",
-      "scheduled_start_current": "2026-09-07T23:00:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Aryna Sabalenka",
-      "away": "Linda Noskova",
-      "kickoff": "2026-09-08T15:30:00Z",
-      "tour": "wta",
-      "tournament": "US Open",
-      "category": "grand_slam",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 0.0,
-      "odds_away": 0.0,
-      "odds_source": "the_odds_api",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_us_open",
-      "scheduled_start_initial": "2026-09-08T15:30:00Z",
-      "scheduled_start_current": "2026-09-08T15:30:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Jessica Pegula",
-      "away": "Emma Navarro",
-      "kickoff": "2026-09-08T15:30:00Z",
-      "tour": "wta",
-      "tournament": "US Open",
-      "category": "grand_slam",
-      "surface": "hard",
-      "best_of": 3,
-      "odds_home": 0.0,
-      "odds_away": 0.0,
-      "odds_source": "the_odds_api",
-      "is_display_only": true,
-      "sport_key": "tennis_wta_us_open",
-      "scheduled_start_initial": "2026-09-08T15:30:00Z",
-      "scheduled_start_current": "2026-09-08T15:30:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "UPCOMING",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Shelton Ben",
-      "away": "Tsitsipas Stefanos",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "US Open",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.54,
-      "odds_away": 2.3,
-      "source": "tennisexplorer",
-      "sport_key": "te:us-open_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Piraino Gabriele",
-      "away": "Feldbausch Kilian",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Genoa challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.75,
-      "odds_away": 1.39,
-      "source": "tennisexplorer",
-      "sport_key": "te:genoa-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Cecchinato Marco",
-      "away": "Djere Laslo",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Genoa challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.1,
-      "odds_away": 1.67,
-      "source": "tennisexplorer",
-      "sport_key": "te:genoa-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Poljicak Mili",
-      "away": "Sakellaridis Stefanos",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Genoa challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.2,
-      "odds_away": 1.6,
-      "source": "tennisexplorer",
-      "sport_key": "te:genoa-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Ajdukovic Duje",
-      "away": "Romano Filippo",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Genoa challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.05,
-      "odds_away": 1.7,
-      "source": "tennisexplorer",
-      "sport_key": "te:genoa-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Olivieri Genaro Alberto",
-      "away": "Blanch Dali",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Sevilla challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.0,
-      "odds_away": 1.71,
-      "source": "tennisexplorer",
-      "sport_key": "te:sevilla-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Bailly Gilles Arnaud",
-      "away": "Hemery Calvin",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Sevilla challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.73,
-      "odds_away": 2.0,
-      "source": "tennisexplorer",
-      "sport_key": "te:sevilla-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Brunclik Petr",
-      "away": "Moro Canas Alejandro",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Sevilla challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.13,
-      "odds_away": 1.64,
-      "source": "tennisexplorer",
-      "sport_key": "te:sevilla-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Diaz Acosta Facundo",
-      "away": "Martin Tiffon Pol",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Sevilla challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.56,
-      "odds_away": 2.25,
-      "source": "tennisexplorer",
-      "sport_key": "te:sevilla-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Delaney Jake",
-      "away": "Matsuoka Hayato",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Shanghai challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.3,
-      "odds_away": 1.56,
-      "source": "tennisexplorer",
-      "sport_key": "te:shanghai-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Daniel Taro",
-      "away": "Dellavedova Matthew",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Shanghai challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.43,
-      "odds_away": 2.58,
-      "source": "tennisexplorer",
-      "sport_key": "te:shanghai-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Noguchi Rio",
-      "away": "Te Rigele",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Shanghai challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.47,
-      "odds_away": 2.55,
-      "source": "tennisexplorer",
-      "sport_key": "te:shanghai-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Sharipov Marat (2002)",
-      "away": "Watanuki Yosuke",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Shanghai challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.08,
-      "odds_away": 1.7,
-      "source": "tennisexplorer",
-      "sport_key": "te:shanghai-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Barrena Alex",
-      "away": "Milic Ognjen",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Tulln challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.6,
-      "odds_away": 2.18,
-      "source": "tennisexplorer",
-      "sport_key": "te:tulln-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Galarneau Alexis",
-      "away": "Pankin Semen",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Shanghai challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.56,
-      "odds_away": 2.25,
-      "source": "tennisexplorer",
-      "sport_key": "te:shanghai-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Xiao Linang",
-      "away": "Uchida Kaichi",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Shanghai challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.2,
-      "odds_away": 1.58,
-      "source": "tennisexplorer",
-      "sport_key": "te:shanghai-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Moeller Marvin",
-      "away": "Mrva Maxim",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Tulln challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.18,
-      "odds_away": 1.64,
-      "source": "tennisexplorer",
-      "sport_key": "te:tulln-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Soto Matias",
-      "away": "Kopp Sandro",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Tulln challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.42,
-      "odds_away": 1.5,
-      "source": "tennisexplorer",
-      "sport_key": "te:tulln-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Krumich Martin",
-      "away": "Sorger Sebastian",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Tulln challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.67,
-      "odds_away": 2.04,
-      "source": "tennisexplorer",
-      "sport_key": "te:tulln-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Topo Marko",
-      "away": "Galan Daniel Elahi",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Tulln challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.1,
-      "odds_away": 1.64,
-      "source": "tennisexplorer",
-      "sport_key": "te:tulln-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Langmo Christian",
-      "away": "Gengel Marek",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Istanbul challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.05,
-      "odds_away": 1.7,
-      "source": "tennisexplorer",
-      "sport_key": "te:istanbul-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Mayot Harold",
-      "away": "Cretu Cezar (2001)",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Istanbul challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.44,
-      "odds_away": 2.71,
-      "source": "tennisexplorer",
-      "sport_key": "te:istanbul-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Ayeni Alafia",
-      "away": "Overbeck Carl Emil",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Istanbul challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.4,
-      "odds_away": 1.5,
-      "source": "tennisexplorer",
-      "sport_key": "te:istanbul-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Kasnikowski Maks",
-      "away": "Marrero Curbelo Ivan",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Istanbul challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.2,
-      "odds_away": 1.61,
-      "source": "tennisexplorer",
-      "sport_key": "te:istanbul-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Holmgren August",
-      "away": "Ursu Vadym",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Istanbul challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.48,
-      "odds_away": 2.45,
-      "source": "tennisexplorer",
-      "sport_key": "te:istanbul-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Brouwer Gijs",
-      "away": "Martineau Matteo",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Cassis challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.2,
-      "odds_away": 1.55,
-      "source": "tennisexplorer",
-      "sport_key": "te:cassis-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Echargui Moez",
-      "away": "Poullain Lucas",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Cassis challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.67,
-      "odds_away": 2.08,
-      "source": "tennisexplorer",
-      "sport_key": "te:cassis-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Peniston Ryan",
-      "away": "Glinka Daniil",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Cassis challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.4,
-      "odds_away": 1.5,
-      "source": "tennisexplorer",
-      "sport_key": "te:cassis-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Grenier Hugo",
-      "away": "Harris Billy",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Cassis challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.17,
-      "odds_away": 1.64,
-      "source": "tennisexplorer",
-      "sport_key": "te:cassis-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Droguet Titouan",
-      "away": "Chazal Maxime",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Cassis challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.32,
-      "odds_away": 3.03,
-      "source": "tennisexplorer",
-      "sport_key": "te:cassis-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Hewitt Cruz",
-      "away": "Bittoun Kouzmine Constantin",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Phan Thiet 3 challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.02,
-      "odds_away": 1.71,
-      "source": "tennisexplorer",
-      "sport_key": "te:phan-thiet-3-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Moriya Hiroki",
-      "away": "Palan Dominik",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Phan Thiet 3 challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.58,
-      "odds_away": 2.2,
-      "source": "tennisexplorer",
-      "sport_key": "te:phan-thiet-3-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Ghazouani Durand Yanis",
-      "away": "Raquillet Leo",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Cassis challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.05,
-      "odds_away": 1.67,
-      "source": "tennisexplorer",
-      "sport_key": "te:cassis-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Dhamne Manas",
-      "away": "Escoffier Antoine",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Cassis challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.65,
-      "odds_away": 2.07,
-      "source": "tennisexplorer",
-      "sport_key": "te:cassis-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Janvier Maxime",
-      "away": "Paldanius Oskari",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Cassis challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.1,
-      "odds_away": 1.62,
-      "source": "tennisexplorer",
-      "sport_key": "te:cassis-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Scaglia Mathieu",
-      "away": "Tailleu Pierre Antoine",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Cassis challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.6,
-      "odds_away": 2.2,
-      "source": "tennisexplorer",
-      "sport_key": "te:cassis-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Pietri Benjamin",
-      "away": "Car Hugo",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Cassis challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.1,
-      "odds_away": 1.65,
-      "source": "tennisexplorer",
-      "sport_key": "te:cassis-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Bobichon Matisse",
-      "away": "Boulais Justin",
-      "kickoff": "2026-09-07T14:51:00Z",
-      "tour": "atp",
-      "tournament": "Cassis challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.35,
-      "odds_away": 1.5,
-      "source": "tennisexplorer",
-      "sport_key": "te:cassis-challenger_atp",
-      "scheduled_start_initial": "2026-09-07T14:51:00Z",
-      "scheduled_start_current": "2026-09-07T14:51:00Z",
-      "schedule_updated_at": "2026-09-07T14:51:44Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-07T14:51:44Z"
-    }
-  ],
   "odds_history": {
     "Alexei Popyrin vs Roman Andres Burruchaga": [
       {
@@ -11003,48 +8887,6 @@
       }
     ]
   },
-  "top_elo": [
-    {
-      "name": "Sinner J.",
-      "rating": 1677
-    },
-    {
-      "name": "Fritz T.",
-      "rating": 1665
-    },
-    {
-      "name": "Alcaraz C.",
-      "rating": 1646
-    },
-    {
-      "name": "Noskova L.",
-      "rating": 1642
-    },
-    {
-      "name": "Djokovic N.",
-      "rating": 1642
-    },
-    {
-      "name": "Zverev A.",
-      "rating": 1625
-    },
-    {
-      "name": "Keys M.",
-      "rating": 1623
-    },
-    {
-      "name": "De Minaur A.",
-      "rating": 1597
-    },
-    {
-      "name": "Pegula J.",
-      "rating": 1596
-    },
-    {
-      "name": "Sabalenka A.",
-      "rating": 1594
-    }
-  ],
   "all_odds": {
     "Alexei Popyrin vs Roman Andres Burruchaga": {
       "home": 1.67,
@@ -14097,6 +11939,16 @@
       "away": 4.31
     }
   },
+  "wm_results": [
+    {
+      "match_id": "fb30113e43d113f1ace48b8563ba1ee9",
+      "home": "Spain",
+      "away": "Argentina",
+      "home_score": 1,
+      "away_score": 0,
+      "commence_time": "2026-07-19T19:05:00Z"
+    }
+  ],
   "model_tips": {
     "France vs England": {
       "p_home": 0.522,
@@ -14211,12 +12063,2116 @@
       ]
     }
   },
-  "updated": "2026-09-07T14:51:44Z",
+  "top_elo": [
+    {
+      "name": "Sinner J.",
+      "rating": 1677
+    },
+    {
+      "name": "Fritz T.",
+      "rating": 1665
+    },
+    {
+      "name": "Alcaraz C.",
+      "rating": 1646
+    },
+    {
+      "name": "Noskova L.",
+      "rating": 1642
+    },
+    {
+      "name": "Djokovic N.",
+      "rating": 1642
+    },
+    {
+      "name": "Zverev A.",
+      "rating": 1625
+    },
+    {
+      "name": "Keys M.",
+      "rating": 1623
+    },
+    {
+      "name": "De Minaur A.",
+      "rating": 1597
+    },
+    {
+      "name": "Pegula J.",
+      "rating": 1596
+    },
+    {
+      "name": "Sabalenka A.",
+      "rating": 1594
+    }
+  ],
+  "schedule": [
+    {
+      "sport": "tennis",
+      "home": "Francisco Cerundolo",
+      "away": "Alexander Blockx",
+      "kickoff": "2026-09-07T17:35:00Z",
+      "tour": "atp",
+      "tournament": "US Open",
+      "category": "grand_slam",
+      "surface": "hard",
+      "best_of": 5,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true,
+      "sport_key": "tennis_atp_us_open",
+      "scheduled_start_initial": "2026-09-07T17:35:00Z",
+      "scheduled_start_current": "2026-09-07T17:35:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Karen Khachanov",
+      "away": "Learner Tien",
+      "kickoff": "2026-09-07T20:00:00Z",
+      "tour": "atp",
+      "tournament": "US Open",
+      "category": "grand_slam",
+      "surface": "hard",
+      "best_of": 5,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true,
+      "sport_key": "tennis_atp_us_open",
+      "scheduled_start_initial": "2026-09-07T20:00:00Z",
+      "scheduled_start_current": "2026-09-07T20:00:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Arthur Gea",
+      "away": "Botic van de Zandschulp",
+      "kickoff": "2026-09-07T21:00:00Z",
+      "tour": "atp",
+      "tournament": "US Open",
+      "category": "grand_slam",
+      "surface": "hard",
+      "best_of": 5,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true,
+      "sport_key": "tennis_atp_us_open",
+      "scheduled_start_initial": "2026-09-07T21:00:00Z",
+      "scheduled_start_current": "2026-09-07T21:00:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Alexander Zverev",
+      "away": "Luciano Darderi",
+      "kickoff": "2026-09-08T00:10:00Z",
+      "tour": "atp",
+      "tournament": "US Open",
+      "category": "grand_slam",
+      "surface": "hard",
+      "best_of": 5,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true,
+      "sport_key": "tennis_atp_us_open",
+      "scheduled_start_initial": "2026-09-08T00:10:00Z",
+      "scheduled_start_current": "2026-09-08T00:10:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Frances Tiafoe",
+      "away": "Alex Michelsen",
+      "kickoff": "2026-09-08T17:00:00Z",
+      "tour": "atp",
+      "tournament": "US Open",
+      "category": "grand_slam",
+      "surface": "hard",
+      "best_of": 5,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true,
+      "sport_key": "tennis_atp_us_open",
+      "scheduled_start_initial": "2026-09-08T17:00:00Z",
+      "scheduled_start_current": "2026-09-08T17:00:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Ben Shelton",
+      "away": "Carlos Alcaraz",
+      "kickoff": "2026-09-09T00:10:00Z",
+      "tour": "atp",
+      "tournament": "US Open",
+      "category": "grand_slam",
+      "surface": "hard",
+      "best_of": 5,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true,
+      "sport_key": "tennis_atp_us_open",
+      "scheduled_start_initial": "2026-09-09T00:10:00Z",
+      "scheduled_start_current": "2026-09-09T00:10:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Naomi Osaka",
+      "away": "Elena Rybakina",
+      "kickoff": "2026-09-07T20:00:00Z",
+      "tour": "wta",
+      "tournament": "US Open",
+      "category": "grand_slam",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_us_open",
+      "scheduled_start_initial": "2026-09-07T20:00:00Z",
+      "scheduled_start_current": "2026-09-07T20:00:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Iva Jović",
+      "away": "Coco Gauff",
+      "kickoff": "2026-09-07T23:00:00Z",
+      "tour": "wta",
+      "tournament": "US Open",
+      "category": "grand_slam",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_us_open",
+      "scheduled_start_initial": "2026-09-07T23:00:00Z",
+      "scheduled_start_current": "2026-09-07T23:00:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Aryna Sabalenka",
+      "away": "Linda Noskova",
+      "kickoff": "2026-09-08T15:30:00Z",
+      "tour": "wta",
+      "tournament": "US Open",
+      "category": "grand_slam",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_us_open",
+      "scheduled_start_initial": "2026-09-08T15:30:00Z",
+      "scheduled_start_current": "2026-09-08T15:30:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Jessica Pegula",
+      "away": "Emma Navarro",
+      "kickoff": "2026-09-08T23:00:00Z",
+      "tour": "wta",
+      "tournament": "US Open",
+      "category": "grand_slam",
+      "surface": "hard",
+      "best_of": 3,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_us_open",
+      "scheduled_start_initial": "2026-09-08T23:00:00Z",
+      "scheduled_start_current": "2026-09-08T23:00:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Shelton Ben",
+      "away": "Tsitsipas Stefanos",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "US Open",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.54,
+      "odds_away": 2.3,
+      "source": "tennisexplorer",
+      "sport_key": "te:us-open_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Piraino Gabriele",
+      "away": "Feldbausch Kilian",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Genoa challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.75,
+      "odds_away": 1.39,
+      "source": "tennisexplorer",
+      "sport_key": "te:genoa-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Djere Laslo",
+      "away": "Cecchinato Marco",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Genoa challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.19,
+      "odds_away": 1.61,
+      "source": "tennisexplorer",
+      "sport_key": "te:genoa-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Sakellaridis Stefanos",
+      "away": "Poljicak Mili",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Genoa challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.56,
+      "odds_away": 2.24,
+      "source": "tennisexplorer",
+      "sport_key": "te:genoa-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Ajdukovic Duje",
+      "away": "Romano Filippo",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Genoa challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.04,
+      "odds_away": 1.71,
+      "source": "tennisexplorer",
+      "sport_key": "te:genoa-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Brunclik Petr",
+      "away": "Moro Canas Alejandro",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Sevilla challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.15,
+      "odds_away": 1.62,
+      "source": "tennisexplorer",
+      "sport_key": "te:sevilla-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Bailly Gilles Arnaud",
+      "away": "Hemery Calvin",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Sevilla challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.73,
+      "odds_away": 2.0,
+      "source": "tennisexplorer",
+      "sport_key": "te:sevilla-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Olivieri Genaro Alberto",
+      "away": "Blanch Dali",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Sevilla challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.05,
+      "odds_away": 1.7,
+      "source": "tennisexplorer",
+      "sport_key": "te:sevilla-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Diaz Acosta Facundo",
+      "away": "Martin Tiffon Pol",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Sevilla challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.22,
+      "odds_away": 1.57,
+      "source": "tennisexplorer",
+      "sport_key": "te:sevilla-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Daniel Taro",
+      "away": "Dellavedova Matthew",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Shanghai challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.43,
+      "odds_away": 2.58,
+      "source": "tennisexplorer",
+      "sport_key": "te:shanghai-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Delaney Jake",
+      "away": "Matsuoka Hayato",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Shanghai challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.3,
+      "odds_away": 1.56,
+      "source": "tennisexplorer",
+      "sport_key": "te:shanghai-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Noguchi Rio",
+      "away": "Te Rigele",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Shanghai challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.47,
+      "odds_away": 2.55,
+      "source": "tennisexplorer",
+      "sport_key": "te:shanghai-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Xiao Linang",
+      "away": "Uchida Kaichi",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Shanghai challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.2,
+      "odds_away": 1.58,
+      "source": "tennisexplorer",
+      "sport_key": "te:shanghai-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Sharipov Marat (2002)",
+      "away": "Watanuki Yosuke",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Shanghai challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.08,
+      "odds_away": 1.7,
+      "source": "tennisexplorer",
+      "sport_key": "te:shanghai-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Galarneau Alexis",
+      "away": "Pankin Semen",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Shanghai challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.56,
+      "odds_away": 2.25,
+      "source": "tennisexplorer",
+      "sport_key": "te:shanghai-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Barrena Alex",
+      "away": "Milic Ognjen",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Tulln challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.6,
+      "odds_away": 2.18,
+      "source": "tennisexplorer",
+      "sport_key": "te:tulln-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Moeller Marvin",
+      "away": "Mrva Maxim",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Tulln challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.18,
+      "odds_away": 1.64,
+      "source": "tennisexplorer",
+      "sport_key": "te:tulln-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Soto Matias",
+      "away": "Kopp Sandro",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Tulln challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.42,
+      "odds_away": 1.5,
+      "source": "tennisexplorer",
+      "sport_key": "te:tulln-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Krumich Martin",
+      "away": "Sorger Sebastian",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Tulln challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.67,
+      "odds_away": 2.04,
+      "source": "tennisexplorer",
+      "sport_key": "te:tulln-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Langmo Christian",
+      "away": "Gengel Marek",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Istanbul challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.05,
+      "odds_away": 1.7,
+      "source": "tennisexplorer",
+      "sport_key": "te:istanbul-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Topo Marko",
+      "away": "Galan Daniel Elahi",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Tulln challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.1,
+      "odds_away": 1.64,
+      "source": "tennisexplorer",
+      "sport_key": "te:tulln-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Mayot Harold",
+      "away": "Cretu Cezar (2001)",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Istanbul challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.44,
+      "odds_away": 2.71,
+      "source": "tennisexplorer",
+      "sport_key": "te:istanbul-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Ayeni Alafia",
+      "away": "Overbeck Carl Emil",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Istanbul challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.4,
+      "odds_away": 1.5,
+      "source": "tennisexplorer",
+      "sport_key": "te:istanbul-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Ursu Vadym",
+      "away": "Holmgren August",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Istanbul challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.5,
+      "odds_away": 1.45,
+      "source": "tennisexplorer",
+      "sport_key": "te:istanbul-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Kasnikowski Maks",
+      "away": "Marrero Curbelo Ivan",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Istanbul challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.5,
+      "odds_away": 2.4,
+      "source": "tennisexplorer",
+      "sport_key": "te:istanbul-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Brouwer Gijs",
+      "away": "Martineau Matteo",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Cassis challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.2,
+      "odds_away": 1.55,
+      "source": "tennisexplorer",
+      "sport_key": "te:cassis-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Glinka Daniil",
+      "away": "Peniston Ryan",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Cassis challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.5,
+      "odds_away": 2.4,
+      "source": "tennisexplorer",
+      "sport_key": "te:cassis-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Echargui Moez",
+      "away": "Poullain Lucas",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Cassis challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.67,
+      "odds_away": 2.08,
+      "source": "tennisexplorer",
+      "sport_key": "te:cassis-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Harris Billy",
+      "away": "Grenier Hugo",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Cassis challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.62,
+      "odds_away": 2.2,
+      "source": "tennisexplorer",
+      "sport_key": "te:cassis-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Droguet Titouan",
+      "away": "Chazal Maxime",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Cassis challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.31,
+      "odds_away": 3.15,
+      "source": "tennisexplorer",
+      "sport_key": "te:cassis-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Moriya Hiroki",
+      "away": "Palan Dominik",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Phan Thiet 3 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.58,
+      "odds_away": 2.2,
+      "source": "tennisexplorer",
+      "sport_key": "te:phan-thiet-3-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Hewitt Cruz",
+      "away": "Bittoun Kouzmine Constantin",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Phan Thiet 3 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.02,
+      "odds_away": 1.71,
+      "source": "tennisexplorer",
+      "sport_key": "te:phan-thiet-3-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Ghazouani Durand Yanis",
+      "away": "Raquillet Leo",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Cassis challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.05,
+      "odds_away": 1.67,
+      "source": "tennisexplorer",
+      "sport_key": "te:cassis-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Dhamne Manas",
+      "away": "Escoffier Antoine",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Cassis challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.65,
+      "odds_away": 2.07,
+      "source": "tennisexplorer",
+      "sport_key": "te:cassis-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Janvier Maxime",
+      "away": "Paldanius Oskari",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Cassis challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.1,
+      "odds_away": 1.62,
+      "source": "tennisexplorer",
+      "sport_key": "te:cassis-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Scaglia Mathieu",
+      "away": "Tailleu Pierre Antoine",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Cassis challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.6,
+      "odds_away": 2.2,
+      "source": "tennisexplorer",
+      "sport_key": "te:cassis-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Pietri Benjamin",
+      "away": "Car Hugo",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Cassis challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.1,
+      "odds_away": 1.65,
+      "source": "tennisexplorer",
+      "sport_key": "te:cassis-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Bobichon Matisse",
+      "away": "Boulais Justin",
+      "kickoff": "2026-09-07T17:07:00Z",
+      "tour": "atp",
+      "tournament": "Cassis challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.35,
+      "odds_away": 1.5,
+      "source": "tennisexplorer",
+      "sport_key": "te:cassis-challenger_atp",
+      "scheduled_start_initial": "2026-09-07T17:07:00Z",
+      "scheduled_start_current": "2026-09-07T17:07:00Z",
+      "schedule_updated_at": "2026-09-07T17:07:42Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-07T17:07:42Z"
+    }
+  ],
+  "model_evals": {
+    "Danilov Savriyan vs Zhang William": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 82.2,
+      "implied_b": 17.8,
+      "odds_a": 1.11,
+      "odds_b": 5.12,
+      "source": "implied"
+    },
+    "Minasyan Michael vs Piening Claus": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 41.3,
+      "implied_b": 58.7,
+      "odds_a": 2.2,
+      "odds_b": 1.55,
+      "source": "implied"
+    },
+    "Bennani Reda vs Vterkovskiy Dmytro": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 91.0,
+      "implied_b": 9.0,
+      "odds_a": 1.03,
+      "odds_b": 10.37,
+      "source": "implied"
+    },
+    "Ceramilac Luka vs Zivkovic Uros": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 60.6,
+      "implied_b": 39.4,
+      "odds_a": 1.52,
+      "odds_b": 2.34,
+      "source": "implied"
+    },
+    "Kountourakis Ioannis vs Pisaric Aleksa": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 42.1,
+      "implied_b": 57.9,
+      "odds_a": 2.2,
+      "odds_b": 1.6,
+      "source": "implied"
+    },
+    "Zapp Logan vs Ardila Landon": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 32.5,
+      "implied_b": 67.5,
+      "odds_a": 2.83,
+      "odds_b": 1.36,
+      "source": "implied"
+    },
+    "De Almeida Gustavo Ribeiro vs Bini Victor": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 75.1,
+      "implied_b": 24.9,
+      "odds_a": 1.22,
+      "odds_b": 3.67,
+      "source": "implied"
+    },
+    "Dussault Maximus vs Carpico Brandon": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 55.9,
+      "implied_b": 44.1,
+      "odds_a": 1.64,
+      "odds_b": 2.08,
+      "source": "implied"
+    },
+    "Maloney Patrick (2000) vs Goldammer Tygen": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 88.9,
+      "implied_b": 11.1,
+      "odds_a": 1.06,
+      "odds_b": 8.5,
+      "source": "implied"
+    },
+    "Dell'elba Vito vs Papoe Cezar Gabriel": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 25.2,
+      "implied_b": 74.8,
+      "odds_a": 3.65,
+      "odds_b": 1.23,
+      "source": "implied"
+    },
+    "Aleshchev Alexey vs Zavacky Peter": {
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 80.1,
+      "implied_b": 19.9,
+      "odds_a": 1.15,
+      "odds_b": 4.62,
+      "source": "implied"
+    },
+    "Brantmeier Reese vs Mandlik Elizabeth": {
+      "p_a": 56.3,
+      "p_b": 43.7,
+      "implied_a": 52.7,
+      "implied_b": 47.3,
+      "odds_a": 1.75,
+      "odds_b": 1.95,
+      "source": "elo"
+    },
+    "Sabalenka Aryna vs Alexandrova Ekaterina": {
+      "p_a": 98.0,
+      "p_b": 2.0,
+      "implied_a": 66.7,
+      "implied_b": 33.3,
+      "odds_a": 1.38,
+      "odds_b": 2.77,
+      "source": "elo"
+    },
+    "Tolev Aleksandar vs Kostic Stefan (2006)": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Tolev Aleksandar, Kostic Stefan (2006)",
+      "odds_a": 1.44,
+      "odds_b": 2.6
+    },
+    "Roberts Justin vs Sarr Jelani": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Roberts Justin, Sarr Jelani",
+      "odds_a": 2.45,
+      "odds_b": 1.49
+    },
+    "Okonkwo Alexander vs Kirchheimer Strong": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Okonkwo Alexander",
+      "odds_a": 2.55,
+      "odds_b": 1.48
+    },
+    "Alkaya Mert vs Zhukayev Beibit": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Alkaya Mert",
+      "odds_a": 1.6,
+      "odds_b": 2.16,
+      "tier": "shadow"
+    },
+    "Solarski Jakub vs Mizerski Eli": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Solarski Jakub, Mizerski Eli",
+      "odds_a": 1.36,
+      "odds_b": 2.8
+    },
+    "Popa Maria Sara vs Simionescu Diana-Ioana": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Bucharest 6 ITF",
+      "odds_a": 1.61,
+      "odds_b": 2.12
+    },
+    "Rakhimova Kamilla vs Sakkari Maria": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 35.1,
+      "p_b": 64.9,
+      "implied_a": 39.3,
+      "implied_b": 60.7,
+      "odds_a": 2.36,
+      "odds_b": 1.53,
+      "source": "elo"
+    },
+    "Ambrogi Luciano Emanuel vs Mares Vojtech": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Prague 2 challenger",
+      "odds_a": 2.16,
+      "odds_b": 1.61
+    },
+    "Walters Marcus vs Ponchet Matt": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Roehampton challenger",
+      "odds_a": 1.7,
+      "odds_b": 2.03
+    },
+    "Norlin Christopher vs Koistila larsson Kenzo": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Norlin Christopher, Koistila larsson Kenzo",
+      "odds_a": 1.31,
+      "odds_b": 3.2
+    },
+    "Bataljin Lawrence vs Walltin Kelvin": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Bataljin Lawrence, Walltin Kelvin",
+      "odds_a": 1.61,
+      "odds_b": 2.15
+    },
+    "Margoulis Daniel vs Lange Alvar": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Margoulis Daniel, Lange Alvar",
+      "odds_a": 3.42,
+      "odds_b": 1.27
+    },
+    "Christoffersson Filip vs Andersson Lukas": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Christoffersson Filip, Andersson Lukas",
+      "odds_a": 1.85,
+      "odds_b": 1.85
+    },
+    "Rovai Samuel vs Andersson Linus (2008)": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Rovai Samuel, Andersson Linus (2008)",
+      "odds_a": 1.1,
+      "odds_b": 5.88
+    },
+    "Gahnstrom Erik vs Rocens Martins": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Gahnstrom Erik, Rocens Martins",
+      "odds_a": 3.45,
+      "odds_b": 1.27
+    },
+    "De Armas Ignacio vs Perez Benjamin": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): De Armas Ignacio, Perez Benjamin",
+      "odds_a": 3.6,
+      "odds_b": 1.25
+    },
+    "Cox Nathan vs De la Pena Bautista": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Cox Nathan, De la Pena Bautista",
+      "odds_a": 1.11,
+      "odds_b": 5.27
+    },
+    "Virgili Berini Felipe vs Van Nunen Max": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Virgili Berini Felipe, Van Nunen Max",
+      "odds_a": 1.55,
+      "odds_b": 2.3
+    },
+    "Larwig Noel vs Moraing Oscar": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil (z.B. Qualifier): Larwig Noel, Moraing Oscar",
+      "odds_a": 2.1,
+      "odds_b": 1.65
+    },
+    "Pegula Jessica vs Swiatek Iga": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 49.3,
+      "p_b": 50.7,
+      "implied_a": 37.6,
+      "implied_b": 62.4,
+      "odds_a": 2.46,
+      "odds_b": 1.48,
+      "source": "elo"
+    },
+    "Gauff Coco vs Kostyuk Marta": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 58.8,
+      "p_b": 41.2,
+      "implied_a": 41.4,
+      "implied_b": 58.6,
+      "odds_a": 2.24,
+      "odds_b": 1.58,
+      "source": "elo"
+    },
+    "Bondar Anna vs Jacquemot Elsa": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 41.5,
+      "implied_b": 58.5,
+      "odds_a": 2.23,
+      "odds_b": 1.58,
+      "source": "elo"
+    },
+    "Udvardy Panna vs Arango Emiliana": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.7,
+      "p_b": 49.3,
+      "implied_a": 59.9,
+      "implied_b": 40.1,
+      "odds_a": 1.54,
+      "odds_b": 2.3,
+      "source": "elo"
+    },
+    "Banthia Siddhant vs Kuhar Matt": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Kingston 2 challenger",
+      "odds_a": 2.67,
+      "odds_b": 1.42
+    },
+    "Neumayer Lukas vs McCabe James": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 48.7,
+      "p_b": 51.3,
+      "implied_a": 44.3,
+      "implied_b": 55.7,
+      "odds_a": 2.1,
+      "odds_b": 1.67,
+      "source": "elo"
+    },
+    "Vanta Valentin vs Giordano Luca (2002)": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.06,
+      "odds_b": 6.83
+    },
+    "Jeran Aljaz vs Premzl Maj": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.15,
+      "odds_b": 4.8
+    },
+    "Over vs Under": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.41,
+      "odds_b": 2.52
+    },
+    "Shi Han vs Lu Jia-Jing": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 50.0,
+      "p_b": 50.0,
+      "implied_a": 59.9,
+      "implied_b": 40.1,
+      "odds_a": 1.51,
+      "odds_b": 2.26,
+      "source": "elo"
+    },
+    "Kasatkina Darya vs Badosa Paula": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 42.2,
+      "p_b": 57.8,
+      "implied_a": 44.4,
+      "implied_b": 55.6,
+      "odds_a": 2.1,
+      "odds_b": 1.68,
+      "source": "elo"
+    },
+    "Ritschard Alexander vs Perez Contri Sergi": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.41,
+      "odds_b": 2.51
+    },
+    "Putintseva Yulia vs Bencic Belinda": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 25.3,
+      "p_b": 74.7,
+      "implied_a": 34.2,
+      "implied_b": 65.8,
+      "odds_a": 2.69,
+      "odds_b": 1.4,
+      "source": "elo"
+    },
+    "Mayo Aidan vs Andrade Andres": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Kingston 2 challenger",
+      "odds_a": 2.15,
+      "odds_b": 1.6
+    },
+    "Michalski Daniel vs Savano Michael": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.09,
+      "odds_b": 6.82
+    },
+    "Turcanu Radu David vs Ghetu Gabriel": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.55,
+      "odds_b": 2.19
+    },
+    "Dominko Sebastian vs Pieri Samuele": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.93,
+      "odds_b": 1.74
+    },
+    "Nakashima Bryce Nakashima vs Vrba Jakub": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.37,
+      "odds_b": 2.66
+    },
+    "Boitan Gabi Adrian vs Maxted Lui": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Mallorca challenger",
+      "odds_a": 2.28,
+      "odds_b": 1.56
+    },
+    "Broom Charles vs Qi Hongjin": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Mallorca challenger",
+      "odds_a": 2.24,
+      "odds_b": 1.57
+    },
+    "Callejon Hernando Sergio vs Durasovic Viktor": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Mallorca challenger",
+      "odds_a": 1.71,
+      "odds_b": 1.98
+    },
+    "Kahatapitiya Romesh vs Schaefer Joshua": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.11,
+      "odds_b": 5.3
+    },
+    "Lagarrigue Leo vs Mortasifu Mircea": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.18,
+      "odds_b": 3.73
+    },
+    "Petre Stefan Ilie Bogdan vs Schinteie Gheorghe Claudiu": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.58,
+      "odds_b": 2.18
+    },
+    "Coman Mihai Alexandru vs Brown Preston": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.64,
+      "odds_b": 2.02
+    },
+    "Kesarwani Maan vs Bertran Peter": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 2.45,
+      "odds_b": 1.48
+    },
+    "Partal Matei Marius vs Hebhang Balan Alexandru Toubi": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 2.52,
+      "odds_b": 1.44
+    },
+    "Radu Andrei vs Gadoiu Andrei Corneliu": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.19,
+      "odds_b": 3.71
+    },
+    "Branchetti Geovanni vs Mouilleron Salvo Manuel": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.6,
+      "odds_b": 2.21
+    },
+    "Denolly Corentin vs Sterniczuk Oliwier": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.1,
+      "odds_b": 6.0
+    },
+    "Tanuma Ryota vs Shiraishi Hikaru": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 2.04,
+      "odds_b": 1.67
+    },
+    "Butulija Boris vs Juhas Kristijan": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 4.0,
+      "odds_b": 1.18
+    },
+    "Faucon Romain vs Tahirovic Amar": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.4,
+      "odds_b": 2.56
+    },
+    "Paolini Jasmine vs Cirstea Sorana-Mihaela": {
+      "status": "EVALUATED_NO_BET",
+      "p_a": 42.4,
+      "p_b": 57.6,
+      "implied_a": 40.2,
+      "implied_b": 59.8,
+      "odds_a": 2.31,
+      "odds_b": 1.55,
+      "source": "elo"
+    },
+    "Loureiro Joao Victor Couto vs Khoeblal Elgin": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 2.3,
+      "odds_b": 1.53
+    },
+    "Bosio Victoria vs Romero Camila": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Lujan ITF",
+      "odds_a": 1.31,
+      "odds_b": 2.96
+    },
+    "Tosetto Rafael vs Crevelaro Enzo": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.29,
+      "odds_b": 3.05
+    },
+    "Urrutia Maria Florencia vs Ayala Lourdes": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Lujan ITF",
+      "odds_a": 1.22,
+      "odds_b": 3.5
+    },
+    "Radovanovic Nina vs Zaytseva Ksenia": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Kursumlijska Banja 17 ITF",
+      "odds_a": 2.06,
+      "odds_b": 1.63
+    },
+    "Madaras Dragos Nicolae vs Rispoli Nicola": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.33,
+      "odds_b": 2.83
+    },
+    "Zarate Carlos Maria vs Gagliardo Lorenzo": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.6,
+      "odds_b": 2.1
+    },
+    "Garland Joanna vs Astakhova Darya": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Tianjin 5 ITF",
+      "odds_a": 2.34,
+      "odds_b": 1.48
+    },
+    "De Lange Pieter vs Van Sambeek Fons": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.47,
+      "odds_b": 2.35
+    },
+    "Schiessl Joao Eduardo vs Silva Luiz Felipe": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 2.29,
+      "odds_b": 1.55
+    },
+    "Luo Xi vs Wang Jiaqi": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Guiyang ITF",
+      "odds_a": 2.6,
+      "odds_b": 1.4
+    },
+    "Blockx Alexander vs Cobolli Flavio": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 2.36,
+      "odds_b": 1.53
+    },
+    "Cerundolo Francisco vs Fritz Taylor": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 2.38,
+      "odds_b": 1.5
+    },
+    "Khachanov Karen vs Bonzi Benjamin": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.54,
+      "odds_b": 2.3
+    },
+    "Darderi Luciano vs Sweeny Dane": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.56,
+      "odds_b": 2.25
+    },
+    "Mena Facundo vs Dellien Hugo": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Porto 2 challenger",
+      "odds_a": 2.5,
+      "odds_b": 1.44
+    },
+    "Francisco Cerundolo vs Alexander Blockx": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Francisco Cerundolo, Alexander Blockx",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Mirra Andreeva vs Anastasia Potapova": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Mirra Andreeva, Anastasia Potapova",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Iga Swiatek vs Qinwen Zheng": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Iga Swiatek, Qinwen Zheng",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Zheng Michael vs Gea Arthur": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 2.17,
+      "odds_b": 1.62
+    },
+    "Bergs Zizou vs Van De Zandschulp Botic": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 2.11,
+      "odds_b": 1.65
+    },
+    "Dodig Matej vs Varillas Juan Pablo": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Como challenger",
+      "odds_a": 1.52,
+      "odds_b": 2.37
+    },
+    "Kravchenko Georgii vs Milev Yanaki": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Plovdiv 3 challenger",
+      "odds_a": 1.56,
+      "odds_b": 2.21
+    },
+    "Singh Karan vs Becroft Isaac": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.95,
+      "odds_b": 1.74
+    },
+    "Nijboer Ryan vs Van Der Meerschen Martin": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.46,
+      "odds_b": 2.36
+    },
+    "Djuric Branko vs Popko Dmitry": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.61,
+      "odds_b": 2.09
+    },
+    "Javia Dev vs Duhan Chirag": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.33,
+      "odds_b": 2.83
+    },
+    "Oetzbach Adrian vs Vasa Eero": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.61,
+      "odds_b": 2.1
+    },
+    "Iva Jović vs Coco Gauff": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Iva Jović, Coco Gauff",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Naomi Osaka vs Elena Rybakina": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Naomi Osaka, Elena Rybakina",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Zverev Alexander vs Tabilo Alejandro": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 2.32,
+      "odds_b": 1.53
+    },
+    "Houkes Max vs Bennani Karim": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.5,
+      "odds_b": 2.28
+    },
+    "Alexander Zverev vs Luciano Darderi": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Alexander Zverev, Luciano Darderi",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Arthur Gea vs Botic van de Zandschulp": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Arthur Gea, Botic van de Zandschulp",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Karen Khachanov vs Learner Tien": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Karen Khachanov, Learner Tien",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Tien Learner vs Mensik Jakub": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 2.13,
+      "odds_b": 1.64
+    },
+    "Simakin Ilia vs Samrej Kasidit": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Zhangjiagang challenger",
+      "odds_a": 1.55,
+      "odds_b": 2.3
+    },
+    "Nakagawa Naoki vs Matsuda Ryuki": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 2.1,
+      "odds_b": 1.59
+    },
+    "Weber Arthur vs Bouzige Moerani": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.63,
+      "odds_b": 2.05
+    },
+    "Tomida Yuta vs Sun Qian": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 2.0,
+      "odds_b": 1.65
+    },
+    "Mazza Manuel vs Bosio Gabriele": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.44,
+      "odds_b": 2.4
+    },
+    "Dougaz Aziz vs Bouchelaghem Cesar": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.7,
+      "odds_b": 2.0
+    },
+    "Hallquist Lithen John vs Lagerbohm Linus": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 2.12,
+      "odds_b": 1.58
+    },
+    "Alves Mateus (2001) vs Remondy Pagotto Victor Hugo": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.04,
+      "odds_b": 9.75
+    },
+    "Jong Sander vs Wassermann Deney": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.54,
+      "odds_b": 2.27
+    },
+    "Perot Raphael vs Bertrand Robin": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Royan challenger",
+      "odds_a": 1.43,
+      "odds_b": 2.46
+    },
+    "Michelsen Alex vs Etcheverry Tomas Martin": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.48,
+      "odds_b": 2.42
+    },
+    "Paul Tommy vs Alcaraz Carlos": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.57,
+      "odds_b": 2.24
+    },
+    "Medvedev Daniil vs Tiafoe Frances": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.57,
+      "odds_b": 2.24
+    },
+    "Balshaw Felix vs Montes-De La Torre Inaki": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Mallorca challenger",
+      "odds_a": 2.21,
+      "odds_b": 1.56
+    },
+    "Aryna Sabalenka vs Linda Noskova": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Aryna Sabalenka, Linda Noskova",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Piraino Gabriele vs Feldbausch Kilian": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Genoa challenger",
+      "odds_a": 2.75,
+      "odds_b": 1.39
+    },
+    "Ajdukovic Duje vs Romano Filippo": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Genoa challenger",
+      "odds_a": 2.04,
+      "odds_b": 1.71
+    },
+    "Cadenasso Gianluca vs Martin Manzano Juan Cruz": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Genoa challenger",
+      "odds_a": 2.15,
+      "odds_b": 1.64
+    },
+    "Brunclik Petr vs Moro Canas Alejandro": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Sevilla challenger",
+      "odds_a": 2.15,
+      "odds_b": 1.62
+    },
+    "Olivieri Genaro Alberto vs Blanch Dali": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Sevilla challenger",
+      "odds_a": 2.05,
+      "odds_b": 1.7
+    },
+    "Bailly Gilles Arnaud vs Hemery Calvin": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Sevilla challenger",
+      "odds_a": 1.73,
+      "odds_b": 2.0
+    },
+    "Diaz Acosta Facundo vs Martin Tiffon Pol": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Sevilla challenger",
+      "odds_a": 2.22,
+      "odds_b": 1.57
+    },
+    "Noguchi Rio vs Te Rigele": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Shanghai challenger",
+      "odds_a": 1.47,
+      "odds_b": 2.55
+    },
+    "Xiao Linang vs Uchida Kaichi": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Shanghai challenger",
+      "odds_a": 2.2,
+      "odds_b": 1.58
+    },
+    "Soto Matias vs Kopp Sandro": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Tulln challenger",
+      "odds_a": 2.42,
+      "odds_b": 1.5
+    },
+    "Krumich Martin vs Sorger Sebastian": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Tulln challenger",
+      "odds_a": 1.67,
+      "odds_b": 2.04
+    },
+    "Ayeni Alafia vs Overbeck Carl Emil": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Istanbul challenger",
+      "odds_a": 2.4,
+      "odds_b": 1.5
+    },
+    "Topo Marko vs Galan Daniel Elahi": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Tulln challenger",
+      "odds_a": 2.1,
+      "odds_b": 1.64
+    },
+    "Brouwer Gijs vs Martineau Matteo": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Cassis challenger",
+      "odds_a": 2.2,
+      "odds_b": 1.55
+    },
+    "Echargui Moez vs Poullain Lucas": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Cassis challenger",
+      "odds_a": 1.67,
+      "odds_b": 2.08
+    },
+    "Moriya Hiroki vs Palan Dominik": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Phan Thiet 3 challenger",
+      "odds_a": 1.58,
+      "odds_b": 2.2
+    },
+    "Droguet Titouan vs Chazal Maxime": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Cassis challenger",
+      "odds_a": 1.31,
+      "odds_b": 3.15
+    },
+    "Hewitt Cruz vs Bittoun Kouzmine Constantin": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Phan Thiet 3 challenger",
+      "odds_a": 2.02,
+      "odds_b": 1.71
+    },
+    "Ghazouani Durand Yanis vs Raquillet Leo": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Cassis challenger",
+      "odds_a": 2.05,
+      "odds_b": 1.67
+    },
+    "Janvier Maxime vs Paldanius Oskari": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Cassis challenger",
+      "odds_a": 2.1,
+      "odds_b": 1.62
+    },
+    "Dhamne Manas vs Escoffier Antoine": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Cassis challenger",
+      "odds_a": 1.65,
+      "odds_b": 2.07
+    },
+    "Pietri Benjamin vs Car Hugo": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Cassis challenger",
+      "odds_a": 2.1,
+      "odds_b": 1.65
+    },
+    "Frances Tiafoe vs Alex Michelsen": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Frances Tiafoe, Alex Michelsen",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Shelton Ben vs Tsitsipas Stefanos": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: US Open",
+      "odds_a": 1.54,
+      "odds_b": 2.3
+    },
+    "Ben Shelton vs Carlos Alcaraz": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Ben Shelton, Carlos Alcaraz",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Jessica Pegula vs Emma Navarro": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Jessica Pegula, Emma Navarro",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Mayot Harold vs Cretu Cezar (2001)": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Istanbul challenger",
+      "odds_a": 1.44,
+      "odds_b": 2.71
+    },
+    "Delaney Jake vs Matsuoka Hayato": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Shanghai challenger",
+      "odds_a": 2.3,
+      "odds_b": 1.56
+    },
+    "Daniel Taro vs Dellavedova Matthew": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Shanghai challenger",
+      "odds_a": 1.43,
+      "odds_b": 2.58
+    },
+    "Sharipov Marat (2002) vs Watanuki Yosuke": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Shanghai challenger",
+      "odds_a": 2.08,
+      "odds_b": 1.7
+    },
+    "Barrena Alex vs Milic Ognjen": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Tulln challenger",
+      "odds_a": 1.6,
+      "odds_b": 2.18
+    },
+    "Galarneau Alexis vs Pankin Semen": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Shanghai challenger",
+      "odds_a": 1.56,
+      "odds_b": 2.25
+    },
+    "Moeller Marvin vs Mrva Maxim": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Tulln challenger",
+      "odds_a": 2.18,
+      "odds_b": 1.64
+    },
+    "Langmo Christian vs Gengel Marek": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Istanbul challenger",
+      "odds_a": 2.05,
+      "odds_b": 1.7
+    },
+    "Kasnikowski Maks vs Marrero Curbelo Ivan": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Istanbul challenger",
+      "odds_a": 1.5,
+      "odds_b": 2.4
+    },
+    "Scaglia Mathieu vs Tailleu Pierre Antoine": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Cassis challenger",
+      "odds_a": 1.6,
+      "odds_b": 2.2
+    },
+    "Bobichon Matisse vs Boulais Justin": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Cassis challenger",
+      "odds_a": 2.35,
+      "odds_b": 1.5
+    },
+    "Djere Laslo vs Cecchinato Marco": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Genoa challenger",
+      "odds_a": 2.19,
+      "odds_b": 1.61
+    },
+    "Sakellaridis Stefanos vs Poljicak Mili": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Genoa challenger",
+      "odds_a": 1.56,
+      "odds_b": 2.24
+    },
+    "Ursu Vadym vs Holmgren August": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Istanbul challenger",
+      "odds_a": 2.5,
+      "odds_b": 1.45
+    },
+    "Glinka Daniil vs Peniston Ryan": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Cassis challenger",
+      "odds_a": 1.5,
+      "odds_b": 2.4
+    },
+    "Harris Billy vs Grenier Hugo": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Cassis challenger",
+      "odds_a": 1.62,
+      "odds_b": 2.2
+    }
+  },
+  "football": [],
+  "tennis": [],
+  "updated": "2026-09-07T17:07:42Z",
+  "build_info": {
+    "sha": "d000ada",
+    "date": "2026-09-07"
+  },
   "meta": {
     "stale_odds": false
   },
   "tennis_stats": {
-    "updated": "2026-09-07T14:51:44Z",
+    "updated": "2026-09-07T17:07:42Z",
     "active_tournaments": [
       {
         "slug": "us_open_atp",
