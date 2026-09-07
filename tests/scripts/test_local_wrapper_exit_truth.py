@@ -9,6 +9,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 LIVE_TRIGGER = ROOT / "scripts" / "live_score_trigger.sh"
 LIVE_PLIST = ROOT / "launchd" / "com.sportsbrain.live-score-push.plist"
+CLOSING_ODDS = ROOT / "scripts" / "closing_odds_cron.sh"
 DAILY_SCAN = ROOT / "scripts" / "scan_cron.sh"
 PREMATCH_SCAN = ROOT / "scripts" / "prematch_scan_cron.sh"
 
@@ -62,6 +63,21 @@ def test_missing_ledger_environment_remains_fail_closed(monkeypatch) -> None:
 
     with pytest.raises(OSError, match="SPORTSBRAIN_LEDGER_DIR is not set"):
         _resolve_ledger_dir()
+
+
+def test_closing_odds_wrapper_loads_the_protected_runtime_environment() -> None:
+    source = CLOSING_ODDS.read_text()
+    assert 'set -a\n    . "$SPORTSBRAIN_DIR/.env"\n    set +a' in source
+    assert "SPORTSBRAIN_LEDGER_DIR" not in source
+    assert "set -x" not in source
+    assert "printenv" not in source
+
+
+def test_closing_odds_returns_the_final_combined_exit_code() -> None:
+    source = CLOSING_ODDS.read_text()
+
+    assert 'health_finish "closing_odds" "$EXIT_CODE"' in source
+    assert 'exit "$EXIT_CODE"' in source
 
 
 def test_daily_and_prematch_scan_cannot_hide_settlement_failure() -> None:
