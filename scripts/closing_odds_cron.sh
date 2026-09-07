@@ -8,6 +8,13 @@ RUNTIME_STAGE_DIR="$(mktemp -d /Users/philiprassillier/Library/Caches/SportsBrai
 export SPORTSBRAIN_RUNTIME_ARTIFACT_STAGE_DIR="$RUNTIME_STAGE_DIR"
 cd "$SPORTSBRAIN_DIR" || exit 1
 
+# launchd does not inherit the protected private-ledger environment.
+if [ -f "$SPORTSBRAIN_DIR/.env" ]; then
+    set -a
+    . "$SPORTSBRAIN_DIR/.env"
+    set +a
+fi
+
 # shellcheck source=./_health.sh
 source "$SPORTSBRAIN_DIR/scripts/_health.sh"
 # shellcheck source=./_require_main_branch.sh
@@ -43,3 +50,4 @@ fi
 echo "--- Publish done (job=$JOB_EXIT publish=$PUBLISH_EXIT final=$EXIT_CODE) ---" >> "$LOG"
 
 health_finish "closing_odds" "$EXIT_CODE" "" "$LOG"
+exit "$EXIT_CODE"
