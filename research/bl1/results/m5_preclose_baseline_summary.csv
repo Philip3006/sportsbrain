@@ -1,2 +1,2 @@
-model,n,brier,brier_ci_lo,brier_ci_hi,logloss,ece
-M5_preclose_per_fold_selected,1224,0.5823035882629094,0.5635096005449004,0.6025058103819638,0.9798518824138883,0.024864653353725136
+model,canonical_source,n,brier,brier_ci_lo,brier_ci_hi,logloss,ece
+M5_canonical_preclose,Bookmaker_avg_preclose,1224,0.58222548547,0.563415741404,0.601992992248,0.979751828567,0.028473616281

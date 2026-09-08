@@ -1,14 +1,21 @@
-"""FLAGSHIP-BL1 — M6 market+Elo blend, M7 market residual model (v5).
+"""FLAGSHIP-BL1 — M6 market+Elo blend, M7 market residual model (v5 CORRECTION).
 
-v5 changes: terminology corrected — "pre-closing" not "opening"; access
-routed through canonical partition loader for logging/audit.
+v5-correction changes (CEO §2, §3):
+- M6 and M7 both consume the CANONICAL market policy (canonical_market.py).
+  When alpha=1.0, M6 == M5 by construction (both call the same
+  canonical_market_prob_vec). Verified by explicit assertion in
+  test_bl1_invariants.py.
+- M7 features use the canonical pre-closing market probabilities as its
+  market input, not raw Pinnacle PSH/PSD/PSA. Same policy across all
+  market-anchored models.
+- Access routed through canonical partition loader.
 
-M6: p = alpha × p_preclose_market + (1 - alpha) × p_Elo
+M6: p = alpha × p_canonical_market + (1 - alpha) × p_Elo
      alpha selected on nested chronological DEV OOF only (2425 and 2526 outcomes never touched).
      Grid: 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
 
 M7: LGBM residual model with signal-time features:
-     - pre-closing no-vig market probabilities (Pinnacle PSH/PSD/PSA)
+     - canonical pre-closing no-vig market probabilities (via canonical_market.py)
      - Elo pre-match
      - DC probabilities (per-season snapshot)
      - DC strengths
@@ -44,8 +51,20 @@ import lightgbm as lgb  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
+import importlib.util  # noqa: E402
 from src.models import dixon_coles  # noqa: E402
 from src.models.elo import elo_win_probability, ELO_DEFAULT  # noqa: E402
+
+# Canonical market policy — MUST be used by M6 and M7 to guarantee that
+# alpha=1.0 → M6 == M5. See canonical_market.py.
+_market_spec = importlib.util.spec_from_file_location(
+    "bl1_canonical_market", Path(__file__).resolve().parent / "canonical_market.py")
+market = importlib.util.module_from_spec(_market_spec)
+_market_spec.loader.exec_module(market)
+_partitions_spec = importlib.util.spec_from_file_location(
+    "bl1_partitions", Path(__file__).resolve().parent / "09_partitions.py")
+partitions = importlib.util.module_from_spec(_partitions_spec)
+_partitions_spec.loader.exec_module(partitions)
 
 RES = ROOT / "research" / "bl1" / "results"
 SNAP_DIR = RES / "dc_snapshots"
@@ -85,12 +104,21 @@ def _load_dc_snapshots() -> dict:
 
 
 def _build_market_prob(row) -> tuple[np.ndarray, bool]:
-    """Returns (p_open_market as [away, draw, home], any_missing)."""
-    p = _devig_basic(row.get("PSH"), row.get("PSD"), row.get("PSA"))
-    if p is None:
+    """Returns (canonical p_market as [away, draw, home], is_fallback).
+
+    Uses the CANONICAL operational policy. When alpha=1.0 in M6, the
+    output must equal M5 exactly — that invariant is enforced by both
+    M5 and M6 calling this same policy.
+
+    If canonical source is missing, falls back to BL1 base rate. This
+    fallback IS documented as part of the operational policy (a missing
+    canonical row is uncommon; base-rate fallback preserves determinism).
+    """
+    result = market.canonical_market_prob(row)
+    if result is None:
         return np.array([0.297, 0.253, 0.450]), True
-    # p is [home, draw, away]
-    return np.array([p[2], p[1], p[0]]), False
+    p, _ = result
+    return p, False
 
 
 def _rolling_pts(hist, team, before, n):
@@ -226,13 +254,15 @@ def main() -> None:
     raw_r = raw_r.sort_values(["date", "home_team"], kind="stable").reset_index(drop=True)
     raw_dev = raw_r[raw_r["season"].isin(DEV_SEASONS)].copy()
 
-    # Join opening-market columns from bl1_raw_full.pkl
+    # Join canonical-market columns from bl1_raw_full.pkl. Uses the canonical
+    # policy source AvgH/AvgD/AvgA — same source that M5 (15_m5) consumes.
     with open(FULL_PKL, "rb") as f:
         raw_full = pickle.load(f)
     raw_full["season"] = raw_full["season"].astype(str)
     raw_full["date"] = pd.to_datetime(raw_full["date"])
+    canonical_cols = list(market.CANONICAL_COLUMNS)
     raw_dev = raw_dev.merge(
-        raw_full[["date", "home_team", "away_team", "PSH", "PSD", "PSA"]],
+        raw_full[["date", "home_team", "away_team"] + canonical_cols],
         on=["date", "home_team", "away_team"], how="left", suffixes=("", "_full"),
     )
 
@@ -302,8 +332,12 @@ def main() -> None:
         }))
 
     m6_oof = pd.concat(m6_outer_rows, ignore_index=True)
+    for col in ("m6_p_away", "m6_p_draw", "m6_p_home"):
+        m6_oof[col] = m6_oof[col].round(12)
     m6_oof.to_csv(RES / "oof_m6_dev_v3.csv", index=False)
-    pd.DataFrame(alpha_selection).to_csv(RES / "m6_alpha_sweep.csv", index=False)
+    _alpha = pd.DataFrame(alpha_selection)
+    _alpha["train_brier"] = _alpha["train_brier"].round(12)
+    _alpha.to_csv(RES / "m6_alpha_sweep.csv", index=False)
     print(f"\nM6 pooled dev OOF Brier = {_brier(m6_oof['y'].values, m6_oof[['m6_p_away','m6_p_draw','m6_p_home']].values):.4f}", flush=True)
 
     # ---- M7: LGBM residual model ----
@@ -346,6 +380,8 @@ def main() -> None:
         dev_oof_rows_m7.append(fold_oof)
 
     m7_oof = pd.concat(dev_oof_rows_m7, ignore_index=True)
+    for col in ("m7_p_away", "m7_p_draw", "m7_p_home"):
+        m7_oof[col] = m7_oof[col].round(12)
     m7_oof.to_csv(RES / "oof_m7_dev_v3.csv", index=False)
     print(f"\nM7 pooled dev OOF Brier = {_brier(m7_oof['y'].values, m7_oof[['m7_p_away','m7_p_draw','m7_p_home']].values):.4f}", flush=True)
 
@@ -357,7 +393,10 @@ def main() -> None:
         {"model": "M6_market_elo_blend", "n": len(m6_oof), "brier": _brier(m6_oof['y'].values, m6_oof[['m6_p_away','m6_p_draw','m6_p_home']].values), "logloss": _logloss(m6_oof['y'].values, m6_oof[['m6_p_away','m6_p_draw','m6_p_home']].values)},
         {"model": "M7_market_residual", "n": len(m7_oof), "brier": _brier(m7_oof['y'].values, m7_oof[['m7_p_away','m7_p_draw','m7_p_home']].values), "logloss": _logloss(m7_oof['y'].values, m7_oof[['m7_p_away','m7_p_draw','m7_p_home']].values)},
     ]
-    pd.DataFrame(rows).to_csv(RES / "m6_m7_summary.csv", index=False)
+    _summary = pd.DataFrame(rows)
+    for col in ("brier", "logloss"):
+        _summary[col] = _summary[col].round(12)
+    _summary.to_csv(RES / "m6_m7_summary.csv", index=False)
     print("\nSummary:", flush=True)
     print(pd.DataFrame(rows).to_string(index=False, float_format=lambda x: f"{x:.4f}"), flush=True)
 

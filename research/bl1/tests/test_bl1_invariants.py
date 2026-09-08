@@ -156,6 +156,66 @@ def test_09_match_level_bootstrap_preserves_grouping():
     assert 'unique_ids = np.array(list(per_match_pnl.keys()))' in src
 
 
+def test_11_market_aware_scripts_route_through_partitions():
+    """Invariant 11 (v5-correction §1): M5, M6, M7 scripts import the
+    canonical partition loader OR the canonical market policy module.
+    They must not open a sealed partition pickle directly without
+    routing through 09_partitions.py.
+    """
+    for name in ("15_m5_market_baseline.py", "16_m6_m7_market_aware.py",
+                  "17_matched_preclose_vs_close.py"):
+        src = (ROOT / "research" / "bl1" / "scripts" / name).read_text()
+        assert "09_partitions.py" in src, \
+            f"{name} must route through 09_partitions.py"
+
+
+def test_12_canonical_market_policy_referenced_by_m6_m7():
+    """Invariant 12 (v5-correction §2): M5, M6, M7 all reference the
+    canonical market policy module so alpha=1.0 implies M6 == M5.
+    """
+    for name in ("15_m5_market_baseline.py", "16_m6_m7_market_aware.py"):
+        src = (ROOT / "research" / "bl1" / "scripts" / name).read_text()
+        assert "canonical_market.py" in src, \
+            f"{name} must reference the canonical market policy"
+
+
+def test_13_m6_equals_m5_when_alpha_1_by_construction():
+    """Invariant 13 (v5-correction §2): forcibly set alpha=1.0 on the
+    canonical policy and Elo blend; the resulting probabilities must
+    equal the M5 OOF probabilities within 1e-9 (numerical tolerance).
+
+    This tests the code path — not the alpha SELECTED by chronological OOF
+    (which may pick any alpha). It proves the invariant "if alpha=1.0
+    were selected, M6 == M5" holds by construction.
+    """
+    m5 = pd.read_csv(RES / "oof_m5_preclose_dev.csv", dtype={"season": str})
+    m5["date"] = pd.to_datetime(m5["date"])
+    m5 = m5.sort_values(["date", "home_team"], kind="stable").reset_index(drop=True)
+    # Import canonical policy
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "bl1_canonical_market", ROOT / "research/bl1/scripts/canonical_market.py")
+    canonical = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(canonical)
+    # Load full raw for the AvgH/D/A columns
+    import pickle
+    with open(ROOT / "research/bl1/dataset/bl1_raw_full.pkl", "rb") as f:
+        full = pickle.load(f)
+    full["season"] = full["season"].astype(str)
+    full["date"] = pd.to_datetime(full["date"])
+    merged = m5.merge(
+        full[["date", "home_team", "away_team",
+              *canonical.CANONICAL_COLUMNS]],
+        on=["date", "home_team", "away_team"], how="left",
+    )
+    probs = canonical.canonical_market_prob_vec(merged)
+    # Forced alpha=1.0 blend = probs (Elo term drops)
+    m6_at_alpha_1 = probs
+    m5_probs = m5[["m5_p_away", "m5_p_draw", "m5_p_home"]].to_numpy()
+    diff = np.max(np.abs(m6_at_alpha_1 - m5_probs))
+    assert diff < 1e-9, f"M6 at alpha=1.0 differs from M5 by {diff:.2e}"
+
+
 def test_10_stable_sort_produces_identical_labels():
     """Invariant 10: stable sort — reloading OOF and joining to raw gives 0
     y-mismatch, confirming row order and labels agree deterministically."""

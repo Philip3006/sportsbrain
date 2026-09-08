@@ -69,6 +69,7 @@ DEV_OUTPUTS_TO_HASH = [
     RES / "paired_bootstrap_v3.csv",
     RES / "edge_sweep_v3_one_per_match.csv",
     RES / "class_asymmetry_decomposition.csv",
+    RES / "holdout_2526_market_coverage.csv",
 ]
 
 RAW_PKL = DATASET_DIR / "bl1_raw.pkl"
@@ -112,18 +113,52 @@ def _run_pipeline(label: str) -> dict[str, str]:
 
 
 def _make_sentinel(pkl_path: Path, backup_path: Path) -> None:
-    """Backs up the real dataset, then writes a sentinel version with
-    2425 and 2526 scores replaced by (99, 0)."""
+    """Backs up the real dataset, then writes a sentinel version.
+
+    v5-correction §5: sentinel ALL forbidden 2425/2526 information —
+      - outcomes: home_score → 99, away_score → 0 (as before)
+      - closing prices: PSCH/PSCD/PSCA, AvgCH/AvgCD/AvgCA,
+        MaxCH/MaxCD/MaxCA, B365CH/B365CD/B365CA → -999
+      - post-signal values: FTR/HTR/HTHG/HTAG/HS/AS/HST/AST → -999
+
+    If any development-decision output reads any of these columns for
+    2425 or 2526, the sentinel value corrupts the read and the output
+    hash changes → the test FAILS. Passing the test proves no dev
+    decision reads any forbidden 2425/2526 field.
+    """
     shutil.copy2(pkl_path, backup_path)
     with open(pkl_path, "rb") as f:
         df = pickle.load(f)
     mask = df["season"].astype(str).isin({"2425", "2526"})
     n_permuted = int(mask.sum())
-    df.loc[mask, "home_score"] = 99
-    df.loc[mask, "away_score"] = 0
+
+    # Sentinel is applied ONLY to non-NaN values. This preserves the
+    # missingness pattern so schema/coverage reports on 2526 stay
+    # invariant. Any downstream script that READS a value (not just
+    # counts non-NaN) will see the sentinel and produce a different
+    # hash → contamination detected.
+    def _corrupt(col_name: str, sentinel_value):
+        if col_name not in df.columns:
+            return
+        col_mask = mask & df[col_name].notna()
+        df.loc[col_mask, col_name] = sentinel_value
+
+    _corrupt("home_score", 99)
+    _corrupt("away_score", 0)
+    for col in ("PSCH", "PSCD", "PSCA", "AvgCH", "AvgCD", "AvgCA",
+                 "MaxCH", "MaxCD", "MaxCA", "B365CH", "B365CD", "B365CA",
+                 "HTHG", "HTAG", "HS", "AS", "HST", "AST"):
+        _corrupt(col, -999)
+    # String outcome columns
+    for col in ("FTR", "HTR"):
+        if col in df.columns:
+            col_mask = mask & df[col].notna()
+            df.loc[col_mask, col] = "X"
+
     with open(pkl_path, "wb") as f:
         pickle.dump(df, f)
-    print(f"  Sentinel: {pkl_path.name} — permuted {n_permuted} rows (seasons 2425+2526).", flush=True)
+    print(f"  Sentinel: {pkl_path.name} — permuted {n_permuted} rows (seasons 2425+2526), "
+          f"outcomes+closing+post-signal (NaN pattern preserved).", flush=True)
 
 
 def _restore(pkl_path: Path, backup_path: Path) -> None:

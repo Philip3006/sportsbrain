@@ -1,8 +1,12 @@
-"""FLAGSHIP-BL1 — Class asymmetry decomposition (CEO Correction Section 9).
+"""FLAGSHIP-BL1 — Class asymmetry decomposition (CEO §9, non-causal wording per v5 correction).
 
 The persistent home-positive / draw-positive / away-weak-or-negative pattern
 in edge sweep results appears across all four v2/v3 models. This script
-decomposes the pattern by:
+DESCRIBES the pattern without making causal claims. Bucketed metrics
+report observed associations. Language is: "the pattern is consistent
+with calibration error" — NOT "the primary cause is calibration failure".
+
+Decompositions:
 
   - predicted probability quintile
   - opening odds bucket
