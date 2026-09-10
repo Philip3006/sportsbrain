@@ -13,6 +13,7 @@ from pathlib import Path
 import pandas as pd
 
 from src.config import DATA_CACHE
+from src.runtime.paths import runtime_state_path
 
 
 # ---------------------------------------------------------------------------
@@ -115,7 +116,14 @@ _TM_TEAMS: dict[str, tuple[str, str]] = {
 _CACHE_DIR = DATA_CACHE / "squad"
 _CACHE_TTL_HOURS = 24
 
-_SUSPENSIONS_FILE = Path(__file__).resolve().parent.parent.parent / "data" / "suspensions.json"
+_SUSPENSIONS_FILE: Path | None = None
+
+
+def suspension_state_path() -> Path:
+    """Resolve durable suspension state only when a caller needs it."""
+    return _SUSPENSIONS_FILE or runtime_state_path(
+        "data/suspensions.json", require_external=True
+    )
 
 _UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "

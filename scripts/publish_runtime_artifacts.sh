@@ -25,7 +25,7 @@ _publish_permitted() {
     return 0
   fi
   case "$1" in
-    docs/data/signals.json|docs/data/live_scores.json|\
+    docs/data/signals.json|docs/data/squads.json|docs/data/live_scores.json|\
     docs/data/tennis_live_scores.json|data/cache/tennis_live_scores.json|\
     data/cache/tennis_suspended.json)
       return 0 ;;
