@@ -14,6 +14,12 @@ export SPORTSBRAIN_RUNTIME_ARTIFACT_STAGE_DIR="$RUNTIME_STAGE_DIR"
 
 cd "$SPORTSBRAIN_DIR" || exit 1
 
+if [ -f "$SPORTSBRAIN_DIR/.env" ]; then
+    set -a
+    . "$SPORTSBRAIN_DIR/.env"
+    set +a
+fi
+
 # shellcheck source=./_health.sh
 source "$SPORTSBRAIN_DIR/scripts/_health.sh"
 health_start "prematch_scan"
@@ -136,3 +142,4 @@ fi
 echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] prematch_scan fertig (exit $EXIT_CODE) ---" >> "$LOG"
 
 health_finish "prematch_scan" "$EXIT_CODE" "" "$LOG"
+exit "$EXIT_CODE"

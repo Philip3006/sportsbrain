@@ -12,6 +12,12 @@ export SPORTSBRAIN_RUNTIME_ARTIFACT_STAGE_DIR="$RUNTIME_STAGE_DIR"
 
 cd "$SPORTSBRAIN_DIR" || { echo "ERROR: could not cd to $SPORTSBRAIN_DIR"; exit 1; }
 
+if [ -f "$SPORTSBRAIN_DIR/.env" ]; then
+    set -a
+    . "$SPORTSBRAIN_DIR/.env"
+    set +a
+fi
+
 # shellcheck source=./_health.sh
 source "$SPORTSBRAIN_DIR/scripts/_health.sh"
 # shellcheck source=./_require_main_branch.sh
@@ -71,3 +77,4 @@ echo "--- [$(date '+%Y-%m-%d %H:%M:%S %Z')] scan_cron finished (exit $EXIT_CODE)
 
 # Health-status: track exit + auto-detect fallback markers in the log tail.
 health_finish "daily_scan" "$EXIT_CODE" "" "$LOG"
+exit "$EXIT_CODE"
