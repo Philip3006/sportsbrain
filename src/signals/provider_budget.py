@@ -1,8 +1,8 @@
 """Provider quota tracking and circuit-breaker for odds refresh.
 
-`data/cache/provider_budget.json` is the single source of truth for per-provider
-quota state. The refresher checks this before dispatching any API call. A provider
-with circuit_open=True is skipped entirely until the circuit resets.
+Provider quota state is stored in operator-owned runtime state, seeded from the
+legacy checkout cache when necessary. The refresher checks this before dispatching
+any API call. A provider with circuit_open=True is skipped until the circuit resets.
 
 Circuit reset policy:
   - Automatic: after circuit_reset_at has passed (default: midnight UTC = daily reset)
@@ -18,28 +18,37 @@ import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
+from src.runtime.paths import runtime_state_path
 from src.utils.atomic_io import atomic_write_json
 
 _log = logging.getLogger("sportsbrain.signals.provider_budget")
 
 ROOT = Path(__file__).resolve().parents[2]
-_BUDGET_PATH = ROOT / "data" / "cache" / "provider_budget.json"
+_BUDGET_PATH: Path | None = None
 _API_USAGE_PATH = ROOT / "data" / "cache" / "api_usage.json"
 
 
+def _budget_path() -> Path:
+    if _BUDGET_PATH is not None:
+        return _BUDGET_PATH
+    return runtime_state_path("data/cache/provider_budget.json", require_external=True)
+
+
 def _load() -> dict[str, dict]:
-    if not _BUDGET_PATH.exists():
+    budget_path = _budget_path()
+    if not budget_path.exists():
         return {}
     try:
-        raw = json.loads(_BUDGET_PATH.read_text())
+        raw = json.loads(budget_path.read_text())
         return raw if isinstance(raw, dict) else {}
     except Exception:
         return {}
 
 
 def _save(state: dict[str, dict]) -> None:
-    _BUDGET_PATH.parent.mkdir(parents=True, exist_ok=True)
-    atomic_write_json(_BUDGET_PATH, state)
+    budget_path = _budget_path()
+    budget_path.parent.mkdir(parents=True, exist_ok=True)
+    atomic_write_json(budget_path, state)
 
 
 def _the_odds_api_exhausted() -> bool:
