@@ -364,6 +364,7 @@ def test_allowlist_accepts_all_current_runtime_artifacts(tmp_path: Path):
     artifacts = {
         "docs/data/signals.json": '{"football": []}\n',
         "docs/data/signals_philip.json": '{"football": []}\n',
+        "docs/data/squads.json": '{"teams": {}}\n',
         "docs/data/tennis_live_scores.json": '[]\n',
         "data/cache/tennis_live_scores.json": '[]\n',
         "data/cache/tennis_suspended.json": '[]\n',

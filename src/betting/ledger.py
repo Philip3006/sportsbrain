@@ -22,7 +22,6 @@ import pandas as pd
 
 from src.betting.value_detector import BetSignal
 from src.config import (
-    BANKROLL_SNAPSHOT_PATH,
     BANKROLL_START,
     DEFAULT_USER,
     RESULTS_DIR,
@@ -806,19 +805,15 @@ def _live_bankroll(ledger_path: Path | None = None, *, user: str = DEFAULT_USER)
 
 
 def _resolve_snapshot_path(snapshot_path: Path | None, user: str) -> Path:
-    """Resolves the per-user snapshot path and migrates legacy single-user
-    `bankroll_snapshot.json` into the default user's slot on first call.
+    """Resolve the weekly stake-control snapshot without touching campaign state.
 
-    Explicit `snapshot_path` (e.g. from tests) bypasses migration and is used
-    as-is."""
+    Explicit paths remain supported for tests and controlled callers. The
+    default path is external runtime state, never the private ledger's campaign
+    snapshot of the same historical filename.
+    """
     if snapshot_path is not None:
         return snapshot_path
-    user_path = bankroll_snapshot_path_for(user)
-    if not user_path.exists() and user == DEFAULT_USER and BANKROLL_SNAPSHOT_PATH.exists():
-        # one-shot migration: rename legacy file into the default user's slot.
-        user_path.parent.mkdir(parents=True, exist_ok=True)
-        BANKROLL_SNAPSHOT_PATH.rename(user_path)
-    return user_path
+    return bankroll_snapshot_path_for(user)
 
 
 def peek_bankroll_snapshot(

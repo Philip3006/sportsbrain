@@ -39,10 +39,18 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from scripts._http_retry import retry_request  # noqa: E402
+from src.runtime.paths import runtime_state_path
+from src.utils.atomic_io import atomic_write_json
 
-_SUSPENSIONS_FILE = _ROOT / "data" / "suspensions.json"
+_SUSPENSIONS_FILE: Path | None = None
 _CANDIDATES_FILE = _ROOT / "data" / "suspensions_candidates.json"
 _SQUAD_CACHE_DIR = _ROOT / "data" / "cache" / "squad"
+
+
+def _suspensions_file() -> Path:
+    return _SUSPENSIONS_FILE or runtime_state_path(
+        "data/suspensions.json", require_external=True
+    )
 
 _HEADERS = {
     "User-Agent": (
@@ -266,8 +274,7 @@ def _load_json(path: Path, default):
 
 
 def _save_json(path: Path, data) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False))
+    atomic_write_json(path, data, indent=2, ensure_ascii=False)
 
 
 def split_by_threshold(
@@ -285,7 +292,8 @@ def split_by_threshold(
 
 def merge_into_suspensions(auto: list[Candidate]) -> list[Candidate]:
     """Trägt Auto-Merge-Kandidaten in suspensions.json ein. Returns die neu hinzugefügten."""
-    data = _load_json(_SUSPENSIONS_FILE, default={})
+    path = _suspensions_file()
+    data = _load_json(path, default={})
     added: list[Candidate] = []
     for cand in auto:
         assert cand.team is not None
@@ -295,7 +303,7 @@ def merge_into_suspensions(auto: list[Candidate]) -> list[Candidate]:
             added.append(cand)
     if added:
         data["_injuries_last_updated"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        _save_json(_SUSPENSIONS_FILE, data)
+        _save_json(path, data)
     return added
 
 

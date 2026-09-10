@@ -21,8 +21,15 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
-SUSPENSIONS_FILE = ROOT / "data" / "suspensions.json"
-SQUADS_FILE = ROOT / "docs" / "data" / "squads.json"
+from src.runtime import paths as runtime_paths
+from src.runtime.paths import runtime_artifact_path, runtime_state_path
+from src.utils.atomic_io import atomic_write_json, atomic_write_text
+
+SUSPENSIONS_FILE = runtime_state_path("data/suspensions.json", require_external=True)
+SQUADS_FILE = runtime_artifact_path("docs/data/squads.json")
+_SQUADS_SOURCE = runtime_paths.ROOT / "docs" / "data" / "squads.json"
+if SQUADS_FILE != _SQUADS_SOURCE and not SQUADS_FILE.exists() and _SQUADS_SOURCE.exists():
+    atomic_write_text(SQUADS_FILE, _SQUADS_SOURCE.read_text())
 
 # All 48 WM teams + search query hints
 WM_TEAMS: list[tuple[str, str]] = [
@@ -172,7 +179,7 @@ def _load_suspensions() -> dict:
 
 
 def _save_suspensions(data: dict) -> None:
-    SUSPENSIONS_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2))
+    atomic_write_json(SUSPENSIONS_FILE, data, ensure_ascii=False, indent=2)
 
 
 def _update_squads_json(suspensions: dict) -> int:
@@ -202,7 +209,7 @@ def _update_squads_json(suspensions: dict) -> int:
 
     from datetime import date
     squads["updated"] = str(date.today())
-    SQUADS_FILE.write_text(json.dumps(squads, ensure_ascii=False, indent=2))
+    atomic_write_json(SQUADS_FILE, squads, ensure_ascii=False, indent=2)
     return updated
 
 

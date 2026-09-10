@@ -4,17 +4,15 @@ Tests for the weekly bankroll snapshot used to drive tier-based stake sizing.
 from __future__ import annotations
 
 import json
-from datetime import date, timedelta
 from pathlib import Path
 
 import pytest
 
 from src.betting import ledger as ledger_mod
 from src.betting.ledger import (
+    _current_iso_week,
     get_bankroll_snapshot,
     peek_bankroll_snapshot,
-    _current_iso_week,
-    _live_bankroll,
 )
 
 
@@ -110,68 +108,65 @@ def test_corrupt_snapshot_recovers_gracefully(tmp_paths):
 
 # ───────────── D3 Multi-User-Schema ─────────────
 
-def test_legacy_snapshot_migrates_into_default_user_slot(tmp_path, monkeypatch):
-    """When no per-user snapshot exists yet but the legacy file does, it
-    is renamed into the default user's slot on first call.
-
-    P0D-002: bankroll_snapshot_path_for() now routes through SPORTSBRAIN_LEDGER_DIR.
-    We patch both BANKROLL_SNAPSHOT_PATH (legacy sentinel) and the env var.
-    """
-    import importlib
-    import src.config as cfg
+def test_campaign_snapshot_is_not_used_for_weekly_stake_control(tmp_path, monkeypatch):
+    """Weekly stake state is external and never overwrites campaign accounting."""
+    from src.runtime import paths
 
     ledger_dir = tmp_path / "ledger"
     ledger_dir.mkdir()
-    monkeypatch.setenv("SPORTSBRAIN_LEDGER_DIR", str(ledger_dir))
-    importlib.reload(cfg)
-    import src.betting.ledger as lm
-    importlib.reload(lm)
-
-    legacy = ledger_dir / "bankroll_snapshot.json"
-    legacy.write_text(json.dumps({
-        "iso_year": 1970, "iso_week": 1,
-        "snapshot_date": "1970-01-01", "bankroll": 42.0,
-    }))
-    monkeypatch.setattr(cfg, "BANKROLL_SNAPSHOT_PATH", legacy)
-    monkeypatch.setattr(lm, "BANKROLL_SNAPSHOT_PATH", legacy)
+    campaign = ledger_dir / "bankroll_snapshot_philip.json"
+    campaign_payload = {
+        "starting_bankroll_eur": 100.0,
+        "current_bankroll_eur": 87.67,
+        "phase": "campaign",
+    }
+    campaign.write_text(json.dumps(campaign_payload))
+    runtime_state = tmp_path / "runtime-state"
+    monkeypatch.setenv("SPORTSBRAIN_RUNTIME_STATE_DIR", str(runtime_state))
+    monkeypatch.setattr(paths, "DEFAULT_RUNTIME_STATE_DIR", runtime_state)
 
     ledger = tmp_path / "ledger.csv"
     _write_ledger(ledger, total_pnl=10.0)
 
-    # First call without explicit snapshot_path → triggers migration
-    lm.get_bankroll_snapshot(ledger_path=ledger, user="philip")
-
-    user_path = ledger_dir / "bankroll_snapshot_philip.json"
-    assert user_path.exists(), "user slot file should exist after migration"
-    assert not legacy.exists(), "legacy file should be renamed away"
+    assert ledger_mod.get_bankroll_snapshot(ledger_path=ledger, user="philip") == 110.0
+    weekly = runtime_state / "financial" / "weekly_bankroll_snapshot_philip.json"
+    assert weekly.exists()
+    assert json.loads(campaign.read_text()) == campaign_payload
 
 
 def test_per_user_snapshots_are_isolated(tmp_path, monkeypatch):
-    """Two different users get independent snapshot files.
-
-    P0D-002: bankroll_snapshot_path_for() routes through SPORTSBRAIN_LEDGER_DIR.
-    """
-    import importlib
-    import src.config as cfg
-
-    ledger_dir = tmp_path / "ledger"
-    ledger_dir.mkdir()
-    monkeypatch.setenv("SPORTSBRAIN_LEDGER_DIR", str(ledger_dir))
-    importlib.reload(cfg)
-    import src.betting.ledger as lm
-    importlib.reload(lm)
-
-    legacy = ledger_dir / "bankroll_snapshot.json"
-    monkeypatch.setattr(cfg, "BANKROLL_SNAPSHOT_PATH", legacy)
-    monkeypatch.setattr(lm, "BANKROLL_SNAPSHOT_PATH", legacy)
+    """Two users receive isolated external weekly stake-control snapshots."""
+    runtime_state = tmp_path / "runtime-state"
+    monkeypatch.setenv("SPORTSBRAIN_RUNTIME_STATE_DIR", str(runtime_state))
 
     ledger = tmp_path / "ledger.csv"
     _write_ledger(ledger, total_pnl=23.0)
 
-    a = lm.get_bankroll_snapshot(ledger_path=ledger, user="philip")
-    b = lm.get_bankroll_snapshot(ledger_path=ledger, user="alice")
+    a = ledger_mod.get_bankroll_snapshot(ledger_path=ledger, user="philip")
+    b = ledger_mod.get_bankroll_snapshot(ledger_path=ledger, user="alice")
     assert a == b == 123.0
-    assert (ledger_dir / "bankroll_snapshot_philip.json").exists()
-    assert (ledger_dir / "bankroll_snapshot_alice.json").exists()
-    # And the philip-slot has a `user` field for traceability
-    assert json.loads((ledger_dir / "bankroll_snapshot_philip.json").read_text())["user"] == "philip"
+    assert (runtime_state / "financial" / "weekly_bankroll_snapshot_philip.json").exists()
+    alice = runtime_state / "financial" / "weekly_bankroll_snapshot_alice.json"
+    assert alice.exists()
+    assert json.loads(alice.read_text())["user"] == "alice"
+
+
+def test_cancellation_refund_uses_external_weekly_snapshot(tmp_path, monkeypatch):
+    runtime_state = tmp_path / "runtime-state"
+    monkeypatch.setenv("SPORTSBRAIN_RUNTIME_STATE_DIR", str(runtime_state))
+    campaign = tmp_path / "bankroll_snapshot_philip.json"
+    campaign.write_text(json.dumps({"current_bankroll_eur": 87.67, "phase": "campaign"}))
+    original_campaign = campaign.read_text()
+    ledger = tmp_path / "ledger.csv"
+    ledger.write_text(
+        "match_id,match_date,home,away,market,decimal_odds,stake_pct,stake_amount,"
+        "placed_date,status,pnl,closing_odds,clv,pinnacle_ref_odds,source,model_prob\n"
+        "x,2026-06-15,A,B,home,2.0,0.1,10.00,2026-06-15,open,0.0,,,,value,\n"
+    )
+
+    assert ledger_mod.get_bankroll_snapshot(ledger_path=ledger, user="philip") == 100.0
+    assert ledger_mod.cancel_bet("A", "B", "home", path=ledger, user="philip") == "ok"
+
+    weekly = runtime_state / "financial" / "weekly_bankroll_snapshot_philip.json"
+    assert json.loads(weekly.read_text())["bankroll"] == 110.0
+    assert campaign.read_text() == original_campaign

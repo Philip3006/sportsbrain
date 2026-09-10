@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from src.runtime.paths import runtime_state_path
+
 ROOT = Path(__file__).parent.parent
 DATA_RAW = ROOT / "data" / "raw"
 DATA_CACHE = ROOT / "data" / "cache"
@@ -208,11 +210,15 @@ TENNIS_USE_LIVE_STATS = True
 
 
 def bankroll_snapshot_path_for(user: str = DEFAULT_USER) -> Path:
-    """Per-User-Bankroll-Snapshot-Pfad — stored in the private ledger directory.
+    """Return the operator-owned weekly stake-control snapshot path.
 
-    Requires SPORTSBRAIN_LEDGER_DIR to be set; raises EnvironmentError otherwise.
+    Campaign/accounting snapshots in the private ledger intentionally use a
+    different schema and must never be used for weekly stake control.
     """
-    return _resolve_ledger_dir() / f"bankroll_snapshot_{user}.json"
+    return runtime_state_path(
+        f"financial/weekly_bankroll_snapshot_{user}.json",
+        require_external=True,
+    )
 
 
 def ledger_path_for(user: str = DEFAULT_USER) -> Path:

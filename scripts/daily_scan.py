@@ -267,7 +267,8 @@ if __name__ == "__main__":
         # Load squads.json for current-squad filtering and clean name lookup
         _squads_data = {}
         try:
-            _sq_path = ROOT / "docs" / "data" / "squads.json"
+            from src.runtime.paths import runtime_artifact_path
+            _sq_path = runtime_artifact_path("docs/data/squads.json", active_root=ROOT)
             if _sq_path.exists():
                 _squads_data = _jsc.loads(_sq_path.read_text()).get("teams", {})
         except Exception:

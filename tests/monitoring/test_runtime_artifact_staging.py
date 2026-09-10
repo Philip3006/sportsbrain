@@ -64,6 +64,27 @@ def test_runtime_state_seeds_external_copy_without_touching_active(monkeypatch, 
     assert source.read_text() == "preserved"
 
 
+def test_suspensions_seed_to_external_state_without_touching_active(monkeypatch, tmp_path):
+    from src.runtime import paths
+
+    active = tmp_path / "active"
+    source = active / "data" / "suspensions.json"
+    source.parent.mkdir(parents=True)
+    source.write_text('{"Sweden": ["Eric Smith"]}\n')
+    monkeypatch.setattr(paths, "ROOT", active)
+    monkeypatch.setenv("SPORTSBRAIN_RUNTIME_STATE_DIR", str(tmp_path / "state"))
+
+    target = paths.runtime_state_path("data/suspensions.json", require_external=True)
+
+    assert target.read_text() == source.read_text()
+    assert source.read_text() == '{"Sweden": ["Eric Smith"]}\n'
+
+
+def test_daily_scan_reads_staged_squads_during_the_same_run():
+    source = (ROOT / "scripts" / "daily_scan.py").read_text()
+    assert 'runtime_artifact_path("docs/data/squads.json", active_root=ROOT)' in source
+
+
 def test_provider_budget_migrates_to_external_state_without_mutating_active(monkeypatch, tmp_path):
     from src.runtime import paths
     from src.signals import provider_budget

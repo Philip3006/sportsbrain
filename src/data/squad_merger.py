@@ -8,10 +8,14 @@ import json
 
 import pandas as pd
 
-from .squad_models import (
-    PlayerStatus, SquadReport, _SUSPENSIONS_FILE, default_report,
-)
 from .squad_covers import _fetch_covers_squad, _overlay_sofascore_values
+from .squad_models import (
+    _SUSPENSIONS_FILE,
+    PlayerStatus,
+    SquadReport,
+    default_report,
+    suspension_state_path,
+)
 from .squad_transfermarkt import fetch_transfermarkt_squad
 from .squad_wikipedia import _fetch_wc_squads_page, _fetch_wikipedia_squad
 
@@ -21,11 +25,12 @@ from .squad_wikipedia import _fetch_wc_squads_page, _fetch_wikipedia_squad
 # ---------------------------------------------------------------------------
 
 def load_suspensions() -> dict[str, list[str]]:
-    """Load manually maintained suspension list from data/suspensions.json."""
-    if not _SUSPENSIONS_FILE.exists():
+    """Load durable suspension state seeded from the tracked historical source."""
+    path = _SUSPENSIONS_FILE or suspension_state_path()
+    if not path.exists():
         return {}
     try:
-        data = json.loads(_SUSPENSIONS_FILE.read_text())
+        data = json.loads(path.read_text())
         # Filter out comment keys (starting with _)
         return {k: v for k, v in data.items() if not k.startswith("_")}
     except Exception:

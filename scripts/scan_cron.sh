@@ -65,7 +65,7 @@ PUBLISH_EXIT=0
 source "$SPORTSBRAIN_DIR/scripts/publish_runtime_artifacts.sh"
 runtime_publish_staged_artifacts "$SPORTSBRAIN_DIR" "$RUNTIME_STAGE_DIR" "$LOG" \
     "auto: scan $(date '+%Y-%m-%d')" \
-    docs/data/signals.json docs/data/signals_philip.json
+    docs/data/signals.json docs/data/signals_philip.json docs/data/squads.json
 PUBLISH_EXIT=$?
 EXIT_CODE=$JOB_EXIT
 if [ "$EXIT_CODE" -eq 0 ] && [ "$PUBLISH_EXIT" -ne 0 ]; then

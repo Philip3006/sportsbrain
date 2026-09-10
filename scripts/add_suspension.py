@@ -13,22 +13,35 @@ import json
 import sys
 from pathlib import Path
 
-_SUSPENSIONS_FILE = Path(__file__).resolve().parent.parent / "data" / "suspensions.json"
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
+from src.runtime.paths import runtime_state_path
+from src.utils.atomic_io import atomic_write_json
+
+_SUSPENSIONS_FILE: Path | None = None
+
+
+def _suspensions_file() -> Path:
+    return _SUSPENSIONS_FILE or runtime_state_path(
+        "data/suspensions.json", require_external=True
+    )
 
 
 def _load() -> dict:
-    if not _SUSPENSIONS_FILE.exists():
+    path = _suspensions_file()
+    if not path.exists():
         return {"_comment": "Manual suspension tracking for WM 2026. Update before each match.",
                 "_format": "team_name: [player_name, ...]"}
     try:
-        return json.loads(_SUSPENSIONS_FILE.read_text())
+        return json.loads(path.read_text())
     except Exception as e:
-        print(f"Error reading {_SUSPENSIONS_FILE}: {e}")
+        print(f"Error reading {path}: {e}")
         sys.exit(1)
 
 
 def _save(data: dict) -> None:
-    _SUSPENSIONS_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False))
+    atomic_write_json(_suspensions_file(), data, indent=2, ensure_ascii=False)
 
 
 def _list_all(data: dict) -> None:
