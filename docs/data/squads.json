@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-14",
+  "updated": "2026-09-10",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -856,7 +856,6 @@
       "availability_score": 1.0,
       "ampel": "🟢",
       "suspended": [
-        "Raphinha",
         "Wesley França",
         "Lucas Paquetá"
       ],
@@ -914,7 +913,7 @@
         {
           "name": "Raphinha",
           "pos": "FWD",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Weverton",
