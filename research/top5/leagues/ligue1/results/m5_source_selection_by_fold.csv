@@ -1,0 +1,5 @@
+outer_fold,earlier_seeds,brier_Bookmaker_avg_preclose,brier_Bookmaker_max_preclose,brier_Bet365_preclose,best_dev_brier_source,best_dev_brier_value,canonical_research_baseline_source
+2021,"1819,1920",0.5921329616353302,0.5914096487253261,0.5983714170877121,Bookmaker_max_preclose,0.5914096487253261,Bookmaker_avg_preclose
+2122,"1819,1920,2021",0.5936292111023278,0.5935441355693218,0.5963344855587137,Bookmaker_max_preclose,0.5935441355693218,Bookmaker_avg_preclose
+2223,"1819,1920,2021,2122",0.5950248128639342,0.5949760583876242,0.5966356993585175,Bookmaker_max_preclose,0.5949760583876242,Bookmaker_avg_preclose
+2324,"1819,1920,2021,2122,2223",0.5900591459388583,0.590077826135687,0.5926018823690782,Bookmaker_avg_preclose,0.5900591459388583,Bookmaker_avg_preclose
