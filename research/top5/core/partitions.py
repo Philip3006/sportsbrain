@@ -144,6 +144,24 @@ def holdout_closing_coverage_diagnostics(full_dataset_pkl: Path, holdout_season:
     return pd.DataFrame(rows).sort_values("coverage", ascending=False).reset_index(drop=True)
 
 
+def compute_season_starts_from_data(dataset_pkl: Path, seasons: tuple[str, ...]) -> dict[str, pd.Timestamp]:
+    """Derive per-league causal boundaries from minimum valid match date per season.
+
+    Returns a dict mapping season code -> first match date (Timestamp).
+    This is the authoritative causal cutoff for DC snapshot causality checks:
+    snapshot fit_date must be <= season_start (i.e. fit strictly on prior data).
+    """
+    raw = _read_pkl(dataset_pkl)
+    raw["date"] = pd.to_datetime(raw["date"])
+    raw = raw.dropna(subset=["home_score", "away_score"])
+    out: dict[str, pd.Timestamp] = {}
+    for s in seasons:
+        sub = raw[raw["season"] == s]
+        if len(sub):
+            out[s] = sub["date"].min()
+    return out
+
+
 def _apply_sealed_whitelist(df: pd.DataFrame, partition: str) -> pd.DataFrame:
     kept, dropped = [], []
     for c in df.columns:

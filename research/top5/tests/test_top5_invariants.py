@@ -113,6 +113,59 @@ def test_holdout_absent_from_all_outputs(league_key):
             )
 
 
+@pytest.mark.parametrize("league_key", _available_leagues())
+def test_season_starts_causal(league_key):
+    """Season starts derived from data must be <= any DC snapshot fit_date.
+
+    The invariant: for each season S, the DC snapshot[S] must have been fit
+    strictly before the first match in S, i.e. fit_date <= min_date(S).
+    """
+    cfg = league_cfg.get(league_key)
+    snap_dir = TOP5 / "leagues" / league_key / "results" / "dc_snapshots"
+    if not snap_dir.exists():
+        pytest.skip(f"{league_key}: no DC snapshots yet")
+
+    from research.top5.core import partitions
+    all_seasons = cfg.dev_seasons + (cfg.calibration_season,)
+    season_starts = partitions.compute_season_starts_from_data(cfg.raw_pkl(TOP5), all_seasons)
+
+    import pickle
+    failures = []
+    for pkl in sorted(snap_dir.glob("dc_*.pkl")):
+        s = pkl.stem.split("_")[1]
+        season_start = season_starts.get(s)
+        if season_start is None:
+            continue
+        with open(pkl, "rb") as f:
+            snap = pickle.load(f)
+        fit_date = snap.fit_date
+        if not isinstance(fit_date, pd.Timestamp):
+            fit_date = pd.Timestamp(fit_date)
+        if fit_date > season_start:
+            failures.append(
+                f"season {s}: fit_date={fit_date.date()} > season_start={season_start.date()}")
+    assert not failures, f"{league_key}: DC snapshot causality violations: {failures}"
+
+
+@pytest.mark.parametrize("league_key", _available_leagues())
+def test_dev_outputs_exclude_holdout(league_key):
+    """No dev output CSV should reference the holdout season."""
+    cfg = league_cfg.get(league_key)
+    res = TOP5 / "leagues" / league_key / "results"
+    if not res.exists():
+        pytest.skip(f"{league_key}: no results")
+    violations = []
+    for csv in sorted(res.glob("oof_*.csv")):
+        try:
+            df = pd.read_csv(csv, dtype=str, low_memory=False)
+        except pd.errors.EmptyDataError:
+            continue
+        if "season" in df.columns:
+            if cfg.holdout_season in df["season"].values:
+                violations.append(csv.name)
+    assert not violations, f"{league_key}: holdout season in dev outputs: {violations}"
+
+
 if __name__ == "__main__":
     import traceback
     tests = [f for name, f in list(globals().items()) if name.startswith("test_")]

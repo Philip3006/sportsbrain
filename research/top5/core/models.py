@@ -305,7 +305,62 @@ def run_matched_preclose_vs_close(config: LeagueConfig, top5_root: Path) -> dict
 
 
 def run_all(config: LeagueConfig, top5_root: Path) -> dict:
+    """M5 + M6 + matched pre-close vs close (market-only baseline package)."""
     m5r = run_m5(config, top5_root)
     m6r = run_m6(config, top5_root)
     mr = run_matched_preclose_vs_close(config, top5_root)
     return {"m5": m5r, "m6": m6r, "matched_preclose_close": mr}
+
+
+def run_full_pipeline(config: LeagueConfig, top5_root: Path,
+                      skip_lgbm: bool = False) -> dict:
+    """Full M1–M7 pipeline for a league.
+
+    Phase order:
+      1. Artefact generation (DC snapshots + Elo series)
+      2. M1 (DC walk-forward) + M2 (Elo standalone)
+      3. M3/M4 (LGBM challengers)  — skippable via skip_lgbm
+      4. M5 (market pre-close baseline)
+      5. M6 (market+Elo blend)
+      6. M7 (LGBM market residual)  — skippable via skip_lgbm
+      7. Matched pre-close vs close
+    """
+    from . import artefacts as art
+    from .models_dc import run_m1, run_m2
+    from .models_lgbm import run_m3_m4, run_m7
+
+    print(f"\n{'='*60}\n[pipeline] {config.key} — full M1-M7 pipeline\n{'='*60}", flush=True)
+
+    print(f"[pipeline/{config.key}] Step 1: generating artefacts", flush=True)
+    phi, snap, elo_series = art.generate_artefacts(config, top5_root)
+
+    print(f"[pipeline/{config.key}] Step 2: M1+M2", flush=True)
+    m1r = run_m1(config, top5_root)
+    m2r = run_m2(config, top5_root)
+
+    m3m4r: dict = {}
+    m7r: dict = {}
+    if not skip_lgbm:
+        print(f"[pipeline/{config.key}] Step 3: M3+M4", flush=True)
+        m3m4r = run_m3_m4(config, top5_root)
+
+    print(f"[pipeline/{config.key}] Step 4: M5", flush=True)
+    m5r = run_m5(config, top5_root)
+
+    print(f"[pipeline/{config.key}] Step 5: M6", flush=True)
+    m6r = run_m6(config, top5_root)
+
+    if not skip_lgbm:
+        print(f"[pipeline/{config.key}] Step 6: M7", flush=True)
+        m7r = run_m7(config, top5_root)
+
+    print(f"[pipeline/{config.key}] Step 7: matched pre-close vs close", flush=True)
+    matchr = run_matched_preclose_vs_close(config, top5_root)
+
+    return {
+        "league": config.key, "phi": phi,
+        "m1": m1r, "m2": m2r,
+        "m3_m4": m3m4r,
+        "m5": m5r, "m6": m6r, "m7": m7r,
+        "matched_preclose_close": matchr,
+    }
