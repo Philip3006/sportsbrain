@@ -1,0 +1,15 @@
+{
+  "match_id": "a5886c5c9ac0bf4cac219e292081d438",
+  "player_a": "Alexander Zverev",
+  "player_b": "Karen Khachanov",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260910_23",
+      "ts_utc": "2026-09-10T23:11:30.185500+00:00",
+      "odds_a": 1.18,
+      "odds_b": 4.81,
+      "source": "gtbets"
+    }
+  ]
+}

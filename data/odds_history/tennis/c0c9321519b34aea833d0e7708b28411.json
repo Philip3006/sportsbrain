@@ -1,0 +1,15 @@
+{
+  "match_id": "c0c9321519b34aea833d0e7708b28411",
+  "player_a": "Ben Shelton",
+  "player_b": "Frances Tiafoe",
+  "tournament_slug": "us_open_atp",
+  "snapshots": [
+    {
+      "label": "auto_20260910_23",
+      "ts_utc": "2026-09-10T23:11:30.185718+00:00",
+      "odds_a": 1.33,
+      "odds_b": 3.44,
+      "source": "onexbet"
+    }
+  ]
+}
