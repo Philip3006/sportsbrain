@@ -1,36 +1,31 @@
-"""FLAGSHIP-BL1 — M6 market+Elo blend, M7 market residual model (v5 CORRECTION).
+"""FLAGSHIP-BL1 — M6 market+Elo blend, M7 market residual (v6 STRUCTURAL).
 
-v5-correction changes (CEO §2, §3):
-- M6 and M7 both consume the CANONICAL market policy (canonical_market.py).
-  When alpha=1.0, M6 == M5 by construction (both call the same
-  canonical_market_prob_vec). Verified by explicit assertion in
-  test_bl1_invariants.py.
-- M7 features use the canonical pre-closing market probabilities as its
-  market input, not raw Pinnacle PSH/PSD/PSA. Same policy across all
-  market-anchored models.
-- Access routed through canonical partition loader.
+CEO BL1 V6 §1, §4, §8:
+
+  §1 No direct raw-pickle load of BL1 dataset files. Access routes through
+     `09_partitions.py::load_development_with_market()`.
+  §4 Unified missing-market policy via `canonical_market.apply_policy()`.
+     M5, M6 and M7 all evaluate on the same set of rows.
+  §8 Terminology: no "opening" / "market_open" — canonical / pre-closing.
 
 M6: p = alpha × p_canonical_market + (1 - alpha) × p_Elo
-     alpha selected on nested chronological DEV OOF only (2425 and 2526 outcomes never touched).
-     Grid: 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
+    alpha selected on nested chronological DEV OOF (2425/2526 outcomes
+    never touched). Grid: 0.0..1.0 by 0.1.
+    Under apply_policy(): if the canonical row is missing, the row is
+    dropped for BOTH M5 and M6 — so at alpha=1.0, M6 == M5 exactly.
 
-M7: LGBM residual model with signal-time features:
-     - canonical pre-closing no-vig market probabilities (via canonical_market.py)
-     - Elo pre-match
-     - DC probabilities (per-season snapshot)
-     - DC strengths
-     - rolling form (3, 6)
-     - rolling goals for/against
-     - rest
-     - promoted flags
-     - domestic midweek density (renamed, no Europe claim)
+M7: LGBM residual with signal-time features:
+    - canonical pre-closing no-vig market probabilities
+    - Elo pre-match
+    - DC probabilities (per-season snapshot)
+    - DC strengths
+    - rolling form (3, 6)
+    - rolling goals for/against
+    - rest days
+    - promoted flags
+    - domestic midweek density
 
 Closing prices NEVER enter features.
-
-Uses precomputed:
-  - Elo state: research/bl1/results/elo_series_dev.pkl
-  - DC snapshots: research/bl1/results/dc_snapshots/*.pkl
-  - M5 OOF: research/bl1/results/oof_m5_preclose_dev.csv (Pinnacle_open)
 
 Outputs:
   research/bl1/results/oof_m6_dev_v3.csv
@@ -40,6 +35,7 @@ Outputs:
 """
 from __future__ import annotations
 
+import importlib.util
 import pickle
 import sys
 from pathlib import Path
@@ -51,20 +47,19 @@ import lightgbm as lgb  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
-import importlib.util  # noqa: E402
 from src.models import dixon_coles  # noqa: E402
 from src.models.elo import elo_win_probability, ELO_DEFAULT  # noqa: E402
 
-# Canonical market policy — MUST be used by M6 and M7 to guarantee that
-# alpha=1.0 → M6 == M5. See canonical_market.py.
-_market_spec = importlib.util.spec_from_file_location(
-    "bl1_canonical_market", Path(__file__).resolve().parent / "canonical_market.py")
-market = importlib.util.module_from_spec(_market_spec)
-_market_spec.loader.exec_module(market)
-_partitions_spec = importlib.util.spec_from_file_location(
-    "bl1_partitions", Path(__file__).resolve().parent / "09_partitions.py")
-partitions = importlib.util.module_from_spec(_partitions_spec)
-_partitions_spec.loader.exec_module(partitions)
+
+def _load(module_name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+partitions = _load("bl1_partitions", ROOT / "research/bl1/scripts/09_partitions.py")
+market = _load("bl1_canonical_market", ROOT / "research/bl1/scripts/canonical_market.py")
 
 RES = ROOT / "research" / "bl1" / "results"
 SNAP_DIR = RES / "dc_snapshots"
@@ -73,7 +68,7 @@ RAW_PKL = ROOT / "research" / "bl1" / "dataset" / "bl1_raw.pkl"
 
 DEV_SEASONS = ["1617", "1718", "1819", "1920", "2021", "2122", "2223", "2324"]
 OUTER_FOLDS = ["2021", "2122", "2223", "2324"]
-CALIB_TRAIN_FOLDS = ["1819", "1920"]  # earlier dev seasons available in OOF
+CALIB_TRAIN_FOLDS = ["1819", "1920"]
 ALPHA_GRID = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
 
@@ -92,33 +87,17 @@ def _logloss(y, p):
     return float(-np.mean(np.sum(onehot * np.log(p), axis=1)))
 
 
-def _devig_basic(oh, od, oa):
-    if any(pd.isna(x) or x <= 1.0 for x in (oh, od, oa)):
-        return None
-    inv = np.array([1 / oh, 1 / od, 1 / oa])
-    return inv / inv.sum()
-
-
 def _load_dc_snapshots() -> dict:
+    """DC snapshots are precomputed research artefacts (not raw dataset)."""
     return {p.stem.split("_")[1]: pickle.load(open(p, "rb")) for p in sorted(SNAP_DIR.glob("dc_*.pkl"))}
 
 
-def _build_market_prob(row) -> tuple[np.ndarray, bool]:
-    """Returns (canonical p_market as [away, draw, home], is_fallback).
-
-    Uses the CANONICAL operational policy. When alpha=1.0 in M6, the
-    output must equal M5 exactly — that invariant is enforced by both
-    M5 and M6 calling this same policy.
-
-    If canonical source is missing, falls back to BL1 base rate. This
-    fallback IS documented as part of the operational policy (a missing
-    canonical row is uncommon; base-rate fallback preserves determinism).
-    """
-    result = market.canonical_market_prob(row)
-    if result is None:
-        return np.array([0.297, 0.253, 0.450]), True
-    p, _ = result
-    return p, False
+def _load_elo_series():
+    """Precomputed Elo series (research artefact, not raw dataset)."""
+    with open(RES / "elo_series_dev.pkl", "rb") as f:
+        elo_series = pickle.load(f)
+    elo_series["date"] = pd.to_datetime(elo_series["date"])
+    return elo_series
 
 
 def _rolling_pts(hist, team, before, n):
@@ -169,16 +148,18 @@ def _domestic_midweek_density(hist, team, before, days):
 
 
 def _build_features_m7(slice_df, hist_universe, snap, elo_series, promoted_map):
+    """Feature builder — evaluates ONLY on rows where the canonical market
+    is available (apply_policy has already been applied by the caller)."""
     elo_lookup = elo_series.set_index(["date", "home_team", "away_team"])[["elo_home_pre", "elo_away_pre"]]
-    rows = []
-    y_arr = []
+    rows, y_arr = [], []
     slice_df = slice_df.sort_values(["date", "home_team"], kind="stable").reset_index(drop=True)
-    for _, r in slice_df.iterrows():
+    # Canonical market probs + row filter — same policy as M5/M6.
+    kept, p_mkt_all = market.apply_policy(slice_df)
+    for i, r in kept.iterrows():
         home, away = r["home_team"], r["away_team"]
         date = pd.Timestamp(r["date"])
         season = r["season"]
 
-        # DC from season snapshot
         dc_params = snap.get(season)
         if dc_params is None or home not in dc_params.attack or away not in dc_params.attack:
             dc_p = {"p_home": 0.44, "p_draw": 0.26, "p_away": 0.30}
@@ -190,7 +171,6 @@ def _build_features_m7(slice_df, hist_universe, snap, elo_series, promoted_map):
             dc_def_h = dc_params.defence.get(home, 0.0)
             dc_def_a = dc_params.defence.get(away, 0.0)
 
-        # Elo pre-match
         try:
             elo_row = elo_lookup.loc[(date, home, away)]
             eh = float(elo_row["elo_home_pre"])
@@ -199,14 +179,10 @@ def _build_features_m7(slice_df, hist_universe, snap, elo_series, promoted_map):
             eh = ea = ELO_DEFAULT
         ph_e, pd_e, pa_e = elo_win_probability(eh, ea, neutral=False)
 
-        # Opening market probabilities (SIGNAL-TIME allowed)
-        p_mkt, mkt_missing = _build_market_prob(r)
-        # p_mkt is [away, draw, home] convention
-
+        p_mkt = p_mkt_all[i]  # [away, draw, home]
         promoted_set = promoted_map.get(season, set())
         feat = {
             "mkt_p_home": p_mkt[2], "mkt_p_draw": p_mkt[1], "mkt_p_away": p_mkt[0],
-            "mkt_missing": int(mkt_missing),
             "dc_p_home": dc_p["p_home"], "dc_p_draw": dc_p["p_draw"], "dc_p_away": dc_p["p_away"],
             "dc_atk_home": dc_atk_h, "dc_def_home": dc_def_h,
             "dc_atk_away": dc_atk_a, "dc_def_away": dc_def_a,
@@ -229,7 +205,7 @@ def _build_features_m7(slice_df, hist_universe, snap, elo_series, promoted_map):
         }
         rows.append(feat)
         y_arr.append(int(r["y"]))
-    return pd.DataFrame(rows), np.array(y_arr)
+    return pd.DataFrame(rows), np.array(y_arr, dtype=np.int64), kept
 
 
 def _promoted_by_season(raw):
@@ -244,70 +220,63 @@ def _promoted_by_season(raw):
     return out
 
 
-def main() -> None:
-    # Load dev+calib raw for feature history
-    with open(RAW_PKL, "rb") as f:
-        raw_r = pickle.load(f)
-    raw_r["season"] = raw_r["season"].astype(str)
-    raw_r = raw_r.dropna(subset=["home_score", "away_score"]).copy()
-    raw_r["y"] = raw_r.apply(_label, axis=1)
-    raw_r = raw_r.sort_values(["date", "home_team"], kind="stable").reset_index(drop=True)
-    raw_dev = raw_r[raw_r["season"].isin(DEV_SEASONS)].copy()
+def _apply_policy_and_elo(fold_df: pd.DataFrame, elo_series: pd.DataFrame):
+    """Returns (kept_df, p_mkt (n,3), p_elo (n,3), y)."""
+    kept, p_mkt = market.apply_policy(fold_df.sort_values(["date", "home_team"], kind="stable"))
+    elo_lookup = elo_series.set_index(["date", "home_team", "away_team"])
+    ys, pelo = [], []
+    for _, r in kept.iterrows():
+        date = pd.Timestamp(r["date"]); home = r["home_team"]; away = r["away_team"]
+        try:
+            elo_row = elo_lookup.loc[(date, home, away)]
+            eh = float(elo_row["elo_home_pre"]); ea = float(elo_row["elo_away_pre"])
+        except Exception:
+            eh = ea = ELO_DEFAULT
+        ph, pd_, pa = elo_win_probability(eh, ea, neutral=False)
+        pelo.append([pa, pd_, ph])
+        ys.append(int(r["y"]))
+    pelo_arr = np.array(pelo).reshape(-1, 3) if pelo else np.empty((0, 3))
+    return kept, p_mkt, pelo_arr, np.array(ys, dtype=int)
 
-    # Join canonical-market columns from bl1_raw_full.pkl. Uses the canonical
-    # policy source AvgH/AvgD/AvgA — same source that M5 (15_m5) consumes.
-    with open(FULL_PKL, "rb") as f:
-        raw_full = pickle.load(f)
-    raw_full["season"] = raw_full["season"].astype(str)
-    raw_full["date"] = pd.to_datetime(raw_full["date"])
-    canonical_cols = list(market.CANONICAL_COLUMNS)
-    raw_dev = raw_dev.merge(
-        raw_full[["date", "home_team", "away_team"] + canonical_cols],
-        on=["date", "home_team", "away_team"], how="left", suffixes=("", "_full"),
-    )
+
+def main() -> None:
+    # ---- Load DEV+market via canonical partition helper ----
+    raw_dev = partitions.load_development_with_market(RAW_PKL, FULL_PKL, include_closing=False)
+    raw_dev["y"] = raw_dev.apply(_label, axis=1)
+    raw_dev["date"] = pd.to_datetime(raw_dev["date"])
+    raw_dev = raw_dev.sort_values(["date", "home_team"], kind="stable").reset_index(drop=True)
+    # Apply the unified missing-market policy at the DEV level so downstream
+    # inner-val selection and rolling-history filters see the same evaluated
+    # row set. Earlier dev seasons without AvgH coverage are excluded from
+    # both training and evaluation — this is the deterministic shared policy.
+    raw_dev, _ = market.apply_policy(raw_dev)
+    print(f"[16_m6_m7] DEV+market after unified policy: n={len(raw_dev)}", flush=True)
 
     snap = _load_dc_snapshots()
-    with open(RES / "elo_series_dev.pkl", "rb") as f:
-        elo_series = pickle.load(f)
-    elo_series["date"] = pd.to_datetime(elo_series["date"])
+    elo_series = _load_elo_series()
     promoted_map = _promoted_by_season(raw_dev)
 
-    # ---- M6: alpha selection on nested chronological dev OOF ----
-    # Build market probs and Elo probs per outer fold. Select alpha per outer
-    # fold using earlier chronological folds only.
-    m6_outer_rows = []
-    alpha_selection = []
+    # ---- M6: unified apply_policy per fold, then chronological alpha selection ----
     fold_data = {}
     for outer in OUTER_FOLDS + CALIB_TRAIN_FOLDS:
-        fold_df = raw_dev[raw_dev["season"] == outer].sort_values(["date", "home_team"], kind="stable").reset_index(drop=True)
-        ps, ys, dts, hs, as_, seasons = [], [], [], [], [], []
-        pmkt_all, pelo_all = [], []
-        for _, r in fold_df.iterrows():
-            date = pd.Timestamp(r["date"]); home = r["home_team"]; away = r["away_team"]
-            p_mkt, missing = _build_market_prob(r)
-            try:
-                elo_row = elo_series.set_index(["date", "home_team", "away_team"]).loc[(date, home, away)]
-                eh = float(elo_row["elo_home_pre"]); ea = float(elo_row["elo_away_pre"])
-            except Exception:
-                eh = ea = ELO_DEFAULT
-            ph, pd_, pa = elo_win_probability(eh, ea, neutral=False)
-            p_elo = np.array([pa, pd_, ph])
-            pmkt_all.append(p_mkt); pelo_all.append(p_elo)
-            ys.append(int(r["y"])); dts.append(date); hs.append(home); as_.append(away); seasons.append(outer)
+        fold_df = raw_dev[raw_dev["season"] == outer].copy()
+        kept, p_mkt, p_elo, ys = _apply_policy_and_elo(fold_df, elo_series)
         fold_data[outer] = {
-            "y": np.array(ys), "p_mkt": np.array(pmkt_all), "p_elo": np.array(pelo_all),
-            "date": dts, "home_team": hs, "away_team": as_, "season": seasons,
+            "y": ys, "p_mkt": p_mkt, "p_elo": p_elo,
+            "date": kept["date"].tolist(),
+            "home_team": kept["home_team"].tolist(),
+            "away_team": kept["away_team"].tolist(),
+            "season": [outer] * len(kept),
         }
 
-    # For each OUTER fold, select alpha using earlier folds
+    m6_outer_rows = []
+    alpha_selection = []
     for i, outer in enumerate(OUTER_FOLDS):
         earlier = CALIB_TRAIN_FOLDS + OUTER_FOLDS[:i]
-        # Pool earlier folds' data
         y_train = np.concatenate([fold_data[e]["y"] for e in earlier])
         pmkt_train = np.concatenate([fold_data[e]["p_mkt"] for e in earlier], axis=0)
         pelo_train = np.concatenate([fold_data[e]["p_elo"] for e in earlier], axis=0)
-        best_alpha = 0.0
-        best_brier = np.inf
+        best_alpha, best_brier = 0.0, np.inf
         alpha_rows = []
         for a in ALPHA_GRID:
             p_blend = a * pmkt_train + (1 - a) * pelo_train
@@ -316,7 +285,6 @@ def main() -> None:
             if b < best_brier:
                 best_brier = b; best_alpha = a
         alpha_selection.extend(alpha_rows)
-        # Apply best alpha to outer fold
         p_val = best_alpha * fold_data[outer]["p_mkt"] + (1 - best_alpha) * fold_data[outer]["p_elo"]
         y_val = fold_data[outer]["y"]
         val_brier = _brier(y_val, p_val)
@@ -340,38 +308,55 @@ def main() -> None:
     _alpha.to_csv(RES / "m6_alpha_sweep.csv", index=False)
     print(f"\nM6 pooled dev OOF Brier = {_brier(m6_oof['y'].values, m6_oof[['m6_p_away','m6_p_draw','m6_p_home']].values):.4f}", flush=True)
 
-    # ---- M7: LGBM residual model ----
-    print("\n=== Building M7 LGBM residual model (market probs allowed as features) ===", flush=True)
+    # ---- M7: LGBM residual, features built on the apply_policy-kept rows ----
+    print("\n=== Building M7 LGBM residual model ===", flush=True)
     dev_oof_rows_m7 = []
     for outer in OUTER_FOLDS:
         val_df = raw_dev[raw_dev["season"] == outer].copy()
         train_df = raw_dev[raw_dev["date"] < val_df["date"].min()].copy()
         inner_seasons = sorted(train_df["season"].unique())
-        inner_val_season = inner_seasons[-1]
-        train_inner = train_df[train_df["season"] != inner_val_season]
-        train_innerval = train_df[train_df["season"] == inner_val_season]
-
-        X_train, y_train = _build_features_m7(train_inner, train_inner, snap, elo_series, promoted_map)
-        X_iv, y_iv = _build_features_m7(train_innerval, train_df, snap, elo_series, promoted_map)
-        X_val, y_val = _build_features_m7(val_df, train_df, snap, elo_series, promoted_map)
-        cols = X_train.columns.tolist()
-        X_iv = X_iv.reindex(columns=cols, fill_value=0.0)
-        X_val = X_val.reindex(columns=cols, fill_value=0.0)
-
-        m = lgb.LGBMClassifier(
-            objective="multiclass", num_class=3,
-            n_estimators=500, learning_rate=0.05, num_leaves=15,
-            min_child_samples=30, reg_lambda=1.0,
-            subsample=0.8, colsample_bytree=0.9,
-            random_state=42, n_jobs=1, verbose=-1,
-        )
-        m.fit(X_train, y_train, eval_set=[(X_iv, y_iv)],
-              callbacks=[lgb.early_stopping(30, verbose=False)])
+        # If fewer than 2 earlier seasons exist under the unified policy,
+        # train on all earlier rows without an inner-val holdout (no early
+        # stopping). This happens for the earliest outer fold when only one
+        # earlier season has canonical market coverage.
+        if len(inner_seasons) < 2:
+            X_train, y_train, _ = _build_features_m7(train_df, train_df, snap, elo_series, promoted_map)
+            X_val, y_val, kept_val = _build_features_m7(val_df, train_df, snap, elo_series, promoted_map)
+            cols = X_train.columns.tolist()
+            X_val = X_val.reindex(columns=cols, fill_value=0.0)
+            m = lgb.LGBMClassifier(
+                objective="multiclass", num_class=3,
+                n_estimators=200, learning_rate=0.05, num_leaves=15,
+                min_child_samples=30, reg_lambda=1.0,
+                subsample=0.8, colsample_bytree=0.9,
+                random_state=42, n_jobs=1, verbose=-1,
+            )
+            m.fit(X_train, y_train)
+        else:
+            inner_val_season = inner_seasons[-1]
+            train_inner = train_df[train_df["season"] != inner_val_season]
+            train_innerval = train_df[train_df["season"] == inner_val_season]
+            X_train, y_train, _ = _build_features_m7(train_inner, train_inner, snap, elo_series, promoted_map)
+            X_iv, y_iv, _ = _build_features_m7(train_innerval, train_df, snap, elo_series, promoted_map)
+            X_val, y_val, kept_val = _build_features_m7(val_df, train_df, snap, elo_series, promoted_map)
+            cols = X_train.columns.tolist()
+            X_iv = X_iv.reindex(columns=cols, fill_value=0.0)
+            X_val = X_val.reindex(columns=cols, fill_value=0.0)
+            m = lgb.LGBMClassifier(
+                objective="multiclass", num_class=3,
+                n_estimators=500, learning_rate=0.05, num_leaves=15,
+                min_child_samples=30, reg_lambda=1.0,
+                subsample=0.8, colsample_bytree=0.9,
+                random_state=42, n_jobs=1, verbose=-1,
+            )
+            m.fit(X_train, y_train, eval_set=[(X_iv, y_iv)],
+                  callbacks=[lgb.early_stopping(30, verbose=False)])
         probs = m.predict_proba(X_val)
-        kv = val_df.sort_values(["date", "home_team"], kind="stable").reset_index(drop=True)
         fold_oof = pd.DataFrame({
-            "season": outer, "date": kv["date"].values,
-            "home_team": kv["home_team"].values, "away_team": kv["away_team"].values,
+            "season": outer,
+            "date": kept_val["date"].values,
+            "home_team": kept_val["home_team"].values,
+            "away_team": kept_val["away_team"].values,
             "y": y_val,
             "m7_p_away": probs[:, 0], "m7_p_draw": probs[:, 1], "m7_p_home": probs[:, 2],
         })
@@ -389,7 +374,7 @@ def main() -> None:
     m5 = pd.read_csv(RES / "oof_m5_preclose_dev.csv", dtype={"season": str})
     y5 = m5["y"].to_numpy(); p5 = m5[["m5_p_away", "m5_p_draw", "m5_p_home"]].to_numpy()
     rows = [
-        {"model": "M5_market_open", "n": len(y5), "brier": _brier(y5, p5), "logloss": _logloss(y5, p5)},
+        {"model": "M5_market_preclose", "n": len(y5), "brier": _brier(y5, p5), "logloss": _logloss(y5, p5)},
         {"model": "M6_market_elo_blend", "n": len(m6_oof), "brier": _brier(m6_oof['y'].values, m6_oof[['m6_p_away','m6_p_draw','m6_p_home']].values), "logloss": _logloss(m6_oof['y'].values, m6_oof[['m6_p_away','m6_p_draw','m6_p_home']].values)},
         {"model": "M7_market_residual", "n": len(m7_oof), "brier": _brier(m7_oof['y'].values, m7_oof[['m7_p_away','m7_p_draw','m7_p_home']].values), "logloss": _logloss(m7_oof['y'].values, m7_oof[['m7_p_away','m7_p_draw','m7_p_home']].values)},
     ]

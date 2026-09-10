@@ -1,92 +1,59 @@
-"""FLAGSHIP-BL1 — Canonical operational market policy.
+"""FLAGSHIP-BL1 — Canonical market probability policy (v6).
 
-CEO BL1 V5 CORRECTION PASS §2:
-> M6 must use the EXACT SAME M5 market probability vector per evaluated
-> match/fold. Prefer consuming canonical M5 OOF probabilities or one
-> shared deterministic market-policy implementation.
+CEO BL1 V6 FINAL STRUCTURAL CORRECTION §4: define ONE shared deterministic
+missing-market policy consumed by M5, M6 and M7. All three market-anchored
+models must use identical:
+  - market probability generation
+  - missing-data behavior
+  - evaluated-row semantics
 
-This module IS the shared deterministic implementation. M5, M6 and M7
-all call `canonical_market_prob()`. Every downstream comparison
-(M6 blend, M7 residual features, edge sweep, matched preclose vs close)
-consumes the same function so consistency is enforced by construction.
+Missing-data policy:
 
-Design decision — operational source selection:
+    If the canonical pre-closing source is missing for a row, that row is
+    DROPPED from the evaluated set. It is neither substituted with a
+    base-rate fallback nor silently zero-imputed. Rationale: this is a
+    market-ANCHORED model family; if the market anchor is missing, the
+    model does not apply for that row. Dropping is deterministic,
+    consistent, and preserves the invariant that M5, M6 and M7 evaluate
+    on the same match set.
 
-  The v5 research per-fold chronological Brier selection returned Bet365
-  pre-closing in EVERY fold (2021, 2122, 2223, 2324). The margin over
-  Pinnacle pre-closing is small (<0.001 Brier).
+Canonical operational source:
 
-  Selecting the operational source ONLY on marginal dev Brier is
-  disallowed per CEO §8. The operational choice must weight
-  timing meaning, production reproducibility, coverage, reliability,
-  deterministic fallback, and holdout safety. See
-  `research/bl1/results/source_governance.md` for the multi-criteria
-  scoring.
+    Bookmaker-average pre-closing (`AvgH / AvgD / AvgA`) with basic
+    normalization. See `research/bl1/results/source_governance.md` for the
+    multi-criteria rationale (research-baseline framing, not a locked
+    production choice — BL1 has no production signal-time contract).
 
-  The v5-correction operational choice: **Bookmaker average pre-closing**
-  (`AvgH / AvgD / AvgA`) with basic normalization.
-
-  Rationale summarized here (full in source_governance.md):
-  - Coverage on 2526: 100% (vs Pinnacle 49.0%)
-  - Deterministic: the arithmetic mean across bookmakers is fully
-    reproducible given the same input odds.
-  - Reduces single-provider reliability risk (Pinnacle feed issue since
-    2025-07-23; the retained warning still holds).
-  - Timing consistency: the aggregate reflects the median pre-closing
-    market snapshot rather than one provider's idiosyncratic timing.
-  - Dev Brier: 0.5812 (dev slice via Bookmaker-avg preclose × basic —
-    within 0.001 of Bet365 preclose 0.5811 which was chosen only on
-    dev Brier).
-
-  The per-fold Bet365 outcome is retained as a research benchmark in
-  `m5_source_selection_by_fold.csv` but is NOT the operational input.
-
-De-vig: basic normalization. Locked in v3 61_market_hierarchy_dev.py
-via dev-only selection. Shin over-corrects Bundesliga 1X2 markets;
-log-odds and power are within 0.0006 Brier of basic; basic wins on
-interpretability + no free hyperparameter.
+De-vig: basic normalization (locked in v3 61_market_hierarchy_dev.py via
+dev-only selection).
 """
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
 
-# Canonical operational pre-closing source. Do NOT change this without
-# CEO authorisation and re-running the full contamination test.
 CANONICAL_PRECLOSE_SOURCE = "Bookmaker_avg_preclose"
 CANONICAL_COLUMNS = ("AvgH", "AvgD", "AvgA")  # home, draw, away pre-closing
 
 
-def canonical_market_prob(row: pd.Series) -> tuple[np.ndarray, bool] | None:
-    """Returns (probability vector in [away, draw, home] order, is_fallback).
-
-    Uses the canonical source with basic normalization. Returns None if
-    the canonical source is not available for this row — callers must
-    handle the None case explicitly (fallback policy is caller-controlled;
-    the market policy itself does not silently substitute).
-
-    Never reads closing prices.
-    """
-    h, d, a = CANONICAL_COLUMNS
-    oh, od, oa = row.get(h), row.get(d), row.get(a)
-    if any(pd.isna(x) or x <= 1.0 for x in (oh, od, oa)):
-        return None
-    inv = np.array([1.0 / oh, 1.0 / od, 1.0 / oa], dtype=np.float64)
-    p_home_draw_away = inv / inv.sum()
-    # Return in [away, draw, home] convention used throughout the pipeline.
-    return np.array([p_home_draw_away[2], p_home_draw_away[1], p_home_draw_away[0]]), False
-
-
-def canonical_market_prob_vec(df: pd.DataFrame) -> np.ndarray:
-    """Vectorised form: returns (n, 3) array of [p_away, p_draw, p_home].
-    Rows with missing canonical odds get NaN — callers must decide fallback.
-    """
+def _valid_mask(df: pd.DataFrame) -> np.ndarray:
     h, d, a = CANONICAL_COLUMNS
     oh = df[h].to_numpy(dtype=np.float64)
     od = df[d].to_numpy(dtype=np.float64)
     oa = df[a].to_numpy(dtype=np.float64)
-    valid = (np.isfinite(oh) & np.isfinite(od) & np.isfinite(oa)
-              & (oh > 1.0) & (od > 1.0) & (oa > 1.0))
+    return (np.isfinite(oh) & np.isfinite(od) & np.isfinite(oa)
+            & (oh > 1.0) & (od > 1.0) & (oa > 1.0))
+
+
+def canonical_market_prob_vec(df: pd.DataFrame) -> np.ndarray:
+    """Vectorised probabilities in [p_away, p_draw, p_home] order.
+    Rows with missing canonical odds get NaN — use apply_policy() to
+    drop them under the unified missing-data policy."""
+    h, d, a = CANONICAL_COLUMNS
+    oh = df[h].to_numpy(dtype=np.float64)
+    od = df[d].to_numpy(dtype=np.float64)
+    oa = df[a].to_numpy(dtype=np.float64)
+    valid = _valid_mask(df)
     inv_h = np.where(valid, 1.0 / oh, np.nan)
     inv_d = np.where(valid, 1.0 / od, np.nan)
     inv_a = np.where(valid, 1.0 / oa, np.nan)
@@ -95,3 +62,33 @@ def canonical_market_prob_vec(df: pd.DataFrame) -> np.ndarray:
     p_draw = inv_d / s
     p_away = inv_a / s
     return np.stack([p_away, p_draw, p_home], axis=1)
+
+
+def apply_policy(df: pd.DataFrame) -> tuple[pd.DataFrame, np.ndarray]:
+    """Unified missing-data policy for all market-anchored models.
+
+    Returns (kept_df, probs) where:
+      - kept_df is the input df restricted to rows with a valid canonical
+        market probability, reset_index-dropped
+      - probs is an (n_kept, 3) array in [p_away, p_draw, p_home] order
+
+    M5, M6 and M7 MUST call this function so their evaluated row-sets and
+    their probability semantics are bit-identical.
+    """
+    valid = _valid_mask(df)
+    kept = df[valid].reset_index(drop=True).copy()
+    probs = canonical_market_prob_vec(kept)
+    return kept, probs
+
+
+def canonical_market_prob(row: pd.Series) -> tuple[np.ndarray, bool] | None:
+    """Single-row form for legacy call sites. Returns (probs, is_fallback=False)
+    or None if the canonical source is missing. Callers using apply_policy()
+    should prefer that entry point for consistency."""
+    h, d, a = CANONICAL_COLUMNS
+    oh, od, oa = row.get(h), row.get(d), row.get(a)
+    if any(pd.isna(x) or x <= 1.0 for x in (oh, od, oa)):
+        return None
+    inv = np.array([1.0 / oh, 1.0 / od, 1.0 / oa], dtype=np.float64)
+    p_home_draw_away = inv / inv.sum()
+    return np.array([p_home_draw_away[2], p_home_draw_away[1], p_home_draw_away[0]]), False

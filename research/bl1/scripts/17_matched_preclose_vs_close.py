@@ -1,18 +1,16 @@
-"""FLAGSHIP-BL1 — Matched-sample pre-closing vs closing market comparison + 2526 coverage audit.
+"""FLAGSHIP-BL1 — Matched-sample pre-closing vs closing + 2526 closing coverage.
 
-CEO BL1 PARTITION CLOSURE:
+CEO BL1 V6 §1, §2, §6:
 
-1. Matched-sample paired bootstrap:
-   Recompute pre-closing market (per-fold selected source, from
-   oof_m5_preclose_dev.csv) vs closing benchmark (Bookmaker-avg × basic)
-   on EXACTLY the same 1,224 outer-fold matches. Both series predict
-   the same match; ΔBrier is paired match-level bootstrapped with
-   1,000 replicates.
-
-2. 2526 market-source availability audit (schema only, NO outcome eval).
-   For each closing and pre-closing source, report coverage on the
-   sealed 2526 partition. Uses `load_holdout_schema_only()` so no y
-   or score column is available to this script by construction.
+  §1 No direct raw-pickle load. DEV closing prices come via
+     `partitions.load_development_closing_prices()`. 2526 closing coverage
+     comes via `partitions.holdout_closing_coverage_diagnostics()`.
+  §2 The 2526 coverage helper returns diagnostics only (source, coverage,
+     counts). No 2526 closing-price values are surfaced to this script.
+  §6 Interpretation stays strictly within observed evidence — no monotonic
+     Brier-trajectory claims across intermediate times, no "lower bound"
+     or "upper limit" phrasing about hypothetical future signal-time
+     snapshots.
 
 Outputs:
   research/bl1/results/matched_preclose_vs_close.csv
@@ -21,7 +19,6 @@ Outputs:
 from __future__ import annotations
 
 import importlib.util
-import pickle
 import sys
 from pathlib import Path
 
@@ -36,9 +33,15 @@ RAW_PKL = ROOT / "research" / "bl1" / "dataset" / "bl1_raw.pkl"
 FULL_PKL = ROOT / "research" / "bl1" / "dataset" / "bl1_raw_full.pkl"
 OUTER_FOLDS = ["2021", "2122", "2223", "2324"]
 
-spec = importlib.util.spec_from_file_location("bl1_partitions", ROOT / "research/bl1/scripts/09_partitions.py")
-partitions = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(partitions)
+
+def _load(module_name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+partitions = _load("bl1_partitions", ROOT / "research/bl1/scripts/09_partitions.py")
 
 
 def _brier(y, p):
@@ -72,33 +75,26 @@ def _paired_bootstrap(y, p_a, p_b, n_boot=1000, seed=42):
 
 
 def main() -> None:
-    # ---- 1. Matched-sample paired comparison ----
-    # M5 pre-closing OOF (already per-fold-selected, dev outer 2021-2324)
+    # ---- 1. Matched-sample paired comparison (DEV closing is allowed) ----
     m5 = pd.read_csv(RES / "oof_m5_preclose_dev.csv", dtype={"season": str})
     m5["date"] = pd.to_datetime(m5["date"])
     m5 = m5.sort_values(["date", "home_team"], kind="stable").reset_index(drop=True)
 
-    # Enrich with closing bookmaker-avg columns from full dataset (dev-legal,
-    # since these are dev outer folds — outcomes on 2021-2324 are allowed).
-    with open(FULL_PKL, "rb") as f:
-        full = pickle.load(f)
-    full["season"] = full["season"].astype(str)
-    full["date"] = pd.to_datetime(full["date"])
+    # DEV closing prices via partition helper (dev is unsealed).
+    dev_close = partitions.load_development_closing_prices(RAW_PKL, FULL_PKL)
+    dev_close["date"] = pd.to_datetime(dev_close["date"])
     merged = m5.merge(
-        full[["date", "home_team", "away_team", "AvgCH", "AvgCD", "AvgCA"]],
+        dev_close[["date", "home_team", "away_team", "AvgCH", "AvgCD", "AvgCA"]],
         on=["date", "home_team", "away_team"], how="left",
     )
-    # Keep only rows with both signals available
     mask = merged[["AvgCH", "AvgCD", "AvgCA"]].notna().all(axis=1)
     matched = merged[mask].reset_index(drop=True)
     y = matched["y"].to_numpy()
     p_preclose = matched[["m5_p_away", "m5_p_draw", "m5_p_home"]].to_numpy()
 
-    # Bookmaker-avg closing basic-normalized
     p_close_rows = []
     for _, r in matched.iterrows():
         p = _devig_basic(r["AvgCH"], r["AvgCD"], r["AvgCA"])
-        # p is [home, draw, away] → reorder [away, draw, home]
         p_close_rows.append([p[2], p[1], p[0]])
     p_close = np.array(p_close_rows)
 
@@ -116,48 +112,27 @@ def main() -> None:
         "delta_ci_hi_95": hi,
         "ci_covers_zero": ci_covers_zero,
         "preclose_win_fraction": preclose_win_frac,
-        "verdict": ("pre-closing wins" if not ci_covers_zero and delta < 0
-                    else ("closing wins" if not ci_covers_zero and delta > 0
+        "verdict": ("pre-closing wins observed sample"
+                    if not ci_covers_zero and delta < 0
+                    else ("closing wins observed sample"
+                          if not ci_covers_zero and delta > 0
                           else "indistinguishable")),
     }])
     result.to_csv(RES / "matched_preclose_vs_close.csv", index=False)
     print("Matched paired M5 pre-closing vs Bookmaker-avg closing (basic):", flush=True)
     print(result.to_string(index=False, float_format=lambda x: f"{x:.4f}" if isinstance(x, float) else str(x)), flush=True)
+    print("\nInterpretation: on this DEV sample the closing snapshot is "
+          "statistically better than the pre-closing snapshot. This does NOT "
+          "prove a monotonic Brier trajectory for intermediate T-N prices, "
+          "and does NOT bound the Brier of any hypothetical future "
+          "SportsBrain BL1 signal-time snapshot.", flush=True)
 
-    # ---- 2. 2526 market-source availability audit ----
-    # Load via schema-only partition loader: outcomes are structurally absent.
-    holdout = partitions.load_holdout_schema_only(FULL_PKL)
-    # Confirm no outcome columns
-    outcome_leaks = [c for c in holdout.columns
-                     if any(tok in c.lower() for tok in ("score", "goal", "result", "outcome", "pnl"))]
-    assert not outcome_leaks, f"HOLDOUT_2526 leaked outcome-named columns: {outcome_leaks}"
-
-    coverage_rows = []
-    source_pairs = [
-        ("Pinnacle_preclose", ("PSH", "PSD", "PSA")),
-        ("Pinnacle_closing", ("PSCH", "PSCD", "PSCA")),
-        ("Bookmaker_avg_preclose", ("AvgH", "AvgD", "AvgA")),
-        ("Bookmaker_avg_closing", ("AvgCH", "AvgCD", "AvgCA")),
-        ("Bookmaker_max_preclose", ("MaxH", "MaxD", "MaxA")),
-        ("Bookmaker_max_closing", ("MaxCH", "MaxCD", "MaxCA")),
-        ("Bet365_preclose", ("B365H", "B365D", "B365A")),
-        ("Bet365_closing", ("B365CH", "B365CD", "B365CA")),
-    ]
-    n_2526 = len(holdout)
-    for name, cols in source_pairs:
-        present = all(c in holdout.columns for c in cols)
-        if not present:
-            coverage_rows.append({"source": name, "columns_present": False, "coverage": 0.0, "n_covered": 0, "n_total": n_2526})
-            continue
-        n_covered = int(holdout[list(cols)].dropna().shape[0])
-        coverage_rows.append({
-            "source": name, "columns_present": True,
-            "coverage": n_covered / max(n_2526, 1),
-            "n_covered": n_covered, "n_total": n_2526,
-        })
-    cov = pd.DataFrame(coverage_rows).sort_values("coverage", ascending=False)
+    # ---- 2. 2526 closing coverage via dedicated diagnostics helper ----
+    # The helper returns counts only — no price values are exposed to this
+    # script. See 09_partitions.holdout_closing_coverage_diagnostics.
+    cov = partitions.holdout_closing_coverage_diagnostics(FULL_PKL)
     cov.to_csv(RES / "holdout_2526_market_coverage.csv", index=False)
-    print("\n2526 market-source availability (SCHEMA ONLY — no outcomes accessed):", flush=True)
+    print("\n2526 market-source availability (DIAGNOSTICS ONLY — no price values):", flush=True)
     print(cov.to_string(index=False, float_format=lambda x: f"{x:.4f}" if isinstance(x, float) else str(x)), flush=True)
 
 

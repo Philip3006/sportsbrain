@@ -51,7 +51,7 @@ BEST_METHOD = {
     "M2_Elo": "platt",
     "M3_LGBM_dmwd": "uncalibrated",
     "M4_LGBM": "uncalibrated",
-    "M5_market_open": "uncalibrated",     # M5 is intrinsically market-derived
+    "M5_market_preclose": "uncalibrated",     # M5 is intrinsically market-derived
     "M6_market_elo_blend": "uncalibrated",
     "M7_market_residual": "uncalibrated",
 }
@@ -88,7 +88,7 @@ def _load_pooled(model: str) -> tuple[np.ndarray, np.ndarray, list]:
         assert len(df) == len(y), f"{model}: len mismatch {len(df)} vs {len(y)}"
         match_ids = [f"{d}|{h}|{a}" for d, h, a in zip(df["date"], df["home_team"], df["away_team"])]
         return y, probs, match_ids
-    elif model == "M5_market_open":
+    elif model == "M5_market_preclose":
         df = pd.read_csv(RES / "oof_m5_preclose_dev.csv", dtype={"season": str})
         df = df[df["season"].isin(OUTER_FOLDS)].sort_values(["date", "home_team"], kind="stable").reset_index(drop=True)
         y = df["y"].to_numpy()
@@ -138,7 +138,7 @@ def _paired(y_a, p_a, y_b, p_b, seed: int = 42):
 def main() -> None:
     available_models = []
     for m in ("M1_DC", "M2_Elo", "M3_LGBM_dmwd", "M4_LGBM",
-              "M5_market_open", "M6_market_elo_blend", "M7_market_residual"):
+              "M5_market_preclose", "M6_market_elo_blend", "M7_market_residual"):
         try:
             _load_pooled(m)
             available_models.append(m)
@@ -153,7 +153,7 @@ def main() -> None:
         ("M2_Elo", "M4_LGBM"),
         ("M3_LGBM_dmwd", "M4_LGBM"),
     ]
-    for m5 in ("M5_market_open", "M6_market_elo_blend", "M7_market_residual"):
+    for m5 in ("M5_market_preclose", "M6_market_elo_blend", "M7_market_residual"):
         if m5 in available_models:
             for opponent in ("M1_DC", "M2_Elo", "M3_LGBM_dmwd", "M4_LGBM"):
                 pairs.append((m5, opponent))
