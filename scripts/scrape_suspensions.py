@@ -39,8 +39,8 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from scripts._http_retry import retry_request  # noqa: E402
-from src.runtime.paths import runtime_state_path  # noqa: E402
-from src.utils.atomic_io import atomic_write_json  # noqa: E402
+from src.runtime.paths import runtime_state_path
+from src.utils.atomic_io import atomic_write_json
 
 _SUSPENSIONS_FILE: Path | None = None
 _CANDIDATES_FILE = _ROOT / "data" / "suspensions_candidates.json"
