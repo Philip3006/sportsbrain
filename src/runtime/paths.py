@@ -3,9 +3,13 @@ from __future__ import annotations
 
 import os
 import shutil
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_RUNTIME_STATE_DIR = (
+    Path.home() / "Library" / "Application Support" / "SportsBrain" / "runtime-state"
+)
 
 
 def _external_root(variable: str) -> Path | None:
@@ -22,16 +26,29 @@ def _external_root(variable: str) -> Path | None:
     return root
 
 
-def runtime_state_path(relative_path: str) -> Path:
-    """Return durable local state outside the checkout when launchd configured it."""
+def _seed_runtime_state(source: Path, target: Path) -> None:
+    target.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary_name = tempfile.mkstemp(prefix=f".{target.name}.", dir=target.parent)
+    temporary = Path(temporary_name)
+    try:
+        os.close(fd)
+        shutil.copy2(source, temporary)
+        os.replace(temporary, target)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def runtime_state_path(relative_path: str, *, require_external: bool = False) -> Path:
+    """Return durable state, optionally requiring an external operator-owned path."""
     root = _external_root("SPORTSBRAIN_RUNTIME_STATE_DIR")
+    if not root and require_external:
+        root = DEFAULT_RUNTIME_STATE_DIR
     if not root:
         return ROOT / relative_path
     target = root / relative_path
     source = ROOT / relative_path
     if not target.exists() and source.is_file():
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source, target)
+        _seed_runtime_state(source, target)
     return target
 
 
