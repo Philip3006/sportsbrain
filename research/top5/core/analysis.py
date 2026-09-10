@@ -161,12 +161,13 @@ def run_paired_bootstrap(config: LeagueConfig, top5_root: Path) -> dict:
             delta, lo, hi, frac = metrics.paired_bootstrap(ya, pa, pb, N_BOOT)
             rows.append({
                 "model_a": na, "model_b": nb,
-                "n": len(ya),
+                "n": len(ya), "n_matched": len(ya),
                 "brier_a": metrics.brier(ya, pa), "brier_b": metrics.brier(yb, pb),
                 "delta_brier_a_minus_b": delta,
                 "ci_lo_95": lo, "ci_hi_95": hi,
                 "frac_a_wins": frac,
                 "ci_covers_zero": lo <= 0.0 <= hi,
+                "match_mode": "identical_index",
             })
 
     out = pd.DataFrame(rows)

@@ -12,32 +12,36 @@
 | Section | Status | Notes |
 |---------|--------|-------|
 | Framework M1–M7 generic | ✅ COMPLETE | All models parameterized on LeagueConfig |
-| BL1 parity gate | ✅ PASS | All 7 models Δ < 1e-12 vs frozen reference |
+| BL1 parity gate | ✅ PASS (7/7) | Automated test_bl1_parity.py; all 7 models Δ < 1e-11 |
 | EPL complete | ✅ COMPLETE | M1-M7 + contamination + invariants |
 | La Liga complete | ✅ COMPLETE | M1-M7 + contamination + invariants |
 | Serie A complete | ✅ COMPLETE | M1-M7 + contamination + invariants |
 | Ligue 1 complete | ✅ COMPLETE | M1-M7 + contamination + invariants; variable n due to format changes |
-| Contamination A/B/A' | ✅ PASS (all 5) | Sentinel: 2425+2526 scores=99/0, closing=NaN |
-| Invariants | ✅ 35/35 PASS | 7 invariant types × 5 leagues |
+| Contamination A/B/A' | ✅ PASS (all 5) | Full pipeline B run + hash_b evidence for 16 files |
+| Invariants | ✅ 100/100 PASS | 20 invariant types × 5 leagues |
 | Cross-league comparison | ✅ COMPLETE | See Section 3 |
 | Signal-time | ⚠️ UNDEFINED | No scanner/scheduler implemented |
 | 2425/2526 sealed | ✅ SEALED | No outcome-based evaluation |
 
 ---
 
-## 2. BL1 PARITY VERIFICATION
+## 2. BL1 PARITY VERIFICATION (automated: `test_bl1_parity.py` 9/9 PASS)
 
-All 7 models bit-identical to BL1 v7 `569741b4a`:
+All 7 models bit-identical to BL1 v7 `569741b4a` on pooled outer-fold Brier:
 
 | Model | Framework Brier | Reference Brier | Δ |
 |-------|----------------|-----------------|---|
-| M1 (DC walk-forward) | 0.605927 | 0.605927 | 1.4e-13 |
-| M2 (Elo standalone) | 0.618888 | 0.618888 | 4.0e-13 |
-| M3 (LGBM+dmwd) | 0.601715 | 0.601715 | 4.4e-13 |
-| M4 (LGBM) | 0.602646 | 0.602646 | 4.8e-13 |
-| M5 (market pre-close) | 0.582225 | 0.582225 | 0 |
-| M6 (market+Elo blend) | 0.582225 | 0.582225 | 0 |
-| M7 (market residual) | 0.630888 | 0.630888 | 5.5e-13 |
+| M1 (DC walk-forward) | 0.605926931401144 | 0.605926931401144 | 0 |
+| M2 (Elo standalone) | 0.618887657942398 | 0.618887657942398 | 0 |
+| M3 (LGBM+dmwd) | 0.601714537491436 | 0.601714537491436 | 0 |
+| M4 (LGBM) | 0.602646133691481 | 0.602646133691481 | 0 |
+| M5 (market pre-close) | 0.582225485470245 | 0.582225485470245 | 0 |
+| M6 (market+Elo blend) | 0.582225485470245 | 0.582225485470245 | 0 |
+| M7 (market residual) | 0.630888443209394 | 0.630888443209391 | 3.33e-15 |
+
+Selected phi = 0.0012 in both. Matched preclose-vs-close CI identical to
+float64 precision (see `research/top5/leagues/bl1/results/PARITY_REPORT.md`
+for full details and phi-CSV note).
 
 ---
 
@@ -90,7 +94,7 @@ Lower Brier = better calibration.
 | Serie A | 1519 | 0.5732 | 0.5718 | +0.0014 | [−0.0009, 0.0036] | Yes |
 | Ligue 1 | 1446 | 0.5937 | 0.5930 | +0.0007 | [−0.0016, 0.0031] | Yes |
 
-**Statistically significant pre-close information advantage exists only in BL1 and EPL.** La Liga, Serie A, Ligue 1 pre-close odds already reflect nearly full closing efficiency.
+**Statistically significant pre-close information advantage detected in BL1 and EPL.** For La Liga, Serie A, and Ligue 1 the observed DEV sample did not produce a Brier delta whose 95% bootstrap CI excludes zero. Absence of detected significance is not proof of market efficiency or equivalence — the DEV sample may be underpowered for the observed delta magnitude, and the point estimate remains positive (pre-close inferior) in every league.
 
 ---
 
@@ -102,18 +106,45 @@ All DC snapshots verified causal: fit_date <= min_date(S) from raw match data. T
 
 ## 7. CONTAMINATION TEST RESULTS (A/B/A')
 
-Sentinel: 2425+2526 home_score=99, away_score=0, closing=NaN.
-Pass criterion: dev outputs unchanged by sentinel mutation.
+**Sentinel scope:** For calibration season 2425 and holdout season 2526, the
+raw and full pickles are mutated in memory as follows before Run B:
+- `home_score=99, away_score=0` (structural sentinel; loaders filter NaN scores)
+- `FTHG, FTAG, HTHG, HTAG, HS, AS, HST, AST = NaN`
+- `FTR, HTR = "" ` (string outcome cols)
+- Closing odds `AvgCH/AvgCD/AvgCA, MaxCH/MaxCD/MaxCA, B365CH/B365CD/B365CA,
+  PSCH/PSCD/PSCA, ps_close_home/draw/away = NaN`
 
-| League | Result | Files checked |
-|--------|--------|--------------|
-| BL1 | **PASS** | 11 |
-| EPL | **PASS** | 11 |
-| La Liga | **PASS** | 11 |
-| Serie A | **PASS** | 11 |
-| Ligue 1 | **PASS** | 11 |
+**Test protocol (per league):**
+- Run A: hash every checked dev-output CSV against the real dataset
+- Run B: re-run the FULL M1-M7 pipeline + downstream analysis (paired
+  bootstrap, edge sweep, summary) on the sentinel dataset into an
+  isolated `_contamination_b/` directory, then hash the same CSVs
+- Run A': re-hash real outputs (must be unchanged)
 
-Note: EPL initial run had a stale M6 output from an intermediate code state. Refreshed and re-verified PASS.
+**Pass criterion:** `hash_a == hash_b` for every checked file (dev decisions
+causally sealed from calibration+holdout data) AND `hash_a == hash_a'`
+(real outputs untouched).
+
+**Files audited (per league, 16 dev decision artefacts):**
+`oof_m1_dev.csv, oof_m2_dev.csv, oof_m3_dev_v2.csv, oof_m4_dev_v2.csv,
+oof_m5_preclose_dev.csv, oof_m6_dev_v3.csv, oof_m7_dev_v3.csv,
+m5_preclose_baseline_summary.csv, m5_source_selection_by_fold.csv,
+m6_alpha_sweep.csv, matched_preclose_vs_close.csv, phi_selection_dev.csv,
+fold_summary_m1m2.csv, model_summary.csv, paired_bootstrap.csv,
+edge_sweep_v3_one_per_match.csv`
+
+| League | Result | Files (A==B) | Files (A==A') |
+|--------|--------|--------------|--------------|
+| BL1 | **PASS** | 16/16 | 16/16 |
+| EPL | **PASS** | 16/16 | 16/16 |
+| La Liga | **PASS** | 16/16 | 16/16 |
+| Serie A | **PASS** | 16/16 | 16/16 |
+| Ligue 1 | **PASS** | 16/16 | 16/16 |
+
+Evidence CSVs at `research/top5/leagues/<key>/results/contamination_test_hashes.csv`
+now contain columns `file, hash_a, hash_b, hash_aprime, a_eq_b, a_eq_aprime, result`
+- providing per-file hash_b evidence for every model output, not merely
+proof of file restoration.
 
 ---
 
@@ -165,7 +196,7 @@ M6 = α × M5 + (1−α) × M2_Elo. Alpha selected per outer fold using calib_se
 
 **Research baseline (M5/M6)**: apply_policy() drops matches without valid canonical AvgH/AvgD/AvgA. This is the pre-close bookmaker average. NOT the same as production scanner which uses Pinnacle/live odds.
 
-**Production distinction**: The research M5 Brier is a lower bound on production pre-close performance (market-covered matches only, historical data only). Signal-time performance depends on live odds availability and timing, which is UNDEFINED in this framework.
+**Production distinction**: The research M5 Brier is the canonical RESEARCH BASELINE: historical bookmaker-average pre-close odds (Bookmaker_avg_preclose = AvgH/D/A) evaluated on DEV outer folds. Actual SportsBrain performance at its eventual production signal time is UNKNOWN until the signal-time contract and live odds source are defined. This historical baseline is neither a lower nor upper bound on future production performance — it is a research reference against which model contributions were tested.
 
 ---
 
