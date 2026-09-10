@@ -87,3 +87,12 @@ def test_daily_and_prematch_scan_cannot_hide_settlement_failure() -> None:
         assert 'if [ "$SETTLE_EXIT" -ne 0 ]; then' in source, path.name
         assert f'health_finish "{job}" "$SETTLE_EXIT"' in source, path.name
         assert 'exit "$SETTLE_EXIT"' in source, path.name
+
+
+def test_daily_and_prematch_scan_load_protected_environment_and_return_final_exit() -> None:
+    for path, job in ((DAILY_SCAN, "daily_scan"), (PREMATCH_SCAN, "prematch_scan")):
+        source = path.read_text()
+        assert 'set -a\n    . "$SPORTSBRAIN_DIR/.env"\n    set +a' in source, path.name
+        assert "SPORTSBRAIN_LEDGER_DIR" not in source, path.name
+        assert 'health_finish "' + job + '" "$EXIT_CODE"' in source, path.name
+        assert 'exit "$EXIT_CODE"' in source, path.name
