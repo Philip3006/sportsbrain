@@ -72,31 +72,78 @@ def run_paired_bootstrap(config: LeagueConfig, top5_root: Path) -> dict:
 
     df_m5, p_m5 = models["M5_market_preclose"]
     y_m5 = df_m5["y"].to_numpy()
+    m5_prob_cols = ["m5_p_away", "m5_p_draw", "m5_p_home"]
     rows = []
     for name, (df, probs) in models.items():
         if name == "M5_market_preclose":
             continue
-        if len(df) != len(df_m5):
-            print(f"[bootstrap] {name} n={len(df)} ≠ M5 n={len(df_m5)} — skip", flush=True)
+        # If lengths match on identical y ordering, use fast path
+        if len(df) == len(df_m5):
+            y = df["y"].to_numpy()
+            if np.array_equal(y, y_m5):
+                b_model = metrics.brier(y, probs)
+                b_m5 = metrics.brier(y_m5, p_m5)
+                delta, lo, hi, frac = metrics.paired_bootstrap(
+                    y, probs, p_m5, N_BOOT)
+                rows.append({
+                    "model_a": name, "model_b": "M5_market_preclose",
+                    "n": len(y), "n_matched": len(y),
+                    "brier_a": b_model, "brier_b": b_m5,
+                    "delta_brier_a_minus_b": delta,
+                    "ci_lo_95": lo, "ci_hi_95": hi,
+                    "frac_a_wins": frac,
+                    "ci_covers_zero": lo <= 0.0 <= hi,
+                    "match_mode": "identical_index",
+                })
+                print(f"[bootstrap/{config.key}] {name} vs M5: "
+                      f"delta_brier={delta:.4f} CI=[{lo:.4f},{hi:.4f}]",
+                      flush=True)
+                continue
+
+        # Mismatch: construct matched population on (date, home, away)
+        df_a = df.copy()
+        df_b = df_m5.copy()
+        for _d in (df_a, df_b):
+            _d["date"] = pd.to_datetime(_d["date"])
+        prob_cols = [c for c in df_a.columns
+                     if c.startswith(("m1_p_", "m2_p_", "m3_p_", "m4_p_",
+                                       "m6_p_", "m7_p_"))]
+        if not prob_cols:
+            print(f"[bootstrap/{config.key}] {name}: no prob cols — skip",
+                  flush=True)
             continue
-        y = df["y"].to_numpy()
-        if not np.array_equal(y, y_m5):
-            print(f"[bootstrap] {name} y mismatch — skip", flush=True)
+        keys = ["date", "home_team", "away_team"]
+        merged = df_a[keys + ["y"] + prob_cols].merge(
+            df_b[keys + ["y"] + m5_prob_cols],
+            on=keys, how="inner", suffixes=("", "_m5"))
+        if len(merged) < 10:
+            print(f"[bootstrap/{config.key}] {name}: matched pop too small "
+                  f"(n={len(merged)}) — skip", flush=True)
             continue
-        b_model = metrics.brier(y, probs)
-        b_m5 = metrics.brier(y_m5, p_m5)
-        delta, lo, hi, frac = metrics.paired_bootstrap(y, probs, p_m5, N_BOOT)
+        # y must match on both sides (both derived from same scoreboard)
+        if not np.array_equal(merged["y"].to_numpy(),
+                              merged["y_m5"].to_numpy()):
+            print(f"[bootstrap/{config.key}] {name}: y mismatch on matched "
+                  f"population — skip", flush=True)
+            continue
+        y = merged["y"].to_numpy()
+        p_a = merged[prob_cols].to_numpy()
+        p_b = merged[m5_prob_cols].to_numpy()
+        b_a = metrics.brier(y, p_a)
+        b_b = metrics.brier(y, p_b)
+        delta, lo, hi, frac = metrics.paired_bootstrap(y, p_a, p_b, N_BOOT)
         rows.append({
             "model_a": name, "model_b": "M5_market_preclose",
-            "n": len(y),
-            "brier_a": b_model, "brier_b": b_m5,
+            "n": len(df_a), "n_matched": len(merged),
+            "brier_a": b_a, "brier_b": b_b,
             "delta_brier_a_minus_b": delta,
             "ci_lo_95": lo, "ci_hi_95": hi,
             "frac_a_wins": frac,
             "ci_covers_zero": lo <= 0.0 <= hi,
+            "match_mode": "inner_join_dhaway",
         })
-        print(f"[bootstrap/{config.key}] {name} vs M5: ΔBrier={delta:.4f} "
-              f"CI=[{lo:.4f},{hi:.4f}]", flush=True)
+        print(f"[bootstrap/{config.key}] {name} vs M5 (matched n={len(merged)}): "
+              f"delta_brier={delta:.4f} CI=[{lo:.4f},{hi:.4f}]", flush=True)
 
     # All non-M5 model pairs
     model_names = list(models.keys())
