@@ -1,0 +1,2 @@
+model,canonical_source,n,brier,brier_ci_lo,brier_ci_hi,logloss,ece
+M5_market_preclose,Bookmaker_avg_preclose,1520,0.564324580598,0.548229808865,0.582307043472,0.953808882404,0.020643285541
