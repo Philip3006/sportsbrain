@@ -17,6 +17,13 @@
       "odds_a": 1.18,
       "odds_b": 4.54,
       "source": "gtbets"
+    },
+    {
+      "label": "auto_20260911_11",
+      "ts_utc": "2026-09-11T11:22:09.368000+00:00",
+      "odds_a": 1.18,
+      "odds_b": 4.54,
+      "source": "gtbets"
     }
   ]
 }
