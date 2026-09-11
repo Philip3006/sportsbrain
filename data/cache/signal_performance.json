@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-10T23:24:06.716257+00:00",
+  "generated_at": "2026-09-11T01:28:26.048633+00:00",
   "n_signals_total": 1665,
-  "n_with_outcome": 1660,
+  "n_with_outcome": 1661,
   "by_market": {
     "ah+0.5_away": {
       "n": 26,
@@ -188,8 +188,8 @@
     "home": {
       "n": 237,
       "n_placed": 205,
-      "n_outcome": 234,
-      "accuracy": 0.4487,
+      "n_outcome": 235,
+      "accuracy": 0.4468,
       "ev_mean": 16.28
     },
     "o/u1.5_over": {
