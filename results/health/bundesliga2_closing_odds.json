@@ -1,8 +1,8 @@
 {
   "job": "bundesliga2_closing_odds",
   "status": "ok",
-  "last_run_at": "2026-09-12T13:48:25Z",
-  "started_at": "2026-09-12T13:48:25Z",
+  "last_run_at": "2026-09-12T20:42:44Z",
+  "started_at": "2026-09-12T20:42:44Z",
   "duration_s": null,
   "exit_code": 0,
   "error": null,
