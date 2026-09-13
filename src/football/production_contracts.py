@@ -60,6 +60,7 @@ class RolloutStage(str, Enum):
     SHADOW_PERFORMANCE = "shadow_performance"
     CEO_APPROVED = "ceo_approved"
     CONTROLLED_ACTIVATION = "controlled_activation"
+    PRODUCTION_VERIFIED = "production_verified"
 
 
 @dataclass(frozen=True)
@@ -435,6 +436,8 @@ class RolloutEvidence:
     provider_validated: bool = False
     shadow_performance: bool = False
     ceo_approved: bool = False
+    controlled_activation: bool = False
+    production_verified: bool = False
 
     def require(self, stage: RolloutStage) -> None:
         resolved_stage = RolloutStage(stage)
@@ -450,6 +453,12 @@ class RolloutEvidence:
         )
         if resolved_stage is RolloutStage.CONTROLLED_ACTIVATION:
             required = all(value for _, value in ordered_checks)
+        elif resolved_stage is RolloutStage.PRODUCTION_VERIFIED:
+            required = (
+                all(value for _, value in ordered_checks)
+                and self.controlled_activation
+                and self.production_verified
+            )
         else:
             target_index = next(
                 index for index, (candidate, _) in enumerate(ordered_checks) if candidate is resolved_stage
