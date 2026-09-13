@@ -38,6 +38,11 @@ class ArtifactOwner(str, Enum):
     HEALTH = "health"
 
 
+TOP5_SHADOW_ARCHIVE_PREFIX = "results/shadow/top5/"
+TOP5_STAGED_ARTIFACT_PREFIX = "docs/data/top5/shadow/"
+TOP5_HEALTH_PREFIX = "results/health/top5/"
+
+
 class RuntimeStateOwner(str, Enum):
     WEEKLY_BANKROLL = "weekly_bankroll"
     PROVIDER_BUDGET = "provider_budget"
@@ -83,9 +88,9 @@ class SignalTimeContract:
 
     def accepts(self, kickoff: datetime, odds_captured_at: datetime, now: datetime) -> bool:
         self.validate()
-        kickoff = _utc(kickoff)
-        odds_captured_at = _utc(odds_captured_at)
-        now = _utc(now)
+        kickoff = _utc(kickoff, "kickoff")
+        odds_captured_at = _utc(odds_captured_at, "odds_captured_at")
+        now = _utc(now, "now")
         lead_minutes = (kickoff - now).total_seconds() / 60
         odds_age = (now - odds_captured_at).total_seconds()
         return (
@@ -188,9 +193,11 @@ class LeagueProductionConfig:
         mode = ActivationMode(self.activation_mode)
         if mode is not ActivationMode.DISABLED and self.signal_time is None:
             raise ProductionContractError("an enabled adapter requires an approved signal-time contract")
-        if mode in (ActivationMode.CONTROLLED, ActivationMode.LIVE):
-            if self.signal_time is None or not self.signal_time.approval_ref:
-                raise ProductionContractError("controlled/live activation requires signal-time approval")
+        if (
+            mode in (ActivationMode.CONTROLLED, ActivationMode.LIVE)
+            and (self.signal_time is None or not self.signal_time.approval_ref)
+        ):
+            raise ProductionContractError("controlled/live activation requires signal-time approval")
         if self.signal_time is not None:
             self.signal_time.validate()
         if self.provider_mapping is not None:
@@ -217,7 +224,11 @@ class Fixture:
     away_team: str
     kickoff: datetime
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "kickoff", _utc(self.kickoff, "kickoff"))
+
     def validate(self) -> None:
+        _utc(self.kickoff, "kickoff")
         if any(not value.strip() for value in (self.fixture_key, self.league_code, self.home_team, self.away_team)):
             raise ProductionContractError("fixture identity and teams are required")
         if self.home_team.strip() == self.away_team.strip():
@@ -233,7 +244,11 @@ class MarketSnapshot:
     odds: Mapping[str, float]
     snapshot_id: str = ""
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "captured_at", _utc(self.captured_at, "captured_at"))
+
     def validate(self) -> None:
+        _utc(self.captured_at, "captured_at")
         if not self.fixture_key.strip() or not self.source.strip():
             raise ProductionContractError("market snapshot identity and source are required")
         if not self.odds:
@@ -254,6 +269,9 @@ class OddsRequest:
     markets: tuple[str, ...]
     regions: tuple[str, ...]
     requested_at: datetime
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "requested_at", _utc(self.requested_at, "requested_at"))
 
     @classmethod
     def for_config(
@@ -280,7 +298,7 @@ class OddsRequest:
             fixture_keys=keys,
             markets=tuple(sorted(set(mapping.markets))),
             regions=tuple(sorted(set(mapping.regions))),
-            requested_at=_utc(requested_at),
+            requested_at=_utc(requested_at, "requested_at"),
         )
 
     @property
@@ -341,7 +359,11 @@ class PredictionArtifact:
     snapshot_kind: MarketSnapshotKind
     probabilities: Mapping[str, float]
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "generated_at", _utc(self.generated_at, "generated_at"))
+
     def validate(self) -> None:
+        _utc(self.generated_at, "generated_at")
         if any(
             not value.strip()
             for value in (
@@ -481,35 +503,45 @@ def validate_disabled_top5_configs(configs: Sequence[LeagueProductionConfig]) ->
 
 
 def validate_artifact_ownership(path: str, owner: ArtifactOwner | None = None) -> None:
-    """Allow only explicit runtime artifact areas; reject source/ledger paths."""
-    normalized = path.strip().lstrip("/")
-    blocked_prefixes = (
-        "src/",
-        "scripts/",
-        "tests/",
-        ".github/",
-        "cloudflare/",
-        "results/ledger",
-        "ledger/",
-    )
-    if not normalized or ".." in normalized.split("/") or normalized.startswith(blocked_prefixes):
+    """Allow only narrow owner-specific Top-5 artifact namespaces."""
+    normalized = path.strip()
+    if not normalized or normalized.startswith("/") or "\\" in normalized:
         raise ProductionContractError("Top-5 artifact path is not runtime-safe")
+    parts = normalized.split("/")
+    if (
+        any(part in {"", ".", ".."} or part.startswith(".") for part in parts)
+        or not normalized.endswith(".json")
+        or any(
+            token in normalized.lower()
+            for token in ("secret", "credential", "password", "api_key", "apikey", "private_key", ".env")
+        )
+    ):
+        raise ProductionContractError("Top-5 artifact path is not runtime-safe")
+
     allowed = {
-        ArtifactOwner.SHADOW_ARCHIVE: "results/shadow/",
-        ArtifactOwner.STAGED_PUBLIC: "docs/data/",
-        ArtifactOwner.HEALTH: "results/health/",
+        ArtifactOwner.SHADOW_ARCHIVE: TOP5_SHADOW_ARCHIVE_PREFIX,
+        ArtifactOwner.STAGED_PUBLIC: TOP5_STAGED_ARTIFACT_PREFIX,
+        ArtifactOwner.HEALTH: TOP5_HEALTH_PREFIX,
     }
     if owner is not None:
-        prefix = allowed[ArtifactOwner(owner)]
-        if not normalized.startswith(prefix):
-            raise ProductionContractError(f"artifact path is outside {owner.value} ownership")
-    elif not normalized.startswith(tuple(allowed.values())):
-        raise ProductionContractError("Top-5 artifact path requires an explicit runtime owner")
+        try:
+            resolved_owner = ArtifactOwner(owner)
+        except ValueError as exc:
+            raise ProductionContractError("unknown Top-5 artifact owner") from exc
+        prefix = allowed[resolved_owner]
+        if not normalized.startswith(prefix) or normalized == prefix:
+            raise ProductionContractError(f"artifact path is outside {resolved_owner.value} ownership")
+        return
+
+    if not any(normalized.startswith(prefix) and normalized != prefix for prefix in allowed.values()):
+        raise ProductionContractError("Top-5 artifact path is not runtime-safe: requires a narrow owner namespace")
 
 
-def _utc(value: datetime) -> datetime:
-    if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
+def _utc(value: datetime, field: str) -> datetime:
+    if not isinstance(value, datetime):
+        raise ProductionContractError(f"{field} must be a datetime")
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise ProductionContractError(f"{field} must be timezone-aware")
     return value.astimezone(timezone.utc)
 
 

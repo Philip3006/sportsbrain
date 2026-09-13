@@ -13,8 +13,10 @@ from datetime import datetime
 
 from src.football.production_contracts import (
     ActivationMode,
+    FeatureAdapter,
     Fixture,
     FixtureIngestor,
+    LeagueProductionConfig,
     MarketSnapshot,
     MarketSnapshotKind,
     ModelAdapter,
@@ -26,8 +28,6 @@ from src.football.production_contracts import (
     ShadowArtifactSink,
     ShadowSignalArtifact,
     SignalDecider,
-    LeagueProductionConfig,
-    FeatureAdapter,
     _utc,
 )
 
@@ -91,6 +91,7 @@ def run_shadow_pipeline(
     data.  Any sink is invoked only after the artifact has passed provenance
     and no-bet validation.
     """
+    now_utc = _utc(now, "now")
     config.assert_shadow_ready()
     assert config.signal_time is not None
     assert config.provider_mapping is not None
@@ -101,7 +102,7 @@ def run_shadow_pipeline(
         if fixture.league_code != config.league_code:
             raise ProductionContractError("fixture ingestor returned a foreign league")
 
-    request = OddsRequest.for_config(config, fixtures, now) if fixtures else None
+    request = OddsRequest.for_config(config, fixtures, now_utc) if fixtures else None
     if request is None:
         health = ShadowRunHealth(
             job="top5_shadow",
@@ -139,7 +140,7 @@ def run_shadow_pipeline(
             snapshot,
             features,
             config.signal_time,
-            now,
+            now_utc,
         )
         probabilities = model_adapter.predict(model_input)
         prediction_id = _artifact_id(config.league_code, fixture, snapshot)
@@ -148,7 +149,7 @@ def run_shadow_pipeline(
             fixture_key=fixture.fixture_key,
             league_code=config.league_code,
             model_adapter_id=config.model_adapter_id,
-            generated_at=_utc(now),
+            generated_at=now_utc,
             snapshot_id=_snapshot_id(snapshot),
             snapshot_kind=MarketSnapshotKind.SIGNAL_TIME,
             probabilities=probabilities,
@@ -206,14 +207,14 @@ def _index_signal_snapshots(snapshots: Sequence[MarketSnapshot]) -> dict[str, Ma
     selected: dict[str, MarketSnapshot] = {}
     for snapshot in snapshots:
         previous = selected.get(snapshot.fixture_key)
-        if previous is None or _utc(snapshot.captured_at) > _utc(previous.captured_at):
+        if previous is None or _utc(snapshot.captured_at, "captured_at") > _utc(previous.captured_at, "captured_at"):
             selected[snapshot.fixture_key] = snapshot
     return selected
 
 
 def _snapshot_id(snapshot: MarketSnapshot) -> str:
-    return snapshot.snapshot_id or f"{snapshot.source}:{snapshot.fixture_key}:{_utc(snapshot.captured_at).isoformat()}"
+    return snapshot.snapshot_id or f"{snapshot.source}:{snapshot.fixture_key}:{_utc(snapshot.captured_at, 'captured_at').isoformat()}"
 
 
 def _artifact_id(league_code: str, fixture: Fixture, snapshot: MarketSnapshot) -> str:
-    return f"{league_code}:{fixture.fixture_key}:{_utc(snapshot.captured_at).isoformat()}"
+    return f"{league_code}:{fixture.fixture_key}:{_utc(snapshot.captured_at, 'captured_at').isoformat()}"

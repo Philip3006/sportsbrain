@@ -227,7 +227,8 @@ _runtime_publish_from_dir() {
         exit 0
       fi
       git -C "$publish_dir" fetch origin main >> "$log" 2>&1
-      if ! git -C "$publish_dir" rebase origin/main >> "$log" 2>&1; then
+      if ! git -C "$publish_dir" -c user.name="SportsBrain Bot" -c user.email="bot@sportsbrain" \
+          rebase origin/main >> "$log" 2>&1; then
         git -C "$publish_dir" rebase --abort >> "$log" 2>&1 || true
         echo "[runtime-publish] conflict; publication failed closed" >> "$log"
         exit 1

@@ -31,7 +31,7 @@ represented only by immutable disabled metadata in
 | Scheduler/launchd | Launchd wrappers under `launchd/`, `.github/workflows/*`, and Cloudflare cron dispatch in `cloudflare/wrangler.toml`. | Existing cadences remain unchanged; no Top-5 job or launchd entry is registered. |
 | Health | `src/monitoring/health_writer.py`, `job_schedule.py`, aggregate health, and Worker validation. | Health schema is reusable; `ShadowRunHealth` is an in-memory integration hook and does not write a health snapshot. |
 | Runtime state | `src/runtime/paths.py` keeps mutable state outside the checkout and prevents checkout-root configuration. | Reusable ownership rule; Top-5 code does not create a new state directory. |
-| Staged artifacts | Runtime publisher allowlist and per-run stage directory in the cron wrappers. | Reusable isolation rule; `validate_artifact_ownership()` allows only explicit shadow/public/health areas and rejects ledger/source paths. |
+| Staged artifacts | Runtime publisher allowlist and per-run stage directory in the cron wrappers. | Reusable isolation rule; `validate_artifact_ownership()` requires an explicit Top-5 owner namespace: `results/shadow/top5/`, `docs/data/top5/shadow/`, or `results/health/top5/`, and rejects ledger/source/model/research/secrets paths. |
 
 ## 2. Signal-Time architecture
 
@@ -67,11 +67,16 @@ The scaffold in `src/football/production_contracts.py` provides:
   `SignalDecider`, and `ShadowArtifactSink` protocols.
 - `PredictionArtifact` and `ShadowSignalArtifact` with provenance and a hard
   `no_bet_flag` requirement.
+- Fixture kickoff, market capture, request, artifact-generation, signal-time,
+  and pipeline timestamps must be timezone-aware; aware values normalize to
+  UTC and naive values fail closed with `ProductionContractError`.
 - `RolloutEvidence` for the ordered, league-by-league gate sequence.
 - `RuntimeStateBinding` for external ownership of mutable provider, odds,
   bankroll-control, and future shadow state.
-- `validate_artifact_ownership()` for staged public, shadow archive, and health
-  ownership; source, publisher, and financial paths are rejected.
+- `validate_artifact_ownership()` for explicit `ArtifactOwner` namespaces:
+  `results/shadow/top5/`, `docs/data/top5/shadow/`, and
+  `results/health/top5/`; source, publisher, financial, runtime-cache, model,
+  research, secret, and traversal paths are rejected.
 
 `src/football/production_pipeline.py` adds one injected shadow orchestration
 function. It ingests fixtures, builds one bulk request, accepts only validated

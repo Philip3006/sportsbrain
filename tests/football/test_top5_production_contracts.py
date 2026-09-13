@@ -23,6 +23,9 @@ from src.football.production_contracts import (
     RuntimeStateOwner,
     ShadowSignalArtifact,
     SignalTimeContract,
+    TOP5_HEALTH_PREFIX,
+    TOP5_SHADOW_ARCHIVE_PREFIX,
+    TOP5_STAGED_ARTIFACT_PREFIX,
     validate_artifact_ownership,
     validate_disabled_top5_configs,
 )
@@ -73,6 +76,65 @@ def test_signal_time_contract_validates_window_and_odds_freshness():
     assert not SIGNAL_TIME.accepts(NOW + timedelta(minutes=30), NOW, NOW)
 
 
+@pytest.mark.parametrize("field", ["kickoff", "odds_captured_at", "now"])
+def test_signal_time_contract_rejects_naive_timestamps(field):
+    values = {"kickoff": FIXTURE.kickoff, "odds_captured_at": NOW, "now": NOW}
+    values[field] = values[field].replace(tzinfo=None)
+    with pytest.raises(ProductionContractError, match="timezone-aware"):
+        SIGNAL_TIME.accepts(**values)
+
+
+def test_aware_contract_timestamps_normalize_to_utc():
+    offset = timezone(timedelta(hours=2))
+    fixture = Fixture("offset-fixture", "sample", "Home", "Away", datetime(2026, 9, 11, 14, 30, tzinfo=offset))
+    snapshot = MarketSnapshot(
+        fixture_key=fixture.fixture_key,
+        captured_at=datetime(2026, 9, 11, 14, tzinfo=offset),
+        kind=MarketSnapshotKind.SIGNAL_TIME,
+        source="provider",
+        odds={"home": 2.0},
+    )
+    request = OddsRequest(
+        league_code="sample",
+        provider_name="provider",
+        sport_key="soccer_sample_league",
+        fixture_keys=(fixture.fixture_key,),
+        markets=("h2h",),
+        regions=("eu",),
+        requested_at=datetime(2026, 9, 11, 14, tzinfo=offset),
+    )
+    artifact = PredictionArtifact(
+        prediction_id="prediction-offset",
+        fixture_key=fixture.fixture_key,
+        league_code="sample",
+        model_adapter_id="model-under-review",
+        generated_at=datetime(2026, 9, 11, 14, tzinfo=offset),
+        snapshot_id="snapshot-offset",
+        snapshot_kind=MarketSnapshotKind.SIGNAL_TIME,
+        probabilities={"home": 0.5},
+    )
+    assert fixture.kickoff.tzinfo is timezone.utc
+    assert snapshot.captured_at.tzinfo is timezone.utc
+    assert request.requested_at.tzinfo is timezone.utc
+    assert artifact.generated_at.tzinfo is timezone.utc
+    assert fixture.kickoff.hour == 12
+    assert snapshot.captured_at.hour == request.requested_at.hour == artifact.generated_at.hour == 12
+
+
+@pytest.mark.parametrize(
+    "factory",
+    [
+        lambda: Fixture("naive", "sample", "Home", "Away", NOW.replace(tzinfo=None)),
+        lambda: MarketSnapshot("fixture-1", NOW.replace(tzinfo=None), MarketSnapshotKind.SIGNAL_TIME, "provider", {"home": 2.0}),
+        lambda: OddsRequest("sample", "provider", "soccer_sample_league", ("fixture-1",), ("h2h",), ("eu",), NOW.replace(tzinfo=None)),
+        lambda: PredictionArtifact("naive", "fixture-1", "sample", "model", NOW.replace(tzinfo=None), "snapshot", MarketSnapshotKind.SIGNAL_TIME, {"home": 0.5}),
+    ],
+)
+def test_contract_objects_reject_naive_timestamps(factory):
+    with pytest.raises(ProductionContractError, match="timezone-aware"):
+        factory()
+
+
 def test_closing_odds_cannot_become_prediction_input():
     closing = MarketSnapshot(
         fixture_key=FIXTURE.fixture_key,
@@ -115,6 +177,12 @@ def test_shadow_artifacts_require_complete_provenance_and_no_bet():
         ".github/workflows/top5.yml",
         "cloudflare/worker.js",
         "results/ledger_philip.csv",
+        "docs/data/signals.json",
+        "results/shadow/BL1/fixture-1.json",
+        "results/health/football.json",
+        "models/top5/prediction.json",
+        "research/top5/notes.json",
+        "docs/data/top5/shadow/../secrets.json",
     ],
 )
 def test_artifact_ownership_rejects_source_and_financial_paths(path):
@@ -123,7 +191,7 @@ def test_artifact_ownership_rejects_source_and_financial_paths(path):
 
 
 def test_artifact_ownership_allows_staged_public_artifacts_only():
-    validate_artifact_ownership("docs/data/signals.json")
+    validate_artifact_ownership(f"{TOP5_STAGED_ARTIFACT_PREFIX}signals.json")
 
 
 def test_disabled_registry_covers_top5_without_binding_a_model():
@@ -175,9 +243,10 @@ def test_prediction_artifact_rejects_closing_snapshot_kind():
 
 
 def test_artifact_ownership_can_be_scoped_to_explicit_owner():
-    validate_artifact_ownership("results/shadow/BL1/fixture-1.json", ArtifactOwner.SHADOW_ARCHIVE)
+    validate_artifact_ownership(f"{TOP5_SHADOW_ARCHIVE_PREFIX}BL1/fixture-1.json", ArtifactOwner.SHADOW_ARCHIVE)
+    validate_artifact_ownership(f"{TOP5_HEALTH_PREFIX}run.json", ArtifactOwner.HEALTH)
     with pytest.raises(ProductionContractError, match="ownership"):
-        validate_artifact_ownership("docs/data/signals.json", ArtifactOwner.SHADOW_ARCHIVE)
+        validate_artifact_ownership(f"{TOP5_STAGED_ARTIFACT_PREFIX}signals.json", ArtifactOwner.SHADOW_ARCHIVE)
 
 
 def test_runtime_state_binding_requires_external_owner_and_safe_path():
@@ -364,4 +433,27 @@ def test_shadow_pipeline_rejects_closing_provider_output():
             object(),
             object(),
             now=NOW,
+        )
+
+
+def test_shadow_pipeline_rejects_naive_run_timestamp_before_any_work():
+    config = _config(
+        activation_mode=ActivationMode.SHADOW,
+        signal_time=SIGNAL_TIME,
+        provider_mapping=ProviderMapping(
+            provider_name="fixture-provider",
+            competition_id="sample-competition",
+            sport_key="soccer_sample_league",
+        ),
+    )
+
+    with pytest.raises(ProductionContractError, match="timezone-aware"):
+        run_shadow_pipeline(
+            config,
+            object(),
+            object(),
+            object(),
+            object(),
+            object(),
+            now=NOW.replace(tzinfo=None),
         )

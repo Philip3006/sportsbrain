@@ -8,5 +8,5 @@ Surface: hard · Best of: 5 · Matches gescannt: 1
 _Keine Value-Signals._
 
 ## Wta Guadalajara Open (WTA) · wta250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 11
+Surface: unknown · Best of: 3 · Matches gescannt: 10
 _Keine Value-Signals._
