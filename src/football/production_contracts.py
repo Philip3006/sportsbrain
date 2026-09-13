@@ -28,6 +28,9 @@ class MarketSnapshotKind(str, Enum):
     CLOSING = "closing"
 
 
+TOP5_STAGED_ARTIFACT_PREFIX = "docs/data/top5/shadow/"
+
+
 @dataclass(frozen=True)
 class SignalTimeContract:
     """An explicitly approved pre-kickoff window for one league adapter.
@@ -50,9 +53,9 @@ class SignalTimeContract:
 
     def accepts(self, kickoff: datetime, odds_captured_at: datetime, now: datetime) -> bool:
         self.validate()
-        kickoff = _utc(kickoff)
-        odds_captured_at = _utc(odds_captured_at)
-        now = _utc(now)
+        kickoff = _utc(kickoff, "kickoff")
+        odds_captured_at = _utc(odds_captured_at, "odds_captured_at")
+        now = _utc(now, "now")
         lead_minutes = (kickoff - now).total_seconds() / 60
         odds_age = (now - odds_captured_at).total_seconds()
         return (
@@ -211,12 +214,20 @@ def validate_disabled_top5_configs(configs: Sequence[LeagueProductionConfig]) ->
 
 
 def validate_artifact_ownership(path: str) -> None:
-    """Reject source and financial paths from any future Top-5 runtime artifact plan."""
-    normalized = path.strip().lstrip("/")
-    blocked_prefixes = ("src/", "scripts/", "tests/", ".github/", "cloudflare/", "results/ledger")
-    if not normalized or normalized.startswith(blocked_prefixes):
+    """Allow only a future Top-5 shadow artifact in its staged-public namespace."""
+    normalized = path.strip()
+    parts = normalized.split("/")
+    if (
+        not normalized.startswith(TOP5_STAGED_ARTIFACT_PREFIX)
+        or len(parts) < 5
+        or any(part in {"", ".", ".."} or part.startswith(".") for part in parts)
+        or "secret" in normalized.lower()
+        or not normalized.endswith(".json")
+    ):
         raise ProductionContractError("Top-5 artifact path is not runtime-safe")
 
 
-def _utc(value: datetime) -> datetime:
-    return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+def _utc(value: datetime, field: str) -> datetime:
+    if not isinstance(value, datetime) or value.tzinfo is None or value.utcoffset() is None:
+        raise ProductionContractError(f"{field} must be timezone-aware")
+    return value.astimezone(timezone.utc)

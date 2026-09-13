@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from src.football.production_contracts import (
+    TOP5_STAGED_ARTIFACT_PREFIX,
     ActivationMode,
     Fixture,
     FixtureIngestor,
@@ -63,6 +64,35 @@ def test_signal_time_contract_validates_window_and_odds_freshness():
     assert not SIGNAL_TIME.accepts(NOW + timedelta(minutes=30), NOW, NOW)
 
 
+@pytest.mark.parametrize(
+    ("kickoff", "odds_captured_at", "now", "field"),
+    [
+        (FIXTURE.kickoff.replace(tzinfo=None), NOW, NOW, "kickoff"),
+        (FIXTURE.kickoff, NOW.replace(tzinfo=None), NOW, "odds_captured_at"),
+        (FIXTURE.kickoff, NOW, NOW.replace(tzinfo=None), "now"),
+    ],
+)
+def test_signal_time_contract_rejects_naive_timestamps(
+    kickoff: datetime,
+    odds_captured_at: datetime,
+    now: datetime,
+    field: str,
+):
+    with pytest.raises(ProductionContractError, match=field):
+        SIGNAL_TIME.accepts(kickoff, odds_captured_at, now)
+
+
+def test_signal_time_contract_normalizes_aware_offsets_before_evaluation():
+    plus_two = timezone(timedelta(hours=2))
+
+    assert SIGNAL_TIME.accepts(FIXTURE.kickoff, NOW, NOW)
+    assert SIGNAL_TIME.accepts(
+        FIXTURE.kickoff.astimezone(plus_two),
+        NOW.astimezone(plus_two),
+        NOW.astimezone(plus_two),
+    )
+
+
 def test_closing_odds_cannot_become_prediction_input():
     closing = MarketSnapshot(
         fixture_key=FIXTURE.fixture_key,
@@ -112,8 +142,25 @@ def test_artifact_ownership_rejects_source_and_financial_paths(path):
         validate_artifact_ownership(path)
 
 
-def test_artifact_ownership_allows_staged_public_artifacts_only():
-    validate_artifact_ownership("docs/data/signals.json")
+def test_artifact_ownership_allows_only_staged_shadow_artifacts():
+    validate_artifact_ownership(f"{TOP5_STAGED_ARTIFACT_PREFIX}sample.json")
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "docs/data/signals.json",
+        "docs/data/top5/research.json",
+        "docs/data/top5/shadow/.env.json",
+        "docs/data/top5/shadow/secrets.json",
+        "docs/data/top5/../signals.json",
+        "data/cache/top5_shadow.json",
+        "models/top5/model.pkl",
+    ],
+)
+def test_artifact_ownership_rejects_non_shadow_staged_paths(path):
+    with pytest.raises(ProductionContractError, match="runtime-safe"):
+        validate_artifact_ownership(path)
 
 
 def test_fixture_ingestor_contract_supports_a_league_isolated_adapter():

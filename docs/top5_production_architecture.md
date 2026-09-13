@@ -48,7 +48,9 @@ quota study. The new `SignalTimeContract` intentionally has no default.
 - `MarketSnapshotKind` separates signal-time and closing snapshots.
 - `PredictionInput.create()` rejects closing snapshots structurally.
 - `ShadowSignalArtifact` requires full provenance and `no_bet_flag=True`.
-- `validate_artifact_ownership()` rejects source and ledger paths.
+- `validate_artifact_ownership()` permits only staged shadow JSON beneath
+  `docs/data/top5/shadow/`; it rejects source, ledger, runtime-cache, secret,
+  model, research, and CI paths.
 
 There is no Top-5 registry, model adapter, provider invocation, scheduler,
 publisher write, Cloudflare call, or ledger call in this scaffold.
