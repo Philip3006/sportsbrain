@@ -34,6 +34,16 @@ from src.football.production_pipeline import run_shadow_pipeline
 NOW = datetime(2026, 9, 11, 12, tzinfo=timezone.utc)
 SIGNAL_TIME = SignalTimeContract(60, 180, 900)
 FIXTURE = Fixture("fixture-1", "sample", "Home", "Away", NOW + timedelta(minutes=90))
+ROLLOUT_STAGE_FIELDS = (
+    (RolloutStage.RESEARCH_APPROVED, "research_approved"),
+    (RolloutStage.ADAPTER_READY, "adapter_ready"),
+    (RolloutStage.OFFLINE_COMPATIBLE, "offline_compatible"),
+    (RolloutStage.SHADOW_INFERENCE, "shadow_inference"),
+    (RolloutStage.SIGNAL_TIME_VALIDATED, "signal_time_validated"),
+    (RolloutStage.PROVIDER_VALIDATED, "provider_validated"),
+    (RolloutStage.SHADOW_PERFORMANCE, "shadow_performance"),
+    (RolloutStage.CEO_APPROVED, "ceo_approved"),
+)
 
 
 def _config(**overrides):
@@ -286,6 +296,52 @@ def test_rollout_controlled_activation_requires_every_gate():
             provider_validated=True,
             shadow_performance=True,
         ).require(RolloutStage.CEO_APPROVED)
+
+
+@pytest.mark.parametrize(
+    "stage, field",
+    ROLLOUT_STAGE_FIELDS[1:],
+)
+def test_each_rollout_stage_requires_all_predecessors(stage, field):
+    with pytest.raises(ProductionContractError, match=stage.value):
+        RolloutEvidence(**{field: True}).require(stage)
+
+
+@pytest.mark.parametrize(
+    "stage, missing_field",
+    [
+        (stage, missing_field)
+        for stage_index, (stage, _) in enumerate(ROLLOUT_STAGE_FIELDS)
+        for _, missing_field in ROLLOUT_STAGE_FIELDS[:stage_index]
+    ],
+)
+def test_skipping_any_predecessor_fails_closed(stage, missing_field):
+    evidence = {field: True for _, field in ROLLOUT_STAGE_FIELDS}
+    evidence[missing_field] = False
+    with pytest.raises(ProductionContractError, match=stage.value):
+        RolloutEvidence(**evidence).require(stage)
+
+
+@pytest.mark.parametrize("stage, field", ROLLOUT_STAGE_FIELDS[1:])
+def test_later_stage_true_alone_never_passes(stage, field):
+    evidence = RolloutEvidence(**{field: True})
+    with pytest.raises(ProductionContractError, match=stage.value):
+        evidence.require(stage)
+
+
+@pytest.mark.parametrize("missing_field", [field for _, field in ROLLOUT_STAGE_FIELDS])
+def test_controlled_activation_requires_every_evidence_gate(missing_field):
+    evidence = {field: True for _, field in ROLLOUT_STAGE_FIELDS}
+    evidence[missing_field] = False
+    with pytest.raises(ProductionContractError, match="controlled_activation"):
+        RolloutEvidence(**evidence).require(RolloutStage.CONTROLLED_ACTIVATION)
+
+
+def test_fully_ordered_rollout_evidence_passes_every_applicable_stage():
+    evidence = RolloutEvidence(**{field: True for _, field in ROLLOUT_STAGE_FIELDS})
+    for stage, _ in ROLLOUT_STAGE_FIELDS:
+        evidence.require(stage)
+    evidence.require(RolloutStage.CONTROLLED_ACTIVATION)
 
 
 def test_fixture_ingestor_contract_supports_a_league_isolated_adapter():

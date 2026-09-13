@@ -71,6 +71,8 @@ The scaffold in `src/football/production_contracts.py` provides:
   and pipeline timestamps must be timezone-aware; aware values normalize to
   UTC and naive values fail closed with `ProductionContractError`.
 - `RolloutEvidence` for the ordered, league-by-league gate sequence.
+  Each requested stage requires that stage and every predecessor; no evidence
+  flag is inferred or changed by validation.
 - `RuntimeStateBinding` for external ownership of mutable provider, odds,
   bankroll-control, and future shadow state.
 - `validate_artifact_ownership()` for explicit `ArtifactOwner` namespaces:

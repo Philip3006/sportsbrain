@@ -437,22 +437,26 @@ class RolloutEvidence:
     ceo_approved: bool = False
 
     def require(self, stage: RolloutStage) -> None:
-        checks = {
-            RolloutStage.RESEARCH_APPROVED: self.research_approved,
-            RolloutStage.ADAPTER_READY: self.adapter_ready,
-            RolloutStage.OFFLINE_COMPATIBLE: self.offline_compatible,
-            RolloutStage.SHADOW_INFERENCE: self.shadow_inference,
-            RolloutStage.SIGNAL_TIME_VALIDATED: self.signal_time_validated,
-            RolloutStage.PROVIDER_VALIDATED: self.provider_validated,
-            RolloutStage.SHADOW_PERFORMANCE: self.shadow_performance,
-            RolloutStage.CEO_APPROVED: self.ceo_approved,
-        }
-        if stage is RolloutStage.CONTROLLED_ACTIVATION:
-            required = all(checks.values())
+        resolved_stage = RolloutStage(stage)
+        ordered_checks = (
+            (RolloutStage.RESEARCH_APPROVED, self.research_approved),
+            (RolloutStage.ADAPTER_READY, self.adapter_ready),
+            (RolloutStage.OFFLINE_COMPATIBLE, self.offline_compatible),
+            (RolloutStage.SHADOW_INFERENCE, self.shadow_inference),
+            (RolloutStage.SIGNAL_TIME_VALIDATED, self.signal_time_validated),
+            (RolloutStage.PROVIDER_VALIDATED, self.provider_validated),
+            (RolloutStage.SHADOW_PERFORMANCE, self.shadow_performance),
+            (RolloutStage.CEO_APPROVED, self.ceo_approved),
+        )
+        if resolved_stage is RolloutStage.CONTROLLED_ACTIVATION:
+            required = all(value for _, value in ordered_checks)
         else:
-            required = checks[stage]
+            target_index = next(
+                index for index, (candidate, _) in enumerate(ordered_checks) if candidate is resolved_stage
+            )
+            required = all(value for _, value in ordered_checks[: target_index + 1])
         if not required:
-            raise ProductionContractError(f"rollout evidence missing for stage {stage.value}")
+            raise ProductionContractError(f"rollout evidence missing for stage {resolved_stage.value}")
 
 
 @runtime_checkable
