@@ -1,8 +1,8 @@
 # SPORTSBRAIN — TOP-5 FLAGSHIP RESEARCH: CONSOLIDATED CEO HANDOFF
 
-**Framework SHA**: `a079fa88b` (branch `feat/top5-framework`)
+**Framework branch**: `feat/top5-framework` (final audit head recorded in Git)
 **BL1 Reference SHA**: `569741b4ad571a38492e4d7cfd014cf82daec396` (frozen)
-**Date**: 2026-09-10
+**Date**: 2026-09-13
 **Status**: COMPLETE — All 5 leagues, M1-M7, contamination, invariants
 
 ---
@@ -18,7 +18,7 @@
 | Serie A complete | ✅ COMPLETE | M1-M7 + contamination + invariants |
 | Ligue 1 complete | ✅ COMPLETE | M1-M7 + contamination + invariants; variable n due to format changes |
 | Contamination A/B/A' | ✅ PASS (all 5) | Full pipeline B run + hash_b evidence for 16 files |
-| Invariants | ✅ 100/100 PASS | 20 invariant types × 5 leagues |
+| Invariants | ✅ 101 PASS | 20 invariant types × 5 leagues, plus Serie A matched-population regression |
 | Cross-league comparison | ✅ COMPLETE | See Section 3 |
 | Signal-time | ⚠️ UNDEFINED | No scanner/scheduler implemented |
 | 2425/2526 sealed | ✅ SEALED | No outcome-based evaluation |
@@ -60,7 +60,10 @@ Lower Brier = better calibration.
 † n=1519 for M5/M6/M7 (one Serie A match has no canonical odds).
 ‡ Variable season lengths: 1920 n=279 (COVID), 2324 n=306 (18-team format).
 
-**M5 (market pre-close) is the best model in every league without exception.**
+M5 is the research market baseline. M6 is identical to M5 in BL1, La Liga,
+and Serie A, and its paired interval includes zero in EPL and Ligue 1. No
+researched model shows a statistically supported improvement over M5 on these
+DEV outer folds.
 
 ---
 
@@ -73,12 +76,13 @@ Lower Brier = better calibration.
 | BL1 | +0.0237 | [0.0135, 0.0328] | No | M5 significantly better |
 | EPL | +0.0282 | [0.0190, 0.0371] | No | M5 significantly better |
 | La Liga | +0.0146 | [0.0067, 0.0222] | No | M5 significantly better |
-| Serie A | +0.0277* | N/A (n mismatch) | — | Directionally M5 better |
+| Serie A | +0.0277 | [0.0192, 0.0355] | No | M5 better on 1,519 matched rows |
 | Ligue 1 | +0.0275 | [0.0188, 0.0359] | No | M5 significantly better |
 
-*Point estimate from model_summary brier difference; bootstrap skipped due to 1-row n mismatch.
-
-**All football models (M1–M4) are significantly inferior to M5 pre-close market in every league.**
+For Serie A, the comparison is an inner join on the 1,519 fixture IDs with
+both M1 and M5 predictions; the unmatched M1-only row is excluded before
+bootstrapping. On the corresponding matched populations, M1--M4 have positive
+paired Brier deltas with 95% intervals excluding zero in all five leagues.
 
 ---
 
@@ -94,7 +98,10 @@ Lower Brier = better calibration.
 | Serie A | 1519 | 0.5732 | 0.5718 | +0.0014 | [−0.0009, 0.0036] | Yes |
 | Ligue 1 | 1446 | 0.5937 | 0.5930 | +0.0007 | [−0.0016, 0.0031] | Yes |
 
-**Statistically significant pre-close information advantage detected in BL1 and EPL.** For La Liga, Serie A, and Ligue 1 the observed DEV sample did not produce a Brier delta whose 95% bootstrap CI excludes zero. Absence of detected significance is not proof of market efficiency or equivalence — the DEV sample may be underpowered for the observed delta magnitude, and the point estimate remains positive (pre-close inferior) in every league.
+Closing odds outperform the historical pre-close baseline in the observed DEV
+samples for BL1 and EPL. For La Liga, Serie A, and Ligue 1, the 95% bootstrap
+interval includes zero. This is not evidence of market efficiency, equivalence,
+or a production timing recommendation.
 
 ---
 
@@ -117,8 +124,8 @@ raw and full pickles are mutated in memory as follows before Run B:
 **Test protocol (per league):**
 - Run A: hash every checked dev-output CSV against the real dataset
 - Run B: re-run the FULL M1-M7 pipeline + downstream analysis (paired
-  bootstrap, edge sweep, summary) on the sentinel dataset into an
-  isolated `_contamination_b/` directory, then hash the same CSVs
+  bootstrap, edge sweep, summary) on the sentinel dataset into a temporary
+  directory outside canonical results, then hash the same CSVs
 - Run A': re-hash real outputs (must be unchanged)
 
 **Pass criterion:** `hash_a == hash_b` for every checked file (dev decisions
@@ -150,9 +157,9 @@ proof of file restoration.
 
 ## 8. EDGE SWEEP FINDINGS (DEV, pre-close entry, AvgH/D/A)
 
-Best signals by league at threshold ≥ 0.05:
+Highest observed ROI configuration by league at threshold >= 0.05:
 
-| League | Best model | Threshold | n_signals | ROI | 95% CI | CLV (price) |
+| League | Configuration | Threshold | n_signals | ROI | 95% CI | CLV (price) |
 |--------|-----------|-----------|-----------|-----|--------|-------------|
 | BL1 | M3_LGBM+dmwd | 0.10 | 973 | +7.6% | [−5.8%, +21.6%] | — |
 | EPL | M6 | 0.08 | 5 | +32.4% | [−100%, +297%] | — |
@@ -162,7 +169,9 @@ Best signals by league at threshold ≥ 0.05:
 
 **No league produces positive ROI with CI entirely above zero at any threshold.** EPL M6 n=5 is noise. CLV (price) is negative across all meaningful signal sets.
 
-**Deployable edge verdict: NO** — no football model (M1–M4) or market residual (M7) generates defensible edge across any Top-5 league on DEV data.
+**Research edge finding:** this DEV sweep did not produce a positive-ROI
+interval entirely above zero for a Top-5 league. It does not approve a model,
+strategy, or market-timing approach for production.
 
 ---
 
@@ -171,10 +180,10 @@ Best signals by league at threshold ≥ 0.05:
 | League | Selected φ | Note |
 |--------|-----------|------|
 | BL1 | 0.0012 | Matches BL1 v7 reference |
-| EPL | 0.0012 | Standard |
-| La Liga | 0.0018 | Slightly faster decay — La Liga volatility |
-| Serie A | 0.0012 | Standard |
-| Ligue 1 | 0.0012 | Standard |
+| EPL | 0.0012 | Selected under the predeclared DEV procedure |
+| La Liga | 0.0018 | Selected under the predeclared DEV procedure |
+| Serie A | 0.0012 | Selected under the predeclared DEV procedure |
+| Ligue 1 | 0.0012 | Selected under the predeclared DEV procedure |
 
 ---
 
@@ -184,11 +193,11 @@ M6 = α × M5 + (1−α) × M2_Elo. Alpha selected per outer fold using calib_se
 
 | League | Outer folds alphas | Interpretation |
 |--------|-------------------|----------------|
-| BL1 | 1.0, 1.0, 1.0, 1.0 | Market completely dominates Elo in BL1 |
-| EPL | 0.9, 1.0, 1.0, 1.0 | Marginal Elo contribution fold 2021 only |
-| La Liga | 1.0, 1.0, 1.0, 1.0 | Pure market |
-| Serie A | 1.0, 1.0, 1.0, 1.0 | Pure market |
-| Ligue 1 | 0.9, 1.0, 1.0, 1.0 | Marginal Elo contribution fold 2021 only |
+| BL1 | 1.0, 1.0, 1.0, 1.0 | Pure-market blend selected in each outer fold |
+| EPL | 0.9, 1.0, 1.0, 1.0 | Per-fold selected blend values |
+| La Liga | 1.0, 1.0, 1.0, 1.0 | Pure-market blend selected in each outer fold |
+| Serie A | 1.0, 1.0, 1.0, 1.0 | Pure-market blend selected in each outer fold |
+| Ligue 1 | 0.9, 1.0, 1.0, 1.0 | Per-fold selected blend values |
 
 ---
 
@@ -206,9 +215,12 @@ Ligue 1 changed from 20 teams (380 matches/season) to 18 teams (306 matches/seas
 
 ---
 
-## 13. SERIE A n MISMATCH NOTE
+## 13. SERIE A MATCHED-POPULATION NOTE
 
-Serie A outer folds: M1/M2/M3/M4 n=1520, M5/M6/M7 n=1519. One match has no valid AvgH/AvgD/AvgA in the historical data. Bootstrap comparison M1 vs M5 was skipped; point estimate confirms M5 better by ~0.0277 Brier.
+Serie A outer folds: M1/M2/M3/M4 n=1520, M5/M6/M7 n=1519. One match
+has no valid AvgH/AvgD/AvgA in the historical data. Paired comparisons join on
+the 1,519 common fixture IDs rather than comparing unequal arrays. M1 versus
+M5 has delta Brier +0.0277, 95% CI [0.0192, 0.0355].
 
 ---
 
@@ -236,10 +248,10 @@ research/top5/
 │   ├── seriea/                # Serie A: dataset + results (M1-M7 + contamination)
 │   └── ligue1/                # Ligue 1: dataset + results (M1-M7 + contamination)
 └── tests/
-    └── test_top5_invariants.py  # 7 invariants × 5 leagues = 35 tests
+    └── test_top5_invariants.py  # 20 invariant categories × 5 leagues + targeted regressions
 ```
 
-**Walk-forward design**: DEV=1617-2324 (8 seasons), CALIB=2425 (sealed), HOLDOUT=2526 (sealed), LIVE_SHADOW=2627 (deferred). No 2425/2526 outcomes inspected at any point.
+**Walk-forward design**: DEV=1617-2324 (8 seasons), CALIB=2425 (sealed), HOLDOUT=2526 (sealed), LIVE_SHADOW=2627 (deferred). No 2425/2526 outcome participates in fitting, selection, scoring, or inference.
 
 ---
 
@@ -249,9 +261,11 @@ research/top5/
 
 2. **Holdout evaluation gate**: 2526 (holdout) and 2425 (calibration) remain sealed. Holdout unlock requires CEO explicit authorization and should be a one-time final-validation event.
 
-3. **Production model selection**: Based on DEV evidence, the only production-deployable strategy is **M5 (market pre-close) as baseline** for BL1 and EPL where the pre-close gap is statistically significant. Deploying football-only models (M1-M4) as a standalone signal is NOT justified by this evidence.
+3. **Production status**: No Top-5 model, strategy, or market-timing approach is approved for production from this DEV-only research. Any future activation requires separate CEO authorization and an independently specified signal-time and shadow-readiness gate.
 
-4. **No-edge finding**: The systematic absence of positive CLV across all models and leagues is a robust finding. If deployment is still desired, it should target BL1/EPL market-timing (pre-close vs close gap) rather than model-vs-market edge.
+4. **DEV evidence boundary**: The edge sweep did not establish a defensible
+model-versus-market edge. The observed BL1/EPL closing-price differences are
+historical DEV findings, not activation criteria.
 
 ---
 

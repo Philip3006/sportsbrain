@@ -10,9 +10,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from . import metrics
-from . import partitions
 from ..config import LeagueConfig
+from . import metrics, partitions
 
 THRESHOLDS = [0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.10]
 CLASSES = ["away", "draw", "home"]
@@ -105,9 +104,15 @@ def run_paired_bootstrap(config: LeagueConfig, top5_root: Path) -> dict:
         df_b = df_m5.copy()
         for _d in (df_a, df_b):
             _d["date"] = pd.to_datetime(_d["date"])
-        prob_cols = [c for c in df_a.columns
-                     if c.startswith(("m1_p_", "m2_p_", "m3_p_", "m4_p_",
-                                       "m6_p_", "m7_p_"))]
+        probability_prefix = {
+            "M1_DC": "m1_p_",
+            "M2_Elo": "m2_p_",
+            "M3_LGBM_dmwd": "m3_p_",
+            "M4_LGBM": "m4_p_",
+            "M6_market_elo_blend": "m6_p_",
+            "M7_market_residual": "m7_p_",
+        }[name]
+        prob_cols = [c for c in df_a.columns if c.startswith(probability_prefix)]
         if not prob_cols:
             print(f"[bootstrap/{config.key}] {name}: no prob cols — skip",
                   flush=True)

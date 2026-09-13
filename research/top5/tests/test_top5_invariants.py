@@ -42,9 +42,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from research.top5 import config as league_cfg  # noqa: E402
-from research.top5.core import canonical_market as market  # noqa: E402
-from research.top5.core import partitions  # noqa: E402
+from research.top5 import config as league_cfg
+from research.top5.core import canonical_market as market
+from research.top5.core import partitions
 
 TOP5 = ROOT / "research" / "top5"
 
@@ -139,7 +139,11 @@ def test_type05_coverage_helper_metadata_only(league_key):
 @pytest.mark.parametrize("league_key", _available_leagues())
 def test_type06_no_raw_bypass_in_orchestrators(league_key):
     from research.top5.core import (
-        models, models_dc, models_lgbm, analysis, contamination,
+        analysis,
+        contamination,
+        models,
+        models_dc,
+        models_lgbm,
     )
     forbidden = re.compile(r"pickle\.load\s*\(")
     offenders = []
@@ -374,6 +378,19 @@ def test_type15_bootstrap_match_level(league_key):
     # (The point delta is data-only, so it's seed-independent.)
     _, lo3, hi3, frac3 = metrics.paired_bootstrap(y, p_a, p_b, 500, seed=99)
     assert (lo3, hi3, frac3) != (lo1, hi1, frac1)
+
+
+def test_type15_seriea_m1_uses_a_legitimate_matched_population():
+    """One missing market quote must not invalidate Serie A's paired test."""
+    res = league_cfg.get("seriea").results_dir(TOP5)
+    report = pd.read_csv(res / "paired_bootstrap.csv")
+    row = report[
+        (report["model_a"] == "M1_DC")
+        & (report["model_b"] == "M5_market_preclose")
+    ].iloc[0]
+    assert int(row["n"]) == 1520
+    assert int(row["n_matched"]) == 1519
+    assert row["match_mode"] == "inner_join_dhaway"
 
 
 # ---------------------------------------------------------------------------

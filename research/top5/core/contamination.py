@@ -17,7 +17,7 @@ Pass criterion:
 
 The sentinel is applied IN-MEMORY by writing temporary copies of the
 raw and full pickles with 2425+2526 rows mutated — no production file is
-ever modified. B outputs are written into `results_dir/_contamination_b/`
+ever modified. B outputs are written into an isolated temporary directory
 and cleaned up AFTER hash capture.
 """
 from __future__ import annotations
@@ -126,10 +126,11 @@ def _sentinel_pkl(pkl_path: Path, calib_season: str, holdout_season: str) -> Pat
         if col in df.columns:
             df.loc[mask, col] = np.nan
 
-    tmp = tempfile.NamedTemporaryFile(suffix=".pkl", delete=False)
-    with open(tmp.name, "wb") as f:
+    with tempfile.NamedTemporaryFile(suffix=".pkl", delete=False) as tmp:
+        tmp_path = Path(tmp.name)
+    with tmp_path.open("wb") as f:
         pickle.dump(df, f)
-    return Path(tmp.name)
+    return tmp_path
 
 
 def _run_full_pipeline_b(config: LeagueConfig, sentinel_raw: Path,
@@ -140,8 +141,8 @@ def _run_full_pipeline_b(config: LeagueConfig, sentinel_raw: Path,
     All outputs are written into `b_res_dir` (isolated). The real league
     results dir is not touched.
     """
-    from . import models as m_mod
     from . import analysis as an_mod
+    from . import models as m_mod
 
     b_res_dir.mkdir(parents=True, exist_ok=True)
 
@@ -209,7 +210,9 @@ def run_contamination_test(config: LeagueConfig, top5_root: Path) -> dict:
                                   config.calibration_season, config.holdout_season)
     sentinel_full = _sentinel_pkl(config.full_pkl(top5_root),
                                    config.calibration_season, config.holdout_season)
-    b_res = res / "_contamination_b"
+    # Keep B completely outside the canonical research tree. This prevents a
+    # full-pipeline B run from interacting with real result-directory cleanup.
+    b_res = Path(tempfile.mkdtemp(prefix=f"top5_{config.key}_contamination_b_"))
     hashes_b: dict[str, str | None] = {}
     errors: list[str] = []
 
