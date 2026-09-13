@@ -4,19 +4,29 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from src.football.production_contracts import (
+    ArtifactOwner,
     ActivationMode,
+    DISABLED_TOP5_LEAGUE_CONFIGS,
     Fixture,
     FixtureIngestor,
     LeagueProductionConfig,
     MarketSnapshot,
     MarketSnapshotKind,
+    OddsRequest,
     PredictionInput,
+    PredictionArtifact,
+    ProviderMapping,
     ProductionContractError,
+    RolloutEvidence,
+    RolloutStage,
+    RuntimeStateBinding,
+    RuntimeStateOwner,
     ShadowSignalArtifact,
     SignalTimeContract,
     validate_artifact_ownership,
     validate_disabled_top5_configs,
 )
+from src.football.production_pipeline import run_shadow_pipeline
 
 NOW = datetime(2026, 9, 11, 12, tzinfo=timezone.utc)
 SIGNAL_TIME = SignalTimeContract(60, 180, 900)
@@ -116,6 +126,99 @@ def test_artifact_ownership_allows_staged_public_artifacts_only():
     validate_artifact_ownership("docs/data/signals.json")
 
 
+def test_disabled_registry_covers_top5_without_binding_a_model():
+    from src.config import LEAGUE_REGISTRY
+
+    assert {config.provider_sport_key for config in DISABLED_TOP5_LEAGUE_CONFIGS} == {
+        "soccer_germany_bundesliga",
+        "soccer_epl",
+        "soccer_spain_la_liga",
+        "soccer_italy_serie_a",
+        "soccer_france_ligue_1",
+    }
+    assert all(config.activation_mode is ActivationMode.DISABLED for config in DISABLED_TOP5_LEAGUE_CONFIGS)
+    assert all(config.model_adapter_id == "unbound" for config in DISABLED_TOP5_LEAGUE_CONFIGS)
+    assert not {config.provider_sport_key for config in DISABLED_TOP5_LEAGUE_CONFIGS}.intersection(LEAGUE_REGISTRY)
+
+
+def test_odds_request_is_bulk_and_stable_for_cache_coalescing():
+    config = _config(
+        provider_mapping=ProviderMapping(
+            provider_name="fixture-provider",
+            competition_id="sample-competition",
+            sport_key="soccer_sample_league",
+            markets=("totals", "h2h", "h2h"),
+            regions=("uk", "eu"),
+        )
+    )
+    other = Fixture("fixture-2", "sample", "Other Home", "Other Away", NOW + timedelta(minutes=120))
+    request = OddsRequest.for_config(config, [other, FIXTURE], NOW)
+    assert request.fixture_keys == ("fixture-1", "fixture-2")
+    assert request.markets == ("h2h", "totals")
+    assert request.regions == ("eu", "uk")
+    assert request.request_key == OddsRequest.for_config(config, [FIXTURE, other], NOW).request_key
+
+
+def test_prediction_artifact_rejects_closing_snapshot_kind():
+    artifact = PredictionArtifact(
+        prediction_id="prediction-1",
+        fixture_key=FIXTURE.fixture_key,
+        league_code=FIXTURE.league_code,
+        model_adapter_id="model-under-review",
+        generated_at=NOW,
+        snapshot_id="snapshot-1",
+        snapshot_kind=MarketSnapshotKind.CLOSING,
+        probabilities={"home": 0.5},
+    )
+    with pytest.raises(ProductionContractError, match="closing"):
+        artifact.validate()
+
+
+def test_artifact_ownership_can_be_scoped_to_explicit_owner():
+    validate_artifact_ownership("results/shadow/BL1/fixture-1.json", ArtifactOwner.SHADOW_ARCHIVE)
+    with pytest.raises(ProductionContractError, match="ownership"):
+        validate_artifact_ownership("docs/data/signals.json", ArtifactOwner.SHADOW_ARCHIVE)
+
+
+def test_runtime_state_binding_requires_external_owner_and_safe_path():
+    RuntimeStateBinding(
+        RuntimeStateOwner.PROVIDER_BUDGET,
+        "data/cache/provider_budget.json",
+    ).validate()
+    with pytest.raises(ProductionContractError, match="external"):
+        RuntimeStateBinding(
+            RuntimeStateOwner.PROVIDER_BUDGET,
+            "data/cache/provider_budget.json",
+            external_required=False,
+        ).validate()
+    with pytest.raises(ProductionContractError, match="public"):
+        RuntimeStateBinding(RuntimeStateOwner.TOP5_SHADOW, "docs/data/top5.json").validate()
+
+
+def test_rollout_controlled_activation_requires_every_gate():
+    evidence = RolloutEvidence(
+        research_approved=True,
+        adapter_ready=True,
+        offline_compatible=True,
+        shadow_inference=True,
+        signal_time_validated=True,
+        provider_validated=True,
+        shadow_performance=True,
+        ceo_approved=True,
+    )
+    evidence.require(RolloutStage.CONTROLLED_ACTIVATION)
+    with pytest.raises(ProductionContractError, match="ceo_approved"):
+        RolloutEvidence(
+            research_approved=True,
+            adapter_ready=True,
+            offline_compatible=True,
+            shadow_inference=True,
+            signal_time_validated=True,
+            provider_validated=True,
+            shadow_performance=True,
+        ).require(RolloutStage.CEO_APPROVED)
+
+
 def test_fixture_ingestor_contract_supports_a_league_isolated_adapter():
     class FakeIngestor:
         def fetch(self, config):
@@ -133,3 +236,132 @@ def test_scaffold_has_no_ledger_or_publisher_entry_point():
     source = inspect.getsource(contracts)
     for prohibited in ("append_bets", "write_signals_json", "upload_signals_to_cloud"):
         assert prohibited not in source
+
+
+def test_shadow_pipeline_has_no_live_side_effect_dependency():
+    import src.football.production_pipeline as pipeline
+
+    source = inspect.getsource(pipeline)
+    for prohibited in ("requests", "pickle", "append_bets", "write_signals_json", "upload_signals_to_cloud"):
+        assert prohibited not in source
+
+
+def test_shadow_pipeline_uses_one_injected_bulk_request_and_no_bet_sink():
+    config = _config(
+        activation_mode=ActivationMode.SHADOW,
+        signal_time=SIGNAL_TIME,
+        provider_mapping=ProviderMapping(
+            provider_name="fixture-provider",
+            competition_id="sample-competition",
+            sport_key="soccer_sample_league",
+        ),
+    )
+    snapshot = MarketSnapshot(
+        fixture_key=FIXTURE.fixture_key,
+        captured_at=NOW,
+        kind=MarketSnapshotKind.SIGNAL_TIME,
+        source="fixture-provider",
+        odds={"home": 2.0},
+        snapshot_id="snapshot-1",
+    )
+
+    class FakeIngestor:
+        def fetch(self, _config):
+            return [FIXTURE]
+
+    class FakeProvider:
+        name = "fixture-provider"
+
+        def __init__(self):
+            self.requests = []
+
+        def fetch(self, request):
+            self.requests.append(request)
+            return [snapshot]
+
+    class FakeFeatures:
+        def build(self, _fixture, _snapshot):
+            return {"form": 1.0}
+
+    class FakeModel:
+        def predict(self, model_input):
+            assert model_input.signal_snapshot.kind is MarketSnapshotKind.SIGNAL_TIME
+            return {"home": 0.55, "away": 0.45}
+
+    class FakeDecider:
+        def decide(self, _fixture, _prediction, _snapshot):
+            return ShadowSignalArtifact(
+                signal_id="signal-1",
+                fixture_key=FIXTURE.fixture_key,
+                league_code=FIXTURE.league_code,
+                source="fixture-provider",
+                model_adapter_id="model-under-review",
+                activation_mode=ActivationMode.SHADOW,
+                no_bet_flag=True,
+                reason="shadow_only",
+            )
+
+    class FakeSink:
+        def __init__(self):
+            self.artifacts = []
+
+        def write(self, artifact):
+            self.artifacts.append(artifact)
+
+    provider = FakeProvider()
+    sink = FakeSink()
+    result = run_shadow_pipeline(
+        config,
+        FakeIngestor(),
+        provider,
+        FakeFeatures(),
+        FakeModel(),
+        FakeDecider(),
+        now=NOW,
+        sink=sink,
+    )
+    assert len(provider.requests) == 1
+    assert result.health.status == "ok"
+    assert result.health.as_payload()["no_bet"] is True
+    assert len(result.predictions) == len(result.signals) == len(sink.artifacts) == 1
+    assert sink.artifacts[0].no_bet_flag is True
+
+
+def test_shadow_pipeline_rejects_closing_provider_output():
+    config = _config(
+        activation_mode=ActivationMode.SHADOW,
+        signal_time=SIGNAL_TIME,
+        provider_mapping=ProviderMapping(
+            provider_name="fixture-provider",
+            competition_id="sample-competition",
+            sport_key="soccer_sample_league",
+        ),
+    )
+    closing = MarketSnapshot(
+        fixture_key=FIXTURE.fixture_key,
+        captured_at=NOW,
+        kind=MarketSnapshotKind.CLOSING,
+        source="fixture-provider",
+        odds={"home": 2.0},
+    )
+
+    class FakeIngestor:
+        def fetch(self, _config):
+            return [FIXTURE]
+
+    class FakeProvider:
+        name = "fixture-provider"
+
+        def fetch(self, _request):
+            return [closing]
+
+    with pytest.raises(ProductionContractError, match="closing snapshot"):
+        run_shadow_pipeline(
+            config,
+            FakeIngestor(),
+            FakeProvider(),
+            object(),
+            object(),
+            object(),
+            now=NOW,
+        )
