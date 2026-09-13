@@ -238,6 +238,10 @@ def run_offline_compatibility(
         duplicate_suppression_count=0,
         model_adapter_identity=model_identity,
         contract_id=signal_time_contract_id(signal_time),
+        logical_fixture_evaluations=pipeline.health.fixture_count,
+        bulk_provider_request_count=len(odds_provider.requests),
+        fallback_request_count=0,
+        health_identity=adapter.health_identity,
     )
     health.validate()
     return OfflineCompatibilityResult(pipeline, artifact_flow, health)

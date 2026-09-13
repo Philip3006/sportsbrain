@@ -51,7 +51,9 @@ def _semantics(adapter: Top5LeagueAdapter, result_code: str) -> SourceSemantics:
     mapping = adapter.config.provider_mapping
     assert mapping is not None
     if result_code in {"D1", "E0"}:
-        fallbacks = ("the_odds_api:scores (1 request/match, only if CSV empty)",)
+        fallbacks = (
+            "the_odds_api:/sports/{sport}/scores (sport-level fallback, only if CSV empty)",
+        )
     else:
         fallbacks = ("none in current results_router for this football-data code",)
     return SourceSemantics(

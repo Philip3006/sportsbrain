@@ -21,6 +21,14 @@ class Top5ShadowHealth:
     contract_id: str
     no_bet: bool = True
     activation_mode: ActivationMode = ActivationMode.DISABLED
+    logical_fixture_evaluations: int = 0
+    bulk_provider_request_count: int = 0
+    fallback_request_count: int = 0
+    health_identity: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.health_identity:
+            object.__setattr__(self, "health_identity", f"top5_shadow:{self.league_code}")
 
     def validate(self) -> None:
         if any(count < 0 for count in (
@@ -32,9 +40,20 @@ class Top5ShadowHealth:
             self.provider_failure_count,
             self.retry_count,
             self.duplicate_suppression_count,
+            self.logical_fixture_evaluations,
+            self.bulk_provider_request_count,
+            self.fallback_request_count,
         )):
             raise ProductionContractError("Top-5 health counts must be non-negative")
-        if not self.league_code.strip() or not self.model_adapter_identity.strip() or not self.contract_id.strip():
+        if any(
+            not value.strip()
+            for value in (
+                self.league_code,
+                self.health_identity,
+                self.model_adapter_identity,
+                self.contract_id,
+            )
+        ):
             raise ProductionContractError("Top-5 health requires league, model, and contract identity")
         if not self.no_bet:
             raise ProductionContractError("Top-5 health must remain no-bet")
@@ -56,7 +75,11 @@ class Top5ShadowHealth:
             "retries": self.retry_count,
             "duplicate_suppression": self.duplicate_suppression_count,
             "model_adapter_identity": self.model_adapter_identity,
+            "health_identity": self.health_identity,
             "contract_id": self.contract_id,
+            "logical_fixture_evaluations": self.logical_fixture_evaluations,
+            "bulk_provider_requests": self.bulk_provider_request_count,
+            "fallback_requests": self.fallback_request_count,
             "no_bet": True,
             "activation_mode": ActivationMode.DISABLED.value,
             "registered": False,
