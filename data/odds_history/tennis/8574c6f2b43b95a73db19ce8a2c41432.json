@@ -1,0 +1,15 @@
+{
+  "match_id": "8574c6f2b43b95a73db19ce8a2c41432",
+  "player_a": "Aryna Sabalenka",
+  "player_b": "Jessica Pegula",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260910_23",
+      "ts_utc": "2026-09-10T23:11:30.351698+00:00",
+      "odds_a": 1.54,
+      "odds_b": 2.82,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "298f63d24d43bad661cec410ef8bddae",
+  "player_a": "Coco Gauff",
+  "player_b": "Elena Rybakina",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260910_23",
+      "ts_utc": "2026-09-10T23:11:30.351889+00:00",
+      "odds_a": 2.0,
+      "odds_b": 1.81,
+      "source": "gtbets"
+    }
+  ]
+}

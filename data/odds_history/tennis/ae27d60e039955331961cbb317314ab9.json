@@ -1,0 +1,15 @@
+{
+  "match_id": "ae27d60e039955331961cbb317314ab9",
+  "player_a": "Aryna Sabalenka",
+  "player_b": "Elena Rybakina",
+  "tournament_slug": "us_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20260911_04",
+      "ts_utc": "2026-09-11T04:41:20.197229+00:00",
+      "odds_a": 1.71,
+      "odds_b": 2.25,
+      "source": "coolbet"
+    }
+  ]
+}
