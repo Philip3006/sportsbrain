@@ -33,15 +33,28 @@ class QuotaAssumptions:
     bulk_reuse: bool = True
     signal_window_passes: int = 1
     fallback_probability_by_league: Mapping[str, float] = field(default_factory=dict)
+    fallback_rate_by_league: Mapping[str, float] = field(default_factory=dict)
     fallback_event_requests_by_league: Mapping[str, int] = field(default_factory=dict)
     markets: tuple[str, ...] = ("h2h", "totals", "spreads")
     regions: tuple[str, ...] = ("eu",)
     cost_model: ProviderCostModel = field(default_factory=ProviderCostModel)
     signal_time_contract: SignalTimeContract | None = None
+    cadence_seconds: int | None = None
+    retry_count: int | None = None
+
+    @property
+    def effective_signal_attempts(self) -> int:
+        """Return one initial evaluation plus an optional retry count."""
+
+        return self.retry_count + 1 if self.retry_count is not None else self.signal_attempts_per_fixture
 
     def validate(self) -> None:
         if self.signal_attempts_per_fixture <= 0:
             raise ProductionContractError("signal attempts per fixture must be positive")
+        if self.retry_count is not None and self.retry_count < 0:
+            raise ProductionContractError("retry count must be non-negative when supplied")
+        if self.cadence_seconds is not None and self.cadence_seconds <= 0:
+            raise ProductionContractError("cadence must be positive when supplied")
         if any(value < 0 for value in (
             self.revalidation_requests_per_fixture,
             self.closing_capture_requests_per_fixture,
@@ -60,6 +73,7 @@ class QuotaAssumptions:
             raise ProductionContractError("quota estimate has blank market or region")
         unknown = (
             set(self.fallback_probability_by_league)
+            | set(self.fallback_rate_by_league)
             | set(self.fallback_event_requests_by_league)
         ) - set(TOP5_LEAGUE_ADAPTERS)
         if unknown:
@@ -69,6 +83,11 @@ class QuotaAssumptions:
             for probability in self.fallback_probability_by_league.values()
         ):
             raise ProductionContractError("fallback probabilities must be finite values in [0, 1]")
+        if any(
+            not isfinite(float(probability)) or not 0 <= probability <= 1
+            for probability in self.fallback_rate_by_league.values()
+        ):
+            raise ProductionContractError("fallback rates must be finite values in [0, 1]")
         if any(count < 0 for count in self.fallback_event_requests_by_league.values()):
             raise ProductionContractError("fallback event request counts must be non-negative")
         if self.signal_time_contract is not None:
@@ -80,6 +99,12 @@ class QuotaAssumptions:
 class QuotaHorizon:
     name: str
     fixtures_by_league: Mapping[str, int]
+
+    @classmethod
+    def named(cls, name: str, fixtures_by_league: Mapping[str, int]) -> QuotaHorizon:
+        """Create a named planning horizon such as matchday, 24h, 72h, or week."""
+
+        return cls(name, fixtures_by_league)
 
     def validate(self) -> None:
         if not self.name.strip():
@@ -145,6 +170,8 @@ class QuotaEstimate:
     regions: tuple[str, ...]
     leagues: tuple[LeagueQuotaEstimate, ...]
     signal_time_contract: SignalTimeContract | None = None
+    cadence_seconds: int | None = None
+    retry_count: int | None = None
 
     @property
     def total_fixtures(self) -> int:
@@ -192,6 +219,8 @@ class QuotaEstimate:
             "horizon": self.horizon,
             "markets": list(self.markets),
             "regions": list(self.regions),
+            "cadence_seconds": self.cadence_seconds,
+            "retry_count": self.retry_count,
             "signal_time_contract": _contract_payload(self.signal_time_contract),
             "total_fixtures": self.total_fixtures,
             "logical_signal_evaluations": self.logical_signal_evaluations,
@@ -228,18 +257,21 @@ def estimate_quota(horizon: QuotaHorizon, assumptions: QuotaAssumptions) -> Quot
     estimates: list[LeagueQuotaEstimate] = []
     for league_code in sorted(TOP5_LEAGUE_ADAPTERS):
         fixtures = int(horizon.fixtures_by_league.get(league_code, 0))
-        logical = fixtures * assumptions.signal_attempts_per_fixture
+        logical = fixtures * assumptions.effective_signal_attempts
         if assumptions.bulk_reuse:
             signal_cycles = assumptions.signal_window_passes + max(
                 0,
-                assumptions.signal_attempts_per_fixture - 1,
+                assumptions.effective_signal_attempts - 1,
             )
             bulk_requests = _bulk_request_count(fixtures, assumptions) * signal_cycles
         else:
             bulk_requests = logical * assumptions.fixture_bulk_requests_per_league
         exact_fallback = assumptions.fallback_event_requests_by_league.get(league_code)
         if exact_fallback is None:
-            probability = assumptions.fallback_probability_by_league.get(league_code, 0.0)
+            probability = assumptions.fallback_probability_by_league.get(
+                league_code,
+                assumptions.fallback_rate_by_league.get(league_code, 0.0),
+            )
             fallback_requests = (
                 logical * probability
                 + logical * assumptions.fallback_requests_per_fixture
@@ -275,6 +307,8 @@ def estimate_quota(horizon: QuotaHorizon, assumptions: QuotaAssumptions) -> Quot
         regions=tuple(assumptions.regions),
         leagues=tuple(estimates),
         signal_time_contract=assumptions.signal_time_contract,
+        cadence_seconds=assumptions.cadence_seconds,
+        retry_count=assumptions.retry_count,
     )
 
 
@@ -313,3 +347,71 @@ def _contract_payload(contract: SignalTimeContract | None) -> dict[str, int] | N
         "maximum_minutes_before_kickoff": contract.maximum_minutes_before_kickoff,
         "maximum_odds_age_seconds": contract.maximum_odds_age_seconds,
     }
+
+
+@dataclass(frozen=True)
+class ProductionQuotaScenario:
+    """A named, non-authoritative planning scenario for one or more horizons."""
+
+    name: str
+    horizons: tuple[QuotaHorizon, ...]
+    assumptions: QuotaAssumptions
+
+    def validate(self) -> None:
+        if not self.name.strip():
+            raise ProductionContractError("quota scenario requires a name")
+        if not self.horizons:
+            raise ProductionContractError("quota scenario requires at least one horizon")
+        self.assumptions.validate()
+        for horizon in self.horizons:
+            horizon.validate()
+
+
+@dataclass(frozen=True)
+class QuotaPlanV3:
+    """Comparison output; it never selects a provider, cadence, or budget."""
+
+    scenarios: Mapping[str, tuple[QuotaEstimate, ...]]
+
+    def validate(self) -> None:
+        if not self.scenarios or any(not name.strip() for name in self.scenarios):
+            raise ProductionContractError("quota plan requires named scenarios")
+        for estimates in self.scenarios.values():
+            if not estimates:
+                raise ProductionContractError("quota plan scenario has no estimates")
+
+    def as_payload(self) -> dict[str, object]:
+        self.validate()
+        return {
+            name: [estimate.as_payload() for estimate in estimates]
+            for name, estimates in self.scenarios.items()
+        }
+
+
+class QuotaPlannerV3:
+    """Plan independent request and cost scenarios with no vendor behavior."""
+
+    def plan(self, scenarios: Sequence[ProductionQuotaScenario]) -> QuotaPlanV3:
+        if not scenarios:
+            raise ProductionContractError("quota planner requires at least one scenario")
+        names = [scenario.name for scenario in scenarios]
+        if len(set(names)) != len(names):
+            raise ProductionContractError("quota planner scenario names must be unique")
+        for scenario in scenarios:
+            scenario.validate()
+        result = {
+            scenario.name: tuple(
+                estimate_quota(horizon, scenario.assumptions)
+                for horizon in scenario.horizons
+            )
+            for scenario in scenarios
+        }
+        plan = QuotaPlanV3(MappingProxyType(result))
+        plan.validate()
+        return plan
+
+
+def plan_quota_v3(scenarios: Sequence[ProductionQuotaScenario]) -> QuotaPlanV3:
+    """Functional entry point for the V3 production planning tool."""
+
+    return QuotaPlannerV3().plan(scenarios)
