@@ -1,3 +1,5 @@
+import subprocess
+import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -6,6 +8,7 @@ import pytest
 from src.football.production_contracts import ProductionContractError
 from src.football.top5_real_shadow import (
     FROZEN_RESEARCH_SHA,
+    TOP5_REAL_SHADOW_LEAGUES,
     RealShadowExecutionError,
     RealShadowQuotaError,
     RealTop5Provider,
@@ -18,26 +21,37 @@ from src.football.top5_real_shadow_provider import ProviderResponse
 BASE = datetime(2026, 9, 14, 18, 30, tzinfo=timezone.utc)
 SHA = "0123456789abcdef" * 2 + "01234567"
 TIMING = ShadowExperiment("shadow-experiment:60-180-120", 60, 180, 120)
+TIMING_LATER = ShadowExperiment("shadow-experiment:90-180-120", 90, 180, 120)
 
 
-def _event(sport_key: str, event_id: str = "event-1", *, kickoff: datetime | None = None) -> dict:
+def _event(
+    sport_key: str,
+    event_id: str = "event-1",
+    *,
+    kickoff: datetime | None = None,
+    source_timestamp: datetime | str | None = BASE,
+) -> dict:
+    market = {
+        "key": "h2h",
+        "outcomes": [
+            {"name": "Home FC", "price": 2.0},
+            {"name": "Draw", "price": 3.5},
+            {"name": "Away FC", "price": 4.0},
+        ],
+    }
+    if source_timestamp is not None:
+        market["last_update"] = (
+            source_timestamp.isoformat()
+            if isinstance(source_timestamp, datetime)
+            else source_timestamp
+        )
     return {
         "id": event_id,
         "sport_key": sport_key,
         "commence_time": (kickoff or (BASE + timedelta(minutes=120))).isoformat(),
         "home_team": "Home FC",
         "away_team": "Away FC",
-        "bookmakers": [{
-            "key": "testbook",
-            "markets": [{
-                "key": "h2h",
-                "outcomes": [
-                    {"name": "Home FC", "price": 2.0},
-                    {"name": "Draw", "price": 3.5},
-                    {"name": "Away FC", "price": 4.0},
-                ],
-            }],
-        }],
+        "bookmakers": [{"key": "testbook", "markets": [market]}],
     }
 
 
@@ -64,7 +78,8 @@ def test_quota_gate_fails_before_any_provider_request():
         run_controlled_shadow_cycle(
             api_key="secret-not-for-output",
             timing=TIMING,
-            quota_remaining=14,
+            league_codes=("BL1",),
+            quota_remaining=10,
             safety_reserve=10,
             integration_sha=SHA,
             now=BASE,
@@ -88,6 +103,7 @@ def test_quota_failure_does_not_create_shadow_archive(monkeypatch, tmp_path):
         run_controlled_shadow_cycle(
             api_key="secret-not-for-output",
             timing=TIMING,
+            league_codes=("BL1",),
             quota_remaining=5,
             safety_reserve=10,
             integration_sha=SHA,
@@ -118,6 +134,7 @@ def test_provider_success_is_bulk_only_and_keeps_full_provenance():
     assert observation.event_requests == 0
     assert observation.fixtures[0].fixture_key == "the_odds_api:soccer_germany_bundesliga:event-1"
     assert observation.snapshots[0].kind.value == "signal_time"
+    assert observation.snapshots[0].captured_at == BASE
     assert observation.as_payload()["quota_headers"] == {"x-requests-remaining": "40"}
 
 
@@ -174,6 +191,7 @@ def test_full_cycle_uses_five_requests_and_only_m5_no_bet_artifacts():
     result = run_controlled_shadow_cycle(
         api_key="secret-not-for-output",
         timing=TIMING,
+        league_codes=TOP5_REAL_SHADOW_LEAGUES,
         quota_remaining=41,
         safety_reserve=10,
         integration_sha=SHA,
@@ -218,6 +236,7 @@ def test_archive_is_external_and_redacted(monkeypatch, tmp_path):
     result = run_controlled_shadow_cycle(
         api_key="secret-not-for-output",
         timing=TIMING,
+        league_codes=TOP5_REAL_SHADOW_LEAGUES,
         quota_remaining=41,
         safety_reserve=10,
         integration_sha=SHA,
@@ -248,6 +267,7 @@ def test_provider_auth_boundary_raises_before_next_league():
         run_controlled_shadow_cycle(
             api_key="secret-not-for-output",
             timing=TIMING,
+            league_codes=("BL1",),
             quota_remaining=41,
             safety_reserve=10,
             integration_sha=SHA,
@@ -272,6 +292,7 @@ def test_quota_exhaustion_stops_without_archive(monkeypatch, tmp_path):
         run_controlled_shadow_cycle(
             api_key="secret-not-for-output",
             timing=TIMING,
+            league_codes=("BL1",),
             quota_remaining=41,
             safety_reserve=10,
             integration_sha=SHA,
@@ -280,3 +301,208 @@ def test_quota_exhaustion_stops_without_archive(monkeypatch, tmp_path):
         )
     assert len(calls) == 1
     assert not list(tmp_path.rglob("*.json"))
+
+
+def test_controlled_scope_is_explicit_bounded_and_deterministically_ordered():
+    calls = []
+
+    def transport(sport_key, markets, regions, api_key, timeout):
+        calls.append(sport_key)
+        return _response([_event(sport_key)])
+
+    result = run_controlled_shadow_cycle(
+        api_key="secret-not-for-output",
+        timing=TIMING,
+        league_codes=("SA", "BL1"),
+        quota_remaining=12,
+        safety_reserve=10,
+        integration_sha=SHA,
+        now=BASE,
+        transport=transport,
+    )
+    assert result.league_codes == ("BL1", "SA")
+    assert result.expected_request_count == 2
+    assert len(calls) == 2
+    assert len(result.observations) == 2
+
+
+def test_controlled_cli_requires_explicit_league_scope():
+    command = [
+        sys.executable,
+        str(Path(__file__).parents[2] / "scripts/top5_controlled_shadow.py"),
+        "--quota-remaining", "11",
+        "--safety-reserve", "10",
+        "--integration-sha", SHA,
+        "--experiment-id", TIMING.experiment_id,
+        "--min-lead-minutes", "60",
+        "--max-lead-minutes", "180",
+        "--max-odds-age-seconds", "120",
+        "--ack-no-bet",
+    ]
+    completed = subprocess.run(command, capture_output=True, text=True, check=False)
+    assert completed.returncode == 2
+    assert "--league" in completed.stderr
+
+
+@pytest.mark.parametrize("scope", [(), ("BL1", "BL1"), ("UCL",)])
+def test_invalid_controlled_scope_fails_closed_before_provider(scope):
+    calls = []
+
+    def transport(*args):
+        calls.append(args)
+        raise AssertionError("provider must not be called")
+
+    with pytest.raises(ProductionContractError):
+        run_controlled_shadow_cycle(
+            api_key="secret-not-for-output",
+            timing=TIMING,
+            league_codes=scope,
+            quota_remaining=100,
+            safety_reserve=10,
+            integration_sha=SHA,
+            now=BASE,
+            transport=transport,
+        )
+    assert calls == []
+
+
+def test_timing_evidence_identity_is_separate_from_m5_and_comparable():
+    calls = []
+
+    def transport(sport_key, markets, regions, api_key, timeout):
+        calls.append(sport_key)
+        return _response([_event(sport_key)])
+
+    first = run_controlled_shadow_cycle(
+        api_key="secret-not-for-output",
+        timing=TIMING,
+        league_codes=("BL1",),
+        quota_remaining=11,
+        safety_reserve=10,
+        integration_sha=SHA,
+        now=BASE,
+        transport=transport,
+    )
+    second = run_controlled_shadow_cycle(
+        api_key="secret-not-for-output",
+        timing=TIMING_LATER,
+        league_codes=("BL1",),
+        quota_remaining=11,
+        safety_reserve=10,
+        integration_sha=SHA,
+        now=BASE,
+        transport=transport,
+    )
+    first_signal = first.as_evidence_payload()["signal_time_evidence"][0]
+    second_signal = second.as_evidence_payload()["signal_time_evidence"][0]
+    assert first_signal["candidate_name"] != second_signal["candidate_name"]
+    assert first_signal["candidate_name"].startswith("shadow-experiment:")
+    assert first_signal["provenance"]["candidate_id"] == "M5_market_preclose"
+    assert second_signal["provenance"]["candidate_id"] == "M5_market_preclose"
+    assert len(calls) == 2
+
+
+def test_freshness_uses_genuine_source_timestamp_not_http_capture_time():
+    source_timestamp = BASE - timedelta(seconds=30)
+    observation = RealTop5Provider(
+        "secret-not-for-output",
+        transport=lambda sport, markets, regions, key, timeout: _response(
+            [_event(sport, source_timestamp=source_timestamp)]
+        ),
+    ).fetch_league("BL1", TIMING, requested_at=BASE)
+    assert observation.status == "success"
+    assert observation.source_timestamps == (source_timestamp,)
+    assert observation.snapshots[0].captured_at == source_timestamp
+    assert observation.completed_at == BASE
+
+
+def test_stale_source_timestamp_is_rejected_and_reported():
+    source_timestamp = BASE - timedelta(seconds=121)
+    observation = RealTop5Provider(
+        "secret-not-for-output",
+        transport=lambda sport, markets, regions, key, timeout: _response(
+            [_event(sport, source_timestamp=source_timestamp)]
+        ),
+    ).fetch_league("BL1", TIMING, requested_at=BASE)
+    assert observation.status == "no_eligible_fixtures"
+    assert observation.valid_fixture_count == 1
+    assert observation.eligible_fixture_count == 0
+    assert observation.outside_window_count == 1
+
+
+def test_composite_odds_age_uses_oldest_selected_quote_timestamp():
+    event = _event("soccer_germany_bundesliga", source_timestamp=BASE - timedelta(seconds=10))
+    event["bookmakers"].append({
+        "key": "older-book",
+        "markets": [{
+            "key": "h2h",
+            "last_update": (BASE - timedelta(seconds=90)).isoformat(),
+            "outcomes": [
+                {"name": "Home FC", "price": 2.1},
+                {"name": "Draw", "price": 3.4},
+                {"name": "Away FC", "price": 3.9},
+            ],
+        }],
+    })
+    observation = RealTop5Provider(
+        "secret-not-for-output",
+        transport=lambda *args: _response([event]),
+    ).fetch_league("BL1", TIMING, requested_at=BASE)
+    assert observation.status == "success"
+    assert observation.snapshots[0].captured_at == BASE - timedelta(seconds=90)
+
+
+def test_bookmaker_timestamp_is_used_when_market_timestamp_is_absent():
+    event = _event("soccer_germany_bundesliga", source_timestamp=None)
+    event["bookmakers"][0]["last_update"] = (BASE - timedelta(seconds=45)).isoformat()
+    observation = RealTop5Provider(
+        "secret-not-for-output",
+        transport=lambda *args: _response([event]),
+    ).fetch_league("BL1", TIMING, requested_at=BASE)
+    assert observation.status == "success"
+    assert observation.snapshots[0].captured_at == BASE - timedelta(seconds=45)
+
+
+@pytest.mark.parametrize("source_timestamp", [None, "not-a-timestamp"])
+def test_missing_or_malformed_source_timestamp_fails_freshness_closed(source_timestamp):
+    observation = RealTop5Provider(
+        "secret-not-for-output",
+        transport=lambda sport, markets, regions, key, timeout: _response(
+            [_event(sport, source_timestamp=source_timestamp)]
+        ),
+    ).fetch_league("BL1", TIMING, requested_at=BASE)
+    assert observation.status == "freshness_unavailable"
+    assert observation.valid_fixture_count == 0
+    assert observation.snapshots == ()
+    if source_timestamp is None:
+        assert observation.source_timestamp_missing_count == 1
+    else:
+        assert observation.source_timestamp_malformed_count == 1
+
+
+def test_bulk_provider_evidence_has_request_level_n_over_n_coverage():
+    def transport(sport_key, markets, regions, api_key, timeout):
+        return _response([
+            _event(sport_key, "event-1"),
+            _event(sport_key, "event-2"),
+            _event(sport_key, "event-3"),
+        ])
+
+    result = run_controlled_shadow_cycle(
+        api_key="secret-not-for-output",
+        timing=TIMING,
+        league_codes=("BL1",),
+        quota_remaining=11,
+        safety_reserve=10,
+        integration_sha=SHA,
+        now=BASE,
+        transport=transport,
+    )
+    evidence = result.as_evidence_payload()
+    assert len(evidence["provider_evidence"]) == 1
+    provider = evidence["provider_evidence"][0]
+    assert provider["requested_fixture_count"] == 3
+    assert provider["covered_fixture_count"] == 3
+    assert provider["bulk_requests"] == 1
+    assert len(evidence["observations"]) == 3
+    assert sum(item["provider_covered"] for item in evidence["observations"]) == 3

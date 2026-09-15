@@ -26,6 +26,13 @@ def main() -> int:
     parser.add_argument("--quota-remaining", type=int, required=True)
     parser.add_argument("--safety-reserve", type=int, default=10)
     parser.add_argument("--integration-sha", required=True)
+    parser.add_argument(
+        "--league",
+        action="append",
+        required=True,
+        dest="league_codes",
+        help="Approved league code; repeat for an explicitly bounded scope",
+    )
     parser.add_argument("--experiment-id", required=True)
     parser.add_argument("--min-lead-minutes", type=int, required=True)
     parser.add_argument("--max-lead-minutes", type=int, required=True)
@@ -44,12 +51,13 @@ def main() -> int:
                 maximum_lead_minutes=args.max_lead_minutes,
                 maximum_odds_age_seconds=args.max_odds_age_seconds,
             ),
+            league_codes=args.league_codes,
             quota_remaining=args.quota_remaining,
             safety_reserve=args.safety_reserve,
             integration_sha=args.integration_sha,
         )
         archive = write_shadow_archive(result)
-        payload = result.as_payload()
+        payload = result.as_evidence_payload()
         payload["archive_path"] = str(archive)
         print(json.dumps(payload, indent=2, sort_keys=True))
         return 0

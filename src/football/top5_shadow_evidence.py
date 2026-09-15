@@ -54,15 +54,29 @@ def build_evidence_payload(result: Any) -> dict[str, object]:
         health_evidence.append(
             _health_record(result, observation, integration is not None)
         )
-        for fixture in observation.fixtures:
-            snapshot = snapshot_by_fixture[fixture.fixture_key]
+        if observation.valid_fixtures:
+            provider_evidence.append(_provider_record(result, observation))
+        eligible_keys = {fixture.fixture_key for fixture in observation.fixtures}
+        for fixture, source_timestamp in zip(
+            observation.valid_fixtures,
+            observation.source_timestamps,
+            strict=True,
+        ):
+            snapshot = snapshot_by_fixture.get(fixture.fixture_key)
             prediction = prediction_by_fixture.get(fixture.fixture_key)
-            generated_at = prediction.generated_at if prediction is not None else observation.completed_at
+            generated_at = (
+                prediction.generated_at
+                if prediction is not None
+                else observation.completed_at
+            )
             model_identity = (
                 prediction.binding.model_artifact_identity
                 if prediction is not None
                 else M5_CANDIDATE_ID
             )
+            eligible = fixture.fixture_key in eligible_keys
+            odds_age = (observation.completed_at - source_timestamp).total_seconds()
+            stale = odds_age > result.timing.maximum_odds_age_seconds
             provenance = _provenance(
                 "observation",
                 f"{observation.request_id}:{fixture.fixture_key}",
@@ -75,13 +89,19 @@ def build_evidence_payload(result: Any) -> dict[str, object]:
             observations.append({
                 "provenance": provenance,
                 "discovered": True,
-                "eligible": True,
+                "eligible": eligible,
                 "valid_odds": True,
                 "prediction_id": prediction.prediction_id if prediction else None,
-                "rejected": False,
-                "rejected_reason": None,
+                "rejected": not eligible,
+                "rejected_reason": (
+                    "stale_odds"
+                    if stale
+                    else "outside_signal_window"
+                    if not eligible
+                    else None
+                ),
                 "provider_covered": True,
-                "stale": False,
+                "stale": stale,
                 "fallback_used": False,
                 "error": False,
                 "duplicate_suppressed": False,
@@ -89,13 +109,17 @@ def build_evidence_payload(result: Any) -> dict[str, object]:
                 "no_bet": True,
                 "publication_enabled": False,
             })
-            provider_evidence.append(
-                _provider_record(result, observation, fixture.fixture_key, snapshot.captured_at)
-            )
             signal_time_evidence.append(
-                _signal_record(result, observation, fixture.fixture_key, snapshot.captured_at)
+                _signal_record(
+                    result,
+                    observation,
+                    fixture.fixture_key,
+                    eligible,
+                    odds_age,
+                    stale,
+                )
             )
-            if prediction is not None:
+            if prediction is not None and snapshot is not None:
                 predictions.append(_prediction_record(result, prediction, snapshot.odds))
         if not observation.fixtures:
             failure_evidence.append(_failure_record(result, observation))
@@ -204,14 +228,24 @@ def _health_record(result: Any, observation: Any, inference_ran: bool) -> dict[s
 def _provider_record(
     result: Any,
     observation: Any,
-    fixture_key: str,
-    captured_at: datetime,
 ) -> dict[str, object]:
-    outcome = "partial_response" if observation.status == "partial" else "success"
+    source_ages = [
+        (observation.completed_at - timestamp).total_seconds()
+        for timestamp in observation.source_timestamps
+    ]
+    maximum_age = max(source_ages)
+    outcome = (
+        "stale"
+        if maximum_age > result.timing.maximum_odds_age_seconds
+        else "partial_response"
+        if observation.status == "partial"
+        else "success"
+    )
+    fixture_key = observation.valid_fixture_keys[0]
     return {
         "provenance": _provenance(
             "provider",
-            f"provider:{observation.request_id}:{fixture_key}",
+            f"provider:{observation.request_id}",
             result,
             observation.league_code,
             fixture_key,
@@ -220,13 +254,11 @@ def _provider_record(
         ),
         "provider_name": "the_odds_api",
         "outcome": outcome,
-        "requested_fixture_count": max(observation.valid_fixture_count, 1),
-        "covered_fixture_count": 1,
+        "requested_fixture_count": observation.valid_fixture_count,
+        "covered_fixture_count": observation.valid_fixture_count,
         "availability": True,
         "latency_ms": observation.latency_ms,
-        "odds_age_seconds": max(
-            0.0, (observation.completed_at - captured_at).total_seconds()
-        ),
+        "odds_age_seconds": maximum_age,
         "maximum_odds_age_seconds": float(result.timing.maximum_odds_age_seconds),
         "bulk_requests": 1,
         "fallback_requests": 0,
@@ -242,9 +274,10 @@ def _signal_record(
     result: Any,
     observation: Any,
     fixture_key: str,
-    captured_at: datetime,
+    eligible: bool,
+    odds_age: float,
+    stale: bool,
 ) -> dict[str, object]:
-    age = max(0.0, (observation.completed_at - captured_at).total_seconds())
     return {
         "provenance": _provenance(
             "signal_time",
@@ -255,13 +288,13 @@ def _signal_record(
             observation.completed_at,
             model_identity=M5_CANDIDATE_ID,
         ),
-        "candidate_name": M5_CANDIDATE_ID,
-        "eligible": True,
-        "odds_age_seconds": age,
+        "candidate_name": result.timing.evidence_candidate_name,
+        "eligible": eligible,
+        "odds_age_seconds": odds_age,
         "maximum_odds_age_seconds": float(result.timing.maximum_odds_age_seconds),
         "request_load": 1.0 / max(observation.valid_fixture_count, 1),
         "fallback_used": False,
-        "stale_rejected": False,
+        "stale_rejected": stale,
         "latency_ms": float(observation.latency_ms),
         "quota_cost_units": 1.0 / max(observation.valid_fixture_count, 1),
         "operational_complexity": 1.0,

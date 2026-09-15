@@ -78,9 +78,14 @@ class ProviderObservation:
     malformed_event_count: int
     wrong_league_count: int
     failure_reason: str | None
+    source_timestamp_missing_count: int = 0
+    source_timestamp_malformed_count: int = 0
     quota_headers: Mapping[str, str] = field(default_factory=dict)
     fixtures: tuple[Fixture, ...] = ()
     snapshots: tuple[MarketSnapshot, ...] = ()
+    valid_fixtures: tuple[Fixture, ...] = ()
+    valid_fixture_keys: tuple[str, ...] = ()
+    source_timestamps: tuple[datetime, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "requested_at", _utc(self.requested_at, "requested_at"))
@@ -89,6 +94,24 @@ class ProviderObservation:
             raise ProductionContractError("real shadow provider must remain bulk-only")
         if self.snapshot_count != len(self.snapshots) or self.eligible_fixture_count != len(self.fixtures):
             raise ProductionContractError("provider observation coverage counts are inconsistent")
+        if not (
+            self.valid_fixture_count == len(self.valid_fixtures)
+            == len(self.valid_fixture_keys)
+            == len(self.source_timestamps)
+        ):
+            raise ProductionContractError("provider observation source coverage is inconsistent")
+        if any(
+            fixture.fixture_key != fixture_key
+            or fixture.kickoff.tzinfo is None
+            or timestamp.tzinfo is None
+            for fixture, fixture_key, timestamp in zip(
+                self.valid_fixtures,
+                self.valid_fixture_keys,
+                self.source_timestamps,
+                strict=True,
+            )
+        ):
+            raise ProductionContractError("provider observation source identity is inconsistent")
 
     def as_payload(self) -> dict[str, object]:
         denominator = self.valid_fixture_count
@@ -118,6 +141,13 @@ class ProviderObservation:
             "unsupported_market_count": self.unsupported_market_count,
             "malformed_event_count": self.malformed_event_count,
             "wrong_league_count": self.wrong_league_count,
+            "source_timestamp_missing_count": self.source_timestamp_missing_count,
+            "source_timestamp_malformed_count": self.source_timestamp_malformed_count,
+            "source_timestamp_method": (
+                "selected quote market.last_update, then bookmaker.last_update; "
+                "composite age uses the oldest selected quote"
+            ),
+            "source_timestamps": [timestamp.isoformat() for timestamp in self.source_timestamps],
             "failure_reason": self.failure_reason,
             "quota_headers": dict(self.quota_headers),
             "results": "pending",
@@ -251,6 +281,8 @@ def _build_observation(
         "wrong_league_count": 0,
         "failure_reason": response.error_code,
         "quota_headers": headers,
+        "source_timestamp_missing_count": 0,
+        "source_timestamp_malformed_count": 0,
     }
     if response.timeout or response.status_code != 200:
         if response.status_code == 401:
@@ -271,8 +303,12 @@ def _build_observation(
 
     fixtures: list[Fixture] = []
     snapshots: list[MarketSnapshot] = []
+    valid_fixtures: list[Fixture] = []
+    valid_fixture_keys: list[str] = []
+    source_timestamps: list[datetime] = []
     events_seen = len(response.payload)
     outside_window = unsupported = malformed = wrong_league = 0
+    source_timestamp_missing = source_timestamp_malformed = 0
     valid_fixture_count = 0
     seen_ids: set[str] = set()
     for event in response.payload:
@@ -292,15 +328,29 @@ def _build_observation(
         except (KeyError, TypeError, ValueError):
             malformed += 1
             continue
-        odds = _h2h_odds(event)
+        parsed_odds = _h2h_odds(event, as_of=response.completed_at)
+        odds = parsed_odds.odds
         if odds is None:
+            if parsed_odds.timestamp_state == "missing":
+                source_timestamp_missing += 1
+            elif parsed_odds.timestamp_state == "malformed":
+                source_timestamp_malformed += 1
+            else:
+                unsupported += 1
+            continue
+        source_timestamp = parsed_odds.source_timestamp
+        if source_timestamp is None:
+            source_timestamp_missing += 1
             unsupported += 1
             continue
         valid_fixture_count += 1
+        valid_fixtures.append(fixture)
+        valid_fixture_keys.append(fixture.fixture_key)
+        source_timestamps.append(source_timestamp)
         fixtures.append(fixture)
         if not timing.signal_time_contract.accepts(
             fixture.kickoff,
-            response.completed_at,
+            source_timestamp,
             response.completed_at,
         ):
             outside_window += 1
@@ -308,7 +358,7 @@ def _build_observation(
             continue
         snapshots.append(MarketSnapshot(
             fixture_key=fixture.fixture_key,
-            captured_at=response.completed_at,
+            captured_at=source_timestamp,
             kind=MarketSnapshotKind.SIGNAL_TIME,
             source="the_odds_api:bulk:h2h:eu",
             odds=odds,
@@ -316,12 +366,22 @@ def _build_observation(
         ))
 
     if snapshots:
-        status = "success" if not (unsupported or malformed or wrong_league) else "partial"
+        status = "success" if not (
+            unsupported
+            or malformed
+            or wrong_league
+            or source_timestamp_missing
+            or source_timestamp_malformed
+        ) else "partial"
         failure_reason = None if status == "success" else "partial_payload"
     elif valid_fixture_count == 0 and unsupported:
         status, failure_reason = "unsupported_market", "h2h_unavailable"
     elif outside_window:
         status, failure_reason = "no_eligible_fixtures", "outside_signal_window"
+    elif source_timestamp_malformed:
+        status, failure_reason = "freshness_unavailable", "malformed_source_timestamp"
+    elif source_timestamp_missing:
+        status, failure_reason = "freshness_unavailable", "missing_source_timestamp"
     else:
         status, failure_reason = "malformed", "no_valid_fixture"
     empty.update({
@@ -337,10 +397,15 @@ def _build_observation(
         "unsupported_market_count": unsupported,
         "malformed_event_count": malformed,
         "wrong_league_count": wrong_league,
+        "source_timestamp_missing_count": source_timestamp_missing,
+        "source_timestamp_malformed_count": source_timestamp_malformed,
         "failure_reason": failure_reason,
         "quota_headers": headers,
         "fixtures": tuple(fixtures),
         "snapshots": tuple(snapshots),
+        "valid_fixtures": tuple(valid_fixtures),
+        "valid_fixture_keys": tuple(valid_fixture_keys),
+        "source_timestamps": tuple(source_timestamps),
     })
     return ProviderObservation(**empty)
 
@@ -353,13 +418,21 @@ def _fixture_from_event(league_code: str, sport_key: str, event: Mapping[str, ob
     return Fixture(f"the_odds_api:{sport_key}:{event_id}", league_code, home, away, kickoff)
 
 
-def _h2h_odds(event: Mapping[str, object]) -> dict[str, float] | None:
-    values: dict[str, float] = {}
+@dataclass(frozen=True)
+class _ParsedH2HOdds:
+    odds: dict[str, float] | None
+    source_timestamp: datetime | None
+    timestamp_state: str = "valid"
+
+
+def _h2h_odds(event: Mapping[str, object], *, as_of: datetime) -> _ParsedH2HOdds:
+    values: dict[str, tuple[float, datetime]] = {}
+    missing_timestamps = malformed_timestamps = 0
     home = str(event.get("home_team", "")).strip().casefold()
     away = str(event.get("away_team", "")).strip().casefold()
     bookmakers = event.get("bookmakers")
     if not isinstance(bookmakers, list):
-        return None
+        return _ParsedH2HOdds(None, None, "invalid")
     for bookmaker in bookmakers:
         if not isinstance(bookmaker, Mapping):
             continue
@@ -368,6 +441,13 @@ def _h2h_odds(event: Mapping[str, object]) -> dict[str, float] | None:
             continue
         for market in markets:
             if not isinstance(market, Mapping) or market.get("key") != "h2h":
+                continue
+            source_timestamp, timestamp_state = _source_timestamp(market, bookmaker, as_of)
+            if timestamp_state == "missing":
+                missing_timestamps += 1
+                continue
+            if timestamp_state == "malformed":
+                malformed_timestamps += 1
                 continue
             outcomes = market.get("outcomes")
             if not isinstance(outcomes, list):
@@ -390,8 +470,39 @@ def _h2h_odds(event: Mapping[str, object]) -> dict[str, float] | None:
                     else None
                 )
                 if key is not None:
-                    values[key] = max(price, values.get(key, 0.0))
-    return values if set(values) == {"home", "draw", "away"} else None
+                    old = values.get(key)
+                    if old is None or price > old[0] or (price == old[0] and source_timestamp < old[1]):
+                        values[key] = (price, source_timestamp)
+    if set(values) != {"home", "draw", "away"}:
+        state = "malformed" if malformed_timestamps else "missing" if missing_timestamps else "invalid"
+        return _ParsedH2HOdds(None, None, state)
+    selected_timestamps = tuple(timestamp for _, timestamp in values.values())
+    return _ParsedH2HOdds(
+        {key: value for key, (value, _) in values.items()},
+        min(selected_timestamps),
+    )
+
+
+def _source_timestamp(
+    market: Mapping[str, object],
+    bookmaker: Mapping[str, object],
+    as_of: datetime,
+) -> tuple[datetime | None, str]:
+    raw = market.get("last_update")
+    if raw is None or not str(raw).strip():
+        raw = bookmaker.get("last_update")
+    if raw is None or not str(raw).strip():
+        return None, "missing"
+    try:
+        parsed = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except ValueError:
+        return None, "malformed"
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        return None, "malformed"
+    parsed = parsed.astimezone(timezone.utc)
+    if parsed > as_of:
+        return None, "malformed"
+    return parsed, "valid"
 
 
 def _request_id(league_code: str, sport_key: str, requested_at: datetime) -> str:

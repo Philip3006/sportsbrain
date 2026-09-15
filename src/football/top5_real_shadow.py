@@ -74,6 +74,12 @@ class ShadowExperiment:
         self.validate()
         return signal_time_contract_id(self.signal_time_contract)
 
+    @property
+    def evidence_candidate_name(self) -> str:
+        """Identify this timing experiment independently from the M5 model."""
+
+        return f"{self.experiment_id}:{self.contract_id}"
+
 
 @dataclass(frozen=True)
 class RealShadowCycleResult:
@@ -85,6 +91,7 @@ class RealShadowCycleResult:
     integration_sha: str
     research_sha: str
     timing: ShadowExperiment
+    league_codes: tuple[str, ...]
     quota_remaining_before: int
     expected_request_count: int
     safety_reserve: int
@@ -96,10 +103,16 @@ class RealShadowCycleResult:
     def validate(self) -> None:
         if self.research_sha != FROZEN_RESEARCH_SHA:
             raise ProductionContractError("real shadow cycle references unfrozen research")
+        normalized_leagues = _normalize_league_scope(self.league_codes)
+        if normalized_leagues != self.league_codes:
+            raise ProductionContractError("real shadow cycle league scope is not deterministic")
+        observed_leagues = tuple(sorted(observation.league_code for observation in self.observations))
+        if observed_leagues != self.league_codes:
+            raise ProductionContractError("real shadow cycle did not complete its selected league scope")
         if len(self.observations) != self.expected_request_count:
             raise ProductionContractError("real shadow cycle did not complete its bounded request plan")
-        if self.expected_request_count != len(TOP5_REAL_SHADOW_LEAGUES):
-            raise ProductionContractError("real shadow cycle request plan must cover exactly five leagues")
+        if self.expected_request_count != len(self.league_codes):
+            raise ProductionContractError("real shadow cycle request count differs from selected scope")
         if self.quota_remaining_before < self.expected_request_count + self.safety_reserve:
             raise RealShadowQuotaError("quota preflight no longer satisfies the safety reserve")
         self.timing.validate()
@@ -118,6 +131,7 @@ class RealShadowCycleResult:
             "completed_at": self.completed_at.isoformat(),
             "implementation_sha": self.integration_sha,
             "research_sha": self.research_sha,
+            "league_codes": list(self.league_codes),
             "timing_experiment": {
                 "experiment_id": self.timing.experiment_id,
                 "contract_id": self.timing.contract_id,
@@ -152,27 +166,29 @@ def run_controlled_shadow_cycle(
     *,
     api_key: str,
     timing: ShadowExperiment,
+    league_codes: Sequence[str],
     quota_remaining: int,
     safety_reserve: int,
     integration_sha: str,
     now: datetime | None = None,
     transport: Transport = requests_transport,
 ) -> RealShadowCycleResult:
-    """Execute exactly one five-league controlled shadow cycle."""
+    """Execute exactly one explicitly scoped controlled shadow cycle."""
 
     timing.validate()
     if not _is_sha(integration_sha):
         raise ProductionContractError("controlled shadow requires an exact implementation SHA")
     if quota_remaining < 0 or safety_reserve <= 0:
         raise RealShadowQuotaError("quota and safety reserve must be non-negative and positive")
-    expected_requests = len(TOP5_REAL_SHADOW_LEAGUES)
+    selected_leagues = _normalize_league_scope(league_codes)
+    expected_requests = len(selected_leagues)
     if quota_remaining < expected_requests + safety_reserve:
         raise RealShadowQuotaError("quota is below the bounded cycle plus safety reserve")
     started_at = _utc(now or datetime.now(timezone.utc), "now")
     provider = RealTop5Provider(api_key, transport=transport)
     observations: list[ProviderObservation] = []
     integrations: list[Top5ShadowIntegrationResult] = []
-    for league_code in TOP5_REAL_SHADOW_LEAGUES:
+    for league_code in selected_leagues:
         observation = provider.fetch_league(league_code, timing, requested_at=started_at)
         observations.append(observation)
         if observation.status_code in (401, 403, 429):
@@ -192,7 +208,7 @@ def run_controlled_shadow_cycle(
     completed_at = datetime.now(timezone.utc)
     run_id = _stable_id(
         "top5-real-shadow",
-        (integration_sha, timing.experiment_id, started_at.isoformat()),
+        (integration_sha, timing.experiment_id, ",".join(selected_leagues), started_at.isoformat()),
     )
     result = RealShadowCycleResult(
         run_id=run_id,
@@ -201,6 +217,7 @@ def run_controlled_shadow_cycle(
         integration_sha=integration_sha,
         research_sha=FROZEN_RESEARCH_SHA,
         timing=timing,
+        league_codes=selected_leagues,
         quota_remaining_before=quota_remaining,
         expected_request_count=expected_requests,
         safety_reserve=safety_reserve,
@@ -237,3 +254,22 @@ def _stable_id(prefix: str, fields: Sequence[str]) -> str:
 
 def _is_sha(value: str) -> bool:
     return len(value) == 40 and all(char in "0123456789abcdef" for char in value.lower())
+
+
+def _normalize_league_scope(league_codes: Sequence[str]) -> tuple[str, ...]:
+    if isinstance(league_codes, (str, bytes)):
+        raise ProductionContractError("league scope must be a sequence of league codes")
+    try:
+        selected = tuple(league_codes)
+    except TypeError as exc:
+        raise ProductionContractError("league scope must be a non-empty sequence") from exc
+    if not selected:
+        raise ProductionContractError("league scope must not be empty")
+    if any(not isinstance(code, str) or not code.strip() for code in selected):
+        raise ProductionContractError("league scope contains an invalid league code")
+    if len(selected) != len(set(selected)):
+        raise ProductionContractError("league scope contains duplicate leagues")
+    unknown = sorted(set(selected) - set(TOP5_REAL_SHADOW_LEAGUES))
+    if unknown:
+        raise ProductionContractError(f"league scope contains unknown leagues: {', '.join(unknown)}")
+    return tuple(sorted(selected))
