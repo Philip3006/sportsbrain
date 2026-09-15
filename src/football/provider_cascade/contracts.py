@@ -1,0 +1,726 @@
+"""Provider-neutral contracts for the Top-5 shadow odds cascade.
+
+This module is deliberately free of network, model, publisher, scheduler, and
+financial side effects.  Provider-specific payloads are converted to these
+contracts before Builder 1 can consume them.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from math import isfinite
+from types import MappingProxyType
+
+from src.football.production_contracts import (
+    Fixture,
+    MarketSnapshot,
+    MarketSnapshotKind,
+    ProductionContractError,
+    _utc,
+)
+
+MARKET_PREMATCH_1X2 = "football:pre_match:1x2"
+TOP5_LEAGUE_CODES = frozenset({"BL1", "EPL", "LL", "SA", "L1"})
+DEFAULT_PROVIDER_ORDER = (
+    "the_odds_api",
+    "odds_api_io",
+    "api_football",
+    "betfair_delayed",
+)
+
+
+class ProviderState(str, Enum):
+    AVAILABLE = "AVAILABLE"
+    QUOTA_EXHAUSTED = "QUOTA_EXHAUSTED"
+    RATE_LIMITED = "RATE_LIMITED"
+    AUTH_FAILED = "AUTH_FAILED"
+    TEMPORARILY_UNAVAILABLE = "TEMPORARILY_UNAVAILABLE"
+    UNSUPPORTED_FIXTURE = "UNSUPPORTED_FIXTURE"
+    UNSUPPORTED_LEAGUE = "UNSUPPORTED_LEAGUE"
+    UNSUPPORTED_MARKET = "UNSUPPORTED_MARKET"
+    STALE = "STALE"
+    MALFORMED = "MALFORMED"
+    PARTIAL = "PARTIAL"
+    QUALITY_REJECTED = "QUALITY_REJECTED"
+    CONFIG_DISABLED = "CONFIG_DISABLED"
+    CREDENTIAL_MISSING = "CREDENTIAL_MISSING"
+    CANDIDATE_ONLY = "CANDIDATE_ONLY"
+    HEALTH_UNKNOWN = "HEALTH_UNKNOWN"
+
+
+class ObservationCompleteness(str, Enum):
+    COMPLETE = "COMPLETE"
+    PARTIAL = "PARTIAL"
+    MISSING = "MISSING"
+
+
+@dataclass(frozen=True)
+class QuotaSnapshot:
+    """A redacted provider quota/rate snapshot; values may be unknown."""
+
+    used: int | None = None
+    remaining: int | None = None
+    reset_at: datetime | None = None
+    rate_limit: int | None = None
+    rate_remaining: int | None = None
+    rate_reset_at: datetime | None = None
+
+    def __post_init__(self) -> None:
+        if self.used is not None and self.used < 0:
+            raise ProductionContractError("quota used must be non-negative")
+        if self.remaining is not None and self.remaining < 0:
+            raise ProductionContractError("quota remaining must be non-negative")
+        if self.rate_limit is not None and self.rate_limit < 0:
+            raise ProductionContractError("rate limit must be non-negative")
+        if self.rate_remaining is not None and self.rate_remaining < 0:
+            raise ProductionContractError("rate remaining must be non-negative")
+        if self.reset_at is not None:
+            _utc(self.reset_at, "quota reset_at")
+        if self.rate_reset_at is not None:
+            _utc(self.rate_reset_at, "rate reset_at")
+
+    def as_payload(self) -> dict[str, object]:
+        return {
+            "used": self.used,
+            "remaining": self.remaining,
+            "reset_at": self.reset_at.isoformat() if self.reset_at else None,
+            "rate_limit": self.rate_limit,
+            "rate_remaining": self.rate_remaining,
+            "rate_reset_at": self.rate_reset_at.isoformat()
+            if self.rate_reset_at
+            else None,
+        }
+
+
+def _quota_from_mapping(raw: object, default: QuotaSnapshot) -> QuotaSnapshot:
+    if isinstance(raw, QuotaSnapshot):
+        return raw
+    if not isinstance(raw, Mapping):
+        raise ProductionContractError("initial_quota must be a mapping")
+
+    def optional_int(name: str) -> int | None:
+        value = raw.get(name)
+        return None if value is None else int(value)
+
+    def optional_datetime(name: str) -> datetime | None:
+        value = raw.get(name)
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return _utc(value, name)
+        try:
+            return _utc(datetime.fromisoformat(str(value).replace("Z", "+00:00")), name)
+        except (TypeError, ValueError) as exc:
+            raise ProductionContractError(f"{name} must be an ISO timestamp") from exc
+
+    return QuotaSnapshot(
+        used=optional_int("used") if "used" in raw else default.used,
+        remaining=(
+            optional_int("remaining") if "remaining" in raw else default.remaining
+        ),
+        reset_at=(
+            optional_datetime("reset_at") if "reset_at" in raw else default.reset_at
+        ),
+        rate_limit=(
+            optional_int("rate_limit") if "rate_limit" in raw else default.rate_limit
+        ),
+        rate_remaining=(
+            optional_int("rate_remaining")
+            if "rate_remaining" in raw
+            else default.rate_remaining
+        ),
+        rate_reset_at=(
+            optional_datetime("rate_reset_at")
+            if "rate_reset_at" in raw
+            else default.rate_reset_at
+        ),
+    )
+
+
+@dataclass(frozen=True)
+class ProviderConfig:
+    """Configuration for one provider, with no secret-bearing values."""
+
+    name: str
+    enabled: bool = True
+    league_allowlist: frozenset[str] = frozenset()
+    market_allowlist: tuple[str, ...] = (MARKET_PREMATCH_1X2,)
+    bookmakers: tuple[str, ...] = ()
+    request_budget: int = 1
+    quota_reserve: int = 0
+    timeout_seconds: float = 5.0
+    max_attempts: int = 1
+    shadow_only: bool = True
+    quality_eligible: bool = False
+    candidate_only: bool = True
+    credentials_required: bool = True
+    credential_env: tuple[str, ...] = ()
+    credential_available: bool | None = None
+    initial_quota: QuotaSnapshot = field(default_factory=QuotaSnapshot)
+    request_cost: int = 1
+    adapter_version: str = "unversioned"
+    source_timestamp_required: bool = True
+
+    def validate(self) -> None:
+        if not self.name.strip():
+            raise ProductionContractError("provider config requires a name")
+        if any(not value.strip() for value in self.league_allowlist):
+            raise ProductionContractError(
+                "provider league allow-list contains a blank value"
+            )
+        if not self.market_allowlist or any(
+            not value.strip() for value in self.market_allowlist
+        ):
+            raise ProductionContractError(
+                "provider market allow-list must not be empty"
+            )
+        if any(not value.strip() for value in self.bookmakers):
+            raise ProductionContractError(
+                "provider bookmaker list contains a blank value"
+            )
+        if self.request_budget < 0 or self.quota_reserve < 0 or self.request_cost <= 0:
+            raise ProductionContractError("provider budget values are invalid")
+        if self.timeout_seconds <= 0 or not isfinite(self.timeout_seconds):
+            raise ProductionContractError(
+                "provider timeout must be finite and positive"
+            )
+        if self.max_attempts != 1:
+            raise ProductionContractError("provider max_attempts must remain one")
+        if not self.shadow_only:
+            raise ProductionContractError(
+                "provider live authority is outside the shadow cascade"
+            )
+        if (
+            self.credentials_required
+            and not self.credential_env
+            and self.credential_available is None
+        ):
+            raise ProductionContractError(
+                "credential environment is required for this provider"
+            )
+        if not self.adapter_version.strip():
+            raise ProductionContractError("provider adapter_version is required")
+        self.initial_quota.__post_init__()
+
+
+@dataclass(frozen=True)
+class ProviderCascadeConfig:
+    """Deterministic provider ordering and local request safety caps."""
+
+    provider_order: tuple[str, ...] = DEFAULT_PROVIDER_ORDER
+    providers: Mapping[str, ProviderConfig] = field(default_factory=dict)
+    global_request_budget: int = 4
+    per_run_cap: int = 4
+    allow_candidate_only: bool = True
+    fail_closed: bool = True
+    live_calls_authorized: bool = False
+    controlled_shadow_run_ref: str | None = None
+
+    def validate(self) -> None:
+        if not self.provider_order:
+            raise ProductionContractError("provider order must not be empty")
+        if len(set(self.provider_order)) != len(self.provider_order):
+            raise ProductionContractError("provider order contains a duplicate")
+        if any(not name.strip() for name in self.provider_order):
+            raise ProductionContractError("provider order contains a blank name")
+        unknown = sorted(set(self.provider_order) - set(self.providers))
+        if unknown:
+            raise ProductionContractError(
+                f"provider order contains unknown providers: {', '.join(unknown)}"
+            )
+        unused = sorted(set(self.providers) - set(self.provider_order))
+        if unused:
+            raise ProductionContractError(
+                f"provider config is not in provider order: {', '.join(unused)}"
+            )
+        if self.global_request_budget < 0 or self.per_run_cap < 0:
+            raise ProductionContractError(
+                "global request budget caps must be non-negative"
+            )
+        if self.per_run_cap > self.global_request_budget:
+            raise ProductionContractError(
+                "per-run cap cannot exceed global request budget"
+            )
+        if self.live_calls_authorized and not (
+            self.controlled_shadow_run_ref and self.controlled_shadow_run_ref.strip()
+        ):
+            raise ProductionContractError(
+                "live calls require a controlled shadow run reference"
+            )
+        for config in self.providers.values():
+            config.validate()
+
+    @classmethod
+    def default(cls) -> ProviderCascadeConfig:
+        return cls(
+            providers={
+                "the_odds_api": ProviderConfig(
+                    name="the_odds_api",
+                    credential_env=("ODDS_API_KEY",),
+                    initial_quota=QuotaSnapshot(used=500, remaining=0),
+                    adapter_version="the-odds-api-v4:1",
+                ),
+                "odds_api_io": ProviderConfig(
+                    name="odds_api_io",
+                    credential_env=("ODDS_API_IO_KEY",),
+                    adapter_version="odds-api-io-v3:1",
+                ),
+                "api_football": ProviderConfig(
+                    name="api_football",
+                    credential_env=("API_FOOTBALL_KEY",),
+                    adapter_version="api-football-v3:1",
+                ),
+                "betfair_delayed": ProviderConfig(
+                    name="betfair_delayed",
+                    credential_env=("BETFAIR_APP_KEY", "BETFAIR_SESSION_TOKEN"),
+                    adapter_version="betfair-delayed-json-rpc:1",
+                ),
+            }
+        )
+
+    @classmethod
+    def from_mapping(cls, raw: Mapping[str, object]) -> ProviderCascadeConfig:
+        if not isinstance(raw, Mapping):
+            raise ProductionContractError("provider cascade config must be a mapping")
+        order_raw = raw.get("provider_order", DEFAULT_PROVIDER_ORDER)
+        if isinstance(order_raw, (str, bytes)):
+            raise ProductionContractError("provider_order must be a sequence")
+        try:
+            order = tuple(str(value) for value in order_raw)  # type: ignore[arg-type]
+        except TypeError as exc:
+            raise ProductionContractError("provider_order must be a sequence") from exc
+        base = cls.default().providers
+        provider_values = raw.get("providers", {})
+        if not isinstance(provider_values, Mapping):
+            raise ProductionContractError("providers must be a mapping")
+        unknown_configs = sorted(set(provider_values) - set(base))
+        if unknown_configs:
+            raise ProductionContractError(
+                "provider config contains unknown providers: "
+                + ", ".join(str(value) for value in unknown_configs)
+            )
+        unknown_order = sorted(set(order) - set(base))
+        if unknown_order:
+            raise ProductionContractError(
+                "provider order contains unknown providers: " + ", ".join(unknown_order)
+            )
+        unused_configs = sorted(set(provider_values) - set(order))
+        if unused_configs:
+            raise ProductionContractError(
+                "provider config is not in provider order: "
+                + ", ".join(str(value) for value in unused_configs)
+            )
+        configs: dict[str, ProviderConfig] = {}
+        for name in order:
+            default = base[name]
+            values = provider_values.get(name, {})
+            if not isinstance(values, Mapping):
+                raise ProductionContractError(
+                    f"provider config for {name} must be a mapping"
+                )
+            configs[name] = ProviderConfig(
+                name=name,
+                enabled=bool(values.get("enabled", default.enabled)),
+                league_allowlist=frozenset(
+                    str(v)
+                    for v in values.get("league_allowlist", default.league_allowlist)
+                ),
+                market_allowlist=tuple(
+                    str(v)
+                    for v in values.get("market_allowlist", default.market_allowlist)
+                ),
+                bookmakers=tuple(
+                    str(v) for v in values.get("bookmakers", default.bookmakers)
+                ),
+                request_budget=int(
+                    values.get("request_budget", default.request_budget)
+                ),
+                quota_reserve=int(values.get("quota_reserve", default.quota_reserve)),
+                timeout_seconds=float(
+                    values.get("timeout_seconds", default.timeout_seconds)
+                ),
+                max_attempts=int(values.get("max_attempts", default.max_attempts)),
+                shadow_only=bool(values.get("shadow_only", default.shadow_only)),
+                quality_eligible=bool(
+                    values.get("quality_eligible", default.quality_eligible)
+                ),
+                candidate_only=bool(
+                    values.get("candidate_only", default.candidate_only)
+                ),
+                credentials_required=bool(
+                    values.get("credentials_required", default.credentials_required)
+                ),
+                credential_env=tuple(
+                    str(v) for v in values.get("credential_env", default.credential_env)
+                ),
+                credential_available=(
+                    None
+                    if "credential_available" not in values
+                    else bool(values["credential_available"])
+                ),
+                initial_quota=_quota_from_mapping(
+                    values.get("initial_quota", default.initial_quota),
+                    default.initial_quota,
+                ),
+                request_cost=int(values.get("request_cost", default.request_cost)),
+                adapter_version=str(
+                    values.get("adapter_version", default.adapter_version)
+                ),
+                source_timestamp_required=bool(
+                    values.get(
+                        "source_timestamp_required", default.source_timestamp_required
+                    )
+                ),
+            )
+        result = cls(
+            provider_order=order,
+            providers=MappingProxyType(configs),
+            global_request_budget=int(raw.get("global_request_budget", 4)),
+            per_run_cap=int(raw.get("per_run_cap", 4)),
+            allow_candidate_only=bool(raw.get("allow_candidate_only", True)),
+            fail_closed=bool(raw.get("fail_closed", True)),
+            live_calls_authorized=bool(raw.get("live_calls_authorized", False)),
+            controlled_shadow_run_ref=(
+                None
+                if raw.get("controlled_shadow_run_ref") is None
+                else str(raw["controlled_shadow_run_ref"])
+            ),
+        )
+        result.validate()
+        return result
+
+
+@dataclass(frozen=True)
+class NormalizedOddsObservation:
+    """Strict provider-neutral pre-match 1X2 observation."""
+
+    league_code: str
+    fixture_key: str
+    provider_fixture_id: str
+    home_team: str
+    away_team: str
+    kickoff_utc: datetime
+    market_type: str
+    home_odds: float
+    draw_odds: float
+    away_odds: float
+    provider_identity: str
+    bookmaker_identity: str
+    source_timestamp: datetime
+    captured_at: datetime
+    request_identity: str
+    request_started_at: datetime
+    request_completed_at: datetime
+    latency_ms: int
+    provider_priority: int
+    fallback_depth: int
+    quota_state_before: QuotaSnapshot = field(default_factory=QuotaSnapshot)
+    quota_state_after: QuotaSnapshot = field(default_factory=QuotaSnapshot)
+    rate_limit_state: QuotaSnapshot = field(default_factory=QuotaSnapshot)
+    source_provenance: str = ""
+    raw_record_digest: str = ""
+    adapter_version: str = ""
+    completeness: ObservationCompleteness = ObservationCompleteness.COMPLETE
+    error_classification: ProviderState = ProviderState.AVAILABLE
+    candidate_only: bool = True
+    delayed: bool = False
+    delay_seconds: int | None = None
+    metadata: Mapping[str, object] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "kickoff_utc", _utc(self.kickoff_utc, "kickoff_utc"))
+        object.__setattr__(
+            self, "source_timestamp", _utc(self.source_timestamp, "source_timestamp")
+        )
+        object.__setattr__(self, "captured_at", _utc(self.captured_at, "captured_at"))
+        object.__setattr__(
+            self,
+            "request_started_at",
+            _utc(self.request_started_at, "request_started_at"),
+        )
+        object.__setattr__(
+            self,
+            "request_completed_at",
+            _utc(self.request_completed_at, "request_completed_at"),
+        )
+        object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
+        if self.latency_ms < 0 or self.fallback_depth < 0 or self.provider_priority < 0:
+            raise ProductionContractError(
+                "observation latency and routing depth must be non-negative"
+            )
+
+    def validate(
+        self, *, now: datetime | None = None, require_fresh: bool = True
+    ) -> None:
+        required = (
+            self.league_code,
+            self.fixture_key,
+            self.provider_fixture_id,
+            self.home_team,
+            self.away_team,
+            self.provider_identity,
+            self.bookmaker_identity,
+            self.request_identity,
+            self.source_provenance,
+            self.raw_record_digest,
+            self.adapter_version,
+        )
+        if any(not value.strip() for value in required):
+            raise ProductionContractError(
+                "normalized odds observation is missing provenance or identity"
+            )
+        if self.home_team.strip().casefold() == self.away_team.strip().casefold():
+            raise ProductionContractError(
+                "normalized odds observation teams must be distinct"
+            )
+        if self.market_type != MARKET_PREMATCH_1X2:
+            raise ProductionContractError("only football pre-match 1X2 is accepted")
+        odds = (self.home_odds, self.draw_odds, self.away_odds)
+        if any(not isfinite(float(value)) or float(value) <= 1.0 for value in odds):
+            raise ProductionContractError(
+                "normalized odds must be finite decimal values greater than 1"
+            )
+        if self.request_completed_at < self.request_started_at:
+            raise ProductionContractError("request completion precedes request start")
+        if self.source_timestamp > self.captured_at:
+            raise ProductionContractError("source timestamp is in the future")
+        if self.completeness is not ObservationCompleteness.COMPLETE:
+            raise ProductionContractError(
+                "partial odds observations cannot enter the quality boundary"
+            )
+        if self.error_classification is not ProviderState.AVAILABLE:
+            raise ProductionContractError(
+                "non-available observation cannot be accepted"
+            )
+        if self.delayed and not self.metadata.get("delay_semantics"):
+            raise ProductionContractError(
+                "delayed observation must retain delay semantics"
+            )
+        if self.delay_seconds is not None and self.delay_seconds < 0:
+            raise ProductionContractError("delay_seconds must be non-negative")
+        if require_fresh and now is not None:
+            now_utc = _utc(now, "observation now")
+            if self.source_timestamp > now_utc:
+                raise ProductionContractError("source timestamp is after capture time")
+
+    @property
+    def fixture(self) -> Fixture:
+        return Fixture(
+            self.fixture_key,
+            self.league_code,
+            self.home_team,
+            self.away_team,
+            self.kickoff_utc,
+        )
+
+    def as_market_snapshot(self) -> MarketSnapshot:
+        self.validate()
+        return MarketSnapshot(
+            fixture_key=self.fixture_key,
+            captured_at=self.source_timestamp,
+            kind=MarketSnapshotKind.SIGNAL_TIME,
+            source=self.provider_identity,
+            odds={
+                "home": self.home_odds,
+                "draw": self.draw_odds,
+                "away": self.away_odds,
+            },
+            snapshot_id=self.request_identity,
+        )
+
+    def as_payload(self) -> dict[str, object]:
+        self.validate(require_fresh=False)
+        return {
+            "league_code": self.league_code,
+            "fixture_key": self.fixture_key,
+            "provider_fixture_id": self.provider_fixture_id,
+            "home_team": self.home_team,
+            "away_team": self.away_team,
+            "kickoff_utc": self.kickoff_utc.isoformat(),
+            "market_type": self.market_type,
+            "odds": {
+                "home": self.home_odds,
+                "draw": self.draw_odds,
+                "away": self.away_odds,
+            },
+            "provider_identity": self.provider_identity,
+            "bookmaker_identity": self.bookmaker_identity,
+            "source_timestamp": self.source_timestamp.isoformat(),
+            "captured_at": self.captured_at.isoformat(),
+            "request_identity": self.request_identity,
+            "request_started_at": self.request_started_at.isoformat(),
+            "request_completed_at": self.request_completed_at.isoformat(),
+            "latency_ms": self.latency_ms,
+            "provider_priority": self.provider_priority,
+            "fallback_depth": self.fallback_depth,
+            "quota_state_before": self.quota_state_before.as_payload(),
+            "quota_state_after": self.quota_state_after.as_payload(),
+            "rate_limit_state": self.rate_limit_state.as_payload(),
+            "source_provenance": self.source_provenance,
+            "raw_record_digest": self.raw_record_digest,
+            "adapter_version": self.adapter_version,
+            "completeness": self.completeness.value,
+            "error_classification": self.error_classification.value,
+            "candidate_only": self.candidate_only,
+            "delayed": self.delayed,
+            "delay_seconds": self.delay_seconds,
+            "metadata": dict(self.metadata),
+        }
+
+
+@dataclass(frozen=True)
+class ProviderAttemptTrace:
+    attempt_index: int
+    provider: str
+    state: ProviderState
+    result: str
+    reason: str
+    network_called: bool
+    request_identity: str
+    status_code: int | None = None
+    latency_ms: int = 0
+
+    def validate(self) -> None:
+        if self.attempt_index < 0 or self.latency_ms < 0:
+            raise ProductionContractError("provider attempt trace counters are invalid")
+        if any(
+            not value.strip()
+            for value in (
+                self.provider,
+                self.result,
+                self.reason,
+                self.request_identity,
+            )
+        ):
+            raise ProductionContractError(
+                "provider attempt trace is missing safe provenance"
+            )
+
+    def as_payload(self) -> dict[str, object]:
+        self.validate()
+        return {
+            "attempt_index": self.attempt_index,
+            "provider": self.provider,
+            "state": self.state.value,
+            "result": self.result,
+            "reason": self.reason,
+            "network_called": self.network_called,
+            "request_identity": self.request_identity,
+            "status_code": self.status_code,
+            "latency_ms": self.latency_ms,
+        }
+
+
+@dataclass(frozen=True)
+class CascadeDecisionTrace:
+    fixture_key: str
+    attempts: tuple[ProviderAttemptTrace, ...]
+    selected_provider: str | None
+    fallback_depth: int | None
+    total_latency_ms: int
+    fail_closed: bool
+    no_bet: bool = True
+    publication: bool = False
+
+    def validate(self) -> None:
+        if not self.fixture_key.strip() or self.total_latency_ms < 0:
+            raise ProductionContractError(
+                "cascade trace identity or latency is invalid"
+            )
+        if self.fallback_depth is not None and self.fallback_depth < 0:
+            raise ProductionContractError("cascade fallback depth must be non-negative")
+        if self.selected_provider is None and not self.fail_closed:
+            raise ProductionContractError("unselected cascade must fail closed")
+        if self.selected_provider is not None and self.fail_closed:
+            raise ProductionContractError("selected cascade cannot be fail closed")
+        if not self.no_bet or self.publication:
+            raise ProductionContractError(
+                "cascade trace violates shadow safety boundary"
+            )
+        for attempt in self.attempts:
+            attempt.validate()
+
+    def as_payload(self) -> dict[str, object]:
+        self.validate()
+        return {
+            "fixture_key": self.fixture_key,
+            "attempts": [attempt.as_payload() for attempt in self.attempts],
+            "selected_provider": self.selected_provider,
+            "fallback_depth": self.fallback_depth,
+            "total_latency_ms": self.total_latency_ms,
+            "fail_closed": self.fail_closed,
+            "no_bet": self.no_bet,
+            "publication": self.publication,
+        }
+
+
+@dataclass(frozen=True)
+class CascadeResult:
+    observation: NormalizedOddsObservation | None
+    trace: CascadeDecisionTrace
+
+    @property
+    def accepted(self) -> bool:
+        return self.observation is not None and not self.trace.fail_closed
+
+    def validate(self) -> None:
+        self.trace.validate()
+        if self.observation is None:
+            if not self.trace.fail_closed or self.trace.selected_provider is not None:
+                raise ProductionContractError("empty cascade result must fail closed")
+        else:
+            self.observation.validate(require_fresh=False)
+            if (
+                self.trace.fail_closed
+                or self.trace.selected_provider != self.observation.provider_identity
+            ):
+                raise ProductionContractError(
+                    "cascade result and trace selection differ"
+                )
+
+    def as_payload(self) -> dict[str, object]:
+        self.validate()
+        return {
+            "observation": self.observation.as_payload() if self.observation else None,
+            "decision_trace": self.trace.as_payload(),
+            "accepted": self.accepted,
+            "fail_closed": self.trace.fail_closed,
+            "no_bet": True,
+            "publication": False,
+        }
+
+
+def stable_request_identity(
+    provider: str, fixture: Fixture, requested_at: datetime
+) -> str:
+    """Return a deterministic, secret-free identity for one logical request."""
+
+    fixture.validate()
+    requested_at = _utc(requested_at, "requested_at")
+    encoded = json.dumps(
+        (
+            provider,
+            fixture.league_code,
+            fixture.fixture_key,
+            fixture.home_team,
+            fixture.away_team,
+            fixture.kickoff.isoformat(),
+            requested_at.isoformat(),
+        ),
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return f"cascade-request:{hashlib.sha256(encoded).hexdigest()[:32]}"
+
+
+def digest_record(record: object) -> str:
+    """Hash a provider record without retaining its raw payload in evidence."""
+
+    encoded = json.dumps(
+        record, sort_keys=True, separators=(",", ":"), default=str
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
