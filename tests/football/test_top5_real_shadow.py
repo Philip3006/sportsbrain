@@ -1,0 +1,508 @@
+import subprocess
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+import pytest
+
+from src.football.production_contracts import ProductionContractError
+from src.football.top5_real_shadow import (
+    FROZEN_RESEARCH_SHA,
+    TOP5_REAL_SHADOW_LEAGUES,
+    RealShadowExecutionError,
+    RealShadowQuotaError,
+    RealTop5Provider,
+    ShadowExperiment,
+    run_controlled_shadow_cycle,
+    write_shadow_archive,
+)
+from src.football.top5_real_shadow_provider import ProviderResponse
+
+BASE = datetime(2026, 9, 14, 18, 30, tzinfo=timezone.utc)
+SHA = "0123456789abcdef" * 2 + "01234567"
+TIMING = ShadowExperiment("shadow-experiment:60-180-120", 60, 180, 120)
+TIMING_LATER = ShadowExperiment("shadow-experiment:90-180-120", 90, 180, 120)
+
+
+def _event(
+    sport_key: str,
+    event_id: str = "event-1",
+    *,
+    kickoff: datetime | None = None,
+    source_timestamp: datetime | str | None = BASE,
+) -> dict:
+    market = {
+        "key": "h2h",
+        "outcomes": [
+            {"name": "Home FC", "price": 2.0},
+            {"name": "Draw", "price": 3.5},
+            {"name": "Away FC", "price": 4.0},
+        ],
+    }
+    if source_timestamp is not None:
+        market["last_update"] = (
+            source_timestamp.isoformat()
+            if isinstance(source_timestamp, datetime)
+            else source_timestamp
+        )
+    return {
+        "id": event_id,
+        "sport_key": sport_key,
+        "commence_time": (kickoff or (BASE + timedelta(minutes=120))).isoformat(),
+        "home_team": "Home FC",
+        "away_team": "Away FC",
+        "bookmakers": [{"key": "testbook", "markets": [market]}],
+    }
+
+
+def _response(payload, *, status=200, headers=None, completed=BASE):
+    return ProviderResponse(status, payload, headers or {}, completed, 12)
+
+
+def test_timing_requires_explicit_shadow_namespace_and_rejects_ambiguous_identity():
+    TIMING.validate()
+    with pytest.raises(ProductionContractError, match="shadow-experiment"):
+        ShadowExperiment("production", 60, 180, 120).validate()
+    with pytest.raises(ProductionContractError, match="ambiguous"):
+        ShadowExperiment("shadow-experiment:latest", 60, 180, 120).validate()
+
+
+def test_quota_gate_fails_before_any_provider_request():
+    calls = []
+
+    def transport(*args):
+        calls.append(args)
+        raise AssertionError("provider must not be called")
+
+    with pytest.raises(RealShadowQuotaError):
+        run_controlled_shadow_cycle(
+            api_key="secret-not-for-output",
+            timing=TIMING,
+            league_codes=("BL1",),
+            quota_remaining=10,
+            safety_reserve=10,
+            integration_sha=SHA,
+            now=BASE,
+            transport=transport,
+        )
+    assert calls == []
+
+
+def test_quota_failure_does_not_create_shadow_archive(monkeypatch, tmp_path):
+    calls = []
+
+    def transport(*args):
+        calls.append(args)
+        raise AssertionError("provider must not be called")
+
+    monkeypatch.setattr(
+        "src.football.top5_real_shadow.runtime_state_path",
+        lambda relative_path, require_external: tmp_path / relative_path,
+    )
+    with pytest.raises(RealShadowQuotaError):
+        run_controlled_shadow_cycle(
+            api_key="secret-not-for-output",
+            timing=TIMING,
+            league_codes=("BL1",),
+            quota_remaining=5,
+            safety_reserve=10,
+            integration_sha=SHA,
+            now=BASE,
+            transport=transport,
+        )
+    assert calls == []
+    assert not list(tmp_path.rglob("*.json"))
+
+
+def test_provider_success_is_bulk_only_and_keeps_full_provenance():
+    calls = []
+
+    def transport(sport_key, markets, regions, api_key, timeout):
+        calls.append((sport_key, markets, regions, api_key, timeout))
+        return _response([_event(sport_key)], headers={"X-Requests-Remaining": "40"})
+
+    observation = RealTop5Provider("secret-not-for-output", transport=transport).fetch_league(
+        "BL1", TIMING, requested_at=BASE
+    )
+    assert len(calls) == 1
+    assert calls[0][1:3] == (("h2h",), ("eu",))
+    assert calls[0][3] == "secret-not-for-output"
+    assert observation.status == "success"
+    assert observation.request_id.startswith("provider-request:")
+    assert observation.fallback_used is False
+    assert observation.retry_count == 0
+    assert observation.event_requests == 0
+    assert observation.fixtures[0].fixture_key == "the_odds_api:soccer_germany_bundesliga:event-1"
+    assert observation.snapshots[0].kind.value == "signal_time"
+    assert observation.snapshots[0].captured_at == BASE
+    assert observation.as_payload()["quota_headers"] == {"x-requests-remaining": "40"}
+
+
+@pytest.mark.parametrize(
+    ("status", "expected"),
+    [(401, "authentication"), (403, "forbidden"), (429, "rate_limited")],
+)
+def test_auth_and_rate_limit_outcomes_are_recorded_without_fallback(status, expected):
+    response = _response(None, status=status, headers={"X-Requests-Remaining": "39"})
+    observation = RealTop5Provider(
+        "secret-not-for-output", transport=lambda *args: response
+    ).fetch_league("BL1", TIMING, requested_at=BASE)
+    payload = observation.as_payload()
+    assert payload["status_code"] == status
+    assert payload["failure_reason"] == expected
+    assert payload["fallback_used"] is False
+    assert payload["event_requests"] == 0
+    assert "secret-not-for-output" not in str(payload)
+
+
+@pytest.mark.parametrize(
+    ("payload", "expected"),
+    [(None, "malformed"), ([], "empty")],
+)
+def test_empty_or_malformed_payload_is_not_a_signal(payload, expected):
+    response = _response(payload)
+    observation = RealTop5Provider(
+        "secret-not-for-output", transport=lambda *args: response
+    ).fetch_league("BL1", TIMING, requested_at=BASE)
+    assert observation.status == expected
+    assert observation.snapshots == ()
+
+
+def test_wrong_league_and_unsupported_market_are_counted():
+    wrong = _event("soccer_epl", "wrong")
+    unsupported = _event("soccer_germany_bundesliga", "unsupported")
+    unsupported["bookmakers"][0]["markets"] = [{"key": "totals", "outcomes": []}]
+    response = _response([wrong, unsupported])
+    observation = RealTop5Provider(
+        "secret-not-for-output", transport=lambda *args: response
+    ).fetch_league("BL1", TIMING, requested_at=BASE)
+    assert observation.wrong_league_count == 1
+    assert observation.unsupported_market_count == 1
+    assert observation.snapshots == ()
+
+
+def test_full_cycle_uses_five_requests_and_only_m5_no_bet_artifacts():
+    calls = []
+
+    def transport(sport_key, markets, regions, api_key, timeout):
+        calls.append((sport_key, markets, regions))
+        return _response([_event(sport_key)], headers={"X-Requests-Used": "460", "X-Requests-Remaining": "40"})
+
+    result = run_controlled_shadow_cycle(
+        api_key="secret-not-for-output",
+        timing=TIMING,
+        league_codes=TOP5_REAL_SHADOW_LEAGUES,
+        quota_remaining=41,
+        safety_reserve=10,
+        integration_sha=SHA,
+        now=BASE,
+        transport=transport,
+    )
+    result.validate()
+    assert len(calls) == 5
+    assert len(result.observations) == 5
+    assert {observation.league_code for observation in result.observations} == {"BL1", "EPL", "LL", "SA", "L1"}
+    assert len(result.integrations) == 5
+    assert all(signal.no_bet for integration in result.integrations for signal in integration.signals)
+    assert all(not signal.publication for integration in result.integrations for signal in integration.signals)
+    payload = result.as_payload()
+    assert payload["research_sha"] == FROZEN_RESEARCH_SHA
+    assert payload["timing_experiment"]["production_approved"] is False
+    assert "secret-not-for-output" not in str(payload)
+    evidence = result.as_evidence_payload()
+    assert evidence["contract_version"] == "top5-shadow-evidence-v1"
+    assert evidence["safety"] == {
+        "no_bet": True,
+        "publication_enabled": False,
+        "real_bet_created": False,
+        "ledger_mutated": False,
+        "sealed_data_accessed": False,
+        "research_mutated": False,
+        "production_activation": False,
+    }
+    assert len(evidence["predictions"]) == 5
+    assert len(evidence["provider_evidence"]) == 5
+    assert evidence == result.as_evidence_payload()
+    assert "secret-not-for-output" not in str(evidence)
+
+
+def test_archive_is_external_and_redacted(monkeypatch, tmp_path):
+    calls = []
+
+    def transport(sport_key, markets, regions, api_key, timeout):
+        calls.append(sport_key)
+        return _response([])
+
+    result = run_controlled_shadow_cycle(
+        api_key="secret-not-for-output",
+        timing=TIMING,
+        league_codes=TOP5_REAL_SHADOW_LEAGUES,
+        quota_remaining=41,
+        safety_reserve=10,
+        integration_sha=SHA,
+        now=BASE,
+        transport=transport,
+    )
+    monkeypatch.setattr(
+        "src.football.top5_real_shadow.runtime_state_path",
+        lambda relative_path, require_external: tmp_path / relative_path,
+    )
+    path = write_shadow_archive(result)
+    assert path.is_file()
+    assert Path("docs/data").exists()
+    assert "secret-not-for-output" not in path.read_text()
+    assert '"contract_version": "top5-shadow-evidence-v1"' in path.read_text()
+    assert len(calls) == 5
+    assert write_shadow_archive(result) == path
+
+
+def test_provider_auth_boundary_raises_before_next_league():
+    calls = []
+
+    def transport(sport_key, markets, regions, api_key, timeout):
+        calls.append(sport_key)
+        return _response(None, status=401)
+
+    with pytest.raises(RealShadowExecutionError, match="provider_401"):
+        run_controlled_shadow_cycle(
+            api_key="secret-not-for-output",
+            timing=TIMING,
+            league_codes=("BL1",),
+            quota_remaining=41,
+            safety_reserve=10,
+            integration_sha=SHA,
+            now=BASE,
+            transport=transport,
+        )
+    assert len(calls) == 1
+
+
+def test_quota_exhaustion_stops_without_archive(monkeypatch, tmp_path):
+    calls = []
+
+    def transport(sport_key, markets, regions, api_key, timeout):
+        calls.append(sport_key)
+        return _response(None, status=429)
+
+    monkeypatch.setattr(
+        "src.football.top5_real_shadow.runtime_state_path",
+        lambda relative_path, require_external: tmp_path / relative_path,
+    )
+    with pytest.raises(RealShadowExecutionError, match="provider_429"):
+        run_controlled_shadow_cycle(
+            api_key="secret-not-for-output",
+            timing=TIMING,
+            league_codes=("BL1",),
+            quota_remaining=41,
+            safety_reserve=10,
+            integration_sha=SHA,
+            now=BASE,
+            transport=transport,
+        )
+    assert len(calls) == 1
+    assert not list(tmp_path.rglob("*.json"))
+
+
+def test_controlled_scope_is_explicit_bounded_and_deterministically_ordered():
+    calls = []
+
+    def transport(sport_key, markets, regions, api_key, timeout):
+        calls.append(sport_key)
+        return _response([_event(sport_key)])
+
+    result = run_controlled_shadow_cycle(
+        api_key="secret-not-for-output",
+        timing=TIMING,
+        league_codes=("SA", "BL1"),
+        quota_remaining=12,
+        safety_reserve=10,
+        integration_sha=SHA,
+        now=BASE,
+        transport=transport,
+    )
+    assert result.league_codes == ("BL1", "SA")
+    assert result.expected_request_count == 2
+    assert len(calls) == 2
+    assert len(result.observations) == 2
+
+
+def test_controlled_cli_requires_explicit_league_scope():
+    command = [
+        sys.executable,
+        str(Path(__file__).parents[2] / "scripts/top5_controlled_shadow.py"),
+        "--quota-remaining", "11",
+        "--safety-reserve", "10",
+        "--integration-sha", SHA,
+        "--experiment-id", TIMING.experiment_id,
+        "--min-lead-minutes", "60",
+        "--max-lead-minutes", "180",
+        "--max-odds-age-seconds", "120",
+        "--ack-no-bet",
+    ]
+    completed = subprocess.run(command, capture_output=True, text=True, check=False)
+    assert completed.returncode == 2
+    assert "--league" in completed.stderr
+
+
+@pytest.mark.parametrize("scope", [(), ("BL1", "BL1"), ("UCL",)])
+def test_invalid_controlled_scope_fails_closed_before_provider(scope):
+    calls = []
+
+    def transport(*args):
+        calls.append(args)
+        raise AssertionError("provider must not be called")
+
+    with pytest.raises(ProductionContractError):
+        run_controlled_shadow_cycle(
+            api_key="secret-not-for-output",
+            timing=TIMING,
+            league_codes=scope,
+            quota_remaining=100,
+            safety_reserve=10,
+            integration_sha=SHA,
+            now=BASE,
+            transport=transport,
+        )
+    assert calls == []
+
+
+def test_timing_evidence_identity_is_separate_from_m5_and_comparable():
+    calls = []
+
+    def transport(sport_key, markets, regions, api_key, timeout):
+        calls.append(sport_key)
+        return _response([_event(sport_key)])
+
+    first = run_controlled_shadow_cycle(
+        api_key="secret-not-for-output",
+        timing=TIMING,
+        league_codes=("BL1",),
+        quota_remaining=11,
+        safety_reserve=10,
+        integration_sha=SHA,
+        now=BASE,
+        transport=transport,
+    )
+    second = run_controlled_shadow_cycle(
+        api_key="secret-not-for-output",
+        timing=TIMING_LATER,
+        league_codes=("BL1",),
+        quota_remaining=11,
+        safety_reserve=10,
+        integration_sha=SHA,
+        now=BASE,
+        transport=transport,
+    )
+    first_signal = first.as_evidence_payload()["signal_time_evidence"][0]
+    second_signal = second.as_evidence_payload()["signal_time_evidence"][0]
+    assert first_signal["candidate_name"] != second_signal["candidate_name"]
+    assert first_signal["candidate_name"].startswith("shadow-experiment:")
+    assert first_signal["provenance"]["candidate_id"] == "M5_market_preclose"
+    assert second_signal["provenance"]["candidate_id"] == "M5_market_preclose"
+    assert len(calls) == 2
+
+
+def test_freshness_uses_genuine_source_timestamp_not_http_capture_time():
+    source_timestamp = BASE - timedelta(seconds=30)
+    observation = RealTop5Provider(
+        "secret-not-for-output",
+        transport=lambda sport, markets, regions, key, timeout: _response(
+            [_event(sport, source_timestamp=source_timestamp)]
+        ),
+    ).fetch_league("BL1", TIMING, requested_at=BASE)
+    assert observation.status == "success"
+    assert observation.source_timestamps == (source_timestamp,)
+    assert observation.snapshots[0].captured_at == source_timestamp
+    assert observation.completed_at == BASE
+
+
+def test_stale_source_timestamp_is_rejected_and_reported():
+    source_timestamp = BASE - timedelta(seconds=121)
+    observation = RealTop5Provider(
+        "secret-not-for-output",
+        transport=lambda sport, markets, regions, key, timeout: _response(
+            [_event(sport, source_timestamp=source_timestamp)]
+        ),
+    ).fetch_league("BL1", TIMING, requested_at=BASE)
+    assert observation.status == "no_eligible_fixtures"
+    assert observation.valid_fixture_count == 1
+    assert observation.eligible_fixture_count == 0
+    assert observation.outside_window_count == 1
+
+
+def test_composite_odds_age_uses_oldest_selected_quote_timestamp():
+    event = _event("soccer_germany_bundesliga", source_timestamp=BASE - timedelta(seconds=10))
+    event["bookmakers"].append({
+        "key": "older-book",
+        "markets": [{
+            "key": "h2h",
+            "last_update": (BASE - timedelta(seconds=90)).isoformat(),
+            "outcomes": [
+                {"name": "Home FC", "price": 2.1},
+                {"name": "Draw", "price": 3.4},
+                {"name": "Away FC", "price": 3.9},
+            ],
+        }],
+    })
+    observation = RealTop5Provider(
+        "secret-not-for-output",
+        transport=lambda *args: _response([event]),
+    ).fetch_league("BL1", TIMING, requested_at=BASE)
+    assert observation.status == "success"
+    assert observation.snapshots[0].captured_at == BASE - timedelta(seconds=90)
+
+
+def test_bookmaker_timestamp_is_used_when_market_timestamp_is_absent():
+    event = _event("soccer_germany_bundesliga", source_timestamp=None)
+    event["bookmakers"][0]["last_update"] = (BASE - timedelta(seconds=45)).isoformat()
+    observation = RealTop5Provider(
+        "secret-not-for-output",
+        transport=lambda *args: _response([event]),
+    ).fetch_league("BL1", TIMING, requested_at=BASE)
+    assert observation.status == "success"
+    assert observation.snapshots[0].captured_at == BASE - timedelta(seconds=45)
+
+
+@pytest.mark.parametrize("source_timestamp", [None, "not-a-timestamp"])
+def test_missing_or_malformed_source_timestamp_fails_freshness_closed(source_timestamp):
+    observation = RealTop5Provider(
+        "secret-not-for-output",
+        transport=lambda sport, markets, regions, key, timeout: _response(
+            [_event(sport, source_timestamp=source_timestamp)]
+        ),
+    ).fetch_league("BL1", TIMING, requested_at=BASE)
+    assert observation.status == "freshness_unavailable"
+    assert observation.valid_fixture_count == 0
+    assert observation.snapshots == ()
+    if source_timestamp is None:
+        assert observation.source_timestamp_missing_count == 1
+    else:
+        assert observation.source_timestamp_malformed_count == 1
+
+
+def test_bulk_provider_evidence_has_request_level_n_over_n_coverage():
+    def transport(sport_key, markets, regions, api_key, timeout):
+        return _response([
+            _event(sport_key, "event-1"),
+            _event(sport_key, "event-2"),
+            _event(sport_key, "event-3"),
+        ])
+
+    result = run_controlled_shadow_cycle(
+        api_key="secret-not-for-output",
+        timing=TIMING,
+        league_codes=("BL1",),
+        quota_remaining=11,
+        safety_reserve=10,
+        integration_sha=SHA,
+        now=BASE,
+        transport=transport,
+    )
+    evidence = result.as_evidence_payload()
+    assert len(evidence["provider_evidence"]) == 1
+    provider = evidence["provider_evidence"][0]
+    assert provider["requested_fixture_count"] == 3
+    assert provider["covered_fixture_count"] == 3
+    assert provider["bulk_requests"] == 1
+    assert len(evidence["observations"]) == 3
+    assert sum(item["provider_covered"] for item in evidence["observations"]) == 3
