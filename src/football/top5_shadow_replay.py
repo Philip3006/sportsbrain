@@ -33,7 +33,7 @@ _OUTCOMES = ("away", "draw", "home")
 
 
 class OfflineReplayError(ProductionContractError):
-    """Raised when replay input or an attachment crosses a hard boundary."""
+    pass
 
 class ReplayResultStatus(str, Enum):
     FINAL = "final"
@@ -41,7 +41,7 @@ class ReplayResultStatus(str, Enum):
     CANCELLED = "cancelled"
     ABANDONED = "abandoned"
 
-def validate_replay_partition(partition: str) -> None:
+def validate_replay_partition(partition: str) -> str:
     """Allow only explicitly approved DEV partitions and reject sealed data."""
 
     if not isinstance(partition, str) or not partition.strip():
@@ -51,6 +51,16 @@ def validate_replay_partition(partition: str) -> None:
         raise OfflineReplayError(f"sealed partition is forbidden: {normalized}")
     if normalized not in ALLOWED_DEV_PARTITIONS:
         raise OfflineReplayError(f"partition is not an approved DEV partition: {normalized}")
+    return normalized
+
+
+def _historical_partition(value: str, field_name: str) -> str:
+    parts = value.split(":") if isinstance(value, str) else ()
+    if len(parts) != 3 or parts[0] != "historical" or not parts[1].strip() or parts[1] != parts[1].strip():
+        raise OfflineReplayError(f"{field_name} must use historical:<source_kind>:<partition>")
+    if parts[2] != parts[2].strip():
+        raise OfflineReplayError(f"{field_name} has an invalid partition")
+    return validate_replay_partition(parts[2])
 
 
 def _stable_digest(payload: Mapping[str, object]) -> str:
@@ -81,22 +91,19 @@ def _market_probabilities(snapshot: MarketSnapshot) -> Mapping[str, float]:
 
 @dataclass(frozen=True)
 class HistoricalReplayInput:
-    """One historical candidate and its optional legitimate pre-closing input."""
-
     partition: str
     fixture: Fixture
     source_identity: str
     replayed_at: datetime
     signal_snapshot: MarketSnapshot | None = None
-
     def validate(self) -> None:
-        validate_replay_partition(self.partition)
+        declared_partition = validate_replay_partition(self.partition)
         self.fixture.validate()
         if self.fixture.league_code not in TOP5_REPLAY_LEAGUES:
             raise OfflineReplayError("replay fixture is outside the five approved leagues")
         replayed_at = _utc(self.replayed_at, "replayed_at")
-        if not self.source_identity.startswith("historical:"):
-            raise OfflineReplayError("replay source must be explicitly historical")
+        if _historical_partition(self.source_identity, "replay source") != declared_partition:
+            raise OfflineReplayError("replay source partition does not match declared partition")
         if self.signal_snapshot is None:
             return
         self.signal_snapshot.validate()
@@ -104,6 +111,8 @@ class HistoricalReplayInput:
             raise OfflineReplayError("replay input must be a pre-closing signal snapshot")
         if self.signal_snapshot.fixture_key != self.fixture.fixture_key:
             raise OfflineReplayError("replay snapshot belongs to another fixture")
+        if _historical_partition(self.signal_snapshot.source, "signal snapshot source") != declared_partition:
+            raise OfflineReplayError("signal snapshot partition does not match declared partition")
         if self.signal_snapshot.captured_at > replayed_at:
             raise OfflineReplayError("replay source timestamp is after replay time")
 
@@ -135,7 +144,6 @@ class ReplayPredictionArtifact:
     engineering_status: str = ENGINEERING_VALIDATION_MARKER
     no_bet: bool = True
     publication: bool = False
-
     @classmethod
     def create(
         cls,
@@ -196,7 +204,6 @@ class ReplayPredictionArtifact:
             market_probabilities=_market_probabilities(input_data.signal_snapshot),
             artifact_sha=_stable_digest(payload),
         )
-
     def _payload(self) -> dict[str, object]:
         return {
             "prediction_id": self.prediction_id,
@@ -222,9 +229,8 @@ class ReplayPredictionArtifact:
             "no_bet": self.no_bet,
             "publication": self.publication,
         }
-
     def validate(self) -> None:
-        validate_replay_partition(self.partition)
+        declared_partition = validate_replay_partition(self.partition)
         if self.league_code not in TOP5_REPLAY_LEAGUES:
             raise OfflineReplayError("prediction league is outside the five approved leagues")
         if self.model_identity != M5_CANDIDATE_ID or self.research_sha != FROZEN_RESEARCH_SHA:
@@ -233,8 +239,8 @@ class ReplayPredictionArtifact:
             char not in "0123456789abcdef" for char in self.source_sha.lower()
         ):
             raise OfflineReplayError("prediction source SHA is invalid")
-        if not self.source_identity.startswith("historical:"):
-            raise OfflineReplayError("prediction source is not historical")
+        if _historical_partition(self.source_identity, "prediction source") != declared_partition:
+            raise OfflineReplayError("prediction source partition does not match declared partition")
         if self.marker != OFFLINE_REPLAY_MARKER or self.engineering_status != ENGINEERING_VALIDATION_MARKER:
             raise OfflineReplayError("prediction is missing offline replay markers")
         if not self.no_bet or self.publication:
@@ -247,7 +253,6 @@ class ReplayPredictionArtifact:
         _required_probabilities(self.market_probabilities, "market probabilities")
         if _stable_digest(self._payload()) != self.artifact_sha:
             raise OfflineReplayError("prediction artifact digest changed")
-
     def as_payload(self) -> dict[str, object]:
         self.validate()
         return {**self._payload(), "artifact_sha": self.artifact_sha}
@@ -329,14 +334,12 @@ class ReplayResultAttachment:
             "actual_outcome": self.actual_outcome,
             "marker": self.marker,
         }
-
     def validate(self) -> None:
         if not self.prediction_id.strip() or not self.prediction_artifact_sha.strip():
             raise OfflineReplayError("result attachment lacks prediction provenance")
         if not self.fixture_key.strip() or self.league_code not in TOP5_REPLAY_LEAGUES:
             raise OfflineReplayError("result attachment identity is invalid")
-        if not self.result_source.startswith("historical:"):
-            raise OfflineReplayError("result source must be explicitly historical")
+        _historical_partition(self.result_source, "result source")
         if self.attached_at < self.result_timestamp:
             raise OfflineReplayError("result attachment precedes its source timestamp")
         status = ReplayResultStatus(self.status)
@@ -350,7 +353,6 @@ class ReplayResultAttachment:
             raise OfflineReplayError("non-final result cannot contain a score or outcome")
         if self.marker != OFFLINE_REPLAY_MARKER or _stable_digest(self._payload()) != self.attachment_sha:
             raise OfflineReplayError("result attachment digest or marker changed")
-
     def as_payload(self) -> dict[str, object]:
         self.validate()
         return {**self._payload(), "attachment_sha": self.attachment_sha}
@@ -370,14 +372,12 @@ class ReplayClosingAttachment:
     attachment_sha: str = ""
     marker: str = OFFLINE_REPLAY_MARKER
     used_for_prediction: bool = False
-
     def __post_init__(self) -> None:
         object.__setattr__(self, "closing_timestamp", _utc(self.closing_timestamp, "closing_timestamp"))
         object.__setattr__(self, "attached_at", _utc(self.attached_at, "attached_at"))
         object.__setattr__(self, "odds", MappingProxyType({name: float(value) for name, value in self.odds.items()}))
         if not self.attachment_sha:
             object.__setattr__(self, "attachment_sha", _stable_digest(self._payload()))
-
     def _payload(self) -> dict[str, object]:
         return {
             "prediction_id": self.prediction_id,
@@ -392,13 +392,13 @@ class ReplayClosingAttachment:
             "marker": self.marker,
             "used_for_prediction": self.used_for_prediction,
         }
-
     def validate(self) -> None:
         if not self.prediction_id.strip() or not self.prediction_artifact_sha.strip():
             raise OfflineReplayError("closing attachment lacks prediction provenance")
         if not self.fixture_key.strip() or self.league_code not in TOP5_REPLAY_LEAGUES:
             raise OfflineReplayError("closing attachment identity is invalid")
-        if not self.closing_source.startswith("historical:") or not self.bookmaker.strip():
+        _historical_partition(self.closing_source, "closing source")
+        if not self.bookmaker.strip():
             raise OfflineReplayError("closing provenance must identify historical source and bookmaker")
         if self.attached_at < self.closing_timestamp or self.used_for_prediction:
             raise OfflineReplayError("closing benchmark cannot enter prediction inputs")
@@ -408,7 +408,6 @@ class ReplayClosingAttachment:
             raise OfflineReplayError("closing attachment odds are invalid")
         if self.marker != OFFLINE_REPLAY_MARKER or _stable_digest(self._payload()) != self.attachment_sha:
             raise OfflineReplayError("closing attachment digest or marker changed")
-
     def as_payload(self) -> dict[str, object]:
         self.validate()
         return {**self._payload(), "attachment_sha": self.attachment_sha}
@@ -416,8 +415,6 @@ class ReplayClosingAttachment:
 
 @dataclass
 class OfflineReplayArchive:
-    """In-memory/test archive with a namespace distinct from real shadow."""
-
     predictions: dict[str, ReplayPredictionArtifact] = field(default_factory=dict)
     results: dict[str, ReplayResultAttachment] = field(default_factory=dict)
     closings: dict[str, ReplayClosingAttachment] = field(default_factory=dict)
@@ -428,7 +425,6 @@ class OfflineReplayArchive:
             raise OfflineReplayError("attachment references a missing prediction")
         prediction.validate()
         return prediction
-
     def add_prediction(self, prediction: ReplayPredictionArtifact) -> bool:
         prediction.validate()
         old = self.predictions.get(prediction.prediction_id)
@@ -438,7 +434,6 @@ class OfflineReplayArchive:
             raise OfflineReplayError("prediction identity collision")
         self.predictions[prediction.prediction_id] = prediction
         return True
-
     def attach_result(self, result: ReplayResultAttachment) -> bool:
         result.validate()
         prediction = self._prediction(result.prediction_id)
@@ -446,8 +441,12 @@ class OfflineReplayArchive:
             raise OfflineReplayError("result references a changed prediction artifact")
         if result.fixture_key != prediction.fixture_key or result.league_code != prediction.league_code:
             raise OfflineReplayError("result fixture or league identity does not match prediction")
+        if _historical_partition(result.result_source, "result source") != validate_replay_partition(prediction.partition):
+            raise OfflineReplayError("result partition does not match prediction partition")
         if result.attached_at < prediction.replayed_at:
             raise OfflineReplayError("result attachment precedes prediction creation")
+        if ReplayResultStatus(result.status) is ReplayResultStatus.FINAL and result.result_timestamp < prediction.kickoff:
+            raise OfflineReplayError("final result precedes fixture kickoff")
         old = self.results.get(result.prediction_id)
         if old is not None:
             if old == result:
@@ -455,7 +454,6 @@ class OfflineReplayArchive:
             raise OfflineReplayError("conflicting result attachment")
         self.results[result.prediction_id] = result
         return True
-
     def attach_closing(self, closing: ReplayClosingAttachment) -> bool:
         closing.validate()
         prediction = self._prediction(closing.prediction_id)
@@ -463,8 +461,10 @@ class OfflineReplayArchive:
             raise OfflineReplayError("closing references a changed prediction artifact")
         if closing.fixture_key != prediction.fixture_key or closing.league_code != prediction.league_code:
             raise OfflineReplayError("closing fixture or league identity does not match prediction")
-        if closing.closing_timestamp < prediction.source_timestamp:
-            raise OfflineReplayError("closing benchmark precedes signal-time source")
+        if _historical_partition(closing.closing_source, "closing source") != validate_replay_partition(prediction.partition):
+            raise OfflineReplayError("closing partition does not match prediction partition")
+        if not prediction.source_timestamp <= closing.closing_timestamp <= prediction.kickoff:
+            raise OfflineReplayError("closing benchmark is outside the signal-to-kickoff window")
         if closing.attached_at < prediction.replayed_at:
             raise OfflineReplayError("closing attachment precedes prediction creation")
         old = self.closings.get(closing.prediction_id)
@@ -474,7 +474,6 @@ class OfflineReplayArchive:
             raise OfflineReplayError("conflicting closing attachment")
         self.closings[closing.prediction_id] = closing
         return True
-
     def as_payload(self) -> dict[str, object]:
         for prediction in self.predictions.values():
             prediction.validate()

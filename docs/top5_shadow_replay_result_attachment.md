@@ -25,9 +25,12 @@ or production archive writer is imported by the replay runner.
 Only explicit DEV partitions are accepted: `2021`, `2122`, `2223`, and
 `2324`. `2425` calibration data and `2526` holdout data are sealed and are
 rejected before replay input validation completes. Unknown or future
-partitions also fail closed. The input source must use the `historical:`
-namespace, and the five supported leagues are exactly BL1, EPL, LL, SA, and
-L1. Champions League input is rejected.
+partitions also fail closed. Every historical source must use the structured
+`historical:<source_kind>:<partition>` form. The declared input partition,
+prediction source partition, signal snapshot source partition, result source
+partition, and closing source partition must match exactly, and each is
+independently checked against the approved DEV set. The five supported leagues
+are exactly BL1, EPL, LL, SA, and L1. Champions League input is rejected.
 
 No loader bypass is provided. The caller supplies an already-approved static
 fixture and signal-time snapshot; this module never discovers or fetches
@@ -48,20 +51,25 @@ An identical duplicate attachment is idempotently suppressed.
 
 ## Result attachment
 
-Results include historical source provenance, source and attachment timestamps,
-home and away scores, the derived 1X2 outcome, and one of `final`,
+Results include structured historical source provenance, source and attachment
+timestamps, home and away scores, the derived 1X2 outcome, and one of `final`,
 `postponed`, `cancelled`, or `abandoned`. Non-final states remain unresolved.
-Scores and outcome are required to agree for final results. An earlier result
-cannot be silently overwritten by a conflicting result.
+Final results must have `result_timestamp >= prediction.kickoff`; non-final
+status records may precede kickoff. Attachments must satisfy
+`attached_at >= result_timestamp`. Scores and outcome are required to agree
+for final results. An earlier result cannot be silently overwritten by a
+conflicting result.
 
 ## Closing benchmark attachment
 
-Closing records include historical source, bookmaker, closing timestamp,
+Closing records include structured historical source, bookmaker, closing timestamp,
 attachment timestamp, odds, fixture identity, prediction identity, and the
 original prediction digest. They are benchmark-only. `used_for_prediction`
-is hard-rejected, and the prediction artifact contains no closing fields or
-closing values. Builder-2 output records closing odds only in its separate
-`closing_benchmark_evidence` section.
+is hard-rejected. Closing timestamps must satisfy
+`prediction.source_timestamp <= closing_timestamp <= prediction.kickoff` and
+`attached_at >= closing_timestamp`. The prediction artifact contains no
+closing fields or closing values. Builder-2 output records closing odds only
+in its separate `closing_benchmark_evidence` section.
 
 ## Causality guarantees
 
@@ -70,7 +78,8 @@ or closing record. The prediction builder receives only the signal-time
 snapshot. Attachments are accepted only after the replay timestamp, and the
 prediction digest must remain unchanged. Replay ordering does not affect the
 digest or serialized archive. Wrong fixture, wrong league, missing prediction,
-conflicting result, and sealed partition attempts fail closed.
+conflicting result, mismatched provenance, causally invalid timestamps, and
+sealed partition attempts fail closed.
 
 ## Coverage and performance
 

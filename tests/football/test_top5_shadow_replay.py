@@ -7,6 +7,7 @@ from src.football.production_contracts import (
     Fixture,
     MarketSnapshot,
     MarketSnapshotKind,
+    ProductionContractError,
     SignalTimeContract,
 )
 from src.football.top5_research_binding import M5_CANDIDATE_ID
@@ -41,25 +42,29 @@ def _fixture(league: str, suffix: str) -> Fixture:
     )
 
 
-def _snapshot(fixture: Fixture, *, captured_at: datetime = BASE) -> MarketSnapshot:
+def _snapshot(
+    fixture: Fixture, *, captured_at: datetime = BASE, partition: str = "2324"
+) -> MarketSnapshot:
     return MarketSnapshot(
         fixture_key=fixture.fixture_key,
         captured_at=captured_at,
         kind=MarketSnapshotKind.SIGNAL_TIME,
-        source="historical:football-data:2324",
+        source=f"historical:football-data:{partition}",
         odds={"home": 2.0, "draw": 3.5, "away": 4.0},
         snapshot_id=f"snapshot:{fixture.fixture_key}",
     )
 
 
-def _input(league: str, suffix: str, *, snapshot: bool = True) -> HistoricalReplayInput:
+def _input(
+    league: str, suffix: str, *, snapshot: bool = True, partition: str = "2324"
+) -> HistoricalReplayInput:
     fixture = _fixture(league, suffix)
     return HistoricalReplayInput(
-        partition="2324",
+        partition=partition,
         fixture=fixture,
-        source_identity="historical:football-data:2324",
+        source_identity=f"historical:football-data:{partition}",
         replayed_at=BASE,
-        signal_snapshot=_snapshot(fixture) if snapshot else None,
+        signal_snapshot=_snapshot(fixture, partition=partition) if snapshot else None,
     )
 
 
@@ -105,6 +110,24 @@ def test_sealed_and_unapproved_partitions_fail_closed(partition):
     candidate = replace(candidate, partition=partition)
     with pytest.raises(OfflineReplayError, match="partition"):
         candidate.validate()
+
+
+@pytest.mark.parametrize("partition", tuple(sorted(ALLOWED_DEV_PARTITIONS)))
+def test_matching_historical_provenance_partition_is_accepted(partition):
+    _input("BL1", f"matching-{partition}", partition=partition).validate()
+
+
+def test_prediction_and_signal_snapshot_partitions_must_match_declared_partition():
+    candidate = _input("BL1", "mismatch")
+    with pytest.raises(OfflineReplayError, match="source partition"):
+        replace(candidate, source_identity="historical:football-data:2122").validate()
+
+    mismatched_snapshot = replace(
+        candidate.signal_snapshot,
+        source="historical:market-snapshot:2122",
+    )
+    with pytest.raises(OfflineReplayError, match="snapshot partition"):
+        replace(candidate, signal_snapshot=mismatched_snapshot).validate()
 
 
 def test_prediction_digest_is_immutable_and_attachments_are_separate():
@@ -164,6 +187,126 @@ def test_duplicate_result_is_idempotent_and_conflict_is_rejected():
     )
     with pytest.raises(OfflineReplayError, match="conflicting"):
         run.archive.attach_result(conflicting)
+
+
+@pytest.mark.parametrize("partition", ("2526", "unknown"))
+def test_result_and_closing_sources_reject_unapproved_partitions(partition):
+    run = run_offline_replay([_input("BL1", "attachment-partition")], signal_time=CONTRACT, integration_sha=SOURCE_SHA)
+    prediction = next(iter(run.archive.predictions.values()))
+    result = ReplayResultAttachment.from_scores(
+        prediction,
+        result_source=f"historical:results:{partition}",
+        result_timestamp=prediction.kickoff,
+        attached_at=prediction.kickoff + timedelta(minutes=1),
+        home_score=1,
+        away_score=0,
+    )
+    with pytest.raises(OfflineReplayError, match="partition"):
+        run.archive.attach_result(result)
+    closing = ReplayClosingAttachment(
+        prediction_id=prediction.prediction_id,
+        prediction_artifact_sha=prediction.artifact_sha,
+        fixture_key=prediction.fixture_key,
+        league_code=prediction.league_code,
+        closing_source=f"historical:closing:{partition}",
+        bookmaker="bookmaker-a",
+        closing_timestamp=prediction.kickoff - timedelta(minutes=10),
+        attached_at=prediction.kickoff + timedelta(minutes=1),
+        odds={"home": 2.1, "draw": 3.2, "away": 3.9},
+    )
+    with pytest.raises(OfflineReplayError, match="partition"):
+        run.archive.attach_closing(closing)
+
+
+def test_result_and_closing_partitions_must_match_prediction_partition():
+    run = run_offline_replay([_input("BL1", "attachment-mismatch")], signal_time=CONTRACT, integration_sha=SOURCE_SHA)
+    prediction = next(iter(run.archive.predictions.values()))
+    result = ReplayResultAttachment.from_scores(
+        prediction,
+        result_source="historical:results:2122",
+        result_timestamp=prediction.kickoff,
+        attached_at=prediction.kickoff + timedelta(minutes=1),
+        home_score=1,
+        away_score=0,
+    )
+    with pytest.raises(OfflineReplayError, match="result partition"):
+        run.archive.attach_result(result)
+    closing = ReplayClosingAttachment(
+        prediction_id=prediction.prediction_id,
+        prediction_artifact_sha=prediction.artifact_sha,
+        fixture_key=prediction.fixture_key,
+        league_code=prediction.league_code,
+        closing_source="historical:closing:2122",
+        bookmaker="bookmaker-a",
+        closing_timestamp=prediction.kickoff - timedelta(minutes=10),
+        attached_at=prediction.kickoff + timedelta(minutes=1),
+        odds={"home": 2.1, "draw": 3.2, "away": 3.9},
+    )
+    with pytest.raises(OfflineReplayError, match="closing partition"):
+        run.archive.attach_closing(closing)
+
+
+def test_final_result_requires_kickoff_but_non_final_result_may_precede_it():
+    run = run_offline_replay([_input("BL1", "result-causality")], signal_time=CONTRACT, integration_sha=SOURCE_SHA)
+    prediction = next(iter(run.archive.predictions.values()))
+    early_final = ReplayResultAttachment.from_scores(
+        prediction,
+        result_source="historical:results:2324",
+        result_timestamp=prediction.kickoff - timedelta(minutes=1),
+        attached_at=prediction.kickoff,
+        home_score=1,
+        away_score=0,
+    )
+    with pytest.raises(OfflineReplayError, match="kickoff"):
+        run.archive.attach_result(early_final)
+    postponed = ReplayResultAttachment.from_scores(
+        prediction,
+        result_source="historical:results:2324",
+        result_timestamp=prediction.kickoff - timedelta(minutes=1),
+        attached_at=prediction.kickoff,
+        home_score=None,
+        away_score=None,
+        status=ReplayResultStatus.POSTPONED,
+    )
+    assert run.archive.attach_result(postponed) is True
+
+
+def test_closing_must_fall_between_signal_time_and_kickoff():
+    run = run_offline_replay([_input("BL1", "closing-causality")], signal_time=CONTRACT, integration_sha=SOURCE_SHA)
+    prediction = next(iter(run.archive.predictions.values()))
+
+    def closing_at(timestamp):
+        return ReplayClosingAttachment(
+            prediction_id=prediction.prediction_id,
+            prediction_artifact_sha=prediction.artifact_sha,
+            fixture_key=prediction.fixture_key,
+            league_code=prediction.league_code,
+            closing_source="historical:closing:2324",
+            bookmaker="bookmaker-a",
+            closing_timestamp=timestamp,
+            attached_at=prediction.kickoff + timedelta(minutes=1),
+            odds={"home": 2.1, "draw": 3.2, "away": 3.9},
+        )
+
+    with pytest.raises(OfflineReplayError, match="signal-to-kickoff"):
+        run.archive.attach_closing(closing_at(prediction.source_timestamp - timedelta(seconds=1)))
+    with pytest.raises(OfflineReplayError, match="signal-to-kickoff"):
+        run.archive.attach_closing(closing_at(prediction.kickoff + timedelta(seconds=1)))
+    assert run.archive.attach_closing(closing_at(prediction.kickoff)) is True
+
+
+def test_malformed_attachment_timestamp_fails_closed():
+    run = run_offline_replay([_input("BL1", "timestamp")], signal_time=CONTRACT, integration_sha=SOURCE_SHA)
+    prediction = next(iter(run.archive.predictions.values()))
+    with pytest.raises(ProductionContractError, match="timezone-aware"):
+        ReplayResultAttachment.from_scores(
+            prediction,
+            result_source="historical:results:2324",
+            result_timestamp=BASE.replace(tzinfo=None, hour=14),
+            attached_at=prediction.kickoff,
+            home_score=1,
+            away_score=0,
+        )
 
 
 @pytest.mark.parametrize("status", tuple(ReplayResultStatus)[1:])
