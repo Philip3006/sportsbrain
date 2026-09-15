@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-14T23:59:41.737001+00:00",
+  "generated_at": "2026-09-15T06:16:30.288361+00:00",
   "n_signals_total": 1665,
-  "n_with_outcome": 1663,
+  "n_with_outcome": 1665,
   "by_market": {
     "ah+0.5_away": {
       "n": 26,
@@ -419,8 +419,8 @@
     "o/u_games_21.0_under": {
       "n": 15,
       "n_placed": 15,
-      "n_outcome": 14,
-      "accuracy": 0.3571,
+      "n_outcome": 15,
+      "accuracy": 0.3333,
       "ev_mean": 10.05
     },
     "o/u_games_21.5_over": {
@@ -433,8 +433,8 @@
     "o/u_games_21.5_under": {
       "n": 44,
       "n_placed": 44,
-      "n_outcome": 43,
-      "accuracy": 0.4186,
+      "n_outcome": 44,
+      "accuracy": 0.4091,
       "ev_mean": 12.09
     },
     "o/u_games_22.0_over": {
