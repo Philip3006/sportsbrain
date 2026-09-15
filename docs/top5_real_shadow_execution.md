@@ -46,3 +46,21 @@ production model path is imported.
 Each invocation is a `CONTROLLED SHADOW RUN`. It must not be described as a
 natural canary or natural scheduled run. No persistent scheduler is included
 by this change.
+
+## Independent evidence contract
+
+The merged Builder 2 validator consumes `top5-shadow-evidence-v1`. Builder 1
+remains the producer: `RealShadowCycleResult.as_evidence_payload()` emits the
+contract's safety assertions, per-fixture observations, M5 predictions,
+provider and signal-time evidence, quota-cost evidence, health evidence, and
+bounded failure evidence. The producer does not import or invoke the Builder 2
+validator. Closing benchmarks and result attachments are intentionally empty
+until their separately authorized stages exist. The payload is deterministic
+for a fixed cycle result and contains no provider secret, response body, or
+credential-bearing URL.
+
+The current external provider gate is blocked by exhausted monthly quota. A
+zero-cost authenticated `/events` check returned HTTP 200 with 500 requests
+used, 0 remaining, and 0 last-request cost. No odds request was made after
+that confirmation, and no archive was written for the failed/quota-blocked
+execution. No billing, subscription, or quota change was authorized.

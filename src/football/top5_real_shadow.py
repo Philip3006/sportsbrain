@@ -139,6 +139,14 @@ class RealShadowCycleResult:
             "publication": self.publication,
         }
 
+    def as_evidence_payload(self) -> dict[str, object]:
+        """Emit the independent Builder 2 evidence contract."""
+
+        self.validate()
+        from src.football.top5_shadow_evidence import build_evidence_payload
+
+        return build_evidence_payload(self)
+
 
 def run_controlled_shadow_cycle(
     *,
@@ -212,7 +220,7 @@ def write_shadow_archive(result: RealShadowCycleResult) -> Path:
         require_external=True,
     )
     path.parent.mkdir(parents=True, exist_ok=True)
-    payload = result.as_payload()
+    payload = result.as_evidence_payload()
     if path.exists():
         existing = json.loads(path.read_text())
         if existing != payload:

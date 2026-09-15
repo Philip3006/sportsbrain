@@ -73,6 +73,31 @@ def test_quota_gate_fails_before_any_provider_request():
     assert calls == []
 
 
+def test_quota_failure_does_not_create_shadow_archive(monkeypatch, tmp_path):
+    calls = []
+
+    def transport(*args):
+        calls.append(args)
+        raise AssertionError("provider must not be called")
+
+    monkeypatch.setattr(
+        "src.football.top5_real_shadow.runtime_state_path",
+        lambda relative_path, require_external: tmp_path / relative_path,
+    )
+    with pytest.raises(RealShadowQuotaError):
+        run_controlled_shadow_cycle(
+            api_key="secret-not-for-output",
+            timing=TIMING,
+            quota_remaining=5,
+            safety_reserve=10,
+            integration_sha=SHA,
+            now=BASE,
+            transport=transport,
+        )
+    assert calls == []
+    assert not list(tmp_path.rglob("*.json"))
+
+
 def test_provider_success_is_bulk_only_and_keeps_full_provenance():
     calls = []
 
@@ -166,6 +191,21 @@ def test_full_cycle_uses_five_requests_and_only_m5_no_bet_artifacts():
     assert payload["research_sha"] == FROZEN_RESEARCH_SHA
     assert payload["timing_experiment"]["production_approved"] is False
     assert "secret-not-for-output" not in str(payload)
+    evidence = result.as_evidence_payload()
+    assert evidence["contract_version"] == "top5-shadow-evidence-v1"
+    assert evidence["safety"] == {
+        "no_bet": True,
+        "publication_enabled": False,
+        "real_bet_created": False,
+        "ledger_mutated": False,
+        "sealed_data_accessed": False,
+        "research_mutated": False,
+        "production_activation": False,
+    }
+    assert len(evidence["predictions"]) == 5
+    assert len(evidence["provider_evidence"]) == 5
+    assert evidence == result.as_evidence_payload()
+    assert "secret-not-for-output" not in str(evidence)
 
 
 def test_archive_is_external_and_redacted(monkeypatch, tmp_path):
@@ -192,7 +232,9 @@ def test_archive_is_external_and_redacted(monkeypatch, tmp_path):
     assert path.is_file()
     assert Path("docs/data").exists()
     assert "secret-not-for-output" not in path.read_text()
+    assert '"contract_version": "top5-shadow-evidence-v1"' in path.read_text()
     assert len(calls) == 5
+    assert write_shadow_archive(result) == path
 
 
 def test_provider_auth_boundary_raises_before_next_league():
@@ -213,3 +255,28 @@ def test_provider_auth_boundary_raises_before_next_league():
             transport=transport,
         )
     assert len(calls) == 1
+
+
+def test_quota_exhaustion_stops_without_archive(monkeypatch, tmp_path):
+    calls = []
+
+    def transport(sport_key, markets, regions, api_key, timeout):
+        calls.append(sport_key)
+        return _response(None, status=429)
+
+    monkeypatch.setattr(
+        "src.football.top5_real_shadow.runtime_state_path",
+        lambda relative_path, require_external: tmp_path / relative_path,
+    )
+    with pytest.raises(RealShadowExecutionError, match="provider_429"):
+        run_controlled_shadow_cycle(
+            api_key="secret-not-for-output",
+            timing=TIMING,
+            quota_remaining=41,
+            safety_reserve=10,
+            integration_sha=SHA,
+            now=BASE,
+            transport=transport,
+        )
+    assert len(calls) == 1
+    assert not list(tmp_path.rglob("*.json"))
