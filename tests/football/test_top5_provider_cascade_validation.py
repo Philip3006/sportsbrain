@@ -53,13 +53,20 @@ SAFE = CascadeSafety(
     production_activation=False,
     sealed_data_accessed=False,
     research_mutated=False,
+    monetary_spend_authorized=False,
 )
 
 
-def _policy(*, ready: bool = False, expected: ExpectedCascadeFixture | None = EXPECTED):
+def _policy(
+    *,
+    ready: bool = False,
+    expected: ExpectedCascadeFixture | None = EXPECTED,
+    order: tuple[str, ...] = CASCADE_PROVIDER_ORDER,
+):
     return CascadeValidationPolicy(
         maximum_odds_age_seconds=900,
         kickoff_tolerance_seconds=300,
+        configured_provider_order=order,
         provider_readiness=(
             {provider: READY for provider in CASCADE_PROVIDER_ORDER} if ready else {}
         ),
@@ -96,10 +103,11 @@ def _attempt(
     network_called: bool | None = None,
     preflight_allowed: bool | None = None,
     budget_decision: BudgetDecision = BudgetDecision.ALLOWED,
-    cost: RequestCostClassification = RequestCostClassification.PAID_CREDIT,
+    cost: RequestCostClassification = RequestCostClassification.QUOTA_CONSUMING_REQUEST,
     cost_units: float | None = 1.0,
-    request_count: int | None = 1,
+    network_request_count: int | None = None,
     credentials_available: bool | None = True,
+    configured_order: tuple[str, ...] = CASCADE_PROVIDER_ORDER,
     quota_before: CascadeQuotaSnapshot | None = None,
     quota_after: CascadeQuotaSnapshot | None = None,
     readiness: ProviderReadinessState | None = None,
@@ -109,6 +117,8 @@ def _attempt(
     failed = outcome is not CascadeOutcome.SUCCESS
     if network_called is None:
         network_called = not (outcome is CascadeOutcome.QUOTA_EXHAUSTED)
+    if network_request_count is None:
+        network_request_count = int(network_called)
     if preflight_allowed is None:
         preflight_allowed = outcome is not CascadeOutcome.BUDGET_REJECTED and not (
             outcome is CascadeOutcome.QUOTA_EXHAUSTED and not network_called
@@ -133,7 +143,7 @@ def _attempt(
         home_team=EXPECTED.home_team,
         away_team=EXPECTED.away_team,
         kickoff=EXPECTED.kickoff,
-        configured_provider_order=CASCADE_PROVIDER_ORDER,
+        configured_provider_order=configured_order,
         provider_attempt_index=index,
         fallback_depth=index,
         provider_identity=provider,
@@ -157,8 +167,8 @@ def _attempt(
         preflight_allowed=preflight_allowed,
         budget_decision=budget_decision,
         request_cost_classification=cost,
-        request_count=request_count,
-        request_cost_units=cost_units,
+        network_request_count=network_request_count,
+        quota_cost_units=cost_units,
         credentials_available=credentials_available,
         provider_record_id=f"{provider}-record-{index}",
         adapter_version=f"{provider}-adapter-v1",
@@ -176,10 +186,12 @@ def _evidence(
     prediction_input_allowed: bool,
     skipped: tuple[SkippedProvider, ...] = (),
     mode: ExecutionMode = ExecutionMode.SEQUENTIAL,
+    order: tuple[str, ...] | None = None,
 ) -> CascadeEvidence:
+    order = order or attempts[0].configured_provider_order
     return CascadeEvidence(
         provenance=_provenance(),
-        configured_provider_order=CASCADE_PROVIDER_ORDER,
+        configured_provider_order=order,
         execution_mode=mode,
         attempts=attempts,
         skipped_providers=skipped,
@@ -190,7 +202,9 @@ def _evidence(
 
 
 def _all_failed(
-    *, outcomes: tuple[CascadeOutcome, ...] | None = None
+    *,
+    outcomes: tuple[CascadeOutcome, ...] | None = None,
+    order: tuple[str, ...] = CASCADE_PROVIDER_ORDER,
 ) -> CascadeEvidence:
     outcomes = outcomes or (
         CascadeOutcome.QUOTA_EXHAUSTED,
@@ -202,11 +216,12 @@ def _all_failed(
         tuple(
             _attempt(provider, index, outcome=outcome)
             for index, (provider, outcome) in enumerate(
-                zip(CASCADE_PROVIDER_ORDER, outcomes, strict=True)
+                zip(order, outcomes, strict=True)
             )
         ),
         selected_provider=None,
         prediction_input_allowed=False,
+        order=order,
     )
 
 
@@ -217,6 +232,234 @@ def test_policy_requires_caller_supplied_timing_and_exact_fixture() -> None:
         CascadeValidationPolicy(0, 300, expected_fixture=EXPECTED).validate()
     with pytest.raises(CascadeValidationError, match="fuzzy"):
         _policy(expected=None).validate()
+
+
+ALT_ORDER = (
+    "odds_api_io",
+    "api_football",
+    "betfair_delayed",
+    "the_odds_api",
+)
+SUBSET_ORDER = ("odds_api_io", "api_football", "betfair_delayed")
+
+
+def _skipped_after(index: int, order: tuple[str, ...]) -> tuple[SkippedProvider, ...]:
+    return tuple(
+        SkippedProvider(provider, skipped_index, "terminal injected failure")
+        for skipped_index, provider in enumerate(order[index + 1 :], start=index + 1)
+    )
+
+
+def test_default_alternative_and_subset_orders_are_configuration_not_authority() -> (
+    None
+):
+    default = validate_cascade_evidence(
+        _evidence(
+            (_attempt("the_odds_api", 0, readiness=READY),),
+            selected_provider="the_odds_api",
+            prediction_input_allowed=True,
+        ),
+        _policy(ready=True),
+    )
+    assert default.accepted is True
+
+    alternative = validate_cascade_evidence(
+        _evidence(
+            (
+                _attempt(
+                    "odds_api_io",
+                    0,
+                    configured_order=ALT_ORDER,
+                    readiness=READY,
+                ),
+            ),
+            selected_provider="odds_api_io",
+            prediction_input_allowed=True,
+            order=ALT_ORDER,
+        ),
+        _policy(ready=True, order=ALT_ORDER),
+    )
+    assert alternative.accepted is True
+    assert alternative.selected_provider == "odds_api_io"
+
+    subset = validate_cascade_evidence(
+        _evidence(
+            (
+                _attempt(
+                    "odds_api_io",
+                    0,
+                    configured_order=SUBSET_ORDER,
+                    readiness=READY,
+                ),
+            ),
+            selected_provider="odds_api_io",
+            prediction_input_allowed=True,
+            order=SUBSET_ORDER,
+        ),
+        _policy(ready=True, order=SUBSET_ORDER),
+    )
+    assert subset.accepted is True
+
+
+def test_evidence_order_duplicate_and_unknown_provider_are_rejected() -> None:
+    alternative = _evidence(
+        (
+            _attempt(
+                "odds_api_io",
+                0,
+                configured_order=ALT_ORDER,
+                readiness=READY,
+            ),
+        ),
+        selected_provider="odds_api_io",
+        prediction_input_allowed=True,
+        order=ALT_ORDER,
+    )
+    mismatch = validate_cascade_evidence(alternative, _policy(ready=True))
+    assert ValidationCode.CONFIGURATION_MISMATCH in mismatch.errors
+
+    with pytest.raises(CascadeValidationError, match="duplicates"):
+        _policy(order=("odds_api_io", "odds_api_io")).validate()
+    with pytest.raises(CascadeValidationError, match="unknown"):
+        _policy(order=("unknown_provider",)).validate()
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "code"),
+    [
+        ("no_bet", False, ValidationCode.NO_BET_VIOLATION),
+        ("publication_enabled", True, ValidationCode.PUBLICATION_ENABLED),
+        ("ledger_mutated", True, ValidationCode.LEDGER_MUTATION),
+        ("production_activation", True, ValidationCode.PRODUCTION_ACTIVATION),
+        ("sealed_data_accessed", True, ValidationCode.SEALED_DATA_ACCESS),
+        ("research_mutated", True, ValidationCode.RESEARCH_MUTATION),
+        (
+            "monetary_spend_authorized",
+            True,
+            ValidationCode.MONETARY_SPEND_AUTHORIZED,
+        ),
+    ],
+)
+def test_each_safety_violation_preserves_its_exact_code(field, value, code) -> None:
+    unsafe = replace(SAFE, **{field: value})
+    evidence = replace(
+        _evidence(
+            (_attempt("the_odds_api", 0),),
+            selected_provider=None,
+            prediction_input_allowed=False,
+        ),
+        safety=unsafe,
+    )
+    report = validate_cascade_evidence(evidence, _policy())
+    assert report.accepted is False
+    assert report.prediction_input_allowed is False
+    assert report.selected_provider is None
+    assert report.errors == (code,)
+
+
+def test_multiple_safety_violations_preserve_all_codes_in_contract_order() -> None:
+    unsafe = replace(
+        SAFE,
+        no_bet=False,
+        publication_enabled=True,
+        ledger_mutated=True,
+        production_activation=True,
+        sealed_data_accessed=True,
+        research_mutated=True,
+        monetary_spend_authorized=True,
+    )
+    evidence = replace(
+        _evidence(
+            (_attempt("the_odds_api", 0),),
+            selected_provider="the_odds_api",
+            prediction_input_allowed=True,
+        ),
+        safety=unsafe,
+    )
+    report = validate_cascade_evidence(evidence, _policy())
+    assert report.errors == (
+        ValidationCode.NO_BET_VIOLATION,
+        ValidationCode.PUBLICATION_ENABLED,
+        ValidationCode.LEDGER_MUTATION,
+        ValidationCode.PRODUCTION_ACTIVATION,
+        ValidationCode.SEALED_DATA_ACCESS,
+        ValidationCode.RESEARCH_MUTATION,
+        ValidationCode.MONETARY_SPEND_AUTHORIZED,
+    )
+    with pytest.raises(CascadeValidationError):
+        cascade_to_shadow_observation_evidence(evidence, _policy())
+
+
+def test_request_count_semantics_are_bounded_by_network_called() -> None:
+    false_zero = _attempt(
+        "the_odds_api",
+        0,
+        outcome=CascadeOutcome.TIMEOUT,
+        network_called=False,
+        cost_units=0.0,
+    )
+    assert (
+        validate_cascade_evidence(
+            _evidence(
+                (false_zero,),
+                selected_provider=None,
+                prediction_input_allowed=False,
+                skipped=_skipped_after(0, CASCADE_PROVIDER_ORDER),
+            ),
+            _policy(),
+        ).accepted
+        is True
+    )
+
+    false_one = replace(false_zero, network_request_count=1)
+    false_one_report = validate_cascade_evidence(
+        _evidence(
+            (false_one,),
+            selected_provider=None,
+            prediction_input_allowed=False,
+            skipped=_skipped_after(0, CASCADE_PROVIDER_ORDER),
+        ),
+        _policy(),
+    )
+    assert ValidationCode.REQUEST_COUNT_MISMATCH in false_one_report.errors
+
+    true_one = _attempt("the_odds_api", 0, outcome=CascadeOutcome.TIMEOUT)
+    assert (
+        validate_cascade_evidence(
+            _evidence(
+                (true_one,),
+                selected_provider=None,
+                prediction_input_allowed=False,
+                skipped=_skipped_after(0, CASCADE_PROVIDER_ORDER),
+            ),
+            _policy(),
+        ).accepted
+        is True
+    )
+
+    true_zero = replace(true_one, network_request_count=0)
+    true_zero_report = validate_cascade_evidence(
+        _evidence(
+            (true_zero,),
+            selected_provider=None,
+            prediction_input_allowed=False,
+            skipped=_skipped_after(0, CASCADE_PROVIDER_ORDER),
+        ),
+        _policy(),
+    )
+    assert ValidationCode.REQUEST_COUNT_MISMATCH in true_zero_report.errors
+
+    too_many = replace(true_one, network_request_count=2)
+    too_many_report = validate_cascade_evidence(
+        _evidence(
+            (too_many,),
+            selected_provider=None,
+            prediction_input_allowed=False,
+            skipped=_skipped_after(0, CASCADE_PROVIDER_ORDER),
+        ),
+        _policy(),
+    )
+    assert ValidationCode.UNKNOWN_REQUEST_COUNT in too_many_report.errors
 
 
 def test_valid_serialized_success_passes_and_selects_only_the_observed_source() -> None:
@@ -254,6 +497,28 @@ def test_quota_exhaustion_denies_the_odds_api_credit_and_allows_serial_fallback(
     assert report.metrics.fallback_depth == 1
     assert report.metrics.successful_fallback_count == 1
     assert report.metrics.quota_rejected_before_network_count == 1
+    first_attempt = evidence.attempts[0]
+    assert first_attempt.network_called is False
+    assert first_attempt.network_request_count == 0
+    assert (
+        first_attempt.request_cost_classification
+        is RequestCostClassification.QUOTA_CONSUMING_REQUEST
+    )
+    assert SAFE.monetary_spend_authorized is False
+
+
+def test_exhausted_provider_is_not_retried() -> None:
+    retry = _evidence(
+        (
+            _attempt("the_odds_api", 0, outcome=CascadeOutcome.QUOTA_EXHAUSTED),
+            _attempt("the_odds_api", 1, outcome=CascadeOutcome.QUOTA_EXHAUSTED),
+        ),
+        selected_provider=None,
+        prediction_input_allowed=False,
+    )
+    report = validate_cascade_evidence(retry, _policy())
+    assert ValidationCode.DUPLICATE_ATTEMPT in report.errors
+    assert report.prediction_input_allowed is False
 
 
 def test_all_four_failures_are_accepted_as_evidence_but_fail_closed() -> None:
@@ -457,7 +722,7 @@ def test_request_cost_authentication_and_unknown_budget_evidence_is_explicit() -
     )
     assert ValidationCode.INVALID_SUCCESS in auth_success_report.errors
 
-    unknown_count = replace(_attempt("the_odds_api", 0), request_count=None)
+    unknown_count = replace(_attempt("the_odds_api", 0), network_request_count=None)
     unknown_count_report = validate_cascade_evidence(
         _evidence(
             (unknown_count,),

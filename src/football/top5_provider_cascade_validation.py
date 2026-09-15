@@ -64,6 +64,10 @@ class CascadeValidationError(ProductionContractError):
 class CascadeSafetyRejection(CascadeValidationError):
     """Cascade evidence violates a hard safety boundary."""
 
+    def __init__(self, message: str, codes: Sequence[str] = ()):
+        self.codes = tuple(codes)
+        super().__init__(message)
+
 
 class CascadeOutcome(str, Enum):
     SUCCESS = "SUCCESS"
@@ -107,10 +111,11 @@ class ValidationCode(str, Enum):
     SELECTED_PROVIDER_MISMATCH = "SELECTED_PROVIDER_MISMATCH"
     NETWORK_AFTER_PREFLIGHT_DENIED = "NETWORK_AFTER_PREFLIGHT_DENIED"
     NETWORK_AFTER_QUOTA_EXHAUSTED = "NETWORK_AFTER_QUOTA_EXHAUSTED"
-    PAID_REQUEST_NOT_AUTHORIZED = "PAID_REQUEST_NOT_AUTHORIZED"
+    QUOTA_REQUEST_NOT_AUTHORIZED = "QUOTA_REQUEST_NOT_AUTHORIZED"
     CREDENTIAL_MISSING = "CREDENTIAL_MISSING"
     BUDGET_REJECTED = "BUDGET_REJECTED"
     UNKNOWN_REQUEST_COUNT = "UNKNOWN_REQUEST_COUNT"
+    REQUEST_COUNT_MISMATCH = "REQUEST_COUNT_MISMATCH"
     INVALID_REQUEST_COST = "INVALID_REQUEST_COST"
     INVALID_SUCCESS = "INVALID_SUCCESS"
     READINESS_ESCALATION = "READINESS_ESCALATION"
@@ -136,10 +141,11 @@ class ValidationCode(str, Enum):
     PRODUCTION_ACTIVATION = "PRODUCTION_ACTIVATION"
     SEALED_DATA_ACCESS = "SEALED_DATA_ACCESS"
     RESEARCH_MUTATION = "RESEARCH_MUTATION"
+    MONETARY_SPEND_AUTHORIZED = "MONETARY_SPEND_AUTHORIZED"
 
 
 class RequestCostClassification(str, Enum):
-    PAID_CREDIT = "PAID_CREDIT"
+    QUOTA_CONSUMING_REQUEST = "QUOTA_CONSUMING_REQUEST"
     ZERO_COST_AUTHENTICATION = "ZERO_COST_AUTHENTICATION"
     FREE_CACHE = "FREE_CACHE"
     UNKNOWN = "UNKNOWN"
@@ -292,7 +298,8 @@ class CascadeProvenance:
             != FROZEN_RESEARCH_SHA.lower()
         ):
             raise CascadeSafetyRejection(
-                "cascade evidence references unfrozen Research"
+                "cascade evidence references unfrozen Research",
+                ("RESEARCH_MUTATION",),
             )
         _utc(self.generated_at, "generated_at")
         if self.contract_version != TOP5_CASCADE_VALIDATION_CONTRACT_VERSION:
@@ -340,20 +347,27 @@ class CascadeSafety:
     production_activation: bool | None
     sealed_data_accessed: bool | None
     research_mutated: bool | None
+    monetary_spend_authorized: bool | None
 
     def validate(self) -> None:
+        violations: list[str] = []
         if self.no_bet is not True:
-            raise CascadeSafetyRejection("no_bet=true is required")
-        checks = (
-            ("publication", self.publication_enabled),
-            ("ledger", self.ledger_mutated),
-            ("production activation", self.production_activation),
-            ("sealed data", self.sealed_data_accessed),
-            ("Research", self.research_mutated),
-        )
-        for label, value in checks:
+            violations.append("NO_BET_VIOLATION")
+        for code, value in (
+            ("PUBLICATION_ENABLED", self.publication_enabled),
+            ("LEDGER_MUTATION", self.ledger_mutated),
+            ("PRODUCTION_ACTIVATION", self.production_activation),
+            ("SEALED_DATA_ACCESS", self.sealed_data_accessed),
+            ("RESEARCH_MUTATION", self.research_mutated),
+            ("MONETARY_SPEND_AUTHORIZED", self.monetary_spend_authorized),
+        ):
             if value is not False:
-                raise CascadeSafetyRejection(f"safety assertion failed: {label}")
+                violations.append(code)
+        if violations:
+            raise CascadeSafetyRejection(
+                "safety assertions failed: " + ", ".join(violations),
+                violations,
+            )
 
     @classmethod
     def from_payload(cls, payload: object) -> CascadeSafety:
@@ -365,6 +379,7 @@ class CascadeSafety:
             production_activation=raw.get("production_activation"),
             sealed_data_accessed=raw.get("sealed_data_accessed"),
             research_mutated=raw.get("research_mutated"),
+            monetary_spend_authorized=raw.get("monetary_spend_authorized"),
         )
 
     def as_payload(self) -> dict[str, object]:
@@ -376,6 +391,7 @@ class CascadeSafety:
             "production_activation": self.production_activation,
             "sealed_data_accessed": self.sealed_data_accessed,
             "research_mutated": self.research_mutated,
+            "monetary_spend_authorized": self.monetary_spend_authorized,
         }
 
 
@@ -446,8 +462,8 @@ class CascadeAttempt:
     preflight_allowed: bool
     budget_decision: BudgetDecision | str
     request_cost_classification: RequestCostClassification | str
-    request_count: int | None
-    request_cost_units: float | None
+    network_request_count: int | None
+    quota_cost_units: float | None
     credentials_available: bool | None
     provider_record_id: str
     adapter_version: str
@@ -522,16 +538,16 @@ class CascadeAttempt:
             self.request_cost_classification,
             "request cost classification",
         )
-        if self.request_count is not None and (
-            not isinstance(self.request_count, int)
-            or isinstance(self.request_count, bool)
-            or self.request_count < 0
+        if self.network_request_count is not None and (
+            not isinstance(self.network_request_count, int)
+            or isinstance(self.network_request_count, bool)
+            or self.network_request_count < 0
         ):
             raise CascadeValidationError(
-                "request count must be a non-negative integer or null"
+                "network request count must be a non-negative integer or null"
             )
-        if self.request_cost_units is not None:
-            _number(self.request_cost_units, "request_cost_units", minimum=0.0)
+        if self.quota_cost_units is not None:
+            _number(self.quota_cost_units, "quota_cost_units", minimum=0.0)
         if self.credentials_available is not None and not isinstance(
             self.credentials_available, bool
         ):
@@ -604,8 +620,8 @@ class CascadeAttempt:
             preflight_allowed=raw.get("preflight_allowed"),
             budget_decision=raw.get("budget_decision", ""),
             request_cost_classification=raw.get("request_cost_classification", ""),
-            request_count=raw.get("request_count"),
-            request_cost_units=raw.get("request_cost_units"),
+            network_request_count=raw.get("network_request_count"),
+            quota_cost_units=raw.get("quota_cost_units"),
             credentials_available=raw.get("credentials_available"),
             provider_record_id=raw.get("provider_record_id", ""),
             adapter_version=raw.get("adapter_version", ""),
@@ -670,8 +686,8 @@ class CascadeAttempt:
                 self.request_cost_classification,
                 "request cost classification",
             ).value,
-            "request_count": self.request_count,
-            "request_cost_units": self.request_cost_units,
+            "network_request_count": self.network_request_count,
+            "quota_cost_units": self.quota_cost_units,
             "credentials_available": self.credentials_available,
             "provider_record_id": self.provider_record_id,
             "adapter_version": self.adapter_version,
@@ -834,10 +850,13 @@ class CascadeValidationPolicy:
             or self.kickoff_tolerance_seconds < 0
         ):
             raise CascadeValidationError("caller-supplied timing policy is invalid")
-        if tuple(self.configured_provider_order) != CASCADE_PROVIDER_ORDER:
-            raise CascadeValidationError(
-                "cascade order must match the CEO-requested configuration"
-            )
+        configured_order = tuple(self.configured_provider_order)
+        if not configured_order:
+            raise CascadeValidationError("cascade order must be non-empty")
+        if len(configured_order) != len(set(configured_order)):
+            raise CascadeValidationError("cascade order must not contain duplicates")
+        if any(provider not in _KNOWN_PROVIDERS for provider in configured_order):
+            raise CascadeValidationError("cascade order contains an unknown provider")
         if self.expected_fixture is None:
             raise CascadeValidationError(
                 "caller-supplied expected fixture is required; fuzzy fixture matching is disabled"
@@ -977,7 +996,7 @@ def _metrics(
             item.request_cost_classification,
             "request cost classification",
         )
-        is RequestCostClassification.PAID_CREDIT
+        is RequestCostClassification.QUOTA_CONSUMING_REQUEST
         and not item.network_called
         for item in attempts
     )
@@ -1033,13 +1052,16 @@ def validate_cascade_evidence(
             else CascadeEvidence.from_payload(evidence)
         )
         record.validate_structural()
-    except CascadeSafetyRejection:
-        return _invalid_report((ValidationCode.NO_BET_VIOLATION,))
+    except CascadeSafetyRejection as exc:
+        if exc.codes:
+            return _invalid_report(tuple(ValidationCode(code) for code in exc.codes))
+        return _invalid_report((ValidationCode.INVALID_SOURCE_CONTRACT,))
     except (AttributeError, TypeError, ValueError, CascadeValidationError):
         return _invalid_report((ValidationCode.INVALID_SOURCE_CONTRACT,))
 
     errors: list[ValidationCode] = []
-    if record.configured_provider_order != policy.configured_provider_order:
+    policy_order = tuple(policy.configured_provider_order)
+    if record.configured_provider_order != policy_order:
         _append(errors, ValidationCode.CONFIGURATION_MISMATCH)
     if (
         _enum(ExecutionMode, record.execution_mode, "execution mode")
@@ -1111,18 +1133,30 @@ def validate_cascade_evidence(
                 is not CascadeOutcome.BUDGET_REJECTED
             ):
                 _append(errors, ValidationCode.BUDGET_REJECTED)
-        if attempt.request_count != 1:
+        if attempt.network_request_count is None or attempt.network_request_count > 1:
             _append(errors, ValidationCode.UNKNOWN_REQUEST_COUNT)
-        if attempt.request_cost_units is None or not isfinite(
-            float(attempt.request_cost_units)
+        elif attempt.network_request_count != int(attempt.network_called):
+            _append(errors, ValidationCode.REQUEST_COUNT_MISMATCH)
+        if attempt.quota_cost_units is None or not isfinite(
+            float(attempt.quota_cost_units)
         ):
             _append(errors, ValidationCode.INVALID_REQUEST_COST)
+        if cost_classification is RequestCostClassification.QUOTA_CONSUMING_REQUEST:
+            if attempt.network_called and (
+                attempt.quota_before is None or attempt.quota_after is None
+            ):
+                _append(errors, ValidationCode.INVALID_REQUEST_COST)
+            if attempt.quota_cost_units is not None and (
+                (attempt.network_called and attempt.quota_cost_units <= 0)
+                or (not attempt.network_called and attempt.quota_cost_units != 0)
+            ):
+                _append(errors, ValidationCode.INVALID_REQUEST_COST)
         if attempt.credentials_available is not True and attempt.network_called:
             _append(errors, ValidationCode.CREDENTIAL_MISSING)
         if (
             attempt.quota_before is not None
             and attempt.quota_before.quota_remaining == 0
-            and cost_classification is RequestCostClassification.PAID_CREDIT
+            and cost_classification is RequestCostClassification.QUOTA_CONSUMING_REQUEST
         ):
             if attempt.network_called:
                 _append(errors, ValidationCode.NETWORK_AFTER_QUOTA_EXHAUSTED)
@@ -1130,9 +1164,9 @@ def validate_cascade_evidence(
                 _enum(CascadeOutcome, attempt.outcome, "outcome")
                 is not CascadeOutcome.QUOTA_EXHAUSTED
             ):
-                _append(errors, ValidationCode.PAID_REQUEST_NOT_AUTHORIZED)
+                _append(errors, ValidationCode.QUOTA_REQUEST_NOT_AUTHORIZED)
         if cost_classification is RequestCostClassification.ZERO_COST_AUTHENTICATION:
-            if attempt.request_cost_units not in (0, 0.0):
+            if attempt.quota_cost_units not in (0, 0.0):
                 _append(errors, ValidationCode.INVALID_REQUEST_COST)
             if (
                 _enum(CascadeOutcome, attempt.outcome, "outcome")
@@ -1140,7 +1174,7 @@ def validate_cascade_evidence(
             ):
                 _append(errors, ValidationCode.INVALID_SUCCESS)
         if cost_classification is RequestCostClassification.FREE_CACHE and (
-            attempt.network_called or attempt.request_cost_units not in (0, 0.0)
+            attempt.network_called or attempt.quota_cost_units not in (0, 0.0)
         ):
             _append(errors, ValidationCode.INVALID_REQUEST_COST)
         provider_state = readiness.get(
@@ -1236,10 +1270,10 @@ def validate_cascade_evidence(
             attempt.quota_before is not None
             and attempt.quota_before.quota_remaining == 0
             and not attempt.network_called
-            and cost_classification is RequestCostClassification.PAID_CREDIT
+            and cost_classification is RequestCostClassification.QUOTA_CONSUMING_REQUEST
             and outcome is not CascadeOutcome.QUOTA_EXHAUSTED
         ):
-            _append(errors, ValidationCode.PAID_REQUEST_NOT_AUTHORIZED)
+            _append(errors, ValidationCode.QUOTA_REQUEST_NOT_AUTHORIZED)
 
     expected_gaps: set[int] = set()
     for previous_index, current_index in pairwise(attempted_order_indices):
@@ -1427,6 +1461,7 @@ __all__ = [
     "CascadeValidationPolicy",
     "CascadeValidationReport",
     "ExecutionMode",
+    "ExpectedCascadeFixture",
     "MarketPhase",
     "RequestCostClassification",
     "SkippedProvider",

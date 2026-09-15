@@ -12,7 +12,7 @@ Activation.
 
 ## Scope and route order
 
-The requested route order is fixed and sequential:
+The default requested shadow route order is sequential:
 
 1. `the_odds_api`
 2. `odds_api_io`
@@ -20,7 +20,18 @@ The requested route order is fixed and sequential:
 4. `betfair_delayed`
 5. `FAIL CLOSED`
 
-The order is configuration evidence, not an approval or ranking of providers.
+The order is caller-supplied configuration evidence, not an approval or
+ranking of providers. Builder 4 may provide an alternative order or a subset
+of the known candidates. The validator requires every configured identity to
+be known, unique, and non-empty, and requires the evidence order to match that
+configuration exactly. An absent provider cannot silently become an
+authority.
+
+The validator covers, at minimum:
+
+- the default order above;
+- `odds_api_io` → `api_football` → `betfair_delayed` → `the_odds_api`;
+- `odds_api_io` → `api_football` → `betfair_delayed`.
 The validator does not import Builder 4’s router, providers, health state,
 retry code, or budget manager. Builder 4 remains the owner of execution,
 provider adapters, fallback behavior, quota accounting, and runtime health.
@@ -30,8 +41,8 @@ Provider claims remain bounded:
 
 - The Odds API is an implemented candidate whose current authenticated quota
   observation is exhausted (`authenticated=true`, `quota_used=500`,
-  `quota_remaining=0`); a paid odds request must therefore be denied before
-  network execution.
+  `quota_remaining=0`); a quota-consuming odds request must therefore be
+  denied before network execution.
 - Odds-API.io, API-Football, and Betfair Delayed are candidate paths until an
   independent observation validates their path.
 - No provider is an authority, winner, or production source by virtue of this
@@ -52,8 +63,8 @@ record includes:
 - timing: caller-supplied source timestamp, capture timestamp, and measured
   request latency;
 - quota and budget: before/after quota snapshots, authentication state,
-  preflight decision, budget decision, cost classification, request count, and
-  cost units;
+  preflight decision, budget decision, quota-versus-cost classification,
+  `network_request_count`, and quota cost units;
 - provenance: provider record ID, adapter version, raw-record digest, request
   identity, cascade evidence identity, artifact/source SHA, frozen Research
   SHA, candidate ID, model identity, and generation time;
@@ -78,8 +89,12 @@ All accepted execution evidence is sequential. The validator rejects:
 - a selected provider that did not produce the first valid success;
 - a selected provider when every attempt failed;
 - a network call after preflight or budget denial;
-- a network call after a paid quota was exhausted;
-- an unknown or unbounded request count or request cost;
+- a network call after a quota-consuming allowance was exhausted;
+- `network_called=false` with a nonzero network request count;
+- `network_called=true` with a zero network request count;
+- a network request count greater than one, because no retry contract is
+  authorized;
+- an unknown or unbounded network request count or quota cost;
 - a prediction input flag without an independently valid selected source.
 
 When all configured providers are rejected, the evidence may be accepted as a
@@ -89,21 +104,28 @@ fail-closed prediction result, never a betting or publication success.
 
 ## Quota and cost policy
 
-`PAID_CREDIT`, `ZERO_COST_AUTHENTICATION`, and `FREE_CACHE` are distinct
-request-cost classifications. `UNKNOWN` is rejected.
+`QUOTA_CONSUMING_REQUEST`, `ZERO_COST_AUTHENTICATION`, and `FREE_CACHE` are
+distinct request-cost classifications. `UNKNOWN` is rejected.
 
-A paid request must have explicit credential, preflight, budget, request-count,
-and cost evidence. If the before snapshot reports an authenticated provider
-with zero remaining credits, the request must not call the network and must be
-classified `QUOTA_EXHAUSTED`. The validator records that rejection as
+`QUOTA_CONSUMING_REQUEST` means only that the provider allowance may be
+consumed. It does not mean paid overage, subscription upgrade, billing
+authority, or monetary spend. Monetary spend authorization is explicitly
+`false` for this contract, and no paid-provider request is authorized by this
+PR.
+
+A quota-consuming request must have explicit credential, preflight, budget,
+network-request-count, and quota-cost evidence. If the before snapshot reports
+an authenticated provider with zero remaining credits, the request must have
+`network_called=false`, `network_request_count=0`, and be classified
+`QUOTA_EXHAUSTED`. The validator records that rejection as
 `quota_rejected_before_network_count` and permits a causally valid next
-provider attempt.
+configured provider attempt.
 
 Zero-cost authentication is allowed only as an explicit zero-cost failure or
 authentication observation; it cannot be promoted into a valid odds success.
 Free-cache evidence cannot claim a network call or a nonzero cost. Missing
 credentials, budget rejection, and preflight denial are independently visible
-and fail closed.
+and fail closed. There is no retry authorization in this contract.
 
 ## Readiness and source quality
 
@@ -191,6 +213,15 @@ for accepted evidence, may bridge to Builder 1’s existing
 `top5-shadow-evidence-v1` observation/bundle contract. The bridge preserves
 `no_bet=true`, publication disabled, no real bet, no ledger mutation, no sealed
 data access, no Research mutation, and no production activation.
+
+The safety report preserves exact violations independently. For example,
+`no_bet != true` reports `NO_BET_VIOLATION`, publication enabled reports
+`PUBLICATION_ENABLED`, ledger mutation reports `LEDGER_MUTATION`, activation
+reports `PRODUCTION_ACTIVATION`, sealed-data access reports
+`SEALED_DATA_ACCESS`, Research mutation reports `RESEARCH_MUTATION`, and
+monetary authorization reports `MONETARY_SPEND_AUTHORIZED`. Multiple violations
+are returned together in deterministic contract order and always force
+rejection.
 
 The state `APPROVED_FOR_CONTROLLED_ACTIVATION` in the existing v1 contract is
 only a validation state. This merge creates no CEOAuthorization decision for
