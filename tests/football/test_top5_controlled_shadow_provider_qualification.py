@@ -194,8 +194,8 @@ def _observation(
         cascade_evidence=_cascade(),
         quota_before=10,
         quota_after=9,
-        quota_cost_units=1.0,
-        network_request_count=1,
+        quota_cost_units=1.0 if kind is ObservationEvidenceKind.REAL_OBSERVED else 0.0,
+        network_request_count=1 if kind is ObservationEvidenceKind.REAL_OBSERVED else 0,
     )
 
 
@@ -266,6 +266,17 @@ def test_missing_authorization_rejects_real_evidence() -> None:
     result = _qualify((_observation(),), authorization=None).results[0]
     assert result.status is ProviderQualificationStatus.OBSERVED_REJECTED
     assert QualificationCode.AUTHORIZATION_MISSING.value in result.failure_codes
+
+
+def test_authorization_request_budget_is_fail_closed() -> None:
+    second = replace(_observation(), observation_id="observation-2")
+    authorization = replace(_authorization(), maximum_network_requests=1)
+    report = _qualify((_observation(), second), authorization=authorization)
+    assert all(
+        QualificationCode.NETWORK_BUDGET_EXCEEDED.value in result.failure_codes
+        for result in report.results
+        if result.real_observed
+    )
 
 
 def test_real_proof_fields_are_required() -> None:

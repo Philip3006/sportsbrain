@@ -117,6 +117,7 @@ class QualificationCode(str, Enum):
     AUTHORIZATION_MISSING = "AUTHORIZATION_MISSING"
     AUTHORIZATION_EXPIRED = "AUTHORIZATION_EXPIRED"
     AUTHORIZATION_SCOPE_MISMATCH = "AUTHORIZATION_SCOPE_MISMATCH"
+    NETWORK_BUDGET_EXCEEDED = "NETWORK_BUDGET_EXCEEDED"
     PAID_SPEND_AUTHORIZATION = "PAID_SPEND_AUTHORIZATION"
     NETWORK_CALL_NOT_ALLOWED = "NETWORK_CALL_NOT_ALLOWED"
     MODEL_BOUND = "MODEL_BOUND"
@@ -594,15 +595,22 @@ class RealProviderObservation:
         )
         if self.source_timestamp is not None:
             _utc(self.source_timestamp, "source_timestamp")
+        evidence_kind = ObservationEvidenceKind(self.evidence_kind)
         if not isinstance(
             self.network_request_count, int
-        ) or self.network_request_count not in {0, 1}:
+        ) or self.network_request_count not in {
+            0,
+            1,
+        }:
             raise QualificationContractError(
                 "network_request_count must be exactly 0 or 1"
             )
-        if self.network_request_count != 1:
+        if (
+            evidence_kind is ObservationEvidenceKind.REAL_OBSERVED
+            and self.network_request_count != 1
+        ):
             raise QualificationContractError(
-                "a serialized provider observation must document one request"
+                "a REAL_OBSERVED record must document exactly one request"
             )
         _number(self.quota_cost_units, "quota_cost_units")
         for name, value in (
@@ -1404,6 +1412,32 @@ def qualify_provider_observations(
                 ),
             )
         results.append(result)
+    if authorization is not None:
+        real_network_count = sum(
+            observation.network_request_count
+            for observation in unique
+            if ObservationEvidenceKind(observation.evidence_kind)
+            is ObservationEvidenceKind.REAL_OBSERVED
+        )
+        if real_network_count > authorization.maximum_network_requests:
+            results = [
+                replace(
+                    result,
+                    accepted=False,
+                    status=ProviderQualificationStatus.OBSERVED_REJECTED,
+                    failure_codes=tuple(
+                        dict.fromkeys(
+                            (
+                                *result.failure_codes,
+                                QualificationCode.NETWORK_BUDGET_EXCEEDED.value,
+                            )
+                        )
+                    ),
+                )
+                if result.real_observed
+                else result
+                for result in results
+            ]
     all_results = tuple(results + duplicate_results + invalid_results)
     all_observations = tuple(unique)
     status_by_provider: dict[str, ProviderQualificationStatus] = {}
