@@ -25,6 +25,13 @@ until real observations, quality evidence, and a separate CEO decision exist.
 No provider, result source, signal time, model, rollout league, publication
 policy, or Controlled Activation is selected here.
 
+The readiness state is explicit: an injected adapter is `CONTRACT_SUPPORTED`,
+but a live path remains `LIVE_PATH_PREREQUISITES_MISSING` until configuration
+proves Top-5 competition identity, fixture identity, exact kickoff, source
+timestamp, complete 1X2, and provenance. Complete proof advances only to
+`LIVE_PATH_READY_FOR_OBSERVATION`; a future controlled and validated real
+observation is required for `REAL_OBSERVATION_VALIDATED`.
+
 ## Repository-level source inventory
 
 The audit covers the currently implemented football fixture, odds, result, and
@@ -86,9 +93,9 @@ Only the following injected adapters are implemented:
 
 | Adapter | Existing capability | Status | Safe input requirement |
 | --- | --- | --- | --- |
-| `TheOddsAPIAdapter` | Existing event/bookmaker/market payload | `CANDIDATE_ONLY` | Event sport/league, exact teams, timezone-aware kickoff, bookmaker key/title, h2h outcomes, bookmaker `last_update`, request identity |
-| `BetfairAdapter` | Existing market catalogue/book path | `CANDIDATE_ONLY` | Explicit enriched event teams/league/kickoff, market id, source timestamp, three runners; no login or API call here |
-| `OddsPortalAdapter` | Existing day-page aggregate | `CANDIDATE_ONLY` | Explicit league, kickoff, source timestamp, match id, and 1X2 values; legacy row without these fields is rejected |
+| `TheOddsAPIAdapter` | Existing event/bookmaker/market payload | `CONTRACT_SUPPORTED` / candidate-only | Event sport/league, exact teams, timezone-aware kickoff, bookmaker key/title, h2h outcomes, bookmaker `last_update`, request identity; no live-path proof supplied |
+| `BetfairAdapter` | Existing market catalogue/book path | `CONTRACT_SUPPORTED` / candidate-only | Explicit enriched event teams/league/kickoff, market id, source timestamp, three runners; credentials alone do not establish readiness |
+| `OddsPortalAdapter` | Existing day-page aggregate | `CONTRACT_SUPPORTED` / candidate-only | Explicit league, kickoff, source timestamp, match id, and 1X2 values; legacy row without these fields is rejected |
 | `FootballDataClosingAdapter` | Existing historical PSCH/PSCD/PSCA columns | `HISTORICAL_ONLY` | Explicit precise timestamps are required for normalization, and the resulting role is `CLOSING_BENCHMARK` only |
 
 The current Pinnacle module is deliberately not adapted for Top-5 because its
@@ -137,6 +144,20 @@ fuzzy or substring matching. Unknown or ambiguous identity is rejected.
 10. duplicate source snapshots; and
 11. closing data entering signal-time input.
 
+`SourceQualityPolicy` requires caller-supplied experiment values for maximum
+odds age and kickoff tolerance. Static tests use clearly labelled `TEST`
+constants only. There is currently:
+
+```text
+NO PRODUCTION FRESHNESS THRESHOLD APPROVED
+NO PRODUCTION KICKOFF TOLERANCE APPROVED
+```
+
+Any structural observation violation, including invalid confidence, latency,
+completeness/error pairing, identity, timestamp, provenance, or market fields,
+adds `INVALID_SOURCE_CONTRACT` and forces both `accepted=false` and
+`prediction_input_allowed=false`.
+
 `validate_observation_batch()` catches the same source snapshot repeated under
 another request identity. A bad alternative is rejected and remains visible in
 the report; it is never silently repaired, normalized into a different fixture,
@@ -184,9 +205,12 @@ zero remaining quota returns `allowed=False`, `network_may_execute=False`,
 callable in that state. Exhaustion therefore cannot cause uncontrolled retries
 or an expensive fallback fan-out.
 
-The planner can list quota-independent Betfair or OddsPortal candidates when
-they are explicitly allowed and their requirements are supplied. Listing is
-not execution and does not select either source.
+The planner exposes `candidate_quota_independent_paths` only after explicit
+live-path proof reaches `LIVE_PATH_READY_FOR_OBSERVATION` (or a future
+`REAL_OBSERVATION_VALIDATED` state). Credentials or adapter existence alone
+never make a path operationally possible. An empty candidate list is expected
+today and does not imply that the exhausted Odds API blocker has been bypassed.
+Listing is not execution and does not select either source.
 
 ## Builder 1 interface
 
@@ -242,12 +266,15 @@ The focused suite is
 - v1 evidence and NO-BET compatibility;
 - exhausted quota preflight, zero-cost authentication distinction, no retries,
   and no fan-out;
-- quota-independent planning and explicit no-selection behavior; and
+- readiness-state planning, candidate quota-independent paths, and explicit
+  no-selection behavior; and
+- structural contract rejection and caller-supplied timing policy; and
 - no-network guarantees.
 
 Broader football, runtime, monitoring, and financial-safety regressions remain
-required before CEO review. Real observations are still required before any
-candidate can be considered for authority.
+required before CEO review. No real observation has been performed here; real
+observations are still required before any candidate can be considered for
+authority or claimed as a quota-independent shadow path.
 
 ## Unresolved CEO decisions
 

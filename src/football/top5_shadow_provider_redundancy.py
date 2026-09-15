@@ -103,12 +103,22 @@ class SourceError(str, Enum):
     MISSING_PROVENANCE = "missing_provenance"
     MISSING_TIMESTAMP = "missing_timestamp"
     CLOSING_LEAKAGE = "closing_leakage"
+    INVALID_SOURCE_CONTRACT = "invalid_source_contract"
 
 
 class AdapterStatus(str, Enum):
     CANDIDATE_ONLY = "candidate_only"
     HISTORICAL_ONLY = "historical_only"
     CACHE_ONLY = "cache_only"
+
+
+class ProviderReadinessState(str, Enum):
+    """The strongest state a provider path has earned so far."""
+
+    CONTRACT_SUPPORTED = "contract_supported"
+    LIVE_PATH_PREREQUISITES_MISSING = "live_path_prerequisites_missing"
+    LIVE_PATH_READY_FOR_OBSERVATION = "live_path_ready_for_observation"
+    REAL_OBSERVATION_VALIDATED = "real_observation_validated"
 
 
 class OddsApiRequestKind(str, Enum):
@@ -139,6 +149,20 @@ TOP5_LEAGUE_NAMES = MappingProxyType(
         "LL": "La Liga",
         "SA": "Serie A",
         "L1": "Ligue 1",
+    }
+)
+
+_LIVE_PATH_PREREQUISITES = MappingProxyType(
+    {
+        provider: (
+            "top5_competition_identity",
+            "fixture_identity",
+            "exact_kickoff",
+            "source_timestamp",
+            "complete_1x2",
+            "provenance",
+        )
+        for provider in ("the_odds_api", "betfair", "oddsportal")
     }
 )
 
@@ -1217,9 +1241,14 @@ class ShadowSourceObservation:
             _required_text(value, field_name)
         if self.bookmaker_identity is not None:
             _required_text(self.bookmaker_identity, "bookmaker_identity")
-        CompletenessState(self.completeness)
-        MarketRole(self.market_role)
-        SourceError(self.error_classification)
+        try:
+            completeness = CompletenessState(self.completeness)
+            MarketRole(self.market_role)
+            error_classification = SourceError(self.error_classification)
+        except (TypeError, ValueError) as exc:
+            raise ShadowProviderContractError(
+                "completeness, market_role, and error_classification must be valid"
+            ) from exc
         for name, value in (
             ("home_odds", self.home_odds),
             ("draw_odds", self.draw_odds),
@@ -1243,10 +1272,10 @@ class ShadowSourceObservation:
             raise ShadowProviderContractError(
                 "source_timestamp cannot be after capture_timestamp"
             )
-        if self.source_provenance is None:
+        if not isinstance(self.source_provenance, SourceProvenance):
             raise ShadowProviderContractError("source provenance is required")
         self.source_provenance.validate()
-        if self.completeness is CompletenessState.COMPLETE:
+        if completeness is CompletenessState.COMPLETE:
             if any(
                 value is None
                 for value in (self.home_odds, self.draw_odds, self.away_odds)
@@ -1259,11 +1288,18 @@ class ShadowSourceObservation:
                     "complete observation requires source_timestamp"
                 )
         if (
-            self.error_classification is SourceError.NONE
-            and self.completeness is not CompletenessState.COMPLETE
+            error_classification is SourceError.NONE
+            and completeness is not CompletenessState.COMPLETE
         ):
             raise ShadowProviderContractError(
                 "incomplete observation requires an error classification"
+            )
+        if (
+            error_classification is not SourceError.NONE
+            and completeness is CompletenessState.COMPLETE
+        ):
+            raise ShadowProviderContractError(
+                "complete observation cannot carry an error classification"
             )
 
     def as_payload(self) -> dict[str, object]:
@@ -1348,13 +1384,22 @@ class ShadowSourceObservation:
 
 @dataclass(frozen=True)
 class SourceQualityPolicy:
-    maximum_odds_age_seconds: int = 900
-    kickoff_tolerance_seconds: int = 300
+    """Caller-supplied experimental timing policy; no production defaults."""
+
+    maximum_odds_age_seconds: int
+    kickoff_tolerance_seconds: int
     required_market_type: str = "h2h_1x2"
     require_bookmaker_identity: bool = True
 
     def validate(self) -> None:
-        if self.maximum_odds_age_seconds <= 0 or self.kickoff_tolerance_seconds < 0:
+        if (
+            not isinstance(self.maximum_odds_age_seconds, int)
+            or isinstance(self.maximum_odds_age_seconds, bool)
+            or self.maximum_odds_age_seconds <= 0
+            or not isinstance(self.kickoff_tolerance_seconds, int)
+            or isinstance(self.kickoff_tolerance_seconds, bool)
+            or self.kickoff_tolerance_seconds < 0
+        ):
             raise ShadowProviderContractError("source quality timing policy is invalid")
         _required_text(self.required_market_type, "required_market_type")
 
@@ -1395,19 +1440,26 @@ def _append_error(errors: list[SourceError], error: SourceError) -> None:
 def validate_source_observation(
     observation: ShadowSourceObservation,
     expected: ExpectedFixture,
-    policy: SourceQualityPolicy | None = None,
+    policy: SourceQualityPolicy,
 ) -> SourceQualityReport:
     """Apply deterministic identity, freshness, market, and provenance gates."""
 
     expected.validate()
-    policy = policy or SourceQualityPolicy()
+    if policy is None:
+        raise ShadowProviderContractError(
+            "explicit SourceQualityPolicy is required; production timing is unresolved"
+        )
     policy.validate()
     errors: list[SourceError] = []
     warnings: list[str] = []
+    provider_identity = getattr(observation, "provider_identity", "invalid_source")
+    if not isinstance(provider_identity, str) or not provider_identity:
+        provider_identity = "invalid_source"
     try:
         observation.validate()
-    except ShadowProviderContractError as exc:
-        warnings.append(str(exc))
+    except (AttributeError, TypeError, ValueError, ShadowProviderContractError) as exc:
+        _append_error(errors, SourceError.INVALID_SOURCE_CONTRACT)
+        warnings.append(f"invalid source contract: {exc}")
 
     try:
         observed_league = normalize_league(observation.league)
@@ -1450,10 +1502,15 @@ def validate_source_observation(
     else:
         try:
             observation.source_provenance.validate()
-        except ShadowProviderContractError:
+        except (AttributeError, TypeError, ValueError, ShadowProviderContractError):
+            _append_error(errors, SourceError.INVALID_SOURCE_CONTRACT)
             _append_error(errors, SourceError.MISSING_PROVENANCE)
 
-    age = observation.odds_age_seconds
+    try:
+        age = observation.odds_age_seconds
+    except (AttributeError, TypeError, ValueError):
+        age = None
+        _append_error(errors, SourceError.INVALID_SOURCE_CONTRACT)
     if age is None or age < 0:
         _append_error(errors, SourceError.MISSING_TIMESTAMP)
     elif age > policy.maximum_odds_age_seconds:
@@ -1481,17 +1538,25 @@ def validate_source_observation(
         except ShadowProviderContractError:
             _append_error(errors, SourceError.ODDS_SANITY)
 
-    _append_error(errors, SourceError(observation.error_classification))
-    if observation.market_role is MarketRole.CLOSING_BENCHMARK:
+    try:
+        _append_error(errors, SourceError(observation.error_classification))
+    except (TypeError, ValueError):
+        _append_error(errors, SourceError.INVALID_SOURCE_CONTRACT)
+    try:
+        market_role = MarketRole(observation.market_role)
+    except (TypeError, ValueError):
+        market_role = None
+        _append_error(errors, SourceError.INVALID_SOURCE_CONTRACT)
+    if market_role is MarketRole.CLOSING_BENCHMARK:
         _append_error(errors, SourceError.CLOSING_LEAKAGE)
         warnings.append(
             "closing benchmark is never admissible as signal-time prediction input"
         )
 
-    status = adapter_status_for(observation.provider_identity)
+    status = adapter_status_for(provider_identity)
     accepted = not errors
     report = SourceQualityReport(
-        provider_identity=observation.provider_identity,
+        provider_identity=provider_identity,
         candidate_status=status,
         accepted=accepted,
         prediction_input_allowed=accepted
@@ -1507,11 +1572,15 @@ def validate_source_observation(
 def validate_observation_batch(
     observations: Sequence[ShadowSourceObservation],
     expected_by_fixture: Mapping[str, ExpectedFixture],
-    policy: SourceQualityPolicy | None = None,
+    policy: SourceQualityPolicy,
 ) -> tuple[SourceQualityReport, ...]:
     """Validate observations and reject duplicate source snapshots."""
 
-    policy = policy or SourceQualityPolicy()
+    if policy is None:
+        raise ShadowProviderContractError(
+            "explicit SourceQualityPolicy is required; production timing is unresolved"
+        )
+    policy.validate()
     seen: set[tuple[str, str, str, str, str | None]] = set()
     reports: list[SourceQualityReport] = []
     for observation in observations:
@@ -1610,6 +1679,118 @@ def supported_candidate_adapters() -> tuple[str, ...]:
         for provider, descriptor in _ADAPTERS.items()
         if descriptor.status is AdapterStatus.CANDIDATE_ONLY
     )
+
+
+@dataclass(frozen=True)
+class ProviderReadinessAssessment:
+    """Explicit proof state for a candidate's real observation path."""
+
+    provider_identity: str
+    contract_supported: bool
+    prerequisite_proof: tuple[str, ...]
+    missing_prerequisites: tuple[str, ...]
+    real_observation_validated: bool
+    state: ProviderReadinessState
+
+    @property
+    def ready_for_observation(self) -> bool:
+        return self.state in {
+            ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION,
+            ProviderReadinessState.REAL_OBSERVATION_VALIDATED,
+        }
+
+    def validate(self) -> None:
+        _required_text(self.provider_identity, "provider_identity")
+        ProviderReadinessState(self.state)
+        if not self.contract_supported and self.ready_for_observation:
+            raise ShadowProviderContractError(
+                "an unsupported provider cannot be ready for observation"
+            )
+        if self.state is ProviderReadinessState.REAL_OBSERVATION_VALIDATED and (
+            not self.real_observation_validated or self.missing_prerequisites
+        ):
+            raise ShadowProviderContractError(
+                "real observation validation requires complete live-path proof"
+            )
+        if (
+            self.real_observation_validated
+            and self.state is not ProviderReadinessState.REAL_OBSERVATION_VALIDATED
+        ):
+            raise ShadowProviderContractError(
+                "real observation validation cannot be asserted before its state"
+            )
+        if self.ready_for_observation and self.missing_prerequisites:
+            raise ShadowProviderContractError(
+                "ready provider path cannot have missing prerequisites"
+            )
+
+
+def assess_provider_readiness(
+    provider_identity: str,
+    prerequisite_proof: Mapping[str, bool] | None = None,
+    *,
+    real_observation_validated: bool = False,
+) -> ProviderReadinessAssessment:
+    """Assess explicit live-path proof; injected adapter support is insufficient."""
+
+    _required_text(provider_identity, "provider_identity")
+    descriptor = _ADAPTERS.get(provider_identity)
+    required = _LIVE_PATH_PREREQUISITES.get(provider_identity, ())
+    contract_supported = bool(
+        descriptor
+        and descriptor.status is AdapterStatus.CANDIDATE_ONLY
+        and descriptor.signal_time_capable
+    )
+    if prerequisite_proof is None:
+        proof: tuple[str, ...] = ()
+        missing = tuple(required)
+        state = (
+            ProviderReadinessState.CONTRACT_SUPPORTED
+            if contract_supported
+            else ProviderReadinessState.LIVE_PATH_PREREQUISITES_MISSING
+        )
+    else:
+        if not isinstance(prerequisite_proof, Mapping):
+            raise ShadowProviderContractError(
+                "live-path prerequisite proof must be a mapping"
+            )
+        if any(not isinstance(value, bool) for value in prerequisite_proof.values()):
+            raise ShadowProviderContractError(
+                "live-path prerequisite proof values must be boolean"
+            )
+        proof = tuple(name for name in required if prerequisite_proof.get(name) is True)
+        missing = tuple(name for name in required if name not in proof)
+        if not contract_supported or missing:
+            state = ProviderReadinessState.LIVE_PATH_PREREQUISITES_MISSING
+        elif real_observation_validated:
+            state = ProviderReadinessState.REAL_OBSERVATION_VALIDATED
+        else:
+            state = ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION
+    assessment = ProviderReadinessAssessment(
+        provider_identity=provider_identity,
+        contract_supported=contract_supported,
+        prerequisite_proof=proof,
+        missing_prerequisites=missing,
+        real_observation_validated=real_observation_validated,
+        state=state,
+    )
+    assessment.validate()
+    return assessment
+
+
+def provider_readiness_state(
+    provider_identity: str,
+    prerequisite_proof: Mapping[str, bool] | None = None,
+    *,
+    real_observation_validated: bool = False,
+) -> ProviderReadinessState:
+    """Return only the readiness state for callers that do not need the report."""
+
+    return assess_provider_readiness(
+        provider_identity,
+        prerequisite_proof,
+        real_observation_validated=real_observation_validated,
+    ).state
 
 
 def _source_provenance(
@@ -2075,7 +2256,7 @@ def to_shadow_observation_evidence(
     expected: ExpectedFixture,
     identity: EvidenceIdentity,
     *,
-    policy: SourceQualityPolicy | None = None,
+    policy: SourceQualityPolicy,
 ) -> ShadowObservationEvidence:
     """Bridge one accepted/rejected source observation into v1 evidence."""
 
@@ -2127,7 +2308,7 @@ def build_shadow_evidence_bundle(
     *,
     window_start: datetime,
     window_end: datetime,
-    policy: SourceQualityPolicy | None = None,
+    policy: SourceQualityPolicy,
 ) -> ShadowEvidenceBundle:
     """Build a read-only v1 bundle; caller supplies all evidence identities."""
 
@@ -2186,7 +2367,7 @@ def to_shadow_provider_evidence(
     expected: ExpectedFixture,
     identity: EvidenceIdentity,
     *,
-    policy: SourceQualityPolicy | None = None,
+    policy: SourceQualityPolicy,
 ) -> ProviderEvidence:
     """Bridge one provider result into the existing v1 provider evidence type."""
 
@@ -2204,7 +2385,7 @@ def to_shadow_provider_evidence(
         generated_at=observation.capture_timestamp,
         fixture_key=observation.fixture_key,
     )
-    max_age = float((policy or SourceQualityPolicy()).maximum_odds_age_seconds)
+    max_age = float(policy.maximum_odds_age_seconds)
     error = report.errors[0] if report.errors else SourceError.NONE
     provider_evidence = ProviderEvidence(
         provenance=provenance,
@@ -2345,6 +2526,10 @@ class ProviderPlanningRequest:
     cached_fixture_count: Mapping[str, int] = field(default_factory=dict)
     cached_max_age_seconds: Mapping[str, float] = field(default_factory=dict)
     cost_units_per_request: Mapping[str, float] = field(default_factory=dict)
+    live_path_prerequisites: Mapping[str, Mapping[str, bool] | None] = field(
+        default_factory=dict
+    )
+    real_observation_validated: Mapping[str, bool] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "league", normalize_league(self.league))
@@ -2400,12 +2585,29 @@ class ProviderPlanningRequest:
             _number(value, "cached_max_age_seconds", minimum=0.0)
         for value in self.cost_units_per_request.values():
             _number(value, "cost_units_per_request", minimum=0.0)
+        for source, proof in self.live_path_prerequisites.items():
+            _required_text(source, "live_path_prerequisites source")
+            if proof is not None and (
+                not isinstance(proof, Mapping)
+                or any(not isinstance(value, bool) for value in proof.values())
+            ):
+                raise ShadowProviderContractError(
+                    f"live-path prerequisite proof for {source} is invalid"
+                )
+        if any(
+            not isinstance(value, bool)
+            for value in self.real_observation_validated.values()
+        ):
+            raise ShadowProviderContractError(
+                "real_observation_validated values must be boolean"
+            )
 
 
 @dataclass(frozen=True)
 class ProviderPathPlan:
     source: str
     status: CapabilityStatus
+    readiness_state: ProviderReadinessState
     operationally_possible: bool
     estimated_requests: int
     estimated_provider_cost_units: float
@@ -2418,6 +2620,7 @@ class ProviderPathPlan:
     def validate(self) -> None:
         _required_text(self.source, "source")
         CapabilityStatus(self.status)
+        ProviderReadinessState(self.readiness_state)
         if self.authority_approved:
             raise ShadowProviderContractError(
                 "provider planning cannot approve authority"
@@ -2433,6 +2636,17 @@ class ProviderPathPlan:
         if not 0.0 <= self.expected_fixture_coverage <= 1.0:
             raise ShadowProviderContractError(
                 "expected fixture coverage must be in [0, 1]"
+            )
+        if self.signal_time_usable and not self.operationally_possible:
+            raise ShadowProviderContractError(
+                "non-operational provider path cannot be signal-time usable"
+            )
+        if self.operationally_possible and self.readiness_state not in {
+            ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION,
+            ProviderReadinessState.REAL_OBSERVATION_VALIDATED,
+        }:
+            raise ShadowProviderContractError(
+                "operational provider path requires live-path readiness"
             )
 
 
@@ -2462,11 +2676,17 @@ class ProviderPlan:
             seen.add(path.source)
 
     @property
-    def quota_independent_paths(self) -> tuple[ProviderPathPlan, ...]:
+    def candidate_quota_independent_paths(self) -> tuple[ProviderPathPlan, ...]:
         return tuple(
             path
             for path in self.paths
-            if path.source != "the_odds_api" and path.operationally_possible
+            if path.source != "the_odds_api"
+            and path.status is CapabilityStatus.CANDIDATE_ONLY
+            and path.readiness_state
+            in {
+                ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION,
+                ProviderReadinessState.REAL_OBSERVATION_VALIDATED,
+            }
         )
 
 
@@ -2476,23 +2696,23 @@ _PLANNER_METADATA = MappingProxyType(
             CapabilityStatus.IMPLEMENTED_CANDIDATE,
             True,
             1,
-            "independent alternative paths are listed but never auto-triggered",
+            "candidate-only; no automatic fallback or authority selection",
         ),
         "betfair": (
             CapabilityStatus.CANDIDATE_ONLY,
             True,
             2,
-            "independent of The Odds API; requires credentials and enriched identity",
+            "candidate-only; explicit live-path proof is required",
         ),
         "oddsportal": (
             CapabilityStatus.CANDIDATE_ONLY,
             True,
             1,
-            "independent of The Odds API; candidate-only day request",
+            "candidate-only; explicit live-path proof is required",
         ),
         "cache": (
             CapabilityStatus.CACHE_ONLY,
-            True,
+            False,
             0,
             "not an independent provider; only usable with fresh retained metadata",
         ),
@@ -2543,6 +2763,7 @@ def plan_provider_paths(request: ProviderPlanningRequest) -> ProviderPlan:
                 ProviderPathPlan(
                     source=source,
                     status=CapabilityStatus.UNSUPPORTED,
+                    readiness_state=ProviderReadinessState.LIVE_PATH_PREREQUISITES_MISSING,
                     operationally_possible=False,
                     estimated_requests=0,
                     estimated_provider_cost_units=0.0,
@@ -2558,30 +2779,49 @@ def plan_provider_paths(request: ProviderPlanningRequest) -> ProviderPlan:
         estimated_cost = request_count * unit_cost
         coverage = 1.0 if request.fixture_count else 0.0
         possible = True
-        reason = "candidate path is operationally possible; authority remains unset"
+        reasons: list[str] = []
+        readiness = assess_provider_readiness(
+            source,
+            request.live_path_prerequisites.get(source),
+            real_observation_validated=request.real_observation_validated.get(
+                source, False
+            ),
+        )
         if not signal_capable:
             possible = False
-            reason = fallback
-        elif source == "the_odds_api":
+            reasons.append(fallback)
+        elif not readiness.ready_for_observation:
+            possible = False
+            if readiness.state is ProviderReadinessState.CONTRACT_SUPPORTED:
+                reasons.append(
+                    "contract_supported: live-path prerequisite proof was not supplied"
+                )
+            else:
+                missing = ", ".join(readiness.missing_prerequisites)
+                reasons.append(
+                    f"{readiness.state.value}: missing {missing or 'live-path proof'}"
+                )
+        if signal_capable and source == "the_odds_api":
             quota = _quota_remaining(request, source)
             credential = request.credentials_available.get(source)
             if quota is None or credential is not True:
                 possible = False
-                reason = (
+                reasons.append(
                     "authentication and remaining quota must be explicitly supplied"
                 )
             elif quota < estimated_cost:
                 possible = False
-                reason = (
+                reasons.append(
                     "quota_exhausted: paid request rejected before network execution"
                 )
         elif (
-            source == "betfair"
+            signal_capable
+            and source == "betfair"
             and request.credentials_available.get(source) is not True
         ):
             possible = False
-            reason = "Betfair credentials are not declared"
-        elif source == "cache":
+            reasons.append("Betfair credentials are not declared")
+        elif not signal_capable and source == "cache":
             cached = request.cached_fixture_count.get(source, 0)
             cached_age = request.cached_max_age_seconds.get(source)
             if (
@@ -2590,24 +2830,31 @@ def plan_provider_paths(request: ProviderPlanningRequest) -> ProviderPlan:
                 or cached_age > request.freshness_requirement_seconds
             ):
                 possible = False
-                reason = "no cache snapshot satisfies the freshness requirement"
+                reasons.append("no cache snapshot satisfies the freshness requirement")
             else:
                 coverage = (
                     min(1.0, cached / request.fixture_count)
                     if request.fixture_count
                     else 0.0
                 )
+        if not reasons:
+            reasons.append(
+                "live path is ready for observation; authority remains unset"
+            )
         paths.append(
             ProviderPathPlan(
                 source=source,
                 status=status,
+                readiness_state=readiness.state,
                 operationally_possible=possible,
                 estimated_requests=request_count,
                 estimated_provider_cost_units=estimated_cost,
                 expected_fixture_coverage=coverage if possible else 0.0,
                 fallback_capability=fallback,
-                reason=reason,
-                signal_time_usable=signal_capable and possible,
+                reason="; ".join(reasons),
+                signal_time_usable=signal_capable
+                and possible
+                and readiness.ready_for_observation,
             )
         )
     plan = ProviderPlan(tuple(paths))
@@ -2648,6 +2895,8 @@ __all__ = [
     "ProviderPathPlan",
     "ProviderPlan",
     "ProviderPlanningRequest",
+    "ProviderReadinessAssessment",
+    "ProviderReadinessState",
     "ShadowProviderContractError",
     "ShadowSourceObservation",
     "SourceError",
@@ -2657,6 +2906,7 @@ __all__ = [
     "SourceQualityReport",
     "TheOddsAPIAdapter",
     "adapter_status_for",
+    "assess_provider_readiness",
     "authorize_odds_api_request",
     "build_shadow_evidence_bundle",
     "canonical_observation_digest",
@@ -2667,6 +2917,7 @@ __all__ = [
     "normalize_team_name",
     "plan_provider_paths",
     "provider_inventory",
+    "provider_readiness_state",
     "supported_candidate_adapters",
     "to_shadow_observation_evidence",
     "to_shadow_provider_evidence",

@@ -23,11 +23,15 @@ from src.football.top5_shadow_provider_redundancy import (
     OddsApiRequestKind,
     OddsPortalAdapter,
     ProviderPlanningRequest,
+    ProviderReadinessState,
+    ShadowProviderContractError,
     ShadowSourceObservation,
     SourceError,
     SourceNormalizationError,
     SourceProvenance,
+    SourceQualityPolicy,
     TheOddsAPIAdapter,
+    assess_provider_readiness,
     authorize_odds_api_request,
     build_shadow_evidence_bundle,
     canonical_observation_digest,
@@ -36,6 +40,7 @@ from src.football.top5_shadow_provider_redundancy import (
     normalize_team_name,
     plan_provider_paths,
     provider_inventory,
+    provider_readiness_state,
     supported_candidate_adapters,
     to_shadow_observation_evidence,
     to_shadow_provider_evidence,
@@ -46,6 +51,20 @@ from src.football.top5_shadow_provider_redundancy import (
 UTC = timezone.utc
 CAPTURED = datetime(2026, 9, 15, 12, 0, tzinfo=UTC)
 KICKOFF = CAPTURED + timedelta(hours=2)
+TEST_MAX_ODDS_AGE_SECONDS = 900
+TEST_KICKOFF_TOLERANCE_SECONDS = 300
+TEST_POLICY = SourceQualityPolicy(
+    maximum_odds_age_seconds=TEST_MAX_ODDS_AGE_SECONDS,
+    kickoff_tolerance_seconds=TEST_KICKOFF_TOLERANCE_SECONDS,
+)
+TEST_LIVE_PATH_PROOF = {
+    "top5_competition_identity": True,
+    "fixture_identity": True,
+    "exact_kickoff": True,
+    "source_timestamp": True,
+    "complete_1x2": True,
+    "provenance": True,
+}
 
 
 def _expected(
@@ -189,6 +208,61 @@ def test_candidate_adapters_are_explicit_and_do_not_include_bl2_pinnacle() -> No
     assert AdapterStatus.CANDIDATE_ONLY is not None
 
 
+def test_contract_support_is_not_live_path_readiness() -> None:
+    for provider in ("betfair", "oddsportal"):
+        assessment = assess_provider_readiness(provider)
+        assert assessment.contract_supported is True
+        assert assessment.state is ProviderReadinessState.CONTRACT_SUPPORTED
+        assert assessment.ready_for_observation is False
+        assert (
+            provider_readiness_state(provider)
+            is ProviderReadinessState.CONTRACT_SUPPORTED
+        )
+
+        request = ProviderPlanningRequest(
+            league="EPL",
+            window_start=CAPTURED,
+            window_end=CAPTURED + timedelta(hours=1),
+            required_market="h2h_1x2",
+            freshness_requirement_seconds=TEST_MAX_ODDS_AGE_SECONDS,
+            allowed_sources=(provider,),
+            fixture_count=1,
+            credentials_available={provider: True},
+        )
+        path = plan_provider_paths(request).paths[0]
+        assert path.operationally_possible is False
+        assert path.readiness_state is ProviderReadinessState.CONTRACT_SUPPORTED
+        assert path.signal_time_usable is False
+        assert plan_provider_paths(request).candidate_quota_independent_paths == ()
+
+
+def test_explicit_prerequisites_advance_only_to_ready_for_observation() -> None:
+    assessment = assess_provider_readiness("betfair", TEST_LIVE_PATH_PROOF)
+    assert assessment.state is ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION
+    assert assessment.ready_for_observation is True
+    assert (
+        assess_provider_readiness(
+            "betfair",
+            TEST_LIVE_PATH_PROOF,
+            real_observation_validated=True,
+        ).state
+        is ProviderReadinessState.REAL_OBSERVATION_VALIDATED
+    )
+
+
+def test_partial_live_path_proof_remains_fail_closed() -> None:
+    assessment = assess_provider_readiness(
+        "oddsportal", {"fixture_identity": True, "complete_1x2": True}
+    )
+    assert assessment.state is ProviderReadinessState.LIVE_PATH_PREREQUISITES_MISSING
+    assert "source_timestamp" in assessment.missing_prerequisites
+
+
+def test_real_observation_state_cannot_be_asserted_without_complete_proof() -> None:
+    with pytest.raises(ShadowProviderContractError, match="cannot be asserted"):
+        assess_provider_readiness("betfair", real_observation_validated=True)
+
+
 def test_team_aliases_are_exact_not_fuzzy() -> None:
     assert normalize_team_name("Man Utd") == "manchester united"
     assert normalize_team_name("Bayern München") == "bayern munich"
@@ -210,7 +284,9 @@ def test_the_odds_api_adapter_normalizes_bookmaker_and_source_metadata() -> None
     assert observation.bookmaker_identity == "pinnacle"
     assert observation.odds_age_seconds == 300.0
     assert observation.signal_time_input_allowed is True
-    assert validate_source_observation(observation, expected).accepted is True
+    assert (
+        validate_source_observation(observation, expected, TEST_POLICY).accepted is True
+    )
 
 
 def test_the_odds_api_adapter_supports_multiple_bookmakers_without_selecting_one() -> (
@@ -245,7 +321,9 @@ def test_the_odds_api_adapter_supports_multiple_bookmakers_without_selecting_one
         "bet365",
     }
     assert all(
-        validate_source_observation(observation, _expected()).authority_approved
+        validate_source_observation(
+            observation, _expected(), TEST_POLICY
+        ).authority_approved
         is False
         for observation in observations
     )
@@ -272,7 +350,9 @@ def test_betfair_adapter_requires_enriched_kickoff_and_timestamp() -> None:
         payload, expected, capture_timestamp=CAPTURED, request_identity="bf-request-1"
     )[0]
     assert observation.bookmaker_identity == "betfair_exchange"
-    assert validate_source_observation(observation, expected).accepted is True
+    assert (
+        validate_source_observation(observation, expected, TEST_POLICY).accepted is True
+    )
 
     legacy_payload = {"market_id": "1.234", "runners": payload["runners"]}
     with pytest.raises(SourceNormalizationError) as exc_info:
@@ -321,7 +401,7 @@ def test_oddsportal_enriched_candidate_row_is_normalized_but_not_authorized() ->
         capture_timestamp=CAPTURED,
         request_identity="op-1",
     )[0]
-    report = validate_source_observation(observation, expected)
+    report = validate_source_observation(observation, expected, TEST_POLICY)
     assert report.accepted is True
     assert report.candidate_status is AdapterStatus.CANDIDATE_ONLY
     assert report.authority_approved is False
@@ -346,10 +426,13 @@ def test_football_data_requires_precise_injected_timestamps_and_is_closing_only(
         row, expected, capture_timestamp=CAPTURED, request_identity="fd-1"
     )[0]
     assert observation.market_role is MarketRole.CLOSING_BENCHMARK
-    assert validate_source_observation(observation, expected).accepted is False
+    assert (
+        validate_source_observation(observation, expected, TEST_POLICY).accepted
+        is False
+    )
     assert (
         SourceError.CLOSING_LEAKAGE
-        in validate_source_observation(observation, expected).errors
+        in validate_source_observation(observation, expected, TEST_POLICY).errors
     )
 
     with pytest.raises(SourceNormalizationError) as exc_info:
@@ -360,6 +443,54 @@ def test_football_data_requires_precise_injected_timestamps_and_is_closing_only(
             request_identity="fd-date-only",
         )
     assert exc_info.value.error is SourceError.MISSING_TIMESTAMP
+
+
+def test_real_shadow_validation_requires_explicit_timing_policy() -> None:
+    with pytest.raises(ShadowProviderContractError, match="SourceQualityPolicy"):
+        validate_source_observation(_observation(), _expected(), None)
+    with pytest.raises(ShadowProviderContractError, match="timing policy"):
+        validate_source_observation(
+            _observation(),
+            _expected(),
+            SourceQualityPolicy(
+                maximum_odds_age_seconds=0,
+                kickoff_tolerance_seconds=TEST_KICKOFF_TOLERANCE_SECONDS,
+            ),
+        )
+
+
+@pytest.mark.parametrize(
+    "mutator",
+    [
+        lambda obs: replace(obs, confidence=-0.1),
+        lambda obs: replace(obs, confidence=1.1),
+        lambda obs: replace(obs, request_latency_ms=-1),
+        lambda obs: replace(
+            obs,
+            completeness=CompletenessState.PARTIAL,
+            error_classification=SourceError.NONE,
+        ),
+        lambda obs: replace(obs, request_identity=""),
+        lambda obs: replace(obs, source_timestamp=CAPTURED + timedelta(seconds=1)),
+        lambda obs: replace(
+            obs,
+            source_provenance=SourceProvenance(
+                source_uri="not-a-uri",
+                raw_record_id="record-1",
+                retrieved_at=CAPTURED,
+                adapter_version="test-adapter-v1",
+            ),
+        ),
+        lambda obs: replace(obs, market_type=None),
+    ],
+)
+def test_structural_observation_failure_is_always_rejected(mutator) -> None:
+    report = validate_source_observation(
+        mutator(_observation()), _expected(), TEST_POLICY
+    )
+    assert report.accepted is False
+    assert report.prediction_input_allowed is False
+    assert SourceError.INVALID_SOURCE_CONTRACT in report.errors
 
 
 @pytest.mark.parametrize(
@@ -441,7 +572,7 @@ def test_football_data_requires_precise_injected_timestamps_and_is_closing_only(
 def test_source_quality_gates_fail_closed(mutator, error) -> None:
     expected = _expected()
     observation = mutator(_observation(expected), expected)
-    report = validate_source_observation(observation, expected)
+    report = validate_source_observation(observation, expected, TEST_POLICY)
     assert report.accepted is False
     assert error in report.errors
     assert report.prediction_input_allowed is False
@@ -463,7 +594,7 @@ def test_provider_failures_are_evidence_and_never_accepted(error: SourceError) -
         error=error,
         completeness=CompletenessState.COMPLETE,
     )
-    report = validate_source_observation(observation, _expected())
+    report = validate_source_observation(observation, _expected(), TEST_POLICY)
     assert report.accepted is False
     assert error in report.errors
 
@@ -473,7 +604,7 @@ def test_duplicate_snapshots_are_rejected() -> None:
     first = _observation(expected)
     second = replace(first, request_identity="request-2")
     reports = validate_observation_batch(
-        (first, second), {expected.fixture_key: expected}
+        (first, second), {expected.fixture_key: expected}, TEST_POLICY
     )
     assert reports[0].accepted is True
     assert reports[1].accepted is False
@@ -482,7 +613,7 @@ def test_duplicate_snapshots_are_rejected() -> None:
 
 def test_missing_bookmaker_identity_is_rejected_when_policy_requires_it() -> None:
     observation = _observation(bookmaker=None)
-    report = validate_source_observation(observation, _expected())
+    report = validate_source_observation(observation, _expected(), TEST_POLICY)
     assert report.accepted is False
     assert SourceError.MISSING_PROVENANCE in report.errors
 
@@ -490,21 +621,27 @@ def test_missing_bookmaker_identity_is_rejected_when_policy_requires_it() -> Non
 def test_closing_benchmark_cannot_enter_v1_observation_evidence() -> None:
     observation = _observation(role=MarketRole.CLOSING_BENCHMARK)
     with pytest.raises(SourceNormalizationError) as exc_info:
-        to_shadow_observation_evidence(observation, _expected(), _identity())
+        to_shadow_observation_evidence(
+            observation, _expected(), _identity(), policy=TEST_POLICY
+        )
     assert exc_info.value.error is SourceError.CLOSING_LEAKAGE
 
 
 def test_valid_provider_output_bridges_to_top5_shadow_evidence_v1() -> None:
     expected = _expected()
     observation = _observation(expected)
-    evidence = to_shadow_observation_evidence(observation, expected, _identity())
+    evidence = to_shadow_observation_evidence(
+        observation, expected, _identity(), policy=TEST_POLICY
+    )
     evidence.validate()
     assert evidence.provenance.research_sha == FROZEN_RESEARCH_SHA
     assert evidence.no_bet is True
     assert evidence.publication_enabled is False
     assert evidence.provider_covered is True
 
-    provider_evidence = to_shadow_provider_evidence(observation, expected, _identity())
+    provider_evidence = to_shadow_provider_evidence(
+        observation, expected, _identity(), policy=TEST_POLICY
+    )
     provider_evidence.validate()
     assert provider_evidence.provider_name == "the_odds_api"
     assert provider_evidence.availability is True
@@ -516,7 +653,9 @@ def test_invalid_provider_output_bridges_as_rejected_v1_evidence() -> None:
         expected,
         source_timestamp=CAPTURED - timedelta(hours=2),
     )
-    evidence = to_shadow_observation_evidence(observation, expected, _identity())
+    evidence = to_shadow_observation_evidence(
+        observation, expected, _identity(), policy=TEST_POLICY
+    )
     evidence.validate()
     assert evidence.rejected is True
     assert evidence.eligible is False
@@ -531,6 +670,7 @@ def test_bundle_has_explicit_no_bet_safety_and_no_authority_selection() -> None:
         {expected.fixture_key: _identity()},
         window_start=CAPTURED - timedelta(minutes=10),
         window_end=CAPTURED + timedelta(minutes=10),
+        policy=TEST_POLICY,
     )
     bundle.validate()
     assert bundle.safety is not None
@@ -599,6 +739,10 @@ def test_provider_planner_lists_quota_independent_paths_without_fanout_or_select
         remaining_quota={"the_odds_api": CURRENT_EXHAUSTED_ODDS_API},
         credentials_available={"the_odds_api": True, "betfair": True},
         cost_units_per_request={"betfair": 2.0},
+        live_path_prerequisites={
+            "betfair": TEST_LIVE_PATH_PROOF,
+            "oddsportal": TEST_LIVE_PATH_PROOF,
+        },
     )
     plan = plan_provider_paths(request)
     plan.validate()
@@ -610,7 +754,7 @@ def test_provider_planner_lists_quota_independent_paths_without_fanout_or_select
     assert plan.selected_source is None
     assert plan.automatic_fallback_enabled is False
     assert plan.automatic_fanout_requests == 0
-    assert {path.source for path in plan.quota_independent_paths} == {
+    assert {path.source for path in plan.candidate_quota_independent_paths} == {
         "betfair",
         "oddsportal",
     }
