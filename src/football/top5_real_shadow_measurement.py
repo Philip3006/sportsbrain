@@ -291,10 +291,20 @@ def _public_candidate(candidate: Mapping[str, object]) -> dict[str, object]:
             "fixture",
             "league",
             "provider",
+            "provider_event_id",
+            "provider_request_id",
             "bookmaker",
             "signal_time_experiment_id",
             "controlled_shadow_run_id",
             "qualification_session_id",
+            "qualification_receipt_id",
+            "qualification_receipt_digest",
+            "observation_id",
+            "observation_digest",
+            "normalized_record_digest",
+            "cascade_evidence_digest",
+            "capture_attestation_digest",
+            "ceo_authorization_id",
             "session_id",
             "research_sha",
             "model_identity",
@@ -302,6 +312,7 @@ def _public_candidate(candidate: Mapping[str, object]) -> dict[str, object]:
             "actual_outcome",
             "prediction_artifact_sha",
             "result_attachment_sha",
+            "audit_digest",
         )
     } | {"closing": closing_payload, "evidence_mode": REAL_OBSERVED_MARKER}
 
@@ -349,11 +360,24 @@ def _candidate(
         "fixture": prediction.fixture_key,
         "league": prediction.league_code,
         "provider": prediction.provider_identity,
+        "provider_event_id": audit_item.get("provider_event_id"),
+        "provider_request_id": audit_item.get("provider_request_id"),
         "bookmaker": prediction.bookmaker_identity,
         "signal_time_experiment_id": audit_item.get("signal_time_experiment_id"),
         "controlled_shadow_run_id": audit_item.get("controlled_shadow_run_id"),
         "qualification_session_id": audit_item.get("qualification_session_id"),
         "qualification_receipt_id": audit_item.get("qualification_receipt_id"),
+        "qualification_receipt_digest": audit_item.get(
+            "qualification_receipt_digest"
+        ),
+        "observation_id": audit_item.get("observation_id"),
+        "observation_digest": audit_item.get("observation_digest"),
+        "normalized_record_digest": audit_item.get("normalized_record_digest"),
+        "cascade_evidence_digest": audit_item.get("cascade_evidence_digest"),
+        "capture_attestation_digest": audit_item.get(
+            "capture_attestation_digest"
+        ),
+        "ceo_authorization_id": audit_item.get("ceo_authorization_id"),
         "session_id": prediction.session_id,
         "research_sha": prediction.research_sha,
         "model_identity": prediction.model_identity,

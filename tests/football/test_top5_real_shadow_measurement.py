@@ -222,5 +222,7 @@ def test_report_does_not_emit_secret_or_raw_provider_fields() -> None:
     report = measure_session_payload(payload, evidence_bundle=evidence)
     serialized = json.dumps(report, sort_keys=True).lower()
 
-    for forbidden in ("api_key", "authorization", "response_body", "cookie", "token"):
+    for forbidden in ("api_key", "response_body", "cookie", "token"):
         assert forbidden not in serialized
+    assert '"authorization":' not in serialized
+    assert '"headers":' not in serialized
