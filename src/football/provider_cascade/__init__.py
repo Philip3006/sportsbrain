@@ -1,0 +1,100 @@
+"""Top-5 shadow provider cascade public API."""
+
+from src.football.provider_cascade.adapters import (
+    AdapterResult,
+    ApiFootballAdapter,
+    BetfairDelayedAdapter,
+    OddsApiIoAdapter,
+    ProviderRequest,
+    RawProviderResponse,
+    TheOddsAPIAdapter,
+    resolve_provider_identity,
+)
+from src.football.provider_cascade.budget import (
+    PreflightDecision,
+    ProviderBudgetCounters,
+    RequestBudgetManager,
+)
+from src.football.provider_cascade.builder1 import (
+    Builder1OddsInput,
+    accepted_for_builder1,
+    builder2_evidence_payload,
+)
+from src.football.provider_cascade.comparison import (
+    ProviderComparisonMetric,
+    ProviderComparisonReport,
+    compare_provider_results,
+)
+from src.football.provider_cascade.contracts import (
+    BUILDER2_VALIDATION_CONTRACT_VERSION,
+    DEFAULT_PROVIDER_ORDER,
+    MARKET_PREMATCH_1X2,
+    CascadeDecisionTrace,
+    CascadeResult,
+    CascadeTimingPolicy,
+    NetworkAuthorizationContract,
+    NormalizedOddsObservation,
+    ObservationCompleteness,
+    ProviderAttemptTrace,
+    ProviderCascadeConfig,
+    ProviderConfig,
+    ProviderIdentityResolution,
+    ProviderIdentityResolutionState,
+    ProviderState,
+    QuotaSnapshot,
+    TimingProvenance,
+    TransportCapability,
+)
+from src.football.provider_cascade.health import ProviderHealth, ProviderHealthRegistry
+from src.football.provider_cascade.router import ProviderCascadeRouter
+from src.football.top5_builder2_qualification_receipt import (
+    Builder2QualificationReceiptError,
+    Builder2QualificationReceiptV1,
+    validate_builder1_qualification_receipt,
+    validate_builder4_qualification_receipt,
+)
+
+__all__ = [
+    "BUILDER2_VALIDATION_CONTRACT_VERSION",
+    "DEFAULT_PROVIDER_ORDER",
+    "MARKET_PREMATCH_1X2",
+    "AdapterResult",
+    "ApiFootballAdapter",
+    "BetfairDelayedAdapter",
+    "Builder1OddsInput",
+    "Builder2QualificationReceiptError",
+    "Builder2QualificationReceiptV1",
+    "CascadeDecisionTrace",
+    "CascadeResult",
+    "CascadeTimingPolicy",
+    "NetworkAuthorizationContract",
+    "NormalizedOddsObservation",
+    "ObservationCompleteness",
+    "OddsApiIoAdapter",
+    "PreflightDecision",
+    "ProviderAttemptTrace",
+    "ProviderBudgetCounters",
+    "ProviderCascadeConfig",
+    "ProviderCascadeRouter",
+    "ProviderComparisonMetric",
+    "ProviderComparisonReport",
+    "ProviderConfig",
+    "ProviderHealth",
+    "ProviderHealthRegistry",
+    "ProviderIdentityResolution",
+    "ProviderIdentityResolutionState",
+    "ProviderRequest",
+    "ProviderState",
+    "QuotaSnapshot",
+    "RawProviderResponse",
+    "RequestBudgetManager",
+    "TheOddsAPIAdapter",
+    "TimingProvenance",
+    "TransportCapability",
+    "accepted_for_builder1",
+    "builder2_evidence_payload",
+    "compare_provider_results",
+    "resolve_provider_identity",
+    "validate_builder1_qualification_receipt",
+    "validate_builder4_qualification_receipt",
+]
