@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Template only: replace placeholders, review, and install manually as a user LaunchAgent. -->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.sportsbrain.night-shift-worker.builder-1</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>__PYTHON3__</string>
+        <string>__SPORTSBRAIN_ROOT__/scripts/night_shift_worker_loop.py</string>
+        <string>--builder</string>
+        <string>builder-1</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>__SPORTSBRAIN_ROOT__</string>
+    <key>RunAtLoad</key>
+    <false/>
+    <key>StartInterval</key>
+    <integer>30</integer>
+    <key>StandardOutPath</key>
+    <string>__LOG_DIR__/sportsbrain_night_shift_builder1.log</string>
+    <key>StandardErrorPath</key>
+    <string>__LOG_DIR__/sportsbrain_night_shift_builder1.log</string>
+</dict>
+</plist>

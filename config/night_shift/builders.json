@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "dispatcher": {
+    "builder_id": "builder-5",
+    "display_name": "Builder 5 — Autonomous Development / Night Shift Dispatcher",
+    "can_be_worker": false
+  },
+  "builders": [
+    {
+      "builder_id": "builder-1",
+      "display_name": "Builder 1 — Research / Shadow / Evidence Lifecycle",
+      "role": "research-shadow-evidence",
+      "repo_allowlist": ["Philip3006/sportsbrain", "Philip3006/SportsBrainMemory"],
+      "branch_prefix": "nightshift/builder-1/",
+      "base_branch_allowlist": ["main"],
+      "task_types": ["research_shadow_evidence", "evidence_lifecycle_audit"],
+      "allowed_risk_classes": ["read_only", "code_change"],
+      "max_concurrency": 1,
+      "enabled": true,
+      "aliases": ["b1"]
+    },
+    {
+      "builder_id": "builder-2",
+      "display_name": "Builder 2 — Independent Qualification / Authority",
+      "role": "independent-qualification-authority",
+      "repo_allowlist": ["Philip3006/sportsbrain", "Philip3006/SportsBrainMemory"],
+      "branch_prefix": "nightshift/builder-2/",
+      "base_branch_allowlist": ["main"],
+      "task_types": ["independent_qualification", "authority_review"],
+      "allowed_risk_classes": ["read_only", "code_change"],
+      "max_concurrency": 1,
+      "enabled": true,
+      "aliases": ["b2"]
+    },
+    {
+      "builder_id": "builder-3",
+      "display_name": "Builder 3 — Memory / Context / Observability",
+      "role": "memory-context-observability",
+      "repo_allowlist": ["Philip3006/sportsbrain", "Philip3006/SportsBrainMemory"],
+      "branch_prefix": "nightshift/builder-3/",
+      "base_branch_allowlist": ["main"],
+      "task_types": ["memory_context_observability", "observability_audit"],
+      "allowed_risk_classes": ["read_only", "code_change"],
+      "max_concurrency": 1,
+      "enabled": true,
+      "aliases": ["b3"]
+    },
+    {
+      "builder_id": "builder-4",
+      "display_name": "Builder 4 — Provider Cascade / Controlled Shadow Infrastructure",
+      "role": "provider-cascade-controlled-shadow",
+      "repo_allowlist": ["Philip3006/sportsbrain", "Philip3006/SportsBrainMemory"],
+      "branch_prefix": "nightshift/builder-4/",
+      "base_branch_allowlist": ["main"],
+      "task_types": ["provider_cascade_shadow", "provider_health_replay"],
+      "allowed_risk_classes": ["read_only", "code_change"],
+      "max_concurrency": 1,
+      "enabled": true,
+      "aliases": ["b4"]
+    }
+  ]
+}

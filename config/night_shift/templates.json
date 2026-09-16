@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "templates": [
+    {
+      "template_id": "builder-1.research-shadow-evidence",
+      "builder_id": "builder-1",
+      "task_type": "research_shadow_evidence",
+      "objective_template": "Research and document the bounded shadow/evidence task: {scope}",
+      "required_payload_keys": ["scope"],
+      "allowed_payload_keys": ["scope", "evidence_artifact", "acceptance_criteria"],
+      "risk_class": "code_change",
+      "required_tests": ["compileall"],
+      "verification_commands": [["python3", "-m", "compileall", "-q", "src"]],
+      "default_priority": 10,
+      "default_max_attempts": 3
+    },
+    {
+      "template_id": "builder-1.evidence-lifecycle-audit",
+      "builder_id": "builder-1",
+      "task_type": "evidence_lifecycle_audit",
+      "objective_template": "Audit the evidence lifecycle for: {scope}",
+      "required_payload_keys": ["scope"],
+      "allowed_payload_keys": ["scope", "acceptance_criteria"],
+      "risk_class": "read_only",
+      "required_tests": ["compileall"],
+      "verification_commands": [["python3", "-m", "compileall", "-q", "src"]],
+      "default_priority": 5,
+      "default_max_attempts": 2
+    },
+    {
+      "template_id": "builder-2.independent-qualification",
+      "builder_id": "builder-2",
+      "task_type": "independent_qualification",
+      "objective_template": "Independently qualify the evidence or change: {scope}",
+      "required_payload_keys": ["scope"],
+      "allowed_payload_keys": ["scope", "authority_source", "acceptance_criteria"],
+      "risk_class": "code_change",
+      "required_tests": ["compileall"],
+      "verification_commands": [["python3", "-m", "compileall", "-q", "src"]],
+      "default_priority": 10,
+      "default_max_attempts": 3
+    },
+    {
+      "template_id": "builder-2.authority-review",
+      "builder_id": "builder-2",
+      "task_type": "authority_review",
+      "objective_template": "Review authority and qualification boundaries for: {scope}",
+      "required_payload_keys": ["scope"],
+      "allowed_payload_keys": ["scope", "authority_source", "acceptance_criteria"],
+      "risk_class": "read_only",
+      "required_tests": ["compileall"],
+      "verification_commands": [["python3", "-m", "compileall", "-q", "src"]],
+      "default_priority": 5,
+      "default_max_attempts": 2
+    },
+    {
+      "template_id": "builder-3.memory-context-observability",
+      "builder_id": "builder-3",
+      "task_type": "memory_context_observability",
+      "objective_template": "Improve bounded memory/context/observability behavior for: {scope}",
+      "required_payload_keys": ["scope"],
+      "allowed_payload_keys": ["scope", "acceptance_criteria", "retention_class"],
+      "risk_class": "code_change",
+      "required_tests": ["compileall"],
+      "verification_commands": [["python3", "-m", "compileall", "-q", "src"]],
+      "default_priority": 8,
+      "default_max_attempts": 3
+    },
+    {
+      "template_id": "builder-3.observability-audit",
+      "builder_id": "builder-3",
+      "task_type": "observability_audit",
+      "objective_template": "Audit dispatcher observability for: {scope}",
+      "required_payload_keys": ["scope"],
+      "allowed_payload_keys": ["scope", "acceptance_criteria"],
+      "risk_class": "read_only",
+      "required_tests": ["compileall"],
+      "verification_commands": [["python3", "-m", "compileall", "-q", "src"]],
+      "default_priority": 5,
+      "default_max_attempts": 2
+    },
+    {
+      "template_id": "builder-4.provider-cascade-shadow",
+      "builder_id": "builder-4",
+      "task_type": "provider_cascade_shadow",
+      "objective_template": "Run bounded controlled-shadow work for provider cascade: {scope}",
+      "required_payload_keys": ["scope"],
+      "allowed_payload_keys": ["scope", "provider_set", "acceptance_criteria"],
+      "risk_class": "code_change",
+      "required_tests": ["compileall"],
+      "verification_commands": [["python3", "-m", "compileall", "-q", "src"]],
+      "default_priority": 8,
+      "default_max_attempts": 3
+    },
+    {
+      "template_id": "builder-4.provider-health-replay",
+      "builder_id": "builder-4",
+      "task_type": "provider_health_replay",
+      "objective_template": "Replay and inspect provider-health evidence for: {scope}",
+      "required_payload_keys": ["scope"],
+      "allowed_payload_keys": ["scope", "provider_set", "acceptance_criteria"],
+      "risk_class": "read_only",
+      "required_tests": ["compileall"],
+      "verification_commands": [["python3", "-m", "compileall", "-q", "src"]],
+      "default_priority": 5,
+      "default_max_attempts": 2
+    }
+  ]
+}
