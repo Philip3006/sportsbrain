@@ -97,7 +97,6 @@ class ApprovedProviderResultAuthority:
     approved_odds_provider: str
     approved_provider_set: tuple[str, ...]
     approved_result_source: str
-    cascade_identity: str
     issued_at: datetime
     expires_at: datetime | None = None
     approved: bool = True
@@ -116,7 +115,6 @@ class ApprovedProviderResultAuthority:
             ("league_code", self.league_code),
             ("approved_odds_provider", self.approved_odds_provider),
             ("approved_result_source", self.approved_result_source),
-            ("cascade_identity", self.cascade_identity),
         ):
             _text(value, name)
         if not self.approved_provider_set or any(
@@ -166,10 +164,6 @@ class ApprovedProviderResultAuthority:
             if receipt.provider_identity != self.approved_odds_provider:
                 raise ProductionContractError(
                     "approved odds provider does not match REAL_OBSERVED receipt"
-                )
-            if receipt.cascade_evidence_digest != self.cascade_identity:
-                raise ProductionContractError(
-                    "approved cascade identity does not match REAL_OBSERVED receipt"
                 )
 
 

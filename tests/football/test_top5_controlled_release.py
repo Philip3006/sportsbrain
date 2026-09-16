@@ -141,7 +141,6 @@ def _context(tmp_path):
         approved_odds_provider=receipt.provider_identity,
         approved_provider_set=(receipt.provider_identity,),
         approved_result_source="result-source",
-        cascade_identity=receipt.cascade_evidence_digest,
         issued_at=BASE - timedelta(minutes=1),
         expires_at=BASE + timedelta(days=1),
     )
