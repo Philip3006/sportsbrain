@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -22,19 +23,39 @@ from src.football.provider_cascade.preparation import (
     SUPPORTED_PREPARATION_PROVIDERS,
     preparation_from_input_payload,
 )
+from src.football.top5_builder2_qualification_receipt import (
+    Builder2QualificationReceiptError,
+    issue_builder2_qualification_receipt,
+)
+from src.football.top5_controlled_shadow_provider_qualification import (
+    CAPTURE_ATTESTATION_CONTRACT_VERSION,
+    ControlledShadowCaptureAttestation,
+    ObservationEvidenceKind,
+    ProviderQualificationSession,
+    ProviderQualificationStatus,
+    QualificationContractError,
+    QualificationTimingPolicy,
+    qualify_provider_observations,
+)
+from src.football.top5_provider_cascade_validation import ExpectedCascadeFixture
+from src.football.top5_shadow_provider_redundancy import (
+    ProviderReadinessState,
+    make_fixture_key,
+)
 
 UTC = timezone.utc
 NOW = datetime(2026, 9, 16, 15, tzinfo=UTC)
+KICKOFF = NOW + timedelta(hours=2)
 ORDER = SUPPORTED_PREPARATION_PROVIDERS
 
 
 def _fixture() -> dict[str, object]:
     return {
-        "fixture_key": "EPL:fixture-001",
+        "fixture_key": make_fixture_key("EPL", "Home FC", "Away FC", KICKOFF),
         "league_code": "EPL",
         "home_team": "Home FC",
         "away_team": "Away FC",
-        "kickoff": NOW.isoformat(),
+        "kickoff": KICKOFF.isoformat(),
     }
 
 
@@ -129,7 +150,12 @@ def _auth(
 
 
 def _success(
-    provider: str, *, event: str | None = None, request: str | None = None, **changes
+    provider: str,
+    *,
+    event: str | None = None,
+    request: str | None = None,
+    evidence_kind: ObservationEvidenceKind | str = ObservationEvidenceKind.MOCK,
+    **changes,
 ):
     return ProviderTransportResponse(
         outcome="SUCCESS",
@@ -144,7 +170,7 @@ def _success(
         source_timestamp=NOW - timedelta(seconds=5),
         adapter_version=f"{provider}:adapter-v1",
         adapter_source_sha="a" * 64,
-        evidence_kind="MOCK",
+        evidence_kind=evidence_kind,
         runner_mapping=(
             {"home": "1", "draw": "2", "away": "3"}
             if provider == "betfair_delayed"
@@ -153,6 +179,41 @@ def _success(
         app_session_prerequisites=True if provider == "betfair_delayed" else None,
         **changes,
     )
+
+
+def _qualification_context(result):
+    observation = result.observation
+    assert observation is not None
+    session = ProviderQualificationSession(
+        qualification_session_id=observation.qualification_session_id,
+        schema_version="top5-controlled-shadow-provider-qualification-v1",
+        created_at=observation.captured_at,
+        provider_identity="top5_cascade",
+        league_scope=(observation.league,),
+        fixture_scope=(observation.fixture_key,),
+        configured_provider_order=result.authorization.configured_provider_order,
+        adapter_version=observation.adapter_version,
+        adapter_source_sha=observation.adapter_source_sha,
+        qualification_state=ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION,
+    )
+    expected = ExpectedCascadeFixture(
+        league=observation.league,
+        fixture_key=observation.fixture_key,
+        home_team=observation.home_team,
+        away_team=observation.away_team,
+        kickoff=observation.kickoff,
+    )
+    timing = QualificationTimingPolicy(
+        maximum_odds_age_seconds=900,
+        kickoff_tolerance_seconds=60,
+        minimum_lead_seconds=0,
+        maximum_lead_seconds=10_800,
+    )
+    readiness = {
+        provider: ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION
+        for provider in result.authorization.configured_provider_order
+    }
+    return observation, session, expected, timing, readiness
 
 
 def test_authorization_is_external_and_exactly_versioned() -> None:
@@ -217,6 +278,104 @@ def test_success_is_sequential_candidate_only_and_attested() -> None:
     result.attestation.validate()
     assert result.attestation.as_payload()["capture_digest"]
     assert result.banners == EXECUTION_BANNERS
+
+
+def test_injected_real_observed_response_fails_closed_before_observation() -> None:
+    preparation = _prepare(order=("the_odds_api",))
+    authorization = _auth(preparation)
+    transport = FakeControlledShadowTransport(
+        {
+            ("the_odds_api", "ODDS"): _success(
+                "the_odds_api", evidence_kind=ObservationEvidenceKind.REAL_OBSERVED
+            )
+        }
+    )
+
+    result = ControlledShadowExecutionHarness(clock=lambda: NOW).execute(
+        preparation, authorization, transport=transport
+    )
+
+    assert result.status is ExecutionStatus.NO_OBSERVATION
+    assert result.observation is None
+    assert result.selected_provider is None
+    assert any("INJECTED_EVIDENCE_REJECTED" in item for item in result.failure_evidence)
+    assert all(
+        item.evidence_kind is not ObservationEvidenceKind.REAL_OBSERVED
+        for item in result.attestations
+    )
+
+
+def test_fake_success_has_test_only_attestation_and_no_canonical_capture() -> None:
+    preparation = _prepare(order=("the_odds_api",))
+    authorization = _auth(preparation)
+    result = ControlledShadowExecutionHarness(clock=lambda: NOW).execute(
+        preparation,
+        authorization,
+        transport=FakeControlledShadowTransport(
+            {("the_odds_api", "ODDS"): _success("the_odds_api")}
+        ),
+    )
+
+    assert result.observation is not None
+    assert result.observation.capture_attestation is None
+    assert result.attestation.transport_capability == "TEST_INJECTED"
+    assert result.attestation.evidence_mode == "TEST_INJECTED"
+    assert result.attestation.evidence_kind is ObservationEvidenceKind.MOCK
+    assert result.attestation.network_execution is False
+    assert result.attestation.schema_version != CAPTURE_ATTESTATION_CONTRACT_VERSION
+    with pytest.raises(QualificationContractError):
+        ControlledShadowCaptureAttestation.from_payload(
+            result.attestation.as_payload()
+        ).validate()
+
+
+def test_fake_output_cannot_reach_real_qualification_or_issue_receipt() -> None:
+    preparation = _prepare(order=("the_odds_api",))
+    authorization = _auth(preparation)
+    result = ControlledShadowExecutionHarness(clock=lambda: NOW).execute(
+        preparation,
+        authorization,
+        transport=FakeControlledShadowTransport(
+            {("the_odds_api", "ODDS"): _success("the_odds_api")}
+        ),
+    )
+    observation, session, expected, timing, readiness = _qualification_context(result)
+
+    report = qualify_provider_observations(
+        (observation,), session, expected, timing, readiness
+    )
+    validation = report.results[0]
+    assert validation.real_observed is False
+    assert (
+        validation.status is not ProviderQualificationStatus.REAL_OBSERVATION_VALIDATED
+    )
+    assert (
+        report.qualification_status
+        is not ProviderQualificationStatus.REAL_OBSERVATION_VALIDATED
+    )
+    assert (
+        report.provider_statuses[observation.provider_identity]
+        is not ProviderQualificationStatus.REAL_OBSERVATION_VALIDATED
+    )
+    with pytest.raises(Builder2QualificationReceiptError):
+        issue_builder2_qualification_receipt(report, observation, validation)
+
+
+def test_test_only_attestation_rejects_network_execution_claim() -> None:
+    preparation = _prepare(order=("the_odds_api",))
+    authorization = _auth(preparation)
+    result = ControlledShadowExecutionHarness(clock=lambda: NOW).execute(
+        preparation,
+        authorization,
+        transport=FakeControlledShadowTransport(
+            {("the_odds_api", "ODDS"): _success("the_odds_api")}
+        ),
+    )
+
+    unsafe = replace(result.attestation, network_execution=True)
+    with pytest.raises(HarnessExecutionBlocked, match="network execution"):
+        unsafe.validate()
+    assert result.attestation.as_payload()["network_execution"] is False
 
 
 def test_failed_first_provider_falls_back_in_configured_order() -> None:
@@ -455,3 +614,19 @@ def test_fake_acceptance_never_needs_socket(monkeypatch) -> None:
         ),
     )
     assert result.observation is not None
+
+
+def test_harness_has_no_socket_or_provider_network_path() -> None:
+    import src.football.provider_cascade.execution_harness as module
+
+    source = inspect.getsource(module)
+    for forbidden in (
+        "import socket",
+        "import requests",
+        "import httpx",
+        "urlopen(",
+        "create_connection(",
+        '"network_execution": True',
+    ):
+        assert forbidden not in source
+    assert "class RealProviderTransport(Protocol)" in source

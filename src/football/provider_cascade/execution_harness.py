@@ -66,7 +66,12 @@ from src.football.top5_research_binding import FROZEN_RESEARCH_SHA
 from src.football.top5_shadow_provider_redundancy import ProviderReadinessState
 
 AUTHORIZATION_SCHEMA_VERSION = "controlled-shadow-run-authorization-v1"
-CAPTURE_ATTESTATION_SCHEMA_VERSION = "controlled-shadow-capture-attestation-v1"
+TEST_CAPTURE_ATTESTATION_SCHEMA_VERSION = (
+    "controlled-shadow-test-capture-attestation-v1"
+)
+# Kept as the public harness symbol for compatibility; this is deliberately
+# not the canonical Builder-2 capture attestation schema.
+CAPTURE_ATTESTATION_SCHEMA_VERSION = TEST_CAPTURE_ATTESTATION_SCHEMA_VERSION
 CONTROLLED_SHADOW_RUN = "CONTROLLED_SHADOW_RUN"
 NO_BET_BANNER = "NO BET"
 NO_PUBLICATION_BANNER = "NO PUBLICATION"
@@ -99,6 +104,31 @@ class ProviderAction(str, Enum):
     FIXTURE_DISCOVERY = "FIXTURE_DISCOVERY"
     ODDS = "ODDS"
     ODDS_AND_EVENT_DISCOVERY = "ODDS_AND_EVENT_DISCOVERY"
+
+
+_TEST_INJECTED_EVIDENCE_KINDS = frozenset(
+    {
+        ObservationEvidenceKind.MOCK,
+        ObservationEvidenceKind.TEST_FIXTURE,
+        ObservationEvidenceKind.OFFLINE_REPLAY,
+    }
+)
+
+
+def _validated_injected_evidence_kind(
+    value: object,
+) -> ObservationEvidenceKind:
+    try:
+        evidence_kind = ObservationEvidenceKind(value)
+    except (TypeError, ValueError) as exc:
+        raise HarnessExecutionBlocked(
+            "injected transport evidence kind is not explicitly non-real"
+        ) from exc
+    if evidence_kind not in _TEST_INJECTED_EVIDENCE_KINDS:
+        raise HarnessExecutionBlocked(
+            "REAL_OBSERVED is forbidden for TEST_INJECTED transport"
+        )
+    return evidence_kind
 
 
 def _text(value: object, name: str) -> str:
@@ -682,7 +712,7 @@ class FakeControlledShadowTransport:
 
 @dataclass(frozen=True)
 class ControlledShadowCaptureAttestationV1:
-    """Deterministic run evidence; it is not authority and cannot qualify."""
+    """Test-only run evidence; it cannot be parsed as canonical real evidence."""
 
     controlled_shadow_run_id: str
     authorization_id: str
@@ -720,6 +750,10 @@ class ControlledShadowCaptureAttestationV1:
     captured_at: datetime
     capture_digest: str = ""
     schema_version: str = CAPTURE_ATTESTATION_SCHEMA_VERSION
+    transport_capability: str = TransportCapability.TEST_INJECTED.value
+    evidence_mode: str = TransportCapability.TEST_INJECTED.value
+    network_execution: bool = False
+    evidence_kind: ObservationEvidenceKind | str = ObservationEvidenceKind.MOCK
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -777,6 +811,10 @@ class ControlledShadowCaptureAttestationV1:
             "publication": self.publication,
             "production_activation": self.production_activation,
             "captured_at": _utc(self.captured_at, "captured_at").isoformat(),
+            "transport_capability": self.transport_capability,
+            "evidence_mode": self.evidence_mode,
+            "network_execution": self.network_execution,
+            "evidence_kind": self.evidence_kind,
         }
 
     @property
@@ -809,6 +847,19 @@ class ControlledShadowCaptureAttestationV1:
         _utc(self.captured_at, "captured_at")
         if self.schema_version != CAPTURE_ATTESTATION_SCHEMA_VERSION:
             raise HarnessContractError("unsupported capture attestation schema")
+        if self.transport_capability != TransportCapability.TEST_INJECTED.value:
+            raise HarnessExecutionBlocked(
+                "test attestation transport capability is not TEST_INJECTED"
+            )
+        if self.evidence_mode != TransportCapability.TEST_INJECTED.value:
+            raise HarnessExecutionBlocked(
+                "test attestation evidence mode is not TEST_INJECTED"
+            )
+        if self.network_execution is not False:
+            raise HarnessExecutionBlocked(
+                "TEST_INJECTED attestation cannot claim network execution"
+            )
+        _validated_injected_evidence_kind(self.evidence_kind)
         if not self.configured_provider_order or any(
             provider not in self.configured_provider_order
             for provider in self.attempted_providers
@@ -906,6 +957,10 @@ class ControlledShadowCaptureAttestationV1:
             schema_version=payload.get(
                 "schema_version", CAPTURE_ATTESTATION_SCHEMA_VERSION
             ),
+            transport_capability=payload.get("transport_capability", ""),
+            evidence_mode=payload.get("evidence_mode", ""),
+            network_execution=payload.get("network_execution"),
+            evidence_kind=payload.get("evidence_kind", ""),
         )
         result.validate()
         return result
@@ -952,6 +1007,11 @@ class ControlledShadowExecutionResult:
                 "observation cannot exist without selected provider"
             )
         if self.observation is not None:
+            _validated_injected_evidence_kind(self.observation.evidence_kind)
+            if self.observation.capture_attestation is not None:
+                raise HarnessExecutionBlocked(
+                    "TEST_INJECTED observations cannot carry canonical capture attestation"
+                )
             self.observation.validate_structural()
         if self.normalized_observation is not None:
             self.normalized_observation.validate(require_fresh=False)
@@ -1483,6 +1543,21 @@ class ControlledShadowExecutionHarness:
             last_response = response
             last_start = started
             last_end = finished
+            try:
+                _validated_injected_evidence_kind(response.evidence_kind)
+            except HarnessExecutionBlocked as exc:
+                failure_evidence.append(
+                    f"{provider}:{action_kind.value}:INJECTED_EVIDENCE_REJECTED"
+                )
+                last_response = ProviderTransportResponse(
+                    **{
+                        **response.__dict__,
+                        "outcome": CascadeOutcome.MALFORMED,
+                        "evidence_kind": ObservationEvidenceKind.MOCK,
+                        "failure_detail": str(exc),
+                    }
+                )
+                break
             if (
                 response.adapter_version
                 and response.adapter_version != auth.adapter_version_scope[provider]
@@ -1806,6 +1881,7 @@ class ControlledShadowExecutionHarness:
             raise HarnessExecutionBlocked(
                 "a failed provider cannot produce an observation"
             )
+        evidence_kind = _validated_injected_evidence_kind(response.evidence_kind)
         if any(
             value is None
             for value in (response.home_odds, response.draw_odds, response.away_odds)
@@ -1844,23 +1920,10 @@ class ControlledShadowExecutionHarness:
         )
         provider_request_id = response.provider_request_id or request.request_identity
         observation_id = f"controlled-shadow-observation:{_digest((auth.controlled_shadow_run_id, provider_request_id, normalized_digest))[:32]}"
-        attestation = self._canonical_attestation_payload(
-            auth,
-            provider,
-            plan.fixture_identity["fixture_key"],
-            provider_event_id,
-            provider_request_id,
-            adapter_version,
-            adapter_sha,
-            cascade_digest,
-            raw_digest,
-            normalized_digest,
-            captured_at,
-        )
         observation = RealProviderObservation(
             observation_id=observation_id,
             qualification_session_id=auth.qualification_session_id,
-            evidence_kind=response.evidence_kind,
+            evidence_kind=evidence_kind,
             provider_identity=provider,
             provider_event_id=provider_event_id,
             provider_request_id=provider_request_id,
@@ -1896,7 +1959,7 @@ class ControlledShadowExecutionHarness:
             quota_cost_units=attempts[-1].quota_cost_units or 0.0,
             network_request_count=1,
             delayed_observation=response.delayed_observation,
-            capture_attestation=attestation,
+            capture_attestation=None,
         )
         observation.validate_structural()
         normalized = NormalizedOddsObservation(
@@ -1940,7 +2003,7 @@ class ControlledShadowExecutionHarness:
             delay_seconds=response.delay_seconds,
             metadata={
                 "controlled_shadow_run_id": auth.controlled_shadow_run_id,
-                "capture_attestation_digest": _digest(attestation),
+                "evidence_mode": TransportCapability.TEST_INJECTED.value,
                 **(
                     {"delay_semantics": "official delayed exchange snapshot"}
                     if response.delayed_observation
@@ -1951,40 +2014,6 @@ class ControlledShadowExecutionHarness:
         )
         normalized.validate(require_fresh=False)
         return observation, normalized
-
-    @staticmethod
-    def _canonical_attestation_payload(
-        auth: ControlledShadowRunAuthorizationV1,
-        provider: str,
-        fixture_key: str,
-        event_id: str,
-        request_id: str,
-        adapter_version: str,
-        adapter_sha: str,
-        cascade_digest: str,
-        raw_digest: str,
-        normalized_digest: str,
-        captured_at: datetime,
-    ) -> dict[str, object]:
-        return {
-            "controlled_shadow_run_id": auth.controlled_shadow_run_id,
-            "ceo_authorization_id": auth.authorization_id,
-            "qualification_session_id": auth.qualification_session_id,
-            "provider_identity": provider,
-            "fixture_key": fixture_key,
-            "provider_event_id": event_id,
-            "provider_request_id": request_id,
-            "adapter_version": adapter_version,
-            "adapter_source_sha": adapter_sha,
-            "cascade_evidence_digest": cascade_digest,
-            "raw_response_digest": raw_digest,
-            "normalized_record_digest": normalized_digest,
-            "captured_at": captured_at,
-            "network_execution": True,
-            "no_bet": True,
-            "publication": False,
-            "monetary_spend_authorized": False,
-        }
 
     def _build_attestation(
         self,
@@ -2005,6 +2034,7 @@ class ControlledShadowExecutionHarness:
     ) -> ControlledShadowCaptureAttestationV1:
         response = run.attempt_response
         provider = run.provider
+        evidence_kind = _validated_injected_evidence_kind(response.evidence_kind)
         event_id = (
             response.provider_event_id
             or f"not-executed:{_digest(run.attempt_request.request_identity)[:16]}"
@@ -2083,6 +2113,10 @@ class ControlledShadowExecutionHarness:
             publication=False,
             production_activation=False,
             captured_at=run.attempt_end,
+            transport_capability=TransportCapability.TEST_INJECTED.value,
+            evidence_mode=TransportCapability.TEST_INJECTED.value,
+            network_execution=False,
+            evidence_kind=evidence_kind,
         )
         attestation.validate()
         return attestation
@@ -2092,6 +2126,7 @@ __all__ = [
     "AUTHORIZATION_SCHEMA_VERSION",
     "CAPTURE_ATTESTATION_SCHEMA_VERSION",
     "EXECUTION_BANNERS",
+    "TEST_CAPTURE_ATTESTATION_SCHEMA_VERSION",
     "ControlledShadowCaptureAttestationV1",
     "ControlledShadowExecutionHarness",
     "ControlledShadowExecutionResult",

@@ -45,5 +45,12 @@ the stored evidence; a conflicting or already-in-flight replay fails closed.
 
 The harness emits deterministic run evidence and, when an injected response
 contains a complete observation, the existing provider-neutral observation
-contracts. It does not create predictions, live signals, publication records,
-bets, or qualification authority.
+contract with non-real evidence (`MOCK`, `TEST_FIXTURE`, or
+`OFFLINE_REPLAY`). It never copies or emits `REAL_OBSERVED` from a test
+transport. The harness attestation is a distinct test-only schema with
+`transport_capability=TEST_INJECTED`, `evidence_mode=TEST_INJECTED`, and
+`network_execution=false`; the observation carries no canonical capture
+attestation. Therefore the output cannot enter the canonical Builder-2
+real-observation qualification or receipt path. It does not create
+predictions, live signals, publication records, bets, or qualification
+authority.
