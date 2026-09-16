@@ -8,9 +8,12 @@ activation path.
 
 The session accepts only a provider-neutral `NormalizedProviderObservation`.
 Builder 4 adapters serialize the observation and an independent accepted
-`top5-provider-cascade-validation-*` receipt. The session does not import or
-select a provider router. An eligible observation is rejected unless the
-receipt explicitly allows prediction input and names the same provider.
+`top5-provider-cascade-validation-v1` receipt. The receipt is bound to its
+receipt ID, fixture, provider, observation digest, cascade-trace digest,
+explicit provenance mode, selected provider, and zero errors. The session does
+not import or select a provider router. An eligible observation is rejected
+unless the receipt explicitly allows prediction input and names the same
+provider. TEST receipts cannot establish REAL_OBSERVED provenance.
 
 Each accepted observation is bound to:
 
@@ -32,7 +35,8 @@ default runtime store. `OFFLINE_REPLAY` and unknown modes are rejected.
 
 The state machine is `CREATED -> OBSERVING -> PREDICTIONS_RECORDED ->
 AWAITING_RESULTS`, with explicit partial/result/closing states before
-`COMPLETE`; empty or unusable input becomes `FAILED_CLOSED`. Results may be
+`COMPLETE`; empty or unusable input becomes `FAILED_CLOSED`. Persisted status
+must agree with the artifacts present and cannot regress. Results may be
 `FINAL`, `POSTPONED`, `CANCELLED`, or `ABANDONED`. Final results cannot precede
 kickoff, and closing timestamps must remain between signal capture and kickoff.
 
@@ -42,9 +46,13 @@ Session JSON is written through `RealShadowSessionStore` to the external
 runtime state namespace `football/top5/shadow_sessions/`. It is not a ledger,
 offline replay artifact, or active-checkout file. Resume validates the session
 schema, every digest, every identity link, and append-only history before a
-new artifact can be written. The manifest contains counts, league coverage,
+new artifact can be written. The session core is immutable across save/resume,
+including experiment timing, model/research/integration identity, fixture mode,
+and safety flags. Each prediction is bound to that core and the session's
+signal-time contract. The manifest contains counts, honest rejected coverage,
 provider identities, pending results, safety markers, and a deterministic
-session digest.
+session digest. Network request counts and quota cost units remain separate;
+zero-network preflight is represented by `network_request_count=0`.
 
 `build_shadow_evidence()` emits Builder 2's `top5-shadow-evidence-v1`
 contract, including provider/cascade trace, signal-time, quota-cost, health,

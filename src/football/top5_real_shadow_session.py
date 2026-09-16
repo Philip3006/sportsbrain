@@ -1,13 +1,11 @@
 """Durable, provider-neutral orchestration for real Top-5 NO-BET shadow runs."""
 from __future__ import annotations
 
-import json
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
 
 from src.football.production_contracts import _utc
 from src.football.top5_real_shadow_attachments import (
@@ -16,7 +14,6 @@ from src.football.top5_real_shadow_attachments import (
     RealShadowResultStatus,
 )
 from src.football.top5_real_shadow_contracts import (
-    REAL_SHADOW_SESSION_NAMESPACE,
     REAL_SHADOW_SESSION_SCHEMA,
     TEST_FIXTURE_MARKER,
     TOP5_REAL_SHADOW_LEAGUES,
@@ -31,8 +28,6 @@ from src.football.top5_real_shadow_contracts import (
 )
 from src.football.top5_research_binding import FROZEN_RESEARCH_SHA, M5_CANDIDATE_ID
 from src.football.top5_shadow_integration import run_offline_top5_shadow
-from src.runtime.paths import runtime_state_path
-from src.utils.atomic_io import atomic_write_json
 
 
 class RealShadowSessionStatus(str, Enum):
@@ -95,23 +90,25 @@ def _stable_session_id(session_key: str, experiment: RealShadowExperiment, integ
 @dataclass(frozen=True)
 class RejectionRecord:
     fixture_key: str
+    league_code: str
+    provider_identity: str
     observation_digest: str
     reason: str
     rejected_at: datetime
 
     def validate(self) -> None:
-        if not self.fixture_key.strip() or not self.observation_digest.strip() or not self.reason.strip():
+        if not self.fixture_key.strip() or not self.league_code.strip() or not self.provider_identity.strip() or not self.observation_digest.strip() or not self.reason.strip():
             raise RealShadowContractError("rejection record lacks provenance")
         _utc(self.rejected_at, "rejected_at")
 
     def as_payload(self) -> dict[str, object]:
         self.validate()
-        return {"fixture_key": self.fixture_key, "observation_digest": self.observation_digest, "reason": self.reason, "rejected_at": self.rejected_at.isoformat()}
+        return {"fixture_key": self.fixture_key, "league_code": self.league_code, "provider_identity": self.provider_identity, "observation_digest": self.observation_digest, "reason": self.reason, "rejected_at": self.rejected_at.isoformat()}
 
     @classmethod
     def from_payload(cls, payload: object) -> RejectionRecord:
         raw = payload if isinstance(payload, Mapping) else {}
-        return cls(raw.get("fixture_key", ""), raw.get("observation_digest", ""), raw.get("reason", ""), _parse_datetime(raw.get("rejected_at"), "rejected_at"))
+        return cls(raw.get("fixture_key", ""), raw.get("league_code", ""), raw.get("provider_identity", ""), raw.get("observation_digest", ""), raw.get("reason", ""), _parse_datetime(raw.get("rejected_at"), "rejected_at"))
 
 
 @dataclass
@@ -167,14 +164,13 @@ class RealShadowSession:
             self.completed_at = self.completed_at or max(event_times)
 
     def _rejection(self, observation: NormalizedProviderObservation, reason: str) -> None:
-        record = RejectionRecord(observation.fixture_key, observation.observation_digest(), reason, observation.captured_at)
+        record = RejectionRecord(observation.fixture_key, observation.league_code, observation.provider_identity, observation.observation_digest(), reason, observation.captured_at)
         record.validate()
         self.rejections[observation.fixture_key] = record
 
     def record_observation(self, observation: NormalizedProviderObservation) -> bool:
         if self.status not in {RealShadowSessionStatus.CREATED, RealShadowSessionStatus.OBSERVING}:
             raise RealShadowContractError("observations cannot be added after prediction finalization")
-        observation.validate(self.experiment)
         digest = observation.observation_digest()
         old = self.observations.get(observation.fixture_key)
         if old is not None:
@@ -182,6 +178,7 @@ class RealShadowSession:
                 self.duplicate_suppressed += 1
                 return False
             raise RealShadowContractError("conflicting observation for fixture")
+        observation.validate(self.experiment)
         if self.status is RealShadowSessionStatus.CREATED:
             self._transition(RealShadowSessionStatus.OBSERVING)
             self.started_at = observation.captured_at
@@ -200,6 +197,9 @@ class RealShadowSession:
         if not self.experiment.signal_time.accepts(observation.kickoff_utc, observation.source_timestamp, observation.captured_at):
             self._rejection(observation, "signal-time experiment rejected observation")
             return True
+        return True
+
+    def _record_prediction(self, observation: NormalizedProviderObservation) -> None:
         integration = run_offline_top5_shadow(
             observation.league_code,
             (observation.fixture(),),
@@ -211,8 +211,9 @@ class RealShadowSession:
         )
         if len(integration.predictions) != 1:
             self._rejection(observation, "M5 did not produce exactly one prediction")
-            return True
+            return
         pipeline_prediction = integration.predictions[0]
+        digest = observation.observation_digest()
         prediction_id = _digest({"session_id": self.session_id, "fixture_key": observation.fixture_key, "observation": digest})[:32]
         prediction = RealShadowPredictionArtifact(
             prediction_id=f"real-shadow-prediction:{prediction_id}", session_id=self.session_id,
@@ -232,12 +233,18 @@ class RealShadowSession:
         object.__setattr__(prediction, "artifact_sha", _digest(prediction._payload()))
         prediction.validate()
         self.predictions[prediction.prediction_id] = prediction
-        return True
 
     def finalize_predictions(self) -> None:
         if self.status not in {RealShadowSessionStatus.OBSERVING, RealShadowSessionStatus.PREDICTIONS_RECORDED}:
             raise RealShadowContractError("session is not ready to finalize predictions")
-        if not self.observations or not self.predictions:
+        if not self.observations:
+            self._transition(RealShadowSessionStatus.FAILED_CLOSED)
+            return
+        if self.status is RealShadowSessionStatus.OBSERVING:
+            for observation in tuple(self.observations.values()):
+                if observation.eligibility_state == "eligible" and observation.fixture_key not in self.rejections:
+                    self._record_prediction(observation)
+        if not self.predictions:
             self._transition(RealShadowSessionStatus.FAILED_CLOSED)
             return
         if self.status is RealShadowSessionStatus.OBSERVING:
@@ -285,16 +292,26 @@ class RealShadowSession:
         return True
 
     def _refresh_status(self) -> None:
+        target = self._status_for_artifacts()
+        if target is not self.status:
+            self._transition(target)
+
+    def _status_for_artifacts(self) -> RealShadowSessionStatus:
+        if not self.observations:
+            return RealShadowSessionStatus.CREATED
+        if not self.predictions:
+            return RealShadowSessionStatus.OBSERVING
         total = len(self.predictions)
         finals = sum(RealShadowResultStatus(item.status) is RealShadowResultStatus.FINAL for item in self.results.values())
-        if total and finals == total and len(self.closings) == total:
-            self._transition(RealShadowSessionStatus.COMPLETE)
-        elif finals == total and total:
-            self._transition(RealShadowSessionStatus.RESULTS_RESOLVED)
-        elif self.results:
-            self._transition(RealShadowSessionStatus.PARTIALLY_RESOLVED)
-        elif self.closings:
-            self._transition(RealShadowSessionStatus.CLOSING_ATTACHED)
+        if finals == total and len(self.closings) == total:
+            return RealShadowSessionStatus.COMPLETE
+        if finals == total:
+            return RealShadowSessionStatus.RESULTS_RESOLVED
+        if self.results:
+            return RealShadowSessionStatus.PARTIALLY_RESOLVED
+        if self.closings:
+            return RealShadowSessionStatus.CLOSING_ATTACHED
+        return RealShadowSessionStatus.AWAITING_RESULTS
 
     def validate(self) -> None:
         try:
@@ -318,6 +335,8 @@ class RealShadowSession:
             raise RealShadowContractError("session violates NO-BET safety")
         if not isinstance(self.fixture_mode, bool):
             raise RealShadowContractError("fixture_mode must be boolean")
+        if self.status is RealShadowSessionStatus.CREATED and (self.observations or self.predictions or self.rejections or self.results or self.closings or self.started_at is not None or self.completed_at is not None):
+            raise RealShadowContractError("created session cannot contain lifecycle artifacts")
         for fixture_key, observation in self.observations.items():
             if fixture_key != observation.fixture_key or observation.league_code not in TOP5_REAL_SHADOW_LEAGUES:
                 raise RealShadowContractError("observation identity or scope changed")
@@ -329,16 +348,23 @@ class RealShadowSession:
             observation = self.observations.get(prediction.fixture_key)
             if observation is None or prediction.observation_digest != observation.observation_digest():
                 raise RealShadowContractError("prediction is not bound to its observed input")
+            if prediction.session_id != self.session_id or prediction.integration_sha != self.integration_sha or prediction.research_sha != self.research_sha or prediction.model_identity != self.model_identity:
+                raise RealShadowContractError("prediction is not bound to immutable session identity")
+            if (prediction.signal_time_contract_id, prediction.minimum_lead_minutes, prediction.maximum_lead_minutes, prediction.maximum_odds_age_seconds, prediction.kickoff_tolerance_seconds) != (self.experiment.contract_id, self.experiment.minimum_lead_minutes, self.experiment.maximum_lead_minutes, self.experiment.maximum_odds_age_seconds, self.experiment.kickoff_tolerance_seconds):
+                raise RealShadowContractError("prediction signal-time contract differs from session experiment")
             if prediction.marker != observation.observation_mode:
                 raise RealShadowContractError("offline replay artifact entered real-shadow session")
             if prediction.marker == TEST_FIXTURE_MARKER and not self.fixture_mode:
                 raise RealShadowContractError("test fixture entered a real-shadow session")
         for observation in self.observations.values():
             has_prediction = any(item.fixture_key == observation.fixture_key for item in self.predictions.values())
-            if observation.eligibility_state == "eligible" and not has_prediction and observation.fixture_key not in self.rejections:
+            if self.status not in {RealShadowSessionStatus.CREATED, RealShadowSessionStatus.OBSERVING} and observation.eligibility_state == "eligible" and not has_prediction and observation.fixture_key not in self.rejections:
                 raise RealShadowContractError("eligible observation has no prediction or rejection")
-        for rejection in self.rejections.values():
+        for fixture_key, rejection in self.rejections.items():
             rejection.validate()
+            observation = self.observations.get(fixture_key)
+            if observation is None or rejection.fixture_key != fixture_key or rejection.league_code != observation.league_code or rejection.provider_identity != observation.provider_identity or rejection.observation_digest != observation.observation_digest():
+                raise RealShadowContractError("rejection is not bound to its observed input")
         for result in self.results.values():
             result.validate()
             prediction = self.predictions.get(result.prediction_id)
@@ -357,6 +383,14 @@ class RealShadowSession:
                 raise RealShadowContractError("closing is outside the signal-to-kickoff window")
             if closing.attached_at < prediction.captured_at:
                 raise RealShadowContractError("closing attachment precedes observed prediction")
+        if self.status is RealShadowSessionStatus.FAILED_CLOSED:
+            if self.predictions or self.results or self.closings:
+                raise RealShadowContractError("failed-closed session cannot contain progression artifacts")
+        else:
+            expected = self._status_for_artifacts()
+            transient = self.status is RealShadowSessionStatus.PREDICTIONS_RECORDED and expected is RealShadowSessionStatus.AWAITING_RESULTS
+            if self.status is not expected and not transient:
+                raise RealShadowContractError(f"session status {self.status.value} is incoherent with persisted artifacts")
         if self.status is RealShadowSessionStatus.COMPLETE and (len(self.predictions) == 0 or len(self.results) != len(self.predictions) or len(self.closings) != len(self.predictions)):
             raise RealShadowContractError("complete session is missing append-only attachments")
 
@@ -395,6 +429,22 @@ class RealShadowSession:
         }
         return _digest(semantic)
 
+    def immutable_core(self) -> dict[str, object]:
+        return {
+            "session_id": self.session_id,
+            "schema": self.session_schema_version,
+            "created_at": self.created_at.isoformat(),
+            "league_scope": list(self.league_scope),
+            "experiment": self.experiment.as_payload(),
+            "integration_sha": self.integration_sha,
+            "research_sha": self.research_sha,
+            "model_identity": self.model_identity,
+            "fixture_mode": self.fixture_mode,
+            "no_bet": self.no_bet,
+            "publication": self.publication,
+            "activation": self.activation,
+        }
+
     def as_payload(self) -> dict[str, object]:
         self.validate()
         return {"schema": self.session_schema_version, "session": self.manifest(), "experiment": self.experiment.as_payload(), "observations": [self.observations[key].as_payload() for key in sorted(self.observations)], "predictions": [self.predictions[key].as_payload() for key in sorted(self.predictions)], "rejections": [self.rejections[key].as_payload() for key in sorted(self.rejections)], "results": [self.results[key].as_payload() for key in sorted(self.results)], "closings": [self.closings[key].as_payload() for key in sorted(self.closings)]}
@@ -405,7 +455,7 @@ class RealShadowSession:
         manifest = raw.get("session") if isinstance(raw.get("session"), Mapping) else {}
         exp_raw = raw.get("experiment") if isinstance(raw.get("experiment"), Mapping) else {}
         experiment = RealShadowExperiment(exp_raw.get("experiment_id", ""), exp_raw.get("minimum_lead_minutes", -1), exp_raw.get("maximum_lead_minutes", -1), exp_raw.get("maximum_odds_age_seconds", -1), exp_raw.get("kickoff_tolerance_seconds", -1))
-        session = cls(manifest.get("session_id", ""), raw.get("schema", ""), _parse_datetime(manifest.get("created_at"), "created_at"), _parse_datetime(manifest.get("started_at"), "started_at") if manifest.get("started_at") else None, _parse_datetime(manifest.get("completed_at"), "completed_at") if manifest.get("completed_at") else None, RealShadowSessionStatus(manifest.get("status", "")), tuple(manifest.get("league_scope", ())), experiment, manifest.get("integration_sha", ""), manifest.get("research_sha", ""), manifest.get("model_identity", ""), fixture_mode=manifest.get("fixture_mode", False))
+        session = cls(manifest.get("session_id", ""), raw.get("schema", ""), _parse_datetime(manifest.get("created_at"), "created_at"), _parse_datetime(manifest.get("started_at"), "started_at") if manifest.get("started_at") else None, _parse_datetime(manifest.get("completed_at"), "completed_at") if manifest.get("completed_at") else None, RealShadowSessionStatus(manifest.get("status", "")), tuple(manifest.get("league_scope", ())), experiment, manifest.get("integration_sha", ""), manifest.get("research_sha", ""), manifest.get("model_identity", ""), no_bet=manifest.get("no_bet", False), publication=manifest.get("publication", True), activation=manifest.get("activation", True), fixture_mode=manifest.get("fixture_mode", False))
         session.observations = {item.fixture_key: item for item in (NormalizedProviderObservation.from_payload(item) for item in raw.get("observations", ())) }
         session.predictions = {item.prediction_id: item for item in (RealShadowPredictionArtifact.from_payload(item) for item in raw.get("predictions", ())) }
         session.rejections = {item.fixture_key: item for item in (RejectionRecord.from_payload(item) for item in raw.get("rejections", ())) }
@@ -414,52 +464,6 @@ class RealShadowSession:
         session.duplicate_suppressed = manifest.get("duplicate_suppressed", 0)
         session.validate()
         return session
-
-
-@dataclass(frozen=True)
-class RealShadowSessionStore:
-    """Atomic external store with append-only identity checks on resume."""
-
-    output_path: Path | None = None
-
-    def path_for(self, session_id: str) -> Path:
-        if self.output_path is not None:
-            path = self.output_path
-        else:
-            path = runtime_state_path(f"{REAL_SHADOW_SESSION_NAMESPACE}{session_id}.json", require_external=True)
-        active_root = Path(__file__).resolve().parents[2]
-        resolved = path.expanduser().resolve()
-        if resolved == active_root or active_root in resolved.parents:
-            raise RealShadowContractError("real-shadow store cannot use the active checkout")
-        if "offline_replay" in str(resolved) or "ledger" in str(resolved).lower():
-            raise RealShadowContractError("real-shadow store cannot use offline or ledger paths")
-        return path
-
-    def save(self, session: RealShadowSession) -> Path:
-        session.validate()
-        if session.fixture_mode and self.output_path is None:
-            raise RealShadowContractError("test fixture sessions require an explicit test output path")
-        path = self.path_for(session.session_id)
-        if path.exists():
-            existing = self.load(session.session_id)
-            for name in ("observations", "predictions", "rejections", "results", "closings"):
-                old = getattr(existing, name)
-                new = getattr(session, name)
-                if any(key not in new or new[key] != value for key, value in old.items()):
-                    raise RealShadowContractError(f"session {name} cannot be removed or rewritten")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        atomic_write_json(path, session.as_payload())
-        return path
-
-    def load(self, session_id: str) -> RealShadowSession:
-        path = self.path_for(session_id)
-        if not path.is_file():
-            raise RealShadowContractError("real-shadow session artifact is missing")
-        try:
-            payload = json.loads(path.read_text())
-        except (OSError, ValueError) as exc:
-            raise RealShadowContractError("real-shadow session artifact is unreadable") from exc
-        return RealShadowSession.from_payload(payload)
 
 
 def build_session_from_payload(payload: Mapping[str, object], *, experiment: RealShadowExperiment, session_key: str, integration_sha: str, created_at: datetime, fixture_mode: bool = False) -> RealShadowSession:
@@ -473,4 +477,4 @@ def build_session_from_payload(payload: Mapping[str, object], *, experiment: Rea
     return session
 
 
-__all__ = ["RealShadowSession", "RealShadowSessionStatus", "RealShadowSessionStore", "RejectionRecord", "build_session_from_payload"]
+__all__ = ["RealShadowSession", "RealShadowSessionStatus", "RejectionRecord", "build_session_from_payload"]

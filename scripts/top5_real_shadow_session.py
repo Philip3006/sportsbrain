@@ -7,10 +7,8 @@ from datetime import datetime
 from pathlib import Path
 
 from src.football.top5_real_shadow_contracts import RealShadowExperiment
-from src.football.top5_real_shadow_session import (
-    RealShadowSessionStore,
-    build_session_from_payload,
-)
+from src.football.top5_real_shadow_session import build_session_from_payload
+from src.football.top5_real_shadow_session_storage import RealShadowSessionStore
 
 
 def _parser() -> argparse.ArgumentParser:

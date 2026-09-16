@@ -12,6 +12,7 @@ from src.football.top5_real_shadow_attachments import (
     RealShadowResultStatus,
 )
 from src.football.top5_real_shadow_contracts import (
+    CASCADE_VALIDATION_CONTRACT_VERSION,
     FROZEN_RESEARCH_SHA,
     M5_CANDIDATE_ID,
     OFFLINE_REPLAY_MARKER,
@@ -21,6 +22,7 @@ from src.football.top5_real_shadow_contracts import (
     NormalizedProviderObservation,
     RealShadowContractError,
     RealShadowExperiment,
+    _digest,
 )
 from src.football.top5_real_shadow_session import (
     RealShadowSession,
@@ -42,7 +44,7 @@ def experiment() -> RealShadowExperiment:
 
 def observation(league: str = "BL1", *, fixture_key: str | None = None, eligible: bool = True, mode: str = TEST_FIXTURE_MARKER) -> NormalizedProviderObservation:
     fixture = fixture_key or f"{league}:fixture-001"
-    return NormalizedProviderObservation(
+    base = NormalizedProviderObservation(
         league_code=league,
         fixture_key=fixture,
         provider_fixture_id=f"provider-{fixture}",
@@ -67,14 +69,28 @@ def observation(league: str = "BL1", *, fixture_key: str | None = None, eligible
         eligibility_state="eligible" if eligible else "rejected",
         signal_snapshot_id=f"signal-{fixture}",
         observation_mode=mode,
-        independent_validation={
-            "accepted": True,
-            "prediction_input_allowed": True,
-            "contract_version": "top5-provider-cascade-validation-v1",
-            "selected_provider": "provider-a",
-            "errors": [],
-        } if eligible else None,
+        independent_validation=None,
     )
+    if not eligible:
+        return base
+    return replace(base, independent_validation={
+        "contract_version": CASCADE_VALIDATION_CONTRACT_VERSION,
+        "receipt_id": f"validation-receipt:{fixture}",
+        "fixture_key": base.fixture_key,
+        "provider_identity": base.provider_identity,
+        "observation_digest": base.observation_digest(),
+        "cascade_trace_digest": _digest(base.cascade_trace),
+        "provenance_mode": mode,
+        "provenance": {
+            "contract_version": CASCADE_VALIDATION_CONTRACT_VERSION,
+            "provenance_mode": mode,
+        },
+        "accepted": True,
+        "prediction_input_allowed": True,
+        "selected_provider": base.provider_identity,
+        "errors": [],
+        "monetary_spend_authorized": False,
+    })
 
 
 def make_session(*, scope: tuple[str, ...] = ("BL1",), fixture_mode: bool = True) -> RealShadowSession:
@@ -85,6 +101,38 @@ def make_session(*, scope: tuple[str, ...] = ("BL1",), fixture_mode: bool = True
         integration_sha=INTEGRATION_SHA,
         created_at=BASE,
         fixture_mode=fixture_mode,
+    )
+
+
+def final_result(prediction, suffix: str = "final") -> RealShadowResultAttachment:
+    return RealShadowResultAttachment(
+        prediction_id=prediction.prediction_id,
+        prediction_artifact_sha=prediction.artifact_sha,
+        fixture_key=prediction.fixture_key,
+        league_code=prediction.league_code,
+        result_source="provider-results",
+        provider_result_id=f"result-{suffix}",
+        result_timestamp=prediction.kickoff,
+        attached_at=prediction.kickoff + timedelta(minutes=1),
+        status=RealShadowResultStatus.FINAL,
+        home_score=2,
+        away_score=1,
+        actual_outcome="home",
+    )
+
+
+def closing_attachment(prediction, suffix: str = "closing") -> RealShadowClosingAttachment:
+    return RealShadowClosingAttachment(
+        prediction_id=prediction.prediction_id,
+        prediction_artifact_sha=prediction.artifact_sha,
+        fixture_key=prediction.fixture_key,
+        league_code=prediction.league_code,
+        closing_source="closing-provider",
+        bookmaker="bookmaker-a",
+        closing_timestamp=prediction.kickoff - timedelta(minutes=5),
+        attached_at=prediction.kickoff + timedelta(minutes=1),
+        odds={"home": 2.0, "draw": 3.5, "away": 3.4},
+        closing_snapshot_id=f"closing-{suffix}",
     )
 
 
@@ -126,12 +174,57 @@ def test_duplicate_observation_is_idempotent_but_conflict_fails_closed() -> None
     with pytest.raises(RealShadowContractError, match="conflicting observation"):
         session.record_observation(replace(first, home_odds=2.3))
 
-
-def test_validation_receipt_is_required_for_eligible_prediction_input() -> None:
-    invalid = replace(observation(), independent_validation=None)
-    with pytest.raises(RealShadowContractError, match="independent accepted validation"):
+@pytest.mark.parametrize("invalid_receipt", [None, True])
+def test_validation_receipt_is_required_for_eligible_prediction_input(invalid_receipt) -> None:
+    with pytest.raises(RealShadowContractError, match="validation|mapping"):
+        invalid = replace(observation(), independent_validation=invalid_receipt)
         invalid.validate(experiment())
 
+@pytest.mark.parametrize("field", ("fixture_key", "provider_identity", "observation_digest", "cascade_trace_digest"))
+def test_validation_receipt_is_bound_to_exact_observation(field: str) -> None:
+    item = observation()
+    receipt = dict(item.independent_validation or {})
+    receipt[field] = "wrong"
+    with pytest.raises(RealShadowContractError, match="validation"):
+        replace(item, independent_validation=receipt).validate(experiment())
+
+
+def test_validation_receipt_cannot_be_reused_for_another_fixture() -> None:
+    first = observation(fixture_key="BL1:fixture-a")
+    second = observation(fixture_key="BL1:fixture-b")
+    with pytest.raises(RealShadowContractError, match="fixture"):
+        replace(second, independent_validation=first.independent_validation).validate(experiment())
+
+def test_validation_receipt_cannot_upgrade_test_provenance_to_real() -> None:
+    item = observation(mode=TEST_FIXTURE_MARKER)
+    receipt = dict(item.independent_validation or {})
+    receipt["provenance_mode"] = REAL_OBSERVED_MARKER
+    receipt["provenance"] = {"contract_version": CASCADE_VALIDATION_CONTRACT_VERSION, "provenance_mode": REAL_OBSERVED_MARKER}
+    with pytest.raises(RealShadowContractError, match="provenance"):
+        replace(item, independent_validation=receipt).validate(experiment())
+
+def test_validation_receipt_rejects_errors_and_spend_authorization() -> None:
+    item = observation()
+    receipt = dict(item.independent_validation or {})
+    receipt["errors"] = ["provider_failed"]
+    with pytest.raises(RealShadowContractError, match="errors"):
+        replace(item, independent_validation=receipt).validate(experiment())
+    receipt["errors"] = []
+    receipt["accepted"] = False
+    with pytest.raises(RealShadowContractError, match="accepted"):
+        replace(item, independent_validation=receipt).validate(experiment())
+    receipt = dict(item.independent_validation or {})
+    receipt["monetary_spend_authorized"] = True
+    with pytest.raises(RealShadowContractError, match="spend"):
+        replace(item, independent_validation=receipt).validate(experiment())
+
+
+def test_network_request_count_and_quota_cost_are_separate() -> None:
+    item = observation()
+    item.validate(experiment())
+    assert item.network_request_count == 1
+    assert item.request_cost_units == 0.0
+    assert "request_count" not in item.as_payload()
 
 def test_rejected_provider_observation_fails_closed_without_prediction() -> None:
     session = make_session()
@@ -140,6 +233,64 @@ def test_rejected_provider_observation_fails_closed_without_prediction() -> None
     assert session.status is RealShadowSessionStatus.FAILED_CLOSED
     assert not session.predictions
     assert session.rejections["BL1:fixture-001"].reason
+
+
+def test_rejection_provenance_and_manifest_cover_rejected_only_and_mixed_leagues() -> None:
+    rejected = make_session(scope=("BL1", "EPL"))
+    rejected.record_observation(observation("BL1", eligible=False))
+    rejected.record_observation(observation("EPL", fixture_key="EPL:fixture-rejected", eligible=False))
+    rejected.finalize_predictions()
+    ShadowEvidenceBundle.from_payload(build_shadow_evidence(rejected)).validate()
+    assert rejected.manifest()["coverage_by_league"]["EPL"]["rejected"] == 1
+    assert rejected.rejections["EPL:fixture-rejected"].provider_identity == "provider-a"
+
+    mixed = make_session(scope=("BL1", "EPL"))
+    mixed.record_observation(observation("BL1"))
+    mixed.record_observation(observation("EPL", fixture_key="EPL:fixture-mixed", eligible=False))
+    mixed.finalize_predictions()
+    ShadowEvidenceBundle.from_payload(build_shadow_evidence(mixed)).validate()
+    assert mixed.manifest()["coverage_by_league"]["EPL"]["rejected"] == 1
+
+
+def test_lifecycle_state_coherence_is_explicit_and_terminal_progression_is_monotonic() -> None:
+    session = make_session(scope=("BL1", "EPL"))
+    session.validate()
+    session.record_observation(observation())
+    assert session.status is RealShadowSessionStatus.OBSERVING
+    session.validate()
+    session.status = RealShadowSessionStatus.CREATED
+    with pytest.raises(RealShadowContractError, match="created session"):
+        session.validate()
+    session.status = RealShadowSessionStatus.OBSERVING
+    session.finalize_predictions()
+    assert session.status is RealShadowSessionStatus.AWAITING_RESULTS
+    session.validate()
+    session.status = RealShadowSessionStatus.OBSERVING
+    with pytest.raises(RealShadowContractError, match="incoherent"):
+        session.validate()
+
+    session.status = RealShadowSessionStatus.AWAITING_RESULTS
+    prediction = next(iter(session.predictions.values()))
+    session.attach_closing(closing_attachment(prediction, "state"))
+    assert session.status is RealShadowSessionStatus.CLOSING_ATTACHED
+    session.attach_result(final_result(prediction, "state"))
+    assert session.status is RealShadowSessionStatus.COMPLETE
+
+
+def test_results_resolved_precedes_closing_completion_for_multiple_predictions() -> None:
+    session = make_session(scope=("BL1", "EPL"))
+    session.record_observation(observation("BL1"))
+    session.record_observation(observation("EPL", fixture_key="EPL:fixture-state"))
+    session.finalize_predictions()
+    predictions = list(session.predictions.values())
+    session.attach_result(final_result(predictions[0], "one"))
+    assert session.status is RealShadowSessionStatus.PARTIALLY_RESOLVED
+    session.attach_result(final_result(predictions[1], "two"))
+    assert session.status is RealShadowSessionStatus.RESULTS_RESOLVED
+    session.attach_closing(closing_attachment(predictions[0], "one"))
+    assert session.status is RealShadowSessionStatus.RESULTS_RESOLVED
+    session.attach_closing(closing_attachment(predictions[1], "two"))
+    assert session.status is RealShadowSessionStatus.COMPLETE
 
 
 def test_all_top5_leagues_are_isolated_and_evidence_validates() -> None:
@@ -333,6 +484,7 @@ def test_champions_league_input_is_rejected() -> None:
 def test_offline_replay_marker_cannot_enter_real_session() -> None:
     session = make_session()
     session.record_observation(observation())
+    session.finalize_predictions()
     prediction_id = next(iter(session.predictions))
     session.predictions[prediction_id] = replace(session.predictions[prediction_id], marker=OFFLINE_REPLAY_MARKER)
     with pytest.raises(RealShadowContractError, match="safety markers"):

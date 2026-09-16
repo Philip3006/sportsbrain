@@ -10,6 +10,7 @@ from src.football.top5_real_shadow_contracts import (
     M5_CANDIDATE_ID,
     _digest,
     _market_probabilities,
+    _thaw,
 )
 from src.football.top5_shadow_validation import (
     TOP5_VALIDATION_CONTRACT_VERSION,
@@ -102,7 +103,9 @@ def build_shadow_evidence(session: RealShadowSession) -> dict[str, object]:
                 "latency_ms": observation.latency_ms,
                 "odds_age_seconds": max(0.0, (observation.captured_at - observation.source_timestamp).total_seconds()),
                 "maximum_odds_age_seconds": float(session.experiment.maximum_odds_age_seconds),
-                "bulk_requests": observation.request_count,
+                "bulk_requests": observation.network_request_count,
+                "network_request_count": observation.network_request_count,
+                "quota_cost_units": observation.request_cost_units,
                 "fallback_requests": observation.fallback_depth,
                 "retry_count": 0,
                 "bulk_reused": True,
@@ -113,7 +116,7 @@ def build_shadow_evidence(session: RealShadowSession) -> dict[str, object]:
                 "eligible": True,
                 "odds_age_seconds": max(0.0, (observation.captured_at - observation.source_timestamp).total_seconds()),
                 "maximum_odds_age_seconds": float(session.experiment.maximum_odds_age_seconds),
-                "request_load": float(observation.request_count),
+                "request_load": float(observation.network_request_count),
                 "fallback_used": observation.fallback_depth > 0,
                 "stale_rejected": False,
                 "latency_ms": float(observation.latency_ms),
@@ -178,10 +181,10 @@ def build_shadow_evidence(session: RealShadowSession) -> dict[str, object]:
         "signal_time_evidence": signal_time_evidence,
         "quota_cost_evidence": [{
             "provenance": quota_provenance, "horizon": "session", "total_fixture_count": len(session.observations),
-            "logical_evaluations": len(session.predictions), "bulk_odds_requests": sum(item.request_count for item in session.observations.values()),
+            "logical_evaluations": len(session.predictions), "bulk_odds_requests": sum(item.network_request_count for item in session.observations.values()),
             "fallback_event_requests": sum(item.fallback_depth for item in session.observations.values()), "result_requests": 0,
             "revalidation_requests": 0, "closing_capture_requests": len(session.closings),
-            "raw_http_requests": sum(item.request_count for item in session.observations.values()) + len(session.closings),
+            "raw_http_requests": sum(item.network_request_count for item in session.observations.values()) + len(session.closings),
             "provider_cost_units": total_cost,
         }],
         "health_evidence": health_evidence,
@@ -193,10 +196,11 @@ def build_shadow_evidence(session: RealShadowSession) -> dict[str, object]:
             "fixture_key": item.fixture_key,
             "provider_identity": item.provider_identity,
             "trace": item.cascade_trace,
-            "validation_receipt": {
-                key: item.independent_validation.get(key)
-                for key in ("contract_version", "accepted", "prediction_input_allowed", "selected_provider", "errors")
-            } if item.independent_validation else None,
+            "observation_digest": item.observation_digest(),
+            "cascade_trace_digest": item.cascade_trace_digest(),
+            "validation_receipt": _thaw(item.independent_validation) if item.independent_validation else None,
+            "network_request_count": item.network_request_count,
+            "quota_cost_units": item.request_cost_units,
             "observation_mode": item.observation_mode,
         } for item in session.observations.values()],
     }

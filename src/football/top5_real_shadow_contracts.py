@@ -27,6 +27,7 @@ TEST_FIXTURE_MARKER = "TEST_FIXTURE"
 REAL_SHADOW_SESSION_SCHEMA = "top5-real-shadow-session-v1"
 REAL_SHADOW_SESSION_NAMESPACE = "football/top5/shadow_sessions/"
 CASCADE_VALIDATION_VERSION_PREFIX = "top5-provider-cascade-validation-"
+CASCADE_VALIDATION_CONTRACT_VERSION = "top5-provider-cascade-validation-v1"
 TOP5_REAL_SHADOW_LEAGUES = tuple(sorted(TOP5_LEAGUE_ADAPTERS))
 _OUTCOMES = ("away", "draw", "home")
 _SECRET_KEY_PARTS = (
@@ -196,7 +197,7 @@ class NormalizedProviderObservation:
     independent_validation: Mapping[str, object] | None
     observation_mode: str
     latency_ms: int = 0
-    request_count: int = 1
+    network_request_count: int = 1
     request_cost_units: float = 0.0
 
     def __post_init__(self) -> None:
@@ -238,11 +239,9 @@ class NormalizedProviderObservation:
         odds = (self.home_odds, self.draw_odds, self.away_odds)
         if any(not isfinite(float(value)) or float(value) <= 1.0 for value in odds):
             raise RealShadowContractError("observation odds must be finite and greater than one")
-        for name, value in (("provider_priority", self.provider_priority), ("fallback_depth", self.fallback_depth), ("latency_ms", self.latency_ms), ("request_count", self.request_count)):
+        for name, value in (("provider_priority", self.provider_priority), ("fallback_depth", self.fallback_depth), ("latency_ms", self.latency_ms), ("network_request_count", self.network_request_count)):
             if not isinstance(value, int) or isinstance(value, bool) or value < 0:
                 raise RealShadowContractError(f"{name} must be a non-negative integer")
-        if self.request_count == 0:
-            raise RealShadowContractError("request_count must be positive")
         if not isfinite(float(self.request_cost_units)) or self.request_cost_units < 0:
             raise RealShadowContractError("request_cost_units must be finite and non-negative")
         if self.eligibility_state not in {"eligible", "rejected"}:
@@ -255,19 +254,38 @@ class NormalizedProviderObservation:
 
     def _validate_independent_acceptance(self) -> None:
         receipt = self.independent_validation
-        if receipt is None or receipt.get("accepted") is not True or receipt.get("prediction_input_allowed") is not True:
-            raise RealShadowContractError("eligible observation requires an independent accepted validation receipt")
-        version = receipt.get("contract_version")
-        provenance = receipt.get("provenance")
-        if version is None and isinstance(provenance, Mapping):
-            version = provenance.get("contract_version")
-        if not isinstance(version, str) or not version.startswith(CASCADE_VALIDATION_VERSION_PREFIX):
+        if not isinstance(receipt, Mapping):
+            raise RealShadowContractError("eligible observation requires an independent accepted validation receipt with structured fields")
+        required = (
+            "contract_version", "receipt_id", "fixture_key", "provider_identity",
+            "observation_digest", "cascade_trace_digest", "provenance_mode",
+            "accepted", "prediction_input_allowed", "selected_provider", "errors",
+        )
+        if any(key not in receipt for key in required):
+            raise RealShadowContractError("validation receipt is incomplete")
+        if receipt.get("contract_version") != CASCADE_VALIDATION_CONTRACT_VERSION:
             raise RealShadowContractError("independent validation contract is missing or unsupported")
-        if receipt.get("selected_provider") != self.provider_identity:
+        _required_text(receipt.get("receipt_id"), "validation receipt_id")
+        if receipt.get("fixture_key") != self.fixture_key:
+            raise RealShadowContractError("validation fixture differs from observation")
+        if receipt.get("provider_identity") != self.provider_identity or receipt.get("selected_provider") != self.provider_identity:
             raise RealShadowContractError("validation selected provider differs from observation")
-        errors = receipt.get("errors", ())
-        if errors not in (None, (), [], {}):
+        if receipt.get("observation_digest") != self.observation_digest():
+            raise RealShadowContractError("validation receipt is bound to a different observation")
+        if receipt.get("cascade_trace_digest") != self.cascade_trace_digest():
+            raise RealShadowContractError("validation receipt is bound to a different cascade trace")
+        if receipt.get("provenance_mode") != self.observation_mode:
+            raise RealShadowContractError("validation provenance mode differs from observation")
+        provenance = receipt.get("provenance")
+        if not isinstance(provenance, Mapping) or provenance.get("contract_version") != CASCADE_VALIDATION_CONTRACT_VERSION or provenance.get("provenance_mode") != self.observation_mode:
+            raise RealShadowContractError("validation provenance is missing or mismatched")
+        if receipt.get("accepted") is not True or receipt.get("prediction_input_allowed") is not True:
+            raise RealShadowContractError("eligible observation requires an independently accepted prediction input")
+        errors = receipt.get("errors")
+        if not isinstance(errors, (list, tuple)) or errors:
             raise RealShadowContractError("accepted validation receipt contains errors")
+        if "monetary_spend_authorized" in receipt and receipt.get("monetary_spend_authorized") is not False:
+            raise RealShadowContractError("validation receipt cannot authorize monetary spend")
 
     def fixture(self) -> Fixture:
         return Fixture(self.fixture_key, self.league_code, self.home_team, self.away_team, self.kickoff_utc)
@@ -310,7 +328,7 @@ class NormalizedProviderObservation:
             "independent_validation": _thaw(self.independent_validation),
             "observation_mode": self.observation_mode,
             "latency_ms": self.latency_ms,
-            "request_count": self.request_count,
+            "network_request_count": self.network_request_count,
             "request_cost_units": self.request_cost_units,
         }
 
@@ -331,11 +349,16 @@ class NormalizedProviderObservation:
             eligibility_state=raw.get("eligibility_state", ""), signal_snapshot_id=raw.get("signal_snapshot_id", ""),
             independent_validation=raw.get("independent_validation"), latency_ms=raw.get("latency_ms", 0),
             observation_mode=raw.get("observation_mode", ""),
-            request_count=raw.get("request_count", 0), request_cost_units=raw.get("request_cost_units", 0.0),
+            network_request_count=raw.get("network_request_count", 0), request_cost_units=raw.get("request_cost_units", 0.0),
         )
 
     def observation_digest(self) -> str:
-        return _digest(self.as_payload())
+        payload = self.as_payload()
+        payload["independent_validation"] = None
+        return _digest(payload)
+
+    def cascade_trace_digest(self) -> str:
+        return _digest(self.cascade_trace)
 
 
 @dataclass(frozen=True)
@@ -444,6 +467,7 @@ class RealShadowPredictionArtifact:
 
 
 __all__ = [
+    "CASCADE_VALIDATION_CONTRACT_VERSION",
     "CASCADE_VALIDATION_VERSION_PREFIX",
     "FROZEN_RESEARCH_SHA",
     "M5_CANDIDATE_ID",
