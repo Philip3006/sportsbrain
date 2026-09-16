@@ -1052,6 +1052,12 @@ class ProviderQualificationReport:
 
     def validate(self) -> None:
         self.session.validate()
+        try:
+            ProviderQualificationStatus(self.qualification_status)
+        except (TypeError, ValueError) as exc:
+            raise QualificationContractError(
+                "report contains an invalid qualification status"
+            ) from exc
         if self.minimum_sample_policy is not None:
             self.minimum_sample_policy.validate()
         if self.signal_time_note != NO_PRODUCTION_SIGNAL_TIME_VALUES:
