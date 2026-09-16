@@ -443,6 +443,47 @@ function _formBadgesHtml(form) {
     ).join('') + '</span>';
 }
 
+const _FOOTBALL_LEAGUE_LABELS = {
+  bl1: '🇩🇪 Bundesliga',
+  bl2: '🇩🇪 2. Bundesliga',
+  epl: '🏴 Premier League',
+  ll: '🇪🇸 La Liga',
+  sa: '🇮🇹 Serie A',
+  l1: '🇫🇷 Ligue 1',
+  wm2026: '🌍 FIFA WM 2026',
+  ucl: '🏆 Champions League',
+  champions_league: '🏆 Champions League',
+  uefa_champs_league: '🏆 Champions League',
+  soccer_uefa_champs_league: '🏆 Champions League',
+};
+const _FOOTBALL_CL_KEYS = new Set([
+  'ucl', 'champions_league', 'uefa_champs_league', 'soccer_uefa_champs_league',
+]);
+
+function _footballLeagueLabel(league) {
+  return _FOOTBALL_LEAGUE_LABELS[String(league || '').toLowerCase()] || '⚽ Fußball';
+}
+
+function _footballCompatMetaHtml(s) {
+  const state = String(s.activation_state || s.activation_mode || '').toUpperCase();
+  const publication = String(s.publication_status || '').toUpperCase();
+  const result = String(s.result_status || s.settlement_status || '').toUpperCase();
+  const parts = [];
+  if (s.model_identity || s.model_version) parts.push(`Modell: ${esc(String(s.model_identity || s.model_version))}`);
+  if (s.prediction_timestamp) parts.push(`Prediction: ${esc(String(s.prediction_timestamp))}`);
+  if (state) parts.push(`State: ${esc(state)}`);
+  if (publication) parts.push(`Publish: ${esc(publication)}`);
+  if (result) parts.push(`Result: ${esc(result)}`);
+  if (s.source) parts.push(`Quelle: ${esc(String(s.source))}`);
+  if (s.source_age_seconds != null && Number.isFinite(Number(s.source_age_seconds))) {
+    parts.push(`Quellenalter: ${Math.max(0, Math.round(Number(s.source_age_seconds)))}s`);
+  }
+  if (s.stale_state) parts.push(`Freshness: ${esc(String(s.stale_state).toUpperCase())}`);
+  if (s.no_bet === true) parts.push('NO-BET');
+  if (!parts.length) return '';
+  return `<div class="football-compat-meta" style="font-size:9px;color:var(--muted);padding:2px 8px 5px;line-height:1.45">${parts.join(' · ')}</div>`;
+}
+
 function sigCard(s, showMatch) {
   const cls = s.confidence === 'HIGH' ? 'high' : 'medium';
   const evCls = s.ev_pct >= 10 ? 'ev-h' : 'ev-m';
@@ -450,6 +491,7 @@ function sigCard(s, showMatch) {
   const matchLine = showMatch
     ? `<div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px"><span>⚽</span><span>${esc(sh)}</span><span style="color:var(--muted)">vs</span><span>${esc(sa)}</span></div>`
     : '';
+  const compatMeta = _footballCompatMetaHtml(s);
   // P0-A: determine if this signal has a canonical identity for value-bet placement
   const _hasCanonicalId = !!(s.signal_id && s.signal_status === 'ACTIVE');
   const _isLegacySignal = !_hasCanonicalId;
@@ -555,6 +597,7 @@ function sigCard(s, showMatch) {
   const _escA = s => s.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
   return `<div class="sig-card ${cls}" style="cursor:pointer" data-match-home="${_escA(sh)}" data-match-away="${_escA(sa)}" onclick="if(!event.target.closest('.place-bet-btn,.why-inline,button,a'))_openMatchDetailFromSignal(this.dataset.matchHome,this.dataset.matchAway)">
     ${matchLine}
+    ${compatMeta}
     <div class="card-market" ${['ah-1.5_a','ah+1.5_b'].includes(s.market)||s.market.match(/^ah[+-]/) ? 'title="Satz-Handicap (SET handicap) — beim Buchmacher \'Sätze-Handicap\' wählen, NICHT \'Games-Handicap\'!"' : ''}>${marketLabel(s.market, s.match)}</div>
     ${_signalAgeHtml(s)}
     <div class="card-footer">
@@ -682,7 +725,7 @@ function _buildTopRecs24h(signals, nowMs) {
 
 function _topRecs24hHtml(signals, nowMs) {
   const picks = _buildTopRecs24h(signals, nowMs);
-  const leagueMap = { bl2: '2.BL', wm2026: 'WM', atp: 'ATP', wta: 'WTA', challenger: 'Chal.', itf: 'ITF' };
+  const leagueMap = { bl2: '2.BL', wm2026: 'WM', ucl: 'UCL', champions_league: 'UCL', uefa_champs_league: 'UCL', soccer_uefa_champs_league: 'UCL', atp: 'ATP', wta: 'WTA', challenger: 'Chal.', itf: 'ITF' };
 
   const picksHtml = picks.length === 0
     ? `<div class="toprec-empty">
@@ -989,9 +1032,8 @@ function renderHome() {
     // Group by competition within each day
     const comps = {};
     for (const g of group) {
-      const _leagueLabel = { bl2: '🇩🇪 2. Bundesliga', wm2026: '🌍 FIFA WM 2026' };
       const ck = g.sport === 'football'
-        ? (_leagueLabel[(g.league||'').toLowerCase()] || '⚽ Fußball')
+        ? _footballLeagueLabel(g.league)
         : (g.tour||'Tennis').toUpperCase();
       if (!comps[ck]) comps[ck] = { sport: g.sport, games: [] };
       comps[ck].games.push(g);
@@ -1067,7 +1109,7 @@ function _buildSportControls(sport, filter, totalAll, totalFiltered) {
   // Liga-Filter: nur für Football anzeigen (2.BL + WM trennbar)
   let ligaRow = '';
   if (sport === 'football') {
-    const ligaOptions = [['all','⚽ Alle'],['bl2','🇩🇪 2.BL'],['wm2026','🌍 WM']];
+    const ligaOptions = [['all','⚽ Alle'],['bl2','🇩🇪 2.BL'],['wm2026','🌍 WM'],['ucl','🏆 UCL']];
     const ligaChips = ligaOptions.map(([v, lbl]) => {
       const active = (filter.liga || 'all') === v ? ' active' : '';
       return `<span class="filter-chip${active}" data-sf="${sport}" data-key="liga" data-val="${v}" role="tab" tabindex="0" aria-selected="${(filter.liga||'all')===v}">${lbl}</span>`;
@@ -1111,6 +1153,7 @@ function renderSport(sport) {
       const sigLeague = (s.league || '').toLowerCase();
       if (filter.liga === 'bl2' && !['bl2', '2. bundesliga'].includes(sigLeague)) return false;
       if (filter.liga === 'wm2026' && !['wm2026', 'wm'].includes(sigLeague)) return false;
+      if (filter.liga === 'ucl' && !_FOOTBALL_CL_KEYS.has(sigLeague)) return false;
     }
     return true;
   });
@@ -2953,4 +2996,3 @@ function _walkEnd() {
   // Demo-Daten zurücksetzen, echte Live-Daten neu zeichnen
   try { _walkDemoDisable(); } catch {}
 }
-
