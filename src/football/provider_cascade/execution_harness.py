@@ -1,4 +1,4 @@
-"""Guarded, test-only execution harness for a Top-5 controlled shadow run.
+"""Guarded execution harness for a Top-5 controlled shadow run.
 
 The preparation contract is intentionally non-executable.  This module adds
 the narrow runtime seam needed after an independently supplied CEO
@@ -7,11 +7,10 @@ does not construct authorization, call a provider adapter, issue a
 qualification receipt, create a prediction, publish, bet, or mutate runtime
 state outside the supplied in-memory idempotency store.
 
-The harness is suitable for contract tests and for a future separately
-reviewed transport integration.  ``FakeControlledShadowTransport`` is the
-only transport implementation in this package.  ``RealProviderTransport`` is
-an explicit interface and is rejected by the harness unless a future caller
-deliberately supplies a test-marked implementation.
+The harness is suitable for contract tests and for a separately reviewed
+network transport integration.  ``FakeControlledShadowTransport`` remains a
+strictly non-real path.  ``NetworkCapableProviderTransport`` is a sealed
+runtime seam used by the separately reviewable real transport bridge.
 """
 
 from __future__ import annotations
@@ -43,6 +42,7 @@ from src.football.provider_cascade.preparation import (
     PreparationContractError,
 )
 from src.football.top5_controlled_shadow_provider_qualification import (
+    ControlledShadowCaptureAttestation,
     ObservationEvidenceKind,
     ProviderTimestampProvenance,
     RealProviderObservation,
@@ -127,6 +127,20 @@ def _validated_injected_evidence_kind(
     if evidence_kind not in _TEST_INJECTED_EVIDENCE_KINDS:
         raise HarnessExecutionBlocked(
             "REAL_OBSERVED is forbidden for TEST_INJECTED transport"
+        )
+    return evidence_kind
+
+
+def _validated_network_evidence_kind(value: object) -> ObservationEvidenceKind:
+    try:
+        evidence_kind = ObservationEvidenceKind(value)
+    except (TypeError, ValueError) as exc:
+        raise HarnessExecutionBlocked(
+            "network transport evidence kind is invalid"
+        ) from exc
+    if evidence_kind is not ObservationEvidenceKind.REAL_OBSERVED:
+        raise HarnessExecutionBlocked(
+            "NETWORK_CAPABLE success must provide REAL_OBSERVED evidence"
         )
     return evidence_kind
 
@@ -656,18 +670,40 @@ class ProviderTransportResponse:
     app_session_prerequisites: bool | None = None
     failure_detail: str = ""
     evidence_kind: ObservationEvidenceKind | str = ObservationEvidenceKind.MOCK
+    provider_timestamp_provenance: ProviderTimestampProvenance | str = (
+        ProviderTimestampProvenance.UNKNOWN
+    )
+    request_started_at: datetime | None = None
+    request_finished_at: datetime | None = None
     raw_metadata: Mapping[str, object] = field(default_factory=dict)
 
 
 @runtime_checkable
 class RealProviderTransport(Protocol):
-    """Explicit future transport interface; no implementation is shipped here."""
+    """Transport seam accepted by the controlled-shadow harness."""
 
     transport_capability: TransportCapability
 
     def execute(
         self, request: ProviderTransportRequest
     ) -> ProviderTransportResponse: ...
+
+
+class NetworkCapableProviderTransport:
+    """Runtime marker for the separately reviewed network bridge.
+
+    Merely setting ``transport_capability`` on a test double is insufficient:
+    the harness requires this concrete marker and an exact run validation hook.
+    """
+
+    transport_capability = TransportCapability.NETWORK_CAPABLE
+
+    def validate_for_run(
+        self,
+        preparation: ControlledShadowRunPreparationV1,
+        authorization: ControlledShadowRunAuthorizationV1,
+    ) -> None:
+        raise NotImplementedError
 
 
 TransportResponseFactory = Callable[
@@ -847,19 +883,27 @@ class ControlledShadowCaptureAttestationV1:
         _utc(self.captured_at, "captured_at")
         if self.schema_version != CAPTURE_ATTESTATION_SCHEMA_VERSION:
             raise HarnessContractError("unsupported capture attestation schema")
-        if self.transport_capability != TransportCapability.TEST_INJECTED.value:
+        try:
+            capability = TransportCapability(self.transport_capability)
+        except (TypeError, ValueError) as exc:
             raise HarnessExecutionBlocked(
-                "test attestation transport capability is not TEST_INJECTED"
-            )
-        if self.evidence_mode != TransportCapability.TEST_INJECTED.value:
-            raise HarnessExecutionBlocked(
-                "test attestation evidence mode is not TEST_INJECTED"
-            )
+                "attestation transport capability is invalid"
+            ) from exc
+        if self.evidence_mode != capability.value:
+            raise HarnessExecutionBlocked("attestation evidence mode is inconsistent")
         if self.network_execution is not False:
             raise HarnessExecutionBlocked(
-                "TEST_INJECTED attestation cannot claim network execution"
+                "test-only attestation cannot claim network execution"
             )
-        _validated_injected_evidence_kind(self.evidence_kind)
+        if capability is TransportCapability.TEST_INJECTED:
+            _validated_injected_evidence_kind(self.evidence_kind)
+        else:
+            try:
+                ObservationEvidenceKind(self.evidence_kind)
+            except (TypeError, ValueError) as exc:
+                raise HarnessExecutionBlocked(
+                    "network attestation evidence kind is invalid"
+                ) from exc
         if not self.configured_provider_order or any(
             provider not in self.configured_provider_order
             for provider in self.attempted_providers
@@ -1006,12 +1050,67 @@ class ControlledShadowExecutionResult:
             raise HarnessContractError(
                 "observation cannot exist without selected provider"
             )
+        try:
+            capability = TransportCapability(self.attestation.transport_capability)
+        except (TypeError, ValueError) as exc:
+            raise HarnessContractError(
+                "result transport capability is invalid"
+            ) from exc
         if self.observation is not None:
-            _validated_injected_evidence_kind(self.observation.evidence_kind)
-            if self.observation.capture_attestation is not None:
-                raise HarnessExecutionBlocked(
-                    "TEST_INJECTED observations cannot carry canonical capture attestation"
-                )
+            if capability is TransportCapability.TEST_INJECTED:
+                _validated_injected_evidence_kind(self.observation.evidence_kind)
+                if self.observation.capture_attestation is not None:
+                    raise HarnessExecutionBlocked(
+                        "TEST_INJECTED observations cannot carry canonical capture attestation"
+                    )
+            else:
+                _validated_network_evidence_kind(self.observation.evidence_kind)
+                if self.observation.capture_attestation is None:
+                    raise HarnessExecutionBlocked(
+                        "REAL_OBSERVED observations require canonical capture attestation"
+                    )
+                try:
+                    canonical = (
+                        self.observation.capture_attestation
+                        if isinstance(
+                            self.observation.capture_attestation,
+                            ControlledShadowCaptureAttestation,
+                        )
+                        else ControlledShadowCaptureAttestation.from_payload(
+                            self.observation.capture_attestation
+                        )
+                    )
+                    canonical.validate()
+                except (TypeError, ValueError, ProductionContractError) as exc:
+                    raise HarnessExecutionBlocked(
+                        "network observation has an invalid canonical capture attestation"
+                    ) from exc
+                if (
+                    canonical.controlled_shadow_run_id
+                    != self.authorization.controlled_shadow_run_id
+                    or canonical.ceo_authorization_id
+                    != self.authorization.authorization_id
+                    or canonical.qualification_session_id
+                    != self.authorization.qualification_session_id
+                    or canonical.provider_identity != self.observation.provider_identity
+                    or canonical.fixture_key != self.observation.fixture_key
+                    or canonical.provider_event_id != self.observation.provider_event_id
+                    or canonical.provider_request_id
+                    != self.observation.provider_request_id
+                    or canonical.adapter_version != self.observation.adapter_version
+                    or canonical.adapter_source_sha.lower()
+                    != self.observation.adapter_source_sha.lower()
+                    or canonical.cascade_evidence_digest.lower()
+                    != evidence_digest(self.cascade_evidence).lower()
+                    or canonical.raw_response_digest.lower()
+                    != self.observation.raw_response_digest.lower()
+                    or canonical.normalized_record_digest.lower()
+                    != self.observation.normalized_record_digest.lower()
+                    or canonical.captured_at != self.observation.captured_at
+                ):
+                    raise HarnessExecutionBlocked(
+                        "network observation attestation is not bound to this run"
+                    )
             self.observation.validate_structural()
         if self.normalized_observation is not None:
             self.normalized_observation.validate(require_fresh=False)
@@ -1131,6 +1230,7 @@ class _ProviderRun:
     odds_count: int
     failure_evidence: list[str]
     selected: bool = False
+    transport_capability: TransportCapability = TransportCapability.TEST_INJECTED
 
 
 def _outcome(
@@ -1212,9 +1312,15 @@ class ControlledShadowExecutionHarness:
         now = self.clock()
         self.validate_run(plan, auth)
         capability = getattr(transport, "transport_capability", None)
-        if capability is not TransportCapability.TEST_INJECTED:
+        if capability is TransportCapability.NETWORK_CAPABLE:
+            if not isinstance(transport, NetworkCapableProviderTransport):
+                raise HarnessExecutionBlocked(
+                    "NETWORK_CAPABLE transport must be the reviewed network bridge"
+                )
+            transport.validate_for_run(plan, auth)
+        elif capability is not TransportCapability.TEST_INJECTED:
             raise HarnessExecutionBlocked(
-                "only an explicitly injected test transport is accepted"
+                "transport capability is not an accepted injected test transport or reviewed network bridge"
             )
         fingerprint = _digest(
             {
@@ -1242,7 +1348,7 @@ class ControlledShadowExecutionHarness:
                 quota_cost_units=replay.quota_cost_units,
                 failure_evidence=replay.failure_evidence,
             )
-        result = self._execute_claimed(plan, auth, transport, now)
+        result = self._execute_claimed(plan, auth, transport, now, capability)
         self.runtime_state.complete(auth.controlled_shadow_run_id, fingerprint, result)
         return result
 
@@ -1252,6 +1358,7 @@ class ControlledShadowExecutionHarness:
         auth: ControlledShadowRunAuthorizationV1,
         transport: RealProviderTransport,
         run_start: datetime,
+        capability: TransportCapability,
     ) -> ControlledShadowExecutionResult:
         manifests = {item.provider: item for item in plan.providers}
         budget = _BudgetLedger(
@@ -1298,6 +1405,7 @@ class ControlledShadowExecutionHarness:
                     0,
                     0,
                     0,
+                    transport_capability=capability,
                 )
             elif manifest.credential_present is not True:
                 response = ProviderTransportResponse(
@@ -1315,6 +1423,7 @@ class ControlledShadowExecutionHarness:
                     0,
                     0,
                     0,
+                    transport_capability=capability,
                 )
             elif (
                 not manifest.executable or manifest.expected_network_request_count == 0
@@ -1340,6 +1449,7 @@ class ControlledShadowExecutionHarness:
                     0,
                     0,
                     quota_override=manifest.current_known_quota,
+                    transport_capability=capability,
                 )
             else:
                 run = self._run_provider(
@@ -1350,6 +1460,7 @@ class ControlledShadowExecutionHarness:
                     budget,
                     run_start,
                     step,
+                    capability,
                 )
             step += 1
             attempted_providers.append(provider)
@@ -1396,6 +1507,7 @@ class ControlledShadowExecutionHarness:
                 cascade_digest,
                 run_start,
                 attempts,
+                capability,
             )
         total_requests = discovery_count + odds_count
         total_cost = budget.cost
@@ -1419,6 +1531,7 @@ class ControlledShadowExecutionHarness:
                 total_requests,
                 total_cost,
                 tuple(failures),
+                capability,
             )
             for run in attempt_runs
         )
@@ -1454,6 +1567,7 @@ class ControlledShadowExecutionHarness:
         budget: _BudgetLedger,
         run_start: datetime,
         step: int,
+        capability: TransportCapability,
     ) -> _ProviderRun:
         provider = manifest.provider
         actions = tuple(
@@ -1539,15 +1653,54 @@ class ControlledShadowExecutionHarness:
                     failure_detail=f"transport failure: {type(exc).__name__}",
                 )
             finished = started + timedelta(milliseconds=1)
+            if (
+                capability is TransportCapability.NETWORK_CAPABLE
+                and response.request_started_at is not None
+            ):
+                try:
+                    started = _utc(response.request_started_at, "request_started_at")
+                    finished = _utc(
+                        response.request_finished_at or started,
+                        "request_finished_at",
+                    )
+                    if finished < started:
+                        raise HarnessContractError(
+                            "network transport response timing is invalid"
+                        )
+                except (HarnessContractError, TypeError, ValueError) as exc:
+                    failure_evidence.append(
+                        f"{provider}:{action_kind.value}:RESPONSE_TIMING_INVALID"
+                    )
+                    last_response = ProviderTransportResponse(
+                        **{
+                            **response.__dict__,
+                            "outcome": CascadeOutcome.MALFORMED,
+                            "evidence_kind": ObservationEvidenceKind.MOCK,
+                            "failure_detail": str(exc),
+                        }
+                    )
+                    last_request = request
+                    last_start = started
+                    last_end = finished
+                    break
             last_request = request
             last_response = response
             last_start = started
             last_end = finished
             try:
-                _validated_injected_evidence_kind(response.evidence_kind)
+                outcome = _outcome(response.outcome)
+                if capability is TransportCapability.TEST_INJECTED:
+                    _validated_injected_evidence_kind(response.evidence_kind)
+                elif outcome is CascadeOutcome.SUCCESS:
+                    _validated_network_evidence_kind(response.evidence_kind)
+                elif response.evidence_kind == ObservationEvidenceKind.REAL_OBSERVED:
+                    raise HarnessExecutionBlocked(
+                        "failed network response cannot claim REAL_OBSERVED evidence"
+                    )
             except HarnessExecutionBlocked as exc:
                 failure_evidence.append(
-                    f"{provider}:{action_kind.value}:INJECTED_EVIDENCE_REJECTED"
+                    f"{provider}:{action_kind.value}:"
+                    f"{('INJECTED_EVIDENCE_REJECTED' if capability is TransportCapability.TEST_INJECTED else 'EVIDENCE_BOUNDARY_REJECTED')}"
                 )
                 last_response = ProviderTransportResponse(
                     **{
@@ -1681,6 +1834,7 @@ class ControlledShadowExecutionHarness:
             discovery_done,
             odds_done,
             failure_evidence,
+            transport_capability=capability,
         )
 
     def _synthetic_run(
@@ -1697,6 +1851,7 @@ class ControlledShadowExecutionHarness:
         cost: float,
         *,
         quota_override: Mapping[str, object] | None = None,
+        transport_capability: TransportCapability = TransportCapability.TEST_INJECTED,
     ) -> _ProviderRun:
         request = ProviderTransportRequest(
             controlled_shadow_run_id=auth.controlled_shadow_run_id,
@@ -1726,6 +1881,7 @@ class ControlledShadowExecutionHarness:
             discovery_count,
             odds_count,
             [f"{provider}:{_outcome(response.outcome).value}:{detail}"],
+            transport_capability=transport_capability,
         )
 
     def _to_cascade_attempt(
@@ -1876,12 +2032,126 @@ class ControlledShadowExecutionHarness:
         cascade_digest: str,
         run_start: datetime,
         attempts: Sequence[CascadeAttempt],
+        capability: TransportCapability,
     ) -> tuple[RealProviderObservation, NormalizedOddsObservation]:
         if _outcome(response.outcome) is not CascadeOutcome.SUCCESS:
             raise HarnessExecutionBlocked(
                 "a failed provider cannot produce an observation"
             )
-        evidence_kind = _validated_injected_evidence_kind(response.evidence_kind)
+        if capability is TransportCapability.TEST_INJECTED:
+            evidence_kind = _validated_injected_evidence_kind(response.evidence_kind)
+            source_timestamp = response.source_timestamp or attempts[
+                -1
+            ].capture_timestamp - timedelta(seconds=1)
+            adapter_version = (
+                response.adapter_version or auth.adapter_version_scope[provider]
+            )
+            adapter_sha = (
+                response.adapter_source_sha or auth.adapter_source_sha_scope[provider]
+            )
+            raw_digest = response.raw_response_digest or _digest(
+                {
+                    "provider": provider,
+                    "request": request.request_identity,
+                    "odds": [
+                        response.home_odds,
+                        response.draw_odds,
+                        response.away_odds,
+                    ],
+                }
+            )
+            normalized_digest = response.normalized_record_digest or _digest(
+                {
+                    "provider": provider,
+                    "fixture": plan.fixture_identity["fixture_key"],
+                    "odds": [
+                        response.home_odds,
+                        response.draw_odds,
+                        response.away_odds,
+                    ],
+                    "source": source_timestamp.isoformat(),
+                }
+            )
+            provider_event_id = (
+                response.provider_event_id
+                or f"{provider}:event:{_digest(request.request_identity)[:16]}"
+            )
+            provider_request_id = (
+                response.provider_request_id or request.request_identity
+            )
+            bookmaker_identity = response.bookmaker_identity or "injected-bookmaker"
+            source_identity = response.source_identity or provider
+            timestamp_provenance = ProviderTimestampProvenance.PROVIDER_SOURCE_TIMESTAMP
+            capture_attestation = None
+            evidence_mode = TransportCapability.TEST_INJECTED.value
+        else:
+            evidence_kind = _validated_network_evidence_kind(response.evidence_kind)
+            if response.source_timestamp is None:
+                raise HarnessExecutionBlocked(
+                    f"{provider}: canonical source timestamp is missing"
+                )
+            if (
+                response.request_started_at is None
+                or response.request_finished_at is None
+            ):
+                raise HarnessExecutionBlocked(
+                    f"{provider}: canonical request timing provenance is missing"
+                )
+            source_timestamp = response.source_timestamp
+            adapter_version = _text(response.adapter_version, "adapter_version")
+            adapter_sha = _sha(response.adapter_source_sha, "adapter_source_sha")
+            raw_digest = _sha(response.raw_response_digest, "raw_response_digest")
+            normalized_digest = _sha(
+                response.normalized_record_digest, "normalized_record_digest"
+            )
+            provider_event_id = _text(response.provider_event_id, "provider_event_id")
+            provider_request_id = _text(
+                response.provider_request_id, "provider_request_id"
+            )
+            if provider_request_id != request.request_identity:
+                raise HarnessExecutionBlocked(
+                    f"{provider}: provider request identity does not match the run request"
+                )
+            bookmaker_identity = _text(
+                response.bookmaker_identity, "bookmaker_identity"
+            )
+            source_identity = _text(response.source_identity, "source_identity")
+            try:
+                timestamp_provenance = ProviderTimestampProvenance(
+                    response.provider_timestamp_provenance
+                )
+            except (TypeError, ValueError) as exc:
+                raise HarnessExecutionBlocked(
+                    f"{provider}: provider timestamp provenance is invalid"
+                ) from exc
+            if timestamp_provenance in {
+                ProviderTimestampProvenance.CAPTURE_TIME_ONLY,
+                ProviderTimestampProvenance.UNKNOWN,
+            }:
+                raise HarnessExecutionBlocked(
+                    f"{provider}: source timestamp provenance is not canonical"
+                )
+            capture_attestation = ControlledShadowCaptureAttestation(
+                controlled_shadow_run_id=auth.controlled_shadow_run_id,
+                ceo_authorization_id=auth.authorization_id,
+                qualification_session_id=auth.qualification_session_id,
+                provider_identity=provider,
+                fixture_key=plan.fixture_identity["fixture_key"],
+                provider_event_id=provider_event_id,
+                provider_request_id=provider_request_id,
+                adapter_version=adapter_version,
+                adapter_source_sha=adapter_sha,
+                cascade_evidence_digest=cascade_digest,
+                raw_response_digest=raw_digest,
+                normalized_record_digest=normalized_digest,
+                captured_at=attempts[-1].capture_timestamp,
+                network_execution=True,
+                no_bet=True,
+                publication=False,
+                monetary_spend_authorized=False,
+            )
+            capture_attestation.validate()
+            evidence_mode = TransportCapability.NETWORK_CAPABLE.value
         if any(
             value is None
             for value in (response.home_odds, response.draw_odds, response.away_odds)
@@ -1890,35 +2160,6 @@ class ControlledShadowExecutionHarness:
                 "complete 1X2 odds are required for an observation"
             )
         captured_at = attempts[-1].capture_timestamp
-        source_timestamp = response.source_timestamp or captured_at - timedelta(
-            seconds=1
-        )
-        adapter_version = (
-            response.adapter_version or auth.adapter_version_scope[provider]
-        )
-        adapter_sha = (
-            response.adapter_source_sha or auth.adapter_source_sha_scope[provider]
-        )
-        raw_digest = response.raw_response_digest or _digest(
-            {
-                "provider": provider,
-                "request": request.request_identity,
-                "odds": [response.home_odds, response.draw_odds, response.away_odds],
-            }
-        )
-        normalized_digest = response.normalized_record_digest or _digest(
-            {
-                "provider": provider,
-                "fixture": plan.fixture_identity["fixture_key"],
-                "odds": [response.home_odds, response.draw_odds, response.away_odds],
-                "source": source_timestamp.isoformat(),
-            }
-        )
-        provider_event_id = (
-            response.provider_event_id
-            or f"{provider}:event:{_digest(request.request_identity)[:16]}"
-        )
-        provider_request_id = response.provider_request_id or request.request_identity
         observation_id = f"controlled-shadow-observation:{_digest((auth.controlled_shadow_run_id, provider_request_id, normalized_digest))[:32]}"
         observation = RealProviderObservation(
             observation_id=observation_id,
@@ -1937,10 +2178,10 @@ class ControlledShadowExecutionHarness:
             home_odds=response.home_odds,
             draw_odds=response.draw_odds,
             away_odds=response.away_odds,
-            bookmaker_identity=response.bookmaker_identity or "injected-bookmaker",
-            source_identity=response.source_identity or provider,
+            bookmaker_identity=bookmaker_identity,
+            source_identity=source_identity,
             source_timestamp=source_timestamp,
-            provider_timestamp_provenance=ProviderTimestampProvenance.PROVIDER_SOURCE_TIMESTAMP,
+            provider_timestamp_provenance=timestamp_provenance,
             captured_at=captured_at,
             request_started_at=attempts[-1].start_timestamp,
             request_finished_at=attempts[-1].end_timestamp,
@@ -1959,7 +2200,7 @@ class ControlledShadowExecutionHarness:
             quota_cost_units=attempts[-1].quota_cost_units or 0.0,
             network_request_count=1,
             delayed_observation=response.delayed_observation,
-            capture_attestation=None,
+            capture_attestation=capture_attestation,
         )
         observation.validate_structural()
         normalized = NormalizedOddsObservation(
@@ -1974,7 +2215,7 @@ class ControlledShadowExecutionHarness:
             draw_odds=response.draw_odds,
             away_odds=response.away_odds,
             provider_identity=provider,
-            bookmaker_identity=response.bookmaker_identity or "injected-bookmaker",
+            bookmaker_identity=bookmaker_identity,
             source_timestamp=source_timestamp,
             captured_at=captured_at,
             request_identity=provider_request_id,
@@ -2003,7 +2244,7 @@ class ControlledShadowExecutionHarness:
             delay_seconds=response.delay_seconds,
             metadata={
                 "controlled_shadow_run_id": auth.controlled_shadow_run_id,
-                "evidence_mode": TransportCapability.TEST_INJECTED.value,
+                "evidence_mode": evidence_mode,
                 **(
                     {"delay_semantics": "official delayed exchange snapshot"}
                     if response.delayed_observation
@@ -2031,10 +2272,21 @@ class ControlledShadowExecutionHarness:
         total_requests: int,
         total_cost: float,
         failures: tuple[str, ...],
+        capability: TransportCapability,
     ) -> ControlledShadowCaptureAttestationV1:
         response = run.attempt_response
         provider = run.provider
-        evidence_kind = _validated_injected_evidence_kind(response.evidence_kind)
+        if capability is TransportCapability.TEST_INJECTED:
+            evidence_kind = _validated_injected_evidence_kind(response.evidence_kind)
+        elif _outcome(response.outcome) is CascadeOutcome.SUCCESS:
+            evidence_kind = _validated_network_evidence_kind(response.evidence_kind)
+        else:
+            try:
+                evidence_kind = ObservationEvidenceKind(response.evidence_kind)
+            except (TypeError, ValueError) as exc:
+                raise HarnessExecutionBlocked(
+                    "network failure evidence kind is invalid"
+                ) from exc
         event_id = (
             response.provider_event_id
             or f"not-executed:{_digest(run.attempt_request.request_identity)[:16]}"
@@ -2113,8 +2365,8 @@ class ControlledShadowExecutionHarness:
             publication=False,
             production_activation=False,
             captured_at=run.attempt_end,
-            transport_capability=TransportCapability.TEST_INJECTED.value,
-            evidence_mode=TransportCapability.TEST_INJECTED.value,
+            transport_capability=capability.value,
+            evidence_mode=capability.value,
             network_execution=False,
             evidence_kind=evidence_kind,
         )
@@ -2135,6 +2387,7 @@ __all__ = [
     "HarnessContractError",
     "HarnessExecutionBlocked",
     "InMemoryControlledShadowRuntimeState",
+    "NetworkCapableProviderTransport",
     "ProviderAction",
     "ProviderTransportRequest",
     "ProviderTransportResponse",

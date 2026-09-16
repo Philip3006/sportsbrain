@@ -57,6 +57,7 @@ from src.football.provider_cascade.execution_harness import (
     HarnessContractError,
     HarnessExecutionBlocked,
     InMemoryControlledShadowRuntimeState,
+    NetworkCapableProviderTransport,
     ProviderAction,
     ProviderTransportRequest,
     ProviderTransportResponse,
@@ -77,6 +78,9 @@ from src.football.provider_cascade.preparation import (
     load_preparation,
     preparation_from_input_payload,
     write_preparation,
+)
+from src.football.provider_cascade.real_transport_bridge import (
+    ConfiguredNetworkProviderTransport,
 )
 from src.football.provider_cascade.router import ProviderCascadeRouter
 from src.football.top5_builder2_qualification_receipt import (
@@ -105,6 +109,7 @@ __all__ = [
     "CascadeDecisionTrace",
     "CascadeResult",
     "CascadeTimingPolicy",
+    "ConfiguredNetworkProviderTransport",
     "ControlledShadowCaptureAttestationV1",
     "ControlledShadowExecutionHarness",
     "ControlledShadowExecutionResult",
@@ -115,6 +120,7 @@ __all__ = [
     "HarnessExecutionBlocked",
     "InMemoryControlledShadowRuntimeState",
     "NetworkAuthorizationContract",
+    "NetworkCapableProviderTransport",
     "NormalizedOddsObservation",
     "ObservationCompleteness",
     "OddsApiIoAdapter",
