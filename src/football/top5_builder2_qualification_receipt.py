@@ -284,7 +284,12 @@ class Builder2QualificationReceiptV1:
             ("receipt_digest", self.receipt_digest),
         ):
             _sha(value, name)
-        status = ProviderQualificationStatus(self.qualification_status)
+        try:
+            status = ProviderQualificationStatus(self.qualification_status)
+        except (TypeError, ValueError) as exc:
+            raise Builder2QualificationReceiptError(
+                "qualification status is invalid"
+            ) from exc
         if status is not ProviderQualificationStatus.REAL_OBSERVATION_VALIDATED:
             raise Builder2QualificationReceiptError(
                 "receipt requires REAL_OBSERVATION_VALIDATED"
