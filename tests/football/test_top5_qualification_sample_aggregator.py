@@ -15,9 +15,12 @@ from src.football.top5_controlled_shadow_provider_qualification import (
     qualify_provider_observations,
 )
 from src.football.top5_qualification_sample_aggregator import (
+    FAILURE_DIVERGENT_RECEIPT_ID_CONFLICT,
     FAILURE_DUPLICATE_OBSERVATION,
     FAILURE_DUPLICATE_RECEIPT,
     FAILURE_FIXTURE_PROVIDER_CONFLICT,
+    FAILURE_OBSERVATION_DIGEST_CONFLICT,
+    FAILURE_OBSERVATION_ID_CONFLICT,
     FAILURE_UNATTRIBUTED_LEAGUE,
     QUALIFICATION_SAMPLE_AGGREGATOR_SCHEMA_VERSION,
     Builder2QualificationSampleAggregatorError,
@@ -77,6 +80,26 @@ def _receipt_for_same_fixture_with_changed_provider_identity():
     return issue_builder2_qualification_receipt(report, observation, report.results[0])
 
 
+def _receipt_variant(receipt, **changes):
+    payload = receipt.as_payload()
+    payload.update(changes)
+    if "qualification_result_digest" in changes:
+        payload["qualification_receipt_id"] = (
+            f"b2qr-{payload['qualification_result_digest'][:24]}"
+        )
+    payload.pop("receipt_digest", None)
+    payload["receipt_digest"] = semantic_digest(payload)
+    return type(receipt).from_payload(payload)
+
+
+def _rehashed_report(report, **changes):
+    changed = replace(report, **changes)
+    return replace(
+        changed,
+        report_digest=semantic_digest(changed._payload(include_report_digest=False)),
+    )
+
+
 def test_valid_receipts_aggregate_counts_identities_provenance_and_safety() -> None:
     first_report, first_observation, first_result = _accepted()
     first = issue_builder2_qualification_receipt(
@@ -94,8 +117,13 @@ def test_valid_receipts_aggregate_counts_identities_provenance_and_safety() -> N
     assert report.total_valid_receipts == 2
     assert report.distinct_observation_count == 2
     assert report.distinct_fixture_count == 2
+    assert report.eligible_receipt_count == 2
+    assert report.eligible_distinct_observation_count == 2
+    assert report.eligible_distinct_fixture_count == 2
     assert report.per_league_counts == {"EPL": 2}
     assert report.per_provider_counts == {"the_odds_api": 2}
+    assert report.eligible_per_league_counts == {"EPL": 2}
+    assert report.eligible_per_provider_counts == {"the_odds_api": 2}
     assert report.controlled_shadow_run_ids == ("controlled-run-1",)
     assert report.qualification_session_ids == ("qualification-session-1",)
     assert report.ceo_authorization_ids == ("ceo-auth-1",)
@@ -124,6 +152,7 @@ def test_accepts_only_canonical_receipts_and_rejects_invalid_or_report_inputs() 
 
     report = aggregate_builder2_qualification_samples([receipt.as_payload()])
     assert report.total_valid_receipts == 1
+    assert report.eligible_receipt_count == 1
 
 
 def test_policy_is_caller_supplied_only_and_never_authorizes_production() -> None:
@@ -145,6 +174,8 @@ def test_policy_is_caller_supplied_only_and_never_authorizes_production() -> Non
         minimum_sample_policy=MinimumSamplePolicy(2, 2),
     )
     assert sufficient.sample_sufficient is True
+    assert sufficient.eligible_distinct_observation_count == 2
+    assert sufficient.eligible_distinct_fixture_count == 2
     assert sufficient.production_activation_authorized is False
 
     with pytest.raises(Builder2QualificationSampleAggregatorError):
@@ -161,6 +192,8 @@ def test_exact_duplicate_receipts_are_detected_and_not_counted_twice() -> None:
     assert report.input_receipt_count == 2
     assert report.total_valid_receipts == 1
     assert report.distinct_observation_count == 1
+    assert report.eligible_distinct_observation_count == 1
+    assert report.eligible_distinct_fixture_count == 1
     assert report.duplicate_receipt_ids == (receipt.qualification_receipt_id,)
     assert report.failure_taxonomy == {FAILURE_DUPLICATE_RECEIPT: 1}
 
@@ -180,7 +213,73 @@ def test_duplicate_observation_is_detected_even_when_receipt_ids_differ() -> Non
     assert report.distinct_observation_count == 1
     assert report.duplicate_observation_ids == (first.observation_id,)
     assert report.duplicate_observation_digests == (first.observation_digest,)
+    assert report.eligible_receipt_count == 1
+    assert report.eligible_distinct_observation_count == 1
+    assert report.eligible_distinct_fixture_count == 1
     assert report.failure_taxonomy == {FAILURE_DUPLICATE_OBSERVATION: 2}
+
+
+def test_divergent_receipt_id_variants_are_reported_and_never_eligible() -> None:
+    report, observation, result = _accepted()
+    receipt = issue_builder2_qualification_receipt(report, observation, result)
+    divergent = _receipt_variant(
+        receipt,
+        observation_id="divergent-observation",
+        observation_digest="d" * 64,
+    )
+    assert divergent.qualification_receipt_id == receipt.qualification_receipt_id
+    assert divergent.receipt_digest != receipt.receipt_digest
+
+    aggregated = aggregate_builder2_qualification_samples(
+        [receipt, divergent], minimum_sample_policy=MinimumSamplePolicy(1, 1)
+    )
+
+    assert aggregated.total_valid_receipts == 2
+    assert aggregated.distinct_observation_count == 2
+    assert aggregated.distinct_fixture_count == 1
+    assert aggregated.eligible_receipt_count == 0
+    assert aggregated.eligible_distinct_observation_count == 0
+    assert aggregated.eligible_distinct_fixture_count == 0
+    assert aggregated.divergent_receipt_ids == (receipt.qualification_receipt_id,)
+    assert aggregated.sample_sufficient is False
+    assert aggregated.failure_taxonomy == {
+        FAILURE_DUPLICATE_RECEIPT: 1,
+        FAILURE_DIVERGENT_RECEIPT_ID_CONFLICT: 1,
+    }
+
+
+def test_observation_identity_conflicts_are_excluded_from_eligible_evidence() -> None:
+    report, observation, result = _accepted()
+    receipt = issue_builder2_qualification_receipt(report, observation, result)
+    same_id_new_digest = _receipt_variant(
+        receipt,
+        qualification_result_digest="a" * 64,
+        observation_digest="b" * 64,
+    )
+    same_digest_new_id = _receipt_variant(
+        receipt,
+        qualification_result_digest="c" * 64,
+        observation_id="observation-conflict-other-id",
+    )
+
+    aggregated = aggregate_builder2_qualification_samples(
+        [receipt, same_id_new_digest, same_digest_new_id],
+        minimum_sample_policy=MinimumSamplePolicy(1, 1),
+    )
+
+    assert aggregated.distinct_observation_count == 3
+    assert aggregated.eligible_distinct_observation_count == 0
+    assert aggregated.eligible_distinct_fixture_count == 0
+    assert aggregated.observation_identity_conflict_ids == (receipt.observation_id,)
+    assert aggregated.observation_identity_conflict_digests == (
+        receipt.observation_digest,
+    )
+    assert aggregated.sample_sufficient is False
+    assert aggregated.failure_taxonomy == {
+        FAILURE_DUPLICATE_OBSERVATION: 2,
+        FAILURE_OBSERVATION_DIGEST_CONFLICT: 1,
+        FAILURE_OBSERVATION_ID_CONFLICT: 1,
+    }
 
 
 def test_fixture_provider_identity_conflict_is_reported() -> None:
@@ -202,6 +301,9 @@ def test_fixture_provider_identity_conflict_is_reported() -> None:
         first.provider_event_id,
         second.provider_event_id,
     }
+    assert report.distinct_fixture_count == 1
+    assert report.eligible_distinct_observation_count == 0
+    assert report.eligible_distinct_fixture_count == 0
     assert report.failure_taxonomy == {FAILURE_FIXTURE_PROVIDER_CONFLICT: 1}
 
 
@@ -215,12 +317,64 @@ def test_unattributed_fixture_has_no_invented_league_or_coverage_rate() -> None:
     unsigned["receipt_digest"] = semantic_digest(unsigned)
     changed = type(receipt).from_payload(unsigned)
 
-    report = aggregate_builder2_qualification_samples([changed])
+    report = aggregate_builder2_qualification_samples(
+        [changed], minimum_sample_policy=MinimumSamplePolicy(1, 1)
+    )
     assert report.per_league_counts == {}
+    assert report.distinct_fixture_count == 1
+    assert report.eligible_distinct_fixture_count == 0
+    assert report.eligible_distinct_observation_count == 0
     assert report.unattributed_fixture_keys == ("fixture-without-canonical-league",)
     assert report.failure_taxonomy == {FAILURE_UNATTRIBUTED_LEAGUE: 1}
     assert report.observation_coverage.supported is False
     assert report.observation_coverage.denominator is None
+    assert report.sample_sufficient is False
+
+
+def test_report_validation_rederives_counts_and_sufficiency_from_provenance() -> None:
+    first_report, first_observation, first_result = _accepted()
+    first = issue_builder2_qualification_receipt(
+        first_report, first_observation, first_result
+    )
+    second = _receipt_for_fixture(1)
+    report = aggregate_builder2_qualification_samples(
+        [first, second], minimum_sample_policy=MinimumSamplePolicy(2, 2)
+    )
+
+    tampered_fields = {
+        "input_receipt_count": report.input_receipt_count + 1,
+        "total_valid_receipts": report.total_valid_receipts + 1,
+        "distinct_observation_count": report.distinct_observation_count + 1,
+        "distinct_fixture_count": report.distinct_fixture_count + 1,
+        "eligible_receipt_count": report.eligible_receipt_count + 1,
+        "eligible_distinct_observation_count": (
+            report.eligible_distinct_observation_count + 1
+        ),
+        "eligible_distinct_fixture_count": report.eligible_distinct_fixture_count + 1,
+        "per_league_counts": {"EPL": 3},
+        "per_provider_counts": {"the_odds_api": 3},
+        "eligible_per_league_counts": {"EPL": 3},
+        "eligible_per_provider_counts": {"the_odds_api": 3},
+    }
+    for field_name, value in tampered_fields.items():
+        with pytest.raises(Builder2QualificationSampleAggregatorError):
+            _rehashed_report(report, **{field_name: value}).validate()
+
+    insufficient = aggregate_builder2_qualification_samples(
+        [first], minimum_sample_policy=MinimumSamplePolicy(2, 2)
+    )
+    with pytest.raises(Builder2QualificationSampleAggregatorError):
+        _rehashed_report(insufficient, sample_sufficient=True).validate()
+
+    tampered_occurrence = replace(
+        report.receipt_provenance[0],
+        input_occurrence_count=report.receipt_provenance[0].input_occurrence_count + 1,
+    )
+    with pytest.raises(Builder2QualificationSampleAggregatorError):
+        _rehashed_report(
+            report,
+            receipt_provenance=(tampered_occurrence, *report.receipt_provenance[1:]),
+        ).validate()
 
 
 def test_aggregation_is_deterministic_across_input_order_and_round_trips() -> None:

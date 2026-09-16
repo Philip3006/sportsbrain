@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 
 from src.football.top5_builder2_qualification_receipt import (
     Builder2QualificationReceiptError,
@@ -34,6 +34,9 @@ SAMPLE_AGGREGATOR_SCHEMA_VERSION = QUALIFICATION_SAMPLE_AGGREGATOR_SCHEMA_VERSIO
 
 FAILURE_DUPLICATE_RECEIPT = "DUPLICATE_RECEIPT"
 FAILURE_DUPLICATE_OBSERVATION = "DUPLICATE_OBSERVATION"
+FAILURE_DIVERGENT_RECEIPT_ID_CONFLICT = "DIVERGENT_RECEIPT_ID_CONFLICT"
+FAILURE_OBSERVATION_DIGEST_CONFLICT = "OBSERVATION_DIGEST_CONFLICT"
+FAILURE_OBSERVATION_ID_CONFLICT = "OBSERVATION_ID_CONFLICT"
 FAILURE_FIXTURE_PROVIDER_CONFLICT = "FIXTURE_PROVIDER_CONFLICT"
 FAILURE_UNATTRIBUTED_LEAGUE = "UNATTRIBUTED_LEAGUE"
 
@@ -114,6 +117,8 @@ class Builder2QualificationReceiptProvenanceV1:
     adapter_version: str
     adapter_source_sha: str
     qualification_status: str
+    receipt_digest: str = ""
+    input_occurrence_count: int = 1
 
     @classmethod
     def from_receipt(
@@ -143,6 +148,8 @@ class Builder2QualificationReceiptProvenanceV1:
                 if hasattr(receipt.qualification_status, "value")
                 else str(receipt.qualification_status)
             ),
+            receipt_digest=receipt.receipt_digest,
+            input_occurrence_count=1,
         )
 
     def validate(self) -> None:
@@ -169,8 +176,17 @@ class Builder2QualificationReceiptProvenanceV1:
             ("cascade_evidence_digest", self.cascade_evidence_digest),
             ("capture_attestation_digest", self.capture_attestation_digest),
             ("adapter_source_sha", self.adapter_source_sha),
+            ("receipt_digest", self.receipt_digest),
         ):
             _sha(value, name)
+        if (
+            not isinstance(self.input_occurrence_count, int)
+            or isinstance(self.input_occurrence_count, bool)
+            or self.input_occurrence_count <= 0
+        ):
+            raise Builder2QualificationSampleAggregatorError(
+                "input_occurrence_count must be a positive integer"
+            )
 
     def as_payload(self) -> dict[str, object]:
         self.validate()
@@ -194,6 +210,8 @@ class Builder2QualificationReceiptProvenanceV1:
             "adapter_version": self.adapter_version,
             "adapter_source_sha": self.adapter_source_sha,
             "qualification_status": self.qualification_status,
+            "receipt_digest": self.receipt_digest,
+            "input_occurrence_count": self.input_occurrence_count,
         }
 
     @classmethod
@@ -219,6 +237,8 @@ class Builder2QualificationReceiptProvenanceV1:
             adapter_version=raw.get("adapter_version", ""),
             adapter_source_sha=raw.get("adapter_source_sha", ""),
             qualification_status=raw.get("qualification_status", ""),
+            receipt_digest=raw.get("receipt_digest", ""),
+            input_occurrence_count=raw.get("input_occurrence_count", 1),
         )
 
 
@@ -350,6 +370,278 @@ class Builder2EvidenceAvailabilityV1:
 
 
 @dataclass(frozen=True)
+class _DerivedProvenanceState:
+    """Re-derived report state; never populated from report counters."""
+
+    input_receipt_count: int
+    total_valid_receipts: int
+    distinct_observation_count: int
+    distinct_fixture_count: int
+    per_league_counts: dict[str, int]
+    per_provider_counts: dict[str, int]
+    controlled_shadow_run_ids: tuple[str, ...]
+    qualification_session_ids: tuple[str, ...]
+    ceo_authorization_ids: tuple[str, ...]
+    duplicate_receipt_ids: tuple[str, ...]
+    divergent_receipt_ids: tuple[str, ...]
+    duplicate_observation_ids: tuple[str, ...]
+    duplicate_observation_digests: tuple[str, ...]
+    observation_identity_conflict_ids: tuple[str, ...]
+    observation_identity_conflict_digests: tuple[str, ...]
+    fixture_provider_conflicts: tuple[Builder2FixtureProviderConflictV1, ...]
+    unattributed_fixture_keys: tuple[str, ...]
+    failure_taxonomy: dict[str, int]
+    eligible_receipt_count: int
+    eligible_distinct_observation_count: int
+    eligible_distinct_fixture_count: int
+    eligible_per_league_counts: dict[str, int]
+    eligible_per_provider_counts: dict[str, int]
+
+
+def _derive_provenance_state(
+    provenance: tuple[Builder2QualificationReceiptProvenanceV1, ...],
+) -> _DerivedProvenanceState:
+    """Derive every count and diagnostic from retained provenance rows."""
+
+    by_receipt_id: dict[str, list[Builder2QualificationReceiptProvenanceV1]] = (
+        defaultdict(list)
+    )
+    variant_keys: set[tuple[str, str]] = set()
+    for item in provenance:
+        variant_key = (item.qualification_receipt_id, item.receipt_digest)
+        if variant_key in variant_keys:
+            raise Builder2QualificationSampleAggregatorError(
+                "receipt provenance must contain one row per receipt ID/digest variant"
+            )
+        variant_keys.add(variant_key)
+        by_receipt_id[item.qualification_receipt_id].append(item)
+
+    duplicate_receipt_ids = tuple(
+        sorted(
+            receipt_id
+            for receipt_id, items in by_receipt_id.items()
+            if sum(item.input_occurrence_count for item in items) > 1
+        )
+    )
+    divergent_receipt_ids = tuple(
+        sorted(
+            receipt_id
+            for receipt_id, items in by_receipt_id.items()
+            if len({item.receipt_digest for item in items}) > 1
+        )
+    )
+
+    observation_id_digests: dict[str, set[str]] = defaultdict(set)
+    observation_digest_ids: dict[str, set[str]] = defaultdict(set)
+    fixture_provider_rows: dict[
+        tuple[str, str], list[Builder2QualificationReceiptProvenanceV1]
+    ] = defaultdict(list)
+    per_league_counts: dict[str, int] = defaultdict(int)
+    per_provider_counts: dict[str, int] = defaultdict(int)
+    fixture_keys: set[str] = set()
+    unattributed_fixture_keys: set[str] = set()
+
+    for item in provenance:
+        observation_id_digests[item.observation_id].add(item.observation_digest)
+        observation_digest_ids[item.observation_digest].add(item.observation_id)
+        fixture_provider_rows[(item.fixture_key, item.provider_identity)].append(item)
+        fixture_keys.add(item.fixture_key)
+        per_provider_counts[item.provider_identity] += 1
+        league = _fixture_league(item.fixture_key)
+        if league is None:
+            unattributed_fixture_keys.add(item.fixture_key)
+        else:
+            per_league_counts[league] += 1
+
+    duplicate_observation_ids = tuple(
+        sorted(
+            observation_id
+            for observation_id, digests in observation_id_digests.items()
+            if len(digests) > 0
+            and sum(1 for item in provenance if item.observation_id == observation_id)
+            > 1
+        )
+    )
+    duplicate_observation_digests = tuple(
+        sorted(
+            observation_digest
+            for observation_digest, observation_ids in observation_digest_ids.items()
+            if len(observation_ids) > 0
+            and sum(
+                1
+                for item in provenance
+                if item.observation_digest == observation_digest
+            )
+            > 1
+        )
+    )
+    observation_identity_conflict_ids = tuple(
+        sorted(
+            observation_id
+            for observation_id, digests in observation_id_digests.items()
+            if len(digests) > 1
+        )
+    )
+    observation_identity_conflict_digests = tuple(
+        sorted(
+            observation_digest
+            for observation_digest, observation_ids in observation_digest_ids.items()
+            if len(observation_ids) > 1
+        )
+    )
+
+    conflicts: list[Builder2FixtureProviderConflictV1] = []
+    conflicting_fixture_provider_keys: set[tuple[str, str]] = set()
+    for (fixture_key, provider_identity), items in fixture_provider_rows.items():
+        event_ids = tuple(sorted({item.provider_event_id for item in items}))
+        request_ids = tuple(sorted({item.provider_request_id for item in items}))
+        if len(event_ids) <= 1 and len(request_ids) <= 1:
+            continue
+        conflicting_fixture_provider_keys.add((fixture_key, provider_identity))
+        conflicts.append(
+            Builder2FixtureProviderConflictV1(
+                fixture_key=fixture_key,
+                provider_identity=provider_identity,
+                reason=(
+                    "one fixture/provider pair has multiple provider event or "
+                    "request identities"
+                ),
+                provider_event_ids=event_ids,
+                provider_request_ids=request_ids,
+                observation_ids=tuple(sorted({item.observation_id for item in items})),
+            )
+        )
+    fixture_provider_conflicts = tuple(
+        sorted(
+            conflicts,
+            key=lambda item: (item.fixture_key, item.provider_identity, item.reason),
+        )
+    )
+
+    conflicting_observation_ids = set(observation_identity_conflict_ids)
+    conflicting_observation_digests = set(observation_identity_conflict_digests)
+    candidate_rows = tuple(
+        item
+        for item in provenance
+        if item.qualification_receipt_id not in divergent_receipt_ids
+        and item.observation_id not in conflicting_observation_ids
+        and item.observation_digest not in conflicting_observation_digests
+        and (item.fixture_key, item.provider_identity)
+        not in conflicting_fixture_provider_keys
+        and item.fixture_key not in unattributed_fixture_keys
+    )
+    observation_fixture_keys: dict[tuple[str, str], set[str]] = defaultdict(set)
+    for item in candidate_rows:
+        observation_fixture_keys[(item.observation_id, item.observation_digest)].add(
+            item.fixture_key
+        )
+    stable_observation_pairs = {
+        observation_pair
+        for observation_pair, fixtures in observation_fixture_keys.items()
+        if len(fixtures) == 1
+    }
+    # A duplicate observation with contradictory fixture attribution cannot
+    # safely add either fixture.  A repeated observation on one fixture still
+    # contributes that observation and fixture exactly once.
+    eligible_rows = tuple(
+        item
+        for item in candidate_rows
+        if (item.observation_id, item.observation_digest) in stable_observation_pairs
+    )
+    eligible_observations = stable_observation_pairs
+    eligible_fixtures = {
+        next(iter(fixtures))
+        for observation_pair, fixtures in observation_fixture_keys.items()
+        if observation_pair in stable_observation_pairs
+    }
+    eligible_per_league_counts: dict[str, int] = defaultdict(int)
+    eligible_per_provider_counts: dict[str, int] = defaultdict(int)
+    eligible_provider_pairs = {
+        (
+            item.observation_id,
+            item.observation_digest,
+            item.provider_identity,
+        )
+        for item in eligible_rows
+    }
+    for _, _, provider_identity in eligible_provider_pairs:
+        eligible_per_provider_counts[provider_identity] += 1
+    eligible_league_pairs = {
+        (
+            item.observation_id,
+            item.observation_digest,
+            item.fixture_key,
+        )
+        for item in eligible_rows
+    }
+    for _, _, fixture_key in eligible_league_pairs:
+        league = _fixture_league(fixture_key)
+        if league is not None:
+            eligible_per_league_counts[league] += 1
+
+    failure_taxonomy: dict[str, int] = {}
+    if duplicate_receipt_ids:
+        failure_taxonomy[FAILURE_DUPLICATE_RECEIPT] = len(duplicate_receipt_ids)
+    if divergent_receipt_ids:
+        failure_taxonomy[FAILURE_DIVERGENT_RECEIPT_ID_CONFLICT] = len(
+            divergent_receipt_ids
+        )
+    duplicate_observation_signals = len(duplicate_observation_ids) + len(
+        duplicate_observation_digests
+    )
+    if duplicate_observation_signals:
+        failure_taxonomy[FAILURE_DUPLICATE_OBSERVATION] = duplicate_observation_signals
+    if observation_identity_conflict_ids:
+        failure_taxonomy[FAILURE_OBSERVATION_ID_CONFLICT] = len(
+            observation_identity_conflict_ids
+        )
+    if observation_identity_conflict_digests:
+        failure_taxonomy[FAILURE_OBSERVATION_DIGEST_CONFLICT] = len(
+            observation_identity_conflict_digests
+        )
+    if fixture_provider_conflicts:
+        failure_taxonomy[FAILURE_FIXTURE_PROVIDER_CONFLICT] = len(
+            fixture_provider_conflicts
+        )
+    if unattributed_fixture_keys:
+        failure_taxonomy[FAILURE_UNATTRIBUTED_LEAGUE] = len(unattributed_fixture_keys)
+
+    return _DerivedProvenanceState(
+        input_receipt_count=sum(item.input_occurrence_count for item in provenance),
+        total_valid_receipts=len(provenance),
+        distinct_observation_count=len(
+            {(item.observation_id, item.observation_digest) for item in provenance}
+        ),
+        distinct_fixture_count=len(fixture_keys),
+        per_league_counts=dict(sorted(per_league_counts.items())),
+        per_provider_counts=dict(sorted(per_provider_counts.items())),
+        controlled_shadow_run_ids=tuple(
+            sorted({item.controlled_shadow_run_id for item in provenance})
+        ),
+        qualification_session_ids=tuple(
+            sorted({item.qualification_session_id for item in provenance})
+        ),
+        ceo_authorization_ids=tuple(
+            sorted({item.ceo_authorization_id for item in provenance})
+        ),
+        duplicate_receipt_ids=duplicate_receipt_ids,
+        divergent_receipt_ids=divergent_receipt_ids,
+        duplicate_observation_ids=duplicate_observation_ids,
+        duplicate_observation_digests=duplicate_observation_digests,
+        observation_identity_conflict_ids=observation_identity_conflict_ids,
+        observation_identity_conflict_digests=observation_identity_conflict_digests,
+        fixture_provider_conflicts=fixture_provider_conflicts,
+        unattributed_fixture_keys=tuple(sorted(unattributed_fixture_keys)),
+        failure_taxonomy=dict(sorted(failure_taxonomy.items())),
+        eligible_receipt_count=len(eligible_observations),
+        eligible_distinct_observation_count=len(eligible_observations),
+        eligible_distinct_fixture_count=len(eligible_fixtures),
+        eligible_per_league_counts=dict(sorted(eligible_per_league_counts.items())),
+        eligible_per_provider_counts=dict(sorted(eligible_per_provider_counts.items())),
+    )
+
+
+@dataclass(frozen=True)
 class Builder2QualificationSampleReportV1:
     """Deterministic receipt sample report with no production authority."""
 
@@ -378,6 +670,14 @@ class Builder2QualificationSampleReportV1:
     publication: bool = False
     production_activation_authorized: bool = False
     report_digest: str = ""
+    eligible_receipt_count: int = 0
+    eligible_distinct_observation_count: int = 0
+    eligible_distinct_fixture_count: int = 0
+    eligible_per_league_counts: Mapping[str, int] = field(default_factory=dict)
+    eligible_per_provider_counts: Mapping[str, int] = field(default_factory=dict)
+    divergent_receipt_ids: tuple[str, ...] = ()
+    observation_identity_conflict_ids: tuple[str, ...] = ()
+    observation_identity_conflict_digests: tuple[str, ...] = ()
 
     def _payload(self, *, include_report_digest: bool) -> dict[str, object]:
         payload: dict[str, object] = {
@@ -413,6 +713,22 @@ class Builder2QualificationSampleReportV1:
             "no_bet": self.no_bet,
             "publication": self.publication,
             "production_activation_authorized": self.production_activation_authorized,
+            "eligible_receipt_count": self.eligible_receipt_count,
+            "eligible_distinct_observation_count": self.eligible_distinct_observation_count,
+            "eligible_distinct_fixture_count": self.eligible_distinct_fixture_count,
+            "eligible_per_league_counts": dict(
+                sorted(self.eligible_per_league_counts.items())
+            ),
+            "eligible_per_provider_counts": dict(
+                sorted(self.eligible_per_provider_counts.items())
+            ),
+            "divergent_receipt_ids": list(self.divergent_receipt_ids),
+            "observation_identity_conflict_ids": list(
+                self.observation_identity_conflict_ids
+            ),
+            "observation_identity_conflict_digests": list(
+                self.observation_identity_conflict_digests
+            ),
         }
         if include_report_digest:
             payload["report_digest"] = self.report_digest
@@ -482,6 +798,30 @@ class Builder2QualificationSampleReportV1:
                 "production_activation_authorized"
             ),
             report_digest=raw.get("report_digest", ""),
+            eligible_receipt_count=raw.get("eligible_receipt_count", -1),
+            eligible_distinct_observation_count=raw.get(
+                "eligible_distinct_observation_count", -1
+            ),
+            eligible_distinct_fixture_count=raw.get(
+                "eligible_distinct_fixture_count", -1
+            ),
+            eligible_per_league_counts=(
+                raw.get("eligible_per_league_counts", {})
+                if isinstance(raw.get("eligible_per_league_counts", {}), Mapping)
+                else {}
+            ),
+            eligible_per_provider_counts=(
+                raw.get("eligible_per_provider_counts", {})
+                if isinstance(raw.get("eligible_per_provider_counts", {}), Mapping)
+                else {}
+            ),
+            divergent_receipt_ids=tuple(raw.get("divergent_receipt_ids", ())),
+            observation_identity_conflict_ids=tuple(
+                raw.get("observation_identity_conflict_ids", ())
+            ),
+            observation_identity_conflict_digests=tuple(
+                raw.get("observation_identity_conflict_digests", ())
+            ),
         )
 
     def validate(self) -> None:
@@ -494,6 +834,12 @@ class Builder2QualificationSampleReportV1:
             ("total_valid_receipts", self.total_valid_receipts),
             ("distinct_observation_count", self.distinct_observation_count),
             ("distinct_fixture_count", self.distinct_fixture_count),
+            ("eligible_receipt_count", self.eligible_receipt_count),
+            (
+                "eligible_distinct_observation_count",
+                self.eligible_distinct_observation_count,
+            ),
+            ("eligible_distinct_fixture_count", self.eligible_distinct_fixture_count),
         ):
             if not isinstance(value, int) or isinstance(value, bool) or value < 0:
                 raise Builder2QualificationSampleAggregatorError(
@@ -503,20 +849,47 @@ class Builder2QualificationSampleReportV1:
             raise Builder2QualificationSampleAggregatorError(
                 "valid receipts cannot exceed input receipts"
             )
+        if self.eligible_receipt_count > self.total_valid_receipts:
+            raise Builder2QualificationSampleAggregatorError(
+                "eligible receipts cannot exceed valid receipt variants"
+            )
+        if self.eligible_distinct_observation_count > self.distinct_observation_count:
+            raise Builder2QualificationSampleAggregatorError(
+                "eligible observations cannot exceed raw observations"
+            )
+        if self.eligible_distinct_fixture_count > self.distinct_fixture_count:
+            raise Builder2QualificationSampleAggregatorError(
+                "eligible fixtures cannot exceed raw fixtures"
+            )
         _count_map(self.per_league_counts, "per_league_counts")
         if any(key not in TOP5_LEAGUES for key in self.per_league_counts):
             raise Builder2QualificationSampleAggregatorError(
                 "per-league counts contain an unsupported league"
             )
         _count_map(self.per_provider_counts, "per_provider_counts")
+        _count_map(self.eligible_per_league_counts, "eligible_per_league_counts")
+        if any(key not in TOP5_LEAGUES for key in self.eligible_per_league_counts):
+            raise Builder2QualificationSampleAggregatorError(
+                "eligible per-league counts contain an unsupported league"
+            )
+        _count_map(self.eligible_per_provider_counts, "eligible_per_provider_counts")
         _count_map(self.failure_taxonomy, "failure_taxonomy")
         for name, values in (
             ("controlled_shadow_run_ids", self.controlled_shadow_run_ids),
             ("qualification_session_ids", self.qualification_session_ids),
             ("ceo_authorization_ids", self.ceo_authorization_ids),
             ("duplicate_receipt_ids", self.duplicate_receipt_ids),
+            ("divergent_receipt_ids", self.divergent_receipt_ids),
             ("duplicate_observation_ids", self.duplicate_observation_ids),
             ("duplicate_observation_digests", self.duplicate_observation_digests),
+            (
+                "observation_identity_conflict_ids",
+                self.observation_identity_conflict_ids,
+            ),
+            (
+                "observation_identity_conflict_digests",
+                self.observation_identity_conflict_digests,
+            ),
             ("unattributed_fixture_keys", self.unattributed_fixture_keys),
         ):
             if tuple(sorted(set(values))) != values:
@@ -525,31 +898,23 @@ class Builder2QualificationSampleReportV1:
                 )
             for value in values:
                 _text(value, name)
+        for item in self.receipt_provenance:
+            item.validate()
         if (
             tuple(
                 sorted(
                     self.receipt_provenance,
-                    key=lambda item: item.qualification_receipt_id,
+                    key=lambda item: (
+                        item.qualification_receipt_id,
+                        item.receipt_digest,
+                    ),
                 )
             )
             != self.receipt_provenance
         ):
             raise Builder2QualificationSampleAggregatorError(
-                "receipt provenance must be sorted by receipt ID"
+                "receipt provenance must be sorted by receipt ID and digest"
             )
-        provenance_ids = tuple(
-            item.qualification_receipt_id for item in self.receipt_provenance
-        )
-        if len(set(provenance_ids)) != len(provenance_ids):
-            raise Builder2QualificationSampleAggregatorError(
-                "receipt provenance must contain one row per valid receipt"
-            )
-        if len(provenance_ids) != self.total_valid_receipts:
-            raise Builder2QualificationSampleAggregatorError(
-                "total valid receipts must equal provenance row count"
-            )
-        for item in self.receipt_provenance:
-            item.validate()
         for item in self.fixture_provider_conflicts:
             item.validate()
         if (
@@ -568,8 +933,57 @@ class Builder2QualificationSampleReportV1:
             raise Builder2QualificationSampleAggregatorError(
                 "fixture/provider conflicts must be deterministically ordered"
             )
+        state = _derive_provenance_state(self.receipt_provenance)
+        expected_fields = (
+            ("input_receipt_count", state.input_receipt_count),
+            ("total_valid_receipts", state.total_valid_receipts),
+            ("distinct_observation_count", state.distinct_observation_count),
+            ("distinct_fixture_count", state.distinct_fixture_count),
+            ("per_league_counts", state.per_league_counts),
+            ("per_provider_counts", state.per_provider_counts),
+            ("controlled_shadow_run_ids", state.controlled_shadow_run_ids),
+            ("qualification_session_ids", state.qualification_session_ids),
+            ("ceo_authorization_ids", state.ceo_authorization_ids),
+            ("duplicate_receipt_ids", state.duplicate_receipt_ids),
+            ("divergent_receipt_ids", state.divergent_receipt_ids),
+            ("duplicate_observation_ids", state.duplicate_observation_ids),
+            ("duplicate_observation_digests", state.duplicate_observation_digests),
+            (
+                "observation_identity_conflict_ids",
+                state.observation_identity_conflict_ids,
+            ),
+            (
+                "observation_identity_conflict_digests",
+                state.observation_identity_conflict_digests,
+            ),
+            ("fixture_provider_conflicts", state.fixture_provider_conflicts),
+            ("unattributed_fixture_keys", state.unattributed_fixture_keys),
+            ("failure_taxonomy", state.failure_taxonomy),
+            ("eligible_receipt_count", state.eligible_receipt_count),
+            (
+                "eligible_distinct_observation_count",
+                state.eligible_distinct_observation_count,
+            ),
+            ("eligible_distinct_fixture_count", state.eligible_distinct_fixture_count),
+            ("eligible_per_league_counts", state.eligible_per_league_counts),
+            ("eligible_per_provider_counts", state.eligible_per_provider_counts),
+        )
+        for name, expected in expected_fields:
+            actual = getattr(self, name)
+            if actual != expected:
+                raise Builder2QualificationSampleAggregatorError(
+                    f"{name} does not match retained receipt provenance"
+                )
         self.freshness.validate()
         self.observation_coverage.validate()
+        if self.freshness != _freshness_unavailable():
+            raise Builder2QualificationSampleAggregatorError(
+                "freshness must remain explicitly unsupported by Receipt V1"
+            )
+        if self.observation_coverage != _coverage_unavailable():
+            raise Builder2QualificationSampleAggregatorError(
+                "observation coverage must remain explicitly unsupported by Receipt V1"
+            )
         if self.minimum_sample_policy is not None:
             if not isinstance(self.minimum_sample_policy, MinimumSamplePolicy):
                 raise Builder2QualificationSampleAggregatorError(
@@ -586,9 +1000,9 @@ class Builder2QualificationSampleReportV1:
                     "sample sufficiency requires a caller-supplied policy"
                 )
             expected_sufficiency = (
-                self.distinct_observation_count
+                self.eligible_distinct_observation_count
                 >= self.minimum_sample_policy.minimum_real_observations
-                and self.distinct_fixture_count
+                and self.eligible_distinct_fixture_count
                 >= self.minimum_sample_policy.minimum_distinct_fixtures
             )
             if self.sample_sufficient is not expected_sufficiency:
@@ -704,145 +1118,65 @@ def aggregate_builder2_qualification_samples(
         minimum_sample_policy.validate()
 
     validated = _validated_receipts(receipts)
-    by_receipt_id: dict[str, list[Builder2QualificationReceiptV1]] = defaultdict(list)
+    by_variant: dict[tuple[str, str], list[Builder2QualificationReceiptV1]] = (
+        defaultdict(list)
+    )
     for receipt in validated:
-        by_receipt_id[receipt.qualification_receipt_id].append(receipt)
-    duplicate_receipt_ids = tuple(
-        sorted(
-            receipt_id for receipt_id, items in by_receipt_id.items() if len(items) > 1
+        by_variant[(receipt.qualification_receipt_id, receipt.receipt_digest)].append(
+            receipt
         )
-    )
-    unique_receipts = tuple(
-        min(items, key=lambda item: item.receipt_digest)
-        for _, items in sorted(by_receipt_id.items())
-    )
-
-    observation_id_groups: dict[str, list[Builder2QualificationReceiptV1]] = (
-        defaultdict(list)
-    )
-    observation_digest_groups: dict[str, list[Builder2QualificationReceiptV1]] = (
-        defaultdict(list)
-    )
-    fixture_provider_groups: dict[
-        tuple[str, str], list[Builder2QualificationReceiptV1]
-    ] = defaultdict(list)
-    per_league_counts: dict[str, int] = defaultdict(int)
-    per_provider_counts: dict[str, int] = defaultdict(int)
-    fixture_keys: set[str] = set()
-    unattributed_fixture_keys: set[str] = set()
-
-    for receipt in unique_receipts:
-        observation_id_groups[receipt.observation_id].append(receipt)
-        observation_digest_groups[receipt.observation_digest].append(receipt)
-        fixture_provider_groups[
-            (receipt.fixture_key, receipt.provider_identity)
-        ].append(receipt)
-        fixture_keys.add(receipt.fixture_key)
-        per_provider_counts[receipt.provider_identity] += 1
-        league = _fixture_league(receipt.fixture_key)
-        if league is None:
-            unattributed_fixture_keys.add(receipt.fixture_key)
-        else:
-            per_league_counts[league] += 1
-
-    duplicate_observation_ids = tuple(
-        sorted(
-            observation_id
-            for observation_id, items in observation_id_groups.items()
-            if len(items) > 1
-        )
-    )
-    duplicate_observation_digests = tuple(
-        sorted(
-            observation_digest
-            for observation_digest, items in observation_digest_groups.items()
-            if len(items) > 1
-        )
-    )
-
-    conflicts: list[Builder2FixtureProviderConflictV1] = []
-    for (fixture_key, provider_identity), items in fixture_provider_groups.items():
-        event_ids = tuple(sorted({item.provider_event_id for item in items}))
-        request_ids = tuple(sorted({item.provider_request_id for item in items}))
-        if len(event_ids) <= 1 and len(request_ids) <= 1:
-            continue
-        conflicts.append(
-            Builder2FixtureProviderConflictV1(
-                fixture_key=fixture_key,
-                provider_identity=provider_identity,
-                reason=(
-                    "one fixture/provider pair has multiple provider event or "
-                    "request identities"
-                ),
-                provider_event_ids=event_ids,
-                provider_request_ids=request_ids,
-                observation_ids=tuple(sorted({item.observation_id for item in items})),
+    provenance: list[Builder2QualificationReceiptProvenanceV1] = []
+    for _, items in sorted(by_variant.items()):
+        # Identical receipt ID/digest rows are exact semantic duplicates.  The
+        # digest is the canonical variant key, so they collapse without
+        # selecting between divergent variants.
+        canonical = min(items, key=lambda item: repr(item.as_payload()))
+        provenance.append(
+            replace(
+                Builder2QualificationReceiptProvenanceV1.from_receipt(canonical),
+                input_occurrence_count=len(items),
             )
         )
-    fixture_provider_conflicts = tuple(
-        sorted(
-            conflicts,
-            key=lambda item: (item.fixture_key, item.provider_identity, item.reason),
-        )
-    )
-
-    failure_taxonomy: dict[str, int] = {}
-    if duplicate_receipt_ids:
-        failure_taxonomy[FAILURE_DUPLICATE_RECEIPT] = len(duplicate_receipt_ids)
-    duplicate_observation_signals = len(duplicate_observation_ids) + len(
-        duplicate_observation_digests
-    )
-    if duplicate_observation_signals:
-        failure_taxonomy[FAILURE_DUPLICATE_OBSERVATION] = duplicate_observation_signals
-    if fixture_provider_conflicts:
-        failure_taxonomy[FAILURE_FIXTURE_PROVIDER_CONFLICT] = len(
-            fixture_provider_conflicts
-        )
-    if unattributed_fixture_keys:
-        failure_taxonomy[FAILURE_UNATTRIBUTED_LEAGUE] = len(unattributed_fixture_keys)
-
-    distinct_observations = {
-        (receipt.observation_id, receipt.observation_digest)
-        for receipt in unique_receipts
-    }
+    retained_provenance = tuple(provenance)
+    state = _derive_provenance_state(retained_provenance)
     sample_sufficient = (
         None
         if minimum_sample_policy is None
-        else len(distinct_observations)
+        else state.eligible_distinct_observation_count
         >= minimum_sample_policy.minimum_real_observations
-        and len(fixture_keys) >= minimum_sample_policy.minimum_distinct_fixtures
+        and state.eligible_distinct_fixture_count
+        >= minimum_sample_policy.minimum_distinct_fixtures
     )
     report = Builder2QualificationSampleReportV1(
         schema_version=QUALIFICATION_SAMPLE_AGGREGATOR_SCHEMA_VERSION,
-        input_receipt_count=len(validated),
-        total_valid_receipts=len(unique_receipts),
-        distinct_observation_count=len(distinct_observations),
-        distinct_fixture_count=len(fixture_keys),
-        per_league_counts=dict(sorted(per_league_counts.items())),
-        per_provider_counts=dict(sorted(per_provider_counts.items())),
-        controlled_shadow_run_ids=tuple(
-            sorted({item.controlled_shadow_run_id for item in unique_receipts})
-        ),
-        qualification_session_ids=tuple(
-            sorted({item.qualification_session_id for item in unique_receipts})
-        ),
-        ceo_authorization_ids=tuple(
-            sorted({item.ceo_authorization_id for item in unique_receipts})
-        ),
-        duplicate_receipt_ids=duplicate_receipt_ids,
-        duplicate_observation_ids=duplicate_observation_ids,
-        duplicate_observation_digests=duplicate_observation_digests,
-        fixture_provider_conflicts=fixture_provider_conflicts,
-        unattributed_fixture_keys=tuple(sorted(unattributed_fixture_keys)),
-        receipt_provenance=tuple(
-            Builder2QualificationReceiptProvenanceV1.from_receipt(item)
-            for item in unique_receipts
-        ),
-        failure_taxonomy=dict(sorted(failure_taxonomy.items())),
+        input_receipt_count=state.input_receipt_count,
+        total_valid_receipts=state.total_valid_receipts,
+        distinct_observation_count=state.distinct_observation_count,
+        distinct_fixture_count=state.distinct_fixture_count,
+        per_league_counts=state.per_league_counts,
+        per_provider_counts=state.per_provider_counts,
+        controlled_shadow_run_ids=state.controlled_shadow_run_ids,
+        qualification_session_ids=state.qualification_session_ids,
+        ceo_authorization_ids=state.ceo_authorization_ids,
+        duplicate_receipt_ids=state.duplicate_receipt_ids,
+        duplicate_observation_ids=state.duplicate_observation_ids,
+        duplicate_observation_digests=state.duplicate_observation_digests,
+        fixture_provider_conflicts=state.fixture_provider_conflicts,
+        unattributed_fixture_keys=state.unattributed_fixture_keys,
+        receipt_provenance=retained_provenance,
+        failure_taxonomy=state.failure_taxonomy,
         freshness=_freshness_unavailable(),
         observation_coverage=_coverage_unavailable(),
         minimum_sample_policy=minimum_sample_policy,
         sample_sufficient=sample_sufficient,
+        eligible_receipt_count=state.eligible_receipt_count,
+        eligible_distinct_observation_count=state.eligible_distinct_observation_count,
+        eligible_distinct_fixture_count=state.eligible_distinct_fixture_count,
+        eligible_per_league_counts=state.eligible_per_league_counts,
+        eligible_per_provider_counts=state.eligible_per_provider_counts,
+        divergent_receipt_ids=state.divergent_receipt_ids,
+        observation_identity_conflict_ids=state.observation_identity_conflict_ids,
+        observation_identity_conflict_digests=state.observation_identity_conflict_digests,
     )
     report = replace(
         report,
@@ -872,9 +1206,12 @@ Builder2QualificationSampleReport = Builder2QualificationSampleReportV1
 
 __all__ = [
     "BUILDER2_QUALIFICATION_SAMPLE_AGGREGATOR_CONTRACT_VERSION",
+    "FAILURE_DIVERGENT_RECEIPT_ID_CONFLICT",
     "FAILURE_DUPLICATE_OBSERVATION",
     "FAILURE_DUPLICATE_RECEIPT",
     "FAILURE_FIXTURE_PROVIDER_CONFLICT",
+    "FAILURE_OBSERVATION_DIGEST_CONFLICT",
+    "FAILURE_OBSERVATION_ID_CONFLICT",
     "FAILURE_UNATTRIBUTED_LEAGUE",
     "QUALIFICATION_SAMPLE_AGGREGATOR_SCHEMA_VERSION",
     "SAMPLE_AGGREGATOR_SCHEMA_VERSION",
