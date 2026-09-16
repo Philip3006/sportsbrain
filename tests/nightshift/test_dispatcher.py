@@ -197,10 +197,16 @@ def test_resource_lock_conflict_does_not_hold_other_builder(tmp_path: Path) -> N
     assert held is not None
     assert dispatcher.claim_next("builder-2") is None
     dispatcher.store.start_running(
-        held.task_id, worker_id="builder-1", lease_generation=held.lease_generation
+        held.task_id,
+        worker_id="builder-1",
+        lease_generation=held.lease_generation,
+        now=T0,
     )
     dispatcher.store.begin_verifying(
-        held.task_id, worker_id="builder-1", lease_generation=held.lease_generation
+        held.task_id,
+        worker_id="builder-1",
+        lease_generation=held.lease_generation,
+        now=T0,
     )
     dispatcher.complete(
         held.task_id,

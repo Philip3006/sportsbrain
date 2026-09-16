@@ -25,8 +25,15 @@ class _AcceptancePullRequestClient:
         self.created: list[dict[str, Any]] = []
 
     def find_or_create(
-        self, task: Any, *, commit_sha: str, verification: dict[str, Any]
+        self,
+        task: Any,
+        *,
+        commit_sha: str,
+        verification: dict[str, Any],
+        lease_guard: Any = None,
     ) -> dict[str, Any]:
+        if lease_guard is not None:
+            lease_guard()
         if task.task_id in {item["task_id"] for item in self.created}:
             return {
                 **next(
@@ -78,10 +85,16 @@ def _finish_read_only(dispatcher: NightShiftDispatcher, claimed: Any) -> Any:
 
     owner = claimed.lease_owner or claimed.builder_id
     dispatcher.store.start_running(
-        claimed.task_id, worker_id=owner, lease_generation=claimed.lease_generation
+        claimed.task_id,
+        worker_id=owner,
+        lease_generation=claimed.lease_generation,
+        now=dispatcher.clock(),
     )
     dispatcher.store.begin_verifying(
-        claimed.task_id, worker_id=owner, lease_generation=claimed.lease_generation
+        claimed.task_id,
+        worker_id=owner,
+        lease_generation=claimed.lease_generation,
+        now=dispatcher.clock(),
     )
     current = dispatcher.store.get(claimed.task_id)
     if dispatcher.delivery_pipeline is not None:
@@ -180,6 +193,7 @@ def run_fake_acceptance() -> dict[str, Any]:
                 item.task_id,
                 worker_id=owner,
                 lease_generation=item.lease_generation,
+                now=dispatcher.clock(),
             )
             current = dispatcher.store.get(item.task_id)
             FakeExecutor()(current)
@@ -187,6 +201,7 @@ def run_fake_acceptance() -> dict[str, Any]:
                 item.task_id,
                 worker_id=owner,
                 lease_generation=item.lease_generation,
+                now=dispatcher.clock(),
             )
             dispatcher.delivery_pipeline.deliver(
                 dispatcher.store.get(item.task_id),

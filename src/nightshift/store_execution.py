@@ -14,7 +14,6 @@ from .models import (
     TaskRecord,
     TaskState,
     isoformat,
-    parse_timestamp,
     state_from_value,
     utc_now,
 )
@@ -188,13 +187,11 @@ class StoreExecutionMixin:
         with self._write() as conn:
             row = self._get_row(conn, task_id)
             self._assert_active_lease(
-                row, worker_id=worker_id, lease_generation=lease_generation
+                row,
+                worker_id=worker_id,
+                lease_generation=lease_generation,
+                now=current,
             )
-            if (
-                row["lease_expires_at"]
-                and parse_timestamp(row["lease_expires_at"]) <= current
-            ):
-                raise LeaseError("cannot heartbeat an expired lease")
             conn.execute(
                 "UPDATE tasks SET updated_at = ?, lease_expires_at = ? WHERE task_id = ?",
                 (timestamp, expiry, task_id),
@@ -230,13 +227,11 @@ class StoreExecutionMixin:
             row = self._get_row(conn, task_id)
             previous = state_from_value(row["state"])
             self._assert_active_lease(
-                row, worker_id=worker_id, lease_generation=lease_generation
+                row,
+                worker_id=worker_id,
+                lease_generation=lease_generation,
+                now=current,
             )
-            if (
-                row["lease_expires_at"]
-                and parse_timestamp(row["lease_expires_at"]) <= current
-            ):
-                raise LeaseError("completion arrived after the lease expired")
             result_json = self._json(execution.as_dict())
             if execution.success:
                 new_state = execution.terminal_state or TaskState.COMPLETED
@@ -358,14 +353,17 @@ class StoreExecutionMixin:
                     event = EventType.DEAD_LETTERED
                     available = row["available_at"]
                     failure = "DEAD_LETTER"
+                fenced_generation = row["lease_generation"] + 1
                 conn.execute(
                     """UPDATE tasks SET state = ?, updated_at = ?, available_at = ?,
                        lease_owner = NULL, lease_expires_at = NULL, process_id = NULL,
-                       last_error = ?, failure_class = ? WHERE task_id = ?""",
+                       lease_generation = ?, last_error = ?, failure_class = ?
+                       WHERE task_id = ?""",
                     (
                         new_state.value,
                         timestamp,
                         available,
+                        fenced_generation,
                         "lease expired before completion",
                         failure,
                         row["task_id"],
@@ -383,6 +381,7 @@ class StoreExecutionMixin:
                         "previous_owner": row["lease_owner"],
                         "attempt": row["attempt_count"],
                         "lease_generation": row["lease_generation"],
+                        "fenced_generation": fenced_generation,
                         "process_alive": process_alive,
                     },
                 )

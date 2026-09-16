@@ -126,9 +126,16 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         store = DispatcherStore(state_path or _default_state_path())
         pipeline = delivery_pipeline
         if manager is not None and pipeline is None:
-            pipeline = DeliveryPipeline(store, manager, GhPullRequestClient())
+            pipeline = DeliveryPipeline(
+                store,
+                manager,
+                GhPullRequestClient(),
+                clock=kwargs.get("clock", utc_now),
+            )
         elif pipeline is not None and pipeline.store is None:
             pipeline.store = store
+        if pipeline is not None and "clock" in kwargs:
+            pipeline.clock = kwargs["clock"]
         return cls(
             registry=registry,
             templates=templates,

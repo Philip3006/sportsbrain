@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from collections.abc import Callable, Mapping
 from datetime import timedelta
 from typing import Any
@@ -17,6 +18,76 @@ from .errors import (
     ScopeViolation,
 )
 from .models import ExecutionResult, TaskRecord, TaskState
+
+
+class _LeaseWatchdog:
+    """Renew and independently fence a lease for the whole delivery phase."""
+
+    def __init__(
+        self,
+        *,
+        heartbeat: Callable[[], None],
+        fence: Callable[[], None],
+        interval_seconds: int,
+    ) -> None:
+        self._heartbeat = heartbeat
+        self._fence = fence
+        self._interval_seconds = max(1, interval_seconds)
+        self._stop = threading.Event()
+        self._lock = threading.Lock()
+        self._failure: Exception | None = None
+        self._thread: threading.Thread | None = None
+
+    def start(self) -> None:
+        try:
+            self._heartbeat()
+        except Exception as exc:  # noqa: BLE001 - fencing is fail-closed
+            self._set_failure(exc)
+            return
+        self._thread = threading.Thread(
+            target=self._run,
+            name="nightshift-delivery-watchdog",
+            daemon=True,
+        )
+        self._thread.start()
+
+    def check(self) -> None:
+        failure = self._failure_snapshot()
+        if failure is not None:
+            raise LeaseError("delivery lease watchdog fenced the worker") from failure
+        try:
+            self._fence()
+        except Exception as exc:
+            self._set_failure(exc)
+            raise LeaseError("delivery lease is stale or expired") from exc
+
+    def raise_if_failed(self) -> None:
+        failure = self._failure_snapshot()
+        if failure is not None:
+            raise LeaseError("delivery lease watchdog fenced the worker") from failure
+
+    def stop(self) -> None:
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=min(5, max(2, self._interval_seconds + 1)))
+
+    def _run(self) -> None:
+        while not self._stop.wait(self._interval_seconds):
+            try:
+                self._heartbeat()
+            except Exception as exc:  # noqa: BLE001 - stale workers must stop
+                self._set_failure(exc)
+                return
+
+    def _set_failure(self, failure: Exception) -> None:
+        with self._lock:
+            if self._failure is None:
+                self._failure = failure
+        self._stop.set()
+
+    def _failure_snapshot(self) -> Exception | None:
+        with self._lock:
+            return self._failure
 
 
 class DispatcherExecutionMixin:
@@ -173,69 +244,106 @@ class DispatcherExecutionMixin:
                 lease_generation=generation,
                 now=self.clock(),
             )
-            current = self.store.get(record.task_id)
-            if self.delivery_pipeline is None:
-                if (
-                    current.pr_required
-                    or current.required_tests
-                    or current.verification_commands
-                ):
-                    raise DeliveryBlocked("DELIVERY_BLOCKED_PIPELINE_UNAVAILABLE")
-                self.store.record_verification(
-                    current.task_id,
+            watchdog = _LeaseWatchdog(
+                heartbeat=lambda: self.heartbeat(
+                    record.task_id,
+                    worker_instance_id=owner,
+                    lease_generation=generation,
+                ),
+                fence=lambda: self.store.assert_active_lease(
+                    record.task_id,
                     worker_id=owner,
                     lease_generation=generation,
-                    evidence={"passed": True, "commands": [], "not_required": True},
+                    now=self.clock(),
+                ),
+                interval_seconds=max(1, self.lease_seconds // 3),
+            )
+            try:
+                watchdog.start()
+                watchdog.check()
+                current = self.store.get(record.task_id)
+                if self.delivery_pipeline is None:
+                    if (
+                        current.pr_required
+                        or current.required_tests
+                        or current.verification_commands
+                    ):
+                        raise DeliveryBlocked("DELIVERY_BLOCKED_PIPELINE_UNAVAILABLE")
+                    watchdog.check()
+                    self.store.record_verification(
+                        current.task_id,
+                        worker_id=owner,
+                        lease_generation=generation,
+                        evidence={
+                            "passed": True,
+                            "commands": [],
+                            "not_required": True,
+                        },
+                        now=self.clock(),
+                    )
+                    delivery = {
+                        "verification": {"passed": True, "not_required": True}
+                    }
+                else:
+                    delivery = self.delivery_pipeline.deliver(
+                        current,
+                        worker_id=owner,
+                        lease_generation=generation,
+                        lease_guard=watchdog.check,
+                    )
+                watchdog.raise_if_failed()
+                terminal = (
+                    TaskState.PR_READY if current.pr_required else TaskState.COMPLETED
+                )
+                watchdog.stop()
+                return self.complete(
+                    record.task_id,
+                    worker_instance_id=owner,
+                    lease_generation=generation,
+                    execution=ExecutionResult(
+                        True,
+                        "execution and governed delivery verified",
+                        data={**dict(execution.data), **delivery},
+                        retryable=False,
+                        terminal_state=terminal,
+                        process_id=execution.process_id,
+                    ),
+                )
+            finally:
+                watchdog.stop()
+        except DeliveryBlocked as exc:
+            try:
+                return self.store.block_delivery(
+                    record.task_id,
+                    worker_id=owner,
+                    lease_generation=generation,
+                    reason=str(exc),
+                    failure_class=(
+                        "DELIVERY_BLOCKED_GITHUB_AUTH"
+                        if "GITHUB_AUTH" in str(exc)
+                        else "DELIVERY_BLOCKED"
+                    ),
+                    evidence={"task_id": record.task_id},
                     now=self.clock(),
                 )
-                delivery = {"verification": {"passed": True, "not_required": True}}
-            else:
-                delivery = self.delivery_pipeline.deliver(
-                    current, worker_id=owner, lease_generation=generation
-                )
-            terminal = (
-                TaskState.PR_READY if current.pr_required else TaskState.COMPLETED
-            )
-            return self.complete(
-                record.task_id,
-                worker_instance_id=owner,
-                lease_generation=generation,
-                execution=ExecutionResult(
-                    True,
-                    "execution and governed delivery verified",
-                    data={**dict(execution.data), **delivery},
-                    retryable=False,
-                    terminal_state=terminal,
-                    process_id=execution.process_id,
-                ),
-            )
-        except DeliveryBlocked as exc:
-            return self.store.block_delivery(
-                record.task_id,
-                worker_id=owner,
-                lease_generation=generation,
-                reason=str(exc),
-                failure_class=(
-                    "DELIVERY_BLOCKED_GITHUB_AUTH"
-                    if "GITHUB_AUTH" in str(exc)
-                    else "DELIVERY_BLOCKED"
-                ),
-                evidence={"task_id": record.task_id},
-                now=self.clock(),
-            )
+            except LeaseError:
+                return self.store.get(record.task_id)
         except DeliveryError as exc:
-            return self.complete(
-                record.task_id,
-                worker_instance_id=owner,
-                lease_generation=generation,
-                execution=ExecutionResult(
-                    False,
-                    str(exc)[:4000],
-                    data={"failure_class": "DELIVERY_FAILED"},
-                    retryable=False,
-                    terminal_state=TaskState.FAILED_SAFE,
-                ),
-            )
+            try:
+                return self.complete(
+                    record.task_id,
+                    worker_instance_id=owner,
+                    lease_generation=generation,
+                    execution=ExecutionResult(
+                        False,
+                        str(exc)[:4000],
+                        data={"failure_class": "DELIVERY_FAILED"},
+                        retryable=False,
+                        terminal_state=TaskState.FAILED_SAFE,
+                    ),
+                )
+            except LeaseError:
+                return self.store.get(record.task_id)
         except LeaseError:
             # A recovery/reclaim may have fenced this worker. It cannot mutate
             # delivery state after losing its generation.
@@ -250,24 +358,27 @@ class DispatcherExecutionMixin:
                     ScopeViolation,
                 ),
             )
-            return self.complete(
-                record.task_id,
-                worker_instance_id=owner,
-                lease_generation=generation,
-                execution=ExecutionResult(
-                    False,
-                    f"{type(exc).__name__}: {str(exc)[:3900]}",
-                    data={
-                        "failure_class": "SCOPE_VIOLATION"
-                        if isinstance(exc, ScopeViolation)
-                        else "EXECUTOR_UNAVAILABLE"
-                        if isinstance(exc, ExecutorUnavailable)
-                        else "WORKER_EXCEPTION"
-                    },
-                    retryable=not safe,
-                    terminal_state=TaskState.FAILED_SAFE if safe else None,
-                ),
-            )
+            try:
+                return self.complete(
+                    record.task_id,
+                    worker_instance_id=owner,
+                    lease_generation=generation,
+                    execution=ExecutionResult(
+                        False,
+                        f"{type(exc).__name__}: {str(exc)[:3900]}",
+                        data={
+                            "failure_class": "SCOPE_VIOLATION"
+                            if isinstance(exc, ScopeViolation)
+                            else "EXECUTOR_UNAVAILABLE"
+                            if isinstance(exc, ExecutorUnavailable)
+                            else "WORKER_EXCEPTION"
+                        },
+                        retryable=not safe,
+                        terminal_state=TaskState.FAILED_SAFE if safe else None,
+                    ),
+                )
+            except LeaseError:
+                return self.store.get(record.task_id)
 
     def run_until_idle(
         self,

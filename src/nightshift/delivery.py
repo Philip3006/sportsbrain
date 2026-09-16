@@ -2,23 +2,29 @@
 
 from __future__ import annotations
 
+import inspect
 import json
 import re
 import subprocess
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any, Protocol
 
 from .errors import DeliveryBlocked, DeliveryError
 from .executors import redact
-from .models import TaskRecord, TaskSpec
+from .models import TaskRecord, TaskSpec, utc_now
 from .verification import VerificationRunner
 from .worktree import WorktreeManager
 
 
 class PullRequestClient(Protocol):
     def find_or_create(
-        self, task: TaskRecord, *, commit_sha: str, verification: Mapping[str, Any]
+        self,
+        task: TaskRecord,
+        *,
+        commit_sha: str,
+        verification: Mapping[str, Any],
+        lease_guard: Callable[[], None] | None = None,
     ) -> dict[str, Any]: ...
 
 
@@ -29,7 +35,12 @@ class GhPullRequestClient:
         self.gh_executable = gh_executable
 
     def find_or_create(
-        self, task: TaskRecord, *, commit_sha: str, verification: Mapping[str, Any]
+        self,
+        task: TaskRecord,
+        *,
+        commit_sha: str,
+        verification: Mapping[str, Any],
+        lease_guard: Callable[[], None] | None = None,
     ) -> dict[str, Any]:
         auth = self._run(["auth", "status"], timeout=20)
         if auth.returncode != 0:
@@ -42,6 +53,8 @@ class GhPullRequestClient:
             self._validate_binding(task, pull, commit_sha)
             return {**pull, "reused": True}
         body = _pr_body(task, commit_sha, verification)
+        if lease_guard is not None:
+            lease_guard()
         created = self._run(
             [
                 "pr",
@@ -160,12 +173,14 @@ class DeliveryPipeline:
         *,
         git_executable: str = "git",
         verifier: VerificationRunner | None = None,
+        clock: Callable[[], Any] = utc_now,
     ) -> None:
         self.store = store
         self.worktrees = worktrees
         self.github = github
         self.git_executable = git_executable
         self.verifier = verifier or VerificationRunner()
+        self.clock = clock
 
     def deliver(
         self,
@@ -173,7 +188,9 @@ class DeliveryPipeline:
         *,
         worker_id: str,
         lease_generation: int,
+        lease_guard: Callable[[], None] | None = None,
     ) -> dict[str, Any]:
+        self._guard(lease_guard)
         if not task.worktree_path:
             raise DeliveryError("delivery requires an isolated worktree")
         path = Path(task.worktree_path)
@@ -187,13 +204,16 @@ class DeliveryPipeline:
             raise DeliveryError(
                 f"{verification.get('failure_class', 'VERIFICATION_FAILED')}: required verification failed"
             )
+        self._guard(lease_guard)
         self.store.record_verification(
             task.task_id,
             worker_id=worker_id,
             lease_generation=lease_generation,
             evidence=verification,
+            now=self.clock(),
         )
         task = self.store.get(task.task_id)
+        self._guard(lease_guard)
         changed = self.worktrees.verify_scope(_spec(task), path)
         if not task.requires_pr:
             if changed:
@@ -207,25 +227,32 @@ class DeliveryPipeline:
         else:
             if not changed:
                 raise DeliveryError("code-changing task produced no reviewable change")
-            commit_sha = self._commit(task, path, changed)
+            commit_sha = self._commit(
+                task, path, changed, lease_guard=lease_guard
+            )
+            self._guard(lease_guard)
             self.store.record_commit(
                 task.task_id,
                 worker_id=worker_id,
                 lease_generation=lease_generation,
                 commit_sha=commit_sha,
+                now=self.clock(),
             )
             task = self.store.get(task.task_id)
         self._require_head(path, task.branch, commit_sha)
-        remote_sha = self._push(task, path)
+        remote_sha = self._push(task, path, lease_guard=lease_guard)
+        self._guard(lease_guard)
         self.store.record_push(
             task.task_id,
             worker_id=worker_id,
             lease_generation=lease_generation,
             remote_sha=remote_sha,
+            now=self.clock(),
         )
         task = self.store.get(task.task_id)
-        pull = self.github.find_or_create(
-            task, commit_sha=commit_sha, verification=verification
+        self._guard(lease_guard)
+        pull = self._find_or_create(
+            task, commit_sha=commit_sha, verification=verification, lease_guard=lease_guard
         )
         number = pull.get("number")
         url = pull.get("url")
@@ -248,6 +275,7 @@ class DeliveryPipeline:
             "pr_number": number,
             "pr_url": url,
         }
+        self._guard(lease_guard)
         self.store.record_pr(
             task.task_id,
             worker_id=worker_id,
@@ -256,16 +284,61 @@ class DeliveryPipeline:
             url=url,
             evidence=delivery,
             reused=bool(pull.get("reused")),
+            now=self.clock(),
         )
         return {"verification": verification, "delivery": delivery}
 
-    def _commit(self, task: TaskRecord, path: Path, changed: tuple[str, ...]) -> str:
+    @staticmethod
+    def _guard(lease_guard: Callable[[], None] | None) -> None:
+        """Run the caller's independent fence immediately before a mutation."""
+
+        if lease_guard is not None:
+            lease_guard()
+
+    def _find_or_create(
+        self,
+        task: TaskRecord,
+        *,
+        commit_sha: str,
+        verification: Mapping[str, Any],
+        lease_guard: Callable[[], None] | None,
+    ) -> dict[str, Any]:
+        """Pass the fence to governed clients while keeping old fixtures usable."""
+
+        method = self.github.find_or_create
+        try:
+            parameters = inspect.signature(method).parameters.values()
+            accepts_guard = any(
+                parameter.name == "lease_guard"
+                or parameter.kind is parameter.VAR_KEYWORD
+                for parameter in parameters
+            )
+        except (TypeError, ValueError):
+            accepts_guard = False
+        kwargs: dict[str, Any] = {
+            "commit_sha": commit_sha,
+            "verification": verification,
+        }
+        if accepts_guard:
+            kwargs["lease_guard"] = lease_guard
+        return method(task, **kwargs)
+
+    def _commit(
+        self,
+        task: TaskRecord,
+        path: Path,
+        changed: tuple[str, ...],
+        *,
+        lease_guard: Callable[[], None] | None = None,
+    ) -> str:
+        self._guard(lease_guard)
         self._run(path, ["add", "--", *sorted(changed)], timeout=30)
         staged = self._names(path, ["diff", "--cached", "--name-only"])
         if set(staged) != set(changed):
             raise DeliveryError(
                 "staged paths differ from the independently verified scope"
             )
+        self._guard(lease_guard)
         self._run(
             path, ["commit", "-m", f"Night Shift task {task.task_id}"], timeout=60
         )
@@ -276,7 +349,14 @@ class DeliveryPipeline:
             raise DeliveryError("worktree is not clean after task commit")
         return sha.lower()
 
-    def _push(self, task: TaskRecord, path: Path) -> str:
+    def _push(
+        self,
+        task: TaskRecord,
+        path: Path,
+        *,
+        lease_guard: Callable[[], None] | None = None,
+    ) -> str:
+        self._guard(lease_guard)
         self._run(path, ["push", "origin", f"HEAD:{task.branch}"], timeout=120)
         remote = self._run(
             path, ["ls-remote", "origin", f"refs/heads/{task.branch}"], timeout=30

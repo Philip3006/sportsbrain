@@ -7,7 +7,14 @@ from datetime import datetime
 from typing import Any
 
 from .errors import InvalidTransitionError, LeaseError
-from .models import EventType, ExecutionResult, TaskState, isoformat, utc_now
+from .models import (
+    EventType,
+    ExecutionResult,
+    TaskState,
+    isoformat,
+    parse_timestamp,
+    utc_now,
+)
 
 
 class StoreLifecycleMixin:
@@ -34,6 +41,7 @@ class StoreLifecycleMixin:
                 worker_id=worker_id,
                 lease_generation=lease_generation,
                 states={TaskState.CLAIMED.value},
+                now=now,
             )
             conn.execute(
                 """UPDATE tasks SET worktree_path = ?, diagnostic_path = ?,
@@ -73,6 +81,7 @@ class StoreLifecycleMixin:
         worker_id: str,
         lease_generation: int | None,
         states: set[str] | None = None,
+        now: datetime | None = None,
     ) -> None:
         active_states = states or {
             TaskState.CLAIMED.value,
@@ -81,15 +90,39 @@ class StoreLifecycleMixin:
         }
         if lease_generation is None:
             raise LeaseError("lease generation is required for worker mutation")
+        current = now or utc_now()
         if (
             row["state"] not in active_states
             or row["lease_owner"] != worker_id
-            or (
-                lease_generation is not None
-                and row["lease_generation"] != lease_generation
-            )
+            or row["lease_generation"] != lease_generation
         ):
             raise LeaseError("worker lease is stale or fenced")
+        try:
+            expires_at = parse_timestamp(row["lease_expires_at"])
+        except (TypeError, ValueError) as exc:
+            raise LeaseError("worker lease is missing or invalid") from exc
+        if expires_at <= current:
+            raise LeaseError("worker lease is expired")
+
+    def assert_active_lease(
+        self,
+        task_id: str,
+        *,
+        worker_id: str,
+        lease_generation: int,
+        now: datetime | None = None,
+    ):
+        """Read-only fence used immediately before external worker mutations."""
+
+        with self._read() as conn:
+            row = self._get_row(conn, task_id)
+            self._assert_active_lease(
+                row,
+                worker_id=worker_id,
+                lease_generation=lease_generation,
+                now=now,
+            )
+            return self._record(row)
 
     def start_running(
         self,
@@ -107,6 +140,7 @@ class StoreLifecycleMixin:
                 worker_id=worker_id,
                 lease_generation=lease_generation,
                 states={TaskState.CLAIMED.value},
+                now=now,
             )
             conn.execute(
                 "UPDATE tasks SET state = ?, updated_at = ? WHERE task_id = ?",
@@ -140,6 +174,7 @@ class StoreLifecycleMixin:
                 worker_id=worker_id,
                 lease_generation=lease_generation,
                 states={TaskState.RUNNING.value},
+                now=now,
             )
             conn.execute(
                 "UPDATE tasks SET state = ?, updated_at = ? WHERE task_id = ?",
@@ -173,6 +208,7 @@ class StoreLifecycleMixin:
                 row,
                 worker_id=worker_id,
                 lease_generation=lease_generation,
+                now=now,
             )
             conn.execute(
                 "UPDATE tasks SET process_id = ?, updated_at = ? WHERE task_id = ?",
@@ -197,6 +233,7 @@ class StoreLifecycleMixin:
                 worker_id=worker_id,
                 lease_generation=lease_generation,
                 states={TaskState.VERIFYING.value},
+                now=now,
             )
             conn.execute(
                 "UPDATE tasks SET verification_json = ?, updated_at = ? WHERE task_id = ?",
@@ -272,6 +309,7 @@ class StoreLifecycleMixin:
                 worker_id=worker_id,
                 lease_generation=lease_generation,
                 states={TaskState.VERIFYING.value},
+                now=now,
             )
             conn.execute(
                 """UPDATE tasks SET pr_number = ?, pr_url = ?, delivery_json = ?, updated_at = ?
@@ -311,6 +349,7 @@ class StoreLifecycleMixin:
                 worker_id=worker_id,
                 lease_generation=lease_generation,
                 states={TaskState.VERIFYING.value},
+                now=now,
             )
             conn.execute(
                 f"UPDATE tasks SET {column} = ?, updated_at = ? WHERE task_id = ?",
@@ -347,6 +386,7 @@ class StoreLifecycleMixin:
                 worker_id=worker_id,
                 lease_generation=lease_generation,
                 states={TaskState.VERIFYING.value},
+                now=now,
             )
             conn.execute(
                 """UPDATE tasks SET state = ?, last_error = ?, failure_class = ?,

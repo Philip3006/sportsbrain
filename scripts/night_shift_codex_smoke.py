@@ -26,8 +26,15 @@ class _DisposablePullRequestClient:
     """Local PR fixture so a smoke run cannot mutate public GitHub state."""
 
     def find_or_create(
-        self, task: Any, *, commit_sha: str, verification: dict[str, Any]
+        self,
+        task: Any,
+        *,
+        commit_sha: str,
+        verification: dict[str, Any],
+        lease_guard: Any = None,
     ) -> dict[str, Any]:
+        if lease_guard is not None:
+            lease_guard()
         return {
             "number": 1,
             "url": f"https://example.invalid/nightshift/{task.task_id}",

@@ -26,8 +26,15 @@ class _PullRequestFixture:
         self.calls: list[dict[str, Any]] = []
 
     def find_or_create(
-        self, task: Any, *, commit_sha: str, verification: dict[str, Any]
+        self,
+        task: Any,
+        *,
+        commit_sha: str,
+        verification: dict[str, Any],
+        lease_guard: Any = None,
     ) -> dict[str, Any]:
+        if lease_guard is not None:
+            lease_guard()
         existing = next(
             (item for item in self.calls if item["task_id"] == task.task_id), None
         )
@@ -202,6 +209,7 @@ def test_late_owner_generation_is_fenced_after_recovery(tmp_path: Path) -> None:
         now=__import__("datetime").datetime.fromisoformat("2099-01-01T00:00:00+00:00")
     )
     assert recovered and recovered[0].state is TaskState.READY
+    assert recovered[0].lease_generation > first.lease_generation
     second = dispatcher.store.claim_next(
         "builder-1",
         worker_id="builder-1:new",
@@ -214,6 +222,16 @@ def test_late_owner_generation_is_fenced_after_recovery(tmp_path: Path) -> None:
             task.task_id,
             worker_instance_id="builder-1:old",
             lease_generation=first.lease_generation,
+        )
+    with pytest.raises(LeaseError):
+        dispatcher.store.record_commit(
+            task.task_id,
+            worker_id="builder-1:old",
+            lease_generation=first.lease_generation,
+            commit_sha="a" * 40,
+            now=__import__("datetime").datetime.fromisoformat(
+                "2099-01-01T00:00:00+00:00"
+            ),
         )
 
 
