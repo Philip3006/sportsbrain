@@ -478,6 +478,109 @@ class NormalizedProviderObservation:
             canonical_observation=raw.get("canonical_observation"),
         )
 
+    @classmethod
+    def from_builder2_package(
+        cls,
+        observation_payload: Mapping[str, object],
+        receipt_payload: Mapping[str, object],
+    ) -> NormalizedProviderObservation:
+        """Project an accepted Builder-2 package into the B1 session seam."""
+
+        try:
+            from src.football.top5_controlled_shadow_provider_qualification import (
+                RealProviderObservation,
+            )
+            from src.football.top5_provider_cascade_validation import CascadeEvidence
+
+            canonical = RealProviderObservation.from_payload(observation_payload)
+            canonical.validate_structural()
+            if canonical.evidence_kind != REAL_OBSERVED_MARKER:
+                raise RealShadowContractError(
+                    "Builder-2 package is not REAL_OBSERVED"
+                )
+            receipt = validate_builder1_qualification_receipt(
+                receipt_payload,
+                expected_observation=canonical,
+            )
+            cascade = CascadeEvidence.from_payload(canonical.cascade_evidence)
+            cascade.validate_structural()
+            selected = [
+                attempt
+                for attempt in cascade.attempts
+                if attempt.provider_identity == canonical.provider_identity
+                and attempt.provider_record_id == canonical.provider_event_id
+                and attempt.request_identity == canonical.provider_request_id
+            ]
+            if len(selected) != 1:
+                raise RealShadowContractError(
+                    "Builder-2 package must contain one exact selected attempt"
+                )
+            selected_attempt = selected[0]
+            if (
+                getattr(selected_attempt.outcome, "value", selected_attempt.outcome)
+                != "SUCCESS"
+                or selected_attempt.network_called is not True
+                or canonical.source_timestamp is None
+            ):
+                raise RealShadowContractError(
+                    "Builder-2 package selected attempt is not an observed success"
+                )
+            return cls(
+                league_code=canonical.league,
+                fixture_key=canonical.fixture_key,
+                provider_fixture_id=canonical.provider_event_id,
+                home_team=canonical.home_team,
+                away_team=canonical.away_team,
+                kickoff_utc=canonical.kickoff,
+                market_type=canonical.market_type,
+                home_odds=canonical.home_odds,
+                draw_odds=canonical.draw_odds,
+                away_odds=canonical.away_odds,
+                provider_identity=canonical.provider_identity,
+                bookmaker_identity=canonical.bookmaker_identity,
+                source_timestamp=canonical.source_timestamp,
+                captured_at=canonical.captured_at,
+                request_identity=canonical.provider_request_id,
+                raw_record_digest=canonical.raw_response_digest,
+                adapter_version=canonical.adapter_version,
+                provider_priority=selected_attempt.provider_attempt_index + 1,
+                fallback_depth=selected_attempt.fallback_depth,
+                cascade_trace={
+                    "configured_provider_order": list(
+                        cascade.configured_provider_order
+                    ),
+                    "attempts": [
+                        attempt.provider_identity for attempt in cascade.attempts
+                    ],
+                    "selected": cascade.selected_provider,
+                },
+                quality_metadata={
+                    "market": canonical.market_type,
+                    "market_phase": canonical.market_phase,
+                },
+                eligibility_state="eligible",
+                signal_snapshot_id=canonical.observation_id,
+                independent_validation=receipt.as_payload(),
+                observation_mode=REAL_OBSERVED_MARKER,
+                latency_ms=canonical.latency_ms,
+                network_request_count=canonical.network_request_count,
+                request_cost_units=canonical.quota_cost_units,
+                observation_id=canonical.observation_id,
+                qualification_session_id=canonical.qualification_session_id,
+                adapter_source_sha=canonical.adapter_source_sha,
+                normalized_record_digest=canonical.normalized_record_digest,
+                canonical_observation=canonical.as_payload(),
+            )
+        except (
+            Builder2QualificationReceiptError,
+            ProductionContractError,
+            TypeError,
+            ValueError,
+        ) as exc:
+            raise RealShadowContractError(
+                "Builder-2 package cannot enter the real-shadow session"
+            ) from exc
+
     def observation_digest(self) -> str:
         payload = self.as_payload()
         payload["independent_validation"] = None

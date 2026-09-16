@@ -930,6 +930,8 @@ def _prediction_payload(
         "fixture": raw.get("fixture_key"),
         "league": raw.get("league_code"),
         "provider": raw.get("provider_identity"),
+        "provider_event_id": obs_raw.get("provider_fixture_id"),
+        "provider_request_id": obs_raw.get("request_identity"),
         "qualification_receipt_id": receipt.get("qualification_receipt_id")
         if isinstance(receipt, Mapping)
         else None,

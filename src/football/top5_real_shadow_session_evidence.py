@@ -195,7 +195,7 @@ def build_shadow_evidence(session: RealShadowSession) -> dict[str, object]:
         "cascade_traces": [{
             "fixture_key": item.fixture_key,
             "provider_identity": item.provider_identity,
-            "trace": item.cascade_trace,
+            "trace": _thaw(item.cascade_trace),
             "observation_digest": item.observation_digest(),
             "cascade_trace_digest": item.cascade_trace_digest(),
             "validation_receipt": _thaw(item.independent_validation) if item.independent_validation else None,

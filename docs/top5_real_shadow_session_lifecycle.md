@@ -83,6 +83,42 @@ python3 scripts/top5_real_shadow_session.py \
 No provider call is made by this interface. A real run remains NO-BET,
 unpublished, unregistered, and outside the ledger and scheduler.
 
+After Builder-2 qualification, the accepted intake directory can be consumed
+without reshaping the observation by hand:
+
+```text
+python3 scripts/top5_real_shadow_session.py \
+  --b2-intake-dir /absolute/external/b2-evidence/<intake-id> \
+  --session-key shadow-session:<run-id> \
+  --integration-sha <exact-implementation-sha> \
+  --experiment-id shadow-experiment:<id> \
+  --created-at 2026-09-16T12:00:00Z \
+  --min-lead-minutes <experiment-value> \
+  --max-lead-minutes <experiment-value> \
+  --max-odds-age-seconds <experiment-value> \
+  --kickoff-tolerance-seconds <experiment-value> \
+  --output /absolute/external/top5-shadow/session.json \
+  --evidence-output /absolute/external/top5-shadow/evidence.json
+```
+
+The adapter validates the shared `Builder2QualificationReceiptV1` against the
+canonical observation and preserves the exact provider, fixture, request,
+capture, qualification, and controlled-run bindings. After result and closing
+attachments are complete, the resulting local artifacts are consumed by the
+existing audit and measurement commands:
+
+```text
+python3 scripts/top5_shadow_audit.py session \
+  /absolute/external/top5-shadow/session.json \
+  --evidence /absolute/external/top5-shadow/evidence.json \
+  --format json > /absolute/external/top5-shadow/audit.json
+
+python3 scripts/top5_shadow_measure.py session \
+  /absolute/external/top5-shadow/session.json \
+  --evidence /absolute/external/top5-shadow/evidence.json \
+  --format json > /absolute/external/top5-shadow/measurement.json
+```
+
 ## What this does not prove
 
 This lifecycle does not select a provider, validate provider quality by itself,
