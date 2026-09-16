@@ -174,6 +174,8 @@ class AdapterResult:
     latency_ms: int = 0
     quota_after: QuotaSnapshot = field(default_factory=QuotaSnapshot)
     rate_limit_state: QuotaSnapshot = field(default_factory=QuotaSnapshot)
+    raw_response_digest: str = ""
+    normalized_record_digest: str = ""
 
     def validate(self) -> None:
         if not self.reason.strip() or self.latency_ms < 0:
@@ -184,6 +186,27 @@ class AdapterResult:
                 raise ProductionContractError(
                     "failed adapter result cannot contain an observation"
                 )
+
+
+def _accepted_result(
+    response: RawProviderResponse,
+    observation: NormalizedOddsObservation,
+    reason: str,
+) -> AdapterResult:
+    """Return one accepted result with both evidence digests separated."""
+
+    return AdapterResult(
+        state=ProviderState.AVAILABLE,
+        reason=reason,
+        observation=observation,
+        status_code=response.status_code,
+        network_called=True,
+        latency_ms=response.latency_ms,
+        quota_after=_quota_from_headers(response.headers),
+        rate_limit_state=_quota_from_headers(response.headers),
+        raw_response_digest=digest_record(response.payload),
+        normalized_record_digest=digest_record(observation.as_payload()),
+    )
 
 
 class OddsProviderAdapter(Protocol):
@@ -273,7 +296,9 @@ class _BaseAdapter:
         return None
 
     @staticmethod
-    def _timing_policy(timing_policy: CascadeTimingPolicy | None) -> CascadeTimingPolicy:
+    def _timing_policy(
+        timing_policy: CascadeTimingPolicy | None,
+    ) -> CascadeTimingPolicy:
         if timing_policy is None:
             raise ProductionContractError(
                 "explicit experiment timing policy is required"
@@ -433,16 +458,7 @@ class TheOddsAPIAdapter(_BaseAdapter):
                 identity_resolution=identity_resolution,
             )
             if observation is not None:
-                return AdapterResult(
-                    ProviderState.AVAILABLE,
-                    "accepted",
-                    observation,
-                    response.status_code,
-                    True,
-                    response.latency_ms,
-                    _quota_from_headers(response.headers),
-                    _quota_from_headers(response.headers),
-                )
+                return _accepted_result(response, observation, "accepted")
             return self._base_result(
                 response,
                 ProviderState.QUALITY_REJECTED,
@@ -565,16 +581,7 @@ class OddsApiIoAdapter(_BaseAdapter):
                 identity_resolution=identity_resolution,
             )
             if observation is not None:
-                return AdapterResult(
-                    ProviderState.AVAILABLE,
-                    "accepted",
-                    observation,
-                    response.status_code,
-                    True,
-                    response.latency_ms,
-                    _quota_from_headers(response.headers),
-                    _quota_from_headers(response.headers),
-                )
+                return _accepted_result(response, observation, "accepted")
             return self._base_result(
                 response,
                 ProviderState.QUALITY_REJECTED,
@@ -708,16 +715,7 @@ class ApiFootballAdapter(_BaseAdapter):
                 aliases=self._aliases,
             )
             if observation is not None:
-                return AdapterResult(
-                    ProviderState.AVAILABLE,
-                    "accepted",
-                    observation,
-                    response.status_code,
-                    True,
-                    response.latency_ms,
-                    _quota_from_headers(response.headers),
-                    _quota_from_headers(response.headers),
-                )
+                return _accepted_result(response, observation, "accepted")
             return self._base_result(
                 response,
                 ProviderState.QUALITY_REJECTED,
@@ -873,15 +871,8 @@ class BetfairDelayedAdapter(_BaseAdapter):
                 ),
             )
             if observation is not None:
-                return AdapterResult(
-                    ProviderState.AVAILABLE,
-                    "accepted_delayed_observation",
-                    observation,
-                    response.status_code,
-                    True,
-                    response.latency_ms,
-                    _quota_from_headers(response.headers),
-                    _quota_from_headers(response.headers),
+                return _accepted_result(
+                    response, observation, "accepted_delayed_observation"
                 )
             return self._base_result(
                 response,
@@ -931,7 +922,9 @@ def resolve_provider_identity(
         raise ProductionContractError("kickoff tolerance must be non-negative")
     aliases = aliases or {}
     if provider == "betfair_delayed":
-        raw_candidates = payload.get("result") if isinstance(payload, Mapping) else payload
+        raw_candidates = (
+            payload.get("result") if isinstance(payload, Mapping) else payload
+        )
         candidates = raw_candidates if isinstance(raw_candidates, list) else []
         matches: list[tuple[Mapping[str, object], Mapping[str, str]]] = []
         for market in candidates:
@@ -943,8 +936,12 @@ def resolve_provider_identity(
             if market_name not in {"match_odds", "match odds"}:
                 continue
             event = market.get("event")
-            event_name = str(event.get("name", "")) if isinstance(event, Mapping) else ""
-            pair = re.split(r"\s+(?:v|vs|versus)\s+", event_name, maxsplit=1, flags=re.IGNORECASE)
+            event_name = (
+                str(event.get("name", "")) if isinstance(event, Mapping) else ""
+            )
+            pair = re.split(
+                r"\s+(?:v|vs|versus)\s+", event_name, maxsplit=1, flags=re.IGNORECASE
+            )
             start = market.get("marketStartTime")
             if len(pair) != 2:
                 continue
@@ -988,7 +985,8 @@ def resolve_provider_identity(
                 provider=provider,
                 fixture=fixture,
                 provider_id=str(market.get("marketId")),
-                league_competition_evidence=competition_text or "Betfair football Match Odds",
+                league_competition_evidence=competition_text
+                or "Betfair football Match Odds",
                 resolution_provenance="listMarketCatalogue",
                 resolution_timestamp=resolution_timestamp,
                 resolver_version="provider-identity-resolver-v1",
@@ -1017,7 +1015,9 @@ def resolve_provider_identity(
         )
 
     if provider == "api_football":
-        candidates = payload.get("response") if isinstance(payload, Mapping) else payload
+        candidates = (
+            payload.get("response") if isinstance(payload, Mapping) else payload
+        )
     else:
         candidates = payload
     if isinstance(candidates, Mapping):
@@ -1096,11 +1096,11 @@ def resolve_provider_identity(
             fixture=fixture,
             provider_id=str(provider_id),
             league_competition_evidence=league_evidence or provider,
-                resolution_provenance=f"{provider}:discovery_response",
-                resolution_timestamp=resolution_timestamp,
-                resolver_version="provider-identity-resolver-v1",
-                kickoff=kickoff,
-                kickoff_tolerance_seconds=kickoff_tolerance_seconds,
+            resolution_provenance=f"{provider}:discovery_response",
+            resolution_timestamp=resolution_timestamp,
+            resolver_version="provider-identity-resolver-v1",
+            kickoff=kickoff,
+            kickoff_tolerance_seconds=kickoff_tolerance_seconds,
         )
     state = (
         ProviderIdentityResolutionState.AMBIGUOUS
@@ -1121,6 +1121,8 @@ def resolve_provider_identity(
         resolver_version="provider-identity-resolver-v1",
         digest="",
     )
+
+
 def _quota_from_headers(headers: Mapping[str, object]) -> QuotaSnapshot:
     lowered = {str(key).lower(): str(value).strip() for key, value in headers.items()}
 
@@ -1226,7 +1228,10 @@ def _event_identity(
     parsed_kickoff = _parse_kickoff(kickoff)
     if parsed_kickoff is None:
         return "malformed"
-    if abs((parsed_kickoff - fixture.kickoff).total_seconds()) > kickoff_tolerance_seconds:
+    if (
+        abs((parsed_kickoff - fixture.kickoff).total_seconds())
+        > kickoff_tolerance_seconds
+    ):
         return "kickoff_mismatch"
     return "match"
 
@@ -1442,8 +1447,7 @@ def _api_football_identity(
         if (
             identity_resolution.provider != "api_football"
             or identity_resolution.provider_id != provider_fixture_id
-            or identity_resolution.state
-            != ProviderIdentityResolutionState.RESOLVED
+            or identity_resolution.state != ProviderIdentityResolutionState.RESOLVED
         ):
             return "wrong_fixture"
     if not isinstance(teams, Mapping):
