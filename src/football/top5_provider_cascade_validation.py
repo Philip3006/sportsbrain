@@ -142,6 +142,7 @@ class ValidationCode(str, Enum):
     SEALED_DATA_ACCESS = "SEALED_DATA_ACCESS"
     RESEARCH_MUTATION = "RESEARCH_MUTATION"
     MONETARY_SPEND_AUTHORIZED = "MONETARY_SPEND_AUTHORIZED"
+    UNQUALIFIED_TIMING_PROVENANCE = "UNQUALIFIED_TIMING_PROVENANCE"
 
 
 class RequestCostClassification(str, Enum):
@@ -470,6 +471,7 @@ class CascadeAttempt:
     raw_record_digest: str
     request_identity: str
     provider_readiness_state: ProviderReadinessState | str
+    source_timing_provenance: str = "SOURCE_TIMESTAMP"
 
     def validate_structural(self) -> None:
         for name, value in (
@@ -584,6 +586,8 @@ class CascadeAttempt:
                 _number(value, name)
         if self.source_timestamp is not None:
             _utc(self.source_timestamp, "source_timestamp")
+        if not isinstance(self.source_timing_provenance, str) or not self.source_timing_provenance.strip():
+            raise CascadeValidationError("source timing provenance is required")
 
     @classmethod
     def from_payload(cls, payload: object) -> CascadeAttempt:
@@ -628,6 +632,9 @@ class CascadeAttempt:
             raw_record_digest=raw.get("raw_record_digest", ""),
             request_identity=raw.get("request_identity", ""),
             provider_readiness_state=raw.get("provider_readiness_state", ""),
+            source_timing_provenance=raw.get(
+                "source_timing_provenance", "SOURCE_TIMESTAMP"
+            ),
         )
 
     def as_payload(self) -> dict[str, object]:
@@ -698,6 +705,7 @@ class CascadeAttempt:
                 self.provider_readiness_state,
                 "provider readiness state",
             ).value,
+            "source_timing_provenance": self.source_timing_provenance,
         }
 
 
@@ -839,6 +847,7 @@ class CascadeValidationPolicy:
         default_factory=dict
     )
     expected_fixture: ExpectedCascadeFixture | None = None
+    accepted_timing_provenances: tuple[str, ...] = ("SOURCE_TIMESTAMP",)
 
     def validate(self) -> None:
         if (
@@ -866,6 +875,11 @@ class CascadeValidationPolicy:
             if provider not in _KNOWN_PROVIDERS:
                 raise CascadeValidationError("readiness contains an unknown provider")
             _enum(ProviderReadinessState, state, "provider readiness state")
+        if not self.accepted_timing_provenances or any(
+            not isinstance(value, str) or not value.strip()
+            for value in self.accepted_timing_provenances
+        ):
+            raise CascadeValidationError("accepted timing provenance is required")
 
     def readiness_for(self, provider: str) -> ProviderReadinessState:
         return ProviderReadinessState(
@@ -1256,8 +1270,14 @@ def validate_cascade_evidence(
                 _append(errors, ValidationCode.MALFORMED_ODDS)
             if not attempt.bookmaker_identity or not attempt.source_identity:
                 _append(errors, ValidationCode.MISSING_PROVENANCE)
-            if attempt.source_timestamp is None:
-                _append(errors, ValidationCode.MISSING_PROVENANCE)
+            if attempt.source_timing_provenance not in policy.accepted_timing_provenances:
+                _append(errors, ValidationCode.UNQUALIFIED_TIMING_PROVENANCE)
+            elif attempt.source_timestamp is None:
+                # Capture-only timing is deliberately not run through the
+                # source-age freshness gate.  Builder 2's explicit policy
+                # decides whether that provenance is sufficient.
+                if attempt.source_timing_provenance == "SOURCE_TIMESTAMP":
+                    _append(errors, ValidationCode.MISSING_PROVENANCE)
             else:
                 source = _utc(attempt.source_timestamp, "source_timestamp")
                 capture = _utc(attempt.capture_timestamp, "capture_timestamp")
