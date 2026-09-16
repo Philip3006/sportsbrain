@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 import re
 from collections import Counter, defaultdict
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from enum import Enum
@@ -34,6 +34,7 @@ from src.football.top5_provider_cascade_validation import (
     ExpectedCascadeFixture,
     RequestCostClassification,
     cascade_to_shadow_observation_evidence,
+    evidence_digest,
     validate_cascade_evidence,
 )
 from src.football.top5_shadow_provider_redundancy import (
@@ -42,6 +43,7 @@ from src.football.top5_shadow_provider_redundancy import (
 )
 
 QUALIFICATION_CONTRACT_VERSION = "top5-controlled-shadow-provider-qualification-v1"
+CAPTURE_ATTESTATION_CONTRACT_VERSION = "controlled-shadow-capture-attestation-v1"
 TOP5_LEAGUES = ("BL1", "EPL", "LL", "SA", "L1")
 QUALIFICATION_ARCHIVE_ROOT = "top5-provider-qualification"
 NO_PRODUCTION_SIGNAL_TIME_VALUES = "NO PRODUCTION SIGNAL-TIME VALUES APPROVED"
@@ -85,6 +87,12 @@ class QualificationCode(str, Enum):
     RAW_DIGEST_MISSING = "RAW_DIGEST_MISSING"
     NORMALIZED_DIGEST_MISSING = "NORMALIZED_DIGEST_MISSING"
     ADAPTER_PROVENANCE_MISSING = "ADAPTER_PROVENANCE_MISSING"
+    CAPTURE_ATTESTATION_MISSING = "CAPTURE_ATTESTATION_MISSING"
+    CAPTURE_ATTESTATION_INVALID = "CAPTURE_ATTESTATION_INVALID"
+    CAPTURE_ATTESTATION_MISMATCH = "CAPTURE_ATTESTATION_MISMATCH"
+    CASCADE_DIGEST_MISMATCH = "CASCADE_DIGEST_MISMATCH"
+    NORMALIZED_DIGEST_MISMATCH = "NORMALIZED_DIGEST_MISMATCH"
+    AUTHORIZATION_ID_MISMATCH = "AUTHORIZATION_ID_MISMATCH"
     PROVIDER_EVENT_ID_MISMATCH = "PROVIDER_EVENT_ID_MISMATCH"
     PROVIDER_REQUEST_ID_MISMATCH = "PROVIDER_REQUEST_ID_MISMATCH"
     RAW_DIGEST_MISMATCH = "RAW_DIGEST_MISMATCH"
@@ -117,6 +125,9 @@ class QualificationCode(str, Enum):
     AUTHORIZATION_MISSING = "AUTHORIZATION_MISSING"
     AUTHORIZATION_EXPIRED = "AUTHORIZATION_EXPIRED"
     AUTHORIZATION_SCOPE_MISMATCH = "AUTHORIZATION_SCOPE_MISMATCH"
+    AUTHORIZATION_RUN_MISMATCH = "AUTHORIZATION_RUN_MISMATCH"
+    AUTHORIZATION_SESSION_MISMATCH = "AUTHORIZATION_SESSION_MISMATCH"
+    AUTHORIZATION_ALREADY_CONSUMED = "AUTHORIZATION_ALREADY_CONSUMED"
     NETWORK_BUDGET_EXCEEDED = "NETWORK_BUDGET_EXCEEDED"
     PAID_SPEND_AUTHORIZATION = "PAID_SPEND_AUTHORIZATION"
     NETWORK_CALL_NOT_ALLOWED = "NETWORK_CALL_NOT_ALLOWED"
@@ -248,6 +259,120 @@ class QualificationTimingPolicy:
 
 
 @dataclass(frozen=True)
+class ControlledShadowCaptureAttestation:
+    """Serialized provenance from one completed controlled shadow run.
+
+    This is an integrity binding supplied by the run/archive layer, not a
+    cryptographic or remote attestation claim.  Builder 2 validates it but
+    cannot create it.
+    """
+
+    controlled_shadow_run_id: str
+    ceo_authorization_id: str
+    qualification_session_id: str
+    provider_identity: str
+    fixture_key: str
+    provider_event_id: str
+    provider_request_id: str
+    adapter_version: str
+    adapter_source_sha: str
+    cascade_evidence_digest: str
+    raw_response_digest: str
+    normalized_record_digest: str
+    captured_at: datetime
+    network_execution: bool
+    no_bet: bool
+    publication: bool
+    monetary_spend_authorized: bool
+    schema_version: str = CAPTURE_ATTESTATION_CONTRACT_VERSION
+
+    @property
+    def attestation_schema_version(self) -> str:
+        return self.schema_version
+
+    def validate(self) -> None:
+        for name, value in (
+            ("controlled_shadow_run_id", self.controlled_shadow_run_id),
+            ("ceo_authorization_id", self.ceo_authorization_id),
+            ("qualification_session_id", self.qualification_session_id),
+            ("provider_identity", self.provider_identity),
+            ("fixture_key", self.fixture_key),
+            ("provider_event_id", self.provider_event_id),
+            ("provider_request_id", self.provider_request_id),
+            ("adapter_version", self.adapter_version),
+        ):
+            _text(value, name)
+        if self.provider_identity not in _KNOWN_PROVIDERS:
+            raise QualificationContractError("attestation provider is not a candidate")
+        _sha(self.adapter_source_sha, "attestation adapter_source_sha")
+        _sha(self.cascade_evidence_digest, "cascade_evidence_digest")
+        _sha(self.raw_response_digest, "attestation raw_response_digest")
+        _sha(self.normalized_record_digest, "attestation normalized_record_digest")
+        _utc(self.captured_at, "attestation captured_at")
+        if self.schema_version != CAPTURE_ATTESTATION_CONTRACT_VERSION:
+            raise QualificationContractError("unsupported capture attestation schema")
+        for name, value, expected in (
+            ("network_execution", self.network_execution, True),
+            ("no_bet", self.no_bet, True),
+            ("publication", self.publication, False),
+            ("monetary_spend_authorized", self.monetary_spend_authorized, False),
+        ):
+            if value is not expected:
+                raise QualificationContractError(
+                    f"attestation safety field {name} is unsafe"
+                )
+
+    @classmethod
+    def from_payload(cls, payload: object) -> ControlledShadowCaptureAttestation:
+        raw = payload if isinstance(payload, Mapping) else {}
+        return cls(
+            controlled_shadow_run_id=raw.get("controlled_shadow_run_id", ""),
+            ceo_authorization_id=raw.get("ceo_authorization_id", ""),
+            qualification_session_id=raw.get("qualification_session_id", ""),
+            provider_identity=raw.get("provider_identity", ""),
+            fixture_key=raw.get("fixture_key", ""),
+            provider_event_id=raw.get("provider_event_id", ""),
+            provider_request_id=raw.get("provider_request_id", ""),
+            adapter_version=raw.get("adapter_version", ""),
+            adapter_source_sha=raw.get("adapter_source_sha", ""),
+            cascade_evidence_digest=raw.get("cascade_evidence_digest", ""),
+            raw_response_digest=raw.get("raw_response_digest", ""),
+            normalized_record_digest=raw.get("normalized_record_digest", ""),
+            captured_at=_parse_datetime(raw.get("captured_at")),
+            network_execution=raw.get("network_execution"),
+            no_bet=raw.get("no_bet"),
+            publication=raw.get("publication"),
+            monetary_spend_authorized=raw.get("monetary_spend_authorized"),
+            schema_version=raw.get(
+                "schema_version", CAPTURE_ATTESTATION_CONTRACT_VERSION
+            ),
+        )
+
+    def as_payload(self) -> dict[str, object]:
+        self.validate()
+        return {
+            "controlled_shadow_run_id": self.controlled_shadow_run_id,
+            "ceo_authorization_id": self.ceo_authorization_id,
+            "qualification_session_id": self.qualification_session_id,
+            "provider_identity": self.provider_identity,
+            "fixture_key": self.fixture_key,
+            "provider_event_id": self.provider_event_id,
+            "provider_request_id": self.provider_request_id,
+            "adapter_version": self.adapter_version,
+            "adapter_source_sha": self.adapter_source_sha,
+            "cascade_evidence_digest": self.cascade_evidence_digest,
+            "raw_response_digest": self.raw_response_digest,
+            "normalized_record_digest": self.normalized_record_digest,
+            "captured_at": _iso(self.captured_at),
+            "network_execution": True,
+            "no_bet": True,
+            "publication": False,
+            "monetary_spend_authorized": False,
+            "schema_version": self.schema_version,
+        }
+
+
+@dataclass(frozen=True)
 class MinimumSamplePolicy:
     """Caller-supplied sample threshold; it never authorizes production."""
 
@@ -276,6 +401,8 @@ class CEOAuthorization:
     """A future, caller-supplied authorization envelope; never created here."""
 
     authorization_id: str
+    controlled_shadow_run_id: str
+    qualification_session_id: str
     provider_scope: tuple[str, ...]
     league_scope: tuple[str, ...]
     fixture_scope: tuple[str, ...]
@@ -287,6 +414,8 @@ class CEOAuthorization:
 
     def validate(self) -> None:
         _text(self.authorization_id, "authorization_id")
+        _text(self.controlled_shadow_run_id, "controlled_shadow_run_id")
+        _text(self.qualification_session_id, "qualification_session_id")
         providers = _strings(self.provider_scope)
         leagues = _strings(self.league_scope)
         fixtures = _strings(self.fixture_scope)
@@ -332,12 +461,16 @@ class CEOAuthorization:
             or observation.fixture_key not in self.fixture_scope
         ):
             return QualificationCode.AUTHORIZATION_SCOPE_MISMATCH
+        if observation.qualification_session_id != self.qualification_session_id:
+            return QualificationCode.AUTHORIZATION_SESSION_MISMATCH
         return None
 
     def as_payload(self) -> dict[str, object]:
         self.validate()
         return {
             "authorization_id": self.authorization_id,
+            "controlled_shadow_run_id": self.controlled_shadow_run_id,
+            "qualification_session_id": self.qualification_session_id,
             "provider_scope": list(self.provider_scope),
             "league_scope": list(self.league_scope),
             "fixture_scope": list(self.fixture_scope),
@@ -393,6 +526,8 @@ class ProviderQualificationSession:
     ledger_mutated: bool = False
     sealed_data_accessed: bool = False
     research_mutated: bool = False
+    selected_observation_network_request_count: int = 0
+    cascade_network_request_count: int = 0
 
     def validate(self) -> None:
         _text(self.qualification_session_id, "qualification_session_id")
@@ -406,7 +541,7 @@ class ProviderQualificationSession:
         if not leagues or any(item not in TOP5_LEAGUES for item in leagues):
             raise QualificationContractError("session league scope is invalid")
         fixtures = _strings(self.fixture_scope)
-        if not fixtures:
+        if not fixtures or len(fixtures) != len(set(fixtures)):
             raise QualificationContractError("session fixture scope is required")
         order = _strings(self.configured_provider_order)
         if (
@@ -423,12 +558,32 @@ class ProviderQualificationSession:
             ("accepted_observation_count", self.accepted_observation_count),
             ("rejected_observation_count", self.rejected_observation_count),
             ("network_request_count", self.network_request_count),
+            (
+                "selected_observation_network_request_count",
+                self.selected_observation_network_request_count,
+            ),
+            ("cascade_network_request_count", self.cascade_network_request_count),
         ):
             if not isinstance(value, int) or isinstance(value, bool) or value < 0:
                 raise QualificationContractError(f"{name} must be non-negative")
         _number(self.quota_units_observed, "quota_units_observed")
         if self.monetary_spend_authorized is not False:
             raise QualificationContractError("session monetary spend must remain false")
+        if self.cascade_network_request_count != self.network_request_count:
+            raise QualificationContractError(
+                "session network_request_count must equal full cascade usage"
+            )
+        if (
+            self.selected_observation_network_request_count
+            > self.cascade_network_request_count
+        ):
+            raise QualificationContractError(
+                "selected observation requests cannot exceed full cascade usage"
+            )
+        if self.accepted_observation_count > self.real_observation_count:
+            raise QualificationContractError(
+                "accepted observations cannot exceed real observations"
+            )
         for name, value, expected in (
             ("no_bet", self.no_bet, True),
             ("publication_enabled", self.publication_enabled, False),
@@ -441,13 +596,15 @@ class ProviderQualificationSession:
                 raise QualificationContractError(
                     f"session safety flag {name} is unsafe"
                 )
-        if (
-            ProviderReadinessState(self.qualification_state)
-            is ProviderReadinessState.REAL_OBSERVATION_VALIDATED
-            and self.accepted_observation_count == 0
+        if ProviderReadinessState(
+            self.qualification_state
+        ) is ProviderReadinessState.REAL_OBSERVATION_VALIDATED and (
+            self.real_observation_count == 0
+            or self.accepted_observation_count == 0
+            or self.accepted_observation_count > self.real_observation_count
         ):
             raise QualificationContractError(
-                "real validation cannot be asserted without accepted real evidence"
+                "real validation requires consistent accepted real evidence counts"
             )
 
     @property
@@ -473,6 +630,8 @@ class ProviderQualificationSession:
             "accepted_observation_count": self.accepted_observation_count,
             "rejected_observation_count": self.rejected_observation_count,
             "network_request_count": self.network_request_count,
+            "selected_observation_network_request_count": self.selected_observation_network_request_count,
+            "cascade_network_request_count": self.cascade_network_request_count,
             "quota_units_observed": self.quota_units_observed,
             "monetary_spend_authorized": False,
             "safety": {
@@ -533,6 +692,9 @@ class RealProviderObservation:
     ledger_mutated: bool = False
     sealed_data_accessed: bool = False
     research_mutated: bool = False
+    capture_attestation: (
+        ControlledShadowCaptureAttestation | Mapping[str, object] | None
+    ) = None
 
     @property
     def provider_timestamp(self) -> datetime | None:
@@ -687,6 +849,7 @@ class RealProviderObservation:
             ledger_mutated=raw.get("ledger_mutated"),
             sealed_data_accessed=raw.get("sealed_data_accessed"),
             research_mutated=raw.get("research_mutated"),
+            capture_attestation=raw.get("capture_attestation"),
         )
 
     def as_payload(self) -> dict[str, object]:
@@ -696,6 +859,14 @@ class RealProviderObservation:
             cascade.as_payload()
             if isinstance(cascade, CascadeEvidence)
             else dict(cascade)
+        )
+        attestation = self.capture_attestation
+        attestation_payload = (
+            attestation.as_payload()
+            if isinstance(attestation, ControlledShadowCaptureAttestation)
+            else dict(attestation)
+            if attestation is not None
+            else None
         )
         return {
             "observation_id": self.observation_id,
@@ -744,6 +915,7 @@ class RealProviderObservation:
             "ledger_mutated": False,
             "sealed_data_accessed": False,
             "research_mutated": False,
+            "capture_attestation": attestation_payload,
         }
 
 
@@ -821,6 +993,8 @@ class ObservationValidationResult:
     source_age_seconds: float | None = None
     capture_latency_ms: float | None = None
     time_to_kickoff_seconds: float | None = None
+    cascade_network_request_count: int = 0
+    cascade_quota_units: float = 0.0
 
     def as_payload(self) -> dict[str, object]:
         return {
@@ -836,6 +1010,8 @@ class ObservationValidationResult:
             "source_age_seconds": self.source_age_seconds,
             "capture_latency_ms": self.capture_latency_ms,
             "time_to_kickoff_seconds": self.time_to_kickoff_seconds,
+            "cascade_network_request_count": self.cascade_network_request_count,
+            "cascade_quota_units": self.cascade_quota_units,
         }
 
 
@@ -851,6 +1027,11 @@ class ProviderQualificationReport:
     unresolved: tuple[str, ...]
     minimum_sample_policy: MinimumSamplePolicy | None = None
     production_sample_sufficient: bool | None = None
+    accepted_real_observation_count: int = 0
+    accepted_distinct_fixture_count: int = 0
+    cascade_network_request_count: int = 0
+    selected_observation_network_request_count: int = 0
+    quota_units_observed: float = 0.0
     signal_time_note: str = NO_PRODUCTION_SIGNAL_TIME_VALUES
     production_activation_authorized: bool = False
     recommendation: None = None
@@ -881,6 +1062,31 @@ class ProviderQualificationReport:
             raise QualificationContractError(
                 "qualification cannot authorize or recommend activation"
             )
+        if (
+            self.accepted_real_observation_count < 0
+            or self.accepted_distinct_fixture_count < 0
+            or self.cascade_network_request_count < 0
+            or self.selected_observation_network_request_count < 0
+        ):
+            raise QualificationContractError("report counts must be non-negative")
+        _number(self.quota_units_observed, "quota_units_observed", minimum=0.0)
+        if (
+            self.cascade_network_request_count
+            != self.session.cascade_network_request_count
+            or self.selected_observation_network_request_count
+            != self.session.selected_observation_network_request_count
+            or self.quota_units_observed != self.session.quota_units_observed
+        ):
+            raise QualificationContractError(
+                "report usage totals must match the serialized session"
+            )
+        if (
+            self.production_sample_sufficient is True
+            and self.minimum_sample_policy is None
+        ):
+            raise QualificationContractError(
+                "sample sufficiency requires an explicit caller policy"
+            )
         for provider, status in self.provider_statuses.items():
             if provider not in _KNOWN_PROVIDERS:
                 raise QualificationContractError("report contains an unknown provider")
@@ -906,6 +1112,11 @@ class ProviderQualificationReport:
                 else None
             ),
             "production_sample_sufficient": self.production_sample_sufficient,
+            "accepted_real_observation_count": self.accepted_real_observation_count,
+            "accepted_distinct_fixture_count": self.accepted_distinct_fixture_count,
+            "cascade_network_request_count": self.cascade_network_request_count,
+            "selected_observation_network_request_count": self.selected_observation_network_request_count,
+            "quota_units_observed": self.quota_units_observed,
             "signal_time_note": self.signal_time_note,
             "production_activation_authorized": False,
             "recommendation": None,
@@ -997,12 +1208,117 @@ def _quality_codes(
     return errors, source_age, capture_latency, lead
 
 
+def _attestation_binding(
+    observation: RealProviderObservation,
+    session: ProviderQualificationSession,
+    expected: ExpectedCascadeFixture,
+    authorization: CEOAuthorization | None,
+) -> list[QualificationCode]:
+    """Check provenance equality without claiming remote cryptographic trust."""
+
+    real = (
+        ObservationEvidenceKind(observation.evidence_kind)
+        is ObservationEvidenceKind.REAL_OBSERVED
+    )
+    if observation.capture_attestation is None:
+        return [QualificationCode.CAPTURE_ATTESTATION_MISSING] if real else []
+    try:
+        attestation = (
+            observation.capture_attestation
+            if isinstance(
+                observation.capture_attestation, ControlledShadowCaptureAttestation
+            )
+            else ControlledShadowCaptureAttestation.from_payload(
+                observation.capture_attestation
+            )
+        )
+        attestation.validate()
+        record = (
+            observation.cascade_evidence
+            if isinstance(observation.cascade_evidence, CascadeEvidence)
+            else CascadeEvidence.from_payload(observation.cascade_evidence)
+        )
+        errors: list[QualificationCode] = []
+        expected_pairs = (
+            (
+                attestation.qualification_session_id
+                != session.qualification_session_id,
+                QualificationCode.AUTHORIZATION_SESSION_MISMATCH,
+            ),
+            (
+                attestation.provider_identity != observation.provider_identity,
+                QualificationCode.CAPTURE_ATTESTATION_MISMATCH,
+            ),
+            (
+                attestation.fixture_key != expected.fixture_key
+                or attestation.fixture_key != observation.fixture_key,
+                QualificationCode.WRONG_FIXTURE,
+            ),
+            (
+                attestation.provider_event_id != observation.provider_event_id,
+                QualificationCode.PROVIDER_EVENT_ID_MISMATCH,
+            ),
+            (
+                attestation.provider_request_id != observation.provider_request_id,
+                QualificationCode.PROVIDER_REQUEST_ID_MISMATCH,
+            ),
+            (
+                attestation.adapter_version != observation.adapter_version,
+                QualificationCode.ADAPTER_VERSION_MISMATCH,
+            ),
+            (
+                attestation.adapter_source_sha.lower()
+                != observation.adapter_source_sha.lower(),
+                QualificationCode.ADAPTER_PROVENANCE_MISSING,
+            ),
+            (
+                attestation.raw_response_digest.lower()
+                != observation.raw_response_digest.lower(),
+                QualificationCode.RAW_DIGEST_MISMATCH,
+            ),
+            (
+                attestation.normalized_record_digest.lower()
+                != observation.normalized_record_digest.lower(),
+                QualificationCode.NORMALIZED_DIGEST_MISMATCH,
+            ),
+            (
+                _utc(attestation.captured_at, "attestation captured_at")
+                != _utc(observation.captured_at, "captured_at"),
+                QualificationCode.CAPTURE_ATTESTATION_MISMATCH,
+            ),
+        )
+        errors.extend(code for mismatch, code in expected_pairs if mismatch)
+        if (
+            attestation.cascade_evidence_digest.lower()
+            != evidence_digest(record).lower()
+        ):
+            errors.append(QualificationCode.CASCADE_DIGEST_MISMATCH)
+        if authorization is None:
+            if real:
+                errors.append(QualificationCode.AUTHORIZATION_MISSING)
+        elif attestation.ceo_authorization_id != authorization.authorization_id:
+            errors.append(QualificationCode.AUTHORIZATION_ID_MISMATCH)
+        elif (
+            attestation.controlled_shadow_run_id
+            != authorization.controlled_shadow_run_id
+        ):
+            errors.append(QualificationCode.AUTHORIZATION_RUN_MISMATCH)
+        elif (
+            attestation.qualification_session_id
+            != authorization.qualification_session_id
+        ):
+            errors.append(QualificationCode.AUTHORIZATION_SESSION_MISMATCH)
+        return errors
+    except (QualificationContractError, TypeError, ValueError, AttributeError):
+        return [QualificationCode.CAPTURE_ATTESTATION_INVALID]
+
+
 def _cascade_codes(
     observation: RealProviderObservation,
     expected: ExpectedCascadeFixture,
     timing: QualificationTimingPolicy,
     provider_readiness: Mapping[str, ProviderReadinessState],
-) -> tuple[object, list[str], list[QualificationCode]]:
+) -> tuple[object, list[str], list[QualificationCode], int, float]:
     record = (
         observation.cascade_evidence
         if isinstance(observation.cascade_evidence, CascadeEvidence)
@@ -1062,7 +1378,13 @@ def _cascade_codes(
             errors.append(QualificationCode.PROVIDER_NOT_READY)
         if selected.request_cost_classification == RequestCostClassification.UNKNOWN:
             errors.append(QualificationCode.UNRESOLVED)
-    return record, cascade_errors, errors
+    cascade_network_count = sum(
+        attempt.network_request_count or 0 for attempt in record.attempts
+    )
+    quota_units = sum(
+        float(attempt.quota_cost_units or 0) for attempt in record.attempts
+    )
+    return record, cascade_errors, errors, cascade_network_count, quota_units
 
 
 def _exception_codes(exc: Exception) -> list[QualificationCode]:
@@ -1071,6 +1393,23 @@ def _exception_codes(exc: Exception) -> list[QualificationCode]:
     if "betfair" in text:
         codes.append(QualificationCode.BETFAIR_DELAY_NOT_DISCLOSED)
     return codes
+
+
+def _cascade_counts(observation: RealProviderObservation) -> tuple[int, float]:
+    """Read all serialized attempts; preflight-only attempts contribute zero."""
+
+    try:
+        record = (
+            observation.cascade_evidence
+            if isinstance(observation.cascade_evidence, CascadeEvidence)
+            else CascadeEvidence.from_payload(observation.cascade_evidence)
+        )
+        return (
+            sum(attempt.network_request_count or 0 for attempt in record.attempts),
+            sum(float(attempt.quota_cost_units or 0) for attempt in record.attempts),
+        )
+    except (QualificationContractError, TypeError, ValueError, AttributeError):
+        return 0, 0.0
 
 
 def _validate_one(
@@ -1084,6 +1423,8 @@ def _validate_one(
     errors: list[QualificationCode] = []
     cascade_errors: list[str] = []
     source_age = capture_latency = lead = None
+    cascade_network_count = 0
+    cascade_quota_units = 0.0
     real = (
         ObservationEvidenceKind(observation.evidence_kind)
         is ObservationEvidenceKind.REAL_OBSERVED
@@ -1112,6 +1453,9 @@ def _validate_one(
             observation, timing
         )
         errors.extend(timing_errors)
+        errors.extend(
+            _attestation_binding(observation, session, expected, authorization)
+        )
         if real:
             if authorization is None:
                 errors.append(QualificationCode.AUTHORIZATION_MISSING)
@@ -1124,9 +1468,13 @@ def _validate_one(
                     errors.append(QualificationCode.AUTHORIZATION_EXPIRED)
         else:
             errors.append(QualificationCode.EVIDENCE_NOT_REAL)
-        record, cascade_errors, cascade_quality_errors = _cascade_codes(
-            observation, expected, timing, provider_readiness
-        )
+        (
+            record,
+            cascade_errors,
+            cascade_quality_errors,
+            cascade_network_count,
+            cascade_quota_units,
+        ) = _cascade_codes(observation, expected, timing, provider_readiness)
         errors.extend(cascade_quality_errors)
         if not cascade_errors:
             selected = next(
@@ -1183,6 +1531,8 @@ def _validate_one(
         source_age_seconds=source_age,
         capture_latency_ms=capture_latency,
         time_to_kickoff_seconds=lead,
+        cascade_network_request_count=cascade_network_count,
+        cascade_quota_units=cascade_quota_units,
     )
 
 
@@ -1252,23 +1602,56 @@ def _metrics(
     return tuple(output)
 
 
+def _expected_fixture_map(
+    expected_fixture: ExpectedCascadeFixture | Mapping[str, ExpectedCascadeFixture],
+) -> dict[str, ExpectedCascadeFixture]:
+    if isinstance(expected_fixture, Mapping):
+        if not expected_fixture:
+            raise QualificationContractError(
+                "at least one expected fixture is required"
+            )
+        output: dict[str, ExpectedCascadeFixture] = {}
+        for key, fixture in expected_fixture.items():
+            if not isinstance(fixture, ExpectedCascadeFixture):
+                raise QualificationContractError(
+                    "expected fixture map contains an invalid fixture"
+                )
+            fixture.validate()
+            if key != fixture.fixture_key:
+                raise QualificationContractError(
+                    "expected fixture map key must equal fixture_key"
+                )
+            output[key] = fixture
+        return output
+    expected_fixture.validate()
+    return {expected_fixture.fixture_key: expected_fixture}
+
+
 def qualify_provider_observations(
     observations: Sequence[RealProviderObservation | Mapping[str, object]],
     session: ProviderQualificationSession,
-    expected_fixture: ExpectedCascadeFixture,
+    expected_fixture: ExpectedCascadeFixture | Mapping[str, ExpectedCascadeFixture],
     timing_policy: QualificationTimingPolicy,
     provider_readiness: Mapping[str, ProviderReadinessState],
     authorization: CEOAuthorization | None = None,
     *,
     minimum_sample_policy: MinimumSamplePolicy | None = None,
+    authorization_usage: Mapping[str, object] | None = None,
+    consumed_authorization_ids: Collection[str] = (),
 ) -> ProviderQualificationReport:
     """Validate already-captured observations; this function performs no I/O."""
 
     session.validate()
-    expected_fixture.validate()
+    expected_fixtures = _expected_fixture_map(expected_fixture)
+    default_expected_fixture = next(iter(expected_fixtures.values()))
     timing_policy.validate()
     if minimum_sample_policy is not None:
         minimum_sample_policy.validate()
+    if isinstance(consumed_authorization_ids, (str, bytes)):
+        raise QualificationContractError(
+            "consumed_authorization_ids must be a collection of IDs"
+        )
+    consumed_ids = set(consumed_authorization_ids)
     if not isinstance(provider_readiness, Mapping):
         raise QualificationContractError("explicit provider readiness is required")
     for provider, state in provider_readiness.items():
@@ -1281,6 +1664,28 @@ def qualify_provider_observations(
         authorization.validate()
         if authorization.monetary_spend_authorized:
             raise QualificationContractError("paid-spend authorization is forbidden")
+        if authorization.authorization_id in consumed_ids:
+            authorization_consumed = True
+        else:
+            authorization_consumed = False
+        if authorization_usage is not None and not isinstance(
+            authorization_usage, Mapping
+        ):
+            raise QualificationContractError("authorization_usage must be a mapping")
+        if (
+            authorization_usage is not None
+            and authorization.authorization_id in authorization_usage
+        ):
+            usage = authorization_usage[authorization.authorization_id]
+            if not isinstance(usage, Mapping) or (
+                usage.get("controlled_shadow_run_id")
+                != authorization.controlled_shadow_run_id
+                or usage.get("qualification_session_id")
+                != authorization.qualification_session_id
+            ):
+                authorization_consumed = True
+    else:
+        authorization_consumed = False
     parsed: list[RealProviderObservation] = []
     invalid_results: list[ObservationValidationResult] = []
     for index, raw in enumerate(observations):
@@ -1323,10 +1728,13 @@ def qualify_provider_observations(
             by_id[observation.observation_id] = observation
             unique.append(observation)
         elif previous.as_payload() == observation.as_payload():
+            duplicate_expected_fixture = expected_fixtures.get(
+                previous.fixture_key, default_expected_fixture
+            )
             result = _validate_one(
                 previous,
                 session,
-                expected_fixture,
+                duplicate_expected_fixture,
                 timing_policy,
                 provider_readiness,
                 authorization,
@@ -1375,10 +1783,13 @@ def qualify_provider_observations(
         event_fixtures[key] = fixture
     results: list[ObservationValidationResult] = []
     for observation in unique:
+        observation_expected_fixture = expected_fixtures.get(
+            observation.fixture_key, default_expected_fixture
+        )
         result = _validate_one(
             observation,
             session,
-            expected_fixture,
+            observation_expected_fixture,
             timing_policy,
             provider_readiness,
             authorization,
@@ -1414,7 +1825,7 @@ def qualify_provider_observations(
         results.append(result)
     if authorization is not None:
         real_network_count = sum(
-            observation.network_request_count
+            _cascade_counts(observation)[0]
             for observation in unique
             if ObservationEvidenceKind(observation.evidence_kind)
             is ObservationEvidenceKind.REAL_OBSERVED
@@ -1430,6 +1841,25 @@ def qualify_provider_observations(
                             (
                                 *result.failure_codes,
                                 QualificationCode.NETWORK_BUDGET_EXCEEDED.value,
+                            )
+                        )
+                    ),
+                )
+                if result.real_observed
+                else result
+                for result in results
+            ]
+        if authorization_consumed:
+            results = [
+                replace(
+                    result,
+                    accepted=False,
+                    status=ProviderQualificationStatus.OBSERVED_REJECTED,
+                    failure_codes=tuple(
+                        dict.fromkeys(
+                            (
+                                *result.failure_codes,
+                                QualificationCode.AUTHORIZATION_ALREADY_CONSUMED.value,
                             )
                         )
                     ),
@@ -1463,9 +1893,22 @@ def qualify_provider_observations(
         for item in all_observations
     )
     accepted_real_count = sum(item.accepted and item.real_observed for item in results)
+    accepted_distinct_fixture_count = len(
+        {
+            observation.fixture_key
+            for observation, result in zip(unique, results, strict=True)
+            if result.accepted and result.real_observed
+        }
+    )
     rejected_count = sum(not item.accepted for item in all_results)
-    network_count = sum(item.network_request_count for item in all_observations)
-    quota_units = sum(item.quota_cost_units for item in all_observations)
+    cascade_network_count = sum(
+        result.cascade_network_request_count for result in results
+    )
+    selected_network_count = sum(
+        min(item.network_request_count, result.cascade_network_request_count)
+        for item, result in zip(all_observations, results, strict=True)
+    )
+    quota_units = sum(result.cascade_quota_units for result in results)
     state = ProviderReadinessState(session.qualification_state)
     if (
         accepted_real_count
@@ -1478,8 +1921,10 @@ def qualify_provider_observations(
         real_observation_count=real_count,
         accepted_observation_count=accepted_real_count,
         rejected_observation_count=rejected_count,
-        network_request_count=network_count,
+        network_request_count=cascade_network_count,
         quota_units_observed=quota_units,
+        selected_observation_network_request_count=selected_network_count,
+        cascade_network_request_count=cascade_network_count,
     )
     updated_session.validate()
     if not all_results:
@@ -1499,6 +1944,8 @@ def qualify_provider_observations(
     else:
         sample_sufficient = (
             accepted_real_count >= minimum_sample_policy.minimum_real_observations
+            and accepted_distinct_fixture_count
+            >= minimum_sample_policy.minimum_distinct_fixtures
         )
         if not sample_sufficient:
             unresolved.append("INSUFFICIENT_PRODUCTION_SAMPLE")
@@ -1515,6 +1962,11 @@ def qualify_provider_observations(
         tuple(dict.fromkeys(unresolved)),
         minimum_sample_policy,
         sample_sufficient,
+        accepted_real_count,
+        accepted_distinct_fixture_count,
+        cascade_network_count,
+        selected_network_count,
+        quota_units,
     )
     report.validate()
     return report
@@ -1600,12 +2052,14 @@ def offline_fixture_catalog() -> tuple[dict[str, object], ...]:
 
 
 __all__ = [
+    "CAPTURE_ATTESTATION_CONTRACT_VERSION",
     "CASCADE_PROVIDER_ORDER",
     "NO_PRODUCTION_SIGNAL_TIME_VALUES",
     "QUALIFICATION_ARCHIVE_ROOT",
     "QUALIFICATION_CONTRACT_VERSION",
     "TOP5_LEAGUES",
     "CEOAuthorization",
+    "ControlledShadowCaptureAttestation",
     "FreshnessSummary",
     "MinimumSamplePolicy",
     "ObservationEvidenceKind",

@@ -67,6 +67,17 @@ serialized. Missing provider/event/request identity, digest, adapter
 provenance, or capture-time proof fails closed. Capture time is not source
 freshness.
 
+Every `REAL_OBSERVED` record must also carry a serialized
+`ControlledShadowCaptureAttestation` from the completed controlled shadow run.
+It binds the controlled-run ID, CEO authorization ID, qualification-session ID,
+provider, exact fixture, event/request IDs, adapter provenance, capture time,
+raw and normalized digests, and the exact serialized `CascadeEvidence` digest.
+The safety fields are fixed to `network_execution=true`, `no_bet=true`,
+`publication=false`, and `monetary_spend_authorized=false`. A marker, copied
+fixture, or fake attestation cannot create real evidence; this module validates
+the serialized equality binding and makes no cryptographic or remote-attestation
+claim.
+
 The accepted timestamp provenance values are:
 
 `PROVIDER_SOURCE_TIMESTAMP`, `BOOKMAKER_UPDATE_TIMESTAMP`,
@@ -105,12 +116,22 @@ exists.
 
 ## Authorization contract
 
-`CEOAuthorization` is a future input, not a factory. It contains provider,
-league, exact fixture, maximum network request budget, expiry, single-use
-semantics, and an explicit `monetary_spend_authorized=false`. Missing,
-expired, out-of-scope, or paid-spend authorization rejects `REAL_OBSERVED`
-qualification. This module cannot create or consume an authorization and
-cannot use it to make a call.
+`CEOAuthorization` is a future input, not a factory. It contains the bound
+controlled-shadow-run ID, qualification-session ID, provider/league/exact
+fixture scopes, maximum network request budget, expiry, single-use semantics,
+and an explicit `monetary_spend_authorized=false`. Missing, expired,
+out-of-scope, copied-to-another-run, or paid-spend authorization rejects
+`REAL_OBSERVED` qualification. Single-use is enforced through caller-supplied
+`authorization_usage` or `consumed_authorization_ids`; the validator performs
+no state write and does not itself consume an authorization. Reuse within the
+same bound run/session is permitted by the supplied usage record.
+
+The network budget is the sum of `network_request_count` across every
+serialized cascade attempt, including failed attempts. Preflight-only attempts
+contribute zero. The report and session expose that full cascade count
+separately from the selected observation's request count. `quota_cost_units`
+are summed independently and are not treated as a one-request/one-quota
+mapping.
 
 ## Qualification results and archive
 
@@ -121,10 +142,14 @@ Results are one of:
 - `OBSERVED_VALID_CONTRACT`
 - `REAL_OBSERVATION_VALIDATED`
 
-Reports contain provider/status, real/accepted/rejected counts, exact
-provider-league coverage, freshness, latency, quota, network request count,
-failure taxonomy, observed leagues, and unresolved issues. They contain no
-profit, model-edge, bet, activation, or publication recommendation.
+Reports contain provider/status, real/accepted/rejected counts, accepted
+distinct-fixture count, exact provider-league coverage, freshness, latency,
+full-cascade and selected-observation network counts, independent quota units,
+failure taxonomy, observed leagues, and unresolved issues. An explicit
+`MinimumSamplePolicy` must be satisfied in both dimensions: minimum accepted
+real observations and minimum distinct accepted real fixtures. These counts
+never authorize production and the report contains no profit, model-edge, bet,
+activation, or publication recommendation.
 
 The archive is isolated under:
 
