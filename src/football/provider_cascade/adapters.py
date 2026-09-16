@@ -9,6 +9,7 @@ controlled shadow run explicitly authorizes them; tests inject transports.
 from __future__ import annotations
 
 import os
+import re
 import unicodedata
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
@@ -22,11 +23,17 @@ from src.config import ODDS_API_URL
 from src.football.production_contracts import Fixture, ProductionContractError, _utc
 from src.football.provider_cascade.contracts import (
     MARKET_PREMATCH_1X2,
+    CascadeTimingPolicy,
+    NetworkAuthorizationContract,
     NormalizedOddsObservation,
     ObservationCompleteness,
     ProviderConfig,
+    ProviderIdentityResolution,
+    ProviderIdentityResolutionState,
     ProviderState,
     QuotaSnapshot,
+    TimingProvenance,
+    TransportCapability,
     digest_record,
 )
 from src.football.top5_real_shadow_provider import (
@@ -181,6 +188,7 @@ class AdapterResult:
 
 class OddsProviderAdapter(Protocol):
     name: str
+    transport_capability: TransportCapability
 
     def fetch(
         self,
@@ -191,12 +199,16 @@ class OddsProviderAdapter(Protocol):
         requested_at: datetime,
         provider_priority: int,
         provider_fixture_id: str | None = None,
+        timing_policy: CascadeTimingPolicy | None = None,
+        identity_resolution: ProviderIdentityResolution | None = None,
+        authorization: NetworkAuthorizationContract | None = None,
     ) -> AdapterResult: ...
 
 
 class _BaseAdapter:
     name: str
     credential_names: tuple[str, ...]
+    transport_capability = TransportCapability.NETWORK_CAPABLE
 
     def __init__(
         self,
@@ -217,8 +229,17 @@ class _BaseAdapter:
         return values
 
     def _request(
-        self, request: ProviderRequest, config: ProviderConfig
+        self,
+        request: ProviderRequest,
+        config: ProviderConfig,
+        *,
+        authorization: NetworkAuthorizationContract,
     ) -> RawProviderResponse:
+        authorization.validate()
+        if not authorization.permits(self.name):
+            raise ProductionContractError(
+                f"network authorization does not permit {self.name}"
+            )
         return self._transport(request, config.timeout_seconds)
 
     def _base_result(
@@ -239,6 +260,26 @@ class _BaseAdapter:
         return AdapterResult(
             ProviderState.CREDENTIAL_MISSING, "credential_missing", network_called=False
         )
+
+    def _authorization_result(
+        self, authorization: NetworkAuthorizationContract | None
+    ) -> AdapterResult | None:
+        if authorization is None or not authorization.permits(self.name):
+            return AdapterResult(
+                ProviderState.HEALTH_UNKNOWN,
+                "network_authorization_required",
+                network_called=False,
+            )
+        return None
+
+    @staticmethod
+    def _timing_policy(timing_policy: CascadeTimingPolicy | None) -> CascadeTimingPolicy:
+        if timing_policy is None:
+            raise ProductionContractError(
+                "explicit experiment timing policy is required"
+            )
+        timing_policy.validate()
+        return timing_policy
 
     def _classify_response(self, response: RawProviderResponse) -> AdapterResult | None:
         if response.timeout or response.error_code == "timeout":
@@ -315,7 +356,15 @@ class TheOddsAPIAdapter(_BaseAdapter):
         requested_at: datetime,
         provider_priority: int,
         provider_fixture_id: str | None = None,
+        timing_policy: CascadeTimingPolicy | None = None,
+        identity_resolution: ProviderIdentityResolution | None = None,
+        authorization: NetworkAuthorizationContract | None = None,
     ) -> AdapterResult:
+        timing_policy = self._timing_policy(timing_policy)
+        denied = self._authorization_result(authorization)
+        if denied is not None:
+            return denied
+        assert authorization is not None
         key_values = self._credentials(config)
         if key_values is None:
             return self._credential_result()
@@ -344,7 +393,7 @@ class TheOddsAPIAdapter(_BaseAdapter):
                 },
                 {"Accept": "application/json"},
             )
-            response = self._request(request, config)
+            response = self._request(request, config, authorization=authorization)
         classified = self._classify_response(response)
         if classified is not None:
             return classified
@@ -368,6 +417,7 @@ class TheOddsAPIAdapter(_BaseAdapter):
                 kickoff=event.get("commence_time"),
                 aliases=self._aliases,
                 expected_league=sport_key,
+                kickoff_tolerance_seconds=timing_policy.kickoff_tolerance_seconds,
             )
             if identity != "match":
                 continue
@@ -380,6 +430,7 @@ class TheOddsAPIAdapter(_BaseAdapter):
                 config=config,
                 response=response,
                 aliases=self._aliases,
+                identity_resolution=identity_resolution,
             )
             if observation is not None:
                 return AdapterResult(
@@ -436,7 +487,15 @@ class OddsApiIoAdapter(_BaseAdapter):
         requested_at: datetime,
         provider_priority: int,
         provider_fixture_id: str | None = None,
+        timing_policy: CascadeTimingPolicy | None = None,
+        identity_resolution: ProviderIdentityResolution | None = None,
+        authorization: NetworkAuthorizationContract | None = None,
     ) -> AdapterResult:
+        timing_policy = self._timing_policy(timing_policy)
+        denied = self._authorization_result(authorization)
+        if denied is not None:
+            return denied
+        assert authorization is not None
         credentials = self._credentials(config)
         if credentials is None:
             return self._credential_result()
@@ -463,7 +522,7 @@ class OddsApiIoAdapter(_BaseAdapter):
             },
             {"Accept": "application/json"},
         )
-        response = self._request(request, config)
+        response = self._request(request, config, authorization=authorization)
         classified = self._classify_response(response)
         if classified is not None:
             return classified
@@ -488,6 +547,7 @@ class OddsApiIoAdapter(_BaseAdapter):
                 away=event.get("away"),
                 kickoff=event.get("date"),
                 aliases=self._aliases,
+                kickoff_tolerance_seconds=timing_policy.kickoff_tolerance_seconds,
             )
             if identity != "match":
                 return self._base_result(
@@ -502,6 +562,7 @@ class OddsApiIoAdapter(_BaseAdapter):
                 config=config,
                 response=response,
                 aliases=self._aliases,
+                identity_resolution=identity_resolution,
             )
             if observation is not None:
                 return AdapterResult(
@@ -528,8 +589,8 @@ class ApiFootballAdapter(_BaseAdapter):
     """API-Football v3 pre-match odds adapter.
 
     The public response contract does not guarantee a per-quote source update
-    timestamp.  This adapter therefore rejects responses without one instead
-    of treating HTTP capture time or kickoff time as odds freshness.
+    timestamp.  This adapter records capture-only timing instead of treating
+    HTTP capture time or kickoff time as a source freshness timestamp.
     """
 
     name = "api_football"
@@ -569,7 +630,15 @@ class ApiFootballAdapter(_BaseAdapter):
         requested_at: datetime,
         provider_priority: int,
         provider_fixture_id: str | None = None,
+        timing_policy: CascadeTimingPolicy | None = None,
+        identity_resolution: ProviderIdentityResolution | None = None,
+        authorization: NetworkAuthorizationContract | None = None,
     ) -> AdapterResult:
+        timing_policy = self._timing_policy(timing_policy)
+        denied = self._authorization_result(authorization)
+        if denied is not None:
+            return denied
+        assert authorization is not None
         credentials = self._credentials(config)
         if credentials is None:
             return self._credential_result()
@@ -585,13 +654,22 @@ class ApiFootballAdapter(_BaseAdapter):
             {"fixture": provider_fixture_id, "page": "1"},
             {"x-apisports-key": credentials[0], "Accept": "application/json"},
         )
-        response = self._request(request, config)
+        response = self._request(request, config, authorization=authorization)
         classified = self._classify_response(response)
         if classified is not None:
             return classified
         if not isinstance(response.payload, Mapping):
             return self._base_result(
                 response, ProviderState.MALFORMED, "payload_not_object"
+            )
+        api_errors = response.payload.get("errors")
+        if api_errors:
+            return self._base_result(
+                response, ProviderState.MALFORMED, "api_body_error"
+            )
+        if response.payload.get("results") == 0:
+            return self._base_result(
+                response, ProviderState.UNSUPPORTED_FIXTURE, "fixture_has_no_odds"
             )
         if _paging_total(response.payload) > 1:
             return self._base_result(
@@ -608,7 +686,12 @@ class ApiFootballAdapter(_BaseAdapter):
             if not isinstance(entry, Mapping):
                 continue
             identity = _api_football_identity(
-                fixture, entry, provider_fixture_id, self._aliases
+                fixture,
+                entry,
+                provider_fixture_id,
+                self._aliases,
+                kickoff_tolerance_seconds=timing_policy.kickoff_tolerance_seconds,
+                identity_resolution=identity_resolution,
             )
             if identity != "match":
                 return self._base_result(
@@ -636,7 +719,9 @@ class ApiFootballAdapter(_BaseAdapter):
                     _quota_from_headers(response.headers),
                 )
             return self._base_result(
-                response, ProviderState.STALE, "missing_or_invalid_source_timestamp"
+                response,
+                ProviderState.QUALITY_REJECTED,
+                "malformed_or_incomplete_match_winner_rows",
             )
         return self._base_result(
             response, ProviderState.UNSUPPORTED_FIXTURE, "fixture_not_found"
@@ -691,10 +776,41 @@ class BetfairDelayedAdapter(_BaseAdapter):
         requested_at: datetime,
         provider_priority: int,
         provider_fixture_id: str | None = None,
+        timing_policy: CascadeTimingPolicy | None = None,
+        identity_resolution: ProviderIdentityResolution | None = None,
+        authorization: NetworkAuthorizationContract | None = None,
     ) -> AdapterResult:
+        timing_policy = self._timing_policy(timing_policy)
+        denied = self._authorization_result(authorization)
+        if denied is not None:
+            return denied
+        assert authorization is not None
         credentials = self._credentials(config)
         if credentials is None:
             return self._credential_result()
+        if (
+            identity_resolution is None
+            or identity_resolution.provider != self.name
+            or identity_resolution.provider_id != provider_fixture_id
+            or ProviderIdentityResolutionState(identity_resolution.state)
+            is not ProviderIdentityResolutionState.RESOLVED
+        ):
+            return AdapterResult(
+                ProviderState.DISCOVERY_REQUIRED,
+                "resolved_market_catalogue_runner_mapping_required",
+                network_called=False,
+            )
+        try:
+            identity_resolution.validate(
+                fixture=fixture,
+                kickoff_tolerance_seconds=timing_policy.kickoff_tolerance_seconds,
+            )
+        except ProductionContractError:
+            return AdapterResult(
+                ProviderState.IDENTITY_AMBIGUOUS,
+                "invalid_market_catalogue_identity_resolution",
+                network_called=False,
+            )
         if not provider_fixture_id:
             return AdapterResult(
                 ProviderState.UNSUPPORTED_FIXTURE,
@@ -721,7 +837,7 @@ class BetfairDelayedAdapter(_BaseAdapter):
             },
             body,
         )
-        response = self._request(request, config)
+        response = self._request(request, config, authorization=authorization)
         classified = self._classify_response(response)
         if classified is not None:
             return classified
@@ -750,6 +866,11 @@ class BetfairDelayedAdapter(_BaseAdapter):
                 config=config,
                 response=response,
                 aliases=self._aliases,
+                runner_mapping=(
+                    identity_resolution.runner_mapping
+                    if identity_resolution is not None
+                    else None
+                ),
             )
             if observation is not None:
                 return AdapterResult(
@@ -789,6 +910,217 @@ def _legacy_to_raw(response: Any, requested_at: datetime) -> RawProviderResponse
     )
 
 
+def resolve_provider_identity(
+    provider: str,
+    fixture: Fixture,
+    payload: object,
+    *,
+    resolution_timestamp: datetime,
+    kickoff_tolerance_seconds: int,
+    aliases: Mapping[str, str] | None = None,
+) -> ProviderIdentityResolution:
+    """Resolve one provider identity from already captured discovery data.
+
+    This function is deliberately pure: it never calls discovery itself.  A
+    caller must budget and authorize discovery separately, then pass its
+    response here.  Missing and duplicate matches are explicit states.
+    """
+
+    fixture.validate()
+    if kickoff_tolerance_seconds < 0:
+        raise ProductionContractError("kickoff tolerance must be non-negative")
+    aliases = aliases or {}
+    if provider == "betfair_delayed":
+        raw_candidates = payload.get("result") if isinstance(payload, Mapping) else payload
+        candidates = raw_candidates if isinstance(raw_candidates, list) else []
+        matches: list[tuple[Mapping[str, object], Mapping[str, str]]] = []
+        for market in candidates:
+            if not isinstance(market, Mapping):
+                continue
+            market_name = str(
+                market.get("marketTypeCode") or market.get("marketName") or ""
+            ).casefold()
+            if market_name not in {"match_odds", "match odds"}:
+                continue
+            event = market.get("event")
+            event_name = str(event.get("name", "")) if isinstance(event, Mapping) else ""
+            pair = re.split(r"\s+(?:v|vs|versus)\s+", event_name, maxsplit=1, flags=re.IGNORECASE)
+            start = market.get("marketStartTime")
+            if len(pair) != 2:
+                continue
+            identity = _event_identity(
+                fixture,
+                home=pair[0],
+                away=pair[1],
+                kickoff=start,
+                aliases=aliases,
+                kickoff_tolerance_seconds=kickoff_tolerance_seconds,
+            )
+            if identity != "match":
+                continue
+            runners = market.get("runners")
+            runner_mapping = {
+                str(runner.get("selectionId")): str(runner.get("runnerName"))
+                for runner in runners
+                if isinstance(runners, list)
+                and isinstance(runner, Mapping)
+                and runner.get("selectionId") is not None
+                and str(runner.get("runnerName", "")).strip()
+            }
+            runner_names = {
+                _team_key(value, aliases) for value in runner_mapping.values()
+            }
+            if runner_names >= {
+                _team_key(fixture.home_team, aliases),
+                _team_key(fixture.away_team, aliases),
+                "draw",
+            }:
+                matches.append((market, runner_mapping))
+        if len(matches) == 1:
+            market, runner_mapping = matches[0]
+            competition = market.get("competition")
+            competition_text = (
+                str(competition.get("name", ""))
+                if isinstance(competition, Mapping)
+                else ""
+            )
+            return ProviderIdentityResolution.resolved(
+                provider=provider,
+                fixture=fixture,
+                provider_id=str(market.get("marketId")),
+                league_competition_evidence=competition_text or "Betfair football Match Odds",
+                resolution_provenance="listMarketCatalogue",
+                resolution_timestamp=resolution_timestamp,
+                resolver_version="provider-identity-resolver-v1",
+                runner_mapping=runner_mapping,
+                kickoff=_parse_kickoff(start),
+                kickoff_tolerance_seconds=kickoff_tolerance_seconds,
+            )
+        state = (
+            ProviderIdentityResolutionState.AMBIGUOUS
+            if len(matches) > 1
+            else ProviderIdentityResolutionState.UNRESOLVED
+        )
+        return ProviderIdentityResolution(
+            provider=provider,
+            state=state,
+            canonical_fixture_key=fixture.fixture_key,
+            provider_id=None,
+            home_team=fixture.home_team,
+            away_team=fixture.away_team,
+            kickoff=fixture.kickoff,
+            league_competition_evidence="Betfair listMarketCatalogue",
+            resolution_provenance="listMarketCatalogue",
+            resolution_timestamp=resolution_timestamp,
+            resolver_version="provider-identity-resolver-v1",
+            digest="",
+        )
+
+    if provider == "api_football":
+        candidates = payload.get("response") if isinstance(payload, Mapping) else payload
+    else:
+        candidates = payload
+    if isinstance(candidates, Mapping):
+        candidates = [candidates]
+    matches: list[Mapping[str, object]] = []
+    for candidate in candidates if isinstance(candidates, list) else []:
+        if not isinstance(candidate, Mapping):
+            continue
+        if provider == "api_football":
+            fixture_meta = candidate.get("fixture")
+            teams = candidate.get("teams")
+            if not isinstance(fixture_meta, Mapping) or not isinstance(teams, Mapping):
+                continue
+            home = teams.get("home")
+            away = teams.get("away")
+            home_value = home.get("name") if isinstance(home, Mapping) else None
+            away_value = away.get("name") if isinstance(away, Mapping) else None
+            kickoff = fixture_meta.get("date")
+            provider_id = fixture_meta.get("id")
+            league_evidence = str(
+                candidate.get("league", {}).get("name", "")
+                if isinstance(candidate.get("league"), Mapping)
+                else ""
+            )
+        else:
+            home_value = candidate.get("home") or candidate.get("home_team")
+            away_value = candidate.get("away") or candidate.get("away_team")
+            kickoff = candidate.get("date") or candidate.get("commence_time")
+            provider_id = candidate.get("id")
+            league_evidence = str(
+                candidate.get("league") or candidate.get("sport_key") or ""
+            )
+        identity = _event_identity(
+            fixture,
+            home=home_value,
+            away=away_value,
+            kickoff=kickoff,
+            aliases=aliases,
+            expected_league=(
+                TheOddsAPIAdapter.sport_keys.get(fixture.league_code)
+                if provider == "the_odds_api"
+                else None
+            ),
+            league_value=(
+                candidate.get("sport_key") if provider == "the_odds_api" else None
+            ),
+            kickoff_tolerance_seconds=kickoff_tolerance_seconds,
+        )
+        if identity == "match" and provider_id is not None:
+            matches.append(candidate)
+    if len(matches) == 1:
+        candidate = matches[0]
+        if provider == "api_football":
+            fixture_meta = candidate["fixture"]
+            teams = candidate["teams"]
+            home = teams["home"]
+            away = teams["away"]
+            home_value = home["name"]
+            away_value = away["name"]
+            kickoff_value = fixture_meta["date"]
+            provider_id = fixture_meta["id"]
+            league_evidence = str(candidate.get("league", {}).get("name", ""))
+        else:
+            home_value = candidate.get("home") or candidate.get("home_team")
+            away_value = candidate.get("away") or candidate.get("away_team")
+            kickoff_value = candidate.get("date") or candidate.get("commence_time")
+            provider_id = candidate.get("id")
+            league_evidence = str(
+                candidate.get("league") or candidate.get("sport_key") or ""
+            )
+        kickoff = _parse_kickoff(kickoff_value)
+        if kickoff is None:
+            raise ProductionContractError("resolved provider kickoff is malformed")
+        return ProviderIdentityResolution.resolved(
+            provider=provider,
+            fixture=fixture,
+            provider_id=str(provider_id),
+            league_competition_evidence=league_evidence or provider,
+                resolution_provenance=f"{provider}:discovery_response",
+                resolution_timestamp=resolution_timestamp,
+                resolver_version="provider-identity-resolver-v1",
+                kickoff=kickoff,
+                kickoff_tolerance_seconds=kickoff_tolerance_seconds,
+        )
+    state = (
+        ProviderIdentityResolutionState.AMBIGUOUS
+        if len(matches) > 1
+        else ProviderIdentityResolutionState.UNRESOLVED
+    )
+    return ProviderIdentityResolution(
+        provider=provider,
+        state=state,
+        canonical_fixture_key=fixture.fixture_key,
+        provider_id=None,
+        home_team=fixture.home_team,
+        away_team=fixture.away_team,
+        kickoff=fixture.kickoff,
+        league_competition_evidence="provider discovery response",
+        resolution_provenance=f"{provider}:discovery_response",
+        resolution_timestamp=resolution_timestamp,
+        resolver_version="provider-identity-resolver-v1",
+        digest="",
+    )
 def _quota_from_headers(headers: Mapping[str, object]) -> QuotaSnapshot:
     lowered = {str(key).lower(): str(value).strip() for key, value in headers.items()}
 
@@ -873,6 +1205,7 @@ def _event_identity(
     kickoff: object,
     aliases: Mapping[str, str],
     expected_league: str | None = None,
+    kickoff_tolerance_seconds: int,
 ) -> str:
     if (
         expected_league is not None
@@ -893,7 +1226,7 @@ def _event_identity(
     parsed_kickoff = _parse_kickoff(kickoff)
     if parsed_kickoff is None:
         return "malformed"
-    if abs((parsed_kickoff - fixture.kickoff).total_seconds()) > 90:
+    if abs((parsed_kickoff - fixture.kickoff).total_seconds()) > kickoff_tolerance_seconds:
         return "kickoff_mismatch"
     return "match"
 
@@ -947,6 +1280,7 @@ def _the_odds_observation(
     config: ProviderConfig,
     response: RawProviderResponse,
     aliases: Mapping[str, str],
+    identity_resolution: ProviderIdentityResolution | None = None,
 ) -> NormalizedOddsObservation | None:
     captured = response.completed_at
     bookmakers = event.get("bookmakers")
@@ -1023,6 +1357,7 @@ def _odds_api_io_observation(
     config: ProviderConfig,
     response: RawProviderResponse,
     aliases: Mapping[str, str],
+    identity_resolution: ProviderIdentityResolution | None = None,
 ) -> NormalizedOddsObservation | None:
     bookmakers = event.get("bookmakers")
     if not isinstance(bookmakers, Mapping):
@@ -1085,6 +1420,9 @@ def _api_football_identity(
     entry: Mapping[str, object],
     provider_fixture_id: str,
     aliases: Mapping[str, str],
+    *,
+    kickoff_tolerance_seconds: int,
+    identity_resolution: ProviderIdentityResolution | None = None,
 ) -> str:
     fixture_meta = entry.get("fixture")
     teams = entry.get("teams")
@@ -1093,8 +1431,34 @@ def _api_football_identity(
         or str(fixture_meta.get("id", "")) != provider_fixture_id
     ):
         return "wrong_fixture"
+    if identity_resolution is not None:
+        try:
+            identity_resolution.validate(
+                fixture=fixture,
+                kickoff_tolerance_seconds=kickoff_tolerance_seconds,
+            )
+        except ProductionContractError:
+            return "wrong_fixture"
+        if (
+            identity_resolution.provider != "api_football"
+            or identity_resolution.provider_id != provider_fixture_id
+            or identity_resolution.state
+            != ProviderIdentityResolutionState.RESOLVED
+        ):
+            return "wrong_fixture"
     if not isinstance(teams, Mapping):
-        return "malformed"
+        # API-Football's documented /odds response carries fixture metadata but
+        # does not promise a teams object.  Discovery evidence owns the team
+        # identity in that case.
+        parsed_kickoff = _parse_kickoff(fixture_meta.get("date"))
+        if parsed_kickoff is None:
+            return "malformed"
+        if (
+            abs((parsed_kickoff - fixture.kickoff).total_seconds())
+            > kickoff_tolerance_seconds
+        ):
+            return "kickoff_mismatch"
+        return "match"
     home = teams.get("home")
     away = teams.get("away")
     if not isinstance(home, Mapping) or not isinstance(away, Mapping):
@@ -1105,6 +1469,7 @@ def _api_football_identity(
         away=away.get("name"),
         kickoff=fixture_meta.get("date"),
         aliases=aliases,
+        kickoff_tolerance_seconds=kickoff_tolerance_seconds,
     )
 
 
@@ -1155,14 +1520,7 @@ def _api_football_observation(
                 price = _decimal(value.get("odd"))
                 if key is not None and price is not None:
                     odds[key] = price
-            source_value = (
-                entry.get("updatedAt")
-                or entry.get("lastUpdate")
-                or bookmaker.get("updatedAt")
-                or bookmaker.get("last_update")
-            )
-            source = _parse_timestamp(source_value, now=response.completed_at)
-            if source is None or set(odds) != {"home", "draw", "away"}:
+            if set(odds) != {"home", "draw", "away"}:
                 continue
             return _observation(
                 fixture,
@@ -1172,15 +1530,23 @@ def _api_football_observation(
                     bookmaker.get("name") or bookmaker.get("id") or "unknown"
                 ),
                 odds=odds,
-                source_timestamp=source,
+                source_timestamp=None,
                 captured_at=response.completed_at,
                 request_identity=request_identity,
                 requested_at=requested_at,
                 provider_priority=provider_priority,
                 config=config,
                 response=response,
-                source_provenance="api_football:v3:/odds; explicit updatedAt/lastUpdate only",
+                source_provenance=(
+                    "api_football:v3:/odds; documented fixture metadata and odds rows; "
+                    "no quote-source timestamp exposed"
+                ),
                 record=entry,
+                source_timing_provenance=TimingProvenance.CAPTURE_TIME_ONLY,
+                metadata={
+                    "timing_provenance": TimingProvenance.CAPTURE_TIME_ONLY.value,
+                    "source_timestamp_available": False,
+                },
             )
     return None
 
@@ -1195,27 +1561,23 @@ def _betfair_observation(
     config: ProviderConfig,
     response: RawProviderResponse,
     aliases: Mapping[str, str],
+    runner_mapping: Mapping[str, str] | None,
 ) -> NormalizedOddsObservation | None:
     if book.get("isMarketDataDelayed") is not True:
         return None
-    definition = book.get("marketDefinition")
-    definition_runners = (
-        definition.get("runners") if isinstance(definition, Mapping) else None
-    )
     runners = book.get("runners")
-    if not isinstance(definition_runners, list) or not isinstance(runners, list):
+    if not runner_mapping or not isinstance(runners, list):
         return None
-    names: dict[str, str] = {}
-    for runner in definition_runners:
-        if isinstance(runner, Mapping):
-            names[str(runner.get("id"))] = str(runner.get("name", ""))
     odds: dict[str, float] = {}
     expected_home = _team_key(fixture.home_team, aliases)
     expected_away = _team_key(fixture.away_team, aliases)
     for runner in runners:
         if not isinstance(runner, Mapping):
             continue
-        label = names.get(str(runner.get("selectionId")), str(runner.get("name", "")))
+        # listMarketBook returns selectionId plus dynamic price data.  The
+        # selectionId -> runnerName mapping comes from the separately resolved
+        # listMarketCatalogue response, never from a fabricated marketDefinition.
+        label = runner_mapping.get(str(runner.get("selectionId")), "")
         normalized = _team_key(label, aliases)
         key = (
             "home"
@@ -1239,13 +1601,7 @@ def _betfair_observation(
             if key in odds:
                 return None
             odds[key] = price
-    source = _parse_timestamp(
-        book.get("publishTime")
-        or book.get("publish_time")
-        or book.get("lastMatchTime"),
-        now=response.completed_at,
-    )
-    if source is None or set(odds) != {"home", "draw", "away"}:
+    if set(odds) != {"home", "draw", "away"}:
         return None
     delay_value = book.get("delaySeconds") or book.get("delay_seconds")
     try:
@@ -1258,20 +1614,28 @@ def _betfair_observation(
         provider_identity="betfair_delayed",
         bookmaker_identity="betfair_exchange",
         odds=odds,
-        source_timestamp=source,
+        source_timestamp=None,
         captured_at=response.completed_at,
         request_identity=request_identity,
         requested_at=requested_at,
         provider_priority=provider_priority,
         config=config,
         response=response,
-        source_provenance="betfair_delayed:Betting API listMarketBook; publishTime; delayed app key",
+        source_provenance=(
+            "betfair_delayed:Betting API listMarketBook; EX_BEST_OFFERS; "
+            "capture time only; delayed app key"
+        ),
         record=book,
         delayed=True,
         delay_seconds=delay_seconds,
         metadata={
-            "delay_semantics": "Betfair Delayed App Key; 1-180 second snapshots per official contract"
+            "delay_semantics": (
+                "Betfair Delayed App Key; 1-180 second snapshots per official contract"
+            ),
+            "timing_provenance": TimingProvenance.CAPTURE_TIME_ONLY.value,
+            "official_delay_semantics": "1-180 seconds",
         },
+        source_timing_provenance=TimingProvenance.CAPTURE_TIME_ONLY,
     )
 
 
@@ -1282,7 +1646,7 @@ def _observation(
     provider_identity: str,
     bookmaker_identity: str,
     odds: Mapping[str, float],
-    source_timestamp: datetime,
+    source_timestamp: datetime | None,
     captured_at: datetime,
     request_identity: str,
     requested_at: datetime,
@@ -1294,6 +1658,7 @@ def _observation(
     delayed: bool = False,
     delay_seconds: int | None = None,
     metadata: Mapping[str, object] | None = None,
+    source_timing_provenance: TimingProvenance = TimingProvenance.SOURCE_TIMESTAMP,
 ) -> NormalizedOddsObservation:
     observation = NormalizedOddsObservation(
         league_code=fixture.league_code,
@@ -1308,7 +1673,11 @@ def _observation(
         away_odds=float(odds["away"]),
         provider_identity=provider_identity,
         bookmaker_identity=bookmaker_identity,
-        source_timestamp=_utc(source_timestamp, "source_timestamp"),
+        source_timestamp=(
+            _utc(source_timestamp, "source_timestamp")
+            if source_timestamp is not None
+            else None
+        ),
         captured_at=_utc(captured_at, "captured_at"),
         request_identity=request_identity,
         request_started_at=_utc(requested_at, "request_started_at"),
@@ -1327,6 +1696,7 @@ def _observation(
         delayed=delayed,
         delay_seconds=delay_seconds,
         metadata=metadata or {},
+        source_timing_provenance=source_timing_provenance,
     )
     observation.validate(require_fresh=False)
     return observation

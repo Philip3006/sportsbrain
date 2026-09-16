@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
@@ -11,26 +12,44 @@ from src.football.provider_cascade import (
     AdapterResult,
     ApiFootballAdapter,
     BetfairDelayedAdapter,
+    Builder2ValidationReceipt,
     CascadeResult,
+    CascadeTimingPolicy,
+    NetworkAuthorizationContract,
     NormalizedOddsObservation,
     OddsApiIoAdapter,
     ProviderCascadeConfig,
     ProviderCascadeRouter,
     ProviderComparisonReport,
     ProviderConfig,
+    ProviderIdentityResolution,
     ProviderState,
     QuotaSnapshot,
     RawProviderResponse,
     RequestBudgetManager,
     TheOddsAPIAdapter,
     accepted_for_builder1,
+    builder2_evidence_payload,
     compare_provider_results,
+    resolve_provider_identity,
 )
 from src.football.top5_real_shadow_provider import ProviderResponse
 
 NOW = datetime(2026, 9, 16, 12, tzinfo=timezone.utc)
 FIXTURE = Fixture(
     "canonical-fixture", "EPL", "Home FC", "Away FC", NOW + timedelta(minutes=120)
+)
+TEST_TIMING = CascadeTimingPolicy(
+    maximum_odds_age_seconds=900, kickoff_tolerance_seconds=90
+)
+TEST_AUTHORIZATION = NetworkAuthorizationContract(
+    controlled_shadow_run_ref="test-controlled-shadow",
+    authorized_providers=(
+        "the_odds_api",
+        "odds_api_io",
+        "api_football",
+        "betfair_delayed",
+    ),
 )
 
 
@@ -44,6 +63,7 @@ def _provider(
     request_budget: int = 1,
     credentials_required: bool = False,
     credential_available: bool | None = True,
+    request_cost: int = 1,
 ) -> ProviderConfig:
     return ProviderConfig(
         name=name,
@@ -55,6 +75,7 @@ def _provider(
         initial_quota=QuotaSnapshot(remaining=quota),
         quota_reserve=reserve,
         request_budget=request_budget,
+        request_cost=request_cost,
         adapter_version=f"{name}:test",
     )
 
@@ -181,7 +202,7 @@ def test_missing_credentials_are_rejected_before_network():
         per_run_cap=1,
     )
     adapter = FakeAdapter(_result("a"))
-    result = ProviderCascadeRouter(config, adapters={"a": adapter}, now=NOW).route(
+    result = ProviderCascadeRouter(config, adapters={"a": adapter}, now=NOW, timing_policy=TEST_TIMING).route(
         FIXTURE, now=NOW
     )
     assert result.trace.fail_closed is True
@@ -207,7 +228,7 @@ def test_exhausted_odds_api_preflight_never_calls_network():
     )
     adapter = FakeAdapter(_result("the_odds_api"))
     result = ProviderCascadeRouter(
-        config, adapters={"the_odds_api": adapter}, now=NOW
+        config, adapters={"the_odds_api": adapter}, now=NOW, timing_policy=TEST_TIMING
     ).route(FIXTURE, now=NOW)
     assert result.observation is None
     assert result.trace.attempts[0].state is ProviderState.QUOTA_EXHAUSTED
@@ -230,7 +251,7 @@ def test_builtin_adapters_do_not_make_live_calls_without_controlled_authorizatio
         global_request_budget=1,
         per_run_cap=1,
     )
-    router = ProviderCascadeRouter(config, now=NOW)
+    router = ProviderCascadeRouter(config, now=NOW, timing_policy=TEST_TIMING)
     result = router.route(
         FIXTURE,
         now=NOW,
@@ -294,7 +315,7 @@ def test_provider_one_success_is_selected_without_fallback():
     first = FakeAdapter(_result("a"))
     second = FakeAdapter(_result("b"))
     result = ProviderCascadeRouter(
-        config, adapters={"a": first, "b": second}, now=NOW
+        config, adapters={"a": first, "b": second}, now=NOW, timing_policy=TEST_TIMING
     ).route(FIXTURE, now=NOW)
     assert result.accepted
     assert result.observation.provider_identity == "a"
@@ -320,7 +341,7 @@ def test_provider_failure_moves_to_next_provider(first_state):
     first = FakeAdapter(_result("a", first_state, reason=first_state.value))
     second = FakeAdapter(_result("b"))
     result = ProviderCascadeRouter(
-        config, adapters={"a": first, "b": second}, now=NOW
+        config, adapters={"a": first, "b": second}, now=NOW, timing_policy=TEST_TIMING
     ).route(FIXTURE, now=NOW)
     assert result.accepted
     assert result.observation.provider_identity == "b"
@@ -335,7 +356,7 @@ def test_stale_observation_is_rejected_and_falls_back():
     first = FakeAdapter(_result("a", observation=stale))
     second = FakeAdapter(_result("b"))
     result = ProviderCascadeRouter(
-        config, adapters={"a": first, "b": second}, now=NOW, max_odds_age_seconds=900
+        config, adapters={"a": first, "b": second}, now=NOW, timing_policy=TEST_TIMING
     ).route(FIXTURE, now=NOW)
     assert result.observation.provider_identity == "b"
     assert result.trace.attempts[0].state is ProviderState.STALE
@@ -351,7 +372,7 @@ def test_all_providers_fail_closed_with_complete_trace():
         )
         for name in config.provider_order
     }
-    result = ProviderCascadeRouter(config, adapters=adapters, now=NOW).route(
+    result = ProviderCascadeRouter(config, adapters=adapters, now=NOW, timing_policy=TEST_TIMING).route(
         FIXTURE, now=NOW
     )
     assert result.observation is None
@@ -376,7 +397,7 @@ def test_disabled_provider_and_candidate_gate_are_explicit():
     disabled = FakeAdapter(_result("disabled"))
     candidate = FakeAdapter(_result("candidate"))
     result = ProviderCascadeRouter(
-        config, adapters={"disabled": disabled, "candidate": candidate}, now=NOW
+        config, adapters={"disabled": disabled, "candidate": candidate}, now=NOW, timing_policy=TEST_TIMING
     ).route(FIXTURE, now=NOW)
     assert result.trace.fail_closed
     assert [attempt.state for attempt in result.trace.attempts] == [
@@ -393,12 +414,12 @@ def test_router_decision_is_deterministic_for_same_inputs_and_config():
         "b": FakeAdapter(_result("b")),
     }
     first = (
-        ProviderCascadeRouter(config, adapters=make_adapters(), now=NOW)
+        ProviderCascadeRouter(config, adapters=make_adapters(), now=NOW, timing_policy=TEST_TIMING)
         .route(FIXTURE, now=NOW)
         .as_payload()
     )
     second = (
-        ProviderCascadeRouter(config, adapters=make_adapters(), now=NOW)
+        ProviderCascadeRouter(config, adapters=make_adapters(), now=NOW, timing_policy=TEST_TIMING)
         .route(FIXTURE, now=NOW)
         .as_payload()
     )
@@ -484,6 +505,8 @@ def test_the_odds_api_adapter_normalizes_injected_http_transport():
         request_identity="request-1",
         requested_at=NOW,
         provider_priority=0,
+        timing_policy=TEST_TIMING,
+        authorization=TEST_AUTHORIZATION,
     )
     assert result.state is ProviderState.AVAILABLE
     assert result.observation.provider_fixture_id == "provider-event"
@@ -512,6 +535,8 @@ def test_the_odds_api_adapter_defaults_to_existing_sportsbrain_transport(monkeyp
         request_identity="request-legacy",
         requested_at=NOW,
         provider_priority=0,
+        timing_policy=TEST_TIMING,
+        authorization=TEST_AUTHORIZATION,
     )
     assert result.state is ProviderState.AVAILABLE
     assert calls == [("soccer_epl", ("h2h",), ("eu",), "", 5.0)]
@@ -544,13 +569,15 @@ def test_odds_api_io_adapter_parses_documented_ml_payload():
         requested_at=NOW,
         provider_priority=1,
         provider_fixture_id="123",
+        timing_policy=TEST_TIMING,
+        authorization=TEST_AUTHORIZATION,
     )
     assert result.state is ProviderState.AVAILABLE
     assert result.observation.home_odds == pytest.approx(2.1)
     assert result.observation.provider_identity == "odds_api_io"
 
 
-def test_api_football_adapter_separates_fixture_and_odds_and_requires_source_timestamp():
+def test_api_football_adapter_uses_official_odds_shape_and_capture_only_timing():
     payload = {
         "paging": {"current": 1, "total": 1},
         "response": [
@@ -577,7 +604,6 @@ def test_api_football_adapter_separates_fixture_and_odds_and_requires_source_tim
                         ],
                     }
                 ],
-                "updatedAt": NOW.isoformat(),
             }
         ],
     }
@@ -589,23 +615,14 @@ def test_api_football_adapter_separates_fixture_and_odds_and_requires_source_tim
         requested_at=NOW,
         provider_priority=2,
         provider_fixture_id="999",
+        timing_policy=TEST_TIMING,
+        authorization=TEST_AUTHORIZATION,
     )
     assert result.state is ProviderState.AVAILABLE
     assert result.observation.provider_identity == "api_football"
-    missing = dict(payload)
-    missing["response"] = [{**payload["response"][0], "updatedAt": None}]
-    rejected = ApiFootballAdapter(
-        transport=lambda request, timeout: _raw(missing)
-    ).fetch(
-        FIXTURE,
-        _adapter_config("api_football"),
-        request_identity="request-4",
-        requested_at=NOW,
-        provider_priority=2,
-        provider_fixture_id="999",
-    )
-    assert rejected.state is ProviderState.STALE
-    assert rejected.observation is None
+    assert result.observation.source_timestamp is None
+    assert result.observation.source_timing_provenance == "CAPTURE_TIME_ONLY"
+    assert result.observation.metadata["source_timestamp_available"] is False
 
 
 def test_betfair_delayed_adapter_preserves_delayed_semantics():
@@ -615,14 +632,6 @@ def test_betfair_delayed_adapter_preserves_delayed_semantics():
             {
                 "marketId": "1.123",
                 "isMarketDataDelayed": True,
-                "publishTime": NOW.isoformat(),
-                "marketDefinition": {
-                    "runners": [
-                        {"id": 1, "name": "Home FC"},
-                        {"id": 2, "name": "Away FC"},
-                        {"id": 3, "name": "Draw"},
-                    ]
-                },
                 "runners": [
                     {"selectionId": 1, "ex": {"availableToBack": [{"price": 2.0}]}},
                     {"selectionId": 2, "ex": {"availableToBack": [{"price": 4.0}]}},
@@ -631,6 +640,16 @@ def test_betfair_delayed_adapter_preserves_delayed_semantics():
             }
         ],
     }
+    resolution = ProviderIdentityResolution.resolved(
+        provider="betfair_delayed",
+        fixture=FIXTURE,
+        provider_id="1.123",
+        league_competition_evidence="Premier League; football Match Odds",
+        resolution_provenance="listMarketCatalogue",
+        resolution_timestamp=NOW,
+        resolver_version="test-catalogue-v1",
+        runner_mapping={"1": "Home FC", "2": "Away FC", "3": "Draw"},
+    )
     adapter = BetfairDelayedAdapter(transport=lambda request, timeout: _raw(payload))
     result = adapter.fetch(
         FIXTURE,
@@ -639,6 +658,9 @@ def test_betfair_delayed_adapter_preserves_delayed_semantics():
         requested_at=NOW,
         provider_priority=3,
         provider_fixture_id="1.123",
+        identity_resolution=resolution,
+        timing_policy=TEST_TIMING,
+        authorization=TEST_AUTHORIZATION,
     )
     assert result.state is ProviderState.AVAILABLE
     assert result.observation.delayed is True
@@ -669,6 +691,8 @@ def test_http_failure_taxonomy_is_deterministic(status, state):
         request_identity="request-http",
         requested_at=NOW,
         provider_priority=0,
+        timing_policy=TEST_TIMING,
+        authorization=TEST_AUTHORIZATION,
     )
     assert result.state is state
     assert result.network_called is True
@@ -691,6 +715,8 @@ def test_chaos_inputs_fail_closed_without_payload_or_secret_leakage():
             request_identity="request-chaos",
             requested_at=NOW,
             provider_priority=0,
+            timing_policy=TEST_TIMING,
+            authorization=TEST_AUTHORIZATION,
         )
         assert result.observation is None
         assert result.state in {
@@ -728,6 +754,8 @@ def test_fixture_identity_rejects_swaps_and_similar_names(home, away, expected):
         request_identity="request-identity",
         requested_at=NOW,
         provider_priority=0,
+        timing_policy=TEST_TIMING,
+        authorization=TEST_AUTHORIZATION,
     )
     assert result.observation is None
     assert expected in result.reason or result.state in {
@@ -749,6 +777,8 @@ def test_market_and_timestamp_boundaries_reject_partial_future_and_inplay_data()
         request_identity="request-partial",
         requested_at=NOW,
         provider_priority=0,
+        timing_policy=TEST_TIMING,
+        authorization=TEST_AUTHORIZATION,
     )
     assert result.state is ProviderState.QUALITY_REJECTED
     future = _event(source=NOW + timedelta(seconds=1))
@@ -758,6 +788,8 @@ def test_market_and_timestamp_boundaries_reject_partial_future_and_inplay_data()
         request_identity="request-future",
         requested_at=NOW,
         provider_priority=0,
+        timing_policy=TEST_TIMING,
+        authorization=TEST_AUTHORIZATION,
     )
     assert result.state is ProviderState.QUALITY_REJECTED
     inplay = _event(kickoff=NOW - timedelta(minutes=1))
@@ -767,6 +799,8 @@ def test_market_and_timestamp_boundaries_reject_partial_future_and_inplay_data()
         request_identity="request-inplay",
         requested_at=NOW,
         provider_priority=0,
+        timing_policy=TEST_TIMING,
+        authorization=TEST_AUTHORIZATION,
     )
     assert result.state is ProviderState.UNSUPPORTED_FIXTURE
 
@@ -794,9 +828,19 @@ def test_budget_tracks_attempts_successes_preflight_rejections_and_quota():
 def test_builder1_seam_only_accepts_non_fail_closed_normalized_observation():
     config = _config("a")
     result = ProviderCascadeRouter(
-        config, adapters={"a": FakeAdapter(_result("a"))}, now=NOW
+        config, adapters={"a": FakeAdapter(_result("a"))}, now=NOW, timing_policy=TEST_TIMING
     ).route(FIXTURE, now=NOW)
-    input_value = accepted_for_builder1(result)
+    receipt = Builder2ValidationReceipt(
+        observation_digest=result.observation_digest,
+        cascade_trace_digest=result.cascade_trace_digest,
+        fixture_key=FIXTURE.fixture_key,
+        provider="a",
+        validation_contract_version="top5-provider-cascade-validation-v1",
+        accepted=True,
+        prediction_input_allowed=True,
+        validation_result_digest="c" * 64,
+    )
+    input_value = accepted_for_builder1(result, receipt)
     fixture, snapshot = input_value.model_inputs()
     assert fixture.fixture_key == FIXTURE.fixture_key
     assert snapshot.odds["draw"] == 3.5
@@ -810,10 +854,366 @@ def test_builder1_seam_only_accepts_non_fail_closed_normalized_observation():
 def test_health_payload_is_secret_free_and_tracks_candidate_state():
     config = _config("a")
     adapter = FakeAdapter(_result("a"))
-    router = ProviderCascadeRouter(config, adapters={"a": adapter}, now=NOW)
+    router = ProviderCascadeRouter(config, adapters={"a": adapter}, now=NOW, timing_policy=TEST_TIMING)
     router.route(FIXTURE, now=NOW)
     health = router.health.as_payload()["a"]
     assert health["candidate_only"] is True
     assert health["validated"] is False
     assert health["rolling_availability"] == [True]
     assert "secret" not in str(health)
+
+
+def test_router_requires_explicit_experiment_timing_policy():
+    config = _config("a")
+    with pytest.raises(ProductionContractError, match="explicit experiment timing"):
+        ProviderCascadeRouter(
+            config, adapters={"a": FakeAdapter(_result("a"))}, now=NOW
+        )
+
+
+def test_kickoff_tolerance_is_caller_supplied_without_hidden_router_value():
+    event = _event(kickoff=FIXTURE.kickoff + timedelta(seconds=61))
+    adapter = TheOddsAPIAdapter(transport=lambda request, timeout: _raw([event]))
+    rejected = adapter.fetch(
+        FIXTURE,
+        _adapter_config("the_odds_api"),
+        request_identity="request-tight-kickoff",
+        requested_at=NOW,
+        provider_priority=0,
+        timing_policy=CascadeTimingPolicy(900, 60),
+        authorization=TEST_AUTHORIZATION,
+    )
+    accepted = adapter.fetch(
+        FIXTURE,
+        _adapter_config("the_odds_api"),
+        request_identity="request-wide-kickoff",
+        requested_at=NOW,
+        provider_priority=0,
+        timing_policy=CascadeTimingPolicy(900, 120),
+        authorization=TEST_AUTHORIZATION,
+    )
+    assert rejected.state is not ProviderState.AVAILABLE
+    assert accepted.state is ProviderState.AVAILABLE
+
+
+def test_builder1_requires_matching_independent_builder2_receipt():
+    result = ProviderCascadeRouter(
+        _config("a"),
+        adapters={"a": FakeAdapter(_result("a"))},
+        now=NOW,
+        timing_policy=TEST_TIMING,
+    ).route(FIXTURE, now=NOW)
+    with pytest.raises(ValueError, match="independent Builder-2"):
+        accepted_for_builder1(result)
+    rejected = Builder2ValidationReceipt(
+        observation_digest=result.observation_digest,
+        cascade_trace_digest=result.cascade_trace_digest,
+        fixture_key=FIXTURE.fixture_key,
+        provider="a",
+        validation_contract_version="top5-provider-cascade-validation-v1",
+        accepted=False,
+        prediction_input_allowed=False,
+    )
+    with pytest.raises((ValueError, ProductionContractError)):
+        accepted_for_builder1(result, rejected)
+    mismatched = replace(rejected, accepted=True, prediction_input_allowed=True)
+    mismatched = replace(mismatched, observation_digest="f" * 64)
+    with pytest.raises(ValueError, match="does not match"):
+        accepted_for_builder1(result, mismatched)
+
+
+def test_explicitly_injected_network_adapter_cannot_bypass_authorization():
+    calls = []
+
+    def transport(request, timeout):
+        calls.append(request)
+        return _raw([_event()])
+
+    config = ProviderCascadeConfig(
+        provider_order=("the_odds_api",),
+        providers={"the_odds_api": _provider("the_odds_api")},
+        global_request_budget=1,
+        per_run_cap=1,
+    )
+    result = ProviderCascadeRouter(
+        config,
+        adapters={"the_odds_api": TheOddsAPIAdapter(transport=transport)},
+        now=NOW,
+        timing_policy=TEST_TIMING,
+    ).route(FIXTURE, now=NOW)
+    assert result.trace.attempts[0].state is ProviderState.HEALTH_UNKNOWN
+    assert result.trace.attempts[0].reason == "live_calls_not_authorized"
+    assert calls == []
+
+
+def test_authorized_network_adapter_is_scoped_to_named_controlled_shadow_path():
+    calls = []
+
+    def transport(request, timeout):
+        calls.append(request)
+        return _raw([_event()])
+
+    config = ProviderCascadeConfig(
+        provider_order=("the_odds_api",),
+        providers={"the_odds_api": _provider("the_odds_api")},
+        global_request_budget=1,
+        per_run_cap=1,
+        live_calls_authorized=True,
+        controlled_shadow_run_ref="future-controlled-shadow-2026-09-17",
+        controlled_shadow_authorized_providers=("the_odds_api",),
+    )
+    result = ProviderCascadeRouter(
+        config,
+        adapters={"the_odds_api": TheOddsAPIAdapter(transport=transport)},
+        now=NOW,
+        timing_policy=TEST_TIMING,
+    ).route(FIXTURE, now=NOW)
+    assert result.accepted
+    assert len(calls) == 1
+    with pytest.raises(ProductionContractError, match="betting or publication"):
+        NetworkAuthorizationContract(
+            "future-controlled-shadow-2026-09-17",
+            ("the_odds_api",),
+            betting_enabled=True,
+        ).validate()
+
+
+def test_live_authorization_requires_run_reference():
+    config = ProviderCascadeConfig(
+        provider_order=("the_odds_api",),
+        providers={"the_odds_api": _provider("the_odds_api")},
+        global_request_budget=1,
+        per_run_cap=1,
+        live_calls_authorized=True,
+    )
+    with pytest.raises(ProductionContractError, match="run reference"):
+        ProviderCascadeRouter(config, now=NOW, timing_policy=TEST_TIMING)
+
+
+def test_missing_provider_id_is_visible_discovery_prerequisite_without_network():
+    adapter = FakeAdapter(_result("odds_api_io"))
+    config = ProviderCascadeConfig(
+        provider_order=("odds_api_io",),
+        providers={"odds_api_io": _provider("odds_api_io")},
+        global_request_budget=1,
+        per_run_cap=1,
+    )
+    result = ProviderCascadeRouter(
+        config, adapters={"odds_api_io": adapter}, now=NOW, timing_policy=TEST_TIMING
+    ).route(FIXTURE, now=NOW)
+    assert result.trace.attempts[0].state is ProviderState.DISCOVERY_REQUIRED
+    assert result.trace.attempts[0].network_called is False
+    assert adapter.calls == 0
+
+
+def test_provider_identity_resolution_is_pure_and_explicitly_classified():
+    api_fixture = {
+        "fixture": {"id": 999, "date": FIXTURE.kickoff.isoformat()},
+        "teams": {
+            "home": {"id": 1, "name": "Home FC"},
+            "away": {"id": 2, "name": "Away FC"},
+        },
+        "league": {"id": 39, "name": "Premier League"},
+    }
+    resolved = resolve_provider_identity(
+        "api_football",
+        FIXTURE,
+        {"response": [api_fixture]},
+        resolution_timestamp=NOW,
+        kickoff_tolerance_seconds=90,
+    )
+    assert resolved.state.value == "RESOLVED"
+    assert resolved.provider_fixture_id == "999"
+    assert len(resolved.digest) == 64
+    round_trip = ProviderIdentityResolution.from_payload(resolved.as_payload())
+    assert round_trip.digest == resolved.digest
+    ambiguous = resolve_provider_identity(
+        "api_football",
+        FIXTURE,
+        {"response": [api_fixture, deepcopy(api_fixture)]},
+        resolution_timestamp=NOW,
+        kickoff_tolerance_seconds=90,
+    )
+    assert ambiguous.state.value == "AMBIGUOUS"
+
+
+def test_betfair_catalogue_resolution_binds_runner_mapping():
+    catalogue = {
+        "jsonrpc": "2.0",
+        "result": [
+            {
+                "marketId": "1.123",
+                "marketTypeCode": "MATCH_ODDS",
+                "marketStartTime": FIXTURE.kickoff.isoformat(),
+                "event": {"id": "event-1", "name": "Home FC v Away FC"},
+                "competition": {"id": "comp-1", "name": "Premier League"},
+                "runners": [
+                    {"selectionId": 1, "runnerName": "Home FC"},
+                    {"selectionId": 2, "runnerName": "Away FC"},
+                    {"selectionId": 3, "runnerName": "Draw"},
+                ],
+            }
+        ],
+    }
+    resolution = resolve_provider_identity(
+        "betfair_delayed",
+        FIXTURE,
+        catalogue,
+        resolution_timestamp=NOW,
+        kickoff_tolerance_seconds=90,
+    )
+    assert resolution.state.value == "RESOLVED"
+    assert resolution.provider_fixture_id == "1.123"
+    assert resolution.runner_mapping == {"1": "Home FC", "2": "Away FC", "3": "Draw"}
+
+
+def test_betfair_book_uses_dynamic_prices_not_last_match_time():
+    payload = {
+        "jsonrpc": "2.0",
+        "result": [
+            {
+                "marketId": "1.123",
+                "isMarketDataDelayed": True,
+                "lastMatchTime": NOW.isoformat(),
+                "runners": [
+                    {"selectionId": 1, "ex": {"availableToBack": [{"price": 2.0}]}},
+                    {"selectionId": 2, "ex": {"availableToBack": [{"price": 4.0}]}},
+                    {"selectionId": 3, "ex": {"availableToBack": [{"price": 3.5}]}},
+                ],
+            }
+        ],
+    }
+    resolution = ProviderIdentityResolution.resolved(
+        provider="betfair_delayed",
+        fixture=FIXTURE,
+        provider_id="1.123",
+        league_competition_evidence="Premier League; Match Odds",
+        resolution_provenance="listMarketCatalogue",
+        resolution_timestamp=NOW,
+        resolver_version="test-catalogue-v1",
+        runner_mapping={"1": "Home FC", "2": "Away FC", "3": "Draw"},
+    )
+    result = BetfairDelayedAdapter(
+        transport=lambda request, timeout: _raw(payload)
+    ).fetch(
+        FIXTURE,
+        _adapter_config("betfair_delayed"),
+        request_identity="request-betfair-capture-only",
+        requested_at=NOW,
+        provider_priority=0,
+        provider_fixture_id="1.123",
+        identity_resolution=resolution,
+        timing_policy=TEST_TIMING,
+        authorization=TEST_AUTHORIZATION,
+    )
+    assert result.state is ProviderState.AVAILABLE
+    assert result.observation.source_timestamp is None
+    assert result.observation.source_timing_provenance.value == "CAPTURE_TIME_ONLY"
+    assert result.observation.metadata["official_delay_semantics"] == "1-180 seconds"
+
+
+def _api_football_odds_payload():
+    return {
+        "paging": {"current": 1, "total": 1},
+        "response": [
+            {
+                "fixture": {"id": 999, "date": FIXTURE.kickoff.isoformat()},
+                "bookmakers": [
+                    {
+                        "id": 8,
+                        "name": "Book",
+                        "bets": [
+                            {
+                                "id": 1,
+                                "name": "Match Winner",
+                                "values": [
+                                    {"value": "Home", "odd": "2.0"},
+                                    {"value": "Draw", "odd": "3.5"},
+                                    {"value": "Away", "odd": "4.0"},
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def _api_fetch(payload):
+    return ApiFootballAdapter(transport=lambda request, timeout: _raw(payload)).fetch(
+        FIXTURE,
+        _adapter_config("api_football"),
+        request_identity="request-api-football-regression",
+        requested_at=NOW,
+        provider_priority=0,
+        provider_fixture_id="999",
+        timing_policy=TEST_TIMING,
+        authorization=TEST_AUTHORIZATION,
+    )
+
+
+def test_api_football_body_error_pagination_and_malformed_rows_fail_closed():
+    body_error = _api_fetch({"errors": {"token": "invalid"}, "results": 0})
+    assert body_error.state is ProviderState.MALFORMED
+    assert body_error.reason == "api_body_error"
+    paged = deepcopy(_api_football_odds_payload())
+    paged["paging"]["total"] = 2
+    pagination = _api_fetch(paged)
+    assert pagination.state is ProviderState.PARTIAL
+    malformed = deepcopy(_api_football_odds_payload())
+    malformed["response"][0]["bookmakers"][0]["bets"] = [
+        {"id": 1, "name": "Match Winner", "values": [{"value": "Home"}]}
+    ]
+    malformed_result = _api_fetch(malformed)
+    assert malformed_result.state is ProviderState.QUALITY_REJECTED
+
+
+def test_budget_separates_network_request_count_from_quota_units():
+    config = ProviderCascadeConfig(
+        provider_order=("a",),
+        providers={"a": _provider("a", request_cost=3)},
+        global_request_budget=1,
+        per_run_cap=1,
+    )
+    budget = RequestBudgetManager(config, now=NOW)
+    budget.record_attempt("a", request_count=1, quota_cost_units=3, at=NOW)
+    counters = budget.counters("a")
+    assert budget.global_requests_attempted == 1
+    assert counters.requests_attempted == 1
+    assert counters.quota_consumed == 3
+    result = ProviderCascadeRouter(
+        config,
+        adapters={"a": FakeAdapter(_result("a"))},
+        budget=RequestBudgetManager(config, now=NOW),
+        now=NOW,
+        timing_policy=TEST_TIMING,
+    ).route(FIXTURE, now=NOW)
+    attempt = result.trace.attempts[0]
+    assert attempt.network_request_count == 1
+    assert attempt.quota_cost_units == 3
+
+
+def test_builder2_payload_is_structurally_compatible_and_preserves_evidence():
+    result = ProviderCascadeRouter(
+        ProviderCascadeConfig(
+            provider_order=("the_odds_api",),
+            providers={"the_odds_api": _provider("the_odds_api")},
+            global_request_budget=1,
+            per_run_cap=1,
+        ),
+        adapters={"the_odds_api": FakeAdapter(_result("the_odds_api"))},
+        now=NOW,
+        timing_policy=TEST_TIMING,
+    ).route(FIXTURE, now=NOW)
+    payload = builder2_evidence_payload(result)
+    from src.football.top5_provider_cascade_validation import CascadeEvidence
+
+    evidence = CascadeEvidence.from_payload(payload)
+    evidence.validate_structural()
+    attempt = payload["attempts"][0]
+    assert attempt["configured_provider_order"] == ["the_odds_api"]
+    assert attempt["preflight_allowed"] is True
+    assert attempt["network_request_count"] == 1
+    assert attempt["quota_cost_units"] == 1.0
+    assert attempt["source_timing_provenance"] == "SOURCE_TIMESTAMP"

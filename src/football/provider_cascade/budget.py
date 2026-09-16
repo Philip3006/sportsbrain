@@ -6,6 +6,7 @@ import os
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from math import isfinite
 
 from src.football.production_contracts import ProductionContractError, _utc
 from src.football.provider_cascade.contracts import (
@@ -21,7 +22,7 @@ class ProviderBudgetCounters:
     requests_attempted: int = 0
     requests_successful: int = 0
     rejected_before_network: int = 0
-    quota_consumed: int = 0
+    quota_consumed: float = 0.0
     last_preflight_at: datetime | None = None
     last_attempt_at: datetime | None = None
     last_success_at: datetime | None = None
@@ -175,7 +176,8 @@ class RequestBudgetManager:
                 cost,
                 quota,
             )
-        if self._global_requests + cost > self.config.global_request_budget:
+        # Request caps count network calls; quota cost is evaluated separately.
+        if self._global_requests + 1 > self.config.global_request_budget:
             return self._reject(
                 provider,
                 ProviderState.QUOTA_EXHAUSTED,
@@ -183,7 +185,7 @@ class RequestBudgetManager:
                 cost,
                 quota,
             )
-        if self._global_requests + cost > self.config.per_run_cap:
+        if self._global_requests + 1 > self.config.per_run_cap:
             return self._reject(
                 provider,
                 ProviderState.QUOTA_EXHAUSTED,
@@ -191,7 +193,7 @@ class RequestBudgetManager:
                 cost,
                 quota,
             )
-        if counter.requests_attempted + cost > provider.request_budget:
+        if counter.requests_attempted + 1 > provider.request_budget:
             return self._reject(
                 provider,
                 ProviderState.QUOTA_EXHAUSTED,
@@ -249,15 +251,35 @@ class RequestBudgetManager:
         self,
         provider_name: str,
         *,
-        request_cost: int = 1,
+        request_count: int = 1,
+        quota_cost_units: float = 1.0,
+        request_cost: int | None = None,
         at: datetime | None = None,
     ) -> None:
         timestamp = _utc(at or self._now, "attempt at")
-        if request_cost <= 0:
-            raise ProductionContractError("request cost must be positive")
+        if request_cost is not None:
+            # Compatibility alias: this value was historically overloaded as
+            # both request count and quota cost.  New callers must provide
+            # request_count and quota_cost_units independently.
+            quota_cost_units = float(request_cost)
+        try:
+            quota_cost = float(quota_cost_units)
+        except (TypeError, ValueError) as exc:
+            raise ProductionContractError(
+                "request count and quota cost must be numeric"
+            ) from exc
+        if (
+            not isinstance(request_count, int)
+            or isinstance(request_count, bool)
+            or request_count <= 0
+            or not isfinite(quota_cost)
+            or quota_cost <= 0
+        ):
+            raise ProductionContractError("request count and quota cost must be positive")
         counter = self.counters(provider_name)
-        counter.requests_attempted += request_cost
-        self._global_requests += request_cost
+        counter.requests_attempted += request_count
+        self._global_requests += request_count
+        counter.quota_consumed += quota_cost
         counter.last_attempt_at = timestamp
 
     def record_result(
@@ -271,11 +293,6 @@ class RequestBudgetManager:
         timestamp = _utc(at or self._now, "result at")
         counter = self.counters(provider_name)
         if quota_after is not None:
-            before = counter.quota
-            if before.remaining is not None and quota_after.remaining is not None:
-                counter.quota_consumed += max(
-                    0, before.remaining - quota_after.remaining
-                )
             self._quotas[provider_name] = quota_after
             counter.quota = quota_after
         if state is ProviderState.AVAILABLE:

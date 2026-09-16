@@ -8,6 +8,13 @@ artifact, write the ledger, or change Research. Built-in adapters are blocked
 unless a controlled shadow run explicitly sets `live_calls_authorized=True` and
 provides `controlled_shadow_run_ref`; the default is fail closed.
 
+**NO PRODUCTION FRESHNESS THRESHOLD APPROVED.**
+
+**NO PRODUCTION KICKOFF TOLERANCE APPROVED.**
+
+Every experiment must pass an explicit `CascadeTimingPolicy` containing both
+values. These are experiment inputs, not production policy defaults.
+
 ## Verification date and official sources
 
 Provider documentation was checked on **2026-09-16**. The implementation is
@@ -18,8 +25,8 @@ as billing authority.
 | --- | --- | --- |
 | The Odds API | [v4 API guide](https://the-odds-api.com/liveapi/guides/v4/), [v4 error codes](https://the-odds-api.com/liveapi/guides/v4/api-error-codes.html), [sports coverage](https://the-odds-api.com/sports-odds-data/) | `https://api.the-odds-api.com/v4`; `GET /sports/{sport}/odds`; query `apiKey`, `regions`, `markets`, `oddsFormat`; bookmaker `last_update`; quota headers `x-requests-used`, `x-requests-remaining`, `x-requests-last`. |
 | Odds-API.io | [documentation index](https://docs.odds-api.io/llms.txt), [fetching odds](https://docs.odds-api.io/guides/fetching-odds), [OpenAPI](https://docs.odds-api.io/api-reference/openapi.json), [authentication](https://docs.odds-api.io/authentication) | `https://api.odds-api.io/v3`; query-key authentication; `GET /events/search` for discovery and `GET /odds/multi` for up to ten known event IDs; football `ML`; bookmaker market `updatedAt`; `X-Next-Since` is a delta-polling cursor, not treated as a quota counter. |
-| API-Football | [v3 reference](https://www.api-football.com/documentation-v3), [getting started](https://www.api-football.com/news/post/how-to-get-started-with-api-football), [rate-limit headers](https://www.api-football.com/news/post/how-ratelimit-works), [terms](https://www.api-football.com/terms) | `https://v3.football.api-sports.io`; header `x-apisports-key`; `GET /fixtures` for discovery and `GET /odds?fixture=...&page=1` for pre-match odds; `paging`; daily/per-minute rate headers. The public odds examples do not establish a reliable per-quote source timestamp, so the adapter rejects a response unless an explicit `updatedAt`/`lastUpdate` equivalent is present. |
-| Betfair delayed | [Getting started and endpoints](https://betfair-developer-docs.atlassian.net/wiki/spaces/1smk3cen4v3lu3yomq5qye0ni/pages/2687786/Getting%2BStarted), [application keys](https://betfair-developer-docs.atlassian.net/wiki/spaces/1smk3cen4v3lu3yomq5qye0ni/pages/2687105/Application%2BKeys), [market catalogue](https://betfair-developer-docs.atlassian.net/wiki/spaces/1smk3cen4v3lu3yomq5qye0ni/pages/2687517), [market data limits](https://betfair-developer-docs.atlassian.net/wiki/spaces/1smk3cen4v3lu3yomq5qye0ni/pages/2687478), [betting types](https://betfair-developer-docs.atlassian.net/wiki/spaces/1smk3cen4v3lu3yomq5qye0ni/pages/2687465) | JSON-RPC `https://api.betfair.com/exchange/betting/json-rpc/v1`; headers `X-Application` and `X-Authentication`; `listMarketCatalogue` discovery and `listMarketBook` prices; `publishTime`, `isMarketDataDelayed`, and `EX_BEST_OFFERS`. The delayed app key is explicitly retained as delayed and is never presented as real-time. |
+| API-Football | [v3 reference](https://www.api-football.com/documentation-v3), [getting started](https://www.api-football.com/news/post/how-to-get-started-with-api-football), [rate-limit headers](https://www.api-football.com/news/post/how-ratelimit-works), [terms](https://www.api-football.com/terms) | `https://v3.football.api-sports.io`; header `x-apisports-key`; `GET /fixtures` for discovery and `GET /odds?fixture=...&page=1` for pre-match odds; documented `errors`, `results`, `paging`, and `response`; daily/per-minute rate headers. No invented `updatedAt` is used. When no trustworthy quote-source timestamp is exposed, the adapter records `CAPTURE_TIME_ONLY`. |
+| Betfair delayed | [Getting started and endpoints](https://betfair-developer-docs.atlassian.net/wiki/spaces/1smk3cen4v3lu3yomq5qye0ni/pages/2687786/Getting%2BStarted), [application keys](https://betfair-developer-docs.atlassian.net/wiki/spaces/1smk3cen4v3lu3yomq5qye0ni/pages/2687105/Application%2BKeys), [market catalogue](https://betfair-developer-docs.atlassian.net/wiki/spaces/1smk3cen4v3lu3yomq5qye0ni/pages/2687517), [market data limits](https://betfair-developer-docs.atlassian.net/wiki/spaces/1smk3cen4v3lu3yomq5qye0ni/pages/2687478), [betting types](https://betfair-developer-docs.atlassian.net/wiki/spaces/1smk3cen4v3lu3yomq5qye0ni/pages/2687465) | JSON-RPC `https://api.betfair.com/exchange/betting/json-rpc/v1`; headers `X-Application` and `X-Authentication`; `listMarketCatalogue` supplies market/runner identity and `listMarketBook` supplies dynamic prices; `isMarketDataDelayed` and `EX_BEST_OFFERS` are retained. `lastMatchTime` is not a source freshness timestamp. When no legitimate source timestamp is exposed, timing is `CAPTURE_TIME_ONLY` with official delayed semantics of 1–180 seconds. |
 
 ### Capability matrix
 
@@ -28,7 +35,7 @@ as billing authority.
 | Auth | API key query parameter | API key query parameter | `x-apisports-key` header | application key + session token headers |
 | Football fixtures/events | sport-level odds/events payload | `/events/search`, `/events/{id}` | `/fixtures` | `listMarketCatalogue` |
 | Pre-match 1X2 | `h2h` | `ML` | `/odds`, Match Winner / bet id 1 | football Match Odds market |
-| Source/update timestamp | bookmaker or market `last_update` | market `updatedAt` | not guaranteed by public odds schema; fail closed if absent | `publishTime` where returned |
+| Source/update timestamp | bookmaker or market `last_update` | market `updatedAt` | not guaranteed by public odds schema; capture-only when absent | no exact source timestamp assumed from `listMarketBook`; capture-only |
 | Source identity | bookmaker `key`/title | bookmaker map key | bookmaker name/id | exchange market, marked delayed |
 | Bulk | sport-level odds; event odds separately | `/odds/multi`, up to 10 events | fixture odds response, paginated | multi-market book calls subject to data-weight limits |
 | Quota/rate evidence | usage headers; local baseline is `used=500`, `remaining=0` | free-tier limits are documented, but response quota headers are not relied upon | daily and per-minute response headers | market-data request-weight limits; no generic daily quota assumed |
@@ -41,7 +48,7 @@ remains the independent quality and validation owner.
 ## Architecture
 
 ```text
-Fixture + explicit provider IDs
+Fixture + explicit timing policy + resolved provider identities
               |
               v
      ProviderCascadeRouter
@@ -54,7 +61,11 @@ Fixture + explicit provider IDs
               |
    NormalizedOddsObservation
               |
-      freshness + identity boundary
+      explicit timing + identity boundary
+              |
+      serialized Builder-2 evidence
+              |
+      independent Builder-2 receipt
               |
       Builder 1 shadow seam
               |
@@ -85,6 +96,21 @@ ProviderCascadeConfig(
 )
 ```
 
+`ProviderCascadeRouter` requires the timing policy at construction; omitting it
+fails closed. A network-capable adapter additionally requires a
+`NetworkAuthorizationContract` derived from the controlled-shadow run and the
+authorized provider list. Authorization cannot enable betting or publication.
+
+```python
+ProviderCascadeRouter(
+    config,
+    timing_policy=CascadeTimingPolicy(
+        maximum_odds_age_seconds=900,  # experiment input only
+        kickoff_tolerance_seconds=90,  # experiment input only
+    ),
+)
+```
+
 Every `ProviderConfig` controls enabled state, league and market allow-lists,
 the explicit bookmaker allow-list required by Odds-API.io,
 per-provider request cap, quota reserve, timeout, credential environment names,
@@ -111,18 +137,20 @@ request; tests use injected responses and never consume that quota.
 - Top-5 league, stable caller fixture key, provider fixture/event ID, exact
   home/away teams, kickoff in UTC.
 - `football:pre_match:1x2`, decimal home/draw/away odds, all finite and `> 1`.
-- Provider and bookmaker identity, explicit source timestamp, capture time,
-  request identity/start/completion, latency, provider priority, and fallback
-  depth.
+- Provider and bookmaker identity, capture time, request identity/start/
+  completion, latency, provider priority, and fallback depth.
+- `source_timing_provenance`: `SOURCE_TIMESTAMP` only when a legitimate source
+  timestamp exists; otherwise an explicit `CAPTURE_TIME_ONLY` classification.
 - Quota before/after, rate state, source provenance, raw-record digest, and
   adapter version.
 - Complete 1X2 state, error classification, candidate/validated state, and
   delayed semantics where applicable.
 
-An observation with a missing or future source timestamp, partial 1X2, closing
-market, in-play event, invalid decimal, wrong league, wrong team order, or
-kickoff mismatch cannot be accepted. Source timestamp is never replaced with
-capture time or cache-read time.
+An observation with an unqualified timing provenance, future source timestamp,
+partial 1X2, closing market, in-play event, invalid decimal, wrong league,
+wrong team order, or kickoff mismatch cannot be accepted. Capture time is never
+presented as source time. Builder 2 decides whether `CAPTURE_TIME_ONLY` is
+sufficient for a given experiment; it is not passed through a source-age gate.
 
 ## Quota preflight and request budget
 
@@ -139,8 +167,10 @@ If any known guard cannot safely support the request, the manager records a
 pre-network rejection and returns `network_called=false`. The router proceeds
 to the next configured provider. No retry is made against an exhausted quota.
 
-The manager tracks attempted, successful, rejected-before-network, and known
-quota-consumed counts, plus remaining/reset/rate fields where available. It is
+The manager tracks `requests_attempted` as actual network-call count and
+`quota_consumed` as provider quota units; these are intentionally separate.
+It also tracks successful, rejected-before-network, and remaining/reset/rate
+fields where available. It is
 local run state and is not billing authority: it cannot buy quota, alter a
 subscription, create accounts, or authorize paid overages.
 
@@ -159,7 +189,7 @@ retry and there is no automatic fan-out.
 | 422 / wrong market | `UNSUPPORTED_MARKET` | continue |
 | timeout / network exception / 5xx | `TEMPORARILY_UNAVAILABLE` | continue |
 | wrong league or swapped teams | `UNSUPPORTED_LEAGUE` / `QUALITY_REJECTED` | continue |
-| malformed, partial, missing timestamp | `MALFORMED` / `PARTIAL` / `STALE` | continue |
+| malformed, partial, unqualified timing | `MALFORMED` / `PARTIAL` / `QUALITY_REJECTED` | continue |
 | all providers rejected | `FAIL_CLOSED` trace | no odds reach M5 |
 
 The trace records attempt index, provider, outcome, reason, safe request
@@ -169,10 +199,18 @@ headers, query keys, session tokens, or secret-bearing URLs.
 ## Fixture identity and market contract
 
 Provider switching requires an exact match on normalized league, explicit team
-aliases, home/away order, kickoff within the bounded tolerance, and provider
-event identity. Explicit aliases are deterministic mappings; substring or
-fuzzy matching is not used. Swapped home/away and ambiguous duplicate events
-fail closed.
+aliases, home/away order, kickoff within the caller-supplied tolerance, and
+provider event identity. For Odds-API.io, API-Football, and Betfair delayed,
+the identity seam reports `RESOLVED`, `UNRESOLVED`, `AMBIGUOUS`, or
+`DISCOVERY_REQUIRED`. A resolved identity carries the canonical fixture key,
+provider ID, teams, kickoff, league evidence, provenance, resolution time,
+resolver version, digest, and (for Betfair) the catalogue runner mapping.
+Explicit aliases are deterministic mappings; substring or fuzzy matching is
+not used. Swapped home/away and ambiguous duplicate events fail closed.
+
+Discovery is a separately budgeted prerequisite. The router never hides a
+second discovery request inside an odds attempt; a missing ID is visible as
+`DISCOVERY_REQUIRED` with `network_called=false`.
 
 Only football pre-match 1X2 is accepted. The contract requires home, draw, and
 away together. It does not convert two-way markets, synthesize a draw, accept
@@ -210,30 +248,38 @@ candidate-only and no sharp-market authority is inferred from bookmaker data.
 ### API-Football
 
 Fixture discovery is represented separately through `discovery_request()`;
-odds retrieval uses `/odds` with a known fixture ID and reads `paging`. Page 1
-is not promoted when additional pages are present. Results and predictions
-are not conflated with bookmaker odds. The adapter requires explicit source
-timestamp data even though the public odds contract does not guarantee it;
-capture time and fixture kickoff are not acceptable substitutes.
+odds retrieval uses `/odds` with a known fixture ID and reads body-level
+`errors`, `results`, and `paging`. Page 1 is not promoted when additional
+pages are present. Results and predictions are not conflated with bookmaker
+odds. The adapter parses documented odds fields only and records
+`CAPTURE_TIME_ONLY` when no trustworthy quote-source timestamp is exposed;
+it never invents `updatedAt` or a synthetic source time.
 
 ### Betfair delayed
 
 The adapter is restricted to `listMarketBook` with `EX_BEST_OFFERS` and a
-known market ID. `listMarketCatalogue` is exposed as a discovery request. It
-requires delayed market data, exact runner mapping for home/draw/away, and an
-explicit `publishTime`-like source timestamp. `isMarketDataDelayed`, delayed
-app-key semantics, and any returned delay metadata remain in the normalized
-observation. The adapter is never called `betfair_realtime` and cannot place
-orders.
+known market ID. `listMarketCatalogue` is exposed as a separate discovery
+request and supplies `selectionId -> runnerName`; the book supplies dynamic
+prices. The parser does not require `marketDefinition.runners` and does not
+use `lastMatchTime` as freshness. It requires delayed market data, exact
+catalogue runner mapping for home/draw/away, and records
+`CAPTURE_TIME_ONLY` plus official 1–180 second delay semantics when no source
+timestamp exists. The adapter is never called `betfair_realtime` and cannot
+place orders.
 
 ## Builder 1 and Builder 2 boundaries
 
-Builder 1 can call `accepted_for_builder1(result)` and receives only:
+Builder 1 can call `accepted_for_builder1(result, validation_receipt)` only
+after an independent Builder-2 receipt has been supplied. The receipt binds
+the exact observation digest, cascade-trace digest/evidence identity, fixture,
+provider, and validation-contract version. A missing, rejected, candidate-only,
+or mismatched receipt raises before model inputs are exposed. The result is:
 
 ```python
 Builder1OddsInput(
     observation=NormalizedOddsObservation(...),
     routing=CascadeDecisionTrace(...),
+    builder2_receipt=Builder2ValidationReceipt(...),
 )
 ```
 
@@ -242,9 +288,13 @@ The seam can convert to the existing `Fixture` and signal-time
 probabilities, and creates no artifact or signal sink. A fail-closed result
 raises before M5 receives odds.
 
-Builder 2 remains independent. The `candidate_only` flag and routing trace are
-evidence, not self-authorization. Builder 2 may independently reject any
-provider, timestamp, fixture, bookmaker, or cascade result.
+Builder 2 remains independent. `builder2_evidence_payload(result)` serializes
+the configured order, every bounded attempt, identity, timing, quota, budget,
+readiness, failure taxonomy, selected provider, and safety assertions using
+the merged `top5-provider-cascade-validation-v1` contract. The
+`candidate_only` flag and routing trace are evidence, not self-authorization.
+Builder 2 may independently reject any provider, timing provenance, fixture,
+bookmaker, or cascade result.
 
 ## Health and observability
 

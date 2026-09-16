@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -51,6 +52,28 @@ class ProviderState(str, Enum):
     CREDENTIAL_MISSING = "CREDENTIAL_MISSING"
     CANDIDATE_ONLY = "CANDIDATE_ONLY"
     HEALTH_UNKNOWN = "HEALTH_UNKNOWN"
+    DISCOVERY_REQUIRED = "DISCOVERY_REQUIRED"
+    IDENTITY_UNRESOLVED = "IDENTITY_UNRESOLVED"
+    IDENTITY_AMBIGUOUS = "IDENTITY_AMBIGUOUS"
+
+
+class TransportCapability(str, Enum):
+    """Whether an adapter can cross the real network boundary."""
+
+    TEST_INJECTED = "TEST_INJECTED"
+    NETWORK_CAPABLE = "NETWORK_CAPABLE"
+
+
+class ProviderIdentityResolutionState(str, Enum):
+    RESOLVED = "RESOLVED"
+    UNRESOLVED = "UNRESOLVED"
+    AMBIGUOUS = "AMBIGUOUS"
+    DISCOVERY_REQUIRED = "DISCOVERY_REQUIRED"
+
+
+class TimingProvenance(str, Enum):
+    SOURCE_TIMESTAMP = "SOURCE_TIMESTAMP"
+    CAPTURE_TIME_ONLY = "CAPTURE_TIME_ONLY"
 
 
 class ObservationCompleteness(str, Enum):
@@ -95,6 +118,63 @@ class QuotaSnapshot:
             if self.rate_reset_at
             else None,
         }
+
+
+@dataclass(frozen=True)
+class CascadeTimingPolicy:
+    """Caller-supplied experiment timing; no production values are implied."""
+
+    maximum_odds_age_seconds: int
+    kickoff_tolerance_seconds: int
+
+    def validate(self) -> None:
+        if (
+            not isinstance(self.maximum_odds_age_seconds, int)
+            or isinstance(self.maximum_odds_age_seconds, bool)
+            or self.maximum_odds_age_seconds <= 0
+            or not isinstance(self.kickoff_tolerance_seconds, int)
+            or isinstance(self.kickoff_tolerance_seconds, bool)
+            or self.kickoff_tolerance_seconds < 0
+        ):
+            raise ProductionContractError(
+                "explicit experiment timing policy is invalid"
+            )
+
+
+@dataclass(frozen=True)
+class NetworkAuthorizationContract:
+    """Explicit authority for one controlled-shadow network path."""
+
+    controlled_shadow_run_ref: str
+    authorized_providers: tuple[str, ...]
+    betting_enabled: bool = False
+    publication_enabled: bool = False
+
+    def validate(self) -> None:
+        if (
+            not isinstance(self.controlled_shadow_run_ref, str)
+            or not self.controlled_shadow_run_ref.strip()
+        ):
+            raise ProductionContractError("controlled shadow run reference is required")
+        if not self.authorized_providers or any(
+            not isinstance(provider, str) or not provider.strip()
+            for provider in self.authorized_providers
+        ):
+            raise ProductionContractError(
+                "controlled shadow authorization requires providers"
+            )
+        if len(set(self.authorized_providers)) != len(self.authorized_providers):
+            raise ProductionContractError(
+                "controlled shadow authorization contains duplicate providers"
+            )
+        if self.betting_enabled or self.publication_enabled:
+            raise ProductionContractError(
+                "controlled shadow authorization cannot enable betting or publication"
+            )
+
+    def permits(self, provider: str) -> bool:
+        self.validate()
+        return provider in self.authorized_providers
 
 
 def _quota_from_mapping(raw: object, default: QuotaSnapshot) -> QuotaSnapshot:
@@ -209,6 +289,218 @@ class ProviderConfig:
 
 
 @dataclass(frozen=True)
+class ProviderIdentityResolution:
+    """Deterministic, cost-visible resolution of a provider-side identity."""
+
+    provider: str
+    state: ProviderIdentityResolutionState | str
+    canonical_fixture_key: str
+    provider_id: str | None
+    home_team: str
+    away_team: str
+    kickoff: datetime | None
+    league_competition_evidence: str
+    resolution_provenance: str
+    resolution_timestamp: datetime | None
+    resolver_version: str
+    digest: str
+    runner_mapping: Mapping[str, str] = field(default_factory=dict)
+
+    @classmethod
+    def from_payload(cls, payload: Mapping[str, object]) -> ProviderIdentityResolution:
+        if not isinstance(payload, Mapping):
+            raise ProductionContractError(
+                "provider identity resolution must be a mapping"
+            )
+
+        def optional_datetime(value: object, field_name: str) -> datetime | None:
+            if value is None:
+                return None
+            if isinstance(value, datetime):
+                return _utc(value, field_name)
+            try:
+                return _utc(
+                    datetime.fromisoformat(str(value).replace("Z", "+00:00")),
+                    field_name,
+                )
+            except (TypeError, ValueError) as exc:
+                raise ProductionContractError(
+                    f"{field_name} must be an ISO timestamp"
+                ) from exc
+
+        runner_mapping = payload.get("runner_mapping", {})
+        if not isinstance(runner_mapping, Mapping):
+            raise ProductionContractError("runner mapping must be a mapping")
+        result = cls(
+            provider=str(payload.get("provider", "")),
+            state=payload.get("state", ""),
+            canonical_fixture_key=str(payload.get("canonical_fixture_key", "")),
+            provider_id=(
+                None
+                if payload.get("provider_id") is None
+                else str(payload.get("provider_id"))
+            ),
+            home_team=str(payload.get("home_team", "")),
+            away_team=str(payload.get("away_team", "")),
+            kickoff=optional_datetime(payload.get("kickoff"), "resolved provider kickoff"),
+            league_competition_evidence=str(
+                payload.get("league_competition_evidence", "")
+            ),
+            resolution_provenance=str(payload.get("resolution_provenance", "")),
+            resolution_timestamp=optional_datetime(
+                payload.get("resolution_timestamp"), "identity resolution timestamp"
+            ),
+            resolver_version=str(payload.get("resolver_version", "")),
+            digest=str(payload.get("digest", "")),
+            runner_mapping={str(key): str(value) for key, value in runner_mapping.items()},
+        )
+        result.validate()
+        return result
+
+    def _digest_payload(self) -> dict[str, object]:
+        return {
+            "provider": self.provider,
+            "state": ProviderIdentityResolutionState(self.state).value,
+            "canonical_fixture_key": self.canonical_fixture_key,
+            "provider_id": self.provider_id,
+            "home_team": self.home_team,
+            "away_team": self.away_team,
+            "kickoff": self.kickoff.isoformat() if self.kickoff else None,
+            "league_competition_evidence": self.league_competition_evidence,
+            "resolution_provenance": self.resolution_provenance,
+            "resolution_timestamp": (
+                self.resolution_timestamp.isoformat()
+                if self.resolution_timestamp
+                else None
+            ),
+            "resolver_version": self.resolver_version,
+            "runner_mapping": dict(sorted(self.runner_mapping.items())),
+        }
+
+    def validate(
+        self,
+        *,
+        fixture: Fixture | None = None,
+        kickoff_tolerance_seconds: int = 0,
+    ) -> None:
+        if (
+            not isinstance(kickoff_tolerance_seconds, int)
+            or isinstance(kickoff_tolerance_seconds, bool)
+            or kickoff_tolerance_seconds < 0
+        ):
+            raise ProductionContractError(
+                "identity kickoff tolerance must be non-negative"
+            )
+        state = ProviderIdentityResolutionState(self.state)
+        if not self.provider.strip() or not self.canonical_fixture_key.strip():
+            raise ProductionContractError("provider identity resolution is missing identity")
+        if not self.resolution_provenance.strip() or not self.resolver_version.strip():
+            raise ProductionContractError(
+                "provider identity resolution is missing provenance"
+            )
+        if state is ProviderIdentityResolutionState.RESOLVED:
+            required = (
+                self.provider_id,
+                self.home_team,
+                self.away_team,
+                self.league_competition_evidence,
+                self.digest,
+            )
+            if any(value is None or not str(value).strip() for value in required):
+                raise ProductionContractError(
+                    "resolved provider identity is missing contract evidence"
+                )
+            if self.kickoff is None or self.resolution_timestamp is None:
+                raise ProductionContractError(
+                    "resolved provider identity requires timestamps"
+                )
+            _utc(self.kickoff, "resolved provider kickoff")
+            _utc(self.resolution_timestamp, "identity resolution timestamp")
+            expected_digest = digest_record(self._digest_payload())
+            if self.digest.lower() != expected_digest:
+                raise ProductionContractError(
+                    "provider identity resolution digest mismatch"
+                )
+            if self.provider == "betfair_delayed" and not self.runner_mapping:
+                raise ProductionContractError(
+                    "Betfair resolution requires selectionId runner mapping"
+                )
+            if fixture is not None:
+                fixture.validate()
+                if (
+                    self.canonical_fixture_key != fixture.fixture_key
+                    or self.home_team.strip().casefold()
+                    != fixture.home_team.strip().casefold()
+                    or self.away_team.strip().casefold()
+                    != fixture.away_team.strip().casefold()
+                    or abs(
+                        (self.kickoff - fixture.kickoff).total_seconds()
+                    )
+                    > kickoff_tolerance_seconds
+                ):
+                    raise ProductionContractError(
+                        "provider identity resolution does not match fixture"
+                    )
+        elif self.digest:
+            expected_digest = digest_record(self._digest_payload())
+            if self.digest.lower() != expected_digest:
+                raise ProductionContractError(
+                    "provider identity resolution digest mismatch"
+                )
+
+    @classmethod
+    def resolved(
+        cls,
+        *,
+        provider: str,
+        fixture: Fixture,
+        provider_id: str,
+        league_competition_evidence: str,
+        resolution_provenance: str,
+        resolution_timestamp: datetime,
+        resolver_version: str,
+        runner_mapping: Mapping[str, str] | None = None,
+        kickoff: datetime | None = None,
+        kickoff_tolerance_seconds: int = 0,
+    ) -> ProviderIdentityResolution:
+        fixture.validate()
+        base = cls(
+            provider=provider,
+            state=ProviderIdentityResolutionState.RESOLVED,
+            canonical_fixture_key=fixture.fixture_key,
+            provider_id=str(provider_id),
+            home_team=fixture.home_team,
+            away_team=fixture.away_team,
+            kickoff=_utc(kickoff or fixture.kickoff, "resolved provider kickoff"),
+            league_competition_evidence=league_competition_evidence,
+            resolution_provenance=resolution_provenance,
+            resolution_timestamp=_utc(
+                resolution_timestamp, "identity resolution timestamp"
+            ),
+            resolver_version=resolver_version,
+            digest="",
+            runner_mapping=runner_mapping or {},
+        )
+        result = cls(**{**base.__dict__, "digest": digest_record(base._digest_payload())})
+        result.validate(
+            fixture=fixture,
+            kickoff_tolerance_seconds=kickoff_tolerance_seconds,
+        )
+        return result
+
+    @property
+    def provider_fixture_id(self) -> str | None:
+        return self.provider_id
+
+    def as_payload(self) -> dict[str, object]:
+        self.validate()
+        return {
+            **self._digest_payload(),
+            "digest": self.digest,
+        }
+
+
+@dataclass(frozen=True)
 class ProviderCascadeConfig:
     """Deterministic provider ordering and local request safety caps."""
 
@@ -220,6 +512,7 @@ class ProviderCascadeConfig:
     fail_closed: bool = True
     live_calls_authorized: bool = False
     controlled_shadow_run_ref: str | None = None
+    controlled_shadow_authorized_providers: tuple[str, ...] = ()
 
     def validate(self) -> None:
         if not self.provider_order:
@@ -252,8 +545,32 @@ class ProviderCascadeConfig:
             raise ProductionContractError(
                 "live calls require a controlled shadow run reference"
             )
+        authorized = tuple(self.controlled_shadow_authorized_providers)
+        if len(set(authorized)) != len(authorized) or any(
+            not provider.strip() for provider in authorized
+        ):
+            raise ProductionContractError(
+                "controlled shadow authorization providers are invalid"
+            )
+        if set(authorized) - set(self.provider_order):
+            raise ProductionContractError(
+                "controlled shadow authorization contains an unconfigured provider"
+            )
         for config in self.providers.values():
             config.validate()
+
+    def network_authorization(self) -> NetworkAuthorizationContract | None:
+        """Return the only contract that may authorize a network-capable adapter."""
+
+        if not self.live_calls_authorized or not self.controlled_shadow_run_ref:
+            return None
+        providers = self.controlled_shadow_authorized_providers or self.provider_order
+        authorization = NetworkAuthorizationContract(
+            controlled_shadow_run_ref=self.controlled_shadow_run_ref,
+            authorized_providers=tuple(providers),
+        )
+        authorization.validate()
+        return authorization
 
     @classmethod
     def default(cls) -> ProviderCascadeConfig:
@@ -390,6 +707,10 @@ class ProviderCascadeConfig:
                 if raw.get("controlled_shadow_run_ref") is None
                 else str(raw["controlled_shadow_run_ref"])
             ),
+            controlled_shadow_authorized_providers=tuple(
+                str(value)
+                for value in raw.get("controlled_shadow_authorized_providers", ())
+            ),
         )
         result.validate()
         return result
@@ -411,7 +732,7 @@ class NormalizedOddsObservation:
     away_odds: float
     provider_identity: str
     bookmaker_identity: str
-    source_timestamp: datetime
+    source_timestamp: datetime | None
     captured_at: datetime
     request_identity: str
     request_started_at: datetime
@@ -431,12 +752,16 @@ class NormalizedOddsObservation:
     delayed: bool = False
     delay_seconds: int | None = None
     metadata: Mapping[str, object] = field(default_factory=dict)
+    source_timing_provenance: TimingProvenance | str = TimingProvenance.SOURCE_TIMESTAMP
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "kickoff_utc", _utc(self.kickoff_utc, "kickoff_utc"))
-        object.__setattr__(
-            self, "source_timestamp", _utc(self.source_timestamp, "source_timestamp")
-        )
+        if self.source_timestamp is not None:
+            object.__setattr__(
+                self,
+                "source_timestamp",
+                _utc(self.source_timestamp, "source_timestamp"),
+            )
         object.__setattr__(self, "captured_at", _utc(self.captured_at, "captured_at"))
         object.__setattr__(
             self,
@@ -449,6 +774,13 @@ class NormalizedOddsObservation:
             _utc(self.request_completed_at, "request_completed_at"),
         )
         object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
+        try:
+            timing_provenance = TimingProvenance(self.source_timing_provenance)
+        except (TypeError, ValueError) as exc:
+            raise ProductionContractError(
+                "source timing provenance is unknown"
+            ) from exc
+        object.__setattr__(self, "source_timing_provenance", timing_provenance)
         if self.latency_ms < 0 or self.fallback_depth < 0 or self.provider_priority < 0:
             raise ProductionContractError(
                 "observation latency and routing depth must be non-negative"
@@ -457,6 +789,12 @@ class NormalizedOddsObservation:
     def validate(
         self, *, now: datetime | None = None, require_fresh: bool = True
     ) -> None:
+        try:
+            timing_provenance = TimingProvenance(self.source_timing_provenance)
+        except (TypeError, ValueError) as exc:
+            raise ProductionContractError(
+                "source timing provenance is unknown"
+            ) from exc
         required = (
             self.league_code,
             self.fixture_key,
@@ -487,7 +825,12 @@ class NormalizedOddsObservation:
             )
         if self.request_completed_at < self.request_started_at:
             raise ProductionContractError("request completion precedes request start")
-        if self.source_timestamp > self.captured_at:
+        if self.source_timestamp is None:
+            if timing_provenance is not TimingProvenance.CAPTURE_TIME_ONLY:
+                raise ProductionContractError(
+                    "source timestamp is required unless timing is capture-only"
+                )
+        elif self.source_timestamp > self.captured_at:
             raise ProductionContractError("source timestamp is in the future")
         if self.completeness is not ObservationCompleteness.COMPLETE:
             raise ProductionContractError(
@@ -505,7 +848,7 @@ class NormalizedOddsObservation:
             raise ProductionContractError("delay_seconds must be non-negative")
         if require_fresh and now is not None:
             now_utc = _utc(now, "observation now")
-            if self.source_timestamp > now_utc:
+            if self.source_timestamp is not None and self.source_timestamp > now_utc:
                 raise ProductionContractError("source timestamp is after capture time")
 
     @property
@@ -522,7 +865,7 @@ class NormalizedOddsObservation:
         self.validate()
         return MarketSnapshot(
             fixture_key=self.fixture_key,
-            captured_at=self.source_timestamp,
+            captured_at=self.source_timestamp or self.captured_at,
             kind=MarketSnapshotKind.SIGNAL_TIME,
             source=self.provider_identity,
             odds={
@@ -550,7 +893,9 @@ class NormalizedOddsObservation:
             },
             "provider_identity": self.provider_identity,
             "bookmaker_identity": self.bookmaker_identity,
-            "source_timestamp": self.source_timestamp.isoformat(),
+            "source_timestamp": (
+                self.source_timestamp.isoformat() if self.source_timestamp else None
+            ),
             "captured_at": self.captured_at.isoformat(),
             "request_identity": self.request_identity,
             "request_started_at": self.request_started_at.isoformat(),
@@ -570,6 +915,9 @@ class NormalizedOddsObservation:
             "delayed": self.delayed,
             "delay_seconds": self.delay_seconds,
             "metadata": dict(self.metadata),
+            "source_timing_provenance": TimingProvenance(
+                self.source_timing_provenance
+            ).value,
         }
 
 
@@ -584,10 +932,64 @@ class ProviderAttemptTrace:
     request_identity: str
     status_code: int | None = None
     latency_ms: int = 0
+    configured_provider_order: tuple[str, ...] = ()
+    fallback_depth: int = 0
+    preflight_allowed: bool = False
+    preflight_reason: str = ""
+    budget_decision: str = "REJECTED"
+    quota_before: QuotaSnapshot = field(default_factory=QuotaSnapshot)
+    quota_after: QuotaSnapshot = field(default_factory=QuotaSnapshot)
+    network_request_count: int = 0
+    quota_cost_units: float = 0.0
+    request_cost_classification: str = "QUOTA_CONSUMING_REQUEST"
+    credentials_present: bool | None = None
+    provider_readiness_state: str = "CONTRACT_SUPPORTED"
+    provider_record_id: str = ""
+    raw_record_digest: str = ""
+    fixture_key: str = ""
+    league_code: str = ""
+    home_team: str = ""
+    away_team: str = ""
+    kickoff: datetime | None = None
+    market_type: str = MARKET_PREMATCH_1X2
+    home_odds: float | None = None
+    draw_odds: float | None = None
+    away_odds: float | None = None
+    bookmaker_identity: str | None = None
+    source_identity: str | None = None
+    source_timestamp: datetime | None = None
+    source_timing_provenance: str = TimingProvenance.SOURCE_TIMESTAMP.value
+    identity_resolution_state: str = ""
+    identity_resolution_digest: str = ""
+    adapter_version: str = "cascade-trace-v1"
+    request_started_at: datetime | None = None
+    request_completed_at: datetime | None = None
 
     def validate(self) -> None:
         if self.attempt_index < 0 or self.latency_ms < 0:
             raise ProductionContractError("provider attempt trace counters are invalid")
+        if self.fallback_depth < 0 or self.network_request_count < 0:
+            raise ProductionContractError("provider attempt trace depth is invalid")
+        if self.network_request_count > 1:
+            raise ProductionContractError(
+                "one provider attempt cannot contain multiple network requests"
+            )
+        if self.network_request_count != int(self.network_called):
+            raise ProductionContractError(
+                "network request count must equal observed network calls"
+            )
+        if self.quota_cost_units < 0 or not isfinite(self.quota_cost_units):
+            raise ProductionContractError("provider attempt quota cost is invalid")
+        if self.request_started_at is not None:
+            _utc(self.request_started_at, "provider request_started_at")
+        if self.request_completed_at is not None:
+            _utc(self.request_completed_at, "provider request_completed_at")
+        if (
+            self.request_started_at is not None
+            and self.request_completed_at is not None
+            and self.request_completed_at < self.request_started_at
+        ):
+            raise ProductionContractError("provider request timestamps are invalid")
         if any(
             not value.strip()
             for value in (
@@ -613,6 +1015,46 @@ class ProviderAttemptTrace:
             "request_identity": self.request_identity,
             "status_code": self.status_code,
             "latency_ms": self.latency_ms,
+            "configured_provider_order": list(self.configured_provider_order),
+            "fallback_depth": self.fallback_depth,
+            "preflight_allowed": self.preflight_allowed,
+            "preflight_reason": self.preflight_reason,
+            "budget_decision": self.budget_decision,
+            "quota_before": self.quota_before.as_payload(),
+            "quota_after": self.quota_after.as_payload(),
+            "network_request_count": self.network_request_count,
+            "quota_cost_units": self.quota_cost_units,
+            "request_cost_classification": self.request_cost_classification,
+            "credentials_present": self.credentials_present,
+            "provider_readiness_state": self.provider_readiness_state,
+            "provider_record_id": self.provider_record_id,
+            "raw_record_digest": self.raw_record_digest,
+            "fixture_key": self.fixture_key,
+            "league_code": self.league_code,
+            "home_team": self.home_team,
+            "away_team": self.away_team,
+            "kickoff": self.kickoff.isoformat() if self.kickoff else None,
+            "market_type": self.market_type,
+            "home_odds": self.home_odds,
+            "draw_odds": self.draw_odds,
+            "away_odds": self.away_odds,
+            "bookmaker_identity": self.bookmaker_identity,
+            "source_identity": self.source_identity,
+            "source_timestamp": (
+                self.source_timestamp.isoformat() if self.source_timestamp else None
+            ),
+            "source_timing_provenance": self.source_timing_provenance,
+            "identity_resolution_state": self.identity_resolution_state,
+            "identity_resolution_digest": self.identity_resolution_digest,
+            "adapter_version": self.adapter_version,
+            "request_started_at": (
+                self.request_started_at.isoformat() if self.request_started_at else None
+            ),
+            "request_completed_at": (
+                self.request_completed_at.isoformat()
+                if self.request_completed_at
+                else None
+            ),
         }
 
 
@@ -626,6 +1068,8 @@ class CascadeDecisionTrace:
     fail_closed: bool
     no_bet: bool = True
     publication: bool = False
+    configured_provider_order: tuple[str, ...] = ()
+    cascade_trace_digest: str = ""
 
     def validate(self) -> None:
         if not self.fixture_key.strip() or self.total_latency_ms < 0:
@@ -642,6 +1086,10 @@ class CascadeDecisionTrace:
             raise ProductionContractError(
                 "cascade trace violates shadow safety boundary"
             )
+        if self.configured_provider_order and len(
+            set(self.configured_provider_order)
+        ) != len(self.configured_provider_order):
+            raise ProductionContractError("cascade provider order contains duplicates")
         for attempt in self.attempts:
             attempt.validate()
 
@@ -656,6 +1104,8 @@ class CascadeDecisionTrace:
             "fail_closed": self.fail_closed,
             "no_bet": self.no_bet,
             "publication": self.publication,
+            "configured_provider_order": list(self.configured_provider_order),
+            "cascade_trace_digest": self.cascade_trace_digest,
         }
 
 
@@ -667,6 +1117,18 @@ class CascadeResult:
     @property
     def accepted(self) -> bool:
         return self.observation is not None and not self.trace.fail_closed
+
+    @property
+    def observation_digest(self) -> str:
+        if self.observation is None:
+            return ""
+        return digest_record(self.observation.as_payload())
+
+    @property
+    def cascade_trace_digest(self) -> str:
+        payload = self.trace.as_payload()
+        payload["cascade_trace_digest"] = ""
+        return digest_record(payload)
 
     def validate(self) -> None:
         self.trace.validate()
@@ -685,13 +1147,117 @@ class CascadeResult:
 
     def as_payload(self) -> dict[str, object]:
         self.validate()
+        trace_payload = self.trace.as_payload()
+        trace_payload["cascade_trace_digest"] = self.cascade_trace_digest
         return {
             "observation": self.observation.as_payload() if self.observation else None,
-            "decision_trace": self.trace.as_payload(),
+            "decision_trace": trace_payload,
             "accepted": self.accepted,
             "fail_closed": self.trace.fail_closed,
             "no_bet": True,
             "publication": False,
+        }
+
+
+BUILDER2_VALIDATION_CONTRACT_VERSION = "top5-provider-cascade-validation-v1"
+
+
+@dataclass(frozen=True)
+class Builder2ValidationReceipt:
+    """External Builder-2 authority bound to exactly one cascade result."""
+
+    observation_digest: str
+    cascade_trace_digest: str
+    fixture_key: str
+    provider: str
+    validation_contract_version: str
+    accepted: bool
+    prediction_input_allowed: bool
+    validation_result_digest: str = ""
+
+    def validate(self) -> None:
+        for name, value in (
+            ("observation_digest", self.observation_digest),
+            ("cascade_trace_digest", self.cascade_trace_digest),
+            ("fixture_key", self.fixture_key),
+            ("provider", self.provider),
+            ("validation_contract_version", self.validation_contract_version),
+        ):
+            if not isinstance(value, str) or not value.strip():
+                raise ProductionContractError(f"Builder-2 receipt {name} is required")
+        for name, value in (
+            ("observation_digest", self.observation_digest),
+            ("cascade_trace_digest", self.cascade_trace_digest),
+        ):
+            if not re.fullmatch(r"[0-9a-fA-F]{64}", value):
+                raise ProductionContractError(
+                    f"Builder-2 receipt {name} must be a SHA-256 digest"
+                )
+        if self.validation_result_digest and not re.fullmatch(
+            r"[0-9a-fA-F]{64}", self.validation_result_digest
+        ):
+            raise ProductionContractError(
+                "Builder-2 validation result digest must be SHA-256"
+            )
+        if self.validation_contract_version != BUILDER2_VALIDATION_CONTRACT_VERSION:
+            raise ProductionContractError(
+                "unsupported Builder-2 validation contract version"
+            )
+        if not isinstance(self.accepted, bool) or not isinstance(
+            self.prediction_input_allowed, bool
+        ):
+            raise ProductionContractError("Builder-2 receipt decisions must be boolean")
+        if self.prediction_input_allowed and not self.accepted:
+            raise ProductionContractError(
+                "rejected Builder-2 receipt cannot allow prediction input"
+            )
+
+    def assert_allows(self) -> None:
+        self.validate()
+        if not self.accepted or not self.prediction_input_allowed:
+            raise ProductionContractError(
+                "Builder-2 receipt does not authorize prediction input"
+            )
+
+    def matches(self, result: CascadeResult) -> bool:
+        self.validate()
+        return (
+            self.observation_digest.lower() == result.observation_digest
+            and self.cascade_trace_digest.lower() == result.cascade_trace_digest
+            and result.observation is not None
+            and self.fixture_key == result.trace.fixture_key
+            and self.fixture_key == result.observation.fixture_key
+            and self.provider == result.observation.provider_identity
+        )
+
+    @classmethod
+    def from_payload(cls, payload: Mapping[str, object]) -> Builder2ValidationReceipt:
+        if not isinstance(payload, Mapping):
+            raise ProductionContractError("Builder-2 receipt must be a mapping")
+        return cls(
+            observation_digest=str(payload.get("observation_digest", "")),
+            cascade_trace_digest=str(payload.get("cascade_trace_digest", "")),
+            fixture_key=str(payload.get("fixture_key", "")),
+            provider=str(payload.get("provider", "")),
+            validation_contract_version=str(
+                payload.get("validation_contract_version", "")
+            ),
+            accepted=payload.get("accepted"),  # type: ignore[arg-type]
+            prediction_input_allowed=payload.get("prediction_input_allowed"),  # type: ignore[arg-type]
+            validation_result_digest=str(payload.get("validation_result_digest", "")),
+        )
+
+    def as_payload(self) -> dict[str, object]:
+        self.validate()
+        return {
+            "observation_digest": self.observation_digest.lower(),
+            "cascade_trace_digest": self.cascade_trace_digest.lower(),
+            "fixture_key": self.fixture_key,
+            "provider": self.provider,
+            "validation_contract_version": self.validation_contract_version,
+            "accepted": self.accepted,
+            "prediction_input_allowed": self.prediction_input_allowed,
+            "validation_result_digest": self.validation_result_digest.lower(),
         }
 
 

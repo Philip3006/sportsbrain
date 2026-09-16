@@ -107,9 +107,10 @@ def compare_provider_results(
             )
             bookmaker_available = bool(observation.bookmaker_identity.strip())
             odds_complete = observation.completeness is ObservationCompleteness.COMPLETE
-            age = (captured_at - observation.source_timestamp).total_seconds()
-            if age >= 0:
-                odds_age_seconds = round(age)
+            if observation.source_timestamp is not None:
+                age = (captured_at - observation.source_timestamp).total_seconds()
+                if age >= 0:
+                    odds_age_seconds = round(age)
             before = observation.quota_state_before.remaining
             after = observation.quota_state_after.remaining
             if before is not None and after is not None:
@@ -120,7 +121,10 @@ def compare_provider_results(
             and fixture_match
             and bookmaker_available
             and odds_complete
-            and odds_age_seconds is not None
+            and (
+                odds_age_seconds is not None
+                or observation.source_timing_provenance.value == "CAPTURE_TIME_ONLY"
+            )
         )
         metric_state = (
             result.state
