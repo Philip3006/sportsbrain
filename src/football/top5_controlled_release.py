@@ -37,7 +37,6 @@ from src.football.top5_builder2_qualification_receipt import (
 from src.football.top5_controlled_shadow_provider_qualification import (
     MinimumSamplePolicy,
 )
-from src.football.top5_provider_validation import ProviderAuthority
 from src.football.top5_publisher import (
     ControlledTop5PublicationPayload,
     InMemoryTop5PublicationStore,
@@ -90,6 +89,91 @@ def _records(value: object, name: str) -> tuple[Mapping[str, object], ...]:
 
 
 @dataclass(frozen=True)
+class ApprovedProviderResultAuthority:
+    """Caller-supplied authority decision; proposals cannot substitute for it."""
+
+    authority_decision_id: str
+    league_code: str
+    approved_odds_provider: str
+    approved_provider_set: tuple[str, ...]
+    approved_result_source: str
+    cascade_identity: str
+    issued_at: datetime
+    expires_at: datetime | None = None
+    approved: bool = True
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "issued_at", _utc(self.issued_at, "issued_at"))
+        if self.expires_at is not None:
+            object.__setattr__(self, "expires_at", _utc(self.expires_at, "expires_at"))
+        object.__setattr__(
+            self, "approved_provider_set", tuple(self.approved_provider_set)
+        )
+
+    def validate(self, *, now: datetime | None = None) -> None:
+        for name, value in (
+            ("authority_decision_id", self.authority_decision_id),
+            ("league_code", self.league_code),
+            ("approved_odds_provider", self.approved_odds_provider),
+            ("approved_result_source", self.approved_result_source),
+            ("cascade_identity", self.cascade_identity),
+        ):
+            _text(value, name)
+        if not self.approved_provider_set or any(
+            not isinstance(provider, str) or not provider.strip()
+            for provider in self.approved_provider_set
+        ):
+            raise ProductionContractError(
+                "provider authority requires an approved provider set"
+            )
+        if len(set(self.approved_provider_set)) != len(self.approved_provider_set):
+            raise ProductionContractError("approved provider set contains duplicates")
+        if self.approved_odds_provider not in self.approved_provider_set:
+            raise ProductionContractError(
+                "approved odds provider is not in the approved provider set"
+            )
+        if self.approved is not True:
+            raise ProductionContractError("provider/result authority is not approved")
+        if self.expires_at is not None and self.expires_at <= self.issued_at:
+            raise ProductionContractError("provider/result authority expiry is invalid")
+        if now is not None and (
+            self.expires_at is None
+            or not self.issued_at <= _utc(now, "now") <= self.expires_at
+        ):
+            raise ProductionContractError(
+                "provider/result authority is expired or has no active validity window"
+            )
+
+    def binds_request(self, request: ControlledActivationRequest) -> None:
+        self.validate()
+        request.provider_authority.validate()
+        if request.league_code != self.league_code:
+            raise ProductionContractError("provider authority league binding mismatch")
+        if request.provider_authority.odds_authority != self.approved_odds_provider:
+            raise ProductionContractError("approved odds provider binding mismatch")
+        if request.provider_authority.result_authority != self.approved_result_source:
+            raise ProductionContractError("approved result source binding mismatch")
+
+    def binds_receipts(
+        self, receipts: Sequence[Builder2QualificationReceiptV1]
+    ) -> None:
+        self.validate()
+        if not receipts:
+            raise ProductionContractError(
+                "provider authority requires receipt evidence"
+            )
+        for receipt in receipts:
+            if receipt.provider_identity != self.approved_odds_provider:
+                raise ProductionContractError(
+                    "approved odds provider does not match REAL_OBSERVED receipt"
+                )
+            if receipt.cascade_evidence_digest != self.cascade_identity:
+                raise ProductionContractError(
+                    "approved cascade identity does not match REAL_OBSERVED receipt"
+                )
+
+
+@dataclass(frozen=True)
 class ControlledActivationAuthorization:
     """Activation-specific CEO approval; never created by this module."""
 
@@ -102,8 +186,9 @@ class ControlledActivationAuthorization:
     research_sha: str
     model_artifact_hash: str
     signal_time_experiment_id: str
+    signal_time_contract: SignalTimeContract
     minimum_sample_policy: MinimumSamplePolicy
-    provider_authority: ProviderAuthority
+    provider_authority: ApprovedProviderResultAuthority
     controlled_shadow_run_id: str
     qualification_session_id: str
     fixture_scope: tuple[str, ...]
@@ -143,14 +228,19 @@ class ControlledActivationAuthorization:
                 "activation authorization requires the canonical caller-supplied MinimumSamplePolicy"
             )
         self.minimum_sample_policy.validate()
-        if not isinstance(self.provider_authority, ProviderAuthority):
+        if not isinstance(self.provider_authority, ApprovedProviderResultAuthority):
             raise ProductionContractError(
-                "activation authorization requires provider and result authority"
+                "activation authorization requires approved provider/result authority"
             )
-        self.provider_authority.validate()
-        if not self.provider_authority.is_complete:
+        self.provider_authority.validate(now=now)
+        if not isinstance(self.signal_time_contract, SignalTimeContract):
             raise ProductionContractError(
-                "activation authorization requires complete provider/result authority"
+                "activation authorization requires an exact Signal-Time contract"
+            )
+        self.signal_time_contract.validate()
+        if self.signal_time_contract.approval_ref != self.authorization_id:
+            raise ProductionContractError(
+                "activation authorization Signal-Time approval reference mismatch"
             )
         if not self.fixture_scope or len(set(self.fixture_scope)) != len(
             self.fixture_scope
@@ -193,10 +283,7 @@ class ControlledActivationAuthorization:
         ):
             if getattr(self, name) != getattr(request, name):
                 raise ProductionContractError(f"activation binding mismatch: {name}")
-        if self.provider_authority != request.provider_authority:
-            raise ProductionContractError(
-                "activation binding mismatch: provider_authority"
-            )
+        self.provider_authority.binds_request(request)
         if not isinstance(request.signal_time_contract, SignalTimeContract):
             raise ProductionContractError(
                 "activation request signal-time contract is invalid"
@@ -204,6 +291,10 @@ class ControlledActivationAuthorization:
         if request.signal_time_contract.approval_ref != self.authorization_id:
             raise ProductionContractError(
                 "activation binding mismatch: signal-time approval"
+            )
+        if request.signal_time_contract != self.signal_time_contract:
+            raise ProductionContractError(
+                "activation binding mismatch: exact signal-time contract"
             )
 
 
@@ -236,6 +327,7 @@ class Top5ControlledReleaseEvidence:
                 "controlled activation requires at least one canonical receipt"
             )
         authorization.validate()
+        authorization.provider_authority.binds_request(request)
         self.sample_report.validate()
         if (
             self.sample_report.minimum_sample_policy
@@ -271,6 +363,7 @@ class Top5ControlledReleaseEvidence:
         try:
             for receipt in self.receipts:
                 receipt.validate()
+            authorization.provider_authority.binds_receipts(self.receipts)
             recomputed = aggregate_builder2_qualification_samples(
                 self.receipts,
                 minimum_sample_policy=authorization.minimum_sample_policy,
@@ -493,6 +586,8 @@ class ControlledActivationState:
     provider_authority: str
     result_authority: str
     evidence_digest: str
+    controlled_shadow_run_id: str
+    qualification_session_id: str
     activated_at: datetime
     activation_mode: ActivationMode = ActivationMode.CONTROLLED
     no_bet: bool = True
@@ -506,6 +601,8 @@ class ControlledActivationState:
         _text(self.signal_time_experiment_id, "signal_time_experiment_id")
         _text(self.provider_authority, "provider_authority")
         _text(self.result_authority, "result_authority")
+        _text(self.controlled_shadow_run_id, "controlled_shadow_run_id")
+        _text(self.qualification_session_id, "qualification_session_id")
         _hash(self.source_sha, "source_sha")
         _hash(self.research_sha, "research_sha")
         _hash(self.model_artifact_hash, "model_artifact_hash")
@@ -539,6 +636,8 @@ class ControlledActivationState:
             "provider_authority": self.provider_authority,
             "result_authority": self.result_authority,
             "evidence_digest": self.evidence_digest,
+            "controlled_shadow_run_id": self.controlled_shadow_run_id,
+            "qualification_session_id": self.qualification_session_id,
         }
 
 
@@ -587,9 +686,11 @@ class InMemoryControlledActivationRuntime:
             research_sha=plan.request.research_sha,
             model_artifact_hash=plan.request.model_artifact_hash,
             signal_time_experiment_id=plan.authorization.signal_time_experiment_id,
-            provider_authority=plan.request.provider_authority.odds_authority or "",
-            result_authority=plan.request.provider_authority.result_authority or "",
+            provider_authority=plan.authorization.provider_authority.approved_odds_provider,
+            result_authority=plan.authorization.provider_authority.approved_result_source,
             evidence_digest=plan.evidence_digest,
+            controlled_shadow_run_id=plan.authorization.controlled_shadow_run_id,
+            qualification_session_id=plan.authorization.qualification_session_id,
             activated_at=_utc(now, "activated_at"),
         )
         state.validate()
@@ -613,7 +714,12 @@ class ControlledReleaseDryRun:
     rollback_target_valid: bool
     public_artifact_valid: bool
     health_preconditions_valid: bool
+    publication_reasons: tuple[str, ...] = ()
     no_production_mutation: bool = True
+
+    @property
+    def publication_ready(self) -> bool:
+        return self.public_artifact_valid and self.publication_authorized
 
     def validate(self) -> None:
         if self.final_state not in {READY_FOR_CONTROLLED_ACTIVATION, BLOCKED}:
@@ -624,6 +730,10 @@ class ControlledReleaseDryRun:
             )
         if not self.no_production_mutation:
             raise ProductionContractError("dry-run must not mutate production")
+        if self.publication_ready and self.publication_reasons:
+            raise ProductionContractError(
+                "ready publication preflight cannot contain blocking reasons"
+            )
 
     def as_payload(self) -> dict[str, object]:
         self.validate()
@@ -636,6 +746,8 @@ class ControlledReleaseDryRun:
             "publication_authorized": self.publication_authorized,
             "rollback_target_valid": self.rollback_target_valid,
             "public_artifact_valid": self.public_artifact_valid,
+            "publication_ready": self.publication_ready,
+            "publication_reasons": list(self.publication_reasons),
             "health_preconditions_valid": self.health_preconditions_valid,
             "no_production_mutation": True,
         }
@@ -661,7 +773,7 @@ class Top5ControlledRelease:
         authorization: ControlledActivationAuthorization,
         evidence: Top5ControlledReleaseEvidence,
         rollout_evidence: RolloutEvidence,
-        publication_artifact: ControlledTop5PublicationPayload,
+        publication_artifact: ControlledTop5PublicationPayload | None = None,
         *,
         publication_authorization: Top5PublicationAuthorization | None = None,
         health_preconditions: Mapping[str, object] | None = None,
@@ -673,6 +785,7 @@ class Top5ControlledRelease:
         exact_bindings = False
         rollback_valid = False
         publication_authorized = False
+        publication_reasons: list[str] = []
         try:
             plan = self.activation_runtime.prepare(
                 request,
@@ -688,43 +801,61 @@ class Top5ControlledRelease:
         except (ProductionContractError, ValueError) as exc:
             reasons.append(str(exc))
         artifact_valid = False
-        try:
-            publication_artifact.validate()
-            if publication_artifact.activation_id != authorization.activation_id:
-                raise ProductionContractError(
-                    "publication artifact activation binding mismatch"
-                )
-            if (
-                publication_artifact.provider_authority
-                != authorization.provider_authority.odds_authority
-            ):
-                raise ProductionContractError(
-                    "publication artifact provider authority mismatch"
-                )
-            if (
-                publication_artifact.result_authority
-                != authorization.provider_authority.result_authority
-            ):
-                raise ProductionContractError(
-                    "publication artifact result authority mismatch"
-                )
-            if publication_artifact.evidence_digest != evidence.evidence_digest():
-                raise ProductionContractError(
-                    "publication artifact evidence digest mismatch"
-                )
-            artifact_valid = True
-        except (ProductionContractError, ValueError) as exc:
-            reasons.append(str(exc))
+        if publication_artifact is None:
+            publication_reasons.append("publication artifact was not supplied")
+        else:
+            try:
+                publication_artifact.validate()
+                if publication_artifact.activation_id != authorization.activation_id:
+                    raise ProductionContractError(
+                        "publication artifact activation binding mismatch"
+                    )
+                if (
+                    publication_artifact.provider_authority
+                    != authorization.provider_authority.approved_odds_provider
+                ):
+                    raise ProductionContractError(
+                        "publication artifact provider authority mismatch"
+                    )
+                if (
+                    publication_artifact.result_authority
+                    != authorization.provider_authority.approved_result_source
+                ):
+                    raise ProductionContractError(
+                        "publication artifact result authority mismatch"
+                    )
+                if (
+                    publication_artifact.controlled_shadow_run_id
+                    != authorization.controlled_shadow_run_id
+                    or publication_artifact.qualification_session_id
+                    != authorization.qualification_session_id
+                ):
+                    raise ProductionContractError(
+                        "publication artifact run/session binding mismatch"
+                    )
+                if publication_artifact.evidence_digest != evidence.evidence_digest():
+                    raise ProductionContractError(
+                        "publication artifact evidence digest mismatch"
+                    )
+                artifact_valid = True
+            except (ProductionContractError, ValueError) as exc:
+                publication_reasons.append(str(exc))
         health_valid = self._health_preconditions_valid(health_preconditions)
         if not health_valid:
             reasons.append("health/monitoring preconditions are incomplete")
         if publication_authorization is not None:
             try:
+                if publication_artifact is None:
+                    raise ProductionContractError(
+                        "publication authorization requires a publication artifact"
+                    )
                 publication_authorization.validate(now=now)
                 publication_authorization.binds(publication_artifact)
                 publication_authorized = True
             except (ProductionContractError, ValueError) as exc:
-                reasons.append(str(exc))
+                publication_reasons.append(str(exc))
+        else:
+            publication_reasons.append("publication authorization was not supplied")
         result = ControlledReleaseDryRun(
             final_state=(READY_FOR_CONTROLLED_ACTIVATION if not reasons else BLOCKED),
             reasons=tuple(dict.fromkeys(reasons)),
@@ -735,6 +866,7 @@ class Top5ControlledRelease:
             rollback_target_valid=rollback_valid,
             public_artifact_valid=artifact_valid,
             health_preconditions_valid=health_valid,
+            publication_reasons=tuple(dict.fromkeys(publication_reasons)),
         )
         result.validate()
         return result
@@ -802,6 +934,7 @@ __all__ = [
     "BLOCKED",
     "READY_FOR_CONTROLLED_ACTIVATION",
     "REAL_OBSERVED",
+    "ApprovedProviderResultAuthority",
     "ControlledActivationAuthorization",
     "ControlledActivationPlan",
     "ControlledActivationState",

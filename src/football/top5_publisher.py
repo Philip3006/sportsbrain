@@ -5,6 +5,7 @@ publication seam below is deliberately an in-memory boundary: it validates a
 separately authorized public artifact and atomically swaps an injected store,
 but it never writes the checkout, Cloudflare, a scheduler, or the ledger.
 """
+
 from __future__ import annotations
 
 import json
@@ -33,8 +34,10 @@ def _digest(value: object) -> str:
 
 
 def _hash(value: str, name: str) -> None:
-    if not isinstance(value, str) or len(value) not in (40, 64) or any(
-        char not in "0123456789abcdefABCDEF" for char in value
+    if (
+        not isinstance(value, str)
+        or len(value) not in (40, 64)
+        or any(char not in "0123456789abcdefABCDEF" for char in value)
     ):
         raise ProductionContractError(f"{name} must be a hexadecimal digest")
 
@@ -72,7 +75,11 @@ class Top5PublisherPayload:
     provenance: Mapping[str, str] = MappingProxyType({})
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "signal_generated_at", _utc(self.signal_generated_at, "signal_generated_at"))
+        object.__setattr__(
+            self,
+            "signal_generated_at",
+            _utc(self.signal_generated_at, "signal_generated_at"),
+        )
 
     def validate(self) -> None:
         values = {
@@ -88,7 +95,9 @@ class Top5PublisherPayload:
         }
         missing = [name for name, value in values.items() if not value.strip()]
         if missing:
-            raise ProductionContractError(f"Top-5 publisher provenance is incomplete: {', '.join(missing)}")
+            raise ProductionContractError(
+                f"Top-5 publisher provenance is incomplete: {', '.join(missing)}"
+            )
         validate_artifact_ownership(self.artifact_path, ArtifactOwner.STAGED_PUBLIC)
         if self.snapshot_age_seconds < 0:
             raise ProductionContractError("publisher snapshot age must be non-negative")
@@ -102,7 +111,9 @@ class Top5PublisherPayload:
         if ActivationMode(self.activation_mode) is not ActivationMode.SHADOW:
             raise ProductionContractError("Top-5 publisher remains shadow-only")
         if not self.no_bet or self.publication_enabled or self.activation_gate_passed:
-            raise ProductionContractError("Top-5 publisher must remain no-bet and unpublished")
+            raise ProductionContractError(
+                "Top-5 publisher must remain no-bet and unpublished"
+            )
         required_provenance = {"source_sha", "research_sha", "model_artifact_hash"}
         if not required_provenance.issubset(self.provenance):
             raise ProductionContractError("publisher provenance map is incomplete")
@@ -139,7 +150,9 @@ class StagedTop5Artifact:
     def validate(self) -> None:
         self.payload.validate()
         if self.overwritten_paths or self.published:
-            raise ProductionContractError("staged Top-5 artifact cannot overwrite or publish")
+            raise ProductionContractError(
+                "staged Top-5 artifact cannot overwrite or publish"
+            )
 
 
 @dataclass(frozen=True)
@@ -190,11 +203,18 @@ class Top5PublicationAuthorization:
         if not self.publication_authorized:
             raise ProductionContractError("publication authorization is not approved")
         if not self.no_bet:
-            raise ProductionContractError("publication authorization cannot enable betting")
+            raise ProductionContractError(
+                "publication authorization cannot enable betting"
+            )
         if self.expires_at <= self.issued_at:
             raise ProductionContractError("publication authorization expiry is invalid")
-        if now is not None and not self.issued_at <= _utc(now, "now") <= self.expires_at:
-            raise ProductionContractError("publication authorization is expired or not yet valid")
+        if (
+            now is not None
+            and not self.issued_at <= _utc(now, "now") <= self.expires_at
+        ):
+            raise ProductionContractError(
+                "publication authorization is expired or not yet valid"
+            )
 
     def binds(self, payload: ControlledTop5PublicationPayload) -> None:
         self.validate()
@@ -228,6 +248,8 @@ class ControlledTop5PublicationPayload:
     provider_authority: str
     result_authority: str
     evidence_digest: str
+    controlled_shadow_run_id: str
+    qualification_session_id: str
     generated_at: datetime
     football_records: tuple[Mapping[str, object], ...]
     health: Mapping[str, object]
@@ -236,7 +258,9 @@ class ControlledTop5PublicationPayload:
     publication_enabled: bool = True
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "generated_at", _utc(self.generated_at, "generated_at"))
+        object.__setattr__(
+            self, "generated_at", _utc(self.generated_at, "generated_at")
+        )
         object.__setattr__(self, "football_records", tuple(self.football_records))
 
     def validate(self) -> None:
@@ -254,6 +278,8 @@ class ControlledTop5PublicationPayload:
                 "provider_authority": self.provider_authority,
                 "result_authority": self.result_authority,
                 "evidence_digest": self.evidence_digest,
+                "controlled_shadow_run_id": self.controlled_shadow_run_id,
+                "qualification_session_id": self.qualification_session_id,
             },
             "controlled publication artifact",
         )
@@ -266,24 +292,42 @@ class ControlledTop5PublicationPayload:
         ):
             _hash(value, name)
         if ActivationMode(self.activation_mode) is not ActivationMode.CONTROLLED:
-            raise ProductionContractError("controlled publication requires controlled activation mode")
+            raise ProductionContractError(
+                "controlled publication requires controlled activation mode"
+            )
         if not self.no_bet or not self.publication_enabled:
-            raise ProductionContractError("controlled publication must remain no-bet and explicitly published")
+            raise ProductionContractError(
+                "controlled publication must remain no-bet and explicitly published"
+            )
         if not self.football_records:
-            raise ProductionContractError("controlled publication requires football records")
+            raise ProductionContractError(
+                "controlled publication requires football records"
+            )
         for index, record in enumerate(self.football_records):
             if not isinstance(record, Mapping):
-                raise ProductionContractError(f"football record {index} is not an object")
+                raise ProductionContractError(
+                    f"football record {index} is not an object"
+                )
+            fixture = record.get("fixture")
+            fixture_key = record.get("fixture_key")
+            if isinstance(fixture, Mapping):
+                fixture_key = fixture.get("fixture_key") or fixture.get("fixture_id")
+            else:
+                fixture_key = fixture_key or fixture
             _required_text(
                 {
-                    "fixture": record.get("fixture"),
+                    "fixture": fixture_key,
                     "league": record.get("league"),
                     "model_identity": record.get("model_identity"),
                     "source_sha": record.get("source_sha"),
                     "research_sha": record.get("research_sha"),
-                    "signal_time_experiment_id": record.get("signal_time_experiment_id"),
+                    "signal_time_experiment_id": record.get(
+                        "signal_time_experiment_id"
+                    ),
                     "activation_id": record.get("activation_id"),
                     "evidence_digest": record.get("evidence_digest"),
+                    "controlled_shadow_run_id": record.get("controlled_shadow_run_id"),
+                    "qualification_session_id": record.get("qualification_session_id"),
                 },
                 f"football record {index}",
             )
@@ -296,34 +340,115 @@ class ControlledTop5PublicationPayload:
                 "signal_time_experiment_id",
                 "activation_id",
                 "evidence_digest",
+                "controlled_shadow_run_id",
+                "qualification_session_id",
             ):
                 if record.get(name) != getattr(self, name):
-                    raise ProductionContractError(f"football record binding mismatch: {name}")
+                    raise ProductionContractError(
+                        f"football record binding mismatch: {name}"
+                    )
             if record.get("no_bet") is not True:
-                raise ProductionContractError("public football record must remain no-bet")
+                raise ProductionContractError(
+                    "public football record must remain no-bet"
+                )
             if record.get("closing_used_for_prediction") is True:
-                raise ProductionContractError("closing odds cannot enter public prediction output")
+                raise ProductionContractError(
+                    "closing odds cannot enter public prediction output"
+                )
             probabilities = record.get("probabilities")
             if not isinstance(probabilities, Mapping) or not probabilities:
-                raise ProductionContractError("public football record requires probabilities")
+                raise ProductionContractError(
+                    "public football record requires probabilities"
+                )
             values = tuple(float(value) for value in probabilities.values())
             if any(not isfinite(value) or value < 0 or value > 1 for value in values):
-                raise ProductionContractError("public football probabilities are invalid")
+                raise ProductionContractError(
+                    "public football probabilities are invalid"
+                )
             if abs(sum(values) - 1.0) > 1e-6:
-                raise ProductionContractError("public football probabilities must sum to one")
+                raise ProductionContractError(
+                    "public football probabilities must sum to one"
+                )
         if not isinstance(self.health, Mapping):
             raise ProductionContractError("controlled publication requires health data")
         if self.health.get("activation_state") != "controlled":
-            raise ProductionContractError("health is not bound to controlled activation")
+            raise ProductionContractError(
+                "health is not bound to controlled activation"
+            )
         if self.health.get("no_bet") is not True:
             raise ProductionContractError("public health must remain no-bet")
 
     def as_public_product(self) -> dict[str, object]:
         self.validate()
+        from src.notifications.public_serializer import (
+            map_prediction_to_public_football_signals,
+        )
+
+        public_records: list[dict[str, object]] = []
+        for index, record in enumerate(self.football_records):
+            fixture = record.get("fixture")
+            fixture_data = dict(fixture) if isinstance(fixture, Mapping) else {}
+            fixture_key = (
+                record.get("fixture_key")
+                or fixture_data.get("fixture_key")
+                or fixture_data.get("fixture_id")
+                or fixture
+            )
+            prediction_id = record.get("prediction_id") or (
+                f"top5-prediction:{_digest((self.activation_id, fixture_key, index))[:32]}"
+            )
+            signal_timestamp = (
+                record.get("signal_timestamp")
+                or record.get("captured_at")
+                or self.generated_at.isoformat()
+            )
+            envelope = {
+                "record_type": "prediction_artifact",
+                "prediction_artifact": {
+                    "league_code": self.league_code,
+                    "fixture_key": fixture_key,
+                    "prediction_id": prediction_id,
+                    "model_identity": self.model_identity,
+                    "model_version": record.get("model_version") or self.model_identity,
+                    "prediction_timestamp": record.get("prediction_timestamp")
+                    or self.generated_at.isoformat(),
+                    "probabilities": dict(record["probabilities"]),
+                    "signal_timestamp": signal_timestamp,
+                    "snapshot_id": record.get("snapshot_id")
+                    or self.signal_time_experiment_id,
+                    "snapshot_kind": "SIGNAL_TIME",
+                    "odds": record.get("odds", {}),
+                },
+                "fixture": {
+                    **fixture_data,
+                    "fixture_key": fixture_key,
+                },
+                "provenance": {
+                    "source": self.provider_authority,
+                    "provider": self.provider_authority,
+                    "source_sha": self.source_sha,
+                    "research_sha": self.research_sha,
+                    "model_artifact_hash": self.model_artifact_hash,
+                    "snapshot_id": record.get("snapshot_id")
+                    or self.signal_time_experiment_id,
+                    "snapshot_kind": "SIGNAL_TIME",
+                    "captured_at": signal_timestamp,
+                },
+                "activation_state": "controlled",
+                "publication_status": "PUBLISHED",
+                "publication_enabled": True,
+                "no_bet": True,
+                "result_status": record.get("result_status") or "PENDING",
+                "run_id": record.get("controlled_shadow_run_id")
+                or self.controlled_shadow_run_id,
+                "session_id": record.get("qualification_session_id")
+                or self.qualification_session_id,
+            }
+            public_records.extend(map_prediction_to_public_football_signals(envelope))
         return serialize_public_product(
             {
                 "updated": self.generated_at.isoformat(),
-                "football": [dict(record) for record in self.football_records],
+                "football": public_records,
                 "health": {
                     **dict(self.health),
                     "top5_activation_id": self.activation_id,
@@ -367,9 +492,13 @@ class PublicationRollback:
 
     def validate(self) -> None:
         if not self.restored_unpublished or self.active_artifact_digest is not None:
-            raise ProductionContractError("publication rollback did not restore unpublished state")
+            raise ProductionContractError(
+                "publication rollback did not restore unpublished state"
+            )
         if self.scheduler_enabled or self.ledger_mutated:
-            raise ProductionContractError("publication rollback safety state is invalid")
+            raise ProductionContractError(
+                "publication rollback safety state is invalid"
+            )
 
 
 class InMemoryTop5PublicationStore:
@@ -394,7 +523,9 @@ class InMemoryTop5PublicationStore:
         payload.validate()
         authorization.binds(payload)
         if activation_bindings.get("active") is not True:
-            raise ProductionContractError("publication requires the exact active controlled activation")
+            raise ProductionContractError(
+                "publication requires the exact active controlled activation"
+            )
         for name in (
             "activation_id",
             "league_code",
@@ -407,12 +538,23 @@ class InMemoryTop5PublicationStore:
             "provider_authority",
             "result_authority",
             "evidence_digest",
+            "controlled_shadow_run_id",
+            "qualification_session_id",
         ):
             expected = activation_bindings.get(name)
-            actual = payload.activation_id if name == "activation_id" else getattr(payload, name, None)
+            actual = (
+                payload.activation_id
+                if name == "activation_id"
+                else getattr(payload, name, None)
+            )
             if actual != expected:
-                raise ProductionContractError(f"publication activation binding mismatch: {name}")
-        if self._current is not None and payload.generated_at <= self._current.payload.generated_at:
+                raise ProductionContractError(
+                    f"publication activation binding mismatch: {name}"
+                )
+        if (
+            self._current is not None
+            and payload.generated_at <= self._current.payload.generated_at
+        ):
             raise ProductionContractError("stale Top-5 publication artifact rejected")
         public_product = payload.as_public_product()
         artifact = PublishedTop5Artifact(

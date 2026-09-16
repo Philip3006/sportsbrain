@@ -21,6 +21,7 @@ from src.football.top5_builder2_qualification_receipt import (
 from src.football.top5_controlled_release import (
     BLOCKED,
     READY_FOR_CONTROLLED_ACTIVATION,
+    ApprovedProviderResultAuthority,
     ControlledActivationAuthorization,
     Top5ControlledRelease,
     Top5ControlledReleaseEvidence,
@@ -131,13 +132,25 @@ def _context(tmp_path):
     evidence, measurement, receipt = _evidence(tmp_path)
     receipt = evidence.receipts[0]
     league = receipt.fixture_key.split("|", 1)[0]
+    proposal = ProviderAuthority(
+        "fixture-source", receipt.provider_identity, "result-source"
+    )
+    approved_authority = ApprovedProviderResultAuthority(
+        authority_decision_id="provider-auth:controlled-release",
+        league_code=league,
+        approved_odds_provider=receipt.provider_identity,
+        approved_provider_set=(receipt.provider_identity,),
+        approved_result_source="result-source",
+        cascade_identity=receipt.cascade_evidence_digest,
+        issued_at=BASE - timedelta(minutes=1),
+        expires_at=BASE + timedelta(days=1),
+    )
     signal_time = SignalTimeContract(
         30,
         180,
         300,
         approval_ref="activation-auth:controlled-release",
     )
-    authority = ProviderAuthority("fixture-source", "odds-source", "result-source")
     request = ControlledActivationRequest(
         league_code=league,
         candidate_id=M5_CANDIDATE_ID,
@@ -146,7 +159,7 @@ def _context(tmp_path):
         research_sha=FROZEN_RESEARCH_SHA,
         model_artifact_hash=inventory_for("BL1", M5_CANDIDATE_ID).model_artifact_hash
         or "",
-        provider_authority=authority,
+        provider_authority=proposal,
         signal_time_contract=signal_time,
         rollback_pointer=f"safe-disabled:{league}",
         config_snapshot={"league": league, "candidate": M5_CANDIDATE_ID},
@@ -163,8 +176,9 @@ def _context(tmp_path):
         research_sha=FROZEN_RESEARCH_SHA,
         model_artifact_hash=request.model_artifact_hash,
         signal_time_experiment_id="shadow-experiment:controlled-release-v1",
+        signal_time_contract=signal_time,
         minimum_sample_policy=MinimumSamplePolicy(1, 1),
-        provider_authority=authority,
+        provider_authority=approved_authority,
         controlled_shadow_run_id=receipt.controlled_shadow_run_id,
         qualification_session_id=receipt.qualification_session_id,
         fixture_scope=(receipt.fixture_key,),
@@ -185,9 +199,11 @@ def _context(tmp_path):
         source_sha=INTEGRATION_SHA,
         research_sha=FROZEN_RESEARCH_SHA,
         model_artifact_hash=request.model_artifact_hash,
-        provider_authority="odds-source",
+        provider_authority=receipt.provider_identity,
         result_authority="result-source",
         evidence_digest=evidence_digest,
+        controlled_shadow_run_id=receipt.controlled_shadow_run_id,
+        qualification_session_id=receipt.qualification_session_id,
         generated_at=BASE + timedelta(minutes=1),
         football_records=(
             {
@@ -199,6 +215,8 @@ def _context(tmp_path):
                 "signal_time_experiment_id": "shadow-experiment:controlled-release-v1",
                 "activation_id": authorization.activation_id,
                 "evidence_digest": evidence_digest,
+                "controlled_shadow_run_id": receipt.controlled_shadow_run_id,
+                "qualification_session_id": receipt.qualification_session_id,
                 "probabilities": candidate["probabilities"],
                 "no_bet": True,
                 "closing_used_for_prediction": False,
@@ -265,6 +283,74 @@ def test_dry_run_reaches_ready_state_without_mutation(tmp_path):
     assert release.publication_store.current is None
 
 
+def test_activation_preflight_is_independent_of_publication_artifact(tmp_path):
+    request, auth, evidence, artifact, publication_auth, health = _context(tmp_path)
+    release = Top5ControlledRelease()
+    activation_only = release.dry_run(
+        request,
+        auth,
+        evidence,
+        _rollout_evidence(),
+        health_preconditions=health,
+        now=BASE + timedelta(minutes=2),
+    )
+    assert activation_only.final_state == READY_FOR_CONTROLLED_ACTIVATION
+    assert activation_only.public_artifact_valid is False
+    assert activation_only.publication_authorized is False
+    assert activation_only.publication_ready is False
+    assert (
+        "publication artifact was not supplied" in activation_only.publication_reasons
+    )
+
+    invalid_artifact = replace(artifact, evidence_digest="f" * 64)
+    still_ready = release.dry_run(
+        request,
+        auth,
+        evidence,
+        _rollout_evidence(),
+        invalid_artifact,
+        publication_authorization=publication_auth,
+        health_preconditions=health,
+        now=BASE + timedelta(minutes=2),
+    )
+    assert still_ready.final_state == READY_FOR_CONTROLLED_ACTIVATION
+    assert still_ready.publication_ready is False
+    assert still_ready.publication_reasons
+
+
+def test_publication_preflight_requires_its_separate_authorization(tmp_path):
+    request, auth, evidence, artifact, publication_auth, health = _context(tmp_path)
+    missing = Top5ControlledRelease().dry_run(
+        request,
+        auth,
+        evidence,
+        _rollout_evidence(),
+        artifact,
+        health_preconditions=health,
+        now=BASE + timedelta(minutes=2),
+    )
+    assert missing.final_state == READY_FOR_CONTROLLED_ACTIVATION
+    assert missing.public_artifact_valid is True
+    assert missing.publication_ready is False
+    assert "publication authorization was not supplied" in missing.publication_reasons
+
+    invalid = Top5ControlledRelease().dry_run(
+        request,
+        auth,
+        evidence,
+        _rollout_evidence(),
+        artifact,
+        publication_authorization=replace(
+            publication_auth, publication_authorized=False
+        ),
+        health_preconditions=health,
+        now=BASE + timedelta(minutes=2),
+    )
+    assert invalid.final_state == READY_FOR_CONTROLLED_ACTIVATION
+    assert invalid.publication_ready is False
+    assert invalid.publication_reasons
+
+
 def test_missing_activation_authorization_blocks(tmp_path):
     request, auth, evidence, _artifact, _, _health = _context(tmp_path)
     blocked = replace(auth, activation_authorized=False)
@@ -325,21 +411,67 @@ def test_missing_receipt_and_injected_evidence_block(tmp_path):
 
 
 def test_incomplete_policy_signal_time_and_authority_block(tmp_path):
-    request, auth, _evidence, _artifact, _, _health = _context(tmp_path)
+    request, auth, evidence, _artifact, _, _health = _context(tmp_path)
     with pytest.raises(ValueError, match="positive integer"):
         replace(auth, minimum_sample_policy=MinimumSamplePolicy(0, 1)).validate()
     with pytest.raises(ValueError, match="signal-time approval"):
         auth.binds_request(
             replace(request, signal_time_contract=SignalTimeContract(30, 180, 300))
         )
-    with pytest.raises(ValueError, match="complete provider"):
+    for altered in (
+        replace(auth.signal_time_contract, minimum_minutes_before_kickoff=31),
+        replace(auth.signal_time_contract, maximum_minutes_before_kickoff=179),
+        replace(auth.signal_time_contract, maximum_odds_age_seconds=301),
+    ):
+        with pytest.raises(ValueError, match="exact signal-time contract"):
+            auth.binds_request(replace(request, signal_time_contract=altered))
+    with pytest.raises(ValueError, match="approved provider/result authority"):
         replace(
-            auth, provider_authority=ProviderAuthority(None, "odds", "results")
+            auth, provider_authority=ProviderAuthority("fixture", "odds", "results")
         ).validate()
-    with pytest.raises(ValueError, match="complete provider"):
+    with pytest.raises(ValueError, match="approved provider/result authority"):
+        replace(auth, provider_authority=None).validate()
+    with pytest.raises(ValueError, match="approved_result_source"):
         replace(
-            auth, provider_authority=ProviderAuthority("fixture", "odds", None)
+            auth,
+            provider_authority=replace(
+                auth.provider_authority, approved_result_source=""
+            ),
         ).validate()
+    with pytest.raises(ValueError, match="approved_odds_provider"):
+        replace(
+            auth,
+            provider_authority=replace(
+                auth.provider_authority, approved_odds_provider=""
+            ),
+        ).validate()
+    with pytest.raises(ValueError, match="approved result source binding"):
+        replace(
+            auth,
+            provider_authority=replace(
+                auth.provider_authority, approved_result_source="other-results"
+            ),
+        ).binds_request(request)
+    with pytest.raises(ValueError, match="approved odds provider binding"):
+        replace(
+            auth,
+            provider_authority=replace(
+                auth.provider_authority,
+                approved_odds_provider="other-provider",
+                approved_provider_set=("other-provider",),
+            ),
+        ).binds_request(request)
+    with pytest.raises(ValueError, match="does not match REAL_OBSERVED"):
+        replace(
+            auth,
+            provider_authority=replace(
+                auth.provider_authority,
+                approved_odds_provider="other-provider",
+                approved_provider_set=("other-provider",),
+            ),
+        ).provider_authority.binds_receipts(evidence.receipts)
+    auth.provider_authority.binds_request(request)
+    auth.provider_authority.binds_receipts(evidence.receipts)
 
 
 def test_activation_does_not_imply_publication_and_publication_needs_separate_auth(
@@ -373,6 +505,54 @@ def test_activation_does_not_imply_publication_and_publication_needs_separate_au
     assert state.provider_authority_created is False
     assert state.scheduler_enabled is False
     assert state.ledger_mutated is False
+
+
+def test_controlled_publication_uses_canonical_pwa_football_shape(tmp_path):
+    request, auth, evidence, artifact, publication_auth, _health = _context(tmp_path)
+    release = Top5ControlledRelease()
+    release.activate(
+        request, auth, evidence, _rollout_evidence(), now=BASE + timedelta(minutes=2)
+    )
+    published = release.publish(
+        artifact, publication_auth, now=BASE + timedelta(minutes=3)
+    )
+    records = published.public_product["football"]
+    assert isinstance(records, list) and records
+    record = records[0]
+    assert {
+        "league",
+        "fixture_key",
+        "home",
+        "away",
+        "match",
+        "market",
+        "model_prob",
+        "model_identity",
+        "model_version",
+        "prediction_timestamp",
+        "signal_timestamp",
+        "signal_snapshot_id",
+        "activation_state",
+        "publication_status",
+        "publication_enabled",
+        "no_bet",
+        "provenance",
+        "result_status",
+        "settlement_status",
+        "run_id",
+        "session_id",
+    } <= record.keys()
+    assert "probabilities" not in record
+    assert record["league"] == artifact.league_code
+    assert record["model_identity"] == artifact.model_identity
+    assert record["activation_state"] == "CONTROLLED"
+    assert record["publication_status"] == "PUBLISHED"
+    assert record["publication_enabled"] is True
+    assert record["no_bet"] is True
+    assert record["provenance"]["source_sha"] == artifact.source_sha
+    assert record["provenance"]["research_sha"] == artifact.research_sha
+    assert record["run_id"] == artifact.controlled_shadow_run_id
+    assert record["session_id"] == artifact.qualification_session_id
 
 
 def test_publication_cannot_cross_activation_evidence_or_authority_bindings(tmp_path):
