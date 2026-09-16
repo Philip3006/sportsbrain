@@ -12,7 +12,6 @@ from src.football.provider_cascade import (
     AdapterResult,
     ApiFootballAdapter,
     BetfairDelayedAdapter,
-    Builder2ValidationReceipt,
     CascadeResult,
     CascadeTimingPolicy,
     NetworkAuthorizationContract,
@@ -28,12 +27,31 @@ from src.football.provider_cascade import (
     RawProviderResponse,
     RequestBudgetManager,
     TheOddsAPIAdapter,
+    TimingProvenance,
+    TransportCapability,
     accepted_for_builder1,
     builder2_evidence_payload,
     compare_provider_results,
     resolve_provider_identity,
 )
+from src.football.provider_cascade.contracts import stable_request_identity
+from src.football.top5_builder2_qualification_receipt import (
+    issue_builder2_qualification_receipt,
+)
+from src.football.top5_provider_cascade_validation import evidence_digest
 from src.football.top5_real_shadow_provider import ProviderResponse
+from tests.football.test_top5_controlled_shadow_provider_qualification import (
+    _attestation as _b2_attestation,
+)
+from tests.football.test_top5_controlled_shadow_provider_qualification import (
+    _cascade as _b2_cascade,
+)
+from tests.football.test_top5_controlled_shadow_provider_qualification import (
+    _observation as _b2_observation,
+)
+from tests.football.test_top5_controlled_shadow_provider_qualification import (
+    _qualify as _b2_qualify,
+)
 
 NOW = datetime(2026, 9, 16, 12, tzinfo=timezone.utc)
 FIXTURE = Fixture(
@@ -153,6 +171,108 @@ def _result(
     )
 
 
+class NetworkCapableFakeAdapter(FakeAdapter):
+    transport_capability = TransportCapability.NETWORK_CAPABLE
+
+
+def _builder2_context_for_cascade():
+    """Return an external canonical B2 observation/receipt for this test fixture."""
+
+    fixture = _b2_observation()
+    request_fixture = Fixture(
+        fixture.fixture_key,
+        fixture.league,
+        fixture.home_team,
+        fixture.away_team,
+        fixture.kickoff,
+    )
+    request_id = stable_request_identity(
+        fixture.provider_identity,
+        request_fixture,
+        NOW,
+    )
+    base_cascade = _b2_cascade()
+    cascade = replace(
+        base_cascade,
+        attempts=(replace(base_cascade.attempts[0], request_identity=request_id),),
+    )
+    attestation = replace(
+        _b2_attestation(),
+        provider_request_id=request_id,
+        cascade_evidence_digest=evidence_digest(cascade),
+    )
+    observation = replace(
+        fixture,
+        provider_request_id=request_id,
+        cascade_evidence=cascade,
+        capture_attestation=attestation,
+    )
+    report = _b2_qualify((observation,))
+    receipt = issue_builder2_qualification_receipt(
+        report, observation, report.results[0]
+    )
+    return observation, receipt
+
+
+def _cascade_observation_for_builder2(observation):
+    return NormalizedOddsObservation(
+        league_code=observation.league,
+        fixture_key=observation.fixture_key,
+        provider_fixture_id=observation.provider_event_id,
+        home_team=observation.home_team,
+        away_team=observation.away_team,
+        kickoff_utc=observation.kickoff,
+        market_type=MARKET_PREMATCH_1X2,
+        home_odds=observation.home_odds,
+        draw_odds=observation.draw_odds,
+        away_odds=observation.away_odds,
+        provider_identity=observation.provider_identity,
+        bookmaker_identity=observation.bookmaker_identity,
+        source_timestamp=observation.source_timestamp,
+        captured_at=observation.captured_at,
+        request_identity=observation.provider_request_id,
+        request_started_at=observation.request_started_at,
+        request_completed_at=observation.request_finished_at,
+        latency_ms=observation.latency_ms,
+        provider_priority=0,
+        fallback_depth=0,
+        source_provenance=observation.source_identity,
+        raw_record_digest=observation.raw_response_digest,
+        adapter_version=observation.adapter_version,
+        source_timing_provenance=TimingProvenance.SOURCE_TIMESTAMP,
+    )
+
+
+def _routed_builder2_case(*, network_capable=True):
+    qualification_observation, receipt = _builder2_context_for_cascade()
+    cascade_observation = _cascade_observation_for_builder2(qualification_observation)
+    adapter_type = NetworkCapableFakeAdapter if network_capable else FakeAdapter
+    config = replace(
+        _config("the_odds_api"),
+        live_calls_authorized=True,
+        controlled_shadow_run_ref="test-controlled-shadow",
+        controlled_shadow_authorized_providers=("the_odds_api",),
+    )
+    fixture = Fixture(
+        qualification_observation.fixture_key,
+        qualification_observation.league,
+        qualification_observation.home_team,
+        qualification_observation.away_team,
+        qualification_observation.kickoff,
+    )
+    result = ProviderCascadeRouter(
+        config,
+        adapters={
+            "the_odds_api": adapter_type(
+                _result("the_odds_api", observation=cascade_observation)
+            )
+        },
+        now=NOW,
+        timing_policy=TEST_TIMING,
+    ).route(fixture, now=NOW)
+    return result, qualification_observation, receipt
+
+
 def test_default_order_is_configurable_and_defaults_to_requested_shadow_order():
     config = ProviderCascadeConfig.default()
     config.validate()
@@ -202,9 +322,9 @@ def test_missing_credentials_are_rejected_before_network():
         per_run_cap=1,
     )
     adapter = FakeAdapter(_result("a"))
-    result = ProviderCascadeRouter(config, adapters={"a": adapter}, now=NOW, timing_policy=TEST_TIMING).route(
-        FIXTURE, now=NOW
-    )
+    result = ProviderCascadeRouter(
+        config, adapters={"a": adapter}, now=NOW, timing_policy=TEST_TIMING
+    ).route(FIXTURE, now=NOW)
     assert result.trace.fail_closed is True
     assert result.trace.attempts[0].state is ProviderState.CREDENTIAL_MISSING
     assert result.trace.attempts[0].network_called is False
@@ -372,9 +492,9 @@ def test_all_providers_fail_closed_with_complete_trace():
         )
         for name in config.provider_order
     }
-    result = ProviderCascadeRouter(config, adapters=adapters, now=NOW, timing_policy=TEST_TIMING).route(
-        FIXTURE, now=NOW
-    )
+    result = ProviderCascadeRouter(
+        config, adapters=adapters, now=NOW, timing_policy=TEST_TIMING
+    ).route(FIXTURE, now=NOW)
     assert result.observation is None
     assert result.trace.fail_closed is True
     assert result.trace.selected_provider is None
@@ -397,7 +517,10 @@ def test_disabled_provider_and_candidate_gate_are_explicit():
     disabled = FakeAdapter(_result("disabled"))
     candidate = FakeAdapter(_result("candidate"))
     result = ProviderCascadeRouter(
-        config, adapters={"disabled": disabled, "candidate": candidate}, now=NOW, timing_policy=TEST_TIMING
+        config,
+        adapters={"disabled": disabled, "candidate": candidate},
+        now=NOW,
+        timing_policy=TEST_TIMING,
     ).route(FIXTURE, now=NOW)
     assert result.trace.fail_closed
     assert [attempt.state for attempt in result.trace.attempts] == [
@@ -414,12 +537,16 @@ def test_router_decision_is_deterministic_for_same_inputs_and_config():
         "b": FakeAdapter(_result("b")),
     }
     first = (
-        ProviderCascadeRouter(config, adapters=make_adapters(), now=NOW, timing_policy=TEST_TIMING)
+        ProviderCascadeRouter(
+            config, adapters=make_adapters(), now=NOW, timing_policy=TEST_TIMING
+        )
         .route(FIXTURE, now=NOW)
         .as_payload()
     )
     second = (
-        ProviderCascadeRouter(config, adapters=make_adapters(), now=NOW, timing_policy=TEST_TIMING)
+        ProviderCascadeRouter(
+            config, adapters=make_adapters(), now=NOW, timing_policy=TEST_TIMING
+        )
         .route(FIXTURE, now=NOW)
         .as_payload()
     )
@@ -825,25 +952,17 @@ def test_budget_tracks_attempts_successes_preflight_rejections_and_quota():
     assert payload["providers"]["a"]["quota"]["remaining"] == 8
 
 
-def test_builder1_seam_only_accepts_non_fail_closed_normalized_observation():
-    config = _config("a")
-    result = ProviderCascadeRouter(
-        config, adapters={"a": FakeAdapter(_result("a"))}, now=NOW, timing_policy=TEST_TIMING
-    ).route(FIXTURE, now=NOW)
-    receipt = Builder2ValidationReceipt(
-        observation_digest=result.observation_digest,
-        cascade_trace_digest=result.cascade_trace_digest,
-        fixture_key=FIXTURE.fixture_key,
-        provider="a",
-        validation_contract_version="top5-provider-cascade-validation-v1",
-        accepted=True,
-        prediction_input_allowed=True,
-        validation_result_digest="c" * 64,
+def test_builder1_seam_accepts_exact_canonical_builder2_observation_and_receipt():
+    result, qualification_observation, receipt = _routed_builder2_case()
+    input_value = accepted_for_builder1(
+        result,
+        receipt.as_payload(),
+        qualification_observation=qualification_observation,
     )
-    input_value = accepted_for_builder1(result, receipt)
     fixture, snapshot = input_value.model_inputs()
-    assert fixture.fixture_key == FIXTURE.fixture_key
-    assert snapshot.odds["draw"] == 3.5
+    assert fixture.fixture_key == qualification_observation.fixture_key
+    assert snapshot.odds["draw"] == 3.4
+    assert input_value.builder2_receipt == receipt
     failed = CascadeResult(
         None, replace(result.trace, selected_provider=None, fail_closed=True)
     )
@@ -854,7 +973,9 @@ def test_builder1_seam_only_accepts_non_fail_closed_normalized_observation():
 def test_health_payload_is_secret_free_and_tracks_candidate_state():
     config = _config("a")
     adapter = FakeAdapter(_result("a"))
-    router = ProviderCascadeRouter(config, adapters={"a": adapter}, now=NOW, timing_policy=TEST_TIMING)
+    router = ProviderCascadeRouter(
+        config, adapters={"a": adapter}, now=NOW, timing_policy=TEST_TIMING
+    )
     router.route(FIXTURE, now=NOW)
     health = router.health.as_payload()["a"]
     assert health["candidate_only"] is True
@@ -897,29 +1018,39 @@ def test_kickoff_tolerance_is_caller_supplied_without_hidden_router_value():
 
 
 def test_builder1_requires_matching_independent_builder2_receipt():
-    result = ProviderCascadeRouter(
-        _config("a"),
-        adapters={"a": FakeAdapter(_result("a"))},
-        now=NOW,
-        timing_policy=TEST_TIMING,
-    ).route(FIXTURE, now=NOW)
+    result, qualification_observation, receipt = _routed_builder2_case()
     with pytest.raises(ValueError, match="independent Builder-2"):
         accepted_for_builder1(result)
-    rejected = Builder2ValidationReceipt(
-        observation_digest=result.observation_digest,
-        cascade_trace_digest=result.cascade_trace_digest,
-        fixture_key=FIXTURE.fixture_key,
-        provider="a",
-        validation_contract_version="top5-provider-cascade-validation-v1",
-        accepted=False,
-        prediction_input_allowed=False,
+    with pytest.raises(ValueError, match="exact external Builder-2"):
+        accepted_for_builder1(result, receipt)
+    copied_to_b = replace(
+        qualification_observation,
+        observation_id="observation-b",
     )
-    with pytest.raises((ValueError, ProductionContractError)):
-        accepted_for_builder1(result, rejected)
-    mismatched = replace(rejected, accepted=True, prediction_input_allowed=True)
-    mismatched = replace(mismatched, observation_digest="f" * 64)
-    with pytest.raises(ValueError, match="does not match"):
-        accepted_for_builder1(result, mismatched)
+    with pytest.raises(ValueError, match="canonical Builder-2 qualification receipt"):
+        accepted_for_builder1(
+            result,
+            receipt,
+            qualification_observation=copied_to_b,
+        )
+
+
+def test_test_injected_cascade_cannot_be_promoted_by_canonical_receipt():
+    result, qualification_observation, receipt = _routed_builder2_case(
+        network_capable=False
+    )
+    with pytest.raises(ValueError, match="TEST_INJECTED"):
+        accepted_for_builder1(
+            result,
+            receipt,
+            qualification_observation=qualification_observation,
+        )
+
+
+def test_builder4_consumer_does_not_expose_canonical_receipt_issuer():
+    import src.football.provider_cascade.builder1 as builder1_module
+
+    assert not hasattr(builder1_module, "issue_builder2_qualification_receipt")
 
 
 def test_explicitly_injected_network_adapter_cannot_bypass_authorization():

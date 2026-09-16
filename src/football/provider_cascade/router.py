@@ -229,9 +229,10 @@ class ProviderCascadeRouter:
             capability = getattr(
                 adapter, "transport_capability", TransportCapability.TEST_INJECTED
             )
-            if (
-                TransportCapability(capability) is TransportCapability.NETWORK_CAPABLE
-                and (authorization is None or not authorization.permits(provider_name))
+            if TransportCapability(
+                capability
+            ) is TransportCapability.NETWORK_CAPABLE and (
+                authorization is None or not authorization.permits(provider_name)
             ):
                 self.health.result(
                     provider_name,
@@ -255,6 +256,7 @@ class ProviderCascadeRouter:
                         quota_before=preflight.quota_before,
                         credentials_present=self.budget.credential_available(config),
                         resolution=resolution,
+                        transport_capability=capability,
                     )
                 )
                 continue
@@ -362,6 +364,7 @@ class ProviderCascadeRouter:
                         request_started_at=current,
                         request_completed_at=current
                         + timedelta(milliseconds=result.latency_ms),
+                        transport_capability=capability,
                     )
                 )
                 trace = CascadeDecisionTrace(
@@ -403,6 +406,7 @@ class ProviderCascadeRouter:
                     request_started_at=current,
                     request_completed_at=current
                     + timedelta(milliseconds=result.latency_ms),
+                    transport_capability=capability,
                 )
             )
         return self._fail_closed(
@@ -411,7 +415,10 @@ class ProviderCascadeRouter:
 
     def _fresh_enough(self, observation, now: datetime) -> bool:
         if observation.source_timestamp is None:
-            return observation.source_timing_provenance is TimingProvenance.CAPTURE_TIME_ONLY
+            return (
+                observation.source_timing_provenance
+                is TimingProvenance.CAPTURE_TIME_ONLY
+            )
         age = (now - observation.source_timestamp).total_seconds()
         return 0 <= age <= self.timing_policy.maximum_odds_age_seconds
 
@@ -549,14 +556,13 @@ class ProviderCascadeRouter:
         resolution: ProviderIdentityResolution | None = None,
         request_started_at: datetime | None = None,
         request_completed_at: datetime | None = None,
+        transport_capability: TransportCapability = TransportCapability.TEST_INJECTED,
     ) -> ProviderAttemptTrace:
         if network_request_count is None:
             network_request_count = int(network_called)
         quota_before = quota_before or QuotaSnapshot()
         quota_after = quota_after or quota_before
-        request_started_at = request_started_at or getattr(
-            self, "_route_time", None
-        )
+        request_started_at = request_started_at or getattr(self, "_route_time", None)
         request_completed_at = request_completed_at or request_started_at
         return ProviderAttemptTrace(
             attempt_index=attempt_index,
@@ -566,6 +572,7 @@ class ProviderCascadeRouter:
             reason=reason,
             network_called=network_called,
             request_identity=request_identity,
+            transport_capability=transport_capability,
             status_code=status_code,
             latency_ms=latency_ms,
             configured_provider_order=configured_provider_order,
@@ -601,7 +608,11 @@ class ProviderCascadeRouter:
             home_team=fixture.home_team if fixture is not None else "",
             away_team=fixture.away_team if fixture is not None else "",
             kickoff=fixture.kickoff if fixture is not None else None,
-            market_type=(observation.market_type if observation is not None else MARKET_PREMATCH_1X2),
+            market_type=(
+                observation.market_type
+                if observation is not None
+                else MARKET_PREMATCH_1X2
+            ),
             home_odds=observation.home_odds if observation is not None else None,
             draw_odds=observation.draw_odds if observation is not None else None,
             away_odds=observation.away_odds if observation is not None else None,

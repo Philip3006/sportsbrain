@@ -7,10 +7,19 @@ from dataclasses import dataclass
 
 from src.football.provider_cascade.contracts import (
     BUILDER2_VALIDATION_CONTRACT_VERSION,
-    Builder2ValidationReceipt,
     CascadeDecisionTrace,
     CascadeResult,
     NormalizedOddsObservation,
+    TransportCapability,
+)
+from src.football.top5_builder2_qualification_receipt import (
+    Builder2QualificationReceiptError,
+    Builder2QualificationReceiptV1,
+    validate_builder1_qualification_receipt,
+    validate_builder4_qualification_receipt,
+)
+from src.football.top5_controlled_shadow_provider_qualification import (
+    RealProviderObservation,
 )
 from src.football.top5_research_binding import FROZEN_RESEARCH_SHA
 
@@ -21,7 +30,8 @@ class Builder1OddsInput:
 
     observation: NormalizedOddsObservation
     routing: CascadeDecisionTrace
-    builder2_receipt: Builder2ValidationReceipt
+    builder2_receipt: Builder2QualificationReceiptV1
+    qualification_observation: RealProviderObservation
 
     def validate(self) -> None:
         self.observation.validate()
@@ -34,11 +44,14 @@ class Builder1OddsInput:
             or self.routing.publication
         ):
             raise ValueError("Builder 1 input violates the shadow safety boundary")
-        self.builder2_receipt.assert_allows()
-        if not self.builder2_receipt.matches(
-            CascadeResult(self.observation, self.routing)
-        ):
-            raise ValueError("Builder-2 receipt is not bound to this observation")
+        result = CascadeResult(self.observation, self.routing)
+        result.validate()
+        _validate_external_builder2_context(
+            result,
+            self.builder2_receipt,
+            self.qualification_observation,
+            consumer_validator=validate_builder1_qualification_receipt,
+        )
 
     def model_inputs(self):
         """Return the existing contract objects; no model is imported here."""
@@ -49,9 +62,15 @@ class Builder1OddsInput:
 
 def accepted_for_builder1(
     result: CascadeResult,
-    validation_receipt: Builder2ValidationReceipt | Mapping[str, object] | None = None,
+    validation_receipt: Builder2QualificationReceiptV1
+    | Mapping[str, object]
+    | None = None,
+    *,
+    qualification_observation: RealProviderObservation
+    | Mapping[str, object]
+    | None = None,
 ) -> Builder1OddsInput:
-    """Cross the seam only with an external, digest-bound Builder-2 receipt."""
+    """Cross the seam only with external Builder-2 V1 evidence and receipt."""
 
     result.validate()
     if not result.accepted or result.observation is None:
@@ -60,22 +79,198 @@ def accepted_for_builder1(
         raise ValueError(
             "independent Builder-2 validation receipt is required; candidate-only cascade cannot self-authorize"
         )
+    if qualification_observation is None:
+        raise ValueError(
+            "exact external Builder-2 qualification observation is required; candidate-only cascade cannot self-authorize"
+        )
     receipt = (
         validation_receipt
-        if isinstance(validation_receipt, Builder2ValidationReceipt)
-        else Builder2ValidationReceipt.from_payload(validation_receipt)
+        if isinstance(validation_receipt, Builder2QualificationReceiptV1)
+        else Builder2QualificationReceiptV1.from_payload(validation_receipt)
     )
-    receipt.validate()
-    if receipt.validation_contract_version != BUILDER2_VALIDATION_CONTRACT_VERSION:
-        raise ValueError("unsupported Builder-2 validation contract")
-    if not receipt.matches(result):
-        raise ValueError(
-            "Builder-2 validation receipt digest, fixture, or provider does not match"
-        )
-    receipt.assert_allows()
-    input_value = Builder1OddsInput(result.observation, result.trace, receipt)
+    external_observation = (
+        qualification_observation
+        if isinstance(qualification_observation, RealProviderObservation)
+        else RealProviderObservation.from_payload(qualification_observation)
+    )
+    _validate_external_builder2_context(
+        result,
+        receipt,
+        external_observation,
+        consumer_validator=validate_builder4_qualification_receipt,
+    )
+    input_value = Builder1OddsInput(
+        result.observation,
+        result.trace,
+        receipt,
+        external_observation,
+    )
     input_value.validate()
     return input_value
+
+
+def _validate_external_builder2_context(
+    result: CascadeResult,
+    receipt: Builder2QualificationReceiptV1,
+    qualification_observation: RealProviderObservation,
+    *,
+    consumer_validator,
+) -> None:
+    """Validate the canonical receipt and bind its real observation to B4 output."""
+
+    try:
+        qualification_observation.validate_structural()
+        consumer_validator(
+            receipt,
+            expected_observation=qualification_observation,
+            expected_cascade_evidence=qualification_observation.cascade_evidence,
+        )
+    except Builder2QualificationReceiptError as exc:
+        raise ValueError(
+            "canonical Builder-2 qualification receipt is invalid or not bound to its observation"
+        ) from exc
+
+    if result.observation is None:
+        raise ValueError("Builder-2 evidence cannot admit an empty cascade result")
+    selected = tuple(
+        attempt
+        for attempt in result.trace.attempts
+        if attempt.provider == result.trace.selected_provider
+    )
+    if len(selected) != 1:
+        raise ValueError(
+            "cascade selection is not bound to exactly one provider attempt"
+        )
+    selected_attempt = selected[0]
+    if (
+        TransportCapability(selected_attempt.transport_capability)
+        is not TransportCapability.NETWORK_CAPABLE
+    ):
+        raise ValueError(
+            "TEST_INJECTED cascade output cannot be promoted by a Builder-2 receipt"
+        )
+    if not selected_attempt.network_called:
+        raise ValueError("qualified Builder-2 evidence requires a network observation")
+
+    cascade_observation = result.observation
+    exact_bindings = (
+        ("league", cascade_observation.league_code, qualification_observation.league),
+        (
+            "fixture_key",
+            cascade_observation.fixture_key,
+            qualification_observation.fixture_key,
+        ),
+        (
+            "home_team",
+            cascade_observation.home_team,
+            qualification_observation.home_team,
+        ),
+        (
+            "away_team",
+            cascade_observation.away_team,
+            qualification_observation.away_team,
+        ),
+        ("kickoff", cascade_observation.kickoff_utc, qualification_observation.kickoff),
+        (
+            "provider_identity",
+            cascade_observation.provider_identity,
+            qualification_observation.provider_identity,
+        ),
+        (
+            "provider_event_id",
+            cascade_observation.provider_fixture_id,
+            qualification_observation.provider_event_id,
+        ),
+        (
+            "provider_request_id",
+            cascade_observation.request_identity,
+            qualification_observation.provider_request_id,
+        ),
+        (
+            "home_odds",
+            cascade_observation.home_odds,
+            qualification_observation.home_odds,
+        ),
+        (
+            "draw_odds",
+            cascade_observation.draw_odds,
+            qualification_observation.draw_odds,
+        ),
+        (
+            "away_odds",
+            cascade_observation.away_odds,
+            qualification_observation.away_odds,
+        ),
+        (
+            "bookmaker_identity",
+            cascade_observation.bookmaker_identity,
+            qualification_observation.bookmaker_identity,
+        ),
+        (
+            "source_timestamp",
+            cascade_observation.source_timestamp,
+            qualification_observation.source_timestamp,
+        ),
+        (
+            "captured_at",
+            cascade_observation.captured_at,
+            qualification_observation.captured_at,
+        ),
+        (
+            "request_started_at",
+            cascade_observation.request_started_at,
+            qualification_observation.request_started_at,
+        ),
+        (
+            "request_completed_at",
+            cascade_observation.request_completed_at,
+            qualification_observation.request_finished_at,
+        ),
+        (
+            "adapter_version",
+            cascade_observation.adapter_version,
+            qualification_observation.adapter_version,
+        ),
+        (
+            "raw_response_digest",
+            cascade_observation.raw_record_digest.lower(),
+            qualification_observation.raw_response_digest.lower(),
+        ),
+    )
+    for name, actual, expected in exact_bindings:
+        if actual != expected:
+            raise ValueError(f"Builder-2 receipt is not bound to this {name}")
+
+    attempt_bindings = (
+        (
+            "provider",
+            selected_attempt.provider,
+            qualification_observation.provider_identity,
+        ),
+        (
+            "provider_event_id",
+            selected_attempt.provider_record_id,
+            qualification_observation.provider_event_id,
+        ),
+        (
+            "provider_request_id",
+            selected_attempt.request_identity,
+            qualification_observation.provider_request_id,
+        ),
+        (
+            "raw_response_digest",
+            selected_attempt.raw_record_digest.lower(),
+            qualification_observation.raw_response_digest.lower(),
+        ),
+        (
+            "adapter_version",
+            selected_attempt.adapter_version,
+            qualification_observation.adapter_version,
+        ),
+    )
+    for name, actual, expected in attempt_bindings:
+        if actual != expected:
+            raise ValueError(f"selected cascade attempt is not bound to this {name}")
 
 
 def builder2_evidence_payload(result: CascadeResult) -> dict[str, object]:
@@ -101,8 +296,7 @@ def builder2_evidence_payload(result: CascadeResult) -> dict[str, object]:
         outcome = outcome_map.get(attempt.state.value, "MALFORMED")
         is_success = outcome == "SUCCESS" and attempt.home_odds is not None
         started = (
-            attempt.request_started_at
-            or result.observation.request_started_at
+            attempt.request_started_at or result.observation.request_started_at
             if result.observation
             else None
         )
@@ -153,7 +347,9 @@ def builder2_evidence_payload(result: CascadeResult) -> dict[str, object]:
                 "bookmaker_identity": attempt.bookmaker_identity,
                 "source_identity": attempt.source_identity,
                 "market_phase": "PRE_MATCH",
-                "source_timestamp": attempt.source_timestamp.isoformat() if attempt.source_timestamp else None,
+                "source_timestamp": attempt.source_timestamp.isoformat()
+                if attempt.source_timestamp
+                else None,
                 "source_timing_provenance": attempt.source_timing_provenance,
                 "request_latency_ms": attempt.latency_ms,
                 "quota_before": {

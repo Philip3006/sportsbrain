@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -342,7 +341,9 @@ class ProviderIdentityResolution:
             ),
             home_team=str(payload.get("home_team", "")),
             away_team=str(payload.get("away_team", "")),
-            kickoff=optional_datetime(payload.get("kickoff"), "resolved provider kickoff"),
+            kickoff=optional_datetime(
+                payload.get("kickoff"), "resolved provider kickoff"
+            ),
             league_competition_evidence=str(
                 payload.get("league_competition_evidence", "")
             ),
@@ -352,7 +353,9 @@ class ProviderIdentityResolution:
             ),
             resolver_version=str(payload.get("resolver_version", "")),
             digest=str(payload.get("digest", "")),
-            runner_mapping={str(key): str(value) for key, value in runner_mapping.items()},
+            runner_mapping={
+                str(key): str(value) for key, value in runner_mapping.items()
+            },
         )
         result.validate()
         return result
@@ -393,7 +396,9 @@ class ProviderIdentityResolution:
             )
         state = ProviderIdentityResolutionState(self.state)
         if not self.provider.strip() or not self.canonical_fixture_key.strip():
-            raise ProductionContractError("provider identity resolution is missing identity")
+            raise ProductionContractError(
+                "provider identity resolution is missing identity"
+            )
         if not self.resolution_provenance.strip() or not self.resolver_version.strip():
             raise ProductionContractError(
                 "provider identity resolution is missing provenance"
@@ -433,9 +438,7 @@ class ProviderIdentityResolution:
                     != fixture.home_team.strip().casefold()
                     or self.away_team.strip().casefold()
                     != fixture.away_team.strip().casefold()
-                    or abs(
-                        (self.kickoff - fixture.kickoff).total_seconds()
-                    )
+                    or abs((self.kickoff - fixture.kickoff).total_seconds())
                     > kickoff_tolerance_seconds
                 ):
                     raise ProductionContractError(
@@ -481,7 +484,9 @@ class ProviderIdentityResolution:
             digest="",
             runner_mapping=runner_mapping or {},
         )
-        result = cls(**{**base.__dict__, "digest": digest_record(base._digest_payload())})
+        result = cls(
+            **{**base.__dict__, "digest": digest_record(base._digest_payload())}
+        )
         result.validate(
             fixture=fixture,
             kickoff_tolerance_seconds=kickoff_tolerance_seconds,
@@ -930,6 +935,7 @@ class ProviderAttemptTrace:
     reason: str
     network_called: bool
     request_identity: str
+    transport_capability: TransportCapability = TransportCapability.TEST_INJECTED
     status_code: int | None = None
     latency_ms: int = 0
     configured_provider_order: tuple[str, ...] = ()
@@ -978,6 +984,12 @@ class ProviderAttemptTrace:
             raise ProductionContractError(
                 "network request count must equal observed network calls"
             )
+        try:
+            TransportCapability(self.transport_capability)
+        except (TypeError, ValueError) as exc:
+            raise ProductionContractError(
+                "provider attempt transport capability is unknown"
+            ) from exc
         if self.quota_cost_units < 0 or not isfinite(self.quota_cost_units):
             raise ProductionContractError("provider attempt quota cost is invalid")
         if self.request_started_at is not None:
@@ -1013,6 +1025,9 @@ class ProviderAttemptTrace:
             "reason": self.reason,
             "network_called": self.network_called,
             "request_identity": self.request_identity,
+            "transport_capability": TransportCapability(
+                self.transport_capability
+            ).value,
             "status_code": self.status_code,
             "latency_ms": self.latency_ms,
             "configured_provider_order": list(self.configured_provider_order),
@@ -1160,105 +1175,6 @@ class CascadeResult:
 
 
 BUILDER2_VALIDATION_CONTRACT_VERSION = "top5-provider-cascade-validation-v1"
-
-
-@dataclass(frozen=True)
-class Builder2ValidationReceipt:
-    """External Builder-2 authority bound to exactly one cascade result."""
-
-    observation_digest: str
-    cascade_trace_digest: str
-    fixture_key: str
-    provider: str
-    validation_contract_version: str
-    accepted: bool
-    prediction_input_allowed: bool
-    validation_result_digest: str = ""
-
-    def validate(self) -> None:
-        for name, value in (
-            ("observation_digest", self.observation_digest),
-            ("cascade_trace_digest", self.cascade_trace_digest),
-            ("fixture_key", self.fixture_key),
-            ("provider", self.provider),
-            ("validation_contract_version", self.validation_contract_version),
-        ):
-            if not isinstance(value, str) or not value.strip():
-                raise ProductionContractError(f"Builder-2 receipt {name} is required")
-        for name, value in (
-            ("observation_digest", self.observation_digest),
-            ("cascade_trace_digest", self.cascade_trace_digest),
-        ):
-            if not re.fullmatch(r"[0-9a-fA-F]{64}", value):
-                raise ProductionContractError(
-                    f"Builder-2 receipt {name} must be a SHA-256 digest"
-                )
-        if self.validation_result_digest and not re.fullmatch(
-            r"[0-9a-fA-F]{64}", self.validation_result_digest
-        ):
-            raise ProductionContractError(
-                "Builder-2 validation result digest must be SHA-256"
-            )
-        if self.validation_contract_version != BUILDER2_VALIDATION_CONTRACT_VERSION:
-            raise ProductionContractError(
-                "unsupported Builder-2 validation contract version"
-            )
-        if not isinstance(self.accepted, bool) or not isinstance(
-            self.prediction_input_allowed, bool
-        ):
-            raise ProductionContractError("Builder-2 receipt decisions must be boolean")
-        if self.prediction_input_allowed and not self.accepted:
-            raise ProductionContractError(
-                "rejected Builder-2 receipt cannot allow prediction input"
-            )
-
-    def assert_allows(self) -> None:
-        self.validate()
-        if not self.accepted or not self.prediction_input_allowed:
-            raise ProductionContractError(
-                "Builder-2 receipt does not authorize prediction input"
-            )
-
-    def matches(self, result: CascadeResult) -> bool:
-        self.validate()
-        return (
-            self.observation_digest.lower() == result.observation_digest
-            and self.cascade_trace_digest.lower() == result.cascade_trace_digest
-            and result.observation is not None
-            and self.fixture_key == result.trace.fixture_key
-            and self.fixture_key == result.observation.fixture_key
-            and self.provider == result.observation.provider_identity
-        )
-
-    @classmethod
-    def from_payload(cls, payload: Mapping[str, object]) -> Builder2ValidationReceipt:
-        if not isinstance(payload, Mapping):
-            raise ProductionContractError("Builder-2 receipt must be a mapping")
-        return cls(
-            observation_digest=str(payload.get("observation_digest", "")),
-            cascade_trace_digest=str(payload.get("cascade_trace_digest", "")),
-            fixture_key=str(payload.get("fixture_key", "")),
-            provider=str(payload.get("provider", "")),
-            validation_contract_version=str(
-                payload.get("validation_contract_version", "")
-            ),
-            accepted=payload.get("accepted"),  # type: ignore[arg-type]
-            prediction_input_allowed=payload.get("prediction_input_allowed"),  # type: ignore[arg-type]
-            validation_result_digest=str(payload.get("validation_result_digest", "")),
-        )
-
-    def as_payload(self) -> dict[str, object]:
-        self.validate()
-        return {
-            "observation_digest": self.observation_digest.lower(),
-            "cascade_trace_digest": self.cascade_trace_digest.lower(),
-            "fixture_key": self.fixture_key,
-            "provider": self.provider,
-            "validation_contract_version": self.validation_contract_version,
-            "accepted": self.accepted,
-            "prediction_input_allowed": self.prediction_input_allowed,
-            "validation_result_digest": self.validation_result_digest.lower(),
-        }
 
 
 def stable_request_identity(

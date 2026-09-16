@@ -29,7 +29,6 @@ from src.football.provider_cascade.contracts import (
     BUILDER2_VALIDATION_CONTRACT_VERSION,
     DEFAULT_PROVIDER_ORDER,
     MARKET_PREMATCH_1X2,
-    Builder2ValidationReceipt,
     CascadeDecisionTrace,
     CascadeResult,
     CascadeTimingPolicy,
@@ -48,6 +47,12 @@ from src.football.provider_cascade.contracts import (
 )
 from src.football.provider_cascade.health import ProviderHealth, ProviderHealthRegistry
 from src.football.provider_cascade.router import ProviderCascadeRouter
+from src.football.top5_builder2_qualification_receipt import (
+    Builder2QualificationReceiptError,
+    Builder2QualificationReceiptV1,
+    validate_builder1_qualification_receipt,
+    validate_builder4_qualification_receipt,
+)
 
 __all__ = [
     "BUILDER2_VALIDATION_CONTRACT_VERSION",
@@ -57,7 +62,8 @@ __all__ = [
     "ApiFootballAdapter",
     "BetfairDelayedAdapter",
     "Builder1OddsInput",
-    "Builder2ValidationReceipt",
+    "Builder2QualificationReceiptError",
+    "Builder2QualificationReceiptV1",
     "CascadeDecisionTrace",
     "CascadeResult",
     "CascadeTimingPolicy",
@@ -89,4 +95,6 @@ __all__ = [
     "builder2_evidence_payload",
     "compare_provider_results",
     "resolve_provider_identity",
+    "validate_builder1_qualification_receipt",
+    "validate_builder4_qualification_receipt",
 ]

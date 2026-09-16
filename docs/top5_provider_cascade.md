@@ -65,7 +65,7 @@ Fixture + explicit timing policy + resolved provider identities
               |
       serialized Builder-2 evidence
               |
-      independent Builder-2 receipt
+      external Builder2QualificationReceiptV1
               |
       Builder 1 shadow seam
               |
@@ -212,6 +212,16 @@ Discovery is a separately budgeted prerequisite. The router never hides a
 second discovery request inside an odds attempt; a missing ID is visible as
 `DISCOVERY_REQUIRED` with `network_called=false`.
 
+The cascade remains candidate-only until Builder 2 supplies the canonical
+`Builder2QualificationReceiptV1` together with its exact `REAL_OBSERVED`
+qualification observation. Builder 4 only validates and consumes that external
+receipt; it cannot issue or recreate Builder-2 qualification authority. The
+consumer checks the receipt's schema, accepted safety state, session/run/CEO
+identity, fixture/provider event and request identity, observation and cascade
+digests, capture attestation, adapter provenance, and the selected trace's
+`NETWORK_CAPABLE` marker. `TEST_INJECTED` output therefore cannot be promoted
+through the Builder-1 seam.
+
 Only football pre-match 1X2 is accepted. The contract requires home, draw, and
 away together. It does not convert two-way markets, synthesize a draw, accept
 in-play odds, accept spreads/totals, or use closing odds as model input.
@@ -269,17 +279,21 @@ place orders.
 
 ## Builder 1 and Builder 2 boundaries
 
-Builder 1 can call `accepted_for_builder1(result, validation_receipt)` only
-after an independent Builder-2 receipt has been supplied. The receipt binds
-the exact observation digest, cascade-trace digest/evidence identity, fixture,
-provider, and validation-contract version. A missing, rejected, candidate-only,
-or mismatched receipt raises before model inputs are exposed. The result is:
+Builder 1 can call `accepted_for_builder1(result, validation_receipt,
+qualification_observation=...)` only after the external Builder-2 V1 receipt
+and its exact real observation have been supplied. The canonical receipt binds
+the exact observation, cascade evidence, controlled-shadow run, qualification
+session, CEO authorization, fixture/provider event and request identity,
+capture attestation, and adapter provenance. A missing, rejected, candidate-only,
+or mismatched receipt or observation raises before model inputs are exposed. The
+result is:
 
 ```python
 Builder1OddsInput(
     observation=NormalizedOddsObservation(...),
     routing=CascadeDecisionTrace(...),
-    builder2_receipt=Builder2ValidationReceipt(...),
+    builder2_receipt=Builder2QualificationReceiptV1(...),
+    qualification_observation=RealProviderObservation(...),
 )
 ```
 
