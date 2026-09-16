@@ -40,6 +40,13 @@ as prediction inputs, retraining data, or production decision criteria.
 Every report carries deterministic audit-input, cohort, and measurement
 digests, excluded evidence, and immutable safety statements:
 
+For downstream descriptive comparisons, `eligible_predictions` contains only
+redacted, digest-bound rows with prediction probabilities, realized outcome,
+experiment/run/session identities, and optional closing implied probabilities.
+It contains no provider response body, credential, header, cookie, token, or
+API key. This export is evidence data only and does not grant decision
+authority.
+
 ```text
 production_activation_authorized = false
 publication_authorized = false
