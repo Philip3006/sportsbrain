@@ -61,3 +61,11 @@ class WorktreeSafetyError(NightShiftError):
 
 class ScopeViolation(WorktreeSafetyError):
     """A worker changed a path outside its allowed scope."""
+
+
+class DeliveryError(NightShiftError):
+    """A governed commit, push, verification, or PR delivery step failed."""
+
+
+class DeliveryBlocked(DeliveryError):
+    """Delivery must stop without claiming success, usually for missing auth."""

@@ -7,6 +7,8 @@ import re
 import shutil
 import signal
 import subprocess
+import threading
+from collections.abc import Callable
 from pathlib import Path
 
 from .errors import (
@@ -23,9 +25,11 @@ _SECRET = re.compile(
 )
 
 
-def redact(value: str, limit: int = 8000) -> str:
+def redact(value: str | bytes, limit: int = 8000) -> str:
     """Keep diagnostics useful without persisting likely credentials."""
 
+    if isinstance(value, bytes):
+        value = value.decode("utf-8", errors="replace")
     return _SECRET.sub(r"\1=[REDACTED]", value.replace("\x00", ""))[:limit]
 
 
@@ -105,6 +109,33 @@ class CodexExecutor:
         )
 
     def __call__(self, task: TaskRecord) -> ExecutionResult:
+        return self._run(task)
+
+    def run_with_heartbeat(
+        self,
+        task: TaskRecord,
+        *,
+        heartbeat: Callable[[], None],
+        process_started: Callable[[int], None],
+        heartbeat_interval_seconds: int,
+    ) -> ExecutionResult:
+        """Run Codex while a daemon watchdog renews the fenced lease."""
+
+        return self._run(
+            task,
+            heartbeat=heartbeat,
+            process_started=process_started,
+            heartbeat_interval_seconds=heartbeat_interval_seconds,
+        )
+
+    def _run(
+        self,
+        task: TaskRecord,
+        *,
+        heartbeat: Callable[[], None] | None = None,
+        process_started: Callable[[int], None] | None = None,
+        heartbeat_interval_seconds: int = 5,
+    ) -> ExecutionResult:
         if not shutil.which(self.codex_path) and not Path(self.codex_path).is_file():
             raise ExecutorUnavailable(
                 "Codex executable is unavailable; refusing fake fallback"
@@ -135,6 +166,17 @@ class CodexExecutor:
             "--skip-git-repo-check",
             "-",
         ]
+        timeout_seconds = min(self.timeout_seconds, task.max_runtime_seconds)
+        if heartbeat is not None:
+            try:
+                heartbeat()
+            except Exception as exc:  # noqa: BLE001 - fencing is fail-closed
+                return ExecutionResult(
+                    False,
+                    f"lease heartbeat failed before Codex start: {type(exc).__name__}",
+                    retryable=False,
+                    terminal_state=TaskState.FAILED_SAFE,
+                )
         try:
             process = subprocess.Popen(
                 command,
@@ -148,14 +190,50 @@ class CodexExecutor:
         except OSError as exc:
             raise ExecutorUnavailable(f"cannot start Codex executable: {exc}") from exc
         self.last_pid = process.pid
+        if process_started is not None:
+            try:
+                process_started(process.pid)
+            except Exception as exc:  # noqa: BLE001 - fencing is fail-closed
+                self._terminate(process)
+                return ExecutionResult(
+                    False,
+                    f"lease fencing failed after Codex start: {type(exc).__name__}",
+                    data={"pid": process.pid, "failure": "FENCED"},
+                    retryable=False,
+                    terminal_state=TaskState.FAILED_SAFE,
+                    process_id=process.pid,
+                )
+        stop = threading.Event()
+        heartbeat_errors: list[Exception] = []
+
+        def keepalive() -> None:
+            while not stop.wait(max(1, heartbeat_interval_seconds)):
+                try:
+                    heartbeat()
+                except Exception as exc:  # noqa: BLE001 - worker must stop on fencing loss
+                    heartbeat_errors.append(exc)
+                    self._terminate(process)
+                    return
+
+        thread = (
+            threading.Thread(
+                target=keepalive,
+                name=f"nightshift-heartbeat-{task.task_id}",
+                daemon=True,
+            )
+            if heartbeat is not None
+            else None
+        )
+        if thread is not None:
+            thread.start()
         try:
             stdout, stderr = process.communicate(
-                self.prompt(task), timeout=self.timeout_seconds
+                self.prompt(task), timeout=timeout_seconds
             )
         except subprocess.TimeoutExpired as exc:
             self._terminate(process)
-            summary = f"Codex timed out after {self.timeout_seconds}s"
-            return ExecutionResult(
+            summary = f"Codex timed out after {timeout_seconds}s"
+            result = ExecutionResult(
                 False,
                 summary,
                 data={
@@ -165,6 +243,23 @@ class CodexExecutor:
                     "failure": "TIMEOUT",
                 },
                 retryable=True,
+                process_id=process.pid,
+            )
+            stop.set()
+            if thread is not None:
+                thread.join(timeout=5)
+            return result
+        finally:
+            stop.set()
+            if thread is not None:
+                thread.join(timeout=5)
+        if heartbeat_errors:
+            return ExecutionResult(
+                False,
+                "Codex lease heartbeat failed; worker was fenced",
+                data={"pid": process.pid, "failure": "FENCED"},
+                retryable=False,
+                terminal_state=TaskState.FAILED_SAFE,
                 process_id=process.pid,
             )
         output = {
@@ -184,12 +279,16 @@ class CodexExecutor:
         try:
             changed = self.worktrees.verify_scope(task, worktree)
         except (ScopeViolation, WorktreeSafetyError) as exc:
+            try:
+                changed_paths = list(self.worktrees.changed_paths(worktree))
+            except WorktreeSafetyError:
+                changed_paths = []
             return ExecutionResult(
                 False,
                 redact(str(exc)),
                 data={
                     **output,
-                    "changed_paths": list(self.worktrees.changed_paths(worktree)),
+                    "changed_paths": changed_paths,
                     "failure": "SCOPE_VIOLATION",
                 },
                 retryable=False,

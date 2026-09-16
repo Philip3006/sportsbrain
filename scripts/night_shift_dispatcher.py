@@ -71,6 +71,7 @@ def _parser() -> argparse.ArgumentParser:
     complete = sub.add_parser("complete")
     complete.add_argument("task_id")
     complete.add_argument("--worker-instance", required=True)
+    complete.add_argument("--lease-generation", type=int, required=True)
     complete.add_argument("--success", action="store_true")
     complete.add_argument("--summary", default="")
     complete.add_argument("--data", default="{}", help="JSON object")
@@ -201,6 +202,7 @@ def main(argv: list[str] | None = None) -> int:
                 dispatcher.complete(
                     args.task_id,
                     worker_instance_id=args.worker_instance,
+                    lease_generation=args.lease_generation,
                     execution=ExecutionResult(
                         success=args.success,
                         summary=args.summary,

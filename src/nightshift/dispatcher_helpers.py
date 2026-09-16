@@ -27,6 +27,12 @@ def claimed_to_spec(record: TaskRecord) -> TaskSpec:
         allowed_paths=record.allowed_paths,
         prohibited_paths=record.prohibited_paths,
         resource_locks=record.resource_locks,
+        expected_base_sha=record.expected_base_sha,
+        base_branch=record.base_branch,
+        required_tests=record.required_tests,
+        verification_commands=record.verification_commands,
+        max_runtime_seconds=record.max_runtime_seconds,
+        requires_pr=record.requires_pr,
     )
 
 

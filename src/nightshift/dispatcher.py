@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from .delivery import DeliveryPipeline, GhPullRequestClient
 from .dispatcher_execution import DispatcherExecutionMixin
 from .errors import (
     IdempotencyConflictError,
@@ -78,6 +79,7 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         retry_max_seconds: int = 60 * 60,
         clock: Callable[[], datetime] = utc_now,
         worktree_manager: WorktreeManager | None = None,
+        delivery_pipeline: DeliveryPipeline | None = None,
     ) -> None:
         if dispatcher_id != DISPATCHER_ID:
             raise SafetyViolation("Builder 5 is the only supported dispatcher identity")
@@ -98,6 +100,7 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         self.retry_max_seconds = retry_max_seconds
         self.clock = clock
         self.worktree_manager = worktree_manager
+        self.delivery_pipeline = delivery_pipeline
 
     @classmethod
     def from_config(
@@ -108,6 +111,7 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         policy: SafetyPolicy | None = None,
         worktree_manager: WorktreeManager | None = None,
         require_isolated_worktrees: bool = True,
+        delivery_pipeline: DeliveryPipeline | None = None,
         **kwargs: Any,
     ) -> NightShiftDispatcher:
         directory = config_dir or _default_config_dir()
@@ -119,12 +123,19 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                 (state_path or _default_state_path()).parent,
                 default_repo_paths(Path(__file__).resolve().parents[2]),
             )
+        store = DispatcherStore(state_path or _default_state_path())
+        pipeline = delivery_pipeline
+        if manager is not None and pipeline is None:
+            pipeline = DeliveryPipeline(store, manager, GhPullRequestClient())
+        elif pipeline is not None and pipeline.store is None:
+            pipeline.store = store
         return cls(
             registry=registry,
             templates=templates,
-            store=DispatcherStore(state_path or _default_state_path()),
+            store=store,
             policy=policy,
             worktree_manager=manager,
+            delivery_pipeline=pipeline,
             **kwargs,
         )
 
@@ -186,6 +197,12 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         allowed_paths: tuple[str, ...] = (),
         prohibited_paths: tuple[str, ...] = (),
         resource_locks: tuple[str, ...] = (),
+        expected_base_sha: str | None = None,
+        base_branch: str = "main",
+        required_tests: tuple[str, ...] | None = None,
+        verification_commands: tuple[tuple[str, ...], ...] | None = None,
+        max_runtime_seconds: int | None = None,
+        requires_pr: bool | None = None,
     ) -> TaskRecord:
         template = self.templates.resolve(template_id)
         return self.submit(
@@ -202,6 +219,12 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                 allowed_paths=allowed_paths,
                 prohibited_paths=prohibited_paths,
                 resource_locks=resource_locks,
+                expected_base_sha=expected_base_sha,
+                base_branch=base_branch,
+                required_tests=required_tests,
+                verification_commands=verification_commands,
+                max_runtime_seconds=max_runtime_seconds,
+                requires_pr=requires_pr,
             )
         )
 
@@ -299,10 +322,12 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                 ],
                 "state_path": str(self.store.path),
                 "queue_mode": "IDLE_SAFE"
-                if result["by_state"].get("pending_approval", 0)
-                + result["by_state"].get("queued", 0)
-                + result["by_state"].get("leased", 0)
-                + result["by_state"].get("retry_wait", 0)
+                if result["by_state"].get(TaskState.BACKLOG.value, 0)
+                + result["by_state"].get(TaskState.READY.value, 0)
+                + result["by_state"].get(TaskState.WAITING_DEPENDENCY.value, 0)
+                + result["by_state"].get(TaskState.CLAIMED.value, 0)
+                + result["by_state"].get(TaskState.RUNNING.value, 0)
+                + result["by_state"].get(TaskState.VERIFYING.value, 0)
                 == 0
                 else "ACTIVE",
             }

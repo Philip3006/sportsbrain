@@ -12,6 +12,7 @@ from typing import Any
 from .errors import ConfigurationError, InvalidTaskError
 from .models import RiskClass, TaskSpec
 from .registry import BuilderRegistry
+from .task_validation import safe_commands, safe_labels
 
 
 @dataclass(frozen=True)
@@ -27,6 +28,10 @@ class TaskTemplate:
     risk_class: RiskClass = RiskClass.CODE_CHANGE
     default_priority: int = 0
     default_max_attempts: int = 3
+    required_tests: tuple[str, ...] = ()
+    verification_commands: tuple[tuple[str, ...], ...] = ()
+    max_runtime_seconds: int = 15 * 60
+    requires_pr: bool | None = None
 
     @classmethod
     def from_mapping(cls, raw: Mapping[str, Any]) -> TaskTemplate:
@@ -61,6 +66,10 @@ class TaskTemplate:
             ) from exc
         priority = raw.get("default_priority", 0)
         attempts = raw.get("default_max_attempts", 3)
+        required_tests = safe_labels(raw.get("required_tests", ()), "required_tests")
+        verification_commands = safe_commands(raw.get("verification_commands", ()))
+        max_runtime_seconds = raw.get("max_runtime_seconds", 15 * 60)
+        requires_pr = raw.get("requires_pr")
         if (
             isinstance(priority, bool)
             or not isinstance(priority, int)
@@ -77,6 +86,16 @@ class TaskTemplate:
             raise ConfigurationError(
                 f"{raw['template_id']}: default_max_attempts is invalid"
             )
+        if (
+            isinstance(max_runtime_seconds, bool)
+            or not isinstance(max_runtime_seconds, int)
+            or not 1 <= max_runtime_seconds <= 24 * 60 * 60
+        ):
+            raise ConfigurationError(
+                f"{raw['template_id']}: max_runtime_seconds is invalid"
+            )
+        if requires_pr is not None and not isinstance(requires_pr, bool):
+            raise ConfigurationError(f"{raw['template_id']}: requires_pr is invalid")
         fields = {
             name
             for _, name, _, _ in Formatter().parse(values["objective_template"])
@@ -97,6 +116,10 @@ class TaskTemplate:
             risk_class=risk,
             default_priority=priority,
             default_max_attempts=attempts,
+            required_tests=required_tests,
+            verification_commands=verification_commands,
+            max_runtime_seconds=max_runtime_seconds,
+            requires_pr=requires_pr,
         )
 
     def instantiate(
@@ -114,6 +137,12 @@ class TaskTemplate:
         allowed_paths: tuple[str, ...] = (),
         prohibited_paths: tuple[str, ...] = (),
         resource_locks: tuple[str, ...] = (),
+        expected_base_sha: str | None = None,
+        base_branch: str = "main",
+        required_tests: tuple[str, ...] | None = None,
+        verification_commands: tuple[tuple[str, ...], ...] | None = None,
+        max_runtime_seconds: int | None = None,
+        requires_pr: bool | None = None,
     ) -> TaskSpec:
         data = dict(payload)
         missing = sorted(set(self.required_payload_keys) - set(data))
@@ -153,6 +182,18 @@ class TaskTemplate:
             allowed_paths=allowed_paths,
             prohibited_paths=prohibited_paths,
             resource_locks=resource_locks,
+            expected_base_sha=expected_base_sha,
+            base_branch=base_branch,
+            required_tests=self.required_tests
+            if required_tests is None
+            else required_tests,
+            verification_commands=self.verification_commands
+            if verification_commands is None
+            else verification_commands,
+            max_runtime_seconds=self.max_runtime_seconds
+            if max_runtime_seconds is None
+            else max_runtime_seconds,
+            requires_pr=self.requires_pr if requires_pr is None else requires_pr,
             requested_by=requested_by,
         )
 
@@ -167,6 +208,12 @@ class TaskTemplate:
             "risk_class": self.risk_class.value,
             "default_priority": self.default_priority,
             "default_max_attempts": self.default_max_attempts,
+            "required_tests": list(self.required_tests),
+            "verification_commands": [
+                list(command) for command in self.verification_commands
+            ],
+            "max_runtime_seconds": self.max_runtime_seconds,
+            "requires_pr": self.requires_pr,
         }
 
 

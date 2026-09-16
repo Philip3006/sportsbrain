@@ -1,17 +1,18 @@
-"""Worker-facing execution operations for the Builder 5 dispatcher."""
+"""Worker-facing execution and delivery operations for Builder 5."""
 
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from dataclasses import replace
 from datetime import timedelta
-from pathlib import Path
 from typing import Any
 
-from .dispatcher_helpers import claimed_to_spec, record_to_spec
+from .delivery import DeliveryBlocked, DeliveryError
+from .dispatcher_helpers import claimed_to_spec
 from .errors import (
     DispatcherRecursionError,
+    ExecutorUnavailable,
     InvalidTaskError,
+    LeaseError,
     SafetyViolation,
     ScopeViolation,
 )
@@ -19,13 +20,11 @@ from .models import ExecutionResult, TaskRecord, TaskState
 
 
 class DispatcherExecutionMixin:
-    """Claims, executes, recovers, and advances worker tasks safely."""
+    """Claims, executes, verifies, and delivers worker tasks safely."""
 
     def claim_next(
         self, builder_id: str, *, worker_instance_id: str | None = None
     ) -> TaskRecord | None:
-        """Lease the highest-priority ready task for one explicit Builder."""
-
         if builder_id == self.dispatcher_id:
             raise DispatcherRecursionError(
                 "Builder 5 is the dispatcher and cannot claim worker tasks"
@@ -66,28 +65,37 @@ class DispatcherExecutionMixin:
                 worker_id=worker_id,
                 worktree_path=str(allocation.path),
                 diagnostic_path=str(allocation.diagnostic_path),
+                base_branch=allocation.base_branch,
+                base_sha=allocation.base_sha,
+                origin_sha=allocation.origin_sha,
+                lease_generation=claimed.lease_generation,
                 now=self.clock(),
             )
-        except Exception as exc:  # noqa: BLE001 - allocation failure is a safe terminal outcome
+        except Exception as exc:  # noqa: BLE001 - allocation fails closed
             return self.store.fail_safe(
                 claimed.task_id,
                 worker_id=worker_id,
+                lease_generation=claimed.lease_generation,
+                failure_class=(
+                    "BASE_SHA_MISMATCH"
+                    if "expected_base_sha" in str(exc)
+                    else "WORKTREE_ALLOCATION_FAILED"
+                ),
                 summary=f"worktree allocation failed: {type(exc).__name__}: {str(exc)[:3800]}",
             )
 
-    def heartbeat(self, task_id: str, *, worker_instance_id: str) -> TaskRecord:
-        if not isinstance(worker_instance_id, str) or not worker_instance_id.strip():
-            raise SafetyViolation("worker_instance_id must be a non-empty string")
-        if worker_instance_id == self.dispatcher_id or worker_instance_id.startswith(
-            f"{self.dispatcher_id}:"
-        ):
-            raise DispatcherRecursionError(
-                "Builder 5 identity cannot heartbeat worker tasks"
-            )
-        self.policy.validate_worker_id(worker_instance_id, self.dispatcher_id)
+    def heartbeat(
+        self,
+        task_id: str,
+        *,
+        worker_instance_id: str,
+        lease_generation: int | None = None,
+    ) -> TaskRecord:
+        self._validate_worker_instance(worker_instance_id)
         return self.store.heartbeat(
             task_id,
             worker_id=worker_instance_id,
+            lease_generation=lease_generation,
             lease_seconds=self.lease_seconds,
             now=self.clock(),
         )
@@ -98,24 +106,29 @@ class DispatcherExecutionMixin:
         *,
         worker_instance_id: str,
         execution: ExecutionResult | Mapping[str, Any],
+        lease_generation: int | None = None,
     ) -> TaskRecord:
-        if not isinstance(worker_instance_id, str) or not worker_instance_id.strip():
-            raise SafetyViolation("worker_instance_id must be a non-empty string")
-        if worker_instance_id == self.dispatcher_id or worker_instance_id.startswith(
-            f"{self.dispatcher_id}:"
-        ):
-            raise DispatcherRecursionError(
-                "Builder 5 identity cannot complete worker tasks"
-            )
-        self.policy.validate_worker_id(worker_instance_id, self.dispatcher_id)
+        self._validate_worker_instance(worker_instance_id)
         normalized = self._normalize_execution(execution)
         record = self.store.get(task_id)
-        retry_at = self.clock() + timedelta(
-            seconds=self._retry_delay(record.attempt_count)
-        )
+        if (
+            normalized.success
+            and record.pr_required
+            and not (
+                normalized.terminal_state is TaskState.PR_READY
+                and record.pr_number
+                and record.pr_url
+            )
+        ):
+            raise SafetyViolation(
+                "code-changing task completion requires the governed delivery pipeline"
+            )
+        retry_at = self.clock().replace(microsecond=0)
+        retry_at = retry_at + timedelta(seconds=self._retry_delay(record.attempt_count))
         return self.store.complete(
             task_id,
             worker_id=worker_instance_id,
+            lease_generation=lease_generation,
             execution=normalized,
             retry_at=retry_at,
             now=self.clock(),
@@ -128,44 +141,133 @@ class DispatcherExecutionMixin:
         *,
         worker_instance_id: str | None = None,
     ) -> TaskRecord | None:
-        """Run one claimed task through an injected, non-shell worker adapter."""
+        """Run one task through execution, verification, and safe delivery."""
 
         record = self.claim_next(builder_id, worker_instance_id=worker_instance_id)
         if record is None:
             return None
-        owner = record.lease_owner
-        if owner is None and record.state is TaskState.FAILED_SAFE:
+        if record.state is TaskState.FAILED_SAFE and not record.lease_owner:
             return record
-        if owner is None:  # pragma: no cover - claim always returns an active lease
+        owner = record.lease_owner
+        generation = record.lease_generation
+        if owner is None:
             raise SafetyViolation("claimed task has no lease owner")
         try:
-            execution = self._normalize_execution(executor(record))
-            if self.worktree_manager is not None and record.worktree_path:
-                changed = self.worktree_manager.verify_scope(
-                    record_to_spec(record), Path(record.worktree_path)
+            self.store.start_running(
+                record.task_id,
+                worker_id=owner,
+                lease_generation=generation,
+                now=self.clock(),
+            )
+            execution = self._execute_adapter(executor, record, owner, generation)
+            if not execution.success:
+                return self.complete(
+                    record.task_id,
+                    worker_instance_id=owner,
+                    lease_generation=generation,
+                    execution=execution,
                 )
-                if changed and execution.success:
-                    execution = replace(
-                        execution,
-                        data={**dict(execution.data), "changed_paths": list(changed)},
-                    )
-        except Exception as exc:  # noqa: BLE001 - worker failures become auditable task failures
-            if isinstance(exc, ScopeViolation):
-                execution = ExecutionResult(
+            self.store.begin_verifying(
+                record.task_id,
+                worker_id=owner,
+                lease_generation=generation,
+                now=self.clock(),
+            )
+            current = self.store.get(record.task_id)
+            if self.delivery_pipeline is None:
+                if (
+                    current.pr_required
+                    or current.required_tests
+                    or current.verification_commands
+                ):
+                    raise DeliveryBlocked("DELIVERY_BLOCKED_PIPELINE_UNAVAILABLE")
+                self.store.record_verification(
+                    current.task_id,
+                    worker_id=owner,
+                    lease_generation=generation,
+                    evidence={"passed": True, "commands": [], "not_required": True},
+                    now=self.clock(),
+                )
+                delivery = {"verification": {"passed": True, "not_required": True}}
+            else:
+                delivery = self.delivery_pipeline.deliver(
+                    current, worker_id=owner, lease_generation=generation
+                )
+            terminal = (
+                TaskState.PR_READY if current.pr_required else TaskState.COMPLETED
+            )
+            return self.complete(
+                record.task_id,
+                worker_instance_id=owner,
+                lease_generation=generation,
+                execution=ExecutionResult(
+                    True,
+                    "execution and governed delivery verified",
+                    data={**dict(execution.data), **delivery},
+                    retryable=False,
+                    terminal_state=terminal,
+                    process_id=execution.process_id,
+                ),
+            )
+        except DeliveryBlocked as exc:
+            return self.store.block_delivery(
+                record.task_id,
+                worker_id=owner,
+                lease_generation=generation,
+                reason=str(exc),
+                failure_class=(
+                    "DELIVERY_BLOCKED_GITHUB_AUTH"
+                    if "GITHUB_AUTH" in str(exc)
+                    else "DELIVERY_BLOCKED"
+                ),
+                evidence={"task_id": record.task_id},
+                now=self.clock(),
+            )
+        except DeliveryError as exc:
+            return self.complete(
+                record.task_id,
+                worker_instance_id=owner,
+                lease_generation=generation,
+                execution=ExecutionResult(
                     False,
-                    f"scope violation: {str(exc)[:3800]}",
+                    str(exc)[:4000],
+                    data={"failure_class": "DELIVERY_FAILED"},
                     retryable=False,
                     terminal_state=TaskState.FAILED_SAFE,
-                )
-            else:
-                execution = ExecutionResult(
-                    success=False,
-                    summary=f"{type(exc).__name__}: {str(exc)[:3900]}",
-                    retryable=True,
-                )
-        return self.complete(
-            record.task_id, worker_instance_id=owner, execution=execution
-        )
+                ),
+            )
+        except LeaseError:
+            # A recovery/reclaim may have fenced this worker. It cannot mutate
+            # delivery state after losing its generation.
+            return self.store.get(record.task_id)
+        except Exception as exc:  # noqa: BLE001 - worker errors are bounded retries
+            safe = isinstance(
+                exc,
+                (
+                    ExecutorUnavailable,
+                    InvalidTaskError,
+                    SafetyViolation,
+                    ScopeViolation,
+                ),
+            )
+            return self.complete(
+                record.task_id,
+                worker_instance_id=owner,
+                lease_generation=generation,
+                execution=ExecutionResult(
+                    False,
+                    f"{type(exc).__name__}: {str(exc)[:3900]}",
+                    data={
+                        "failure_class": "SCOPE_VIOLATION"
+                        if isinstance(exc, ScopeViolation)
+                        else "EXECUTOR_UNAVAILABLE"
+                        if isinstance(exc, ExecutorUnavailable)
+                        else "WORKER_EXCEPTION"
+                    },
+                    retryable=not safe,
+                    terminal_state=TaskState.FAILED_SAFE if safe else None,
+                ),
+            )
 
     def run_until_idle(
         self,
@@ -192,12 +294,39 @@ class DispatcherExecutionMixin:
     ) -> TaskRecord:
         self._require_actor(actor)
         record = self.store.get(task_id)
-        if record.state not in {TaskState.SUCCEEDED, TaskState.PR_READY}:
-            raise SafetyViolation("only verified successful work can enter CEO_REVIEW")
-        if evidence is not None and not isinstance(evidence, Mapping):
-            raise InvalidTaskError("CEO_REVIEW evidence must be an object")
+        if record.state not in {TaskState.COMPLETED, TaskState.PR_READY}:
+            raise SafetyViolation("only verified delivered work can enter CEO_REVIEW")
         return self.store.mark_ceo_review(
             task_id, actor=actor, evidence=dict(evidence or {}), now=self.clock()
+        )
+
+    def _execute_adapter(
+        self,
+        executor: Any,
+        record: TaskRecord,
+        owner: str,
+        generation: int,
+    ) -> ExecutionResult:
+        runner = getattr(executor, "run_with_heartbeat", None)
+        if runner is None:
+            return self._normalize_execution(executor(record))
+        return self._normalize_execution(
+            runner(
+                record,
+                heartbeat=lambda: self.heartbeat(
+                    record.task_id,
+                    worker_instance_id=owner,
+                    lease_generation=generation,
+                ),
+                process_started=lambda pid: self.store.record_process(
+                    record.task_id,
+                    worker_id=owner,
+                    lease_generation=generation,
+                    process_id=pid,
+                    now=self.clock(),
+                ),
+                heartbeat_interval_seconds=max(1, self.lease_seconds // 3),
+            )
         )
 
     def _retry_delay(self, attempt_count: int) -> int:
@@ -207,6 +336,17 @@ class DispatcherExecutionMixin:
             self.retry_max_seconds,
             self.retry_base_seconds * (2 ** max(0, attempt_count - 1)),
         )
+
+    def _validate_worker_instance(self, worker_instance_id: str) -> None:
+        if not isinstance(worker_instance_id, str) or not worker_instance_id.strip():
+            raise SafetyViolation("worker_instance_id must be a non-empty string")
+        if worker_instance_id == self.dispatcher_id or worker_instance_id.startswith(
+            f"{self.dispatcher_id}:"
+        ):
+            raise DispatcherRecursionError(
+                "Builder 5 identity cannot operate worker tasks"
+            )
+        self.policy.validate_worker_id(worker_instance_id, self.dispatcher_id)
 
     @staticmethod
     def _normalize_execution(

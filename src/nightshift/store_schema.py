@@ -5,34 +5,46 @@ from __future__ import annotations
 from .models import TaskState
 
 ALLOWED_TRANSITIONS: dict[TaskState, frozenset[TaskState]] = {
-    TaskState.PENDING_APPROVAL: frozenset(
-        {TaskState.QUEUED, TaskState.CANCELLED, TaskState.FAILED}
+    TaskState.BACKLOG: frozenset(
+        {TaskState.READY, TaskState.CANCELLED, TaskState.FAILED_SAFE}
     ),
-    TaskState.QUEUED: frozenset(
-        {TaskState.LEASED, TaskState.CANCELLED, TaskState.BLOCKED}
-    ),
-    TaskState.LEASED: frozenset(
+    TaskState.READY: frozenset(
         {
-            TaskState.SUCCEEDED,
-            TaskState.PR_READY,
-            TaskState.CEO_REVIEW,
-            TaskState.RETRY_WAIT,
-            TaskState.FAILED,
+            TaskState.CLAIMED,
+            TaskState.WAITING_DEPENDENCY,
+            TaskState.CANCELLED,
+            TaskState.BLOCKED,
+        }
+    ),
+    TaskState.WAITING_DEPENDENCY: frozenset(
+        {TaskState.READY, TaskState.BLOCKED, TaskState.CANCELLED}
+    ),
+    TaskState.CLAIMED: frozenset(
+        {TaskState.RUNNING, TaskState.FAILED_SAFE, TaskState.CANCELLED}
+    ),
+    TaskState.RUNNING: frozenset(
+        {
+            TaskState.VERIFYING,
+            TaskState.READY,
+            TaskState.BLOCKED,
             TaskState.FAILED_SAFE,
-            TaskState.DEAD_LETTER,
             TaskState.CANCELLED,
         }
     ),
-    TaskState.RETRY_WAIT: frozenset(
-        {TaskState.QUEUED, TaskState.LEASED, TaskState.CANCELLED, TaskState.BLOCKED}
+    TaskState.VERIFYING: frozenset(
+        {
+            TaskState.PR_READY,
+            TaskState.COMPLETED,
+            TaskState.READY,
+            TaskState.BLOCKED,
+            TaskState.FAILED_SAFE,
+        }
     ),
-    TaskState.BLOCKED: frozenset({TaskState.QUEUED, TaskState.CANCELLED}),
-    TaskState.SUCCEEDED: frozenset({TaskState.CEO_REVIEW}),
     TaskState.PR_READY: frozenset({TaskState.CEO_REVIEW}),
+    TaskState.COMPLETED: frozenset({TaskState.CEO_REVIEW}),
+    TaskState.BLOCKED: frozenset({TaskState.READY, TaskState.CANCELLED}),
     TaskState.CEO_REVIEW: frozenset(),
-    TaskState.FAILED: frozenset(),
     TaskState.FAILED_SAFE: frozenset(),
-    TaskState.DEAD_LETTER: frozenset(),
     TaskState.CANCELLED: frozenset(),
 }
 
@@ -51,6 +63,13 @@ CREATE TABLE IF NOT EXISTS tasks (
     created_at TEXT NOT NULL, updated_at TEXT NOT NULL, available_at TEXT NOT NULL,
     lease_owner TEXT, lease_expires_at TEXT, last_error TEXT, result_json TEXT,
     worktree_path TEXT, diagnostic_path TEXT, failure_class TEXT,
+    expected_base_sha TEXT, base_branch TEXT NOT NULL DEFAULT 'main', base_sha TEXT,
+    origin_sha TEXT, required_tests_json TEXT NOT NULL DEFAULT '[]',
+    verification_commands_json TEXT NOT NULL DEFAULT '[]',
+    max_runtime_seconds INTEGER NOT NULL DEFAULT 900, requires_pr INTEGER NOT NULL DEFAULT 0,
+    lease_generation INTEGER NOT NULL DEFAULT 0, process_id INTEGER,
+    commit_sha TEXT, remote_sha TEXT, pr_number INTEGER, pr_url TEXT,
+    verification_json TEXT, delivery_json TEXT,
     CHECK (requires_approval IN (0, 1)), CHECK (attempt_count >= 0), CHECK (max_attempts >= 1)
 );
 CREATE INDEX IF NOT EXISTS idx_tasks_claim ON tasks (state, available_at, priority DESC, created_at);

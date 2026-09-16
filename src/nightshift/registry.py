@@ -32,6 +32,7 @@ class BuilderDefinition:
     branch_prefix: str
     task_types: tuple[str, ...]
     allowed_risk_classes: tuple[RiskClass, ...]
+    base_branch_allowlist: tuple[str, ...] = ("main",)
     max_concurrency: int = 1
     enabled: bool = True
     aliases: tuple[str, ...] = ()
@@ -78,6 +79,11 @@ class BuilderDefinition:
         task_types = _string_tuple(
             raw["task_types"], f"{builder_id}.task_types", non_empty=True
         )
+        base_branches = _string_tuple(
+            raw.get("base_branch_allowlist", ("main",)),
+            f"{builder_id}.base_branch_allowlist",
+            non_empty=True,
+        )
         raw_risks = raw.get(
             "allowed_risk_classes",
             [RiskClass.READ_ONLY.value, RiskClass.CODE_CHANGE.value],
@@ -119,6 +125,7 @@ class BuilderDefinition:
             repo_allowlist=repos,
             branch_prefix=branch_prefix,
             task_types=task_types,
+            base_branch_allowlist=base_branches,
             allowed_risk_classes=risks,
             max_concurrency=max_concurrency,
             enabled=enabled,
@@ -134,6 +141,7 @@ class BuilderDefinition:
             "repo_allowlist": list(self.repo_allowlist),
             "branch_prefix": self.branch_prefix,
             "task_types": list(self.task_types),
+            "base_branch_allowlist": list(self.base_branch_allowlist),
             "allowed_risk_classes": [risk.value for risk in self.allowed_risk_classes],
             "max_concurrency": self.max_concurrency,
             "enabled": self.enabled,
@@ -257,6 +265,10 @@ class BuilderRegistry:
         if not task.branch.startswith(definition.branch_prefix):
             raise ConfigurationError(
                 f"{task.builder_id}: branch must start with {definition.branch_prefix!r}"
+            )
+        if task.base_branch not in definition.base_branch_allowlist:
+            raise ConfigurationError(
+                f"{task.builder_id}: base branch is not in its explicit allowlist"
             )
         if not task.task_type or task.task_type not in definition.task_types:
             raise ConfigurationError(

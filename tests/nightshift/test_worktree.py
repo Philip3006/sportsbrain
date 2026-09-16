@@ -30,6 +30,15 @@ def _repo(tmp_path: Path) -> Path:
     (repo / "README.md").write_text("fixture\n", encoding="utf-8")
     git("add", "README.md")
     git("commit", "-qm", "fixture")
+    remote = tmp_path / "remote.git"
+    subprocess.run(
+        ["git", "init", "--bare", "-q", str(remote)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    git("remote", "add", "origin", str(remote))
+    git("push", "-q", "origin", "HEAD:main")
     return repo
 
 
@@ -84,5 +93,5 @@ def test_scope_violation_fails_safe_and_keeps_diagnostic(tmp_path: Path) -> None
     )
     failed = dispatcher.run_once("builder-1", FakeExecutor(write_file="outside.txt"))
     assert failed is not None and failed.state is TaskState.FAILED_SAFE
-    assert failed.failure_class == "FAILED_SAFE"
+    assert failed.failure_class == "SCOPE_VIOLATION"
     assert Path(failed.diagnostic_path or "").exists()

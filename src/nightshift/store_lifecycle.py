@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import datetime
+from typing import Any
 
-from .errors import LeaseError
+from .errors import InvalidTransitionError, LeaseError
 from .models import EventType, ExecutionResult, TaskState, isoformat, utc_now
 
 
@@ -19,19 +20,34 @@ class StoreLifecycleMixin:
         worker_id: str,
         worktree_path: str,
         diagnostic_path: str,
+        base_branch: str = "main",
+        base_sha: str | None = None,
+        origin_sha: str | None = None,
+        lease_generation: int,
         now: datetime | None = None,
     ):
         timestamp = isoformat(now or utc_now())
         with self._write() as conn:
             row = self._get_row(conn, task_id)
-            if (
-                row["state"] != TaskState.LEASED.value
-                or row["lease_owner"] != worker_id
-            ):
-                raise LeaseError("worktree assignment requires the active lease owner")
+            self._assert_active_lease(
+                row,
+                worker_id=worker_id,
+                lease_generation=lease_generation,
+                states={TaskState.CLAIMED.value},
+            )
             conn.execute(
-                "UPDATE tasks SET worktree_path = ?, diagnostic_path = ?, updated_at = ? WHERE task_id = ?",
-                (worktree_path, diagnostic_path, timestamp, task_id),
+                """UPDATE tasks SET worktree_path = ?, diagnostic_path = ?,
+                   base_branch = ?, base_sha = ?, origin_sha = ?, updated_at = ?
+                   WHERE task_id = ?""",
+                (
+                    worktree_path,
+                    diagnostic_path,
+                    base_branch,
+                    base_sha,
+                    origin_sha,
+                    timestamp,
+                    task_id,
+                ),
             )
             self._append_event(
                 conn,
@@ -39,9 +55,321 @@ class StoreLifecycleMixin:
                 EventType.WORKTREE_ALLOCATED,
                 worker_id,
                 timestamp,
-                TaskState.LEASED.value,
-                TaskState.LEASED.value,
-                {"worktree_path": worktree_path},
+                TaskState.CLAIMED.value,
+                TaskState.CLAIMED.value,
+                {
+                    "worktree_path": worktree_path,
+                    "base_branch": base_branch,
+                    "base_sha": base_sha,
+                    "origin_sha": origin_sha,
+                },
+            )
+            return self._record(self._get_row(conn, task_id))
+
+    def _assert_active_lease(
+        self,
+        row: Any,
+        *,
+        worker_id: str,
+        lease_generation: int | None,
+        states: set[str] | None = None,
+    ) -> None:
+        active_states = states or {
+            TaskState.CLAIMED.value,
+            TaskState.RUNNING.value,
+            TaskState.VERIFYING.value,
+        }
+        if lease_generation is None:
+            raise LeaseError("lease generation is required for worker mutation")
+        if (
+            row["state"] not in active_states
+            or row["lease_owner"] != worker_id
+            or (
+                lease_generation is not None
+                and row["lease_generation"] != lease_generation
+            )
+        ):
+            raise LeaseError("worker lease is stale or fenced")
+
+    def start_running(
+        self,
+        task_id: str,
+        *,
+        worker_id: str,
+        lease_generation: int,
+        now: datetime | None = None,
+    ):
+        timestamp = isoformat(now or utc_now())
+        with self._write() as conn:
+            row = self._get_row(conn, task_id)
+            self._assert_active_lease(
+                row,
+                worker_id=worker_id,
+                lease_generation=lease_generation,
+                states={TaskState.CLAIMED.value},
+            )
+            conn.execute(
+                "UPDATE tasks SET state = ?, updated_at = ? WHERE task_id = ?",
+                (TaskState.RUNNING.value, timestamp, task_id),
+            )
+            self._append_event(
+                conn,
+                task_id,
+                EventType.RUNNING,
+                worker_id,
+                timestamp,
+                TaskState.CLAIMED.value,
+                TaskState.RUNNING.value,
+                {"lease_generation": lease_generation},
+            )
+            return self._record(self._get_row(conn, task_id))
+
+    def begin_verifying(
+        self,
+        task_id: str,
+        *,
+        worker_id: str,
+        lease_generation: int,
+        now: datetime | None = None,
+    ):
+        timestamp = isoformat(now or utc_now())
+        with self._write() as conn:
+            row = self._get_row(conn, task_id)
+            self._assert_active_lease(
+                row,
+                worker_id=worker_id,
+                lease_generation=lease_generation,
+                states={TaskState.RUNNING.value},
+            )
+            conn.execute(
+                "UPDATE tasks SET state = ?, updated_at = ? WHERE task_id = ?",
+                (TaskState.VERIFYING.value, timestamp, task_id),
+            )
+            self._append_event(
+                conn,
+                task_id,
+                EventType.VERIFYING,
+                worker_id,
+                timestamp,
+                TaskState.RUNNING.value,
+                TaskState.VERIFYING.value,
+                {"lease_generation": lease_generation},
+            )
+            return self._record(self._get_row(conn, task_id))
+
+    def record_process(
+        self,
+        task_id: str,
+        *,
+        worker_id: str,
+        lease_generation: int,
+        process_id: int,
+        now: datetime | None = None,
+    ):
+        timestamp = isoformat(now or utc_now())
+        with self._write() as conn:
+            row = self._get_row(conn, task_id)
+            self._assert_active_lease(
+                row,
+                worker_id=worker_id,
+                lease_generation=lease_generation,
+            )
+            conn.execute(
+                "UPDATE tasks SET process_id = ?, updated_at = ? WHERE task_id = ?",
+                (process_id, timestamp, task_id),
+            )
+            return self._record(self._get_row(conn, task_id))
+
+    def record_verification(
+        self,
+        task_id: str,
+        *,
+        worker_id: str,
+        lease_generation: int,
+        evidence: Mapping[str, Any],
+        now: datetime | None = None,
+    ):
+        timestamp = isoformat(now or utc_now())
+        with self._write() as conn:
+            row = self._get_row(conn, task_id)
+            self._assert_active_lease(
+                row,
+                worker_id=worker_id,
+                lease_generation=lease_generation,
+                states={TaskState.VERIFYING.value},
+            )
+            conn.execute(
+                "UPDATE tasks SET verification_json = ?, updated_at = ? WHERE task_id = ?",
+                (self._json(dict(evidence)), timestamp, task_id),
+            )
+            self._append_event(
+                conn,
+                task_id,
+                EventType.VERIFYING,
+                worker_id,
+                timestamp,
+                TaskState.VERIFYING.value,
+                TaskState.VERIFYING.value,
+                {"verification_recorded": True},
+            )
+            return self._record(self._get_row(conn, task_id))
+
+    def record_commit(
+        self,
+        task_id: str,
+        *,
+        worker_id: str,
+        lease_generation: int,
+        commit_sha: str,
+        now: datetime | None = None,
+    ):
+        return self._record_delivery_value(
+            task_id,
+            worker_id=worker_id,
+            lease_generation=lease_generation,
+            column="commit_sha",
+            value=commit_sha,
+            event=EventType.COMMITTED,
+            now=now,
+        )
+
+    def record_push(
+        self,
+        task_id: str,
+        *,
+        worker_id: str,
+        lease_generation: int,
+        remote_sha: str,
+        now: datetime | None = None,
+    ):
+        return self._record_delivery_value(
+            task_id,
+            worker_id=worker_id,
+            lease_generation=lease_generation,
+            column="remote_sha",
+            value=remote_sha,
+            event=EventType.PUSHED,
+            now=now,
+        )
+
+    def record_pr(
+        self,
+        task_id: str,
+        *,
+        worker_id: str,
+        lease_generation: int,
+        number: int,
+        url: str,
+        evidence: Mapping[str, Any],
+        reused: bool,
+        now: datetime | None = None,
+    ):
+        timestamp = isoformat(now or utc_now())
+        with self._write() as conn:
+            row = self._get_row(conn, task_id)
+            self._assert_active_lease(
+                row,
+                worker_id=worker_id,
+                lease_generation=lease_generation,
+                states={TaskState.VERIFYING.value},
+            )
+            conn.execute(
+                """UPDATE tasks SET pr_number = ?, pr_url = ?, delivery_json = ?, updated_at = ?
+                   WHERE task_id = ?""",
+                (number, url, self._json(dict(evidence)), timestamp, task_id),
+            )
+            self._append_event(
+                conn,
+                task_id,
+                EventType.PR_REUSED if reused else EventType.PR_CREATED,
+                worker_id,
+                timestamp,
+                TaskState.VERIFYING.value,
+                TaskState.VERIFYING.value,
+                {"pr_number": number, "pr_url": url},
+            )
+            return self._record(self._get_row(conn, task_id))
+
+    def _record_delivery_value(
+        self,
+        task_id: str,
+        *,
+        worker_id: str,
+        lease_generation: int,
+        column: str,
+        value: Any,
+        event: EventType,
+        now: datetime | None,
+    ):
+        if column not in {"commit_sha", "remote_sha"}:
+            raise InvalidTransitionError("unsupported delivery evidence column")
+        timestamp = isoformat(now or utc_now())
+        with self._write() as conn:
+            row = self._get_row(conn, task_id)
+            self._assert_active_lease(
+                row,
+                worker_id=worker_id,
+                lease_generation=lease_generation,
+                states={TaskState.VERIFYING.value},
+            )
+            conn.execute(
+                f"UPDATE tasks SET {column} = ?, updated_at = ? WHERE task_id = ?",
+                (value, timestamp, task_id),
+            )
+            self._append_event(
+                conn,
+                task_id,
+                event,
+                worker_id,
+                timestamp,
+                TaskState.VERIFYING.value,
+                TaskState.VERIFYING.value,
+                {column: value},
+            )
+            return self._record(self._get_row(conn, task_id))
+
+    def block_delivery(
+        self,
+        task_id: str,
+        *,
+        worker_id: str,
+        lease_generation: int,
+        reason: str,
+        failure_class: str,
+        evidence: Mapping[str, Any] | None = None,
+        now: datetime | None = None,
+    ):
+        timestamp = isoformat(now or utc_now())
+        with self._write() as conn:
+            row = self._get_row(conn, task_id)
+            self._assert_active_lease(
+                row,
+                worker_id=worker_id,
+                lease_generation=lease_generation,
+                states={TaskState.VERIFYING.value},
+            )
+            conn.execute(
+                """UPDATE tasks SET state = ?, last_error = ?, failure_class = ?,
+                   delivery_json = ?, lease_owner = NULL, lease_expires_at = NULL,
+                   updated_at = ? WHERE task_id = ?""",
+                (
+                    TaskState.BLOCKED.value,
+                    reason[:4000],
+                    failure_class,
+                    self._json(dict(evidence or {})),
+                    timestamp,
+                    task_id,
+                ),
+            )
+            self._append_event(
+                conn,
+                task_id,
+                EventType.DELIVERY_BLOCKED,
+                worker_id,
+                timestamp,
+                TaskState.VERIFYING.value,
+                TaskState.BLOCKED.value,
+                {"failure_class": failure_class},
             )
             return self._record(self._get_row(conn, task_id))
 
@@ -52,6 +380,7 @@ class StoreLifecycleMixin:
         worker_id: str,
         summary: str,
         failure_class: str = "FAILED_SAFE",
+        lease_generation: int | None = None,
         now: datetime | None = None,
     ):
         execution = ExecutionResult(
@@ -61,7 +390,13 @@ class StoreLifecycleMixin:
             retryable=False,
             terminal_state=TaskState.FAILED_SAFE,
         )
-        self.complete(task_id, worker_id=worker_id, execution=execution, now=now)
+        self.complete(
+            task_id,
+            worker_id=worker_id,
+            lease_generation=lease_generation,
+            execution=execution,
+            now=now,
+        )
         return self.get(task_id)
 
     def mark_ceo_review(

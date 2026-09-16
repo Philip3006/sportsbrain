@@ -4,20 +4,38 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.nightshift import CodexExecutor, NightShiftDispatcher, TaskSpec
+from src.nightshift import CodexExecutor, NightShiftDispatcher, TaskSpec, TaskState
 from src.nightshift.worktree import WorktreeManager
 
 REPO = "Philip3006/sportsbrain"
+
+
+class _DisposablePullRequestClient:
+    """Local PR fixture so a smoke run cannot mutate public GitHub state."""
+
+    def find_or_create(
+        self, task: Any, *, commit_sha: str, verification: dict[str, Any]
+    ) -> dict[str, Any]:
+        return {
+            "number": 1,
+            "url": f"https://example.invalid/nightshift/{task.task_id}",
+            "reused": False,
+            "task_id": task.task_id,
+            "commit_sha": commit_sha,
+            "verification": verification,
+        }
 
 
 def _git(path: Path, *args: str) -> str:
@@ -30,7 +48,10 @@ def _git(path: Path, *args: str) -> str:
 
 
 def main() -> int:
-    codex = shutil.which("codex")
+    codex = os.getenv("SPORTSBRAIN_CODEX_PATH") or shutil.which("codex")
+    fallback = Path("/Applications/ChatGPT.app/Contents/Resources/codex")
+    if not codex and fallback.is_file():
+        codex = str(fallback)
     if not codex:
         print(
             json.dumps(
@@ -49,6 +70,16 @@ def main() -> int:
         (repo / "README.md").write_text("disposable fixture\n", encoding="utf-8")
         _git(repo, "add", "README.md")
         _git(repo, "commit", "-qm", "disposable fixture")
+        remote = root / "remote.git"
+        subprocess.run(
+            ["git", "init", "--bare", "-q", str(remote)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        _git(repo, "remote", "add", "origin", str(remote))
+        _git(repo, "push", "-q", "origin", "HEAD:main")
+        base_sha = _git(repo, "rev-parse", "HEAD")
         manager = WorktreeManager(root / "runtime", {REPO: repo})
         dispatcher = NightShiftDispatcher.from_config(
             state_path=root / "runtime" / "state.sqlite3",
@@ -56,6 +87,8 @@ def main() -> int:
             lease_seconds=120,
             retry_base_seconds=0,
         )
+        assert dispatcher.delivery_pipeline is not None
+        dispatcher.delivery_pipeline.github = _DisposablePullRequestClient()
         task = dispatcher.submit(
             TaskSpec(
                 task_id="codex-smoke-0001",
@@ -66,6 +99,10 @@ def main() -> int:
                 risk_class="code_change",
                 allowed_paths=("smoke",),
                 requires_approval=True,
+                expected_base_sha=base_sha,
+                required_tests=("compileall",),
+                verification_commands=(("python3", "-m", "compileall", "-q", "smoke"),),
+                max_runtime_seconds=300,
             )
         )
         dispatcher.approve(
@@ -84,9 +121,20 @@ def main() -> int:
         )
         branch = _git(Path(result.worktree_path), "branch", "--show-current")
         head = _git(Path(result.worktree_path), "rev-parse", "HEAD")
+        heartbeat_events = sum(
+            event.event_type == "heartbeat"
+            for event in dispatcher.store.audit_events(
+                task_id=result.task_id, limit=1000
+            )
+        )
+        data = (result.result or {}).get("data", {}) if result.result else {}
+        delivery_blocked = result.failure_class == "DELIVERY_BLOCKED_GITHUB_AUTH"
+        successful_delivery = result.state in {TaskState.PR_READY, TaskState.CEO_REVIEW}
         output = {
             "status": "PASS"
-            if result.state.value == "pr_ready" and content_ok
+            if successful_delivery and content_ok
+            else "BLOCKED"
+            if delivery_blocked
             else "FAIL",
             "codex": codex,
             "command_form": [
@@ -101,18 +149,23 @@ def main() -> int:
                 "-",
             ],
             "task_state": result.state.value,
+            "failure_class": result.failure_class,
             "summary": result.last_error or "success",
             "branch": branch,
             "head": head,
-            "executor_data": (result.result or {}).get("data", {})
-            if result.result
-            else {},
-            "changed_paths": list(
-                (result.result or {}).get("data", {}).get("changed_paths", [])
-            )
-            if result.result
-            else [],
-            "pid": (result.result or {}).get("process_id") if result.result else None,
+            "base_branch": result.base_branch,
+            "base_sha": result.base_sha,
+            "origin_sha": result.origin_sha,
+            "commit_sha": result.commit_sha,
+            "remote_sha": result.remote_sha,
+            "pr_number": result.pr_number,
+            "pr_url": result.pr_url,
+            "pr_client": "disposable-local-fixture",
+            "executor_data": data,
+            "changed_paths": list(data.get("changed_paths", [])),
+            "pid": data.get("pid") or data.get("process_id"),
+            "heartbeat_events": heartbeat_events,
+            "verification": result.verification,
             "file_sha256": hashlib.sha256(target.read_bytes()).hexdigest()
             if content_ok
             else None,
@@ -120,7 +173,13 @@ def main() -> int:
             "deployment_performed": False,
         }
         print(json.dumps(output, sort_keys=True, indent=2))
-        return 0 if output["status"] == "PASS" else 1
+        return (
+            0
+            if output["status"] == "PASS"
+            else 2
+            if output["status"] == "BLOCKED"
+            else 1
+        )
 
 
 if __name__ == "__main__":

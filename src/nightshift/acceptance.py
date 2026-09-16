@@ -18,6 +18,34 @@ UTC = timezone.utc
 REPO = "Philip3006/sportsbrain"
 
 
+class _AcceptancePullRequestClient:
+    """Local deterministic PR fixture; it never contacts GitHub."""
+
+    def __init__(self) -> None:
+        self.created: list[dict[str, Any]] = []
+
+    def find_or_create(
+        self, task: Any, *, commit_sha: str, verification: dict[str, Any]
+    ) -> dict[str, Any]:
+        if task.task_id in {item["task_id"] for item in self.created}:
+            return {
+                **next(
+                    item for item in self.created if item["task_id"] == task.task_id
+                ),
+                "reused": True,
+            }
+        pull = {
+            "number": len(self.created) + 1,
+            "url": f"https://example.invalid/pull/{len(self.created) + 1}",
+            "task_id": task.task_id,
+            "commit_sha": commit_sha,
+            "verification": verification,
+            "reused": False,
+        }
+        self.created.append(pull)
+        return pull
+
+
 def _git(path: Path, *args: str) -> None:
     result = subprocess.run(
         ["git", "-C", str(path), *args], capture_output=True, text=True, check=False
@@ -45,6 +73,29 @@ def _task(
     )
 
 
+def _finish_read_only(dispatcher: NightShiftDispatcher, claimed: Any) -> Any:
+    """Drive a claimed read-only fixture through the canonical state path."""
+
+    owner = claimed.lease_owner or claimed.builder_id
+    dispatcher.store.start_running(
+        claimed.task_id, worker_id=owner, lease_generation=claimed.lease_generation
+    )
+    dispatcher.store.begin_verifying(
+        claimed.task_id, worker_id=owner, lease_generation=claimed.lease_generation
+    )
+    current = dispatcher.store.get(claimed.task_id)
+    if dispatcher.delivery_pipeline is not None:
+        dispatcher.delivery_pipeline.deliver(
+            current, worker_id=owner, lease_generation=claimed.lease_generation
+        )
+    return dispatcher.complete(
+        claimed.task_id,
+        worker_instance_id=owner,
+        lease_generation=claimed.lease_generation,
+        execution=ExecutionResult(True, "verified", terminal_state=TaskState.COMPLETED),
+    )
+
+
 def run_fake_acceptance() -> dict[str, Any]:
     """Run all required safety and lifecycle assertions in disposable repos."""
 
@@ -58,13 +109,25 @@ def run_fake_acceptance() -> dict[str, Any]:
         (repo / "README.md").write_text("fixture\n", encoding="utf-8")
         _git(repo, "add", "README.md")
         _git(repo, "commit", "-qm", "fixture")
+        remote = root / "remote.git"
+        _git(root, "init", "--bare", "-q", str(remote))
+        _git(repo, "remote", "add", "origin", str(remote))
+        _git(repo, "push", "-q", "origin", "HEAD:main")
+        (repo / "smoke").mkdir()
+        (repo / "smoke" / "__init__.py").write_text("fixture\n", encoding="utf-8")
+        _git(repo, "add", "smoke/__init__.py")
+        _git(repo, "commit", "-qm", "verification fixture")
+        _git(repo, "push", "-q", "origin", "HEAD:main")
         manager = WorktreeManager(root / "runtime", {REPO: repo})
         dispatcher = NightShiftDispatcher.from_config(
             state_path=root / "runtime" / "state.sqlite3",
             worktree_manager=manager,
             lease_seconds=30,
             retry_base_seconds=0,
+            clock=lambda: datetime(2026, 9, 16, tzinfo=UTC),
         )
+        assert dispatcher.delivery_pipeline is not None
+        dispatcher.delivery_pipeline.github = _AcceptancePullRequestClient()
         observed: dict[str, Any] = {
             "builders": list(dispatcher.registry.builder_ids),
             "steps": {},
@@ -112,11 +175,30 @@ def run_fake_acceptance() -> dict[str, Any]:
         )
         for item in claims:
             assert item
+            owner = item.lease_owner or item.builder_id
+            dispatcher.store.start_running(
+                item.task_id,
+                worker_id=owner,
+                lease_generation=item.lease_generation,
+            )
+            current = dispatcher.store.get(item.task_id)
+            FakeExecutor()(current)
+            dispatcher.store.begin_verifying(
+                item.task_id,
+                worker_id=owner,
+                lease_generation=item.lease_generation,
+            )
+            dispatcher.delivery_pipeline.deliver(
+                dispatcher.store.get(item.task_id),
+                worker_id=owner,
+                lease_generation=item.lease_generation,
+            )
             result = dispatcher.complete(
                 item.task_id,
-                worker_instance_id=item.lease_owner or item.builder_id,
+                worker_instance_id=owner,
+                lease_generation=item.lease_generation,
                 execution=ExecutionResult(
-                    True, "ready", terminal_state=TaskState.PR_READY
+                    True, "verified", terminal_state=TaskState.COMPLETED
                 ),
             )
             dispatcher.mark_ceo_review(
@@ -167,18 +249,10 @@ def run_fake_acceptance() -> dict[str, Any]:
         held_lock = dispatcher.claim_next("builder-1")
         assert held_lock is not None
         assert dispatcher.claim_next("builder-2") is None
-        dispatcher.complete(
-            held_lock.task_id,
-            worker_instance_id=held_lock.lease_owner or "builder-1",
-            execution=ExecutionResult(True),
-        )
+        _finish_read_only(dispatcher, held_lock)
         lock_claim = dispatcher.claim_next("builder-2")
         assert lock_claim is not None
-        dispatcher.complete(
-            lock_claim.task_id,
-            worker_instance_id=lock_claim.lease_owner or "builder-2",
-            execution=ExecutionResult(True),
-        )
+        _finish_read_only(dispatcher, lock_claim)
         observed["steps"]["resource_lock_conflict_then_release"] = (
             lock_one.task_id != lock_two.task_id
         )
@@ -285,11 +359,7 @@ def run_fake_acceptance() -> dict[str, Any]:
         )
         safe_claim = dispatcher.claim_next("builder-3")
         assert safe_claim
-        dispatcher.complete(
-            safe_claim.task_id,
-            worker_instance_id=safe_claim.lease_owner or "builder-3",
-            execution=ExecutionResult(True),
-        )
+        _finish_read_only(dispatcher, safe_claim)
         observed["steps"]["ceo_block_does_not_hold_builder"] = (
             blocked.state is TaskState.BLOCKED and safe_claim.task_id == safe.task_id
         )
@@ -300,10 +370,18 @@ def run_fake_acceptance() -> dict[str, Any]:
                 "builder-4",
                 "nightshift/builder-4/accept-pr",
                 task_type="provider_health_replay",
+                risk_class=RiskClass.CODE_CHANGE,
+                requires_pr=True,
+                allowed_paths=("artifacts",),
+                required_tests=("compileall",),
+                verification_commands=(("python3", "-m", "compileall", "-q", "smoke"),),
             )
         )
+        dispatcher.approve(
+            pr.task_id, approver="acceptance", reason="fixture scope approved"
+        )
         ready = dispatcher.run_once(
-            "builder-4", FakeExecutor(outcome=TaskState.PR_READY)
+            "builder-4", FakeExecutor(write_file="artifacts/change.txt")
         )
         assert ready
         reviewed = dispatcher.mark_ceo_review(
@@ -325,15 +403,14 @@ def run_fake_acceptance() -> dict[str, Any]:
             worktree_manager=manager,
             lease_seconds=30,
             retry_base_seconds=0,
+            clock=lambda: datetime(2026, 9, 16, tzinfo=UTC),
         )
         restarted.heartbeat(
-            restart.task_id, worker_instance_id=held.lease_owner or "builder-1"
-        )
-        restarted.complete(
             restart.task_id,
             worker_instance_id=held.lease_owner or "builder-1",
-            execution=ExecutionResult(True),
+            lease_generation=held.lease_generation,
         )
+        _finish_read_only(restarted, restarted.store.get(restart.task_id))
         replay = restarted.submit(
             _task(
                 "accept-idempotent",

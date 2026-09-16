@@ -9,6 +9,8 @@
       "required_payload_keys": ["scope"],
       "allowed_payload_keys": ["scope", "evidence_artifact", "acceptance_criteria"],
       "risk_class": "code_change",
+      "required_tests": ["compileall"],
+      "verification_commands": [["python3", "-m", "compileall", "-q", "src"]],
       "default_priority": 10,
       "default_max_attempts": 3
     },
@@ -20,6 +22,8 @@
       "required_payload_keys": ["scope"],
       "allowed_payload_keys": ["scope", "acceptance_criteria"],
       "risk_class": "read_only",
+      "required_tests": ["compileall"],
+      "verification_commands": [["python3", "-m", "compileall", "-q", "src"]],
       "default_priority": 5,
       "default_max_attempts": 2
     },
@@ -31,6 +35,8 @@
       "required_payload_keys": ["scope"],
       "allowed_payload_keys": ["scope", "authority_source", "acceptance_criteria"],
       "risk_class": "code_change",
+      "required_tests": ["compileall"],
+      "verification_commands": [["python3", "-m", "compileall", "-q", "src"]],
       "default_priority": 10,
       "default_max_attempts": 3
     },
@@ -42,6 +48,8 @@
       "required_payload_keys": ["scope"],
       "allowed_payload_keys": ["scope", "authority_source", "acceptance_criteria"],
       "risk_class": "read_only",
+      "required_tests": ["compileall"],
+      "verification_commands": [["python3", "-m", "compileall", "-q", "src"]],
       "default_priority": 5,
       "default_max_attempts": 2
     },
@@ -53,6 +61,8 @@
       "required_payload_keys": ["scope"],
       "allowed_payload_keys": ["scope", "acceptance_criteria", "retention_class"],
       "risk_class": "code_change",
+      "required_tests": ["compileall"],
+      "verification_commands": [["python3", "-m", "compileall", "-q", "src"]],
       "default_priority": 8,
       "default_max_attempts": 3
     },
@@ -64,6 +74,8 @@
       "required_payload_keys": ["scope"],
       "allowed_payload_keys": ["scope", "acceptance_criteria"],
       "risk_class": "read_only",
+      "required_tests": ["compileall"],
+      "verification_commands": [["python3", "-m", "compileall", "-q", "src"]],
       "default_priority": 5,
       "default_max_attempts": 2
     },
@@ -75,6 +87,8 @@
       "required_payload_keys": ["scope"],
       "allowed_payload_keys": ["scope", "provider_set", "acceptance_criteria"],
       "risk_class": "code_change",
+      "required_tests": ["compileall"],
+      "verification_commands": [["python3", "-m", "compileall", "-q", "src"]],
       "default_priority": 8,
       "default_max_attempts": 3
     },
@@ -86,6 +100,8 @@
       "required_payload_keys": ["scope"],
       "allowed_payload_keys": ["scope", "provider_set", "acceptance_criteria"],
       "risk_class": "read_only",
+      "required_tests": ["compileall"],
+      "verification_commands": [["python3", "-m", "compileall", "-q", "src"]],
       "default_priority": 5,
       "default_max_attempts": 2
     }

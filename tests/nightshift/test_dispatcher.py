@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -22,22 +23,68 @@ from src.nightshift import (
     UnknownBuilderError,
 )
 from src.nightshift.store import AuditIntegrityError
+from src.nightshift.worktree import WorktreeManager
 
 UTC = timezone.utc
 T0 = datetime(2026, 9, 16, 0, 0, tzinfo=UTC)
 CONFIG_DIR = Path(__file__).parents[2] / "config" / "night_shift"
 
 
+def _prepare_repo(tmp_path: Path) -> Path:
+    repo = tmp_path / "canonical"
+    if repo.exists():
+        return repo
+    repo.mkdir()
+    for command in (
+        ("init", "-q"),
+        ("config", "user.email", "test@example.invalid"),
+        ("config", "user.name", "Night Shift Test"),
+    ):
+        subprocess.run(
+            ["git", "-C", str(repo), *command], check=True, capture_output=True
+        )
+    (repo / "src").mkdir()
+    (repo / "src" / "__init__.py").write_text("fixture\n", encoding="utf-8")
+    subprocess.run(
+        ["git", "-C", str(repo), "add", "src/__init__.py"],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "commit", "-qm", "fixture"],
+        check=True,
+        capture_output=True,
+    )
+    remote = tmp_path / "remote.git"
+    subprocess.run(
+        ["git", "init", "--bare", "-q", str(remote)], check=True, capture_output=True
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "remote", "add", "origin", str(remote)],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "push", "-q", "origin", "HEAD:main"],
+        check=True,
+        capture_output=True,
+    )
+    return repo
+
+
 def _dispatcher(
     tmp_path: Path, *, now: datetime = T0, **kwargs: object
 ) -> NightShiftDispatcher:
+    repo = _prepare_repo(tmp_path)
     return NightShiftDispatcher.from_config(
         config_dir=CONFIG_DIR,
         state_path=tmp_path / "nightshift.sqlite3",
         clock=lambda: now,
         lease_seconds=30,
         retry_base_seconds=0,
-        require_isolated_worktrees=False,
+        worktree_manager=WorktreeManager(
+            tmp_path / "runtime", {"Philip3006/sportsbrain": repo}
+        ),
         **kwargs,
     )
 
@@ -149,8 +196,17 @@ def test_resource_lock_conflict_does_not_hold_other_builder(tmp_path: Path) -> N
     held = dispatcher.claim_next("builder-1")
     assert held is not None
     assert dispatcher.claim_next("builder-2") is None
+    dispatcher.store.start_running(
+        held.task_id, worker_id="builder-1", lease_generation=held.lease_generation
+    )
+    dispatcher.store.begin_verifying(
+        held.task_id, worker_id="builder-1", lease_generation=held.lease_generation
+    )
     dispatcher.complete(
-        held.task_id, worker_instance_id="builder-1", execution=ExecutionResult(True)
+        held.task_id,
+        worker_instance_id="builder-1",
+        lease_generation=held.lease_generation,
+        execution=ExecutionResult(True),
     )
     released = dispatcher.claim_next("builder-2")
     assert released is not None
@@ -238,7 +294,9 @@ def test_lease_heartbeat_and_expiry_recovery(tmp_path: Path) -> None:
     assert leased is not None
     assert (
         dispatcher.heartbeat(
-            record.task_id, worker_instance_id="builder-1:runner-a"
+            record.task_id,
+            worker_instance_id="builder-1:runner-a",
+            lease_generation=leased.lease_generation,
         ).lease_expires_at
         is not None
     )
@@ -299,10 +357,12 @@ def test_dependencies_wait_then_block_on_failed_dependency(tmp_path: Path) -> No
             dependency_ids=(dependency.task_id,),
         )
     )
-    assert dispatcher.claim_next("builder-1") is not None
+    claimed = dispatcher.claim_next("builder-1")
+    assert claimed is not None
     dispatcher.complete(
         dependency.task_id,
         worker_instance_id="builder-1",
+        lease_generation=claimed.lease_generation,
         execution=ExecutionResult(False, "no evidence", retryable=False),
     )
     assert dispatcher.claim_next("builder-1") is None
@@ -325,10 +385,12 @@ def test_blocked_task_can_only_be_released_after_dependencies_succeed(
             dependency_ids=(dependency.task_id,),
         )
     )
-    dispatcher.claim_next("builder-1")
+    claimed = dispatcher.claim_next("builder-1")
+    assert claimed is not None
     dispatcher.complete(
         dependency.task_id,
         worker_instance_id="builder-1",
+        lease_generation=claimed.lease_generation,
         execution=ExecutionResult(False, "blocked", retryable=False),
     )
     dispatcher.claim_next("builder-1")

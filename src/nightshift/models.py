@@ -8,7 +8,6 @@ accepted its complete envelope.
 from __future__ import annotations
 
 import json
-import math
 import re
 import uuid
 from collections.abc import Mapping
@@ -17,29 +16,25 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
+from .audit_models import AuditEvent
 from .errors import InvalidTaskError
+from .task_states import TaskState, state_from_value
+from .task_validation import (
+    json_payload,
+    safe_commands,
+    safe_labels,
+    safe_locks,
+    safe_relative_paths,
+)
+
+__all__ = ["AuditEvent", "TaskState", "json_payload", "state_from_value"]
 
 DISPATCHER_ID = "builder-5"
 UTC = timezone.utc
 _TASK_ID_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_.:-]{7,127}$")
 _BRANCH_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._/-]{7,255}$")
-
-
-class TaskState(str, Enum):
-    """Persistent states in the queue state machine."""
-
-    PENDING_APPROVAL = "pending_approval"
-    QUEUED = "queued"
-    LEASED = "leased"
-    RETRY_WAIT = "retry_wait"
-    SUCCEEDED = "succeeded"
-    PR_READY = "pr_ready"
-    CEO_REVIEW = "ceo_review"
-    FAILED = "failed"
-    FAILED_SAFE = "failed_safe"
-    DEAD_LETTER = "dead_letter"
-    BLOCKED = "blocked"
-    CANCELLED = "cancelled"
+_SHA_RE = re.compile(r"^[0-9a-fA-F]{40,64}$")
+_BASE_BRANCH_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._/-]{0,255}$")
 
 
 class RiskClass(str, Enum):
@@ -58,6 +53,16 @@ class EventType(str, Enum):
     APPROVED = "approved"
     REJECTED = "rejected"
     CLAIMED = "claimed"
+    RUNNING = "running"
+    VERIFYING = "verifying"
+    WAITING_DEPENDENCY = "waiting_dependency"
+    COMMITTED = "committed"
+    PUSHED = "pushed"
+    PR_CREATED = "pr_created"
+    PR_REUSED = "pr_reused"
+    COMPLETED = "completed"
+    DELIVERY_BLOCKED = "delivery_blocked"
+    FENCED = "fenced"
     HEARTBEAT = "heartbeat"
     SUCCEEDED = "succeeded"
     PR_READY = "pr_ready"
@@ -103,73 +108,6 @@ def parse_timestamp(value: str) -> datetime:
     return parsed.astimezone(UTC)
 
 
-def _safe_relative_paths(value: Any, field_name: str) -> tuple[str, ...]:
-    if not isinstance(value, (list, tuple)):
-        raise InvalidTaskError(f"{field_name} must be an array")
-    paths = tuple(value)
-    for path in paths:
-        if not isinstance(path, str) or not path.strip() or path.startswith("/"):
-            raise InvalidTaskError(f"{field_name} must contain relative paths")
-        parts = path.replace("\\", "/").split("/")
-        if any(part in {"", ".", ".."} for part in parts):
-            raise InvalidTaskError(f"{field_name} contains an unsafe path")
-    if len(set(paths)) != len(paths):
-        raise InvalidTaskError(f"{field_name} must not contain duplicates")
-    return paths
-
-
-def _safe_locks(value: Any) -> tuple[str, ...]:
-    if not isinstance(value, (list, tuple)):
-        raise InvalidTaskError("resource_locks must be an array")
-    locks = tuple(value)
-    if any(
-        not isinstance(lock, str)
-        or not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9:._/-]{0,127}", lock)
-        for lock in locks
-    ):
-        raise InvalidTaskError("resource_locks contain an unsafe identifier")
-    if len(set(locks)) != len(locks):
-        raise InvalidTaskError("resource_locks must be unique")
-    return locks
-
-
-def _json_safe(value: Any, *, path: str = "payload") -> Any:
-    """Validate and normalize JSON data without accepting executable objects."""
-
-    if value is None or isinstance(value, (str, int, float, bool)):
-        if isinstance(value, float) and not math.isfinite(value):
-            raise InvalidTaskError(f"{path} contains a non-finite number")
-        return value
-    if isinstance(value, Mapping):
-        normalized: dict[str, Any] = {}
-        for key, item in value.items():
-            if not isinstance(key, str) or not key:
-                raise InvalidTaskError(f"{path} keys must be non-empty strings")
-            normalized[key] = _json_safe(item, path=f"{path}.{key}")
-        return normalized
-    if isinstance(value, (list, tuple)):
-        return [
-            _json_safe(item, path=f"{path}[{index}]")
-            for index, item in enumerate(value)
-        ]
-    raise InvalidTaskError(f"{path} contains unsupported value {type(value).__name__}")
-
-
-def json_payload(value: Mapping[str, Any]) -> dict[str, Any]:
-    """Return a JSON-safe deep copy of a task payload."""
-
-    normalized = _json_safe(value)
-    if not isinstance(
-        normalized, dict
-    ):  # pragma: no cover - mapping always becomes dict
-        raise InvalidTaskError("payload must be an object")
-    try:
-        json.dumps(normalized, sort_keys=True, separators=(",", ":"))
-    except (TypeError, ValueError) as exc:  # defensive boundary check
-        raise InvalidTaskError("payload is not JSON serializable") from exc
-    return normalized
-
-
 @dataclass(frozen=True)
 class TaskSpec:
     """Immutable task request accepted by the dispatcher."""
@@ -191,6 +129,12 @@ class TaskSpec:
     allowed_paths: tuple[str, ...] = ()
     prohibited_paths: tuple[str, ...] = ()
     resource_locks: tuple[str, ...] = ()
+    expected_base_sha: str | None = None
+    base_branch: str = "main"
+    required_tests: tuple[str, ...] = ()
+    verification_commands: tuple[tuple[str, ...], ...] = ()
+    max_runtime_seconds: int = 15 * 60
+    requires_pr: bool | None = None
     requested_by: str = "operator"
     task_id: str = field(default_factory=lambda: f"ns-{uuid.uuid4().hex}")
 
@@ -211,6 +155,21 @@ class TaskSpec:
             raise InvalidTaskError("branch contains unsafe path components")
         if not isinstance(self.repo, str) or not self.repo.strip():
             raise InvalidTaskError("repo is required")
+        if self.expected_base_sha is not None and (
+            not isinstance(self.expected_base_sha, str)
+            or not _SHA_RE.fullmatch(self.expected_base_sha)
+        ):
+            raise InvalidTaskError(
+                "expected_base_sha must be a 40-64 character hex SHA"
+            )
+        if (
+            not isinstance(self.base_branch, str)
+            or not _BASE_BRANCH_RE.fullmatch(self.base_branch)
+            or ".." in self.base_branch
+            or "//" in self.base_branch
+            or self.base_branch.startswith("refs/")
+        ):
+            raise InvalidTaskError("base_branch contains unsafe path components")
         if self.task_type and (
             not isinstance(self.task_type, str) or len(self.task_type) > 128
         ):
@@ -266,13 +225,29 @@ class TaskSpec:
             raise InvalidTaskError("dependency_ids must be unique")
         if self.task_id in dependencies:
             raise InvalidTaskError("a task cannot depend on itself")
-        allowed = _safe_relative_paths(self.allowed_paths, "allowed_paths")
-        prohibited = _safe_relative_paths(self.prohibited_paths, "prohibited_paths")
+        allowed = safe_relative_paths(self.allowed_paths, "allowed_paths")
+        prohibited = safe_relative_paths(self.prohibited_paths, "prohibited_paths")
         if set(allowed) & set(prohibited):
             raise InvalidTaskError("allowed_paths and prohibited_paths overlap")
         object.__setattr__(self, "allowed_paths", allowed)
         object.__setattr__(self, "prohibited_paths", prohibited)
-        object.__setattr__(self, "resource_locks", _safe_locks(self.resource_locks))
+        object.__setattr__(self, "resource_locks", safe_locks(self.resource_locks))
+        object.__setattr__(
+            self, "required_tests", safe_labels(self.required_tests, "required_tests")
+        )
+        object.__setattr__(
+            self, "verification_commands", safe_commands(self.verification_commands)
+        )
+        if (
+            isinstance(self.max_runtime_seconds, bool)
+            or not isinstance(self.max_runtime_seconds, int)
+            or not 1 <= self.max_runtime_seconds <= 24 * 60 * 60
+        ):
+            raise InvalidTaskError(
+                "max_runtime_seconds must be between 1 second and 24 hours"
+            )
+        if self.requires_pr is not None and not isinstance(self.requires_pr, bool):
+            raise InvalidTaskError("requires_pr must be boolean or omitted")
         normalized_payload = json_payload(self.payload)
         if (
             len(json.dumps(normalized_payload, sort_keys=True, separators=(",", ":")))
@@ -289,6 +264,14 @@ class TaskSpec:
         if self.requires_approval is not None:
             return self.requires_approval
         return self.risk_class is not RiskClass.READ_ONLY
+
+    @property
+    def pr_required(self) -> bool:
+        """Return whether successful work must produce a real pull request."""
+
+        if self.requires_pr is not None:
+            return self.requires_pr
+        return self.risk_class is RiskClass.CODE_CHANGE
 
     def canonical(self) -> dict[str, Any]:
         """Return fields used for idempotency comparison."""
@@ -310,6 +293,14 @@ class TaskSpec:
             "allowed_paths": list(self.allowed_paths),
             "prohibited_paths": list(self.prohibited_paths),
             "resource_locks": list(self.resource_locks),
+            "expected_base_sha": self.expected_base_sha,
+            "base_branch": self.base_branch,
+            "required_tests": list(self.required_tests),
+            "verification_commands": [
+                list(command) for command in self.verification_commands
+            ],
+            "max_runtime_seconds": self.max_runtime_seconds,
+            "requires_pr": self.pr_required,
         }
 
     def as_dict(self) -> dict[str, Any]:
@@ -415,13 +406,43 @@ class TaskRecord:
     allowed_paths: tuple[str, ...] = ()
     prohibited_paths: tuple[str, ...] = ()
     resource_locks: tuple[str, ...] = ()
+    expected_base_sha: str | None = None
+    base_branch: str = "main"
+    required_tests: tuple[str, ...] = ()
+    verification_commands: tuple[tuple[str, ...], ...] = ()
+    max_runtime_seconds: int = 15 * 60
+    requires_pr: bool = False
     worktree_path: str | None = None
+    base_sha: str | None = None
+    origin_sha: str | None = None
+    lease_generation: int = 0
+    process_id: int | None = None
+    commit_sha: str | None = None
+    remote_sha: str | None = None
+    pr_number: int | None = None
+    pr_url: str | None = None
+    verification: Mapping[str, Any] | None = None
+    delivery: Mapping[str, Any] | None = None
     diagnostic_path: str | None = None
     failure_class: str | None = None
 
     @property
     def lease_active(self) -> bool:
-        return self.state is TaskState.LEASED and self.lease_owner is not None
+        return (
+            self.state
+            in {
+                TaskState.CLAIMED,
+                TaskState.RUNNING,
+                TaskState.VERIFYING,
+            }
+            and self.lease_owner is not None
+        )
+
+    @property
+    def pr_required(self) -> bool:
+        """Return whether this persisted task requires a real pull request."""
+
+        return self.requires_pr
 
     def as_dict(self) -> dict[str, Any]:
         result = asdict(self)
@@ -432,6 +453,10 @@ class TaskRecord:
         result["allowed_paths"] = list(self.allowed_paths)
         result["prohibited_paths"] = list(self.prohibited_paths)
         result["resource_locks"] = list(self.resource_locks)
+        result["required_tests"] = list(self.required_tests)
+        result["verification_commands"] = [
+            list(command) for command in self.verification_commands
+        ]
         if self.result is not None:
             result["result"] = dict(self.result)
         return result
@@ -454,27 +479,12 @@ class TaskRecord:
             "allowed_paths",
             "prohibited_paths",
             "resource_locks",
+            "expected_base_sha",
+            "base_branch",
+            "required_tests",
+            "verification_commands",
+            "max_runtime_seconds",
+            "requires_pr",
         )
         serialized = self.as_dict()
         return {field: serialized[field] for field in fields}
-
-
-@dataclass(frozen=True)
-class AuditEvent:
-    """One append-only, hash-chained audit event."""
-
-    event_id: int
-    task_id: str | None
-    event_type: str
-    actor: str
-    created_at: str
-    from_state: str | None
-    to_state: str | None
-    details: Mapping[str, Any]
-    previous_hash: str
-    event_hash: str
-
-    def as_dict(self) -> dict[str, Any]:
-        result = asdict(self)
-        result["details"] = dict(self.details)
-        return result

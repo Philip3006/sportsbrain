@@ -20,6 +20,7 @@ from .models import (
     TaskSpec,
     TaskState,
     isoformat,
+    state_from_value,
     utc_now,
 )
 from .store_execution import StoreExecutionMixin
@@ -57,6 +58,7 @@ class DispatcherStore(
         columns = {
             row[1] for row in conn.execute("PRAGMA table_info(tasks)").fetchall()
         }
+        requires_pr_added = "requires_pr" not in columns
         additions = {
             "allowed_paths_json": "TEXT NOT NULL DEFAULT '[]'",
             "prohibited_paths_json": "TEXT NOT NULL DEFAULT '[]'",
@@ -64,10 +66,48 @@ class DispatcherStore(
             "worktree_path": "TEXT",
             "diagnostic_path": "TEXT",
             "failure_class": "TEXT",
+            "expected_base_sha": "TEXT",
+            "base_branch": "TEXT NOT NULL DEFAULT 'main'",
+            "base_sha": "TEXT",
+            "origin_sha": "TEXT",
+            "required_tests_json": "TEXT NOT NULL DEFAULT '[]'",
+            "verification_commands_json": "TEXT NOT NULL DEFAULT '[]'",
+            "max_runtime_seconds": "INTEGER NOT NULL DEFAULT 900",
+            "requires_pr": "INTEGER NOT NULL DEFAULT 0",
+            "lease_generation": "INTEGER NOT NULL DEFAULT 0",
+            "process_id": "INTEGER",
+            "commit_sha": "TEXT",
+            "remote_sha": "TEXT",
+            "pr_number": "INTEGER",
+            "pr_url": "TEXT",
+            "verification_json": "TEXT",
+            "delivery_json": "TEXT",
         }
         for name, definition in additions.items():
             if name not in columns:
                 conn.execute(f"ALTER TABLE tasks ADD COLUMN {name} {definition}")
+        conn.execute(
+            """UPDATE tasks SET state = CASE state
+                WHEN 'pending_approval' THEN 'BACKLOG'
+                WHEN 'queued' THEN 'READY'
+                WHEN 'retry_wait' THEN 'READY'
+                WHEN 'leased' THEN 'CLAIMED'
+                WHEN 'running' THEN 'RUNNING'
+                WHEN 'verifying' THEN 'VERIFYING'
+                WHEN 'succeeded' THEN 'COMPLETED'
+                WHEN 'pr_ready' THEN 'PR_READY'
+                WHEN 'ceo_review' THEN 'CEO_REVIEW'
+                WHEN 'failed' THEN 'FAILED_SAFE'
+                WHEN 'failed_safe' THEN 'FAILED_SAFE'
+                WHEN 'dead_letter' THEN 'FAILED_SAFE'
+                WHEN 'blocked' THEN 'BLOCKED'
+                WHEN 'cancelled' THEN 'CANCELLED'
+                ELSE state END"""
+        )
+        if requires_pr_added:
+            conn.execute(
+                "UPDATE tasks SET requires_pr = 1 WHERE risk_class = 'code_change'"
+            )
 
     def _connection(self) -> sqlite3.Connection:
         conn = sqlite3.connect(
@@ -123,7 +163,7 @@ class DispatcherStore(
             priority=row["priority"],
             max_attempts=row["max_attempts"],
             attempt_count=row["attempt_count"],
-            state=TaskState(row["state"]),
+            state=state_from_value(row["state"]),
             requested_by=row["requested_by"],
             parent_task_id=row["parent_task_id"],
             dependency_ids=tuple(json.loads(row["dependency_ids_json"])),
@@ -138,6 +178,27 @@ class DispatcherStore(
             last_error=row["last_error"],
             result=json.loads(row["result_json"]) if row["result_json"] else None,
             worktree_path=row["worktree_path"],
+            expected_base_sha=row["expected_base_sha"],
+            base_branch=row["base_branch"] or "main",
+            base_sha=row["base_sha"],
+            origin_sha=row["origin_sha"],
+            required_tests=tuple(json.loads(row["required_tests_json"])),
+            verification_commands=tuple(
+                tuple(command)
+                for command in json.loads(row["verification_commands_json"])
+            ),
+            max_runtime_seconds=row["max_runtime_seconds"] or 900,
+            requires_pr=bool(row["requires_pr"]),
+            lease_generation=row["lease_generation"] or 0,
+            process_id=row["process_id"],
+            commit_sha=row["commit_sha"],
+            remote_sha=row["remote_sha"],
+            pr_number=row["pr_number"],
+            pr_url=row["pr_url"],
+            verification=json.loads(row["verification_json"])
+            if row["verification_json"]
+            else None,
+            delivery=json.loads(row["delivery_json"]) if row["delivery_json"] else None,
             diagnostic_path=row["diagnostic_path"],
             failure_class=row["failure_class"],
         )
@@ -208,6 +269,22 @@ class DispatcherStore(
                         initial_error,
                     ),
                 )
+                conn.execute(
+                    """UPDATE tasks SET expected_base_sha = ?, base_branch = ?,
+                       required_tests_json = ?, verification_commands_json = ?,
+                       max_runtime_seconds = ?, requires_pr = ? WHERE task_id = ?""",
+                    (
+                        task.expected_base_sha,
+                        task.base_branch,
+                        self._json(list(task.required_tests)),
+                        self._json(
+                            [list(command) for command in task.verification_commands]
+                        ),
+                        task.max_runtime_seconds,
+                        int(task.pr_required),
+                        task.task_id,
+                    ),
+                )
             except sqlite3.IntegrityError as exc:
                 if task.idempotency_key:
                     row = conn.execute(
@@ -274,6 +351,22 @@ class DispatcherStore(
                     "worktree_path",
                     "diagnostic_path",
                     "failure_class",
+                    "expected_base_sha",
+                    "base_branch",
+                    "base_sha",
+                    "origin_sha",
+                    "required_tests_json",
+                    "verification_commands_json",
+                    "max_runtime_seconds",
+                    "requires_pr",
+                    "lease_generation",
+                    "process_id",
+                    "commit_sha",
+                    "remote_sha",
+                    "pr_number",
+                    "pr_url",
+                    "verification_json",
+                    "delivery_json",
                 }:
                     raise InvalidTransitionError(f"unsupported task update {column}")
                 assignments.append(f"{column} = ?")

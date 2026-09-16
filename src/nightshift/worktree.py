@@ -20,6 +20,18 @@ class WorktreeAllocation:
     branch: str
     path: Path
     diagnostic_path: Path
+    base_branch: str
+    base_sha: str
+    origin_sha: str
+
+
+@dataclass(frozen=True)
+class BaseResolution:
+    """Authoritative origin reference used to create a task worktree."""
+
+    base_branch: str
+    base_sha: str
+    origin_sha: str
 
 
 class WorktreeManager:
@@ -85,6 +97,7 @@ class WorktreeManager:
             raise WorktreeSafetyError(
                 f"canonical checkout for {task.repo} is not clean"
             )
+        base = self.resolve_base(task)
         path = self.worktrees_dir / task.task_id
         diagnostic = self.diagnostics_dir / f"{task.task_id}.jsonl"
         if path.exists():
@@ -108,7 +121,7 @@ class WorktreeManager:
                 "-b",
                 task.branch,
                 str(path),
-                "HEAD",
+                base.base_sha,
             ],
             check=False,
         )
@@ -121,8 +134,53 @@ class WorktreeManager:
             {"event": "allocated", "path": str(path), "branch": task.branch},
         )
         return WorktreeAllocation(
-            task.task_id, task.repo, task.branch, path, diagnostic
+            task.task_id,
+            task.repo,
+            task.branch,
+            path,
+            diagnostic,
+            base.base_branch,
+            base.base_sha,
+            base.origin_sha,
         )
+
+    def resolve_base(self, task: TaskSpec) -> BaseResolution:
+        """Fetch and resolve the reviewed origin base without moving checkout HEAD."""
+
+        canonical = self.resolve_repo(task.repo)
+        check = self.canonical_check(task.repo)
+        if not check.get("clean"):
+            raise WorktreeSafetyError(
+                f"canonical checkout for {task.repo} is not clean"
+            )
+        fetched = self._run(
+            [
+                "-C",
+                str(canonical),
+                "fetch",
+                "--no-tags",
+                "origin",
+                task.base_branch,
+            ],
+            check=False,
+        )
+        if fetched.returncode != 0:
+            raise WorktreeSafetyError(
+                self._safe_output(fetched.stderr) or "origin base fetch failed"
+            )
+        base_ref = f"refs/remotes/origin/{task.base_branch}"
+        resolved = self._run(
+            ["-C", str(canonical), "rev-parse", "--verify", f"{base_ref}^{{commit}}"],
+            check=False,
+        )
+        if resolved.returncode != 0 or not resolved.stdout.strip():
+            raise WorktreeSafetyError("configured origin base branch is unavailable")
+        base_sha = resolved.stdout.strip().splitlines()[0].lower()
+        if task.expected_base_sha and task.expected_base_sha.lower() != base_sha:
+            raise WorktreeSafetyError(
+                "expected_base_sha does not match the fetched origin base"
+            )
+        return BaseResolution(task.base_branch, base_sha, base_sha)
 
     def is_isolated_path(self, path: Path) -> bool:
         try:

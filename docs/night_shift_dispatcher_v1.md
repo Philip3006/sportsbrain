@@ -23,9 +23,13 @@ The dispatcher deliberately does not:
 
 - discover workers from packages, names, branches, prompts, or installed tools;
 - execute arbitrary shell text;
-- merge, push, deploy, publish, reset, rebase, or delete repository content;
+- merge, deploy, publish, reset, rebase, or delete repository content;
 - modify an active Builder 1–4 branch or pull request;
 - infer a new Builder role from a task or template.
+
+The governed delivery gate may commit and push only the unique task branch
+from its isolated worktree, then query or create exactly one pull request for
+that task. It never pushes `main`, another Builder branch, or with force.
 
 The two JSON files in `config/night_shift/` are the authority boundary. A
 future Builder may be added by a reviewed registry entry and reviewed task
@@ -39,20 +43,28 @@ Memory PR #6 and does not copy Memory retrieval logic.
 ## Task lifecycle
 
 ```text
-PENDING_APPROVAL ──approve──> QUEUED ──claim──> LEASED ──success──> SUCCEEDED
-       │                         │                │
-       └────reject────> FAILED   │                ├─retry──> RETRY_WAIT ──> QUEUED
-                                 │                ├─non-retryable──> FAILED
-                                 │                └─attempts exhausted──> DEAD_LETTER
-                                 ├─cancel──> CANCELLED
-                                 └─dependency failed──> BLOCKED ──release──> QUEUED
+BACKLOG ──approve──> READY ──claim──> CLAIMED ──start──> RUNNING
+   │                    │                                  │
+   └─reject──> FAILED_SAFE       └─dependency──> WAITING_DEPENDENCY
+                                                         │
+RUNNING ──verify──> VERIFYING ──delivery──> PR_READY ──> CEO_REVIEW
+   │                       └─read-only delivery──> COMPLETED ──> CEO_REVIEW
+   ├─retry──> READY
+   ├─unsafe/auth gate──> BLOCKED
+   └─unsafe/stale/failed verification──> FAILED_SAFE
+
+READY/WAITING_DEPENDENCY ──cancel──> CANCELLED
 ```
 
-Successful engineering work may end at `PR_READY`, then moves to
-`CEO_REVIEW` only after independent verification. Queue-level exhaustion is
-reported as `IDLE_SAFE`. Unsafe scope, stale worker ownership, or failed
-verification produces `FAILED_SAFE`; CEO authorization and prohibited work
-remain `BLOCKED` and cannot be released by `unblock`.
+The external state model is exactly `BACKLOG`, `READY`,
+`WAITING_DEPENDENCY`, `CLAIMED`, `RUNNING`, `VERIFYING`, `PR_READY`,
+`CEO_REVIEW`, `BLOCKED`, `FAILED_SAFE`, `COMPLETED`, and `CANCELLED`.
+Retry timing is orthogonal metadata, not an extra state. Code-changing work
+must pass the independent verification gate, receive a deterministic commit,
+push only its task branch, and have one real PR before `PR_READY`. Queue-level
+exhaustion is reported as `IDLE_SAFE`. Unsafe scope, stale worker ownership,
+or failed verification produces `FAILED_SAFE`; CEO authorization and
+prohibited work remain `BLOCKED` and cannot be released by `unblock`.
 
 Every transition is committed in the same SQLite transaction as its audit
 event. Leases are owned by an explicit worker instance, have an expiry, and
@@ -82,11 +94,13 @@ the dependent task rather than allowing it to run with incomplete context.
 8. The audit event stream is hash chained. `verify_audit_chain()` fails if an
    event is altered or removed.
 
-Each production claim allocates a unique `nightshift/<builder>/<task>` branch
-and worktree below the external runtime directory. A dirty canonical checkout,
-existing branch, path outside `allowed_paths`, prohibited path, or held
-`resource_locks` prevents unsafe execution. Worktree diagnostics are retained
-under `runtime/diagnostics/`; the dispatcher never pushes or merges them.
+Each production claim resolves `origin/<base_branch>` to an authoritative SHA,
+compares it with `expected_base_sha` when supplied, and allocates a unique
+`nightshift/<builder>/<task>` branch/worktree from that exact commit below the
+external runtime directory. A dirty canonical checkout, existing branch, path
+outside `allowed_paths`, prohibited path, or held `resource_locks` prevents
+unsafe execution. Worktree diagnostics are retained under
+`runtime/diagnostics/`; the dispatcher never pushes or merges them.
 
 ## Operating the queue
 
@@ -115,9 +129,13 @@ python3 scripts/night_shift_dispatcher.py audit --limit 50
 
 `claim` only leases work. Production worker processes should call
 `NightShiftDispatcher.run_once()` with a reviewed, non-shell adapter, send
-heartbeats for long work, and return an `ExecutionResult`. A queue record or a
-process exit alone is not success; the adapter must return explicit success
-evidence.
+heartbeats for long work, and return an `ExecutionResult`. A queue record,
+process exit, or worker prose alone is not success. For every task,
+`required_tests`, structured-argv `verification_commands`, and
+`max_runtime_seconds` are persisted and independently enforced. Code-changing
+work also records the base SHA, commit SHA, remote SHA, and exact PR identity;
+PR delivery fails closed when GitHub authentication or exact-one-PR checks are
+not healthy.
 
 The supplied `FakeExecutor` is used by automated tests and the deterministic
 acceptance runner:

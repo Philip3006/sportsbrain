@@ -6,10 +6,13 @@ from .bootstrap import (
     MemoryV4BootstrapProvider,
     StaticBootstrapProvider,
 )
+from .delivery import DeliveryPipeline, GhPullRequestClient
 from .dispatcher import NightShiftDispatcher
 from .errors import (
     ApprovalError,
     ConfigurationError,
+    DeliveryBlocked,
+    DeliveryError,
     DispatcherRecursionError,
     ExecutorTimeout,
     ExecutorUnavailable,
@@ -39,6 +42,7 @@ from .policy import SafetyPolicy
 from .registry import BuilderDefinition, BuilderRegistry
 from .store import ALLOWED_TRANSITIONS, DispatcherStore
 from .templates import TaskTemplate, TemplateRegistry
+from .verification import VerificationResult, VerificationRunner
 from .worktree import WorktreeAllocation, WorktreeManager
 
 __all__ = [
@@ -52,6 +56,9 @@ __all__ = [
     "BuilderRegistry",
     "CodexExecutor",
     "ConfigurationError",
+    "DeliveryBlocked",
+    "DeliveryError",
+    "DeliveryPipeline",
     "DispatcherRecursionError",
     "DispatcherStore",
     "EventType",
@@ -59,6 +66,7 @@ __all__ = [
     "ExecutorTimeout",
     "ExecutorUnavailable",
     "FakeExecutor",
+    "GhPullRequestClient",
     "IdempotencyConflictError",
     "InvalidTaskError",
     "InvalidTransitionError",
@@ -78,6 +86,8 @@ __all__ = [
     "TaskTemplate",
     "TemplateRegistry",
     "UnknownBuilderError",
+    "VerificationResult",
+    "VerificationRunner",
     "WorktreeAllocation",
     "WorktreeManager",
     "WorktreeSafetyError",
