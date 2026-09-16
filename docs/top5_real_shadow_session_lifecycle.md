@@ -7,13 +7,14 @@ activation path.
 ## Contract
 
 The session accepts only a provider-neutral `NormalizedProviderObservation`.
-Builder 4 adapters serialize the observation and an independent accepted
-`top5-provider-cascade-validation-v1` receipt. The receipt is bound to its
-receipt ID, fixture, provider, observation digest, cascade-trace digest,
-explicit provenance mode, selected provider, and zero errors. The session does
-not import or select a provider router. An eligible observation is rejected
-unless the receipt explicitly allows prediction input and names the same
-provider. TEST receipts cannot establish REAL_OBSERVED provenance.
+For `REAL_OBSERVED`, the observation must carry the exact serialized
+Builder-2 `Builder2QualificationReceiptV1` and its canonical observation
+envelope. Builder 1 validates that receipt through the shared
+`validate_builder1_qualification_receipt()` seam and aligns the local record
+to the canonical fixture, provider event/request, observation, normalized
+record, cascade, capture, adapter, and qualification identities. Builder 1
+cannot issue or recreate the receipt. A copied receipt, a locally constructed
+`accepted=true` mapping, TEST_FIXTURE, or OFFLINE_REPLAY evidence fails closed.
 
 Each accepted observation is bound to:
 
@@ -31,7 +32,8 @@ captured for evaluation only and can never enter prediction inputs.
 `REAL_OBSERVED` is required for a real session. Deterministic local fixtures
 must carry `TEST_FIXTURE` and use the explicit CLI `--fixture-mode`; fixture
 sessions require an explicit test output path and cannot be written to the
-default runtime store. `OFFLINE_REPLAY` and unknown modes are rejected.
+default runtime store. `TEST_FIXTURE` carries no qualification receipt,
+`OFFLINE_REPLAY` is rejected, and unknown modes are rejected.
 
 The state machine is `CREATED -> OBSERVING -> PREDICTIONS_RECORDED ->
 AWAITING_RESULTS`, with explicit partial/result/closing states before

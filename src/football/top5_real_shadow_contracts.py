@@ -18,6 +18,10 @@ from src.football.production_contracts import (
     _utc,
 )
 from src.football.top5_adapters import TOP5_LEAGUE_ADAPTERS
+from src.football.top5_builder2_qualification_receipt import (
+    Builder2QualificationReceiptError,
+    validate_builder1_qualification_receipt,
+)
 from src.football.top5_dispatch import signal_time_contract_id
 from src.football.top5_research_binding import FROZEN_RESEARCH_SHA, M5_CANDIDATE_ID
 
@@ -26,8 +30,6 @@ OFFLINE_REPLAY_MARKER = "OFFLINE_REPLAY"
 TEST_FIXTURE_MARKER = "TEST_FIXTURE"
 REAL_SHADOW_SESSION_SCHEMA = "top5-real-shadow-session-v1"
 REAL_SHADOW_SESSION_NAMESPACE = "football/top5/shadow_sessions/"
-CASCADE_VALIDATION_VERSION_PREFIX = "top5-provider-cascade-validation-"
-CASCADE_VALIDATION_CONTRACT_VERSION = "top5-provider-cascade-validation-v1"
 TOP5_REAL_SHADOW_LEAGUES = tuple(sorted(TOP5_LEAGUE_ADAPTERS))
 _OUTCOMES = ("away", "draw", "home")
 _SECRET_KEY_PARTS = (
@@ -39,6 +41,17 @@ _SECRET_KEY_PARTS = (
     "token",
     "response_body",
     "headers",
+)
+_CANONICAL_RECEIPT_FORBIDDEN_KEY_PARTS = (
+    "api_key",
+    "authorization_header",
+    "cookie",
+    "password",
+    "secret",
+    "token",
+    "response_body",
+    "headers",
+    "credential",
 )
 
 
@@ -102,6 +115,37 @@ def _metadata(value: object, field_name: str) -> Mapping[str, object]:
     except (TypeError, ValueError) as exc:
         raise RealShadowContractError(f"{field_name} must be JSON-serializable") from exc
     return MappingProxyType(dict(_thaw(value)))
+
+
+def _canonical_evidence(value: object, field_name: str) -> Mapping[str, object]:
+    if not isinstance(value, Mapping):
+        raise RealShadowContractError(f"{field_name} must be a mapping")
+
+    def reject_secret_keys(item: object) -> None:
+        if isinstance(item, Mapping):
+            for key, nested in item.items():
+                lowered = str(key).lower()
+                if any(
+                    lowered == part or lowered.endswith(f"_{part}")
+                    for part in _CANONICAL_RECEIPT_FORBIDDEN_KEY_PARTS
+                ):
+                    raise RealShadowContractError(
+                        f"{field_name} contains a secret-bearing key"
+                    )
+                reject_secret_keys(nested)
+        elif isinstance(item, (list, tuple)):
+            for nested in item:
+                reject_secret_keys(nested)
+
+    reject_secret_keys(value)
+    try:
+        thawed = _thaw(value)
+        json.dumps(thawed, allow_nan=False, sort_keys=True)
+    except (TypeError, ValueError) as exc:
+        raise RealShadowContractError(
+            f"{field_name} must be JSON-serializable"
+        ) from exc
+    return MappingProxyType(dict(thawed))
 
 
 def _digest(payload: Mapping[str, object]) -> str:
@@ -169,7 +213,7 @@ class RealShadowExperiment:
 
 @dataclass(frozen=True)
 class NormalizedProviderObservation:
-    """Serialized Builder-4 seam; no provider client or router is imported."""
+    """Serialized observation seam with canonical Builder-2 admission evidence."""
 
     league_code: str
     fixture_key: str
@@ -199,6 +243,11 @@ class NormalizedProviderObservation:
     latency_ms: int = 0
     network_request_count: int = 1
     request_cost_units: float = 0.0
+    observation_id: str | None = None
+    qualification_session_id: str | None = None
+    adapter_source_sha: str | None = None
+    normalized_record_digest: str | None = None
+    canonical_observation: Mapping[str, object] | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "kickoff_utc", _parse_datetime(self.kickoff_utc, "kickoff_utc"))
@@ -207,7 +256,17 @@ class NormalizedProviderObservation:
         object.__setattr__(self, "cascade_trace", _metadata(self.cascade_trace, "cascade_trace"))
         object.__setattr__(self, "quality_metadata", _metadata(self.quality_metadata, "quality_metadata"))
         if self.independent_validation is not None:
-            object.__setattr__(self, "independent_validation", _metadata(self.independent_validation, "independent_validation"))
+            object.__setattr__(
+                self,
+                "independent_validation",
+                _canonical_evidence(self.independent_validation, "independent_validation"),
+            )
+        if self.canonical_observation is not None:
+            object.__setattr__(
+                self,
+                "canonical_observation",
+                _canonical_evidence(self.canonical_observation, "canonical_observation"),
+            )
 
     def validate(self, experiment: RealShadowExperiment) -> None:
         experiment.validate()
@@ -250,42 +309,99 @@ class NormalizedProviderObservation:
             raise RealShadowContractError("observation mode must be explicit")
         _sha(self.raw_record_digest, "raw_record_digest")
         if self.eligibility_state == "eligible":
-            self._validate_independent_acceptance()
+            if self.observation_mode == REAL_OBSERVED_MARKER:
+                self._validate_builder2_acceptance()
+            elif self.independent_validation is not None or self.canonical_observation is not None:
+                raise RealShadowContractError(
+                    "TEST_FIXTURE cannot carry real qualification evidence"
+                )
 
-    def _validate_independent_acceptance(self) -> None:
+    def _validate_builder2_acceptance(self) -> None:
         receipt = self.independent_validation
-        if not isinstance(receipt, Mapping):
-            raise RealShadowContractError("eligible observation requires an independent accepted validation receipt with structured fields")
-        required = (
-            "contract_version", "receipt_id", "fixture_key", "provider_identity",
-            "observation_digest", "cascade_trace_digest", "provenance_mode",
-            "accepted", "prediction_input_allowed", "selected_provider", "errors",
+        canonical_payload = self.canonical_observation
+        if not isinstance(receipt, Mapping) or not isinstance(canonical_payload, Mapping):
+            raise RealShadowContractError(
+                "REAL_OBSERVED requires the canonical Builder2QualificationReceiptV1 "
+                "and its exact observation envelope"
+            )
+        try:
+            if canonical_payload.get("evidence_kind") != REAL_OBSERVED_MARKER:
+                raise RealShadowContractError(
+                    "only REAL_OBSERVED Builder-2 evidence may admit a real session"
+                )
+            validate_builder1_qualification_receipt(
+                receipt,
+                expected_observation=canonical_payload,
+            )
+        except (Builder2QualificationReceiptError, ProductionContractError, TypeError, ValueError) as exc:
+            raise RealShadowContractError(
+                "REAL_OBSERVED requires an exact canonical Builder2QualificationReceiptV1"
+            ) from exc
+
+        bindings = (
+            ("observation_id", self.observation_id, canonical_payload.get("observation_id")),
+            (
+                "qualification_session_id",
+                self.qualification_session_id,
+                canonical_payload.get("qualification_session_id"),
+            ),
+            ("fixture_key", self.fixture_key, canonical_payload.get("fixture_key")),
+            ("provider_identity", self.provider_identity, canonical_payload.get("provider_identity")),
+            ("provider_event_id", self.provider_fixture_id, canonical_payload.get("provider_event_id")),
+            ("provider_request_id", self.request_identity, canonical_payload.get("provider_request_id")),
+            ("league", self.league_code, canonical_payload.get("league")),
+            ("home_team", self.home_team, canonical_payload.get("home_team")),
+            ("away_team", self.away_team, canonical_payload.get("away_team")),
+            ("market_type", self.market_type, canonical_payload.get("market_type")),
+            ("bookmaker_identity", self.bookmaker_identity, canonical_payload.get("bookmaker_identity")),
+            ("adapter_version", self.adapter_version, canonical_payload.get("adapter_version")),
+            ("adapter_source_sha", self.adapter_source_sha, canonical_payload.get("adapter_source_sha")),
+            ("raw_record_digest", self.raw_record_digest.lower(), str(canonical_payload.get("raw_response_digest", "")).lower()),
+            (
+                "normalized_record_digest",
+                self.normalized_record_digest,
+                canonical_payload.get("normalized_record_digest"),
+            ),
+            ("latency_ms", self.latency_ms, canonical_payload.get("latency_ms")),
+            ("network_request_count", self.network_request_count, canonical_payload.get("network_request_count")),
         )
-        if any(key not in receipt for key in required):
-            raise RealShadowContractError("validation receipt is incomplete")
-        if receipt.get("contract_version") != CASCADE_VALIDATION_CONTRACT_VERSION:
-            raise RealShadowContractError("independent validation contract is missing or unsupported")
-        _required_text(receipt.get("receipt_id"), "validation receipt_id")
-        if receipt.get("fixture_key") != self.fixture_key:
-            raise RealShadowContractError("validation fixture differs from observation")
-        if receipt.get("provider_identity") != self.provider_identity or receipt.get("selected_provider") != self.provider_identity:
-            raise RealShadowContractError("validation selected provider differs from observation")
-        if receipt.get("observation_digest") != self.observation_digest():
-            raise RealShadowContractError("validation receipt is bound to a different observation")
-        if receipt.get("cascade_trace_digest") != self.cascade_trace_digest():
-            raise RealShadowContractError("validation receipt is bound to a different cascade trace")
-        if receipt.get("provenance_mode") != self.observation_mode:
-            raise RealShadowContractError("validation provenance mode differs from observation")
-        provenance = receipt.get("provenance")
-        if not isinstance(provenance, Mapping) or provenance.get("contract_version") != CASCADE_VALIDATION_CONTRACT_VERSION or provenance.get("provenance_mode") != self.observation_mode:
-            raise RealShadowContractError("validation provenance is missing or mismatched")
-        if receipt.get("accepted") is not True or receipt.get("prediction_input_allowed") is not True:
-            raise RealShadowContractError("eligible observation requires an independently accepted prediction input")
-        errors = receipt.get("errors")
-        if not isinstance(errors, (list, tuple)) or errors:
-            raise RealShadowContractError("accepted validation receipt contains errors")
-        if "monetary_spend_authorized" in receipt and receipt.get("monetary_spend_authorized") is not False:
-            raise RealShadowContractError("validation receipt cannot authorize monetary spend")
+        if any(local != expected for _, local, expected in bindings):
+            raise RealShadowContractError(
+                "local observation is not exactly bound to canonical Builder-2 evidence"
+            )
+        for name, local, expected in (
+            (
+                "kickoff",
+                self.kickoff_utc,
+                _parse_datetime(canonical_payload.get("kickoff"), "canonical kickoff"),
+            ),
+            (
+                "source_timestamp",
+                self.source_timestamp,
+                _parse_datetime(
+                    canonical_payload.get("source_timestamp"),
+                    "canonical source_timestamp",
+                ),
+            ),
+            (
+                "captured_at",
+                self.captured_at,
+                _parse_datetime(canonical_payload.get("captured_at"), "canonical captured_at"),
+            ),
+        ):
+            if _utc(local, name) != _utc(expected, name):
+                raise RealShadowContractError(
+                    "local observation is not exactly bound to canonical Builder-2 evidence"
+                )
+        for name, local, expected in (
+            ("home_odds", self.home_odds, canonical_payload.get("home_odds")),
+            ("draw_odds", self.draw_odds, canonical_payload.get("draw_odds")),
+            ("away_odds", self.away_odds, canonical_payload.get("away_odds")),
+        ):
+            if float(local) != float(expected):
+                raise RealShadowContractError(
+                    "local observation is not exactly bound to canonical Builder-2 evidence"
+                )
 
     def fixture(self) -> Fixture:
         return Fixture(self.fixture_key, self.league_code, self.home_team, self.away_team, self.kickoff_utc)
@@ -330,6 +446,11 @@ class NormalizedProviderObservation:
             "latency_ms": self.latency_ms,
             "network_request_count": self.network_request_count,
             "request_cost_units": self.request_cost_units,
+            "observation_id": self.observation_id,
+            "qualification_session_id": self.qualification_session_id,
+            "adapter_source_sha": self.adapter_source_sha,
+            "normalized_record_digest": self.normalized_record_digest,
+            "canonical_observation": _thaw(self.canonical_observation),
         }
 
     @classmethod
@@ -350,6 +471,11 @@ class NormalizedProviderObservation:
             independent_validation=raw.get("independent_validation"), latency_ms=raw.get("latency_ms", 0),
             observation_mode=raw.get("observation_mode", ""),
             network_request_count=raw.get("network_request_count", 0), request_cost_units=raw.get("request_cost_units", 0.0),
+            observation_id=raw.get("observation_id"),
+            qualification_session_id=raw.get("qualification_session_id"),
+            adapter_source_sha=raw.get("adapter_source_sha"),
+            normalized_record_digest=raw.get("normalized_record_digest"),
+            canonical_observation=raw.get("canonical_observation"),
         )
 
     def observation_digest(self) -> str:
@@ -467,8 +593,6 @@ class RealShadowPredictionArtifact:
 
 
 __all__ = [
-    "CASCADE_VALIDATION_CONTRACT_VERSION",
-    "CASCADE_VALIDATION_VERSION_PREFIX",
     "FROZEN_RESEARCH_SHA",
     "M5_CANDIDATE_ID",
     "OFFLINE_REPLAY_MARKER",

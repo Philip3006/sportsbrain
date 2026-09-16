@@ -6,13 +6,15 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from src.football.top5_builder2_qualification_receipt import (
+    issue_builder2_qualification_receipt,
+)
 from src.football.top5_real_shadow_attachments import (
     RealShadowClosingAttachment,
     RealShadowResultAttachment,
     RealShadowResultStatus,
 )
 from src.football.top5_real_shadow_contracts import (
-    CASCADE_VALIDATION_CONTRACT_VERSION,
     FROZEN_RESEARCH_SHA,
     M5_CANDIDATE_ID,
     OFFLINE_REPLAY_MARKER,
@@ -22,7 +24,6 @@ from src.football.top5_real_shadow_contracts import (
     NormalizedProviderObservation,
     RealShadowContractError,
     RealShadowExperiment,
-    _digest,
 )
 from src.football.top5_real_shadow_session import (
     RealShadowSession,
@@ -33,6 +34,12 @@ from src.football.top5_shadow_validation import (
     ShadowEvidenceBundle,
     ShadowSafetyRejection,
 )
+from tests.football.test_top5_controlled_shadow_provider_qualification import (
+    _observation as builder2_observation,
+)
+from tests.football.test_top5_controlled_shadow_provider_qualification import (
+    _qualify as qualify_builder2_observation,
+)
 
 BASE = datetime(2026, 9, 16, 12, 0, tzinfo=timezone.utc)
 INTEGRATION_SHA = "b" * 40
@@ -42,7 +49,52 @@ def experiment() -> RealShadowExperiment:
     return RealShadowExperiment("shadow-experiment:test-v1", 30, 180, 300, 0)
 
 
+def builder2_evidence():
+    canonical = builder2_observation()
+    report = qualify_builder2_observation((canonical,))
+    return canonical, issue_builder2_qualification_receipt(
+        report, canonical, report.results[0]
+    )
+
+
 def observation(league: str = "BL1", *, fixture_key: str | None = None, eligible: bool = True, mode: str = TEST_FIXTURE_MARKER) -> NormalizedProviderObservation:
+    if mode == REAL_OBSERVED_MARKER:
+        canonical, receipt = builder2_evidence()
+        return NormalizedProviderObservation(
+            league_code=canonical.league,
+            fixture_key=canonical.fixture_key,
+            provider_fixture_id=canonical.provider_event_id,
+            home_team=canonical.home_team,
+            away_team=canonical.away_team,
+            kickoff_utc=canonical.kickoff,
+            market_type=canonical.market_type,
+            home_odds=canonical.home_odds,
+            draw_odds=canonical.draw_odds,
+            away_odds=canonical.away_odds,
+            provider_identity=canonical.provider_identity,
+            bookmaker_identity=canonical.bookmaker_identity,
+            source_timestamp=canonical.source_timestamp,
+            captured_at=canonical.captured_at,
+            request_identity=canonical.provider_request_id,
+            raw_record_digest=canonical.raw_response_digest,
+            adapter_version=canonical.adapter_version,
+            provider_priority=1,
+            fallback_depth=0,
+            cascade_trace={"attempts": [canonical.provider_identity], "selected": canonical.provider_identity},
+            quality_metadata={"market": canonical.market_type},
+            eligibility_state="eligible",
+            signal_snapshot_id=canonical.observation_id,
+            independent_validation=receipt.as_payload(),
+            observation_mode=REAL_OBSERVED_MARKER,
+            latency_ms=canonical.latency_ms,
+            network_request_count=canonical.network_request_count,
+            request_cost_units=canonical.quota_cost_units,
+            observation_id=canonical.observation_id,
+            qualification_session_id=canonical.qualification_session_id,
+            adapter_source_sha=canonical.adapter_source_sha,
+            normalized_record_digest=canonical.normalized_record_digest,
+            canonical_observation=canonical.as_payload(),
+        )
     fixture = fixture_key or f"{league}:fixture-001"
     base = NormalizedProviderObservation(
         league_code=league,
@@ -71,26 +123,7 @@ def observation(league: str = "BL1", *, fixture_key: str | None = None, eligible
         observation_mode=mode,
         independent_validation=None,
     )
-    if not eligible:
-        return base
-    return replace(base, independent_validation={
-        "contract_version": CASCADE_VALIDATION_CONTRACT_VERSION,
-        "receipt_id": f"validation-receipt:{fixture}",
-        "fixture_key": base.fixture_key,
-        "provider_identity": base.provider_identity,
-        "observation_digest": base.observation_digest(),
-        "cascade_trace_digest": _digest(base.cascade_trace),
-        "provenance_mode": mode,
-        "provenance": {
-            "contract_version": CASCADE_VALIDATION_CONTRACT_VERSION,
-            "provenance_mode": mode,
-        },
-        "accepted": True,
-        "prediction_input_allowed": True,
-        "selected_provider": base.provider_identity,
-        "errors": [],
-        "monetary_spend_authorized": False,
-    })
+    return base
 
 
 def make_session(*, scope: tuple[str, ...] = ("BL1",), fixture_mode: bool = True) -> RealShadowSession:
@@ -151,7 +184,7 @@ def test_fixture_observation_is_explicitly_non_real_m5_and_no_bet() -> None:
 
 
 def test_real_observation_requires_explicit_real_mode() -> None:
-    session = make_session(fixture_mode=False)
+    session = make_session(scope=("EPL",), fixture_mode=False)
     session.record_observation(observation(mode=REAL_OBSERVED_MARKER))
     session.finalize_predictions()
     assert next(iter(session.predictions.values())).marker == REAL_OBSERVED_MARKER
@@ -174,49 +207,113 @@ def test_duplicate_observation_is_idempotent_but_conflict_fails_closed() -> None
     with pytest.raises(RealShadowContractError, match="conflicting observation"):
         session.record_observation(replace(first, home_odds=2.3))
 
-@pytest.mark.parametrize("invalid_receipt", [None, True])
+@pytest.mark.parametrize("invalid_receipt", [None, True, {}])
 def test_validation_receipt_is_required_for_eligible_prediction_input(invalid_receipt) -> None:
-    with pytest.raises(RealShadowContractError, match="validation|mapping"):
-        invalid = replace(observation(), independent_validation=invalid_receipt)
+    with pytest.raises(RealShadowContractError, match="canonical|receipt|mapping"):
+        invalid = replace(
+            observation(mode=REAL_OBSERVED_MARKER),
+            independent_validation=invalid_receipt,
+        )
         invalid.validate(experiment())
 
-@pytest.mark.parametrize("field", ("fixture_key", "provider_identity", "observation_digest", "cascade_trace_digest"))
-def test_validation_receipt_is_bound_to_exact_observation(field: str) -> None:
-    item = observation()
+
+def test_locally_constructed_accepted_mapping_cannot_admit_real_observation() -> None:
+    item = observation(mode=REAL_OBSERVED_MARKER)
+    local_mapping = {
+        "accepted": True,
+        "prediction_input_allowed": True,
+        "provenance_mode": REAL_OBSERVED_MARKER,
+    }
+    with pytest.raises(RealShadowContractError, match="canonical|receipt"):
+        replace(item, independent_validation=local_mapping).validate(experiment())
+
+
+@pytest.mark.parametrize(
+    "field",
+    (
+        "fixture_key",
+        "provider_identity",
+        "provider_event_id",
+        "provider_request_id",
+        "observation_id",
+        "observation_digest",
+        "normalized_record_digest",
+        "cascade_evidence_digest",
+        "capture_attestation_digest",
+        "controlled_shadow_run_id",
+        "qualification_session_id",
+        "ceo_authorization_id",
+        "adapter_version",
+        "adapter_source_sha",
+    ),
+)
+def test_canonical_receipt_is_bound_to_exact_observation(field: str) -> None:
+    item = observation(mode=REAL_OBSERVED_MARKER)
     receipt = dict(item.independent_validation or {})
-    receipt[field] = "wrong"
-    with pytest.raises(RealShadowContractError, match="validation"):
+    receipt[field] = "f" * 64 if field.endswith(("digest", "sha")) else "changed"
+    with pytest.raises(RealShadowContractError, match="canonical|receipt|bound"):
         replace(item, independent_validation=receipt).validate(experiment())
 
 
-def test_validation_receipt_cannot_be_reused_for_another_fixture() -> None:
-    first = observation(fixture_key="BL1:fixture-a")
-    second = observation(fixture_key="BL1:fixture-b")
-    with pytest.raises(RealShadowContractError, match="fixture"):
-        replace(second, independent_validation=first.independent_validation).validate(experiment())
+def test_canonical_receipt_cannot_be_reused_for_another_observation() -> None:
+    first = observation(mode=REAL_OBSERVED_MARKER)
+    canonical_b = dict(first.canonical_observation or {})
+    canonical_b["fixture_key"] = "EPL:fixture-b"
+    second = replace(
+        first,
+        fixture_key="EPL:fixture-b",
+        provider_fixture_id="provider-event-b",
+        request_identity="request-b",
+        observation_id="observation-b",
+        signal_snapshot_id="observation-b",
+        canonical_observation=canonical_b,
+    )
+    with pytest.raises(RealShadowContractError, match="canonical|bound"):
+        second.validate(experiment())
 
-def test_validation_receipt_cannot_upgrade_test_provenance_to_real() -> None:
-    item = observation(mode=TEST_FIXTURE_MARKER)
-    receipt = dict(item.independent_validation or {})
-    receipt["provenance_mode"] = REAL_OBSERVED_MARKER
-    receipt["provenance"] = {"contract_version": CASCADE_VALIDATION_CONTRACT_VERSION, "provenance_mode": REAL_OBSERVED_MARKER}
-    with pytest.raises(RealShadowContractError, match="provenance"):
-        replace(item, independent_validation=receipt).validate(experiment())
 
-def test_validation_receipt_rejects_errors_and_spend_authorization() -> None:
-    item = observation()
+def test_test_fixture_cannot_be_upgraded_with_canonical_real_evidence() -> None:
+    fixture = observation(mode=TEST_FIXTURE_MARKER)
+    real = observation(mode=REAL_OBSERVED_MARKER)
+    with pytest.raises(RealShadowContractError, match="TEST_FIXTURE"):
+        replace(
+            fixture,
+            independent_validation=real.independent_validation,
+            canonical_observation=real.canonical_observation,
+        ).validate(experiment())
+
+
+def test_canonical_receipt_rejects_unsafe_state() -> None:
+    item = observation(mode=REAL_OBSERVED_MARKER)
     receipt = dict(item.independent_validation or {})
-    receipt["errors"] = ["provider_failed"]
-    with pytest.raises(RealShadowContractError, match="errors"):
-        replace(item, independent_validation=receipt).validate(experiment())
-    receipt["errors"] = []
-    receipt["accepted"] = False
-    with pytest.raises(RealShadowContractError, match="accepted"):
-        replace(item, independent_validation=receipt).validate(experiment())
-    receipt = dict(item.independent_validation or {})
-    receipt["monetary_spend_authorized"] = True
-    with pytest.raises(RealShadowContractError, match="spend"):
-        replace(item, independent_validation=receipt).validate(experiment())
+    for field, value in (
+        ("accepted", False),
+        ("prediction_input_allowed", False),
+        ("no_bet", False),
+        ("publication", True),
+        ("production_activation", True),
+        ("monetary_spend_authorized", True),
+    ):
+        tampered = {**receipt, field: value}
+        with pytest.raises(RealShadowContractError, match="canonical|receipt"):
+            replace(item, independent_validation=tampered).validate(experiment())
+
+
+def test_builder1_only_consumes_canonical_receipts() -> None:
+    import src.football.top5_real_shadow_contracts as lifecycle_contracts
+
+    assert not hasattr(lifecycle_contracts, "issue_builder2_qualification_receipt")
+
+
+def test_real_canonical_evidence_round_trips_through_observation_storage() -> None:
+    item = observation(mode=REAL_OBSERVED_MARKER)
+    restored = NormalizedProviderObservation.from_payload(item.as_payload())
+    restored.validate(experiment())
+    assert restored.independent_validation == item.independent_validation
+    assert restored.canonical_observation == item.canonical_observation
+    serialized = str(restored.as_payload()).lower()
+    assert "api_key" not in serialized
+    assert "response_body" not in serialized
 
 
 def test_network_request_count_and_quota_cost_are_separate() -> None:
@@ -304,7 +401,7 @@ def test_all_top5_leagues_are_isolated_and_evidence_validates() -> None:
     bundle.validate()
     assert len(payload["predictions"]) == 5
     assert all(item["trace"]["selected"] == "provider-a" for item in payload["cascade_traces"])
-    assert all(item["validation_receipt"]["prediction_input_allowed"] is True for item in payload["cascade_traces"])
+    assert all(item["validation_receipt"] is None for item in payload["cascade_traces"])
 
 
 def test_result_and_closing_are_temporally_bound_append_only_attachments() -> None:
