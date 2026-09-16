@@ -24,6 +24,9 @@ _publish_permitted() {
   if [[ "$1" =~ ^docs/data/signals_[a-z0-9_-]+\.json$ ]]; then
     return 0
   fi
+  if [[ "$1" =~ ^docs/data/top5/published/[A-Za-z0-9_-]+/[A-Za-z0-9_.-]+\.json$ ]]; then
+    return 0
+  fi
   case "$1" in
     docs/data/signals.json|docs/data/squads.json|docs/data/live_scores.json|\
     docs/data/tennis_live_scores.json|data/cache/tennis_live_scores.json|\
