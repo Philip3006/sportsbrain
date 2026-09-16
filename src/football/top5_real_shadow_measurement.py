@@ -261,6 +261,7 @@ def _safe_exclusion(
         "prediction_id": item.get("prediction_id"),
         "fixture": item.get("fixture"),
         "session_id": session_id,
+        "signal_time_experiment_id": item.get("signal_time_experiment_id"),
         "reason": reason,
         "audit_state": item.get("overall_state"),
         "finding_codes": sorted(
@@ -271,6 +272,38 @@ def _safe_exclusion(
             }
         ),
     }
+
+
+def _public_candidate(candidate: Mapping[str, object]) -> dict[str, object]:
+    closing = candidate.get("closing")
+    closing_payload = None
+    if isinstance(closing, RealShadowClosingAttachment):
+        closing_payload = {
+            "attachment_sha": closing.attachment_sha,
+            "closing_snapshot_id": closing.closing_snapshot_id,
+            "closing_probabilities": _implied_probabilities(closing.odds),
+            "used_for_prediction": False,
+        }
+    return {
+        key: candidate[key]
+        for key in (
+            "prediction_id",
+            "fixture",
+            "league",
+            "provider",
+            "bookmaker",
+            "signal_time_experiment_id",
+            "controlled_shadow_run_id",
+            "qualification_session_id",
+            "session_id",
+            "research_sha",
+            "model_identity",
+            "probabilities",
+            "actual_outcome",
+            "prediction_artifact_sha",
+            "result_attachment_sha",
+        )
+    } | {"closing": closing_payload, "evidence_mode": REAL_OBSERVED_MARKER}
 
 
 def _candidate(
@@ -675,6 +708,9 @@ def _assemble_report(
             candidate["prediction_id"] for candidate in candidates
         ],
         "excluded_evidence": excluded,
+        "eligible_predictions": [
+            _public_candidate(candidate) for candidate in candidates
+        ],
         "eligible_count": len(candidates),
         "excluded_count": len(excluded),
         "unique_fixture_count": len({candidate["fixture"] for candidate in candidates}),
