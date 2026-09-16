@@ -231,6 +231,10 @@ def _normalize_public_state(*sources: Mapping[str, object]) -> str:
     return normalized
 
 
+def _is_published_publication_status(value: object) -> bool:
+    return isinstance(value, str) and value.strip().upper() == "PUBLISHED"
+
+
 def _validate_synthetic_boundary(
     record: Mapping[str, object],
     provenance: Mapping[str, object],
@@ -269,7 +273,7 @@ def _validate_synthetic_boundary(
         )
     if state == "live" or any(
         source.get("publication_enabled") is True
-        or source.get("publication_status") == "PUBLISHED"
+        or _is_published_publication_status(source.get("publication_status"))
         for source in sources
     ):
         raise PublicFootballCompatibilityError(

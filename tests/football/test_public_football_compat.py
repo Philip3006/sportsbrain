@@ -151,12 +151,24 @@ def test_synthetic_cl_cannot_be_published_or_live() -> None:
         )
 
 
-def test_synthetic_nested_artifact_cannot_be_published() -> None:
+@pytest.mark.parametrize("publication_status", ("published", "Published", "PUBLISHED"))
+def test_synthetic_publication_status_is_case_insensitive(
+    publication_status: str,
+) -> None:
+    with pytest.raises(
+        PublicFootballCompatibilityError, match="synthetic football evidence"
+    ):
+        map_prediction_to_public_football_signals(
+            _synthetic_cl_record(publication_status=publication_status)
+        )
+
+
+@pytest.mark.parametrize("container", ("prediction_artifact", "provenance", "health"))
+def test_synthetic_nested_publication_status_cannot_be_published(
+    container: str,
+) -> None:
     record = _synthetic_cl_record()
-    record["prediction_artifact"] = {
-        **record["prediction_artifact"],
-        "publication_enabled": True,
-    }
+    record[container] = {**record[container], "publication_status": "published"}
     with pytest.raises(
         PublicFootballCompatibilityError, match="synthetic football evidence"
     ):
