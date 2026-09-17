@@ -9,6 +9,7 @@ match_hint-Schema:
     model_probs: {p_home, p_draw, p_away} is retained only for callers that
     need to describe model context; it is never an odds source.
 """
+
 from __future__ import annotations
 
 import threading
@@ -23,6 +24,7 @@ _T = TypeVar("_T")
 @dataclass
 class FootballOddsQuote:
     """Einheitliche Odds-Repräsentation für Football über alle Quellen."""
+
     home_team: str
     away_team: str
     source: str
@@ -70,8 +72,7 @@ class FootballOddsQuote:
         return sanity_1x2(self.h2h_home, self.h2h_draw, self.h2h_away)
 
 
-def sanity_1x2(h: float, d: float, a: float,
-               lo: float = 1.0, hi: float = 1.20) -> bool:
+def sanity_1x2(h: float, d: float, a: float, lo: float = 1.0, hi: float = 1.20) -> bool:
     """3-Weg-Sanity: implied Marginalensumme in [lo, hi]."""
     if not all(1.01 < x < 50.0 for x in (h, d, a)):
         return False
@@ -79,8 +80,7 @@ def sanity_1x2(h: float, d: float, a: float,
     return lo < implied <= hi
 
 
-def sanity_2way(h: float, a: float,
-                lo: float = 0.95, hi: float = 1.15) -> bool:
+def sanity_2way(h: float, a: float, lo: float = 0.95, hi: float = 1.15) -> bool:
     """2-Weg-Sanity (DC/BTTS — kein Draw)."""
     if not all(1.01 < x < 50.0 for x in (h, a)):
         return False
@@ -129,7 +129,10 @@ class ThreadSafeDictCache(Generic[_T]):
 
     def get(self, key: Any) -> _T | None:
         with self._lock:
-            if key in self._data and (time.monotonic() - self._ts.get(key, 0.0)) < self._ttl:
+            if (
+                key in self._data
+                and (time.monotonic() - self._ts.get(key, 0.0)) < self._ttl
+            ):
                 return self._data[key]
             return None
 

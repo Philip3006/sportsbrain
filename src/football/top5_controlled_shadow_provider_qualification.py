@@ -794,6 +794,7 @@ class RealProviderObservation:
         ):
             if value is not expected:
                 raise QualificationContractError(f"unsafe observation flag: {name}")
+
     @classmethod
     def from_payload(cls, payload: object) -> RealProviderObservation:
         raw = payload if isinstance(payload, Mapping) else {}

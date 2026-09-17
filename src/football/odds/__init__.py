@@ -3,6 +3,7 @@
 The football merger is fail closed when The Odds API cannot provide a valid
 quote. Tennis has a separate provider architecture.
 """
+
 from src.football.odds.base import FootballOddsQuote, sanity_1x2, sanity_2way
 from src.football.odds.merger import (
     fetch_all_sources,
