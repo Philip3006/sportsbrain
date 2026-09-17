@@ -84,6 +84,8 @@ _PUBLIC_FOOTBALL_EVIDENCE_KINDS = frozenset(
     {
         "SYNTHETIC",
         "TEST_FIXTURE",
+        "INJECTED",
+        "OFFLINE_REPLAY",
         "RUNTIME_DERIVED",
         "REAL_OBSERVED",
     }
@@ -101,8 +103,216 @@ _PUBLIC_FOOTBALL_PROVENANCE_FIELDS = frozenset(
         "snapshot_kind",
         "captured_at",
         "source_age_seconds",
+        "evidence_kind",
+        "observation_mode",
+        "prediction_time_source",
+        "prediction_time_snapshot_id",
+        "prediction_time_captured_at",
     }
 )
+
+_CHAMPIONS_LEAGUE_KEYS = frozenset(
+    {
+        "ucl",
+        "cl",
+        "championsleague",
+        "champions_league",
+        "uefa_champions_league",
+        "uefa_champs_league",
+        "soccer_uefa_champions_league",
+        "soccer_uefa_champs_league",
+    }
+)
+
+_COMPETITION_CONTEXT_KEYS = (
+    "competition_context",
+    "competition_metadata",
+    "competition",
+)
+
+# Context is diagnostic metadata, not an unbounded payload escape hatch.  A
+# small deterministic limit keeps replayed/provider-supplied context from
+# exhausting serializer memory or inflating public artifacts.
+_MAX_PUBLIC_CONTEXT_DEPTH = 6
+_MAX_PUBLIC_CONTEXT_ITEMS = 128
+_MAX_PUBLIC_CONTEXT_STRING_LENGTH = 4096
+
+
+def _normalized_key(value: object) -> str:
+    return str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
+
+
+def _optional_bool(value: object, field: str) -> bool | None:
+    if value is None or value == "":
+        return None
+    if isinstance(value, bool):
+        return value
+    raise PublicFootballCompatibilityError(f"public football {field} must be boolean")
+
+
+def _public_json_value(value: object, field: str, *, depth: int = 0) -> object:
+    """Copy bounded JSON context without allowing arbitrary object leakage."""
+    if depth > _MAX_PUBLIC_CONTEXT_DEPTH:
+        raise PublicFootballCompatibilityError(
+            f"public football {field} exceeds context depth limit"
+        )
+    if value is None or isinstance(value, (str, bool, int)):
+        if isinstance(value, str) and len(value) > _MAX_PUBLIC_CONTEXT_STRING_LENGTH:
+            raise PublicFootballCompatibilityError(
+                f"public football {field} exceeds context string limit"
+            )
+        return value
+    if isinstance(value, float):
+        if not isfinite(value):
+            raise PublicFootballCompatibilityError(
+                f"public football {field} contains a non-finite number"
+            )
+        return value
+    if isinstance(value, Mapping):
+        if len(value) > _MAX_PUBLIC_CONTEXT_ITEMS:
+            raise PublicFootballCompatibilityError(
+                f"public football {field} exceeds context item limit"
+            )
+        result: dict[str, object] = {}
+        for key, nested in value.items():
+            if not isinstance(key, str) or not key.strip():
+                raise PublicFootballCompatibilityError(
+                    f"public football {field} contains an invalid key"
+                )
+            result[key] = _public_json_value(nested, f"{field}.{key}", depth=depth + 1)
+        return result
+    if isinstance(value, (list, tuple)):
+        if len(value) > _MAX_PUBLIC_CONTEXT_ITEMS:
+            raise PublicFootballCompatibilityError(
+                f"public football {field} exceeds context item limit"
+            )
+        return [
+            _public_json_value(item, f"{field}[]", depth=depth + 1)
+            for item in value
+        ]
+    raise PublicFootballCompatibilityError(
+        f"public football {field} must be JSON-compatible"
+    )
+
+
+def _context_mapping(*sources: Mapping[str, object]) -> dict[str, object]:
+    """Merge explicit competition/fixture/result context mappings in priority order."""
+    result: dict[str, object] = {}
+    for source in reversed(sources):
+        for key in _COMPETITION_CONTEXT_KEYS:
+            nested = source.get(key)
+            if isinstance(nested, Mapping):
+                public_nested = _public_json_value(nested, f"{key}")
+                if not isinstance(public_nested, dict):
+                    raise PublicFootballCompatibilityError(
+                        f"public football {key} must be an object"
+                    )
+                if "competition_id" not in public_nested:
+                    for alias in ("id", "code"):
+                        if public_nested.get(alias) not in (None, ""):
+                            public_nested["competition_id"] = public_nested[alias]
+                            break
+                if "competition_identity" not in public_nested:
+                    for alias in ("identity", "competition_id", "code", "id"):
+                        if public_nested.get(alias) not in (None, ""):
+                            public_nested["competition_identity"] = public_nested[alias]
+                            break
+                result.update(public_nested)
+    return result
+
+
+def _evidence_state(
+    *sources: Mapping[str, object],
+) -> tuple[str | None, bool, bool, bool]:
+    """Return (kind, synthetic, injected, real_observed) with contradictions rejected."""
+    raw_kind = _first_value(
+        *sources,
+        keys=("evidence_kind", "marker", "observation_mode"),
+    )
+    if raw_kind is None:
+        origin = _first_value(*sources, keys=("evidence_origin",))
+        if _normalized_key(origin) in {
+            "synthetic",
+            "test_fixture",
+            "testfixture",
+            "injected",
+            "injected_evidence",
+            "offline_replay",
+            "offlinereplay",
+            "real_observed",
+            "real",
+            "observed",
+        }:
+            raw_kind = origin
+    kind = _normalized_key(raw_kind).upper() if raw_kind is not None else ""
+    aliases = {
+        "TESTFIXTURE": "TEST_FIXTURE",
+        "OFFLINEREPLAY": "OFFLINE_REPLAY",
+        "REAL": "REAL_OBSERVED",
+        "OBSERVED": "REAL_OBSERVED",
+        "INJECTED_EVIDENCE": "INJECTED",
+    }
+    kind = aliases.get(kind, kind)
+    if kind and kind not in _PUBLIC_FOOTBALL_EVIDENCE_KINDS:
+        raise PublicFootballCompatibilityError(
+            f"unsupported public football evidence kind: {kind!r}"
+        )
+    # An explicit envelope boolean is authoritative over a marker copied from
+    # nested metadata.  This matters for replay/injection adapters, where the
+    # payload can retain a historical marker while the current envelope has
+    # already classified the evidence.
+    explicit_synthetic = next(
+        (
+            source["synthetic"]
+            for source in sources
+            if isinstance(source.get("synthetic"), bool)
+        ),
+        None,
+    )
+    explicit_injected = next(
+        (
+            source[key]
+            for source in sources
+            for key in ("injected", "injected_evidence")
+            if isinstance(source.get(key), bool)
+        ),
+        None,
+    )
+    explicit_real_observed = next(
+        (
+            source["real_observed"]
+            for source in sources
+            if isinstance(source.get("real_observed"), bool)
+        ),
+        None,
+    )
+    synthetic = (
+        explicit_synthetic
+        if explicit_synthetic is not None
+        else kind in {"SYNTHETIC", "TEST_FIXTURE"}
+    )
+    injected = (
+        explicit_injected
+        if explicit_injected is not None
+        else kind in {"INJECTED", "OFFLINE_REPLAY"}
+    )
+    real_observed = (
+        explicit_real_observed
+        if explicit_real_observed is not None
+        else kind == "REAL_OBSERVED"
+    )
+    if (synthetic or injected) and real_observed:
+        raise PublicFootballCompatibilityError(
+            "synthetic football evidence (including injected evidence) cannot claim real observation"
+        )
+    if not kind:
+        if synthetic:
+            kind = "SYNTHETIC"
+        elif injected:
+            kind = "INJECTED"
+        elif real_observed:
+            kind = "REAL_OBSERVED"
+    return kind or None, synthetic, injected, real_observed
 
 
 def _mapping(value: object) -> Mapping[str, object]:
@@ -215,12 +425,23 @@ def _stable_public_signal_id(prediction_id: str, outcome: str) -> str:
 
 
 def _normalize_public_state(*sources: Mapping[str, object]) -> str:
-    raw = _first_value(*sources, keys=("activation_state", "activation_mode", "state"))
+    raw = _first_value(
+        *sources,
+        keys=(
+            "activation_state",
+            "activation_mode",
+            "shadow_state",
+            "shadow_runtime_state",
+            "state",
+        ),
+    )
     normalized = str(raw or "disabled").strip().lower().replace("-", "_")
     aliases = {
         "off": "disabled",
         "readiness": "disabled",
         "real_shadow": "shadow",
+        "shadow_only": "shadow",
+        "inactive": "disabled",
         "controlled_activation": "controlled",
     }
     normalized = aliases.get(normalized, normalized)
@@ -242,22 +463,9 @@ def _validate_synthetic_boundary(
     *additional_sources: Mapping[str, object],
 ) -> bool:
     sources = (record, provenance, *additional_sources)
-    evidence_kind = (
-        str(_first_value(*sources, keys=("evidence_kind", "marker")) or "")
-        .strip()
-        .upper()
-    )
-    synthetic = any(
-        source.get("synthetic") is True for source in sources
-    ) or evidence_kind in {
-        "SYNTHETIC",
-        "TEST_FIXTURE",
-    }
-    if evidence_kind and evidence_kind not in _PUBLIC_FOOTBALL_EVIDENCE_KINDS:
-        raise PublicFootballCompatibilityError(
-            f"unsupported public football evidence kind: {evidence_kind!r}"
-        )
-    if not synthetic:
+    evidence_kind, synthetic, injected, _real_observed = _evidence_state(*sources)
+    synthetic_or_injected = synthetic or injected
+    if not synthetic_or_injected:
         return False
     forbidden_true = (
         "real_observed",
@@ -269,7 +477,7 @@ def _validate_synthetic_boundary(
     )
     if any(source.get(key) is True for source in sources for key in forbidden_true):
         raise PublicFootballCompatibilityError(
-            "synthetic football evidence cannot claim real observation, approval, or activation"
+            "synthetic football evidence (including injected evidence) cannot claim real observation, approval, or activation"
         )
     if state == "live" or any(
         source.get("publication_enabled") is True
@@ -277,9 +485,87 @@ def _validate_synthetic_boundary(
         for source in sources
     ):
         raise PublicFootballCompatibilityError(
-            "synthetic football evidence must remain disabled or shadow and unpublished"
+            "synthetic football evidence (including injected evidence) must remain disabled or shadow and unpublished"
         )
-    return True
+    return synthetic_or_injected
+
+
+def _is_champions_league(*sources: Mapping[str, object]) -> bool:
+    values: list[object] = []
+    for source in sources:
+        values.extend(
+            source.get(key)
+            for key in (
+                "competition",
+                "competition_id",
+                "competition_identity",
+                "competition_code",
+                "league_code",
+                "league",
+            )
+            if source.get(key) is not None
+        )
+        for key in _COMPETITION_CONTEXT_KEYS:
+            nested = source.get(key)
+            if isinstance(nested, Mapping):
+                values.extend(
+                    nested.get(name)
+                    for name in (
+                        "id",
+                        "competition_id",
+                        "identity",
+                        "competition_identity",
+                        "code",
+                        "competition_code",
+                        "name",
+                        "display_name",
+                        "league",
+                    )
+                    if nested.get(name) is not None
+                )
+    return any(_normalized_key(value) in _CHAMPIONS_LEAGUE_KEYS for value in values)
+
+
+def _validate_champions_league_boundary(
+    is_champions_league: bool,
+    state: str,
+    *sources: Mapping[str, object],
+) -> None:
+    """Keep UCL compatibility records shadow-only and out of publication."""
+    if not is_champions_league:
+        return
+    requested_publication = any(
+        source.get("publication_enabled") is True
+        or source.get("publication") is True
+        or source.get("publication_success") is True
+        or _is_published_publication_status(source.get("publication_status"))
+        for source in sources
+    )
+    requested_live = state in {"controlled", "live"} or any(
+        _normalized_key(source.get("activation_state")) in {"controlled", "live"}
+        or _normalized_key(source.get("activation_mode")) in {"controlled", "live"}
+        or _normalized_key(source.get("shadow_state")) in {"controlled", "live"}
+        or _normalized_key(source.get("shadow_runtime_state")) in {"controlled", "live"}
+        or source.get("live_activation") is True
+        or source.get("production_activation") is True
+        for source in sources
+    )
+    requested_bet = any(
+        source.get("no_bet") is False or source.get("no_bet_flag") is False
+        for source in sources
+    )
+    externally_visible = any(
+        source.get("externally_visible") is True
+        or source.get("publicly_visible") is True
+        or source.get("external_visibility") is True
+        or source.get("public") is True
+        or _normalized_key(source.get("visibility")) in {"public", "external", "published"}
+        for source in sources
+    )
+    if requested_publication or requested_live or requested_bet or externally_visible:
+        raise PublicFootballCompatibilityError(
+            "Champions League compatibility output must remain shadow, no-bet, and unpublished"
+        )
 
 
 def _public_provenance(
@@ -289,10 +575,12 @@ def _public_provenance(
     snapshot_id: str,
     snapshot_kind: str,
     source_age_seconds: float | None,
+    additional_sources: Sequence[Mapping[str, object]] = (),
 ) -> dict[str, object]:
     result: dict[str, object] = {}
+    sources = (record, provenance, *additional_sources)
     for key in sorted(_PUBLIC_FOOTBALL_PROVENANCE_FIELDS):
-        value = _first_value(record, provenance, keys=(key,))
+        value = _first_value(*sources, keys=(key,))
         if value is not None and value != "":
             if key == "source_age_seconds":
                 value = _optional_number(value, key)
@@ -306,6 +594,468 @@ def _public_provenance(
     if source_age_seconds is not None:
         result["source_age_seconds"] = source_age_seconds
     return result
+
+
+def _optional_context_value(
+    *sources: Mapping[str, object],
+    keys: Sequence[str],
+) -> object | None:
+    """Resolve a context field from an explicit nested context then legacy fields."""
+    return _first_value(*sources, keys=keys)
+
+
+def _context_payload(
+    record: Mapping[str, object],
+    artifact: Mapping[str, object],
+    fixture: Mapping[str, object],
+    provenance: Mapping[str, object],
+    health: Mapping[str, object],
+    result: Mapping[str, object],
+    *,
+    league: str,
+    fixture_key: str,
+    prediction_id: str,
+    model_identity: str,
+    generated_at: str,
+    snapshot_id: str,
+    snapshot_kind: str,
+    signal_timestamp: str,
+    source: str,
+    source_age_seconds: float | None,
+    stale_state: str,
+    state: str,
+    result_status: str,
+) -> dict[str, object]:
+    """Build the additive, bounded observability context for a football record."""
+    competition_context = _context_mapping(record, artifact, fixture, provenance)
+    context_sources = (competition_context, artifact, record, fixture, provenance)
+    result_sources = (result, health, record, artifact, provenance)
+
+    competition_id = _optional_text(
+        _optional_context_value(
+            *context_sources,
+            keys=(
+                "competition",
+                "competition_id",
+                "competition_code",
+                "competition_identity",
+                "league_code",
+                "league",
+            ),
+        )
+    ) or league
+    competition_identity = _optional_text(
+        _optional_context_value(
+            *context_sources,
+            keys=(
+                "competition_identity",
+                "competition_id",
+                "competition_code",
+            ),
+        )
+    ) or competition_id
+    competition_name = _optional_text(
+        _optional_context_value(
+            *context_sources,
+            keys=("competition_name", "display_name", "name"),
+        )
+    )
+    season = _optional_text(
+        _optional_context_value(
+            *context_sources,
+            keys=(
+                "season",
+                "season_id",
+                "season_label",
+                "competition_season",
+            ),
+        )
+    )
+    historical_format_era = _optional_text(
+        _optional_context_value(
+            *context_sources,
+            keys=(
+                "historical_format_era",
+                "format_era",
+                "competition_format_era",
+            ),
+        )
+    )
+    stage = _optional_text(
+        _optional_context_value(
+            *context_sources,
+        keys=("stage", "competition_stage", "stage_name", "phase"),
+        )
+    )
+    round_raw = _optional_context_value(
+        *context_sources,
+        keys=("round", "round_name", "round_number", "round_of"),
+    )
+    if isinstance(round_raw, bool):
+        raise PublicFootballCompatibilityError("public football round must be text or integer")
+    round_name: object = (
+        round_raw
+        if isinstance(round_raw, int)
+        else _optional_text(round_raw)
+    )
+    leg = _optional_context_value(
+        *context_sources,
+        keys=("leg", "leg_number", "leg_index", "tie_leg"),
+    )
+    if leg is not None and (isinstance(leg, bool) or not isinstance(leg, (str, int))):
+        raise PublicFootballCompatibilityError("public football leg must be text or integer")
+    aggregate_raw = _optional_context_value(
+        *context_sources,
+        keys=("aggregate_context", "aggregate", "aggregate_score", "tie_context"),
+    )
+    aggregate_context = (
+        _public_json_value(aggregate_raw, "aggregate_context")
+        if aggregate_raw is not None
+        else None
+    )
+    neutral_site = _optional_bool(
+        _optional_context_value(
+            *context_sources,
+            keys=(
+                "neutral_site",
+                "neutral_venue",
+                "is_neutral",
+                "venue_neutral",
+                "is_neutral_site",
+                "neutral",
+            ),
+        ),
+        "neutral_site",
+    )
+
+    model_artifact_hash = _optional_text(
+        _first_value(
+            artifact,
+            record,
+            provenance,
+            keys=(
+                "model_artifact_hash",
+                "model_artifact_sha",
+                "model_artifact_sha256",
+                "model_sha",
+                "artifact_hash",
+                "artifact_sha",
+                "artifact_sha256",
+                "prediction_artifact_sha",
+            ),
+        )
+    )
+    prediction_time_raw = _optional_context_value(
+        *context_sources,
+        keys=(
+            "prediction_time_provenance",
+            "prediction_provenance",
+            "prediction_time",
+            "time_provenance",
+        ),
+    )
+    if prediction_time_raw is None:
+        prediction_time_provenance: object = {
+            "prediction_timestamp": generated_at,
+            "source": source,
+            "snapshot_id": snapshot_id,
+            "snapshot_kind": snapshot_kind,
+            "captured_at": signal_timestamp or None,
+            "evidence_kind": _first_value(
+                record,
+                provenance,
+                artifact,
+                keys=("evidence_kind", "marker", "observation_mode"),
+            ),
+        }
+    else:
+        prediction_time_provenance = _public_json_value(
+            prediction_time_raw, "prediction_time_provenance"
+        )
+    prediction_time_details = _mapping(prediction_time_provenance)
+    prediction_time_source = _optional_text(
+        _first_value(
+            prediction_time_details,
+            *context_sources,
+            keys=("prediction_time_source", "time_provenance_source", "source"),
+        )
+    )
+    prediction_time_snapshot_id = _optional_text(
+        _first_value(
+            prediction_time_details,
+            *context_sources,
+            keys=(
+                "prediction_time_snapshot_id",
+                "prediction_snapshot_id",
+                "snapshot_id",
+            ),
+        )
+    ) or snapshot_id
+    prediction_time_captured_at = _optional_text(
+        _first_value(
+            prediction_time_details,
+            *context_sources,
+            keys=(
+                "prediction_time_captured_at",
+                "prediction_captured_at",
+                "captured_at",
+            ),
+        )
+    ) or (signal_timestamp or None)
+
+    fixture_id = _optional_text(
+        _first_value(
+            fixture,
+            record,
+            artifact,
+            provenance,
+            keys=("fixture_id", "provider_fixture_id", "provider_event_id", "event_id"),
+        )
+    )
+    provider_fixture_id = _optional_text(
+        _first_value(
+            fixture,
+            record,
+            artifact,
+            provenance,
+            keys=("provider_fixture_id", "provider_event_id", "event_id"),
+        )
+    )
+    fixture_identity_raw = _first_value(
+        record,
+        artifact,
+        fixture,
+        provenance,
+        keys=("fixture_identity",),
+    )
+    fixture_identity = (
+        _public_json_value(fixture_identity_raw, "fixture_identity")
+        if fixture_identity_raw is not None
+        else {}
+    )
+    if not isinstance(fixture_identity, dict):
+        raise PublicFootballCompatibilityError("public football fixture_identity must be an object")
+    fixture_identity.update(
+        {
+            "fixture_key": fixture_key,
+            "fixture_id": fixture_id,
+            "provider_fixture_id": provider_fixture_id,
+        }
+    )
+
+    result_id = _optional_text(
+        _first_value(
+            *result_sources,
+            keys=("result_id", "provider_result_id", "result_key"),
+        )
+    )
+    provider_result_id = _optional_text(
+        _first_value(
+            *result_sources,
+            keys=("provider_result_id", "result_id", "provider_event_id"),
+        )
+    )
+    result_source = _optional_text(
+        _first_value(
+            *result_sources,
+            keys=("result_source", "result_provider", "provider_result_source"),
+        )
+    )
+    result_timestamp = _optional_text(
+        _first_value(*result_sources, keys=("result_timestamp", "result_at", "settled_at"))
+    )
+    result_artifact_hash = _optional_text(
+        _first_value(
+            *result_sources,
+            keys=(
+                "result_artifact_hash",
+                "result_artifact_sha",
+                "result_artifact_sha256",
+                "result_hash",
+                "attachment_sha",
+            ),
+        )
+    )
+    result_identity_raw = _first_value(
+        record,
+        artifact,
+        result,
+        provenance,
+        keys=("result_identity",),
+    )
+    result_identity = (
+        _public_json_value(result_identity_raw, "result_identity")
+        if result_identity_raw is not None
+        else {}
+    )
+    if not isinstance(result_identity, dict):
+        raise PublicFootballCompatibilityError("public football result_identity must be an object")
+    result_identity.update(
+        {
+            "result_id": result_id,
+            "provider_result_id": provider_result_id,
+            "result_source": result_source,
+            "result_timestamp": result_timestamp,
+            "result_status": result_status,
+        }
+    )
+    result_lineage_raw = _first_value(
+        record,
+        artifact,
+        result,
+        provenance,
+        keys=("result_lineage",),
+    )
+    result_lineage_value = (
+        _public_json_value(result_lineage_raw, "result_lineage")
+        if result_lineage_raw is not None
+        else {}
+    )
+    if not isinstance(result_lineage_value, dict):
+        raise PublicFootballCompatibilityError("public football result_lineage must be an object")
+    result_lineage = result_lineage_value
+    # Canonical identity fields are always regenerated from the current
+    # envelope so a stale attachment cannot be attributed to another
+    # prediction or fixture.
+    result_lineage.update(
+        {
+            "prediction_id": prediction_id,
+            "fixture_key": fixture_key,
+            "result_id": result_id,
+            "provider_result_id": provider_result_id,
+            "result_status": result_status,
+            "result_source": result_source,
+        }
+    )
+
+    freshness = {
+        "state": stale_state,
+        "stale": stale_state == "STALE" if stale_state != "UNKNOWN" else None,
+        "source_age_seconds": source_age_seconds,
+    }
+    explicit_freshness = _first_value(
+        health,
+        record,
+        provenance,
+        keys=("freshness",),
+    )
+    if explicit_freshness is not None:
+        freshness = _public_json_value(explicit_freshness, "freshness")
+        if not isinstance(freshness, dict):
+            freshness = {"state": freshness}
+        explicit_state = _normalized_key(freshness.get("state"))
+        if explicit_state in {"fresh", "current"}:
+            freshness["state"] = "FRESH"
+        elif explicit_state in {"stale", "expired"}:
+            freshness["state"] = "STALE"
+        freshness.setdefault("state", stale_state)
+        explicit_age = _optional_number(
+            freshness.get("source_age_seconds"), "freshness.source_age_seconds"
+        )
+        if explicit_age is not None and explicit_age < 0:
+            raise PublicFootballCompatibilityError(
+                "public football freshness.source_age_seconds must be non-negative"
+            )
+        freshness["source_age_seconds"] = (
+            explicit_age if explicit_age is not None else source_age_seconds
+        )
+        if "stale" not in freshness:
+            freshness["stale"] = (
+                freshness["state"] == "STALE"
+                if freshness["state"] in {"FRESH", "STALE"}
+                else None
+            )
+
+    evidence_kind, synthetic, injected, real_observed = _evidence_state(
+        record, provenance, artifact, fixture, health, result
+    )
+    context: dict[str, object] = {
+        # Canonical names are retained alongside the legacy ``league`` field;
+        # aliases below make the envelope consumable by existing football
+        # readers without requiring a second competition architecture.
+        "competition": competition_identity,
+        "competition_id": competition_id,
+        "competition_identity": competition_identity,
+        "season": season,
+        "season_id": season,
+        "historical_format_era": historical_format_era,
+        "format_era": historical_format_era,
+        "stage": stage,
+        "round": round_name,
+        "round_name": round_name,
+        "leg": leg,
+        "leg_number": leg,
+        "aggregate_context": aggregate_context,
+        "aggregate": aggregate_context,
+        "neutral_site": neutral_site,
+        "neutral_venue": neutral_site,
+        "venue_context": (
+            "neutral" if neutral_site is True else "standard_home" if neutral_site is False else "unknown"
+        ),
+        "home_advantage_applicable": (
+            False if neutral_site is True else True if neutral_site is False else None
+        ),
+        "model_artifact_hash": model_artifact_hash,
+        "model_artifact_sha": model_artifact_hash,
+        "model_artifact_sha256": model_artifact_hash,
+        "artifact_hash": model_artifact_hash,
+        "artifact_sha": model_artifact_hash,
+        "artifact_sha256": model_artifact_hash,
+        "prediction_artifact_sha": model_artifact_hash,
+        "model_identity": model_identity,
+        "prediction_timestamp": generated_at,
+        "signal_timestamp": signal_timestamp,
+        "prediction_time_provenance": prediction_time_provenance,
+        "prediction_provenance": prediction_time_provenance,
+        "prediction_time_source": prediction_time_source,
+        "prediction_time_snapshot_id": prediction_time_snapshot_id,
+        "prediction_time_captured_at": prediction_time_captured_at,
+        "fixture_id": fixture_id,
+        "provider_fixture_id": provider_fixture_id,
+        "fixture_identity": fixture_identity,
+        "result_id": result_id,
+        "provider_result_id": provider_result_id,
+        "result_source": result_source,
+        "result_timestamp": result_timestamp,
+        "result_identity": result_identity,
+        "result_lineage": result_lineage,
+        "result_artifact_hash": result_artifact_hash,
+        "result_artifact_sha": result_artifact_hash,
+        "result_artifact_sha256": result_artifact_hash,
+        "freshness": freshness,
+        "freshness_state": stale_state,
+        "freshness_status": stale_state,
+        "freshness_age_seconds": source_age_seconds,
+        "odds_age_seconds": source_age_seconds,
+        "shadow_state": state.upper(),
+        "shadow_only": state in {"disabled", "shadow"},
+        "inactive": state in {"disabled", "shadow"},
+        "externally_visible": False if _is_champions_league(
+            record, artifact, fixture, provenance, competition_context
+        ) else None,
+        "publicly_visible": False if _is_champions_league(
+            record, artifact, fixture, provenance, competition_context
+        ) else None,
+        "evidence_kind": evidence_kind,
+        "synthetic": synthetic,
+        "injected": injected,
+        "real_observed": real_observed,
+    }
+    if competition_name is not None:
+        context["competition_name"] = competition_name
+    context["competition_context"] = {
+        "competition_id": competition_id,
+        "competition_identity": competition_identity,
+        "competition_name": competition_name,
+        "season": season,
+        "historical_format_era": historical_format_era,
+        "stage": stage,
+        "round": round_name,
+        "leg": leg,
+        "aggregate_context": aggregate_context,
+        "neutral_site": neutral_site,
+    }
+    return context
 
 
 def map_prediction_to_public_football_signals(
@@ -328,6 +1078,7 @@ def map_prediction_to_public_football_signals(
     fixture = _mapping(record.get("fixture"))
     provenance = _mapping(record.get("provenance"))
     health = _mapping(record.get("health"))
+    result = _mapping(record.get("result"))
 
     league = _required_text(
         _first_value(artifact, record, provenance, keys=("league_code", "league")),
@@ -362,8 +1113,22 @@ def map_prediction_to_public_football_signals(
         _first_value(artifact, record, keys=("probabilities", "model_probabilities"))
     )
     state = _normalize_public_state(record, artifact, provenance)
-    synthetic = _validate_synthetic_boundary(
-        record, provenance, state, artifact, health
+    is_champions_league = _is_champions_league(
+        record, artifact, fixture, provenance
+    )
+    _validate_synthetic_boundary(record, provenance, state, artifact, health, result)
+    evidence_kind, synthetic, injected, real_observed = _evidence_state(
+        record, provenance, artifact, fixture, health, result
+    )
+    _validate_champions_league_boundary(
+        is_champions_league,
+        state,
+        record,
+        artifact,
+        fixture,
+        provenance,
+        health,
+        result,
     )
 
     fixture_key_text = fixture_key
@@ -408,14 +1173,49 @@ def map_prediction_to_public_football_signals(
             keys=("signal_timestamp", "snapshot_captured_at", "captured_at"),
         )
     )
+    freshness_record = _mapping(
+        _first_value(health, record, provenance, result, keys=("freshness",))
+    )
     source_age_seconds = _optional_number(
-        _first_value(health, record, provenance, keys=("source_age_seconds",)),
+        _first_value(
+            freshness_record,
+            health,
+            record,
+            provenance,
+            result,
+            keys=("source_age_seconds", "odds_age_seconds", "freshness_age_seconds", "age_seconds"),
+        ),
         "source_age_seconds",
     )
-    stale_raw = _first_value(
-        health, record, provenance, keys=("stale", "stale_artifact")
+    if source_age_seconds is not None and source_age_seconds < 0:
+        raise PublicFootballCompatibilityError(
+            "public football source_age_seconds must be non-negative"
+        )
+    freshness_raw = _first_value(
+        freshness_record,
+        health,
+        record,
+        provenance,
+        result,
+        keys=("freshness_state", "freshness_status", "state"),
     )
-    stale = stale_raw if isinstance(stale_raw, bool) else None
+    stale = None
+    if isinstance(freshness_raw, str):
+        freshness_state = _normalized_key(freshness_raw)
+        if freshness_state in {"fresh", "current"}:
+            stale = False
+        elif freshness_state in {"stale", "expired"}:
+            stale = True
+    if stale is None:
+        stale_raw = _first_value(
+            freshness_record,
+            health,
+            record,
+            provenance,
+            result,
+            keys=("stale", "stale_artifact"),
+        )
+        stale = stale_raw if isinstance(stale_raw, bool) else None
     stale_state = "STALE" if stale is True else "FRESH" if stale is False else "UNKNOWN"
 
     publication_enabled = (
@@ -455,7 +1255,11 @@ def map_prediction_to_public_football_signals(
     result_status = (
         str(
             _first_value(
-                record, artifact, health, keys=("result_status", "settlement_status")
+                result,
+                record,
+                artifact,
+                health,
+                keys=("result_status", "settlement_status", "status"),
             )
             or "PENDING"
         )
@@ -500,6 +1304,63 @@ def map_prediction_to_public_football_signals(
         snapshot_id=snapshot_id,
         snapshot_kind=snapshot_kind,
         source_age_seconds=source_age_seconds,
+        additional_sources=(artifact, health, result),
+    )
+    if evidence_kind is not None:
+        public_provenance["evidence_kind"] = evidence_kind
+    if injected:
+        public_provenance["injected"] = True
+    if real_observed:
+        public_provenance["real_observed"] = True
+    context = _context_payload(
+        record,
+        artifact,
+        fixture,
+        provenance,
+        health,
+        result,
+        league=league,
+        fixture_key=fixture_key_text,
+        prediction_id=prediction_id,
+        model_identity=model_identity,
+        generated_at=generated_at,
+        snapshot_id=snapshot_id,
+        snapshot_kind=snapshot_kind,
+        signal_timestamp=signal_timestamp or "",
+        source=source or "",
+        source_age_seconds=source_age_seconds,
+        stale_state=stale_state,
+        state=state,
+        result_status=result_status,
+    )
+    rich_context_supplied = is_champions_league or any(
+        source.get(key) is not None
+        for source in (record, artifact, fixture, provenance, health, result)
+        for key in (
+            "competition_id",
+            "competition_identity",
+            "competition_context",
+            "competition",
+            "season",
+            "season_id",
+            "historical_format_era",
+            "format_era",
+            "stage",
+            "round",
+            "leg",
+            "aggregate_context",
+            "neutral_site",
+            "model_artifact_hash",
+            "model_artifact_sha",
+            "model_artifact_sha256",
+            "prediction_time_provenance",
+            "prediction_provenance",
+            "prediction_time",
+            "fixture_identity",
+            "result_identity",
+            "result_lineage",
+            "freshness",
+        )
     )
     common: dict[str, object] = {
         "sport": "football",
@@ -546,11 +1407,34 @@ def map_prediction_to_public_football_signals(
         "n_models_agree": 0,
         "no_bet_flag": record.get("no_bet_flag") is True,
     }
-    if synthetic:
+    if is_champions_league:
+        # The compatibility record remains inspectable for shadow evaluation,
+        # but cannot become an actionable or externally visible signal.
         common.update(
             {
-                "synthetic": True,
-                "evidence_kind": "SYNTHETIC",
+                **context,
+                "activation_state": "SHADOW" if state != "disabled" else "DISABLED",
+                "activation_mode": "shadow" if state != "disabled" else "disabled",
+                "publication_status": "UNPUBLISHED",
+                "publication_enabled": False,
+                "no_bet": True,
+                "no_bet_flag": True,
+                "signal_status": "SHADOW" if state != "disabled" else "DISABLED",
+                "externally_visible": False,
+                "shadow_only": True,
+                "shadow_state": "SHADOW" if state != "disabled" else "DISABLED",
+            }
+        )
+    elif rich_context_supplied:
+        # Preserve the legacy Top-5/Tennis-facing record shape unless a
+        # caller explicitly supplied the additive context contract.
+        common.update(context)
+    if synthetic or injected:
+        common.update(
+            {
+                "synthetic": synthetic,
+                "evidence_kind": evidence_kind or ("SYNTHETIC" if synthetic else "INJECTED"),
+                "injected": injected,
                 "real_observed": False,
                 "model_approved": False,
                 "signal_time_approved": False,
@@ -595,7 +1479,12 @@ def build_public_football_release_health(
         "health model_identity",
     )
     state = _normalize_public_state(record, provenance)
-    _validate_synthetic_boundary(record, provenance, state)
+    result_record = _mapping(record.get("result"))
+    is_champions_league = _is_champions_league(record, provenance)
+    _validate_synthetic_boundary(record, provenance, state, result_record)
+    _validate_champions_league_boundary(
+        is_champions_league, state, record, provenance, result_record
+    )
     publication_status = (
         str(
             _first_value(record, keys=("publication_status",))
@@ -677,6 +1566,132 @@ def build_public_football_release_health(
         )
         or "",
     }
+    for age_field in ("source_age_seconds", "stale_artifact_age_seconds"):
+        age = result[age_field]
+        if isinstance(age, (int, float)) and age < 0:
+            raise PublicFootballCompatibilityError(
+                f"public football {age_field} must be non-negative"
+            )
+    health_freshness_record = _mapping(
+        _first_value(record, provenance, result_record, keys=("freshness",))
+    )
+    freshness_age = _optional_number(
+        _first_value(
+            health_freshness_record,
+            keys=("source_age_seconds", "odds_age_seconds", "age_seconds"),
+        ),
+        "source_age_seconds",
+    )
+    if freshness_age is not None:
+        result["source_age_seconds"] = freshness_age
+    if (
+        isinstance(result["source_age_seconds"], (int, float))
+        and result["source_age_seconds"] < 0
+    ):
+        raise PublicFootballCompatibilityError(
+            "public football source_age_seconds must be non-negative"
+        )
+    if result["stale_artifact"] is None:
+        freshness_state = _normalized_key(
+            _first_value(health_freshness_record, keys=("state", "status"))
+        )
+        if freshness_state in {"fresh", "current"}:
+            result["stale_artifact"] = False
+        elif freshness_state in {"stale", "expired"}:
+            result["stale_artifact"] = True
+    rich_context_supplied = any(
+        source.get(key) is not None
+        for source in (record, provenance, result_record)
+        for key in (
+            "competition_id",
+            "competition_identity",
+            "competition_context",
+            "competition",
+            "season",
+            "season_id",
+            "historical_format_era",
+            "format_era",
+            "stage",
+            "round",
+            "leg",
+            "aggregate_context",
+            "neutral_site",
+            "model_artifact_hash",
+            "model_artifact_sha",
+            "model_artifact_sha256",
+            "prediction_timestamp",
+            "prediction_time_provenance",
+            "prediction_provenance",
+            "prediction_time",
+            "fixture_identity",
+            "result_identity",
+            "result_lineage",
+            "freshness",
+            "shadow_state",
+            "injected",
+            "evidence_kind",
+        )
+    )
+    if rich_context_supplied:
+        health_source = _optional_text(
+            _first_value(record, provenance, keys=("source", "provider", "provider_name"))
+        ) or ""
+        health_stale = result["stale_artifact"]
+        health_stale_state = (
+            "STALE"
+            if health_stale is True
+            else "FRESH"
+            if health_stale is False
+            else "UNKNOWN"
+        )
+        health_context = _context_payload(
+            record,
+            {},
+            _mapping(record.get("fixture")),
+            provenance,
+            record,
+            result_record,
+            league=league,
+            fixture_key=_optional_text(
+                _first_value(record, provenance, keys=("fixture_key", "fixture_id"))
+            ) or "",
+            prediction_id=_optional_text(
+                _first_value(record, result_record, keys=("prediction_id",))
+            ) or "",
+            model_identity=model_identity,
+            generated_at=_optional_text(
+                _first_value(record, keys=("prediction_timestamp", "observed_at", "generated_at"))
+            ) or "",
+            snapshot_id=_optional_text(
+                _first_value(record, provenance, keys=("snapshot_id", "signal_snapshot_id"))
+            ) or "",
+            snapshot_kind=_optional_text(
+                _first_value(record, provenance, keys=("snapshot_kind",))
+            ) or "unknown",
+            signal_timestamp=_optional_text(
+                _first_value(record, provenance, keys=("prediction_time_captured_at", "captured_at"))
+            ) or "",
+            source=health_source,
+            source_age_seconds=result["source_age_seconds"]
+            if isinstance(result["source_age_seconds"], (int, float))
+            else None,
+            stale_state=health_stale_state,
+            state=state,
+            result_status=str(result["settlement_status"]),
+        )
+        result.update(health_context)
+        if is_champions_league:
+            result.update(
+                {
+                    "activation_state": "SHADOW" if state != "disabled" else "DISABLED",
+                    "no_bet": True,
+                    "publication_enabled": False,
+                    "publication_status": "UNPUBLISHED",
+                    "shadow_state": "SHADOW" if state != "disabled" else "DISABLED",
+                    "shadow_only": True,
+                    "externally_visible": False,
+                }
+            )
     assert_no_private_fields(result)
     return result
 

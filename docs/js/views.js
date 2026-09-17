@@ -669,6 +669,9 @@ function _buildTopRecs24h(signals, nowMs) {
     return matchKey(bh, ba);
   }));
   const candidates = (signals || [])
+    // Champions League compatibility records are retained for shadow
+    // observability but must never become user-facing recommendations.
+    .filter(s => s.externally_visible !== false && s.shadow_only !== true)
     .filter(s => _evScore(s) > 0)
     .filter(s => {
       // P1.5-H: explicit ACTIVE required — old-schema signals without status are
@@ -1143,7 +1146,11 @@ function _bindSportControls(sport) {
 
 function renderSport(sport) {
   const c = document.getElementById(sport + '-container');
-  const allSigs = _signals.filter(s => s.sport === sport);
+  // Keep inactive/shadow compatibility records out of the user-facing list;
+  // the serialized payload still retains them for internal observability.
+  const allSigs = _signals.filter(s =>
+    s.sport === sport && s.externally_visible !== false && s.shadow_only !== true
+  );
   const filter = _getSportFilter(sport);
   // Filter anwenden
   const sigs = allSigs.filter(s => {
