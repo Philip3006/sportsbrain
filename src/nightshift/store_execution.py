@@ -19,6 +19,7 @@ from .models import (
     utc_now,
 )
 from .store_schema import ALLOWED_TRANSITIONS
+from .task_states import DEPENDENCY_SATISFIED_STATES
 
 
 class StoreExecutionMixin:
@@ -110,12 +111,7 @@ class StoreExecutionMixin:
                         )
                         continue
                     if any(
-                        dep_states[dep_id]
-                        not in {
-                            TaskState.COMPLETED,
-                            TaskState.PR_READY,
-                            TaskState.CEO_REVIEW,
-                        }
+                        dep_states[dep_id] not in DEPENDENCY_SATISFIED_STATES
                         for dep_id in dependencies
                     ):
                         if row["state"] == TaskState.READY.value:

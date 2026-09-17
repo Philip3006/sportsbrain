@@ -40,10 +40,10 @@ ALLOWED_TRANSITIONS: dict[TaskState, frozenset[TaskState]] = {
             TaskState.FAILED_SAFE,
         }
     ),
-    TaskState.PR_READY: frozenset({TaskState.CEO_REVIEW}),
+    TaskState.PR_READY: frozenset({TaskState.CEO_REVIEW, TaskState.COMPLETED}),
     TaskState.COMPLETED: frozenset({TaskState.CEO_REVIEW}),
     TaskState.BLOCKED: frozenset({TaskState.READY, TaskState.CANCELLED}),
-    TaskState.CEO_REVIEW: frozenset(),
+    TaskState.CEO_REVIEW: frozenset({TaskState.COMPLETED}),
     TaskState.FAILED_SAFE: frozenset(),
     TaskState.CANCELLED: frozenset(),
 }

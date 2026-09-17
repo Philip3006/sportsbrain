@@ -31,6 +31,12 @@ class TaskState(str, Enum):
     CANCELLED = "CANCELLED"
 
 
+# A dependency is satisfied only when the task's work is actually present on
+# the protected base.  PR_READY and CEO_REVIEW are delivery milestones, not
+# proof that the change has been merged.
+DEPENDENCY_SATISFIED_STATES = frozenset({TaskState.COMPLETED})
+
+
 def state_from_value(value: str | TaskState) -> TaskState:
     """Parse canonical state values and migrate original V1 spellings."""
 

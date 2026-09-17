@@ -8,6 +8,7 @@ from typing import Any
 
 from .models import EventType, TaskState, isoformat, state_from_value, utc_now
 from .roadmap import RoadmapRegistry
+from .task_states import DEPENDENCY_SATISFIED_STATES
 
 
 class StoreRoadmapMixin:
@@ -134,12 +135,7 @@ class StoreRoadmapMixin:
                     }
                     if any(
                         dep_id not in dep_states
-                        or dep_states[dep_id]
-                        not in {
-                            TaskState.COMPLETED,
-                            TaskState.PR_READY,
-                            TaskState.CEO_REVIEW,
-                        }
+                        or dep_states[dep_id] not in DEPENDENCY_SATISFIED_STATES
                         for dep_id in dependencies
                     ):
                         continue

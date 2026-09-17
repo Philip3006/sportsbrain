@@ -60,6 +60,7 @@ class EventType(str, Enum):
     PUSHED = "pushed"
     PR_CREATED = "pr_created"
     PR_REUSED = "pr_reused"
+    MERGE_VERIFIED = "merge_verified"
     COMPLETED = "completed"
     DELIVERY_BLOCKED = "delivery_blocked"
     FENCED = "fenced"

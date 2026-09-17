@@ -48,6 +48,7 @@ BACKLOG ──approve──> READY ──claim──> CLAIMED ──start──>
    └─reject──> FAILED_SAFE       └─dependency──> WAITING_DEPENDENCY
                                                          │
 RUNNING ──verify──> VERIFYING ──delivery──> PR_READY ──> CEO_REVIEW
+                                      └─verified merge──> COMPLETED
    │                       └─read-only delivery──> COMPLETED ──> CEO_REVIEW
    ├─retry──> READY
    ├─unsafe/auth gate──> BLOCKED
@@ -76,8 +77,19 @@ stale owner is rejected.
 
 Tasks support explicit dependencies, priority, bounded attempts, parent task
 identity, and idempotency keys. A task is not claimable until every dependency
-has succeeded. Failed, cancelled, blocked, or dead-lettered dependencies block
-the dependent task rather than allowing it to run with incomplete context.
+is `COMPLETED`. `PR_READY` and `CEO_REVIEW` are not dependency satisfaction:
+they represent unmerged work waiting for CEO action. Failed, cancelled,
+blocked, or dead-lettered dependencies block the dependent task rather than
+allowing it to run with incomplete context. Independent roadmap items remain
+eligible while a parent PR waits for merge.
+
+A PR-backed task reaches `COMPLETED` after the operator runs
+`reconcile-merged TASK_ID --actor OPERATOR`. The command performs a read-only
+GitHub query and requires exact repository, base branch/base SHA, task branch,
+commit SHA, remote SHA, and recorded PR-number binding with `merged=true`.
+GitHub or binding verification failure is fail-closed. Successful
+reconciliation records durable `merge_verified` evidence; it never merges,
+approves, pushes, or deploys.
 
 ## Safety gates
 

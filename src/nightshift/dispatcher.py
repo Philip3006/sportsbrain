@@ -9,9 +9,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .delivery import DeliveryPipeline, GhPullRequestClient
+from .delivery import DeliveryPipeline, GhPullRequestClient, PullRequestClient
 from .dispatcher_execution import DispatcherExecutionMixin
 from .errors import (
+    DeliveryBlocked,
+    DeliveryError,
     IdempotencyConflictError,
     InvalidTaskError,
     SafetyViolation,
@@ -30,6 +32,7 @@ from .policy import SafetyPolicy
 from .registry import BuilderRegistry
 from .roadmap import RoadmapRegistry
 from .store import DispatcherStore
+from .task_states import DEPENDENCY_SATISFIED_STATES
 from .templates import TemplateRegistry
 from .worktree import (
     WorktreeManager,
@@ -333,7 +336,7 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
             )
         if any(
             self.store.get(dependency).state
-            not in {TaskState.SUCCEEDED, TaskState.PR_READY, TaskState.CEO_REVIEW}
+            not in DEPENDENCY_SATISFIED_STATES
             for dependency in record.dependency_ids
         ):
             raise SafetyViolation("blocked task still has an incomplete dependency")
@@ -376,6 +379,49 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
             now=self.clock(), actor=self.dispatcher_id
         )
 
+    def reconcile_merged(
+        self,
+        task_id: str,
+        *,
+        actor: str,
+        github: PullRequestClient | None = None,
+    ) -> TaskRecord:
+        """Complete PR work only after independent read-only merge verification."""
+
+        self._require_actor(actor)
+        record = self.store.get(task_id)
+        if record.state is TaskState.COMPLETED:
+            merge_evidence = (record.delivery or {}).get("merge_verification")
+            if isinstance(merge_evidence, Mapping) and merge_evidence.get("merged") is True:
+                return record
+            raise SafetyViolation("task is already completed without merge reconciliation")
+        if record.state not in {TaskState.PR_READY, TaskState.CEO_REVIEW}:
+            raise SafetyViolation("task is not awaiting merge verification")
+        if not record.requires_pr or not record.pr_number:
+            raise SafetyViolation("merge verification requires a recorded pull request")
+        client = github
+        if client is None:
+            client = self.delivery_pipeline.github if self.delivery_pipeline else GhPullRequestClient()
+        verifier = getattr(client, "verify_merged", None)
+        if verifier is None:
+            raise DeliveryBlocked("MERGE_VERIFICATION_UNAVAILABLE")
+        try:
+            evidence = verifier(record)
+        except DeliveryError:
+            raise
+        except Exception as exc:
+            raise DeliveryError("pull request merge verification failed") from exc
+        if not isinstance(evidence, Mapping) or evidence.get("merged") is not True:
+            raise DeliveryError("merge verification did not prove merged=true")
+        completed = self.store.mark_merge_verified(
+            task_id,
+            actor=actor,
+            evidence=dict(evidence),
+            now=self.clock(),
+        )
+        self._refresh_roadmap()
+        return completed
+
     def _refresh_roadmap(self) -> None:
         """Reflect task outcomes without inventing or deleting roadmap items."""
 
@@ -387,13 +433,19 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                 task = self.store.get(task_id)
             except TaskNotFoundError:
                 continue
-            if task.state in {
-                TaskState.COMPLETED,
-                TaskState.PR_READY,
-                TaskState.CEO_REVIEW,
-            }:
+            if task.state is TaskState.COMPLETED:
                 self.store.set_roadmap_status(
                     item["item_id"], status="COMPLETED", now=self.clock()
+                )
+            elif task.state in {TaskState.PR_READY, TaskState.CEO_REVIEW}:
+                self.store.set_roadmap_status(
+                    item["item_id"],
+                    status="BLOCKED",
+                    reason="awaiting verified GitHub merge",
+                    next_eligible_at=datetime.fromisoformat(
+                        task.available_at.replace("Z", "+00:00")
+                    ),
+                    now=self.clock(),
                 )
             elif task.state is TaskState.BLOCKED:
                 self.store.set_roadmap_status(

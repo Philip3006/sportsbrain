@@ -12,7 +12,12 @@ from typing import Any
 
 from .audit import AuditIntegrityError, AuditMixin
 from .control import QueueControlMixin
-from .errors import IdempotencyConflictError, InvalidTransitionError, TaskNotFoundError
+from .errors import (
+    IdempotencyConflictError,
+    InvalidTransitionError,
+    SafetyViolation,
+    TaskNotFoundError,
+)
 from .models import (
     EventType,
     RiskClass,
@@ -352,6 +357,10 @@ class DispatcherStore(
         now: datetime | None = None,
         updates: Mapping[str, Any] | None = None,
     ) -> TaskRecord:
+        if expected in {TaskState.PR_READY, TaskState.CEO_REVIEW} and new_state is TaskState.COMPLETED:
+            raise SafetyViolation(
+                "PR-backed work must use merge reconciliation before COMPLETED"
+            )
         if new_state not in ALLOWED_TRANSITIONS[expected]:
             raise InvalidTransitionError(
                 f"{expected.value} -> {new_state.value} is not permitted"

@@ -65,6 +65,12 @@ def _parser() -> argparse.ArgumentParser:
     )
     review.add_argument("task_id")
     review.add_argument("--actor", required=True)
+    reconcile = sub.add_parser(
+        "reconcile-merged",
+        help="complete a PR task only after read-only GitHub merge verification",
+    )
+    reconcile.add_argument("task_id")
+    reconcile.add_argument("--actor", required=True)
     unblock = sub.add_parser(
         "unblock", help="release dependency-blocked work after prerequisites succeed"
     )
@@ -223,6 +229,13 @@ def main(argv: list[str] | None = None) -> int:
         print(
             json.dumps(
                 dispatcher.mark_ceo_review(args.task_id, actor=args.actor).as_dict(),
+                indent=2,
+            )
+        )
+    elif args.command == "reconcile-merged":
+        print(
+            json.dumps(
+                dispatcher.reconcile_merged(args.task_id, actor=args.actor).as_dict(),
                 indent=2,
             )
         )
