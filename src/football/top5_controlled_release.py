@@ -46,6 +46,7 @@ from src.football.top5_publisher import (
     PublicationRollback,
     PublishedTop5Artifact,
     Top5PublicationAuthorization,
+    _create_capability_issuance_proof,
 )
 from src.football.top5_qualification_sample_aggregator import (
     Builder2QualificationSampleAggregatorError,
@@ -922,7 +923,11 @@ class Top5ControlledRelease:
             authorization,
             now=now,
         )
-        return attestation, capability_store.issue(attestation)
+        issuer_proof = _create_capability_issuance_proof(attestation)
+        return attestation, capability_store.issue(
+            attestation,
+            issuer_proof=issuer_proof,
+        )
 
     def publish(
         self,

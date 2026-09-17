@@ -812,6 +812,44 @@ class ControlledPublicationAttestation:
         }
 
 
+_PENDING_CAPABILITY_ISSUANCE_PROOFS: dict[
+    int, tuple[object, ControlledPublicationAttestation]
+] = {}
+
+
+def _create_capability_issuance_proof(
+    attestation: ControlledPublicationAttestation,
+) -> object:
+    """Create an opaque, one-time proof for the controlled release boundary.
+
+    The proof is intentionally an object-identity capability, not a digest of
+    caller-supplied fields.  Only ``Top5ControlledRelease`` receives one after
+    its activation and separate-publication-authority checks have succeeded.
+    ``FileControlledPublicationCapabilityStore`` consumes it before touching
+    canonical runtime state.
+    """
+
+    proof = object()
+    _PENDING_CAPABILITY_ISSUANCE_PROOFS[id(proof)] = (proof, attestation)
+    return proof
+
+
+def _consume_capability_issuance_proof(
+    attestation: ControlledPublicationAttestation,
+    proof: object | None,
+) -> None:
+    if proof is None:
+        raise ProductionContractError(
+            "controlled publication capability issuance requires an authorized release proof"
+        )
+    entry = _PENDING_CAPABILITY_ISSUANCE_PROOFS.get(id(proof))
+    if entry is None or entry[0] is not proof or entry[1] is not attestation:
+        raise ProductionContractError(
+            "controlled publication capability issuance proof is invalid or already consumed"
+        )
+    del _PENDING_CAPABILITY_ISSUANCE_PROOFS[id(proof)]
+
+
 @dataclass(frozen=True)
 class ControlledPublicationCapability:
     """One-time operator capability kept separate from public artifacts."""
@@ -869,7 +907,10 @@ class ControlledPublicationCapability:
 
 class ControlledPublicationCapabilityStore(Protocol):
     def issue(
-        self, attestation: ControlledPublicationAttestation
+        self,
+        attestation: ControlledPublicationAttestation,
+        *,
+        issuer_proof: object | None = None,
     ) -> ControlledPublicationCapability: ...
 
 
@@ -1016,8 +1057,12 @@ class FileControlledPublicationCapabilityStore:
         return value
 
     def issue(
-        self, attestation: ControlledPublicationAttestation
+        self,
+        attestation: ControlledPublicationAttestation,
+        *,
+        issuer_proof: object | None = None,
     ) -> ControlledPublicationCapability:
+        _consume_capability_issuance_proof(attestation, issuer_proof)
         capability_id = f"top5-capability:{uuid.uuid4().hex}"
         capability_nonce = secrets.token_urlsafe(32)
         capability = ControlledPublicationCapability(capability_id, capability_nonce)

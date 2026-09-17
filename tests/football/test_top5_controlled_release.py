@@ -850,6 +850,8 @@ def _capability_fixture(tmp_path, monkeypatch):
         "capability_path": capability_path,
         "state_path": state_path,
         "store": store,
+        "release": release,
+        "publication_authorization": publication_auth,
         "runtime_now": runtime_now,
     }
 
@@ -1068,11 +1070,18 @@ def test_consumed_capability_rotates_without_manual_deletion(tmp_path, monkeypat
     store = fixture["store"]
     capability_a = fixture["capability"]
     attestation = fixture["attestation"]
+    release = fixture["release"]
+    publication_authorization = fixture["publication_authorization"]
     artifact_path = fixture["artifact"].artifact_path
     now = fixture["runtime_now"]
 
     with pytest.raises(ValueError, match="still unconsumed"):
-        store.issue(attestation)
+        release.issue_publication_capability(
+            fixture["artifact"],
+            publication_authorization,
+            store,
+            now=now,
+        )
     assert json.loads(fixture["state_path"].read_text())["consumed"] is False
 
     store.consume(
@@ -1091,7 +1100,12 @@ def test_consumed_capability_rotates_without_manual_deletion(tmp_path, monkeypat
             now=now,
         )
 
-    capability_b = store.issue(attestation)
+    attestation_b, capability_b = release.issue_publication_capability(
+        fixture["artifact"],
+        publication_authorization,
+        store,
+        now=now,
+    )
     state_after_rotation = json.loads(fixture["state_path"].read_text())
     assert capability_b.capability_id != capability_a.capability_id
     assert state_after_rotation["consumed"] is False
@@ -1101,7 +1115,7 @@ def test_consumed_capability_rotates_without_manual_deletion(tmp_path, monkeypat
 
     store.consume(
         capability_b,
-        attestation,
+        attestation_b,
         artifact=fixture["product"],
         artifact_path=artifact_path,
         now=now,
@@ -1110,11 +1124,89 @@ def test_consumed_capability_rotates_without_manual_deletion(tmp_path, monkeypat
         with pytest.raises(ValueError):
             store.consume(
                 capability,
-                attestation,
+                attestation_b,
                 artifact=fixture["product"],
                 artifact_path=artifact_path,
                 now=now,
             )
+
+
+def test_direct_store_cannot_issue_from_self_consistent_forged_attestation(
+    tmp_path, monkeypatch
+):
+    _request, _auth, _evidence, artifact, publication_auth, _health = _context(tmp_path)
+    runtime_now = datetime.now(timezone.utc)
+    publication_auth = replace(
+        publication_auth,
+        issued_at=runtime_now - timedelta(minutes=1),
+        expires_at=runtime_now + timedelta(days=1),
+    )
+    monkeypatch.setattr(
+        top5_publisher_module.pwd,
+        "getpwuid",
+        lambda uid: type(
+            "PasswdEntry", (), {"pw_dir": str(tmp_path / "operator-home")}
+        )(),
+    )
+    store = FileControlledPublicationCapabilityStore()
+    state_path = controlled_publication_capability_state_path()
+    fake_active_bindings = {
+        "active": True,
+        "activation_id": artifact.activation_id,
+        "league_code": artifact.league_code,
+        "candidate_id": artifact.candidate_id,
+        "model_identity": artifact.model_identity,
+        "source_sha": artifact.source_sha,
+        "research_sha": artifact.research_sha,
+        "model_artifact_hash": artifact.model_artifact_hash,
+        "signal_time_experiment_id": artifact.signal_time_experiment_id,
+        "provider_authority": artifact.provider_authority,
+        "result_authority": artifact.result_authority,
+        "evidence_digest": artifact.evidence_digest,
+        "controlled_shadow_run_id": artifact.controlled_shadow_run_id,
+        "qualification_session_id": artifact.qualification_session_id,
+    }
+    forged = ControlledPublicationAttestation.issue(
+        artifact,
+        publication_auth,
+        activation_bindings=fake_active_bindings,
+        artifact=artifact.as_public_product(),
+        now=runtime_now,
+    )
+    forged.validate(
+        artifact=artifact.as_public_product(),
+        artifact_path=artifact.artifact_path,
+        now=runtime_now,
+    )
+    product_path = tmp_path / artifact.artifact_path
+    product_path.parent.mkdir(parents=True)
+    product_path.write_text(json.dumps(artifact.as_public_product(), sort_keys=True))
+    attestation_path = tmp_path / "direct-forged-attestation.json"
+    attestation_path.write_text(json.dumps(forged.as_payload(), sort_keys=True))
+    capability_path = tmp_path / "direct-forged-capability.json"
+    capability_path.write_text(
+        json.dumps(
+            {
+                "capability_id": "top5-capability:direct-forgery",
+                "capability_nonce": "direct-forgery-nonce-" + "x" * 32,
+            },
+            sort_keys=True,
+        )
+    )
+    fixture = {
+        "artifact": artifact,
+        "product_path": product_path,
+        "attestation_path": attestation_path,
+        "capability_path": capability_path,
+        "state_path": state_path,
+    }
+
+    with pytest.raises(ValueError, match="authorized release proof"):
+        store.issue(forged)
+
+    rejected = _run_validator(fixture)
+    assert rejected.returncode != 0
+    assert not fixture["state_path"].exists()
 
 
 def test_capability_store_rejects_noncanonical_state_path(tmp_path, monkeypatch):
