@@ -26,18 +26,16 @@ The existing readiness enum is reused without changing its meaning:
 - `LIVE_PATH_READY_FOR_OBSERVATION`
 - `REAL_OBSERVATION_VALIDATED`
 
-Provider candidates are the configurable, non-ranked set:
-
-`the_odds_api`, `odds_api_io`, `api_football`, `betfair_delayed`.
+The canonical football provider scope is the single provider `the_odds_api`.
 
 Only `REAL_OBSERVED` can produce `REAL_OBSERVATION_VALIDATED`. `TEST_FIXTURE`,
 `MOCK`, and `OFFLINE_REPLAY` may demonstrate the contract but can never count
 as a real observation or promote readiness.
 
 The gate preserves the causal cascade contract from PR #63. The configured
-order is caller-supplied, duplicate-free, and recorded in every session;
-fallback is sequential and is accepted only when prior attempts failed. The
-gate does not rank providers or infer an authority, consensus, or winner.
+singleton order is recorded in every session; a provider failure is terminal
+for football and cannot be substituted. The gate does not rank providers or
+infer an authority, consensus, or winner.
 
 ## Session and observation contract
 
@@ -57,7 +55,8 @@ evidence.
   adapter version and adapter source SHA;
 - source timestamp, timestamp provenance, capture time, request start/end,
   latency, and caller-supplied signal-time checks;
-- cascade evidence, selected provider, fallback order and prior outcomes;
+- cascade evidence, selected provider, canonical provider order and prior
+  outcome;
 - quota before/after, quota units and exactly one documented network request;
 - immutable `NO-BET`, publication-off, activation-off, no-ledger,
   no-sealed-data, no-Research, and no-monetary-spend flags.
@@ -83,9 +82,8 @@ The accepted timestamp provenance values are:
 `PROVIDER_SOURCE_TIMESTAMP`, `BOOKMAKER_UPDATE_TIMESTAMP`,
 `EXCHANGE_PUBLISH_TIMESTAMP`, `CAPTURE_TIME_ONLY`, and `UNKNOWN`.
 
-`CAPTURE_TIME_ONLY` and `UNKNOWN` cannot pass the real freshness gate.
-Betfair Delayed observations must explicitly disclose that they are delayed;
-the gate never fabricates a delay interval.
+`CAPTURE_TIME_ONLY` and `UNKNOWN` cannot pass the real freshness gate. The
+gate never fabricates a delay interval.
 
 ## Quality and timing
 
@@ -173,9 +171,8 @@ stale/future/capture-only timestamps, malformed and partial odds, duplicate
 and conflicting duplicate identity, provider-event collisions, timeout,
 401/403/429/5xx and quota outcomes through the merged cascade contract,
 missing provenance, fake `REAL_OBSERVED`, paid-spend authorization, and
-offline replay. All fail closed. `betfair_delayed` is covered as an explicit
-delayed candidate, and The Odds API quota fallback remains subject to the
-causal PR-#63 validator.
+offline replay. All fail closed. The Odds API failure remains terminal and
+subject to the causal PR-#63 validator.
 
 ## Verification boundary
 

@@ -1,51 +1,36 @@
-"""Parallel-Fetch + Priorisierter Merger für Football-Odds.
+"""The Odds API-only Football odds merger.
 
-Analog zu src/tennis/odds/merger.py. Alle registrierten Quellen werden
-parallel angefragt (ThreadPoolExecutor, 5s Timeout). Aus den gelieferten
-FootballOddsQuotes wird der Best-Price aus dem höchsten Tier (kleinste
-Ziffer = schärfste Quelle) gewählt.
+The existing helper is retained for API compatibility, but the active
+Football registry contains only The Odds API.  Provider failure is fail closed.
 
 Coverage-Gate:
     bookies_count_1x2 < MIN_BOOKIES_1X2 (3) → no_bet_flag=True auf allen Signalen.
     Gilt auch wenn Quellen insgesamt vorhanden, aber nur wenige Bookies.
 
-Fallback-Kette:
-    Tier 1 (Betfair, Pinnacle) → Tier 2 (TheOddsAPI multi-region) →
-    Tier 3 (WebSearch) → Tier 5 (Implied-DC, no_bet_flag immer True)
+There is no alternate-provider, WebSearch, cache, or implied-odds fallback.
 """
+
 from __future__ import annotations
 
+import logging
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Callable, Optional
 
-from src.football.odds.base import FootballOddsQuote, sanity_1x2
-from src.football.odds.implied import fetch as _fetch_implied
+from src.football.odds.base import FootballOddsQuote
+from src.football.provider_cascade.contracts import FOOTBALL_PROVIDER_REPERTOIRE
 
 MIN_BOOKIES_1X2 = 3
+_log = logging.getLogger("sportsbrain.football.odds.merger")
 
 
 def _load_sources() -> list[tuple[str, int, Callable]]:
     sources: list[tuple[str, int, Callable]] = []
     try:
         from src.football.odds import the_odds_api as _toa
+
         sources.append((_toa.name, _toa.tier, _toa.fetch))
-    except Exception:
-        pass
-    try:
-        from src.football.odds import betfair as _bf
-        sources.append((_bf.name, _bf.tier, _bf.fetch))
-    except Exception:
-        pass
-    try:
-        from src.football.odds import pinnacle as _pin
-        sources.append((_pin.name, _pin.tier, _pin.fetch))
-    except Exception:
-        pass
-    try:
-        from src.football.odds import websearch as _ws
-        sources.append((_ws.name, _ws.tier, _ws.fetch))
-    except Exception:
-        pass
+    except (ImportError, AttributeError):
+        return sources
     return sources
 
 
@@ -56,45 +41,57 @@ def fetch_all_sources(
     match_hint: dict,
     timeout_s: float = 5.0,
 ) -> list[FootballOddsQuote]:
-    """Fragt alle registrierten Quellen parallel ab.
+    """Fetch the one canonical football source and fail closed.
 
     match_hint muss mindestens 'home_team' und 'away_team' enthalten.
     Optionales 'bookmakers' spart TheOddsAPI-Quota (aus Bulk-Fetch).
-    Optionales 'model_probs' {p_home,p_draw,p_away} ermöglicht Tier-5-Fallback.
+    Model probabilities never substitute for an observed provider quote.
 
     Return: Liste aller Quotes die geliefert wurden (inkl. no_bet_flag-Quotes).
     """
     quotes: list[FootballOddsQuote] = []
-    if not ENABLED_SOURCES:
+    source = next(
+        (
+            source
+            for source in ENABLED_SOURCES
+            if source[0] in FOOTBALL_PROVIDER_REPERTOIRE
+        ),
+        None,
+    )
+    if source is None:
         return quotes
 
-    with ThreadPoolExecutor(max_workers=max(1, len(ENABLED_SOURCES))) as pool:
-        futures = {
-            pool.submit(fn, match_hint): (src_name, src_tier)
-            for (src_name, src_tier, fn) in ENABLED_SOURCES
-        }
+    # The filter and first-match selection above are invariants, not just a
+    # default. They prevent a mutable compatibility test seam from introducing
+    # a second football provider or a duplicate call into this runtime path.
+    src_name, src_tier, fn = source
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        futures = {pool.submit(fn, match_hint): (src_name, src_tier)}
         try:
-            for fut in as_completed(futures, timeout=timeout_s + 2):
+            for future in as_completed(futures, timeout=timeout_s + 2):
                 try:
-                    q: Optional[FootballOddsQuote] = fut.result(timeout=timeout_s)
-                except Exception:
-                    q = None
-                if q is not None and q.h2h_home > 0:
-                    quotes.append(q)
+                    quote: FootballOddsQuote | None = future.result(timeout=timeout_s)
+                except Exception as exc:  # noqa: BLE001 - provider boundary fails closed
+                    _log.debug("The Odds API source failed: %s", exc)
+                    quote = None
+                if quote is not None and quote.h2h_home > 0:
+                    quotes.append(quote)
         except TimeoutError:
-            for fut in futures:
-                if fut.done():
-                    try:
-                        q = fut.result(timeout=0)
-                        if q is not None and q.h2h_home > 0:
-                            quotes.append(q)
-                    except Exception:
-                        pass
+            for future in futures:
+                if not future.done():
+                    continue
+                try:
+                    quote = future.result(timeout=0)
+                except Exception as exc:  # noqa: BLE001 - provider boundary fails closed
+                    _log.debug("The Odds API source timed out: %s", exc)
+                    quote = None
+                if quote is not None and quote.h2h_home > 0:
+                    quotes.append(quote)
 
     return quotes
 
 
-def merge_by_tier(quotes: list[FootballOddsQuote]) -> Optional[FootballOddsQuote]:
+def merge_by_tier(quotes: list[FootballOddsQuote]) -> FootballOddsQuote | None:
     """Wählt beste Quote: Tier 1 vor Tier 2 vor Tier 3; innerhalb Tier → bester Bookie-Count.
 
     Gibt None zurück wenn keine Quote vorhanden.
@@ -122,21 +119,18 @@ def fetch_best_football_odds(
     match_hint: dict,
     timeout_s: float = 5.0,
     allow_implied: bool = True,
-) -> Optional[FootballOddsQuote]:
-    """Convenience: fetch_all_sources → merge_by_tier → Coverage-Gate → Implied-Fallback.
+) -> FootballOddsQuote | None:
+    """Fetch The Odds API, apply the coverage gate, and fail closed.
 
     Return:
       - FootballOddsQuote mit no_bet_flag=False → normales Signal
       - FootballOddsQuote mit no_bet_flag=True  → Display-only
-      - None → nichts brauchbar, kein Implied möglich
+      - None → no authoritative provider quote
     """
     quotes = fetch_all_sources(match_hint, timeout_s=timeout_s)
     best = merge_by_tier(quotes)
 
     if best is not None:
         return _apply_coverage_gate(best)
-
-    if allow_implied and match_hint.get("model_probs"):
-        return _fetch_implied(match_hint)
 
     return None

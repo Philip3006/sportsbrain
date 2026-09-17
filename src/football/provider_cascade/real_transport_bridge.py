@@ -1,6 +1,6 @@
 """Separately reviewed network-capable transport bridge.
 
-This module adapts one of the existing provider adapters to the controlled
+This module adapts the existing The Odds API adapter to the controlled
 shadow harness.  It has no authority-issuing methods and requires both the
 caller-supplied run authorization already required by the harness and the
 existing network authorization contract.  Tests inject the adapter's HTTP
@@ -15,7 +15,11 @@ from math import isfinite
 from typing import Any
 
 from src.football.production_contracts import Fixture, _utc
-from src.football.provider_cascade.adapters import AdapterResult, OddsProviderAdapter
+from src.football.provider_cascade.adapters import (
+    AdapterResult,
+    OddsProviderAdapter,
+    TheOddsAPIAdapter,
+)
 from src.football.provider_cascade.contracts import (
     CascadeTimingPolicy,
     NetworkAuthorizationContract,
@@ -42,7 +46,6 @@ from src.football.top5_provider_cascade_validation import CascadeOutcome
 
 _SOURCE_TIMESTAMP_PROVENANCE = {
     "the_odds_api": ProviderTimestampProvenance.BOOKMAKER_UPDATE_TIMESTAMP,
-    "odds_api_io": ProviderTimestampProvenance.PROVIDER_SOURCE_TIMESTAMP,
 }
 
 
@@ -79,12 +82,11 @@ def _failure_outcome(state: ProviderState) -> CascadeOutcome:
 
 
 class ConfiguredNetworkProviderTransport(NetworkCapableProviderTransport):
-    """One explicit existing adapter behind the network-capable seam.
+    """The explicit The Odds API adapter behind the network-capable seam.
 
-    The bridge intentionally supports a pre-resolved, single odds request.
+    The bridge intentionally supports a pre-resolved, single The Odds API odds request.
     Discovery is a separate contract and is rejected until an adapter-specific
-    discovery evidence path is reviewed.  Current adapters that can supply a
-    canonical source timestamp are the only providers accepted here.
+    discovery evidence path is reviewed.  No alternate provider is accepted.
     """
 
     def __init__(
@@ -116,11 +118,19 @@ class ConfiguredNetworkProviderTransport(NetworkCapableProviderTransport):
     def _validate_static_configuration(self) -> None:
         if not self.provider.strip():
             raise HarnessContractError("network bridge provider is required")
+        if self.provider != "the_odds_api":
+            raise HarnessExecutionBlocked(
+                "only The Odds API is an approved Football network bridge provider"
+            )
         self.provider_config.validate()
         self.timing_policy.validate()
         self.network_authorization.validate()
         if self.provider_config.name != self.provider:
             raise HarnessContractError("provider config does not match bridge provider")
+        if type(self.adapter) is not TheOddsAPIAdapter:
+            raise HarnessExecutionBlocked(
+                "network bridge requires the canonical The Odds API adapter"
+            )
         if getattr(self.adapter, "name", None) != self.provider:
             raise HarnessContractError(
                 "adapter identity does not match bridge provider"

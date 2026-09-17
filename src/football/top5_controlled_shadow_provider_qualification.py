@@ -120,7 +120,6 @@ class QualificationCode(str, Enum):
     MISSING_DRAW = "MISSING_DRAW"
     MALFORMED_ODDS = "MALFORMED_ODDS"
     SYNTHETIC_RECONSTRUCTION = "SYNTHETIC_RECONSTRUCTION"
-    BETFAIR_DELAY_NOT_DISCLOSED = "BETFAIR_DELAY_NOT_DISCLOSED"
     PROVIDER_NOT_READY = "PROVIDER_NOT_READY"
     AUTHORIZATION_MISSING = "AUTHORIZATION_MISSING"
     AUTHORIZATION_EXPIRED = "AUTHORIZATION_EXPIRED"
@@ -795,13 +794,6 @@ class RealProviderObservation:
         ):
             if value is not expected:
                 raise QualificationContractError(f"unsafe observation flag: {name}")
-        if (
-            self.provider_identity == "betfair_delayed"
-            and self.delayed_observation is not True
-        ):
-            raise QualificationContractError(
-                "Betfair Delayed observations must disclose delay explicitly"
-            )
 
     @classmethod
     def from_payload(cls, payload: object) -> RealProviderObservation:
@@ -1394,11 +1386,8 @@ def _cascade_codes(
 
 
 def _exception_codes(exc: Exception) -> list[QualificationCode]:
-    text = str(exc).lower()
-    codes: list[QualificationCode] = [QualificationCode.INVALID_OBSERVATION]
-    if "betfair" in text:
-        codes.append(QualificationCode.BETFAIR_DELAY_NOT_DISCLOSED)
-    return codes
+    del exc
+    return [QualificationCode.INVALID_OBSERVATION]
 
 
 def _cascade_counts(observation: RealProviderObservation) -> tuple[int, float]:

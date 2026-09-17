@@ -1,4 +1,4 @@
-# Top-5 Multi-Provider Cascade Validation Gate
+# Top-5 Football Provider Validation Gate
 
 Status: independent validation baseline, validation-only, NO-BET.
 
@@ -12,26 +12,18 @@ Activation.
 
 ## Scope and route order
 
-The default requested shadow route order is sequential:
+The only accepted football/Top-5 route order is sequential:
 
 1. `the_odds_api`
-2. `odds_api_io`
-3. `api_football`
-4. `betfair_delayed`
-5. `FAIL CLOSED`
+2. `FAIL CLOSED`
 
 The order is caller-supplied configuration evidence, not an approval or
-ranking of providers. Builder 4 may provide an alternative order or a subset
-of the known candidates. The validator requires every configured identity to
-be known, unique, and non-empty, and requires the evidence order to match that
-configuration exactly. An absent provider cannot silently become an
-authority.
+ranking of providers. The validator requires exactly the canonical provider,
+and requires the evidence order to match that configuration exactly. A failed
+provider cannot silently become a substitute authority.
 
-The validator covers, at minimum:
-
-- the default order above;
-- `odds_api_io` → `api_football` → `betfair_delayed` → `the_odds_api`;
-- `odds_api_io` → `api_football` → `betfair_delayed`.
+The validator covers the canonical singleton order and the fail-closed result
+when The Odds API is unavailable.
 The validator does not import Builder 4’s router, providers, health state,
 retry code, or budget manager. Builder 4 remains the owner of execution,
 provider adapters, fallback behavior, quota accounting, and runtime health.
@@ -43,8 +35,6 @@ Provider claims remain bounded:
   observation is exhausted (`authenticated=true`, `quota_used=500`,
   `quota_remaining=0`); a quota-consuming odds request must therefore be
   denied before network execution.
-- Odds-API.io, API-Football, and Betfair Delayed are candidate paths until an
-  independent observation validates their path.
 - No provider is an authority, winner, or production source by virtue of this
   contract.
 
@@ -97,8 +87,8 @@ All accepted execution evidence is sequential. The validator rejects:
 - an unknown or unbounded network request count or quota cost;
 - a prediction input flag without an independently valid selected source.
 
-When all configured providers are rejected, the evidence may be accepted as a
-measurement of failure coverage, but `selected_provider` is null and
+When the configured The Odds API provider is rejected, the evidence may be
+accepted as a measurement of failure coverage, but `selected_provider` is null and
 `prediction_input_allowed` is false. This is an evidence success with a
 fail-closed prediction result, never a betting or publication success.
 
@@ -118,8 +108,7 @@ network-request-count, and quota-cost evidence. If the before snapshot reports
 an authenticated provider with zero remaining credits, the request must have
 `network_called=false`, `network_request_count=0`, and be classified
 `QUOTA_EXHAUSTED`. The validator records that rejection as
-`quota_rejected_before_network_count` and permits a causally valid next
-configured provider attempt.
+  `quota_rejected_before_network_count` and fails the football route closed.
 
 Zero-cost authentication is allowed only as an explicit zero-cost failure or
 authentication observation; it cannot be promoted into a valid odds success.
@@ -196,8 +185,8 @@ The test suite injects, without any network client:
 - wrong league, wrong fixture, alias mismatch, and inverted home/away;
 - partial and missing-draw markets;
 - duplicate attempts and illegal extra calls;
-- quota-legal sequential fallback;
-- all four providers failing;
+- The Odds API quota/rate/auth failure remaining fail-closed;
+- no alternate provider selection or fallback;
 - missing credentials, denied preflight, budget rejection, unknown request
   count, unknown cost, and readiness escalation;
 - serialized round-trip and Builder 1 bridge compatibility.

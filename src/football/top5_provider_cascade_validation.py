@@ -35,12 +35,7 @@ from src.football.top5_shadow_validation import (
 )
 
 TOP5_CASCADE_VALIDATION_CONTRACT_VERSION = "top5-provider-cascade-validation-v1"
-CASCADE_PROVIDER_ORDER = (
-    "the_odds_api",
-    "odds_api_io",
-    "api_football",
-    "betfair_delayed",
-)
+CASCADE_PROVIDER_ORDER = ("the_odds_api",)
 _SHA_RE = re.compile(r"^[0-9a-fA-F]{40,64}$")
 _KNOWN_PROVIDERS = frozenset(CASCADE_PROVIDER_ORDER)
 _READY_STATES = frozenset(
@@ -586,7 +581,10 @@ class CascadeAttempt:
                 _number(value, name)
         if self.source_timestamp is not None:
             _utc(self.source_timestamp, "source_timestamp")
-        if not isinstance(self.source_timing_provenance, str) or not self.source_timing_provenance.strip():
+        if (
+            not isinstance(self.source_timing_provenance, str)
+            or not self.source_timing_provenance.strip()
+        ):
             raise CascadeValidationError("source timing provenance is required")
 
     @classmethod
@@ -1270,7 +1268,10 @@ def validate_cascade_evidence(
                 _append(errors, ValidationCode.MALFORMED_ODDS)
             if not attempt.bookmaker_identity or not attempt.source_identity:
                 _append(errors, ValidationCode.MISSING_PROVENANCE)
-            if attempt.source_timing_provenance not in policy.accepted_timing_provenances:
+            if (
+                attempt.source_timing_provenance
+                not in policy.accepted_timing_provenances
+            ):
                 _append(errors, ValidationCode.UNQUALIFIED_TIMING_PROVENANCE)
             elif attempt.source_timestamp is None:
                 # Capture-only timing is deliberately not run through the

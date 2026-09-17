@@ -10,11 +10,11 @@ represented only by immutable disabled metadata in
 
 | Concern | Current implementation | Classification and Top-5 disposition |
 |---|---|---|
-| Match discovery | `src/data/football_discovery.py` caches `/sports` for one hour and applies `FOOTBALL_LEAGUES_WHITELIST`; `src/data/odds_api.py` provides bulk upcoming matches; `scripts/bundesliga2_scan.py` has ESPN fixture fallback. | Discovery pattern is reusable; ESPN/BL2 fallback is league-specific; a Top-5 ingestor is missing. |
+| Match discovery | `src/data/football_discovery.py` caches `/sports` for one hour and applies `FOOTBALL_LEAGUES_WHITELIST`; `src/data/odds_api.py` provides The Odds API bulk upcoming matches. | Discovery pattern is reusable; the Top-5 ingestor remains preparation-only. |
 | Competition/sport configuration | `src/config.py` contains the whitelist and live `LEAGUE_REGISTRY` entries for WM 2026 and BL2; tennis has separate tournament registries. | Registry shape is reusable; WM/BL2 entries and date windows are existing production behavior; Top-5 live registration is intentionally missing. |
-| Odds acquisition | `src/data/odds_api.py` bulk endpoint; `src/football/odds/merger.py` runs source fetches in parallel and preserves source tiers; `src/football/odds/the_odds_api.py` reuses bulk bookmaker payloads when available. | Provider/merger boundary is reusable; the current sport key fallback is BL2-specific; the Top-5 provider mapping is now typed but not invoked. |
+| Odds acquisition | `src/data/odds_api.py` and `src/football/odds/the_odds_api.py` use The Odds API bulk/event payloads. | The Odds API is the only active football odds provider; invalid or unavailable data fails closed. |
 | Scores/results acquisition | `src/data/results_router.py`, `src/data/odds_api.py`, `scripts/settle_bets.py`, and BL2/tennis live-score jobs. | Result routing is reusable; WM score endpoint and BL2/tennis jobs are domain-specific. |
-| Provider fallback | Football merger: Betfair/Pinnacle, The Odds API, web search, then implied model fallback; `src/signals/provider_budget.py` circuit-breaks providers and keeps quota state externally. | The boundary and budget state are reusable; fallback order and authority need a league/source contract before Top-5 activation. |
+| Provider fallback | The football merger and refresher expose The Odds API only; `src/signals/provider_budget.py` circuit-breaks the provider and keeps quota state externally. | There is no provider substitution; the route fails closed before Top-5 activation. |
 | Cache/state | `src/data/cache.py` disk cache, provider budget state, odds refresher sidecar, `src/runtime/paths.py` external runtime-state resolver. | Cache and ownership principles are reusable; some cache keys are not parameterized by sport/market and require review before reuse. |
 | Prematch scans | `scripts/prematch_scan_cron.sh` gates a schedule window and calls `scripts/daily_scan.py`; active BL2 scans run from `.github/workflows/bundesliga2_scan.yml`. | Scheduler wrapper/health pattern is reusable; the daily scan is WM-shaped and the BL2 job is league-specific; generic Top-5 orchestration was missing and is now injected-only. |
 | Daily scan | `src/scanner/daily_scan.py` plus `scripts/daily_scan.py`; it loads WM historical context, model data, and dashboard payloads. | WM-specific legacy path; unsafe as a Top-5 scanner without an adapter boundary. |
@@ -124,18 +124,17 @@ Closing odds remain a benchmark/CLV artifact only and are not admissible to
 2. `disk_cache("odds_api_upcoming_wide")` stores multiple function variants
    behind one cache filename. Sport/market/region-aware keys are required
    before the cache can be shared safely across leagues.
-3. The The Odds API 422 fallback may issue one `/events/{id}/odds` request per
-   fixture; a quota study should compare that cost with a supported bulk market
-   set.
-4. Multi-source football merging can request the same event through several
-   providers when the bulk payload was not passed through; future adapters
-   need an explicit source authority and deduplication policy.
+3. The The Odds API 422 handling may issue a same-provider event request; a
+   quota study must keep that path bounded and fail closed when the budget is
+   exhausted.
+4. The Top-5 provider mapping is singular by architecture; no source
+   authority or provider substitution may be inferred from a missing quote.
 
 ### Do not change in this task
 
 - Scheduler cadence, free-plan/billing configuration, or launchd activation.
 - Provider regions/markets solely to fit current quota.
-- Existing fallback order or stale-cache semantics without production evidence.
+- Any provider substitution or stale-cache promotion without production evidence.
 - Any financial writer, public publisher, Cloudflare Worker, or ledger path.
 
 No live provider request was made by this architecture task; meaningful Odds
@@ -149,7 +148,7 @@ API credits consumed: 0.
 | Injuries/suspensions | WM-specific inactive legacy | `refresh_injuries.py` and the disabled suspension workflow target WM teams and external runtime state. A Top-5 availability source is missing. |
 | Squads | WM-specific / reusable concept only | `src/data/squad_availability.py`, `squad_merger.py`, and the publisher's staged squad artifact provide a boundary pattern, but the team universe is not a Top-5 contract. |
 | Retraining | Unnecessary WM runtime work for Top-5 | `auto_retrain.py` counts WM matches and can train the WM stacker; BL2 retraining is separately scheduled. No Top-5 model lifecycle is activated. |
-| Settlement | Shared boundary, WM defaults remain | `settle_bets.py` still has a WM score endpoint/fallback and must not be treated as a generic Top-5 settlement implementation. |
+| Settlement | Shared boundary, WM defaults remain | `settle_bets.py` still has a WM score endpoint and must not be treated as a generic Top-5 settlement implementation. |
 | Publisher | Shared boundary, WM payload compatibility | `web_dashboard.py` and public serializers retain WM stats/fields. Top-5 artifacts must use the isolated staged publisher only after separate approval. |
 | Models/phase flags | Historical compatibility | `WC2026_BOOST` and WM-specific data paths remain for historical compatibility. No broad deletion or cleanup was performed. |
 

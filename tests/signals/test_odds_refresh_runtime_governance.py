@@ -62,7 +62,7 @@ def test_refresh_stages_public_artifacts_without_mutating_active_snapshot(monkey
     monkeypatch.setattr(odds_refresher, "_SIGNALS_JSON", active)
     monkeypatch.setattr(odds_refresher, "_load_signals", lambda: [_signal()])
     monkeypatch.setattr(odds_refresher, "load_odds_state", lambda: {})
-    monkeypatch.setattr(odds_refresher, "_refresh_football", lambda _signal: (2.0, "betfair", 1))
+    monkeypatch.setattr(odds_refresher, "_refresh_football", lambda _signal: (2.0, "the_odds_api", 1))
     monkeypatch.setattr(odds_refresher, "update_odds_state", lambda *_args, **_kwargs: None)
     monkeypatch.setenv("SPORTSBRAIN_RUNTIME_STAGE_BASE", str(tmp_path))
     monkeypatch.setattr(odds_refresher.tempfile, "mkdtemp", lambda **_kwargs: str(stage))
@@ -94,7 +94,7 @@ def test_publication_failure_is_an_explicit_refresh_result(monkeypatch, tmp_path
 
     monkeypatch.setattr(odds_refresher, "_load_signals", lambda: [_signal()])
     monkeypatch.setattr(odds_refresher, "load_odds_state", lambda: {})
-    monkeypatch.setattr(odds_refresher, "_refresh_football", lambda _signal: (2.0, "betfair", 1))
+    monkeypatch.setattr(odds_refresher, "_refresh_football", lambda _signal: (2.0, "the_odds_api", 1))
     monkeypatch.setattr(odds_refresher, "update_odds_state", lambda *_args, **_kwargs: None)
     monkeypatch.setenv("SPORTSBRAIN_RUNTIME_STAGE_BASE", str(tmp_path))
     monkeypatch.setattr(odds_refresher.tempfile, "mkdtemp", lambda **_kwargs: str(tmp_path / "stage"))

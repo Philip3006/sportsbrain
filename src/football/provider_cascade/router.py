@@ -9,9 +9,6 @@ from datetime import datetime, timedelta, timezone
 from src.football.production_contracts import Fixture, ProductionContractError, _utc
 from src.football.provider_cascade.adapters import (
     AdapterResult,
-    ApiFootballAdapter,
-    BetfairDelayedAdapter,
-    OddsApiIoAdapter,
     OddsProviderAdapter,
     TheOddsAPIAdapter,
 )
@@ -34,17 +31,13 @@ from src.football.provider_cascade.contracts import (
     stable_request_identity,
 )
 from src.football.provider_cascade.health import ProviderHealthRegistry
+from src.football.provider_cascade.readiness import QuotaStateStore
 
 DEFAULT_ADAPTERS: Mapping[str, OddsProviderAdapter] = {
     "the_odds_api": TheOddsAPIAdapter(),
-    "odds_api_io": OddsApiIoAdapter(),
-    "api_football": ApiFootballAdapter(),
-    "betfair_delayed": BetfairDelayedAdapter(),
 }
 
-IDENTITY_REQUIRED_PROVIDERS = frozenset(
-    {"odds_api_io", "api_football", "betfair_delayed"}
-)
+IDENTITY_REQUIRED_PROVIDERS = frozenset()
 
 
 class ProviderCascadeRouter:
@@ -61,6 +54,7 @@ class ProviderCascadeRouter:
         *,
         adapters: Mapping[str, OddsProviderAdapter] | None = None,
         budget: RequestBudgetManager | None = None,
+        quota_state_store: QuotaStateStore | None = None,
         now: datetime | None = None,
         timing_policy: CascadeTimingPolicy | None = None,
     ) -> None:
@@ -78,7 +72,9 @@ class ProviderCascadeRouter:
             raise ProductionContractError(
                 f"missing provider adapters: {', '.join(missing)}"
             )
-        self.budget = budget or RequestBudgetManager(self.config, now=now)
+        self.budget = budget or RequestBudgetManager(
+            self.config, quota_state_store=quota_state_store, now=now
+        )
         credentials = {
             name: self.budget.credential_available(provider)
             for name, provider in self.config.providers.items()
@@ -307,11 +303,27 @@ class ProviderCascadeRouter:
                 self.health.attempt(provider_name, current)
             quota_after = self._effective_quota(provider_name, result)
             if result.network_called:
+                quota_evidence_observed = any(
+                    value is not None
+                    for value in (
+                        result.quota_after.used,
+                        result.quota_after.remaining,
+                        result.quota_after.reset_at,
+                        result.quota_after.rate_limit,
+                        result.quota_after.rate_remaining,
+                        result.quota_after.rate_reset_at,
+                    )
+                )
                 self.budget.record_result(
                     provider_name,
                     state=effective_state,
                     at=current,
                     quota_after=quota_after,
+                    persist_quota_evidence=(
+                        TransportCapability(capability)
+                        is TransportCapability.NETWORK_CAPABLE
+                        and quota_evidence_observed
+                    ),
                 )
             self.health.result(
                 provider_name,
@@ -501,21 +513,6 @@ class ProviderCascadeRouter:
                 kickoff=fixture.kickoff,
                 league_competition_evidence="",
                 resolution_provenance="provider_id_not_supplied",
-                resolution_timestamp=current,
-                resolver_version="router-resolution-v1",
-                digest="",
-            )
-        if provider == "betfair_delayed":
-            return ProviderIdentityResolution(
-                provider=provider,
-                state=ProviderIdentityResolutionState.DISCOVERY_REQUIRED,
-                canonical_fixture_key=fixture.fixture_key,
-                provider_id=provider_fixture_id,
-                home_team=fixture.home_team,
-                away_team=fixture.away_team,
-                kickoff=fixture.kickoff,
-                league_competition_evidence="market catalogue runner mapping required",
-                resolution_provenance="runner_mapping_not_supplied",
                 resolution_timestamp=current,
                 resolver_version="router-resolution-v1",
                 digest="",

@@ -26,11 +26,10 @@ from src.football.production_contracts import (
 
 MARKET_PREMATCH_1X2 = "football:pre_match:1x2"
 TOP5_LEAGUE_CODES = frozenset({"BL1", "EPL", "LL", "SA", "L1"})
-DEFAULT_PROVIDER_ORDER = (
-    "the_odds_api",
-    "odds_api_io",
-    "api_football",
-    "betfair_delayed",
+FOOTBALL_PROVIDER_REPERTOIRE = ("the_odds_api",)
+DEFAULT_PROVIDER_ORDER = FOOTBALL_PROVIDER_REPERTOIRE
+DECOMMISSIONED_FOOTBALL_PROVIDERS = frozenset(
+    {"odds_api_io", "api_football", "betfair", "betfair_delayed", "oddsportal"}
 )
 
 
@@ -162,6 +161,10 @@ class NetworkAuthorizationContract:
             raise ProductionContractError(
                 "controlled shadow authorization requires providers"
             )
+        if set(self.authorized_providers) & DECOMMISSIONED_FOOTBALL_PROVIDERS:
+            raise ProductionContractError(
+                "controlled shadow authorization contains a decommissioned football provider"
+            )
         if len(set(self.authorized_providers)) != len(self.authorized_providers):
             raise ProductionContractError(
                 "controlled shadow authorization contains duplicate providers"
@@ -248,6 +251,10 @@ class ProviderConfig:
     def validate(self) -> None:
         if not self.name.strip():
             raise ProductionContractError("provider config requires a name")
+        if self.name in DECOMMISSIONED_FOOTBALL_PROVIDERS:
+            raise ProductionContractError(
+                f"football provider is decommissioned: {self.name}"
+            )
         if any(not value.strip() for value in self.league_allowlist):
             raise ProductionContractError(
                 "provider league allow-list contains a blank value"
@@ -426,10 +433,6 @@ class ProviderIdentityResolution:
                 raise ProductionContractError(
                     "provider identity resolution digest mismatch"
                 )
-            if self.provider == "betfair_delayed" and not self.runner_mapping:
-                raise ProductionContractError(
-                    "Betfair resolution requires selectionId runner mapping"
-                )
             if fixture is not None:
                 fixture.validate()
                 if (
@@ -511,8 +514,8 @@ class ProviderCascadeConfig:
 
     provider_order: tuple[str, ...] = DEFAULT_PROVIDER_ORDER
     providers: Mapping[str, ProviderConfig] = field(default_factory=dict)
-    global_request_budget: int = 4
-    per_run_cap: int = 4
+    global_request_budget: int = 1
+    per_run_cap: int = 1
     allow_candidate_only: bool = True
     fail_closed: bool = True
     live_calls_authorized: bool = False
@@ -526,6 +529,10 @@ class ProviderCascadeConfig:
             raise ProductionContractError("provider order contains a duplicate")
         if any(not name.strip() for name in self.provider_order):
             raise ProductionContractError("provider order contains a blank name")
+        if set(self.provider_order) & DECOMMISSIONED_FOOTBALL_PROVIDERS:
+            raise ProductionContractError(
+                "provider order contains a decommissioned football provider"
+            )
         unknown = sorted(set(self.provider_order) - set(self.providers))
         if unknown:
             raise ProductionContractError(
@@ -586,21 +593,6 @@ class ProviderCascadeConfig:
                     credential_env=("ODDS_API_KEY",),
                     initial_quota=QuotaSnapshot(used=500, remaining=0),
                     adapter_version="the-odds-api-v4:1",
-                ),
-                "odds_api_io": ProviderConfig(
-                    name="odds_api_io",
-                    credential_env=("ODDS_API_IO_KEY",),
-                    adapter_version="odds-api-io-v3:1",
-                ),
-                "api_football": ProviderConfig(
-                    name="api_football",
-                    credential_env=("API_FOOTBALL_KEY",),
-                    adapter_version="api-football-v3:1",
-                ),
-                "betfair_delayed": ProviderConfig(
-                    name="betfair_delayed",
-                    credential_env=("BETFAIR_APP_KEY", "BETFAIR_SESSION_TOKEN"),
-                    adapter_version="betfair-delayed-json-rpc:1",
                 ),
             }
         )
@@ -702,8 +694,8 @@ class ProviderCascadeConfig:
         result = cls(
             provider_order=order,
             providers=MappingProxyType(configs),
-            global_request_budget=int(raw.get("global_request_budget", 4)),
-            per_run_cap=int(raw.get("per_run_cap", 4)),
+            global_request_budget=int(raw.get("global_request_budget", 1)),
+            per_run_cap=int(raw.get("per_run_cap", 1)),
             allow_candidate_only=bool(raw.get("allow_candidate_only", True)),
             fail_closed=bool(raw.get("fail_closed", True)),
             live_calls_authorized=bool(raw.get("live_calls_authorized", False)),

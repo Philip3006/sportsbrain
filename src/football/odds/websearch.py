@@ -1,12 +1,8 @@
-"""Tier 3 — WebSearch-Ensemble als Football-Odds-Fallback.
+"""Decommissioned Football WebSearch compatibility module.
 
-Aktiviert wenn Tier-1/2 <3 Bookies liefern. Multi-Query über DuckDuckGo,
-medianisiert Preise aus mehreren Treffern. Ab ≥ 2 unabhängigen Quotes
-kein no_bet_flag; sonst Display-only.
-
-`_websearch_football_fallback()` ist hier direkt implementiert (nicht aus
-einem Script importiert — das wäre ein zirkulärer Pfad und würde beim
-CI-Import scheitern).
+WebSearch is not a Football odds authority.  This module remains importable
+for historical callers, but its public ``fetch`` is permanently disabled and
+no active Football surface imports or registers it.
 """
 from __future__ import annotations
 
@@ -79,6 +75,11 @@ def _collect_quotes(home: str, away: str, tournament_hint: str) -> list[tuple[fl
 
 
 def fetch(match_hint: dict) -> Optional[FootballOddsQuote]:
+    """Return no quote; this legacy Football source is disabled."""
+    # WebSearch is not a football odds authority. This legacy module is
+    # retained for historical imports but cannot execute an odds path.
+    return None
+
     home_raw = match_hint.get("home_team", "")
     away_raw = match_hint.get("away_team", "")
     if not home_raw or not away_raw:

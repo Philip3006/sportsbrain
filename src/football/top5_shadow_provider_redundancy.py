@@ -1,4 +1,4 @@
-"""Provider-neutral redundancy and quality contracts for Top-5 shadow odds.
+"""Provider-neutral quality contracts for the TOA-only Top-5 shadow path.
 
 This module is deliberately a contract and planning boundary.  It normalizes
 injected source payloads, audits the sources that already exist in SportsBrain,
@@ -6,9 +6,9 @@ and plans possible request paths without making a provider call.  It never
 selects an authority, writes runtime state, invokes a scheduler, publishes an
 artifact, or activates a Top-5 league.
 
-The existing provider modules remain the owners of their network behavior.  The
-adapters here accept their already-observed payload shape (or an explicitly
-enriched injected fixture) and fail closed when required identity or timing
+The canonical The Odds API adapter remains the owner of network behavior. The
+adapter here accepts an already-observed payload shape (or an explicitly
+enriched injected fixture) and fails closed when required identity or timing
 metadata is absent.
 """
 
@@ -162,7 +162,7 @@ _LIVE_PATH_PREREQUISITES = MappingProxyType(
             "complete_1x2",
             "provenance",
         )
-        for provider in ("the_odds_api", "betfair", "oddsportal")
+        for provider in ("the_odds_api",)
     }
 )
 
@@ -400,7 +400,7 @@ def provider_inventory() -> tuple[CapabilityRecord, ...]:
     """Return the audited football source inventory in deterministic order."""
 
     top5 = TOP5_LEAGUE_CODES
-    return (
+    records = (
         _cap(
             "the_odds_api",
             CapabilityKind.FIXTURES,
@@ -413,7 +413,7 @@ def provider_inventory() -> tuple[CapabilityRecord, ...]:
             freshness="one-hour discovery cache; live endpoint when uncached",
             auth="ODDS_API_KEY",
             rate_limits="credit quota; current checkout reports 0 remaining",
-            failures=("401/403", "429", "422", "timeout", "stale cache"),
+            failures=("401/403", "429", "422", "timeout", "malformed"),
             bulk="/sports discovery and bulk /odds; single-event fallback",
             signal_time=True,
             historical=False,
@@ -429,7 +429,7 @@ def provider_inventory() -> tuple[CapabilityRecord, ...]:
             one_x_two=True,
             timestamps="bookmaker last_update when supplied; event payload otherwise",
             bookmaker="bookmaker key/title in raw payload; consensus in legacy quote",
-            freshness="live response or stale disk cache in legacy path",
+            freshness="live response with provider source-time evidence",
             auth="ODDS_API_KEY",
             rate_limits="credit quota; 500 used / 0 remaining current state",
             failures=(
@@ -439,7 +439,7 @@ def provider_inventory() -> tuple[CapabilityRecord, ...]:
                 "422",
                 "timeout",
                 "malformed",
-                "stale cache",
+                "stale source timestamp",
             ),
             bulk="one sport-key request can cover multiple fixtures/bookmakers",
             signal_time=True,
@@ -486,177 +486,6 @@ def provider_inventory() -> tuple[CapabilityRecord, ...]:
             notes="Not a closing source in this repository.",
         ),
         _cap(
-            "betfair",
-            CapabilityKind.FIXTURES,
-            CapabilityStatus.CANDIDATE_ONLY,
-            "src/football/odds/betfair.py",
-            (),
-            one_x_two=False,
-            timestamps="raw catalogue may contain event data; legacy quote drops kickoff",
-            bookmaker="exchange identity only",
-            freshness="5-minute in-memory bulk cache",
-            auth="BETFAIR_APP_KEY + username/password",
-            rate_limits="vendor/API limits not declared in repository",
-            failures=(
-                "missing credentials",
-                "login failure",
-                "HTTP error",
-                "empty catalogue",
-                "event identity mismatch",
-            ),
-            bulk="catalogue + market-book bulk calls",
-            signal_time=False,
-            historical=False,
-            closing_only=False,
-            notes="Competition mapping and safe kickoff/source timestamp are absent from current Top-5 path.",
-        ),
-        _cap(
-            "betfair",
-            CapabilityKind.ODDS,
-            CapabilityStatus.CANDIDATE_ONLY,
-            "src/football/odds/betfair.py",
-            (),
-            one_x_two=True,
-            timestamps="legacy normalized quote has no source timestamp",
-            bookmaker="exchange",
-            freshness="5-minute in-memory bulk cache",
-            auth="BETFAIR_APP_KEY + username/password",
-            rate_limits="vendor/API limits not declared in repository",
-            failures=(
-                "missing credentials",
-                "login failure",
-                "HTTP error",
-                "three-runner mismatch",
-                "sanity rejection",
-            ),
-            bulk="market catalogue then market-book prices",
-            signal_time=False,
-            historical=False,
-            closing_only=False,
-            notes="Can be normalized only from an injected enriched payload; not an approved authority.",
-        ),
-        _cap(
-            "betfair",
-            CapabilityKind.RESULTS,
-            CapabilityStatus.UNSUPPORTED,
-            "src/football/odds/betfair.py",
-            (),
-            one_x_two=False,
-            timestamps="not implemented",
-            bookmaker="not applicable",
-            freshness="not applicable",
-            auth="Betfair credentials",
-            rate_limits="not declared",
-            failures=("no result loader",),
-            bulk="not implemented",
-            signal_time=False,
-            historical=False,
-            closing_only=False,
-        ),
-        _cap(
-            "betfair",
-            CapabilityKind.CLOSING_BENCHMARK,
-            CapabilityStatus.UNSUPPORTED,
-            "src/football/odds/betfair.py",
-            (),
-            one_x_two=False,
-            timestamps="not implemented",
-            bookmaker="not implemented",
-            freshness="not applicable",
-            auth="Betfair credentials",
-            rate_limits="not declared",
-            failures=("no historical closing capture",),
-            bulk="not implemented",
-            signal_time=False,
-            historical=False,
-            closing_only=False,
-        ),
-        _cap(
-            "oddsportal",
-            CapabilityKind.FIXTURES,
-            CapabilityStatus.CANDIDATE_ONLY,
-            "src/football/odds/oddsportal.py",
-            (),
-            one_x_two=False,
-            timestamps="legacy day page drops kickoff",
-            bookmaker="aggregate page, not bookmaker identity",
-            freshness="15-minute in-memory day cache",
-            auth="none declared; Cloudflare may challenge",
-            rate_limits="not declared; observed 403 path",
-            failures=(
-                "403",
-                "non-200",
-                "HTML selector drift",
-                "wrong day",
-                "ambiguous fixture",
-            ),
-            bulk="one day overview request",
-            signal_time=False,
-            historical=False,
-            closing_only=False,
-            notes="Current scraper does not establish Top-5 league or exact kickoff identity.",
-        ),
-        _cap(
-            "oddsportal",
-            CapabilityKind.ODDS,
-            CapabilityStatus.CANDIDATE_ONLY,
-            "src/football/odds/oddsportal.py",
-            (),
-            one_x_two=True,
-            timestamps="legacy quote has no source timestamp",
-            bookmaker="oddsportal aggregate only; no bookmaker identity",
-            freshness="15-minute in-memory day cache",
-            auth="none declared; Cloudflare may challenge",
-            rate_limits="not declared; observed 403 path",
-            failures=("403", "HTML drift", "partial 1X2", "stale", "wrong fixture"),
-            bulk="day-level overview",
-            signal_time=False,
-            historical=False,
-            closing_only=False,
-            notes="Candidate-only; enriched metadata is mandatory before safe use.",
-        ),
-        _cap(
-            "oddsportal",
-            CapabilityKind.RESULTS,
-            CapabilityStatus.UNSUPPORTED,
-            "src/football/odds/oddsportal.py",
-            (),
-            one_x_two=False,
-            timestamps="not implemented",
-            bookmaker="not applicable",
-            freshness="not applicable",
-            auth="none declared",
-            rate_limits="not declared",
-            failures=("no result parser",),
-            bulk="not implemented",
-            signal_time=False,
-            historical=False,
-            closing_only=False,
-        ),
-        _cap(
-            "oddsportal",
-            CapabilityKind.CLOSING_BENCHMARK,
-            CapabilityStatus.REJECTED,
-            "src/football/odds/oddsportal.py",
-            (),
-            one_x_two=True,
-            timestamps="no capture/closing timestamp contract",
-            bookmaker="aggregate only",
-            freshness="unbounded without source timestamp",
-            auth="none declared",
-            rate_limits="not declared",
-            failures=(
-                "closing time ambiguity",
-                "selector drift",
-                "historical identity ambiguity",
-            ),
-            bulk="day page only",
-            signal_time=False,
-            historical=False,
-            closing_only=True,
-            notes="Rejected until a distinct, timestamped closing capture is implemented.",
-        ),
-        _cap(
             "football_data",
             CapabilityKind.FIXTURES,
             CapabilityStatus.HISTORICAL_ONLY,
@@ -683,7 +512,7 @@ def provider_inventory() -> tuple[CapabilityRecord, ...]:
             top5,
             one_x_two=True,
             timestamps="date only; PSH/PSD/PSA and PSCH/PSCD/PSCA columns",
-            bookmaker="Pinnacle closing columns; opening bookmaker label implicit",
+            bookmaker="historical closing columns; opening bookmaker label implicit",
             freshness="season file; local 30-day cache",
             auth="none",
             rate_limits="public CSV availability",
@@ -725,7 +554,7 @@ def provider_inventory() -> tuple[CapabilityRecord, ...]:
             top5,
             one_x_two=True,
             timestamps="PSCH/PSCD/PSCA are historical closing columns without capture time",
-            bookmaker="Pinnacle closing proxy",
+            bookmaker="historical closing proxy",
             freshness="historical season file",
             auth="none",
             rate_limits="public CSV availability",
@@ -890,160 +719,6 @@ def provider_inventory() -> tuple[CapabilityRecord, ...]:
             closing_only=False,
         ),
         _cap(
-            "pinnacle",
-            CapabilityKind.FIXTURES,
-            CapabilityStatus.REJECTED,
-            "src/football/odds/pinnacle.py",
-            (),
-            one_x_two=False,
-            timestamps="legacy matchup payload; BL2 keyword filter only",
-            bookmaker="Pinnacle guest API",
-            freshness="5-minute in-memory cache",
-            auth="guest endpoint",
-            rate_limits="vendor endpoint; retry helper",
-            failures=("BL2-only mapping", "network", "schema drift"),
-            bulk="leagues then matchups then markets",
-            signal_time=False,
-            historical=False,
-            closing_only=False,
-            notes="Current implementation is Bundesliga-2-specific, outside Top-5 scope.",
-        ),
-        _cap(
-            "pinnacle",
-            CapabilityKind.ODDS,
-            CapabilityStatus.REJECTED,
-            "src/football/odds/pinnacle.py",
-            (),
-            one_x_two=True,
-            timestamps="legacy quote has no source timestamp",
-            bookmaker="Pinnacle",
-            freshness="5-minute in-memory cache",
-            auth="guest endpoint",
-            rate_limits="retry helper; vendor endpoint",
-            failures=("BL2-only", "missing draw", "sanity rejection", "network"),
-            bulk="league/matchup/market calls",
-            signal_time=False,
-            historical=False,
-            closing_only=False,
-            notes="No Top-5 competition mapping exists in current code.",
-        ),
-        _cap(
-            "pinnacle",
-            CapabilityKind.RESULTS,
-            CapabilityStatus.UNSUPPORTED,
-            "src/football/odds/pinnacle.py",
-            (),
-            one_x_two=False,
-            timestamps="not implemented",
-            bookmaker="not applicable",
-            freshness="not applicable",
-            auth="guest endpoint",
-            rate_limits="not declared",
-            failures=("no result loader",),
-            bulk="not implemented",
-            signal_time=False,
-            historical=False,
-            closing_only=False,
-        ),
-        _cap(
-            "pinnacle",
-            CapabilityKind.CLOSING_BENCHMARK,
-            CapabilityStatus.UNSUPPORTED,
-            "src/football/odds/pinnacle.py",
-            (),
-            one_x_two=False,
-            timestamps="no historical closing capture",
-            bookmaker="not implemented",
-            freshness="not applicable",
-            auth="guest endpoint",
-            rate_limits="not declared",
-            failures=("no closing path",),
-            bulk="not implemented",
-            signal_time=False,
-            historical=False,
-            closing_only=False,
-        ),
-        _cap(
-            "websearch",
-            CapabilityKind.FIXTURES,
-            CapabilityStatus.REJECTED,
-            "src/football/odds/websearch.py",
-            (),
-            one_x_two=False,
-            timestamps="no fixture timestamp",
-            bookmaker="not available",
-            freshness="unbounded search snippets",
-            auth="DDGS dependency",
-            rate_limits="search-engine dependent",
-            failures=("ambiguous search", "stale snippet", "wrong league"),
-            bulk="one query per search",
-            signal_time=False,
-            historical=False,
-            closing_only=False,
-            notes="Not a fixture authority.",
-        ),
-        _cap(
-            "websearch",
-            CapabilityKind.ODDS,
-            CapabilityStatus.REJECTED,
-            "src/football/odds/websearch.py",
-            (),
-            one_x_two=True,
-            timestamps="no source timestamp",
-            bookmaker="no bookmaker identity",
-            freshness="snippet age unknown",
-            auth="DDGS dependency",
-            rate_limits="search-engine dependent",
-            failures=(
-                "single-source quote",
-                "wrong fixture",
-                "wrong league",
-                "stale snippet",
-                "parse ambiguity",
-            ),
-            bulk="three broad queries per match",
-            signal_time=False,
-            historical=False,
-            closing_only=False,
-            notes="Legacy path is no-bet/display-only and cannot satisfy this source contract.",
-        ),
-        _cap(
-            "websearch",
-            CapabilityKind.RESULTS,
-            CapabilityStatus.UNSUPPORTED,
-            "src/football/odds/websearch.py",
-            (),
-            one_x_two=False,
-            timestamps="not implemented",
-            bookmaker="not applicable",
-            freshness="not applicable",
-            auth="DDGS dependency",
-            rate_limits="search-engine dependent",
-            failures=("no result contract",),
-            bulk="not implemented",
-            signal_time=False,
-            historical=False,
-            closing_only=False,
-        ),
-        _cap(
-            "websearch",
-            CapabilityKind.CLOSING_BENCHMARK,
-            CapabilityStatus.REJECTED,
-            "src/football/odds/websearch.py",
-            (),
-            one_x_two=True,
-            timestamps="no closing timestamp",
-            bookmaker="no identity",
-            freshness="unknown",
-            auth="DDGS dependency",
-            rate_limits="search-engine dependent",
-            failures=("closing leakage risk", "source ambiguity"),
-            bulk="not implemented",
-            signal_time=False,
-            historical=False,
-            closing_only=True,
-        ),
-        _cap(
             "betexplorer",
             CapabilityKind.FIXTURES,
             CapabilityStatus.HISTORICAL_ONLY,
@@ -1118,6 +793,8 @@ def provider_inventory() -> tuple[CapabilityRecord, ...]:
             closing_only=True,
         ),
     )
+    active_sources = {"the_odds_api", "football_data", "espn"}
+    return tuple(record for record in records if record.source in active_sources)
 
 
 def capability_matrix() -> tuple[CapabilityRecord, ...]:
@@ -1641,20 +1318,6 @@ _ADAPTERS = MappingProxyType(
             True,
             False,
         ),
-        "betfair": AdapterDescriptor(
-            "betfair",
-            AdapterStatus.CANDIDATE_ONLY,
-            ("src/football/odds/betfair.py",),
-            True,
-            False,
-        ),
-        "oddsportal": AdapterDescriptor(
-            "oddsportal",
-            AdapterStatus.CANDIDATE_ONLY,
-            ("src/football/odds/oddsportal.py",),
-            True,
-            False,
-        ),
         "football_data": AdapterDescriptor(
             "football_data",
             AdapterStatus.HISTORICAL_ONLY,
@@ -1798,8 +1461,6 @@ def _source_provenance(
 ) -> SourceProvenance:
     uri = {
         "the_odds_api": "https://api.the-odds-api.com/v4/sports/{sport}/odds",
-        "betfair": "https://api.betfair.com/exchange/betting/rest/v1.0/listMarketBook/",
-        "oddsportal": "https://www.oddsportal.com/matches/football/{date}/",
         "football_data": "https://www.football-data.co.uk/mmz4281/{season}/{league}.csv",
     }[provider]
     return SourceProvenance(uri, record_id, retrieved_at, version)
@@ -1999,168 +1660,6 @@ class TheOddsAPIAdapter:
         return tuple(observations)
 
 
-class BetfairAdapter:
-    """Normalize an enriched Betfair market payload without logging in."""
-
-    provider_identity = "betfair"
-    status = AdapterStatus.CANDIDATE_ONLY
-    adapter_version = "top5-shadow-source-v1/betfair"
-
-    @classmethod
-    def normalize(
-        cls,
-        payload: Mapping[str, object],
-        expected: ExpectedFixture,
-        *,
-        capture_timestamp: datetime,
-        request_identity: str,
-        market_role: MarketRole = MarketRole.SIGNAL_TIME,
-    ) -> tuple[ShadowSourceObservation, ...]:
-        expected.validate()
-        if not isinstance(payload, Mapping):
-            raise SourceNormalizationError(
-                SourceError.MALFORMED_RESPONSE, "Betfair market must be a mapping"
-            )
-        if "market_id" not in payload:
-            raise SourceNormalizationError(
-                SourceError.MISSING_PROVENANCE, "Betfair market_id is required"
-            )
-        event = payload.get("event")
-        event_data = dict(event) if isinstance(event, Mapping) else {}
-        merged = dict(payload)
-        for key in (
-            "home_team",
-            "away_team",
-            "kickoff",
-            "commence_time",
-            "league",
-            "sport_key",
-        ):
-            if key not in merged and key in event_data:
-                merged[key] = event_data[key]
-        merged.setdefault("id", payload.get("market_id"))
-        try:
-            source_timestamp = _parse_timestamp(
-                payload.get(
-                    "source_timestamp",
-                    payload.get("last_update", event_data.get("updated_at")),
-                ),
-                "source_timestamp",
-            )
-        except ShadowProviderContractError as exc:
-            raise SourceNormalizationError(
-                SourceError.MISSING_TIMESTAMP, str(exc)
-            ) from exc
-        runners = payload.get("runners")
-        if not isinstance(runners, Sequence) or isinstance(runners, (str, bytes)):
-            raise SourceNormalizationError(
-                SourceError.MALFORMED_RESPONSE, "Betfair runners must be a sequence"
-            )
-        prices: dict[str, object] = {}
-        for runner in runners:
-            if not isinstance(runner, Mapping):
-                raise SourceNormalizationError(
-                    SourceError.MALFORMED_RESPONSE, "Betfair runner must be a mapping"
-                )
-            label = (
-                runner.get("selection")
-                or runner.get("runnerName")
-                or runner.get("name")
-            )
-            price = runner.get("price")
-            if label is not None:
-                prices[str(label)] = price
-        if len(prices) < 3:
-            raise SourceNormalizationError(
-                SourceError.PARTIAL_MARKET,
-                "Betfair MATCH_ODDS requires home, draw, and away runners",
-            )
-        observation = _observation_from_prices(
-            provider=cls.provider_identity,
-            payload=merged,
-            expected=expected,
-            capture_timestamp=capture_timestamp,
-            request_identity=request_identity,
-            bookmaker_identity="betfair_exchange",
-            prices=prices,
-            source_timestamp=source_timestamp,
-            market_role=market_role,
-            adapter_version=cls.adapter_version,
-            record_id=str(payload["market_id"]),
-        )
-        return (observation,)
-
-
-class OddsPortalAdapter:
-    """Normalize only explicitly enriched OddsPortal rows.
-
-    The current scraper's ``home/away/h/d/a`` row intentionally lacks league,
-    kickoff, and source timestamp.  Passing that row therefore raises instead
-    of inventing metadata.
-    """
-
-    provider_identity = "oddsportal"
-    status = AdapterStatus.CANDIDATE_ONLY
-    adapter_version = "top5-shadow-source-v1/oddsportal"
-
-    @classmethod
-    def normalize(
-        cls,
-        payload: Mapping[str, object],
-        expected: ExpectedFixture,
-        *,
-        capture_timestamp: datetime,
-        request_identity: str,
-        market_role: MarketRole = MarketRole.SIGNAL_TIME,
-    ) -> tuple[ShadowSourceObservation, ...]:
-        expected.validate()
-        if not isinstance(payload, Mapping):
-            raise SourceNormalizationError(
-                SourceError.MALFORMED_RESPONSE, "OddsPortal row must be a mapping"
-            )
-        required = ("league", "home", "away", "kickoff", "source_timestamp")
-        if any(key not in payload for key in required):
-            raise SourceNormalizationError(
-                SourceError.MISSING_PROVENANCE,
-                "OddsPortal row lacks explicit league, kickoff, or source timestamp",
-            )
-        source_timestamp = _parse_timestamp(
-            payload.get("source_timestamp"), "source_timestamp"
-        )
-        event = {
-            "league": payload.get("league"),
-            "home_team": payload.get("home"),
-            "away_team": payload.get("away"),
-            "kickoff": payload.get("kickoff"),
-            "id": payload.get("match_id", payload.get("fixture_id", "")),
-        }
-        if not event["id"]:
-            raise SourceNormalizationError(
-                SourceError.MISSING_PROVENANCE, "OddsPortal row requires match_id"
-            )
-        prices = {
-            "home": payload.get("h", payload.get("home_odds")),
-            "draw": payload.get("d", payload.get("draw_odds")),
-            "away": payload.get("a", payload.get("away_odds")),
-        }
-        observation = _observation_from_prices(
-            provider=cls.provider_identity,
-            payload=event,
-            expected=expected,
-            capture_timestamp=capture_timestamp,
-            request_identity=request_identity,
-            bookmaker_identity=str(
-                payload.get("bookmaker_identity") or "oddsportal_aggregate"
-            ),
-            prices=prices,
-            source_timestamp=source_timestamp,
-            market_role=market_role,
-            adapter_version=cls.adapter_version,
-            record_id=str(event["id"]),
-        )
-        return (observation,)
-
-
 class FootballDataClosingAdapter:
     """Normalize only historical Football-Data closing rows."""
 
@@ -2197,7 +1696,7 @@ class FootballDataClosingAdapter:
         if any(value is None for value in close.values()):
             raise SourceNormalizationError(
                 SourceError.PARTIAL_MARKET,
-                "Football-Data row lacks complete Pinnacle closing 1X2",
+                "Football-Data row lacks complete historical closing 1X2",
             )
         event = {
             "league": row.get("league", expected.league),
@@ -2212,7 +1711,7 @@ class FootballDataClosingAdapter:
             expected=expected,
             capture_timestamp=capture_timestamp,
             request_identity=request_identity,
-            bookmaker_identity="pinnacle_closing",
+            bookmaker_identity="historical_closing",
             prices=close,
             source_timestamp=source_timestamp
             or _parse_timestamp(row.get("source_timestamp"), "source_timestamp"),
@@ -2698,18 +2197,6 @@ _PLANNER_METADATA = MappingProxyType(
             1,
             "candidate-only; no automatic fallback or authority selection",
         ),
-        "betfair": (
-            CapabilityStatus.CANDIDATE_ONLY,
-            True,
-            2,
-            "candidate-only; explicit live-path proof is required",
-        ),
-        "oddsportal": (
-            CapabilityStatus.CANDIDATE_ONLY,
-            True,
-            1,
-            "candidate-only; explicit live-path proof is required",
-        ),
         "cache": (
             CapabilityStatus.CACHE_ONLY,
             False,
@@ -2727,18 +2214,6 @@ _PLANNER_METADATA = MappingProxyType(
             False,
             0,
             "results/fixture scoreboard only; no 1X2 odds",
-        ),
-        "pinnacle": (
-            CapabilityStatus.REJECTED,
-            False,
-            0,
-            "current implementation is Bundesliga-2-only",
-        ),
-        "websearch": (
-            CapabilityStatus.REJECTED,
-            False,
-            0,
-            "no reliable source timestamp or bookmaker identity",
         ),
     }
 )
@@ -2814,13 +2289,6 @@ def plan_provider_paths(request: ProviderPlanningRequest) -> ProviderPlan:
                 reasons.append(
                     "quota_exhausted: paid request rejected before network execution"
                 )
-        elif (
-            signal_capable
-            and source == "betfair"
-            and request.credentials_available.get(source) is not True
-        ):
-            possible = False
-            reasons.append("Betfair credentials are not declared")
         elif not signal_capable and source == "cache":
             cached = request.cached_fixture_count.get(source, 0)
             cached_age = request.cached_max_age_seconds.get(source)
@@ -2878,7 +2346,6 @@ __all__ = [
     "TOP5_SPORT_KEYS",
     "AdapterDescriptor",
     "AdapterStatus",
-    "BetfairAdapter",
     "CapabilityKind",
     "CapabilityRecord",
     "CapabilityStatus",
@@ -2891,7 +2358,6 @@ __all__ = [
     "OddsApiPreflight",
     "OddsApiQuotaSnapshot",
     "OddsApiRequestKind",
-    "OddsPortalAdapter",
     "ProviderPathPlan",
     "ProviderPlan",
     "ProviderPlanningRequest",

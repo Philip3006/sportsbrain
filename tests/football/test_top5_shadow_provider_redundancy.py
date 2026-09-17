@@ -11,7 +11,6 @@ from src.football.top5_research_binding import FROZEN_RESEARCH_SHA
 from src.football.top5_shadow_provider_redundancy import (
     CURRENT_EXHAUSTED_ODDS_API,
     AdapterStatus,
-    BetfairAdapter,
     CapabilityKind,
     CapabilityStatus,
     CompletenessState,
@@ -21,7 +20,6 @@ from src.football.top5_shadow_provider_redundancy import (
     MarketRole,
     OddsApiQuotaSnapshot,
     OddsApiRequestKind,
-    OddsPortalAdapter,
     ProviderPlanningRequest,
     ProviderReadinessState,
     ShadowProviderContractError,
@@ -91,8 +89,6 @@ def _provenance(
 ) -> SourceProvenance:
     uris = {
         "the_odds_api": "https://api.the-odds-api.com/v4/sports/soccer_epl/odds",
-        "betfair": "https://api.betfair.com/exchange/betting/rest/v1.0/listMarketBook/",
-        "oddsportal": "https://www.oddsportal.com/matches/football/2026-09-15/",
         "football_data": "https://www.football-data.co.uk/mmz4281/2526/E0.csv",
     }
     return SourceProvenance(
@@ -204,45 +200,25 @@ def test_inventory_classifies_each_capability_without_authority() -> None:
 
 
 def test_candidate_adapters_are_explicit_and_do_not_include_bl2_pinnacle() -> None:
-    assert supported_candidate_adapters() == ("the_odds_api", "betfair", "oddsportal")
+    assert supported_candidate_adapters() == ("the_odds_api",)
     assert AdapterStatus.CANDIDATE_ONLY is not None
 
 
 def test_contract_support_is_not_live_path_readiness() -> None:
-    for provider in ("betfair", "oddsportal"):
-        assessment = assess_provider_readiness(provider)
-        assert assessment.contract_supported is True
-        assert assessment.state is ProviderReadinessState.CONTRACT_SUPPORTED
-        assert assessment.ready_for_observation is False
-        assert (
-            provider_readiness_state(provider)
-            is ProviderReadinessState.CONTRACT_SUPPORTED
-        )
-
-        request = ProviderPlanningRequest(
-            league="EPL",
-            window_start=CAPTURED,
-            window_end=CAPTURED + timedelta(hours=1),
-            required_market="h2h_1x2",
-            freshness_requirement_seconds=TEST_MAX_ODDS_AGE_SECONDS,
-            allowed_sources=(provider,),
-            fixture_count=1,
-            credentials_available={provider: True},
-        )
-        path = plan_provider_paths(request).paths[0]
-        assert path.operationally_possible is False
-        assert path.readiness_state is ProviderReadinessState.CONTRACT_SUPPORTED
-        assert path.signal_time_usable is False
-        assert plan_provider_paths(request).candidate_quota_independent_paths == ()
+    assessment = assess_provider_readiness("the_odds_api")
+    assert assessment.contract_supported is True
+    assert assessment.state is ProviderReadinessState.CONTRACT_SUPPORTED
+    assert assessment.ready_for_observation is False
+    assert provider_readiness_state("the_odds_api") is ProviderReadinessState.CONTRACT_SUPPORTED
 
 
 def test_explicit_prerequisites_advance_only_to_ready_for_observation() -> None:
-    assessment = assess_provider_readiness("betfair", TEST_LIVE_PATH_PROOF)
+    assessment = assess_provider_readiness("the_odds_api", TEST_LIVE_PATH_PROOF)
     assert assessment.state is ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION
     assert assessment.ready_for_observation is True
     assert (
         assess_provider_readiness(
-            "betfair",
+            "the_odds_api",
             TEST_LIVE_PATH_PROOF,
             real_observation_validated=True,
         ).state
@@ -252,7 +228,7 @@ def test_explicit_prerequisites_advance_only_to_ready_for_observation() -> None:
 
 def test_partial_live_path_proof_remains_fail_closed() -> None:
     assessment = assess_provider_readiness(
-        "oddsportal", {"fixture_identity": True, "complete_1x2": True}
+        "the_odds_api", {"fixture_identity": True, "complete_1x2": True}
     )
     assert assessment.state is ProviderReadinessState.LIVE_PATH_PREREQUISITES_MISSING
     assert "source_timestamp" in assessment.missing_prerequisites
@@ -260,7 +236,7 @@ def test_partial_live_path_proof_remains_fail_closed() -> None:
 
 def test_real_observation_state_cannot_be_asserted_without_complete_proof() -> None:
     with pytest.raises(ShadowProviderContractError, match="cannot be asserted"):
-        assess_provider_readiness("betfair", real_observation_validated=True)
+        assess_provider_readiness("the_odds_api", real_observation_validated=True)
 
 
 def test_team_aliases_are_exact_not_fuzzy() -> None:
@@ -327,84 +303,6 @@ def test_the_odds_api_adapter_supports_multiple_bookmakers_without_selecting_one
         is False
         for observation in observations
     )
-
-
-def test_betfair_adapter_requires_enriched_kickoff_and_timestamp() -> None:
-    expected = _expected(league="BL1", home="Bayern München", away="Borussia Dortmund")
-    payload = {
-        "market_id": "1.234",
-        "event": {
-            "league": "BL1",
-            "home_team": "Bayern Munich",
-            "away_team": "Borussia Dortmund",
-            "kickoff": expected.kickoff.isoformat(),
-        },
-        "source_timestamp": (CAPTURED - timedelta(minutes=2)).isoformat(),
-        "runners": [
-            {"selection": "home", "price": 1.9},
-            {"selection": "draw", "price": 3.8},
-            {"selection": "away", "price": 4.0},
-        ],
-    }
-    observation = BetfairAdapter.normalize(
-        payload, expected, capture_timestamp=CAPTURED, request_identity="bf-request-1"
-    )[0]
-    assert observation.bookmaker_identity == "betfair_exchange"
-    assert (
-        validate_source_observation(observation, expected, TEST_POLICY).accepted is True
-    )
-
-    legacy_payload = {"market_id": "1.234", "runners": payload["runners"]}
-    with pytest.raises(SourceNormalizationError) as exc_info:
-        BetfairAdapter.normalize(
-            legacy_payload,
-            expected,
-            capture_timestamp=CAPTURED,
-            request_identity="bf-request-2",
-        )
-    assert exc_info.value.error is SourceError.MISSING_TIMESTAMP
-
-
-def test_oddsportal_legacy_row_is_rejected_instead_of_inventing_metadata() -> None:
-    expected = _expected()
-    with pytest.raises(SourceNormalizationError) as exc_info:
-        OddsPortalAdapter.normalize(
-            {
-                "home": expected.home_team,
-                "away": expected.away_team,
-                "h": 2.2,
-                "d": 3.4,
-                "a": 3.0,
-            },
-            expected,
-            capture_timestamp=CAPTURED,
-            request_identity="op-legacy",
-        )
-    assert exc_info.value.error is SourceError.MISSING_PROVENANCE
-
-
-def test_oddsportal_enriched_candidate_row_is_normalized_but_not_authorized() -> None:
-    expected = _expected()
-    observation = OddsPortalAdapter.normalize(
-        {
-            "match_id": "op-1",
-            "league": "EPL",
-            "home": "Man Utd",
-            "away": "Arsenal",
-            "kickoff": expected.kickoff.isoformat(),
-            "source_timestamp": (CAPTURED - timedelta(minutes=3)).isoformat(),
-            "h": 2.2,
-            "d": 3.4,
-            "a": 3.0,
-        },
-        expected,
-        capture_timestamp=CAPTURED,
-        request_identity="op-1",
-    )[0]
-    report = validate_source_observation(observation, expected, TEST_POLICY)
-    assert report.accepted is True
-    assert report.candidate_status is AdapterStatus.CANDIDATE_ONLY
-    assert report.authority_approved is False
 
 
 def test_football_data_requires_precise_injected_timestamps_and_is_closing_only() -> (
@@ -734,30 +632,21 @@ def test_provider_planner_lists_quota_independent_paths_without_fanout_or_select
         window_end=CAPTURED + timedelta(hours=4),
         required_market="h2h_1x2",
         freshness_requirement_seconds=900,
-        allowed_sources=("the_odds_api", "betfair", "oddsportal"),
+        allowed_sources=("the_odds_api",),
         fixture_count=10,
         remaining_quota={"the_odds_api": CURRENT_EXHAUSTED_ODDS_API},
-        credentials_available={"the_odds_api": True, "betfair": True},
-        cost_units_per_request={"betfair": 2.0},
-        live_path_prerequisites={
-            "betfair": TEST_LIVE_PATH_PROOF,
-            "oddsportal": TEST_LIVE_PATH_PROOF,
-        },
+        credentials_available={"the_odds_api": True},
     )
     plan = plan_provider_paths(request)
     plan.validate()
     by_source = {path.source: path for path in plan.paths}
     assert by_source["the_odds_api"].operationally_possible is False
     assert "quota_exhausted" in by_source["the_odds_api"].reason
-    assert by_source["betfair"].operationally_possible is True
-    assert by_source["oddsportal"].operationally_possible is True
+    assert set(by_source) == {"the_odds_api"}
     assert plan.selected_source is None
     assert plan.automatic_fallback_enabled is False
     assert plan.automatic_fanout_requests == 0
-    assert {path.source for path in plan.candidate_quota_independent_paths} == {
-        "betfair",
-        "oddsportal",
-    }
+    assert plan.candidate_quota_independent_paths == ()
 
 
 def test_planner_fails_closed_without_quota_or_credentials() -> None:
@@ -767,14 +656,14 @@ def test_planner_fails_closed_without_quota_or_credentials() -> None:
         window_end=CAPTURED + timedelta(hours=4),
         required_market="h2h_1x2",
         freshness_requirement_seconds=900,
-        allowed_sources=("the_odds_api", "betfair", "football_data"),
+        allowed_sources=("the_odds_api", "football_data"),
         fixture_count=1,
     )
     plan = plan_provider_paths(request)
     by_source = {path.source: path for path in plan.paths}
     assert all(path.operationally_possible is False for path in plan.paths)
     assert "explicitly supplied" in by_source["the_odds_api"].reason
-    assert "credentials" in by_source["betfair"].reason
+    assert "authentication" in by_source["the_odds_api"].reason
     assert "not signal-time" in by_source["football_data"].reason
 
 
@@ -785,7 +674,7 @@ def test_fallback_fanout_is_never_auto_enabled_even_when_primary_is_exhausted() 
         window_end=CAPTURED + timedelta(hours=2),
         required_market="h2h_1x2",
         freshness_requirement_seconds=600,
-        allowed_sources=("the_odds_api", "oddsportal"),
+        allowed_sources=("the_odds_api",),
         fixture_count=3,
         remaining_quota={"the_odds_api": 0},
     )

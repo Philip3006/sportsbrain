@@ -76,12 +76,7 @@ def _prepare(
     maximum_cost: float | None = None,
 ):
     remaining = remaining or {provider: 10 for provider in order}
-    all_providers = (
-        "the_odds_api",
-        "odds_api_io",
-        "api_football",
-        "betfair_delayed",
-    )
+    all_providers = order
     return preparation_from_input_payload(
         {
             "fixture": _fixture_payload(),
@@ -321,10 +316,10 @@ def test_network_bridge_emits_real_observation_and_canonical_b2_attestation():
 
 def test_quota_zero_makes_zero_bridge_http_calls():
     preparation = _prepare(
-        order=(PROVIDER, "odds_api_io"),
-        remaining={PROVIDER: 0, "odds_api_io": 10},
-        maximum_requests=2,
-        maximum_cost=2.0,
+        order=(PROVIDER,),
+        remaining={PROVIDER: 0},
+        maximum_requests=1,
+        maximum_cost=1.0,
     )
     authorization = _auth(preparation)
     calls = []
@@ -333,18 +328,15 @@ def test_quota_zero_makes_zero_bridge_http_calls():
         authorization,
         lambda request, timeout: calls.append(request) or _raw([_event()]),
     )
-    result = ControlledShadowExecutionHarness(clock=lambda: NOW).execute(
-        preparation, authorization, transport=bridge
-    )
+    with pytest.raises(HarnessExecutionBlocked, match="preparation is not READY"):
+        ControlledShadowExecutionHarness(clock=lambda: NOW).execute(
+            preparation, authorization, transport=bridge
+        )
     assert calls == []
-    assert result.observation is None
-    assert any("QUOTA_EXHAUSTED" in item for item in result.failure_evidence)
 
 
 def test_request_cap_exhaustion_stops_before_next_http_call():
-    preparation = _prepare(
-        order=(PROVIDER, "odds_api_io"), maximum_requests=1, maximum_cost=1.0
-    )
+    preparation = _prepare(order=(PROVIDER,), maximum_requests=1, maximum_cost=1.0)
     authorization = _auth(preparation)
     calls = []
     bridge = _bridge(
@@ -358,7 +350,7 @@ def test_request_cap_exhaustion_stops_before_next_http_call():
     assert len(calls) == 1
     assert result.network_request_count == 1
     assert result.observation is None
-    assert any("QUOTA_EXHAUSTED" in item for item in result.failure_evidence)
+    assert any("NO_OBSERVATION" in item for item in result.failure_evidence)
 
 
 @pytest.mark.parametrize("payload", [None, "not-json", [{"id": "wrong-event"}]])

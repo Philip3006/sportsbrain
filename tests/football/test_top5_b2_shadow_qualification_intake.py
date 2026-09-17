@@ -180,7 +180,7 @@ def test_nested_identity_and_provenance_changes_fail_closed() -> None:
     changed_embedded = manifest.observation.as_payload()
     changed_embedded["cascade_evidence"] = {
         **manifest.cascade_evidence.as_payload(),
-        "selected_provider": "odds_api_io",
+        "selected_provider": "unapproved-provider",
     }
     with pytest.raises(Builder2QualificationIntakeError):
         intake.Builder2QualificationIntakeManifestV1.from_payload(

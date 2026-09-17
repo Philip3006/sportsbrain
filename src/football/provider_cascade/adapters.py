@@ -9,7 +9,6 @@ controlled shadow run explicitly authorizes them; tests inject transports.
 from __future__ import annotations
 
 import os
-import re
 import unicodedata
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
@@ -287,6 +286,12 @@ class _BaseAdapter:
     def _authorization_result(
         self, authorization: NetworkAuthorizationContract | None
     ) -> AdapterResult | None:
+        if type(self) is not TheOddsAPIAdapter or self.name != "the_odds_api":
+            return AdapterResult(
+                ProviderState.CONFIG_DISABLED,
+                "football_provider_decommissioned",
+                network_called=False,
+            )
         if authorization is None or not authorization.permits(self.name):
             return AdapterResult(
                 ProviderState.HEALTH_UNKNOWN,
@@ -920,174 +925,46 @@ def resolve_provider_identity(
     fixture.validate()
     if kickoff_tolerance_seconds < 0:
         raise ProductionContractError("kickoff tolerance must be non-negative")
+    if provider != "the_odds_api":
+        raise ProductionContractError(
+            "only The Odds API has an active Football identity contract"
+        )
     aliases = aliases or {}
-    if provider == "betfair_delayed":
-        raw_candidates = (
-            payload.get("result") if isinstance(payload, Mapping) else payload
-        )
-        candidates = raw_candidates if isinstance(raw_candidates, list) else []
-        matches: list[tuple[Mapping[str, object], Mapping[str, str]]] = []
-        for market in candidates:
-            if not isinstance(market, Mapping):
-                continue
-            market_name = str(
-                market.get("marketTypeCode") or market.get("marketName") or ""
-            ).casefold()
-            if market_name not in {"match_odds", "match odds"}:
-                continue
-            event = market.get("event")
-            event_name = (
-                str(event.get("name", "")) if isinstance(event, Mapping) else ""
-            )
-            pair = re.split(
-                r"\s+(?:v|vs|versus)\s+", event_name, maxsplit=1, flags=re.IGNORECASE
-            )
-            start = market.get("marketStartTime")
-            if len(pair) != 2:
-                continue
-            identity = _event_identity(
-                fixture,
-                home=pair[0],
-                away=pair[1],
-                kickoff=start,
-                aliases=aliases,
-                kickoff_tolerance_seconds=kickoff_tolerance_seconds,
-            )
-            if identity != "match":
-                continue
-            runners = market.get("runners")
-            runner_mapping = {
-                str(runner.get("selectionId")): str(runner.get("runnerName"))
-                for runner in runners
-                if isinstance(runners, list)
-                and isinstance(runner, Mapping)
-                and runner.get("selectionId") is not None
-                and str(runner.get("runnerName", "")).strip()
-            }
-            runner_names = {
-                _team_key(value, aliases) for value in runner_mapping.values()
-            }
-            if runner_names >= {
-                _team_key(fixture.home_team, aliases),
-                _team_key(fixture.away_team, aliases),
-                "draw",
-            }:
-                matches.append((market, runner_mapping))
-        if len(matches) == 1:
-            market, runner_mapping = matches[0]
-            competition = market.get("competition")
-            competition_text = (
-                str(competition.get("name", ""))
-                if isinstance(competition, Mapping)
-                else ""
-            )
-            return ProviderIdentityResolution.resolved(
-                provider=provider,
-                fixture=fixture,
-                provider_id=str(market.get("marketId")),
-                league_competition_evidence=competition_text
-                or "Betfair football Match Odds",
-                resolution_provenance="listMarketCatalogue",
-                resolution_timestamp=resolution_timestamp,
-                resolver_version="provider-identity-resolver-v1",
-                runner_mapping=runner_mapping,
-                kickoff=_parse_kickoff(start),
-                kickoff_tolerance_seconds=kickoff_tolerance_seconds,
-            )
-        state = (
-            ProviderIdentityResolutionState.AMBIGUOUS
-            if len(matches) > 1
-            else ProviderIdentityResolutionState.UNRESOLVED
-        )
-        return ProviderIdentityResolution(
-            provider=provider,
-            state=state,
-            canonical_fixture_key=fixture.fixture_key,
-            provider_id=None,
-            home_team=fixture.home_team,
-            away_team=fixture.away_team,
-            kickoff=fixture.kickoff,
-            league_competition_evidence="Betfair listMarketCatalogue",
-            resolution_provenance="listMarketCatalogue",
-            resolution_timestamp=resolution_timestamp,
-            resolver_version="provider-identity-resolver-v1",
-            digest="",
-        )
-
-    if provider == "api_football":
-        candidates = (
-            payload.get("response") if isinstance(payload, Mapping) else payload
-        )
-    else:
-        candidates = payload
+    candidates = payload
     if isinstance(candidates, Mapping):
         candidates = [candidates]
     matches: list[Mapping[str, object]] = []
     for candidate in candidates if isinstance(candidates, list) else []:
         if not isinstance(candidate, Mapping):
             continue
-        if provider == "api_football":
-            fixture_meta = candidate.get("fixture")
-            teams = candidate.get("teams")
-            if not isinstance(fixture_meta, Mapping) or not isinstance(teams, Mapping):
-                continue
-            home = teams.get("home")
-            away = teams.get("away")
-            home_value = home.get("name") if isinstance(home, Mapping) else None
-            away_value = away.get("name") if isinstance(away, Mapping) else None
-            kickoff = fixture_meta.get("date")
-            provider_id = fixture_meta.get("id")
-            league_evidence = str(
-                candidate.get("league", {}).get("name", "")
-                if isinstance(candidate.get("league"), Mapping)
-                else ""
-            )
-        else:
-            home_value = candidate.get("home") or candidate.get("home_team")
-            away_value = candidate.get("away") or candidate.get("away_team")
-            kickoff = candidate.get("date") or candidate.get("commence_time")
-            provider_id = candidate.get("id")
-            league_evidence = str(
-                candidate.get("league") or candidate.get("sport_key") or ""
-            )
+        home_value = candidate.get("home") or candidate.get("home_team")
+        away_value = candidate.get("away") or candidate.get("away_team")
+        kickoff = candidate.get("date") or candidate.get("commence_time")
+        provider_id = candidate.get("id")
+        league_evidence = str(
+            candidate.get("league") or candidate.get("sport_key") or ""
+        )
         identity = _event_identity(
             fixture,
             home=home_value,
             away=away_value,
             kickoff=kickoff,
             aliases=aliases,
-            expected_league=(
-                TheOddsAPIAdapter.sport_keys.get(fixture.league_code)
-                if provider == "the_odds_api"
-                else None
-            ),
-            league_value=(
-                candidate.get("sport_key") if provider == "the_odds_api" else None
-            ),
+            expected_league=TheOddsAPIAdapter.sport_keys.get(fixture.league_code),
+            league_value=candidate.get("sport_key"),
             kickoff_tolerance_seconds=kickoff_tolerance_seconds,
         )
         if identity == "match" and provider_id is not None:
             matches.append(candidate)
     if len(matches) == 1:
         candidate = matches[0]
-        if provider == "api_football":
-            fixture_meta = candidate["fixture"]
-            teams = candidate["teams"]
-            home = teams["home"]
-            away = teams["away"]
-            home_value = home["name"]
-            away_value = away["name"]
-            kickoff_value = fixture_meta["date"]
-            provider_id = fixture_meta["id"]
-            league_evidence = str(candidate.get("league", {}).get("name", ""))
-        else:
-            home_value = candidate.get("home") or candidate.get("home_team")
-            away_value = candidate.get("away") or candidate.get("away_team")
-            kickoff_value = candidate.get("date") or candidate.get("commence_time")
-            provider_id = candidate.get("id")
-            league_evidence = str(
-                candidate.get("league") or candidate.get("sport_key") or ""
-            )
+        home_value = candidate.get("home") or candidate.get("home_team")
+        away_value = candidate.get("away") or candidate.get("away_team")
+        kickoff_value = candidate.get("date") or candidate.get("commence_time")
+        provider_id = candidate.get("id")
+        league_evidence = str(
+            candidate.get("league") or candidate.get("sport_key") or ""
+        )
         kickoff = _parse_kickoff(kickoff_value)
         if kickoff is None:
             raise ProductionContractError("resolved provider kickoff is malformed")

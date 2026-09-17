@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from copy import deepcopy
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
@@ -10,13 +9,10 @@ from src.football.production_contracts import Fixture, ProductionContractError
 from src.football.provider_cascade import (
     MARKET_PREMATCH_1X2,
     AdapterResult,
-    ApiFootballAdapter,
-    BetfairDelayedAdapter,
     CascadeResult,
     CascadeTimingPolicy,
     NetworkAuthorizationContract,
     NormalizedOddsObservation,
-    OddsApiIoAdapter,
     ProviderCascadeConfig,
     ProviderCascadeRouter,
     ProviderComparisonReport,
@@ -62,12 +58,7 @@ TEST_TIMING = CascadeTimingPolicy(
 )
 TEST_AUTHORIZATION = NetworkAuthorizationContract(
     controlled_shadow_run_ref="test-controlled-shadow",
-    authorized_providers=(
-        "the_odds_api",
-        "odds_api_io",
-        "api_football",
-        "betfair_delayed",
-    ),
+    authorized_providers=("the_odds_api",),
 )
 
 
@@ -276,12 +267,7 @@ def _routed_builder2_case(*, network_capable=True):
 def test_default_order_is_configurable_and_defaults_to_requested_shadow_order():
     config = ProviderCascadeConfig.default()
     config.validate()
-    assert config.provider_order == (
-        "the_odds_api",
-        "odds_api_io",
-        "api_football",
-        "betfair_delayed",
-    )
+    assert config.provider_order == ("the_odds_api",)
     legacy = ProviderCascadeConfig(
         provider_order=("the_odds_api",),
         providers={"the_odds_api": _provider("the_odds_api")},
@@ -362,11 +348,9 @@ def test_exhausted_odds_api_preflight_never_calls_network():
 
 def test_builtin_adapters_do_not_make_live_calls_without_controlled_authorization():
     config = ProviderCascadeConfig(
-        provider_order=("odds_api_io",),
+        provider_order=("the_odds_api",),
         providers={
-            "odds_api_io": _provider(
-                "odds_api_io", quota=10, credentials_required=False
-            ),
+            "the_odds_api": _provider("the_odds_api", quota=10),
         },
         global_request_budget=1,
         per_run_cap=1,
@@ -375,7 +359,7 @@ def test_builtin_adapters_do_not_make_live_calls_without_controlled_authorizatio
     result = router.route(
         FIXTURE,
         now=NOW,
-        provider_fixture_ids={"odds_api_io": "event-123"},
+        provider_fixture_ids={"the_odds_api": "event-123"},
     )
     assert result.observation is None
     assert result.trace.fail_closed is True
@@ -383,7 +367,7 @@ def test_builtin_adapters_do_not_make_live_calls_without_controlled_authorizatio
     assert result.trace.attempts[0].reason == "live_calls_not_authorized"
     assert result.trace.attempts[0].network_called is False
     assert router.budget.global_requests_attempted == 0
-    assert router.budget.counters("odds_api_io").requests_attempted == 0
+    assert router.budget.counters("the_odds_api").requests_attempted == 0
 
 
 def test_mapping_config_preserves_quota_and_requires_run_reference_for_live_calls():
@@ -667,132 +651,6 @@ def test_the_odds_api_adapter_defaults_to_existing_sportsbrain_transport(monkeyp
     )
     assert result.state is ProviderState.AVAILABLE
     assert calls == [("soccer_epl", ("h2h",), ("eu",), "", 5.0)]
-
-
-def test_odds_api_io_adapter_parses_documented_ml_payload():
-    payload = [
-        {
-            "id": 123,
-            "home": "Home FC",
-            "away": "Away FC",
-            "date": FIXTURE.kickoff.isoformat(),
-            "status": "pending",
-            "bookmakers": {
-                "Bet365": [
-                    {
-                        "name": "ML",
-                        "odds": [{"home": "2.1", "draw": "3.4", "away": "3.2"}],
-                        "updatedAt": NOW.isoformat(),
-                    }
-                ]
-            },
-        }
-    ]
-    adapter = OddsApiIoAdapter(transport=lambda request, timeout: _raw(payload))
-    result = adapter.fetch(
-        FIXTURE,
-        _adapter_config("odds_api_io"),
-        request_identity="request-2",
-        requested_at=NOW,
-        provider_priority=1,
-        provider_fixture_id="123",
-        timing_policy=TEST_TIMING,
-        authorization=TEST_AUTHORIZATION,
-    )
-    assert result.state is ProviderState.AVAILABLE
-    assert result.observation.home_odds == pytest.approx(2.1)
-    assert result.observation.provider_identity == "odds_api_io"
-
-
-def test_api_football_adapter_uses_official_odds_shape_and_capture_only_timing():
-    payload = {
-        "paging": {"current": 1, "total": 1},
-        "response": [
-            {
-                "fixture": {"id": 999, "date": FIXTURE.kickoff.isoformat()},
-                "teams": {
-                    "home": {"id": 1, "name": "Home FC"},
-                    "away": {"id": 2, "name": "Away FC"},
-                },
-                "bookmakers": [
-                    {
-                        "id": 8,
-                        "name": "Book",
-                        "bets": [
-                            {
-                                "id": 1,
-                                "name": "Match Winner",
-                                "values": [
-                                    {"value": "Home", "odd": "2.0"},
-                                    {"value": "Draw", "odd": "3.5"},
-                                    {"value": "Away", "odd": "4.0"},
-                                ],
-                            }
-                        ],
-                    }
-                ],
-            }
-        ],
-    }
-    adapter = ApiFootballAdapter(transport=lambda request, timeout: _raw(payload))
-    result = adapter.fetch(
-        FIXTURE,
-        _adapter_config("api_football"),
-        request_identity="request-3",
-        requested_at=NOW,
-        provider_priority=2,
-        provider_fixture_id="999",
-        timing_policy=TEST_TIMING,
-        authorization=TEST_AUTHORIZATION,
-    )
-    assert result.state is ProviderState.AVAILABLE
-    assert result.observation.provider_identity == "api_football"
-    assert result.observation.source_timestamp is None
-    assert result.observation.source_timing_provenance == "CAPTURE_TIME_ONLY"
-    assert result.observation.metadata["source_timestamp_available"] is False
-
-
-def test_betfair_delayed_adapter_preserves_delayed_semantics():
-    payload = {
-        "jsonrpc": "2.0",
-        "result": [
-            {
-                "marketId": "1.123",
-                "isMarketDataDelayed": True,
-                "runners": [
-                    {"selectionId": 1, "ex": {"availableToBack": [{"price": 2.0}]}},
-                    {"selectionId": 2, "ex": {"availableToBack": [{"price": 4.0}]}},
-                    {"selectionId": 3, "ex": {"availableToBack": [{"price": 3.5}]}},
-                ],
-            }
-        ],
-    }
-    resolution = ProviderIdentityResolution.resolved(
-        provider="betfair_delayed",
-        fixture=FIXTURE,
-        provider_id="1.123",
-        league_competition_evidence="Premier League; football Match Odds",
-        resolution_provenance="listMarketCatalogue",
-        resolution_timestamp=NOW,
-        resolver_version="test-catalogue-v1",
-        runner_mapping={"1": "Home FC", "2": "Away FC", "3": "Draw"},
-    )
-    adapter = BetfairDelayedAdapter(transport=lambda request, timeout: _raw(payload))
-    result = adapter.fetch(
-        FIXTURE,
-        _adapter_config("betfair_delayed"),
-        request_identity="request-5",
-        requested_at=NOW,
-        provider_priority=3,
-        provider_fixture_id="1.123",
-        identity_resolution=resolution,
-        timing_policy=TEST_TIMING,
-        authorization=TEST_AUTHORIZATION,
-    )
-    assert result.state is ProviderState.AVAILABLE
-    assert result.observation.delayed is True
-    assert "Delayed App Key" in result.observation.metadata["delay_semantics"]
-    assert result.observation.provider_identity == "betfair_delayed"
 
 
 @pytest.mark.parametrize(
@@ -1119,185 +977,6 @@ def test_live_authorization_requires_run_reference():
     )
     with pytest.raises(ProductionContractError, match="run reference"):
         ProviderCascadeRouter(config, now=NOW, timing_policy=TEST_TIMING)
-
-
-def test_missing_provider_id_is_visible_discovery_prerequisite_without_network():
-    adapter = FakeAdapter(_result("odds_api_io"))
-    config = ProviderCascadeConfig(
-        provider_order=("odds_api_io",),
-        providers={"odds_api_io": _provider("odds_api_io")},
-        global_request_budget=1,
-        per_run_cap=1,
-    )
-    result = ProviderCascadeRouter(
-        config, adapters={"odds_api_io": adapter}, now=NOW, timing_policy=TEST_TIMING
-    ).route(FIXTURE, now=NOW)
-    assert result.trace.attempts[0].state is ProviderState.DISCOVERY_REQUIRED
-    assert result.trace.attempts[0].network_called is False
-    assert adapter.calls == 0
-
-
-def test_provider_identity_resolution_is_pure_and_explicitly_classified():
-    api_fixture = {
-        "fixture": {"id": 999, "date": FIXTURE.kickoff.isoformat()},
-        "teams": {
-            "home": {"id": 1, "name": "Home FC"},
-            "away": {"id": 2, "name": "Away FC"},
-        },
-        "league": {"id": 39, "name": "Premier League"},
-    }
-    resolved = resolve_provider_identity(
-        "api_football",
-        FIXTURE,
-        {"response": [api_fixture]},
-        resolution_timestamp=NOW,
-        kickoff_tolerance_seconds=90,
-    )
-    assert resolved.state.value == "RESOLVED"
-    assert resolved.provider_fixture_id == "999"
-    assert len(resolved.digest) == 64
-    round_trip = ProviderIdentityResolution.from_payload(resolved.as_payload())
-    assert round_trip.digest == resolved.digest
-    ambiguous = resolve_provider_identity(
-        "api_football",
-        FIXTURE,
-        {"response": [api_fixture, deepcopy(api_fixture)]},
-        resolution_timestamp=NOW,
-        kickoff_tolerance_seconds=90,
-    )
-    assert ambiguous.state.value == "AMBIGUOUS"
-
-
-def test_betfair_catalogue_resolution_binds_runner_mapping():
-    catalogue = {
-        "jsonrpc": "2.0",
-        "result": [
-            {
-                "marketId": "1.123",
-                "marketTypeCode": "MATCH_ODDS",
-                "marketStartTime": FIXTURE.kickoff.isoformat(),
-                "event": {"id": "event-1", "name": "Home FC v Away FC"},
-                "competition": {"id": "comp-1", "name": "Premier League"},
-                "runners": [
-                    {"selectionId": 1, "runnerName": "Home FC"},
-                    {"selectionId": 2, "runnerName": "Away FC"},
-                    {"selectionId": 3, "runnerName": "Draw"},
-                ],
-            }
-        ],
-    }
-    resolution = resolve_provider_identity(
-        "betfair_delayed",
-        FIXTURE,
-        catalogue,
-        resolution_timestamp=NOW,
-        kickoff_tolerance_seconds=90,
-    )
-    assert resolution.state.value == "RESOLVED"
-    assert resolution.provider_fixture_id == "1.123"
-    assert resolution.runner_mapping == {"1": "Home FC", "2": "Away FC", "3": "Draw"}
-
-
-def test_betfair_book_uses_dynamic_prices_not_last_match_time():
-    payload = {
-        "jsonrpc": "2.0",
-        "result": [
-            {
-                "marketId": "1.123",
-                "isMarketDataDelayed": True,
-                "lastMatchTime": NOW.isoformat(),
-                "runners": [
-                    {"selectionId": 1, "ex": {"availableToBack": [{"price": 2.0}]}},
-                    {"selectionId": 2, "ex": {"availableToBack": [{"price": 4.0}]}},
-                    {"selectionId": 3, "ex": {"availableToBack": [{"price": 3.5}]}},
-                ],
-            }
-        ],
-    }
-    resolution = ProviderIdentityResolution.resolved(
-        provider="betfair_delayed",
-        fixture=FIXTURE,
-        provider_id="1.123",
-        league_competition_evidence="Premier League; Match Odds",
-        resolution_provenance="listMarketCatalogue",
-        resolution_timestamp=NOW,
-        resolver_version="test-catalogue-v1",
-        runner_mapping={"1": "Home FC", "2": "Away FC", "3": "Draw"},
-    )
-    result = BetfairDelayedAdapter(
-        transport=lambda request, timeout: _raw(payload)
-    ).fetch(
-        FIXTURE,
-        _adapter_config("betfair_delayed"),
-        request_identity="request-betfair-capture-only",
-        requested_at=NOW,
-        provider_priority=0,
-        provider_fixture_id="1.123",
-        identity_resolution=resolution,
-        timing_policy=TEST_TIMING,
-        authorization=TEST_AUTHORIZATION,
-    )
-    assert result.state is ProviderState.AVAILABLE
-    assert result.observation.source_timestamp is None
-    assert result.observation.source_timing_provenance.value == "CAPTURE_TIME_ONLY"
-    assert result.observation.metadata["official_delay_semantics"] == "1-180 seconds"
-
-
-def _api_football_odds_payload():
-    return {
-        "paging": {"current": 1, "total": 1},
-        "response": [
-            {
-                "fixture": {"id": 999, "date": FIXTURE.kickoff.isoformat()},
-                "bookmakers": [
-                    {
-                        "id": 8,
-                        "name": "Book",
-                        "bets": [
-                            {
-                                "id": 1,
-                                "name": "Match Winner",
-                                "values": [
-                                    {"value": "Home", "odd": "2.0"},
-                                    {"value": "Draw", "odd": "3.5"},
-                                    {"value": "Away", "odd": "4.0"},
-                                ],
-                            }
-                        ],
-                    }
-                ],
-            }
-        ],
-    }
-
-
-def _api_fetch(payload):
-    return ApiFootballAdapter(transport=lambda request, timeout: _raw(payload)).fetch(
-        FIXTURE,
-        _adapter_config("api_football"),
-        request_identity="request-api-football-regression",
-        requested_at=NOW,
-        provider_priority=0,
-        provider_fixture_id="999",
-        timing_policy=TEST_TIMING,
-        authorization=TEST_AUTHORIZATION,
-    )
-
-
-def test_api_football_body_error_pagination_and_malformed_rows_fail_closed():
-    body_error = _api_fetch({"errors": {"token": "invalid"}, "results": 0})
-    assert body_error.state is ProviderState.MALFORMED
-    assert body_error.reason == "api_body_error"
-    paged = deepcopy(_api_football_odds_payload())
-    paged["paging"]["total"] = 2
-    pagination = _api_fetch(paged)
-    assert pagination.state is ProviderState.PARTIAL
-    malformed = deepcopy(_api_football_odds_payload())
-    malformed["response"][0]["bookmakers"][0]["bets"] = [
-        {"id": 1, "name": "Match Winner", "values": [{"value": "Home"}]}
-    ]
-    malformed_result = _api_fetch(malformed)
-    assert malformed_result.state is ProviderState.QUALITY_REJECTED
 
 
 def test_budget_separates_network_request_count_from_quota_units():

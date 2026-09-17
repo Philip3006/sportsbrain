@@ -1,11 +1,8 @@
-"""Tier 2 — OddsPortal.com Scraper für Football 1X2.
+"""Decommissioned Football OddsPortal compatibility module.
 
-Bulk-Fetch der Tages-Übersicht (/matches/football/YYYY-MM-DD/) — ein Request
-deckt alle Matches des Tages. Cloudflare-geschützt: ~30% 403-Rate akzeptiert.
-Bei 403 → fetch() gibt None zurück, Merger fällt auf nächsten Tier.
-
-Coverage: 1X2 only (kein AH/O-U in SSR-HTML verfügbar).
-bookies_count_1x2 = 1 (Single-page aggregate — Coverage-Gate muss extern geprüft werden).
+The active Football odds authority is The Odds API only.  This module remains
+importable for historical callers, but its public ``fetch`` is permanently
+disabled and no active Football surface imports or registers it.
 """
 from __future__ import annotations
 
@@ -82,11 +79,10 @@ def _fetch_day(date_iso: str) -> list[dict]:
 
 
 def fetch(match_hint: dict) -> Optional[FootballOddsQuote]:
-    """Fetch 1X2 odds for a single match from OddsPortal day-overview.
-
-    match_hint: {home_team, away_team, commence_time (ISO-8601)}
-    Returns None if unavailable or Cloudflare blocks.
-    """
+    """Return no quote; this legacy Football provider is disabled."""
+    # Football authority is The Odds API only. This legacy module is retained
+    # for historical imports but is never an executable provider path.
+    return None
     home_raw = match_hint.get("home_team", "")
     away_raw = match_hint.get("away_team", "")
     if not home_raw or not away_raw:

@@ -1792,23 +1792,6 @@ class ControlledShadowExecutionHarness:
                             "failure_detail": "capture time cannot substitute for provider freshness",
                         }
                     )
-                elif provider == "betfair_delayed" and (
-                    response.delayed_observation is not True
-                    or response.delay_seconds is None
-                    or response.delay_seconds < 0
-                    or response.app_session_prerequisites is not True
-                    or not response.runner_mapping
-                ):
-                    failure_evidence.append(
-                        f"{provider}:ODDS:BETFAIR_PREREQUISITES_OR_DELAYED_RUNNER_EVIDENCE_MISSING"
-                    )
-                    last_response = ProviderTransportResponse(
-                        **{
-                            **response.__dict__,
-                            "outcome": CascadeOutcome.MALFORMED,
-                            "failure_detail": "Betfair delayed app/session, runner mapping, and delay evidence are required",
-                        }
-                    )
                 break
             action_step += 1
         if last_request is None or last_response is None:

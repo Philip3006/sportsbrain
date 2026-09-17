@@ -1,6 +1,7 @@
-"""Tests für src/football/odds/ — Multi-Source-Merger."""
+"""Tests für src/football/odds/ — The Odds API-only merger."""
 from __future__ import annotations
 
+from importlib import import_module
 from src.football.odds.base import FootballOddsQuote, sanity_1x2, sanity_2way
 from src.football.odds.merger import (
     fetch_all_sources, fetch_best_football_odds, merge_by_tier,
@@ -107,16 +108,26 @@ class TestCoverageGate:
         assert q is not None
         assert q.no_bet_flag
 
-    def test_empty_bookmakers_implies_fallback(self):
+    def test_empty_bookmakers_fail_closed_without_implied_substitution(self):
         hint = {
             "home_team": "Hamburg", "away_team": "Kaiserslautern",
             "bookmakers": [],
             "model_probs": {"p_home": 0.42, "p_draw": 0.28, "p_away": 0.30},
         }
         q = fetch_best_football_odds(hint, timeout_s=3.0, allow_implied=True)
-        assert q is not None
-        assert q.source == "implied_dc"
-        assert q.no_bet_flag  # Tier-5 ist immer no_bet
+        assert q is None
+
+
+class TestDecommissionedFootballProviders:
+    def test_legacy_fetchers_fail_closed_without_transport(self):
+        hint = {
+            "home_team": "Hamburg",
+            "away_team": "Kaiserslautern",
+            "sport_key": "soccer_germany_bundesliga2",
+        }
+        for module_name in ("betfair", "oddsportal", "pinnacle", "websearch"):
+            module = import_module(f"src.football.odds.{module_name}")
+            assert module.fetch(hint) is None
 
 
 class TestImplied:
@@ -204,7 +215,7 @@ class TestCircuitBreakerIntegration:
             "sport_key": "soccer_germany_bundesliga2",
             # no "bookmakers" key → triggers Pfad 2 (live API call)
         }
-        # Circuit open → fetch_upcoming_matches raises/returns stale [] → fetch() returns None
+        # Circuit open → fetch_upcoming_matches fails closed → fetch() returns None
         with patch("src.signals.provider_budget.is_provider_available", return_value=False):
             with patch("src.data.odds_api._load_stale_upcoming_cache", return_value=None):
                 q = fetch(hint)

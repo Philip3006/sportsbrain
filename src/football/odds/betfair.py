@@ -1,11 +1,8 @@
-"""Tier 1 — Betfair Exchange (Sharp H2H-Referenz für Football).
+"""Decommissioned Football Betfair compatibility module.
 
-Football event type ID = 1. Holt MATCH_ODDS-Märkte (3-way: Home/Draw/Away).
-Identische Session-Login-Strategie wie src/tennis/odds/betfair.py.
-
-Konfiguration via env:
-    BETFAIR_APP_KEY, BETFAIR_USERNAME, BETFAIR_PASSWORD
-Ohne diese env-vars: fetch() → None (Merger geht zu Tier 2).
+The active Football odds authority is The Odds API only.  This module remains
+importable for historical callers, but its public ``fetch`` is permanently
+disabled and no active Football surface imports or registers it.
 """
 from __future__ import annotations
 
@@ -144,6 +141,10 @@ def _refresh_bulk() -> dict[str, dict]:
 
 
 def fetch(match_hint: dict) -> Optional[FootballOddsQuote]:
+    # Football authority is The Odds API only. This legacy module is retained
+    # for historical imports but is never an executable provider path.
+    return None
+
     home_raw = match_hint.get("home_team", "")
     away_raw = match_hint.get("away_team", "")
     if not home_raw or not away_raw:

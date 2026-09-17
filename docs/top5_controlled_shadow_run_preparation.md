@@ -44,8 +44,8 @@ The `prepare` command accepts a JSON object containing:
   kickoff;
 - `timing_policy`: explicit `maximum_odds_age_seconds` and
   `kickoff_tolerance_seconds`;
-- `provider_order`: a non-empty, unique sequence of the four supported
-  providers;
+- `provider_order`: the canonical singleton sequence containing only
+  `the_odds_api`;
 - `credential_presence`: per-provider booleans, never credential values;
 - `provider_readiness`: caller-supplied readiness, identity, fixture, quota,
   and provider-contract evidence;
@@ -54,27 +54,20 @@ The `prepare` command accepts a JSON object containing:
 - optional per-provider request/cost maximums and safety flags, which must
   remain disabled.
 
-The supported provider order is configurable and is preserved exactly. The
-planner does not rank providers or infer a preferred source:
+The supported provider order is fixed and preserved exactly. The planner does
+not rank providers or infer a preferred source:
 
 1. `the_odds_api` — sport-level odds response, with fixture identity resolved
    from the response;
-2. `odds_api_io` — separate `/events/search` discovery followed by
-   `/odds/multi` for a known event;
-3. `api_football` — separate `/fixtures` discovery followed by page-1
-   `/odds` for a known fixture;
-4. `betfair_delayed` — `listMarketCatalogue` discovery followed by delayed
-   `listMarketBook(EX_BEST_OFFERS)`.
-
 The Odds API known baseline of `used=500`, `remaining=0` produces zero planned
 requests. Unknown credentials, readiness, identity, quota, malformed fixture
 or timing fields, duplicate/unsupported providers, invalid budgets, and
-ambiguous identity all fail closed. `UNKNOWN` never becomes `READY`.
+ambiguous identity all fail closed. `UNKNOWN` never becomes `READY`; no
+alternate-provider state exists.
 
 ## Output contract
 
-The artifact contains a manifest for all four providers, including disabled
-entries for providers omitted from the configured order. Each manifest records
+The artifact contains a manifest for the canonical provider. Each manifest records
 configured position, candidate-only state, credential-presence boolean,
 fixture/discovery state, identity/readiness state, quota snapshot, expected
 endpoint/action class, request and quota-cost maxima, timestamp capability,
