@@ -87,7 +87,17 @@ def main() -> int:
         _git(repo, "remote", "add", "origin", str(remote))
         _git(repo, "push", "-q", "origin", "HEAD:main")
         base_sha = _git(repo, "rev-parse", "HEAD")
-        manager = WorktreeManager(root / "runtime", {REPO: repo})
+        control = root / "control.git"
+        control.mkdir()
+        _git(control, "init", "-q", "--bare", "--initial-branch=main")
+        _git(control, "remote", "add", "origin", str(remote))
+        _git(control, "fetch", "-q", "origin", "main")
+        manager = WorktreeManager(
+            root / "runtime",
+            {REPO: repo},
+            control_repo_paths={REPO: control},
+            worktrees_dir=root / "night-shift" / "worktrees",
+        )
         dispatcher = NightShiftDispatcher.from_config(
             state_path=root / "runtime" / "state.sqlite3",
             worktree_manager=manager,

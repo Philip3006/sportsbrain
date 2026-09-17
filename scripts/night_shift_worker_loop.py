@@ -23,13 +23,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--builder",
         required=True,
-        choices=("builder-1", "builder-2", "builder-3", "builder-4"),
+        help="explicit registered worker Builder; the registry is authoritative",
     )
     parser.add_argument("--poll-seconds", type=int, default=30)
+    parser.add_argument("--max-tasks", type=int, default=1)
     parser.add_argument("--once", action="store_true")
     args = parser.parse_args(argv)
     if not 1 <= args.poll_seconds <= 60:
         parser.error("--poll-seconds must be between 1 and 60")
+    if not 1 <= args.max_tasks <= 100:
+        parser.error("--max-tasks must be between 1 and 100")
     codex = os.getenv("SPORTSBRAIN_CODEX_EXECUTABLE") or shutil.which("codex")
     if not codex:
         raise RuntimeError("Codex executable is unavailable; refusing fake fallback")
@@ -43,7 +46,9 @@ def main(argv: list[str] | None = None) -> int:
     executor = CodexExecutor(codex, dispatcher.worktree_manager)
     while True:
         dispatcher.recover_expired()
-        dispatcher.run_once(args.builder, executor)
+        dispatcher.run_autonomous_cycle(
+            args.builder, executor, max_tasks=args.max_tasks
+        )
         if args.once:
             return 0
         time.sleep(args.poll_seconds)

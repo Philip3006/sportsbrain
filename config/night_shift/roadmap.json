@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "mode": "bounded",
+  "max_cycles": 100,
+  "merge_backpressure_limit": 3,
+  "items": [
+    {
+      "item_id": "roadmap-b1-evidence",
+      "title": "Builder 1 evidence lifecycle audit",
+      "builder_id": "builder-1",
+      "template_id": "builder-1.evidence-lifecycle-audit",
+      "payload": {"scope": "night shift evidence lifecycle"},
+      "priority": 20,
+      "debug_budget": 2,
+      "repeated_failure_limit": 2,
+      "mode": "bounded",
+      "enabled": true
+    },
+    {
+      "item_id": "roadmap-b2-authority",
+      "title": "Builder 2 independent authority review",
+      "builder_id": "builder-2",
+      "template_id": "builder-2.authority-review",
+      "payload": {"scope": "night shift authority boundary"},
+      "priority": 15,
+      "debug_budget": 2,
+      "repeated_failure_limit": 2,
+      "mode": "bounded",
+      "enabled": true
+    },
+    {
+      "item_id": "roadmap-b3-observability",
+      "title": "Builder 3 context and observability audit",
+      "builder_id": "builder-3",
+      "template_id": "builder-3.observability-audit",
+      "payload": {"scope": "night shift context and observability"},
+      "priority": 10,
+      "debug_budget": 2,
+      "repeated_failure_limit": 2,
+      "mode": "bounded",
+      "enabled": true
+    },
+    {
+      "item_id": "roadmap-b4-provider-health",
+      "title": "Builder 4 provider cascade health replay",
+      "builder_id": "builder-4",
+      "template_id": "builder-4.provider-health-replay",
+      "payload": {"scope": "night shift provider cascade health"},
+      "priority": 5,
+      "debug_budget": 2,
+      "repeated_failure_limit": 2,
+      "mode": "bounded",
+      "enabled": true
+    }
+  ]
+}
