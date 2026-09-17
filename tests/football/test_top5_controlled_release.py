@@ -1063,6 +1063,60 @@ def test_runtime_state_environment_cannot_redirect_capability_authority(
     assert json.loads(attacker_state_path.read_text())["consumed"] is False
 
 
+def test_consumed_capability_rotates_without_manual_deletion(tmp_path, monkeypatch):
+    fixture = _capability_fixture(tmp_path, monkeypatch)
+    store = fixture["store"]
+    capability_a = fixture["capability"]
+    attestation = fixture["attestation"]
+    artifact_path = fixture["artifact"].artifact_path
+    now = fixture["runtime_now"]
+
+    with pytest.raises(ValueError, match="still unconsumed"):
+        store.issue(attestation)
+    assert json.loads(fixture["state_path"].read_text())["consumed"] is False
+
+    store.consume(
+        capability_a,
+        attestation,
+        artifact=fixture["product"],
+        artifact_path=artifact_path,
+        now=now,
+    )
+    with pytest.raises(ValueError):
+        store.consume(
+            capability_a,
+            attestation,
+            artifact=fixture["product"],
+            artifact_path=artifact_path,
+            now=now,
+        )
+
+    capability_b = store.issue(attestation)
+    state_after_rotation = json.loads(fixture["state_path"].read_text())
+    assert capability_b.capability_id != capability_a.capability_id
+    assert state_after_rotation["consumed"] is False
+    assert state_after_rotation["rotation_history"][0]["capability_id"] == (
+        capability_a.capability_id
+    )
+
+    store.consume(
+        capability_b,
+        attestation,
+        artifact=fixture["product"],
+        artifact_path=artifact_path,
+        now=now,
+    )
+    for capability in (capability_a, capability_b):
+        with pytest.raises(ValueError):
+            store.consume(
+                capability,
+                attestation,
+                artifact=fixture["product"],
+                artifact_path=artifact_path,
+                now=now,
+            )
+
+
 def test_capability_store_rejects_noncanonical_state_path(tmp_path, monkeypatch):
     monkeypatch.setattr(
         top5_publisher_module.pwd,

@@ -921,7 +921,41 @@ class FileControlledPublicationCapabilityStore:
         finally:
             temporary.unlink(missing_ok=True)
 
-    def _read_state(self) -> dict[str, object]:
+    @staticmethod
+    def _audit_record(state: Mapping[str, object]) -> dict[str, object]:
+        return {
+            "capability_id": state["capability_id"],
+            "nonce_digest": state["nonce_digest"],
+            "attestation": dict(state["attestation"]),
+            "consumed": True,
+        }
+
+    @classmethod
+    def _validate_audit_record(cls, record: object) -> None:
+        if not isinstance(record, Mapping):
+            raise ProductionContractError(
+                "controlled publication capability rotation history is invalid"
+            )
+        expected = {"capability_id", "nonce_digest", "attestation", "consumed"}
+        if set(record) != expected or record.get("consumed") is not True:
+            raise ProductionContractError(
+                "controlled publication capability rotation history is invalid"
+            )
+        _required_text(
+            {
+                "capability_id": record.get("capability_id"),
+                "nonce_digest": record.get("nonce_digest"),
+            },
+            "controlled publication capability rotation history",
+        )
+        _hash(record["nonce_digest"], "capability nonce digest")
+        if not isinstance(record.get("attestation"), Mapping):
+            raise ProductionContractError(
+                "controlled publication capability rotation history is invalid"
+            )
+        ControlledPublicationAttestation.from_mapping(record["attestation"])
+
+    def _read_state(self, *, allow_consumed: bool = False) -> dict[str, object]:
         if not self.state_path.is_file() or self.state_path.is_symlink():
             raise ProductionContractError(
                 "controlled publication capability state is unavailable"
@@ -943,11 +977,20 @@ class FileControlledPublicationCapabilityStore:
             "attestation",
             "consumed",
         }
-        if set(value) != expected or value.get("schema") != self._SCHEMA:
+        allowed = expected | {"rotation_history"}
+        if (
+            not expected.issubset(value)
+            or set(value) - allowed
+            or value.get("schema") != self._SCHEMA
+        ):
             raise ProductionContractError(
                 "controlled publication capability state has an invalid shape"
             )
-        if value.get("consumed") is not False:
+        if not isinstance(value.get("consumed"), bool):
+            raise ProductionContractError(
+                "controlled publication capability consumed state is invalid"
+            )
+        if value["consumed"] and not allow_consumed:
             raise ProductionContractError(
                 "controlled publication capability has already been consumed"
             )
@@ -963,6 +1006,13 @@ class FileControlledPublicationCapabilityStore:
             raise ProductionContractError(
                 "controlled publication capability attestation is invalid"
             )
+        rotation_history = value.setdefault("rotation_history", [])
+        if not isinstance(rotation_history, list):
+            raise ProductionContractError(
+                "controlled publication capability rotation history is invalid"
+            )
+        for record in rotation_history:
+            self._validate_audit_record(record)
         return value
 
     def issue(
@@ -980,10 +1030,16 @@ class FileControlledPublicationCapabilityStore:
             "consumed": False,
         }
         with self._locked():
+            rotation_history: list[Mapping[str, object]] = []
             if self.state_path.exists() or self.state_path.is_symlink():
-                raise ProductionContractError(
-                    "controlled publication capability state already exists"
-                )
+                previous = self._read_state(allow_consumed=True)
+                if previous["consumed"] is False:
+                    raise ProductionContractError(
+                        "controlled publication capability is still unconsumed"
+                    )
+                rotation_history = list(previous.get("rotation_history", []))
+                rotation_history.append(self._audit_record(previous))
+            state["rotation_history"] = rotation_history
             self._write_state(state)
         return capability
 
