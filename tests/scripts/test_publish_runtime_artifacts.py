@@ -266,6 +266,28 @@ def test_staged_publication_rejects_non_allowlisted_artifacts(tmp_path: Path):
     assert result.returncode != 0
 
 
+def test_controlled_cli_rejects_caller_selected_capability_state(tmp_path: Path):
+    result = subprocess.run(
+        [
+            str(PUBLISHER),
+            "publish-controlled",
+            str(tmp_path / "active"),
+            "docs/data/top5/published/signals.json",
+            str(tmp_path / "attestation.json"),
+            str(tmp_path / "attacker-state.json"),
+            str(tmp_path / "capability-token.json"),
+            str(tmp_path / "publish.log"),
+            "test: controlled publication",
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 2
+    assert "publish-controlled" in result.stderr
+
+
 def test_staged_publication_rejects_controlled_top5_paths(tmp_path: Path):
     _, active, publisher = _seed(tmp_path)
     stage = tmp_path / "stage"

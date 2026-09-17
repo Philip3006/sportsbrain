@@ -32,6 +32,20 @@ from src.football.production_contracts import (
     validate_artifact_ownership,
 )
 from src.notifications.public_serializer import serialize_public_product
+from src.runtime.paths import runtime_state_path
+
+CONTROLLED_PUBLICATION_CAPABILITY_STATE = (
+    "football/top5/controlled_publication_capability.json"
+)
+
+
+def controlled_publication_capability_state_path() -> Path:
+    """Return the sole operator-owned state location for publication capability."""
+
+    return runtime_state_path(
+        CONTROLLED_PUBLICATION_CAPABILITY_STATE,
+        require_external=True,
+    )
 
 
 def _digest(value: object) -> str:
@@ -854,17 +868,18 @@ class FileControlledPublicationCapabilityStore:
 
     _SCHEMA = "top5-controlled-publication-capability-v1"
 
-    def __init__(self, state_path: str | Path) -> None:
-        self.state_path = Path(state_path)
-        if not self.state_path.is_absolute():
+    def __init__(self, state_path: str | Path | None = None) -> None:
+        canonical_path = controlled_publication_capability_state_path()
+        selected_path = canonical_path if state_path is None else Path(state_path)
+        if not selected_path.is_absolute():
             raise ProductionContractError(
                 "controlled publication capability state must be an absolute path"
             )
-        repository_root = Path(__file__).resolve().parents[2]
-        if self.state_path.resolve().is_relative_to(repository_root):
+        if selected_path.resolve() != canonical_path.resolve():
             raise ProductionContractError(
-                "controlled publication capability state must be outside the repository"
+                "controlled publication capability state must use the canonical operator path"
             )
+        self.state_path = canonical_path
         self.lock_path = self.state_path.with_name(self.state_path.name + ".lock")
 
     @contextmanager

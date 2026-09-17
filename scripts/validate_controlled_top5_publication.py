@@ -14,28 +14,27 @@ from src.football.top5_publisher import (
     ControlledPublicationAttestation,
     ControlledPublicationCapability,
     FileControlledPublicationCapabilityStore,
+    controlled_publication_capability_state_path,
 )
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 7 or argv[6] != "--consume":
+    if len(argv) != 6 or argv[5] != "--consume":
         print(
             "usage: validate_controlled_top5_publication.py "
             "<artifact-json> <attestation-json> <artifact-path> "
-            "<capability-state-json> <capability-token-json> --consume",
+            "<capability-token-json> --consume",
             file=sys.stderr,
         )
         return 2
     try:
         repository_root = Path(__file__).resolve().parents[1]
-        state_path = Path(argv[4])
-        token_path = Path(argv[5])
-        if state_path.resolve().is_relative_to(
-            repository_root
-        ) or token_path.resolve().is_relative_to(repository_root):
+        token_path = Path(argv[4])
+        if token_path.resolve().is_relative_to(repository_root):
             raise ValueError(
-                "capability state must be operator-owned outside the repository"
+                "capability token must be operator-owned outside the repository"
             )
+        state_path = controlled_publication_capability_state_path()
         artifact = json.loads(Path(argv[1]).read_text())
         attestation = ControlledPublicationAttestation.from_mapping(
             json.loads(Path(argv[2]).read_text())

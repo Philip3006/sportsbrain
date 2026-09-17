@@ -276,19 +276,18 @@ runtime_publish_controlled_artifacts() {
   local source_dir="$1"
   local artifact_path="$2"
   local attestation_path="$3"
-  local capability_state_path="$4"
-  local capability_token_path="$5"
-  local log="$6"
-  local message="$7"
-  if [ "$#" -ne 7 ] || [ -z "$source_dir" ] || [ -z "$artifact_path" ] || \
-     [ -z "$attestation_path" ] || [ -z "$capability_state_path" ] || \
-     [ -z "$capability_token_path" ] || [ -z "$log" ] || [ -z "$message" ]; then
+  local capability_token_path="$4"
+  local log="$5"
+  local message="$6"
+  if [ "$#" -ne 6 ] || [ -z "$source_dir" ] || [ -z "$artifact_path" ] || \
+     [ -z "$attestation_path" ] || [ -z "$capability_token_path" ] || \
+     [ -z "$log" ] || [ -z "$message" ]; then
     echo "runtime-publish: invalid controlled publication arguments" >&2
     return 2
   fi
   if ! python3 "$_RUNTIME_PUBLISHER_SCRIPT_DIR/validate_controlled_top5_publication.py" \
       "$source_dir/$artifact_path" "$attestation_path" "$artifact_path" \
-      "$capability_state_path" "$capability_token_path" --consume >> "$log" 2>&1; then
+      "$capability_token_path" --consume >> "$log" 2>&1; then
     echo "[runtime-publish] controlled publication gate rejected" >> "$log"
     return 1
   fi
@@ -303,11 +302,11 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
   elif [ "${1:-}" = "publish-staged" ] && [ -n "${2:-}" ] && [ -n "${3:-}" ] && \
        [ -n "${4:-}" ] && [ -n "${5:-}" ] && [ -n "${6:-}" ]; then
     runtime_publish_staged_artifacts "$2" "$3" "$4" "$5" "${@:6}"
-  elif [ "${1:-}" = "publish-controlled" ] && [ -n "${2:-}" ] && [ -n "${3:-}" ] && \
-       [ -n "${4:-}" ] && [ -n "${5:-}" ] && [ -n "${6:-}" ] && [ -n "${7:-}" ]; then
+  elif [ "$#" -eq 7 ] && [ "${1:-}" = "publish-controlled" ] && [ -n "${2:-}" ] && [ -n "${3:-}" ] && \
+       [ -n "${4:-}" ] && [ -n "${5:-}" ] && [ -n "${6:-}" ]; then
     runtime_publish_controlled_artifacts "$2" "$3" "$4" "$5" "$6" "$7"
   else
-    echo "usage: $0 configure <active-checkout> <publish-dir> | setup <active-checkout> [log-path] | publish-staged <active-checkout> <stage-dir> <log-path> <message> <path...> | publish-controlled <active-checkout> <artifact-path> <attestation-json> <capability-state-json> <capability-token-json> <log-path> <message>" >&2
+    echo "usage: $0 configure <active-checkout> <publish-dir> | setup <active-checkout> [log-path] | publish-staged <active-checkout> <stage-dir> <log-path> <message> <path...> | publish-controlled <active-checkout> <artifact-path> <attestation-json> <capability-token-json> <log-path> <message>" >&2
     exit 2
   fi
 fi

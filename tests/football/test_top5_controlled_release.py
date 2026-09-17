@@ -39,6 +39,7 @@ from src.football.top5_publisher import (
     ControlledTop5PublicationPayload,
     FileControlledPublicationCapabilityStore,
     Top5PublicationAuthorization,
+    controlled_publication_capability_state_path,
 )
 from src.football.top5_qualification_sample_aggregator import (
     aggregate_builder2_qualification_samples,
@@ -796,7 +797,7 @@ def test_controlled_publication_attestation_requires_active_state_and_separate_a
         )
 
 
-def _capability_fixture(tmp_path):
+def _capability_fixture(tmp_path, monkeypatch):
     request, auth, evidence, artifact, publication_auth, health = _context(tmp_path)
     release = Top5ControlledRelease()
     release.activate(
@@ -813,7 +814,9 @@ def _capability_fixture(tmp_path):
         issued_at=runtime_now - timedelta(minutes=1),
         expires_at=runtime_now + timedelta(days=1),
     )
-    state_path = tmp_path / "operator-runtime" / "controlled-capability.json"
+    runtime_root = tmp_path / "operator-runtime"
+    monkeypatch.setenv("SPORTSBRAIN_RUNTIME_STATE_DIR", str(runtime_root))
+    state_path = controlled_publication_capability_state_path()
     store = FileControlledPublicationCapabilityStore(state_path)
     attestation, capability = release.issue_publication_capability(
         artifact,
@@ -842,7 +845,7 @@ def _capability_fixture(tmp_path):
     }
 
 
-def _validator_command(fixture, *, state_path=None, capability_path=None):
+def _validator_command(fixture, *, capability_path=None):
     validator = (
         Path(__file__).resolve().parents[2]
         / "scripts"
@@ -854,16 +857,13 @@ def _validator_command(fixture, *, state_path=None, capability_path=None):
         str(fixture["product_path"]),
         str(fixture["attestation_path"]),
         fixture["artifact"].artifact_path,
-        str(state_path or fixture["state_path"]),
         str(capability_path or fixture["capability_path"]),
         "--consume",
     ], validator.parents[1]
 
 
-def _run_validator(fixture, *, state_path=None, capability_path=None):
-    command, root = _validator_command(
-        fixture, state_path=state_path, capability_path=capability_path
-    )
+def _run_validator(fixture, *, capability_path=None):
+    command, root = _validator_command(fixture, capability_path=capability_path)
     return subprocess.run(
         command,
         cwd=root,
@@ -921,15 +921,19 @@ def _self_consistent_forgery(attestation, **changes):
     return payload
 
 
-def test_legitimate_runtime_issued_capability_validates_and_consumes(tmp_path):
-    fixture = _capability_fixture(tmp_path)
+def test_legitimate_runtime_issued_capability_validates_and_consumes(
+    tmp_path, monkeypatch
+):
+    fixture = _capability_fixture(tmp_path, monkeypatch)
     accepted = _run_validator(fixture)
     assert accepted.returncode == 0, accepted.stderr
     assert json.loads(fixture["state_path"].read_text())["consumed"] is True
 
 
-def test_self_consistent_forged_attestation_fails_against_runtime_capability(tmp_path):
-    fixture = _capability_fixture(tmp_path)
+def test_self_consistent_forged_attestation_fails_against_runtime_capability(
+    tmp_path, monkeypatch
+):
+    fixture = _capability_fixture(tmp_path, monkeypatch)
     forged_payload = _self_consistent_forgery(
         fixture["attestation"], activation_id="activation:forged"
     )
@@ -945,16 +949,70 @@ def test_self_consistent_forged_attestation_fails_against_runtime_capability(tmp
     assert json.loads(fixture["state_path"].read_text())["consumed"] is False
 
 
-def test_missing_capability_fails_closed(tmp_path):
-    fixture = _capability_fixture(tmp_path)
-    rejected = _run_validator(
-        fixture, state_path=tmp_path / "operator-runtime" / "missing.json"
+def test_self_consistent_forged_external_state_is_ignored(tmp_path, monkeypatch):
+    fixture = _capability_fixture(tmp_path, monkeypatch)
+    forged_payload = _self_consistent_forgery(
+        fixture["attestation"], activation_id="activation:attacker"
     )
+    forged = ControlledPublicationAttestation.from_mapping(forged_payload)
+    forged.validate(
+        artifact=fixture["product"],
+        artifact_path=fixture["artifact"].artifact_path,
+        now=fixture["runtime_now"],
+    )
+
+    attacker_nonce = "attacker-nonce-" + "x" * 32
+    attacker_capability_id = "top5-capability:attacker"
+    attacker_state_path = tmp_path / "attacker-state" / "capability.json"
+    attacker_state_path.parent.mkdir(parents=True)
+    attacker_state_path.write_text(
+        json.dumps(
+            {
+                "schema": "top5-controlled-publication-capability-v1",
+                "capability_id": attacker_capability_id,
+                "nonce_digest": sha256(attacker_nonce.encode()).hexdigest(),
+                "attestation": forged_payload,
+                "consumed": False,
+            },
+            sort_keys=True,
+        )
+    )
+    attacker_token_path = tmp_path / "attacker-token.json"
+    attacker_token_path.write_text(
+        json.dumps(
+            {
+                "capability_id": attacker_capability_id,
+                "capability_nonce": attacker_nonce,
+            },
+            sort_keys=True,
+        )
+    )
+    fixture["attestation_path"].write_text(json.dumps(forged_payload, sort_keys=True))
+
+    rejected = _run_validator(fixture, capability_path=attacker_token_path)
+
+    assert rejected.returncode != 0
+    assert json.loads(fixture["state_path"].read_text())["consumed"] is False
+    assert json.loads(attacker_state_path.read_text())["consumed"] is False
+
+
+def test_capability_store_rejects_noncanonical_state_path(tmp_path, monkeypatch):
+    monkeypatch.setenv(
+        "SPORTSBRAIN_RUNTIME_STATE_DIR", str(tmp_path / "operator-runtime")
+    )
+    with pytest.raises(ValueError, match="canonical operator path"):
+        FileControlledPublicationCapabilityStore(tmp_path / "attacker-state.json")
+
+
+def test_missing_capability_fails_closed(tmp_path, monkeypatch):
+    fixture = _capability_fixture(tmp_path, monkeypatch)
+    fixture["state_path"].unlink()
+    rejected = _run_validator(fixture)
     assert rejected.returncode != 0
 
 
-def test_wrong_capability_nonce_fails_closed(tmp_path):
-    fixture = _capability_fixture(tmp_path)
+def test_wrong_capability_nonce_fails_closed(tmp_path, monkeypatch):
+    fixture = _capability_fixture(tmp_path, monkeypatch)
     wrong_path = tmp_path / "wrong-capability.json"
     wrong_path.write_text(
         json.dumps(
@@ -969,15 +1027,15 @@ def test_wrong_capability_nonce_fails_closed(tmp_path):
     assert rejected.returncode != 0
 
 
-def test_capability_replay_fails_after_successful_consumption(tmp_path):
-    fixture = _capability_fixture(tmp_path)
+def test_capability_replay_fails_after_successful_consumption(tmp_path, monkeypatch):
+    fixture = _capability_fixture(tmp_path, monkeypatch)
     assert _run_validator(fixture).returncode == 0
     replay = _run_validator(fixture)
     assert replay.returncode != 0
 
 
-def test_expired_capability_fails_without_consuming_state(tmp_path):
-    fixture = _capability_fixture(tmp_path)
+def test_expired_capability_fails_without_consuming_state(tmp_path, monkeypatch):
+    fixture = _capability_fixture(tmp_path, monkeypatch)
     with pytest.raises(ValueError, match="stale or expired"):
         fixture["store"].consume(
             fixture["capability"],
@@ -989,16 +1047,18 @@ def test_expired_capability_fails_without_consuming_state(tmp_path):
     assert json.loads(fixture["state_path"].read_text())["consumed"] is False
 
 
-def test_artifact_changed_after_capability_issue_fails_closed(tmp_path):
-    fixture = _capability_fixture(tmp_path)
+def test_artifact_changed_after_capability_issue_fails_closed(tmp_path, monkeypatch):
+    fixture = _capability_fixture(tmp_path, monkeypatch)
     fixture["product_path"].write_text(json.dumps({"tampered": True}))
     rejected = _run_validator(fixture)
     assert rejected.returncode != 0
     assert json.loads(fixture["state_path"].read_text())["consumed"] is False
 
 
-def test_activation_binding_changed_after_capability_issue_fails_closed(tmp_path):
-    fixture = _capability_fixture(tmp_path)
+def test_activation_binding_changed_after_capability_issue_fails_closed(
+    tmp_path, monkeypatch
+):
+    fixture = _capability_fixture(tmp_path, monkeypatch)
     fixture["attestation_path"].write_text(
         json.dumps(
             _self_consistent_forgery(
@@ -1012,9 +1072,9 @@ def test_activation_binding_changed_after_capability_issue_fails_closed(tmp_path
 
 
 def test_publication_authorization_changed_after_capability_issue_fails_closed(
-    tmp_path,
+    tmp_path, monkeypatch
 ):
-    fixture = _capability_fixture(tmp_path)
+    fixture = _capability_fixture(tmp_path, monkeypatch)
     fixture["attestation_path"].write_text(
         json.dumps(
             _self_consistent_forgery(
@@ -1029,12 +1089,13 @@ def test_publication_authorization_changed_after_capability_issue_fails_closed(
 
 
 def test_capability_issue_requires_active_activation_and_valid_publication_auth(
-    tmp_path,
+    tmp_path, monkeypatch
 ):
     request, auth, evidence, artifact, publication_auth, health = _context(tmp_path)
-    store = FileControlledPublicationCapabilityStore(
-        tmp_path / "operator-runtime" / "capability.json"
+    monkeypatch.setenv(
+        "SPORTSBRAIN_RUNTIME_STATE_DIR", str(tmp_path / "operator-runtime")
     )
+    store = FileControlledPublicationCapabilityStore()
     release = Top5ControlledRelease()
     with pytest.raises(ValueError, match="active activation"):
         release.issue_publication_capability(
