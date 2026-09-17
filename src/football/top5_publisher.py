@@ -11,6 +11,7 @@ from __future__ import annotations
 import fcntl
 import json
 import os
+import pwd
 import secrets
 import uuid
 from collections.abc import Mapping
@@ -32,7 +33,6 @@ from src.football.production_contracts import (
     validate_artifact_ownership,
 )
 from src.notifications.public_serializer import serialize_public_product
-from src.runtime.paths import DEFAULT_RUNTIME_STATE_DIR
 
 CONTROLLED_PUBLICATION_CAPABILITY_STATE = (
     "football/top5/controlled_publication_capability.json"
@@ -42,7 +42,24 @@ CONTROLLED_PUBLICATION_CAPABILITY_STATE = (
 def controlled_publication_capability_state_path() -> Path:
     """Return the sole operator-owned state location for publication capability."""
 
-    return DEFAULT_RUNTIME_STATE_DIR / CONTROLLED_PUBLICATION_CAPABILITY_STATE
+    try:
+        account_home = Path(pwd.getpwuid(os.getuid()).pw_dir)
+    except (KeyError, OSError) as exc:
+        raise ProductionContractError(
+            "controlled publication capability operator account is unavailable"
+        ) from exc
+    if not account_home.is_absolute():
+        raise ProductionContractError(
+            "controlled publication capability operator account path is invalid"
+        )
+    return (
+        account_home
+        / "Library"
+        / "Application Support"
+        / "SportsBrain"
+        / "runtime-state"
+        / CONTROLLED_PUBLICATION_CAPABILITY_STATE
+    )
 
 
 def _digest(value: object) -> str:

@@ -14,7 +14,6 @@ from src.football.top5_publisher import (
     ControlledPublicationAttestation,
     ControlledPublicationCapability,
     FileControlledPublicationCapabilityStore,
-    controlled_publication_capability_state_path,
 )
 
 
@@ -34,7 +33,6 @@ def main(argv: list[str]) -> int:
             raise ValueError(
                 "capability token must be operator-owned outside the repository"
             )
-        state_path = controlled_publication_capability_state_path()
         artifact = json.loads(Path(argv[1]).read_text())
         attestation = ControlledPublicationAttestation.from_mapping(
             json.loads(Path(argv[2]).read_text())
@@ -42,7 +40,7 @@ def main(argv: list[str]) -> int:
         capability = ControlledPublicationCapability.from_mapping(
             json.loads(token_path.read_text())
         )
-        FileControlledPublicationCapabilityStore(state_path).consume(
+        FileControlledPublicationCapabilityStore().consume(
             capability,
             attestation,
             artifact=artifact,

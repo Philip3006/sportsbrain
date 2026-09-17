@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import io
 import json
-import os
 import subprocess
 import sys
+from contextlib import redirect_stderr, redirect_stdout
 from copy import deepcopy
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
@@ -16,6 +17,7 @@ import pytest
 
 import src.football.top5_publisher as top5_publisher_module
 from scripts.top5_real_shadow_session import main as session_cli
+from scripts.validate_controlled_top5_publication import main as validate_publication
 from src.football.production_contracts import RolloutEvidence, SignalTimeContract
 from src.football.top5_activation_readiness import (
     ControlledActivationRequest,
@@ -817,16 +819,11 @@ def _capability_fixture(tmp_path, monkeypatch):
         expires_at=runtime_now + timedelta(days=1),
     )
     operator_home = tmp_path / "operator-home"
-    runtime_root = (
-        operator_home
-        / "Library"
-        / "Application Support"
-        / "SportsBrain"
-        / "runtime-state"
-    )
     monkeypatch.setenv("HOME", str(operator_home))
     monkeypatch.setattr(
-        top5_publisher_module, "DEFAULT_RUNTIME_STATE_DIR", runtime_root
+        top5_publisher_module.pwd,
+        "getpwuid",
+        lambda uid: type("PasswdEntry", (), {"pw_dir": str(operator_home)})(),
     )
     state_path = controlled_publication_capability_state_path()
     store = FileControlledPublicationCapabilityStore(state_path)
@@ -874,19 +871,17 @@ def _validator_command(fixture, *, capability_path=None):
     ], validator.parents[1]
 
 
-def _run_validator(fixture, *, capability_path=None, runtime_state_root=None):
-    command, root = _validator_command(fixture, capability_path=capability_path)
-    environment = None
-    if runtime_state_root is not None:
-        environment = dict(os.environ)
-        environment["SPORTSBRAIN_RUNTIME_STATE_DIR"] = str(runtime_state_root)
-    return subprocess.run(
+def _run_validator(fixture, *, capability_path=None):
+    command, _ = _validator_command(fixture, capability_path=capability_path)
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+    with redirect_stdout(stdout), redirect_stderr(stderr):
+        returncode = validate_publication([command[1], *command[2:]])
+    return subprocess.CompletedProcess(
         command,
-        cwd=root,
-        text=True,
-        capture_output=True,
-        env=environment,
-        check=False,
+        returncode,
+        stdout=stdout.getvalue(),
+        stderr=stderr.getvalue(),
     )
 
 
@@ -1057,12 +1052,10 @@ def test_runtime_state_environment_cannot_redirect_capability_authority(
         )
     )
     fixture["attestation_path"].write_text(json.dumps(forged_payload, sort_keys=True))
+    monkeypatch.setenv("HOME", str(attacker_root))
+    monkeypatch.setenv("SPORTSBRAIN_RUNTIME_STATE_DIR", str(attacker_root))
 
-    rejected = _run_validator(
-        fixture,
-        capability_path=attacker_token_path,
-        runtime_state_root=attacker_root,
-    )
+    rejected = _run_validator(fixture, capability_path=attacker_token_path)
 
     assert rejected.returncode != 0
     assert fixture["state_path"].is_file()
@@ -1071,9 +1064,12 @@ def test_runtime_state_environment_cannot_redirect_capability_authority(
 
 
 def test_capability_store_rejects_noncanonical_state_path(tmp_path, monkeypatch):
-    runtime_root = tmp_path / "operator-runtime"
     monkeypatch.setattr(
-        top5_publisher_module, "DEFAULT_RUNTIME_STATE_DIR", runtime_root
+        top5_publisher_module.pwd,
+        "getpwuid",
+        lambda uid: type(
+            "PasswdEntry", (), {"pw_dir": str(tmp_path / "operator-home")}
+        )(),
     )
     with pytest.raises(ValueError, match="canonical operator path"):
         FileControlledPublicationCapabilityStore(tmp_path / "attacker-state.json")
@@ -1168,9 +1164,11 @@ def test_capability_issue_requires_active_activation_and_valid_publication_auth(
 ):
     request, auth, evidence, artifact, publication_auth, health = _context(tmp_path)
     monkeypatch.setattr(
-        top5_publisher_module,
-        "DEFAULT_RUNTIME_STATE_DIR",
-        tmp_path / "operator-runtime",
+        top5_publisher_module.pwd,
+        "getpwuid",
+        lambda uid: type(
+            "PasswdEntry", (), {"pw_dir": str(tmp_path / "operator-home")}
+        )(),
     )
     store = FileControlledPublicationCapabilityStore()
     release = Top5ControlledRelease()
