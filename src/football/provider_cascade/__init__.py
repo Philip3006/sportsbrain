@@ -97,6 +97,21 @@ from src.football.provider_cascade.real_transport_bridge import (
     ConfiguredNetworkProviderTransport,
 )
 from src.football.provider_cascade.router import ProviderCascadeRouter
+from src.football.provider_cascade.sportsgameodds import (
+    SPORTSGAMEODDS_API_URL,
+    SPORTSGAMEODDS_INTERNAL_LEAGUE,
+    SPORTSGAMEODDS_LEAGUE_ID,
+    SPORTSGAMEODDS_PROVIDER,
+    SPORTSGAMEODDS_REGULATION_MARKET_IDS,
+    SportsGameOddsAdapter,
+    SportsGameOddsError,
+    SportsGameOddsExperimentConfig,
+    build_sportsgameodds_provider_config,
+)
+from src.football.provider_cascade.sportsgameodds_diagnostic import (
+    SportsGameOddsDiagnostic,
+    SportsGameOddsDiagnosticClient,
+)
 from src.football.top5_builder2_qualification_receipt import (
     Builder2QualificationReceiptError,
     Builder2QualificationReceiptV1,
@@ -120,6 +135,11 @@ __all__ = [
     "QUOTA_STATE_SCHEMA_VERSION",
     "RELEASE_PREFLIGHT_BLOCKED",
     "RELEASE_PREFLIGHT_READY",
+    "SPORTSGAMEODDS_API_URL",
+    "SPORTSGAMEODDS_INTERNAL_LEAGUE",
+    "SPORTSGAMEODDS_LEAGUE_ID",
+    "SPORTSGAMEODDS_PROVIDER",
+    "SPORTSGAMEODDS_REGULATION_MARKET_IDS",
     "AdapterResult",
     "Builder1OddsInput",
     "Builder2QualificationReceiptError",
@@ -172,12 +192,18 @@ __all__ = [
     "ReleasePreflightResult",
     "RequestBudgetManager",
     "RunValidationReport",
+    "SportsGameOddsAdapter",
+    "SportsGameOddsDiagnostic",
+    "SportsGameOddsDiagnosticClient",
+    "SportsGameOddsError",
+    "SportsGameOddsExperimentConfig",
     "TheOddsAPIAdapter",
     "TimingProvenance",
     "TransportCapability",
     "accepted_for_builder1",
     "build_controlled_shadow_preparation",
     "build_provider_readiness_view",
+    "build_sportsgameodds_provider_config",
     "builder2_evidence_payload",
     "compare_provider_results",
     "load_preparation",

@@ -60,9 +60,11 @@ class ProviderRequest:
         sensitive = {
             "apikey",
             "api_key",
+            "x-api-key",
             "x-application",
             "x-authentication",
             "authorization",
+            "token",
         }
         return {
             "provider": self.provider,
