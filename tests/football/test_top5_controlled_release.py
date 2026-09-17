@@ -830,10 +830,7 @@ def _capability_fixture(tmp_path, monkeypatch):
         lambda uid: type("PasswdEntry", (), {"pw_dir": str(operator_home)})(),
     )
     capability_issuer = _SyntheticCapabilityIssuer("trusted")
-    issuer_key_path = controlled_publication_issuer_public_key_path()
-    issuer_key_path.parent.mkdir(parents=True, exist_ok=True)
-    issuer_key_path.write_text(capability_issuer.public_key_hex)
-    issuer_key_path.chmod(0o600)
+    _install_synthetic_issuer_key(capability_issuer, monkeypatch)
     state_path = controlled_publication_capability_state_path()
     store = FileControlledPublicationCapabilityStore(state_path)
     attestation, capability = release.issue_publication_capability(
@@ -905,6 +902,7 @@ class _SyntheticCapabilityIssuer:
         self._label = label
         self._counter = 0
         self._private_key = Ed25519PrivateKey.generate()
+        self.last_proof = None
 
     @property
     def public_key_hex(self):
@@ -926,11 +924,25 @@ class _SyntheticCapabilityIssuer:
                 attestation_digest, issuance_id
             )
         ).hex()
-        return ControlledPublicationCapabilityIssuanceProof(
+        self.last_proof = ControlledPublicationCapabilityIssuanceProof(
             attestation_digest=attestation_digest,
             issuance_id=issuance_id,
             signature=signature,
         )
+        return self.last_proof
+
+
+def _install_synthetic_issuer_key(issuer, monkeypatch):
+    issuer_key_path = controlled_publication_issuer_public_key_path()
+    issuer_key_path.parent.mkdir(parents=True, exist_ok=True)
+    issuer_key_bytes = bytes.fromhex(issuer.public_key_hex)
+    issuer_key_path.write_text(issuer.public_key_hex)
+    issuer_key_path.chmod(0o600)
+    monkeypatch.setattr(
+        top5_publisher_module,
+        "CONTROLLED_PUBLICATION_ISSUER_PUBLIC_KEY_SHA256",
+        sha256(issuer_key_bytes).hexdigest(),
+    )
 
 
 def _ordinary_digest(value):
@@ -1200,10 +1212,7 @@ def test_direct_store_cannot_issue_from_self_consistent_forged_attestation(
     store = FileControlledPublicationCapabilityStore()
     state_path = controlled_publication_capability_state_path()
     trusted_issuer = _SyntheticCapabilityIssuer("trusted-direct-test")
-    issuer_key_path = controlled_publication_issuer_public_key_path()
-    issuer_key_path.parent.mkdir(parents=True, exist_ok=True)
-    issuer_key_path.write_text(trusted_issuer.public_key_hex)
-    issuer_key_path.chmod(0o600)
+    _install_synthetic_issuer_key(trusted_issuer, monkeypatch)
     fake_active_bindings = {
         "active": True,
         "activation_id": artifact.activation_id,
@@ -1258,8 +1267,12 @@ def test_direct_store_cannot_issue_from_self_consistent_forged_attestation(
     with pytest.raises(ValueError, match="trusted signed proof"):
         store.issue(forged)
     assert not hasattr(top5_publisher_module, "_create_capability_issuance_proof")
-    attacker_proof = _SyntheticCapabilityIssuer("attacker").issue_proof(forged)
-    with pytest.raises(ValueError, match="signature"):
+    attacker_issuer = _SyntheticCapabilityIssuer("attacker")
+    issuer_key_path = controlled_publication_issuer_public_key_path()
+    issuer_key_path.write_text(attacker_issuer.public_key_hex)
+    issuer_key_path.chmod(0o600)
+    attacker_proof = attacker_issuer.issue_proof(forged)
+    with pytest.raises(ValueError, match="fingerprint mismatch|signature"):
         store.issue(forged, issuer_proof=attacker_proof)
 
     rejected = _run_validator(fixture)

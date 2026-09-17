@@ -43,6 +43,11 @@ CONTROLLED_PUBLICATION_CAPABILITY_STATE = (
 CONTROLLED_PUBLICATION_ISSUER_PUBLIC_KEY = (
     "football/top5/controlled_publication_issuer.ed25519.pub"
 )
+# This reviewed fingerprint is the trust anchor.  No matching private key is
+# committed; absent an operator-provisioned matching key, issuance fails closed.
+CONTROLLED_PUBLICATION_ISSUER_PUBLIC_KEY_SHA256 = (
+    "0d54b442abe704eadcae23e3638bff75ba87de06d62977f53900846e2df4bd86"
+)
 
 
 def controlled_publication_capability_state_path() -> Path:
@@ -928,9 +933,15 @@ def _verify_capability_issuance_proof(
             raise ProductionContractError(
                 "trusted controlled publication issuer key permissions are unsafe"
             )
-        public_key = Ed25519PublicKey.from_public_bytes(
-            bytes.fromhex(public_key_path.read_text().strip())
-        )
+        public_key_bytes = bytes.fromhex(public_key_path.read_text().strip())
+        if not compare_digest(
+            sha256(public_key_bytes).hexdigest(),
+            CONTROLLED_PUBLICATION_ISSUER_PUBLIC_KEY_SHA256,
+        ):
+            raise ProductionContractError(
+                "trusted controlled publication issuer key fingerprint mismatch"
+            )
+        public_key = Ed25519PublicKey.from_public_bytes(public_key_bytes)
         public_key.verify(
             bytes.fromhex(proof.signature),
             ControlledPublicationCapabilityIssuanceProof.message_for(
