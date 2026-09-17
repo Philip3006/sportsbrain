@@ -10,23 +10,42 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.football.top5_publisher import ControlledPublicationAttestation
+from src.football.top5_publisher import (
+    ControlledPublicationAttestation,
+    ControlledPublicationCapability,
+    FileControlledPublicationCapabilityStore,
+)
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 4:
+    if len(argv) != 7 or argv[6] != "--consume":
         print(
             "usage: validate_controlled_top5_publication.py "
-            "<artifact-json> <attestation-json> <artifact-path>",
+            "<artifact-json> <attestation-json> <artifact-path> "
+            "<capability-state-json> <capability-token-json> --consume",
             file=sys.stderr,
         )
         return 2
     try:
+        repository_root = Path(__file__).resolve().parents[1]
+        state_path = Path(argv[4])
+        token_path = Path(argv[5])
+        if state_path.resolve().is_relative_to(
+            repository_root
+        ) or token_path.resolve().is_relative_to(repository_root):
+            raise ValueError(
+                "capability state must be operator-owned outside the repository"
+            )
         artifact = json.loads(Path(argv[1]).read_text())
         attestation = ControlledPublicationAttestation.from_mapping(
             json.loads(Path(argv[2]).read_text())
         )
-        attestation.validate(
+        capability = ControlledPublicationCapability.from_mapping(
+            json.loads(token_path.read_text())
+        )
+        FileControlledPublicationCapabilityStore(state_path).consume(
+            capability,
+            attestation,
             artifact=artifact,
             artifact_path=argv[3],
             now=datetime.now(timezone.utc),

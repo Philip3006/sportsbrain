@@ -39,6 +39,8 @@ from src.football.top5_controlled_shadow_provider_qualification import (
 )
 from src.football.top5_publisher import (
     ControlledPublicationAttestation,
+    ControlledPublicationCapability,
+    ControlledPublicationCapabilityStore,
     ControlledTop5PublicationPayload,
     InMemoryTop5PublicationStore,
     PublicationRollback,
@@ -904,6 +906,23 @@ class Top5ControlledRelease:
             artifact=artifact.as_public_product(),
             now=now,
         )
+
+    def issue_publication_capability(
+        self,
+        artifact: ControlledTop5PublicationPayload,
+        authorization: Top5PublicationAuthorization,
+        capability_store: ControlledPublicationCapabilityStore,
+        *,
+        now: datetime,
+    ) -> tuple[ControlledPublicationAttestation, ControlledPublicationCapability]:
+        """Issue a runtime capability only after all controlled gates validate."""
+
+        attestation = self.issue_publication_attestation(
+            artifact,
+            authorization,
+            now=now,
+        )
+        return attestation, capability_store.issue(attestation)
 
     def publish(
         self,

@@ -7,7 +7,8 @@ import subprocess
 import sys
 from copy import deepcopy
 from dataclasses import replace
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
+from hashlib import sha256
 from pathlib import Path
 
 import pytest
@@ -36,6 +37,7 @@ from src.football.top5_provider_validation import ProviderAuthority
 from src.football.top5_publisher import (
     ControlledPublicationAttestation,
     ControlledTop5PublicationPayload,
+    FileControlledPublicationCapabilityStore,
     Top5PublicationAuthorization,
 )
 from src.football.top5_qualification_sample_aggregator import (
@@ -794,13 +796,8 @@ def test_controlled_publication_attestation_requires_active_state_and_separate_a
         )
 
 
-def test_controlled_publication_validator_rejects_tampered_artifact(tmp_path):
+def _capability_fixture(tmp_path):
     request, auth, evidence, artifact, publication_auth, health = _context(tmp_path)
-    publication_auth = replace(
-        publication_auth,
-        issued_at=BASE - timedelta(days=1),
-        expires_at=BASE + timedelta(days=365),
-    )
     release = Top5ControlledRelease()
     release.activate(
         request,
@@ -810,43 +807,251 @@ def test_controlled_publication_validator_rejects_tampered_artifact(tmp_path):
         health_preconditions=health,
         now=BASE + timedelta(minutes=2),
     )
-    product_path = tmp_path / "signals.json"
-    attestation_path = tmp_path / "attestation.json"
-    product_path.write_text(json.dumps(artifact.as_public_product(), sort_keys=True))
-    attestation_path.write_text(
-        json.dumps(
-            release.issue_publication_attestation(
-                artifact, publication_auth, now=BASE + timedelta(minutes=3)
-            ).as_payload(),
-            sort_keys=True,
-        )
+    runtime_now = datetime.now(timezone.utc)
+    publication_auth = replace(
+        publication_auth,
+        issued_at=runtime_now - timedelta(minutes=1),
+        expires_at=runtime_now + timedelta(days=1),
     )
+    state_path = tmp_path / "operator-runtime" / "controlled-capability.json"
+    store = FileControlledPublicationCapabilityStore(state_path)
+    attestation, capability = release.issue_publication_capability(
+        artifact,
+        publication_auth,
+        store,
+        now=runtime_now,
+    )
+    product_path = tmp_path / artifact.artifact_path
+    product_path.parent.mkdir(parents=True)
+    product_path.write_text(json.dumps(artifact.as_public_product(), sort_keys=True))
+    attestation_path = tmp_path / "attestation.json"
+    attestation_path.write_text(json.dumps(attestation.as_payload(), sort_keys=True))
+    capability_path = tmp_path / "capability-token.json"
+    capability_path.write_text(json.dumps(capability.as_payload(), sort_keys=True))
+    return {
+        "artifact": artifact,
+        "product": artifact.as_public_product(),
+        "product_path": product_path,
+        "attestation": attestation,
+        "attestation_path": attestation_path,
+        "capability": capability,
+        "capability_path": capability_path,
+        "state_path": state_path,
+        "store": store,
+        "runtime_now": runtime_now,
+    }
+
+
+def _validator_command(fixture, *, state_path=None, capability_path=None):
     validator = (
         Path(__file__).resolve().parents[2]
         / "scripts"
         / "validate_controlled_top5_publication.py"
     )
-    command = [
+    return [
         sys.executable,
         str(validator),
-        str(product_path),
-        str(attestation_path),
-        artifact.artifact_path,
-    ]
-    accepted = subprocess.run(
+        str(fixture["product_path"]),
+        str(fixture["attestation_path"]),
+        fixture["artifact"].artifact_path,
+        str(state_path or fixture["state_path"]),
+        str(capability_path or fixture["capability_path"]),
+        "--consume",
+    ], validator.parents[1]
+
+
+def _run_validator(fixture, *, state_path=None, capability_path=None):
+    command, root = _validator_command(
+        fixture, state_path=state_path, capability_path=capability_path
+    )
+    return subprocess.run(
         command,
-        cwd=validator.parents[1],
+        cwd=root,
         text=True,
         capture_output=True,
         check=False,
     )
+
+
+def _ordinary_digest(value):
+    return sha256(
+        json.dumps(
+            value, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+        ).encode()
+    ).hexdigest()
+
+
+def _self_consistent_forgery(attestation, **changes):
+    payload = dict(attestation.as_payload())
+    payload.update(changes)
+    binding_fields = (
+        "activation_id",
+        "league_code",
+        "candidate_id",
+        "model_identity",
+        "source_sha",
+        "research_sha",
+        "model_artifact_hash",
+        "signal_time_experiment_id",
+        "provider_authority",
+        "result_authority",
+        "evidence_digest",
+        "controlled_shadow_run_id",
+        "qualification_session_id",
+    )
+    payload["activation_binding_digest"] = _ordinary_digest(
+        {"active": True, **{name: payload[name] for name in binding_fields}}
+    )
+    publication_fields = (
+        "publication_authorization_id",
+        "activation_id",
+        "league_code",
+        "candidate_id",
+        "model_identity",
+        "source_sha",
+        "research_sha",
+        "model_artifact_hash",
+        "signal_time_experiment_id",
+        "publication_authorized",
+        "no_bet",
+    )
+    payload["publication_authorization_digest"] = _ordinary_digest(
+        {name: payload[name] for name in publication_fields}
+    )
+    return payload
+
+
+def test_legitimate_runtime_issued_capability_validates_and_consumes(tmp_path):
+    fixture = _capability_fixture(tmp_path)
+    accepted = _run_validator(fixture)
     assert accepted.returncode == 0, accepted.stderr
-    product_path.write_text(json.dumps({"tampered": True}))
-    rejected = subprocess.run(
-        command,
-        cwd=validator.parents[1],
-        text=True,
-        capture_output=True,
-        check=False,
+    assert json.loads(fixture["state_path"].read_text())["consumed"] is True
+
+
+def test_self_consistent_forged_attestation_fails_against_runtime_capability(tmp_path):
+    fixture = _capability_fixture(tmp_path)
+    forged_payload = _self_consistent_forgery(
+        fixture["attestation"], activation_id="activation:forged"
+    )
+    forged = ControlledPublicationAttestation.from_mapping(forged_payload)
+    forged.validate(
+        artifact=fixture["product"],
+        artifact_path=fixture["artifact"].artifact_path,
+        now=fixture["runtime_now"],
+    )
+    fixture["attestation_path"].write_text(json.dumps(forged_payload, sort_keys=True))
+    rejected = _run_validator(fixture)
+    assert rejected.returncode != 0
+    assert json.loads(fixture["state_path"].read_text())["consumed"] is False
+
+
+def test_missing_capability_fails_closed(tmp_path):
+    fixture = _capability_fixture(tmp_path)
+    rejected = _run_validator(
+        fixture, state_path=tmp_path / "operator-runtime" / "missing.json"
     )
     assert rejected.returncode != 0
+
+
+def test_wrong_capability_nonce_fails_closed(tmp_path):
+    fixture = _capability_fixture(tmp_path)
+    wrong_path = tmp_path / "wrong-capability.json"
+    wrong_path.write_text(
+        json.dumps(
+            {
+                "capability_id": fixture["capability"].capability_id,
+                "capability_nonce": "wrong-nonce-" + "x" * 32,
+            },
+            sort_keys=True,
+        )
+    )
+    rejected = _run_validator(fixture, capability_path=wrong_path)
+    assert rejected.returncode != 0
+
+
+def test_capability_replay_fails_after_successful_consumption(tmp_path):
+    fixture = _capability_fixture(tmp_path)
+    assert _run_validator(fixture).returncode == 0
+    replay = _run_validator(fixture)
+    assert replay.returncode != 0
+
+
+def test_expired_capability_fails_without_consuming_state(tmp_path):
+    fixture = _capability_fixture(tmp_path)
+    with pytest.raises(ValueError, match="stale or expired"):
+        fixture["store"].consume(
+            fixture["capability"],
+            fixture["attestation"],
+            artifact=fixture["product"],
+            artifact_path=fixture["artifact"].artifact_path,
+            now=fixture["attestation"].expires_at + timedelta(seconds=1),
+        )
+    assert json.loads(fixture["state_path"].read_text())["consumed"] is False
+
+
+def test_artifact_changed_after_capability_issue_fails_closed(tmp_path):
+    fixture = _capability_fixture(tmp_path)
+    fixture["product_path"].write_text(json.dumps({"tampered": True}))
+    rejected = _run_validator(fixture)
+    assert rejected.returncode != 0
+    assert json.loads(fixture["state_path"].read_text())["consumed"] is False
+
+
+def test_activation_binding_changed_after_capability_issue_fails_closed(tmp_path):
+    fixture = _capability_fixture(tmp_path)
+    fixture["attestation_path"].write_text(
+        json.dumps(
+            _self_consistent_forgery(
+                fixture["attestation"], activation_id="activation:changed"
+            ),
+            sort_keys=True,
+        )
+    )
+    rejected = _run_validator(fixture)
+    assert rejected.returncode != 0
+
+
+def test_publication_authorization_changed_after_capability_issue_fails_closed(
+    tmp_path,
+):
+    fixture = _capability_fixture(tmp_path)
+    fixture["attestation_path"].write_text(
+        json.dumps(
+            _self_consistent_forgery(
+                fixture["attestation"],
+                publication_authorization_id="publication-auth:changed",
+            ),
+            sort_keys=True,
+        )
+    )
+    rejected = _run_validator(fixture)
+    assert rejected.returncode != 0
+
+
+def test_capability_issue_requires_active_activation_and_valid_publication_auth(
+    tmp_path,
+):
+    request, auth, evidence, artifact, publication_auth, health = _context(tmp_path)
+    store = FileControlledPublicationCapabilityStore(
+        tmp_path / "operator-runtime" / "capability.json"
+    )
+    release = Top5ControlledRelease()
+    with pytest.raises(ValueError, match="active activation"):
+        release.issue_publication_capability(
+            artifact, publication_auth, store, now=BASE + timedelta(minutes=2)
+        )
+    release.activate(
+        request,
+        auth,
+        evidence,
+        _rollout_evidence(),
+        health_preconditions=health,
+        now=BASE + timedelta(minutes=2),
+    )
+    with pytest.raises(ValueError, match="not approved"):
+        release.issue_publication_capability(
+            artifact,
+            replace(publication_auth, publication_authorized=False),
+            store,
+            now=BASE + timedelta(minutes=3),
+        )

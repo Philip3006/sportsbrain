@@ -266,6 +266,24 @@ def test_staged_publication_rejects_non_allowlisted_artifacts(tmp_path: Path):
     assert result.returncode != 0
 
 
+def test_staged_publication_rejects_controlled_top5_paths(tmp_path: Path):
+    _, active, publisher = _seed(tmp_path)
+    stage = tmp_path / "stage"
+    forbidden = stage / "docs" / "data" / "top5" / "published" / "BL1" / "signals.json"
+    forbidden.parent.mkdir(parents=True)
+    forbidden.write_text('{"football": []}\n')
+
+    result = _run_staged(
+        active,
+        publisher,
+        stage,
+        tmp_path / "publish.log",
+        "docs/data/top5/published/BL1/signals.json",
+    )
+
+    assert result.returncode != 0
+
+
 def test_staged_publication_rejects_a_stage_inside_the_active_checkout(tmp_path: Path):
     _, active, publisher = _seed(tmp_path)
     stage = active / "staging"

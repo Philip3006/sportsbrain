@@ -8,13 +8,21 @@ but it never writes the checkout, Cloudflare, a scheduler, or the ledger.
 
 from __future__ import annotations
 
+import fcntl
 import json
+import os
+import secrets
+import uuid
 from collections.abc import Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from hashlib import sha256
+from hmac import compare_digest
 from math import isfinite
+from pathlib import Path
 from types import MappingProxyType
+from typing import Protocol
 
 from src.football.production_contracts import (
     ActivationMode,
@@ -774,6 +782,217 @@ class ControlledPublicationAttestation:
             "issued_at": self.issued_at.isoformat(),
             "expires_at": self.expires_at.isoformat(),
         }
+
+
+@dataclass(frozen=True)
+class ControlledPublicationCapability:
+    """One-time operator capability kept separate from public artifacts."""
+
+    capability_id: str
+    capability_nonce: str
+
+    def validate(self) -> None:
+        _required_text(
+            {
+                "capability_id": self.capability_id,
+                "capability_nonce": self.capability_nonce,
+            },
+            "controlled publication capability",
+        )
+        if len(self.capability_nonce) < 32:
+            raise ProductionContractError(
+                "controlled publication capability nonce is too short"
+            )
+
+    @classmethod
+    def from_mapping(
+        cls, value: Mapping[str, object]
+    ) -> ControlledPublicationCapability:
+        expected = {"capability_id", "capability_nonce"}
+        if not isinstance(value, Mapping):
+            raise ProductionContractError(
+                "controlled publication capability must be an object"
+            )
+        missing = sorted(expected - set(value))
+        extra = sorted(set(value) - expected)
+        if missing:
+            raise ProductionContractError(
+                "controlled publication capability is missing: " + ", ".join(missing)
+            )
+        if extra:
+            raise ProductionContractError(
+                "controlled publication capability has unknown fields: "
+                + ", ".join(extra)
+            )
+        capability = cls(
+            capability_id=value["capability_id"],
+            capability_nonce=value["capability_nonce"],
+        )
+        capability.validate()
+        return capability
+
+    def as_payload(self) -> dict[str, str]:
+        self.validate()
+        return {
+            "capability_id": self.capability_id,
+            "capability_nonce": self.capability_nonce,
+        }
+
+
+class ControlledPublicationCapabilityStore(Protocol):
+    def issue(
+        self, attestation: ControlledPublicationAttestation
+    ) -> ControlledPublicationCapability: ...
+
+
+def _capability_nonce_digest(nonce: str) -> str:
+    return sha256(nonce.encode("utf-8")).hexdigest()
+
+
+class FileControlledPublicationCapabilityStore:
+    """Operator-owned one-time capability state outside the repository."""
+
+    _SCHEMA = "top5-controlled-publication-capability-v1"
+
+    def __init__(self, state_path: str | Path) -> None:
+        self.state_path = Path(state_path)
+        if not self.state_path.is_absolute():
+            raise ProductionContractError(
+                "controlled publication capability state must be an absolute path"
+            )
+        repository_root = Path(__file__).resolve().parents[2]
+        if self.state_path.resolve().is_relative_to(repository_root):
+            raise ProductionContractError(
+                "controlled publication capability state must be outside the repository"
+            )
+        self.lock_path = self.state_path.with_name(self.state_path.name + ".lock")
+
+    @contextmanager
+    def _locked(self):
+        self.state_path.parent.mkdir(parents=True, exist_ok=True)
+        with self.lock_path.open("a+") as lock:
+            os.chmod(self.lock_path, 0o600)
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+    def _write_state(self, state: Mapping[str, object]) -> None:
+        temporary = self.state_path.with_name(
+            f".{self.state_path.name}.{uuid.uuid4().hex}.tmp"
+        )
+        try:
+            temporary.write_text(
+                json.dumps(state, sort_keys=True, separators=(",", ":"))
+            )
+            os.chmod(temporary, 0o600)
+            os.replace(temporary, self.state_path)
+            os.chmod(self.state_path, 0o600)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+    def _read_state(self) -> dict[str, object]:
+        if not self.state_path.is_file() or self.state_path.is_symlink():
+            raise ProductionContractError(
+                "controlled publication capability state is unavailable"
+            )
+        try:
+            value = json.loads(self.state_path.read_text())
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ProductionContractError(
+                "controlled publication capability state is invalid"
+            ) from exc
+        if not isinstance(value, dict):
+            raise ProductionContractError(
+                "controlled publication capability state must be an object"
+            )
+        expected = {
+            "schema",
+            "capability_id",
+            "nonce_digest",
+            "attestation",
+            "consumed",
+        }
+        if set(value) != expected or value.get("schema") != self._SCHEMA:
+            raise ProductionContractError(
+                "controlled publication capability state has an invalid shape"
+            )
+        if value.get("consumed") is not False:
+            raise ProductionContractError(
+                "controlled publication capability has already been consumed"
+            )
+        _required_text(
+            {
+                "capability_id": value.get("capability_id"),
+                "nonce_digest": value.get("nonce_digest"),
+            },
+            "controlled publication capability state",
+        )
+        _hash(value["nonce_digest"], "capability nonce digest")
+        if not isinstance(value.get("attestation"), Mapping):
+            raise ProductionContractError(
+                "controlled publication capability attestation is invalid"
+            )
+        return value
+
+    def issue(
+        self, attestation: ControlledPublicationAttestation
+    ) -> ControlledPublicationCapability:
+        capability_id = f"top5-capability:{uuid.uuid4().hex}"
+        capability_nonce = secrets.token_urlsafe(32)
+        capability = ControlledPublicationCapability(capability_id, capability_nonce)
+        capability.validate()
+        state = {
+            "schema": self._SCHEMA,
+            "capability_id": capability.capability_id,
+            "nonce_digest": _capability_nonce_digest(capability.capability_nonce),
+            "attestation": attestation.as_payload(),
+            "consumed": False,
+        }
+        with self._locked():
+            if self.state_path.exists() or self.state_path.is_symlink():
+                raise ProductionContractError(
+                    "controlled publication capability state already exists"
+                )
+            self._write_state(state)
+        return capability
+
+    def consume(
+        self,
+        capability: ControlledPublicationCapability,
+        attestation: ControlledPublicationAttestation,
+        *,
+        artifact: object,
+        artifact_path: str,
+        now: datetime,
+    ) -> None:
+        capability.validate()
+        with self._locked():
+            state = self._read_state()
+            if state["capability_id"] != capability.capability_id:
+                raise ProductionContractError(
+                    "controlled publication capability identity mismatch"
+                )
+            if not compare_digest(
+                state["nonce_digest"],
+                _capability_nonce_digest(capability.capability_nonce),
+            ):
+                raise ProductionContractError(
+                    "controlled publication capability nonce mismatch"
+                )
+            stored = ControlledPublicationAttestation.from_mapping(state["attestation"])
+            if stored.as_payload() != attestation.as_payload():
+                raise ProductionContractError(
+                    "controlled publication capability binding mismatch"
+                )
+            attestation.validate(
+                artifact=artifact,
+                artifact_path=artifact_path,
+                now=now,
+            )
+            state["consumed"] = True
+            self._write_state(state)
 
 
 @dataclass(frozen=True)
