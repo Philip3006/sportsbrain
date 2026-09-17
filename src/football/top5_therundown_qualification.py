@@ -46,8 +46,28 @@ _EVIDENCE_FIELDS = frozenset(
     bookmaker_observed bookmaker_identity source_timestamp
     source_timing_provenance captured_at provider_request_id observation_id
     source_provenance raw_record_digest normalized_record_digest adapter_version
+    provider_record_digest adapter_source_sha authorization_metadata
     quota_state_before quota_state_after rate_limit_state quota_cost_units
     network_request_count synthetic_reconstruction provider_status failure_codes""".split()  # noqa: SIM905
+)
+_AUTHORIZATION_FIELDS = frozenset(
+    [
+        "controlled_shadow_run_id",
+        "qualification_session_id",
+        "ceo_authorization_id",
+        "provider_identity",
+        "canonical_league",
+        "fixture_key",
+        "provider_event_id",
+        "provider_request_id",
+        "provider_scope",
+        "league_scope",
+        "fixture_scope",
+        "network_execution",
+        "no_bet",
+        "publication_enabled",
+        "monetary_spend_authorized",
+    ]
 )
 _SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
 _REAL_EVIDENCE = "REAL_OBSERVED"
@@ -88,6 +108,9 @@ class TheRundownQualificationCode(str, Enum):
     ODDS_STALE = "ODDS_STALE"
     REQUEST_PROVENANCE_INCOMPLETE = "REQUEST_PROVENANCE_INCOMPLETE"
     QUOTA_RATE_LIMIT_UNRECORDED = "QUOTA_RATE_LIMIT_UNRECORDED"
+    AUTHORIZATION_PROVENANCE_INCOMPLETE = "AUTHORIZATION_PROVENANCE_INCOMPLETE"
+    ADAPTER_SOURCE_PROVENANCE_INCOMPLETE = "ADAPTER_SOURCE_PROVENANCE_INCOMPLETE"
+    PROVIDER_RECORD_DIGEST_REQUIRED = "PROVIDER_RECORD_DIGEST_REQUIRED"
     PROVIDER_FAILURE = "PROVIDER_FAILURE"
     UNSAFE_NETWORK_COUNT = "UNSAFE_NETWORK_COUNT"
     CANONICAL_OBSERVATION_REQUIRED = "CANONICAL_OBSERVATION_REQUIRED"
@@ -139,6 +162,14 @@ def _digest(value: object) -> bool:
     return isinstance(value, str) and _SHA256_RE.fullmatch(value) is not None
 
 
+def _source_digest(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and 40 <= len(value) <= 64
+        and all(character in "0123456789abcdefABCDEF" for character in value)
+    )
+
+
 def _recorded_state(value: object, fields: tuple[str, ...]) -> bool:
     if not isinstance(value, Mapping):
         return False
@@ -151,6 +182,63 @@ def _recorded_state(value: object, fields: tuple[str, ...]) -> bool:
             return False
         present = True
     return present
+
+
+def _scope_contains(value: object, expected: str) -> bool:
+    if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
+        return False
+    values = tuple(item for item in value if _text(item))
+    return (
+        len(values) == len(value)
+        and len(values) == len(set(values))
+        and expected in values
+    )
+
+
+def _authorization_metadata_ok(
+    value: object,
+    *,
+    provider: object,
+    league: object,
+    fixture_key: object,
+    provider_event_id: object,
+    provider_request_id: object,
+    evidence_kind: object,
+    network_request_count: object,
+) -> bool:
+    if not isinstance(value, Mapping) or set(value) != _AUTHORIZATION_FIELDS:
+        return False
+    if any(
+        not _text(value.get(name))
+        for name in (
+            "controlled_shadow_run_id",
+            "qualification_session_id",
+            "ceo_authorization_id",
+        )
+    ):
+        return False
+    for name, expected in (
+        ("provider_identity", provider),
+        ("canonical_league", league),
+        ("fixture_key", fixture_key),
+        ("provider_event_id", provider_event_id),
+        ("provider_request_id", provider_request_id),
+    ):
+        if value.get(name) != expected:
+            return False
+    if not (
+        _scope_contains(value.get("provider_scope"), provider)
+        and _scope_contains(value.get("league_scope"), league)
+        and _scope_contains(value.get("fixture_scope"), fixture_key)
+    ):
+        return False
+    real = evidence_kind == _REAL_EVIDENCE
+    return (
+        value.get("network_execution") is (real and network_request_count == 1)
+        and value.get("no_bet") is True
+        and value.get("publication_enabled") is False
+        and value.get("monetary_spend_authorized") is False
+    )
 
 
 @dataclass(frozen=True)
@@ -424,13 +512,46 @@ def _evaluate_record(
             _text(raw.get("observation_id")),
             _text(raw.get("source_provenance")),
             _digest(raw.get("raw_record_digest")),
+            _digest(raw.get("provider_record_digest")),
             _digest(raw.get("normalized_record_digest")),
             _text(raw.get("adapter_version")),
+            _source_digest(raw.get("adapter_source_sha")),
+            _authorization_metadata_ok(
+                raw.get("authorization_metadata"),
+                provider=raw.get("provider_identity"),
+                league=raw.get("canonical_league"),
+                fixture_key=raw.get("fixture_key"),
+                provider_event_id=raw.get("provider_event_id"),
+                provider_request_id=raw.get("provider_request_id"),
+                evidence_kind=evidence_kind,
+                network_request_count=raw.get("network_request_count"),
+            ),
         )
     )
     criteria[QUALIFICATION_CRITERIA[7]] = provenance_ok
     if not provenance_ok:
         failures.append(TheRundownQualificationCode.REQUEST_PROVENANCE_INCOMPLETE.value)
+    if not _source_digest(raw.get("adapter_source_sha")):
+        failures.append(
+            TheRundownQualificationCode.ADAPTER_SOURCE_PROVENANCE_INCOMPLETE.value
+        )
+    if not _digest(raw.get("provider_record_digest")):
+        failures.append(
+            TheRundownQualificationCode.PROVIDER_RECORD_DIGEST_REQUIRED.value
+        )
+    if not _authorization_metadata_ok(
+        raw.get("authorization_metadata"),
+        provider=raw.get("provider_identity"),
+        league=raw.get("canonical_league"),
+        fixture_key=raw.get("fixture_key"),
+        provider_event_id=raw.get("provider_event_id"),
+        provider_request_id=raw.get("provider_request_id"),
+        evidence_kind=evidence_kind,
+        network_request_count=raw.get("network_request_count"),
+    ):
+        failures.append(
+            TheRundownQualificationCode.AUTHORIZATION_PROVENANCE_INCOMPLETE.value
+        )
 
     quota_ok = (
         _recorded_state(raw.get("quota_state_before"), ("used", "remaining"))

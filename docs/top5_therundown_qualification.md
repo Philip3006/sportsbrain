@@ -36,7 +36,8 @@ provider_event_id, home_team, away_team, home_away_identity_verified,
 kickoff, market_type, market_phase, odds, bookmaker_observed,
 bookmaker_identity, source_timestamp, source_timing_provenance, captured_at,
 provider_request_id, observation_id, source_provenance, raw_record_digest,
-normalized_record_digest, adapter_version, quota_state_before,
+normalized_record_digest, provider_record_digest, adapter_version,
+adapter_source_sha, authorization_metadata, quota_state_before,
 quota_state_after, rate_limit_state, quota_cost_units,
 network_request_count, synthetic_reconstruction, provider_status,
 failure_codes
@@ -47,6 +48,29 @@ evaluator never treats a digest or an `accepted` flag as proof by itself;
 `REAL_OBSERVED`, one documented network request, and every required evidence
 field must pass together. `TEST_FIXTURE`, `MOCK`, `OFFLINE_REPLAY`, synthetic
 reconstruction, provider failure, and incomplete provenance cannot qualify.
+
+## Adapter bridge
+
+`src/football/top5_therundown_qualification_bridge.py` provides the narrow
+adapter-to-envelope projection. It accepts an existing `AdapterResult` with a
+`NormalizedOddsObservation`, validates it against an explicit expected
+`Fixture`, and returns one envelope item without I/O. The adapter result supplies
+the raw response digest, normalized digest, status, and quota-after state. The
+normalized observation supplies the provider identity, canonical fixture and
+league, event ID, bookmaker, prices, source timestamp, capture time, request
+identity, source provenance, adapter version, provider-record digest, and
+quota-before state. The caller must explicitly supply the evidence ID,
+observation ID, provider league code/verification, adapter source SHA, quota
+cost, evidence kind, request count, and complete authorization metadata.
+
+Authorization metadata is exact-bound to the provider, league, fixture, event,
+and request and retains the controlled-run, qualification-session, and CEO
+authorization IDs. It also carries provider/league/fixture scopes and the
+no-bet, publication-disabled, monetary-spend-disabled safety flags. A
+`TEST_FIXTURE` bridge result records zero network requests and synthetic
+reconstruction; it remains explicitly non-real and the evaluator rejects it.
+`REAL_OBSERVED` requires one network request, HTTP 200, non-synthetic evidence,
+fresh source time, and matching authorization metadata.
 
 ## Criteria and statuses
 
