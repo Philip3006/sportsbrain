@@ -12,7 +12,12 @@ from typing import Any
 
 from .audit import AuditIntegrityError, AuditMixin
 from .control import QueueControlMixin
-from .errors import IdempotencyConflictError, InvalidTransitionError, TaskNotFoundError
+from .errors import (
+    IdempotencyConflictError,
+    InvalidTransitionError,
+    SafetyViolation,
+    TaskNotFoundError,
+)
 from .models import (
     EventType,
     RiskClass,
@@ -25,13 +30,18 @@ from .models import (
 )
 from .store_execution import StoreExecutionMixin
 from .store_lifecycle import StoreLifecycleMixin
+from .store_roadmap import StoreRoadmapMixin
 from .store_schema import ALLOWED_TRANSITIONS, DDL
 
 __all__ = ["ALLOWED_TRANSITIONS", "AuditIntegrityError", "DispatcherStore"]
 
 
 class DispatcherStore(
-    StoreLifecycleMixin, StoreExecutionMixin, QueueControlMixin, AuditMixin
+    StoreLifecycleMixin,
+    StoreExecutionMixin,
+    QueueControlMixin,
+    AuditMixin,
+    StoreRoadmapMixin,
 ):
     """SQLite store whose state changes and audit events commit atomically."""
 
@@ -82,6 +92,12 @@ class DispatcherStore(
             "pr_url": "TEXT",
             "verification_json": "TEXT",
             "delivery_json": "TEXT",
+            "roadmap_item_id": "TEXT",
+            "debug_budget": "INTEGER NOT NULL DEFAULT 0",
+            "debug_attempt_count": "INTEGER NOT NULL DEFAULT 0",
+            "last_failure_signature": "TEXT",
+            "failure_repeat_count": "INTEGER NOT NULL DEFAULT 0",
+            "repeated_failure_limit": "INTEGER NOT NULL DEFAULT 2",
         }
         for name, definition in additions.items():
             if name not in columns:
@@ -201,6 +217,12 @@ class DispatcherStore(
             delivery=json.loads(row["delivery_json"]) if row["delivery_json"] else None,
             diagnostic_path=row["diagnostic_path"],
             failure_class=row["failure_class"],
+            roadmap_item_id=row["roadmap_item_id"],
+            debug_budget=row["debug_budget"] or 0,
+            debug_attempt_count=row["debug_attempt_count"] or 0,
+            last_failure_signature=row["last_failure_signature"],
+            failure_repeat_count=row["failure_repeat_count"] or 0,
+            repeated_failure_limit=row["repeated_failure_limit"] or 2,
         )
 
     @staticmethod
@@ -285,6 +307,16 @@ class DispatcherStore(
                         task.task_id,
                     ),
                 )
+                conn.execute(
+                    """UPDATE tasks SET roadmap_item_id = ?, debug_budget = ?,
+                       repeated_failure_limit = ? WHERE task_id = ?""",
+                    (
+                        task.roadmap_item_id,
+                        task.debug_budget,
+                        task.repeated_failure_limit,
+                        task.task_id,
+                    ),
+                )
             except sqlite3.IntegrityError as exc:
                 if task.idempotency_key:
                     row = conn.execute(
@@ -325,6 +357,10 @@ class DispatcherStore(
         now: datetime | None = None,
         updates: Mapping[str, Any] | None = None,
     ) -> TaskRecord:
+        if expected in {TaskState.PR_READY, TaskState.CEO_REVIEW} and new_state is TaskState.COMPLETED:
+            raise SafetyViolation(
+                "PR-backed work must use merge reconciliation before COMPLETED"
+            )
         if new_state not in ALLOWED_TRANSITIONS[expected]:
             raise InvalidTransitionError(
                 f"{expected.value} -> {new_state.value} is not permitted"
@@ -367,6 +403,12 @@ class DispatcherStore(
                     "pr_url",
                     "verification_json",
                     "delivery_json",
+                    "roadmap_item_id",
+                    "debug_budget",
+                    "debug_attempt_count",
+                    "last_failure_signature",
+                    "failure_repeat_count",
+                    "repeated_failure_limit",
                 }:
                     raise InvalidTransitionError(f"unsupported task update {column}")
                 assignments.append(f"{column} = ?")

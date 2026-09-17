@@ -27,6 +27,8 @@ class PullRequestClient(Protocol):
         lease_guard: Callable[[], None] | None = None,
     ) -> dict[str, Any]: ...
 
+    def verify_merged(self, task: TaskRecord) -> dict[str, Any]: ...
+
 
 class GhPullRequestClient:
     """GitHub CLI adapter that refuses delivery when gh auth is not healthy."""
@@ -81,6 +83,81 @@ class GhPullRequestClient:
             raise DeliveryError("pull request creation did not yield exactly one PR")
         self._validate_binding(task, final[0], commit_sha)
         return {**final[0], "reused": False}
+
+    def verify_merged(self, task: TaskRecord) -> dict[str, Any]:
+        """Read GitHub merge state and verify every recorded delivery binding."""
+
+        if task.pr_number is None:
+            raise DeliveryError("merge verification requires a recorded pull request")
+        result = self._run(
+            [
+                "pr",
+                "view",
+                str(task.pr_number),
+                "--repo",
+                task.repo,
+                "--json",
+                "number,state,mergedAt,headRefName,baseRefName,headRefOid,baseRefOid,mergeCommit",
+            ],
+            timeout=20,
+        )
+        if result.returncode != 0:
+            raise DeliveryError(
+                f"pull request merge verification failed: {redact(result.stderr)}"
+            )
+        try:
+            pull = json.loads(result.stdout or "{}")
+        except json.JSONDecodeError as exc:
+            raise DeliveryError(
+                "pull request merge verification returned invalid JSON"
+            ) from exc
+        if not isinstance(pull, dict):
+            raise DeliveryError(
+                "pull request merge verification returned an invalid shape"
+            )
+        merged_at = pull.get("mergedAt")
+        if (
+            str(pull.get("state", "")).upper() != "MERGED"
+            or not isinstance(merged_at, str)
+            or not merged_at.strip()
+        ):
+            raise DeliveryError("pull request is not reported as merged")
+        number = pull.get("number")
+        if isinstance(number, bool) or number != task.pr_number:
+            raise DeliveryError("merged pull request number does not match the task")
+        if pull.get("headRefName") != task.branch:
+            raise DeliveryError("merged pull request head branch does not match the task")
+        if pull.get("baseRefName") != task.base_branch:
+            raise DeliveryError("merged pull request base branch does not match the task")
+        head_oid = pull.get("headRefOid")
+        if (
+            not isinstance(head_oid, str)
+            or not task.commit_sha
+            or head_oid.lower() != task.commit_sha.lower()
+            or not task.remote_sha
+            or head_oid.lower() != task.remote_sha.lower()
+        ):
+            raise DeliveryError("merged pull request head does not match recorded SHAs")
+        base_oid = pull.get("baseRefOid")
+        if (
+            not isinstance(base_oid, str)
+            or not task.base_sha
+            or base_oid.lower() != task.base_sha.lower()
+            or (task.origin_sha and base_oid.lower() != task.origin_sha.lower())
+        ):
+            raise DeliveryError("merged pull request base does not match recorded base")
+        return {
+            "source": "github-readonly",
+            "repository": task.repo,
+            "merged": True,
+            "merged_at": merged_at,
+            "pr_number": number,
+            "head_ref_name": pull["headRefName"],
+            "head_ref_oid": head_oid.lower(),
+            "base_ref_name": pull["baseRefName"],
+            "base_ref_oid": base_oid.lower(),
+            "merge_commit": pull.get("mergeCommit"),
+        }
 
     @staticmethod
     def _validate_binding(
@@ -227,9 +304,7 @@ class DeliveryPipeline:
         else:
             if not changed:
                 raise DeliveryError("code-changing task produced no reviewable change")
-            commit_sha = self._commit(
-                task, path, changed, lease_guard=lease_guard
-            )
+            commit_sha = self._commit(task, path, changed, lease_guard=lease_guard)
             self._guard(lease_guard)
             self.store.record_commit(
                 task.task_id,
@@ -252,7 +327,10 @@ class DeliveryPipeline:
         task = self.store.get(task.task_id)
         self._guard(lease_guard)
         pull = self._find_or_create(
-            task, commit_sha=commit_sha, verification=verification, lease_guard=lease_guard
+            task,
+            commit_sha=commit_sha,
+            verification=verification,
+            lease_guard=lease_guard,
         )
         number = pull.get("number")
         url = pull.get("url")
@@ -436,6 +514,9 @@ def _spec(task: TaskRecord) -> TaskSpec:
         verification_commands=task.verification_commands,
         max_runtime_seconds=task.max_runtime_seconds,
         requires_pr=task.requires_pr,
+        roadmap_item_id=task.roadmap_item_id,
+        debug_budget=task.debug_budget,
+        repeated_failure_limit=task.repeated_failure_limit,
     )
 
 

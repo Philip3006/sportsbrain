@@ -33,6 +33,9 @@ def claimed_to_spec(record: TaskRecord) -> TaskSpec:
         verification_commands=record.verification_commands,
         max_runtime_seconds=record.max_runtime_seconds,
         requires_pr=record.requires_pr,
+        roadmap_item_id=record.roadmap_item_id,
+        debug_budget=record.debug_budget,
+        repeated_failure_limit=record.repeated_failure_limit,
     )
 
 

@@ -19,6 +19,7 @@ if str(REPO_ROOT) not in sys.path:
 from src.nightshift import (
     ExecutionResult,
     NightShiftDispatcher,
+    TaskState,
 )
 from src.nightshift.doctor import run_doctor
 
@@ -35,6 +36,10 @@ def _parser() -> argparse.ArgumentParser:
     sub.add_parser("builders", help="show explicitly registered worker Builders")
     sub.add_parser("templates", help="show explicitly registered task templates")
     sub.add_parser("status", help="show queue health and state counts")
+    sub.add_parser("roadmap", help="show the explicit autonomous roadmap")
+    sub.add_parser("blocked", help="show parked blocked tasks")
+    sub.add_parser("pr-ready", help="show tasks awaiting CEO review")
+    sub.add_parser("workers", help="show the governed worker registry")
     sub.add_parser(
         "doctor", help="check local dependencies and safety boundaries without mutation"
     )
@@ -60,6 +65,12 @@ def _parser() -> argparse.ArgumentParser:
     )
     review.add_argument("task_id")
     review.add_argument("--actor", required=True)
+    reconcile = sub.add_parser(
+        "reconcile-merged",
+        help="complete a PR task only after read-only GitHub merge verification",
+    )
+    reconcile.add_argument("task_id")
+    reconcile.add_argument("--actor", required=True)
     unblock = sub.add_parser(
         "unblock", help="release dependency-blocked work after prerequisites succeed"
     )
@@ -80,6 +91,9 @@ def _parser() -> argparse.ArgumentParser:
         "recover", help="requeue expired leases or dead-letter exhausted work"
     )
     for name in ("pause", "resume"):
+        action = sub.add_parser(name)
+        action.add_argument("--actor", required=True)
+    for name in ("start", "stop", "drain", "restart"):
         action = sub.add_parser(name)
         action.add_argument("--actor", required=True)
     audit = sub.add_parser("audit")
@@ -116,7 +130,12 @@ def main(argv: list[str] | None = None) -> int:
             / "SportsBrain"
             / "runtime-state"
         )
-        report = run_doctor(repo_root=REPO_ROOT, runtime_dir=runtime)
+        report = run_doctor(
+            repo_root=REPO_ROOT,
+            runtime_dir=runtime,
+            state_path=args.state,
+            config_dir=args.config_dir,
+        )
         print(json.dumps(report, indent=2))
         return 0 if report["status"] == "ok" else 1
     dispatcher = _dispatcher(args)
@@ -136,6 +155,34 @@ def main(argv: list[str] | None = None) -> int:
         )
     elif args.command == "status":
         print(json.dumps(dispatcher.status(), indent=2))
+    elif args.command == "roadmap":
+        print(json.dumps(dispatcher.store.roadmap_records(), indent=2))
+    elif args.command == "blocked":
+        print(
+            json.dumps(
+                [
+                    record.as_dict()
+                    for record in dispatcher.store.list_tasks(state=TaskState.BLOCKED)
+                ],
+                indent=2,
+            )
+        )
+    elif args.command == "pr-ready":
+        print(
+            json.dumps(
+                [
+                    record.as_dict()
+                    for record in dispatcher.store.list_tasks(state=TaskState.PR_READY)
+                ],
+                indent=2,
+            )
+        )
+    elif args.command == "workers":
+        print(
+            json.dumps(
+                [item.as_dict() for item in dispatcher.registry.builders], indent=2
+            )
+        )
     elif args.command == "enqueue-template":
         record = dispatcher.submit_template(
             args.template_id,
@@ -185,6 +232,13 @@ def main(argv: list[str] | None = None) -> int:
                 indent=2,
             )
         )
+    elif args.command == "reconcile-merged":
+        print(
+            json.dumps(
+                dispatcher.reconcile_merged(args.task_id, actor=args.actor).as_dict(),
+                indent=2,
+            )
+        )
     elif args.command == "unblock":
         print(
             json.dumps(
@@ -222,8 +276,17 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "pause":
         dispatcher.pause(actor=args.actor)
         print(json.dumps(dispatcher.status(), indent=2))
-    elif args.command == "resume":
+    elif args.command in {"resume", "start"}:
         dispatcher.resume(actor=args.actor)
+        print(json.dumps(dispatcher.status(), indent=2))
+    elif args.command == "stop":
+        dispatcher.pause(actor=args.actor)
+        print(json.dumps(dispatcher.status(), indent=2))
+    elif args.command == "drain":
+        dispatcher.drain(actor=args.actor)
+        print(json.dumps(dispatcher.status(), indent=2))
+    elif args.command == "restart":
+        dispatcher.restart(actor=args.actor)
         print(json.dumps(dispatcher.status(), indent=2))
     elif args.command == "audit":
         print(

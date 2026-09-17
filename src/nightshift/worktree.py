@@ -1,4 +1,10 @@
-"""Safe, isolated Git worktree allocation and scope verification."""
+"""Safe, isolated Git worktree allocation and scope verification.
+
+The production checkout is a runtime/data surface, not the Night Shift Git
+control plane.  A task may inspect its configured runtime checkout for
+diagnostics, but all fetch, branch, worktree, commit, and push operations are
+performed through the dedicated control repository.
+"""
 
 from __future__ import annotations
 
@@ -34,6 +40,99 @@ class BaseResolution:
     origin_sha: str
 
 
+@dataclass(frozen=True)
+class RuntimeDirtyEvidence:
+    """One narrowly governed runtime-mutated path."""
+
+    path: str
+    job: str
+    script: str
+    reason: str
+    observed_evidence: str
+
+    @classmethod
+    def from_mapping(cls, raw: dict[str, Any]) -> RuntimeDirtyEvidence:
+        fields = ("path", "job", "script", "reason", "observed_evidence")
+        if any(
+            not isinstance(raw.get(field), str) or not raw[field].strip()
+            for field in fields
+        ):
+            raise WorktreeSafetyError(
+                "runtime dirty evidence entries require explicit string fields"
+            )
+        path = raw["path"].strip().replace("\\", "/")
+        if path.startswith("/") or ".." in Path(path).parts:
+            raise WorktreeSafetyError("runtime dirty evidence paths must be relative")
+        return cls(
+            path=path,
+            job=raw["job"].strip(),
+            script=raw["script"].strip(),
+            reason=raw["reason"].strip(),
+            observed_evidence=raw["observed_evidence"].strip(),
+        )
+
+
+class RuntimeDirtyPolicy:
+    """Classify only evidence-backed runtime mutations as expected dirtiness."""
+
+    def __init__(self, entries: dict[str, tuple[RuntimeDirtyEvidence, ...]]) -> None:
+        self._entries = {repo: tuple(values) for repo, values in entries.items()}
+
+    @classmethod
+    def from_mapping(cls, raw: Any) -> RuntimeDirtyPolicy:
+        if not isinstance(raw, dict) or raw.get("version") != 1:
+            raise WorktreeSafetyError("runtime dirty policy must use version 1")
+        repositories = raw.get("repositories")
+        if not isinstance(repositories, dict):
+            raise WorktreeSafetyError(
+                "runtime dirty policy repositories must be an object"
+            )
+        entries: dict[str, tuple[RuntimeDirtyEvidence, ...]] = {}
+        for repo, values in repositories.items():
+            if not isinstance(repo, str) or not isinstance(values, list):
+                raise WorktreeSafetyError("runtime dirty policy entries are malformed")
+            parsed: list[RuntimeDirtyEvidence] = []
+            for value in values:
+                if not isinstance(value, dict):
+                    raise WorktreeSafetyError(
+                        "runtime dirty policy evidence must be objects"
+                    )
+                parsed.append(RuntimeDirtyEvidence.from_mapping(value))
+            paths = [item.path for item in parsed]
+            if len(paths) != len(set(paths)):
+                raise WorktreeSafetyError(f"duplicate runtime dirty path for {repo}")
+            entries[repo] = tuple(parsed)
+        return cls(entries)
+
+    @classmethod
+    def from_file(cls, path: Path) -> RuntimeDirtyPolicy:
+        try:
+            return cls.from_mapping(json.loads(path.read_text(encoding="utf-8")))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise WorktreeSafetyError(
+                f"cannot read runtime dirty policy: {path}"
+            ) from exc
+
+    def evidence_for(self, repo: str, path: str) -> RuntimeDirtyEvidence | None:
+        normalized = path.replace("\\", "/").strip("/")
+        return next(
+            (item for item in self._entries.get(repo, ()) if item.path == normalized),
+            None,
+        )
+
+    def classify(
+        self, repo: str, paths: tuple[str, ...]
+    ) -> tuple[tuple[str, ...], tuple[str, ...]]:
+        expected: list[str] = []
+        unexpected: list[str] = []
+        for path in paths:
+            if self.evidence_for(repo, path) is not None:
+                expected.append(path)
+            else:
+                unexpected.append(path)
+        return tuple(expected), tuple(unexpected)
+
+
 class WorktreeManager:
     """Allocate one branch/worktree per task without shell interpolation."""
 
@@ -42,15 +141,32 @@ class WorktreeManager:
         runtime_dir: Path,
         repo_paths: dict[str, Path],
         *,
+        control_repo_paths: dict[str, Path] | None = None,
+        worktrees_dir: Path | None = None,
+        runtime_dirty_policy: RuntimeDirtyPolicy | None = None,
+        expected_remote_urls: dict[str, str] | None = None,
         git_executable: str = "git",
     ) -> None:
         self.runtime_dir = Path(runtime_dir).expanduser()
         self.repo_paths = {
             repo: Path(path).expanduser() for repo, path in repo_paths.items()
         }
+        # A direct WorktreeManager constructed by a unit fixture may use one
+        # local repository for both roles.  Production construction always
+        # supplies the explicit dedicated control repository.
+        self.control_repo_paths = {
+            repo: Path(path).expanduser()
+            for repo, path in (control_repo_paths or repo_paths).items()
+        }
+        self.has_dedicated_control_repo = control_repo_paths is not None
+        self.expected_remote_urls = dict(expected_remote_urls or {})
         self.git_executable = git_executable
-        self.worktrees_dir = self.runtime_dir / "worktrees"
+        configured_root = os.getenv("SPORTSBRAIN_NIGHTSHIFT_WORKTREE_ROOT")
+        self.worktrees_dir = Path(
+            worktrees_dir or configured_root or (self.runtime_dir / "worktrees")
+        ).expanduser()
         self.diagnostics_dir = self.runtime_dir / "diagnostics"
+        self.runtime_dirty_policy = runtime_dirty_policy or RuntimeDirtyPolicy({})
 
     def resolve_repo(self, repo: str) -> Path:
         try:
@@ -83,21 +199,139 @@ class WorktreeManager:
             ["-C", str(path), "status", "--porcelain=v1", "--untracked-files=all"],
             check=False,
         )
-        result["clean"] = status.returncode == 0 and not status.stdout.strip()
+        changed = self._status_paths(status.stdout) if status.returncode == 0 else ()
+        expected, unexpected = self.runtime_dirty_policy.classify(repo, changed)
+        result["clean"] = status.returncode == 0 and not changed
+        result["runtime_dirty_paths"] = list(expected)
+        result["unexpected_dirty_paths"] = list(unexpected)
+        result["dirty_class"] = (
+            "UNKNOWN"
+            if status.returncode != 0
+            else "CLEAN"
+            if not changed
+            else "UNEXPECTED_SOURCE_DIRTY"
+            if unexpected
+            else "RUNTIME_CHECKOUT_DIRTY_EXPECTED"
+        )
+        result["safe_for_allocation"] = status.returncode == 0 and not unexpected
         if status.returncode != 0:
             result["error"] = "git status failed"
         elif status.stdout.strip():
-            result["dirty_entries"] = len(status.stdout.splitlines())
+            result["dirty_entries"] = len(changed)
+        return result
+
+    @staticmethod
+    def _status_paths(output: str) -> tuple[str, ...]:
+        paths: list[str] = []
+        for line in output.splitlines():
+            if len(line) < 4:
+                continue
+            name = line[3:]
+            if " -> " in name:
+                name = name.split(" -> ", 1)[1]
+            paths.append(name.strip().strip('"'))
+        return tuple(paths)
+
+    def resolve_control_repo(self, repo: str) -> Path:
+        try:
+            return self.control_repo_paths[repo]
+        except KeyError as exc:
+            raise WorktreeSafetyError(
+                f"no dedicated Night Shift control repository is configured for {repo}"
+            ) from exc
+
+    def control_check(
+        self, repo: str, *, base_branch: str = "main", fetch: bool = False
+    ) -> dict[str, Any]:
+        """Validate and optionally refresh the isolated Git control repository."""
+
+        path = self.resolve_control_repo(repo)
+        result: dict[str, Any] = {
+            "repo": repo,
+            "path": str(path),
+            "exists": path.exists(),
+            "is_control_repository": False,
+            "remote": None,
+            "remote_ok": False,
+            "fetch_ok": False,
+            "origin_sha": None,
+        }
+        if self.has_dedicated_control_repo:
+            try:
+                if path.resolve() == self.resolve_repo(repo).resolve():
+                    result["error"] = (
+                        "control repository must be separate from the canonical checkout"
+                    )
+                    return result
+            except OSError:
+                result["error"] = "control repository path cannot be resolved"
+                return result
+        if not path.exists():
+            result["error"] = "control repository does not exist"
+            return result
+        bare = self._run(
+            self._git_path_args(path) + ["rev-parse", "--is-bare-repository"],
+            check=False,
+        )
+        is_bare = bare.returncode == 0 and bare.stdout.strip() == "true"
+        top = self._run(
+            self._git_path_args(path) + ["rev-parse", "--is-inside-work-tree"],
+            check=False,
+        )
+        is_worktree = top.returncode == 0 and top.stdout.strip() == "true"
+        result["is_control_repository"] = is_bare or is_worktree
+        if not result["is_control_repository"]:
+            result["error"] = "control repository is not a Git repository"
+            return result
+        remote = self._run(
+            self._git_path_args(path) + ["remote", "get-url", "origin"], check=False
+        )
+        if remote.returncode == 0:
+            value = remote.stdout.strip()
+            result["remote"] = value
+            expected = self.expected_remote_urls.get(repo)
+            result["remote_ok"] = expected is None or self._normalize_remote(
+                value
+            ) == self._normalize_remote(expected)
+        if not result["remote_ok"]:
+            result["error"] = "control repository origin is missing or incorrect"
+            return result
+        if fetch:
+            fetched = self._run(
+                self._git_path_args(path)
+                + ["fetch", "--no-tags", "origin", base_branch],
+                check=False,
+            )
+            result["fetch_ok"] = fetched.returncode == 0
+            if not result["fetch_ok"]:
+                result["error"] = (
+                    self._safe_output(fetched.stderr)
+                    or "control repository fetch failed"
+                )
+                return result
+        resolved = self._run(
+            self._git_path_args(path)
+            + [
+                "rev-parse",
+                "--verify",
+                f"refs/remotes/origin/{base_branch}^{{commit}}",
+            ],
+            check=False,
+        )
+        if resolved.returncode == 0 and resolved.stdout.strip():
+            result["origin_sha"] = resolved.stdout.strip().splitlines()[0].lower()
+            result["fetch_ok"] = result["fetch_ok"] or not fetch
+        else:
+            result["error"] = "origin base SHA is unavailable"
         return result
 
     def allocate(self, task: TaskSpec) -> WorktreeAllocation:
-        canonical = self.resolve_repo(task.repo)
-        check = self.canonical_check(task.repo)
-        if not check.get("clean"):
-            raise WorktreeSafetyError(
-                f"canonical checkout for {task.repo} is not clean"
-            )
         base = self.resolve_base(task)
+        check = self.canonical_check(task.repo)
+        if not check.get("safe_for_allocation"):
+            raise WorktreeSafetyError(
+                f"canonical checkout for {task.repo} is not clean: unexpected source dirtiness"
+            )
         path = self.worktrees_dir / task.task_id
         diagnostic = self.diagnostics_dir / f"{task.task_id}.jsonl"
         if path.exists():
@@ -106,16 +340,17 @@ class WorktreeManager:
             )
         self.worktrees_dir.mkdir(parents=True, exist_ok=True)
         self.diagnostics_dir.mkdir(parents=True, exist_ok=True)
+        control = self.resolve_control_repo(task.repo)
         branch = self._run(
-            ["-C", str(canonical), "show-ref", "--verify", f"refs/heads/{task.branch}"],
+            self._git_path_args(control)
+            + ["show-ref", "--verify", f"refs/heads/{task.branch}"],
             check=False,
         )
         if branch.returncode == 0:
             raise WorktreeSafetyError(f"task branch already exists: {task.branch}")
         created = self._run(
             [
-                "-C",
-                str(canonical),
+                *self._git_path_args(control),
                 "worktree",
                 "add",
                 "-b",
@@ -147,16 +382,21 @@ class WorktreeManager:
     def resolve_base(self, task: TaskSpec) -> BaseResolution:
         """Fetch and resolve the reviewed origin base without moving checkout HEAD."""
 
-        canonical = self.resolve_repo(task.repo)
-        check = self.canonical_check(task.repo)
-        if not check.get("clean"):
+        control = self.resolve_control_repo(task.repo)
+        control_check = self.control_check(
+            task.repo, base_branch=task.base_branch, fetch=False
+        )
+        if not control_check.get("is_control_repository") or not control_check.get(
+            "remote_ok"
+        ):
             raise WorktreeSafetyError(
-                f"canonical checkout for {task.repo} is not clean"
+                control_check.get(
+                    "error", "Night Shift control repository is unavailable"
+                )
             )
         fetched = self._run(
-            [
-                "-C",
-                str(canonical),
+            self._git_path_args(control)
+            + [
                 "fetch",
                 "--no-tags",
                 "origin",
@@ -170,7 +410,8 @@ class WorktreeManager:
             )
         base_ref = f"refs/remotes/origin/{task.base_branch}"
         resolved = self._run(
-            ["-C", str(canonical), "rev-parse", "--verify", f"{base_ref}^{{commit}}"],
+            self._git_path_args(control)
+            + ["rev-parse", "--verify", f"{base_ref}^{{commit}}"],
             check=False,
         )
         if resolved.returncode != 0 or not resolved.stdout.strip():
@@ -283,6 +524,19 @@ class WorktreeManager:
             ) from exc
         return result
 
+    @staticmethod
+    def _git_path_args(path: Path) -> list[str]:
+        """Return a Git invocation prefix for either a bare or normal repo."""
+
+        if (path / "HEAD").is_file() and not (path / ".git").exists():
+            return ["--git-dir", str(path)]
+        return ["-C", str(path)]
+
+    @staticmethod
+    def _normalize_remote(value: str) -> str:
+        normalized = value.strip().rstrip("/")
+        return normalized.removesuffix(".git").lower()
+
 
 def default_repo_paths(repo_root: Path) -> dict[str, Path]:
     """Resolve canonical checkouts from explicit env vars, never discovery."""
@@ -296,3 +550,56 @@ def default_repo_paths(repo_root: Path) -> dict[str, Path]:
     if memory:
         paths["Philip3006/SportsBrainMemory"] = Path(memory).expanduser()
     return paths
+
+
+def default_control_repo_paths() -> dict[str, Path]:
+    """Return explicit Night Shift control repositories, never production paths."""
+
+    root = Path(
+        os.getenv(
+            "SPORTSBRAIN_NIGHTSHIFT_CONTROL_REPO",
+            Path.home()
+            / "Library"
+            / "Application Support"
+            / "SportsBrain"
+            / "night-shift"
+            / "repo.git",
+        )
+    ).expanduser()
+    paths = {"Philip3006/sportsbrain": root}
+    memory = os.getenv("SPORTSBRAIN_MEMORY_CONTROL_REPO")
+    if memory:
+        paths["Philip3006/SportsBrainMemory"] = Path(memory).expanduser()
+    return paths
+
+
+def default_control_remote_urls() -> dict[str, str]:
+    """Return the governed upstream URLs for the configured control repos."""
+
+    urls = {"Philip3006/sportsbrain": "https://github.com/Philip3006/sportsbrain.git"}
+    if os.getenv("SPORTSBRAIN_MEMORY_CONTROL_REPO"):
+        urls["Philip3006/SportsBrainMemory"] = (
+            "https://github.com/Philip3006/SportsBrainMemory.git"
+        )
+    return urls
+
+
+def default_worktree_root() -> Path:
+    """Return the isolated worktree root used by production workers."""
+
+    return Path(
+        os.getenv(
+            "SPORTSBRAIN_NIGHTSHIFT_WORKTREE_ROOT",
+            Path.home()
+            / "Library"
+            / "Application Support"
+            / "SportsBrain"
+            / "night-shift"
+            / "worktrees",
+        )
+    ).expanduser()
+
+
+def default_runtime_dirty_policy(repo_root: Path) -> RuntimeDirtyPolicy:
+    path = Path(repo_root) / "config" / "night_shift" / "runtime_dirty.json"
+    return RuntimeDirtyPolicy.from_file(path)

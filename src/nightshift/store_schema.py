@@ -40,10 +40,10 @@ ALLOWED_TRANSITIONS: dict[TaskState, frozenset[TaskState]] = {
             TaskState.FAILED_SAFE,
         }
     ),
-    TaskState.PR_READY: frozenset({TaskState.CEO_REVIEW}),
+    TaskState.PR_READY: frozenset({TaskState.CEO_REVIEW, TaskState.COMPLETED}),
     TaskState.COMPLETED: frozenset({TaskState.CEO_REVIEW}),
     TaskState.BLOCKED: frozenset({TaskState.READY, TaskState.CANCELLED}),
-    TaskState.CEO_REVIEW: frozenset(),
+    TaskState.CEO_REVIEW: frozenset({TaskState.COMPLETED}),
     TaskState.FAILED_SAFE: frozenset(),
     TaskState.CANCELLED: frozenset(),
 }
@@ -70,6 +70,10 @@ CREATE TABLE IF NOT EXISTS tasks (
     lease_generation INTEGER NOT NULL DEFAULT 0, process_id INTEGER,
     commit_sha TEXT, remote_sha TEXT, pr_number INTEGER, pr_url TEXT,
     verification_json TEXT, delivery_json TEXT,
+    roadmap_item_id TEXT, debug_budget INTEGER NOT NULL DEFAULT 0,
+    debug_attempt_count INTEGER NOT NULL DEFAULT 0,
+    last_failure_signature TEXT, failure_repeat_count INTEGER NOT NULL DEFAULT 0,
+    repeated_failure_limit INTEGER NOT NULL DEFAULT 2,
     CHECK (requires_approval IN (0, 1)), CHECK (attempt_count >= 0), CHECK (max_attempts >= 1)
 );
 CREATE INDEX IF NOT EXISTS idx_tasks_claim ON tasks (state, available_at, priority DESC, created_at);
@@ -80,4 +84,15 @@ CREATE TABLE IF NOT EXISTS audit_events (
     details_json TEXT NOT NULL, previous_hash TEXT NOT NULL, event_hash TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_audit_task ON audit_events (task_id, event_id);
+CREATE TABLE IF NOT EXISTS roadmap_items (
+    item_id TEXT PRIMARY KEY, title TEXT NOT NULL, builder_id TEXT NOT NULL,
+    template_id TEXT NOT NULL, payload_json TEXT NOT NULL,
+    dependency_item_ids_json TEXT NOT NULL DEFAULT '[]', priority INTEGER NOT NULL,
+    status TEXT NOT NULL, task_id TEXT, blocked_reason TEXT,
+    next_eligible_at TEXT NOT NULL, debug_budget INTEGER NOT NULL DEFAULT 0,
+    repeated_failure_limit INTEGER NOT NULL DEFAULT 2, mode TEXT NOT NULL DEFAULT 'bounded',
+    enabled INTEGER NOT NULL DEFAULT 1, updated_at TEXT NOT NULL,
+    CHECK (enabled IN (0, 1))
+);
+CREATE INDEX IF NOT EXISTS idx_roadmap_status ON roadmap_items (status, priority DESC, item_id);
 """

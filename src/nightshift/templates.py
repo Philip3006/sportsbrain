@@ -143,6 +143,9 @@ class TaskTemplate:
         verification_commands: tuple[tuple[str, ...], ...] | None = None,
         max_runtime_seconds: int | None = None,
         requires_pr: bool | None = None,
+        roadmap_item_id: str | None = None,
+        debug_budget: int = 0,
+        repeated_failure_limit: int = 2,
     ) -> TaskSpec:
         data = dict(payload)
         missing = sorted(set(self.required_payload_keys) - set(data))
@@ -194,6 +197,9 @@ class TaskTemplate:
             if max_runtime_seconds is None
             else max_runtime_seconds,
             requires_pr=self.requires_pr if requires_pr is None else requires_pr,
+            roadmap_item_id=roadmap_item_id,
+            debug_budget=debug_budget,
+            repeated_failure_limit=repeated_failure_limit,
             requested_by=requested_by,
         )
 

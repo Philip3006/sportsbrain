@@ -40,10 +40,16 @@ from .models import (
 )
 from .policy import SafetyPolicy
 from .registry import BuilderDefinition, BuilderRegistry
+from .roadmap import RoadmapItem, RoadmapRegistry
 from .store import ALLOWED_TRANSITIONS, DispatcherStore
 from .templates import TaskTemplate, TemplateRegistry
 from .verification import VerificationResult, VerificationRunner
-from .worktree import WorktreeAllocation, WorktreeManager
+from .worktree import (
+    RuntimeDirtyEvidence,
+    RuntimeDirtyPolicy,
+    WorktreeAllocation,
+    WorktreeManager,
+)
 
 __all__ = [
     "ALLOWED_TRANSITIONS",
@@ -75,6 +81,10 @@ __all__ = [
     "NightShiftDispatcher",
     "NightShiftError",
     "RiskClass",
+    "RoadmapItem",
+    "RoadmapRegistry",
+    "RuntimeDirtyEvidence",
+    "RuntimeDirtyPolicy",
     "SafetyPolicy",
     "SafetyViolation",
     "ScopeViolation",

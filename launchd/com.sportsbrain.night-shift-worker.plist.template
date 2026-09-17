@@ -23,5 +23,16 @@
     <string>__LOG_DIR__/sportsbrain_night_shift_builder1.log</string>
     <key>StandardErrorPath</key>
     <string>__LOG_DIR__/sportsbrain_night_shift_builder1.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>SPORTSBRAIN_CANONICAL_REPO</key>
+        <string>__SPORTSBRAIN_ROOT__</string>
+        <key>SPORTSBRAIN_NIGHTSHIFT_CONTROL_REPO</key>
+        <string>__NIGHTSHIFT_CONTROL_REPO__</string>
+        <key>SPORTSBRAIN_NIGHTSHIFT_WORKTREE_ROOT</key>
+        <string>__NIGHTSHIFT_WORKTREE_ROOT__</string>
+        <key>SPORTSBRAIN_NIGHTSHIFT_STATE</key>
+        <string>__NIGHTSHIFT_STATE__</string>
+    </dict>
 </dict>
 </plist>
