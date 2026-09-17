@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from copy import deepcopy
@@ -13,6 +14,7 @@ from pathlib import Path
 
 import pytest
 
+import src.football.top5_publisher as top5_publisher_module
 from scripts.top5_real_shadow_session import main as session_cli
 from src.football.production_contracts import RolloutEvidence, SignalTimeContract
 from src.football.top5_activation_readiness import (
@@ -814,8 +816,18 @@ def _capability_fixture(tmp_path, monkeypatch):
         issued_at=runtime_now - timedelta(minutes=1),
         expires_at=runtime_now + timedelta(days=1),
     )
-    runtime_root = tmp_path / "operator-runtime"
-    monkeypatch.setenv("SPORTSBRAIN_RUNTIME_STATE_DIR", str(runtime_root))
+    operator_home = tmp_path / "operator-home"
+    runtime_root = (
+        operator_home
+        / "Library"
+        / "Application Support"
+        / "SportsBrain"
+        / "runtime-state"
+    )
+    monkeypatch.setenv("HOME", str(operator_home))
+    monkeypatch.setattr(
+        top5_publisher_module, "DEFAULT_RUNTIME_STATE_DIR", runtime_root
+    )
     state_path = controlled_publication_capability_state_path()
     store = FileControlledPublicationCapabilityStore(state_path)
     attestation, capability = release.issue_publication_capability(
@@ -862,13 +874,18 @@ def _validator_command(fixture, *, capability_path=None):
     ], validator.parents[1]
 
 
-def _run_validator(fixture, *, capability_path=None):
+def _run_validator(fixture, *, capability_path=None, runtime_state_root=None):
     command, root = _validator_command(fixture, capability_path=capability_path)
+    environment = None
+    if runtime_state_root is not None:
+        environment = dict(os.environ)
+        environment["SPORTSBRAIN_RUNTIME_STATE_DIR"] = str(runtime_state_root)
     return subprocess.run(
         command,
         cwd=root,
         text=True,
         capture_output=True,
+        env=environment,
         check=False,
     )
 
@@ -996,9 +1013,67 @@ def test_self_consistent_forged_external_state_is_ignored(tmp_path, monkeypatch)
     assert json.loads(attacker_state_path.read_text())["consumed"] is False
 
 
+def test_runtime_state_environment_cannot_redirect_capability_authority(
+    tmp_path, monkeypatch
+):
+    fixture = _capability_fixture(tmp_path, monkeypatch)
+    forged_payload = _self_consistent_forgery(
+        fixture["attestation"], activation_id="activation:env-attacker"
+    )
+    forged = ControlledPublicationAttestation.from_mapping(forged_payload)
+    forged.validate(
+        artifact=fixture["product"],
+        artifact_path=fixture["artifact"].artifact_path,
+        now=fixture["runtime_now"],
+    )
+
+    attacker_root = tmp_path / "attacker-runtime"
+    attacker_state_path = (
+        attacker_root / "football" / "top5" / "controlled_publication_capability.json"
+    )
+    attacker_state_path.parent.mkdir(parents=True)
+    attacker_nonce = "environment-attacker-nonce-" + "x" * 32
+    attacker_capability_id = "top5-capability:environment-attacker"
+    attacker_state_path.write_text(
+        json.dumps(
+            {
+                "schema": "top5-controlled-publication-capability-v1",
+                "capability_id": attacker_capability_id,
+                "nonce_digest": sha256(attacker_nonce.encode()).hexdigest(),
+                "attestation": forged_payload,
+                "consumed": False,
+            },
+            sort_keys=True,
+        )
+    )
+    attacker_token_path = tmp_path / "environment-attacker-token.json"
+    attacker_token_path.write_text(
+        json.dumps(
+            {
+                "capability_id": attacker_capability_id,
+                "capability_nonce": attacker_nonce,
+            },
+            sort_keys=True,
+        )
+    )
+    fixture["attestation_path"].write_text(json.dumps(forged_payload, sort_keys=True))
+
+    rejected = _run_validator(
+        fixture,
+        capability_path=attacker_token_path,
+        runtime_state_root=attacker_root,
+    )
+
+    assert rejected.returncode != 0
+    assert fixture["state_path"].is_file()
+    assert json.loads(fixture["state_path"].read_text())["consumed"] is False
+    assert json.loads(attacker_state_path.read_text())["consumed"] is False
+
+
 def test_capability_store_rejects_noncanonical_state_path(tmp_path, monkeypatch):
-    monkeypatch.setenv(
-        "SPORTSBRAIN_RUNTIME_STATE_DIR", str(tmp_path / "operator-runtime")
+    runtime_root = tmp_path / "operator-runtime"
+    monkeypatch.setattr(
+        top5_publisher_module, "DEFAULT_RUNTIME_STATE_DIR", runtime_root
     )
     with pytest.raises(ValueError, match="canonical operator path"):
         FileControlledPublicationCapabilityStore(tmp_path / "attacker-state.json")
@@ -1092,8 +1167,10 @@ def test_capability_issue_requires_active_activation_and_valid_publication_auth(
     tmp_path, monkeypatch
 ):
     request, auth, evidence, artifact, publication_auth, health = _context(tmp_path)
-    monkeypatch.setenv(
-        "SPORTSBRAIN_RUNTIME_STATE_DIR", str(tmp_path / "operator-runtime")
+    monkeypatch.setattr(
+        top5_publisher_module,
+        "DEFAULT_RUNTIME_STATE_DIR",
+        tmp_path / "operator-runtime",
     )
     store = FileControlledPublicationCapabilityStore()
     release = Top5ControlledRelease()

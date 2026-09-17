@@ -32,7 +32,7 @@ from src.football.production_contracts import (
     validate_artifact_ownership,
 )
 from src.notifications.public_serializer import serialize_public_product
-from src.runtime.paths import runtime_state_path
+from src.runtime.paths import DEFAULT_RUNTIME_STATE_DIR
 
 CONTROLLED_PUBLICATION_CAPABILITY_STATE = (
     "football/top5/controlled_publication_capability.json"
@@ -42,10 +42,7 @@ CONTROLLED_PUBLICATION_CAPABILITY_STATE = (
 def controlled_publication_capability_state_path() -> Path:
     """Return the sole operator-owned state location for publication capability."""
 
-    return runtime_state_path(
-        CONTROLLED_PUBLICATION_CAPABILITY_STATE,
-        require_external=True,
-    )
+    return DEFAULT_RUNTIME_STATE_DIR / CONTROLLED_PUBLICATION_CAPABILITY_STATE
 
 
 def _digest(value: object) -> str:
