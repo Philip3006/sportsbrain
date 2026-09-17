@@ -1,6 +1,8 @@
 #!/bin/bash
 # Isolated publisher for local runtime artifacts. Never mutates the active checkout.
 
+_RUNTIME_PUBLISHER_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+
 _canonical_github_remote() {
   case "$1" in
     https://github.com/Philip3006/sportsbrain|https://github.com/Philip3006/sportsbrain.git|\
@@ -21,10 +23,15 @@ _canonical_origin_transport() {
 }
 
 _publish_permitted() {
-  if [[ "$1" =~ ^docs/data/signals_[a-z0-9_-]+\.json$ ]]; then
+  local path="$1"
+  local allow_controlled="${2:-0}"
+  if [[ "$path" =~ ^docs/data/signals_[a-z0-9_-]+\.json$ ]]; then
     return 0
   fi
-  case "$1" in
+  if [ "$allow_controlled" = "1" ] && [[ "$path" =~ ^docs/data/top5/published/[A-Za-z0-9_-]+/[A-Za-z0-9_.-]+\.json$ ]]; then
+    return 0
+  fi
+  case "$path" in
     docs/data/signals.json|docs/data/squads.json|docs/data/live_scores.json|\
     docs/data/tennis_live_scores.json|data/cache/tennis_live_scores.json|\
     data/cache/tennis_suspended.json)
@@ -139,7 +146,8 @@ _runtime_publish_from_dir() {
   local artifact_dir="$2"
   local log="$3"
   local message="$4"
-  shift 4
+  local allow_controlled="${5:-0}"
+  shift 5
 
   local publish_dir
   _publish_resolve_dir "$source_dir" "$log" || return 1
@@ -183,7 +191,7 @@ _runtime_publish_from_dir() {
 
     local path
     for path in "$@"; do
-      if ! _publish_permitted "$path" || [ ! -f "$artifact_dir/$path" ]; then
+      if ! _publish_permitted "$path" "$allow_controlled" || [ ! -f "$artifact_dir/$path" ]; then
         echo "[runtime-publish] forbidden or missing artifact: $path" >> "$log"
         exit 1
       fi
@@ -208,7 +216,7 @@ _runtime_publish_from_dir() {
       exit 0
     fi
     if ! git -C "$publish_dir" diff --cached --name-only | while IFS= read -r path; do
-      _publish_permitted "$path"
+      _publish_permitted "$path" "$allow_controlled"
     done; then
       echo "[runtime-publish] staged path outside allowlist" >> "$log"
       exit 1
@@ -244,7 +252,7 @@ runtime_publish_artifacts() {
   local log="$2"
   local message="$3"
   shift 3
-  _runtime_publish_from_dir "$source_dir" "$source_dir" "$log" "$message" "$@"
+  _runtime_publish_from_dir "$source_dir" "$source_dir" "$log" "$message" 0 "$@"
 }
 
 runtime_publish_staged_artifacts() {
@@ -261,7 +269,29 @@ runtime_publish_staged_artifacts() {
     echo "[runtime-publish] unsafe staged artifact directory" >> "$log"
     return 1
   fi
-  _runtime_publish_from_dir "$source_dir" "$staged_dir" "$log" "$message" "$@"
+  _runtime_publish_from_dir "$source_dir" "$staged_dir" "$log" "$message" 0 "$@"
+}
+
+runtime_publish_controlled_artifacts() {
+  local source_dir="$1"
+  local artifact_path="$2"
+  local attestation_path="$3"
+  local capability_token_path="$4"
+  local log="$5"
+  local message="$6"
+  if [ "$#" -ne 6 ] || [ -z "$source_dir" ] || [ -z "$artifact_path" ] || \
+     [ -z "$attestation_path" ] || [ -z "$capability_token_path" ] || \
+     [ -z "$log" ] || [ -z "$message" ]; then
+    echo "runtime-publish: invalid controlled publication arguments" >&2
+    return 2
+  fi
+  if ! python3 "$_RUNTIME_PUBLISHER_SCRIPT_DIR/validate_controlled_top5_publication.py" \
+      "$source_dir/$artifact_path" "$attestation_path" "$artifact_path" \
+      "$capability_token_path" --consume >> "$log" 2>&1; then
+    echo "[runtime-publish] controlled publication gate rejected" >> "$log"
+    return 1
+  fi
+  _runtime_publish_from_dir "$source_dir" "$source_dir" "$log" "$message" 1 "$artifact_path"
 }
 
 if [ "${BASH_SOURCE[0]}" = "$0" ]; then
@@ -272,8 +302,11 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
   elif [ "${1:-}" = "publish-staged" ] && [ -n "${2:-}" ] && [ -n "${3:-}" ] && \
        [ -n "${4:-}" ] && [ -n "${5:-}" ] && [ -n "${6:-}" ]; then
     runtime_publish_staged_artifacts "$2" "$3" "$4" "$5" "${@:6}"
+  elif [ "$#" -eq 7 ] && [ "${1:-}" = "publish-controlled" ] && [ -n "${2:-}" ] && [ -n "${3:-}" ] && \
+       [ -n "${4:-}" ] && [ -n "${5:-}" ] && [ -n "${6:-}" ]; then
+    runtime_publish_controlled_artifacts "$2" "$3" "$4" "$5" "$6" "$7"
   else
-    echo "usage: $0 configure <active-checkout> <publish-dir> | setup <active-checkout> [log-path] | publish-staged <active-checkout> <stage-dir> <log-path> <message> <path...>" >&2
+    echo "usage: $0 configure <active-checkout> <publish-dir> | setup <active-checkout> [log-path] | publish-staged <active-checkout> <stage-dir> <log-path> <message> <path...> | publish-controlled <active-checkout> <artifact-path> <attestation-json> <capability-token-json> <log-path> <message>" >&2
     exit 2
   fi
 fi

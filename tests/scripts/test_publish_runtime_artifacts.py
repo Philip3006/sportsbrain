@@ -266,6 +266,46 @@ def test_staged_publication_rejects_non_allowlisted_artifacts(tmp_path: Path):
     assert result.returncode != 0
 
 
+def test_controlled_cli_rejects_caller_selected_capability_state(tmp_path: Path):
+    result = subprocess.run(
+        [
+            str(PUBLISHER),
+            "publish-controlled",
+            str(tmp_path / "active"),
+            "docs/data/top5/published/signals.json",
+            str(tmp_path / "attestation.json"),
+            str(tmp_path / "attacker-state.json"),
+            str(tmp_path / "capability-token.json"),
+            str(tmp_path / "publish.log"),
+            "test: controlled publication",
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 2
+    assert "publish-controlled" in result.stderr
+
+
+def test_staged_publication_rejects_controlled_top5_paths(tmp_path: Path):
+    _, active, publisher = _seed(tmp_path)
+    stage = tmp_path / "stage"
+    forbidden = stage / "docs" / "data" / "top5" / "published" / "BL1" / "signals.json"
+    forbidden.parent.mkdir(parents=True)
+    forbidden.write_text('{"football": []}\n')
+
+    result = _run_staged(
+        active,
+        publisher,
+        stage,
+        tmp_path / "publish.log",
+        "docs/data/top5/published/BL1/signals.json",
+    )
+
+    assert result.returncode != 0
+
+
 def test_staged_publication_rejects_a_stage_inside_the_active_checkout(tmp_path: Path):
     _, active, publisher = _seed(tmp_path)
     stage = active / "staging"
@@ -351,12 +391,31 @@ def test_allowlist_rejects_non_artifact_paths(tmp_path: Path):
         ".env",
         "credentials.json",
         "docs/data/unknown.json",
+        "docs/data/top5/published/BL1/signals.json",
     ):
         target = active / path
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text("x")
         result = _run(active, publisher, tmp_path / "publish.log", path)
         assert result.returncode != 0, path
+
+
+def test_generic_publisher_rejects_controlled_publication_without_gate(tmp_path: Path):
+    origin, active, publisher = _seed(tmp_path)
+    artifact = active / "docs" / "data" / "top5" / "published" / "BL1" / "signals.json"
+    artifact.parent.mkdir(parents=True)
+    artifact.write_text('{"football": []}\n')
+    head_before = _git(["rev-parse", "main"], origin).stdout.strip()
+
+    result = _run(
+        active,
+        publisher,
+        tmp_path / "publish.log",
+        "docs/data/top5/published/BL1/signals.json",
+    )
+
+    assert result.returncode != 0
+    assert _git(["rev-parse", "main"], origin).stdout.strip() == head_before
 
 
 def test_allowlist_accepts_all_current_runtime_artifacts(tmp_path: Path):

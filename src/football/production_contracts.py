@@ -35,11 +35,13 @@ class MarketSnapshotKind(str, Enum):
 class ArtifactOwner(str, Enum):
     SHADOW_ARCHIVE = "shadow_archive"
     STAGED_PUBLIC = "staged_public"
+    CONTROLLED_PUBLIC = "controlled_public"
     HEALTH = "health"
 
 
 TOP5_SHADOW_ARCHIVE_PREFIX = "results/shadow/top5/"
 TOP5_STAGED_ARTIFACT_PREFIX = "docs/data/top5/shadow/"
+TOP5_CONTROLLED_ARTIFACT_PREFIX = "docs/data/top5/published/"
 TOP5_HEALTH_PREFIX = "results/health/top5/"
 
 
@@ -534,6 +536,7 @@ def validate_artifact_ownership(path: str, owner: ArtifactOwner | None = None) -
     allowed = {
         ArtifactOwner.SHADOW_ARCHIVE: TOP5_SHADOW_ARCHIVE_PREFIX,
         ArtifactOwner.STAGED_PUBLIC: TOP5_STAGED_ARTIFACT_PREFIX,
+        ArtifactOwner.CONTROLLED_PUBLIC: TOP5_CONTROLLED_ARTIFACT_PREFIX,
         ArtifactOwner.HEALTH: TOP5_HEALTH_PREFIX,
     }
     if owner is not None:
