@@ -13,6 +13,9 @@ from typing import Any
 
 from .errors import ConfigurationError
 from .registry import BuilderRegistry
+from .status import operator_snapshot
+from .store import DispatcherStore
+from .task_states import TaskState
 from .worktree import (
     RuntimeDirtyPolicy,
     WorktreeManager,
@@ -348,6 +351,33 @@ def run_doctor(
     )
 
     failed = [item for item in checks if not item["ok"]]
+    queue_path = (
+        Path(state_path).expanduser()
+        if state_path
+        else runtime / "nightshift.sqlite3"
+    )
+    queue_report: dict[str, Any] = {
+        "available": queue_path.is_file(),
+        "state_path": str(queue_path),
+    }
+    if queue_path.is_file():
+        try:
+            store = DispatcherStore(queue_path)
+            records = store.list_tasks(limit=1000)
+            roadmap = store.roadmap_records()
+            stats = store.stats()
+            queue_report.update(stats)
+            queue_report["operator"] = operator_snapshot(
+                records,
+                roadmap,
+                merge_backpressure=(
+                    stats["by_state"].get(TaskState.PR_READY.value, 0)
+                    + stats["by_state"].get(TaskState.CEO_REVIEW.value, 0)
+                    >= 3
+                ),
+            )
+        except Exception as exc:  # noqa: BLE001 - doctor reports, never raises
+            queue_report["error"] = type(exc).__name__
     return {
         "status": "ok" if not failed else "blocked",
         "checks": checks,
@@ -358,5 +388,6 @@ def run_doctor(
         "runtime_dir": str(runtime),
         "control_repo_paths": {repo: str(path) for repo, path in controls.items()},
         "registry_builders": list(registry_ids),
+        "queue": queue_report,
         "secrets_redacted": True,
     }

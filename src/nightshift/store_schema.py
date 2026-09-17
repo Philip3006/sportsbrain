@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     expected_base_sha TEXT, base_branch TEXT NOT NULL DEFAULT 'main', base_sha TEXT,
     origin_sha TEXT, required_tests_json TEXT NOT NULL DEFAULT '[]',
     verification_commands_json TEXT NOT NULL DEFAULT '[]',
-    max_runtime_seconds INTEGER NOT NULL DEFAULT 900, requires_pr INTEGER NOT NULL DEFAULT 0,
+    max_runtime_seconds INTEGER NOT NULL DEFAULT 1800, requires_pr INTEGER NOT NULL DEFAULT 0,
     lease_generation INTEGER NOT NULL DEFAULT 0, process_id INTEGER,
     commit_sha TEXT, remote_sha TEXT, pr_number INTEGER, pr_url TEXT,
     verification_json TEXT, delivery_json TEXT,

@@ -82,7 +82,7 @@ class DispatcherStore(
             "origin_sha": "TEXT",
             "required_tests_json": "TEXT NOT NULL DEFAULT '[]'",
             "verification_commands_json": "TEXT NOT NULL DEFAULT '[]'",
-            "max_runtime_seconds": "INTEGER NOT NULL DEFAULT 900",
+            "max_runtime_seconds": "INTEGER NOT NULL DEFAULT 1800",
             "requires_pr": "INTEGER NOT NULL DEFAULT 0",
             "lease_generation": "INTEGER NOT NULL DEFAULT 0",
             "process_id": "INTEGER",
@@ -203,7 +203,7 @@ class DispatcherStore(
                 tuple(command)
                 for command in json.loads(row["verification_commands_json"])
             ),
-            max_runtime_seconds=row["max_runtime_seconds"] or 900,
+            max_runtime_seconds=row["max_runtime_seconds"] or 1800,
             requires_pr=bool(row["requires_pr"]),
             lease_generation=row["lease_generation"] or 0,
             process_id=row["process_id"],

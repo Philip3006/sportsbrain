@@ -94,7 +94,11 @@ class DispatcherExecutionMixin:
     """Claims, executes, verifies, and delivers worker tasks safely."""
 
     def claim_next(
-        self, builder_id: str, *, worker_instance_id: str | None = None
+        self,
+        builder_id: str,
+        *,
+        worker_instance_id: str | None = None,
+        process_id: int | None = None,
     ) -> TaskRecord | None:
         if builder_id == self.dispatcher_id:
             raise DispatcherRecursionError(
@@ -127,7 +131,18 @@ class DispatcherExecutionMixin:
             max_concurrency=definition.max_concurrency,
             now=self.clock(),
         )
-        if claimed is None or self.worktree_manager is None or claimed.worktree_path:
+        if claimed is None:
+            return claimed
+        if process_id is not None:
+            self.store.record_process(
+                claimed.task_id,
+                worker_id=worker_id,
+                lease_generation=claimed.lease_generation,
+                process_id=process_id,
+                now=self.clock(),
+            )
+            claimed = self.store.get(claimed.task_id)
+        if self.worktree_manager is None or claimed.worktree_path:
             return claimed
         try:
             allocation = self.worktree_manager.allocate(claimed_to_spec(claimed))
@@ -190,6 +205,15 @@ class DispatcherExecutionMixin:
                 normalized.terminal_state is TaskState.PR_READY
                 and record.pr_number
                 and record.pr_url
+            )
+            and not (
+                str(normalized.data.get("delivery_status", "")).lower()
+                in {"blocked", "failed", "delivery_failed"}
+                and bool(
+                    normalized.data.get("commit_sha")
+                    or normalized.data.get("remote_sha")
+                    or normalized.data.get("verification_json")
+                )
             )
         ):
             raise SafetyViolation(
@@ -329,6 +353,23 @@ class DispatcherExecutionMixin:
                 return self.store.get(record.task_id)
         except DeliveryError as exc:
             try:
+                current = self.store.get(record.task_id)
+                preserved = {
+                    "delivery_status": "blocked",
+                    "implementation_success": bool(
+                        current.commit_sha
+                        or current.remote_sha
+                        or (
+                            current.verification
+                            and current.verification.get("passed") is True
+                        )
+                    ),
+                    "commit_sha": current.commit_sha,
+                    "remote_sha": current.remote_sha,
+                    "pr_number": current.pr_number,
+                    "pr_url": current.pr_url,
+                    "verification_json": dict(current.verification or {}),
+                }
                 return self.complete(
                     record.task_id,
                     worker_instance_id=owner,
@@ -336,7 +377,11 @@ class DispatcherExecutionMixin:
                     execution=ExecutionResult(
                         False,
                         str(exc)[:4000],
-                        data={"failure_class": "DELIVERY_FAILED"},
+                        data={
+                            "failure_class": "DELIVERY_FAILED",
+                            "delivery_reason": str(exc)[:4000],
+                            **preserved,
+                        },
                         retryable=False,
                         terminal_state=TaskState.FAILED_SAFE,
                     ),
@@ -473,4 +518,8 @@ class DispatcherExecutionMixin:
             summary=value.get("summary", ""),
             data=value.get("data", {}),
             retryable=value.get("retryable", True),
+            terminal_state=value.get("terminal_state"),
+            process_id=value.get("process_id"),
+            failure_class=value.get("failure_class"),
+            timeout_signature=value.get("timeout_signature"),
         )

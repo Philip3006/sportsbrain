@@ -19,6 +19,7 @@ if str(REPO_ROOT) not in sys.path:
 from src.nightshift import (
     ExecutionResult,
     NightShiftDispatcher,
+    NightShiftNotificationWatcher,
     TaskState,
 )
 from src.nightshift.doctor import run_doctor
@@ -71,6 +72,15 @@ def _parser() -> argparse.ArgumentParser:
     )
     reconcile.add_argument("task_id")
     reconcile.add_argument("--actor", required=True)
+    delivery_reconcile = sub.add_parser(
+        "reconcile-delivery",
+        help="verify an existing GitHub PR and recover preserved delivery work",
+    )
+    delivery_reconcile.add_argument("task_id")
+    delivery_reconcile.add_argument("--actor", required=True)
+    delivery_reconcile.add_argument("--pr-number", type=int)
+    delivery_reconcile.add_argument("--commit-sha")
+    delivery_reconcile.add_argument("--remote-sha")
     unblock = sub.add_parser(
         "unblock", help="release dependency-blocked work after prerequisites succeed"
     )
@@ -90,6 +100,11 @@ def _parser() -> argparse.ArgumentParser:
     sub.add_parser(
         "recover", help="requeue expired leases or dead-letter exhausted work"
     )
+    notify = sub.add_parser(
+        "notify", help="poll meaningful queue transitions and notify the local user"
+    )
+    notify.add_argument("--dry-run", action="store_true")
+    notify.add_argument("--seen-path", type=Path)
     for name in ("pause", "resume"):
         action = sub.add_parser(name)
         action.add_argument("--actor", required=True)
@@ -239,6 +254,19 @@ def main(argv: list[str] | None = None) -> int:
                 indent=2,
             )
         )
+    elif args.command == "reconcile-delivery":
+        print(
+            json.dumps(
+                dispatcher.reconcile_delivery(
+                    args.task_id,
+                    actor=args.actor,
+                    pr_number=args.pr_number,
+                    commit_sha=args.commit_sha,
+                    remote_sha=args.remote_sha,
+                ).as_dict(),
+                indent=2,
+            )
+        )
     elif args.command == "unblock":
         print(
             json.dumps(
@@ -271,6 +299,23 @@ def main(argv: list[str] | None = None) -> int:
         print(
             json.dumps(
                 [record.as_dict() for record in dispatcher.recover_expired()], indent=2
+            )
+        )
+    elif args.command == "notify":
+        watcher = NightShiftNotificationWatcher(
+            dispatcher.store.path,
+            seen_path=args.seen_path,
+        )
+        print(
+            json.dumps(
+                {
+                    "dry_run": args.dry_run,
+                    "notifications": [
+                        item.as_dict() for item in watcher.poll(dry_run=args.dry_run)
+                    ],
+                    "sender_failures": watcher.sender_failures,
+                },
+                indent=2,
             )
         )
     elif args.command == "pause":

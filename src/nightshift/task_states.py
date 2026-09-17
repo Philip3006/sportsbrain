@@ -23,6 +23,7 @@ class TaskState(str, Enum):
     PR_READY = "PR_READY"
     CEO_REVIEW = "CEO_REVIEW"
     BLOCKED = "BLOCKED"
+    DELIVERY_FAILED = "BLOCKED"  # noqa: PIE796 - compatibility alias
     FAILED_SAFE = "FAILED_SAFE"
     FAILED = "FAILED_SAFE"  # noqa: PIE796 - compatibility alias
     DEAD_LETTER = "FAILED_SAFE"  # noqa: PIE796 - compatibility alias

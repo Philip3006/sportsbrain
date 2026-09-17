@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .errors import SafetyViolation
-from .models import RiskClass, TaskSpec
+from .models import HARD_MAX_RUNTIME_SECONDS, RiskClass, TaskSpec
 from .registry import BuilderDefinition
 
 # These are intentionally checked at the queue boundary as well as documented
@@ -49,6 +49,9 @@ class SafetyPolicy:
     max_pending_tasks: int = 1000
     max_attempts: int = 10
     max_dependencies: int = 32
+    # 30 minutes is the safe generic default; reviewed heavy templates may
+    # use 60 minutes, but no queue submission may exceed that policy ceiling.
+    max_runtime_seconds: int = 60 * 60
     allow_external_side_effects: bool = False
     allow_destructive: bool = False
     forbidden_text: tuple[re.Pattern[str], ...] = _FORBIDDEN_TEXT
@@ -60,6 +63,12 @@ class SafetyPolicy:
             raise SafetyViolation(
                 f"max_attempts exceeds policy limit {self.max_attempts}"
             )
+        if task.max_runtime_seconds > self.max_runtime_seconds:
+            raise SafetyViolation(
+                f"max_runtime_seconds exceeds policy limit {self.max_runtime_seconds}"
+            )
+        if task.max_runtime_seconds > HARD_MAX_RUNTIME_SECONDS:
+            raise SafetyViolation("max_runtime_seconds exceeds the hard safety maximum")
         if len(task.dependency_ids) > self.max_dependencies:
             raise SafetyViolation(
                 f"dependency count exceeds policy limit {self.max_dependencies}"

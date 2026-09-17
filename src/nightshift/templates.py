@@ -10,7 +10,12 @@ from string import Formatter
 from typing import Any
 
 from .errors import ConfigurationError, InvalidTaskError
-from .models import RiskClass, TaskSpec
+from .models import (
+    DEFAULT_RUNTIME_SECONDS,
+    HARD_MAX_RUNTIME_SECONDS,
+    RiskClass,
+    TaskSpec,
+)
 from .registry import BuilderRegistry
 from .task_validation import safe_commands, safe_labels
 
@@ -30,7 +35,7 @@ class TaskTemplate:
     default_max_attempts: int = 3
     required_tests: tuple[str, ...] = ()
     verification_commands: tuple[tuple[str, ...], ...] = ()
-    max_runtime_seconds: int = 15 * 60
+    max_runtime_seconds: int = DEFAULT_RUNTIME_SECONDS
     requires_pr: bool | None = None
 
     @classmethod
@@ -68,7 +73,12 @@ class TaskTemplate:
         attempts = raw.get("default_max_attempts", 3)
         required_tests = safe_labels(raw.get("required_tests", ()), "required_tests")
         verification_commands = safe_commands(raw.get("verification_commands", ()))
-        max_runtime_seconds = raw.get("max_runtime_seconds", 15 * 60)
+        # ``runtime_seconds`` was used by the short-lived recovery prototype;
+        # accept it only as a migration spelling, while persisting the
+        # canonical max_runtime_seconds field.
+        max_runtime_seconds = raw.get(
+            "max_runtime_seconds", raw.get("runtime_seconds", DEFAULT_RUNTIME_SECONDS)
+        )
         requires_pr = raw.get("requires_pr")
         if (
             isinstance(priority, bool)
@@ -89,7 +99,7 @@ class TaskTemplate:
         if (
             isinstance(max_runtime_seconds, bool)
             or not isinstance(max_runtime_seconds, int)
-            or not 1 <= max_runtime_seconds <= 24 * 60 * 60
+            or not 1 <= max_runtime_seconds <= HARD_MAX_RUNTIME_SECONDS
         ):
             raise ConfigurationError(
                 f"{raw['template_id']}: max_runtime_seconds is invalid"
@@ -121,6 +131,12 @@ class TaskTemplate:
             max_runtime_seconds=max_runtime_seconds,
             requires_pr=requires_pr,
         )
+
+    @property
+    def runtime_seconds(self) -> int:
+        """Compatibility name for the task runtime shown to operators."""
+
+        return self.max_runtime_seconds
 
     def instantiate(
         self,

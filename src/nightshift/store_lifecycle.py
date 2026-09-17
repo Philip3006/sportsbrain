@@ -388,15 +388,23 @@ class StoreLifecycleMixin:
                 states={TaskState.VERIFYING.value},
                 now=now,
             )
+            existing_delivery = (
+                self._json(dict(evidence or {}))
+                if evidence
+                else row["delivery_json"] or self._json({})
+            )
+            has_pr = bool(row["pr_number"] and row["pr_url"])
+            new_state = TaskState.PR_READY if has_pr else TaskState.BLOCKED
+            event = EventType.PR_READY if has_pr else EventType.DELIVERY_BLOCKED
             conn.execute(
                 """UPDATE tasks SET state = ?, last_error = ?, failure_class = ?,
                    delivery_json = ?, lease_owner = NULL, lease_expires_at = NULL,
-                   updated_at = ? WHERE task_id = ?""",
+                   process_id = NULL, updated_at = ? WHERE task_id = ?""",
                 (
-                    TaskState.BLOCKED.value,
-                    reason[:4000],
+                    new_state.value,
+                    f"DELIVERY_BLOCKED: {reason}"[:4000],
                     failure_class,
-                    self._json(dict(evidence or {})),
+                    existing_delivery,
                     timestamp,
                     task_id,
                 ),
@@ -404,12 +412,16 @@ class StoreLifecycleMixin:
             self._append_event(
                 conn,
                 task_id,
-                EventType.DELIVERY_BLOCKED,
+                event,
                 worker_id,
                 timestamp,
                 TaskState.VERIFYING.value,
-                TaskState.BLOCKED.value,
-                {"failure_class": failure_class},
+                new_state.value,
+                {
+                    "failure_class": failure_class,
+                    "delivery_blocked": True,
+                    "preserved": bool(row["commit_sha"] or row["remote_sha"] or has_pr),
+                },
             )
             return self._record(self._get_row(conn, task_id))
 
@@ -438,6 +450,135 @@ class StoreLifecycleMixin:
             now=now,
         )
         return self.get(task_id)
+
+    def reconcile_delivery(
+        self,
+        task_id: str,
+        *,
+        actor: str,
+        evidence: Mapping[str, Any],
+        now: datetime | None = None,
+    ):
+        """Expose preserved implementation work after explicit verification.
+
+        This is deliberately not the generic transition API: a historical
+        FAILED_SAFE row can only leave that state through this evidence-gated
+        recovery path, and it can only become PR_READY, never COMPLETED.
+        """
+
+        record = self.get(task_id)
+        if record.state not in {TaskState.BLOCKED, TaskState.FAILED_SAFE}:
+            raise SafetyViolation("task is not a delivery-blocked recovery candidate")
+        failure = (record.failure_class or "").upper()
+        if not record.delivery_blocked or (
+            record.state is TaskState.FAILED_SAFE
+            and not failure.startswith("DELIVERY")
+        ):
+            raise SafetyViolation("task is not marked as delivery-blocked")
+        if record.state is TaskState.FAILED_SAFE and (
+            not failure.startswith("DELIVERY")
+            or "TIMEOUT" in failure
+            or "DEAD_LETTER" in failure
+        ):
+            raise SafetyViolation("timeout/dead-letter work cannot be reconciled as delivery")
+        if not isinstance(evidence, Mapping) or evidence.get("verified") is not True:
+            raise SafetyViolation("delivery recovery requires verified GitHub facts")
+        if evidence.get("worker_execution_success") is not True or evidence.get(
+            "implementation_success"
+        ) is not True:
+            raise SafetyViolation("delivery recovery requires successful implementation evidence")
+        commit_sha = evidence.get("commit_sha") or record.commit_sha
+        remote_sha = evidence.get("remote_sha") or record.remote_sha or commit_sha
+        pr_number = evidence.get("pr_number") or record.pr_number
+        pr_url = evidence.get("pr_url") or record.pr_url
+        if not isinstance(commit_sha, str) or not commit_sha.strip():
+            raise SafetyViolation("delivery recovery is missing the preserved commit SHA")
+        if not isinstance(remote_sha, str) or not remote_sha.strip():
+            raise SafetyViolation("delivery recovery is missing the pushed remote SHA")
+        if (
+            isinstance(record.commit_sha, str)
+            and record.commit_sha
+            and record.commit_sha.lower() != commit_sha.lower()
+        ):
+            raise SafetyViolation("recovery commit SHA does not match the task")
+        if (
+            isinstance(record.remote_sha, str)
+            and record.remote_sha
+            and record.remote_sha.lower() != remote_sha.lower()
+        ):
+            raise SafetyViolation("recovery remote SHA does not match the task")
+        if isinstance(pr_number, bool) or not isinstance(pr_number, int) or pr_number <= 0:
+            raise SafetyViolation("delivery recovery requires a positive PR number")
+        if not isinstance(pr_url, str) or not pr_url.strip():
+            pr_url = f"https://github.com/{record.repo}/pull/{pr_number}"
+        verification = evidence.get("verification_json") or record.verification
+        if not isinstance(verification, Mapping) or not verification:
+            raise SafetyViolation("delivery recovery requires preserved verification evidence")
+        delivery = dict(record.delivery or {})
+        delivery.update(
+            {
+                "delivery_blocked": True,
+                "recovery_verified": True,
+                "recovery_evidence": {
+                    key: value
+                    for key, value in evidence.items()
+                    if key
+                    in {
+                        "repo",
+                        "pr_number",
+                        "head_ref",
+                        "base_ref",
+                        "base_sha",
+                        "state",
+                        "merged",
+                    }
+                },
+            }
+        )
+        timestamp = isoformat(now or utc_now())
+        with self._write() as conn:
+            row = self._get_row(conn, task_id)
+            actual = TaskState(row["state"])
+            if actual is not record.state:
+                raise InvalidTransitionError(
+                    f"task {task_id} is {actual.value}, expected {record.state.value}"
+                )
+            conn.execute(
+                """UPDATE tasks SET state = ?, commit_sha = ?, remote_sha = ?,
+                   pr_number = ?, pr_url = ?, verification_json = ?, delivery_json = ?,
+                   last_error = ?, failure_class = ?, lease_owner = NULL,
+                   lease_expires_at = NULL, process_id = NULL, updated_at = ?
+                   WHERE task_id = ?""",
+                (
+                    TaskState.PR_READY.value,
+                    commit_sha,
+                    remote_sha,
+                    pr_number,
+                    pr_url,
+                    self._json(dict(verification)),
+                    self._json(delivery),
+                    "DELIVERY_BLOCKED: preserved work reconciled; awaiting merge verification",
+                    "DELIVERY_BLOCKED",
+                    timestamp,
+                    task_id,
+                ),
+            )
+            self._append_event(
+                conn,
+                task_id,
+                EventType.DELIVERY_RECOVERED,
+                actor,
+                timestamp,
+                record.state.value,
+                TaskState.PR_READY.value,
+                {
+                    "pr_number": pr_number,
+                    "commit_sha": commit_sha,
+                    "remote_sha": remote_sha,
+                    "verified": True,
+                },
+            )
+            return self._record(self._get_row(conn, task_id))
 
     def mark_ceo_review(
         self,

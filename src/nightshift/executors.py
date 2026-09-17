@@ -81,7 +81,7 @@ class CodexExecutor:
         codex_path: str,
         worktrees: WorktreeManager,
         *,
-        timeout_seconds: int = 15 * 60,
+        timeout_seconds: int = 60 * 60,
         sandbox: str = "workspace-write",
     ) -> None:
         if timeout_seconds < 1 or timeout_seconds > 24 * 60 * 60:
@@ -241,9 +241,13 @@ class CodexExecutor:
                     "stderr": redact(exc.stderr or ""),
                     "pid": process.pid,
                     "failure": "TIMEOUT",
+                    "failure_class": "TIMEOUT",
+                    "timeout_signature": f"codex-timeout:{timeout_seconds}",
                 },
                 retryable=True,
                 process_id=process.pid,
+                failure_class="TIMEOUT",
+                timeout_signature=f"codex-timeout:{timeout_seconds}",
             )
             stop.set()
             if thread is not None:
