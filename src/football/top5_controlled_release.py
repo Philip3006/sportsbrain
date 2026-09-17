@@ -40,13 +40,14 @@ from src.football.top5_controlled_shadow_provider_qualification import (
 from src.football.top5_publisher import (
     ControlledPublicationAttestation,
     ControlledPublicationCapability,
+    ControlledPublicationCapabilityIssuanceProof,
+    ControlledPublicationCapabilityIssuer,
     ControlledPublicationCapabilityStore,
     ControlledTop5PublicationPayload,
     InMemoryTop5PublicationStore,
     PublicationRollback,
     PublishedTop5Artifact,
     Top5PublicationAuthorization,
-    _create_capability_issuance_proof,
 )
 from src.football.top5_qualification_sample_aggregator import (
     Builder2QualificationSampleAggregatorError,
@@ -914,6 +915,7 @@ class Top5ControlledRelease:
         authorization: Top5PublicationAuthorization,
         capability_store: ControlledPublicationCapabilityStore,
         *,
+        capability_issuer: ControlledPublicationCapabilityIssuer | None = None,
         now: datetime,
     ) -> tuple[ControlledPublicationAttestation, ControlledPublicationCapability]:
         """Issue a runtime capability only after all controlled gates validate."""
@@ -923,7 +925,15 @@ class Top5ControlledRelease:
             authorization,
             now=now,
         )
-        issuer_proof = _create_capability_issuance_proof(attestation)
+        if capability_issuer is None:
+            raise ProductionContractError(
+                "trusted controlled publication capability issuer is unavailable"
+            )
+        issuer_proof = capability_issuer.issue_proof(attestation)
+        if not isinstance(issuer_proof, ControlledPublicationCapabilityIssuanceProof):
+            raise ProductionContractError(
+                "trusted controlled publication capability issuer returned an invalid proof"
+            )
         return attestation, capability_store.issue(
             attestation,
             issuer_proof=issuer_proof,

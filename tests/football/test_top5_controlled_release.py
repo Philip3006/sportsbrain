@@ -14,6 +14,8 @@ from hashlib import sha256
 from pathlib import Path
 
 import pytest
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 import src.football.top5_publisher as top5_publisher_module
 from scripts.top5_real_shadow_session import main as session_cli
@@ -40,10 +42,12 @@ from src.football.top5_controlled_shadow_provider_qualification import (
 from src.football.top5_provider_validation import ProviderAuthority
 from src.football.top5_publisher import (
     ControlledPublicationAttestation,
+    ControlledPublicationCapabilityIssuanceProof,
     ControlledTop5PublicationPayload,
     FileControlledPublicationCapabilityStore,
     Top5PublicationAuthorization,
     controlled_publication_capability_state_path,
+    controlled_publication_issuer_public_key_path,
 )
 from src.football.top5_qualification_sample_aggregator import (
     aggregate_builder2_qualification_samples,
@@ -825,12 +829,18 @@ def _capability_fixture(tmp_path, monkeypatch):
         "getpwuid",
         lambda uid: type("PasswdEntry", (), {"pw_dir": str(operator_home)})(),
     )
+    capability_issuer = _SyntheticCapabilityIssuer("trusted")
+    issuer_key_path = controlled_publication_issuer_public_key_path()
+    issuer_key_path.parent.mkdir(parents=True, exist_ok=True)
+    issuer_key_path.write_text(capability_issuer.public_key_hex)
+    issuer_key_path.chmod(0o600)
     state_path = controlled_publication_capability_state_path()
     store = FileControlledPublicationCapabilityStore(state_path)
     attestation, capability = release.issue_publication_capability(
         artifact,
         publication_auth,
         store,
+        capability_issuer=capability_issuer,
         now=runtime_now,
     )
     product_path = tmp_path / artifact.artifact_path
@@ -852,6 +862,7 @@ def _capability_fixture(tmp_path, monkeypatch):
         "store": store,
         "release": release,
         "publication_authorization": publication_auth,
+        "capability_issuer": capability_issuer,
         "runtime_now": runtime_now,
     }
 
@@ -885,6 +896,41 @@ def _run_validator(fixture, *, capability_path=None):
         stdout=stdout.getvalue(),
         stderr=stderr.getvalue(),
     )
+
+
+class _SyntheticCapabilityIssuer:
+    """Test-only signer; no production key material is committed."""
+
+    def __init__(self, label):
+        self._label = label
+        self._counter = 0
+        self._private_key = Ed25519PrivateKey.generate()
+
+    @property
+    def public_key_hex(self):
+        return (
+            self._private_key.public_key()
+            .public_bytes(
+                serialization.Encoding.Raw,
+                serialization.PublicFormat.Raw,
+            )
+            .hex()
+        )
+
+    def issue_proof(self, attestation):
+        self._counter += 1
+        issuance_id = f"test-issuance:{self._label}:{self._counter}"
+        attestation_digest = _ordinary_digest(attestation.as_payload())
+        signature = self._private_key.sign(
+            ControlledPublicationCapabilityIssuanceProof.message_for(
+                attestation_digest, issuance_id
+            )
+        ).hex()
+        return ControlledPublicationCapabilityIssuanceProof(
+            attestation_digest=attestation_digest,
+            issuance_id=issuance_id,
+            signature=signature,
+        )
 
 
 def _ordinary_digest(value):
@@ -1072,6 +1118,7 @@ def test_consumed_capability_rotates_without_manual_deletion(tmp_path, monkeypat
     attestation = fixture["attestation"]
     release = fixture["release"]
     publication_authorization = fixture["publication_authorization"]
+    capability_issuer = fixture["capability_issuer"]
     artifact_path = fixture["artifact"].artifact_path
     now = fixture["runtime_now"]
 
@@ -1080,6 +1127,7 @@ def test_consumed_capability_rotates_without_manual_deletion(tmp_path, monkeypat
             fixture["artifact"],
             publication_authorization,
             store,
+            capability_issuer=capability_issuer,
             now=now,
         )
     assert json.loads(fixture["state_path"].read_text())["consumed"] is False
@@ -1104,6 +1152,7 @@ def test_consumed_capability_rotates_without_manual_deletion(tmp_path, monkeypat
         fixture["artifact"],
         publication_authorization,
         store,
+        capability_issuer=capability_issuer,
         now=now,
     )
     state_after_rotation = json.loads(fixture["state_path"].read_text())
@@ -1150,6 +1199,11 @@ def test_direct_store_cannot_issue_from_self_consistent_forged_attestation(
     )
     store = FileControlledPublicationCapabilityStore()
     state_path = controlled_publication_capability_state_path()
+    trusted_issuer = _SyntheticCapabilityIssuer("trusted-direct-test")
+    issuer_key_path = controlled_publication_issuer_public_key_path()
+    issuer_key_path.parent.mkdir(parents=True, exist_ok=True)
+    issuer_key_path.write_text(trusted_issuer.public_key_hex)
+    issuer_key_path.chmod(0o600)
     fake_active_bindings = {
         "active": True,
         "activation_id": artifact.activation_id,
@@ -1201,8 +1255,12 @@ def test_direct_store_cannot_issue_from_self_consistent_forged_attestation(
         "state_path": state_path,
     }
 
-    with pytest.raises(ValueError, match="authorized release proof"):
+    with pytest.raises(ValueError, match="trusted signed proof"):
         store.issue(forged)
+    assert not hasattr(top5_publisher_module, "_create_capability_issuance_proof")
+    attacker_proof = _SyntheticCapabilityIssuer("attacker").issue_proof(forged)
+    with pytest.raises(ValueError, match="signature"):
+        store.issue(forged, issuer_proof=attacker_proof)
 
     rejected = _run_validator(fixture)
     assert rejected.returncode != 0
@@ -1334,6 +1392,13 @@ def test_capability_issue_requires_active_activation_and_valid_publication_auth(
         release.issue_publication_capability(
             artifact,
             replace(publication_auth, publication_authorized=False),
+            store,
+            now=BASE + timedelta(minutes=3),
+        )
+    with pytest.raises(ValueError, match="issuer is unavailable"):
+        release.issue_publication_capability(
+            artifact,
+            publication_auth,
             store,
             now=BASE + timedelta(minutes=3),
         )

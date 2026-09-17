@@ -25,6 +25,9 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Protocol
 
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+
 from src.football.production_contracts import (
     ActivationMode,
     ArtifactOwner,
@@ -36,6 +39,9 @@ from src.notifications.public_serializer import serialize_public_product
 
 CONTROLLED_PUBLICATION_CAPABILITY_STATE = (
     "football/top5/controlled_publication_capability.json"
+)
+CONTROLLED_PUBLICATION_ISSUER_PUBLIC_KEY = (
+    "football/top5/controlled_publication_issuer.ed25519.pub"
 )
 
 
@@ -59,6 +65,15 @@ def controlled_publication_capability_state_path() -> Path:
         / "SportsBrain"
         / "runtime-state"
         / CONTROLLED_PUBLICATION_CAPABILITY_STATE
+    )
+
+
+def controlled_publication_issuer_public_key_path() -> Path:
+    """Return the immutable operator-owned issuer verification-key location."""
+
+    return (
+        controlled_publication_capability_state_path().parent
+        / Path(CONTROLLED_PUBLICATION_ISSUER_PUBLIC_KEY).name
     )
 
 
@@ -812,42 +827,123 @@ class ControlledPublicationAttestation:
         }
 
 
-_PENDING_CAPABILITY_ISSUANCE_PROOFS: dict[
-    int, tuple[object, ControlledPublicationAttestation]
-] = {}
+@dataclass(frozen=True)
+class ControlledPublicationCapabilityIssuanceProof:
+    """Operator-signed proof allowing one capability issuance."""
+
+    attestation_digest: str
+    issuance_id: str
+    signature: str
+
+    @staticmethod
+    def message_for(attestation_digest: str, issuance_id: str) -> bytes:
+        _hash(attestation_digest, "capability issuance attestation digest")
+        _required_text({"issuance_id": issuance_id}, "capability issuance proof")
+        return json.dumps(
+            {
+                "schema": "top5-controlled-publication-issuance-proof-v1",
+                "attestation_digest": attestation_digest,
+                "issuance_id": issuance_id,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+        ).encode("utf-8")
+
+    def validate(self) -> None:
+        _hash(self.attestation_digest, "capability issuance attestation digest")
+        _required_text({"issuance_id": self.issuance_id}, "capability issuance proof")
+        if (
+            not isinstance(self.signature, str)
+            or len(self.signature) != 128
+            or any(char not in "0123456789abcdefABCDEF" for char in self.signature)
+        ):
+            raise ProductionContractError(
+                "capability issuance proof signature is invalid"
+            )
+
+    @classmethod
+    def from_mapping(
+        cls, value: Mapping[str, object]
+    ) -> ControlledPublicationCapabilityIssuanceProof:
+        expected = {"attestation_digest", "issuance_id", "signature"}
+        if not isinstance(value, Mapping):
+            raise ProductionContractError("capability issuance proof must be an object")
+        missing = sorted(expected - set(value))
+        extra = sorted(set(value) - expected)
+        if missing:
+            raise ProductionContractError(
+                "capability issuance proof is missing: " + ", ".join(missing)
+            )
+        if extra:
+            raise ProductionContractError(
+                "capability issuance proof has unknown fields: " + ", ".join(extra)
+            )
+        proof = cls(
+            attestation_digest=value["attestation_digest"],
+            issuance_id=value["issuance_id"],
+            signature=value["signature"],
+        )
+        proof.validate()
+        return proof
+
+    def as_payload(self) -> dict[str, str]:
+        self.validate()
+        return {
+            "attestation_digest": self.attestation_digest,
+            "issuance_id": self.issuance_id,
+            "signature": self.signature,
+        }
 
 
-def _create_capability_issuance_proof(
-    attestation: ControlledPublicationAttestation,
-) -> object:
-    """Create an opaque, one-time proof for the controlled release boundary.
+class ControlledPublicationCapabilityIssuer(Protocol):
+    """External operator authority that signs a validated attestation."""
 
-    The proof is intentionally an object-identity capability, not a digest of
-    caller-supplied fields.  Only ``Top5ControlledRelease`` receives one after
-    its activation and separate-publication-authority checks have succeeded.
-    ``FileControlledPublicationCapabilityStore`` consumes it before touching
-    canonical runtime state.
-    """
-
-    proof = object()
-    _PENDING_CAPABILITY_ISSUANCE_PROOFS[id(proof)] = (proof, attestation)
-    return proof
+    def issue_proof(
+        self, attestation: ControlledPublicationAttestation
+    ) -> ControlledPublicationCapabilityIssuanceProof: ...
 
 
-def _consume_capability_issuance_proof(
+def _verify_capability_issuance_proof(
     attestation: ControlledPublicationAttestation,
     proof: object | None,
-) -> None:
-    if proof is None:
+) -> ControlledPublicationCapabilityIssuanceProof:
+    if not isinstance(proof, ControlledPublicationCapabilityIssuanceProof):
         raise ProductionContractError(
-            "controlled publication capability issuance requires an authorized release proof"
+            "controlled publication capability issuance requires a trusted signed proof"
         )
-    entry = _PENDING_CAPABILITY_ISSUANCE_PROOFS.get(id(proof))
-    if entry is None or entry[0] is not proof or entry[1] is not attestation:
+    proof.validate()
+    expected_digest = _digest(attestation.as_payload())
+    if not compare_digest(proof.attestation_digest, expected_digest):
         raise ProductionContractError(
-            "controlled publication capability issuance proof is invalid or already consumed"
+            "controlled publication capability issuance attestation binding mismatch"
         )
-    del _PENDING_CAPABILITY_ISSUANCE_PROOFS[id(proof)]
+    public_key_path = controlled_publication_issuer_public_key_path()
+    try:
+        if public_key_path.is_symlink() or not public_key_path.is_file():
+            raise ProductionContractError(
+                "trusted controlled publication issuer key is unavailable"
+            )
+        if public_key_path.stat().st_mode & 0o077:
+            raise ProductionContractError(
+                "trusted controlled publication issuer key permissions are unsafe"
+            )
+        public_key = Ed25519PublicKey.from_public_bytes(
+            bytes.fromhex(public_key_path.read_text().strip())
+        )
+        public_key.verify(
+            bytes.fromhex(proof.signature),
+            ControlledPublicationCapabilityIssuanceProof.message_for(
+                proof.attestation_digest, proof.issuance_id
+            ),
+        )
+    except ProductionContractError:
+        raise
+    except (InvalidSignature, OSError, TypeError, ValueError) as exc:
+        raise ProductionContractError(
+            "controlled publication capability issuance proof signature is invalid"
+        ) from exc
+    return proof
 
 
 @dataclass(frozen=True)
@@ -921,7 +1017,7 @@ def _capability_nonce_digest(nonce: str) -> str:
 class FileControlledPublicationCapabilityStore:
     """Operator-owned one-time capability state outside the repository."""
 
-    _SCHEMA = "top5-controlled-publication-capability-v1"
+    _SCHEMA = "top5-controlled-publication-capability-v2"
 
     def __init__(self, state_path: str | Path | None = None) -> None:
         canonical_path = controlled_publication_capability_state_path()
@@ -968,6 +1064,7 @@ class FileControlledPublicationCapabilityStore:
             "capability_id": state["capability_id"],
             "nonce_digest": state["nonce_digest"],
             "attestation": dict(state["attestation"]),
+            "issuer_proof": dict(state["issuer_proof"]),
             "consumed": True,
         }
 
@@ -977,7 +1074,13 @@ class FileControlledPublicationCapabilityStore:
             raise ProductionContractError(
                 "controlled publication capability rotation history is invalid"
             )
-        expected = {"capability_id", "nonce_digest", "attestation", "consumed"}
+        expected = {
+            "capability_id",
+            "nonce_digest",
+            "attestation",
+            "issuer_proof",
+            "consumed",
+        }
         if set(record) != expected or record.get("consumed") is not True:
             raise ProductionContractError(
                 "controlled publication capability rotation history is invalid"
@@ -994,7 +1097,13 @@ class FileControlledPublicationCapabilityStore:
             raise ProductionContractError(
                 "controlled publication capability rotation history is invalid"
             )
-        ControlledPublicationAttestation.from_mapping(record["attestation"])
+        attestation = ControlledPublicationAttestation.from_mapping(
+            record["attestation"]
+        )
+        proof = ControlledPublicationCapabilityIssuanceProof.from_mapping(
+            record["issuer_proof"]
+        )
+        _verify_capability_issuance_proof(attestation, proof)
 
     def _read_state(self, *, allow_consumed: bool = False) -> dict[str, object]:
         if not self.state_path.is_file() or self.state_path.is_symlink():
@@ -1016,6 +1125,7 @@ class FileControlledPublicationCapabilityStore:
             "capability_id",
             "nonce_digest",
             "attestation",
+            "issuer_proof",
             "consumed",
         }
         allowed = expected | {"rotation_history"}
@@ -1047,6 +1157,13 @@ class FileControlledPublicationCapabilityStore:
             raise ProductionContractError(
                 "controlled publication capability attestation is invalid"
             )
+        attestation = ControlledPublicationAttestation.from_mapping(
+            value["attestation"]
+        )
+        proof = ControlledPublicationCapabilityIssuanceProof.from_mapping(
+            value["issuer_proof"]
+        )
+        _verify_capability_issuance_proof(attestation, proof)
         rotation_history = value.setdefault("rotation_history", [])
         if not isinstance(rotation_history, list):
             raise ProductionContractError(
@@ -1062,7 +1179,7 @@ class FileControlledPublicationCapabilityStore:
         *,
         issuer_proof: object | None = None,
     ) -> ControlledPublicationCapability:
-        _consume_capability_issuance_proof(attestation, issuer_proof)
+        proof = _verify_capability_issuance_proof(attestation, issuer_proof)
         capability_id = f"top5-capability:{uuid.uuid4().hex}"
         capability_nonce = secrets.token_urlsafe(32)
         capability = ControlledPublicationCapability(capability_id, capability_nonce)
@@ -1072,6 +1189,7 @@ class FileControlledPublicationCapabilityStore:
             "capability_id": capability.capability_id,
             "nonce_digest": _capability_nonce_digest(capability.capability_nonce),
             "attestation": attestation.as_payload(),
+            "issuer_proof": proof.as_payload(),
             "consumed": False,
         }
         with self._locked():
@@ -1081,6 +1199,18 @@ class FileControlledPublicationCapabilityStore:
                 if previous["consumed"] is False:
                     raise ProductionContractError(
                         "controlled publication capability is still unconsumed"
+                    )
+                previous_proof = (
+                    ControlledPublicationCapabilityIssuanceProof.from_mapping(
+                        previous["issuer_proof"]
+                    )
+                )
+                if previous_proof.as_payload() == proof.as_payload() or any(
+                    record["issuer_proof"] == proof.as_payload()
+                    for record in previous.get("rotation_history", [])
+                ):
+                    raise ProductionContractError(
+                        "controlled publication capability issuance proof has already been used"
                     )
                 rotation_history = list(previous.get("rotation_history", []))
                 rotation_history.append(self._audit_record(previous))
