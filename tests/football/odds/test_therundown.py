@@ -7,7 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from scripts.therundown_diagnostic import _affiliate_names, _event_details
+from scripts.therundown_diagnostic import (
+    _affiliate_names,
+    _event_details,
+    _verified_league_ids,
+)
 from src.football.odds.therundown import (
     THERUNDOWN_ADAPTER_VERSION,
     THERUNDOWN_CHAMPIONS_LEAGUE_CODE,
@@ -474,3 +478,19 @@ def test_diagnostic_reports_fixture_market_books_and_timestamps() -> None:
         {"affiliate_id": "3", "name": "DraftKings"},
     ]
     assert len(market["source_update_timestamps"]) == 2
+
+
+def test_diagnostic_uses_only_unambiguous_real_catalog_ids() -> None:
+    catalog = {
+        "sports": [
+            {"sport_id": 11, "sport_name": "EPL"},
+            {"sport_id": 13, "sport_name": "GER1"},
+            {"sport_id": 14, "sport_name": "ESP1"},
+            {"sport_id": 15, "sport_name": "ITA1"},
+            {"sport_id": 12, "sport_name": "FRA1"},
+        ]
+    }
+
+    verified = _verified_league_ids(catalog)
+
+    assert {item["id"] for item in verified.values()} == {"11", "12", "13", "14", "15"}

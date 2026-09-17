@@ -3,7 +3,8 @@
 This is intentionally separate from the active provider cascade.  It makes no
 requests unless THERUNDOWN_API_KEY is already present in the process
 environment, never prints response bodies or credentials, and makes at most
-five sequential requests without retries.
+five sequential UCL requests or fifteen sequential Top-5 requests without
+retries.
 """
 
 from __future__ import annotations
@@ -22,7 +23,15 @@ import requests
 BASE_URL = "https://therundown.io/api/v2"
 SPORT_ID = 16
 DEFAULT_MAX_REQUESTS = 5
-MIN_REQUEST_INTERVAL_SECONDS = 1.05
+MIN_REQUEST_INTERVAL_SECONDS = 1.30
+TOP5_MAX_REQUESTS = 15
+TOP5_TARGETS = {
+    "EPL": frozenset({"epl", "englishpremierleague", "premierleague"}),
+    "Bundesliga": frozenset({"bundesliga", "germanbundesliga", "bundesliga1", "ger1"}),
+    "La Liga": frozenset({"laliga", "spanishlaliga", "esp1"}),
+    "Serie A": frozenset({"seriea", "italianseriea", "ita1"}),
+    "Ligue 1": frozenset({"ligue1", "frenchligue1", "fra1"}),
+}
 
 
 def _headers(response: requests.Response) -> dict[str, str]:
@@ -75,6 +84,56 @@ def _summary(payload: object) -> dict[str, object]:
     if isinstance(payload.get("dates"), list):
         summary["first_date_present"] = bool(payload["dates"])
     return summary
+
+
+def _list_value(payload: object, key: str) -> list[object]:
+    if isinstance(payload, Mapping):
+        value = payload.get(key)
+        if isinstance(value, list):
+            return value
+        value = payload.get("data")
+        if isinstance(value, list):
+            return value
+    if isinstance(payload, list):
+        return payload
+    return []
+
+
+def _sport_catalog(payload: object) -> list[dict[str, str]]:
+    catalog: list[dict[str, str]] = []
+    for entry in _list_value(payload, "sports"):
+        if not isinstance(entry, Mapping):
+            continue
+        sport_id = entry.get("sport_id", entry.get("id", entry.get("sportID")))
+        name = entry.get("name", entry.get("sport_name", entry.get("league_name")))
+        abbreviation = entry.get(
+            "abbreviation", entry.get("abbr", entry.get("short_name", ""))
+        )
+        if sport_id is None or not name:
+            continue
+        catalog.append(
+            {
+                "id": str(sport_id).strip(),
+                "name": str(name).strip(),
+                "abbreviation": str(abbreviation).strip(),
+            }
+        )
+    return catalog
+
+
+def _verified_league_ids(payload: object) -> dict[str, dict[str, object]]:
+    catalog = _sport_catalog(payload)
+    verified: dict[str, dict[str, object]] = {}
+    for target, aliases in TOP5_TARGETS.items():
+        matches = [
+            item
+            for item in catalog
+            if _compact(item["name"]) in aliases
+            or _compact(item["abbreviation"]) in aliases
+        ]
+        if len(matches) == 1:
+            verified[target] = matches[0]
+    return verified
 
 
 def _compact(value: object) -> str:
@@ -323,14 +382,135 @@ def _date_from_payload(payload: object, fallback: str) -> str:
     return min(upcoming) if upcoming else max(valid_dates)
 
 
+def _account_snapshot(outputs: list[dict[str, object]]) -> dict[str, object]:
+    for output in reversed(outputs):
+        quota = output.get("quota")
+        if isinstance(quota, dict) and any(
+            value is not None for value in quota.values()
+        ):
+            return quota
+    return {}
+
+
+def _request_cost(output: Mapping[str, object]) -> int | None:
+    quota = output.get("quota")
+    if not isinstance(quota, Mapping):
+        return None
+    value = quota.get("datapoints")
+    return value if isinstance(value, int) else None
+
+
+def _league_result(
+    target: str,
+    league: Mapping[str, object] | None,
+    date_output: Mapping[str, object] | None,
+    event_output: Mapping[str, object] | None,
+) -> dict[str, object]:
+    result: dict[str, object] = {
+        "league": target,
+        "provider_league_id": league.get("id") if league else None,
+        "provider_league_name": league.get("name") if league else None,
+        "provider_league_abbreviation": league.get("abbreviation") if league else None,
+        "access": "UNOBSERVED",
+        "real_fixture": None,
+        "complete_1x2": "UNOBSERVED",
+        "complete_1x2_count": None,
+        "complete_1x2_books": [],
+        "books": [],
+        "freshness": None,
+        "cost": {
+            "dates_datapoints": _request_cost(date_output or {}),
+            "events_datapoints": _request_cost(event_output or {}),
+        },
+        "result": "UNOBSERVED",
+    }
+    if league is None or date_output is None:
+        return result
+    date_status = date_output.get("status")
+    if date_status in {401, 403}:
+        result["access"] = "NO"
+        result["result"] = "FAIL"
+        return result
+    if date_status != 200:
+        return result
+    result["access"] = "YES"
+    if event_output is None:
+        return result
+    event_status = event_output.get("status")
+    if event_status in {401, 403}:
+        result["access"] = "RESTRICTED"
+        result["result"] = "FAIL"
+        return result
+    if event_status != 200:
+        return result
+    events = event_output.get("events")
+    if not isinstance(events, list) or not events:
+        result["complete_1x2"] = "NO"
+        result["result"] = "PARTIAL"
+        return result
+    sample = next(
+        (
+            event
+            for event in events
+            if isinstance(event, Mapping)
+            and any(
+                isinstance(market, Mapping) and market.get("market_id") == "1"
+                for market in event.get("markets", ())
+                if isinstance(event.get("markets"), list)
+            )
+        ),
+        events[0],
+    )
+    if not isinstance(sample, Mapping):
+        result["result"] = "PARTIAL"
+        return result
+    result["real_fixture"] = {
+        "event_id": sample.get("event_id"),
+        "event_date": sample.get("event_date"),
+        "fixture": sample.get("fixture"),
+        "sport_id": sample.get("sport_id"),
+        "league_name": sample.get("league_name"),
+    }
+    markets = sample.get("markets")
+    moneyline = (
+        next(
+            (
+                market
+                for market in markets
+                if isinstance(market, Mapping) and market.get("market_id") == "1"
+            ),
+            None,
+        )
+        if isinstance(markets, list)
+        else None
+    )
+    if not isinstance(moneyline, Mapping):
+        result["complete_1x2"] = "NO"
+        result["result"] = "PARTIAL"
+        return result
+    result["books"] = moneyline.get("bookmakers", [])
+    complete = moneyline.get("complete_1x2_bookmakers", [])
+    result["complete_1x2_count"] = len(complete) if isinstance(complete, list) else None
+    result["complete_1x2_books"] = complete if isinstance(complete, list) else []
+    result["freshness"] = {
+        "source_update_timestamps": moneyline.get("source_update_timestamps", []),
+        "delay_seconds": _account_snapshot([event_output]).get("delay_seconds"),
+    }
+    result["complete_1x2"] = "YES" if complete else "NO"
+    result["result"] = "PASS_EVIDENCE" if complete else "PARTIAL"
+    return result
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--scope", choices=("ucl", "top5"), default="top5")
     parser.add_argument("--date", default=datetime.now(timezone.utc).date().isoformat())
-    parser.add_argument("--max-requests", type=int, default=DEFAULT_MAX_REQUESTS)
+    parser.add_argument("--max-requests", type=int, default=TOP5_MAX_REQUESTS)
     parser.add_argument("--timeout", type=float, default=10.0)
     args = parser.parse_args()
-    if not 0 <= args.max_requests <= DEFAULT_MAX_REQUESTS:
-        parser.error("--max-requests must be between 0 and 5")
+    request_limit = TOP5_MAX_REQUESTS if args.scope == "top5" else DEFAULT_MAX_REQUESTS
+    if not 0 <= args.max_requests <= request_limit:
+        parser.error(f"--max-requests must be between 0 and {request_limit}")
     if args.timeout <= 0:
         parser.error("--timeout must be positive")
     try:
@@ -344,31 +524,31 @@ def main() -> int:
             json.dumps(
                 {
                     "status": "REAL_TEST_READY",
+                    "scope": args.scope,
                     "real_requests": 0,
                     "required_environment": "THERUNDOWN_API_KEY",
-                    "command": "THERUNDOWN_API_KEY=... python3 scripts/therundown_diagnostic.py",
+                    "command": "THERUNDOWN_API_KEY=... python3 scripts/therundown_diagnostic.py --scope top5 --max-requests 15",
                 },
                 sort_keys=True,
             )
         )
         return 0
 
-    paths: list[tuple[str, dict[str, str] | None]] = [
-        (f"{BASE_URL}/sports", None),
-        (f"{BASE_URL}/affiliates", None),
-        (f"{BASE_URL}/sports/{SPORT_ID}/dates", None),
-    ]
     session = requests.Session()
     outputs: list[dict[str, object]] = []
-    datapoints_consumed = 0
-    selected_date = requested_date
-    affiliate_names: dict[str, str] = {}
     last_request_at: float | None = None
+    task_datapoints_before: int | None = None
+    task_datapoints_after: int | None = None
+    per_request_datapoints = 0
+    consecutive_429 = 0
+    stop_reason: str | None = None
 
     def issue(
-        path: str, params: dict[str, str] | None
+        label: str, path: str, params: dict[str, str] | None
     ) -> tuple[dict[str, object], object | None]:
         nonlocal last_request_at
+        nonlocal task_datapoints_before, task_datapoints_after
+        nonlocal per_request_datapoints, consecutive_429, stop_reason
         if last_request_at is not None:
             time.sleep(
                 max(
@@ -376,54 +556,125 @@ def main() -> int:
                     MIN_REQUEST_INTERVAL_SECONDS - (time.monotonic() - last_request_at),
                 )
             )
-        result = _request(session, key, path, params=params, timeout=args.timeout)
+        output, payload = _request(
+            session, key, path, params=params, timeout=args.timeout
+        )
         last_request_at = time.monotonic()
-        return result
-
-    for index in range(min(args.max_requests, len(paths))):
-        path, params = paths[index]
-        output, payload = issue(path, params)
-        if index == 1:
-            affiliate_names = _affiliate_names(payload)
-        if "/events/" in path:
-            output["events"] = _event_details(payload, affiliate_names)
+        output["request_label"] = label
         outputs.append(output)
-        value = output.get("quota", {})
-        if isinstance(value, dict):
-            datapoints_consumed += int(value.get("datapoints") or 0)
-        if index == 2:
-            selected_date = _date_from_payload(payload, requested_date)
+        quota = output.get("quota")
+        if isinstance(quota, Mapping):
+            request_cost = quota.get("datapoints")
+            if isinstance(request_cost, int):
+                per_request_datapoints += request_cost
+            used = quota.get("datapoints_used")
+            if isinstance(used, int):
+                if task_datapoints_before is None:
+                    task_datapoints_before = used
+                task_datapoints_after = used
+        if output.get("status") == 429:
+            consecutive_429 += 1
+        else:
+            consecutive_429 = 0
+        if consecutive_429 >= 2:
+            stop_reason = "repeated_429"
+        if (
+            task_datapoints_before is not None
+            and task_datapoints_after is not None
+            and task_datapoints_after - task_datapoints_before > 1500
+        ) or per_request_datapoints > 1500:
+            stop_reason = "datapoint_budget_exceeded"
+        return output, payload
 
-    if len(outputs) < args.max_requests:
-        extra: list[tuple[str, dict[str, str] | None]] = [
-            (
-                f"{BASE_URL}/sports/{SPORT_ID}/events/{selected_date}",
+    catalog_payload: object | None = None
+    affiliate_payload: object | None = None
+    if args.max_requests >= 1:
+        _, catalog_payload = issue("sports_catalog", f"{BASE_URL}/sports", None)
+    if args.max_requests >= 2 and stop_reason is None:
+        _, affiliate_payload = issue(
+            "affiliate_catalog", f"{BASE_URL}/affiliates", None
+        )
+    affiliate_names = _affiliate_names(affiliate_payload)
+    verified = _verified_league_ids(catalog_payload) if args.scope == "top5" else {}
+    if args.scope == "ucl":
+        verified = {
+            "UEFA Champions League": {
+                "id": str(SPORT_ID),
+                "name": "UEFA Champions League",
+                "abbreviation": "UEFA.CHAMP",
+            }
+        }
+
+    league_reports: list[dict[str, object]] = []
+    completed_targets: set[str] = set()
+    targets = list(TOP5_TARGETS) if args.scope == "top5" else ["UEFA Champions League"]
+    for target in targets:
+        league = verified.get(target)
+        if (
+            league is None
+            or stop_reason is not None
+            or len(outputs) >= args.max_requests
+        ):
+            league_reports.append(_league_result(target, league, None, None))
+            completed_targets.add(target)
+            continue
+        league_id = str(league["id"])
+        date_output, date_payload = issue(
+            f"{target}:dates", f"{BASE_URL}/sports/{league_id}/dates", None
+        )
+        selected_date = _date_from_payload(date_payload, requested_date)
+        event_output: dict[str, object] | None = None
+        if (
+            date_output.get("status") == 200
+            and stop_reason is None
+            and len(outputs) < args.max_requests
+        ):
+            event_output, event_payload = issue(
+                f"{target}:events",
+                f"{BASE_URL}/sports/{league_id}/events/{selected_date}",
                 {
                     "market_ids": "1",
                     "main_line": "true",
                     "hide_closed": "true",
                     "hide_no_markets": "true",
                 },
-            ),
-            (f"{BASE_URL}/sports/{SPORT_ID}", None),
-        ]
-        for path, params in extra[: args.max_requests - len(outputs)]:
-            output, payload = issue(path, params)
-            if "/events/" in path:
-                output["events"] = _event_details(payload, affiliate_names)
-            outputs.append(output)
-            value = output.get("quota", {})
-            if isinstance(value, dict):
-                datapoints_consumed += int(value.get("datapoints") or 0)
+            )
+            if event_output.get("status") == 200:
+                event_output["events"] = _event_details(event_payload, affiliate_names)
+        report = _league_result(target, league, date_output, event_output)
+        report["selected_date"] = selected_date
+        league_reports.append(report)
+        completed_targets.add(target)
+        if stop_reason is not None:
+            break
 
+    for target in targets:
+        if target not in completed_targets:
+            league_reports.append(
+                _league_result(target, verified.get(target), None, None)
+            )
+    if args.scope == "top5":
+        league_reports.sort(key=lambda item: targets.index(str(item["league"])))
+    if task_datapoints_before is not None and task_datapoints_after is not None:
+        datapoints_consumed: int | None = max(
+            0, task_datapoints_after - task_datapoints_before
+        )
+    else:
+        datapoints_consumed = per_request_datapoints or None
     print(
         json.dumps(
             {
                 "status": "REAL_TEST_EXECUTED",
+                "scope": args.scope,
                 "real_requests": len(outputs),
+                "request_limit": args.max_requests,
+                "datapoints_before": task_datapoints_before,
+                "datapoints_after": task_datapoints_after,
                 "datapoints_consumed": datapoints_consumed,
-                "selected_date": selected_date,
+                "account_snapshot": _account_snapshot(outputs),
+                "leagues": league_reports,
                 "responses": outputs,
+                "stopped_reason": stop_reason,
                 "generated_at": datetime.now(timezone.utc).isoformat(),
             },
             sort_keys=True,
