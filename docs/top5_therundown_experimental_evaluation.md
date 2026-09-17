@@ -13,7 +13,7 @@ the process environment.
 
 | TheRundown V2 | SportsBrain candidate contract |
 | --- | --- |
-| `sport_id=16` / `UEFA.CHAMP` | Champions League-only fixture allowlist |
+| verified `sport_id` catalogue (`11`, `12`, `13`, `14`, `15`, plus `16`) | Verified EPL, Ligue 1, Bundesliga, La Liga, Serie A, and Champions League fixture allowlists |
 | `event_id` | `provider_fixture_id` and event provenance; `event_uuid` is retained only as metadata |
 | `event_date` | kickoff identity, strict timezone parsing, configured tolerance |
 | `teams` | home/away identity; documented V2 `[away, home]` order is used only when explicit markers are absent |
@@ -21,15 +21,19 @@ the process environment.
 | three participants | home, draw, away; all three are mandatory |
 | American `price` | finite decimal odds greater than 1, with off-board sentinel `0.0001` rejected |
 | `updated_at` | source timestamp and stale-age gate |
-| affiliate price map | one complete candidate observation per configured sportsbook |
+| affiliate price map | one complete candidate observation per configured sportsbook; the explicit qualification surface preserves the full tuple |
 | `X-Datapoints*` and rate headers | redacted `QuotaSnapshot` |
 
-The adapter accepts only complete main-line prices. It rejects ambiguous team
-markers, duplicate events or outcome prices, wrong competitions, fixture
-mismatches, missing markets/books/outcomes, malformed timestamps, future source
-timestamps, stale books, and provider error responses. Every accepted result
-remains `candidate_only=True` and uses the existing
-`NormalizedOddsObservation` / `AdapterResult` contracts.
+The adapter accepts only complete main-line prices from a verified league
+catalogue. It rejects ambiguous team markers, duplicate events or outcome
+prices, wrong competitions, fixture mismatches, live/in-play/completed/closed
+events or markets, inconsistent participant IDs/names, missing
+markets/books/outcomes, malformed timestamps, future source timestamps, stale
+books, and provider error responses. Every accepted result remains
+`candidate_only=True` and uses the existing `NormalizedOddsObservation` /
+`AdapterResult` contracts. Per-price IDs, source IDs, update timestamps, raw
+response digest, quota, rate-limit, tier, delay, and access evidence are
+retained in the observation metadata without retaining sensitive headers.
 
 The official documentation describes Champions League as sport ID 16 and
 moneyline as market ID 1; soccer moneyline is represented by three participants
@@ -39,10 +43,10 @@ for home/draw/away: [sports](https://docs.therundown.io/reference/sports),
 
 ## Request and credential boundary
 
-The request is the documented dated-event route:
+The request is the documented verified-league dated-event route:
 
 ```text
-GET /api/v2/sports/16/events/YYYY-MM-DD
+GET /api/v2/sports/{verified_sport_id}/events/YYYY-MM-DD
 market_ids=1&main_line=true&hide_closed=true&hide_no_markets=true
 ```
 
@@ -155,10 +159,13 @@ is insufficient to promote TheRundown to provider authority; one paced,
 operator-run follow-up with a fresh request budget is required for a useful
 provider comparison.
 
-Known prototype limitation: `fetch()` currently returns `observations[0]` when
-multiple normalized bookmaker observations exist. It was not changed because
-the raw diagnostic does not depend on that reduction and the limitation did
-not block this bounded evaluation.
+The provider-neutral `AdapterResult` contract is intentionally singular for
+the existing cascade. Accordingly, `fetch()` retains the first deterministic
+observation solely for that backwards-compatible cascade surface. Qualification
+callers must use the explicit candidate-only `fetch_observations()` (or the
+full tuple returned by `normalize_event()`); those surfaces preserve every
+complete bookmaker observation and never silently treat `observations[0]` as
+the qualification sample. The canonical cascade contract was not redesigned.
 
 ### Top-5 real qualification-evidence run
 

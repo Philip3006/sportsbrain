@@ -15,6 +15,7 @@ from scripts.therundown_diagnostic import (
 from src.football.odds.therundown import (
     THERUNDOWN_ADAPTER_VERSION,
     THERUNDOWN_CHAMPIONS_LEAGUE_CODE,
+    THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS,
     TheRundownExperimentalAdapter,
 )
 from src.football.production_contracts import Fixture
@@ -183,6 +184,59 @@ def test_valid_ucl_response_returns_sorted_candidate_only_observations(
     ]
 
 
+def test_fetch_observations_preserves_full_bookmaker_set_for_qualification(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("THERUNDOWN_API_KEY", "synthetic-secret")
+
+    observations = _adapter(_response(_payload())).fetch_observations(
+        _FIXTURE,
+        _config(),
+        request_identity="synthetic-request-001",
+        requested_at=_STARTED_AT,
+        provider_priority=0,
+        timing_policy=_TIMING,
+        authorization=_AUTHORIZATION,
+    )
+
+    assert [item.bookmaker_identity for item in observations] == [
+        "DraftKings",
+        "FanDuel",
+    ]
+    assert all(item.candidate_only for item in observations)
+
+
+def test_verified_top5_league_uses_catalogue_id_without_registering_authority(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("THERUNDOWN_API_KEY", "synthetic-secret")
+    payload = _payload()
+    event = payload["events"][0]
+    event["sport_id"] = THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS["EPL"]
+    event["schedule"]["league_name"] = "EPL"
+    fixture = Fixture("epl-fixture-001", "EPL", "Home City", "Away United", _STARTED_AT)
+    config = _config(league_allowlist=frozenset({"EPL"}))
+    adapter = _adapter(_response(payload))
+
+    request = adapter.request_for_fixture(fixture, config)
+    result = adapter.fetch(
+        fixture,
+        config,
+        request_identity="epl-request-001",
+        requested_at=_STARTED_AT,
+        provider_priority=0,
+        timing_policy=_TIMING,
+        authorization=_AUTHORIZATION,
+    )
+
+    assert request is not None
+    assert "/sports/11/events/2026-09-22" in request.endpoint
+    assert result.state is ProviderState.AVAILABLE
+    assert result.observation is not None
+    assert result.observation.metadata["competition_identity"] == "EPL"
+    assert result.observation.metadata["therundown_sport_id"] == 11
+
+
 def test_date_response_selects_exact_fixture_without_registering_provider(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -242,6 +296,60 @@ def test_missing_market_and_missing_draw_fail_closed(
     result = _fetch(_response(no_draw))
     assert result.state is ProviderState.QUALITY_REJECTED
     assert "missing_draw" in result.reason
+
+
+@pytest.mark.parametrize(
+    ("change", "expected_reason"),
+    [
+        (
+            lambda payload: payload["events"][0]["score"].update(
+                {"event_status": "STATUS_IN_PROGRESS"}
+            ),
+            "identity_not_prematch",
+        ),
+        (
+            lambda payload: payload["events"][0]["score"].update(
+                {"event_status": "STATUS_FINAL"}
+            ),
+            "identity_not_prematch",
+        ),
+        (
+            lambda payload: payload["events"][0]["markets"][0].update(
+                {"is_live": True}
+            ),
+            "market_not_prematch",
+        ),
+        (
+            lambda payload: payload["events"][0]["markets"][0].update(
+                {"in_play": True}
+            ),
+            "market_not_prematch",
+        ),
+        (
+            lambda payload: payload["events"][0]["markets"][0].update(
+                {"is_closed": True}
+            ),
+            "market_not_prematch",
+        ),
+        (
+            lambda payload: payload["events"][0]["markets"][0].update(
+                {"status": "STATUS_COMPLETED"}
+            ),
+            "market_not_prematch",
+        ),
+    ],
+)
+def test_live_inplay_completed_and_closed_state_fails_closed(
+    monkeypatch: pytest.MonkeyPatch, change, expected_reason: str
+) -> None:
+    monkeypatch.setenv("THERUNDOWN_API_KEY", "synthetic-secret")
+    payload = _payload()
+    change(payload)
+
+    result = _fetch(_response(payload))
+
+    assert result.state is ProviderState.QUALITY_REJECTED
+    assert result.reason == expected_reason
 
 
 def test_invalid_and_off_board_prices_are_rejected(
@@ -371,6 +479,74 @@ def test_duplicate_outcome_and_non_main_line_are_rejected(
         price["is_main_line"] = False
     result = _fetch(_response(non_main))
     assert result.state is ProviderState.QUALITY_REJECTED
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        lambda payload: payload["events"][0]["markets"][0]["participants"][0].update(
+            {"name": "Away United"}
+        ),
+        lambda payload: payload["events"][0]["markets"][0]["participants"][0].update(
+            {"id": 999}
+        ),
+    ],
+)
+def test_participant_id_and_name_must_agree(
+    monkeypatch: pytest.MonkeyPatch, change
+) -> None:
+    monkeypatch.setenv("THERUNDOWN_API_KEY", "synthetic-secret")
+    payload = _payload()
+    change(payload)
+
+    result = _fetch(_response(payload))
+
+    assert result.state is ProviderState.QUALITY_REJECTED
+    assert result.reason in {
+        "participant_id_name_mismatch",
+        "unknown_market_participant",
+    }
+
+
+def test_provenance_and_quota_evidence_are_durable_and_complete(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("THERUNDOWN_API_KEY", "synthetic-secret")
+    response = _response(
+        _payload(),
+        **{
+            "X-Datapoints": "11",
+            "X-Datapoints-Limit": "20000",
+            "X-Data-Delay-Seconds": "300",
+            "X-Tier": "free",
+            "X-History-Access": "false",
+            "X-Live-Odds-Access": "false",
+            "X-Websocket-Access": "false",
+        },
+    )
+
+    observations = _adapter(response).fetch_observations(
+        _FIXTURE,
+        _config(),
+        request_identity="synthetic-request-001",
+        requested_at=_STARTED_AT,
+        provider_priority=0,
+        timing_policy=_TIMING,
+        authorization=_AUTHORIZATION,
+    )
+
+    metadata = observations[0].metadata
+    assert "price.id" in observations[0].source_provenance
+    assert len(metadata["price_provenance"]) == 6
+    assert {item["affiliate_id"] for item in metadata["price_provenance"]} == {
+        "3",
+        "19",
+    }
+    assert metadata["raw_response_digest"]
+    assert metadata["quota_evidence"]["x-datapoints"] == 11
+    assert metadata["quota_evidence"]["x-datapoints-limit"] == 20000
+    assert metadata["quota_evidence"]["x-rate-limit"] == 1
+    assert metadata["quota_evidence"]["x-tier"] == "free"
 
 
 def test_naive_source_timestamp_is_malformed(monkeypatch: pytest.MonkeyPatch) -> None:

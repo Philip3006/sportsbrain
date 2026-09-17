@@ -1,4 +1,4 @@
-"""Experimental TheRundown V2 adapter for UEFA Champions League odds.
+"""Experimental TheRundown V2 adapter for verified football leagues.
 
 This module deliberately sits outside the active provider cascade.  It uses
 the existing provider-neutral observation/result contracts, but its provider
@@ -42,10 +42,32 @@ from src.football.provider_cascade.contracts import (
 
 THERUNDOWN_BASE_URL = "https://therundown.io/api/v2"
 THERUNDOWN_PROVIDER_NAME = "therundown_experimental"
-THERUNDOWN_CHAMPIONS_LEAGUE_SPORT_ID = 16
 THERUNDOWN_CHAMPIONS_LEAGUE_CODE = "UEFA.CHAMP"
+THERUNDOWN_CHAMPIONS_LEAGUE_SPORT_ID = 16
+THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS: Mapping[str, int] = {
+    "EPL": 11,
+    "L1": 12,
+    "BL1": 13,
+    "LL": 14,
+    "SA": 15,
+    THERUNDOWN_CHAMPIONS_LEAGUE_CODE: THERUNDOWN_CHAMPIONS_LEAGUE_SPORT_ID,
+}
+THERUNDOWN_VERIFIED_SPORT_LEAGUE_CODES: Mapping[int, str] = {
+    sport_id: league_code
+    for league_code, sport_id in THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS.items()
+}
+THERUNDOWN_VERIFIED_LEAGUE_NAMES: Mapping[str, frozenset[str]] = {
+    "EPL": frozenset({"epl", "englishpremierleague", "premierleague"}),
+    "L1": frozenset({"fra1", "ligue1", "frenchligue1"}),
+    "BL1": frozenset({"ger1", "bundesliga", "germanbundesliga"}),
+    "LL": frozenset({"esp1", "laliga", "spanishlaliga"}),
+    "SA": frozenset({"ita1", "seriea", "italianseriea"}),
+    THERUNDOWN_CHAMPIONS_LEAGUE_CODE: frozenset(
+        {"championsleague", "uefachampionsleague", "uefachamp"}
+    ),
+}
 THERUNDOWN_MONEYLINE_MARKET_ID = 1
-THERUNDOWN_ADAPTER_VERSION = "therundown-v2-experimental:1"
+THERUNDOWN_ADAPTER_VERSION = "therundown-v2-experimental:2"
 THERUNDOWN_CREDENTIAL_ENV = "THERUNDOWN_API_KEY"
 THERUNDOWN_OFF_BOARD_SENTINEL = 0.0001
 
@@ -57,6 +79,54 @@ _CHAMPIONS_LEAGUE_NAMES = frozenset(
     }
 )
 _DRAW_NAMES = frozenset({"draw", "tie", "x"})
+_PREMATCH_EVENT_STATUSES = frozenset(
+    {
+        "scheduled",
+        "statusscheduled",
+        "notstarted",
+        "statusnotstarted",
+        "prematch",
+        "upcoming",
+        "statusupcoming",
+    }
+)
+_PREMATCH_MARKET_STATUSES = frozenset(
+    {"open", "statusopen", "scheduled", "statusscheduled", "prematch", "upcoming"}
+)
+_STATE_REJECT_FLAGS = (
+    "closed",
+    "completed",
+    "in_play",
+    "inplay",
+    "live",
+    "is_closed",
+    "is_completed",
+    "is_in_play",
+    "is_live",
+)
+_STATUS_KEYS = (
+    "status",
+    "state",
+    "event_status",
+    "market_status",
+    "phase",
+    "market_phase",
+)
+_SAFE_QUOTA_HEADERS = (
+    "x-datapoints",
+    "x-datapoints-limit",
+    "x-datapoints-remaining",
+    "x-datapoints-used",
+    "x-rate-limit",
+    "x-rate-limit-remaining",
+    "x-ratelimit-limit",
+    "x-ratelimit-remaining",
+    "x-data-delay-seconds",
+    "x-history-access",
+    "x-live-odds-access",
+    "x-websocket-access",
+    "x-tier",
+)
 
 
 @dataclass(frozen=True)
@@ -77,6 +147,7 @@ class _PriceRow:
     updated_at: datetime
     price_id: str
     source_id: str | None
+    line_id: str
 
 
 def _team_key(value: object, aliases: Mapping[str, str]) -> str:
@@ -158,6 +229,82 @@ def _quota_from_headers(headers: Mapping[str, object]) -> QuotaSnapshot:
         rate_limit=integer("x-rate-limit", "x-ratelimit-limit"),
         rate_remaining=integer("x-ratelimit-remaining", "x-rate-limit-remaining"),
     )
+
+
+def _safe_quota_evidence(headers: Mapping[str, object]) -> dict[str, object]:
+    """Retain only non-secret quota, rate, and entitlement headers."""
+
+    lowered = {
+        str(key).casefold(): str(value).strip() for key, value in headers.items()
+    }
+    evidence: dict[str, object] = {}
+    integer_headers = {
+        "x-datapoints",
+        "x-datapoints-limit",
+        "x-datapoints-remaining",
+        "x-datapoints-used",
+        "x-rate-limit",
+        "x-rate-limit-remaining",
+        "x-ratelimit-limit",
+        "x-ratelimit-remaining",
+        "x-data-delay-seconds",
+    }
+    for name in _SAFE_QUOTA_HEADERS:
+        value = lowered.get(name)
+        if value is None:
+            continue
+        if name in integer_headers:
+            try:
+                evidence[name] = int(value)
+            except ValueError:
+                continue
+        else:
+            evidence[name] = value
+    return evidence
+
+
+def _is_true(value: object) -> bool:
+    return value is True or (
+        isinstance(value, str) and value.strip().casefold() in {"true", "1", "yes"}
+    )
+
+
+def _status_values(
+    record: Mapping[str, object], *, nested: str = ""
+) -> tuple[str, ...]:
+    values: list[str] = []
+    for key in _STATUS_KEYS:
+        value = record.get(key)
+        if value is not None and str(value).strip():
+            values.append(_team_key(value, {}))
+    if nested:
+        child = record.get(nested)
+        if isinstance(child, Mapping):
+            for key in _STATUS_KEYS:
+                value = child.get(key)
+                if value is not None and str(value).strip():
+                    values.append(_team_key(value, {}))
+    return tuple(values)
+
+
+def _event_prematch_state(event: Mapping[str, object]) -> str:
+    statuses = _status_values(event, nested="score")
+    if not statuses:
+        return "missing"
+    if any(status not in _PREMATCH_EVENT_STATUSES for status in statuses):
+        return "rejected"
+    if any(_is_true(event.get(key)) for key in _STATE_REJECT_FLAGS):
+        return "rejected"
+    return "accepted"
+
+
+def _market_prematch_state(market: Mapping[str, object]) -> str:
+    if any(_is_true(market.get(key)) for key in _STATE_REJECT_FLAGS):
+        return "rejected"
+    statuses = _status_values(market)
+    if statuses and any(status not in _PREMATCH_MARKET_STATUSES for status in statuses):
+        return "rejected"
+    return "accepted"
 
 
 def _response_result(
@@ -247,6 +394,9 @@ class TheRundownExperimentalAdapter:
             raise ProductionContractError(
                 "TheRundown config identity does not match adapter"
             )
+        sport_id = THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS.get(fixture.league_code)
+        if sport_id is None:
+            return None
         credential_names = config.credential_env or self.credential_names
         credentials = tuple(os.getenv(name, "") for name in credential_names)
         if config.credentials_required and any(
@@ -264,7 +414,7 @@ class TheRundownExperimentalAdapter:
         return ProviderRequest(
             provider=self.name,
             endpoint=(
-                f"{THERUNDOWN_BASE_URL}/sports/{THERUNDOWN_CHAMPIONS_LEAGUE_SPORT_ID}"
+                f"{THERUNDOWN_BASE_URL}/sports/{sport_id}"
                 f"/events/{fixture.kickoff.date().isoformat()}"
             ),
             params=params,
@@ -295,6 +445,7 @@ class TheRundownExperimentalAdapter:
             state = {
                 "wrong_league": ProviderState.UNSUPPORTED_LEAGUE,
                 "wrong_season": ProviderState.UNSUPPORTED_LEAGUE,
+                "not_prematch": ProviderState.QUALITY_REJECTED,
                 "swapped_home_away": ProviderState.QUALITY_REJECTED,
                 "wrong_fixture": ProviderState.UNSUPPORTED_FIXTURE,
                 "kickoff_mismatch": ProviderState.QUALITY_REJECTED,
@@ -322,6 +473,10 @@ class TheRundownExperimentalAdapter:
             raise _NormalizationFailure(
                 ProviderState.QUALITY_REJECTED, "duplicate_moneyline_market"
             )
+        if _market_prematch_state(moneyline_markets[0]) != "accepted":
+            raise _NormalizationFailure(
+                ProviderState.QUALITY_REJECTED, "market_not_prematch"
+            )
         participants = moneyline_markets[0].get("participants")
         if not isinstance(participants, list):
             raise _NormalizationFailure(
@@ -330,28 +485,69 @@ class TheRundownExperimentalAdapter:
         participant_keys: dict[str, Mapping[str, object]] = {}
         home_id = str(teams.home.get("team_id", "")).strip()
         away_id = str(teams.away.get("team_id", "")).strip()
+        home_name = _team_key(teams.home.get("name"), {})
+        away_name = _team_key(teams.away.get("name"), {})
+        expected_home = _team_key(fixture.home_team, self._aliases)
+        expected_away = _team_key(fixture.away_team, self._aliases)
+        seen_ids: set[str] = set()
+        seen_names: set[str] = set()
         for participant in participants:
             if not isinstance(participant, Mapping):
-                continue
+                raise _NormalizationFailure(
+                    ProviderState.MALFORMED, "participant_not_object"
+                )
             participant_id = str(participant.get("id", "")).strip()
             label = _team_key(participant.get("name"), self._aliases)
-            key = (
-                "home"
-                if participant_id == home_id
-                or label == _team_key(fixture.home_team, self._aliases)
-                else "away"
-                if participant_id == away_id
-                or label == _team_key(fixture.away_team, self._aliases)
-                else "draw"
-                if label in _DRAW_NAMES
-                else ""
-            )
-            if not key or key in participant_keys:
-                if key:
+            provider_label = _team_key(participant.get("name"), {})
+            if not participant_id or not provider_label:
+                raise _NormalizationFailure(
+                    ProviderState.MALFORMED, "participant_identity_missing"
+                )
+            if participant_id in seen_ids or provider_label in seen_names:
+                raise _NormalizationFailure(
+                    ProviderState.QUALITY_REJECTED, "duplicate_market_participant"
+                )
+            seen_ids.add(participant_id)
+            seen_names.add(provider_label)
+            if participant_id == home_id:
+                key = "home"
+                if provider_label != home_name or label != expected_home:
                     raise _NormalizationFailure(
-                        ProviderState.QUALITY_REJECTED, "duplicate_market_participant"
+                        ProviderState.QUALITY_REJECTED,
+                        "participant_id_name_mismatch",
                     )
-                continue
+                if participant.get("is_away") is True:
+                    raise _NormalizationFailure(
+                        ProviderState.QUALITY_REJECTED,
+                        "participant_home_away_mismatch",
+                    )
+            elif participant_id == away_id:
+                key = "away"
+                if provider_label != away_name or label != expected_away:
+                    raise _NormalizationFailure(
+                        ProviderState.QUALITY_REJECTED,
+                        "participant_id_name_mismatch",
+                    )
+                if participant.get("is_home") is True:
+                    raise _NormalizationFailure(
+                        ProviderState.QUALITY_REJECTED,
+                        "participant_home_away_mismatch",
+                    )
+            elif label in _DRAW_NAMES:
+                key = "draw"
+                if participant_id in {home_id, away_id}:
+                    raise _NormalizationFailure(
+                        ProviderState.QUALITY_REJECTED,
+                        "participant_draw_id_conflict",
+                    )
+            else:
+                raise _NormalizationFailure(
+                    ProviderState.QUALITY_REJECTED, "unknown_market_participant"
+                )
+            if key in participant_keys:
+                raise _NormalizationFailure(
+                    ProviderState.QUALITY_REJECTED, "duplicate_market_participant"
+                )
             participant_keys[key] = participant
         if set(participant_keys) != {"home", "draw", "away"}:
             missing = sorted({"home", "draw", "away"} - set(participant_keys))
@@ -361,6 +557,10 @@ class TheRundownExperimentalAdapter:
             )
 
         rows: dict[str, dict[str, _PriceRow]] = {}
+        event_source_ids = event.get("affiliate_source_ids")
+        event_source_ids = (
+            event_source_ids if isinstance(event_source_ids, Mapping) else {}
+        )
         for outcome, participant in sorted(participant_keys.items()):
             lines = participant.get("lines")
             if not isinstance(lines, list):
@@ -385,6 +585,13 @@ class TheRundownExperimentalAdapter:
                     converted = _american_to_decimal(price_raw.get("price"))
                     if converted is None:
                         continue
+                    price_id = str(price_raw.get("id", "")).strip()
+                    line_id = str(line.get("id", "")).strip()
+                    if not price_id or not line_id:
+                        raise _NormalizationFailure(
+                            ProviderState.MALFORMED,
+                            "price_provenance_identity_missing",
+                        )
                     updated_at = _parse_datetime(
                         price_raw.get("updated_at"), field_name="price_updated_at"
                     )
@@ -400,18 +607,41 @@ class TheRundownExperimentalAdapter:
                     bucket[outcome] = _PriceRow(
                         decimal_price=converted,
                         updated_at=updated_at,
-                        price_id=str(price_raw.get("id", "")).strip(),
+                        price_id=price_id,
                         source_id=(
-                            None
-                            if price_raw.get("source_id") is None
-                            else str(price_raw.get("source_id"))
+                            str(price_raw.get("source_id")).strip()
+                            if price_raw.get("source_id") is not None
+                            else (
+                                str(event_source_ids.get(affiliate_id)).strip()
+                                if event_source_ids.get(affiliate_id) is not None
+                                else None
+                            )
                         ),
+                        line_id=line_id,
                     )
 
         fresh: list[NormalizedOddsObservation] = []
         stale_count = 0
         invalid_book_count = 0
         selected_affiliates = self._affiliate_ids or tuple(sorted(rows))
+        quota_after = _quota_from_headers(response.headers)
+        price_provenance = [
+            {
+                "affiliate_id": affiliate_id,
+                "outcome": outcome,
+                "line_id": row.line_id,
+                "price_id": row.price_id,
+                "source_id": row.source_id,
+                "updated_at": row.updated_at.isoformat(),
+            }
+            for affiliate_id in sorted(rows)
+            for outcome, row in sorted(rows[affiliate_id].items())
+        ]
+        complete_affiliates = tuple(
+            affiliate_id
+            for affiliate_id in selected_affiliates
+            if set(rows.get(affiliate_id, {})) == {"home", "draw", "away"}
+        )
         for affiliate_id in selected_affiliates:
             bucket = rows.get(affiliate_id, {})
             if set(bucket) != {"home", "draw", "away"}:
@@ -428,11 +658,12 @@ class TheRundownExperimentalAdapter:
             source_id = next(
                 (row.source_id for row in bucket.values() if row.source_id), None
             )
+            sport_id = THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS[fixture.league_code]
             metadata = {
                 "experimental": True,
                 "candidate_only": True,
-                "competition_identity": THERUNDOWN_CHAMPIONS_LEAGUE_CODE,
-                "therundown_sport_id": THERUNDOWN_CHAMPIONS_LEAGUE_SPORT_ID,
+                "competition_identity": fixture.league_code,
+                "therundown_sport_id": sport_id,
                 "event_id": str(event.get("event_id")),
                 "event_uuid": event.get("event_uuid"),
                 "season_year": event.get("schedule", {}).get("season_year")
@@ -452,11 +683,24 @@ class TheRundownExperimentalAdapter:
                 "period_id": 0,
                 "odds_format": "american_to_decimal",
                 "main_line_only": True,
+                "event_prematch_state": "accepted",
+                "market_prematch_state": "accepted",
                 "event_status": (
                     event.get("score", {}).get("event_status")
                     if isinstance(event.get("score"), Mapping)
                     else None
                 ),
+                "bookmaker_ids": list(complete_affiliates),
+                "bookmaker_names": [
+                    self._affiliate_names.get(item) or f"affiliate:{item}"
+                    for item in complete_affiliates
+                ],
+                "price_provenance": price_provenance,
+                "source_update_timestamps": sorted(
+                    {row.updated_at.isoformat() for row in bucket.values()}
+                ),
+                "raw_response_digest": digest_record(response.payload),
+                "quota_evidence": _safe_quota_evidence(response.headers),
                 "neutral_venue": bool(
                     event.get("neutral_site")
                     or event.get("neutral_venue")
@@ -485,12 +729,13 @@ class TheRundownExperimentalAdapter:
                 provider_priority=provider_priority,
                 fallback_depth=0,
                 quota_state_before=config.initial_quota,
-                quota_state_after=_quota_from_headers(response.headers),
-                rate_limit_state=_quota_from_headers(response.headers),
+                quota_state_after=quota_after,
+                rate_limit_state=quota_after,
                 source_provenance=(
-                    "therundown:v2:/sports/16/events/{date};event_id="
+                    f"therundown:v2:/sports/{sport_id}/events/"
+                    f"{fixture.kickoff.date().isoformat()};event_id="
                     f"{event.get('event_id')};market_id=1;affiliate_id={affiliate_id};"
-                    "price.updated_at"
+                    "price.id,price.source_id,price.updated_at"
                 ),
                 raw_record_digest=digest_record(event),
                 adapter_version=config.adapter_version,
@@ -525,6 +770,7 @@ class TheRundownExperimentalAdapter:
         timing_policy: CascadeTimingPolicy | None = None,
         identity_resolution: object | None = None,
         authorization: NetworkAuthorizationContract | None = None,
+        _observations_sink: list[NormalizedOddsObservation] | None = None,
     ) -> AdapterResult:
         if timing_policy is None:
             raise ProductionContractError(
@@ -560,10 +806,10 @@ class TheRundownExperimentalAdapter:
                 "league_not_allowlisted",
                 network_called=False,
             )
-        if fixture.league_code != THERUNDOWN_CHAMPIONS_LEAGUE_CODE:
+        if fixture.league_code not in THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS:
             return AdapterResult(
                 ProviderState.UNSUPPORTED_LEAGUE,
-                "champions_league_only",
+                "league_not_verified_in_provider_catalogue",
                 network_called=False,
             )
         if MARKET_PREMATCH_1X2 not in config.market_allowlist:
@@ -676,7 +922,48 @@ class TheRundownExperimentalAdapter:
             )
         except _NormalizationFailure as failure:
             return _response_result(response, failure.state, failure.reason)
+        # AdapterResult is intentionally singular for the existing cascade.
+        # Qualification callers must use fetch_observations() when they need
+        # every complete bookmaker observation.
+        if _observations_sink is not None:
+            _observations_sink.extend(observations)
         return _accepted_result(response, observations[0])
+
+    def fetch_observations(
+        self,
+        fixture: Fixture,
+        config: ProviderConfig,
+        *,
+        request_identity: str,
+        requested_at: datetime,
+        provider_priority: int,
+        provider_fixture_id: str | None = None,
+        timing_policy: CascadeTimingPolicy | None = None,
+        identity_resolution: object | None = None,
+        authorization: NetworkAuthorizationContract | None = None,
+    ) -> tuple[NormalizedOddsObservation, ...]:
+        """Fetch the full candidate bookmaker set for qualification callers.
+
+        The provider-neutral cascade remains a one-observation contract.  This
+        explicit candidate-only surface prevents a qualification caller from
+        mistaking the legacy cascade-compatible ``AdapterResult.observation``
+        for the complete TheRundown bookmaker set.
+        """
+
+        observations: list[NormalizedOddsObservation] = []
+        self.fetch(
+            fixture,
+            config,
+            request_identity=request_identity,
+            requested_at=requested_at,
+            provider_priority=provider_priority,
+            provider_fixture_id=provider_fixture_id,
+            timing_policy=timing_policy,
+            identity_resolution=identity_resolution,
+            authorization=authorization,
+            _observations_sink=observations,
+        )
+        return tuple(observations)
 
     def _event_identity(
         self,
@@ -685,11 +972,16 @@ class TheRundownExperimentalAdapter:
         *,
         timing_policy: CascadeTimingPolicy,
     ) -> str:
+        expected_sport_id = THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS.get(
+            fixture.league_code
+        )
         if (
-            _integer_field(event.get("sport_id"))
-            != THERUNDOWN_CHAMPIONS_LEAGUE_SPORT_ID
+            expected_sport_id is None
+            or _integer_field(event.get("sport_id")) != expected_sport_id
         ):
             return "wrong_league"
+        if _event_prematch_state(event) != "accepted":
+            return "not_prematch"
         schedule = event.get("schedule")
         if schedule is not None and not isinstance(schedule, Mapping):
             return "malformed"
@@ -697,7 +989,8 @@ class TheRundownExperimentalAdapter:
             league_name = schedule.get("league_name")
             if (
                 league_name is not None
-                and _team_key(league_name, {}) not in _CHAMPIONS_LEAGUE_NAMES
+                and _team_key(league_name, {})
+                not in THERUNDOWN_VERIFIED_LEAGUE_NAMES[fixture.league_code]
             ):
                 return "wrong_league"
             season_year = schedule.get("season_year")
@@ -812,9 +1105,24 @@ def _extract_teams(event: Mapping[str, object]) -> _TeamPair:
             raise _NormalizationFailure(
                 ProviderState.MALFORMED, "team_home_away_markers_ambiguous"
             )
-        return _TeamPair(home=home_marked[0], away=away_marked[0])
-    # TheRundown V2 documents array order as [away_team, home_team].
-    return _TeamPair(home=typed[1], away=typed[0])
+        pair = _TeamPair(home=home_marked[0], away=away_marked[0])
+    else:
+        # TheRundown V2 documents array order as [away_team, home_team].
+        pair = _TeamPair(home=typed[1], away=typed[0])
+    identities = []
+    for team in (pair.home, pair.away):
+        team_id = str(team.get("team_id", "")).strip()
+        team_name = _team_key(team.get("name"), {})
+        if not team_id or team_id == "0" or not team_name:
+            raise _NormalizationFailure(
+                ProviderState.MALFORMED, "team_identity_missing"
+            )
+        identities.append((team_id, team_name))
+    if identities[0][0] == identities[1][0] or identities[0][1] == identities[1][1]:
+        raise _NormalizationFailure(
+            ProviderState.QUALITY_REJECTED, "duplicate_team_identity"
+        )
+    return pair
 
 
 __all__ = [
@@ -826,5 +1134,8 @@ __all__ = [
     "THERUNDOWN_MONEYLINE_MARKET_ID",
     "THERUNDOWN_OFF_BOARD_SENTINEL",
     "THERUNDOWN_PROVIDER_NAME",
+    "THERUNDOWN_VERIFIED_LEAGUE_NAMES",
+    "THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS",
+    "THERUNDOWN_VERIFIED_SPORT_LEAGUE_CODES",
     "TheRundownExperimentalAdapter",
 ]
