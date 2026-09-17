@@ -10,6 +10,7 @@ from src.nightshift import (
     ExecutionResult,
     FakeExecutor,
     NightShiftDispatcher,
+    SafetyViolation,
     TaskSpec,
     TaskState,
     UnknownBuilderError,
@@ -139,3 +140,15 @@ def test_roadmap_rejects_unknown_builder_and_cycle() -> None:
                 ],
             }
         )
+
+
+def test_autonomous_debug_and_unlimited_modes_have_finite_bounds(
+    tmp_path: Path,
+) -> None:
+    dispatcher = _dispatcher(tmp_path)
+    with pytest.raises(SafetyViolation):
+        dispatcher.run_debug_loop("builder-1", FakeExecutor(), max_cycles=11)
+    with pytest.raises(SafetyViolation):
+        dispatcher.run_autonomous("builder-1", FakeExecutor(), max_cycles=101)
+    with pytest.raises(SafetyViolation):
+        dispatcher.run_autonomous("builder-1", FakeExecutor(), max_cycles=0)

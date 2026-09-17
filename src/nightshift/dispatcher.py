@@ -409,6 +409,16 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                 self.store.set_roadmap_status(
                     item["item_id"], status="ENQUEUED", now=self.clock()
                 )
+            elif task.state is TaskState.FAILED_SAFE:
+                self.store.set_roadmap_status(
+                    item["item_id"],
+                    status="BLOCKED",
+                    reason=task.last_error,
+                    next_eligible_at=datetime.fromisoformat(
+                        task.available_at.replace("Z", "+00:00")
+                    ),
+                    now=self.clock(),
+                )
 
     def select_next_roadmap_task(
         self, *, builder_id: str | None = None
@@ -491,7 +501,7 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
     ) -> list[TaskRecord]:
         """Run a finite worker cycle; unlimited mode never removes this bound."""
 
-        if not 1 <= max_tasks <= 100:
+        if isinstance(max_tasks, bool) or not 1 <= max_tasks <= 100:
             raise SafetyViolation("max_tasks must be between 1 and 100")
         completed: list[TaskRecord] = []
         self.reevaluate_blocked()
@@ -513,7 +523,7 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
     ) -> list[TaskRecord]:
         """Run bounded diagnose/retest cycles; repeated failures are parked."""
 
-        if not 1 <= max_cycles <= 10:
+        if isinstance(max_cycles, bool) or not 1 <= max_cycles <= 10:
             raise SafetyViolation("max_cycles must be between 1 and 10")
         return self.run_autonomous_cycle(builder_id, executor, max_tasks=max_cycles)
 
@@ -527,16 +537,18 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
     ) -> list[TaskRecord]:
         """Run a bounded autonomous session in the configured roadmap mode."""
 
-        selected_mode = mode or self.roadmap.mode
+        selected_mode = self.roadmap.mode if mode is None else mode
         if selected_mode not in {"bounded", "unlimited"}:
             raise SafetyViolation("autonomous mode must be bounded or unlimited")
-        limit = max_cycles or self.roadmap.max_cycles
+        if max_cycles is not None and isinstance(max_cycles, bool):
+            raise SafetyViolation("autonomous sessions must be bounded to 100 cycles")
+        limit = self.roadmap.max_cycles if max_cycles is None else max_cycles
         if selected_mode == "unlimited":
             # "Unlimited" means no roadmap item count is imposed by the
             # configuration; every invocation still has an operator-visible
             # finite cap so a bad worker cannot spin forever.
-            limit = max_cycles or 100
-        if not 1 <= limit <= 100:
+            limit = 100 if max_cycles is None else max_cycles
+        if isinstance(limit, bool) or not 1 <= limit <= 100:
             raise SafetyViolation("autonomous sessions must be bounded to 100 cycles")
         return self.run_autonomous_cycle(builder_id, executor, max_tasks=limit)
 
