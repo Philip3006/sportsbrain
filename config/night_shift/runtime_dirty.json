@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "repositories": {
+    "Philip3006/sportsbrain": [
+      {
+        "path": "data/odds_history.json",
+        "job": "daily_scan",
+        "script": "scripts/scan_cron.sh -> scripts/daily_scan.py",
+        "reason": "The scheduled daily scan records the bounded odds-history snapshot for runtime freshness.",
+        "observed_evidence": "Observed tracked-file mutation during the existing daily_scan retry; the writer is explicitly configured with the runtime-state path."
+      },
+      {
+        "path": "docs/data/health.json",
+        "job": "consume_pending_bets",
+        "script": "scripts/consume_pending_bets_cron.sh -> src.monitoring.aggregate_health",
+        "reason": "The existing two-minute health carrier aggregates local health snapshots into the canonical dashboard health file.",
+        "observed_evidence": "Observed docs/data/health.json mtime changes on the two-minute consume-pending-bets cadence after the agent was restored."
+      },
+      {
+        "path": "docs/data/signals.json",
+        "job": "daily_scan,prematch_scan,closing_odds",
+        "script": "scripts/scan_cron.sh; scripts/prematch_scan_cron.sh; scripts/closing_odds_cron.sh",
+        "reason": "Existing scheduled signal writers publish the public runtime snapshot through their configured publication path.",
+        "observed_evidence": "Observed tracked-file mutation in the existing daily-scan retry and direct publication calls in the three reviewed wrappers."
+      },
+      {
+        "path": "docs/data/signals_philip.json",
+        "job": "daily_scan,prematch_scan,closing_odds",
+        "script": "scripts/scan_cron.sh; scripts/prematch_scan_cron.sh; scripts/closing_odds_cron.sh",
+        "reason": "Existing scheduled multi-user signal writers publish the default user runtime snapshot alongside signals.json.",
+        "observed_evidence": "Observed the paired tracked-file mutation in the existing daily-scan retry and direct publication calls in the three reviewed wrappers."
+      }
+    ]
+  }
+}

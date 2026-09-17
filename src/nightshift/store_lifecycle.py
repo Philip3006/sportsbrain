@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
 
-from .errors import InvalidTransitionError, LeaseError
+from .errors import InvalidTransitionError, LeaseError, SafetyViolation
 from .models import (
     EventType,
     ExecutionResult,
@@ -460,6 +460,91 @@ class StoreLifecycleMixin:
             },
             now=now,
         )
+
+    def mark_merge_verified(
+        self,
+        task_id: str,
+        *,
+        actor: str,
+        evidence: Mapping[str, Any],
+        now: datetime | None = None,
+    ):
+        """Complete PR-backed work only after structured merge evidence."""
+
+        record = self.get(task_id)
+        if record.state not in {TaskState.PR_READY, TaskState.CEO_REVIEW}:
+            raise InvalidTransitionError(
+                f"task {task_id} is not awaiting merge verification"
+            )
+        required = {
+            "source": "github-readonly",
+            "repository": record.repo,
+            "merged": True,
+            "pr_number": record.pr_number,
+            "head_ref_name": record.branch,
+            "head_ref_oid": record.commit_sha,
+            "base_ref_name": record.base_branch,
+            "base_ref_oid": record.base_sha,
+        }
+        if any(
+            required[key] is None
+            for key in (
+                "repository",
+                "pr_number",
+                "head_ref_name",
+                "head_ref_oid",
+                "base_ref_name",
+                "base_ref_oid",
+            )
+        ):
+            raise SafetyViolation("task is missing complete merge binding evidence")
+        if any(evidence.get(key) != value for key, value in required.items()):
+            raise SafetyViolation("merge evidence does not match the task binding")
+        if (
+            not record.remote_sha
+            or not isinstance(evidence.get("head_ref_oid"), str)
+            or record.remote_sha.lower() != evidence["head_ref_oid"].lower()
+        ):
+            raise SafetyViolation("merge evidence does not match the remote SHA")
+        if record.origin_sha and (
+            not isinstance(evidence.get("base_ref_oid"), str)
+            or record.origin_sha.lower() != evidence["base_ref_oid"].lower()
+        ):
+            raise SafetyViolation("merge evidence does not match the expected base SHA")
+        merged_at = evidence.get("merged_at")
+        if not isinstance(merged_at, str) or not merged_at.strip():
+            raise SafetyViolation("merge evidence is missing merged_at")
+        delivery = dict(record.delivery or {})
+        delivery["merge_verification"] = dict(evidence)
+        timestamp = isoformat(now or utc_now())
+        with self._write() as conn:
+            row = self._get_row(conn, task_id)
+            actual = TaskState(row["state"])
+            if actual is not record.state:
+                raise InvalidTransitionError(
+                    f"task {task_id} is {actual.value}, expected {record.state.value}"
+                )
+            conn.execute(
+                """UPDATE tasks SET state = ?, delivery_json = ?, last_error = NULL,
+                   failure_class = NULL, updated_at = ? WHERE task_id = ?""",
+                (
+                    TaskState.COMPLETED.value,
+                    self._json(delivery),
+                    timestamp,
+                    task_id,
+                ),
+            )
+            self._append_event(
+                conn,
+                task_id,
+                EventType.MERGE_VERIFIED,
+                actor,
+                timestamp,
+                record.state.value,
+                TaskState.COMPLETED.value,
+                {"merge_verification": dict(evidence)},
+            )
+            return self._record(self._get_row(conn, task_id))
 
     def approve(
         self, task_id: str, *, actor: str, now: datetime | None = None, reason: str = ""

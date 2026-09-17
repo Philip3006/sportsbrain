@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import shutil
 import sqlite3
 import subprocess
@@ -10,7 +11,17 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from .worktree import WorktreeManager, default_repo_paths
+from .errors import ConfigurationError
+from .registry import BuilderRegistry
+from .worktree import (
+    RuntimeDirtyPolicy,
+    WorktreeManager,
+    default_control_remote_urls,
+    default_control_repo_paths,
+    default_repo_paths,
+    default_runtime_dirty_policy,
+    default_worktree_root,
+)
 
 
 def _check(
@@ -35,8 +46,8 @@ def _run(
         return None
 
 
-def _version(command: str) -> tuple[bool, str]:
-    path = shutil.which(command)
+def _version_path(command: str, configured: str | None = None) -> tuple[bool, str]:
+    path = configured or shutil.which(command)
     if not path:
         return False, "not found"
     result = _run([path, "--version"])
@@ -58,18 +69,111 @@ def _remote(path: Path) -> tuple[bool, str]:
     return True, value[:240]
 
 
+def _writable_directory(path: Path) -> tuple[bool, str]:
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(
+            prefix="doctor-", dir=path, delete=True
+        ) as handle:
+            handle.write(b"ok")
+        return True, str(path)
+    except OSError:
+        return False, "directory is not writable"
+
+
+def _sqlite_integrity(path: Path) -> tuple[bool, str]:
+    if not path.exists():
+        try:
+            with tempfile.TemporaryDirectory(prefix="nightshift-doctor-") as temp:
+                temp_path = Path(temp) / "doctor.sqlite3"
+                with sqlite3.connect(temp_path) as conn:
+                    result = conn.execute("PRAGMA integrity_check").fetchone()[0]
+                return result == "ok", "SQLite integrity check passed"
+        except sqlite3.Error:
+            return False, "SQLite integrity check failed"
+    try:
+        uri = f"file:{path.resolve()}?mode=ro"
+        with sqlite3.connect(uri, uri=True) as conn:
+            result = conn.execute("PRAGMA integrity_check").fetchone()[0]
+        return result == "ok", "shared SQLite integrity check passed"
+    except sqlite3.Error:
+        return False, "shared SQLite integrity check failed"
+
+
+def _launchd_worker_checks(builder_ids: tuple[str, ...]) -> list[dict[str, Any]]:
+    if shutil.which("launchctl") is None or os.name != "posix":
+        return [
+            _check(
+                "night_shift_workers",
+                False,
+                "launchctl is unavailable; worker activity cannot be verified",
+            )
+        ]
+    uid = os.getuid()
+    checks: list[dict[str, Any]] = []
+    for builder_id in builder_ids:
+        label = f"com.sportsbrain.night-shift-worker.{builder_id}"
+        plist = Path.home() / "Library" / "LaunchAgents" / f"{label}.plist"
+        present = plist.is_file()
+        status = _run(["launchctl", "print", f"gui/{uid}/{label}"], timeout=10)
+        running = bool(status and status.returncode == 0)
+        detail = (
+            "plist present and launchd service loaded"
+            if present and running
+            else "plist missing"
+            if not present
+            else "launchd service not loaded"
+        )
+        checks.append(
+            _check(f"night_shift_worker:{builder_id}", present and running, detail)
+        )
+    return checks
+
+
 def run_doctor(
-    *, repo_root: Path, runtime_dir: Path, repo_paths: dict[str, Path] | None = None
+    *,
+    repo_root: Path,
+    runtime_dir: Path,
+    repo_paths: dict[str, Path] | None = None,
+    control_repo_paths: dict[str, Path] | None = None,
+    worktree_root: Path | None = None,
+    runtime_dirty_policy: RuntimeDirtyPolicy | None = None,
+    state_path: Path | None = None,
+    config_dir: Path | None = None,
 ) -> dict[str, Any]:
     """Return a sanitized report; this function never prints command output."""
 
     runtime = Path(runtime_dir).expanduser()
-    paths = repo_paths or default_repo_paths(repo_root)
-    manager = WorktreeManager(runtime, paths)
+    paths = repo_paths if repo_paths is not None else default_repo_paths(repo_root)
+    controls = (
+        control_repo_paths
+        if control_repo_paths is not None
+        else {
+            repo: path
+            for repo, path in default_control_repo_paths().items()
+            if repo in paths
+        }
+    )
+    policy = runtime_dirty_policy
+    if policy is None:
+        policy_path = Path(repo_root) / "config" / "night_shift" / "runtime_dirty.json"
+        policy = (
+            default_runtime_dirty_policy(repo_root)
+            if policy_path.is_file()
+            else RuntimeDirtyPolicy({})
+        )
+    manager = WorktreeManager(
+        runtime,
+        paths,
+        control_repo_paths=controls,
+        worktrees_dir=worktree_root or default_worktree_root(),
+        runtime_dirty_policy=policy,
+        expected_remote_urls=default_control_remote_urls(),
+    )
     checks: list[dict[str, Any]] = []
-    git_ok, git_detail = _version("git")
+    git_ok, git_detail = _version_path("git")
     checks.append(_check("git", git_ok, git_detail))
-    gh_ok, gh_detail = _version("gh")
+    gh_ok, gh_detail = _version_path("gh")
     checks.append(_check("gh", gh_ok, gh_detail))
     gh_path = shutil.which("gh")
     auth = _run([gh_path, "auth", "status"], timeout=15) if gh_path else None
@@ -80,8 +184,8 @@ def run_doctor(
             "authenticated" if auth and auth.returncode == 0 else "not authenticated",
         )
     )
-    codex_path = shutil.which("codex")
-    codex_ok, codex_detail = _version("codex")
+    codex_path = os.getenv("SPORTSBRAIN_CODEX_EXECUTABLE") or shutil.which("codex")
+    codex_ok, codex_detail = _version_path("codex", codex_path)
     checks.append(_check("codex_executable", codex_ok, codex_detail))
     help_result = (
         _run([codex_path, "exec", "--help"], timeout=15) if codex_path else None
@@ -112,51 +216,86 @@ def run_doctor(
             else "not authenticated or status unavailable",
         )
     )
+
     for repo, path in paths.items():
         check = manager.canonical_check(repo)
+        dirty_class = check.get("dirty_class", "UNKNOWN")
+        if dirty_class == "CLEAN":
+            detail = "clean"
+        elif dirty_class == "RUNTIME_CHECKOUT_DIRTY_EXPECTED":
+            detail = "RUNTIME_CHECKOUT_DIRTY_EXPECTED: " + ", ".join(
+                check.get("runtime_dirty_paths", [])
+            )
+        else:
+            detail = dirty_class
+            if check.get("unexpected_dirty_paths"):
+                detail += ": " + ", ".join(check["unexpected_dirty_paths"])
         checks.append(
             _check(
                 f"canonical_checkout:{repo}",
-                bool(check.get("clean")),
-                "clean" if check.get("clean") else str(check.get("error", "dirty")),
+                dirty_class in {"CLEAN", "RUNTIME_CHECKOUT_DIRTY_EXPECTED"}
+                and bool(check.get("safe_for_allocation")),
+                detail,
             )
         )
         remote_ok, remote_detail = _remote(path)
         checks.append(_check(f"origin_url:{repo}", remote_ok, remote_detail))
-    try:
-        runtime.mkdir(parents=True, exist_ok=True)
-        with tempfile.NamedTemporaryFile(
-            prefix="doctor-", dir=runtime, delete=True
-        ) as handle:
-            handle.write(b"ok")
-        runtime_ok = True
-    except OSError:
-        runtime_ok = False
-    checks.append(
-        _check(
-            "runtime_directory",
-            runtime_ok,
-            str(runtime) if runtime_ok else "runtime directory is not writable",
+        try:
+            control = manager.control_check(repo, base_branch="main", fetch=True)
+        except Exception as exc:  # noqa: BLE001 - doctor reports, never raises
+            control = {
+                "path": "",
+                "is_control_repository": False,
+                "remote_ok": False,
+                "fetch_ok": False,
+                "origin_sha": None,
+                "error": type(exc).__name__,
+            }
+        checks.append(
+            _check(
+                f"night_shift_control_repository:{repo}",
+                bool(control.get("is_control_repository")),
+                str(control.get("path", ""))
+                if control.get("is_control_repository")
+                else str(control.get("error", "control repository unavailable")),
+            )
         )
-    )
-    try:
-        with tempfile.TemporaryDirectory(prefix="nightshift-doctor-") as temp:
-            db = Path(temp) / "doctor.sqlite3"
-            with sqlite3.connect(db) as conn:
-                conn.execute("CREATE TABLE check_ok (value INTEGER)")
-                conn.execute("INSERT INTO check_ok VALUES (1)")
-                sqlite_ok = (
-                    conn.execute("SELECT value FROM check_ok").fetchone()[0] == 1
-                )
-    except sqlite3.Error:
-        sqlite_ok = False
-    checks.append(
-        _check(
-            "sqlite",
-            sqlite_ok,
-            "WAL-capable SQLite available" if sqlite_ok else "SQLite check failed",
+        checks.append(
+            _check(
+                f"night_shift_control_remote:{repo}",
+                bool(control.get("remote_ok")),
+                "governed origin configured"
+                if control.get("remote_ok")
+                else "control repository origin is incorrect",
+            )
         )
+        checks.append(
+            _check(
+                f"night_shift_control_fetch:{repo}",
+                bool(control.get("fetch_ok")),
+                f"fetched origin/main at {control.get('origin_sha')}"
+                if control.get("fetch_ok")
+                else "control repository fetch failed",
+            )
+        )
+        checks.append(
+            _check(
+                f"night_shift_origin_main:{repo}",
+                bool(control.get("origin_sha")),
+                str(control.get("origin_sha") or "origin/main unavailable"),
+            )
+        )
+
+    runtime_ok, runtime_detail = _writable_directory(runtime)
+    checks.append(_check("runtime_directory", runtime_ok, runtime_detail))
+    root_ok, root_detail = _writable_directory(
+        Path(worktree_root or default_worktree_root()).expanduser()
     )
+    checks.append(_check("isolated_worktree_root", root_ok, root_detail))
+    sqlite_ok, sqlite_detail = _sqlite_integrity(
+        Path(state_path).expanduser() if state_path else runtime / "nightshift.sqlite3"
+    )
+    checks.append(_check("shared_sqlite", sqlite_ok, sqlite_detail))
     wt = _run(["git", "worktree", "list", "--porcelain"])
     checks.append(
         _check(
@@ -176,11 +315,48 @@ def run_doctor(
                 "available" if available else "not importable",
             )
         )
+
+    registry_ok = True
+    registry_ids: tuple[str, ...] = ()
+    registry_error = ""
+    try:
+        directory = config_dir or Path(repo_root) / "config" / "night_shift"
+        registry = BuilderRegistry.from_file(directory / "builders.json")
+        registry_ids = registry.builder_ids
+        registry_ok = registry_ids == (
+            "builder-1",
+            "builder-2",
+            "builder-3",
+            "builder-4",
+        )
+    except (ConfigurationError, OSError) as exc:
+        registry_ok = False
+        registry_error = type(exc).__name__
+    checks.append(
+        _check(
+            "worker_registry_builders_1_to_4_only",
+            registry_ok,
+            "explicit Builders 1-4; Builder 5 is dispatcher-only"
+            if registry_ok
+            else f"registry unavailable or contains unsupported builders ({registry_error})",
+        )
+    )
+    checks.extend(
+        _launchd_worker_checks(
+            registry_ids or ("builder-1", "builder-2", "builder-3", "builder-4")
+        )
+    )
+
     failed = [item for item in checks if not item["ok"]]
     return {
         "status": "ok" if not failed else "blocked",
         "checks": checks,
-        "codex": {"path": codex_path or "not found", "headless_supported": supported},
+        "codex": {
+            "path": codex_path or "not found",
+            "headless_supported": supported,
+        },
         "runtime_dir": str(runtime),
+        "control_repo_paths": {repo: str(path) for repo, path in controls.items()},
+        "registry_builders": list(registry_ids),
         "secrets_redacted": True,
     }

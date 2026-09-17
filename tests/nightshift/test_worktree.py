@@ -13,6 +13,7 @@ from src.nightshift import (
     WorktreeManager,
     WorktreeSafetyError,
 )
+from src.nightshift.worktree import RuntimeDirtyPolicy
 
 
 def _repo(tmp_path: Path) -> Path:
@@ -95,3 +96,120 @@ def test_scope_violation_fails_safe_and_keeps_diagnostic(tmp_path: Path) -> None
     assert failed is not None and failed.state is TaskState.FAILED_SAFE
     assert failed.failure_class == "SCOPE_VIOLATION"
     assert Path(failed.diagnostic_path or "").exists()
+
+
+def test_expected_runtime_dirtiness_uses_dedicated_control_repo(tmp_path: Path) -> None:
+    repo = _repo(tmp_path)
+    (repo / "docs" / "data").mkdir(parents=True)
+    health = repo / "docs" / "data" / "health.json"
+    health.write_text('{"status":"ok"}\n', encoding="utf-8")
+    subprocess.run(["git", "-C", str(repo), "add", "docs/data/health.json"], check=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "commit", "-qm", "health fixture"], check=True
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "push", "-q", "origin", "HEAD:main"], check=True
+    )
+    remote = subprocess.run(
+        ["git", "-C", str(repo), "remote", "get-url", "origin"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    control = tmp_path / "control.git"
+    control.mkdir()
+    subprocess.run(
+        ["git", "-C", str(control), "init", "-q", "--bare", "--initial-branch=main"],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "--git-dir", str(control), "remote", "add", "origin", remote],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "--git-dir", str(control), "fetch", "-q", "origin", "main"],
+        check=True,
+    )
+    health.write_text('{"status":"warn"}\n', encoding="utf-8")
+    policy = RuntimeDirtyPolicy.from_mapping(
+        {
+            "version": 1,
+            "repositories": {
+                "Philip3006/sportsbrain": [
+                    {
+                        "path": "docs/data/health.json",
+                        "job": "fixture-writer",
+                        "script": "fixture",
+                        "reason": "known runtime writer",
+                        "observed_evidence": "fixture evidence",
+                    }
+                ]
+            },
+        }
+    )
+    manager = WorktreeManager(
+        tmp_path / "runtime",
+        {"Philip3006/sportsbrain": repo},
+        control_repo_paths={"Philip3006/sportsbrain": control},
+        runtime_dirty_policy=policy,
+        worktrees_dir=tmp_path / "isolated-worktrees",
+    )
+    task = _task("worktree-expected-001", "nightshift/builder-1/expected")
+    check = manager.canonical_check(task.repo)
+    assert check["dirty_class"] == "RUNTIME_CHECKOUT_DIRTY_EXPECTED"
+    allocation = manager.allocate(task)
+    assert allocation.path != repo
+    assert allocation.origin_sha == manager.control_check(task.repo)["origin_sha"]
+
+
+def test_unexpected_source_dirtiness_blocks_even_with_control_repo(
+    tmp_path: Path,
+) -> None:
+    repo = _repo(tmp_path)
+    control = tmp_path / "control.git"
+    control.mkdir()
+    subprocess.run(
+        ["git", "-C", str(control), "init", "-q", "--bare", "--initial-branch=main"],
+        check=True,
+    )
+    remote = subprocess.run(
+        ["git", "-C", str(repo), "remote", "get-url", "origin"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    subprocess.run(
+        ["git", "--git-dir", str(control), "remote", "add", "origin", remote],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "--git-dir", str(control), "fetch", "-q", "origin", "main"],
+        check=True,
+    )
+    (repo / "unexpected-source.py").write_text("unsafe\n", encoding="utf-8")
+    manager = WorktreeManager(
+        tmp_path / "runtime",
+        {"Philip3006/sportsbrain": repo},
+        control_repo_paths={"Philip3006/sportsbrain": control},
+        worktrees_dir=tmp_path / "isolated-worktrees",
+    )
+    check = manager.canonical_check("Philip3006/sportsbrain")
+    assert check["dirty_class"] == "UNEXPECTED_SOURCE_DIRTY"
+    with pytest.raises(WorktreeSafetyError, match="unexpected source dirtiness"):
+        manager.allocate(
+            _task("worktree-unexpected-001", "nightshift/builder-1/unexpected")
+        )
+
+
+def test_explicit_control_repo_cannot_reuse_canonical_checkout(tmp_path: Path) -> None:
+    repo = _repo(tmp_path)
+    manager = WorktreeManager(
+        tmp_path / "runtime",
+        {"Philip3006/sportsbrain": repo},
+        control_repo_paths={"Philip3006/sportsbrain": repo},
+    )
+    check = manager.control_check("Philip3006/sportsbrain")
+    assert check["is_control_repository"] is False
+    assert "separate" in check["error"]
+    with pytest.raises(WorktreeSafetyError, match="separate"):
+        manager.allocate(_task("worktree-same-control-1", "nightshift/builder-1/same"))
