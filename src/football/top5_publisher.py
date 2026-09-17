@@ -468,6 +468,314 @@ class ControlledTop5PublicationPayload:
         )
 
 
+_CONTROLLED_PUBLICATION_BINDING_FIELDS = (
+    "activation_id",
+    "league_code",
+    "candidate_id",
+    "model_identity",
+    "source_sha",
+    "research_sha",
+    "model_artifact_hash",
+    "signal_time_experiment_id",
+    "provider_authority",
+    "result_authority",
+    "evidence_digest",
+    "controlled_shadow_run_id",
+    "qualification_session_id",
+)
+
+
+def _controlled_binding_values(
+    values: Mapping[str, object],
+) -> dict[str, object]:
+    return {name: values.get(name) for name in _CONTROLLED_PUBLICATION_BINDING_FIELDS}
+
+
+def _publication_authorization_values(
+    values: Mapping[str, object],
+) -> dict[str, object]:
+    return {
+        name: values.get(name)
+        for name in (
+            "publication_authorization_id",
+            "activation_id",
+            "league_code",
+            "candidate_id",
+            "model_identity",
+            "source_sha",
+            "research_sha",
+            "model_artifact_hash",
+            "signal_time_experiment_id",
+            "publication_authorized",
+            "no_bet",
+        )
+    }
+
+
+@dataclass(frozen=True)
+class ControlledPublicationAttestation:
+    """Detached, fail-closed proof for the controlled runtime gate.
+
+    This is not an activation or publication authorization.  It is issued only
+    after both have already been validated and binds the exact artifact hash to
+    the active activation and the separate publication authorization.
+    """
+
+    artifact_path: str
+    artifact_hash: str
+    activation_id: str
+    league_code: str
+    candidate_id: str
+    model_identity: str
+    source_sha: str
+    research_sha: str
+    model_artifact_hash: str
+    signal_time_experiment_id: str
+    provider_authority: str
+    result_authority: str
+    evidence_digest: str
+    controlled_shadow_run_id: str
+    qualification_session_id: str
+    activation_binding_digest: str
+    publication_authorization_id: str
+    publication_authorization_digest: str
+    active_activation: bool
+    publication_authorized: bool
+    no_bet: bool
+    issued_at: datetime
+    expires_at: datetime
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "issued_at", _utc(self.issued_at, "issued_at"))
+        object.__setattr__(self, "expires_at", _utc(self.expires_at, "expires_at"))
+
+    @classmethod
+    def issue(
+        cls,
+        payload: ControlledTop5PublicationPayload,
+        publication_authorization: Top5PublicationAuthorization,
+        *,
+        activation_bindings: Mapping[str, object],
+        artifact: Mapping[str, object],
+        now: datetime,
+    ) -> ControlledPublicationAttestation:
+        now = _utc(now, "now")
+        payload.validate()
+        publication_authorization.validate(now=now)
+        publication_authorization.binds(payload)
+        if activation_bindings.get("active") is not True:
+            raise ProductionContractError(
+                "controlled publication attestation requires the exact active activation"
+            )
+        payload_values = {
+            name: payload.activation_id
+            if name == "activation_id"
+            else getattr(payload, name)
+            for name in _CONTROLLED_PUBLICATION_BINDING_FIELDS
+        }
+        for name, expected in payload_values.items():
+            if activation_bindings.get(name) != expected:
+                raise ProductionContractError(
+                    f"controlled publication activation binding mismatch: {name}"
+                )
+        authorization_claims = {
+            name: getattr(publication_authorization, name)
+            for name in (
+                "publication_authorization_id",
+                "activation_id",
+                "league_code",
+                "candidate_id",
+                "model_identity",
+                "source_sha",
+                "research_sha",
+                "model_artifact_hash",
+                "signal_time_experiment_id",
+                "publication_authorized",
+                "no_bet",
+            )
+        }
+        return cls(
+            artifact_path=payload.artifact_path,
+            artifact_hash=_digest(artifact),
+            **{
+                name: payload_values[name]
+                for name in _CONTROLLED_PUBLICATION_BINDING_FIELDS
+            },
+            activation_binding_digest=_digest(
+                {"active": True, **_controlled_binding_values(payload_values)}
+            ),
+            publication_authorization_id=publication_authorization.publication_authorization_id,
+            publication_authorization_digest=_digest(
+                _publication_authorization_values(authorization_claims)
+            ),
+            active_activation=True,
+            publication_authorized=True,
+            no_bet=True,
+            issued_at=now,
+            expires_at=publication_authorization.expires_at,
+        )
+
+    @classmethod
+    def from_mapping(
+        cls, value: Mapping[str, object]
+    ) -> ControlledPublicationAttestation:
+        expected = {
+            "artifact_path",
+            "artifact_hash",
+            *_CONTROLLED_PUBLICATION_BINDING_FIELDS,
+            "activation_binding_digest",
+            "publication_authorization_id",
+            "publication_authorization_digest",
+            "active_activation",
+            "publication_authorized",
+            "no_bet",
+            "issued_at",
+            "expires_at",
+        }
+        if not isinstance(value, Mapping):
+            raise ProductionContractError(
+                "controlled publication attestation must be an object"
+            )
+        missing = sorted(expected - set(value))
+        extra = sorted(set(value) - expected)
+        if missing:
+            raise ProductionContractError(
+                "controlled publication attestation is missing: " + ", ".join(missing)
+            )
+        if extra:
+            raise ProductionContractError(
+                "controlled publication attestation has unknown fields: "
+                + ", ".join(extra)
+            )
+        try:
+            issued_at = datetime.fromisoformat(str(value["issued_at"]))
+            expires_at = datetime.fromisoformat(str(value["expires_at"]))
+        except (TypeError, ValueError) as exc:
+            raise ProductionContractError(
+                "controlled publication attestation timestamps are invalid"
+            ) from exc
+        return cls(
+            **{
+                name: value[name]
+                for name in sorted(expected)
+                if name not in {"issued_at", "expires_at"}
+            },
+            issued_at=issued_at,
+            expires_at=expires_at,
+        )
+
+    def validate(
+        self,
+        *,
+        artifact: object,
+        artifact_path: str,
+        now: datetime,
+    ) -> None:
+        _required_text(
+            {
+                "artifact_path": self.artifact_path,
+                "artifact_hash": self.artifact_hash,
+                **{
+                    name: getattr(self, name)
+                    for name in _CONTROLLED_PUBLICATION_BINDING_FIELDS
+                },
+                "activation_binding_digest": self.activation_binding_digest,
+                "publication_authorization_id": self.publication_authorization_id,
+                "publication_authorization_digest": self.publication_authorization_digest,
+            },
+            "controlled publication attestation",
+        )
+        validate_artifact_ownership(self.artifact_path, ArtifactOwner.CONTROLLED_PUBLIC)
+        if artifact_path != self.artifact_path:
+            raise ProductionContractError(
+                "controlled publication artifact path mismatch"
+            )
+        for name in (
+            "artifact_hash",
+            "source_sha",
+            "research_sha",
+            "model_artifact_hash",
+            "evidence_digest",
+            "activation_binding_digest",
+            "publication_authorization_digest",
+        ):
+            _hash(getattr(self, name), name)
+        if self.active_activation is not True:
+            raise ProductionContractError(
+                "controlled publication requires active activation"
+            )
+        if self.publication_authorized is not True:
+            raise ProductionContractError(
+                "controlled publication requires separate publication authorization"
+            )
+        if self.no_bet is not True:
+            raise ProductionContractError("controlled publication must remain no-bet")
+        now = _utc(now, "now")
+        if (
+            self.expires_at <= self.issued_at
+            or not self.issued_at <= now <= self.expires_at
+        ):
+            raise ProductionContractError(
+                "stale or expired controlled publication attestation"
+            )
+        if self.artifact_hash != _digest(artifact):
+            raise ProductionContractError(
+                "controlled publication artifact hash mismatch"
+            )
+        if self.publication_authorization_digest != _digest(
+            _publication_authorization_values(
+                {
+                    "publication_authorization_id": self.publication_authorization_id,
+                    **{
+                        name: getattr(self, name)
+                        for name in (
+                            "activation_id",
+                            "league_code",
+                            "candidate_id",
+                            "model_identity",
+                            "source_sha",
+                            "research_sha",
+                            "model_artifact_hash",
+                            "signal_time_experiment_id",
+                        )
+                    },
+                    "publication_authorized": self.publication_authorized,
+                    "no_bet": self.no_bet,
+                }
+            )
+        ):
+            raise ProductionContractError(
+                "controlled publication authorization digest mismatch"
+            )
+        binding_values = {
+            name: getattr(self, name) for name in _CONTROLLED_PUBLICATION_BINDING_FIELDS
+        }
+        if self.activation_binding_digest != _digest(
+            {"active": True, **_controlled_binding_values(binding_values)}
+        ):
+            raise ProductionContractError(
+                "controlled publication activation digest mismatch"
+            )
+
+    def as_payload(self) -> dict[str, object]:
+        return {
+            "artifact_path": self.artifact_path,
+            "artifact_hash": self.artifact_hash,
+            **{
+                name: getattr(self, name)
+                for name in _CONTROLLED_PUBLICATION_BINDING_FIELDS
+            },
+            "activation_binding_digest": self.activation_binding_digest,
+            "publication_authorization_id": self.publication_authorization_id,
+            "publication_authorization_digest": self.publication_authorization_digest,
+            "active_activation": self.active_activation,
+            "publication_authorized": self.publication_authorized,
+            "no_bet": self.no_bet,
+            "issued_at": self.issued_at.isoformat(),
+            "expires_at": self.expires_at.isoformat(),
+        }
+
+
 @dataclass(frozen=True)
 class PublishedTop5Artifact:
     payload: ControlledTop5PublicationPayload

@@ -351,6 +351,7 @@ def test_allowlist_rejects_non_artifact_paths(tmp_path: Path):
         ".env",
         "credentials.json",
         "docs/data/unknown.json",
+        "docs/data/top5/published/BL1/signals.json",
     ):
         target = active / path
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -359,12 +360,29 @@ def test_allowlist_rejects_non_artifact_paths(tmp_path: Path):
         assert result.returncode != 0, path
 
 
+def test_generic_publisher_rejects_controlled_publication_without_gate(tmp_path: Path):
+    origin, active, publisher = _seed(tmp_path)
+    artifact = active / "docs" / "data" / "top5" / "published" / "BL1" / "signals.json"
+    artifact.parent.mkdir(parents=True)
+    artifact.write_text('{"football": []}\n')
+    head_before = _git(["rev-parse", "main"], origin).stdout.strip()
+
+    result = _run(
+        active,
+        publisher,
+        tmp_path / "publish.log",
+        "docs/data/top5/published/BL1/signals.json",
+    )
+
+    assert result.returncode != 0
+    assert _git(["rev-parse", "main"], origin).stdout.strip() == head_before
+
+
 def test_allowlist_accepts_all_current_runtime_artifacts(tmp_path: Path):
     origin, active, publisher = _seed(tmp_path)
     artifacts = {
         "docs/data/signals.json": '{"football": []}\n',
         "docs/data/signals_philip.json": '{"football": []}\n',
-        "docs/data/top5/published/BL1/signals.json": '{"football": []}\n',
         "docs/data/squads.json": '{"teams": {}}\n',
         "docs/data/tennis_live_scores.json": '[]\n',
         "data/cache/tennis_live_scores.json": '[]\n',

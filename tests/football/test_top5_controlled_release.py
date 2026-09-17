@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from copy import deepcopy
 from dataclasses import replace
 from datetime import timedelta
+from pathlib import Path
 
 import pytest
 
@@ -31,6 +34,7 @@ from src.football.top5_controlled_shadow_provider_qualification import (
 )
 from src.football.top5_provider_validation import ProviderAuthority
 from src.football.top5_publisher import (
+    ControlledPublicationAttestation,
     ControlledTop5PublicationPayload,
     Top5PublicationAuthorization,
 )
@@ -359,8 +363,50 @@ def test_missing_activation_authorization_blocks(tmp_path):
             blocked,
             evidence,
             _rollout_evidence(),
+            health_preconditions=_health,
             now=BASE + timedelta(minutes=2),
         )
+
+
+@pytest.mark.parametrize(
+    ("health_field", "remove_field"),
+    tuple(
+        (field, remove)
+        for field in (
+            "provider_healthy",
+            "fixture_coverage_valid",
+            "odds_freshness_valid",
+            "signal_time_coverage_valid",
+            "inference_healthy",
+            "publisher_healthy",
+            "result_source_healthy",
+            "rollback_ready",
+        )
+        for remove in (False, True)
+    ),
+)
+def test_direct_activation_requires_each_health_gate(
+    tmp_path, health_field, remove_field
+):
+    request, auth, evidence, _artifact, _, health = _context(tmp_path)
+    incomplete = dict(health)
+    if remove_field:
+        incomplete.pop(health_field)
+    else:
+        incomplete[health_field] = False
+    release = Top5ControlledRelease()
+    with pytest.raises(
+        ValueError, match=health_field if not remove_field else "health/monitoring"
+    ):
+        release.activate(
+            request,
+            auth,
+            evidence,
+            _rollout_evidence(),
+            health_preconditions=incomplete,
+            now=BASE + timedelta(minutes=2),
+        )
+    assert release.activation_runtime.state is None
 
 
 @pytest.mark.parametrize(
@@ -392,7 +438,12 @@ def test_missing_receipt_and_injected_evidence_block(tmp_path):
     missing = replace(evidence, receipts=())
     with pytest.raises(ValueError):
         Top5ControlledRelease().activate(
-            request, auth, missing, _rollout_evidence(), now=BASE + timedelta(minutes=2)
+            request,
+            auth,
+            missing,
+            _rollout_evidence(),
+            health_preconditions=_health,
+            now=BASE + timedelta(minutes=2),
         )
     audit = deepcopy(dict(evidence.audit_report))
     audit["predictions"] = [
@@ -405,6 +456,7 @@ def test_missing_receipt_and_injected_evidence_block(tmp_path):
             auth,
             injected,
             _rollout_evidence(),
+            health_preconditions=_health,
             now=BASE + timedelta(minutes=2),
         )
 
@@ -479,7 +531,12 @@ def test_activation_does_not_imply_publication_and_publication_needs_separate_au
     request, auth, evidence, artifact, publication_auth, _health = _context(tmp_path)
     release = Top5ControlledRelease()
     state = release.activate(
-        request, auth, evidence, _rollout_evidence(), now=BASE + timedelta(minutes=2)
+        request,
+        auth,
+        evidence,
+        _rollout_evidence(),
+        health_preconditions=_health,
+        now=BASE + timedelta(minutes=2),
     )
     assert state.publication_enabled is False
     with pytest.raises(ValueError, match="publication authorization"):
@@ -510,7 +567,12 @@ def test_controlled_publication_uses_canonical_pwa_football_shape(tmp_path):
     request, auth, evidence, artifact, publication_auth, _health = _context(tmp_path)
     release = Top5ControlledRelease()
     release.activate(
-        request, auth, evidence, _rollout_evidence(), now=BASE + timedelta(minutes=2)
+        request,
+        auth,
+        evidence,
+        _rollout_evidence(),
+        health_preconditions=_health,
+        now=BASE + timedelta(minutes=2),
     )
     published = release.publish(
         artifact, publication_auth, now=BASE + timedelta(minutes=3)
@@ -558,7 +620,12 @@ def test_publication_cannot_cross_activation_evidence_or_authority_bindings(tmp_
     request, auth, evidence, artifact, publication_auth, _health = _context(tmp_path)
     release = Top5ControlledRelease()
     release.activate(
-        request, auth, evidence, _rollout_evidence(), now=BASE + timedelta(minutes=2)
+        request,
+        auth,
+        evidence,
+        _rollout_evidence(),
+        health_preconditions=_health,
+        now=BASE + timedelta(minutes=2),
     )
     foreign = replace(
         artifact, evidence_digest="f" * 64, generated_at=BASE + timedelta(minutes=4)
@@ -581,7 +648,12 @@ def test_publication_requires_record_provenance_to_match_artifact(tmp_path, fiel
     request, auth, evidence, artifact, publication_auth, _health = _context(tmp_path)
     release = Top5ControlledRelease()
     release.activate(
-        request, auth, evidence, _rollout_evidence(), now=BASE + timedelta(minutes=2)
+        request,
+        auth,
+        evidence,
+        _rollout_evidence(),
+        health_preconditions=_health,
+        now=BASE + timedelta(minutes=2),
     )
     record = dict(artifact.football_records[0], **{field: "f" * 40})
     foreign = replace(
@@ -597,7 +669,12 @@ def test_stale_publication_closing_and_unsafe_authority_fail_closed(tmp_path):
     request, auth, evidence, artifact, publication_auth, _health = _context(tmp_path)
     release = Top5ControlledRelease()
     release.activate(
-        request, auth, evidence, _rollout_evidence(), now=BASE + timedelta(minutes=2)
+        request,
+        auth,
+        evidence,
+        _rollout_evidence(),
+        health_preconditions=_health,
+        now=BASE + timedelta(minutes=2),
     )
     release.publish(artifact, publication_auth, now=BASE + timedelta(minutes=3))
     with pytest.raises(ValueError, match="stale"):
@@ -616,7 +693,12 @@ def test_rollback_disables_activation_and_publication_without_ledger_or_provider
     request, auth, evidence, artifact, publication_auth, _health = _context(tmp_path)
     release = Top5ControlledRelease()
     release.activate(
-        request, auth, evidence, _rollout_evidence(), now=BASE + timedelta(minutes=2)
+        request,
+        auth,
+        evidence,
+        _rollout_evidence(),
+        health_preconditions=_health,
+        now=BASE + timedelta(minutes=2),
     )
     release.publish(artifact, publication_auth, now=BASE + timedelta(minutes=3))
     activation_rollback, publication_rollback = release.rollback(
@@ -629,3 +711,142 @@ def test_rollback_disables_activation_and_publication_without_ledger_or_provider
     assert publication_rollback.active_artifact_digest is None
     assert release.activation_runtime.state is None
     assert release.publication_store.current is None
+
+
+def test_controlled_publication_attestation_binds_active_authorized_artifact(tmp_path):
+    request, auth, evidence, artifact, publication_auth, health = _context(tmp_path)
+    release = Top5ControlledRelease()
+    release.activate(
+        request,
+        auth,
+        evidence,
+        _rollout_evidence(),
+        health_preconditions=health,
+        now=BASE + timedelta(minutes=2),
+    )
+    attestation = release.issue_publication_attestation(
+        artifact, publication_auth, now=BASE + timedelta(minutes=3)
+    )
+    public_product = artifact.as_public_product()
+    assert attestation.active_activation is True
+    assert attestation.publication_authorized is True
+    assert attestation.no_bet is True
+    assert attestation.activation_id == auth.activation_id
+    assert (
+        attestation.provider_authority == auth.provider_authority.approved_odds_provider
+    )
+    round_trip = ControlledPublicationAttestation.from_mapping(attestation.as_payload())
+    round_trip.validate(
+        artifact=public_product,
+        artifact_path=artifact.artifact_path,
+        now=BASE + timedelta(minutes=4),
+    )
+
+    with pytest.raises(ValueError, match="active activation"):
+        replace(attestation, active_activation=False).validate(
+            artifact=public_product,
+            artifact_path=artifact.artifact_path,
+            now=BASE + timedelta(minutes=4),
+        )
+    with pytest.raises(ValueError, match="separate publication authorization"):
+        replace(attestation, publication_authorized=False).validate(
+            artifact=public_product,
+            artifact_path=artifact.artifact_path,
+            now=BASE + timedelta(minutes=4),
+        )
+    with pytest.raises(ValueError, match="artifact hash"):
+        round_trip.validate(
+            artifact={**public_product, "updated": "tampered"},
+            artifact_path=artifact.artifact_path,
+            now=BASE + timedelta(minutes=4),
+        )
+    with pytest.raises(ValueError, match="stale or expired"):
+        round_trip.validate(
+            artifact=public_product,
+            artifact_path=artifact.artifact_path,
+            now=BASE + timedelta(days=2),
+        )
+
+
+def test_controlled_publication_attestation_requires_active_state_and_separate_auth(
+    tmp_path,
+):
+    request, auth, evidence, artifact, publication_auth, _health = _context(tmp_path)
+    release = Top5ControlledRelease()
+    with pytest.raises(ValueError, match="active activation"):
+        release.issue_publication_attestation(
+            artifact, publication_auth, now=BASE + timedelta(minutes=2)
+        )
+    health = _health
+    release.activate(
+        request,
+        auth,
+        evidence,
+        _rollout_evidence(),
+        health_preconditions=health,
+        now=BASE + timedelta(minutes=2),
+    )
+    with pytest.raises(ValueError, match="not approved"):
+        release.issue_publication_attestation(
+            artifact,
+            replace(publication_auth, publication_authorized=False),
+            now=BASE + timedelta(minutes=3),
+        )
+
+
+def test_controlled_publication_validator_rejects_tampered_artifact(tmp_path):
+    request, auth, evidence, artifact, publication_auth, health = _context(tmp_path)
+    publication_auth = replace(
+        publication_auth,
+        issued_at=BASE - timedelta(days=1),
+        expires_at=BASE + timedelta(days=365),
+    )
+    release = Top5ControlledRelease()
+    release.activate(
+        request,
+        auth,
+        evidence,
+        _rollout_evidence(),
+        health_preconditions=health,
+        now=BASE + timedelta(minutes=2),
+    )
+    product_path = tmp_path / "signals.json"
+    attestation_path = tmp_path / "attestation.json"
+    product_path.write_text(json.dumps(artifact.as_public_product(), sort_keys=True))
+    attestation_path.write_text(
+        json.dumps(
+            release.issue_publication_attestation(
+                artifact, publication_auth, now=BASE + timedelta(minutes=3)
+            ).as_payload(),
+            sort_keys=True,
+        )
+    )
+    validator = (
+        Path(__file__).resolve().parents[2]
+        / "scripts"
+        / "validate_controlled_top5_publication.py"
+    )
+    command = [
+        sys.executable,
+        str(validator),
+        str(product_path),
+        str(attestation_path),
+        artifact.artifact_path,
+    ]
+    accepted = subprocess.run(
+        command,
+        cwd=validator.parents[1],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert accepted.returncode == 0, accepted.stderr
+    product_path.write_text(json.dumps({"tampered": True}))
+    rejected = subprocess.run(
+        command,
+        cwd=validator.parents[1],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert rejected.returncode != 0

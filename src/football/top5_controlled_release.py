@@ -38,6 +38,7 @@ from src.football.top5_controlled_shadow_provider_qualification import (
     MinimumSamplePolicy,
 )
 from src.football.top5_publisher import (
+    ControlledPublicationAttestation,
     ControlledTop5PublicationPayload,
     InMemoryTop5PublicationStore,
     PublicationRollback,
@@ -872,8 +873,10 @@ class Top5ControlledRelease:
         evidence: Top5ControlledReleaseEvidence,
         rollout_evidence: RolloutEvidence,
         *,
+        health_preconditions: Mapping[str, object] | None = None,
         now: datetime,
     ) -> ControlledActivationState:
+        self._validate_health_preconditions(health_preconditions)
         plan = self.activation_runtime.prepare(
             request,
             authorization,
@@ -883,6 +886,24 @@ class Top5ControlledRelease:
             now=now,
         )
         return self.activation_runtime.activate(plan, now=now)
+
+    def issue_publication_attestation(
+        self,
+        artifact: ControlledTop5PublicationPayload,
+        authorization: Top5PublicationAuthorization,
+        *,
+        now: datetime,
+    ) -> ControlledPublicationAttestation:
+        """Issue a detached gate artifact without publishing anything."""
+
+        state = self.activation_runtime.state
+        return ControlledPublicationAttestation.issue(
+            artifact,
+            authorization,
+            activation_bindings=state.as_bindings() if state else {},
+            artifact=artifact.as_public_product(),
+            now=now,
+        )
 
     def publish(
         self,
@@ -908,9 +929,7 @@ class Top5ControlledRelease:
         return activation_result, publication_result
 
     @staticmethod
-    def _health_preconditions_valid(health: Mapping[str, object] | None) -> bool:
-        if not isinstance(health, Mapping):
-            return False
+    def _validate_health_preconditions(health: Mapping[str, object] | None) -> None:
         required = (
             "provider_healthy",
             "fixture_coverage_valid",
@@ -921,7 +940,23 @@ class Top5ControlledRelease:
             "result_source_healthy",
             "rollback_ready",
         )
-        return all(health.get(name) is True for name in required)
+        if not isinstance(health, Mapping):
+            raise ProductionContractError(
+                "health/monitoring preconditions are incomplete: missing health map"
+            )
+        missing = tuple(name for name in required if health.get(name) is not True)
+        if missing:
+            raise ProductionContractError(
+                "health/monitoring preconditions are incomplete: " + ", ".join(missing)
+            )
+
+    @classmethod
+    def _health_preconditions_valid(cls, health: Mapping[str, object] | None) -> bool:
+        try:
+            cls._validate_health_preconditions(health)
+        except ProductionContractError:
+            return False
+        return True
 
 
 __all__ = [
