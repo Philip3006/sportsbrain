@@ -1,0 +1,77 @@
+{
+  "meta": {"delta_last_id": "synthetic-therundown-fixture"},
+  "events": [
+    {
+      "event_id": "cl-event-001",
+      "event_uuid": "legacy-uuid-001",
+      "sport_id": 16,
+      "event_date": "2026-09-22T19:00:00Z",
+      "score": {"event_status": "STATUS_SCHEDULED"},
+      "teams": [
+        {"team_id": 101, "name": "Away United", "is_away": true, "is_home": false},
+        {"team_id": 202, "name": "Home City", "is_away": false, "is_home": true}
+      ],
+      "schedule": {
+        "event_name": "Away United at Home City",
+        "season_type": "Regular Season",
+        "season_year": 2026,
+        "league_name": "UEFA Champions League"
+      },
+      "markets": [
+        {
+          "market_id": 1,
+          "period_id": 0,
+          "name": "moneyline",
+          "participants": [
+            {
+              "id": 202,
+              "type": "TYPE_TEAM",
+              "name": "Home City",
+              "lines": [
+                {
+                  "id": "line-home",
+                  "value": "",
+                  "prices": {
+                    "3": {"id": "p-h-3", "price": 150, "is_main_line": true, "updated_at": "2026-09-22T18:58:00Z", "source_id": "book-home-3"},
+                    "19": {"id": "p-h-19", "price": 145, "is_main_line": true, "updated_at": "2026-09-22T18:57:00Z", "source_id": "book-home-19"}
+                  }
+                }
+              ]
+            },
+            {
+              "id": 0,
+              "type": "TYPE_RESULT",
+              "name": "Draw",
+              "lines": [
+                {
+                  "id": "line-draw",
+                  "value": "",
+                  "prices": {
+                    "3": {"id": "p-d-3", "price": 250, "is_main_line": true, "updated_at": "2026-09-22T18:58:00Z", "source_id": "book-draw-3"},
+                    "19": {"id": "p-d-19", "price": 245, "is_main_line": true, "updated_at": "2026-09-22T18:57:00Z", "source_id": "book-draw-19"}
+                  }
+                }
+              ]
+            },
+            {
+              "id": 101,
+              "type": "TYPE_TEAM",
+              "name": "Away United",
+              "lines": [
+                {
+                  "id": "line-away",
+                  "value": "",
+                  "prices": {
+                    "3": {"id": "p-a-3", "price": 210, "is_main_line": true, "updated_at": "2026-09-22T18:58:00Z", "source_id": "book-away-3"},
+                    "19": {"id": "p-a-19", "price": 220, "is_main_line": true, "updated_at": "2026-09-22T18:57:00Z", "source_id": "book-away-19"}
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "affiliate_source_ids": {"3": "src-event-3", "19": "src-event-19"}
+    }
+  ]
+}

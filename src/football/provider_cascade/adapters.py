@@ -63,6 +63,7 @@ class ProviderRequest:
             "x-application",
             "x-authentication",
             "authorization",
+            "x-therundown-key",
         }
         return {
             "provider": self.provider,
