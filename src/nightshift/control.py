@@ -28,6 +28,55 @@ class QueueControlMixin:
                 == "1"
             )
 
+    def is_draining(self) -> bool:
+        with self._read() as conn:
+            row = conn.execute(
+                "SELECT value FROM dispatcher_meta WHERE key = 'draining'"
+            ).fetchone()
+        return bool(row and row[0] == "1")
+
+    def set_draining(
+        self, draining: bool, *, actor: str, now: datetime | None = None
+    ) -> None:
+        timestamp = isoformat(now or utc_now())
+        with self._write() as conn:
+            conn.execute(
+                "INSERT INTO dispatcher_meta(key, value) VALUES ('draining', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                ("1" if draining else "0",),
+            )
+            self._append_event(
+                conn,
+                None,
+                EventType.DRAINED,
+                actor,
+                timestamp,
+                None,
+                None,
+                {"draining": draining},
+            )
+
+    def request_restart(self, *, actor: str, now: datetime | None = None) -> None:
+        timestamp = isoformat(now or utc_now())
+        with self._write() as conn:
+            self._append_event(
+                conn,
+                None,
+                EventType.RESTART_REQUESTED,
+                actor,
+                timestamp,
+                None,
+                None,
+                {"restart_requested": True},
+            )
+
+    def merge_backpressure_count(self) -> int:
+        with self._read() as conn:
+            return int(
+                conn.execute(
+                    "SELECT COUNT(*) FROM tasks WHERE state IN ('PR_READY', 'CEO_REVIEW')"
+                ).fetchone()[0]
+            )
+
     def set_paused(
         self, paused: bool, *, actor: str, now: datetime | None = None
     ) -> None:
@@ -51,6 +100,7 @@ class QueueControlMixin:
         counts.update({row["state"]: row["count"] for row in rows})
         return {
             "paused": self.is_paused(),
+            "draining": self.is_draining(),
             "total": sum(counts.values()),
             "by_state": counts,
         }

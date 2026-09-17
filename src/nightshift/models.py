@@ -80,6 +80,8 @@ class EventType(str, Enum):
     CANCELLED = "cancelled"
     PAUSED = "paused"
     RESUMED = "resumed"
+    DRAINED = "drained"
+    RESTART_REQUESTED = "restart_requested"
 
 
 def utc_now() -> datetime:
@@ -135,6 +137,9 @@ class TaskSpec:
     verification_commands: tuple[tuple[str, ...], ...] = ()
     max_runtime_seconds: int = 15 * 60
     requires_pr: bool | None = None
+    roadmap_item_id: str | None = None
+    debug_budget: int = 0
+    repeated_failure_limit: int = 2
     requested_by: str = "operator"
     task_id: str = field(default_factory=lambda: f"ns-{uuid.uuid4().hex}")
 
@@ -248,6 +253,23 @@ class TaskSpec:
             )
         if self.requires_pr is not None and not isinstance(self.requires_pr, bool):
             raise InvalidTaskError("requires_pr must be boolean or omitted")
+        if self.roadmap_item_id is not None and (
+            not isinstance(self.roadmap_item_id, str)
+            or not re.fullmatch(r"[a-z0-9][a-z0-9._-]{7,127}", self.roadmap_item_id)
+        ):
+            raise InvalidTaskError("roadmap_item_id is invalid")
+        if (
+            isinstance(self.debug_budget, bool)
+            or not isinstance(self.debug_budget, int)
+            or not 0 <= self.debug_budget <= 10
+        ):
+            raise InvalidTaskError("debug_budget must be between 0 and 10")
+        if (
+            isinstance(self.repeated_failure_limit, bool)
+            or not isinstance(self.repeated_failure_limit, int)
+            or not 1 <= self.repeated_failure_limit <= 10
+        ):
+            raise InvalidTaskError("repeated_failure_limit must be between 1 and 10")
         normalized_payload = json_payload(self.payload)
         if (
             len(json.dumps(normalized_payload, sort_keys=True, separators=(",", ":")))
@@ -301,6 +323,9 @@ class TaskSpec:
             ],
             "max_runtime_seconds": self.max_runtime_seconds,
             "requires_pr": self.pr_required,
+            "roadmap_item_id": self.roadmap_item_id,
+            "debug_budget": self.debug_budget,
+            "repeated_failure_limit": self.repeated_failure_limit,
         }
 
     def as_dict(self) -> dict[str, Any]:
@@ -425,6 +450,12 @@ class TaskRecord:
     delivery: Mapping[str, Any] | None = None
     diagnostic_path: str | None = None
     failure_class: str | None = None
+    roadmap_item_id: str | None = None
+    debug_budget: int = 0
+    debug_attempt_count: int = 0
+    last_failure_signature: str | None = None
+    failure_repeat_count: int = 0
+    repeated_failure_limit: int = 2
 
     @property
     def lease_active(self) -> bool:
@@ -485,6 +516,9 @@ class TaskRecord:
             "verification_commands",
             "max_runtime_seconds",
             "requires_pr",
+            "roadmap_item_id",
+            "debug_budget",
+            "repeated_failure_limit",
         )
         serialized = self.as_dict()
         return {field: serialized[field] for field in fields}

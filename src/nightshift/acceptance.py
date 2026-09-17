@@ -12,7 +12,7 @@ from typing import Any
 from .dispatcher import NightShiftDispatcher
 from .executors import FakeExecutor
 from .models import ExecutionResult, RiskClass, TaskSpec, TaskState
-from .worktree import WorktreeManager
+from .worktree import RuntimeDirtyPolicy, WorktreeManager
 
 UTC = timezone.utc
 REPO = "Philip3006/sportsbrain"
@@ -120,7 +120,12 @@ def run_fake_acceptance() -> dict[str, Any]:
         _git(repo, "config", "user.email", "acceptance@example.invalid")
         _git(repo, "config", "user.name", "Night Shift Acceptance")
         (repo / "README.md").write_text("fixture\n", encoding="utf-8")
+        (repo / "docs" / "data").mkdir(parents=True)
+        (repo / "docs" / "data" / "health.json").write_text(
+            '{"status": "ok"}\n', encoding="utf-8"
+        )
         _git(repo, "add", "README.md")
+        _git(repo, "add", "docs/data/health.json")
         _git(repo, "commit", "-qm", "fixture")
         remote = root / "remote.git"
         _git(root, "init", "--bare", "-q", str(remote))
@@ -131,7 +136,37 @@ def run_fake_acceptance() -> dict[str, Any]:
         _git(repo, "add", "smoke/__init__.py")
         _git(repo, "commit", "-qm", "verification fixture")
         _git(repo, "push", "-q", "origin", "HEAD:main")
-        manager = WorktreeManager(root / "runtime", {REPO: repo})
+        control = root / "control.git"
+        control.mkdir()
+        _git(control, "init", "-q", "--bare", "--initial-branch=main")
+        _git(control, "remote", "add", "origin", str(remote))
+        _git(control, "fetch", "-q", "origin", "main")
+        policy = RuntimeDirtyPolicy.from_mapping(
+            {
+                "version": 1,
+                "repositories": {
+                    REPO: [
+                        {
+                            "path": "docs/data/health.json",
+                            "job": "fixture-writer",
+                            "script": "acceptance-fixture",
+                            "reason": "disposable runtime health writer",
+                            "observed_evidence": "fixture mutation",
+                        }
+                    ]
+                },
+            }
+        )
+        (repo / "docs" / "data" / "health.json").write_text(
+            '{"status": "warn"}\n', encoding="utf-8"
+        )
+        manager = WorktreeManager(
+            root / "runtime",
+            {REPO: repo},
+            control_repo_paths={REPO: control},
+            worktrees_dir=root / "night-shift" / "worktrees",
+            runtime_dirty_policy=policy,
+        )
         dispatcher = NightShiftDispatcher.from_config(
             state_path=root / "runtime" / "state.sqlite3",
             worktree_manager=manager,
@@ -145,6 +180,12 @@ def run_fake_acceptance() -> dict[str, Any]:
             "builders": list(dispatcher.registry.builder_ids),
             "steps": {},
         }
+        runtime_check = manager.canonical_check(REPO)
+        control_before = manager.control_check(REPO, fetch=True)["origin_sha"]
+        observed["steps"]["isolated_runtime_dirty_does_not_block"] = (
+            runtime_check["dirty_class"] == "RUNTIME_CHECKOUT_DIRTY_EXPECTED"
+            and runtime_check["safe_for_allocation"] is True
+        )
 
         dispatcher.submit(
             _task(
@@ -447,9 +488,32 @@ def run_fake_acceptance() -> dict[str, Any]:
             replay.task_id == replayed.task_id
         )
         observed["steps"]["audit_chain"] = restarted.store.verify_audit_chain()
-        observed["steps"]["queue_exhaustion_idle_safe"] = (
-            restarted.status()["queue_mode"] == "IDLE_SAFE"
+        control_after = manager.control_check(REPO, fetch=False)["origin_sha"]
+        observed["steps"]["control_repo_unaffected"] = control_before == control_after
+        for item in restarted.store.roadmap_records():
+            restarted.store.set_roadmap_status(
+                item["item_id"], status="DISABLED", now=restarted.clock()
+            )
+        idle_mode = restarted.status()["queue_mode"]
+        observed["steps"]["queue_exhaustion_idle_safe"] = idle_mode in {
+            "IDLE_SAFE",
+            "INTENTIONAL_IDLE",
+            "MERGE_BACKPRESSURE",
+        }
+        observed["steps"]["merge_backpressure"] = idle_mode == "MERGE_BACKPRESSURE"
+        idle_dispatcher = NightShiftDispatcher.from_config(
+            state_path=root / "runtime" / "idle.sqlite3",
+            require_isolated_worktrees=False,
+            clock=lambda: datetime(2026, 9, 16, tzinfo=UTC),
         )
+        for item in idle_dispatcher.store.roadmap_records():
+            idle_dispatcher.store.set_roadmap_status(
+                item["item_id"], status="DISABLED", now=idle_dispatcher.clock()
+            )
+        observed["steps"]["intentional_idle"] = (
+            idle_dispatcher.status()["queue_mode"] == "INTENTIONAL_IDLE"
+        )
+        observed["idle_mode"] = idle_mode
         observed["task_count"] = restarted.status()["total"]
         observed["status"] = "PASS" if all(observed["steps"].values()) else "FAIL"
         return observed

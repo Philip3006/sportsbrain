@@ -153,6 +153,7 @@ class DispatcherExecutionMixin:
                     else "WORKTREE_ALLOCATION_FAILED"
                 ),
                 summary=f"worktree allocation failed: {type(exc).__name__}: {str(exc)[:3800]}",
+                now=self.clock(),
             )
 
     def heartbeat(
@@ -281,9 +282,7 @@ class DispatcherExecutionMixin:
                         },
                         now=self.clock(),
                     )
-                    delivery = {
-                        "verification": {"passed": True, "not_required": True}
-                    }
+                    delivery = {"verification": {"passed": True, "not_required": True}}
                 else:
                     delivery = self.delivery_pipeline.deliver(
                         current,

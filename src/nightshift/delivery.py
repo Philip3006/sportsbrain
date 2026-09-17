@@ -227,9 +227,7 @@ class DeliveryPipeline:
         else:
             if not changed:
                 raise DeliveryError("code-changing task produced no reviewable change")
-            commit_sha = self._commit(
-                task, path, changed, lease_guard=lease_guard
-            )
+            commit_sha = self._commit(task, path, changed, lease_guard=lease_guard)
             self._guard(lease_guard)
             self.store.record_commit(
                 task.task_id,
@@ -252,7 +250,10 @@ class DeliveryPipeline:
         task = self.store.get(task.task_id)
         self._guard(lease_guard)
         pull = self._find_or_create(
-            task, commit_sha=commit_sha, verification=verification, lease_guard=lease_guard
+            task,
+            commit_sha=commit_sha,
+            verification=verification,
+            lease_guard=lease_guard,
         )
         number = pull.get("number")
         url = pull.get("url")
@@ -436,6 +437,9 @@ def _spec(task: TaskRecord) -> TaskSpec:
         verification_commands=task.verification_commands,
         max_runtime_seconds=task.max_runtime_seconds,
         requires_pr=task.requires_pr,
+        roadmap_item_id=task.roadmap_item_id,
+        debug_budget=task.debug_budget,
+        repeated_failure_limit=task.repeated_failure_limit,
     )
 
 

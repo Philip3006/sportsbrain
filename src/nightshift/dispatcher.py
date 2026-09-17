@@ -28,9 +28,17 @@ from .models import (
 )
 from .policy import SafetyPolicy
 from .registry import BuilderRegistry
+from .roadmap import RoadmapRegistry
 from .store import DispatcherStore
 from .templates import TemplateRegistry
-from .worktree import WorktreeManager, default_repo_paths
+from .worktree import (
+    WorktreeManager,
+    default_control_remote_urls,
+    default_control_repo_paths,
+    default_repo_paths,
+    default_runtime_dirty_policy,
+    default_worktree_root,
+)
 
 WorkerExecutor = Callable[[TaskRecord], ExecutionResult | Mapping[str, Any]]
 
@@ -80,6 +88,8 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         clock: Callable[[], datetime] = utc_now,
         worktree_manager: WorktreeManager | None = None,
         delivery_pipeline: DeliveryPipeline | None = None,
+        roadmap: RoadmapRegistry | None = None,
+        merge_backpressure_limit: int = 3,
     ) -> None:
         if dispatcher_id != DISPATCHER_ID:
             raise SafetyViolation("Builder 5 is the only supported dispatcher identity")
@@ -89,6 +99,8 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
             )
         if not 0 <= retry_base_seconds <= retry_max_seconds:
             raise SafetyViolation("retry delay bounds are invalid")
+        if not 1 <= merge_backpressure_limit <= 100:
+            raise SafetyViolation("merge_backpressure_limit must be between 1 and 100")
         templates.validate_against(registry)
         self.registry = registry
         self.templates = templates
@@ -101,6 +113,10 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         self.clock = clock
         self.worktree_manager = worktree_manager
         self.delivery_pipeline = delivery_pipeline
+        self.roadmap = roadmap or RoadmapRegistry(())
+        self.merge_backpressure_limit = merge_backpressure_limit
+        self.roadmap.validate_against(self.registry, self.templates)
+        self.store.sync_roadmap(self.roadmap, now=self.clock())
 
     @classmethod
     def from_config(
@@ -112,16 +128,29 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         worktree_manager: WorktreeManager | None = None,
         require_isolated_worktrees: bool = True,
         delivery_pipeline: DeliveryPipeline | None = None,
+        roadmap: RoadmapRegistry | None = None,
         **kwargs: Any,
     ) -> NightShiftDispatcher:
         directory = config_dir or _default_config_dir()
         registry = BuilderRegistry.from_file(directory / "builders.json")
         templates = TemplateRegistry.from_file(directory / "templates.json")
+        roadmap_path = directory / "roadmap.json"
+        configured_roadmap = roadmap or (
+            RoadmapRegistry.from_file(roadmap_path)
+            if roadmap_path.is_file()
+            else RoadmapRegistry(())
+        )
         manager = worktree_manager
         if require_isolated_worktrees and manager is None:
             manager = WorktreeManager(
                 (state_path or _default_state_path()).parent,
                 default_repo_paths(Path(__file__).resolve().parents[2]),
+                control_repo_paths=default_control_repo_paths(),
+                worktrees_dir=default_worktree_root(),
+                runtime_dirty_policy=default_runtime_dirty_policy(
+                    Path(__file__).resolve().parents[2]
+                ),
+                expected_remote_urls=default_control_remote_urls(),
             )
         store = DispatcherStore(state_path or _default_state_path())
         pipeline = delivery_pipeline
@@ -143,6 +172,8 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
             policy=policy,
             worktree_manager=manager,
             delivery_pipeline=pipeline,
+            roadmap=configured_roadmap,
+            merge_backpressure_limit=configured_roadmap.merge_backpressure_limit,
             **kwargs,
         )
 
@@ -210,6 +241,9 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         verification_commands: tuple[tuple[str, ...], ...] | None = None,
         max_runtime_seconds: int | None = None,
         requires_pr: bool | None = None,
+        roadmap_item_id: str | None = None,
+        debug_budget: int = 0,
+        repeated_failure_limit: int = 2,
     ) -> TaskRecord:
         template = self.templates.resolve(template_id)
         return self.submit(
@@ -232,6 +266,9 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                 verification_commands=verification_commands,
                 max_runtime_seconds=max_runtime_seconds,
                 requires_pr=requires_pr,
+                roadmap_item_id=roadmap_item_id,
+                debug_budget=debug_budget,
+                repeated_failure_limit=repeated_failure_limit,
             )
         )
 
@@ -318,8 +355,218 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         self._require_actor(actor)
         self.store.set_paused(False, actor=actor, now=self.clock())
 
+    def drain(self, *, actor: str) -> None:
+        """Stop selecting new roadmap work while allowing active work to finish."""
+
+        self._require_actor(actor)
+        self.store.set_draining(True, actor=actor, now=self.clock())
+
+    def stop_drain(self, *, actor: str) -> None:
+        self._require_actor(actor)
+        self.store.set_draining(False, actor=actor, now=self.clock())
+
+    def restart(self, *, actor: str) -> None:
+        """Record an operator restart request; process supervision owns restart."""
+
+        self._require_actor(actor)
+        self.store.request_restart(actor=actor, now=self.clock())
+
+    def reevaluate_blocked(self) -> list[str]:
+        return self.store.release_eligible_blocked(
+            now=self.clock(), actor=self.dispatcher_id
+        )
+
+    def _refresh_roadmap(self) -> None:
+        """Reflect task outcomes without inventing or deleting roadmap items."""
+
+        for item in self.store.roadmap_records():
+            task_id = item.get("task_id")
+            if not task_id:
+                continue
+            try:
+                task = self.store.get(task_id)
+            except TaskNotFoundError:
+                continue
+            if task.state in {
+                TaskState.COMPLETED,
+                TaskState.PR_READY,
+                TaskState.CEO_REVIEW,
+            }:
+                self.store.set_roadmap_status(
+                    item["item_id"], status="COMPLETED", now=self.clock()
+                )
+            elif task.state is TaskState.BLOCKED:
+                self.store.set_roadmap_status(
+                    item["item_id"],
+                    status="BLOCKED",
+                    reason=task.last_error,
+                    next_eligible_at=datetime.fromisoformat(
+                        task.available_at.replace("Z", "+00:00")
+                    ),
+                    now=self.clock(),
+                )
+            elif task.state in {TaskState.READY, TaskState.WAITING_DEPENDENCY}:
+                self.store.set_roadmap_status(
+                    item["item_id"], status="ENQUEUED", now=self.clock()
+                )
+
+    def select_next_roadmap_task(
+        self, *, builder_id: str | None = None
+    ) -> TaskRecord | None:
+        """Materialize one explicit roadmap item into the normal task queue."""
+
+        if builder_id is not None:
+            builder_id = self.registry.assert_worker_target(builder_id).builder_id
+        if self.store.is_paused() or self.store.is_draining():
+            return None
+        if self.store.merge_backpressure_count() >= self.merge_backpressure_limit:
+            return None
+        self._refresh_roadmap()
+        records = {item["item_id"]: item for item in self.store.roadmap_records()}
+        for item in sorted(
+            self.roadmap.items, key=lambda value: (-value.priority, value.item_id)
+        ):
+            row = records.get(item.item_id)
+            if (
+                row is None
+                or not item.enabled
+                or row["status"] in {"DISABLED", "COMPLETED"}
+            ):
+                continue
+            if builder_id is not None and item.builder_id != builder_id:
+                continue
+            if row.get("task_id"):
+                existing = self.store.get(row["task_id"])
+                if existing.state not in {
+                    TaskState.READY,
+                    TaskState.WAITING_DEPENDENCY,
+                }:
+                    continue
+                if row["status"] == "BLOCKED":
+                    self.store.set_roadmap_status(
+                        item.item_id, status="ENQUEUED", now=self.clock()
+                    )
+                    row["status"] = "ENQUEUED"
+                elif row["status"] == "ENQUEUED":
+                    continue
+            dependencies = [records.get(dep) for dep in item.dependency_item_ids]
+            if any(dep is None or dep["status"] != "COMPLETED" for dep in dependencies):
+                self.store.set_roadmap_status(
+                    item.item_id,
+                    status="BLOCKED",
+                    reason="dependency roadmap item incomplete",
+                    next_eligible_at=self.clock(),
+                    now=self.clock(),
+                )
+                continue
+            definition = self.registry.assert_worker_target(item.builder_id)
+            task = self.submit_template(
+                item.template_id,
+                branch=f"{definition.branch_prefix}{item.item_id}",
+                payload=item.payload,
+                requested_by="builder-5-roadmap",
+                idempotency_key=f"roadmap:{item.item_id}",
+                priority=item.priority,
+                debug_budget=item.debug_budget,
+                repeated_failure_limit=item.repeated_failure_limit,
+                roadmap_item_id=item.item_id,
+            )
+            status = "BLOCKED" if task.state is TaskState.BLOCKED else "ENQUEUED"
+            self.store.set_roadmap_status(
+                item.item_id,
+                status=status,
+                task_id=task.task_id,
+                reason=task.last_error if status == "BLOCKED" else None,
+                now=self.clock(),
+            )
+            return task
+        return None
+
+    def run_autonomous_cycle(
+        self,
+        builder_id: str,
+        executor: WorkerExecutor,
+        *,
+        max_tasks: int = 1,
+    ) -> list[TaskRecord]:
+        """Run a finite worker cycle; unlimited mode never removes this bound."""
+
+        if not 1 <= max_tasks <= 100:
+            raise SafetyViolation("max_tasks must be between 1 and 100")
+        completed: list[TaskRecord] = []
+        self.reevaluate_blocked()
+        for _ in range(max_tasks):
+            self.select_next_roadmap_task(builder_id=builder_id)
+            result = self.run_once(builder_id, executor)
+            if result is None:
+                break
+            completed.append(result)
+            self._refresh_roadmap()
+        return completed
+
+    def run_debug_loop(
+        self,
+        builder_id: str,
+        executor: WorkerExecutor,
+        *,
+        max_cycles: int = 3,
+    ) -> list[TaskRecord]:
+        """Run bounded diagnose/retest cycles; repeated failures are parked."""
+
+        if not 1 <= max_cycles <= 10:
+            raise SafetyViolation("max_cycles must be between 1 and 10")
+        return self.run_autonomous_cycle(builder_id, executor, max_tasks=max_cycles)
+
+    def run_autonomous(
+        self,
+        builder_id: str,
+        executor: WorkerExecutor,
+        *,
+        mode: str | None = None,
+        max_cycles: int | None = None,
+    ) -> list[TaskRecord]:
+        """Run a bounded autonomous session in the configured roadmap mode."""
+
+        selected_mode = mode or self.roadmap.mode
+        if selected_mode not in {"bounded", "unlimited"}:
+            raise SafetyViolation("autonomous mode must be bounded or unlimited")
+        limit = max_cycles or self.roadmap.max_cycles
+        if selected_mode == "unlimited":
+            # "Unlimited" means no roadmap item count is imposed by the
+            # configuration; every invocation still has an operator-visible
+            # finite cap so a bad worker cannot spin forever.
+            limit = max_cycles or 100
+        if not 1 <= limit <= 100:
+            raise SafetyViolation("autonomous sessions must be bounded to 100 cycles")
+        return self.run_autonomous_cycle(builder_id, executor, max_tasks=limit)
+
     def status(self) -> dict[str, Any]:
         result = self.store.stats()
+        roadmap = self.store.roadmap_records()
+        merge_count = self.store.merge_backpressure_count()
+        actionable = sum(
+            result["by_state"].get(state.value, 0)
+            for state in (
+                TaskState.BACKLOG,
+                TaskState.READY,
+                TaskState.WAITING_DEPENDENCY,
+                TaskState.CLAIMED,
+                TaskState.RUNNING,
+                TaskState.VERIFYING,
+            )
+        )
+        if result["paused"]:
+            queue_mode = "PAUSED"
+        elif result.get("draining"):
+            queue_mode = "DRAINING"
+        elif merge_count >= self.merge_backpressure_limit:
+            queue_mode = "MERGE_BACKPRESSURE"
+        elif actionable == 0 and all(
+            item["status"] in {"COMPLETED", "DISABLED"} for item in roadmap
+        ):
+            queue_mode = "INTENTIONAL_IDLE" if roadmap else "IDLE_SAFE"
+        else:
+            queue_mode = "ACTIVE"
         result.update(
             {
                 "dispatcher_id": self.dispatcher_id,
@@ -328,15 +575,12 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                     template.template_id for template in self.templates.templates
                 ],
                 "state_path": str(self.store.path),
-                "queue_mode": "IDLE_SAFE"
-                if result["by_state"].get(TaskState.BACKLOG.value, 0)
-                + result["by_state"].get(TaskState.READY.value, 0)
-                + result["by_state"].get(TaskState.WAITING_DEPENDENCY.value, 0)
-                + result["by_state"].get(TaskState.CLAIMED.value, 0)
-                + result["by_state"].get(TaskState.RUNNING.value, 0)
-                + result["by_state"].get(TaskState.VERIFYING.value, 0)
-                == 0
-                else "ACTIVE",
+                "queue_mode": queue_mode,
+                "merge_backpressure_count": merge_count,
+                "merge_backpressure_limit": self.merge_backpressure_limit,
+                "roadmap": roadmap,
+                "roadmap_mode": self.roadmap.mode,
+                "roadmap_max_cycles": self.roadmap.max_cycles,
             }
         )
         return result

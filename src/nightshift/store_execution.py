@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 from datetime import datetime, timedelta
+from hashlib import sha256
 from typing import Any
 
 from .errors import InvalidTransitionError, LeaseError, SafetyViolation
@@ -233,6 +234,10 @@ class StoreExecutionMixin:
                 now=current,
             )
             result_json = self._json(execution.as_dict())
+            signature: str | None = None
+            repeat_count = row["failure_repeat_count"]
+            debug_attempt = row["debug_attempt_count"]
+            park_debug = False
             if execution.success:
                 new_state = execution.terminal_state or TaskState.COMPLETED
                 if row["requires_pr"] and new_state is not TaskState.PR_READY:
@@ -259,7 +264,27 @@ class StoreExecutionMixin:
                     "last_error": None,
                     "failure_class": None,
                 }
-            elif execution.retryable and row["attempt_count"] < row["max_attempts"]:
+            elif execution.retryable:
+                signature = self._failure_signature(execution)
+                repeat_count = (
+                    row["failure_repeat_count"] + 1
+                    if row["last_failure_signature"] == signature
+                    else 1
+                )
+                debug_attempt = row["debug_attempt_count"] + 1
+                debug_budget = row["debug_budget"] or 0
+                repeat_limit = row["repeated_failure_limit"] or 2
+                park_debug = (
+                    execution.retryable
+                    and debug_budget > 0
+                    and (debug_attempt >= debug_budget or repeat_count >= repeat_limit)
+                )
+            if (
+                not execution.success
+                and execution.retryable
+                and row["attempt_count"] < row["max_attempts"]
+                and not park_debug
+            ):
                 new_state, event = TaskState.READY, EventType.RETRY_SCHEDULED
                 next_at = isoformat(retry_at or current)
                 details = {
@@ -275,8 +300,45 @@ class StoreExecutionMixin:
                     "last_error": execution.summary or "worker failed",
                     "available_at": next_at,
                     "failure_class": "RETRYABLE_FAILURE",
+                    "debug_attempt_count": debug_attempt,
+                    "last_failure_signature": signature,
+                    "failure_repeat_count": repeat_count,
                 }
-            else:
+            elif not execution.success and execution.retryable and park_debug:
+                new_state, event = TaskState.BLOCKED, EventType.BLOCKED
+                requested_retry = retry_at or current
+                next_at = isoformat(
+                    max(requested_retry, current + timedelta(seconds=60))
+                )
+                reason = (
+                    "AUTONOMOUS_DEBUG_BUDGET_EXHAUSTED"
+                    if debug_attempt >= debug_budget
+                    else "AUTONOMOUS_DEBUG_REPEATED_FAILURE"
+                )
+                details = {
+                    "summary": execution.summary,
+                    "attempt": row["attempt_count"],
+                    "debug_attempt": debug_attempt,
+                    "debug_budget": debug_budget,
+                    "failure_repeat_count": repeat_count,
+                    "reason": reason,
+                    "available_at": next_at,
+                }
+                updates = {
+                    "lease_owner": None,
+                    "lease_expires_at": None,
+                    "process_id": None,
+                    "result_json": result_json,
+                    "last_error": f"{reason}: {execution.summary or 'worker failed'}"[
+                        :4000
+                    ],
+                    "available_at": next_at,
+                    "failure_class": reason,
+                    "debug_attempt_count": debug_attempt,
+                    "last_failure_signature": signature,
+                    "failure_repeat_count": repeat_count,
+                }
+            elif not execution.success:
                 new_state, event = TaskState.FAILED_SAFE, EventType.FAILED_SAFE
                 classified = execution.data.get("failure_class")
                 failure_class = (
@@ -298,6 +360,9 @@ class StoreExecutionMixin:
                     "result_json": result_json,
                     "last_error": execution.summary or "worker failed safely",
                     "failure_class": failure_class,
+                    "debug_attempt_count": row["debug_attempt_count"] + 1
+                    if not execution.success and row["debug_budget"]
+                    else row["debug_attempt_count"],
                 }
             if new_state not in ALLOWED_TRANSITIONS[previous]:
                 raise InvalidTransitionError(
@@ -323,6 +388,15 @@ class StoreExecutionMixin:
                 details,
             )
             return self._record(self._get_row(conn, task_id))
+
+    @staticmethod
+    def _failure_signature(execution: ExecutionResult) -> str:
+        classified = execution.data.get("failure_class")
+        failure_class = (
+            classified.strip() if isinstance(classified, str) else "worker_failure"
+        )
+        summary = " ".join(execution.summary.split())[:1000]
+        return sha256(f"{failure_class}:{summary}".encode()).hexdigest()
 
     def recover_expired(
         self, *, now: datetime | None = None, actor: str = "reaper"
