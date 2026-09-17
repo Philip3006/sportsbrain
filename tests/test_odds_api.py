@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import requests
+import pytest
 
 from src.config import LINE_SHOPPING_REGIONS
 from src.data.odds_api import (
@@ -91,39 +92,40 @@ def _patch_data_cache(monkeypatch, tmp_path):
     """Redirect DATA_CACHE in both odds_api and cache modules to tmp_path."""
     import src.data.odds_api as _oa
     import src.data.cache as _dc
+    import src.signals.provider_budget as _pb
     monkeypatch.setattr(_oa, "DATA_CACHE", tmp_path)
     monkeypatch.setattr(_dc, "DATA_CACHE", tmp_path)
+    monkeypatch.setattr(_pb, "_BUDGET_PATH", tmp_path / "provider_budget.json")
     monkeypatch.setattr(_oa, "get_api_key", lambda *a, **kw: "test-key")
 
 
-def test_401_loads_stale_cache_not_empty_list(tmp_path, monkeypatch):
-    """O1-1: 401 from TheOddsAPI must load stale cache, never return []."""
+def test_401_fails_closed_without_promoting_stale_cache(tmp_path, monkeypatch):
+    """O1-1: 401 from TheOddsAPI never becomes an authoritative quote."""
     _patch_data_cache(monkeypatch, tmp_path)
     (tmp_path / "odds_api_upcoming_wide.pkl").write_bytes(pickle.dumps(_STALE_MATCHES))
 
     with patch("src.data.odds_api._http_get_with_retry", return_value=_make_4xx_resp(401)):
         with patch("src.signals.provider_budget.is_provider_available", return_value=True):
-            result = fetch_upcoming_matches(sport="soccer_test", force=True)
+            with pytest.raises(requests.HTTPError):
+                fetch_upcoming_matches(sport="soccer_test", force=True)
 
-    assert result == _STALE_MATCHES, "401 must load stale cache, not return []"
     import src.data.odds_api as _m
-    assert _m.USED_STALE_CACHE is True
+    assert _m.USED_STALE_CACHE is False
 
 
-def test_403_loads_stale_cache(tmp_path, monkeypatch):
-    """O1-1: 403 (auth failure) also loads stale cache."""
+def test_403_fails_closed_without_promoting_stale_cache(tmp_path, monkeypatch):
+    """O1-1: 403 (auth failure) remains blocked."""
     _patch_data_cache(monkeypatch, tmp_path)
     (tmp_path / "odds_api_upcoming_wide.pkl").write_bytes(pickle.dumps(_STALE_MATCHES))
 
     with patch("src.data.odds_api._http_get_with_retry", return_value=_make_4xx_resp(403)):
         with patch("src.signals.provider_budget.is_provider_available", return_value=True):
-            result = fetch_upcoming_matches(sport="soccer_test", force=True)
-
-    assert result == _STALE_MATCHES
+            with pytest.raises(requests.HTTPError):
+                fetch_upcoming_matches(sport="soccer_test", force=True)
 
 
 def test_circuit_open_skips_api_call(tmp_path, monkeypatch):
-    """O1-1: circuit open → stale cache returned WITHOUT any API call."""
+    """O1-1: circuit open → blocked WITHOUT any API call."""
     _patch_data_cache(monkeypatch, tmp_path)
     (tmp_path / "odds_api_upcoming_wide.pkl").write_bytes(pickle.dumps(_STALE_MATCHES))
 
@@ -135,30 +137,25 @@ def test_circuit_open_skips_api_call(tmp_path, monkeypatch):
 
     with patch("src.data.odds_api._http_get_with_retry", side_effect=_no_api):
         with patch("src.signals.provider_budget.is_provider_available", return_value=False):
-            result = fetch_upcoming_matches(sport="soccer_test", force=True)
+            with pytest.raises(RuntimeError, match="fail closed"):
+                fetch_upcoming_matches(sport="soccer_test")
 
-    assert result == _STALE_MATCHES
     assert not api_called, "API was called despite circuit being open"
 
 
-def test_circuit_open_no_cache_raises(tmp_path, monkeypatch):
-    """O1-1: circuit open + no stale cache → RuntimeError (fail closed)."""
+def test_circuit_open_is_fail_closed_even_when_cache_exists(tmp_path, monkeypatch):
+    """O1-1: circuit open → RuntimeError, regardless of local cache."""
     _patch_data_cache(monkeypatch, tmp_path)
-    # no cache file written → stale cache unavailable
+    (tmp_path / "odds_api_upcoming_wide.pkl").write_bytes(pickle.dumps(_STALE_MATCHES))
 
     with patch("src.signals.provider_budget.is_provider_available", return_value=False):
-        try:
+        with pytest.raises(RuntimeError, match="fail closed"):
             fetch_upcoming_matches(sport="soccer_test", force=True)
-            assert False, "Expected RuntimeError"
-        except RuntimeError as e:
-            assert "circuit open" in str(e).lower()
 
 
 def test_401_records_circuit_error(tmp_path, monkeypatch):
     """O1-1: 401 response opens the circuit breaker."""
     _patch_data_cache(monkeypatch, tmp_path)
-    (tmp_path / "odds_api_upcoming_wide.pkl").write_bytes(pickle.dumps(_STALE_MATCHES))
-
     recorded: list[dict] = []
 
     def _fake_record(name, code, *, open_circuit=False):
@@ -167,7 +164,8 @@ def test_401_records_circuit_error(tmp_path, monkeypatch):
     with patch("src.data.odds_api._http_get_with_retry", return_value=_make_4xx_resp(401)):
         with patch("src.signals.provider_budget.is_provider_available", return_value=True):
             with patch("src.signals.provider_budget.record_error", _fake_record):
-                fetch_upcoming_matches(sport="soccer_test", force=True)
+                with pytest.raises(requests.HTTPError):
+                    fetch_upcoming_matches(sport="soccer_test", force=True)
 
     assert any(r["code"] == 401 and r["open"] for r in recorded), \
         "401 must call record_error with open_circuit=True"

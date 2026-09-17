@@ -212,7 +212,7 @@ def test_report_receipt_mismatch_and_cross_observation_substitution_fail_closed(
 @pytest.mark.parametrize(
     "field,replacement",
     [
-        ("provider_identity", "odds_api_io"),
+        ("provider_identity", "different-provider"),
         ("fixture_key", "EPL|Different|Fixture|2026-09-16T14:00:00+00:00"),
         ("provider_event_id", "different-event"),
         ("provider_request_id", "different-request"),
@@ -238,7 +238,7 @@ def test_expected_binding_substitution_cannot_unlock_another_identity(
 @pytest.mark.parametrize(
     "field,replacement",
     [
-        ("provider_identity", "odds_api_io"),
+        ("provider_identity", "different-provider"),
         ("fixture_key", "EPL|Different|Fixture|2026-09-16T14:00:00+00:00"),
         ("provider_event_id", "different-event"),
         ("provider_request_id", "different-request"),

@@ -9,9 +9,6 @@ from datetime import datetime, timedelta, timezone
 from src.football.production_contracts import Fixture, ProductionContractError, _utc
 from src.football.provider_cascade.adapters import (
     AdapterResult,
-    ApiFootballAdapter,
-    BetfairDelayedAdapter,
-    OddsApiIoAdapter,
     OddsProviderAdapter,
     TheOddsAPIAdapter,
 )
@@ -38,14 +35,9 @@ from src.football.provider_cascade.readiness import QuotaStateStore
 
 DEFAULT_ADAPTERS: Mapping[str, OddsProviderAdapter] = {
     "the_odds_api": TheOddsAPIAdapter(),
-    "odds_api_io": OddsApiIoAdapter(),
-    "api_football": ApiFootballAdapter(),
-    "betfair_delayed": BetfairDelayedAdapter(),
 }
 
-IDENTITY_REQUIRED_PROVIDERS = frozenset(
-    {"odds_api_io", "api_football", "betfair_delayed"}
-)
+IDENTITY_REQUIRED_PROVIDERS = frozenset()
 
 
 class ProviderCascadeRouter:
@@ -521,21 +513,6 @@ class ProviderCascadeRouter:
                 kickoff=fixture.kickoff,
                 league_competition_evidence="",
                 resolution_provenance="provider_id_not_supplied",
-                resolution_timestamp=current,
-                resolver_version="router-resolution-v1",
-                digest="",
-            )
-        if provider == "betfair_delayed":
-            return ProviderIdentityResolution(
-                provider=provider,
-                state=ProviderIdentityResolutionState.DISCOVERY_REQUIRED,
-                canonical_fixture_key=fixture.fixture_key,
-                provider_id=provider_fixture_id,
-                home_team=fixture.home_team,
-                away_team=fixture.away_team,
-                kickoff=fixture.kickoff,
-                league_competition_evidence="market catalogue runner mapping required",
-                resolution_provenance="runner_mapping_not_supplied",
                 resolution_timestamp=current,
                 resolver_version="router-resolution-v1",
                 digest="",

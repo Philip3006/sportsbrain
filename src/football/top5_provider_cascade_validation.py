@@ -35,12 +35,7 @@ from src.football.top5_shadow_validation import (
 )
 
 TOP5_CASCADE_VALIDATION_CONTRACT_VERSION = "top5-provider-cascade-validation-v1"
-CASCADE_PROVIDER_ORDER = (
-    "the_odds_api",
-    "odds_api_io",
-    "api_football",
-    "betfair_delayed",
-)
+CASCADE_PROVIDER_ORDER = ("the_odds_api",)
 _SHA_RE = re.compile(r"^[0-9a-fA-F]{40,64}$")
 _KNOWN_PROVIDERS = frozenset(CASCADE_PROVIDER_ORDER)
 _READY_STATES = frozenset(

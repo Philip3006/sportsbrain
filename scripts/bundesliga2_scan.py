@@ -2,13 +2,10 @@
 
 Fixture-Quellen (Kaskade):
   1. TheOddsAPI (`soccer_germany_bundesliga2`) — mit Odds-Bulk
-  2. ESPN public scoreboard (?dates=7d) — kein Quota, bookmakers=[] → Odds via WebSearch
+  2. ESPN public scoreboard (?dates=7d) — kein Quota, fixture metadata only
 
-Odds-Quellen (Multi-Source, analog Tennis):
-  Tier 1: Betfair Exchange + Pinnacle (Sharp-Referenz)
-  Tier 2: TheOddsAPI EU+UK+AU Konsens (Bulk-Daten aus Fixture-Fetch wiederverwendet)
-  Tier 3: WebSearch-Ensemble (Fallback <3 Bookies)
-  Tier 5: DC-Implied (Display-only, no_bet_flag)
+Authoritative football odds: The Odds API only. Missing, stale, or unavailable
+odds fail closed; fixture discovery never substitutes for odds.
 
 Unknown-Team-Gate (analog Tennis): Team muss ≥ 5 Matches in Universe haben.
 Coverage-Gate: min 3 Bookies für 1X2, sonst no_bet_flag.
@@ -275,11 +272,11 @@ def _team_matches_in_universe(team: str, universe: dict) -> int:
 
 
 def _fetch_odds(match: dict, model_probs: dict) -> FootballOddsQuote | None:
-    """Holt Odds via Multi-Source-Merger (Tier 1→2→3→5).
+    """Holt Odds über den The-Odds-API-only-Merger.
 
     Übergibt bookmakers aus bereits geladenen TheOddsAPI-Daten im match_hint
-    (kein Extra-Quota-Verbrauch für Tier-2). Betfair + Pinnacle werden parallel
-    dazu angefragt (Tier 1). WebSearch als Tier-3-Fallback.
+    (kein separater Fixture-Quota-Verbrauch). Fehlende oder ungültige Quoten
+    bleiben fail-closed.
     """
     match_hint = {
         "home_team": match.get("home_team", ""),
@@ -288,7 +285,7 @@ def _fetch_odds(match: dict, model_probs: dict) -> FootballOddsQuote | None:
         "commence_time": match.get("commence_time", ""),
         "match_id": match.get("match_id", ""),
         "bookmakers": match.get("bookmakers", []),  # TheOddsAPI-Bulk → kein Extra-Call
-        "model_probs": model_probs,                 # Tier-5-Implied-Fallback
+        "model_probs": model_probs,                 # Model context only; never an odds source
     }
     return fetch_best_football_odds(match_hint, timeout_s=5.0, allow_implied=True)
 
@@ -358,7 +355,7 @@ def _fetch_espn_fixtures() -> list[dict]:
     """Holt kommende 2.BL-Matches via ESPN (kein API-Quota-Verbrauch).
 
     Fragt nächste 7 Tage via ?dates-Parameter ab. Rückgabe im Scanner-Format
-    (bookmakers=[] — Odds kommen danach via WebSearch Tier 3).
+    (bookmakers=[] — The Odds API odds are required separately).
     """
     from datetime import date as _date, timedelta as _td
     today = _date.today()
@@ -394,7 +391,7 @@ def _fetch_espn_fixtures() -> list[dict]:
             "home_team": home_name,
             "away_team": away_name,
             "commence_time": event.get("date", ""),
-            "bookmakers": [],  # Odds via merger (WebSearch Tier 3)
+            "bookmakers": [],  # Fixture metadata only; The Odds API supplies odds
         })
     return matches
 
@@ -425,7 +422,7 @@ _BL2_SCORER_SHARES: dict[str, list[tuple[str, float]]] = {
     "Hansa Rostock":      [("Ryan Biroket", 0.22), ("John Verhoek", 0.20), ("Nico Neidhart", 0.11)],
 }
 
-# Scorer-Odds-Cache: falls TheOddsAPI oder WebSearch Torschützen-Quoten liefert.
+# Scorer-Odds-Cache: optional The Odds API scorer markets only.
 # Key: canonical_team__player_slug → anytime_scorer_odds
 _scorer_odds_cache: dict[str, float] = {}
 
@@ -558,7 +555,7 @@ def _scan_match(
         model_probs = dc_probs
         meta["lgbm_used"] = False
 
-    # Odds: Multi-Source-Merger (Tier 1 Betfair/Pinnacle → Tier 2 TheOddsAPI → Tier 3 WebSearch → Tier 5 Implied)
+    # Odds: The Odds API-only merger; missing odds remain fail-closed.
     odds_q = _fetch_odds(match, model_probs)
     if odds_q is None:
         meta["skip"] = "no_odds"
@@ -608,7 +605,7 @@ def _scan_match(
     except Exception as exc:
         meta["totals_err"] = str(exc)
 
-    # AH (Merger liefert ah_home/ah_away/ah_line aus Betfair/Pinnacle/TheOddsAPI)
+    # AH (when available, the merger receives it from The Odds API).
     try:
         ah_line = odds_q.ah_line or -0.5
         ah = dixon_coles.predict_asian_handicap(home, away, params, ah_line)
@@ -804,7 +801,7 @@ def main() -> None:
             matches = _fetch_espn_fixtures()
             if matches:
                 _espn_fallback_used = True
-                print(f"ESPN: {len(matches)} Fixtures (Odds via WebSearch)")
+                print(f"ESPN: {len(matches)} Fixtures (The Odds API odds required)")
             else:
                 print("  Keine Fixtures — 2.BL offseason oder alle Quellen fehlgeschlagen.")
                 _write_health("ok", monotonic() - _t0, fallback="no_fixtures")

@@ -66,10 +66,8 @@ def get_api_key(api_key: str | None = None) -> str:
     return key
 
 
-# Module-level flag: callers (daily_scan, prematch_scan) read this after
-# fetch_upcoming_matches() to know whether they got fresh odds or fell back
-# to a stale on-disk cache. Surfaces in signals.json["meta"]["stale_odds"]
-# and the health snapshot so the dashboard can show a banner.
+# Compatibility flag retained for dashboard payloads.  Football refreshes are
+# fail-closed and never promote stale data to an authoritative quote.
 USED_STALE_CACHE: bool = False
 
 
@@ -156,8 +154,8 @@ def _fetch_events_and_odds_per_event(
 def _load_stale_upcoming_cache() -> list[dict] | None:
     """Loads the latest on-disk pickle of upcoming matches, regardless of age.
 
-    Used when the live API call fails after all retries. Returns None if no
-    cache exists.
+    Retained only for historical callers.  The authoritative Football fetch
+    never promotes this unbounded cache after a provider failure.
     """
     import pickle as _pickle
     path = DATA_CACHE / "odds_api_upcoming_wide.pkl"
@@ -173,8 +171,23 @@ def _load_stale_upcoming_cache() -> list[dict] | None:
     return None
 
 
+def _assert_odds_api_available(*, allow_quota_revalidation: bool) -> None:
+    """Run the provider budget gate before even considering a local cache."""
+
+    try:
+        from src.signals.provider_budget import is_provider_available
+        if not is_provider_available(
+            "the_odds_api", allow_quota_revalidation=allow_quota_revalidation
+        ):
+            raise RuntimeError("TheOddsAPI circuit open — fail closed")
+    except ImportError as exc:
+        # The budget guard is part of the football network boundary.  If it
+        # cannot be imported, the safe result is no request, not a bypass.
+        raise RuntimeError("TheOddsAPI budget guard unavailable — fail closed") from exc
+
+
 @disk_cache("odds_api_upcoming_wide", max_age_hours=1.0)
-def fetch_upcoming_matches(
+def _fetch_upcoming_matches(
     sport: str = "soccer_fifa_world_cup",
     regions: str | None = None,
     markets: str = "h2h,totals,spreads",
@@ -188,29 +201,12 @@ def fetch_upcoming_matches(
 
     Resilience:
       - 30s timeout per attempt, up to 3 attempts with backoff (5s, 15s)
-      - On total failure: loads last on-disk cache (regardless of age) and
-        sets module-level USED_STALE_CACHE=True so callers can flag it.
-      - O1-1: circuit breaker pre-check via provider_budget — skips API call
-        when provider is known QUOTA_EXHAUSTED / AUTH_FAILURE / CIRCUIT_OPEN.
+      - hard failures remain failures; no stale cache is promoted.
+      - provider budget preflight is performed by the public wrapper before
+        this cached function is entered.
     """
     global USED_STALE_CACHE
     USED_STALE_CACHE = False  # reset on each fresh call
-
-    # O1-1: circuit breaker pre-check — avoid any API call when provider is down
-    try:
-        from src.signals.provider_budget import is_provider_available
-        if not is_provider_available(
-            "the_odds_api", allow_quota_revalidation=allow_quota_revalidation
-        ):
-            stale = _load_stale_upcoming_cache()
-            if stale is not None:
-                USED_STALE_CACHE = True
-                print(f"  ⚠️  USED STALE CACHE (circuit open) — {len(stale)} matches "
-                      "(TheOddsAPI circuit-broken). Flag propagated to signals.meta.")
-                return stale
-            raise RuntimeError("TheOddsAPI circuit open — no stale cache available")
-    except ImportError:
-        pass  # provider_budget not available — degrade gracefully
 
     from src.config import LINE_SHOPPING_REGIONS
     if regions is None:
@@ -226,7 +222,7 @@ def fetch_upcoming_matches(
     try:
         resp = _http_get_with_retry(url, params)
         # O1-1: 401/403 = quota exhausted or auth failure; 429 = rate limited.
-        # These are not transient — circuit-break and fall back to stale cache.
+        # These are not transient — circuit-break and fail closed.
         if resp.status_code in (401, 403, 429):
             _reason = {401: "quota_or_auth", 403: "auth_failure", 429: "rate_limited"}[resp.status_code]
             print(f"  ERROR: TheOddsAPI {resp.status_code} ({_reason}) — circuit opening.")
@@ -252,17 +248,9 @@ def fetch_upcoming_matches(
                     return _parse_matches(aggregated)
                 resp.raise_for_status()
     except Exception as e:
-        # Hard fail after retries — try to keep the scanner alive with the
-        # last known on-disk cache instead of returning empty (which would
-        # cause cascading failures downstream).
+        # Hard fail after retries.  A stale cache cannot satisfy the
+        # authoritative Football source contract.
         print(f"  ERROR: TheOddsAPI fetch failed after retries: {e}")
-        stale = _load_stale_upcoming_cache()
-        if stale is not None:
-            USED_STALE_CACHE = True
-            print(f"  ⚠️  USED STALE CACHE — {len(stale)} matches loaded "
-                  "(odds may be outdated). Flag propagated to signals.meta.")
-            return stale
-        # No cache → propagate the original exception so caller can handle it.
         raise
 
     # Log usage from response headers
@@ -278,14 +266,34 @@ def fetch_upcoming_matches(
         except Exception:
             pass
         if remaining == 0:
-            stale = _load_stale_upcoming_cache()
-            if stale is not None:
-                USED_STALE_CACHE = True
-                print(f"  ⚠️  Quota exhausted — STALE CACHE ({len(stale)} matches)")
-                return stale
+            print("  INFO: TheOddsAPI quota exhausted after this response; "
+                  "no future request is permitted until the reset boundary.")
 
     data = resp.json()
     return _parse_matches(data)
+
+
+def fetch_upcoming_matches(
+    sport: str = "soccer_fifa_world_cup",
+    regions: str | None = None,
+    markets: str = "h2h,totals,spreads",
+    api_key: str | None = None,
+    force: bool = False,
+    allow_quota_revalidation: bool = False,
+) -> list[dict]:
+    """Fetch The Odds API data only after the zero-network budget gate."""
+
+    _assert_odds_api_available(
+        allow_quota_revalidation=allow_quota_revalidation
+    )
+    return _fetch_upcoming_matches(
+        sport=sport,
+        regions=regions,
+        markets=markets,
+        api_key=api_key,
+        force=force,
+        allow_quota_revalidation=allow_quota_revalidation,
+    )
 
 
 _PREFERRED_BM = "pinnacle"
@@ -349,66 +357,6 @@ def _parse_markets(bm: dict, home: str, away: str, store: dict, dynamic: dict) -
                     store[key] = o["price"]
 
 
-def _websearch_odds_fallback(home: str, away: str) -> dict | None:
-    """Search for h2h odds when TheOddsAPI has no bookmakers for a game.
-
-    Uses DuckDuckGo text search → fetches first result → extracts decimal odds
-    via JSON-LD or regex. Returns {home, draw, away} or None.
-    """
-    try:
-        from ddgs import DDGS
-        import re
-
-        query = f'{home} vs {away} 2026 FIFA World Cup odds'
-        results = DDGS().text(query, max_results=4)
-        if not results:
-            return None
-
-        headers = {"User-Agent": "Mozilla/5.0 (compatible; SportsBrainBot/1.0)"}
-        for result in results:
-            url = result.get("href", "")
-            if not url or "twitter" in url or "youtube" in url:
-                continue
-            try:
-                resp = requests.get(url, headers=headers, timeout=8)
-                if resp.status_code != 200:
-                    continue
-                html = resp.text
-
-                # Try JSON-LD first (structured sports data)
-                ld_blocks = re.findall(r'<script[^>]+type="application/ld\+json"[^>]*>(.*?)</script>',
-                                       html, re.DOTALL)
-                for block in ld_blocks:
-                    try:
-                        ld = json.loads(block)
-                        items = ld if isinstance(ld, list) else [ld]
-                        for item in items:
-                            if item.get("@type") in ("SportsEvent", "Event"):
-                                offers = item.get("offers", [])
-                                if isinstance(offers, list) and len(offers) >= 3:
-                                    prices = [float(o.get("price", 0)) for o in offers if o.get("price")]
-                                    if len(prices) >= 3 and all(1.01 < p < 50 for p in prices[:3]):
-                                        return {"home": prices[0], "draw": prices[1], "away": prices[2]}
-                    except Exception:
-                        continue
-
-                # Regex fallback: look for 3 consecutive decimal odds in context
-                # e.g. "Netherlands 2.05, Draw 3.40, Japan 3.60"
-                pattern = r'(?:home|win|1)\D{0,20}?(\d\.\d{2})\D{0,30}(?:draw|x|tie)\D{0,20}?(\d\.\d{2})\D{0,30}(?:away|win|2)\D{0,20}?(\d\.\d{2})'
-                m = re.search(pattern, html, re.IGNORECASE)
-                if m:
-                    h, d, a = float(m.group(1)), float(m.group(2)), float(m.group(3))
-                    if all(1.01 < x < 50 for x in (h, d, a)):
-                        implied = 1/h + 1/d + 1/a
-                        if 0.90 <= implied <= 1.20:
-                            return {"home": h, "draw": d, "away": a}
-            except Exception:
-                continue
-    except Exception:
-        pass
-    return None
-
-
 def _parse_matches(raw: list[dict]) -> list[dict]:
     """
     Returns one entry per match with:
@@ -431,29 +379,11 @@ def _parse_matches(raw: list[dict]) -> list[dict]:
         match_id = event.get("id", f"{home}_vs_{away}")
 
         bookmakers = event.get("bookmakers", [])
-        # WebSearch fallback: 0 bookmakers OR fewer than 3 (sparse early market)
-        sparse = len(bookmakers) < 3
-        if sparse:
-            ws_odds = _websearch_odds_fallback(home, away)
-            if ws_odds:
-                ws_bm = {"key": "websearch", "title": "WebSearch", "markets": [
-                    {"key": "h2h", "outcomes": [
-                        {"name": home,   "price": ws_odds["home"]},
-                        {"name": "Draw", "price": ws_odds["draw"]},
-                        {"name": away,   "price": ws_odds["away"]},
-                    ]}
-                ]}
-                if not bookmakers:
-                    bookmakers = [ws_bm]
-                    print(f"  INFO: {home} vs {away} — odds via WebSearch (0 bookmakers) "
-                          f"({ws_odds['home']}/{ws_odds['draw']}/{ws_odds['away']})")
-                else:
-                    bookmakers = bookmakers + [ws_bm]
-                    print(f"  INFO: {home} vs {away} — WebSearch enriched sparse market "
-                          f"({len(bookmakers)-1} → +WebSearch)")
-            elif not bookmakers:
-                print(f"  WARN: {home} vs {away} — no bookmakers, WebSearch found nothing.")
-                continue
+        # No bookmaker data means The Odds API did not provide an
+        # authoritative market for this fixture.  Keep it absent; never
+        # synthesize or import a quote from another source.
+        if not bookmakers:
+            continue
 
         best: dict[str, float] = {}
         pin: dict[str, float] = {}

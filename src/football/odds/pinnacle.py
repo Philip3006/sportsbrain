@@ -1,15 +1,8 @@
-"""Tier 1 — Pinnacle Guest-API für Football (CLV-Ground-Truth).
+"""Decommissioned Football Pinnacle compatibility module.
 
-Analog zu src/tennis/odds/pinnacle.py — nutzt denselben öffentlichen
-Arcadia-Endpoint ohne Auth.
-
-Football sportId = 29. Bundesliga 2 wird unter den deutschen Ligen gelistet.
-Liefert 1X2 (moneyline) + AH (spread) pro Match.
-
-Bulk-Strategie:
-  1. /leagues?sportId=29 → aktive Football-Ligen filtern auf "Bundesliga 2"
-  2. /leagues/{id}/matchups → Matches je Liga
-  3. /matchups/{id}/markets/related/straight → 1X2 + AH
+The active Football odds authority is The Odds API only.  This module remains
+importable for historical callers, but its public ``fetch`` is permanently
+disabled and no active Football surface imports or registers it.
 """
 from __future__ import annotations
 
@@ -164,6 +157,11 @@ def _american_to_decimal(price) -> float:
 
 
 def fetch(match_hint: dict) -> Optional[FootballOddsQuote]:
+    """Return no quote; this legacy Football provider is disabled."""
+    # Football authority is The Odds API only. This legacy module is retained
+    # for historical imports but is never an executable provider path.
+    return None
+
     home_raw = match_hint.get("home_team", "")
     away_raw = match_hint.get("away_team", "")
     sport_key = match_hint.get("sport_key", "soccer_germany_bundesliga2")

@@ -104,7 +104,7 @@ def test_rejected_observation_and_result_report_mismatch_cannot_issue() -> None:
         issue_builder2_qualification_receipt(
             report,
             observation,
-            replace(result, provider_identity="odds_api_io"),
+            replace(result, provider_identity="different-provider"),
         )
 
 

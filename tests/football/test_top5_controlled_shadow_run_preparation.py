@@ -93,16 +93,11 @@ def _prepare(**kwargs):
     return preparation_from_input_payload(_input(**kwargs))
 
 
-def test_valid_preparation_has_all_four_candidates_and_safety_flags() -> None:
+def test_valid_preparation_has_only_the_odds_api_and_safety_flags() -> None:
     preparation = _prepare()
     assert preparation.preparation_status == PREPARATION_READY
     assert tuple(item.provider for item in preparation.providers) == ORDER
-    assert [item.expected_network_request_count for item in preparation.providers] == [
-        1,
-        1,
-        1,
-        1,
-    ]
+    assert [item.expected_network_request_count for item in preparation.providers] == [1]
     assert [
         item.provider for item in preparation.expected_sequential_execution_plan
     ] == list(ORDER)
@@ -130,8 +125,8 @@ def test_preparation_digest_and_id_are_deterministic() -> None:
     assert first.as_payload() == second.as_payload()
 
 
-def test_configured_order_is_preserved_without_provider_ranking() -> None:
-    order = ("api_football", "the_odds_api", "betfair_delayed", "odds_api_io")
+def test_configured_order_is_the_odds_api_only() -> None:
+    order = ("the_odds_api",)
     preparation = _prepare(order=order)
     assert preparation.configured_provider_order == order
     assert [
@@ -169,14 +164,14 @@ def test_the_odds_api_exhausted_500_0_plans_zero_requests() -> None:
 @pytest.mark.parametrize("credential", [False, None])
 def test_missing_or_unknown_credentials_fail_closed(credential: bool | None) -> None:
     preparation = _prepare(
-        order=("odds_api_io",),
-        credentials={"odds_api_io": credential},
-        states={"odds_api_io": _state("odds_api_io")},
+        order=("the_odds_api",),
+        credentials={"the_odds_api": credential},
+        states={"the_odds_api": _state("the_odds_api")},
         maximum_requests=1,
         maximum_cost=1.0,
     )
     provider = next(
-        item for item in preparation.providers if item.provider == "odds_api_io"
+        item for item in preparation.providers if item.provider == "the_odds_api"
     )
     assert preparation.preparation_status == PREPARATION_BLOCKED
     assert provider.executable is False
@@ -185,8 +180,8 @@ def test_missing_or_unknown_credentials_fail_closed(credential: bool | None) -> 
     assert credential in (False, None)
 
 
-@pytest.mark.parametrize("provider", ["odds_api_io", "api_football", "betfair_delayed"])
-def test_discovery_required_is_explicitly_separate_from_odds(provider: str) -> None:
+def test_discovery_required_is_fail_closed_for_the_odds_api() -> None:
+    provider = "the_odds_api"
     preparation = _prepare(
         order=(provider,),
         credentials={provider: True},
@@ -199,23 +194,21 @@ def test_discovery_required_is_explicitly_separate_from_odds(provider: str) -> N
     assert preparation.preparation_status == PREPARATION_READY
     assert manifest.fixture_discovery_required is True
     assert manifest.provider_fixture_id_known is False
-    assert manifest.expected_network_request_count == 2
-    assert [item.action_class for item in actions] == ["FIXTURE_DISCOVERY", "ODDS"]
-    assert actions[0].network_request_count == actions[1].network_request_count == 1
-    assert actions[0].provider == actions[1].provider == provider
+    assert manifest.expected_network_request_count == 1
+    assert actions[0].action_class == "ODDS_AND_EVENT_DISCOVERY"
 
 
 @pytest.mark.parametrize("identity", ["UNRESOLVED", "AMBIGUOUS"])
 def test_unresolved_or_ambiguous_identity_has_no_odds_plan(identity: str) -> None:
     preparation = _prepare(
-        order=("api_football",),
-        credentials={"api_football": True},
-        states={"api_football": _state("api_football", identity=identity)},
+        order=("the_odds_api",),
+        credentials={"the_odds_api": True},
+        states={"the_odds_api": _state("the_odds_api", identity=identity)},
         maximum_requests=2,
         maximum_cost=2.0,
     )
     manifest = next(
-        item for item in preparation.providers if item.provider == "api_football"
+        item for item in preparation.providers if item.provider == "the_odds_api"
     )
     assert preparation.preparation_status == PREPARATION_BLOCKED
     assert manifest.expected_network_request_count == 0
@@ -226,73 +219,17 @@ def test_unresolved_or_ambiguous_identity_has_no_odds_plan(identity: str) -> Non
     )
 
 
-def test_api_football_pagination_and_body_error_taxonomy_are_visible() -> None:
-    preparation = _prepare(
-        order=("api_football",),
-        credentials={"api_football": True},
-        states={
-            "api_football": _state(
-                "api_football",
-                pagination_risk="paging.total > 1 blocks promotion",
-                body_error_taxonomy=("errors", "results", "paging", "response"),
-            )
-        },
-        maximum_requests=1,
-        maximum_cost=1.0,
-    )
-    manifest = next(
-        item for item in preparation.providers if item.provider == "api_football"
-    )
-    assert manifest.pagination_risk == "paging.total > 1 blocks promotion"
-    assert manifest.body_error_taxonomy == ("errors", "results", "paging", "response")
-    assert "PAGINATION_RISK" in manifest.expected_failure_classifications
-    assert "BODY_ERROR" in manifest.expected_failure_classifications
-
-
-def test_betfair_catalogue_and_book_actions_keep_delayed_semantics() -> None:
-    preparation = _prepare(
-        order=("betfair_delayed",),
-        credentials={"betfair_delayed": True},
-        states={"betfair_delayed": _state("betfair_delayed")},
-        maximum_requests=1,
-        maximum_cost=1.0,
-    )
-    manifest = next(
-        item for item in preparation.providers if item.provider == "betfair_delayed"
-    )
-    assert (
-        manifest.delayed_data_semantics
-        == "official delayed app-key semantics: 1-180 seconds"
-    )
-    assert (
-        "listMarketBook" in manifest.planned_actions[0].endpoint_or_action
-        if manifest.planned_actions
-        else True
-    )
-    assert (
-        "listMarketCatalogue" in manifest.expected_failure_classifications
-        or manifest.fixture_discovery_required is False
-    )
-    assert "runner mapping" in manifest.bookmaker_constraint
-
-
 def test_global_and_per_provider_request_and_quota_caps_fail_closed() -> None:
     preparation = _prepare(
-        order=("the_odds_api", "odds_api_io"),
-        credentials={"the_odds_api": True, "odds_api_io": True},
-        states={
-            "the_odds_api": _state("the_odds_api"),
-            "odds_api_io": _state("odds_api_io"),
-        },
+        order=("the_odds_api",),
+        credentials={"the_odds_api": True},
+        states={"the_odds_api": _state("the_odds_api")},
         maximum_requests=1,
         maximum_cost=1.0,
-        # A provider cap of zero blocks the first provider; the global cap then
-        # allows exactly one later sequential provider.
+        # One canonical provider receives one bounded request.
     )
     first = preparation.providers[0]
-    second = preparation.providers[1]
     assert first.expected_network_request_count == 1
-    assert second.expected_network_request_count == 0
     assert (
         sum(
             action.network_request_count
@@ -300,56 +237,56 @@ def test_global_and_per_provider_request_and_quota_caps_fail_closed() -> None:
         )
         == 1
     )
-    assert "global request budget" in second.reason_executable_or_blocked
+    assert preparation.preparation_status == PREPARATION_READY
 
     capped = _prepare(
-        order=("odds_api_io",),
-        credentials={"odds_api_io": True},
-        states={"odds_api_io": _state("odds_api_io", cost=2.0)},
+        order=("the_odds_api",),
+        credentials={"the_odds_api": True},
+        states={"the_odds_api": _state("the_odds_api", cost=2.0)},
         maximum_requests=1,
         maximum_cost=2.0,
     )
     assert capped.preparation_status == PREPARATION_READY
-    assert capped.providers[1].expected_quota_cost_units == 2.0
+    assert capped.providers[0].expected_quota_cost_units == 2.0
 
     provider_capped = _prepare(
-        order=("odds_api_io",),
-        credentials={"odds_api_io": True},
-        states={"odds_api_io": _state("odds_api_io")},
+        order=("the_odds_api",),
+        credentials={"the_odds_api": True},
+        states={"the_odds_api": _state("the_odds_api")},
         maximum_requests=1,
         maximum_cost=1.0,
     )
     # Caller-supplied provider maximums are exercised through the payload API below.
     payload = _input(
-        order=("odds_api_io",),
-        credentials={"odds_api_io": True},
-        states={"odds_api_io": _state("odds_api_io")},
+        order=("the_odds_api",),
+        credentials={"the_odds_api": True},
+        states={"the_odds_api": _state("the_odds_api")},
         maximum_requests=1,
         maximum_cost=1.0,
     )
-    payload["per_provider_maximum_requests"] = {"odds_api_io": 0}
+    payload["per_provider_maximum_requests"] = {"the_odds_api": 0}
     limited = preparation_from_input_payload(payload)
     assert limited.preparation_status == PREPARATION_BLOCKED
-    assert limited.providers[1].expected_network_request_count == 0
+    assert limited.providers[0].expected_network_request_count == 0
     assert (
-        "provider request maximum" in limited.providers[1].reason_executable_or_blocked
+        "provider request maximum" in limited.providers[0].reason_executable_or_blocked
     )
     assert provider_capped.preparation_status == PREPARATION_READY
 
 
 def test_zero_quota_cost_cap_blocks_without_network() -> None:
     preparation = _prepare(
-        order=("api_football",),
-        credentials={"api_football": True},
-        states={"api_football": _state("api_football")},
+        order=("the_odds_api",),
+        credentials={"the_odds_api": True},
+        states={"the_odds_api": _state("the_odds_api")},
         maximum_requests=1,
         maximum_cost=0.0,
     )
     assert preparation.preparation_status == PREPARATION_BLOCKED
-    assert preparation.providers[2].expected_network_request_count == 0
+    assert preparation.providers[0].expected_network_request_count == 0
     assert (
         "global quota-cost budget"
-        in preparation.providers[2].reason_executable_or_blocked
+        in preparation.providers[0].reason_executable_or_blocked
     )
 
 
@@ -362,7 +299,7 @@ def test_zero_quota_cost_cap_blocks_without_network() -> None:
         {"maximum_total_network_requests": -1},
         {"maximum_total_quota_cost_units": -1.0},
         {"timing_policy": {"maximum_odds_age_seconds": 900}},
-        {"provider_readiness": {"odds_api_io": {"readiness_state": "not-real"}}},
+        {"provider_readiness": {"the_odds_api": {"readiness_state": "not-real"}}},
     ],
 )
 def test_invalid_preparation_input_fails_closed(

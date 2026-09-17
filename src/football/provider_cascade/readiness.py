@@ -37,25 +37,17 @@ DEFAULT_QUOTA_FRESHNESS_SECONDS = 31 * 24 * 60 * 60
 
 _SOURCE_TIMESTAMP_CAPABILITY = {
     "the_odds_api": True,
-    "odds_api_io": True,
-    "api_football": False,
-    "betfair_delayed": False,
 }
 _PARSER_CONTRACT = {
-    provider: "SUPPORTED"
-    for provider in ("the_odds_api", "odds_api_io", "api_football", "betfair_delayed")
+    "the_odds_api": "SUPPORTED",
 }
 _QUOTA_HEADER_CONTRACT = {
     "the_odds_api": "SUPPORTED",
-    "odds_api_io": "SUPPORTED",
-    "api_football": "NOT_SUPPORTED",
-    "betfair_delayed": "NOT_SUPPORTED",
 }
 _HEALTH_CONTRACT = {
-    provider: "SUPPORTED"
-    for provider in ("the_odds_api", "odds_api_io", "api_football", "betfair_delayed")
+    "the_odds_api": "SUPPORTED",
 }
-_IDENTITY_REQUIRED = frozenset({"odds_api_io", "api_football", "betfair_delayed"})
+_IDENTITY_REQUIRED = frozenset()
 _READY_STATES = frozenset(
     {
         ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION.value,
@@ -516,8 +508,12 @@ def build_provider_readiness_view(
         observed_state = str(quota_state.state)
         if not credential:
             observed_state = ProviderState.CREDENTIAL_MISSING.value
-        elif quota.remaining == 0 and not reset_eligible:
-            observed_state = ProviderState.QUOTA_EXHAUSTED.value
+        elif quota.remaining == 0:
+            observed_state = (
+                "QUOTA_REVALIDATION_ELIGIBLE"
+                if reset_eligible
+                else ProviderState.QUOTA_EXHAUSTED.value
+            )
         rate_state = "UNKNOWN"
         if quota.rate_remaining is not None:
             rate_state = (

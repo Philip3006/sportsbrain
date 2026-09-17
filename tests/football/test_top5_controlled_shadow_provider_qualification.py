@@ -58,9 +58,6 @@ EXPECTED = ExpectedCascadeFixture(
 )
 ORDER = (
     "the_odds_api",
-    "odds_api_io",
-    "api_football",
-    "betfair_delayed",
 )
 READY = {
     provider: ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION
@@ -631,32 +628,6 @@ def test_authorization_is_scoped_expiring_single_use_and_never_paid() -> None:
     assert QualificationCode.AUTHORIZATION_EXPIRED.value in result.failure_codes
 
 
-def test_betfair_requires_explicit_delayed_provenance() -> None:
-    observation = replace(
-        _observation(),
-        provider_identity="betfair_delayed",
-        delayed_observation=False,
-        cascade_evidence=replace(
-            _cascade(),
-            configured_provider_order=("betfair_delayed",),
-            attempts=(
-                replace(
-                    _cascade().attempts[0],
-                    configured_provider_order=("betfair_delayed",),
-                    provider_identity="betfair_delayed",
-                    provider_record_id="betfair_delayed-event-1",
-                    request_identity="request-betfair",
-                    adapter_version="betfair-adapter-v1",
-                ),
-            ),
-            skipped_providers=(),
-            selected_provider="betfair_delayed",
-        ),
-    )
-    result = _qualify((observation,)).results[0]
-    assert result.status is ProviderQualificationStatus.OBSERVED_REJECTED
-
-
 def test_metrics_have_no_fake_denominator_and_cover_only_top5_leagues() -> None:
     report = _qualify(())
     assert all(item.coverage_rate is None for item in report.coverage)
@@ -716,8 +687,8 @@ def test_fixture_with_fake_attestation_never_becomes_real() -> None:
         ),
         (
             "provider_identity",
-            "odds_api_io",
-            QualificationCode.CAPTURE_ATTESTATION_MISMATCH,
+            "unapproved-provider",
+            QualificationCode.CAPTURE_ATTESTATION_INVALID,
         ),
         ("fixture_key", "EPL::wrong-fixture", QualificationCode.WRONG_FIXTURE),
         (
@@ -766,60 +737,34 @@ def test_exact_serialized_controlled_capture_attestation_is_eligible() -> None:
     ).cascade_evidence_digest == evidence_digest(observation.cascade_evidence)
 
 
-@pytest.mark.parametrize(
-    ("outcomes", "maximum", "expected_network", "accepted"),
-    [
-        (
-            (CascadeOutcome.QUOTA_EXHAUSTED, CascadeOutcome.SUCCESS),
-            1,
-            1,
-            True,
-        ),
-        ((CascadeOutcome.TIMEOUT, CascadeOutcome.SUCCESS), 2, 2, True),
-        (
-            (CascadeOutcome.TIMEOUT, CascadeOutcome.HTTP_403, CascadeOutcome.SUCCESS),
-            3,
-            3,
-            True,
-        ),
-        ((CascadeOutcome.TIMEOUT, CascadeOutcome.SUCCESS), 1, 2, False),
-    ],
-)
-def test_authorization_budget_counts_every_cascade_attempt(
-    outcomes: tuple[CascadeOutcome, ...],
-    maximum: int,
-    expected_network: int,
-    accepted: bool,
-) -> None:
-    observation = _observation_with_outcomes(outcomes)
+def test_authorization_budget_counts_the_single_canonical_provider_attempt() -> None:
+    observation = _observation_with_outcomes((CascadeOutcome.SUCCESS,))
     authorization = replace(
-        _authorization(
-            maximum_network_requests=maximum,
-        ),
+        _authorization(maximum_network_requests=1),
         provider_scope=ORDER,
     )
     report = _qualify((observation,), authorization=authorization)
-    assert report.cascade_network_request_count == expected_network
-    assert report.session.network_request_count == expected_network
+    assert report.cascade_network_request_count == 1
+    assert report.session.network_request_count == 1
     assert report.session.selected_observation_network_request_count == 1
-    assert report.results[0].accepted is accepted
+    assert report.results[0].accepted is True
 
 
 def test_quota_units_are_reported_independently_from_network_requests() -> None:
     observation = _observation_with_outcomes(
-        (CascadeOutcome.TIMEOUT, CascadeOutcome.SUCCESS),
-        quota_cost_units=(2.5, 0.25),
+        (CascadeOutcome.SUCCESS,),
+        quota_cost_units=(0.25,),
     )
     report = _qualify(
         (observation,),
         authorization=replace(
-            _authorization(maximum_network_requests=2), provider_scope=ORDER
+            _authorization(maximum_network_requests=1), provider_scope=ORDER
         ),
     )
-    assert report.cascade_network_request_count == 2
+    assert report.cascade_network_request_count == 1
     assert report.selected_observation_network_request_count == 1
-    assert report.quota_units_observed == 2.75
-    assert report.session.quota_units_observed == 2.75
+    assert report.quota_units_observed == 0.25
+    assert report.session.quota_units_observed == 0.25
 
 
 def test_authorization_single_use_is_external_and_run_bound() -> None:

@@ -2,9 +2,6 @@
 
 from src.football.provider_cascade.adapters import (
     AdapterResult,
-    ApiFootballAdapter,
-    BetfairDelayedAdapter,
-    OddsApiIoAdapter,
     ProviderRequest,
     RawProviderResponse,
     TheOddsAPIAdapter,
@@ -27,7 +24,9 @@ from src.football.provider_cascade.comparison import (
 )
 from src.football.provider_cascade.contracts import (
     BUILDER2_VALIDATION_CONTRACT_VERSION,
+    DECOMMISSIONED_FOOTBALL_PROVIDERS,
     DEFAULT_PROVIDER_ORDER,
+    FOOTBALL_PROVIDER_REPERTOIRE,
     MARKET_PREMATCH_1X2,
     CascadeDecisionTrace,
     CascadeResult,
@@ -109,9 +108,11 @@ __all__ = [
     "AUTHORIZATION_SCHEMA_VERSION",
     "BUILDER2_VALIDATION_CONTRACT_VERSION",
     "CAPTURE_ATTESTATION_SCHEMA_VERSION",
+    "DECOMMISSIONED_FOOTBALL_PROVIDERS",
     "DEFAULT_PROVIDER_ORDER",
     "DEFAULT_QUOTA_FRESHNESS_SECONDS",
     "EXECUTION_BANNERS",
+    "FOOTBALL_PROVIDER_REPERTOIRE",
     "MARKET_PREMATCH_1X2",
     "PREPARATION_BLOCKED",
     "PREPARATION_READY",
@@ -120,8 +121,6 @@ __all__ = [
     "RELEASE_PREFLIGHT_BLOCKED",
     "RELEASE_PREFLIGHT_READY",
     "AdapterResult",
-    "ApiFootballAdapter",
-    "BetfairDelayedAdapter",
     "Builder1OddsInput",
     "Builder2QualificationReceiptError",
     "Builder2QualificationReceiptV1",
@@ -142,7 +141,6 @@ __all__ = [
     "NetworkCapableProviderTransport",
     "NormalizedOddsObservation",
     "ObservationCompleteness",
-    "OddsApiIoAdapter",
     "PersistedProviderQuotaState",
     "PreflightDecision",
     "PreparationAction",

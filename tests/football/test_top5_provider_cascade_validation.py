@@ -206,12 +206,7 @@ def _all_failed(
     outcomes: tuple[CascadeOutcome, ...] | None = None,
     order: tuple[str, ...] = CASCADE_PROVIDER_ORDER,
 ) -> CascadeEvidence:
-    outcomes = outcomes or (
-        CascadeOutcome.QUOTA_EXHAUSTED,
-        CascadeOutcome.TIMEOUT,
-        CascadeOutcome.HTTP_403,
-        CascadeOutcome.PROVIDER_UNAVAILABLE,
-    )
+    outcomes = outcomes or (CascadeOutcome.QUOTA_EXHAUSTED,)
     return _evidence(
         tuple(
             _attempt(provider, index, outcome=outcome)
@@ -234,15 +229,6 @@ def test_policy_requires_caller_supplied_timing_and_exact_fixture() -> None:
         _policy(expected=None).validate()
 
 
-ALT_ORDER = (
-    "odds_api_io",
-    "api_football",
-    "betfair_delayed",
-    "the_odds_api",
-)
-SUBSET_ORDER = ("odds_api_io", "api_football", "betfair_delayed")
-
-
 def _skipped_after(index: int, order: tuple[str, ...]) -> tuple[SkippedProvider, ...]:
     return tuple(
         SkippedProvider(provider, skipped_index, "terminal injected failure")
@@ -250,9 +236,7 @@ def _skipped_after(index: int, order: tuple[str, ...]) -> tuple[SkippedProvider,
     )
 
 
-def test_default_alternative_and_subset_orders_are_configuration_not_authority() -> (
-    None
-):
+def test_canonical_order_is_the_only_allowed_provider_order() -> None:
     default = validate_cascade_evidence(
         _evidence(
             (_attempt("the_odds_api", 0, readiness=READY),),
@@ -263,63 +247,29 @@ def test_default_alternative_and_subset_orders_are_configuration_not_authority()
     )
     assert default.accepted is True
 
-    alternative = validate_cascade_evidence(
-        _evidence(
-            (
-                _attempt(
-                    "odds_api_io",
-                    0,
-                    configured_order=ALT_ORDER,
-                    readiness=READY,
-                ),
-            ),
-            selected_provider="odds_api_io",
-            prediction_input_allowed=True,
-            order=ALT_ORDER,
-        ),
-        _policy(ready=True, order=ALT_ORDER),
-    )
-    assert alternative.accepted is True
-    assert alternative.selected_provider == "odds_api_io"
-
-    subset = validate_cascade_evidence(
-        _evidence(
-            (
-                _attempt(
-                    "odds_api_io",
-                    0,
-                    configured_order=SUBSET_ORDER,
-                    readiness=READY,
-                ),
-            ),
-            selected_provider="odds_api_io",
-            prediction_input_allowed=True,
-            order=SUBSET_ORDER,
-        ),
-        _policy(ready=True, order=SUBSET_ORDER),
-    )
-    assert subset.accepted is True
+    with pytest.raises(CascadeValidationError, match="unknown"):
+        _policy(order=("unapproved-provider",)).validate()
 
 
 def test_evidence_order_duplicate_and_unknown_provider_are_rejected() -> None:
     alternative = _evidence(
         (
             _attempt(
-                "odds_api_io",
+                "unapproved-provider",
                 0,
-                configured_order=ALT_ORDER,
+                configured_order=("unapproved-provider",),
                 readiness=READY,
             ),
         ),
-        selected_provider="odds_api_io",
+        selected_provider="unapproved-provider",
         prediction_input_allowed=True,
-        order=ALT_ORDER,
+        order=("unapproved-provider",),
     )
     mismatch = validate_cascade_evidence(alternative, _policy(ready=True))
-    assert ValidationCode.CONFIGURATION_MISMATCH in mismatch.errors
+    assert ValidationCode.INVALID_SOURCE_CONTRACT in mismatch.errors
 
     with pytest.raises(CascadeValidationError, match="duplicates"):
-        _policy(order=("odds_api_io", "odds_api_io")).validate()
+        _policy(order=("the_odds_api", "the_odds_api")).validate()
     with pytest.raises(CascadeValidationError, match="unknown"):
         _policy(order=("unknown_provider",)).validate()
 
@@ -480,22 +430,17 @@ def test_valid_serialized_success_passes_and_selects_only_the_observed_source() 
     assert report.metrics.latency_observations_ms == (100.0,)
 
 
-def test_quota_exhaustion_denies_the_odds_api_credit_and_allows_serial_fallback() -> (
-    None
-):
+def test_quota_exhaustion_denies_the_odds_api_credit_and_fails_closed() -> None:
     evidence = _evidence(
-        (
-            _attempt("the_odds_api", 0, outcome=CascadeOutcome.QUOTA_EXHAUSTED),
-            _attempt("odds_api_io", 1, readiness=READY),
-        ),
-        selected_provider="odds_api_io",
-        prediction_input_allowed=True,
+        (_attempt("the_odds_api", 0, outcome=CascadeOutcome.QUOTA_EXHAUSTED),),
+        selected_provider=None,
+        prediction_input_allowed=False,
     )
     report = validate_cascade_evidence(evidence, _policy(ready=True))
     assert report.accepted is True
-    assert report.selected_provider == "odds_api_io"
-    assert report.metrics.fallback_depth == 1
-    assert report.metrics.successful_fallback_count == 1
+    assert report.selected_provider is None
+    assert report.metrics.fallback_depth == 0
+    assert report.metrics.successful_fallback_count == 0
     assert report.metrics.quota_rejected_before_network_count == 1
     first_attempt = evidence.attempts[0]
     assert first_attempt.network_called is False
@@ -521,14 +466,14 @@ def test_exhausted_provider_is_not_retried() -> None:
     assert report.prediction_input_allowed is False
 
 
-def test_all_four_failures_are_accepted_as_evidence_but_fail_closed() -> None:
+def test_quota_failure_is_accepted_as_evidence_but_fail_closed() -> None:
     report = validate_cascade_evidence(_all_failed(), _policy())
     assert report.accepted is True
     assert report.fail_closed is True
     assert report.prediction_input_allowed is False
     assert report.selected_provider is None
     assert report.errors == ()
-    assert report.metrics.provider_attempts == 4
+    assert report.metrics.provider_attempts == 1
     assert report.metrics.provider_success_count == 0
     assert report.metrics.fail_closed_count == 1
 
@@ -537,7 +482,7 @@ def test_success_stops_cascade_and_later_attempt_is_illegal() -> None:
     evidence = _evidence(
         (
             _attempt("the_odds_api", 0, readiness=READY),
-            _attempt("odds_api_io", 1, outcome=CascadeOutcome.TIMEOUT),
+            _attempt("the_odds_api", 1, outcome=CascadeOutcome.TIMEOUT),
         ),
         selected_provider="the_odds_api",
         prediction_input_allowed=True,
@@ -571,9 +516,9 @@ def test_order_duplicate_and_skipped_provider_contracts_fail_closed() -> None:
     assert ValidationCode.DUPLICATE_ATTEMPT in duplicate_report.errors
 
     skipped = SkippedProvider(
-        "odds_api_io", 1, "provider disabled in injected scenario"
+        "unapproved-provider", 1, "provider disabled in injected scenario"
     )
-    wrong_skipped = replace(skipped, provider_identity="api_football")
+    wrong_skipped = replace(skipped, provider_identity="another-unapproved-provider")
     skipped_evidence = _evidence(
         (_attempt("the_odds_api", 0, outcome=CascadeOutcome.TIMEOUT),),
         selected_provider=None,
@@ -594,26 +539,10 @@ def test_parallel_or_overlapping_attempts_are_fanout_not_sequential_fallback() -
     parallel_report = validate_cascade_evidence(parallel, _policy())
     assert ValidationCode.FANOUT_DETECTED in parallel_report.errors
 
-    overlap = _evidence(
-        (
-            _attempt("the_odds_api", 0, outcome=CascadeOutcome.TIMEOUT),
-            _attempt(
-                "odds_api_io",
-                1,
-                start=CAPTURED + timedelta(milliseconds=500),
-            ),
-        ),
-        selected_provider="odds_api_io",
-        prediction_input_allowed=True,
-    )
-    overlap_report = validate_cascade_evidence(overlap, _policy(ready=True))
-    assert ValidationCode.FANOUT_DETECTED in overlap_report.errors
-
-
 def test_selected_provider_must_be_the_first_valid_success() -> None:
     success = _evidence(
         (_attempt("the_odds_api", 0, readiness=READY),),
-        selected_provider="odds_api_io",
+        selected_provider="unapproved-provider",
         prediction_input_allowed=True,
     )
     report = validate_cascade_evidence(success, _policy(ready=True))
@@ -873,13 +802,13 @@ def test_exact_fixture_and_quality_gates_reject_bad_success(mutator) -> None:
 
 def test_missing_readiness_never_escalates_from_contract_support() -> None:
     attempt = _attempt(
-        "odds_api_io",
+        "the_odds_api",
         0,
         readiness=ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION,
     )
     report = validate_cascade_evidence(
         _evidence(
-            (attempt,), selected_provider="odds_api_io", prediction_input_allowed=True
+            (attempt,), selected_provider="the_odds_api", prediction_input_allowed=True
         ),
         _policy(),
     )
@@ -933,7 +862,7 @@ def test_bridge_to_builder_one_v1_remains_no_bet_and_does_not_create_prediction(
     assert bundle.safety.production_activation is False
 
 
-def test_all_failed_bridge_is_validation_only_and_fail_closed() -> None:
+def test_quota_failed_bridge_is_validation_only_and_fail_closed() -> None:
     observation = cascade_to_shadow_observation_evidence(_all_failed(), _policy())
     assert observation.eligible is False
     assert observation.rejected is True

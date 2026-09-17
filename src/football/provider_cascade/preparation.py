@@ -91,88 +91,6 @@ _PROVIDER_SPECS = MappingProxyType(
             ),
             supports_inline_identity_discovery=True,
         ),
-        "odds_api_io": _ProviderSpec(
-            display_name="Odds-API.io",
-            odds_action="GET /odds/multi",
-            discovery_action="GET /events/search",
-            source_timestamp_capability="market.updatedAt",
-            delayed_data_semantics=None,
-            bookmaker_constraint="explicit bookmaker allow-list",
-            expected_failures=(
-                "CREDENTIAL_MISSING",
-                "QUOTA_EXHAUSTED",
-                "RATE_LIMITED",
-                "AUTH_FAILED",
-                "DISCOVERY_REQUIRED",
-                "UNRESOLVED",
-                "AMBIGUOUS",
-                "PARTIAL",
-                "MALFORMED",
-                "STALE",
-            ),
-            prerequisites=(
-                "credential presence must be explicitly true",
-                "known non-exhausted provider quota",
-                "resolved provider event ID or a separately planned discovery call",
-                "market.updatedAt and complete ML 1X2 response",
-            ),
-        ),
-        "api_football": _ProviderSpec(
-            display_name="API-Football",
-            odds_action="GET /odds?fixture={provider_fixture_id}&page=1",
-            discovery_action="GET /fixtures",
-            source_timestamp_capability=(
-                "provider timestamp when supplied; otherwise CAPTURE_TIME_ONLY"
-            ),
-            delayed_data_semantics=None,
-            bookmaker_constraint="documented bookmaker Match Winner market",
-            expected_failures=(
-                "CREDENTIAL_MISSING",
-                "QUOTA_EXHAUSTED",
-                "RATE_LIMITED",
-                "AUTH_FAILED",
-                "DISCOVERY_REQUIRED",
-                "UNRESOLVED",
-                "AMBIGUOUS",
-                "PAGINATION_RISK",
-                "BODY_ERROR",
-                "PARTIAL",
-                "MALFORMED",
-            ),
-            prerequisites=(
-                "credential presence must be explicitly true",
-                "known non-exhausted provider quota",
-                "resolved fixture ID or a separately planned discovery call",
-                "body errors and pagination must be checked fail closed",
-            ),
-        ),
-        "betfair_delayed": _ProviderSpec(
-            display_name="Betfair Delayed",
-            odds_action="listMarketBook(EX_BEST_OFFERS)",
-            discovery_action="listMarketCatalogue",
-            source_timestamp_capability="CAPTURE_TIME_ONLY unless a legitimate source timestamp is supplied",
-            delayed_data_semantics="official delayed app-key semantics: 1-180 seconds",
-            bookmaker_constraint="exchange market plus exact catalogue runner mapping",
-            expected_failures=(
-                "CREDENTIAL_MISSING",
-                "QUOTA_EXHAUSTED",
-                "RATE_LIMITED",
-                "AUTH_FAILED",
-                "DISCOVERY_REQUIRED",
-                "UNRESOLVED",
-                "AMBIGUOUS",
-                "MISSING_RUNNER_MAPPING",
-                "DELAY_SEMANTICS_MISSING",
-                "PARTIAL",
-                "MALFORMED",
-            ),
-            prerequisites=(
-                "application key and session-token presence must be explicit",
-                "known non-exhausted request-weight/quota state",
-                "resolved market ID or a separately planned catalogue call",
-                "delayed semantics and exact home/draw/away runner mapping",
-            ),
-        ),
     }
 )
 
@@ -968,7 +886,7 @@ class ControlledShadowRunPreparationV1:
         )
         if len(self.providers) != len(SUPPORTED_PREPARATION_PROVIDERS):
             raise PreparationContractError(
-                "preparation must include all four provider entries"
+                "preparation must include the canonical provider entry"
             )
         if (
             tuple(item.provider for item in self.providers)
@@ -1512,20 +1430,6 @@ def _provider_manifest(
         blockers.append("pagination risk is not applicable to the sport-level endpoint")
     pagination_risk = evidence.pagination_risk
     body_error_taxonomy = evidence.body_error_taxonomy
-    if provider == "api_football":
-        failures.extend(
-            item for item in ("PAGINATION_RISK", "BODY_ERROR") if item not in failures
-        )
-        pagination_risk = (
-            pagination_risk
-            or "paging.total > 1 is visible; page 1 only and no promotion"
-        )
-        body_error_taxonomy = body_error_taxonomy or (
-            "errors",
-            "results",
-            "paging",
-            "response",
-        )
 
     raw_request_count = len(actions)
     raw_cost = raw_request_count * evidence.quota_cost_units_per_request

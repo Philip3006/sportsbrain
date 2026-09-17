@@ -85,8 +85,8 @@ def _prepare(
     maximum_requests: int | None = None,
     maximum_cost: float | None = None,
 ):
-    remaining = remaining or {provider: 10 for provider in ORDER}
-    identities = identities or {provider: "RESOLVED" for provider in ORDER}
+    remaining = remaining or {provider: 10 for provider in order}
+    identities = identities or {provider: "RESOLVED" for provider in order}
     return preparation_from_input_payload(
         {
             "fixture": _fixture(),
@@ -95,17 +95,21 @@ def _prepare(
                 "kickoff_tolerance_seconds": 60,
             },
             "provider_order": list(order),
-            "credential_presence": {provider: True for provider in ORDER},
+            "credential_presence": {provider: True for provider in order},
             "provider_readiness": {
                 provider: _state(
                     provider,
                     identity=identities[provider],
                     remaining=remaining[provider],
                 )
-                for provider in ORDER
+                for provider in order
             },
-            "maximum_total_network_requests": maximum_requests or len(order),
-            "maximum_total_quota_cost_units": maximum_cost or float(len(order)),
+            "maximum_total_network_requests": (
+                len(order) if maximum_requests is None else maximum_requests
+            ),
+            "maximum_total_quota_cost_units": (
+                float(len(order)) if maximum_cost is None else maximum_cost
+            ),
         }
     )
 
@@ -171,12 +175,8 @@ def _success(
         adapter_version=f"{provider}:adapter-v1",
         adapter_source_sha="a" * 64,
         evidence_kind=evidence_kind,
-        runner_mapping=(
-            {"home": "1", "draw": "2", "away": "3"}
-            if provider == "betfair_delayed"
-            else {}
-        ),
-        app_session_prerequisites=True if provider == "betfair_delayed" else None,
+        runner_mapping={},
+        app_session_prerequisites=None,
         **changes,
     )
 
@@ -378,110 +378,39 @@ def test_test_only_attestation_rejects_network_execution_claim() -> None:
     assert result.attestation.as_payload()["network_execution"] is False
 
 
-def test_failed_first_provider_falls_back_in_configured_order() -> None:
-    preparation = _prepare(order=ORDER)
+def test_the_odds_api_failure_is_fail_closed_without_fallback() -> None:
+    preparation = _prepare(order=("the_odds_api",))
     authorization = _auth(preparation)
     transport = FakeControlledShadowTransport(
         {
             ("the_odds_api", "ODDS"): ProviderTransportResponse(
                 outcome="RATE_LIMITED", failure_detail="rate limited"
             ),
-            ("odds_api_io", "ODDS"): _success("odds_api_io"),
         }
     )
     result = ControlledShadowExecutionHarness(clock=lambda: NOW).execute(
         preparation, authorization, transport=transport
     )
-    assert result.selected_provider == "odds_api_io"
-    assert [request.provider for request in transport.calls] == [
-        "the_odds_api",
-        "odds_api_io",
-    ]
-    assert result.network_request_count == 2
-    assert result.attestation.attempted_providers == ("the_odds_api", "odds_api_io")
-
-
-def test_odds_api_500_remaining_zero_makes_zero_calls_then_falls_back() -> None:
-    preparation = _prepare(
-        order=ORDER,
-        remaining={"the_odds_api": 0, **{provider: 10 for provider in ORDER[1:]}},
-        maximum_requests=4,
-        maximum_cost=4.0,
-    )
-    authorization = _auth(preparation)
-    transport = FakeControlledShadowTransport(
-        {("odds_api_io", "ODDS"): _success("odds_api_io")}
-    )
-    result = ControlledShadowExecutionHarness(clock=lambda: NOW).execute(
-        preparation, authorization, transport=transport
-    )
-    assert result.selected_provider == "odds_api_io"
-    assert [request.provider for request in transport.calls] == ["odds_api_io"]
+    assert result.selected_provider is None
+    assert [request.provider for request in transport.calls] == ["the_odds_api"]
     assert result.network_request_count == 1
-    assert any("remaining=0" in item for item in result.failure_evidence)
-    assert any("QUOTA_EXHAUSTED" in item for item in result.failure_evidence)
+    assert result.attestation.attempted_providers == ("the_odds_api",)
 
 
-def test_discovery_and_odds_are_separately_counted() -> None:
-    provider = "odds_api_io"
+def test_odds_api_500_remaining_zero_makes_zero_calls_and_fails_closed() -> None:
     preparation = _prepare(
-        order=(provider,),
-        identities={
-            provider: "DISCOVERY_REQUIRED",
-            **{item: "RESOLVED" for item in ORDER if item != provider},
-        },
-        maximum_requests=2,
-        maximum_cost=2.0,
+        order=("the_odds_api",),
+        remaining={"the_odds_api": 0},
+        maximum_requests=1,
+        maximum_cost=1.0,
     )
     authorization = _auth(preparation)
-    transport = FakeControlledShadowTransport(
-        {
-            (provider, "FIXTURE_DISCOVERY"): ProviderTransportResponse(
-                outcome="SUCCESS", identity_state="UNIQUE", provider_event_id="event-1"
-            ),
-            (provider, "ODDS"): _success(provider),
-        }
-    )
-    result = ControlledShadowExecutionHarness(clock=lambda: NOW).execute(
-        preparation, authorization, transport=transport
-    )
-    assert result.discovery_request_count == 1
-    assert result.odds_request_count == 1
-    assert result.network_request_count == 2
-    assert [request.action.value for request in transport.calls] == [
-        "FIXTURE_DISCOVERY",
-        "ODDS",
-    ]
-
-
-def test_ambiguous_discovery_stops_before_odds() -> None:
-    provider = "api_football"
-    preparation = _prepare(
-        order=(provider,),
-        identities={
-            provider: "DISCOVERY_REQUIRED",
-            **{item: "RESOLVED" for item in ORDER if item != provider},
-        },
-        maximum_requests=2,
-        maximum_cost=2.0,
-    )
-    authorization = _auth(preparation)
-    transport = FakeControlledShadowTransport(
-        {
-            (provider, "FIXTURE_DISCOVERY"): ProviderTransportResponse(
-                outcome="SUCCESS", identity_state="AMBIGUOUS"
-            )
-        }
-    )
-    result = ControlledShadowExecutionHarness(clock=lambda: NOW).execute(
-        preparation, authorization, transport=transport
-    )
-    assert result.status is ExecutionStatus.NO_OBSERVATION
-    assert result.observation is None
-    assert [request.action.value for request in transport.calls] == [
-        "FIXTURE_DISCOVERY"
-    ]
-    assert result.odds_request_count == 0
+    transport = FakeControlledShadowTransport()
+    with pytest.raises(HarnessExecutionBlocked, match="preparation is not READY"):
+        ControlledShadowExecutionHarness(clock=lambda: NOW).execute(
+            preparation, authorization, transport=transport
+        )
+    assert transport.calls == []
 
 
 def test_network_capable_transport_is_rejected_without_calling_it() -> None:
@@ -534,7 +463,7 @@ def test_conflicting_replay_fails_closed() -> None:
 
 
 def test_all_failures_emit_no_observation_and_one_attestation_per_attempt() -> None:
-    preparation = _prepare(order=ORDER)
+    preparation = _prepare(order=("the_odds_api",))
     authorization = _auth(preparation)
     transport = FakeControlledShadowTransport(
         default=ProviderTransportResponse(outcome="PROVIDER_UNAVAILABLE")
@@ -545,47 +474,8 @@ def test_all_failures_emit_no_observation_and_one_attestation_per_attempt() -> N
     assert result.status is ExecutionStatus.NO_OBSERVATION
     assert result.selected_provider is None
     assert result.observation is None
-    assert len(result.attestations) == len(ORDER)
+    assert len(result.attestations) == 1
     assert any(item.startswith("NO_OBSERVATION:") for item in result.failure_evidence)
-
-
-def test_api_football_pagination_and_body_errors_fail_closed() -> None:
-    provider = "api_football"
-    preparation = _prepare(order=(provider,), maximum_requests=1, maximum_cost=1.0)
-    authorization = _auth(preparation)
-    transport = FakeControlledShadowTransport(
-        {
-            (provider, "ODDS"): _success(
-                provider, pagination_total=2, body_error_taxonomy=("errors",)
-            )
-        }
-    )
-    result = ControlledShadowExecutionHarness(clock=lambda: NOW).execute(
-        preparation, authorization, transport=transport
-    )
-    assert result.status is ExecutionStatus.NO_OBSERVATION
-    assert any("PAGINATION_RISK" in item for item in result.failure_evidence)
-
-
-def test_betfair_success_preserves_delayed_semantics() -> None:
-    provider = "betfair_delayed"
-    preparation = _prepare(order=(provider,), maximum_requests=1, maximum_cost=1.0)
-    authorization = _auth(preparation)
-    transport = FakeControlledShadowTransport(
-        {
-            (
-                provider,
-                "ODDS",
-            ): _success(provider, delayed_observation=True, delay_seconds=30)
-        }
-    )
-    result = ControlledShadowExecutionHarness(clock=lambda: NOW).execute(
-        preparation, authorization, transport=transport
-    )
-    assert result.observation is not None
-    assert result.observation.delayed_observation is True
-    assert result.normalized_observation is not None
-    assert result.normalized_observation.delayed is True
 
 
 def test_harness_does_not_import_or_issue_builder2_authority() -> None:
