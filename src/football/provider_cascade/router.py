@@ -34,6 +34,7 @@ from src.football.provider_cascade.contracts import (
     stable_request_identity,
 )
 from src.football.provider_cascade.health import ProviderHealthRegistry
+from src.football.provider_cascade.readiness import QuotaStateStore
 
 DEFAULT_ADAPTERS: Mapping[str, OddsProviderAdapter] = {
     "the_odds_api": TheOddsAPIAdapter(),
@@ -61,6 +62,7 @@ class ProviderCascadeRouter:
         *,
         adapters: Mapping[str, OddsProviderAdapter] | None = None,
         budget: RequestBudgetManager | None = None,
+        quota_state_store: QuotaStateStore | None = None,
         now: datetime | None = None,
         timing_policy: CascadeTimingPolicy | None = None,
     ) -> None:
@@ -78,7 +80,9 @@ class ProviderCascadeRouter:
             raise ProductionContractError(
                 f"missing provider adapters: {', '.join(missing)}"
             )
-        self.budget = budget or RequestBudgetManager(self.config, now=now)
+        self.budget = budget or RequestBudgetManager(
+            self.config, quota_state_store=quota_state_store, now=now
+        )
         credentials = {
             name: self.budget.credential_available(provider)
             for name, provider in self.config.providers.items()
@@ -307,11 +311,27 @@ class ProviderCascadeRouter:
                 self.health.attempt(provider_name, current)
             quota_after = self._effective_quota(provider_name, result)
             if result.network_called:
+                quota_evidence_observed = any(
+                    value is not None
+                    for value in (
+                        result.quota_after.used,
+                        result.quota_after.remaining,
+                        result.quota_after.reset_at,
+                        result.quota_after.rate_limit,
+                        result.quota_after.rate_remaining,
+                        result.quota_after.rate_reset_at,
+                    )
+                )
                 self.budget.record_result(
                     provider_name,
                     state=effective_state,
                     at=current,
                     quota_after=quota_after,
+                    persist_quota_evidence=(
+                        TransportCapability(capability)
+                        is TransportCapability.NETWORK_CAPABLE
+                        and quota_evidence_observed
+                    ),
                 )
             self.health.result(
                 provider_name,

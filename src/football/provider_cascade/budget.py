@@ -15,6 +15,10 @@ from src.football.provider_cascade.contracts import (
     ProviderState,
     QuotaSnapshot,
 )
+from src.football.provider_cascade.readiness import (
+    QuotaStateStore,
+    quota_reset_revalidation_eligible,
+)
 
 
 @dataclass
@@ -101,6 +105,7 @@ class RequestBudgetManager:
         *,
         quota_overrides: Mapping[str, QuotaSnapshot] | None = None,
         credential_overrides: Mapping[str, bool] | None = None,
+        quota_state_store: QuotaStateStore | None = None,
         now: datetime | None = None,
     ) -> None:
         config.validate()
@@ -111,9 +116,24 @@ class RequestBudgetManager:
         self._quotas: dict[str, QuotaSnapshot] = {}
         self._counters: dict[str, ProviderBudgetCounters] = {}
         self._credential_overrides = dict(credential_overrides)
+        self._quota_state_store = quota_state_store
+        persisted = quota_state_store.load() if quota_state_store is not None else {}
+        self._revalidation_eligible: dict[str, bool] = {}
         for name, provider in config.providers.items():
             provider.validate()
-            self._quotas[name] = overrides.get(name, provider.initial_quota)
+            persisted_state = persisted.get(name)
+            configured_quota = (
+                persisted_state.quota
+                if name not in overrides and persisted_state is not None
+                else provider.initial_quota
+            )
+            self._quotas[name] = overrides.get(name, configured_quota)
+            self._revalidation_eligible[name] = (
+                name not in overrides
+                and persisted_state is not None
+                and persisted_state.observed_at is not None
+                and quota_reset_revalidation_eligible(self._quotas[name], now=self._now)
+            )
             self._counters[name] = ProviderBudgetCounters(quota=self._quotas[name])
         self._global_requests = 0
 
@@ -201,9 +221,11 @@ class RequestBudgetManager:
                 cost,
                 quota,
             )
+        reset_revalidation = self._revalidation_eligible.get(provider_name, False)
         if (
             quota.remaining is not None
             and quota.remaining < cost + provider.quota_reserve
+            and not reset_revalidation
         ):
             return self._reject(
                 provider,
@@ -224,7 +246,9 @@ class RequestBudgetManager:
             provider_name,
             True,
             ProviderState.AVAILABLE,
-            "preflight_allowed",
+            "quota_reset_revalidation_allowed"
+            if reset_revalidation
+            else "preflight_allowed",
             False,
             cost,
             quota,
@@ -275,8 +299,11 @@ class RequestBudgetManager:
             or not isfinite(quota_cost)
             or quota_cost <= 0
         ):
-            raise ProductionContractError("request count and quota cost must be positive")
+            raise ProductionContractError(
+                "request count and quota cost must be positive"
+            )
         counter = self.counters(provider_name)
+        self._revalidation_eligible[provider_name] = False
         counter.requests_attempted += request_count
         self._global_requests += request_count
         counter.quota_consumed += quota_cost
@@ -289,6 +316,7 @@ class RequestBudgetManager:
         state: ProviderState,
         at: datetime | None = None,
         quota_after: QuotaSnapshot | None = None,
+        persist_quota_evidence: bool = True,
     ) -> None:
         timestamp = _utc(at or self._now, "result at")
         counter = self.counters(provider_name)
@@ -301,6 +329,32 @@ class RequestBudgetManager:
         else:
             counter.last_failure_at = timestamp
             counter.last_failure_class = state
+        if self._quota_state_store is not None and persist_quota_evidence:
+            self._persist_quota_state(
+                provider_name,
+                quota_after or self._quotas[provider_name],
+                state=state,
+                observed_at=timestamp,
+            )
+
+    def _persist_quota_state(
+        self,
+        provider_name: str,
+        quota: QuotaSnapshot,
+        *,
+        state: ProviderState,
+        observed_at: datetime,
+    ) -> None:
+        """Persist only redacted quota evidence after a network result."""
+
+        assert self._quota_state_store is not None
+        self._quota_state_store.update(
+            provider_name,
+            quota=quota,
+            observed_at=observed_at,
+            state=state.value,
+            source="top5_adapter_response_headers",
+        )
 
     def update_quota_from_headers(
         self,
@@ -348,6 +402,15 @@ class RequestBudgetManager:
         )
         self._quotas[provider_name] = after
         self._counters[provider_name].quota = after
+        if self._quota_state_store is not None:
+            self._persist_quota_state(
+                provider_name,
+                after,
+                state=ProviderState.AVAILABLE,
+                observed_at=_utc(
+                    completed_at or self._now, "quota evidence completed_at"
+                ),
+            )
         return after
 
     def as_payload(self) -> dict[str, object]:

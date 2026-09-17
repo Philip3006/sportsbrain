@@ -5,6 +5,7 @@ Set ODDS_API_KEY in .env or pass directly.
 """
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
@@ -12,17 +13,48 @@ from dotenv import load_dotenv
 
 from src.config import DATA_CACHE, LINE_SHOPPING_REGIONS, ODDS_API_URL
 from src.data.cache import disk_cache
+from src.runtime.paths import runtime_state_path
+from src.utils.atomic_io import atomic_write_json
 
 load_dotenv()
 
-_USAGE_LOG = DATA_CACHE / "api_usage.json"
+_USAGE_LOG: Path | None = None
 
 
-def _log_usage(requests_used: int, requests_remaining: int) -> None:
-    usage = {"requests_used": requests_used, "requests_remaining": requests_remaining}
-    DATA_CACHE.mkdir(parents=True, exist_ok=True)
-    with open(_USAGE_LOG, "w") as f:
-        json.dump(usage, f)
+def _usage_log_path() -> Path:
+    """Use operator-owned runtime state for mutable quota evidence."""
+    if _USAGE_LOG is not None:
+        return _USAGE_LOG
+    checkout_cache = Path(__file__).resolve().parents[2] / "data" / "cache"
+    if Path(DATA_CACHE).resolve() != checkout_cache.resolve():
+        # Test callers commonly redirect DATA_CACHE to a temporary directory.
+        return Path(DATA_CACHE) / "api_usage.json"
+    return runtime_state_path("data/cache/api_usage.json", require_external=True)
+
+
+def _next_month_start(at: datetime) -> datetime:
+    current = at.astimezone(timezone.utc)
+    if current.month == 12:
+        return datetime(current.year + 1, 1, 1, tzinfo=timezone.utc)
+    return datetime(current.year, current.month + 1, 1, tzinfo=timezone.utc)
+
+
+def _log_usage(
+    requests_used: int,
+    requests_remaining: int,
+    *,
+    observed_at: datetime | None = None,
+) -> None:
+    observed = (observed_at or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    usage = {
+        "requests_used": requests_used,
+        "requests_remaining": requests_remaining,
+        "observed_at": observed.isoformat(),
+        "reset_at": _next_month_start(observed).isoformat(),
+        "state": "QUOTA_EXHAUSTED" if requests_remaining == 0 else "AVAILABLE",
+        "source": "the_odds_api_response_headers",
+    }
+    atomic_write_json(_usage_log_path(), usage, sort_keys=True)
 
 
 def get_api_key(api_key: str | None = None) -> str:
@@ -148,6 +180,7 @@ def fetch_upcoming_matches(
     markets: str = "h2h,totals,spreads",
     api_key: str | None = None,
     force: bool = False,
+    allow_quota_revalidation: bool = False,
 ) -> list[dict]:
     """
     Fetches upcoming matches with odds from TheOddsAPI.
@@ -165,8 +198,10 @@ def fetch_upcoming_matches(
 
     # O1-1: circuit breaker pre-check — avoid any API call when provider is down
     try:
-        from src.signals.provider_budget import is_provider_available, record_error as _pb_record
-        if not is_provider_available("the_odds_api"):
+        from src.signals.provider_budget import is_provider_available
+        if not is_provider_available(
+            "the_odds_api", allow_quota_revalidation=allow_quota_revalidation
+        ):
             stale = _load_stale_upcoming_cache()
             if stale is not None:
                 USED_STALE_CACHE = True
@@ -175,7 +210,7 @@ def fetch_upcoming_matches(
                 return stale
             raise RuntimeError("TheOddsAPI circuit open — no stale cache available")
     except ImportError:
-        _pb_record = None  # provider_budget not available — degrade gracefully
+        pass  # provider_budget not available — degrade gracefully
 
     from src.config import LINE_SHOPPING_REGIONS
     if regions is None:
