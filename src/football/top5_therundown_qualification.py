@@ -16,6 +16,15 @@ from src.football.top5_controlled_shadow_provider_qualification import TOP5_LEAG
 THERUNDOWN_PROVIDER_IDENTITY = "therundown_experimental"
 THERUNDOWN_QUALIFICATION_SCHEMA_VERSION = "top5-therundown-qualification-evidence-v1"
 EVIDENCE_SCHEMA_VERSION = THERUNDOWN_QUALIFICATION_SCHEMA_VERSION
+PR88_REAL_EVIDENCE_SUMMARY_SCHEMA_VERSION = (
+    "top5-therundown-pr88-real-evidence-summary-v1"
+)
+PR88_REAL_EVIDENCE_HEAD = "279654a2aefe71fc4b7db9d58cd985adb9fbdd94"
+PR88_REAL_EVIDENCE_REVIEW_ID = "5241854809"
+PR88_REAL_EVIDENCE_DOCUMENT = "docs/top5_therundown_experimental_evaluation.md"
+PR88_REAL_EVIDENCE_DOCUMENT_BLOB = "c6fec62ee16976d8cc2ed7dd6bce7d75fc32d8b8"
+PR91_SHADOW_COMPATIBILITY_HEAD = "a29030571940c73f51066856f589e29b06627523"
+PR91_SHADOW_COMPATIBILITY_REVIEW_ID = "5241881123"
 
 QUALIFICATION_CRITERIA = (
     "provider_league_identity_verified",
@@ -56,6 +65,13 @@ class TheRundownQualificationStatus(str, Enum):
     UNOBSERVED = "UNOBSERVED"
 
 
+class TheRundownEvidenceSummaryStatus(str, Enum):
+    """Status for redacted PR-88 run summaries, never canonical authority."""
+
+    PARTIAL_EVIDENCE = "PARTIAL_EVIDENCE"
+    UNOBSERVED = "UNOBSERVED"
+
+
 class TheRundownQualificationCode(str, Enum):
     INVALID_SCHEMA = "INVALID_SCHEMA"
     PROVIDER_IDENTITY_MISMATCH = "PROVIDER_IDENTITY_MISMATCH"
@@ -74,6 +90,8 @@ class TheRundownQualificationCode(str, Enum):
     QUOTA_RATE_LIMIT_UNRECORDED = "QUOTA_RATE_LIMIT_UNRECORDED"
     PROVIDER_FAILURE = "PROVIDER_FAILURE"
     UNSAFE_NETWORK_COUNT = "UNSAFE_NETWORK_COUNT"
+    CANONICAL_OBSERVATION_REQUIRED = "CANONICAL_OBSERVATION_REQUIRED"
+    EXACT_PRICE_PROVENANCE_REQUIRED = "EXACT_PRICE_PROVENANCE_REQUIRED"
 
 
 _HARD_FAILURES = frozenset(
@@ -189,6 +207,85 @@ class TheRundownQualificationReport:
             "maximum_odds_age_seconds": self.maximum_odds_age_seconds,
             "production_authority_changed": False,
             "provider_registered": False,
+        }
+
+
+@dataclass(frozen=True)
+class TheRundownLeagueEvidenceSummary:
+    """Redacted, real-run summary for one league from the reviewed PR-88 run."""
+
+    league: str
+    provider_league_id: str | None
+    provider_league_code: str | None
+    access: str
+    real_fixture: Mapping[str, object] | None
+    complete_1x2: bool
+    complete_1x2_count: int
+    bookmakers: tuple[str, ...]
+    source_update_timestamp_range: tuple[str, ...]
+    delay_seconds: int | None
+    event_datapoints: int
+    result: str
+    status: TheRundownEvidenceSummaryStatus
+    blockers: tuple[str, ...]
+
+    def as_payload(self) -> dict[str, object]:
+        return {
+            "league": self.league,
+            "provider_league_id": self.provider_league_id,
+            "provider_league_code": self.provider_league_code,
+            "access": self.access,
+            "real_fixture": dict(self.real_fixture) if self.real_fixture else None,
+            "complete_1x2": self.complete_1x2,
+            "complete_1x2_count": self.complete_1x2_count,
+            "bookmakers": list(self.bookmakers),
+            "source_update_timestamp_range": list(self.source_update_timestamp_range),
+            "delay_seconds": self.delay_seconds,
+            "event_datapoints": self.event_datapoints,
+            "result": self.result,
+            "status": self.status.value,
+            "blockers": list(self.blockers),
+        }
+
+
+@dataclass(frozen=True)
+class TheRundownPR88EvidenceSummaryReport:
+    """Read-only projection of PR-88's real diagnostic evidence.
+
+    This is deliberately a summary contract. It cannot satisfy the detailed
+    evidence gate and cannot be projected into a Builder-2 receipt or a
+    production-authoritative provider observation.
+    """
+
+    schema_version: str
+    provider_identity: str
+    source: Mapping[str, object]
+    run: Mapping[str, object]
+    status: TheRundownEvidenceSummaryStatus
+    leagues: tuple[TheRundownLeagueEvidenceSummary, ...]
+
+    def as_payload(self) -> dict[str, object]:
+        return {
+            "schema_version": self.schema_version,
+            "provider_identity": self.provider_identity,
+            "source": dict(self.source),
+            "run": dict(self.run),
+            "status": self.status.value,
+            "leagues": [item.as_payload() for item in self.leagues],
+            "summary_only": True,
+            "canonical_gate_eligible": False,
+            "builder2_receipt_eligible": False,
+            "provider_registered": False,
+            "production_authority_changed": False,
+            "publication_authorized": False,
+            "betting_authorized": False,
+            "production_activation_authorized": False,
+            "evaluator_network_accessed": False,
+            "shadow_compatibility": {
+                "pr": 91,
+                "head": PR91_SHADOW_COMPATIBILITY_HEAD,
+                "review_id": PR91_SHADOW_COMPATIBILITY_REVIEW_ID,
+            },
         }
 
 
@@ -485,16 +582,265 @@ def evaluate_therundown_qualification(
     return report
 
 
+def _summary_text(value: object, name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise TheRundownQualificationError(f"{name} must be non-empty text")
+    return value.strip()
+
+
+def _summary_nonnegative_int(value: object, name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise TheRundownQualificationError(f"{name} must be a non-negative integer")
+    return value
+
+
+def _summary_string_list(value: object, name: str) -> tuple[str, ...]:
+    if not isinstance(value, list):
+        raise TheRundownQualificationError(f"{name} must be a list")
+    result = tuple(_summary_text(item, name) for item in value)
+    if len(set(result)) != len(result):
+        raise TheRundownQualificationError(f"{name} must not contain duplicates")
+    return result
+
+
+def _summary_fixture(value: object) -> Mapping[str, object] | None:
+    if value is None:
+        return None
+    if not isinstance(value, Mapping):
+        raise TheRundownQualificationError("real_fixture must be an object or null")
+    allowed = {"home", "away", "kickoff"}
+    if set(value) != allowed:
+        raise TheRundownQualificationError(
+            "real_fixture must contain only home, away, and kickoff"
+        )
+    home = _summary_text(value.get("home"), "real_fixture.home")
+    away = _summary_text(value.get("away"), "real_fixture.away")
+    kickoff = _aware_datetime(value.get("kickoff"))
+    if home == away or kickoff is None:
+        raise TheRundownQualificationError("real_fixture identity is invalid")
+    return {"home": home, "away": away, "kickoff": kickoff.isoformat()}
+
+
+def _summary_source(payload: object) -> dict[str, object]:
+    if not isinstance(payload, Mapping):
+        raise TheRundownQualificationError("source must be an object")
+    allowed = {
+        "provider_identity",
+        "source_pr",
+        "source_head",
+        "source_review_id",
+        "source_document",
+        "source_document_blob",
+    }
+    if set(payload) != allowed:
+        raise TheRundownQualificationError("source schema is invalid")
+    if payload.get("provider_identity") != THERUNDOWN_PROVIDER_IDENTITY:
+        raise TheRundownQualificationError("source provider identity mismatch")
+    if payload.get("source_pr") != 88:
+        raise TheRundownQualificationError("source PR must be 88")
+    if payload.get("source_head") != PR88_REAL_EVIDENCE_HEAD:
+        raise TheRundownQualificationError("source PR-88 head mismatch")
+    if payload.get("source_review_id") != PR88_REAL_EVIDENCE_REVIEW_ID:
+        raise TheRundownQualificationError("source PR-88 review mismatch")
+    if payload.get("source_document") != PR88_REAL_EVIDENCE_DOCUMENT:
+        raise TheRundownQualificationError("source document mismatch")
+    if payload.get("source_document_blob") != PR88_REAL_EVIDENCE_DOCUMENT_BLOB:
+        raise TheRundownQualificationError("source document digest mismatch")
+    return dict(payload)
+
+
+def _summary_run(payload: object) -> dict[str, object]:
+    if not isinstance(payload, Mapping):
+        raise TheRundownQualificationError("run must be an object")
+    allowed = {
+        "real_requests",
+        "datapoints_before",
+        "datapoints_after",
+        "datapoints_consumed",
+        "account_tier",
+        "delay_seconds",
+        "rate_limit_per_second",
+        "bookmaker_entitlement",
+        "history_access",
+        "live_odds_access",
+        "websocket_access",
+    }
+    if set(payload) != allowed:
+        raise TheRundownQualificationError("run schema is invalid")
+    for name in (
+        "real_requests",
+        "datapoints_before",
+        "datapoints_after",
+        "datapoints_consumed",
+        "delay_seconds",
+        "rate_limit_per_second",
+    ):
+        _summary_nonnegative_int(payload.get(name), f"run.{name}")
+    if (
+        payload["datapoints_after"] - payload["datapoints_before"]
+        != payload["datapoints_consumed"]
+    ):
+        raise TheRundownQualificationError("run datapoint accounting is inconsistent")
+    _summary_text(payload.get("account_tier"), "run.account_tier")
+    _summary_string_list(
+        payload.get("bookmaker_entitlement"), "run.bookmaker_entitlement"
+    )
+    for name in ("history_access", "live_odds_access", "websocket_access"):
+        if not isinstance(payload.get(name), bool):
+            raise TheRundownQualificationError(f"run.{name} must be boolean")
+    return dict(payload)
+
+
+def _summary_league(payload: object) -> TheRundownLeagueEvidenceSummary:
+    if not isinstance(payload, Mapping):
+        raise TheRundownQualificationError("league summary must be an object")
+    allowed = {
+        "canonical_league",
+        "provider_league_id",
+        "provider_league_code",
+        "access",
+        "real_fixture",
+        "complete_1x2",
+        "complete_1x2_count",
+        "bookmakers",
+        "source_update_timestamp_range",
+        "delay_seconds",
+        "event_datapoints",
+        "result",
+    }
+    if set(payload) != allowed:
+        raise TheRundownQualificationError("league summary schema is invalid")
+    league = _summary_text(payload.get("canonical_league"), "canonical_league")
+    if league not in TOP5_LEAGUES:
+        raise TheRundownQualificationError("summary league is outside Top-5 scope")
+    provider_id = _summary_text(payload.get("provider_league_id"), "provider_league_id")
+    provider_code = _summary_text(
+        payload.get("provider_league_code"), "provider_league_code"
+    )
+    access = _summary_text(payload.get("access"), "access")
+    if access not in {"YES", "NO", "PARTIAL"}:
+        raise TheRundownQualificationError("summary access state is invalid")
+    fixture = _summary_fixture(payload.get("real_fixture"))
+    complete = payload.get("complete_1x2")
+    if not isinstance(complete, bool):
+        raise TheRundownQualificationError("complete_1x2 must be boolean")
+    complete_count = _summary_nonnegative_int(
+        payload.get("complete_1x2_count"), "complete_1x2_count"
+    )
+    bookmakers = _summary_string_list(payload.get("bookmakers"), "bookmakers")
+    if complete and complete_count != len(bookmakers):
+        raise TheRundownQualificationError(
+            "complete_1x2_count must match the bookmaker summary"
+        )
+    timestamps = _summary_string_list(
+        payload.get("source_update_timestamp_range"),
+        "source_update_timestamp_range",
+    )
+    for timestamp in timestamps:
+        if _aware_datetime(timestamp) is None:
+            raise TheRundownQualificationError(
+                "source_update_timestamp_range must be timezone-aware"
+            )
+    delay = payload.get("delay_seconds")
+    if delay is not None:
+        delay = _summary_nonnegative_int(delay, "delay_seconds")
+    event_datapoints = _summary_nonnegative_int(
+        payload.get("event_datapoints"), "event_datapoints"
+    )
+    result = _summary_text(payload.get("result"), "result")
+    if result not in {"PASS_EVIDENCE", "PARTIAL", "UNOBSERVED"}:
+        raise TheRundownQualificationError("summary result is invalid")
+    observed = fixture is not None
+    complete_observation = complete and complete_count > 0 and bool(bookmakers)
+    if not observed and not complete_observation:
+        status = TheRundownEvidenceSummaryStatus.UNOBSERVED
+    else:
+        status = TheRundownEvidenceSummaryStatus.PARTIAL_EVIDENCE
+    blockers = [
+        TheRundownQualificationCode.CANONICAL_OBSERVATION_REQUIRED.value,
+        TheRundownQualificationCode.EXACT_PRICE_PROVENANCE_REQUIRED.value,
+        TheRundownQualificationCode.FRESHNESS_NOT_OBSERVABLE.value,
+    ]
+    if not observed:
+        blockers.append(TheRundownQualificationCode.FIXTURE_NOT_OBSERVED.value)
+    if not complete_observation:
+        blockers.append(TheRundownQualificationCode.COMPLETE_PRICES_REQUIRED.value)
+    return TheRundownLeagueEvidenceSummary(
+        league=league,
+        provider_league_id=provider_id,
+        provider_league_code=provider_code,
+        access=access,
+        real_fixture=fixture,
+        complete_1x2=complete,
+        complete_1x2_count=complete_count,
+        bookmakers=bookmakers,
+        source_update_timestamp_range=timestamps,
+        delay_seconds=delay,
+        event_datapoints=event_datapoints,
+        result=result,
+        status=status,
+        blockers=tuple(dict.fromkeys(blockers)),
+    )
+
+
+def evaluate_therundown_pr88_evidence_summary(
+    payload: Mapping[str, object],
+) -> TheRundownPR88EvidenceSummaryReport:
+    """Consume PR-88's redacted real-run summary without qualifying it."""
+
+    if not isinstance(payload, Mapping):
+        raise TheRundownQualificationError("evidence summary must be an object")
+    allowed = {"schema_version", "provider_identity", "source", "run", "leagues"}
+    if set(payload) != allowed:
+        raise TheRundownQualificationError("evidence summary schema is invalid")
+    if payload.get("schema_version") != PR88_REAL_EVIDENCE_SUMMARY_SCHEMA_VERSION:
+        raise TheRundownQualificationError("unsupported PR-88 summary schema")
+    if payload.get("provider_identity") != THERUNDOWN_PROVIDER_IDENTITY:
+        raise TheRundownQualificationError("summary provider identity mismatch")
+    source = _summary_source(payload.get("source"))
+    run = _summary_run(payload.get("run"))
+    raw_leagues = payload.get("leagues")
+    if not isinstance(raw_leagues, list):
+        raise TheRundownQualificationError("leagues must be a list")
+    leagues = tuple(_summary_league(item) for item in raw_leagues)
+    if {item.league for item in leagues} != set(TOP5_LEAGUES) or len(leagues) != len(
+        TOP5_LEAGUES
+    ):
+        raise TheRundownQualificationError(
+            "summary must contain exactly one item for every Top-5 league"
+        )
+    leagues = tuple(sorted(leagues, key=lambda item: TOP5_LEAGUES.index(item.league)))
+    return TheRundownPR88EvidenceSummaryReport(
+        schema_version=PR88_REAL_EVIDENCE_SUMMARY_SCHEMA_VERSION,
+        provider_identity=THERUNDOWN_PROVIDER_IDENTITY,
+        source=source,
+        run=run,
+        status=TheRundownEvidenceSummaryStatus.PARTIAL_EVIDENCE,
+        leagues=leagues,
+    )
+
+
 __all__ = [
     "EVIDENCE_SCHEMA_VERSION",
+    "PR88_REAL_EVIDENCE_DOCUMENT",
+    "PR88_REAL_EVIDENCE_DOCUMENT_BLOB",
+    "PR88_REAL_EVIDENCE_HEAD",
+    "PR88_REAL_EVIDENCE_REVIEW_ID",
+    "PR88_REAL_EVIDENCE_SUMMARY_SCHEMA_VERSION",
+    "PR91_SHADOW_COMPATIBILITY_HEAD",
+    "PR91_SHADOW_COMPATIBILITY_REVIEW_ID",
     "QUALIFICATION_CRITERIA",
     "THERUNDOWN_PROVIDER_IDENTITY",
     "THERUNDOWN_QUALIFICATION_SCHEMA_VERSION",
     "TheRundownEvidenceResult",
+    "TheRundownEvidenceSummaryStatus",
+    "TheRundownLeagueEvidenceSummary",
     "TheRundownLeagueQualification",
+    "TheRundownPR88EvidenceSummaryReport",
     "TheRundownQualificationCode",
     "TheRundownQualificationError",
     "TheRundownQualificationReport",
     "TheRundownQualificationStatus",
+    "evaluate_therundown_pr88_evidence_summary",
     "evaluate_therundown_qualification",
 ]

@@ -4,22 +4,29 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import pytest
 
 from scripts.top5_therundown_qualification import main as qualification_main
-from src.football.provider_cascade.contracts import MARKET_PREMATCH_1X2
+from src.football.provider_cascade.contracts import (
+    FOOTBALL_PROVIDER_REPERTOIRE,
+    MARKET_PREMATCH_1X2,
+)
 from src.football.top5_therundown_qualification import (
     EVIDENCE_SCHEMA_VERSION,
     QUALIFICATION_CRITERIA,
     THERUNDOWN_PROVIDER_IDENTITY,
+    TheRundownEvidenceSummaryStatus,
     TheRundownQualificationCode,
     TheRundownQualificationError,
     TheRundownQualificationStatus,
+    evaluate_therundown_pr88_evidence_summary,
     evaluate_therundown_qualification,
 )
 
 UTC = timezone.utc
+_ROOT = Path(__file__).parents[2]
 CAPTURED_AT = datetime(2026, 9, 17, 12, 0, tzinfo=UTC)
 KICKOFF = CAPTURED_AT + timedelta(hours=2)
 SOURCE_TIMESTAMP = CAPTURED_AT - timedelta(minutes=2)
@@ -74,6 +81,73 @@ def _payload(records: list[dict[str, object]]) -> dict[str, object]:
         "provider_identity": THERUNDOWN_PROVIDER_IDENTITY,
         "evidence": records,
     }
+
+
+def _pr88_summary() -> dict[str, object]:
+    path = _ROOT / "tests/fixtures/therundown/pr88_top5_real_evidence_summary.json"
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def test_pr88_real_evidence_summary_is_consumed_as_partial_only() -> None:
+    report = evaluate_therundown_pr88_evidence_summary(_pr88_summary())
+
+    assert report.status is TheRundownEvidenceSummaryStatus.PARTIAL_EVIDENCE
+    by_league = {item.league: item for item in report.leagues}
+    assert set(by_league) == {"BL1", "EPL", "LL", "SA", "L1"}
+    for league in ("BL1", "EPL", "SA", "L1"):
+        item = by_league[league]
+        assert item.status is TheRundownEvidenceSummaryStatus.PARTIAL_EVIDENCE
+        assert item.real_fixture is not None
+        assert item.complete_1x2 is True
+        assert item.complete_1x2_count == 3
+        assert item.bookmakers == ("DraftKings", "BetMGM", "FanDuel")
+        assert item.source_update_timestamp_range
+        assert "CANONICAL_OBSERVATION_REQUIRED" in item.blockers
+        assert "EXACT_PRICE_PROVENANCE_REQUIRED" in item.blockers
+    assert by_league["LL"].status is TheRundownEvidenceSummaryStatus.UNOBSERVED
+    assert by_league["LL"].real_fixture is None
+    payload = report.as_payload()
+    assert payload["source"]["source_pr"] == 88
+    assert payload["source"]["source_head"] == (
+        "279654a2aefe71fc4b7db9d58cd985adb9fbdd94"
+    )
+    assert payload["canonical_gate_eligible"] is False
+    assert payload["builder2_receipt_eligible"] is False
+    assert payload["provider_registered"] is False
+    assert payload["production_authority_changed"] is False
+    assert payload["evaluator_network_accessed"] is False
+    assert FOOTBALL_PROVIDER_REPERTOIRE == ("the_odds_api",)
+    assert THERUNDOWN_PROVIDER_IDENTITY not in FOOTBALL_PROVIDER_REPERTOIRE
+    assert payload["shadow_compatibility"]["head"] == (
+        "a29030571940c73f51066856f589e29b06627523"
+    )
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["source_head", "source_review_id", "source_document_blob"],
+)
+def test_pr88_summary_is_bound_to_the_reviewed_external_source(field: str) -> None:
+    payload = _pr88_summary()
+    payload["source"] = {**payload["source"], field: "changed"}
+
+    with pytest.raises(TheRundownQualificationError):
+        evaluate_therundown_pr88_evidence_summary(payload)
+
+
+def test_pr88_summary_order_is_normalized_and_cannot_supply_canonical_prices() -> None:
+    payload = _pr88_summary()
+    payload["leagues"] = list(reversed(payload["leagues"]))
+    report = evaluate_therundown_pr88_evidence_summary(payload)
+
+    assert [item.league for item in report.leagues] == ["BL1", "EPL", "LL", "SA", "L1"]
+    assert all(
+        item.status is not TheRundownQualificationStatus.QUALIFIED_EVIDENCE_READY
+        for item in report.leagues
+    )
+    assert all(
+        "EXACT_PRICE_PROVENANCE_REQUIRED" in item.blockers for item in report.leagues
+    )
 
 
 def test_all_five_leagues_require_and_can_reach_evidence_ready() -> None:

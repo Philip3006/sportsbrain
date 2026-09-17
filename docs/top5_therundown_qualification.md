@@ -81,3 +81,37 @@ python3 scripts/top5_therundown_qualification.py \
 The command makes no provider or network request. Exit code `0` means all five
 league evidence results are ready. Exit code `2` means the report is partial,
 failed, unobserved, or malformed.
+
+## PR-88 real-evidence handoff
+
+The reviewed PR-88 run is available to this gate as a redacted, machine-readable
+summary at:
+
+```text
+tests/fixtures/therundown/pr88_top5_real_evidence_summary.json
+```
+
+The summary is pinned to PR-88 head
+`279654a2aefe71fc4b7db9d58cd985adb9fbdd94`, CEO review `5241854809`, and the
+exact evaluation document blob recorded in the source block. It records 15 real
+requests, 44 datapoints consumed, Free-tier access, a five-minute delay, and
+DraftKings, BetMGM, and FanDuel entitlement. EPL, BL1, SA, and L1 each report a
+real fixture with complete 1X2 coverage from three bookmakers; LL is unobserved
+for the sampled date.
+
+This summary is intentionally not a canonical observation envelope: it omits
+exact odds, provider event/request identities, capture timestamp, raw-response
+digest, normalized-record digest, and adapter-source binding. The consumer
+therefore returns `PARTIAL_EVIDENCE`, lists those blockers, and cannot create or
+validate a Builder-2 receipt. It also records the independently reviewed PR-91
+shadow compatibility head for traceability; PR-91 is not modified or merged.
+The `source_update_timestamp_range` values remain the ranges reported by PR-88;
+they are not reinterpreted as exact per-price timestamps.
+
+Run it offline with:
+
+```text
+python3 scripts/top5_therundown_qualification.py \
+  tests/fixtures/therundown/pr88_top5_real_evidence_summary.json \
+  --maximum-odds-age-seconds 300
+```
