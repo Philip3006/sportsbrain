@@ -11,6 +11,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import time
+import unicodedata
+from collections.abc import Mapping
 from datetime import date, datetime, timezone
 from urllib.parse import urlsplit
 
@@ -19,6 +22,7 @@ import requests
 BASE_URL = "https://therundown.io/api/v2"
 SPORT_ID = 16
 DEFAULT_MAX_REQUESTS = 5
+MIN_REQUEST_INTERVAL_SECONDS = 1.05
 
 
 def _headers(response: requests.Response) -> dict[str, str]:
@@ -73,6 +77,201 @@ def _summary(payload: object) -> dict[str, object]:
     return summary
 
 
+def _compact(value: object) -> str:
+    return "".join(
+        char
+        for char in unicodedata.normalize("NFKD", str(value or "").casefold())
+        if not unicodedata.combining(char) and char.isalnum()
+    )
+
+
+def _affiliate_names(payload: object) -> dict[str, str]:
+    """Extract affiliate identity without retaining the response body."""
+
+    entries: object = payload
+    if isinstance(payload, Mapping):
+        entries = payload.get("affiliates", payload.get("data", ()))
+    if not isinstance(entries, list):
+        return {}
+    names: dict[str, str] = {}
+    for entry in entries:
+        if not isinstance(entry, Mapping):
+            continue
+        affiliate_id = entry.get(
+            "affiliate_id", entry.get("id", entry.get("source_id"))
+        )
+        name = entry.get("name", entry.get("affiliate_name", entry.get("display_name")))
+        if affiliate_id is not None and name:
+            names[str(affiliate_id).strip()] = str(name).strip()
+    return names
+
+
+def _event_teams(event: Mapping[str, object]) -> tuple[str, str, str, str]:
+    teams = event.get("teams")
+    if not isinstance(teams, list):
+        return "", "", "", ""
+    objects = tuple(team for team in teams if isinstance(team, Mapping))
+    home = next((team for team in objects if team.get("is_home") is True), None)
+    away = next((team for team in objects if team.get("is_away") is True), None)
+    if home is None or away is None:
+        if len(objects) == 2:
+            away, home = objects
+        else:
+            return "", "", "", ""
+    return (
+        str(home.get("name", "")).strip(),
+        str(away.get("name", "")).strip(),
+        str(home.get("team_id", "")).strip(),
+        str(away.get("team_id", "")).strip(),
+    )
+
+
+def _outcome_key(
+    participant: Mapping[str, object],
+    *,
+    home_name: str,
+    away_name: str,
+    home_id: str,
+    away_id: str,
+) -> str:
+    participant_id = str(participant.get("id", "")).strip()
+    label = _compact(participant.get("name"))
+    if (
+        participant.get("is_home") is True
+        or participant_id == home_id
+        or label == _compact(home_name)
+    ):
+        return "home"
+    if (
+        participant.get("is_away") is True
+        or participant_id == away_id
+        or label == _compact(away_name)
+    ):
+        return "away"
+    if label in {"draw", "tie", "x"}:
+        return "draw"
+    return ""
+
+
+def _event_details(
+    payload: object, affiliate_names: Mapping[str, str]
+) -> list[dict[str, object]]:
+    """Return redacted event-level fixture, market, and book evidence."""
+
+    if not isinstance(payload, Mapping) or not isinstance(payload.get("events"), list):
+        return []
+    details: list[dict[str, object]] = []
+    for event in payload["events"]:
+        if not isinstance(event, Mapping):
+            continue
+        home_name, away_name, home_id, away_id = _event_teams(event)
+        schedule = event.get("schedule")
+        schedule = schedule if isinstance(schedule, Mapping) else {}
+        markets: list[dict[str, object]] = []
+        raw_markets = event.get("markets")
+        if isinstance(raw_markets, list):
+            for market in raw_markets:
+                if not isinstance(market, Mapping):
+                    continue
+                market_id = str(market.get("market_id", "")).strip()
+                market_detail: dict[str, object] = {
+                    "market_id": market_id,
+                    "period_id": market.get("period_id"),
+                    "name": market.get("name"),
+                    "participant_count": len(market.get("participants", ()))
+                    if isinstance(market.get("participants"), list)
+                    else 0,
+                }
+                if market_id != "1":
+                    markets.append(market_detail)
+                    continue
+                books: dict[str, dict[str, list[str]]] = {}
+                participants = market.get("participants")
+                if isinstance(participants, list):
+                    for participant in participants:
+                        if not isinstance(participant, Mapping):
+                            continue
+                        outcome = _outcome_key(
+                            participant,
+                            home_name=home_name,
+                            away_name=away_name,
+                            home_id=home_id,
+                            away_id=away_id,
+                        )
+                        if not outcome:
+                            continue
+                        lines = participant.get("lines")
+                        if not isinstance(lines, list):
+                            continue
+                        for line in lines:
+                            if not isinstance(line, Mapping) or line.get(
+                                "value"
+                            ) not in ("", None):
+                                continue
+                            prices = line.get("prices")
+                            if not isinstance(prices, Mapping):
+                                continue
+                            for affiliate_raw, price in prices.items():
+                                if (
+                                    not isinstance(price, Mapping)
+                                    or price.get("is_main_line") is not True
+                                ):
+                                    continue
+                                affiliate_id = str(affiliate_raw).strip()
+                                bucket = books.setdefault(affiliate_id, {})
+                                timestamps = bucket.setdefault("timestamps", [])
+                                updated_at = price.get("updated_at")
+                                if updated_at is not None:
+                                    timestamps.append(str(updated_at))
+                                bucket.setdefault(outcome, [])
+                observed_ids = sorted(books)
+                complete_ids = sorted(
+                    affiliate_id
+                    for affiliate_id, outcomes in books.items()
+                    if {key for key in outcomes if key in {"home", "draw", "away"}}
+                    == {"home", "draw", "away"}
+                )
+                market_detail.update(
+                    {
+                        "bookmakers": [
+                            {
+                                "affiliate_id": affiliate_id,
+                                "name": affiliate_names.get(affiliate_id),
+                            }
+                            for affiliate_id in observed_ids
+                        ],
+                        "complete_1x2_bookmakers": [
+                            {
+                                "affiliate_id": affiliate_id,
+                                "name": affiliate_names.get(affiliate_id),
+                            }
+                            for affiliate_id in complete_ids
+                        ],
+                        "complete_1x2_count": len(complete_ids),
+                        "source_update_timestamps": sorted(
+                            {
+                                timestamp
+                                for outcomes in books.values()
+                                for timestamp in outcomes.get("timestamps", [])
+                            }
+                        ),
+                    }
+                )
+                markets.append(market_detail)
+        details.append(
+            {
+                "event_id": str(event.get("event_id", "")).strip(),
+                "event_date": event.get("event_date"),
+                "fixture": {"home": home_name, "away": away_name},
+                "sport_id": event.get("sport_id"),
+                "league_name": schedule.get("league_name"),
+                "season_year": schedule.get("season_year"),
+                "markets": markets,
+            }
+        )
+    return details
+
+
 def _request(
     session: requests.Session,
     key: str,
@@ -106,18 +305,22 @@ def _request(
 
 
 def _date_from_payload(payload: object, fallback: str) -> str:
+    valid_dates: list[str] = []
     if isinstance(payload, dict) and isinstance(payload.get("dates"), list):
         for value in payload["dates"]:
             text = str(value).strip()
             try:
-                return (
+                valid_dates.append(
                     datetime.fromisoformat(text.replace("Z", "+00:00"))
                     .date()
                     .isoformat()
                 )
             except ValueError:
                 continue
-    return fallback
+    if not valid_dates:
+        return fallback
+    upcoming = [value for value in valid_dates if value >= fallback]
+    return min(upcoming) if upcoming else max(valid_dates)
 
 
 def main() -> int:
@@ -159,11 +362,31 @@ def main() -> int:
     outputs: list[dict[str, object]] = []
     datapoints_consumed = 0
     selected_date = requested_date
+    affiliate_names: dict[str, str] = {}
+    last_request_at: float | None = None
+
+    def issue(
+        path: str, params: dict[str, str] | None
+    ) -> tuple[dict[str, object], object | None]:
+        nonlocal last_request_at
+        if last_request_at is not None:
+            time.sleep(
+                max(
+                    0.0,
+                    MIN_REQUEST_INTERVAL_SECONDS - (time.monotonic() - last_request_at),
+                )
+            )
+        result = _request(session, key, path, params=params, timeout=args.timeout)
+        last_request_at = time.monotonic()
+        return result
+
     for index in range(min(args.max_requests, len(paths))):
         path, params = paths[index]
-        output, payload = _request(
-            session, key, path, params=params, timeout=args.timeout
-        )
+        output, payload = issue(path, params)
+        if index == 1:
+            affiliate_names = _affiliate_names(payload)
+        if "/events/" in path:
+            output["events"] = _event_details(payload, affiliate_names)
         outputs.append(output)
         value = output.get("quota", {})
         if isinstance(value, dict):
@@ -185,9 +408,9 @@ def main() -> int:
             (f"{BASE_URL}/sports/{SPORT_ID}", None),
         ]
         for path, params in extra[: args.max_requests - len(outputs)]:
-            output, _ = _request(
-                session, key, path, params=params, timeout=args.timeout
-            )
+            output, payload = issue(path, params)
+            if "/events/" in path:
+                output["events"] = _event_details(payload, affiliate_names)
             outputs.append(output)
             value = output.get("quota", {})
             if isinstance(value, dict):

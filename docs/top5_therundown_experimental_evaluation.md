@@ -120,6 +120,42 @@ The diagnostic checks sports, affiliates, available UCL dates, one filtered
 UCL event response, and the UCL sport resource. It does not issue receipts,
 select a provider authority, or make the candidate eligible for production.
 
+### Bounded real evaluation run
+
+On 17 September 2026, exactly five requests were executed with the account
+credential supplied out-of-band. The credential was held only in the process
+environment and was not printed, persisted, or included in evidence.
+
+| Request | Status | Safe result |
+| --- | ---: | --- |
+| `/api/v2/sports` | 200 | 36 sports returned |
+| `/api/v2/affiliates` | 200 | 25 affiliates returned |
+| `/api/v2/sports/16/dates` | 200 | 13 UCL dates available; nearest selected date was 2026-10-13 |
+| `/api/v2/sports/16/events/2026-10-13` | 429 | burst/rate throttled; no fixture payload obtained |
+| `/api/v2/sports/16` | 404 | resource route not available for this account/API surface |
+
+The account headers on the UCL date and event responses reported `free`, a
+300-second delay, `betmgm,fanduel,draftkings` bookmaker entitlement,
+`history_access=false`, `live_odds_access=false`, and
+`websocket_access=false`. They reported a datapoint limit of 20,000, remaining
+20,000, and used 0; aggregate observed datapoint consumption was therefore 0.
+The event response was rate-limited before any event-level market, bookmaker,
+timestamp, or 1X2 evidence was returned. The follow-up diagnostic now spaces
+requests by 1.05 seconds to respect the observed one-request-per-second limit,
+but it performs no retry automatically.
+
+Real coverage verdict: **PARTIAL / TEILWEISE BRAUCHBAR**. Sport/date coverage
+and account-level bookmaker entitlement are demonstrated, but fixture-level
+UCL 1X2 availability, complete-book count, and freshness are unverified. This
+is insufficient to promote TheRundown to provider authority; one paced,
+operator-run follow-up with a fresh request budget is required for a useful
+provider comparison.
+
+Known prototype limitation: `fetch()` currently returns `observations[0]` when
+multiple normalized bookmaker observations exist. It was not changed because
+the raw diagnostic does not depend on that reduction and the limitation did
+not block this bounded evaluation.
+
 ## Evidence needed for any later decision
 
 Before any CEO decision about real controlled-shadow use, retain a redacted

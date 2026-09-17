@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from scripts.therundown_diagnostic import _affiliate_names, _event_details
 from src.football.odds.therundown import (
     THERUNDOWN_ADAPTER_VERSION,
     THERUNDOWN_CHAMPIONS_LEAGUE_CODE,
@@ -450,3 +451,26 @@ def test_alias_mapping_and_candidate_only_boundary(
     assert result.observation is not None
     assert result.observation.candidate_only is True
     assert result.observation.provider_identity == "therundown_experimental"
+
+
+def test_diagnostic_reports_fixture_market_books_and_timestamps() -> None:
+    payload = _payload()
+    names = _affiliate_names(
+        {
+            "affiliates": [
+                {"affiliate_id": 3, "name": "DraftKings"},
+                {"id": 19, "name": "FanDuel"},
+            ]
+        }
+    )
+    detail = _event_details(payload, names)[0]
+    market = detail["markets"][0]
+
+    assert detail["event_id"] == "cl-event-001"
+    assert market["market_id"] == "1"
+    assert market["complete_1x2_count"] == 2
+    assert market["bookmakers"] == [
+        {"affiliate_id": "19", "name": "FanDuel"},
+        {"affiliate_id": "3", "name": "DraftKings"},
+    ]
+    assert len(market["source_update_timestamps"]) == 2
