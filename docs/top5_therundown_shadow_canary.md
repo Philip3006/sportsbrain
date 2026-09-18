@@ -49,6 +49,37 @@ unexpected retries, missing/stale timestamps, incomplete or invalid odds,
 provider mismatch, and any attempted betting, publication, activation,
 authority, ledger, scheduler, or spend mutation.
 
+## Offline lifecycle compatibility proof
+
+`TheRundownCanaryRunResultV1.lifecycle_artifact()` projects a deterministic
+result into three downstream-shaped inputs without issuing any downstream
+authority:
+
+1. the exact `ControlledShadowCaptureAttestation` field shape, including run,
+   CEO authorization, qualification session, provider/fixture/event/request
+   identity, adapter/configuration provenance, cascade/raw/normalized digests,
+   capture time, and immutable safety flags;
+2. the exact `RealProviderObservation` field shape, including bookmaker,
+   pre-match 1X2 prices, source-time provenance, capture/request times, quota
+   evidence, and request count; and
+3. the exact binding fields expected by `Builder2QualificationReceiptV1`, with
+   report/result digests left unavailable until independent qualification has
+   accepted the observation.
+
+The artifact remains `candidate_only=true` and never constructs a canonical
+observation, qualification report, or receipt. `TEST_FIXTURE` results are
+`TEST_ONLY` and cannot validate as a real capture attestation. A deterministic
+network-shaped stub result is labelled
+`BLOCKED_BY_CURRENT_PROVIDER_REPERTOIRE`: the current B1/B2 contracts accept
+only the active Football repertoire (`the_odds_api`), while TheRundown is
+intentionally not registered or authoritative. The artifact also records that
+a separately reviewed provider integration must supply a canonical
+`CascadeEvidence` digest before current Builder-2 validation could proceed.
+
+This is an explicit dependency report, not a bypass. Receipt issuance remains
+impossible before a valid canonical attestation and an independently accepted
+`REAL_OBSERVATION_VALIDATED` qualification result.
+
 ## Safety status
 
 - No real provider request is made by this PR.

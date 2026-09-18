@@ -9,9 +9,16 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from src.football.provider_cascade.contracts import FOOTBALL_PROVIDER_REPERTOIRE
+from src.football.top5_builder2_qualification_receipt import (
+    Builder2QualificationReceiptError,
+    issue_builder2_qualification_receipt,
+)
 from src.football.top5_controlled_shadow_provider_qualification import (
     ControlledShadowCaptureAttestation,
+    ObservationEvidenceKind,
+    ProviderQualificationStatus,
     QualificationContractError,
+    RealProviderObservation,
 )
 from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_shadow_canary import (
@@ -23,6 +30,7 @@ from src.football.top5_therundown_shadow_canary import (
     FakeTheRundownCanaryTransport,
     TheRundownCanaryAuthorizationV1,
     TheRundownCanaryConfigurationV1,
+    TheRundownCanaryLifecycleArtifactV1,
     TheRundownCanaryNetworkTransport,
     TheRundownCanaryPacingPolicyV1,
     TheRundownCanaryResponseV1,
@@ -123,6 +131,8 @@ def _response(request, **changes: object) -> TheRundownCanaryResponseV1:
         "adapter_source_sha": ADAPTER_SOURCE_SHA,
         "raw_response_digest": RAW_DIGEST,
         "normalized_record_digest": NORMALIZED_DIGEST,
+        "quota_before": 10,
+        "quota_after": 9,
         "quota_cost_units": 1.0,
         "retry_count": 0,
         "evidence_kind": "TEST_FIXTURE",
@@ -438,3 +448,182 @@ def test_pacing_is_sequential_and_retry_policy_is_zero():
     assert configuration.pacing_policy.maximum_retries == 0
     with pytest.raises(CanaryExecutionBlocked, match="retries"):
         TheRundownCanaryPacingPolicyV1(maximum_retries=1).validate()
+
+
+def _network_result_for_league(league: str):
+    target = _target(
+        league=league,
+        fixture_key=make_fixture_key(league, "Home FC", "Away FC", KICKOFF),
+        provider_event_id=f"therundown-event-{league.lower()}",
+    )
+    configuration = _config(enabled=True, target=target)
+    authorization = _authorization(configuration)
+
+    class OfflineNetworkStub(TheRundownCanaryNetworkTransport):
+        def execute(self, request):
+            return _response(
+                request,
+                provider_event_id=target.provider_event_id,
+                evidence_kind="REAL_OBSERVED",
+                network_execution=True,
+            )
+
+    return TheRundownControlledShadowCanary(clock=lambda: NOW).run(
+        configuration, authorization, transport=OfflineNetworkStub()
+    )
+
+
+@pytest.mark.parametrize("league", ["EPL", "BL1", "LL", "SA", "L1"])
+def test_offline_real_shaped_lifecycle_preserves_exact_five_league_bindings(league):
+    result = _network_result_for_league(league)
+    artifact = result.lifecycle_artifact()
+    assert isinstance(artifact, TheRundownCanaryLifecycleArtifactV1)
+    assert artifact.compatibility.value == "BLOCKED_BY_CURRENT_PROVIDER_REPERTOIRE"
+    observation = artifact.qualification_input["observation"]
+    assert observation["provider_identity"] == "therundown"
+    assert observation["league"] == league
+    assert observation["fixture_key"] == result.request.target.fixture_key
+    assert observation["provider_event_id"] == result.evidence.provider_event_id
+    assert observation["provider_request_id"] == result.request.request_identity
+    assert observation["bookmaker_identity"] == "book-a"
+    assert observation["home_odds"] == 2.1
+    assert observation["draw_odds"] == 3.4
+    assert observation["away_odds"] == 3.2
+    assert observation["source_timestamp"] is not None
+    assert observation["provider_timestamp_provenance"] == "PROVIDER_SOURCE_TIMESTAMP"
+    assert observation["adapter_source_sha"] == ADAPTER_SOURCE_SHA
+    assert observation["raw_response_digest"] == RAW_DIGEST
+    assert observation["normalized_record_digest"] == NORMALIZED_DIGEST
+    assert observation["observation_digest"] == result.evidence.observation_digest
+    assert observation["quota_before"] == 10
+    assert observation["quota_after"] == 9
+    assert observation["quota_cost_units"] == 1.0
+    assert observation["network_request_count"] == 1
+
+    capture = artifact.capture_attestation_input
+    assert capture["schema_version"] == "controlled-shadow-capture-attestation-v1"
+    assert capture["controlled_shadow_run_id"] == "controlled-shadow:therundown-1"
+    assert capture["ceo_authorization_id"] == "ceo-auth:therundown-canary-1"
+    assert capture["qualification_session_id"] == "qualification-session:therundown-1"
+    assert capture["provider_identity"] == "therundown"
+    assert capture["fixture_key"] == result.request.target.fixture_key
+    assert capture["provider_event_id"] == result.evidence.provider_event_id
+    assert capture["provider_request_id"] == result.request.request_identity
+    assert capture["network_execution"] is True
+    assert capture["no_bet"] is True
+    assert capture["publication"] is False
+    assert capture["production_activation"] is False
+    assert capture["monetary_spend_authorized"] is False
+    assert artifact.result.evidence.canonical_capture_attestation_digest
+
+    receipt_input = artifact.builder2_receipt_input
+    assert receipt_input["schema_version"] == "top5-builder2-qualification-receipt-v1"
+    assert receipt_input["issuer_present"] is False
+    assert receipt_input["eligible"] is False
+    assert (
+        receipt_input["available_evidence"]["observation_id"]
+        == result.evidence.observation_id
+    )
+    assert (
+        receipt_input["available_evidence"]["normalized_record_digest"]
+        == NORMALIZED_DIGEST
+    )
+    assert (
+        receipt_input["available_evidence"]["adapter_source_sha"] == ADAPTER_SOURCE_SHA
+    )
+    assert (
+        receipt_input["available_evidence"]["capture_attestation_digest"]
+        == result.evidence.canonical_capture_attestation_digest
+    )
+
+
+def test_fake_lifecycle_is_test_only_and_cannot_cross_attestation_boundary():
+    result, _ = _run_fake()
+    artifact = result.lifecycle_artifact()
+    assert artifact.compatibility.value == "TEST_ONLY"
+    observation = artifact.qualification_input["observation"]
+    assert observation["evidence_kind"] == ObservationEvidenceKind.TEST_FIXTURE.value
+    assert observation["network_request_count"] == 0
+    assert observation["synthetic_reconstruction"] is True
+    assert observation["candidate_only"] is True
+    assert artifact.capture_attestation_input["network_execution"] is False
+    with pytest.raises(QualificationContractError):
+        ControlledShadowCaptureAttestation.from_payload(
+            artifact.capture_attestation_input
+        ).validate()
+
+
+def test_current_b1_b2_contracts_reject_therundown_without_authority_change():
+    result = _network_result_for_league("EPL")
+    artifact = result.lifecycle_artifact()
+    observation_payload = artifact.qualification_input["observation"]
+    observation = RealProviderObservation.from_payload(observation_payload)
+    with pytest.raises(QualificationContractError, match="unknown provider"):
+        observation.validate_structural()
+
+    from tests.football.test_top5_controlled_shadow_provider_qualification import (
+        _observation as active_observation,
+    )
+    from tests.football.test_top5_controlled_shadow_provider_qualification import (
+        _qualify as qualify_active,
+    )
+
+    active = active_observation()
+    active_report = qualify_active((active,))
+    active_result = active_report.results[0]
+    assert (
+        active_result.status is ProviderQualificationStatus.REAL_OBSERVATION_VALIDATED
+    )
+    with pytest.raises((Builder2QualificationReceiptError, QualificationContractError)):
+        issue_builder2_qualification_receipt(
+            active_report,
+            observation_payload,
+            active_result,
+        )
+    assert FOOTBALL_PROVIDER_REPERTOIRE == ("the_odds_api",)
+    assert artifact.as_payload()["safety"] == {
+        "no_bet": True,
+        "publication": False,
+        "production_activation": False,
+        "monetary_spend_authorized": False,
+        "authority_changed": False,
+        "scheduler_registered": False,
+        "ledger_mutated": False,
+    }
+
+
+def test_receipt_requires_attestation_and_accepted_qualification_result():
+    from tests.football.test_top5_controlled_shadow_provider_qualification import (
+        _observation as active_observation,
+    )
+    from tests.football.test_top5_controlled_shadow_provider_qualification import (
+        _qualify as qualify_active,
+    )
+
+    fixture = active_observation()
+    report = qualify_active((fixture,))
+    valid_result = report.results[0]
+    receipt = issue_builder2_qualification_receipt(report, fixture, valid_result)
+    assert receipt.accepted is True
+    assert receipt.no_bet is True
+    assert receipt.publication is False
+    assert receipt.production_activation is False
+
+    missing_attestation = replace(fixture, capture_attestation=None)
+    with pytest.raises(Builder2QualificationReceiptError):
+        issue_builder2_qualification_receipt(report, missing_attestation, valid_result)
+
+    test_fixture = replace(
+        fixture,
+        evidence_kind=ObservationEvidenceKind.TEST_FIXTURE,
+        network_request_count=0,
+        quota_cost_units=0.0,
+        capture_attestation=None,
+    )
+    test_report = qualify_active((test_fixture,), authorization=None)
+    with pytest.raises(Builder2QualificationReceiptError):
+        issue_builder2_qualification_receipt(
+            test_report,
+            test_fixture,
+            test_report.results[0],
+        )

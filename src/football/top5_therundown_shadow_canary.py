@@ -19,7 +19,7 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from enum import Enum
 from hashlib import sha256
@@ -36,6 +36,7 @@ from src.football.top5_builder2_qualification_receipt import RECEIPT_SCHEMA_VERS
 from src.football.top5_controlled_shadow_provider_qualification import (
     CAPTURE_ATTESTATION_CONTRACT_VERSION,
     ObservationEvidenceKind,
+    ProviderTimestampProvenance,
 )
 from src.football.top5_shadow_provider_redundancy import make_fixture_key
 
@@ -46,6 +47,8 @@ CANARY_ATTESTATION_INPUT_SCHEMA_VERSION = (
 )
 CANARY_ACTION = "ODDS"
 CANARY_EXECUTION_MODE = "SEQUENTIAL"
+CANARY_MARKET_PHASE = "PRE_MATCH"
+CANARY_OBSERVATION_SCHEMA_VERSION = "top5-real-provider-observation-v1"
 _SHA_RE = re.compile(r"^[0-9a-fA-F]{40,64}$")
 _TEST_EVIDENCE_KINDS = frozenset(
     {
@@ -79,6 +82,14 @@ class CanaryRunStatus(str, Enum):
     TEST_FIXTURE = "TEST_FIXTURE"
     REAL_OBSERVED = "REAL_OBSERVED"
     NO_OBSERVATION = "NO_OBSERVATION"
+
+
+class CanaryLifecycleCompatibility(str, Enum):
+    """Compatibility outcome without changing the active provider authority."""
+
+    READY_FOR_EXTERNAL_VALIDATION = "READY_FOR_EXTERNAL_VALIDATION"
+    BLOCKED_BY_CURRENT_PROVIDER_REPERTOIRE = "BLOCKED_BY_CURRENT_PROVIDER_REPERTOIRE"
+    TEST_ONLY = "TEST_ONLY"
 
 
 def _text(value: object, name: str) -> str:
@@ -554,7 +565,12 @@ class TheRundownCanaryResponseV1:
     adapter_source_sha: str = ""
     raw_response_digest: str = ""
     normalized_record_digest: str = ""
+    quota_before: int | None = None
+    quota_after: int | None = None
     quota_cost_units: float = 0.0
+    provider_timestamp_provenance: str = (
+        ProviderTimestampProvenance.PROVIDER_SOURCE_TIMESTAMP.value
+    )
     retry_count: int = 0
     evidence_kind: ObservationEvidenceKind | str = ObservationEvidenceKind.TEST_FIXTURE
     network_execution: bool = False
@@ -647,6 +663,7 @@ class TheRundownCanaryEvidenceV1:
     configuration_digest: str
     target: TheRundownCanaryTargetV1
     request_identity: str
+    observation_id: str
     provider_request_id: str
     provider_event_id: str
     observation_digest: str
@@ -661,15 +678,133 @@ class TheRundownCanaryEvidenceV1:
     request_finished_at: datetime
     bookmaker_identity: str
     source_identity: str
+    provider_timestamp_provenance: str
+    market_type: str
+    market_phase: str
     home_odds: float | None
     draw_odds: float | None
     away_odds: float | None
     request_count: int
+    quota_before: int | None
+    quota_after: int | None
     quota_cost_units: float
+    candidate_only: bool
     canonical_attestation_eligible: bool
     qualification_report_eligible: bool
     builder2_receipt_eligible: bool
     failure_reason: str | None
+
+    @property
+    def network_request_count(self) -> int:
+        return 1 if self.network_execution else 0
+
+    def _observation_input_without_digest(self) -> dict[str, object]:
+        """Return the exact field shape expected by the current observation gate.
+
+        The mapping is deliberately an input projection.  It is not parsed or
+        promoted here: current Builder-2 validation must independently accept
+        the provider, cascade, attestation, and qualification result.
+        """
+
+        return {
+            "observation_id": self.observation_id,
+            "qualification_session_id": self.qualification_session_id,
+            "evidence_kind": self.evidence_kind.value,
+            "provider_identity": self.target.provider,
+            "provider_event_id": self.provider_event_id,
+            "provider_request_id": self.provider_request_id,
+            "league": self.target.league,
+            "fixture_key": self.target.fixture_key,
+            "home_team": self.target.home_team,
+            "away_team": self.target.away_team,
+            "kickoff": self.target.kickoff.isoformat(),
+            "market_type": MARKET_PREMATCH_1X2,
+            "market_phase": CANARY_MARKET_PHASE,
+            "home_odds": self.home_odds,
+            "draw_odds": self.draw_odds,
+            "away_odds": self.away_odds,
+            "bookmaker_identity": self.bookmaker_identity,
+            "source_identity": self.source_identity,
+            "source_timestamp": self.source_timestamp.isoformat()
+            if self.source_timestamp
+            else None,
+            "provider_timestamp_provenance": self.provider_timestamp_provenance,
+            "captured_at": self.captured_at.isoformat(),
+            "request_started_at": self.request_started_at.isoformat(),
+            "request_finished_at": self.request_finished_at.isoformat(),
+            "latency_ms": max(
+                0,
+                int(
+                    (self.request_finished_at - self.request_started_at).total_seconds()
+                    * 1000
+                ),
+            ),
+            "adapter_version": self.adapter_version,
+            "adapter_source_sha": self.adapter_source_sha,
+            "raw_response_digest": self.raw_response_digest,
+            "normalized_record_digest": self.normalized_record_digest,
+            "cascade_evidence": {
+                "contract_version": CANARY_SCHEMA_VERSION,
+                "candidate_only": True,
+                "provider_identity": self.target.provider,
+                "request_identity": self.request_identity,
+                "cascade_evidence_digest": self.cascade_evidence_digest,
+                "network_request_count": self.network_request_count,
+                "quota_cost_units": self.quota_cost_units,
+            },
+            "quota_before": self.quota_before,
+            "quota_after": self.quota_after,
+            "quota_cost_units": self.quota_cost_units,
+            "network_request_count": self.network_request_count,
+            "candidate_only": True,
+            "monetary_spend_authorized": False,
+            "delayed_observation": False,
+            "synthetic_reconstruction": not self.network_execution,
+            "no_bet": True,
+            "publication_enabled": False,
+            "production_activation": False,
+            "ledger_mutated": False,
+            "sealed_data_accessed": False,
+            "research_mutated": False,
+            "capture_attestation": self._capture_attestation_input(),
+        }
+
+    @property
+    def observation_input_digest(self) -> str:
+        return _digest(self._observation_input_without_digest())
+
+    def observation_input(self) -> dict[str, object]:
+        payload = self._observation_input_without_digest()
+        payload["observation_digest"] = self.observation_input_digest
+        return payload
+
+    def canonical_capture_attestation_payload(self) -> dict[str, object]:
+        """Return only fields serialized by the current canonical attestation."""
+
+        return {
+            "controlled_shadow_run_id": self.controlled_shadow_run_id,
+            "ceo_authorization_id": self.authorization_id,
+            "qualification_session_id": self.qualification_session_id,
+            "provider_identity": self.target.provider,
+            "fixture_key": self.target.fixture_key,
+            "provider_event_id": self.provider_event_id,
+            "provider_request_id": self.provider_request_id,
+            "adapter_version": self.adapter_version,
+            "adapter_source_sha": self.adapter_source_sha,
+            "cascade_evidence_digest": self.cascade_evidence_digest,
+            "raw_response_digest": self.raw_response_digest,
+            "normalized_record_digest": self.normalized_record_digest,
+            "captured_at": self.captured_at.isoformat(),
+            "network_execution": self.network_execution,
+            "no_bet": True,
+            "publication": False,
+            "monetary_spend_authorized": False,
+            "schema_version": CAPTURE_ATTESTATION_CONTRACT_VERSION,
+        }
+
+    @property
+    def canonical_capture_attestation_digest(self) -> str:
+        return _digest(self.canonical_capture_attestation_payload())
 
     def _capture_attestation_input(self) -> dict[str, object]:
         return {
@@ -690,7 +825,9 @@ class TheRundownCanaryEvidenceV1:
             "network_execution": self.network_execution,
             "no_bet": True,
             "publication": False,
+            "production_activation": False,
             "monetary_spend_authorized": False,
+            "candidate_only": self.candidate_only,
             "evidence_kind": self.evidence_kind.value,
             "attestation_input_schema": CANARY_ATTESTATION_INPUT_SCHEMA_VERSION,
         }
@@ -716,12 +853,14 @@ class TheRundownCanaryEvidenceV1:
             "authorization_digest": self.authorization_digest,
             "qualification_session_id": self.qualification_session_id,
             "configuration_digest": self.configuration_digest,
+            "candidate_only": self.candidate_only,
             "provider": self.target.provider,
             "league": self.target.league,
             "fixture_key": self.target.fixture_key,
             "provider_event_id": self.provider_event_id,
             "request_identity": self.request_identity,
             "provider_request_id": self.provider_request_id,
+            "observation_id": self.observation_id,
             "observation_digest": self.observation_digest,
             "normalized_record_digest": self.normalized_record_digest,
             "raw_response_digest": self.raw_response_digest,
@@ -736,31 +875,53 @@ class TheRundownCanaryEvidenceV1:
             "request_finished_at": self.request_finished_at.isoformat(),
             "bookmaker_identity": self.bookmaker_identity,
             "source_identity": self.source_identity,
+            "provider_timestamp_provenance": self.provider_timestamp_provenance,
+            "market_type": MARKET_PREMATCH_1X2,
+            "market_phase": CANARY_MARKET_PHASE,
             "odds": {
                 "home": self.home_odds,
                 "draw": self.draw_odds,
                 "away": self.away_odds,
             },
             "request_count": self.request_count,
+            "network_request_count": self.network_request_count,
+            "quota_before": self.quota_before,
+            "quota_after": self.quota_after,
             "quota_cost_units": self.quota_cost_units,
+            "observation_input_digest": self.observation_input_digest,
+            "observation_input": self.observation_input(),
             "canonical_attestation_eligible": self.canonical_attestation_eligible,
             "qualification_report_eligible": self.qualification_report_eligible,
             "builder2_receipt_eligible": self.builder2_receipt_eligible,
             "capture_attestation_input": self._capture_attestation_input(),
             "qualification_input": {
+                "schema_version": CANARY_OBSERVATION_SCHEMA_VERSION,
                 "provider": self.target.provider,
+                "provider_identity": self.target.provider,
                 "league": self.target.league,
                 "fixture_key": self.target.fixture_key,
                 "provider_event_id": self.provider_event_id,
+                "provider_request_id": self.provider_request_id,
+                "bookmaker_identity": self.bookmaker_identity,
+                "source_identity": self.source_identity,
                 "real_observed": self.evidence_kind
                 is ObservationEvidenceKind.REAL_OBSERVED,
                 "candidate_only": True,
                 "no_bet": True,
                 "publication": False,
                 "production_activation": False,
+                "monetary_spend_authorized": False,
                 "source_timestamp": self.source_timestamp.isoformat()
                 if self.source_timestamp
                 else None,
+                "provider_timestamp_provenance": self.provider_timestamp_provenance,
+                "observation_id": self.observation_id,
+                "observation_digest": self.observation_input_digest,
+                "network_request_count": self.network_request_count,
+                "quota_before": self.quota_before,
+                "quota_after": self.quota_after,
+                "quota_cost_units": self.quota_cost_units,
+                "observation": self.observation_input(),
             },
             "builder2_receipt_input": {
                 "schema_version": RECEIPT_SCHEMA_VERSION,
@@ -795,11 +956,17 @@ class TheRundownCanaryEvidenceV1:
                     "provider_identity": self.target.provider,
                     "provider_event_id": self.provider_event_id,
                     "provider_request_id": self.provider_request_id,
+                    "observation_id": self.observation_id,
                     "observation_digest": self.observation_digest,
                     "normalized_record_digest": self.normalized_record_digest,
                     "cascade_evidence_digest": self.cascade_evidence_digest,
+                    "capture_attestation_digest": self.canonical_capture_attestation_digest,
                     "adapter_version": self.adapter_version,
                     "adapter_source_sha": self.adapter_source_sha,
+                    "qualification_result_digest": None,
+                    "qualification_status": None,
+                    "accepted": False,
+                    "prediction_input_allowed": False,
                     "no_bet": True,
                     "publication": False,
                     "production_activation": False,
@@ -807,6 +974,102 @@ class TheRundownCanaryEvidenceV1:
                 },
             },
             "failure_reason": self.failure_reason,
+        }
+
+
+@dataclass(frozen=True)
+class TheRundownCanaryLifecycleArtifactV1:
+    """Offline projection across the capture, qualification, and receipt seams.
+
+    This object is a compatibility proof artifact only.  It contains the
+    exact current downstream field shapes and the immutable safety bindings,
+    but it never constructs a canonical observation, qualification report, or
+    Builder-2 receipt.  The current contracts still reject TheRundown because
+    it is not in the active Football provider repertoire.
+    """
+
+    result: TheRundownCanaryRunResultV1
+    compatibility: CanaryLifecycleCompatibility
+    dependency_blockers: tuple[str, ...]
+
+    def validate(self) -> None:
+        self.result.validate()
+        evidence = self.result.evidence
+        if evidence.candidate_only is not True:
+            raise CanaryExecutionBlocked(
+                "lifecycle artifact cannot clear candidate-only evidence"
+            )
+        if evidence.network_execution:
+            if (
+                self.compatibility
+                is not CanaryLifecycleCompatibility.BLOCKED_BY_CURRENT_PROVIDER_REPERTOIRE
+            ):
+                raise CanaryContractError(
+                    "TheRundown real-shaped evidence must report the current provider dependency"
+                )
+            if not self.dependency_blockers:
+                raise CanaryContractError(
+                    "provider compatibility blocker must be explicit"
+                )
+        elif self.compatibility is not CanaryLifecycleCompatibility.TEST_ONLY:
+            raise CanaryContractError(
+                "non-network canary evidence must remain test-only"
+            )
+        for name, value, expected in (
+            ("no_bet", True, True),
+            ("publication", False, False),
+            ("production_activation", False, False),
+            ("monetary_spend_authorized", False, False),
+        ):
+            if value is not expected:
+                raise CanaryExecutionBlocked(
+                    f"lifecycle safety binding is unsafe: {name}"
+                )
+
+    @property
+    def capture_attestation_input(self) -> Mapping[str, object]:
+        return self.result.evidence.as_payload()["capture_attestation_input"]
+
+    @property
+    def canonical_capture_attestation(self) -> Mapping[str, object]:
+        return self.result.evidence.canonical_capture_attestation_payload()
+
+    @property
+    def qualification_input(self) -> Mapping[str, object]:
+        payload = self.result.evidence.as_payload()["qualification_input"]
+        if not isinstance(payload, Mapping):
+            raise CanaryContractError("qualification input projection is malformed")
+        return payload
+
+    @property
+    def builder2_receipt_input(self) -> Mapping[str, object]:
+        payload = self.result.evidence.as_payload()["builder2_receipt_input"]
+        if not isinstance(payload, Mapping):
+            raise CanaryContractError("Builder-2 receipt input projection is malformed")
+        return payload
+
+    def as_payload(self) -> dict[str, object]:
+        self.validate()
+        return {
+            "schema_version": CANARY_SCHEMA_VERSION,
+            "lifecycle_contract": "authorized-capture-to-qualification-to-receipt-input-v1",
+            "compatibility": self.compatibility.value,
+            "dependency_blockers": list(self.dependency_blockers),
+            "run": self.result.evidence.as_payload(),
+            "capture_attestation_input": dict(self.capture_attestation_input),
+            "canonical_capture_attestation": self.result.evidence.canonical_capture_attestation_payload(),
+            "capture_attestation_digest": self.result.evidence.canonical_capture_attestation_digest,
+            "qualification_input": dict(self.qualification_input),
+            "builder2_receipt_input": dict(self.builder2_receipt_input),
+            "safety": {
+                "no_bet": True,
+                "publication": False,
+                "production_activation": False,
+                "monetary_spend_authorized": False,
+                "authority_changed": False,
+                "scheduler_registered": False,
+                "ledger_mutated": False,
+            },
         }
 
 
@@ -852,6 +1115,38 @@ class TheRundownCanaryRunResultV1:
             or self.evidence.quota_cost_units != self.quota_cost_units
         ):
             raise CanaryExecutionBlocked("canary evidence is not bound to the request")
+
+    def lifecycle_artifact(self) -> TheRundownCanaryLifecycleArtifactV1:
+        """Project one offline result into the downstream contract boundary."""
+
+        if self.status is CanaryRunStatus.TEST_FIXTURE:
+            compatibility = CanaryLifecycleCompatibility.TEST_ONLY
+            blockers = (
+                "TEST_INJECTED evidence cannot validate as canonical REAL_OBSERVED",
+                "a Builder-2 receipt requires an independently accepted real qualification result",
+            )
+        elif self.status is CanaryRunStatus.REAL_OBSERVED:
+            compatibility = (
+                CanaryLifecycleCompatibility.BLOCKED_BY_CURRENT_PROVIDER_REPERTOIRE
+            )
+            blockers = (
+                "current B1/B2 contracts accept only the active Football provider repertoire",
+                "TheRundown is intentionally outside the active Football provider repertoire",
+                "a canonical CascadeEvidence digest must be supplied by a separately reviewed provider integration",
+            )
+        else:
+            compatibility = CanaryLifecycleCompatibility.TEST_ONLY
+            blockers = (
+                "no provider observation exists",
+                "qualification and receipt preconditions are not satisfied",
+            )
+        artifact = TheRundownCanaryLifecycleArtifactV1(
+            result=self,
+            compatibility=compatibility,
+            dependency_blockers=blockers,
+        )
+        artifact.validate()
+        return artifact
 
 
 class TheRundownControlledShadowCanary:
@@ -1002,6 +1297,22 @@ class TheRundownControlledShadowCanary:
                 raise CanaryExecutionBlocked(f"unsafe provider response flag: {name}")
         if response.quota_cost_units < 0 or not isfinite(response.quota_cost_units):
             raise CanaryExecutionBlocked("provider response quota cost is invalid")
+        for name, value in (
+            ("quota_before", response.quota_before),
+            ("quota_after", response.quota_after),
+        ):
+            if value is not None and (
+                not isinstance(value, int) or isinstance(value, bool) or value < 0
+            ):
+                raise CanaryExecutionBlocked(f"provider response {name} is invalid")
+        if (
+            response.quota_before is not None
+            and response.quota_after is not None
+            and response.quota_after > response.quota_before
+        ):
+            raise CanaryExecutionBlocked(
+                "provider response quota increased unexpectedly"
+            )
         if response.quota_cost_units != authorization.request_quota_cost_units:
             raise CanaryExecutionBlocked(
                 "provider response quota cost does not match preflight"
@@ -1054,6 +1365,15 @@ class TheRundownControlledShadowCanary:
             raise CanaryExecutionBlocked("bookmaker and source provenance are required")
         if response.source_timestamp is None or response.captured_at is None:
             raise CanaryExecutionBlocked("source and capture timestamps are required")
+        if (
+            response.provider_timestamp_provenance
+            != ProviderTimestampProvenance.PROVIDER_SOURCE_TIMESTAMP.value
+        ):
+            raise CanaryExecutionBlocked(
+                "provider source timestamp provenance is required"
+            )
+        if response.quota_before is None or response.quota_after is None:
+            raise CanaryExecutionBlocked("quota evidence is required for success")
         if response.request_started_at is None or response.request_finished_at is None:
             raise CanaryExecutionBlocked("request timing provenance is required")
         source = _utc(response.source_timestamp, "source_timestamp")
@@ -1118,6 +1438,7 @@ class TheRundownControlledShadowCanary:
         )
         provider_event_id = response.provider_event_id or "unresolved-event"
         provider_request_id = response.provider_request_id or request.request_identity
+        observation_id = f"therundown-observation:{_digest((request.request_identity, provider_event_id, provider_request_id))[:32]}"
         observation_digest = _digest(
             {
                 "request": request.as_payload(),
@@ -1145,7 +1466,7 @@ class TheRundownControlledShadowCanary:
         }
         cascade_digest = _digest(cascade_trace)
         network = status is CanaryRunStatus.REAL_OBSERVED
-        return TheRundownCanaryEvidenceV1(
+        evidence = TheRundownCanaryEvidenceV1(
             status=status,
             evidence_kind=evidence_kind,
             network_execution=network,
@@ -1156,6 +1477,7 @@ class TheRundownControlledShadowCanary:
             configuration_digest=authorization.configuration_digest,
             target=request.target,
             request_identity=request.request_identity,
+            observation_id=observation_id,
             provider_request_id=provider_request_id,
             provider_event_id=provider_event_id,
             observation_digest=observation_digest,
@@ -1171,11 +1493,17 @@ class TheRundownControlledShadowCanary:
             request_finished_at=_utc(finished_at, "request_finished_at"),
             bookmaker_identity=response.bookmaker_identity,
             source_identity=response.source_identity,
+            provider_timestamp_provenance=response.provider_timestamp_provenance,
+            market_type=MARKET_PREMATCH_1X2,
+            market_phase=CANARY_MARKET_PHASE,
             home_odds=response.home_odds,
             draw_odds=response.draw_odds,
             away_odds=response.away_odds,
             request_count=1,
+            quota_before=response.quota_before,
+            quota_after=response.quota_after,
             quota_cost_units=response.quota_cost_units,
+            candidate_only=True,
             canonical_attestation_eligible=network,
             qualification_report_eligible=network,
             builder2_receipt_eligible=False,
@@ -1183,22 +1511,27 @@ class TheRundownControlledShadowCanary:
             if status is not CanaryRunStatus.NO_OBSERVATION
             else str(response.outcome),
         )
+        return replace(evidence, observation_digest=evidence.observation_input_digest)
 
 
 __all__ = [
     "CANARY_ACTION",
     "CANARY_ATTESTATION_INPUT_SCHEMA_VERSION",
     "CANARY_EXECUTION_MODE",
+    "CANARY_MARKET_PHASE",
+    "CANARY_OBSERVATION_SCHEMA_VERSION",
     "CANARY_SCHEMA_VERSION",
     "THERUNDOWN_PROVIDER",
     "CanaryContractError",
     "CanaryExecutionBlocked",
+    "CanaryLifecycleCompatibility",
     "CanaryOutcome",
     "CanaryRunStatus",
     "FakeTheRundownCanaryTransport",
     "TheRundownCanaryAuthorizationV1",
     "TheRundownCanaryConfigurationV1",
     "TheRundownCanaryEvidenceV1",
+    "TheRundownCanaryLifecycleArtifactV1",
     "TheRundownCanaryNetworkTransport",
     "TheRundownCanaryPacingPolicyV1",
     "TheRundownCanaryRequestV1",
