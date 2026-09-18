@@ -52,25 +52,37 @@ reconstruction, provider failure, and incomplete provenance cannot qualify.
 ## Adapter bridge
 
 `src/football/top5_therundown_qualification_bridge.py` provides the narrow
-adapter-to-envelope projection. It accepts an existing `AdapterResult` with a
-`NormalizedOddsObservation`, validates it against an explicit expected
-`Fixture`, and returns one envelope item without I/O. The adapter result supplies
-the raw response digest, normalized digest, status, and quota-after state. The
-normalized observation supplies the provider identity, canonical fixture and
-league, event ID, bookmaker, prices, source timestamp, capture time, request
-identity, source provenance, adapter version, provider-record digest, and
-quota-before state. The caller must explicitly supply the evidence ID,
-observation ID, provider league code/verification, adapter source SHA, quota
-cost, evidence kind, request count, and complete authorization metadata.
+adapter-to-envelope projection. Its batch entry point accepts the complete
+`NormalizedOddsObservation` tuple returned by B2's candidate-only
+`fetch_observations()`; the existing singular `AdapterResult` entry point
+remains available for the legacy cascade-compatible surface. The bridge
+validates every observation against an explicit expected `Fixture` and returns
+one envelope item per bookmaker without I/O. The normalized observation
+supplies provider identity, canonical fixture and league, event ID, bookmaker,
+prices, source timestamp, capture time, request identity, source provenance,
+adapter version, provider-record digest, quota-before/after and rate-limit
+state. The batch bridge retains the B2 raw-response digest from observation
+metadata and deterministically computes the normalized-record digest from that
+exact normalized payload. It rejects mixed request/event/fixture/quota
+provenance and duplicate or missing bookmaker identities. The caller must
+explicitly supply the response status, evidence/observation ID for every
+bookmaker, provider league code/verification, adapter source SHA, quota cost,
+evidence kind, request count, and complete authorization metadata.
 
 Authorization metadata is exact-bound to the provider, league, fixture, event,
 and request and retains the controlled-run, qualification-session, and CEO
 authorization IDs. It also carries provider/league/fixture scopes and the
 no-bet, publication-disabled, monetary-spend-disabled safety flags. A
-`TEST_FIXTURE` bridge result records zero network requests and synthetic
-reconstruction; it remains explicitly non-real and the evaluator rejects it.
-`REAL_OBSERVED` requires one network request, HTTP 200, non-synthetic evidence,
-fresh source time, and matching authorization metadata.
+`TEST_FIXTURE` bridge results record zero network requests and synthetic
+reconstruction; they remain explicitly non-real and the evaluator rejects
+them. `REAL_OBSERVED` requires one explicitly attested request, HTTP 200,
+non-synthetic evidence, fresh source time, and matching authorization metadata.
+
+The committed offline fixture
+`tests/fixtures/therundown/fetch_observations_top5.json` exercises two
+bookmakers for each of BL1, EPL, LL, SA, and L1 through the normalized
+observation tuple, batch bridge, and evaluator. It proves structural mapping
+only; it cannot qualify because the fixture is marked `TEST_FIXTURE`.
 
 ## Criteria and statuses
 

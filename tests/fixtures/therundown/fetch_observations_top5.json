@@ -1,0 +1,122 @@
+[
+  {
+    "league_code": "BL1",
+    "provider_league_code": "GER1",
+    "fixture_key": "bl1|Bayern Munich|Union Berlin|2026-09-18T14:00:00+00:00",
+    "provider_fixture_id": "rd-bl1-001",
+    "home_team": "Bayern Munich",
+    "away_team": "Union Berlin",
+    "kickoff_utc": "2026-09-18T14:00:00+00:00",
+    "source_timestamp": "2026-09-18T13:58:30+00:00",
+    "captured_at": "2026-09-18T13:59:00+00:00",
+    "request_started_at": "2026-09-18T13:58:55+00:00",
+    "request_completed_at": "2026-09-18T13:59:00+00:00",
+    "request_identity": "rd-top5-request-001",
+    "raw_record_digest": "1111111111111111111111111111111111111111111111111111111111111111",
+    "raw_response_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "adapter_version": "therundown-v2-experimental:2",
+    "source_provenance_prefix": "therundown:v2;event=rd-bl1-001;market=1",
+    "quota_before": {"used": 100, "remaining": 1900, "rate_limit": 1, "rate_remaining": 1},
+    "quota_after": {"used": 111, "remaining": 1889, "rate_limit": 1, "rate_remaining": 1},
+    "bookmakers": [
+      {"identity": "DraftKings", "odds": {"home": 1.8, "draw": 4.2, "away": 5.1}, "evidence_id": "b1-bl1-dk", "observation_id": "obs-bl1-dk"},
+      {"identity": "FanDuel", "odds": {"home": 1.82, "draw": 4.1, "away": 5.0}, "evidence_id": "b1-bl1-fd", "observation_id": "obs-bl1-fd"}
+    ]
+  },
+  {
+    "league_code": "EPL",
+    "provider_league_code": "EPL",
+    "fixture_key": "epl|Brentford|Chelsea|2026-09-18T14:00:00+00:00",
+    "provider_fixture_id": "rd-epl-001",
+    "home_team": "Brentford",
+    "away_team": "Chelsea",
+    "kickoff_utc": "2026-09-18T14:00:00+00:00",
+    "source_timestamp": "2026-09-18T13:58:30+00:00",
+    "captured_at": "2026-09-18T13:59:00+00:00",
+    "request_started_at": "2026-09-18T13:58:55+00:00",
+    "request_completed_at": "2026-09-18T13:59:00+00:00",
+    "request_identity": "rd-top5-request-002",
+    "raw_record_digest": "2222222222222222222222222222222222222222222222222222222222222222",
+    "raw_response_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "adapter_version": "therundown-v2-experimental:2",
+    "source_provenance_prefix": "therundown:v2;event=rd-epl-001;market=1",
+    "quota_before": {"used": 200, "remaining": 1800, "rate_limit": 1, "rate_remaining": 1},
+    "quota_after": {"used": 211, "remaining": 1789, "rate_limit": 1, "rate_remaining": 1},
+    "bookmakers": [
+      {"identity": "DraftKings", "odds": {"home": 2.1, "draw": 3.5, "away": 3.4}, "evidence_id": "b1-epl-dk", "observation_id": "obs-epl-dk"},
+      {"identity": "FanDuel", "odds": {"home": 2.08, "draw": 3.55, "away": 3.45}, "evidence_id": "b1-epl-fd", "observation_id": "obs-epl-fd"}
+    ]
+  },
+  {
+    "league_code": "LL",
+    "provider_league_code": "ESP1",
+    "fixture_key": "ll|Real Sociedad|Valencia|2026-09-18T14:00:00+00:00",
+    "provider_fixture_id": "rd-ll-001",
+    "home_team": "Real Sociedad",
+    "away_team": "Valencia",
+    "kickoff_utc": "2026-09-18T14:00:00+00:00",
+    "source_timestamp": "2026-09-18T13:58:30+00:00",
+    "captured_at": "2026-09-18T13:59:00+00:00",
+    "request_started_at": "2026-09-18T13:58:55+00:00",
+    "request_completed_at": "2026-09-18T13:59:00+00:00",
+    "request_identity": "rd-top5-request-003",
+    "raw_record_digest": "3333333333333333333333333333333333333333333333333333333333333333",
+    "raw_response_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "adapter_version": "therundown-v2-experimental:2",
+    "source_provenance_prefix": "therundown:v2;event=rd-ll-001;market=1",
+    "quota_before": {"used": 300, "remaining": 1700, "rate_limit": 1, "rate_remaining": 1},
+    "quota_after": {"used": 311, "remaining": 1689, "rate_limit": 1, "rate_remaining": 1},
+    "bookmakers": [
+      {"identity": "DraftKings", "odds": {"home": 2.4, "draw": 3.1, "away": 3.0}, "evidence_id": "b1-ll-dk", "observation_id": "obs-ll-dk"},
+      {"identity": "FanDuel", "odds": {"home": 2.35, "draw": 3.15, "away": 3.05}, "evidence_id": "b1-ll-fd", "observation_id": "obs-ll-fd"}
+    ]
+  },
+  {
+    "league_code": "SA",
+    "provider_league_code": "ITA1",
+    "fixture_key": "sa|Monza|Sassuolo|2026-09-18T14:00:00+00:00",
+    "provider_fixture_id": "rd-sa-001",
+    "home_team": "Monza",
+    "away_team": "Sassuolo",
+    "kickoff_utc": "2026-09-18T14:00:00+00:00",
+    "source_timestamp": "2026-09-18T13:58:30+00:00",
+    "captured_at": "2026-09-18T13:59:00+00:00",
+    "request_started_at": "2026-09-18T13:58:55+00:00",
+    "request_completed_at": "2026-09-18T13:59:00+00:00",
+    "request_identity": "rd-top5-request-004",
+    "raw_record_digest": "4444444444444444444444444444444444444444444444444444444444444444",
+    "raw_response_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "adapter_version": "therundown-v2-experimental:2",
+    "source_provenance_prefix": "therundown:v2;event=rd-sa-001;market=1",
+    "quota_before": {"used": 400, "remaining": 1600, "rate_limit": 1, "rate_remaining": 1},
+    "quota_after": {"used": 411, "remaining": 1589, "rate_limit": 1, "rate_remaining": 1},
+    "bookmakers": [
+      {"identity": "DraftKings", "odds": {"home": 2.5, "draw": 3.2, "away": 2.8}, "evidence_id": "b1-sa-dk", "observation_id": "obs-sa-dk"},
+      {"identity": "FanDuel", "odds": {"home": 2.45, "draw": 3.25, "away": 2.85}, "evidence_id": "b1-sa-fd", "observation_id": "obs-sa-fd"}
+    ]
+  },
+  {
+    "league_code": "L1",
+    "provider_league_code": "FRA1",
+    "fixture_key": "l1|Monaco|Lens|2026-09-18T14:00:00+00:00",
+    "provider_fixture_id": "rd-l1-001",
+    "home_team": "Monaco",
+    "away_team": "Lens",
+    "kickoff_utc": "2026-09-18T14:00:00+00:00",
+    "source_timestamp": "2026-09-18T13:58:30+00:00",
+    "captured_at": "2026-09-18T13:59:00+00:00",
+    "request_started_at": "2026-09-18T13:58:55+00:00",
+    "request_completed_at": "2026-09-18T13:59:00+00:00",
+    "request_identity": "rd-top5-request-005",
+    "raw_record_digest": "5555555555555555555555555555555555555555555555555555555555555555",
+    "raw_response_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "adapter_version": "therundown-v2-experimental:2",
+    "source_provenance_prefix": "therundown:v2;event=rd-l1-001;market=1",
+    "quota_before": {"used": 500, "remaining": 1500, "rate_limit": 1, "rate_remaining": 1},
+    "quota_after": {"used": 511, "remaining": 1489, "rate_limit": 1, "rate_remaining": 1},
+    "bookmakers": [
+      {"identity": "DraftKings", "odds": {"home": 1.95, "draw": 3.6, "away": 3.8}, "evidence_id": "b1-l1-dk", "observation_id": "obs-l1-dk"},
+      {"identity": "FanDuel", "odds": {"home": 1.98, "draw": 3.55, "away": 3.75}, "evidence_id": "b1-l1-fd", "observation_id": "obs-l1-fd"}
+    ]
+  }
+]

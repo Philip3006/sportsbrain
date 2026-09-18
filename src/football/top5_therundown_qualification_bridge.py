@@ -14,6 +14,7 @@ from src.football.provider_cascade.contracts import (
     NormalizedOddsObservation,
     ProviderState,
     TimingProvenance,
+    digest_record,
 )
 from src.football.top5_controlled_shadow_provider_qualification import (
     TOP5_LEAGUES,
@@ -131,6 +132,50 @@ def _validate_authorization(
     for name, expected_value in safety:
         if metadata.get(name) is not expected_value:
             raise TheRundownBridgeError(f"unsafe authorization metadata: {name}")
+
+
+def _validate_quota_consistency(
+    observation: NormalizedOddsObservation,
+    *,
+    network_request_count: int,
+    quota_cost_units: float,
+) -> None:
+    before = observation.quota_state_before
+    after = observation.quota_state_after
+    rate = observation.rate_limit_state
+    if (
+        (before.used is None and before.remaining is None)
+        or (after.used is None and after.remaining is None)
+        or (rate.rate_limit is None and rate.rate_remaining is None)
+    ):
+        raise TheRundownBridgeError("quota and rate-limit evidence is incomplete")
+    if before.used is not None and after.used is not None and after.used < before.used:
+        raise TheRundownBridgeError("quota usage moved backwards")
+    if (
+        before.remaining is not None
+        and after.remaining is not None
+        and after.remaining > before.remaining
+    ):
+        raise TheRundownBridgeError("quota remaining moved backwards")
+    if (
+        rate.rate_limit is not None
+        and rate.rate_remaining is not None
+        and rate.rate_remaining > rate.rate_limit
+    ):
+        raise TheRundownBridgeError("rate-limit remaining exceeds its limit")
+    if (
+        before.rate_remaining is not None
+        and rate.rate_remaining is not None
+        and rate.rate_remaining > before.rate_remaining
+    ):
+        raise TheRundownBridgeError("rate-limit remaining moved backwards")
+    if (
+        network_request_count == 1
+        and before.used is not None
+        and after.used is not None
+        and float(after.used - before.used) != quota_cost_units
+    ):
+        raise TheRundownBridgeError("quota cost does not match quota usage")
 
 
 def bridge_therundown_observation(
@@ -328,4 +373,168 @@ def bridge_therundown_observation(
     }
 
 
-__all__ = ["TheRundownBridgeError", "bridge_therundown_observation"]
+def bridge_therundown_observations(
+    observations: Sequence[NormalizedOddsObservation],
+    *,
+    expected_fixture: Fixture,
+    evidence_ids: Mapping[str, str],
+    observation_ids: Mapping[str, str],
+    provider_league_code: str,
+    provider_league_identity_verified: bool,
+    evidence_kind: ObservationEvidenceKind | str,
+    synthetic_reconstruction: bool,
+    network_request_count: int,
+    response_status_code: int,
+    maximum_odds_age_seconds: int,
+    quota_cost_units: float,
+    adapter_source_sha: str,
+    authorization_metadata: Mapping[str, object],
+) -> dict[str, object]:
+    """Project the complete tuple returned by ``fetch_observations``.
+
+    The B2 adapter deliberately returns normalized observations rather than an
+    ``AdapterResult`` so every complete bookmaker survives the legacy cascade
+    boundary. Response status and request count are therefore explicit caller
+    attestations; they are never inferred from an observation-only tuple.
+    """
+
+    if isinstance(observations, (str, bytes)) or not isinstance(observations, Sequence):
+        raise TheRundownBridgeError("observations must be a sequence")
+    items = tuple(observations)
+    if not items:
+        raise TheRundownBridgeError("at least one observation is required")
+    if any(not isinstance(item, NormalizedOddsObservation) for item in items):
+        raise TheRundownBridgeError("observations must use the normalized contract")
+    if (
+        isinstance(response_status_code, bool)
+        or not isinstance(response_status_code, int)
+        or response_status_code != 200
+    ):
+        raise TheRundownBridgeError(
+            "accepted fetch_observations output requires HTTP 200"
+        )
+    bookmakers = tuple(item.bookmaker_identity for item in items)
+    if any(not value.strip() for value in bookmakers) or len(set(bookmakers)) != len(
+        bookmakers
+    ):
+        raise TheRundownBridgeError(
+            "bookmaker observations must be identified uniquely"
+        )
+    if not isinstance(evidence_ids, Mapping) or not isinstance(
+        observation_ids, Mapping
+    ):
+        raise TheRundownBridgeError(
+            "explicit observation and evidence IDs are required"
+        )
+    if set(evidence_ids) != set(bookmakers) or set(observation_ids) != set(bookmakers):
+        raise TheRundownBridgeError(
+            "every bookmaker must have explicit evidence and observation IDs"
+        )
+    provider_league_code = _text(provider_league_code, "provider_league_code")
+    provider_league_code_key = provider_league_code.casefold()
+    for item in items:
+        provider_metadata = item.metadata
+        observed_provider_league = provider_metadata.get("league_name")
+        if (
+            not isinstance(observed_provider_league, str)
+            or observed_provider_league.strip().casefold() != provider_league_code_key
+            or provider_metadata.get("competition_identity") != item.league_code
+        ):
+            raise TheRundownBridgeError(
+                "provider league identity is not bound to the observation"
+            )
+
+    first = items[0]
+    raw_response_digest = _digest(
+        first.metadata.get("raw_response_digest"), "raw_response_digest"
+    )
+    common = (
+        first.provider_identity,
+        first.league_code,
+        first.fixture_key,
+        first.provider_fixture_id,
+        first.request_identity,
+        first.kickoff_utc,
+        first.captured_at,
+        first.request_started_at,
+        first.request_completed_at,
+        first.quota_state_before,
+        first.quota_state_after,
+        first.rate_limit_state,
+        first.raw_record_digest,
+        first.adapter_version,
+        raw_response_digest,
+    )
+    for item in items[1:]:
+        item_raw_response_digest = _digest(
+            item.metadata.get("raw_response_digest"), "raw_response_digest"
+        )
+        if (
+            item.provider_identity,
+            item.league_code,
+            item.fixture_key,
+            item.provider_fixture_id,
+            item.request_identity,
+            item.kickoff_utc,
+            item.captured_at,
+            item.request_started_at,
+            item.request_completed_at,
+            item.quota_state_before,
+            item.quota_state_after,
+            item.rate_limit_state,
+            item.raw_record_digest,
+            item.adapter_version,
+            item_raw_response_digest,
+        ) != common:
+            raise TheRundownBridgeError(
+                "bookmaker observations do not share one request provenance"
+            )
+
+    _validate_quota_consistency(
+        first,
+        network_request_count=network_request_count,
+        quota_cost_units=float(quota_cost_units),
+    )
+
+    bridged: list[dict[str, object]] = []
+    for item in items:
+        result = AdapterResult(
+            state=ProviderState.AVAILABLE,
+            reason="accepted_candidate_only",
+            observation=item,
+            status_code=response_status_code,
+            network_called=network_request_count == 1,
+            quota_after=item.quota_state_after,
+            rate_limit_state=item.rate_limit_state,
+            raw_response_digest=raw_response_digest,
+            normalized_record_digest=digest_record(item.as_payload()),
+        )
+        bridged.append(
+            bridge_therundown_observation(
+                result,
+                expected_fixture=expected_fixture,
+                evidence_id=evidence_ids[item.bookmaker_identity],
+                observation_id=observation_ids[item.bookmaker_identity],
+                provider_league_code=provider_league_code,
+                provider_league_identity_verified=provider_league_identity_verified,
+                evidence_kind=evidence_kind,
+                synthetic_reconstruction=synthetic_reconstruction,
+                network_request_count=network_request_count,
+                maximum_odds_age_seconds=maximum_odds_age_seconds,
+                quota_cost_units=quota_cost_units,
+                adapter_source_sha=adapter_source_sha,
+                authorization_metadata=authorization_metadata,
+            )
+        )
+    return {
+        "schema_version": EVIDENCE_SCHEMA_VERSION,
+        "provider_identity": THERUNDOWN_PROVIDER_IDENTITY,
+        "evidence": bridged,
+    }
+
+
+__all__ = [
+    "TheRundownBridgeError",
+    "bridge_therundown_observation",
+    "bridge_therundown_observations",
+]

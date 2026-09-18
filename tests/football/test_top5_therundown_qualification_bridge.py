@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import pytest
 
@@ -26,6 +28,7 @@ from src.football.top5_therundown_qualification import (
 from src.football.top5_therundown_qualification_bridge import (
     TheRundownBridgeError,
     bridge_therundown_observation,
+    bridge_therundown_observations,
 )
 
 UTC = timezone.utc
@@ -40,6 +43,12 @@ FIXTURE = Fixture(
 )
 BEFORE = QuotaSnapshot(used=10, remaining=490, rate_limit=10, rate_remaining=9)
 AFTER = QuotaSnapshot(used=11, remaining=489, rate_limit=10, rate_remaining=8)
+OFFLINE_FIXTURE = (
+    Path(__file__).parents[1]
+    / "fixtures"
+    / "therundown"
+    / "fetch_observations_top5.json"
+)
 
 
 def _authorization(*, network_execution: bool = True) -> dict[str, object]:
@@ -143,6 +152,101 @@ def _bridge(
         ),
         **changes,
     )
+
+
+def _offline_batch() -> tuple[
+    list[tuple[Fixture, list[NormalizedOddsObservation], dict[str, object]]],
+]:
+    records = json.loads(OFFLINE_FIXTURE.read_text())
+    batches = []
+    for record in records:
+        fixture = Fixture(
+            fixture_key=record["fixture_key"],
+            league_code=record["league_code"],
+            home_team=record["home_team"],
+            away_team=record["away_team"],
+            kickoff=datetime.fromisoformat(record["kickoff_utc"]),
+        )
+        observations = []
+        evidence_ids = {}
+        observation_ids = {}
+        for bookmaker in record["bookmakers"]:
+            identity = bookmaker["identity"]
+            observations.append(
+                NormalizedOddsObservation(
+                    league_code=fixture.league_code,
+                    fixture_key=fixture.fixture_key,
+                    provider_fixture_id=record["provider_fixture_id"],
+                    home_team=fixture.home_team,
+                    away_team=fixture.away_team,
+                    kickoff_utc=fixture.kickoff,
+                    market_type=MARKET_PREMATCH_1X2,
+                    home_odds=bookmaker["odds"]["home"],
+                    draw_odds=bookmaker["odds"]["draw"],
+                    away_odds=bookmaker["odds"]["away"],
+                    provider_identity="therundown_experimental",
+                    bookmaker_identity=identity,
+                    source_timestamp=datetime.fromisoformat(record["source_timestamp"]),
+                    captured_at=datetime.fromisoformat(record["captured_at"]),
+                    request_identity=record["request_identity"],
+                    request_started_at=datetime.fromisoformat(
+                        record["request_started_at"]
+                    ),
+                    request_completed_at=datetime.fromisoformat(
+                        record["request_completed_at"]
+                    ),
+                    latency_ms=5000,
+                    provider_priority=0,
+                    fallback_depth=0,
+                    quota_state_before=QuotaSnapshot(**record["quota_before"]),
+                    quota_state_after=QuotaSnapshot(**record["quota_after"]),
+                    rate_limit_state=QuotaSnapshot(**record["quota_after"]),
+                    source_provenance=(
+                        f"{record['source_provenance_prefix']};bookmaker={identity}"
+                    ),
+                    raw_record_digest=record["raw_record_digest"],
+                    adapter_version=record["adapter_version"],
+                    candidate_only=True,
+                    metadata={
+                        "raw_response_digest": record["raw_response_digest"],
+                        "competition_identity": fixture.league_code,
+                        "league_name": record["provider_league_code"],
+                        "offline_fixture": True,
+                    },
+                    source_timing_provenance=TimingProvenance.SOURCE_TIMESTAMP,
+                )
+            )
+            evidence_ids[identity] = bookmaker["evidence_id"]
+            observation_ids[identity] = bookmaker["observation_id"]
+        batches.append(
+            (
+                fixture,
+                observations,
+                {
+                    "evidence_ids": evidence_ids,
+                    "observation_ids": observation_ids,
+                    "provider_league_code": record["provider_league_code"],
+                    "authorization_metadata": {
+                        "controlled_shadow_run_id": "offline-controlled-run",
+                        "qualification_session_id": "offline-qualification-session",
+                        "ceo_authorization_id": "offline-ceo-authorization",
+                        "provider_identity": "therundown_experimental",
+                        "canonical_league": fixture.league_code,
+                        "fixture_key": fixture.fixture_key,
+                        "provider_event_id": record["provider_fixture_id"],
+                        "provider_request_id": record["request_identity"],
+                        "provider_scope": ["therundown_experimental"],
+                        "league_scope": [fixture.league_code],
+                        "fixture_scope": [fixture.fixture_key],
+                        "network_execution": False,
+                        "no_bet": True,
+                        "publication_enabled": False,
+                        "monetary_spend_authorized": False,
+                    },
+                },
+            )
+        )
+    return batches
 
 
 def test_real_adapter_observation_maps_to_qualified_b1_evidence() -> None:
@@ -307,3 +411,178 @@ def test_bridge_preserves_each_top5_league_identity(league: str) -> None:
         authorization_metadata=auth,
     )
     assert evidence["canonical_league"] == league
+
+
+def test_fetch_observations_offline_tuple_maps_all_top5_books_to_envelope() -> None:
+    envelope_evidence = []
+    for fixture, observations, bindings in _offline_batch():
+        envelope = bridge_therundown_observations(
+            observations,
+            expected_fixture=fixture,
+            evidence_ids=bindings["evidence_ids"],
+            observation_ids=bindings["observation_ids"],
+            provider_league_code=bindings["provider_league_code"],
+            provider_league_identity_verified=True,
+            evidence_kind=ObservationEvidenceKind.TEST_FIXTURE,
+            synthetic_reconstruction=True,
+            network_request_count=0,
+            response_status_code=200,
+            maximum_odds_age_seconds=300,
+            quota_cost_units=0.0,
+            adapter_source_sha="f" * 40,
+            authorization_metadata=bindings["authorization_metadata"],
+        )
+        envelope_evidence.extend(envelope["evidence"])
+
+    assert len(envelope_evidence) == 10
+    assert {item["canonical_league"] for item in envelope_evidence} == {
+        "BL1",
+        "EPL",
+        "LL",
+        "SA",
+        "L1",
+    }
+    assert {item["bookmaker_identity"] for item in envelope_evidence} == {
+        "DraftKings",
+        "FanDuel",
+    }
+    assert all(
+        item["provider_event_id"].startswith("rd-") for item in envelope_evidence
+    )
+    assert all(item["raw_record_digest"] for item in envelope_evidence)
+    assert all(item["normalized_record_digest"] for item in envelope_evidence)
+    assert all(item["adapter_source_sha"] == "f" * 40 for item in envelope_evidence)
+
+    report = evaluate_therundown_qualification(
+        {
+            "schema_version": envelope_evidence[0]["schema_version"],
+            "provider_identity": envelope_evidence[0]["provider_identity"],
+            "evidence": envelope_evidence,
+        },
+        maximum_odds_age_seconds=300,
+    )
+    assert report.status is TheRundownQualificationStatus.FAILED
+    assert all(
+        league.status is TheRundownQualificationStatus.FAILED
+        for league in report.leagues
+    )
+    assert all(not league.qualified_evidence_ids for league in report.leagues)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda item: replace(item, bookmaker_identity=""),
+        lambda item: replace(
+            item,
+            source_timestamp=item.source_timestamp - timedelta(minutes=6),
+        ),
+        lambda item: replace(item, home_team="Wrong Participant"),
+        lambda item: replace(item, request_identity="ambiguous-request"),
+        lambda item: replace(
+            item,
+            quota_state_after=QuotaSnapshot(
+                used=999, remaining=1, rate_limit=1, rate_remaining=0
+            ),
+        ),
+        lambda item: replace(
+            item,
+            rate_limit_state=QuotaSnapshot(rate_limit=1, rate_remaining=2),
+        ),
+    ],
+    ids=[
+        "missing-bookmaker",
+        "stale",
+        "participant",
+        "request",
+        "quota",
+        "rate-limit",
+    ],
+)
+def test_fetch_observations_bridge_rejects_unsafe_batch_provenance(mutation) -> None:
+    fixture, observations, bindings = _offline_batch()[0]
+    unsafe = [mutation(observations[0]), *observations[1:]]
+    with pytest.raises(TheRundownBridgeError):
+        bridge_therundown_observations(
+            unsafe,
+            expected_fixture=fixture,
+            evidence_ids=bindings["evidence_ids"],
+            observation_ids=bindings["observation_ids"],
+            provider_league_code=bindings["provider_league_code"],
+            provider_league_identity_verified=True,
+            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+            synthetic_reconstruction=False,
+            network_request_count=1,
+            response_status_code=200,
+            maximum_odds_age_seconds=300,
+            quota_cost_units=11.0,
+            adapter_source_sha="f" * 40,
+            authorization_metadata={
+                **bindings["authorization_metadata"],
+                "network_execution": True,
+            },
+        )
+
+
+def test_fetch_observations_bridge_requires_explicit_authorization_and_request_count() -> (
+    None
+):
+    fixture, observations, bindings = _offline_batch()[0]
+    with pytest.raises(TheRundownBridgeError):
+        bridge_therundown_observations(
+            observations,
+            expected_fixture=fixture,
+            evidence_ids=bindings["evidence_ids"],
+            observation_ids=bindings["observation_ids"],
+            provider_league_code=bindings["provider_league_code"],
+            provider_league_identity_verified=True,
+            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+            synthetic_reconstruction=False,
+            network_request_count=2,
+            response_status_code=200,
+            maximum_odds_age_seconds=300,
+            quota_cost_units=11.0,
+            adapter_source_sha="f" * 40,
+            authorization_metadata=bindings["authorization_metadata"],
+        )
+
+    incomplete_auth = dict(bindings["authorization_metadata"])
+    incomplete_auth.pop("ceo_authorization_id")
+    with pytest.raises(TheRundownBridgeError):
+        bridge_therundown_observations(
+            observations,
+            expected_fixture=fixture,
+            evidence_ids=bindings["evidence_ids"],
+            observation_ids=bindings["observation_ids"],
+            provider_league_code=bindings["provider_league_code"],
+            provider_league_identity_verified=True,
+            evidence_kind=ObservationEvidenceKind.TEST_FIXTURE,
+            synthetic_reconstruction=True,
+            network_request_count=0,
+            response_status_code=200,
+            maximum_odds_age_seconds=300,
+            quota_cost_units=0.0,
+            adapter_source_sha="f" * 40,
+            authorization_metadata=incomplete_auth,
+        )
+
+
+def test_fetch_observations_bridge_binds_provider_league_identity() -> None:
+    fixture, observations, bindings = _offline_batch()[0]
+    with pytest.raises(TheRundownBridgeError):
+        bridge_therundown_observations(
+            observations,
+            expected_fixture=fixture,
+            evidence_ids=bindings["evidence_ids"],
+            observation_ids=bindings["observation_ids"],
+            provider_league_code="WRONG_PROVIDER_LEAGUE",
+            provider_league_identity_verified=True,
+            evidence_kind=ObservationEvidenceKind.TEST_FIXTURE,
+            synthetic_reconstruction=True,
+            network_request_count=0,
+            response_status_code=200,
+            maximum_odds_age_seconds=300,
+            quota_cost_units=0.0,
+            adapter_source_sha="f" * 40,
+            authorization_metadata=bindings["authorization_metadata"],
+        )
