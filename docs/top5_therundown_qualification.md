@@ -127,9 +127,9 @@ summary at:
 tests/fixtures/therundown/pr88_top5_real_evidence_summary.json
 ```
 
-The summary is pinned to PR-88 head
-`c550e8037704eda58f536246e4563b47e3c2e8bb`, CEO review `5241854809`, and the
-exact evaluation document blob recorded in the source block. It records 15 real
+The summary is pinned to the current PR-88 head
+`dac86defdf3ed2e7aba445eb35daa131d7472c1f`, CEO review `5241854809`, and the
+current evaluation document blob recorded in the source block. It records 15 real
 requests, 44 datapoints consumed, Free-tier access, a five-minute delay, and
 DraftKings, BetMGM, and FanDuel entitlement. EPL, BL1, SA, and L1 each report a
 real fixture with complete 1X2 coverage from three bookmakers; LL is unobserved
@@ -143,6 +143,14 @@ validate a Builder-2 receipt. It also records the independently reviewed PR-91
 shadow compatibility head for traceability; PR-91 is not modified or merged.
 The `source_update_timestamp_range` values remain the ranges reported by PR-88;
 they are not reinterpreted as exact per-price timestamps.
+
+The current PR-88 execution package adds participant metadata to the existing
+normalized observation and a bounded La Liga capture/evidence bundle. It does
+not change the `fetch_observations()` tuple, this qualification envelope schema,
+request/quota provenance, or digest identity. The La Liga bundle remains a
+candidate-only input package: its historical result is still `PARTIAL`/unobserved
+and its cascade digest and canonical capture attestation remain required from
+Builder 4. No La Liga REAL_OBSERVED evidence is fabricated or promoted here.
 
 Run it offline with:
 

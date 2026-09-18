@@ -4,10 +4,10 @@
   "source": {
     "provider_identity": "therundown_experimental",
     "source_pr": 88,
-    "source_head": "c550e8037704eda58f536246e4563b47e3c2e8bb",
+    "source_head": "dac86defdf3ed2e7aba445eb35daa131d7472c1f",
     "source_review_id": "5241854809",
     "source_document": "docs/top5_therundown_experimental_evaluation.md",
-    "source_document_blob": "edc13a84931d25a80173442fbb71a78b13eb607c"
+    "source_document_blob": "1b83317fbf54343c862163b34eb7538df99064ac"
   },
   "run": {
     "real_requests": 15,
