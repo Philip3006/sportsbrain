@@ -199,3 +199,115 @@ integrity. They also cover expected versus unexpected runtime dirtiness,
 control-repository isolation, explicit roadmap selection, bounded debug
 retests, blocker parking/re-eligibility, merge backpressure, and intentional
 idle.
+
+## Recovery V2 runtime policy
+
+Task runtime is an explicit template field, persisted as
+`max_runtime_seconds`. The default is 1,800 seconds and the reviewed heavy
+templates use 3,600 seconds:
+
+| Work class | Templates | Maximum runtime |
+| --- | --- | ---: |
+| Heavy research/code/provider | `*.research-shadow-evidence`, `*.independent-qualification`, `*.memory-context-observability`, `*.provider-cascade-shadow` | 3,600s / 60m |
+| Read-only/audit | `*.evidence-lifecycle-audit`, `*.authority-review`, `*.observability-audit`, `*.provider-health-replay` | 1,800s / 30m |
+| Generic direct task | no template override | 1,800s / 30m |
+
+The queue policy rejects submissions above 3,600 seconds. The pre-existing
+model hard limit remains 24 hours for schema compatibility, but it is not
+reachable through governed dispatcher submission. Existing database rows are
+not rewritten; a restart is sufficient to load the new defaults.
+
+When a worker returns a timeout, the first occurrence may be retried within
+the task attempt budget. A second identical timeout signature is parked in
+`FAILED_SAFE` with `failure_class=REPEATED_TIMEOUT`, the signature, summary,
+and attempt count retained in the result and audit event. The dispatcher does
+not split the task, invent a follow-up, or redefine its scope.
+
+## Delivery-blocked recovery
+
+Verification, commit, remote branch, and PR evidence are written as each
+delivery step succeeds. If a later, non-destructive delivery check fails, the
+task is retained as delivery-blocked (`BLOCKED`) or `PR_READY` when a complete
+PR identity already exists. The result keeps `commit_sha`, `remote_sha`,
+`pr_number`, `pr_url`, and `verification_json`; it does not call the worker
+again. `PR_READY` may retain a delivery-blocked reason until merge is
+independently reconciled.
+
+For historical cases such as Builder 2 PR #89 and Builder 3 PR #86, provide
+the task ID and, when the old row lacks them, the PR and commit identifiers:
+
+```bash
+python3 scripts/night_shift_dispatcher.py reconcile-delivery TASK_ID \
+  --actor philip --pr-number 89 --commit-sha COMMIT_SHA
+```
+
+The command performs a read-only `gh api repos/Philip3006/sportsbrain/pulls/N`
+check and requires the recorded task branch, governed base branch, PR head,
+preserved commit/remote SHA, and successful implementation/verification facts.
+A changed base OID is retained as evidence; the command never changes a PR
+base, rebases, force-pushes, merges, or declares completion. Timeout/dead-letter
+tasks cannot use this path. After review, use `ceo-review` and then the
+existing read-only `reconcile-merged` command as appropriate.
+
+## Control-repository locking
+
+Fetches and other shared remote-ref updates in the dedicated bare control
+repository are serialized with a kernel-owned POSIX `flock` file beside the
+repository (`.nightshift-control-repo.lock` by default). Acquisition is
+bounded to 30 seconds. A stale file is safe because ownership belongs to the
+kernel and is released when the process exits; the implementation never
+guesses at stale PIDs or deletes repository state. Per-task worktree creation
+and scope checks remain outside this critical section, so independent workers
+remain parallel.
+
+## Native notifications
+
+The decoupled watcher polls the SQLite queue with:
+
+```bash
+python3 scripts/night_shift_dispatcher.py notify --dry-run
+python3 scripts/night_shift_dispatcher.py notify
+```
+
+It reports `COMPLETED`, `PR_READY`, `CEO_REVIEW`, `FAILED_SAFE`, final
+timeout/dead-letter parking, delivery-blocked outcomes, `CANCELLED`, and an
+active task whose recorded PID has disappeared. Messages contain only the
+Builder, state, short branch/task identifier, sanitized short reason, and PR
+number. The last-seen signatures live outside the repository under
+`~/Library/Application Support/SportsBrain/runtime-state/`; unchanged states
+are deduplicated. `osascript` failures are counted and ignored, so Notification
+Center can never change queue truth. The user-level
+`launchd/com.sportsbrain.nightshift-notifications.plist.template` may be
+expanded and installed under `~/Library/LaunchAgents` without `sudo`; no
+system LaunchDaemon is used.
+
+`status` and `doctor` include sanitized operator categories for running work,
+dead PIDs, parked timeouts, delivery blockers, CEO review, merge backpressure,
+intentional idle, and the next eligible explicit roadmap item. They do not
+print task payloads, credentials, or provider responses.
+
+## AI usage and quota recovery
+
+Terminal workers classify quota pauses only from explicit provider usage
+signals. Accepted signals are usage/account/organization/project quota or
+limit exhaustion, exhausted or insufficient credits, an explicit provider
+reset-required result, or the provider's explicit “hit your usage limit”
+message. Generic rate-limit text, test failures, disk/resource quota errors,
+and ordinary provider or code errors are not quota signals.
+
+The persisted state is `PAUSED_QUOTA`. It retains the worker result, delivery
+evidence, and a sanitized `QUOTA_EXHAUSTED` reason. The claim transaction
+automatically moves due quota-paused work back to `READY`; no manual resume is
+needed. A validated future reset timestamp is used when present. Otherwise,
+the queue uses bounded exponential backoff starting at 15 minutes and capped
+at six hours. Quota pauses do not increment normal attempts, repeated-failure
+counts, debug budgets, or timeout/dead-letter counters. A repeated pause stays
+`PAUSED_QUOTA`.
+
+Complete commit/remote/PR/verification evidence remains authoritative: if a
+later quota or gate result arrives after successful delivery, the task remains
+`PR_READY` and is reconciled through the existing explicit GitHub verification
+path. Historical `FAILED_SAFE`/dead-letter rows are never revived by quota
+support. `status` and `doctor` expose `paused_quota`, and the fail-open local
+notification watcher emits `PAUSED_QUOTA` without allowing notification
+failures to mutate queue state.

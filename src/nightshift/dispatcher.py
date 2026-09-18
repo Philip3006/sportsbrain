@@ -29,8 +29,10 @@ from .models import (
     utc_now,
 )
 from .policy import SafetyPolicy
+from .recovery import DeliveryVerificationError, verify_github_pull_request
 from .registry import BuilderRegistry
 from .roadmap import RoadmapRegistry
+from .status import operator_snapshot
 from .store import DispatcherStore
 from .task_states import DEPENDENCY_SATISFIED_STATES
 from .templates import TemplateRegistry
@@ -85,7 +87,7 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         store: DispatcherStore,
         policy: SafetyPolicy | None = None,
         dispatcher_id: str = DISPATCHER_ID,
-        lease_seconds: int = 15 * 60,
+        lease_seconds: int = 30 * 60,
         retry_base_seconds: int = 60,
         retry_max_seconds: int = 60 * 60,
         clock: Callable[[], datetime] = utc_now,
@@ -422,6 +424,102 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         self._refresh_roadmap()
         return completed
 
+    def reconcile_delivery(
+        self,
+        task_id: str,
+        *,
+        actor: str,
+        facts: Mapping[str, Any] | None = None,
+        pr_number: int | None = None,
+        commit_sha: str | None = None,
+        remote_sha: str | None = None,
+    ) -> TaskRecord:
+        """Recover preserved delivery work after independently checking GitHub.
+
+        Production callers omit ``facts`` and this method performs a read-only
+        ``gh api`` verification.  A facts mapping is accepted for deterministic
+        tests and still undergoes task-binding validation below.
+        """
+
+        self._require_actor(actor)
+        record = self.store.get(task_id)
+        failure = (record.failure_class or "").upper()
+        if record.state is TaskState.FAILED_SAFE and (
+            not failure.startswith("DELIVERY")
+            or "TIMEOUT" in failure
+            or "DEAD_LETTER" in failure
+        ):
+            raise DeliveryVerificationError(
+                "timeout/dead-letter work cannot be reconciled as delivery"
+            )
+        selected_pr = pr_number or record.pr_number
+        selected_commit = commit_sha or record.commit_sha
+        selected_remote = remote_sha or record.remote_sha
+        if facts is None:
+            if selected_pr is None or selected_commit is None:
+                raise DeliveryVerificationError(
+                    "recovery requires the recorded or explicitly supplied PR and commit"
+                )
+            facts = verify_github_pull_request(
+                record.repo,
+                selected_pr,
+                expected_commit_sha=selected_commit,
+                expected_base=record.base_branch,
+                expected_branch=record.branch,
+                expected_remote_sha=selected_remote,
+            )
+        if not isinstance(facts, Mapping) or facts.get("verified") is not True:
+            raise DeliveryVerificationError("delivery recovery requires verified GitHub facts")
+        if facts.get("worker_execution_success") is not True or facts.get(
+            "implementation_success"
+        ) is not True:
+            raise DeliveryVerificationError("delivery recovery requires successful implementation evidence")
+        self._validate_recovery_binding(record, facts)
+        if facts.get("merged") is True:
+            raise DeliveryVerificationError(
+                "verified merged PR must use reconcile-merged; no automatic completion"
+            )
+        recovered = self.store.reconcile_delivery(
+            task_id,
+            actor=actor,
+            evidence=facts,
+            now=self.clock(),
+        )
+        self._refresh_roadmap()
+        return recovered
+
+    @staticmethod
+    def _validate_recovery_binding(
+        record: TaskRecord, facts: Mapping[str, Any]
+    ) -> None:
+        for key, expected in (
+            ("repo", record.repo),
+            ("head_ref", record.branch),
+            ("base_ref", record.base_branch),
+            ("pr_number", record.pr_number),
+            ("commit_sha", record.commit_sha),
+            ("remote_sha", record.remote_sha),
+        ):
+            actual = facts.get(key)
+            if actual is None:
+                continue
+            if expected is None:
+                continue
+            if key in {"commit_sha", "remote_sha"}:
+                if not isinstance(actual, str) or actual.lower() != expected.lower():
+                    raise DeliveryVerificationError(
+                        f"recovery {key} does not match the preserved task evidence"
+                    )
+            elif actual != expected:
+                raise DeliveryVerificationError(
+                    f"recovery {key} does not match the preserved task evidence"
+                )
+        if record.pr_number is None and (
+            isinstance(facts.get("pr_number"), bool)
+            or not isinstance(facts.get("pr_number"), int)
+        ):
+            raise DeliveryVerificationError("recovery is missing a valid pull-request number")
+
     def _refresh_roadmap(self) -> None:
         """Reflect task outcomes without inventing or deleting roadmap items."""
 
@@ -607,6 +705,7 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
     def status(self) -> dict[str, Any]:
         result = self.store.stats()
         roadmap = self.store.roadmap_records()
+        records = self.store.list_tasks(limit=1000)
         merge_count = self.store.merge_backpressure_count()
         actionable = sum(
             result["by_state"].get(state.value, 0)
@@ -625,12 +724,38 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
             queue_mode = "DRAINING"
         elif merge_count >= self.merge_backpressure_limit:
             queue_mode = "MERGE_BACKPRESSURE"
+        elif any(record.state is TaskState.PAUSED_QUOTA for record in records):
+            queue_mode = "PAUSED_QUOTA" if actionable == 0 else "ACTIVE"
         elif actionable == 0 and all(
             item["status"] in {"COMPLETED", "DISABLED"} for item in roadmap
         ):
             queue_mode = "INTENTIONAL_IDLE" if roadmap else "IDLE_SAFE"
         else:
             queue_mode = "ACTIVE"
+        roadmap_summary = [
+            {
+                key: item.get(key)
+                for key in (
+                    "item_id",
+                    "title",
+                    "builder_id",
+                    "template_id",
+                    "dependency_item_ids",
+                    "priority",
+                    "status",
+                    "task_id",
+                    "blocked_reason",
+                    "next_eligible_at",
+                    "enabled",
+                )
+            }
+            for item in roadmap
+        ]
+        operator = operator_snapshot(
+            records,
+            roadmap,
+            merge_backpressure=merge_count >= self.merge_backpressure_limit,
+        )
         result.update(
             {
                 "dispatcher_id": self.dispatcher_id,
@@ -642,9 +767,10 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                 "queue_mode": queue_mode,
                 "merge_backpressure_count": merge_count,
                 "merge_backpressure_limit": self.merge_backpressure_limit,
-                "roadmap": roadmap,
+                "roadmap": roadmap_summary,
                 "roadmap_mode": self.roadmap.mode,
                 "roadmap_max_cycles": self.roadmap.max_cycles,
+                "operator": operator,
             }
         )
         return result

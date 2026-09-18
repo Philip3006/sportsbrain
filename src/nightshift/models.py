@@ -31,6 +31,8 @@ __all__ = ["AuditEvent", "TaskState", "json_payload", "state_from_value"]
 
 DISPATCHER_ID = "builder-5"
 UTC = timezone.utc
+DEFAULT_RUNTIME_SECONDS = 30 * 60
+HARD_MAX_RUNTIME_SECONDS = 24 * 60 * 60
 _TASK_ID_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_.:-]{7,127}$")
 _BRANCH_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._/-]{7,255}$")
 _SHA_RE = re.compile(r"^[0-9a-fA-F]{40,64}$")
@@ -63,6 +65,7 @@ class EventType(str, Enum):
     MERGE_VERIFIED = "merge_verified"
     COMPLETED = "completed"
     DELIVERY_BLOCKED = "delivery_blocked"
+    DELIVERY_RECOVERED = "delivery_recovered"
     FENCED = "fenced"
     HEARTBEAT = "heartbeat"
     SUCCEEDED = "succeeded"
@@ -81,6 +84,8 @@ class EventType(str, Enum):
     CANCELLED = "cancelled"
     PAUSED = "paused"
     RESUMED = "resumed"
+    QUOTA_PAUSED = "quota_paused"
+    QUOTA_RESUMED = "quota_resumed"
     DRAINED = "drained"
     RESTART_REQUESTED = "restart_requested"
 
@@ -136,7 +141,7 @@ class TaskSpec:
     base_branch: str = "main"
     required_tests: tuple[str, ...] = ()
     verification_commands: tuple[tuple[str, ...], ...] = ()
-    max_runtime_seconds: int = 15 * 60
+    max_runtime_seconds: int = DEFAULT_RUNTIME_SECONDS
     requires_pr: bool | None = None
     roadmap_item_id: str | None = None
     debug_budget: int = 0
@@ -247,7 +252,7 @@ class TaskSpec:
         if (
             isinstance(self.max_runtime_seconds, bool)
             or not isinstance(self.max_runtime_seconds, int)
-            or not 1 <= self.max_runtime_seconds <= 24 * 60 * 60
+            or not 1 <= self.max_runtime_seconds <= HARD_MAX_RUNTIME_SECONDS
         ):
             raise InvalidTaskError(
                 "max_runtime_seconds must be between 1 second and 24 hours"
@@ -349,6 +354,9 @@ class ExecutionResult:
     retryable: bool = True
     terminal_state: TaskState | None = None
     process_id: int | None = None
+    failure_class: str | None = None
+    timeout_signature: str | None = None
+    quota_reset_at: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.success, bool):
@@ -358,6 +366,17 @@ class ExecutionResult:
         object.__setattr__(self, "data", json_payload(self.data))
         if not isinstance(self.retryable, bool):
             raise InvalidTaskError("execution retryable must be boolean")
+        for name in ("failure_class", "timeout_signature", "quota_reset_at"):
+            value = getattr(self, name)
+            if value is not None and (
+                not isinstance(value, str) or not value.strip() or len(value) > 256
+            ):
+                raise InvalidTaskError(f"execution {name} is invalid")
+        if self.quota_reset_at is not None:
+            try:
+                parse_timestamp(self.quota_reset_at)
+            except (TypeError, ValueError) as exc:
+                raise InvalidTaskError("execution quota_reset_at is invalid") from exc
         if self.terminal_state is not None:
             try:
                 terminal = (
@@ -436,7 +455,7 @@ class TaskRecord:
     base_branch: str = "main"
     required_tests: tuple[str, ...] = ()
     verification_commands: tuple[tuple[str, ...], ...] = ()
-    max_runtime_seconds: int = 15 * 60
+    max_runtime_seconds: int = DEFAULT_RUNTIME_SECONDS
     requires_pr: bool = False
     worktree_path: str | None = None
     base_sha: str | None = None
@@ -475,6 +494,27 @@ class TaskRecord:
         """Return whether this persisted task requires a real pull request."""
 
         return self.requires_pr
+
+    @property
+    def runtime_seconds(self) -> int:
+        """Compatibility name used by operator-facing runtime reports."""
+
+        return self.max_runtime_seconds
+
+    @property
+    def verification_json(self) -> Mapping[str, Any] | None:
+        """Return the persisted verification evidence under its DB name."""
+
+        return self.verification
+
+    @property
+    def delivery_blocked(self) -> bool:
+        """Whether delivery was blocked after useful work was preserved."""
+
+        return bool(
+            self.failure_class
+            and self.failure_class.startswith("DELIVERY")
+        ) or bool((self.delivery or {}).get("delivery_blocked"))
 
     def as_dict(self) -> dict[str, Any]:
         result = asdict(self)

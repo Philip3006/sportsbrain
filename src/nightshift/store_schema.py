@@ -19,15 +19,18 @@ ALLOWED_TRANSITIONS: dict[TaskState, frozenset[TaskState]] = {
     TaskState.WAITING_DEPENDENCY: frozenset(
         {TaskState.READY, TaskState.BLOCKED, TaskState.CANCELLED}
     ),
+    TaskState.PAUSED_QUOTA: frozenset({TaskState.READY, TaskState.CANCELLED}),
     TaskState.CLAIMED: frozenset(
-        {TaskState.RUNNING, TaskState.FAILED_SAFE, TaskState.CANCELLED}
+        {TaskState.RUNNING, TaskState.FAILED_SAFE, TaskState.PAUSED_QUOTA, TaskState.CANCELLED}
     ),
     TaskState.RUNNING: frozenset(
         {
             TaskState.VERIFYING,
+            TaskState.PR_READY,
             TaskState.READY,
             TaskState.BLOCKED,
             TaskState.FAILED_SAFE,
+            TaskState.PAUSED_QUOTA,
             TaskState.CANCELLED,
         }
     ),
@@ -38,6 +41,7 @@ ALLOWED_TRANSITIONS: dict[TaskState, frozenset[TaskState]] = {
             TaskState.READY,
             TaskState.BLOCKED,
             TaskState.FAILED_SAFE,
+            TaskState.PAUSED_QUOTA,
         }
     ),
     TaskState.PR_READY: frozenset({TaskState.CEO_REVIEW, TaskState.COMPLETED}),
@@ -66,7 +70,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     expected_base_sha TEXT, base_branch TEXT NOT NULL DEFAULT 'main', base_sha TEXT,
     origin_sha TEXT, required_tests_json TEXT NOT NULL DEFAULT '[]',
     verification_commands_json TEXT NOT NULL DEFAULT '[]',
-    max_runtime_seconds INTEGER NOT NULL DEFAULT 900, requires_pr INTEGER NOT NULL DEFAULT 0,
+    max_runtime_seconds INTEGER NOT NULL DEFAULT 1800, requires_pr INTEGER NOT NULL DEFAULT 0,
     lease_generation INTEGER NOT NULL DEFAULT 0, process_id INTEGER,
     commit_sha TEXT, remote_sha TEXT, pr_number INTEGER, pr_url TEXT,
     verification_json TEXT, delivery_json TEXT,

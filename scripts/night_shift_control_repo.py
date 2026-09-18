@@ -9,7 +9,17 @@ from __future__ import annotations
 
 import argparse
 import subprocess
+import sys
 from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from src.nightshift.control_repo import (
+    control_repo_lock_path,
+    run_locked_control_repo_operation,
+)
 
 REMOTE = "https://github.com/Philip3006/sportsbrain.git"
 DEFAULT_CONTROL = (
@@ -71,8 +81,16 @@ def provision(control: Path, worktrees: Path) -> dict[str, str]:
         )
     git(control, "config", "user.name", "SportsBrain Night Shift")
     git(control, "config", "user.email", "nightshift@sportsbrain.invalid")
-    git(control, "fetch", "--no-tags", "origin", "main")
-    git(control, "update-ref", "refs/heads/main", "refs/remotes/origin/main")
+    def refresh() -> None:
+        git(control, "fetch", "--no-tags", "origin", "main")
+        git(control, "update-ref", "refs/heads/main", "refs/remotes/origin/main")
+
+    run_locked_control_repo_operation(
+        control,
+        refresh,
+        lock_path=control_repo_lock_path(control),
+        timeout_seconds=30,
+    )
     git(control, "symbolic-ref", "HEAD", "refs/heads/main")
     worktrees.mkdir(parents=True, exist_ok=True)
     sha = git(control, "rev-parse", "refs/remotes/origin/main")

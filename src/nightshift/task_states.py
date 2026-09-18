@@ -16,6 +16,8 @@ class TaskState(str, Enum):
     QUEUED = "READY"  # noqa: PIE796 - compatibility alias
     RETRY_WAIT = "READY"  # noqa: PIE796 - compatibility alias
     WAITING_DEPENDENCY = "WAITING_DEPENDENCY"
+    PAUSED_QUOTA = "PAUSED_QUOTA"
+    WAITING_FOR_QUOTA = "PAUSED_QUOTA"  # noqa: PIE796 - operator-facing alias
     CLAIMED = "CLAIMED"
     LEASED = "CLAIMED"  # noqa: PIE796 - compatibility alias
     RUNNING = "RUNNING"
@@ -23,6 +25,7 @@ class TaskState(str, Enum):
     PR_READY = "PR_READY"
     CEO_REVIEW = "CEO_REVIEW"
     BLOCKED = "BLOCKED"
+    DELIVERY_FAILED = "BLOCKED"  # noqa: PIE796 - compatibility alias
     FAILED_SAFE = "FAILED_SAFE"
     FAILED = "FAILED_SAFE"  # noqa: PIE796 - compatibility alias
     DEAD_LETTER = "FAILED_SAFE"  # noqa: PIE796 - compatibility alias
@@ -56,6 +59,8 @@ def state_from_value(value: str | TaskState) -> TaskState:
         "failed_safe": TaskState.FAILED_SAFE,
         "dead_letter": TaskState.FAILED_SAFE,
         "blocked": TaskState.BLOCKED,
+        "paused_quota": TaskState.PAUSED_QUOTA,
+        "waiting_for_quota": TaskState.PAUSED_QUOTA,
         "cancelled": TaskState.CANCELLED,
     }
     try:

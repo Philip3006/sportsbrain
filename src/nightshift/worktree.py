@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from .control_repo import control_repo_lock_path, run_locked_control_repo_operation
 from .errors import ScopeViolation, WorktreeSafetyError
 from .models import TaskSpec
 
@@ -146,6 +147,8 @@ class WorktreeManager:
         runtime_dirty_policy: RuntimeDirtyPolicy | None = None,
         expected_remote_urls: dict[str, str] | None = None,
         git_executable: str = "git",
+        control_lock_path: Path | None = None,
+        control_lock_timeout_seconds: float = 30.0,
     ) -> None:
         self.runtime_dir = Path(runtime_dir).expanduser()
         self.repo_paths = {
@@ -161,6 +164,12 @@ class WorktreeManager:
         self.has_dedicated_control_repo = control_repo_paths is not None
         self.expected_remote_urls = dict(expected_remote_urls or {})
         self.git_executable = git_executable
+        self.control_lock_path = (
+            Path(control_lock_path).expanduser() if control_lock_path else None
+        )
+        self.control_lock_timeout_seconds = float(control_lock_timeout_seconds)
+        if self.control_lock_timeout_seconds < 0:
+            raise ValueError("control_lock_timeout_seconds must be non-negative")
         configured_root = os.getenv("SPORTSBRAIN_NIGHTSHIFT_WORKTREE_ROOT")
         self.worktrees_dir = Path(
             worktrees_dir or configured_root or (self.runtime_dir / "worktrees")
@@ -297,10 +306,10 @@ class WorktreeManager:
             result["error"] = "control repository origin is missing or incorrect"
             return result
         if fetch:
-            fetched = self._run(
+            fetched = self._locked_control_run(
+                path,
                 self._git_path_args(path)
                 + ["fetch", "--no-tags", "origin", base_branch],
-                check=False,
             )
             result["fetch_ok"] = fetched.returncode == 0
             if not result["fetch_ok"]:
@@ -394,7 +403,8 @@ class WorktreeManager:
                     "error", "Night Shift control repository is unavailable"
                 )
             )
-        fetched = self._run(
+        fetched = self._locked_control_run(
+            control,
             self._git_path_args(control)
             + [
                 "fetch",
@@ -402,7 +412,6 @@ class WorktreeManager:
                 "origin",
                 task.base_branch,
             ],
-            check=False,
         )
         if fetched.returncode != 0:
             raise WorktreeSafetyError(
@@ -491,6 +500,21 @@ class WorktreeManager:
         target = self.diagnostics_dir / f"{task_id}.jsonl"
         with target.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(event, sort_keys=True, ensure_ascii=False) + "\n")
+
+    def _locked_control_run(
+        self, control_repo: Path, args: list[str]
+    ) -> subprocess.CompletedProcess[str]:
+        """Serialize only the shared fetch/ref-update operation."""
+
+        return run_locked_control_repo_operation(
+            control_repo,
+            lambda: self._run(args, check=False),
+            lock_path=(
+                self.control_lock_path
+                or control_repo_lock_path(control_repo)
+            ),
+            timeout_seconds=self.control_lock_timeout_seconds,
+        )
 
     @staticmethod
     def _under(path: str, root: str) -> bool:
