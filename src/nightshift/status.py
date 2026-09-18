@@ -36,6 +36,7 @@ def task_summary(record: TaskRecord) -> dict[str, Any]:
         "failure_class": record.failure_class,
         "last_error": record.last_error[:240] if record.last_error else None,
         "process_id": record.process_id,
+        "available_at": record.available_at,
         "commit_sha": record.commit_sha,
         "remote_sha": record.remote_sha,
         "pr_number": record.pr_number,
@@ -79,6 +80,11 @@ def operator_snapshot(
         for record in records
         if record.delivery_blocked
     ]
+    paused_quota = [
+        task_summary(record)
+        for record in records
+        if record.state is TaskState.PAUSED_QUOTA
+    ]
     ceo_review = [
         task_summary(record) for record in records if record.state is TaskState.CEO_REVIEW
     ]
@@ -87,10 +93,16 @@ def operator_snapshot(
         "running": running,
         "parked_timeout": parked_timeout,
         "delivery_blocked": delivery_blocked,
+        "paused_quota": paused_quota,
         "awaiting_ceo_review": ceo_review,
         "dead_pid": dead_pid,
         "merge_backpressure": merge_backpressure,
-        "intentional_idle": not running and not next_item and not merge_backpressure,
+        "intentional_idle": (
+            not running
+            and not paused_quota
+            and not next_item
+            and not merge_backpressure
+        ),
         "next_eligible_explicit_task": next_item,
     }
 

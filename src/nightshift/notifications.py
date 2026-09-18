@@ -84,6 +84,8 @@ class NightShiftNotificationWatcher:
             return "PR_READY"
         if record.state is TaskState.CEO_REVIEW:
             return "CEO_REVIEW"
+        if record.state is TaskState.PAUSED_QUOTA:
+            return "PAUSED_QUOTA"
         if record.state is TaskState.FAILED_SAFE:
             failure = (record.failure_class or "").upper()
             return (
@@ -111,6 +113,7 @@ class NightShiftNotificationWatcher:
                 record.state.value,
                 record.failure_class or "",
                 str(record.pr_number or ""),
+                record.available_at,
                 "dead-pid" if event == "RUNNING_DEAD_PID" else "",
             )
         )

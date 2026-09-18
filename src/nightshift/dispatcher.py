@@ -724,6 +724,8 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
             queue_mode = "DRAINING"
         elif merge_count >= self.merge_backpressure_limit:
             queue_mode = "MERGE_BACKPRESSURE"
+        elif any(record.state is TaskState.PAUSED_QUOTA for record in records):
+            queue_mode = "PAUSED_QUOTA" if actionable == 0 else "ACTIVE"
         elif actionable == 0 and all(
             item["status"] in {"COMPLETED", "DISABLED"} for item in roadmap
         ):

@@ -15,7 +15,7 @@ class QueueControlMixin:
         with self._read() as conn:
             return int(
                 conn.execute(
-                    "SELECT COUNT(*) FROM tasks WHERE state IN ('BACKLOG', 'READY', 'WAITING_DEPENDENCY', 'CLAIMED', 'RUNNING', 'VERIFYING', 'BLOCKED')"
+                    "SELECT COUNT(*) FROM tasks WHERE state IN ('BACKLOG', 'READY', 'WAITING_DEPENDENCY', 'PAUSED_QUOTA', 'CLAIMED', 'RUNNING', 'VERIFYING', 'BLOCKED')"
                 ).fetchone()[0]
             )
 

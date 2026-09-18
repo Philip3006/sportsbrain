@@ -51,6 +51,15 @@ from .notifications import (
     send_macos_notification,
 )
 from .policy import SafetyPolicy
+from .quota import (
+    DEFAULT_QUOTA_BACKOFF_SECONDS,
+    MAX_QUOTA_BACKOFF_SECONDS,
+    QuotaDetection,
+    classify_quota_exhaustion,
+    is_quota_failure_class,
+    next_quota_eligible_at,
+    normalize_reset_at,
+)
 from .recovery import (
     DeliveryVerificationError,
     facts_verifier,
@@ -70,7 +79,9 @@ from .worktree import (
 
 __all__ = [
     "ALLOWED_TRANSITIONS",
+    "DEFAULT_QUOTA_BACKOFF_SECONDS",
     "DISPATCHER_ID",
+    "MAX_QUOTA_BACKOFF_SECONDS",
     "ApprovalError",
     "AuditEvent",
     "AuditIntegrityError",
@@ -102,6 +113,7 @@ __all__ = [
     "NightShiftError",
     "NightShiftNotification",
     "NightShiftNotificationWatcher",
+    "QuotaDetection",
     "RiskClass",
     "RoadmapItem",
     "RoadmapRegistry",
@@ -123,9 +135,13 @@ __all__ = [
     "WorktreeAllocation",
     "WorktreeManager",
     "WorktreeSafetyError",
+    "classify_quota_exhaustion",
     "control_repo_lock_path",
     "facts_verifier",
     "fetch_control_repo",
+    "is_quota_failure_class",
+    "next_quota_eligible_at",
+    "normalize_reset_at",
     "redact",
     "run_locked_control_repo_operation",
     "send_macos_notification",

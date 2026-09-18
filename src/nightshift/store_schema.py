@@ -19,15 +19,18 @@ ALLOWED_TRANSITIONS: dict[TaskState, frozenset[TaskState]] = {
     TaskState.WAITING_DEPENDENCY: frozenset(
         {TaskState.READY, TaskState.BLOCKED, TaskState.CANCELLED}
     ),
+    TaskState.PAUSED_QUOTA: frozenset({TaskState.READY, TaskState.CANCELLED}),
     TaskState.CLAIMED: frozenset(
-        {TaskState.RUNNING, TaskState.FAILED_SAFE, TaskState.CANCELLED}
+        {TaskState.RUNNING, TaskState.FAILED_SAFE, TaskState.PAUSED_QUOTA, TaskState.CANCELLED}
     ),
     TaskState.RUNNING: frozenset(
         {
             TaskState.VERIFYING,
+            TaskState.PR_READY,
             TaskState.READY,
             TaskState.BLOCKED,
             TaskState.FAILED_SAFE,
+            TaskState.PAUSED_QUOTA,
             TaskState.CANCELLED,
         }
     ),
@@ -38,6 +41,7 @@ ALLOWED_TRANSITIONS: dict[TaskState, frozenset[TaskState]] = {
             TaskState.READY,
             TaskState.BLOCKED,
             TaskState.FAILED_SAFE,
+            TaskState.PAUSED_QUOTA,
         }
     ),
     TaskState.PR_READY: frozenset({TaskState.CEO_REVIEW, TaskState.COMPLETED}),

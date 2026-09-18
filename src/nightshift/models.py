@@ -84,6 +84,8 @@ class EventType(str, Enum):
     CANCELLED = "cancelled"
     PAUSED = "paused"
     RESUMED = "resumed"
+    QUOTA_PAUSED = "quota_paused"
+    QUOTA_RESUMED = "quota_resumed"
     DRAINED = "drained"
     RESTART_REQUESTED = "restart_requested"
 
@@ -354,6 +356,7 @@ class ExecutionResult:
     process_id: int | None = None
     failure_class: str | None = None
     timeout_signature: str | None = None
+    quota_reset_at: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.success, bool):
@@ -363,12 +366,17 @@ class ExecutionResult:
         object.__setattr__(self, "data", json_payload(self.data))
         if not isinstance(self.retryable, bool):
             raise InvalidTaskError("execution retryable must be boolean")
-        for name in ("failure_class", "timeout_signature"):
+        for name in ("failure_class", "timeout_signature", "quota_reset_at"):
             value = getattr(self, name)
             if value is not None and (
                 not isinstance(value, str) or not value.strip() or len(value) > 256
             ):
                 raise InvalidTaskError(f"execution {name} is invalid")
+        if self.quota_reset_at is not None:
+            try:
+                parse_timestamp(self.quota_reset_at)
+            except (TypeError, ValueError) as exc:
+                raise InvalidTaskError("execution quota_reset_at is invalid") from exc
         if self.terminal_state is not None:
             try:
                 terminal = (

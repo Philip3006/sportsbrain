@@ -285,3 +285,29 @@ system LaunchDaemon is used.
 dead PIDs, parked timeouts, delivery blockers, CEO review, merge backpressure,
 intentional idle, and the next eligible explicit roadmap item. They do not
 print task payloads, credentials, or provider responses.
+
+## AI usage and quota recovery
+
+Terminal workers classify quota pauses only from explicit provider usage
+signals. Accepted signals are usage/account/organization/project quota or
+limit exhaustion, exhausted or insufficient credits, an explicit provider
+reset-required result, or the provider's explicit “hit your usage limit”
+message. Generic rate-limit text, test failures, disk/resource quota errors,
+and ordinary provider or code errors are not quota signals.
+
+The persisted state is `PAUSED_QUOTA`. It retains the worker result, delivery
+evidence, and a sanitized `QUOTA_EXHAUSTED` reason. The claim transaction
+automatically moves due quota-paused work back to `READY`; no manual resume is
+needed. A validated future reset timestamp is used when present. Otherwise,
+the queue uses bounded exponential backoff starting at 15 minutes and capped
+at six hours. Quota pauses do not increment normal attempts, repeated-failure
+counts, debug budgets, or timeout/dead-letter counters. A repeated pause stays
+`PAUSED_QUOTA`.
+
+Complete commit/remote/PR/verification evidence remains authoritative: if a
+later quota or gate result arrives after successful delivery, the task remains
+`PR_READY` and is reconciled through the existing explicit GitHub verification
+path. Historical `FAILED_SAFE`/dead-letter rows are never revived by quota
+support. `status` and `doctor` expose `paused_quota`, and the fail-open local
+notification watcher emits `PAUSED_QUOTA` without allowing notification
+failures to mutate queue state.

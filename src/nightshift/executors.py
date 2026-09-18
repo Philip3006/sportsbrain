@@ -18,6 +18,7 @@ from .errors import (
     WorktreeSafetyError,
 )
 from .models import ExecutionResult, TaskRecord, TaskState
+from .quota import classify_quota_exhaustion
 from .worktree import WorktreeManager
 
 _SECRET = re.compile(
@@ -273,6 +274,25 @@ class CodexExecutor:
             "exit_code": process.returncode,
         }
         if process.returncode != 0:
+            quota = classify_quota_exhaustion(stdout, stderr, provider="codex")
+            if quota is not None:
+                return ExecutionResult(
+                    False,
+                    quota.reason,
+                    data={
+                        **output,
+                        "failure_class": "QUOTA_EXHAUSTED",
+                        "quota_detection": quota.as_dict(),
+                        "quota_marker": quota.marker,
+                        "quota_reason": quota.reason,
+                        "quota_reset_at": quota.reset_at,
+                        "provider": quota.provider,
+                    },
+                    retryable=True,
+                    process_id=process.pid,
+                    failure_class="QUOTA_EXHAUSTED",
+                    quota_reset_at=quota.reset_at,
+                )
             return ExecutionResult(
                 False,
                 f"Codex exited with status {process.returncode}",

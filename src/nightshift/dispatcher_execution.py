@@ -522,4 +522,5 @@ class DispatcherExecutionMixin:
             process_id=value.get("process_id"),
             failure_class=value.get("failure_class"),
             timeout_signature=value.get("timeout_signature"),
+            quota_reset_at=value.get("quota_reset_at"),
         )
