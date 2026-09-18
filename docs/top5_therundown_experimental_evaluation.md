@@ -198,6 +198,52 @@ date-specific observation before it can be treated as complete Top-5 coverage;
 the observed Free-tier delay and historical/live restrictions also remain part
 of the operational qualification decision.
 
+### La Liga one-shot evidence capture readiness
+
+The missing La Liga fixture-level observation now has a bounded, offline-tested
+capture path in `src/football/odds/therundown_la_liga_capture.py` with the
+entrypoint `scripts/therundown_la_liga_capture.py`. It is limited to exactly
+two requests: one `GET /sports/14/dates` request, followed by one filtered
+`GET /sports/14/events/YYYY-MM-DD` request for the earliest upcoming date
+returned by the provider. The default bound is 2 requests and an explicit
+caller-supplied datapoint budget no greater than 100; the future CEO envelope
+must set the actual budget before execution. This is an operational request
+cap, not a production sample threshold.
+
+The future one-shot command contract is:
+
+```text
+THERUNDOWN_API_KEY="$THERUNDOWN_API_KEY" \
+python3 scripts/therundown_la_liga_capture.py \
+  --authorization-file /operator-only/top5/ll-capture-authorization.json \
+  --execute-network
+```
+
+The external authorization JSON must contain `provider=therundown_experimental`,
+`league=LL` (ESP1 is accepted only as the equivalent provider label),
+`maximum_request_count=2`, a positive `maximum_datapoint_budget` no greater
+than 100, an unexpired `expires_at`, `controlled_shadow_run_id`,
+`ceo_authorization_id`, `qualification_session_id`, and all four safety flags
+`no_bet`, `no_publication`, `no_activation`, and `no_spend` set to `true`.
+It also carries the operator-observed `quota_before_used` and
+`quota_before_remaining` values so the capture cannot infer its quota baseline.
+Without both this file and `--execute-network`, the entrypoint performs zero
+requests. The provider key is read only from the existing environment variable
+and is never printed or persisted.
+
+The capture selects one real upcoming event deterministically, then replays the
+single received event response through `fetch_observations()` so every complete
+bookmaker observation is retained. The resulting candidate evidence includes
+the exact provider event/request IDs, fixture and participant IDs/names,
+complete regulation 1X2 observations, source timestamps, `captured_at`, raw
+and normalized digests, quota before/after, rate-limit/tier/delay/access
+evidence, adapter version/source SHA, and the controlled-shadow/run/session/
+authorization bindings required by the B1 bridge. Any wrong league, expired or
+unsafe envelope, absent upcoming date, live/in-play/completed/closed event,
+quota overrun, incomplete market, participant mismatch, or missing provenance
+fails closed before evidence is returned. The result remains candidate-only,
+quality-ineligible, unpublished, no-bet, and outside active provider authority.
+
 ## Evidence needed for any later decision
 
 Before any CEO decision about real controlled-shadow use, retain a redacted

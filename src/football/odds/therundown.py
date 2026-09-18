@@ -677,6 +677,14 @@ class TheRundownExperimentalAdapter:
                 else None,
                 "home_team_id": home_id,
                 "away_team_id": away_id,
+                "participant_ids": {
+                    outcome: str(participant.get("id", "")).strip()
+                    for outcome, participant in sorted(participant_keys.items())
+                },
+                "participant_names": {
+                    outcome: str(participant.get("name", "")).strip()
+                    for outcome, participant in sorted(participant_keys.items())
+                },
                 "affiliate_id": affiliate_id,
                 "affiliate_source_id": source_id,
                 "market_id": THERUNDOWN_MONEYLINE_MARKET_ID,

@@ -1,0 +1,241 @@
+from __future__ import annotations
+
+import json
+from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
+
+import pytest
+
+from src.football.odds.therundown import THERUNDOWN_ADAPTER_VERSION
+from src.football.odds.therundown_la_liga_capture import (
+    LA_LIGA_CODE,
+    LA_LIGA_MAX_DATAPOINTS,
+    LA_LIGA_MAX_REQUESTS,
+    LaLigaCaptureAuthorization,
+    LaLigaCaptureStatus,
+    capture_la_liga,
+)
+from src.football.provider_cascade.adapters import RawProviderResponse
+
+_ROOT = Path(__file__).parents[3]
+_NOW = datetime(2026, 9, 18, 12, tzinfo=timezone.utc)
+_RESPONSE_NOW = datetime(2026, 9, 22, 19, tzinfo=timezone.utc)
+_AUTH = LaLigaCaptureAuthorization(
+    provider="therundown_experimental",
+    league=LA_LIGA_CODE,
+    maximum_request_count=LA_LIGA_MAX_REQUESTS,
+    maximum_datapoint_budget=LA_LIGA_MAX_DATAPOINTS,
+    quota_before_used=100,
+    quota_before_remaining=19900,
+    expires_at=_NOW + timedelta(hours=1),
+    controlled_shadow_run_id="ll-run-001",
+    ceo_authorization_id="ceo-ll-001",
+    qualification_session_id="ll-session-001",
+)
+
+
+def _event() -> dict[str, object]:
+    with (
+        _ROOT / "tests/fixtures/therundown/champions_league_events.json"
+    ).open() as handle:
+        event = json.load(handle)["events"][0]
+    event["sport_id"] = 14
+    event["schedule"]["league_name"] = "La Liga"
+    event["event_date"] = "2026-09-22T19:00:00Z"
+    event["event_id"] = "ll-event-001"
+    return event
+
+
+def _response(
+    payload: object, *, used: int, remaining: int, cost: int
+) -> RawProviderResponse:
+    return RawProviderResponse(
+        200,
+        payload,
+        {
+            "x-datapoints": str(cost),
+            "x-datapoints-used": str(used),
+            "x-datapoints-remaining": str(remaining),
+            "x-datapoints-limit": "20000",
+            "x-rate-limit": "1",
+            "x-rate-limit-remaining": "1",
+            "x-tier": "free",
+            "x-data-delay-seconds": "300",
+        },
+        _RESPONSE_NOW,
+        _RESPONSE_NOW + timedelta(seconds=30),
+        30_000,
+    )
+
+
+def _transport(responses: list[RawProviderResponse], calls: list[object]):
+    def send(request: object, timeout: float) -> RawProviderResponse:
+        del timeout
+        calls.append(request)
+        return responses.pop(0)
+
+    return send
+
+
+def _run(
+    *,
+    authorization: LaLigaCaptureAuthorization | None = _AUTH,
+    event: dict[str, object] | None = None,
+    dates: list[str] | None = None,
+    date_cost: int = 1,
+    event_cost: int = 11,
+    budget: int = LA_LIGA_MAX_DATAPOINTS,
+):
+    calls: list[object] = []
+    auth = authorization
+    if auth is not None and budget != auth.maximum_datapoint_budget:
+        auth = LaLigaCaptureAuthorization(
+            **{**auth.__dict__, "maximum_datapoint_budget": budget}
+        )
+    responses = [
+        _response(
+            {"dates": dates or ["2026-09-22"]},
+            used=101,
+            remaining=19899,
+            cost=date_cost,
+        ),
+        _response(
+            {"events": [event or _event()]},
+            used=112,
+            remaining=19888,
+            cost=event_cost,
+        ),
+    ]
+    result = capture_la_liga(
+        auth,
+        now=_NOW,
+        today=date(2026, 9, 18),
+        transport=_transport(responses, calls),
+    )
+    return result, calls
+
+
+def test_no_authorization_is_disabled_without_a_transport_call():
+    result, calls = _run(authorization=None)
+
+    assert result.status is LaLigaCaptureStatus.DISABLED
+    assert result.reason == "explicit_capture_authorization_required"
+    assert calls == []
+
+
+@pytest.mark.parametrize(
+    "mutator",
+    [
+        lambda auth: {**auth.__dict__, "league": "EPL"},
+        lambda auth: {
+            **auth.__dict__,
+            "expires_at": _NOW - timedelta(seconds=1),
+        },
+        lambda auth: {**auth.__dict__, "no_bet": False},
+    ],
+)
+def test_wrong_or_unsafe_authorization_fails_before_network(mutator):
+    result, calls = _run(authorization=LaLigaCaptureAuthorization(**mutator(_AUTH)))
+
+    assert result.status is LaLigaCaptureStatus.REJECTED
+    assert calls == []
+
+
+def test_upcoming_date_selection_and_full_bookmaker_capture():
+    result, calls = _run()
+
+    assert result.status is LaLigaCaptureStatus.CAPTURED
+    assert len(calls) == 2
+    assert result.selected_date == "2026-09-22"
+    assert result.provider_event_id == "ll-event-001"
+    assert result.provider_request_id == "therundown-ll:ll-run-001:2026-09-22"
+    assert len(result.observations) == 2
+    assert result.observations[0].candidate_only is True
+    assert result.observations[0].metadata["participant_ids"] == {
+        "away": "101",
+        "draw": "0",
+        "home": "202",
+    }
+    assert result.raw_response_digest
+    assert len(result.normalized_record_digests) == 2
+    assert result.quota_before.used == 100
+    assert result.quota_after.used == 112
+    assert result.quota_evidence["x-tier"] == "free"
+    assert result.adapter_version == THERUNDOWN_ADAPTER_VERSION
+    assert len(result.adapter_source_sha) == 64
+    assert result.b1_bridge_fields["ceo_authorization_id"] == "ceo-ll-001"
+    assert result.b1_bridge_fields["no_bet"] is True
+
+
+def test_no_upcoming_fixture_stops_after_date_request():
+    result, calls = _run(dates=["2026-09-17"])
+
+    assert result.status is LaLigaCaptureStatus.REJECTED
+    assert result.reason == "no_upcoming_fixture_date"
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize(
+    "event_status", ["STATUS_IN_PROGRESS", "STATUS_CLOSED", "STATUS_COMPLETED"]
+)
+def test_live_completed_and_closed_state_stops_before_observation_is_returned(
+    event_status: str,
+):
+    event = _event()
+    event["score"]["event_status"] = event_status
+
+    result, calls = _run(event=event)
+
+    assert result.status is LaLigaCaptureStatus.REJECTED
+    assert "no_upcoming_prematch_fixture" in result.reason
+    assert len(calls) == 2
+    assert result.observations == ()
+
+
+def test_datapoint_overrun_stops_before_event_request():
+    result, calls = _run(date_cost=101, budget=100)
+
+    assert result.status is LaLigaCaptureStatus.REJECTED
+    assert result.reason == "datapoint_budget_exceeded_before_event_request"
+    assert len(calls) == 1
+
+
+def test_datapoint_overrun_after_event_is_rejected_without_evidence():
+    result, calls = _run(event_cost=100, budget=100)
+
+    assert result.status is LaLigaCaptureStatus.REJECTED
+    assert result.reason == "datapoint budget exceeded"
+    assert result.requests_used == 2
+    assert result.datapoints_consumed == 101
+    assert result.observations == ()
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize(
+    "case", ["incomplete", "participant_mismatch", "missing_provenance"]
+)
+def test_market_identity_and_provenance_fail_closed(case: str):
+    event = _event()
+    if case == "incomplete":
+        for participant in event["markets"][0]["participants"]:
+            participant["lines"][0]["prices"] = {}
+    elif case == "participant_mismatch":
+        event["markets"][0]["participants"][0]["name"] = "Wrong Club"
+    else:
+        del event["markets"][0]["participants"][0]["lines"][0]["prices"]["3"][
+            "updated_at"
+        ]
+
+    result, calls = _run(event=event)
+
+    assert result.status is LaLigaCaptureStatus.REJECTED
+    assert len(calls) == 2
+    assert result.observations == ()
+
+
+def test_capture_config_cannot_become_provider_authority():
+    result, _ = _run()
+
+    assert result.status is LaLigaCaptureStatus.CAPTURED
+    assert all(item.candidate_only for item in result.observations)
+    assert all(item.metadata["experimental"] is True for item in result.observations)
