@@ -128,7 +128,7 @@ tests/fixtures/therundown/pr88_top5_real_evidence_summary.json
 ```
 
 The summary is pinned to PR-88 head
-`279654a2aefe71fc4b7db9d58cd985adb9fbdd94`, CEO review `5241854809`, and the
+`c550e8037704eda58f536246e4563b47e3c2e8bb`, CEO review `5241854809`, and the
 exact evaluation document blob recorded in the source block. It records 15 real
 requests, 44 datapoints consumed, Free-tier access, a five-minute delay, and
 DraftKings, BetMGM, and FanDuel entitlement. EPL, BL1, SA, and L1 each report a

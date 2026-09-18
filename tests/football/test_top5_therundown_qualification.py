@@ -130,7 +130,7 @@ def test_pr88_real_evidence_summary_is_consumed_as_partial_only() -> None:
     payload = report.as_payload()
     assert payload["source"]["source_pr"] == 88
     assert payload["source"]["source_head"] == (
-        "279654a2aefe71fc4b7db9d58cd985adb9fbdd94"
+        "c550e8037704eda58f536246e4563b47e3c2e8bb"
     )
     assert payload["canonical_gate_eligible"] is False
     assert payload["builder2_receipt_eligible"] is False
