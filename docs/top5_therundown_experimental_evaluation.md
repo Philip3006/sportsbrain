@@ -6,8 +6,8 @@ This work is an independent Builder-2 evaluation of TheRundown V2. It is not
 registered in the active provider cascade, cannot become provider authority,
 and does not publish, qualify, bet, activate, mutate runtime state, or call a
 provider during deterministic tests. Real requests are available only through
-the bounded diagnostic script when `THERUNDOWN_API_KEY` is already present in
-the process environment.
+an explicitly authorized diagnostic or the separately gated one-shot capture
+entrypoint; this readiness pass performs no provider request.
 
 ## Contract mapping
 
@@ -219,6 +219,23 @@ python3 scripts/therundown_la_liga_capture.py \
   --execute-network
 ```
 
+The offline preflight command is:
+
+```text
+python3 scripts/therundown_la_liga_capture.py \
+  --authorization-file /operator-only/top5/ll-capture-authorization.json \
+  --preflight
+```
+
+It validates the authorization JSON, expiry, exact provider/league, request
+and datapoint caps, all safety flags, quota baseline, and the presence of
+`THERUNDOWN_API_KEY`; it performs zero provider requests. The committed
+schema and placeholder template are
+`docs/top5_therundown_ll_capture_authorization.schema.json` and
+`docs/top5_therundown_ll_capture_authorization.template.json`. The template
+is not an authorization and must not be used without CEO-supplied identities,
+expiry, and quota values.
+
 The external authorization JSON must contain `provider=therundown_experimental`,
 `league=LL` (ESP1 is accepted only as the equivalent provider label),
 `maximum_request_count=2`, a positive `maximum_datapoint_budget` no greater
@@ -243,6 +260,23 @@ unsafe envelope, absent upcoming date, live/in-play/completed/closed event,
 quota overrun, incomplete market, participant mismatch, or missing provenance
 fails closed before evidence is returned. The result remains candidate-only,
 quality-ineligible, unpublished, no-bet, and outside active provider authority.
+
+`LaLigaCaptureEvidence.as_evidence_bundle()` emits
+`top5-therundown-ll-evidence-bundle-v1`. It contains one deterministic
+`bookmaker_observations` entry per complete bookmaker, plus `b1_bridge_inputs`
+with the provider/event/request/fixture/participant identities, regulation 1X2,
+source and capture times, all digests, quota/rate/tier/delay evidence, adapter
+provenance, and immutable safety fields. It intentionally marks
+`cascade_evidence_digest` and the canonical capture attestation as
+`required_from_b4`; B2 does not fabricate either authority artifact. This lets
+APP-B1 consume the provider evidence without manually reconstructing fields,
+while preserving the B4-owned authority boundary.
+
+The historical Top-5 evaluation remains the only real TheRundown evaluation
+for this branch: it used the previously approved 15-request budget and
+recorded La Liga as `PARTIAL` because no suitable fixture was returned on the
+selected date. This readiness pass performs zero new provider requests and
+does not change that historical result.
 
 ## Evidence needed for any later decision
 

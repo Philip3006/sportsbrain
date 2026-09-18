@@ -1,0 +1,16 @@
+{
+  "provider": "therundown_experimental",
+  "league": "LL",
+  "maximum_request_count": 2,
+  "maximum_datapoint_budget": 100,
+  "quota_before_used": 0,
+  "quota_before_remaining": 0,
+  "expires_at": "2030-01-01T00:00:00Z",
+  "controlled_shadow_run_id": "CEO_SUPPLIED_RUN_ID",
+  "qualification_session_id": "CEO_SUPPLIED_QUALIFICATION_SESSION_ID",
+  "ceo_authorization_id": "CEO_SUPPLIED_AUTHORIZATION_ID",
+  "no_bet": true,
+  "no_publication": true,
+  "no_activation": true,
+  "no_spend": true
+}

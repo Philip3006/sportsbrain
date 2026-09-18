@@ -14,6 +14,7 @@ from src.football.odds.therundown_la_liga_capture import (
     LaLigaCaptureAuthorization,
     LaLigaCaptureStatus,
     capture_la_liga,
+    preflight_la_liga,
 )
 from src.football.provider_cascade.adapters import RawProviderResponse
 
@@ -123,6 +124,47 @@ def test_no_authorization_is_disabled_without_a_transport_call():
     assert calls == []
 
 
+def test_offline_preflight_validates_environment_without_network():
+    result = preflight_la_liga(
+        _AUTH,
+        now=_NOW,
+        environment={"THERUNDOWN_API_KEY": "synthetic-only"},
+    )
+
+    assert result.status is LaLigaCaptureStatus.READY
+    assert result.requests_used == 0
+    assert "network_not_called" in result.reason
+
+
+def test_offline_preflight_rejects_missing_credential_without_network():
+    result = preflight_la_liga(_AUTH, now=_NOW, environment={})
+
+    assert result.status is LaLigaCaptureStatus.REJECTED
+    assert result.reason == "THERUNDOWN_API_KEY is missing"
+    assert result.requests_used == 0
+
+
+def test_authorization_schema_and_template_are_present_and_safe():
+    schema = json.loads(
+        (
+            _ROOT / "docs/top5_therundown_ll_capture_authorization.schema.json"
+        ).read_text()
+    )
+    template = json.loads(
+        (
+            _ROOT / "docs/top5_therundown_ll_capture_authorization.template.json"
+        ).read_text()
+    )
+
+    assert set(schema["required"]) == set(template)
+    assert schema["properties"]["maximum_request_count"]["const"] == 2
+    assert schema["properties"]["maximum_datapoint_budget"]["maximum"] == 100
+    assert template["no_bet"] is True
+    assert template["no_publication"] is True
+    assert template["no_activation"] is True
+    assert template["no_spend"] is True
+
+
 @pytest.mark.parametrize(
     "mutator",
     [
@@ -165,6 +207,27 @@ def test_upcoming_date_selection_and_full_bookmaker_capture():
     assert len(result.adapter_source_sha) == 64
     assert result.b1_bridge_fields["ceo_authorization_id"] == "ceo-ll-001"
     assert result.b1_bridge_fields["no_bet"] is True
+
+
+def test_evidence_bundle_is_deterministic_and_b1_ready_without_fabricated_authority():
+    result, _ = _run()
+
+    bundle = result.as_evidence_bundle()
+    assert bundle["schema_version"] == "top5-therundown-ll-evidence-bundle-v1"
+    assert bundle["capture_status"] == "CAPTURED"
+    assert len(bundle["bookmaker_observations"]) == 2
+    assert [item["bookmaker_name"] for item in bundle["bookmaker_observations"]] == [
+        "affiliate:19",
+        "affiliate:3",
+    ]
+    bridge = bundle["b1_bridge_inputs"]
+    assert bridge["evidence_kind"] == "REAL_OBSERVED"
+    assert bridge["market_type"] == "football:pre_match:1x2"
+    assert bridge["provider_event_id"] == "ll-event-001"
+    assert bridge["cascade_evidence_digest"] is None
+    assert bridge["cascade_evidence_required_from_b4"] is True
+    assert bundle["safety"]["candidate_only"] is True
+    assert bundle["safety"]["no_activation"] is True
 
 
 def test_no_upcoming_fixture_stops_after_date_request():

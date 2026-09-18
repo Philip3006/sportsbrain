@@ -295,6 +295,78 @@ class LaLigaCaptureEvidence:
             },
         }
 
+    def as_evidence_bundle(self) -> dict[str, object]:
+        """Return deterministic provider-side inputs for the B1 handoff.
+
+        This is an input bundle, not a canonical B1 observation or receipt.
+        B4 remains responsible for adding cascade evidence and the canonical
+        capture attestation from the authorized run.
+        """
+
+        bookmaker_observations = []
+        for observation in sorted(
+            self.observations,
+            key=lambda item: (
+                item.bookmaker_identity,
+                str(item.metadata.get("affiliate_id", "")),
+            ),
+        ):
+            bookmaker_observations.append(
+                {
+                    "bookmaker_id": observation.metadata.get("affiliate_id"),
+                    "bookmaker_name": observation.bookmaker_identity,
+                    "odds": {
+                        "home": observation.home_odds,
+                        "draw": observation.draw_odds,
+                        "away": observation.away_odds,
+                    },
+                    "source_timestamp": (
+                        observation.source_timestamp.isoformat()
+                        if observation.source_timestamp
+                        else None
+                    ),
+                    "captured_at": observation.captured_at.isoformat(),
+                    "provider_record_digest": observation.raw_record_digest,
+                    "normalized_record_digest": digest_record(observation.as_payload()),
+                    "quota_before": observation.quota_state_before.as_payload(),
+                    "quota_after": observation.quota_state_after.as_payload(),
+                    "rate_limit_state": observation.rate_limit_state.as_payload(),
+                    "metadata": dict(observation.metadata),
+                }
+            )
+        return {
+            "schema_version": "top5-therundown-ll-evidence-bundle-v1",
+            "capture_status": self.status.value,
+            "capture_reason": self.reason,
+            "authorization": self.authorization.as_payload()
+            if self.authorization
+            else None,
+            "b1_bridge_inputs": {
+                **self.b1_bridge_fields,
+                "evidence_kind": "REAL_OBSERVED",
+                "market_phase": "PRE_MATCH",
+                "market_type": MARKET_PREMATCH_1X2,
+                "provider_record_digests": [
+                    item.raw_record_digest for item in self.observations
+                ],
+                "cascade_evidence_digest": None,
+                "cascade_evidence_required_from_b4": True,
+                "capture_attestation_required_from_b4": True,
+            },
+            "bookmaker_observations": bookmaker_observations,
+            "raw_response_digest": self.raw_response_digest,
+            "adapter_version": self.adapter_version,
+            "adapter_source_sha": self.adapter_source_sha,
+            "safety": {
+                "candidate_only": True,
+                "quality_eligible": False,
+                "no_bet": True,
+                "no_publication": True,
+                "no_activation": True,
+                "no_spend": True,
+            },
+        }
+
 
 def adapter_source_sha() -> str:
     """Return a source digest suitable for the B1 bridge provenance field."""
@@ -375,6 +447,40 @@ def _datapoint_cost(headers: Mapping[str, str]) -> int | None:
     if isinstance(cost, int):
         return cost
     return None
+
+
+def preflight_la_liga(
+    authorization: LaLigaCaptureAuthorization | None,
+    *,
+    now: datetime,
+    environment: Mapping[str, str] | None = None,
+) -> LaLigaCaptureEvidence:
+    """Validate the future envelope and environment without network access."""
+
+    if authorization is None:
+        return LaLigaCaptureEvidence(
+            LaLigaCaptureStatus.DISABLED,
+            "explicit_capture_authorization_required",
+            adapter_source_sha=adapter_source_sha(),
+        )
+    try:
+        authorization.validate(now=now)
+        env = environment if environment is not None else os.environ
+        if not str(env.get("THERUNDOWN_API_KEY", "")).strip():
+            raise ProductionContractError("THERUNDOWN_API_KEY is missing")
+    except ProductionContractError as exc:
+        return LaLigaCaptureEvidence(
+            LaLigaCaptureStatus.REJECTED,
+            str(exc),
+            authorization=authorization,
+            adapter_source_sha=adapter_source_sha(),
+        )
+    return LaLigaCaptureEvidence(
+        LaLigaCaptureStatus.READY,
+        "offline_preflight_passed; network_not_called",
+        authorization=authorization,
+        adapter_source_sha=adapter_source_sha(),
+    )
 
 
 def _dates_request(
@@ -748,4 +854,5 @@ __all__ = [
     "LaLigaCaptureStatus",
     "adapter_source_sha",
     "capture_la_liga",
+    "preflight_la_liga",
 ]

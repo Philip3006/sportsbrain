@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.football.odds.therundown_la_liga_capture import (
     LaLigaCaptureAuthorization,
     capture_la_liga,
+    preflight_la_liga,
 )
 
 
@@ -34,11 +35,56 @@ def main() -> int:
         help="required in addition to authorization-file for the one-shot real path",
     )
     parser.add_argument(
+        "--preflight",
+        action="store_true",
+        help="validate authorization and environment without contacting the provider",
+    )
+    parser.add_argument(
         "--now",
         help="offline test clock in ISO-8601 form; defaults to current UTC",
     )
     args = parser.parse_args()
 
+    if args.preflight:
+        if args.authorization_file is None:
+            print(
+                json.dumps(
+                    {
+                        "status": "REJECTED",
+                        "reason": "authorization_file_required_for_preflight",
+                        "real_requests": 0,
+                    },
+                    sort_keys=True,
+                )
+            )
+            return 1
+        try:
+            raw = json.loads(args.authorization_file.read_text())
+            authorization = LaLigaCaptureAuthorization.from_payload(raw)
+            now = (
+                datetime.fromisoformat(args.now.replace("Z", "+00:00"))
+                if args.now
+                else datetime.now(timezone.utc)
+            )
+            result = preflight_la_liga(authorization, now=now)
+        except (OSError, json.JSONDecodeError, ValueError, TypeError) as exc:
+            print(json.dumps({"status": "REJECTED", "reason": type(exc).__name__}))
+            return 1
+        print(json.dumps(result.as_payload(), sort_keys=True))
+        return 0 if result.status.value == "READY" else 1
+
+    if args.execute_network and args.authorization_file is None:
+        print(
+            json.dumps(
+                {
+                    "status": "REJECTED",
+                    "reason": "authorization_file_required_for_network_execution",
+                    "real_requests": 0,
+                },
+                sort_keys=True,
+            )
+        )
+        return 1
     if not args.execute_network or args.authorization_file is None:
         print(
             json.dumps(
