@@ -1002,10 +1002,10 @@ class TheRundownCanaryLifecycleArtifactV1:
         if evidence.network_execution:
             if (
                 self.compatibility
-                is not CanaryLifecycleCompatibility.BLOCKED_BY_CURRENT_PROVIDER_REPERTOIRE
+                is not CanaryLifecycleCompatibility.READY_FOR_EXTERNAL_VALIDATION
             ):
                 raise CanaryContractError(
-                    "TheRundown real-shaped evidence must report the current provider dependency"
+                    "complete network-shaped lifecycle input must be ready for external validation"
                 )
             if not self.dependency_blockers:
                 raise CanaryContractError(
@@ -1126,9 +1126,7 @@ class TheRundownCanaryRunResultV1:
                 "a Builder-2 receipt requires an independently accepted real qualification result",
             )
         elif self.status is CanaryRunStatus.REAL_OBSERVED:
-            compatibility = (
-                CanaryLifecycleCompatibility.BLOCKED_BY_CURRENT_PROVIDER_REPERTOIRE
-            )
+            compatibility = CanaryLifecycleCompatibility.READY_FOR_EXTERNAL_VALIDATION
             blockers = (
                 "current B1/B2 contracts accept only the active Football provider repertoire",
                 "TheRundown is intentionally outside the active Football provider repertoire",

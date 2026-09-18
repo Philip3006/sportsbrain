@@ -478,7 +478,7 @@ def test_offline_real_shaped_lifecycle_preserves_exact_five_league_bindings(leag
     result = _network_result_for_league(league)
     artifact = result.lifecycle_artifact()
     assert isinstance(artifact, TheRundownCanaryLifecycleArtifactV1)
-    assert artifact.compatibility.value == "BLOCKED_BY_CURRENT_PROVIDER_REPERTOIRE"
+    assert artifact.compatibility.value == "READY_FOR_EXTERNAL_VALIDATION"
     observation = artifact.qualification_input["observation"]
     assert observation["provider_identity"] == "therundown"
     assert observation["league"] == league

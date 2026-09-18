@@ -70,11 +70,13 @@ The artifact remains `candidate_only=true` and never constructs a canonical
 observation, qualification report, or receipt. `TEST_FIXTURE` results are
 `TEST_ONLY` and cannot validate as a real capture attestation. A deterministic
 network-shaped stub result is labelled
-`BLOCKED_BY_CURRENT_PROVIDER_REPERTOIRE`: the current B1/B2 contracts accept
-only the active Football repertoire (`the_odds_api`), while TheRundown is
-intentionally not registered or authoritative. The artifact also records that
-a separately reviewed provider integration must supply a canonical
-`CascadeEvidence` digest before current Builder-2 validation could proceed.
+`READY_FOR_EXTERNAL_VALIDATION`: the offline lifecycle projection is complete,
+while the current B1/B2 contracts accept only the active Football repertoire
+(`the_odds_api`). TheRundown therefore remains intentionally unregistered and
+non-authoritative. The artifact records this as an explicit external
+dependency, including that a separately reviewed provider integration must
+supply a canonical `CascadeEvidence` digest before current Builder-2
+validation could proceed.
 
 This is an explicit dependency report, not a bypass. Receipt issuance remains
 impossible before a valid canonical attestation and an independently accepted
