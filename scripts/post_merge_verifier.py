@@ -196,8 +196,15 @@ def _check_authority_and_candidate_boundary(root: Path) -> Check:
         'FOOTBALL_PROVIDER_REPERTOIRE = ("the_odds_api",)' in contracts
         and "DEFAULT_PROVIDER_ORDER = FOOTBALL_PROVIDER_REPERTOIRE" in contracts
         and '"the_odds_api": TheOddsAPIAdapter()' in router
-        and "therundown" not in contracts.lower()
         and "therundown" not in router.lower()
+        and (
+            "therundown" not in contracts.lower()
+            or (
+                "CANDIDATE_PROVIDER_REPERTOIRE" in contracts
+                and '"therundown_experimental"' in contracts
+                and "active_authority" in contracts
+            )
+        )
     )
     candidate_ok = (
         'THERUNDOWN_PROVIDER_NAME = "therundown_experimental"' in rundown

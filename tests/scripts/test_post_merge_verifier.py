@@ -24,6 +24,29 @@ def test_future_follow_up_accepts_explicit_paths_and_tests() -> None:
     assert verifier._required_paths("follow-up", ("src/follow_up.py",)) == (
         "src/follow_up.py",
     )
+
+
+def test_authority_check_allows_explicit_candidate_repertoire(tmp_path: Path) -> None:
+    contracts = tmp_path / "src" / "football" / "provider_cascade" / "contracts.py"
+    router = tmp_path / "src" / "football" / "provider_cascade" / "router.py"
+    rundown = tmp_path / "src" / "football" / "odds" / "therundown.py"
+    contracts.parent.mkdir(parents=True)
+    rundown.parent.mkdir(parents=True)
+    contracts.write_text(
+        'FOOTBALL_PROVIDER_REPERTOIRE = ("the_odds_api",)\n'
+        "DEFAULT_PROVIDER_ORDER = FOOTBALL_PROVIDER_REPERTOIRE\n"
+        'CANDIDATE_PROVIDER_REPERTOIRE = ("therundown_experimental",)\n'
+        "active_authority = False\n",
+        encoding="utf-8",
+    )
+    router.write_text('"the_odds_api": TheOddsAPIAdapter()\n', encoding="utf-8")
+    rundown.write_text(
+        'THERUNDOWN_PROVIDER_NAME = "therundown_experimental"\n'
+        "# candidate-only; not registered\n",
+        encoding="utf-8",
+    )
+    result = verifier._check_authority_and_candidate_boundary(tmp_path)
+    assert result.passed is True
     assert verifier._test_patterns("follow-up", ("tests/test_follow_up.py",)) == (
         "tests/test_follow_up.py",
     )
