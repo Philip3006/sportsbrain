@@ -407,11 +407,17 @@ class NormalizedProviderObservation:
         return Fixture(self.fixture_key, self.league_code, self.home_team, self.away_team, self.kickoff_utc)
 
     def snapshot(self) -> MarketSnapshot:
+        if self.observation_mode == REAL_OBSERVED_MARKER:
+            evidence_prefix = "real_observed"
+        elif self.observation_mode == TEST_FIXTURE_MARKER:
+            evidence_prefix = "test_fixture"
+        else:
+            raise RealShadowContractError("observation mode is invalid")
         return MarketSnapshot(
             fixture_key=self.fixture_key,
             captured_at=self.source_timestamp,
             kind=MarketSnapshotKind.SIGNAL_TIME,
-            source=f"real_observed:{self.provider_identity}:{self.bookmaker_identity}",
+            source=f"{evidence_prefix}:{self.provider_identity}:{self.bookmaker_identity}",
             odds={"home": self.home_odds, "draw": self.draw_odds, "away": self.away_odds},
             snapshot_id=self.signal_snapshot_id,
         )

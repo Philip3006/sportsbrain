@@ -17,6 +17,12 @@ from src.football.provider_cascade.builder1 import (
     accepted_for_builder1,
     builder2_evidence_payload,
 )
+from src.football.provider_cascade.candidate_eligibility import (
+    CANDIDATE_PROVIDER_IDENTITIES,
+    CANDIDATE_PROVIDER_REPERTOIRE,
+    CandidateEligibilityError,
+    CandidateProviderEligibilityV1,
+)
 from src.football.provider_cascade.comparison import (
     ProviderComparisonMetric,
     ProviderComparisonReport,
@@ -24,6 +30,7 @@ from src.football.provider_cascade.comparison import (
 )
 from src.football.provider_cascade.contracts import (
     BUILDER2_VALIDATION_CONTRACT_VERSION,
+    CANDIDATE_ONLY_PROVIDER_IDENTITIES,
     DECOMMISSIONED_FOOTBALL_PROVIDERS,
     DEFAULT_PROVIDER_ORDER,
     FOOTBALL_PROVIDER_REPERTOIRE,
@@ -107,6 +114,9 @@ from src.football.top5_builder2_qualification_receipt import (
 __all__ = [
     "AUTHORIZATION_SCHEMA_VERSION",
     "BUILDER2_VALIDATION_CONTRACT_VERSION",
+    "CANDIDATE_ONLY_PROVIDER_IDENTITIES",
+    "CANDIDATE_PROVIDER_IDENTITIES",
+    "CANDIDATE_PROVIDER_REPERTOIRE",
     "CAPTURE_ATTESTATION_SCHEMA_VERSION",
     "DECOMMISSIONED_FOOTBALL_PROVIDERS",
     "DEFAULT_PROVIDER_ORDER",
@@ -124,6 +134,8 @@ __all__ = [
     "Builder1OddsInput",
     "Builder2QualificationReceiptError",
     "Builder2QualificationReceiptV1",
+    "CandidateEligibilityError",
+    "CandidateProviderEligibilityV1",
     "CascadeDecisionTrace",
     "CascadeResult",
     "CascadeTimingPolicy",

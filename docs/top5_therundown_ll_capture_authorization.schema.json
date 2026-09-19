@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sportsbrain.local/schemas/top5-therundown-ll-capture-authorization-v1.json",
+  "title": "SportsBrain TheRundown La Liga bounded capture authorization",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "provider",
+    "league",
+    "maximum_request_count",
+    "maximum_datapoint_budget",
+    "quota_before_used",
+    "quota_before_remaining",
+    "expires_at",
+    "controlled_shadow_run_id",
+    "qualification_session_id",
+    "ceo_authorization_id",
+    "no_bet",
+    "no_publication",
+    "no_activation",
+    "no_spend"
+  ],
+  "properties": {
+    "provider": { "const": "therundown_experimental" },
+    "league": { "enum": ["LL", "ESP1"] },
+    "maximum_request_count": { "const": 2 },
+    "maximum_datapoint_budget": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100
+    },
+    "quota_before_used": { "type": "integer", "minimum": 0 },
+    "quota_before_remaining": {
+      "anyOf": [
+        { "type": "integer", "minimum": 0 },
+        { "type": "null" }
+      ]
+    },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "controlled_shadow_run_id": { "type": "string", "minLength": 1 },
+    "qualification_session_id": { "type": "string", "minLength": 1 },
+    "ceo_authorization_id": { "type": "string", "minLength": 1 },
+    "no_bet": { "const": true },
+    "no_publication": { "const": true },
+    "no_activation": { "const": true },
+    "no_spend": { "const": true }
+  }
+}
