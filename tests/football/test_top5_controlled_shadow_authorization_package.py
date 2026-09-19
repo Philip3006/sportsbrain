@@ -299,6 +299,13 @@ def test_b1_ll_artifact_must_match_exact_request_and_bookmaker_prices():
             result, configuration, authorization, b1_artifact, now=NOW
         )
 
+    b1_artifact = _b1_ll_artifact(result, authorization)
+    b1_artifact["raw_response_digest"] = "f" * 64
+    with pytest.raises(ControlledShadowAuthorizationPackageError, match="top-level"):
+        reconcile_controlled_shadow_run_with_b1_ll_artifact(
+            result, configuration, authorization, b1_artifact, now=NOW
+        )
+
 
 def test_reconciliation_preserves_identity_and_evidence_for_each_league():
     result, configuration, authorization = _network_run()

@@ -326,6 +326,18 @@ def _validate_b1_ll_artifact(
             raise ControlledShadowAuthorizationPackageError(
                 f"B1 LL binding mismatch: {name}"
             )
+    if raw.get("raw_response_digest") != response.raw_response_digest:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 top-level raw response digest does not match the LL capture"
+        )
+    if raw.get("adapter_version") != response.adapter_version:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 top-level adapter version does not match the LL capture"
+        )
+    if raw.get("adapter_source_sha") != response.adapter_source_sha:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 top-level adapter source SHA does not match the LL capture"
+        )
     if _timestamp(bridge.get("kickoff"), "B1 kickoff") != _utc(
         target.kickoff, "target kickoff"
     ):
