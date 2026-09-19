@@ -20,6 +20,9 @@ from itertools import pairwise
 from math import isfinite
 
 from src.football.production_contracts import ProductionContractError
+from src.football.provider_cascade.candidate_eligibility import (
+    CANDIDATE_PROVIDER_IDENTITIES,
+)
 from src.football.top5_research_binding import FROZEN_RESEARCH_SHA
 from src.football.top5_shadow_provider_redundancy import (
     ProviderReadinessState,
@@ -37,7 +40,10 @@ from src.football.top5_shadow_validation import (
 TOP5_CASCADE_VALIDATION_CONTRACT_VERSION = "top5-provider-cascade-validation-v1"
 CASCADE_PROVIDER_ORDER = ("the_odds_api",)
 _SHA_RE = re.compile(r"^[0-9a-fA-F]{40,64}$")
-_KNOWN_PROVIDERS = frozenset(CASCADE_PROVIDER_ORDER)
+# This is the validation vocabulary, not the active routing order.  Candidate
+# identities are accepted only at explicit shadow/qualification boundaries;
+# CASCADE_PROVIDER_ORDER remains the production order.
+_KNOWN_PROVIDERS = frozenset(CASCADE_PROVIDER_ORDER) | CANDIDATE_PROVIDER_IDENTITIES
 _READY_STATES = frozenset(
     {
         ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION,

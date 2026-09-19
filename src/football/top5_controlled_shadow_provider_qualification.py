@@ -26,6 +26,11 @@ from math import isfinite
 from statistics import median
 
 from src.football.production_contracts import ProductionContractError
+from src.football.provider_cascade.candidate_eligibility import (
+    CANDIDATE_PROVIDER_IDENTITIES,
+    CandidateEligibilityError,
+    CandidateProviderEligibilityV1,
+)
 from src.football.top5_provider_cascade_validation import (
     CASCADE_PROVIDER_ORDER,
     CascadeEvidence,
@@ -48,7 +53,9 @@ TOP5_LEAGUES = ("BL1", "EPL", "LL", "SA", "L1")
 QUALIFICATION_ARCHIVE_ROOT = "top5-provider-qualification"
 NO_PRODUCTION_SIGNAL_TIME_VALUES = "NO PRODUCTION SIGNAL-TIME VALUES APPROVED"
 _SHA_RE = re.compile(r"^[0-9a-fA-F]{40,64}$")
-_KNOWN_PROVIDERS = frozenset(CASCADE_PROVIDER_ORDER)
+# Validation vocabulary includes explicitly eligible candidates; this does not
+# alter CASCADE_PROVIDER_ORDER or production provider authority.
+_KNOWN_PROVIDERS = frozenset(CASCADE_PROVIDER_ORDER) | CANDIDATE_PROVIDER_IDENTITIES
 _SAFE_SOURCE_WORDS = frozenset({"consensus", "authority", "selected", "best"})
 
 
@@ -80,6 +87,8 @@ class ProviderQualificationStatus(str, Enum):
 
 class QualificationCode(str, Enum):
     INVALID_OBSERVATION = "INVALID_OBSERVATION"
+    CANDIDATE_ELIGIBILITY_REQUIRED = "CANDIDATE_ELIGIBILITY_REQUIRED"
+    CANDIDATE_ELIGIBILITY_MISMATCH = "CANDIDATE_ELIGIBILITY_MISMATCH"
     EVIDENCE_NOT_REAL = "EVIDENCE_NOT_REAL"
     REAL_PROVENANCE_MISSING = "REAL_PROVENANCE_MISSING"
     PROVIDER_EVENT_ID_MISSING = "PROVIDER_EVENT_ID_MISSING"
@@ -1414,6 +1423,7 @@ def _validate_one(
     timing: QualificationTimingPolicy,
     provider_readiness: Mapping[str, ProviderReadinessState],
     authorization: CEOAuthorization | None,
+    candidate_eligibility: CandidateProviderEligibilityV1 | None = None,
 ) -> ObservationValidationResult:
     errors: list[QualificationCode] = []
     cascade_errors: list[str] = []
@@ -1443,6 +1453,14 @@ def _validate_one(
             if not observation.adapter_version or not observation.adapter_source_sha:
                 errors.append(QualificationCode.ADAPTER_PROVENANCE_MISSING)
         observation.validate_structural()
+        if observation.provider_identity in CANDIDATE_PROVIDER_IDENTITIES:
+            if candidate_eligibility is None:
+                errors.append(QualificationCode.CANDIDATE_ELIGIBILITY_REQUIRED)
+            else:
+                try:
+                    candidate_eligibility.matches_observation(observation)
+                except CandidateEligibilityError:
+                    errors.append(QualificationCode.CANDIDATE_ELIGIBILITY_MISMATCH)
         errors.extend(_fixture_codes(observation, expected, timing))
         timing_errors, source_age, capture_latency, lead = _quality_codes(
             observation, timing
@@ -1544,7 +1562,15 @@ def _metrics(
             (observation, result)
         )
     output: list[ProviderLeagueMetrics] = []
-    for provider in CASCADE_PROVIDER_ORDER:
+    providers = tuple(
+        dict.fromkeys(
+            (
+                *CASCADE_PROVIDER_ORDER,
+                *(item.provider_identity for item in observations),
+            )
+        )
+    )
+    for provider in providers:
         for league in TOP5_LEAGUES:
             pairs = grouped.get((provider, league), [])
             accepted = [
@@ -1633,6 +1659,7 @@ def qualify_provider_observations(
     minimum_sample_policy: MinimumSamplePolicy | None = None,
     authorization_usage: Mapping[str, object] | None = None,
     consumed_authorization_ids: Collection[str] = (),
+    candidate_eligibility: CandidateProviderEligibilityV1 | None = None,
 ) -> ProviderQualificationReport:
     """Validate already-captured observations; this function performs no I/O."""
 
@@ -1655,6 +1682,32 @@ def qualify_provider_observations(
                 "provider readiness contains an unknown candidate"
             )
         ProviderReadinessState(state)
+    if candidate_eligibility is not None:
+        try:
+            candidate_eligibility.validate()
+        except CandidateEligibilityError as exc:
+            raise QualificationContractError(
+                "candidate eligibility binding is invalid"
+            ) from exc
+        if (
+            candidate_eligibility.qualification_session_id
+            != session.qualification_session_id
+        ):
+            raise QualificationContractError(
+                "candidate eligibility session binding does not match"
+            )
+        if authorization is None:
+            raise QualificationContractError(
+                "candidate eligibility requires matching CEO authorization"
+            )
+        if (
+            candidate_eligibility.authorization_id != authorization.authorization_id
+            or candidate_eligibility.controlled_shadow_run_id
+            != authorization.controlled_shadow_run_id
+        ):
+            raise QualificationContractError(
+                "candidate eligibility authorization binding does not match"
+            )
     if authorization is not None:
         authorization.validate()
         if authorization.monetary_spend_authorized:
@@ -1733,6 +1786,7 @@ def qualify_provider_observations(
                 timing_policy,
                 provider_readiness,
                 authorization,
+                candidate_eligibility,
             )
             duplicate_results.append(
                 replace(
@@ -1788,6 +1842,7 @@ def qualify_provider_observations(
             timing_policy,
             provider_readiness,
             authorization,
+            candidate_eligibility,
         )
         if observation.observation_id in conflicting_duplicate_ids:
             result = replace(
@@ -1866,7 +1921,15 @@ def qualify_provider_observations(
     all_results = tuple(results + duplicate_results + invalid_results)
     all_observations = tuple(unique)
     status_by_provider: dict[str, ProviderQualificationStatus] = {}
-    for provider in CASCADE_PROVIDER_ORDER:
+    providers = tuple(
+        dict.fromkeys(
+            (
+                *CASCADE_PROVIDER_ORDER,
+                *(item.provider_identity for item in all_observations),
+            )
+        )
+    )
+    for provider in providers:
         provider_results = [
             item for item in all_results if item.provider_identity == provider
         ]
@@ -1992,6 +2055,7 @@ def bridge_real_observation_to_builder1_shadow_evidence(
     authorization: CEOAuthorization | None = None,
     *,
     minimum_sample_policy: MinimumSamplePolicy | None = None,
+    candidate_eligibility: CandidateProviderEligibilityV1 | None = None,
 ):
     """Bridge only a validated real observation to v1 NO-BET shadow evidence."""
 
@@ -2002,6 +2066,7 @@ def bridge_real_observation_to_builder1_shadow_evidence(
         timing_policy,
         provider_readiness,
         authorization,
+        candidate_eligibility=candidate_eligibility,
         minimum_sample_policy=minimum_sample_policy,
     )
     if (
