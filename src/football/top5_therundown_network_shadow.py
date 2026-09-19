@@ -40,7 +40,7 @@ from src.football.top5_controlled_shadow_provider_qualification import (
 from src.football.top5_therundown_shadow_canary import (
     CANARY_EXECUTION_MODE,
     RECEIPT_SCHEMA_VERSION,
-    THERUNDOWN_PROVIDER,
+    THERUNDOWN_PROVIDER_IDENTITIES,
     CanaryContractError,
     CanaryOutcome,
     TheRundownCanaryNetworkTransport,
@@ -398,8 +398,10 @@ class TheRundownNetworkAuthorizationV1:
             _text(value, name)
         if self.schema_version != NETWORK_SHADOW_SCHEMA_VERSION:
             raise NetworkShadowContractError("unsupported network authorization schema")
-        if self.provider != THERUNDOWN_PROVIDER:
-            raise NetworkShadowContractError("network provider must be therundown")
+        if self.provider not in THERUNDOWN_PROVIDER_IDENTITIES:
+            raise NetworkShadowContractError(
+                "network provider is not an allowed TheRundown identity"
+            )
         if len(self.targets) != len(TOP5_LEAGUE_CODES):
             raise NetworkShadowContractError("authorization must cover five targets")
         for target in self.targets:
@@ -943,7 +945,7 @@ def _failure_response(
 ) -> TheRundownNetworkResponseV1:
     return TheRundownNetworkResponseV1(
         outcome=outcome,
-        provider=THERUNDOWN_PROVIDER,
+        provider=request.target.provider,
         league=request.target.league,
         fixture_key=request.target.fixture_key,
         provider_event_id=request.target.provider_event_id,

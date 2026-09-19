@@ -21,6 +21,11 @@ from pathlib import Path
 from typing import Any
 
 from src.football.production_contracts import ProductionContractError
+from src.football.provider_cascade.candidate_eligibility import (
+    CANDIDATE_PROVIDER_IDENTITIES,
+    CandidateEligibilityError,
+    CandidateProviderEligibilityV1,
+)
 from src.football.top5_builder2_qualification_receipt import (
     Builder2QualificationReceiptV1,
     issue_builder2_qualification_receipt,
@@ -94,6 +99,7 @@ _MANIFEST_REQUIRED = frozenset(
         "provider_readiness",
     }
 )
+_MANIFEST_OPTIONAL = frozenset({"candidate_provider_eligibility"})
 
 _ARTIFACT_FIELDS = frozenset({"role", "path", "digest"})
 _SESSION_FIELDS = frozenset(
@@ -605,13 +611,14 @@ class Builder2QualificationIntakeManifestV1:
     capture_attestation: ControlledShadowCaptureAttestation
     timing_policy: QualificationTimingPolicy
     provider_readiness: Mapping[str, ProviderReadinessState | str]
+    candidate_provider_eligibility: CandidateProviderEligibilityV1 | None = None
 
     @classmethod
     def from_payload(cls, payload: object) -> Builder2QualificationIntakeManifestV1:
         raw = _strict_mapping(
             payload,
             required=_MANIFEST_REQUIRED,
-            allowed=(*_MANIFEST_REQUIRED, "manifest_digest"),
+            allowed=(*_MANIFEST_REQUIRED, *_MANIFEST_OPTIONAL, "manifest_digest"),
             name="manifest",
         )
         source_raw = raw["source_artifacts"]
@@ -642,6 +649,12 @@ class Builder2QualificationIntakeManifestV1:
             )
             for provider, state in readiness_raw.items()
         }
+        candidate_raw = raw.get("candidate_provider_eligibility")
+        candidate_eligibility = (
+            None
+            if candidate_raw is None
+            else CandidateProviderEligibilityV1.from_payload(candidate_raw)
+        )
         manifest = cls(
             schema_version=_text(raw["schema_version"], "manifest.schema_version"),
             intake_id=_component(raw["intake_id"], "manifest.intake_id"),
@@ -695,6 +708,7 @@ class Builder2QualificationIntakeManifestV1:
             capture_attestation=attestation,
             timing_policy=timing_policy,
             provider_readiness=provider_readiness,
+            candidate_provider_eligibility=candidate_eligibility,
         )
         manifest.validate()
         if (
@@ -758,12 +772,56 @@ class Builder2QualificationIntakeManifestV1:
         self.capture_attestation.validate()
         self.observation.validate_structural()
         self.timing_policy.validate()
+        if self.provider_identity in CANDIDATE_PROVIDER_IDENTITIES:
+            if self.candidate_provider_eligibility is None:
+                raise Builder2QualificationIntakeError(
+                    "candidate provider requires an explicit eligibility binding"
+                )
+            try:
+                self.candidate_provider_eligibility.validate(
+                    now=self.observation.captured_at
+                )
+                self.candidate_provider_eligibility.matches_observation(
+                    self.observation
+                )
+            except CandidateEligibilityError as exc:
+                raise Builder2QualificationIntakeError(
+                    "candidate eligibility does not match canonical observation"
+                ) from exc
+            candidate_bindings = (
+                (
+                    self.candidate_provider_eligibility.controlled_shadow_run_id,
+                    self.authorization.controlled_shadow_run_id,
+                ),
+                (
+                    self.candidate_provider_eligibility.qualification_session_id,
+                    self.session.qualification_session_id,
+                ),
+                (
+                    self.candidate_provider_eligibility.authorization_id,
+                    self.authorization.authorization_id,
+                ),
+                (
+                    self.candidate_provider_eligibility.provider_identity,
+                    self.provider_identity,
+                ),
+            )
+            if any(actual != expected for actual, expected in candidate_bindings):
+                raise Builder2QualificationIntakeError(
+                    "candidate eligibility run/session/authorization binding mismatch"
+                )
+        elif self.candidate_provider_eligibility is not None:
+            raise Builder2QualificationIntakeError(
+                "candidate eligibility is only valid for a candidate provider"
+            )
         if set(self.provider_readiness) != set(self.session.configured_provider_order):
             raise Builder2QualificationIntakeError(
                 "provider_readiness must cover the configured cascade order exactly"
             )
         for provider, state in self.provider_readiness.items():
-            if provider not in CASCADE_PROVIDER_ORDER:
+            if provider not in (
+                set(CASCADE_PROVIDER_ORDER) | CANDIDATE_PROVIDER_IDENTITIES
+            ):
                 raise Builder2QualificationIntakeError(
                     "provider_readiness contains an unknown provider"
                 )
@@ -888,7 +946,7 @@ class Builder2QualificationIntakeManifestV1:
 
     def as_payload(self) -> dict[str, object]:
         self.validate()
-        return {
+        payload = {
             "schema_version": self.schema_version,
             "intake_id": self.intake_id,
             "controlled_shadow_run_id": self.controlled_shadow_run_id,
@@ -919,6 +977,11 @@ class Builder2QualificationIntakeManifestV1:
                 for key, value in sorted(self.provider_readiness.items())
             },
         }
+        if self.candidate_provider_eligibility is not None:
+            payload[
+                "candidate_provider_eligibility"
+            ] = self.candidate_provider_eligibility.as_payload()
+        return payload
 
     @property
     def manifest_digest(self) -> str:
@@ -1002,6 +1065,7 @@ def validate_intake(
         manifest.timing_policy,
         manifest.provider_readiness,
         manifest.authorization,
+        candidate_eligibility=manifest.candidate_provider_eligibility,
         minimum_sample_policy=minimum_sample_policy,
     )
     if (
