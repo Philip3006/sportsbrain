@@ -210,7 +210,7 @@ def test_status_reports_dead_pid_without_payloads(tmp_path: Path) -> None:
     dispatcher.claim_next("builder-1", process_id=999_999_999)
     status = dispatcher.status()
     assert task.task_id in {item["task_id"] for item in status["operator"]["dead_pid"]}
-    assert status["operator"]["next_eligible_explicit_task"]["item_id"] == "roadmap-b1-evidence"
+    assert status["operator"]["next_eligible_explicit_task"]["item_id"] == "roadmap-b1-research-1"
     assert all("payload" not in item for item in status["roadmap"])
 
 

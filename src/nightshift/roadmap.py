@@ -32,6 +32,7 @@ class RoadmapItem:
     repeated_failure_limit: int = 2
     mode: str = "bounded"
     enabled: bool = True
+    generation: int = 1
 
     @classmethod
     def from_mapping(cls, raw: Mapping[str, Any]) -> RoadmapItem:
@@ -91,6 +92,15 @@ class RoadmapItem:
         enabled = raw.get("enabled", True)
         if not isinstance(enabled, bool):
             raise ConfigurationError(f"{item_id}: enabled must be boolean")
+        generation = raw.get("generation", 1)
+        if (
+            isinstance(generation, bool)
+            or not isinstance(generation, int)
+            or not 1 <= generation <= 10000
+        ):
+            raise ConfigurationError(
+                f"{item_id}: generation must be between 1 and 10000"
+            )
         return cls(
             item_id=item_id,
             title=raw["title"].strip(),
@@ -103,6 +113,7 @@ class RoadmapItem:
             repeated_failure_limit=repeat_limit,
             mode=mode,
             enabled=enabled,
+            generation=generation,
         )
 
     def as_dict(self) -> dict[str, Any]:
@@ -118,7 +129,19 @@ class RoadmapItem:
             "repeated_failure_limit": self.repeated_failure_limit,
             "mode": self.mode,
             "enabled": self.enabled,
+            "generation": self.generation,
         }
+
+    @property
+    def idempotency_key(self) -> str:
+        """Return the stable identity for this explicit roadmap generation."""
+
+        # Keep the V1 spelling for generation one so existing static roadmap
+        # rows and operator scripts remain compatible. Later generations are
+        # explicit in the identity and cannot collide with an earlier stage.
+        if self.generation == 1:
+            return f"roadmap:{self.item_id}"
+        return f"roadmap:{self.item_id}:generation:{self.generation}"
 
 
 class RoadmapRegistry:

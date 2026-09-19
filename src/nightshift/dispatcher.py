@@ -23,6 +23,7 @@ from .models import (
     DISPATCHER_ID,
     EventType,
     ExecutionResult,
+    RiskClass,
     TaskRecord,
     TaskSpec,
     TaskState,
@@ -569,6 +570,25 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                     ),
                     now=self.clock(),
                 )
+            elif task.state is TaskState.PAUSED_QUOTA:
+                self.store.set_roadmap_status(
+                    item["item_id"],
+                    status="BLOCKED",
+                    reason="AI quota paused",
+                    next_eligible_at=datetime.fromisoformat(
+                        task.available_at.replace("Z", "+00:00")
+                    ),
+                    now=self.clock(),
+                )
+
+    def _roadmap_item_is_read_only(self, item: Any) -> bool:
+        """Return whether a configured item may bypass PR backpressure."""
+
+        template = self.templates.resolve(item.template_id)
+        return (
+            template.risk_class is RiskClass.READ_ONLY
+            and template.requires_pr is not True
+        )
 
     def select_next_roadmap_task(
         self, *, builder_id: str | None = None
@@ -579,8 +599,9 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
             builder_id = self.registry.assert_worker_target(builder_id).builder_id
         if self.store.is_paused() or self.store.is_draining():
             return None
-        if self.store.merge_backpressure_count() >= self.merge_backpressure_limit:
-            return None
+        merge_backpressure = (
+            self.store.merge_backpressure_count() >= self.merge_backpressure_limit
+        )
         self._refresh_roadmap()
         records = {item["item_id"]: item for item in self.store.roadmap_records()}
         for item in sorted(
@@ -594,6 +615,11 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
             ):
                 continue
             if builder_id is not None and item.builder_id != builder_id:
+                continue
+            if merge_backpressure and not self._roadmap_item_is_read_only(item):
+                # Backpressure is risk-aware: it gates new code/PR work but
+                # deliberately leaves explicitly configured offline audits
+                # available. No roadmap state is changed by this skip.
                 continue
             if row.get("task_id"):
                 existing = self.store.get(row["task_id"])
@@ -625,7 +651,7 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                 branch=f"{definition.branch_prefix}{item.item_id}",
                 payload=item.payload,
                 requested_by="builder-5-roadmap",
-                idempotency_key=f"roadmap:{item.item_id}",
+                idempotency_key=item.idempotency_key,
                 priority=item.priority,
                 debug_budget=item.debug_budget,
                 repeated_failure_limit=item.repeated_failure_limit,
@@ -707,6 +733,7 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         roadmap = self.store.roadmap_records()
         records = self.store.list_tasks(limit=1000)
         merge_count = self.store.merge_backpressure_count()
+        merge_backpressure = merge_count >= self.merge_backpressure_limit
         actionable = sum(
             result["by_state"].get(state.value, 0)
             for state in (
@@ -722,7 +749,7 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
             queue_mode = "PAUSED"
         elif result.get("draining"):
             queue_mode = "DRAINING"
-        elif merge_count >= self.merge_backpressure_limit:
+        elif merge_backpressure:
             queue_mode = "MERGE_BACKPRESSURE"
         elif any(record.state is TaskState.PAUSED_QUOTA for record in records):
             queue_mode = "PAUSED_QUOTA" if actionable == 0 else "ACTIVE"
@@ -747,15 +774,34 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                     "blocked_reason",
                     "next_eligible_at",
                     "enabled",
+                    "generation",
                 )
             }
             for item in roadmap
         ]
+        configured_items = {item.item_id: item for item in self.roadmap.items}
+        for summary in roadmap_summary:
+            template = self.templates.resolve(summary["template_id"])
+            summary["risk_class"] = template.risk_class.value
+            configured_item = configured_items.get(summary["item_id"])
+            summary["merge_backpressure_blocked"] = merge_backpressure and not (
+                self._roadmap_item_is_read_only(configured_item)
+                if configured_item is not None
+                else (
+                    template.risk_class is RiskClass.READ_ONLY
+                    and template.requires_pr is not True
+                )
+            )
         operator = operator_snapshot(
             records,
-            roadmap,
-            merge_backpressure=merge_count >= self.merge_backpressure_limit,
+            roadmap_summary,
+            merge_backpressure=merge_backpressure,
+            builders=self.registry.builder_ids,
+            paused=result["paused"],
+            draining=result["draining"],
         )
+        if merge_backpressure and operator["safe_read_only_roadmap_available"]:
+            queue_mode = "MERGE_BACKPRESSURE_WITH_READ_ONLY"
         result.update(
             {
                 "dispatcher_id": self.dispatcher_id,
