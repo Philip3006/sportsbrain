@@ -1,0 +1,378 @@
+{
+  "combined_audit": {
+    "competition_identity": {
+      "declared_value_coverage": 0.0,
+      "field_names": [],
+      "observed_values": [],
+      "path_scope_is_not_substitute_for_field": true,
+      "status": "BLOCKED",
+      "unexpected_values": []
+    },
+    "feature_availability": [
+      {
+        "complete_row_coverage": 0.0,
+        "expected_fields": [
+          "away_odds",
+          "draw_odds",
+          "home_odds"
+        ],
+        "feature_id": "odds_1x2",
+        "point_in_time_ready": false,
+        "present_fields": [],
+        "status": "UNAVAILABLE",
+        "timestamp_coverage": 0.0
+      },
+      {
+        "complete_row_coverage": 0.0,
+        "expected_fields": [
+          "away_elo",
+          "elo_away",
+          "elo_home",
+          "home_elo"
+        ],
+        "feature_id": "elo_pre_match",
+        "point_in_time_ready": false,
+        "present_fields": [],
+        "status": "UNAVAILABLE",
+        "timestamp_coverage": 0.0
+      },
+      {
+        "complete_row_coverage": 0.0,
+        "expected_fields": [
+          "away_form",
+          "form_gd_diff",
+          "form_pts_diff",
+          "home_form"
+        ],
+        "feature_id": "rolling_form",
+        "point_in_time_ready": false,
+        "present_fields": [],
+        "status": "UNAVAILABLE",
+        "timestamp_coverage": 0.0
+      },
+      {
+        "complete_row_coverage": 0.0,
+        "expected_fields": [
+          "away_xg",
+          "home_xg",
+          "xg_away",
+          "xg_home"
+        ],
+        "feature_id": "xg",
+        "point_in_time_ready": false,
+        "present_fields": [],
+        "status": "UNAVAILABLE",
+        "timestamp_coverage": 0.0
+      },
+      {
+        "complete_row_coverage": 0.0,
+        "expected_fields": [
+          "away_ppda",
+          "home_ppda",
+          "ppda_away",
+          "ppda_home"
+        ],
+        "feature_id": "ppda",
+        "point_in_time_ready": false,
+        "present_fields": [],
+        "status": "UNAVAILABLE",
+        "timestamp_coverage": 0.0
+      },
+      {
+        "complete_row_coverage": 0.0,
+        "expected_fields": [
+          "away_squad_availability",
+          "home_squad_availability"
+        ],
+        "feature_id": "squad_availability",
+        "point_in_time_ready": false,
+        "present_fields": [],
+        "status": "UNAVAILABLE",
+        "timestamp_coverage": 0.0
+      },
+      {
+        "complete_row_coverage": 0.0,
+        "expected_fields": [
+          "away_market_value",
+          "home_market_value"
+        ],
+        "feature_id": "market_value",
+        "point_in_time_ready": false,
+        "present_fields": [],
+        "status": "UNAVAILABLE",
+        "timestamp_coverage": 0.0
+      }
+    ],
+    "fixture_result_identity": {
+      "derived_fixture_key_count": 0,
+      "duplicate_fixture_ids": [],
+      "duplicate_fixture_keys": [],
+      "explicit_fixture_id_coverage": 0.0,
+      "required_field_missing_rows": {},
+      "result_identity": {
+        "complete_result_rows": 0,
+        "result_id_coverage": 0.0,
+        "unique_result_keys": 0
+      },
+      "row_count": 0,
+      "status": "BLOCKED"
+    },
+    "row_count": 0,
+    "season_partition_feasibility": {
+      "counts_by_season": {},
+      "final_evaluation_guard": {
+        "feature_fit_allowed": false,
+        "locked_for_selection": true,
+        "mapping_fit_allowed": false,
+        "mutated_by_audit": false,
+        "scoring_requires_frozen_candidate": true,
+        "season": "2024-25"
+      },
+      "partitions": {
+        "calibration": {
+          "feature_fit_allowed": false,
+          "missing_seasons": [
+            "2022-23",
+            "2023-24"
+          ],
+          "present_seasons": [],
+          "read_only": false,
+          "row_count": 0,
+          "seasons": [
+            "2022-23",
+            "2023-24"
+          ],
+          "selection_eligible": true
+        },
+        "development": {
+          "feature_fit_allowed": true,
+          "missing_seasons": [
+            "2015-16",
+            "2016-17",
+            "2017-18",
+            "2018-19",
+            "2019-20",
+            "2020-21",
+            "2021-22"
+          ],
+          "present_seasons": [],
+          "read_only": false,
+          "row_count": 0,
+          "seasons": [
+            "2015-16",
+            "2016-17",
+            "2017-18",
+            "2018-19",
+            "2019-20",
+            "2020-21",
+            "2021-22"
+          ],
+          "selection_eligible": true
+        },
+        "final": {
+          "feature_fit_allowed": false,
+          "missing_seasons": [
+            "2024-25"
+          ],
+          "present_seasons": [],
+          "read_only": true,
+          "row_count": 0,
+          "seasons": [
+            "2024-25"
+          ],
+          "selection_eligible": false
+        },
+        "shadow": {
+          "feature_fit_allowed": false,
+          "missing_seasons": [
+            "2025-26"
+          ],
+          "present_seasons": [],
+          "read_only": false,
+          "row_count": 0,
+          "seasons": [
+            "2025-26"
+          ],
+          "selection_eligible": false
+        }
+      },
+      "status": "BLOCKED",
+      "unknown_or_unusable_rows": 0,
+      "unknown_seasons": []
+    },
+    "team_mapping": {
+      "explicit_team_id_coverage": 0.0,
+      "missing_team_id_sides": 0,
+      "missing_team_name_sides": 0,
+      "status": "BLOCKED",
+      "team_id_to_multiple_names": [],
+      "team_name_to_multiple_ids": [],
+      "team_side_count": 0,
+      "unique_team_names": 0
+    },
+    "timestamp_provenance": {
+      "invalid_or_unzoned_kickoff_rows": 0,
+      "invalid_or_unzoned_result_rows": 0,
+      "invalid_or_unzoned_source_rows": 0,
+      "kickoff_instant_coverage": 0.0,
+      "policy": "strict instant timestamps; source_timestamp must be timezone-aware and strictly before kickoff",
+      "result_after_kickoff_coverage": 0.0,
+      "result_timestamp_coverage": 0.0,
+      "same_or_after_kickoff_rows": 0,
+      "source_before_kickoff_coverage": 0.0,
+      "source_timestamp_coverage": 0.0,
+      "status": "BLOCKED"
+    }
+  },
+  "competition": "UEFA Champions League",
+  "dataset_bundle_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "dataset_count": 0,
+  "dataset_location": "data/champions_league/",
+  "datasets": [],
+  "final_partition": {
+    "feature_fit_allowed": false,
+    "locked_for_selection": true,
+    "mapping_fit_allowed": false,
+    "mutated_by_audit": false,
+    "scoring_requires_frozen_candidate": true,
+    "season": "2024-25"
+  },
+  "input_contract": {
+    "accepted_formats": [
+      "csv",
+      "json"
+    ],
+    "required_fields": [
+      "season",
+      "kickoff_at",
+      "home_team",
+      "away_team",
+      "home_score",
+      "away_score"
+    ],
+    "strict_kickoff_timestamp": true,
+    "strict_source_timestamp": true
+  },
+  "limitations": [
+    "No local dataset is treated as Champions League evidence unless it is explicitly supplied under data/champions_league/.",
+    "A date-only kickoff or source timestamp cannot establish point-in-time provenance.",
+    "Team names without stable source IDs are conditional identity evidence, not a validated mapping.",
+    "The final 2024-25 partition is read-only, excluded from fitting and selection, and requires a frozen candidate before scoring."
+  ],
+  "manifest_sha256": "911f68c0a9faa8035250d96adfc4cd80e573c3025ae41de5c86efe1b2d240aef",
+  "overall_status": "BLOCKED_NO_CL_DATA",
+  "partition_spec": {
+    "calibration": [
+      "2022-23",
+      "2023-24"
+    ],
+    "development": [
+      "2015-16",
+      "2016-17",
+      "2017-18",
+      "2018-19",
+      "2019-20",
+      "2020-21",
+      "2021-22"
+    ],
+    "final": [
+      "2024-25"
+    ],
+    "shadow": [
+      "2025-26"
+    ]
+  },
+  "read_only_references": [
+    {
+      "path": "docs/champions_league_model_research_readiness.md",
+      "present": false,
+      "reference_id": "prior_research_contract",
+      "sha256": null
+    },
+    {
+      "path": "docs/champions_league_candidate_manifest.json",
+      "present": false,
+      "reference_id": "prior_candidate_manifest",
+      "sha256": null
+    },
+    {
+      "path": "src/football/champions_league_research.py",
+      "present": false,
+      "reference_id": "prior_research_module",
+      "sha256": null
+    }
+  ],
+  "row_count": 0,
+  "safety": {
+    "final_partition_mutated": false,
+    "financial_data_accessed": false,
+    "network_accessed": false,
+    "production_mutated": false
+  },
+  "schema_version": "champions-league-dataset-readiness-v1",
+  "scope": "offline research shadow/evidence only",
+  "source_inventory": [
+    {
+      "cl_coverage": "none",
+      "finding": "local loader enumerates domestic leagues only",
+      "network_used_by_audit": false,
+      "paths": [
+        {
+          "path": "src/data/football_data.py",
+          "present": true,
+          "reference_id": "football_data_co_uk",
+          "sha256": "ea632de737e13e1517489fa118b28b2d90c9baed272319e5ef656aec6b39a90f"
+        }
+      ],
+      "source_id": "football_data_co_uk"
+    },
+    {
+      "cl_coverage": "not_proven",
+      "finding": "network-backed broad international results; no CL point-in-time snapshot",
+      "network_used_by_audit": false,
+      "paths": [
+        {
+          "path": "src/data/international.py",
+          "present": true,
+          "reference_id": "martj42_international_results",
+          "sha256": "88ba277bd20a09c3d48740f0f41971f89a81f360693724864feeb3627a73581d"
+        }
+      ],
+      "source_id": "martj42_international_results"
+    },
+    {
+      "cl_coverage": "none",
+      "finding": "configured competition IDs are World Cup, UEFA Euro, and Copa America",
+      "network_used_by_audit": false,
+      "paths": [
+        {
+          "path": "src/data/statsbomb.py",
+          "present": true,
+          "reference_id": "statsbomb_open_data",
+          "sha256": "ca8d9465688226c18fb0b5079c323b10aa10aec9aebc691e9c9da6270dfe583d"
+        }
+      ],
+      "source_id": "statsbomb_open_data"
+    },
+    {
+      "cl_coverage": "live_or_discovery_only",
+      "finding": "does not provide a committed historical CL dataset",
+      "network_used_by_audit": false,
+      "paths": [
+        {
+          "path": "src/data/football_discovery.py",
+          "present": true,
+          "reference_id": "odds_api_discovery",
+          "sha256": "f65332f449417d2dece5beabe4469dc0acaf2eb74f035ad15ef8d5b73bfc0e4b"
+        },
+        {
+          "path": "src/data/odds_api.py",
+          "present": true,
+          "reference_id": "odds_api_discovery",
+          "sha256": "e903025f470988bba36e4f93de0878aee437091d5d0862461974c85c076f2b99"
+        }
+      ],
+      "source_id": "odds_api_discovery"
+    }
+  ]
+}
