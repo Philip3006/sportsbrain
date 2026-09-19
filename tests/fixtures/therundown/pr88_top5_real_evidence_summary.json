@@ -1,0 +1,125 @@
+{
+  "schema_version": "top5-therundown-pr88-real-evidence-summary-v1",
+  "provider_identity": "therundown_experimental",
+  "source": {
+    "provider_identity": "therundown_experimental",
+    "source_pr": 88,
+    "source_head": "dac86defdf3ed2e7aba445eb35daa131d7472c1f",
+    "source_review_id": "5241854809",
+    "source_document": "docs/top5_therundown_experimental_evaluation.md",
+    "source_document_blob": "1b83317fbf54343c862163b34eb7538df99064ac"
+  },
+  "run": {
+    "real_requests": 15,
+    "datapoints_before": 0,
+    "datapoints_after": 44,
+    "datapoints_consumed": 44,
+    "account_tier": "free",
+    "delay_seconds": 300,
+    "rate_limit_per_second": 1,
+    "bookmaker_entitlement": ["BetMGM", "FanDuel", "DraftKings"],
+    "history_access": false,
+    "live_odds_access": false,
+    "websocket_access": false
+  },
+  "leagues": [
+    {
+      "canonical_league": "BL1",
+      "provider_league_id": "13",
+      "provider_league_code": "GER1",
+      "access": "YES",
+      "real_fixture": {
+        "home": "Bayern Munich",
+        "away": "FC Union Berlin",
+        "kickoff": "2026-09-18T18:30:00Z"
+      },
+      "complete_1x2": true,
+      "complete_1x2_count": 3,
+      "bookmakers": ["DraftKings", "BetMGM", "FanDuel"],
+      "source_update_timestamp_range": [
+        "2026-09-14T11:14:00Z",
+        "2026-09-17T21:25:00Z"
+      ],
+      "delay_seconds": 300,
+      "event_datapoints": 11,
+      "result": "PASS_EVIDENCE"
+    },
+    {
+      "canonical_league": "EPL",
+      "provider_league_id": "11",
+      "provider_league_code": "EPL",
+      "access": "YES",
+      "real_fixture": {
+        "home": "Brentford FC",
+        "away": "Chelsea",
+        "kickoff": "2026-09-18T19:00:00Z"
+      },
+      "complete_1x2": true,
+      "complete_1x2_count": 3,
+      "bookmakers": ["DraftKings", "BetMGM", "FanDuel"],
+      "source_update_timestamp_range": [
+        "2026-09-17T20:40:00Z",
+        "2026-09-17T21:17:00Z"
+      ],
+      "delay_seconds": 300,
+      "event_datapoints": 11,
+      "result": "PASS_EVIDENCE"
+    },
+    {
+      "canonical_league": "LL",
+      "provider_league_id": "14",
+      "provider_league_code": "ESP1",
+      "access": "YES",
+      "real_fixture": null,
+      "complete_1x2": false,
+      "complete_1x2_count": 0,
+      "bookmakers": [],
+      "source_update_timestamp_range": [],
+      "delay_seconds": 300,
+      "event_datapoints": 0,
+      "result": "PARTIAL"
+    },
+    {
+      "canonical_league": "SA",
+      "provider_league_id": "15",
+      "provider_league_code": "ITA1",
+      "access": "YES",
+      "real_fixture": {
+        "home": "Monza",
+        "away": "Sassuolo",
+        "kickoff": "2026-09-18T18:45:00Z"
+      },
+      "complete_1x2": true,
+      "complete_1x2_count": 3,
+      "bookmakers": ["DraftKings", "BetMGM", "FanDuel"],
+      "source_update_timestamp_range": [
+        "2026-09-14T18:52:00Z",
+        "2026-09-17T20:04:00Z"
+      ],
+      "delay_seconds": 300,
+      "event_datapoints": 11,
+      "result": "PASS_EVIDENCE"
+    },
+    {
+      "canonical_league": "L1",
+      "provider_league_id": "12",
+      "provider_league_code": "FRA1",
+      "access": "YES",
+      "real_fixture": {
+        "home": "AS Monaco",
+        "away": "Lens",
+        "kickoff": "2026-09-18T18:45:00Z"
+      },
+      "complete_1x2": true,
+      "complete_1x2_count": 3,
+      "bookmakers": ["DraftKings", "BetMGM", "FanDuel"],
+      "source_update_timestamp_range": [
+        "2026-09-15T12:13:00Z",
+        "2026-09-17T20:22:00Z"
+      ],
+      "delay_seconds": 300,
+      "event_datapoints": 11,
+      "result": "PASS_EVIDENCE"
+    }
+  ]
+}
