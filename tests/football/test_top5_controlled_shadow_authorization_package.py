@@ -18,6 +18,7 @@ from src.football.top5_controlled_shadow_authorization_package import (
 from src.football.top5_controlled_shadow_provider_qualification import (
     ObservationEvidenceKind,
 )
+from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_network_shadow import (
     NetworkShadowRunStatus,
     TheRundownNetworkShadowExecutorV1,
@@ -236,6 +237,44 @@ def test_reconciliation_rejects_stale_observation():
 
     with pytest.raises(ControlledShadowAuthorizationPackageError, match="stale"):
         reconcile_controlled_shadow_run(tampered, configuration, authorization, now=NOW)
+
+
+def test_reconciliation_rejects_wrong_provider_and_post_kickoff_capture():
+    result, configuration, authorization = _network_run()
+    original = _capture(result, "EPL")
+    wrong_provider = _replace_capture(
+        result,
+        original,
+        target=replace(original.target, provider="the_odds_api"),
+    )
+    with pytest.raises(
+        ControlledShadowAuthorizationPackageError, match="allowed identity"
+    ):
+        reconcile_controlled_shadow_run(
+            wrong_provider, configuration, authorization, now=NOW
+        )
+
+    kickoff = NOW - timedelta(seconds=1)
+    fixture_key = make_fixture_key(
+        "EPL", original.target.home_team, original.target.away_team, kickoff
+    )
+    target = replace(original.target, fixture_key=fixture_key, kickoff=kickoff)
+    request = replace(original.request, target=target)
+    response = replace(original.response, fixture_key=fixture_key)
+    attestation = dict(original.canonical_capture_attestation)
+    attestation["fixture_key"] = fixture_key
+    post_kickoff = _replace_capture(
+        result,
+        original,
+        target=target,
+        request=request,
+        response=response,
+        capture_attestation_input=attestation,
+    )
+    with pytest.raises(ControlledShadowAuthorizationPackageError, match="post-kickoff"):
+        reconcile_controlled_shadow_run(
+            post_kickoff, configuration, authorization, now=NOW
+        )
 
 
 @pytest.mark.parametrize("field", ["provider_event_id", "provider_request_id"])
