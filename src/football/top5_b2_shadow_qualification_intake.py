@@ -36,6 +36,7 @@ from src.football.top5_controlled_shadow_provider_qualification import (
     CAPTURE_ATTESTATION_CONTRACT_VERSION,
     NO_PRODUCTION_SIGNAL_TIME_VALUES,
     QUALIFICATION_CONTRACT_VERSION,
+    TOP5_LEAGUES,
     CEOAuthorization,
     ControlledShadowCaptureAttestation,
     MinimumSamplePolicy,
@@ -59,6 +60,11 @@ from src.football.top5_qualification_sample_aggregator import (
     BUILDER2_QUALIFICATION_SAMPLE_AGGREGATOR_CONTRACT_VERSION,
     Builder2QualificationSampleReportV1,
     aggregate_builder2_qualification_samples,
+)
+from src.football.top5_therundown_network_shadow import (
+    NetworkShadowRunStatus,
+    TheRundownNetworkShadowCaptureV1,
+    TheRundownNetworkShadowRunResultV1,
 )
 from src.utils.atomic_io import atomic_write_json
 
@@ -978,9 +984,9 @@ class Builder2QualificationIntakeManifestV1:
             },
         }
         if self.candidate_provider_eligibility is not None:
-            payload[
-                "candidate_provider_eligibility"
-            ] = self.candidate_provider_eligibility.as_payload()
+            payload["candidate_provider_eligibility"] = (
+                self.candidate_provider_eligibility.as_payload()
+            )
         return payload
 
     @property
@@ -1103,6 +1109,284 @@ def validate_intake(
     )
     result.validate()
     return result
+
+
+def qualify_five_league_shadow_run(
+    shadow_run: TheRundownNetworkShadowRunResultV1,
+    manifests: Sequence[Builder2QualificationIntakeManifestV1],
+) -> tuple[Builder2QualificationIntakeResultV1, ...]:
+    """Validate one complete shadow run and derive its five B2 receipts.
+
+    The controlled-shadow runner remains the producer of capture evidence and
+    Builder 2 remains the receipt authority.  This wrapper only binds the
+    already-materialized B2 manifests to the exact successful five-league run,
+    then delegates every observation check and receipt issuance to
+    :func:`validate_intake`.  It performs no I/O or network execution.
+    """
+
+    if not isinstance(shadow_run, TheRundownNetworkShadowRunResultV1):
+        raise Builder2QualificationIntakeError(
+            "a canonical five-league shadow run result is required"
+        )
+    shadow_run.validate()
+    if shadow_run.status is not NetworkShadowRunStatus.COMPLETED_NETWORK:
+        raise Builder2QualificationIntakeError(
+            "only a completed network shadow run may enter the operational intake"
+        )
+    if not shadow_run.all_five_succeeded:
+        raise Builder2QualificationIntakeError(
+            "all five controlled-shadow captures must succeed before receipt intake"
+        )
+    if len(shadow_run.captures) != len(TOP5_LEAGUES):
+        raise Builder2QualificationIntakeError(
+            "five controlled-shadow captures are required"
+        )
+    if not isinstance(manifests, Sequence) or isinstance(manifests, (str, bytes)):
+        raise Builder2QualificationIntakeError(
+            "five canonical intake manifests are required"
+        )
+    if len(manifests) != len(TOP5_LEAGUES):
+        raise Builder2QualificationIntakeError(
+            "exactly five canonical intake manifests are required"
+        )
+    if shadow_run.request_count != len(TOP5_LEAGUES):
+        raise Builder2QualificationIntakeError(
+            "successful five-league run request count is inconsistent"
+        )
+    expected_datapoints = sum(
+        capture.response.datapoint_count for capture in shadow_run.captures
+    )
+    expected_quota = sum(
+        float(capture.response.quota_cost_units) for capture in shadow_run.captures
+    )
+    if shadow_run.datapoint_count != expected_datapoints:
+        raise Builder2QualificationIntakeError(
+            "five-league datapoint total does not match captures"
+        )
+    if shadow_run.quota_cost_units != expected_quota:
+        raise Builder2QualificationIntakeError(
+            "five-league quota total does not match captures"
+        )
+
+    captures_by_league: dict[str, TheRundownNetworkShadowCaptureV1] = {}
+    for capture in shadow_run.captures:
+        if capture.target.league in captures_by_league:
+            raise Builder2QualificationIntakeError(
+                "five-league run contains duplicate league captures"
+            )
+        captures_by_league[capture.target.league] = capture
+    manifests_by_league: dict[str, Builder2QualificationIntakeManifestV1] = {}
+    for manifest in manifests:
+        if not isinstance(manifest, Builder2QualificationIntakeManifestV1):
+            raise Builder2QualificationIntakeError(
+                "five-league intake items must be canonical manifests"
+            )
+        if manifest.observation.league in manifests_by_league:
+            raise Builder2QualificationIntakeError(
+                "five-league intake contains duplicate league manifests"
+            )
+        manifests_by_league[manifest.observation.league] = manifest
+
+    if set(captures_by_league) != set(TOP5_LEAGUES) or set(manifests_by_league) != set(
+        TOP5_LEAGUES
+    ):
+        raise Builder2QualificationIntakeError(
+            "capture and manifest scopes must cover exactly the five Top-5 leagues"
+        )
+
+    for league in TOP5_LEAGUES:
+        _bind_shadow_capture_to_manifest(
+            captures_by_league[league], manifests_by_league[league], shadow_run
+        )
+
+    # Validate every manifest only after the complete run-wide binding pass so
+    # a later mismatch cannot leave a partially derived receipt batch.
+    return tuple(
+        validate_intake(manifests_by_league[league]) for league in TOP5_LEAGUES
+    )
+
+
+def _bind_shadow_capture_to_manifest(
+    capture: TheRundownNetworkShadowCaptureV1,
+    manifest: Builder2QualificationIntakeManifestV1,
+    shadow_run: TheRundownNetworkShadowRunResultV1,
+) -> None:
+    """Bind B4 capture identity/provenance to one canonical B2 manifest."""
+
+    capture.validate()
+    if capture.evidence_kind is not ObservationEvidenceKind.REAL_OBSERVED:
+        raise Builder2QualificationIntakeError(
+            "five-league receipt intake requires REAL_OBSERVED captures"
+        )
+    if (
+        capture.network_execution is not True
+        or capture.response.network_execution is not True
+    ):
+        raise Builder2QualificationIntakeError(
+            "five-league receipt intake requires network execution attestation"
+        )
+    request = capture.request
+    target = capture.target
+    response = capture.response
+    observation = manifest.observation
+    try:
+        response_evidence_kind = ObservationEvidenceKind(response.evidence_kind)
+    except (TypeError, ValueError) as exc:
+        raise Builder2QualificationIntakeError(
+            "capture response evidence kind is invalid"
+        ) from exc
+    if response_evidence_kind is not ObservationEvidenceKind.REAL_OBSERVED:
+        raise Builder2QualificationIntakeError(
+            "five-league receipt intake requires a real provider response"
+        )
+    if response.http_status != 200:
+        raise Builder2QualificationIntakeError(
+            "five-league receipt intake requires an HTTP 200 response"
+        )
+    if response.retry_count != 0:
+        raise Builder2QualificationIntakeError(
+            "five-league receipt intake forbids provider retries"
+        )
+    if (
+        not isinstance(response.datapoint_count, int)
+        or isinstance(response.datapoint_count, bool)
+        or response.datapoint_count <= 0
+    ):
+        raise Builder2QualificationIntakeError(
+            "successful capture datapoint evidence is invalid"
+        )
+    if (
+        response.provider != target.provider
+        or response.league != target.league
+        or response.fixture_key != target.fixture_key
+        or response.provider_event_id != target.provider_event_id
+        or response.provider_request_id != request.request_identity
+        or response.home_team != target.home_team
+        or response.away_team != target.away_team
+        or response.home_participant_id != request.home_participant_id
+        or response.away_participant_id != request.away_participant_id
+    ):
+        raise Builder2QualificationIntakeError(
+            "capture response identity or participant binding mismatch"
+        )
+    if any(
+        getattr(response, field) is not expected
+        for field, expected in (
+            ("no_bet", True),
+            ("publication", False),
+            ("production_activation", False),
+            ("monetary_spend_authorized", False),
+            ("authority_attempted", False),
+            ("publication_attempted", False),
+            ("activation_attempted", False),
+            ("ledger_mutated", False),
+            ("scheduler_registered", False),
+        )
+    ):
+        raise Builder2QualificationIntakeError(
+            "capture response carries an unsafe side-effect flag"
+        )
+    eligibility = manifest.candidate_provider_eligibility
+    if eligibility is None:
+        raise Builder2QualificationIntakeError(
+            "candidate provider eligibility is required for a TheRundown capture"
+        )
+    try:
+        expected_eligibility = CandidateProviderEligibilityV1.from_network_capture(
+            capture, now=response.captured_at
+        )
+    except (CandidateEligibilityError, TypeError, ValueError) as exc:
+        raise Builder2QualificationIntakeError(
+            "capture cannot produce a valid candidate eligibility binding"
+        ) from exc
+    if eligibility != expected_eligibility:
+        raise Builder2QualificationIntakeError(
+            "candidate eligibility does not exactly match the capture"
+        )
+
+    run_bindings = (
+        (request.controlled_shadow_run_id, shadow_run.controlled_shadow_run_id),
+        (request.qualification_session_id, shadow_run.qualification_session_id),
+        (request.authorization_id, shadow_run.authorization_id),
+    )
+    if any(actual != expected for actual, expected in run_bindings):
+        raise Builder2QualificationIntakeError(
+            "capture run/session/authorization identity is not bound to the run"
+        )
+    manifest_bindings = (
+        (manifest.controlled_shadow_run_id, request.controlled_shadow_run_id),
+        (manifest.qualification_session_id, request.qualification_session_id),
+        (manifest.ceo_authorization_id, request.authorization_id),
+        (manifest.provider_identity, target.provider),
+        (manifest.fixture_key, target.fixture_key),
+        (manifest.provider_event_id, response.provider_event_id),
+        (manifest.provider_request_id, response.provider_request_id),
+        (manifest.observation_id, capture.observation_id),
+    )
+    if any(actual != expected for actual, expected in manifest_bindings):
+        raise Builder2QualificationIntakeError(
+            "manifest identity is not bound to the exact capture"
+        )
+    if response.provider_request_id != request.request_identity:
+        raise Builder2QualificationIntakeError(
+            "provider request identity does not match the authorized request"
+        )
+    if capture.observation_id is None or capture.observation_digest is None:
+        raise Builder2QualificationIntakeError(
+            "successful capture observation identity/digest is missing"
+        )
+    _digest(capture.observation_digest, "capture.observation_digest")
+    if (
+        capture.canonical_capture_attestation
+        != manifest.capture_attestation.as_payload()
+    ):
+        raise Builder2QualificationIntakeError(
+            "capture attestation is not the exact B4 attestation"
+        )
+    if capture.capture_attestation_digest != semantic_digest(
+        manifest.capture_attestation.as_payload()
+    ):
+        raise Builder2QualificationIntakeError(
+            "capture attestation digest does not match the canonical attestation"
+        )
+    observation_bindings = (
+        (observation.provider_identity, target.provider),
+        (observation.league, target.league),
+        (observation.fixture_key, target.fixture_key),
+        (observation.home_team, target.home_team),
+        (observation.away_team, target.away_team),
+        (observation.kickoff, target.kickoff),
+        (observation.provider_event_id, response.provider_event_id),
+        (observation.provider_request_id, response.provider_request_id),
+        (observation.bookmaker_identity, response.bookmaker_identity),
+        (observation.source_identity, response.source_identity),
+        (observation.source_timestamp, response.source_timestamp),
+        (observation.captured_at, response.captured_at),
+        (observation.request_started_at, response.request_started_at),
+        (observation.request_finished_at, response.request_finished_at),
+        (observation.home_odds, response.home_odds),
+        (observation.draw_odds, response.draw_odds),
+        (observation.away_odds, response.away_odds),
+        (observation.adapter_version, response.adapter_version),
+        (observation.adapter_source_sha.lower(), response.adapter_source_sha.lower()),
+        (observation.raw_response_digest.lower(), response.raw_response_digest.lower()),
+        (
+            observation.normalized_record_digest.lower(),
+            response.normalized_record_digest.lower(),
+        ),
+        (observation.quota_before, response.quota_before),
+        (observation.quota_after, response.quota_after),
+        (observation.quota_cost_units, response.quota_cost_units),
+        (observation.network_request_count, 1),
+    )
+    if any(actual != expected for actual, expected in observation_bindings):
+        raise Builder2QualificationIntakeError(
+            "observation fixture/provider/market/provenance binding mismatch"
+        )
+    if manifest.cascade_evidence_digest != response.cascade_evidence_digest:
+        raise Builder2QualificationIntakeError(
+            "cascade evidence digest is not bound to the capture"
+        )
 
 
 def _safe_evidence_directory(path: object) -> Path:
@@ -1531,6 +1815,7 @@ __all__ = [
     "load_intake_manifest",
     "load_receipts_from_directory",
     "main",
+    "qualify_five_league_shadow_run",
     "run_intake",
     "validate_intake",
 ]
