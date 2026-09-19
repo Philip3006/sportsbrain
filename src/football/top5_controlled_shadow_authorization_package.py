@@ -328,6 +328,18 @@ class QualificationReadyArtifactsV1:
             raise ControlledShadowAuthorizationPackageError(
                 "qualification artifacts must contain five attestations"
             )
+        expected_count = len(TOP5_LEAGUE_ORDER)
+        if any(
+            len(items) != expected_count
+            for items in (
+                self.candidate_eligibilities,
+                self.qualification_inputs,
+                self.builder2_receipt_inputs,
+            )
+        ):
+            raise ControlledShadowAuthorizationPackageError(
+                "qualification artifacts must contain five items per evidence type"
+            )
         if (
             self.cascade_evidence_available is not False
             or self.receipt_eligible is not False
