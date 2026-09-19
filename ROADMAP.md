@@ -1254,6 +1254,16 @@ Kontext: Umfassender Review über Tennis / Football / Betting-Layer / Infrastruk
 - `tennis_detector._MIN_PROB/_MAX_ODDS` → `gate_for("tennis").min_prob/.max_odds`. `value_detector._BIAS_EV_CAP` → `gate_for("football").bias_ev_cap`. Single source of truth.
 - **Dateien**: `src/betting/tennis_detector.py`, `src/betting/value_detector.py`
 
+### N-Rev17. Top-5 TheRundown quota-safe polling planner — P2
+- **Was**: `src/football/top5_polling_planner.py` berechnet aus Laufzeitbudgets, Reserve, Fixture-Scope, Bookmakern, Outcomes, beobachteten Request-/Fixture-Kosten und Signal-Time-Fenstern einen deterministischen Kandidaten-Shadow-Plan inklusive `SAFE`/`DEGRADED`/`UNSAFE`, Verbrauch, sicherem Snapshot-Limit, Quota-Erschöpfungsprojektion und Mindestintervall.
+- **Warum**: Far-future-Fixtures sollen keine TheRundown-Datapoints verbrauchen; gleichzeitig bleibt Reserve für Qualification/Canaries erhalten. Provider-Limits und Kosten bleiben Laufzeit-Evidenz statt dauerhafter Konstanten.
+- **Impact/Aufwand/Risiko**: 🟢 · 🟢 (~2 h) · 🟢
+- **Priorität**: P2 (vor jedem Kandidaten-Shadow-Run; keine Scheduler-/Aktivierungs-Autorität)
+- **Dateien**: `src/football/top5_polling_planner.py`, `tests/football/test_top5_polling_planner.py`, `docs/top5_therundown_quota_plan.md`
+- **Abhängigkeiten**: bestehende Top-5-Architektur; künftige TheRundown-Account-/Kosten-Evidenz; PR #88 bleibt separat.
+- **Verifikation**: deterministische Planner-Tests; kein Netzwerk, kein Scheduler, keine Provider-Anfrage, keine Aktivierung.
+- **Status (2026-09-17)**: Auf APP-B3-Branch zur Review vorbereitet; nicht gemergt.
+
 ---
 
 ## 🚫 K. Bewusst draußen (Veto-Liste)
@@ -1323,15 +1333,16 @@ Kontext: Umfassender Review über Tennis / Football / Betting-Layer / Infrastruk
 | **14f** | + NEU **J8-I8 (Live-InPlay Phase 5)** — nur nach stabilem J8-I6 (Pinnacle) | **Q1 2027+** | 15-25 h |
 | **14g** | + NEU **Tennis UX-Paket 2026-08-04** — Satz-AH-Guard, Marktfilter-Chips, Signal-Alter, Form-Badges, Surface-Widget, Coverage-Footer, Pinnacle-AH-Fallback, CLV-Alarm, Doppelbuchung-Guard, Scanner 6×/Tag, Settle-Reminder | erledigt 2026-08-04 | ~6 h |
 | **14h** | + NEU **Phase 3c + 4c (2026-08-04)** — TZ-Reise-Feature (IOC→TZ-Lookup, tz_shift_a/b in FEATURE_COLUMNS 81 Cols), bio+tournament_slug in Ensemble-Prediction, Spieler-Form-Badges; First-Set-Markt: serve-stats-basierte Probs (_first_set_probs_serve_based), Tier-1/2-Gate | erledigt 2026-08-04 | ~2 h |
+| **15** | **N-Rev17 Top-5 TheRundown quota-safe polling planner** | **P2, vor jedem Kandidaten-Shadow-Run** | ~2 h |
 
 ---
 
 ## 📊 Statistik
 
-- **Insgesamt**: 121 konkrete Items (+1: LGBM-Symmetrization ✅)
+- **Insgesamt**: 122 konkrete Items (+1: LGBM-Symmetrization ✅; +1: N-Rev17)
 - **P0**: 17 (sofort) — davon **17 ✅** (N12 ✅, N15 ✅, live_score_push-fix ✅, LGBM-Symmetrization ✅)
 - **P1**: 46 — davon **46 ✅** — alle P1-Items erledigt
-- **P2**: 40 — davon **39 ✅**; **offen: J8-B8 (Serve-Feature-Semantik, Q4 deferred), N14 Challenger Coverage**
+- **P2**: 41 — davon **39 ✅**; **offen: J8-B8 (Serve-Feature-Semantik, Q4 deferred), N14 Challenger Coverage, N-Rev17 (in review)**
 - **P3**: 7 — J2-N + **J8-I8 Live-InPlay** + **N13 Spiel-Handicap-Modell** + N10 ✅ + N11 ✅
 - **Veto**: 10 (K5 aufgehoben 2026-06-26)
 
@@ -1392,6 +1403,7 @@ Alcaraz vs Djokovic p_a 0.50 → 0.67, Fritz vs Michelsen 0.50 → 0.75.
 
 ## 📝 Änderungs-Historie
 
+- **2026-09-17**: + **N-Rev17 — Top-5 TheRundown quota-safe polling planner**. Runtime-input- und reserve-basierte Planung für einen künftigen Kandidaten-Shadow-Run mit Signal-Time-Fenstern, Fixture-Scope und deterministischer SAFE/DEGRADED/UNSAFE-Ausgabe. Kein Scheduler, kein Provider-Request, keine Aktivierung und keine Änderung an PR #88.
 - **2026-09-13**: + **TOP5-PROD-ARCH-002 — Disabled Top-5 production architecture hardening (P1)**. Auf frischem Builder-B-Branch ergänzt: immutable, disabled-only metadata for Bundesliga, Premier League, La Liga, Serie A, and Ligue 1; provider mapping and bulk `OddsRequest`; injected shadow-only pipeline; prediction/signal provenance; health integration payload; artifact ownership validation; and explicit rollout evidence gates. No model is bound, no provider request/scheduler/publisher/Cloudflare/ledger path is wired, and no Top-5 activation occurs. Architecture documentation: `docs/top5_production_architecture.md`. Exact Signal-Time remains open for CEO decision after schedule/quota evidence.
 - **2026-09-13**: ~ **TOP5-PROD-ARCH-002 reconciliation**. Canonical branch merged current `origin/main` once without rebase and restored fail-closed timestamp handling plus strict owner-specific Top-5 artifact namespaces. Naive kickoff/capture/request/generation/pipeline timestamps now raise `ProductionContractError`; aware values normalize to UTC. Allowed namespaces are `results/shadow/top5/`, `docs/data/top5/shadow/`, and `results/health/top5/`; no Top-5 publisher, health registration, scheduler, provider, model, Cloudflare, or ledger path was added.
 
