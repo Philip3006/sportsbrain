@@ -43,6 +43,56 @@ bookmaker, complete pre-match 1X2 prices, source/capture/request timestamps,
 freshness, adapter/configuration hashes, raw/provider/normalized/cascade
 digests, and quota/rate-limit/tier/delay provenance.
 
+### Direct B1 La Liga injection
+
+The repaired B1 La Liga artifact is injected as the keyword argument
+`b1_ll_artifact` to
+`reconcile_controlled_shadow_run_with_b1_ll_artifact(result, configuration,
+authorization, b1_ll_artifact, now=...)`. The value is exactly the mapping
+returned by `LaLigaCaptureEvidence.as_evidence_bundle()`; an object exposing
+that method is also accepted and materialized once. No B1 object is imported
+as an authority or receipt issuer.
+
+B4 accepts the bundle only when all of the following match the `LL` capture in
+the completed PR-103 result byte-for-byte or by canonical timestamp
+comparison:
+
+- `therundown_experimental`, canonical `LL` identity, fixture, provider event,
+  provider request, home/away participant IDs, teams, and kickoff;
+- the exact controlled-shadow run ID, qualification session ID, CEO
+  authorization ID, expiry, adapter version, adapter source SHA, and raw
+  response digest;
+- source and capture timestamps within the 300-second freshness contract;
+- a bookmaker with a complete home/draw/away decimal 1X2 record and matching
+  provider/normalized record digests;
+- quota-before/after, rate-limit, and quota evidence provenance.
+
+The B1 bundle must remain `REAL_OBSERVED`/`CAPTURED`, pre-match, candidate-only,
+no-bet, unpublished, inactive, and no-spend. Its cascade digest must remain
+`null`, and it must explicitly require B4 to supply the canonical cascade
+evidence and capture attestation. A synthetic/replay bundle, stale bundle,
+wrong request, partial 1X2, missing bookmaker/provenance, or any identity or
+digest mismatch fails closed. The final reconciled payload retains the exact
+B1 bundle under `artifacts.b1_ll_artifact`; it does not turn it into a receipt.
+
+### Expected five-league artifact set
+
+The reconciled package is ordered and complete only when it contains exactly
+these five slots:
+
+1. `EPL`
+2. `BL1`
+3. `LL` — the slot bound to the repaired B1 artifact above
+4. `SA`
+5. `L1`
+
+Each slot contains one PR-103 canonical capture attestation, one
+`CandidateProviderEligibilityV1` payload, one qualification input, and one
+Builder-2 receipt input. The five receipt inputs remain
+`eligible=false`/`issuer_present=false`; the reconciliation status remains
+`PENDING_BUILDER2_VALIDATION`. No slot can change production authority,
+publication, scheduler registration, activation, betting, or spend.
+
 Synthetic, replay, stale, post-kickoff, incomplete, ambiguous, duplicated,
 rebinding, digest-mismatched, or otherwise malformed evidence fails closed.
 The resulting artifacts contain canonical capture attestations and
@@ -57,15 +107,18 @@ The exact future command/package shape is exposed for a later, separately
 authorized run but is not executed by this package:
 
 ```text
-python -m src.football.top5_controlled_shadow_authorization_package --execute --package <authorization-package.json> --authorization <ceo-authorization.json>
+python -m src.football.top5_controlled_shadow_authorization_package --execute --package <authorization-package.json> --authorization <ceo-authorization.json> --b1-ll-artifact <b1-ll-evidence-bundle.json>
 ```
 
-The later operator must provide a valid, unexpired CEO authorization matching
-the package byte-for-byte on scope, hashes, budgets, pacing, retry policy,
-run/session identifiers, and safety flags. A future implementation of that
-command must retain the PR-103 executor's `allow_live_network=False` default;
-this package itself has no execution entry point and performs no provider
-request.
+This is the single later Controlled-Shadow command shape after the repaired
+B1 LL bundle is available. It is not run by this offline package. The later
+operator must provide a valid, unexpired, separately approved CEO
+authorization matching the package byte-for-byte on scope, hashes, budgets,
+pacing, retry policy, run/session identifiers, and safety flags. The command
+must retain the PR-103 executor's `allow_live_network=False` default until the
+caller explicitly supplies the new run-specific authorization and enables the
+reviewed network transport. This package itself performs no provider request,
+does not register a scheduler, and has no receipt-issuer or authority path.
 
 ## Compatibility assumptions
 
@@ -78,5 +131,7 @@ request.
   `Builder2QualificationReceiptV1` issuance. A complete canonical cascade
   evidence object/report is a downstream Builder-2 input; this package does
   not fabricate one from a digest.
-- No real La Liga capture is consumed during offline package preparation.
-
+- The B1 LL bundle is a validated input to the exact LL slot, not a substitute
+  for the PR-103 canonical capture attestation.
+- No real La Liga capture or five-league Controlled Shadow is consumed during
+  offline package preparation.

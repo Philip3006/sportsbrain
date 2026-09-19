@@ -14,6 +14,7 @@ from src.football.top5_controlled_shadow_authorization_package import (
     ControlledShadowAuthorizationPackageError,
     prepare_authorization_package,
     reconcile_controlled_shadow_run,
+    reconcile_controlled_shadow_run_with_b1_ll_artifact,
 )
 from src.football.top5_controlled_shadow_provider_qualification import (
     ObservationEvidenceKind,
@@ -63,6 +64,109 @@ def _replace_capture(result, original, **changes):
     index = captures.index(original)
     captures[index] = replace(original, **changes)
     return replace(result, captures=tuple(captures))
+
+
+def _b1_ll_artifact(result, authorization):
+    capture = _capture(result, "LL")
+    target = capture.target
+    request = capture.request
+    response = capture.response
+    return {
+        "schema_version": "top5-therundown-ll-evidence-bundle-v1",
+        "capture_status": "CAPTURED",
+        "capture_reason": "captured",
+        "authorization": {
+            "provider": CANONICAL_CANDIDATE_PROVIDER,
+            "league": "LL",
+            "maximum_request_count": 2,
+            "maximum_datapoint_budget": 100,
+            "quota_before_used": response.quota_before,
+            "quota_before_remaining": response.rate_limit_remaining,
+            "expires_at": authorization.expires_at.isoformat(),
+            "controlled_shadow_run_id": authorization.controlled_shadow_run_id,
+            "ceo_authorization_id": authorization.authorization_id,
+            "qualification_session_id": authorization.qualification_session_id,
+            "no_bet": True,
+            "no_publication": True,
+            "no_activation": True,
+            "no_spend": True,
+        },
+        "b1_bridge_inputs": {
+            "controlled_shadow_run_id": authorization.controlled_shadow_run_id,
+            "ceo_authorization_id": authorization.authorization_id,
+            "qualification_session_id": authorization.qualification_session_id,
+            "provider_identity": CANONICAL_CANDIDATE_PROVIDER,
+            "league": "LL",
+            "fixture_key": target.fixture_key,
+            "provider_event_id": response.provider_event_id,
+            "provider_request_id": request.request_identity,
+            "home_team": target.home_team,
+            "away_team": target.away_team,
+            "kickoff": target.kickoff.isoformat(),
+            "adapter_version": response.adapter_version,
+            "adapter_source_sha": response.adapter_source_sha,
+            "raw_response_digest": response.raw_response_digest,
+            "provider_record_digests": [response.provider_record_digest],
+            "normalized_record_digests": [response.normalized_record_digest],
+            "source_timestamps": [response.source_timestamp.isoformat()],
+            "captured_at": response.captured_at.isoformat(),
+            "participant_ids": {
+                "home": request.home_participant_id,
+                "away": request.away_participant_id,
+                "draw": "draw-id-LL",
+            },
+            "participant_names": {
+                "home": target.home_team,
+                "away": target.away_team,
+                "draw": "Draw",
+            },
+            "quota_before": {"used": response.quota_before},
+            "quota_after": {"used": response.quota_after},
+            "rate_limit_state": {"remaining": response.rate_limit_remaining},
+            "quota_evidence": {"source": "B1 synthetic contract fixture"},
+            "network_execution": True,
+            "no_bet": True,
+            "publication": False,
+            "production_activation": False,
+            "monetary_spend_authorized": False,
+            "evidence_kind": "REAL_OBSERVED",
+            "market_phase": "PRE_MATCH",
+            "market_type": "football:pre_match:1x2",
+            "cascade_evidence_digest": None,
+            "cascade_evidence_required_from_b4": True,
+            "capture_attestation_required_from_b4": True,
+        },
+        "bookmaker_observations": [
+            {
+                "bookmaker_id": "bookmaker-a-id",
+                "bookmaker_name": response.bookmaker_identity,
+                "odds": {
+                    "home": response.home_odds,
+                    "draw": response.draw_odds,
+                    "away": response.away_odds,
+                },
+                "source_timestamp": response.source_timestamp.isoformat(),
+                "captured_at": response.captured_at.isoformat(),
+                "provider_record_digest": response.provider_record_digest,
+                "normalized_record_digest": response.normalized_record_digest,
+                "quota_before": {"used": response.quota_before},
+                "quota_after": {"used": response.quota_after},
+                "rate_limit_state": {"remaining": response.rate_limit_remaining},
+                "metadata": {},
+            }
+        ],
+        "raw_response_digest": response.raw_response_digest,
+        "adapter_version": response.adapter_version,
+        "adapter_source_sha": response.adapter_source_sha,
+        "safety": {
+            "candidate_only": True,
+            "quality_eligible": False,
+            "no_bet": True,
+            "no_publication": True,
+            "no_activation": True,
+            "no_spend": True,
+        },
+    }
 
 
 def test_disabled_package_preserves_exact_reviewed_budgets_and_scope():
@@ -138,6 +242,62 @@ def test_completed_network_run_reconciles_all_five_leagues_to_downstream_inputs(
     for receipt_input in reconciliation.artifacts.builder2_receipt_inputs:
         assert receipt_input["eligible"] is False
         assert receipt_input["issuer_present"] is False
+
+
+def test_repaired_b1_ll_artifact_is_injected_into_the_exact_ll_slot():
+    result, configuration, authorization = _network_run()
+    b1_artifact = _b1_ll_artifact(result, authorization)
+
+    reconciliation = reconcile_controlled_shadow_run_with_b1_ll_artifact(
+        result,
+        configuration,
+        authorization,
+        b1_artifact,
+        now=NOW,
+    )
+
+    assert reconciliation.leagues == ("EPL", "BL1", "LL", "SA", "L1")
+    assert reconciliation.artifacts.b1_ll_artifact == b1_artifact
+    assert (
+        reconciliation.artifacts.capture_attestations[2]["fixture_key"]
+        == (b1_artifact["b1_bridge_inputs"]["fixture_key"])
+    )
+    assert reconciliation.artifacts.candidate_eligibilities[2]["league_code"] == "LL"
+    assert reconciliation.artifacts.builder2_receipt_inputs[2]["eligible"] is False
+    assert reconciliation.artifacts.receipt_issuer_present is False
+    assert reconciliation.artifacts.publication is False
+    assert reconciliation.artifacts.production_activation is False
+
+
+def test_b1_ll_artifact_cannot_self_supply_real_authority():
+    result, configuration, authorization = _network_run()
+    b1_artifact = _b1_ll_artifact(result, authorization)
+    b1_artifact["b1_bridge_inputs"]["evidence_kind"] = "TEST_FIXTURE"
+
+    with pytest.raises(
+        ControlledShadowAuthorizationPackageError, match="synthetic or replay"
+    ):
+        reconcile_controlled_shadow_run_with_b1_ll_artifact(
+            result, configuration, authorization, b1_artifact, now=NOW
+        )
+
+
+def test_b1_ll_artifact_must_match_exact_request_and_bookmaker_prices():
+    result, configuration, authorization = _network_run()
+    b1_artifact = _b1_ll_artifact(result, authorization)
+    b1_artifact["b1_bridge_inputs"]["provider_request_id"] = "other-request"
+
+    with pytest.raises(ControlledShadowAuthorizationPackageError, match="request"):
+        reconcile_controlled_shadow_run_with_b1_ll_artifact(
+            result, configuration, authorization, b1_artifact, now=NOW
+        )
+
+    b1_artifact = _b1_ll_artifact(result, authorization)
+    b1_artifact["bookmaker_observations"][0]["odds"]["draw"] = 9.9
+    with pytest.raises(ControlledShadowAuthorizationPackageError, match="bookmaker"):
+        reconcile_controlled_shadow_run_with_b1_ll_artifact(
+            result, configuration, authorization, b1_artifact, now=NOW
+        )
 
 
 def test_reconciliation_preserves_identity_and_evidence_for_each_league():

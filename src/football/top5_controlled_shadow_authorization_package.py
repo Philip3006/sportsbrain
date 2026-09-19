@@ -14,6 +14,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from hashlib import sha256
+from math import isfinite
 from typing import Any
 
 from src.football.provider_cascade.candidate_eligibility import (
@@ -44,7 +45,8 @@ QUALIFICATION_ARTIFACT_SCHEMA_VERSION = (
 FUTURE_EXECUTION_COMMAND = (
     "python -m src.football.top5_controlled_shadow_authorization_package "
     "--execute --package <authorization-package.json> "
-    "--authorization <ceo-authorization.json>"
+    "--authorization <ceo-authorization.json> "
+    "--b1-ll-artifact <b1-ll-evidence-bundle.json>"
 )
 
 
@@ -79,6 +81,363 @@ def _digest(value: object) -> str:
         _jsonable(value), sort_keys=True, separators=(",", ":"), ensure_ascii=True
     ).encode("utf-8")
     return sha256(encoded).hexdigest()
+
+
+def _mapping(value: object, name: str) -> Mapping[str, object]:
+    if not isinstance(value, Mapping):
+        raise ControlledShadowAuthorizationPackageError(f"{name} must be an object")
+    return value
+
+
+def _timestamp(value: object, name: str) -> datetime:
+    if isinstance(value, datetime):
+        return _utc(value, name)
+    if isinstance(value, str):
+        try:
+            return _utc(datetime.fromisoformat(value.replace("Z", "+00:00")), name)
+        except ValueError as exc:
+            raise ControlledShadowAuthorizationPackageError(
+                f"{name} must be an ISO-8601 timestamp"
+            ) from exc
+    raise ControlledShadowAuthorizationPackageError(
+        f"{name} must be an ISO-8601 timestamp"
+    )
+
+
+def _digest_value(value: object, name: str) -> str:
+    if not isinstance(value, str) or len(value) not in (40, 64):
+        raise ControlledShadowAuthorizationPackageError(
+            f"{name} must be a hexadecimal digest"
+        )
+    try:
+        int(value, 16)
+    except ValueError as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            f"{name} must be a hexadecimal digest"
+        ) from exc
+    return value.lower()
+
+
+def _price(value: object, name: str) -> float:
+    if isinstance(value, bool):
+        raise ControlledShadowAuthorizationPackageError(
+            f"{name} must be a decimal price"
+        )
+    try:
+        number = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            f"{name} must be a decimal price"
+        ) from exc
+    if number <= 1.0 or not isfinite(number):
+        raise ControlledShadowAuthorizationPackageError(
+            f"{name} must be a decimal price"
+        )
+    return number
+
+
+def _materialize_b1_ll_artifact(artifact: object) -> Mapping[str, object]:
+    if hasattr(artifact, "as_evidence_bundle"):
+        artifact = artifact.as_evidence_bundle()  # type: ignore[union-attr]
+    return _mapping(artifact, "B1 La Liga artifact")
+
+
+def _validate_b1_ll_artifact_shape(artifact: Mapping[str, object]) -> None:
+    """Validate the serialized shape without inventing B1 authority."""
+
+    raw = _materialize_b1_ll_artifact(artifact)
+    if raw.get("schema_version") != "top5-therundown-ll-evidence-bundle-v1":
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 La Liga artifact schema is unsupported"
+        )
+    if raw.get("capture_status") != "CAPTURED":
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 La Liga artifact is not a captured observation"
+        )
+    if not isinstance(raw.get("b1_bridge_inputs"), Mapping):
+        raise ControlledShadowAuthorizationPackageError("B1 bridge inputs are missing")
+    if not isinstance(raw.get("bookmaker_observations"), (tuple, list)):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 bookmaker observations are missing"
+        )
+    safety = _mapping(raw.get("safety"), "B1 safety")
+    for name, expected in (
+        ("candidate_only", True),
+        ("quality_eligible", False),
+        ("no_bet", True),
+        ("no_publication", True),
+        ("no_activation", True),
+        ("no_spend", True),
+    ):
+        if safety.get(name) is not expected:
+            raise ControlledShadowAuthorizationPackageError(
+                f"B1 safety field {name} is unsafe"
+            )
+
+
+def _validate_b1_ll_artifact(
+    artifact: object,
+    *,
+    capture: TheRundownNetworkShadowCaptureV1,
+    configuration: TheRundownNetworkConfigurationV1,
+    authorization: TheRundownNetworkAuthorizationV1,
+    now: datetime,
+) -> dict[str, object]:
+    """Bind B1's repaired LL bundle to the exact B4 LL capture.
+
+    B1 owns provider-side capture input only.  It must not supply a cascade
+    digest or a canonical attestation; those remain properties of the PR-103
+    completed run and are checked by ``_validate_capture``.
+    """
+
+    raw = dict(_materialize_b1_ll_artifact(artifact))
+    if raw.get("schema_version") != "top5-therundown-ll-evidence-bundle-v1":
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 La Liga artifact schema is unsupported"
+        )
+    if raw.get("capture_status") != "CAPTURED":
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 La Liga artifact is not a captured observation"
+        )
+    safety = _mapping(raw.get("safety"), "B1 safety")
+    for name, expected in (
+        ("candidate_only", True),
+        ("quality_eligible", False),
+        ("no_bet", True),
+        ("no_publication", True),
+        ("no_activation", True),
+        ("no_spend", True),
+    ):
+        if safety.get(name) is not expected:
+            raise ControlledShadowAuthorizationPackageError(
+                f"B1 safety field {name} is unsafe"
+            )
+    bridge = _mapping(raw.get("b1_bridge_inputs"), "B1 bridge inputs")
+    if bridge.get("evidence_kind") != ObservationEvidenceKind.REAL_OBSERVED.value:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 synthetic or replay evidence cannot enter reconciliation"
+        )
+    if bridge.get("market_phase") != "PRE_MATCH" or bridge.get("market_type") != (
+        "football:pre_match:1x2"
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 artifact must be pre-match regulation 1X2"
+        )
+    if bridge.get("network_execution") is not True:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 artifact must record network execution"
+        )
+    if bridge.get("cascade_evidence_digest") is not None:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 artifact cannot self-supply cascade evidence"
+        )
+    if bridge.get("cascade_evidence_required_from_b4") is not True:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 artifact must require B4 cascade evidence"
+        )
+    if bridge.get("capture_attestation_required_from_b4") is not True:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 artifact must require B4 capture attestation"
+        )
+    if bridge.get("provider_identity") != CANONICAL_CANDIDATE_PROVIDER:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 artifact provider identity is not canonical"
+        )
+    if bridge.get("league") not in ("LL", "ESP1"):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 artifact is not the canonical La Liga league"
+        )
+
+    b1_authorization = _mapping(raw.get("authorization"), "B1 authorization")
+    if b1_authorization.get("provider") != CANONICAL_CANDIDATE_PROVIDER:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 authorization provider identity is not canonical"
+        )
+    if b1_authorization.get("league") not in ("LL", "ESP1"):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 authorization league is not La Liga"
+        )
+    for name, expected in (
+        ("controlled_shadow_run_id", authorization.controlled_shadow_run_id),
+        ("qualification_session_id", authorization.qualification_session_id),
+        ("ceo_authorization_id", authorization.authorization_id),
+    ):
+        if bridge.get(name) != expected:
+            raise ControlledShadowAuthorizationPackageError(
+                f"B1 authorization binding mismatch: {name}"
+            )
+    for name, expected in (
+        ("controlled_shadow_run_id", authorization.controlled_shadow_run_id),
+        ("qualification_session_id", authorization.qualification_session_id),
+        ("ceo_authorization_id", authorization.authorization_id),
+    ):
+        if b1_authorization.get(name) != expected:
+            raise ControlledShadowAuthorizationPackageError(
+                f"B1 nested authorization mismatch: {name}"
+            )
+    if _timestamp(
+        b1_authorization.get("expires_at"), "B1 authorization expiry"
+    ) != _utc(authorization.expires_at, "authorization expiry"):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 authorization expiry does not match the run authorization"
+        )
+    for name, expected in (
+        ("no_bet", True),
+        ("no_publication", True),
+        ("no_activation", True),
+        ("no_spend", True),
+    ):
+        if b1_authorization.get(name) is not expected:
+            raise ControlledShadowAuthorizationPackageError(
+                f"B1 authorization safety field {name} is unsafe"
+            )
+
+    target = capture.target
+    request = capture.request
+    response = capture.response
+    exact_fields = (
+        ("fixture_key", bridge.get("fixture_key"), target.fixture_key),
+        (
+            "provider_event_id",
+            bridge.get("provider_event_id"),
+            response.provider_event_id,
+        ),
+        (
+            "provider_request_id",
+            bridge.get("provider_request_id"),
+            request.request_identity,
+        ),
+        ("home_team", bridge.get("home_team"), target.home_team),
+        ("away_team", bridge.get("away_team"), target.away_team),
+        ("adapter_version", bridge.get("adapter_version"), response.adapter_version),
+        (
+            "adapter_source_sha",
+            bridge.get("adapter_source_sha"),
+            response.adapter_source_sha,
+        ),
+        (
+            "raw_response_digest",
+            bridge.get("raw_response_digest"),
+            response.raw_response_digest,
+        ),
+    )
+    for name, actual, expected in exact_fields:
+        if actual != expected:
+            raise ControlledShadowAuthorizationPackageError(
+                f"B1 LL binding mismatch: {name}"
+            )
+    if _timestamp(bridge.get("kickoff"), "B1 kickoff") != _utc(
+        target.kickoff, "target kickoff"
+    ):
+        raise ControlledShadowAuthorizationPackageError("B1 kickoff mismatch")
+    participant_ids = _mapping(bridge.get("participant_ids"), "B1 participant IDs")
+    if (
+        participant_ids.get("home") != request.home_participant_id
+        or participant_ids.get("away") != request.away_participant_id
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 participant binding mismatch"
+        )
+    if not participant_ids.get("draw"):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 draw participant binding is missing"
+        )
+    if _timestamp(bridge.get("captured_at"), "B1 captured_at") != _utc(
+        response.captured_at, "response captured_at"
+    ):
+        raise ControlledShadowAuthorizationPackageError("B1 capture timestamp mismatch")
+    source_timestamps = bridge.get("source_timestamps")
+    if not isinstance(source_timestamps, (tuple, list)) or not source_timestamps:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 source timestamp provenance is missing"
+        )
+    source_timestamp = _utc(response.source_timestamp, "response source_timestamp")
+    if source_timestamp not in {
+        _timestamp(value, "B1 source timestamp") for value in source_timestamps
+    }:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 source timestamp does not match the LL capture"
+        )
+    if (
+        now - source_timestamp
+    ).total_seconds() > configuration.maximum_source_age_seconds:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 source observation is stale"
+        )
+    _digest_value(bridge.get("raw_response_digest"), "B1 raw response digest")
+    provider_digests = bridge.get("provider_record_digests")
+    normalized_digests = bridge.get("normalized_record_digests")
+    if not isinstance(provider_digests, (tuple, list)) or not isinstance(
+        normalized_digests, (tuple, list)
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 provider/normalized digest provenance is missing"
+        )
+    if response.provider_record_digest not in provider_digests:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 provider record digest does not match the LL capture"
+        )
+    if response.normalized_record_digest not in normalized_digests:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 normalized record digest does not match the LL capture"
+        )
+
+    bookmaker_observations = raw.get("bookmaker_observations")
+    if (
+        not isinstance(bookmaker_observations, (tuple, list))
+        or not bookmaker_observations
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 bookmaker observations are missing"
+        )
+    matching_bookmaker = False
+    for item in bookmaker_observations:
+        bookmaker = _mapping(item, "B1 bookmaker observation")
+        if not bookmaker.get("bookmaker_id") or not bookmaker.get("bookmaker_name"):
+            raise ControlledShadowAuthorizationPackageError(
+                "B1 bookmaker identity is incomplete"
+            )
+        odds = _mapping(bookmaker.get("odds"), "B1 bookmaker odds")
+        prices = (
+            _price(odds.get("home"), "B1 home odds"),
+            _price(odds.get("draw"), "B1 draw odds"),
+            _price(odds.get("away"), "B1 away odds"),
+        )
+        bookmaker_source = _timestamp(
+            bookmaker.get("source_timestamp"), "B1 bookmaker source timestamp"
+        )
+        bookmaker_captured = _timestamp(
+            bookmaker.get("captured_at"), "B1 bookmaker captured_at"
+        )
+        _digest_value(
+            bookmaker.get("provider_record_digest"),
+            "B1 bookmaker provider record digest",
+        )
+        _digest_value(
+            bookmaker.get("normalized_record_digest"),
+            "B1 bookmaker normalized record digest",
+        )
+        if (
+            bookmaker.get("bookmaker_name") == response.bookmaker_identity
+            and prices == (response.home_odds, response.draw_odds, response.away_odds)
+            and bookmaker_source == source_timestamp
+            and bookmaker_captured == _utc(response.captured_at, "response captured_at")
+            and bookmaker.get("provider_record_digest")
+            == response.provider_record_digest
+            and bookmaker.get("normalized_record_digest")
+            == response.normalized_record_digest
+        ):
+            matching_bookmaker = True
+    if not matching_bookmaker:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 bookmaker/price evidence does not match the LL capture"
+        )
+    for name in ("quota_before", "quota_after", "rate_limit_state", "quota_evidence"):
+        if not isinstance(bridge.get(name), Mapping):
+            raise ControlledShadowAuthorizationPackageError(
+                f"B1 {name} provenance is missing"
+            )
+    return raw
 
 
 def _require_canonical_targets(
@@ -310,6 +669,7 @@ class QualificationReadyArtifactsV1:
     candidate_eligibilities: tuple[Mapping[str, object], ...]
     qualification_inputs: tuple[Mapping[str, object], ...]
     builder2_receipt_inputs: tuple[Mapping[str, object], ...]
+    b1_ll_artifact: Mapping[str, object] | None = None
     cascade_evidence_available: bool = False
     qualification_status: str = "PENDING_BUILDER2_VALIDATION"
     receipt_eligible: bool = False
@@ -352,6 +712,8 @@ class QualificationReadyArtifactsV1:
             raise ControlledShadowAuthorizationPackageError(
                 "qualification artifact safety boundary is unsafe"
             )
+        if self.b1_ll_artifact is not None:
+            _validate_b1_ll_artifact_shape(self.b1_ll_artifact)
 
     def as_payload(self) -> dict[str, object]:
         self.validate()
@@ -370,6 +732,9 @@ class QualificationReadyArtifactsV1:
             "builder2_receipt_inputs": [
                 dict(item) for item in self.builder2_receipt_inputs
             ],
+            "b1_ll_artifact": (
+                dict(self.b1_ll_artifact) if self.b1_ll_artifact is not None else None
+            ),
             "cascade_evidence_available": False,
             "qualification_status": self.qualification_status,
             "receipt_eligible": False,
@@ -583,8 +948,15 @@ def reconcile_controlled_shadow_run(
     authorization: TheRundownNetworkAuthorizationV1,
     *,
     now: datetime,
+    b1_ll_artifact: object | None = None,
 ) -> FiveLeagueReconciliationV1:
-    """Validate a completed network result into B1/B2 evidence inputs."""
+    """Validate a completed network result into B1/B2 evidence inputs.
+
+    ``b1_ll_artifact`` is the exact mapping returned by B1's repaired
+    ``LaLigaCaptureEvidence.as_evidence_bundle()``.  When supplied, it is
+    bound to the LL capture in this result; it cannot replace the PR-103
+    capture attestation or create qualification authority.
+    """
 
     now = _utc(now, "reconciliation now")
     try:
@@ -646,6 +1018,15 @@ def reconcile_controlled_shadow_run(
         raise ControlledShadowAuthorizationPackageError("duplicate provider event")
     if len(set(request_ids)) != len(request_ids):
         raise ControlledShadowAuthorizationPackageError("duplicate request identity")
+    validated_b1_ll_artifact = None
+    if b1_ll_artifact is not None:
+        validated_b1_ll_artifact = _validate_b1_ll_artifact(
+            b1_ll_artifact,
+            capture=captures_by_league["LL"],
+            configuration=configuration,
+            authorization=authorization,
+            now=now,
+        )
     if result.request_count != len(result.captures):
         raise ControlledShadowAuthorizationPackageError(
             "request count does not match five captures"
@@ -684,6 +1065,7 @@ def reconcile_controlled_shadow_run(
         builder2_receipt_inputs=tuple(
             dict(capture.builder2_receipt_input) for capture in ordered_captures
         ),
+        b1_ll_artifact=validated_b1_ll_artifact,
     )
     artifacts.validate()
     reconciliation = FiveLeagueReconciliationV1(
@@ -715,6 +1097,29 @@ def reconcile_controlled_shadow_run(
     return reconciliation
 
 
+def reconcile_controlled_shadow_run_with_b1_ll_artifact(
+    result: TheRundownNetworkShadowRunResultV1,
+    configuration: TheRundownNetworkConfigurationV1,
+    authorization: TheRundownNetworkAuthorizationV1,
+    b1_ll_artifact: object,
+    *,
+    now: datetime,
+) -> FiveLeagueReconciliationV1:
+    """Run the final offline five-league path with B1's LL input required."""
+
+    if b1_ll_artifact is None:
+        raise ControlledShadowAuthorizationPackageError(
+            "final five-league reconciliation requires the B1 LL artifact"
+        )
+    return reconcile_controlled_shadow_run(
+        result,
+        configuration,
+        authorization,
+        now=now,
+        b1_ll_artifact=b1_ll_artifact,
+    )
+
+
 __all__ = [
     "AUTHORIZATION_PACKAGE_SCHEMA_VERSION",
     "CANONICAL_CANDIDATE_PROVIDER",
@@ -727,4 +1132,5 @@ __all__ = [
     "QualificationReadyArtifactsV1",
     "prepare_authorization_package",
     "reconcile_controlled_shadow_run",
+    "reconcile_controlled_shadow_run_with_b1_ll_artifact",
 ]
