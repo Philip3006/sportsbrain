@@ -41,6 +41,10 @@ from src.football.top5_controlled_shadow_provider_qualification import (
 from src.football.top5_shadow_provider_redundancy import make_fixture_key
 
 THERUNDOWN_PROVIDER = "therundown"
+THERUNDOWN_EXPERIMENTAL_PROVIDER = "therundown_experimental"
+THERUNDOWN_PROVIDER_IDENTITIES = frozenset(
+    {THERUNDOWN_PROVIDER, THERUNDOWN_EXPERIMENTAL_PROVIDER}
+)
 CANARY_SCHEMA_VERSION = "top5-therundown-controlled-shadow-canary-v1"
 CANARY_ATTESTATION_INPUT_SCHEMA_VERSION = (
     "top5-therundown-controlled-shadow-capture-attestation-input-v1"
@@ -187,9 +191,9 @@ class TheRundownCanaryTargetV1:
     kickoff: datetime
 
     def validate(self) -> None:
-        if _text(self.provider, "target provider") != THERUNDOWN_PROVIDER:
+        if _text(self.provider, "target provider") not in THERUNDOWN_PROVIDER_IDENTITIES:
             raise CanaryContractError(
-                "TheRundown canary target provider must be exactly therundown"
+                "TheRundown canary target provider is not an allowed identity"
             )
         if _text(self.league, "target league") not in TOP5_LEAGUE_CODES:
             raise CanaryContractError("target league is outside the Top-5 scope")
@@ -1519,7 +1523,9 @@ __all__ = [
     "CANARY_MARKET_PHASE",
     "CANARY_OBSERVATION_SCHEMA_VERSION",
     "CANARY_SCHEMA_VERSION",
+    "THERUNDOWN_EXPERIMENTAL_PROVIDER",
     "THERUNDOWN_PROVIDER",
+    "THERUNDOWN_PROVIDER_IDENTITIES",
     "CanaryContractError",
     "CanaryExecutionBlocked",
     "CanaryLifecycleCompatibility",

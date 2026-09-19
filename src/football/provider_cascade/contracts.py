@@ -31,6 +31,9 @@ DEFAULT_PROVIDER_ORDER = FOOTBALL_PROVIDER_REPERTOIRE
 DECOMMISSIONED_FOOTBALL_PROVIDERS = frozenset(
     {"odds_api_io", "api_football", "betfair", "betfair_delayed", "oddsportal"}
 )
+# Candidate identities are accepted only by explicitly candidate/shadow gates;
+# they must never be inserted into the active production cascade config.
+CANDIDATE_ONLY_PROVIDER_IDENTITIES = frozenset({"therundown_experimental"})
 
 
 class ProviderState(str, Enum):
@@ -532,6 +535,10 @@ class ProviderCascadeConfig:
         if set(self.provider_order) & DECOMMISSIONED_FOOTBALL_PROVIDERS:
             raise ProductionContractError(
                 "provider order contains a decommissioned football provider"
+            )
+        if set(self.provider_order) & CANDIDATE_ONLY_PROVIDER_IDENTITIES:
+            raise ProductionContractError(
+                "candidate-only provider cannot enter active production routing"
             )
         unknown = sorted(set(self.provider_order) - set(self.providers))
         if unknown:
