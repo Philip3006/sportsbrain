@@ -83,6 +83,28 @@ python3 scripts/top5_production_verification.py publication-preflight \
   --input evidence/top5-publication-preflight.json
 ```
 
+The following read-only checks are the future baseline-capture recipe on the
+runtime host.  Their outputs are assembled into the baseline JSON; none calls
+an odds provider or writes an artifact.
+
+```text
+git rev-parse HEAD
+python3 -c 'import json; print(json.load(open("docs/data/health.json")))'
+python3 -c 'from src.football.production_contracts import DISABLED_TOP5_REGISTRY; print({k: v.provider_mapping.provider_name for k, v in DISABLED_TOP5_REGISTRY.items()})'
+launchctl print gui/$(id -u)/com.sportsbrain.aggregate-health
+launchctl print gui/$(id -u)/com.sportsbrain.odds-refresh
+launchctl print gui/$(id -u)/com.sportsbrain.live-score-push
+gh run list --limit 20 --json workflowName,status,conclusion,headSha
+git -C "${SPORTSBRAIN_LEDGER_DIR:?}" status --short
+git status --short
+```
+
+Immediately after a separately authorized activation, repeat the health,
+writer, scheduler, ledger, and status checks; attach the selected provider,
+fixture observations, and quota snapshot to the post-activation JSON.  Repeat
+the same set once during the short follow-up window.  Do not expand the
+fixture/league scope while collecting either sample.
+
 The post-activation evidence must contain the exact activation identity and
 digest, selected/observed routing, pre-match signal-time observations with
 complete home/draw/away odds, worker/PWA/scheduler/writer health, retry and
