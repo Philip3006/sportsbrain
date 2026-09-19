@@ -238,3 +238,137 @@ def test_release_health_exposes_required_observability_fields() -> None:
         "publication_enabled": False,
         "observed_at": "2026-09-16T12:00:00Z",
     }
+
+
+def test_champions_league_context_and_lineage_are_additive_and_bounded() -> None:
+    record = _synthetic_cl_record()
+    record["competition_context"] = {
+        "competition_id": "uefa_champions_league",
+        "competition_name": "UEFA Champions League",
+        "season": "2026/27",
+        "historical_format_era": "league_phase_2024_onward",
+        "stage": "knockout",
+        "round": "round_of_16",
+        "leg": 1,
+        "aggregate_context": {"home_score": 1, "away_score": 0},
+        "neutral_site": True,
+    }
+    record["prediction_artifact"] = {
+        **record["prediction_artifact"],
+        "prediction_time_provenance": {
+            "source": "signal_time_snapshot",
+            "captured_at": "2026-09-16T11:59:30Z",
+            "snapshot_id": "ucl-signal-snapshot-001",
+        },
+        "model_artifact_hash": "d" * 64,
+    }
+    record["result"] = {
+        "result_id": "ucl-result-001",
+        "provider_result_id": "uefa-result-001",
+        "result_source": "shadow-result-feed",
+        "result_timestamp": "2026-09-16T16:00:00Z",
+        "result_status": "PENDING",
+    }
+    record["freshness"] = {"state": "fresh", "source_age_seconds": 18}
+
+    signal = map_prediction_to_public_football_signals(record)[0]
+
+    assert signal["competition_id"] == "uefa_champions_league"
+    assert signal["competition_identity"] == "uefa_champions_league"
+    assert signal["season"] == "2026/27"
+    assert signal["historical_format_era"] == "league_phase_2024_onward"
+    assert signal["stage"] == "knockout"
+    assert signal["round"] == "round_of_16"
+    assert signal["leg"] == 1
+    assert signal["aggregate_context"] == {"home_score": 1, "away_score": 0}
+    assert signal["neutral_site"] is True
+    assert signal["home_advantage_applicable"] is False
+    assert signal["model_artifact_hash"] == "d" * 64
+    assert signal["prediction_time_provenance"]["source"] == "signal_time_snapshot"
+    assert signal["fixture_identity"]["fixture_key"] == "ucl:2026:fixture-001"
+    assert signal["result_identity"]["result_id"] == "ucl-result-001"
+    assert signal["result_lineage"]["prediction_id"] == "ucl-prediction-001"
+    assert signal["freshness_state"] == "FRESH"
+    assert signal["freshness_age_seconds"] == 18.0
+    assert signal["shadow_state"] == "SHADOW"
+    assert signal["externally_visible"] is False
+
+
+def test_injected_and_real_observed_evidence_remain_distinguishable() -> None:
+    injected = _synthetic_cl_record(synthetic=False, injected=True)
+    injected["provenance"] = {
+        **injected["provenance"],
+        "evidence_kind": "INJECTED",
+    }
+    injected_signal = map_prediction_to_public_football_signals(injected)[0]
+    assert injected_signal["evidence_kind"] == "INJECTED"
+    assert injected_signal["injected"] is True
+    assert injected_signal["synthetic"] is False
+    assert injected_signal["real_observed"] is False
+
+    observed = _synthetic_cl_record(synthetic=False)
+    observed["provenance"] = {
+        **observed["provenance"],
+        "evidence_kind": "REAL_OBSERVED",
+    }
+    observed_signal = map_prediction_to_public_football_signals(observed)[0]
+    assert observed_signal["evidence_kind"] == "REAL_OBSERVED"
+    assert observed_signal["injected"] is False
+    assert observed_signal["synthetic"] is False
+    assert observed_signal["real_observed"] is True
+
+
+def test_champions_league_active_or_public_state_fails_closed() -> None:
+    with pytest.raises(
+        PublicFootballCompatibilityError,
+        match="Champions League compatibility output",
+    ):
+        map_prediction_to_public_football_signals(
+            _synthetic_cl_record(
+                synthetic=False,
+                activation_state="live",
+                no_bet=True,
+                publication_enabled=False,
+            )
+        )
+
+
+def test_rich_champions_league_release_health_retains_shadow_context() -> None:
+    health = build_public_football_release_health(
+        {
+            "league": "ucl",
+            "model_identity": "cl-model-v2",
+            "model_artifact_hash": "e" * 64,
+            "competition_context": {
+                "competition_id": "uefa_champions_league",
+                "season": "2026/27",
+                "historical_format_era": "league_phase_2024_onward",
+                "stage": "league_phase",
+                "round": 1,
+                "neutral_site": False,
+            },
+            "fixture_key": "ucl:fixture-002",
+            "provider_fixture_id": "provider-fixture-002",
+            "prediction_timestamp": "2026-09-17T10:00:00Z",
+            "prediction_time_provenance": {"source": "signal_time"},
+            "freshness": {"state": "fresh", "source_age_seconds": 25},
+            "result_lineage": {
+                "prediction_id": "ucl-prediction-002",
+                "result_id": None,
+            },
+            "prediction_count": 1,
+            "activation_state": "shadow",
+            "publication_status": "UNPUBLISHED",
+            "publication_enabled": False,
+            "no_bet": True,
+        }
+    )
+    assert health["competition_id"] == "uefa_champions_league"
+    assert health["season"] == "2026/27"
+    assert health["round"] == 1
+    assert health["neutral_site"] is False
+    assert health["model_artifact_hash"] == "e" * 64
+    assert health["freshness_state"] == "FRESH"
+    assert health["source_age_seconds"] == 25.0
+    assert health["shadow_state"] == "SHADOW"
+    assert health["externally_visible"] is False
