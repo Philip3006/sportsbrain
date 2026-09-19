@@ -12,7 +12,8 @@ from __future__ import annotations
 
 import hashlib
 import os
-from collections.abc import Mapping
+import time
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from enum import StrEnum
@@ -52,6 +53,11 @@ LA_LIGA_PROVIDER_SPORT_ID = THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS[LA_LIGA_CODE]
 LA_LIGA_MAX_REQUESTS = 2
 LA_LIGA_MAX_DATAPOINTS = 100
 LA_LIGA_CAPTURE_SCHEMA = "top5-therundown-ll-capture-v1"
+LA_LIGA_PROVIDER_MIN_INTERVAL_SECONDS = 1.0
+LA_LIGA_PACING_SAFETY_BUFFER_SECONDS = 0.1
+LA_LIGA_REQUIRED_INTER_REQUEST_INTERVAL_SECONDS = (
+    LA_LIGA_PROVIDER_MIN_INTERVAL_SECONDS + LA_LIGA_PACING_SAFETY_BUFFER_SECONDS
+)
 
 
 class LaLigaCaptureStatus(StrEnum):
@@ -209,6 +215,11 @@ class LaLigaCaptureEvidence:
     adapter_source_sha: str = ""
     requests_used: int = 0
     datapoints_consumed: int | None = None
+    pacing_required_interval_seconds: float = (
+        LA_LIGA_REQUIRED_INTER_REQUEST_INTERVAL_SECONDS
+    )
+    pacing_actual_interval_seconds: float | None = None
+    pacing_gate_passed: bool = False
 
     @property
     def b1_bridge_fields(self) -> dict[str, object]:
@@ -248,6 +259,11 @@ class LaLigaCaptureEvidence:
             "quota_after": self.quota_after.as_payload(),
             "rate_limit_state": self.rate_limit_state.as_payload(),
             "quota_evidence": dict(self.quota_evidence),
+            "pacing": {
+                "required_minimum_interval_seconds": self.pacing_required_interval_seconds,
+                "actual_interval_seconds": self.pacing_actual_interval_seconds,
+                "gate_passed": self.pacing_gate_passed,
+            },
             "network_execution": self.status is LaLigaCaptureStatus.CAPTURED,
             "no_bet": True,
             "publication": False,
@@ -285,6 +301,11 @@ class LaLigaCaptureEvidence:
             "adapter_source_sha": self.adapter_source_sha,
             "requests_used": self.requests_used,
             "datapoints_consumed": self.datapoints_consumed,
+            "pacing": {
+                "required_minimum_interval_seconds": self.pacing_required_interval_seconds,
+                "actual_interval_seconds": self.pacing_actual_interval_seconds,
+                "gate_passed": self.pacing_gate_passed,
+            },
             "safety": {
                 "candidate_only": True,
                 "quality_eligible": False,
@@ -678,6 +699,8 @@ def capture_la_liga(
     config: ProviderConfig | None = None,
     transport: HttpTransport | None = None,
     today: date | None = None,
+    monotonic_clock: Callable[[], float] | None = None,
+    sleeper: Callable[[float], None] | None = None,
 ) -> LaLigaCaptureEvidence:
     """Run the bounded two-request path with an injected or real transport."""
 
@@ -725,6 +748,10 @@ def capture_la_liga(
     datapoints_consumed: int | None = None
     discovery_cost_source = "not_validated"
     discovery_quota_evidence: dict[str, object] = {}
+    pacing_actual_interval: float | None = None
+    pacing_gate_passed = False
+    clock = monotonic_clock or time.monotonic
+    sleep = sleeper or time.sleep
     try:
         config.validate()
         if (
@@ -803,6 +830,21 @@ def capture_la_liga(
                 adapter_source_sha=adapter_source_sha(),
             )
 
+        dates_completed_at = clock()
+        elapsed = max(0.0, clock() - dates_completed_at)
+        wait_seconds = max(
+            0.0, LA_LIGA_REQUIRED_INTER_REQUEST_INTERVAL_SECONDS - elapsed
+        )
+        if wait_seconds > 0:
+            sleep(wait_seconds)
+        pacing_actual_interval = max(0.0, clock() - dates_completed_at)
+        if (
+            pacing_actual_interval
+            < LA_LIGA_REQUIRED_INTER_REQUEST_INTERVAL_SECONDS
+        ):
+            raise ProductionContractError("inter-request pacing gate failed")
+        pacing_gate_passed = True
+
         events_request = ProviderRequest(
             provider=THERUNDOWN_PROVIDER_NAME,
             endpoint=f"{THERUNDOWN_BASE_URL}/sports/{LA_LIGA_PROVIDER_SPORT_ID}/events/{selected_date}",
@@ -842,6 +884,8 @@ def capture_la_liga(
                 raw_response_digest=digest_record(events_response.payload),
                 requests_used=requests_used,
                 datapoints_consumed=datapoints_consumed,
+                pacing_actual_interval_seconds=pacing_actual_interval,
+                pacing_gate_passed=pacing_gate_passed,
                 adapter_source_sha=adapter_source_sha(),
             )
         if events_cost is None:
@@ -930,6 +974,8 @@ def capture_la_liga(
             adapter_source_sha=adapter_source_sha(),
             requests_used=requests_used,
             datapoints_consumed=total_cost,
+            pacing_actual_interval_seconds=pacing_actual_interval,
+            pacing_gate_passed=pacing_gate_passed,
         )
     except (ProductionContractError, ValueError, TypeError, KeyError) as exc:
         return LaLigaCaptureEvidence(
@@ -944,6 +990,8 @@ def capture_la_liga(
             raw_response_digest=raw_response_digest,
             requests_used=requests_used,
             datapoints_consumed=datapoints_consumed,
+            pacing_actual_interval_seconds=pacing_actual_interval,
+            pacing_gate_passed=pacing_gate_passed,
             adapter_source_sha=adapter_source_sha(),
         )
 
@@ -953,7 +1001,10 @@ __all__ = [
     "LA_LIGA_CODE",
     "LA_LIGA_MAX_DATAPOINTS",
     "LA_LIGA_MAX_REQUESTS",
+    "LA_LIGA_PACING_SAFETY_BUFFER_SECONDS",
     "LA_LIGA_PROVIDER_LEAGUE",
+    "LA_LIGA_PROVIDER_MIN_INTERVAL_SECONDS",
+    "LA_LIGA_REQUIRED_INTER_REQUEST_INTERVAL_SECONDS",
     "LaLigaCaptureAuthorization",
     "LaLigaCaptureEvidence",
     "LaLigaCaptureStatus",

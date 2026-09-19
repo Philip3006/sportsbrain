@@ -11,6 +11,7 @@ from src.football.odds.therundown_la_liga_capture import (
     LA_LIGA_CODE,
     LA_LIGA_MAX_DATAPOINTS,
     LA_LIGA_MAX_REQUESTS,
+    LA_LIGA_REQUIRED_INTER_REQUEST_INTERVAL_SECONDS,
     LaLigaCaptureAuthorization,
     LaLigaCaptureStatus,
     capture_la_liga,
@@ -55,6 +56,7 @@ def _response(
     cost: int | None,
     extra_headers: dict[str, str] | None = None,
     omit_headers: set[str] | None = None,
+    status_code: int = 200,
 ) -> RawProviderResponse:
     headers = {
         "x-datapoints-used": str(used),
@@ -72,7 +74,7 @@ def _response(
     for name in omit_headers or set():
         headers.pop(name, None)
     return RawProviderResponse(
-        200,
+        status_code,
         payload,
         headers,
         _RESPONSE_NOW,
@@ -81,10 +83,36 @@ def _response(
     )
 
 
-def _transport(responses: list[RawProviderResponse], calls: list[object]):
+class _FakeClock:
+    def __init__(self, elapsed_after_completion: float = 0.0):
+        self.current = 0.0
+        self.elapsed_after_completion = elapsed_after_completion
+        self._completion_read = False
+        self.sleeps: list[float] = []
+        self.dispatch_times: list[float] = []
+
+    def monotonic(self) -> float:
+        if not self._completion_read:
+            self._completion_read = True
+            return self.current
+        self.current += self.elapsed_after_completion
+        self.elapsed_after_completion = 0.0
+        return self.current
+
+    def sleep(self, seconds: float) -> None:
+        self.sleeps.append(seconds)
+        self.current += seconds
+
+
+def _transport(
+    responses: list[RawProviderResponse],
+    calls: list[object],
+    clock: _FakeClock,
+):
     def send(request: object, timeout: float) -> RawProviderResponse:
         del timeout
         calls.append(request)
+        clock.dispatch_times.append(clock.current)
         return responses.pop(0)
 
     return send
@@ -106,8 +134,13 @@ def _run(
     date_omit_headers: set[str] | None = None,
     event_omit_headers: set[str] | None = None,
     budget: int = LA_LIGA_MAX_DATAPOINTS,
+    event_status_code: int = 200,
+    elapsed_after_dates: float = 0.0,
+    return_clock: bool = False,
+    no_advance_sleep: bool = False,
 ):
     calls: list[object] = []
+    clock = _FakeClock(elapsed_after_dates)
     auth = authorization
     if auth is not None and budget != auth.maximum_datapoint_budget:
         auth = LaLigaCaptureAuthorization(
@@ -129,14 +162,19 @@ def _run(
             cost=event_cost,
             extra_headers=event_headers,
             omit_headers=event_omit_headers,
+            status_code=event_status_code,
         ),
     ]
     result = capture_la_liga(
         auth,
         now=_NOW,
         today=date(2026, 9, 18),
-        transport=_transport(responses, calls),
+        transport=_transport(responses, calls, clock),
+        monotonic_clock=clock.monotonic,
+        sleeper=(lambda seconds: None) if no_advance_sleep else clock.sleep,
     )
+    if return_clock:
+        return result, calls, clock
     return result, calls
 
 
@@ -233,6 +271,64 @@ def test_upcoming_date_selection_and_full_bookmaker_capture():
     assert len(result.adapter_source_sha) == 64
     assert result.b1_bridge_fields["ceo_authorization_id"] == "ceo-ll-001"
     assert result.b1_bridge_fields["no_bet"] is True
+    assert result.pacing_gate_passed is True
+    assert (
+        result.pacing_actual_interval_seconds
+        >= LA_LIGA_REQUIRED_INTER_REQUEST_INTERVAL_SECONDS
+    )
+    assert result.as_payload()["pacing"]["gate_passed"] is True
+
+
+@pytest.mark.parametrize(
+    ("elapsed_after_dates", "expected_sleep"),
+    [(0.0, 1.1), (0.5, 0.6), (1.1, 0.0)],
+)
+def test_event_dispatch_waits_for_safe_inter_request_interval(
+    elapsed_after_dates: float, expected_sleep: float
+):
+    result, calls, clock = _run(
+        elapsed_after_dates=elapsed_after_dates,
+        return_clock=True,
+    )
+
+    assert result.status is LaLigaCaptureStatus.CAPTURED
+    assert len(calls) == 2
+    assert (
+        clock.dispatch_times[1] - clock.dispatch_times[0]
+        >= LA_LIGA_REQUIRED_INTER_REQUEST_INTERVAL_SECONDS
+    )
+    if expected_sleep:
+        assert clock.sleeps == [pytest.approx(expected_sleep)]
+    else:
+        assert clock.sleeps == []
+
+
+def test_pacing_gate_fails_closed_without_dispatch_when_sleep_does_not_advance():
+    result, calls, clock = _run(
+        return_clock=True,
+        no_advance_sleep=True,
+    )
+
+    assert result.status is LaLigaCaptureStatus.REJECTED
+    assert result.reason == "inter-request pacing gate failed"
+    assert len(calls) == 1
+    assert result.pacing_gate_passed is False
+    assert result.pacing_actual_interval_seconds == 0.0
+    assert clock.dispatch_times == [0.0]
+
+
+def test_429_fails_closed_without_retry_and_never_exceeds_two_requests():
+    result, calls, clock = _run(
+        event_status_code=429,
+        return_clock=True,
+    )
+
+    assert result.status is LaLigaCaptureStatus.REJECTED
+    assert result.reason == "events_http_429"
+    assert len(calls) == LA_LIGA_MAX_REQUESTS
+    assert result.requests_used == LA_LIGA_MAX_REQUESTS
+    assert result.pacing_gate_passed is True
+    assert len(clock.dispatch_times) == LA_LIGA_MAX_REQUESTS
 
 
 def test_evidence_bundle_is_deterministic_and_b1_ready_without_fabricated_authority():
