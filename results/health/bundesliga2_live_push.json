@@ -1,16 +1,16 @@
 {
   "job": "bundesliga2_live_push",
-  "status": "error",
-  "last_run_at": "2026-09-19T14:02:31Z",
-  "started_at": "2026-09-19T14:02:31Z",
+  "status": "ok",
+  "last_run_at": "2026-09-19T14:03:10Z",
+  "started_at": "2026-09-19T14:03:10Z",
   "duration_s": null,
   "exit_code": 1,
   "error": null,
   "fallback_used": null,
   "run_id": null,
   "recovery_attempt_id": null,
-  "scheduler": "gh_cron_fallback",
-  "scheduled_at": null,
-  "scheduler_lag_s": null,
-  "idempotency_key": null
+  "scheduler": "cloudflare_cron",
+  "scheduled_at": "2026-09-19T14:02:10.000Z",
+  "scheduler_lag_s": 32,
+  "idempotency_key": "bl2_live_push/2026-09-19T14:02"
 }
