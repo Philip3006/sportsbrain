@@ -48,21 +48,33 @@ def _event() -> dict[str, object]:
 
 
 def _response(
-    payload: object, *, used: int, remaining: int, cost: int
+    payload: object,
+    *,
+    used: int,
+    remaining: int,
+    cost: int | None,
+    extra_headers: dict[str, str] | None = None,
+    omit_headers: set[str] | None = None,
 ) -> RawProviderResponse:
+    headers = {
+        "x-datapoints-used": str(used),
+        "x-datapoints-remaining": str(remaining),
+        "x-datapoints-limit": "20000",
+        "x-rate-limit": "1",
+        "x-rate-limit-remaining": "1",
+        "x-tier": "free",
+        "x-data-delay-seconds": "300",
+    }
+    if cost is not None:
+        headers["x-datapoints"] = str(cost)
+    if extra_headers:
+        headers.update(extra_headers)
+    for name in omit_headers or set():
+        headers.pop(name, None)
     return RawProviderResponse(
         200,
         payload,
-        {
-            "x-datapoints": str(cost),
-            "x-datapoints-used": str(used),
-            "x-datapoints-remaining": str(remaining),
-            "x-datapoints-limit": "20000",
-            "x-rate-limit": "1",
-            "x-rate-limit-remaining": "1",
-            "x-tier": "free",
-            "x-data-delay-seconds": "300",
-        },
+        headers,
         _RESPONSE_NOW,
         _RESPONSE_NOW + timedelta(seconds=30),
         30_000,
@@ -83,8 +95,16 @@ def _run(
     authorization: LaLigaCaptureAuthorization | None = _AUTH,
     event: dict[str, object] | None = None,
     dates: list[str] | None = None,
-    date_cost: int = 1,
-    event_cost: int = 11,
+    date_cost: int | None = 1,
+    event_cost: int | None = 11,
+    date_used: int = 101,
+    date_remaining: int = 19899,
+    event_used: int = 112,
+    event_remaining: int = 19888,
+    date_headers: dict[str, str] | None = None,
+    event_headers: dict[str, str] | None = None,
+    date_omit_headers: set[str] | None = None,
+    event_omit_headers: set[str] | None = None,
     budget: int = LA_LIGA_MAX_DATAPOINTS,
 ):
     calls: list[object] = []
@@ -96,15 +116,19 @@ def _run(
     responses = [
         _response(
             {"dates": dates or ["2026-09-22"]},
-            used=101,
-            remaining=19899,
+            used=date_used,
+            remaining=date_remaining,
             cost=date_cost,
+            extra_headers=date_headers,
+            omit_headers=date_omit_headers,
         ),
         _response(
             {"events": [event or _event()]},
-            used=112,
-            remaining=19888,
+            used=event_used,
+            remaining=event_remaining,
             cost=event_cost,
+            extra_headers=event_headers,
+            omit_headers=event_omit_headers,
         ),
     ]
     result = capture_la_liga(
@@ -203,6 +227,8 @@ def test_upcoming_date_selection_and_full_bookmaker_capture():
     assert result.quota_before.used == 100
     assert result.quota_after.used == 112
     assert result.quota_evidence["x-tier"] == "free"
+    assert result.quota_evidence["discovery"]["provider_emitted_cost"] == 1
+    assert result.quota_evidence["discovery"]["cost_inference"] == "provider_header"
     assert result.adapter_version == THERUNDOWN_ADAPTER_VERSION
     assert len(result.adapter_source_sha) == 64
     assert result.b1_bridge_fields["ceo_authorization_id"] == "ceo-ll-001"
@@ -228,6 +254,73 @@ def test_evidence_bundle_is_deterministic_and_b1_ready_without_fabricated_author
     assert bridge["cascade_evidence_required_from_b4"] is True
     assert bundle["safety"]["candidate_only"] is True
     assert bundle["safety"]["no_activation"] is True
+
+
+def test_discovery_without_billed_cost_uses_explicit_zero_cost_inference():
+    result, calls = _run(
+        date_cost=None,
+        date_used=100,
+        date_remaining=19900,
+    )
+
+    assert result.status is LaLigaCaptureStatus.CAPTURED
+    assert len(calls) == 2
+    assert result.datapoints_consumed == 11
+    discovery = result.quota_evidence["discovery"]
+    assert discovery["provider_emitted_cost"] is None
+    assert discovery["cost_inference"] == "inferred_unchanged_quota_counters"
+    assert "x-datapoints" not in discovery["quota_evidence"]
+
+
+def test_discovery_without_billed_cost_rejects_changed_quota_counters():
+    result, calls = _run(
+        date_cost=None,
+        date_used=101,
+        date_remaining=19899,
+    )
+
+    assert result.status is LaLigaCaptureStatus.REJECTED
+    assert result.reason == "discovery quota counters changed without billed cost"
+    assert len(calls) == 1
+
+
+def test_discovery_without_billed_cost_requires_both_quota_counters():
+    result, calls = _run(
+        date_cost=None,
+        date_used=100,
+        date_remaining=19900,
+        date_omit_headers={"x-datapoints-remaining"},
+    )
+
+    assert result.status is LaLigaCaptureStatus.REJECTED
+    assert (
+        result.reason
+        == "discovery quota counters are required when billed cost is absent"
+    )
+    assert len(calls) == 1
+
+
+def test_discovery_without_billed_cost_rejects_contradictory_quota_evidence():
+    result, calls = _run(
+        date_cost=None,
+        date_used=100,
+        date_remaining=20000,
+    )
+
+    assert result.status is LaLigaCaptureStatus.REJECTED
+    assert result.reason == "discovery quota evidence is contradictory"
+    assert len(calls) == 1
+
+
+def test_event_odds_without_billed_cost_rejects_and_preserves_raw_quota_evidence():
+    result, calls = _run(event_cost=None)
+
+    assert result.status is LaLigaCaptureStatus.REJECTED
+    assert result.reason == "event/odds billed-cost provenance is missing"
+    assert len(calls) == 2
+    assert "x-datapoints" not in result.quota_evidence["event"]
+    assert result.quota_evidence["event"]["x-datapoints-used"] == 112
+    assert result.datapoints_consumed is None
 
 
 def test_no_upcoming_fixture_stops_after_date_request():

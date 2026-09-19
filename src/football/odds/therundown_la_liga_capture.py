@@ -449,6 +449,90 @@ def _datapoint_cost(headers: Mapping[str, str]) -> int | None:
     return None
 
 
+def _header_integer(
+    headers: Mapping[str, str], name: str
+) -> tuple[bool, int | None]:
+    lowered = {
+        str(key).casefold(): str(value).strip() for key, value in headers.items()
+    }
+    raw = lowered.get(name)
+    if raw is None:
+        return False, None
+    try:
+        value = int(raw)
+    except ValueError:
+        return True, None
+    return True, value if value >= 0 else None
+
+
+def _discovery_cost(
+    headers: Mapping[str, str], *, quota_before: QuotaSnapshot
+) -> tuple[int, str]:
+    """Resolve discovery cost without inventing a provider billed-cost header."""
+
+    cost_present, cost = _header_integer(headers, "x-datapoints")
+    if cost_present:
+        if cost is None:
+            raise ProductionContractError("discovery billed-cost header is invalid")
+        return cost, "provider_header"
+
+    used_present, used = _header_integer(headers, "x-datapoints-used")
+    remaining_present, remaining = _header_integer(
+        headers, "x-datapoints-remaining"
+    )
+    limit_present, limit = _header_integer(headers, "x-datapoints-limit")
+    if (
+        not used_present
+        or not remaining_present
+        or used is None
+        or remaining is None
+    ):
+        raise ProductionContractError(
+            "discovery quota counters are required when billed cost is absent"
+        )
+    if limit_present and (
+        limit is None
+        or used > limit
+        or remaining > limit
+        or used + remaining > limit
+    ):
+        raise ProductionContractError("discovery quota evidence is contradictory")
+    if quota_before.used is None or used != quota_before.used:
+        raise ProductionContractError(
+            "discovery quota counters changed without billed cost"
+        )
+    if (
+        quota_before.remaining is not None
+        and remaining != quota_before.remaining
+    ):
+        raise ProductionContractError(
+            "discovery quota counters changed without billed cost"
+        )
+    return 0, "inferred_unchanged_quota_counters"
+
+
+def _combined_quota_evidence(
+    discovery: Mapping[str, object],
+    *,
+    discovery_cost: int | None,
+    discovery_cost_source: str,
+    event: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Retain provider headers and make any discovery inference explicit."""
+
+    combined = dict(event or discovery)
+    combined["discovery"] = {
+        "provider_emitted_cost": (
+            discovery_cost if discovery_cost_source == "provider_header" else None
+        ),
+        "cost_inference": discovery_cost_source,
+        "quota_evidence": dict(discovery),
+    }
+    if event is not None:
+        combined["event"] = dict(event)
+    return combined
+
+
 def preflight_la_liga(
     authorization: LaLigaCaptureAuthorization | None,
     *,
@@ -639,6 +723,8 @@ def capture_la_liga(
     raw_response_digest = ""
     requests_used = 0
     datapoints_consumed: int | None = None
+    discovery_cost_source = "not_validated"
+    discovery_quota_evidence: dict[str, object] = {}
     try:
         config.validate()
         if (
@@ -653,13 +739,16 @@ def capture_la_liga(
         request_transport = transport or adapter._transport
         dates_response = request_transport(dates_request, config.timeout_seconds)
         requests_used = 1
-        dates_cost = _datapoint_cost(dates_response.headers)
+        discovery_quota_evidence = _quota_evidence(dates_response.headers)
         quota_after_dates = _quota_snapshot(dates_response.headers)
         quota_after = quota_after_dates
         rate_limit_state = quota_after_dates
-        quota_evidence = _quota_evidence(dates_response.headers)
+        quota_evidence = _combined_quota_evidence(
+            discovery_quota_evidence,
+            discovery_cost=None,
+            discovery_cost_source=discovery_cost_source,
+        )
         raw_response_digest = digest_record(dates_response.payload)
-        datapoints_consumed = dates_cost
         if dates_response.status_code != 200:
             return LaLigaCaptureEvidence(
                 LaLigaCaptureStatus.REJECTED,
@@ -668,10 +757,10 @@ def capture_la_liga(
                 quota_before=quota_before,
                 quota_after=quota_after_dates,
                 rate_limit_state=quota_after_dates,
-                quota_evidence=_quota_evidence(dates_response.headers),
+                quota_evidence=quota_evidence,
                 raw_response_digest=digest_record(dates_response.payload),
                 requests_used=requests_used,
-                datapoints_consumed=dates_cost,
+                datapoints_consumed=None,
                 adapter_source_sha=adapter_source_sha(),
             )
         selected_date = _upcoming_date(
@@ -685,12 +774,21 @@ def capture_la_liga(
                 quota_before=quota_before,
                 quota_after=quota_after_dates,
                 rate_limit_state=quota_after_dates,
-                quota_evidence=_quota_evidence(dates_response.headers),
+                quota_evidence=quota_evidence,
                 requests_used=requests_used,
-                datapoints_consumed=dates_cost,
+                datapoints_consumed=None,
                 adapter_source_sha=adapter_source_sha(),
             )
-        if dates_cost is None or dates_cost > authorization.maximum_datapoint_budget:
+        dates_cost, discovery_cost_source = _discovery_cost(
+            dates_response.headers, quota_before=quota_before
+        )
+        quota_evidence = _combined_quota_evidence(
+            discovery_quota_evidence,
+            discovery_cost=dates_cost,
+            discovery_cost_source=discovery_cost_source,
+        )
+        datapoints_consumed = dates_cost
+        if dates_cost > authorization.maximum_datapoint_budget:
             return LaLigaCaptureEvidence(
                 LaLigaCaptureStatus.REJECTED,
                 "datapoint_budget_exceeded_before_event_request",
@@ -699,7 +797,7 @@ def capture_la_liga(
                 quota_before=quota_before,
                 quota_after=quota_after_dates,
                 rate_limit_state=quota_after_dates,
-                quota_evidence=_quota_evidence(dates_response.headers),
+                quota_evidence=quota_evidence,
                 requests_used=requests_used,
                 datapoints_consumed=dates_cost,
                 adapter_source_sha=adapter_source_sha(),
@@ -723,9 +821,14 @@ def capture_la_liga(
         total_cost = (dates_cost or 0) + (events_cost or 0)
         evidence = _quota_evidence(events_response.headers)
         rate_limit_state = quota_after
-        quota_evidence = evidence
+        quota_evidence = _combined_quota_evidence(
+            discovery_quota_evidence,
+            discovery_cost=dates_cost,
+            discovery_cost_source=discovery_cost_source,
+            event=evidence,
+        )
         raw_response_digest = digest_record(events_response.payload)
-        datapoints_consumed = total_cost
+        datapoints_consumed = total_cost if events_cost is not None else None
         if events_response.status_code != 200:
             return LaLigaCaptureEvidence(
                 LaLigaCaptureStatus.REJECTED,
@@ -735,14 +838,16 @@ def capture_la_liga(
                 quota_before=quota_before,
                 quota_after=quota_after,
                 rate_limit_state=quota_after,
-                quota_evidence=evidence,
+                quota_evidence=quota_evidence,
                 raw_response_digest=digest_record(events_response.payload),
                 requests_used=requests_used,
-                datapoints_consumed=total_cost,
+                datapoints_consumed=datapoints_consumed,
                 adapter_source_sha=adapter_source_sha(),
             )
-        if dates_cost is None or events_cost is None:
-            raise ProductionContractError("quota datapoint provenance is missing")
+        if events_cost is None:
+            raise ProductionContractError(
+                "event/odds billed-cost provenance is missing"
+            )
         if total_cost > authorization.maximum_datapoint_budget:
             raise ProductionContractError("datapoint budget exceeded")
         if not isinstance(events_response.payload, Mapping) or not isinstance(
@@ -820,7 +925,7 @@ def capture_la_liga(
             quota_before=quota_before,
             quota_after=quota_after,
             rate_limit_state=quota_after,
-            quota_evidence=evidence,
+            quota_evidence=quota_evidence,
             adapter_version=THERUNDOWN_ADAPTER_VERSION,
             adapter_source_sha=adapter_source_sha(),
             requests_used=requests_used,
