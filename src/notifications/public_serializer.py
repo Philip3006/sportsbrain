@@ -269,7 +269,8 @@ def _validate_synthetic_boundary(
     )
     if any(source.get(key) is True for source in sources for key in forbidden_true):
         raise PublicFootballCompatibilityError(
-            "synthetic football evidence cannot claim real observation, approval, or activation"
+            "synthetic football evidence cannot claim real observation, "
+            "approval, or activation"
         )
     if state == "live" or any(
         source.get("publication_enabled") is True
@@ -788,7 +789,8 @@ def assert_no_private_fields(obj: Any, _path: str = "root") -> None:
         for k, v in obj.items():
             if k in FORBIDDEN_PRIVATE_KEYS:
                 raise AssertionError(
-                    f"P0C-001 PRIVACY VIOLATION — forbidden key '{k}' found at {_path}.{k}"
+                    f"P0C-001 PRIVACY VIOLATION — forbidden key '{k}' found "
+                    f"at {_path}.{k}"
                 )
             assert_no_private_fields(v, _path=f"{_path}.{k}")
     elif isinstance(obj, list):
