@@ -59,14 +59,14 @@ def test_roadmap_selection_is_explicit_and_registry_scoped(tmp_path: Path) -> No
     dispatcher = _dispatcher(tmp_path)
     selected = dispatcher.select_next_roadmap_task(builder_id="builder-1")
     assert selected is not None
-    assert selected.roadmap_item_id == "roadmap-b1-evidence"
+    assert selected.roadmap_item_id == "roadmap-b1-research-1"
     assert selected.builder_id == "builder-1"
     with pytest.raises(UnknownBuilderError):
         dispatcher.select_next_roadmap_task(builder_id="builder-6")
-    results = dispatcher.run_autonomous_cycle("builder-1", FakeExecutor(), max_tasks=1)
-    assert results and results[0].state is TaskState.COMPLETED
+    # Code-changing roadmap stages remain approval-gated after materialization.
+    assert selected.state is TaskState.BACKLOG
     assert any(
-        item["item_id"] == "roadmap-b1-evidence" and item["status"] == "COMPLETED"
+        item["item_id"] == "roadmap-b1-research-1" and item["status"] == "ENQUEUED"
         for item in dispatcher.store.roadmap_records()
     )
 

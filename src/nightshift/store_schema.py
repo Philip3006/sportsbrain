@@ -95,7 +95,8 @@ CREATE TABLE IF NOT EXISTS roadmap_items (
     status TEXT NOT NULL, task_id TEXT, blocked_reason TEXT,
     next_eligible_at TEXT NOT NULL, debug_budget INTEGER NOT NULL DEFAULT 0,
     repeated_failure_limit INTEGER NOT NULL DEFAULT 2, mode TEXT NOT NULL DEFAULT 'bounded',
-    enabled INTEGER NOT NULL DEFAULT 1, updated_at TEXT NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1, generation INTEGER NOT NULL DEFAULT 1,
+    updated_at TEXT NOT NULL,
     CHECK (enabled IN (0, 1))
 );
 CREATE INDEX IF NOT EXISTS idx_roadmap_status ON roadmap_items (status, priority DESC, item_id);
