@@ -135,26 +135,34 @@ a partial league set.
 ## Read-only post-publication acceptance
 
 Capture the two HTTP 200 response bodies and the separately issued publication
-attestation, then run:
+attestation, the operator-owned capability evidence, and a read-only governed
+runtime evidence snapshot, then run:
 
 ```text
 python3 scripts/top5_publication_delivery_acceptance.py \
   --worker-payload /absolute/capture/worker-signals.json \
   --static-payload /absolute/capture/static-signals.json \
   --publication-attestation /absolute/capture/publication-attestation.json \
+  --capability-token /absolute/operator/capability-token.json \
+  --runtime-evidence /absolute/capture/runtime-evidence.json \
+  --expected-runtime-root /absolute/governed/runtime \
   --delivery-manifest /absolute/capture/top5-delivery-manifest.json \
   --expected-provider the_odds_api \
   --worker-status 200 \
-  --pwa-status 200
+  --pwa-status 200 \
+  --now 2026-09-20T12:01:00Z
 ```
 
-The command is read-only and returns `TOP5_DELIVERY_VERIFIED` only when both
-responses carry the same generation and activation, their canonical public
-product digest matches the immutable delivery manifest, all five leagues are
-visible, records are no-bet controlled records, provenance is intact, and the
-separate publication attestation matches. Any mismatch returns
-`TOP5_DELIVERY_BLOCKED`; it never repairs, publishes, activates, or rolls back
-state.
+The command is read-only and returns `TOP5_PRODUCTION_ACCEPTANCE_VERIFIED` only
+when both responses return HTTP 200, carry the same canonical generation and
+digest, the immutable delivery manifest matches, exactly 15 records cover the
+five leagues three times each, every record and health block retains its
+activation/model/research/evidence provenance, the publication attestation and
+capability bind to the same artifact, and a fresh clean governed runtime
+proves that `the_odds_api` remains the active authority. The candidate provider
+`therundown_experimental` is rejected on every authority/routing surface. Any
+mismatch returns `TOP5_DELIVERY_BLOCKED`; the verifier never repairs,
+publishes, activates, or rolls back state.
 
 The offline fixture at
 `tests/fixtures/top5/publication_delivery_offline.json` is explicitly
