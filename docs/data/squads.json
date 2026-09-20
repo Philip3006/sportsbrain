@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-12",
+  "updated": "2026-09-20",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -10,7 +10,9 @@
         "Ismael Bennacer",
         "Mohamed Amoura",
         "Ramy Bensebaini",
-        "Youcef Atal"
+        "Youcef Atal",
+        "Oussama Benbot",
+        "Ibrahim Maza"
       ],
       "players": [
         {
@@ -91,7 +93,7 @@
         {
           "name": "Oussama Benbot",
           "pos": "GK",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Rafik Belghali",
@@ -121,7 +123,7 @@
         {
           "name": "Ibrahim Maza",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Luca Zidane",
@@ -155,7 +157,8 @@
         "Joaquín Panichelli",
         "Juan Foyth",
         "Leonardo Balerdi",
-        "Nahuel Molina"
+        "Nahuel Molina",
+        "Lionel Messi"
       ],
       "players": [
         {
@@ -201,7 +204,7 @@
         {
           "name": "Lionel Messi",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Giovani Lo Celso",
@@ -292,7 +295,8 @@
       "ampel": "🟢",
       "suspended": [
         "Lewis Miller",
-        "Riley McGree"
+        "Riley McGree",
+        "Patrick Beach"
       ],
       "players": [
         {
@@ -383,7 +387,7 @@
         {
           "name": "Patrick Beach",
           "pos": "GK",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Harry Souttar",
@@ -433,7 +437,8 @@
       "availability_score": 1.0,
       "ampel": "🟢",
       "suspended": [
-        "Christoph Baumgartner"
+        "Christoph Baumgartner",
+        "Konrad Laimer"
       ],
       "players": [
         {
@@ -529,7 +534,7 @@
         {
           "name": "Konrad Laimer",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Patrick Wimmer",
@@ -857,7 +862,8 @@
       "ampel": "🟢",
       "suspended": [
         "Wesley França",
-        "Lucas Paquetá"
+        "Lucas Paquetá",
+        "Raphinha"
       ],
       "players": [
         {
@@ -913,7 +919,7 @@
         {
           "name": "Raphinha",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Weverton",
@@ -1002,8 +1008,8 @@
         "Ismaël Koné",
         "Marcelo Flores",
         "Moïse Bombito",
-        "Alphonso Davies",
-        "Alistair Johnston"
+        "Alistair Johnston",
+        "Alphonso Davies"
       ],
       "players": [
         {
@@ -2267,8 +2273,8 @@
         "Marcus Rashford",
         "Tino Livramento",
         "Reece James",
-        "Declan Rice",
-        "Jordan Henderson"
+        "Jordan Henderson",
+        "John Stones"
       ],
       "players": [
         {
@@ -2289,12 +2295,12 @@
         {
           "name": "Declan Rice",
           "pos": "MID",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "John Stones",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Marc Guéhi",
@@ -2553,7 +2559,8 @@
       "ampel": "🟢",
       "suspended": [
         "Lennart Karl",
-        "Nico Schlotterbeck"
+        "Nico Schlotterbeck",
+        "Oliver Baumann"
       ],
       "players": [
         {
@@ -2614,7 +2621,7 @@
         {
           "name": "Oliver Baumann",
           "pos": "GK",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Pascal Groß",
@@ -3268,7 +3275,8 @@
       "ampel": "🟢",
       "suspended": [
         "Clément Akpa",
-        "Sébastien Haller"
+        "Sébastien Haller",
+        "Guéla Doué"
       ],
       "players": [
         {
@@ -3354,7 +3362,7 @@
         {
           "name": "Guéla Doué",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Ibrahim Sangaré",
@@ -3699,7 +3707,8 @@
       "ampel": "🟢",
       "suspended": [
         "Luis Ángel Malagón",
-        "Marcel Ruiz"
+        "Marcel Ruiz",
+        "Edson Álvarez"
       ],
       "players": [
         {
@@ -3720,7 +3729,7 @@
         {
           "name": "Edson Álvarez",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Johan Vásquez",
@@ -3843,7 +3852,8 @@
         "Abdessamad Ezzalzouli",
         "Nayef Aguerd",
         "Ismael Saibari",
-        "Abde Ezzalzouli"
+        "Abde Ezzalzouli",
+        "Achraf Hakimi"
       ],
       "players": [
         {
@@ -3854,7 +3864,7 @@
         {
           "name": "Achraf Hakimi",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Noussair Mazraoui",
@@ -3989,7 +3999,8 @@
         "Jurriën Timber",
         "Matthijs de Ligt",
         "Stefan de Vrij",
-        "Xavi Simons"
+        "Xavi Simons",
+        "Memphis Depay"
       ],
       "players": [
         {
@@ -4040,7 +4051,7 @@
         {
           "name": "Memphis Depay",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Cody Gakpo",
@@ -4694,7 +4705,6 @@
       "availability_score": 1.0,
       "ampel": "🟢",
       "suspended": [
-        "Cristiano Ronaldo",
         "Tomás Araújo"
       ],
       "players": [
@@ -4731,7 +4741,7 @@
         {
           "name": "Cristiano Ronaldo",
           "pos": "FWD",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Bruno Fernandes",
@@ -5263,7 +5273,8 @@
       "availability_score": 1.0,
       "ampel": "🟢",
       "suspended": [
-        "Kalidou Koulibaly"
+        "Kalidou Koulibaly",
+        "Lamine Camara"
       ],
       "players": [
         {
@@ -5304,7 +5315,7 @@
         {
           "name": "Lamine Camara",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Bamba Dieng",
@@ -5692,7 +5703,9 @@
         "Dani Carvajal",
         "Fermin Lopez",
         "Rodri",
-        "Lamine Yamal"
+        "Lamine Yamal",
+        "Gavi",
+        "Pedro Porro"
       ],
       "players": [
         {
@@ -5738,7 +5751,7 @@
         {
           "name": "Gavi",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Dani Olmo",
@@ -5753,7 +5766,7 @@
         {
           "name": "Pedro Porro",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Joan Garcia",
@@ -5835,7 +5848,9 @@
       "suspended": [
         "Dejan Kulusevski",
         "Emil Holm",
-        "Eric Smith"
+        "Eric Smith",
+        "Anthony Elanga",
+        "Viktor Johansson"
       ],
       "players": [
         {
@@ -5891,12 +5906,12 @@
         {
           "name": "Anthony Elanga",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Viktor Johansson",
           "pos": "GK",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Ken Sema",
@@ -6398,7 +6413,10 @@
       "availability_score": 1.0,
       "ampel": "🟢",
       "suspended": [
-        "Cristian Roldan"
+        "Cristian Roldan",
+        "Weston McKennie",
+        "Christian Pulisic",
+        "Folarin Balogun"
       ],
       "players": [
         {
@@ -6439,7 +6457,7 @@
         {
           "name": "Weston McKennie",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Ricardo Pepi",
@@ -6449,7 +6467,7 @@
         {
           "name": "Christian Pulisic",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Brenden Aaronson",
@@ -6499,7 +6517,7 @@
         {
           "name": "Folarin Balogun",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Timothy Weah",
