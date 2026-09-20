@@ -25,8 +25,9 @@ class StoreRoadmapMixin:
                         item_id, title, builder_id, template_id, payload_json,
                         dependency_item_ids_json, priority, status, next_eligible_at,
                         debug_budget, repeated_failure_limit, mode, enabled, generation,
+                        governed_paths_json, resource_locks_json,
                         updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(item_id) DO UPDATE SET
                         title = excluded.title, builder_id = excluded.builder_id,
                         template_id = excluded.template_id, payload_json = excluded.payload_json,
@@ -34,7 +35,10 @@ class StoreRoadmapMixin:
                         priority = excluded.priority, debug_budget = excluded.debug_budget,
                         repeated_failure_limit = excluded.repeated_failure_limit,
                         mode = excluded.mode, enabled = excluded.enabled,
-                        generation = excluded.generation, updated_at = excluded.updated_at""",
+                        generation = excluded.generation,
+                        governed_paths_json = excluded.governed_paths_json,
+                        resource_locks_json = excluded.resource_locks_json,
+                        updated_at = excluded.updated_at""",
                     (
                         item.item_id,
                         item.title,
@@ -50,6 +54,8 @@ class StoreRoadmapMixin:
                         item.mode,
                         int(item.enabled),
                         item.generation,
+                        self._json(list(item.governed_paths)),
+                        self._json(list(item.resource_locks)),
                         timestamp,
                     ),
                 )
@@ -77,6 +83,11 @@ class StoreRoadmapMixin:
                 "mode": row["mode"],
                 "enabled": bool(row["enabled"]),
                 "generation": row["generation"] or 1,
+                "governed_paths": json.loads(row["governed_paths_json"] or "[]"),
+                "resource_locks": json.loads(row["resource_locks_json"] or "[]"),
+                "skip_reason": row["skip_reason"],
+                "skip_signature": row["skip_signature"],
+                "skip_count": row["skip_count"] or 0,
                 "updated_at": row["updated_at"],
             }
             for row in rows
@@ -97,18 +108,87 @@ class StoreRoadmapMixin:
         if status not in allowed:
             raise ValueError(f"unknown roadmap status: {status}")
         with self._write() as conn:
+            existing = conn.execute(
+                "SELECT status, blocked_reason FROM roadmap_items WHERE item_id = ?",
+                (item_id,),
+            ).fetchone()
+            unchanged_blocker = bool(
+                existing
+                and existing["status"] == status
+                and existing["blocked_reason"] == reason
+            )
+            if unchanged_blocker:
+                conn.execute(
+                    """UPDATE roadmap_items SET status = ?, task_id = COALESCE(?, task_id),
+                       blocked_reason = ?, next_eligible_at = ?, updated_at = ?
+                       WHERE item_id = ?""",
+                    (
+                        status,
+                        task_id,
+                        reason,
+                        isoformat(next_eligible_at) if next_eligible_at else timestamp,
+                        timestamp,
+                        item_id,
+                    ),
+                )
+            else:
+                conn.execute(
+                    """UPDATE roadmap_items SET status = ?, task_id = COALESCE(?, task_id),
+                       blocked_reason = ?, next_eligible_at = ?,
+                       skip_reason = NULL, skip_signature = NULL, updated_at = ?
+                       WHERE item_id = ?""",
+                    (
+                        status,
+                        task_id,
+                        reason,
+                        isoformat(next_eligible_at) if next_eligible_at else timestamp,
+                        timestamp,
+                        item_id,
+                    ),
+                )
+
+    def record_roadmap_skip(
+        self,
+        item_id: str,
+        *,
+        reason: str,
+        signature: str,
+        actor: str = "builder-5",
+        now: datetime | None = None,
+    ) -> bool:
+        """Persist a deterministic skip without emitting a busy-loop write."""
+
+        timestamp = isoformat(now or utc_now())
+        with self._write() as conn:
+            row = conn.execute(
+                "SELECT task_id, skip_signature, skip_count FROM roadmap_items WHERE item_id = ?",
+                (item_id,),
+            ).fetchone()
+            if row is None or row["skip_signature"] == signature:
+                return False
             conn.execute(
-                """UPDATE roadmap_items SET status = ?, task_id = COALESCE(?, task_id),
-                   blocked_reason = ?, next_eligible_at = ?, updated_at = ? WHERE item_id = ?""",
+                """UPDATE roadmap_items
+                   SET skip_reason = ?, skip_signature = ?, skip_count = ?, updated_at = ?
+                   WHERE item_id = ?""",
                 (
-                    status,
-                    task_id,
-                    reason,
-                    isoformat(next_eligible_at) if next_eligible_at else timestamp,
+                    reason[:240],
+                    signature[:240],
+                    int(row["skip_count"] or 0) + 1,
                     timestamp,
                     item_id,
                 ),
             )
+            self._append_event(
+                conn,
+                row["task_id"],
+                EventType.ROADMAP_SKIPPED,
+                actor,
+                timestamp,
+                None,
+                None,
+                {"item_id": item_id, "reason": reason[:240], "signature": signature[:240]},
+            )
+            return True
 
     def release_eligible_blocked(
         self, *, now: datetime | None = None, actor: str = "builder-5"

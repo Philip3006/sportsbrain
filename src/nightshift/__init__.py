@@ -1,6 +1,12 @@
 """Builder 5 Night Shift dispatcher for governed SportsBrain development."""
 
 from .audit import AuditIntegrityError
+from .backpressure import (
+    PullRequestClassification,
+    classify_pull_request,
+    paths_overlap,
+    summarize_pull_requests,
+)
 from .bootstrap import (
     BootstrapProvider,
     MemoryV4BootstrapProvider,
@@ -122,6 +128,7 @@ __all__ = [
     "NightShiftError",
     "NightShiftNotification",
     "NightShiftNotificationWatcher",
+    "PullRequestClassification",
     "QuotaDetection",
     "RiskClass",
     "RoadmapItem",
@@ -145,6 +152,7 @@ __all__ = [
     "WorktreeManager",
     "WorktreeSafetyError",
     "classify_drift",
+    "classify_pull_request",
     "classify_quota_exhaustion",
     "control_repo_lock_path",
     "facts_verifier",
@@ -152,8 +160,10 @@ __all__ = [
     "is_quota_failure_class",
     "next_quota_eligible_at",
     "normalize_reset_at",
+    "paths_overlap",
     "redact",
     "run_locked_control_repo_operation",
     "send_macos_notification",
+    "summarize_pull_requests",
     "verify_github_pull_request",
 ]

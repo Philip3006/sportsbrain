@@ -2,7 +2,7 @@
   "version": 1,
   "mode": "bounded",
   "max_cycles": 100,
-  "merge_backpressure_limit": 3,
+  "merge_backpressure_limit": 12,
   "items": [
     {
       "item_id": "roadmap-b1-research-1",

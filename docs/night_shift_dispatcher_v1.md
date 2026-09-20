@@ -67,12 +67,15 @@ task attempt.
 Retry timing is orthogonal metadata, not an extra state. Code-changing work
 must pass the independent verification gate, receive a deterministic commit,
 push only its task branch, and have one real PR before `PR_READY`. Queue-level
-exhaustion is reported as `IDLE_SAFE` or `INTENTIONAL_IDLE` when an explicit
-roadmap has no eligible work. When the merge-backpressure limit is reached,
-new code-changing or PR-producing roadmap stages are held, while explicitly
-configured `read_only` stages remain eligible. Status reports
-`MERGE_BACKPRESSURE_WITH_READ_ONLY` when that safe work is available. Unsafe
-scope, stale worker ownership, or failed verification produces `FAILED_SAFE`;
+exhaustion is reported as `IDLE_SAFE`, `INTENTIONAL_IDLE`, or `GLOBAL_IDLE`
+when an explicit roadmap has no safe eligible work. Open PR backpressure is a
+soft routing signal with a default threshold of twelve active substantive PRs;
+it never globally stops an otherwise safe independent roadmap item. Under soft
+pressure, read-only, documentation, test, research, and other non-overlapping
+work is preferred, but a non-overlapping code task may still run when no safer
+candidate exists. Recovery, superseded, stale, and read-only PRs are classified
+separately and do not count as active substantive pressure. Unsafe scope, stale
+worker ownership, or failed verification produces `FAILED_SAFE`;
 CEO authorization and prohibited work remain `BLOCKED` and cannot be released
 by `unblock`.
 
@@ -330,9 +333,12 @@ system LaunchDaemon is used.
 `status` and `doctor` include sanitized operator categories for running work,
 dead PIDs, parked timeouts, delivery blockers, CEO review, merge backpressure,
 intentional idle, and the next eligible explicit roadmap item. Status also
-reports the next generation and idle reason for each Builder, including whether
-safe read-only work remains eligible. They do not print task payloads,
-credentials, or provider responses.
+reports the next generation and idle reason for each Builder, active/blocked
+builders, persisted skipped-task reasons and signatures, active
+substantive/recovery/superseded/stale/read-only/waiting-review/conflicted PR
+counts, whether backpressure is soft or hard, the number of safe eligible
+roadmap items, and the truthful global-idle reason. They do not print task
+payloads, credentials, or provider responses.
 
 ## AI usage and quota recovery
 

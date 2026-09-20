@@ -9,6 +9,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from .backpressure import (
+    ACTIVE_TASK_STATES,
+    paths_overlap,
+    record_changed_paths,
+    summarize_pull_requests,
+)
 from .delivery import DeliveryPipeline, GhPullRequestClient, PullRequestClient
 from .dispatcher_execution import DispatcherExecutionMixin
 from .errors import (
@@ -95,7 +101,7 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         worktree_manager: WorktreeManager | None = None,
         delivery_pipeline: DeliveryPipeline | None = None,
         roadmap: RoadmapRegistry | None = None,
-        merge_backpressure_limit: int = 3,
+        merge_backpressure_limit: int = 12,
     ) -> None:
         if dispatcher_id != DISPATCHER_ID:
             raise SafetyViolation("Builder 5 is the only supported dispatcher identity")
@@ -590,6 +596,40 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
             and template.requires_pr is not True
         )
 
+    def _roadmap_overlap_reason(
+        self, item: Any, records: list[TaskRecord]
+    ) -> str | None:
+        """Return an individual overlap blocker, never a global PR blocker."""
+
+        governed_paths = tuple(getattr(item, "governed_paths", ()))
+        resource_locks = tuple(getattr(item, "resource_locks", ()))
+        if governed_paths:
+            for record in records:
+                if record.pr_number is None or record.state not in {
+                    TaskState.PR_READY,
+                    TaskState.CEO_REVIEW,
+                }:
+                    continue
+                if paths_overlap(governed_paths, record_changed_paths(record)):
+                    return f"open_pr_overlap:{record.pr_number}"
+        if resource_locks:
+            for record in records:
+                if record.state in ACTIVE_TASK_STATES and set(resource_locks).intersection(
+                    record.resource_locks
+                ):
+                    return f"active_resource_lock:{record.task_id}"
+        return None
+
+    def _record_roadmap_skip(self, item: Any, reason: str) -> None:
+        signature = f"{item.item_id}:{reason}"
+        self.store.record_roadmap_skip(
+            item.item_id,
+            reason=reason,
+            signature=signature,
+            actor=self.dispatcher_id,
+            now=self.clock(),
+        )
+
     def select_next_roadmap_task(
         self, *, builder_id: str | None = None
     ) -> TaskRecord | None:
@@ -599,11 +639,14 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
             builder_id = self.registry.assert_worker_target(builder_id).builder_id
         if self.store.is_paused() or self.store.is_draining():
             return None
-        merge_backpressure = (
-            self.store.merge_backpressure_count() >= self.merge_backpressure_limit
-        )
         self._refresh_roadmap()
         records = {item["item_id"]: item for item in self.store.roadmap_records()}
+        task_records = self.store.list_tasks(limit=1000)
+        soft_backpressure = (
+            summarize_pull_requests(task_records)["active_substantive_pr_count"]
+            >= self.merge_backpressure_limit
+        )
+        candidates: list[tuple[Any, dict[str, Any], bool]] = []
         for item in sorted(
             self.roadmap.items, key=lambda value: (-value.priority, value.item_id)
         ):
@@ -616,17 +659,15 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                 continue
             if builder_id is not None and item.builder_id != builder_id:
                 continue
-            if merge_backpressure and not self._roadmap_item_is_read_only(item):
-                # Backpressure is risk-aware: it gates new code/PR work but
-                # deliberately leaves explicitly configured offline audits
-                # available. No roadmap state is changed by this skip.
-                continue
             if row.get("task_id"):
                 existing = self.store.get(row["task_id"])
                 if existing.state not in {
                     TaskState.READY,
                     TaskState.WAITING_DEPENDENCY,
                 }:
+                    self._record_roadmap_skip(
+                        item, f"task_state:{existing.state.value}"
+                    )
                     continue
                 if row["status"] == "BLOCKED":
                     self.store.set_roadmap_status(
@@ -634,19 +675,47 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                     )
                     row["status"] = "ENQUEUED"
                 elif row["status"] == "ENQUEUED":
+                    self._record_roadmap_skip(item, "task_already_enqueued")
                     continue
+            overlap_reason = self._roadmap_overlap_reason(item, task_records)
+            if overlap_reason is not None:
+                self._record_roadmap_skip(item, overlap_reason)
+                continue
             dependencies = [records.get(dep) for dep in item.dependency_item_ids]
             if any(dep is None or dep["status"] != "COMPLETED" for dep in dependencies):
-                self.store.set_roadmap_status(
-                    item.item_id,
-                    status="BLOCKED",
-                    reason="dependency roadmap item incomplete",
-                    next_eligible_at=self.clock(),
-                    now=self.clock(),
-                )
+                reason = "dependency roadmap item incomplete"
+                if row["status"] != "BLOCKED" or row.get("blocked_reason") != reason:
+                    self.store.set_roadmap_status(
+                        item.item_id,
+                        status="BLOCKED",
+                        reason=reason,
+                        next_eligible_at=self.clock(),
+                        now=self.clock(),
+                    )
+                self._record_roadmap_skip(item, reason)
                 continue
-            definition = self.registry.assert_worker_target(item.builder_id)
-            task = self.submit_template(
+            candidates.append((item, row, self._roadmap_item_is_read_only(item)))
+
+        if not candidates:
+            return None
+        selected_index = 0
+        if soft_backpressure:
+            selected_index = next(
+                (
+                    index
+                    for index, (_, _, read_only) in enumerate(candidates)
+                    if read_only
+                ),
+                0,
+            )
+            for index, (item, _, read_only) in enumerate(candidates):
+                if index != selected_index and not read_only:
+                    self._record_roadmap_skip(
+                        item, "soft_backpressure_preference_for_safe_work"
+                    )
+        item, row, _ = candidates[selected_index]
+        definition = self.registry.assert_worker_target(item.builder_id)
+        task = self.submit_template(
                 item.template_id,
                 branch=f"{definition.branch_prefix}{item.item_id}",
                 payload=item.payload,
@@ -655,18 +724,19 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                 priority=item.priority,
                 debug_budget=item.debug_budget,
                 repeated_failure_limit=item.repeated_failure_limit,
+                allowed_paths=tuple(getattr(item, "governed_paths", ())),
+                resource_locks=tuple(getattr(item, "resource_locks", ())),
                 roadmap_item_id=item.item_id,
             )
-            status = "BLOCKED" if task.state is TaskState.BLOCKED else "ENQUEUED"
-            self.store.set_roadmap_status(
-                item.item_id,
-                status=status,
-                task_id=task.task_id,
-                reason=task.last_error if status == "BLOCKED" else None,
-                now=self.clock(),
-            )
-            return task
-        return None
+        status = "BLOCKED" if task.state is TaskState.BLOCKED else "ENQUEUED"
+        self.store.set_roadmap_status(
+            item.item_id,
+            status=status,
+            task_id=task.task_id,
+            reason=task.last_error if status == "BLOCKED" else None,
+            now=self.clock(),
+        )
+        return task
 
     def run_autonomous_cycle(
         self,
@@ -732,7 +802,8 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         result = self.store.stats()
         roadmap = self.store.roadmap_records()
         records = self.store.list_tasks(limit=1000)
-        merge_count = self.store.merge_backpressure_count()
+        pr_counts = summarize_pull_requests(records)
+        merge_count = pr_counts["active_substantive_pr_count"]
         merge_backpressure = merge_count >= self.merge_backpressure_limit
         actionable = sum(
             result["by_state"].get(state.value, 0)
@@ -749,8 +820,6 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
             queue_mode = "PAUSED"
         elif result.get("draining"):
             queue_mode = "DRAINING"
-        elif merge_backpressure:
-            queue_mode = "MERGE_BACKPRESSURE"
         elif any(record.state is TaskState.PAUSED_QUOTA for record in records):
             queue_mode = "PAUSED_QUOTA" if actionable == 0 else "ACTIVE"
         elif actionable == 0 and all(
@@ -758,7 +827,7 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         ):
             queue_mode = "INTENTIONAL_IDLE" if roadmap else "IDLE_SAFE"
         else:
-            queue_mode = "ACTIVE"
+            queue_mode = "CONTINUOUS_AUTONOMOUS"
         roadmap_summary = [
             {
                 key: item.get(key)
@@ -775,6 +844,11 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                     "next_eligible_at",
                     "enabled",
                     "generation",
+                    "governed_paths",
+                    "resource_locks",
+                    "skip_reason",
+                    "skip_signature",
+                    "skip_count",
                 )
             }
             for item in roadmap
@@ -784,24 +858,30 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
             template = self.templates.resolve(summary["template_id"])
             summary["risk_class"] = template.risk_class.value
             configured_item = configured_items.get(summary["item_id"])
-            summary["merge_backpressure_blocked"] = merge_backpressure and not (
+            read_only = (
                 self._roadmap_item_is_read_only(configured_item)
                 if configured_item is not None
-                else (
-                    template.risk_class is RiskClass.READ_ONLY
-                    and template.requires_pr is not True
-                )
+                else template.risk_class is RiskClass.READ_ONLY
+                and template.requires_pr is not True
             )
+            summary["merge_backpressure_blocked"] = False
+            summary["soft_backpressure_preferred"] = merge_backpressure and not read_only
         operator = operator_snapshot(
             records,
             roadmap_summary,
             merge_backpressure=merge_backpressure,
+            pr_counts=pr_counts,
             builders=self.registry.builder_ids,
             paused=result["paused"],
             draining=result["draining"],
         )
-        if merge_backpressure and operator["safe_read_only_roadmap_available"]:
-            queue_mode = "MERGE_BACKPRESSURE_WITH_READ_ONLY"
+        if (
+            queue_mode == "CONTINUOUS_AUTONOMOUS"
+            and not operator["next_eligible_explicit_task"]
+            and not operator["running"]
+            and not operator["eligible_roadmap_items"]
+        ):
+            queue_mode = "GLOBAL_IDLE"
         result.update(
             {
                 "dispatcher_id": self.dispatcher_id,
@@ -813,6 +893,10 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                 "queue_mode": queue_mode,
                 "merge_backpressure_count": merge_count,
                 "merge_backpressure_limit": self.merge_backpressure_limit,
+                "active_substantive_pr_count": merge_count,
+                "pr_classifications": pr_counts,
+                "backpressure_mode": "SOFT" if merge_backpressure else "NONE",
+                "backpressure_is_hard": False,
                 "roadmap": roadmap_summary,
                 "roadmap_mode": self.roadmap.mode,
                 "roadmap_max_cycles": self.roadmap.max_cycles,

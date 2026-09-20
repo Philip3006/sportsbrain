@@ -33,6 +33,8 @@ class RoadmapItem:
     mode: str = "bounded"
     enabled: bool = True
     generation: int = 1
+    governed_paths: tuple[str, ...] = ()
+    resource_locks: tuple[str, ...] = ()
 
     @classmethod
     def from_mapping(cls, raw: Mapping[str, Any]) -> RoadmapItem:
@@ -101,6 +103,8 @@ class RoadmapItem:
             raise ConfigurationError(
                 f"{item_id}: generation must be between 1 and 10000"
             )
+        governed_paths = _scopes(raw.get("governed_paths", ()), "governed_paths")
+        resource_locks = _scopes(raw.get("resource_locks", ()), "resource_locks")
         return cls(
             item_id=item_id,
             title=raw["title"].strip(),
@@ -114,6 +118,8 @@ class RoadmapItem:
             mode=mode,
             enabled=enabled,
             generation=generation,
+            governed_paths=governed_paths,
+            resource_locks=resource_locks,
         )
 
     def as_dict(self) -> dict[str, Any]:
@@ -130,6 +136,8 @@ class RoadmapItem:
             "mode": self.mode,
             "enabled": self.enabled,
             "generation": self.generation,
+            "governed_paths": list(self.governed_paths),
+            "resource_locks": list(self.resource_locks),
         }
 
     @property
@@ -153,7 +161,7 @@ class RoadmapRegistry:
         *,
         mode: str = "bounded",
         max_cycles: int = 100,
-        merge_backpressure_limit: int = 3,
+        merge_backpressure_limit: int = 12,
     ) -> None:
         if mode not in _MODES:
             raise ConfigurationError("roadmap mode must be bounded or unlimited")
@@ -207,7 +215,7 @@ class RoadmapRegistry:
             tuple(RoadmapItem.from_mapping(item) for item in entries),
             mode=raw.get("mode", "bounded"),
             max_cycles=raw.get("max_cycles", 100),
-            merge_backpressure_limit=raw.get("merge_backpressure_limit", 3),
+            merge_backpressure_limit=raw.get("merge_backpressure_limit", 12),
         )
 
     @classmethod
@@ -236,3 +244,22 @@ class RoadmapRegistry:
             if item.item_id == item_id:
                 return item
         raise KeyError(item_id)
+
+
+def _scopes(value: Any, field_name: str) -> tuple[str, ...]:
+    """Validate optional path/resource scopes used for independent selection."""
+
+    if not isinstance(value, (list, tuple)):
+        raise ConfigurationError(f"{field_name} must be an array")
+    result = tuple(value)
+    if any(
+        not isinstance(item, str)
+        or not item.strip()
+        or item.startswith("/")
+        or ".." in item.split("/")
+        for item in result
+    ):
+        raise ConfigurationError(f"{field_name} must contain safe relative values")
+    if len(set(result)) != len(result):
+        raise ConfigurationError(f"{field_name} must not contain duplicates")
+    return result

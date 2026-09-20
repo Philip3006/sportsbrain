@@ -92,6 +92,7 @@ class EventType(str, Enum):
     QUOTA_RESUMED = "quota_resumed"
     DRAINED = "drained"
     RESTART_REQUESTED = "restart_requested"
+    ROADMAP_SKIPPED = "roadmap_skipped"
 
 
 def utc_now() -> datetime:

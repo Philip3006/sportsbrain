@@ -88,13 +88,15 @@ def test_three_pr_ready_items_gate_code_but_allow_read_only_work(
     assert selected.roadmap_item_id == "rolling-audit-stage-1"
     assert selected.risk_class.value == "read_only"
     status = dispatcher.status()
-    assert status["queue_mode"] == "MERGE_BACKPRESSURE_WITH_READ_ONLY"
-    assert status["operator"]["safe_read_only_roadmap_available"] is True
+    assert status["queue_mode"] == "CONTINUOUS_AUTONOMOUS"
+    assert status["operator"]["backpressure_mode"] == "SOFT"
+    assert status["operator"]["safe_eligible_roadmap_items"] == 0
     assert status["operator"]["builders"]["builder-1"]["idle_reason"] == "eligible"
     code_summary = next(
         item for item in status["roadmap"] if item["item_id"] == "rolling-code-stage-1"
     )
-    assert code_summary["merge_backpressure_blocked"] is True
+    assert code_summary["merge_backpressure_blocked"] is False
+    assert code_summary["soft_backpressure_preferred"] is True
 
     completed = dispatcher.run_once("builder-1", FakeExecutor())
     assert completed is not None and completed.state is TaskState.COMPLETED

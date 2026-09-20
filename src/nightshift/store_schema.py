@@ -101,6 +101,10 @@ CREATE TABLE IF NOT EXISTS roadmap_items (
     next_eligible_at TEXT NOT NULL, debug_budget INTEGER NOT NULL DEFAULT 0,
     repeated_failure_limit INTEGER NOT NULL DEFAULT 2, mode TEXT NOT NULL DEFAULT 'bounded',
     enabled INTEGER NOT NULL DEFAULT 1, generation INTEGER NOT NULL DEFAULT 1,
+    governed_paths_json TEXT NOT NULL DEFAULT '[]',
+    resource_locks_json TEXT NOT NULL DEFAULT '[]',
+    skip_reason TEXT, skip_signature TEXT,
+    skip_count INTEGER NOT NULL DEFAULT 0,
     updated_at TEXT NOT NULL,
     CHECK (enabled IN (0, 1))
 );

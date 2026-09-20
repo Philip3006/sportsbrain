@@ -129,6 +129,18 @@ class DispatcherStore(
             conn.execute(
                 "ALTER TABLE roadmap_items ADD COLUMN generation INTEGER NOT NULL DEFAULT 1"
             )
+        roadmap_additions = {
+            "governed_paths_json": "TEXT NOT NULL DEFAULT '[]'",
+            "resource_locks_json": "TEXT NOT NULL DEFAULT '[]'",
+            "skip_reason": "TEXT",
+            "skip_signature": "TEXT",
+            "skip_count": "INTEGER NOT NULL DEFAULT 0",
+        }
+        for name, definition in roadmap_additions.items():
+            if name not in roadmap_columns:
+                conn.execute(
+                    f"ALTER TABLE roadmap_items ADD COLUMN {name} {definition}"
+                )
         if requires_pr_added:
             conn.execute(
                 "UPDATE tasks SET requires_pr = 1 WHERE risk_class = 'code_change'"

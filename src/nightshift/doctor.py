@@ -11,12 +11,12 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from .backpressure import summarize_pull_requests
 from .errors import ConfigurationError
 from .registry import BuilderRegistry
 from .roadmap import RoadmapRegistry
 from .status import operator_snapshot
 from .store import DispatcherStore
-from .task_states import TaskState
 from .templates import TemplateRegistry
 from .worktree import (
     RuntimeDirtyPolicy,
@@ -375,10 +375,8 @@ def run_doctor(
             roadmap = store.roadmap_records()
             stats = store.stats()
             merge_limit = configured_roadmap.merge_backpressure_limit
-            merge_count = (
-                stats["by_state"].get(TaskState.PR_READY.value, 0)
-                + stats["by_state"].get(TaskState.CEO_REVIEW.value, 0)
-            )
+            pr_counts = summarize_pull_requests(records)
+            merge_count = pr_counts["active_substantive_pr_count"]
             roadmap_for_status: list[dict[str, Any]] = []
             for item in roadmap:
                 template = templates.resolve(item["template_id"])
@@ -392,15 +390,29 @@ def run_doctor(
                     template.risk_class.value == "read_only"
                     and template.requires_pr is not True
                 )
-                summary["merge_backpressure_blocked"] = (
+                summary["merge_backpressure_blocked"] = False
+                summary["soft_backpressure_preferred"] = (
                     merge_count >= merge_limit and not read_only
                 )
                 roadmap_for_status.append(summary)
             queue_report.update(stats)
+            queue_report.update(
+                {
+                    "merge_backpressure_count": merge_count,
+                    "merge_backpressure_limit": merge_limit,
+                    "active_substantive_pr_count": merge_count,
+                    "pr_classifications": pr_counts,
+                    "backpressure_mode": "SOFT"
+                    if merge_count >= merge_limit
+                    else "NONE",
+                    "backpressure_is_hard": False,
+                }
+            )
             queue_report["operator"] = operator_snapshot(
                 records,
                 roadmap_for_status,
                 merge_backpressure=merge_count >= merge_limit,
+                pr_counts=pr_counts,
                 builders=registry_ids,
                 paused=stats["paused"],
                 draining=stats["draining"],
