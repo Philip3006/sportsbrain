@@ -17,9 +17,12 @@ from math import isfinite
 from types import MappingProxyType
 
 from src.football.production_contracts import ProductionContractError, _utc
+from src.football.provider_cascade.contracts import (
+    CANDIDATE_ONLY_PROVIDER_IDENTITIES,
+)
 
 ACTIVE_FOOTBALL_AUTHORITY = "the_odds_api"
-CANDIDATE_PROVIDER = "therundown"
+CANDIDATE_PROVIDER = next(iter(CANDIDATE_ONLY_PROVIDER_IDENTITIES))
 _HEALTHY_RUNTIME_STATES = frozenset({"ok", "degraded"})
 _WRITER_STATES = frozenset({"active", "healthy", "read_only"})
 
@@ -176,7 +179,7 @@ class PreActivationBaseline:
         normalized = tuple(provider.casefold() for provider in self.active_provider_order)
         if ACTIVE_FOOTBALL_AUTHORITY not in normalized:
             raise ProductionContractError("The Odds API must remain in active football authority")
-        if CANDIDATE_PROVIDER in normalized:
+        if any(provider in CANDIDATE_ONLY_PROVIDER_IDENTITIES for provider in normalized):
             raise ProductionContractError("candidate provider cannot be active football authority")
         _string_map("launchd_expectations", self.launchd_expectations)
         _string_map("github_workflow_expectations", self.github_workflow_expectations)
@@ -517,9 +520,21 @@ def verify_production(
     else:
         checks["activation_identity"] = "PASS"
 
-    normalized_observed = tuple(provider.casefold() for provider in routing.observed_providers)
     normalized_order = tuple(provider.casefold() for provider in routing.active_provider_order)
     expected = routing.expected_provider.casefold()
+    routing_providers = (
+        routing.selected_provider,
+        *routing.active_provider_order,
+        *routing.observed_providers,
+        *(routing.allowed_fallback_providers or ()),
+    )
+    if routing.fallback_provider is not None:
+        routing_providers += (routing.fallback_provider,)
+    candidate_provider_present = any(
+        provider.casefold()
+        in {candidate.casefold() for candidate in CANDIDATE_ONLY_PROVIDER_IDENTITIES}
+        for provider in routing_providers
+    )
     if (
         routing.selected_provider.casefold() != expected
         or not normalized_order
@@ -527,7 +542,7 @@ def verify_production(
         or normalized_order != tuple(provider.casefold() for provider in baseline.active_provider_order)
         or any(provider.casefold() not in normalized_order for provider in routing.observed_providers)
         or (routing.fallback_provider is not None and routing.fallback_provider.casefold() not in tuple(p.casefold() for p in routing.allowed_fallback_providers))
-        or any(provider == CANDIDATE_PROVIDER for provider in normalized_observed + normalized_order)
+        or candidate_provider_present
         or routing.observed_candidate_ids
     ):
         triggers.append(RollbackTrigger.ROUTING_MISMATCH)

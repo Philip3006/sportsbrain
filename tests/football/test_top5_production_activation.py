@@ -11,17 +11,17 @@ from src.football.production_contracts import (
     ProductionContractError,
     SignalTimeContract,
 )
-from src.football.top5_builder2_qualification_receipt import (
-    RECEIPT_SCHEMA_VERSION,
-    Builder2QualificationReceiptV1,
-    ProviderQualificationStatus,
-    semantic_digest,
+from src.football.provider_cascade.contracts import CANDIDATE_ONLY_PROVIDER_IDENTITIES
+from src.football.top5_b2_qualification_batch_orchestrator import (
+    build_five_league_shadow_package,
+    consume_five_league_shadow_package,
 )
 from src.football.top5_controlled_release import (
     ApprovedProviderResultAuthority,
     ControlledActivationAuthorization,
 )
 from src.football.top5_controlled_shadow_provider_qualification import (
+    TOP5_LEAGUES,
     MinimumSamplePolicy,
 )
 from src.football.top5_production_activation import (
@@ -32,47 +32,18 @@ from src.football.top5_production_activation import (
     prepare_top5_production_activation,
     provider_cascade_config_digest,
 )
+from tests.football.test_top5_b2_five_league_receipt import _canonical_run_and_manifests
 from tests.football.test_top5_real_shadow_session import BASE
 
-PROVIDER = "therundown_experimental"
+CANDIDATE_PROVIDER = next(iter(CANDIDATE_ONLY_PROVIDER_IDENTITIES))
+PRODUCTION_PROVIDER = "the_odds_api"
 NOW = BASE
 
 
-def _receipt() -> Builder2QualificationReceiptV1:
-    result_digest = "d" * 64
-    receipt = Builder2QualificationReceiptV1(
-        schema_version=RECEIPT_SCHEMA_VERSION,
-        qualification_receipt_id=f"b2qr-{result_digest[:24]}",
-        qualification_report_identity=(
-            f"session:activation:{ProviderQualificationStatus.REAL_OBSERVATION_VALIDATED.value}"
-        ),
-        qualification_report_digest="a" * 64,
-        qualification_result_digest=result_digest,
-        qualification_session_id="session:activation",
-        controlled_shadow_run_id="run:activation",
-        ceo_authorization_id="ceo:qualification",
-        fixture_key="BL1|fixture-1",
-        provider_identity=PROVIDER,
-        provider_event_id="event-1",
-        provider_request_id="request-1",
-        observation_id="observation-1",
-        observation_digest="b" * 64,
-        normalized_record_digest="c" * 64,
-        cascade_evidence_digest="e" * 64,
-        capture_attestation_digest="f" * 64,
-        adapter_version="therundown-v1",
-        adapter_source_sha="1" * 40,
-        qualification_status=ProviderQualificationStatus.REAL_OBSERVATION_VALIDATED,
-        accepted=True,
-        prediction_input_allowed=True,
-        no_bet=True,
-        publication=False,
-        production_activation=False,
-        monetary_spend_authorized=False,
-    )
-    return replace(
-        receipt,
-        receipt_digest=semantic_digest(receipt._payload(include_receipt_digest=False)),
+def _package():
+    run, manifests = _canonical_run_and_manifests()
+    return consume_five_league_shadow_package(
+        build_five_league_shadow_package(run, manifests)
     )
 
 
@@ -82,8 +53,8 @@ def _authority() -> tuple[
     provider_authority = ApprovedProviderResultAuthority(
         authority_decision_id="authority:top5-provider",
         league_code="BL1",
-        approved_odds_provider=PROVIDER,
-        approved_provider_set=(PROVIDER,),
+        approved_odds_provider=PRODUCTION_PROVIDER,
+        approved_provider_set=(PRODUCTION_PROVIDER,),
         approved_result_source="result-source:top5",
         issued_at=NOW - timedelta(minutes=1),
         expires_at=NOW + timedelta(hours=1),
@@ -109,6 +80,7 @@ def _authority() -> tuple[
         provider_authority=provider_authority,
         controlled_shadow_run_id="run:activation",
         qualification_session_id="session:activation",
+        ceo_shadow_authorization_id="ceo:qualification",
         fixture_scope=("BL1|fixture-1",),
         rollback_pointer="safe-disabled:top5",
         authorization_token="activation-token",
@@ -120,13 +92,20 @@ def _authority() -> tuple[
 
 def _context() -> tuple[
     Top5ProductionActivationContract,
-    Builder2QualificationReceiptV1,
+    object,
     ApprovedProviderResultAuthority,
     ControlledActivationAuthorization,
     Top5ProductionRoutingSnapshot,
 ]:
-    receipt = _receipt()
+    package = _package()
     authority, activation = _authority()
+    activation = replace(
+        activation,
+        controlled_shadow_run_id=package.dossier.controlled_shadow_run_id,
+        qualification_session_id=package.dossier.qualification_session_id,
+        ceo_shadow_authorization_id=package.dossier.ceo_authorization_id,
+        fixture_scope=tuple(binding.fixture_key for binding in package.dossier.bindings),
+    )
     current = Top5ProductionRoutingSnapshot(
         provider_order=("the_odds_api",),
         adapter_registry=("the_odds_api",),
@@ -134,19 +113,22 @@ def _context() -> tuple[
         snapshot_id="snapshot:before-top5",
     )
     contract = Top5ProductionActivationContract(
-        league_scope=("BL1",),
-        approved_provider_identity=PROVIDER,
-        receipt_digest=receipt.receipt_digest,
+        league_scope=TOP5_LEAGUES,
+        approved_provider_identity=PRODUCTION_PROVIDER,
+        receipt_package_digest=package.package_digest,
         authority_authorization_id=authority.authority_decision_id,
         activation_authorization_id=activation.authorization_id,
+        ceo_shadow_authorization_id=package.dossier.ceo_authorization_id,
         activation_expires_at=activation.expires_at,
         expected_current_provider_order=current.provider_order,
-        target_provider_order=(PROVIDER, "the_odds_api"),
-        expected_candidate_adapter_config_digest="6" * 64,
+        target_provider_order=(PRODUCTION_PROVIDER,),
+        candidate_configuration_digest=package.dossier.configuration_digest,
+        candidate_adapter_source_sha=package.dossier.adapter_source_sha,
+        target_provider_config_digest="6" * 64,
         rollback_target=activation.rollback_pointer,
         rollback_snapshot_digest=current.snapshot_digest,
     )
-    return contract, receipt, authority, activation, current
+    return contract, package, authority, activation, current
 
 
 def test_current_snapshot_is_the_odds_api_only_and_disabled() -> None:
@@ -161,37 +143,124 @@ def test_current_snapshot_is_the_odds_api_only_and_disabled() -> None:
 
 
 def test_prepare_binds_receipt_authority_expiry_and_current_route_exactly() -> None:
-    contract, receipt, authority, activation, current = _context()
+    contract, package, authority, activation, current = _context()
     plan = prepare_top5_production_activation(
         contract,
-        receipt,
+        package,
         authority,
         activation,
         current,
         prepared_at=NOW,
     )
     assert plan.executed is False
-    assert plan.contract.receipt_digest == receipt.receipt_digest
+    assert plan.contract.receipt_package_digest == package.package_digest
     assert plan.contract.authority_authorization_id == authority.authority_decision_id
     assert plan.contract.activation_authorization_id == activation.authorization_id
-    assert plan.target_snapshot().provider_order == (PROVIDER, "the_odds_api")
+    assert plan.target_snapshot().provider_order == (PRODUCTION_PROVIDER,)
     assert plan.target_snapshot().publication_enabled is False
     assert plan.target_snapshot().top5_scheduler_enabled is False
+
+
+def test_prepare_requires_the_complete_five_receipt_package() -> None:
+    contract, package, authority, activation, current = _context()
+    with pytest.raises(ProductionContractError, match="canonical five-league receipt package"):
+        prepare_top5_production_activation(
+            contract,
+            package.receipts[0],
+            authority,
+            activation,
+            current,
+            prepared_at=NOW,
+        )
+    incomplete = replace(package, receipts=package.receipts[:4])
+    with pytest.raises(ProductionContractError, match="canonical five-league receipt package"):
+        prepare_top5_production_activation(
+            contract,
+            incomplete,
+            authority,
+            activation,
+            current,
+            prepared_at=NOW,
+        )
+
+
+def test_candidate_evidence_provider_cannot_be_production_authority_or_route() -> None:
+    contract, package, authority, activation, current = _context()
+    with pytest.raises(ProductionContractError, match="candidate-only provider"):
+        replace(
+            contract,
+            approved_provider_identity=CANDIDATE_PROVIDER,
+            target_provider_order=(CANDIDATE_PROVIDER,),
+        ).validate()
+    candidate_authority = replace(
+        authority,
+        approved_odds_provider=CANDIDATE_PROVIDER,
+        approved_provider_set=(CANDIDATE_PROVIDER,),
+    )
+    candidate_activation = replace(activation, provider_authority=candidate_authority)
+    with pytest.raises(ProductionContractError, match="approved production provider"):
+        prepare_top5_production_activation(
+            contract,
+            package,
+            candidate_authority,
+            candidate_activation,
+            current,
+            prepared_at=NOW,
+        )
+
+
+def test_package_and_dossier_binding_drift_fails_before_prepare() -> None:
+    contract, package, authority, activation, current = _context()
+    altered_dossier = replace(
+        package.dossier, controlled_shadow_run_id="run:altered"
+    )
+    altered_package = replace(package, dossier=altered_dossier)
+    with pytest.raises(ProductionContractError, match="canonical five-league receipt package"):
+        prepare_top5_production_activation(
+            contract,
+            altered_package,
+            authority,
+            activation,
+            current,
+            prepared_at=NOW,
+        )
+
+
+def test_single_receipt_cannot_cross_apply_boundary_or_mutate_state() -> None:
+    contract, package, authority, activation, current = _context()
+    plan = prepare_top5_production_activation(
+        contract,
+        package,
+        authority,
+        activation,
+        current,
+        prepared_at=NOW,
+    )
+    state = InMemoryTop5RoutingState(current)
+    with pytest.raises(ProductionContractError, match="canonical five-league receipt package"):
+        state.activate(
+            plan,
+            package.receipts[0],
+            authority,
+            activation,
+            now=NOW,
+        )
+    assert state.snapshot == current
 
 
 @pytest.mark.parametrize(
     "change, message",
     [
-        ("receipt", "receipt digest"),
+        ("receipt", "receipt package digest"),
         ("authority", "authority authorization ID"),
         ("activation", "activation authorization ID"),
         ("expiry", "activation expiry"),
     ],
 )
 def test_exact_authorization_bindings_fail_closed(change: str, message: str) -> None:
-    contract, receipt, authority, activation, current = _context()
+    contract, package, authority, activation, current = _context()
     if change == "receipt":
-        contract = replace(contract, receipt_digest="7" * 64)
+        contract = replace(contract, receipt_package_digest="7" * 64)
     elif change == "authority":
         contract = replace(contract, authority_authorization_id="authority:wrong")
     elif change == "activation":
@@ -203,7 +272,7 @@ def test_exact_authorization_bindings_fail_closed(change: str, message: str) -> 
     with pytest.raises(ProductionContractError, match=message):
         prepare_top5_production_activation(
             contract,
-            receipt,
+            package,
             authority,
             activation,
             current,
@@ -212,7 +281,7 @@ def test_exact_authorization_bindings_fail_closed(change: str, message: str) -> 
 
 
 def test_stale_activation_authorization_fails_closed() -> None:
-    contract, receipt, authority, activation, current = _context()
+    contract, package, authority, activation, current = _context()
     stale_activation = replace(
         activation,
         expires_at=NOW - timedelta(seconds=1),
@@ -224,7 +293,7 @@ def test_stale_activation_authorization_fails_closed() -> None:
     with pytest.raises(ProductionContractError, match="expired"):
         prepare_top5_production_activation(
             stale_contract,
-            receipt,
+            package,
             authority,
             stale_activation,
             current,
@@ -233,7 +302,7 @@ def test_stale_activation_authorization_fails_closed() -> None:
 
 
 def test_provider_order_and_snapshot_drift_fail_closed() -> None:
-    contract, receipt, authority, activation, current = _context()
+    contract, package, authority, activation, current = _context()
     drifted = replace(
         current,
         provider_order=("unexpected_provider",),
@@ -245,7 +314,7 @@ def test_provider_order_and_snapshot_drift_fail_closed() -> None:
     ):
         prepare_top5_production_activation(
             contract,
-            receipt,
+            package,
             authority,
             activation,
             drifted,
@@ -254,7 +323,7 @@ def test_provider_order_and_snapshot_drift_fail_closed() -> None:
 
 
 def test_publication_scheduler_and_ledger_flags_cannot_be_enabled() -> None:
-    contract, _receipt, _authority, _activation, current = _context()
+    contract, _package_obj, _authority, _activation, current = _context()
     with pytest.raises(ProductionContractError, match="publication or a scheduler"):
         replace(contract, publication_enabled=True).validate()
     with pytest.raises(ProductionContractError, match="no-bet/ledger"):
@@ -264,18 +333,18 @@ def test_publication_scheduler_and_ledger_flags_cannot_be_enabled() -> None:
 
 
 def test_unapproved_target_provider_is_rejected() -> None:
-    contract, _receipt_obj, _authority_obj, _activation, _current = _context()
-    with pytest.raises(ProductionContractError, match="unapproved provider"):
+    contract, _package_obj, _authority_obj, _activation, _current = _context()
+    with pytest.raises(ProductionContractError, match="non-canonical provider"):
         replace(
-            contract, target_provider_order=("unknown-provider", PROVIDER)
+            contract, target_provider_order=("unknown-provider", PRODUCTION_PROVIDER)
         ).validate()
 
 
 def test_activation_is_atomic_and_rollback_restores_exact_snapshot() -> None:
-    contract, receipt, authority, activation, current = _context()
+    contract, package, authority, activation, current = _context()
     plan = prepare_top5_production_activation(
         contract,
-        receipt,
+        package,
         authority,
         activation,
         current,
@@ -284,12 +353,12 @@ def test_activation_is_atomic_and_rollback_restores_exact_snapshot() -> None:
     state = InMemoryTop5RoutingState(current)
     activated = state.activate(
         plan,
-        receipt,
+        package,
         authority,
         activation,
         now=NOW,
     )
-    assert activated.provider_order == (PROVIDER, "the_odds_api")
+    assert activated.provider_order == (PRODUCTION_PROVIDER,)
     assert activated.publication_enabled is False
     assert activated.top5_scheduler_enabled is False
     assert activated.no_bet is True
@@ -300,10 +369,10 @@ def test_activation_is_atomic_and_rollback_restores_exact_snapshot() -> None:
 
 
 def test_activation_rejects_routing_drift_before_state_change() -> None:
-    contract, receipt, authority, activation, current = _context()
+    contract, package, authority, activation, current = _context()
     plan = prepare_top5_production_activation(
         contract,
-        receipt,
+        package,
         authority,
         activation,
         current,
@@ -312,7 +381,7 @@ def test_activation_rejects_routing_drift_before_state_change() -> None:
     drifted = replace(current, snapshot_id="snapshot:drifted", snapshot_digest="")
     state = InMemoryTop5RoutingState(drifted)
     with pytest.raises(ProductionContractError, match="drifted"):
-        state.activate(plan, receipt, authority, activation, now=NOW)
+        state.activate(plan, package, authority, activation, now=NOW)
     assert state.snapshot == drifted
 
 

@@ -2,6 +2,9 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from src.football.provider_cascade.contracts import (
+    CANDIDATE_ONLY_PROVIDER_IDENTITIES,
+)
 from src.football.top5_production_verification import (
     ACTIVE_FOOTBALL_AUTHORITY,
     CANDIDATE_PROVIDER,
@@ -20,6 +23,7 @@ from src.football.top5_production_verification import (
 
 NOW = datetime(2026, 9, 19, 12, tzinfo=timezone.utc)
 IDENTITY = ActivationIdentity("activation-1", "config-digest-1", "source-1", "research-1", "model-1", "candidate-1")
+CANONICAL_CANDIDATE = next(iter(CANDIDATE_ONLY_PROVIDER_IDENTITIES))
 
 
 def _baseline(**overrides):
@@ -152,6 +156,39 @@ def test_activation_identity_mismatch_requires_rollback():
 def test_candidate_provider_cannot_enter_active_routing():
     report = _verify(routing=_routing(active_provider_order=(CANDIDATE_PROVIDER, ACTIVE_FOOTBALL_AUTHORITY)))
     assert report.status is VerificationStatus.ROLLBACK_REQUIRED
+    assert RollbackTrigger.ROUTING_MISMATCH in report.triggers
+
+
+def test_canonical_candidate_provider_cannot_pass_production_verification():
+    order = (ACTIVE_FOOTBALL_AUTHORITY, CANONICAL_CANDIDATE)
+    report = _verify(
+        baseline=_baseline(active_provider_order=order),
+        routing=_routing(active_provider_order=order),
+    )
+    assert report.status is not VerificationStatus.PRODUCTION_VERIFIED
+    assert report.status in {
+        VerificationStatus.VERIFICATION_BLOCKED,
+        VerificationStatus.ROLLBACK_REQUIRED,
+    }
+
+
+@pytest.mark.parametrize(
+    "routing_overrides",
+    [
+        {"selected_provider": CANONICAL_CANDIDATE},
+        {"observed_providers": (CANONICAL_CANDIDATE,)},
+        {
+            "fallback_provider": CANONICAL_CANDIDATE,
+            "allowed_fallback_providers": (CANONICAL_CANDIDATE,),
+        },
+        {"allowed_fallback_providers": (CANONICAL_CANDIDATE,)},
+    ],
+)
+def test_canonical_candidate_is_rejected_from_all_routing_surfaces(
+    routing_overrides,
+):
+    report = _verify(routing=_routing(**routing_overrides))
+    assert report.status is not VerificationStatus.PRODUCTION_VERIFIED
     assert RollbackTrigger.ROUTING_MISMATCH in report.triggers
 
 
