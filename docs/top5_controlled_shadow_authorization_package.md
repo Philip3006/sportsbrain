@@ -115,7 +115,7 @@ python -m src.football.top5_controlled_shadow_authorization_package \
   --authorization /operator-only/top5/ceo-authorization.json \
   --b1-ll-artifact /operator-only/top5/b1-ll-evidence-bundle.json \
   --credential-file /operator-only/top5/therundown.env \
-  --output /operator-only/top5/top5-network-shadow-result.json
+  --output /operator-only/top5/top5-b2-five-league-shadow-package.json
 ```
 
 The package file is the exact inert package produced by
@@ -133,12 +133,16 @@ before the first request and reconciled again after the completed run.
 no group/world permissions and an existing `THERUNDOWN_API_KEY=` entry. The
 key is read only for transport construction, is never printed, and is never
 written to the output artifact. `--output` is required for network execution;
-the artifact is created with mode `0600` and is never overwritten.
+the package is written atomically with mode `0600`, and a conflicting existing
+package is rejected.
 
-The successful artifact contains the completed network run, exactly five
-captures, per-league capture attestations, candidate eligibilities, Builder-2
-receipt inputs, and the full reconciliation digest. B4 does not issue the
-receipt or change authority. Any credential, package/configuration digest,
+The successful artifact is the canonical
+`top5-b2-five-league-shadow-package-v1` consumed by Builder 2. It contains a
+`COMPLETED_NETWORK` run, exactly five capture envelopes, and exactly five
+canonical `Builder2QualificationIntakeManifestV1` manifests. Its package ID
+and digest are deterministic. B4 writes it atomically and reloads it through
+`load_five_league_shadow_package()` before reporting success. B4 does not issue
+the receipt or change authority. Any credential, package/configuration digest,
 authorization, B1, billing, freshness, event, participant, provenance, retry,
 HTTP, or safety failure aborts without continuing to the next request.
 
@@ -155,9 +159,10 @@ path. The explicit network flag is the only path that uses
 - PR-112 remains the candidate-provider eligibility boundary and keeps
   `therundown_experimental` out of active routing.
 - Builder 2 still owns qualification reporting and
-  `Builder2QualificationReceiptV1` issuance. A complete canonical cascade
-  evidence object/report is a downstream Builder-2 input; this package does
-  not fabricate one from a digest.
+  `Builder2QualificationReceiptV1` issuance. B4 projects each validated
+  network capture into the canonical cascade and intake-manifest contracts;
+  this projection preserves the provider, raw, normalized, request, quota,
+  timestamp, bookmaker, and safety bindings and does not issue a receipt.
 - The B1 LL bundle is a validated input to the exact LL slot, not a substitute
   for the PR-103 canonical capture attestation.
 - No real La Liga capture or five-league Controlled Shadow is consumed during

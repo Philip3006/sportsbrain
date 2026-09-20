@@ -11,6 +11,10 @@ import pytest
 
 from src.football.odds.therundown import THERUNDOWN_ADAPTER_VERSION
 from src.football.provider_cascade.contracts import QuotaSnapshot
+from src.football.top5_b2_qualification_batch_orchestrator import (
+    load_five_league_shadow_package,
+    run_five_league_receipt_pipeline,
+)
 from src.football.top5_controlled_shadow_authorization_package import (
     CANONICAL_CANDIDATE_PROVIDER,
     FUTURE_EXECUTION_COMMAND,
@@ -933,20 +937,33 @@ def test_guarded_cli_five_of_five_writes_b2_compatible_output(tmp_path):
             )
         ),
     )
-    payload = json.loads(output_path.read_text())
     assert summary["status"] == "COMPLETED_NETWORK"
-    assert payload["status"] == "COMPLETED_NETWORK"
-    assert payload["request_count"] == 5
-    assert payload["datapoint_count"] == 275
-    assert len(payload["captures"]) == 5
-    assert len(payload["capture_attestations"]) == 5
-    assert len(payload["candidate_eligibilities"]) == 5
-    assert len(payload["builder2_receipt_inputs"]) == 5
-    assert (
-        payload["reconciliation"]["reconciliation_digest"]
-        == payload["reconciliation_digest"]
+    package = load_five_league_shadow_package(output_path)
+    assert package.schema_version == "top5-b2-five-league-shadow-package-v1"
+    assert package.package_id == summary["package_id"]
+    assert package.package_digest == summary["package_digest"]
+    assert package.shadow_run.status is NetworkShadowRunStatus.COMPLETED_NETWORK
+    assert package.shadow_run.request_count == 5
+    assert package.shadow_run.datapoint_count == 275
+    assert len(package.shadow_run.captures) == 5
+    assert len(package.manifests) == 5
+    assert {manifest.observation.league for manifest in package.manifests} == {
+        "EPL",
+        "BL1",
+        "LL",
+        "SA",
+        "L1",
+    }
+    receipt_package = run_five_league_receipt_pipeline(output_path)
+    assert len(receipt_package.receipts) == 5
+    assert all(
+        receipt.accepted is True
+        and receipt.no_bet is True
+        and receipt.publication is False
+        and receipt.production_activation is False
+        and receipt.monetary_spend_authorized is False
+        for receipt in receipt_package.receipts
     )
-    assert all(item["eligible"] is False for item in payload["builder2_receipt_inputs"])
-    assert payload["safety"]["receipt_issued"] is False
-    assert payload["safety"]["authority_changed"] is False
+    assert summary["safety"]["receipt_issued"] is False
+    assert summary["safety"]["authority_changed"] is False
     assert output_path.stat().st_mode & 0o077 == 0

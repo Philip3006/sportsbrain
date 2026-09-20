@@ -25,10 +25,42 @@ from src.football.provider_cascade.candidate_eligibility import (
     CandidateEligibilityError,
     CandidateProviderEligibilityV1,
 )
+from src.football.top5_b2_qualification_batch_orchestrator import (
+    Builder2FiveLeagueShadowPackageV1,
+    build_five_league_shadow_package,
+    load_five_league_shadow_package,
+)
+from src.football.top5_b2_shadow_qualification_intake import (
+    INTAKE_CONTRACT_VERSION,
+    Builder2QualificationIntakeError,
+    Builder2QualificationIntakeManifestV1,
+    Builder2QualificationSourceArtifactV1,
+    _safe_external_path,
+)
+from src.football.top5_builder2_qualification_receipt import semantic_digest
 from src.football.top5_controlled_shadow_provider_qualification import (
+    QUALIFICATION_CONTRACT_VERSION,
+    CEOAuthorization,
     ControlledShadowCaptureAttestation,
     ObservationEvidenceKind,
+    ProviderQualificationSession,
+    ProviderReadinessState,
+    QualificationTimingPolicy,
+    RealProviderObservation,
 )
+from src.football.top5_provider_cascade_validation import (
+    BudgetDecision,
+    CascadeAttempt,
+    CascadeEvidence,
+    CascadeOutcome,
+    CascadeProvenance,
+    CascadeQuotaSnapshot,
+    CascadeSafety,
+    MarketPhase,
+    RequestCostClassification,
+    evidence_digest,
+)
+from src.football.top5_research_binding import FROZEN_RESEARCH_SHA
 from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_network_shadow import (
     NETWORK_SHADOW_SCHEMA_VERSION,
@@ -45,6 +77,7 @@ from src.football.top5_therundown_network_shadow import (
     TheRundownNetworkShadowRunResultV1,
 )
 from src.football.top5_therundown_shadow_canary import TheRundownCanaryTargetV1
+from src.utils.atomic_io import atomic_write_json
 
 CANONICAL_CANDIDATE_PROVIDER = "therundown_experimental"
 TOP5_LEAGUE_ORDER = ("EPL", "BL1", "LL", "SA", "L1")
@@ -59,12 +92,12 @@ FUTURE_EXECUTION_COMMAND = (
     "--authorization <ceo-authorization.json> "
     "--b1-ll-artifact <b1-ll-evidence-bundle.json> "
     "--credential-file /operator-only/top5/therundown.env "
-    "--output /operator-only/top5/top5-network-shadow-result.json"
+    "--output /operator-only/top5/top5-b2-five-league-shadow-package.json"
 )
 DEFAULT_THERUNDOWN_CREDENTIAL_PATH = Path.home() / "sportsbrain" / ".env"
-NETWORK_EXECUTION_ARTIFACT_SCHEMA_VERSION = (
-    "top5-controlled-shadow-network-execution-v1"
-)
+B2_SHADOW_TIMING_KICKOFF_TOLERANCE_SECONDS = 60
+B2_SHADOW_TIMING_MINIMUM_LEAD_SECONDS = 0
+B2_SHADOW_TIMING_MAXIMUM_LEAD_SECONDS = 10_800
 
 
 class ControlledShadowAuthorizationPackageError(NetworkShadowContractError):
@@ -1568,75 +1601,346 @@ def reconcile_controlled_shadow_run_with_b1_ll_artifact(
     )
 
 
-def _write_network_execution_artifact(
-    path_value: object, payload: Mapping[str, object]
-) -> Path:
-    path = _absolute_path(path_value, "output")
-    try:
-        with path.open("x", encoding="utf-8") as handle:
-            json.dump(_jsonable(payload), handle, indent=2, sort_keys=True)
-            handle.write("\n")
-        path.chmod(0o600)
-    except FileExistsError as exc:
-        raise ControlledShadowAuthorizationPackageError(
-            "output already exists; refusing to overwrite an execution artifact"
-        ) from exc
-    except OSError as exc:
-        raise ControlledShadowAuthorizationPackageError(
-            "execution artifact could not be written"
-        ) from exc
-    return path
+def _b2_observation_digest(observation: RealProviderObservation) -> str:
+    payload = observation.as_payload()
+    payload.pop("capture_attestation", None)
+    return semantic_digest(payload)
 
 
-def _network_execution_payload(
+def _b2_cascade_for_capture(
+    capture: TheRundownNetworkShadowCaptureV1,
+) -> CascadeEvidence:
+    """Project one validated network capture into the canonical B2 cascade."""
+
+    response = capture.response
+    request = capture.request
+    target = capture.target
+    required_timestamps = (
+        response.request_started_at,
+        response.request_finished_at,
+        response.captured_at,
+        response.source_timestamp,
+    )
+    if any(value is None for value in required_timestamps):
+        raise ControlledShadowAuthorizationPackageError(
+            "B2 cascade projection requires complete timestamp provenance"
+        )
+    start = response.request_started_at
+    end = response.request_finished_at
+    captured = response.captured_at
+    if start is None or end is None or captured is None:
+        raise ControlledShadowAuthorizationPackageError(
+            "B2 cascade projection requires request/capture timestamps"
+        )
+    attempt = CascadeAttempt(
+        league=target.league,
+        fixture_key=target.fixture_key,
+        home_team=target.home_team,
+        away_team=target.away_team,
+        kickoff=target.kickoff,
+        configured_provider_order=(CANONICAL_CANDIDATE_PROVIDER,),
+        provider_attempt_index=0,
+        fallback_depth=0,
+        provider_identity=CANONICAL_CANDIDATE_PROVIDER,
+        network_called=True,
+        start_timestamp=start,
+        end_timestamp=end,
+        capture_timestamp=captured,
+        outcome=CascadeOutcome.SUCCESS,
+        failure_classification=None,
+        market_type="h2h_1x2",
+        home_odds=response.home_odds,
+        draw_odds=response.draw_odds,
+        away_odds=response.away_odds,
+        bookmaker_identity=response.bookmaker_identity,
+        source_identity=response.source_identity,
+        market_phase=MarketPhase.PRE_MATCH,
+        source_timestamp=response.source_timestamp,
+        request_latency_ms=max(0, round((end - start).total_seconds() * 1000)),
+        quota_before=CascadeQuotaSnapshot(
+            authenticated=True,
+            quota_used=None,
+            quota_remaining=response.quota_before,
+        ),
+        quota_after=CascadeQuotaSnapshot(
+            authenticated=True,
+            quota_used=None,
+            quota_remaining=response.quota_after,
+        ),
+        preflight_allowed=True,
+        budget_decision=BudgetDecision.ALLOWED,
+        request_cost_classification=RequestCostClassification.QUOTA_CONSUMING_REQUEST,
+        network_request_count=1,
+        quota_cost_units=response.quota_cost_units,
+        credentials_available=True,
+        provider_record_id=response.provider_event_id,
+        adapter_version=response.adapter_version,
+        raw_record_digest=response.raw_response_digest,
+        request_identity=request.request_identity,
+        provider_readiness_state=ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION,
+        source_timing_provenance="SOURCE_TIMESTAMP",
+    )
+    provenance = CascadeProvenance(
+        evidence_id=f"b4-cascade:{request.request_identity}",
+        artifact_id=f"b4-capture:{response.provider_event_id}",
+        artifact_sha=response.raw_response_digest,
+        source_sha=response.adapter_source_sha,
+        research_sha=FROZEN_RESEARCH_SHA,
+        candidate_id="top5-controlled-shadow",
+        model_identity="unbound-model-slot",
+        generated_at=captured,
+    )
+    cascade = CascadeEvidence.from_attempts(
+        provenance=provenance,
+        attempts=(attempt,),
+        selected_provider=CANONICAL_CANDIDATE_PROVIDER,
+        prediction_input_allowed=True,
+        safety=CascadeSafety(True, False, False, False, False, False, False),
+    )
+    cascade.validate_structural()
+    return cascade
+
+
+def _b2_manifest_for_capture(
+    capture: TheRundownNetworkShadowCaptureV1,
+    configuration: TheRundownNetworkConfigurationV1,
+    authorization: TheRundownNetworkAuthorizationV1,
+) -> tuple[
+    TheRundownNetworkShadowCaptureV1,
+    Builder2QualificationIntakeManifestV1,
+]:
+    """Build one canonical B2 manifest without creating authority."""
+
+    response = capture.response
+    request = capture.request
+    target = capture.target
+    if capture.observation_id is None:
+        raise ControlledShadowAuthorizationPackageError(
+            "successful capture is missing an observation ID"
+        )
+    cascade = _b2_cascade_for_capture(capture)
+    cascade_digest = evidence_digest(cascade)
+    attestation = ControlledShadowCaptureAttestation.from_payload(
+        capture.canonical_capture_attestation
+    )
+    attestation = replace(attestation, cascade_evidence_digest=cascade_digest)
+    attestation.validate()
+    if response.captured_at is None:
+        raise ControlledShadowAuthorizationPackageError(
+            "successful capture is missing captured_at"
+        )
+    observation = RealProviderObservation(
+        observation_id=capture.observation_id,
+        qualification_session_id=request.qualification_session_id,
+        evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+        provider_identity=target.provider,
+        provider_event_id=response.provider_event_id,
+        provider_request_id=response.provider_request_id,
+        league=target.league,
+        fixture_key=target.fixture_key,
+        home_team=target.home_team,
+        away_team=target.away_team,
+        kickoff=target.kickoff,
+        market_type="h2h_1x2",
+        market_phase=MarketPhase.PRE_MATCH.value,
+        home_odds=response.home_odds,
+        draw_odds=response.draw_odds,
+        away_odds=response.away_odds,
+        bookmaker_identity=response.bookmaker_identity,
+        source_identity=response.source_identity,
+        source_timestamp=response.source_timestamp,
+        provider_timestamp_provenance=response.provider_timestamp_provenance,
+        captured_at=response.captured_at,
+        request_started_at=response.request_started_at,
+        request_finished_at=response.request_finished_at,
+        latency_ms=max(
+            0,
+            round(
+                (
+                    response.request_finished_at - response.request_started_at
+                ).total_seconds()
+                * 1000
+            ),
+        ),
+        adapter_version=response.adapter_version,
+        adapter_source_sha=response.adapter_source_sha,
+        raw_response_digest=response.raw_response_digest,
+        normalized_record_digest=response.normalized_record_digest,
+        cascade_evidence=cascade,
+        quota_before=response.quota_before,
+        quota_after=response.quota_after,
+        quota_cost_units=response.quota_cost_units,
+        network_request_count=1,
+        capture_attestation=attestation,
+    )
+    observation.validate_structural()
+    observation_digest = _b2_observation_digest(observation)
+    attestation_payload = attestation.as_payload()
+    canonical_response = replace(
+        response,
+        cascade_evidence_digest=cascade_digest,
+    )
+    canonical_capture = replace(
+        capture,
+        response=canonical_response,
+        observation_digest=observation_digest,
+        capture_attestation_digest=semantic_digest(attestation_payload),
+        capture_attestation_input=attestation_payload,
+        observation_input=observation.as_payload(),
+    )
+    canonical_capture.validate()
+    eligibility = CandidateProviderEligibilityV1.from_network_capture(
+        canonical_capture,
+        now=response.captured_at,
+        maximum_source_age_seconds=configuration.maximum_source_age_seconds,
+    )
+    timing_policy = QualificationTimingPolicy(
+        maximum_odds_age_seconds=configuration.maximum_source_age_seconds,
+        kickoff_tolerance_seconds=B2_SHADOW_TIMING_KICKOFF_TOLERANCE_SECONDS,
+        minimum_lead_seconds=B2_SHADOW_TIMING_MINIMUM_LEAD_SECONDS,
+        maximum_lead_seconds=B2_SHADOW_TIMING_MAXIMUM_LEAD_SECONDS,
+    )
+    session = ProviderQualificationSession(
+        qualification_session_id=request.qualification_session_id,
+        schema_version=QUALIFICATION_CONTRACT_VERSION,
+        created_at=response.captured_at,
+        provider_identity="top5_cascade",
+        league_scope=(target.league,),
+        fixture_scope=(target.fixture_key,),
+        configured_provider_order=(CANONICAL_CANDIDATE_PROVIDER,),
+        adapter_version=response.adapter_version,
+        adapter_source_sha=response.adapter_source_sha,
+        qualification_state=ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION,
+        network_request_count=1,
+        selected_observation_network_request_count=1,
+        cascade_network_request_count=1,
+        quota_units_observed=response.quota_cost_units,
+    )
+    b2_authorization = CEOAuthorization(
+        authorization_id=request.authorization_id,
+        controlled_shadow_run_id=request.controlled_shadow_run_id,
+        qualification_session_id=request.qualification_session_id,
+        provider_scope=(CANONICAL_CANDIDATE_PROVIDER,),
+        league_scope=(target.league,),
+        fixture_scope=(target.fixture_key,),
+        maximum_network_requests=1,
+        monetary_spend_authorized=False,
+        issued_at=authorization.issued_at,
+        expires_at=authorization.expires_at,
+    )
+    source_artifact = Builder2QualificationSourceArtifactV1(
+        role="network-capture",
+        path=(
+            "/private/tmp/top5-b4-capture-"
+            f"{target.league.lower()}-{_digest(request.request_identity)[:16]}.json"
+        ),
+        digest=response.raw_response_digest,
+    )
+    manifest = Builder2QualificationIntakeManifestV1(
+        schema_version=INTAKE_CONTRACT_VERSION,
+        intake_id=(
+            f"top5-{target.league.lower()}-{_digest(request.request_identity)[:16]}"
+        ),
+        controlled_shadow_run_id=request.controlled_shadow_run_id,
+        qualification_session_id=request.qualification_session_id,
+        ceo_authorization_id=request.authorization_id,
+        fixture_key=target.fixture_key,
+        provider_identity=target.provider,
+        provider_event_id=response.provider_event_id,
+        provider_request_id=response.provider_request_id,
+        observation_id=capture.observation_id,
+        observation_digest=observation_digest,
+        normalized_record_digest=response.normalized_record_digest,
+        cascade_evidence_digest=cascade_digest,
+        capture_attestation_digest=semantic_digest(attestation_payload),
+        adapter_version=response.adapter_version,
+        adapter_source_sha=response.adapter_source_sha,
+        timing_policy_reference="top5-controlled-shadow-timing-v1",
+        readiness_reference="top5-controlled-shadow-provider-readiness-v1",
+        source_artifacts=(source_artifact,),
+        observation=observation,
+        session=session,
+        authorization=b2_authorization,
+        cascade_evidence=cascade,
+        capture_attestation=attestation,
+        timing_policy=timing_policy,
+        provider_readiness={
+            CANONICAL_CANDIDATE_PROVIDER: ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION
+        },
+        candidate_provider_eligibility=eligibility,
+    )
+    manifest.validate()
+    return canonical_capture, manifest
+
+
+def _build_b2_shadow_package(
     result: TheRundownNetworkShadowRunResultV1,
     reconciliation: FiveLeagueReconciliationV1,
-    *,
-    package_digest: str,
+    configuration: TheRundownNetworkConfigurationV1,
     authorization: TheRundownNetworkAuthorizationV1,
-) -> dict[str, object]:
-    reconciliation_payload = reconciliation.as_payload()
-    run_payload = result.as_payload()
-    return {
-        "schema_version": NETWORK_EXECUTION_ARTIFACT_SCHEMA_VERSION,
-        "status": NetworkShadowRunStatus.COMPLETED_NETWORK.value,
-        "provider": CANONICAL_CANDIDATE_PROVIDER,
-        "controlled_shadow_run_id": authorization.controlled_shadow_run_id,
-        "qualification_session_id": authorization.qualification_session_id,
-        "authorization_id": authorization.authorization_id,
-        "authorization_digest": authorization.authorization_digest,
-        "package_digest": package_digest,
-        "configuration_digest": authorization.configuration_digest,
-        "request_count": result.request_count,
-        "datapoint_count": result.datapoint_count,
-        "quota_cost_units": result.quota_cost_units,
-        "captures": [capture.as_payload() for capture in result.captures],
-        "capture_attestations": reconciliation_payload["artifacts"][
-            "capture_attestations"
-        ],
-        "candidate_eligibilities": reconciliation_payload["artifacts"][
-            "candidate_eligibilities"
-        ],
-        "builder2_receipt_inputs": reconciliation_payload["artifacts"][
-            "builder2_receipt_inputs"
-        ],
-        "reconciliation_digest": reconciliation.reconciliation_digest,
-        "network_shadow_run": run_payload,
-        "reconciliation": reconciliation_payload,
-        "safety": {
-            "candidate_only": True,
-            "receipt_issued": False,
-            "receipt_issuer_present": False,
-            "authority_changed": False,
-            "publication": False,
-            "production_activation": False,
-            "betting": False,
-            "monetary_spend_authorized": False,
-            "scheduler_registered": False,
-            "ledger_mutated": False,
-            "cloudflare_mutated": False,
-        },
-    }
+) -> Builder2FiveLeagueShadowPackageV1:
+    """Materialize the exact merged B2 package from a completed B4 result."""
+
+    if reconciliation.receipt_eligible or reconciliation.authority_changed:
+        raise ControlledShadowAuthorizationPackageError(
+            "B4 reconciliation carries unsafe downstream authority"
+        )
+    if tuple(capture.target.league for capture in result.captures) != TOP5_LEAGUE_ORDER:
+        raise ControlledShadowAuthorizationPackageError(
+            "B2 package requires the canonical five-league capture order"
+        )
+    canonical_captures: list[TheRundownNetworkShadowCaptureV1] = []
+    manifests: list[Builder2QualificationIntakeManifestV1] = []
+    for capture in result.captures:
+        canonical_capture, manifest = _b2_manifest_for_capture(
+            capture, configuration, authorization
+        )
+        canonical_captures.append(canonical_capture)
+        manifests.append(manifest)
+    canonical_run = replace(result, captures=tuple(canonical_captures))
+    canonical_run.validate()
+    package = build_five_league_shadow_package(canonical_run, tuple(manifests))
+    package.validate()
+    return package
+
+
+def _write_and_reload_b2_shadow_package(
+    path_value: object, package: Builder2FiveLeagueShadowPackageV1
+) -> Path:
+    try:
+        path = _safe_external_path(path_value, "output")
+    except Builder2QualificationIntakeError as exc:
+        raise ControlledShadowAuthorizationPackageError(str(exc)) from exc
+    package_payload = package.as_payload()
+    if path.exists():
+        existing = load_five_league_shadow_package(path)
+        if existing.package_digest != package.package_digest:
+            raise ControlledShadowAuthorizationPackageError(
+                "output contains a conflicting canonical B2 shadow package"
+            )
+        return path
+    try:
+        atomic_write_json(
+            path,
+            _jsonable(package_payload),
+            indent=2,
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+        path.chmod(0o600)
+    except OSError as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            "canonical B2 shadow package could not be written"
+        ) from exc
+    reloaded = load_five_league_shadow_package(path)
+    if (
+        reloaded.package_id != package.package_id
+        or reloaded.package_digest != package.package_digest
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "written B2 shadow package did not survive canonical reload"
+        )
+    return path
 
 
 def run_guarded_network_execution(
@@ -1660,7 +1964,7 @@ def run_guarded_network_execution(
 
     clock_fn = clock or (lambda: datetime.now(timezone.utc))
     now = _utc(clock_fn(), "execution now")
-    package, configuration, authorization, b1_artifact = _load_execution_inputs(
+    _, configuration, authorization, b1_artifact = _load_execution_inputs(
         package_path,
         authorization_path,
         b1_ll_artifact_path,
@@ -1700,25 +2004,41 @@ def run_guarded_network_execution(
         b1_artifact,
         now=_utc(clock_fn(), "reconciliation now"),
     )
-    payload = _network_execution_payload(
+    b2_package = _build_b2_shadow_package(
         result,
         reconciliation,
-        package_digest=package.package_digest,
+        configuration,
         authorization=authorization,
     )
-    artifact_path = _write_network_execution_artifact(output_path, payload)
+    artifact_path = _write_and_reload_b2_shadow_package(output_path, b2_package)
+    reloaded_package = load_five_league_shadow_package(artifact_path)
     return {
-        "status": payload["status"],
+        "status": reloaded_package.shadow_run.status.value,
         "artifact_path": str(artifact_path),
-        "provider": payload["provider"],
-        "controlled_shadow_run_id": payload["controlled_shadow_run_id"],
-        "qualification_session_id": payload["qualification_session_id"],
-        "authorization_id": payload["authorization_id"],
-        "request_count": payload["request_count"],
-        "datapoint_count": payload["datapoint_count"],
-        "quota_cost_units": payload["quota_cost_units"],
-        "reconciliation_digest": payload["reconciliation_digest"],
-        "network_calls": payload["request_count"],
+        "schema_version": reloaded_package.schema_version,
+        "package_id": reloaded_package.package_id,
+        "package_digest": reloaded_package.package_digest,
+        "provider": CANONICAL_CANDIDATE_PROVIDER,
+        "authorization_digest": authorization.authorization_digest,
+        "configuration_digest": configuration.configuration_digest,
+        "controlled_shadow_run_id": reloaded_package.shadow_run.controlled_shadow_run_id,
+        "qualification_session_id": reloaded_package.shadow_run.qualification_session_id,
+        "authorization_id": reloaded_package.shadow_run.authorization_id,
+        "request_count": reloaded_package.shadow_run.request_count,
+        "datapoint_count": reloaded_package.shadow_run.datapoint_count,
+        "quota_cost_units": reloaded_package.shadow_run.quota_cost_units,
+        "capture_count": len(reloaded_package.shadow_run.captures),
+        "manifest_count": len(reloaded_package.manifests),
+        "reconciliation_digest": reconciliation.reconciliation_digest,
+        "network_calls": reloaded_package.shadow_run.request_count,
+        "safety": {
+            "receipt_issued": False,
+            "authority_changed": False,
+            "publication": False,
+            "production_activation": False,
+            "betting": False,
+            "monetary_spend_authorized": False,
+        },
     }
 
 
@@ -1819,7 +2139,6 @@ __all__ = [
     "AUTHORIZATION_PACKAGE_SCHEMA_VERSION",
     "CANONICAL_CANDIDATE_PROVIDER",
     "FUTURE_EXECUTION_COMMAND",
-    "NETWORK_EXECUTION_ARTIFACT_SCHEMA_VERSION",
     "RECONCILIATION_SCHEMA_VERSION",
     "TOP5_LEAGUE_ORDER",
     "ControlledShadowAuthorizationPackageError",
