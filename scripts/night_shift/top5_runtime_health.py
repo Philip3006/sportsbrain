@@ -16,7 +16,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from monitoring.top5.runtime_health import (  # noqa: E402
+from monitoring.top5.runtime_health import (
     BLOCKED_STATUS,
     READY_STATUS,
     Top5RuntimeEvidence,
@@ -35,7 +35,7 @@ def _load_evidence(path: Path) -> Top5RuntimeEvidence:
     except (OSError, json.JSONDecodeError) as exc:
         raise ValueError(f"unable to read evidence input: {exc}") from exc
     if not isinstance(payload, dict):
-        raise ValueError("evidence input must be a JSON object")
+        raise TypeError("evidence input must be a JSON object")
     return Top5RuntimeEvidence.from_mapping(payload.get("evidence") or payload)
 
 
