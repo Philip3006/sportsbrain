@@ -48,6 +48,7 @@ BACKLOG ──approve──> READY ──claim──> CLAIMED ──start──>
    └─reject──> FAILED_SAFE       └─dependency──> WAITING_DEPENDENCY
                                                          │
 RUNNING ──verify──> VERIFYING ──delivery──> PR_READY ──> CEO_REVIEW
+                                      └─base drift──> DELIVERY_RECONCILING
                                       └─verified merge──> COMPLETED
    │                       └─read-only delivery──> COMPLETED ──> CEO_REVIEW
    ├─retry──> READY
@@ -58,8 +59,11 @@ READY/WAITING_DEPENDENCY ──cancel──> CANCELLED
 ```
 
 The external state model is exactly `BACKLOG`, `READY`,
-`WAITING_DEPENDENCY`, `CLAIMED`, `RUNNING`, `VERIFYING`, `PR_READY`,
-`CEO_REVIEW`, `BLOCKED`, `FAILED_SAFE`, `COMPLETED`, and `CANCELLED`.
+`WAITING_DEPENDENCY`, `CLAIMED`, `RUNNING`, `VERIFYING`,
+`DELIVERY_RECONCILING`, `PR_READY`, `CEO_REVIEW`, `BLOCKED`, `FAILED_SAFE`,
+`COMPLETED`, and `CANCELLED`. `DELIVERY_RECONCILING` is a bounded
+delivery-only state; it does not rerun the worker or consume another normal
+task attempt.
 Retry timing is orthogonal metadata, not an extra state. Code-changing work
 must pass the independent verification gate, receive a deterministic commit,
 push only its task branch, and have one real PR before `PR_READY`. Queue-level
@@ -257,6 +261,39 @@ A changed base OID is retained as evidence; the command never changes a PR
 base, rebases, force-pushes, merges, or declares completion. Timeout/dead-letter
 tasks cannot use this path. After review, use `ceo-review` and then the
 existing read-only `reconcile-merged` command as appropriate.
+
+### Authoritative-base drift reconciliation
+
+An ordinary `origin/main` advance is not terminal delivery failure. After the
+worker has already verified, committed, and pushed its exact task delta, the
+dispatcher compares the original base with the current authoritative base and
+classifies the changed paths. Runtime/health/generated-artifact drift and
+unrelated code drift are automatically rematerialized onto a fresh
+`nightshift/recovery/<task-id>/attempt-N` branch. Same-file overlap is accepted
+only when `git apply --3way --check` proves that the exact delta applies cleanly;
+semantic conflicts and post-recovery verification failures remain hard blocks.
+
+The automatic loop is limited to two delivery reconciliation attempts. It
+never rewrites the original branch, rebases a shared branch, or force-pushes.
+The SQLite row retains the original task base/commit and records the current
+authoritative base, overlap analysis, recovery branch/commit, verification,
+PR number, PR head/base, and final delivery state. Audit events distinguish
+`delivery_base_drift_detected`, `delivery_reconciliation_started`,
+`delivery_reconciliation_verified`, `delivery_reconciliation_failed`, and
+`delivery_recovered`.
+
+For a previously preserved `BLOCKED` delivery row, use the same governed path
+without rerunning the Builder:
+
+```bash
+python3 scripts/night_shift_dispatcher.py reconcile-delivery-drift TASK_ID \
+  --actor builder-5-reconciler
+```
+
+`status` and `doctor` expose active reconciliations, attempt count, drift
+classification, original/recovered commit evidence, hard blockers, and the
+recovered PR binding. Normal task attempts and dead-letter budgets are not
+consumed by this delivery-only recovery.
 
 ## Control-repository locking
 

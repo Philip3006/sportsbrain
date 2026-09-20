@@ -42,6 +42,21 @@ def task_summary(record: TaskRecord) -> dict[str, Any]:
         "pr_number": record.pr_number,
         "pr_url": record.pr_url,
         "roadmap_item_id": record.roadmap_item_id,
+        "reconciliation_attempts": record.reconciliation_attempts,
+        "reconciliation": {
+            key: (record.reconciliation or {}).get(key)
+            for key in (
+                "classification",
+                "original_base_sha",
+                "authoritative_base_sha",
+                "original_commit_sha",
+                "recovery_commit_sha",
+                "recovery_branch",
+                "pr_number",
+                "pr_url",
+            )
+            if (record.reconciliation or {}).get(key) is not None
+        },
     }
 
 
@@ -59,12 +74,24 @@ def operator_snapshot(
     running = [
         task_summary(record)
         for record in records
-        if record.state in {TaskState.CLAIMED, TaskState.RUNNING, TaskState.VERIFYING}
+        if record.state
+        in {
+            TaskState.CLAIMED,
+            TaskState.RUNNING,
+            TaskState.VERIFYING,
+            TaskState.DELIVERY_RECONCILING,
+        }
     ]
     dead_pid = [
         task_summary(record)
         for record in records
-        if record.state in {TaskState.CLAIMED, TaskState.RUNNING, TaskState.VERIFYING}
+        if record.state
+        in {
+            TaskState.CLAIMED,
+            TaskState.RUNNING,
+            TaskState.VERIFYING,
+            TaskState.DELIVERY_RECONCILING,
+        }
         and isinstance(record.process_id, int)
         and not process_alive(record.process_id)
     ]
@@ -82,6 +109,16 @@ def operator_snapshot(
         task_summary(record)
         for record in records
         if record.delivery_blocked
+    ]
+    delivery_reconciling = [
+        task_summary(record)
+        for record in records
+        if record.state is TaskState.DELIVERY_RECONCILING
+    ]
+    delivery_recovered = [
+        task_summary(record)
+        for record in records
+        if record.reconciliation and record.delivery and record.state is TaskState.PR_READY
     ]
     paused_quota = [
         task_summary(record)
@@ -143,6 +180,8 @@ def operator_snapshot(
         "running": running,
         "parked_timeout": parked_timeout,
         "delivery_blocked": delivery_blocked,
+        "delivery_reconciling": delivery_reconciling,
+        "delivery_recovered": delivery_recovered,
         "paused_quota": paused_quota,
         "awaiting_ceo_review": ceo_review,
         "dead_pid": dead_pid,

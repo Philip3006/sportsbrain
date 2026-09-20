@@ -249,6 +249,32 @@ class WorktreeManager:
                 f"no dedicated Night Shift control repository is configured for {repo}"
             ) from exc
 
+    def authoritative_base_sha(self, repo: str, *, base_branch: str = "main") -> str:
+        """Fetch and return the current authoritative base under the control lock."""
+
+        check = self.control_check(repo, base_branch=base_branch, fetch=True)
+        value = check.get("origin_sha")
+        if not check.get("fetch_ok") or not isinstance(value, str) or not value:
+            raise WorktreeSafetyError(
+                check.get("error", "authoritative base SHA is unavailable")
+            )
+        return value.lower()
+
+    def fetch_task_branch(self, repo: str, branch: str) -> None:
+        """Fetch one already-pushed task branch without rewriting any ref."""
+
+        control = self.resolve_control_repo(repo)
+        fetched = self._locked_control_run(
+            control,
+            self._git_path_args(control)
+            + ["fetch", "--no-tags", "origin", branch],
+        )
+        if fetched.returncode != 0:
+            raise WorktreeSafetyError(
+                self._safe_output(fetched.stderr)
+                or "task branch fetch failed during reconciliation"
+            )
+
     def control_check(
         self, repo: str, *, base_branch: str = "main", fetch: bool = False
     ) -> dict[str, Any]:

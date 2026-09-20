@@ -65,6 +65,10 @@ class EventType(str, Enum):
     MERGE_VERIFIED = "merge_verified"
     COMPLETED = "completed"
     DELIVERY_BLOCKED = "delivery_blocked"
+    DELIVERY_BASE_DRIFT_DETECTED = "delivery_base_drift_detected"
+    DELIVERY_RECONCILIATION_STARTED = "delivery_reconciliation_started"
+    DELIVERY_RECONCILIATION_VERIFIED = "delivery_reconciliation_verified"
+    DELIVERY_RECONCILIATION_FAILED = "delivery_reconciliation_failed"
     DELIVERY_RECOVERED = "delivery_recovered"
     FENCED = "fenced"
     HEARTBEAT = "heartbeat"
@@ -468,6 +472,7 @@ class TaskRecord:
     pr_url: str | None = None
     verification: Mapping[str, Any] | None = None
     delivery: Mapping[str, Any] | None = None
+    reconciliation: Mapping[str, Any] | None = None
     diagnostic_path: str | None = None
     failure_class: str | None = None
     roadmap_item_id: str | None = None
@@ -485,6 +490,7 @@ class TaskRecord:
                 TaskState.CLAIMED,
                 TaskState.RUNNING,
                 TaskState.VERIFYING,
+                TaskState.DELIVERY_RECONCILING,
             }
             and self.lease_owner is not None
         )
@@ -515,6 +521,16 @@ class TaskRecord:
             self.failure_class
             and self.failure_class.startswith("DELIVERY")
         ) or bool((self.delivery or {}).get("delivery_blocked"))
+
+    @property
+    def reconciliation_attempts(self) -> int:
+        """Return the bounded automatic delivery-reconciliation count."""
+
+        value = (self.reconciliation or {}).get("attempts", 0)
+        try:
+            return max(0, int(value))
+        except (TypeError, ValueError):
+            return 0
 
     def as_dict(self) -> dict[str, Any]:
         result = asdict(self)

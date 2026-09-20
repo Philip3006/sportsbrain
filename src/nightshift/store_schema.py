@@ -39,10 +39,14 @@ ALLOWED_TRANSITIONS: dict[TaskState, frozenset[TaskState]] = {
             TaskState.PR_READY,
             TaskState.COMPLETED,
             TaskState.READY,
+            TaskState.DELIVERY_RECONCILING,
             TaskState.BLOCKED,
             TaskState.FAILED_SAFE,
             TaskState.PAUSED_QUOTA,
         }
+    ),
+    TaskState.DELIVERY_RECONCILING: frozenset(
+        {TaskState.PR_READY, TaskState.BLOCKED, TaskState.FAILED_SAFE}
     ),
     TaskState.PR_READY: frozenset({TaskState.CEO_REVIEW, TaskState.COMPLETED}),
     TaskState.COMPLETED: frozenset({TaskState.CEO_REVIEW}),
@@ -74,6 +78,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     lease_generation INTEGER NOT NULL DEFAULT 0, process_id INTEGER,
     commit_sha TEXT, remote_sha TEXT, pr_number INTEGER, pr_url TEXT,
     verification_json TEXT, delivery_json TEXT,
+    reconciliation_json TEXT,
     roadmap_item_id TEXT, debug_budget INTEGER NOT NULL DEFAULT 0,
     debug_attempt_count INTEGER NOT NULL DEFAULT 0,
     last_failure_signature TEXT, failure_repeat_count INTEGER NOT NULL DEFAULT 0,

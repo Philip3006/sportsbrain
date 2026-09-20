@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
@@ -87,6 +88,7 @@ class StoreLifecycleMixin:
             TaskState.CLAIMED.value,
             TaskState.RUNNING.value,
             TaskState.VERIFYING.value,
+            TaskState.DELIVERY_RECONCILING.value,
         }
         if lease_generation is None:
             raise LeaseError("lease generation is required for worker mutation")
@@ -422,6 +424,399 @@ class StoreLifecycleMixin:
                     "delivery_blocked": True,
                     "preserved": bool(row["commit_sha"] or row["remote_sha"] or has_pr),
                 },
+            )
+            return self._record(self._get_row(conn, task_id))
+
+    def start_delivery_reconciliation(
+        self,
+        task_id: str,
+        *,
+        actor: str,
+        evidence: Mapping[str, Any],
+        lease_generation: int | None = None,
+        max_attempts: int = 2,
+        now: datetime | None = None,
+    ):
+        """Enter the bounded, durable base-drift recovery state.
+
+        A task already in ``DELIVERY_RECONCILING`` is returned unchanged so a
+        restart or duplicate dispatcher invocation cannot create a second
+        recovery branch or consume another reconciliation attempt.
+        """
+
+        if not isinstance(actor, str) or not actor.strip():
+            raise SafetyViolation("reconciliation actor is required")
+        if not 1 <= max_attempts <= 2:
+            raise SafetyViolation("delivery reconciliation is bounded to two attempts")
+        timestamp = isoformat(now or utc_now())
+        with self._write() as conn:
+            row = self._get_row(conn, task_id)
+            current = TaskState(row["state"])
+            if current is TaskState.DELIVERY_RECONCILING:
+                return self._record(row)
+            if current not in {
+                TaskState.VERIFYING,
+                TaskState.BLOCKED,
+                TaskState.FAILED_SAFE,
+            }:
+                raise InvalidTransitionError(
+                    f"{current.value} cannot enter delivery reconciliation"
+                )
+            if current is TaskState.FAILED_SAFE and not (
+                str(row["failure_class"] or "").upper().startswith("DELIVERY")
+            ):
+                raise SafetyViolation(
+                    "non-delivery FAILED_SAFE work cannot enter reconciliation"
+                )
+            if current is TaskState.VERIFYING:
+                self._assert_active_lease(
+                    row,
+                    worker_id=actor,
+                    lease_generation=lease_generation,
+                    states={TaskState.VERIFYING.value},
+                    now=now,
+                )
+            elif row["lease_owner"] is not None:
+                self._assert_active_lease(
+                    row,
+                    worker_id=actor,
+                    lease_generation=lease_generation,
+                    states={current.value},
+                    now=now,
+                )
+            prior = {}
+            if row["reconciliation_json"]:
+                try:
+                    loaded = json.loads(row["reconciliation_json"])
+                    if isinstance(loaded, dict):
+                        prior = loaded
+                except (TypeError, ValueError, json.JSONDecodeError):
+                    prior = {}
+            attempts = int(prior.get("attempts", 0) or 0) + 1
+            if attempts > max_attempts:
+                raise SafetyViolation("delivery reconciliation attempt limit exhausted")
+            details = dict(prior)
+            details.update(dict(evidence))
+            details.update(
+                {
+                    "attempts": attempts,
+                    "max_attempts": max_attempts,
+                    "source_state": current.value,
+                    "original_branch": details.get("original_branch", row["branch"]),
+                    "started_at": details.get("started_at", timestamp),
+                }
+            )
+            conn.execute(
+                """UPDATE tasks SET state = ?, reconciliation_json = ?,
+                   last_error = ?, updated_at = ? WHERE task_id = ?""",
+                (
+                    TaskState.DELIVERY_RECONCILING.value,
+                    self._json(details),
+                    "DELIVERY_RECONCILING: authoritative base drift is being recovered",
+                    timestamp,
+                    task_id,
+                ),
+            )
+            self._append_event(
+                conn,
+                task_id,
+                EventType.DELIVERY_BASE_DRIFT_DETECTED,
+                actor,
+                timestamp,
+                current.value,
+                current.value,
+                {
+                    "original_base_sha": details.get("original_base_sha"),
+                    "authoritative_base_sha": details.get("authoritative_base_sha"),
+                    "classification": details.get("classification"),
+                    "attempt": attempts,
+                },
+            )
+            self._append_event(
+                conn,
+                task_id,
+                EventType.DELIVERY_RECONCILIATION_STARTED,
+                actor,
+                timestamp,
+                current.value,
+                TaskState.DELIVERY_RECONCILING.value,
+                {
+                    "attempt": attempts,
+                    "max_attempts": max_attempts,
+                    "recovery_branch": details.get("recovery_branch"),
+                },
+            )
+            return self._record(self._get_row(conn, task_id))
+
+    def finish_delivery_reconciliation(
+        self,
+        task_id: str,
+        *,
+        actor: str,
+        success: bool,
+        evidence: Mapping[str, Any],
+        lease_generation: int | None = None,
+        now: datetime | None = None,
+    ):
+        """Atomically persist recovery evidence and its terminal delivery state."""
+
+        timestamp = isoformat(now or utc_now())
+        with self._write() as conn:
+            row = self._get_row(conn, task_id)
+            current = TaskState(row["state"])
+            if current is not TaskState.DELIVERY_RECONCILING:
+                if success and current is TaskState.PR_READY:
+                    return self._record(row)
+                raise InvalidTransitionError(
+                    f"{current.value} is not in delivery reconciliation"
+                )
+            if row["lease_owner"] is not None:
+                self._assert_active_lease(
+                    row,
+                    worker_id=actor,
+                    lease_generation=lease_generation,
+                    states={TaskState.DELIVERY_RECONCILING.value},
+                    now=now,
+                )
+            reconciliation = {}
+            if row["reconciliation_json"]:
+                try:
+                    loaded = json.loads(row["reconciliation_json"])
+                    if isinstance(loaded, dict):
+                        reconciliation = loaded
+                except (TypeError, ValueError, json.JSONDecodeError):
+                    reconciliation = {}
+            reconciliation.update(dict(evidence))
+            reconciliation["finished_at"] = timestamp
+            if success:
+                required = ("commit_sha", "remote_sha", "pr_number", "pr_url")
+                if any(not reconciliation.get(key) for key in required):
+                    raise SafetyViolation(
+                        "successful reconciliation requires commit, remote, and PR evidence"
+                    )
+                verification = reconciliation.get("verification") or {}
+                if not isinstance(verification, Mapping) or verification.get("passed") is not True:
+                    raise SafetyViolation(
+                        "successful reconciliation requires passing verification evidence"
+                    )
+                delivery = reconciliation.get("delivery") or {}
+                if not isinstance(delivery, Mapping):
+                    delivery = {}
+                delivery = dict(delivery)
+                delivery.update(
+                    {
+                        "delivery_recovered": True,
+                        "original_commit_sha": reconciliation.get("original_commit_sha"),
+                        "recovery_commit_sha": reconciliation.get("commit_sha"),
+                        "recovery_branch": reconciliation.get("recovery_branch"),
+                        "recovery_base_sha": reconciliation.get("authoritative_base_sha"),
+                    }
+                )
+                conn.execute(
+                    """UPDATE tasks SET state = ?, branch = ?, commit_sha = ?, remote_sha = ?,
+                       pr_number = ?, pr_url = ?, base_sha = ?, origin_sha = ?,
+                       verification_json = ?, delivery_json = ?, reconciliation_json = ?,
+                       last_error = NULL, failure_class = NULL, lease_owner = NULL,
+                       lease_expires_at = NULL, process_id = NULL, updated_at = ?
+                       WHERE task_id = ?""",
+                    (
+                        TaskState.PR_READY.value,
+                        reconciliation.get("recovery_branch") or row["branch"],
+                        reconciliation["commit_sha"],
+                        reconciliation["remote_sha"],
+                        reconciliation["pr_number"],
+                        reconciliation["pr_url"],
+                        reconciliation.get("authoritative_base_sha"),
+                        reconciliation.get("authoritative_base_sha"),
+                        self._json(dict(verification)),
+                        self._json(delivery),
+                        self._json(reconciliation),
+                        timestamp,
+                        task_id,
+                    ),
+                )
+                self._append_event(
+                    conn,
+                    task_id,
+                    EventType.DELIVERY_RECONCILIATION_VERIFIED,
+                    actor,
+                    timestamp,
+                    current.value,
+                    current.value,
+                    {
+                        "attempt": reconciliation.get("attempts"),
+                        "recovery_commit_sha": reconciliation.get("commit_sha"),
+                        "verification_passed": True,
+                    },
+                )
+                self._append_event(
+                    conn,
+                    task_id,
+                    EventType.DELIVERY_RECOVERED,
+                    actor,
+                    timestamp,
+                    current.value,
+                    TaskState.PR_READY.value,
+                    {
+                        "pr_number": reconciliation["pr_number"],
+                        "recovery_branch": reconciliation.get("recovery_branch"),
+                        "original_commit_sha": reconciliation.get("original_commit_sha"),
+                        "recovery_commit_sha": reconciliation.get("commit_sha"),
+                    },
+                )
+            else:
+                source = str(reconciliation.get("source_state", TaskState.BLOCKED.value))
+                final_state = (
+                    TaskState.FAILED_SAFE
+                    if source == TaskState.FAILED_SAFE.value
+                    else TaskState.BLOCKED
+                )
+                reason = str(
+                    reconciliation.get("failure_reason")
+                    or "delivery reconciliation failed"
+                )[:4000]
+                conn.execute(
+                    """UPDATE tasks SET state = ?, reconciliation_json = ?,
+                       last_error = ?, failure_class = ?, lease_owner = NULL,
+                       lease_expires_at = NULL, process_id = NULL, updated_at = ?
+                       WHERE task_id = ?""",
+                    (
+                        final_state.value,
+                        self._json(reconciliation),
+                        f"DELIVERY_RECONCILIATION_FAILED: {reason}",
+                        "DELIVERY_RECONCILIATION_FAILED",
+                        timestamp,
+                        task_id,
+                    ),
+                )
+                self._append_event(
+                    conn,
+                    task_id,
+                    EventType.DELIVERY_RECONCILIATION_FAILED,
+                    actor,
+                    timestamp,
+                    current.value,
+                    final_state.value,
+                    {
+                        "attempt": reconciliation.get("attempts"),
+                        "max_attempts": reconciliation.get("max_attempts", 2),
+                        "reason": reason,
+                        "classification": reconciliation.get("classification"),
+                    },
+                )
+            return self._record(self._get_row(conn, task_id))
+
+    def update_delivery_reconciliation(
+        self,
+        task_id: str,
+        *,
+        actor: str,
+        evidence: Mapping[str, Any],
+        lease_generation: int | None = None,
+        now: datetime | None = None,
+    ):
+        """Persist idempotent recovery progress without changing task state."""
+
+        timestamp = isoformat(now or utc_now())
+        with self._write() as conn:
+            row = self._get_row(conn, task_id)
+            if TaskState(row["state"]) is not TaskState.DELIVERY_RECONCILING:
+                raise InvalidTransitionError(
+                    "reconciliation progress requires DELIVERY_RECONCILING"
+                )
+            if row["lease_owner"] is not None:
+                self._assert_active_lease(
+                    row,
+                    worker_id=actor,
+                    lease_generation=lease_generation,
+                    states={TaskState.DELIVERY_RECONCILING.value},
+                    now=now,
+                )
+            current = {}
+            if row["reconciliation_json"]:
+                try:
+                    loaded = json.loads(row["reconciliation_json"])
+                    if isinstance(loaded, dict):
+                        current = loaded
+                except (TypeError, ValueError, json.JSONDecodeError):
+                    current = {}
+            current.update(dict(evidence))
+            conn.execute(
+                "UPDATE tasks SET reconciliation_json = ?, updated_at = ? WHERE task_id = ?",
+                (self._json(current), timestamp, task_id),
+            )
+            return self._record(self._get_row(conn, task_id))
+
+    def retry_delivery_reconciliation(
+        self,
+        task_id: str,
+        *,
+        actor: str,
+        evidence: Mapping[str, Any],
+        lease_generation: int | None = None,
+        max_attempts: int = 2,
+        now: datetime | None = None,
+    ):
+        """Advance one bounded attempt while retaining an active worker lease."""
+
+        if not 1 <= max_attempts <= 2:
+            raise SafetyViolation("delivery reconciliation is bounded to two attempts")
+        timestamp = isoformat(now or utc_now())
+        with self._write() as conn:
+            row = self._get_row(conn, task_id)
+            if TaskState(row["state"]) is not TaskState.DELIVERY_RECONCILING:
+                raise InvalidTransitionError(
+                    "only DELIVERY_RECONCILING work can start another attempt"
+                )
+            if row["lease_owner"] is not None:
+                self._assert_active_lease(
+                    row,
+                    worker_id=actor,
+                    lease_generation=lease_generation,
+                    states={TaskState.DELIVERY_RECONCILING.value},
+                    now=now,
+                )
+            current = {}
+            if row["reconciliation_json"]:
+                try:
+                    loaded = json.loads(row["reconciliation_json"])
+                    if isinstance(loaded, dict):
+                        current = loaded
+                except (TypeError, ValueError, json.JSONDecodeError):
+                    current = {}
+            attempts = int(current.get("attempts", 0) or 0) + 1
+            if attempts > max_attempts:
+                raise SafetyViolation("delivery reconciliation attempt limit exhausted")
+            current.update(dict(evidence))
+            current.update({"attempts": attempts, "max_attempts": max_attempts})
+            conn.execute(
+                "UPDATE tasks SET reconciliation_json = ?, updated_at = ? WHERE task_id = ?",
+                (self._json(current), timestamp, task_id),
+            )
+            self._append_event(
+                conn,
+                task_id,
+                EventType.DELIVERY_BASE_DRIFT_DETECTED,
+                actor,
+                timestamp,
+                TaskState.DELIVERY_RECONCILING.value,
+                TaskState.DELIVERY_RECONCILING.value,
+                {
+                    "attempt": attempts,
+                    "original_base_sha": current.get("original_base_sha"),
+                    "authoritative_base_sha": current.get("authoritative_base_sha"),
+                    "classification": current.get("classification"),
+                },
+            )
+            self._append_event(
+                conn,
+                task_id,
+                EventType.DELIVERY_RECONCILIATION_STARTED,
+                actor,
+                timestamp,
+                TaskState.DELIVERY_RECONCILING.value,
+                TaskState.DELIVERY_RECONCILING.value,
+                {"attempt": attempts, "max_attempts": max_attempts},
             )
             return self._record(self._get_row(conn, task_id))
 

@@ -60,6 +60,12 @@ from .quota import (
     next_quota_eligible_at,
     normalize_reset_at,
 )
+from .reconciliation import (
+    DeliveryBaseDrift,
+    DeliveryReconciliationError,
+    DriftClassification,
+    classify_drift,
+)
 from .recovery import (
     DeliveryVerificationError,
     facts_verifier,
@@ -92,12 +98,15 @@ __all__ = [
     "ConfigurationError",
     "ControlRepoLock",
     "ControlRepoLockTimeout",
+    "DeliveryBaseDrift",
     "DeliveryBlocked",
     "DeliveryError",
     "DeliveryPipeline",
+    "DeliveryReconciliationError",
     "DeliveryVerificationError",
     "DispatcherRecursionError",
     "DispatcherStore",
+    "DriftClassification",
     "EventType",
     "ExecutionResult",
     "ExecutorTimeout",
@@ -135,6 +144,7 @@ __all__ = [
     "WorktreeAllocation",
     "WorktreeManager",
     "WorktreeSafetyError",
+    "classify_drift",
     "classify_quota_exhaustion",
     "control_repo_lock_path",
     "facts_verifier",

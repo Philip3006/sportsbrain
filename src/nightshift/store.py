@@ -92,6 +92,7 @@ class DispatcherStore(
             "pr_url": "TEXT",
             "verification_json": "TEXT",
             "delivery_json": "TEXT",
+            "reconciliation_json": "TEXT",
             "roadmap_item_id": "TEXT",
             "debug_budget": "INTEGER NOT NULL DEFAULT 0",
             "debug_attempt_count": "INTEGER NOT NULL DEFAULT 0",
@@ -223,6 +224,11 @@ class DispatcherStore(
             if row["verification_json"]
             else None,
             delivery=json.loads(row["delivery_json"]) if row["delivery_json"] else None,
+            reconciliation=(
+                json.loads(row["reconciliation_json"])
+                if row["reconciliation_json"]
+                else None
+            ),
             diagnostic_path=row["diagnostic_path"],
             failure_class=row["failure_class"],
             roadmap_item_id=row["roadmap_item_id"],
