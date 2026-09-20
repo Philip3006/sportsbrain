@@ -11,6 +11,7 @@ an additional explicit execution switch.
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -374,6 +375,256 @@ def adapter_source_sha() -> str:
     from src.football.odds import therundown
 
     return hashlib.sha256(Path(therundown.__file__).read_bytes()).hexdigest()
+
+
+SAME_RUN_LL_VALIDATION_SCHEMA = "top5-therundown-ll-same-run-validation-v1"
+
+
+def _same_run_attr(value: object, name: str) -> object:
+    result = getattr(value, name, None)
+    if result is None or (isinstance(result, str) and not result.strip()):
+        raise ProductionContractError(f"same-run LL {name} is missing")
+    return result
+
+
+def _same_run_digest(value: object, name: str) -> str:
+    raw = _same_run_attr(value, name)
+    if not isinstance(raw, str) or len(raw) != 64:
+        raise ProductionContractError(f"same-run LL {name} is not a digest")
+    try:
+        int(raw, 16)
+    except ValueError as exc:
+        raise ProductionContractError(f"same-run LL {name} is not a digest") from exc
+    return raw.lower()
+
+
+def _same_run_price(value: object, name: str) -> float:
+    try:
+        price = float(_same_run_attr(value, name))
+    except (TypeError, ValueError) as exc:
+        raise ProductionContractError(f"same-run LL {name} is invalid") from exc
+    if price <= 1.0:
+        raise ProductionContractError(f"same-run LL {name} is invalid")
+    return price
+
+
+def _same_run_timestamp(value: object, name: str) -> datetime:
+    if isinstance(value, datetime):
+        return _utc(value, name)
+    try:
+        return _parse_datetime(value, field_name=name)
+    except (ProductionContractError, TypeError, ValueError) as exc:
+        raise ProductionContractError(f"same-run LL {name} is invalid") from exc
+
+
+def _same_run_digest_payload(payload: Mapping[str, object]) -> str:
+    encoded = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), allow_nan=False
+    )
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def validate_same_run_ll_capture(
+    *,
+    target: object,
+    request: object,
+    response: object,
+    authorization: object,
+    now: datetime,
+    maximum_source_age_seconds: int = 300,
+) -> dict[str, object]:
+    """Validate the genuine B4 LL response through the B1 boundary.
+
+    This is deliberately a validator/attestation seam. It does not perform
+    network I/O, construct a B1 capture, issue authority, or issue a receipt.
+    B4 may call it only after the single LL response has been accepted by the
+    network-shadow executor.
+    """
+
+    current = _utc(now, "same-run LL validation now")
+    provider = _same_run_attr(target, "provider")
+    league = _same_run_attr(target, "league")
+    if provider != THERUNDOWN_PROVIDER_NAME or league != LA_LIGA_CODE:
+        raise ProductionContractError("same-run LL target identity is invalid")
+    for name in ("fixture_key", "provider_event_id", "home_team", "away_team"):
+        _same_run_attr(target, name)
+    target_kickoff = _same_run_timestamp(_same_run_attr(target, "kickoff"), "kickoff")
+    if target_kickoff <= current:
+        raise ProductionContractError("same-run LL target is not pre-match")
+
+    expected_bindings = {
+        "provider": provider,
+        "league": league,
+        "fixture_key": _same_run_attr(target, "fixture_key"),
+        "provider_event_id": _same_run_attr(target, "provider_event_id"),
+        "provider_request_id": _same_run_attr(request, "request_identity"),
+        "controlled_shadow_run_id": _same_run_attr(
+            authorization, "controlled_shadow_run_id"
+        ),
+        "qualification_session_id": _same_run_attr(
+            authorization, "qualification_session_id"
+        ),
+        "ceo_authorization_id": _same_run_attr(authorization, "authorization_id"),
+    }
+    response_binding_names = {
+        "provider",
+        "league",
+        "fixture_key",
+        "provider_event_id",
+        "provider_request_id",
+    }
+    for name, expected in expected_bindings.items():
+        source = response if name in response_binding_names else request
+        actual_name = {
+            "provider_request_id": "provider_request_id",
+            "ceo_authorization_id": "authorization_id",
+        }.get(name, name)
+        actual = _same_run_attr(source, actual_name)
+        if actual != expected:
+            raise ProductionContractError(f"same-run LL binding mismatch: {name}")
+
+    evidence_kind = _same_run_attr(response, "evidence_kind")
+    if getattr(evidence_kind, "value", evidence_kind) != "REAL_OBSERVED":
+        raise ProductionContractError("same-run LL evidence is not REAL_OBSERVED")
+    if _same_run_attr(response, "network_execution") is not True:
+        raise ProductionContractError("same-run LL evidence is not network execution")
+    for name, expected in (
+        ("no_bet", True),
+        ("publication", False),
+        ("production_activation", False),
+        ("monetary_spend_authorized", False),
+        ("authority_attempted", False),
+        ("publication_attempted", False),
+        ("activation_attempted", False),
+        ("ledger_mutated", False),
+        ("scheduler_registered", False),
+    ):
+        if getattr(response, name, None) is not expected:
+            raise ProductionContractError(f"same-run LL unsafe flag: {name}")
+    if getattr(response, "retry_count", None) != 0:
+        raise ProductionContractError("same-run LL retries are forbidden")
+
+    for name in ("home_participant_id", "away_participant_id"):
+        if _same_run_attr(response, name) != _same_run_attr(request, name):
+            raise ProductionContractError("same-run LL participant binding mismatch")
+    if _same_run_attr(response, "home_team") != _same_run_attr(target, "home_team"):
+        raise ProductionContractError("same-run LL home team mismatch")
+    if _same_run_attr(response, "away_team") != _same_run_attr(target, "away_team"):
+        raise ProductionContractError("same-run LL away team mismatch")
+
+    for name in ("bookmaker_identity", "source_identity"):
+        _same_run_attr(response, name)
+    for name in ("home_odds", "draw_odds", "away_odds"):
+        _same_run_price(response, name)
+    source_timestamp = _same_run_timestamp(
+        _same_run_attr(response, "source_timestamp"), "source_timestamp"
+    )
+    captured_at = _same_run_timestamp(
+        _same_run_attr(response, "captured_at"), "captured_at"
+    )
+    request_started_at = _same_run_timestamp(
+        _same_run_attr(response, "request_started_at"), "request_started_at"
+    )
+    request_finished_at = _same_run_timestamp(
+        _same_run_attr(response, "request_finished_at"), "request_finished_at"
+    )
+    if (
+        source_timestamp > captured_at
+        or captured_at > current
+        or request_started_at > request_finished_at
+        or request_finished_at > current
+        or (current - source_timestamp).total_seconds() > maximum_source_age_seconds
+    ):
+        raise ProductionContractError(
+            "same-run LL timestamp/freshness validation failed"
+        )
+    if (
+        getattr(response, "provider_timestamp_provenance", None)
+        != "PROVIDER_SOURCE_TIMESTAMP"
+    ):
+        raise ProductionContractError(
+            "same-run LL source timestamp provenance is invalid"
+        )
+
+    for name in (
+        "adapter_source_sha",
+        "raw_response_digest",
+        "provider_record_digest",
+        "normalized_record_digest",
+    ):
+        _same_run_digest(response, name)
+    _same_run_attr(response, "adapter_version")
+    quota_before = _same_run_attr(response, "quota_before")
+    quota_after = _same_run_attr(response, "quota_after")
+    if not isinstance(quota_before, int) or quota_before < 0:
+        raise ProductionContractError("same-run LL quota-before evidence is invalid")
+    if (
+        not isinstance(quota_after, int)
+        or quota_after < 0
+        or quota_after > quota_before
+    ):
+        raise ProductionContractError("same-run LL quota-after evidence is invalid")
+    datapoints = _same_run_attr(response, "datapoint_count")
+    quota_units = float(_same_run_attr(response, "quota_cost_units"))
+    if (
+        not isinstance(datapoints, int)
+        or datapoints <= 0
+        or quota_units != float(datapoints)
+    ):
+        raise ProductionContractError("same-run LL billing evidence is invalid")
+
+    raw_metadata = getattr(response, "raw_metadata", {})
+    normalized = (
+        raw_metadata.get("normalized_observations", [])
+        if isinstance(raw_metadata, Mapping)
+        else []
+    )
+    if not isinstance(normalized, list):
+        raise ProductionContractError("same-run LL normalized observations are invalid")
+    payload: dict[str, object] = {
+        "schema_version": SAME_RUN_LL_VALIDATION_SCHEMA,
+        "validation_status": "VALIDATED",
+        "provider_identity": provider,
+        "league": league,
+        "provider_fixture_key": f"therundown:{league}:{expected_bindings['provider_event_id']}",
+        "canonical_fixture_key": expected_bindings["fixture_key"],
+        **expected_bindings,
+        "participant_ids": {
+            "home": _same_run_attr(request, "home_participant_id"),
+            "away": _same_run_attr(request, "away_participant_id"),
+        },
+        "bookmaker_identity": _same_run_attr(response, "bookmaker_identity"),
+        "source_identity": _same_run_attr(response, "source_identity"),
+        "home_odds": _same_run_price(response, "home_odds"),
+        "draw_odds": _same_run_price(response, "draw_odds"),
+        "away_odds": _same_run_price(response, "away_odds"),
+        "source_timestamp": source_timestamp.isoformat(),
+        "captured_at": captured_at.isoformat(),
+        "request_started_at": request_started_at.isoformat(),
+        "request_finished_at": request_finished_at.isoformat(),
+        "adapter_version": _same_run_attr(response, "adapter_version"),
+        "adapter_source_sha": _same_run_digest(response, "adapter_source_sha"),
+        "raw_response_digest": _same_run_digest(response, "raw_response_digest"),
+        "provider_record_digest": _same_run_digest(response, "provider_record_digest"),
+        "normalized_record_digest": _same_run_digest(
+            response, "normalized_record_digest"
+        ),
+        "normalized_observations": normalized,
+        "quota_before": quota_before,
+        "quota_after": quota_after,
+        "datapoint_count": datapoints,
+        "quota_cost_units": quota_units,
+        "network_execution": True,
+        "evidence_kind": "REAL_OBSERVED",
+        "b1_authority_issued": False,
+        "receipt_issued": False,
+        "no_bet": True,
+        "publication": False,
+        "production_activation": False,
+        "monetary_spend_authorized": False,
+    }
+    payload["validation_digest"] = _same_run_digest_payload(payload)
+    return payload
 
 
 def _quota_snapshot(headers: Mapping[str, str]) -> QuotaSnapshot:
@@ -849,10 +1100,12 @@ __all__ = [
     "LA_LIGA_MAX_DATAPOINTS",
     "LA_LIGA_MAX_REQUESTS",
     "LA_LIGA_PROVIDER_LEAGUE",
+    "SAME_RUN_LL_VALIDATION_SCHEMA",
     "LaLigaCaptureAuthorization",
     "LaLigaCaptureEvidence",
     "LaLigaCaptureStatus",
     "adapter_source_sha",
     "capture_la_liga",
     "preflight_la_liga",
+    "validate_same_run_ll_capture",
 ]

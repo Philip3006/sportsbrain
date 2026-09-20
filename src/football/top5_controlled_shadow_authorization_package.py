@@ -21,6 +21,10 @@ from pathlib import Path
 from typing import Any
 
 from src.football.odds.therundown import THERUNDOWN_BASE_URL
+from src.football.odds.therundown_la_liga_capture import (
+    SAME_RUN_LL_VALIDATION_SCHEMA,
+    validate_same_run_ll_capture,
+)
 from src.football.provider_cascade.candidate_eligibility import (
     CandidateEligibilityError,
     CandidateProviderEligibilityV1,
@@ -75,6 +79,7 @@ from src.football.top5_therundown_network_shadow import (
     TheRundownNetworkShadowCaptureV1,
     TheRundownNetworkShadowExecutorV1,
     TheRundownNetworkShadowRunResultV1,
+    TheRundownQuotaHeadroomEvidenceV1,
 )
 from src.football.top5_therundown_shadow_canary import TheRundownCanaryTargetV1
 from src.utils.atomic_io import atomic_write_json
@@ -90,7 +95,7 @@ FUTURE_EXECUTION_COMMAND = (
     "python -m src.football.top5_controlled_shadow_authorization_package "
     "--execute-network --package <authorization-package.json> "
     "--authorization <ceo-authorization.json> "
-    "--b1-ll-artifact <b1-ll-evidence-bundle.json> "
+    "--quota-headroom <quota-headroom-evidence.json> "
     "--credential-file /operator-only/top5/therundown.env "
     "--output /operator-only/top5/top5-b2-five-league-shadow-package.json"
 )
@@ -372,6 +377,9 @@ def _authorization_from_payload(
         maximum_source_age_seconds=mapping.get("maximum_source_age_seconds"),  # type: ignore[arg-type]
         issued_at=_timestamp(mapping.get("issued_at"), "issued_at"),
         expires_at=_timestamp(mapping.get("expires_at"), "expires_at"),
+        quota_headroom_evidence_digest=str(
+            mapping.get("quota_headroom_evidence_digest", "")
+        ),
         minimum_interval_seconds=mapping.get("minimum_interval_seconds", 1.1),  # type: ignore[arg-type]
         maximum_retries=mapping.get("maximum_retries", 0),  # type: ignore[arg-type]
         no_bet=mapping.get("no_bet", True),  # type: ignore[arg-type]
@@ -387,14 +395,12 @@ def _authorization_from_payload(
 def _load_execution_inputs(
     package_path: object,
     authorization_path: object,
-    b1_path: object,
     *,
     now: datetime,
 ) -> tuple[
     ControlledShadowAuthorizationPackageV1,
     TheRundownNetworkConfigurationV1,
     TheRundownNetworkAuthorizationV1,
-    Mapping[str, object],
 ]:
     package_payload = _read_json_file(package_path, "authorization package")
     package = ControlledShadowAuthorizationPackageV1(
@@ -463,21 +469,109 @@ def _load_execution_inputs(
         raise ControlledShadowAuthorizationPackageError(
             "CEO authorization provider is not canonical"
         )
-    b1_payload = _read_json_file(b1_path, "B1 La Liga artifact")
-    b1_artifact = _materialize_b1_ll_artifact(b1_payload)
-    _validate_b1_execution_envelope(
-        b1_artifact,
-        configuration=execution_configuration,
-        authorization=authorization,
-        now=now,
+    return package, execution_configuration, authorization
+
+
+def _load_quota_headroom(
+    path_value: object,
+    *,
+    package: ControlledShadowAuthorizationPackageV1,
+    configuration: TheRundownNetworkConfigurationV1,
+    authorization: TheRundownNetworkAuthorizationV1,
+    now: datetime,
+) -> TheRundownQuotaHeadroomEvidenceV1:
+    raise ControlledShadowAuthorizationPackageError(
+        "NO_TRUSTWORTHY_PRE_REQUEST_QUOTA_SOURCE: TheRundown exposes "
+        "quota remaining only in billed response headers; no provider-native "
+        "non-billable account artifact or verifier is configured"
     )
-    return package, execution_configuration, authorization, b1_artifact
 
 
 def _validate_b1_ll_artifact_shape(artifact: Mapping[str, object]) -> None:
     """Validate the serialized shape without inventing B1 authority."""
 
     raw = _materialize_b1_ll_artifact(artifact)
+    if raw.get("schema_version") == SAME_RUN_LL_VALIDATION_SCHEMA:
+        required = (
+            "validation_status",
+            "provider_identity",
+            "league",
+            "canonical_fixture_key",
+            "provider_event_id",
+            "provider_request_id",
+            "controlled_shadow_run_id",
+            "qualification_session_id",
+            "ceo_authorization_id",
+            "participant_ids",
+            "bookmaker_identity",
+            "source_identity",
+            "home_odds",
+            "draw_odds",
+            "away_odds",
+            "source_timestamp",
+            "captured_at",
+            "request_started_at",
+            "request_finished_at",
+            "adapter_version",
+            "adapter_source_sha",
+            "raw_response_digest",
+            "provider_record_digest",
+            "normalized_record_digest",
+            "normalized_observations",
+            "quota_before",
+            "quota_after",
+            "datapoint_count",
+            "quota_cost_units",
+            "validation_digest",
+        )
+        missing = [name for name in required if name not in raw]
+        if missing:
+            raise ControlledShadowAuthorizationPackageError(
+                "same-run B1 validation is missing: " + ", ".join(missing)
+            )
+        if raw.get("validation_status") != "VALIDATED":
+            raise ControlledShadowAuthorizationPackageError(
+                "same-run B1 validation is not valid"
+            )
+        if raw.get("provider_identity") != CANONICAL_CANDIDATE_PROVIDER:
+            raise ControlledShadowAuthorizationPackageError(
+                "same-run B1 provider identity is not canonical"
+            )
+        if raw.get("league") != "LL":
+            raise ControlledShadowAuthorizationPackageError(
+                "same-run B1 league is not LL"
+            )
+        if not isinstance(raw.get("participant_ids"), Mapping):
+            raise ControlledShadowAuthorizationPackageError(
+                "same-run B1 participant IDs are missing"
+            )
+        if not isinstance(raw.get("normalized_observations"), list):
+            raise ControlledShadowAuthorizationPackageError(
+                "same-run B1 normalized observations are missing"
+            )
+        for name, expected in (
+            ("network_execution", True),
+            ("evidence_kind", ObservationEvidenceKind.REAL_OBSERVED.value),
+            ("b1_authority_issued", False),
+            ("receipt_issued", False),
+            ("no_bet", True),
+            ("publication", False),
+            ("production_activation", False),
+            ("monetary_spend_authorized", False),
+        ):
+            if raw.get(name) is not expected:
+                raise ControlledShadowAuthorizationPackageError(
+                    f"same-run B1 safety field {name} is unsafe"
+                )
+        if _digest_value(
+            raw.get("validation_digest"), "same-run B1 validation digest"
+        ) != _digest(
+            {key: value for key, value in raw.items() if key != "validation_digest"}
+        ):
+            raise ControlledShadowAuthorizationPackageError(
+                "same-run B1 validation digest mismatch"
+            )
+        return
     if raw.get("schema_version") != "top5-therundown-ll-evidence-bundle-v1":
         raise ControlledShadowAuthorizationPackageError(
             "B1 La Liga artifact schema is unsupported"
@@ -507,117 +601,6 @@ def _validate_b1_ll_artifact_shape(artifact: Mapping[str, object]) -> None:
             )
 
 
-def _validate_b1_execution_envelope(
-    artifact: Mapping[str, object],
-    *,
-    configuration: TheRundownNetworkConfigurationV1,
-    authorization: TheRundownNetworkAuthorizationV1,
-    now: datetime,
-) -> None:
-    """Bind the supplied B1 input before the first possible network request."""
-
-    _validate_b1_ll_artifact_shape(artifact)
-    bridge = _mapping(artifact.get("b1_bridge_inputs"), "B1 bridge inputs")
-    nested = _mapping(artifact.get("authorization"), "B1 authorization")
-    ll_target = next(
-        (target for target in configuration.targets if target.league == "LL"),
-        None,
-    )
-    if ll_target is None:
-        raise ControlledShadowAuthorizationPackageError(
-            "execution configuration is missing the LL target"
-        )
-    expected_bindings = {
-        "provider_identity": CANONICAL_CANDIDATE_PROVIDER,
-        "league": "LL",
-        "controlled_shadow_run_id": authorization.controlled_shadow_run_id,
-        "ceo_authorization_id": authorization.authorization_id,
-        "qualification_session_id": authorization.qualification_session_id,
-        "adapter_version": authorization.adapter_version,
-        "adapter_source_sha": authorization.adapter_source_sha,
-        "evidence_kind": ObservationEvidenceKind.REAL_OBSERVED.value,
-        "network_execution": True,
-    }
-    for name, expected in expected_bindings.items():
-        if bridge.get(name) != expected:
-            raise ControlledShadowAuthorizationPackageError(
-                f"B1 execution binding mismatch: {name}"
-            )
-    for name, expected in (
-        ("provider", CANONICAL_CANDIDATE_PROVIDER),
-        ("league", "LL"),
-        ("controlled_shadow_run_id", authorization.controlled_shadow_run_id),
-        ("ceo_authorization_id", authorization.authorization_id),
-        ("qualification_session_id", authorization.qualification_session_id),
-    ):
-        if nested.get(name) != expected:
-            raise ControlledShadowAuthorizationPackageError(
-                f"B1 nested authorization mismatch: {name}"
-            )
-    if _timestamp(nested.get("expires_at"), "B1 authorization expiry") != _utc(
-        authorization.expires_at, "authorization expiry"
-    ):
-        raise ControlledShadowAuthorizationPackageError(
-            "B1 authorization expiry does not match the CEO authorization"
-        )
-    if _timestamp(nested.get("expires_at"), "B1 authorization expiry") <= _utc(
-        now, "execution now"
-    ):
-        raise ControlledShadowAuthorizationPackageError(
-            "B1 authorization artifact is expired"
-        )
-    provider_event_id = bridge.get("provider_event_id")
-    if provider_event_id != ll_target.provider_event_id:
-        raise ControlledShadowAuthorizationPackageError(
-            "B1 provider event does not match the authorized LL target"
-        )
-    if (
-        bridge.get("provider_request_id")
-        != configuration.request_for(ll_target.fixture_key).request_identity
-    ):
-        raise ControlledShadowAuthorizationPackageError(
-            "B1 request identity does not match the authorized LL target"
-        )
-    if (
-        bridge.get("home_team") != ll_target.home_team
-        or bridge.get("away_team") != ll_target.away_team
-    ):
-        raise ControlledShadowAuthorizationPackageError(
-            "B1 participant names do not match the authorized LL target"
-        )
-    if _timestamp(bridge.get("kickoff"), "B1 kickoff") != _utc(
-        ll_target.kickoff, "LL kickoff"
-    ):
-        raise ControlledShadowAuthorizationPackageError(
-            "B1 kickoff does not match the authorized LL target"
-        )
-    raw_digest = _digest_value(
-        bridge.get("raw_response_digest"), "B1 raw_response_digest"
-    )
-    if raw_digest != _digest_value(
-        artifact.get("raw_response_digest"), "B1 top-level raw_response_digest"
-    ):
-        raise ControlledShadowAuthorizationPackageError(
-            "B1 raw response digest is internally inconsistent"
-        )
-    captured_at = _timestamp(bridge.get("captured_at"), "B1 captured_at")
-    source_timestamps = bridge.get("source_timestamps")
-    if not isinstance(source_timestamps, (tuple, list)) or not source_timestamps:
-        raise ControlledShadowAuthorizationPackageError(
-            "B1 source timestamp provenance is missing"
-        )
-    newest_source = max(
-        _timestamp(value, "B1 source timestamp") for value in source_timestamps
-    )
-    current = _utc(now, "execution now")
-    if (
-        captured_at < newest_source
-        or (current - newest_source).total_seconds()
-        > configuration.maximum_source_age_seconds
-    ):
-        raise ControlledShadowAuthorizationPackageError("B1 evidence is stale")
-
-
 def _validate_b1_ll_artifact(
     artifact: object,
     *,
@@ -634,6 +617,25 @@ def _validate_b1_ll_artifact(
     """
 
     raw = dict(_materialize_b1_ll_artifact(artifact))
+    if raw.get("schema_version") == SAME_RUN_LL_VALIDATION_SCHEMA:
+        try:
+            expected = validate_same_run_ll_capture(
+                target=capture.target,
+                request=capture.request,
+                response=capture.response,
+                authorization=authorization,
+                now=now,
+                maximum_source_age_seconds=configuration.maximum_source_age_seconds,
+            )
+        except Exception as exc:
+            raise ControlledShadowAuthorizationPackageError(
+                f"B1 same-run LL validation failed: {exc}"
+            ) from exc
+        if raw != expected:
+            raise ControlledShadowAuthorizationPackageError(
+                "B1 same-run validation attestation does not match the genuine LL capture"
+            )
+        return raw
     if raw.get("schema_version") != "top5-therundown-ll-evidence-bundle-v1":
         raise ControlledShadowAuthorizationPackageError(
             "B1 La Liga artifact schema is unsupported"
@@ -1035,6 +1037,7 @@ class ControlledShadowAuthorizationPackageV1:
             "request_quota_cost_units",
             "adapter_source_sha",
             "configuration_digest",
+            "quota_headroom_evidence_digest",
         ):
             if name not in self.authorization_template:
                 raise ControlledShadowAuthorizationPackageError(
@@ -1113,6 +1116,7 @@ def prepare_authorization_package(
         "maximum_source_age_seconds": configuration.maximum_source_age_seconds,
         "issued_at": None,
         "expires_at": None,
+        "quota_headroom_evidence_digest": None,
         "minimum_interval_seconds": configuration.minimum_interval_seconds,
         "maximum_retries": 0,
         "no_bet": True,
@@ -1946,8 +1950,8 @@ def _write_and_reload_b2_shadow_package(
 def run_guarded_network_execution(
     package_path: object,
     authorization_path: object,
-    b1_ll_artifact_path: object,
     *,
+    quota_headroom_path: object,
     credential_file: object = DEFAULT_THERUNDOWN_CREDENTIAL_PATH,
     output_path: object,
     endpoint: str = THERUNDOWN_BASE_URL,
@@ -1964,10 +1968,16 @@ def run_guarded_network_execution(
 
     clock_fn = clock or (lambda: datetime.now(timezone.utc))
     now = _utc(clock_fn(), "execution now")
-    _, configuration, authorization, b1_artifact = _load_execution_inputs(
+    package, configuration, authorization = _load_execution_inputs(
         package_path,
         authorization_path,
-        b1_ll_artifact_path,
+        now=now,
+    )
+    quota_headroom = _load_quota_headroom(
+        quota_headroom_path,
+        package=package,
+        configuration=configuration,
+        authorization=authorization,
         now=now,
     )
     api_key = _read_protected_therundown_credential(credential_file)
@@ -1983,12 +1993,33 @@ def run_guarded_network_execution(
             adapter=adapter,
             clock=clock_fn,
         )
+    same_run_b1_validation: dict[str, object] | None = None
+
+    def validate_b1_after_capture(capture: TheRundownNetworkShadowCaptureV1) -> None:
+        nonlocal same_run_b1_validation
+        if capture.target.league != "LL":
+            return
+        same_run_b1_validation = validate_same_run_ll_capture(
+            target=capture.target,
+            request=capture.request,
+            response=capture.response,
+            authorization=authorization,
+            now=_utc(clock_fn(), "B1 same-run validation now"),
+            maximum_source_age_seconds=configuration.maximum_source_age_seconds,
+        )
+
     result = TheRundownNetworkShadowExecutorV1(
         clock=clock_fn,
         pacer=pacer,
         allow_live_network=True,
         fail_closed_immediately=True,
-    ).run(configuration, authorization, transport=transport)
+    ).run(
+        configuration,
+        authorization,
+        transport=transport,
+        quota_headroom=quota_headroom,
+        post_capture_validator=validate_b1_after_capture,
+    )
     if (
         result.status is not NetworkShadowRunStatus.COMPLETED_NETWORK
         or not result.all_five_succeeded
@@ -1997,11 +2028,15 @@ def run_guarded_network_execution(
             "network shadow did not complete all five leagues: "
             + "; ".join(result.failures)
         )
+    if same_run_b1_validation is None:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 same-run validation did not run for the LL capture"
+        )
     reconciliation = reconcile_controlled_shadow_run_with_b1_ll_artifact(
         result,
         configuration,
         authorization,
-        b1_artifact,
+        same_run_b1_validation,
         now=_utc(clock_fn(), "reconciliation now"),
     )
     b2_package = _build_b2_shadow_package(
@@ -2045,8 +2080,8 @@ def run_guarded_network_execution(
 def run_guarded_network_preflight(
     package_path: object,
     authorization_path: object,
-    b1_ll_artifact_path: object,
     *,
+    quota_headroom_path: object,
     credential_file: object = DEFAULT_THERUNDOWN_CREDENTIAL_PATH,
     clock: Any = None,
 ) -> dict[str, object]:
@@ -2054,10 +2089,16 @@ def run_guarded_network_preflight(
 
     clock_fn = clock or (lambda: datetime.now(timezone.utc))
     now = _utc(clock_fn(), "preflight now")
-    package, configuration, authorization, _ = _load_execution_inputs(
+    package, configuration, authorization = _load_execution_inputs(
         package_path,
         authorization_path,
-        b1_ll_artifact_path,
+        now=now,
+    )
+    quota_headroom = _load_quota_headroom(
+        quota_headroom_path,
+        package=package,
+        configuration=configuration,
+        authorization=authorization,
         now=now,
     )
     _read_protected_therundown_credential(credential_file)
@@ -2077,6 +2118,8 @@ def run_guarded_network_preflight(
         "maximum_quota_cost_units": authorization.maximum_quota_cost_units,
         "minimum_interval_seconds": authorization.minimum_interval_seconds,
         "maximum_retries": authorization.maximum_retries,
+        "quota_headroom_evidence_digest": quota_headroom.evidence_digest,
+        "observed_remaining_datapoints": quota_headroom.observed_remaining_datapoints,
         "execution_enabled": False,
         "provider_requests": 0,
     }
@@ -2093,7 +2136,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     mode.add_argument("--execute-network", action="store_true")
     parser.add_argument("--package", required=True, type=Path)
     parser.add_argument("--authorization", required=True, type=Path)
-    parser.add_argument("--b1-ll-artifact", required=True, type=Path)
+    parser.add_argument("--quota-headroom", required=True, type=Path)
     parser.add_argument(
         "--credential-file",
         type=Path,
@@ -2110,7 +2153,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             summary = run_guarded_network_execution(
                 args.package,
                 args.authorization,
-                args.b1_ll_artifact,
+                quota_headroom_path=args.quota_headroom,
                 credential_file=args.credential_file,
                 output_path=args.output,
                 endpoint=args.endpoint,
@@ -2119,7 +2162,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             summary = run_guarded_network_preflight(
                 args.package,
                 args.authorization,
-                args.b1_ll_artifact,
+                quota_headroom_path=args.quota_headroom,
                 credential_file=args.credential_file,
             )
         print(json.dumps(_jsonable(summary), indent=2, sort_keys=True))

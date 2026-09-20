@@ -44,6 +44,7 @@ from src.football.top5_therundown_network_shadow import (
     TheRundownNetworkRequestScopeV1,
     TheRundownNetworkResponseV1,
     TheRundownNetworkShadowExecutorV1,
+    TheRundownQuotaHeadroomEvidenceV1,
     TheRundownReplayTransportV1,
 )
 from src.football.top5_therundown_shadow_canary import (
@@ -105,9 +106,7 @@ def _configuration(**changes: object) -> TheRundownNetworkConfigurationV1:
         "maximum_request_count": TOP5_CONTROLLED_SHADOW_REQUEST_COUNT,
         "maximum_datapoints": TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET,
         "maximum_quota_cost_units": TOP5_CONTROLLED_SHADOW_QUOTA_BUDGET,
-        "request_quota_cost_units": float(
-            THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST
-        ),
+        "request_quota_cost_units": float(THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST),
         "maximum_source_age_seconds": 300,
         "minimum_interval_seconds": TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS,
         "maximum_retries": 0,
@@ -202,6 +201,28 @@ def _response(request, **changes: object) -> TheRundownNetworkResponseV1:
     }
     values.update(changes)
     return TheRundownNetworkResponseV1(**values)  # type: ignore[arg-type]
+
+
+def _quota_headroom(authorization):
+    evidence = TheRundownQuotaHeadroomEvidenceV1(
+        provider=authorization.provider,
+        account_scope="network-test-account",
+        observed_remaining_datapoints=275,
+        observed_at=NOW,
+        provenance_source="offline-test-fixture",
+        provenance_digest="e" * 64,
+        authorization_package_digest="f" * 64,
+        authorization_id=authorization.authorization_id,
+        controlled_shadow_run_id=authorization.controlled_shadow_run_id,
+        qualification_session_id=authorization.qualification_session_id,
+        ceo_authorization_identity=authorization.ceo_authorization_identity,
+        evidence_digest="0" * 64,
+    )
+    evidence = replace(evidence, evidence_digest=evidence.computed_evidence_digest)
+    return replace(
+        authorization,
+        quota_headroom_evidence_digest=evidence.evidence_digest,
+    ), evidence
 
 
 def _run(
@@ -377,7 +398,9 @@ def test_billing_units_must_reconcile_per_response():
         )
     )
     assert result.status is NetworkShadowRunStatus.PARTIAL
-    assert any("billing units do not reconcile" in failure for failure in result.failures)
+    assert any(
+        "billing units do not reconcile" in failure for failure in result.failures
+    )
 
 
 def test_pacing_below_one_point_one_seconds_is_rejected():
@@ -396,9 +419,7 @@ def test_provider_billing_headers_bind_to_response_units():
     authorization = _authorization(configuration)
     request = authorization.request_for(configuration.targets[0], configuration)
     source = _response(request)
-    payload = {
-        name: getattr(source, name) for name in source.__dataclass_fields__
-    }
+    payload = {name: getattr(source, name) for name in source.__dataclass_fields__}
     payload.pop("quota_before")
     payload.pop("quota_after")
     decoded = TheRundownCanonicalPayloadAdapterV1().decode_response(
@@ -433,9 +454,7 @@ def test_provider_billing_headers_missing_or_contradictory_fail_closed():
     authorization = _authorization(configuration)
     request = authorization.request_for(configuration.targets[0], configuration)
     source = _response(request)
-    payload = {
-        name: getattr(source, name) for name in source.__dataclass_fields__
-    }
+    payload = {name: getattr(source, name) for name in source.__dataclass_fields__}
     adapter = TheRundownCanonicalPayloadAdapterV1()
     with pytest.raises(NetworkShadowExecutionBlocked, match="billing header"):
         adapter.decode_response(
@@ -467,7 +486,9 @@ def test_provider_billing_headers_missing_or_contradictory_fail_closed():
 
 
 def test_actual_run006_payload_is_bridged_through_reviewed_adapter():
-    body_path = Path("/private/tmp/top5-laliga-nextdate-20260920-006.request-2.body.json")
+    body_path = Path(
+        "/private/tmp/top5-laliga-nextdate-20260920-006.request-2.body.json"
+    )
     if not body_path.exists():
         pytest.skip("local Run-006 raw artifact is not available")
     payload = json.loads(body_path.read_text())
@@ -540,8 +561,7 @@ def test_actual_run006_payload_is_bridged_through_reviewed_adapter():
         "6df5aa61479bbeaa85f46b4a1f66c7c3a40d88736b9b7f08555f9eb0e0f276c4"
     )
     assert [
-        digest_record(item)
-        for item in decoded.raw_metadata["normalized_observations"]
+        digest_record(item) for item in decoded.raw_metadata["normalized_observations"]
     ] == [
         "6e31168f27a5da71a96f369bdb0aca7dcd93b4a103f29685f7f528ea50984355",
         "2b2bb6cc67a204929478c0957ac5af5b8ebcc2002c6e89faee71cc044de582a1",
@@ -662,7 +682,7 @@ def test_shadow_success_never_implies_receipt_authority_or_active_provider():
 
 def test_network_shaped_five_league_output_matches_downstream_input_shapes():
     configuration = _configuration(enabled=True)
-    authorization = _authorization(configuration)
+    authorization, quota_headroom = _quota_headroom(_authorization(configuration))
     transport = _NetworkStubTransport(
         lambda request: _response(
             request,
@@ -673,7 +693,12 @@ def test_network_shaped_five_league_output_matches_downstream_input_shapes():
     result = TheRundownNetworkShadowExecutorV1(
         clock=lambda: NOW,
         allow_live_network=True,
-    ).run(configuration, authorization, transport=transport)
+    ).run(
+        configuration,
+        authorization,
+        transport=transport,
+        quota_headroom=quota_headroom,
+    )
 
     assert result.status is NetworkShadowRunStatus.COMPLETED_NETWORK
     assert result.all_five_succeeded is True
