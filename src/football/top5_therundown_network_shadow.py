@@ -63,6 +63,7 @@ NETWORK_SHADOW_SCHEMA_VERSION = "top5-therundown-network-shadow-v1"
 NETWORK_REQUEST_SCHEMA_VERSION = "top5-therundown-network-request-v1"
 NETWORK_RESPONSE_SCHEMA_VERSION = "top5-therundown-network-response-v1"
 NETWORK_RUN_SCHEMA_VERSION = "top5-therundown-network-run-v1"
+QUOTA_HEADROOM_SCHEMA_VERSION = "top5-therundown-quota-headroom-v1"
 TOP5_CONTROLLED_SHADOW_REQUEST_COUNT = 5
 THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST = 55
 TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET = (
@@ -93,6 +94,166 @@ class NetworkShadowRunStatus(str, Enum):
     COMPLETED_REPLAY = "COMPLETED_REPLAY"
     PARTIAL = "PARTIAL"
     BLOCKED = "BLOCKED"
+
+
+@dataclass(frozen=True)
+class TheRundownQuotaHeadroomEvidenceV1:
+    """Non-billable, caller-supplied quota evidence required before request 1."""
+
+    provider: str
+    account_scope: str
+    observed_remaining_datapoints: int
+    observed_at: datetime
+    provenance_source: str
+    provenance_digest: str
+    authorization_package_digest: str
+    authorization_id: str
+    controlled_shadow_run_id: str
+    qualification_session_id: str
+    ceo_authorization_identity: str
+    evidence_digest: str
+    schema_version: str = QUOTA_HEADROOM_SCHEMA_VERSION
+
+    def _payload_without_digest(self) -> dict[str, object]:
+        return {
+            "schema_version": self.schema_version,
+            "provider": self.provider,
+            "account_scope": self.account_scope,
+            "observed_remaining_datapoints": self.observed_remaining_datapoints,
+            "observed_at": _utc(self.observed_at, "quota observed_at").isoformat(),
+            "provenance_source": self.provenance_source,
+            "provenance_digest": self.provenance_digest,
+            "authorization_package_digest": self.authorization_package_digest,
+            "authorization_id": self.authorization_id,
+            "controlled_shadow_run_id": self.controlled_shadow_run_id,
+            "qualification_session_id": self.qualification_session_id,
+            "ceo_authorization_identity": self.ceo_authorization_identity,
+        }
+
+    @property
+    def computed_evidence_digest(self) -> str:
+        return _digest(self._payload_without_digest())
+
+    def validate(
+        self,
+        *,
+        expected_provider: str = THERUNDOWN_PROVIDER_NAME,
+        expected_package_digest: str | None = None,
+        expected_authorization: TheRundownNetworkAuthorizationV1 | None = None,
+        now: datetime | None = None,
+        maximum_age_seconds: int = 300,
+    ) -> None:
+        if self.schema_version != QUOTA_HEADROOM_SCHEMA_VERSION:
+            raise NetworkShadowContractError("unsupported quota headroom schema")
+        if self.provider != expected_provider:
+            raise NetworkShadowExecutionBlocked(
+                "quota headroom provider does not match the run"
+            )
+        _text(self.account_scope, "quota account_scope")
+        _positive_int(
+            self.observed_remaining_datapoints, "observed_remaining_datapoints"
+        )
+        if self.observed_remaining_datapoints < TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET:
+            raise NetworkShadowExecutionBlocked(
+                "quota headroom is below the five-league budget"
+            )
+        observed = _utc(self.observed_at, "quota observed_at")
+        current = _utc(now or datetime.now(timezone.utc), "quota validation now")
+        if observed > current:
+            raise NetworkShadowExecutionBlocked("quota headroom is from the future")
+        if (current - observed).total_seconds() > maximum_age_seconds:
+            raise NetworkShadowExecutionBlocked("quota headroom evidence is stale")
+        _text(self.provenance_source, "quota provenance_source")
+        _sha(self.provenance_digest, "quota provenance_digest")
+        _sha(self.authorization_package_digest, "authorization_package_digest")
+        _text(self.authorization_id, "quota authorization_id")
+        _text(self.controlled_shadow_run_id, "quota controlled_shadow_run_id")
+        _text(self.qualification_session_id, "quota qualification_session_id")
+        _text(self.ceo_authorization_identity, "quota ceo_authorization_identity")
+        _sha(self.evidence_digest, "quota evidence_digest")
+        if self.evidence_digest.lower() != self.computed_evidence_digest:
+            raise NetworkShadowContractError("quota headroom evidence digest mismatch")
+        if (
+            expected_package_digest is not None
+            and self.authorization_package_digest.lower()
+            != expected_package_digest.lower()
+        ):
+            raise NetworkShadowExecutionBlocked(
+                "quota headroom package binding does not match"
+            )
+        if expected_authorization is not None:
+            for name, actual, expected in (
+                (
+                    "authorization_id",
+                    self.authorization_id,
+                    expected_authorization.authorization_id,
+                ),
+                (
+                    "controlled_shadow_run_id",
+                    self.controlled_shadow_run_id,
+                    expected_authorization.controlled_shadow_run_id,
+                ),
+                (
+                    "qualification_session_id",
+                    self.qualification_session_id,
+                    expected_authorization.qualification_session_id,
+                ),
+                (
+                    "ceo_authorization_identity",
+                    self.ceo_authorization_identity,
+                    expected_authorization.ceo_authorization_identity,
+                ),
+            ):
+                if actual != expected:
+                    raise NetworkShadowExecutionBlocked(
+                        f"quota headroom authorization binding mismatch: {name}"
+                    )
+            if (
+                expected_authorization.quota_headroom_evidence_digest.lower()
+                != self.evidence_digest.lower()
+            ):
+                raise NetworkShadowExecutionBlocked(
+                    "authorization is not bound to quota headroom evidence"
+                )
+
+    def as_payload(self) -> dict[str, object]:
+        self.validate(now=self.observed_at, maximum_age_seconds=2**31 - 1)
+        return {
+            **self._payload_without_digest(),
+            "evidence_digest": self.evidence_digest,
+        }
+
+    @classmethod
+    def from_payload(cls, raw: object) -> TheRundownQuotaHeadroomEvidenceV1:
+        if not isinstance(raw, Mapping):
+            raise NetworkShadowContractError(
+                "quota headroom evidence must be an object"
+            )
+        try:
+            observed_at = datetime.fromisoformat(
+                str(raw.get("observed_at", "")).replace("Z", "+00:00")
+            )
+        except ValueError as exc:
+            raise NetworkShadowContractError("quota observed_at is invalid") from exc
+        return cls(
+            provider=str(raw.get("provider", "")),
+            account_scope=str(raw.get("account_scope", "")),
+            observed_remaining_datapoints=raw.get("observed_remaining_datapoints", 0),  # type: ignore[arg-type]
+            observed_at=observed_at,
+            provenance_source=str(raw.get("provenance_source", "")),
+            provenance_digest=str(raw.get("provenance_digest", "")),
+            authorization_package_digest=str(
+                raw.get("authorization_package_digest", "")
+            ),
+            authorization_id=str(raw.get("authorization_id", "")),
+            controlled_shadow_run_id=str(raw.get("controlled_shadow_run_id", "")),
+            qualification_session_id=str(raw.get("qualification_session_id", "")),
+            ceo_authorization_identity=str(raw.get("ceo_authorization_identity", "")),
+            evidence_digest=str(raw.get("evidence_digest", "")),
+            schema_version=str(
+                raw.get("schema_version", QUOTA_HEADROOM_SCHEMA_VERSION)
+            ),
+        )
 
 
 def _text(value: object, name: str) -> str:
@@ -395,6 +556,7 @@ class TheRundownNetworkAuthorizationV1:
     maximum_source_age_seconds: int
     issued_at: datetime
     expires_at: datetime
+    quota_headroom_evidence_digest: str = ""
     minimum_interval_seconds: float = 1.0
     maximum_retries: int = 0
     no_bet: bool = True
@@ -428,6 +590,7 @@ class TheRundownNetworkAuthorizationV1:
             "maximum_source_age_seconds": self.maximum_source_age_seconds,
             "issued_at": _utc(self.issued_at, "issued_at").isoformat(),
             "expires_at": _utc(self.expires_at, "expires_at").isoformat(),
+            "quota_headroom_evidence_digest": self.quota_headroom_evidence_digest,
             "minimum_interval_seconds": self.minimum_interval_seconds,
             "maximum_retries": self.maximum_retries,
             "no_bet": self.no_bet,
@@ -441,6 +604,7 @@ class TheRundownNetworkAuthorizationV1:
         configuration: TheRundownNetworkConfigurationV1 | None = None,
         *,
         now: datetime | None = None,
+        require_quota_headroom: bool = False,
     ) -> None:
         for name, value in (
             ("authorization_id", self.authorization_id),
@@ -490,6 +654,11 @@ class TheRundownNetworkAuthorizationV1:
             self.request_quota_cost_units,
         )
         _positive_int(self.maximum_source_age_seconds, "maximum_source_age_seconds")
+        if require_quota_headroom:
+            _sha(
+                self.quota_headroom_evidence_digest,
+                "quota_headroom_evidence_digest",
+            )
         interval = _number(self.minimum_interval_seconds, "minimum_interval_seconds")
         if interval < TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS:
             raise NetworkShadowExecutionBlocked(
@@ -1768,6 +1937,7 @@ class TheRundownNetworkShadowExecutorV1:
         authorization: TheRundownNetworkAuthorizationV1,
         *,
         transport: TheRundownCanaryNetworkTransport,
+        quota_headroom: TheRundownQuotaHeadroomEvidenceV1 | None = None,
     ) -> TheRundownNetworkShadowRunResultV1:
         configuration.validate()
         authorization.validate(configuration, now=self.clock())
@@ -1781,6 +1951,21 @@ class TheRundownNetworkShadowExecutorV1:
         test_only = bool(getattr(transport, "test_only", False))
         if not test_only and self.allow_live_network is not True:
             raise NetworkShadowExecutionBlocked("live network execution is disabled")
+        if not test_only:
+            authorization.validate(
+                configuration,
+                now=self.clock(),
+                require_quota_headroom=True,
+            )
+            if quota_headroom is None:
+                raise NetworkShadowExecutionBlocked(
+                    "quota headroom evidence is required before network execution"
+                )
+            quota_headroom.validate(
+                expected_provider=authorization.provider,
+                expected_authorization=authorization,
+                now=self.clock(),
+            )
         captures: list[TheRundownNetworkShadowCaptureV1] = []
         failures: list[str] = []
         request_count = 0
@@ -2198,6 +2383,7 @@ __all__ = [
     "NETWORK_RESPONSE_SCHEMA_VERSION",
     "NETWORK_RUN_SCHEMA_VERSION",
     "NETWORK_SHADOW_SCHEMA_VERSION",
+    "QUOTA_HEADROOM_SCHEMA_VERSION",
     "THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST",
     "TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET",
     "TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS",
@@ -2221,6 +2407,7 @@ __all__ = [
     "TheRundownNetworkShadowCaptureV1",
     "TheRundownNetworkShadowExecutorV1",
     "TheRundownNetworkShadowRunResultV1",
+    "TheRundownQuotaHeadroomEvidenceV1",
     "TheRundownReplayTransportV1",
     "TheRundownUrlLibHttpClientV1",
 ]

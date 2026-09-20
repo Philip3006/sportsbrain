@@ -43,6 +43,7 @@ from tests.football.test_top5_controlled_shadow_provider_qualification import (
 from tests.football.test_top5_therundown_network_shadow import (
     NOW,
     _configuration,
+    _quota_headroom,
     _NetworkStubTransport,
     _response,
     _targets,
@@ -65,10 +66,16 @@ def _candidate_network_run():
             network_execution=True,
         )
     )
+    authorization, quota_headroom = _quota_headroom(authorization)
     result = TheRundownNetworkShadowExecutorV1(
         clock=lambda: NOW,
         allow_live_network=True,
-    ).run(configuration, authorization, transport=transport)
+    ).run(
+        configuration,
+        authorization,
+        transport=transport,
+        quota_headroom=quota_headroom,
+    )
     return result, configuration
 
 

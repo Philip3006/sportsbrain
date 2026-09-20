@@ -32,6 +32,16 @@ The generated package is inert: network execution, receipt issuance, active
 provider authority, scheduler registration, publication, activation, betting,
 and monetary spend are all false.
 
+Before the first request, the operator must provide a separate
+`TheRundownQuotaHeadroomEvidenceV1` artifact. It is an immutable, digest-bound
+observation of the provider/account's remaining billable datapoints and must
+prove at least 275 datapoints, be no older than the configured source-age
+window, and bind to the package digest, authorization ID, run ID, session ID,
+and CEO authorization identity. Missing, stale, malformed, provider-mismatched,
+account-unattributed, or under-budget evidence fails closed without a
+transport call. Response billing remains validated independently after every
+request; the headroom artifact never invents or reserves quota.
+
 ## Post-run reconciliation
 
 `reconcile_controlled_shadow_run()` consumes only a completed
@@ -43,15 +53,17 @@ bookmaker, complete pre-match 1X2 prices, source/capture/request timestamps,
 freshness, adapter/configuration hashes, raw/provider/normalized/cascade
 digests, and quota/rate-limit/tier/delay provenance.
 
-### Direct B1 La Liga injection
+### Same-run B1 La Liga validation
 
-The repaired B1 La Liga artifact is injected as the keyword argument
-`b1_ll_artifact` to
-`reconcile_controlled_shadow_run_with_b1_ll_artifact(result, configuration,
-authorization, b1_ll_artifact, now=...)`. The value is exactly the mapping
-returned by `LaLigaCaptureEvidence.as_evidence_bundle()`; an object exposing
-that method is also accepted and materialized once. No B1 object is imported
-as an authority or receipt issuer.
+The real execution does not require a separate B1 request or a pre-run B1
+artifact. The single authorized `LL` request is the only new LL evidence. Once
+that response is accepted, B4 passes the genuine LL target/request/response
+through `validate_same_run_ll_capture(...)`, producing the B1 validation
+attestation used by
+`reconcile_controlled_shadow_run_with_b1_ll_artifact(...)`. This preserves B1
+ownership of validation without creating a sixth request, stale-evidence
+shortcut, authority, or receipt issuer. Offline reconciliation continues to
+accept the previously reviewed B1 bundle format where applicable.
 
 B4 accepts the bundle only when all of the following match the `LL` capture in
 the completed PR-103 result byte-for-byte or by canonical timestamp
@@ -67,7 +79,7 @@ comparison:
   provider/normalized record digests;
 - quota-before/after, rate-limit, and quota evidence provenance.
 
-The B1 bundle must remain `REAL_OBSERVED`/`CAPTURED`, pre-match, candidate-only,
+The same-run B1 validation must remain `REAL_OBSERVED`, pre-match, candidate-only,
 no-bet, unpublished, inactive, and no-spend. Its cascade digest must remain
 `null`, and it must explicitly require B4 to supply the canonical cascade
 evidence and capture attestation. A synthetic/replay bundle, stale bundle,
@@ -113,7 +125,7 @@ python -m src.football.top5_controlled_shadow_authorization_package \
   --execute-network \
   --package /operator-only/top5/authorization-package.json \
   --authorization /operator-only/top5/ceo-authorization.json \
-  --b1-ll-artifact /operator-only/top5/b1-ll-evidence-bundle.json \
+  --quota-headroom /operator-only/top5/quota-headroom-evidence.json \
   --credential-file /operator-only/top5/therundown.env \
   --output /operator-only/top5/top5-b2-five-league-shadow-package.json
 ```
@@ -126,8 +138,12 @@ wrapper containing `package_digest` and the serialized
 configuration from the package only after verifying the authorization's
 configuration digest, exact five-league scope, run/session/identity/expiry,
 adapter hashes, `5/55/275` budgets, `>=1.1` second pacing, zero retries, and
-all candidate-only safety flags. The B1 artifact is bound to the LL target
-before the first request and reconciled again after the completed run.
+all candidate-only safety flags. The quota-headroom file contains the
+serialized `TheRundownQuotaHeadroomEvidenceV1` observation, including its
+evidence digest, provider/account scope, observation timestamp, and remaining
+datapoints. The entrypoint requires a fresh `>=275` headroom proof before the
+first request. The LL response is validated into the same-run B1 seam after
+capture and reconciled only after that validation succeeds.
 
 `--credential-file` must be an absolute, non-symlink, operator-only file with
 no group/world permissions and an existing `THERUNDOWN_API_KEY=` entry. The
@@ -143,8 +159,9 @@ canonical `Builder2QualificationIntakeManifestV1` manifests. Its package ID
 and digest are deterministic. B4 writes it atomically and reloads it through
 `load_five_league_shadow_package()` before reporting success. B4 does not issue
 the receipt or change authority. Any credential, package/configuration digest,
-authorization, B1, billing, freshness, event, participant, provenance, retry,
-HTTP, or safety failure aborts without continuing to the next request.
+authorization, quota-headroom, B1, billing, freshness, event, participant,
+provenance, retry, HTTP, or safety failure aborts without continuing to the
+next request.
 
 Preflight and all package/reconciliation functions perform no provider
 request, do not register a scheduler, and have no receipt-issuer or authority
@@ -163,7 +180,7 @@ path. The explicit network flag is the only path that uses
   network capture into the canonical cascade and intake-manifest contracts;
   this projection preserves the provider, raw, normalized, request, quota,
   timestamp, bookmaker, and safety bindings and does not issue a receipt.
-- The B1 LL bundle is a validated input to the exact LL slot, not a substitute
-  for the PR-103 canonical capture attestation.
+- The single LL response is validated through the same-run B1 seam after
+  capture; it is not a substitute for the PR-103 canonical capture attestation.
 - No real La Liga capture or five-league Controlled Shadow is consumed during
   offline package preparation.
