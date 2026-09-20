@@ -32,6 +32,46 @@ The generated package is inert: network execution, receipt issuance, active
 provider authority, scheduler registration, publication, activation, betting,
 and monetary spend are all false.
 
+## Provider billing and final bounded budget
+
+For the real TheRundown transport, `datapoint_count` means the provider-billed
+`X-Datapoints` value from the HTTP response header. It is not the number of
+normalized bookmaker observations. `quota_cost_units` is kept as a separate
+governed field, but for this provider it must equal that billed datapoint value
+and is never inferred from normalized record count. `request_quota_cost_units`
+is the per-request authorization ceiling; `maximum_quota_cost_units` is the
+sum ceiling across the run.
+
+Run-006 supplied the offline billing evidence `X-Datapoints=55`,
+`X-Datapoints-Used=55`, `X-Datapoints-Remaining=19945`, and
+`X-Datapoints-Limit=20000`. Therefore the exact five-request package is:
+
+| field | value |
+| --- | ---: |
+| `maximum_request_count` | `5` |
+| `maximum_datapoints` | `275` (`5 × 55`) |
+| `request_quota_cost_units` | `55` |
+| `maximum_quota_cost_units` | `275` |
+| `minimum_interval_seconds` | `1.1` |
+| `maximum_retries` | `0` |
+| `maximum_source_age_seconds` | `300` |
+
+The observed daily free-tier headroom before the bounded run is `19945`, so
+the authorized ceiling leaves `19670` units. The package derives these values
+from the observed provider cost and rejects a smaller headroom; it does not
+substitute an arbitrary large cap. A response with missing or contradictory
+billing headers fails closed before it can become `REAL_OBSERVED` evidence.
+The provider's observed `X-Rate-Limit` exposes a limit but no remaining/reset
+header; the transport records those fields as explicitly unavailable and never
+maps the limit into a fabricated remaining value.
+
+Freshness uses the existing TheRundown snapshot contract:
+`source_timestamp = response_finished_at - X-Data-Delay-Seconds`. The raw
+price-level `updated_at` values remain preserved as provenance, but are not
+silently substituted for the provider's declared REST snapshot timestamp.
+Missing delay, event kickoff, bookmaker mapping, or price-level timestamps
+fails closed.
+
 ## Post-run reconciliation
 
 `reconcile_controlled_shadow_run()` consumes only a completed
@@ -49,9 +89,19 @@ The repaired B1 La Liga artifact is injected as the keyword argument
 `b1_ll_artifact` to
 `reconcile_controlled_shadow_run_with_b1_ll_artifact(result, configuration,
 authorization, b1_ll_artifact, now=...)`. The value is exactly the mapping
-returned by `LaLigaCaptureEvidence.as_evidence_bundle()`; an object exposing
-that method is also accepted and materialized once. No B1 object is imported
-as an authority or receipt issuer.
+returned by `LaLigaCaptureEvidence.as_evidence_bundle()`; the repaired
+Run-006 wrapper at `/private/tmp/top5-b1-laliga-final-evidence.json` is also
+accepted and its `canonical_b1_evidence_bundle` is materialized without
+network access. `validate_canonical_b1_ll_artifact()` is the offline B4
+preflight for this wrapper: it checks real-evidence identity, the three
+bookmakers, complete 1X2, timestamps, digests, and the 55-datapoint billing
+reconciliation. No B1 object is imported as an authority or receipt issuer.
+
+The Run-006 artifact retains its own historical LL authorization/run/session
+binding. It is evidence provenance, not a substitute for the new
+five-league CEO authorization. The eventual five-league reconciliation must
+bind the newly captured LL slot to that run's exact authorization, run ID,
+session ID, expiry, configuration digest, and capture attestation.
 
 B4 accepts the bundle only when all of the following match the `LL` capture in
 the completed PR-103 result byte-for-byte or by canonical timestamp

@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from hashlib import sha256
 from math import isfinite
+from pathlib import Path
 from typing import Any
 
 from src.football.provider_cascade.candidate_eligibility import (
@@ -37,6 +38,20 @@ from src.football.top5_therundown_network_shadow import (
 
 CANONICAL_CANDIDATE_PROVIDER = "therundown_experimental"
 TOP5_LEAGUE_ORDER = ("EPL", "BL1", "LL", "SA", "L1")
+TOP5_CONTROLLED_SHADOW_REQUEST_COUNT = 5
+TOP5_OBSERVED_REQUEST_DATAPOINT_COST = 55
+TOP5_CONTROLLED_SHADOW_MAX_DATAPOINTS = (
+    TOP5_CONTROLLED_SHADOW_REQUEST_COUNT * TOP5_OBSERVED_REQUEST_DATAPOINT_COST
+)
+TOP5_CONTROLLED_SHADOW_REQUEST_QUOTA_COST_UNITS = float(
+    TOP5_OBSERVED_REQUEST_DATAPOINT_COST
+)
+TOP5_CONTROLLED_SHADOW_MAX_QUOTA_COST_UNITS = float(
+    TOP5_CONTROLLED_SHADOW_MAX_DATAPOINTS
+)
+TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS = 1.1
+TOP5_CONTROLLED_SHADOW_MAX_RETRIES = 0
+TOP5_CONTROLLED_SHADOW_MAX_SOURCE_AGE_SECONDS = 300
 AUTHORIZATION_PACKAGE_SCHEMA_VERSION = "top5-controlled-shadow-authorization-package-v1"
 RECONCILIATION_SCHEMA_VERSION = "top5-controlled-shadow-reconciliation-v1"
 QUALIFICATION_ARTIFACT_SCHEMA_VERSION = (
@@ -48,6 +63,68 @@ FUTURE_EXECUTION_COMMAND = (
     "--authorization <ceo-authorization.json> "
     "--b1-ll-artifact <b1-ll-evidence-bundle.json>"
 )
+
+
+def derive_bounded_shadow_budget(
+    *,
+    observed_datapoint_cost: int,
+    available_quota_remaining: int,
+    request_count: int = TOP5_CONTROLLED_SHADOW_REQUEST_COUNT,
+) -> dict[str, object]:
+    """Derive the final hard ceiling from observed provider billing semantics."""
+
+    if observed_datapoint_cost <= 0:
+        raise ControlledShadowAuthorizationPackageError(
+            "observed provider datapoint cost must be positive"
+        )
+    if request_count != TOP5_CONTROLLED_SHADOW_REQUEST_COUNT:
+        raise ControlledShadowAuthorizationPackageError(
+            "the controlled shadow scope is exactly five requests"
+        )
+    if available_quota_remaining < observed_datapoint_cost * request_count:
+        raise ControlledShadowAuthorizationPackageError(
+            "free-tier quota headroom is below the bounded five-request ceiling"
+        )
+    total = observed_datapoint_cost * request_count
+    return {
+        "maximum_request_count": request_count,
+        "maximum_datapoints": total,
+        "maximum_quota_cost_units": float(total),
+        "request_quota_cost_units": float(observed_datapoint_cost),
+        "observed_datapoint_cost_per_request": observed_datapoint_cost,
+        "available_quota_remaining_before_run": available_quota_remaining,
+        "quota_headroom_after_bounded_run": available_quota_remaining - total,
+        "minimum_interval_seconds": TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS,
+        "maximum_retries": TOP5_CONTROLLED_SHADOW_MAX_RETRIES,
+        "billing_unit": "provider_billed_x_datapoints",
+    }
+
+
+def _require_final_shadow_budget(
+    configuration: TheRundownNetworkConfigurationV1,
+) -> None:
+    expected = derive_bounded_shadow_budget(
+        observed_datapoint_cost=TOP5_OBSERVED_REQUEST_DATAPOINT_COST,
+        available_quota_remaining=TOP5_OBSERVED_REQUEST_DATAPOINT_COST
+        * TOP5_CONTROLLED_SHADOW_REQUEST_COUNT,
+    )
+    fields = (
+        ("maximum_request_count", configuration.maximum_request_count),
+        ("maximum_datapoints", configuration.maximum_datapoints),
+        ("maximum_quota_cost_units", configuration.maximum_quota_cost_units),
+        ("request_quota_cost_units", configuration.request_quota_cost_units),
+        ("minimum_interval_seconds", configuration.minimum_interval_seconds),
+        ("maximum_retries", configuration.maximum_retries),
+        ("maximum_source_age_seconds", configuration.maximum_source_age_seconds),
+    )
+    for name, actual in fields:
+        expected_value = expected.get(name)
+        if name == "maximum_source_age_seconds":
+            expected_value = TOP5_CONTROLLED_SHADOW_MAX_SOURCE_AGE_SECONDS
+        if actual != expected_value:
+            raise ControlledShadowAuthorizationPackageError(
+                f"final provider billing budget mismatch: {name}"
+            )
 
 
 class ControlledShadowAuthorizationPackageError(NetworkShadowContractError):
@@ -137,9 +214,43 @@ def _price(value: object, name: str) -> float:
 
 
 def _materialize_b1_ll_artifact(artifact: object) -> Mapping[str, object]:
+    if isinstance(artifact, (str, Path)):
+        try:
+            artifact = json.loads(Path(artifact).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ControlledShadowAuthorizationPackageError(
+                "B1 La Liga artifact file cannot be read as JSON"
+            ) from exc
     if hasattr(artifact, "as_evidence_bundle"):
         artifact = artifact.as_evidence_bundle()  # type: ignore[union-attr]
-    return _mapping(artifact, "B1 La Liga artifact")
+    outer = _mapping(artifact, "B1 La Liga artifact")
+    if outer.get("schema_version") == "top5-b1-laliga-final-evidence-v1":
+        if outer.get("evidence_kind") != ObservationEvidenceKind.REAL_OBSERVED.value:
+            raise ControlledShadowAuthorizationPackageError(
+                "B1 outer artifact must be REAL_OBSERVED"
+            )
+        replay = _mapping(outer.get("replay"), "B1 replay")
+        if replay.get("network_called") is not False:
+            raise ControlledShadowAuthorizationPackageError(
+                "offline B1 replay must not make a network call"
+            )
+        reconciliation = _mapping(outer.get("b4_reconciliation"), "B4 reconciliation")
+        for name, expected in (
+            ("activation_or_publication_enabled", False),
+            ("provider_authority_changed", False),
+            ("receipt_or_authority_issued", False),
+            ("candidate_provider_eligibility_input_ready", True),
+            ("complete_regulation_1x2_present", True),
+            ("required_bookmaker_observations_present", True),
+        ):
+            if reconciliation.get(name) is not expected:
+                raise ControlledShadowAuthorizationPackageError(
+                    f"B4 outer reconciliation safety field {name} is invalid"
+                )
+        outer = _mapping(
+            outer.get("canonical_b1_evidence_bundle"), "B1 canonical evidence bundle"
+        )
+    return outer
 
 
 def _validate_b1_ll_artifact_shape(artifact: Mapping[str, object]) -> None:
@@ -173,6 +284,145 @@ def _validate_b1_ll_artifact_shape(artifact: Mapping[str, object]) -> None:
             raise ControlledShadowAuthorizationPackageError(
                 f"B1 safety field {name} is unsafe"
             )
+
+
+def validate_canonical_b1_ll_artifact(
+    artifact: object,
+    *,
+    now: datetime | None = None,
+) -> dict[str, object]:
+    """Validate the supplied repaired B1 LL artifact without issuing authority.
+
+    The checked-in/run-specific B1 artifact carries the historical LL capture's
+    own authorization binding.  This preflight validator therefore proves the
+    artifact's evidence, billing, and safety boundary independently.  The
+    later five-league run must still bind its newly captured LL slot to its own
+    CEO authorization, run ID, session ID, and configuration digest through
+    ``_validate_b1_ll_artifact``.
+    """
+
+    raw = dict(_materialize_b1_ll_artifact(artifact))
+    _validate_b1_ll_artifact_shape(raw)
+    bridge = _mapping(raw.get("b1_bridge_inputs"), "B1 bridge inputs")
+    if bridge.get("evidence_kind") != ObservationEvidenceKind.REAL_OBSERVED.value:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 synthetic or replay evidence cannot enter the offline preflight"
+        )
+    if bridge.get("network_execution") is not True:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 artifact does not prove network execution"
+        )
+    if bridge.get("provider_identity") != CANONICAL_CANDIDATE_PROVIDER:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 provider identity is not canonical"
+        )
+    if bridge.get("league") not in ("LL", "ESP1"):
+        raise ControlledShadowAuthorizationPackageError("B1 artifact is not La Liga")
+    if bridge.get("market_phase") != "PRE_MATCH" or bridge.get("market_type") != (
+        "football:pre_match:1x2"
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 artifact must be prematch regulation 1X2"
+        )
+    _digest_value(raw.get("raw_response_digest"), "B1 raw response digest")
+    _digest_value(bridge.get("raw_response_digest"), "B1 bridge raw response digest")
+    if raw.get("raw_response_digest") != bridge.get("raw_response_digest"):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 raw response digest is inconsistent"
+        )
+    for name in ("adapter_version", "adapter_source_sha"):
+        if not isinstance(raw.get(name), str) or not str(raw.get(name)).strip():
+            raise ControlledShadowAuthorizationPackageError(
+                f"B1 {name} provenance is missing"
+            )
+    participant_ids = _mapping(bridge.get("participant_ids"), "B1 participant IDs")
+    for name in ("home", "away", "draw"):
+        if not str(participant_ids.get(name, "")).strip():
+            raise ControlledShadowAuthorizationPackageError(
+                "B1 participant binding is incomplete"
+            )
+    source_timestamps = bridge.get("source_timestamps")
+    if not isinstance(source_timestamps, (tuple, list)) or not source_timestamps:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 source timestamp provenance is missing"
+        )
+    source_timestamp = _timestamp(source_timestamps[0], "B1 source timestamp")
+    captured_at = _timestamp(bridge.get("captured_at"), "B1 captured_at")
+    validation_now = _utc(now, "B1 preflight now") if now is not None else captured_at
+    if source_timestamp > captured_at or captured_at > validation_now:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 timestamp provenance is not ordered"
+        )
+    if (
+        validation_now - source_timestamp
+    ).total_seconds() > TOP5_CONTROLLED_SHADOW_MAX_SOURCE_AGE_SECONDS:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 source observation is stale"
+        )
+    quota_evidence = _mapping(bridge.get("quota_evidence"), "B1 quota evidence")
+    datapoints = quota_evidence.get("x-datapoints")
+    used_after = quota_evidence.get("x-datapoints-used")
+    remaining_after = quota_evidence.get("x-datapoints-remaining")
+    limit = quota_evidence.get("x-datapoints-limit")
+    for name, value in (
+        ("x-datapoints", datapoints),
+        ("x-datapoints-used", used_after),
+        ("x-datapoints-remaining", remaining_after),
+        ("x-datapoints-limit", limit),
+    ):
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            raise ControlledShadowAuthorizationPackageError(
+                f"B1 billing provenance is missing or invalid: {name}"
+            )
+    if used_after + remaining_after != limit or used_after < datapoints:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 billing counters do not reconcile"
+        )
+    bookmaker_observations = raw.get("bookmaker_observations")
+    if (
+        not isinstance(bookmaker_observations, (tuple, list))
+        or not bookmaker_observations
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 bookmaker observations are missing"
+        )
+    for item in bookmaker_observations:
+        bookmaker = _mapping(item, "B1 bookmaker observation")
+        if (
+            not str(bookmaker.get("bookmaker_id", "")).strip()
+            or not str(bookmaker.get("bookmaker_name", "")).strip()
+        ):
+            raise ControlledShadowAuthorizationPackageError(
+                "B1 bookmaker identity is incomplete"
+            )
+        odds = _mapping(bookmaker.get("odds"), "B1 bookmaker odds")
+        _price(odds.get("home"), "B1 home odds")
+        _price(odds.get("draw"), "B1 draw odds")
+        _price(odds.get("away"), "B1 away odds")
+    return {
+        "schema_version": raw.get("schema_version"),
+        "provider": CANONICAL_CANDIDATE_PROVIDER,
+        "league": "LL",
+        "evidence_kind": bridge.get("evidence_kind"),
+        "network_execution": True,
+        "fixture_key": bridge.get("fixture_key"),
+        "provider_event_id": bridge.get("provider_event_id"),
+        "provider_request_id": bridge.get("provider_request_id"),
+        "bookmaker_count": len(bookmaker_observations),
+        "source_timestamp": source_timestamp.isoformat(),
+        "captured_at": captured_at.isoformat(),
+        "datapoint_count": datapoints,
+        "quota_cost_units": float(datapoints),
+        "quota_used_before": used_after - datapoints,
+        "quota_used_after": used_after,
+        "quota_remaining_after": remaining_after,
+        "quota_limit": limit,
+        "adapter_version": raw.get("adapter_version"),
+        "adapter_source_sha": raw.get("adapter_source_sha"),
+        "raw_response_digest": raw.get("raw_response_digest"),
+        "candidate_only": True,
+        "receipt_or_authority_issued": False,
+    }
 
 
 def _validate_b1_ll_artifact(
@@ -603,6 +853,7 @@ def prepare_authorization_package(
 
     configuration.validate()
     _require_canonical_targets(configuration)
+    _require_final_shadow_budget(configuration)
     if configuration.enabled is not False:
         raise ControlledShadowAuthorizationPackageError(
             "package preparation requires a disabled configuration"
@@ -1137,12 +1388,22 @@ __all__ = [
     "CANONICAL_CANDIDATE_PROVIDER",
     "FUTURE_EXECUTION_COMMAND",
     "RECONCILIATION_SCHEMA_VERSION",
+    "TOP5_CONTROLLED_SHADOW_MAX_DATAPOINTS",
+    "TOP5_CONTROLLED_SHADOW_MAX_QUOTA_COST_UNITS",
+    "TOP5_CONTROLLED_SHADOW_MAX_RETRIES",
+    "TOP5_CONTROLLED_SHADOW_MAX_SOURCE_AGE_SECONDS",
+    "TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS",
+    "TOP5_CONTROLLED_SHADOW_REQUEST_COUNT",
+    "TOP5_CONTROLLED_SHADOW_REQUEST_QUOTA_COST_UNITS",
     "TOP5_LEAGUE_ORDER",
+    "TOP5_OBSERVED_REQUEST_DATAPOINT_COST",
     "ControlledShadowAuthorizationPackageError",
     "ControlledShadowAuthorizationPackageV1",
     "FiveLeagueReconciliationV1",
     "QualificationReadyArtifactsV1",
+    "derive_bounded_shadow_budget",
     "prepare_authorization_package",
     "reconcile_controlled_shadow_run",
     "reconcile_controlled_shadow_run_with_b1_ll_artifact",
+    "validate_canonical_b1_ll_artifact",
 ]

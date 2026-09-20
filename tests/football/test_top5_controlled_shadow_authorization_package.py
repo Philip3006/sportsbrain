@@ -4,17 +4,24 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import timedelta
+from pathlib import Path
 
 import pytest
 
 from src.football.top5_controlled_shadow_authorization_package import (
     CANONICAL_CANDIDATE_PROVIDER,
     FUTURE_EXECUTION_COMMAND,
+    TOP5_CONTROLLED_SHADOW_MAX_DATAPOINTS,
+    TOP5_CONTROLLED_SHADOW_MAX_QUOTA_COST_UNITS,
+    TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS,
+    TOP5_CONTROLLED_SHADOW_REQUEST_QUOTA_COST_UNITS,
     TOP5_LEAGUE_ORDER,
     ControlledShadowAuthorizationPackageError,
+    derive_bounded_shadow_budget,
     prepare_authorization_package,
     reconcile_controlled_shadow_run,
     reconcile_controlled_shadow_run_with_b1_ll_artifact,
+    validate_canonical_b1_ll_artifact,
 )
 from src.football.top5_controlled_shadow_provider_qualification import (
     ObservationEvidenceKind,
@@ -173,7 +180,16 @@ def test_disabled_package_preserves_exact_reviewed_budgets_and_scope():
     targets = tuple(
         replace(target, provider=CANONICAL_CANDIDATE_PROVIDER) for target in _targets()
     )
-    configuration = replace(_configuration(targets=targets), enabled=False)
+    configuration = replace(
+        _configuration(
+            targets=targets,
+            maximum_datapoints=275,
+            maximum_quota_cost_units=275.0,
+            request_quota_cost_units=55.0,
+            minimum_interval_seconds=1.1,
+        ),
+        enabled=False,
+    )
 
     package = prepare_authorization_package(configuration)
     payload = package.as_payload()
@@ -204,6 +220,15 @@ def test_disabled_package_preserves_exact_reviewed_budgets_and_scope():
     assert template["monetary_spend_authorized"] is False
     assert payload["receipt_issuer_present"] is False
     assert payload["active_provider_authority"] is False
+
+
+def test_package_rejects_obsolete_five_datapoint_budget():
+    targets = tuple(
+        replace(target, provider=CANONICAL_CANDIDATE_PROVIDER) for target in _targets()
+    )
+    configuration = replace(_configuration(targets=targets), enabled=False)
+    with pytest.raises(ControlledShadowAuthorizationPackageError, match="budget"):
+        prepare_authorization_package(configuration)
 
 
 def test_completed_network_run_reconciles_all_five_leagues_to_downstream_inputs():
@@ -511,3 +536,56 @@ def test_package_and_reconciliation_never_issue_receipt_or_change_authority():
     assert (
         reconciliation.artifacts.qualification_status == "PENDING_BUILDER2_VALIDATION"
     )
+
+
+def test_run006_b1_artifact_passes_offline_b4_preflight_without_authority():
+    artifact = Path("/private/tmp/top5-b1-laliga-final-evidence.json")
+    if not artifact.exists():
+        pytest.skip("canonical offline Run-006 artifact is not present")
+    summary = validate_canonical_b1_ll_artifact(artifact)
+    assert summary["provider"] == CANONICAL_CANDIDATE_PROVIDER
+    assert summary["league"] == "LL"
+    assert summary["evidence_kind"] == "REAL_OBSERVED"
+    assert summary["network_execution"] is True
+    assert summary["datapoint_count"] == 55
+    assert summary["quota_cost_units"] == 55.0
+    assert summary["quota_used_before"] == 0
+    assert summary["quota_used_after"] == 55
+    assert summary["quota_remaining_after"] == 19945
+    assert summary["bookmaker_count"] == 3
+    assert summary["candidate_only"] is True
+    assert summary["receipt_or_authority_issued"] is False
+
+
+def test_final_bounded_budget_is_derived_from_observed_ll_cost():
+    budget = derive_bounded_shadow_budget(
+        observed_datapoint_cost=55,
+        available_quota_remaining=19945,
+    )
+    assert budget["maximum_request_count"] == 5
+    assert budget["maximum_datapoints"] == TOP5_CONTROLLED_SHADOW_MAX_DATAPOINTS == 275
+    assert (
+        budget["maximum_quota_cost_units"]
+        == TOP5_CONTROLLED_SHADOW_MAX_QUOTA_COST_UNITS
+        == 275.0
+    )
+    assert (
+        budget["request_quota_cost_units"]
+        == TOP5_CONTROLLED_SHADOW_REQUEST_QUOTA_COST_UNITS
+        == 55.0
+    )
+    assert (
+        budget["minimum_interval_seconds"]
+        == TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS
+        == 1.1
+    )
+    assert budget["maximum_retries"] == 0
+    assert budget["quota_headroom_after_bounded_run"] == 19670
+
+
+def test_budget_derivation_rejects_insufficient_remaining_quota():
+    with pytest.raises(ControlledShadowAuthorizationPackageError, match="headroom"):
+        derive_bounded_shadow_budget(
+            observed_datapoint_cost=55,
+            available_quota_remaining=274,
+        )

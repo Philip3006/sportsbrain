@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import pytest
 
@@ -26,6 +28,7 @@ from src.football.top5_therundown_network_shadow import (
     TheRundownHttpNetworkTransportV1,
     TheRundownNetworkAuthorizationV1,
     TheRundownNetworkConfigurationV1,
+    TheRundownNetworkHttpResponseV1,
     TheRundownNetworkParticipantScopeV1,
     TheRundownNetworkRequestScopeV1,
     TheRundownNetworkResponseV1,
@@ -495,3 +498,195 @@ def test_network_request_contract_has_no_retry_and_exact_scope_binding():
     assert request.request_identity == "request-EPL"
     assert request.sequence == 0
     assert request.market_type == MARKET_PREMATCH_1X2
+
+
+def _run006_http_fixture():
+    body_path = Path(
+        "/private/tmp/top5-laliga-nextdate-20260920-006.request-2.body.json"
+    )
+    headers_path = Path(
+        "/private/tmp/top5-laliga-nextdate-20260920-006.request-2.headers.json"
+    )
+    if not body_path.exists() or not headers_path.exists():
+        pytest.skip("canonical Run-006 HTTP fixture is not present")
+    body = json.loads(body_path.read_text(encoding="utf-8"))
+    headers = json.loads(headers_path.read_text(encoding="utf-8"))
+    target_event = body["events"][0]
+    kickoff = datetime.fromisoformat("2026-09-20T12:00:00+00:00")
+    targets = [
+        replace(target, provider="therundown_experimental") for target in _targets()
+    ]
+    target = TheRundownCanaryTargetV1(
+        provider="therundown_experimental",
+        league="LL",
+        fixture_key=make_fixture_key("LL", "Getafe", "Málaga", kickoff),
+        provider_event_id=target_event["event_id"],
+        home_team="Getafe",
+        away_team="Málaga",
+        kickoff=kickoff,
+    )
+    targets[2] = target
+    participants = list(_configuration(targets=tuple(targets)).participant_scope)
+    participants[2] = TheRundownNetworkParticipantScopeV1(
+        fixture_key=target.fixture_key,
+        home_participant_id="3952",
+        away_participant_id="133109",
+    )
+    request_scope = list(_configuration(targets=tuple(targets)).request_scope)
+    request_scope[2] = TheRundownNetworkRequestScopeV1(
+        fixture_key=target.fixture_key,
+        request_identity="request-LL",
+    )
+    configuration = _configuration(
+        targets=tuple(targets),
+        participant_scope=tuple(participants),
+        request_scope=tuple(request_scope),
+        enabled=True,
+        maximum_datapoints=275,
+        maximum_quota_cost_units=275.0,
+        request_quota_cost_units=55.0,
+        minimum_interval_seconds=1.1,
+    )
+    authorization = _authorization(
+        configuration,
+        provider="therundown_experimental",
+        issued_at=datetime(2026, 9, 19, 22, 30, tzinfo=UTC),
+        expires_at=datetime(2026, 9, 19, 23, 30, tzinfo=UTC),
+    )
+    request = authorization.request_for(target, configuration)
+    http_response = TheRundownNetworkHttpResponseV1(
+        status_code=200,
+        payload=body,
+        headers=headers,
+        started_at=datetime(2026, 9, 19, 22, 40, 35, tzinfo=UTC),
+        finished_at=datetime(2026, 9, 19, 22, 40, 36, 431436, tzinfo=UTC),
+    )
+    return request, http_response
+
+
+def test_real_run006_http_shape_uses_provider_billed_datapoints_and_headers():
+    request, http_response = _run006_http_fixture()
+    response = TheRundownCanonicalPayloadAdapterV1(
+        adapter_version="therundown-v2-experimental:2",
+        adapter_source_sha=ADAPTER_SHA,
+    ).decode_response(request, http_response)
+
+    assert response.outcome is CanaryOutcome.SUCCESS
+    assert response.evidence_kind is ObservationEvidenceKind.REAL_OBSERVED
+    assert response.network_execution is True
+    assert response.bookmaker_identity == "betmgm"
+    assert (response.home_odds, response.draw_odds, response.away_odds) == (
+        2.05,
+        3.05,
+        4.3,
+    )
+    assert response.datapoint_count == 55
+    assert response.quota_cost_units == 55.0
+    assert (response.quota_before, response.quota_after) == (20000, 19945)
+    assert response.source_timestamp == datetime(
+        2026, 9, 19, 22, 35, 36, 431436, tzinfo=UTC
+    )
+    assert response.raw_metadata["source_timestamp_method"] == (
+        "response_finished_at_minus_x_data_delay_seconds"
+    )
+    assert response.raw_metadata["billing_unit"] == "provider_billed_x_datapoints"
+    assert response.raw_metadata["x_datapoints_used_after"] == 55
+    assert response.raw_metadata["x_datapoints_remaining_after"] == 19945
+    assert response.raw_metadata["rate_limit_remaining_unavailable"] is True
+    assert response.raw_metadata["rate_limit_reset_unavailable"] is True
+    assert response.provider_record_digest == (
+        "2eabb443c539240dc5db0866d69e500b1b62b8d943ca42d03e4b3aae818eb74b"
+    )
+
+
+def test_real_run006_http_transport_path_is_header_and_payload_complete():
+    request, http_response = _run006_http_fixture()
+
+    class OfflineHttpClient:
+        def execute(self, http_request):
+            assert (
+                http_request.headers["X-SportsBrain-Request-Identity"]
+                == request.request_identity
+            )
+            return http_response
+
+    transport = TheRundownHttpNetworkTransportV1(
+        endpoint="https://example.invalid/therundown",
+        api_key="offline-test-key",
+        adapter=TheRundownCanonicalPayloadAdapterV1(adapter_source_sha=ADAPTER_SHA),
+        http_client=OfflineHttpClient(),
+        clock=lambda: datetime(2026, 9, 19, 22, 40, 36, tzinfo=UTC),
+    )
+    response = transport.execute(request)
+    assert response.outcome is CanaryOutcome.SUCCESS
+    assert response.network_execution is True
+    assert response.datapoint_count == 55
+    assert response.quota_cost_units == 55.0
+    assert len(transport.calls) == 1
+
+
+def test_real_run006_missing_billing_header_fails_closed():
+    request, http_response = _run006_http_fixture()
+    headers = dict(http_response.headers)
+    headers.pop("x-datapoints")
+    response = TheRundownCanonicalPayloadAdapterV1(
+        adapter_source_sha=ADAPTER_SHA
+    ).decode_response(request, replace(http_response, headers=headers))
+    assert response.outcome is CanaryOutcome.MALFORMED
+    assert response.datapoint_count == 0
+    assert response.network_execution is True
+
+
+def test_real_run006_contradictory_billing_counters_fail_closed():
+    request, http_response = _run006_http_fixture()
+    headers = dict(http_response.headers)
+    headers["x-datapoints-remaining"] = "19944"
+    response = TheRundownCanonicalPayloadAdapterV1(
+        adapter_source_sha=ADAPTER_SHA
+    ).decode_response(request, replace(http_response, headers=headers))
+    assert response.outcome is CanaryOutcome.MALFORMED
+    assert response.datapoint_count == 0
+
+
+def test_real_run006_missing_bookmaker_header_fails_closed():
+    request, http_response = _run006_http_fixture()
+    headers = dict(http_response.headers)
+    headers.pop("x-bookmakers")
+    response = TheRundownCanonicalPayloadAdapterV1(
+        adapter_source_sha=ADAPTER_SHA
+    ).decode_response(request, replace(http_response, headers=headers))
+    assert response.outcome is CanaryOutcome.MALFORMED
+    assert response.datapoint_count == 0
+
+
+@pytest.mark.parametrize(
+    ("maximum_datapoints", "maximum_quota_cost_units", "expected_status"),
+    [
+        (300, 300.0, NetworkShadowRunStatus.COMPLETED_REPLAY),
+        (275, 275.0, NetworkShadowRunStatus.COMPLETED_REPLAY),
+        (274, 275.0, NetworkShadowRunStatus.PARTIAL),
+    ],
+)
+def test_provider_billed_five_request_budget_is_under_exact_or_over_bound(
+    maximum_datapoints, maximum_quota_cost_units, expected_status
+):
+    configuration = _configuration(
+        enabled=True,
+        maximum_datapoints=maximum_datapoints,
+        maximum_quota_cost_units=maximum_quota_cost_units,
+        request_quota_cost_units=55.0,
+    )
+    result, transport = _run(
+        configuration=configuration,
+        response_factory=lambda request: _response(
+            request, datapoint_count=55, quota_cost_units=55.0
+        ),
+    )
+    assert result.status is expected_status
+    assert len(transport.calls) == 5
+    if expected_status is NetworkShadowRunStatus.PARTIAL:
+        assert result.datapoint_count == 220
+        assert any("DATAPOINT_BUDGET_OVERRUN" in item for item in result.failures)
+    else:
+        assert result.datapoint_count == 275
+        assert result.quota_cost_units == 275.0
