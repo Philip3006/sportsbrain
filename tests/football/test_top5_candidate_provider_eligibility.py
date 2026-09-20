@@ -43,8 +43,8 @@ from tests.football.test_top5_controlled_shadow_provider_qualification import (
 from tests.football.test_top5_therundown_network_shadow import (
     NOW,
     _configuration,
-    _quota_headroom,
     _NetworkStubTransport,
+    _quota_headroom,
     _response,
     _targets,
 )
@@ -172,9 +172,7 @@ def _candidate_qualification_inputs():
         adapter_version=observation.adapter_version,
     )
     authorization = replace(_authorization(), provider_scope=(CANDIDATE,))
-    readiness = {
-        CANDIDATE: ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION
-    }
+    readiness = {CANDIDATE: ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION}
     return observation, eligibility, session, authorization, readiness, cascade
 
 
@@ -193,9 +191,7 @@ def test_network_capture_can_bind_all_five_candidate_leagues_without_authority()
         eligibility = CandidateProviderEligibilityV1.from_network_capture(
             capture, now=NOW
         )
-        restored = CandidateProviderEligibilityV1.from_payload(
-            eligibility.as_payload()
-        )
+        restored = CandidateProviderEligibilityV1.from_payload(eligibility.as_payload())
         assert restored.provider_identity == CANDIDATE
         assert restored.configuration_digest == configuration.configuration_digest
         assert restored.active_production_capability is False
@@ -236,7 +232,10 @@ def test_candidate_real_observation_requires_explicit_eligibility_and_qualifies(
         report.qualification_status
         is ProviderQualificationStatus.REAL_OBSERVATION_VALIDATED
     )
-    assert report.provider_statuses[CANDIDATE] is ProviderQualificationStatus.REAL_OBSERVATION_VALIDATED
+    assert (
+        report.provider_statuses[CANDIDATE]
+        is ProviderQualificationStatus.REAL_OBSERVATION_VALIDATED
+    )
     assert report.production_activation_authorized is False
     assert report.recommendation is None
     builder1_shadow = bridge_real_observation_to_builder1_shadow_evidence(
@@ -334,7 +333,10 @@ def test_replay_cannot_upgrade_candidate_output_to_real_evidence():
     )
     assert result.status is NetworkShadowRunStatus.PARTIAL
     assert result.captures == ()
-    assert all("TRANSPORT_ERROR:NetworkShadowExecutionBlocked" in failure for failure in result.failures)
+    assert all(
+        "TRANSPORT_ERROR:NetworkShadowExecutionBlocked" in failure
+        for failure in result.failures
+    )
 
 
 def test_candidate_manifest_is_accepted_by_b2_intake_only_with_binding():

@@ -40,7 +40,12 @@ window, and bind to the package digest, authorization ID, run ID, session ID,
 and CEO authorization identity. Missing, stale, malformed, provider-mismatched,
 account-unattributed, or under-budget evidence fails closed without a
 transport call. Response billing remains validated independently after every
-request; the headroom artifact never invents or reserves quota.
+request; the headroom artifact never invents or reserves quota. The current
+repository has no provider-native non-billable account artifact or verifier:
+TheRundown exposes these datapoints only in billed response headers. Therefore
+the real operator path currently fails closed with
+`NO_TRUSTWORTHY_PRE_REQUEST_QUOTA_SOURCE`; the structural artifact is usable
+only by explicit offline tests and cannot authorize a real run.
 
 ## Post-run reconciliation
 
@@ -115,9 +120,10 @@ not grant authority or publication.
 
 ## Guarded operator entrypoint
 
-The single canonical operator entrypoint is now implemented in this module.
-With no mode flag, it performs a complete dry-run/preflight and makes zero
-provider calls. The explicit `--execute-network` flag is required before the
+The single canonical operator entrypoint is implemented in this module. With
+no mode flag, it performs a zero-network preflight, but the current preflight
+also fails closed until a provider-backed quota-headroom source and verifier
+are integrated. The explicit `--execute-network` flag is required before the
 reviewed HTTP transport can be constructed:
 
 ```text
@@ -142,8 +148,10 @@ all candidate-only safety flags. The quota-headroom file contains the
 serialized `TheRundownQuotaHeadroomEvidenceV1` observation, including its
 evidence digest, provider/account scope, observation timestamp, and remaining
 datapoints. The entrypoint requires a fresh `>=275` headroom proof before the
-first request. The LL response is validated into the same-run B1 seam after
-capture and reconciled only after that validation succeeds.
+first request. The LL response is validated immediately after the single LL
+capture, before SA or L1 can be requested, and reconciled only after that
+validation succeeds. The current operator command remains blocked by the
+missing trustworthy pre-request quota source described above.
 
 `--credential-file` must be an absolute, non-symlink, operator-only file with
 no group/world permissions and an existing `THERUNDOWN_API_KEY=` entry. The

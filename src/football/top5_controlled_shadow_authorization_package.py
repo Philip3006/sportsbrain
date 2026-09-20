@@ -480,24 +480,11 @@ def _load_quota_headroom(
     authorization: TheRundownNetworkAuthorizationV1,
     now: datetime,
 ) -> TheRundownQuotaHeadroomEvidenceV1:
-    payload = _read_json_file(path_value, "quota headroom evidence")
-    evidence = TheRundownQuotaHeadroomEvidenceV1.from_payload(payload)
-    try:
-        evidence.validate(
-            expected_provider=authorization.provider,
-            expected_package_digest=package.package_digest,
-            expected_authorization=authorization,
-            now=now,
-            maximum_age_seconds=configuration.maximum_source_age_seconds,
-        )
-        authorization.validate(
-            configuration,
-            now=now,
-            require_quota_headroom=True,
-        )
-    except NetworkShadowContractError as exc:
-        raise ControlledShadowAuthorizationPackageError(str(exc)) from exc
-    return evidence
+    raise ControlledShadowAuthorizationPackageError(
+        "NO_TRUSTWORTHY_PRE_REQUEST_QUOTA_SOURCE: TheRundown exposes "
+        "quota remaining only in billed response headers; no provider-native "
+        "non-billable account artifact or verifier is configured"
+    )
 
 
 def _validate_b1_ll_artifact_shape(artifact: Mapping[str, object]) -> None:
@@ -2006,6 +1993,21 @@ def run_guarded_network_execution(
             adapter=adapter,
             clock=clock_fn,
         )
+    same_run_b1_validation: dict[str, object] | None = None
+
+    def validate_b1_after_capture(capture: TheRundownNetworkShadowCaptureV1) -> None:
+        nonlocal same_run_b1_validation
+        if capture.target.league != "LL":
+            return
+        same_run_b1_validation = validate_same_run_ll_capture(
+            target=capture.target,
+            request=capture.request,
+            response=capture.response,
+            authorization=authorization,
+            now=_utc(clock_fn(), "B1 same-run validation now"),
+            maximum_source_age_seconds=configuration.maximum_source_age_seconds,
+        )
+
     result = TheRundownNetworkShadowExecutorV1(
         clock=clock_fn,
         pacer=pacer,
@@ -2016,6 +2018,7 @@ def run_guarded_network_execution(
         authorization,
         transport=transport,
         quota_headroom=quota_headroom,
+        post_capture_validator=validate_b1_after_capture,
     )
     if (
         result.status is not NetworkShadowRunStatus.COMPLETED_NETWORK
@@ -2025,27 +2028,15 @@ def run_guarded_network_execution(
             "network shadow did not complete all five leagues: "
             + "; ".join(result.failures)
         )
-    ll_capture = next(
-        capture for capture in result.captures if capture.target.league == "LL"
-    )
-    try:
-        b1_same_run_validation = validate_same_run_ll_capture(
-            target=ll_capture.target,
-            request=ll_capture.request,
-            response=ll_capture.response,
-            authorization=authorization,
-            now=_utc(clock_fn(), "B1 same-run validation now"),
-            maximum_source_age_seconds=configuration.maximum_source_age_seconds,
-        )
-    except Exception as exc:
+    if same_run_b1_validation is None:
         raise ControlledShadowAuthorizationPackageError(
-            f"B1 same-run validation failed: {exc}"
-        ) from exc
+            "B1 same-run validation did not run for the LL capture"
+        )
     reconciliation = reconcile_controlled_shadow_run_with_b1_ll_artifact(
         result,
         configuration,
         authorization,
-        b1_same_run_validation,
+        same_run_b1_validation,
         now=_utc(clock_fn(), "reconciliation now"),
     )
     b2_package = _build_b2_shadow_package(

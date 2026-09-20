@@ -1938,6 +1938,8 @@ class TheRundownNetworkShadowExecutorV1:
         *,
         transport: TheRundownCanaryNetworkTransport,
         quota_headroom: TheRundownQuotaHeadroomEvidenceV1 | None = None,
+        post_capture_validator: Callable[[TheRundownNetworkShadowCaptureV1], None]
+        | None = None,
     ) -> TheRundownNetworkShadowRunResultV1:
         configuration.validate()
         authorization.validate(configuration, now=self.clock())
@@ -2030,6 +2032,12 @@ class TheRundownNetworkShadowExecutorV1:
                     break
                 continue
             capture = _build_capture(target, request, response, test_only=test_only)
+            if post_capture_validator is not None:
+                try:
+                    post_capture_validator(capture)
+                except Exception as exc:  # noqa: BLE001 - safety hook fails closed
+                    failures.append(f"{target.league}:POST_CAPTURE_VALIDATION:{exc}")
+                    break
             captures.append(capture)
         status = (
             NetworkShadowRunStatus.COMPLETED_REPLAY
