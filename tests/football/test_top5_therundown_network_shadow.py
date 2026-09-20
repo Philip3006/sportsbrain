@@ -9,9 +9,15 @@ from pathlib import Path
 
 import pytest
 
+from src.football.odds.therundown import (
+    THERUNDOWN_ADAPTER_VERSION,
+    THERUNDOWN_PROVIDER_NAME,
+)
 from src.football.provider_cascade.contracts import (
     FOOTBALL_PROVIDER_REPERTOIRE,
     MARKET_PREMATCH_1X2,
+    QuotaSnapshot,
+    digest_record,
 )
 from src.football.top5_controlled_shadow_provider_qualification import (
     ControlledShadowCaptureAttestation,
@@ -460,7 +466,7 @@ def test_provider_billing_headers_missing_or_contradictory_fail_closed():
         )
 
 
-def test_actual_run006_payload_is_not_accepted_by_internal_payload_adapter():
+def test_actual_run006_payload_is_bridged_through_reviewed_adapter():
     body_path = Path("/private/tmp/top5-laliga-nextdate-20260920-006.request-2.body.json")
     if not body_path.exists():
         pytest.skip("local Run-006 raw artifact is not available")
@@ -475,10 +481,44 @@ def test_actual_run006_payload_is_not_accepted_by_internal_payload_adapter():
         pytest.skip("local Run-006 response metadata is not available")
     headers = json.loads(headers_path.read_text())
     metadata = json.loads(metadata_path.read_text())
-    configuration = _configuration(enabled=True)
-    authorization = _authorization(configuration)
-    request = authorization.request_for(configuration.targets[2], configuration)
-    decoded = TheRundownCanonicalPayloadAdapterV1().decode_response(
+    kickoff = datetime.fromisoformat("2026-09-20T12:00:00+00:00")
+    target = TheRundownCanaryTargetV1(
+        provider=THERUNDOWN_PROVIDER_NAME,
+        league="LL",
+        fixture_key=make_fixture_key("LL", "Getafe", "Málaga", kickoff),
+        provider_event_id="48e87c231045c73e2318f6b4d5327405",
+        home_team="Getafe",
+        away_team="Málaga",
+        kickoff=kickoff,
+    )
+    targets = tuple(target if item.league == "LL" else item for item in _targets())
+    configuration = _configuration(
+        targets=targets,
+        request_scope=tuple(
+            TheRundownNetworkRequestScopeV1(
+                fixture_key=item.fixture_key,
+                request_identity=(
+                    "therundown-ll:top5-laliga-real-capture-20260920-006:2026-09-20"
+                    if item.league == "LL"
+                    else f"request-{item.league}"
+                ),
+            )
+            for item in targets
+        ),
+        adapter_version=THERUNDOWN_ADAPTER_VERSION,
+        adapter_source_sha=(
+            "67f67ff97cb072bfca03bae688acbf87074359be9af31a36d890483ecd4fe152"
+        ),
+        maximum_source_age_seconds=900,
+        enabled=True,
+    )
+    authorization = _authorization(configuration, provider=THERUNDOWN_PROVIDER_NAME)
+    request = authorization.request_for(target, configuration)
+    decoded = TheRundownCanonicalPayloadAdapterV1(
+        adapter_source_sha=configuration.adapter_source_sha,
+        maximum_source_age_seconds=configuration.maximum_source_age_seconds,
+        initial_quota=QuotaSnapshot(used=0, remaining=None),
+    ).decode_response(
         request,
         TheRundownNetworkHttpResponseV1(
             status_code=200,
@@ -488,12 +528,25 @@ def test_actual_run006_payload_is_not_accepted_by_internal_payload_adapter():
             finished_at=datetime.fromisoformat(metadata["completed_at"]),
         ),
     )
-    # The current network seam intentionally requires a reviewed provider-
-    # specific normalization before its internal response object is formed.
     assert isinstance(payload.get("events"), list)
     assert "outcome" not in payload
     assert "datapoint_count" not in payload
-    assert decoded.outcome is CanaryOutcome.MALFORMED
+    assert decoded.outcome is CanaryOutcome.SUCCESS
+    assert decoded.provider == THERUNDOWN_PROVIDER_NAME
+    assert decoded.datapoint_count == 55
+    assert decoded.quota_cost_units == 55.0
+    assert decoded.rate_limit_remaining is None
+    assert decoded.raw_response_digest == (
+        "6df5aa61479bbeaa85f46b4a1f66c7c3a40d88736b9b7f08555f9eb0e0f276c4"
+    )
+    assert [
+        digest_record(item)
+        for item in decoded.raw_metadata["normalized_observations"]
+    ] == [
+        "6e31168f27a5da71a96f369bdb0aca7dcd93b4a103f29685f7f528ea50984355",
+        "2b2bb6cc67a204929478c0957ac5af5b8ebcc2002c6e89faee71cc044de582a1",
+        "68d0a0da7f2ddf25299b76c08c8d995b57d8cfe571089402215a666fc9f24017",
+    ]
 
 
 @pytest.mark.parametrize(

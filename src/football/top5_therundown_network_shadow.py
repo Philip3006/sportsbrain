@@ -27,10 +27,22 @@ from typing import Protocol
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+from src.football.odds.therundown import (
+    THERUNDOWN_ADAPTER_VERSION,
+    THERUNDOWN_PROVIDER_NAME,
+    TheRundownExperimentalAdapter,
+)
+from src.football.production_contracts import Fixture
+from src.football.provider_cascade.adapters import RawProviderResponse
 from src.football.provider_cascade.contracts import (
     MARKET_PREMATCH_1X2,
     TOP5_LEAGUE_CODES,
+    CascadeTimingPolicy,
+    NetworkAuthorizationContract,
+    ProviderConfig,
+    QuotaSnapshot,
     TransportCapability,
+    digest_record,
 )
 from src.football.top5_controlled_shadow_provider_qualification import (
     CAPTURE_ATTESTATION_CONTRACT_VERSION,
@@ -899,7 +911,242 @@ class TheRundownNetworkPayloadAdapter(Protocol):
 
 
 class TheRundownCanonicalPayloadAdapterV1:
-    """Adapter seam for a reviewed provider-specific JSON normalization."""
+    """Bridge actual TheRundown JSON through the reviewed candidate adapter.
+
+    The legacy mapping path remains available for deterministic contract
+    fixtures.  Actual ``events[]`` payloads require the reviewed adapter
+    configuration explicitly, so a generic payload cannot silently become
+    real evidence.
+    """
+
+    _SAFE_PROVIDER_HEADERS = frozenset(
+        {
+            "x-datapoints",
+            "x-datapoints-limit",
+            "x-datapoints-period",
+            "x-datapoints-remaining",
+            "x-datapoints-reset",
+            "x-datapoints-used",
+            "x-data-delay-seconds",
+            "x-history-access",
+            "x-live-odds-access",
+            "x-rate-limit",
+            "x-rate-limit-remaining",
+            "x-rate-limit-reset",
+            "x-ratelimit-limit",
+            "x-ratelimit-remaining",
+            "x-ratelimit-reset",
+            "x-tier",
+            "x-websocket-access",
+        }
+    )
+
+    _INTEGER_PROVIDER_HEADERS = frozenset(
+        {
+            "x-datapoints",
+            "x-datapoints-limit",
+            "x-datapoints-remaining",
+            "x-datapoints-used",
+            "x-data-delay-seconds",
+            "x-rate-limit",
+            "x-rate-limit-remaining",
+            "x-rate-limit-reset",
+            "x-ratelimit-limit",
+            "x-ratelimit-remaining",
+            "x-ratelimit-reset",
+        }
+    )
+
+    def __init__(
+        self,
+        *,
+        adapter_version: str = THERUNDOWN_ADAPTER_VERSION,
+        adapter_source_sha: str | None = None,
+        maximum_source_age_seconds: int = 300,
+        kickoff_tolerance_seconds: int = 60,
+        initial_quota: QuotaSnapshot | None = None,
+    ) -> None:
+        self.adapter_version = adapter_version
+        self.adapter_source_sha = adapter_source_sha
+        self.maximum_source_age_seconds = maximum_source_age_seconds
+        self.kickoff_tolerance_seconds = kickoff_tolerance_seconds
+        self.initial_quota = initial_quota or QuotaSnapshot()
+
+    @classmethod
+    def _safe_provider_headers(cls, headers: Mapping[str, str]) -> dict[str, object]:
+        evidence: dict[str, object] = {}
+        for key, raw_value in headers.items():
+            name = str(key).casefold()
+            if name not in cls._SAFE_PROVIDER_HEADERS:
+                continue
+            value = str(raw_value).strip()
+            if name in cls._INTEGER_PROVIDER_HEADERS:
+                try:
+                    evidence[name] = int(value)
+                except ValueError:
+                    continue
+            else:
+                evidence[name] = value
+        return evidence
+
+    @staticmethod
+    def _provider_fixture_key(request: TheRundownNetworkRequestV1) -> str:
+        return (
+            f"therundown:{request.target.league}:"
+            f"{request.target.provider_event_id}"
+        )
+
+    def _reviewed_config(self, request: TheRundownNetworkRequestV1) -> ProviderConfig:
+        return ProviderConfig(
+            name=THERUNDOWN_PROVIDER_NAME,
+            league_allowlist=frozenset({request.target.league}),
+            market_allowlist=(MARKET_PREMATCH_1X2,),
+            credentials_required=False,
+            credential_available=True,
+            candidate_only=True,
+            quality_eligible=False,
+            shadow_only=True,
+            adapter_version=self.adapter_version,
+            initial_quota=self.initial_quota,
+        )
+
+    def _decode_reviewed_events(
+        self,
+        request: TheRundownNetworkRequestV1,
+        response: TheRundownNetworkHttpResponseV1,
+        billing: Mapping[str, int],
+    ) -> TheRundownNetworkResponseV1:
+        if request.target.provider != THERUNDOWN_PROVIDER_NAME:
+            raise NetworkShadowExecutionBlocked(
+                "actual TheRundown payload requires therundown_experimental identity"
+            )
+        if not self.adapter_source_sha:
+            raise NetworkShadowExecutionBlocked(
+                "reviewed adapter source SHA is required for actual payloads"
+            )
+        raw = response.payload
+        if not isinstance(raw, Mapping) or not isinstance(raw.get("events"), list):
+            raise NetworkShadowExecutionBlocked(
+                "actual TheRundown payload must contain events[]"
+            )
+        provider_fixture_key = self._provider_fixture_key(request)
+        provider_fixture = Fixture(
+            provider_fixture_key,
+            request.target.league,
+            request.target.home_team,
+            request.target.away_team,
+            request.target.kickoff,
+        )
+        raw_response = RawProviderResponse(
+            status_code=response.status_code,
+            payload=raw,
+            headers=response.headers,
+            started_at=response.started_at,
+            completed_at=response.finished_at,
+            latency_ms=round(
+                (response.finished_at - response.started_at).total_seconds() * 1000
+            ),
+        )
+        reviewed_adapter = TheRundownExperimentalAdapter(
+            transport=lambda _request, _timeout: raw_response
+        )
+        observations = reviewed_adapter.fetch_observations(
+            provider_fixture,
+            self._reviewed_config(request),
+            request_identity=request.request_identity,
+            requested_at=response.started_at,
+            provider_priority=0,
+            provider_fixture_id=request.target.provider_event_id,
+            timing_policy=CascadeTimingPolicy(
+                maximum_odds_age_seconds=self.maximum_source_age_seconds,
+                kickoff_tolerance_seconds=self.kickoff_tolerance_seconds,
+            ),
+            authorization=NetworkAuthorizationContract(
+                controlled_shadow_run_ref=request.controlled_shadow_run_id,
+                authorized_providers=(THERUNDOWN_PROVIDER_NAME,),
+            ),
+        )
+        if not observations:
+            raise NetworkShadowExecutionBlocked(
+                "reviewed TheRundown adapter returned no complete bookmaker observations"
+            )
+        raw_digest = digest_record(raw)
+        normalized_digests = tuple(
+            digest_record(observation.as_payload()) for observation in observations
+        )
+        safe_headers = self._safe_provider_headers(response.headers)
+        cascade_evidence = {
+            "candidate_only": True,
+            "provider": request.target.provider,
+            "league": request.target.league,
+            "fixture_key": request.target.fixture_key,
+            "provider_event_id": request.target.provider_event_id,
+            "provider_request_id": request.request_identity,
+            "raw_response_digest": raw_digest,
+            "normalized_record_digests": list(normalized_digests),
+            "bookmaker_observations": len(observations),
+        }
+        cascade_digest = _digest(cascade_evidence)
+        primary = observations[0]
+        provider_billing = dict(safe_headers)
+        provider_billing["provider_fixture_key"] = provider_fixture_key
+        provider_billing["canonical_fixture_key"] = request.target.fixture_key
+        provider_billing["normalized_observations"] = [
+            observation.as_payload() for observation in observations
+        ]
+        provider_billing["cascade_evidence"] = cascade_evidence
+        provider_billing["cascade_evidence_digest"] = cascade_digest
+        return TheRundownNetworkResponseV1(
+            outcome=CanaryOutcome.SUCCESS,
+            provider=request.target.provider,
+            league=request.target.league,
+            fixture_key=request.target.fixture_key,
+            provider_event_id=primary.provider_fixture_id,
+            provider_request_id=request.request_identity,
+            home_team=request.target.home_team,
+            away_team=request.target.away_team,
+            home_participant_id=str(
+                primary.metadata.get("participant_ids", {}).get("home", "")
+            ),
+            away_participant_id=str(
+                primary.metadata.get("participant_ids", {}).get("away", "")
+            ),
+            bookmaker_identity=primary.bookmaker_identity,
+            source_identity=primary.source_provenance,
+            source_timestamp=primary.source_timestamp,
+            captured_at=primary.captured_at,
+            request_started_at=primary.request_started_at,
+            request_finished_at=primary.request_completed_at,
+            home_odds=primary.home_odds,
+            draw_odds=primary.draw_odds,
+            away_odds=primary.away_odds,
+            adapter_version=self.adapter_version,
+            adapter_source_sha=self.adapter_source_sha,
+            raw_response_digest=raw_digest,
+            provider_record_digest=primary.raw_record_digest,
+            normalized_record_digest=normalized_digests[0],
+            cascade_evidence_digest=cascade_digest,
+            quota_before=billing["x-datapoints-remaining"] + billing["x-datapoints"],
+            quota_after=billing["x-datapoints-remaining"],
+            quota_cost_units=float(billing["x-datapoints"]),
+            datapoint_count=billing["x-datapoints"],
+            rate_limit_remaining=safe_headers.get("x-rate-limit-remaining"),
+            rate_limit_reset_at=None,
+            account_tier=str(safe_headers.get("x-tier", "")),
+            provider_delay_seconds=float(safe_headers["x-data-delay-seconds"]),
+            http_status=response.status_code,
+            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+            network_execution=True,
+            raw_metadata={
+                "provider_billing": provider_billing,
+                "provider_fixture_key": provider_fixture_key,
+                "canonical_fixture_key": request.target.fixture_key,
+                "normalized_observations": [
+                    observation.as_payload() for observation in observations
+                ],
+                "cascade_evidence": cascade_evidence,
+            },
+        )
 
     @staticmethod
     def _billing_headers(headers: Mapping[str, str]) -> dict[str, int]:
@@ -989,6 +1236,8 @@ class TheRundownCanonicalPayloadAdapterV1:
             return _failure_response(request, outcome, response)
         billing = self._billing_headers(response.headers)
         payload = dict(raw)
+        if isinstance(raw, Mapping) and isinstance(raw.get("events"), list):
+            return self._decode_reviewed_events(request, response, billing)
         payload_datapoints = payload.get("datapoint_count")
         if payload_datapoints is not None and payload_datapoints != billing[
             "x-datapoints"
@@ -1776,11 +2025,19 @@ class TheRundownNetworkShadowExecutorV1:
                 "quota-before/after evidence is missing"
             )
         if response.rate_limit_remaining is None:
-            raise NetworkShadowExecutionBlocked("rate-limit evidence is missing")
-        _nonnegative_int(response.rate_limit_remaining, "rate_limit_remaining")
-        if response.rate_limit_reset_at is None:
-            raise NetworkShadowExecutionBlocked("rate-limit reset evidence is missing")
-        _utc(response.rate_limit_reset_at, "rate_limit_reset_at")
+            provider_billing = response.raw_metadata.get("provider_billing")
+            if not isinstance(provider_billing, Mapping):
+                raise NetworkShadowExecutionBlocked("rate-limit evidence is missing")
+            limit = provider_billing.get("x-rate-limit")
+            if limit is None:
+                limit = provider_billing.get("x-ratelimit-limit")
+            if not isinstance(limit, int) or isinstance(limit, bool) or limit <= 0:
+                raise NetworkShadowExecutionBlocked("rate-limit evidence is missing")
+        else:
+            _nonnegative_int(response.rate_limit_remaining, "rate_limit_remaining")
+            if response.rate_limit_reset_at is None:
+                raise NetworkShadowExecutionBlocked("rate-limit reset evidence is missing")
+            _utc(response.rate_limit_reset_at, "rate_limit_reset_at")
         _text(response.account_tier, "account_tier")
         if response.provider_delay_seconds is None:
             raise NetworkShadowExecutionBlocked("provider delay evidence is missing")
@@ -1874,6 +2131,11 @@ def _build_capture(
         "quota_before": response.quota_before,
         "quota_after": response.quota_after,
         "quota_cost_units": response.quota_cost_units,
+        "datapoint_count": response.datapoint_count,
+        "provider_billing": response.raw_metadata.get("provider_billing", {}),
+        "normalized_observations": response.raw_metadata.get(
+            "normalized_observations", []
+        ),
         "network_request_count": 0 if test_only else 1,
         "monetary_spend_authorized": False,
         "delayed_observation": False,

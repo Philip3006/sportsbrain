@@ -52,20 +52,23 @@ loopback endpoints intended for local tests.
 `REAL_OBSERVED` or network execution is rejected. All acceptance tests use
 in-memory transports and do not open sockets.
 
-The generic canonical payload adapter binds `X-Datapoints` and its used,
-remaining, and limit counters to the internal response object, but it does
-not itself normalize the provider's raw `/events/{date}` JSON. The reviewed
-candidate adapter remains the provider-specific normalization boundary. A
-live run must supply that reviewed adapter and its cascade-evidence binding;
-the generic seam fails closed for a raw provider payload that has not been
-normalized.
+The canonical payload adapter binds `X-Datapoints` and its used, remaining,
+and limit counters to the internal response object, then routes an actual
+`/events/{date}` payload through the reviewed `TheRundownExperimentalAdapter`.
+That bridge preserves the provider-scoped fixture identity, all complete
+bookmaker observations, row-level price timestamps, and the reviewed
+raw/normalized/cascade digests. It never treats an internal test mapping as a
+real observation.
 
 The normalized response requires complete pre-match regulation 1X2 data,
 bookmaker and source identity, exact participant/event/request identity,
 provider source and capture/request timestamps, freshness, provider timestamp
 provenance, adapter/source/raw/provider-record/normalized/cascade digests,
 quota-before/after, rate-limit reset/remaining, account tier, provider delay,
-and zero retries. Missing or malformed evidence fails closed.
+and zero retries. The provider's rate-limit ceiling is sufficient when the
+provider does not emit remaining/reset values; a remaining/reset pair is
+still accepted for transports that provide it. Missing or malformed rate,
+quota, billing, identity, or timing evidence fails closed.
 
 ## Downstream evidence boundary
 
@@ -83,13 +86,13 @@ qualification report, or `Builder2QualificationReceiptV1`; it only emits
 candidate evidence inputs. All capture and run outputs remain candidate-only
 with immutable no-bet/publication/activation/spend safety flags.
 
-The current B1/B2 contracts intentionally accept only the active Football
-provider repertoire (`the_odds_api`). TheRundown remains outside that active
-repertoire, and this change does not alter it. Consequently, a network-shaped
-TheRundown output is ready for external validation but cannot currently pass
-canonical provider qualification or become a Builder-2 receipt. A separately
-reviewed provider-repertoire/cascade contract and canonical cascade-evidence
-binding remain prerequisites for that later gate.
+The current B1/B2 contracts keep TheRundown outside the active Football
+provider repertoire while accepting it only through the separately reviewed
+candidate identity `therundown_experimental`. A complete five-league network
+run can therefore produce candidate qualification inputs and reconciliation
+artifacts, but it does not register a provider, change routing, issue a
+Builder-2 receipt, or grant production authority. Candidate eligibility and
+canonical cascade/attestation validation remain separate downstream gates.
 
 ## Verification and next gate
 

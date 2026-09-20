@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import replace
-from datetime import timedelta
+from datetime import datetime, timedelta
+from pathlib import Path
 
 import pytest
 
+from src.football.odds.therundown import THERUNDOWN_ADAPTER_VERSION
+from src.football.provider_cascade.contracts import QuotaSnapshot
 from src.football.top5_controlled_shadow_authorization_package import (
     CANONICAL_CANDIDATE_PROVIDER,
     FUTURE_EXECUTION_COMMAND,
@@ -22,6 +26,10 @@ from src.football.top5_controlled_shadow_provider_qualification import (
 from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_network_shadow import (
     NetworkShadowRunStatus,
+    TheRundownCanonicalPayloadAdapterV1,
+    TheRundownNetworkHttpResponseV1,
+    TheRundownNetworkParticipantScopeV1,
+    TheRundownNetworkRequestScopeV1,
     TheRundownNetworkShadowExecutorV1,
     TheRundownReplayTransportV1,
 )
@@ -98,7 +106,7 @@ def _b1_ll_artifact(result, authorization):
             "qualification_session_id": authorization.qualification_session_id,
             "provider_identity": CANONICAL_CANDIDATE_PROVIDER,
             "league": "LL",
-            "fixture_key": target.fixture_key,
+            "fixture_key": f"therundown:LL:{response.provider_event_id}",
             "provider_event_id": response.provider_event_id,
             "provider_request_id": request.request_identity,
             "home_team": target.home_team,
@@ -168,6 +176,161 @@ def _b1_ll_artifact(result, authorization):
             "no_spend": True,
         },
     }
+
+
+def _run006_network_run():
+    body_path = Path("/private/tmp/top5-laliga-nextdate-20260920-006.request-2.body.json")
+    headers_path = body_path.with_name(
+        "top5-laliga-nextdate-20260920-006.request-2.headers.json"
+    )
+    metadata_path = body_path.with_name(
+        "top5-laliga-nextdate-20260920-006.request-2.meta.json"
+    )
+    if not all(path.exists() for path in (body_path, headers_path, metadata_path)):
+        pytest.skip("Run-006 offline artifacts are not available")
+    payload = json.loads(body_path.read_text())
+    headers = json.loads(headers_path.read_text())
+    metadata = json.loads(metadata_path.read_text())
+    run_now = datetime.fromisoformat(metadata["completed_at"])
+    adapter_source_sha = (
+        "67f67ff97cb072bfca03bae688acbf87074359be9af31a36d890483ecd4fe152"
+    )
+    kickoff = datetime.fromisoformat("2026-09-20T12:00:00+00:00")
+    ll_target = replace(
+        _targets()[2],
+        provider=CANONICAL_CANDIDATE_PROVIDER,
+        fixture_key=make_fixture_key("LL", "Getafe", "Málaga", kickoff),
+        provider_event_id="48e87c231045c73e2318f6b4d5327405",
+        home_team="Getafe",
+        away_team="Málaga",
+        kickoff=kickoff,
+    )
+    targets = tuple(
+        ll_target
+        if target.league == "LL"
+        else replace(
+            target,
+            provider=CANONICAL_CANDIDATE_PROVIDER,
+            kickoff=run_now + timedelta(hours=2),
+            fixture_key=make_fixture_key(
+                target.league,
+                target.home_team,
+                target.away_team,
+                run_now + timedelta(hours=2),
+            ),
+        )
+        for target in _targets()
+    )
+    participant_scope = tuple(
+        TheRundownNetworkParticipantScopeV1(
+            target.fixture_key,
+            "3952" if target.league == "LL" else f"home-id-{target.league}",
+            "133109" if target.league == "LL" else f"away-id-{target.league}",
+        )
+        for target in targets
+    )
+    request_scope = tuple(
+        TheRundownNetworkRequestScopeV1(
+            target.fixture_key,
+            (
+                "therundown-ll:top5-laliga-real-capture-20260920-006:2026-09-20"
+                if target.league == "LL"
+                else f"request-{target.league}"
+            ),
+        )
+        for target in targets
+    )
+    configuration = _configuration(
+        targets=targets,
+        participant_scope=participant_scope,
+        request_scope=request_scope,
+        adapter_version=THERUNDOWN_ADAPTER_VERSION,
+        adapter_source_sha=adapter_source_sha,
+        maximum_source_age_seconds=900,
+        enabled=True,
+    )
+    authorization = _authorization(
+        configuration,
+        provider=CANONICAL_CANDIDATE_PROVIDER,
+        authorization_id="CEO-TOP5-LALIGA-NEXTDATE-CAPTURE-20260920-006",
+        controlled_shadow_run_id="top5-laliga-real-capture-20260920-006",
+        qualification_session_id="top5-laliga-qualification-20260920-006",
+        issued_at=run_now - timedelta(minutes=1),
+        expires_at=datetime.fromisoformat("2026-09-20T01:00:00+00:00"),
+    )
+    request = authorization.request_for(ll_target, configuration)
+    ll_response = TheRundownCanonicalPayloadAdapterV1(
+        adapter_source_sha=adapter_source_sha,
+        maximum_source_age_seconds=configuration.maximum_source_age_seconds,
+        initial_quota=QuotaSnapshot(used=0, remaining=None),
+    ).decode_response(
+        request,
+        TheRundownNetworkHttpResponseV1(
+            status_code=200,
+            payload=payload,
+            headers=headers,
+            started_at=datetime.fromisoformat(metadata["started_at"]),
+            finished_at=run_now,
+        ),
+    )
+
+    def response_factory(network_request):
+        if network_request.target.league == "LL":
+            return ll_response
+        return _response(
+            network_request,
+            provider=CANONICAL_CANDIDATE_PROVIDER,
+            adapter_version=THERUNDOWN_ADAPTER_VERSION,
+            adapter_source_sha=adapter_source_sha,
+            source_timestamp=run_now - timedelta(seconds=5),
+            captured_at=run_now,
+            request_started_at=run_now - timedelta(seconds=1),
+            request_finished_at=run_now,
+            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+            network_execution=True,
+        )
+
+    result = TheRundownNetworkShadowExecutorV1(
+        clock=lambda: run_now,
+        pacer=lambda _seconds: None,
+        allow_live_network=True,
+    ).run(
+        configuration,
+        authorization,
+        transport=_NetworkStubTransport(response_factory),
+    )
+    artifact = json.loads(
+        Path("/private/tmp/top5-b1-laliga-final-evidence.json").read_text()
+    )["canonical_b1_evidence_bundle"]
+    return result, configuration, authorization, artifact, run_now
+
+
+def test_run006_payload_reconciles_through_b4_with_b1_artifact():
+    result, configuration, authorization, artifact, run_now = _run006_network_run()
+
+    reconciliation = reconcile_controlled_shadow_run_with_b1_ll_artifact(
+        result,
+        configuration,
+        authorization,
+        artifact,
+        now=run_now,
+    )
+
+    assert result.status is NetworkShadowRunStatus.COMPLETED_NETWORK
+    assert result.request_count == 5
+    assert result.datapoint_count == 275
+    assert result.quota_cost_units == 275.0
+    assert reconciliation.provider == CANONICAL_CANDIDATE_PROVIDER
+    assert reconciliation.receipt_eligible is False
+    assert reconciliation.authority_changed is False
+    assert reconciliation.artifacts.b1_ll_artifact is not None
+    assert len(reconciliation.artifacts.candidate_eligibilities) == 5
+    ll_capture = result.captures[2]
+    assert len(ll_capture.response.raw_metadata["normalized_observations"]) == 3
+    assert (
+        ll_capture.response.raw_response_digest
+        == "6df5aa61479bbeaa85f46b4a1f66c7c3a40d88736b9b7f08555f9eb0e0f276c4"
+    )
 
 
 def test_disabled_package_preserves_exact_reviewed_budgets_and_scope():
@@ -261,13 +424,43 @@ def test_repaired_b1_ll_artifact_is_injected_into_the_exact_ll_slot():
     assert reconciliation.artifacts.b1_ll_artifact == b1_artifact
     assert (
         reconciliation.artifacts.capture_attestations[2]["fixture_key"]
-        == (b1_artifact["b1_bridge_inputs"]["fixture_key"])
+        == configuration.targets[2].fixture_key
+    )
+    assert b1_artifact["b1_bridge_inputs"]["fixture_key"] == (
+        "therundown:LL:event-LL"
     )
     assert reconciliation.artifacts.candidate_eligibilities[2]["league_code"] == "LL"
     assert reconciliation.artifacts.builder2_receipt_inputs[2]["eligible"] is False
     assert reconciliation.artifacts.receipt_issuer_present is False
     assert reconciliation.artifacts.publication is False
     assert reconciliation.artifacts.production_activation is False
+
+
+@pytest.mark.parametrize(
+    "field, value, pattern",
+    [
+        ("fixture_key", "therundown:LL:other-event", "provider fixture identity"),
+        ("home_team", "Other Home", "canonical fixture identity"),
+    ],
+)
+def test_b1_provider_and_canonical_fixture_bindings_fail_closed(
+    field, value, pattern
+):
+    result, configuration, authorization = _network_run()
+    b1_artifact = _b1_ll_artifact(result, authorization)
+    b1_artifact["b1_bridge_inputs"][field] = value
+
+    with pytest.raises(
+        ControlledShadowAuthorizationPackageError,
+        match=pattern,
+    ):
+        reconcile_controlled_shadow_run_with_b1_ll_artifact(
+            result,
+            configuration,
+            authorization,
+            b1_artifact,
+            now=NOW,
+        )
 
 
 def test_b1_ll_artifact_cannot_self_supply_real_authority():

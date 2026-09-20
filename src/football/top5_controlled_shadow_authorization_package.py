@@ -25,6 +25,7 @@ from src.football.top5_controlled_shadow_provider_qualification import (
     ControlledShadowCaptureAttestation,
     ObservationEvidenceKind,
 )
+from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_network_shadow import (
     NETWORK_SHADOW_SCHEMA_VERSION,
     NetworkShadowContractError,
@@ -295,8 +296,29 @@ def _validate_b1_ll_artifact(
     target = capture.target
     request = capture.request
     response = capture.response
+    bridge_kickoff = _timestamp(bridge.get("kickoff"), "B1 kickoff")
+    derived_fixture_key = make_fixture_key(
+        str(bridge.get("league")),
+        str(bridge.get("home_team")),
+        str(bridge.get("away_team")),
+        bridge_kickoff,
+    )
+    if derived_fixture_key != target.fixture_key:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 canonical fixture identity does not match the LL target"
+        )
+    if not isinstance(bridge.get("fixture_key"), str) or not bridge["fixture_key"].strip():
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 provider fixture identity is missing"
+        )
+    expected_provider_fixture_key = (
+        f"therundown:{bridge.get('league')}:{bridge.get('provider_event_id')}"
+    )
+    if bridge.get("fixture_key") != expected_provider_fixture_key:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 provider fixture identity does not match the provider event"
+        )
     exact_fields = (
-        ("fixture_key", bridge.get("fixture_key"), target.fixture_key),
         (
             "provider_event_id",
             bridge.get("provider_event_id"),
@@ -941,7 +963,9 @@ def _validate_capture(
             )
     try:
         candidate = CandidateProviderEligibilityV1.from_network_capture(
-            capture, now=now
+            capture,
+            now=now,
+            maximum_source_age_seconds=configuration.maximum_source_age_seconds,
         )
     except CandidateEligibilityError as exc:
         raise ControlledShadowAuthorizationPackageError(
