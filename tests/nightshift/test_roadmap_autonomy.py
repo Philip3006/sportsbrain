@@ -90,7 +90,7 @@ def test_top5_finalization_wave_is_explicit_and_bounded(tmp_path: Path) -> None:
         "top5-final-convergence",
     }
     assert dispatcher.roadmap.max_cycles == 25
-    assert dispatcher.merge_backpressure_limit == 3
+    assert dispatcher.merge_backpressure_limit == 12
     assert dispatcher.registry.builder_ids == (
         "builder-1",
         "builder-2",

@@ -2,7 +2,7 @@
   "version": 1,
   "mode": "bounded",
   "max_cycles": 25,
-  "merge_backpressure_limit": 3,
+  "merge_backpressure_limit": 12,
   "items": [
     {
       "item_id": "roadmap-b1-research-1",
@@ -260,7 +260,7 @@
         "acceptance_criteria": [
           "pins current origin/main and the merged B4 implementation identity",
           "uses exactly five request slots total, exactly one per EPL, BL1, LL, SA, and L1, with no additional league slot",
-          "records a zero-retry budget, at least 1.1 seconds pacing, at most 55 seconds per request, and at most 275 seconds total",
+          "records exactly five requests total, exactly one each for EPL, BL1, LL, SA, and L1, zero retries, pacing of at least 1.1 seconds, a maximum of 55 billable datapoints per request, and a maximum of 275 billable datapoints cumulative across the entire five-league run",
           "proves candidate-only shadow boundaries with no authority, activation, or publication",
           "does not make a provider request or perform a La Liga probe",
           "expected result is TOP5_B4_EXECUTION_DOSSIER_READY_FOR_CEO_AUTHORIZATION"
