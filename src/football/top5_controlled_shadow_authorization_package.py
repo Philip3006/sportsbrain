@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import stat
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
@@ -87,6 +88,7 @@ from src.football.top5_therundown_network_shadow import (
     execute_therundown_quota_proof,
 )
 from src.football.top5_therundown_shadow_canary import TheRundownCanaryTargetV1
+from src.runtime.paths import runtime_state_path
 from src.utils.atomic_io import atomic_write_json
 
 CANONICAL_CANDIDATE_PROVIDER = "therundown_experimental"
@@ -115,6 +117,7 @@ QUOTA_PROOF_COMMAND = (
 )
 DEFAULT_THERUNDOWN_CREDENTIAL_PATH = Path.home() / "sportsbrain" / ".env"
 SPEND_CONTROL_EVIDENCE_MAXIMUM_AGE_SECONDS = 86_400
+QUOTA_PROOF_CONSUMPTION_SCHEMA_VERSION = "top5-therundown-quota-proof-consumption-v1"
 B2_SHADOW_TIMING_KICKOFF_TOLERANCE_SECONDS = 60
 B2_SHADOW_TIMING_MINIMUM_LEAD_SECONDS = 0
 B2_SHADOW_TIMING_MAXIMUM_LEAD_SECONDS = 10_800
@@ -274,6 +277,178 @@ def _read_protected_therundown_credential(path_value: object) -> str:
     raise ControlledShadowAuthorizationPackageError(
         "THERUNDOWN_API_KEY is missing from credential_file"
     )
+
+
+def quota_proof_consumption_state_path() -> Path:
+    """Return the sole external operator-owned quota-proof consumption store."""
+
+    return runtime_state_path(
+        "football/top5/quota-proof-consumption",
+        require_external=True,
+    )
+
+
+def _quota_proof_consumption_identity(
+    authorization: TheRundownQuotaProofAuthorizationV1,
+) -> str:
+    return _digest(
+        {
+            "proof_authorization_id": authorization.proof_authorization_id,
+            "authorization_digest": authorization.authorization_digest,
+        }
+    )
+
+
+def _quota_proof_consumption_marker_path(
+    authorization: TheRundownQuotaProofAuthorizationV1,
+) -> Path:
+    directory = quota_proof_consumption_state_path()
+    if not directory.is_absolute():
+        raise ControlledShadowAuthorizationPackageError(
+            "quota proof consumption store must be an absolute operator path"
+        )
+    marker_name = "quota-proof-" + _digest(
+        {"proof_authorization_id": authorization.proof_authorization_id}
+    )
+    return directory / f"{marker_name}.json"
+
+
+def _read_quota_proof_consumption_marker(path: Path) -> Mapping[str, object]:
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            "existing quota proof consumption marker is invalid; refusing reuse"
+        ) from exc
+    marker = _mapping(raw, "quota proof consumption marker")
+    required = {
+        "schema_version",
+        "consumption_identity",
+        "proof_authorization_id",
+        "authorization_digest",
+        "proof_id",
+        "provider",
+        "provider_event_id",
+        "request_shape_digest",
+        "proof_target_source_digest",
+        "consumed_at",
+        "maximum_request_count",
+        "retry_count",
+    }
+    if (
+        set(marker) != required
+        or marker.get("schema_version") != QUOTA_PROOF_CONSUMPTION_SCHEMA_VERSION
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "existing quota proof consumption marker is invalid; refusing reuse"
+        )
+    for name in (
+        "consumption_identity",
+        "authorization_digest",
+        "request_shape_digest",
+        "proof_target_source_digest",
+    ):
+        _digest_value(marker.get(name), f"quota proof marker {name}")
+    _timestamp(marker.get("consumed_at"), "quota proof marker consumed_at")
+    if marker.get("maximum_request_count") != 1 or marker.get("retry_count") != 0:
+        raise ControlledShadowAuthorizationPackageError(
+            "existing quota proof consumption marker has unsafe limits"
+        )
+    return marker
+
+
+def _consume_quota_proof_authorization(
+    authorization: TheRundownQuotaProofAuthorizationV1,
+    *,
+    consumed_at: datetime,
+) -> Path:
+    """Atomically consume one proof authorization before credential/transport use."""
+
+    directory = quota_proof_consumption_state_path()
+    if directory.is_symlink():
+        raise ControlledShadowAuthorizationPackageError(
+            "quota proof consumption store must not be a symlink"
+        )
+    try:
+        directory.mkdir(parents=True, mode=0o700, exist_ok=True)
+        if directory.is_symlink() or not directory.is_dir():
+            raise ControlledShadowAuthorizationPackageError(
+                "quota proof consumption store is not a directory"
+            )
+        directory.chmod(0o700)
+        if stat.S_IMODE(directory.stat().st_mode) & 0o077:
+            raise ControlledShadowAuthorizationPackageError(
+                "quota proof consumption store permissions are too broad"
+            )
+    except ControlledShadowAuthorizationPackageError:
+        raise
+    except OSError as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            "quota proof consumption store is unavailable"
+        ) from exc
+
+    marker_path = _quota_proof_consumption_marker_path(authorization)
+    marker = {
+        "schema_version": QUOTA_PROOF_CONSUMPTION_SCHEMA_VERSION,
+        "consumption_identity": _quota_proof_consumption_identity(authorization),
+        "proof_authorization_id": authorization.proof_authorization_id,
+        "authorization_digest": authorization.authorization_digest,
+        "proof_id": authorization.proof_id,
+        "provider": authorization.provider,
+        "provider_event_id": authorization.provider_event_id,
+        "request_shape_digest": authorization.request_shape_digest,
+        "proof_target_source_digest": authorization.proof_target_source_digest,
+        "consumed_at": _utc(consumed_at, "quota proof consumed_at").isoformat(),
+        "maximum_request_count": 1,
+        "retry_count": 0,
+    }
+    payload = json.dumps(
+        marker, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+    ).encode("utf-8")
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    nofollow = getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(marker_path, flags | nofollow, 0o600)
+    except FileExistsError as exc:
+        if marker_path.is_symlink():
+            raise ControlledShadowAuthorizationPackageError(
+                "existing quota proof consumption marker is a symlink; refusing reuse"
+            ) from exc
+        existing = _read_quota_proof_consumption_marker(marker_path)
+        if (
+            existing.get("proof_authorization_id")
+            != authorization.proof_authorization_id
+            or existing.get("authorization_digest")
+            != authorization.authorization_digest
+        ):
+            raise ControlledShadowAuthorizationPackageError(
+                "quota proof authorization identity conflicts with consumed state"
+            ) from exc
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — proof authorization has already been consumed"
+        ) from exc
+    except OSError as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            "quota proof consumption marker could not be created"
+        ) from exc
+
+    try:
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        marker_path.chmod(0o600)
+        directory_descriptor = os.open(directory, os.O_RDONLY)
+        try:
+            os.fsync(directory_descriptor)
+        finally:
+            os.close(directory_descriptor)
+    except OSError as exc:
+        # The exclusive marker remains as a deliberate fail-closed tombstone.
+        raise ControlledShadowAuthorizationPackageError(
+            "quota proof consumption marker could not be committed"
+        ) from exc
+    return marker_path
 
 
 def _target_from_payload(raw: object) -> TheRundownCanaryTargetV1:
@@ -864,6 +1039,10 @@ def run_guarded_quota_proof(
     )
     request = proof_authorization.request_for_proof(
         proof_configuration_digest=proof_configuration_digest
+    )
+    _consume_quota_proof_authorization(
+        proof_authorization,
+        consumed_at=now,
     )
     api_key = _read_protected_therundown_credential(credential_file)
     evidence = execute_therundown_quota_proof(
