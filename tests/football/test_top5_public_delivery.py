@@ -211,6 +211,15 @@ def _published_batch_artifact():
     )
 
 
+def _controlled_public_product() -> dict[str, object]:
+    return ControlledTop5PublicationBatch(
+        tuple(_controlled_payload(league) for league in LEAGUES)
+    ).as_public_product(
+        published_at=BASE,
+        publication_authorization_id="publication-auth:top5-delivery-test",
+    )
+
+
 def test_offline_fixture_is_publisher_to_pwa_compatible_and_never_real():
     product = _offline_public_product()
     assert len(product["football"]) == 15
@@ -251,13 +260,51 @@ def test_controlled_batch_preserves_all_release_bindings_and_current_odds():
 
 
 def test_public_serialization_is_idempotent_for_controlled_release():
-    product = ControlledTop5PublicationBatch(
-        tuple(_controlled_payload(league) for league in LEAGUES)
-    ).as_public_product(
-        published_at=BASE,
-        publication_authorization_id="publication-auth:top5-delivery-test",
-    )
-    assert serialize_public_product(product) == product
+    product = _controlled_public_product()
+    serialized = serialize_public_product(product)
+    assert serialized == product
+    assert serialized["top5_release"]["league_codes"] == sorted(LEAGUES)
+    assert len(serialized["football"]) == 15
+
+
+@pytest.mark.parametrize(
+    "league_codes",
+    [
+        ["EPL"],
+        ["EPL", "BL1", "LL", "SA"],
+        ["EPL", "BL1", "LL", "SA", "SA"],
+        ["EPL", "BL1", "LL", "SA", "L1", "UCL"],
+    ],
+    ids=["partial", "four_of_five", "duplicate", "unknown_additional"],
+)
+def test_public_serializer_rejects_noncanonical_release_leagues(league_codes):
+    product = _controlled_public_product()
+    product["top5_release"]["league_codes"] = league_codes
+    with pytest.raises(PublicFootballCompatibilityError, match="league_codes"):
+        serialize_public_product(product)
+
+
+def test_public_serializer_rejects_missing_league_records():
+    product = _controlled_public_product()
+    product["football"] = [
+        record for record in product["football"] if record["league"] != "L1"
+    ]
+    with pytest.raises(PublicFootballCompatibilityError, match="15|three records"):
+        serialize_public_product(product)
+
+
+def test_public_serializer_rejects_fewer_than_fifteen_records():
+    product = _controlled_public_product()
+    product["football"] = product["football"][:-1]
+    with pytest.raises(PublicFootballCompatibilityError, match="15|three records"):
+        serialize_public_product(product)
+
+
+def test_public_serializer_rejects_mixed_fixture_identity_within_league():
+    product = _controlled_public_product()
+    product["football"][0]["fixture_key"] = "EPL:controlled-002"
+    with pytest.raises(PublicFootballCompatibilityError, match="one fixture"):
+        serialize_public_product(product)
 
 
 def test_unbound_non_fixture_top5_records_are_rejected_at_serializer_boundary():

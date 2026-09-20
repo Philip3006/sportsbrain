@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 const __dir = fileURLToPath(new URL('.', import.meta.url));
 const worker = await import(resolve(__dir, '../../cloudflare/worker.js'));
 
+const TOP5_LEAGUES = ['EPL', 'BL1', 'LL', 'SA', 'L1'];
 const RELEASE = {
   schema_version: 'top5-public-release-v1',
   release_type: 'CONTROLLED_TOP5',
@@ -20,10 +21,10 @@ const RELEASE = {
   candidate_id: 'candidate:test',
   model_identity: 'model:test',
   evidence_digest: 'evidence:test',
-  evidence_digests: { EPL: 'evidence:test' },
+  evidence_digests: Object.fromEntries(TOP5_LEAGUES.map((league) => [league, 'evidence:test'])),
   controlled_shadow_run_id: 'shadow:test',
   qualification_session_id: 'qualification:test',
-  league_codes: ['EPL'],
+  league_codes: TOP5_LEAGUES,
   generated_at: '2026-09-20T12:00:00Z',
   published_at: '2026-09-20T12:00:00Z',
   fallback_max_age_seconds: 7200,
@@ -31,16 +32,51 @@ const RELEASE = {
   owner: 'must-not-cross-public-boundary',
 };
 
+function recordFor(league, index, fixture = `${league}:fixture:test`) {
+  return {
+    league,
+    fixture_key: fixture,
+    activation_state: 'CONTROLLED',
+    signal_status: 'CONTROLLED',
+    publication_status: 'PUBLISHED',
+    publication_enabled: true,
+    no_bet: true,
+    activation_id: RELEASE.activation_id,
+    provider: RELEASE.provider_authority,
+    run_id: RELEASE.controlled_shadow_run_id,
+    session_id: RELEASE.qualification_session_id,
+    evidence_digest: `evidence:${league}:${index}`,
+    provenance: {
+      activation_id: RELEASE.activation_id,
+      evidence_digest: `evidence:${league}:${index}`,
+    },
+  };
+}
+
+const TOP5_RECORDS = TOP5_LEAGUES.flatMap((league) =>
+  [0, 1, 2].map((index) => recordFor(league, index))
+);
+
+function payload(overrides = {}) {
+  return {
+    updated: '2026-09-20T12:00:00Z',
+    top5_release: RELEASE,
+    football: TOP5_RECORDS,
+    ...overrides,
+  };
+}
+
 describe('Worker Top-5 public release boundary', () => {
   test('preserves the governed release envelope and strips unknown fields', () => {
     const result = worker.serializePublicProduct({
-      updated: '2026-09-20T12:00:00Z',
-      top5_release: RELEASE,
+      ...payload(),
       bankroll_state: { free: 999 },
     });
     assert.equal(result.top5_release.generation_id, RELEASE.generation_id);
     assert.equal(result.top5_release.owner, undefined);
     assert.equal(result.bankroll_state, undefined);
+    assert.deepEqual(result.top5_release.league_codes, [...TOP5_LEAGUES].sort());
+    assert.equal(result.football.length, 15);
   });
 
   test('rejects a staged or disabled release fail-closed', () => {
@@ -50,5 +86,29 @@ describe('Worker Top-5 public release boundary', () => {
     assert.throws(() => worker.serializePublicProduct({
       football: [{ league: 'EPL', signal_status: 'SHADOW' }],
     }), /controlled release envelope/);
+  });
+
+  test('rejects partial, duplicate, and unknown release league sets', () => {
+    for (const league_codes of [
+      ['EPL'],
+      ['EPL', 'BL1', 'LL', 'SA'],
+      ['EPL', 'BL1', 'LL', 'SA', 'SA'],
+      ['EPL', 'BL1', 'LL', 'SA', 'L1', 'UCL'],
+    ]) {
+      assert.throws(() => worker.serializePublicProduct(payload({
+        top5_release: { ...RELEASE, league_codes },
+      })), /five Top-5 leagues|league_codes/);
+    }
+  });
+
+  test('rejects incomplete record coverage and mixed fixtures', () => {
+    assert.throws(() => worker.serializePublicProduct(payload({
+      football: TOP5_RECORDS.slice(0, -1),
+    })), /15|three records/);
+    assert.throws(() => worker.serializePublicProduct(payload({
+      football: TOP5_RECORDS.map((record, index) => index === 0
+        ? { ...record, fixture_key: 'EPL:fixture:other' }
+        : record),
+    })), /one fixture/);
   });
 });
