@@ -101,24 +101,55 @@ remain explicitly `eligible=false` and `issuer_present=false`. The
 qualification status is `PENDING_BUILDER2_VALIDATION`; shadow success does
 not grant authority or publication.
 
-## Later execution gate
+## Guarded operator entrypoint
 
-The exact future command/package shape is exposed for a later, separately
-authorized run but is not executed by this package:
+The single canonical operator entrypoint is now implemented in this module.
+With no mode flag, it performs a complete dry-run/preflight and makes zero
+provider calls. The explicit `--execute-network` flag is required before the
+reviewed HTTP transport can be constructed:
 
 ```text
-python -m src.football.top5_controlled_shadow_authorization_package --execute --package <authorization-package.json> --authorization <ceo-authorization.json> --b1-ll-artifact <b1-ll-evidence-bundle.json>
+python -m src.football.top5_controlled_shadow_authorization_package \
+  --execute-network \
+  --package /operator-only/top5/authorization-package.json \
+  --authorization /operator-only/top5/ceo-authorization.json \
+  --b1-ll-artifact /operator-only/top5/b1-ll-evidence-bundle.json \
+  --credential-file /operator-only/top5/therundown.env \
+  --output /operator-only/top5/top5-b2-five-league-shadow-package.json
 ```
 
-This is the single later Controlled-Shadow command shape after the repaired
-B1 LL bundle is available. It is not run by this offline package. The later
-operator must provide a valid, unexpired, separately approved CEO
-authorization matching the package byte-for-byte on scope, hashes, budgets,
-pacing, retry policy, run/session identifiers, and safety flags. The command
-must retain the PR-103 executor's `allow_live_network=False` default until the
-caller explicitly supplies the new run-specific authorization and enables the
-reviewed network transport. This package itself performs no provider request,
-does not register a scheduler, and has no receipt-issuer or authority path.
+The package file is the exact inert package produced by
+`prepare_authorization_package()`. The CEO authorization file is a JSON
+wrapper containing `package_digest` and the serialized
+`TheRundownNetworkAuthorizationV1` payload, including its
+`authorization_digest`. The entrypoint derives the enabled execution
+configuration from the package only after verifying the authorization's
+configuration digest, exact five-league scope, run/session/identity/expiry,
+adapter hashes, `5/55/275` budgets, `>=1.1` second pacing, zero retries, and
+all candidate-only safety flags. The B1 artifact is bound to the LL target
+before the first request and reconciled again after the completed run.
+
+`--credential-file` must be an absolute, non-symlink, operator-only file with
+no group/world permissions and an existing `THERUNDOWN_API_KEY=` entry. The
+key is read only for transport construction, is never printed, and is never
+written to the output artifact. `--output` is required for network execution;
+the package is written atomically with mode `0600`, and a conflicting existing
+package is rejected.
+
+The successful artifact is the canonical
+`top5-b2-five-league-shadow-package-v1` consumed by Builder 2. It contains a
+`COMPLETED_NETWORK` run, exactly five capture envelopes, and exactly five
+canonical `Builder2QualificationIntakeManifestV1` manifests. Its package ID
+and digest are deterministic. B4 writes it atomically and reloads it through
+`load_five_league_shadow_package()` before reporting success. B4 does not issue
+the receipt or change authority. Any credential, package/configuration digest,
+authorization, B1, billing, freshness, event, participant, provenance, retry,
+HTTP, or safety failure aborts without continuing to the next request.
+
+Preflight and all package/reconciliation functions perform no provider
+request, do not register a scheduler, and have no receipt-issuer or authority
+path. The explicit network flag is the only path that uses
+`TheRundownHttpNetworkTransportV1`.
 
 ## Compatibility assumptions
 
@@ -128,9 +159,10 @@ does not register a scheduler, and has no receipt-issuer or authority path.
 - PR-112 remains the candidate-provider eligibility boundary and keeps
   `therundown_experimental` out of active routing.
 - Builder 2 still owns qualification reporting and
-  `Builder2QualificationReceiptV1` issuance. A complete canonical cascade
-  evidence object/report is a downstream Builder-2 input; this package does
-  not fabricate one from a digest.
+  `Builder2QualificationReceiptV1` issuance. B4 projects each validated
+  network capture into the canonical cascade and intake-manifest contracts;
+  this projection preserves the provider, raw, normalized, request, quota,
+  timestamp, bookmaker, and safety bindings and does not issue a receipt.
 - The B1 LL bundle is a validated input to the exact LL slot, not a substitute
   for the PR-103 canonical capture attestation.
 - No real La Liga capture or five-league Controlled Shadow is consumed during

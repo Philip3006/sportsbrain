@@ -2,11 +2,19 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import replace
-from datetime import timedelta
+from datetime import datetime, timedelta
+from pathlib import Path
 
 import pytest
 
+from src.football.odds.therundown import THERUNDOWN_ADAPTER_VERSION
+from src.football.provider_cascade.contracts import QuotaSnapshot
+from src.football.top5_b2_qualification_batch_orchestrator import (
+    load_five_league_shadow_package,
+    run_five_league_receipt_pipeline,
+)
 from src.football.top5_controlled_shadow_authorization_package import (
     CANONICAL_CANDIDATE_PROVIDER,
     FUTURE_EXECUTION_COMMAND,
@@ -15,6 +23,8 @@ from src.football.top5_controlled_shadow_authorization_package import (
     prepare_authorization_package,
     reconcile_controlled_shadow_run,
     reconcile_controlled_shadow_run_with_b1_ll_artifact,
+    run_guarded_network_execution,
+    run_guarded_network_preflight,
 )
 from src.football.top5_controlled_shadow_provider_qualification import (
     ObservationEvidenceKind,
@@ -22,6 +32,10 @@ from src.football.top5_controlled_shadow_provider_qualification import (
 from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_network_shadow import (
     NetworkShadowRunStatus,
+    TheRundownCanonicalPayloadAdapterV1,
+    TheRundownNetworkHttpResponseV1,
+    TheRundownNetworkParticipantScopeV1,
+    TheRundownNetworkRequestScopeV1,
     TheRundownNetworkShadowExecutorV1,
     TheRundownReplayTransportV1,
 )
@@ -50,6 +64,7 @@ def _network_run():
     )
     result = TheRundownNetworkShadowExecutorV1(
         clock=lambda: NOW,
+        pacer=lambda _seconds: None,
         allow_live_network=True,
     ).run(configuration, authorization, transport=transport)
     return result, configuration, authorization
@@ -97,7 +112,7 @@ def _b1_ll_artifact(result, authorization):
             "qualification_session_id": authorization.qualification_session_id,
             "provider_identity": CANONICAL_CANDIDATE_PROVIDER,
             "league": "LL",
-            "fixture_key": target.fixture_key,
+            "fixture_key": f"therundown:LL:{response.provider_event_id}",
             "provider_event_id": response.provider_event_id,
             "provider_request_id": request.request_identity,
             "home_team": target.home_team,
@@ -167,6 +182,163 @@ def _b1_ll_artifact(result, authorization):
             "no_spend": True,
         },
     }
+
+
+def _run006_network_run():
+    body_path = Path(
+        "/private/tmp/top5-laliga-nextdate-20260920-006.request-2.body.json"
+    )
+    headers_path = body_path.with_name(
+        "top5-laliga-nextdate-20260920-006.request-2.headers.json"
+    )
+    metadata_path = body_path.with_name(
+        "top5-laliga-nextdate-20260920-006.request-2.meta.json"
+    )
+    if not all(path.exists() for path in (body_path, headers_path, metadata_path)):
+        pytest.skip("Run-006 offline artifacts are not available")
+    payload = json.loads(body_path.read_text())
+    headers = json.loads(headers_path.read_text())
+    metadata = json.loads(metadata_path.read_text())
+    run_now = datetime.fromisoformat(metadata["completed_at"])
+    adapter_source_sha = (
+        "67f67ff97cb072bfca03bae688acbf87074359be9af31a36d890483ecd4fe152"
+    )
+    kickoff = datetime.fromisoformat("2026-09-20T12:00:00+00:00")
+    ll_target = replace(
+        _targets()[2],
+        provider=CANONICAL_CANDIDATE_PROVIDER,
+        fixture_key=make_fixture_key("LL", "Getafe", "Málaga", kickoff),
+        provider_event_id="48e87c231045c73e2318f6b4d5327405",
+        home_team="Getafe",
+        away_team="Málaga",
+        kickoff=kickoff,
+    )
+    targets = tuple(
+        ll_target
+        if target.league == "LL"
+        else replace(
+            target,
+            provider=CANONICAL_CANDIDATE_PROVIDER,
+            kickoff=run_now + timedelta(hours=2),
+            fixture_key=make_fixture_key(
+                target.league,
+                target.home_team,
+                target.away_team,
+                run_now + timedelta(hours=2),
+            ),
+        )
+        for target in _targets()
+    )
+    participant_scope = tuple(
+        TheRundownNetworkParticipantScopeV1(
+            target.fixture_key,
+            "3952" if target.league == "LL" else f"home-id-{target.league}",
+            "133109" if target.league == "LL" else f"away-id-{target.league}",
+        )
+        for target in targets
+    )
+    request_scope = tuple(
+        TheRundownNetworkRequestScopeV1(
+            target.fixture_key,
+            (
+                "therundown-ll:top5-laliga-real-capture-20260920-006:2026-09-20"
+                if target.league == "LL"
+                else f"request-{target.league}"
+            ),
+        )
+        for target in targets
+    )
+    configuration = _configuration(
+        targets=targets,
+        participant_scope=participant_scope,
+        request_scope=request_scope,
+        adapter_version=THERUNDOWN_ADAPTER_VERSION,
+        adapter_source_sha=adapter_source_sha,
+        maximum_source_age_seconds=900,
+        enabled=True,
+    )
+    authorization = _authorization(
+        configuration,
+        provider=CANONICAL_CANDIDATE_PROVIDER,
+        authorization_id="CEO-TOP5-LALIGA-NEXTDATE-CAPTURE-20260920-006",
+        controlled_shadow_run_id="top5-laliga-real-capture-20260920-006",
+        qualification_session_id="top5-laliga-qualification-20260920-006",
+        issued_at=run_now - timedelta(minutes=1),
+        expires_at=datetime.fromisoformat("2026-09-20T01:00:00+00:00"),
+    )
+    request = authorization.request_for(ll_target, configuration)
+    ll_response = TheRundownCanonicalPayloadAdapterV1(
+        adapter_source_sha=adapter_source_sha,
+        maximum_source_age_seconds=configuration.maximum_source_age_seconds,
+        initial_quota=QuotaSnapshot(used=0, remaining=None),
+    ).decode_response(
+        request,
+        TheRundownNetworkHttpResponseV1(
+            status_code=200,
+            payload=payload,
+            headers=headers,
+            started_at=datetime.fromisoformat(metadata["started_at"]),
+            finished_at=run_now,
+        ),
+    )
+
+    def response_factory(network_request):
+        if network_request.target.league == "LL":
+            return ll_response
+        return _response(
+            network_request,
+            provider=CANONICAL_CANDIDATE_PROVIDER,
+            adapter_version=THERUNDOWN_ADAPTER_VERSION,
+            adapter_source_sha=adapter_source_sha,
+            source_timestamp=run_now - timedelta(seconds=5),
+            captured_at=run_now,
+            request_started_at=run_now - timedelta(seconds=1),
+            request_finished_at=run_now,
+            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+            network_execution=True,
+        )
+
+    result = TheRundownNetworkShadowExecutorV1(
+        clock=lambda: run_now,
+        pacer=lambda _seconds: None,
+        allow_live_network=True,
+    ).run(
+        configuration,
+        authorization,
+        transport=_NetworkStubTransport(response_factory),
+    )
+    artifact = json.loads(
+        Path("/private/tmp/top5-b1-laliga-final-evidence.json").read_text()
+    )["canonical_b1_evidence_bundle"]
+    return result, configuration, authorization, artifact, run_now
+
+
+def test_run006_payload_reconciles_through_b4_with_b1_artifact():
+    result, configuration, authorization, artifact, run_now = _run006_network_run()
+
+    reconciliation = reconcile_controlled_shadow_run_with_b1_ll_artifact(
+        result,
+        configuration,
+        authorization,
+        artifact,
+        now=run_now,
+    )
+
+    assert result.status is NetworkShadowRunStatus.COMPLETED_NETWORK
+    assert result.request_count == 5
+    assert result.datapoint_count == 275
+    assert result.quota_cost_units == 275.0
+    assert reconciliation.provider == CANONICAL_CANDIDATE_PROVIDER
+    assert reconciliation.receipt_eligible is False
+    assert reconciliation.authority_changed is False
+    assert reconciliation.artifacts.b1_ll_artifact is not None
+    assert len(reconciliation.artifacts.candidate_eligibilities) == 5
+    ll_capture = result.captures[2]
+    assert len(ll_capture.response.raw_metadata["normalized_observations"]) == 3
+    assert (
+        ll_capture.response.raw_response_digest
+        == "6df5aa61479bbeaa85f46b4a1f66c7c3a40d88736b9b7f08555f9eb0e0f276c4"
+    )
 
 
 def test_disabled_package_preserves_exact_reviewed_budgets_and_scope():
@@ -260,13 +432,39 @@ def test_repaired_b1_ll_artifact_is_injected_into_the_exact_ll_slot():
     assert reconciliation.artifacts.b1_ll_artifact == b1_artifact
     assert (
         reconciliation.artifacts.capture_attestations[2]["fixture_key"]
-        == (b1_artifact["b1_bridge_inputs"]["fixture_key"])
+        == configuration.targets[2].fixture_key
     )
+    assert b1_artifact["b1_bridge_inputs"]["fixture_key"] == ("therundown:LL:event-LL")
     assert reconciliation.artifacts.candidate_eligibilities[2]["league_code"] == "LL"
     assert reconciliation.artifacts.builder2_receipt_inputs[2]["eligible"] is False
     assert reconciliation.artifacts.receipt_issuer_present is False
     assert reconciliation.artifacts.publication is False
     assert reconciliation.artifacts.production_activation is False
+
+
+@pytest.mark.parametrize(
+    "field, value, pattern",
+    [
+        ("fixture_key", "therundown:LL:other-event", "provider fixture identity"),
+        ("home_team", "Other Home", "canonical fixture identity"),
+    ],
+)
+def test_b1_provider_and_canonical_fixture_bindings_fail_closed(field, value, pattern):
+    result, configuration, authorization = _network_run()
+    b1_artifact = _b1_ll_artifact(result, authorization)
+    b1_artifact["b1_bridge_inputs"][field] = value
+
+    with pytest.raises(
+        ControlledShadowAuthorizationPackageError,
+        match=pattern,
+    ):
+        reconcile_controlled_shadow_run_with_b1_ll_artifact(
+            result,
+            configuration,
+            authorization,
+            b1_artifact,
+            now=NOW,
+        )
 
 
 def test_b1_ll_artifact_cannot_self_supply_real_authority():
@@ -511,3 +709,261 @@ def test_package_and_reconciliation_never_issue_receipt_or_change_authority():
     assert (
         reconciliation.artifacts.qualification_status == "PENDING_BUILDER2_VALIDATION"
     )
+
+
+def _cli_input_files(tmp_path: Path):
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    result, configuration, authorization = _network_run()
+    disabled = replace(configuration, enabled=False, configuration_digest="")
+    disabled = replace(
+        disabled, configuration_digest=disabled.computed_configuration_digest
+    )
+    package = prepare_authorization_package(disabled)
+    package_path = tmp_path / "authorization-package.json"
+    package_path.write_text(json.dumps(package.as_payload()), encoding="utf-8")
+
+    authorization_payload = authorization.as_payload()
+    authorization_path = tmp_path / "ceo-authorization.json"
+    authorization_path.write_text(
+        json.dumps(
+            {
+                "package_digest": package.package_digest,
+                "authorization": authorization_payload,
+            }
+        ),
+        encoding="utf-8",
+    )
+    b1_path = tmp_path / "b1-ll-evidence.json"
+    b1_path.write_text(
+        json.dumps(
+            {"canonical_b1_evidence_bundle": _b1_ll_artifact(result, authorization)}
+        ),
+        encoding="utf-8",
+    )
+    credential_path = tmp_path / "therundown.env"
+    credential_path.write_text(
+        "THERUNDOWN_API_KEY=offline-test-secret\n", encoding="utf-8"
+    )
+    credential_path.chmod(0o600)
+    return (
+        package_path,
+        authorization_path,
+        b1_path,
+        credential_path,
+        configuration,
+        authorization,
+        package,
+    )
+
+
+def _guarded_cli_run(tmp_path: Path, response_factory, *, output_name="result.json"):
+    package_path, authorization_path, b1_path, credential_path, _, _, _ = (
+        _cli_input_files(tmp_path)
+    )
+    transport = _NetworkStubTransport(response_factory)
+    with pytest.raises(ControlledShadowAuthorizationPackageError):
+        run_guarded_network_execution(
+            package_path,
+            authorization_path,
+            b1_path,
+            credential_file=credential_path,
+            output_path=tmp_path / output_name,
+            clock=lambda: NOW,
+            pacer=lambda _seconds: None,
+            transport=transport,
+        )
+    return transport
+
+
+def test_guarded_cli_default_preflight_is_zero_network(tmp_path):
+    package_path, authorization_path, b1_path, credential_path, _, _, _ = (
+        _cli_input_files(tmp_path)
+    )
+    output = run_guarded_network_preflight(
+        package_path,
+        authorization_path,
+        b1_path,
+        credential_file=credential_path,
+        clock=lambda: NOW,
+    )
+    assert output["status"] == "DRY_RUN_READY"
+    assert output["network_calls"] == 0
+    assert output["provider_requests"] == 0
+
+
+@pytest.mark.parametrize(
+    "mutation", ["missing", "expired", "wrong-package", "wrong-config", "wrong-b1"]
+)
+def test_guarded_cli_bindings_fail_before_first_request(tmp_path, mutation):
+    package_path, authorization_path, b1_path, credential_path, _, _, _ = (
+        _cli_input_files(tmp_path)
+    )
+    if mutation == "missing":
+        authorization_path.unlink()
+    elif mutation == "expired":
+        payload = json.loads(authorization_path.read_text())
+        payload["authorization"]["issued_at"] = (NOW - timedelta(minutes=2)).isoformat()
+        payload["authorization"]["expires_at"] = (
+            NOW - timedelta(seconds=1)
+        ).isoformat()
+        authorization_path.write_text(json.dumps(payload), encoding="utf-8")
+    elif mutation == "wrong-package":
+        payload = json.loads(authorization_path.read_text())
+        payload["package_digest"] = "f" * 64
+        authorization_path.write_text(json.dumps(payload), encoding="utf-8")
+    elif mutation == "wrong-config":
+        payload = json.loads(authorization_path.read_text())
+        payload["authorization"]["configuration_digest"] = "f" * 64
+        authorization_path.write_text(json.dumps(payload), encoding="utf-8")
+    else:
+        payload = json.loads(b1_path.read_text())
+        payload["canonical_b1_evidence_bundle"]["b1_bridge_inputs"][
+            "provider_event_id"
+        ] = "wrong-event"
+        b1_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ControlledShadowAuthorizationPackageError):
+        run_guarded_network_execution(
+            package_path,
+            authorization_path,
+            b1_path,
+            credential_file=credential_path,
+            output_path=tmp_path / "blocked.json",
+            clock=lambda: NOW,
+            pacer=lambda _seconds: None,
+            transport=_NetworkStubTransport(
+                lambda request: pytest.fail("network called")
+            ),
+        )
+
+
+def test_guarded_cli_credential_missing_or_unsafe_fails_before_request(tmp_path):
+    package_path, authorization_path, b1_path, _, _, _, _ = _cli_input_files(tmp_path)
+    missing = tmp_path / "missing.env"
+    with pytest.raises(
+        ControlledShadowAuthorizationPackageError, match="THERUNDOWN_API_KEY"
+    ):
+        run_guarded_network_preflight(
+            package_path,
+            authorization_path,
+            b1_path,
+            credential_file=missing,
+            clock=lambda: NOW,
+        )
+
+    unsafe = tmp_path / "unsafe.env"
+    unsafe.write_text("THERUNDOWN_API_KEY=offline-test-secret\n", encoding="utf-8")
+    unsafe.chmod(0o644)
+    with pytest.raises(ControlledShadowAuthorizationPackageError, match="permissions"):
+        run_guarded_network_preflight(
+            package_path,
+            authorization_path,
+            b1_path,
+            credential_file=unsafe,
+            clock=lambda: NOW,
+        )
+
+
+def test_guarded_cli_first_request_and_cumulative_billing_overrun_fail_closed(tmp_path):
+    first = _guarded_cli_run(
+        tmp_path,
+        lambda request: _response(
+            request,
+            datapoint_count=56,
+            quota_cost_units=56.0,
+            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+            network_execution=True,
+        ),
+        output_name="first-overrun.json",
+    )
+    assert len(first.calls) == 1
+
+    counter = {"value": 0}
+
+    def fifth_overrun(request):
+        counter["value"] += 1
+        if counter["value"] == 5:
+            return _response(
+                request,
+                datapoint_count=56,
+                quota_cost_units=56.0,
+                evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+                network_execution=True,
+            )
+        return _response(
+            request,
+            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+            network_execution=True,
+        )
+
+    fifth = _guarded_cli_run(
+        tmp_path / "fifth", fifth_overrun, output_name="fifth-overrun.json"
+    )
+    assert len(fifth.calls) == 5
+
+
+def test_guarded_cli_retry_attempt_fails_closed_without_retry(tmp_path):
+    transport = _guarded_cli_run(
+        tmp_path,
+        lambda request: _response(
+            request,
+            retry_count=1,
+            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+            network_execution=True,
+        ),
+        output_name="retry.json",
+    )
+    assert len(transport.calls) == 1
+
+
+def test_guarded_cli_five_of_five_writes_b2_compatible_output(tmp_path):
+    package_path, authorization_path, b1_path, credential_path, _, _, _ = (
+        _cli_input_files(tmp_path)
+    )
+    output_path = tmp_path / "completed.json"
+    summary = run_guarded_network_execution(
+        package_path,
+        authorization_path,
+        b1_path,
+        credential_file=credential_path,
+        output_path=output_path,
+        clock=lambda: NOW,
+        pacer=lambda _seconds: None,
+        transport=_NetworkStubTransport(
+            lambda request: _response(
+                request,
+                evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+                network_execution=True,
+            )
+        ),
+    )
+    assert summary["status"] == "COMPLETED_NETWORK"
+    package = load_five_league_shadow_package(output_path)
+    assert package.schema_version == "top5-b2-five-league-shadow-package-v1"
+    assert package.package_id == summary["package_id"]
+    assert package.package_digest == summary["package_digest"]
+    assert package.shadow_run.status is NetworkShadowRunStatus.COMPLETED_NETWORK
+    assert package.shadow_run.request_count == 5
+    assert package.shadow_run.datapoint_count == 275
+    assert len(package.shadow_run.captures) == 5
+    assert len(package.manifests) == 5
+    assert {manifest.observation.league for manifest in package.manifests} == {
+        "EPL",
+        "BL1",
+        "LL",
+        "SA",
+        "L1",
+    }
+    receipt_package = run_five_league_receipt_pipeline(output_path)
+    assert len(receipt_package.receipts) == 5
+    assert all(
+        receipt.accepted is True
+        and receipt.no_bet is True
+        and receipt.publication is False
+        and receipt.production_activation is False
+        and receipt.monetary_spend_authorized is False
+        for receipt in receipt_package.receipts
+    )
+    assert summary["safety"]["receipt_issued"] is False
+    assert summary["safety"]["authority_changed"] is False
+    assert output_path.stat().st_mode & 0o077 == 0
