@@ -16,7 +16,7 @@ import secrets
 import uuid
 from collections.abc import Mapping
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from hashlib import sha256
 from hmac import compare_digest
@@ -132,7 +132,9 @@ class Top5PublisherPayload:
     no_bet: bool = True
     publication_enabled: bool = False
     activation_gate_passed: bool = False
-    provenance: Mapping[str, str] = MappingProxyType({})
+    provenance: Mapping[str, str] = field(
+        default_factory=lambda: MappingProxyType({})
+    )
 
     def __post_init__(self) -> None:
         object.__setattr__(
