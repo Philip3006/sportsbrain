@@ -137,6 +137,27 @@ _PUBLIC_TOP5_RELEASE_FIELDS = frozenset(
 _TOP5_LEAGUES = frozenset({"EPL", "BL1", "LL", "SA", "L1"})
 
 
+def _normalize_top5_league_codes(value: object) -> list[str]:
+    """Return the canonical five-league set or reject the release."""
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+        raise PublicFootballCompatibilityError(
+            "top5_release league_codes must be a list"
+        )
+    normalized = [
+        code.strip().upper() if isinstance(code, str) else ""
+        for code in value
+    ]
+    if (
+        len(normalized) != len(_TOP5_LEAGUES)
+        or len(set(normalized)) != len(normalized)
+        or set(normalized) != _TOP5_LEAGUES
+    ):
+        raise PublicFootballCompatibilityError(
+            "top5_release league_codes must contain EPL, BL1, LL, SA, and L1 exactly once"
+        )
+    return sorted(normalized)
+
+
 def _mapping(value: object) -> Mapping[str, object]:
     return value if isinstance(value, Mapping) else {}
 
@@ -355,11 +376,7 @@ def _public_top5_release(value: object) -> dict[str, object]:
             continue
         item = value[key]
         if key == "league_codes":
-            if not isinstance(item, Sequence) or isinstance(item, (str, bytes)):
-                raise PublicFootballCompatibilityError(
-                    "top5_release league_codes must be a list"
-                )
-            result[key] = [str(code) for code in item]
+            result[key] = _normalize_top5_league_codes(item)
         elif key == "evidence_digests":
             if not isinstance(item, Mapping):
                 raise PublicFootballCompatibilityError(
@@ -407,8 +424,12 @@ def _public_top5_release(value: object) -> dict[str, object]:
 def _validate_top5_public_records(
     records: object, release: Mapping[str, object] | None
 ) -> None:
-    """Reject unbound Top-5 records at the public serialization boundary."""
+    """Reject incomplete or unbound Top-5 records at the public boundary."""
     if not isinstance(records, Sequence) or isinstance(records, (str, bytes)):
+        if release is not None:
+            raise PublicFootballCompatibilityError(
+                "published Top-5 release requires complete football records"
+            )
         return
     top5_records = [
         record
@@ -417,6 +438,10 @@ def _validate_top5_public_records(
         and str(record.get("league", "")).upper() in _TOP5_LEAGUES
     ]
     if not top5_records:
+        if release is not None:
+            raise PublicFootballCompatibilityError(
+                "published Top-5 release requires complete five-league records"
+            )
         return
     offline = all(
         record.get("publication_enabled") is False
@@ -433,6 +458,28 @@ def _validate_top5_public_records(
         raise PublicFootballCompatibilityError(
             "Top-5 public records require a controlled release envelope"
         )
+    if len(top5_records) != len(_TOP5_LEAGUES) * 3:
+        raise PublicFootballCompatibilityError(
+            "published Top-5 release requires exactly 15 records"
+        )
+    by_league: dict[str, list[Mapping[str, object]]] = {
+        league: [] for league in _TOP5_LEAGUES
+    }
+    for record in top5_records:
+        by_league[str(record.get("league", "")).upper()].append(record)
+    if any(len(items) != 3 for items in by_league.values()):
+        raise PublicFootballCompatibilityError(
+            "published Top-5 release requires three records per league"
+        )
+    for league, items in by_league.items():
+        fixtures = [record.get("fixture_key") for record in items]
+        if (
+            any(not isinstance(fixture, str) or not fixture for fixture in fixtures)
+            or len(set(fixtures)) != 1
+        ):
+            raise PublicFootballCompatibilityError(
+                f"published Top-5 release requires one fixture for {league}"
+            )
     for record in top5_records:
         provenance = _mapping(record.get("provenance"))
         if (

@@ -388,6 +388,21 @@ const _PUBLIC_TOP5_RELEASE_FIELDS = new Set([
   'controlled_shadow_run_id', 'qualification_session_id', 'league_codes',
   'generated_at', 'published_at', 'fallback_max_age_seconds', 'no_bet',
 ]);
+const _TOP5_LEAGUES = new Set(['EPL', 'BL1', 'LL', 'SA', 'L1']);
+
+function _normalizeTop5LeagueCodes(value) {
+  if (!Array.isArray(value) || value.some((code) => typeof code !== 'string')) {
+    throw new Error('invalid top5_release league_codes');
+  }
+  const normalized = value.map((code) => code.trim().toUpperCase());
+  if (normalized.length !== _TOP5_LEAGUES.size ||
+      new Set(normalized).size !== normalized.length ||
+      new Set(normalized).size !== _TOP5_LEAGUES.size ||
+      normalized.some((code) => !_TOP5_LEAGUES.has(code))) {
+    throw new Error('top5_release league_codes must contain the five Top-5 leagues exactly once');
+  }
+  return [...normalized].sort();
+}
 
 // Forbidden private keys — must never appear anywhere in the public payload.
 // Mirrors FORBIDDEN_PRIVATE_KEYS in src/notifications/public_serializer.py.
@@ -439,10 +454,7 @@ function _publicTop5Release(value) {
     if (!(key in value)) continue;
     const item = value[key];
     if (key === 'league_codes') {
-      if (!Array.isArray(item) || item.some((code) => typeof code !== 'string')) {
-        throw new Error('invalid top5_release league_codes');
-      }
-      out[key] = [...item];
+      out[key] = _normalizeTop5LeagueCodes(item);
     } else if (key === 'evidence_digests') {
       if (!item || typeof item !== 'object' || Array.isArray(item)) {
         throw new Error('invalid top5_release evidence_digests');
@@ -476,13 +488,32 @@ function _publicTop5Release(value) {
 }
 
 function _validateTop5PublicRecords(records, release) {
-  if (!Array.isArray(records)) return;
-  const leagues = new Set(['EPL', 'BL1', 'LL', 'SA', 'L1']);
+  if (!Array.isArray(records)) {
+    if (release) throw new Error('published Top-5 release requires complete football records');
+    return;
+  }
   const top5 = records.filter((record) =>
-    record && typeof record === 'object' && leagues.has(String(record.league || '').toUpperCase())
+    record && typeof record === 'object' && _TOP5_LEAGUES.has(String(record.league || '').toUpperCase())
   );
-  if (!top5.length) return;
+  if (!top5.length) {
+    if (release) throw new Error('published Top-5 release requires complete five-league records');
+    return;
+  }
   if (!release) throw new Error('Top-5 records require a controlled release envelope');
+  if (top5.length !== _TOP5_LEAGUES.size * 3) {
+    throw new Error('published Top-5 release requires exactly 15 records');
+  }
+  const byLeague = new Map([..._TOP5_LEAGUES].map((league) => [league, []]));
+  for (const record of top5) byLeague.get(String(record.league).toUpperCase()).push(record);
+  for (const [league, leagueRecords] of byLeague) {
+    if (leagueRecords.length !== 3) {
+      throw new Error(`published Top-5 release requires three records for ${league}`);
+    }
+    const fixtures = new Set(leagueRecords.map((record) => record.fixture_key));
+    if (fixtures.size !== 1 || !leagueRecords[0].fixture_key) {
+      throw new Error(`published Top-5 release requires one fixture for ${league}`);
+    }
+  }
   for (const record of top5) {
     const provenance = record.provenance && typeof record.provenance === 'object'
       ? record.provenance : {};

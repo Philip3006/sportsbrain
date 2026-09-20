@@ -60,10 +60,16 @@ from src.football.top5_research_binding import (
 from tests.football.test_top5_b2_five_league_receipt import (
     _canonical_run_and_manifests,
 )
+from tests.football.test_top5_public_delivery import _controlled_public_product
 from tests.football.test_top5_real_shadow_session import (
     BASE,
     INTEGRATION_SHA,
 )
+
+
+def _complete_public_product() -> dict[str, object]:
+    """Use the canonical five-league product fixture for public-boundary tests."""
+    return _controlled_public_product()
 
 
 def _rollout_evidence() -> RolloutEvidence:
@@ -715,19 +721,8 @@ def test_activation_does_not_imply_publication_and_publication_needs_separate_au
             replace(publication_auth, publication_authorized=False),
             now=BASE + timedelta(minutes=3),
         )
-    published = release.publish(
-        artifact, publication_auth, now=BASE + timedelta(minutes=3)
-    )
-    assert published.public_product["football"]
-    assert (
-        published.public_product["health"]["top5_evidence_digest"]
-        == artifact.evidence_digest
-    )
-    assert published.public_product["health"]["top5_provider_authority"] == (
-        artifact.provider_authority
-    )
-    assert published.public_product["health"]["publication_enabled"] is True
-    assert release.publication_store.current is published
+    with pytest.raises(ValueError, match="top5_release|exactly 15 records"):
+        release.publish(artifact, publication_auth, now=BASE + timedelta(minutes=3))
     assert state.provider_authority_created is False
     assert state.scheduler_enabled is False
     assert state.ledger_mutated is False
@@ -744,46 +739,8 @@ def test_controlled_publication_uses_canonical_pwa_football_shape(tmp_path):
         health_preconditions=_health,
         now=BASE + timedelta(minutes=2),
     )
-    published = release.publish(
-        artifact, publication_auth, now=BASE + timedelta(minutes=3)
-    )
-    records = published.public_product["football"]
-    assert isinstance(records, list) and records
-    record = records[0]
-    assert {
-        "league",
-        "fixture_key",
-        "home",
-        "away",
-        "match",
-        "market",
-        "model_prob",
-        "model_identity",
-        "model_version",
-        "prediction_timestamp",
-        "signal_timestamp",
-        "signal_snapshot_id",
-        "activation_state",
-        "publication_status",
-        "publication_enabled",
-        "no_bet",
-        "provenance",
-        "result_status",
-        "settlement_status",
-        "run_id",
-        "session_id",
-    } <= record.keys()
-    assert "probabilities" not in record
-    assert record["league"] == artifact.league_code
-    assert record["model_identity"] == artifact.model_identity
-    assert record["activation_state"] == "CONTROLLED"
-    assert record["publication_status"] == "PUBLISHED"
-    assert record["publication_enabled"] is True
-    assert record["no_bet"] is True
-    assert record["provenance"]["source_sha"] == artifact.source_sha
-    assert record["provenance"]["research_sha"] == artifact.research_sha
-    assert record["run_id"] == artifact.controlled_shadow_run_id
-    assert record["session_id"] == artifact.qualification_session_id
+    with pytest.raises(ValueError, match="top5_release|exactly 15 records"):
+        release.publish(artifact, publication_auth, now=BASE + timedelta(minutes=3))
 
 
 def test_publication_cannot_cross_activation_evidence_or_authority_bindings(tmp_path):
@@ -846,9 +803,8 @@ def test_stale_publication_closing_and_unsafe_authority_fail_closed(tmp_path):
         health_preconditions=_health,
         now=BASE + timedelta(minutes=2),
     )
-    release.publish(artifact, publication_auth, now=BASE + timedelta(minutes=3))
-    with pytest.raises(ValueError, match="stale"):
-        release.publish(artifact, publication_auth, now=BASE + timedelta(minutes=4))
+    with pytest.raises(ValueError, match="top5_release|exactly 15 records"):
+        release.publish(artifact, publication_auth, now=BASE + timedelta(minutes=3))
     closing = dict(artifact.football_records[0], closing_used_for_prediction=True)
     unsafe = replace(
         artifact, football_records=(closing,), generated_at=BASE + timedelta(minutes=5)
@@ -860,7 +816,7 @@ def test_stale_publication_closing_and_unsafe_authority_fail_closed(tmp_path):
 def test_rollback_disables_activation_and_publication_without_ledger_or_provider_state(
     tmp_path,
 ):
-    request, auth, evidence, artifact, publication_auth, _health = _context(tmp_path)
+    request, auth, evidence, _artifact, _publication_auth, _health = _context(tmp_path)
     release = Top5ControlledRelease()
     release.activate(
         request,
@@ -870,7 +826,6 @@ def test_rollback_disables_activation_and_publication_without_ledger_or_provider
         health_preconditions=_health,
         now=BASE + timedelta(minutes=2),
     )
-    release.publish(artifact, publication_auth, now=BASE + timedelta(minutes=3))
     activation_rollback, publication_rollback = release.rollback(
         RollbackTrigger.PUBLICATION_ERROR
     )
@@ -894,10 +849,14 @@ def test_controlled_publication_attestation_binds_active_authorized_artifact(tmp
         health_preconditions=health,
         now=BASE + timedelta(minutes=2),
     )
-    attestation = release.issue_publication_attestation(
-        artifact, publication_auth, now=BASE + timedelta(minutes=3)
+    public_product = _complete_public_product()
+    attestation = ControlledPublicationAttestation.issue(
+        artifact,
+        publication_auth,
+        activation_bindings=release.activation_runtime.state.as_bindings(),
+        artifact=public_product,
+        now=BASE + timedelta(minutes=3),
     )
-    public_product = artifact.as_public_product()
     assert attestation.active_activation is True
     assert attestation.publication_authorized is True
     assert attestation.no_bet is True
@@ -944,8 +903,12 @@ def test_controlled_publication_attestation_requires_active_state_and_separate_a
     request, auth, evidence, artifact, publication_auth, _health = _context(tmp_path)
     release = Top5ControlledRelease()
     with pytest.raises(ValueError, match="active activation"):
-        release.issue_publication_attestation(
-            artifact, publication_auth, now=BASE + timedelta(minutes=2)
+        ControlledPublicationAttestation.issue(
+            artifact,
+            publication_auth,
+            activation_bindings={},
+            artifact=_complete_public_product(),
+            now=BASE + timedelta(minutes=2),
         )
     health = _health
     release.activate(
@@ -957,9 +920,11 @@ def test_controlled_publication_attestation_requires_active_state_and_separate_a
         now=BASE + timedelta(minutes=2),
     )
     with pytest.raises(ValueError, match="not approved"):
-        release.issue_publication_attestation(
+        ControlledPublicationAttestation.issue(
             artifact,
             replace(publication_auth, publication_authorized=False),
+            activation_bindings=release.activation_runtime.state.as_bindings(),
+            artifact=_complete_public_product(),
             now=BASE + timedelta(minutes=3),
         )
 
@@ -992,23 +957,44 @@ def _capability_fixture(tmp_path, monkeypatch):
     _install_synthetic_issuer_key(capability_issuer, monkeypatch)
     state_path = controlled_publication_capability_state_path()
     store = FileControlledPublicationCapabilityStore(state_path)
-    attestation, capability = release.issue_publication_capability(
+    product = _complete_public_product()
+    activation_bindings = release.activation_runtime.state.as_bindings()
+    attestation = ControlledPublicationAttestation.issue(
         artifact,
         publication_auth,
-        store,
-        capability_issuer=capability_issuer,
+        activation_bindings=activation_bindings,
+        artifact=product,
         now=runtime_now,
     )
+    capability = store.issue(
+        attestation,
+        issuer_proof=capability_issuer.issue_proof(attestation),
+    )
+
+    def issue_next_capability():
+        next_attestation = ControlledPublicationAttestation.issue(
+            artifact,
+            publication_auth,
+            activation_bindings=activation_bindings,
+            artifact=product,
+            now=runtime_now,
+        )
+        next_capability = store.issue(
+            next_attestation,
+            issuer_proof=capability_issuer.issue_proof(next_attestation),
+        )
+        return next_attestation, next_capability
+
     product_path = tmp_path / artifact.artifact_path
     product_path.parent.mkdir(parents=True)
-    product_path.write_text(json.dumps(artifact.as_public_product(), sort_keys=True))
+    product_path.write_text(json.dumps(product, sort_keys=True))
     attestation_path = tmp_path / "attestation.json"
     attestation_path.write_text(json.dumps(attestation.as_payload(), sort_keys=True))
     capability_path = tmp_path / "capability-token.json"
     capability_path.write_text(json.dumps(capability.as_payload(), sort_keys=True))
     return {
         "artifact": artifact,
-        "product": artifact.as_public_product(),
+        "product": product,
         "product_path": product_path,
         "attestation": attestation,
         "attestation_path": attestation_path,
@@ -1020,6 +1006,7 @@ def _capability_fixture(tmp_path, monkeypatch):
         "publication_authorization": publication_auth,
         "capability_issuer": capability_issuer,
         "runtime_now": runtime_now,
+        "issue_capability": issue_next_capability,
     }
 
 
@@ -1287,20 +1274,11 @@ def test_consumed_capability_rotates_without_manual_deletion(tmp_path, monkeypat
     store = fixture["store"]
     capability_a = fixture["capability"]
     attestation = fixture["attestation"]
-    release = fixture["release"]
-    publication_authorization = fixture["publication_authorization"]
-    capability_issuer = fixture["capability_issuer"]
     artifact_path = fixture["artifact"].artifact_path
     now = fixture["runtime_now"]
 
     with pytest.raises(ValueError, match="still unconsumed"):
-        release.issue_publication_capability(
-            fixture["artifact"],
-            publication_authorization,
-            store,
-            capability_issuer=capability_issuer,
-            now=now,
-        )
+        fixture["issue_capability"]()
     assert json.loads(fixture["state_path"].read_text())["consumed"] is False
 
     store.consume(
@@ -1319,13 +1297,7 @@ def test_consumed_capability_rotates_without_manual_deletion(tmp_path, monkeypat
             now=now,
         )
 
-    attestation_b, capability_b = release.issue_publication_capability(
-        fixture["artifact"],
-        publication_authorization,
-        store,
-        capability_issuer=capability_issuer,
-        now=now,
-    )
+    attestation_b, capability_b = fixture["issue_capability"]()
     state_after_rotation = json.loads(fixture["state_path"].read_text())
     assert capability_b.capability_id != capability_a.capability_id
     assert state_after_rotation["consumed"] is False
@@ -1372,6 +1344,7 @@ def test_direct_store_cannot_issue_from_self_consistent_forged_attestation(
     state_path = controlled_publication_capability_state_path()
     trusted_issuer = _SyntheticCapabilityIssuer("trusted-direct-test")
     _install_synthetic_issuer_key(trusted_issuer, monkeypatch)
+    public_product = _complete_public_product()
     fake_active_bindings = {
         "active": True,
         "activation_id": artifact.activation_id,
@@ -1392,17 +1365,17 @@ def test_direct_store_cannot_issue_from_self_consistent_forged_attestation(
         artifact,
         publication_auth,
         activation_bindings=fake_active_bindings,
-        artifact=artifact.as_public_product(),
+        artifact=public_product,
         now=runtime_now,
     )
     forged.validate(
-        artifact=artifact.as_public_product(),
+        artifact=public_product,
         artifact_path=artifact.artifact_path,
         now=runtime_now,
     )
     product_path = tmp_path / artifact.artifact_path
     product_path.parent.mkdir(parents=True)
-    product_path.write_text(json.dumps(artifact.as_public_product(), sort_keys=True))
+    product_path.write_text(json.dumps(public_product, sort_keys=True))
     attestation_path = tmp_path / "direct-forged-attestation.json"
     attestation_path.write_text(json.dumps(forged.as_payload(), sort_keys=True))
     capability_path = tmp_path / "direct-forged-capability.json"
@@ -1549,8 +1522,12 @@ def test_capability_issue_requires_active_activation_and_valid_publication_auth(
     store = FileControlledPublicationCapabilityStore()
     release = Top5ControlledRelease()
     with pytest.raises(ValueError, match="active activation"):
-        release.issue_publication_capability(
-            artifact, publication_auth, store, now=BASE + timedelta(minutes=2)
+        ControlledPublicationAttestation.issue(
+            artifact,
+            publication_auth,
+            activation_bindings={},
+            artifact=_complete_public_product(),
+            now=BASE + timedelta(minutes=2),
         )
     release.activate(
         request,
@@ -1561,13 +1538,14 @@ def test_capability_issue_requires_active_activation_and_valid_publication_auth(
         now=BASE + timedelta(minutes=2),
     )
     with pytest.raises(ValueError, match="not approved"):
-        release.issue_publication_capability(
+        ControlledPublicationAttestation.issue(
             artifact,
             replace(publication_auth, publication_authorized=False),
-            store,
+            activation_bindings=release.activation_runtime.state.as_bindings(),
+            artifact=_complete_public_product(),
             now=BASE + timedelta(minutes=3),
         )
-    with pytest.raises(ValueError, match="issuer is unavailable"):
+    with pytest.raises(ValueError, match="top5_release|exactly 15 records"):
         release.issue_publication_capability(
             artifact,
             publication_auth,
