@@ -20,6 +20,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 import src.football.top5_publisher as top5_publisher_module
 from scripts.validate_controlled_top5_publication import main as validate_publication
 from src.football.production_contracts import RolloutEvidence, SignalTimeContract
+from src.football.provider_cascade.contracts import FOOTBALL_PROVIDER_REPERTOIRE
 from src.football.top5_activation_readiness import (
     ControlledActivationRequest,
     RollbackTrigger,
@@ -162,14 +163,15 @@ def _context(tmp_path):
     evidence, measurement, receipt = _evidence(tmp_path)
     receipt = evidence.receipts[0]
     league = receipt.fixture_key.split("|", 1)[0]
+    production_provider = FOOTBALL_PROVIDER_REPERTOIRE[0]
     proposal = ProviderAuthority(
-        "fixture-source", receipt.provider_identity, "result-source"
+        "fixture-source", production_provider, "result-source"
     )
     approved_authority = ApprovedProviderResultAuthority(
         authority_decision_id="provider-auth:controlled-release",
         league_code=league,
-        approved_odds_provider=receipt.provider_identity,
-        approved_provider_set=(receipt.provider_identity,),
+        approved_odds_provider=production_provider,
+        approved_provider_set=(production_provider,),
         approved_result_source="result-source",
         issued_at=BASE - timedelta(minutes=1),
         expires_at=BASE + timedelta(days=1),
@@ -233,7 +235,7 @@ def _context(tmp_path):
         source_sha=INTEGRATION_SHA,
         research_sha=FROZEN_RESEARCH_SHA,
         model_artifact_hash=request.model_artifact_hash,
-        provider_authority=receipt.provider_identity,
+        provider_authority=production_provider,
         result_authority="result-source",
         evidence_digest=evidence_digest,
         controlled_shadow_run_id=receipt.controlled_shadow_run_id,
@@ -300,6 +302,12 @@ def _context(tmp_path):
 
 def test_dry_run_reaches_ready_state_without_mutation(tmp_path):
     request, auth, evidence, artifact, publication_auth, health = _context(tmp_path)
+    assert evidence.five_league_package.dossier.provider_identity == "therundown_experimental"
+    assert auth.provider_authority.approved_odds_provider == "the_odds_api"
+    assert (
+        evidence.five_league_package.dossier.provider_identity
+        != auth.provider_authority.approved_odds_provider
+    )
     release = Top5ControlledRelease()
     result = release.dry_run(
         request,
@@ -602,6 +610,16 @@ def test_top5_activation_requires_exact_five_receipt_package(tmp_path):
             ),
             id="provider-candidate-mismatch",
         ),
+        pytest.param(
+            lambda package: replace(
+                package,
+                receipts=(
+                    replace(package.receipts[0], provider_identity="other-provider"),
+                    *package.receipts[1:],
+                ),
+            ),
+            id="mixed-receipt-providers",
+        ),
     ],
 )
 def test_top5_activation_rejects_partial_or_tampered_dossier(
@@ -698,7 +716,33 @@ def test_incomplete_policy_signal_time_and_authority_block(tmp_path):
             ),
         ).provider_authority.binds_receipts(evidence.receipts)
     auth.provider_authority.binds_request(request)
-    auth.provider_authority.binds_receipts(evidence.receipts)
+
+
+def test_candidate_evidence_and_production_authority_are_distinct(tmp_path):
+    request, auth, evidence, _artifact, _publication_auth, _health = _context(tmp_path)
+    candidate = evidence.five_league_package.dossier.provider_identity
+    candidate_authority = replace(
+        auth.provider_authority,
+        approved_odds_provider=candidate,
+        approved_provider_set=(candidate,),
+    )
+    candidate_request = replace(
+        request,
+        provider_authority=ProviderAuthority(
+            "fixture-source", candidate, "result-source"
+        ),
+    )
+    candidate_activation = replace(auth, provider_authority=candidate_authority)
+    with pytest.raises(ValueError, match="candidate evidence provider"):
+        evidence.validate(candidate_request, candidate_activation)
+
+    evidence.validate(request, auth)
+
+
+def test_missing_production_authority_blocks_controlled_release(tmp_path):
+    request, auth, evidence, _artifact, _publication_auth, _health = _context(tmp_path)
+    with pytest.raises(ValueError, match="provider/result authority"):
+        evidence.validate(request, replace(auth, provider_authority=None))
 
 
 def test_activation_does_not_imply_publication_and_publication_needs_separate_auth(

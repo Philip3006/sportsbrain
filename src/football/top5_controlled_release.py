@@ -24,6 +24,10 @@ from src.football.production_contracts import (
     SignalTimeContract,
     _utc,
 )
+from src.football.provider_cascade.contracts import (
+    CANDIDATE_ONLY_PROVIDER_IDENTITIES,
+    FOOTBALL_PROVIDER_REPERTOIRE,
+)
 from src.football.top5_activation_readiness import (
     ControlledActivationRequest,
     RollbackController,
@@ -412,8 +416,25 @@ class Top5ControlledReleaseEvidence:
         configured_digest = request.config_snapshot.get("configuration_digest")
         if configured_digest is not None and configured_digest != dossier.configuration_digest:
             raise ProductionContractError("configuration digest binding mismatch")
-        if authorization.provider_authority.approved_odds_provider != dossier.provider_identity:
-            raise ProductionContractError("provider authority/dossier identity mismatch")
+        production_provider = authorization.provider_authority.approved_odds_provider
+        if production_provider in CANDIDATE_ONLY_PROVIDER_IDENTITIES:
+            raise ProductionContractError(
+                "candidate evidence provider cannot receive production authority"
+            )
+        if production_provider not in FOOTBALL_PROVIDER_REPERTOIRE:
+            raise ProductionContractError(
+                "production authority provider is outside the canonical repertoire"
+            )
+        if set(authorization.provider_authority.approved_provider_set) != {
+            production_provider
+        }:
+            raise ProductionContractError(
+                "production authority must contain exactly one canonical provider"
+            )
+        if dossier.provider_identity == production_provider:
+            raise ProductionContractError(
+                "candidate evidence provider must remain distinct from production authority"
+            )
         self.sample_report.validate()
         if (
             self.sample_report.minimum_sample_policy
@@ -449,7 +470,6 @@ class Top5ControlledReleaseEvidence:
         try:
             for receipt in self.receipts:
                 receipt.validate()
-            authorization.provider_authority.binds_receipts(self.receipts)
             recomputed = aggregate_builder2_qualification_samples(
                 self.receipts,
                 minimum_sample_policy=authorization.minimum_sample_policy,
