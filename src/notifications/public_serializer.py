@@ -45,6 +45,7 @@ _PUBLIC_TOP_LEVEL_KEYS: frozenset[str] = frozenset(
         "wm_results",
         "odds_history",
         "health",
+        "top5_release",
     }
 )
 
@@ -101,8 +102,39 @@ _PUBLIC_FOOTBALL_PROVENANCE_FIELDS = frozenset(
         "snapshot_kind",
         "captured_at",
         "source_age_seconds",
+        "activation_id",
+        "evidence_digest",
+        "controlled_shadow_run_id",
+        "qualification_session_id",
     }
 )
+
+_PUBLIC_TOP5_RELEASE_FIELDS = frozenset(
+    {
+        "schema_version",
+        "release_type",
+        "generation_id",
+        "activation_state",
+        "activation_id",
+        "publication_status",
+        "publication_enabled",
+        "publication_authorization_id",
+        "provider_authority",
+        "result_authority",
+        "candidate_id",
+        "model_identity",
+        "evidence_digest",
+        "evidence_digests",
+        "controlled_shadow_run_id",
+        "qualification_session_id",
+        "league_codes",
+        "generated_at",
+        "published_at",
+        "fallback_max_age_seconds",
+        "no_bet",
+    }
+)
+_TOP5_LEAGUES = frozenset({"EPL", "BL1", "LL", "SA", "L1"})
 
 
 def _mapping(value: object) -> Mapping[str, object]:
@@ -308,6 +340,119 @@ def _public_provenance(
     return result
 
 
+def _public_top5_release(value: object) -> dict[str, object]:
+    """Project the controlled Top-5 release envelope through an allowlist.
+
+    This metadata is deliberately separate from ``health``.  The PWA and the
+    static fallback use it to bind all Top-5 records to one generation and to
+    fail closed when a staged or stale artifact is encountered.
+    """
+    if not isinstance(value, Mapping):
+        raise PublicFootballCompatibilityError("top5_release must be an object")
+    result: dict[str, object] = {}
+    for key in _PUBLIC_TOP5_RELEASE_FIELDS:
+        if key not in value:
+            continue
+        item = value[key]
+        if key == "league_codes":
+            if not isinstance(item, Sequence) or isinstance(item, (str, bytes)):
+                raise PublicFootballCompatibilityError(
+                    "top5_release league_codes must be a list"
+                )
+            result[key] = [str(code) for code in item]
+        elif key == "evidence_digests":
+            if not isinstance(item, Mapping):
+                raise PublicFootballCompatibilityError(
+                    "top5_release evidence_digests must be an object"
+                )
+            result[key] = {
+                str(league): str(digest) for league, digest in item.items()
+            }
+        elif isinstance(item, (str, int, float, bool)) or item is None:
+            result[key] = item
+        else:
+            raise PublicFootballCompatibilityError(
+                f"unsupported top5_release field: {key}"
+            )
+    required = {
+        "schema_version",
+        "generation_id",
+        "activation_state",
+        "activation_id",
+        "publication_status",
+        "publication_enabled",
+        "league_codes",
+        "no_bet",
+    }
+    missing = sorted(required - result.keys())
+    if missing:
+        raise PublicFootballCompatibilityError(
+            "top5_release is incomplete: " + ", ".join(missing)
+        )
+    if result["activation_state"] != "CONTROLLED":
+        raise PublicFootballCompatibilityError(
+            "top5_release must be bound to CONTROLLED activation"
+        )
+    if result["publication_status"] != "PUBLISHED" or result["publication_enabled"] is not True:
+        raise PublicFootballCompatibilityError(
+            "top5_release is not published"
+        )
+    if result["no_bet"] is not True:
+        raise PublicFootballCompatibilityError("top5_release must remain no-bet")
+    if not result["league_codes"]:
+        raise PublicFootballCompatibilityError("top5_release requires leagues")
+    return result
+
+
+def _validate_top5_public_records(
+    records: object, release: Mapping[str, object] | None
+) -> None:
+    """Reject unbound Top-5 records at the public serialization boundary."""
+    if not isinstance(records, Sequence) or isinstance(records, (str, bytes)):
+        return
+    top5_records = [
+        record
+        for record in records
+        if isinstance(record, Mapping)
+        and str(record.get("league", "")).upper() in _TOP5_LEAGUES
+    ]
+    if not top5_records:
+        return
+    offline = all(
+        record.get("publication_enabled") is False
+        and record.get("signal_status") == "SHADOW"
+        and (
+            record.get("synthetic") is True
+            or str(record.get("evidence_kind", "")).upper() == "TEST_FIXTURE"
+        )
+        for record in top5_records
+    )
+    if offline:
+        return
+    if not isinstance(release, Mapping):
+        raise PublicFootballCompatibilityError(
+            "Top-5 public records require a controlled release envelope"
+        )
+    for record in top5_records:
+        provenance = _mapping(record.get("provenance"))
+        if (
+            record.get("activation_state") != "CONTROLLED"
+            or record.get("signal_status") != "CONTROLLED"
+            or record.get("publication_status") != "PUBLISHED"
+            or record.get("publication_enabled") is not True
+            or record.get("no_bet") is not True
+            or record.get("activation_id") != release.get("activation_id")
+            or record.get("provider") != release.get("provider_authority")
+            or record.get("run_id") != release.get("controlled_shadow_run_id")
+            or record.get("session_id") != release.get("qualification_session_id")
+            or provenance.get("activation_id") != release.get("activation_id")
+            or provenance.get("evidence_digest") != record.get("evidence_digest")
+        ):
+            raise PublicFootballCompatibilityError(
+                "Top-5 public record/release binding mismatch"
+            )
+
+
 def map_prediction_to_public_football_signals(
     record: Mapping[str, object],
 ) -> list[dict[str, object]]:
@@ -365,6 +510,12 @@ def map_prediction_to_public_football_signals(
     synthetic = _validate_synthetic_boundary(
         record, provenance, state, artifact, health
     )
+    evidence_kind = str(
+        _first_value(
+            record, provenance, artifact, health, keys=("evidence_kind", "marker")
+        )
+        or ""
+    ).strip().upper()
 
     fixture_key_text = fixture_key
     home = (
@@ -517,6 +668,7 @@ def map_prediction_to_public_football_signals(
         "signal_snapshot_id": snapshot_id,
         "snapshot_kind": snapshot_kind,
         "source": source or "",
+        "provider": source or "",
         "source_age_seconds": source_age_seconds,
         "stale_state": stale_state,
         "activation_state": state.upper(),
@@ -535,6 +687,34 @@ def map_prediction_to_public_football_signals(
             _first_value(record, artifact, health, keys=("session_id",))
         )
         or "",
+        "activation_id": _optional_text(
+            _first_value(record, artifact, provenance, health, keys=("activation_id",))
+        )
+        or "",
+        "evidence_digest": _optional_text(
+            _first_value(record, artifact, provenance, health, keys=("evidence_digest",))
+        )
+        or "",
+        "controlled_shadow_run_id": _optional_text(
+            _first_value(
+                record,
+                artifact,
+                provenance,
+                health,
+                keys=("controlled_shadow_run_id", "run_id"),
+            )
+        )
+        or "",
+        "qualification_session_id": _optional_text(
+            _first_value(
+                record,
+                artifact,
+                provenance,
+                health,
+                keys=("qualification_session_id", "session_id"),
+            )
+        )
+        or "",
         "provenance": public_provenance,
         "model_prob": 0.0,
         "fair_prob": 0.0,
@@ -550,7 +730,7 @@ def map_prediction_to_public_football_signals(
         common.update(
             {
                 "synthetic": True,
-                "evidence_kind": "SYNTHETIC",
+                "evidence_kind": evidence_kind or "SYNTHETIC",
                 "real_observed": False,
                 "model_approved": False,
                 "signal_time_approved": False,
@@ -570,6 +750,12 @@ def map_prediction_to_public_football_signals(
         item["odds"] = round(odds.get(outcome, 0.0), 4)
         if item["odds"] and item["model_prob"]:
             item["ev_pct"] = round(probabilities[outcome] * item["odds"] * 100 - 100, 4)
+        # The PWA's actionability contract reads current_* fields.  Controlled
+        # Top-5 records remain informational because signal_status=CONTROLLED
+        # and no_bet=true; exposing the canonical values prevents a schema
+        # downgrade without enabling betting.
+        item["current_odds"] = item["odds"]
+        item["current_ev_pct"] = item["ev_pct"]
         if signal_timestamp:
             item["odds_ts"] = signal_timestamp
         output.append(item)
@@ -750,6 +936,9 @@ def serialize_public_product(snapshot: dict | None) -> dict:
             pub[key] = snapshot[key]
     if "football" in pub:
         pub["football"] = serialize_public_football_records(pub["football"])
+    if "top5_release" in pub:
+        pub["top5_release"] = _public_top5_release(pub["top5_release"])
+    _validate_top5_public_records(pub.get("football"), pub.get("top5_release"))
     if isinstance(snapshot.get("health"), Mapping):
         public_health = dict(snapshot["health"])
         if "football_release" in public_health:

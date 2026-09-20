@@ -377,6 +377,16 @@ function _signalsKey(user) {
 const _PUBLIC_TOP_LEVEL_KEYS = new Set([
   'updated', 'build_info', 'schedule', 'all_odds', 'model_tips', 'model_evals',
   'football', 'tennis', 'top_elo', 'wm_results', 'odds_history', 'health',
+  'top5_release',
+]);
+
+const _PUBLIC_TOP5_RELEASE_FIELDS = new Set([
+  'schema_version', 'release_type', 'generation_id', 'activation_state',
+  'activation_id', 'publication_status', 'publication_enabled',
+  'publication_authorization_id', 'provider_authority', 'result_authority',
+  'candidate_id', 'model_identity', 'evidence_digest', 'evidence_digests',
+  'controlled_shadow_run_id', 'qualification_session_id', 'league_codes',
+  'generated_at', 'published_at', 'fallback_max_age_seconds', 'no_bet',
 ]);
 
 // Forbidden private keys — must never appear anywhere in the public payload.
@@ -419,6 +429,75 @@ function _publicTennisStats(ts) {
   }
   return out;
 }
+
+function _publicTop5Release(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('invalid top5_release');
+  }
+  const out = {};
+  for (const key of _PUBLIC_TOP5_RELEASE_FIELDS) {
+    if (!(key in value)) continue;
+    const item = value[key];
+    if (key === 'league_codes') {
+      if (!Array.isArray(item) || item.some((code) => typeof code !== 'string')) {
+        throw new Error('invalid top5_release league_codes');
+      }
+      out[key] = [...item];
+    } else if (key === 'evidence_digests') {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        throw new Error('invalid top5_release evidence_digests');
+      }
+      out[key] = {};
+      for (const [league, digest] of Object.entries(item)) {
+        if (typeof digest !== 'string') throw new Error('invalid top5_release digest');
+        out[key][league] = digest;
+      }
+    } else if (
+      item === null || typeof item === 'string' || typeof item === 'number' ||
+      typeof item === 'boolean'
+    ) {
+      out[key] = item;
+    } else {
+      throw new Error(`invalid top5_release field: ${key}`);
+    }
+  }
+  for (const key of [
+    'schema_version', 'generation_id', 'activation_state', 'activation_id',
+    'publication_status', 'publication_enabled', 'publication_authorization_id',
+    'league_codes', 'no_bet',
+  ]) {
+    if (!(key in out)) throw new Error(`incomplete top5_release: ${key}`);
+  }
+  if (out.activation_state !== 'CONTROLLED' || out.publication_status !== 'PUBLISHED' ||
+      out.publication_enabled !== true || out.no_bet !== true || out.league_codes.length === 0) {
+    throw new Error('top5_release is not a published controlled no-bet release');
+  }
+  return out;
+}
+
+function _validateTop5PublicRecords(records, release) {
+  if (!Array.isArray(records)) return;
+  const leagues = new Set(['EPL', 'BL1', 'LL', 'SA', 'L1']);
+  const top5 = records.filter((record) =>
+    record && typeof record === 'object' && leagues.has(String(record.league || '').toUpperCase())
+  );
+  if (!top5.length) return;
+  if (!release) throw new Error('Top-5 records require a controlled release envelope');
+  for (const record of top5) {
+    const provenance = record.provenance && typeof record.provenance === 'object'
+      ? record.provenance : {};
+    if (record.activation_state !== 'CONTROLLED' || record.signal_status !== 'CONTROLLED' ||
+        record.publication_status !== 'PUBLISHED' || record.publication_enabled !== true ||
+        record.no_bet !== true || record.activation_id !== release.activation_id ||
+        record.provider !== release.provider_authority ||
+        record.run_id !== release.controlled_shadow_run_id ||
+        record.session_id !== release.qualification_session_id ||
+        provenance.activation_id !== release.activation_id ||
+        provenance.evidence_digest !== record.evidence_digest) {
+      throw new Error('Top-5 public record/release binding mismatch');
+    }
+  }
+}
 // P0C-002 — Private state allowlist for GET /me.
 // Only these top-level keys are returned in the authenticated /me payload.
 // Public product fields (schedule, all_odds, model_tips, football, tennis, …)
@@ -456,6 +535,8 @@ export function serializePublicProduct(snapshot) {
   for (const key of _PUBLIC_TOP_LEVEL_KEYS) {
     if (key in snapshot) pub[key] = snapshot[key];
   }
+  if ('top5_release' in pub) pub.top5_release = _publicTop5Release(pub.top5_release);
+  _validateTop5PublicRecords(pub.football, pub.top5_release);
   if ('meta' in snapshot) pub.meta = _publicMeta(snapshot.meta);
   if ('tennis_stats' in snapshot) pub.tennis_stats = _publicTennisStats(snapshot.tennis_stats);
   // Fail-closed: throws if any forbidden key survived inside an approved container.

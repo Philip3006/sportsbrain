@@ -16,7 +16,7 @@ import secrets
 import uuid
 from collections.abc import Mapping
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from hashlib import sha256
 from hmac import compare_digest
@@ -48,6 +48,10 @@ CONTROLLED_PUBLICATION_ISSUER_PUBLIC_KEY = (
 CONTROLLED_PUBLICATION_ISSUER_PUBLIC_KEY_SHA256 = (
     "0d54b442abe704eadcae23e3638bff75ba87de06d62977f53900846e2df4bd86"
 )
+
+TOP5_PUBLIC_RELEASE_SCHEMA_VERSION = "top5-public-release-v1"
+TOP5_PUBLIC_RELEASE_LEAGUES = ("EPL", "BL1", "LL", "SA", "L1")
+TOP5_PUBLIC_RELEASE_MAX_FALLBACK_AGE_SECONDS = 2 * 60 * 60
 
 
 def controlled_publication_capability_state_path() -> Path:
@@ -128,7 +132,9 @@ class Top5PublisherPayload:
     no_bet: bool = True
     publication_enabled: bool = False
     activation_gate_passed: bool = False
-    provenance: Mapping[str, str] = MappingProxyType({})
+    provenance: Mapping[str, str] = field(
+        default_factory=lambda: MappingProxyType({})
+    )
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -434,7 +440,7 @@ class ControlledTop5PublicationPayload:
         if self.health.get("no_bet") is not True:
             raise ProductionContractError("public health must remain no-bet")
 
-    def as_public_product(self) -> dict[str, object]:
+    def _as_public_records(self) -> list[dict[str, object]]:
         self.validate()
         from src.notifications.public_serializer import (
             map_prediction_to_public_football_signals,
@@ -485,6 +491,15 @@ class ControlledTop5PublicationPayload:
                     "source_sha": self.source_sha,
                     "research_sha": self.research_sha,
                     "model_artifact_hash": self.model_artifact_hash,
+                    "activation_id": self.activation_id,
+                    "evidence_digest": record.get("evidence_digest")
+                    or self.evidence_digest,
+                    "controlled_shadow_run_id": record.get("controlled_shadow_run_id")
+                    or self.controlled_shadow_run_id,
+                    "qualification_session_id": record.get(
+                        "qualification_session_id"
+                    )
+                    or self.qualification_session_id,
                     "snapshot_id": record.get("snapshot_id")
                     or self.signal_time_experiment_id,
                     "snapshot_kind": "SIGNAL_TIME",
@@ -494,6 +509,13 @@ class ControlledTop5PublicationPayload:
                 "publication_status": "PUBLISHED",
                 "publication_enabled": True,
                 "no_bet": True,
+                "activation_id": record.get("activation_id") or self.activation_id,
+                "evidence_digest": record.get("evidence_digest")
+                or self.evidence_digest,
+                "controlled_shadow_run_id": record.get("controlled_shadow_run_id")
+                or self.controlled_shadow_run_id,
+                "qualification_session_id": record.get("qualification_session_id")
+                or self.qualification_session_id,
                 "result_status": record.get("result_status") or "PENDING",
                 "run_id": record.get("controlled_shadow_run_id")
                 or self.controlled_shadow_run_id,
@@ -501,10 +523,25 @@ class ControlledTop5PublicationPayload:
                 or self.qualification_session_id,
             }
             public_records.extend(map_prediction_to_public_football_signals(envelope))
+        return public_records
+
+    def as_public_product(
+        self,
+        *,
+        published_at: datetime | None = None,
+        publication_authorization_id: str | None = None,
+    ) -> dict[str, object]:
+        public_records = self._as_public_records()
         return serialize_public_product(
             {
                 "updated": self.generated_at.isoformat(),
                 "football": public_records,
+                "top5_release": _top5_public_release(
+                    (self,),
+                    public_records,
+                    published_at=published_at,
+                    publication_authorization_id=publication_authorization_id,
+                ),
                 "health": {
                     **dict(self.health),
                     "top5_activation_id": self.activation_id,
@@ -517,6 +554,163 @@ class ControlledTop5PublicationPayload:
                     "top5_provider_authority": self.provider_authority,
                     "top5_result_authority": self.result_authority,
                     "top5_evidence_digest": self.evidence_digest,
+                    "publication_status": "PUBLISHED",
+                    "publication_enabled": True,
+                },
+            }
+        )
+
+
+def _top5_public_release(
+    payloads: tuple[ControlledTop5PublicationPayload, ...],
+    public_records: list[Mapping[str, object]],
+    *,
+    published_at: datetime | None = None,
+    publication_authorization_id: str | None = None,
+) -> dict[str, object]:
+    """Build one immutable public-generation envelope for one or five leagues."""
+    if not payloads:
+        raise ProductionContractError("Top-5 public release requires payloads")
+    first = payloads[0]
+    leagues = tuple(payload.league_code for payload in payloads)
+    evidence_digests = {
+        payload.league_code: payload.evidence_digest for payload in payloads
+    }
+    seed = {
+        "schema_version": TOP5_PUBLIC_RELEASE_SCHEMA_VERSION,
+        "activation_id": first.activation_id,
+        "candidate_id": first.candidate_id,
+        "model_identity": first.model_identity,
+        "source_sha": first.source_sha,
+        "research_sha": first.research_sha,
+        "model_artifact_hash": first.model_artifact_hash,
+        "signal_time_experiment_id": first.signal_time_experiment_id,
+        "provider_authority": first.provider_authority,
+        "result_authority": first.result_authority,
+        "controlled_shadow_run_id": first.controlled_shadow_run_id,
+        "qualification_session_id": first.qualification_session_id,
+        "league_codes": leagues,
+        "evidence_digests": evidence_digests,
+        "records": [
+            {
+                "signal_id": record.get("signal_id"),
+                "league": record.get("league"),
+                "fixture_key": record.get("fixture_key"),
+            }
+            for record in public_records
+        ],
+    }
+    result: dict[str, object] = {
+        "schema_version": TOP5_PUBLIC_RELEASE_SCHEMA_VERSION,
+        "release_type": "CONTROLLED_TOP5",
+        "generation_id": "top5-generation-v1:" + _digest(seed),
+        "activation_state": "CONTROLLED",
+        "activation_id": first.activation_id,
+        "publication_status": "PUBLISHED",
+        "publication_enabled": True,
+        "provider_authority": first.provider_authority,
+        "result_authority": first.result_authority,
+        "candidate_id": first.candidate_id,
+        "model_identity": first.model_identity,
+        "evidence_digest": (
+            first.evidence_digest
+            if len(evidence_digests) == 1
+            else "top5-evidence-v1:" + _digest(evidence_digests)
+        ),
+        "evidence_digests": evidence_digests,
+        "controlled_shadow_run_id": first.controlled_shadow_run_id,
+        "qualification_session_id": first.qualification_session_id,
+        "league_codes": list(leagues),
+        "generated_at": max(payload.generated_at for payload in payloads).isoformat(),
+        "published_at": _utc(
+            published_at or first.generated_at, "published_at"
+        ).isoformat(),
+        "fallback_max_age_seconds": TOP5_PUBLIC_RELEASE_MAX_FALLBACK_AGE_SECONDS,
+        "no_bet": True,
+    }
+    if publication_authorization_id:
+        result["publication_authorization_id"] = publication_authorization_id
+    return result
+
+
+@dataclass(frozen=True)
+class ControlledTop5PublicationBatch:
+    """Atomic five-league adapter from controlled publisher to public JSON."""
+
+    payloads: tuple[ControlledTop5PublicationPayload, ...]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "payloads", tuple(self.payloads))
+
+    def validate(self) -> None:
+        codes = tuple(payload.league_code for payload in self.payloads)
+        if len(codes) != len(TOP5_PUBLIC_RELEASE_LEAGUES) or set(codes) != set(
+            TOP5_PUBLIC_RELEASE_LEAGUES
+        ):
+            raise ProductionContractError(
+                "controlled Top-5 batch requires EPL, BL1, LL, SA and L1 exactly once"
+            )
+        for payload in self.payloads:
+            payload.validate()
+        first = self.payloads[0]
+        for payload in self.payloads[1:]:
+            for name in (
+                "activation_id",
+                "candidate_id",
+                "model_identity",
+                "source_sha",
+                "research_sha",
+                "model_artifact_hash",
+                "signal_time_experiment_id",
+                "provider_authority",
+                "result_authority",
+                "controlled_shadow_run_id",
+                "qualification_session_id",
+            ):
+                if getattr(payload, name) != getattr(first, name):
+                    raise ProductionContractError(
+                        f"controlled Top-5 batch binding mismatch: {name}"
+                    )
+
+    def as_public_product(
+        self,
+        *,
+        published_at: datetime | None = None,
+        publication_authorization_id: str | None = None,
+    ) -> dict[str, object]:
+        self.validate()
+        ordered_payloads = tuple(
+            sorted(self.payloads, key=lambda payload: payload.league_code)
+        )
+        public_records: list[dict[str, object]] = []
+        for payload in ordered_payloads:
+            public_records.extend(payload._as_public_records())
+        first = ordered_payloads[0]
+        return serialize_public_product(
+            {
+                "updated": max(payload.generated_at for payload in self.payloads).isoformat(),
+                "football": public_records,
+                "top5_release": _top5_public_release(
+                    ordered_payloads,
+                    public_records,
+                    published_at=published_at,
+                    publication_authorization_id=publication_authorization_id,
+                ),
+                "health": {
+                    **dict(first.health),
+                    "top5_activation_id": first.activation_id,
+                    "top5_leagues": list(TOP5_PUBLIC_RELEASE_LEAGUES),
+                    "top5_candidate_id": first.candidate_id,
+                    "top5_model_identity": first.model_identity,
+                    "top5_source_sha": first.source_sha,
+                    "top5_research_sha": first.research_sha,
+                    "top5_model_artifact_hash": first.model_artifact_hash,
+                    "top5_provider_authority": first.provider_authority,
+                    "top5_result_authority": first.result_authority,
+                    "top5_evidence_digests": {
+                        payload.league_code: payload.evidence_digest
+                        for payload in ordered_payloads
+                    },
                     "publication_status": "PUBLISHED",
                     "publication_enabled": True,
                 },
@@ -1281,6 +1475,20 @@ class PublishedTop5Artifact:
 
 
 @dataclass(frozen=True)
+class PublishedTop5BatchArtifact:
+    payloads: tuple[ControlledTop5PublicationPayload, ...]
+    public_product: Mapping[str, object]
+    artifact_digest: str
+    published_at: datetime
+
+    def validate(self) -> None:
+        ControlledTop5PublicationBatch(self.payloads).validate()
+        _utc(self.published_at, "published_at")
+        if self.artifact_digest != _digest(self.public_product):
+            raise ProductionContractError("published Top-5 batch digest mismatch")
+
+
+@dataclass(frozen=True)
 class PublicationRollback:
     restored_unpublished: bool
     previous_safe_artifact_digest: str | None
@@ -1304,10 +1512,15 @@ class InMemoryTop5PublicationStore:
 
     def __init__(self) -> None:
         self._current: PublishedTop5Artifact | None = None
+        self._current_batch: PublishedTop5BatchArtifact | None = None
 
     @property
     def current(self) -> PublishedTop5Artifact | None:
         return self._current
+
+    @property
+    def current_batch(self) -> PublishedTop5BatchArtifact | None:
+        return self._current_batch
 
     def publish(
         self,
@@ -1354,7 +1567,17 @@ class InMemoryTop5PublicationStore:
             and payload.generated_at <= self._current.payload.generated_at
         ):
             raise ProductionContractError("stale Top-5 publication artifact rejected")
-        public_product = payload.as_public_product()
+        if (
+            self._current_batch is not None
+            and payload.generated_at <= max(
+                item.generated_at for item in self._current_batch.payloads
+            )
+        ):
+            raise ProductionContractError("stale Top-5 publication artifact rejected")
+        public_product = payload.as_public_product(
+            published_at=now,
+            publication_authorization_id=authorization.publication_authorization_id,
+        )
         artifact = PublishedTop5Artifact(
             payload=payload,
             public_product=public_product,
@@ -1363,11 +1586,105 @@ class InMemoryTop5PublicationStore:
         )
         artifact.validate()
         self._current = artifact
+        self._current_batch = None
+        return artifact
+
+    def publish_batch(
+        self,
+        payloads: tuple[ControlledTop5PublicationPayload, ...],
+        authorizations: Mapping[str, Top5PublicationAuthorization],
+        *,
+        activation_bindings: Mapping[str, object],
+        now: datetime,
+    ) -> PublishedTop5BatchArtifact:
+        """Atomically publish all five leagues as one public generation.
+
+        ``activation_bindings`` may be one shared binding map or a map keyed by
+        league.  In both forms every payload and authorization is checked
+        before the store pointer changes.
+        """
+        batch = ControlledTop5PublicationBatch(tuple(payloads))
+        batch.validate()
+        authorization_ids: dict[str, str] = {}
+        for payload in batch.payloads:
+            authorization = authorizations.get(payload.league_code)
+            if authorization is None:
+                raise ProductionContractError(
+                    f"missing publication authorization: {payload.league_code}"
+                )
+            authorization.validate(now=now)
+            authorization.binds(payload)
+            binding = activation_bindings.get(payload.league_code)
+            if not isinstance(binding, Mapping):
+                binding = activation_bindings
+            if binding.get("active") is not True:
+                raise ProductionContractError(
+                    "publication requires the exact active controlled activation"
+                )
+            for name in (
+                "activation_id",
+                "league_code",
+                "candidate_id",
+                "model_identity",
+                "source_sha",
+                "research_sha",
+                "model_artifact_hash",
+                "signal_time_experiment_id",
+                "provider_authority",
+                "result_authority",
+                "evidence_digest",
+                "controlled_shadow_run_id",
+                "qualification_session_id",
+            ):
+                expected = binding.get(name)
+                actual = (
+                    payload.activation_id
+                    if name == "activation_id"
+                    else getattr(payload, name, None)
+                )
+                if actual != expected:
+                    raise ProductionContractError(
+                        f"publication activation binding mismatch: {payload.league_code}:{name}"
+                    )
+            authorization_ids[payload.league_code] = (
+                authorization.publication_authorization_id
+            )
+        latest_generated_at = max(payload.generated_at for payload in batch.payloads)
+        if (
+            self._current_batch is not None
+            and latest_generated_at <= max(
+                payload.generated_at for payload in self._current_batch.payloads
+            )
+        ):
+            raise ProductionContractError("stale Top-5 batch publication rejected")
+        aggregate_authorization_id = "top5-batch-publication-v1:" + _digest(
+            authorization_ids
+        )
+        public_product = batch.as_public_product(
+            published_at=now,
+            publication_authorization_id=aggregate_authorization_id,
+        )
+        artifact = PublishedTop5BatchArtifact(
+            payloads=batch.payloads,
+            public_product=public_product,
+            artifact_digest=_digest(public_product),
+            published_at=_utc(now, "published_at"),
+        )
+        artifact.validate()
+        self._current = None
+        self._current_batch = artifact
         return artifact
 
     def rollback(self) -> PublicationRollback:
-        previous = self._current.artifact_digest if self._current is not None else None
+        previous = (
+            self._current.artifact_digest
+            if self._current is not None
+            else self._current_batch.artifact_digest
+            if self._current_batch is not None
+            else None
+        )
         self._current = None
+        self._current_batch = None
         result = PublicationRollback(True, previous)
         result.validate()
         return result
@@ -1399,6 +1716,24 @@ class Top5PublisherContract:
         return store.publish(
             payload,
             authorization,
+            activation_bindings=activation_bindings,
+            now=now,
+        )
+
+    def publish_controlled_batch(
+        self,
+        payloads: tuple[ControlledTop5PublicationPayload, ...],
+        authorizations: Mapping[str, Top5PublicationAuthorization],
+        *,
+        store: InMemoryTop5PublicationStore,
+        activation_bindings: Mapping[str, object],
+        now: datetime,
+    ) -> PublishedTop5BatchArtifact:
+        """Publish the complete five-league generation through one swap."""
+
+        return store.publish_batch(
+            payloads,
+            authorizations,
             activation_bindings=activation_bindings,
             now=now,
         )
