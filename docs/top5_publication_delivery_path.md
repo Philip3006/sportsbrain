@@ -31,11 +31,62 @@ non-no-bet/staged release fails closed.
 The adapter calls `serialize_public_product()` once. Its immutable
 `serialized_payload` and `public_product_digest` are reused as both the
 static `docs/data/signals.json` staging input and the Worker `/signals`
-staging input. The adapter itself has no filesystem or network writer. The
-future bounded runtime transaction must use the existing isolated runtime
-publisher and Worker write path, and must preserve/restore the previous safe
-generation if either target fails. The in-memory transaction in the offline
-tests proves rollback and idempotent retry; it is not a production publisher.
+staging input. The adapter itself has no filesystem or network writer.
+
+The guarded executor is the only execution seam. `prepare` is always
+read-only and emits a signed-input-free plan/manifest. `execute` is also a
+dry-run unless the explicit `--execute` flag is supplied. Real execution
+requires the detached `Top5DeliveryAttestation`, an operator-owned
+`ControlledPublicationCapability` token, and the existing one-time capability
+state containing the matching `ControlledPublicationAttestation`; the file
+consumer validates and consumes that capability immediately before the first
+delivery mutation. Secrets are never printed or written to the plan.
+
+The bounded state sequence is
+`PREPARED → STATIC_STAGED → WORKER_WRITTEN → STATIC_COMMITTED →
+ACCEPTANCE_REQUIRED`. The executor rechecks the canonical snapshot and both
+current delivery-target digests before consuming capability state. It stages
+through `scripts/publish_runtime_artifacts.sh publish-staged`, writes the
+Worker `/signals` body as the exact same bytes, and stops for the existing
+read-only acceptance command. Static-stage or Worker failures clean up the
+stage; a static-commit failure attempts Worker restoration and reports
+`ROLLBACK_REQUIRED` even if restoration succeeds. There is no distributed
+atomicity claim and no unbounded retry. Re-running the same generation,
+activation, and digest is idempotent; a conflicting or newer generation is
+rejected.
+
+Example commands (all paths are absolute in operational use):
+
+```text
+python3 scripts/top5_public_delivery.py prepare \
+  --artifact /absolute/input/published-top5-artifact.json \
+  --current-snapshot /absolute/input/current-signals.json \
+  --plan-output /absolute/output/top5-delivery-plan.json
+
+python3 scripts/top5_public_delivery.py execute \
+  --artifact /absolute/input/published-top5-artifact.json \
+  --current-snapshot /absolute/input/current-signals.json \
+  --plan /absolute/output/top5-delivery-plan.json \
+  --attestation /absolute/input/top5-delivery-attestation.json \
+  --capability-token /absolute/operator/top5-capability.json \
+  --now 2026-01-01T00:00:00+00:00
+
+python3 scripts/top5_public_delivery.py execute \
+  --artifact /absolute/input/published-top5-artifact.json \
+  --current-snapshot /absolute/input/current-signals.json \
+  --plan /absolute/output/top5-delivery-plan.json \
+  --attestation /absolute/input/top5-delivery-attestation.json \
+  --capability-token /absolute/operator/top5-capability.json \
+  --execute \
+  --active-checkout /absolute/active/sportsbrain \
+  --stage-directory /absolute/stage/top5-generation \
+  --runtime-log /absolute/logs/top5-delivery.log \
+  --worker-url https://example.invalid/signals.json
+```
+
+The final command is intentionally the only path that can invoke the
+isolated runtime publisher or Worker transport. It remains subject to the
+separate CEO publication authorization and is not run by tests or CI.
 
 ## Field compatibility matrix
 
