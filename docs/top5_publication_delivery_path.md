@@ -18,6 +18,25 @@ handler for either signal source.
 The existing single-league controlled publisher remains supported. The batch
 bridge is the required path when a five-league generation is delivered.
 
+## Canonical delivery adapter
+
+`Top5CanonicalDeliveryAdapter.build_plan()` is the governed seam between the
+already authorized `PublishedTop5BatchArtifact` and the existing public
+product. It removes only the prior `EPL`, `BL1`, `LL`, `SA`, and `L1` football
+records, preserves the other football leagues and unrelated public keys, then
+adds the one validated batch release. A conflicting existing `top5_release`,
+mixed bindings, missing league, stale artifact, malformed output, or
+non-no-bet/staged release fails closed.
+
+The adapter calls `serialize_public_product()` once. Its immutable
+`serialized_payload` and `public_product_digest` are reused as both the
+static `docs/data/signals.json` staging input and the Worker `/signals`
+staging input. The adapter itself has no filesystem or network writer. The
+future bounded runtime transaction must use the existing isolated runtime
+publisher and Worker write path, and must preserve/restore the previous safe
+generation if either target fails. The in-memory transaction in the offline
+tests proves rollback and idempotent retry; it is not a production publisher.
+
 ## Field compatibility matrix
 
 | Contract field | Publisher input | Public football record | `top5_release` / health | PWA use |
@@ -72,13 +91,15 @@ python3 scripts/top5_publication_delivery_acceptance.py \
   --worker-payload /absolute/capture/worker-signals.json \
   --static-payload /absolute/capture/static-signals.json \
   --publication-attestation /absolute/capture/publication-attestation.json \
+  --delivery-manifest /absolute/capture/top5-delivery-manifest.json \
   --expected-provider the_odds_api \
   --worker-status 200 \
   --pwa-status 200
 ```
 
 The command is read-only and returns `TOP5_DELIVERY_VERIFIED` only when both
-responses carry the same generation and activation, all five leagues are
+responses carry the same generation and activation, their canonical public
+product digest matches the immutable delivery manifest, all five leagues are
 visible, records are no-bet controlled records, provenance is intact, and the
 separate publication attestation matches. Any mismatch returns
 `TOP5_DELIVERY_BLOCKED`; it never repairs, publishes, activates, or rolls back

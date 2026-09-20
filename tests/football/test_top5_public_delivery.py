@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -11,6 +13,11 @@ import pytest
 from scripts.top5_publication_delivery_acceptance import (
     DeliveryAcceptanceError,
     validate_delivery,
+)
+from src.football.top5_public_delivery import (
+    InMemoryTop5DeliveryTransaction,
+    Top5CanonicalDeliveryAdapter,
+    Top5DeliveryError,
 )
 from src.football.top5_publisher import (
     ControlledTop5PublicationBatch,
@@ -144,6 +151,63 @@ def _offline_public_product() -> dict[str, object]:
         )
     return serialize_public_product(
         {"updated": BASE.isoformat(), "football": envelopes}
+    )
+
+
+def _published_batch_artifact():
+    payloads = tuple(_controlled_payload(league) for league in LEAGUES)
+    authorizations = {
+        payload.league_code: Top5PublicationAuthorization(
+            publication_authorization_id=f"publication-auth:{payload.league_code}",
+            activation_id=payload.activation_id,
+            league_code=payload.league_code,
+            candidate_id=payload.candidate_id,
+            model_identity=payload.model_identity,
+            source_sha=payload.source_sha,
+            research_sha=payload.research_sha,
+            model_artifact_hash=payload.model_artifact_hash,
+            signal_time_experiment_id=payload.signal_time_experiment_id,
+            publication_token=f"token:{payload.league_code}",
+            issued_at=BASE - timedelta(minutes=1),
+            expires_at=BASE + timedelta(hours=1),
+        )
+        for payload in payloads
+    }
+    binding_names = (
+        "activation_id",
+        "league_code",
+        "candidate_id",
+        "model_identity",
+        "source_sha",
+        "research_sha",
+        "model_artifact_hash",
+        "signal_time_experiment_id",
+        "provider_authority",
+        "result_authority",
+        "evidence_digest",
+        "controlled_shadow_run_id",
+        "qualification_session_id",
+    )
+    bindings = {
+        payload.league_code: {
+            "active": True,
+            **{
+                name: (
+                    payload.activation_id
+                    if name == "activation_id"
+                    else getattr(payload, name)
+                )
+                for name in binding_names
+            },
+        }
+        for payload in payloads
+    }
+    store = InMemoryTop5PublicationStore()
+    return store.publish_batch(
+        payloads,
+        authorizations,
+        activation_bindings=bindings,
+        now=BASE,
     )
 
 
@@ -322,3 +386,97 @@ def test_store_swaps_five_league_generation_atomically():
     rollback = store.rollback()
     assert rollback.restored_unpublished is True
     assert store.current_batch is None
+
+
+def test_canonical_delivery_replaces_only_top5_and_preserves_public_product():
+    artifact = _published_batch_artifact()
+    current = {
+        "updated": "2026-09-20T11:00:00Z",
+        "tennis": [{"match_id": "tennis-keep"}],
+        "schedule": [{"league": "BL2", "fixture": "bl2-keep"}],
+        "health": {"overall": "ok", "writer_state": "active"},
+        "football": [
+            {"league": "EPL", "fixture_key": "legacy-top5"},
+            {"league": "UCL", "fixture_key": "ucl-keep"},
+        ],
+    }
+    plan = Top5CanonicalDeliveryAdapter().build_plan(current, artifact)
+    output = plan.public_product
+    assert list(output["tennis"]) == current["tennis"]
+    assert list(output["schedule"]) == current["schedule"]
+    assert output["health"]["writer_state"] == "active"
+    assert {record["league"] for record in output["football"] if record["league"] in LEAGUES} == set(LEAGUES)
+    assert not any(record.get("fixture_key") == "legacy-top5" for record in output["football"])
+    assert any(record.get("fixture_key") == "ucl-keep" for record in output["football"])
+    assert plan.static_payload == plan.worker_payload
+    assert plan.manifest()["static_payload_digest"] == plan.manifest()["worker_payload_digest"]
+
+
+def test_canonical_delivery_rejects_conflicting_current_generation_and_mixed_artifact():
+    artifact = _published_batch_artifact()
+    adapter = Top5CanonicalDeliveryAdapter()
+    with pytest.raises(Top5DeliveryError, match="conflicting Top-5 generation"):
+        adapter.build_plan(
+            {
+                "football": [],
+                "top5_release": {
+                    **artifact.public_product["top5_release"],
+                    "generation_id": "top5-generation-v1:stale",
+                },
+            },
+            artifact,
+        )
+
+    mixed_release = {
+        **artifact.public_product["top5_release"],
+        "activation_id": "activation:mixed",
+    }
+    mixed_product = {**artifact.public_product, "top5_release": mixed_release}
+    digest = hashlib.sha256(
+        json.dumps(mixed_product, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    with pytest.raises(Top5DeliveryError, match="record/release binding"):
+        adapter.build_plan(
+            {}, replace(artifact, public_product=mixed_product, artifact_digest=digest)
+        )
+
+
+def test_canonical_delivery_transaction_rolls_back_on_either_target_failure_and_is_idempotent():
+    artifact = _published_batch_artifact()
+    plan = Top5CanonicalDeliveryAdapter().build_plan({"football": []}, artifact)
+    transaction = InMemoryTop5DeliveryTransaction(initial_payload=b"safe")
+    with pytest.raises(Top5DeliveryError, match="static staging failed"):
+        transaction.stage(plan, fail_static=True)
+    assert transaction.static_payload == b"safe"
+    assert transaction.worker_payload == b"safe"
+    with pytest.raises(Top5DeliveryError, match="Worker staging failed"):
+        transaction.stage(plan, fail_worker=True)
+    assert transaction.static_payload == b"safe"
+    assert transaction.worker_payload == b"safe"
+    assert transaction.committed_digest is None
+    result = transaction.stage(plan)
+    assert result.status == "TOP5_DELIVERY_STAGED"
+    assert transaction.static_payload == plan.serialized_payload
+    assert transaction.worker_payload == plan.serialized_payload
+    repeat = transaction.stage(plan)
+    assert repeat.status == "TOP5_DELIVERY_IDEMPOTENT"
+
+
+def test_acceptance_binds_delivery_manifest_and_digest():
+    artifact = _published_batch_artifact()
+    plan = Top5CanonicalDeliveryAdapter().build_plan({"football": []}, artifact)
+    result = validate_delivery(
+        json.loads(plan.serialized_payload),
+        json.loads(plan.serialized_payload),
+        {
+            "publication_authorized": True,
+            "generation_id": plan.generation_id,
+            "activation_id": plan.activation_id,
+            "provider_authority": "the_odds_api",
+        },
+        now=BASE + timedelta(minutes=1),
+        expected_public_product_digest=plan.public_product_digest,
+        delivery_manifest=plan.manifest(),
+    )
+    assert result["status"] == "TOP5_DELIVERY_VERIFIED"
+    assert result["public_product_digest"] == plan.public_product_digest

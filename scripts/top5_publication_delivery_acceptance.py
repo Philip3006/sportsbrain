@@ -10,6 +10,7 @@ created by the already-governed publication gate.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -32,6 +33,13 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise DeliveryAcceptanceError(f"payload is not an object: {path}")
     return value
+
+
+def _canonical_digest(payload: dict[str, Any]) -> str:
+    encoded = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _timestamp(value: object, field: str) -> datetime:
@@ -158,6 +166,8 @@ def validate_delivery(
     worker_status: int = 200,
     pwa_status: int = 200,
     now: datetime | None = None,
+    expected_public_product_digest: str | None = None,
+    delivery_manifest: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if worker_status != 200 or pwa_status != 200:
         raise DeliveryAcceptanceError("Worker and PWA must both return HTTP 200")
@@ -181,6 +191,23 @@ def validate_delivery(
             raise DeliveryAcceptanceError(f"Worker/static {key} mismatch")
         if attestation.get(key) != worker_release.get(key):
             raise DeliveryAcceptanceError(f"attestation {key} mismatch")
+    worker_digest = _canonical_digest(worker_payload)
+    static_digest = _canonical_digest(static_payload)
+    if worker_digest != static_digest:
+        raise DeliveryAcceptanceError("Worker/static public product digest mismatch")
+    if expected_public_product_digest and worker_digest != expected_public_product_digest:
+        raise DeliveryAcceptanceError("public product digest does not match delivery plan")
+    if delivery_manifest is not None:
+        if delivery_manifest.get("public_product_digest") != worker_digest:
+            raise DeliveryAcceptanceError("delivery manifest public product digest mismatch")
+        if delivery_manifest.get("static_payload_digest") != worker_digest:
+            raise DeliveryAcceptanceError("delivery manifest static payload mismatch")
+        if delivery_manifest.get("worker_payload_digest") != worker_digest:
+            raise DeliveryAcceptanceError("delivery manifest Worker payload mismatch")
+        if delivery_manifest.get("generation_id") != worker_release["generation_id"]:
+            raise DeliveryAcceptanceError("delivery manifest generation mismatch")
+        if delivery_manifest.get("activation_id") != worker_release["activation_id"]:
+            raise DeliveryAcceptanceError("delivery manifest activation mismatch")
     return {
         "status": STATUS_VERIFIED,
         "generation_id": worker_release["generation_id"],
@@ -190,6 +217,7 @@ def validate_delivery(
         "worker_status": worker_status,
         "pwa_status": pwa_status,
         "publication_authorized": True,
+        "public_product_digest": worker_digest,
     }
 
 
@@ -201,6 +229,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expected-provider", default="the_odds_api")
     parser.add_argument("--worker-status", type=int, default=200)
     parser.add_argument("--pwa-status", type=int, default=200)
+    parser.add_argument("--expected-public-product-digest")
+    parser.add_argument("--delivery-manifest", type=Path)
     parser.add_argument("--now", help="ISO-8601 verification time; defaults to now")
     args = parser.parse_args(argv)
     try:
@@ -213,6 +243,12 @@ def main(argv: list[str] | None = None) -> int:
             worker_status=args.worker_status,
             pwa_status=args.pwa_status,
             now=now,
+            expected_public_product_digest=args.expected_public_product_digest,
+            delivery_manifest=(
+                _read_json(args.delivery_manifest)
+                if args.delivery_manifest
+                else None
+            ),
         )
     except DeliveryAcceptanceError as exc:
         print(json.dumps({"status": STATUS_BLOCKED, "reason": str(exc)}, sort_keys=True))
