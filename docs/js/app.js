@@ -25,6 +25,16 @@ const SQUADS_URL = 'data/squads.json';
 const _TOP5_LEAGUES = new Set(['EPL', 'BL1', 'LL', 'SA', 'L1']);
 const _TOP5_LAST_GENERATION_KEY = 'sb_top5_public_generation_v1';
 
+function _normalizeTop5LeagueCodes(value) {
+  if (!Array.isArray(value) || value.some((code) => typeof code !== 'string')) return null;
+  const normalized = value.map((code) => code.trim().toUpperCase());
+  if (normalized.length !== _TOP5_LEAGUES.size ||
+      new Set(normalized).size !== normalized.length ||
+      new Set(normalized).size !== _TOP5_LEAGUES.size ||
+      normalized.some((code) => !_TOP5_LEAGUES.has(code))) return null;
+  return [...normalized].sort();
+}
+
 function _dropUntrustedTop5(payload) {
   const safe = Object.assign({}, payload);
   const football = Array.isArray(payload.football) ? payload.football : [];
@@ -49,10 +59,17 @@ function _top5PublicReleaseGuard(payload, source, nowMs = Date.now()) {
     _TOP5_LEAGUES.has(String(record && record.league || '').toUpperCase())
   );
   if (!top5Records.length) {
-    return payload.top5_release ? _dropUntrustedTop5(payload) : payload;
+    if (!payload.top5_release) return payload;
+    if (!_normalizeTop5LeagueCodes(payload.top5_release.league_codes)) {
+      if (source === 'static') return _dropUntrustedTop5(payload);
+      throw new Error('public Top-5 release is incomplete');
+    }
+    if (source === 'static') return _dropUntrustedTop5(payload);
+    throw new Error('public Top-5 release requires complete five-league records');
   }
 
   const release = payload.top5_release;
+  const normalizedLeagueCodes = _normalizeTop5LeagueCodes(release && release.league_codes);
   const validRelease = release && typeof release === 'object' &&
     release.schema_version === 'top5-public-release-v1' &&
     typeof release.generation_id === 'string' && release.generation_id &&
@@ -61,15 +78,33 @@ function _top5PublicReleaseGuard(payload, source, nowMs = Date.now()) {
     release.publication_status === 'PUBLISHED' &&
     release.publication_enabled === true && release.no_bet === true &&
     typeof release.publication_authorization_id === 'string' &&
-    release.publication_authorization_id && Array.isArray(release.league_codes) &&
-    release.league_codes.length > 0 &&
+    release.publication_authorization_id && normalizedLeagueCodes !== null &&
     typeof release.provider_authority === 'string' && release.provider_authority;
   if (!validRelease) {
     if (source === 'static') return _dropUntrustedTop5(payload);
     throw new Error('public Top-5 release is not authorized and published');
   }
 
-  const allowedLeagues = new Set(release.league_codes.map((code) => String(code).toUpperCase()));
+  if (top5Records.length !== _TOP5_LEAGUES.size * 3) {
+    if (source === 'static') return _dropUntrustedTop5(payload);
+    throw new Error('public Top-5 release requires exactly 15 records');
+  }
+  const recordsByLeague = new Map([..._TOP5_LEAGUES].map((league) => [league, []]));
+  for (const record of top5Records) {
+    recordsByLeague.get(String(record.league).toUpperCase()).push(record);
+  }
+  for (const [league, records] of recordsByLeague) {
+    if (records.length !== 3) {
+      if (source === 'static') return _dropUntrustedTop5(payload);
+      throw new Error(`public Top-5 release requires three records for ${league}`);
+    }
+    const fixtures = new Set(records.map((record) => record.fixture_key));
+    if (fixtures.size !== 1 || !records[0].fixture_key) {
+      if (source === 'static') return _dropUntrustedTop5(payload);
+      throw new Error(`public Top-5 release requires one fixture for ${league}`);
+    }
+  }
+  const allowedLeagues = new Set(normalizedLeagueCodes);
   for (const record of top5Records) {
     const provenance = record && typeof record.provenance === 'object' ? record.provenance : {};
     if (!allowedLeagues.has(String(record.league).toUpperCase()) ||
