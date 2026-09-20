@@ -112,7 +112,7 @@ def test_independent_roadmap_item_runs_while_parent_waits(tmp_path: Path) -> Non
 
     selected = dispatcher.select_next_roadmap_task(builder_id="builder-3")
     assert selected is not None
-    assert selected.roadmap_item_id == "roadmap-b3-integration-1"
+    assert selected.roadmap_item_id == "top5-final-runtime-health"
     assert selected.state is TaskState.BACKLOG
 
 
@@ -195,7 +195,7 @@ def test_merge_backpressure_is_soft_and_does_not_stop_independent_selection(
 
     selected = dispatcher.select_next_roadmap_task(builder_id="builder-3")
     assert selected is not None
-    assert selected.roadmap_item_id == "roadmap-b3-integration-1"
+    assert selected.roadmap_item_id == "top5-final-runtime-health"
     assert dispatcher.status()["queue_mode"] == "CONTINUOUS_AUTONOMOUS"
 
 
