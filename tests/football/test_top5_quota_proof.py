@@ -12,12 +12,17 @@ import pytest
 from src.football.odds.therundown import THERUNDOWN_PROVIDER_NAME
 from src.football.top5_controlled_shadow_authorization_package import (
     ControlledShadowAuthorizationPackageError,
+    _digest,
+    _load_quota_proof_target_evidence,
     _load_spend_control_evidence,
     _write_quota_proof,
+    run_guarded_quota_proof,
 )
 from src.football.top5_therundown_network_shadow import (
+    NetworkShadowContractError,
     NetworkShadowExecutionBlocked,
     TheRundownNetworkHttpResponseV1,
+    TheRundownQuotaProofAuthorizationV1,
     TheRundownQuotaProofEvidenceV1,
     TheRundownQuotaProofRequestV1,
     execute_therundown_quota_proof,
@@ -62,9 +67,8 @@ def _request(**changes: object) -> TheRundownQuotaProofRequestV1:
         },
         request_shape_digest="0" * 64,
     )
-    return replace(
-        request, **changes, request_shape_digest=request.computed_request_shape_digest
-    )
+    request = replace(request, **changes)
+    return replace(request, request_shape_digest=request.computed_request_shape_digest)
 
 
 def _response(**changes: object) -> TheRundownNetworkHttpResponseV1:
@@ -90,6 +94,34 @@ def _response(**changes: object) -> TheRundownNetworkHttpResponseV1:
     return TheRundownNetworkHttpResponseV1(**values)
 
 
+def _proof_authorization(
+    *,
+    provider_event_id: str = "event-ll-001",
+    target_source_digest: str = "d" * 64,
+    **changes: object,
+) -> TheRundownQuotaProofAuthorizationV1:
+    request = _request(provider_event_id=provider_event_id)
+    authorization = TheRundownQuotaProofAuthorizationV1(
+        proof_authorization_id="CEO-TOP5-QUOTA-PROOF-001",
+        ceo_proof_authorization_identity="ceo:quota-proof",
+        proof_id="quota-proof:authorized-001",
+        provider=THERUNDOWN_PROVIDER_NAME,
+        provider_event_id=provider_event_id,
+        proof_target_source_digest=target_source_digest,
+        request_shape_digest=request.request_shape_digest,
+        adapter_version="therundown-adapter-v1",
+        adapter_source_sha="c" * 64,
+        issued_at=NOW - timedelta(minutes=1),
+        expires_at=NOW + timedelta(minutes=10),
+        authorization_digest="0" * 64,
+    )
+    return replace(
+        authorization,
+        **changes,
+        authorization_digest=authorization.computed_authorization_digest,
+    )
+
+
 def test_valid_proof_is_one_bounded_request_and_not_a_league_capture():
     request = _request()
     client = _FakeProofClient(_response())
@@ -111,6 +143,128 @@ def test_valid_proof_is_one_bounded_request_and_not_a_league_capture():
     assert evidence.retry_count == 0
     assert evidence.no_retry is True
     assert evidence.as_payload()["execution_phase"] == "quota_proof"
+
+
+def test_proof_only_authorization_does_not_require_five_league_scope():
+    authorization = _proof_authorization()
+    authorization.validate(now=NOW)
+    request = authorization.request_for_proof(proof_configuration_digest="e" * 64)
+    client = _FakeProofClient(_response())
+    evidence = execute_therundown_quota_proof(
+        request,
+        api_key="test-secret",
+        http_client=client,
+        now=NOW,
+    )
+    assert evidence.authorization_id == authorization.proof_authorization_id
+    assert evidence.proof_target_source_digest == "d" * 64
+    assert len(client.calls) == 1
+
+
+@pytest.mark.parametrize(
+    "changes,match",
+    [
+        ({"five_league_execution_authorized": True}, "forbidden authority"),
+        ({"provider_authority_granted": True}, "forbidden authority"),
+        ({"activation_authorized": True}, "forbidden authority"),
+        ({"publication_authorized": True}, "forbidden authority"),
+        ({"betting_authorized": True}, "forbidden authority"),
+        ({"maximum_request_count": 5}, "request count"),
+        ({"retry_count": 1}, "retries"),
+    ],
+)
+def test_proof_authorization_cannot_grant_later_authority(changes, match):
+    authorization = _proof_authorization(**changes)
+    with pytest.raises(NetworkShadowExecutionBlocked, match=match):
+        authorization.validate(now=NOW)
+
+
+def test_proof_authorization_digest_and_expiry_fail_closed():
+    authorization = _proof_authorization()
+    with pytest.raises(NetworkShadowContractError, match="digest"):
+        replace(authorization, authorization_digest="f" * 64).validate(now=NOW)
+    with pytest.raises(NetworkShadowExecutionBlocked, match="outside"):
+        replace(
+            authorization,
+            issued_at=NOW - timedelta(hours=2),
+            expires_at=NOW - timedelta(seconds=1),
+            authorization_digest="0" * 64,
+        ).validate(now=NOW)
+
+
+def test_known_local_real_event_is_deterministically_bound_without_discovery():
+    path = Path("/private/tmp/top5-b1-laliga-final-evidence.json")
+    if not path.exists():
+        pytest.skip("trusted local B1 evidence is not available")
+    raw = json.loads(path.read_text())
+    target = raw["repaired_normalization"]["provider_event_id"]
+    authorization = _proof_authorization(
+        provider_event_id=target,
+        target_source_digest=_digest(raw),
+    )
+    selected = _load_quota_proof_target_evidence(
+        path,
+        authorization=authorization,
+    )
+    assert selected["provider_event_id"] == target
+    assert selected["league"] == "LL"
+    assert selected["source_digest"] == _digest(raw)
+
+
+def test_guarded_proof_uses_proof_authorization_without_five_league_package(
+    tmp_path: Path,
+):
+    target_path = Path("/private/tmp/top5-b1-laliga-final-evidence.json")
+    if not target_path.exists():
+        pytest.skip("trusted local B1 evidence is not available")
+    raw = json.loads(target_path.read_text())
+    authorization = _proof_authorization(
+        provider_event_id=raw["repaired_normalization"]["provider_event_id"],
+        target_source_digest=_digest(raw),
+    )
+    authorization_path = tmp_path / "proof-authorization.json"
+    authorization_path.write_text(
+        json.dumps({"authorization": authorization.as_payload()})
+    )
+    spend_path = tmp_path / "spend.json"
+    spend_path.write_text(
+        json.dumps(
+            {
+                "provider": THERUNDOWN_PROVIDER_NAME,
+                "observed_at": (NOW - timedelta(minutes=1)).isoformat(),
+                "headers": {
+                    "x-tier": "free",
+                    "x-datapoints-period": "daily",
+                    "x-datapoints-limit": "20000",
+                    "x-rate-limit": "1",
+                },
+            }
+        )
+    )
+    credential_path = tmp_path / "therundown.env"
+    credential_path.write_text("THERUNDOWN_API_KEY=test-secret\n")
+    credential_path.chmod(0o600)
+    output_path = tmp_path / "proof-output.json"
+    client = _FakeProofClient(_response())
+
+    summary = run_guarded_quota_proof(
+        authorization_path,
+        target_path,
+        spend_control_evidence_path=spend_path,
+        credential_file=credential_path,
+        output_path=output_path,
+        clock=lambda: NOW,
+        http_client=client,
+    )
+
+    assert summary["status"] == "TOP5_B4_QUOTA_PROOF — QUOTA_CONFIRMED"
+    assert summary["proof_authorization_id"] == authorization.proof_authorization_id
+    assert summary["selected_proof_target"] == authorization.provider_event_id
+    assert summary["five_league_requests"] == 0
+    assert len(client.calls) == 1
+    output = json.loads(output_path.read_text())
+    assert output["execution_phase"] == "quota_proof"
+    assert output["safety"]["authority_changed"] is False
 
 
 @pytest.mark.parametrize(

@@ -81,6 +81,7 @@ from src.football.top5_therundown_network_shadow import (
     TheRundownNetworkShadowExecutorV1,
     TheRundownNetworkShadowRunResultV1,
     TheRundownQuotaHeadroomEvidenceV1,
+    TheRundownQuotaProofAuthorizationV1,
     TheRundownQuotaProofEvidenceV1,
     TheRundownQuotaProofRequestV1,
     execute_therundown_quota_proof,
@@ -105,8 +106,9 @@ FUTURE_EXECUTION_COMMAND = (
 )
 QUOTA_PROOF_COMMAND = (
     "python -m src.football.top5_controlled_shadow_authorization_package "
-    "--execute-quota-proof --package <authorization-package.json> "
-    "--authorization <ceo-authorization.json> "
+    "--execute-quota-proof "
+    "--proof-authorization <quota-proof-authorization.json> "
+    "--proof-target-evidence /private/tmp/top5-b1-laliga-final-evidence.json "
     "--spend-control-evidence <provider-tier-evidence.json> "
     "--credential-file /operator-only/top5/therundown.env "
     "--output /operator-only/top5/top5-quota-proof.json"
@@ -485,6 +487,126 @@ def _load_execution_inputs(
     return package, execution_configuration, authorization
 
 
+def _load_quota_proof_authorization(
+    path_value: object,
+    *,
+    now: datetime,
+) -> TheRundownQuotaProofAuthorizationV1:
+    container = _read_json_file(path_value, "quota proof authorization")
+    payload = container.get("authorization")
+    if not isinstance(payload, Mapping):
+        payload = container.get("proof_authorization")
+    if not isinstance(payload, Mapping):
+        payload = container
+    authorization = TheRundownQuotaProofAuthorizationV1.from_payload(payload)
+    outer_digest = container.get("authorization_digest")
+    if outer_digest is not None and outer_digest != authorization.authorization_digest:
+        raise ControlledShadowAuthorizationPackageError(
+            "quota proof authorization digest wrapper mismatch"
+        )
+    try:
+        authorization.validate(now=now)
+    except NetworkShadowContractError as exc:
+        raise ControlledShadowAuthorizationPackageError(str(exc)) from exc
+    return authorization
+
+
+def _contains_provider_event_id(value: object, provider_event_id: str) -> bool:
+    if isinstance(value, Mapping):
+        return any(
+            (
+                key in {"event_id", "provider_event_id"}
+                and str(item) == provider_event_id
+            )
+            or _contains_provider_event_id(item, provider_event_id)
+            for key, item in value.items()
+        )
+    if isinstance(value, list):
+        return any(
+            _contains_provider_event_id(item, provider_event_id) for item in value
+        )
+    return False
+
+
+def _load_quota_proof_target_evidence(
+    path_value: object,
+    *,
+    authorization: TheRundownQuotaProofAuthorizationV1,
+) -> dict[str, object]:
+    """Select one previously observed event; never perform discovery."""
+
+    path = _absolute_path(path_value, "quota proof target evidence")
+    raw = _read_json_file(path, "quota proof target evidence")
+    bundle = _mapping(
+        raw.get("canonical_b1_evidence_bundle"),
+        "quota proof canonical target evidence",
+    )
+    original = _mapping(
+        raw.get("original_network_capture"),
+        "quota proof original target capture",
+    )
+    repaired = _mapping(
+        raw.get("repaired_normalization"),
+        "quota proof repaired target normalization",
+    )
+    provider_event_id = str(repaired.get("provider_event_id", ""))
+    if provider_event_id != authorization.provider_event_id:
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_NO_PROOF_TARGET: target event binding mismatch"
+        )
+    if (
+        raw.get("evidence_kind") != ObservationEvidenceKind.REAL_OBSERVED.value
+        or bundle.get("capture_status") != "CAPTURED"
+        or original.get("provider") != CANONICAL_CANDIDATE_PROVIDER
+        or original.get("league") != "LL"
+        or original.get("network_evidence_is_original") is not True
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_NO_PROOF_TARGET: local evidence is not an original real LL capture"
+        )
+    raw_digests = {
+        str(original.get("raw_response_digest", "")),
+        str(bundle.get("raw_response_digest", "")),
+        str(repaired.get("raw_response_digest", "")),
+    }
+    if len(raw_digests) != 1 or "" in raw_digests:
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_NO_PROOF_TARGET: local target digests disagree"
+        )
+    replay = _mapping(raw.get("replay"), "quota proof replay metadata")
+    body_path_value = replay.get("source_event_body")
+    headers_path_value = replay.get("source_event_headers")
+    try:
+        body_path = _absolute_path(body_path_value, "quota proof source event body")
+        headers_path = _absolute_path(
+            headers_path_value, "quota proof source event headers"
+        )
+        body = _read_json_file(body_path, "quota proof source event body")
+        _read_json_file(headers_path, "quota proof source event headers")
+    except (ControlledShadowAuthorizationPackageError, TypeError) as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_NO_PROOF_TARGET: source capture files are unavailable"
+        ) from exc
+    if not _contains_provider_event_id(body, provider_event_id):
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_NO_PROOF_TARGET: source body does not contain the selected event"
+        )
+    observed_at = _timestamp(repaired.get("captured_at"), "proof target captured_at")
+    source_digest = _digest(raw)
+    if source_digest != authorization.proof_target_source_digest:
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_NO_PROOF_TARGET: target source digest mismatch"
+        )
+    return {
+        "provider": CANONICAL_CANDIDATE_PROVIDER,
+        "league": "LL",
+        "provider_event_id": provider_event_id,
+        "source_digest": source_digest,
+        "source_path": str(path),
+        "observed_at": observed_at,
+    }
+
+
 def _load_quota_headroom(
     path_value: object,
     *,
@@ -652,6 +774,7 @@ def _write_quota_proof(
             "endpoint": request.endpoint,
             "query": dict(request.query),
             "request_shape_digest": request.request_shape_digest,
+            "proof_target_source_digest": request.proof_target_source_digest,
             "maximum_datapoints": request.maximum_datapoints,
             "request_count": request.request_count,
             "retry_count": request.retry_count,
@@ -701,8 +824,8 @@ def _write_quota_proof(
 
 
 def run_guarded_quota_proof(
-    package_path: object,
-    authorization_path: object,
+    proof_authorization_path: object,
+    proof_target_evidence_path: object,
     *,
     spend_control_evidence_path: object,
     credential_file: object = DEFAULT_THERUNDOWN_CREDENTIAL_PATH,
@@ -714,10 +837,13 @@ def run_guarded_quota_proof(
 
     clock_fn = clock or (lambda: datetime.now(timezone.utc))
     now = _utc(clock_fn(), "quota proof now")
-    package, configuration, authorization = _load_execution_inputs(
-        package_path,
-        authorization_path,
+    proof_authorization = _load_quota_proof_authorization(
+        proof_authorization_path,
         now=now,
+    )
+    target = _load_quota_proof_target_evidence(
+        proof_target_evidence_path,
+        authorization=proof_authorization,
     )
     spend_control = _load_spend_control_evidence(
         spend_control_evidence_path,
@@ -728,7 +854,17 @@ def run_guarded_quota_proof(
         raise ControlledShadowAuthorizationPackageError(
             "TOP5_B4_QUOTA_PROOF — second quota proof output is not allowed"
         )
-    request = _build_quota_proof_request(package, configuration, authorization)
+    proof_configuration_digest = _digest(
+        {
+            "schema_version": "top5-therundown-quota-proof-configuration-v1",
+            "proof_authorization_digest": proof_authorization.authorization_digest,
+            "request_shape_digest": proof_authorization.request_shape_digest,
+            "proof_target_source_digest": target["source_digest"],
+        }
+    )
+    request = proof_authorization.request_for_proof(
+        proof_configuration_digest=proof_configuration_digest
+    )
     api_key = _read_protected_therundown_credential(credential_file)
     evidence = execute_therundown_quota_proof(
         request,
@@ -746,7 +882,11 @@ def run_guarded_quota_proof(
         "status": "TOP5_B4_QUOTA_PROOF — QUOTA_CONFIRMED",
         "artifact_path": str(artifact_path),
         "proof_id": evidence.proof_id,
+        "proof_authorization_id": proof_authorization.proof_authorization_id,
         "provider": evidence.provider,
+        "selected_proof_target": target["provider_event_id"],
+        "proof_target_source_digest": target["source_digest"],
+        "proof_target_source_path": target["source_path"],
         "request_count": evidence.request_count,
         "billed_datapoints": evidence.billed_datapoints,
         "remaining_datapoints": evidence.remaining_datapoints,
@@ -2417,8 +2557,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     mode.add_argument("--preflight", action="store_true")
     mode.add_argument("--execute-network", action="store_true")
     mode.add_argument("--execute-quota-proof", action="store_true")
-    parser.add_argument("--package", required=True, type=Path)
-    parser.add_argument("--authorization", required=True, type=Path)
+    parser.add_argument("--package", type=Path)
+    parser.add_argument("--authorization", type=Path)
+    parser.add_argument("--proof-authorization", type=Path)
+    parser.add_argument("--proof-target-evidence", type=Path)
     parser.add_argument("--quota-headroom", type=Path)
     parser.add_argument("--spend-control-evidence", type=Path)
     parser.add_argument(
@@ -2434,18 +2576,30 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.execute_quota_proof:
             if args.output is None:
                 parser.error("--output is required with --execute-quota-proof")
+            if args.proof_authorization is None:
+                parser.error(
+                    "--proof-authorization is required with --execute-quota-proof"
+                )
+            if args.proof_target_evidence is None:
+                parser.error(
+                    "--proof-target-evidence is required with --execute-quota-proof"
+                )
             if args.spend_control_evidence is None:
                 parser.error(
                     "--spend-control-evidence is required with --execute-quota-proof"
                 )
             summary = run_guarded_quota_proof(
-                args.package,
-                args.authorization,
+                args.proof_authorization,
+                args.proof_target_evidence,
                 spend_control_evidence_path=args.spend_control_evidence,
                 credential_file=args.credential_file,
                 output_path=args.output,
             )
         elif args.execute_network:
+            if args.package is None or args.authorization is None:
+                parser.error(
+                    "--package and --authorization are required with --execute-network"
+                )
             if args.output is None:
                 parser.error("--output is required with --execute-network")
             if args.quota_headroom is None:
@@ -2459,6 +2613,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 endpoint=args.endpoint,
             )
         else:
+            if args.package is None or args.authorization is None:
+                parser.error(
+                    "--package and --authorization are required with --preflight"
+                )
             if args.quota_headroom is None:
                 parser.error("--quota-headroom is required with --preflight")
             summary = run_guarded_network_preflight(

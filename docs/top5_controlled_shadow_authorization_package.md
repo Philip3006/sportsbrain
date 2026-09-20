@@ -53,6 +53,16 @@ remaining quota. If paid overage cannot be bounded, the command stops with
 with `TOP5_B4_QUOTA_PROOF — QUOTA_CONFIRMED`; no five-league request, receipt,
 authority, activation, publication, betting, or production mutation follows.
 
+The quota proof has its own `TheRundownQuotaProofAuthorizationV1`; it does not
+consume or validate the later five-league authorization package. The proof
+authorization binds exactly one provider event, its deterministic request-shape
+digest, the CEO proof-authorization identity, issue/expiry, adapter source,
+55-datapoint maximum, and zero retries. It contains explicit false capability
+flags for five-league execution, provider authority, activation, publication,
+and betting. The selected event must be present in a trusted local original
+capture artifact and its canonical source digest must match the proof
+authorization before the credential is read.
+
 ## Post-run reconciliation
 
 `reconcile_controlled_shadow_run()` consumes only a completed
@@ -134,8 +144,8 @@ after its one response:
 ```text
 python -m src.football.top5_controlled_shadow_authorization_package \
   --execute-quota-proof \
-  --package /operator-only/top5/authorization-package.json \
-  --authorization /operator-only/top5/ceo-authorization.json \
+  --proof-authorization /operator-only/top5/quota-proof-authorization.json \
+  --proof-target-evidence /private/tmp/top5-b1-laliga-final-evidence.json \
   --spend-control-evidence /operator-only/top5/provider-tier-evidence.json \
   --credential-file /operator-only/top5/therundown.env \
   --output /operator-only/top5/top5-quota-proof.json
@@ -155,19 +165,15 @@ python -m src.football.top5_controlled_shadow_authorization_package \
   --output /operator-only/top5/top5-b2-five-league-shadow-package.json
 ```
 
-The proof command consumes the exact inert package produced by
-`prepare_authorization_package()`. The CEO authorization file is a JSON
-wrapper containing `package_digest` and the serialized
-`TheRundownNetworkAuthorizationV1` payload, including its
-`authorization_digest`. The entrypoint derives the enabled execution
-configuration from the package only after verifying the authorization's
-configuration digest, exact five-league scope, run/session/identity/expiry,
-adapter hashes, `5/55/275` budgets, `>=1.1` second pacing, zero retries, and
-all candidate-only safety flags. The proof command then validates its bounded
-request shape and calls the existing reviewed HTTP client exactly once. Its
-provider response, not any caller-provided number, supplies billed and
-remaining datapoints. The five-league path remains separately gated and the
-proof is never counted as a capture or receipt input.
+The proof command consumes only the proof authorization and the selected local
+target evidence. It does not load the five-league package, five target list,
+or later `TheRundownNetworkAuthorizationV1`. It verifies the target source
+digest and event ID, the proof authorization digest/window, the bounded
+request shape, and the spend gate before reading the credential. The existing
+reviewed HTTP client is then called exactly once. Its provider response, not
+any caller-provided number, supplies billed and remaining datapoints. The
+five-league path remains separately gated and the proof is never counted as a
+capture or receipt input.
 
 `--credential-file` must be an absolute, non-symlink, operator-only file with
 no group/world permissions and an existing `THERUNDOWN_API_KEY=` entry. The

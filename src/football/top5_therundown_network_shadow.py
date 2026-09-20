@@ -66,6 +66,9 @@ NETWORK_RESPONSE_SCHEMA_VERSION = "top5-therundown-network-response-v1"
 NETWORK_RUN_SCHEMA_VERSION = "top5-therundown-network-run-v1"
 QUOTA_HEADROOM_SCHEMA_VERSION = "top5-therundown-quota-headroom-v1"
 QUOTA_PROOF_SCHEMA_VERSION = "top5-therundown-quota-proof-v1"
+QUOTA_PROOF_AUTHORIZATION_SCHEMA_VERSION = (
+    "top5-therundown-quota-proof-authorization-v1"
+)
 TOP5_CONTROLLED_SHADOW_REQUEST_COUNT = 5
 THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST = 55
 TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET = (
@@ -1133,6 +1136,231 @@ def _header_timestamp(headers: Mapping[str, str], name: str) -> datetime:
     return _utc(value, f"quota proof {name}")
 
 
+def _quota_proof_request_shape_digest(provider_event_id: str) -> str:
+    return _digest(
+        {
+            "method": "GET",
+            "endpoint": f"{THERUNDOWN_BASE_URL}/events/{provider_event_id}",
+            "query": {
+                "affiliate_ids": ",".join(QUOTA_PROOF_AFFILIATE_IDS),
+                "hide_closed": "true",
+                "main_line": "true",
+                "market_ids": "1",
+            },
+        }
+    )
+
+
+@dataclass(frozen=True)
+class TheRundownQuotaProofAuthorizationV1:
+    """Proof-only CEO authorization; it cannot authorize league execution."""
+
+    proof_authorization_id: str
+    ceo_proof_authorization_identity: str
+    proof_id: str
+    provider: str
+    provider_event_id: str
+    proof_target_source_digest: str
+    request_shape_digest: str
+    adapter_version: str
+    adapter_source_sha: str
+    issued_at: datetime
+    expires_at: datetime
+    authorization_digest: str
+    maximum_request_count: int = QUOTA_PROOF_MAX_REQUEST_COUNT
+    maximum_datapoints: int = QUOTA_PROOF_MAX_DATAPOINTS
+    retry_count: int = 0
+    five_league_execution_authorized: bool = False
+    provider_authority_granted: bool = False
+    activation_authorized: bool = False
+    publication_authorized: bool = False
+    betting_authorized: bool = False
+    schema_version: str = QUOTA_PROOF_AUTHORIZATION_SCHEMA_VERSION
+
+    def _payload_without_digest(self) -> dict[str, object]:
+        return {
+            "schema_version": self.schema_version,
+            "proof_authorization_id": self.proof_authorization_id,
+            "ceo_proof_authorization_identity": self.ceo_proof_authorization_identity,
+            "proof_id": self.proof_id,
+            "provider": self.provider,
+            "provider_event_id": self.provider_event_id,
+            "proof_target_source_digest": self.proof_target_source_digest,
+            "request_shape_digest": self.request_shape_digest,
+            "adapter_version": self.adapter_version,
+            "adapter_source_sha": self.adapter_source_sha,
+            "issued_at": _utc(
+                self.issued_at, "proof authorization issued_at"
+            ).isoformat(),
+            "expires_at": _utc(
+                self.expires_at, "proof authorization expires_at"
+            ).isoformat(),
+            "maximum_request_count": self.maximum_request_count,
+            "maximum_datapoints": self.maximum_datapoints,
+            "retry_count": self.retry_count,
+            "five_league_execution_authorized": self.five_league_execution_authorized,
+            "provider_authority_granted": self.provider_authority_granted,
+            "activation_authorized": self.activation_authorized,
+            "publication_authorized": self.publication_authorized,
+            "betting_authorized": self.betting_authorized,
+        }
+
+    @property
+    def computed_authorization_digest(self) -> str:
+        return _digest(self._payload_without_digest())
+
+    def validate(self, *, now: datetime | None = None) -> None:
+        if self.schema_version != QUOTA_PROOF_AUTHORIZATION_SCHEMA_VERSION:
+            raise NetworkShadowContractError(
+                "unsupported quota proof authorization schema"
+            )
+        for value, name in (
+            (self.proof_authorization_id, "proof_authorization_id"),
+            (
+                self.ceo_proof_authorization_identity,
+                "ceo_proof_authorization_identity",
+            ),
+            (self.proof_id, "proof_id"),
+            (self.provider_event_id, "provider_event_id"),
+            (self.proof_target_source_digest, "proof_target_source_digest"),
+            (self.request_shape_digest, "request_shape_digest"),
+            (self.adapter_version, "adapter_version"),
+            (self.adapter_source_sha, "adapter_source_sha"),
+        ):
+            _text(value, f"proof authorization {name}")
+        if self.provider != THERUNDOWN_PROVIDER_NAME:
+            raise NetworkShadowExecutionBlocked(
+                "proof authorization provider is not TheRundown"
+            )
+        _sha(self.proof_target_source_digest, "proof target source digest")
+        _sha(self.request_shape_digest, "proof authorization request-shape digest")
+        _sha(self.adapter_source_sha, "proof authorization adapter source SHA")
+        if self.request_shape_digest != _quota_proof_request_shape_digest(
+            self.provider_event_id
+        ):
+            raise NetworkShadowExecutionBlocked(
+                "proof authorization request-shape digest mismatch"
+            )
+        if self.maximum_request_count != QUOTA_PROOF_MAX_REQUEST_COUNT:
+            raise NetworkShadowExecutionBlocked(
+                "proof authorization request count must be exactly one"
+            )
+        if self.maximum_datapoints != QUOTA_PROOF_MAX_DATAPOINTS:
+            raise NetworkShadowExecutionBlocked(
+                "proof authorization datapoint cap must be exactly 55"
+            )
+        if self.retry_count != 0:
+            raise NetworkShadowExecutionBlocked(
+                "proof authorization retries must be zero"
+            )
+        if any(
+            (
+                self.five_league_execution_authorized,
+                self.provider_authority_granted,
+                self.activation_authorized,
+                self.publication_authorized,
+                self.betting_authorized,
+            )
+        ):
+            raise NetworkShadowExecutionBlocked(
+                "proof authorization contains a forbidden authority"
+            )
+        issued = _utc(self.issued_at, "proof authorization issued_at")
+        expires = _utc(self.expires_at, "proof authorization expires_at")
+        current = _utc(now or issued, "proof authorization validation now")
+        if expires <= issued or current < issued or current >= expires:
+            raise NetworkShadowExecutionBlocked(
+                "proof authorization is outside its issue/expiry window"
+            )
+        _sha(self.authorization_digest, "proof authorization digest")
+        if self.authorization_digest.lower() != self.computed_authorization_digest:
+            raise NetworkShadowContractError("proof authorization digest mismatch")
+
+    def as_payload(self) -> dict[str, object]:
+        return {
+            **self._payload_without_digest(),
+            "authorization_digest": self.authorization_digest,
+        }
+
+    @classmethod
+    def from_payload(cls, raw: object) -> TheRundownQuotaProofAuthorizationV1:
+        if not isinstance(raw, Mapping):
+            raise NetworkShadowContractError("proof authorization must be an object")
+        try:
+            issued_at = datetime.fromisoformat(
+                str(raw.get("issued_at", "")).replace("Z", "+00:00")
+            )
+            expires_at = datetime.fromisoformat(
+                str(raw.get("expires_at", "")).replace("Z", "+00:00")
+            )
+        except ValueError as exc:
+            raise NetworkShadowContractError(
+                "proof authorization timestamps are invalid"
+            ) from exc
+        return cls(
+            proof_authorization_id=str(raw.get("proof_authorization_id", "")),
+            ceo_proof_authorization_identity=str(
+                raw.get("ceo_proof_authorization_identity", "")
+            ),
+            proof_id=str(raw.get("proof_id", "")),
+            provider=str(raw.get("provider", "")),
+            provider_event_id=str(raw.get("provider_event_id", "")),
+            proof_target_source_digest=str(raw.get("proof_target_source_digest", "")),
+            request_shape_digest=str(raw.get("request_shape_digest", "")),
+            adapter_version=str(raw.get("adapter_version", "")),
+            adapter_source_sha=str(raw.get("adapter_source_sha", "")),
+            issued_at=issued_at,
+            expires_at=expires_at,
+            authorization_digest=str(raw.get("authorization_digest", "")),
+            maximum_request_count=raw.get("maximum_request_count", 0),  # type: ignore[arg-type]
+            maximum_datapoints=raw.get("maximum_datapoints", 0),  # type: ignore[arg-type]
+            retry_count=raw.get("retry_count", 0),  # type: ignore[arg-type]
+            five_league_execution_authorized=raw.get(
+                "five_league_execution_authorized", True
+            ),  # type: ignore[arg-type]
+            provider_authority_granted=raw.get("provider_authority_granted", True),  # type: ignore[arg-type]
+            activation_authorized=raw.get("activation_authorized", True),  # type: ignore[arg-type]
+            publication_authorized=raw.get("publication_authorized", True),  # type: ignore[arg-type]
+            betting_authorized=raw.get("betting_authorized", True),  # type: ignore[arg-type]
+            schema_version=str(
+                raw.get("schema_version", QUOTA_PROOF_AUTHORIZATION_SCHEMA_VERSION)
+            ),
+        )
+
+    def request_for_proof(
+        self, *, proof_configuration_digest: str
+    ) -> TheRundownQuotaProofRequestV1:
+        self.validate()
+        _sha(proof_configuration_digest, "proof configuration digest")
+        request = TheRundownQuotaProofRequestV1(
+            proof_id=self.proof_id,
+            provider=self.provider,
+            provider_event_id=self.provider_event_id,
+            authorization_package_digest=self.authorization_digest,
+            configuration_digest=proof_configuration_digest,
+            authorization_id=self.proof_authorization_id,
+            controlled_shadow_run_id="quota-proof-only",
+            qualification_session_id="quota-proof-only",
+            ceo_authorization_identity=self.ceo_proof_authorization_identity,
+            adapter_version=self.adapter_version,
+            adapter_source_sha=self.adapter_source_sha,
+            endpoint=f"{THERUNDOWN_BASE_URL}/events/{self.provider_event_id}",
+            query={
+                "affiliate_ids": ",".join(QUOTA_PROOF_AFFILIATE_IDS),
+                "hide_closed": "true",
+                "main_line": "true",
+                "market_ids": "1",
+            },
+            request_shape_digest=self.request_shape_digest,
+            maximum_datapoints=self.maximum_datapoints,
+            request_count=self.maximum_request_count,
+            retry_count=self.retry_count,
+            proof_target_source_digest=self.proof_target_source_digest,
+        )
+        request.validate()
+        return request
+
+
 @dataclass(frozen=True)
 class TheRundownQuotaProofRequestV1:
     """One provider-native, account-bound request used only to prove headroom."""
@@ -1155,16 +1383,11 @@ class TheRundownQuotaProofRequestV1:
     request_count: int = QUOTA_PROOF_MAX_REQUEST_COUNT
     retry_count: int = 0
     timeout_seconds: float = 30.0
+    proof_target_source_digest: str = ""
 
     @property
     def computed_request_shape_digest(self) -> str:
-        return _digest(
-            {
-                "method": "GET",
-                "endpoint": self.endpoint,
-                "query": dict(self.query),
-            }
-        )
+        return _quota_proof_request_shape_digest(self.provider_event_id)
 
     def validate(self) -> None:
         if self.proof_id.strip() == "":
@@ -1188,6 +1411,8 @@ class TheRundownQuotaProofRequestV1:
         _sha(self.authorization_package_digest, "quota proof package digest")
         _sha(self.configuration_digest, "quota proof configuration digest")
         _sha(self.adapter_source_sha, "quota proof adapter source SHA")
+        if self.proof_target_source_digest:
+            _sha(self.proof_target_source_digest, "quota proof target source digest")
         expected_endpoint = f"{THERUNDOWN_BASE_URL}/events/{self.provider_event_id}"
         if self.endpoint != expected_endpoint:
             raise NetworkShadowExecutionBlocked(
@@ -1267,6 +1492,7 @@ class TheRundownQuotaProofEvidenceV1:
     no_retry: bool = True
     execution_phase: str = "quota_proof"
     schema_version: str = QUOTA_PROOF_SCHEMA_VERSION
+    proof_target_source_digest: str = ""
 
     def _payload_without_digest(self) -> dict[str, object]:
         return {
@@ -1299,6 +1525,7 @@ class TheRundownQuotaProofEvidenceV1:
             ).isoformat(),
             "raw_header_evidence": dict(self.raw_header_evidence),
             "response_digest": self.response_digest,
+            "proof_target_source_digest": self.proof_target_source_digest,
             "status_code": self.status_code,
             "request_count": self.request_count,
             "retry_count": self.retry_count,
@@ -1355,6 +1582,10 @@ class TheRundownQuotaProofEvidenceV1:
                 raise NetworkShadowExecutionBlocked(
                     f"quota proof {name} binding mismatch"
                 )
+        if request.proof_target_source_digest != self.proof_target_source_digest:
+            raise NetworkShadowExecutionBlocked(
+                "quota proof target source binding mismatch"
+            )
         _text(self.account_scope, "quota proof account_scope")
         _sha(self.credential_binding_digest, "quota proof credential binding")
         _sha(self.response_digest, "quota proof response digest")
@@ -1531,6 +1762,7 @@ class TheRundownQuotaProofEvidenceV1:
             response_digest=response_digest,
             evidence_digest="0" * 64,
             status_code=response.status_code,
+            proof_target_source_digest=request.proof_target_source_digest,
         )
         evidence = replace(evidence, evidence_digest=evidence.computed_evidence_digest)
         evidence.validate(request=request, now=now or finished)
@@ -1586,6 +1818,7 @@ class TheRundownQuotaProofEvidenceV1:
             no_retry=raw.get("no_retry", False),  # type: ignore[arg-type]
             execution_phase=str(raw.get("execution_phase", "")),
             schema_version=str(raw.get("schema_version", "")),
+            proof_target_source_digest=str(raw.get("proof_target_source_digest", "")),
         )
 
 
@@ -2949,6 +3182,7 @@ __all__ = [
     "NETWORK_RUN_SCHEMA_VERSION",
     "NETWORK_SHADOW_SCHEMA_VERSION",
     "QUOTA_HEADROOM_SCHEMA_VERSION",
+    "QUOTA_PROOF_AUTHORIZATION_SCHEMA_VERSION",
     "QUOTA_PROOF_MAXIMUM_AGE_SECONDS",
     "QUOTA_PROOF_MAX_DATAPOINTS",
     "QUOTA_PROOF_MAX_REQUEST_COUNT",
@@ -2978,6 +3212,7 @@ __all__ = [
     "TheRundownNetworkShadowExecutorV1",
     "TheRundownNetworkShadowRunResultV1",
     "TheRundownQuotaHeadroomEvidenceV1",
+    "TheRundownQuotaProofAuthorizationV1",
     "TheRundownQuotaProofEvidenceV1",
     "TheRundownQuotaProofRequestV1",
     "TheRundownReplayTransportV1",
