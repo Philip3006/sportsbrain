@@ -1,0 +1,41 @@
+{
+  "fixture_mode": "TEST/OFFLINE",
+  "evidence_kind": "TEST_FIXTURE",
+  "records": [
+    {
+      "league": "EPL",
+      "fixture": "EPL:offline-001",
+      "home": "Offline EPL Home",
+      "away": "Offline EPL Away",
+      "signal_id": "offline-epl-001"
+    },
+    {
+      "league": "BL1",
+      "fixture": "BL1:offline-001",
+      "home": "Offline BL1 Home",
+      "away": "Offline BL1 Away",
+      "signal_id": "offline-bl1-001"
+    },
+    {
+      "league": "LL",
+      "fixture": "LL:offline-001",
+      "home": "Offline LL Home",
+      "away": "Offline LL Away",
+      "signal_id": "offline-ll-001"
+    },
+    {
+      "league": "SA",
+      "fixture": "SA:offline-001",
+      "home": "Offline SA Home",
+      "away": "Offline SA Away",
+      "signal_id": "offline-sa-001"
+    },
+    {
+      "league": "L1",
+      "fixture": "L1:offline-001",
+      "home": "Offline L1 Home",
+      "away": "Offline L1 Away",
+      "signal_id": "offline-l1-001"
+    }
+  ]
+}
