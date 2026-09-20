@@ -9,14 +9,18 @@ change the active Football provider repertoire.
 
 from __future__ import annotations
 
+import argparse
 import json
-from collections.abc import Mapping
-from dataclasses import dataclass
+import stat
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from hashlib import sha256
 from math import isfinite
+from pathlib import Path
 from typing import Any
 
+from src.football.odds.therundown import THERUNDOWN_BASE_URL
 from src.football.provider_cascade.candidate_eligibility import (
     CandidateEligibilityError,
     CandidateProviderEligibilityV1,
@@ -30,11 +34,17 @@ from src.football.top5_therundown_network_shadow import (
     NETWORK_SHADOW_SCHEMA_VERSION,
     NetworkShadowContractError,
     NetworkShadowRunStatus,
+    TheRundownCanonicalPayloadAdapterV1,
+    TheRundownHttpNetworkTransportV1,
     TheRundownNetworkAuthorizationV1,
     TheRundownNetworkConfigurationV1,
+    TheRundownNetworkParticipantScopeV1,
+    TheRundownNetworkRequestScopeV1,
     TheRundownNetworkShadowCaptureV1,
+    TheRundownNetworkShadowExecutorV1,
     TheRundownNetworkShadowRunResultV1,
 )
+from src.football.top5_therundown_shadow_canary import TheRundownCanaryTargetV1
 
 CANONICAL_CANDIDATE_PROVIDER = "therundown_experimental"
 TOP5_LEAGUE_ORDER = ("EPL", "BL1", "LL", "SA", "L1")
@@ -45,9 +55,15 @@ QUALIFICATION_ARTIFACT_SCHEMA_VERSION = (
 )
 FUTURE_EXECUTION_COMMAND = (
     "python -m src.football.top5_controlled_shadow_authorization_package "
-    "--execute --package <authorization-package.json> "
+    "--execute-network --package <authorization-package.json> "
     "--authorization <ceo-authorization.json> "
-    "--b1-ll-artifact <b1-ll-evidence-bundle.json>"
+    "--b1-ll-artifact <b1-ll-evidence-bundle.json> "
+    "--credential-file /operator-only/top5/therundown.env "
+    "--output /operator-only/top5/top5-network-shadow-result.json"
+)
+DEFAULT_THERUNDOWN_CREDENTIAL_PATH = Path.home() / "sportsbrain" / ".env"
+NETWORK_EXECUTION_ARTIFACT_SCHEMA_VERSION = (
+    "top5-controlled-shadow-network-execution-v1"
 )
 
 
@@ -140,7 +156,289 @@ def _price(value: object, name: str) -> float:
 def _materialize_b1_ll_artifact(artifact: object) -> Mapping[str, object]:
     if hasattr(artifact, "as_evidence_bundle"):
         artifact = artifact.as_evidence_bundle()  # type: ignore[union-attr]
+    if isinstance(artifact, Mapping) and isinstance(
+        artifact.get("canonical_b1_evidence_bundle"), Mapping
+    ):
+        artifact = artifact["canonical_b1_evidence_bundle"]
     return _mapping(artifact, "B1 La Liga artifact")
+
+
+def _absolute_path(value: object, name: str) -> Path:
+    if not isinstance(value, (str, Path)):
+        raise ControlledShadowAuthorizationPackageError(f"{name} must be a path")
+    path = Path(value).expanduser()
+    if not path.is_absolute():
+        raise ControlledShadowAuthorizationPackageError(
+            f"{name} must be an absolute path"
+        )
+    return path
+
+
+def _read_json_file(path_value: object, name: str) -> Mapping[str, object]:
+    path = _absolute_path(path_value, name)
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            f"{name} could not be read"
+        ) from exc
+    return _mapping(raw, name)
+
+
+def _read_protected_therundown_credential(path_value: object) -> str:
+    """Read the existing operator-only .env convention without exposing it."""
+
+    path = _absolute_path(path_value, "credential_file")
+    try:
+        if path.is_symlink():
+            raise ControlledShadowAuthorizationPackageError(
+                "credential_file must not be a symlink"
+            )
+        mode = stat.S_IMODE(path.stat().st_mode)
+        if mode & 0o077:
+            raise ControlledShadowAuthorizationPackageError(
+                "credential_file permissions are too broad"
+            )
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except ControlledShadowAuthorizationPackageError:
+        raise
+    except (OSError, UnicodeDecodeError) as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            "credential_file could not be read; THERUNDOWN_API_KEY is unavailable"
+        ) from exc
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        name, value = line.split("=", 1)
+        if name.strip() not in ("THERUNDOWN_API_KEY", "export THERUNDOWN_API_KEY"):
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        if value:
+            return value
+    raise ControlledShadowAuthorizationPackageError(
+        "THERUNDOWN_API_KEY is missing from credential_file"
+    )
+
+
+def _target_from_payload(raw: object) -> TheRundownCanaryTargetV1:
+    item = _mapping(raw, "target")
+    return TheRundownCanaryTargetV1(
+        provider=str(item.get("provider", "")),
+        league=str(item.get("league", "")),
+        fixture_key=str(item.get("fixture_key", "")),
+        provider_event_id=str(item.get("provider_event_id", "")),
+        home_team=str(item.get("home_team", "")),
+        away_team=str(item.get("away_team", "")),
+        kickoff=_timestamp(item.get("kickoff"), "target kickoff"),
+    )
+
+
+def _targets_from_payload(raw: object) -> tuple[TheRundownCanaryTargetV1, ...]:
+    if not isinstance(raw, (tuple, list)):
+        raise ControlledShadowAuthorizationPackageError("targets must be an array")
+    return tuple(_target_from_payload(item) for item in raw)
+
+
+def _participants_from_payload(
+    raw: object,
+) -> tuple[TheRundownNetworkParticipantScopeV1, ...]:
+    if not isinstance(raw, (tuple, list)):
+        raise ControlledShadowAuthorizationPackageError(
+            "participant_scope must be an array"
+        )
+    values = []
+    for item in raw:
+        mapping = _mapping(item, "participant scope item")
+        values.append(
+            TheRundownNetworkParticipantScopeV1(
+                fixture_key=str(mapping.get("fixture_key", "")),
+                home_participant_id=str(mapping.get("home_participant_id", "")),
+                away_participant_id=str(mapping.get("away_participant_id", "")),
+            )
+        )
+    return tuple(values)
+
+
+def _requests_from_payload(
+    raw: object,
+) -> tuple[TheRundownNetworkRequestScopeV1, ...]:
+    if not isinstance(raw, (tuple, list)):
+        raise ControlledShadowAuthorizationPackageError(
+            "request_scope must be an array"
+        )
+    values = []
+    for item in raw:
+        mapping = _mapping(item, "request scope item")
+        values.append(
+            TheRundownNetworkRequestScopeV1(
+                fixture_key=str(mapping.get("fixture_key", "")),
+                request_identity=str(mapping.get("request_identity", "")),
+            )
+        )
+    return tuple(values)
+
+
+def _configuration_from_payload(
+    raw: object,
+    *,
+    enabled: bool,
+    configuration_digest: str | None = None,
+) -> TheRundownNetworkConfigurationV1:
+    mapping = _mapping(raw, "configuration")
+    digest = configuration_digest or mapping.get("configuration_digest")
+    if not isinstance(digest, str):
+        raise ControlledShadowAuthorizationPackageError(
+            "configuration_digest is missing"
+        )
+    configuration = TheRundownNetworkConfigurationV1(
+        targets=_targets_from_payload(mapping.get("targets")),
+        participant_scope=_participants_from_payload(mapping.get("participant_scope")),
+        request_scope=_requests_from_payload(mapping.get("request_scope")),
+        adapter_version=str(mapping.get("adapter_version", "")),
+        adapter_source_sha=str(mapping.get("adapter_source_sha", "")),
+        maximum_request_count=mapping.get("maximum_request_count"),  # type: ignore[arg-type]
+        maximum_datapoints=mapping.get("maximum_datapoints"),  # type: ignore[arg-type]
+        maximum_quota_cost_units=mapping.get("maximum_quota_cost_units"),  # type: ignore[arg-type]
+        request_quota_cost_units=mapping.get("request_quota_cost_units"),  # type: ignore[arg-type]
+        maximum_source_age_seconds=mapping.get("maximum_source_age_seconds"),  # type: ignore[arg-type]
+        minimum_interval_seconds=mapping.get("minimum_interval_seconds", 1.1),  # type: ignore[arg-type]
+        maximum_retries=mapping.get("maximum_retries", 0),  # type: ignore[arg-type]
+        enabled=enabled,
+        no_bet=mapping.get("no_bet", True),  # type: ignore[arg-type]
+        publication=mapping.get("publication", False),  # type: ignore[arg-type]
+        production_activation=mapping.get("production_activation", False),  # type: ignore[arg-type]
+        monetary_spend_authorized=mapping.get("monetary_spend_authorized", False),  # type: ignore[arg-type]
+        configuration_digest=digest,
+    )
+    return configuration
+
+
+def _authorization_from_payload(
+    raw: object,
+) -> TheRundownNetworkAuthorizationV1:
+    mapping = _mapping(raw, "CEO authorization")
+    return TheRundownNetworkAuthorizationV1(
+        authorization_id=str(mapping.get("authorization_id", "")),
+        ceo_authorization_identity=str(mapping.get("ceo_authorization_identity", "")),
+        controlled_shadow_run_id=str(mapping.get("controlled_shadow_run_id", "")),
+        qualification_session_id=str(mapping.get("qualification_session_id", "")),
+        provider=str(mapping.get("provider", "")),
+        targets=_targets_from_payload(mapping.get("targets")),
+        participant_scope=_participants_from_payload(mapping.get("participant_scope")),
+        request_scope=_requests_from_payload(mapping.get("request_scope")),
+        adapter_version=str(mapping.get("adapter_version", "")),
+        adapter_source_sha=str(mapping.get("adapter_source_sha", "")),
+        configuration_digest=str(mapping.get("configuration_digest", "")),
+        maximum_request_count=mapping.get("maximum_request_count"),  # type: ignore[arg-type]
+        maximum_datapoints=mapping.get("maximum_datapoints"),  # type: ignore[arg-type]
+        maximum_quota_cost_units=mapping.get("maximum_quota_cost_units"),  # type: ignore[arg-type]
+        request_quota_cost_units=mapping.get("request_quota_cost_units"),  # type: ignore[arg-type]
+        maximum_source_age_seconds=mapping.get("maximum_source_age_seconds"),  # type: ignore[arg-type]
+        issued_at=_timestamp(mapping.get("issued_at"), "issued_at"),
+        expires_at=_timestamp(mapping.get("expires_at"), "expires_at"),
+        minimum_interval_seconds=mapping.get("minimum_interval_seconds", 1.1),  # type: ignore[arg-type]
+        maximum_retries=mapping.get("maximum_retries", 0),  # type: ignore[arg-type]
+        no_bet=mapping.get("no_bet", True),  # type: ignore[arg-type]
+        publication=mapping.get("publication", False),  # type: ignore[arg-type]
+        production_activation=mapping.get("production_activation", False),  # type: ignore[arg-type]
+        monetary_spend_authorized=mapping.get("monetary_spend_authorized", False),  # type: ignore[arg-type]
+        schema_version=str(
+            mapping.get("schema_version", NETWORK_SHADOW_SCHEMA_VERSION)
+        ),
+    )
+
+
+def _load_execution_inputs(
+    package_path: object,
+    authorization_path: object,
+    b1_path: object,
+    *,
+    now: datetime,
+) -> tuple[
+    ControlledShadowAuthorizationPackageV1,
+    TheRundownNetworkConfigurationV1,
+    TheRundownNetworkAuthorizationV1,
+    Mapping[str, object],
+]:
+    package_payload = _read_json_file(package_path, "authorization package")
+    package = ControlledShadowAuthorizationPackageV1(
+        configuration_payload=_mapping(
+            package_payload.get("configuration"), "package configuration"
+        ),
+        authorization_template=_mapping(
+            package_payload.get("authorization_template"),
+            "package authorization_template",
+        ),
+        package_digest=str(package_payload.get("package_digest", "")),
+    )
+    package.validate()
+    package_configuration = _configuration_from_payload(
+        package.configuration_payload,
+        enabled=False,
+    )
+    package_configuration.validate()
+    if package_configuration.configuration_digest != package.configuration_payload.get(
+        "configuration_digest"
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "package configuration digest does not match the disabled configuration"
+        )
+
+    authorization_container = _read_json_file(
+        authorization_path, "CEO authorization artifact"
+    )
+    authorization_payload = authorization_container.get("authorization")
+    if not isinstance(authorization_payload, Mapping):
+        authorization_payload = authorization_container
+    supplied_package_digest = authorization_container.get("package_digest")
+    if supplied_package_digest is None:
+        supplied_package_digest = authorization_container.get(
+            "authorization_package_digest"
+        )
+    if supplied_package_digest is None:
+        supplied_package_digest = authorization_payload.get("package_digest")
+    if supplied_package_digest != package.package_digest:
+        raise ControlledShadowAuthorizationPackageError(
+            "CEO authorization is not bound to the exact package digest"
+        )
+    authorization = _authorization_from_payload(authorization_payload)
+    supplied_authorization_digest = authorization_payload.get("authorization_digest")
+    if supplied_authorization_digest != authorization.authorization_digest:
+        raise ControlledShadowAuthorizationPackageError(
+            "CEO authorization digest mismatch"
+        )
+    execution_configuration = _configuration_from_payload(
+        package.configuration_payload,
+        enabled=True,
+        configuration_digest=authorization.configuration_digest,
+    )
+    if (
+        authorization.configuration_digest
+        != replace(
+            execution_configuration, configuration_digest=""
+        ).computed_configuration_digest
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "authorization configuration digest does not match the enabled configuration"
+        )
+    execution_configuration.validate()
+    authorization.validate(execution_configuration, now=now)
+    if authorization.provider != CANONICAL_CANDIDATE_PROVIDER:
+        raise ControlledShadowAuthorizationPackageError(
+            "CEO authorization provider is not canonical"
+        )
+    b1_payload = _read_json_file(b1_path, "B1 La Liga artifact")
+    b1_artifact = _materialize_b1_ll_artifact(b1_payload)
+    _validate_b1_execution_envelope(
+        b1_artifact,
+        configuration=execution_configuration,
+        authorization=authorization,
+        now=now,
+    )
+    return package, execution_configuration, authorization, b1_artifact
 
 
 def _validate_b1_ll_artifact_shape(artifact: Mapping[str, object]) -> None:
@@ -174,6 +472,117 @@ def _validate_b1_ll_artifact_shape(artifact: Mapping[str, object]) -> None:
             raise ControlledShadowAuthorizationPackageError(
                 f"B1 safety field {name} is unsafe"
             )
+
+
+def _validate_b1_execution_envelope(
+    artifact: Mapping[str, object],
+    *,
+    configuration: TheRundownNetworkConfigurationV1,
+    authorization: TheRundownNetworkAuthorizationV1,
+    now: datetime,
+) -> None:
+    """Bind the supplied B1 input before the first possible network request."""
+
+    _validate_b1_ll_artifact_shape(artifact)
+    bridge = _mapping(artifact.get("b1_bridge_inputs"), "B1 bridge inputs")
+    nested = _mapping(artifact.get("authorization"), "B1 authorization")
+    ll_target = next(
+        (target for target in configuration.targets if target.league == "LL"),
+        None,
+    )
+    if ll_target is None:
+        raise ControlledShadowAuthorizationPackageError(
+            "execution configuration is missing the LL target"
+        )
+    expected_bindings = {
+        "provider_identity": CANONICAL_CANDIDATE_PROVIDER,
+        "league": "LL",
+        "controlled_shadow_run_id": authorization.controlled_shadow_run_id,
+        "ceo_authorization_id": authorization.authorization_id,
+        "qualification_session_id": authorization.qualification_session_id,
+        "adapter_version": authorization.adapter_version,
+        "adapter_source_sha": authorization.adapter_source_sha,
+        "evidence_kind": ObservationEvidenceKind.REAL_OBSERVED.value,
+        "network_execution": True,
+    }
+    for name, expected in expected_bindings.items():
+        if bridge.get(name) != expected:
+            raise ControlledShadowAuthorizationPackageError(
+                f"B1 execution binding mismatch: {name}"
+            )
+    for name, expected in (
+        ("provider", CANONICAL_CANDIDATE_PROVIDER),
+        ("league", "LL"),
+        ("controlled_shadow_run_id", authorization.controlled_shadow_run_id),
+        ("ceo_authorization_id", authorization.authorization_id),
+        ("qualification_session_id", authorization.qualification_session_id),
+    ):
+        if nested.get(name) != expected:
+            raise ControlledShadowAuthorizationPackageError(
+                f"B1 nested authorization mismatch: {name}"
+            )
+    if _timestamp(nested.get("expires_at"), "B1 authorization expiry") != _utc(
+        authorization.expires_at, "authorization expiry"
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 authorization expiry does not match the CEO authorization"
+        )
+    if _timestamp(nested.get("expires_at"), "B1 authorization expiry") <= _utc(
+        now, "execution now"
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 authorization artifact is expired"
+        )
+    provider_event_id = bridge.get("provider_event_id")
+    if provider_event_id != ll_target.provider_event_id:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 provider event does not match the authorized LL target"
+        )
+    if (
+        bridge.get("provider_request_id")
+        != configuration.request_for(ll_target.fixture_key).request_identity
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 request identity does not match the authorized LL target"
+        )
+    if (
+        bridge.get("home_team") != ll_target.home_team
+        or bridge.get("away_team") != ll_target.away_team
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 participant names do not match the authorized LL target"
+        )
+    if _timestamp(bridge.get("kickoff"), "B1 kickoff") != _utc(
+        ll_target.kickoff, "LL kickoff"
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 kickoff does not match the authorized LL target"
+        )
+    raw_digest = _digest_value(
+        bridge.get("raw_response_digest"), "B1 raw_response_digest"
+    )
+    if raw_digest != _digest_value(
+        artifact.get("raw_response_digest"), "B1 top-level raw_response_digest"
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 raw response digest is internally inconsistent"
+        )
+    captured_at = _timestamp(bridge.get("captured_at"), "B1 captured_at")
+    source_timestamps = bridge.get("source_timestamps")
+    if not isinstance(source_timestamps, (tuple, list)) or not source_timestamps:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 source timestamp provenance is missing"
+        )
+    newest_source = max(
+        _timestamp(value, "B1 source timestamp") for value in source_timestamps
+    )
+    current = _utc(now, "execution now")
+    if (
+        captured_at < newest_source
+        or (current - newest_source).total_seconds()
+        > configuration.maximum_source_age_seconds
+    ):
+        raise ControlledShadowAuthorizationPackageError("B1 evidence is stale")
 
 
 def _validate_b1_ll_artifact(
@@ -307,7 +716,10 @@ def _validate_b1_ll_artifact(
         raise ControlledShadowAuthorizationPackageError(
             "B1 canonical fixture identity does not match the LL target"
         )
-    if not isinstance(bridge.get("fixture_key"), str) or not bridge["fixture_key"].strip():
+    if (
+        not isinstance(bridge.get("fixture_key"), str)
+        or not bridge["fixture_key"].strip()
+    ):
         raise ControlledShadowAuthorizationPackageError(
             "B1 provider fixture identity is missing"
         )
@@ -1156,10 +1568,258 @@ def reconcile_controlled_shadow_run_with_b1_ll_artifact(
     )
 
 
+def _write_network_execution_artifact(
+    path_value: object, payload: Mapping[str, object]
+) -> Path:
+    path = _absolute_path(path_value, "output")
+    try:
+        with path.open("x", encoding="utf-8") as handle:
+            json.dump(_jsonable(payload), handle, indent=2, sort_keys=True)
+            handle.write("\n")
+        path.chmod(0o600)
+    except FileExistsError as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            "output already exists; refusing to overwrite an execution artifact"
+        ) from exc
+    except OSError as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            "execution artifact could not be written"
+        ) from exc
+    return path
+
+
+def _network_execution_payload(
+    result: TheRundownNetworkShadowRunResultV1,
+    reconciliation: FiveLeagueReconciliationV1,
+    *,
+    package_digest: str,
+    authorization: TheRundownNetworkAuthorizationV1,
+) -> dict[str, object]:
+    reconciliation_payload = reconciliation.as_payload()
+    run_payload = result.as_payload()
+    return {
+        "schema_version": NETWORK_EXECUTION_ARTIFACT_SCHEMA_VERSION,
+        "status": NetworkShadowRunStatus.COMPLETED_NETWORK.value,
+        "provider": CANONICAL_CANDIDATE_PROVIDER,
+        "controlled_shadow_run_id": authorization.controlled_shadow_run_id,
+        "qualification_session_id": authorization.qualification_session_id,
+        "authorization_id": authorization.authorization_id,
+        "authorization_digest": authorization.authorization_digest,
+        "package_digest": package_digest,
+        "configuration_digest": authorization.configuration_digest,
+        "request_count": result.request_count,
+        "datapoint_count": result.datapoint_count,
+        "quota_cost_units": result.quota_cost_units,
+        "captures": [capture.as_payload() for capture in result.captures],
+        "capture_attestations": reconciliation_payload["artifacts"][
+            "capture_attestations"
+        ],
+        "candidate_eligibilities": reconciliation_payload["artifacts"][
+            "candidate_eligibilities"
+        ],
+        "builder2_receipt_inputs": reconciliation_payload["artifacts"][
+            "builder2_receipt_inputs"
+        ],
+        "reconciliation_digest": reconciliation.reconciliation_digest,
+        "network_shadow_run": run_payload,
+        "reconciliation": reconciliation_payload,
+        "safety": {
+            "candidate_only": True,
+            "receipt_issued": False,
+            "receipt_issuer_present": False,
+            "authority_changed": False,
+            "publication": False,
+            "production_activation": False,
+            "betting": False,
+            "monetary_spend_authorized": False,
+            "scheduler_registered": False,
+            "ledger_mutated": False,
+            "cloudflare_mutated": False,
+        },
+    }
+
+
+def run_guarded_network_execution(
+    package_path: object,
+    authorization_path: object,
+    b1_ll_artifact_path: object,
+    *,
+    credential_file: object = DEFAULT_THERUNDOWN_CREDENTIAL_PATH,
+    output_path: object,
+    endpoint: str = THERUNDOWN_BASE_URL,
+    clock: Any = None,
+    pacer: Any = None,
+    transport: Any = None,
+) -> dict[str, object]:
+    """Execute one explicitly enabled, fully bound network shadow.
+
+    ``transport`` is an internal injected seam for offline tests only. The
+    canonical operator command leaves it unset and therefore uses exactly the
+    reviewed ``TheRundownHttpNetworkTransportV1`` implementation.
+    """
+
+    clock_fn = clock or (lambda: datetime.now(timezone.utc))
+    now = _utc(clock_fn(), "execution now")
+    package, configuration, authorization, b1_artifact = _load_execution_inputs(
+        package_path,
+        authorization_path,
+        b1_ll_artifact_path,
+        now=now,
+    )
+    api_key = _read_protected_therundown_credential(credential_file)
+    adapter = TheRundownCanonicalPayloadAdapterV1(
+        adapter_version=configuration.adapter_version,
+        adapter_source_sha=configuration.adapter_source_sha,
+        maximum_source_age_seconds=configuration.maximum_source_age_seconds,
+    )
+    if transport is None:
+        transport = TheRundownHttpNetworkTransportV1(
+            endpoint=endpoint,
+            api_key=api_key,
+            adapter=adapter,
+            clock=clock_fn,
+        )
+    result = TheRundownNetworkShadowExecutorV1(
+        clock=clock_fn,
+        pacer=pacer,
+        allow_live_network=True,
+        fail_closed_immediately=True,
+    ).run(configuration, authorization, transport=transport)
+    if (
+        result.status is not NetworkShadowRunStatus.COMPLETED_NETWORK
+        or not result.all_five_succeeded
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "network shadow did not complete all five leagues: "
+            + "; ".join(result.failures)
+        )
+    reconciliation = reconcile_controlled_shadow_run_with_b1_ll_artifact(
+        result,
+        configuration,
+        authorization,
+        b1_artifact,
+        now=_utc(clock_fn(), "reconciliation now"),
+    )
+    payload = _network_execution_payload(
+        result,
+        reconciliation,
+        package_digest=package.package_digest,
+        authorization=authorization,
+    )
+    artifact_path = _write_network_execution_artifact(output_path, payload)
+    return {
+        "status": payload["status"],
+        "artifact_path": str(artifact_path),
+        "provider": payload["provider"],
+        "controlled_shadow_run_id": payload["controlled_shadow_run_id"],
+        "qualification_session_id": payload["qualification_session_id"],
+        "authorization_id": payload["authorization_id"],
+        "request_count": payload["request_count"],
+        "datapoint_count": payload["datapoint_count"],
+        "quota_cost_units": payload["quota_cost_units"],
+        "reconciliation_digest": payload["reconciliation_digest"],
+        "network_calls": payload["request_count"],
+    }
+
+
+def run_guarded_network_preflight(
+    package_path: object,
+    authorization_path: object,
+    b1_ll_artifact_path: object,
+    *,
+    credential_file: object = DEFAULT_THERUNDOWN_CREDENTIAL_PATH,
+    clock: Any = None,
+) -> dict[str, object]:
+    """Validate the complete execution envelope while making zero calls."""
+
+    clock_fn = clock or (lambda: datetime.now(timezone.utc))
+    now = _utc(clock_fn(), "preflight now")
+    package, configuration, authorization, _ = _load_execution_inputs(
+        package_path,
+        authorization_path,
+        b1_ll_artifact_path,
+        now=now,
+    )
+    _read_protected_therundown_credential(credential_file)
+    return {
+        "status": "DRY_RUN_READY",
+        "network_calls": 0,
+        "provider": authorization.provider,
+        "leagues": list(TOP5_LEAGUE_ORDER),
+        "package_digest": package.package_digest,
+        "configuration_digest": configuration.configuration_digest,
+        "authorization_digest": authorization.authorization_digest,
+        "controlled_shadow_run_id": authorization.controlled_shadow_run_id,
+        "qualification_session_id": authorization.qualification_session_id,
+        "authorization_id": authorization.authorization_id,
+        "maximum_request_count": authorization.maximum_request_count,
+        "maximum_datapoints": authorization.maximum_datapoints,
+        "maximum_quota_cost_units": authorization.maximum_quota_cost_units,
+        "minimum_interval_seconds": authorization.minimum_interval_seconds,
+        "maximum_retries": authorization.maximum_retries,
+        "execution_enabled": False,
+        "provider_requests": 0,
+    }
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Guarded TheRundown Top-5 controlled shadow; default is zero-network dry-run."
+        )
+    )
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--preflight", action="store_true")
+    mode.add_argument("--execute-network", action="store_true")
+    parser.add_argument("--package", required=True, type=Path)
+    parser.add_argument("--authorization", required=True, type=Path)
+    parser.add_argument("--b1-ll-artifact", required=True, type=Path)
+    parser.add_argument(
+        "--credential-file",
+        type=Path,
+        default=DEFAULT_THERUNDOWN_CREDENTIAL_PATH,
+        help="absolute operator-only .env containing THERUNDOWN_API_KEY",
+    )
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--endpoint", default=THERUNDOWN_BASE_URL)
+    args = parser.parse_args(argv)
+    try:
+        if args.execute_network:
+            if args.output is None:
+                parser.error("--output is required with --execute-network")
+            summary = run_guarded_network_execution(
+                args.package,
+                args.authorization,
+                args.b1_ll_artifact,
+                credential_file=args.credential_file,
+                output_path=args.output,
+                endpoint=args.endpoint,
+            )
+        else:
+            summary = run_guarded_network_preflight(
+                args.package,
+                args.authorization,
+                args.b1_ll_artifact,
+                credential_file=args.credential_file,
+            )
+        print(json.dumps(_jsonable(summary), indent=2, sort_keys=True))
+        return 0
+    except (
+        ControlledShadowAuthorizationPackageError,
+        NetworkShadowContractError,
+        OSError,
+        TypeError,
+        ValueError,
+    ) as exc:
+        print(f"BLOCKED: {type(exc).__name__}: {exc}", file=__import__("sys").stderr)
+        return 2
+
+
 __all__ = [
     "AUTHORIZATION_PACKAGE_SCHEMA_VERSION",
     "CANONICAL_CANDIDATE_PROVIDER",
     "FUTURE_EXECUTION_COMMAND",
+    "NETWORK_EXECUTION_ARTIFACT_SCHEMA_VERSION",
     "RECONCILIATION_SCHEMA_VERSION",
     "TOP5_LEAGUE_ORDER",
     "ControlledShadowAuthorizationPackageError",
@@ -1169,4 +1829,10 @@ __all__ = [
     "prepare_authorization_package",
     "reconcile_controlled_shadow_run",
     "reconcile_controlled_shadow_run_with_b1_ll_artifact",
+    "run_guarded_network_execution",
+    "run_guarded_network_preflight",
 ]
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

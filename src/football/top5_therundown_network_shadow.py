@@ -66,12 +66,9 @@ NETWORK_RUN_SCHEMA_VERSION = "top5-therundown-network-run-v1"
 TOP5_CONTROLLED_SHADOW_REQUEST_COUNT = 5
 THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST = 55
 TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET = (
-    TOP5_CONTROLLED_SHADOW_REQUEST_COUNT
-    * THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST
+    TOP5_CONTROLLED_SHADOW_REQUEST_COUNT * THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST
 )
-TOP5_CONTROLLED_SHADOW_QUOTA_BUDGET = float(
-    TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET
-)
+TOP5_CONTROLLED_SHADOW_QUOTA_BUDGET = float(TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET)
 TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS = 1.1
 _SHA_RE = re.compile(r"^[0-9a-fA-F]{40,64}$")
 _SAFE_EVIDENCE_KINDS = frozenset(
@@ -991,10 +988,7 @@ class TheRundownCanonicalPayloadAdapterV1:
 
     @staticmethod
     def _provider_fixture_key(request: TheRundownNetworkRequestV1) -> str:
-        return (
-            f"therundown:{request.target.league}:"
-            f"{request.target.provider_event_id}"
-        )
+        return f"therundown:{request.target.league}:{request.target.provider_event_id}"
 
     def _reviewed_config(self, request: TheRundownNetworkRequestV1) -> ProviderConfig:
         return ProviderConfig(
@@ -1239,9 +1233,10 @@ class TheRundownCanonicalPayloadAdapterV1:
         if isinstance(raw, Mapping) and isinstance(raw.get("events"), list):
             return self._decode_reviewed_events(request, response, billing)
         payload_datapoints = payload.get("datapoint_count")
-        if payload_datapoints is not None and payload_datapoints != billing[
-            "x-datapoints"
-        ]:
+        if (
+            payload_datapoints is not None
+            and payload_datapoints != billing["x-datapoints"]
+        ):
             raise NetworkShadowExecutionBlocked(
                 "payload and provider billed datapoints disagree"
             )
@@ -1760,10 +1755,12 @@ class TheRundownNetworkShadowExecutorV1:
         clock: Callable[[], datetime] | None = None,
         pacer: Callable[[float], None] | None = None,
         allow_live_network: bool = False,
+        fail_closed_immediately: bool = False,
     ) -> None:
         self.clock = clock or (lambda: datetime.now(timezone.utc))
         self.pacer = pacer or time.sleep
         self.allow_live_network = allow_live_network
+        self.fail_closed_immediately = fail_closed_immediately
 
     def run(
         self,
@@ -1802,6 +1799,8 @@ class TheRundownNetworkShadowExecutorV1:
             except Exception as exc:  # noqa: BLE001 - transport boundary fails closed
                 failures.append(f"{target.league}:TRANSPORT_ERROR:{type(exc).__name__}")
                 request_count += 1
+                if self.fail_closed_immediately:
+                    break
                 continue
             request_count += 1
             try:
@@ -1814,6 +1813,8 @@ class TheRundownNetworkShadowExecutorV1:
                 )
             except Exception as exc:  # noqa: BLE001 - malformed provider data fails closed
                 failures.append(f"{target.league}:{exc}")
+                if self.fail_closed_immediately:
+                    break
                 if "budget" in str(exc) or "overrun" in str(exc):
                     break
                 captures.append(_failure_capture(target, request, response, str(exc)))
@@ -1840,6 +1841,8 @@ class TheRundownNetworkShadowExecutorV1:
                 failures.append(
                     f"{target.league}:{CanaryOutcome(response.outcome).value}"
                 )
+                if self.fail_closed_immediately:
+                    break
                 continue
             capture = _build_capture(target, request, response, test_only=test_only)
             captures.append(capture)
@@ -2036,7 +2039,9 @@ class TheRundownNetworkShadowExecutorV1:
         else:
             _nonnegative_int(response.rate_limit_remaining, "rate_limit_remaining")
             if response.rate_limit_reset_at is None:
-                raise NetworkShadowExecutionBlocked("rate-limit reset evidence is missing")
+                raise NetworkShadowExecutionBlocked(
+                    "rate-limit reset evidence is missing"
+                )
             _utc(response.rate_limit_reset_at, "rate_limit_reset_at")
         _text(response.account_tier, "account_tier")
         if response.provider_delay_seconds is None:

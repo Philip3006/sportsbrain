@@ -19,6 +19,8 @@ from src.football.top5_controlled_shadow_authorization_package import (
     prepare_authorization_package,
     reconcile_controlled_shadow_run,
     reconcile_controlled_shadow_run_with_b1_ll_artifact,
+    run_guarded_network_execution,
+    run_guarded_network_preflight,
 )
 from src.football.top5_controlled_shadow_provider_qualification import (
     ObservationEvidenceKind,
@@ -179,7 +181,9 @@ def _b1_ll_artifact(result, authorization):
 
 
 def _run006_network_run():
-    body_path = Path("/private/tmp/top5-laliga-nextdate-20260920-006.request-2.body.json")
+    body_path = Path(
+        "/private/tmp/top5-laliga-nextdate-20260920-006.request-2.body.json"
+    )
     headers_path = body_path.with_name(
         "top5-laliga-nextdate-20260920-006.request-2.headers.json"
     )
@@ -426,9 +430,7 @@ def test_repaired_b1_ll_artifact_is_injected_into_the_exact_ll_slot():
         reconciliation.artifacts.capture_attestations[2]["fixture_key"]
         == configuration.targets[2].fixture_key
     )
-    assert b1_artifact["b1_bridge_inputs"]["fixture_key"] == (
-        "therundown:LL:event-LL"
-    )
+    assert b1_artifact["b1_bridge_inputs"]["fixture_key"] == ("therundown:LL:event-LL")
     assert reconciliation.artifacts.candidate_eligibilities[2]["league_code"] == "LL"
     assert reconciliation.artifacts.builder2_receipt_inputs[2]["eligible"] is False
     assert reconciliation.artifacts.receipt_issuer_present is False
@@ -443,9 +445,7 @@ def test_repaired_b1_ll_artifact_is_injected_into_the_exact_ll_slot():
         ("home_team", "Other Home", "canonical fixture identity"),
     ],
 )
-def test_b1_provider_and_canonical_fixture_bindings_fail_closed(
-    field, value, pattern
-):
+def test_b1_provider_and_canonical_fixture_bindings_fail_closed(field, value, pattern):
     result, configuration, authorization = _network_run()
     b1_artifact = _b1_ll_artifact(result, authorization)
     b1_artifact["b1_bridge_inputs"][field] = value
@@ -705,3 +705,248 @@ def test_package_and_reconciliation_never_issue_receipt_or_change_authority():
     assert (
         reconciliation.artifacts.qualification_status == "PENDING_BUILDER2_VALIDATION"
     )
+
+
+def _cli_input_files(tmp_path: Path):
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    result, configuration, authorization = _network_run()
+    disabled = replace(configuration, enabled=False, configuration_digest="")
+    disabled = replace(
+        disabled, configuration_digest=disabled.computed_configuration_digest
+    )
+    package = prepare_authorization_package(disabled)
+    package_path = tmp_path / "authorization-package.json"
+    package_path.write_text(json.dumps(package.as_payload()), encoding="utf-8")
+
+    authorization_payload = authorization.as_payload()
+    authorization_path = tmp_path / "ceo-authorization.json"
+    authorization_path.write_text(
+        json.dumps(
+            {
+                "package_digest": package.package_digest,
+                "authorization": authorization_payload,
+            }
+        ),
+        encoding="utf-8",
+    )
+    b1_path = tmp_path / "b1-ll-evidence.json"
+    b1_path.write_text(
+        json.dumps(
+            {"canonical_b1_evidence_bundle": _b1_ll_artifact(result, authorization)}
+        ),
+        encoding="utf-8",
+    )
+    credential_path = tmp_path / "therundown.env"
+    credential_path.write_text(
+        "THERUNDOWN_API_KEY=offline-test-secret\n", encoding="utf-8"
+    )
+    credential_path.chmod(0o600)
+    return (
+        package_path,
+        authorization_path,
+        b1_path,
+        credential_path,
+        configuration,
+        authorization,
+        package,
+    )
+
+
+def _guarded_cli_run(tmp_path: Path, response_factory, *, output_name="result.json"):
+    package_path, authorization_path, b1_path, credential_path, _, _, _ = (
+        _cli_input_files(tmp_path)
+    )
+    transport = _NetworkStubTransport(response_factory)
+    with pytest.raises(ControlledShadowAuthorizationPackageError):
+        run_guarded_network_execution(
+            package_path,
+            authorization_path,
+            b1_path,
+            credential_file=credential_path,
+            output_path=tmp_path / output_name,
+            clock=lambda: NOW,
+            pacer=lambda _seconds: None,
+            transport=transport,
+        )
+    return transport
+
+
+def test_guarded_cli_default_preflight_is_zero_network(tmp_path):
+    package_path, authorization_path, b1_path, credential_path, _, _, _ = (
+        _cli_input_files(tmp_path)
+    )
+    output = run_guarded_network_preflight(
+        package_path,
+        authorization_path,
+        b1_path,
+        credential_file=credential_path,
+        clock=lambda: NOW,
+    )
+    assert output["status"] == "DRY_RUN_READY"
+    assert output["network_calls"] == 0
+    assert output["provider_requests"] == 0
+
+
+@pytest.mark.parametrize(
+    "mutation", ["missing", "expired", "wrong-package", "wrong-config", "wrong-b1"]
+)
+def test_guarded_cli_bindings_fail_before_first_request(tmp_path, mutation):
+    package_path, authorization_path, b1_path, credential_path, _, _, _ = (
+        _cli_input_files(tmp_path)
+    )
+    if mutation == "missing":
+        authorization_path.unlink()
+    elif mutation == "expired":
+        payload = json.loads(authorization_path.read_text())
+        payload["authorization"]["issued_at"] = (NOW - timedelta(minutes=2)).isoformat()
+        payload["authorization"]["expires_at"] = (
+            NOW - timedelta(seconds=1)
+        ).isoformat()
+        authorization_path.write_text(json.dumps(payload), encoding="utf-8")
+    elif mutation == "wrong-package":
+        payload = json.loads(authorization_path.read_text())
+        payload["package_digest"] = "f" * 64
+        authorization_path.write_text(json.dumps(payload), encoding="utf-8")
+    elif mutation == "wrong-config":
+        payload = json.loads(authorization_path.read_text())
+        payload["authorization"]["configuration_digest"] = "f" * 64
+        authorization_path.write_text(json.dumps(payload), encoding="utf-8")
+    else:
+        payload = json.loads(b1_path.read_text())
+        payload["canonical_b1_evidence_bundle"]["b1_bridge_inputs"][
+            "provider_event_id"
+        ] = "wrong-event"
+        b1_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ControlledShadowAuthorizationPackageError):
+        run_guarded_network_execution(
+            package_path,
+            authorization_path,
+            b1_path,
+            credential_file=credential_path,
+            output_path=tmp_path / "blocked.json",
+            clock=lambda: NOW,
+            pacer=lambda _seconds: None,
+            transport=_NetworkStubTransport(
+                lambda request: pytest.fail("network called")
+            ),
+        )
+
+
+def test_guarded_cli_credential_missing_or_unsafe_fails_before_request(tmp_path):
+    package_path, authorization_path, b1_path, _, _, _, _ = _cli_input_files(tmp_path)
+    missing = tmp_path / "missing.env"
+    with pytest.raises(
+        ControlledShadowAuthorizationPackageError, match="THERUNDOWN_API_KEY"
+    ):
+        run_guarded_network_preflight(
+            package_path,
+            authorization_path,
+            b1_path,
+            credential_file=missing,
+            clock=lambda: NOW,
+        )
+
+    unsafe = tmp_path / "unsafe.env"
+    unsafe.write_text("THERUNDOWN_API_KEY=offline-test-secret\n", encoding="utf-8")
+    unsafe.chmod(0o644)
+    with pytest.raises(ControlledShadowAuthorizationPackageError, match="permissions"):
+        run_guarded_network_preflight(
+            package_path,
+            authorization_path,
+            b1_path,
+            credential_file=unsafe,
+            clock=lambda: NOW,
+        )
+
+
+def test_guarded_cli_first_request_and_cumulative_billing_overrun_fail_closed(tmp_path):
+    first = _guarded_cli_run(
+        tmp_path,
+        lambda request: _response(
+            request,
+            datapoint_count=56,
+            quota_cost_units=56.0,
+            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+            network_execution=True,
+        ),
+        output_name="first-overrun.json",
+    )
+    assert len(first.calls) == 1
+
+    counter = {"value": 0}
+
+    def fifth_overrun(request):
+        counter["value"] += 1
+        if counter["value"] == 5:
+            return _response(
+                request,
+                datapoint_count=56,
+                quota_cost_units=56.0,
+                evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+                network_execution=True,
+            )
+        return _response(
+            request,
+            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+            network_execution=True,
+        )
+
+    fifth = _guarded_cli_run(
+        tmp_path / "fifth", fifth_overrun, output_name="fifth-overrun.json"
+    )
+    assert len(fifth.calls) == 5
+
+
+def test_guarded_cli_retry_attempt_fails_closed_without_retry(tmp_path):
+    transport = _guarded_cli_run(
+        tmp_path,
+        lambda request: _response(
+            request,
+            retry_count=1,
+            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+            network_execution=True,
+        ),
+        output_name="retry.json",
+    )
+    assert len(transport.calls) == 1
+
+
+def test_guarded_cli_five_of_five_writes_b2_compatible_output(tmp_path):
+    package_path, authorization_path, b1_path, credential_path, _, _, _ = (
+        _cli_input_files(tmp_path)
+    )
+    output_path = tmp_path / "completed.json"
+    summary = run_guarded_network_execution(
+        package_path,
+        authorization_path,
+        b1_path,
+        credential_file=credential_path,
+        output_path=output_path,
+        clock=lambda: NOW,
+        pacer=lambda _seconds: None,
+        transport=_NetworkStubTransport(
+            lambda request: _response(
+                request,
+                evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+                network_execution=True,
+            )
+        ),
+    )
+    payload = json.loads(output_path.read_text())
+    assert summary["status"] == "COMPLETED_NETWORK"
+    assert payload["status"] == "COMPLETED_NETWORK"
+    assert payload["request_count"] == 5
+    assert payload["datapoint_count"] == 275
+    assert len(payload["captures"]) == 5
+    assert len(payload["capture_attestations"]) == 5
+    assert len(payload["candidate_eligibilities"]) == 5
+    assert len(payload["builder2_receipt_inputs"]) == 5
+    assert (
+        payload["reconciliation"]["reconciliation_digest"]
+        == payload["reconciliation_digest"]
+    )
+    assert all(item["eligible"] is False for item in payload["builder2_receipt_inputs"])
+    assert payload["safety"]["receipt_issued"] is False
+    assert payload["safety"]["authority_changed"] is False
+    assert output_path.stat().st_mode & 0o077 == 0
