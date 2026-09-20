@@ -27,10 +27,23 @@ from typing import Protocol
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+from src.football.odds.therundown import (
+    THERUNDOWN_ADAPTER_VERSION,
+    THERUNDOWN_PROVIDER_NAME,
+    TheRundownExperimentalAdapter,
+)
+from src.football.production_contracts import Fixture, ProductionContractError
+from src.football.provider_cascade.adapters import RawProviderResponse
 from src.football.provider_cascade.contracts import (
     MARKET_PREMATCH_1X2,
     TOP5_LEAGUE_CODES,
+    CascadeTimingPolicy,
+    NetworkAuthorizationContract,
+    ProviderConfig,
+    ProviderState,
+    QuotaSnapshot,
     TransportCapability,
+    digest_record,
 )
 from src.football.top5_controlled_shadow_provider_qualification import (
     CAPTURE_ATTESTATION_CONTRACT_VERSION,
@@ -53,7 +66,7 @@ NETWORK_RESPONSE_SCHEMA_VERSION = "top5-therundown-network-response-v1"
 NETWORK_RUN_SCHEMA_VERSION = "top5-therundown-network-run-v1"
 THERUNDOWN_BILLING_UNIT = "provider_billed_x_datapoints"
 THERUNDOWN_DATAPOINT_HEADER = "x-datapoints"
-THERUNDOWN_DEFAULT_ADAPTER_VERSION = "therundown-v2-experimental:2"
+THERUNDOWN_DEFAULT_ADAPTER_VERSION = THERUNDOWN_ADAPTER_VERSION
 _SHA_RE = re.compile(r"^[0-9a-fA-F]{40,64}$")
 _SAFE_EVIDENCE_KINDS = frozenset(
     {
@@ -183,192 +196,6 @@ def _header_int(
     if parsed < 0:
         raise NetworkShadowContractError(f"provider header is negative: {name}")
     return parsed
-
-
-def _header_float(
-    headers: Mapping[str, str], name: str, *, required: bool = False
-) -> float | None:
-    value = _header_value(headers, name)
-    if value is None or value == "":
-        if required:
-            raise NetworkShadowContractError(
-                f"required provider header is missing: {name}"
-            )
-        return None
-    try:
-        parsed = float(value)
-    except (TypeError, ValueError) as exc:
-        raise NetworkShadowContractError(
-            f"provider header is not numeric: {name}"
-        ) from exc
-    if not isfinite(parsed) or parsed < 0:
-        raise NetworkShadowContractError(
-            f"provider header is outside the allowed range: {name}"
-        )
-    return parsed
-
-
-def _parse_provider_timestamp(value: object, name: str) -> datetime:
-    if not isinstance(value, str):
-        raise NetworkShadowContractError(f"{name} is missing or invalid")
-    try:
-        return _utc(datetime.fromisoformat(value.replace("Z", "+00:00")), name)
-    except ValueError as exc:
-        raise NetworkShadowContractError(
-            f"{name} is not an ISO-8601 timestamp"
-        ) from exc
-
-
-def _american_to_decimal(value: object, name: str) -> float:
-    if isinstance(value, bool):
-        raise NetworkShadowContractError(f"{name} is not a valid American price")
-    try:
-        number = float(value)
-    except (TypeError, ValueError) as exc:
-        raise NetworkShadowContractError(
-            f"{name} is not a valid American price"
-        ) from exc
-    if not isfinite(number) or number == 0:
-        raise NetworkShadowContractError(f"{name} is not a valid American price")
-    decimal = 1.0 + (number / 100.0 if number > 0 else 100.0 / abs(number))
-    return _price(decimal, name)
-
-
-def _provider_event_from_payload(
-    payload: Mapping[str, object], request: TheRundownNetworkRequestV1
-) -> tuple[
-    Mapping[str, object],
-    Mapping[str, object],
-    str,
-    str,
-    str,
-    float,
-    float,
-    float,
-    datetime,
-    str,
-]:
-    events = payload.get("events")
-    if not isinstance(events, list):
-        raise NetworkShadowContractError("TheRundown response events are missing")
-    matches = [
-        event
-        for event in events
-        if isinstance(event, Mapping)
-        and str(event.get("event_id", "")) == request.target.provider_event_id
-    ]
-    if len(matches) != 1:
-        raise NetworkShadowContractError("provider event scope is missing or ambiguous")
-    event = matches[0]
-    event_kickoff = _parse_provider_timestamp(
-        event.get("event_date"), "provider event_date"
-    )
-    if event_kickoff != _utc(request.target.kickoff, "request kickoff"):
-        raise NetworkShadowContractError("provider event kickoff mismatch")
-    teams = event.get("teams")
-    if not isinstance(teams, list):
-        raise NetworkShadowContractError("provider participants are missing")
-    home = next(
-        (item for item in teams if isinstance(item, Mapping) and item.get("is_home")),
-        None,
-    )
-    away = next(
-        (item for item in teams if isinstance(item, Mapping) and item.get("is_away")),
-        None,
-    )
-    if not isinstance(home, Mapping) or not isinstance(away, Mapping):
-        raise NetworkShadowContractError("provider home/away participants are missing")
-    if (
-        str(home.get("team_id")) != request.home_participant_id
-        or str(away.get("team_id")) != request.away_participant_id
-        or str(home.get("name", "")) != request.target.home_team
-        or str(away.get("name", "")) != request.target.away_team
-    ):
-        raise NetworkShadowContractError("provider participant binding mismatch")
-    markets = event.get("markets")
-    if not isinstance(markets, list):
-        raise NetworkShadowContractError("provider markets are missing")
-    market = next(
-        (
-            item
-            for item in markets
-            if isinstance(item, Mapping)
-            and str(item.get("market_id")) == "1"
-            and str(item.get("name", "")).lower() == "moneyline"
-            and item.get("period_id") == 0
-        ),
-        None,
-    )
-    if not isinstance(market, Mapping):
-        raise NetworkShadowContractError("prematch Match Winner market is missing")
-    participants = market.get("participants")
-    if not isinstance(participants, list):
-        raise NetworkShadowContractError("1X2 market participants are missing")
-    by_id = {
-        str(item.get("id")): item for item in participants if isinstance(item, Mapping)
-    }
-    if not {request.home_participant_id, request.away_participant_id, "3"}.issubset(
-        by_id
-    ):
-        raise NetworkShadowContractError("complete regulation 1X2 is missing")
-
-    candidate_affiliates: set[str] | None = None
-    for participant_id in (
-        request.home_participant_id,
-        "3",
-        request.away_participant_id,
-    ):
-        participant = by_id[participant_id]
-        lines = participant.get("lines")
-        if (
-            not isinstance(lines, list)
-            or len(lines) != 1
-            or not isinstance(lines[0], Mapping)
-        ):
-            raise NetworkShadowContractError(
-                "1X2 participant line is missing or ambiguous"
-            )
-        prices = lines[0].get("prices")
-        if not isinstance(prices, Mapping):
-            raise NetworkShadowContractError("1X2 prices are missing")
-        available = {str(key) for key in prices}
-        candidate_affiliates = (
-            available
-            if candidate_affiliates is None
-            else candidate_affiliates & available
-        )
-    if not candidate_affiliates:
-        raise NetworkShadowContractError("no bookmaker has complete 1X2 prices")
-    affiliate_id = min(candidate_affiliates)
-    selected: list[Mapping[str, object]] = []
-    for participant_id in (
-        request.home_participant_id,
-        "3",
-        request.away_participant_id,
-    ):
-        participant = by_id[participant_id]
-        line = participant["lines"][0]
-        price = line["prices"][affiliate_id]
-        if not isinstance(price, Mapping):
-            raise NetworkShadowContractError("bookmaker price record is malformed")
-        selected.append(price)
-    source_timestamp = max(
-        _parse_provider_timestamp(item.get("updated_at"), "provider price updated_at")
-        for item in selected
-    )
-    bookmaker_name = f"affiliate:{affiliate_id}"
-    return (
-        event,
-        market,
-        str(home.get("name")),
-        str(away.get("name")),
-        bookmaker_name,
-        _american_to_decimal(selected[0].get("price"), "home price"),
-        _american_to_decimal(selected[1].get("price"), "draw price"),
-        _american_to_decimal(selected[2].get("price"), "away price"),
-        source_timestamp,
-        affiliate_id,
-    )
 
 
 @dataclass(frozen=True)
@@ -1134,8 +961,9 @@ class TheRundownCanonicalPayloadAdapterV1:
             return _failure_response(request, outcome, response)
         try:
             # Existing deterministic tests may provide a fully normalized
-            # response.  Real provider bodies are identified by ``events`` and
-            # are normalized here, at the HTTP boundary, with their headers.
+            # response.  Actual provider bodies are delegated to the reviewed
+            # provider adapter below; this boundary only maps its canonical
+            # observations and billing evidence into the shadow contract.
             if "events" not in raw:
                 decoded = TheRundownNetworkResponseV1.from_payload(
                     raw,
@@ -1149,208 +977,216 @@ class TheRundownCanonicalPayloadAdapterV1:
                 raise NetworkShadowContractError(
                     "real TheRundown decoding requires adapter_source_sha"
                 )
-            datapoints = _header_int(
-                response.headers, THERUNDOWN_DATAPOINT_HEADER, required=True
-            )
-            used_after = _header_int(
-                response.headers, "x-datapoints-used", required=True
-            )
-            remaining_after = _header_int(
-                response.headers, "x-datapoints-remaining", required=True
-            )
-            limit = _header_int(response.headers, "x-datapoints-limit", required=True)
-            if used_after is None or remaining_after is None or limit is None:
-                raise NetworkShadowContractError(
-                    "provider billing headers are incomplete"
-                )
-            if used_after + remaining_after != limit:
-                raise NetworkShadowContractError(
-                    "provider billing headers contradict their limit"
-                )
-            if used_after < datapoints:
-                raise NetworkShadowContractError(
-                    "provider used counter precedes billed response cost"
-                )
-            before_used = used_after - datapoints
-            before_remaining = remaining_after + datapoints
-            if before_used + before_remaining != limit:
-                raise NetworkShadowContractError(
-                    "provider before/after billing counters do not reconcile"
-                )
-            (
-                event,
-                market,
-                home_team,
-                away_team,
-                bookmaker_identity,
-                home_odds,
-                draw_odds,
-                away_odds,
-                price_source_timestamp,
-                affiliate_id,
-            ) = _provider_event_from_payload(raw, request)
-            bookmaker_header = _header_value(response.headers, "x-bookmakers")
-            if not bookmaker_header:
-                raise NetworkShadowContractError(
-                    "bookmaker identity provenance is missing"
-                )
-            bookmaker_names = [
-                item.strip() for item in bookmaker_header.split(",") if item.strip()
-            ]
-            affiliate_names = dict(
-                zip(
-                    sorted(
-                        {
-                            str(price_id)
-                            for participant in market.get("participants", [])
-                            if isinstance(participant, Mapping)
-                            for line in participant.get("lines", [])
-                            if isinstance(line, Mapping)
-                            for price_id in (line.get("prices", {}) or {})
-                        }
-                    ),
-                    bookmaker_names,
-                )
-            )
-            bookmaker_identity = affiliate_names.get(affiliate_id)
-            if bookmaker_identity is None:
-                raise NetworkShadowContractError(
-                    "selected bookmaker is absent from provider bookmaker provenance"
-                )
-            delay = _header_float(
-                response.headers, "x-data-delay-seconds", required=True
-            )
-            if delay is None:
-                raise NetworkShadowContractError(
-                    "provider snapshot delay provenance is missing"
-                )
-            source_timestamp = response.finished_at - timedelta(seconds=delay)
-            if source_timestamp > response.finished_at:
-                raise NetworkShadowContractError(
-                    "provider snapshot timing provenance is contradictory"
-                )
-            raw_digest = _digest(raw)
-            provider_record_digest = _digest(event)
-            normalized = {
-                "provider": request.target.provider,
-                "league": request.target.league,
-                "fixture_key": request.target.fixture_key,
-                "provider_event_id": request.target.provider_event_id,
-                "bookmaker_identity": bookmaker_identity,
-                "affiliate_id": affiliate_id,
-                "home_participant_id": request.home_participant_id,
-                "away_participant_id": request.away_participant_id,
-                "home_odds": home_odds,
-                "draw_odds": draw_odds,
-                "away_odds": away_odds,
-                "source_timestamp": source_timestamp,
-                "market_id": market.get("market_id"),
-                "period_id": market.get("period_id"),
-            }
-            normalized_digest = _digest(normalized)
-            cascade_digest = _digest(
-                {
-                    "candidate_only": True,
-                    "provider": request.target.provider,
-                    "fixture_key": request.target.fixture_key,
-                    "request_identity": request.request_identity,
-                    "raw_response_digest": raw_digest,
-                    "normalized_record_digest": normalized_digest,
-                }
-            )
-            rate_limit = _header_int(response.headers, "x-rate-limit")
-            tier = _header_value(response.headers, "x-tier") or ""
-            if not tier:
-                raise NetworkShadowContractError(
-                    "provider tier/delay billing provenance is missing"
-                )
-            rate_reset = _header_value(response.headers, "x-rate-limit-reset")
-            rate_remaining = _header_int(response.headers, "x-rate-limit-remaining")
-            rate_reset_at = (
-                _parse_provider_timestamp(rate_reset, "x-rate-limit-reset")
-                if rate_reset
-                else None
-            )
-            raw_metadata = {
-                "billing_unit": THERUNDOWN_BILLING_UNIT,
-                "billing_header": THERUNDOWN_DATAPOINT_HEADER,
-                "x_datapoints": datapoints,
-                "x_datapoints_used_after": used_after,
-                "x_datapoints_remaining_after": remaining_after,
-                "x_datapoints_limit": limit,
-                "x_datapoints_used_before": before_used,
-                "x_datapoints_remaining_before": before_remaining,
-                "x_datapoints_period": _header_value(
-                    response.headers, "x-datapoints-period"
-                ),
-                "x_datapoints_reset": _header_value(
-                    response.headers, "x-datapoints-reset"
-                ),
-                "x_datapoints_monthly_used": _header_int(
-                    response.headers, "x-datapoints-monthly-used"
-                ),
-                "x_datapoints_monthly_remaining": _header_int(
-                    response.headers, "x-datapoints-monthly-remaining"
-                ),
-                "x_datapoints_monthly_limit": _header_int(
-                    response.headers, "x-datapoints-monthly-limit"
-                ),
-                "x_datapoints_monthly_reset": _header_value(
-                    response.headers, "x-datapoints-monthly-reset"
-                ),
-                "source_timestamp_method": "response_finished_at_minus_x_data_delay_seconds",
-                "price_update_timestamp": price_source_timestamp.isoformat(),
-                "rate_limit_limit": rate_limit,
-                "rate_limit_remaining_unavailable": rate_remaining is None,
-                "rate_limit_reset_unavailable": rate_reset_at is None,
-                "bookmaker_header": bookmaker_header,
-                "selected_affiliate_id": affiliate_id,
-                "source_payload_shape": "therundown_events_v1",
-            }
-            return TheRundownNetworkResponseV1(
-                outcome=CanaryOutcome.SUCCESS,
-                provider=request.target.provider,
-                league=request.target.league,
-                fixture_key=request.target.fixture_key,
-                provider_event_id=request.target.provider_event_id,
-                provider_request_id=request.request_identity,
-                home_team=home_team,
-                away_team=away_team,
-                home_participant_id=request.home_participant_id,
-                away_participant_id=request.away_participant_id,
-                bookmaker_identity=bookmaker_identity,
-                source_identity="therundown",
-                source_timestamp=source_timestamp,
-                captured_at=response.finished_at,
-                request_started_at=response.started_at,
-                request_finished_at=response.finished_at,
-                home_odds=home_odds,
-                draw_odds=draw_odds,
-                away_odds=away_odds,
-                adapter_version=self.adapter_version,
-                adapter_source_sha=self.adapter_source_sha,
-                raw_response_digest=raw_digest,
-                provider_record_digest=provider_record_digest,
-                normalized_record_digest=normalized_digest,
-                cascade_evidence_digest=cascade_digest,
-                quota_before=before_remaining,
-                quota_after=remaining_after,
-                quota_cost_units=float(datapoints),
-                datapoint_count=datapoints,
-                rate_limit_remaining=rate_remaining,
-                rate_limit_reset_at=rate_reset_at,
-                account_tier=tier,
-                provider_delay_seconds=delay,
-                http_status=response.status_code,
-                retry_count=0,
-                evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
-                network_execution=True,
-                raw_metadata=raw_metadata,
-            )
-        except NetworkShadowContractError as exc:
+            return self._decode_canonical_provider_response(request, response, raw)
+        except (NetworkShadowContractError, ProductionContractError, ValueError) as exc:
             return _failure_response(
                 request, CanaryOutcome.MALFORMED, response, error_detail=str(exc)
             )
+
+    def _decode_canonical_provider_response(
+        self,
+        request: TheRundownNetworkRequestV1,
+        response: TheRundownNetworkHttpResponseV1,
+        raw: Mapping[str, object],
+    ) -> TheRundownNetworkResponseV1:
+        """Adapt the reviewed provider-neutral observations into B4 evidence.
+
+        The provider adapter owns event selection, participant/market checks,
+        American-to-decimal conversion, row provenance, freshness semantics,
+        and provider digests.  This method only adds the B4 billing envelope
+        and copies canonical observation fields; it never parses ``events``.
+        """
+
+        datapoints = _header_int(
+            response.headers, THERUNDOWN_DATAPOINT_HEADER, required=True
+        )
+        used_after = _header_int(response.headers, "x-datapoints-used", required=True)
+        remaining_after = _header_int(
+            response.headers, "x-datapoints-remaining", required=True
+        )
+        limit = _header_int(response.headers, "x-datapoints-limit", required=True)
+        bookmaker_header = _header_value(response.headers, "x-bookmakers")
+        tier = _header_value(response.headers, "x-tier")
+        if (
+            used_after is None
+            or remaining_after is None
+            or limit is None
+            or not bookmaker_header
+            or not tier
+        ):
+            raise NetworkShadowContractError(
+                "provider billing/provenance headers are incomplete"
+            )
+        if used_after + remaining_after != limit or used_after < datapoints:
+            raise NetworkShadowContractError(
+                "provider billing counters do not reconcile"
+            )
+        before_used = used_after - datapoints
+        before_remaining = remaining_after + datapoints
+        if before_used + before_remaining != limit:
+            raise NetworkShadowContractError(
+                "provider before/after billing counters do not reconcile"
+            )
+        if request.target.provider != THERUNDOWN_PROVIDER_NAME:
+            raise NetworkShadowContractError("canonical provider identity is required")
+
+        fixture = Fixture(
+            request.target.fixture_key,
+            request.target.league,
+            request.target.home_team,
+            request.target.away_team,
+            request.target.kickoff,
+        )
+        raw_response = RawProviderResponse(
+            status_code=response.status_code,
+            payload=raw,
+            headers=dict(response.headers),
+            started_at=response.started_at,
+            completed_at=response.finished_at,
+            latency_ms=round(
+                (response.finished_at - response.started_at).total_seconds() * 1000
+            ),
+        )
+        quota_before = QuotaSnapshot(
+            used=before_used,
+            remaining=before_remaining,
+            rate_limit=_header_int(response.headers, "x-rate-limit"),
+            rate_remaining=_header_int(response.headers, "x-rate-limit-remaining"),
+        )
+        provider_config = ProviderConfig(
+            name=THERUNDOWN_PROVIDER_NAME,
+            enabled=True,
+            league_allowlist=frozenset({request.target.league}),
+            market_allowlist=(MARKET_PREMATCH_1X2,),
+            request_budget=1,
+            timeout_seconds=10.0,
+            max_attempts=1,
+            shadow_only=True,
+            quality_eligible=False,
+            candidate_only=True,
+            credentials_required=False,
+            initial_quota=quota_before,
+            request_cost=datapoints,
+            adapter_version=self.adapter_version,
+        )
+        canonical_authorization = NetworkAuthorizationContract(
+            controlled_shadow_run_ref=request.controlled_shadow_run_id,
+            authorized_providers=(THERUNDOWN_PROVIDER_NAME,),
+            betting_enabled=False,
+            publication_enabled=False,
+        )
+        observations: list[object] = []
+
+        def replay_transport(
+            _provider_request: object, _timeout: float
+        ) -> RawProviderResponse:
+            return raw_response
+
+        canonical_adapter = TheRundownExperimentalAdapter(transport=replay_transport)
+        result = canonical_adapter.fetch(
+            fixture,
+            provider_config,
+            request_identity=request.request_identity,
+            requested_at=response.started_at,
+            provider_priority=0,
+            provider_fixture_id=request.target.provider_event_id,
+            timing_policy=CascadeTimingPolicy(
+                maximum_odds_age_seconds=300,
+                kickoff_tolerance_seconds=60,
+            ),
+            authorization=canonical_authorization,
+            _observations_sink=observations,
+        )
+        if result.state is not ProviderState.AVAILABLE or not observations:
+            raise NetworkShadowContractError(
+                f"canonical TheRundown normalization rejected response: {result.reason}"
+            )
+        canonical_observations = tuple(observations)
+        observation = canonical_observations[0]
+        metadata = dict(observation.metadata)
+        timing = metadata.get("snapshot_timing_provenance")
+        if not isinstance(timing, Mapping):
+            raise NetworkShadowContractError("canonical snapshot provenance is missing")
+        delay = timing.get("provider_data_delay_seconds")
+        if isinstance(delay, bool) or not isinstance(delay, (int, float)) or delay < 0:
+            raise NetworkShadowContractError("canonical provider delay is invalid")
+        rate_state = result.rate_limit_state
+        normalized_digests = [
+            digest_record(item.as_payload()) for item in canonical_observations
+        ]
+        cascade_digest = _digest(
+            {
+                "candidate_only": True,
+                "provider": observation.provider_identity,
+                "fixture_key": observation.fixture_key,
+                "request_identity": observation.request_identity,
+                "raw_response_digest": result.raw_response_digest,
+                "normalized_record_digests": normalized_digests,
+            }
+        )
+        raw_metadata = {
+            **metadata,
+            "billing_unit": THERUNDOWN_BILLING_UNIT,
+            "billing_header": THERUNDOWN_DATAPOINT_HEADER,
+            "x_datapoints": datapoints,
+            "x_datapoints_used_after": used_after,
+            "x_datapoints_remaining_after": remaining_after,
+            "x_datapoints_limit": limit,
+            "x_datapoints_used_before": before_used,
+            "x_datapoints_remaining_before": before_remaining,
+            "bookmaker_header": bookmaker_header,
+            "source_payload_shape": "therundown_events_v1",
+            "source_timestamp_method": (
+                "response_finished_at_minus_x_data_delay_seconds"
+            ),
+            "canonical_normalized_record_digests": normalized_digests,
+            "canonical_normalized_observations": [
+                item.as_payload() for item in canonical_observations
+            ],
+            "canonical_normalized_observation_count": len(canonical_observations),
+            "rate_limit_remaining_unavailable": rate_state.rate_remaining is None,
+            "rate_limit_reset_unavailable": rate_state.rate_reset_at is None,
+        }
+        return TheRundownNetworkResponseV1(
+            outcome=CanaryOutcome.SUCCESS,
+            provider=request.target.provider,
+            league=observation.league_code,
+            fixture_key=observation.fixture_key,
+            provider_event_id=observation.provider_fixture_id,
+            provider_request_id=observation.request_identity,
+            home_team=observation.home_team,
+            away_team=observation.away_team,
+            home_participant_id=request.home_participant_id,
+            away_participant_id=request.away_participant_id,
+            bookmaker_identity=observation.bookmaker_identity,
+            source_identity=observation.provider_identity,
+            source_timestamp=observation.source_timestamp,
+            captured_at=observation.captured_at,
+            request_started_at=observation.request_started_at,
+            request_finished_at=observation.request_completed_at,
+            home_odds=observation.home_odds,
+            draw_odds=observation.draw_odds,
+            away_odds=observation.away_odds,
+            adapter_version=observation.adapter_version,
+            adapter_source_sha=self.adapter_source_sha,
+            raw_response_digest=result.raw_response_digest,
+            provider_record_digest=observation.raw_record_digest,
+            normalized_record_digest=result.normalized_record_digest,
+            cascade_evidence_digest=cascade_digest,
+            quota_before=before_remaining,
+            quota_after=remaining_after,
+            quota_cost_units=float(datapoints),
+            datapoint_count=datapoints,
+            rate_limit_remaining=rate_state.rate_remaining,
+            rate_limit_reset_at=rate_state.rate_reset_at,
+            account_tier=tier,
+            provider_delay_seconds=float(delay),
+            http_status=response.status_code,
+            retry_count=0,
+            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+            network_execution=True,
+            raw_metadata=raw_metadata,
+        )
 
 
 class TheRundownUrlLibHttpClientV1:

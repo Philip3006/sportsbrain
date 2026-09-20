@@ -65,6 +65,12 @@ The provider's observed `X-Rate-Limit` exposes a limit but no remaining/reset
 header; the transport records those fields as explicitly unavailable and never
 maps the limit into a fabricated remaining value.
 
+The network-shadow adapter delegates the actual `events[]` response to the
+reviewed `src/football/odds/therundown.py` semantics. B4 only adapts the
+resulting normalized observations into the shadow response and adds the
+provider billing envelope; it does not maintain a second participant, market,
+price, bookmaker, freshness, or digest parser.
+
 Freshness uses the existing TheRundown snapshot contract:
 `source_timestamp = response_finished_at - X-Data-Delay-Seconds`. The raw
 price-level `updated_at` values remain preserved as provenance, but are not
@@ -103,6 +109,16 @@ five-league CEO authorization. The eventual five-league reconciliation must
 bind the newly captured LL slot to that run's exact authorization, run ID,
 session ID, expiry, configuration digest, and capture attestation.
 
+Run-006 also retains the original provider fixture key
+`therundown:LL:48e87c231045c73e2318f6b4d5327405`. B4 never rewrites that
+historical value. It separately derives the canonical SportsBrain key with
+`make_fixture_key(league, home_team, away_team, kickoff)`, compares that
+derived value to the B4 target fixture key, and fails closed on mismatch. The
+reconciled artifacts expose both identities under `b1_fixture_identity`.
+Historical B1 normalized-record digests remain provider-key provenance; B4's
+canonical normalized digest is independently retained and is never substituted
+or falsified to make the two identity domains appear identical.
+
 B4 accepts the bundle only when all of the following match the `LL` capture in
 the completed PR-103 result byte-for-byte or by canonical timestamp
 comparison:
@@ -113,8 +129,9 @@ comparison:
   authorization ID, expiry, adapter version, adapter source SHA, and raw
   response digest;
 - source and capture timestamps within the 300-second freshness contract;
-- a bookmaker with a complete home/draw/away decimal 1X2 record and matching
-  provider/normalized record digests;
+  - a bookmaker with a complete home/draw/away decimal 1X2 record and matching
+    provider-record provenance; B1's historical normalized-record digests remain
+    bound to its provider fixture identity while B4 retains its canonical digest;
 - quota-before/after, rate-limit, and quota evidence provenance.
 
 The B1 bundle must remain `REAL_OBSERVED`/`CAPTURED`, pre-match, candidate-only,
@@ -160,14 +177,22 @@ authorized run but is not executed by this package:
 python -m src.football.top5_controlled_shadow_authorization_package --execute --package <authorization-package.json> --authorization <ceo-authorization.json> --b1-ll-artifact <b1-ll-evidence-bundle.json>
 ```
 
+The same command with `--preflight` is the zero-network validation mode. It
+requires the package, CEO authorization, and B1 artifact, but never loads the
+provider credential or constructs the HTTP transport. `--execute` is the only
+mode that loads `THERUNDOWN_API_KEY`; it requires the same exact authorization,
+enables the otherwise-disabled configuration only for that invocation, and
+still emits candidate/shadow evidence without issuing a receipt or changing
+authority.
+
 This is the single later Controlled-Shadow command shape after the repaired
 B1 LL bundle is available. It is not run by this offline package. The later
 operator must provide a valid, unexpired, separately approved CEO
 authorization matching the package byte-for-byte on scope, hashes, budgets,
 pacing, retry policy, run/session identifiers, and safety flags. The command
-must retain the PR-103 executor's `allow_live_network=False` default until the
-caller explicitly supplies the new run-specific authorization and enables the
-reviewed network transport. This package itself performs no provider request,
+keeps network disabled in preflight/default operation and only passes the
+reviewed live-network gate after the explicit `--execute` flag, authorization,
+credential, and all executor checks succeed. This package itself performs no provider request,
 does not register a scheduler, and has no receipt-issuer or authority path.
 
 ## Compatibility assumptions

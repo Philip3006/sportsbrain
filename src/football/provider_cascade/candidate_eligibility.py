@@ -140,8 +140,8 @@ class CandidateProviderEligibilityV1:
     quota_before: int | None
     quota_after: int | None
     quota_cost_units: float
-    rate_limit_remaining: int
-    rate_limit_reset_at: datetime
+    rate_limit_remaining: int | None
+    rate_limit_reset_at: datetime | None
     account_tier: str
     provider_delay_seconds: float
     evidence_kind: str = REAL_OBSERVED
@@ -150,6 +150,7 @@ class CandidateProviderEligibilityV1:
     publication: bool = False
     production_activation: bool = False
     monetary_spend_authorized: bool = False
+    rate_limit_reset_unavailable: bool = False
 
     @classmethod
     def from_network_capture(
@@ -221,12 +222,19 @@ class CandidateProviderEligibilityV1:
             publication=response.publication,
             production_activation=response.production_activation,
             monetary_spend_authorized=response.monetary_spend_authorized,
+            rate_limit_reset_unavailable=bool(
+                response.raw_metadata.get("rate_limit_reset_unavailable", False)
+            ),
         )
         candidate.validate(now=now)
         if getattr(capture, "candidate_only", None) is not True:
-            raise CandidateEligibilityError("candidate capture must remain candidate-only")
+            raise CandidateEligibilityError(
+                "candidate capture must remain candidate-only"
+            )
         if getattr(capture, "receipt_eligible", None) is not False:
-            raise CandidateEligibilityError("candidate capture cannot be receipt-eligible")
+            raise CandidateEligibilityError(
+                "candidate capture cannot be receipt-eligible"
+            )
         return candidate
 
     def validate(self, *, now: datetime | None = None) -> None:
@@ -283,7 +291,9 @@ class CandidateProviderEligibilityV1:
         if self.market_type != MARKET_PREMATCH_1X2:
             raise CandidateEligibilityError("candidate market is not pre-match 1X2")
         if self.market_phase != PREMATCH_MARKET_PHASE:
-            raise CandidateEligibilityError("in-play/post-kickoff evidence is forbidden")
+            raise CandidateEligibilityError(
+                "in-play/post-kickoff evidence is forbidden"
+            )
         _odds(self.home_odds, "home_odds")
         _odds(self.draw_odds, "draw_odds")
         _odds(self.away_odds, "away_odds")
@@ -304,7 +314,9 @@ class CandidateProviderEligibilityV1:
             CAPTURE_TIME_ONLY,
             UNKNOWN_TIMESTAMP,
         }:
-            raise CandidateEligibilityError("source timestamp provenance is insufficient")
+            raise CandidateEligibilityError(
+                "source timestamp provenance is insufficient"
+            )
         for name, value in (
             ("raw_response_digest", self.raw_response_digest),
             ("provider_record_digest", self.provider_record_digest),
@@ -323,17 +335,32 @@ class CandidateProviderEligibilityV1:
         if not isfinite(float(self.quota_cost_units)) or self.quota_cost_units < 0:
             raise CandidateEligibilityError("quota cost evidence is invalid")
         _optional_nonnegative_int(self.rate_limit_remaining, "rate_limit_remaining")
-        _utc(self.rate_limit_reset_at, "rate_limit_reset_at")
-        if not isfinite(float(self.provider_delay_seconds)) or self.provider_delay_seconds < 0:
+        if self.rate_limit_reset_at is None:
+            if self.rate_limit_reset_unavailable is not True:
+                raise CandidateEligibilityError(
+                    "rate_limit_reset_at is missing without provider unavailability evidence"
+                )
+        else:
+            _utc(self.rate_limit_reset_at, "rate_limit_reset_at")
+        if (
+            not isfinite(float(self.provider_delay_seconds))
+            or self.provider_delay_seconds < 0
+        ):
             raise CandidateEligibilityError("provider delay evidence is invalid")
         try:
             evidence_kind = _enum_value(self.evidence_kind)
         except (TypeError, ValueError) as exc:
-            raise CandidateEligibilityError("candidate evidence kind is invalid") from exc
+            raise CandidateEligibilityError(
+                "candidate evidence kind is invalid"
+            ) from exc
         if evidence_kind != REAL_OBSERVED:
-            raise CandidateEligibilityError("candidate qualification requires real evidence")
+            raise CandidateEligibilityError(
+                "candidate qualification requires real evidence"
+            )
         if self.network_execution is not True:
-            raise CandidateEligibilityError("candidate real evidence requires network execution")
+            raise CandidateEligibilityError(
+                "candidate real evidence requires network execution"
+            )
         if now is not None and captured > _utc(now, "eligibility now"):
             raise CandidateEligibilityError("capture timestamp is in the future")
 
@@ -417,8 +444,9 @@ class CandidateProviderEligibilityV1:
             no_bet=payload.get("no_bet", True),
             publication=payload.get("publication", False),
             production_activation=payload.get("production_activation", False),
-            monetary_spend_authorized=payload.get(
-                "monetary_spend_authorized", False
+            monetary_spend_authorized=payload.get("monetary_spend_authorized", False),
+            rate_limit_reset_unavailable=payload.get(
+                "rate_limit_reset_unavailable", False
             ),
         )
 
@@ -468,7 +496,9 @@ class CandidateProviderEligibilityV1:
             )
         attestation = getattr(observation, "capture_attestation", None)
         if attestation is None:
-            raise CandidateEligibilityError("candidate observation attestation is missing")
+            raise CandidateEligibilityError(
+                "candidate observation attestation is missing"
+            )
         for name, expected in (
             ("controlled_shadow_run_id", self.controlled_shadow_run_id),
             ("ceo_authorization_id", self.authorization_id),
@@ -479,7 +509,9 @@ class CandidateProviderEligibilityV1:
                     f"candidate eligibility binding mismatch: {name}"
                 )
         if _enum_value(observation.evidence_kind) != REAL_OBSERVED:
-            raise CandidateEligibilityError("candidate observation is not REAL_OBSERVED")
+            raise CandidateEligibilityError(
+                "candidate observation is not REAL_OBSERVED"
+            )
 
     def as_payload(self) -> dict[str, object]:
         self.validate()
@@ -493,6 +525,8 @@ class CandidateProviderEligibilityV1:
             "request_finished_at",
             "rate_limit_reset_at",
         ):
+            if name == "rate_limit_reset_at" and payload[name] is None:
+                continue
             payload[name] = _utc(payload[name], name).isoformat()
         payload["provider_timestamp_provenance"] = _enum_value(
             self.provider_timestamp_provenance

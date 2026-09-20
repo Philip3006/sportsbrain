@@ -9,9 +9,11 @@ change the active Football provider repertoire.
 
 from __future__ import annotations
 
+import argparse
 import json
-from collections.abc import Mapping
-from dataclasses import dataclass
+import os
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from hashlib import sha256
 from math import isfinite
@@ -26,15 +28,23 @@ from src.football.top5_controlled_shadow_provider_qualification import (
     ControlledShadowCaptureAttestation,
     ObservationEvidenceKind,
 )
+from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_network_shadow import (
     NETWORK_SHADOW_SCHEMA_VERSION,
     NetworkShadowContractError,
+    NetworkShadowExecutionBlocked,
     NetworkShadowRunStatus,
+    TheRundownCanonicalPayloadAdapterV1,
+    TheRundownHttpNetworkTransportV1,
     TheRundownNetworkAuthorizationV1,
     TheRundownNetworkConfigurationV1,
+    TheRundownNetworkParticipantScopeV1,
+    TheRundownNetworkRequestScopeV1,
     TheRundownNetworkShadowCaptureV1,
+    TheRundownNetworkShadowExecutorV1,
     TheRundownNetworkShadowRunResultV1,
 )
+from src.football.top5_therundown_shadow_canary import TheRundownCanaryTargetV1
 
 CANONICAL_CANDIDATE_PROVIDER = "therundown_experimental"
 TOP5_LEAGUE_ORDER = ("EPL", "BL1", "LL", "SA", "L1")
@@ -286,6 +296,45 @@ def _validate_b1_ll_artifact_shape(artifact: Mapping[str, object]) -> None:
             )
 
 
+def _derive_b1_fixture_identity(
+    bridge: Mapping[str, object],
+) -> dict[str, object]:
+    """Keep B1's provider key separate from SportsBrain's canonical key."""
+
+    provider_fixture_key = bridge.get("fixture_key")
+    if not isinstance(provider_fixture_key, str) or not provider_fixture_key.strip():
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 provider fixture identity is missing"
+        )
+    league = bridge.get("league")
+    if league not in ("LL", "ESP1"):
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 fixture identity has an unsupported league"
+        )
+    home_team = bridge.get("home_team")
+    away_team = bridge.get("away_team")
+    if not isinstance(home_team, str) or not home_team.strip():
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 home participant identity is missing"
+        )
+    if not isinstance(away_team, str) or not away_team.strip():
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 away participant identity is missing"
+        )
+    kickoff = _timestamp(bridge.get("kickoff"), "B1 kickoff")
+    canonical_fixture_key = make_fixture_key("LL", home_team, away_team, kickoff)
+    return {
+        "provider_fixture_key": provider_fixture_key,
+        "canonical_fixture_key": canonical_fixture_key,
+        "canonical_derivation": "make_fixture_key(league,home_team,away_team,kickoff)",
+        "provider_event_id": bridge.get("provider_event_id"),
+        "league": "LL",
+        "home_team": home_team,
+        "away_team": away_team,
+        "kickoff": kickoff.isoformat(),
+    }
+
+
 def validate_canonical_b1_ll_artifact(
     artifact: object,
     *,
@@ -386,6 +435,7 @@ def validate_canonical_b1_ll_artifact(
         raise ControlledShadowAuthorizationPackageError(
             "B1 bookmaker observations are missing"
         )
+    fixture_identity = _derive_b1_fixture_identity(bridge)
     for item in bookmaker_observations:
         bookmaker = _mapping(item, "B1 bookmaker observation")
         if (
@@ -405,7 +455,10 @@ def validate_canonical_b1_ll_artifact(
         "league": "LL",
         "evidence_kind": bridge.get("evidence_kind"),
         "network_execution": True,
-        "fixture_key": bridge.get("fixture_key"),
+        "provider_fixture_key": fixture_identity["provider_fixture_key"],
+        "canonical_fixture_key": fixture_identity["canonical_fixture_key"],
+        "fixture_identity_provenance": fixture_identity["canonical_derivation"],
+        "fixture_key": fixture_identity["provider_fixture_key"],
         "provider_event_id": bridge.get("provider_event_id"),
         "provider_request_id": bridge.get("provider_request_id"),
         "bookmaker_count": len(bookmaker_observations),
@@ -545,8 +598,13 @@ def _validate_b1_ll_artifact(
     target = capture.target
     request = capture.request
     response = capture.response
+    fixture_identity = _derive_b1_fixture_identity(bridge)
     exact_fields = (
-        ("fixture_key", bridge.get("fixture_key"), target.fixture_key),
+        (
+            "canonical_fixture_key",
+            fixture_identity["canonical_fixture_key"],
+            target.fixture_key,
+        ),
         (
             "provider_event_id",
             bridge.get("provider_event_id"),
@@ -635,14 +693,18 @@ def _validate_b1_ll_artifact(
         raise ControlledShadowAuthorizationPackageError(
             "B1 provider/normalized digest provenance is missing"
         )
+    for digest in provider_digests:
+        _digest_value(digest, "B1 provider record digest")
+    for digest in normalized_digests:
+        _digest_value(digest, "B1 normalized record digest")
     if response.provider_record_digest not in provider_digests:
         raise ControlledShadowAuthorizationPackageError(
             "B1 provider record digest does not match the LL capture"
         )
-    if response.normalized_record_digest not in normalized_digests:
-        raise ControlledShadowAuthorizationPackageError(
-            "B1 normalized record digest does not match the LL capture"
-        )
+    # B1's historical normalized digests are bound to its original provider
+    # fixture key.  B4 must retain them as provenance while independently
+    # digesting the canonical SportsBrain fixture key; conflating the two
+    # would either lose B1 history or falsify the B4 canonical digest.
 
     bookmaker_observations = raw.get("bookmaker_observations")
     if (
@@ -686,8 +748,7 @@ def _validate_b1_ll_artifact(
             and bookmaker_captured == _utc(response.captured_at, "response captured_at")
             and bookmaker.get("provider_record_digest")
             == response.provider_record_digest
-            and bookmaker.get("normalized_record_digest")
-            == response.normalized_record_digest
+            and bookmaker.get("normalized_record_digest") in normalized_digests
         ):
             matching_bookmaker = True
     if not matching_bookmaker:
@@ -933,6 +994,7 @@ class QualificationReadyArtifactsV1:
     qualification_inputs: tuple[Mapping[str, object], ...]
     builder2_receipt_inputs: tuple[Mapping[str, object], ...]
     b1_ll_artifact: Mapping[str, object] | None = None
+    b1_fixture_identity: Mapping[str, object] | None = None
     cascade_evidence_available: bool = False
     qualification_status: str = "PENDING_BUILDER2_VALIDATION"
     receipt_eligible: bool = False
@@ -977,6 +1039,17 @@ class QualificationReadyArtifactsV1:
             )
         if self.b1_ll_artifact is not None:
             _validate_b1_ll_artifact_shape(self.b1_ll_artifact)
+        if self.b1_fixture_identity is not None:
+            identity = _mapping(self.b1_fixture_identity, "B1 fixture identity")
+            for name in (
+                "provider_fixture_key",
+                "canonical_fixture_key",
+                "canonical_derivation",
+            ):
+                if not str(identity.get(name, "")).strip():
+                    raise ControlledShadowAuthorizationPackageError(
+                        f"B1 fixture identity is missing: {name}"
+                    )
 
     def as_payload(self) -> dict[str, object]:
         self.validate()
@@ -997,6 +1070,11 @@ class QualificationReadyArtifactsV1:
             ],
             "b1_ll_artifact": (
                 dict(self.b1_ll_artifact) if self.b1_ll_artifact is not None else None
+            ),
+            "b1_fixture_identity": (
+                dict(self.b1_fixture_identity)
+                if self.b1_fixture_identity is not None
+                else None
             ),
             "cascade_evidence_available": False,
             "qualification_status": self.qualification_status,
@@ -1282,6 +1360,7 @@ def reconcile_controlled_shadow_run(
     if len(set(request_ids)) != len(request_ids):
         raise ControlledShadowAuthorizationPackageError("duplicate request identity")
     validated_b1_ll_artifact = None
+    b1_fixture_identity = None
     if b1_ll_artifact is not None:
         validated_b1_ll_artifact = _validate_b1_ll_artifact(
             b1_ll_artifact,
@@ -1289,6 +1368,12 @@ def reconcile_controlled_shadow_run(
             configuration=configuration,
             authorization=authorization,
             now=now,
+        )
+        b1_fixture_identity = _derive_b1_fixture_identity(
+            _mapping(
+                validated_b1_ll_artifact.get("b1_bridge_inputs"),
+                "B1 bridge inputs",
+            )
         )
     if result.request_count != len(result.captures):
         raise ControlledShadowAuthorizationPackageError(
@@ -1329,6 +1414,7 @@ def reconcile_controlled_shadow_run(
             dict(capture.builder2_receipt_input) for capture in ordered_captures
         ),
         b1_ll_artifact=validated_b1_ll_artifact,
+        b1_fixture_identity=b1_fixture_identity,
     )
     artifacts.validate()
     reconciliation = FiveLeagueReconciliationV1(
@@ -1381,6 +1467,315 @@ def reconcile_controlled_shadow_run_with_b1_ll_artifact(
         now=now,
         b1_ll_artifact=b1_ll_artifact,
     )
+
+
+def _cli_mapping(value: object, name: str) -> Mapping[str, object]:
+    return _mapping(value, name)
+
+
+def _target_from_payload(value: object) -> TheRundownCanaryTargetV1:
+    raw = _cli_mapping(value, "target")
+    return TheRundownCanaryTargetV1(
+        provider=raw.get("provider", ""),
+        league=raw.get("league", ""),
+        fixture_key=raw.get("fixture_key", ""),
+        provider_event_id=raw.get("provider_event_id", ""),
+        home_team=raw.get("home_team", ""),
+        away_team=raw.get("away_team", ""),
+        kickoff=_timestamp(raw.get("kickoff"), "target kickoff"),
+    )
+
+
+def _configuration_from_payload(
+    value: object,
+) -> TheRundownNetworkConfigurationV1:
+    raw = _cli_mapping(value, "configuration")
+    targets_raw = raw.get("targets")
+    participants_raw = raw.get("participant_scope")
+    requests_raw = raw.get("request_scope")
+    if not isinstance(targets_raw, (tuple, list)):
+        raise ControlledShadowAuthorizationPackageError(
+            "configuration targets are missing"
+        )
+    if not isinstance(participants_raw, (tuple, list)):
+        raise ControlledShadowAuthorizationPackageError(
+            "configuration participant scope is missing"
+        )
+    if not isinstance(requests_raw, (tuple, list)):
+        raise ControlledShadowAuthorizationPackageError(
+            "configuration request scope is missing"
+        )
+    participants = tuple(
+        TheRundownNetworkParticipantScopeV1(
+            fixture_key=_cli_mapping(item, "participant scope").get("fixture_key", ""),
+            home_participant_id=_cli_mapping(item, "participant scope").get(
+                "home_participant_id", ""
+            ),
+            away_participant_id=_cli_mapping(item, "participant scope").get(
+                "away_participant_id", ""
+            ),
+        )
+        for item in participants_raw
+    )
+    requests = tuple(
+        TheRundownNetworkRequestScopeV1(
+            fixture_key=_cli_mapping(item, "request scope").get("fixture_key", ""),
+            request_identity=_cli_mapping(item, "request scope").get(
+                "request_identity", ""
+            ),
+        )
+        for item in requests_raw
+    )
+    return TheRundownNetworkConfigurationV1(
+        targets=tuple(_target_from_payload(item) for item in targets_raw),
+        participant_scope=participants,
+        request_scope=requests,
+        adapter_version=raw.get("adapter_version", ""),
+        adapter_source_sha=raw.get("adapter_source_sha", ""),
+        maximum_request_count=raw.get("maximum_request_count", 0),
+        maximum_datapoints=raw.get("maximum_datapoints", 0),
+        maximum_quota_cost_units=raw.get("maximum_quota_cost_units", 0.0),
+        request_quota_cost_units=raw.get("request_quota_cost_units", 0.0),
+        maximum_source_age_seconds=raw.get("maximum_source_age_seconds", 0),
+        minimum_interval_seconds=raw.get("minimum_interval_seconds", 0.0),
+        maximum_retries=raw.get("maximum_retries", 0),
+        enabled=raw.get("enabled", False),
+        no_bet=raw.get("no_bet", True),
+        publication=raw.get("publication", False),
+        production_activation=raw.get("production_activation", False),
+        monetary_spend_authorized=raw.get("monetary_spend_authorized", False),
+        configuration_digest=raw.get("configuration_digest", ""),
+    )
+
+
+def _authorization_from_payload(
+    value: object,
+) -> TheRundownNetworkAuthorizationV1:
+    raw = _cli_mapping(value, "authorization")
+    targets_raw = raw.get("targets")
+    participants_raw = raw.get("participant_scope")
+    requests_raw = raw.get("request_scope")
+    if not all(
+        isinstance(items, (tuple, list))
+        for items in (targets_raw, participants_raw, requests_raw)
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "authorization scope is incomplete"
+        )
+    participants = tuple(
+        TheRundownNetworkParticipantScopeV1(
+            fixture_key=_cli_mapping(item, "authorization participant scope").get(
+                "fixture_key", ""
+            ),
+            home_participant_id=_cli_mapping(
+                item, "authorization participant scope"
+            ).get("home_participant_id", ""),
+            away_participant_id=_cli_mapping(
+                item, "authorization participant scope"
+            ).get("away_participant_id", ""),
+        )
+        for item in participants_raw
+    )
+    requests = tuple(
+        TheRundownNetworkRequestScopeV1(
+            fixture_key=_cli_mapping(item, "authorization request scope").get(
+                "fixture_key", ""
+            ),
+            request_identity=_cli_mapping(item, "authorization request scope").get(
+                "request_identity", ""
+            ),
+        )
+        for item in requests_raw
+    )
+    return TheRundownNetworkAuthorizationV1(
+        authorization_id=raw.get("authorization_id", ""),
+        ceo_authorization_identity=raw.get("ceo_authorization_identity", ""),
+        controlled_shadow_run_id=raw.get("controlled_shadow_run_id", ""),
+        qualification_session_id=raw.get("qualification_session_id", ""),
+        provider=raw.get("provider", ""),
+        targets=tuple(_target_from_payload(item) for item in targets_raw),
+        participant_scope=participants,
+        request_scope=requests,
+        adapter_version=raw.get("adapter_version", ""),
+        adapter_source_sha=raw.get("adapter_source_sha", ""),
+        configuration_digest=raw.get("configuration_digest", ""),
+        maximum_request_count=raw.get("maximum_request_count", 0),
+        maximum_datapoints=raw.get("maximum_datapoints", 0),
+        maximum_quota_cost_units=raw.get("maximum_quota_cost_units", 0.0),
+        request_quota_cost_units=raw.get("request_quota_cost_units", 0.0),
+        maximum_source_age_seconds=raw.get("maximum_source_age_seconds", 0),
+        issued_at=_timestamp(raw.get("issued_at"), "authorization issued_at"),
+        expires_at=_timestamp(raw.get("expires_at"), "authorization expires_at"),
+        minimum_interval_seconds=raw.get("minimum_interval_seconds", 0.0),
+        maximum_retries=raw.get("maximum_retries", 0),
+        no_bet=raw.get("no_bet", True),
+        publication=raw.get("publication", False),
+        production_activation=raw.get("production_activation", False),
+        monetary_spend_authorized=raw.get("monetary_spend_authorized", False),
+        schema_version=raw.get("schema_version", NETWORK_SHADOW_SCHEMA_VERSION),
+    )
+
+
+def _read_cli_json(path: str, name: str) -> Mapping[str, object]:
+    try:
+        raw = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            f"{name} cannot be read as JSON"
+        ) from exc
+    return _cli_mapping(raw, name)
+
+
+def _load_cli_inputs(
+    package_path: str,
+    authorization_path: str,
+    b1_path: str,
+) -> tuple[
+    ControlledShadowAuthorizationPackageV1,
+    TheRundownNetworkConfigurationV1,
+    TheRundownNetworkConfigurationV1,
+    TheRundownNetworkAuthorizationV1,
+]:
+    package_raw = _read_cli_json(package_path, "authorization package")
+    package = ControlledShadowAuthorizationPackageV1(
+        configuration_payload=_cli_mapping(
+            package_raw.get("configuration"), "package configuration"
+        ),
+        authorization_template=_cli_mapping(
+            package_raw.get("authorization_template"), "authorization template"
+        ),
+        package_digest=package_raw.get("package_digest", ""),
+        network_execution_enabled=package_raw.get("network_execution_enabled", False),
+        receipt_issuer_present=package_raw.get("receipt_issuer_present", False),
+        active_provider_authority=package_raw.get("active_provider_authority", False),
+        scheduler_registered=package_raw.get("scheduler_registered", False),
+        publication=package_raw.get("publication", False),
+        production_activation=package_raw.get("production_activation", False),
+        betting=package_raw.get("betting", False),
+        monetary_spend_authorized=package_raw.get("monetary_spend_authorized", False),
+    )
+    package.validate()
+    packaged_configuration = _configuration_from_payload(package.configuration_payload)
+    packaged_configuration.validate()
+    _require_canonical_targets(packaged_configuration)
+    _require_final_shadow_budget(packaged_configuration)
+    execution_configuration = replace(
+        packaged_configuration,
+        enabled=True,
+        configuration_digest="",
+    )
+    execution_configuration = replace(
+        execution_configuration,
+        configuration_digest=execution_configuration.computed_configuration_digest,
+    )
+    authorization = _authorization_from_payload(
+        _read_cli_json(authorization_path, "CEO authorization")
+    )
+    # The package remains disabled.  The explicit execution flag is the only
+    # place where the separately authorized enabled digest is accepted.
+    authorization.validate(execution_configuration)
+    validate_canonical_b1_ll_artifact(b1_path)
+    return package, packaged_configuration, execution_configuration, authorization
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Guarded CLI: preflight is offline; execution requires every explicit gate."""
+
+    parser = argparse.ArgumentParser(
+        description="Controlled-shadow package preflight or explicitly authorized execution"
+    )
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--preflight", action="store_true")
+    mode.add_argument("--execute", action="store_true")
+    parser.add_argument("--package", required=True)
+    parser.add_argument("--authorization", required=True)
+    parser.add_argument("--b1-ll-artifact", required=True)
+    parser.add_argument("--endpoint")
+    args = parser.parse_args(argv)
+    try:
+        _, packaged_configuration, execution_configuration, authorization = (
+            _load_cli_inputs(
+                args.package,
+                args.authorization,
+                args.b1_ll_artifact,
+            )
+        )
+        if args.preflight:
+            print(
+                json.dumps(
+                    {
+                        "status": "PREFLIGHT_READY",
+                        "network_calls": 0,
+                        "network_enabled_by_default": packaged_configuration.enabled,
+                        "provider": CANONICAL_CANDIDATE_PROVIDER,
+                        "leagues": list(TOP5_LEAGUE_ORDER),
+                        "maximum_request_count": execution_configuration.maximum_request_count,
+                        "maximum_datapoints": execution_configuration.maximum_datapoints,
+                        "maximum_quota_cost_units": execution_configuration.maximum_quota_cost_units,
+                        "maximum_retries": execution_configuration.maximum_retries,
+                    },
+                    sort_keys=True,
+                )
+            )
+            return 0
+        endpoint = args.endpoint or os.environ.get(
+            "THERUNDOWN_ENDPOINT", "https://therundown.io/api/v2"
+        )
+        api_key = os.environ.get("THERUNDOWN_API_KEY")
+        if not api_key:
+            raise NetworkShadowExecutionBlocked(
+                "THERUNDOWN_API_KEY is required only for explicit execution"
+            )
+        transport = TheRundownHttpNetworkTransportV1(
+            endpoint=endpoint,
+            api_key=api_key,
+            adapter=TheRundownCanonicalPayloadAdapterV1(
+                adapter_version=execution_configuration.adapter_version,
+                adapter_source_sha=execution_configuration.adapter_source_sha,
+            ),
+        )
+        executor = TheRundownNetworkShadowExecutorV1(allow_live_network=True)
+        result = executor.run(
+            execution_configuration,
+            authorization,
+            transport=transport,
+        )
+        reconciliation = reconcile_controlled_shadow_run_with_b1_ll_artifact(
+            result,
+            execution_configuration,
+            authorization,
+            args.b1_ll_artifact,
+            now=datetime.now(timezone.utc),
+        )
+        print(
+            json.dumps(
+                {
+                    "status": "CONTROLLED_SHADOW_RECONCILED",
+                    "network_calls": len(transport.calls),
+                    "request_count": result.request_count,
+                    "datapoint_count": result.datapoint_count,
+                    "quota_cost_units": result.quota_cost_units,
+                    "reconciliation_digest": reconciliation.reconciliation_digest,
+                    "receipt_eligible": False,
+                    "authority_changed": False,
+                    "publication": False,
+                    "production_activation": False,
+                    "betting": False,
+                },
+                sort_keys=True,
+            )
+        )
+        return 0
+    except (
+        ControlledShadowAuthorizationPackageError,
+        NetworkShadowContractError,
+    ) as exc:
+        print(json.dumps({"status": "BLOCKED", "reason": str(exc)}, sort_keys=True))
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
 
 
 __all__ = [

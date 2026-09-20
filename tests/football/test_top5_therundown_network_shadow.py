@@ -574,7 +574,10 @@ def test_real_run006_http_shape_uses_provider_billed_datapoints_and_headers():
     assert response.outcome is CanaryOutcome.SUCCESS
     assert response.evidence_kind is ObservationEvidenceKind.REAL_OBSERVED
     assert response.network_execution is True
-    assert response.bookmaker_identity == "betmgm"
+    # The B4 seam inherits the reviewed adapter's canonical affiliate identity;
+    # the provider header remains retained as provenance rather than being
+    # reparsed into a second bookmaker mapping.
+    assert response.bookmaker_identity == "affiliate:19"
     assert (response.home_odds, response.draw_odds, response.away_odds) == (
         2.05,
         3.05,
@@ -594,6 +597,16 @@ def test_real_run006_http_shape_uses_provider_billed_datapoints_and_headers():
     assert response.raw_metadata["x_datapoints_remaining_after"] == 19945
     assert response.raw_metadata["rate_limit_remaining_unavailable"] is True
     assert response.raw_metadata["rate_limit_reset_unavailable"] is True
+    assert response.raw_metadata["canonical_normalized_observation_count"] == 3
+    assert response.raw_metadata["canonical_normalized_record_digests"] == [
+        "32edb950950d0c699a7feae3dbc94d786fb0c797ffe2e6a46fc384a1e97bcaac",
+        "8133c4d02c763e80332f874ca4a7d043890f3c707b1d0d026241d5ff305567db",
+        "23da06f57a963c0bbfe8445f9aab3058f201243b5265533a751fa6567e91254c",
+    ]
+    assert [
+        item["bookmaker_identity"]
+        for item in response.raw_metadata["canonical_normalized_observations"]
+    ] == ["affiliate:19", "affiliate:22", "affiliate:23"]
     assert response.provider_record_digest == (
         "2eabb443c539240dc5db0866d69e500b1b62b8d943ca42d03e4b3aae818eb74b"
     )

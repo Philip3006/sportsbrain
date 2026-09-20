@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import replace
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -18,6 +19,7 @@ from src.football.top5_controlled_shadow_authorization_package import (
     TOP5_LEAGUE_ORDER,
     ControlledShadowAuthorizationPackageError,
     derive_bounded_shadow_budget,
+    main,
     prepare_authorization_package,
     reconcile_controlled_shadow_run,
     reconcile_controlled_shadow_run_with_b1_ll_artifact,
@@ -29,6 +31,10 @@ from src.football.top5_controlled_shadow_provider_qualification import (
 from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_network_shadow import (
     NetworkShadowRunStatus,
+    TheRundownCanaryTargetV1,
+    TheRundownCanonicalPayloadAdapterV1,
+    TheRundownNetworkParticipantScopeV1,
+    TheRundownNetworkRequestScopeV1,
     TheRundownNetworkShadowExecutorV1,
     TheRundownReplayTransportV1,
 )
@@ -38,8 +44,124 @@ from tests.football.test_top5_therundown_network_shadow import (
     _configuration,
     _NetworkStubTransport,
     _response,
+    _run006_http_fixture,
     _targets,
 )
+
+UTC = timezone.utc
+
+
+def _run006_full_network_run():
+    """Replay Run-006 through B4 with canonical LL identity and billing."""
+
+    run_now = datetime(2026, 9, 19, 22, 40, 36, 431436, tzinfo=UTC)
+    league_teams = {
+        "EPL": ("Arsenal", "Chelsea"),
+        "BL1": ("Bayern", "Dortmund"),
+        "LL": ("Getafe", "Málaga"),
+        "SA": ("Inter", "Milan"),
+        "L1": ("PSG", "Lyon"),
+    }
+    event_ids = {
+        league: f"event-{league}" for league in TOP5_LEAGUE_ORDER if league != "LL"
+    }
+    event_ids["LL"] = "48e87c231045c73e2318f6b4d5327405"
+    targets = []
+    for league in TOP5_LEAGUE_ORDER:
+        home, away = league_teams[league]
+        kickoff = datetime(2026, 9, 20, 12, tzinfo=UTC)
+        targets.append(
+            TheRundownCanaryTargetV1(
+                provider=CANONICAL_CANDIDATE_PROVIDER,
+                league=league,
+                fixture_key=make_fixture_key(league, home, away, kickoff),
+                provider_event_id=event_ids[league],
+                home_team=home,
+                away_team=away,
+                kickoff=kickoff,
+            )
+        )
+    participants = tuple(
+        TheRundownNetworkParticipantScopeV1(
+            fixture_key=target.fixture_key,
+            home_participant_id=(
+                "3952" if target.league == "LL" else f"home-{target.league}"
+            ),
+            away_participant_id=(
+                "133109" if target.league == "LL" else f"away-{target.league}"
+            ),
+        )
+        for target in targets
+    )
+    request_scope = tuple(
+        TheRundownNetworkRequestScopeV1(
+            fixture_key=target.fixture_key,
+            request_identity=(
+                "therundown-ll:top5-laliga-real-capture-20260920-006:2026-09-20"
+                if target.league == "LL"
+                else f"request-{target.league}"
+            ),
+        )
+        for target in targets
+    )
+    configuration = _configuration(
+        targets=tuple(targets),
+        participant_scope=participants,
+        request_scope=request_scope,
+        enabled=True,
+        adapter_version="therundown-v2-experimental:2",
+        adapter_source_sha=(
+            "67f67ff97cb072bfca03bae688acbf87074359be9af31a36d890483ecd4fe152"
+        ),
+        maximum_datapoints=275,
+        maximum_quota_cost_units=275.0,
+        request_quota_cost_units=55.0,
+        minimum_interval_seconds=1.1,
+    )
+    authorization = _authorization(
+        configuration,
+        provider=CANONICAL_CANDIDATE_PROVIDER,
+        authorization_id="CEO-TOP5-LALIGA-NEXTDATE-CAPTURE-20260920-006",
+        controlled_shadow_run_id="top5-laliga-real-capture-20260920-006",
+        qualification_session_id="top5-laliga-qualification-20260920-006",
+        issued_at=datetime(2026, 9, 19, tzinfo=UTC),
+        expires_at=datetime(2026, 9, 20, 1, tzinfo=UTC),
+    )
+    _, http_response = _run006_http_fixture()
+    canonical_adapter = TheRundownCanonicalPayloadAdapterV1(
+        adapter_version=configuration.adapter_version,
+        adapter_source_sha=configuration.adapter_source_sha,
+    )
+
+    def response_factory(request):
+        if request.target.league == "LL":
+            return canonical_adapter.decode_response(request, http_response)
+        return _response(
+            request,
+            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+            network_execution=True,
+            adapter_version=configuration.adapter_version,
+            adapter_source_sha=configuration.adapter_source_sha,
+            source_timestamp=run_now,
+            captured_at=run_now,
+            request_started_at=run_now.replace(microsecond=0),
+            request_finished_at=run_now,
+            datapoint_count=55,
+            quota_cost_units=55.0,
+            quota_before=20000,
+            quota_after=19945,
+        )
+
+    result = TheRundownNetworkShadowExecutorV1(
+        clock=lambda: run_now,
+        pacer=lambda _: None,
+        allow_live_network=True,
+    ).run(
+        configuration,
+        authorization,
+        transport=_NetworkStubTransport(response_factory),
+    )
+    return result, configuration, authorization, run_now
 
 
 def _network_run():
@@ -555,6 +677,109 @@ def test_run006_b1_artifact_passes_offline_b4_preflight_without_authority():
     assert summary["bookmaker_count"] == 3
     assert summary["candidate_only"] is True
     assert summary["receipt_or_authority_issued"] is False
+
+
+def test_run006_b1_artifact_passes_full_b4_reconciliation_with_identity_bridge():
+    artifact = Path("/private/tmp/top5-b1-laliga-final-evidence.json")
+    if not artifact.exists():
+        pytest.skip("canonical offline Run-006 artifact is not present")
+    result, configuration, authorization, run_now = _run006_full_network_run()
+    reconciliation = reconcile_controlled_shadow_run_with_b1_ll_artifact(
+        result,
+        configuration,
+        authorization,
+        artifact,
+        now=run_now,
+    )
+    identity = reconciliation.artifacts.b1_fixture_identity
+    assert identity["provider_fixture_key"] == (
+        "therundown:LL:48e87c231045c73e2318f6b4d5327405"
+    )
+    assert identity["canonical_fixture_key"] == (
+        "LL|getafe|malaga|2026-09-20T12:00:00+00:00"
+    )
+    assert identity["canonical_fixture_key"] == reconciliation.fixture_keys[2]
+    assert (
+        reconciliation.artifacts.b1_ll_artifact["b1_bridge_inputs"]["fixture_key"]
+        == (identity["provider_fixture_key"])
+    )
+    assert reconciliation.artifacts.b1_ll_artifact["raw_response_digest"] == (
+        "6df5aa61479bbeaa85f46b4a1f66c7c3a40d88736b9b7f08555f9eb0e0f276c4"
+    )
+    assert len(reconciliation.artifacts.b1_ll_artifact["bookmaker_observations"]) == 3
+    assert reconciliation.datapoint_count == 275
+    assert reconciliation.quota_cost_units == 275.0
+    assert reconciliation.artifacts.qualification_inputs[2]
+    assert (
+        reconciliation.artifacts.builder2_receipt_inputs[2]["issuer_present"] is False
+    )
+    assert reconciliation.artifacts.receipt_issuer_present is False
+    assert reconciliation.artifacts.authority_changed is False
+
+
+def test_guarded_cli_preflight_is_zero_network_and_requires_valid_authorization(
+    tmp_path, monkeypatch, capsys
+):
+    _, enabled_configuration, authorization, _ = _run006_full_network_run()
+    disabled_configuration = replace(
+        enabled_configuration, enabled=False, configuration_digest=""
+    )
+    disabled_configuration = replace(
+        disabled_configuration,
+        configuration_digest=disabled_configuration.computed_configuration_digest,
+    )
+    package = prepare_authorization_package(disabled_configuration)
+    package_path = tmp_path / "authorization-package.json"
+    authorization_path = tmp_path / "ceo-authorization.json"
+    package_path.write_text(json.dumps(package.as_payload()), encoding="utf-8")
+    future_authorization = replace(
+        authorization,
+        issued_at=datetime(2026, 1, 1, tzinfo=UTC),
+        expires_at=datetime(2030, 1, 1, tzinfo=UTC),
+    )
+    authorization_path.write_text(
+        json.dumps(future_authorization.as_payload()), encoding="utf-8"
+    )
+    network_calls = []
+    monkeypatch.setattr(
+        "src.football.top5_therundown_network_shadow.urlopen",
+        lambda *args, **kwargs: network_calls.append((args, kwargs)),
+    )
+    exit_code = main(
+        [
+            "--preflight",
+            "--package",
+            str(package_path),
+            "--authorization",
+            str(authorization_path),
+            "--b1-ll-artifact",
+            "/private/tmp/top5-b1-laliga-final-evidence.json",
+        ]
+    )
+    output = json.loads(capsys.readouterr().out)
+    assert exit_code == 0
+    assert output["status"] == "PREFLIGHT_READY"
+    assert output["network_calls"] == 0
+    assert network_calls == []
+
+    invalid = dict(future_authorization.as_payload())
+    invalid["configuration_digest"] = "0" * 64
+    authorization_path.write_text(json.dumps(invalid), encoding="utf-8")
+    assert (
+        main(
+            [
+                "--preflight",
+                "--package",
+                str(package_path),
+                "--authorization",
+                str(authorization_path),
+                "--b1-ll-artifact",
+                "/private/tmp/top5-b1-laliga-final-evidence.json",
+            ]
+        )
+        == 1
+    )
+    assert json.loads(capsys.readouterr().out)["status"] == "BLOCKED"
 
 
 def test_final_bounded_budget_is_derived_from_observed_ll_cost():
