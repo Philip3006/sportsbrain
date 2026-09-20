@@ -68,3 +68,41 @@ model_authorized = false
 signal_time_authorized = false
 provider_network_execution = false
 ```
+
+## Canonical B4 five-league one-shot path
+
+For the completed B4 controlled-shadow package, use the dedicated five-league
+mode. The input is one external JSON package containing the canonical
+`TheRundownNetworkShadowRunResultV1`, full target/request/capture envelopes for
+all five captures, and five `Builder2QualificationIntakeManifestV1` objects.
+The package must cover exactly `BL1`, `EPL`, `LL`, `SA`, and `L1`; it must be
+`COMPLETED_NETWORK` and pass the existing B4-to-B2 intake gate.
+
+```text
+python3 -m src.football.top5_b2_qualification_batch_orchestrator \
+  --five-league-input /absolute/external/b4-five-league-package.json \
+  --five-league-output /absolute/external/b2-five-league-receipts.json
+```
+
+This path performs no network or provider work. It either derives all five
+`Builder2QualificationReceiptV1` objects and one deterministic,
+non-authorizing Builder-3 input dossier, or writes no new output. The single
+output JSON is the atomic commit unit; an existing identical output is an
+idempotent no-op and a conflicting output path fails closed.
+
+The dossier contains the five receipt IDs/digests and qualification-result
+digests, provider/run/session/CEO identities, configuration and adapter source
+SHA bindings, per-league fixture/event/request/participant/bookmaker identities,
+complete 1X2, kickoff/source/captured timestamps, raw/provider/normalized/cascade
+and attestation digests, quota/datapoint/rate-limit/tier/delay/HTTP/retry
+provenance, source-artifact digests, and an overall dossier digest. It
+explicitly carries no provider authority, publication, activation, betting,
+model, or signal-time authorization.
+
+The output is deterministic: the same valid B4 package produces the same five
+receipt identities, receipt digests, dossier identity, and dossier digest.
+Missing or duplicate leagues, synthetic/replay evidence, mixed authorization
+identities, altered observations, stale or contradictory quota evidence, and
+any provider other than the candidate-only identity fail before the output
+file is committed. The canonical league order in the dossier is `BL1`, `EPL`,
+`LL`, `SA`, `L1`.
