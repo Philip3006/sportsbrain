@@ -17,7 +17,7 @@ import json
 import re
 import time
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from hashlib import sha256
@@ -29,6 +29,7 @@ from urllib.request import Request, urlopen
 
 from src.football.odds.therundown import (
     THERUNDOWN_ADAPTER_VERSION,
+    THERUNDOWN_BASE_URL,
     THERUNDOWN_PROVIDER_NAME,
     TheRundownExperimentalAdapter,
 )
@@ -64,6 +65,7 @@ NETWORK_REQUEST_SCHEMA_VERSION = "top5-therundown-network-request-v1"
 NETWORK_RESPONSE_SCHEMA_VERSION = "top5-therundown-network-response-v1"
 NETWORK_RUN_SCHEMA_VERSION = "top5-therundown-network-run-v1"
 QUOTA_HEADROOM_SCHEMA_VERSION = "top5-therundown-quota-headroom-v1"
+QUOTA_PROOF_SCHEMA_VERSION = "top5-therundown-quota-proof-v1"
 TOP5_CONTROLLED_SHADOW_REQUEST_COUNT = 5
 THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST = 55
 TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET = (
@@ -71,6 +73,11 @@ TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET = (
 )
 TOP5_CONTROLLED_SHADOW_QUOTA_BUDGET = float(TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET)
 TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS = 1.1
+QUOTA_PROOF_MAX_REQUEST_COUNT = 1
+QUOTA_PROOF_MAX_DATAPOINTS = THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST
+QUOTA_PROOF_MINIMUM_REMAINING_DATAPOINTS = TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET
+QUOTA_PROOF_MAXIMUM_AGE_SECONDS = 300
+QUOTA_PROOF_AFFILIATE_IDS = ("19", "22", "23")
 _SHA_RE = re.compile(r"^[0-9a-fA-F]{40,64}$")
 _SAFE_EVIDENCE_KINDS = frozenset(
     {
@@ -1058,6 +1065,530 @@ class TheRundownNetworkHttpResponseV1:
             raise NetworkShadowContractError("HTTP timeout flag is invalid")
 
 
+_QUOTA_PROOF_SAFE_HEADERS = frozenset(
+    {
+        "x-datapoints",
+        "x-datapoints-used",
+        "x-datapoints-remaining",
+        "x-datapoints-limit",
+        "x-datapoints-period",
+        "x-datapoints-reset",
+        "x-tier",
+        "x-rate-limit",
+        "x-rate-limit-remaining",
+        "x-rate-limit-reset",
+        "x-ratelimit-limit",
+        "x-ratelimit-remaining",
+        "x-ratelimit-reset",
+        "x-data-delay-seconds",
+        "x-history-access",
+        "x-live-odds-access",
+        "x-websocket-access",
+    }
+)
+
+
+def _lower_headers(headers: Mapping[str, object]) -> dict[str, str]:
+    return {
+        str(key).casefold(): str(value).strip()
+        for key, value in headers.items()
+        if str(value).strip()
+    }
+
+
+def _safe_quota_proof_headers(headers: Mapping[str, object]) -> dict[str, str]:
+    lowered = _lower_headers(headers)
+    return {
+        key: value
+        for key, value in sorted(lowered.items())
+        if key in _QUOTA_PROOF_SAFE_HEADERS
+    }
+
+
+def _header_int(headers: Mapping[str, str], name: str) -> int:
+    raw = headers.get(name)
+    if raw is None:
+        raise NetworkShadowExecutionBlocked(f"quota proof header missing: {name}")
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise NetworkShadowExecutionBlocked(
+            f"quota proof header malformed: {name}"
+        ) from exc
+    if value < 0:
+        raise NetworkShadowExecutionBlocked(f"quota proof header is negative: {name}")
+    return value
+
+
+def _header_timestamp(headers: Mapping[str, str], name: str) -> datetime:
+    raw = headers.get(name)
+    if raw is None:
+        raise NetworkShadowExecutionBlocked(f"quota proof header missing: {name}")
+    try:
+        value = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise NetworkShadowExecutionBlocked(
+            f"quota proof header malformed: {name}"
+        ) from exc
+    return _utc(value, f"quota proof {name}")
+
+
+@dataclass(frozen=True)
+class TheRundownQuotaProofRequestV1:
+    """One provider-native, account-bound request used only to prove headroom."""
+
+    proof_id: str
+    provider: str
+    provider_event_id: str
+    authorization_package_digest: str
+    configuration_digest: str
+    authorization_id: str
+    controlled_shadow_run_id: str
+    qualification_session_id: str
+    ceo_authorization_identity: str
+    adapter_version: str
+    adapter_source_sha: str
+    endpoint: str
+    query: Mapping[str, str]
+    request_shape_digest: str
+    maximum_datapoints: int = QUOTA_PROOF_MAX_DATAPOINTS
+    request_count: int = QUOTA_PROOF_MAX_REQUEST_COUNT
+    retry_count: int = 0
+    timeout_seconds: float = 30.0
+
+    @property
+    def computed_request_shape_digest(self) -> str:
+        return _digest(
+            {
+                "method": "GET",
+                "endpoint": self.endpoint,
+                "query": dict(self.query),
+            }
+        )
+
+    def validate(self) -> None:
+        if self.proof_id.strip() == "":
+            raise NetworkShadowContractError("quota proof_id is required")
+        if self.provider != THERUNDOWN_PROVIDER_NAME:
+            raise NetworkShadowExecutionBlocked(
+                "quota proof provider is not TheRundown"
+            )
+        for value, name in (
+            (self.provider_event_id, "provider_event_id"),
+            (self.authorization_package_digest, "authorization_package_digest"),
+            (self.configuration_digest, "configuration_digest"),
+            (self.authorization_id, "authorization_id"),
+            (self.controlled_shadow_run_id, "controlled_shadow_run_id"),
+            (self.qualification_session_id, "qualification_session_id"),
+            (self.ceo_authorization_identity, "ceo_authorization_identity"),
+            (self.adapter_version, "adapter_version"),
+            (self.adapter_source_sha, "adapter_source_sha"),
+        ):
+            _text(value, f"quota proof {name}")
+        _sha(self.authorization_package_digest, "quota proof package digest")
+        _sha(self.configuration_digest, "quota proof configuration digest")
+        _sha(self.adapter_source_sha, "quota proof adapter source SHA")
+        expected_endpoint = f"{THERUNDOWN_BASE_URL}/events/{self.provider_event_id}"
+        if self.endpoint != expected_endpoint:
+            raise NetworkShadowExecutionBlocked(
+                "quota proof endpoint is not the reviewed TheRundown event route"
+            )
+        expected_query = {
+            "affiliate_ids": ",".join(QUOTA_PROOF_AFFILIATE_IDS),
+            "hide_closed": "true",
+            "main_line": "true",
+            "market_ids": "1",
+        }
+        if dict(self.query) != expected_query:
+            raise NetworkShadowExecutionBlocked(
+                "quota proof request shape is outside the bounded contract"
+            )
+        if self.maximum_datapoints != QUOTA_PROOF_MAX_DATAPOINTS:
+            raise NetworkShadowExecutionBlocked(
+                "quota proof datapoint cap must be exactly 55"
+            )
+        if self.request_count != QUOTA_PROOF_MAX_REQUEST_COUNT:
+            raise NetworkShadowExecutionBlocked(
+                "quota proof request count must be exactly one"
+            )
+        if self.retry_count != 0:
+            raise NetworkShadowExecutionBlocked("quota proof retries must be zero")
+        if self.request_shape_digest.lower() != self.computed_request_shape_digest:
+            raise NetworkShadowExecutionBlocked(
+                "quota proof request-shape digest mismatch"
+            )
+        _number(self.timeout_seconds, "quota proof timeout_seconds", positive=True)
+
+    def as_http_request(self, api_key: str) -> TheRundownNetworkHttpRequestV1:
+        self.validate()
+        _text(api_key, "TheRundown API credential")
+        return TheRundownNetworkHttpRequestV1(
+            method="GET",
+            endpoint=self.endpoint,
+            query=dict(self.query),
+            headers={
+                "Accept": "application/json",
+                "X-SportsBrain-Request-Identity": self.proof_id,
+                "X-TheRundown-Key": api_key,
+            },
+            timeout_seconds=self.timeout_seconds,
+        )
+
+
+@dataclass(frozen=True)
+class TheRundownQuotaProofEvidenceV1:
+    """Validated response evidence; never a caller-authored quota assertion."""
+
+    proof_id: str
+    provider: str
+    account_scope: str
+    authorization_package_digest: str
+    configuration_digest: str
+    authorization_id: str
+    controlled_shadow_run_id: str
+    qualification_session_id: str
+    ceo_authorization_identity: str
+    request_shape_digest: str
+    credential_binding_digest: str
+    request_started_at: datetime
+    response_finished_at: datetime
+    billed_datapoints: int
+    remaining_datapoints: int
+    quota_used_datapoints: int
+    quota_limit_datapoints: int
+    quota_period: str
+    quota_reset_at: datetime
+    raw_header_evidence: Mapping[str, str]
+    response_digest: str
+    evidence_digest: str
+    status_code: int = 200
+    request_count: int = 1
+    retry_count: int = 0
+    no_retry: bool = True
+    execution_phase: str = "quota_proof"
+    schema_version: str = QUOTA_PROOF_SCHEMA_VERSION
+
+    def _payload_without_digest(self) -> dict[str, object]:
+        return {
+            "schema_version": self.schema_version,
+            "execution_phase": self.execution_phase,
+            "proof_id": self.proof_id,
+            "provider": self.provider,
+            "account_scope": self.account_scope,
+            "authorization_package_digest": self.authorization_package_digest,
+            "configuration_digest": self.configuration_digest,
+            "authorization_id": self.authorization_id,
+            "controlled_shadow_run_id": self.controlled_shadow_run_id,
+            "qualification_session_id": self.qualification_session_id,
+            "ceo_authorization_identity": self.ceo_authorization_identity,
+            "request_shape_digest": self.request_shape_digest,
+            "credential_binding_digest": self.credential_binding_digest,
+            "request_started_at": _utc(
+                self.request_started_at, "quota proof request_started_at"
+            ).isoformat(),
+            "response_finished_at": _utc(
+                self.response_finished_at, "quota proof response_finished_at"
+            ).isoformat(),
+            "billed_datapoints": self.billed_datapoints,
+            "remaining_datapoints": self.remaining_datapoints,
+            "quota_used_datapoints": self.quota_used_datapoints,
+            "quota_limit_datapoints": self.quota_limit_datapoints,
+            "quota_period": self.quota_period,
+            "quota_reset_at": _utc(
+                self.quota_reset_at, "quota proof quota_reset_at"
+            ).isoformat(),
+            "raw_header_evidence": dict(self.raw_header_evidence),
+            "response_digest": self.response_digest,
+            "status_code": self.status_code,
+            "request_count": self.request_count,
+            "retry_count": self.retry_count,
+            "no_retry": self.no_retry,
+        }
+
+    @property
+    def computed_evidence_digest(self) -> str:
+        return _digest(self._payload_without_digest())
+
+    def validate(
+        self,
+        *,
+        request: TheRundownQuotaProofRequestV1,
+        now: datetime | None = None,
+    ) -> None:
+        request.validate()
+        if self.schema_version != QUOTA_PROOF_SCHEMA_VERSION:
+            raise NetworkShadowContractError("unsupported quota proof schema")
+        if self.execution_phase != "quota_proof":
+            raise NetworkShadowExecutionBlocked(
+                "quota proof evidence has an invalid execution phase"
+            )
+        if self.proof_id != request.proof_id or self.provider != request.provider:
+            raise NetworkShadowExecutionBlocked(
+                "quota proof identity is not bound to its request"
+            )
+        for value, expected, name in (
+            (
+                self.authorization_package_digest,
+                request.authorization_package_digest,
+                "authorization package",
+            ),
+            (self.configuration_digest, request.configuration_digest, "configuration"),
+            (self.authorization_id, request.authorization_id, "authorization"),
+            (
+                self.controlled_shadow_run_id,
+                request.controlled_shadow_run_id,
+                "controlled-shadow run",
+            ),
+            (
+                self.qualification_session_id,
+                request.qualification_session_id,
+                "qualification session",
+            ),
+            (
+                self.ceo_authorization_identity,
+                request.ceo_authorization_identity,
+                "CEO authorization",
+            ),
+            (self.request_shape_digest, request.request_shape_digest, "request shape"),
+        ):
+            if value != expected:
+                raise NetworkShadowExecutionBlocked(
+                    f"quota proof {name} binding mismatch"
+                )
+        _text(self.account_scope, "quota proof account_scope")
+        _sha(self.credential_binding_digest, "quota proof credential binding")
+        _sha(self.response_digest, "quota proof response digest")
+        _sha(self.evidence_digest, "quota proof evidence digest")
+        if self.status_code < 200 or self.status_code >= 300:
+            raise NetworkShadowExecutionBlocked("quota proof HTTP response is not 2xx")
+        if (
+            self.billed_datapoints <= 0
+            or self.billed_datapoints > request.maximum_datapoints
+        ):
+            raise NetworkShadowExecutionBlocked(
+                "quota proof billed datapoints exceed the per-request cap"
+            )
+        if self.remaining_datapoints < QUOTA_PROOF_MINIMUM_REMAINING_DATAPOINTS:
+            raise NetworkShadowExecutionBlocked(
+                "quota proof remaining datapoints are below the five-league budget"
+            )
+        for value, name in (
+            (self.quota_used_datapoints, "quota_used_datapoints"),
+            (self.quota_limit_datapoints, "quota_limit_datapoints"),
+        ):
+            _nonnegative_int(value, f"quota proof {name}")
+        if self.quota_limit_datapoints == 0:
+            raise NetworkShadowExecutionBlocked("quota proof quota limit is zero")
+        if (
+            self.quota_used_datapoints + self.remaining_datapoints
+            != self.quota_limit_datapoints
+        ):
+            raise NetworkShadowExecutionBlocked(
+                "quota proof quota headers are contradictory"
+            )
+        if self.billed_datapoints > self.quota_used_datapoints:
+            raise NetworkShadowExecutionBlocked(
+                "quota proof billed datapoints exceed provider usage"
+            )
+        if self.quota_period not in {"daily", "weekly", "monthly"}:
+            raise NetworkShadowExecutionBlocked("quota proof period is unsupported")
+        started = _utc(self.request_started_at, "quota proof request start")
+        finished = _utc(self.response_finished_at, "quota proof response finish")
+        current = _utc(now or finished, "quota proof validation now")
+        if finished < started or finished > current:
+            raise NetworkShadowExecutionBlocked(
+                "quota proof response timestamps are invalid"
+            )
+        if (current - finished).total_seconds() > QUOTA_PROOF_MAXIMUM_AGE_SECONDS:
+            raise NetworkShadowExecutionBlocked("quota proof response is stale")
+        if _utc(self.quota_reset_at, "quota proof quota reset") <= finished:
+            raise NetworkShadowExecutionBlocked(
+                "quota proof reset boundary is not future-dated"
+            )
+        required_headers = {
+            "x-datapoints",
+            "x-datapoints-used",
+            "x-datapoints-remaining",
+            "x-datapoints-limit",
+            "x-datapoints-period",
+            "x-datapoints-reset",
+            "x-tier",
+            "x-rate-limit",
+            "x-data-delay-seconds",
+        }
+        headers = _lower_headers(self.raw_header_evidence)
+        if not required_headers.issubset(headers):
+            raise NetworkShadowExecutionBlocked(
+                "quota proof provider billing/rate/tier evidence is incomplete"
+            )
+        if int(headers["x-datapoints"]) != self.billed_datapoints:
+            raise NetworkShadowExecutionBlocked(
+                "quota proof billed header does not match evidence"
+            )
+        if int(headers["x-datapoints-used"]) != self.quota_used_datapoints:
+            raise NetworkShadowExecutionBlocked(
+                "quota proof used header does not match evidence"
+            )
+        if int(headers["x-datapoints-remaining"]) != self.remaining_datapoints:
+            raise NetworkShadowExecutionBlocked(
+                "quota proof remaining header does not match evidence"
+            )
+        if int(headers["x-datapoints-limit"]) != self.quota_limit_datapoints:
+            raise NetworkShadowExecutionBlocked(
+                "quota proof limit header does not match evidence"
+            )
+        if headers["x-datapoints-period"] != self.quota_period:
+            raise NetworkShadowExecutionBlocked(
+                "quota proof period header does not match evidence"
+            )
+        if headers["x-tier"].casefold() != "free":
+            raise NetworkShadowExecutionBlocked(
+                "quota proof account tier is not the approved free tier"
+            )
+        if (
+            self.request_count != 1
+            or self.retry_count != 0
+            or self.no_retry is not True
+        ):
+            raise NetworkShadowExecutionBlocked(
+                "quota proof must be exactly one request with zero retries"
+            )
+        if self.evidence_digest.lower() != self.computed_evidence_digest:
+            raise NetworkShadowContractError("quota proof evidence digest mismatch")
+
+    def as_payload(self) -> dict[str, object]:
+        return {
+            **self._payload_without_digest(),
+            "evidence_digest": self.evidence_digest,
+        }
+
+    @classmethod
+    def from_http_response(
+        cls,
+        request: TheRundownQuotaProofRequestV1,
+        response: TheRundownNetworkHttpResponseV1,
+        *,
+        api_key: str,
+        now: datetime | None = None,
+    ) -> TheRundownQuotaProofEvidenceV1:
+        request.validate()
+        response.validate()
+        if response.payload is None or not isinstance(
+            response.payload, (Mapping, list)
+        ):
+            raise NetworkShadowExecutionBlocked(
+                "quota proof response body is missing or malformed"
+            )
+        if response.status_code is None or not 200 <= response.status_code < 300:
+            raise NetworkShadowExecutionBlocked("quota proof provider request failed")
+        if response.error_detail or response.timed_out:
+            raise NetworkShadowExecutionBlocked("quota proof provider transport failed")
+        headers = _safe_quota_proof_headers(response.headers)
+        billed = _header_int(headers, "x-datapoints")
+        used = _header_int(headers, "x-datapoints-used")
+        remaining = _header_int(headers, "x-datapoints-remaining")
+        limit = _header_int(headers, "x-datapoints-limit")
+        period = headers.get("x-datapoints-period", "").casefold()
+        _text(period, "quota proof x-datapoints-period")
+        reset = _header_timestamp(headers, "x-datapoints-reset")
+        _header_int(headers, "x-rate-limit")
+        _header_int(headers, "x-data-delay-seconds")
+        if not headers.get("x-tier"):
+            raise NetworkShadowExecutionBlocked("quota proof x-tier is missing")
+        finished = _utc(response.finished_at, "quota proof response finish")
+        started = _utc(response.started_at, "quota proof request start")
+        credential_binding = sha256(api_key.encode("utf-8")).hexdigest()
+        response_digest = _digest(
+            {
+                "status_code": response.status_code,
+                "payload": response.payload,
+                "safe_headers": headers,
+                "started_at": started,
+                "finished_at": finished,
+            }
+        )
+        evidence = cls(
+            proof_id=request.proof_id,
+            provider=request.provider,
+            account_scope=f"credential:{credential_binding}",
+            authorization_package_digest=request.authorization_package_digest,
+            configuration_digest=request.configuration_digest,
+            authorization_id=request.authorization_id,
+            controlled_shadow_run_id=request.controlled_shadow_run_id,
+            qualification_session_id=request.qualification_session_id,
+            ceo_authorization_identity=request.ceo_authorization_identity,
+            request_shape_digest=request.request_shape_digest,
+            credential_binding_digest=credential_binding,
+            request_started_at=started,
+            response_finished_at=finished,
+            billed_datapoints=billed,
+            remaining_datapoints=remaining,
+            quota_used_datapoints=used,
+            quota_limit_datapoints=limit,
+            quota_period=period,
+            quota_reset_at=reset,
+            raw_header_evidence=headers,
+            response_digest=response_digest,
+            evidence_digest="0" * 64,
+            status_code=response.status_code,
+        )
+        evidence = replace(evidence, evidence_digest=evidence.computed_evidence_digest)
+        evidence.validate(request=request, now=now or finished)
+        return evidence
+
+    @classmethod
+    def from_payload(cls, raw: object) -> TheRundownQuotaProofEvidenceV1:
+        if not isinstance(raw, Mapping):
+            raise NetworkShadowContractError("quota proof evidence must be an object")
+        try:
+            timestamps = {
+                name: datetime.fromisoformat(
+                    str(raw.get(name, "")).replace("Z", "+00:00")
+                )
+                for name in (
+                    "request_started_at",
+                    "response_finished_at",
+                    "quota_reset_at",
+                )
+            }
+        except ValueError as exc:
+            raise NetworkShadowContractError(
+                "quota proof timestamp is invalid"
+            ) from exc
+        return cls(
+            proof_id=str(raw.get("proof_id", "")),
+            provider=str(raw.get("provider", "")),
+            account_scope=str(raw.get("account_scope", "")),
+            authorization_package_digest=str(
+                raw.get("authorization_package_digest", "")
+            ),
+            configuration_digest=str(raw.get("configuration_digest", "")),
+            authorization_id=str(raw.get("authorization_id", "")),
+            controlled_shadow_run_id=str(raw.get("controlled_shadow_run_id", "")),
+            qualification_session_id=str(raw.get("qualification_session_id", "")),
+            ceo_authorization_identity=str(raw.get("ceo_authorization_identity", "")),
+            request_shape_digest=str(raw.get("request_shape_digest", "")),
+            credential_binding_digest=str(raw.get("credential_binding_digest", "")),
+            request_started_at=timestamps["request_started_at"],
+            response_finished_at=timestamps["response_finished_at"],
+            billed_datapoints=raw.get("billed_datapoints", 0),  # type: ignore[arg-type]
+            remaining_datapoints=raw.get("remaining_datapoints", 0),  # type: ignore[arg-type]
+            quota_used_datapoints=raw.get("quota_used_datapoints", 0),  # type: ignore[arg-type]
+            quota_limit_datapoints=raw.get("quota_limit_datapoints", 0),  # type: ignore[arg-type]
+            quota_period=str(raw.get("quota_period", "")),
+            quota_reset_at=timestamps["quota_reset_at"],
+            raw_header_evidence=dict(raw.get("raw_header_evidence", {})),  # type: ignore[arg-type]
+            response_digest=str(raw.get("response_digest", "")),
+            evidence_digest=str(raw.get("evidence_digest", "")),
+            status_code=raw.get("status_code", 0),  # type: ignore[arg-type]
+            request_count=raw.get("request_count", 0),  # type: ignore[arg-type]
+            retry_count=raw.get("retry_count", 0),  # type: ignore[arg-type]
+            no_retry=raw.get("no_retry", False),  # type: ignore[arg-type]
+            execution_phase=str(raw.get("execution_phase", "")),
+            schema_version=str(raw.get("schema_version", "")),
+        )
+
+
 class TheRundownNetworkHttpClient(Protocol):
     def execute(
         self, request: TheRundownNetworkHttpRequestV1
@@ -1490,6 +2021,32 @@ class TheRundownUrlLibHttpClientV1:
             started_at=started,
             finished_at=finished,
         )
+
+
+def execute_therundown_quota_proof(
+    request: TheRundownQuotaProofRequestV1,
+    *,
+    api_key: str,
+    http_client: TheRundownNetworkHttpClient | None = None,
+    now: datetime | None = None,
+) -> TheRundownQuotaProofEvidenceV1:
+    """Perform exactly one proof request and never continue into league calls."""
+
+    request.validate()
+    _text(api_key, "TheRundown API credential")
+    client = http_client or TheRundownUrlLibHttpClientV1()
+    try:
+        response = client.execute(request.as_http_request(api_key))
+    except Exception as exc:
+        raise NetworkShadowExecutionBlocked(
+            "quota proof provider transport failed"
+        ) from exc
+    return TheRundownQuotaProofEvidenceV1.from_http_response(
+        request,
+        response,
+        api_key=api_key,
+        now=now,
+    )
 
 
 def _failure_response(
@@ -2392,6 +2949,11 @@ __all__ = [
     "NETWORK_RUN_SCHEMA_VERSION",
     "NETWORK_SHADOW_SCHEMA_VERSION",
     "QUOTA_HEADROOM_SCHEMA_VERSION",
+    "QUOTA_PROOF_MAXIMUM_AGE_SECONDS",
+    "QUOTA_PROOF_MAX_DATAPOINTS",
+    "QUOTA_PROOF_MAX_REQUEST_COUNT",
+    "QUOTA_PROOF_MINIMUM_REMAINING_DATAPOINTS",
+    "QUOTA_PROOF_SCHEMA_VERSION",
     "THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST",
     "TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET",
     "TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS",
@@ -2416,6 +2978,9 @@ __all__ = [
     "TheRundownNetworkShadowExecutorV1",
     "TheRundownNetworkShadowRunResultV1",
     "TheRundownQuotaHeadroomEvidenceV1",
+    "TheRundownQuotaProofEvidenceV1",
+    "TheRundownQuotaProofRequestV1",
     "TheRundownReplayTransportV1",
     "TheRundownUrlLibHttpClientV1",
+    "execute_therundown_quota_proof",
 ]
