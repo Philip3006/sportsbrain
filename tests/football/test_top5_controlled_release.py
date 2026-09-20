@@ -18,15 +18,15 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 import src.football.top5_publisher as top5_publisher_module
-from scripts.top5_real_shadow_session import main as session_cli
 from scripts.validate_controlled_top5_publication import main as validate_publication
 from src.football.production_contracts import RolloutEvidence, SignalTimeContract
 from src.football.top5_activation_readiness import (
     ControlledActivationRequest,
     RollbackTrigger,
 )
-from src.football.top5_builder2_qualification_receipt import (
-    Builder2QualificationReceiptV1,
+from src.football.top5_b2_qualification_batch_orchestrator import (
+    build_five_league_shadow_package,
+    consume_five_league_shadow_package,
 )
 from src.football.top5_controlled_release import (
     BLOCKED,
@@ -52,21 +52,17 @@ from src.football.top5_publisher import (
 from src.football.top5_qualification_sample_aggregator import (
     aggregate_builder2_qualification_samples,
 )
-from src.football.top5_real_shadow_audit import audit_session_payload
-from src.football.top5_real_shadow_measurement import measure_session_payload
-from src.football.top5_real_shadow_session import RealShadowSession
-from src.football.top5_real_shadow_session_evidence import build_shadow_evidence
 from src.football.top5_research_binding import (
     FROZEN_RESEARCH_SHA,
     M5_CANDIDATE_ID,
     inventory_for,
 )
-from tests.football.test_top5_b2_shadow_qualification_intake import _manifest
+from tests.football.test_top5_b2_five_league_receipt import (
+    _canonical_run_and_manifests,
+)
 from tests.football.test_top5_real_shadow_session import (
     BASE,
     INTEGRATION_SHA,
-    closing_attachment,
-    final_result,
 )
 
 
@@ -84,61 +80,74 @@ def _rollout_evidence() -> RolloutEvidence:
 
 
 def _evidence(tmp_path):
-    from src.football.top5_b2_shadow_qualification_intake import run_intake
-
-    intake = run_intake(_manifest(), tmp_path / "b2-intake")
-    intake_dir = intake.artifact_directory
-    assert intake_dir is not None
-    session_path = tmp_path / "session.json"
-    evidence_path = tmp_path / "evidence.json"
-    assert (
-        session_cli(
-            [
-                "--b2-intake-dir",
-                str(intake_dir),
-                "--session-key",
-                "shadow-session:controlled-release",
-                "--integration-sha",
-                INTEGRATION_SHA,
-                "--experiment-id",
-                "shadow-experiment:controlled-release-v1",
-                "--created-at",
-                BASE.isoformat(),
-                "--min-lead-minutes",
-                "30",
-                "--max-lead-minutes",
-                "180",
-                "--max-odds-age-seconds",
-                "300",
-                "--kickoff-tolerance-seconds",
-                "0",
-                "--output",
-                str(session_path),
-                "--evidence-output",
-                str(evidence_path),
-            ]
-        )
-        == 0
+    run, manifests = _canonical_run_and_manifests()
+    package = consume_five_league_shadow_package(
+        build_five_league_shadow_package(run, manifests)
     )
-    session = RealShadowSession.from_payload(json.loads(session_path.read_text()))
-    prediction = next(iter(session.predictions.values()))
-    session.attach_result(final_result(prediction, "controlled-release"))
-    session.attach_closing(closing_attachment(prediction, "controlled-release"))
-    session_payload = session.as_payload()
-    bundle = build_shadow_evidence(session)
-    audit = audit_session_payload(session_payload, evidence_bundle=bundle)
-    measurement = measure_session_payload(session_payload, evidence_bundle=bundle)
-    receipt = session_payload["observations"][0]["independent_validation"]
-    receipt_object = Builder2QualificationReceiptV1.from_payload(receipt)
-    policy = MinimumSamplePolicy(1, 1)
+    receipts = package.receipts
+    signal_time_experiment_id = "shadow-experiment:controlled-release-v1"
+    audit = {
+        "overall_state": "COMPLETE",
+        "integration_sha": INTEGRATION_SHA,
+        "research_sha": FROZEN_RESEARCH_SHA,
+        "model_identity": M5_CANDIDATE_ID,
+        "predictions": [
+            {
+                "overall_state": "COMPLETE",
+                "evidence_mode": "REAL_OBSERVED",
+                "league": receipt.fixture_key.split("|", 1)[0],
+                "signal_time_experiment_id": signal_time_experiment_id,
+                "qualification_receipt_id": receipt.qualification_receipt_id,
+                "qualification_receipt_digest": receipt.receipt_digest,
+                "controlled_shadow_run_id": receipt.controlled_shadow_run_id,
+                "qualification_session_id": receipt.qualification_session_id,
+            }
+            for receipt in receipts
+        ],
+    }
+    eligible_predictions = [
+        {
+            "evidence_mode": "REAL_OBSERVED",
+            "league": receipt.fixture_key.split("|", 1)[0],
+            "model_identity": M5_CANDIDATE_ID,
+            "research_sha": FROZEN_RESEARCH_SHA,
+            "signal_time_experiment_id": signal_time_experiment_id,
+            "qualification_receipt_id": receipt.qualification_receipt_id,
+            "qualification_receipt_digest": receipt.receipt_digest,
+            "controlled_shadow_run_id": receipt.controlled_shadow_run_id,
+            "qualification_session_id": receipt.qualification_session_id,
+            "fixture": receipt.fixture_key,
+            "probabilities": {"home": 0.34, "draw": 0.33, "away": 0.33},
+        }
+        for receipt in receipts
+    ]
+    measurement = {
+        "overall_state": "COMPLETE",
+        "research_sha": FROZEN_RESEARCH_SHA,
+        "model_identity": M5_CANDIDATE_ID,
+        "eligible_count": len(eligible_predictions),
+        "eligible_predictions": eligible_predictions,
+        "safety_invariants": {
+            "production_activation_authorized": False,
+            "publication_authorized": False,
+            "betting_authorized": False,
+            "model_approved_for_production": False,
+            "signal_time_approved_for_production": False,
+            "sealed_data_accessed": False,
+            "closing_used_for_prediction": False,
+        },
+    }
+    receipt_object = receipts[0]
+    policy = MinimumSamplePolicy(5, 5)
     sample_report = aggregate_builder2_qualification_samples(
-        (receipt_object,), minimum_sample_policy=policy
+        receipts, minimum_sample_policy=policy
     )
     release_evidence = Top5ControlledReleaseEvidence(
-        receipts=(receipt_object,),
+        receipts=receipts,
         sample_report=sample_report,
         audit_report=audit,
         measurement_report=measurement,
+        five_league_package=package,
     )
     return release_evidence, measurement, receipt_object
 
@@ -176,7 +185,11 @@ def _context(tmp_path):
         provider_authority=proposal,
         signal_time_contract=signal_time,
         rollback_pointer=f"safe-disabled:{league}",
-        config_snapshot={"league": league, "candidate": M5_CANDIDATE_ID},
+        config_snapshot={
+            "league": league,
+            "candidate": M5_CANDIDATE_ID,
+            "configuration_digest": evidence.five_league_package.dossier.configuration_digest,
+        },
         ceo_authorization_token="activation-token",
         ceo_authorized=True,
     )
@@ -191,11 +204,11 @@ def _context(tmp_path):
         model_artifact_hash=request.model_artifact_hash,
         signal_time_experiment_id="shadow-experiment:controlled-release-v1",
         signal_time_contract=signal_time,
-        minimum_sample_policy=MinimumSamplePolicy(1, 1),
+        minimum_sample_policy=MinimumSamplePolicy(5, 5),
         provider_authority=approved_authority,
         controlled_shadow_run_id=receipt.controlled_shadow_run_id,
         qualification_session_id=receipt.qualification_session_id,
-        fixture_scope=(receipt.fixture_key,),
+        fixture_scope=tuple(item.fixture_key for item in evidence.receipts),
         rollback_pointer=f"safe-disabled:{league}",
         authorization_token="activation-specific-token",
         issued_at=BASE - timedelta(minutes=1),
@@ -466,6 +479,151 @@ def test_missing_receipt_and_injected_evidence_block(tmp_path):
             request,
             auth,
             injected,
+            _rollout_evidence(),
+            health_preconditions=_health,
+            now=BASE + timedelta(minutes=2),
+        )
+
+
+def test_top5_activation_requires_exact_five_receipt_package(tmp_path):
+    request, auth, evidence, _artifact, _, _health = _context(tmp_path)
+    missing_package = replace(evidence, five_league_package=None)
+    with pytest.raises(ValueError, match="five-league receipt package"):
+        Top5ControlledRelease().activate(
+            request,
+            auth,
+            missing_package,
+            _rollout_evidence(),
+            health_preconditions=_health,
+            now=BASE + timedelta(minutes=2),
+        )
+
+
+@pytest.mark.parametrize(
+    "package_mutation",
+    [
+        pytest.param(
+            lambda package: replace(package, receipts=package.receipts[:1]),
+            id="one-receipt",
+        ),
+        pytest.param(
+            lambda package: replace(package, receipts=package.receipts[:4]),
+            id="four-receipts",
+        ),
+        pytest.param(
+            lambda package: replace(
+                package,
+                receipts=(
+                    package.receipts[0],
+                    package.receipts[0],
+                    *package.receipts[2:],
+                ),
+            ),
+            id="duplicate-league-receipt",
+        ),
+        pytest.param(
+            lambda package: replace(
+                package,
+                dossier=replace(
+                    package.dossier,
+                    leagues=("BL1", "EPL", "LL", "SA", "SIX"),
+                ),
+            ),
+            id="unknown-sixth-league",
+        ),
+        pytest.param(
+            lambda package: replace(
+                package,
+                dossier=replace(
+                    package.dossier,
+                    receipt_digests=("f" * 64, *package.dossier.receipt_digests[1:]),
+                ),
+            ),
+            id="receipt-digest-not-in-dossier",
+        ),
+        pytest.param(
+            lambda package: replace(
+                package,
+                dossier=replace(
+                    package.dossier,
+                    dossier_digest="f" * 64,
+                ),
+            ),
+            id="modified-dossier-digest",
+        ),
+        pytest.param(
+            lambda package: replace(
+                package,
+                dossier=replace(package.dossier, authority_granted=True),
+            ),
+            id="dossier-claims-authority",
+        ),
+        pytest.param(
+            lambda package: replace(
+                package,
+                receipts=(
+                    replace(
+                        package.receipts[0],
+                        controlled_shadow_run_id="mixed-run",
+                    ),
+                    *package.receipts[1:],
+                ),
+            ),
+            id="mixed-controlled-shadow-run",
+        ),
+        pytest.param(
+            lambda package: replace(
+                package,
+                receipts=(
+                    replace(
+                        package.receipts[0],
+                        qualification_session_id="mixed-session",
+                    ),
+                    *package.receipts[1:],
+                ),
+            ),
+            id="mixed-qualification-session",
+        ),
+        pytest.param(
+            lambda package: replace(
+                package,
+                dossier=replace(
+                    package.dossier,
+                    provider_identity="the_odds_api",
+                    candidate_provider_identity="the_odds_api",
+                ),
+            ),
+            id="provider-candidate-mismatch",
+        ),
+    ],
+)
+def test_top5_activation_rejects_partial_or_tampered_dossier(
+    tmp_path, package_mutation
+):
+    request, auth, evidence, _artifact, _, _health = _context(tmp_path)
+    altered = replace(
+        evidence,
+        five_league_package=package_mutation(evidence.five_league_package),
+    )
+    with pytest.raises(ValueError):
+        Top5ControlledRelease().activate(
+            request,
+            auth,
+            altered,
+            _rollout_evidence(),
+            health_preconditions=_health,
+            now=BASE + timedelta(minutes=2),
+        )
+
+
+def test_top5_activation_rejects_receipt_missing_from_supplied_package(tmp_path):
+    request, auth, evidence, _artifact, _, _health = _context(tmp_path)
+    altered = replace(evidence, receipts=evidence.receipts[:-1])
+    with pytest.raises(ValueError, match="exactly match"):
+        Top5ControlledRelease().activate(
+            request,
+            auth,
+            altered,
             _rollout_evidence(),
             health_preconditions=_health,
             now=BASE + timedelta(minutes=2),
