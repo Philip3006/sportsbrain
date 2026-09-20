@@ -50,6 +50,7 @@ def _network_run():
     )
     result = TheRundownNetworkShadowExecutorV1(
         clock=lambda: NOW,
+        pacer=lambda _seconds: None,
         allow_live_network=True,
     ).run(configuration, authorization, transport=transport)
     return result, configuration, authorization

@@ -51,6 +51,16 @@ NETWORK_SHADOW_SCHEMA_VERSION = "top5-therundown-network-shadow-v1"
 NETWORK_REQUEST_SCHEMA_VERSION = "top5-therundown-network-request-v1"
 NETWORK_RESPONSE_SCHEMA_VERSION = "top5-therundown-network-response-v1"
 NETWORK_RUN_SCHEMA_VERSION = "top5-therundown-network-run-v1"
+TOP5_CONTROLLED_SHADOW_REQUEST_COUNT = 5
+THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST = 55
+TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET = (
+    TOP5_CONTROLLED_SHADOW_REQUEST_COUNT
+    * THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST
+)
+TOP5_CONTROLLED_SHADOW_QUOTA_BUDGET = float(
+    TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET
+)
+TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS = 1.1
 _SHA_RE = re.compile(r"^[0-9a-fA-F]{40,64}$")
 _SAFE_EVIDENCE_KINDS = frozenset(
     {
@@ -129,6 +139,30 @@ def _price(value: object, name: str) -> float:
     if number <= 1.0:
         raise NetworkShadowContractError(f"{name} must be a valid decimal price")
     return number
+
+
+def _validate_controlled_shadow_budget(
+    maximum_request_count: int,
+    maximum_datapoints: int,
+    maximum_quota_cost_units: float,
+    request_quota_cost_units: float,
+) -> None:
+    if maximum_request_count != TOP5_CONTROLLED_SHADOW_REQUEST_COUNT:
+        raise NetworkShadowExecutionBlocked(
+            "controlled shadow request budget must be exactly five"
+        )
+    if maximum_datapoints != TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET:
+        raise NetworkShadowExecutionBlocked(
+            "controlled shadow datapoint budget must be exactly 275"
+        )
+    if maximum_quota_cost_units != TOP5_CONTROLLED_SHADOW_QUOTA_BUDGET:
+        raise NetworkShadowExecutionBlocked(
+            "controlled shadow quota budget must be exactly 275"
+        )
+    if request_quota_cost_units != THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST:
+        raise NetworkShadowExecutionBlocked(
+            "controlled shadow request billing budget must be exactly 55"
+        )
 
 
 def _canonical(value: object) -> object:
@@ -282,8 +316,18 @@ class TheRundownNetworkConfigurationV1:
         _number(
             self.request_quota_cost_units, "request_quota_cost_units", positive=True
         )
+        _validate_controlled_shadow_budget(
+            self.maximum_request_count,
+            self.maximum_datapoints,
+            self.maximum_quota_cost_units,
+            self.request_quota_cost_units,
+        )
         _positive_int(self.maximum_source_age_seconds, "maximum_source_age_seconds")
-        _number(self.minimum_interval_seconds, "minimum_interval_seconds")
+        interval = _number(self.minimum_interval_seconds, "minimum_interval_seconds")
+        if interval < TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS:
+            raise NetworkShadowExecutionBlocked(
+                "network shadow pacing must be at least 1.1 seconds"
+            )
         if _nonnegative_int(self.maximum_retries, "maximum_retries") != 0:
             raise NetworkShadowExecutionBlocked("network shadow retries are forbidden")
         for name, value, expected in (
@@ -430,8 +474,18 @@ class TheRundownNetworkAuthorizationV1:
         request_cost = _number(
             self.request_quota_cost_units, "request_quota_cost_units", positive=True
         )
+        _validate_controlled_shadow_budget(
+            self.maximum_request_count,
+            self.maximum_datapoints,
+            self.maximum_quota_cost_units,
+            self.request_quota_cost_units,
+        )
         _positive_int(self.maximum_source_age_seconds, "maximum_source_age_seconds")
-        _number(self.minimum_interval_seconds, "minimum_interval_seconds")
+        interval = _number(self.minimum_interval_seconds, "minimum_interval_seconds")
+        if interval < TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS:
+            raise NetworkShadowExecutionBlocked(
+                "network shadow pacing must be at least 1.1 seconds"
+            )
         if self.maximum_retries != 0:
             raise NetworkShadowExecutionBlocked("network shadow retries are forbidden")
         issued = _utc(self.issued_at, "issued_at")
@@ -644,7 +698,13 @@ class TheRundownNetworkRequestV1:
 
 @dataclass(frozen=True)
 class TheRundownNetworkResponseV1:
-    """Normalized provider response plus rate-limit/tier/delay evidence."""
+    """Normalized response with provider-billed ``X-Datapoints`` accounting.
+
+    ``datapoint_count`` and ``quota_cost_units`` both represent the provider's
+    billed ``X-Datapoints`` value for this response.  They are not counts of
+    normalized observations or bookmaker rows.  The payload adapter must bind
+    them to the response header before the executor can consume the response.
+    """
 
     outcome: CanaryOutcome | str
     provider: str
@@ -841,6 +901,47 @@ class TheRundownNetworkPayloadAdapter(Protocol):
 class TheRundownCanonicalPayloadAdapterV1:
     """Adapter seam for a reviewed provider-specific JSON normalization."""
 
+    @staticmethod
+    def _billing_headers(headers: Mapping[str, str]) -> dict[str, int]:
+        lowered = {
+            str(key).casefold(): str(value).strip() for key, value in headers.items()
+        }
+        values: dict[str, int] = {}
+        for name in (
+            "x-datapoints",
+            "x-datapoints-used",
+            "x-datapoints-remaining",
+            "x-datapoints-limit",
+        ):
+            raw = lowered.get(name)
+            if raw is None:
+                raise NetworkShadowExecutionBlocked(
+                    f"provider billing header is missing: {name}"
+                )
+            try:
+                parsed = int(raw)
+            except ValueError as exc:
+                raise NetworkShadowExecutionBlocked(
+                    f"provider billing header is invalid: {name}"
+                ) from exc
+            if parsed < 0:
+                raise NetworkShadowExecutionBlocked(
+                    f"provider billing header is negative: {name}"
+                )
+            values[name] = parsed
+        if (
+            values["x-datapoints-used"] + values["x-datapoints-remaining"]
+            != values["x-datapoints-limit"]
+        ):
+            raise NetworkShadowExecutionBlocked(
+                "provider quota counters do not reconcile"
+            )
+        if values["x-datapoints"] > values["x-datapoints-used"]:
+            raise NetworkShadowExecutionBlocked(
+                "provider billed datapoints exceed used quota"
+            )
+        return values
+
     def build_request(
         self, request: TheRundownNetworkRequestV1, *, endpoint: str, api_key: str
     ) -> TheRundownNetworkHttpRequestV1:
@@ -886,7 +987,47 @@ class TheRundownCanonicalPayloadAdapterV1:
         raw = response.payload if isinstance(response.payload, Mapping) else {}
         if outcome is not CanaryOutcome.SUCCESS:
             return _failure_response(request, outcome, response)
-        decoded = TheRundownNetworkResponseV1.from_payload(raw)
+        billing = self._billing_headers(response.headers)
+        payload = dict(raw)
+        payload_datapoints = payload.get("datapoint_count")
+        if payload_datapoints is not None and payload_datapoints != billing[
+            "x-datapoints"
+        ]:
+            raise NetworkShadowExecutionBlocked(
+                "payload and provider billed datapoints disagree"
+            )
+        expected_quota_before = (
+            billing["x-datapoints-remaining"] + billing["x-datapoints"]
+        )
+        expected_quota_after = billing["x-datapoints-remaining"]
+        for name, expected in (
+            ("quota_before", expected_quota_before),
+            ("quota_after", expected_quota_after),
+        ):
+            if payload.get(name) is not None and payload[name] != expected:
+                raise NetworkShadowExecutionBlocked(
+                    f"payload and provider quota evidence disagree: {name}"
+                )
+        payload.update(
+            {
+                "datapoint_count": billing["x-datapoints"],
+                "quota_cost_units": float(billing["x-datapoints"]),
+                "quota_before": expected_quota_before,
+                "quota_after": expected_quota_after,
+                "http_status": response.status_code,
+                "network_execution": True,
+                "evidence_kind": ObservationEvidenceKind.REAL_OBSERVED,
+                "raw_metadata": {
+                    **(
+                        dict(payload.get("raw_metadata", {}))
+                        if isinstance(payload.get("raw_metadata"), Mapping)
+                        else {}
+                    ),
+                    "provider_billing": billing,
+                },
+            }
+        )
+        decoded = TheRundownNetworkResponseV1.from_payload(payload)
         if decoded.outcome is not CanaryOutcome.SUCCESS:
             return decoded
         return decoded
@@ -1534,6 +1675,10 @@ class TheRundownNetworkShadowExecutorV1:
                 raise NetworkShadowExecutionBlocked(f"unsafe response flag: {name}")
         _nonnegative_int(response.datapoint_count, "datapoint_count")
         _number(response.quota_cost_units, "quota_cost_units")
+        if response.quota_cost_units != float(response.datapoint_count):
+            raise NetworkShadowExecutionBlocked(
+                "provider billing units do not reconcile"
+            )
         if response.datapoint_count == 0 and outcome is CanaryOutcome.SUCCESS:
             raise NetworkShadowExecutionBlocked("successful response has no datapoints")
         if response.quota_cost_units > authorization.request_quota_cost_units:
@@ -1786,6 +1931,11 @@ __all__ = [
     "NETWORK_RESPONSE_SCHEMA_VERSION",
     "NETWORK_RUN_SCHEMA_VERSION",
     "NETWORK_SHADOW_SCHEMA_VERSION",
+    "THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST",
+    "TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET",
+    "TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS",
+    "TOP5_CONTROLLED_SHADOW_QUOTA_BUDGET",
+    "TOP5_CONTROLLED_SHADOW_REQUEST_COUNT",
     "NetworkShadowContractError",
     "NetworkShadowExecutionBlocked",
     "NetworkShadowRunStatus",

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import pytest
 
@@ -19,6 +21,11 @@ from src.football.top5_controlled_shadow_provider_qualification import (
 )
 from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_network_shadow import (
+    THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST,
+    TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET,
+    TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS,
+    TOP5_CONTROLLED_SHADOW_QUOTA_BUDGET,
+    TOP5_CONTROLLED_SHADOW_REQUEST_COUNT,
     NetworkShadowContractError,
     NetworkShadowExecutionBlocked,
     NetworkShadowRunStatus,
@@ -26,6 +33,7 @@ from src.football.top5_therundown_network_shadow import (
     TheRundownHttpNetworkTransportV1,
     TheRundownNetworkAuthorizationV1,
     TheRundownNetworkConfigurationV1,
+    TheRundownNetworkHttpResponseV1,
     TheRundownNetworkParticipantScopeV1,
     TheRundownNetworkRequestScopeV1,
     TheRundownNetworkResponseV1,
@@ -88,12 +96,14 @@ def _configuration(**changes: object) -> TheRundownNetworkConfigurationV1:
         ),
         "adapter_version": "therundown-adapter-v1",
         "adapter_source_sha": ADAPTER_SHA,
-        "maximum_request_count": 5,
-        "maximum_datapoints": 5,
-        "maximum_quota_cost_units": 5.0,
-        "request_quota_cost_units": 1.0,
+        "maximum_request_count": TOP5_CONTROLLED_SHADOW_REQUEST_COUNT,
+        "maximum_datapoints": TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET,
+        "maximum_quota_cost_units": TOP5_CONTROLLED_SHADOW_QUOTA_BUDGET,
+        "request_quota_cost_units": float(
+            THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST
+        ),
         "maximum_source_age_seconds": 300,
-        "minimum_interval_seconds": 1.0,
+        "minimum_interval_seconds": TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS,
         "maximum_retries": 0,
         "enabled": False,
     }
@@ -169,8 +179,8 @@ def _response(request, **changes: object) -> TheRundownNetworkResponseV1:
         "cascade_evidence_digest": CASCADE_DIGEST,
         "quota_before": 100,
         "quota_after": 99,
-        "quota_cost_units": 1.0,
-        "datapoint_count": 1,
+        "quota_cost_units": float(THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST),
+        "datapoint_count": THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST,
         "rate_limit_remaining": 99,
         "rate_limit_reset_at": NOW + timedelta(hours=1),
         "account_tier": "shadow-test-tier",
@@ -244,10 +254,11 @@ def test_successful_five_league_replay_is_sequential_and_complete():
         "SA",
         "L1",
     ]
-    assert pacing == [1.0] * 4
+    assert pacing == [TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS] * 4
     assert result.request_count == 5
-    assert result.datapoint_count == 5
-    assert result.quota_cost_units == 5.0
+    assert result.request_count == TOP5_CONTROLLED_SHADOW_REQUEST_COUNT
+    assert result.datapoint_count == TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET
+    assert result.quota_cost_units == TOP5_CONTROLLED_SHADOW_QUOTA_BUDGET
     for capture in result.captures:
         assert capture.evidence_kind is ObservationEvidenceKind.TEST_FIXTURE
         assert capture.network_execution is False
@@ -303,28 +314,186 @@ def test_request_budget_violation_makes_zero_calls():
     assert transport.calls == []
 
 
-def test_datapoint_overrun_stops_before_next_capture():
+def test_stale_datapoint_budget_is_rejected_before_transport():
     configuration = _configuration(enabled=True, maximum_datapoints=5)
-    result, transport = _run(
-        response_factory=lambda request: _response(request, datapoint_count=2),
-        configuration=configuration,
-    )
-    assert result.status is NetworkShadowRunStatus.PARTIAL
-    assert any("DATAPOINT_BUDGET_OVERRUN" in failure for failure in result.failures)
-    assert len(transport.calls) == 3
-    assert result.datapoint_count == 4
+    authorization = _authorization(configuration)
+    transport = TheRundownReplayTransportV1(lambda request: pytest.fail("called"))
+    with pytest.raises(NetworkShadowExecutionBlocked, match="datapoint budget"):
+        TheRundownNetworkShadowExecutorV1(clock=lambda: NOW).run(
+            configuration, authorization, transport=transport
+        )
+    assert transport.calls == []
 
 
-def test_quota_overrun_fails_before_accepting_response():
+def test_stale_request_billing_budget_is_rejected_before_transport():
     configuration = _configuration(enabled=True, request_quota_cost_units=1.0)
+    authorization = _authorization(configuration)
+    transport = TheRundownReplayTransportV1(lambda request: pytest.fail("called"))
+    with pytest.raises(NetworkShadowExecutionBlocked, match="billing budget"):
+        TheRundownNetworkShadowExecutorV1(clock=lambda: NOW).run(
+            configuration, authorization, transport=transport
+        )
+    assert transport.calls == []
+
+
+def test_observed_provider_billing_units_are_the_run_budget_basis():
+    assert THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST == 55
+    assert TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET == 5 * 55
+    assert TOP5_CONTROLLED_SHADOW_QUOTA_BUDGET == 5 * 55
+
+
+def test_exact_five_request_billing_budget_is_accepted():
+    result, _ = _run()
+    assert result.request_count == 5
+    assert result.datapoint_count == 275
+    assert result.quota_cost_units == 275.0
+
+
+def test_over_budget_billed_response_fails_closed():
     result, transport = _run(
-        response_factory=lambda request: _response(request, quota_cost_units=2.0),
-        configuration=configuration,
+        response_factory=lambda request: _response(
+            request,
+            datapoint_count=56,
+            quota_cost_units=56.0,
+        )
     )
     assert result.status is NetworkShadowRunStatus.PARTIAL
     assert any("quota budget overrun" in failure for failure in result.failures)
     assert len(transport.calls) == 1
-    assert result.captures == ()
+
+
+def test_billing_units_must_reconcile_per_response():
+    result, _ = _run(
+        response_factory=lambda request: _response(
+            request,
+            datapoint_count=55,
+            quota_cost_units=54.0,
+        )
+    )
+    assert result.status is NetworkShadowRunStatus.PARTIAL
+    assert any("billing units do not reconcile" in failure for failure in result.failures)
+
+
+def test_pacing_below_one_point_one_seconds_is_rejected():
+    configuration = _configuration(enabled=True, minimum_interval_seconds=1.0)
+    authorization = _authorization(configuration)
+    transport = TheRundownReplayTransportV1(lambda request: pytest.fail("called"))
+    with pytest.raises(NetworkShadowExecutionBlocked, match="1.1 seconds"):
+        TheRundownNetworkShadowExecutorV1(clock=lambda: NOW).run(
+            configuration, authorization, transport=transport
+        )
+    assert transport.calls == []
+
+
+def test_provider_billing_headers_bind_to_response_units():
+    configuration = _configuration(enabled=True)
+    authorization = _authorization(configuration)
+    request = authorization.request_for(configuration.targets[0], configuration)
+    source = _response(request)
+    payload = {
+        name: getattr(source, name) for name in source.__dataclass_fields__
+    }
+    payload.pop("quota_before")
+    payload.pop("quota_after")
+    decoded = TheRundownCanonicalPayloadAdapterV1().decode_response(
+        request,
+        TheRundownNetworkHttpResponseV1(
+            status_code=200,
+            payload=payload,
+            headers={
+                "X-Datapoints": "55",
+                "X-Datapoints-Used": "55",
+                "X-Datapoints-Remaining": "19945",
+                "X-Datapoints-Limit": "20000",
+            },
+            started_at=NOW - timedelta(seconds=1),
+            finished_at=NOW,
+        ),
+    )
+    assert decoded.datapoint_count == 55
+    assert decoded.quota_cost_units == 55.0
+    assert decoded.quota_before == 20000
+    assert decoded.quota_after == 19945
+    assert decoded.raw_metadata["provider_billing"] == {
+        "x-datapoints": 55,
+        "x-datapoints-used": 55,
+        "x-datapoints-remaining": 19945,
+        "x-datapoints-limit": 20000,
+    }
+
+
+def test_provider_billing_headers_missing_or_contradictory_fail_closed():
+    configuration = _configuration(enabled=True)
+    authorization = _authorization(configuration)
+    request = authorization.request_for(configuration.targets[0], configuration)
+    source = _response(request)
+    payload = {
+        name: getattr(source, name) for name in source.__dataclass_fields__
+    }
+    adapter = TheRundownCanonicalPayloadAdapterV1()
+    with pytest.raises(NetworkShadowExecutionBlocked, match="billing header"):
+        adapter.decode_response(
+            request,
+            TheRundownNetworkHttpResponseV1(
+                status_code=200,
+                payload=payload,
+                headers={},
+                started_at=NOW - timedelta(seconds=1),
+                finished_at=NOW,
+            ),
+        )
+    with pytest.raises(NetworkShadowExecutionBlocked, match="do not reconcile"):
+        adapter.decode_response(
+            request,
+            TheRundownNetworkHttpResponseV1(
+                status_code=200,
+                payload=payload,
+                headers={
+                    "X-Datapoints": "55",
+                    "X-Datapoints-Used": "55",
+                    "X-Datapoints-Remaining": "19944",
+                    "X-Datapoints-Limit": "20000",
+                },
+                started_at=NOW - timedelta(seconds=1),
+                finished_at=NOW,
+            ),
+        )
+
+
+def test_actual_run006_payload_is_not_accepted_by_internal_payload_adapter():
+    body_path = Path("/private/tmp/top5-laliga-nextdate-20260920-006.request-2.body.json")
+    if not body_path.exists():
+        pytest.skip("local Run-006 raw artifact is not available")
+    payload = json.loads(body_path.read_text())
+    headers_path = body_path.with_name(
+        "top5-laliga-nextdate-20260920-006.request-2.headers.json"
+    )
+    metadata_path = body_path.with_name(
+        "top5-laliga-nextdate-20260920-006.request-2.meta.json"
+    )
+    if not headers_path.exists() or not metadata_path.exists():
+        pytest.skip("local Run-006 response metadata is not available")
+    headers = json.loads(headers_path.read_text())
+    metadata = json.loads(metadata_path.read_text())
+    configuration = _configuration(enabled=True)
+    authorization = _authorization(configuration)
+    request = authorization.request_for(configuration.targets[2], configuration)
+    decoded = TheRundownCanonicalPayloadAdapterV1().decode_response(
+        request,
+        TheRundownNetworkHttpResponseV1(
+            status_code=200,
+            payload=payload,
+            headers=headers,
+            started_at=datetime.fromisoformat(metadata["started_at"]),
+            finished_at=datetime.fromisoformat(metadata["completed_at"]),
+        ),
+    )
+    # The current network seam intentionally requires a reviewed provider-
+    # specific normalization before its internal response object is formed.
+    assert isinstance(payload.get("events"), list)
+    assert "outcome" not in payload
+    assert "datapoint_count" not in payload
+    assert decoded.outcome is CanaryOutcome.MALFORMED
 
 
 @pytest.mark.parametrize(
