@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from src.football.provider_cascade.contracts import (
     BUILDER2_VALIDATION_CONTRACT_VERSION,
@@ -12,16 +13,15 @@ from src.football.provider_cascade.contracts import (
     NormalizedOddsObservation,
     TransportCapability,
 )
-from src.football.top5_builder2_qualification_receipt import (
-    Builder2QualificationReceiptError,
-    Builder2QualificationReceiptV1,
-    validate_builder1_qualification_receipt,
-    validate_builder4_qualification_receipt,
-)
-from src.football.top5_controlled_shadow_provider_qualification import (
-    RealProviderObservation,
-)
 from src.football.top5_research_binding import FROZEN_RESEARCH_SHA
+
+if TYPE_CHECKING:
+    from src.football.top5_builder2_qualification_receipt import (
+        Builder2QualificationReceiptV1,
+    )
+    from src.football.top5_controlled_shadow_provider_qualification import (
+        RealProviderObservation,
+    )
 
 
 @dataclass(frozen=True)
@@ -34,6 +34,10 @@ class Builder1OddsInput:
     qualification_observation: RealProviderObservation
 
     def validate(self) -> None:
+        from src.football.top5_builder2_qualification_receipt import (
+            validate_builder1_qualification_receipt,
+        )
+
         self.observation.validate()
         self.routing.validate()
         if self.routing.selected_provider != self.observation.provider_identity:
@@ -71,6 +75,14 @@ def accepted_for_builder1(
     | None = None,
 ) -> Builder1OddsInput:
     """Cross the seam only with external Builder-2 V1 evidence and receipt."""
+
+    from src.football.top5_builder2_qualification_receipt import (
+        Builder2QualificationReceiptV1,
+        validate_builder4_qualification_receipt,
+    )
+    from src.football.top5_controlled_shadow_provider_qualification import (
+        RealProviderObservation,
+    )
 
     result.validate()
     if not result.accepted or result.observation is None:
@@ -117,6 +129,10 @@ def _validate_external_builder2_context(
     consumer_validator,
 ) -> None:
     """Validate the canonical receipt and bind its real observation to B4 output."""
+
+    from src.football.top5_builder2_qualification_receipt import (
+        Builder2QualificationReceiptError,
+    )
 
     try:
         qualification_observation.validate_structural()

@@ -38,6 +38,17 @@ def test_local_carrier_never_writes_from_the_active_checkout() -> None:
     assert "--authority local" in source
 
 
+def test_health_error_evidence_is_scoped_to_the_current_log_run() -> None:
+    source = (ROOT / "scripts" / "_health.sh").read_text()
+
+    # A historical log entry must not be reused as the cause of a later
+    # scheduler failure (for example, an old ENOSPC trace after recovery).
+    assert 'local current_log_tail' in source
+    assert 'current_log_tail=$(awk' in source
+    assert '/^--- \\[.*\\] .* started ---$/' in source
+    assert 'printf \'%s\\n\' "$current_log_tail"' in source
+
+
 def test_local_authority_filter_excludes_cloud_jobs() -> None:
     jobs = [
         {"job": "daily_scan"},

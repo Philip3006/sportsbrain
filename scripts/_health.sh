@@ -86,7 +86,17 @@ health_finish() {
   # Extract error tail when status=error.
   local err_msg=""
   if [ "$status" = "error" ] && [ -n "$log_path" ] && [ -f "$log_path" ]; then
-    err_msg=$(grep -E -i "error|exception|traceback|timeout|rejected" "$log_path" 2>/dev/null \
+    # Only attribute diagnostics from the current execution.  Reusing the
+    # whole historical log can misreport an old disk/provider failure as the
+    # cause of a later, unrelated exit (and can amplify MON-001 evidence).
+    local current_log_tail
+    current_log_tail=$(awk '
+      /^--- \[.*\] .* started ---$/ || /^--- 20[0-9][0-9]-[0-9][0-9]-[0-9][0-9] .* ---$/ { buf="" }
+      { buf=buf "\n" $0 }
+      END { print buf }
+    ' "$log_path" 2>/dev/null)
+    err_msg=$(printf '%s\n' "$current_log_tail" \
+      | grep -E -i "error|exception|traceback|timeout|rejected" 2>/dev/null \
       | tail -n 3 \
       | tr '\n' ' ' \
       | cut -c1-500)
