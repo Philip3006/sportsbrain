@@ -22,6 +22,7 @@ class TaskState(str, Enum):
     LEASED = "CLAIMED"  # noqa: PIE796 - compatibility alias
     RUNNING = "RUNNING"
     VERIFYING = "VERIFYING"
+    DELIVERY_RECONCILING = "DELIVERY_RECONCILING"
     PR_READY = "PR_READY"
     CEO_REVIEW = "CEO_REVIEW"
     BLOCKED = "BLOCKED"

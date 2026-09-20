@@ -112,9 +112,8 @@ def test_independent_roadmap_item_runs_while_parent_waits(tmp_path: Path) -> Non
 
     selected = dispatcher.select_next_roadmap_task(builder_id="builder-3")
     assert selected is not None
-    assert selected.roadmap_item_id == "roadmap-b3-observability"
-    result = dispatcher.run_once("builder-3", FakeExecutor())
-    assert result is not None and result.state is TaskState.COMPLETED
+    assert selected.roadmap_item_id == "roadmap-b3-integration-1"
+    assert selected.state is TaskState.BACKLOG
 
 
 @pytest.mark.parametrize(
@@ -187,13 +186,17 @@ def test_verified_merge_releases_dependent_without_duplicate_task(tmp_path: Path
     assert [item.task_id for item in dispatcher.store.list_tasks()].count(child.task_id) == 1
 
 
-def test_merge_backpressure_still_stops_new_roadmap_selection(tmp_path: Path) -> None:
+def test_merge_backpressure_is_soft_and_does_not_stop_independent_selection(
+    tmp_path: Path,
+) -> None:
     dispatcher, _, base_sha, _ = _fixture(tmp_path)
     dispatcher.merge_backpressure_limit = 1
     _make_pr_ready(dispatcher, base_sha, task_id="pressure-parent-0001")
 
-    assert dispatcher.select_next_roadmap_task(builder_id="builder-3") is None
-    assert dispatcher.status()["queue_mode"] == "MERGE_BACKPRESSURE"
+    selected = dispatcher.select_next_roadmap_task(builder_id="builder-3")
+    assert selected is not None
+    assert selected.roadmap_item_id == "roadmap-b3-integration-1"
+    assert dispatcher.status()["queue_mode"] == "CONTINUOUS_AUTONOMOUS"
 
 
 def test_builder5_is_not_worker_and_future_builders_are_rejected(tmp_path: Path) -> None:

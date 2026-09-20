@@ -46,7 +46,7 @@ class StoreExecutionMixin:
         with self._write() as conn:
             self._resume_due_quota(conn, timestamp, worker_id)
             active_count = conn.execute(
-                "SELECT COUNT(*) FROM tasks WHERE builder_id = ? AND state IN ('CLAIMED', 'RUNNING', 'VERIFYING')",
+                "SELECT COUNT(*) FROM tasks WHERE builder_id = ? AND state IN ('CLAIMED', 'RUNNING', 'VERIFYING', 'DELIVERY_RECONCILING')",
                 (builder_id,),
             ).fetchone()[0]
             if active_count >= max_concurrency:
@@ -61,7 +61,7 @@ class StoreExecutionMixin:
                 set(json.loads(item[0]))
                 for item in conn.execute(
                     """SELECT resource_locks_json FROM tasks
-                       WHERE state IN ('CLAIMED', 'RUNNING', 'VERIFYING')
+                       WHERE state IN ('CLAIMED', 'RUNNING', 'VERIFYING', 'DELIVERY_RECONCILING')
                        AND resource_locks_json != '[]'"""
                 ).fetchall()
             ]
@@ -789,11 +789,50 @@ class StoreExecutionMixin:
         recovered: list[TaskRecord] = []
         with self._write() as conn:
             rows = conn.execute(
-                """SELECT * FROM tasks WHERE state IN ('CLAIMED', 'RUNNING', 'VERIFYING')
+                """SELECT * FROM tasks WHERE state IN ('CLAIMED', 'RUNNING', 'VERIFYING', 'DELIVERY_RECONCILING')
                    AND lease_expires_at IS NOT NULL AND lease_expires_at <= ? ORDER BY task_id""",
                 (timestamp,),
             ).fetchall()
             for row in rows:
+                if row["state"] == TaskState.DELIVERY_RECONCILING.value:
+                    fenced_generation = row["lease_generation"] + 1
+                    new_state = TaskState.BLOCKED
+                    failure = "DELIVERY_RECONCILIATION_LEASE_EXPIRED"
+                    conn.execute(
+                        """UPDATE tasks SET state = ?, updated_at = ?,
+                           lease_owner = NULL, lease_expires_at = NULL,
+                           process_id = NULL, lease_generation = ?, last_error = ?,
+                           failure_class = ? WHERE task_id = ?""",
+                        (
+                            new_state.value,
+                            timestamp,
+                            fenced_generation,
+                            "delivery reconciliation lease expired",
+                            failure,
+                            row["task_id"],
+                        ),
+                    )
+                    self._append_event(
+                        conn,
+                        row["task_id"],
+                        EventType.LEASE_EXPIRED,
+                        actor,
+                        timestamp,
+                        row["state"],
+                        new_state.value,
+                        {
+                            "reconciliation_attempts": (
+                                json.loads(row["reconciliation_json"] or "{}").get(
+                                    "attempts", 0
+                                )
+                                if row["reconciliation_json"]
+                                else 0
+                            ),
+                            "fenced_generation": fenced_generation,
+                        },
+                    )
+                    recovered.append(self._record(self._get_row(conn, row["task_id"])))
+                    continue
                 process_alive = self._process_alive(row["process_id"])
                 if process_alive:
                     new_state = TaskState.FAILED_SAFE

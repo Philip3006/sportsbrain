@@ -498,9 +498,11 @@ def run_fake_acceptance() -> dict[str, Any]:
         observed["steps"]["queue_exhaustion_idle_safe"] = idle_mode in {
             "IDLE_SAFE",
             "INTENTIONAL_IDLE",
-            "MERGE_BACKPRESSURE",
+            "GLOBAL_IDLE",
         }
-        observed["steps"]["merge_backpressure"] = idle_mode == "MERGE_BACKPRESSURE"
+        observed["steps"]["soft_backpressure_not_global_stop"] = (
+            idle_mode != "MERGE_BACKPRESSURE"
+        )
         idle_dispatcher = NightShiftDispatcher.from_config(
             state_path=root / "runtime" / "idle.sqlite3",
             require_isolated_worktrees=False,

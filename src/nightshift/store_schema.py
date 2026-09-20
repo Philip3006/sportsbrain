@@ -39,10 +39,14 @@ ALLOWED_TRANSITIONS: dict[TaskState, frozenset[TaskState]] = {
             TaskState.PR_READY,
             TaskState.COMPLETED,
             TaskState.READY,
+            TaskState.DELIVERY_RECONCILING,
             TaskState.BLOCKED,
             TaskState.FAILED_SAFE,
             TaskState.PAUSED_QUOTA,
         }
+    ),
+    TaskState.DELIVERY_RECONCILING: frozenset(
+        {TaskState.PR_READY, TaskState.BLOCKED, TaskState.FAILED_SAFE}
     ),
     TaskState.PR_READY: frozenset({TaskState.CEO_REVIEW, TaskState.COMPLETED}),
     TaskState.COMPLETED: frozenset({TaskState.CEO_REVIEW}),
@@ -74,6 +78,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     lease_generation INTEGER NOT NULL DEFAULT 0, process_id INTEGER,
     commit_sha TEXT, remote_sha TEXT, pr_number INTEGER, pr_url TEXT,
     verification_json TEXT, delivery_json TEXT,
+    reconciliation_json TEXT,
     roadmap_item_id TEXT, debug_budget INTEGER NOT NULL DEFAULT 0,
     debug_attempt_count INTEGER NOT NULL DEFAULT 0,
     last_failure_signature TEXT, failure_repeat_count INTEGER NOT NULL DEFAULT 0,
@@ -95,7 +100,12 @@ CREATE TABLE IF NOT EXISTS roadmap_items (
     status TEXT NOT NULL, task_id TEXT, blocked_reason TEXT,
     next_eligible_at TEXT NOT NULL, debug_budget INTEGER NOT NULL DEFAULT 0,
     repeated_failure_limit INTEGER NOT NULL DEFAULT 2, mode TEXT NOT NULL DEFAULT 'bounded',
-    enabled INTEGER NOT NULL DEFAULT 1, updated_at TEXT NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1, generation INTEGER NOT NULL DEFAULT 1,
+    governed_paths_json TEXT NOT NULL DEFAULT '[]',
+    resource_locks_json TEXT NOT NULL DEFAULT '[]',
+    skip_reason TEXT, skip_signature TEXT,
+    skip_count INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL,
     CHECK (enabled IN (0, 1))
 );
 CREATE INDEX IF NOT EXISTS idx_roadmap_status ON roadmap_items (status, priority DESC, item_id);

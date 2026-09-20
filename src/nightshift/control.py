@@ -70,12 +70,13 @@ class QueueControlMixin:
             )
 
     def merge_backpressure_count(self) -> int:
-        with self._read() as conn:
-            return int(
-                conn.execute(
-                    "SELECT COUNT(*) FROM tasks WHERE state IN ('PR_READY', 'CEO_REVIEW')"
-                ).fetchone()[0]
-            )
+        """Return substantive PR pressure, excluding recovery/non-substantive PRs."""
+
+        from .backpressure import summarize_pull_requests
+
+        return summarize_pull_requests(self.list_tasks(limit=1000)).get(
+            "active_substantive_pr_count", 0
+        )
 
     def set_paused(
         self, paused: bool, *, actor: str, now: datetime | None = None

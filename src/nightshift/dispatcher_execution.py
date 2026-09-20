@@ -18,6 +18,7 @@ from .errors import (
     ScopeViolation,
 )
 from .models import ExecutionResult, TaskRecord, TaskState
+from .reconciliation import DeliveryBaseDrift, DeliveryReconciliationError
 
 
 class _LeaseWatchdog:
@@ -351,6 +352,16 @@ class DispatcherExecutionMixin:
                 )
             except LeaseError:
                 return self.store.get(record.task_id)
+        except DeliveryBaseDrift as exc:
+            try:
+                return self._reconcile_base_drift(
+                    record,
+                    actor=owner,
+                    lease_generation=generation,
+                    drift=exc,
+                )
+            except LeaseError:
+                return self.store.get(record.task_id)
         except DeliveryError as exc:
             try:
                 current = self.store.get(record.task_id)
@@ -440,6 +451,116 @@ class DispatcherExecutionMixin:
                 break
             completed.append(result)
         return completed
+
+    def _reconcile_base_drift(
+        self,
+        task: TaskRecord,
+        *,
+        actor: str,
+        lease_generation: int | None,
+        drift: DeliveryBaseDrift,
+    ) -> TaskRecord:
+        """Run at most two automatic base-drift reconciliation attempts."""
+
+        if self.delivery_pipeline is None or self.worktree_manager is None:
+            raise DeliveryReconciliationError(
+                "delivery reconciliation requires the governed delivery pipeline"
+            )
+        authoritative = drift.authoritative_base_sha
+        if not authoritative:
+            authoritative = self.worktree_manager.authoritative_base_sha(
+                task.repo, base_branch=task.base_branch
+            )
+        started = self.store.start_delivery_reconciliation(
+            task.task_id,
+            actor=actor,
+            lease_generation=lease_generation,
+            evidence={
+                "original_base_sha": task.base_sha,
+                "original_commit_sha": task.commit_sha,
+                "authoritative_base_sha": authoritative,
+                "classification": drift.classification or "AUTHORITATIVE_BASE_DRIFT",
+            },
+            max_attempts=2,
+            now=self.clock(),
+        )
+        current = started
+        while True:
+            try:
+                return self.delivery_pipeline.reconcile(
+                    current,
+                    actor=actor,
+                    lease_generation=lease_generation,
+                )
+            except DeliveryBaseDrift as moved:
+                if current.reconciliation_attempts >= 2:
+                    return self.store.finish_delivery_reconciliation(
+                        current.task_id,
+                        actor=actor,
+                        success=False,
+                        lease_generation=lease_generation,
+                        evidence={
+                            "failure_reason": str(moved)[:4000],
+                            "failure_class": "AUTHORITATIVE_BASE_MOVED_DURING_RECOVERY",
+                        },
+                        now=self.clock(),
+                    )
+                refreshed = moved.authoritative_base_sha or self.worktree_manager.authoritative_base_sha(
+                    current.repo, base_branch=current.base_branch
+                )
+                current = self.store.retry_delivery_reconciliation(
+                    current.task_id,
+                    actor=actor,
+                    lease_generation=lease_generation,
+                    evidence={
+                        "authoritative_base_sha": refreshed,
+                        "classification": moved.classification
+                        or "AUTHORITATIVE_BASE_MOVED_DURING_RECOVERY",
+                        "failure_reason": str(moved)[:4000],
+                    },
+                    max_attempts=2,
+                    now=self.clock(),
+                )
+            except DeliveryReconciliationError as failure:
+                return self.store.finish_delivery_reconciliation(
+                    current.task_id,
+                    actor=actor,
+                    success=False,
+                    lease_generation=lease_generation,
+                    evidence={
+                        "failure_reason": str(failure)[:4000],
+                        "failure_class": type(failure).__name__,
+                    },
+                    now=self.clock(),
+                )
+
+    def reconcile_preserved_delivery(
+        self, task_id: str, *, actor: str = "builder-5-reconciler"
+    ) -> TaskRecord:
+        """Resume a preserved delivery-blocked task without rerunning its worker."""
+
+        if actor == self.dispatcher_id:
+            actor = f"{self.dispatcher_id}:reconciler"
+        task = self.store.get(task_id)
+        if task.state not in {TaskState.BLOCKED, TaskState.FAILED_SAFE}:
+            raise SafetyViolation("task is not a preserved delivery-blocked task")
+        if not task.delivery_blocked:
+            raise SafetyViolation("task is not marked as delivery-blocked")
+        drift = DeliveryBaseDrift(
+            "preserved delivery requires authoritative-base reconciliation",
+            original_base_sha=task.base_sha,
+            authoritative_base_sha=(
+                self.worktree_manager.authoritative_base_sha(
+                    task.repo, base_branch=task.base_branch
+                )
+                if self.worktree_manager is not None
+                else None
+            ),
+            classification="PRESERVED_DELIVERY_BASE_DRIFT",
+        )
+        return self._reconcile_base_drift(
+            task, actor=actor, lease_generation=None, drift=drift
+        )
 
     def recover_expired(self) -> list[TaskRecord]:
         return self.store.recover_expired(now=self.clock(), actor=self.dispatcher_id)

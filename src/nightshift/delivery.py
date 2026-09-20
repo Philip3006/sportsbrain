@@ -7,12 +7,18 @@ import json
 import re
 import subprocess
 from collections.abc import Callable, Mapping
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Protocol
 
 from .errors import DeliveryBlocked, DeliveryError
 from .executors import redact
-from .models import TaskRecord, TaskSpec, utc_now
+from .models import TaskRecord, TaskSpec, TaskState, utc_now
+from .reconciliation import (
+    DeliveryBaseDrift,
+    DeliveryReconciliationError,
+    classify_drift,
+)
 from .verification import VerificationRunner
 from .worktree import WorktreeManager
 
@@ -183,8 +189,10 @@ class GhPullRequestClient:
                 not isinstance(base_oid, str)
                 or base_oid.lower() != task.base_sha.lower()
             ):
-                raise DeliveryError(
-                    "pull request base does not match the authoritative base"
+                raise DeliveryBaseDrift(
+                    "pull request base does not match the authoritative base",
+                    original_base_sha=task.base_sha,
+                    authoritative_base_sha=base_oid,
                 )
 
     def _list(self, task: TaskRecord) -> list[dict[str, Any]]:
@@ -326,6 +334,18 @@ class DeliveryPipeline:
         )
         task = self.store.get(task.task_id)
         self._guard(lease_guard)
+        if task.base_sha:
+            authoritative = self.worktrees.authoritative_base_sha(
+                task.repo, base_branch=task.base_branch
+            )
+            if authoritative.lower() != task.base_sha.lower():
+                drift = self._drift_evidence(task, authoritative)
+                raise DeliveryBaseDrift(
+                    "authoritative base advanced after task start",
+                    original_base_sha=task.base_sha,
+                    authoritative_base_sha=authoritative,
+                    classification=str(drift["classification"]),
+                )
         pull = self._find_or_create(
             task,
             commit_sha=commit_sha,
@@ -365,6 +385,400 @@ class DeliveryPipeline:
             now=self.clock(),
         )
         return {"verification": verification, "delivery": delivery}
+
+    def reconcile(
+        self,
+        task: TaskRecord,
+        *,
+        actor: str,
+        lease_generation: int | None = None,
+        lease_guard: Callable[[], None] | None = None,
+    ) -> TaskRecord:
+        """Rematerialize a preserved delta onto the current authoritative base.
+
+        The operation is deterministic by task id and persisted attempt number.
+        It only creates a fresh task branch, applies the original commit delta,
+        verifies it, and opens a PR.  It never rewrites the original branch and
+        never uses a force push.
+        """
+
+        current = self.store.get(task.task_id)
+        if current.state is not TaskState.DELIVERY_RECONCILING:
+            raise DeliveryReconciliationError(
+                "task must be in DELIVERY_RECONCILING before rematerialization"
+            )
+        reconciliation = dict(current.reconciliation or {})
+        attempt = current.reconciliation_attempts
+        if not 1 <= attempt <= 2:
+            raise DeliveryReconciliationError("delivery reconciliation attempt limit exhausted")
+        original_base = str(
+            reconciliation.get("original_base_sha") or current.base_sha or ""
+        )
+        original_commit = str(
+            reconciliation.get("original_commit_sha") or current.commit_sha or ""
+        )
+        authoritative = str(
+            reconciliation.get("authoritative_base_sha")
+            or self.worktrees.authoritative_base_sha(
+                current.repo, base_branch=current.base_branch
+            )
+        )
+        if not re.fullmatch(r"[0-9a-fA-F]{40,64}", original_base):
+            raise DeliveryReconciliationError("original task base SHA is unavailable")
+        if not re.fullmatch(r"[0-9a-fA-F]{40,64}", original_commit):
+            raise DeliveryReconciliationError("original implementation commit SHA is unavailable")
+        if not re.fullmatch(r"[0-9a-fA-F]{40,64}", authoritative):
+            raise DeliveryReconciliationError("authoritative recovery base SHA is invalid")
+        branch = str(
+            reconciliation.get("recovery_branch")
+            or f"nightshift/recovery/{current.task_id}/attempt-{attempt}"
+        )
+        progress: dict[str, Any] = {
+            "original_base_sha": original_base,
+            "original_commit_sha": original_commit,
+            "authoritative_base_sha": authoritative.lower(),
+            "recovery_branch": branch,
+        }
+        self._update_reconciliation(
+            current,
+            actor=actor,
+            evidence=progress,
+            lease_generation=lease_generation,
+            lease_guard=lease_guard,
+        )
+        current = self.store.get(current.task_id)
+        reconciliation = dict(current.reconciliation or {})
+
+        try:
+            refreshed_authoritative = self.worktrees.authoritative_base_sha(
+                current.repo, base_branch=current.base_branch
+            )
+            if refreshed_authoritative.lower() != authoritative.lower():
+                raise DeliveryBaseDrift(
+                    "authoritative base moved during delivery reconciliation",
+                    original_base_sha=authoritative,
+                    authoritative_base_sha=refreshed_authoritative,
+                    classification="AUTHORITATIVE_BASE_MOVED_DURING_RECOVERY",
+                )
+            self.worktrees.fetch_task_branch(current.repo, current.branch)
+            drift = self._drift_evidence(current, authoritative)
+            progress.update(drift)
+            self._update_reconciliation(
+                current,
+                actor=actor,
+                evidence=progress,
+                lease_generation=lease_generation,
+                lease_guard=lease_guard,
+            )
+            current = self.store.get(current.task_id)
+            reconciliation = dict(current.reconciliation or {})
+
+            recovery_path_value = reconciliation.get("recovery_worktree_path")
+            recovery_path = (
+                Path(str(recovery_path_value)) if recovery_path_value else None
+            )
+            recovery_task_id = f"{current.task_id}-recovery-{attempt}"
+            recovery_spec = replace(
+                _spec(current),
+                task_id=recovery_task_id,
+                branch=branch,
+                expected_base_sha=authoritative.lower(),
+            )
+            if recovery_path is None:
+                allocation = self.worktrees.allocate(recovery_spec)
+                recovery_path = allocation.path
+                progress["recovery_worktree_path"] = str(recovery_path)
+                self._update_reconciliation(
+                    current,
+                    actor=actor,
+                    evidence=progress,
+                    lease_generation=lease_generation,
+                    lease_guard=lease_guard,
+                )
+            if not recovery_path.is_dir() or not self.worktrees.is_isolated_path(
+                recovery_path
+            ):
+                raise DeliveryReconciliationError("recovery worktree is not isolated")
+
+            recovery_commit = reconciliation.get("recovery_commit_sha")
+            if recovery_commit:
+                self._require_head(recovery_path, branch, str(recovery_commit))
+            else:
+                patch = self._task_patch(current, original_base, original_commit)
+                if not patch:
+                    raise DeliveryReconciliationError("task delta is empty")
+                self._apply_patch(recovery_path, patch)
+                changed = self.worktrees.verify_scope(recovery_spec, recovery_path)
+                if not changed:
+                    raise DeliveryReconciliationError(
+                        "reconciliation produced no scoped change"
+                    )
+                verification = self.verifier.run(
+                    recovery_spec, recovery_path
+                ).as_dict()
+                if verification.get("passed") is not True:
+                    raise DeliveryReconciliationError(
+                        f"{verification.get('failure_class', 'VERIFICATION_FAILED')}: verification failed after rematerialization"
+                    )
+                recovery_commit = self._commit(
+                    replace(current, task_id=recovery_task_id, branch=branch),
+                    recovery_path,
+                    changed,
+                    lease_guard=lease_guard,
+                )
+                progress.update(
+                    {
+                        "recovery_commit_sha": recovery_commit,
+                        "commit_sha": recovery_commit,
+                        "verification": verification,
+                    }
+                )
+                self._update_reconciliation(
+                    current,
+                    actor=actor,
+                    evidence=progress,
+                    lease_generation=lease_generation,
+                    lease_guard=lease_guard,
+                )
+            recovery_commit = str(recovery_commit)
+            verification = reconciliation.get("verification") or progress.get(
+                "verification"
+            )
+            if not isinstance(verification, Mapping) or verification.get("passed") is not True:
+                verification = self.verifier.run(recovery_spec, recovery_path).as_dict()
+                if verification.get("passed") is not True:
+                    raise DeliveryReconciliationError(
+                        "verification failed after recovery restart"
+                    )
+            recovery_task = replace(
+                current,
+                task_id=recovery_task_id,
+                branch=branch,
+                worktree_path=str(recovery_path),
+                expected_base_sha=authoritative.lower(),
+                base_sha=authoritative.lower(),
+                origin_sha=authoritative.lower(),
+                commit_sha=recovery_commit,
+                remote_sha=str(reconciliation.get("recovery_remote_sha"))
+                if reconciliation.get("recovery_remote_sha")
+                else None,
+            )
+            remote_sha = reconciliation.get("recovery_remote_sha")
+            if not remote_sha:
+                remote_sha = self._push(
+                    recovery_task, recovery_path, lease_guard=lease_guard
+                )
+                progress.update(
+                    {
+                        "recovery_remote_sha": remote_sha,
+                        "remote_sha": remote_sha,
+                    }
+                )
+                self._update_reconciliation(
+                    current,
+                    actor=actor,
+                    evidence=progress,
+                    lease_generation=lease_generation,
+                    lease_guard=lease_guard,
+                )
+                current = self.store.get(current.task_id)
+                reconciliation = dict(current.reconciliation or {})
+                recovery_task = replace(recovery_task, remote_sha=remote_sha)
+            pull_number = reconciliation.get("pr_number")
+            pull_url = reconciliation.get("pr_url")
+            pull: Mapping[str, Any]
+            if pull_number and pull_url:
+                pull = {"number": pull_number, "url": pull_url, "reused": True}
+            else:
+                pull = self._find_or_create(
+                    recovery_task,
+                    commit_sha=recovery_commit,
+                    verification=verification,
+                    lease_guard=lease_guard,
+                )
+                pull_number = pull.get("number")
+                pull_url = pull.get("url")
+                if (
+                    isinstance(pull_number, bool)
+                    or not isinstance(pull_number, int)
+                    or not isinstance(pull_url, str)
+                    or not pull_url
+                ):
+                    raise DeliveryReconciliationError(
+                        "recovery PR identity is incomplete"
+                    )
+                progress.update(
+                    {
+                        "pr_number": pull_number,
+                        "pr_url": pull_url,
+                    }
+                )
+                self._update_reconciliation(
+                    current,
+                    actor=actor,
+                    evidence=progress,
+                    lease_generation=lease_generation,
+                    lease_guard=lease_guard,
+                )
+            delivery = {
+                "task_id": current.task_id,
+                "builder_id": current.builder_id,
+                "branch": branch,
+                "commit_sha": recovery_commit,
+                "base_branch": current.base_branch,
+                "base_sha": authoritative.lower(),
+                "origin_sha": authoritative.lower(),
+                "original_commit_sha": original_commit,
+                "original_base_sha": original_base,
+                "recovery_branch": branch,
+                "recovery_commit_sha": recovery_commit,
+                "recovery_base_sha": authoritative.lower(),
+                "verification": dict(verification),
+                "pr_number": pull_number,
+                "pr_url": pull_url,
+                "delivery_recovered": True,
+            }
+            progress.update(
+                {
+                    "commit_sha": recovery_commit,
+                    "remote_sha": remote_sha,
+                    "pr_number": pull_number,
+                    "pr_url": pull_url,
+                    "verification": dict(verification),
+                    "delivery": delivery,
+                }
+            )
+            return self.store.finish_delivery_reconciliation(
+                current.task_id,
+                actor=actor,
+                success=True,
+                evidence=progress,
+                lease_generation=lease_generation,
+                now=self.clock(),
+            )
+        except DeliveryBaseDrift as exc:
+            latest = self.store.get(current.task_id)
+            if latest.reconciliation_attempts >= 2:
+                failure = dict(latest.reconciliation or {})
+                failure.update(
+                    {
+                        "failure_reason": str(exc)[:4000],
+                        "failure_class": type(exc).__name__,
+                    }
+                )
+                return self.store.finish_delivery_reconciliation(
+                    latest.task_id,
+                    actor=actor,
+                    success=False,
+                    evidence=failure,
+                    lease_generation=lease_generation,
+                    now=self.clock(),
+                )
+            raise
+
+    def _update_reconciliation(
+        self,
+        task: TaskRecord,
+        *,
+        actor: str,
+        evidence: Mapping[str, Any],
+        lease_generation: int | None,
+        lease_guard: Callable[[], None] | None,
+    ) -> None:
+        self._guard(lease_guard)
+        self.store.update_delivery_reconciliation(
+            task.task_id,
+            actor=actor,
+            evidence=evidence,
+            lease_generation=lease_generation,
+            now=self.clock(),
+        )
+
+    def _drift_evidence(self, task: TaskRecord, authoritative: str) -> dict[str, Any]:
+        original = task.base_sha or ""
+        commit = task.commit_sha or ""
+        if not original or not commit:
+            return {
+                "classification": "BASE_DRIFT_WITHOUT_COMPLETE_DELTA",
+                "upstream_paths": [],
+                "task_paths": [],
+                "overlapping_paths": [],
+            }
+        control = self.worktrees.resolve_control_repo(task.repo)
+        self.worktrees.fetch_task_branch(task.repo, task.branch)
+        upstream = self._names_at(control, ["diff", "--name-only", original, authoritative])
+        changed = self._names_at(control, ["diff", "--name-only", original, commit])
+        return classify_drift(upstream, changed).as_dict()
+
+    def _task_patch(self, task: TaskRecord, original_base: str, commit: str) -> str:
+        control = self.worktrees.resolve_control_repo(task.repo)
+        result = self._run_control(
+            control, ["diff", "--binary", f"{original_base}..{commit}"]
+        )
+        if result.returncode != 0:
+            raise DeliveryReconciliationError(
+                "cannot materialize the preserved task delta"
+            )
+        return result.stdout
+
+    def _apply_patch(self, path: Path, patch: str) -> None:
+        checked = self._run_with_input(path, ["apply", "--3way", "--check"], patch)
+        if checked.returncode != 0:
+            raise DeliveryReconciliationError(
+                "task delta conflicts semantically with authoritative main"
+            )
+        applied = self._run_with_input(path, ["apply", "--3way"], patch)
+        if applied.returncode != 0:
+            raise DeliveryReconciliationError(
+                "task delta could not be applied cleanly to authoritative main"
+            )
+        checked_diff = self._run(path, ["diff", "--check"], timeout=30)
+        if checked_diff.returncode != 0:
+            raise DeliveryReconciliationError("recovery patch failed diff validation")
+
+    def _names_at(self, path: Path, args: list[str]) -> tuple[str, ...]:
+        result = self._run_control(path, args)
+        if result.returncode != 0:
+            raise DeliveryReconciliationError("cannot classify authoritative base drift")
+        return tuple(item for item in result.stdout.splitlines() if item)
+
+    def _run_control(
+        self, path: Path, args: list[str]
+    ) -> subprocess.CompletedProcess[str]:
+        return self._run_path(path, args, timeout=60)
+
+    def _run_path(
+        self, path: Path, args: list[str], *, timeout: int
+    ) -> subprocess.CompletedProcess[str]:
+        try:
+            return subprocess.run(
+                [self.git_executable, "-C", str(path), *args],
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise DeliveryReconciliationError(
+                f"git reconciliation command failed: {type(exc).__name__}"
+            ) from exc
+
+    def _run_with_input(
+        self, path: Path, args: list[str], value: str
+    ) -> subprocess.CompletedProcess[str]:
+        try:
+            return subprocess.run(
+                [self.git_executable, "-C", str(path), *args],
+                input=value,
+                capture_output=True,
+                text=True,
+                timeout=120,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise DeliveryReconciliationError(
+                f"git patch operation failed: {type(exc).__name__}"
+            ) from exc
 
     @staticmethod
     def _guard(lease_guard: Callable[[], None] | None) -> None:

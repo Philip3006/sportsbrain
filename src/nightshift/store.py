@@ -92,6 +92,7 @@ class DispatcherStore(
             "pr_url": "TEXT",
             "verification_json": "TEXT",
             "delivery_json": "TEXT",
+            "reconciliation_json": "TEXT",
             "roadmap_item_id": "TEXT",
             "debug_budget": "INTEGER NOT NULL DEFAULT 0",
             "debug_attempt_count": "INTEGER NOT NULL DEFAULT 0",
@@ -120,6 +121,26 @@ class DispatcherStore(
                 WHEN 'cancelled' THEN 'CANCELLED'
                 ELSE state END"""
         )
+        roadmap_columns = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(roadmap_items)").fetchall()
+        }
+        if "generation" not in roadmap_columns:
+            conn.execute(
+                "ALTER TABLE roadmap_items ADD COLUMN generation INTEGER NOT NULL DEFAULT 1"
+            )
+        roadmap_additions = {
+            "governed_paths_json": "TEXT NOT NULL DEFAULT '[]'",
+            "resource_locks_json": "TEXT NOT NULL DEFAULT '[]'",
+            "skip_reason": "TEXT",
+            "skip_signature": "TEXT",
+            "skip_count": "INTEGER NOT NULL DEFAULT 0",
+        }
+        for name, definition in roadmap_additions.items():
+            if name not in roadmap_columns:
+                conn.execute(
+                    f"ALTER TABLE roadmap_items ADD COLUMN {name} {definition}"
+                )
         if requires_pr_added:
             conn.execute(
                 "UPDATE tasks SET requires_pr = 1 WHERE risk_class = 'code_change'"
@@ -215,6 +236,11 @@ class DispatcherStore(
             if row["verification_json"]
             else None,
             delivery=json.loads(row["delivery_json"]) if row["delivery_json"] else None,
+            reconciliation=(
+                json.loads(row["reconciliation_json"])
+                if row["reconciliation_json"]
+                else None
+            ),
             diagnostic_path=row["diagnostic_path"],
             failure_class=row["failure_class"],
             roadmap_item_id=row["roadmap_item_id"],

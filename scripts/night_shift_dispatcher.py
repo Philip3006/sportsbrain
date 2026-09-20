@@ -81,6 +81,12 @@ def _parser() -> argparse.ArgumentParser:
     delivery_reconcile.add_argument("--pr-number", type=int)
     delivery_reconcile.add_argument("--commit-sha")
     delivery_reconcile.add_argument("--remote-sha")
+    drift_reconcile = sub.add_parser(
+        "reconcile-delivery-drift",
+        help="automatically rematerialize a preserved task after authoritative-base drift",
+    )
+    drift_reconcile.add_argument("task_id")
+    drift_reconcile.add_argument("--actor", default="builder-5-reconciler")
     unblock = sub.add_parser(
         "unblock", help="release dependency-blocked work after prerequisites succeed"
     )
@@ -263,6 +269,15 @@ def main(argv: list[str] | None = None) -> int:
                     pr_number=args.pr_number,
                     commit_sha=args.commit_sha,
                     remote_sha=args.remote_sha,
+                ).as_dict(),
+                indent=2,
+            )
+        )
+    elif args.command == "reconcile-delivery-drift":
+        print(
+            json.dumps(
+                dispatcher.reconcile_preserved_delivery(
+                    args.task_id, actor=args.actor
                 ).as_dict(),
                 indent=2,
             )
