@@ -14,7 +14,7 @@ import os
 import unicodedata
 from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from math import isfinite
 from typing import ClassVar
 
@@ -263,6 +263,50 @@ def _safe_quota_evidence(headers: Mapping[str, object]) -> dict[str, object]:
     return evidence
 
 
+def _snapshot_source_timestamp(
+    response: RawProviderResponse,
+    timing_policy: CascadeTimingPolicy,
+) -> tuple[datetime, int]:
+    """Derive REST snapshot freshness from response timing and provider delay."""
+
+    if response.completed_at < response.started_at:
+        raise _NormalizationFailure(
+            ProviderState.MALFORMED, "provider response timing is invalid"
+        )
+    raw_delay = next(
+        (
+            str(value).strip()
+            for key, value in response.headers.items()
+            if str(key).casefold() == "x-data-delay-seconds"
+        ),
+        None,
+    )
+    if raw_delay is None or not raw_delay:
+        raise _NormalizationFailure(
+            ProviderState.MALFORMED, "snapshot delay provenance is missing"
+        )
+    try:
+        delay_seconds = int(raw_delay)
+    except ValueError as exc:
+        raise _NormalizationFailure(
+            ProviderState.MALFORMED, "snapshot delay provenance is invalid"
+        ) from exc
+    if delay_seconds < 0:
+        raise _NormalizationFailure(
+            ProviderState.MALFORMED, "snapshot delay provenance is invalid"
+        )
+    if delay_seconds > timing_policy.maximum_odds_age_seconds:
+        raise _NormalizationFailure(
+            ProviderState.STALE, "snapshot delay exceeds freshness ceiling"
+        )
+    snapshot_timestamp = response.completed_at - timedelta(seconds=delay_seconds)
+    if snapshot_timestamp > response.completed_at:
+        raise _NormalizationFailure(
+            ProviderState.MALFORMED, "snapshot timing provenance is contradictory"
+        )
+    return snapshot_timestamp, delay_seconds
+
+
 def _is_true(value: object) -> bool:
     return value is True or (
         isinstance(value, str) and value.strip().casefold() in {"true", "1", "yes"}
@@ -440,6 +484,9 @@ class TheRundownExperimentalAdapter:
         fixture.validate()
         config.validate()
         timing_policy.validate()
+        snapshot_timestamp, snapshot_delay_seconds = _snapshot_source_timestamp(
+            response, timing_policy
+        )
         identity = self._event_identity(event, fixture, timing_policy=timing_policy)
         if identity != "match":
             state = {
@@ -621,7 +668,6 @@ class TheRundownExperimentalAdapter:
                     )
 
         fresh: list[NormalizedOddsObservation] = []
-        stale_count = 0
         invalid_book_count = 0
         selected_affiliates = self._affiliate_ids or tuple(sorted(rows))
         quota_after = _quota_from_headers(response.headers)
@@ -647,11 +693,7 @@ class TheRundownExperimentalAdapter:
             if set(bucket) != {"home", "draw", "away"}:
                 invalid_book_count += 1
                 continue
-            source_timestamp = min(row.updated_at for row in bucket.values())
-            age_seconds = (response.completed_at - source_timestamp).total_seconds()
-            if age_seconds < 0 or age_seconds > timing_policy.maximum_odds_age_seconds:
-                stale_count += 1
-                continue
+            source_timestamp = snapshot_timestamp
             bookmaker = (
                 self._affiliate_names.get(affiliate_id) or f"affiliate:{affiliate_id}"
             )
@@ -707,6 +749,12 @@ class TheRundownExperimentalAdapter:
                 "source_update_timestamps": sorted(
                     {row.updated_at.isoformat() for row in bucket.values()}
                 ),
+                "snapshot_timing_provenance": {
+                    "response_completed_at": response.completed_at.isoformat(),
+                    "provider_data_delay_seconds": snapshot_delay_seconds,
+                    "snapshot_source_timestamp": snapshot_timestamp.isoformat(),
+                    "freshness_ceiling_seconds": timing_policy.maximum_odds_age_seconds,
+                },
                 "raw_response_digest": digest_record(response.payload),
                 "quota_evidence": _safe_quota_evidence(response.headers),
                 "neutral_venue": bool(
@@ -755,8 +803,6 @@ class TheRundownExperimentalAdapter:
             observation.validate(require_fresh=False)
             fresh.append(observation)
         if not fresh:
-            if stale_count and stale_count == len(selected_affiliates):
-                raise _NormalizationFailure(ProviderState.STALE, "all_bookmakers_stale")
             if invalid_book_count:
                 raise _NormalizationFailure(
                     ProviderState.QUALITY_REJECTED, "bookmaker_1x2_incomplete"
