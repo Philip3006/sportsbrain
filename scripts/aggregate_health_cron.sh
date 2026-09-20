@@ -2,7 +2,8 @@
 # Dedicated local health carrier. It must remain independent of financial intent handling.
 set -uo pipefail
 
-SPORTSBRAIN_DIR="/Users/philiprassillier/sportsbrain"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+SPORTSBRAIN_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 LOG="/Users/philiprassillier/Library/Logs/sportsbrain_aggregate_health.log"
 
 cd "$SPORTSBRAIN_DIR" || exit 1

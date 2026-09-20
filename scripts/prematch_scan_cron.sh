@@ -3,7 +3,8 @@
 # Triggered every 20 min by com.sportsbrain.prematch-scan.plist
 # Skips if no game in window, or if cache is fresh (<25 min old).
 
-SPORTSBRAIN_DIR="/Users/philiprassillier/sportsbrain"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+SPORTSBRAIN_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 LOG="/Users/philiprassillier/Library/Logs/sportsbrain_prematch_scan.log"
 LOCKFILE="$SPORTSBRAIN_DIR/results/prematch_scan.lock"
 RUNTIME_STATE_DIR="/Users/philiprassillier/Library/Application Support/SportsBrain/runtime-state"

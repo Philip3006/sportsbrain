@@ -105,7 +105,8 @@ def test_health_write_failure_fails_closed(monkeypatch) -> None:
 def test_launchd_wrapper_loads_protected_environment_and_execs_refresh() -> None:
     source = WRAPPER.read_text()
 
-    assert 'SPORTSBRAIN_DIR="/Users/philiprassillier/sportsbrain"' in source
+    assert 'SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"' in source
+    assert 'SPORTSBRAIN_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"' in source
     assert 'cd "$SPORTSBRAIN_DIR"' in source
     assert "set -a" in source
     assert '. "$SPORTSBRAIN_DIR/.env"' in source
