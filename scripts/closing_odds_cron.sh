@@ -1,7 +1,8 @@
 #!/bin/bash
 # Wrapper for launchd: updates closing odds for open bets.
 # Runs silently if no open bets or outside tournament period.
-SPORTSBRAIN_DIR="/Users/philiprassillier/sportsbrain"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+SPORTSBRAIN_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 LOG="/Users/philiprassillier/Library/Logs/sportsbrain_closing_odds.log"
 mkdir -p "/Users/philiprassillier/Library/Caches/SportsBrain" || exit 1
 RUNTIME_STAGE_DIR="$(mktemp -d /Users/philiprassillier/Library/Caches/SportsBrain/closing-odds.XXXXXX)" || exit 1

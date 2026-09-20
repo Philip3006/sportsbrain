@@ -2,7 +2,8 @@
 # launchd entrypoint: load the protected runtime environment before refresh.
 set -euo pipefail
 
-SPORTSBRAIN_DIR="/Users/philiprassillier/sportsbrain"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+SPORTSBRAIN_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 cd "$SPORTSBRAIN_DIR"
 
 set -a

@@ -4,7 +4,8 @@
 set -uo pipefail  # no -e: we want to record the exit code in health, not die
 
 PYTHON=/Library/Frameworks/Python.framework/Versions/3.13/bin/python3
-SPORTSBRAIN_DIR="/Users/philiprassillier/sportsbrain"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+SPORTSBRAIN_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 LOG="/Users/philiprassillier/Library/Logs/sportsbrain_live_score_push.log"
 RUNTIME_STATE_DIR="/Users/philiprassillier/Library/Application Support/SportsBrain/runtime-state"
 mkdir -p "/Users/philiprassillier/Library/Caches/SportsBrain" "$RUNTIME_STATE_DIR" || exit 1
